@@ -417,9 +417,9 @@ BU_EXTERN(double		bn_gauss_fill, (struct bn_gauss *p));
  */
 
 BU_EXTERN(void		bn_noise_init, () );
-BU_EXTERN(double	bn_noise_perlin, (point_t pt) );
+BU_EXTERN(double	bn_noise_perlin, (const point_t pt) );
 /* XXX Why isn't the result listed first? */
-BU_EXTERN(void		bn_noise_vec, (point_t point, point_t result) );
+BU_EXTERN(void		bn_noise_vec, (const point_t point, point_t result) );
 BU_EXTERN(double	bn_noise_fbm, (point_t point, double h_val,
 				double lacunarity, double octaves) );
 BU_EXTERN(double	bn_noise_turb, (point_t point, double h_val,

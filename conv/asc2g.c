@@ -57,13 +57,13 @@ extern void rt_vol_ifree( struct rt_db_internal	*ip);
 #define TYPELEN			10
 #define NAME_LEN			20
 
-void		identbld(void), polyhbld(void), pipebld(void), particlebld(void);
-void		solbld(void), arbnbld(void), clinebld(void), botbld(void), extrbld(void), sktbld(void);
-int		combbld(void);
-void		membbld(struct bu_list *headp), arsabld(void), arsbbld(void);
-void		materbld(void), bsplbld(void), bsurfbld(void), zap_nl(void);
-char		*nxt_spc(register char *cp);
-void		strsolbld(void), nmgbld(void);
+void		identbld(), polyhbld(), pipebld(), particlebld();
+void		solbld(), arbnbld(), clinebld(), botbld(), extrbld(), sktbld();
+int		combbld();
+void		membbld(), arsabld(), arsbbld();
+void		materbld(), bsplbld(), bsurfbld(), zap_nl();
+char		*nxt_spc();
+void		strsolbld(), nmgbld();
 
 static union record	record;			/* GED database record */
 static char 		buf[BUFSIZE];		/* Record input buffer */
@@ -98,7 +98,7 @@ char *aliases[] = {
 };
 
 int
-incr_ars_pt(void)
+incr_ars_pt()
 {
 	int ret=0;
 
@@ -120,7 +120,9 @@ incr_ars_pt(void)
  *			M A I N
  */
 int
-main(int argc, char **argv)
+main(argc, argv)
+int argc;
+char **argv;
 {
 	char c1[3];
 
@@ -309,7 +311,7 @@ after_read:
  *  to hand it off to the appropriate LIBWDB routine.
  */
 void
-strsolbld(void)
+strsolbld()
 {
     char	*type;
     char	*name;
@@ -398,7 +400,7 @@ strsolbld(void)
 #define NURB 'N'
 
 void
-sktbld(void)
+sktbld()
 {
 	register char *cp, *ptr;
 	int i, j;
@@ -569,7 +571,7 @@ sktbld(void)
 }
 
 void
-extrbld(void)
+extrbld()
 {
 	register char *cp;
 	char name[NAMESIZE+1];
@@ -611,7 +613,7 @@ extrbld(void)
  *  in-memory versions.
  */
 void
-nmgbld(void)
+nmgbld()
 {
 	register char *cp;
 	int	version;
@@ -701,7 +703,7 @@ nmgbld(void)
  */
 
 void
-solbld(void)
+solbld()
 {
 	register char *cp;
 	register char *np;
@@ -880,7 +882,7 @@ solbld(void)
  *	1	OK, another record exists in global input line buffer.
  */
 int
-combbld(void)
+combbld()
 {
 	struct bu_list	head;
 	register char 	*cp;
@@ -1011,7 +1013,8 @@ combbld(void)
  *  Called only from combbld()
  */
 void
-membbld(struct bu_list *headp)
+membbld( headp )
+struct bu_list	*headp;
 {
 	register char 	*cp;
 	register char 	*np;
@@ -1050,7 +1053,7 @@ membbld(struct bu_list *headp)
  */
 
 void
-arsabld(void)
+arsabld()
 {
 	char *cp;
 	char *np;
@@ -1087,7 +1090,7 @@ arsabld(void)
  */
 
 void
-arsbbld(void)
+arsbbld()
 {
 	char *cp;
 	int i;
@@ -1134,7 +1137,7 @@ arsbbld(void)
  */
 
 void
-zap_nl(void)
+zap_nl()
 {
 	register char *bp;
 
@@ -1154,7 +1157,7 @@ zap_nl(void)
  */
 
 void
-identbld(void)
+identbld()
 {
 	register char	*cp;
 	register char	*np;
@@ -1251,7 +1254,7 @@ identbld(void)
  */
 
 void
-polyhbld(void)
+polyhbld()
 {
 	char	*cp;
 	char	*name;
@@ -1337,7 +1340,7 @@ polyhbld(void)
  */
 
 void
-materbld(void)
+materbld()
 {
 	register char *cp;
 	int	low, hi;
@@ -1369,7 +1372,7 @@ materbld(void)
  */
 
 void
-bsplbld(void)
+bsplbld()
 {
 #if 0
 	register char	*cp;
@@ -1404,7 +1407,7 @@ bsplbld(void)
  */
 
 void
-bsurfbld(void)
+bsurfbld()
 {
 #if 0
 
@@ -1513,7 +1516,7 @@ bsurfbld(void)
  *
  */
 void
-clinebld(void)
+clinebld()
 {
 	char			my_name[NAME_LEN];
 	fastf_t			thickness;
@@ -1571,7 +1574,7 @@ clinebld(void)
  *
  */
 void
-botbld(void)
+botbld()
 {
 	char			my_name[NAME_LEN];
 	char			type;
@@ -1662,7 +1665,7 @@ botbld(void)
  */
 
 void
-pipebld(void)
+pipebld()
 {
 
 	char			name[NAME_LEN];
@@ -1724,7 +1727,7 @@ pipebld(void)
  */
 
 void
-particlebld(void)
+particlebld()
 {
 
 	char		name[NAME_LEN];
@@ -1760,7 +1763,7 @@ particlebld(void)
  */
 
 void
-arbnbld(void)
+arbnbld()
 {
 
 	char		name[NAME_LEN];
@@ -1817,7 +1820,8 @@ arbnbld(void)
 }
 
 char *
-nxt_spc(register char *cp)
+nxt_spc( cp)
+register char *cp;
 {
 	while( *cp != ' ' && *cp != '\t' && *cp !='\0' )  {
 		cp++;
@@ -1829,7 +1833,7 @@ nxt_spc(register char *cp)
 }
 
 int
-ngran(int nfloat)
+ngran( nfloat )
 {
 	register int gran;
 	/* Round up */

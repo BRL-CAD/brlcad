@@ -28,7 +28,9 @@ double	*weight;		/* weights to unbias estimation */
 static char usage[] = "\
 Usage: dauto [window_size (512)] < doubles\n";
 
-int main(int argc, char **argv)
+int main( argc, argv )
+int	argc;
+char	**argv;
 {
 	int	i, j, n, L;
 	register double *dp1, *dp2;

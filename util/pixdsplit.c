@@ -39,7 +39,7 @@ extern int errno;
 
 #define	made_it()	bu_log("%s:%d\n", __FILE__, __LINE__);
 
-void print_usage (void)
+void print_usage ()
 {
 #define OPT_STRING	"c:d:#:?"
 

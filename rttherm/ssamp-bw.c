@@ -66,7 +66,8 @@ Usage: ssamp-bw [-s squarefilesize] [-w file_width] [-n file_height]\n\
  *			G E T _ A R G S
  */
 int
-get_args(int argc, register char **argv)
+get_args( argc, argv )
+register char **argv;
 {
 	register int c;
 
@@ -111,7 +112,7 @@ get_args(int argc, register char **argv)
  *			F I N D _ M I N M A X
  */
 void
-find_minmax(void)
+find_minmax()
 {
 	register fastf_t	max, min;
 	register int		i;
@@ -133,7 +134,8 @@ find_minmax(void)
  *			M A I N
  */
 int
-main(int argc, char **argv)
+main( argc, argv )
+char	**argv;
 {
 	int	i;
 	fastf_t	scale;

@@ -39,7 +39,9 @@ Usage: pixfieldsep [-w file_width] [-s square_size] [-# nbytes/pixel] \n\
 	[-d] [even.pix odd.pix]\n";
 
 int
-get_args(int argc, register char **argv)
+get_args( argc, argv )
+int	argc;
+register char **argv;
 {
 	register int c;
 
@@ -78,7 +80,9 @@ get_args(int argc, register char **argv)
 }
 
 int
-main(int argc, char **argv)
+main(argc, argv)
+int	argc;
+char	*argv[];
 {
 	register int	i;
 

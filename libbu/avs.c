@@ -46,7 +46,10 @@ bu_avs_init_empty( struct bu_attribute_value_set *avsp )
  *			B U _ A V S _ I N I T
  */
 void
-bu_avs_init(struct bu_attribute_value_set *avsp, int len, const char *str)
+bu_avs_init( avsp, len, str )
+struct bu_attribute_value_set	*avsp;
+int		len;
+const char	*str;
 {
 	if (bu_debug & BU_DEBUG_AVS)
 		bu_log("bu_avs_init(%8x, len=%d, %s)\n", avsp, len, str);
@@ -67,7 +70,9 @@ bu_avs_init(struct bu_attribute_value_set *avsp, int len, const char *str)
  *  'len' slots pre-allocated.
  */
 struct bu_attribute_value_set	*
-bu_avs_new(int len, const char *str)
+bu_avs_new( len, str )
+int		len;
+const char	*str;
 {
 	struct bu_attribute_value_set	*avsp;
 
@@ -91,7 +96,10 @@ bu_avs_new(int len, const char *str)
  *	2	set extended with new attribute/value pair
  */
 int
-bu_avs_add(struct bu_attribute_value_set *avsp, const char *attribute, const char *value)
+bu_avs_add( avsp, attribute, value )
+struct bu_attribute_value_set	*avsp;
+const char	*attribute;
+const char	*value;
 {
 	struct bu_attribute_value_pair *app;
 
@@ -137,7 +145,10 @@ bu_avs_add(struct bu_attribute_value_set *avsp, const char *attribute, const cha
  *			B U _ A V S _ A D D _ V L S
  */
 int
-bu_avs_add_vls(struct bu_attribute_value_set *avsp, const char *attribute, const struct bu_vls *value_vls)
+bu_avs_add_vls( avsp, attribute, value_vls )
+struct bu_attribute_value_set	*avsp;
+const char		*attribute;
+const struct bu_vls	*value_vls;
 {
 	BU_CK_AVS(avsp);
 	BU_CK_VLS(value_vls);
@@ -193,7 +204,9 @@ bu_avs_get( const struct bu_attribute_value_set *avsp, const char *attribute )
  *	 0	OK
  */
 int
-bu_avs_remove(struct bu_attribute_value_set *avsp, const char *attribute)
+bu_avs_remove( avsp, attribute )
+struct bu_attribute_value_set	*avsp;
+const char	*attribute;
 {
 	struct bu_attribute_value_pair *app, *epp;
 

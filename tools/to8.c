@@ -38,7 +38,7 @@ static const char rcs_ident[] = "$Header$";
 #include "externs.h"		/* For malloc and free */
 #include "rle.h"
 
-void init_color(void), map_scanline(unsigned char **rgb, int n, int y, unsigned char *line);
+void init_color(), map_scanline();
 
 short map[3][256];			/* Output color map. */
 int colmap[216][3];
@@ -79,7 +79,9 @@ double img_gam = 1.0;
  */
 
 int
-main(int argc, char **argv)
+main( argc, argv )
+int argc;
+char **argv;
 {
     char * infname = NULL, * outfname = NULL;
     char comment[80];		/* for gamma comment */
@@ -208,7 +210,7 @@ main(int argc, char **argv)
  * "alpha-1" (perceptual flavor) or linear maps
  */
 void
-init_color(void)
+init_color()
 {
     int     i;
 
@@ -229,7 +231,9 @@ init_color(void)
 #define DMAP(v,x,y)	(modN[v]>dm16[x][y] ? divN[v] + 1 : divN[v])
 
 void
-map_scanline(unsigned char **rgb, int n, int y, unsigned char *line)
+map_scanline( rgb, n, y, line )
+unsigned char *rgb[3], *line;
+int n, y;
 {
 	register unsigned char *r, *g, *b;
 	register int i, col, row;

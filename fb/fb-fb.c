@@ -43,7 +43,8 @@ Usage: fb-fb [-v] [-F output_framebuffer]\n\
 	input_framebuffer [output_framebuffer]\n";
 
 int
-get_args(int argc, register char **argv)
+get_args( argc, argv )
+register char **argv;
 {
 	register int c;
 
@@ -78,7 +79,9 @@ get_args(int argc, register char **argv)
 }
 
 int
-main(int argc, char **argv)
+main(argc, argv)
+int argc;
+char **argv;
 {
 	register int y;
 	register FBIO *in_fbp, *out_fbp;

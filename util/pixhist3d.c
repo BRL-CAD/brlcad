@@ -56,12 +56,13 @@ long	rxb[256][256], rxg[256][256], bxg[256][256];
 
 unsigned char ibuf[8*1024*3];
 
-void	disp_array(long int (*v)[256], int xoff, int yoff);
+void	disp_array();
 
 static char *Usage = "usage: pixhist3d [file.pix]\n";
 
 int
-main(int argc, char **argv)
+main(argc, argv)
+int argc; char **argv;
 {
 	int	n;
 	
@@ -108,7 +109,9 @@ main(int argc, char **argv)
  * Display the array v[Y][X] at screen location xoff, yoff.
  */
 void
-disp_array(long int (*v)[256], int xoff, int yoff)
+disp_array( v, xoff, yoff )
+long v[256][256];
+int xoff, yoff;
 {
 	register int	x, y;
 	static long	max;

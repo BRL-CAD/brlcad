@@ -29,7 +29,7 @@ static const char RCSid[] = "$Header$";
 #define MAX_PTS	500
 
 int
-main(void)
+main()
 {
 	char str[1024];
 	int ident,face_type,npts,face_no;

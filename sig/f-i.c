@@ -30,7 +30,9 @@ short	obuf[512];
 static char usage[] = "\
 Usage: f-i [-n || scale] < floats > shorts\n";
 
-int main(int argc, char **argv)
+int main( argc, argv )
+int	argc;
+char	**argv;
 {
 	int	i, num;
 	double	scale;

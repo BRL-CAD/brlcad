@@ -32,7 +32,12 @@ static const char RCSbadmagic[] = "@(#)$Header$ (ARL)";
  *  Support routine for BU_CKMAG macro
  */
 void
-bu_badmagic(const long int *ptr, long int magic, const char *str, const char *file, int line)
+bu_badmagic( ptr, magic, str, file, line )
+const long	*ptr;
+long		magic;
+const char	*str;
+const char	*file;
+int		line;
 {
 	char	buf[512];
 

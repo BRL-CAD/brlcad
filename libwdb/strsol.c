@@ -54,13 +54,13 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "db.h"
 
 int
-mk_dsp(struct rt_wdb *fp, const char *name, const char *file, int xdim, int ydim, const matp_t mat)
-             		    
-          	      
-          	      		/* name of file containing elevation data */
-   		     		/* X dimension of file (w cells) */
-   		     		/* Y dimension of file (n cells) */
-            	    		/* convert solid coords to model space */
+mk_dsp( fp, name, file, xdim, ydim, mat )
+struct rt_wdb		*fp;
+const char	*name;
+const char	*file;		/* name of file containing elevation data */
+int		xdim;		/* X dimension of file (w cells) */
+int		ydim;		/* Y dimension of file (n cells) */
+const matp_t	mat;		/* convert solid coords to model space */
 {
 	struct rt_dsp_internal *dsp;
 	
@@ -81,14 +81,14 @@ mk_dsp(struct rt_wdb *fp, const char *name, const char *file, int xdim, int ydim
  *			M K _ E B M
  */
 int
-mk_ebm(struct rt_wdb *fp, const char *name, const char *file, int xdim, int ydim, fastf_t tallness, const matp_t mat)
-             		    
-          	      
-          	      		/* name of file containing bitmap */
-   		     		/* X dimansion of file (w cells) */
-   		     		/* Y dimension of file (n cells) */
-       		         	/* Z extrusion height (mm) */
-            	    		/* convert local coords to model space */
+mk_ebm( fp, name, file, xdim, ydim, tallness, mat )
+struct rt_wdb		*fp;
+const char	*name;
+const char	*file;		/* name of file containing bitmap */
+int		xdim;		/* X dimansion of file (w cells) */
+int		ydim;		/* Y dimension of file (n cells) */
+fastf_t		tallness;	/* Z extrusion height (mm) */
+const matp_t	mat;		/* convert local coords to model space */
 {
 	struct rt_ebm_internal	*ebm;
 
@@ -107,17 +107,17 @@ mk_ebm(struct rt_wdb *fp, const char *name, const char *file, int xdim, int ydim
  *			M K _ V O L
  */
 int
-mk_vol(struct rt_wdb *fp, const char *name, const char *file, int xdim, int ydim, int zdim, int lo, int hi, const fastf_t *cellsize, const matp_t mat)
-             		    
-          	      
-          	      		/* name of file containing bitmap */
-   		     		/* X dimansion of file (w cells) */
-   		     		/* Y dimension of file (n cells) */
-   		     		/* Z dimension of file (d cells) */
-   		   		/* Low threshold */
-   		   		/* High threshold */
-            	         	/* ideal coords: size of each cell */
-            	    		/* convert local coords to model space */
+mk_vol( fp, name, file, xdim, ydim, zdim, lo, hi, cellsize, mat )
+struct rt_wdb		*fp;
+const char	*name;
+const char	*file;		/* name of file containing bitmap */
+int		xdim;		/* X dimansion of file (w cells) */
+int		ydim;		/* Y dimension of file (n cells) */
+int		zdim;		/* Z dimension of file (d cells) */
+int		lo;		/* Low threshold */
+int		hi;		/* High threshold */
+const vect_t	cellsize;	/* ideal coords: size of each cell */
+const matp_t	mat;		/* convert local coords to model space */
 {
 	struct rt_vol_internal	*vol;
 
@@ -176,7 +176,12 @@ const char	*string_arg;
  *  method 0 is what is normally used.
  */
 int
-mk_submodel(struct rt_wdb *fp, const char *name, const char *file, const char *treetop, int meth)
+mk_submodel( fp, name, file, treetop, meth )
+struct rt_wdb		*fp;
+const char	*name;
+const char	*file;
+const char	*treetop;
+int		meth;
 {
 	struct rt_submodel_internal *in;
 

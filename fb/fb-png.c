@@ -52,14 +52,15 @@ int	screen_width;			/* input width */
 
 double	out_gamma = 1.0;		/* Gamma the image was created at */
 
-extern void	cmap_crunch(register RGBpixel (*scan_buf), register int pixel_ct, ColorMap *cmap);
+extern void	cmap_crunch();
 
 char usage[] = "\
 Usage: fb-png [-h -i -c] [-# nbytes/pixel] [-F framebuffer] [-g gamma]\n\
 	[-s squaresize] [-w width] [-n height] [file.png]\n";
 
 int
-get_args(int argc, register char **argv)
+get_args( argc, argv )
+register char **argv;
 {
 	register int c;
 
@@ -125,7 +126,9 @@ get_args(int argc, register char **argv)
 }
 
 int
-main(int argc, char **argv)
+main(argc, argv)
+int argc;
+char **argv;
 {
 	register FBIO *fbp;
 	register int y;
@@ -202,7 +205,7 @@ main(int argc, char **argv)
 				break;
 			}
 			if( crunch )
-				cmap_crunch( (RGBpixel *)scanline, scanpix, &cmap );
+				cmap_crunch( scanline, scanpix, &cmap );
 			png_write_row( png_p, scanline );
 		}
 	}
@@ -225,7 +228,7 @@ main(int argc, char **argv)
 				break;
 			}
 			if( crunch )
-				cmap_crunch( (RGBpixel *)scanline, scanpix, &cmap );
+				cmap_crunch( scanline, scanpix, &cmap );
 			png_write_row( png_p, scanline );
 		}
 	}

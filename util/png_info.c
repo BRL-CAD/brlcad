@@ -38,7 +38,9 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 static char *usage="Usage:\n\t%s png__file\n";
 
 int
-main(int argc, char **argv)
+main( argc, argv )
+int argc;
+char *argv[];
 {
 	int i;
 	FILE *fp_in = NULL;

@@ -42,7 +42,8 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
  *	Count number of vertices in an NMG loop.
  */
 static int
-verts_in_nmg_loop(struct loopuse *lu)
+verts_in_nmg_loop(lu)
+struct loopuse	*lu;
 {
 	int		cnt;
 	struct edgeuse	*eu;
@@ -74,7 +75,8 @@ verts_in_nmg_loop(struct loopuse *lu)
  *	Count number of vertices in an NMG face.
  */
 static int
-verts_in_nmg_face(struct faceuse *fu)
+verts_in_nmg_face(fu)
+struct faceuse	*fu;
 {
 	int		cnt;
 	struct loopuse	*lu;
@@ -91,7 +93,10 @@ verts_in_nmg_face(struct faceuse *fu)
  *	Translate a face using a vector's magnitude and direction.
  */
 void
-nmg_translate_face(struct faceuse *fu, const fastf_t *Vec, const struct bn_tol *tol)
+nmg_translate_face(fu, Vec, tol)
+struct faceuse	*fu;
+const vect_t		Vec;
+const struct bn_tol	*tol;
 {
 	int		cnt,		/* Number of vertices in face. */
 			cur,
@@ -181,14 +186,14 @@ nmg_translate_face(struct faceuse *fu, const fastf_t *Vec, const struct bn_tol *
  *	and create a solid bounded by these faces.
  */
 int
-nmg_extrude_face(struct faceuse *fu, const fastf_t *Vec, const struct bn_tol *tol)
-              	    	/* Face to extrude. */
-            		    	/* Magnitude and direction of extrusion. */
-                   	     	/* NMG tolerances. */
+nmg_extrude_face(fu, Vec, tol)
+struct faceuse	*fu;	/* Face to extrude. */
+const vect_t		Vec;	/* Magnitude and direction of extrusion. */
+const struct bn_tol	*tol;	/* NMG tolerances. */
 {
 	fastf_t		cosang;
 	int		nfaces;
-	struct faceuse	*fu2, *nmg_dup_face(struct faceuse *fu, struct shell *s), **outfaces;
+	struct faceuse	*fu2, *nmg_dup_face(), **outfaces;
 	int		face_count=2;
 	struct loopuse	*lu, *lu2;
 	plane_t		n;
@@ -270,7 +275,9 @@ nmg_extrude_face(struct faceuse *fu, const fastf_t *Vec, const struct bn_tol *to
  */
 
 struct vertexuse *
-nmg_find_vertex_in_lu(const struct vertex *v, const struct loopuse *lu)
+nmg_find_vertex_in_lu( v , lu )
+const struct vertex *v;
+const struct loopuse *lu;
 {
 	struct edgeuse *eu;
 	struct vertexuse *ret_vu;
@@ -313,7 +320,11 @@ nmg_find_vertex_in_lu(const struct vertex *v, const struct loopuse *lu)
  * from the same faceuse. This is a support routine for nmg_fix_overlapping loops
  */
 static void
-nmg_start_new_loop(struct edgeuse *start_eu, struct loopuse *lu1, struct loopuse *lu2, struct bu_ptbl *loops)
+nmg_start_new_loop( start_eu , lu1 , lu2 , loops )
+struct edgeuse *start_eu;
+struct loopuse *lu1;
+struct loopuse *lu2;
+struct bu_ptbl *loops;
 {
 	struct bu_ptbl *new_lu_tab;
 	struct loopuse *this_lu;
@@ -431,7 +442,9 @@ nmg_start_new_loop(struct edgeuse *start_eu, struct loopuse *lu1, struct loopuse
  * original loopuses are killed
  */
 void
-nmg_fix_overlapping_loops(struct shell *s, const struct bn_tol *tol)
+nmg_fix_overlapping_loops( s , tol )
+struct shell *s;
+const struct bn_tol *tol;
 {
 	struct faceuse *fu;
 	struct edgeuse *start_eu;
@@ -732,7 +745,9 @@ nmg_fix_overlapping_loops(struct shell *s, const struct bn_tol *tol)
  *	in the loop
  */
 void
-nmg_break_crossed_loops(struct shell *is, const struct bn_tol *tol)
+nmg_break_crossed_loops( is , tol )
+struct shell *is;
+const struct bn_tol *tol;
 {
 	struct faceuse *fu;
 
@@ -837,7 +852,10 @@ nmg_break_crossed_loops(struct shell *is, const struct bn_tol *tol)
  *	These shells are detected and killed
  */
 struct shell *
-nmg_extrude_cleanup(struct shell *is, const int is_void, const struct bn_tol *tol)
+nmg_extrude_cleanup( is , is_void , tol )
+struct shell *is;
+const int is_void;
+const struct bn_tol *tol;
 {
 	struct model *m;
 	struct nmgregion *new_r;
@@ -1025,7 +1043,11 @@ nmg_extrude_cleanup(struct shell *is, const int is_void, const struct bn_tol *to
  *
  */
 void
-nmg_hollow_shell(struct shell *s, const fastf_t thick, const int approximate, const struct bn_tol *tol)
+nmg_hollow_shell( s , thick , approximate , tol )
+struct shell *s;
+const fastf_t thick;
+const int approximate;
+const struct bn_tol *tol;
 {
 	struct nmgregion *new_r,*old_r;
 	struct vertexuse *vu;
@@ -1244,7 +1266,12 @@ nmg_hollow_shell(struct shell *s, const fastf_t thick, const int approximate, co
  *	NULL on failure
  */
 struct shell *
-nmg_extrude_shell(struct shell *s, const fastf_t dist, const int normal_ward, const int approximate, const struct bn_tol *tol)
+nmg_extrude_shell( s , dist , normal_ward , approximate , tol )
+struct shell *s;
+const fastf_t dist;
+const int normal_ward;
+const int approximate;
+const struct bn_tol *tol;
 {
 	fastf_t thick;
 	int along_normal;

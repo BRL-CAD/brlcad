@@ -23,7 +23,7 @@
 
 char *progname ="(noname)";
 
-void usage(void)
+void usage()
 {
 	fprintf(stderr, "Usage: %s db_file.g\n", progname);
 	exit(-1);

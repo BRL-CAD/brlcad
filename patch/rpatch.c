@@ -33,7 +33,9 @@ static char *usage="Usage:\n\trpatch [-D] [-3] < fastgen_input_file > file.rp\n\
 static int fast3;
 
 double
-get_ftn_float(char *str, unsigned int start_col, char *format)
+get_ftn_float( str , start_col , format )
+char *str,*format;
+unsigned int start_col;
 {
 	char *ptr;
 	char tmp_str[MAXLINELEN];
@@ -118,7 +120,9 @@ get_ftn_float(char *str, unsigned int start_col, char *format)
 }
 
 int
-get_ftn_int(char *str, unsigned int start_col, char *format)
+get_ftn_int( str , start_col , format )
+char *str,*format;
+unsigned int start_col;
 {
 	char *ptr;
 	char tmp_str[MAXLINELEN];
@@ -177,7 +181,9 @@ get_ftn_int(char *str, unsigned int start_col, char *format)
 }
 
 int
-main(int argc, char **argv)
+main( argc, argv )
+int argc;
+char *argv[];
 {
 	char line[MAXLINELEN];
 	float x,y,z,hold,work;

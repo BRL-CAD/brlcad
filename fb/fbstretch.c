@@ -121,8 +121,9 @@ static unsigned char	*dst_buf;		/* calloc()ed output scan line buffer */
 
 
 static char *
-Simple(char *path)
-{
+Simple( path )
+	char		*path;
+	{
 	register char	*s;		/* -> past last '/' in path */
 
 	s = strrchr( path, '/' );
@@ -131,8 +132,10 @@ Simple(char *path)
 
 
 static void
-VMessage(char *format, va_list ap)
-{
+VMessage( format, ap )
+	char	*format;
+	va_list	ap;
+	{
 	(void)fprintf( stderr, "%s: ", arg0 );
 #if !defined(HAVE_VPRINTF)
 	(void)fprintf( stderr, format,	/* kludge city */
@@ -211,8 +214,9 @@ Fatal( va_alist )
 
 
 static void
-Sig_Catcher(int sig)
-{
+Sig_Catcher( sig )
+	int	sig;
+	{
 	(void)signal( sig, SIG_DFL );
 
 	/* The following is not guaranteed to work, but it's worth a try. */
@@ -221,8 +225,10 @@ Sig_Catcher(int sig)
 
 
 int
-main(int argc, char **argv)
-{
+main( argc, argv )
+	int	argc;
+	char	*argv[];
+	{
 	/* Plant signal catcher. */
 	{
 	static int	getsigs[] =	/* signals to catch */

@@ -4,10 +4,10 @@
 
 #include <stdio.h>
 
-init_ik(void)
+init_ik()
 {
 	char cmd[100];
-	FILE *popen(const char *, const char *), *pipe;
+	FILE *popen(), *pipe;
 
 
 	sprintf(cmd,"fbi > /dev/null");

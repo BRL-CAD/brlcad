@@ -20,7 +20,7 @@
 #include<X11/Xutil.h>
 
 int
-main(void)
+main()
 {
    int ichoice;			/*  Choice.  */
    char *irX = "ir-X";		/*  Calls ir-X program.  */

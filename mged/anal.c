@@ -43,18 +43,18 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 extern struct rt_db_internal	es_int;	/* from edsol.c */
 extern struct bn_tol		mged_tol;		/* from ged.c */
 
-static void	do_anal(struct bu_vls *vp, const struct rt_db_internal *ip);
-static void	arb_anal(struct bu_vls *vp, const struct rt_db_internal *ip);
-static double	anal_face(struct bu_vls *vp, int face, fastf_t *center_pt, const struct rt_arb_internal *arb, int type, const struct bn_tol *tol);
-static void	anal_edge(struct bu_vls *vp, int edge, const struct rt_arb_internal *arb, int type);
-static double	find_vol(int loc, struct rt_arb_internal *arb, struct bn_tol *tol);
-static void	tgc_anal(struct bu_vls *vp, const struct rt_db_internal *ip);
-static void	ell_anal(struct bu_vls *vp, const struct rt_db_internal *ip);
-static void	tor_anal(struct bu_vls *vp, const struct rt_db_internal *ip);
-static void	ars_anal(struct bu_vls *vp, const struct rt_db_internal *ip);
-static void	rpc_anal(struct bu_vls *vp, const struct rt_db_internal *ip);
-static void	rhc_anal(struct bu_vls *vp, const struct rt_db_internal *ip);
-static void	part_anal(struct bu_vls *vp, const struct rt_db_internal *ip);
+static void	do_anal();
+static void	arb_anal();
+static double	anal_face();
+static void	anal_edge();
+static double	find_vol();
+static void	tgc_anal();
+static void	ell_anal();
+static void	tor_anal();
+static void	ars_anal();
+static void	rpc_anal();
+static void	rhc_anal();
+static void	part_anal();
 
 /*
  *			F _ A N A L Y Z E
@@ -65,7 +65,11 @@ static void	part_anal(struct bu_vls *vp, const struct rt_db_internal *ip);
  */
 
 int
-f_analyze(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_analyze(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int	argc;
+char	*argv[];
 {
 	register struct directory *ndp;
 	mat_t new_mat;
@@ -156,7 +160,9 @@ f_analyze(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 /* Analyze solid in internal form */
 static void
-do_anal(struct bu_vls *vp, const struct rt_db_internal *ip)
+do_anal(vp, ip)
+struct bu_vls		*vp;
+const struct rt_db_internal	*ip;
 {
 	/* XXX Could give solid name, and current units, here */
 
@@ -216,7 +222,9 @@ static const int nedge[5][24] = {
  *			A R B _ A N A L
  */
 static void
-arb_anal(struct bu_vls *vp, const struct rt_db_internal *ip)
+arb_anal(vp, ip)
+struct bu_vls	*vp;
+const struct rt_db_internal	*ip;
 {
 	struct rt_arb_internal	*arb = (struct rt_arb_internal *)ip->idb_ptr;
 	register int	i;
@@ -311,7 +319,9 @@ static const int farb4[6][4] = {
  * unitv = pointer to the unit vector (previously computed)
  */
 void
-findang(register fastf_t *angles, register fastf_t *unitv)
+findang( angles, unitv )
+register fastf_t	*angles;
+register vect_t		unitv;
 {
 	FAST fastf_t f;
 
@@ -357,13 +367,13 @@ findang(register fastf_t *angles, register fastf_t *unitv)
 /* 	Analyzes an arb face
  */
 static double
-anal_face(struct bu_vls *vp, int face, fastf_t *center_pt, const struct rt_arb_internal *arb, int type, const struct bn_tol *tol)
-             	    
-   		     
-       		          		/* reference center point */
-                            	     
-   		     
-                   	     
+anal_face( vp, face, center_pt, arb, type, tol )
+struct bu_vls	*vp;
+int		face;
+point_t		center_pt;		/* reference center point */
+const struct rt_arb_internal	*arb;
+int		type;
+const struct bn_tol	*tol;
 {
 	register int i, j, k;
 	int a, b, c, d;		/* 4 points of face to look at */
@@ -445,7 +455,11 @@ anal_face(struct bu_vls *vp, int face, fastf_t *center_pt, const struct rt_arb_i
 
 /*	Analyzes arb edges - finds lengths */
 static void
-anal_edge(struct bu_vls *vp, int edge, const struct rt_arb_internal *arb, int type)
+anal_edge( vp, edge, arb, type )
+struct bu_vls		*vp;
+int			edge;
+const struct rt_arb_internal	*arb;
+int			type;
 {
 	register int a, b;
 	static vect_t v_temp;
@@ -483,7 +497,10 @@ anal_edge(struct bu_vls *vp, int edge, const struct rt_arb_internal *arb, int ty
 
 /*	Finds volume of an arb4 defined by farb4[loc][] 	*/
 static double
-find_vol(int loc, struct rt_arb_internal *arb, struct bn_tol *tol)
+find_vol( loc, arb, tol )
+int	loc;
+struct rt_arb_internal	*arb;
+struct bn_tol		*tol;
 {
 	int a, b, c, d;
 	fastf_t vol, height, len[3], temp, areabase;
@@ -521,7 +538,9 @@ static double pi = 3.1415926535898;
 
 /*	analyze a torus	*/
 static void
-tor_anal(struct bu_vls *vp, const struct rt_db_internal *ip)
+tor_anal(vp, ip)
+struct bu_vls	*vp;
+const struct rt_db_internal	*ip;
 {
 	struct rt_tor_internal	*tor = (struct rt_tor_internal *)ip->idb_ptr;
 	fastf_t r1, r2, vol, sur_area;
@@ -550,7 +569,9 @@ tor_anal(struct bu_vls *vp, const struct rt_db_internal *ip)
 
 /*	analyze an ell	*/
 static void
-ell_anal(struct bu_vls *vp, const struct rt_db_internal *ip)
+ell_anal(vp, ip)
+struct bu_vls	*vp;
+const struct rt_db_internal	*ip;
 {
 	struct rt_ell_internal	*ell = (struct rt_ell_internal *)ip->idb_ptr;
 	fastf_t ma, mb, mc;
@@ -659,7 +680,9 @@ ell_anal(struct bu_vls *vp, const struct rt_db_internal *ip)
 
 /*	analyze tgc */
 static void
-tgc_anal(struct bu_vls *vp, const struct rt_db_internal *ip)
+tgc_anal(vp, ip)
+struct bu_vls	*vp;
+const struct rt_db_internal	*ip;
 {
 	struct rt_tgc_internal	*tgc = (struct rt_tgc_internal *)ip->idb_ptr;
 	fastf_t maxb, ma, mb, mc, md, mh;
@@ -749,7 +772,9 @@ tgc_anal(struct bu_vls *vp, const struct rt_db_internal *ip)
 
 /*	analyze ars */
 static void
-ars_anal(struct bu_vls *vp, const struct rt_db_internal *ip)
+ars_anal(vp, ip)
+struct bu_vls	*vp;
+const struct rt_db_internal	*ip;
 {
 	bu_vls_printf(vp,"ARS analyze not implemented\n");
 }
@@ -766,7 +791,9 @@ ars_anal(struct bu_vls *vp, const struct rt_db_internal *ip)
 
 /*	analyze particle	*/
 static void
-part_anal(struct bu_vls *vp, const struct rt_db_internal *ip)
+part_anal(vp, ip)
+struct bu_vls	*vp;
+const struct rt_db_internal	*ip;
 {
 	bu_vls_printf(vp,"PARTICLE analyze not implemented\n");
 }
@@ -775,7 +802,9 @@ part_anal(struct bu_vls *vp, const struct rt_db_internal *ip)
 
 /*	analyze rpc */
 static void
-rpc_anal(struct bu_vls *vp, const struct rt_db_internal *ip)
+rpc_anal(vp, ip)
+struct bu_vls	*vp;
+const struct rt_db_internal	*ip;
 {
 	fastf_t	area_parab, area_body, b, h, r, vol_parab;
 	struct rt_rpc_internal	*rpc = (struct rt_rpc_internal *)ip->idb_ptr;
@@ -811,7 +840,9 @@ rpc_anal(struct bu_vls *vp, const struct rt_db_internal *ip)
 
 /*	analyze rhc */
 static void
-rhc_anal(struct bu_vls *vp, const struct rt_db_internal *ip)
+rhc_anal(vp, ip)
+struct bu_vls	*vp;
+const struct rt_db_internal	*ip;
 {
 	fastf_t	area_hyperb, area_body, b, c, h, r, vol_hyperb,	work1;
 	struct rt_rhc_internal	*rhc = (struct rt_rhc_internal *)ip->idb_ptr;

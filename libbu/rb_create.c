@@ -41,7 +41,12 @@ static const char libbu_rb_create_RCSid[] = "@(#) $Header$";
  *	bu_rb_create() returns a pointer to the red-black tree header
  *	record.
  */
-bu_rb_tree *bu_rb_create (char *description, int nm_orders, int (**order_funcs)() )
+bu_rb_tree *bu_rb_create (description, nm_orders, order_funcs)
+
+char	*description;
+int	nm_orders;
+int	(**order_funcs)();
+
 {
     int		order;
     bu_rb_tree	*tree;
@@ -125,7 +130,11 @@ bu_rb_tree *bu_rb_create (char *description, int nm_orders, int (**order_funcs)(
  *	function pointers, in order to avoid memory leaks on freeing
  *	the tree, applications should call bu_rb_free1(), NOT bu_rb_free().
  */
-bu_rb_tree *bu_rb_create1 (char *description, int (*order_func) (/* ??? */))
+bu_rb_tree *bu_rb_create1 (description, order_func)
+
+char	*description;
+int	(*order_func)();
+
 {
     int		(**ofp)();
 

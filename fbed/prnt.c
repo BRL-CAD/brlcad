@@ -55,22 +55,22 @@ static char *usage[] =
 	0
 	};
 
-void init_Status(void);
-void prnt_Status(void), prnt_Usage(void);
+void init_Status();
+void prnt_Status(), prnt_Usage();
 #if __STDC__
 void prnt_Event(char *fmt, ...);
 #else
 void prnt_Event();
 #endif
-void prnt_Prompt(char *msg);
-void prnt_Macro(register char *bufp);
-void prnt_Rectangle(char *str, register Rectangle *rectp);
+void prnt_Prompt();
+void prnt_Macro();
+void prnt_Rectangle();
 /**void prnt_FBC();**/
 
 /*	p r n t _ S t a t u s ( ) */
 void
-prnt_Status(void)
-{	RGBpixel pixel;
+prnt_Status()
+	{	RGBpixel pixel;
 	if( ! tty )
 		return;
 	fb_Get_Pixel( pixel );
@@ -102,8 +102,8 @@ static char *screen_template[] = {
 
 /*	i n i t _ S t a t u s ( ) */
 void
-init_Status(void)
-{	register char **p = screen_template;
+init_Status()
+	{	register char **p = screen_template;
 		register int template_co;
 		char buf[MAX_LN];
 		extern int CO;
@@ -132,8 +132,8 @@ init_Status(void)
 	Print usage message.
  */
 void
-prnt_Usage(void)
-{	register char **p = usage;
+prnt_Usage()
+	{	register char **p = usage;
 	while( *p )
 		(void) fprintf( stderr, "%s\n", *p++ );
 	return;
@@ -142,8 +142,10 @@ prnt_Usage(void)
 
 /*	p r n t _ P i x e l ( ) */
 void
-prnt_Pixel(char *msg, RGBpixel (*pixelp))
-{
+prnt_Pixel( msg, pixelp )
+char *msg;
+RGBpixel *pixelp;
+	{
 	prnt_Scroll(	"%s {%03d,%03d,%03d}",
 			msg,
 			pixelp[RED],
@@ -330,8 +332,9 @@ prnt_FBC()
 #endif
 
 void
-prnt_Prompt(char *msg)
-{
+prnt_Prompt( msg )
+char *msg;
+	{
 	PROMPT_MOVE();
 	(void) ClrEOL();
 	(void) printf( "%s", msg );
@@ -340,8 +343,9 @@ prnt_Prompt(char *msg)
 	}
 
 void
-prnt_Macro(register char *bufp)
-{	char prnt_buf[BUFSIZ];
+prnt_Macro( bufp )
+register char *bufp;
+	{	char prnt_buf[BUFSIZ];
 		register char *p;
 	for( p = prnt_buf; *bufp != '\0'; bufp++ )
 		{
@@ -370,8 +374,10 @@ prnt_Macro(register char *bufp)
 	}
 
 void
-prnt_Rectangle(char *str, register Rectangle *rectp)
-{
+prnt_Rectangle( str, rectp )
+char *str;
+register Rectangle *rectp;
+	{
 	prnt_Scroll(	"%s {<%d,%d>,<%d,%d>}\n",
 			str,
 			rectp->r_origin.p_x,

@@ -54,25 +54,25 @@ static unsigned int joint_debug = 0;
 #define JOINT_DEBUG_FORMAT \
 "\020\10LEX\7PARSE\6SYSTEM\5EVAL\4SOLVE\3MOVE\2LOAD\1MESH"
 
-void joint_move(struct joint *jp);
-void joint_clear(void);
+void joint_move();
+void joint_clear();
 
-static int f_jfhelp(int argc, char **argv);
-int f_fhelp2(int argc, char **argv, struct funtab *functions);
-static int f_jhelp(int argc, char **argv);
-int f_help2(int argc, char **argv, struct funtab *functions);
-int f_jmesh(int argc, char **argv);
-int f_jdebug(int argc, char **argv);
-int f_jload(int argc, char **argv);
-int f_junload(int argc, char **argv);
-int f_jmove(int argc, char **argv);
-int f_jlist(int argc, char **argv);
-int f_jaccept(int argc, char **argv);
-int f_jreject(int argc, char **argv);
-int f_jsave(int argc, char **argv);
-int f_jhold(int argc, char **argv);
-int f_jsolve(int argc, char **argv);
-int f_jtest(int argc, char **argv);
+static int f_jfhelp();
+int f_fhelp2();
+static int f_jhelp();
+int f_help2();
+int f_jmesh();
+int f_jdebug();
+int f_jload();
+int f_junload();
+int f_jmove();
+int f_jlist();
+int f_jaccept();
+int f_jreject();
+int f_jsave();
+int f_jhold();
+int f_jsolve();
+int f_jtest();
 
 static struct funtab joint_tab[] = {
 {"joint ", "", "Joint command table",
@@ -135,7 +135,11 @@ f_jdebug(int	argc,
 	return CMD_OK;
 }
 int
-f_joint(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_joint(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
 {
   int status;
 
@@ -161,7 +165,9 @@ f_joint(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 }
 
 static int
-f_jfhelp(int argc, char **argv)
+f_jfhelp(argc, argv)
+int argc;
+char **argv;
 {
   int status;
 
@@ -174,7 +180,9 @@ f_jfhelp(int argc, char **argv)
 }
 
 static int
-f_jhelp(int argc, char **argv)
+f_jhelp(argc, argv)
+int argc;
+char **argv;
 {
   int status;
 
@@ -194,7 +202,8 @@ struct bu_list hold_head = {
 	&hold_head, &hold_head
 };
 static struct joint *
-joint_lookup(char *name)
+joint_lookup(name)
+char *name;
 {
 	register struct joint *jp;
 
@@ -204,7 +213,8 @@ joint_lookup(char *name)
 	return (struct joint *) 0;
 }
 static void
-free_arc(struct arc *ap)
+free_arc(ap)
+struct arc *ap;
 {
 	register int i;
 	if (!ap || ap->type == ARC_UNSET) return;
@@ -222,7 +232,8 @@ free_arc(struct arc *ap)
 	ap->type=ARC_UNSET;
 }
 static void
-free_joint(struct joint *jp)
+free_joint(jp)
+struct joint *jp;
 {
 	free_arc(&jp->path);
 	if (jp->name) bu_free((genptr_t)jp->name, "joint name");
@@ -230,7 +241,8 @@ free_joint(struct joint *jp)
 }
 
 static void
-free_hold(struct hold *hp)
+free_hold(hp)
+struct hold *hp;
 {
 	register struct jointH *jh;
 
@@ -257,7 +269,8 @@ free_hold(struct hold *hp)
 	bu_free((genptr_t)hp, "hold struct");
 }
 static void
-hold_clear_flags(struct hold *hp)
+hold_clear_flags(hp)
+struct hold *hp;
 {
 	hp->effector.flag = hp->objective.flag = 0;
 }
@@ -448,7 +461,9 @@ FILE *fip;
 #endif /* 0 */
 
 int
-f_junload(int argc, char **argv)
+f_junload(argc, argv)
+int argc;
+char **argv;
 {
 	register struct joint *jp;
 	register struct hold *hp;
@@ -589,7 +604,9 @@ static char *lex_name;
 static double mm2base, base2mm;
 
 static void
-parse_error(struct bu_vls *str, char *error)
+parse_error(str, error)
+struct bu_vls *str;
+char *error;
 {
 	char *text;
 	int i;
@@ -623,7 +640,12 @@ parse_error(struct bu_vls *str, char *error)
 }
 
 int
-get_token(union bu_lex_token *token, FILE *fip, struct bu_vls *str, struct bu_lex_key *keys, struct bu_lex_key *syms)
+get_token(token, fip, str, keys, syms)
+union bu_lex_token *token;
+FILE *fip;
+struct bu_vls *str;
+struct bu_lex_key *keys;
+struct bu_lex_key *syms;
 {
   int	used;
   for (;;) {
@@ -673,7 +695,11 @@ get_token(union bu_lex_token *token, FILE *fip, struct bu_vls *str, struct bu_le
 }
 
 static int
-gobble_token(int type_wanted, int value_wanted, FILE *fip, struct bu_vls *str)
+gobble_token(type_wanted, value_wanted, fip, str)
+int type_wanted;
+int value_wanted;
+FILE *fip;
+struct bu_vls *str;
 {
 	static char *types[] = {
 		"any",
@@ -716,7 +742,9 @@ gobble_token(int type_wanted, int value_wanted, FILE *fip, struct bu_vls *str)
 	return 0;
 }
 static void
-skip_group(FILE *fip, struct bu_vls *str)
+skip_group(fip, str)
+FILE * fip;
+struct bu_vls *str;
 {
 	union bu_lex_token tok;
 	int count = 1;
@@ -743,7 +771,9 @@ skip_group(FILE *fip, struct bu_vls *str)
 
 }
 static int
-parse_units(FILE *fip, struct bu_vls *str)
+parse_units(fip, str)
+FILE *fip;
+struct bu_vls *str;
 {
 	union bu_lex_token token;
 
@@ -774,7 +804,10 @@ parse_units(FILE *fip, struct bu_vls *str)
 	return 1;
 }
 static int
-parse_path(struct arc *ap, FILE *fip, struct bu_vls *str)
+parse_path(ap, fip, str)
+struct arc *ap;
+FILE *fip;
+struct bu_vls *str;
 {
 	union bu_lex_token token;
 	int max;
@@ -849,7 +882,10 @@ parse_path(struct arc *ap, FILE *fip, struct bu_vls *str)
 	return 1;
 }
 static int
-parse_list(struct arc *ap, FILE *fip, struct bu_vls *str)
+parse_list(ap, fip, str)
+struct arc *ap;
+FILE *fip;
+struct bu_vls *str;
 {
 	union bu_lex_token token;
 	int max;
@@ -908,7 +944,10 @@ parse_list(struct arc *ap, FILE *fip, struct bu_vls *str)
 	return 1;
 }
 static int
-parse_ARC(struct arc *ap, FILE *fip, struct bu_vls *str)
+parse_ARC(ap, fip, str)
+struct arc *ap;
+FILE *fip;
+struct bu_vls *str;
 {
 	union bu_lex_token token;
 	int max;
@@ -966,7 +1005,10 @@ parse_ARC(struct arc *ap, FILE *fip, struct bu_vls *str)
 	return 0;
 }
 static int
-parse_double(double *dbl, FILE *fip, struct bu_vls *str)
+parse_double(dbl, fip, str)
+double *dbl;
+FILE *fip;
+struct bu_vls *str;
 {
 	union bu_lex_token token;
 	double sign;
@@ -1003,7 +1045,10 @@ parse_double(double *dbl, FILE *fip, struct bu_vls *str)
 	return 1;
 }
 static int
-parse_assign(double *dbl, FILE *fip, struct bu_vls *str)
+parse_assign(dbl, fip, str)
+double *dbl;
+FILE *fip;
+struct bu_vls *str;
 {
 	if (!gobble_token(BU_LEX_SYMBOL, SYM_EQ, fip, str)) {
 		skip_group(fip, str);
@@ -1020,7 +1065,10 @@ parse_assign(double *dbl, FILE *fip, struct bu_vls *str)
 	return 1;
 }
 static int
-parse_vect(fastf_t *vect, FILE *fip, struct bu_vls *str)
+parse_vect(vect, fip, str)
+vect_t vect;
+FILE *fip;
+struct bu_vls *str;
 {
 	int i;
 
@@ -1040,7 +1088,11 @@ parse_vect(fastf_t *vect, FILE *fip, struct bu_vls *str)
 	return 1;
 }
 static int
-parse_trans(struct joint *jp, int index, FILE *fip, struct bu_vls *str)
+parse_trans(jp, index, fip, str)
+struct joint *jp;
+int index;
+FILE *fip;
+struct bu_vls *str;
 {
 	union bu_lex_token token;
 	int dirfound=0, upfound = 0, lowfound=0, curfound=0, accfound=0;
@@ -1198,7 +1250,11 @@ parse_trans(struct joint *jp, int index, FILE *fip, struct bu_vls *str)
 	return 0;
 }
 static int
-parse_rots(struct joint *jp, int index, FILE *fip, struct bu_vls *str)
+parse_rots(jp, index, fip, str)
+struct joint *jp;
+int index;
+FILE *fip;
+struct bu_vls *str;
 {
 	union bu_lex_token token;
 	int dirfound=0, upfound = 0, lowfound=0, curfound=0, accfound=0;
@@ -1356,7 +1412,9 @@ parse_rots(struct joint *jp, int index, FILE *fip, struct bu_vls *str)
 	return 0;
 }
 static int
-parse_joint(FILE *fip, struct bu_vls *str)
+parse_joint(fip, str)
+FILE *fip;
+struct bu_vls *str;
 {
 	union bu_lex_token token;
 	struct joint *jp;
@@ -1514,7 +1572,10 @@ parse_joint(FILE *fip, struct bu_vls *str)
 	/* NOTREACHED */
 }
 static int
-parse_jset(struct hold *hp, FILE *fip, struct bu_vls *str)
+parse_jset(hp,fip, str)
+struct hold *hp;
+FILE *fip;
+struct bu_vls *str;
 {
 	union bu_lex_token token;
 	int jointfound=0, listfound=0, arcfound=0, pathfound=0;
@@ -1603,7 +1664,10 @@ parse_jset(struct hold *hp, FILE *fip, struct bu_vls *str)
 	}
 }
 static int
-parse_solid(struct hold_point *pp, FILE *fip, struct bu_vls *str)
+parse_solid(pp, fip, str)
+struct hold_point *pp;
+FILE *fip;
+struct bu_vls *str;
 {
 	union bu_lex_token token;
 	int vertexfound = 0, arcfound = 0;
@@ -1667,7 +1731,10 @@ parse_solid(struct hold_point *pp, FILE *fip, struct bu_vls *str)
 	}
 }
 static int
-parse_point(struct hold_point *pp, FILE *fip, struct bu_vls *str)
+parse_point(pp, fip, str)
+struct hold_point *pp;
+FILE *fip;
+struct bu_vls *str;
 {
 	union bu_lex_token token;
 
@@ -1709,7 +1776,9 @@ parse_point(struct hold_point *pp, FILE *fip, struct bu_vls *str)
 	return 1;
 }
 static int
-parse_hold(FILE *fip, struct bu_vls *str)
+parse_hold(fip, str)
+FILE *fip;
+struct bu_vls *str;
 {
 	struct hold *hp;
 	union bu_lex_token token;
@@ -1871,7 +1940,9 @@ parse_hold(FILE *fip, struct bu_vls *str)
 }
 static struct bu_list path_head;
 int
-f_jload(int argc, char **argv)
+f_jload(argc, argv)
+int argc;
+char **argv;
 {
 	FILE *fip;
 	struct bu_vls	*instring;
@@ -2022,12 +2093,16 @@ f_jload(int argc, char **argv)
 	return CMD_OK;
 }
 int
-f_jtest(int argc, char **argv)
+f_jtest(argc, argv)
+int argc;
+char **argv;
 {
 	return CMD_OK;
 }
 int
-f_jsave(int argc, char **argv)
+f_jsave(argc, argv)
+int argc;
+char **argv;
 {
 	register struct joint *jp;
 	register int i;
@@ -2106,7 +2181,9 @@ f_jsave(int argc, char **argv)
 	return CMD_OK;
 }
 int
-f_jaccept(int argc, char **argv)
+f_jaccept(argc, argv)
+int argc;
+char **argv;
 {
 	register struct joint *jp;
 	register int i;
@@ -2141,7 +2218,9 @@ f_jaccept(int argc, char **argv)
 	return CMD_OK;
 }
 int
-f_jreject(int argc, char **argv)
+f_jreject(argc, argv)
+int argc;
+char **argv;
 {
 	register struct joint *jp;
 	register int i;
@@ -2178,7 +2257,9 @@ f_jreject(int argc, char **argv)
 	return CMD_OK;
 }
 static int
-hold_point_location(fastf_t *loc, struct hold_point *hp)
+hold_point_location(loc, hp)
+vect_t loc;
+struct hold_point *hp;
 {
 	mat_t mat;
 	struct joint *jp;
@@ -2236,7 +2317,8 @@ hold_point_location(fastf_t *loc, struct hold_point *hp)
 	return 1;	/* For the picky compilers */
 }
 double
-hold_eval(struct hold *hp)
+hold_eval(hp)
+struct hold *hp;
 {
 	vect_t	e_loc, o_loc;
 	double	value;
@@ -2284,7 +2366,7 @@ struct bu_list solve_head = {
 };
 
 void
-joint_clear(void)
+joint_clear()
 {
 	register struct stack_solve *ssp;
 	BU_LIST_POP(stack_solve, &solve_head, ssp);
@@ -2295,7 +2377,10 @@ joint_clear(void)
 }
 
 int
-part_solve(struct hold *hp, double limits, double tol)
+part_solve(hp, limits, tol)
+struct hold *hp;
+double limits;
+double tol;
 {
 	register struct joint *jp;
 	double f0,f1,f2;
@@ -2615,7 +2700,7 @@ part_solve(struct hold *hp, double limits, double tol)
 	return 1;
 }
 void
-reject_move(void)
+reject_move()
 {
 	register struct solve_stack *ssp;
 	BU_LIST_POP(solve_stack, &solve_head, ssp);
@@ -2665,7 +2750,10 @@ reject_move(void)
  */
 #define SOLVE_MAX_PRIORITY	100
 int
-system_solve(int pri, double delta, double epsilon)
+system_solve(pri,delta, epsilon)
+int pri;
+double delta;
+double epsilon;
 {
 	double	pri_weights[SOLVE_MAX_PRIORITY+1];
 	double	new_weights[SOLVE_MAX_PRIORITY+1];
@@ -2866,7 +2954,9 @@ Middle:
 
 }
 int
-f_jsolve(int argc, char **argv)
+f_jsolve(argc, argv)
+int argc;
+char **argv;
 {
 	register struct hold *hp;
 	int loops, count;
@@ -3063,7 +3153,8 @@ f_jsolve(int argc, char **argv)
 	return CMD_OK;
 }
 static char *
-hold_point_to_string(struct hold_point *hp)
+hold_point_to_string(hp)
+struct hold_point *hp;
 {
 #define HOLD_POINT_TO_STRING_LEN	1024
 	char *text = bu_malloc(HOLD_POINT_TO_STRING_LEN, "hold_point_to_string");
@@ -3089,7 +3180,8 @@ hold_point_to_string(struct hold_point *hp)
 	return text;
 }
 void
-print_hold(struct hold *hp)
+print_hold(hp)
+struct hold *hp;
 {
 	char *t1, *t2;
 
@@ -3111,7 +3203,9 @@ print_hold(struct hold *hp)
 	}
 }
 int
-f_jhold(int argc, char **argv)
+f_jhold(argc, argv)
+int argc;
+char **argv;
 {
 	register struct hold *hp;
 	++argv;
@@ -3130,7 +3224,9 @@ f_jhold(int argc, char **argv)
 	return CMD_OK;
 }
 int
-f_jlist(int argc, char **argv)
+f_jlist(argc, argv)
+int argc;
+char **argv;
 {
   register struct joint *jp;
   struct bu_vls vls;
@@ -3146,7 +3242,8 @@ f_jlist(int argc, char **argv)
   return CMD_OK;
 }
 void
-joint_move(struct joint *jp)
+joint_move(jp)
+struct joint *jp;
 {
 	register struct animate *anp;
 	double tmp;
@@ -3282,7 +3379,9 @@ joint_move(struct joint *jp)
 	}
 }
 int
-f_jmove(int argc, char **argv)
+f_jmove(argc, argv)
+int argc;
+char **argv;
 {
 	struct joint *jp;
 	int i;
@@ -3392,7 +3491,8 @@ struct bu_list artic_head = {
 };
 
 struct joint *
-findjoint(struct db_full_path *pathp)
+findjoint(pathp)
+struct db_full_path	*pathp;
 {
 	register int i,j;
 	register struct joint *jp;
@@ -3439,7 +3539,11 @@ findjoint(struct db_full_path *pathp)
 	return (struct joint *) 0;
 }
 
-HIDDEN union tree *mesh_leaf(struct db_tree_state *tsp, struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data)
+HIDDEN union tree *mesh_leaf( tsp, pathp, ip, client_data)
+struct db_tree_state	*tsp;
+struct db_full_path	*pathp;
+struct rt_db_internal	*ip;
+genptr_t		client_data;
 {
 	struct rt_grip_internal *gip;
 	struct	artic_joints	*newJoint;
@@ -3495,7 +3599,11 @@ HIDDEN union tree *mesh_leaf(struct db_tree_state *tsp, struct db_full_path *pat
 
 	return curtree;
 }
-HIDDEN union tree *mesh_end_region (register struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+HIDDEN union tree *mesh_end_region (tsp, pathp, curtree, client_data )
+register struct db_tree_state	*tsp;
+struct db_full_path		*pathp;
+union tree			*curtree;
+genptr_t			client_data;
 {
 	return curtree;
 }
@@ -3541,7 +3649,9 @@ static struct db_tree_state mesh_initial_tree_state = {
 	NULL				/* ts_resp */
 };
 int
-f_jmesh(int argc, char **argv)
+f_jmesh(argc, argv)
+int argc;
+char **argv;
 {
 	char			*name;
 	struct rt_vlblock	*vbp;

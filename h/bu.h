@@ -42,10 +42,6 @@
 
 #ifndef SEEN_BU_H
 #define SEEN_BU_H seen
-
-/* Included for Tcl_Interp definition */
-#include "tcl.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -406,7 +402,7 @@ struct bu_list {
 
 typedef struct bu_list bu_list_t;
 
-struct bu_list *bu_list_new(void);
+struct bu_list *bu_list_new();
 struct bu_list *bu_list_pop( struct bu_list *hp );
 
 #define BU_LIST_CLOSE( hp ) { \
@@ -1915,100 +1911,26 @@ extern void bu_observer_free(struct bu_observer *);
 
 /* bu_tcl.c */
 /* The presence of Tcl_Interp as an arg prevents giving arg list */
-extern void bu_badmagic_tcl(Tcl_Interp	*interp,
-			    const long	*ptr,
-			    long	magic,
-			    const char	*str,
-			    const char	*file,
-			    int		line);
-
-extern void bu_structparse_get_terse_form(Tcl_Interp	*interp,
-					  register struct bu_structparse *sp);
-
-extern int bu_structparse_argv(Tcl_Interp			*interp,
-			       int				argc,
-			       char				**argv,
-			       const struct bu_structparse	*desc,
-			       char				*base);
-
-extern int bu_tcl_mem_barriercheck(ClientData	clientData,
-				   Tcl_Interp	*interp,
-				   int		argc,
-				   char		**argv);
-
-extern int bu_tcl_ck_malloc_ptr(ClientData		clientData,
-				Tcl_Interp		*interp,
-				int		argc,
-				char		**argv);
-
-extern int bu_tcl_malloc_len_roundup(ClientData	clientData,
-				     Tcl_Interp	*interp,
-				     int		argc,
-				     char		**argv);
-
-extern int bu_tcl_prmem(ClientData	clientData,
-			Tcl_Interp	*interp,
-			int	argc,
-			char	**argv);
-
-extern int bu_tcl_printb(ClientData	clientData,
-			 Tcl_Interp	*interp,
-			 int		argc,
-			 char		**argv);
-
-extern int bu_get_value_by_keyword(ClientData	clientData,
-				   Tcl_Interp	*interp,
-				   int		argc,
-				   char		**argv);
-
-extern int bu_get_all_keyword_values(ClientData	clientData,
-				     Tcl_Interp	*interp,
-				     int		argc,
-				     char		**argv);
-
-extern int bu_tcl_rgb_to_hsv(ClientData	clientData,
-			     Tcl_Interp	*interp,
-			     int		argc,
-			     char		**argv);
-
-extern int bu_tcl_hsv_to_rgb(ClientData	clientData,
-			     Tcl_Interp	*interp,
-			     int		argc,
-			     char		**argv);
-
-extern int bu_tcl_key_eq_to_key_val(ClientData	clientData,
-				    Tcl_Interp	*interp,
-				    int		argc,
-				    char		**argv);
-
-extern int bu_tcl_shader_to_key_val(ClientData	clientData,
-				    Tcl_Interp	*interp,
-				    int		argc,
-				    char		**argv);
-
-extern int bu_tcl_key_val_to_key_eq(ClientData	clientData,
-				    Tcl_Interp	*interp,
-				    int		argc,
-				    char		**argv);
-
-extern int bu_tcl_shader_to_key_eq(ClientData	clientData,
-				   Tcl_Interp	*interp,
-				   int		argc,
-				   char		**argv);
-
-extern int bu_tcl_brlcad_path(ClientData	clientData,
-			      Tcl_Interp	*interp,
-			      int		 argc,
-			      char		**argv);
-
-extern int bu_tcl_units_conversion(ClientData	clientData,
-				   Tcl_Interp	*interp,
-				   int		argc,
-				   char		**argv);
-
-extern void bu_tcl_setup(Tcl_Interp *interp);
-
-extern int Bu_Init(Tcl_Interp *interp);
+extern void bu_badmagic_tcl();
+extern void bu_structparse_get_terse_form();
+extern int bu_structparse_argv();
+extern int bu_tcl_mem_barriercheck();
+extern int bu_tcl_ck_malloc_ptr();
+extern int bu_tcl_malloc_len_roundup();
+extern int bu_tcl_prmem();
+extern int bu_tcl_printb();
+extern int bu_get_value_by_keyword();
+extern int bu_get_all_keyword_values();
+extern int bu_tcl_rgb_to_hsv();
+extern int bu_tcl_hsv_to_rgb();
+extern int bu_tcl_key_eq_to_key_val();
+extern int bu_tcl_shader_to_key_val();
+extern int bu_tcl_key_val_to_key_eq();
+extern int bu_tcl_shader_to_key_eq();
+extern int bu_tcl_brlcad_path();
+extern int bu_tcl_units_conversion();
+extern void bu_tcl_setup();
+extern int Bu_Init();
 
 /* lex.c */
 #define BU_LEX_ANY	0	/* pseudo type */

@@ -14,7 +14,7 @@
 #include "externs.h"
 
 char *progname = "(noname)";
-void usage(void)
+void usage()
 {
 	(void) fprintf(stderr, "Usage: %s [ -v ] < ALIASpixfile >BRLpixfile\n", progname);
 	exit(1);
@@ -36,7 +36,9 @@ int verbose = 0;
 char *image;
 
 int
-main(int ac, char **av)
+main(ac,av)
+int ac;
+char *av[];
 {
 	int pixcnt, i;
 	char *p;

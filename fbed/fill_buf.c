@@ -37,8 +37,10 @@ static const char RCSid[] = "@(#) fill_buf.c 2.1, modified 12/9/86 at 15:55:48, 
 	correct position.
  */
 void
-fill_buf(register int wid, register int *buf)
-{
+fill_buf( wid, buf )
+register int wid;
+register int *buf;
+	{
 	char    bitrow[FONTBUFSZ];
 	register int     j;
 
@@ -77,8 +79,10 @@ fill_buf(register int wid, register int *buf)
 	the edges of the character definition.
  */
 void
-clear_buf(int wid, register int *buf)
-{
+clear_buf( wid, buf )
+int wid;
+register int *buf;
+	{
 	register int     i, w = wid + 4;
 
 	/* Clear each value in the row. */

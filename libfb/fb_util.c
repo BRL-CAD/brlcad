@@ -35,7 +35,10 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
  *  storing this information into the FBIO structure.
  */
 int
-fb_sim_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
+fb_sim_view( ifp, xcenter, ycenter, xzoom, yzoom )
+FBIO	*ifp;
+int	xcenter, ycenter;
+int	xzoom, yzoom;
 {
 	ifp->if_xcenter = xcenter;
 	ifp->if_ycenter = ycenter;
@@ -52,7 +55,10 @@ fb_sim_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
  *  reading this information from the FBIO structure.
  */
 int
-fb_sim_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
+fb_sim_getview( ifp, xcenter, ycenter, xzoom, yzoom )
+FBIO	*ifp;
+int	*xcenter, *ycenter;
+int	*xzoom, *yzoom;
 {
 	*xcenter = ifp->if_xcenter;
 	*ycenter = ifp->if_ycenter;
@@ -69,7 +75,10 @@ fb_sim_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
  *  storing this information into the FBIO structure.
  */
 int
-fb_sim_cursor(FBIO *ifp, int mode, int x, int y)
+fb_sim_cursor( ifp, mode, x, y )
+FBIO	*ifp;
+int	mode;
+int	x, y;
 {
 	ifp->if_cursmode = mode;
 	ifp->if_xcurs = x;
@@ -85,7 +94,10 @@ fb_sim_cursor(FBIO *ifp, int mode, int x, int y)
  *  reading this information from the FBIO structure.
  */
 int
-fb_sim_getcursor(FBIO *ifp, int *mode, int *x, int *y)
+fb_sim_getcursor( ifp, mode, x, y )
+FBIO	*ifp;
+int	*mode;
+int	*x, *y;
 {
 	*mode = ifp->if_cursmode;
 	*x = ifp->if_xcurs;
@@ -97,19 +109,24 @@ fb_sim_getcursor(FBIO *ifp, int *mode, int *x, int *y)
 /* Backward Compatibility Routines */
 
 int
-fb_reset(FBIO *ifp)
+fb_reset(ifp)
+FBIO	*ifp;
 {
 	return	0;
 }
 
 int
-fb_viewport(FBIO *ifp, int left, int top, int right, int bottom)
+fb_viewport(ifp, left, top, right, bottom)
+FBIO	*ifp;
+int	left, top, right, bottom;
 {
 	return	0;
 }
 
 int
-fb_window(FBIO *ifp, int x, int y)
+fb_window(ifp, x, y)
+FBIO	*ifp;
+int	x, y;
 {
 	int	xcenter, ycenter;
 	int	xzoom, yzoom;
@@ -121,7 +138,9 @@ fb_window(FBIO *ifp, int x, int y)
 }
 
 int
-fb_zoom(FBIO *ifp, int x, int y)
+fb_zoom(ifp, x, y)
+FBIO	*ifp;
+int	x, y;
 {
 	int	xcenter, ycenter;
 	int	xzoom, yzoom;
@@ -133,7 +152,10 @@ fb_zoom(FBIO *ifp, int x, int y)
 }
 
 int
-fb_scursor(FBIO *ifp, int mode, int x, int y)
+fb_scursor(ifp, mode, x, y)
+FBIO	*ifp;
+int	mode;
+int	x, y;
 {
 	/* We could actually implement this but it
 	 * is probably of no value.

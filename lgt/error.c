@@ -51,8 +51,9 @@ int		bu_setjmp_valid = 0;	/* !0 = bu_jmpbuf is valid */
 jmp_buf		bu_jmpbuf;		/* for BU_SETJMP() */
 
 void
-bu_bomb(const char *str)
-{
+bu_bomb(str)
+const char *str;
+	{
 	bu_log( "%s (librt.a) : Fatal error, aborting!\n", str );
 	(void) fflush( stdout );
 	prnt_Timer( "DUMP" );

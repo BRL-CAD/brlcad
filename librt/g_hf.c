@@ -210,7 +210,10 @@ rt_hf_to_dsp(struct rt_db_internal *db_intern, struct resource *resp)
  *  	stp->st_specific for use by hf_shot().
  */
 int
-rt_hf_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
+rt_hf_prep( stp, ip, rtip )
+struct soltab		*stp;
+struct rt_db_internal	*ip;
+struct rt_i		*rtip;
 {
 	struct rt_hf_internal *hip;
 	register struct hf_specific	*hf;
@@ -351,7 +354,8 @@ rt_hf_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
  *			R T _ H F _ P R I N T
  */
 void
-rt_hf_print(register const struct soltab *stp)
+rt_hf_print( stp )
+register const struct soltab *stp;
 {
 	register const struct hf_specific *hf =
 		(struct hf_specific *)stp->st_specific;
@@ -364,7 +368,12 @@ rt_hf_print(register const struct soltab *stp)
 }
 
 static int
-rt_hf_cell_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct hit *hitp, int xCell, int yCell)
+rt_hf_cell_shot(stp, rp, ap, hitp, xCell, yCell)
+struct soltab		*stp;
+register struct xray	*rp;
+struct application	*ap;
+struct hit		*hitp;
+int			xCell, yCell;
 {
 	register struct hf_specific *hfp =
 		(struct hf_specific *)stp->st_specific;
@@ -658,7 +667,15 @@ leave:
  *	and we skip it.  That will be handled elsewhere.
  */
 static void
-axis_plane_isect(int plane, fastf_t inout, struct xray *rp, struct hf_specific *hf, double xWidth, double yWidth, struct hit **hp, int *nhits)
+axis_plane_isect(plane, inout, rp, hf, xWidth, yWidth, hp, nhits)
+int plane;
+fastf_t inout;
+struct xray	*rp;
+struct hf_specific *hf;
+double xWidth, yWidth;
+struct hit **hp;
+int *nhits;
+
 {
 	double left, right, xx=0, xright=0, answer;
 	vect_t loc;
@@ -766,7 +783,11 @@ bu_log("inout: loc[Z]=%g, answer=%g, left=%g, right=%g, xright=%g, xx=%g\n",
  *	>0	HIT
  */
 int
-rt_hf_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
+rt_hf_shot( stp, rp, ap, seghead )
+struct soltab		*stp;
+register struct xray	*rp;
+struct application	*ap;
+struct seg		*seghead;
 {
 	register struct hf_specific *hf =
 		(struct hf_specific *)stp->st_specific;
@@ -1544,7 +1565,10 @@ rt_bomb("Odd number of hits.");
  *  Given ONE ray distance, return the normal and entry/exit point.
  */
 void
-rt_hf_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
+rt_hf_norm( hitp, stp, rp )
+register struct hit	*hitp;
+struct soltab		*stp;
+register struct xray	*rp;
 {
 	register struct hf_specific *hf =
 		(struct hf_specific *)stp->st_specific;
@@ -1588,7 +1612,10 @@ rt_hf_norm(register struct hit *hitp, struct soltab *stp, register struct xray *
  *  Return the curvature of the hf.
  */
 void
-rt_hf_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
+rt_hf_curve( cvp, hitp, stp )
+register struct curvature *cvp;
+register struct hit	*hitp;
+struct soltab		*stp;
 {
  	cvp->crv_c1 = cvp->crv_c2 = 0;
 
@@ -1605,7 +1632,11 @@ rt_hf_curve(register struct curvature *cvp, register struct hit *hitp, struct so
  *  v = elevation
  */
 void
-rt_hf_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
+rt_hf_uv( ap, stp, hitp, uvp )
+struct application	*ap;
+struct soltab		*stp;
+register struct hit	*hitp;
+register struct uvcoord	*uvp;
 {
 	register struct hf_specific *hf =
 		(struct hf_specific *)stp->st_specific;
@@ -1636,7 +1667,8 @@ rt_hf_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, 
  *		R T _ H F _ F R E E
  */
 void
-rt_hf_free(register struct soltab *stp)
+rt_hf_free( stp )
+register struct soltab *stp;
 {
 	register struct hf_specific *hf =
 		(struct hf_specific *)stp->st_specific;
@@ -1652,7 +1684,7 @@ rt_hf_free(register struct soltab *stp)
  *			R T _ H F _ C L A S S
  */
 int
-rt_hf_class(void)
+rt_hf_class()
 {
 	return(0);
 }
@@ -1661,7 +1693,11 @@ rt_hf_class(void)
  *			R T _ H F _ P L O T
  */
 int
-rt_hf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_hf_plot( vhead, ip, ttol, tol )
+struct bu_list		*vhead;
+struct rt_db_internal	*ip;
+const struct rt_tess_tol *ttol;
+const struct bn_tol		*tol;
 {
 	LOCAL struct rt_hf_internal	*xip;
 	register unsigned short		*sp = (unsigned short *)NULL;
@@ -1912,7 +1948,12 @@ rt_hf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tes
  *	 0	OK.  *r points to nmgregion that holds this tessellation.
  */
 int
-rt_hf_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_hf_tess( r, m, ip, ttol, tol )
+struct nmgregion	**r;
+struct model		*m;
+struct rt_db_internal	*ip;
+const struct rt_tess_tol *ttol;
+const struct bn_tol		*tol;
 {
 	LOCAL struct rt_hf_internal	*xip;
 
@@ -1930,7 +1971,11 @@ rt_hf_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, con
  *  Apply modeling transformations as well.
  */
 int
-rt_hf_import(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
+rt_hf_import( ip, ep, mat, dbip )
+struct rt_db_internal		*ip;
+const struct bu_external	*ep;
+register const mat_t		mat;
+const struct db_i		*dbip;
 {
 	LOCAL struct rt_hf_internal	*xip;
 	union record			*rp;
@@ -2099,7 +2144,11 @@ err1:
  *  in the string solid (including the dfile name).
  */
 int
-rt_hf_export(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
+rt_hf_export( ep, ip, local2mm, dbip )
+struct bu_external		*ep;
+const struct rt_db_internal	*ip;
+double				local2mm;
+const struct db_i		*dbip;
 {
 	struct rt_hf_internal	*xip;
 	union record		*rec;
@@ -2136,7 +2185,11 @@ rt_hf_export(struct bu_external *ep, const struct rt_db_internal *ip, double loc
 }
 
 int
-rt_hf_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
+rt_hf_import5( ip, ep, mat, dbip )
+struct rt_db_internal		*ip;
+const struct bu_external	*ep;
+const mat_t			mat;
+const struct db_i		*dbip;
 {
 	bu_log( "As of release 6.0 the HF primitive is superceded by the DSP primitive.\n" );
 	bu_log( "\tTo convert HF primitives to DSP, use 'dbupgrade'.\n");
@@ -2145,7 +2198,11 @@ rt_hf_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fas
 }
 
 int
-rt_hf_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
+rt_hf_export5( ep, ip, local2mm, dbip )
+struct bu_external		*ep;
+const struct rt_db_internal	*ip;
+double				local2mm;
+const struct db_i		*dbip;
 {
 	bu_log( "As of release 6.0 the HF primitive is superceded by the DSP primitive.\n" );
 	bu_log( "\tTo convert HF primitives to DSP, use 'dbupgrade'.\n" );
@@ -2161,7 +2218,11 @@ rt_hf_export5(struct bu_external *ep, const struct rt_db_internal *ip, double lo
  *  Additional lines are indented one tab, and give parameter values.
  */
 int
-rt_hf_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
+rt_hf_describe( str, ip, verbose, mm2local )
+struct bu_vls		*str;
+const struct rt_db_internal	*ip;
+int			verbose;
+double			mm2local;
 {
 #ifndef NO_MAGIC_CHECKING
 	register struct rt_hf_internal	*xip =
@@ -2183,7 +2244,8 @@ rt_hf_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose,
  *  Free the storage associated with the rt_db_internal version of this solid.
  */
 void
-rt_hf_ifree(struct rt_db_internal *ip)
+rt_hf_ifree( ip )
+struct rt_db_internal	*ip;
 {
 	register struct rt_hf_internal	*xip;
 

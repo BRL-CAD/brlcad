@@ -69,14 +69,15 @@ int	oflag = 0;	/* Different offset specified */
 char *file_name;
 FILE *infp;
 
-void	select_filter(char *str), dousage(void);
+void	select_filter(), dousage();
 
 char	usage[] = "\
 Usage: pixfilter [-f type] [-v] [-d div] [-o offset]\n\
         [-s squaresize] [-w width] [-n height] [file.pix] > file.pix\n";
 
 int
-get_args(int argc, register char **argv)
+get_args( argc, argv )
+register char **argv;
 {
 	register int c;
 
@@ -135,7 +136,8 @@ get_args(int argc, register char **argv)
 }
 
 int
-main(int argc, char **argv)
+main( argc, argv )
+int argc; char **argv;
 {
 	int	x, y, color;
 	int	value, r1, r2, r3;
@@ -223,7 +225,8 @@ main(int argc, char **argv)
  *  on it.
  */
 void
-select_filter(char *str)
+select_filter( str )
+char *str;
 {
 	int	i;
 
@@ -250,7 +253,7 @@ select_filter(char *str)
 }
 
 void
-dousage(void)
+dousage()
 {
 	int	i;
 

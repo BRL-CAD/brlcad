@@ -46,8 +46,8 @@ int	max_bounces = 5;	/* Maximum recursion level */
 
 #define AIR_GAP_TOL	0.01		/* Max permitted air gap for RI tracking */
 
-HIDDEN int	rr_hit(register struct application *ap, struct partition *PartHeadp), rr_miss(register struct application *ap, struct partition *PartHeadp);
-HIDDEN int	rr_refract(register fastf_t *v_1, register fastf_t *norml, double ri_1, double ri_2, register fastf_t *v_2);
+HIDDEN int	rr_hit(), rr_miss();
+HIDDEN int	rr_refract();
 
 #if RT_MULTISPECTRAL
 extern const struct bn_table	*spectrum;
@@ -624,7 +624,9 @@ out:
  */
 HIDDEN int
 /*ARGSUSED*/
-rr_miss(register struct application *ap, struct partition *PartHeadp)
+rr_miss( ap, PartHeadp )
+register struct application *ap;
+struct partition *PartHeadp;
 {
 	RT_AP_CHECK(ap);
 	return(1);	/* treat as escaping ray */
@@ -649,7 +651,9 @@ rr_miss(register struct application *ap, struct partition *PartHeadp)
  *			a_refrac_index	RI of *next* material
  */
 HIDDEN int
-rr_hit(register struct application *ap, struct partition *PartHeadp)
+rr_hit( ap, PartHeadp )
+register struct application *ap;
+struct partition *PartHeadp;
 {
 	register struct partition *pp;
 	register struct hit	*hitp;
@@ -866,7 +870,11 @@ out:
  *  Note:  output (v_2) can be same storage as an input.
  */
 HIDDEN int
-rr_refract(register fastf_t *v_1, register fastf_t *norml, double ri_1, double ri_2, register fastf_t *v_2)
+rr_refract( v_1, norml, ri_1, ri_2, v_2 )
+register vect_t	v_1;
+register vect_t	norml;
+double	ri_1, ri_2;
+register vect_t	v_2;
 {
 	LOCAL vect_t	w, u;
 	FAST fastf_t	beta;

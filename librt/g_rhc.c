@@ -205,7 +205,10 @@ const struct bu_structparse rt_rhc_parse[] = {
  *  	stp->st_specific for use by rhc_shot().
  */
 int
-rt_rhc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
+rt_rhc_prep( stp, ip, rtip )
+struct soltab		*stp;
+struct rt_db_internal	*ip;
+struct rt_i		*rtip;
 {
 	struct rt_rhc_internal		*xip;
 	register struct rhc_specific	*rhc;
@@ -305,7 +308,8 @@ rt_rhc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
  *			R T _ R H C _ P R I N T
  */
 void
-rt_rhc_print(register const struct soltab *stp)
+rt_rhc_print( stp )
+register const struct soltab *stp;
 {
 	register const struct rhc_specific *rhc =
 		(struct rhc_specific *)stp->st_specific;
@@ -336,7 +340,11 @@ rt_rhc_print(register const struct soltab *stp)
  *	>0	HIT
  */
 int
-rt_rhc_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
+rt_rhc_shot( stp, rp, ap, seghead )
+struct soltab		*stp;
+register struct xray	*rp;
+struct application	*ap;
+struct seg		*seghead;
 {
 	register struct rhc_specific *rhc =
 		(struct rhc_specific *)stp->st_specific;
@@ -506,12 +514,12 @@ check_plates:
  *  Vectorized version.
  */
 void
-rt_rhc_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
-             	               /* An array of solid pointers */
-           		       /* An array of ray pointers */
-                               /* array of segs (results returned) */
-   		  	       /* Number of ray/object pairs */
-                  	    
+rt_rhc_vshot( stp, rp, segp, n, ap )
+struct soltab	       *stp[]; /* An array of solid pointers */
+struct xray		*rp[]; /* An array of ray pointers */
+struct  seg            segp[]; /* array of segs (results returned) */
+int		  	    n; /* Number of ray/object pairs */
+struct application	*ap;
 {
 	rt_vstub( stp, rp, segp, n, ap );
 }
@@ -522,7 +530,10 @@ rt_rhc_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
  *  Given ONE ray distance, return the normal and entry/exit point.
  */
 void
-rt_rhc_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
+rt_rhc_norm( hitp, stp, rp )
+register struct hit	*hitp;
+struct soltab		*stp;
+register struct xray	*rp;
 {
 	fastf_t	c;
 	vect_t	can_normal;	/* normal to canonical rhc */
@@ -561,7 +572,10 @@ rt_rhc_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
  *  Return the curvature of the rhc.
  */
 void
-rt_rhc_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
+rt_rhc_curve( cvp, hitp, stp )
+register struct curvature *cvp;
+register struct hit	*hitp;
+struct soltab		*stp;
 {
 	fastf_t	b, c, rsq, y;
 	fastf_t	zp1_sq, zp2;	/* 1st deriv sqr, 2nd deriv */
@@ -602,7 +616,11 @@ rt_rhc_curve(register struct curvature *cvp, register struct hit *hitp, struct s
  *  v = elevation
  */
 void
-rt_rhc_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
+rt_rhc_uv( ap, stp, hitp, uvp )
+struct application	*ap;
+struct soltab		*stp;
+register struct hit	*hitp;
+register struct uvcoord	*uvp;
 {
 	register struct rhc_specific *rhc =
 		(struct rhc_specific *)stp->st_specific;
@@ -645,7 +663,8 @@ rt_rhc_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
  *		R T _ R H C _ F R E E
  */
 void
-rt_rhc_free(register struct soltab *stp)
+rt_rhc_free( stp )
+register struct soltab *stp;
 {
 	register struct rhc_specific *rhc =
 		(struct rhc_specific *)stp->st_specific;
@@ -657,7 +676,7 @@ rt_rhc_free(register struct soltab *stp)
  *			R T _ R H C _ C L A S S
  */
 int
-rt_rhc_class(void)
+rt_rhc_class()
 {
 	return(0);
 }
@@ -667,7 +686,11 @@ rt_rhc_class(void)
  *			R T _ R H C _ P L O T
  */
 int
-rt_rhc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_rhc_plot( vhead, ip, ttol, tol )
+struct bu_list		*vhead;
+struct rt_db_internal	*ip;
+const struct rt_tess_tol *ttol;
+const struct bn_tol		*tol;
 {
 	int		i, n;
 	fastf_t		b, c, *back, f, *front, h, rh;
@@ -676,7 +699,7 @@ rt_rhc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	LOCAL mat_t	R;
 	LOCAL mat_t	invR;
 	LOCAL struct rt_rhc_internal	*xip;
-	struct rt_pt_node	*old, *pos, *pts, *rt_ptalloc(void);
+	struct rt_pt_node	*old, *pos, *pts, *rt_ptalloc();
 
 	RT_CK_DB_INTERNAL(ip);
 	xip = (struct rt_rhc_internal *)ip->idb_ptr;
@@ -814,13 +837,15 @@ rt_rhc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
  *
  */
 int
-rt_mk_hyperbola(struct rt_pt_node *pts, fastf_t r, fastf_t b, fastf_t c, fastf_t dtol, fastf_t ntol)
+rt_mk_hyperbola( pts, r, b, c, dtol, ntol )
+fastf_t	r, b, c, dtol, ntol;
+struct rt_pt_node *pts;
 {
 	fastf_t	A, B, C, discr, dist, intr, j, k, m, theta0, theta1, z0;
 	int	n;
 	point_t	mpt, p0, p1;
 	vect_t	norm_line, norm_hyperb;
-	struct rt_pt_node *new, *rt_ptalloc(void);
+	struct rt_pt_node *new, *rt_ptalloc();
 	
 #define RHC_TOL .0001
 	/* endpoints of segment approximating hyperbola */
@@ -887,7 +912,12 @@ rt_mk_hyperbola(struct rt_pt_node *pts, fastf_t r, fastf_t b, fastf_t c, fastf_t
  *	 0	OK.  *r points to nmgregion that holds this tessellation.
  */
 int
-rt_rhc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_rhc_tess( r, m, ip, ttol, tol )
+struct nmgregion	**r;
+struct model		*m;
+struct rt_db_internal	*ip;
+const struct rt_tess_tol *ttol;
+const struct bn_tol		*tol;
 {
 	int		i, j, n;
 	fastf_t		b, c, *back, f, *front, h, rh;
@@ -896,7 +926,7 @@ rt_rhc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	LOCAL mat_t	R;
 	LOCAL mat_t	invR;
 	LOCAL struct rt_rhc_internal	*xip;
-	struct rt_pt_node	*old, *pos, *pts, *rt_ptalloc(void);
+	struct rt_pt_node	*old, *pos, *pts, *rt_ptalloc();
 	struct shell	*s;
 	struct faceuse	**outfaceuses;
 	struct vertex	**vfront, **vback, **vtemp, *vertlist[4];
@@ -1163,7 +1193,11 @@ fail:
  *  Apply modeling transformations as well.
  */
 int
-rt_rhc_import(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
+rt_rhc_import( ip, ep, mat, dbip )
+struct rt_db_internal		*ip;
+const struct bu_external	*ep;
+register const mat_t		mat;
+const struct db_i		*dbip;
 {
 	LOCAL struct rt_rhc_internal	*xip;
 	union record			*rp;
@@ -1207,7 +1241,11 @@ rt_rhc_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
  *  The name is added by the caller, in the usual place.
  */
 int
-rt_rhc_export(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
+rt_rhc_export( ep, ip, local2mm, dbip )
+struct bu_external		*ep;
+const struct rt_db_internal	*ip;
+double				local2mm;
+const struct db_i		*dbip;
 {
 	struct rt_rhc_internal	*xip;
 	union record		*rhc;
@@ -1263,7 +1301,11 @@ rt_rhc_export(struct bu_external *ep, const struct rt_db_internal *ip, double lo
  *  Apply modeling transformations as well.
  */
 int
-rt_rhc_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
+rt_rhc_import5( ip, ep, mat, dbip )
+struct rt_db_internal		*ip;
+const struct bu_external	*ep;
+register const mat_t		mat;
+const struct db_i		*dbip;
 {
 	LOCAL struct rt_rhc_internal	*xip;
 	fastf_t			vec[11];
@@ -1307,7 +1349,11 @@ rt_rhc_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
  *  The name is added by the caller, in the usual place.
  */
 int
-rt_rhc_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
+rt_rhc_export5( ep, ip, local2mm, dbip )
+struct bu_external		*ep;
+const struct rt_db_internal	*ip;
+double				local2mm;
+const struct db_i		*dbip;
 {
 	struct rt_rhc_internal	*xip;
 	fastf_t			vec[11];
@@ -1363,7 +1409,11 @@ rt_rhc_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
  *  Additional lines are indented one tab, and give parameter values.
  */
 int
-rt_rhc_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
+rt_rhc_describe( str, ip, verbose, mm2local )
+struct bu_vls		*str;
+const struct rt_db_internal	*ip;
+int			verbose;
+double			mm2local;
 {
 	register struct rt_rhc_internal	*xip =
 		(struct rt_rhc_internal *)ip->idb_ptr;
@@ -1407,7 +1457,8 @@ rt_rhc_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
  *  Free the storage associated with the rt_db_internal version of this solid.
  */
 void
-rt_rhc_ifree(struct rt_db_internal *ip)
+rt_rhc_ifree( ip )
+struct rt_db_internal	*ip;
 {
 	register struct rt_rhc_internal	*xip;
 

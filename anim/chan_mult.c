@@ -24,7 +24,9 @@
 #include <stdio.h>
 
 int
-main(int argc, char **argv)
+main(argc,argv)
+int argc;
+char **argv;
 {
 	double factor, temp;
 	int i,j,doit, of, count, val, *col_list;

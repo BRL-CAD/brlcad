@@ -78,7 +78,7 @@ extern int pkg_suckin(register struct pkg_conn *);
 extern struct pkg_conn *pkg_open();
 extern struct pkg_conn *pkg_transerver();
 extern int pkg_permserver();
-extern struct pkg_conn *pkg_getclient(int fd, struct pkg_switch *switchp, void (*errlog) (/* ??? */), int nodelay);
+extern struct pkg_conn *pkg_getclient();
 extern void pkg_close();
 extern int pkg_send();
 extern int pkg_2send();
@@ -92,7 +92,6 @@ extern int pkg_block();
 /* Data conversion routines */
 extern unsigned short pkg_gshort();
 extern unsigned long pkg_glong();
-extern char *pkg_pshort(unsigned char *msgp, short unsigned int s);
-extern char *pkg_plong();
+extern char *pkg_pshort(), *pkg_plong();
 
 #endif /* PKG_H_SEENYET */

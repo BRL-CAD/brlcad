@@ -63,17 +63,19 @@ int units;
 extern int bu_optind;
 extern char *bu_optarg;
 
-int get_args(int argc, char **argv);
-extern void anim_v_unpermute(fastf_t *);
+int get_args();
+extern void anim_v_unpermute();
 
 int
-main(int argc, char **argv)
+main(argc,argv)
+int argc;
+char **argv;
 {
 	int c;
 	fastf_t time, viewsize;
 
 	fastf_t eyept[3], viewrot[16], angle[3], quat[4];
-	int anim_mat2ypr(fastf_t *, fastf_t *), anim_mat2zyx(const fastf_t *, fastf_t *), anim_mat2quat(fastf_t *, const fastf_t *);
+	int anim_mat2ypr(), anim_mat2zyx(), anim_mat2quat();
 
 	if (!get_args(argc,argv))
 		fprintf(stderr,"anim_keyread: get_args error");
@@ -126,7 +128,9 @@ main(int argc, char **argv)
 
 #define OPT_STR "yzqr"
 
-int get_args(int argc, char **argv)
+int get_args(argc,argv)
+int argc;
+char **argv;
 {
 
 	int c;

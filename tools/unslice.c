@@ -31,7 +31,7 @@
 #include "rle_code.h"
 #include "rle_raw.h"
 
-void do_slice(int num, char *filename), copy_scanline(int ypos, int copy_flag);
+void do_slice(), copy_scanline();
 
 rle_hdr in_hdr, out_hdr;
 
@@ -54,7 +54,9 @@ char *progname;
 char **gargv;
 
 int
-main(int argc, char **argv)
+main(argc, argv)
+int argc;
+char **argv;
 {
     int nfiles, i;
     char **slicefiles;
@@ -144,7 +146,9 @@ main(int argc, char **argv)
  * Also generate the output header if it's the first file.
  */
 void
-do_slice(int num, char *filename)
+do_slice( num, filename )
+int num;
+char *filename;
 {
     register int y;
     static int current_y = 0;
@@ -249,9 +253,9 @@ do_slice(int num, char *filename)
  * copy_flag is false, scanlines are just eaten away from the input file.
  */
 void
-copy_scanline(int ypos, int copy_flag)
-         
-              			/* If true, write the output */
+copy_scanline( ypos, copy_flag )
+int ypos;
+int copy_flag;			/* If true, write the output */
 {
 
  SKIP_ROW:

@@ -37,10 +37,13 @@ int	optind = 0;	/* Global argv index. */
 
 static char	*scan = NULL;	/* Private scan pointer. */
 
-extern char	*index(const char *, int);
+extern char	*index();
 
 int
-getopt(int argc, char **argv, char *optstring)
+getopt(argc, argv, optstring)
+int argc;
+char *argv[];
+char *optstring;
 {
     register char c;
     register char *place;

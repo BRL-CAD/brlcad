@@ -28,10 +28,13 @@
 #include "../librt/debug.h"
 
 
-void rt_nurb_pbound(struct face_g_snurb *srf, fastf_t *vmin, fastf_t *vmax);
+void rt_nurb_pbound();
 
 struct face_g_snurb *
-rt_nurb_project_srf(const struct face_g_snurb *srf, fastf_t *plane1, fastf_t *plane2, struct resource *res)
+rt_nurb_project_srf( srf, plane1, plane2, res)
+const struct face_g_snurb *srf;
+plane_t plane1, plane2;
+struct resource *res;
 {
 
 	register struct face_g_snurb *psrf;
@@ -119,7 +122,10 @@ struct internal_convex_hull {
 #define SIGN(a)	((a < 0.0)? -1 : 1)
 
 void
-rt_nurb_clip_srf(const struct face_g_snurb *srf, int dir, fastf_t *min, fastf_t *max)
+rt_nurb_clip_srf( srf, dir, min, max)
+const struct face_g_snurb *srf;
+int	dir;
+fastf_t *min, *max;
 {
 	struct internal_convex_hull ch[20]; /* max order is 10 */
 	register fastf_t * mp1;
@@ -285,7 +291,11 @@ rt_nurb_clip_srf(const struct face_g_snurb *srf, int dir, fastf_t *min, fastf_t 
  *			R T _ N U R B _ R E G I O N _ F R O M _ S R F
  */
 struct face_g_snurb *
-rt_nurb_region_from_srf(const struct face_g_snurb *srf, int dir, fastf_t param1, fastf_t param2, struct resource *res)
+rt_nurb_region_from_srf( srf, dir, param1, param2, res)
+const struct face_g_snurb *srf;
+int	dir;
+fastf_t param1, param2;
+struct resource *res;
 {
 	register int	i;
 	struct face_g_snurb *region;
@@ -324,7 +334,12 @@ rt_nurb_region_from_srf(const struct face_g_snurb *srf, int dir, fastf_t param1,
  *			R T _ N U R B _ I N T E R S E C T
  */
 struct rt_nurb_uv_hit *
-rt_nurb_intersect(const struct face_g_snurb *srf, fastf_t *plane1, fastf_t *plane2, double uv_tol, struct resource *res)
+rt_nurb_intersect( srf, plane1, plane2, uv_tol, res )
+const struct face_g_snurb * srf;
+plane_t plane1;
+plane_t plane2;
+double	uv_tol;
+struct resource *res;
 {
 	struct rt_nurb_uv_hit * h;
 	struct face_g_snurb 	* psrf,
@@ -502,7 +517,9 @@ top:
 }
 
 void
-rt_nurb_pbound(struct face_g_snurb *srf, fastf_t *vmin, fastf_t *vmax)
+rt_nurb_pbound( srf, vmin, vmax)
+struct face_g_snurb * srf;
+point_t vmin, vmax;
 {
 	register fastf_t * ptr;
 	register int coords;

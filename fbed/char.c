@@ -35,17 +35,17 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 	char.c - routines for displaying a string on a frame buffer.
  */
 extern void fudge_Pixel();
-extern void fill_buf(register int wid, register int *buf), clear_buf(int wid, register int *buf);
-extern void squash(register int *buf0, register int *buf1, register int *buf2, register float *ret_buf, register int n);
+extern void fill_buf(), clear_buf();
+extern void squash();
 
-STATIC void do_Char(int c, int xpos, int ypos, int odd);
-void menu_char(int x_adjust, int menu_wid, int odd, register unsigned char *menu_border);
+STATIC void do_Char();
+void menu_char();
 
 void
-do_line(int xpos, int ypos, register char *line, RGBpixel (*menu_border))
-               
-                    
-                       /* Menu outline color, if NULL, do filtering. */
+do_line( xpos, ypos, line, menu_border )
+int xpos, ypos;
+register char *line;
+RGBpixel *menu_border; /* Menu outline color, if NULL, do filtering. */
 	{	register int    currx;
 		register int    char_count, char_id;
 		register int len = strlen( line );
@@ -101,7 +101,7 @@ do_line(int xpos, int ypos, register char *line, RGBpixel (*menu_border))
 			menu_char(	currx,
 					ypos,
 					SignedChar(dir[char_id].down) % 2,
-					(unsigned char*)menu_border
+					menu_border
 					);
 		currx += SWABV(dir[char_id].width) + 2;
     		}
@@ -112,8 +112,10 @@ do_line(int xpos, int ypos, register char *line, RGBpixel (*menu_border))
 static int filterbuf[FONTBUFSZ][FONTBUFSZ];
 
 STATIC void
-do_Char(int c, int xpos, int ypos, int odd)
-{	register int    i, j;
+do_Char( c, xpos, ypos, odd )
+int c;
+int xpos, ypos, odd;
+	{	register int    i, j;
 		int base;
 		int     	totwid = width;
 		int     	down;
@@ -175,8 +177,11 @@ do_Char(int c, int xpos, int ypos, int odd)
 	}
 
 void
-menu_char(int x_adjust, int menu_wid, int odd, register unsigned char *menu_border)
-{	register int    i, j, k;
+menu_char( x_adjust, menu_wid, odd, menu_border )
+int x_adjust, menu_wid, odd;
+register
+RGBpixel menu_border;
+	{	register int    i, j, k;
 		int embold = 1;
 		int base;
 		int totwid = width;
@@ -213,8 +218,10 @@ menu_char(int x_adjust, int menu_wid, int odd, register unsigned char *menu_bord
 	Extract a bit field from a bit string.
  */
 int
-bitx(register char *bitstring, register int posn)
-{
+bitx( bitstring, posn )
+register char *bitstring;
+register int posn;
+	{
 #if 0 /* Was #ifdef vax , but doesn't work on 4.3BSD */
    	register field;
 

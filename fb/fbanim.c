@@ -35,7 +35,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 int		sec;
 int		usec;
 
-void		newframe(register int i);
+void		newframe();
 
 FBIO	*fbp;
 int	screen_width;		/* Number of pixels/line in frame buffer */
@@ -58,7 +58,8 @@ Usage: fbanim [-h -i -r -v] [-p passes]\n\
 	subimage_width nframes [fps]\n";
 
 int
-get_args(int argc, register char **argv)
+get_args( argc, argv )
+register char **argv;
 {
 	register int c;
 
@@ -111,7 +112,8 @@ get_args(int argc, register char **argv)
 }
 
 int
-main(int argc, char **argv)
+main(argc, argv )
+char **argv;
 {
 	register int i;
 
@@ -171,7 +173,8 @@ main(int argc, char **argv)
 }
 
 void
-newframe(register int i)
+newframe(i)
+register int i;
 {
 	register int	xPan, yPan;		/* Pan Location */
 	struct timeval tv;

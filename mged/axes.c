@@ -38,8 +38,8 @@ extern point_t es_keypoint;
 extern point_t e_axes_pos;
 extern point_t curr_e_axes_pos;
 
-static void ax_set_dirty_flag(void);
-static void draw_axes(fastf_t *vpos, fastf_t *rot_mat, fastf_t size, int *axes_color, int *label_color, int linewidth);
+static void ax_set_dirty_flag();
+static void draw_axes();
 
 struct _axes_state default_axes_state = {
 /* ax_rc */			1,
@@ -78,7 +78,7 @@ struct bu_structparse axes_vparse[] = {
 };
 
 static void
-ax_set_dirty_flag(void)
+ax_set_dirty_flag()
 {
   struct dm_list *dmlp;
 
@@ -88,7 +88,13 @@ ax_set_dirty_flag(void)
 }
 
 static void
-draw_axes(fastf_t *vpos, fastf_t *rot_mat, fastf_t size, int *axes_color, int *label_color, int linewidth)
+draw_axes(vpos, rot_mat, size, axes_color, label_color, linewidth)
+point_t vpos;
+mat_t rot_mat;
+fastf_t size;
+int *axes_color;
+int *label_color;
+int linewidth;
 {
   register fastf_t half_size;			/* half the length of an axis */
   register fastf_t xlx, xly;			/* X axis label position */
@@ -171,7 +177,7 @@ draw_axes(fastf_t *vpos, fastf_t *rot_mat, fastf_t size, int *axes_color, int *l
 }
 
 void
-draw_e_axes(void)
+draw_e_axes()
 {
 	point_t v_ap1;                 /* axes position in view coordinates */
 	point_t v_ap2;                 /* axes position in view coordinates */
@@ -206,7 +212,7 @@ draw_e_axes(void)
 }
 
 void
-draw_m_axes(void)
+draw_m_axes()
 {
 	point_t m_ap;			/* axes position in model coordinates, mm */
 	point_t v_ap;			/* axes position in view coordinates */
@@ -222,7 +228,7 @@ draw_m_axes(void)
 }
 
 void
-draw_v_axes(void)
+draw_v_axes()
 {
   point_t v_ap;			/* axes position in view coordinates */
 

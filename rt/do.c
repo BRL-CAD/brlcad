@@ -49,8 +49,8 @@ extern mat_t	view2model;
 extern mat_t	model2view;
 /***** end of sharing with viewing model *****/
 
-extern void	grid_setup(void);
-extern void	worker(int cpu, genptr_t arg);
+extern void	grid_setup();
+extern void	worker();
 
 /***** variables shared with worker() ******/
 extern struct application ap;
@@ -104,9 +104,9 @@ extern fastf_t rt_cline_radius;
 /***** end variables shared with g_cline.c ******/
 
 
-void		def_tree(register struct rt_i *rtip);
-void		do_ae(double azim, double elev);
-void		res_pr(void);
+void		def_tree();
+void		do_ae();
+void		res_pr();
 void		memory_summary(void);
 
 /*
@@ -116,7 +116,8 @@ void		memory_summary(void);
  *  Returns -1 if unable to acquire info, 0 if successful.
  */
 int
-old_frame(FILE *fp)
+old_frame( fp )
+FILE *fp;
 {
 	register int i;
 	char number[128];
@@ -147,7 +148,8 @@ old_frame(FILE *fp)
  *  Note that the rewind() will fail on ttys, pipes, and sockets (sigh).
  */
 int
-old_way(FILE *fp)
+old_way( fp )
+FILE *fp;
 {
 	int	c;
 
@@ -506,7 +508,8 @@ int cm_opt(int argc, char **argv)
  *  Load default tree list, from command line.
  */
 void
-def_tree(register struct rt_i *rtip)
+def_tree( rtip )
+register struct rt_i	*rtip;
 {
 	struct bu_vls	times;
 
@@ -530,7 +533,8 @@ def_tree(register struct rt_i *rtip)
  *  This is a separate function primarily as a service to REMRT.
  */
 void
-do_prep(struct rt_i *rtip)
+do_prep( rtip )
+struct rt_i	*rtip;
 {
 	struct bu_vls	times;
 
@@ -572,7 +576,8 @@ rt_pr_cut_info( rtip, "main" );
  *  Returns -1 on error, 0 if OK.
  */
 int
-do_frame(int framenumber)
+do_frame( framenumber )
+int framenumber;
 {
 	struct bu_vls	times;
 	char framename[128];		/* File name to hold current frame */
@@ -949,7 +954,8 @@ do_frame(int framenumber)
  *  X axis, or, rotating the *model* in -X.
  */
 void
-do_ae(double azim, double elev)
+do_ae( azim, elev )
+double azim, elev;
 {
 	vect_t	temp;
 	vect_t	diag;
@@ -1006,7 +1012,7 @@ do_ae(double azim, double elev)
  *			R E S _ P R
  */
 void
-res_pr(void)
+res_pr()
 {
 	register struct resource *res;
 	register int i;

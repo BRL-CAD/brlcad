@@ -30,14 +30,16 @@ int	mode = 0;
 FBIO	*fbp;
 int	fbsize = 512;
 
-void	lineout(double *dat, int n);
-void	disp_inten(double *buf, int size);
-void	disp_bars(double *buf, int size);
+void	lineout();
+void	disp_inten();
+void	disp_bars();
 
 static char usage[] = "\
 Usage: ddisp [-v -b -p -c -h] [width (512)]\n";
 
-int main(int argc, char **argv)
+int main( argc, argv )
+int	argc;
+char	**argv;
 {
 	int	n, L;
 
@@ -92,7 +94,9 @@ int main(int argc, char **argv)
 }
 
 void
-lineout(double *dat, int n)
+lineout( dat, n )
+double dat[];
+int n;
 {
 	static	int	y = 0;
 	int	i, value;
@@ -118,7 +122,9 @@ lineout(double *dat, int n)
  *  +/- 1.0 in, becomes +/- 128 from center Y.
  */
 void
-disp_inten(double *buf, int size)
+disp_inten( buf, size )
+double	buf[];
+int size;
 {
 	int	x, y;
 	RGBpixel color;
@@ -144,7 +150,9 @@ disp_inten(double *buf, int size)
  *  +/- 1.0 in, becomes +/- 128 from center Y.
  */
 void
-disp_bars(double *buf, int size)
+disp_bars( buf, size )
+double	buf[];
+int size;
 {
 	int	x, y;
 	RGBpixel color;

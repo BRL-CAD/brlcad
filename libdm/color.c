@@ -6,17 +6,17 @@
 #include "bu.h"
 #include "dm_color.h"
 
-unsigned long dm_get_pixel(unsigned char r, unsigned char g, unsigned char b, long unsigned int *pixels, int cd);
-void dm_copy_cmap(Display *dpy, Colormap dest, Colormap src, int low, int hi, int store);
-void dm_allocate_color_cube(Display *dpy, Colormap cmap, long unsigned int *pixels, int cd, int cmap_base, int store);
+unsigned long dm_get_pixel();
+void dm_copy_cmap();
+void dm_allocate_color_cube();
 
 /* Return the allocated pixel value that most closely represents
 the color requested. */
 unsigned long
-dm_get_pixel(unsigned char r, unsigned char g, unsigned char b, long unsigned int *pixels, int cd)
-                        /* values assumed to be [0,255] */
-                      
-        /* cube dimension */
+dm_get_pixel(r, g, b, pixels, cd)
+unsigned char r, g, b;  /* values assumed to be [0,255] */
+unsigned long *pixels;
+int cd; /* cube dimension */
 {
   fastf_t f;
   int rf, gf, bf;
@@ -50,7 +50,11 @@ dm_get_pixel(unsigned char r, unsigned char g, unsigned char b, long unsigned in
  * Alloc/Store (hi - low) colors from src colormap into dest.
  */
 void
-dm_copy_cmap(Display *dpy, Colormap dest, Colormap src, int low, int hi, int store)
+dm_copy_cmap(dpy, dest, src, low, hi, store)
+Display *dpy;
+Colormap dest, src;
+int low, hi;
+int store;
 {
   int i;
   int ncolors;
@@ -75,13 +79,13 @@ dm_copy_cmap(Display *dpy, Colormap dest, Colormap src, int low, int hi, int sto
 }
 
 void
-dm_allocate_color_cube(Display *dpy, Colormap cmap, long unsigned int *pixels, int cd, int cmap_base, int store)
-             
-              
-                      
-          /* cube dimension */
-              
-          
+dm_allocate_color_cube(dpy, cmap, pixels, cd, cmap_base, store)
+Display *dpy;
+Colormap cmap;
+unsigned long *pixels;
+int cd;   /* cube dimension */
+int cmap_base;
+int store;
 {
   XColor color;
   Colormap default_cmap;

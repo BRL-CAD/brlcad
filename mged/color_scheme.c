@@ -233,7 +233,7 @@ struct bu_structparse color_scheme_vparse[] = {
 };
 
 void
-cs_set_dirty_flag(void)
+cs_set_dirty_flag()
 {
   struct dm_list *dmlp;
 
@@ -243,7 +243,7 @@ cs_set_dirty_flag(void)
 }
 
 void
-cs_update(void)
+cs_update()
 {
   register struct bu_structparse *sp;
   struct bu_vls vls;
@@ -267,7 +267,7 @@ cs_update(void)
 }
 
 void
-cs_set_bg(void)
+cs_set_bg()
 {
   struct dm_list *dmlp;
   struct dm_list *save_curr_dmlp = curr_dm_list;

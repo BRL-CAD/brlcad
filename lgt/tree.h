@@ -91,10 +91,10 @@ F_Hdr_Ptlist;
 #define IR_EDIT		(1<<1) /* Edit IR data base.			*/
 #define IR_OCTREE	(1<<2) /* If ON, display octree, else GED model.*/
 
-extern OcList		*get_Region_Name(char *inbuf, int bufsz, char *msg);
-extern Octree		*find_Octant(register Octree *parentp, register fastf_t *pt, register int *levelp);
-extern Octree		*add_Region_Octree(Octree *parentp, fastf_t *pt, Trie *triep, int temp, int level);
-extern Trie		*add_Trie(register char *name, register Trie **triepp);
+extern OcList		*get_Region_Name();
+extern Octree		*find_Octant();
+extern Octree		*add_Region_Octree();
+extern Trie		*add_Trie();
 
 extern Octree		ir_octree;
 extern Trie		*reg_triep;

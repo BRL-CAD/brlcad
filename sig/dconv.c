@@ -36,13 +36,15 @@ double	savebuffer[MAXM-1];
 double	xbuf[2*MAXM];
 double	ibuf[2*MAXM];		/* impulse response */
 
-void	mult(double *o, double *b, int n);
+void	mult();
 
 static char usage[] = "\
 Usage: dconv filter < doubles > doubles\n\
  XXX Warning: kernal size must be 2^i - 1\n";
 
-int main(int argc, char **argv)
+int main( argc, argv )
+int	argc;
+char	**argv;
 {
 	int	i;
 	int	N, M, L;
@@ -130,7 +132,9 @@ M += 1;
  *    so for: 0 < i < n/2, (x[i],x[n-i]) is a complex pair.
  */
 void
-mult(double *o, double *b, int n)
+mult( o, b, n )
+double	o[], b[];
+int	n;
 {
 	int	i;
 	double	r;

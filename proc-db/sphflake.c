@@ -62,7 +62,7 @@
 #define MAX_INPUT_LENGTH 48
 
 extern char *optarg;
-extern int optind, opterr, getopt(int, char *const *, const char *);
+extern int optind, opterr, getopt();
 
 struct depthMat { 
   char name[MAX_INPUT_LENGTH];
@@ -116,7 +116,9 @@ BU_EXTERN(void makeFlake, (int depth, mat_t *trans, point_t center, fastf_t radi
 BU_EXTERN(void usage, (char *n));
 
 
-int main(int argc, char **argv)
+int main(argc, argv)
+     int argc;
+     char **argv;
 {
   int i;
   int optc;
@@ -214,7 +216,8 @@ int main(int argc, char **argv)
   return 0;
 }
 
-void usage(char *n)
+void usage(n)
+     char *n;
 {
   printf(
 	 "\nUSAGE: %s -D -d# -i -f fileName\n\
@@ -224,7 +227,11 @@ void usage(char *n)
           f -- specify output file\n\n", n);
 }
 
-void initializeInfo(params_t *p, int inter, char *name, int depth)
+void initializeInfo(p, inter, name, depth)
+     params_t *p;
+     int inter;
+     char *name;
+     int depth;
 {
   char input[MAX_INPUT_LENGTH];
   int i = 0;
@@ -379,7 +386,8 @@ void initializeInfo(params_t *p, int inter, char *name, int depth)
   MAT_IDN(IDENT);
 }
 
-void createSphereflake(params_t *p)
+void createSphereflake(p)
+     params_t *p;
 {
   mat_t trans;
   char name[MAX_INPUT_LENGTH];
@@ -402,7 +410,8 @@ void createSphereflake(params_t *p)
   
 }
 
-void createLights(params_t *p)
+void createLights(p)
+     params_t *p;
 {
   char name[MAX_INPUT_LENGTH];
   point_t lPos;
@@ -443,7 +452,8 @@ void createLights(params_t *p)
   printf("\nLights created");
 }
 
-void createPlane(params_t *p)
+void createPlane(p)
+     params_t *p;
 {
   char name[MAX_INPUT_LENGTH];
   point_t lPos;
@@ -461,7 +471,8 @@ void createPlane(params_t *p)
   printf("\nPlane created");
 }
 
-void createEnvironMap(params_t *p)
+void createEnvironMap(p)
+     params_t *p;
 {
   char name[MAX_INPUT_LENGTH];
   
@@ -476,7 +487,8 @@ void createEnvironMap(params_t *p)
   
 }
 
-void createScene(params_t *p)
+void createScene(p)
+     params_t *p;
 {
   int i;
   char name[MAX_INPUT_LENGTH];
@@ -497,7 +509,9 @@ void createScene(params_t *p)
   printf("\nScene created (FILE: %s)\n", p->fileName);
 }
 
-void printMatrix(char *n, fastf_t *m)
+void printMatrix(n, m)
+     char *n;
+     mat_t m;
 {
   int i = 0;
   printf("\n-----%s------\n", n);
@@ -508,7 +522,11 @@ void printMatrix(char *n, fastf_t *m)
   printf("\n-----------\n");
 }
 
-void getTrans(mat_t (*t), int theta, int phi, fastf_t radius)
+void getTrans(t, theta, phi, radius)
+     mat_t *t;
+     int theta;
+     int phi;
+     fastf_t radius;
 {
   mat_t z;
   mat_t y;
@@ -533,7 +551,9 @@ void getTrans(mat_t (*t), int theta, int phi, fastf_t radius)
   memcpy(*t, newPos, sizeof(newPos));
 }
 
-void getYRotMat(mat_t (*t), fastf_t theta)
+void getYRotMat(t, theta)
+     mat_t *t;
+     fastf_t theta;
 {
   fastf_t sin_ = sin(D2R(theta));
   fastf_t cos_ = cos(D2R(theta));
@@ -548,7 +568,9 @@ void getYRotMat(mat_t (*t), fastf_t theta)
   memcpy(*t, r, sizeof(*t));
 }
 
-void getZRotMat(mat_t (*t), fastf_t phi)
+void getZRotMat(t, phi)
+     mat_t *t;
+     fastf_t phi;
 {
   fastf_t sin_ = sin(D2R(phi));
   fastf_t cos_ = cos(D2R(phi));
@@ -568,7 +590,13 @@ void makeFlake(int depth, mat_t *trans, point_t center, fastf_t radius, float de
 */
 
 
-void makeFlake(int depth, mat_t (*trans), fastf_t *center, fastf_t radius, double delta, int maxDepth)
+void makeFlake(depth, trans, center, radius, delta, maxDepth)
+     int depth;
+     mat_t *trans;
+     point_t center;
+     fastf_t radius;
+     double delta;
+     int maxDepth;
 {
   char name[MAX_INPUT_LENGTH];
   int i = 0;

@@ -39,7 +39,10 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
  *  Upon return, the virtual pen is left at the "to" position.
  */
 void
-tp_3vector(FILE *plotfp, fastf_t *from, fastf_t *to, double fromheadfract, double toheadfract)
+tp_3vector( plotfp, from, to, fromheadfract, toheadfract )
+FILE	*plotfp;
+point_t	from, to;
+double	fromheadfract, toheadfract;
 {
 	register fastf_t	len;
 	register fastf_t	hooklen;

@@ -43,15 +43,16 @@ static char	*framebuffer = NULL;
 static int	scr_width = 0;		/* screen tracks file if not given */
 static int	scr_height = 0;
 
-void	usage(void), usage_new(void), usage_record(void), usage_seq(void);
-void	program_recording(int new, int scene_number, int start_frame), record_add_to_scene(int number_of_frames), do_record(int wait);
-void	get_tape_position(void);
+void	usage(), usage_new(), usage_record(), usage_seq();
+void	program_recording(), record_add_to_scene(), do_record();
+void	get_tape_position();
 
 /*
  *			G E T _ A R G S
  */
 int
-get_args(int argc, register char **argv)
+get_args( argc, argv )
+register char **argv;
 {
 	register int c;
 
@@ -97,7 +98,9 @@ get_args(int argc, register char **argv)
  *			M A I N
  */
 int
-main(int argc, char **argv)
+main(argc, argv)
+int argc;
+char **argv;
 {
 	register FBIO	*fbp = FBIO_NULL;
 	int scene_number = 1;
@@ -302,7 +305,7 @@ done:
 }
 
 void
-usage(void)
+usage()
 {
 	fprintf(stderr,"Usage: vas4 [-d] [-h] [-F framebuffer]\n");
 	fprintf(stderr,"	[-{sS} squarescrsize] [-{wW} scr_width] [-{nN} scr_height]\n");
@@ -325,7 +328,7 @@ usage(void)
 }
 
 void
-usage_new(void)
+usage_new()
 {
 	fprintf(stderr,"Usage: vas4 new [sn]\n");
 	fprintf(stderr,"\t[sn]\tscene number must be >= 1\n");
@@ -333,7 +336,7 @@ usage_new(void)
 }
 
 void
-usage_record(void)
+usage_record()
 {
 	fprintf(stderr,"Usage: vas4 record [nf]\n");
 	fprintf(stderr,"\t[nf]\tnumber of frames must be >= 1\n");
@@ -341,7 +344,7 @@ usage_record(void)
 }
 
 void
-usage_seq(void)
+usage_seq()
 {
 	fprintf(stderr,"Usage: vas4 sequence [n nf] [start]\n");
 	fprintf(stderr,"\t[n nf]\tthe number of images n must be > 1\n");
@@ -356,13 +359,16 @@ usage_seq(void)
  *			P R O G R A M _ R E C O R D I N G
  */
 void
-program_recording(int new, int scene_number, int start_frame)
+program_recording(new, scene_number, start_frame)
+int	new;
+int	scene_number;
+int	start_frame;
 {
 	int number_of_frames = 1;
 
 	/* Enter VAS IV program mode */	
 	vas_putc(C_PROGRAM);
-	vas_await(R_PROGRAM, 0);
+	vas_await(R_PROGRAM);
 
 	vas_putnum(number_of_frames);
 	vas_putc(C_ENTER);
@@ -405,7 +411,8 @@ program_recording(int new, int scene_number, int start_frame)
  *			R E C O R D _ A D D _ T O _ S C E N E
  */
 void
-record_add_to_scene(int number_of_frames)
+record_add_to_scene(number_of_frames)
+int number_of_frames;
 {
 	vas_putc(C_FRAME_CHANGE);
 	vas_putnum(number_of_frames);
@@ -437,7 +444,7 @@ record_add_to_scene(int number_of_frames)
  *  the tape backspace time.
  */
 void
-do_record(int wait)
+do_record(wait)
 {
 	register int c;
 
@@ -483,7 +490,8 @@ do_record(int wait)
  *  It is unclear what modes this is safe in
  */
 int
-search_frame(int frame)
+search_frame(frame)
+int	frame;
 {
 	int	reply;
 
@@ -506,7 +514,7 @@ search_frame(int frame)
  *  This is only safe when the tape is playing or not moving.
  */
 int
-reset_tape_time(void)
+reset_tape_time()
 {
 	vas_putc(C_RESET_TAPETIME);
 	return(0);
@@ -521,7 +529,7 @@ reset_tape_time(void)
  *  It is unclear what modes this is safe in
  */
 int
-time0(void)
+time0()
 {
 	int	reply;
 
@@ -542,7 +550,7 @@ time0(void)
  *	>0	VAS is ready, value is return code
  */
 int
-get_vas_status(void)
+get_vas_status()
 {
 	int	reply;
 
@@ -565,7 +573,8 @@ get_vas_status(void)
  *	-1	problems (with description)
  */
 int
-get_vtr_status(int chatter)
+get_vtr_status(chatter)
+int	chatter;
 {
 	char	buf[4];
 
@@ -602,7 +611,7 @@ get_vtr_status(int chatter)
 }
 
 int
-get_frame_code(void)
+get_frame_code()
 {
 	int	status;
 	char	scene[4];
@@ -631,7 +640,7 @@ get_frame_code(void)
 }
 
 void
-get_tape_position(void)
+get_tape_position()
 {
 	char	buf[9];
 	int	i;
@@ -659,7 +668,8 @@ get_tape_position(void)
  *  "32sec" and "3min" are fine.
  */
 int
-str2frames(char *str)
+str2frames(str)
+char	*str;
 {
 	int	num;
 	char	suffix[32];

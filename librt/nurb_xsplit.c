@@ -40,7 +40,10 @@
  */
 
 struct face_g_snurb *
-rt_nurb_s_xsplit(struct face_g_snurb *srf, fastf_t param, int dir)
+rt_nurb_s_xsplit( srf, param, dir)
+struct face_g_snurb * srf;
+fastf_t param;
+int dir;
 {
 	struct knot_vector new_kv;
 	struct oslo_mat * oslo;
@@ -216,7 +219,9 @@ rt_nurb_s_xsplit(struct face_g_snurb *srf, fastf_t param, int dir)
  */
 
 struct edge_g_cnurb *
-rt_nurb_c_xsplit(struct edge_g_cnurb *crv, fastf_t param)
+rt_nurb_c_xsplit( crv, param)
+struct edge_g_cnurb * crv;
+fastf_t param;
 {
 	struct knot_vector new_kv;
 	struct oslo_mat * oslo;

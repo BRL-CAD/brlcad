@@ -2,7 +2,7 @@
 
 short ibuf[1024];
 
-int main(void)
+int main()
 {
 	int n, i;
 

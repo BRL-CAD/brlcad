@@ -33,7 +33,13 @@
  */
 
 void
-rt_nurb_kvknot(register struct knot_vector *new_knots, int order, fastf_t lower, fastf_t upper, int num, struct resource *res)
+rt_nurb_kvknot( new_knots, order, lower, upper, num, res)
+register struct knot_vector *new_knots;
+int	order;
+fastf_t lower;
+fastf_t upper;
+int	num;
+struct resource *res;
 {
 	register int	i;
 	int	total;
@@ -65,7 +71,12 @@ rt_nurb_kvknot(register struct knot_vector *new_knots, int order, fastf_t lower,
  * val already is a multiple knot. 
  */
 void
-rt_nurb_kvmult(struct knot_vector *new_kv, const struct knot_vector *kv, int num, register fastf_t val, struct resource *res)
+rt_nurb_kvmult( new_kv, kv, num, val, res)
+struct knot_vector	*new_kv;
+const struct knot_vector *kv;
+int			num;
+register fastf_t	val;
+struct resource *res;
 {
 	int	n;
 	register int	i;
@@ -100,7 +111,11 @@ rt_nurb_kvmult(struct knot_vector *new_kv, const struct knot_vector *kv, int num
  */
 
 void
-rt_nurb_kvgen(register struct knot_vector *kv, fastf_t lower, fastf_t upper, int num, struct resource *res)
+rt_nurb_kvgen( kv, lower, upper, num, res)
+register struct knot_vector *kv;
+int	num;
+fastf_t lower, upper;
+struct resource *res;
 {
 	register int	i;
 	register fastf_t inc;
@@ -123,7 +138,11 @@ rt_nurb_kvgen(register struct knot_vector *kv, fastf_t lower, fastf_t upper, int
  */
 
 void
-rt_nurb_kvmerge(struct knot_vector *new_knots, const struct knot_vector *kv1, const struct knot_vector *kv2, struct resource *res)
+rt_nurb_kvmerge( new_knots, kv1, kv2, res )
+struct knot_vector *new_knots;
+const struct knot_vector *kv1;
+const struct knot_vector *kv2;
+struct resource *res;
 {
 	int	kv1_ptr = 0;
 	int	kv2_ptr = 0;
@@ -154,7 +173,9 @@ rt_nurb_kvmerge(struct knot_vector *new_knots, const struct knot_vector *kv1, co
  */
 
 int
-rt_nurb_kvcheck(fastf_t val, register const struct knot_vector *kv)
+rt_nurb_kvcheck( val, kv)
+fastf_t val;
+register const struct knot_vector *kv;
 {
 	register int	kv_num = 0;
 	register int	i;
@@ -174,7 +195,11 @@ rt_nurb_kvcheck(fastf_t val, register const struct knot_vector *kv)
  */
 
 void
-rt_nurb_kvextract(struct knot_vector *new_kv, register const struct knot_vector *kv, int lower, int upper, struct resource *res)
+rt_nurb_kvextract( new_kv, kv, lower, upper, res)
+struct knot_vector	*new_kv;
+register const struct knot_vector *kv;
+int	upper, lower;
+struct resource *res;
 {
 	register int	i;
 	register fastf_t *ptr;
@@ -196,7 +221,10 @@ rt_nurb_kvextract(struct knot_vector *new_kv, register const struct knot_vector 
  */
 
 void
-rt_nurb_kvcopy(struct knot_vector *new_kv, register const struct knot_vector *old_kv, struct resource *res)
+rt_nurb_kvcopy( new_kv, old_kv, res )
+struct knot_vector	*new_kv;
+register const struct knot_vector *old_kv;
+struct resource *res;
 {
 	register int	i;
 
@@ -216,7 +244,8 @@ rt_nurb_kvcopy(struct knot_vector *new_kv, register const struct knot_vector *ol
 
 /* XXX Need to check to see if the lower value is zero */
 void
-rt_nurb_kvnorm(register struct knot_vector *kv)
+rt_nurb_kvnorm( kv )
+register struct knot_vector *kv;
 {
 	register fastf_t upper;
 	register int	i;
@@ -239,7 +268,10 @@ rt_nurb_kvnorm(register struct knot_vector *kv)
  */
 
 int
-rt_nurb_knot_index(const struct knot_vector *kv, fastf_t k_value, int order)
+rt_nurb_knot_index( kv, k_value, order)
+const struct knot_vector *kv;
+fastf_t k_value;
+int	order;
 {
 	int	i;
 	fastf_t  knt;
@@ -282,7 +314,12 @@ rt_nurb_knot_index(const struct knot_vector *kv, fastf_t k_value, int order)
  */
 
 void
-rt_nurb_gen_knot_vector(register struct knot_vector *new_knots, int order, fastf_t lower, fastf_t upper, struct resource *res)
+rt_nurb_gen_knot_vector( new_knots, order, lower, upper, res)
+register struct knot_vector *new_knots;
+int		order;
+fastf_t		lower;
+fastf_t		upper;
+struct resource *res;
 {
     register int i;
     int total;

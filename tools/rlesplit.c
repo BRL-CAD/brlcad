@@ -59,7 +59,9 @@
  */
 
 int
-main(int argc, char **argv)
+main( argc, argv )
+int argc;
+char **argv;
 {
     register const char * cp, * slashp;
     int num = 1, oflag = 0, digits = 3;

@@ -168,7 +168,10 @@ struct rec_specific {
  *	If the TGC is really an REC, stp->st_id is modified to ID_REC.
  */
 int
-rt_rec_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
+rt_rec_prep( stp, ip, rtip )
+struct soltab		*stp;
+struct rt_db_internal	*ip;
+struct rt_i		*rtip;
 {
 	struct rt_tgc_internal	*tip;
 	register struct rec_specific *rec;
@@ -359,7 +362,8 @@ rt_rec_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
  *  			R E C _ P R I N T
  */
 void
-rt_rec_print(register const struct soltab *stp)
+rt_rec_print( stp )
+register const struct soltab *stp;
 {
 	register const struct rec_specific *rec =
 		(struct rec_specific *)stp->st_specific;
@@ -388,7 +392,11 @@ rt_rec_print(register const struct soltab *stp)
  *	>0	HIT
  */
 int
-rt_rec_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
+rt_rec_shot( stp, rp, ap, seghead )
+struct soltab		*stp;
+register struct xray	*rp;
+struct application	*ap;
+struct seg		*seghead;
 {
 	register struct rec_specific *rec =
 		(struct rec_specific *)stp->st_specific;
@@ -550,12 +558,12 @@ hit:
  *  This is the Becker vector version
  */
 void
-rt_rec_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
-             	               /* An array of solid pointers */
-           		       /* An array of ray pointers */
-                               /* array of segs (results returned) */
-   		  	       /* Number of ray/object pairs */
-                  	    
+rt_rec_vshot( stp, rp, segp, n, ap )
+struct soltab	       *stp[]; /* An array of solid pointers */
+struct xray		*rp[]; /* An array of ray pointers */
+struct  seg            segp[]; /* array of segs (results returned) */
+int		  	    n; /* Number of ray/object pairs */
+struct application	*ap;
 {
 	register int    i;
 	register struct rec_specific *rec;
@@ -675,7 +683,10 @@ check_plates:
  *  hit_surfno is a flag indicating if normal needs to be computed or not.
  */
 void
-rt_rec_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
+rt_rec_norm( hitp, stp, rp )
+register struct hit *hitp;
+struct soltab *stp;
+register struct xray *rp;
 {
 	register struct rec_specific *rec =
 		(struct rec_specific *)stp->st_specific;
@@ -710,7 +721,10 @@ rt_rec_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
  *  Normal must have been computed before calling this routine.
  */
 void
-rt_rec_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
+rt_rec_curve( cvp, hitp, stp )
+register struct curvature *cvp;
+register struct hit *hitp;
+struct soltab *stp;
 {
 	register struct rec_specific *rec =
 		(struct rec_specific *)stp->st_specific;
@@ -751,7 +765,11 @@ rt_rec_curve(register struct curvature *cvp, register struct hit *hitp, struct s
  *  v is the displacement along H.
  */
 void
-rt_rec_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
+rt_rec_uv( ap, stp, hitp, uvp )
+struct application *ap;
+struct soltab *stp;
+register struct hit *hitp;
+register struct uvcoord *uvp;
 {
 	register struct rec_specific *rec =
 		(struct rec_specific *)stp->st_specific;
@@ -817,7 +835,8 @@ rt_rec_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
  *			R E C _ F R E E
  */
 void
-rt_rec_free(struct soltab *stp)
+rt_rec_free( stp )
+struct soltab *stp;
 {
 	register struct rec_specific *rec =
 		(struct rec_specific *)stp->st_specific;
@@ -826,7 +845,7 @@ rt_rec_free(struct soltab *stp)
 }
 
 int
-rt_rec_class(void)
+rt_rec_class()
 {
 	return(0);
 }

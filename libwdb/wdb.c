@@ -52,7 +52,11 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
  *  outward pointing normal vector.
  */
 int
-mk_half(struct rt_wdb *wdbp, const char *name, const fastf_t *norm, double d)
+mk_half( wdbp, name, norm, d )
+struct rt_wdb	*wdbp;
+const char		*name;
+const vect_t	norm;
+double		d;
 {
 	struct rt_half_internal		*half;
 
@@ -95,7 +99,11 @@ mk_grip(
  *  Make a right parallelpiped.  Specified by minXYZ, maxXYZ.
  */
 int
-mk_rpp(struct rt_wdb *wdbp, const char *name, const fastf_t *min, const fastf_t *max)
+mk_rpp( wdbp, name, min, max )
+struct rt_wdb		*wdbp;
+const char		*name;
+const point_t	min;
+const point_t	max;
 {
 	point_t	pt8[8];
 
@@ -121,7 +129,16 @@ mk_rpp(struct rt_wdb *wdbp, const char *name, const fastf_t *min, const fastf_t 
  *  x length for the top.  The y direcion vector is x cross z.
  */
 int
-mk_wedge(struct rt_wdb *wdbp, const char *name, const fastf_t *vert, const fastf_t *xdirv, const fastf_t *zdirv, fastf_t xlen, fastf_t ylen, fastf_t zlen, fastf_t x_top_len)
+mk_wedge(wdbp, name, vert, xdirv, zdirv, xlen, ylen, zlen, x_top_len)
+struct rt_wdb		*wdbp;
+const char		*name;
+const point_t	vert;
+const vect_t	xdirv;
+const vect_t	zdirv;
+fastf_t		xlen;
+fastf_t		ylen;
+fastf_t		zlen;
+fastf_t		x_top_len;
 {
 	point_t		pts[8];		/* vertices for the wedge */
 	vect_t		xvec;		/* x_axis vector */
@@ -168,10 +185,10 @@ mk_wedge(struct rt_wdb *wdbp, const char *name, const fastf_t *vert, const fastf
  *			M K _ A R B 4
  */
 int
-mk_arb4(struct rt_wdb *wdbp, const char *name, const fastf_t *pts)
-             		      
-          		      
-             	     	/* [4*3] */
+mk_arb4( wdbp, name, pts )
+struct rt_wdb		*wdbp;
+const char		*name;
+const fastf_t	*pts;	/* [4*3] */
 {
 	point_t	pt8[8];
 
@@ -199,10 +216,10 @@ mk_arb4(struct rt_wdb *wdbp, const char *name, const fastf_t *pts)
  *  the second four points listed must lie on the other plate.
  */
 int
-mk_arb8(struct rt_wdb *wdbp, const char *name, const fastf_t *pts)
-             		      
-          		      
-             	     		/* [24] */
+mk_arb8( wdbp, name, pts )
+struct rt_wdb		*wdbp;
+const char		*name;
+const fastf_t	*pts;		/* [24] */
 {
 	register int i;
 	struct rt_arb_internal	*arb;
@@ -223,7 +240,11 @@ mk_arb8(struct rt_wdb *wdbp, const char *name, const fastf_t *pts)
  *  Make a sphere with the given center point and radius.
  */
 int
-mk_sph(struct rt_wdb *wdbp, const char *name, const fastf_t *center, fastf_t radius)
+mk_sph( wdbp, name, center, radius )
+struct rt_wdb		*wdbp;
+const char		*name;
+const point_t	center;
+fastf_t		radius;
 {
 	struct rt_ell_internal	*ell;
 
@@ -245,7 +266,11 @@ mk_sph(struct rt_wdb *wdbp, const char *name, const fastf_t *center, fastf_t rad
  *  lengths of the three radius vectors.
  */
 int
-mk_ell(struct rt_wdb *wdbp, const char *name, const fastf_t *center, const fastf_t *a, const fastf_t *b, const fastf_t *c)
+mk_ell( wdbp, name, center, a, b, c )
+struct rt_wdb		*wdbp;
+const char		*name;
+const point_t	center;
+const vect_t	a, b, c;
 {
 	struct rt_ell_internal	*ell;
 
@@ -267,7 +292,12 @@ mk_ell(struct rt_wdb *wdbp, const char *name, const fastf_t *center, const fastf
  *  r2: radius of solid part.
  */
 int
-mk_tor(struct rt_wdb *wdbp, const char *name, const fastf_t *center, const fastf_t *inorm, double r1, double r2)
+mk_tor( wdbp, name, center, inorm, r1, r2 )
+struct rt_wdb		*wdbp;
+const char		*name;
+const point_t	center;
+const vect_t	inorm;
+double		r1, r2;
 {
 	struct rt_tor_internal	*tor;
 
@@ -287,7 +317,12 @@ mk_tor(struct rt_wdb *wdbp, const char *name, const fastf_t *center, const fastf
  *  Make a Right Circular Cylinder (special case of the TGC).
  */
 int
-mk_rcc(struct rt_wdb *wdbp, const char *name, const fastf_t *base, const fastf_t *height, fastf_t radius)
+mk_rcc( wdbp, name, base, height, radius )
+struct rt_wdb		*wdbp;
+const char		*name;
+const point_t	base;
+const vect_t	height;
+fastf_t		radius;
 {
 	vect_t	cross1, cross2;
 	vect_t	a, b;
@@ -312,7 +347,15 @@ mk_rcc(struct rt_wdb *wdbp, const char *name, const fastf_t *base, const fastf_t
  *  Make a Truncated General Cylinder.
  */
 int
-mk_tgc(struct rt_wdb *wdbp, const char *name, const fastf_t *base, const fastf_t *height, const fastf_t *a, const fastf_t *b, const fastf_t *c, const fastf_t *d)
+mk_tgc( wdbp, name, base, height, a, b, c, d )
+struct rt_wdb		*wdbp;
+const char		*name;
+const point_t	base;
+const vect_t	height;
+const vect_t	a;
+const vect_t	b;
+const vect_t	c;
+const vect_t	d;
 {
 	struct rt_tgc_internal	*tgc;
 
@@ -336,7 +379,14 @@ mk_tgc(struct rt_wdb *wdbp, const char *name, const fastf_t *base, const fastf_t
  *  cone.
  */
 int
-mk_cone(struct rt_wdb *wdbp, const char *name, const fastf_t *base, const fastf_t *dirv, fastf_t height, fastf_t rad1, fastf_t rad2)
+mk_cone( wdbp, name, base, dirv, height, rad1, rad2)
+struct rt_wdb		*wdbp;
+const char		*name;
+const point_t	base;
+const vect_t	dirv;
+fastf_t		height;
+fastf_t		rad1;
+fastf_t		rad2;
 {
 	vect_t		a, avec;	/* one base radius vector */
 	vect_t		b, bvec;	/* another base radius vector */
@@ -375,7 +425,13 @@ mk_cone(struct rt_wdb *wdbp, const char *name, const fastf_t *base, const fastf_
  *  of that name with different calling sequence.
  */
 int
-mk_trc_h(struct rt_wdb *wdbp, const char *name, const fastf_t *base, const fastf_t *height, fastf_t radbase, fastf_t radtop)
+mk_trc_h( wdbp, name, base, height, radbase, radtop )
+struct rt_wdb		*wdbp;
+const char		*name;
+const point_t	base;
+const vect_t	height;
+fastf_t		radbase;
+fastf_t		radtop;
 {
 	vect_t	cross1, cross2;
 	vect_t	a, b, c, d;
@@ -403,7 +459,13 @@ mk_trc_h(struct rt_wdb *wdbp, const char *name, const fastf_t *base, const fastf
  *  Convenience wrapper for mk_trc_h().
  */
 int
-mk_trc_top(struct rt_wdb *wdbp, const char *name, const fastf_t *ibase, const fastf_t *itop, fastf_t radbase, fastf_t radtop)
+mk_trc_top( wdbp, name, ibase, itop, radbase, radtop )
+struct rt_wdb		*wdbp;
+const char		*name;
+const point_t	ibase;
+const point_t	itop;
+fastf_t		radbase;
+fastf_t		radtop;
 {
 	vect_t	height;
 

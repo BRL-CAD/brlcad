@@ -30,13 +30,13 @@ typedef struct
 	} Mat_Db_Entry;
 #define MAT_DB_NULL	(Mat_Db_Entry *) NULL
 
-extern Mat_Db_Entry	*mat_Get_Db_Entry(int id);
-extern int		fb_Entry(struct uvcoord *uvp, Mat_Db_Entry *entry);
-extern int		mat_Print_Db(int material_id);
-extern int		mat_Rd_Db(char *file);
-extern int		mat_Save_Db(char *file);
-extern int		mat_Edit_Db_Entry(int id);
-extern int		mat_Print_Db(int material_id);
+extern Mat_Db_Entry	*mat_Get_Db_Entry();
+extern int		fb_Entry();
+extern int		mat_Print_Db();
+extern int		mat_Rd_Db();
+extern int		mat_Save_Db();
+extern int		mat_Edit_Db_Entry();
+extern int		mat_Print_Db();
 
 extern Mat_Db_Entry	mat_dfl_entry;
 

@@ -32,7 +32,10 @@ static const char libbu_htond_RCSid[] = "@(#)$Header$ (BRL)";
  *  Host to Network Floats
  */
 void
-htonf(register unsigned char *out, register const unsigned char *in, int count)
+htonf( out, in, count )
+register unsigned char	*out;
+register const unsigned char	*in;
+int			count;
 {
 #if	defined(NATURAL_IEEE)
 	/*
@@ -77,7 +80,10 @@ htonf(register unsigned char *out, register const unsigned char *in, int count)
  *  Network to Host Floats
  */
 void
-ntohf(register unsigned char *out, register const unsigned char *in, int count)
+ntohf( out, in, count )
+register unsigned char	*out;
+register const unsigned char	*in;
+int			count;
 {
 #ifdef NATURAL_IEEE
 	/*

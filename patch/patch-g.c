@@ -61,17 +61,17 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #define ABS( _x )	(( _x > 0.0 )? _x : (-_x))
 
-void	proc_plate(int cnt);
-void	proc_label(char *labelfile);
-void	proc_triangle(int cnt);
-void	proc_wedge(int cnt);
-void	proc_sphere(int cnt);
-void	proc_box(int cnt);
-void	proc_cylin(int cnt);
-void	proc_rod(int cnt);
-void	set_color(int color);
-void	mk_cyladdmember(char *name1, struct wmember *head, struct subtract_list *slist, int mirflag);
-void	proc_donut(int cnt);
+void	proc_plate();
+void	proc_label();
+void	proc_triangle();
+void	proc_wedge();
+void	proc_sphere();
+void	proc_box();
+void	proc_cylin();
+void	proc_rod();
+void	set_color();
+void	mk_cyladdmember();
+void	proc_donut();
 
 static struct bn_tol	tol;
 static int scratch_num;
@@ -105,7 +105,9 @@ int pt_inside( point_t a, point_t base, point_t top, double rad1, double rad2 );
  *			M A I N
  */
 int
-main(int argc, char **argv)
+main(argc,argv)
+int	argc;
+char	*argv[];
 {
 
 	int fd,nread;
@@ -631,7 +633,12 @@ main(int argc, char **argv)
  */
 
 int
-make_inside_trc(fastf_t *base, fastf_t *top, fastf_t rbase, fastf_t rtop, fastf_t *new_base, fastf_t *new_top, fastf_t *new_rbase, fastf_t *new_rtop, int do_base, int do_top, int do_sides, fastf_t thick)
+make_inside_trc( base, top, rbase, rtop, new_base, new_top, new_rbase, new_rtop, do_base, do_top, do_sides, thick )
+point_t base, top, new_base, new_top;
+fastf_t rbase, rtop;
+fastf_t *new_rbase, *new_rtop;
+int do_base, do_top, do_sides;
+fastf_t thick;
 {
 	fastf_t delta_r;
 	fastf_t sin_ang;
@@ -731,7 +738,9 @@ make_inside_trc(fastf_t *base, fastf_t *top, fastf_t rbase, fastf_t rtop, fastf_
  *      required.
  */
 char *
-proc_sname(char shflg, char mrflg, int cnt, char ctflg)
+proc_sname(shflg,mrflg,cnt,ctflg)
+char shflg,mrflg,ctflg;
+int  cnt;
 {
 	char side;
 	static char new_name[17];
@@ -795,7 +804,12 @@ proc_sname(char shflg, char mrflg, int cnt, char ctflg)
  */
 
 static void
-nmg_patch_coplanar_face_merge(struct shell *s, int *face_count, struct patch_faces *p_faces, struct bn_tol *tol, int simplify)
+nmg_patch_coplanar_face_merge( s , face_count , p_faces , tol , simplify )
+struct shell		*s;
+int			*face_count;
+struct patch_faces	*p_faces;
+struct rt_tol		*tol;
+int			simplify;
 {
 	struct model	*m;
 	int		len;
@@ -947,7 +961,14 @@ nmg_patch_coplanar_face_merge(struct shell *s, int *face_count, struct patch_fac
 }
 
 int
-Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centroid, fastf_t thickness, fastf_t *pl1, struct bn_tol *tol)
+Build_solid( l, name, mirror_name, plate_mode, centroid, thickness, pl1, tol )
+int l;
+char *name,*mirror_name;
+int plate_mode;
+point_t centroid;
+fastf_t thickness;
+plane_t pl1;
+struct rt_tol *tol;
 {
 	struct model *m;
 	struct nmgregion *r;
@@ -1676,7 +1697,9 @@ nmg_face_g( fu , pl1 );
  *	added to a hold file for combination into groups in another process.        
  */
 void
-proc_region(char *name1)
+proc_region(name1)
+char *name1;
+
 {
 	char tmpname[24];
 	int chkroot;
@@ -1740,7 +1763,8 @@ proc_region(char *name1)
  *	 Process Volume Mode triangular facetted solids  
  */
 void
-proc_triangle(int cnt)
+proc_triangle(cnt)
+int cnt;
 {
 	int	k,l;
 	int	index;
@@ -1868,7 +1892,10 @@ proc_triangle(int cnt)
 }
 
 void
-Get_ave_plane(fastf_t *pl, int num_pts, fastf_t *x, fastf_t *y, fastf_t *z)
+Get_ave_plane( pl, num_pts, x, y, z )
+plane_t pl;
+int num_pts;
+fastf_t *x,*y,*z;
 {
 	mat_t matrix;
 	mat_t inverse;
@@ -2012,7 +2039,8 @@ Get_ave_plane(fastf_t *pl, int num_pts, fastf_t *x, fastf_t *y, fastf_t *z)
  *	 Process Plate Mode triangular surfaces 
  */
 void
-proc_plate(int cnt)
+proc_plate(cnt)
+int cnt;
 {
 	int	thick_no;
 	int k,l;
@@ -2207,7 +2235,8 @@ proc_plate(int cnt)
  *	Process fastgen wedge shape - also process hollow wedges.
  */
 void
-proc_wedge(int cnt)
+proc_wedge(cnt)
+int cnt;
 {
 	point_t	pt8[8];
 	point_t inpt8[8];
@@ -2457,7 +2486,8 @@ proc_wedge(int cnt)
  *	 Process fastgen spheres - can handle hollowness 
  */
 void
-proc_sphere(int cnt)
+proc_sphere(cnt)
+int cnt;
 {
 	fastf_t rad;
 	point_t center;
@@ -2583,7 +2613,8 @@ proc_sphere(int cnt)
  *	Process fastgen box code
  */
 void
-proc_box(int cnt)
+proc_box(cnt)
+int cnt;
 {
 	point_t	pt8[8];
 	int k;
@@ -2792,7 +2823,8 @@ proc_box(int cnt)
  *	In order to use "donuts", rpatch must have been invoked with the "-D" option.
  */
 void
-proc_donut(int cnt)
+proc_donut(cnt)
+int cnt;
 {
 	int k;
 	point_t base1, top1, base2, top2;
@@ -3176,7 +3208,8 @@ proc_donut(int cnt)
  *
  */
 void
-proc_cylin(int cnt)
+proc_cylin(cnt)
+int cnt;
 {
 	point_t base;
 	point_t	top;
@@ -3186,7 +3219,7 @@ proc_cylin(int cnt)
 	fastf_t	rad1,rad2;
 	fastf_t srad1,srad2;		/* for subtraction case */
 	int k,j;
-	struct subtract_list *slist,*get_subtract(int cnt);
+	struct subtract_list *slist,*get_subtract();
 	double	thick,ht,sht;
 	char    shflg='\0',mrflg,ctflg;
 	static int count=0;
@@ -3819,7 +3852,8 @@ proc_cylin(int cnt)
  *	Process fastgen rod mode
  */
 void
-proc_rod(int cnt)
+proc_rod(cnt)
+int cnt;
 {
 
 	int k,l,index;
@@ -3985,7 +4019,11 @@ proc_rod(int cnt)
  *  Assumes all points are coplanar (they better be!).
  */
 void
-pnorms(fastf_t (*norms)[3], fastf_t (*verts)[3], fastf_t *centroid, int npts, int inv)
+pnorms( norms, verts, centroid, npts, inv )
+fastf_t	norms[5][3];
+fastf_t	verts[5][3];
+point_t	centroid;
+int	npts;
 {
 	register int i;
 	vect_t	ab, ac;
@@ -4030,7 +4068,8 @@ pnorms(fastf_t (*norms)[3], fastf_t (*verts)[3], fastf_t *centroid, int npts, in
  *	heade == linked list of over-all group
  */
 void
-proc_label(char *labelfile)
+proc_label(labelfile)
+char *labelfile;
 {
 	char gname[16+1], mgname[16+1];	/* group, mirrored group names */
 	static int cur_series = -1;
@@ -4081,7 +4120,8 @@ proc_label(char *labelfile)
  * made, set the rgb color array for the upcoming call to make combinations.
  */
 void
-set_color(int color)
+set_color( color )
+int color;
 {
 
 	switch ( color ){
@@ -4183,7 +4223,8 @@ set_color(int color)
  * within the first.
  */
 int
-inside_cyl(int i, int j)
+inside_cyl(i,j)
+int i,j;
 {
 	point_t	outbase,outtop,inbase,intop;
 	fastf_t	r1,r2;
@@ -4268,7 +4309,11 @@ pt_inside( point_t a, point_t base, point_t top, double rad1, double rad2 )
  * subtracted solids will be eventually be made.
  */
 void
-mk_cyladdmember(char *name1, struct wmember *head, struct subtract_list *slist, int mirflag)
+mk_cyladdmember(name1,head,slist,mirflag)
+char *name1;
+struct wmember *head;
+struct subtract_list *slist;
+int mirflag;
 {
 
 	char			tmpname[16];
@@ -4317,10 +4362,11 @@ mk_cyladdmember(char *name1, struct wmember *head, struct subtract_list *slist, 
  * subtracting cylinder.
  */
 struct subtract_list *
-get_subtract(int cnt)
+get_subtract( cnt )
+int cnt;
 {
 	static struct subtract_list	*slist = NULL;
-	struct subtract_list		*next,*add_to_list(struct subtract_list *slist, int outsolid, int insolid, int inmirror);
+	struct subtract_list		*next,*add_to_list();
 	int i,j;
 
 	/* free up memory for slist, if any */
@@ -4348,7 +4394,9 @@ get_subtract(int cnt)
  * Add the inside,outside cylinder numbers to the subtraction list slist.
  */
 struct subtract_list *
-add_to_list(struct subtract_list *slist, int outsolid, int insolid, int inmirror)
+add_to_list( slist,outsolid,insolid,inmirror )
+struct subtract_list *slist;
+int outsolid,insolid,inmirror;
 {
 
 	if( slist == NULL ){

@@ -43,7 +43,10 @@
  * of count+1 pixels out of it.
  */
 void
-float_to_exp(int count, float *floats, rle_pixel *pixels)
+float_to_exp( count, floats, pixels )
+int count;
+float * floats;
+rle_pixel * pixels;
 {
     register int i;
     int expon, max_exp = -2000;

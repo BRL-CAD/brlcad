@@ -41,7 +41,9 @@ extern struct rt_sketch_internal *sketch_start();
 struct rt_wdb *outfp;
 
 int
-main(int argc, char **argv)
+main( argc, argv )
+int argc;
+char *argv[];
 {
 	struct rt_sketch_internal *skt;
 	struct bezier_seg *bsg;

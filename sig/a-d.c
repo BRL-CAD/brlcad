@@ -19,7 +19,9 @@
 static char usage[] = "\
 Usage: a-d [values] < ascii > doubles\n";
 
-int main(int argc, char **argv)
+int main( argc, argv )
+int	argc;
+char	**argv;
 {
 	double	d;
 	int	i;

@@ -72,7 +72,11 @@ static int	regions_converted = 0;
 *
 *  This routine must be prepared to run in parallel.
 */
-union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+union tree *do_region_end(tsp, pathp, curtree, client_data)
+register struct db_tree_state	*tsp;
+struct db_full_path	*pathp;
+union tree		*curtree;
+genptr_t		client_data;
 {
 	struct nmgregion	*r;
 	struct bu_list		vhead;
@@ -259,7 +263,10 @@ out:
 }
 
 void
-csg_comb_func(struct db_i *dbip, struct directory *dp, genptr_t ptr)
+csg_comb_func( dbip , dp, ptr )
+struct db_i *dbip;
+struct directory *dp;
+genptr_t	ptr;
 {
 	struct rt_db_internal intern;
 	struct rt_comb_internal *comb;
@@ -414,7 +421,9 @@ csg_comb_func(struct db_i *dbip, struct directory *dp, genptr_t ptr)
  *			M A I N
  */
 int
-main(int argc, char **argv)
+main(argc, argv)
+int	argc;
+char	*argv[];
 {
 	int		i;
 	register int	c;

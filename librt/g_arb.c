@@ -164,30 +164,31 @@ rt_arb_get_cgtype(
 	register int i,j;
 	int	numuvec, unique, done;
 	int	si;
-
+	
 	RT_ARB_CK_MAGIC(arb);
 	BN_CK_TOL(tol);
-
+	
 	done = NO;		/* done checking for like vectors */
-
+	
 	svec[0] = svec[1] = 0;
 	si = 2;
-
+	
 	for(i=0; i<7; i++) {
 		unique = YES;
-		if(done == NO)
+		if(done == NO) {
 			svec[si] = i;
+		}
 		for(j=i+1; j<8; j++) {
 			int tmp;
 			vect_t vtmp;
-
+			
 			VSUB2( vtmp, arb->pt[i], arb->pt[j] );
-
+			
 			if( fabs(vtmp[0]) > tol->dist) tmp = 0;
 			else 	if( fabs(vtmp[1]) > tol->dist) tmp = 0;
 			else 	if( fabs(vtmp[2]) > tol->dist) tmp = 0;
 			else tmp = 1;
-
+			
 			if( tmp ) {
 				if( done == NO )
 					svec[++si] = j;
@@ -207,16 +208,20 @@ rt_arb_get_cgtype(
 			}
 		}
 	}
-
-	if( si > 2 && si < 6 ) 
+	
+	if( si > 2 && si < 6 ) {
 		svec[0] = si - 1;
-	if( si > 6 )
+	}
+	if( si > 6 ) {
 		svec[1] = si - 5;
-	for(i=1; i<=svec[1]; i++)
+	}
+	for(i=1; i<=svec[1]; i++) {
 		svec[svec[0]+1+i] = svec[5+i];
-	for(i=svec[0]+svec[1]+2; i<11; i++)
+	}
+	for(i=svec[0]+svec[1]+2; i<11; i++) {
 		svec[i] = -1;
-
+	}
+	
 	/* find the unique points */
 	numuvec = 0;
 	for(j=0; j<8; j++) {
@@ -227,13 +232,14 @@ rt_arb_get_cgtype(
 				break;
 			}
 		}
-		if( unique == YES )
+		if( unique == YES ) {
 			uvec[numuvec++] = j;
+		}
 	}
 
 	/* Figure out what kind of ARB this is */
 	switch( numuvec ) {
-
+		
 	case 8:
 		*cgtype = ARB8;		/* ARB8 */
 		break;
@@ -346,12 +352,12 @@ rt_arb_centroid( point_t center_pt, const struct rt_arb_internal *arb, int npoin
  *	-1	point was rejected
  */
 HIDDEN int
-rt_arb_add_pt(register pointp_t point, const char *title, struct prep_arb *pap, int ptno, const char *name)
-                        
-          	       
-               	     
-   		     	/* current point # on face */
-          	      
+rt_arb_add_pt( point, title, pap, ptno, name )
+register pointp_t point;
+const char	*title;
+struct prep_arb	*pap;
+int		ptno;	/* current point # on face */
+const char	*name;
 {
 	LOCAL vect_t	work;
 	LOCAL vect_t	P_A;		/* new point minus A */
@@ -489,7 +495,10 @@ rt_arb_add_pt(register pointp_t point, const char *title, struct prep_arb *pap, 
  *	<0	failure
  */
 HIDDEN int
-rt_arb_mk_planes(register struct prep_arb *pap, struct rt_arb_internal *aip, const char *name)
+rt_arb_mk_planes( pap, aip, name )
+register struct prep_arb	*pap;
+struct rt_arb_internal		*aip;
+const char			*name;
 {
 	LOCAL vect_t	sum;		/* Sum of all endpoints */
 	register int	i;
@@ -617,7 +626,11 @@ skip_pt:		;
  *	!0	failure
  */
 HIDDEN int
-rt_arb_setup(struct soltab *stp, struct rt_arb_internal *aip, struct rt_i *rtip, int uv_wanted)
+rt_arb_setup( stp, aip, rtip, uv_wanted )
+struct soltab		*stp;
+struct rt_arb_internal	*aip;
+struct rt_i		*rtip;
+int			uv_wanted;
 {
 	register int		i;
 	struct prep_arb		pa;
@@ -704,7 +717,10 @@ rt_arb_setup(struct soltab *stp, struct rt_arb_internal *aip, struct rt_i *rtip,
  *	!0	failure
  */
 int
-rt_arb_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
+rt_arb_prep( stp, ip, rtip )
+struct soltab		*stp;
+struct rt_db_internal	*ip;
+struct rt_i		*rtip;
 {
 	struct rt_arb_internal	*aip;
 
@@ -718,7 +734,8 @@ rt_arb_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
  *  			R T _ A R B _ P R I N T
  */
 void
-rt_arb_print(register const struct soltab *stp)
+rt_arb_print( stp )
+register const struct soltab *stp;
 {
 	register struct arb_specific *arbp =
 		(struct arb_specific *)stp->st_specific;
@@ -762,7 +779,11 @@ rt_arb_print(register const struct soltab *stp)
  *	>0	HIT
  */
 int
-rt_arb_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
+rt_arb_shot( stp, rp, ap, seghead )
+struct soltab		*stp;
+register struct xray	*rp;
+struct application	*ap;
+struct seg		*seghead;
 {
 	struct arb_specific *arbp = (struct arb_specific *)stp->st_specific;
 	LOCAL int		iplane, oplane;
@@ -851,12 +872,12 @@ rt_arb_shot(struct soltab *stp, register struct xray *rp, struct application *ap
  *  This is the Becker vector version
  */
 void
-rt_arb_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
-             	               /* An array of solid pointers */
-           		       /* An array of ray pointers */
-                               /* array of segs (results returned) */
-   		 	       /* Number of ray/object pairs */
-                  	    
+rt_arb_vshot( stp, rp, segp, n, ap)
+struct soltab	       *stp[]; /* An array of solid pointers */
+struct xray		*rp[]; /* An array of ray pointers */
+struct  seg            segp[]; /* array of segs (results returned) */
+int		 	    n; /* Number of ray/object pairs */
+struct application	*ap;
 {
 	register int    j, i;
 	register struct arb_specific *arbp;
@@ -942,7 +963,10 @@ rt_arb_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
  *  Given ONE ray distance, return the normal and entry/exit point.
  */
 void
-rt_arb_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
+rt_arb_norm( hitp, stp, rp )
+register struct hit *hitp;
+struct soltab *stp;
+register struct xray *rp;
 {
 	register struct arb_specific *arbp =
 		(struct arb_specific *)stp->st_specific;
@@ -961,7 +985,10 @@ rt_arb_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
  *  indicate no curvature.
  */
 void
-rt_arb_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
+rt_arb_curve( cvp, hitp, stp )
+register struct curvature *cvp;
+register struct hit *hitp;
+struct soltab *stp;
 {
 
 	bn_vec_ortho( cvp->crv_pdir, hitp->hit_normal );
@@ -977,7 +1004,11 @@ rt_arb_curve(register struct curvature *cvp, register struct hit *hitp, struct s
  *  v extends along the arb_V direction defined by Nx(B-A).
  */
 void
-rt_arb_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
+rt_arb_uv( ap, stp, hitp, uvp )
+struct application *ap;
+struct soltab *stp;
+register struct hit *hitp;
+register struct uvcoord *uvp;
 {
 	register struct arb_specific *arbp =
 		(struct arb_specific *)stp->st_specific;
@@ -1062,7 +1093,8 @@ rt_arb_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
  *			R T _ A R B _ F R E E
  */
 void
-rt_arb_free(register struct soltab *stp)
+rt_arb_free( stp )
+register struct soltab *stp;
 {
 	register struct arb_specific *arbp =
 		(struct arb_specific *)stp->st_specific;
@@ -1086,7 +1118,11 @@ rt_arb_free(register struct soltab *stp)
  *  XXX No checking for degenerate faces is done, but probably should be.
  */
 int
-rt_arb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_arb_plot( vhead, ip, ttol, tol )
+struct bu_list			*vhead;
+struct rt_db_internal		 *ip;
+const struct rt_tess_tol	*ttol;
+const struct bn_tol		*tol;
 {
 	struct rt_arb_internal	*aip;
 
@@ -1105,7 +1141,10 @@ rt_arb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
  *			R T _ A R B _ C L A S S
  */
 int
-rt_arb_class(const struct soltab *stp, const fastf_t *min, const fastf_t *max, const struct bn_tol *tol)
+rt_arb_class( stp, min, max, tol )
+const struct soltab    *stp;
+const vect_t		min, max;
+const struct bn_tol    *tol;
 {
 	register struct arb_specific *arbp =
 		(struct arb_specific *)stp->st_specific;
@@ -1142,7 +1181,11 @@ rt_arb_class(const struct soltab *stp, const fastf_t *min, const fastf_t *max, c
  *  by rotating each vector and adding in the base vector.
  */
 int
-rt_arb_import(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
+rt_arb_import( ip, ep, mat, dbip )
+struct rt_db_internal		*ip;
+const struct bu_external	*ep;
+register const  mat_t		mat;
+const struct db_i		*dbip;
 {
 	struct rt_arb_internal	*aip;
 	union record		*rp;
@@ -1186,7 +1229,11 @@ rt_arb_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
  *			R T _ A R B _ E X P O R T
  */
 int
-rt_arb_export(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
+rt_arb_export( ep, ip, local2mm, dbip )
+struct bu_external		*ep;
+const struct rt_db_internal	*ip;
+double				local2mm;
+const struct db_i		*dbip;
 {
 	struct rt_arb_internal	*aip;
 	union record		*rec;
@@ -1221,7 +1268,11 @@ rt_arb_export(struct bu_external *ep, const struct rt_db_internal *ip, double lo
  * Code duplicated from rt_arb_import() with db5 help from g_ell.c
  */
 int
-rt_arb_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
+rt_arb_import5( ip, ep, mat, dbip )
+struct rt_db_internal		*ip;
+const struct bu_external	*ep;
+register const mat_t		mat;
+const struct db_i		*dbip;
 {
 	struct rt_arb_internal *aip;
 	register int		i;
@@ -1249,7 +1300,11 @@ rt_arb_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
  *			R T _ A R B _ E X P O R T 5
  */
 int
-rt_arb_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
+rt_arb_export5( ep, ip, local2mm, dbip )
+struct bu_external		*ep;
+const struct rt_db_internal	*ip;
+double				local2mm;
+const struct db_i		*dbip;
 {
 	struct rt_arb_internal	*aip;
 	fastf_t			vec[3*8];
@@ -1277,7 +1332,11 @@ rt_arb_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
  *  Additional lines are indented one tab, and give parameter values.
  */
 int
-rt_arb_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
+rt_arb_describe( str, ip, verbose, mm2local )
+struct bu_vls		*str;
+const struct rt_db_internal	*ip;
+int			verbose;
+double			mm2local;
 {
 	register struct rt_arb_internal	*aip =
 		(struct rt_arb_internal *)ip->idb_ptr;
@@ -1395,7 +1454,8 @@ rt_arb_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
  *  Free the storage associated with the rt_db_internal version of this solid.
  */
 void
-rt_arb_ifree(struct rt_db_internal *ip)
+rt_arb_ifree( ip )
+struct rt_db_internal	*ip;
 {
 	RT_CK_DB_INTERNAL(ip);
 	bu_free( ip->idb_ptr, "arb ifree" );
@@ -1414,7 +1474,12 @@ rt_arb_ifree(struct rt_db_internal *ip)
  *	 0	OK.  *r points to nmgregion that holds this tessellation.
  */
 int
-rt_arb_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_arb_tess( r, m, ip, ttol, tol )
+struct nmgregion	**r;
+struct model		*m;
+struct rt_db_internal	*ip;
+const struct rt_tess_tol	*ttol;
+const struct bn_tol		*tol;
 {
 	LOCAL struct rt_arb_internal	*aip;
 	struct shell		*s;
@@ -1523,7 +1588,11 @@ static const int rt_arb_vert_index_scramble[4] = { 0, 1, 3, 2 };
  *	 0	OK.  *r points to nmgregion that holds this tessellation.
  */
 int
-rt_arb_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bn_tol *tol)
+rt_arb_tnurb( r, m, ip, tol )
+struct nmgregion	**r;
+struct model		*m;
+struct rt_db_internal	*ip;
+const struct bn_tol	*tol;
 {
 	LOCAL struct rt_arb_internal	*aip;
 	struct shell		*s;

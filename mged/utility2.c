@@ -34,7 +34,11 @@
 #include "../librt/debug.h"	/* XXX */
 
 int
-f_eac(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_eac(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
 {
 	int i,j;
 	int item;

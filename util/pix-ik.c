@@ -24,7 +24,9 @@ static char outline[MAX_LINE*4];	/* Ikonas pixels */
 char usage[] = "Usage: pix-ik [-h] file.pix [width] [fr_offset] [fr_count]\n";
 
 int
-main(int argc, char **argv)
+main(argc, argv)
+int argc;
+char **argv;
 {
 	static int y;
 	static int infd;

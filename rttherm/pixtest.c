@@ -58,7 +58,7 @@ mat_t			xyz2rgb;
 /*
  *			M A I N
  */
-main(void)
+main()
 {
 	unsigned char	rgb[4];
 	point_t		src;

@@ -29,7 +29,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 /* declarations to support use of getopt() system call */
 char *options = "ht";
 extern char *optarg;
-extern int optind, opterr, getopt(int, char *const *, const char *);
+extern int optind, opterr, getopt();
 
 char *progname = "(noname)";
 int triangulate = 0;
@@ -37,7 +37,8 @@ int triangulate = 0;
 /*
  *	U S A G E --- tell user how to invoke this program, then exit
  */
-void usage(char *s)
+void usage(s)
+char *s;
 {
 	if (s) (void)fputs(s, stderr);
 
@@ -49,10 +50,12 @@ void usage(char *s)
 /*
  *	P A R S E _ A R G S --- Parse through command line flags
  */
-int parse_args(int ac, char **av)
+int parse_args(ac, av)
+int ac;
+char *av[];
 {
 	int  c;
-	char *strrchr(const char *, int);
+	char *strrchr();
 
 	if (  ! (progname=strrchr(*av, '/'))  )
 		progname = *av;
@@ -75,7 +78,11 @@ int parse_args(int ac, char **av)
 }
 
 static void
-lu_to_rib(struct loopuse *lu, fastf_t *fu_normal, struct bu_vls *norms, struct bu_vls *points)
+lu_to_rib(lu, fu_normal, norms, points)
+struct loopuse *lu;
+vect_t fu_normal;
+struct bu_vls *norms;
+struct bu_vls *points;
 {
 	struct edgeuse *eu;
 	struct vertexuse *vu;
@@ -113,7 +120,8 @@ lu_to_rib(struct loopuse *lu, fastf_t *fu_normal, struct bu_vls *norms, struct b
 }
 
 void
-nmg_to_rib(struct model *m)
+nmg_to_rib(m)
+struct model *m;
 {
 	struct bn_tol tol;
 	struct nmgregion *r;
@@ -162,7 +170,9 @@ nmg_to_rib(struct model *m)
  *	Call parse_args to handle command line arguments first, then
  *	process input.
  */
-int main(int ac, char **av)
+int main(ac,av)
+int ac;
+char *av[];
 {
 	int arg_index;
 	struct rt_db_internal ip;

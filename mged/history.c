@@ -59,7 +59,7 @@ FILE *journalfp;
 int firstjournal;
 int journal_delay = 0;
 
-void history_journalize(struct mged_hist *hptr);
+void history_journalize();
 
 /*
  *	H I S T O R Y _ R E C O R D
@@ -101,7 +101,8 @@ history_record(
 }
 
 HIDDEN int
-timediff(struct timeval *tvdiff, struct timeval *start, struct timeval *finish)
+timediff(tvdiff, start, finish)
+struct timeval *tvdiff, *start, *finish;
 {
     if (finish->tv_sec == 0 && finish->tv_usec == 0)
 	return -1;
@@ -119,7 +120,8 @@ timediff(struct timeval *tvdiff, struct timeval *start, struct timeval *finish)
 }
 
 void
-history_journalize(struct mged_hist *hptr)
+history_journalize(hptr)
+struct mged_hist *hptr;
 {
     struct timeval tvdiff;
     struct mged_hist *lasthptr;
@@ -146,7 +148,11 @@ history_journalize(struct mged_hist *hptr)
  */
 
 int
-f_journal(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_journal(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
 {
   if(argc < 1 || 3 < argc){
     struct bu_vls vls;
@@ -203,7 +209,11 @@ f_journal(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  */
 
 int
-f_delay(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_delay(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
 {
     struct timeval tv;
 
@@ -231,7 +241,11 @@ f_delay(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  */
 
 int
-f_history(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_history(clientData, interp, argc, argv )
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
 {
     FILE *fp;
     int with_delays = 0;
@@ -306,7 +320,7 @@ f_history(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 /*      H I S T O R Y _ P R E V
  */
 struct bu_vls *
-history_prev(void)
+history_prev()
 {
     struct mged_hist *hp;
 
@@ -322,7 +336,7 @@ history_prev(void)
 /*      H I S T O R Y _ C U R
  */
 struct bu_vls *
-history_cur(void)
+history_cur()
 {
     if (BU_LIST_IS_HEAD(curr_cmd_list->cl_cur_hist, &(mged_hist_head.l)))
 	return NULL;
@@ -333,7 +347,7 @@ history_cur(void)
 /*      H I S T O R Y _ N E X T
  */
 struct bu_vls *
-history_next(void)
+history_next()
 {
     struct mged_hist *hp;
 
@@ -352,7 +366,11 @@ history_next(void)
 }
 
 int
-cmd_hist(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+cmd_hist(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
 {
   struct bu_vls *vp;
   struct bu_vls vls;

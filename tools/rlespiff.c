@@ -27,7 +27,7 @@
 #include "rle_code.h"
 #include "rle_raw.h"
 
-void copy_raw(rle_hdr *the_hdr, int y, rle_op **scan, int *nraw, rle_op ***save_scan, int **save_nraw);
+void copy_raw();
 
 #define CLAMP(x)	((x)<0 ? 0 : ((x)>255 ? 255 : (x)))
 
@@ -69,7 +69,9 @@ void copy_raw(rle_hdr *the_hdr, int y, rle_op **scan, int *nraw, rle_op ***save_
  * 	them to the output file.
  */
 int
-main(int argc, char **argv)
+main( argc, argv )
+int argc;
+char **argv;
 {
     int		rle_cnt = 0;
     int 	tflag = 0,
@@ -292,7 +294,13 @@ main(int argc, char **argv)
  * 	data, so caller need not call rle_freeraw.
  */
 void
-copy_raw(rle_hdr *the_hdr, int y, rle_op **scan, int *nraw, rle_op ***save_scan, int **save_nraw)
+copy_raw( the_hdr, y, scan, nraw, save_scan, save_nraw )
+rle_hdr *the_hdr;
+int y;
+rle_op **scan;
+int *nraw;
+rle_op ***save_scan;
+int **save_nraw;
 {
     int 	totlen = 0;
     register int c;

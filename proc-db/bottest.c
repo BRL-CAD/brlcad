@@ -38,7 +38,9 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 struct rt_wdb *outfp;
 
 int
-main(int argc, char **argv)
+main( argc, argv )
+int argc;
+char *argv[];
 {
 	fastf_t vertices[36];
 	int faces[15];

@@ -74,7 +74,7 @@ vect_t		at_vect;
 int		overlap_claimant_handling = 0;
 int		use_air = 0;		/* Handling of air */
 
-extern int hit(struct application *ap, struct partition *PartHeadp), miss(register struct application *ap);
+extern int hit(), miss();
 extern int rt_bot_tri_per_piece;
 extern int rt_bot_minpieces;
 
@@ -82,7 +82,9 @@ extern int rt_bot_minpieces;
  *			M A I N
  */
 int
-main(int argc, char **argv)
+main(argc, argv)
+int argc;
+char **argv;
 {
 	static struct rt_i *rtip;
 	char *title_file;
@@ -323,7 +325,9 @@ err:
 	return(0);
 }
 
-int hit(register struct application *ap, struct partition *PartHeadp)
+int hit( ap, PartHeadp )
+register struct application *ap;
+struct partition *PartHeadp;
 {
 	register struct partition *pp;
 	register struct soltab *stp;
@@ -452,7 +456,8 @@ int hit(register struct application *ap, struct partition *PartHeadp)
 	return(1);
 }
 
-int miss(register struct application *ap)
+int miss( ap )
+register struct application *ap;
 {
 	bu_log("missed\n");
 	if( rdebug&RDEBUG_RAYPLOT )  {

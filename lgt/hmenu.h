@@ -67,10 +67,10 @@ typedef struct HWin
 	}
 HWindow;
 
-extern HMitem	*hmenuhit(HMenu *menup, int menux, int menuy);	/* Application's calls menu.		*/
-extern int	hm_getchar(void);	/* Can be supplied by application.	*/
-extern int	hm_ungetchar(int c);	/* Can be supplied by application.	*/
-extern void	hmredraw(void);	/* Application signals need for redraw.	*/
+extern HMitem	*hmenuhit();	/* Application's calls menu.		*/
+extern int	hm_getchar();	/* Can be supplied by application.	*/
+extern int	hm_ungetchar();	/* Can be supplied by application.	*/
+extern void	hmredraw();	/* Application signals need for redraw.	*/
 
 #define MAXARGS		100
 #define MAXLINE 	132

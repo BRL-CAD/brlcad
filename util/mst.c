@@ -95,7 +95,12 @@ static int		debug = 1;
  *			     M K _ B R I D G E ( )
  *
  */
-struct bridge *mk_bridge (struct vertex *vcp, struct vertex *vup, double weight)
+struct bridge *mk_bridge (vcp, vup, weight)
+
+struct vertex	*vcp;
+struct vertex	*vup;
+double		weight;
+
 {
     static unsigned long	next_index = 0;
     struct bridge		*bp;
@@ -127,7 +132,10 @@ struct bridge *mk_bridge (struct vertex *vcp, struct vertex *vup, double weight)
  *	N.B. - It is up to the calling routine to free
  *		the b_vert_civ and b_vert_unciv members of bp.
  */
-void free_bridge (struct bridge *bp)
+void free_bridge (bp)
+
+struct bridge	*bp;
+
 {
     BU_CKMAG(bp, BRIDGE_MAGIC, "bridge");
     bu_free((genptr_t) bp, "bridge");
@@ -137,7 +145,10 @@ void free_bridge (struct bridge *bp)
  *			  P R I N T _ B R I D G E ( )
  *
  */
-void print_bridge (struct bridge *bp)
+void print_bridge (bp)
+
+struct bridge	*bp;
+
 {
     BU_CKMAG(bp, BRIDGE_MAGIC, "bridge");
 
@@ -160,7 +171,11 @@ void print_bridge (struct bridge *bp)
  *			     M K _ V E R T E X ( )
  *
  */
-struct vertex *mk_vertex (long int index, char *label)
+struct vertex *mk_vertex (index, label)
+
+long	index;
+char	*label;
+
 {
     struct vertex	*vp;
 
@@ -180,7 +195,11 @@ struct vertex *mk_vertex (long int index, char *label)
  *			  P R I N T _ V E R T E X ( )
  *
  */
-void print_vertex (void *v, int depth)
+void print_vertex (v, depth)
+
+void	*v;
+int	depth;
+
 {
     struct vertex	*vp = (struct vertex *) v;
     struct neighbor	*np;
@@ -207,7 +226,10 @@ void print_vertex (void *v, int depth)
  *
  *	N.B. - This routine frees the v_bridge member of vp.
  */
-void free_vertex (struct vertex *vp)
+void free_vertex (vp)
+
+struct vertex	*vp;
+
 {
     BU_CKMAG(vp, VERTEX_MAGIC, "vertex");
     free_bridge(vp -> v_bridge);
@@ -218,7 +240,11 @@ void free_vertex (struct vertex *vp)
  *			   M K _ N E I G H B O R ( )
  *
  */
-struct neighbor *mk_neighbor (struct vertex *vp, double weight)
+struct neighbor *mk_neighbor (vp, weight)
+
+struct vertex	*vp;
+double		weight;
+
 {
     struct neighbor	*np;
 
@@ -240,7 +266,11 @@ struct neighbor *mk_neighbor (struct vertex *vp, double weight)
 /*
  *		C O M P A R E _ V E R T E X _ I N D I C E S ( )
  */
-int compare_vertex_indices (void *v1, void *v2)
+int compare_vertex_indices (v1, v2)
+
+void	*v1;
+void	*v2;
+
 {
     struct vertex	*vert1 = (struct vertex *) v1;
     struct vertex	*vert2 = (struct vertex *) v2;
@@ -254,7 +284,11 @@ int compare_vertex_indices (void *v1, void *v2)
 /*
  *		 C O M P A R E _ V E R T E X _ L A B E L S ( )
  */
-int compare_vertex_labels (void *v1, void *v2)
+int compare_vertex_labels (v1, v2)
+
+void	*v1;
+void	*v2;
+
 {
     struct vertex	*vert1 = (struct vertex *) v1;
     struct vertex	*vert2 = (struct vertex *) v2;
@@ -285,7 +319,11 @@ int compare_vertex_labels (void *v1, void *v2)
 /*
  *		C O M P A R E _ B R I D G E _ W E I G H T S ( )
  */
-int compare_bridge_weights (void *v1, void *v2)
+int compare_bridge_weights (v1, v2)
+
+void	*v1;
+void	*v2;
+
 {
     double		delta;
     struct bridge	*b1 = (struct bridge *) v1;
@@ -311,7 +349,11 @@ int compare_bridge_weights (void *v1, void *v2)
 /*
  *		C O M P A R E _ B R I D G E _ I N D I C E S ( )
  */
-int compare_bridge_indices (void *v1, void *v2)
+int compare_bridge_indices (v1, v2)
+
+void	*v1;
+void	*v2;
+
 {
     struct bridge	*b1 = (struct bridge *) v1;
     struct bridge	*b2 = (struct bridge *) v2;
@@ -364,7 +406,12 @@ int compare_bridge_indices (void *v1, void *v2)
 /*
  *			 L O O K U P _ V E R T E X ( )
  */
-struct vertex *lookup_vertex(bu_rb_tree *dict, long int index, char *label)
+struct vertex *lookup_vertex(dict, index, label)
+
+bu_rb_tree	*dict;
+long	index;
+char	*label;
+
 {
     int			rc;	/* Return code from bu_rb_insert() */
     struct vertex	*qvp;	/* The query */
@@ -402,7 +449,11 @@ struct vertex *lookup_vertex(bu_rb_tree *dict, long int index, char *label)
  *			  A D D _ T O _ P R I O Q ( )
  *
  */
-void add_to_prioq (void *v, int depth)
+void add_to_prioq (v, depth)
+
+void	*v;
+int	depth;
+
 {
     struct vertex	*vp = (struct vertex *) v;
 
@@ -416,7 +467,10 @@ void add_to_prioq (void *v, int depth)
  *			D E L _ F R O M _ P R I O Q ( )
  *
  */
-void del_from_prioq (struct vertex *vp)
+void del_from_prioq (vp)
+
+struct vertex	*vp;
+
 {
     BU_CKMAG(vp, VERTEX_MAGIC, "vertex");
     BU_CKMAG(vp -> v_bridge, BRIDGE_MAGIC, "bridge");
@@ -437,7 +491,7 @@ void del_from_prioq (struct vertex *vp)
  *			   E X T R A C T _ M I N ( )
  *
  */
-struct bridge *extract_min (void)
+struct bridge *extract_min ()
 {
     struct bridge	*bp;
 
@@ -459,13 +513,13 @@ struct bridge *extract_min (void)
 /*
  *			      G E T _ E D G E ( )
  */
-int get_edge (FILE *fp, long int *index, char **label, double *w, int numeric)
+int get_edge (fp, index, label, w, numeric)
 
-    	    
-    	       		/* Indices of edge endpoints */
-    	        	/* Labels of edge endpoints */
-      	   		/* Weight */
-   	        	/* Use indices instead of labels? */
+FILE	*fp;
+long	*index;		/* Indices of edge endpoints */
+char	**label;	/* Labels of edge endpoints */
+double	*w;		/* Weight */
+int	numeric;	/* Use indices instead of labels? */
 
 {
     char		*bp;
@@ -547,7 +601,7 @@ int get_edge (FILE *fp, long int *index, char **label, double *w, int numeric)
 /*
  *			   P R I N T _ U S A G E ( )
  */
-void print_usage (void)
+void print_usage ()
 {
 #define OPT_STRING	"n?"
 
@@ -558,7 +612,11 @@ void print_usage (void)
  *                                M A I N ( )
  */
 int
-main (int argc, char **argv)
+main (argc, argv)
+
+int	argc;
+char	*argv[];
+
 {
     char		*label[2];	/* Labels of edge endpoints */
     int			ch;		/* Command-line character */

@@ -71,7 +71,10 @@ fastf_t rt_cline_radius=-1.0;
  *  	stp->st_specific for use by rt_cline_shot().
  */
 int
-rt_cline_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
+rt_cline_prep( stp, ip, rtip )
+struct soltab		*stp;
+struct rt_db_internal	*ip;
+struct rt_i		*rtip;
 {
 	struct rt_cline_internal		*cline_ip;
 	register struct cline_specific		*cline;
@@ -122,7 +125,8 @@ rt_cline_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
  *			R T _ C L I N E _ P R I N T
  */
 void
-rt_cline_print(register const struct soltab *stp)
+rt_cline_print( stp )
+register const struct soltab *stp;
 {
 	register const struct cline_specific *cline =
 		(struct cline_specific *)stp->st_specific;
@@ -149,7 +153,11 @@ rt_cline_print(register const struct soltab *stp)
  *	>0	HIT
  */
 int
-rt_cline_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
+rt_cline_shot( stp, rp, ap, seghead )
+struct soltab		*stp;
+register struct xray	*rp;
+struct application	*ap;
+struct seg		*seghead;
 {
 	register struct cline_specific *cline =
 		(struct cline_specific *)stp->st_specific;
@@ -333,12 +341,12 @@ rt_cline_shot(struct soltab *stp, register struct xray *rp, struct application *
  *  Vectorized version.
  */
 void
-rt_cline_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
-             	               /* An array of solid pointers */
-           		       /* An array of ray pointers */
-                               /* array of segs (results returned) */
-   		  	       /* Number of ray/object pairs */
-                  	    
+rt_cline_vshot( stp, rp, segp, n, ap )
+struct soltab	       *stp[]; /* An array of solid pointers */
+struct xray		*rp[]; /* An array of ray pointers */
+struct  seg            segp[]; /* array of segs (results returned) */
+int		  	    n; /* Number of ray/object pairs */
+struct application	*ap;
 {
 	rt_vstub( stp, rp, segp, n, ap );
 }
@@ -349,7 +357,10 @@ rt_cline_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, s
  *  Given ONE ray distance, return the normal and entry/exit point.
  */
 void
-rt_cline_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
+rt_cline_norm( hitp, stp, rp )
+register struct hit	*hitp;
+struct soltab		*stp;
+register struct xray	*rp;
 {
 	vect_t tmp;
 	fastf_t dot;
@@ -382,7 +393,10 @@ rt_cline_norm(register struct hit *hitp, struct soltab *stp, register struct xra
  *  Return the curvature of the cline.
  */
 void
-rt_cline_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
+rt_cline_curve( cvp, hitp, stp )
+register struct curvature *cvp;
+register struct hit	*hitp;
+struct soltab		*stp;
 {
 
 	/* for now, don't do curvature */
@@ -399,7 +413,11 @@ rt_cline_curve(register struct curvature *cvp, register struct hit *hitp, struct
  *  of the hit point, 0 <= u,v <= 1.
  */
 void
-rt_cline_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
+rt_cline_uv( ap, stp, hitp, uvp )
+struct application	*ap;
+struct soltab		*stp;
+register struct hit	*hitp;
+register struct uvcoord	*uvp;
 {
 	uvp->uv_u = 0.0;
 	uvp->uv_v = 0.0;
@@ -411,7 +429,8 @@ rt_cline_uv(struct application *ap, struct soltab *stp, register struct hit *hit
  *		R T _ C L I N E _ F R E E
  */
 void
-rt_cline_free(register struct soltab *stp)
+rt_cline_free( stp )
+register struct soltab *stp;
 {
 	register struct cline_specific *cline =
 		(struct cline_specific *)stp->st_specific;
@@ -423,7 +442,10 @@ rt_cline_free(register struct soltab *stp)
  *			R T _ C L I N E _ C L A S S
  */
 int
-rt_cline_class(const struct soltab *stp, const fastf_t *min, const fastf_t *max, const struct bn_tol *tol)
+rt_cline_class( stp, min, max, tol )
+const struct soltab    *stp;
+const vect_t		min, max;
+const struct bn_tol    *tol;
 {
 
 	return( 0 );
@@ -433,7 +455,11 @@ rt_cline_class(const struct soltab *stp, const fastf_t *min, const fastf_t *max,
  *			R T _ C L I N E _ P L O T
  */
 int
-rt_cline_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_cline_plot( vhead, ip, ttol, tol )
+struct bu_list		*vhead;
+struct rt_db_internal	*ip;
+const struct rt_tess_tol *ttol;
+const struct bn_tol	*tol;
 {
 	LOCAL struct rt_cline_internal	*cline_ip;
         LOCAL fastf_t           top[16*3];
@@ -524,7 +550,12 @@ struct cline_vert {
  *	 0	OK.  *r points to nmgregion that holds this tessellation.
  */
 int
-rt_cline_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_cline_tess( r, m, ip, ttol, tol )
+struct nmgregion	**r;
+struct model		*m;
+struct rt_db_internal	*ip;
+const struct rt_tess_tol *ttol;
+const struct bn_tol	*tol;
 {
 	struct shell			*s;
 	struct rt_cline_internal	*cline_ip;
@@ -816,7 +847,11 @@ rt_cline_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, 
  *  Apply modeling transformations as well.
  */
 int
-rt_cline_import(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
+rt_cline_import( ip, ep, mat, dbip )
+struct rt_db_internal		*ip;
+const struct bu_external	*ep;
+register const mat_t		mat;
+const struct db_i		*dbip;
 {
 	LOCAL struct rt_cline_internal	*cline_ip;
 	union record			*rp;
@@ -856,7 +891,11 @@ rt_cline_import(struct rt_db_internal *ip, const struct bu_external *ep, registe
  *  The name is added by the caller, in the usual place.
  */
 int
-rt_cline_export(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
+rt_cline_export( ep, ip, local2mm, dbip )
+struct bu_external		*ep;
+const struct rt_db_internal	*ip;
+double				local2mm;
+const struct db_i		*dbip;
 {
 	struct rt_cline_internal	*cline_ip;
 	union record			*rec;
@@ -895,7 +934,11 @@ rt_cline_export(struct bu_external *ep, const struct rt_db_internal *ip, double 
  *  Apply modeling transformations as well.
  */
 int
-rt_cline_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
+rt_cline_import5( ip, ep, mat, dbip )
+struct rt_db_internal		*ip;
+const struct bu_external	*ep;
+register const mat_t		mat;
+const struct db_i		*dbip;
 {
 	struct rt_cline_internal	*cline_ip;
 	fastf_t				vec[8];
@@ -930,7 +973,11 @@ rt_cline_import5(struct rt_db_internal *ip, const struct bu_external *ep, regist
  *  The name is added by the caller, in the usual place.
  */
 int
-rt_cline_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
+rt_cline_export5( ep, ip, local2mm, dbip )
+struct bu_external		*ep;
+const struct rt_db_internal	*ip;
+double				local2mm;
+const struct db_i		*dbip;
 {
 	struct rt_cline_internal	*cline_ip;
 	fastf_t				vec[8];
@@ -963,7 +1010,11 @@ rt_cline_export5(struct bu_external *ep, const struct rt_db_internal *ip, double
  *  Additional lines are indented one tab, and give parameter values.
  */
 int
-rt_cline_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
+rt_cline_describe( str, ip, verbose, mm2local )
+struct bu_vls		*str;
+const struct rt_db_internal	*ip;
+int			verbose;
+double			mm2local;
 {
 	register struct rt_cline_internal	*cline_ip =
 		(struct rt_cline_internal *)ip->idb_ptr;
@@ -998,7 +1049,8 @@ rt_cline_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbo
  *  Free the storage associated with the rt_db_internal version of this solid.
  */
 void
-rt_cline_ifree(struct rt_db_internal *ip)
+rt_cline_ifree( ip )
+struct rt_db_internal	*ip;
 {
 	register struct rt_cline_internal	*cline_ip;
 
@@ -1012,13 +1064,20 @@ rt_cline_ifree(struct rt_db_internal *ip)
 }
 
 int
-rt_cline_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bn_tol *tol)
+rt_cline_tnurb( r, m, ip, tol )
+struct nmgregion	**r;
+struct model		*m;
+struct rt_db_internal	*ip;
+const struct bn_tol		*tol;
 {
 	return( 1 );
 }
 
 int
-rt_cline_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const char *attr)
+rt_cline_tclget( interp, intern, attr )
+Tcl_Interp                      *interp;
+const struct rt_db_internal     *intern;
+const char                      *attr;
 {
 	register struct rt_cline_internal *cli = 
 		(struct rt_cline_internal *)intern->idb_ptr;
@@ -1060,7 +1119,11 @@ rt_cline_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const c
 }
 
 int
-rt_cline_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, char **argv)
+rt_cline_tcladjust( interp, intern, argc, argv )
+Tcl_Interp              *interp;
+struct rt_db_internal   *intern;
+int                     argc;
+char                    **argv;
 {
 	struct rt_cline_internal *cli =
 		(struct rt_cline_internal *)intern->idb_ptr;

@@ -158,7 +158,8 @@ struct taskcontrol {
  *  (The system routine makes a relative change).
  */
 void
-bu_nice_set(int newnice)
+bu_nice_set(newnice)
+int	newnice;
 {
 	int opri, npri;
 
@@ -192,7 +193,7 @@ bu_nice_set(int newnice)
  *  Zero or negative return indicates that limits are not in effect.
  */
 int
-bu_cpulimit_get(void)
+bu_cpulimit_get()
 {
 #ifdef CRAY
 	long	old;			/* 64-bit clock counts */
@@ -216,7 +217,8 @@ bu_cpulimit_get(void)
  */
 /* ARGSUSED */
 void
-bu_cpulimit_set(int sec)
+bu_cpulimit_set(sec)
+int	sec;
 {
 #ifdef CRAY
 	long	old;		/* seconds */
@@ -250,7 +252,7 @@ bu_cpulimit_set(int sec)
  *  available to this process now.
  */
 int
-bu_avail_cpus(void)
+bu_avail_cpus()
 {
 	int	ret = 1;
 
@@ -393,7 +395,7 @@ bu_avail_cpus(void)
  *  which requires special privleges to open.
  */
 fastf_t
-bu_get_load_average(void)
+bu_get_load_average()
 {
 	FILE	*fp;
 	double	load = -1.0;
@@ -423,7 +425,7 @@ bu_get_load_average(void)
 #define PUBLIC_CPUS1	"/var/tmp/public_cpus"
 #define PUBLIC_CPUS2	"/usr/tmp/public_cpus"
 int
-bu_get_public_cpus(void)
+bu_get_public_cpus()
 {
 	FILE	*fp;
 	int	avail_cpus;
@@ -465,7 +467,7 @@ bu_get_public_cpus(void)
  *	0	running with non-realtime scheduler behavior
  */
 int
-bu_set_realtime(void)
+bu_set_realtime()
 {
 #	if IRIX64 >= 64
 	{
@@ -567,7 +569,7 @@ static genptr_t	bu_parallel_arg;		/* User's arg to his threads */
  *  may be active at any one time.
  */
 static void
-bu_parallel_interface(void)
+bu_parallel_interface()
 {
 	register int	cpu;		/* our CPU (thread) number */
 

@@ -52,23 +52,23 @@
 #define NUM_DISTANCE	250
 #define LAB_LNGTH	860
 
-void	tp_ftoa(float x, char *s);
-void	tp_fixsc(float *x, int npts, float size, float *xs, float *xmin, float *xmax, float *dx), tp_sep(float x, float *coef, int *ex);
-double	tp_ipow(double x, int n);
+void	tp_ftoa();
+void	tp_fixsc(), tp_sep();
+double	tp_ipow();
 
 void
-tp_plot(FILE *fp, int xp, int yp, int xl, int yl, char *xtitle, char *ytitle, float *x, float *y, int n, double cscale)
-    	    
-   	   		/* page point desired to be (0,0) for plot */
-   	   
-   	   		/* lengths of x,y axis */
-   	   
-    	         
-    	         
-     	    
-     	    
-   	  		/* number of points */
-      	       		/* character scale factor */
+tp_plot( fp, xp, yp, xl, yl, xtitle, ytitle, x, y, n, cscale )
+FILE	*fp;
+int	xp;		/* page point desired to be (0,0) for plot */
+int	yp;
+int	xl;		/* lengths of x,y axis */
+int	yl;
+char	xtitle[];
+char	ytitle[];
+float	x[];
+float	y[];
+int	n;		/* number of points */
+double	cscale;		/* character scale factor */
 {
 	int  ddx, ddy, xend, yend, xpen, ypen;
 	float fxl, fyl, xs, ys, xmin, xmax, ymin, ymax, dx, dy;
@@ -187,7 +187,9 @@ loop:
  * null terminated.
  */
 void
-tp_ftoa(float x, char *s)
+tp_ftoa(x, s)
+float x;
+char *s;
 {
 	int ex,tmp;
 	float coef;
@@ -283,7 +285,9 @@ tp_ftoa(float x, char *s)
  *
  */
 void
-tp_fixsc(float *x, int npts, float size, float *xs, float *xmin, float *xmax, float *dx)
+tp_fixsc(x,npts,size,xs,xmin,xmax,dx)
+int npts;
+float x[], size, *xs, *xmin, *xmax, *dx ;
 {
 	float txmi, txma, coef, delta, diff;
 	int i, ex;
@@ -335,7 +339,9 @@ tp_fixsc(float *x, int npts, float size, float *xs, float *xmin, float *xmax, fl
  *  and an exponent. works in base ten.
  */
 void
-tp_sep(float x, float *coef, int *ex)
+tp_sep( x, coef, ex )
+float x, *coef;
+int *ex;
 {
 	int i, isv;
 	float xx;
@@ -383,7 +389,9 @@ tp_sep(float x, float *coef, int *ex)
  *  power.
  *  XXX Horribly inefficient!
  */
-double tp_ipow (double x, int n)
+double tp_ipow (x, n)
+double x;
+int n;
 {
 	return(n>0?x*tp_ipow(x,n-1):1);
 }

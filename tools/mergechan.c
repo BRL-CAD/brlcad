@@ -30,7 +30,9 @@
 #define RLE_END 32768		/* This should be in rle.h */
 
 int
-main(int argc, char **argv)
+main( argc, argv )
+int argc;
+char ** argv;
 {
     int nfiles;
     rle_hdr * in_hdr;

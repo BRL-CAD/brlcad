@@ -115,13 +115,15 @@ char link_cmd[10];		/* default is "rarc" */
 char wheel_cmd[10];		/* default is "lmul" */
 int get_circumf;	/* flag: just return circumference of track */
 
-int get_link(fastf_t *pos, fastf_t *angle_p, fastf_t dist);
+int get_link();
 
 int
-main(int argc, char **argv)
+main(argc,argv)
+int argc;
+char **argv;
 {
-	void anim_dir2mat(fastf_t *, const fastf_t *, const fastf_t *), anim_y_p_r2mat(fastf_t *, double, double, double), anim_add_trans(fastf_t *, const fastf_t *, const fastf_t *),anim_mat_print(FILE *, const fastf_t *, int);
-	int get_args(int argc, char **argv), track_prep(void), val, frame, go, i, count;
+	void anim_dir2mat(), anim_y_p_r2mat(), anim_add_trans(),anim_mat_print();
+	int get_args(), track_prep(), val, frame, go, i, count;
 	fastf_t y_rot, distance, yaw, pitch, roll;
 	vect_t p1, p2, p3, dir, dir2, wheel_now, wheel_prev;
 	vect_t zero, position, vdelta, temp, to_track, to_front;
@@ -308,7 +310,7 @@ main(int argc, char **argv)
 }
 
 
-int track_prep(void)/*run once at the beginning to establish important track info*/
+int track_prep()/*run once at the beginning to establish important track info*/
 {
 	int i;
 	fastf_t phi, costheta, link_angle, arc_angle;
@@ -375,7 +377,9 @@ int track_prep(void)/*run once at the beginning to establish important track inf
 }
 
 	
-int get_link(fastf_t *pos, fastf_t *angle_p, fastf_t dist)
+int get_link(pos,angle_p,dist) 
+fastf_t *angle_p, dist;
+vect_t pos;
 {
 	int i;
 	vect_t temp;
@@ -404,10 +408,12 @@ int get_link(fastf_t *pos, fastf_t *angle_p, fastf_t dist)
 }
 
 #define OPT_STR "b:d:f:i:l:pr:w:sg:m:c"
-int get_args(int argc, char **argv)
+int get_args(argc,argv)
+int argc;
+char **argv;
 {
 	fastf_t yaw, pch, rll;
-	void anim_dx_y_z2mat(fastf_t *, double, double, double), anim_dz_y_x2mat(fastf_t *, double, double, double);
+	void anim_dx_y_z2mat(), anim_dz_y_x2mat();
 	int c, i;
 	axes = cent = links_placed = print_wheel = print_link = 0;
 	get_circumf = 0;
@@ -491,8 +497,8 @@ int get_args(int argc, char **argv)
         return(1);
 }
 
-void show_info(int which)/* for debugging - -1:track 0:both 1:link*/
-          
+void show_info(which)/* for debugging - -1:track 0:both 1:link*/
+int which;
 {
 	int i;
 	if (which <=0){

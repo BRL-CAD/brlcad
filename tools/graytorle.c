@@ -45,7 +45,9 @@ typedef FILE	*FILPTR;
  */
 
 int
-main(int argc, char **argv)
+main(argc, argv)
+int  argc;
+char *argv[];
 {
     int			hflag = 0;	/* Header size flag */
     int 		aflag = 0;	/* Alpha channel flag. */

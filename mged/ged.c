@@ -86,22 +86,22 @@ in all countries except the USA.  All rights reserved.";
 #define LOGFILE	"/vld/lib/gedlog"	/* usage log */
 #endif
 
-extern void view_ring_init(struct _view_state *vsp1, struct _view_state *vsp2); /* defined in chgview.c */
+extern void view_ring_init(); /* defined in chgview.c */
 
-extern void draw_e_axes(void);
-extern void draw_m_axes(void);
-extern void draw_v_axes(void);
+extern void draw_e_axes();
+extern void draw_m_axes();
+extern void draw_v_axes();
 
 extern void fb_tclInit();  /* from in libfb/tcl.c */
 extern int fb_refresh();
 
-extern void draw_grid(void);		/* grid.c */
+extern void draw_grid();		/* grid.c */
 
-extern void draw_rect(void);		/* rect.c */
-extern void paint_rect_area(void);
+extern void draw_rect();		/* rect.c */
+extern void paint_rect_area();
 
 /* defined in predictor.c */
-extern void predictor_init(void);
+extern void predictor_init();
 
 /* defined in cmd.c */
 extern Tcl_Interp *interp;
@@ -111,10 +111,10 @@ extern Tk_Window tkwin;
 #endif
 
 /* defined in attach.c */
-extern int mged_link_vars(struct dm_list *p);
+extern int mged_link_vars();
 
 /* defined in chgmodel.c */
-extern void set_localunit_TclVar(void);
+extern void set_localunit_TclVar();
 
 /* defined in dodraw.c */
 extern unsigned char geometry_default_color[];
@@ -147,13 +147,13 @@ int (*cmdline_hook)() = NULL;
 jmp_buf	jmp_env;		/* For non-local gotos */
 double frametime;		/* time needed to draw last frame */
 
-int             cmd_stuff_str(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+int             cmd_stuff_str();
 void		(*cur_sigint)();	/* Current SIGINT status */
-void		sig2(void), sig3(void);
-void		reset_input_strings(void);
-void		new_mats(void);
-void		usejoy(double xangle, double yangle, double zangle);
-void            slewview(fastf_t *view_pos);
+void		sig2(), sig3();
+void		reset_input_strings();
+void		new_mats();
+void		usejoy();
+void            slewview();
 int		interactive = 0;	/* >0 means interactive */
 int             cbreak_mode = 0;        /* >0 means in cbreak_mode */
 #ifdef DM_X
@@ -182,19 +182,19 @@ int db_upgrade = 0;
 /* force creation of specific database versions */
 int db_version = 5;
 
-static void     mged_insert_char(char ch);
-static void	mged_process_char(char ch);
-static int	do_rc(void);
-static void	log_event(char *event, char *arg);
+static void     mged_insert_char();
+static void	mged_process_char();
+static int	do_rc();
+static void	log_event();
 extern char	version[];		/* from vers.c */
 
 struct bn_tol	mged_tol;		/* calculation tolerance */
 
 struct bu_vls mged_prompt;
-void pr_prompt(void), pr_beep(void);
-int mged_bomb_hook(genptr_t clientData, genptr_t str);
+void pr_prompt(), pr_beep();
+int mged_bomb_hook();
 
-void mged_view_obj_callback(genptr_t clientData, struct view_obj *vop);
+void mged_view_obj_callback();
 
 #ifdef USE_PROTOTYPES
 Tcl_FileProc stdin_input;
@@ -209,7 +209,9 @@ void std_out_or_err();
  */
 
 int
-main(int argc, char **argv)
+main(argc,argv)
+int argc;
+char **argv;
 {
 	int	rateflag = 0;
 	int	c;
@@ -566,14 +568,14 @@ main(int argc, char **argv)
 }
 
 void
-pr_prompt(void)
+pr_prompt()
 {
 	if( interactive )
 		bu_log("%S", &mged_prompt);
 }
 
 void
-pr_beep(void)
+pr_beep()
 {
     bu_log("%c", 7);
 }
@@ -590,7 +592,7 @@ pr_beep(void)
  * by setting up the multi_line_sig routine as the SIGINT handler.
  */
 
-extern struct bu_vls *history_prev(void), *history_cur(void), *history_next(void);
+extern struct bu_vls *history_prev(), *history_cur(), *history_next();
 
 /*
  * stdin_input
@@ -600,7 +602,9 @@ extern struct bu_vls *history_prev(void), *history_cur(void), *history_next(void
  */
 
 void
-stdin_input(ClientData clientData, int mask)
+stdin_input(clientData, mask)
+ClientData clientData;
+int mask;
 {
     int count;
     char ch;
@@ -708,7 +712,8 @@ stdin_input(ClientData clientData, int mask)
 
 /* Process character */
 static void
-mged_process_char(char ch)
+mged_process_char(ch)
+char ch;
 {
   struct bu_vls *vp;
   struct bu_vls temp;
@@ -1126,7 +1131,8 @@ mged_process_char(char ch)
 }
 
 static void
-mged_insert_char(char ch)
+mged_insert_char(ch)
+char ch;
 {
   if (input_str_index == bu_vls_strlen(&input_str)) {
     bu_log("%c", (int)ch);
@@ -1151,7 +1157,11 @@ mged_insert_char(char ch)
 
 /* Stuff a string to stdout while leaving the current command-line alone */
 int
-cmd_stuff_str(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+cmd_stuff_str(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int     argc;
+char    **argv;
 {
   int i;
 
@@ -1178,7 +1188,9 @@ cmd_stuff_str(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 }
 
 void
-std_out_or_err(ClientData clientData, int mask)
+std_out_or_err(clientData, mask)
+ClientData clientData;
+int mask;
 {
   int fd = (int)((long)clientData & 0xFFFF);	/* fd's will be small */
   int count;
@@ -1541,7 +1553,7 @@ event_check( int non_blocking )
  * then you don't want to call it.
  */
 void
-refresh(void)
+refresh()
 {
   struct dm_list *p;
   struct dm_list *save_dm_list;
@@ -1705,7 +1717,9 @@ refresh(void)
  * Logging routine
  */
 static void
-log_event(char *event, char *arg)
+log_event( event, arg )
+char *event;
+char *arg;
 {
 	struct bu_vls line;
 	time_t now;
@@ -1742,7 +1756,8 @@ log_event(char *event, char *arg)
  * the (ugh) logfile, also to remove the device access lock.
  */
 void
-mged_finish(int exitcode)
+mged_finish( exitcode )
+int	exitcode;
 {
 	char place[64];
 	register struct dm_list *p;
@@ -1784,7 +1799,7 @@ mged_finish(int exitcode)
  * Handles finishing up.  Also called upon EOF on STDIN.
  */
 void
-quit(void)
+quit()
 {
 	mged_finish(0);
 	/* NOTREACHED */
@@ -1794,7 +1809,7 @@ quit(void)
  *  			S I G 2
  */
 void
-sig2(void)
+sig2()
 {
   reset_input_strings();
 
@@ -1802,14 +1817,14 @@ sig2(void)
 }
 
 void
-sig3(void)
+sig3()
 {
   (void)signal( SIGINT, SIG_IGN );
   longjmp( jmp_env, 1 );
 }
 
 void
-reset_input_strings(void)
+reset_input_strings()
 {
   if(BU_LIST_IS_HEAD(curr_cmd_list, &head_cmd_list.l)){
     /* Truncate input string */
@@ -1840,14 +1855,14 @@ reset_input_strings(void)
  *  Centralized here to simplify things.
  */
 void
-new_mats(void)
+new_mats()
 {
 	vo_update(view_state->vs_vop, interp, 0);
 }
 
 #ifdef DO_NEW_EDIT_MATS
 void
-new_edit_mats(void)
+new_edit_mats()
 {
   register struct dm_list *p;
   struct dm_list *save_dm_list;
@@ -1892,7 +1907,7 @@ mged_view_obj_callback(genptr_t		clientData,
  *	 0	OK
  */
 static int
-do_rc(void)
+do_rc()
 {
 	FILE	*fp = NULL;
 	char	*path;
@@ -1988,12 +2003,7 @@ f_opendb(
 	struct bu_vls		msg;	/* use this to hold returned message */
 	int			create_new_db = 0;
 
-	bu_vls_init(&vls);
-	bu_vls_init(&msg);
-
 	if( argc <= 1 )  {
-		bu_vls_free(&vls);
-		bu_vls_free(&msg);
 
 		/* Invoked without args, return name of current database */
 		if( dbip != DBI_NULL )  {
@@ -2008,10 +2018,11 @@ f_opendb(
 	if(3 < argc || (strlen(argv[1]) == 0)){
 		bu_vls_printf(&vls, "help opendb");
 		Tcl_Eval(interp, bu_vls_addr(&vls));
-		bu_vls_free(&vls);
-		bu_vls_free(&msg);
 		return TCL_ERROR;
 	}
+
+	bu_vls_init(&vls);
+	bu_vls_init(&msg);
 
 	if(argc == 3 &&
 	    strcmp("y", argv[2]) && strcmp("Y", argv[2]) &&
@@ -2261,8 +2272,69 @@ f_opendb(
 	return TCL_OK;
 }
 
+
+/*
+ *			F _ C L O S E D B
+ *
+ *  Close the current database, if open.
+ *
+ */
 int
-mged_bomb_hook(genptr_t clientData, genptr_t str)
+f_closedb(
+	ClientData clientData,
+	Tcl_Interp *interp,
+	int	argc,
+	char	**argv)
+{
+	char *av[2];
+
+	if( argc != 1 )  {
+		Tcl_Eval(interp, "help closedb");
+		return TCL_ERROR;
+	}
+
+	if (dbip == DBI_NULL) {
+		Tcl_AppendResult(interp, "No database is open\n", (char *)NULL);
+		return TCL_OK;
+	}
+
+	/* Clear out anything in the display */
+	av[0] = "zap";
+	av[1] = NULL;
+	cmd_zap(clientData, interp, 1, av);
+
+	/* Close the Tcl database objects */
+#if 0
+	Tcl_Eval(interp, "db close; .inmem close");
+#else
+	Tcl_Eval(interp, "rename db \"\"; rename .inmem \"\"");
+#endif
+	
+	log_event( "CEASE", "(close)" );
+
+	/* update any and all other displays */
+	{
+		register struct dm_list *dmlp;
+		
+		/* update local2base and base2local variables for all view objects */
+		FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l) {
+			dmlp->dml_view_state->vs_vop->vo_local2base = dbip->dbi_local2base;
+			dmlp->dml_view_state->vs_vop->vo_base2local = dbip->dbi_base2local;
+		}
+	}
+	
+	/* wipe out the global pointers */
+	dbip = DBI_NULL;
+	rt_material_head = MATER_NULL;
+
+	return TCL_OK;
+}
+
+
+int
+mged_bomb_hook(clientData, str)
+     genptr_t clientData;
+     genptr_t str;
 {
 	struct bu_vls vls;
 

@@ -24,12 +24,14 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 double	obuf[2*1024];
 double	real[1024], imag[1024];
 
-void	open_file(FILE **fp, char *name);
+void	open_file();
 
 static char usage[] = "\
 Usage: d2-c real_file imag_file > complex (- stdin, . skip)\n";
 
-int main(int argc, char **argv)
+int main( argc, argv )
+int argc;
+char **argv;
 {
 	int	i;
 	int	nr, ni, num;
@@ -68,7 +70,9 @@ int main(int argc, char **argv)
 }
 
 void
-open_file(FILE **fp, char *name)
+open_file( fp, name )
+FILE **fp;
+char *name;
 {
 	/* check for special names */
 	if( strcmp( name, "-" ) == 0 ) {

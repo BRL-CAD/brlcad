@@ -72,7 +72,9 @@
  * 	extent necessary to copy it and its data to the output.
  */
 void
-rle_cp(rle_hdr *in_hdr, rle_hdr *the_hdr)
+rle_cp( in_hdr, the_hdr )
+rle_hdr *in_hdr;
+rle_hdr *the_hdr;
 {
     register FILE *infile = in_hdr->rle_file;
     register FILE *outfile = the_hdr->rle_file;

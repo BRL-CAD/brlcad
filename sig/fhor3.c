@@ -38,7 +38,7 @@ static	int	Xleft, Yleft, Xright, Yright;		/* XXX */
 
 FBIO	*fbp;	/* XXX - debug */
 
-fhinit(void)
+fhinit()
 {
 	int	i;
 
@@ -55,7 +55,8 @@ fhinit(void)
  * Add another Z cut to the display.
  *  This one goes "behind" the last one.
  */
-fhnewz(int *f, int num)
+fhnewz( f, num )
+int	f[], num;
 {
 	int	x, y, Xprev, Yprev, Xi, Yi;
 	int	Previously, Currently;
@@ -114,7 +115,8 @@ fhnewz(int *f, int num)
  *	    1 if visible above upper horizon.
  *	   -1 if visible below lower horizon.
  */
-fhvis(int x, int y)
+fhvis( x, y )
+int x, y;
 {
 	/* See if hidden behind horizons */
 	if( y < upper[x] && y > lower[x] )
@@ -130,7 +132,7 @@ fhvis(int x, int y)
  * INTERNAL Edge fill routine.
  * NOT DONE YET.
  */
-Efill(void)
+Efill()
 {
 }
 
@@ -138,7 +140,8 @@ Efill(void)
  * Fill the upper and lower horizon arrays from x1 to x2
  *  with a line spanning (x1,y1) to (x2,y2).
  */
-Horizon(int x1, int y1, int x2, int y2)
+Horizon( x1, y1, x2, y2 )
+int	x1, y1, x2, y2;
 {
 	int	xinc, x, y;
 	double	slope;
@@ -162,7 +165,10 @@ Horizon(int x1, int y1, int x2, int y2)
  * Find the intersection (xi,yi) between the line (x1,y1)->(x2,y2)
  *  and the horizon hor[].
  */
-Intersect(int x1, int y1, int x2, int y2, int *hor, int *xi, int *yi)
+Intersect( x1, y1, x2, y2, hor, xi, yi )
+int	x1, y1, x2, y2;
+int	hor[];
+int	*xi, *yi;
 {
 	int	xinc, ysign, denom;
 	int	slope;
@@ -214,7 +220,8 @@ fflush( stdout );
 /*printf("(%3d,%3d)\n", *xi, *yi );*/
 }
 
-sign(int i)
+sign( i )
+int	i;
 {
 	if( i > 0 )
 		return( 1 );
@@ -228,7 +235,8 @@ sign(int i)
  * DRAW - plot a line from (x1,y1) to (x2,y2)
  *  An integer Bresenham algorithm for any quadrant.
  */
-Draw(int x1, int y1, int x2, int y2)
+Draw( x1, y1, x2, y2 )
+int	x1, y1, x2, y2;
 {
 	int	x, y, deltx, delty, error, i;
 	int	temp, s1, s2, interchange;
@@ -309,7 +317,9 @@ int main()
 static char usage[] = "\
 Usage: fhor [width] < doubles\n";
 
-int main(int argc, char **argv)
+int main( argc, argv )
+int	argc;
+char	**argv;
 {
 	double	inbuf[512];
 	int	f[512];

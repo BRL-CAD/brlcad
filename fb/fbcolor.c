@@ -47,9 +47,9 @@ static FBIO	*fbp;
 static int	scr_height;
 static int	scr_width;
 
-void	new_rgb(void), rgbhsv(register int *rgb, register int *hsv), hsvrgb(register int *hsv, register int *rgb);
-int	pars_Argv(int argc, register char **argv);
-int	doKeyPad(void);
+void	new_rgb(), rgbhsv(), hsvrgb();
+int	pars_Argv();
+int	doKeyPad();
 
 static char usage[] = "\
 Usage: fbcolor [-h] [-F framebuffer]\n\
@@ -57,7 +57,8 @@ Usage: fbcolor [-h] [-F framebuffer]\n\
 	[-S squarescrsize] [-W scr_width] [-N scr_height]\n";
 
 int
-main(int argc, char **argv)
+main(argc, argv )
+char **argv;
 {
 	register int i;
 
@@ -173,7 +174,7 @@ q	quit\r\n\
 \\n	Exit\r\n";
 
 int
-doKeyPad(void)
+doKeyPad()
 { 
 	register int ch;	
 
@@ -246,7 +247,7 @@ doKeyPad(void)
 }
 
 void
-new_rgb(void) {
+new_rgb()  {
 	/* Wrap values to stay in range 0..255 */
 	if( col[curchan] < 0 ) col[curchan] = 255;
 	if( col[curchan] > 255 ) col[curchan] = 0;
@@ -260,7 +261,8 @@ new_rgb(void) {
 /*	p a r s _ A r g v ( )
  */
 int
-pars_Argv(int argc, register char **argv)
+pars_Argv( argc, argv )
+register char	**argv;
 {
 	register int	c;
 	while( (c = getopt( argc, argv, "F:s:S:w:W:n:N:h" )) != EOF )  {
@@ -295,7 +297,9 @@ pars_Argv(int argc, register char **argv)
  * convert red green blue to hue saturation value
  */
 void
-rgbhsv(register int *rgb, register int *hsv)
+rgbhsv(rgb, hsv)
+register int *rgb;
+register int *hsv;
 {
         int	s, v;
         int	r, g, b;
@@ -347,20 +351,22 @@ rgbhsv(register int *rgb, register int *hsv)
  * convert hue saturation and value to red, green, blue
  */
 
-double modf(double, double *);
+double modf();
 
 void
-hsvrgb(register int *hsv, register int *rgb)
+hsvrgb(hsv, rgb)
+register int *hsv;
+register int *rgb;
 {
-  	int r, g, b, m, n, k;
-        double h, s, v, foo;
+        int r, g, b, m, n, k, foo;
+        double h, s, v;
         double f;
 
 	if(hsv[1] != 0) 
         {
             s = (double)hsv[1] / 255.;
             h = (double)hsv[0] / 42.666;
-            f = modf(h, &(foo));
+            f = modf(h, &foo);
             v = (double)hsv[2];
             m = (int) (v * (1. - s) + .5);
             n = (int) (v * (1. - s*f) + .5);

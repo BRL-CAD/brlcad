@@ -83,27 +83,27 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 extern struct db_tree_state	mged_initial_tree_state;	/* dodraw.c */
 
-extern void color_soltab(void);
-extern void set_absolute_tran(void); /* defined in set.c */
-extern void set_absolute_view_tran(void); /* defined in set.c */
-extern void set_absolute_model_tran(void); /* defined in set.c */
+extern void color_soltab();
+extern void set_absolute_tran(); /* defined in set.c */
+extern void set_absolute_view_tran(); /* defined in set.c */
+extern void set_absolute_model_tran(); /* defined in set.c */
 
-void solid_list_callback(void);
-void knob_update_rate_vars(void);
-int mged_svbase(void);
-int mged_vrot(char origin, fastf_t *newrot);
-int mged_zoom(double val);
-void mged_center(fastf_t *center);
-static void abs_zoom(void);
-void usejoy(double xangle, double yangle, double zangle);
+void solid_list_callback();
+void knob_update_rate_vars();
+int mged_svbase();
+int mged_vrot();
+int mged_zoom();
+void mged_center();
+static void abs_zoom();
+void usejoy();
 
 int knob_rot(vect_t rvec, char origin, int mf, int vf, int ef);
-int knob_tran(fastf_t *tvec, int model_flag, int view_flag, int edit_flag);
+int knob_tran();
 int mged_etran(struct view_obj *vop, Tcl_Interp *interp, char coords, vect_t tvec);
-int mged_mtran(const fastf_t *tvec);
-int mged_otran(const fastf_t *tvec);
-int mged_vtran(const fastf_t *tvec);
-int mged_tran(fastf_t *tvec);
+int mged_mtran();
+int mged_otran();
+int mged_vtran();
+int mged_tran();
 
 #ifndef M_SQRT2
 #define M_SQRT2		1.41421356237309504880
@@ -343,7 +343,7 @@ char	**argv;
  *  Caller is responsible for calling new_mats().
  */
 void
-size_reset(void)
+size_reset()
 {
 	dgo_autoview(dgop, view_state->vs_vop, interp);
 	view_state->vs_i_Viewscale = view_state->vs_vop->vo_scale;
@@ -625,7 +625,7 @@ cmd_get_autoview(ClientData	clientData,
 }
 
 void
-solid_list_callback(void)
+solid_list_callback()
 {
   struct bu_vls vls;
   Tcl_Obj *save_obj;
@@ -666,7 +666,11 @@ cmd_solid_report(ClientData	clientData,
  *  Display-manager specific "hardware register" debugging.
  */
 int
-f_regdebug(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_regdebug(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int	argc;
+char	**argv;
 {
 	static int regdebug = 0;
 	static char debug_str[10];
@@ -845,7 +849,10 @@ f_debugnmg(ClientData	clientData,
  *			D O _ L I S T
  */
 void
-do_list(struct bu_vls *outstrp, register struct directory *dp, int verbose)
+do_list( outstrp, dp, verbose )
+struct bu_vls	*outstrp;
+register struct directory *dp;
+int	verbose;
 {
 	int			id;
 	struct rt_db_internal	intern;
@@ -875,7 +882,7 @@ do_list(struct bu_vls *outstrp, register struct directory *dp, int verbose)
  *  and RT_GET_VLIST in h/raytrace.h.
  */
 void
-mged_freemem(void)
+mged_freemem()
 {
   register struct solid		*sp;
   register struct bn_vlist	*vp;
@@ -927,7 +934,11 @@ cmd_zap(ClientData	clientData,
 }
 
 int
-f_status(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_status(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int	argc;
+char	**argv;
 {
 	struct bu_vls vls;
 
@@ -1036,7 +1047,11 @@ f_status(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 }
 
 int
-f_view(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_view(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int	argc;
+char	**argv;
 {
 	int n;
 	point_t pt;
@@ -1348,7 +1363,11 @@ f_view(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 }
 
 int
-f_refresh(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_refresh(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int	argc;
+char	**argv;
 {
   if(argc < 1 || 1 < argc){
     struct bu_vls vls;
@@ -1462,8 +1481,8 @@ cmd_aetview(ClientData	clientData,
  * from the solid list which contain the specified object anywhere in their 'path'
  */
 void
-eraseobjall(register struct directory **dpp)
-                                     	/* this is a partial path spec. XXX should be db_full_path? */
+eraseobjall(dpp)
+     register struct directory **dpp;	/* this is a partial path spec. XXX should be db_full_path? */
 {
 	register struct directory **tmp_dpp;
 	register struct solid *sp;
@@ -1517,8 +1536,8 @@ eraseobjall(register struct directory **dpp)
  * beginning of their 'path'
  */
 void
-eraseobj(register struct directory **dpp)
-                                     	/* this is a partial path spec. XXX should be db_full_path? */
+eraseobj(dpp)
+     register struct directory **dpp;	/* this is a partial path spec. XXX should be db_full_path? */
 {
 	register struct directory **tmp_dpp;
 	register struct solid *sp;
@@ -1576,9 +1595,9 @@ eraseobj(register struct directory **dpp)
  *  about each solid structure.
  */
 void
-pr_schain(struct solid *startp, int lvl)
-                     
-   		    			/* debug level */
+pr_schain( startp, lvl )
+struct solid *startp;
+int		lvl;			/* debug level */
 {
   register struct solid	*sp;
   register struct bn_vlist	*vp;
@@ -1665,11 +1684,15 @@ pr_schain(struct solid *startp, int lvl)
   (void)signal( SIGINT, SIG_IGN );
 }
 
-static char ** path_parse (char *path);
+static char ** path_parse ();
 
 /* Illuminate the named object */
 int
-f_ill(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_ill(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int	argc;
+char	**argv;
 {
 	register struct directory *dp;
 	register struct solid *sp;
@@ -1902,7 +1925,7 @@ f_sed(
 }
 
 void
-check_nonzero_rates(void)
+check_nonzero_rates()
 {
   if( view_state->vs_rate_model_rotate[X] != 0.0 ||
       view_state->vs_rate_model_rotate[Y] != 0.0 ||
@@ -1981,14 +2004,15 @@ check_nonzero_rates(void)
 }
 
 void
-knob_update_rate_vars(void)
+knob_update_rate_vars()
 {
   if(!mged_variables->mv_rateknobs)
     return;
 }
 
 int
-mged_print_knobvals(Tcl_Interp *interp)
+mged_print_knobvals(interp)
+Tcl_Interp *interp;
 {
   struct bu_vls vls;
 
@@ -2062,7 +2086,11 @@ mged_print_knobvals(Tcl_Interp *interp)
 
 /* Main processing of knob twists.  "knob id val id val ..." */
 int
-f_knob(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_knob(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int	argc;
+char	**argv;
 {
   int	i;
   fastf_t f;
@@ -3250,7 +3278,7 @@ knob_rot(vect_t	rvec,
 
 /* absolute_scale's value range is [-1.0, 1.0] */
 static void
-abs_zoom(void)
+abs_zoom()
 {
   /* Use initial Viewscale */
   if(-SMALL_FASTF < view_state->vs_absolute_scale && view_state->vs_absolute_scale < SMALL_FASTF)
@@ -3326,7 +3354,7 @@ cmd_zoom(ClientData	clientData,
 }
 
 /*
- *			F _ O R I E N T A T I O N
+ *			C M D _ O R I E N T A T I O N
  *
  *  Set current view direction from a quaternion,
  *  such as might be found in a "saveview" script.
@@ -3346,7 +3374,11 @@ cmd_orientation(ClientData	clientData,
  *  Set view from direction vector and twist angle
  */
 int
-f_qvrot(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_qvrot(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int	argc;
+char	**argv;
 {
     double	dx, dy, dz;
     double	az;
@@ -3401,7 +3433,10 @@ f_qvrot(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  *	pointer to them.
  */
 static char **
-path_parse (char *path)
+path_parse (path)
+
+char	*path;
+
 {
     int		nm_constituents;
     int		i;
@@ -3461,7 +3496,11 @@ cmd_setview(ClientData	clientData,
 }
 
 int
-f_slewview(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_slewview(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int	argc;
+char	*argv[];
 {
 	point_t old_model_center;
 	point_t new_model_center;
@@ -3489,7 +3528,7 @@ f_slewview(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 /* set view reference base */
 int
-mged_svbase(void)
+mged_svbase()
 { 
 	MAT_DELTAS_GET_NEG(view_state->vs_orig_pos, view_state->vs_vop->vo_center);
 	view_state->vs_i_Viewscale = view_state->vs_vop->vo_scale;
@@ -3513,7 +3552,11 @@ mged_svbase(void)
 
 
 int
-f_svbase(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_svbase(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int     argc;
+char    **argv;
 {
   int status;
   struct dm_list *dmlp;
@@ -3548,7 +3591,11 @@ f_svbase(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  *  The default is to rotate around the view center: v=(0,0,0).
  */
 int
-f_vrot_center(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_vrot_center(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int	argc;
+char	**argv;
 {
   if(argc < 5 || 5 < argc){
     struct bu_vls vls;
@@ -3574,7 +3621,8 @@ f_vrot_center(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  *  Angles are in radians.
  */
 void
-usejoy(double xangle, double yangle, double zangle)
+usejoy( xangle, yangle, zangle )
+double	xangle, yangle, zangle;
 {
 	mat_t	newrot;		/* NEW rot matrix, from joystick */
 
@@ -3601,7 +3649,8 @@ usejoy(double xangle, double yangle, double zangle)
  *  Assume rotation around view center, for now.
  */
 void
-absview_v(const fastf_t *ang)
+absview_v( ang )
+const point_t	ang;
 {
 	point_t	rad;
 
@@ -3672,7 +3721,11 @@ slewview(vect_t view_pos)
  *  in rt animation script -- put eye at specified point.
  */
 int
-cmd_eye_pt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+cmd_eye_pt(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int	argc;
+char	**argv;
 {
 	return vo_eye_cmd(view_state->vs_vop, interp, argc, argv);
 }
@@ -3684,7 +3737,11 @@ cmd_eye_pt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  *  convert it to view (screen) coordinates.
  */
 int
-f_model2view(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_model2view(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int	argc;
+char	**argv;
 {
 #if 0
 	return vo_model2view_cmd(view_state->vs_vop, interp, argc, argv);
@@ -3729,7 +3786,11 @@ f_model2view(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  *  convert it to model coordinates (in mm).
  */
 int
-f_view2model(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_view2model(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int	argc;
+char	**argv;
 {
 	point_t	model;
 	point_t	view;
@@ -3770,7 +3831,11 @@ f_view2model(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  *  convert it to view coordinates (local units).
  */
 int
-f_model2view_lu(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_model2view_lu(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int	argc;
+char	**argv;
 {
 	struct bu_vls vls;
 	fastf_t f;
@@ -3817,7 +3882,11 @@ f_model2view_lu(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
  *  convert it to model coordinates (local units).
  */
 int
-f_view2model_lu(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_view2model_lu(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int	argc;
+char	**argv;
 {
 	struct bu_vls vls;
 	fastf_t sf;
@@ -3864,7 +3933,11 @@ f_view2model_lu(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
  *  convert it to grid coordinates (local units).
  */
 int
-f_model2grid_lu(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_model2grid_lu(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int	argc;
+char	**argv;
 {
 	struct bu_vls vls;
 	fastf_t f;
@@ -3919,7 +3992,11 @@ f_model2grid_lu(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
  *  convert it to model coordinates (local units).
  */
 int
-f_grid2model_lu(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_grid2model_lu(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int     argc;
+char    **argv;
 {
 	struct bu_vls vls;
 	fastf_t f;
@@ -3973,7 +4050,11 @@ f_grid2model_lu(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
  *  convert it to grid coordinates (local units).
  */
 int
-f_view2grid_lu(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_view2grid_lu(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int	argc;
+char	**argv;
 {
 	struct bu_vls vls;
 	fastf_t f;
@@ -4024,7 +4105,11 @@ f_view2grid_lu(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  *  convert it to view coordinates (local units).
  */
 int
-f_grid2view_lu(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_grid2view_lu(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int     argc;
+char    **argv;
 {
 	struct bu_vls vls;
 	fastf_t f;
@@ -4073,7 +4158,11 @@ f_grid2view_lu(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  *  convert it to model coordinates.
  */
 int
-f_view2model_vec(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_view2model_vec(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int     argc;
+char    **argv;
 {
 	struct bu_vls vls;
 	point_t model_vec;
@@ -4113,7 +4202,11 @@ f_view2model_vec(ClientData clientData, Tcl_Interp *interp, int argc, char **arg
 }
 
 int
-cmd_lookat(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+cmd_lookat(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int	argc;
+char	**argv;
 {
 	CHECK_DBI_NULL;
 
@@ -4124,7 +4217,9 @@ cmd_lookat(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  * Initialize vsp1 using vsp2 if vsp2 is not null.
  */
 void
-view_ring_init(struct _view_state *vsp1, struct _view_state *vsp2)
+view_ring_init(vsp1, vsp2)
+struct _view_state *vsp1;
+struct _view_state *vsp2;
 {
   struct view_ring *vrp1;
   struct view_ring *vrp2;
@@ -4594,7 +4689,9 @@ cmd_mrot(ClientData	clientData,
  *			M G E D _ V R O T
  */
 int
-mged_vrot(char origin, fastf_t *newrot)
+mged_vrot(origin, newrot)
+char origin;
+mat_t newrot;
 {
 	mat_t   newinv;
 

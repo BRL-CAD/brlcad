@@ -33,7 +33,8 @@
  *
  * Fill in the matrix "m" with zeros.
  */
-mat_zero(register matp_t m)
+mat_zero( m )
+register matp_t m;
 {
 	register int i = 0;
 
@@ -48,7 +49,8 @@ mat_zero(register matp_t m)
  *
  * Fill in the matrix "m" with an identity matrix.
  */
-mat_idn(register matp_t m)
+mat_idn( m )
+register matp_t m;
 {
 	/* Clear everything first */
 	mat_zero( m );
@@ -63,7 +65,9 @@ mat_idn(register matp_t m)
  *
  * Copy the matrix "im" into the matrix "om".
  */
-mat_copy(register matp_t om, register matp_t im)
+mat_copy( om, im )
+register matp_t om;
+register matp_t im;
 {
 	register int i = 0;
 
@@ -80,7 +84,10 @@ mat_copy(register matp_t om, register matp_t im)
  * NOTE:  This is different from multiplying "im2" by "im1" (most
  * of the time!)
  */
-mat_mul(register matp_t om, register matp_t im1, register matp_t im2)
+mat_mul( om, im1, im2 )
+register matp_t om;
+register matp_t im1;
+register matp_t im2;
 {
 	register int em1;		/* Element subscript for im1 */
 	register int em2;		/* Element subscript for im2 */
@@ -110,7 +117,10 @@ mat_mul(register matp_t om, register matp_t im1, register matp_t im2)
  * Multiply the vector "iv" by the matrix "im" and store the result
  * in the vector "ov".  Note this is pre-multiply.
  */
-vecXmat(register vectp_t ov, register vectp_t iv, register matp_t im)
+vecXmat(ov, iv, im)
+register vectp_t ov;
+register vectp_t iv;
+register matp_t im;
 {
 	register int el = 0;		/* Position in output vector */
 	register int ev;		/* Position in input vector */
@@ -136,7 +146,10 @@ vecXmat(register vectp_t ov, register vectp_t iv, register matp_t im)
  * Multiply the matrix "im" by the vector "iv" and store the result
  * in the vector "ov".  Note this is post-multiply.
  */
-matXvec(register vectp_t ov, register matp_t im, register vectp_t iv)
+matXvec(ov, im, iv)
+register vectp_t ov;
+register matp_t im;
+register vectp_t iv;
 {
 	register int eo = 0;		/* Position in output vector */
 	register int em = 0;		/* Position in input matrix */
@@ -158,7 +171,8 @@ matXvec(register vectp_t ov, register matp_t im, register vectp_t iv)
  *
  * Print out the 4x4 matrix addressed by "m".
  */
-mat_print(register matp_t m)
+mat_print( m )
+register matp_t m;
 {
 	register int i;
 
@@ -175,7 +189,9 @@ mat_print(register matp_t m)
  * variable "hscale".  NOTE that the input matrix is ALSO the output
  * matrix.
  */
-mat_hscale(register matp_t m, float hscale)
+mat_hscale( m, hscale )
+register matp_t m;
+float hscale;
 {
 	m[0] *= hscale;
 	m[5] *= hscale;
@@ -189,7 +205,7 @@ mat_hscale(register matp_t m, float hscale)
  * The matrix pointed at by "im" is inverted and stored in the area
  * pointed at by "om".
  */
-double abs(double foo);
+double abs();
 #define EPSILON	0.000001
 
 /* 
@@ -198,7 +214,9 @@ double abs(double foo);
  * Note:  Inversion is done in place, with 3 work vectors
  */
 void
-mat_inv(register matp_t output, matp_t input)
+mat_inv( output, input )
+matp_t input;
+register matp_t output;
 {
 	register int i, j;			/* Indices */
 	static int k;				/* Indices */
@@ -278,7 +296,8 @@ mat_inv(register matp_t output, matp_t input)
 	return;
 }
 
-double abs(double foo)
+double abs( foo )
+double foo;
 {
 	if( foo < 0 )
 		return( -foo );
@@ -293,7 +312,8 @@ double abs(double foo)
  * to space for a homogeneous vector [x,y,z,w],
  * and builds [x,y,z,1].
  */
-vtoh_move(register float *h, register float *v)
+vtoh_move( h, v )
+register float *h, *v;
 {
 	*h++ = *v++;
 	*h++ = *v++;
@@ -308,7 +328,8 @@ vtoh_move(register float *h, register float *v)
  * an ordinary vector [x/w, y/w, z/w].
  * Optimization for the case of w==1 is performed.
  */
-htov_move(register float *v, register float *h)
+htov_move( v, h )
+register float *v, *h;
 {
 	static float inv;
 

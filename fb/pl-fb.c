@@ -299,18 +299,18 @@ FBIO	*fbp;			/* Current framebuffer */
 
 /*	Local subroutines:	*/
 
-STATIC int	DoFile(void), Foo(int code);
-STATIC stroke	*Dequeue(register struct band *bp, register stroke **hp);
-STATIC bool	BuildStr(coords *pt1, coords *pt2), GetCoords(register coords *coop),
-		OutBuild(void);
-STATIC void	Catch(register int sig), FreeUp(void), InitDesc(void), Requeue(register struct band *bp, register stroke *vp),
-		Raster(register stroke *vp, register struct band *np), SetSigs(void);
+STATIC int	DoFile(), Foo();
+STATIC stroke	*Dequeue();
+STATIC bool	BuildStr(), GetCoords(),
+		OutBuild();
+STATIC void	Catch(), FreeUp(), InitDesc(), Requeue(),
+		Raster(), SetSigs();
 
-void		edgelimit(register coords *ppos), put_vector_char(register char c, register coords *pos);
+void		edgelimit(), put_vector_char();
 
-bool	Get3Coords(register coords *coop);
-bool	Get3DCoords(register coords *coop);
-bool	GetDCoords(register coords *coop);
+bool	Get3Coords();
+bool	Get3DCoords();
+bool	GetDCoords();
 
 /*
  *  Stroke descriptor management.
@@ -324,7 +324,7 @@ STATIC struct descr	*freep = STROKE_NULL;	/* head of free stroke list */
 
 /* allocate new strokes to the free list */
 STATIC void
-get_strokes(void)
+get_strokes()
 {
 	register stroke	*sp;
 	register char	*cp;
@@ -370,7 +370,8 @@ get_strokes(void)
  *  We assume the machine is twos-compliment.
  */
 long
-sxt16(register long int v)
+sxt16( v )
+register long v;
 {
 	register long w;
 	if( v <= 0x7FFF )  return(v);
@@ -380,7 +381,8 @@ sxt16(register long int v)
 }
 
 int
-get_args(int argc, register char **argv)
+get_args( argc, argv )
+register char **argv;
 {
 	register int c;
 
@@ -461,7 +463,9 @@ Usage: pl-fb [-h -d -o -i] [-t thickness] [-F framebuffer]\n\
  *	Default (no arguments) action is to plot STDIN on current FB.
  */
 int
-main(int argc, char **argv)
+main(argc, argv)
+int	argc;
+char	**argv;
 {
 	Nscanlines = Npixels = 512;
 
@@ -542,7 +546,7 @@ main(int argc, char **argv)
 		   > 0	=> line limit hit
 */
 STATIC int
-DoFile(void)	/* returns vpl status code */
+DoFile( )	/* returns vpl status code */
 {
 	register bool	plotted;	/* false => empty frame image */
 	register int	c;		/* input character */
@@ -914,7 +918,9 @@ spacend:
  *	Update position to reflect character width.
  */
 void
-put_vector_char(register char c, register coords *pos)
+put_vector_char( c, pos )
+register char	c;
+register coords	*pos;
 {
 	static coords	start, end;
 	register struct vectorchar	*vc;
@@ -956,7 +962,8 @@ put_vector_char(register char c, register coords *pos)
  *	Limit generated positions to edges of screen
  */
 void
-edgelimit(register coords *ppos)
+edgelimit( ppos )
+register coords *ppos;
 {
 	if( ppos->x >= Npixels )
 		ppos->x = Npixels -1;
@@ -968,7 +975,8 @@ edgelimit(register coords *ppos)
 /*
 	GetCoords - input x,y coordinates and scale into pixels
 */
-bool Get3Coords(register coords *coop)
+bool Get3Coords( coop )
+register coords	*coop;
 {
 	char	trash[2];
 	register bool	ret;
@@ -979,8 +987,8 @@ bool Get3Coords(register coords *coop)
 }
 
 STATIC bool
-GetCoords(register coords *coop)
-               	      		/* -> input coordinates */
+GetCoords( coop )
+register coords	*coop;		/* -> input coordinates */
 {
 	unsigned char buf[4];
 	double	x, y;
@@ -1017,7 +1025,8 @@ GetCoords(register coords *coop)
 }
 
 /* IEEE coordinates */
-bool Get3DCoords(register coords *coop)
+bool Get3DCoords( coop )
+register coords	*coop;
 {
 	static unsigned char in[3*8];
 	static double	out[2];
@@ -1054,8 +1063,8 @@ bool Get3DCoords(register coords *coop)
 }
 
 bool
-GetDCoords(register coords *coop)
-               	      		/* -> input coordinates */
+GetDCoords( coop )
+register coords	*coop;		/* -> input coordinates */
 {
 	static unsigned char	in[2*8];
 	static double	out[2];
@@ -1096,7 +1105,7 @@ GetDCoords(register coords *coop)
 */
 
 STATIC void
-InitDesc(void)
+InitDesc()
 {
 	register struct band *bp;	/* *bp -> start of descr list */
 
@@ -1111,7 +1120,9 @@ InitDesc(void)
  * 	Requeue - enqueue descriptor at END of band list
  */
 STATIC void
-Requeue(register struct band *bp, register stroke *vp)
+Requeue( bp, vp )
+register struct band *bp;
+register stroke	     *vp;
 {
 	CK_STROKE(vp);
 	vp->next = NULL;
@@ -1129,9 +1140,9 @@ Requeue(register struct band *bp, register stroke *vp)
  *  Returns addr of descriptor, or NULL if none left.
  */
 STATIC stroke *
-Dequeue(register struct band *bp, register stroke **hp)
-                         
-                     		/* *hp -> first descr in list */
+Dequeue( bp, hp )
+register struct band *bp;
+register stroke **hp;		/* *hp -> first descr in list */
 {
 	register stroke *vp;		/* -> descriptor */
 
@@ -1150,8 +1161,8 @@ Dequeue(register struct band *bp, register stroke **hp)
 */
 
 STATIC void
-FreeUp(void)
-{
+FreeUp()
+	{
 	register struct band *bp;
 	register stroke *vp;		/* -> rasterization descr */
 
@@ -1166,7 +1177,9 @@ FreeUp(void)
  *  Set up multi-band DDA parameters for stroke
  */
 STATIC void
-prep_dda(register stroke *vp, register coords *pt1, register coords *pt2)
+prep_dda( vp, pt1, pt2 )
+register stroke	*vp;
+register coords	*pt1, *pt2;
 {
 	CK_STROKE(vp);
 	vp->pixel = *pt1;		/* initial pixel */
@@ -1201,8 +1214,8 @@ prep_dda(register stroke *vp, register coords *pt1, register coords *pt2)
  *  point band(s).
  */
 STATIC bool
-BuildStr(coords *pt1, coords *pt2)		/* returns true or dies */
-      	           		/* endpoints */
+BuildStr( pt1, pt2 )		/* returns true or dies */
+coords	*pt1, *pt2;		/* endpoints */
 {
 	register stroke *vp;		/* -> rasterization descr */
 	register int	thick;
@@ -1256,7 +1269,7 @@ BuildStr(coords *pt1, coords *pt2)		/* returns true or dies */
  *	OutBuild - rasterize all strokes into raster frame image
  */
 STATIC bool
-OutBuild(void)				/* returns true if successful */
+OutBuild()				/* returns true if successful */
 {
 	register struct band *hp;	/* *hp -> head of descr list */
 	register struct band *np;	/* `hp' for next band */
@@ -1322,9 +1335,9 @@ OutBuild(void)				/* returns true if successful */
  *	as it is extremely hard to get all aspects just right.
  */
 STATIC void
-Raster(register stroke *vp, register struct band *np)
-                    		/* -> rasterization descr */
-                         	/* *np -> next band 1st descr */
+Raster( vp, np )
+register stroke *vp;		/* -> rasterization descr */
+register struct band *np;	/* *np -> next band 1st descr */
 {
 	register short	dy;		/* raster within active band */
 
@@ -1375,8 +1388,8 @@ Raster(register stroke *vp, register struct band *np)
 */
 
 STATIC int
-Foo(int code)				/* returns status code */
-	   	     			/* status code */
+Foo( code )				/* returns status code */
+	int	code;			/* status code */
 	{
 	if( debug ) fprintf(stderr,"Foo(%d)\n", code);
 	fb_close( fbp );		/* release framebuffer */
@@ -1390,8 +1403,8 @@ Foo(int code)				/* returns status code */
 	SetSigs - set up signal catchers
 */
 STATIC void
-SetSigs(void)
-{
+SetSigs()
+	{
 	register int	*psig;		/* -> sigs[.] */
 
 	for ( psig = &sigs[0];
@@ -1408,8 +1421,8 @@ SetSigs(void)
 */
 
 STATIC void
-Catch(register int sig)
-	            	    		/* signal number */
+Catch( sig )
+	register int	sig;		/* signal number */
 	{
 	register int	pid;		/* this process's ID */
 	register int	*psig;		/* -> sigs[.] */

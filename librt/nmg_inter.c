@@ -85,7 +85,10 @@ static struct nmg_inter_struct	*nmg_hack_last_is;	/* see nmg_isect2d_final_clean
 /*
  */
 struct vertexuse *
-nmg_make_dualvu(struct vertex *v, struct faceuse *fu, const struct bn_tol *tol)
+nmg_make_dualvu( v, fu, tol )
+struct vertex *v;
+struct faceuse *fu;
+const struct bn_tol *tol;
 {
 	struct loopuse *lu;
 	struct vertexuse *dualvu;
@@ -190,11 +193,11 @@ nmg_make_dualvu(struct vertex *v, struct faceuse *fu, const struct bn_tol *tol)
  *  "Join the Army, young vertexuse".
  */
 struct vertexuse *
-nmg_enlist_vu(struct nmg_inter_struct *is, const struct vertexuse *vu, struct vertexuse *dualvu, fastf_t dist)
-                       	    
-                      	    
-                	        		/* vu's dual in other shell.  May be NULL */
-       			     			/* distance along intersect ray for this vu */
+nmg_enlist_vu( is, vu, dualvu, dist )
+struct nmg_inter_struct	*is;
+const struct vertexuse	*vu;
+struct vertexuse	*dualvu;		/* vu's dual in other shell.  May be NULL */
+fastf_t			dist;			/* distance along intersect ray for this vu */
 {
 	struct shell		*sv;		/* shell of vu */
 	struct loopuse		*lu;		/* lu of new self-loop */
@@ -412,11 +415,11 @@ nmg_enlist_vu(struct nmg_inter_struct *is, const struct vertexuse *vu, struct ve
  *  'assoc_use' is either a pointer to a faceuse, or an edgeuse.
  */
 static void
-nmg_get_2d_vertex(fastf_t *v2d, struct vertex *v, struct nmg_inter_struct *is, const long int *assoc_use)
-       			    		/* a 3-tuple */
-             		   
-                       	    
-          		           	/* ptr to faceuse/edgeuse associated w/2d projection */
+nmg_get_2d_vertex( v2d, v, is, assoc_use )
+point_t			v2d;		/* a 3-tuple */
+struct vertex		*v;
+struct nmg_inter_struct	*is;
+const long		*assoc_use;	/* ptr to faceuse/edgeuse associated w/2d projection */
 {
 	register fastf_t	*pt2d;
 	point_t			pt;
@@ -544,7 +547,9 @@ bad:
  * This will allow the 2D routines to operate on wires.
  */
 void
-nmg_isect2d_prep(struct nmg_inter_struct *is, const long int *assoc_use)
+nmg_isect2d_prep( is, assoc_use )
+struct nmg_inter_struct	*is;
+const long		*assoc_use;
 {
 	struct model	*m;
 	struct face_g_plane	*fg;
@@ -645,7 +650,8 @@ nmg_isect2d_prep(struct nmg_inter_struct *is, const long int *assoc_use)
  *  Common routine to zap 2d vertex cache, and release dynamic storage.
  */
 void
-nmg_isect2d_cleanup(struct nmg_inter_struct *is)
+nmg_isect2d_cleanup(is)
+struct nmg_inter_struct	*is;
 {
 	NMG_CK_INTER_STRUCT(is);
 
@@ -668,7 +674,7 @@ nmg_isect2d_cleanup(struct nmg_inter_struct *is)
  *  If not, no harm done.
  */
 void
-nmg_isect2d_final_cleanup(void)
+nmg_isect2d_final_cleanup()
 {
 	if( nmg_hack_last_is && nmg_hack_last_is->magic == NMG_INTER_STRUCT_MAGIC )
 		nmg_isect2d_cleanup( nmg_hack_last_is );
@@ -692,7 +698,10 @@ nmg_isect2d_final_cleanup(void)
  *	nmg_isect_two_face2p()
  */
 void
-nmg_isect_vert2p_face2p(struct nmg_inter_struct *is, struct vertexuse *vu1, struct faceuse *fu2)
+nmg_isect_vert2p_face2p(is, vu1, fu2)
+struct nmg_inter_struct *is;
+struct vertexuse	*vu1;
+struct faceuse		*fu2;
 {
 	struct vertexuse	*vu2;
 	struct loopuse	 *lu2;
@@ -775,7 +784,10 @@ nmg_isect_vert2p_face2p(struct nmg_inter_struct *is, struct vertexuse *vu1, stru
  *  XXX to re-determine what was just done.
  */
 static void
-nmg_isect_3vertex_3face(struct nmg_inter_struct *is, struct vertexuse *vu, struct faceuse *fu)
+nmg_isect_3vertex_3face(is, vu, fu)
+struct nmg_inter_struct *is;
+struct vertexuse *vu;
+struct faceuse *fu;
 {
 	struct vertexuse *vup;
 	pointp_t pt;
@@ -830,11 +842,11 @@ nmg_isect_3vertex_3face(struct nmg_inter_struct *is, struct vertexuse *vu, struc
  *
  */
 static struct vertexuse *
-nmg_break_3edge_at_plane(const fastf_t *hit_pt, struct faceuse *fu2, struct nmg_inter_struct *is, struct edgeuse *eu1)
-             		       
-              		     		/* The face that eu intersects */
-                            
-              		     		/* Edge to be broken (in fu1) */
+nmg_break_3edge_at_plane(hit_pt, fu2, is, eu1)
+const point_t		hit_pt;
+struct faceuse		*fu2;		/* The face that eu intersects */
+struct nmg_inter_struct *is;
+struct edgeuse		*eu1;		/* Edge to be broken (in fu1) */
 {
 	struct vertexuse *vu1_final;
 	struct vertexuse *vu2_final;	/* hit_pt's vu in fu2 */
@@ -1035,11 +1047,11 @@ bu_log("%%%%%% point is outside face loop, no need to break eu1?\n");
  *	0	otherwise
  */
 struct edgeuse *
-nmg_break_eu_on_v(struct edgeuse *eu1, struct vertex *v2, struct faceuse *fu, struct nmg_inter_struct *is)
-              		     
-             		    
-              		    	/* for plane equation of (either) face */
-                       	    
+nmg_break_eu_on_v( eu1, v2, fu, is )
+struct edgeuse		*eu1;
+struct vertex		*v2;
+struct faceuse		*fu;	/* for plane equation of (either) face */
+struct nmg_inter_struct	*is;
 {
 	point_t		a;
 	point_t		b;
@@ -1123,7 +1135,10 @@ out:
  *  makes sense.
  */
 void
-nmg_break_eg_on_v(const struct edge_g_lseg *eg, struct vertex *v, const struct bn_tol *tol)
+nmg_break_eg_on_v( eg, v, tol )
+const struct edge_g_lseg	*eg;
+struct vertex		*v;
+const struct bn_tol	*tol;
 {
 	register struct edgeuse	**eup;
 	struct bu_ptbl	eutab;
@@ -1220,13 +1235,13 @@ nmg_break_eg_on_v(const struct edge_g_lseg *eg, struct vertex *v, const struct b
  *
  */
 int
-nmg_isect_2colinear_edge2p(struct edgeuse *eu1, struct edgeuse *eu2, struct faceuse *fu, struct nmg_inter_struct *is, struct bu_ptbl *l1, struct bu_ptbl *l2)
-              	     
-              	     
-              		    	/* for plane equation of (either) face */
-                       	    
-              		    	/* optional: list of new eu1 pieces */
-              		    	/* optional: list of new eu2 pieces */
+nmg_isect_2colinear_edge2p( eu1, eu2, fu, is, l1, l2 )
+struct edgeuse	*eu1;
+struct edgeuse	*eu2;
+struct faceuse		*fu;	/* for plane equation of (either) face */
+struct nmg_inter_struct	*is;
+struct bu_ptbl		*l1;	/* optional: list of new eu1 pieces */
+struct bu_ptbl		*l2;	/* optional: list of new eu2 pieces */
 {
 	struct edgeuse	*eu[10];
 	struct vertexuse *vu[4];
@@ -1317,12 +1332,12 @@ next_i:		;
  *	ISECT_SPLIT2	eu2 was split at (geometric) intersection.
  */
 int
-nmg_isect_edge2p_edge2p(struct nmg_inter_struct *is, struct edgeuse *eu1, struct edgeuse *eu2, struct faceuse *fu1, struct faceuse *fu2)
-                       	    
-              		     
-              		     
-              		     		/* fu of eu1, for plane equation */
-              		     		/* fu of eu2, for error checks */
+nmg_isect_edge2p_edge2p( is, eu1, eu2, fu1, fu2 )
+struct nmg_inter_struct	*is;
+struct edgeuse		*eu1;
+struct edgeuse		*eu2;
+struct faceuse		*fu1;		/* fu of eu1, for plane equation */
+struct faceuse		*fu2;		/* fu of eu2, for error checks */
 {
 	point_t		eu1_start;
 	point_t		eu1_end;
@@ -1690,7 +1705,10 @@ out:
  *	1	If vu[] list along the intersection line needs to be re-done.
  */
 static int
-nmg_isect_wireedge3p_face3p(struct nmg_inter_struct *is, struct edgeuse *eu1, struct faceuse *fu2)
+nmg_isect_wireedge3p_face3p(is, eu1, fu2)
+struct nmg_inter_struct *is;
+struct edgeuse		*eu1;
+struct faceuse		*fu2;
 {
 	struct vertexuse *vu1_final = (struct vertexuse *)NULL;
 	struct vertexuse *vu2_final = (struct vertexuse *)NULL;
@@ -1993,7 +2011,10 @@ out:
  *	>0	vu[] list along intersection line needs to be re-done.
  */
 static int
-nmg_isect_wireloop3p_face3p(struct nmg_inter_struct *bs, struct loopuse *lu, struct faceuse *fu)
+nmg_isect_wireloop3p_face3p(bs, lu, fu)
+struct nmg_inter_struct *bs;
+struct loopuse *lu;
+struct faceuse *fu;
 {
 	struct edgeuse	*eu;
 	long		magic1;
@@ -2078,7 +2099,9 @@ nmg_isect_wireloop3p_face3p(struct nmg_inter_struct *bs, struct loopuse *lu, str
  *	1	ray misses fu2 bounding box
  */
 int
-nmg_isect_construct_nice_ray(struct nmg_inter_struct *is, struct faceuse *fu2)
+nmg_isect_construct_nice_ray( is, fu2 )
+struct nmg_inter_struct	*is;
+struct faceuse		*fu2;
 {
 	struct xray		line;
 	vect_t			invdir;
@@ -2167,11 +2190,11 @@ nmg_isect_construct_nice_ray(struct nmg_inter_struct *is, struct faceuse *fu2)
  *	>0	Caller needs to invalidate his l1/l2 list.
  */
 static int
-nmg_isect_edge2p_face2p(struct nmg_inter_struct *is, struct edgeuse *eu1, struct faceuse *fu2, struct faceuse *fu1)
-                       	    
-              		     		/* edge to be intersected w/fu2 */
-              		     		/* face to be intersected w/eu1 */
-              		     		/* fu that eu1 is from */
+nmg_isect_edge2p_face2p( is, eu1, fu2, fu1 )
+struct nmg_inter_struct	*is;
+struct edgeuse		*eu1;		/* edge to be intersected w/fu2 */
+struct faceuse		*fu2;		/* face to be intersected w/eu1 */
+struct faceuse		*fu1;		/* fu that eu1 is from */
 {
 	struct bu_ptbl vert_list1, vert_list2;
 	fastf_t		*mag1,	    *mag2;
@@ -2326,10 +2349,10 @@ do_ret:
 /*
  */
 void
-nmg_enlist_one_vu(struct nmg_inter_struct *is, const struct vertexuse *vu, fastf_t dist)
-                       	    
-                      	    
-       			     			/* distance along intersect ray for this vu */
+nmg_enlist_one_vu( is,   vu,  dist )
+struct nmg_inter_struct	*is;
+const struct vertexuse	*vu;
+fastf_t			dist;			/* distance along intersect ray for this vu */
 {
 	struct shell		*sv;		/* shell of vu */
 
@@ -2405,7 +2428,9 @@ nmg_enlist_one_vu(struct nmg_inter_struct *is, const struct vertexuse *vu, fastf
 }
 
 static void
-nmg_coplanar_face_vertex_fuse(struct faceuse *fu1, struct faceuse *fu2, struct bn_tol *tol)
+nmg_coplanar_face_vertex_fuse( fu1, fu2, tol )
+struct faceuse *fu1, *fu2;
+struct bn_tol *tol;
 {
 	struct bu_ptbl fu1_verts;
 	struct bu_ptbl fu2_verts;
@@ -2461,7 +2486,9 @@ nmg_coplanar_face_vertex_fuse(struct faceuse *fu1, struct faceuse *fu2, struct b
 }
 
 static void
-nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struct faceuse *fu2)
+nmg_isect_two_face2p_jra( is, fu1, fu2 )
+struct nmg_inter_struct	*is;
+struct faceuse		*fu1, *fu2;
 {
 	struct model *m;
 	struct loopuse *lu;
@@ -3017,7 +3044,12 @@ f2_again:
  *	Number of times edge is broken (0 or 1).
  */
 int
-nmg_isect_line2_edge2p(struct nmg_inter_struct *is, struct bu_ptbl *list, struct edgeuse *eu1, struct faceuse *fu1, struct faceuse *fu2)
+nmg_isect_line2_edge2p( is, list, eu1, fu1, fu2 )
+struct nmg_inter_struct	*is;
+struct bu_ptbl		*list;
+struct edgeuse		*eu1;
+struct faceuse		*fu1;
+struct faceuse		*fu2;
 {
 	point_t		eu1_start;	/* 2D */
 	point_t		eu1_end;	/* 2D */
@@ -3180,7 +3212,10 @@ out:
  *  Called from nmg_isect_line2_face2p().
  */
 void
-nmg_isect_line2_vertex2(struct nmg_inter_struct *is, struct vertexuse *vu1, struct faceuse *fu1)
+nmg_isect_line2_vertex2( is, vu1, fu1 )
+struct nmg_inter_struct	*is;
+struct vertexuse	*vu1;
+struct faceuse		*fu1;
 {
 
 	NMG_CK_INTER_STRUCT(is);
@@ -3211,7 +3246,10 @@ nmg_isect_line2_vertex2(struct nmg_inter_struct *is, struct vertexuse *vu1, stru
  *	0	no intersection
  */
 int
-nmg_isect_two_ptbls(struct nmg_inter_struct *is, const struct bu_ptbl *t1, const struct bu_ptbl *t2)
+nmg_isect_two_ptbls( is, t1, t2 )
+struct nmg_inter_struct		*is;
+const struct bu_ptbl		*t1;
+const struct bu_ptbl		*t2;
 {
 	const struct edgeuse	**eu1;
 	const struct edgeuse	**eu2;
@@ -3287,7 +3325,11 @@ enlist:
  *  If the fuser did it's job, there should be only one.
  */
 struct edge_g_lseg *
-nmg_find_eg_on_line(const long int *magic_p, const fastf_t *pt, const fastf_t *dir, const struct bn_tol *tol)
+nmg_find_eg_on_line( magic_p, pt, dir, tol )
+const long		*magic_p;
+const point_t		pt;
+const vect_t		dir;
+const struct bn_tol	*tol;
 {
 	struct bu_ptbl	eutab;
 	struct edgeuse	**eup;
@@ -3338,7 +3380,8 @@ nmg_find_eg_on_line(const long int *magic_p, const fastf_t *pt, const fastf_t *d
  *	count	Number of 0-length edgeuses killed (not counting mates)
  */
 int
-nmg_k0eu(struct vertex *v)
+nmg_k0eu(v)
+struct vertex	*v;
 {
 	struct edgeuse		*eu;
 	struct vertexuse	*vu;
@@ -3378,13 +3421,13 @@ nmg_pr_eu_briefly(eu->eumate_p, 0);
  *		If 'bomb' is non-zero, rt_bomb() is called.
  */
 struct vertex *
-nmg_repair_v_near_v(struct vertex *hit_v, struct vertex *v, const struct edge_g_lseg *eg1, const struct edge_g_lseg *eg2, int bomb, const struct bn_tol *tol)
-             		       
-             		   
-                        		     		/* edge_g_lseg of hit_v */
-                        		     		/* edge_g_lseg of v */
-   			     
-                   	     
+nmg_repair_v_near_v( hit_v, v, eg1, eg2, bomb, tol )
+struct vertex		*hit_v;
+struct vertex		*v;
+const struct edge_g_lseg		*eg1;		/* edge_g_lseg of hit_v */
+const struct edge_g_lseg		*eg2;		/* edge_g_lseg of v */
+int			bomb;
+const struct bn_tol	*tol;
 {
 	NMG_CK_VERTEX(hit_v);
 	NMG_CK_VERTEX(v);
@@ -3451,13 +3494,13 @@ out:
  * XXX This is a lame name.
  */
 struct vertex *
-nmg_search_v_eg(const struct edgeuse *eu, int second, const struct edge_g_lseg *eg1, const struct edge_g_lseg *eg2, register struct vertex *hit_v, const struct bn_tol *tol)
-                    		    
-   				       		/* 2nd vu on eu, not 1st */
-                        	     
-                        	     
-                      		       		/* often will be NULL */
-                   		     
+nmg_search_v_eg( eu, second, eg1, eg2, hit_v, tol )
+const struct edgeuse		*eu;
+int				second;		/* 2nd vu on eu, not 1st */
+const struct edge_g_lseg	*eg1;
+const struct edge_g_lseg	*eg2;
+register struct vertex		*hit_v;		/* often will be NULL */
+const struct bn_tol		*tol;
 {
 	struct vertex			*v;
 	register struct vertexuse	*vu1;
@@ -3533,7 +3576,10 @@ nmg_search_v_eg(const struct edgeuse *eu, int second, const struct edge_g_lseg *
  *  lines.
  */
 struct vertex *
-nmg_common_v_2eg(struct edge_g_lseg *eg1, struct edge_g_lseg *eg2, const struct bn_tol *tol)
+nmg_common_v_2eg( eg1, eg2, tol )
+struct edge_g_lseg	*eg1;
+struct edge_g_lseg	*eg2;
+const struct bn_tol	*tol;
 {
 	struct edgeuse		*eu1;
 	struct vertex		*hit_v = (struct vertex *)NULL;
@@ -3567,7 +3613,11 @@ nmg_common_v_2eg(struct edge_g_lseg *eg1, struct edge_g_lseg *eg2, const struct 
 #define VDIST_SQ( a, b )	( (a[X]-b[X])*(a[X]-b[X]) + (a[Y]-b[Y])*(a[Y]-b[Y]) + (a[Z]-b[Z])*(a[Z]-b[Z]) )
 
 int
-nmg_is_vertex_on_inter(struct vertex *v, struct faceuse *fu1, struct faceuse *fu2, struct nmg_inter_struct *is)
+nmg_is_vertex_on_inter( v, fu1, fu2, is )
+struct vertex *v;
+struct faceuse *fu1;
+struct faceuse *fu2;
+struct nmg_inter_struct *is;
 {
 	struct vertex_g *vg;
 	plane_t pl1,pl2;
@@ -3615,7 +3665,13 @@ nmg_is_vertex_on_inter(struct vertex *v, struct faceuse *fu1, struct faceuse *fu
 }
 
 void
-nmg_isect_eu_verts(struct edgeuse *eu, struct vertex_g *vg1, struct vertex_g *vg2, struct bu_ptbl *verts, struct bu_ptbl *inters, const struct bn_tol *tol)
+nmg_isect_eu_verts( eu, vg1, vg2, verts, inters, tol )
+struct edgeuse *eu;
+struct vertex_g *vg1;
+struct vertex_g *vg2;
+struct bu_ptbl *verts;
+struct bu_ptbl *inters;
+const struct bn_tol *tol;
 {
 	int i;
 	struct vertex *v1,*v2;
@@ -3657,7 +3713,15 @@ nmg_isect_eu_verts(struct edgeuse *eu, struct vertex_g *vg1, struct vertex_g *vg
 }
 
 void
-nmg_isect_eu_eu(struct edgeuse *eu1, struct vertex_g *vg1a, struct vertex_g *vg1b, fastf_t *dir1, struct edgeuse *eu2, struct bu_ptbl *verts, struct bu_ptbl *inters, const struct bn_tol *tol)
+nmg_isect_eu_eu( eu1, vg1a, vg1b, dir1, eu2, verts, inters, tol )
+struct edgeuse *eu1;
+struct vertex_g *vg1a;
+struct vertex_g *vg1b;
+vect_t dir1;
+struct edgeuse *eu2;
+struct bu_ptbl *verts;
+struct bu_ptbl *inters;
+const struct bn_tol *tol;
 {
 	struct model *m;
 	struct vertex_g *vg2a,*vg2b;
@@ -3773,7 +3837,11 @@ nmg_isect_eu_eu(struct edgeuse *eu1, struct vertex_g *vg1a, struct vertex_g *vg1
 }
 
 void
-nmg_isect_eu_fu(struct nmg_inter_struct *is, struct bu_ptbl *verts, struct edgeuse *eu, struct faceuse *fu)
+nmg_isect_eu_fu( is, verts, eu, fu )
+struct nmg_inter_struct *is;
+struct bu_ptbl		*verts;
+struct edgeuse		*eu;
+struct faceuse          *fu;
 {
 	struct model *m;
 	struct vertex_g *vg1,*vg2;
@@ -4115,7 +4183,12 @@ out:
 }
 
 void
-nmg_isect_fu_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struct faceuse *fu2, struct bu_ptbl *eu1_list, struct bu_ptbl *eu2_list)
+nmg_isect_fu_jra( is, fu1, fu2, eu1_list, eu2_list)
+struct nmg_inter_struct	*is;
+struct faceuse		*fu1;
+struct faceuse		*fu2;
+struct bu_ptbl		*eu1_list;
+struct bu_ptbl		*eu2_list;
 {
 	struct model *m;
 	struct bu_ptbl verts1,verts2;
@@ -4256,7 +4329,12 @@ nmg_isect_fu_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struct faceus
  *	nmg_isect_two_face3p()
  */
 void
-nmg_isect_line2_face2pNEW(struct nmg_inter_struct *is, struct faceuse *fu1, struct faceuse *fu2, struct bu_ptbl *eu1_list, struct bu_ptbl *eu2_list)
+nmg_isect_line2_face2pNEW( is, fu1, fu2, eu1_list, eu2_list )
+struct nmg_inter_struct	*is;
+struct faceuse		*fu1;
+struct faceuse		*fu2;
+struct bu_ptbl		*eu1_list;
+struct bu_ptbl		*eu2_list;
 {
 	struct bu_ptbl		eg_list;
 	struct edge_g_lseg	**eg1;
@@ -4963,7 +5041,11 @@ hit_b:
  *			N M G _ I S _ E U _ O N _ L I N E 3
  */
 int
-nmg_is_eu_on_line3(const struct edgeuse *eu, const fastf_t *pt, const fastf_t *dir, const struct bn_tol *tol)
+nmg_is_eu_on_line3(eu, pt, dir, tol)
+const struct edgeuse	*eu;
+const point_t		pt;
+const vect_t		dir;
+const struct bn_tol	*tol;
 {
 	struct edge_g_lseg	*eg;
 
@@ -5008,7 +5090,10 @@ nmg_is_eu_on_line3(const struct edgeuse *eu, const fastf_t *pt, const fastf_t *d
  *  NULL is returned if no common edge geometry could be found.
  */
 struct edge_g_lseg *
-nmg_find_eg_between_2fg(const struct faceuse *ofu1, const struct faceuse *fu2, const struct bn_tol *tol)
+nmg_find_eg_between_2fg(ofu1, fu2, tol)
+const struct faceuse	*ofu1;
+const struct faceuse	*fu2;
+const struct bn_tol	*tol;
 {
 	const struct faceuse	*fu1;
 	const struct loopuse	*lu1;
@@ -5149,7 +5234,9 @@ restart:
  *	eu	Yes, here is one edgeuse that does.  There may be more.
  */
 struct edgeuse *
-nmg_does_fu_use_eg(const struct faceuse *fu1, const long int *eg)
+nmg_does_fu_use_eg( fu1, eg )
+const struct faceuse	*fu1;
+const long		*eg;
 {
 	const struct loopuse	*lu1;
 	register struct edgeuse	*eu1;
@@ -5187,7 +5274,11 @@ out:
  *	0	line does not lie on the plane
  */
 int
-rt_line_on_plane(const fastf_t *pt, const fastf_t *dir, const fastf_t *plane, const struct bn_tol *tol)
+rt_line_on_plane( pt, dir, plane, tol )
+const point_t	pt;
+const vect_t	dir;
+const plane_t	plane;
+const struct bn_tol	*tol;
 {
 	vect_t	unitdir;
 	fastf_t	dist;
@@ -5221,7 +5312,9 @@ rt_line_on_plane(const fastf_t *pt, const fastf_t *dir, const fastf_t *plane, co
  *  This is the HEART of the intersection code.
  */
 static void
-nmg_isect_two_face3p(struct nmg_inter_struct *is, struct faceuse *fu1, struct faceuse *fu2)
+nmg_isect_two_face3p( is, fu1, fu2 )
+struct nmg_inter_struct	*is;
+struct faceuse		*fu1, *fu2;
 {
 	struct bu_ptbl vert_list1, vert_list2;
 	struct bu_ptbl		eu1_list;	/* all eu's in fu1 */
@@ -5469,7 +5562,10 @@ out:
 }
 
 void
-nmg_cut_lu_into_coplanar_and_non(struct loopuse *lu, fastf_t *pl, struct nmg_inter_struct *is)
+nmg_cut_lu_into_coplanar_and_non( lu, pl, is )
+struct loopuse *lu;
+plane_t pl;
+struct nmg_inter_struct *is;
 {
 	struct model *m;
 	struct edgeuse *eu;
@@ -5940,7 +6036,10 @@ nmg_cut_lu_into_coplanar_and_non(struct loopuse *lu, fastf_t *pl, struct nmg_int
 }
 
 static void
-nmg_isect_coplanar_edges(struct nmg_inter_struct *is, struct bu_ptbl *eu1_list, struct bu_ptbl *eu2_list)
+nmg_isect_coplanar_edges( is, eu1_list, eu2_list )
+struct nmg_inter_struct *is;
+struct bu_ptbl *eu1_list;
+struct bu_ptbl *eu2_list;
 {
 	struct model *m;
 	struct loopuse *lu;
@@ -6416,7 +6515,10 @@ plane_t pl1,pl2;
 #endif
 #define MAX_FACES	200
 void
-nmg_check_radial_angles(char *str, struct shell *s, const struct bn_tol *tol)
+nmg_check_radial_angles( str, s, tol )
+char *str;
+struct shell *s;
+const struct bn_tol *tol;
 {
 	struct bu_ptbl edges;
 	vect_t xvec,yvec,zvec;
@@ -6543,7 +6645,9 @@ nmg_check_radial_angles(char *str, struct shell *s, const struct bn_tol *tol)
  *		3. intersect coplanar loops same as done in nmg_isect_two_face2p_jra().	
  */
 static void
-nmg_isect_nearly_coplanar_faces(struct nmg_inter_struct *is, struct faceuse *fu1, struct faceuse *fu2)
+nmg_isect_nearly_coplanar_faces( is, fu1, fu2 )
+struct nmg_inter_struct	*is;
+struct faceuse *fu1,*fu2;
 {
 	int i;
 	struct model *m;
@@ -7095,7 +7199,11 @@ nmg_isect_nearly_coplanar_faces(struct nmg_inter_struct *is, struct faceuse *fu1
  *		0 - must use nmg_isect_nearly_coplanar_faces
  */
 int
-nmg_faces_can_be_intersected(struct nmg_inter_struct *bs, const struct faceuse *fu1, const struct faceuse *fu2, const struct bn_tol *tol)
+nmg_faces_can_be_intersected( bs, fu1, fu2, tol )
+struct nmg_inter_struct *bs;
+const struct faceuse *fu1;
+const struct faceuse *fu2;
+const struct bn_tol *tol;
 {
 	plane_t pl1,pl2;
 	point_t min_pt;
@@ -7270,7 +7378,10 @@ nmg_faces_can_be_intersected(struct nmg_inter_struct *bs, const struct faceuse *
  *	Intersect a pair of faces
  */
 void
-nmg_isect_two_generic_faces(struct faceuse *fu1, struct faceuse *fu2, const struct bn_tol *tol)
+nmg_isect_two_generic_faces(fu1, fu2, tol)
+struct faceuse		*fu1;
+struct faceuse		*fu2;
+const struct bn_tol	*tol;
 {
 	struct nmg_inter_struct	bs;
 	plane_t		pl1, pl2;
@@ -7586,7 +7697,10 @@ nmg_ck_face_worthless_edges( fu2 );
  *  Called from nmg_isect_edge3p_shell()
  */
 static void
-nmg_isect_edge3p_edge3p(struct nmg_inter_struct *is, struct edgeuse *eu1, struct edgeuse *eu2)
+nmg_isect_edge3p_edge3p( is, eu1, eu2 )
+struct nmg_inter_struct	*is;
+struct edgeuse		*eu1;
+struct edgeuse		*eu2;
 {
 	struct vertexuse	*vu1a;
 	struct vertexuse	*vu1b;
@@ -7721,7 +7835,10 @@ nmg_isect_edge3p_edge3p(struct nmg_inter_struct *is, struct edgeuse *eu1, struct
  *  Intersect a lone vertex from s1 with a single edge from s2.
  */
 static void
-nmg_isect_vertex3_edge3p(struct nmg_inter_struct *is, struct vertexuse *vu1, struct edgeuse *eu2)
+nmg_isect_vertex3_edge3p( is, vu1, eu2 )
+struct nmg_inter_struct		*is;
+struct vertexuse	*vu1;
+struct edgeuse		*eu2;
 {
 	fastf_t		dist;
 	int		code;
@@ -7789,7 +7906,10 @@ nmg_isect_vertex3_edge3p(struct nmg_inter_struct *is, struct vertexuse *vu1, str
  *  Called by nmg_crackshells().
  */
 static void
-nmg_isect_edge3p_shell(struct nmg_inter_struct *is, struct edgeuse *eu1, struct shell *s2)
+nmg_isect_edge3p_shell( is, eu1, s2 )
+struct nmg_inter_struct		*is;
+struct edgeuse		*eu1;
+struct shell		*s2;
 {
 	struct faceuse	*fu2;
 	struct loopuse	*lu2;
@@ -7915,7 +8035,10 @@ out:
  *	in preparation for performing boolean operations on the shells.
  */
 void
-nmg_crackshells(struct shell *s1, struct shell *s2, const struct bn_tol *tol)
+nmg_crackshells(s1, s2, tol)
+struct shell		*s1;
+struct shell		*s2;
+const struct bn_tol	*tol;
 {
 	struct bu_ptbl		vert_list1, vert_list2;
 	struct nmg_inter_struct is;
@@ -8128,7 +8251,8 @@ nmg_ck_vs_in_region( s2->r_p, tol );
  *			N M G _ F U _ T O U C H I N G L O O P S
  */
 int
-nmg_fu_touchingloops(const struct faceuse *fu)
+nmg_fu_touchingloops(fu)
+const struct faceuse	*fu;
 {
 	const struct loopuse	*lu;
 	const struct vertexuse	*vu;

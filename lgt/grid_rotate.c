@@ -25,7 +25,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./lgt.h"
 #include "./extern.h"
 #include "./vecmath.h"
-void	grid_Rotate(fastf_t azim, fastf_t elev, fastf_t roll, register fastf_t *des_H, register fastf_t *des_V);
+void	grid_Rotate();
 
 /*	g r i d _ R o t a t e ( )
 	Creates the unit vectors H and V which are the horizontal
@@ -40,8 +40,10 @@ void	grid_Rotate(fastf_t azim, fastf_t elev, fastf_t roll, register fastf_t *des
 
  */
 void
-grid_Rotate(fastf_t azim, fastf_t elev, fastf_t roll, register fastf_t *des_H, register fastf_t *des_V)
-{	fastf_t	sn_azm = sin( azim );
+grid_Rotate( azim, elev, roll, des_H, des_V )
+fastf_t	azim, elev, roll;
+register fastf_t	*des_H, *des_V;
+	{	fastf_t	sn_azm = sin( azim );
 		fastf_t	cs_azm = cos( azim );
 		fastf_t	sn_elv = sin( elev );
 	des_H[0] = -sn_azm;

@@ -30,7 +30,7 @@ static const char rcs_ident[] = "$Header$";
 #include "raytrace.h"
 #include "nurb.h"
 
-extern void	rt_clip_cnurb(struct bu_list *plist, struct edge_g_cnurb *crv, fastf_t u, fastf_t v);
+extern void	rt_clip_cnurb();
 
 struct _interior_line {
 	int axis;
@@ -68,7 +68,9 @@ int quad_table[16]  = {		/* A = 0, B = 2, C = 3 */
  */
 
 int 
-rt_trim_case(struct edge_g_cnurb *trim, fastf_t u, fastf_t v)
+rt_trim_case( trim, u, v)
+struct edge_g_cnurb * trim;
+fastf_t u,v;
 {
 	int quadrant;
 	int qstats;
@@ -120,7 +122,9 @@ rt_trim_case(struct edge_g_cnurb *trim, fastf_t u, fastf_t v)
  * No further processing is required.
  */
 int
-rt_process_caseb(struct edge_g_cnurb *trim, fastf_t u, fastf_t v)
+rt_process_caseb(trim, u, v)
+struct edge_g_cnurb * trim;
+fastf_t u, v;
 {
 	int q1, q2;
 	fastf_t * pts;
@@ -164,7 +168,9 @@ rt_process_caseb(struct edge_g_cnurb *trim, fastf_t u, fastf_t v)
 /* Only check end points of the curve */
 
 int
-rt_nurb_uv_dist(struct edge_g_cnurb *trim, fastf_t u, fastf_t v)
+rt_nurb_uv_dist(trim, u, v)
+struct edge_g_cnurb * trim;
+fastf_t u, v;
 {
 
 	fastf_t dist;
@@ -235,7 +241,9 @@ rt_nurb_uv_dist(struct edge_g_cnurb *trim, fastf_t u, fastf_t v)
  */
 
 int
-rt_process_casec(struct edge_g_cnurb *trim, fastf_t u, fastf_t v)
+rt_process_casec(trim, u, v)
+struct edge_g_cnurb * trim;
+fastf_t u, v;
 {
 
 	struct edge_g_cnurb * clip;
@@ -302,7 +310,9 @@ rt_process_casec(struct edge_g_cnurb *trim, fastf_t u, fastf_t v)
  * processing is required.
  */
 int 
-rt_uv_in_trim(struct edge_g_cnurb *trim, fastf_t u, fastf_t v)
+rt_uv_in_trim(trim, u,v)
+struct edge_g_cnurb * trim;
+fastf_t u, v;
 {
 
 	int quad_case;
@@ -332,7 +342,10 @@ rt_uv_in_trim(struct edge_g_cnurb *trim, fastf_t u, fastf_t v)
  */
 
 fastf_t
-rt_trim_line_pt_dist(struct _interior_line *l, fastf_t *pt, int pt_type)
+rt_trim_line_pt_dist( l, pt, pt_type)
+struct _interior_line *l;
+fastf_t * pt;
+int pt_type;
 {
 	fastf_t h;
 	int h_flag;
@@ -356,7 +369,8 @@ rt_trim_line_pt_dist(struct _interior_line *l, fastf_t *pt, int pt_type)
 
 /* Return the SIGN of the value */
 int
-_SIGN(fastf_t f)
+_SIGN(f)
+fastf_t f;
 {
 	if (f < 0.0)
 		return -1;
@@ -379,7 +393,10 @@ _SIGN(fastf_t f)
  *  methods which were prossed.
  */
 void
-rt_clip_cnurb(struct bu_list *plist, struct edge_g_cnurb *crv, fastf_t u, fastf_t v)
+rt_clip_cnurb( plist, crv, u, v )
+struct bu_list *plist;
+struct edge_g_cnurb * crv;
+fastf_t u,v;
 {
 	fastf_t ds1, dt1;
 	struct _interior_line s_line, t_line;
@@ -500,7 +517,9 @@ rt_clip_cnurb(struct bu_list *plist, struct edge_g_cnurb *crv, fastf_t u, fastf_
 
 
 int
-nmg_uv_in_lu(const fastf_t u, const fastf_t v, const struct loopuse *lu)
+nmg_uv_in_lu( u, v, lu )
+const fastf_t u, v;
+const struct loopuse *lu;
 {
 	struct edgeuse *eu;
 	int crossings=0;

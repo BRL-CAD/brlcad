@@ -32,7 +32,9 @@
 #define CBARS_TIME	10		/* Normal */
 
 void
-record_seq(int number_of_images, int number_of_frames, int start_seq_number)
+record_seq(number_of_images, number_of_frames, start_seq_number)
+int number_of_images, number_of_frames;
+int start_seq_number;
 {
 	char cmd[100];
 	int i;

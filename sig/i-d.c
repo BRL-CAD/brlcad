@@ -29,7 +29,9 @@ double	obuf[512];
 static char usage[] = "\
 Usage: i-d [-n || scale] < shorts > doubles\n";
 
-int main(int argc, char **argv)
+int main( argc, argv )
+int	argc;
+char	**argv;
 {
 	int	i, num;
 	double	scale;

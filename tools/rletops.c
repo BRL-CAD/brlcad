@@ -58,12 +58,14 @@ static const char rcs_ident[] = "$Id$";
 #include "externs.h"		/* For malloc and free */
 #include "rle.h"
 
-void prologue(FILE *outfile, int scribe_mode, int nr, int nc, float x1, float y1, float x2, float y2), puthexpix(FILE *outfile, unsigned char p), epilogue(FILE *outfile, int scribemode);
+void prologue(), puthexpix(), epilogue();
 
 static int gencps = 0;		/* generate color PostScript? */
 
 int
-main(int argc, char **argv)
+main( argc, argv )
+int argc;
+char **argv;
 {
     char       *infname = NULL, 
     	       *outfname = NULL;
@@ -176,7 +178,11 @@ main(int argc, char **argv)
 }
 
 void
-prologue(FILE *outfile, int scribe_mode, int nr, int nc, float x1, float y1, float x2, float y2)
+prologue(outfile,scribe_mode,nr,nc,x1,y1,x2,y2)
+FILE *outfile;
+int scribe_mode;
+int nr,nc;
+float x1,y1,x2,y2;
 {
     fprintf(outfile,"%%!\n");
     fprintf(outfile, "%%BoundingBox: %d %d %d %d\n",
@@ -203,7 +209,9 @@ prologue(FILE *outfile, int scribe_mode, int nr, int nc, float x1, float y1, flo
 }
 
 void
-epilogue(FILE *outfile, int scribemode)
+epilogue(outfile, scribemode)
+FILE *outfile;
+int scribemode;
 {
     fprintf(outfile,"\n");
     if (!scribemode)
@@ -212,7 +220,9 @@ epilogue(FILE *outfile, int scribemode)
 }
 
 void
-puthexpix(FILE *outfile, unsigned char p)
+puthexpix(outfile,p)
+FILE *outfile;
+unsigned char p;
 {
     static int	npixo = 0;
     static char tohex[] = "0123456789ABCDEF";

@@ -37,14 +37,16 @@ extern int	fd;
 extern char	cmd;
 extern int	polaroid;
 
-extern void dunnopen(void);
+extern void dunnopen();
 extern int ready(int nsecs);
 extern void getexposure(char *title);
 extern int dunnsend(char color, int val);
 
 
 int
-main(int argc, char **argv)
+main(argc, argv)
+int argc;
+char **argv;
 {
 
 	dunnopen();

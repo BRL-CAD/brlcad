@@ -49,7 +49,9 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
  */
 
 int
-bn_decode_mat(fastf_t *m, const char *str)
+bn_decode_mat(m, str)
+mat_t m;
+const char *str;
 {
 	if( strcmp( str, "I" ) == 0 )  {
 		MAT_IDN( m );
@@ -64,28 +66,36 @@ bn_decode_mat(fastf_t *m, const char *str)
 }
 
 int
-bn_decode_quat(fastf_t *q, const char *str)
+bn_decode_quat(q, str)
+quat_t q;
+const char *str;
 {
 	if( *str == '{' )  str++;
 	return sscanf(str, "%lf %lf %lf %lf", &q[0], &q[1], &q[2], &q[3]);
 }
 
 int
-bn_decode_vect(fastf_t *v, const char *str)
+bn_decode_vect(v, str)
+vect_t v;
+const char *str;
 {
 	if( *str == '{' )  str++;
 	return sscanf(str, "%lf %lf %lf", &v[0], &v[1], &v[2]);
 }
 
 int
-bn_decode_hvect(fastf_t *v, const char *str)
+bn_decode_hvect(v, str)
+hvect_t v;
+const char *str;
 {
 	if( *str == '{' )  str++;
 	return sscanf(str, "%lf %lf %lf %lf", &v[0], &v[1], &v[2], &v[3]);
 }
 
 void
-bn_encode_mat(struct bu_vls *vp, const fastf_t *m)
+bn_encode_mat(vp, m)
+struct bu_vls *vp;
+const mat_t m;
 {
 	if( m == NULL )  {
 		bu_vls_putc(vp, 'I');
@@ -98,61 +108,88 @@ bn_encode_mat(struct bu_vls *vp, const fastf_t *m)
 }
 
 void
-bn_encode_quat(struct bu_vls *vp, const fastf_t *q)
+bn_encode_quat(vp, q)
+struct bu_vls *vp;
+const quat_t q;
 {
 	bu_vls_printf(vp, "%g %g %g %g", V4ARGS(q));
 }
 
 void
-bn_encode_vect(struct bu_vls *vp, const fastf_t *v)
+bn_encode_vect(vp, v)
+struct bu_vls *vp;
+const vect_t v;
 {
 	bu_vls_printf(vp, "%g %g %g", V3ARGS(v));
 }
 
 void
-bn_encode_hvect(struct bu_vls *vp, const fastf_t *v)
+bn_encode_hvect(vp, v)
+struct bu_vls *vp;
+const hvect_t v;
 {
 	bu_vls_printf(vp, "%g %g %g %g", V4ARGS(v));
 }
 
 void
-bn_quat_distance_wrapper(double *dp, fastf_t *q1, fastf_t *q2)
+bn_quat_distance_wrapper(dp, q1, q2)
+double *dp;
+quat_t q1, q2;
 {
 	*dp = quat_distance(q1, q2);
 }
 
 void
-bn_mat_scale_about_pt_wrapper(int *statusp, fastf_t *mat, const fastf_t *pt, const double scale)
+bn_mat_scale_about_pt_wrapper(statusp, mat, pt, scale)
+int *statusp;
+mat_t mat;
+const point_t pt;
+const double scale;
 {
 	*statusp = bn_mat_scale_about_pt(mat, pt, scale);
 }
 
 static void
-bn_mat4x3pnt(fastf_t *o, fastf_t *m, fastf_t *i)
+bn_mat4x3pnt(o, m, i)
+point_t i, o;
+mat_t m;
 {
 	MAT4X3PNT(o, m, i);
 }
 
 static void
-bn_mat4x3vec(fastf_t *o, fastf_t *m, fastf_t *i)
+bn_mat4x3vec(o, m, i)
+vect_t i, o;
+mat_t m;
 {
 	MAT4X3VEC(o, m, i);
 }
 
 static void
-bn_hdivide(fastf_t *o, const fastf_t *i)
+bn_hdivide(o, i)
+const hvect_t i;
+vect_t o;
 {
 	HDIVIDE(o, i);
 }
 
 static void
-bn_vjoin1(fastf_t *o, const fastf_t *pnt, double scale, const fastf_t *dir)
+bn_vjoin1(o, pnt, scale, dir )
+point_t o;
+const point_t pnt;
+double scale;
+const vect_t dir;
 {
 	VJOIN1( o, pnt, scale, dir );
 }
 
 
-static void bn_vblend(fastf_t *a, fastf_t b, fastf_t *c, fastf_t d, fastf_t *e)
+static void bn_vblend( a, b, c, d, e )
+point_t a;
+fastf_t b;
+point_t c;
+fastf_t d;
+point_t e;
 {
 	VBLEND2( a, b, c, d, e );
 }
@@ -167,7 +204,11 @@ static void bn_vblend(fastf_t *a, fastf_t b, fastf_t *c, fastf_t d, fastf_t *e)
  */
 
 int
-bn_math_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+bn_math_cmd(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
 {
 	void (*math_func)();
 	struct bu_vls result;
@@ -570,7 +611,11 @@ static struct math_func_link {
  *			B N _ C M D _ C O M M O N _ F I L E _ S I Z E
  */
 int
-bn_cmd_common_file_size(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+bn_cmd_common_file_size(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
 {
     int width, height;
     int pixel_size = 3;
@@ -829,7 +874,8 @@ bn_tcl_mat_print(Tcl_Interp		*interp,
  *  the list of commands known by the given interpreter.
  */
 void
-bn_tcl_setup(Tcl_Interp *interp)
+bn_tcl_setup(interp)
+Tcl_Interp *interp;
 {
 	struct math_func_link *mp;
 
@@ -876,7 +922,8 @@ bn_tcl_setup(Tcl_Interp *interp)
  *  The name of this function is specified by TCL.
  */
 int
-Bn_Init(Tcl_Interp *interp)
+Bn_Init(interp)
+Tcl_Interp *interp;
 {
 	bn_tcl_setup(interp);
 	return TCL_OK;

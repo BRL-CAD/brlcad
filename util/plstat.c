@@ -114,14 +114,14 @@ int	verbose;
 long	counts['z'-'A'+1];	/* for counting command usage */
 FILE	*fp;
 
-void	outchar(int n), outstring(int n), outshort(int n), outfloat(int n);
+void	outchar(), outstring(), outshort(), outfloat();
 
 static char usage[] = "\
 Usage: pldebug [-v] [unix_plot]\n";
 
 
 int
-getshort(void)
+getshort()
 {
 	register long	v, w;
 
@@ -138,7 +138,9 @@ getshort(void)
 
 
 int
-main(int argc, char **argv)
+main( argc, argv )
+int	argc;
+char	**argv;
 {
 	register int	c;
 	struct	uplot *up;
@@ -214,7 +216,8 @@ main(int argc, char **argv)
 }
 
 void
-outchar(int n)
+outchar( n )
+int	n;
 {
 	int	i;
 
@@ -225,7 +228,8 @@ outchar(int n)
 }
 
 void
-outstring(int n)
+outstring( n )
+int	n;
 {
 	int	c;
 
@@ -235,7 +239,8 @@ outstring(int n)
 }
 
 void
-outshort(int n)
+outshort( n )
+int	n;
 {
 	int	i;
 
@@ -245,7 +250,8 @@ outshort(int n)
 }
 
 void
-outfloat(int n)
+outfloat( n )
+int	n;
 {
 	int	i;
 	unsigned char	in[8*16];

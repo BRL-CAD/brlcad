@@ -43,13 +43,14 @@ static const char RCSmater[] = "@(#)$Header$ (BRL)";
  */
 struct mater *rt_material_head = MATER_NULL;
 
-void	rt_insert_color(struct mater *newp);
+void	rt_insert_color();
 
 /*
  *			R T _ P R _ M A T E R
  */
 void
-rt_pr_mater(register struct mater *mp)
+rt_pr_mater( mp )
+register struct mater *mp;
 {
 	(void)bu_log( "%5d..%d\t", mp->mt_low, mp->mt_high );
 	(void)bu_log( "%d,%d,%d\t", mp->mt_r, mp->mt_g, mp->mt_b);
@@ -188,7 +189,8 @@ check_overlap:
  *  of regionid-driven color override.
  */
 void
-rt_region_color_map(register struct region *regp)
+rt_region_color_map( regp )
+register struct region *regp;
 {
 	register struct mater *mp;
 
@@ -218,7 +220,7 @@ rt_region_color_map(register struct region *regp)
  *  Called from db_close().
  */
 void
-rt_color_free(void)
+rt_color_free()
 {
 	register struct mater *mp;
 

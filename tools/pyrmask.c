@@ -21,12 +21,14 @@ static const char rcs_ident[] = "$Header$";
 #include "rle.h"
 #include "pyramid.h"
 
-int rle_to_pyramids(FILE *infile, pyramid *gausspyr, pyramid *bandpyr, rle_hdr *in_hdr, int levellimit, float *mask_mult_table);
-void alloc_pyramid(pyramid *pyr), copy_mask_bands(int level, pyramid *leftbandpyr, pyramid *rightbandpyr, pyramid *splitbandpyr, pyramid *maskgausspyr), rebuild_image(rle_pixel **imgcorner, pyramid *bandpyr, float *mask_mult_table), dump_pyramid(FILE *outfile, int levels, rle_pixel **corners, int xlen, int ylen, int channels, rle_hdr in_hdr);
-void copy_half_bands(int level, pyramid *leftbandpyr, pyramid *rightbandpyr, pyramid *splitbandpyr);
+int rle_to_pyramids();
+void alloc_pyramid(), copy_mask_bands(), rebuild_image(), dump_pyramid();
+void copy_half_bands();
 
 int
-main(int argc, char **argv)
+main(argc, argv)
+int  argc;
+char *argv[];
 {
     char * leftname = NULL, * rightname = NULL, * outfname = NULL;
     char * maskname = NULL, * errname;
@@ -178,7 +180,9 @@ main(int argc, char **argv)
 }
 
 void
-copy_half_bands(int level, pyramid *leftbandpyr, pyramid *rightbandpyr, pyramid *splitbandpyr)
+copy_half_bands(level,leftbandpyr, rightbandpyr, splitbandpyr)
+int level;
+pyramid * leftbandpyr, * rightbandpyr, *splitbandpyr;
 {
     int xsize, ysize, x, y, chan, xlinewidth, nchan;
     rle_pixel *leftbase, *leftrastptr, *leftpxl, *leftsign;
@@ -266,7 +270,9 @@ copy_half_bands(int level, pyramid *leftbandpyr, pyramid *rightbandpyr, pyramid 
 }
 
 void
-copy_mask_bands(int level, pyramid *leftbandpyr, pyramid *rightbandpyr, pyramid *splitbandpyr, pyramid *maskgausspyr)
+copy_mask_bands(level,leftbandpyr, rightbandpyr, splitbandpyr, maskgausspyr)
+int level;
+pyramid * leftbandpyr, * rightbandpyr, *splitbandpyr, *maskgausspyr;
 {
     int xsize, ysize, x, y, chan, xlinewidth, nchan;
     rle_pixel *leftbase, *leftrastptr, *leftpxl, *leftsign;

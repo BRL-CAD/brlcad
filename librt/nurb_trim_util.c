@@ -39,7 +39,10 @@ static const char rcs_ident[] = "$Header$";
  */
 
 int
-rt_nurb_crv_in_range(struct edge_g_cnurb *crv, fastf_t u_min, fastf_t u_max, fastf_t v_min, fastf_t v_max)
+rt_nurb_crv_in_range( crv, u_min, u_max, v_min, v_max)
+struct edge_g_cnurb * crv;
+fastf_t u_min, u_max;
+fastf_t v_min, v_max;
 {
 	point_t eval;
 	fastf_t *pts;

@@ -7,7 +7,8 @@
  * NULL if not found
  */
 char *
-strchr(register char *sp, register char c)
+strchr(sp, c)
+register char *sp, c;
 {
 	do {
 		if(*sp == c)

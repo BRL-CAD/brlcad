@@ -43,8 +43,10 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 		\	Escapes special characters.
  */
 int
-match(register char *pattern, register char *string)
-{
+match(	 pattern,  string )
+register
+char	*pattern, *string;
+	{
 	do
 		{
 		switch( pattern[0] )

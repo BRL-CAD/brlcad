@@ -49,7 +49,8 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
  *  Note that sh_plastic.c defines the required "default" entry.
  */
 void
-multispectral_shader_init(struct mfuncs **headp)
+multispectral_shader_init(headp)
+struct mfuncs	**headp;
 {
 	/* multi-spectral-specific routines */
 	MFUNCS( temp_mfuncs );

@@ -31,7 +31,7 @@ static const char libbu_list_RCSid[] = "@(#)$Header$ (ARL)";
  *	Creates and initializes a bu_list head structure
  */
 struct bu_list *
-bu_list_new(void)
+bu_list_new()
 {
 	struct bu_list *new;
 
@@ -62,7 +62,8 @@ bu_list_pop( struct bu_list *hp )
  *  Returns the number of elements on a bu_list brand linked list.
  */
 int
-bu_list_len(register const struct bu_list *hd)
+bu_list_len( hd )
+register const struct bu_list	*hd;
 {
 	register int			count = 0;
 	register const struct bu_list	*ep;
@@ -79,7 +80,8 @@ bu_list_len(register const struct bu_list *hd)
  *	Reverses the order of elements in a bu_list linked list.
  */
 void
-bu_list_reverse(register struct bu_list *hd)
+bu_list_reverse( hd )
+register struct bu_list   *hd;
 {
 	struct bu_list tmp_hd;
 	register struct bu_list *ep;
@@ -104,7 +106,8 @@ bu_list_reverse(register struct bu_list *hd)
  *  pointers.
  */
 void
-bu_list_free(struct bu_list *hd)
+bu_list_free(hd)
+struct bu_list	*hd;
 {
 	struct bu_list	*p;
 
@@ -124,7 +127,9 @@ bu_list_free(struct bu_list *hd)
  *	No portable way to notify waiting thread(s) that are sleeping
  */
 void
-bu_list_parallel_append(struct bu_list *headp, struct bu_list *itemp)
+bu_list_parallel_append( headp, itemp )
+struct bu_list	*headp;
+struct bu_list	*itemp;
 {
 	bu_semaphore_acquire(BU_SEM_LISTS);
 	BU_LIST_INSERT( headp, itemp );		/* insert before head = append */
@@ -144,7 +149,8 @@ bu_list_parallel_append(struct bu_list *headp, struct bu_list *itemp)
  *	for something to show up on the list.
  */
 struct bu_list *
-bu_list_parallel_dequeue(struct bu_list *headp)
+bu_list_parallel_dequeue( headp )
+struct bu_list	*headp;
 {
 	for(;;)  {
 		register struct bu_list *p;
@@ -172,7 +178,9 @@ bu_list_parallel_dequeue(struct bu_list *headp)
  *  Generic bu_list doubly-linked list checker.
  */
 void
-bu_ck_list(const struct bu_list *hd, const char *str)
+bu_ck_list( hd, str )
+const struct bu_list	*hd;
+const char		*str;
 {
 	register const struct bu_list	*cur;
 	int	head_count = 0;
@@ -216,7 +224,10 @@ bu_ck_list(const struct bu_list *hd, const char *str)
  *	all elements in the linked list
  */
 void
-bu_ck_list_magic(const struct bu_list *hd, const char *str, const long int magic)
+bu_ck_list_magic( hd, str, magic )
+const struct bu_list	*hd;
+const char		*str;
+const long		magic;
 {
 	register const struct bu_list	*cur;
 	int	head_count = 0;

@@ -291,7 +291,7 @@ proc do_Concat { id } {
 	set mged_gui(databaseDir) [file dirname $filename]
 
 	set ret [cad_input_dialog .$id.prefix $mged_gui($id,screen) "Prefix" \
-		"Enter prefix:" prefix ""\
+		"Enter prefix (optional):" prefix ""\
 		0 {{ summary "
 This is where to enter a prefix. The prefix,
 if entered, is prepended to each object of
@@ -308,27 +308,61 @@ the database being inserted."} { see_also dbconcat } } OK Cancel]
 }
 
 proc do_LoadScript { id } {
-    global mged_gui
-    global tkPriv
+	global mged_gui
+	global tkPriv
+	
+	set ftypes {{{All Readable Scripts} {.tcl .sh .rt}} {{Raytrace Scripts} {.rt .sh}} {{Tcl Scripts} {.tcl}} {{All Files} {*}}}
+	set ia_filename [tk_getOpenFile -parent .$id -filetypes $ftypes -initialdir $mged_gui(loadScriptDir) -title "Load Script"]
+	
+	if {$ia_filename != ""} {
+		# save the directory
+		set mged_gui(loadScriptDir) [file dirname $ia_filename]
 
-    set ftypes {{{Tcl Scripts} {.tcl}} {{All Files} {*}}}
-    set ia_filename [tk_getOpenFile -parent .$id -filetypes $ftypes \
-	    -initialdir $mged_gui(loadScriptDir) \
-	    -title "Load Script"]
+		# read in the first two lines of the script file
+		# XXX this is not the best thing to do if we have a big script file..
+		set ret [ catch { open $ia_filename } scriptfd ]
+		if {$ret} {
+			cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen) "Error" $scriptfd info 0 OK
+		}
+		set ret [ catch { read $scriptfd } scriptsource ]
+		if {$ret} {
+			cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen) "Error" $scriptsource info 0 OK
+		}
+		set ret [ catch { close $scriptfd } msg ]
+		if {$ret} {
+			cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen) "Error" $msg info 0 OK
+		}			
 
-    if {$ia_filename != ""} {
-	# save the directory
-	set mged_gui(loadScriptDir) [file dirname $ia_filename]
+		# the script should now be stored in scriptsource. attempt to determine some basic types
+		if [ regexp {^#!/bin/sh.*?\nrt} $scriptsource ] {
+			# handle "saveview" raytrace script
 
-	set ret [catch {source $ia_filename} msg]
-	if {$ret} {
-	    cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen) "Error" \
-		    $msg info 0 OK
-	} else {
-	    cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen) "Script loaded" \
-		    "Script successfully loaded!" info 0 OK
+			# attempt to loadview
+			set ret [catch { loadview $ia_filename } output ]
+
+		} elseif [ regexp {^#!/.*\n} $scriptsource ] {
+			# handle other shell scripts by simply loading them
+
+			set ret [ catch { exec $ia_filename } output ]
+
+		} else {
+			# assume we have a tcl script
+
+			set ret [catch {source $ia_filename} output ]
+
+		}
+		# end iteration over script detection
+
+		# output a result dialog
+		if {$ret} {
+			cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen) "Error" $output info 0 OK
+		} else {
+			cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen) "Script loaded" "Script successfully loaded!" info 0 OK
+		}
+
 	}
-    }
+	# end check if filename was given
+
 }
 
 proc do_Units { id } {

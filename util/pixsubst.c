@@ -4,7 +4,9 @@
 extern int errno;
 
 int
-main(int argc, char **argv)
+main( argc , argv )
+int argc;
+char *argv[];
 {
 
 	unsigned char pix[3],pixin[3],pixout[3];

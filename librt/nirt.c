@@ -52,12 +52,12 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./qray.h"
 
 /* defined in qray.c */
-extern void dgo_qray_data_to_vlist(struct dg_obj *dgop, struct bn_vlblock *vbp, struct dg_qray_dataList *headp, fastf_t *dir, int do_overlaps);
+extern void dgo_qray_data_to_vlist();
 
 /* defined in dg_obj.c */
-extern int dgo_build_tops(Tcl_Interp *interp, struct solid *hsp, char **start, register char **end);
-extern void dgo_cvt_vlblock_to_solids(struct dg_obj *dgop, Tcl_Interp *interp, struct bn_vlblock *vbp, char *name, int copy);
-extern void dgo_pr_wait_status(Tcl_Interp *interp, int status);
+extern int dgo_build_tops();
+extern void dgo_cvt_vlblock_to_solids();
+extern void dgo_pr_wait_status();
 
 /*
  *			F _ N I R T

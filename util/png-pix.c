@@ -41,7 +41,9 @@ static int verbose=0;
 static char *usage="Usage:\n\t%s [-v] [png_input_file] > pix_output_file\n";
 
 int
-main(int argc, char **argv)
+main( argc, argv )
+int argc;
+char *argv[];
 {
 	int i;
 	int c;

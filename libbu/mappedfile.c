@@ -75,9 +75,9 @@ static struct bu_list	bu_mapped_file_list = {
  *  If the system does not support mapped files, the data is read into memory.
  */
 struct bu_mapped_file *
-bu_open_mapped_file(const char *name, const char *appl)
-          	      		/* file name */
-          	      		/* non-null only when app. will use 'apbuf' */
+bu_open_mapped_file( name, appl )
+const char	*name;		/* file name */
+const char	*appl;		/* non-null only when app. will use 'apbuf' */
 {
 	struct bu_mapped_file	*mp = (struct bu_mapped_file *)NULL;
 #ifdef HAVE_UNIX_IO
@@ -310,7 +310,8 @@ fail:
  *  animations.
  */
 void
-bu_close_mapped_file(struct bu_mapped_file *mp)
+bu_close_mapped_file( mp )
+struct bu_mapped_file	*mp;
 {
 	BU_CK_MAPPED_FILE(mp);
 
@@ -331,7 +332,9 @@ bu_close_mapped_file(struct bu_mapped_file *mp)
  *			B U _ P R _ M A P P E D _ F I L E
  */
 void
-bu_pr_mapped_file(const char *title, const struct bu_mapped_file *mp)
+bu_pr_mapped_file( title, mp )
+const char			*title;
+const struct bu_mapped_file	*mp;
 {
 	BU_CK_MAPPED_FILE(mp);
 
@@ -351,7 +354,8 @@ bu_pr_mapped_file(const char *title, const struct bu_mapped_file *mp)
  *  animations.
  */
 void
-bu_free_mapped_files(int verbose)
+bu_free_mapped_files(verbose)
+int	verbose;
 {
 	struct bu_mapped_file	*mp, *next;
 
@@ -410,10 +414,10 @@ bu_free_mapped_files(int verbose)
  *  If the file name begins with a slash ('/') the path is not used.
  */
 struct bu_mapped_file *
-bu_open_mapped_file_with_path(char *const *path, const char *name, const char *appl)
-                   
-          	      		/* file name */
-          	      		/* non-null only when app. will use 'apbuf' */
+bu_open_mapped_file_with_path( path, name, appl )
+char * const *path;
+const char	*name;		/* file name */
+const char	*appl;		/* non-null only when app. will use 'apbuf' */
 {
 	char	* const *pathp = path;
 	struct bu_vls	str;

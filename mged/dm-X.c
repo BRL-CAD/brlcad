@@ -43,11 +43,11 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 extern int _X24_open_existing();	/* defined in libfb/if_ogl.c */
 extern int common_dm();			/* defined in dm-generic.c */
-extern void dm_var_init(struct dm_list *initial_dm_list);		/* defined in attach.c */
+extern void dm_var_init();		/* defined in attach.c */
 
-static int X_dm(int argc, char **argv);
-static void dirty_hook(void);
-static void zclip_hook(void);
+static int X_dm();
+static void dirty_hook();
+static void zclip_hook();
 
 #ifdef USE_PROTOTYPES
 static Tk_GenericProc X_doevent;
@@ -96,7 +96,7 @@ X_dm_init(struct dm_list	*o_dm_list,
 }
 
 void
-X_fb_open(void)
+X_fb_open()
 {
 	char *X_name = "/dev/X";
 
@@ -176,13 +176,13 @@ X_dm(int	argc,
 }
 
 static void
-dirty_hook(void)
+dirty_hook()
 {
 	dirty = 1;
 }
 
 static void
-zclip_hook(void)
+zclip_hook()
 {
 	view_state->vs_vop->vo_zclip = dmp->dm_zclip;
 	dirty_hook();

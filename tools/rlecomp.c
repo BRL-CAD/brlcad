@@ -69,8 +69,8 @@
 
 #define IN_WINDOW(y,wind) ((y >= wind.ymin) && (y <= wind.ymax))
 
-void get_scanline(rle_hdr *the_hdr, rle_pixel **scanline, int *num_skip, rle_op **tmp_raw, int *tmp_nraw);
-void copy_scanline(rle_hdr *in_hdr, rle_hdr *out_hdr, int ypos, int *num_skip, rle_op **out_raw, int *out_nraw, int blank_output);
+void get_scanline();
+void copy_scanline();
 
 /* 
  * Global raw data structures for copy_scanline.
@@ -80,7 +80,9 @@ int * Anraw, *Bnraw;
 rle_pixel * non_zero_pixels;
 
 int
-main(int argc, char **argv)
+main(argc, argv)
+int	argc;
+char	*argv[];
 {
     FILE	*outfile = stdout;
     int         i, j, k, temp;
@@ -403,12 +405,12 @@ main(int argc, char **argv)
  * background pixels) if alpha isn't present.
  */
 void
-get_scanline(rle_hdr *the_hdr, rle_pixel **scanline, int *num_skip, rle_op **tmp_raw, int *tmp_nraw)
-                  
-                     
-               
-                  		/* Raw pointers for data left behind by */
-               			/* copy_scanline. */
+get_scanline( the_hdr, scanline, num_skip, tmp_raw, tmp_nraw )
+rle_hdr * the_hdr;
+rle_pixel **scanline;
+int * num_skip;
+rle_op ** tmp_raw;		/* Raw pointers for data left behind by */
+int * tmp_nraw;			/* copy_scanline. */
 {
     int i,j,no_backgr;
 
@@ -457,13 +459,14 @@ get_scanline(rle_hdr *the_hdr, rle_pixel **scanline, int *num_skip, rle_op **tmp
  * if alpha isn't present.
  */
 void
-copy_scanline(rle_hdr *in_hdr, rle_hdr *out_hdr, int ypos, int *num_skip, rle_op **out_raw, int *out_nraw, int blank_output)
-                            
-         
-              			/* Number of scanlines to be skipped. */
-                  
-               
-                 		/* if non-zero, just eat input & blank output */
+copy_scanline( in_hdr, out_hdr, ypos, num_skip, out_raw, out_nraw, 
+	       blank_output )
+rle_hdr * in_hdr, * out_hdr;
+int ypos;
+int *num_skip;			/* Number of scanlines to be skipped. */
+rle_op ** out_raw;
+int * out_nraw;
+int blank_output;		/* if non-zero, just eat input & blank output */
 {
     register int i,j;
     register rle_pixel * ptr;

@@ -44,7 +44,9 @@ struct	pix_element {
 static char *Usage = "usage: pixhist3d-pl [file.pix] | plot\n";
 
 int
-main(int argc, char **argv)
+main( argc, argv )
+int argc;
+char **argv;
 {
 	int	n, x;
 	struct pix_element scan[512];

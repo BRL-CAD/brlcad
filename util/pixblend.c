@@ -59,7 +59,7 @@ static char usage[] = "\
 Usage: pixblend [-{r|i} value] [-s [seed]] file1.pix file2.pix > out.pix\n";
 
 int
-timeseed(void)
+timeseed()
 {
     struct timeval tv;
     gettimeofday(&tv, (struct timezone *)NULL);
@@ -67,7 +67,9 @@ timeseed(void)
 }
 
 int
-get_args(int argc, register char **argv)
+get_args( argc, argv )
+int argc;
+register char **argv;
 {
 	register int c;
 
@@ -147,7 +149,9 @@ get_args(int argc, register char **argv)
 }
 
 int
-main(int argc, char **argv)
+main(argc, argv)
+int argc;
+char **argv;
 {
 #ifndef HAVE_DRAND48
 	int threshold = 0;
@@ -228,7 +232,7 @@ main(int argc, char **argv)
 			} else {
 #ifdef HAVE_DRAND48
 			    double d;
-			    extern double drand48(void);
+			    extern double drand48();
 			    d = drand48();
 			    if (d >= value) {
 #else

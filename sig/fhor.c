@@ -38,15 +38,15 @@ static	int	upper[HSCREEN], lower[HSCREEN];
 
 FBIO	*fbp;	/* XXX - debug */
 
-void	Efill(void);
-void	Horizon(int x1, int y1, int x2, int y2);
-void	Intersect(int x1, int y1, int x2, int y2, int *hor, int *xi, int *yi);
-void	Draw(int x1, int y1, int x2, int y2);
-int	fhvis(int x, int y);
-int	sign(int i);
+void	Efill();
+void	Horizon();
+void	Intersect();
+void	Draw();
+int	fhvis();
+int	sign();
 
 void
-fhinit(void)
+fhinit()
 {
 	int	i;
 
@@ -62,7 +62,8 @@ fhinit(void)
  *  This one goes "behind" the last one.
  */
 void
-fhnewz(int *f, int num)
+fhnewz( f, num )
+int	f[], num;
 {
 	int	x, y, Xprev, Yprev, Xi, Yi;
 	int	Previously, Currently;
@@ -162,7 +163,8 @@ fhnewz(int *f, int num)
  *	   -1 if visible below lower horizon.
  */
 int
-fhvis(int x, int y)
+fhvis( x, y )
+int x, y;
 {
 	/* See if hidden behind horizons */
 	if( y < upper[x] && y > lower[x] )
@@ -179,7 +181,7 @@ fhvis(int x, int y)
  * NOT DONE YET.
  */
 void
-Efill(void)
+Efill()
 {
 }
 
@@ -188,7 +190,8 @@ Efill(void)
  *  with a line spanning (x1,y1) to (x2,y2).
  */
 void
-Horizon(int x1, int y1, int x2, int y2)
+Horizon( x1, y1, x2, y2 )
+int	x1, y1, x2, y2;
 {
 	int	xinc, x, y;
 	double	slope;
@@ -213,7 +216,10 @@ Horizon(int x1, int y1, int x2, int y2)
  *  and the horizon hor[].
  */
 void
-Intersect(int x1, int y1, int x2, int y2, int *hor, int *xi, int *yi)
+Intersect( x1, y1, x2, y2, hor, xi, yi )
+int	x1, y1, x2, y2;
+int	hor[];
+int	*xi, *yi;
 {
 	int	xinc, ysign;
 	int	slope;
@@ -266,7 +272,8 @@ fflush( stdout );
 }
 
 int
-sign(int i)
+sign( i )
+int	i;
 {
 	if( i > 0 )
 		return( 1 );
@@ -281,7 +288,8 @@ sign(int i)
  *  An integer Bresenham algorithm for any quadrant.
  */
 void
-Draw(int x1, int y1, int x2, int y2)
+Draw( x1, y1, x2, y2 )
+int	x1, y1, x2, y2;
 {
 	int	x, y, deltx, delty, error, i;
 	int	temp, s1, s2, interchange;
@@ -358,7 +366,9 @@ int main()
 static char usage[] = "\
 Usage: fhor [width] < doubles\n";
 
-int main(int argc, char **argv)
+int main( argc, argv )
+int	argc;
+char	**argv;
 {
 	double	inbuf[512];
 	int	f[512];

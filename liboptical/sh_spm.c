@@ -48,8 +48,8 @@ struct bu_structparse spm_parse[] = {
 	{"",	0, (char *)0,	0,		BU_STRUCTPARSE_FUNC_NULL }
 };
 
-HIDDEN int	spm_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip), spm_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
-HIDDEN void	spm_print(register struct region *rp, char *dp), spm_mfree(char *cp);
+HIDDEN int	spm_setup(), spm_render();
+HIDDEN void	spm_print(), spm_mfree();
 
 struct mfuncs spm_mfuncs[] = {
 	{MF_MAGIC,	"spm",		0,		MFI_UV,		0,
@@ -66,7 +66,11 @@ struct mfuncs spm_mfuncs[] = {
  *  return a pointer to the relevant pixel.
  */
 HIDDEN int
-spm_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
+spm_render( ap, pp, swp, dp )
+struct application *ap;
+struct partition *pp;
+struct shadework	*swp;
+char	*dp;
 {
 	register struct spm_specific *spp =
 		(struct spm_specific *)dp;
@@ -93,12 +97,12 @@ spm_render(struct application *ap, struct partition *pp, struct shadework *swp, 
  *	>0	success
  */
 HIDDEN int
-spm_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
-                           
-             	         
-    	      
-                             
-                                /* New since 4.4 release */
+spm_setup( rp, matparm, dpp, mfp, rtip )
+register struct region *rp;
+struct bu_vls	*matparm;
+char	**dpp;
+struct mfuncs           *mfp;
+struct rt_i             *rtip;  /* New since 4.4 release */
 {
 	register struct spm_specific *spp;
 
@@ -129,7 +133,9 @@ fail:
  *			S P M _ P R I N T
  */
 HIDDEN void
-spm_print(register struct region *rp, char *dp)
+spm_print( rp, dp )
+register struct region *rp;
+char	*dp;
 {
 	struct spm_specific	*spm;
 
@@ -141,7 +147,8 @@ spm_print(register struct region *rp, char *dp)
 }
 
 HIDDEN void
-spm_mfree(char *cp)
+spm_mfree( cp )
+char *cp;
 {
 	struct spm_specific	*spm;
 

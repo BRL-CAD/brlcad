@@ -127,8 +127,8 @@ static char	*usage="Usage:\n\tfast4-g [-dwq] [-c component_list] [-m muves_file]
 #define		BOT		't'
 #define		COMPSPLT	'h'
 
-void make_region_name(int g_id, int c_id);
-char * make_solid_name(char type, int element_id, int c_id, int g_id, int inner);
+void make_region_name();
+char * make_solid_name();
 
 #if USE_SURVICE_MODS
 unsigned char *get_fast4_color();
@@ -283,13 +283,14 @@ struct holes
 
 point_t *grid_pts;
 
-int getline(void);
+int getline();
 void Add_holes( int type, int gr, int comp, struct hole_list *ptr );
-void make_bot_object(void);
+void make_bot_object();
 int skip_region( int id );
 
 int
-is_a_hole(int id)
+is_a_hole( id )
+int id;
 {
 	struct holes *hole_ptr;
 	struct hole_list *ptr;
@@ -314,14 +315,17 @@ is_a_hole(int id)
 }
 
 void
-add_to_holes(char *name, int reg_id)
+add_to_holes( name, reg_id )
+char *name;
+int reg_id;
 {
 	if( mk_addmember( name , &hole_head.l, NULL, WMOP_UNION ) == (struct wmember *)NULL )
 		bu_log( "add_to_holes: mk_addmember failed for region %s\n" , name );
 }
 
 void
-plot_tri(int pt1, int pt2, int pt3)
+plot_tri( pt1, pt2, pt3 )
+int pt1, pt2, pt3;
 {
 	pdv_3move( fd_plot, grid_pts[pt1] );
 	pdv_3cont( fd_plot, grid_pts[pt2] );
@@ -330,7 +334,7 @@ plot_tri(int pt1, int pt2, int pt3)
 }
 
 void
-Check_names(void)
+Check_names()
 {
 	struct name_tree *ptr;
 
@@ -378,7 +382,8 @@ Check_names(void)
 }
 
 void
-insert_int(int in)
+insert_int( in )
+int in;
 {
 	int i;
 
@@ -405,7 +410,10 @@ insert_int(int in)
 }
 
 void
-Subtract_holes(struct wmember *head, int comp_id, int group_id)
+Subtract_holes( head , comp_id , group_id )
+struct wmember *head;
+int comp_id;
+int group_id;
 {
 	struct holes *hole_ptr;
 	struct hole_list *list_ptr;
@@ -471,7 +479,7 @@ Subtract_holes(struct wmember *head, int comp_id, int group_id)
 }
 
 void
-do_compsplt(void)
+do_compsplt()
 {
 	int gr, co, gr1,  co1;
 	fastf_t z;
@@ -513,7 +521,7 @@ do_compsplt(void)
 }
 
 void
-List_holes(void)
+List_holes()
 {
 	struct holes *hole_ptr;
 	struct hole_list *list_ptr;
@@ -534,7 +542,7 @@ List_holes(void)
 }
 
 void
-List_names(void)
+List_names()
 {
 	struct name_tree *ptr;
 
@@ -579,7 +587,10 @@ List_names(void)
 }
 
 struct name_tree *
-Search_names(struct name_tree *root, char *name, int *found)
+Search_names( root , name , found )
+struct name_tree *root;
+char *name;
+int *found;
 {
 	struct name_tree *ptr;
 
@@ -617,7 +628,10 @@ Search_names(struct name_tree *root, char *name, int *found)
 }
 
 struct name_tree *
-Search_ident(struct name_tree *root, int reg_id, int *found)
+Search_ident( root , reg_id , found )
+struct name_tree *root;
+int reg_id;
+int *found;
 {
 	struct name_tree *ptr;
 
@@ -656,7 +670,9 @@ Search_ident(struct name_tree *root, int reg_id, int *found)
 }
 
 void
-Delete_name(struct name_tree **root, char *name)
+Delete_name( root , name )
+struct name_tree **root;
+char *name;
 {
 	struct name_tree *ptr,*parent,*ptr2;
 	int r_id;
@@ -853,7 +869,10 @@ Delete_name(struct name_tree **root, char *name)
 }
 
 void
-Insert_name(struct name_tree **root, char *name, int inner)
+Insert_name( root , name, inner )
+struct name_tree **root;
+char *name;
+int inner;
 {
 	struct name_tree *ptr;
 	struct name_tree *new_ptr;
@@ -910,7 +929,9 @@ Insert_name(struct name_tree **root, char *name, int inner)
 }
 
 void
-Insert_region_name(char *name, int reg_id)
+Insert_region_name( name , reg_id )
+char *name;
+int reg_id;
 {
 	struct name_tree *nptr_model,*rptr_model;
 	struct name_tree *new_ptr;
@@ -1000,7 +1021,9 @@ Insert_region_name(char *name, int reg_id)
 }
 
 char *
-find_region_name(int g_id, int c_id)
+find_region_name( g_id , c_id )
+int g_id;
+int c_id;
 {
 	struct name_tree *ptr;
 	int reg_id;
@@ -1020,7 +1043,8 @@ find_region_name(int g_id, int c_id)
 }
 
 char *
-make_unique_name(char *name)
+make_unique_name( name )
+char *name;
 {
 	struct bu_vls vls;
 	int found;
@@ -1046,7 +1070,9 @@ make_unique_name(char *name)
 }
 
 void
-add_to_series(char *name, int reg_id)
+add_to_series( name , reg_id )
+char *name;
+int reg_id;
 {
 	if( group_id < 0 || group_id > 10 )
 	{
@@ -1060,7 +1086,7 @@ add_to_series(char *name, int reg_id)
 }
 
 void
-make_comp_group(void)
+make_comp_group()
 {
 	struct wmember g_head;
 	struct name_tree *ptr;
@@ -1124,7 +1150,7 @@ make_comp_group(void)
 }
 
 void
-Add_stragglers_to_groups(void)
+Add_stragglers_to_groups()
 {
 	struct name_tree *ptr;
 
@@ -1156,7 +1182,7 @@ Add_stragglers_to_groups(void)
 }
 
 void
-do_groups(void)
+do_groups()
 {
 	int group_no;
 	struct wmember head_all;
@@ -1190,7 +1216,7 @@ do_groups(void)
 }
 
 void
-do_name(void)
+do_name()
 {
 	int i,j;
 	int g_id;
@@ -1265,7 +1291,9 @@ do_name(void)
 }
 
 void
-make_region_name(int g_id, int c_id)
+make_region_name( g_id , c_id )
+int g_id;
+int c_id;
 {
 	int r_id;
 	char *tmp_name;
@@ -1290,7 +1318,12 @@ make_region_name(int g_id, int c_id)
 }
 
 char *
-get_solid_name(char type, int element_id, int c_id, int g_id, int inner)
+get_solid_name( type , element_id , c_id , g_id , inner )
+char type;
+int element_id;
+int c_id;
+int g_id;
+int inner;
 {
 	int reg_id;
 	struct bu_vls vls;
@@ -1304,7 +1337,12 @@ get_solid_name(char type, int element_id, int c_id, int g_id, int inner)
 }
 
 char *
-make_solid_name(char type, int element_id, int c_id, int g_id, int inner)
+make_solid_name( type , element_id , c_id , g_id , inner )
+char type;
+int element_id;
+int c_id;
+int g_id;
+int inner;
 {
 	char *name;
 
@@ -1316,7 +1354,7 @@ make_solid_name(char type, int element_id, int c_id, int g_id, int inner)
 }
 
 void
-do_grid(void)
+do_grid()
 {
 	int grid_no;
 	fastf_t x,y,z;
@@ -1360,7 +1398,7 @@ do_grid(void)
 }
 
 void
-do_sphere(void)
+do_sphere()
 {
 	int element_id;
 	int center_pt;
@@ -1448,7 +1486,7 @@ do_sphere(void)
 }
 
 void
-do_vehicle(void)
+do_vehicle()
 {
 	if( pass )
 		return;
@@ -1458,7 +1496,7 @@ do_vehicle(void)
 }
 
 void
-do_cline(void)
+do_cline()
 {
 	int element_id;
 	int pt1,pt2;
@@ -1518,7 +1556,7 @@ do_cline(void)
 }
 
 void
-do_ccone1(void)
+do_ccone1()
 {
 	int element_id;
 	int pt1,pt2;
@@ -1748,7 +1786,7 @@ do_ccone1(void)
 }
 
 void
-do_ccone2(void)
+do_ccone2()
 {
 	int element_id;
 	int pt1,pt2;
@@ -1874,7 +1912,7 @@ do_ccone2(void)
 }
 
 void
-do_ccone3(void)
+do_ccone3()
 {
 	int element_id;
 	int pt1, pt2, pt3, pt4, i;
@@ -2197,7 +2235,8 @@ Add_holes( int type, int gr, int comp, struct hole_list *ptr )
 }
 
 void
-do_hole_wall(int type)
+do_hole_wall( type )
+int type;
 {
 	struct hole_list *list_ptr;
 	struct hole_list *list_start;
@@ -2279,7 +2318,7 @@ do_hole_wall(int type)
 }
 
 int
-getline(void)
+getline()
 {
 	int len;
 
@@ -2304,7 +2343,10 @@ getline(void)
 }
 
 void
-Add_bot_face(int pt1, int pt2, int pt3, fastf_t thick, int pos)
+Add_bot_face( pt1, pt2, pt3, thick, pos )
+int pt1, pt2, pt3;
+fastf_t thick;
+int pos;
 {
 
 	if( pt1 == pt2 || pt2 == pt3 || pt1 == pt3 )
@@ -2359,7 +2401,7 @@ Add_bot_face(int pt1, int pt2, int pt3, fastf_t thick, int pos)
 }
 
 void
-do_tri(void)
+do_tri()
 {
 	int element_id;
 	int pt1,pt2,pt3;
@@ -2431,7 +2473,7 @@ do_tri(void)
 }
 
 void
-do_quad(void)
+do_quad()
 {
 	int element_id;
 	int pt1,pt2,pt3,pt4;
@@ -2512,7 +2554,7 @@ skip_region( int id )
 }
 
 void
-make_bot_object(void)
+make_bot_object()
 {
 	int i;
 	int max_pt=0, min_pt=999999;
@@ -2602,7 +2644,7 @@ make_bot_object(void)
 }
 
 void
-skip_section(void)
+skip_section()
 {
 	long section_start;
 
@@ -2628,7 +2670,8 @@ skip_section(void)
  *	This is called with final == 1 when ENDDATA is found
  */
 void
-do_section(int final)
+do_section( final )
+int final;
 {
 	int found;
 	struct name_tree *nm_ptr;
@@ -2699,7 +2742,7 @@ do_section(int final)
 }
 
 void
-do_hex1(void)
+do_hex1()
 {
 	fastf_t thick=0.0;
 	int pos;
@@ -2804,7 +2847,7 @@ do_hex1(void)
 }
 
 void
-do_hex2(void)
+do_hex2()
 {
 	int pts[8];
 	int element_id;
@@ -2873,7 +2916,7 @@ do_hex2(void)
 }
 
 void
-Process_hole_wall(void)
+Process_hole_wall()
 {
 	if( debug )
 		bu_log( "Process_hole_wall\n" );
@@ -2915,7 +2958,7 @@ Process_hole_wall(void)
 }
 
 void
-do_chgcomp(void)
+do_chgcomp()
 {
 
 	if( !pass )
@@ -2928,7 +2971,7 @@ do_chgcomp(void)
 }
 
 void
-do_cbacking(void)
+do_cbacking()
 {
 	int gr1, co1, gr2, co2, material;
 	fastf_t thickness, probability;
@@ -2964,7 +3007,8 @@ do_cbacking(void)
 }
 
 int
-Process_input(int pass_number)
+Process_input( pass_number )
+int pass_number;
 {
 
 	if( debug )
@@ -3049,7 +3093,10 @@ Process_input(int pass_number)
  * region (eliminating an extra, unnecessary redirection).
  */
 void
-fix_regions(struct db_i *dbip, struct directory *dp, genptr_t ptr)
+fix_regions( dbip, dp, ptr )
+struct db_i *dbip;
+struct directory *dp;
+genptr_t	ptr;
 {
 	struct directory	*dp2;
 	struct rt_db_internal   internal, internal2;
@@ -3133,7 +3180,8 @@ fix_regions(struct db_i *dbip, struct directory *dp, genptr_t ptr)
 }
 
 void
-Post_process(char *output_file)
+Post_process( output_file )
+char *output_file;
 {
 	struct db_i *dbip;
 	struct directory *dp;
@@ -3171,7 +3219,8 @@ Post_process(char *output_file)
 }
 
 void
-make_region_list(char *str)
+make_region_list( str )
+char *str;
 {
 	char *ptr, *ptr2;
 
@@ -3219,7 +3268,7 @@ make_region_list(char *str)
 	}
 }
 
-void make_regions(void)
+void make_regions()
 {
 	struct name_tree *ptr1, *ptr2;
 	struct holes *hptr;
@@ -3457,7 +3506,9 @@ get_fast4_color(int r_id) {
 #endif
 
 int
-main(int argc, char **argv)
+main( argc , argv )
+int argc;
+char *argv[];
 {
 	int i;
 	int c;

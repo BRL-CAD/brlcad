@@ -121,7 +121,7 @@ attrib_print(void)
 }
 
 void
-attrib_flush(void)
+attrib_flush()
 {
     int i;
     /* flush the list of desired attributs */
@@ -185,11 +185,11 @@ struct script_rec
 #define SCRIPT_REC_MAGIC	0x73637270
 #define	sr_magic		l.magic
 
-static void enqueue_script (struct bu_list *qp, int type, char *string)
+static void enqueue_script (qp, type, string)
 
-              	    
-   		     
-    		        	/* Literal or file name */
+struct bu_list	*qp;
+int		type;
+char		*string;	/* Literal or file name */
 
 {
     struct script_rec	*srp;
@@ -206,10 +206,10 @@ static void enqueue_script (struct bu_list *qp, int type, char *string)
     BU_LIST_INSERT(qp, &(srp -> l));
 }
 
-static void show_scripts (struct bu_list *sl, char *text)
+static void show_scripts (sl, text)
 
-              	    
-    		      		/* for title line */
+struct bu_list	*sl;
+char		*text;		/* for title line */
 
 {
     int			i;
@@ -232,7 +232,10 @@ static void show_scripts (struct bu_list *sl, char *text)
     bu_log("- - - - - - - - - - - - - - - - - - - - - - - - - -\n");
 }
 
-static void free_script (struct script_rec *srp)
+static void free_script (srp)
+
+struct script_rec	*srp;
+
 {
     BU_CKMAG(srp, SCRIPT_REC_MAGIC, "script record");
 
@@ -240,7 +243,10 @@ static void free_script (struct script_rec *srp)
     bu_free((genptr_t) srp, "script record");
 }
 
-static void run_scripts (struct bu_list *sl)
+static void run_scripts (sl)
+
+struct bu_list	*sl;
+
 {
     struct script_rec	*srp;
     char		*cp;
@@ -284,7 +290,9 @@ static void run_scripts (struct bu_list *sl)
 }
 
 int
-main (int argc, char **argv)
+main (argc, argv)
+int argc;
+char **argv;
 {
     char                db_title[TITLE_LEN+1];/* title from MGED file      */
     const char		*tmp_str;
@@ -303,17 +311,17 @@ main (int argc, char **argv)
     extern char		*optarg;	/* argument from getopt(3C) */
 
     /* FUNCTIONS */
-    int                    if_overlap(register struct application *ap, register struct partition *pp, struct region *reg1, struct region *reg2, struct partition *InputHdp);    /* routine if you overlap         */
-    int             	   if_hit(struct application *ap, struct partition *part_head, struct seg *finished_segs);        /* routine if you hit target      */
-    int             	   if_miss(void);       /* routine if you miss target     */
-    void                   do_rt_gettrees(struct rt_i *rtip, char **object_name, int nm_objects);
-    void                   printusage(void);
-    void		   grid2targ(void);
-    void		   targ2grid(void);
-    void		   ae2dir(void);
-    void		   dir2ae(void);
-    void	           set_diameter(struct rt_i *rtip);
-    int	           	   str_dbl(char *buf, double *Result);	
+    int                    if_overlap();    /* routine if you overlap         */
+    int             	   if_hit();        /* routine if you hit target      */
+    int             	   if_miss();       /* routine if you miss target     */
+    void                   do_rt_gettrees();
+    void                   printusage();
+    void		   grid2targ();
+    void		   targ2grid();
+    void		   ae2dir();
+    void		   dir2ae();
+    void	           set_diameter();
+    int	           	   str_dbl();	
     void		   az_el();
     void		   sh_esc();
     void		   grid_coor();
@@ -322,7 +330,7 @@ main (int argc, char **argv)
     void		   backout();
     void		   quit();
     void		   show_menu();
-    void		   print_item(char *buffer, com_table *ctp);
+    void		   print_item();
     void		   shoot();
 
     BU_LIST_INIT(&script_list);
@@ -576,13 +584,17 @@ Options:\n\
  -X v      set nirt diagnostic flag=v\n\
 ";
 
-void printusage(void)
+void printusage() 
 {
     (void) fputs(usage, stderr);
 }
 
 void
-do_rt_gettrees (struct rt_i *rtip, char **object_name, int nm_objects)
+do_rt_gettrees (rtip, object_name, nm_objects)
+struct rt_i	*rtip;
+char		*object_name[];
+int		nm_objects;
+
 {
     static char	**prev_names = 0;
     static int	prev_nm = 0;

@@ -34,7 +34,9 @@ char	buf[2048];
 int	debug = 0;
 
 int
-main(int argc, char *argv)
+main(argc, argv)
+int	argc;
+char	*argv;
 {
 	double	xyz[3];
 	int	i;

@@ -31,10 +31,11 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "vmath.h"
 
-static int	code(fastf_t x, fastf_t y);
+static int	code();
 
 int
-clip (fastf_t *xp1, fastf_t *yp1, fastf_t *xp2, fastf_t *yp2)
+clip (xp1, yp1, xp2, yp2)
+vect_t	xp1, yp1, xp2, yp2;
 {
 	char code1, code2;
 
@@ -87,7 +88,8 @@ clip (fastf_t *xp1, fastf_t *yp1, fastf_t *xp2, fastf_t *yp2)
 }
 
 static int
-code (fastf_t x, fastf_t y)
+code (x, y)
+fastf_t x, y;
 {
 	int cval;
 
@@ -124,7 +126,9 @@ code (fastf_t x, fastf_t y)
  *	if !0 was returned, "a" and "b" have been clipped to the RPP.
  */
 int
-vclip(fastf_t *a, fastf_t *b, register fastf_t *min, register fastf_t *max)
+vclip( a, b, min, max )
+vect_t a, b;
+register fastf_t *min, *max;
 {
 	static vect_t diff;
 	static double sv;

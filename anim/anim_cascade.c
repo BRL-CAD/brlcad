@@ -60,11 +60,11 @@
 #define CASCADE_R	1
 #define CASCADE_F	2
 
-int get_args(int argc, char **argv);
+int get_args();
 
-extern void	anim_dy_p_r2mat(fastf_t *, double, double, double);
-extern void	anim_tran(fastf_t *);
-extern int	anim_mat2ypr(fastf_t *, fastf_t *);
+extern void	anim_dy_p_r2mat();
+extern void	anim_tran();
+extern int	anim_mat2ypr();
 
 extern int bu_optind;
 extern char *bu_optarg;
@@ -74,7 +74,9 @@ int cmd_fcen, cmd_fypr, cmd_rcen, cmd_rypr, cmd_acen, cmd_aypr;
 int output_mode, read_time, print_time;
 
 int
-main (int argc, char **argv)
+main (argc,argv)
+int argc;
+char **argv;
 {
 	int val;
 	fastf_t time, yaw1, pitch1, roll1, yaw2, pitch2, roll2;
@@ -204,7 +206,9 @@ main (int argc, char **argv)
 
 #define OPT_STR "so:f:r:a:"
 
-int get_args(int argc, char **argv)
+int get_args(argc,argv)
+int argc;
+char **argv;
 {
 	int c,d;
 

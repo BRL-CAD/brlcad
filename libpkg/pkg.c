@@ -103,17 +103,17 @@ int pkg_nochecking = 0;	/* set to disable extra checking for input */
 int pkg_permport = 0;	/* TCP port that pkg_permserver() is listening on XXX */
 
 /* Internal Functions */
-static struct pkg_conn *pkg_makeconn(int fd, struct pkg_switch *switchp, void (*errlog) (/* ??? */));
-static void pkg_errlog(char *s);
-static void pkg_perror(void (*errlog) (/* ??? */), char *s);
-static int pkg_dispatch(register struct pkg_conn *pc);
-static int pkg_gethdr(register struct pkg_conn *pc, char *buf);
+static struct pkg_conn *pkg_makeconn();
+static void pkg_errlog();
+static void pkg_perror();
+static int pkg_dispatch();
+static int pkg_gethdr();
 
 static char errbuf[80];
 static FILE	*pkg_debug;
-static void	pkg_ck_debug(void);
-static void	pkg_timestamp(void);
-static void	pkg_checkin(register struct pkg_conn *pc, int nodelay);
+static void	pkg_ck_debug();
+static void	pkg_timestamp();
+static void	pkg_checkin();
 
 int pkg_inget(register struct pkg_conn *, char *, int);
 
@@ -140,7 +140,8 @@ int pkg_inget(register struct pkg_conn *, char *, int);
  *			P K G _ G S H O R T
  */
 unsigned short
-pkg_gshort(unsigned char *msgp)
+pkg_gshort(msgp)
+unsigned char *msgp;
 {
 	register unsigned char *p = (unsigned char *) msgp;
 #ifdef vax
@@ -160,7 +161,8 @@ pkg_gshort(unsigned char *msgp)
  *			P K G _ G L O N G
  */
 unsigned long
-pkg_glong(unsigned char *msgp)
+pkg_glong(msgp)
+unsigned char *msgp;
 {
 	register unsigned char *p = (unsigned char *) msgp;
 	register unsigned long u;
@@ -175,7 +177,9 @@ pkg_glong(unsigned char *msgp)
  *			P K G _ P S H O R T
  */
 char *
-pkg_pshort(unsigned char *msgp, short unsigned int s)
+pkg_pshort(msgp, s)
+unsigned char *msgp;
+unsigned short s;
 {
 
 	msgp[1] = s;
@@ -187,7 +191,9 @@ pkg_pshort(unsigned char *msgp, short unsigned int s)
  *			P K G _ P L O N G
  */
 char *
-pkg_plong(unsigned char *msgp, long unsigned int l)
+pkg_plong(msgp, l)
+unsigned char *msgp;
+unsigned long l;
 {
 
 	msgp[3] = l;
@@ -205,7 +211,14 @@ pkg_plong(unsigned char *msgp, long unsigned int l)
  *  Returns PKC_ERROR on error.
  */
 struct pkg_conn *
-pkg_open(char *host, char *service, char *protocol, char *uname, char *passwd, struct pkg_switch *switchp, void (*errlog) (/* ??? */))
+pkg_open( host, service, protocol, uname, passwd, switchp, errlog )
+char *host;
+char *service;
+char *protocol;
+char *uname;
+char *passwd;
+struct pkg_switch *switchp;
+void (*errlog)();
 {
 	struct sockaddr_in sinme;		/* Client */
 	struct sockaddr_in sinhim;		/* Server */
@@ -313,7 +326,9 @@ ready:
  *  Returns PKC_ERROR or a pointer to a pkg_conn structure.
  */
 struct pkg_conn *
-pkg_transerver(struct pkg_switch *switchp, void (*errlog) (/* ??? */))
+pkg_transerver( switchp, errlog )
+struct pkg_switch *switchp;
+void (*errlog)();
 {
 	pkg_ck_debug();
 	if( pkg_debug )  {
@@ -342,7 +357,11 @@ pkg_transerver(struct pkg_switch *switchp, void (*errlog) (/* ??? */))
  *  Returns fd to listen on (>=0), -1 on error.
  */
 int
-pkg_permserver(char *service, char *protocol, int backlog, void (*errlog) (/* ??? */))
+pkg_permserver( service, protocol, backlog, errlog )
+char *service;
+char *protocol;
+int backlog;
+void (*errlog)();
 {
 	struct sockaddr_in sinme;
 #ifdef HAVE_UNIX_DOMAIN_SOCKETS
@@ -445,11 +464,13 @@ ready:
  *	PKC_ERROR	fatal error
  */
 struct pkg_conn *
-pkg_getclient(int fd, struct pkg_switch *switchp, void (*errlog) (/* ??? */), int nodelay)
+pkg_getclient(fd, switchp, errlog, nodelay)
+struct pkg_switch *switchp;
+void (*errlog)();
 {
 	struct sockaddr_in from;
 	register int s2;
-	unsigned int fromlen = sizeof (from);
+	auto int fromlen = sizeof (from);
 	auto int onoff;
 
 	if( pkg_debug )  {
@@ -509,7 +530,9 @@ pkg_getclient(int fd, struct pkg_switch *switchp, void (*errlog) (/* ??? */), in
  */
 static
 struct pkg_conn *
-pkg_makeconn(int fd, struct pkg_switch *switchp, void (*errlog) (/* ??? */))
+pkg_makeconn(fd, switchp, errlog)
+struct pkg_switch *switchp;
+void (*errlog)();
 {
 	register struct pkg_conn *pc;
 
@@ -548,7 +571,8 @@ pkg_makeconn(int fd, struct pkg_switch *switchp, void (*errlog) (/* ??? */))
  *  Gracefully release the connection block and close the connection.
  */
 void
-pkg_close(register struct pkg_conn *pc)
+pkg_close(pc)
+register struct pkg_conn *pc;
 {
 	PKG_CK(pc);
 	if( pkg_debug )  {
@@ -636,7 +660,11 @@ int	n;
  *  Returns number of bytes of user data actually sent.
  */
 int
-pkg_send(int type, char *buf, int len, register struct pkg_conn *pc)
+pkg_send( type, buf, len, pc )
+int type;
+char *buf;
+int len;
+register struct pkg_conn *pc;
 {
 #ifdef HAVE_WRITEV
 	static struct iovec cmdvec[2];
@@ -763,7 +791,11 @@ pkg_send(int type, char *buf, int len, register struct pkg_conn *pc)
  *  Fiendishly useful!
  */
 int
-pkg_2send(int type, char *buf1, int len1, char *buf2, int len2, register struct pkg_conn *pc)
+pkg_2send( type, buf1, len1, buf2, len2, pc )
+int type;
+char *buf1, *buf2;
+int len1, len2;
+register struct pkg_conn *pc;
 {
 #ifdef HAVE_WRITEV
 	static struct iovec cmdvec[3];
@@ -914,7 +946,11 @@ pkg_2send(int type, char *buf1, int len1, char *buf2, int len2, register struct 
  *  Returns number of bytes of user data actually sent (or queued).
  */
 int
-pkg_stream(int type, char *buf, int len, register struct pkg_conn *pc)
+pkg_stream( type, buf, len, pc )
+int type;
+char *buf;
+int len;
+register struct pkg_conn *pc;
 {
 	static struct pkg_header hdr;
 
@@ -954,7 +990,8 @@ pkg_stream(int type, char *buf, int len, register struct pkg_conn *pc)
  *  Returns < 0 on failure, else number of bytes sent.
  */
 int
-pkg_flush(register struct pkg_conn *pc)
+pkg_flush( pc )
+register struct pkg_conn *pc;
 {
 	register int	i;
 
@@ -1000,7 +1037,11 @@ pkg_flush(register struct pkg_conn *pc)
  *  Returns the length of the message actually received, or -1 on error.
  */
 int
-pkg_waitfor(int type, char *buf, int len, register struct pkg_conn *pc)
+pkg_waitfor( type, buf, len, pc )
+int type;
+char *buf;
+int len;
+register struct pkg_conn *pc;
 {
 	register int i;
 
@@ -1104,7 +1145,9 @@ again:
  *  Returns pointer to message buffer, or NULL.
  */
 char *
-pkg_bwaitfor(int type, register struct pkg_conn *pc)
+pkg_bwaitfor( type, pc )
+int type;
+register struct pkg_conn *pc;
 {
 	register int i;
 	register char *tmpbuf;
@@ -1199,7 +1242,8 @@ pkg_bwaitfor(int type, register struct pkg_conn *pc)
  *	>0	All ok, return is # of packages processed (for the curious)
  */
 int
-pkg_process(register struct pkg_conn *pc)
+pkg_process(pc)
+register struct pkg_conn *pc;
 {
 	register int	len;
 	register int	available;
@@ -1328,7 +1372,8 @@ pkg_process(register struct pkg_conn *pc)
  *  Returns -1 on fatal error, 0 on no handler, 1 if all's well.
  */
 static int
-pkg_dispatch(register struct pkg_conn *pc)
+pkg_dispatch(pc)
+register struct pkg_conn *pc;
 {
 	register int i;
 
@@ -1380,7 +1425,9 @@ pkg_dispatch(register struct pkg_conn *pc)
  *	-1	on fatal errors
  */
 static int
-pkg_gethdr(register struct pkg_conn *pc, char *buf)
+pkg_gethdr( pc, buf )
+register struct pkg_conn *pc;
+char *buf;
 {
 	register int i;
 
@@ -1459,7 +1506,8 @@ pkg_gethdr(register struct pkg_conn *pc, char *buf)
  *  Returns -1 on error, etc.
  */
 int
-pkg_block(register struct pkg_conn *pc)
+pkg_block(pc)
+register struct pkg_conn *pc;
 {
 	PKG_CK(pc);
 	if( pkg_debug )  {
@@ -1496,7 +1544,9 @@ pkg_block(register struct pkg_conn *pc)
  *  Produce a perror on the error logging output.
  */
 static void
-pkg_perror(void (*errlog) (/* ??? */), char *s)
+pkg_perror( errlog, s )
+void (*errlog)();
+char *s;
 {
 	if( errno >= 0 && errno < sys_nerr ) {
 		sprintf( errbuf, "%s: %s\n", s, sys_errlist[errno] );
@@ -1513,7 +1563,8 @@ pkg_perror(void (*errlog) (/* ??? */), char *s)
  *  Default error logger.  Writes to stderr.
  */
 static void
-pkg_errlog(char *s)
+pkg_errlog( s )
+char *s;
 {
 	if( pkg_debug )  {
 		pkg_timestamp();
@@ -1527,7 +1578,7 @@ pkg_errlog(char *s)
  *			P K G _ C K _ D E B U G
  */
 static void
-pkg_ck_debug(void)
+pkg_ck_debug()
 {
 	char	*place;
 	char	buf[128];
@@ -1552,7 +1603,7 @@ pkg_ck_debug(void)
  *  Output a timestamp to the log, suitable for starting each line with.
  */
 static void
-pkg_timestamp(void)
+pkg_timestamp()
 {
 	time_t		now;
 	struct tm	*tmp;
@@ -1594,7 +1645,8 @@ pkg_timestamp(void)
  *	 1	success
  */
 int
-pkg_suckin(register struct pkg_conn *pc)
+pkg_suckin(pc)
+register struct pkg_conn	*pc;
 {
 	int	avail;
 	int	got;
@@ -1709,7 +1761,9 @@ out:
  *  If nodelay is set, poll without waiting.
  */
 static void
-pkg_checkin(register struct pkg_conn *pc, int nodelay)
+pkg_checkin(pc, nodelay)
+register struct pkg_conn	*pc;
+int		nodelay;
 {
 	struct timeval	tv;
 	fd_set		bits;
@@ -1764,7 +1818,10 @@ pkg_checkin(register struct pkg_conn *pc, int nodelay)
  *  The number of bytes actually transferred is returned.
  */
 int
-pkg_inget(register struct pkg_conn *pc, char *buf, int count)
+pkg_inget( pc, buf, count )
+register struct pkg_conn	*pc;
+char		*buf;
+int		count;
 {
 	register int	len;
 	register int	todo = count;

@@ -124,34 +124,36 @@ int	rle_verbose = 0;
 
 #undef HIDDEN
 #define HIDDEN static
-HIDDEN void	_put_Data(register FILE *fp, register unsigned char *cp, int n);
-HIDDEN int	_put_Color_Map_Seg(FILE *fp, register short unsigned int *cmap_seg);
-HIDDEN int	_put_Std_Map(FILE *fp);
-HIDDEN int	_get_Color_Map_Seg(FILE *fp, register short unsigned int *cmap_seg);
+HIDDEN void	_put_Data();
+HIDDEN int	_put_Color_Map_Seg();
+HIDDEN int	_put_Std_Map();
+HIDDEN int	_get_Color_Map_Seg();
 
 /* Functions to read instructions, depending on format.			*/
 HIDDEN int	(*_func_Get_Inst)();	/* Ptr to appropriate function.	*/
-HIDDEN int	_get_Old_Inst(register FILE *fp, register int *op, register int *dat);	/* Old format inst. reader.	*/
-HIDDEN int	_get_New_Inst(register FILE *fp, register int *opcode, register int *datum);	/* New extended inst. reader.	*/
-HIDDEN void	_enc_Color_Seg(FILE *fp, register int seg, register int color);
-HIDDEN void	_enc_Segment(FILE *fp, register RGBpixel (*data_p), register RGBpixel (*last_p));
-HIDDEN int	_bg_Get_Runs(register RGBpixel (*pixelp), register RGBpixel (*endpix));
+HIDDEN int	_get_Old_Inst();	/* Old format inst. reader.	*/
+HIDDEN int	_get_New_Inst();	/* New extended inst. reader.	*/
+HIDDEN void	_enc_Color_Seg();
+HIDDEN void	_enc_Segment();
+HIDDEN int	_bg_Get_Runs();
 
-void		prnt_XSetup(char *msg, register Xtnd_Rle_Header *setup);
+void		prnt_XSetup();
 
 static Xtnd_Rle_Header	w_setup;	/* Header being written out.	*/
 static Xtnd_Rle_Header	r_setup;	/* Header being read in.	*/
 
 void
-rle_rlen(int *xlen, int *ylen)
-{
+rle_rlen( xlen, ylen )
+int	*xlen, *ylen;
+	{
 	*xlen = r_setup.h_xlen;
 	*ylen = r_setup.h_ylen;
 	}
 
 void
-rle_wlen(int xlen, int ylen, int mode)
-{
+rle_wlen( xlen, ylen, mode )
+int	xlen, ylen, mode;
+	{
 	if( mode == 0 )		/* Read mode.				*/
 		{
 		r_setup.h_xlen = xlen;
@@ -166,15 +168,17 @@ rle_wlen(int xlen, int ylen, int mode)
 	}
 
 void
-rle_rpos(int *xpos, int *ypos)
-{
+rle_rpos( xpos, ypos )
+int	*xpos, *ypos;
+	{
 	*xpos = r_setup.h_xpos;
 	*ypos = r_setup.h_ypos;
 	}
 
 void
-rle_wpos(int xpos, int ypos, int mode)
-{
+rle_wpos( xpos, ypos, mode )
+int	xpos, ypos, mode;
+	{
 	if( mode == 0 )		/* Read mode.				*/
 		{
 		r_setup.h_xpos = xpos;
@@ -197,8 +201,11 @@ rle_wpos(int xpos, int ypos, int mode)
 	Returns -1 for failure, 0 otherwise.
  */
 int
-rle_rhdr(FILE *fp, int *flags, register unsigned char *bgpixel)
-{
+rle_rhdr( fp, flags, bgpixel )
+FILE		*fp;
+int		*flags;
+register unsigned char	*bgpixel;
+	{
 	static short	x_magic;
 	static char	*verbage[] =
 		{
@@ -343,8 +350,11 @@ rle_rhdr(FILE *fp, int *flags, register unsigned char *bgpixel)
 	Returns -1 for failure, 0 otherwise.
  */
 int
-rle_whdr(FILE *fp, int ncolors, int bgflag, int cmflag, unsigned char *bgpixel)
-{
+rle_whdr( fp, ncolors, bgflag, cmflag, bgpixel )
+FILE		*fp;
+int		ncolors, bgflag, cmflag;
+RGBpixel		bgpixel;
+	{
 	/* Magic numbers for output file.				*/
 	static short	x_magic = XtndRMAGIC; /* Extended magic number.	*/
 	static RGBpixel	black = { 0, 0, 0 };
@@ -419,8 +429,10 @@ rle_whdr(FILE *fp, int ncolors, int bgflag, int cmflag, unsigned char *bgpixel)
 	Returns -1 upon failure, 0 otherwise.
  */
 int
-rle_rmap(FILE *fp, ColorMap *cmap)
-{
+rle_rmap( fp, cmap )
+FILE		*fp;
+ColorMap	*cmap;
+	{
 	if( rle_verbose )
 		(void) fprintf( stderr, "Reading color map\n");
 	if(	_get_Color_Map_Seg( fp, cmap->cm_red ) == -1
@@ -437,8 +449,10 @@ rle_rmap(FILE *fp, ColorMap *cmap)
 	Returns -1 upon failure, 0 otherwise.
  */
 int
-rle_wmap(FILE *fp, ColorMap *cmap)
-{
+rle_wmap( fp, cmap )
+FILE		*fp;
+ColorMap	*cmap;
+	{
 	if( w_setup.h_ncmap == 0 )
 		{
 		(void) fprintf( stderr,
@@ -471,8 +485,10 @@ rle_wmap(FILE *fp, ColorMap *cmap)
 	and 0 if untouched.
  */
 int
-rle_decode_ln(register FILE *fp, RGBpixel (*scan_buf))
-{	static int	lines_to_skip = 0;
+rle_decode_ln( fp, scan_buf )
+register FILE	*fp;
+RGBpixel	*scan_buf;
+	{	static int	lines_to_skip = 0;
 		static int	opcode, datum;
 		static short	word;
 
@@ -617,8 +633,10 @@ rle_decode_ln(register FILE *fp, RGBpixel (*scan_buf))
 	Returns -1 upon failure, 0 otherwise.
  */
 int
-rle_encode_ln(register FILE *fp, RGBpixel (*scan_buf))
-{	register RGBpixel *scan_p;
+rle_encode_ln( fp, scan_buf )
+register FILE	*fp;
+RGBpixel		*scan_buf;
+	{	register RGBpixel *scan_p;
 		register RGBpixel *last_p;
 		register int	i;
 		register int	color;		/* holds current color */
@@ -682,8 +700,10 @@ rle_encode_ln(register FILE *fp, RGBpixel (*scan_buf))
 	before all pixels are processed, otherwise a 'nseg' is returned.
  */
 HIDDEN int
-_bg_Get_Runs(register RGBpixel (*pixelp), register RGBpixel (*endpix))
-{	/* find non-background runs */
+_bg_Get_Runs( pixelp, endpix )
+register RGBpixel *pixelp;
+register RGBpixel *endpix;
+	{	/* find non-background runs */
 		register int	nseg = 0;
 	while( pixelp <= endpix && nseg < NSEG )
 		{
@@ -723,8 +743,11 @@ _bg_Get_Runs(register RGBpixel (*pixelp), register RGBpixel (*endpix))
 	Encode a segment, 'seg', for specified 'color'.
  */
 HIDDEN void
-_enc_Color_Seg(FILE *fp, register int seg, register int color)
-{	static RGBpixel *data_p;
+_enc_Color_Seg( fp, seg, color )
+FILE		*fp;
+register int	seg;
+register int	color;
+	{	static RGBpixel *data_p;
 		static RGBpixel *last_p;
 
 	data_p = (RGBpixel *) &((*(runs[seg].first))[color]);
@@ -738,8 +761,11 @@ _enc_Color_Seg(FILE *fp, register int seg, register int color)
 	Output code for segment.
  */
 HIDDEN void
-_enc_Segment(FILE *fp, register RGBpixel (*data_p), register RGBpixel (*last_p))
-{	register RGBpixel	*pixelp;
+_enc_Segment( fp, data_p, last_p )
+FILE		*fp;
+register RGBpixel	*data_p;
+register RGBpixel	*last_p;
+	{	register RGBpixel	*pixelp;
 		register RGBpixel	*runs_p = data_p;
 		register int	state = DATA;
 		register unsigned char	runval = (*data_p)[CUR];
@@ -811,8 +837,11 @@ _enc_Segment(FILE *fp, register RGBpixel (*data_p), register RGBpixel (*last_p))
 	Put one or more pixels of byte data into the output file.
  */
 HIDDEN void
-_put_Data(register FILE *fp, register unsigned char *cp, int n)
-{	register int	count = n;
+_put_Data( fp, cp, n )
+register FILE	*fp;
+register unsigned char *cp;
+int		n;
+	{	register int	count = n;
 	RByteData(n-1);
 
 #if 0
@@ -850,8 +879,10 @@ _put_Data(register FILE *fp, register unsigned char *cp, int n)
 	maps to be LEFT justified within a short.
  */
 HIDDEN int
-_get_Color_Map_Seg(FILE *fp, register short unsigned int *cmap_seg)
-{	static unsigned short	rle_cmap[256];
+_get_Color_Map_Seg( fp, cmap_seg )
+FILE	*fp;
+register unsigned short	*cmap_seg;
+	{	static unsigned short	rle_cmap[256];
 		register unsigned short	*cm = rle_cmap;
 		register int	i;
 	if( fread( (char *) rle_cmap, sizeof(rle_cmap), 1, fp ) != 1 )
@@ -871,8 +902,10 @@ _get_Color_Map_Seg(FILE *fp, register short unsigned int *cmap_seg)
 	Output color map segment to RLE file as shorts.  See above.
  */
 HIDDEN int
-_put_Color_Map_Seg(FILE *fp, register short unsigned int *cmap_seg)
-{	static unsigned short	rle_cmap[256];
+_put_Color_Map_Seg( fp, cmap_seg )
+FILE	*fp;
+register unsigned short	*cmap_seg;
+	{	static unsigned short	rle_cmap[256];
 		register unsigned short	*cm = rle_cmap;
 		register int	i;
 	for( i = 0; i < 256; i++, cm++ )
@@ -894,8 +927,9 @@ _put_Color_Map_Seg(FILE *fp, register short unsigned int *cmap_seg)
 	Output standard color map to RLE file as shorts.
  */
 HIDDEN int
-_put_Std_Map(FILE *fp)
-{	static unsigned short	rle_cmap[256*3];
+_put_Std_Map( fp )
+FILE	*fp;
+	{	static unsigned short	rle_cmap[256*3];
 		register unsigned short	*cm = rle_cmap;
 		register int	i, segment;
 	for( segment = 0; segment < 3; segment++ )
@@ -915,8 +949,11 @@ _put_Std_Map(FILE *fp)
 	}
 
 HIDDEN int
-_get_New_Inst(register FILE *fp, register int *opcode, register int *datum)
-{
+_get_New_Inst( fp, opcode, datum )
+register FILE	*fp;
+register int	*opcode;
+register int	*datum;
+	{
 	static short	long_data;
 
 	*opcode = getc( fp );
@@ -935,8 +972,11 @@ _get_New_Inst(register FILE *fp, register int *opcode, register int *datum)
 	}
 
 HIDDEN int
-_get_Old_Inst(register FILE *fp, register int *op, register int *dat)
-{
+_get_Old_Inst( fp, op, dat )
+register FILE	*fp;
+register int	*op;
+register int	*dat;
+	{
 	static Old_Inst	instruction;
 	register char	*p;
 
@@ -956,8 +996,10 @@ _get_Old_Inst(register FILE *fp, register int *op, register int *dat)
 	}
 	
 void
-prnt_XSetup(char *msg, register Xtnd_Rle_Header *setup)
-{
+prnt_XSetup( msg, setup )
+char				*msg;
+register Xtnd_Rle_Header	*setup;
+	{
 	(void) fprintf( stderr, "%s : \n", msg );
 	(void) fprintf( stderr,
 			"\th_xpos=%d, h_ypos=%d\n\th_xlen=%d, h_ylen=%d\n",

@@ -224,7 +224,8 @@ static struct bu_semaphores	*bu_semaphores = (struct bu_semaphores *)NULL;
  *
  */
 void
-bu_semaphore_init(unsigned int nsemaphores)
+bu_semaphore_init( nsemaphores )
+unsigned int	nsemaphores;
 {
 #if !defined(PARALLEL) && !defined(DEFINED_BU_SEMAPHORES)
 	return;					/* No support on this hardware */
@@ -332,7 +333,8 @@ bu_semaphore_init(unsigned int nsemaphores)
  *			B U _ S E M A P H O R E _ A C Q U I R E
  */
 void
-bu_semaphore_acquire(unsigned int i)
+bu_semaphore_acquire( i )
+unsigned int	i;
 {
 #if !defined(PARALLEL) && !defined(DEFINED_BU_SEMAPHORES)
 	return;					/* No support on this hardware */
@@ -403,7 +405,8 @@ bu_semaphore_acquire(unsigned int i)
  *			B U _ S E M A P H O R E _ R E L E A S E
  */
 void
-bu_semaphore_release(unsigned int i)
+bu_semaphore_release( i )
+unsigned int	i;
 {
 #if !defined(PARALLEL) && !defined(DEFINED_BU_SEMAPHORES)
 	return;					/* No support on this hardware */

@@ -20,7 +20,8 @@
 extern Tk_PhotoImageFormat tkImgFmtPIX;
 
 int
-tclcad_tk_setup(Tcl_Interp *interp)
+tclcad_tk_setup(interp)
+Tcl_Interp *interp;
 {
     /* Note:  pix_common_file_size  is now bn_common_file_size */
 

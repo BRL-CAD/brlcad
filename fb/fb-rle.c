@@ -65,13 +65,14 @@ Usage: fb-rle [-c -h -d] [-F framebuffer] [-C r/g/b]\n\
 \n\
 If omitted, the .rle file is written to stdout\n";
 
-extern void	cmap_crunch(register RGBpixel (*scan_buf), register int pixel_ct, ColorMap *cmap);
+extern void	cmap_crunch();
 
 /*
  *			G E T _ A R G S
  */
 static int
-get_args(int argc, register char **argv)
+get_args( argc, argv )
+register char	**argv;
 {
 	register int	c;
 
@@ -153,7 +154,9 @@ get_args(int argc, register char **argv)
  *			M A I N
  */
 int
-main(int argc, char **argv)
+main( argc, argv )
+int	argc;
+char	*argv[];
 {
 	register FBIO	*fbp;
 	register unsigned char *scan_buf;
@@ -282,7 +285,7 @@ main(int argc, char **argv)
 		}
 
 		if( crunch )
-			cmap_crunch( (RGBpixel *)scan_buf, file_width, &cmap );
+			cmap_crunch( scan_buf, file_width, &cmap );
 
 		/* Grumble, convert to Utah layout */
 		{

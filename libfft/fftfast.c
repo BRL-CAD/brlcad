@@ -44,15 +44,16 @@ typedef struct {
 	double	im;	/* Imaginary Part */
 } COMPLEX;
 
-void	scramble(int numpoints, COMPLEX *dat);
-void	butterflies(int numpoints, int inverse, COMPLEX *dat);
+void	scramble();
+void	butterflies();
 int	init_sintab( int size );
 
 /*
  * Forward Complex Fourier Transform
  */
 void
-cfft(COMPLEX *dat, int num)
+cfft( dat, num )
+COMPLEX dat[]; int num;
 {
 	/* Check for trig table initialization */
 	if( num != _init_size ) {
@@ -70,7 +71,8 @@ cfft(COMPLEX *dat, int num)
  * Inverse Complex Fourier Transform
  */
 void
-icfft(COMPLEX *dat, int num)
+icfft(dat, num)
+COMPLEX dat[]; int num;
 {
 	/* Check for trig table initialization */
 	if( num != _init_size ) {
@@ -113,7 +115,8 @@ double	*costab;
  *   _init_size requests to use existing numbers!)
  */
 int
-init_sintab(int size)
+init_sintab( size )
+int size;
 {
 	double	theta;
 	int	col, m;
@@ -174,7 +177,9 @@ init_sintab(int size)
  *   but the butterflies take much longer.
  */
 void
-scramble(int numpoints, COMPLEX *dat)
+scramble(numpoints, dat)
+int numpoints;
+COMPLEX dat[];
 {
 	register int	i, j, m;
 	COMPLEX	temp;
@@ -199,7 +204,9 @@ scramble(int numpoints, COMPLEX *dat)
 }
 
 void
-butterflies(int numpoints, int inverse, COMPLEX *dat)
+butterflies(numpoints, inverse, dat)
+int numpoints, inverse;
+COMPLEX dat[];
 {
 	register COMPLEX *node1, *node2;
 	register int step, column, m;
@@ -271,7 +278,8 @@ butterflies(int numpoints, int inverse, COMPLEX *dat)
  * CADD - Complex ADDition
  */
 void
-cadd(COMPLEX *result, COMPLEX *val1, COMPLEX *val2)
+cadd(result, val1, val2)
+COMPLEX *val1, *val2, *result;
 {
 	result->re = val1->re + val2->re;
 	result->im = val1->im + val2->im;
@@ -281,7 +289,8 @@ cadd(COMPLEX *result, COMPLEX *val1, COMPLEX *val2)
  * CSUB - Complex SUBtraction
  */
 void
-csub(COMPLEX *result, COMPLEX *val1, COMPLEX *val2)
+csub(result, val1, val2)
+COMPLEX *val1, *val2, *result;
 {
 	result->re = val1->re - val2->re;
 	result->im = val1->im - val2->im;
@@ -291,7 +300,8 @@ csub(COMPLEX *result, COMPLEX *val1, COMPLEX *val2)
  * CMULT - Complex MULTiply
  */
 void
-cmult(COMPLEX *result, COMPLEX *val1, COMPLEX *val2)
+cmult(result, val1, val2)
+COMPLEX *val1, *val2, *result;
 {
 	result->re = val1->re*val2->re - val1->im*val2->im;
 	result->im = val1->im*val2->re + val1->re*val2->im;
@@ -301,7 +311,8 @@ cmult(COMPLEX *result, COMPLEX *val1, COMPLEX *val2)
  * CDIV - Complex DIVide
  */
 void
-cdiv(COMPLEX *result, COMPLEX *val1, COMPLEX *val2)
+cdiv(result, val1, val2)
+COMPLEX *val1, *val2, *result;
 {
 	double	denom;
 

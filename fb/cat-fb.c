@@ -361,22 +361,23 @@ static int	overlay_from_stdin = 0;	/* overlay FROM STDIN rather than fb */
 static int	debug = 0;
 static int	output_pix = 0;		/* output pixfile, rather than to fb */
 
-void		ofile(register FILE *fp);
-void		readrailmag(void);
-void		crail(register int nrail);
-void		slop_lines(int nlines);
-int		loadfont(register int fnum, register int size);
-int		findsize(register int code);
-int		outc(int code);
-int		relfont(void);
-int		writelines(int nlines, register char *buf);
+void		ofile();
+void		readrailmag();
+void		crail();
+void		slop_lines();
+int		loadfont();
+int		findsize();
+int		outc();
+int		relfont();
+int		writelines();
 
 static char usage[] = "\
 Usage: cat-fb [-h -c -O -o] [-F framebuffer] [-C r/g/b]\n\
 	[-{sS} squarescrsize] [-{wW} scr_width] [-{nN} scr_height]\n\
 	[troff_files]\n";
 int
-get_args(int argc, register char **argv)
+get_args( argc, argv )
+register char **argv;
 {
 	register int c;
 
@@ -441,7 +442,9 @@ get_args(int argc, register char **argv)
 }
 
 int
-main(int argc, char **argv)
+main(argc, argv) 
+	int argc;
+	char *argv[];
 {
 	char	*cp;
 
@@ -495,7 +498,7 @@ main(int argc, char **argv)
  *			R E A D R A I L M A G
  */
 void
-readrailmag(void)
+readrailmag()
 {
 	register int i;
 	register char *cp;
@@ -532,7 +535,8 @@ readrailmag(void)
 }
 
 void
-ofile(register FILE *fp)
+ofile(fp)
+register FILE	*fp;
 {
 	register int c;
 	static int initialized;
@@ -666,7 +670,8 @@ out:
 }
 
 int
-findsize(register int code)
+findsize(code)
+	register int code;
 {
 	register struct point_sizes *psp;
 	register int delta;
@@ -696,7 +701,8 @@ findsize(register int code)
 }
 
 void
-crail(register int nrail)
+crail(nrail)
+	register int nrail;
 {
 	register int psize;
 
@@ -709,7 +715,9 @@ crail(register int nrail)
 
 /* Queue up a request to change to a new font */
 int
-loadfont(register int fnum, register int size)
+loadfont(fnum, size)
+register int fnum;
+register int size;
 {
 	register int i;
 
@@ -740,7 +748,7 @@ loadfont(register int fnum, register int size)
  *	 0	OK
  */
 int
-readinfont(void)
+readinfont()
 {
 	register struct vfont	*vfp;
 	register int fnum, size;
@@ -772,7 +780,7 @@ readinfont(void)
 int lastloaded	= -1;
 
 int
-relfont(void)
+relfont()
 {
 	register int newfont;
 
@@ -812,7 +820,8 @@ relfont(void)
  *	1	OK
  */
 int
-outc(int code)
+outc(code)
+	int code;
 {
 	char c;				/* character to print */
 	register struct vfont_dispatch *vdp;	/* ptr to character font record */
@@ -885,13 +894,14 @@ outc(int code)
 }
 
 void
-slop_lines(int nlines)
+slop_lines(nlines)
+	int nlines;
 {
 	register int rlines;
 	
 	rlines = (&buffer[BUFFER_SIZE] - buf0p) / bytes_per_line;
 	if (rlines < nlines) {
-		if (writelines(rlines, (char *)buf0p) < 0)
+		if (writelines(rlines, buf0p) < 0)
 			exit(1);
 		bzero( (char *)buf0p, rlines * bytes_per_line);
 		buf0p = buffer;
@@ -899,7 +909,7 @@ slop_lines(int nlines)
 		xpos -= rlines;
 		row -= RECONVERT(rlines);
 	}
-	if (writelines(nlines, (char *)buf0p) < 0)
+	if (writelines(nlines, buf0p) < 0)
 		exit(1);
 	bzero( (char *)buf0p, bytes_per_line * nlines);
 	buf0p += bytes_per_line * nlines;
@@ -914,9 +924,9 @@ slop_lines(int nlines)
  *  Output proceeds from top to bottom.
  */
 int
-writelines(int nlines, register char *buf)
-	   	       		/*  Number of scan lines to put out.  */
-	             	     	/*  Pointer to buffer location.  */
+writelines(nlines, buf)
+	int	nlines;		/*  Number of scan lines to put out.  */
+	register char	*buf;	/*  Pointer to buffer location.  */
 {
 	register unsigned char *pp;
 	register int	bit;

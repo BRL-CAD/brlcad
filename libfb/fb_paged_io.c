@@ -50,7 +50,8 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
  *  I/O routines in this file are used.
  */
 int
-fb_ioinit(register FBIO *ifp)
+fb_ioinit( ifp )
+register FBIO	*ifp;
 {
 	if( ifp->if_debug & FB_DEBUG_BIO ) {
 		fb_log( "fb_ioinit( 0x%lx )\n", (unsigned long)ifp );
@@ -75,7 +76,9 @@ fb_ioinit(register FBIO *ifp)
 }
 
 int
-fb_seek(register FBIO *ifp, int x, int y)
+fb_seek( ifp, x, y )
+register FBIO	*ifp;
+int	x, y;
 {
 	long	pixelnum;
 	long	pagepixel;
@@ -106,7 +109,9 @@ fb_seek(register FBIO *ifp, int x, int y)
 }
 
 int
-fb_tell(register FBIO *ifp, int *xp, int *yp)
+fb_tell( ifp, xp, yp )
+register FBIO	*ifp;
+int	*xp, *yp;
 {
 	*yp = (int) (ifp->if_pixcur / ifp->if_width);
 	*xp = (int) (ifp->if_pixcur % ifp->if_width);
@@ -120,7 +125,9 @@ fb_tell(register FBIO *ifp, int *xp, int *yp)
 }
 
 int
-fb_wpixel(register FBIO *ifp, unsigned char *pixelp)
+fb_wpixel( ifp, pixelp )
+register FBIO	*ifp;
+unsigned char 	*pixelp;
 {
 #ifdef NEVER
 	if( ifp->if_debug & FB_DEBUG_BRW ) {
@@ -147,7 +154,9 @@ fb_wpixel(register FBIO *ifp, unsigned char *pixelp)
 }
 
 int
-fb_rpixel(register FBIO *ifp, unsigned char *pixelp)
+fb_rpixel( ifp, pixelp )
+register FBIO	*ifp;
+unsigned char	*pixelp;
 {
 	if( ifp->if_pno == -1 )
 		if( _fb_pgin( ifp, ifp->if_pixcur / ifp->if_ppixels ) <= -1 )
@@ -174,7 +183,8 @@ fb_rpixel(register FBIO *ifp, unsigned char *pixelp)
 }
 
 int
-fb_flush(register FBIO *ifp)
+fb_flush( ifp )
+register FBIO	*ifp;
 {
 	_fb_pgflush(ifp);
 
@@ -186,7 +196,8 @@ fb_flush(register FBIO *ifp)
 }
 
 int
-_fb_pgflush(register FBIO *ifp)
+_fb_pgflush( ifp )
+register FBIO	*ifp;
 {
 	if( ifp->if_debug & FB_DEBUG_BIO ) {
 		fb_log( "_fb_pgflush( 0x%lx )\n", (unsigned long)ifp );
@@ -202,7 +213,8 @@ _fb_pgflush(register FBIO *ifp)
 }
 
 int
-_fb_pgout(register FBIO *ifp)
+_fb_pgout( ifp )
+register FBIO	*ifp;
 {
 	int	scans, first_scan;
 
@@ -226,7 +238,9 @@ _fb_pgout(register FBIO *ifp)
 }
 
 int
-_fb_pgin(register FBIO *ifp, int pageno)
+_fb_pgin( ifp, pageno )
+register FBIO	*ifp;
+int	pageno;
 {
 	int	scans, first_scan;
 

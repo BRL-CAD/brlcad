@@ -107,7 +107,7 @@ extern fastf_t	frame_delta_t;		/* from main.c */
 
 struct region	env_region;		/* environment map region */
 
-void		free_scanlines(void);
+void		free_scanlines();
 
 /***** variables shared with rt.c *****/
 extern char	*outputfile;		/* name of base of output file */
@@ -143,7 +143,8 @@ struct bn_tabdata		*background;		/* radiant emittance of bg */
  *  Ensure that a_spectrum points to a valid spectral curve.
  */
 void
-curve_attach(register struct application *ap)
+curve_attach(ap)
+register struct application *ap;
 {
 	register struct scanline	*slp;
 
@@ -178,7 +179,8 @@ curve_attach(register struct application *ap)
  *  XXX For now this is a gross hack.
  */
 void
-background_radiation(struct application *ap)
+background_radiation( ap )
+struct application *ap;
 {
 	fastf_t	dist;
 	fastf_t	radius;
@@ -204,7 +206,8 @@ background_radiation(struct application *ap)
  *  When a scaline is completed (possibly not in sequence), write it to file.
  */
 void
-view_pixel(register struct application *ap)
+view_pixel(ap)
+register struct application *ap;
 {
 	register struct scanline	*slp;
 	register int	do_eol = 0;
@@ -303,7 +306,8 @@ double lo = INFINITY, hi = -INFINITY;
  *  pixel of a scanline is really done, for parallel considerations.
  */
 void
-view_eol(register struct application *ap)
+view_eol(ap)
+register struct application *ap;
 {
 	return;
 }
@@ -312,7 +316,8 @@ view_eol(register struct application *ap)
  *			V I E W _ E N D
  */
 void
-view_end(struct application *ap)
+view_end(ap)
+struct application *ap;
 {
 	free_scanlines();
 }
@@ -323,7 +328,8 @@ view_end(struct application *ap)
  *  Called before rt_prep() in do.c
  */
 void
-view_setup(struct rt_i *rtip)
+view_setup(rtip)
+struct rt_i	*rtip;
 {
 	register struct region *regp;
 
@@ -373,7 +379,8 @@ view_setup(struct rt_i *rtip)
  *  Called before rt_clean() in do.c
  */
 void
-view_cleanup(struct rt_i *rtip)
+view_cleanup(rtip)
+struct rt_i	*rtip;
 {
 	register struct region	*regp;
 
@@ -399,7 +406,8 @@ view_cleanup(struct rt_i *rtip)
  *  For now, return a pleasant dark blue.
  */
 static int 
-hit_nothing(register struct application *ap)
+hit_nothing( ap )
+register struct application *ap;
 {
 	if( rdebug&RDEBUG_MISSPLOT )  {
 		vect_t	out;
@@ -475,7 +483,10 @@ hit_nothing(register struct application *ap)
  *  This can be a recursive procedure.
  */
 int
-colorview(register struct application *ap, struct partition *PartHeadp, struct seg *finished_segs)
+colorview( ap, PartHeadp, finished_segs )
+register struct application *ap;
+struct partition *PartHeadp;
+struct seg *finished_segs;
 {
 	register struct partition *pp;
 	register struct hit *hitp;
@@ -641,7 +652,7 @@ out:
 }
 
 void
-free_scanlines(void)
+free_scanlines()
 {
 	register int	y;
 
@@ -661,7 +672,9 @@ free_scanlines(void)
  *  Called once, early on in RT setup, before view size is set.
  */
 int
-view_init(register struct application *ap, char *file, char *obj, int minus_o)
+view_init( ap, file, obj, minus_o )
+register struct application *ap;
+char *file, *obj;
 {
 	extern char	libmultispectral_version[];
 
@@ -690,7 +703,9 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o)
  *  Called each time a new image is about to be done.
  */
 void
-view_2init(register struct application *ap, char *framename)
+view_2init( ap, framename )
+register struct application *ap;
+char	*framename;
 {
 	register int i;
 	struct bu_vls	name;
@@ -758,7 +773,7 @@ view_2init(register struct application *ap, char *framename)
  *  Called once, very early on in RT setup, even before command line
  *	is processed.
  */
-void application_init (void)
+void application_init ()
 {
     rpt_overlap = 1;
 }
@@ -774,7 +789,11 @@ void application_init (void)
  *	area of ray footprint, in mm**2 (square milimeters).
  */
 double
-rt_pixel_footprint(const struct application *ap, const struct hit *hitp, const struct seg *segp, const fastf_t *normal)
+rt_pixel_footprint(ap, hitp, segp, normal)
+const struct application *ap;
+const struct hit	*hitp;
+const struct seg	*segp;
+const vect_t		normal;
 {
 	plane_t	perp;
 	plane_t	surf_tan;

@@ -39,7 +39,7 @@
 #include "rle_put.h"
 #include "rle.h"
 
-static int findruns(register rle_pixel *row, int rowlen, int color, int nrun, short int (*brun)[2]);
+static int findruns();
 
 #define FASTRUNS		/* Faster run finding */
 #ifdef vax
@@ -72,7 +72,10 @@ static int findruns(register rle_pixel *row, int rowlen, int color, int nrun, sh
  */
 
 void
-rle_putrow(register rle_pixel **rows, int rowlen, register rle_hdr *the_hdr)
+rle_putrow(rows, rowlen, the_hdr)
+register rle_pixel *rows[];
+int rowlen;
+register rle_hdr * the_hdr;
 {
     register int i, j;
     int nrun;
@@ -311,7 +314,9 @@ rle_putrow(register rle_pixel **rows, int rowlen, register rle_hdr *the_hdr)
  *	[None]
  */
 void
-rle_skiprow(rle_hdr *the_hdr, int nrow)
+rle_skiprow( the_hdr, nrow )
+rle_hdr *the_hdr;
+int nrow;
 {
     the_hdr->priv.put.nblank += nrow;
 }
@@ -331,7 +336,8 @@ rle_skiprow(rle_hdr *the_hdr, int nrow)
  *	[None]
  */
 void
-rle_put_init(register rle_hdr *the_hdr)
+rle_put_init( the_hdr )
+register rle_hdr *the_hdr;
 {
     the_hdr->dispatch = RUN_DISPATCH;
     the_hdr->priv.put.nblank = 0;	/* Reinit static vars */
@@ -362,7 +368,8 @@ rle_put_init(register rle_hdr *the_hdr)
  *	[None]
  */
 void
-rle_put_setup(register rle_hdr *the_hdr)
+rle_put_setup( the_hdr )
+register rle_hdr * the_hdr;
 {
     rle_put_init( the_hdr );
     Setup();
@@ -370,7 +377,8 @@ rle_put_setup(register rle_hdr *the_hdr)
 
 /*ARGSUSED*/
 void
-DefaultBlockHook(rle_hdr *the_hdr)
+DefaultBlockHook(the_hdr)
+rle_hdr * the_hdr;
 {
     					/* Do nothing */
 }
@@ -380,7 +388,8 @@ DefaultBlockHook(rle_hdr *the_hdr)
  * Write an EOF code into the output file.
  */
 void
-rle_puteof(register rle_hdr *the_hdr)
+rle_puteof( the_hdr )
+register rle_hdr * the_hdr;
 {
     /* Don't puteof twice. */
     if ( the_hdr->dispatch == NO_DISPATCH )
@@ -453,7 +462,10 @@ char *bits;
  *	are merged.
  */
 static int
-findruns(register rle_pixel *row, int rowlen, int color, int nrun, short int (*brun)[2])
+findruns( row, rowlen, color, nrun, brun )
+register rle_pixel *row;
+int rowlen, color, nrun;
+short (*brun)[2];
 {
     int i = 0, lower, upper;
     register int s, j;
@@ -582,7 +594,12 @@ findruns(register rle_pixel *row, int rowlen, int color, int nrun, short int (*b
  * 	BW = .30*R + .59*G + .11*B
  */
 void
-rgb_to_bw(rle_pixel *red_row, rle_pixel *green_row, rle_pixel *blue_row, rle_pixel *bw_row, int rowlen)
+rgb_to_bw( red_row, green_row, blue_row, bw_row, rowlen )
+rle_pixel *red_row;
+rle_pixel *green_row;
+rle_pixel *blue_row;
+rle_pixel *bw_row;
+int rowlen;
 {
     register int x, bw;
 

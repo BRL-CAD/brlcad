@@ -81,7 +81,10 @@ static const char rcs_ident[] = "$Id$";
  *	input files.
  */
 unsigned int
-rle_getraw(rle_hdr *the_hdr, rle_op **scanraw, int *nraw)
+rle_getraw( the_hdr, scanraw, nraw )
+rle_hdr *the_hdr;
+rle_op *scanraw[];
+int nraw[];
 {
     register int channel;
     register rle_op * rawp = NULL;
@@ -266,7 +269,10 @@ rle_getraw(rle_hdr *the_hdr, rle_op **scanraw, int *nraw)
  *	[None]
  */
 void
-rle_freeraw(rle_hdr *the_hdr, rle_op **scanraw, int *nraw)
+rle_freeraw( the_hdr, scanraw, nraw )
+rle_hdr * the_hdr;
+int nraw[];
+rle_op *scanraw[] ;
 {
     int c, i;
     register rle_op * raw_p;

@@ -106,7 +106,8 @@ fd_set	readfds;
 int	polaroid = 0;		/* 0 = aux camera, 1 = Polaroid 8x10 */
 
 void
-unsnooze(int x)
+unsnooze(x)
+int	x;
 {
 	printf("\007dunnsnap: request timed out, aborting\n");
 	exit(1);
@@ -116,7 +117,7 @@ unsnooze(int x)
  *			D U N N O P E N
  */
 void
-dunnopen(void)
+dunnopen()
 {
 
 	/* open the camera device */
@@ -201,7 +202,10 @@ dunnopen(void)
  * grouping as it is written with.
  */
 static int
-mread(int fd, register unsigned char *bufp, unsigned int n)
+mread(fd, bufp, n)
+int fd;
+register unsigned char	*bufp;
+unsigned	n;
 {
 	register unsigned	count = 0;
 	register int		nread;
@@ -227,7 +231,7 @@ mread(int fd, register unsigned char *bufp, unsigned int n)
  *
  */
 int
-goodstatus(void)
+goodstatus()
 {
 	struct timeval waittime, *timeout;
 
@@ -275,7 +279,7 @@ goodstatus(void)
  *
  */
 void
-hangten(void)
+hangten()
 {
 	static struct timeval delaytime = { 0, 10000}; /* set timeout to 10mS*/
 
@@ -291,7 +295,8 @@ hangten(void)
  *
  */
 int
-ready(int nsecs)
+ready(nsecs)
+int nsecs;
 {
 	register int i;
 
@@ -334,7 +339,8 @@ ready(int nsecs)
  *  Get and print the current exposure
  */
 void
-getexposure(char *title)
+getexposure(title)
+char *title;
 {
 	struct timeval waittime;
 
@@ -370,7 +376,9 @@ getexposure(char *title)
  *
  */
 int
-dunnsend(char color, int val)
+dunnsend(color,val)
+char color;
+int val;
 {
 	char digit;
 

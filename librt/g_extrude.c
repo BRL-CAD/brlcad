@@ -119,7 +119,10 @@ static struct bn_tol extr_tol={			/* a fake tolerance structure for the intersec
  *  	stp->st_specific for use by extrude_shot().
  */
 int
-rt_extrude_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
+rt_extrude_prep( stp, ip, rtip )
+struct soltab		*stp;
+struct rt_db_internal	*ip;
+struct rt_i		*rtip;
 {
 	struct rt_extrude_internal *eip;
 	register struct extrude_specific *extr;
@@ -355,12 +358,16 @@ rt_extrude_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
  *			R T _ E X T R U D E _ P R I N T
  */
 void
-rt_extrude_print(register const struct soltab *stp)
+rt_extrude_print( stp )
+register const struct soltab *stp;
 {
 }
 
 int
-get_quadrant(fastf_t *v, fastf_t *local_x, fastf_t *local_y, fastf_t *vx, fastf_t *vy)
+get_quadrant( v, local_x, local_y, vx, vy )
+vect_t local_x, local_y;
+point2d_t v;
+fastf_t *vx, *vy;
 {
 
 	*vx = V2DOT( v, local_x );
@@ -383,7 +390,10 @@ get_quadrant(fastf_t *v, fastf_t *local_x, fastf_t *local_y, fastf_t *vx, fastf_
 }
 
 int
-isect_line2_ellipse(fastf_t *dist, fastf_t *ray_start, fastf_t *ray_dir, fastf_t *center, fastf_t *ra, fastf_t *rb)
+isect_line2_ellipse( dist, ray_start, ray_dir, center, ra, rb )
+fastf_t dist[2];
+point_t ray_start, center;
+vect_t ray_dir, ra, rb;
 {
 	fastf_t a, b, c;
 	point2d_t pmc;
@@ -431,13 +441,13 @@ isect_line2_ellipse(fastf_t *dist, fastf_t *ray_start, fastf_t *ray_dir, fastf_t
 
 
 int
-isect_line_earc(fastf_t *dist, fastf_t *ray_start, fastf_t *ray_dir, fastf_t *center, fastf_t *ra, fastf_t *rb, fastf_t *norm, fastf_t *start, fastf_t *end, int orientation)
-                
-                  
-               
-                           
-                    
-                	/* 0 -> ccw, !0 -> cw */
+isect_line_earc( dist, ray_start, ray_dir, center, ra, rb, norm, start, end, orientation )
+fastf_t dist[2];
+point_t ray_start;
+vect_t ray_dir;
+point_t center, start, end;
+vect_t ra, rb, norm;
+int orientation;	/* 0 -> ccw, !0 -> cw */
 {
 	int dist_count;
 	vect_t local_x, local_y, local_z;
@@ -601,7 +611,11 @@ isect_line_earc(fastf_t *dist, fastf_t *ray_start, fastf_t *ray_dir, fastf_t *ce
  *	>0	HIT
  */
 int
-rt_extrude_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
+rt_extrude_shot( stp, rp, ap, seghead )
+struct soltab		*stp;
+register struct xray	*rp;
+struct application	*ap;
+struct seg		*seghead;
 {
 	struct extrude_specific *extr=(struct extrude_specific *)stp->st_specific;
 	register int i, j, k;
@@ -1032,12 +1046,12 @@ rt_extrude_shot(struct soltab *stp, register struct xray *rp, struct application
  *  Vectorized version.
  */
 void
-rt_extrude_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
-             	               /* An array of solid pointers */
-           		       /* An array of ray pointers */
-                               /* array of segs (results returned) */
-   		  	       /* Number of ray/object pairs */
-                  	    
+rt_extrude_vshot( stp, rp, segp, n, ap )
+struct soltab	       *stp[]; /* An array of solid pointers */
+struct xray		*rp[]; /* An array of ray pointers */
+struct  seg            segp[]; /* array of segs (results returned) */
+int		  	    n; /* Number of ray/object pairs */
+struct application	*ap;
 {
 	rt_vstub( stp, rp, segp, n, ap );
 }
@@ -1048,7 +1062,10 @@ rt_extrude_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n,
  *  Given ONE ray distance, return the normal and entry/exit point.
  */
 void
-rt_extrude_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
+rt_extrude_norm( hitp, stp, rp )
+register struct hit	*hitp;
+struct soltab		*stp;
+register struct xray	*rp;
 {
         struct extrude_specific *extr=(struct extrude_specific *)stp->st_specific;
 	fastf_t alpha;
@@ -1111,7 +1128,10 @@ rt_extrude_norm(register struct hit *hitp, struct soltab *stp, register struct x
  *  Return the curvature of the extrude.
  */
 void
-rt_extrude_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
+rt_extrude_curve( cvp, hitp, stp )
+register struct curvature *cvp;
+register struct hit	*hitp;
+struct soltab		*stp;
 {
         struct extrude_specific *extr=(struct extrude_specific *)stp->st_specific;
 	struct carc_seg *csg;
@@ -1171,7 +1191,11 @@ rt_extrude_curve(register struct curvature *cvp, register struct hit *hitp, stru
  *  v = elevation
  */
 void
-rt_extrude_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
+rt_extrude_uv( ap, stp, hitp, uvp )
+struct application	*ap;
+struct soltab		*stp;
+register struct hit	*hitp;
+register struct uvcoord	*uvp;
 {
 }
 
@@ -1179,7 +1203,8 @@ rt_extrude_uv(struct application *ap, struct soltab *stp, register struct hit *h
  *		R T _ E X T R U D E _ F R E E
  */
 void
-rt_extrude_free(register struct soltab *stp)
+rt_extrude_free( stp )
+register struct soltab *stp;
 {
 	register struct extrude_specific *extrude =
 		(struct extrude_specific *)stp->st_specific;
@@ -1194,7 +1219,7 @@ rt_extrude_free(register struct soltab *stp)
  *			R T _ E X T R U D E _ C L A S S
  */
 int
-rt_extrude_class(void)
+rt_extrude_class()
 {
 	return(0);
 }
@@ -1203,7 +1228,11 @@ rt_extrude_class(void)
  *			R T _ E X T R U D E _ P L O T
  */
 int
-rt_extrude_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_extrude_plot( vhead, ip, ttol, tol )
+struct bu_list		*vhead;
+struct rt_db_internal	*ip;
+const struct rt_tess_tol *ttol;
+const struct bn_tol	*tol;
 {
 	LOCAL struct rt_extrude_internal	*extrude_ip;
 	struct curve			*crv=(struct curve *)NULL;
@@ -1826,7 +1855,12 @@ classify_sketch_loops( struct bu_ptbl *loopa, struct bu_ptbl *loopb, struct rt_s
  *	 0	OK.  *r points to nmgregion that holds this tessellation.
  */
 int
-rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_extrude_tess( r, m, ip, ttol, tol )
+struct nmgregion	**r;
+struct model		*m;
+struct rt_db_internal	*ip;
+const struct rt_tess_tol *ttol;
+const struct bn_tol	*tol;
 {
 #if 0
 	return( -1 );
@@ -2140,7 +2174,12 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
  *  Apply modeling transformations as well.
  */
 int
-rt_extrude_import(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip, struct resource *resp)
+rt_extrude_import( ip, ep, mat, dbip, resp )
+struct rt_db_internal		*ip;
+const struct bu_external	*ep;
+register const mat_t		mat;
+const struct db_i		*dbip;
+struct resource			*resp;
 {
 	LOCAL struct rt_extrude_internal	*extrude_ip;
 	struct rt_db_internal			tmp_ip;
@@ -2212,7 +2251,11 @@ rt_extrude_import(struct rt_db_internal *ip, const struct bu_external *ep, regis
  *  The name is added by the caller, in the usual place.
  */
 int
-rt_extrude_export(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
+rt_extrude_export( ep, ip, local2mm, dbip )
+struct bu_external		*ep;
+const struct rt_db_internal	*ip;
+double				local2mm;
+const struct db_i		*dbip;
 {
 	struct rt_extrude_internal	*extrude_ip;
 	vect_t				tmp_vec;
@@ -2257,7 +2300,11 @@ rt_extrude_export(struct bu_external *ep, const struct rt_db_internal *ip, doubl
  *  The name is added by the caller, in the usual place.
  */
 int
-rt_extrude_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
+rt_extrude_export5( ep, ip, local2mm, dbip )
+struct bu_external		*ep;
+const struct rt_db_internal	*ip;
+double				local2mm;
+const struct db_i		*dbip;
 {
 	struct rt_extrude_internal	*extrude_ip;
 	vect_t				tmp_vec[4];
@@ -2363,7 +2410,11 @@ rt_extrude_import5(
  *  Additional lines are indented one tab, and give parameter values.
  */
 int
-rt_extrude_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
+rt_extrude_describe( str, ip, verbose, mm2local )
+struct bu_vls		*str;
+const struct rt_db_internal	*ip;
+int			verbose;
+double			mm2local;
 {
 	register struct rt_extrude_internal	*extrude_ip =
 		(struct rt_extrude_internal *)ip->idb_ptr;
@@ -2397,7 +2448,8 @@ rt_extrude_describe(struct bu_vls *str, const struct rt_db_internal *ip, int ver
  *  Free the storage associated with the rt_db_internal version of this solid.
  */
 void
-rt_extrude_ifree(struct rt_db_internal *ip)
+rt_extrude_ifree( ip )
+struct rt_db_internal	*ip;
 {
 	register struct rt_extrude_internal	*extrude_ip;
 	struct rt_db_internal			tmp_ip;
@@ -2501,7 +2553,10 @@ rt_extrude_tclform( const struct rt_functab *ftp, Tcl_Interp *interp )
 }
 
 int
-rt_extrude_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const char *attr)
+rt_extrude_tclget( interp, intern, attr )
+Tcl_Interp                      *interp;
+const struct rt_db_internal     *intern;
+const char                      *attr;
 {
 	register struct rt_extrude_internal *extr=(struct rt_extrude_internal *) intern->idb_ptr;
         Tcl_DString     ds;
@@ -2550,7 +2605,11 @@ rt_extrude_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const
 }
 
 int
-rt_extrude_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, char **argv)
+rt_extrude_tcladjust( interp, intern, argc, argv )
+Tcl_Interp              *interp;
+struct rt_db_internal   *intern;
+int                     argc;
+char                    **argv;
 {
         struct rt_extrude_internal *extr;
         fastf_t *new;

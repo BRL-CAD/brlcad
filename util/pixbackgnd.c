@@ -43,7 +43,7 @@ int	title_height = 80;
 int	h_start = 240;
 int	h_end = 50;
 
-void	rgbhsv(register double *rgb, register double *hsv), hsvrgb(register double *hsv, register double *rgb);
+void	rgbhsv(), hsvrgb();
 
 char usage[] = "\
 Usage:  pixbackgnd [-h -i] [-s squaresize] [-w width] [-n height]\n\
@@ -53,7 +53,8 @@ or	r g b\n\
 	> file.pix";
 
 int
-get_args(int argc, register char **argv)
+get_args( argc, argv )
+register char **argv;
 {
 	register int c;
 
@@ -115,7 +116,8 @@ get_args(int argc, register char **argv)
 }
 
 int
-main(int argc, char **argv)
+main(argc, argv )
+char **argv;
 {
 	register int i;
 	register int line;
@@ -220,7 +222,9 @@ main(int argc, char **argv)
  * convert red green blue to hue saturation value
  */
 void
-rgbhsv(register double *rgb, register double *hsv)
+rgbhsv(rgb, hsv)
+register double *rgb;
+register double *hsv;
 {
         double s, v, r, g, b, x;
 	static double h;
@@ -270,7 +274,9 @@ rgbhsv(register double *rgb, register double *hsv)
  */
 
 void
-hsvrgb(register double *hsv, register double *rgb)
+hsvrgb(hsv, rgb)
+register double *hsv;
+register double *rgb;
 {
         double r, g, b, m, n, k, foo;
         double h, s, v;

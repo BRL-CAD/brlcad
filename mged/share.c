@@ -73,8 +73,8 @@
     } \
 }
 
-extern void mged_vls_struct_parse(struct bu_vls *vls, char *title, struct bu_structparse *how_to_parse, char *structp, int argc, char **argv); /* defined in vparse.c */
-extern void view_ring_init(struct _view_state *vsp1, struct _view_state *vsp2); /* defined in chgview.c */
+extern void mged_vls_struct_parse(); /* defined in vparse.c */
+extern void view_ring_init(); /* defined in chgview.c */
 
 extern struct bu_structparse axes_vparse[];
 extern struct bu_structparse color_scheme_vparse[];
@@ -82,7 +82,7 @@ extern struct bu_structparse grid_vparse[];
 extern struct bu_structparse rubber_band_vparse[];
 extern struct bu_structparse mged_vparse[];
 
-void free_all_resources(struct dm_list *dlp);
+void free_all_resources();
 
 /*
  * SYNOPSIS
@@ -99,7 +99,11 @@ void free_all_resources(struct dm_list *dlp);
  *	share -u res_type p	--->	causes 'p' to no longer share resource of type 'res_type'
  */
 int
-f_share(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_share(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
 {
   register int uflag = 0;		/* unshare flag */
   struct dm_list *dlp1 = (struct dm_list *)NULL;
@@ -276,7 +280,11 @@ f_share(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  *	rset c bg 0 0 50	--->	sets the background color to dark blue
  */
 int
-f_rset (ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_rset (clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int     argc;
+char    **argv;
 {
   struct bu_vls vls;
 
@@ -404,7 +412,8 @@ usurp_all_resources(struct dm_list *dlp1, struct dm_list *dlp2)
  * - free all resources that are not being used
  */
 void
-free_all_resources(struct dm_list *dlp)
+free_all_resources(dlp)
+struct dm_list *dlp;
 {
   if(!--dlp->dml_view_state->vs_rc){
     view_ring_destroy(dlp);
@@ -434,7 +443,8 @@ free_all_resources(struct dm_list *dlp)
 }
 
 void
-share_dlist(struct dm_list *dlp2)
+share_dlist(dlp2)
+struct dm_list *dlp2;
 {
   struct dm_list *dlp1;
 

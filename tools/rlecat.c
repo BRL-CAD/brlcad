@@ -18,7 +18,7 @@
 #include "rle_code.h"
 #include "rle_raw.h"
 
-void	rep_file(rle_hdr *in_hdr, rle_hdr *out_hdr, int rep_cnt);
+void	rep_file();
 
 /*
  * rlecat
@@ -59,7 +59,9 @@ void	rep_file(rle_hdr *in_hdr, rle_hdr *out_hdr, int rep_cnt);
  *  	all images will be read before starting to repeat.
  */
 int
-main(int argc, char **argv)
+main( argc, argv )
+int argc;
+char **argv;
 {
     char       **infname = NULL,
     	       *outfname = NULL;
@@ -242,7 +244,9 @@ main(int argc, char **argv)
  *  	Rewind the input.
  */
 void
-rep_file(rle_hdr *in_hdr, rle_hdr *out_hdr, int rep_cnt)
+rep_file( in_hdr, out_hdr, rep_cnt)
+rle_hdr *in_hdr, *out_hdr;
+int rep_cnt;
 {
     long int pos = ftell( in_hdr->rle_file );
     char buf[BUFSIZ];

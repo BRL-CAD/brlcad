@@ -61,7 +61,9 @@ struct solid	HeadSolid;	/* Head of solid table */
  *  (Note:  SGI is left-handed, but the fix is done in the Display Manger).
  */
 static void
-persp_mat(fastf_t *m, fastf_t fovy, fastf_t aspect, fastf_t near, fastf_t far, fastf_t backoff)
+persp_mat( m, fovy, aspect, near, far, backoff )
+mat_t	m;
+fastf_t	fovy, aspect, near, far, backoff;
 {
 	mat_t	m2, tran;
 
@@ -95,7 +97,9 @@ persp_mat(fastf_t *m, fastf_t fovy, fastf_t aspect, fastf_t near, fastf_t far, f
  *  pmat = persp * xlate * shear
  */
 static void
-mike_persp_mat(fastf_t *pmat, const fastf_t *eye)
+mike_persp_mat( pmat, eye )
+mat_t		pmat;
+const point_t	eye;
 {
 	mat_t	shear;
 	mat_t	persp;
@@ -209,11 +213,11 @@ bn_mat_print("pmat",pmat);
  *  SPIE Vol 1457 Stereoscopic Display & Applications, 1991, pg 19.
  */
 static void
-deering_persp_mat(fastf_t *m, const fastf_t *l, const fastf_t *h, const fastf_t *eye)
-     		  
-             	  	/* lower left corner of screen */
-             	  	/* upper right (high) corner of screen */
-             	    	/* eye location.  Traditionally at (0,0,1) */
+deering_persp_mat( m, l, h, eye )
+mat_t		m;
+const point_t	l;	/* lower left corner of screen */
+const point_t	h;	/* upper right (high) corner of screen */
+const point_t	eye;	/* eye location.  Traditionally at (0,0,1) */
 {
 	vect_t	diff;	/* H - L */
 	vect_t	sum;	/* H + L */
@@ -254,7 +258,8 @@ deering_persp_mat(fastf_t *m, const fastf_t *l, const fastf_t *h, const fastf_t 
  * screen position for the object.
  */
 void
-dozoom(int which_eye)
+dozoom(which_eye)
+int	which_eye;
 {
 	register struct solid	*sp;
 	FAST fastf_t		ratio;

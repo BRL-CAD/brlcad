@@ -559,7 +559,7 @@ main()
 #include <stdio.h>
 #include <stdlib.h>
 int
-main(void)
+main()
 {
 	fprintf(stderr,"ir-sgi: This program only works on an SGI workstation\n");
 	exit(1);

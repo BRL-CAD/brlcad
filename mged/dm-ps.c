@@ -30,10 +30,13 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./mged_dm.h"
 #include "dm-ps.h"
 
-extern void dm_var_init(struct dm_list *initial_dm_list);
+extern void dm_var_init();
 
 int
-PS_dm_init(struct dm_list *o_dm_list, int argc, char **argv)
+PS_dm_init(o_dm_list, argc, argv)
+struct dm_list *o_dm_list;
+int argc;
+char *argv[];
 {
   dm_var_init(o_dm_list);
 

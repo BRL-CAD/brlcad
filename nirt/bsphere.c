@@ -17,7 +17,10 @@ static const char RCSid[] = "$Header$";
 
 fastf_t	bsphere_diameter;
 
-void set_diameter(struct rt_i *rtip)
+void set_diameter(rtip)
+
+struct rt_i	*rtip;
+
 {
     vect_t	diag;
 

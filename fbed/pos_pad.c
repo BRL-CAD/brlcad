@@ -43,8 +43,9 @@ static	char *padfile = "/dev/pad";
 static	int npoints;
 
 int
-pad_open(int n)
-{
+pad_open(n)
+int n;
+	{
 	if( (pfd = open(padfile, 2)) < 0 )
 		{
 		perror( padfile );
@@ -58,16 +59,17 @@ pad_open(int n)
 	}
 
 void
-pad_close(void)
-{
+pad_close()
+	{
 	reset_Tty( pfd );
 	(void) close( pfd );
 	return;
 	}
 
 int
-getpos(Point *pos)
-{	static char str[1024];
+getpos( pos )
+Point *pos;
+	{	static char str[1024];
 		int buttons = -1;
 		static int nread = 0;
 		register int just_read = 0;

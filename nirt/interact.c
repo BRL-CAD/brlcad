@@ -25,9 +25,12 @@ extern int		nirt_debug;
 extern com_table	ComTab[];
 extern int		silent_flag;
 
-extern void		bu_log(char *, ...);
+extern void		bu_log();
 
-static int sgetc (char *string)
+static int sgetc (string)
+
+char	*string;
+
 {
     static char	*prev_string = 0;
     static char	*sp;
@@ -72,7 +75,11 @@ static int sgetc (char *string)
  *	and, if it finds the key word, the command is executed.
  *
  */
-void interact(int input_source, void *sPtr)
+void interact(input_source, sPtr)
+
+int	input_source;
+void	*sPtr;
+
 {
     int		Ch;		/* individual characters of the input line */
     int		Prev_ch=0;	/* previous character */
@@ -179,7 +186,11 @@ void interact(int input_source, void *sPtr)
     }
 }
 
-com_table *get_comtab_ent (char *pattern, int pat_len)
+com_table *get_comtab_ent (pattern, pat_len)
+
+char	*pattern;
+int	pat_len;
+
 {
     com_table	*ctp;
     int		len;

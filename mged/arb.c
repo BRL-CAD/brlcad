@@ -32,7 +32,9 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./ged.h"
 
 void
-dbpr_arb(struct solidrec *sp, register struct directory *dp)
+dbpr_arb( sp, dp )
+struct solidrec *sp;
+register struct directory *dp;
 {
 	int i;
 	char *s;

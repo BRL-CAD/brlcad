@@ -16,7 +16,10 @@ static double	*coswintab = NULL;
 int init_coswintab( int size );
 
 void
-coswin(double *data, int length, double percent)
+coswin( data, length, percent )
+double	*data;
+int	length;
+double	percent;
 {
 	int	num, i;
 
@@ -41,7 +44,10 @@ coswin(double *data, int length, double percent)
  * Complex Data Version.
  */
 void
-ccoswin(COMPLEX *data, int length, double percent)
+ccoswin( data, length, percent )
+COMPLEX	*data;
+int	length;
+double	percent;
 {
 	int	num, i;
 
@@ -69,7 +75,8 @@ ccoswin(COMPLEX *data, int length, double percent)
  *  a given effect length (number of sample at each end effected).
  */
 int
-init_coswintab(int size)
+init_coswintab( size )
+int size;
 {
 	int	i;
 	double	theta;

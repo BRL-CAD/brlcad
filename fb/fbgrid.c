@@ -40,14 +40,15 @@ static int	fbheight = 0;
 static int	flavor = DECIMAL;
 static int	clear = 0;
 
-void		grid(FBIO *fbp, unsigned char *line, int spacing), oldflavor(void);
+void		grid(), oldflavor();
 
 static char usage[] = "\
 Usage: fbgrid [-h -c] [-b | -d | -o] [-F framebuffer]\n\
 	[-S squaresize] [-W width] [-N height]\n";
 
 int
-get_args(int argc, register char **argv)
+get_args( argc, argv )
+register char **argv;
 {
 	register int c;
 
@@ -98,7 +99,8 @@ get_args(int argc, register char **argv)
 }
 
 int
-main(int argc, char **argv)
+main( argc, argv )
+int argc; char **argv;
 {
 	int	i;
 
@@ -150,7 +152,10 @@ main(int argc, char **argv)
 }
 
 void
-grid(FBIO *fbp, unsigned char *line, int spacing)
+grid( fbp, line, spacing )
+FBIO *fbp;
+unsigned char line[];
+int	spacing;
 {
 	int	x, y;
 
@@ -162,7 +167,7 @@ grid(FBIO *fbp, unsigned char *line, int spacing)
 }
 
 void
-oldflavor(void)
+oldflavor()
 {
 	register FBIO	*fbp;
 	register int	x, y;

@@ -50,26 +50,6 @@
 #include "tcl.h"
 #include "wdb.h"
 
-/* Needed to define struct menu_item - RFH */
-#include "./menu.h"
-
-/* Needed to define struct w_dm - RFH */
-#include "./mged_dm.h"
-
-/* Needed to define struct solid - RFH */
-#include "solid.h"
-
-/* A hack around a compilation issue.  No need in fixing it now as the build
-   process is about to be redone - RFH */
-#ifndef SEEN_RT_NURB_INTERNAL
-#define SEEN_RT_NURB_INTERNAL
-struct rt_nurb_internal {
-	long		magic;
-	int	 	nsrf;		/* number of surfaces */
-	struct face_g_snurb **srfs;	/* The surfaces themselves */
-};
-#endif
-
 /*	Stuff needed from db.h */
 #ifndef NAMESIZE
 
@@ -210,23 +190,23 @@ extern jmp_buf jmp_env;
  *	GED functions referenced in more than one source file:
  */
 extern int              tran(), irot();
-extern void             mged_setup(void);
-extern void		dir_build(), buildHrot(fastf_t *, double, double, double), dozoom(int which_eye),
-			pr_schain(struct solid *startp, int lvl), itoa(int n, char *s, int w);
-extern void		eraseobj(register struct directory **dpp), eraseobjall(register struct directory **dpp), mged_finish(int exitcode), slewview(fastf_t *view_pos),
-			mmenu_init(void), moveHinstance(struct directory *cdp, struct directory *dp, matp_t xlate), moveHobj(register struct directory *dp, matp_t xlate),
-			quit(void), refresh(void), rej_sedit(), sedit(void),
-			setview(double a1, double a2, double a3),
-			adcursor(void), mmenu_display(int y_top), mmenu_set(int index, struct menu_item *value), mmenu_set_all(int index, struct menu_item *value),
+extern void             mged_setup();
+extern void		dir_build(), buildHrot(), dozoom(),
+			pr_schain(), itoa();
+extern void		eraseobj(), eraseobjall(), mged_finish(), slewview(),
+			mmenu_init(), moveHinstance(), moveHobj(),
+			quit(), refresh(), rej_sedit(), sedit(),
+			setview(),
+			adcursor(), mmenu_display(), mmenu_set(), mmenu_set_all(),
 			col_item(), col_putchar(), col_eol(), col_pr4v();
-extern void		sedit_menu(void);
-extern void		attach(), get_attached(void);
+extern void		sedit_menu();
+extern void		attach(), get_attached();
 extern void		(*cur_sigint)();	/* Current SIGINT status */
-extern void		sig2(void), sig3(void);
+extern void		sig2(), sig3();
 
-extern void		aexists(char *name);
-extern int		clip(fastf_t *, fastf_t *, fastf_t *, fastf_t *), getname(), use_pen(), dir_print();
-extern int              mged_cmd_arg_check(), release(char *name, int need_close);
+extern void		aexists();
+extern int		clip(), getname(), use_pen(), dir_print();
+extern int              mged_cmd_arg_check(), release();
 extern struct directory	*combadd(), **dir_getspace();
 extern void		ellipse();
 
@@ -260,7 +240,7 @@ void history_setup(void);
 
 /* cmd.c */
 
-extern void start_catching_output(struct bu_vls *vp), stop_catching_output(struct bu_vls *vp);
+extern void start_catching_output(), stop_catching_output();
 
 #ifndef	NULL
 #define	NULL		0
@@ -425,7 +405,7 @@ you should exit MGED now, and resolve the I/O problem, before continuing.\n")
 #define CHECK_DBI_NULL \
 	if( dbip == DBI_NULL ) \
 	{ \
-		Tcl_AppendResult(interp, "No database has been opened!\n", (char *)NULL); \
+		Tcl_AppendResult(interp, "A database is not open!\n", (char *)NULL); \
 		return TCL_ERROR; \
 	}	
 
@@ -498,7 +478,7 @@ int mged_attach(
 	int argc,
 	char *argv[]);
 #else
-int mged_attach(struct w_dm *wp, int argc, char **argv);
+int mged_attach();
 #endif
 
 /* buttons.c */
@@ -739,6 +719,11 @@ int f_opendb(
 	Tcl_Interp *interp,
 	int	argc,
 	char	**argv);
+int f_closedb(
+	ClientData clientData,
+	Tcl_Interp *interp,
+	int	argc,
+	char	**argv);
 void new_edit_mats(void);
 void new_mats(void);
 void pr_prompt(void);
@@ -764,7 +749,7 @@ int f_overlay(
 	char	**argv);
 
 /* predictor.c */
-void predictor_frame(void);
+void predictor_frame();
 
 /* usepen.c */
 int f_mouse(
@@ -833,7 +818,7 @@ void oedit_abs_scale(void);
 void oedit_accept(void);
 void oedit_reject(void);
 void objedit_mouse( const vect_t mousevec );
-extern int nurb_closest2d(int *surface, int *uval, int *vval, const struct rt_nurb_internal *spl, const fastf_t *ref_pt, const fastf_t *mat);
+extern int nurb_closest2d();
 void label_edited_solid(
 	int *num_lines,
 	point_t *lines,

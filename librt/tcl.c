@@ -54,13 +54,13 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "./debug.h"
 
 /* defined in wdb_obj.c */
-extern int Wdb_Init(Tcl_Interp *interp);
+extern int Wdb_Init();
 
 /* defined in dg_obj.c */
-extern int Dgo_Init(Tcl_Interp *interp);
+extern int Dgo_Init();
 
 /* defined in view_obj.c */
-extern int Vo_Init(Tcl_Interp *interp);
+extern int Vo_Init();
 
 /************************************************************************
  *									*
@@ -348,7 +348,11 @@ rt_tcl_a_miss( struct application *ap )
  *	each with an associated value.
  */
 int
-rt_tcl_rt_shootray(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv)
+rt_tcl_rt_shootray( clientData, interp, argc, argv )
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+const char *const*argv;
 {
 	struct application	*ap = (struct application *)clientData;
 	struct rt_i		*rtip;
@@ -383,7 +387,11 @@ rt_tcl_rt_shootray(ClientData clientData, Tcl_Interp *interp, int argc, const ch
  *	procname onehit #
  */
 int
-rt_tcl_rt_onehit(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv)
+rt_tcl_rt_onehit( clientData, interp, argc, argv )
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+const char *const*argv;
 {
 	struct application	*ap = (struct application *)clientData;
 	struct rt_i		*rtip;
@@ -416,7 +424,11 @@ rt_tcl_rt_onehit(ClientData clientData, Tcl_Interp *interp, int argc, const char
  *	procname no_bool #
  */
 int
-rt_tcl_rt_no_bool(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv)
+rt_tcl_rt_no_bool( clientData, interp, argc, argv )
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+const char *const*argv;
 {
 	struct application	*ap = (struct application *)clientData;
 	struct rt_i		*rtip;
@@ -451,7 +463,11 @@ rt_tcl_rt_no_bool(ClientData clientData, Tcl_Interp *interp, int argc, const cha
  *	procname check
  */
 int
-rt_tcl_rt_check(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv)
+rt_tcl_rt_check( clientData, interp, argc, argv )
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+const char *const*argv;
 {
 	struct application	*ap = (struct application *)clientData;
 	struct rt_i		*rtip;
@@ -483,7 +499,11 @@ rt_tcl_rt_check(ClientData clientData, Tcl_Interp *interp, int argc, const char 
  *	procname prep use_air [hasty_prep]
  */
 int
-rt_tcl_rt_prep(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv)
+rt_tcl_rt_prep( clientData, interp, argc, argv )
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+const char *const*argv;
 {
 	struct application	*ap = (struct application *)clientData;
 	struct rt_i		*rtip;
@@ -569,7 +589,11 @@ static struct dbcmdstruct rt_tcl_rt_cmds[] = {
  *	.rt shootray {0 0 0} dir {0 0 -1}
  */
 int
-rt_tcl_rt(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv)
+rt_tcl_rt( clientData, interp, argc, argv )
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+const char *const*argv;
 {
 	struct dbcmdstruct	*dbcmd;
 
@@ -634,7 +658,9 @@ rt_tcl_rt(ClientData clientData, Tcl_Interp *interp, int argc, const char *const
  */
 
 void
-db_tcl_tree_describe(Tcl_DString *dsp, const union tree *tp)
+db_tcl_tree_describe( dsp, tp )
+Tcl_DString		*dsp;
+const union tree		*tp;
 {
 	if( !tp ) return;
 
@@ -873,7 +899,10 @@ out:
  *  Entered via rt_functab[].ft_tclget().
  */
 int
-rt_comb_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const char *item)
+rt_comb_tclget( interp, intern, item )
+Tcl_Interp			*interp;
+const struct rt_db_internal	*intern;
+const char			*item;
 {
 	const struct rt_comb_internal *comb;
 	char buf[128];
@@ -1200,7 +1229,11 @@ rt_comb_tcladjust(
  *	TCL_ERROR
  */
 int
-rt_tcl_import_from_path(Tcl_Interp *interp, struct rt_db_internal *ip, const char *path, struct rt_wdb *wdb)
+rt_tcl_import_from_path( interp, ip, path, wdb )
+Tcl_Interp		*interp;
+struct rt_db_internal	*ip;
+const char		*path;
+struct rt_wdb		*wdb;
 {
 	struct db_i	*dbip;
 	int		status;
@@ -1297,7 +1330,10 @@ rt_tcl_import_from_path(Tcl_Interp *interp, struct rt_db_internal *ip, const cha
  *  Example:  "db get ell.s B" to get only the B vector.
  */
 int
-rt_parsetab_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const char *attr)
+rt_parsetab_tclget( interp, intern, attr )
+Tcl_Interp			*interp;
+const struct rt_db_internal	*intern;
+const char			*attr;
 {
 	register const struct bu_structparse	*sp = NULL;
 	register const struct rt_functab	*ftp;
@@ -1356,7 +1392,9 @@ rt_parsetab_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, cons
  *			R T _ C O M B _ T C L F O R M
  */
 int
-rt_comb_tclform(const struct rt_functab *ftp, Tcl_Interp *interp)
+rt_comb_tclform( ftp, interp )
+const struct rt_functab *ftp;
+Tcl_Interp		*interp;
 {
 	RT_CK_FUNCTAB(ftp);
 
@@ -1374,7 +1412,10 @@ shader {%s} material {%s} inherit {%s} tree {%s}", (char *)NULL );
  *  Called via rt_functab[ID_COMBINATION].ft_make().
  */
 void
-rt_comb_make(const struct rt_functab *ftp, struct rt_db_internal *intern, double diameter)
+rt_comb_make( ftp, intern, diameter )
+const struct rt_functab	*ftp;
+struct rt_db_internal	*intern;
+double			diameter;
 {
 	struct rt_comb_internal *comb;
 
@@ -1408,7 +1449,10 @@ rt_comb_make(const struct rt_functab *ftp, struct rt_db_internal *intern, double
  *  build something interesting to look at.)
  */
 void
-rt_generic_make(const struct rt_functab *ftp, struct rt_db_internal *intern, double diameter)
+rt_generic_make( ftp, intern, diameter )
+const struct rt_functab	*ftp;
+struct rt_db_internal	*intern;
+double			diameter;
 {
 	intern->idb_type = ftp - rt_functab;
 	intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -1426,7 +1470,11 @@ rt_generic_make(const struct rt_functab *ftp, struct rt_db_internal *intern, dou
  *  Invoked via rt_functab[].ft_tcladjust()
  */
 int
-rt_parsetab_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, char **argv)
+rt_parsetab_tcladjust( interp, intern, argc, argv )
+Tcl_Interp		*interp;
+struct rt_db_internal	*intern;
+int			argc;
+char			**argv;
 {
 	const struct rt_functab	*ftp;
 
@@ -1453,7 +1501,9 @@ rt_parsetab_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int arg
  *  in ft_parsetab.
  */
 int
-rt_parsetab_tclform(const struct rt_functab *ftp, Tcl_Interp *interp)
+rt_parsetab_tclform( ftp, interp)
+const struct rt_functab	*ftp;
+Tcl_Interp		*interp;
 {
 	RT_CK_FUNCTAB(ftp);
 
@@ -1574,7 +1624,11 @@ db_full_path_appendresult( Tcl_Interp *interp, const struct db_full_path *pp )
  *	is the number of elements converted.
  */
 int
-tcl_obj_to_int_array(Tcl_Interp *interp, Tcl_Obj *list, int **array, int *array_len)
+tcl_obj_to_int_array( interp, list, array, array_len )
+Tcl_Interp *interp;
+Tcl_Obj *list;
+int **array;
+int *array_len;
 {
 	Tcl_Obj **obj_array;
 	int len, i;
@@ -1608,7 +1662,11 @@ tcl_obj_to_int_array(Tcl_Interp *interp, Tcl_Obj *list, int **array, int *array_
  */
 
 int
-tcl_list_to_int_array(Tcl_Interp *interp, char *char_list, int **array, int *array_len)
+tcl_list_to_int_array( interp, char_list, array, array_len )
+Tcl_Interp *interp;
+char *char_list;
+int **array;
+int *array_len;
 {
 	Tcl_Obj *obj;
 	int ret;
@@ -1631,7 +1689,11 @@ tcl_list_to_int_array(Tcl_Interp *interp, char *char_list, int **array, int *arr
  */
 
 int
-tcl_obj_to_fastf_array(Tcl_Interp *interp, Tcl_Obj *list, fastf_t **array, int *array_len)
+tcl_obj_to_fastf_array( interp, list, array, array_len )
+Tcl_Interp *interp;
+Tcl_Obj *list;
+fastf_t **array;
+int *array_len;
 {
 	Tcl_Obj **obj_array;
 	int len, i;
@@ -1666,7 +1728,11 @@ tcl_obj_to_fastf_array(Tcl_Interp *interp, Tcl_Obj *list, fastf_t **array, int *
  */
 
 int
-tcl_list_to_fastf_array(Tcl_Interp *interp, char *char_list, fastf_t **array, int *array_len)
+tcl_list_to_fastf_array( interp, char_list, array, array_len )
+Tcl_Interp *interp;
+char *char_list;
+fastf_t **array;
+int *array_len;
 {
 	Tcl_Obj *obj;
 	int ret;

@@ -68,11 +68,13 @@ struct table *info;	/*  Dimension later with malloc.  */
 
 /*  Variables needed for rt_shootray.  */
 struct application ap;	/*  Application struct, passed between functions.  */
-extern int hit(register struct application *ap_p, struct partition *PartHeadp);	/*  User supplied hit function.  */
-extern int miss(register struct application *ap_p);	/*  User supplied miss function.  */
-extern int overlap(register struct application *ap_p, register struct partition *PartHeadp);	/*  User supplied overlap function.  */
+extern int hit();	/*  User supplied hit function.  */
+extern int miss();	/*  User supplied miss function.  */
+extern int overlap();	/*  User supplied overlap function.  */
 
-int main(int argc, char **argv)
+int main(argc,argv)
+int argc;
+char *argv[];
 {							/*  START # 1  */
  int index;		/*  Index for rt_dirbuild & rt_gettree.  */
  static struct rt_i *rtip;/*  Used for building directory, ect.  */
@@ -561,12 +563,12 @@ int main(int argc, char **argv)
 
 /****************************************************************************/
 int
-hit(register struct application *ap_p, struct partition *PartHeadp)
+hit(ap_p,PartHeadp)
 
 /*  User supplied hit function.  */
 
-                                  
-                            
+register struct application *ap_p;
+struct partition *PartHeadp;
 
 {
    register struct partition *pp;
@@ -589,11 +591,11 @@ hit(register struct application *ap_p, struct partition *PartHeadp)
 
 /****************************************************************************/
 int
-miss(register struct application *ap_p)
+miss(ap_p)
 
 /*  User supplied miss function.  */
 
-                                  
+register struct application *ap_p;
 
 {
 
@@ -607,12 +609,12 @@ miss(register struct application *ap_p)
 
 /****************************************************************************/
 int
-overlap(register struct application *ap_p, register struct partition *PartHeadp)
+overlap(ap_p,PartHeadp)
 
 /*  User supplied overlap function.  */
 
-                                  
-                                     
+register struct application *ap_p;
+register struct partition *PartHeadp;
 
 {
    (void)printf("It is an overlap.\n");

@@ -27,7 +27,8 @@ static const char libbu_linebuf_RCSid[] = "@(#)$Header$ (ARL)";
 #include "bu.h"
 
 void
-bu_setlinebuf(FILE *fp)
+bu_setlinebuf( fp )
+FILE *fp;
 {
 #ifdef BSD
 	setlinebuf( fp );

@@ -38,7 +38,8 @@ static const char RCSbrlcad_path[] = "@(#)$Header$ (BRL)";
  *	0	The given filename does not exist.
  */
 int
-bu_file_exists(const char *path)
+bu_file_exists( path )
+const char *path;
 {
 	struct	stat	sbuf;
 
@@ -65,7 +66,8 @@ bu_file_exists(const char *path)
  *
  */
 char *
-bu_brlcad_path(const char *rhs)
+bu_brlcad_path( rhs )
+const char *rhs;
 {
 	static char	result[256];
 	char		*lhs;

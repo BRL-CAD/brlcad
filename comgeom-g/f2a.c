@@ -1,8 +1,8 @@
 /* F 2 A () ====  convert float to ascii  w.df format.	No leading blanks */
-f2a(float f, char *s, int w, int d)
-     	  		/* INPUT	===*/
-    	       		/* OUTPUT	===*/
-   		     	/* length	===*/
+f2a(	f, s,	w, d )
+float	f;		/* INPUT	===*/
+char	   s[];		/* OUTPUT	===*/
+int		w, d;	/* length	===*/
 { int	c, i, j;
   long	n, sign;
 	if( w <= d + 2 )

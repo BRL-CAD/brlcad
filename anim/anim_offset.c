@@ -38,12 +38,14 @@ extern char *bu_optarg;
 int full_print = 0;
 vect_t offset;
 
-int get_args(int argc, char **argv);
-extern void anim_dy_p_r2mat(fastf_t *, double, double, double);
-extern void anim_add_trans(fastf_t *, const fastf_t *, const fastf_t *);
+int get_args();
+extern void anim_dy_p_r2mat();
+extern void anim_add_trans();
 
 int
-main(int argc, char **argv)
+main(argc,argv)
+int argc;
+char **argv;
 {
 	int val;
 	fastf_t yaw, pitch, roll, time;
@@ -80,7 +82,9 @@ main(int argc, char **argv)
 
 #define OPT_STR "ro:"
 
-int get_args(int argc, char **argv)
+int get_args(argc,argv)
+int argc;
+char **argv;
 {
 	int c;
 	while ( (c=bu_getopt(argc,argv,OPT_STR)) != EOF) {

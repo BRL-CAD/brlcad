@@ -46,12 +46,12 @@
 #include "libtermio.h"
 
 /* defined in tcl.c */
-extern void Cad_Exit(int status);
+extern void Cad_Exit();
 
-HIDDEN void historyInit(void);
-HIDDEN int cmd_history(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-HIDDEN int cmd_hist(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-HIDDEN int cmd_quit(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+HIDDEN void historyInit();
+HIDDEN int cmd_history();
+HIDDEN int cmd_hist();
+HIDDEN int cmd_quit();
 
 HIDDEN struct bu_cmdhist histHead;
 HIDDEN struct bu_cmdhist *currHist;
@@ -70,7 +70,8 @@ extern Tk_PhotoImageFormat tkImgFmtPIX;
 #endif
 
 int
-cmdInit(Tcl_Interp *interp)
+cmdInit(interp)
+     Tcl_Interp *interp;
 {
 	/* Register bwish/btclsh commands */
 	bu_register_cmds(interp, bwish_cmds);
@@ -109,7 +110,7 @@ cmd_quit(ClientData	clientData,
 /***************************** BWISH/BTCLSH COMMAND HISTORY *****************************/
 
 HIDDEN void
-historyInit(void)
+historyInit()
 {
 	BU_LIST_INIT(&(histHead.l));
 	bu_vls_init(&(histHead.h_command));
@@ -129,10 +130,10 @@ historyInit(void)
  *	history vls'es.
  */
 void
-history_record(struct bu_vls *cmdp, struct timeval *start, struct timeval *finish, int status)
-                         
-                                    
-                   /* Either TCL_OK or TCL_ERROR */
+history_record(cmdp, start, finish, status)
+     struct bu_vls *cmdp;
+     struct timeval *start, *finish;
+     int status;   /* Either TCL_OK or TCL_ERROR */
 {
 	struct bu_cmdhist *new_hist;
 
@@ -164,7 +165,8 @@ history_record(struct bu_vls *cmdp, struct timeval *start, struct timeval *finis
 }
 
 HIDDEN int
-timediff(struct timeval *tvdiff, struct timeval *start, struct timeval *finish)
+timediff(tvdiff, start, finish)
+     struct timeval *tvdiff, *start, *finish;
 {
 	if (finish->tv_sec == 0 && finish->tv_usec == 0)
 		return -1;
@@ -304,7 +306,11 @@ f_delay(clientData, interp, argc, argv)
  */
 
 int
-cmd_history(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+cmd_history(clientData, interp, argc, argv )
+     ClientData clientData;
+     Tcl_Interp *interp;
+     int argc;
+     char **argv;
 {
 	FILE *fp;
 	int with_delays = 0;
@@ -377,7 +383,7 @@ cmd_history(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  *      H I S T O R Y _ P R E V
  */
 struct bu_vls *
-history_prev(void)
+history_prev()
 {
 	struct bu_cmdhist *hp;
 
@@ -394,7 +400,7 @@ history_prev(void)
  *      H I S T O R Y _ C U R
  */
 struct bu_vls *
-history_cur(void)
+history_cur()
 {
 	if (BU_LIST_IS_HEAD(currHist, &(histHead.l)))
 		return NULL;
@@ -406,7 +412,7 @@ history_cur(void)
  *      H I S T O R Y _ N E X T
  */
 struct bu_vls *
-history_next(void)
+history_next()
 {
 	struct bu_cmdhist *hp;
 
@@ -425,7 +431,11 @@ history_next(void)
 }
 
 int
-cmd_hist(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+cmd_hist(clientData, interp, argc, argv)
+     ClientData clientData;
+     Tcl_Interp *interp;
+     int argc;
+     char **argv;
 {
 	struct bu_vls *vp;
 	struct bu_vls vls;

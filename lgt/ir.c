@@ -35,11 +35,11 @@ static RGBpixel	black = { 0, 0, 0 };
 static int	ir_max_index = -1;
 RGBpixel	*ir_table = (RGBpixel *)RGBPIXEL_NULL;
 
-STATIC void	temp_To_RGB(unsigned char *rgb, int temp);
+STATIC void	temp_To_RGB();
 
 int
-ir_Chk_Table(void)
-{
+ir_Chk_Table()
+	{
 	if( ir_table == (RGBpixel *)PIXEL_NULL )
 		{
 		get_Input( input_ln, MAX_LN, "Enter minimum temperature : " );
@@ -61,16 +61,18 @@ ir_Chk_Table(void)
 	}
 
 STATIC int
-adjust_Page(int y)
-{	int	scans_per_page = fbiop->if_ppixels/fbiop->if_width;
+adjust_Page( y )
+int	y;
+	{	int	scans_per_page = fbiop->if_ppixels/fbiop->if_width;
 		int	newy = y - (y % scans_per_page);
 	return	newy;
 	}
 
 #define D_XPOS	(x-xmin)
 void
-display_Temps(int xmin, int ymin)
-{	register int	x, y;
+display_Temps( xmin, ymin )
+int	xmin, ymin;
+	{	register int	x, y;
 		register int	interval = ((grid_sz*3+2)/4)/(S_BINS+2);
 		register int	xmax = xmin+(interval*S_BINS);
 		register int	ymax;
@@ -137,8 +139,11 @@ display_Temps(int xmin, int ymin)
 	}
 
 STATIC int
-get_IR(int x, int y, int *fahp, FILE *fp)
-{
+get_IR( x, y, fahp, fp )
+int	x, y;
+int	*fahp;
+FILE	*fp;
+	{
 	if( fseek( fp, (long)((y*IR_DATA_WID + x) * sizeof(int)), 0 ) != 0 )
 		return	0;
 	else
@@ -148,8 +153,9 @@ get_IR(int x, int y, int *fahp, FILE *fp)
 		return	1;
 	}
 int
-read_IR(FILE *fp)
-{	register int	fy;
+read_IR( fp )
+FILE	*fp;
+	{	register int	fy;
 		register int	rx, ry;
 		int		min, max;
 	if(	fread( (char *) &min, (int) sizeof(int), 1, fp ) != 1
@@ -234,8 +240,10 @@ read_IR(FILE *fp)
 	to suit the input data.
  */
 STATIC void
-temp_To_RGB(unsigned char *rgb, int temp)
-{	fastf_t		scale = 4.0 / RANGE;
+temp_To_RGB( rgb, temp )
+RGBpixel	rgb;
+int		temp;
+	{	fastf_t		scale = 4.0 / RANGE;
 		fastf_t		t = temp;
 		fastf_t		hue = 4.0 - ((t < AMBIENT ? AMBIENT :
 					      t > HOTTEST ? HOTTEST :
@@ -294,8 +302,8 @@ temp_To_RGB(unsigned char *rgb, int temp)
 	valid for display of the current view.
  */
 int
-init_Temp_To_RGB(void)
-{	register int	temp, i;
+init_Temp_To_RGB()
+	{	register int	temp, i;
 		RGBpixel	rgb;
 	if( (ir_aperture = fb_getwidth( fbiop )/grid_sz) < 1 )
 		{
@@ -329,8 +337,9 @@ init_Temp_To_RGB(void)
 	}
 
 int
-same_Hue(register RGBpixel (*pixel1p), register RGBpixel (*pixel2p))
-{	fastf_t	rval1, gval1, bval1;
+same_Hue( pixel1p, pixel2p )
+register RGBpixel	*pixel1p, *pixel2p;
+	{	fastf_t	rval1, gval1, bval1;
 		fastf_t	rval2, gval2, bval2;
 		fastf_t	rratio, gratio, bratio;
 	if(	(*pixel1p)[RED] == (*pixel2p)[RED]
@@ -424,8 +433,9 @@ same_Hue(register RGBpixel (*pixel1p), register RGBpixel (*pixel2p))
 	}
 
 int
-pixel_To_Temp(register RGBpixel (*pixelp))
-{
+pixel_To_Temp( pixelp )
+register RGBpixel	*pixelp;
+	{
 #ifdef CRAY2 /* Compiler bug, register pointers don't always compile. */
 		RGBpixel	*p;
 		RGBpixel	*q = (RGBpixel *) ir_table[ir_max-ir_min];
@@ -447,8 +457,10 @@ pixel_To_Temp(register RGBpixel (*pixelp))
 	return	ABSOLUTE_ZERO;
 	}
 int
-f_IR_Model(register struct application *ap, Octree *op)
-{	fastf_t		octnt_min[3], octnt_max[3];
+f_IR_Model( ap, op )
+register struct application	*ap;
+Octree				*op;
+	{	fastf_t		octnt_min[3], octnt_max[3];
 		fastf_t		delta = modl_radius / pow_Of_2( ap->a_level );
 		fastf_t		point[3]; /* Intersection point.	*/
 		fastf_t		norml[3]; /* Unit normal at point.	*/
@@ -546,8 +558,9 @@ f_IR_Model(register struct application *ap, Octree *op)
 	return	1;
 	}
 int
-f_IR_Backgr(register struct application *ap)
-{
+f_IR_Backgr( ap )
+register struct application *ap;
+	{
 	VMOVE( ap->a_color, bg_coefs );
 	return	0;
 	}

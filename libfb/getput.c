@@ -9,7 +9,8 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 unsigned short
-fbgetshort(char *msgp)
+fbgetshort(msgp)
+	char *msgp;
 {
 	register unsigned char *p = (unsigned char *) msgp;
 #ifdef vax
@@ -26,7 +27,8 @@ fbgetshort(char *msgp)
 }
 
 unsigned long
-fbgetlong(char *msgp)
+fbgetlong(msgp)
+	char *msgp;
 {
 	register unsigned char *p = (unsigned char *) msgp;
 	register unsigned long u;
@@ -38,7 +40,9 @@ fbgetlong(char *msgp)
 }
 
 char *
-fbputshort(register short unsigned int s, register char *msgp)
+fbputshort(s, msgp)
+	register unsigned short s;
+	register char *msgp;
 {
 
 	msgp[1] = s;
@@ -47,7 +51,9 @@ fbputshort(register short unsigned int s, register char *msgp)
 }
 
 char *
-fbputlong(register long unsigned int l, register char *msgp)
+fbputlong(l, msgp)
+	register unsigned long l;
+	register char *msgp;
 {
 
 	msgp[3] = l;

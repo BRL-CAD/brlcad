@@ -18,7 +18,9 @@
 
 
 int
-main(int argc, char **argv)
+main(argc, argv)
+int	argc;
+char	**argv;
 {
 	struct rt_wdb	*fp;
 	struct db_i	*dbip;

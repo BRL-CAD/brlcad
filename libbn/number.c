@@ -28,14 +28,14 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "plot3.h"
 
 void
-tp_2number(FILE *fp, double input, int x, int y, int cscale, double theta, int digits)
-    	    
-      	      		/* number to be plotted */
-   	  		/* first char position */
-   	  
-   	       		/* char scale */
-      	      		/* degrees ccw from X-axis */
-   	       		/* # digits wide */
+tp_2number( fp, input, x, y, cscale, theta, digits )
+FILE	*fp;
+double	input;		/* number to be plotted */
+int	x;		/* first char position */
+int	y;
+int	cscale;		/* char scale */
+double	theta;		/* degrees ccw from X-axis */
+int	digits;		/* # digits wide */
 {
 	char	fmt[32];
 	char	buf[32];

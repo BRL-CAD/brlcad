@@ -20,7 +20,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "conf.h"
 
 #include <stdio.h>
-#include <stdlib.h> /* for getenv() */
 
 #ifdef USE_STRING_H
 #include <string.h>
@@ -31,12 +30,9 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #ifdef HAVE_TERMCAP_H
 #  include <termcap.h>
 #endif
-#ifdef __ppc__  /* this should be a check ifdef HAVE_CURSES */
+#ifdef __ppc__
 #  include <curses.h>
-#else /* not __ppc__ */
-extern char	*getenv(), *tgetstr(const char *, char **);
-extern int	tgetent(void *, const char *);
-#endif  /* end check ifdef __ppc__ */
+#endif
 
 #include <sys/ioctl.h>
 #define _winsize winsize	/* For compat with _ioctl.h. */
@@ -44,6 +40,8 @@ extern int	tgetent(void *, const char *);
 #define TBUFSIZ		1024
 #define MAX_TERM_LEN	80
 
+extern char	*getenv(), *tgetstr();
+extern int	tgetent();
 #if ! defined( BSD )
 extern void	clr_Tabs(), save_Tty();
 #endif
@@ -56,7 +54,7 @@ static char	*tstr_addr = tstrings;	/* Used by tgetstr().	*/
 static int	fd_stdout = 1;
 #endif
 
-static void	LoadTP(void), LoadTCS(void);
+static void	LoadTP(), LoadTCS();
 
 
 /* This is a global buffer for the name of the terminal.	*/
@@ -84,12 +82,12 @@ int		LI, /* Number of lines on screen.		*/
 /* This function must be called first to read the termcap database and
 	to specify the output stream.
  */
-int		InitTermCap(FILE *fp);
+int		InitTermCap();
 
 /* This function must be accessible to the termcap library, but will
 	not necessarily be needed by the application.
  */
-int		PutChr(char c);
+int		PutChr();
 
 /* These functions output terminal control strings to the file stream
 	specified by the InitTermCap() call which must precede them.
@@ -97,13 +95,13 @@ int		PutChr(char c);
 	database and 1 otherwise.  Of course if the database entry is
 	wrong, the command will not do its job.
  */
-int		ClrStandout(void), ClrEOL(void), ClrText(void),
-		DeleteLn(void),
-		HmCursor(void),
-		MvCursor(int x, int y),
-		ResetScrlReg(void),
-		ScrollDn(void), ScrollUp(void),
-		SetScrlReg(int top, int btm), SetStandout(void);
+int		ClrStandout(), ClrEOL(), ClrText(),
+		DeleteLn(),
+		HmCursor(),
+		MvCursor(),
+		ResetScrlReg(),
+		ScrollDn(), ScrollUp(),
+		SetScrlReg(), SetStandout();
 
 
 /*	I n i t T e r m C a p ( )
@@ -117,8 +115,9 @@ int		ClrStandout(void), ClrEOL(void), ClrText(void),
 	Use 'fp' as output stream.
  */
 int
-InitTermCap(FILE *fp)
-{	char	*term; /* Name of terminal from environment ($TERM).*/
+InitTermCap( fp )
+FILE	*fp;
+	{	char	*term; /* Name of terminal from environment ($TERM).*/
 	out_fp = fp;
 #ifdef TIOCGWINSZ
 	fd_stdout = fileno( out_fp );
@@ -158,8 +157,8 @@ InitTermCap(FILE *fp)
 	Get the terminal parameters.
  */
 static void
-LoadTP(void)
-{
+LoadTP()
+	{
 #ifdef TIOCGWINSZ
 	/* Get window size for DMD layers support.			*/
 	struct _winsize		window;
@@ -184,8 +183,8 @@ LoadTP(void)
 	Get the terminal control strings.
  */
 static void
-LoadTCS(void)
-{
+LoadTCS()
+	{
 	CS = tgetstr( "cs", &tstr_addr );
 	SE = tgetstr( "se", &tstr_addr );
 	SO = tgetstr( "so", &tstr_addr );
@@ -206,8 +205,8 @@ LoadTCS(void)
 	Home the cursor.
  */
 int
-HmCursor(void)
-{
+HmCursor()
+	{
 	if( HO != NULL )
 		{
 		tputs( HO, 1, (void *)PutChr );
@@ -221,8 +220,8 @@ HmCursor(void)
 	Forward scroll 1 line.
  */
 int
-ScrollUp(void)
-{
+ScrollUp()
+	{
 	if( SF != NULL )
 		{
 		tputs( SF, 1, (void *)PutChr );
@@ -236,8 +235,8 @@ ScrollUp(void)
 	Reverse scroll 1 line.
  */
 int
-ScrollDn(void)
-{
+ScrollDn()
+	{
 	if( SR != NULL )
 		{
 		tputs( SR, 1, (void *)PutChr );
@@ -251,8 +250,8 @@ ScrollDn(void)
 	Delete the current line.
  */
 int
-DeleteLn(void)
-{
+DeleteLn()
+	{
 	if( DL != NULL )
 		{
 		tputs( DL, 1, (void *)PutChr );
@@ -266,8 +265,9 @@ DeleteLn(void)
 	Move the cursor to screen coordinates x, y.
  */
 int
-MvCursor(int x, int y)
-{
+MvCursor( x, y )
+int	x, y;
+	{
 	--x; --y; /* Tgoto() adds 1 to each coordinate!?		*/
 	if( CM != NULL )
 		{
@@ -282,8 +282,8 @@ MvCursor(int x, int y)
 	Clear from the cursor to end of line.
  */
 int
-ClrEOL(void)
-{
+ClrEOL()
+	{
 	if( CE != NULL )
 		{
 		tputs( CE, 1, (void *)PutChr );
@@ -297,8 +297,8 @@ ClrEOL(void)
 	Clear screen and home cursor.
  */
 int
-ClrText(void)
-{
+ClrText()
+	{
 	if( CL != NULL )
 		{
 		tputs( CL, LI, (void *)PutChr );
@@ -312,8 +312,9 @@ ClrText(void)
 	Set the scrolling region to be from "top" to "btm".
  */
 int
-SetScrlReg(int top, int btm)
-{
+SetScrlReg( top, btm )
+int	top, btm;
+	{
 	if( CS != NULL )
 		{
 		tputs( tgoto( CS, btm-1, top-1 ), 1, (void *)PutChr );
@@ -327,8 +328,8 @@ SetScrlReg(int top, int btm)
 	Reset the scrolling region to the entire screen.
  */
 int
-ResetScrlReg(void)
-{
+ResetScrlReg()
+	{
 	if( CS != NULL )
 		{
 		tputs( tgoto( CS, LI-1, 0 ), 1, (void *)PutChr );
@@ -342,8 +343,8 @@ ResetScrlReg(void)
 	End standout mode.
  */
 int
-ClrStandout(void)
-{
+ClrStandout()
+	{
 	if( SE != NULL )
 		{
 		tputs( SE, 1, (void *)PutChr );
@@ -357,8 +358,8 @@ ClrStandout(void)
 	Begin standout mode.
  */
 int
-SetStandout(void)
-{
+SetStandout()
+	{
 	if( SO != NULL )
 		{
 		tputs( SO, 1, (void *)PutChr );
@@ -370,7 +371,8 @@ SetStandout(void)
 
 /*	P u t C h r ( )							*/
 int
-PutChr(char c)
-{
+PutChr( c )
+char	c;
+	{
 	return	putc( c, out_fp );
 	}

@@ -206,21 +206,28 @@ static int	bot=0;
  * overlaps are irrelevant to this application
  */
 static int
-a_overlap(register struct application *ap, register struct partition *pp, struct region *reg1, struct region *reg2, struct partition *pheadp)
+a_overlap( ap, pp, reg1, reg2, pheadp )
+register struct application     *ap;
+register struct partition       *pp;
+struct region                   *reg1;
+struct region                   *reg2;
+struct partition                *pheadp;
 {
 	return( 1 );
 }
 
 
 static int
-miss(register struct application *ap)
+miss( ap )
+register struct application *ap;
 {
 	return(0);
 }
 
 
 static void
-pr_part(struct local_part *ptr)
+pr_part( ptr )
+struct local_part *ptr;
 {
 	bu_log( "local_part: x%x\n", ptr );
 	if( !ptr )
@@ -244,7 +251,10 @@ pr_part(struct local_part *ptr)
 }
 
 static void
-Make_simple_faces(struct shell *s, int status, struct local_part **lpart)
+Make_simple_faces( s, status, lpart )
+struct shell *s;
+int status;
+struct local_part *lpart[4];
 {
 	fastf_t ave_y;
 	fastf_t diff[4];
@@ -382,7 +392,12 @@ Make_simple_faces(struct shell *s, int status, struct local_part **lpart)
 }
 
 static int
-Get_extremes(struct shell *s, struct application *ap, struct hitmiss **hitmiss, char *manifolds, fastf_t *hit1, fastf_t *hit2)
+Get_extremes( s, ap, hitmiss, manifolds, hit1, hit2 )
+struct application *ap;
+struct shell *s;
+struct hitmiss **hitmiss;
+char *manifolds;
+point_t hit1, hit2;
 {
 	struct model *m;
 	struct ray_data rd;
@@ -453,7 +468,10 @@ Get_extremes(struct shell *s, struct application *ap, struct hitmiss **hitmiss, 
 }
 
 static int
-shrink_hit(register struct application *ap, struct partition *PartHeadp, struct seg *segs)
+shrink_hit( ap, PartHeadp, segs )
+register struct application *ap;
+struct partition *PartHeadp;
+struct seg *segs;
 {
 	point_t hit1, hit2;
 	point_t mhit1, mhit2;
@@ -754,7 +772,9 @@ shrink_hit(register struct application *ap, struct partition *PartHeadp, struct 
 }
 
 static void
-Split_side_faces(struct shell *s, struct bu_ptbl *tab)
+Split_side_faces( s, tab )
+struct shell *s;
+struct bu_ptbl *tab;
 {
 	struct faceuse *fu;
 	struct loopuse *lu;
@@ -997,7 +1017,8 @@ Split_side_faces(struct shell *s, struct bu_ptbl *tab)
 }
 
 static void
-shrink_wrap(struct shell *s)
+shrink_wrap( s )
+struct shell *s;
 {
 	struct faceuse *fu;
 	struct application ap;
@@ -1131,7 +1152,10 @@ shrink_wrap(struct shell *s)
 }
 
 static int
-refine_hit(register struct application *ap, struct partition *PartHeadp, struct seg *segs)
+refine_hit( ap, PartHeadp, segs )
+register struct application *ap;
+struct partition *PartHeadp;
+struct seg *segs;
 {
 	struct partition *pp;
 	struct refine_data *ref_data;
@@ -1314,7 +1338,8 @@ refine_hit(register struct application *ap, struct partition *PartHeadp, struct 
 }
 
 static int
-refine_edges(struct shell *s)
+refine_edges( s )
+struct shell *s;
 {
 	struct bu_ptbl edges_1;
 	struct bu_ptbl edges_2;
@@ -1483,7 +1508,7 @@ refine_edges(struct shell *s)
 }
 
 static void
-Make_shell(void)
+Make_shell()
 {
 	int i;
 	int x_index, y_index, z_index;
@@ -1668,7 +1693,10 @@ Make_shell(void)
 }
 
 static int
-hit(register struct application *ap, struct partition *PartHeadp, struct seg *segs)
+hit( ap, PartHeadp, segs )
+register struct application *ap;
+struct partition *PartHeadp;
+struct seg *segs;
 {
 	register struct partition *first_pp;
 	register struct partition *last_pp;
@@ -1731,7 +1759,9 @@ hit(register struct application *ap, struct partition *PartHeadp, struct seg *se
 }
 
 int
-main(int argc, char **argv)
+main( argc, argv )
+int argc;
+char *argv[];
 {
 	char idbuf[132];
 	struct application ap;

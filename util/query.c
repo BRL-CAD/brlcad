@@ -53,7 +53,8 @@ static char usage[] = "\
 Usage: %s [-v] [-t seconds] [-r response ] [-l]\n";
 
 int
-get_args(int argc, register char **argv)
+get_args( argc, argv )
+register char **argv;
 {
 	register int c;
 
@@ -82,10 +83,12 @@ get_args(int argc, register char **argv)
 
 	return(1);
 }
-void handler(void);
+void handler();
 
 int
-main(int argc, char **argv)
+main( argc, argv )
+int argc;
+char *argv[];
 {
 	char line[80];
 	char *eol;
@@ -149,7 +152,7 @@ main(int argc, char **argv)
 	exit(0);
 }
 void
-handler(void)
+handler()
 {
 	Done = 1;
 }

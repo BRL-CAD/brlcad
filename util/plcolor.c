@@ -33,7 +33,8 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 static char usage[] = "Usage: plcolor r g b\n";
 
 int
-main(int argc, char **argv)
+main( argc, argv )
+int argc; char **argv;
 {
 	int	c;
 	int	r, g, b;

@@ -41,47 +41,47 @@
 #include "bn.h"
 #include "raytrace.h"
 
-int Vo_Init(Tcl_Interp *interp);
+int Vo_Init();
 
-static int vo_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int vo_size_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int vo_invSize_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int vo_aet_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int vo_rmat_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int vo_center_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int vo_model2view_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int vo_pmodel2view_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int vo_view2model_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int vo_perspective_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int vo_pmat_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int vo_rot_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int vo_tra_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int vo_sca_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int vo_slew_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int vo_open_tcl();
+static int vo_size_tcl();
+static int vo_invSize_tcl();
+static int vo_aet_tcl();
+static int vo_rmat_tcl();
+static int vo_center_tcl();
+static int vo_model2view_tcl();
+static int vo_pmodel2view_tcl();
+static int vo_view2model_tcl();
+static int vo_perspective_tcl();
+static int vo_pmat_tcl();
+static int vo_rot_tcl();
+static int vo_tra_tcl();
+static int vo_sca_tcl();
+static int vo_slew_tcl();
 
-static int vo_eye_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int vo_eye_pos_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int vo_lookat_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int vo_orientation_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int vo_pov_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int vo_units_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int vo_zoom_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int vo_local2base_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int vo_base2local_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int vo_observer_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int vo_coord_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int vo_rotate_about_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int vo_keypoint_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int vo_setview_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int vo_arot_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int vo_vrot_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static int vo_mrot_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int vo_eye_tcl();
+static int vo_eye_pos_tcl();
+static int vo_lookat_tcl();
+static int vo_orientation_tcl();
+static int vo_pov_tcl();
+static int vo_units_tcl();
+static int vo_zoom_tcl();
+static int vo_local2base_tcl();
+static int vo_base2local_tcl();
+static int vo_observer_tcl();
+static int vo_coord_tcl();
+static int vo_rotate_about_tcl();
+static int vo_keypoint_tcl();
+static int vo_setview_tcl();
+static int vo_arot_tcl();
+static int vo_vrot_tcl();
+static int vo_mrot_tcl();
 
-static int vo_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-void vo_update(struct view_obj *vop, Tcl_Interp *interp, int oflag);
-void vo_mat_aet(struct view_obj *vop);
-static void vo_persp_mat(fastf_t *m, fastf_t fovy, fastf_t aspect, fastf_t near, fastf_t far, fastf_t backoff);
-static void vo_mike_persp_mat(fastf_t *pmat, const fastf_t *eye);
+static int vo_cmd();
+void vo_update();
+void vo_mat_aet();
+static void vo_persp_mat();
+static void vo_mike_persp_mat();
 
 struct view_obj HeadViewObj;		/* head of view object list */
 

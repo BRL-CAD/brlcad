@@ -86,25 +86,25 @@ struct bu_structparse toyota_parse[] = {
 	{"",   0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 
-HIDDEN int	toyota_setup(register struct region *rp, struct bu_vls *matparm, char **dtp, struct mfuncs *mfp, struct rt_i *rtip), tmirror_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip), tglass_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int	toyota_render(register struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
-HIDDEN void	toyota_print(register struct region *rp, char *dp);
-HIDDEN void	toyota_free(char *cp);
-void		lambda_to_rgb(fastf_t lambda, fastf_t irrad, fastf_t *rgb),
-		spectral_dist_table(fastf_t lambda, fastf_t *e_mean, fastf_t *v1, fastf_t *v2);
+HIDDEN int	toyota_setup(), tmirror_setup(), tglass_setup();
+HIDDEN int	toyota_render();
+HIDDEN void	toyota_print();
+HIDDEN void	toyota_free();
+void		lambda_to_rgb(),
+		spectral_dist_table();
 fastf_t
-	atmos_irradiance(fastf_t lambda),
-	air_mass(fastf_t gamma),
-	background_light(fastf_t lambda, struct toyota_specific *ts, fastf_t *Refl, fastf_t *Sun, fastf_t t_vl, struct shadework *swp),
-	clear_sky_lum(fastf_t lz, fastf_t *Sky_elmt, fastf_t *Sun, fastf_t *Zenith),
-	fresnel_refl(fastf_t cos_eps, fastf_t n1, fastf_t n2),
-	homogenous_sky_lum(fastf_t *Sky_elmt, fastf_t *Sun, fastf_t t_vl),
-	sun_radiance(fastf_t lambda, fastf_t alpha, fastf_t beta, fastf_t sun_alt, fastf_t sun_sang),
-	absorp_coeff(fastf_t lambda, char *material),
-	overcast_sky_lum(fastf_t lz, fastf_t *Zenith, fastf_t *Sky_elmt),
-	ozone_absorption(fastf_t lambda),
-	skylight_spectral_dist(fastf_t lambda, fastf_t *Zenith, fastf_t *Sky_elmt, fastf_t *Sun, int weather, fastf_t t_vl),
-	zenith_luminance(fastf_t sun_alt, fastf_t t_vl);
+	atmos_irradiance(),
+	air_mass(),
+	background_light(),
+	clear_sky_lum(),
+	fresnel_refl(),
+	homogenous_sky_lum(),
+	sun_radiance(),
+	absorp_coeff(),
+	overcast_sky_lum(),
+	ozone_absorption(),
+	skylight_spectral_dist(),
+	zenith_luminance();
 
 struct mfuncs toyota_mfuncs[] = {
 	{MF_MAGIC,	"toyota",	0,		MFI_NORMAL|MFI_LIGHT,	0,
@@ -139,12 +139,12 @@ struct mfuncs toyota_mfuncs[] = {
  *			(MINOLTA CS-100)
  */
 HIDDEN int
-toyota_setup(register struct region *rp, struct bu_vls *matparm, char **dtp, struct mfuncs *mfp, struct rt_i *rtip)
-                           
-             	         
-    	      
-                             
-                                /* New since 4.4 release */
+toyota_setup(rp, matparm, dtp, mfp, rtip)
+register struct region *rp;
+struct bu_vls	*matparm;
+char	**dtp;
+struct mfuncs           *mfp;
+struct rt_i             *rtip;  /* New since 4.4 release */
 {
 	char	mfile[200];
 	fastf_t	l, a, b;
@@ -238,12 +238,12 @@ toyota_setup(register struct region *rp, struct bu_vls *matparm, char **dtp, str
  *	M I R R O R _ S E T U P
  */
 HIDDEN int
-tmirror_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
-                           
-             	         
-    	      
-                             
-                                /* New since 4.4 release */
+tmirror_setup(rp, matparm, dpp, mfp, rtip)
+register struct region *rp;
+struct bu_vls	*matparm;
+char	**dpp;
+struct mfuncs           *mfp;
+struct rt_i             *rtip;  /* New since 4.4 release */
 {
 	register struct toyota_specific *pp;
 
@@ -261,12 +261,12 @@ tmirror_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, st
  *	G L A S S _ S E T U P
  */
 HIDDEN int
-tglass_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
-                           
-             	         
-    	      
-                             
-                                /* New since 4.4 release */
+tglass_setup(rp, matparm, dpp, mfp, rtip)
+register struct region *rp;
+struct bu_vls	*matparm;
+char	**dpp;
+struct mfuncs           *mfp;
+struct rt_i             *rtip;  /* New since 4.4 release */
 {
 	register struct toyota_specific *pp;
 
@@ -284,7 +284,9 @@ tglass_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, str
  *	T O Y O T A _ P R I N T
  */
 HIDDEN void
-toyota_print(register struct region *rp, char *dp)
+toyota_print(rp, dp)
+register struct region *rp;
+char	*dp;
 {
 	bu_struct_print(rp->reg_name, toyota_parse, (char *)dp);
 }
@@ -293,7 +295,8 @@ toyota_print(register struct region *rp, char *dp)
  *	T O Y O T A _ F R E E
  */
 HIDDEN void
-toyota_free(char *cp)
+toyota_free(cp)
+char *cp;
 {
 	/* need to free cp->refl */
 	bu_free(cp, "toyota_specific");
@@ -310,8 +313,8 @@ toyota_free(char *cp)
  *	Unitless (ratio).
  */
 fastf_t
-air_mass(fastf_t gamma)
-       	      	/* Solar altitude off horizon (degrees). */
+air_mass(gamma)
+fastf_t	gamma;	/* Solar altitude off horizon (degrees). */
 {
 	fastf_t	m;
 
@@ -335,9 +338,9 @@ air_mass(fastf_t gamma)
  *	Luminance units: cd/m^2
  */
 fastf_t
-zenith_luminance(fastf_t sun_alt, fastf_t t_vl)
-       	        	/* Solar altitude off horizon (degrees). */
-       	     		/* atmospheric turbidity (aerosol optical depth) */
+zenith_luminance(sun_alt, t_vl)
+fastf_t	sun_alt;	/* Solar altitude off horizon (degrees). */
+fastf_t	t_vl;		/* atmospheric turbidity (aerosol optical depth) */
 {
 	return(2000.);	/* swag */
 }
@@ -354,9 +357,9 @@ zenith_luminance(fastf_t sun_alt, fastf_t t_vl)
  *	Number 4, August 1986, pp. 127-8."
  */
 fastf_t
-overcast_sky_lum(fastf_t lz, fastf_t *Zenith, fastf_t *Sky_elmt)
-       	   			/* luminance of the zenith */
-      	                 	/* vectors to zenith and a sky element */
+overcast_sky_lum(lz, Zenith, Sky_elmt)
+fastf_t	lz;			/* luminance of the zenith */
+vect_t	Zenith, Sky_elmt;	/* vectors to zenith and a sky element */
 {
 	return(lz * (1. + 2.*VDOT(Zenith, Sky_elmt)/3.));
 }
@@ -372,9 +375,9 @@ overcast_sky_lum(fastf_t lz, fastf_t *Zenith, fastf_t *Sky_elmt)
  *	SENT LETTER TO CIE & TOYOTA JULY 7, 1992
  */
 fastf_t
-homogenous_sky_lum(fastf_t *Sky_elmt, fastf_t *Sun, fastf_t t_vl)
-      	              	/* vectors to a sky element and to sun */
-       	     		/* Turbidity factor. */
+homogenous_sky_lum(Sky_elmt, Sun, t_vl)
+vect_t	Sky_elmt, Sun;	/* vectors to a sky element and to sun */
+fastf_t	t_vl;		/* Turbidity factor. */
 {
 	return(0.);
 }
@@ -390,10 +393,10 @@ homogenous_sky_lum(fastf_t *Sky_elmt, fastf_t *Sun, fastf_t t_vl)
  *	Number 4, August 1986, pp. 127-8."
  */
 fastf_t
-clear_sky_lum(fastf_t lz, fastf_t *Sky_elmt, fastf_t *Sun, fastf_t *Zenith)
-       	   		/* luminance of the zenith */
-      	              	/* vectors to a sky element and to sun */
-      	       		/* vector to zenith */
+clear_sky_lum(lz, Sky_elmt, Sun, Zenith)
+fastf_t	lz;		/* luminance of the zenith */
+vect_t	Sky_elmt, Sun;	/* vectors to a sky element and to sun */
+vect_t	Zenith;		/* vector to zenith */
 {
 	fastf_t	cos_gamma;	/* cos(gamma) */
 	fastf_t	cos_z0;		/* cos(z0) */
@@ -433,7 +436,8 @@ bu_log("clear_sky_lum(lz=%g, ...) = %g\n", lz, lum );
  *	Units: W/m^2
  */
 fastf_t
-atmos_irradiance(fastf_t lambda)
+atmos_irradiance(lambda)
+fastf_t	lambda;
 {
 #define NSIRRAD 992 /* Number of entries in solar irradiance table. */
 
@@ -1470,8 +1474,8 @@ atmos_irradiance(fastf_t lambda)
  *	pp. 870-3.
  */
 fastf_t
-ozone_absorption(fastf_t lambda)
-       	       	/* Wavelength of light.  Units: nm. */
+ozone_absorption(lambda)
+fastf_t	lambda;	/* Wavelength of light.  Units: nm. */
 {
 #define NABSORP 38 /* Number of entries in absorption coefficient table. */
 
@@ -1554,7 +1558,8 @@ ozone_absorption(fastf_t lambda)
  *	pp. 1031-40.
  */
 void
-spectral_dist_table(fastf_t lambda, fastf_t *e_mean, fastf_t *v1, fastf_t *v2)
+spectral_dist_table(lambda, e_mean, v1, v2)
+fastf_t	lambda, *e_mean, *v1, *v2;
 {
 	fastf_t		ratio;
 	int		j;
@@ -1644,13 +1649,13 @@ spectral_dist_table(fastf_t lambda, fastf_t *e_mean, fastf_t *v1, fastf_t *v2)
  *	Units: W/m^2/nm/sr
  */
 fastf_t	
-skylight_spectral_dist(fastf_t lambda, fastf_t *Zenith, fastf_t *Sky_elmt, fastf_t *Sun, int weather, fastf_t t_vl)
-       	       		/* Wavelength of light (nm). */
-      	       		/* Vector to sky zenith. */
-      	         	/* Vector to sky element of interest. */
-      	    		/* Vector to sun. */
-   	        	/* Weather condition. */
-       	     		/* Turbidity factor. */
+skylight_spectral_dist(lambda, Zenith, Sky_elmt, Sun, weather, t_vl)
+fastf_t	lambda;		/* Wavelength of light (nm). */
+vect_t	Zenith;		/* Vector to sky zenith. */
+vect_t	Sky_elmt;	/* Vector to sky element of interest. */
+vect_t	Sun;		/* Vector to sun. */
+int	weather;	/* Weather condition. */
+fastf_t	t_vl;		/* Turbidity factor. */
 {
 	fastf_t	e_mean, v1, v2,
 		lum,	/* Luminance at a given point in the sky (cd/m^2). */
@@ -1740,11 +1745,11 @@ if (lum <= 0.) {/*bu_log("lum = %g\n", lum);*/ return(0.);}
  *	Units: W/m^2/nm/sr.
  */
 fastf_t
-sun_radiance(fastf_t lambda, fastf_t alpha, fastf_t beta, fastf_t sun_alt, fastf_t sun_sang)
-       	       		/* Wavelength of light (nm). */
-	            	/* Coefficients of turbidity. */
-	        	/* Altitude of sun above horizon. */
-	         	/* Solid angle of sun as seen from ground. */
+sun_radiance(lambda, alpha, beta, sun_alt, sun_sang)
+fastf_t	lambda,		/* Wavelength of light (nm). */
+	alpha, beta,	/* Coefficients of turbidity. */
+	sun_alt,	/* Altitude of sun above horizon. */
+	sun_sang;	/* Solid angle of sun as seen from ground. */
 {
 	fastf_t	cm,	/* Attenuation factor according to diffusion of */
 			/* aerosol (unitless?). */
@@ -1788,11 +1793,11 @@ bu_log("sun radiance = %g\n", ls);
  *	SHOULD CONTACT TOYOTA TO UNDERSTAND WHAT THEY DID.
  */
 fastf_t
-fresnel_refl(fastf_t cos_eps, fastf_t n1, fastf_t n2)
-       	        	/* Cosine of angle of incidence on the medium. */
-	   		/* Index of refraction of material (usually air)
+fresnel_refl(cos_eps, n1, n2)
+fastf_t	cos_eps,	/* Cosine of angle of incidence on the medium. */
+	n1,		/* Index of refraction of material (usually air)
 			 * in contact with the medium under test. */
-	   		/* Index of refraction of the medium. */
+	n2;		/* Index of refraction of the medium. */
 {
 	fastf_t	refl;		/* Returned reflectance. */
 	fastf_t	p_parallel;	/* Reflectance for a plane-polarized beam
@@ -1833,9 +1838,9 @@ fresnel_refl(fastf_t cos_eps, fastf_t n1, fastf_t n2)
  *	coefficient (1/m).
  */
 fastf_t
-absorp_coeff(fastf_t lambda, char *material)
-       	       		/* wavelength (nm) */
-    	          
+absorp_coeff(lambda, material)
+fastf_t	lambda;		/* wavelength (nm) */
+char	*material;
 {
 	char	mfile[80];
 	fastf_t	a, l,
@@ -1895,11 +1900,11 @@ absorp_coeff(fastf_t lambda, char *material)
  *	Data files are 3 column ascii: wavelength, angle, reflectance.
  */
 fastf_t
-reflectance(fastf_t lambda, fastf_t alpha, fastf_t *refl, int lines)
-       	       		/* Wavelength (nm). */
-       	      		/* Angle of incident light, in degrees. */
-       	      		/* Reflectance data. */
-   	      		/* How many lines of data in refl[]. */
+reflectance(lambda, alpha, refl, lines)
+fastf_t	lambda;		/* Wavelength (nm). */
+fastf_t	alpha;		/* Angle of incident light, in degrees. */
+fastf_t	*refl;		/* Reflectance data. */
+int	lines;		/* How many lines of data in refl[]. */
 {
 	fastf_t	alpha_hh, alpha_hl, alpha_lh, alpha_ll,
 		beta_hh,  beta_hl,  beta_lh,  beta_ll,
@@ -1998,10 +2003,10 @@ bu_log("reflectance(lambda=%g, alpha=%g)=%g\n", lambda, alpha, beta );
  *	Table row: wavelength, x_bar(lambda), y_bar(lambda), z_bar(lambda).
  */
 void
-lambda_to_rgb(fastf_t lambda, fastf_t irrad, fastf_t *rgb)
-       	       	/* Input, wavelength of light. */
-       	      	/* Input, irradiance of light. */
-       	     	/* Output, RGB approximation of input. */
+lambda_to_rgb(lambda, irrad, rgb)
+fastf_t	lambda;	/* Input, wavelength of light. */
+fastf_t	irrad;	/* Input, irradiance of light. */
+fastf_t	*rgb;	/* Output, RGB approximation of input. */
 {
 
 /* Number of entries in color matching table. */
@@ -2161,13 +2166,13 @@ bu_log("rgb = (%g %g %g), irrad = %g\n",r,g,b,irrad);
  *
  */
 fastf_t
-background_light(fastf_t lambda, struct toyota_specific *ts, fastf_t *Refl, fastf_t *Sun, fastf_t t_vl, struct shadework *swp)
-       			       	/* Wavelength of light (nm). */
-                      	    
-      			     	/* Regularly reflected ray. */
-      			    	/* Vector pointing to sun. */
-       			     	/* Atmospheric turbidity. */
-                	     	/* Holds surface normal. */
+background_light(lambda, ts, Refl, Sun, t_vl, swp)
+fastf_t			lambda;	/* Wavelength of light (nm). */
+struct toyota_specific	*ts;
+vect_t			Refl;	/* Regularly reflected ray. */
+vect_t			Sun;	/* Vector pointing to sun. */
+fastf_t			t_vl;	/* Atmospheric turbidity. */
+struct shadework	*swp;	/* Holds surface normal. */
 {
 	fastf_t	alpha0, alpha1, alpha_c,
 		ang,
@@ -2337,7 +2342,11 @@ bu_log("irradiance = %g\n\n", irradiance);
  *		    any weather conditions."
  */
 HIDDEN int
-toyota_render(register struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
+toyota_render(ap, pp, swp, dp)
+register struct application *ap;
+struct partition	*pp;
+struct shadework	*swp;
+char	*dp;
 {
 	fastf_t	direct_sunlight,
 		dist,			/* Distance light travels (m). */

@@ -56,7 +56,7 @@ static struct tms tms0;
  *			R T _ P R E P _ T I M E R
  */
 void
-rt_prep_timer(void)
+rt_prep_timer()
 {
 	(void)time(&time0);
 	(void)times(&tms0);
@@ -72,7 +72,9 @@ rt_prep_timer(void)
  *  Times returned will never be zero.
  */
 double
-rt_get_timer(struct bu_vls *vp, double *elapsed)
+rt_get_timer( vp, elapsed )
+struct bu_vls	*vp;
+double		*elapsed;
 {
 	long	now;
 	double	user_cpu_secs;
@@ -120,7 +122,8 @@ rt_get_timer(struct bu_vls *vp, double *elapsed)
  *  Compatability routine
  */
 double
-rt_read_timer(char *str, int len)
+rt_read_timer(str,len)
+char *str;
 {
 	struct bu_vls	vls;
 	double		cpu;

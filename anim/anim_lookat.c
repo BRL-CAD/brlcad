@@ -51,13 +51,15 @@ int frame = 0;
 int print_mode = LOOKAT_SCRIPT;
 int print_viewsize = 0;
 
-int get_args(int argc, char **argv);
-extern void anim_dirn2mat(fastf_t *, const fastf_t *, const fastf_t *);
-extern int anim_mat2ypr(fastf_t *, fastf_t *);
-extern int anim_mat2quat(fastf_t *, const fastf_t *);
+int get_args();
+extern void anim_dirn2mat();
+extern int anim_mat2ypr();
+extern int anim_mat2quat();
 
 int
-main(int argc, char **argv)
+main(argc,argv)
+int argc;
+char **argv;
 {
 	fastf_t time, vsize=0.0;
 	vect_t eye,look,dir, angles, norm, temp;
@@ -128,7 +130,9 @@ main(int argc, char **argv)
 
 #define OPT_STR "f:yqv"
 
-int get_args(int argc, char **argv)
+int get_args(argc,argv)
+int argc;
+char **argv;
 {
 	int c;
 	while ( (c=bu_getopt(argc,argv,OPT_STR)) != EOF) {

@@ -43,8 +43,8 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 
 RT_EXTERN(void		rt_tree_kill_dead_solid_refs, (union tree *tp));
 
-HIDDEN struct region *rt_getregion(struct rt_i *rtip, register const char *reg_name);
-HIDDEN void	rt_tree_region_assign(register union tree *tp, register const struct region *regionp);
+HIDDEN struct region *rt_getregion();
+HIDDEN void	rt_tree_region_assign();
 
 /*
  *  Also used by converters in conv/ directory.
@@ -135,11 +135,11 @@ const struct db_tree_state	rt_initial_tree_state = {
  *  This routine must be prepared to run in parallel.
  */
 /* ARGSUSED */
-HIDDEN int rt_gettree_region_start(struct db_tree_state *tsp, struct db_full_path *pathp, const struct rt_comb_internal *combp, genptr_t client_data)
-/*const*/                     	     
-/*const*/                    	       
-                             	       
-        			            
+HIDDEN int rt_gettree_region_start( tsp, pathp, combp, client_data )
+/*const*/ struct db_tree_state	*tsp;
+/*const*/ struct db_full_path	*pathp;
+const struct rt_comb_internal	*combp;
+genptr_t			client_data;
 {
 	RT_CK_RTI(tsp->ts_rtip);
 	RT_CK_RESOURCE(tsp->ts_resp);
@@ -166,11 +166,11 @@ HIDDEN int rt_gettree_region_start(struct db_tree_state *tsp, struct db_full_pat
  *  Therefore, everything which referred to the tree has been moved
  *  out into the serial section.  (rt_tree_region_assign, rt_bound_tree)
  */
-HIDDEN union tree *rt_gettree_region_end(register struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
-         /*const*/                     	     
-/*const*/                    	       
-          			         
-        			            
+HIDDEN union tree *rt_gettree_region_end( tsp, pathp, curtree, client_data )
+register /*const*/ struct db_tree_state	*tsp;
+/*const*/ struct db_full_path	*pathp;
+union tree			*curtree;
+genptr_t			client_data;
 {
 	struct region		*rp;
 	struct directory	*dp;
@@ -333,7 +333,10 @@ HIDDEN union tree *rt_gettree_region_end(register struct db_tree_state *tsp, str
  *  thread will be using the same hash, and will thus wait for the
  *  proper semaphore.
  */
-HIDDEN struct soltab *rt_find_identical_solid(register const matp_t mat, register struct directory *dp, struct rt_i *rtip)
+HIDDEN struct soltab *rt_find_identical_solid( mat, dp, rtip )
+register const matp_t		mat;
+register struct directory	*dp;
+struct rt_i			*rtip;
 {
 	register struct soltab	*stp = RT_SOLTAB_NULL;
 	int			hash;
@@ -463,11 +466,11 @@ more_checks:
  *
  *  This routine must be prepared to run in parallel.
  */
-HIDDEN union tree *rt_gettree_leaf(struct db_tree_state *tsp, struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data)
-/*const*/                     	     
-                   		       
-/*const*/                      	    
-        			            
+HIDDEN union tree *rt_gettree_leaf( tsp, pathp, ip, client_data )
+/*const*/ struct db_tree_state	*tsp;
+struct db_full_path		*pathp;
+/*const*/ struct rt_db_internal	*ip;
+genptr_t			client_data;
 {
 	register struct soltab	*stp;
 	union tree		*curtree;
@@ -634,7 +637,8 @@ found_it:
  *	rt_kill_deal_solid_refs()
  */
 void
-rt_free_soltab(struct soltab *stp)
+rt_free_soltab( stp )
+struct soltab	*stp;
 {
 	int	hash;
 
@@ -702,7 +706,12 @@ rt_free_soltab(struct soltab *stp)
  *	-1	On major error
  */
 int
-rt_gettrees_muves(struct rt_i *rtip, const char **attrs, int argc, const char **argv, int ncpus)
+rt_gettrees_muves( rtip, attrs, argc, argv, ncpus )
+struct rt_i	*rtip;
+const char	**attrs;
+int		argc;
+const char	**argv;
+int		ncpus;
 {
 	register struct soltab	*stp;
 	register struct region	*regp;
@@ -876,7 +885,12 @@ again:
  *      -2      If there were unresolved names
  */
 int
-rt_gettrees_and_attrs(struct rt_i *rtip, const char **attrs, int argc, const char **argv, int ncpus)
+rt_gettrees_and_attrs( rtip, attrs, argc, argv, ncpus )
+struct rt_i	*rtip;
+const char	**attrs;
+int		argc;
+const char	**argv;
+int		ncpus;
 {
 	return( rt_gettrees_muves( rtip, attrs, argc, argv, ncpus ) );
 }
@@ -895,7 +909,9 @@ rt_gettrees_and_attrs(struct rt_i *rtip, const char **attrs, int argc, const cha
  *  Note: -2 returns from rt_gettrees_and_attrs are filtered.
  */
 int
-rt_gettree(struct rt_i *rtip, const char *node)
+rt_gettree( rtip, node )
+struct rt_i	*rtip;
+const char	*node;
 {
   int rv;
   
@@ -912,7 +928,11 @@ rt_gettree(struct rt_i *rtip, const char *node)
 }
 
 int
-rt_gettrees(struct rt_i *rtip, int argc, const char **argv, int ncpus)
+rt_gettrees( rtip, argc, argv, ncpus )
+struct rt_i	*rtip;
+int		argc;
+const char	**argv;
+int		ncpus;
 {
   int rv;
   rv = rt_gettrees_and_attrs( rtip, NULL, argc, argv, ncpus );
@@ -939,7 +959,10 @@ rt_gettrees(struct rt_i *rtip, int argc, const char **argv, int ncpus)
  *	-1	failure (tree_min and tree_max may have been altered)
  */
 int
-rt_bound_tree(register const union tree *tp, fastf_t *tree_min, fastf_t *tree_max)
+rt_bound_tree( tp, tree_min, tree_max )
+register const union tree	*tp;
+vect_t				tree_min;
+vect_t				tree_max;
 {	
 	vect_t	r_min, r_max;		/* rpp for right side of tree */
 
@@ -1012,7 +1035,8 @@ rt_bound_tree(register const union tree *tp, fastf_t *tree_min, fastf_t *tree_ma
  *  Convert any references to "dead" solids into NOP nodes.
  */
 void
-rt_tree_kill_dead_solid_refs(register union tree *tp)
+rt_tree_kill_dead_solid_refs( tp )
+register union tree	*tp;
 {	
 
 	RT_CK_TREE(tp);
@@ -1168,7 +1192,8 @@ top:
  *  pointer to the first character after the last slash.
  */
 const char *
-rt_basename(register const char *str)
+rt_basename( str )
+register const char	*str;
 {	
 	register const char	*p = str;
 	while( *p != '\0' )
@@ -1189,7 +1214,9 @@ rt_basename(register const char *str)
  *  time in the tree, then this routine will simply return the first one.
  */
 HIDDEN struct region *
-rt_getregion(struct rt_i *rtip, register const char *reg_name)
+rt_getregion( rtip, reg_name )
+struct rt_i		*rtip;
+register const char	*reg_name;
 {	
 	register struct region	*regp;
 	register const char *reg_base = rt_basename(reg_name);
@@ -1218,7 +1245,10 @@ rt_getregion(struct rt_i *rtip, register const char *reg_name)
  *  Returns 0 for failure (and prints a diagnostic), or 1 for success.
  */
 int
-rt_rpp_region(struct rt_i *rtip, const char *reg_name, fastf_t *min_rpp, fastf_t *max_rpp)
+rt_rpp_region( rtip, reg_name, min_rpp, max_rpp )
+struct rt_i	*rtip;
+const char	*reg_name;
+fastf_t		*min_rpp, *max_rpp;
 {	
 	register struct region	*regp;
 
@@ -1237,7 +1267,10 @@ rt_rpp_region(struct rt_i *rtip, const char *reg_name, fastf_t *min_rpp, fastf_t
  *  Convert TO fastf_t FROM 3xfloats (for database) 
  */
 void
-rt_fastf_float(register fastf_t *ff, register const dbfloat_t *fp, register int n)
+rt_fastf_float( ff, fp, n )
+register fastf_t *ff;
+register const dbfloat_t *fp;
+register int n;
 {
 #	include "noalias.h"
 	while( n-- )  {
@@ -1254,7 +1287,9 @@ rt_fastf_float(register fastf_t *ff, register const dbfloat_t *fp, register int 
  *  Convert TO fastf_t matrix FROM dbfloats (for database) 
  */
 void
-rt_mat_dbmat(register fastf_t *ff, register const dbfloat_t *dbp)
+rt_mat_dbmat( ff, dbp )
+register fastf_t *ff;
+register const dbfloat_t *dbp;
 {
 
 	*ff++ = *dbp++;
@@ -1284,7 +1319,9 @@ rt_mat_dbmat(register fastf_t *ff, register const dbfloat_t *dbp)
  *  Convert FROM fastf_t matrix TO dbfloats (for updating database) 
  */
 void
-rt_dbmat_mat(register dbfloat_t *dbp, register const fastf_t *ff)
+rt_dbmat_mat( dbp, ff )
+register dbfloat_t *dbp;
+register const fastf_t *ff;
 {
 
 	*dbp++ = (dbfloat_t) *ff++;
@@ -1316,7 +1353,9 @@ rt_dbmat_mat(register dbfloat_t *dbp, register const fastf_t *ff)
  *  Returns soltab pointer, or RT_SOLTAB_NULL.
  */
 struct soltab *
-rt_find_solid(const struct rt_i *rtip, register const char *name)
+rt_find_solid( rtip, name )
+const struct rt_i	*rtip;
+register const char	*name;
 {
 	register struct soltab	*stp;
 	struct directory	*dp;
@@ -1338,7 +1377,9 @@ rt_find_solid(const struct rt_i *rtip, register const char *name)
  *			R T _ O P T I M _ T R E E
  */
 void
-rt_optim_tree(register union tree *tp, struct resource *resp)
+rt_optim_tree( tp, resp )
+register union tree	*tp;
+struct resource		*resp;
 {
 	register union tree	**sp;
 	register union tree	*low;
@@ -1402,7 +1443,9 @@ rt_optim_tree(register union tree *tp, struct resource *resp)
  *			R T _ T R E E _ R E G I O N _ A S S I G N
  */
 HIDDEN void
-rt_tree_region_assign(register union tree *tp, register const struct region *regionp)
+rt_tree_region_assign( tp, regionp )
+register union tree	*tp;
+register const struct region	*regionp;
 {
 	RT_CK_TREE(tp);
 	RT_CK_REGION(regionp);

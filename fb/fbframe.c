@@ -34,7 +34,8 @@ char *Usage="[-h] [-F framebuffer]\n\
 			exit(-1); }
 
 int
-main(int argc, char **argv)
+main(argc, argv)
+char **argv;
 {
 	register int c;
 	register int	x;

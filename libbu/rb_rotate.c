@@ -41,7 +41,11 @@ static const char libbu_rb_rotate_RCSid[] = "@(#) $Header$";
  *	of the routine called LEFT-ROTATE on p. 266 of Cormen et al,
  *	with modification on p. 285.
  */
-void _rb_rot_left (struct bu_rb_node *x, int order)
+void _rb_rot_left (x, order)
+
+struct bu_rb_node	*x;
+int			order;
+
 {
     struct bu_rb_node	*y;		/* x's child to pivot up */
     struct bu_rb_node	*beta;		/* y's child in direction of rot. */
@@ -89,7 +93,11 @@ void _rb_rot_left (struct bu_rb_node *x, int order)
  *	and the order to be rotated.  _rb_rot_right() is hacked from
  *	_rb_rot_left() above.
  */
-void _rb_rot_right (struct bu_rb_node *y, int order)
+void _rb_rot_right (y, order)
+
+struct bu_rb_node	*y;
+int		order;
+
 {
     struct bu_rb_node	*x;		/* y's child to pivot up */
     struct bu_rb_node	*beta;		/* x's child in direction of rot. */

@@ -38,13 +38,13 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
  *  'scale' is the width, in mm, of one character.
  */
 void
-bn_vlist_3string(struct bu_list *vhead, struct bu_list *free_hd, const char *string, const fastf_t *origin, const fastf_t *rot, double scale)
-              	       
-              	         	/* source of free vlists */
-          	        	/* string of chars to be plotted */
-             	       		/* lower left corner of 1st char */
-           	    		/* Transform matrix (WARNING: may xlate) */
-      		      		/* scale factor to change 1x1 char sz */
+bn_vlist_3string( vhead, free_hd, string, origin, rot, scale )
+struct bu_list	*vhead;
+struct bu_list	*free_hd;	/* source of free vlists */
+const char	*string;	/* string of chars to be plotted */
+const point_t	origin;		/* lower left corner of 1st char */
+const mat_t	rot;		/* Transform matrix (WARNING: may xlate) */
+double		scale;		/* scale factor to change 1x1 char sz */
 {
 	register unsigned char *cp;
 	double	offset;			/* offset of char from given x,y */
@@ -121,14 +121,14 @@ bn_vlist_3string(struct bu_list *vhead, struct bu_list *free_hd, const char *str
  *  in the X-Y plane.
  */
 void
-bn_vlist_2string(struct bu_list *vhead, struct bu_list *free_hd, const char *string, double x, double y, double scale, double theta)
-              	       
-              	         	/* source of free vlists */
-          	        	/* string of chars to be plotted */
-      	  			/* x,y of lower left corner of 1st char */
-      	  
-      	      			/* scale factor to change 1x1 char sz */
-      	      			/* degrees ccw from X-axis */
+bn_vlist_2string( vhead, free_hd, string, x, y, scale, theta )
+struct bu_list	*vhead;
+struct bu_list	*free_hd;	/* source of free vlists */
+const char	*string;	/* string of chars to be plotted */
+double	x;			/* x,y of lower left corner of 1st char */
+double	y;
+double	scale;			/* scale factor to change 1x1 char sz */
+double	theta;			/* degrees ccw from X-axis */
 {
 	mat_t	mat;
 	vect_t	p;

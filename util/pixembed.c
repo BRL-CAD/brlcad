@@ -40,7 +40,7 @@ int	yout = 512;
 
 int	border_inset = 0;		/* Sometimes border pixels are bad */
 
-void	load_buffer(void), write_buffer(void);
+void	load_buffer(), write_buffer();
 
 static	char usage[] = "\
 Usage: pixembed [-h] [-b border_inset] \n\
@@ -51,7 +51,8 @@ Usage: pixembed [-h] [-b border_inset] \n\
  *			G E T _ A R G S
  */
 int
-get_args(int argc, register char **argv)
+get_args( argc, argv )
+register char **argv;
 {
 	register int c;
 
@@ -115,7 +116,9 @@ get_args(int argc, register char **argv)
  *			M A I N
  */
 int
-main(int argc, char **argv)
+main( argc, argv )
+int	argc;
+char	**argv;
 {
 	int	ydup;
 	int	i;
@@ -173,7 +176,7 @@ main(int argc, char **argv)
  *  and duplicate the border pixels.
  */
 void
-load_buffer(void)
+load_buffer()
 {
 	register unsigned char	r,g,b;
 	register unsigned char	*cp;
@@ -215,7 +218,7 @@ load_buffer(void)
  *  Write the buffer to stdout, with error checking.
  */
 void
-write_buffer(void)
+write_buffer()
 {
 	if( fwrite( obuf, 3, xout, stdout ) != xout )  {
 		perror("pixembed stdout fwrite");

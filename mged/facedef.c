@@ -61,8 +61,8 @@ char *p_nupnt[] = {
 	"Enter Z of fixed point: "
 };
 
-static void	get_pleqn(fastf_t *plane, char **argv), get_rotfb(fastf_t *plane, char **argv, const struct rt_arb_internal *arb), get_nupnt(fastf_t *plane, char **argv);
-static int	get_3pts(fastf_t *plane, char **argv, const struct bn_tol *tol);
+static void	get_pleqn(), get_rotfb(), get_nupnt();
+static int	get_3pts();
 
 /*
  *			F _ F A C E D E F
@@ -72,7 +72,11 @@ static int	get_3pts(fastf_t *plane, char **argv, const struct bn_tol *tol);
  * one of four functions before calculating new vertices.
  */
 int
-f_facedef(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_facedef(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
 {
 	short int 	i;
 	int		face,prod,plane;
@@ -311,7 +315,9 @@ end:
  * and puts the result into 'plane'.
  */
 static void
-get_pleqn(fastf_t *plane, char **argv)
+get_pleqn( plane, argv )
+plane_t	plane;
+char	*argv[];
 {
 	int i;
 
@@ -338,7 +344,10 @@ get_pleqn(fastf_t *plane, char **argv)
  *	-1	failure
  */
 static int
-get_3pts(fastf_t *plane, char **argv, const struct bn_tol *tol)
+get_3pts( plane, argv, tol)
+plane_t		plane;
+char		*argv[];
+const struct bn_tol	*tol;
 {
 	int i;
 	point_t	a,b,c;
@@ -368,7 +377,10 @@ get_3pts(fastf_t *plane, char **argv, const struct bn_tol *tol)
  * pointed to by 's_recp' are used if a vertex is chosen as fixed point.
  */
 static void
-get_rotfb(fastf_t *plane, char **argv, const struct rt_arb_internal *arb)
+get_rotfb(plane, argv, arb)
+plane_t	plane;
+char	*argv[];
+const struct rt_arb_internal	*arb;
 {
 	fastf_t rota, fb;
 	short int i,temp;
@@ -404,7 +416,9 @@ get_rotfb(fastf_t *plane, char **argv, const struct rt_arb_internal *arb)
  * passes through the input point.
  */
 static void
-get_nupnt(fastf_t *plane, char **argv)
+get_nupnt(plane, argv)
+plane_t	plane;
+char	*argv[];
 {
 	int	i;
 	point_t	pt;

@@ -60,9 +60,11 @@ struct was_op {			/* A wasatch "opcode" */
 } was_op;
 
 int
-main(int argc, char **argv)
+main(argc, argv)
+int argc;
+char **argv;
 {
-    FILE       *open_with_ext(char *basename, char *ext);
+    FILE       *open_with_ext();
     int 	oflag = 0;
     char       *out_name = NULL;
     char       *was_basename;
@@ -155,7 +157,9 @@ main(int argc, char **argv)
  */
 
 FILE *
-open_with_ext(char *basename, char *ext)
+open_with_ext( basename, ext )
+char * basename;
+char * ext;
 {
     char file_name[255];
     char ext_name[10];

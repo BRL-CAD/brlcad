@@ -76,7 +76,7 @@ typedef struct FBIO_ {
 	int	(*if_close)FB_ARGS((struct FBIO_ *ifp));				/* close device		*/
 	int	(*if_clear)FB_ARGS((struct FBIO_ *ifp, unsigned char *pp));		/* clear device 	*/
 	int	(*if_read)FB_ARGS((struct FBIO_ *ifp, int x, int y, unsigned char *pp, int count));		/* read pixels		*/
-	int	(*if_write)FB_ARGS((struct FBIO_ *ifp, int x, int y, const unsigned char *pp, int count));	/* write pixels		*/
+	int	(*if_write)FB_ARGS((struct FBIO_ *ifp, int x, int y, const unsigned char *pp, int count));		/* write pixels		*/
 	int	(*if_rmap)FB_ARGS((struct FBIO_ *ifp, ColorMap *cmap));		/* read colormap 	*/
 	int	(*if_wmap)FB_ARGS((struct FBIO_ *ifp, const ColorMap *cmap));		/* write colormap 	*/
 	int	(*if_view)FB_ARGS((struct FBIO_ *ifp, int xcent, int ycent, int xzoom, int yzoom));		/* set view		*/

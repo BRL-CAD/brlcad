@@ -67,7 +67,9 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
  *  Convert Matrix to Quaternion.
  */
 void
-quat_mat2quat(register fastf_t *quat, register const fastf_t *mat)
+quat_mat2quat( quat, mat )
+register quat_t	quat;
+register const mat_t	mat;
 {
 	fastf_t		tr;
 	FAST fastf_t	s;
@@ -134,7 +136,9 @@ quat_mat2quat(register fastf_t *quat, register const fastf_t *mat)
  *   otherwise.  We should normalize first (still yields same rotation).
  */
 void
-quat_quat2mat(register fastf_t *mat, register const fastf_t *quat)
+quat_quat2mat( mat, quat )
+register mat_t	mat;
+register const quat_t	quat;
 {
 	quat_t	q;
 
@@ -165,7 +169,8 @@ quat_quat2mat(register fastf_t *mat, register const fastf_t *quat)
  * Gives the euclidean distance between two quaternions.
  */
 double
-quat_distance(const fastf_t *q1, const fastf_t *q2)
+quat_distance( q1, q2 )
+const quat_t	q1, q2;
 {
 	quat_t	qtemp;
 
@@ -182,7 +187,9 @@ quat_distance(const fastf_t *q1, const fastf_t *q2)
  *   A rather poor name admittedly.
  */
 void
-quat_double(fastf_t *qout, const fastf_t *q1, const fastf_t *q2)
+quat_double( qout, q1, q2 )
+quat_t	qout;
+const quat_t q1, q2;
 {
 	quat_t	qtemp;
 	double	scale;
@@ -201,7 +208,9 @@ quat_double(fastf_t *qout, const fastf_t *q1, const fastf_t *q2)
  * [I believe they must be unit quaternions this to work]
  */
 void
-quat_bisect(fastf_t *qout, const fastf_t *q1, const fastf_t *q2)
+quat_bisect( qout, q1, q2 )
+quat_t	qout;
+const quat_t q1, q2;
 {
 	QADD2( qout, q1, q2 );
 	QUNITIZE( qout );
@@ -217,7 +226,10 @@ quat_bisect(fastf_t *qout, const fastf_t *q1, const fastf_t *q2)
  * Code based on code by Ken Shoemake
  */
 void
-quat_slerp(fastf_t *qout, const fastf_t *q1, const fastf_t *q2, double f)
+quat_slerp( qout, q1, q2, f )
+quat_t	qout;
+const quat_t q1, q2;
+double	f;
 {
 	double		omega;
 	double		cos_omega;
@@ -271,7 +283,10 @@ quat_slerp(fastf_t *qout, const fastf_t *q1, const fastf_t *q2, double f)
  *  Uses the method of successive bisection.
  */
 void
-quat_sberp(fastf_t *qout, const fastf_t *q1, const fastf_t *qa, const fastf_t *qb, const fastf_t *q2, double f)
+quat_sberp( qout, q1, qa, qb, q2, f )
+quat_t	qout;
+const quat_t q1, qa, qb, q2;
+double	f;
 {
 	quat_t	p1, p2, p3, p4, p5;
 
@@ -299,7 +314,9 @@ quat_sberp(fastf_t *qout, const fastf_t *q1, const fastf_t *qa, const fastf_t *q
  *   circle distance as well (since surface is convex).
  */
 void
-quat_make_nearest(fastf_t *q1, const fastf_t *q2)
+quat_make_nearest( q1, q2 )
+quat_t	q1;
+const quat_t q2;
 {
 	quat_t	qtemp;
 	double	d1, d2;
@@ -319,7 +336,9 @@ quat_make_nearest(fastf_t *q1, const fastf_t *q2)
  */
 /* DEBUG ROUTINE */
 void
-quat_print(const char *title, const fastf_t *quat)
+quat_print( title, quat )
+const char	*title;
+const quat_t	quat;
 {
 	int	i;
 	vect_t	axis;
@@ -343,7 +362,9 @@ quat_print(const char *title, const fastf_t *quat)
  *  Code by Ken Shoemake.
  */
 void
-quat_exp(fastf_t *out, const fastf_t *in)
+quat_exp( out, in )
+quat_t	out;
+const quat_t	in;
 {
 	FAST fastf_t	theta;
 	FAST fastf_t	scale;
@@ -364,7 +385,9 @@ quat_exp(fastf_t *out, const fastf_t *in)
  *  Code by Ken Shoemake.
  */
 void
-quat_log(fastf_t *out, const fastf_t *in)
+quat_log( out, in )
+quat_t	out;
+const quat_t in;
 {
 	FAST fastf_t	theta;
 	FAST fastf_t	scale;

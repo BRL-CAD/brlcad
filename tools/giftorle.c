@@ -59,12 +59,9 @@ static const char rcsid[] = "$Id$";
 
 #define LM_to_uint(a,b)			(((b)<<8)|(a))
 
-int ReadGIF(char *filename);
-int ReadColorMap(FILE *fd, int number, unsigned char (*buffer)[256]);
-int IgnoreExtention(FILE *fd), GetCode(FILE *fd, int code_size, int flag);
-int LWZReadByte(FILE *fd, int flag, int input_code_size);
-int ReadInterlaced(FILE *fd, int len, int height, unsigned char (*cmap)[256]);
-int ReadRaster(FILE *fd, int len, int height, unsigned char (*cmap)[256]);
+int ReadGIF();
+int ReadColorMap(), IgnoreExtention(), GetCode(), LWZReadByte();
+int ReadInterlaced(), ReadRaster();
 
 static rle_map out_map[3*(1<<8)];
 
@@ -84,7 +81,9 @@ struct {
 static int output_colormap = FALSE;
 
 int
-main(int argc, char **argv)
+main(argc,argv)
+int	argc;
+char	**argv;
 {
     int		oflag = 0, 
     nfname = 0;
@@ -111,7 +110,8 @@ main(int argc, char **argv)
 }
 
 int
-ReadGIF(char *filename)
+ReadGIF(filename)
+char	*filename;
 {
     unsigned char	buf[16];
     unsigned char	c;
@@ -187,7 +187,10 @@ ReadGIF(char *filename)
 }
 
 int
-ReadColorMap(FILE *fd, int number, unsigned char (*buffer)[256])
+ReadColorMap(fd,number,buffer)
+FILE			*fd;
+int				number;
+unsigned char	buffer[3][MAXCOLORMAPSIZE];
 {
     int				i;
     unsigned char	rgb[3];
@@ -203,7 +206,8 @@ ReadColorMap(FILE *fd, int number, unsigned char (*buffer)[256])
 }
 
 int
-IgnoreExtention(FILE *fd)
+IgnoreExtention(fd)
+FILE	*fd;
 {
     static char		buf[256];
     unsigned char	c;
@@ -219,7 +223,10 @@ IgnoreExtention(FILE *fd)
 }
 
 int
-GetCode(FILE *fd, int code_size, int flag)
+GetCode(fd, code_size, flag)
+FILE	*fd;
+int		code_size;
+int		flag;
 {
     static unsigned char	buf[280];
     static int				curbit,lastbit,done,last_byte;
@@ -262,7 +269,10 @@ GetCode(FILE *fd, int code_size, int flag)
 }
 
 int
-LWZReadByte(FILE *fd, int flag, int input_code_size)
+LWZReadByte(fd,flag,input_code_size)
+FILE	*fd;
+int		flag;
+int		input_code_size;
 {
     static int		fresh=FALSE;
     int				code,incode;
@@ -370,7 +380,10 @@ LWZReadByte(FILE *fd, int flag, int input_code_size)
 }
 
 int
-ReadInterlaced(FILE *fd, int len, int height, unsigned char (*cmap)[256])
+ReadInterlaced(fd,len,height,cmap)
+FILE	*fd;
+int		len,height;
+char	cmap[3][MAXCOLORMAPSIZE];
 {
     unsigned char		c;	
     int					v;
@@ -490,7 +503,10 @@ ReadInterlaced(FILE *fd, int len, int height, unsigned char (*cmap)[256])
 }
 
 int
-ReadRaster(FILE *fd, int len, int height, unsigned char (*cmap)[256])
+ReadRaster(fd,len,height,cmap)
+FILE	*fd;
+int		len,height;
+char	cmap[3][MAXCOLORMAPSIZE];
 {
     unsigned char		c;	
     int					v;

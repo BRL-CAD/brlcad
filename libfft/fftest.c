@@ -9,12 +9,12 @@ typedef struct {
 	double	im;	/* Imaginary Part */
 } COMPLEX;
 
-extern double cos(double), sin(double);
+extern double cos(), sin();
 
 /***** TEST ROUTINES *****/
 COMPLEX data[64];
 
-main(void)
+main()
 {
 	int	i;
 
@@ -36,7 +36,8 @@ main(void)
 	display(data, 64);
 }
 
-display(COMPLEX *dat, int num)
+display(dat, num)
+COMPLEX dat[]; int num;
 {
 	int	i;
 

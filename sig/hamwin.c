@@ -16,7 +16,9 @@ static int	maxinitlen = 0;
 static double	*hamwintab = NULL;
 
 void
-hamwin(double *data, int length)
+hamwin( data, length )
+double	*data;
+int	length;
 {
 	int	i;
 
@@ -38,7 +40,9 @@ hamwin(double *data, int length)
  * Complex Data Version.
  */
 void
-chamwin(COMPLEX *data, int length)
+chamwin( data, length )
+COMPLEX	*data;
+int	length;
 {
 	int	i;
 
@@ -64,7 +68,8 @@ chamwin(COMPLEX *data, int length)
  *  Returns zero on failure.
  */
 int
-init_hamwintab(int size)
+init_hamwintab( size )
+int size;
 {
 	int	i;
 	double	theta;

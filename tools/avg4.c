@@ -51,7 +51,9 @@ static int bit_count[16] = {0, 63, 63, 127, 63, 127, 127,
     192, 63, 127, 127, 192, 127, 192, 192, 255};
 
 int
-main(int argc, char **argv)
+main(argc, argv)
+int	argc;
+char	*argv[];
 {
     char	*infname = NULL, *outfname = NULL;
     char	*cmd = cmd_name( argv );

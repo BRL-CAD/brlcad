@@ -40,10 +40,10 @@ static const char libbu_ptbl_RCSid[] = "@(#)$Header$ (ARL)";
  *  Initialize struct & get storage for table
  */
 void
-bu_ptbl_init(struct bu_ptbl *b, int len, const char *str)
-              	   
-   		    		/* initial len.  Recommend 8 or 64 */
-          	     
+bu_ptbl_init(b, len, str)
+struct bu_ptbl	*b;
+int		len;		/* initial len.  Recommend 8 or 64 */
+const char	*str;
 {
 	if (bu_debug & BU_DEBUG_PTBL)
 		bu_log("bu_ptbl_init(%8x, len=%d, %s)\n", b, len, str);
@@ -61,7 +61,8 @@ bu_ptbl_init(struct bu_ptbl *b, int len, const char *str)
  *  Reset the table to have no elements, but retain any existing storage.
  */
 void
-bu_ptbl_reset(struct bu_ptbl *b)
+bu_ptbl_reset(b)
+struct bu_ptbl	*b;
 {
 	BU_CK_PTBL(b);
 	b->end = 0;
@@ -77,7 +78,9 @@ bu_ptbl_reset(struct bu_ptbl *b)
  *  Called "insert", for unknown reasons.
  */
 int
-bu_ptbl_ins(struct bu_ptbl *b, long int *p)
+bu_ptbl_ins(b, p)
+struct bu_ptbl	*b;
+long		*p;
 {
 	register int i;
 
@@ -111,7 +114,9 @@ bu_ptbl_ins(struct bu_ptbl *b, long int *p)
  * ordered list.  Someday....
  */
 int
-bu_ptbl_locate(const struct bu_ptbl *b, const long int *p)
+bu_ptbl_locate(b, p)
+const struct bu_ptbl	*b;
+const long		*p;
 {
 	register int		k;
 	register const long	**pp;
@@ -132,7 +137,9 @@ bu_ptbl_locate(const struct bu_ptbl *b, const long int *p)
  *  This is different than deleting them.
  */
 void
-bu_ptbl_zero(struct bu_ptbl *b, const long int *p)
+bu_ptbl_zero(b, p)
+struct bu_ptbl	*b;
+const long	*p;
 {
 	register int		k;
 	register const long	**pp;
@@ -158,7 +165,9 @@ bu_ptbl_zero(struct bu_ptbl *b, const long int *p)
  * ordered list.  Someday....
  */
 int
-bu_ptbl_ins_unique(struct bu_ptbl *b, long int *p)
+bu_ptbl_ins_unique(b, p)
+struct bu_ptbl	*b;
+long		*p;
 {
 	register int	k;
 	register long	**pp = b->buffer;
@@ -197,7 +206,9 @@ bu_ptbl_ins_unique(struct bu_ptbl *b, long int *p)
  * lot of it.
  */
 int
-bu_ptbl_rm(struct bu_ptbl *b, const long int *p)
+bu_ptbl_rm(b, p)
+struct bu_ptbl	*b;
+const long	*p;
 {
 	register int end = b->end, j, k, l;
 	register long **pp = b->buffer;
@@ -232,7 +243,9 @@ bu_ptbl_rm(struct bu_ptbl *b, const long int *p)
  *  There is no checking for duplication.
  */
 void
-bu_ptbl_cat(struct bu_ptbl *dest, const struct bu_ptbl *src)
+bu_ptbl_cat(dest, src)
+struct bu_ptbl		*dest;
+const struct bu_ptbl	*src;
 {
 	BU_CK_PTBL(dest);
 	BU_CK_PTBL(src);
@@ -259,7 +272,9 @@ bu_ptbl_cat(struct bu_ptbl *dest, const struct bu_ptbl *src)
  *  The search is a nasty n**2 one.  The tables are expected to be short.
  */
 void
-bu_ptbl_cat_uniq(struct bu_ptbl *dest, const struct bu_ptbl *src)
+bu_ptbl_cat_uniq(dest, src)
+struct bu_ptbl		*dest;
+const struct bu_ptbl	*src;
 {
 	register long	**p;
 
@@ -286,7 +301,8 @@ bu_ptbl_cat_uniq(struct bu_ptbl *dest, const struct bu_ptbl *src)
  *  and render this table unusable without a subsequent bu_ptbl_init().
  */
 void
-bu_ptbl_free(struct bu_ptbl *b)
+bu_ptbl_free(b)
+struct bu_ptbl	*b;
 {
 	BU_CK_PTBL(b);
 
@@ -305,7 +321,10 @@ bu_ptbl_free(struct bu_ptbl *b)
  *  This version maintained for source compatibility with existing NMG code.
  */
 int
-bu_ptbl(struct bu_ptbl *b, int func, long int *p)
+bu_ptbl(b, func, p)
+struct bu_ptbl	*b;
+int		func;
+long		*p;
 {
 	if (func == BU_PTBL_INIT) {
 		bu_ptbl_init(b, 64, "bu_ptbl() buffer[]");
@@ -344,7 +363,10 @@ bu_ptbl(struct bu_ptbl *b, int func, long int *p)
  *  Print a bu_ptbl array for inspection.
  */
 void
-bu_pr_ptbl(const char *title, const struct bu_ptbl *tbl, int verbose)
+bu_pr_ptbl( title, tbl, verbose )
+const char		*title;
+const struct bu_ptbl	*tbl;
+int			verbose;
 {
 	register long	**lp;
 
@@ -371,7 +393,9 @@ bu_pr_ptbl(const char *title, const struct bu_ptbl *tbl, int verbose)
  *	truncate a bu_ptbl
  */
 void
-bu_ptbl_trunc(struct bu_ptbl *tbl, int end)
+bu_ptbl_trunc( tbl, end )
+struct bu_ptbl		*tbl;
+int			end;
 {
 	BU_CK_PTBL(tbl);
 

@@ -100,14 +100,14 @@ Tk_PhotoImageFormat tkImgFmtPIX = {
  */
 
 static int
-FileMatchPIX(Tcl_Channel chan, const char *fileName, Tcl_Obj *format, int *widthPtr, int *heightPtr, Tcl_Interp *interp)
-                     
-                         	/* The name of the image file. */
-                    	/* User-specified format string, or NULL. */
-                              	/* The dimensions of the image are
+FileMatchPIX(chan, fileName, format, widthPtr, heightPtr, interp)
+    Tcl_Channel chan;
+    const char *fileName;	/* The name of the image file. */
+    Tcl_Obj *format;	/* User-specified format string, or NULL. */
+    int *widthPtr, *heightPtr;	/* The dimensions of the image are
 				 * returned here if the file is a valid
 				 * raw PIX file. */
-                       
+    Tcl_Interp *interp;
 {
     /* The format string must be nonnull and it must contain the word "pix". */
     /* If the user also specified the dimensions in the format string,
@@ -153,17 +153,18 @@ FileMatchPIX(Tcl_Channel chan, const char *fileName, Tcl_Obj *format, int *width
  */
 
 static int
-FileReadPIX(Tcl_Interp *interp, Tcl_Channel chan, const char *fileName, Tcl_Obj *format, Tk_PhotoHandle imageHandle, int destX, int destY, int width, int height, int srcX, int srcY)
-                       		/* Interpreter to use for reporting errors. */
-                     
-                         	/* The name of the image file. */
-                    		/* User-specified format string, or NULL. */
-                               	/* The photo image to write into. */
-                     		/* Coordinates of top-left pixel in
+FileReadPIX(interp, chan, fileName, format, imageHandle, destX, destY,
+	width, height, srcX, srcY)
+    Tcl_Interp *interp;		/* Interpreter to use for reporting errors. */
+    Tcl_Channel chan;
+    const char *fileName;	/* The name of the image file. */
+    Tcl_Obj *format;		/* User-specified format string, or NULL. */
+    Tk_PhotoHandle imageHandle;	/* The photo image to write into. */
+    int destX, destY;		/* Coordinates of top-left pixel in
 				 * photo image to be written to. */
-                      		/* Dimensions of block of photo image to
+    int width, height;		/* Dimensions of block of photo image to
 				 * be written to. */
-                   		/* Coordinates of top-left pixel to be used
+    int srcX, srcY;		/* Coordinates of top-left pixel to be used
 				 * in image being read. */
 {
     int fileWidth, fileHeight;
@@ -259,7 +260,11 @@ FileReadPIX(Tcl_Interp *interp, Tcl_Channel chan, const char *fileName, Tcl_Obj 
  */
 
 static int
-FileWritePIX(Tcl_Interp *interp, const char *fileName, Tcl_Obj *format, Tk_PhotoImageBlock *blockPtr)
+FileWritePIX(interp, fileName, format, blockPtr)
+    Tcl_Interp *interp;
+    const char *fileName;
+    Tcl_Obj *format;
+    Tk_PhotoImageBlock *blockPtr;
 {
     FILE *f;
     int w, h;

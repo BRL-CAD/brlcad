@@ -57,7 +57,10 @@ const struct bu_structparse rt_grp_parse[] = {
  *  			R T _ G R P _ P R E P
  */
 int
-rt_grp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
+rt_grp_prep( stp, ip, rtip )
+struct soltab		*stp;
+struct rt_db_internal	*ip;
+struct rt_i		*rtip;
 {
 	struct rt_grip_internal *gip;
 	register struct grip_specific *gripp;
@@ -85,7 +88,8 @@ rt_grp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
  *  			R T _ G R P _ P R I N T
  */
 void
-rt_grp_print(register const struct soltab *stp)
+rt_grp_print( stp )
+register const struct soltab *stp;
 {
 	register const struct grip_specific *gripp =
 		(struct grip_specific *)stp->st_specific;
@@ -113,7 +117,11 @@ rt_grp_print(register const struct soltab *stp)
  *	>0	HIT
  */
 int
-rt_grp_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
+rt_grp_shot( stp, rp, ap, seghead )
+struct soltab		*stp;
+register struct xray	*rp;
+struct application	*ap;
+struct seg		*seghead;
 {
 	return 0;	/* this has got to be the easiest */
 			/* RT routine I've written */
@@ -127,12 +135,12 @@ rt_grp_shot(struct soltab *stp, register struct xray *rp, struct application *ap
  *  Vectorizing version.
  */
 void
-rt_grp_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
-             	               /* An array of solid pointers */
-           		       /* An array of ray pointers */
-                               /* array of segs (results returned) */
-   		  	       /* Number of ray/object pairs */
-                  	    
+rt_grp_vshot( stp, rp, segp, n, ap )
+struct soltab	       *stp[]; /* An array of solid pointers */
+struct xray		*rp[]; /* An array of ray pointers */
+struct  seg            segp[]; /* array of segs (results returned) */
+int		  	    n; /* Number of ray/object pairs */
+struct application	*ap;
 {
 	return;
 }
@@ -144,7 +152,10 @@ rt_grp_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
  *  The normal is already filled in.
  */
 void
-rt_grp_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
+rt_grp_norm( hitp, stp, rp )
+register struct hit *hitp;
+struct soltab *stp;
+register struct xray *rp;
 {
 	rt_bomb("rt_grp_norm: grips should never be hit.\n");
 }
@@ -154,7 +165,10 @@ rt_grp_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
  *  Return the "curvature" of the grip.
  */
 void
-rt_grp_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
+rt_grp_curve( cvp, hitp, stp )
+register struct curvature *cvp;
+register struct hit *hitp;
+struct soltab *stp;
 {
 	rt_bomb("rt_grp_curve: nobody should be asking for curve of a grip.\n");
 }
@@ -170,7 +184,11 @@ rt_grp_curve(register struct curvature *cvp, register struct hit *hitp, struct s
  *  0 up to 1 and then back down to 0 again.
  */
 void
-rt_grp_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
+rt_grp_uv( ap, stp, hitp, uvp )
+struct application *ap;
+struct soltab *stp;
+register struct hit *hitp;
+register struct uvcoord *uvp;
 {
 	rt_bomb("rt_grp_uv: nobody should be asking for UV of a grip.\n");
 }
@@ -179,7 +197,8 @@ rt_grp_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
  *			R T _ G R P _ F R E E
  */
 void
-rt_grp_free(struct soltab *stp)
+rt_grp_free( stp )
+struct soltab *stp;
 {
 	register struct grip_specific *gripp =
 		(struct grip_specific *)stp->st_specific;
@@ -188,7 +207,7 @@ rt_grp_free(struct soltab *stp)
 }
 
 int
-rt_grp_class(void)
+rt_grp_class()
 {
 	return(0);
 }
@@ -203,7 +222,11 @@ rt_grp_class(void)
  *
  */
 int
-rt_grp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_grp_plot( vhead, ip, ttol, tol )
+struct bu_list		*vhead;
+struct rt_db_internal 	*ip;
+const struct rt_tess_tol *ttol;
+const struct bn_tol		*tol;
 {
 	struct rt_grip_internal	*gip;
 	vect_t xbase, ybase;	/* perpendiculars to normal */
@@ -256,7 +279,11 @@ rt_grp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
  *	 0	success
  */
 int
-rt_grp_import(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
+rt_grp_import( ip, ep, mat, dbip )
+struct rt_db_internal		*ip;
+const struct bu_external	*ep;
+const mat_t			mat;
+const struct db_i		*dbip;
 {
 	struct rt_grip_internal	*gip;
 	union record	*rp;
@@ -308,7 +335,11 @@ rt_grp_import(struct rt_db_internal *ip, const struct bu_external *ep, const fas
  *			R T _ G R P _ E X P O R T
  */
 int
-rt_grp_export(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
+rt_grp_export( ep, ip, local2mm, dbip )
+struct bu_external		*ep;
+const struct rt_db_internal	*ip;
+double				local2mm;
+const struct db_i		*dbip;
 {
 	struct rt_grip_internal	*gip;
 	union record		*rec;
@@ -333,7 +364,11 @@ rt_grp_export(struct bu_external *ep, const struct rt_db_internal *ip, double lo
 }
 
 int
-rt_grp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
+rt_grp_import5( ip, ep, mat, dbip )
+struct rt_db_internal		*ip;
+const struct bu_external	*ep;
+register const mat_t		mat;
+const struct db_i		*dbip;
 {
 	struct rt_grip_internal *gip;
 	fastf_t			vec[7];
@@ -383,7 +418,11 @@ rt_grp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
  *
  */
 int
-rt_grp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
+rt_grp_export5( ep, ip, local2mm, dbip )
+struct bu_external		*ep;
+const struct rt_db_internal	*ip;
+double				local2mm;
+const struct db_i		*dbip;
 {
 	struct rt_grip_internal *gip;
 	fastf_t			vec[7];
@@ -415,7 +454,11 @@ rt_grp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
  *  Additional lines are indented one tab, and give parameter values.
  */
 int
-rt_grp_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
+rt_grp_describe( str, ip, verbose, mm2local )
+struct bu_vls		*str;
+const struct rt_db_internal	*ip;
+int			verbose;
+double			mm2local;
 {
 	register struct rt_grip_internal	*gip =
 		(struct rt_grip_internal *)ip->idb_ptr;
@@ -443,7 +486,8 @@ rt_grp_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
  *  Free the storage associated with the rt_db_internal version of this solid.
  */
 void
-rt_grp_ifree(struct rt_db_internal *ip)
+rt_grp_ifree( ip )
+struct rt_db_internal	*ip;
 {
 	RT_CK_DB_INTERNAL(ip);
 	bu_free( ip->idb_ptr, "grip ifree" );
@@ -454,7 +498,12 @@ rt_grp_ifree(struct rt_db_internal *ip)
  *			R T _ G R P _ T E S S
  */
 int
-rt_grp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_grp_tess( r, m, ip, ttol, tol )
+struct nmgregion	**r;
+struct model		*m;
+struct rt_db_internal	*ip;
+const struct rt_tess_tol *ttol;
+const struct bn_tol		*tol;
 {
 	struct rt_grip_internal	*gip;
 

@@ -90,7 +90,11 @@ int sol_comp_dist (void *v1, void *v2)
 /*
  *			M K _ S O L I D
  */
-struct sol_name_dist *mk_solid (char *name, fastf_t dist)
+struct sol_name_dist *mk_solid (name, dist)
+
+char	*name;
+fastf_t	dist;
+
 {
     struct sol_name_dist	*sp;
 
@@ -106,7 +110,10 @@ struct sol_name_dist *mk_solid (char *name, fastf_t dist)
 /*
  *			F R E E _ S O L I D
  */
-void free_solid (char *vp)
+void free_solid (vp)
+
+char	*vp;
+
 {
     struct sol_name_dist	*sol = (struct sol_name_dist *) vp;
 
@@ -119,7 +126,11 @@ void free_solid (char *vp)
 /*
  *			P R I N T _ S O L I D
  */
-void print_solid (void *vp, int depth)
+void print_solid (vp, depth)
+
+void	*vp;
+int	depth;
+
 {
     struct sol_name_dist	*sol = vp;
 
@@ -133,7 +144,11 @@ void print_solid (void *vp, int depth)
  *
  *	Does nothing.  Returns 1.
  */
-static int rpt_hit (struct application *ap, struct partition *ph, struct seg *segs)
+static int rpt_hit (ap, ph, segs)
+
+struct application	*ap;
+struct partition	*ph;
+struct seg		*segs;
 {
     struct partition		*pp;
     struct seg			*sh;
@@ -219,12 +234,19 @@ static int rpt_hit (struct application *ap, struct partition *ph, struct seg *se
  *
  *	Does nothing.  Returns 1.
  */
-static int no_op (struct application *ap)
+static int no_op (ap)
+
+struct application	*ap;
+
 {
     return (1);
 }
 
-main (int argc, char **argv)
+main (argc, argv)
+
+int	argc;
+char	**argv;
+
 {
     struct application	ap;
     char		db_title[TITLE_LEN+1];

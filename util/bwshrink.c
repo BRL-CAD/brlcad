@@ -44,7 +44,9 @@ char *filename = "(stdin)";
  *	
  */
 void
-shrink_image(int w, int h, unsigned char *buffer, int Factor)
+shrink_image(w, h, buffer, Factor)
+unsigned char *buffer;
+int Factor, w, h;
 {
 	unsigned char *finalpixel;	/* output pixel pointer */
 	unsigned int p;		/* pixel sum/average */
@@ -76,7 +78,9 @@ shrink_image(int w, int h, unsigned char *buffer, int Factor)
  *	Undersample image pixels
  */
 void
-usample_image(int w, int h, unsigned char *buffer, int Factor)
+usample_image(w, h, buffer, Factor)
+unsigned char *buffer;
+int Factor, w, h;
 {
 	register int x, y;
 	register unsigned char *p;
@@ -101,7 +105,7 @@ int method = METH_BOXCAR;
 /*
  *	U S A G E --- tell user how to invoke this program, then exit
  */
-void usage(void)
+void usage()
 {
 	(void) fprintf(stderr,
 "Usage: %s [-u] [-h] [-w width] [-n scanlines] [-s squaresize]\n\
@@ -113,7 +117,9 @@ void usage(void)
 /*
  *	P A R S E _ A R G S --- Parse through command line flags
  */
-void parse_args(int ac, char **av)
+void parse_args(ac, av)
+int ac;
+char *av[];
 {
 	int  c;
 
@@ -169,7 +175,9 @@ void parse_args(int ac, char **av)
  *	Call parse_args to handle command line arguments first, then
  *	process input.
  */
-int main(int ac, char **av)
+int main(ac,av)
+int ac;
+char *av[];
 {
 	unsigned char *buffer = (unsigned char *)NULL;
 	int	size;

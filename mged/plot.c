@@ -44,7 +44,11 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
  *	grid, 3d w/color, |filter, infinite Z
  */
 int
-f_plot(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_plot(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int	argc;
+char	**argv;
 {
 	register struct solid		*sp;
 	register struct rt_vlist	*vp;
@@ -256,7 +260,11 @@ out:
 }
 
 int
-f_area(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_area(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int	argc;
+char	**argv;
 {
 	register struct solid		*sp;
 	register struct rt_vlist	*vp;

@@ -78,7 +78,12 @@ static int magic4x4[4][4] =  {
  *	if you don't want function call overhead.
  */
 void
-dithermap(int levels, double gamma, int (*rgbmap)[3], int *divN, int *modN, int (*magic)[16])
+dithermap( levels, gamma, rgbmap, divN, modN, magic )
+double gamma;
+int rgbmap[][3];
+int divN[256];
+int modN[256];
+int magic[16][16];
 {
     double N;
     register int i;
@@ -134,7 +139,12 @@ dithermap(int levels, double gamma, int (*rgbmap)[3], int *divN, int *modN, int 
  *	    divN[val] > magic[col][row] ? 1 : 0
  */
 void
-bwdithermap(int levels, double gamma, int *bwmap, int *divN, int *modN, int (*magic)[16])
+bwdithermap( levels, gamma, bwmap, divN, modN, magic )
+double gamma;
+int bwmap[];
+int divN[256];
+int modN[256];
+int magic[16][16];
 {
     double N;
     register int i;
@@ -178,7 +188,11 @@ bwdithermap(int levels, double gamma, int *bwmap, int *divN, int *modN, int (*ma
  *	range.
  */
 void
-make_square(double N, int *divN, int *modN, int (*magic)[16])
+make_square( N, divN, modN, magic )
+double N;
+int divN[256];
+int modN[256];
+int magic[16][16] ;
 {
     register int i, j, k, l;
     double magicfact;
@@ -229,7 +243,10 @@ make_square(double N, int *divN, int *modN, int (*magic)[16])
  * 	see "Note:" in dithermap comment.
  */
 int
-dithergb(int x, int y, int r, int g, int b, int levels, int *divN, int *modN, int (*magic)[16])
+dithergb( x, y, r, g, b, levels, divN, modN, magic )
+int divN[256];
+int modN[256];
+int magic[16][16];
 {
     int col = x % 16, row = y % 16;
 
@@ -257,7 +274,10 @@ dithergb(int x, int y, int r, int g, int b, int levels, int *divN, int *modN, in
  * 	see "Note:" in bwdithermap comment.
  */
 int
-ditherbw(int x, int y, int val, int *divN, int *modN, int (*magic)[16])
+ditherbw( x, y, val, divN, modN, magic )
+int divN[256];
+int modN[256];
+int magic[16][16];
 {
     int col = x % 16, row = y % 16;
 

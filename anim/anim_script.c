@@ -44,11 +44,11 @@
 #define M_PI	3.14159265358979323846
 #endif
 
-int		get_args(int argc, char **argv);
-extern int	anim_steer_mat(fastf_t *, fastf_t *, int);
-extern void	anim_quat2mat(fastf_t *, const fastf_t *);
-extern void	anim_v_unpermute(fastf_t *);
-extern void	anim_mat_print(FILE *, const fastf_t *, int);
+int		get_args();
+extern int	anim_steer_mat();
+extern void	anim_quat2mat();
+extern void	anim_v_unpermute();
+extern void	anim_mat_print();
 
 extern int bu_optind;
 extern char *bu_optarg;
@@ -63,9 +63,11 @@ mat_t m_axes, m_rev_axes; /* rotational analogue of centroid */
 char mat_cmd[10];   /* default is lmul */
 
 int
-main(int argc, char **argv)
+main(argc,argv)
+int argc;
+char **argv;
 {
-	void anim_dx_y_z2mat(fastf_t *, double, double, double), anim_add_trans(fastf_t *, const fastf_t *, const fastf_t *);
+	void anim_dx_y_z2mat(), anim_add_trans();
 	fastf_t yaw, pitch, roll;
 	vect_t point, zero;
 	quat_t quat;
@@ -173,12 +175,14 @@ main(int argc, char **argv)
 
 #define OPT_STR	"a:b:c:d:f:m:pqrstv:"
 
-int get_args(int argc, char **argv)
+int get_args(argc,argv)
+int argc;
+char **argv;
 {
 	
 	int c, i, yes;
 	double yaw,pch,rll;
-	void anim_dx_y_z2mat(fastf_t *, double, double, double), anim_dz_y_x2mat(fastf_t *, double, double, double);
+	void anim_dx_y_z2mat(), anim_dz_y_x2mat();
 	rotate = translate = 1; /* defaults */
 	quaternion = permute = 0;
 	strcpy(mat_cmd, "lmul");

@@ -69,11 +69,11 @@ const char *base, char *value));
  *  Convert "visible" flag to "invisible" variable 
  */
 void
-light_cvt_visible(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value)
-                                    	     	/* structure description */
-                   			      	/* struct member name */
-    					      	/* begining of structure */
-          				       	/* string containing value */
+light_cvt_visible( sdp, name, base, value )
+register const struct bu_structparse	*sdp;	/* structure description */
+register const char			*name;	/* struct member name */
+char					*base;	/* begining of structure */
+const char				*value;	/* string containing value */
 {
 	struct light_specific *lsp = (struct light_specific *)base;
 
@@ -97,11 +97,11 @@ light_cvt_visible(register const struct bu_structparse *sdp, register const char
  *
  */
 static void
-light_pt_set(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value)
-                                    	     	/* structure description */
-                   			      	/* struct member name */
-    					      	/* begining of structure */
-          				       	/* string containing value */
+light_pt_set( sdp, name, base, value )
+register const struct bu_structparse	*sdp;	/* structure description */
+register const char			*name;	/* struct member name */
+char					*base;	/* begining of structure */
+const char				*value;	/* string containing value */
 {
 	struct light_specific *lsp = (struct light_specific *)base;
 	fastf_t *p = (fastf_t *)(base+sdp->sp_offset);
@@ -173,9 +173,9 @@ extern double AmbientIntensity;
 extern const struct bn_table	*spectrum;	/* from rttherm/viewtherm.c */
 #endif
 
-HIDDEN int	light_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, struct mfuncs *mfp, struct rt_i *rtip), light_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
-HIDDEN void	light_print(register struct region *rp, char *dp);
-void		light_free(char *cp);
+HIDDEN int	light_setup(), light_render();
+HIDDEN void	light_print();
+void		light_free();
 
 struct mfuncs light_mfuncs[] = {
 	{MF_MAGIC,	"light",	0,		MFI_NORMAL,	0,
@@ -214,7 +214,11 @@ struct light_obs_stuff {
  *  qualifier is encountered, and causes lt_exaim to be set.
  */
 
-HIDDEN void aim_set (const struct bu_structparse *sdp, const char *name, const char *base, char *value)
+HIDDEN void aim_set (sdp, name, base, value)
+const struct bu_structparse *sdp;
+const char *name;
+const char *base;
+char *value;
 {
 	register struct light_specific *lsp = (struct light_specific *)base;
 	if (rdebug & RDEBUG_LIGHT )  {
@@ -235,7 +239,11 @@ HIDDEN void aim_set (const struct bu_structparse *sdp, const char *name, const c
  *  when the beam points away.
  */
 HIDDEN int
-light_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
+light_render( ap, pp, swp, dp )
+struct application	*ap;
+struct partition	*pp;
+struct shadework	*swp;
+char	*dp;
 {
 	register struct light_specific *lsp = (struct light_specific *)dp;
 	register fastf_t f;
@@ -739,7 +747,9 @@ light_setup(register struct region *rp,
  *			L I G H T _ P R I N T
  */
 HIDDEN void
-light_print(register struct region *rp, char *dp)
+light_print( rp, dp )
+register struct region *rp;
+char	*dp;
 {
 	bu_struct_print(rp->reg_name, light_print_tab, (char *)dp);
 }
@@ -748,7 +758,8 @@ light_print(register struct region *rp, char *dp)
  *			L I G H T _ F R E E
  */
 void
-light_free(char *cp)
+light_free( cp )
+char *cp;
 {
 	register struct light_specific *lsp = (struct light_specific *)cp;
 
@@ -939,7 +950,7 @@ light_init(struct application *ap)
  *	invisible lights, because their region was destroyed.
  */
 void
-light_cleanup(void)
+light_cleanup()
 {
 	register struct light_specific *lsp, *zaplsp;
 
@@ -985,14 +996,17 @@ light_cleanup(void)
  */
 
 int
-light_hit(struct application *ap, struct partition *PartHeadp, struct seg *finished_segs)
+light_hit(ap, PartHeadp, finished_segs )
+struct application *ap;
+struct partition *PartHeadp;
+struct seg *finished_segs;
 {
 	register struct partition *pp;
 	register struct region	*regp = NULL;
 	struct application	sub_ap;
 	struct shadework	sw;
 	const struct light_specific	*lsp;
-	extern int	light_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
+	extern int	light_render();
 #if RT_MULTISPECTRAL
 	struct bn_tabdata	*ms_filter_color = BN_TABDATA_NULL;
 #else
@@ -1333,7 +1347,8 @@ out:
  */
 /* ARGSUSED */
 int
-light_miss(register struct application *ap)
+light_miss(ap)
+register struct application *ap;
 {
 	struct light_specific *lsp = (struct light_specific *)(ap->a_uptr);
 
@@ -1365,7 +1380,9 @@ light_miss(register struct application *ap)
  *
  */
 static int 
-light_vis(struct light_obs_stuff *los, char *flags)
+light_vis(los, flags)
+struct light_obs_stuff *los;
+char flags[MAX_LIGHT_SAMPLES];
 {
 	struct application sub_ap;
 	double radius = 0.0;
@@ -1702,7 +1719,10 @@ retry:
  *		a_diverge
  */
 void
-light_obs(struct application *ap, struct shadework *swp, int have)
+light_obs(ap, swp, have)
+struct application *ap;
+struct shadework *swp;
+int have;
 {
 	register struct light_specific *lsp;
 	register int	i;

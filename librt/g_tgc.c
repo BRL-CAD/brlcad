@@ -48,6 +48,10 @@ static const char RCStgc[] = "@(#)$Header$ (BRL)";
 RT_EXTERN(int rt_rec_prep, (struct soltab *stp, struct rt_db_internal *ip,
 struct rt_i *rtip));
 
+static void	rt_tgc_rotate(), rt_tgc_shear();
+static void	rt_tgc_scale(),  nmg_tgc_disk(), nmg_tgc_nurb_cyl();
+void rt_pt_sort();
+
 struct  tgc_specific {
 	vect_t	tgc_V;		/*  Vector to center of base of TGC	*/
 	fastf_t	tgc_sH;		/*  magnitude of sheared H vector	*/
@@ -64,14 +68,6 @@ struct  tgc_specific {
 	mat_t	tgc_invRtShSc;	/*  invRot( trnShear( Scale( vect )))	*/
 	char	tgc_AD_CB;	/*  boolean:  A*D == C*B  */
 };
-
-
-static void rt_tgc_rotate(fastf_t *A, fastf_t *B, fastf_t *Hv, fastf_t *Rot, fastf_t *Inv, struct tgc_specific *tgc);
-static void rt_tgc_shear(const fastf_t *vect, int axis, fastf_t *Shr, fastf_t *Trn, fastf_t *Inv);
-static void rt_tgc_scale(fastf_t a, fastf_t b, fastf_t h, fastf_t *Scl, fastf_t *Inv);
-static void nmg_tgc_disk(struct faceuse *fu, fastf_t *rmat, fastf_t height, int flip);
-static void nmg_tgc_nurb_cyl(struct faceuse *fu, fastf_t *top_mat, fastf_t *bot_mat);
-void rt_pt_sort(register fastf_t *t, int npts);
 
 #define VLARGE		1000000.0
 #define	ALPHA(x,y,c,d)	( (x)*(x)*(c) + (y)*(y)*(d) )
@@ -98,7 +94,10 @@ const struct bu_structparse rt_tgc_parse[] = {
  *  matrix (if you really want to know why, talk to Ed Davisson).
  */
 int
-rt_tgc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
+rt_tgc_prep( stp, ip, rtip )
+struct soltab		*stp;
+struct rt_db_internal	*ip;
+struct rt_i		*rtip;
 {
 	struct rt_tgc_internal	*tip;
 	register struct tgc_specific *tgc;
@@ -344,7 +343,10 @@ rt_tgc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
  *  the normal for the planar sections of the truncated cone.
  */
 static void
-rt_tgc_rotate(fastf_t *A, fastf_t *B, fastf_t *Hv, fastf_t *Rot, fastf_t *Inv, struct tgc_specific *tgc)
+rt_tgc_rotate( A, B, Hv, Rot, Inv, tgc )
+vect_t		A, B, Hv;
+mat_t		Rot, Inv;
+struct tgc_specific	*tgc;
 {
 	LOCAL vect_t	uA, uB, uC;	/*  unit vectors		*/
 	LOCAL fastf_t	mag_ha,		/*  magnitude of H in the	*/
@@ -398,7 +400,10 @@ rt_tgc_rotate(fastf_t *A, fastf_t *B, fastf_t *Hv, fastf_t *Rot, fastf_t *Inv, s
  * Begin changes GSM, EOD -- Added INVERSE (Inv) calculation.
  */
 static void
-rt_tgc_shear(const fastf_t *vect, int axis, fastf_t *Shr, fastf_t *Trn, fastf_t *Inv)
+rt_tgc_shear( vect, axis, Shr, Trn, Inv )
+const vect_t	vect;
+int		axis;
+mat_t		Shr, Trn, Inv;
 {
 	MAT_IDN( Shr );
 	MAT_IDN( Trn );
@@ -423,7 +428,9 @@ rt_tgc_shear(const fastf_t *vect, int axis, fastf_t *Shr, fastf_t *Trn, fastf_t 
  *			R T _ T G C _ S C A L E
  */
 static void
-rt_tgc_scale(fastf_t a, fastf_t b, fastf_t h, fastf_t *Scl, fastf_t *Inv)
+rt_tgc_scale( a, b, h, Scl, Inv )
+fastf_t	a, b, h;
+mat_t	Scl, Inv;
 {
 	MAT_IDN( Scl );
 	MAT_IDN( Inv );
@@ -440,7 +447,8 @@ rt_tgc_scale(fastf_t a, fastf_t b, fastf_t h, fastf_t *Scl, fastf_t *Inv)
  *  			R T _ T G C _ P R I N T
  */
 void
-rt_tgc_print(register const struct soltab *stp)
+rt_tgc_print( stp )
+register const struct soltab	*stp;
 {
 	register const struct tgc_specific	*tgc =
 	(struct tgc_specific *)stp->st_specific;
@@ -497,7 +505,11 @@ rt_tgc_print(register const struct soltab *stp)
  *  the points of intersection in the original coordinate system.
  */
 int
-rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
+rt_tgc_shot( stp, rp, ap, seghead )
+struct soltab		*stp;
+register struct xray	*rp;
+struct application	*ap;
+struct seg		*seghead;
 {
 	register const struct tgc_specific	*tgc =
 	(struct tgc_specific *)stp->st_specific;
@@ -903,12 +915,12 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
  *  The Homer vectorized version.
  */
 void
-rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, int n, struct application *ap)
-             		       
-                    	      
-                               /* array of segs (results returned) */
-                               /* Number of ray/object pairs */
-                  	    
+rt_tgc_vshot( stp, rp, segp, n, ap )
+struct soltab		*stp[];
+register struct xray	*rp[];
+struct  seg            segp[]; /* array of segs (results returned) */
+int                         n; /* Number of ray/object pairs */
+struct application	*ap;
 {
 	register struct tgc_specific	*tgc;
 	register int		ix;
@@ -1407,7 +1419,10 @@ rt_pt_sort(register fastf_t t[], int npts)
  *  the above expressions.
  */
 void
-rt_tgc_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
+rt_tgc_norm( hitp, stp, rp )
+register struct hit *hitp;
+struct soltab *stp;
+register struct xray *rp;
 {
 	register struct tgc_specific	*tgc =
 	(struct tgc_specific *)stp->st_specific;
@@ -1450,7 +1465,11 @@ rt_tgc_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
  *			R T _ T G C _ U V
  */
 void
-rt_tgc_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
+rt_tgc_uv( ap, stp, hitp, uvp )
+struct application	*ap;
+struct soltab		*stp;
+register struct hit	*hitp;
+register struct uvcoord	*uvp;
 {
 	register struct tgc_specific	*tgc =
 	(struct tgc_specific *)stp->st_specific;
@@ -1509,7 +1528,8 @@ rt_tgc_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
  *			R T _ T G C _ F R E E
  */
 void
-rt_tgc_free(struct soltab *stp)
+rt_tgc_free( stp )
+struct soltab *stp;
 {
 	register struct tgc_specific	*tgc =
 	(struct tgc_specific *)stp->st_specific;
@@ -1518,7 +1538,7 @@ rt_tgc_free(struct soltab *stp)
 }
 
 int
-rt_tgc_class(void)
+rt_tgc_class()
 {
 	return(0);
 }
@@ -1531,7 +1551,11 @@ rt_tgc_class(void)
  *  Apply modeling transformations as well.
  */
 int
-rt_tgc_import(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
+rt_tgc_import( ip, ep, mat, dbip )
+struct rt_db_internal		*ip;
+const struct bu_external	*ep;
+register const mat_t		mat;
+const struct db_i		*dbip;
 {
 	struct rt_tgc_internal	*tip;
 	union record		*rp;
@@ -1571,7 +1595,11 @@ rt_tgc_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
  *			R T _ T G C _ E X P O R T
  */
 int
-rt_tgc_export(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
+rt_tgc_export( ep, ip, local2mm, dbip )
+struct bu_external		*ep;
+const struct rt_db_internal	*ip;
+double				local2mm;
+const struct db_i		*dbip;
 {
 	struct rt_tgc_internal	*tip;
 	union record		*rec;
@@ -1607,7 +1635,11 @@ rt_tgc_export(struct bu_external *ep, const struct rt_db_internal *ip, double lo
  *  Apply modeling transformations as well.
  */
 int
-rt_tgc_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
+rt_tgc_import5( ip, ep, mat, dbip )
+struct rt_db_internal		*ip;
+const struct bu_external	*ep;
+register const mat_t		mat;
+const struct db_i		*dbip;
 {
 	struct rt_tgc_internal	*tip;
 	fastf_t			vec[3*6];
@@ -1643,7 +1675,11 @@ rt_tgc_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
  *			R T _ T G C _ E X P O R T 5
  */
 int
-rt_tgc_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
+rt_tgc_export5( ep, ip, local2mm, dbip )
+struct bu_external		*ep;
+const struct rt_db_internal	*ip;
+double				local2mm;
+const struct db_i		*dbip;
 {
 	struct rt_tgc_internal	*tip;
 	fastf_t			vec[3*6];
@@ -1679,7 +1715,11 @@ rt_tgc_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
  *  Additional lines are indented one tab, and give parameter values.
  */
 int
-rt_tgc_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
+rt_tgc_describe( str, ip, verbose, mm2local )
+struct bu_vls		*str;
+const struct rt_db_internal	*ip;
+int			verbose;
+double			mm2local;
 {
 	register struct rt_tgc_internal	*tip =
 	(struct rt_tgc_internal *)ip->idb_ptr;
@@ -1761,7 +1801,8 @@ rt_tgc_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
  *  Free the storage associated with the rt_db_internal version of this solid.
  */
 void
-rt_tgc_ifree(struct rt_db_internal *ip)
+rt_tgc_ifree( ip )
+struct rt_db_internal	*ip;
 {
 	RT_CK_DB_INTERNAL(ip);
 	bu_free( ip->idb_ptr, "tgc ifree" );
@@ -1772,7 +1813,11 @@ rt_tgc_ifree(struct rt_db_internal *ip)
  *			R T _ T G C _ P L O T
  */
 int
-rt_tgc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_tgc_plot( vhead, ip, ttol, tol )
+struct bu_list		*vhead;
+struct rt_db_internal	*ip;
+const struct rt_tess_tol *ttol;
+const struct bn_tol		*tol;
 {
 	LOCAL struct rt_tgc_internal	*tip;
 	register int		i;
@@ -1814,7 +1859,10 @@ rt_tgc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
  *  Return the curvature of the TGC.
  */
 void
-rt_tgc_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
+rt_tgc_curve( cvp, hitp, stp )
+register struct curvature *cvp;
+register struct hit *hitp;
+struct soltab *stp;
 {
 	register struct tgc_specific *tgc =
 	(struct tgc_specific *)stp->st_specific;
@@ -1906,7 +1954,12 @@ struct tgc_pts
 
 /* version using tolerances */
 int
-rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_tgc_tess( r, m, ip, ttol, tol )
+struct nmgregion	**r;
+struct model		*m;
+struct rt_db_internal	*ip;
+const struct rt_tess_tol *ttol;
+const struct bn_tol	*tol;
 {
 	struct shell		*s;		/* shell to hold facetted TGC */
 	struct faceuse		*fu,*fu_top,*fu_base;
@@ -2642,7 +2695,11 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
  */
 
 int
-rt_tgc_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bn_tol *tol)
+rt_tgc_tnurb( r, m, ip, tol )
+struct nmgregion	**r;
+struct model		*m;
+struct rt_db_internal	*ip;
+const struct bn_tol		*tol;
 {
 	LOCAL struct rt_tgc_internal	*tip;
 
@@ -2828,7 +2885,11 @@ fastf_t nmg_uv_unitcircle[27] = {
 };
 
 static void
-nmg_tgc_disk(struct faceuse *fu, fastf_t *rmat, fastf_t height, int flip)
+nmg_tgc_disk(fu, rmat, height, flip)
+struct faceuse	* fu;
+mat_t 	rmat;
+fastf_t height;
+int	flip;
 {
 	struct face_g_snurb 	* fg;
 	struct loopuse		* lu;
@@ -2975,7 +3036,10 @@ nmg_tgc_disk(struct faceuse *fu, fastf_t *rmat, fastf_t height, int flip)
  * respectively.
  */
 static void
-nmg_tgc_nurb_cyl(struct faceuse *fu, fastf_t *top_mat, fastf_t *bot_mat)
+nmg_tgc_nurb_cyl(fu, top_mat, bot_mat)
+struct faceuse *fu;
+mat_t	top_mat;
+mat_t	bot_mat;
 {
 	struct face_g_snurb 	* fg;
 	struct loopuse		* lu;

@@ -43,7 +43,8 @@ double	val[256];		/* arguments to operations */
 double	buf[BUFLEN];		/* working buffer */
 
 int
-get_args(int argc, register char **argv)
+get_args( argc, argv )
+register char **argv;
 {
 	register int c;
 	double	d;
@@ -115,7 +116,9 @@ get_args(int argc, register char **argv)
 	return(1);		/* OK */
 }
 
-int main(int argc, char **argv)
+int main( argc, argv )
+int	argc;
+char	**argv;
 {
 	int	i, n;
 #ifdef sgi

@@ -34,9 +34,9 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "shadework.h"
 #include "rtprivate.h"
 
-HIDDEN int  stxt_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip), brick_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp), mbound_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp), rbound_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
-HIDDEN void	stxt_print(register struct region *rp, char *dp), stxt_free(char *cp);
-HIDDEN void	stxt_transp_hook(struct bu_structparse *ptab, char *name, char *cp, char *value);
+HIDDEN int  stxt_setup(), brick_render(), mbound_render(), rbound_render();
+HIDDEN void	stxt_print(), stxt_free();
+HIDDEN void	stxt_transp_hook();
 
 #define STX_NAME_LEN 128
 struct	stxt_specific  {
@@ -93,7 +93,11 @@ struct	mfuncs stxt_mfuncs[] = {
  *  Hooked function, called by bu_structparse.
  */
 HIDDEN void
-stxt_transp_hook(struct bu_structparse *ptab, char *name, char *cp, char *value)
+stxt_transp_hook( ptab, name, cp, value)
+struct bu_structparse *ptab;
+char	*name;
+char	*cp;
+char	*value;
 {
 	register struct stxt_specific *stp =
 		(struct stxt_specific *)cp;
@@ -113,7 +117,8 @@ stxt_transp_hook(struct bu_structparse *ptab, char *name, char *cp, char *value)
  *  Returns 0 on failure, 1 on success.
  */
 HIDDEN int
-stxt_read(register struct stxt_specific *stp)
+stxt_read( stp )
+register struct stxt_specific *stp;
 {
 	char *linebuf;
 	register FILE *fp;
@@ -166,12 +171,12 @@ stxt_read(register struct stxt_specific *stp)
  *			S T X T _ S E T U P
  */
 HIDDEN int
-stxt_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
-                      	    
-             		         
-    			      
-                             
-                                /* New since 4.4 release */
+stxt_setup( rp, matparm, dpp, mfp, rtip )
+register struct region	*rp;
+struct bu_vls		*matparm;
+char			**dpp;
+struct mfuncs           *mfp;
+struct rt_i             *rtip;  /* New since 4.4 release */
 {
 	register struct stxt_specific *stp;
 
@@ -211,7 +216,8 @@ stxt_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struc
  *			S T X T _ F R E E
  */
 HIDDEN void
-stxt_free(char *cp)
+stxt_free( cp )
+char	*cp;
 {
 	register struct stxt_specific *stp =
 		(struct stxt_specific *)cp;
@@ -227,14 +233,20 @@ stxt_free(char *cp)
  *			S T X T _ P R I N T
  */
 HIDDEN void
-stxt_print(register struct region *rp, char *dp)
+stxt_print( rp, dp )
+register struct region *rp;
+char	*dp;
 {
 	bu_struct_print(rp->reg_name, stxt_parse, (char *)dp);
 }
 
 
 HIDDEN int
-brick_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
+brick_render( ap, pp, swp, dp )
+struct application	*ap;
+struct partition	*pp;
+struct shadework	*swp;
+char	*dp;
 {
 	register struct stxt_specific *stp =
 		(struct stxt_specific *)dp;
@@ -328,7 +340,11 @@ brick_render(struct application *ap, struct partition *pp, struct shadework *swp
  *  Use region RPP to bound solid texture (rbound).
  */
 HIDDEN int
-rbound_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
+rbound_render( ap, pp, swp, dp )
+struct application	*ap;
+struct partition	*pp;
+struct shadework	*swp;
+char	*dp;
 {
 	register struct stxt_specific *stp =
 		(struct stxt_specific *)dp;
@@ -399,7 +415,11 @@ rbound_render(struct application *ap, struct partition *pp, struct shadework *sw
  *  Use model RPP as solid texture bounds.  (mbound).
  */
 HIDDEN int
-mbound_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
+mbound_render( ap, pp, swp, dp )
+struct application	*ap;
+struct partition	*pp;
+struct shadework	*swp;
+char	*dp;
 {
 	register struct stxt_specific *stp =
 		(struct stxt_specific *)dp;

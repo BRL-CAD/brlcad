@@ -60,14 +60,15 @@ int	iny = 512;
 int	outx = 512;
 int	outy = 512;
 
-void	init_buffer(int scanlen), fill_buffer(int y), binterp(FILE *ofp, int ix, int iy, int ox, int oy), ninterp(FILE *ofp, int ix, int iy, int ox, int oy);
+void	init_buffer(), fill_buffer(), binterp(), ninterp();
 
 static	char usage[] = "\
 Usage: bwscale [-h] [-r] [-s squareinsize] [-w inwidth] [-n inheight]\n\
 	[-S squareoutsize] [-W outwidth] [-N outheight] [in.bw] > out.bw\n";
 
 int
-get_args(int argc, register char **argv)
+get_args( argc, argv )
+register char **argv;
 {
 	register int c;
 
@@ -158,7 +159,9 @@ get_args(int argc, register char **argv)
  * To scale up we use bilinear interpolation.
  */
 int
-scale(FILE *ofp, int ix, int iy, int ox, int oy)
+scale( ofp, ix, iy, ox, oy )
+FILE	*ofp;
+int	ix, iy, ox, oy;
 {
 	int	i, j, k, l;
 	double	pxlen, pylen;			/* # old pixels per new pixel */
@@ -237,7 +240,8 @@ scale(FILE *ofp, int ix, int iy, int ox, int oy)
 
 
 int
-main(int argc, char **argv)
+main( argc, argv )
+int argc; char **argv;
 {
 	int i;
 
@@ -275,7 +279,8 @@ main(int argc, char **argv)
  *  XXX - CHECK FILE SIZE
  */
 void
-init_buffer(int scanlen)
+init_buffer( scanlen )
+int scanlen;
 {
 	int	max;
 
@@ -305,7 +310,8 @@ init_buffer(int scanlen)
  * the given y coordinate.
  */
 void
-fill_buffer(int y)
+fill_buffer( y )
+int y;
 {
 	buf_start = y - buflines/2;
 	if( buf_start < 0 ) buf_start = 0;
@@ -324,7 +330,9 @@ fill_buffer(int y)
  * This version preserves the outside pixels and interps inside only.
  */
 void
-binterp(FILE *ofp, int ix, int iy, int ox, int oy)
+binterp( ofp, ix, iy, ox, oy )
+FILE	*ofp;
+int	ix, iy, ox, oy;
 {
 	int	i, j;
 	double	x, y, dx, dy, mid1, mid2;
@@ -375,7 +383,9 @@ binterp(FILE *ofp, int ix, int iy, int ox, int oy)
  * This version preserves the outside pixels and interps inside only.
  */
 void
-ninterp(FILE *ofp, int ix, int iy, int ox, int oy)
+ninterp( ofp, ix, iy, ox, oy )
+FILE	*ofp;
+int	ix, iy, ox, oy;
 {
 	int	i, j;
 	double	x, y;

@@ -60,13 +60,14 @@ int	nmtab = sizeof(mtab)/sizeof(struct mtab);
 
 #define PICK_MAT	((rand() % nmtab) )
 
-void	make_room(char *rname, fastf_t *imin, fastf_t *imax, fastf_t *thickness, struct wmember *headp), make_walls(char *rname, fastf_t *imin, fastf_t *imax, fastf_t *thickness, int bits, struct wmember *headp), make_pillar(char *prefix, int ix, int iy, fastf_t *center, fastf_t *lwh, struct wmember *headp), make_carpet(char *rname, fastf_t *min, fastf_t *max, char *file, struct wmember *headp);
+void	make_room(), make_walls(), make_pillar(), make_carpet();
 extern void get_rgb( unsigned char *rgb );
 
 struct rt_wdb	*outfp;
 
 int
-main(int argc, char **argv)
+main(argc, argv)
+char	**argv;
 {
 	vect_t	norm;
 	unsigned char	rgb[3];
@@ -145,12 +146,12 @@ main(int argc, char **argv)
 }
 
 void
-make_room(char *rname, fastf_t *imin, fastf_t *imax, fastf_t *thickness, struct wmember *headp)
-    	       
-      	     		/* Interior RPP min point */
-      	     
-      	          
-                      
+make_room( rname, imin, imax, thickness, headp )
+char	*rname;
+vect_t	imin;		/* Interior RPP min point */
+vect_t	imax;
+vect_t	thickness;
+struct wmember *headp;
 {
 	struct wmember head;
 	char	name[32];
@@ -175,13 +176,13 @@ make_room(char *rname, fastf_t *imin, fastf_t *imax, fastf_t *thickness, struct 
 }
 
 void
-make_walls(char *rname, fastf_t *imin, fastf_t *imax, fastf_t *thickness, int bits, struct wmember *headp)
-    	       
-      	     		/* Interior RPP min point */
-      	     
-      	          
-   	     
-                      
+make_walls( rname, imin, imax, thickness, bits, headp )
+char	*rname;
+vect_t	imin;		/* Interior RPP min point */
+vect_t	imax;
+vect_t	thickness;
+int	bits;
+struct wmember *headp;
 {
 	struct wmember head;
 	char	name[32];
@@ -247,13 +248,13 @@ make_walls(char *rname, fastf_t *imin, fastf_t *imax, fastf_t *thickness, int bi
 }
 
 void
-make_pillar(char *prefix, int ix, int iy, fastf_t *center, fastf_t *lwh, struct wmember *headp)
-    	        
-   	   
-   	   
-      	       			/* center of base */
-      	    
-                      
+make_pillar( prefix, ix, iy, center, lwh, headp )
+char	*prefix;
+int	ix;
+int	iy;
+vect_t	center;			/* center of base */
+vect_t	lwh;
+struct wmember *headp;
 {
 	vect_t	min, max;
 	unsigned char	rgb[4];		/* needs all 4 */
@@ -290,7 +291,11 @@ make_pillar(char *prefix, int ix, int iy, fastf_t *center, fastf_t *lwh, struct 
 }
 
 void
-make_carpet(char *rname, fastf_t *min, fastf_t *max, char *file, struct wmember *headp)
+make_carpet( rname, min, max, file, headp )
+char	*rname;
+vect_t	min, max;
+char	*file;
+struct wmember *headp;
 {
 	char	sname[32];
 	char	args[128];

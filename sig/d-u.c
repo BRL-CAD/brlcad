@@ -29,7 +29,9 @@ unsigned short	obuf[512];
 static char usage[] = "\
 Usage: d-i [-n || scale] < doubles > unsigned_shorts\n";
 
-int main(int argc, char **argv)
+int main( argc, argv )
+int	argc;
+char	**argv;
 {
 	int	i, num;
 	double	scale;

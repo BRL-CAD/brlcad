@@ -85,10 +85,10 @@ struct bu_structparse brdf_parse[] = {
 	{"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 
-HIDDEN int brdf_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int brdf_render(register struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
-HIDDEN void	brdf_print(register struct region *rp, char *dp);
-HIDDEN void	brdf_free(char *cp);
+HIDDEN int brdf_setup();
+HIDDEN int brdf_render();
+HIDDEN void	brdf_print();
+HIDDEN void	brdf_free();
 
 struct mfuncs brdf_mfuncs[] = {
 	{MF_MAGIC,	"brdf",		0,		MFI_NORMAL|MFI_LIGHT,	0,
@@ -104,7 +104,12 @@ struct mfuncs brdf_mfuncs[] = {
  *			B R D F _ S E T U P
  */
 HIDDEN int
-brdf_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
+brdf_setup( rp, matparm, dpp, mfp, rtip )
+register struct region *rp;
+struct bu_vls	*matparm;
+char	**dpp;
+struct mfuncs	*mfp;
+struct rt_i	*rtip;
 {
 	register struct brdf_specific *pp;
 
@@ -135,7 +140,9 @@ brdf_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struc
  *			B R D F _ P R I N T
  */
 HIDDEN void
-brdf_print(register struct region *rp, char *dp)
+brdf_print( rp, dp )
+register struct region *rp;
+char	*dp;
 {
 	bu_struct_print(rp->reg_name, brdf_parse, (char *)dp);
 }
@@ -144,7 +151,8 @@ brdf_print(register struct region *rp, char *dp)
  *			B R D F _ F R E E
  */
 HIDDEN void
-brdf_free(char *cp)
+brdf_free( cp )
+char *cp;
 {
 	bu_free( cp, "brdf_specific" );
 }
@@ -194,7 +202,11 @@ brdf_free(char *cp)
 
  */
 HIDDEN int
-brdf_render(register struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
+brdf_render( ap, pp, swp, dp )
+register struct application *ap;
+struct partition	*pp;
+struct shadework	*swp;
+char	*dp;
 {
 	register struct light_specific *lp;
 	register fastf_t *intensity, *to_light;

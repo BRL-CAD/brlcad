@@ -34,12 +34,12 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 /* Shared with dunncomm.c */
 extern int	fd;
 extern char	cmd;
-extern void dunnopen(void);
+extern void dunnopen();
 extern int ready(int nsecs);
 extern void getexposure(char *title);
 extern int dunnsend(char color, int val);
-extern int goodstatus(void);
-extern void hangten(void);
+extern int goodstatus();
+extern void hangten();
 
 
 static int	nframes = 1;
@@ -53,7 +53,8 @@ Usage: dunnsnap [-h] [-F framebuffer]\n\
 	[num_frames]\n";
 
 int
-get_args(int argc, register char **argv)
+get_args( argc, argv )
+register char **argv;
 {
 	register int c;
 
@@ -94,7 +95,9 @@ get_args(int argc, register char **argv)
 }
 
 int
-main(int argc, char **argv)
+main(argc, argv)
+int argc;
+char **argv;
 {
 	register FBIO *fbp = FBIO_NULL;
 

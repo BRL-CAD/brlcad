@@ -100,7 +100,11 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 }
 #endif
 static void
-filter_args(fastf_t *src, fastf_t *p, fastf_t *f, int *ip)
+filter_args(src, p, f, ip)
+point_t src;
+point_t p;
+point_t f;
+int	ip[3];
 {
 	register int i;
 	point_t dst;
@@ -191,7 +195,7 @@ static struct str_ht ht;
 
 
 void
-bn_noise_init(void)
+bn_noise_init()
 {
 	int i, j, k, temp;
 	int rndtabi = BN_RAND_TABSIZE - 1;
@@ -256,7 +260,8 @@ bn_noise_init(void)
  * isn't as flat as the literature would have one believe.
  */
 double
-bn_noise_perlin(fastf_t *point)
+bn_noise_perlin(point)
+const point_t point;
 {
 	register int	jx, jy, jz;
 	int ix, iy, iz;	/* lower integer lattice point */
@@ -273,8 +278,6 @@ bn_noise_perlin(fastf_t *point)
 /*		CK_HT(); */
 	}
 
-	/* IS: const fastf_t *, point_t, point_t, int[3] */
-	/* NE: fastf_t *, fastf_t *, fastf_t *, int *    */
 	filter_args( point, p, f, ip);
 	ix = ip[X];
 	iy = ip[Y];
@@ -337,7 +340,9 @@ bn_noise_perlin(fastf_t *point)
  * Vector-valued "Noise"
  */
 void
-bn_noise_vec(fastf_t *point, fastf_t *result)
+bn_noise_vec(point, result)
+const point_t point;
+point_t result;
 {
 	register int	jx, jy, jz;
 	int ix, iy, iz;		/* lower integer lattice point */
@@ -472,7 +477,8 @@ static int etbl_size = 0;
 
 
 static struct fbm_spec *
-build_spec_tbl(double h_val, double lacunarity, double octaves)
+build_spec_tbl(h_val, lacunarity, octaves)
+double h_val, lacunarity, octaves;
 {
 	struct fbm_spec	*ep;
 	double		*spec_wgts;
@@ -525,7 +531,10 @@ build_spec_tbl(double h_val, double lacunarity, double octaves)
  */
 
 struct fbm_spec		*
-find_spec_wgt(double h, double l, double o)
+find_spec_wgt(h, l, o)
+double			h;
+double			l;
+double			o;
 {
 	struct fbm_spec	*ep;
 	int i;
@@ -587,7 +596,11 @@ find_spec_wgt(double h, double l, double o)
  * successive invocations.
  */
 double
-bn_noise_fbm(fastf_t *point, double h_val, double lacunarity, double octaves)
+bn_noise_fbm(point, h_val, lacunarity, octaves)
+point_t point;
+double h_val;
+double lacunarity;
+double octaves;
 {
 	struct fbm_spec		*ep;
 	double			value, remainder, *spec_wgts;
@@ -656,7 +669,11 @@ bn_noise_fbm(fastf_t *point, double h_val, double lacunarity, double octaves)
  * successive invocations.
  */
 double
-bn_noise_turb(fastf_t *point, double h_val, double lacunarity, double octaves)
+bn_noise_turb( point, h_val, lacunarity, octaves)
+point_t point;
+double h_val;
+double lacunarity;
+double octaves;
 {
 	struct fbm_spec		*ep;
 	double			value, remainder, *spec_wgts;
@@ -731,7 +748,12 @@ bn_noise_turb(fastf_t *point, double h_val, double lacunarity, double octaves)
  *
  */
 double
-bn_noise_ridged(fastf_t *point, double h_val, double lacunarity, double octaves, double offset)
+bn_noise_ridged(point, h_val, lacunarity, octaves, offset)
+point_t point;
+double h_val;
+double lacunarity;
+double octaves;
+double offset;
 {
 	struct fbm_spec		*ep;
 	double			result, weight, signal, *spec_wgts;
@@ -791,7 +813,12 @@ bn_noise_ridged(fastf_t *point, double h_val, double lacunarity, double octaves,
  */
 
 double
-bn_noise_mf(fastf_t *point, double h_val, double lacunarity, double octaves, double offset)
+bn_noise_mf( point, h_val, lacunarity, octaves, offset)
+point_t point;
+double h_val;
+double lacunarity;
+double octaves;
+double offset;
 {
 	double 			frequency = 1.0;
 	struct fbm_spec		*ep;

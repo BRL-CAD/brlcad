@@ -12,7 +12,7 @@ static const char RCShep[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 
 /* Standard System V stuff */
-extern long time(time_t *);
+extern long time();
 static long time0;
 
 
@@ -20,7 +20,7 @@ static long time0;
  *			P R E P _ T I M E R
  */
 void
-rt_prep_timer(void)
+rt_prep_timer()
 {
 	(void)time(&time0);
 	(void)intime_();
@@ -32,7 +32,8 @@ rt_prep_timer(void)
  * 
  */
 double
-rt_read_timer(char *str, int len)
+rt_read_timer(str,len)
+char *str;
 {
 	long now;
 	double usert;

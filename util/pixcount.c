@@ -47,7 +47,7 @@ Usage: 'pixcount [-# bytes_per_pixel]\n\
 		 [infile.pix [outfile]]'\n";
 #define OPT_STRING	"#:?"
 
-static void print_usage (void)
+static void print_usage ()
 {
     (void) bu_log("%s", usage);
 }
@@ -56,7 +56,10 @@ static void print_usage (void)
  *			     M K _ P I X E L ( )
  *
  */
-struct pixel *mk_pixel (unsigned char *color)
+struct pixel *mk_pixel (color)
+
+unsigned char	*color;
+
 {
     int			i;
     struct pixel	*pp;
@@ -78,7 +81,10 @@ struct pixel *mk_pixel (unsigned char *color)
  *			   F R E E _ P I X E L ( )
  *
  */
-void free_pixel (struct pixel *pp)
+void free_pixel (pp)
+
+struct pixel	*pp;
+
 {
     BU_CKMAG(pp, PIXEL_MAGIC, "pixel");
     bu_free((genptr_t) pp, "pixel");
@@ -88,7 +94,11 @@ void free_pixel (struct pixel *pp)
  *			  P R I N T _ P I X E L ( )
  *
  */
-void print_pixel (void *p, int depth)
+void print_pixel (p, depth)
+
+void	*p;
+int	depth;
+
 {
     int			i;
     struct pixel	*pp = (struct pixel *) p;
@@ -105,7 +115,11 @@ void print_pixel (void *p, int depth)
  *
  *	    The comparison callback for the red-black tree
  */
-int compare_pixels (void *v1, void *v2)
+int compare_pixels (v1, v2)
+
+void	*v1;
+void	*v2;
+
 {
     struct pixel	*p1 = (struct pixel *) v1;
     struct pixel	*p2 = (struct pixel *) v2;
@@ -127,7 +141,11 @@ int compare_pixels (void *v1, void *v2)
 /*
  *			 L O O K U P _ P I X E L ( )
  */
-struct pixel *lookup_pixel(bu_rb_tree *palette, char *color)
+struct pixel *lookup_pixel(palette, color)
+
+bu_rb_tree	*palette;
+char	*color;
+
 {
     int			rc;	/* Return code from bu_rb_insert() */
     struct pixel	*qpp;	/* The query */
@@ -175,7 +193,11 @@ struct pixel *lookup_pixel(bu_rb_tree *palette, char *color)
 }
 
 int
-main (int argc, char **argv)
+main (argc, argv)
+
+int	argc;
+char	*argv[];
+
 {
     bu_rb_tree		*palette;	/* Pixel palette */
     char		*inf_name;	/* name of input stream */

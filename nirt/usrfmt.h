@@ -1,7 +1,5 @@
 /*		U S R F M T . H
 */
-#ifndef SEEN_USRFMT_H
-#define SEEN_USRFMT_H
 
 #define			OUTITEM_NULL		((outitem *) 0)
 #define			OVERLAP_NULL		((overlap *) 0)
@@ -43,7 +41,7 @@ typedef struct ovlp_tag
     struct ovlp_tag	*backw;
 }					overlap;
 
-extern FILE	*fopenrc(void);
+extern FILE	*fopenrc();
 
 /* Codes for output-item data types */
 #define		OIT_INT		0
@@ -155,5 +153,3 @@ extern FILE	*fopenrc(void);
 #endif
 #define		H		4
 #define		V		5
- 
-#endif /* SEEN_USRFMT_H */

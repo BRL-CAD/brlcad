@@ -58,8 +58,8 @@ struct bu_structparse points_parse[] = {
 	{"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 
-HIDDEN int	points_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip), points_render(struct application *ap, struct partition *partp, struct shadework *swp, char *dp);
-HIDDEN void	points_print(register struct region *rp, char *dp), points_mfree(char *cp);
+HIDDEN int	points_setup(), points_render();
+HIDDEN void	points_print(), points_mfree();
 
 struct mfuncs points_mfuncs[] = {
 	{MF_MAGIC,	"points",	0,		MFI_UV,		0,
@@ -85,12 +85,12 @@ struct points {
  *	>0	success
  */
 HIDDEN int
-points_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
-                           
-             	         
-    	      
-                             
-                                /* New since 4.4 release */
+points_setup( rp, matparm, dpp, mfp, rtip )
+register struct region *rp;
+struct bu_vls	*matparm;
+char	**dpp;
+struct mfuncs           *mfp;
+struct rt_i             *rtip;  /* New since 4.4 release */
 {
 	register struct points_specific *ptp;
 	char	buf[513];
@@ -157,7 +157,11 @@ fail:
  *  color of the "brightest" point (if any) within that region.
  */
 HIDDEN int
-points_render(struct application *ap, struct partition *partp, struct shadework *swp, char *dp)
+points_render( ap, partp, swp, dp )
+struct application *ap;
+struct partition *partp;
+struct shadework	*swp;
+char	*dp;
 {
 	register struct points_specific *ptp =
 		(struct points_specific *)dp;
@@ -221,14 +225,17 @@ swp->sw_uv.uv_dv = ap->a_diverge;
  *			P O I N T S _ P R I N T
  */
 HIDDEN void
-points_print(register struct region *rp, char *dp)
+points_print( rp, dp )
+register struct region *rp;
+char	*dp;
 {
 	bu_struct_print("points_setup", points_parse, (char *)dp);
 	/* Should be more here */
 }
 
 HIDDEN void
-points_mfree(char *cp)
+points_mfree( cp )
+char *cp;
 {
 	/* XXX - free linked lists in every bin! */
 	spm_free( (spm_map_t *)cp );

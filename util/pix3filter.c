@@ -83,7 +83,7 @@ int	oflag = 0;	/* Different offset specified */
 char *file_name;
 FILE *oldfp, *curfp, *newfp;
 
-void	select_filter(char *str), dousage(void);
+void	select_filter(), dousage();
 
 char	usage[] = "\
 Usage: pix3filter [-f<type>] [-v] [-d#] [-o#]\n\
@@ -91,7 +91,8 @@ Usage: pix3filter [-f<type>] [-v] [-d#] [-o#]\n\
 	file.pix.n | file.pix1 file.pix2 file.pix3  > file.pix\n";
 
 int
-get_args(int argc, register char **argv)
+get_args( argc, argv )
+register char **argv;
 {
 	register int c;
 
@@ -215,7 +216,8 @@ get_args(int argc, register char **argv)
 }
 
 int
-main(int argc, char **argv)
+main( argc, argv )
+int argc; char **argv;
 {
 	int	x, y, color;
 	int	value, r1, r2, r3, r4, r5, r6, r7, r8, r9;
@@ -365,7 +367,8 @@ main(int argc, char **argv)
  *  on it.
  */
 void
-select_filter(char *str)
+select_filter( str )
+char *str;
 {
 	int	i;
 
@@ -392,7 +395,7 @@ select_filter(char *str)
 }
 
 void
-dousage(void)
+dousage()
 {
 	int	i;
 

@@ -82,17 +82,18 @@ static int	im_width;		/* image size (in Imagen dots) */
 static int	im_wpatches;		/* # 32-bit patches width */
 static int	im_hpatches;		/* # 32-bit patches height */
 
-bool	get_args(int argc, register char **argv);
-bool	im_close(void);
-bool	im_header(void);
-void	im_write(int y);
+bool	get_args();
+bool	im_close();
+bool	im_header();
+void	im_write();
 
 char usage[] = "\
 Usage: bw-imp [-h -D] [-s squaresize] [-w width] [-n height]\n\
 	[-X page_xoff] [-Y page_yoff] [-t thresh] [file.bw] > impress\n";
 
 bool
-get_args(int argc, register char **argv)
+get_args( argc, argv )
+register char	**argv;
 {
 	register int	c;
 
@@ -153,7 +154,9 @@ get_args(int argc, register char **argv)
 }
 
 int
-main(int argc, char **argv)
+main( argc, argv )
+int		argc;
+char		*argv[];
 {
 	register int 	y;
 
@@ -198,7 +201,7 @@ main(int argc, char **argv)
 }
 
 bool
-im_header(void)
+im_header()
 {
 
 	(void)printf( "@document(language impress, prerasterization on, Name \"%s\")",
@@ -229,7 +232,8 @@ im_header(void)
 }
 
 void
-im_write(int y)
+im_write(y)
+int y;
 {
 	int y1;
 
@@ -300,7 +304,7 @@ im_write(int y)
 }
 
 bool
-im_close(void)
+im_close()
 {
 /*	(void)putchar( 219 );		ENDPAGE */
 

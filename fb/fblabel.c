@@ -62,10 +62,11 @@ static char	*textstring;
 static int	debug;
 static int	alias_off;
 
-void	do_char(struct vfont *vfp, struct vfont_dispatch *vdp, int x, int y), do_line(register struct vfont *vfp, register char *line), squash(register int *buf0, register int *buf1, register int *buf2, register float *ret_buf, register int n), fill_buf(register int wid, register int *buf, register char *bitrow);
+void	do_char(), do_line(), squash(), fill_buf();
 
 int
-get_args(int argc, register char **argv)
+get_args( argc, argv )
+register char **argv;
 {
 
 	register int c;
@@ -151,7 +152,9 @@ get_args(int argc, register char **argv)
 
 
 int
-main(int argc, char **argv)
+main(argc, argv)
+int argc;
+char **argv;
 {
 	struct	vfont	*vfp;
 
@@ -182,7 +185,9 @@ main(int argc, char **argv)
 }
 
 void
-do_line(register struct vfont *vfp, register char *line)
+do_line( vfp, line )
+register struct vfont	*vfp;
+register char		*line;
 {
 	register int    currx;
 	register int    char_count, char_id;
@@ -233,7 +238,10 @@ do_line(register struct vfont *vfp, register char *line)
 }
 
 void
-do_char(struct vfont *vfp, struct vfont_dispatch *vdp, int x, int y)
+do_char( vfp, vdp, x, y )
+struct vfont	*vfp;
+struct vfont_dispatch	*vdp;
+int x, y;
 {	
 	register int    i, j;
 	int		base;
@@ -305,7 +313,9 @@ do_char(struct vfont *vfp, struct vfont_dispatch *vdp, int x, int y)
 	 Extract a bit field from a bit string.
   */
 int
-bitx(register char *bitstring, register int posn)
+bitx( bitstring, posn )
+register char *bitstring;
+register int posn;
 {
 	for (; posn >= 8; posn -= 8, bitstring++);
 #if defined( CANT_DO_ZERO_SHIFT )
@@ -337,7 +347,10 @@ bitx(register char *bitstring, register int posn)
 	assumed to be only 0 or 1.
  */
 void
-squash(register int *buf0, register int *buf1, register int *buf2, register float *ret_buf, register int n)
+squash( buf0, buf1, buf2, ret_buf, n )
+register int	*buf0, *buf1, *buf2;	
+register float	*ret_buf;
+register int	n;
 {
 	register int    j;
 
@@ -370,7 +383,10 @@ squash(register int *buf0, register int *buf1, register int *buf2, register floa
 	correct position.
  */
 void
-fill_buf(register int wid, register int *buf, register char *bitrow)
+fill_buf( wid, buf, bitrow )
+register int	wid;
+register int	*buf;
+register char	*bitrow;
 {
 	register int    j;
 

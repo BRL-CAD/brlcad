@@ -51,8 +51,8 @@ static	unsigned char *scanbuf;
 static	int pixsize = 0;		/* bytes per pixel in scanbuf */
 static	double	contrast_boost = 2.0;
 
-static int xrayhit(register struct application *ap, struct partition *PartHeadp);
-static int xraymiss(register struct application *ap, struct partition *PartHeadp);
+static int xrayhit();
+static int xraymiss();
 
 /* Viewing module specific "set" variables */
 struct bu_structparse view_parse[] = {
@@ -82,7 +82,10 @@ Options:\n\
  *  Returns 1 if framebuffer should be opened, else 0.
  */
 int
-view_init(register struct application *ap, char *file, char *obj, int minus_o)
+view_init( ap, file, obj, minus_o )
+register struct application *ap;
+char *file, *obj;
+int minus_o;
 {
 	/*
 	 *  We need to work to get the output pixels and scanlines
@@ -122,7 +125,9 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o)
 
 /* beginning of a frame */
 void
-view_2init(struct application *ap, char *framename)
+view_2init( ap, framename )
+struct application *ap;
+char *framename;
 {
 	/*
 	 *  This is a dangerous hack to allow us to use -A #
@@ -141,13 +146,15 @@ view_2init(struct application *ap, char *framename)
 
 /* end of each pixel */
 void
-view_pixel(register struct application *ap)
+view_pixel( ap )
+register struct application *ap;
 {
 }
 
 /* end of each line */
 void
-view_eol(register struct application *ap)
+view_eol( ap )
+register struct application *ap;
 {
 	if( lightmodel == LGT_BW ) {
 		bu_semaphore_acquire( BU_SEM_SYSCALL );
@@ -159,19 +166,21 @@ view_eol(register struct application *ap)
 	}
 }
 
-void	view_setup(void) {}
+void	view_setup() {}
 /* end of a frame, called after rt_clean() */
-void	view_cleanup(void) {}
+void	view_cleanup() {}
 
 /* end of each frame */
 void
-view_end(void)
+view_end()
 {
 
 }
 
 static int
-xrayhit(register struct application *ap, struct partition *PartHeadp)
+xrayhit( ap, PartHeadp )
+register struct application *ap;
+struct partition *PartHeadp;
 {
 	register struct partition *pp;
 	register struct hit *hitp;
@@ -244,7 +253,9 @@ xrayhit(register struct application *ap, struct partition *PartHeadp)
 }
 
 static int
-xraymiss(register struct application *ap, struct partition *PartHeadp)
+xraymiss( ap, PartHeadp )
+register struct application *ap;
+struct partition *PartHeadp;
 {
 	static	double	zero = 0;
 
@@ -273,4 +284,4 @@ xraymiss(register struct application *ap, struct partition *PartHeadp)
 	return(0);	/* report miss to main routine */
 }
 
-void application_init (void) {}
+void application_init () {}

@@ -81,7 +81,8 @@ The default width is 3 bytes, suitable for processing .pix files.\n\
 ";
 
 void
-usage(char *s, int n)
+usage(s, n)
+char *s;
 {
 	if (s && *s) (void)fputs(s, stderr);
 	
@@ -93,7 +94,9 @@ usage(char *s, int n)
  *			O P E N _ F I L E
  */
 int
-open_file(int i, char *name)
+open_file( i, name )
+int	i;
+char	*name;
 {
 	if( name[0] == '=' )  {
 		/* Parse constant */
@@ -140,7 +143,8 @@ open_file(int i, char *name)
  *			G E T _ A R G S
  */
 void
-get_args(int argc, register char **argv)
+get_args( argc, argv )
+register char	**argv;
 {
 	register int	c;
 	register int	seen_formula = 0;
@@ -200,7 +204,9 @@ get_args(int argc, register char **argv)
 }
 
 int
-main(int argc, char **argv)
+main(argc, argv)
+int argc;
+char **argv;
 {
 
 	get_args(argc, argv);

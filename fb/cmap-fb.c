@@ -33,15 +33,16 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "fb.h"
 
-static char *nextsym(register char *b, register char *cp);
-static int htoi(register char *s);
+static char *nextsym();
+static int htoi();
 
 ColorMap cm;
 static char usage[] = "\
 Usage: cmap-fb [-h -o] [colormap]\n";
 
 int
-main(int argc, char **argv)
+main( argc, argv )
+int argc; char **argv;
 {
 	FBIO	*fbp;
 	FILE	*fp;
@@ -117,7 +118,9 @@ main(int argc, char **argv)
  */
 static
 char *
-nextsym(register char *b, register char *cp)
+nextsym( b, cp )
+register char *b;
+register char *cp;
 {
 	/* skip white */
 	while( isspace(*cp) )
@@ -137,7 +140,8 @@ nextsym(register char *b, register char *cp)
  */
 static
 int
-htoi(register char *s)
+htoi( s )
+register char *s;
 {
 	register int	i;
 

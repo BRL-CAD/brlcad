@@ -45,7 +45,9 @@
  */
 
 int
-rt_nurb_s_bound(struct face_g_snurb *srf, fastf_t *bmin, fastf_t *bmax)
+rt_nurb_s_bound( srf, bmin, bmax )
+struct face_g_snurb *srf;
+point_t bmin, bmax;
 {
 	register fastf_t *p_ptr;	/* Mesh pointr */
 	register int	coords;		/* Elements per vector */
@@ -86,7 +88,9 @@ rt_nurb_s_bound(struct face_g_snurb *srf, fastf_t *bmin, fastf_t *bmax)
 
 
 int
-rt_nurb_c_bound(struct edge_g_cnurb *crv, fastf_t *bmin, fastf_t *bmax)
+rt_nurb_c_bound( crv, bmin, bmax )
+struct edge_g_cnurb *crv;
+point_t bmin, bmax;
 {
 	register fastf_t *p_ptr;	/* Mesh pointr */
 	register int	coords;		/* Elements per vector */
@@ -132,7 +136,8 @@ rt_nurb_c_bound(struct edge_g_cnurb *crv, fastf_t *bmin, fastf_t *bmax)
  */
 
 int
-rt_nurb_s_check(register struct face_g_snurb *srf)
+rt_nurb_s_check( srf )
+register struct face_g_snurb *srf;
 {
 	register fastf_t *mp;	/* Mesh pointr */
 	register int	i;
@@ -160,7 +165,8 @@ rt_nurb_s_check(register struct face_g_snurb *srf)
  */
 
 int
-rt_nurb_c_check(register struct edge_g_cnurb *crv)
+rt_nurb_c_check( crv )
+register struct edge_g_cnurb *crv;
 {
 	register fastf_t *mp;	/* Mesh pointr */
 	register int	i;

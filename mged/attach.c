@@ -57,8 +57,8 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 	IS_DM_TYPE_X(_type) )
 
 /* All systems can compile these! */
-extern int Plot_dm_init(struct dm_list *o_dm_list, int argc, char **argv);
-extern int PS_dm_init(struct dm_list *o_dm_list, int argc, char **argv);
+extern int Plot_dm_init();
+extern int PS_dm_init();
 
 #ifdef DM_X
 extern int X_dm_init();
@@ -77,10 +77,10 @@ extern int Glx_dm_init();
 extern int Pex_dm_init();
 #endif
 
-extern void share_dlist(struct dm_list *dlp2);	/* defined in share.c */
-extern void set_port(void);		/* defined in fbserv.c */
-extern void predictor_init(void);	/* defined in predictor.c */
-extern void view_ring_init(struct _view_state *vsp1, struct _view_state *vsp2); /* defined in chgview.c */
+extern void share_dlist();	/* defined in share.c */
+extern void set_port();		/* defined in fbserv.c */
+extern void predictor_init();	/* defined in predictor.c */
+extern void view_ring_init(); /* defined in chgview.c */
 
 extern void Tk_CreateCanvasBezierType();
 
@@ -89,20 +89,20 @@ extern Tk_Window tkwin;
 #endif
 extern struct _color_scheme default_color_scheme;
 
-int gui_setup(char *dstr);
-int mged_attach(struct w_dm *wp, int argc, char **argv);
-void get_attached(void);
-void print_valid_dm(void);
-void dm_var_init(struct dm_list *initial_dm_list);
-void mged_slider_init_vls(struct dm_list *p);
-void mged_slider_free_vls(struct dm_list *p);
-void mged_link_vars(struct dm_list *p);
+int gui_setup();
+int mged_attach();
+void get_attached();
+void print_valid_dm();
+void dm_var_init();
+void mged_slider_init_vls();
+void mged_slider_free_vls();
+void mged_link_vars();
 
 #if 0
 static int do_2nd_attach_prompt();
 #endif
-void mged_fb_open(void);
-void mged_fb_close(void);
+void mged_fb_open();
+void mged_fb_close();
 
 int mged_default_dlist = 0;   /* This variable is available via Tcl for controlling use of display lists */
 struct dm_list head_dm_list;  /* list of active display managers */
@@ -130,7 +130,9 @@ struct w_dm which_dm[] = {
 
 
 int
-release(char *name, int need_close)
+release(name, need_close)
+char *name;
+int need_close;
 {
   struct dm_list *save_dm_list = DM_LIST_NULL;
 
@@ -201,7 +203,11 @@ release(char *name, int need_close)
 }
 
 int
-f_release(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_release(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int	argc;
+char	**argv;
 {
   if(argc < 1 || 2 < argc){
     struct bu_vls vls;
@@ -263,7 +269,11 @@ do_2nd_attach_prompt()
 #endif
 
 int
-f_attach(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_attach(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int     argc;
+char    **argv;
 {
   register struct w_dm *wp;
 
@@ -293,7 +303,7 @@ f_attach(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 }
 
 void
-print_valid_dm(void)
+print_valid_dm()
 {
     Tcl_AppendResult(interp, "\tThe following display manager types are valid: ", (char *)NULL);
 #ifdef DM_X
@@ -402,7 +412,7 @@ Bad:
 }
 
 void
-get_attached(void)
+get_attached()
 {
   int argc;
   char *argv[3];
@@ -442,7 +452,8 @@ get_attached(void)
 
 
 int
-gui_setup(char *dstr)
+gui_setup(dstr)
+char *dstr;
 {
 #ifdef DM_X
   struct bu_vls vls;
@@ -526,7 +537,11 @@ gui_setup(char *dstr)
  *  Run a display manager specific command(s).
  */
 int
-f_dm(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_dm(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int	argc;
+char	**argv;
 {
   if( !cmd_hook ){
     Tcl_AppendResult(interp, "The '", dmp->dm_name,
@@ -556,13 +571,14 @@ f_dm(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  *	!0	If the null display manager is attached.
  */
 int
-is_dm_null(void)
+is_dm_null()
 {
   return(curr_dm_list == &head_dm_list);
 }
 
 void
-dm_var_init(struct dm_list *initial_dm_list)
+dm_var_init(initial_dm_list)
+struct dm_list *initial_dm_list;
 {
   BU_GETSTRUCT(adc_state, _adc_state);
   *adc_state = *initial_dm_list->dml_adc_state;			/* struct copy */
@@ -626,7 +642,8 @@ dm_var_init(struct dm_list *initial_dm_list)
 }
 
 void
-mged_slider_init_vls(struct dm_list *p)
+mged_slider_init_vls(p)
+struct dm_list *p;
 {
   bu_vls_init(&p->dml_fps_name);
   bu_vls_init(&p->dml_aet_name);
@@ -637,7 +654,8 @@ mged_slider_init_vls(struct dm_list *p)
 }
 
 void
-mged_slider_free_vls(struct dm_list *p)
+mged_slider_free_vls(p)
+struct dm_list *p;
 {
   if (BU_VLS_IS_INITIALIZED(&p->dml_fps_name)) {
     bu_vls_free(&p->dml_fps_name);
@@ -650,7 +668,8 @@ mged_slider_free_vls(struct dm_list *p)
 }
 
 void
-mged_link_vars(struct dm_list *p)
+mged_link_vars(p)
+struct dm_list *p;
 {
   mged_slider_init_vls(p);
 
@@ -669,7 +688,11 @@ mged_link_vars(struct dm_list *p)
 }
 
 int
-f_get_dm_list(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_get_dm_list(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
 {
   struct dm_list *dlp;
 
@@ -690,7 +713,7 @@ f_get_dm_list(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 }
 
 void
-mged_fb_open(void)
+mged_fb_open()
 {
 #ifdef DM_X
   if(dmp->dm_type == DM_TYPE_X)
@@ -703,7 +726,7 @@ mged_fb_open(void)
 }
 
 void
-mged_fb_close(void)
+mged_fb_close()
 {
 #ifdef DM_X
   struct bu_vls vls;

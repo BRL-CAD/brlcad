@@ -27,8 +27,8 @@
 
 extern int rr_render(struct application *ap, struct partition *pp, struct shadework *swp);
 
-HIDDEN int	null_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip), null_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
-HIDDEN void	null_print(register struct region *rp, char *dp), null_free(char *cp);
+HIDDEN int	null_setup(), null_render();
+HIDDEN void	null_print(), null_free();
 
 /* The "mfuncs" table describes what the user interface may call this shader.
  * The null shader may be referred to as null or invisible.  Note that the 

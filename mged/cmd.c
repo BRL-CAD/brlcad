@@ -93,36 +93,39 @@ int be_o_xscale(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
 int be_o_yscale(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 int be_o_zscale(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 
-void mged_setup(void), cmd_setup(void), mged_compat(struct bu_vls *dest, struct bu_vls *src, int use_first);
-void mged_print_result(int status);
-void mged_global_variable_setup(Tcl_Interp *interp);
-int f_bot_fuse(ClientData clientData, Tcl_Interp *interp, int argc, char **argv), f_bot_condense(ClientData clientData, Tcl_Interp *interp, int argc, char **argv), f_bot_face_fuse(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+void mged_setup(), cmd_setup(), mged_compat();
+void mged_print_result();
+void mged_global_variable_setup();
+int f_bot_fuse(), f_bot_condense(), f_bot_face_fuse();
 extern int f_hide(), f_unhide();
 
 
 #ifndef HAVE_UNISTD_H
 extern void sync();
 #endif
-extern void update_grids(fastf_t sf);			/* in grid.c */
-extern void set_localunit_TclVar(void);		/* in chgmodel.c */
-extern void init_qray(void);			/* in qray.c */
-extern int gui_setup(char *dstr);				/* in attach.c */
+extern void update_grids();			/* in grid.c */
+extern void set_localunit_TclVar();		/* in chgmodel.c */
+extern void init_qray();			/* in qray.c */
+extern int gui_setup();				/* in attach.c */
 extern int mged_default_dlist;			/* in attach.c */
 extern int classic_mged;			/* in ged.c */
 extern int bot_vertex_fuse(), bot_condense();
 struct cmd_list head_cmd_list;
 struct cmd_list *curr_cmd_list;
 
-extern void mged_view_obj_callback(genptr_t clientData, struct view_obj *vop);
+extern void mged_view_obj_callback();
 
 extern int db_warn;	/* defined in ged.c */
 extern int db_upgrade;	/* defined in ged.c */
 extern int db_version;	/* defined in ged.c */
 
+extern struct rt_tess_tol     mged_ttol; /* do_draw.c */
+extern struct bn_tol	      mged_tol; /* ged.c */
+
 int glob_compat_mode = 1;
 int output_as_return = 1;
 
-int mged_cmd(int argc, char **argv, struct funtab *in_functions);
+int mged_cmd();
 struct bu_vls tcl_output_hook;
 
 Tcl_Interp *interp = NULL;
@@ -179,6 +182,7 @@ static struct cmdtab cmdtab[] = {
 	{"c", cmd_comb_std},
 	{"cat", cmd_cat},
 	{"center", cmd_center},
+	{"closedb", f_closedb},
 	{"cmd_win", cmd_cmd_win},
 	{"color", cmd_color},
 	{"comb", cmd_comb},
@@ -277,6 +281,7 @@ static struct cmdtab cmdtab[] = {
 #ifdef DM_X
 	{"loadtk", cmd_tk},
 #endif
+	{"loadview", f_loadview},
 	{"lookat", cmd_lookat},
 	{"ls", cmd_ls},
 	{"M", f_mouse},
@@ -477,7 +482,9 @@ static struct cmdtab cmdtab[] = {
  */
 
 HIDDEN int
-output_catch(genptr_t clientdata, genptr_t str)
+output_catch(clientdata, str)
+	genptr_t clientdata;
+	genptr_t str;
 {
 	register struct bu_vls *vp = (struct bu_vls *)clientdata;
 	register int len;
@@ -498,7 +505,8 @@ output_catch(genptr_t clientdata, genptr_t str)
  */
 
 void
-start_catching_output(struct bu_vls *vp)
+start_catching_output(vp)
+	struct bu_vls *vp;
 {
 	bu_log_add_hook(output_catch, (genptr_t)vp);
 }
@@ -510,7 +518,8 @@ start_catching_output(struct bu_vls *vp)
  */
 
 void
-stop_catching_output(struct bu_vls *vp)
+stop_catching_output(vp)
+	struct bu_vls *vp;
 {
 	bu_log_delete_hook(output_catch, (genptr_t)vp);
 }
@@ -524,7 +533,9 @@ stop_catching_output(struct bu_vls *vp)
  */
 
 int
-gui_output(genptr_t clientData, genptr_t str)
+gui_output(clientData, str)
+	genptr_t clientData;
+	genptr_t str;
 {
 	Tcl_DString tclcommand;
 	Tcl_Obj *save_result;
@@ -561,7 +572,11 @@ gui_output(genptr_t clientData, genptr_t str)
  *  Usage:  loadtk [displayname[.screennum]]
  */
 int
-cmd_tk(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+cmd_tk(clientData, interp, argc, argv)
+	ClientData clientData;
+	Tcl_Interp *interp;
+	int argc;
+	char **argv;
 {
 	int status;
 
@@ -591,7 +606,11 @@ cmd_tk(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  */
 
 int
-cmd_output_hook(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+cmd_output_hook(clientData, interp, argc, argv)
+	ClientData clientData;
+	Tcl_Interp *interp;    
+	int argc;
+	char **argv;
 {
 	struct bu_vls infocommand;
 	int status;
@@ -645,7 +664,11 @@ cmd_output_hook(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
  *			C M D _ N O P
  */
 int
-cmd_nop(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+cmd_nop(clientData, interp, argc, argv)
+	ClientData clientData;
+	Tcl_Interp *interp;
+	int argc;
+	char **argv;
 {
 	return TCL_OK;
 }
@@ -659,7 +682,11 @@ cmd_nop(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  */
 
 int
-cmd_get_ptr(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+cmd_get_ptr(clientData, interp, argc, argv)
+ClientData	clientData;
+Tcl_Interp     *interp;
+int		argc;
+char	      **argv;
 {
 	char buf[128];
 
@@ -673,7 +700,7 @@ cmd_get_ptr(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  * Sets up the Tcl interpreter
  */ 
 void
-mged_setup(void)
+mged_setup()
 {
 	struct bu_vls str;
 	char *filename;
@@ -757,7 +784,7 @@ mged_setup(void)
  * Register all the MGED commands.
  */
 void
-cmd_setup(void)
+cmd_setup()
 {
 	register struct cmdtab *ctp;
 	struct bu_vls temp;
@@ -816,7 +843,11 @@ cmd_setup(void)
 }
 
 int
-cmd_cmd_win(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+cmd_cmd_win(clientData, interp, argc, argv)
+	ClientData clientData;
+	Tcl_Interp *interp;
+	int argc;
+	char **argv;
 {
 	struct bu_vls vls;
 
@@ -1008,7 +1039,11 @@ cmd_get(clientData, interp, argc, argv)
 #endif
 
 int
-cmd_get_more_default(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+cmd_get_more_default(clientData, interp, argc, argv)
+	ClientData clientData;
+	Tcl_Interp *interp;
+	int argc;
+	char **argv;
 {
 	if(argc != 1){
 		struct bu_vls vls;
@@ -1025,7 +1060,11 @@ cmd_get_more_default(ClientData clientData, Tcl_Interp *interp, int argc, char *
 }
 
 int
-cmd_set_more_default(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+cmd_set_more_default(clientData, interp, argc, argv)
+	ClientData clientData;
+	Tcl_Interp *interp;
+	int argc;
+	char **argv;
 {
 	if(argc != 2){
 		struct bu_vls vls;
@@ -1043,7 +1082,11 @@ cmd_set_more_default(ClientData clientData, Tcl_Interp *interp, int argc, char *
 
 
 int
-cmd_mged_glob(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+cmd_mged_glob(clientData, interp, argc, argv)
+	ClientData clientData;
+	Tcl_Interp *interp;
+	int argc;
+	char **argv;
 {
 	struct bu_vls dest, src;
 
@@ -1075,7 +1118,8 @@ cmd_mged_glob(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  */
 
 void
-debackslash(struct bu_vls *dest, struct bu_vls *src)
+debackslash( dest, src )
+	struct bu_vls *dest, *src;
 {
 	char *ptr;
 
@@ -1090,7 +1134,8 @@ debackslash(struct bu_vls *dest, struct bu_vls *src)
 }
 
 void
-backslash_specials(struct bu_vls *dest, struct bu_vls *src)
+backslash_specials( dest, src )
+	struct bu_vls *dest, *src;
 {
 	int backslashed;
 	char *ptr, buf[2];
@@ -1123,7 +1168,9 @@ backslash_specials(struct bu_vls *dest, struct bu_vls *src)
  */
 
 void
-mged_compat(struct bu_vls *dest, struct bu_vls *src, int use_first)
+mged_compat( dest, src, use_first )
+	struct bu_vls *dest, *src;
+	int use_first;
 {
 	char *start, *end;          /* Start and ends of words */
 	int regexp;                 /* Set to TRUE when word is a regexp */
@@ -1350,7 +1397,7 @@ void
 mged_print_result(int status)
 {
 	int len;
-	extern void pr_prompt(void);
+	extern void pr_prompt();
 
 #if 0
 	switch (status) {
@@ -1461,7 +1508,11 @@ mged_cmd(
 /* Format: %	*/
 
 int
-f_comm(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_comm(clientData, interp, argc, argv)
+	ClientData clientData;
+	Tcl_Interp *interp;
+	int	argc;
+	char	**argv;
 {
 
 	register int pid, rpid;
@@ -1524,7 +1575,11 @@ f_quit(
 /* wrapper for sync() */
 
 int
-f_sync(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_sync(clientData, interp, argc, argv)
+	ClientData clientData;
+	Tcl_Interp *interp;
+	int argc;
+	char **argv;
 {
 
 	if(argc < 1 || 1 < argc){
@@ -1549,7 +1604,10 @@ f_sync(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  */
 
 static int
-helpcomm(int argc, char **argv, struct funtab *functions)
+helpcomm( argc, argv, functions)
+	int	argc;
+	char	**argv;
+	struct funtab *functions;
 {
 	register struct funtab *ftp;
 	register int	i, bad;
@@ -1585,7 +1643,10 @@ helpcomm(int argc, char **argv, struct funtab *functions)
  */
 
 int
-f_help2(int argc, char **argv, struct funtab *functions)
+f_help2(argc, argv, functions)
+	int argc;
+	char **argv;
+	struct funtab *functions;
 {
 	register struct funtab *ftp;
 
@@ -1601,7 +1662,10 @@ f_help2(int argc, char **argv, struct funtab *functions)
 }
 
 int
-f_fhelp2(int argc, char **argv, struct funtab *functions)
+f_fhelp2( argc, argv, functions)
+	int	argc;
+	char	**argv;
+	struct funtab *functions;
 {
 	register struct funtab *ftp;
 	struct bu_vls		str;
@@ -1622,7 +1686,11 @@ f_fhelp2(int argc, char **argv, struct funtab *functions)
 }
 
 int
-cmd_summary(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+cmd_summary(clientData, interp, argc, argv )
+	ClientData clientData;
+	Tcl_Interp *interp;
+	int	argc;
+	char	**argv;
 {
 	CHECK_DBI_NULL;
 
@@ -1636,7 +1704,11 @@ cmd_summary(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  */
 
 int
-cmd_echo(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+cmd_echo(clientData, interp, argc, argv)
+	ClientData clientData;
+	Tcl_Interp *interp;
+	int	argc;
+	char	*argv[];
 {
 	register int i;
 
@@ -1716,7 +1788,11 @@ f_savedit(argc, argv)
  *	tie -u cw1	--->	removes the association, if it exists, cw1 has with a display manager
  */
 int
-f_tie(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_tie(clientData, interp, argc, argv)
+	ClientData clientData;
+	Tcl_Interp *interp;
+	int argc;
+	char *argv[];
 {
 	register int uflag = 0;		/* untie flag */
 	struct cmd_list *clp;
@@ -1838,7 +1914,11 @@ f_tie(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 }
 
 int
-f_ps(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_ps(clientData, interp, argc, argv)
+     ClientData clientData;
+     Tcl_Interp *interp;
+     int argc;
+     char *argv[];
 {
 	int status;
 	char *av[2];
@@ -1888,7 +1968,11 @@ f_ps(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  *                any arguments.
  */
 int
-f_pl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_pl(clientData, interp, argc, argv)
+	ClientData clientData;
+	Tcl_Interp *interp;
+	int argc;
+	char *argv[];
 {
 	int status;
 	char *av[2];
@@ -1936,7 +2020,11 @@ f_pl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 }
 
 int
-f_winset(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_winset(clientData, interp, argc, argv)
+	ClientData clientData;
+	Tcl_Interp *interp;
+	int     argc;
+	char    **argv;
 {
 	register struct dm_list *p;
 
@@ -1976,7 +2064,8 @@ f_winset(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 }
 
 void
-mged_global_variable_setup(Tcl_Interp *interp)
+mged_global_variable_setup(interp)
+Tcl_Interp *interp;
 {
 	struct bu_vls vls;
 
@@ -2002,7 +2091,11 @@ mged_global_variable_setup(Tcl_Interp *interp)
 }
 
 int
-f_bot_face_fuse(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_bot_face_fuse( clientData, interp, argc, argv)
+	ClientData clientData;
+	Tcl_Interp *interp;
+	int     argc;
+	char    **argv;
 {
 	struct directory *old_dp, *new_dp;
 	struct rt_db_internal intern;
@@ -2051,7 +2144,11 @@ f_bot_face_fuse(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
 }
 
 int
-f_bot_fuse(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_bot_fuse(clientData, interp, argc, argv)
+	ClientData clientData;
+	Tcl_Interp *interp;
+	int     argc;
+	char    **argv;
 {
 	struct directory *old_dp, *new_dp;
 	struct rt_db_internal intern;
@@ -2103,7 +2200,11 @@ f_bot_fuse(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 }
 
 int
-f_bot_condense(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_bot_condense(clientData, interp, argc, argv)
+	ClientData clientData;
+	Tcl_Interp *interp;
+	int     argc;
+	char    **argv;
 {
 	struct directory *old_dp, *new_dp;
 	struct rt_db_internal intern;
@@ -2157,7 +2258,11 @@ f_bot_condense(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 #if 1
 int
-f_test_bomb_hook(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_test_bomb_hook(clientData, interp, argc, argv)
+	ClientData clientData;
+	Tcl_Interp *interp;
+	int     argc;
+	char    **argv;
 {
 	bu_bomb("\nTesting MGED's bomb hook!\n");
 
@@ -2295,7 +2400,11 @@ cmd_comb_std(ClientData	clientData,
 }
 
 int
-cmd_nmg_collapse(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+cmd_nmg_collapse( clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
 {
 	char *av[3];
 
@@ -2329,7 +2438,11 @@ cmd_make_name(ClientData	clientData,
 }
 
 int
-cmd_shells(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+cmd_shells(clientData, interp, argc, argv )
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
 {
 	CHECK_DBI_NULL;
 
@@ -2344,7 +2457,11 @@ cmd_shells(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  *		    of the matching paths
  */
 int
-cmd_pathsum(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+cmd_pathsum(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int	argc;
+char	**argv;
 {
 	int	ret;
 
@@ -2376,7 +2493,11 @@ cmd_pathsum(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  */
 
 int
-cmd_copyeval(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+cmd_copyeval(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
 {
 	int ret;
 
@@ -2412,7 +2533,11 @@ cmd_copyeval(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  * the -l flag is there to select levels even if it does not currently work.
  */
 int
-cmd_push(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+cmd_push(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
 {
 	CHECK_DBI_NULL;
 
@@ -2420,7 +2545,11 @@ cmd_push(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 }
 
 int
-cmd_hide(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+cmd_hide(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
 {
 	CHECK_DBI_NULL;
 
@@ -2428,7 +2557,11 @@ cmd_hide(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 }
 
 int
-cmd_unhide(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+cmd_unhide(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
 {
 	CHECK_DBI_NULL;
 
@@ -2447,7 +2580,11 @@ cmd_xpush(ClientData	clientData,
 }
 
 int
-cmd_showmats(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+cmd_showmats(clientData, interp, argc, argv )
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
 {
 	CHECK_DBI_NULL;
 
@@ -2455,7 +2592,11 @@ cmd_showmats(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 }
 
 int
-cmd_nmg_simplify(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+cmd_nmg_simplify(clientData, interp, argc, argv )
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char *argv[];
 {
 	CHECK_DBI_NULL;
 
@@ -2468,7 +2609,11 @@ cmd_nmg_simplify(ClientData clientData, Tcl_Interp *interp, int argc, char **arg
  */
 
 int
-cmd_make_bb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+cmd_make_bb(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
 {
 	CHECK_DBI_NULL;
 
@@ -2476,7 +2621,11 @@ cmd_make_bb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 }
 
 int
-cmd_whatid(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+cmd_whatid(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
 {
 	CHECK_DBI_NULL;
 
@@ -2489,7 +2638,11 @@ cmd_whatid(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  *	Finds all regions with given region ids or air codes.
  */
 int
-cmd_which(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+cmd_which(clientData, interp, argc, argv)
+     ClientData clientData;
+     Tcl_Interp *interp;
+     int	argc;
+     char	**argv;
 {
 	int		ret;
 
@@ -2513,7 +2666,11 @@ cmd_which(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  *  TODO:  Perhaps print all objects, sorted by use count, as an option?
  */
 int
-cmd_tops(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+cmd_tops(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int	argc;
+char	**argv;
 {
 	int		ret;
 
@@ -2592,7 +2749,11 @@ cmd_mvall(ClientData	clientData,
  *  becomes: db dup file.g [prefix]
  */
 int
-cmd_dup(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+cmd_dup(clientData, interp, argc, argv )
+     ClientData clientData;
+     Tcl_Interp *interp;
+     int	argc;
+     char	**argv;
 {
 	CHECK_DBI_NULL;
 
@@ -2614,7 +2775,11 @@ cmd_dup(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  *  Slash ("/") specifies no prefix.
  */
 int
-cmd_concat(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+cmd_concat(clientData, interp, argc, argv)
+     ClientData clientData;
+     Tcl_Interp *interp;
+     int	argc;
+     char	**argv;
 {
 	CHECK_DBI_NULL;
 
@@ -2669,7 +2834,11 @@ cmd_region(ClientData	clientData,
 /* Delete members of a combination */
 /* Format: rm comb memb1 memb2 .... membn	*/
 int
-cmd_remove(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+cmd_remove(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int	argc;
+char	**argv;
 {
 	CHECK_DBI_NULL;
 
@@ -2799,7 +2968,11 @@ cmd_color(ClientData	clientData,
  *  Format: comb comb_name sol1 opr2 sol2 ... oprN solN
  */
 int
-cmd_comb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+cmd_comb(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int	argc;
+char	**argv;
 {
 	CHECK_DBI_NULL;
 
@@ -2837,7 +3010,11 @@ cmd_copy(ClientData	clientData,
  * on its given arguments.  The result is returned in interp->result.
  */
 int
-cmd_expand(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+cmd_expand( clientData, interp, argc, argv )
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
 {
     CHECK_DBI_NULL;
 
@@ -3088,13 +3265,24 @@ cmd_tol(ClientData	clientData,
 	int		argc,
 	char		**argv)
 {
+	int ret;
+
 	CHECK_DBI_NULL;
 
-	return wdb_tol_cmd(wdbp, interp, argc, argv);
+	ret = wdb_tol_cmd(wdbp, interp, argc, argv);
+
+	/* hack to keep mged tolerance settings current */
+	mged_ttol = wdbp->wdb_ttol;
+	mged_tol = wdbp->wdb_tol;
+	mged_abs_tol = mged_ttol.abs;
+	mged_rel_tol = mged_ttol.rel;
+	mged_nrm_tol = mged_ttol.norm;
+
+	return( ret );
 }
 
 /* defined in chgview.c */
-extern int edit_com(int argc, char **argv, int kind, int catch_sigint);
+extern int edit_com();
 
 /* ZAP the display -- then edit anew */
 /* Format: B object	*/

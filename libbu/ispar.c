@@ -40,7 +40,7 @@ int	bu_pid_of_initiating_thread = 0;	/* don't declare in h/bu.h */
  *  If bu_parallel() is active, this routine will return non-zero.
  */
 int
-bu_is_parallel(void)
+bu_is_parallel()
 {
 	if( bu_pid_of_initiating_thread != 0 )  return 1;
 	return 0;
@@ -53,7 +53,7 @@ bu_is_parallel(void)
  *  without dragging in the whole parallel library if it isn't being used.
  */
 void
-bu_kill_parallel(void)
+bu_kill_parallel()
 {
 	if( bu_pid_of_initiating_thread == 0 )  return;
 	if( bu_pid_of_initiating_thread == getpid() )  return;

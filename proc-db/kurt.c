@@ -40,12 +40,13 @@ struct val {
 	int	v_n;
 } val[20][20];
 
-void	do_cell(struct val *vp, double xc, double yc), draw_rect(struct val *a, struct val *b, struct val *c, struct val *d), pnorms(fastf_t (*norms)[3], fastf_t (*verts)[3], fastf_t *centroid, int npts), do_light(char *name, fastf_t *pos, fastf_t *dir_at, int da_flag, double r, unsigned char *rgb);
+void	do_cell(), draw_rect(), pnorms(), do_light();
 
 struct rt_wdb	*outfp;
 
 int
-main(int argc, char **argv)
+main(argc, argv)
+char	**argv;
 {
 	int	ix, iy;
 	double	x, y;
@@ -113,9 +114,9 @@ main(int argc, char **argv)
 }
 
 void
-do_cell(struct val *vp, double xc, double yc)
-          	    
-      	       		/* center coordinates, z=0+ */
+do_cell( vp, xc, yc )
+struct val	*vp;
+double	xc, yc;		/* center coordinates, z=0+ */
 {
 	LOCAL poly	polynom;
 	LOCAL bn_complex_t	roots[4];	/* roots of final equation */
@@ -153,7 +154,8 @@ do_cell(struct val *vp, double xc, double yc)
 }
 
 void
-draw_rect(struct val *a, struct val *b, struct val *c, struct val *d)
+draw_rect( a, b, c, d )
+struct val *a, *b, *c, *d;
 {
 	int min, max;
 	register int i;
@@ -271,11 +273,11 @@ draw_rect(struct val *a, struct val *b, struct val *c, struct val *d)
  *  Assumes all points are coplanar (they better be!).
  */
 void
-pnorms(fastf_t (*norms)[3], fastf_t (*verts)[3], fastf_t *out, int npts)
-       	            
-       	            
-      	    		/* hopefully points outwards */
-   	     
+pnorms( norms, verts, out, npts )
+fastf_t	norms[5][3];
+fastf_t	verts[5][3];
+vect_t	out;		/* hopefully points outwards */
+int	npts;
 {
 	register int i;
 	vect_t	ab, ac;
@@ -298,13 +300,13 @@ pnorms(fastf_t (*norms)[3], fastf_t (*verts)[3], fastf_t *out, int npts)
 }
 
 void
-do_light(char *name, fastf_t *pos, fastf_t *dir_at, int da_flag, double r, unsigned char *rgb)
-    	      
-       	    
-      	       		/* direction or aim point */
-   	        	/* 0 = direction, !0 = aim point */
-      	  		/* radius of light */
-             	     
+do_light( name, pos, dir_at, da_flag, r, rgb )
+char	*name;
+point_t	pos;
+vect_t	dir_at;		/* direction or aim point */
+int	da_flag;	/* 0 = direction, !0 = aim point */
+double	r;		/* radius of light */
+unsigned char	*rgb;
 {
 	char	nbuf[64];
 	vect_t	center;

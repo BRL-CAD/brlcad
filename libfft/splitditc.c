@@ -26,7 +26,9 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 int	rfft_adds, rfft_mults;
 
 void
-splitdit(double *X, int N, int M)
+splitdit( X, N, M )
+double	X[];
+int	N, M;
 {
 	int	i0, i1, i2, i3;
 	int	a0, a1, a2, a3, b0, b1, b2, b3;

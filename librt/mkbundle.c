@@ -44,7 +44,13 @@ static const char RCSmkbundle[] = "@(#)$Header$ (BRL)";
  *  XXX Should we require a and b as inputs, for efficiency?
  */
 void
-rt_raybundle_maker(struct xray *rp, double radius, const fastf_t *avec, const fastf_t *bvec, int rays_per_ring, int nring)
+rt_raybundle_maker( rp, radius, avec, bvec, rays_per_ring, nring )
+struct xray	*rp;
+double		radius;
+const vect_t	avec;
+const vect_t	bvec;
+int		rays_per_ring;
+int		nring;
 {
 	register struct xray	*rayp = rp+1;
 	int	ring;

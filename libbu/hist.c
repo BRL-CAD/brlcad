@@ -37,7 +37,8 @@ static const char RCShist[] = "@(#)$Header$ (BRL)";
  *			B U _ H I S T _ F R E E
  */
 void
-bu_hist_free(struct bu_hist *histp)
+bu_hist_free( histp )
+struct bu_hist	*histp;
 {
 	if( histp && histp->magic == 0 )  return;
 	BU_CK_HIST(histp);
@@ -55,7 +56,10 @@ bu_hist_free(struct bu_hist *histp)
  *  It is expected that the structure is junk upon entry.
  */
 void
-bu_hist_init(struct bu_hist *histp, fastf_t min, fastf_t max, int nbins)
+bu_hist_init( histp, min, max, nbins )
+struct bu_hist	*histp;
+fastf_t			min, max;
+int			nbins;
 {
 
 	if( max <= min )  max = min+1;
@@ -81,7 +85,10 @@ bu_hist_init(struct bu_hist *histp, fastf_t min, fastf_t max, int nbins)
  *			B U _ H I S T _ R A N G E
  */
 void
-bu_hist_range(register struct bu_hist *hp, fastf_t low, fastf_t high)
+bu_hist_range( hp, low, high )
+register struct bu_hist	*hp;
+fastf_t				low;
+fastf_t				high;
 {
 	long		a;
 	long		b;
@@ -110,7 +117,10 @@ bu_hist_range(register struct bu_hist *hp, fastf_t low, fastf_t high)
  *  Allows caller control over zero-suppression feature.
  */
 void
-bu_hist_pr_suppress(register const struct bu_hist *histp, const char *title, int zero_suppress)
+bu_hist_pr_suppress( histp, title, zero_suppress )
+register const struct bu_hist	*histp;
+const char		*title;
+int			zero_suppress;
 {
 	register int	i;
 	long		maxcount;
@@ -183,7 +193,9 @@ bu_hist_pr_suppress(register const struct bu_hist *histp, const char *title, int
  *  The original interface.
  */
 void
-bu_hist_pr(register const struct bu_hist *histp, const char *title)
+bu_hist_pr( histp, title )
+register const struct bu_hist	*histp;
+const char			*title;
 {
 	bu_hist_pr_suppress( histp, title, 1 );
 }

@@ -1,18 +1,18 @@
 /*
  * Package Handlers.
  */
-void	pkgfoo(struct pkg_conn *pcp, char *buf);	/* foobar message handler */
-void	rfbopen(struct pkg_conn *pcp, char *buf), rfbclose(struct pkg_conn *pcp, char *buf), rfbclear(struct pkg_conn *pcp, char *buf), rfbread(struct pkg_conn *pcp, char *buf), rfbwrite(struct pkg_conn *pcp, char *buf);
-void	rfbcursor(struct pkg_conn *pcp, char *buf), rfbgetcursor(struct pkg_conn *pcp, char *buf);
-void	rfbrmap(struct pkg_conn *pcp, char *buf), rfbwmap(struct pkg_conn *pcp, char *buf);
-void	rfbhelp(struct pkg_conn *pcp, char *buf);
-void	rfbreadrect(struct pkg_conn *pcp, char *buf), rfbwriterect(struct pkg_conn *pcp, char *buf);
-void	rfbbwreadrect(struct pkg_conn *pcp, char *buf), rfbbwwriterect(struct pkg_conn *pcp, char *buf);
-void	rfbpoll(struct pkg_conn *pcp, char *buf), rfbflush(struct pkg_conn *pcp, char *buf), rfbfree(struct pkg_conn *pcp, char *buf);
-void	rfbview(struct pkg_conn *pcp, char *buf), rfbgetview(struct pkg_conn *pcp, char *buf);
-void	rfbsetcursor(struct pkg_conn *pcp, char *buf);
+void	pkgfoo();	/* foobar message handler */
+void	rfbopen(), rfbclose(), rfbclear(), rfbread(), rfbwrite();
+void	rfbcursor(), rfbgetcursor();
+void	rfbrmap(), rfbwmap();
+void	rfbhelp();
+void	rfbreadrect(), rfbwriterect();
+void	rfbbwreadrect(), rfbbwwriterect();
+void	rfbpoll(), rfbflush(), rfbfree();
+void	rfbview(), rfbgetview();
+void	rfbsetcursor();
 /* Old Routines */
-void	rfbscursor(struct pkg_conn *pcp, char *buf), rfbwindow(struct pkg_conn *pcp, char *buf), rfbzoom(struct pkg_conn *pcp, char *buf);
+void	rfbscursor(), rfbwindow(), rfbzoom();
 
 static struct pkg_switch pkg_switch[] = {
 	{ MSG_FBOPEN,		rfbopen,	"Open Framebuffer" },

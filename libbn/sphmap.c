@@ -46,7 +46,9 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
  *  Returns SPM_NULL on error.
  */
 spm_map_t *
-spm_init(int N, int elsize)
+spm_init( N, elsize )
+int	N;
+int	elsize;
 {
 	int	i, nx, total, index;
 	register spm_map_t *mapp;
@@ -100,7 +102,8 @@ spm_init(int N, int elsize)
  *  Free the storage associated with a sphere structure.
  */
 void
-spm_free(spm_map_t *mp)
+spm_free( mp )
+spm_map_t *mp;
 {
 	RT_CK_SPM(mp);
 	if( mp == SPM_NULL )
@@ -134,7 +137,10 @@ spm_free(spm_map_t *mp)
  *  0.0 <= v < 1.0	Bottom to Top
  */
 void
-spm_read(register spm_map_t *mapp, register unsigned char *valp, double u, double v)
+spm_read( mapp, valp, u, v )
+register spm_map_t	*mapp;
+register unsigned char	*valp;
+double	u, v;
 {
 	int	x, y;
 	register unsigned char *cp;
@@ -162,7 +168,10 @@ spm_read(register spm_map_t *mapp, register unsigned char *valp, double u, doubl
  *  0.0 <= v < 1.0	Bottom to Top
  */
 void
-spm_write(register spm_map_t *mapp, register unsigned char *valp, double u, double v)
+spm_write( mapp, valp, u, v )
+register spm_map_t	*mapp;
+register unsigned char	*valp;
+double	u, v;
 {
 	int	x, y;
 	register unsigned char *cp;
@@ -190,7 +199,9 @@ spm_write(register spm_map_t *mapp, register unsigned char *valp, double u, doub
  *  0.0 <= v < 1.0	Bottom to Top
  */
 char *
-spm_get(register spm_map_t *mapp, double u, double v)
+spm_get( mapp, u, v )
+register spm_map_t	*mapp;
+double	u, v;
 {
 	int	x, y;
 	register unsigned char *cp;
@@ -213,7 +224,9 @@ spm_get(register spm_map_t *mapp, double u, double v)
  *  Returns -1 on error, else 0.
  */
 int
-spm_load(spm_map_t *mapp, char *filename)
+spm_load( mapp, filename )
+spm_map_t *mapp;
+char	*filename;
 {
 	int	y, total;
 	FILE	*fp;
@@ -252,7 +265,9 @@ spm_load(spm_map_t *mapp, char *filename)
  *  Returns -1 on error, else 0.
  */
 int
-spm_save(spm_map_t *mapp, char *filename)
+spm_save( mapp, filename )
+spm_map_t *mapp;
+char	*filename;
 {
 	int	i;
 	int	got;
@@ -299,7 +314,10 @@ spm_save(spm_map_t *mapp, char *filename)
  *  Returns -1 on error, else 0.
  */
 int
-spm_px_load(spm_map_t *mapp, char *filename, int nx, int ny)
+spm_px_load( mapp, filename, nx, ny )
+spm_map_t *mapp;
+char	*filename;
+int	nx, ny;
 {
 	int	i, j;			/* index input file */
 	int	x, y;			/* index texture map */
@@ -372,7 +390,10 @@ spm_px_load(spm_map_t *mapp, char *filename, int nx, int ny)
  *  Returns -1 on error, else 0.
  */
 int
-spm_px_save(spm_map_t *mapp, char *filename, int nx, int ny)
+spm_px_save( mapp, filename, nx, ny )
+spm_map_t *mapp;
+char	*filename;
+int	nx, ny;
 {
 	int	x, y;
 	FILE	*fp;
@@ -421,7 +442,9 @@ spm_px_save(spm_map_t *mapp, char *filename, int nx, int ny)
  *  Used for debugging.
  */
 void
-spm_dump(spm_map_t *mp, int verbose)
+spm_dump( mp, verbose )
+spm_map_t *mp;
+int	verbose;
 {
 	int	i;
 

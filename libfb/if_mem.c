@@ -33,21 +33,21 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "fb.h"
 #include "./fblocal.h"
 
-_LOCAL_ int	mem_open(FBIO *ifp, char *file, int width, int height),
-		mem_close(FBIO *ifp),
-		mem_clear(FBIO *ifp, unsigned char *pp),
-		mem_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count),
-		mem_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count),
-		mem_rmap(FBIO *ifp, ColorMap *cmp),
-		mem_wmap(FBIO *ifp, const ColorMap *cmp),
-		mem_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom),
-		mem_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom),
-		mem_setcursor(FBIO *ifp, const unsigned char *bits, int xbits, int ybits, int xorig, int yorig),
-		mem_cursor(FBIO *ifp, int mode, int x, int y),
-		mem_getcursor(FBIO *ifp, int *mode, int *x, int *y),
-		mem_poll(FBIO *ifp),
-		mem_flush(FBIO *ifp),
-		mem_help(FBIO *ifp);
+_LOCAL_ int	mem_open(),
+		mem_close(),
+		mem_clear(),
+		mem_read(),
+		mem_write(),
+		mem_rmap(),
+		mem_wmap(),
+		mem_view(),
+		mem_getview(),
+		mem_setcursor(),
+		mem_cursor(),
+		mem_getcursor(),
+		mem_poll(),
+		mem_flush(),
+		mem_help();
 
 /* This is the ONLY thing that we normally "export" */
 FBIO memory_interface =  {
@@ -127,7 +127,10 @@ static struct modeflags {
 };
 
 _LOCAL_ int
-mem_open(FBIO *ifp, char *file, int width, int height)
+mem_open( ifp, file, width, height )
+FBIO	*ifp;
+char	*file;
+int	width, height;
 {
 	int	mode;
 	char	*cp;
@@ -240,7 +243,8 @@ mem_open(FBIO *ifp, char *file, int width, int height)
 }
 
 _LOCAL_ int
-mem_close(FBIO *ifp)
+mem_close( ifp )
+FBIO	*ifp;
 {
 	/*
 	 * Flush memory/cmap to attached frame buffer if any
@@ -263,7 +267,9 @@ mem_close(FBIO *ifp)
 }
 
 _LOCAL_ int
-mem_clear(FBIO *ifp, unsigned char *pp)
+mem_clear( ifp, pp )
+FBIO	*ifp;
+unsigned char	*pp;
 {
 	RGBpixel v;
 	register int n;
@@ -300,7 +306,11 @@ mem_clear(FBIO *ifp, unsigned char *pp)
 }
 
 _LOCAL_ int
-mem_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count)
+mem_read( ifp, x, y, pixelp, count )
+FBIO	*ifp;
+int	x, y;
+unsigned char	*pixelp;
+int	count;
 {
 	int	pixels_to_end;
 
@@ -319,7 +329,11 @@ mem_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count)
 }
 
 _LOCAL_ int
-mem_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count)
+mem_write( ifp, x, y, pixelp, count )
+FBIO	*ifp;
+int	x, y;
+const unsigned char	*pixelp;
+int	count;
 {
 	int	pixels_to_end;
 
@@ -343,14 +357,18 @@ mem_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count)
 }
 
 _LOCAL_ int
-mem_rmap(FBIO *ifp, ColorMap *cmp)
+mem_rmap( ifp, cmp )
+FBIO	*ifp;
+ColorMap	*cmp;
 {
 	*cmp = MI(ifp)->cmap;		/* struct copy */
 	return(0);
 }
 
 _LOCAL_ int
-mem_wmap(FBIO *ifp, const ColorMap *cmp)
+mem_wmap( ifp, cmp )
+FBIO	*ifp;
+const ColorMap	*cmp;
 {
 	if( cmp == COLORMAP_NULL )  {
 		fb_make_linear_cmap( &(MI(ifp)->cmap) );
@@ -367,7 +385,10 @@ mem_wmap(FBIO *ifp, const ColorMap *cmp)
 }
 
 _LOCAL_ int
-mem_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
+mem_view( ifp, xcenter, ycenter, xzoom, yzoom )
+FBIO	*ifp;
+int	xcenter, ycenter;
+int	xzoom, yzoom;
 {
 	fb_sim_view( ifp, xcenter, ycenter, xzoom, yzoom );
 	if( MI(ifp)->write_thru ) {
@@ -378,7 +399,10 @@ mem_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 }
 
 _LOCAL_ int
-mem_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
+mem_getview( ifp, xcenter, ycenter, xzoom, yzoom )
+FBIO	*ifp;
+int	*xcenter, *ycenter;
+int	*xzoom, *yzoom;
 {
 	if( MI(ifp)->write_thru ) {
 		return fb_getview( MI(ifp)->fbp, xcenter, ycenter,
@@ -389,7 +413,11 @@ mem_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 }
 
 _LOCAL_ int
-mem_setcursor(FBIO *ifp, const unsigned char *bits, int xbits, int ybits, int xorig, int yorig)
+mem_setcursor( ifp, bits, xbits, ybits, xorig, yorig )
+FBIO	*ifp;
+const unsigned char *bits;
+int	xbits, ybits;
+int	xorig, yorig;
 {
 	if( MI(ifp)->write_thru ) {
 		return fb_setcursor( MI(ifp)->fbp,
@@ -399,7 +427,10 @@ mem_setcursor(FBIO *ifp, const unsigned char *bits, int xbits, int ybits, int xo
 }
 
 _LOCAL_ int
-mem_cursor(FBIO *ifp, int mode, int x, int y)
+mem_cursor( ifp, mode, x, y )
+FBIO	*ifp;
+int	mode;
+int	x, y;
 {
 	fb_sim_cursor( ifp, mode, x, y );
 	if( MI(ifp)->write_thru ) {
@@ -409,7 +440,10 @@ mem_cursor(FBIO *ifp, int mode, int x, int y)
 }
 
 _LOCAL_ int
-mem_getcursor(FBIO *ifp, int *mode, int *x, int *y)
+mem_getcursor( ifp, mode, x, y )
+FBIO	*ifp;
+int	*mode;
+int	*x, *y;
 {
 	if( MI(ifp)->write_thru ) {
 		return fb_getcursor( MI(ifp)->fbp, mode, x, y );
@@ -419,7 +453,8 @@ mem_getcursor(FBIO *ifp, int *mode, int *x, int *y)
 }
 
 _LOCAL_ int
-mem_poll(FBIO *ifp)
+mem_poll( ifp )
+FBIO	*ifp;
 {
 	if( MI(ifp)->write_thru ) {
 		return fb_poll( MI(ifp)->fbp );
@@ -428,7 +463,8 @@ mem_poll(FBIO *ifp)
 }
 
 _LOCAL_ int
-mem_flush(FBIO *ifp)
+mem_flush( ifp )
+FBIO	*ifp;
 {
 	/*
 	 * Flush memory/cmap to attached frame buffer if any
@@ -452,7 +488,8 @@ mem_flush(FBIO *ifp)
 }
 
 _LOCAL_ int
-mem_help(FBIO *ifp)
+mem_help( ifp )
+FBIO	*ifp;
 {
 	struct	modeflags *mfp;
 

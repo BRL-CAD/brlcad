@@ -42,7 +42,10 @@ static const struct bn_poly	bn_Zero_poly = { BN_POLY_MAGIC, 0, {0.0} };
  *	bn_poly_mul -- multiply two polynomials
  */
 struct bn_poly *
-bn_poly_mul(register struct bn_poly *product, register const struct bn_poly *m1, register const struct bn_poly *m2)
+bn_poly_mul(product, m1, m2)
+register struct bn_poly	*product;
+register const struct bn_poly	*m1;
+register const struct bn_poly	*m2;
 {
 	if( m1->dgr == 1 && m2->dgr == 1 )  {
 		product->dgr = 2;
@@ -94,7 +97,9 @@ bn_poly_mul(register struct bn_poly *product, register const struct bn_poly *m1,
  *	bn_poly_scale -- scale a polynomial
  */
 struct bn_poly *
-bn_poly_scale(register struct bn_poly *eqn, double factor)
+bn_poly_scale(eqn,factor)
+register struct bn_poly	*eqn;
+double	factor;
 {
 	register int		cnt;
 
@@ -109,7 +114,10 @@ bn_poly_scale(register struct bn_poly *eqn, double factor)
  *	bn_poly_add -- add two polynomials
  */
 struct bn_poly *
-bn_poly_add(register struct bn_poly *sum, register const struct bn_poly *poly1, register const struct bn_poly *poly2)
+bn_poly_add(sum,poly1,poly2)
+register struct bn_poly	*sum;
+register const struct bn_poly	*poly1;
+register const struct bn_poly	*poly2;
 {
 	LOCAL struct bn_poly	tmp;
 	register int		i, offset;
@@ -141,7 +149,10 @@ bn_poly_add(register struct bn_poly *sum, register const struct bn_poly *poly1, 
  *	bn_poly_sub -- subtract two polynomials
  */
 struct bn_poly *
-bn_poly_sub(register struct bn_poly *diff, register const struct bn_poly *poly1, register const struct bn_poly *poly2)
+bn_poly_sub(diff, poly1, poly2)
+register struct bn_poly *diff;
+register const struct bn_poly	*poly1;
+register const struct bn_poly	*poly2;
 {
 	LOCAL struct bn_poly	tmp;
 	register int		i, offset;
@@ -176,7 +187,11 @@ bn_poly_sub(register struct bn_poly *diff, register const struct bn_poly *poly1,
  *	division.  Both polynomials must have real coefficients.
  */
 void
-bn_poly_synthetic_division(register struct bn_poly *quo, register struct bn_poly *rem, register const struct bn_poly *dvdend, register const struct bn_poly *dvsor)
+bn_poly_synthetic_division(quo, rem, dvdend, dvsor)
+register struct bn_poly	*quo;
+register struct bn_poly	*rem;
+register const struct bn_poly	*dvdend;
+register const struct bn_poly	*dvsor;
 {
 	register int	div;
 	register int	n;
@@ -208,7 +223,9 @@ bn_poly_synthetic_division(register struct bn_poly *quo, register struct bn_poly
  *	of any quadratic equation with real coefficients.
  */
 int
-bn_poly_quadratic_roots(register struct bn_complex *roots, register const struct bn_poly *quadrat)
+bn_poly_quadratic_roots( roots, quadrat )
+register struct bn_complex	roots[];
+register const struct bn_poly	*quadrat;
 {
 	LOCAL fastf_t	discrim, denom, rad;
 
@@ -277,7 +294,8 @@ bn_poly_quadratic_roots(register struct bn_complex *roots, register const struct
  */
 static int	bn_expecting_fpe = 0;
 static jmp_buf	bn_abort_buf;
-HIDDEN void bn_catch_FPE(int sig)
+HIDDEN void bn_catch_FPE(sig)
+int	sig;
 {
 	if( !bn_expecting_fpe )
 		bu_bomb("bn_catch_FPE() unexpected SIGFPE!");
@@ -290,7 +308,9 @@ HIDDEN void bn_catch_FPE(int sig)
  *			B N _ P O L Y _ C U B I C _ R O O T S
  */
 int
-bn_poly_cubic_roots(register struct bn_complex *roots, register const struct bn_poly *eqn)
+bn_poly_cubic_roots( roots, eqn )
+register struct bn_complex	roots[];
+register const struct bn_poly	*eqn;
 {
 	LOCAL fastf_t	a, b, c1, c1_3rd, delta;
 	register int	i;
@@ -396,7 +416,9 @@ bn_poly_cubic_roots(register struct bn_complex *roots, register const struct bn_
  *	Returns 1 for success, 0 for fail.
  */
 int
-bn_poly_quartic_roots(register struct bn_complex *roots, register const struct bn_poly *eqn)
+bn_poly_quartic_roots( roots, eqn )
+register struct bn_complex	roots[];
+register const struct bn_poly	*eqn;
 {
 	LOCAL struct bn_poly	cube, quad1, quad2;
 	LOCAL bn_complex_t	u[3];
@@ -474,7 +496,9 @@ bn_poly_quartic_roots(register struct bn_complex *roots, register const struct b
  *			B N _ P R _ P O L Y
  */
 void
-bn_pr_poly(const char *title, register const struct bn_poly *eqn)
+bn_pr_poly(title, eqn)
+const char			*title;
+register const struct bn_poly	*eqn;
 {
 	register int	n;
 	register int	exp;
@@ -517,7 +541,10 @@ bn_pr_poly(const char *title, register const struct bn_poly *eqn)
  *			B N _ P R _ R O O T S
  */
 void
-bn_pr_roots(const char *title, const struct bn_complex *roots, int n)
+bn_pr_roots( title, roots, n )
+const char	*title;
+const struct bn_complex	roots[];
+int		n;
 {
 	register int	i;
 

@@ -35,7 +35,7 @@ static	int	Xleft, Yleft, Xright, Yright;		/* XXX */
 
 FBIO	*fbp;	/* XXX - debug */
 
-fhinit(void)
+fhinit()
 {
 	int	i;
 
@@ -52,7 +52,8 @@ fhinit(void)
  * Add another Z cut to the display.
  *  This one goes "behind" the last one.
  */
-fhnewz(int *f, int num)
+fhnewz( f, num )
+int	f[], num;
 {
 	int	x, y, Xprev, Yprev, Xi, Yi;
 
@@ -81,7 +82,8 @@ fhnewz(int *f, int num)
  *	    1 if visible above upper horizon.
  *	   -1 if visible below lower horizon.
  */
-fhvis(int x, int y)
+fhvis( x, y )
+int x, y;
 {
 	/* See if hidden behind horizons */
 	if( y < upper[x] && y > lower[x] )
@@ -97,21 +99,23 @@ fhvis(int x, int y)
  * INTERNAL Edge fill routine.
  * NOT DONE YET.
  */
-Efill(void)
+Efill()
 {
 }
 
 /*
  * Fill the upper and lower horizon arrays
  */
-Horizon(int x, int y)
+Horizon( x, y )
+int	x, y;
 {
 	/* Vertical line */
 	upper[x] = MAX( upper[x], y );
 	lower[x] = MIN( lower[x], y );
 }
 
-sign(int i)
+sign( i )
+int	i;
 {
 	if( i > 0 )
 		return( 1 );
@@ -121,7 +125,8 @@ sign(int i)
 		return( 0 );
 }
 
-Point(int x, int y)
+Point( x, y )
+int	x, y;
 {
 	static	RGBpixel white = { 255, 255, 255 };
 	fb_write( fbp, x, y, white, 1 );
@@ -131,7 +136,8 @@ Point(int x, int y)
  * DRAW - plot a line from (x1,y1) to (x2,y2)
  *  An integer Bresenham algorithm for any quadrant.
  */
-Draw(int x1, int y1, int x2, int y2)
+Draw( x1, y1, x2, y2 )
+int	x1, y1, x2, y2;
 {
 	int	x, y, deltx, delty, error, i;
 	int	temp, s1, s2, interchange;
@@ -206,7 +212,9 @@ main()
 static char usage[] = "\
 Usage: fhor [width] < doubles\n";
 
-int main(int argc, char **argv)
+int main( argc, argv )
+int	argc;
+char	**argv;
 {
 	double	inbuf[512];
 	int	f[512];

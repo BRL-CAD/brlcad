@@ -41,17 +41,17 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "wdb.h"
 
 /* defined in region.c */
-extern void group_init(void);
-extern int getregion(void);
-extern void region_register(int reg_num, int id, int air, int mat, int los);
-extern void group_write(void);
+extern void group_init();
+extern int getregion();
+extern void region_register();
+extern void group_write();
 
 /* defined in read.c */
-extern int getline(register char *cp, int buflen, char *title);
+extern int getline();
 
 /* defined in solid.c */
-extern void trim_trail_spaces(register char *cp);
-extern int getsolid(void);
+extern void trim_trail_spaces();
+extern int getsolid();
 
 struct wmember	*wmp;	/* array indexed by region number */
 
@@ -69,9 +69,9 @@ struct rt_wdb	*outfp;		/* Output file descriptor */
 int	sol_total, sol_work;	/* total num solids, num solids processed */
 int	reg_total;
 
-extern void	getid(void);
+extern void	getid();
 
-void		col_pr(char *str);
+void		col_pr();
 
 static char usage[] = "\
 Usage: comgeom-g [options] input_file output_file\n\
@@ -82,7 +82,8 @@ Options:\n\
 ";
 
 int
-get_args(int argc, register char **argv)
+get_args( argc, argv )
+register char **argv;
 {
 	register int	c;
 	char		*file_name;
@@ -140,7 +141,8 @@ get_args(int argc, register char **argv)
  *			M A I N
  */
 int
-main(int argc, char **argv)
+main( argc, argv )
+char **argv;
 {
 	register int i;
 	char	ctitle[132];
@@ -342,7 +344,8 @@ main(int argc, char **argv)
  *			C O L _ P R
  */
 void
-col_pr(char *str)
+col_pr( str )
+char	*str;
 {
 	printf("%s", str);
 	cur_col += strlen(str);

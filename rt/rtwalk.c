@@ -79,20 +79,20 @@ fastf_t		incr_dist;
 double		clear_dist = 0.0;
 double		max_dist_togo;
 
-extern int hit(struct application *ap, struct partition *PartHeadp);
-extern int miss(register struct application *ap);
+extern int hit(), miss();
 
 FILE		*plotfp;
 FILE		*outfp = NULL;
 
-void		proj_goal(void);
-void		write_matrix(int frame);
+void		proj_goal();
+void		write_matrix();
 
 /*
  *			G E T _ A R G S
  */
 int
-get_args(int argc, register char **argv)
+get_args( argc, argv )
+register char **argv;
 {
 	register int c;
 
@@ -126,7 +126,9 @@ get_args(int argc, register char **argv)
  *			M A I N
  */
 int
-main(int argc, char **argv)
+main(argc, argv)
+int argc;
+char **argv;
 {
 	static struct rt_i *rtip;
 	char	*title_file;
@@ -366,7 +368,9 @@ advance:	;
 	exit(1);
 }
 
-int hit(register struct application *ap, struct partition *PartHeadp)
+int hit( ap, PartHeadp )
+register struct application *ap;
+struct partition *PartHeadp;
 {
 	register struct partition *pp;
 	register struct soltab *stp;
@@ -390,7 +394,7 @@ int hit(register struct application *ap, struct partition *PartHeadp)
 }
 
 int
-miss(register struct application *ap)
+miss()
 {
 	return(0);
 }
@@ -406,7 +410,7 @@ miss(register struct application *ap)
  *  except perhaps for concave objects.
  */
 void
-proj_goal(void)
+proj_goal()
 {
 	vect_t	goal_dir;
 	vect_t	goal_proj;
@@ -435,7 +439,7 @@ proj_goal(void)
  *			W R I T E _ M A T R I X
  */
 void
-write_matrix(int frame)
+write_matrix(frame)
 {
 	fprintf(outfp, "start %d;\n", frame);
 	fprintf(outfp, "clean;\n");

@@ -11,7 +11,7 @@
 #include<string.h>
 #include<math.h>
 
-main(void)
+main()
 {
    int ichoice;			/*  Choice.  */
    char *irsgi = "ir-sgi";	/*  Calls ir-sgi program.  */

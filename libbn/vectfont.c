@@ -53,7 +53,7 @@ TINY		*tp_cindex[256];	/* index to stroke tokens */
  *  Used by libplot3/symbol.c, so it can't be static.
  */
 void
-tp_setup(void)
+tp_setup()
 {
 	register TINY	*p;	/* pointer to stroke table */
 	register int i;

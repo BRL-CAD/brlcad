@@ -29,14 +29,13 @@ struct face_g_snurb **surfaces;
 char *Usage = "This program ordinarily generates a database on stdout.\n\
 	Your terminal probably wouldn't like it.";
 
-/*void dump_patch(int (*patch)[4]);*/
-void dump_patch( struct face_g_snurb **surfp, pt patch );
+void dump_patch();
 
 struct rt_wdb *outfp;
 
 int
-main(int argc, char **argv) 			/* really has no arguments */
-                       
+main(argc, argv) 			/* really has no arguments */
+int argc; char *argv[];
 {
 	char * id_name = "Spline Example";
 	char * tea_name = "UtahTeapot";

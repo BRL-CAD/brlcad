@@ -176,7 +176,9 @@ Usage: halftone [ -h -R -S -a] [-D Debug Level]\n\
  *	straight-forward.
  */
 void
-setup(int argc, char **argv)
+setup(argc,argv)
+int argc;
+char **argv;
 {
 	int c;
 	int i,j;
@@ -296,7 +298,9 @@ setup(int argc, char **argv)
 }
 
 int
-main(int argc, char **argv)
+main(argc,argv)
+int argc;
+char **argv;
 {
 	int pixel,x,y,i;
 	unsigned char *Line, *Out;

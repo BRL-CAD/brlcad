@@ -49,7 +49,7 @@ static int	file_height = 512;	/* default input height */
 static int	make_cells = 0;		/* Insert cell coords in output? */
 static int	d_per_l = 1;		/* doubles per line of output */
 
-void print_usage (void)
+void print_usage ()
 {
 #define OPT_STRING	"acf:hs:n:w#:?"
 
@@ -59,7 +59,11 @@ void print_usage (void)
 }
 
 int
-get_args(int argc, register char **argv)
+get_args(argc, argv)
+
+int		argc;
+register char	*argv[];
+
 {
     register int ch;
 
@@ -150,7 +154,11 @@ get_args(int argc, register char **argv)
 }
 
 int
-main (int argc, char **argv)
+main (argc, argv)
+
+int	argc;
+char	*argv[];
+
 {
     unsigned char *buffer;
     unsigned char *bp;

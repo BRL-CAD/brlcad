@@ -36,7 +36,10 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 
 
 void
-rt_nurb_nodes(fastf_t *nodes, const struct knot_vector *knots, int order)
+rt_nurb_nodes( nodes, knots, order)
+fastf_t * nodes;
+const struct knot_vector * knots;
+int order;
 {
 	int i, j;
 	fastf_t sum;
@@ -55,7 +58,12 @@ rt_nurb_nodes(fastf_t *nodes, const struct knot_vector *knots, int order)
 }
 
 void
-rt_nurb_interp_mat(fastf_t *imat, struct knot_vector *knots, fastf_t *nodes, int order, int dim)
+rt_nurb_interp_mat( imat, knots, nodes, order, dim)
+fastf_t * imat;
+struct knot_vector * knots;
+fastf_t * nodes;
+int order;
+int dim;
 {
 	int i,j;
 	int ptr;
@@ -79,7 +87,11 @@ rt_nurb_interp_mat(fastf_t *imat, struct knot_vector *knots, fastf_t *nodes, int
  * main routine for interpolation of curves
  */
 void
-rt_nurb_cinterp(struct edge_g_cnurb *crv, int order, const fastf_t *data, int n)
+rt_nurb_cinterp( crv, order, data, n)
+struct edge_g_cnurb	* crv;
+int		order;
+const fastf_t	* data;
+int		n;
 {
 	fastf_t * interp_mat;
 	fastf_t * nodes;
@@ -149,12 +161,12 @@ rt_nurb_cinterp(struct edge_g_cnurb *crv, int order, const fastf_t *data, int n)
  *  independent variable being interpolated to make the surface.
  */
 void
-rt_nurb_sinterp(struct face_g_snurb *srf, int order, const fastf_t *data, int ymax, int xmax)
-                   	     
-   		      
-             	      		/* data[x,y] */
-   		     		/* nrow = max Y */
-   		     		/* ncol = max X */
+rt_nurb_sinterp( srf, order, data, ymax, xmax)
+struct face_g_snurb	*srf;
+int		order;
+const fastf_t	*data;		/* data[x,y] */
+int		ymax;		/* nrow = max Y */
+int		xmax;		/* ncol = max X */
 {
 	int	x;
 	int	y;

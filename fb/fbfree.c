@@ -34,7 +34,9 @@ static char usage[] = "\
 Usage: fbfree [-F framebuffer]\n";
 
 int
-main(int argc, char **argv)
+main(argc, argv)
+char	**argv;
+int	argc;
 {
 	register int c;
 	FBIO	*fbp;

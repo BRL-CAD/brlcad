@@ -36,7 +36,9 @@
 			    cmd_name(argv));exit(-2);}
 
 int
-main(int argc, char **argv)
+main( argc, argv )
+int argc;
+char ** argv;
 {
     int x, y, i;
     int oflag = 0, noise_amount = 4;

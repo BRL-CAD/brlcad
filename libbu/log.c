@@ -59,7 +59,8 @@ static int	bu_log_indent_cur_level = 0; /* formerly rt_g.rtg_logindent */
  *  Call with a large negative number to cancel all indentation.
  */
 void
-bu_log_indent_delta(int delta)
+bu_log_indent_delta( delta )
+int	delta;
 {
 	if( (bu_log_indent_cur_level += delta) < 0 )
 		bu_log_indent_cur_level = 0;
@@ -73,7 +74,8 @@ bu_log_indent_delta(int delta)
  *  Should be called at the front of each new line.
  */
 void
-bu_log_indent_vls(struct bu_vls *v)
+bu_log_indent_vls( v )
+struct bu_vls	*v;
 {
 	bu_vls_spaces( v, bu_log_indent_cur_level );
 }
@@ -106,7 +108,9 @@ static int bu_log_hooks_called = 0;
  */
 
 void
-bu_log_add_hook(bu_hook_t func, genptr_t clientdata)
+bu_log_add_hook( func, clientdata )
+bu_hook_t func;
+genptr_t clientdata;
 {
 #if 0
     struct bu_hook_list *toadd;
@@ -133,7 +137,9 @@ bu_log_add_hook(bu_hook_t func, genptr_t clientdata)
  *  the hook list.  Note that it is not necessarily the active (top) hook.
  */
 void
-bu_log_delete_hook(bu_hook_t func, genptr_t clientdata)
+bu_log_delete_hook( func, clientdata )
+bu_hook_t func;
+genptr_t clientdata;
 {
 #if 0
     struct bu_hook_list *cur = &bu_log_hook_list;
@@ -153,7 +159,8 @@ bu_log_delete_hook(bu_hook_t func, genptr_t clientdata)
 
 #if 1
 HIDDEN void
-bu_log_call_hooks(genptr_t buf)
+bu_log_call_hooks( buf )
+genptr_t	buf;
 {
 #if 0
     bu_hook_t hookfunc;		/* for clarity */
@@ -187,7 +194,9 @@ bu_log_call_hooks(genptr_t buf)
  */
 
 HIDDEN void
-bu_log_do_indent_level(struct bu_vls *new, register char *old)
+bu_log_do_indent_level( new, old )
+struct bu_vls *new;
+register char *old;
 {
     register int i;
 
@@ -209,7 +218,8 @@ bu_log_do_indent_level(struct bu_vls *new, register char *old)
  */
 
 void
-bu_putchar(int c)
+bu_putchar( c )
+int c;
 {
     if ( BU_LIST_IS_EMPTY( &(bu_log_hook_list.l) ) ) {
 	fputc(c, stderr);

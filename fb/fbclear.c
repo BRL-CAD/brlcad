@@ -42,7 +42,8 @@ Usage: fbclear [-h -c] [-F framebuffer]\n\
 	[-S squarescrsize] [-W scr_width] [-N scr_height] [gray | r g b]\n";
 
 int
-get_args(int argc, register char **argv)
+get_args( argc, argv )
+register char **argv;
 {
 	register int c;
 
@@ -80,7 +81,9 @@ get_args(int argc, register char **argv)
 }
 
 int
-main(int argc, char **argv)
+main(argc, argv)
+int argc;
+char **argv;
 {
 	if ( !get_args( argc, argv ) )  {
 		(void)fputs(usage, stderr);

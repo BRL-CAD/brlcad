@@ -44,9 +44,9 @@ extern int	debug;
 extern char	*usage[], *cmd[];
 extern mat_t	identity;
 
-extern void		abort_sig(int sig), quit(int sig);
-extern void		toc(void), list_toc(char **args);
-extern void		prompt(char *fmt);
+extern void		abort_sig(), quit();
+extern void		toc(), list_toc();
+extern void		prompt();
 
 extern int	curr_ct;
 extern char	*arg_list[];

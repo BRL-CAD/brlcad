@@ -50,12 +50,14 @@ static char	usage[] = "Usage: %s [-r region] [-g group] [jack_db] [brlcad_db]\n"
 
 RT_EXTERN( fastf_t nmg_loop_plane_area, (const struct loopuse *lu, plane_t pl ) );
 
-int	psurf_to_nmg(struct model *m, FILE *fp, char *jfile);
-int	create_brlcad_db(struct rt_wdb *fpout, struct model *m, char *reg_name, char *grp_name);
-void	jack_to_brlcad(FILE *fpin, FILE *fpout, char *reg_name, char *grp_name, char *jfile, char *bfile);
+int	psurf_to_nmg();
+int	create_brlcad_db();
+void	jack_to_brlcad();
 
 int
-main(int argc, char **argv)
+main(argc, argv)
+int	argc;
+char	*argv[];
 {
 	char		*base, *bfile, *grp_name, *jfile, *reg_name;
 	FILE		*fpin;
@@ -144,7 +146,9 @@ main(int argc, char **argv)
  *	Convert a UPenn Jack data base into a BRL-CAD data base.
  */
 void
-jack_to_brlcad(FILE *fpin, FILE *fpout, char *reg_name, char *grp_name, char *jfile, char *bfile)
+jack_to_brlcad(fpin, fpout, reg_name, grp_name, jfile, bfile)
+FILE	*fpin, *fpout;
+char	*reg_name, *grp_name, *jfile, *bfile;
 {
 	struct model	*m;
 
@@ -164,9 +168,9 @@ jack_to_brlcad(FILE *fpin, FILE *fpout, char *reg_name, char *grp_name, char *jf
  *	no errors during reading...
  */
 int
-read_psurf_vertices(FILE *fp, struct vlist *vert)
-    		    	/* Psurf file pointer. */
-            	      	/* Array of read in vertices. */
+read_psurf_vertices(fp, vert)
+FILE		*fp;	/* Psurf file pointer. */
+struct vlist	*vert;	/* Array of read in vertices. */
 {
 	fastf_t	x, y, z;
 	int	i;
@@ -202,7 +206,9 @@ read_psurf_vertices(FILE *fp, struct vlist *vert)
  *	Read in the vertexes describing a face of a psurf.
  */
 int
-read_psurf_face(FILE *fp, int *lst)
+read_psurf_face(fp, lst)
+FILE	*fp;
+int	*lst;
 {
 	int	i, n;
 
@@ -217,10 +223,10 @@ read_psurf_face(FILE *fp, int *lst)
  *
  */
 int
-psurf_to_nmg(struct model *m, FILE *fp, char *jfile)
-            	   	/* Input/output, nmg model. */
-    		    	/* Input, pointer to psurf data file. */
-    		       	/* Name of Jack data base file. */
+psurf_to_nmg(m, fp, jfile)
+struct model	*m;	/* Input/output, nmg model. */
+FILE		*fp;	/* Input, pointer to psurf data file. */
+char		*jfile;	/* Name of Jack data base file. */
 {
 	int		face, fail, i, lst[MAX_NUM_PTS], nf, nv;
 	struct faceuse	*outfaceuses[MAX_NUM_PTS];
@@ -307,7 +313,10 @@ psurf_to_nmg(struct model *m, FILE *fp, char *jfile)
  *	Write the nmg to a brl-cad style data base.
  */
 int
-create_brlcad_db(struct rt_wdb *fpout, struct model *m, char *reg_name, char *grp_name)
+create_brlcad_db(fpout, m, reg_name, grp_name)
+struct rt_wdb	*fpout;
+char		*grp_name, *reg_name;
+struct model	*m;
 {
 	char	*rname, *sname;
 

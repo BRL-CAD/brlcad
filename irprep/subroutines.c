@@ -36,7 +36,12 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 /*  Subroutine to rotate a point, given a point (3 coordinates)  */
 /*  and three angles (in radians).  */
 
-void rotate(double *p, double *a, double *np)
+void rotate( p, a, np )
+
+double p[3];
+double a[3];
+double np[3];
+
 {
 
 	/*  p[3]  - The point brought in where p[0] is the x-coordinate,  */
@@ -91,7 +96,8 @@ void rotate(double *p, double *a, double *np)
 /*  Subroutine to receive an angle in degrees and return  */
 /*  the angle in radians.  */
 
-double radians(double a)
+double radians(a)
+double a;
 {
 
 	/*  a - Angle in degrees.  */

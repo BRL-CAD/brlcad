@@ -44,7 +44,8 @@ double	mk_conv2mm = 1.0;		/* Conversion factor to mm */
  *	 0	OK
  */
 int
-mk_conversion(char *str)
+mk_conversion(str)
+char	*str;
 {
 	double	d;
 
@@ -62,7 +63,8 @@ mk_conversion(char *str)
  *	 0	OK
  */
 int
-mk_set_conversion(double val)
+mk_set_conversion(val)
+double	val;
 {
 	if( val <= 0.0 )  return(-1);
 	mk_conv2mm = val;

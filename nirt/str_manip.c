@@ -20,7 +20,9 @@ static const char RCSid[] = "$Header$";
 #include "vmath.h"
 #include "./nirt.h"
 
-int str_dbl(char *buf, double *Result)
+int str_dbl(buf, Result)
+char 	*buf;
+double	*Result;
 {
 	int 	status = 0; 		/* 0, function failed - 1, success */
 	int	sign = POS;		/* POS or NEG sign		   */
@@ -65,7 +67,8 @@ int str_dbl(char *buf, double *Result)
 
 }
 
-char *basename(char *string)
+char *basename(string)
+char	*string;
 {
     char	*sp;
     char        *sp2;

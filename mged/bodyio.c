@@ -65,7 +65,11 @@ extern void rt_binunif_dump();
  *
  */
 int
-cmd_import_body(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+cmd_import_body(clientData, interp, argc, argv )
+ClientData clientData;
+Tcl_Interp *interp;
+int	argc;
+char	*argv[];
 {
     register struct directory	*dp;
     struct stat			stat_buf;
@@ -250,7 +254,11 @@ cmd_import_body(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
  *
  */
 int
-cmd_export_body(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+cmd_export_body(clientData, interp, argc, argv )
+ClientData clientData;
+Tcl_Interp *interp;
+int	argc;
+char	*argv[];
 {
     register struct directory	*dp;
     int				fd;

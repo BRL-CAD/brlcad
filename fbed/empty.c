@@ -29,8 +29,9 @@ static const char RCSid[] = "@(#) empty.c 2.3, modified 1/5/87 at 16:52:54, arch
 	Return 0 if no input or error.
  */
 int
-empty(int fd)
-{
+empty( fd )
+int fd;
+	{
 #if 0
 	if( isSGI )
 		return sgi_Empty();

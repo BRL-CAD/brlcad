@@ -57,8 +57,9 @@ struct fb_texture
 *fbs = NULL;
 
 STATIC char	*
-suffix(register char *str)
-{	register char	*p = str + strlen( str ) - 1;
+suffix( str )
+register char	*str;
+	{	register char	*p = str + strlen( str ) - 1;
 	while( *p != '.' && p != str )
 		p--;
 	if( *p == '.' )
@@ -84,8 +85,10 @@ int	u, v;
 	}
 
 STATIC struct icon_texture	*
-init_Icon_Texture(char *file, Mat_Db_Entry *entry)
-{	FILE	*iconfp;
+init_Icon_Texture( file, entry )
+char		*file;
+Mat_Db_Entry	*entry;
+	{	FILE	*iconfp;
 		register struct icon_texture	*iconp;
 		icon_t	*iconmap;
 		int	wid = entry->df_rgb[0] << 3;
@@ -149,8 +152,10 @@ init_Icon_Texture(char *file, Mat_Db_Entry *entry)
 	}
 
 STATIC struct fb_texture	*
-init_Fb_Texture(char *file, Mat_Db_Entry *entry)
-{	FBIO		*txfbiop;
+init_Fb_Texture( file, entry )
+char	*file;
+Mat_Db_Entry	*entry;
+	{	FBIO		*txfbiop;
 		register struct fb_texture	*fbp;
 		RGBpixel	*fbmap;
 		int		wid = entry->df_rgb[0] << 3;
@@ -209,8 +214,10 @@ init_Fb_Texture(char *file, Mat_Db_Entry *entry)
 	}
 
 int
-tex_Entry(struct uvcoord *uvp, Mat_Db_Entry *entry)
-{
+tex_Entry( uvp, entry )
+struct uvcoord	*uvp;
+Mat_Db_Entry	*entry;
+	{
 	if( strcmp( ICON_SUFFIX, suffix( entry->name ) ) == 0 )
 		return	icon_Entry( uvp, entry );
 	else
@@ -221,8 +228,10 @@ tex_Entry(struct uvcoord *uvp, Mat_Db_Entry *entry)
 	}
 
 int
-icon_Entry(struct uvcoord *uvp, Mat_Db_Entry *entry)
-{	int	ui;
+icon_Entry( uvp, entry )
+struct uvcoord	*uvp;
+Mat_Db_Entry	*entry;
+	{	int	ui;
 		int	vi;
 		register RGBpixel		*pixel;
 		register struct icon_texture	*iconp;
@@ -257,8 +266,10 @@ icon_Entry(struct uvcoord *uvp, Mat_Db_Entry *entry)
 	}
 
 int
-fb_Entry(struct uvcoord *uvp, Mat_Db_Entry *entry)
-{	int				ui;
+fb_Entry( uvp, entry )
+struct uvcoord	*uvp;
+Mat_Db_Entry	*entry;
+	{	int				ui;
 		int				vi;
 		register RGBpixel		*pixel;
 		register struct fb_texture	*fbp;

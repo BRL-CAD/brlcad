@@ -41,12 +41,16 @@ Usage: 'imgdims [-ns] [-# bytes/pixel] file_name'\n\
     or 'imgdims [-# bytes/pixel] num_bytes'\n";
 #define OPT_STRING	"ns#:?"
 
-static void print_usage (void)
+static void print_usage ()
 {
     (void) bu_log("%s", usage);
 }
 
-static int grab_number (char *buf, int *np)
+static int grab_number (buf, np)
+
+char	*buf;
+int	*np;
+
 {
     char	*bp;
 
@@ -62,7 +66,10 @@ static int grab_number (char *buf, int *np)
     return (1);
 }
 
-static int pixel_size (char *buf)
+static int pixel_size (buf)
+
+char	*buf;
+
 {
     char		*ep;
     struct assoc
@@ -90,7 +97,11 @@ static int pixel_size (char *buf)
 }
 
 int
-main (int argc, char **argv)
+main (argc, argv)
+
+int argc;
+char *argv[];
+
 {
     char	*argument;		/* file name or size */
     int		bytes_per_pixel = -1;

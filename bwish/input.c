@@ -76,21 +76,21 @@
 #define SPACES "                                                                                                                                                                                                                                                                                                           "
 
 /* defined in tcl.c */
-extern void Cad_Exit(int status);
+extern void Cad_Exit();
 
 /* defined in cmd.c */
-extern struct bu_vls *history_prev(void);
-extern struct bu_vls *history_next(void);
-extern void history_record(struct bu_vls *cmdp, struct timeval *start, struct timeval *finish, int status);
+extern struct bu_vls *history_prev();
+extern struct bu_vls *history_next();
+extern void history_record();
 
 /* defined in main.c */
 extern Tcl_Interp *interp;
 
-HIDDEN void inputHandler(ClientData clientData, int mask);
-HIDDEN void processChar(char ch);
-HIDDEN void insert_prompt(void);
-HIDDEN void insert_char(char ch);
-HIDDEN void insert_beep(void);
+HIDDEN void inputHandler();
+HIDDEN void processChar();
+HIDDEN void insert_prompt();
+HIDDEN void insert_char();
+HIDDEN void insert_beep();
 
 HIDDEN struct bu_vls input_str;
 HIDDEN struct bu_vls input_str_prefix;
@@ -99,7 +99,7 @@ HIDDEN struct bu_vls scratchline;
 HIDDEN struct bu_vls prompt;
 
 void
-initInput(void)
+initInput()
 {
 	bu_vls_init(&input_str);
 	bu_vls_init(&input_str_prefix);
@@ -118,7 +118,9 @@ initInput(void)
 }
 
 HIDDEN void
-inputHandler(ClientData clientData, int mask)
+inputHandler(clientData, mask)
+     ClientData clientData;
+     int mask;
 {
 	int count;
 	char ch;
@@ -140,7 +142,8 @@ inputHandler(ClientData clientData, int mask)
 
 /* Process character */
 HIDDEN void
-processChar(char ch)
+processChar(ch)
+     char ch;
 {
 	struct bu_vls *vp;
 	struct bu_vls temp;
@@ -504,13 +507,14 @@ processChar(char ch)
 }
 
 HIDDEN void
-insert_prompt(void)
+insert_prompt()
 {
 	bu_log("%S", &prompt);
 }
 
 HIDDEN void
-insert_char(char ch)
+insert_char(ch)
+     char ch;
 {
 	if (input_str_index == bu_vls_strlen(&input_str)) {
 		bu_log("%c", (int)ch);
@@ -533,7 +537,7 @@ insert_char(char ch)
 }
 
 HIDDEN void
-insert_beep(void)
+insert_beep()
 {
 	bu_log("%c", 7);
 }

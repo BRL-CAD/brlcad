@@ -40,20 +40,13 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "bn.h"
 
-struct uplot {
-	int	targ;	/* type of args */
-	int	narg;	/* number or args */
-	char	*desc;	/* description */
-	int	t3d;	/* non-zero if 3D */
-};
+void	getstring();
+void	getargs();
+double	getieee();
+void	doscale();
 
-void	getstring(void);
-void	getargs(struct uplot *up);
-double	getieee(void);
-void	doscale(void);
-
-static void	tekmove(int xi, int yi), tekcont(register int x, register int y), tekerase(void);
-static void	teklabel(register char *s), teklinemod(register char *s), tekpoint(int xi, int yi);
+static void	tekmove(), tekcont(), tekerase();
+static void	teklabel(), teklinemod(), tekpoint();
 
 #define BELL	007
 #define	FF	014
@@ -69,6 +62,12 @@ static void	teklabel(register char *s), teklinemod(register char *s), tekpoint(i
 #define	TCHAR	4	/* unsigned chars */
 #define	TSTRING	5	/* linefeed terminated string */
 
+struct uplot {
+	int	targ;	/* type of args */
+	int	narg;	/* number or args */
+	char	*desc;	/* description */
+	int	t3d;	/* non-zero if 3D */
+};
 struct uplot uerror = { 0, 0, 0 };
 struct uplot letters[] = {
 /*A*/	{ 0, 0, 0, 0 },
@@ -143,7 +142,9 @@ static char usage[] = "\
 Usage: pl-tek [-e] [-v] < file.pl > file.tek\n";
 
 int
-main(int argc, char **argv)
+main( argc, argv )
+int	argc;
+char	**argv;
 {
 	register int	c;
 	struct	uplot *up;
@@ -321,7 +322,7 @@ main(int argc, char **argv)
 /*** Input args ***/
 
 int
-getshort(void)
+getshort()
 {
 	register long	v, w;
 
@@ -336,7 +337,8 @@ getshort(void)
 }
 
 void
-getargs(struct uplot *up)
+getargs( up )
+struct uplot *up;
 {
 	int	i;
 
@@ -363,7 +365,7 @@ getargs(struct uplot *up)
 }
 
 void
-getstring(void)
+getstring()
 {
 	int	c;
 	char	*cp;
@@ -376,7 +378,7 @@ getstring(void)
 
 
 double
-getieee(void)
+getieee()
 {
 	unsigned char	in[8];
 	double	d;
@@ -395,7 +397,7 @@ getieee(void)
  *  Out of range detection is converters problem.
  */
 void
-doscale(void)
+doscale()
 {
 	double	dx, dy, dz;
 	double	max;
@@ -436,7 +438,8 @@ static int oextra = -1;
 
 /* Continue motion from last position */
 static void
-tekcont(register int x, register int y)
+tekcont(x,y)
+register int x,y;
 {
 	int hix,hiy,lox,loy,extra;
 	int n;
@@ -478,16 +481,16 @@ tekcont(register int x, register int y)
 }
 
 static void
-tekmove(int xi, int yi)
+tekmove(xi,yi)
 {
 	(void)putc(GS,stdout);			/* Next vector blank */
 	tekcont(xi,yi);
 }
 
 static void
-tekerase(void)
+tekerase()
 {
-	extern unsigned sleep(unsigned int);	/* DAG -- was missing */
+	extern unsigned sleep();	/* DAG -- was missing */
 
 	(void)putc(ESC,stdout);
 	(void)putc(FF,stdout);
@@ -498,7 +501,8 @@ tekerase(void)
 }
 
 static void
-teklabel(register char *s)
+teklabel(s)
+register char *s;
 {
 	(void)putc(US,stdout);
 	for( ; *s; s++ )
@@ -507,7 +511,8 @@ teklabel(register char *s)
 }
 
 static void
-teklinemod(register char *s)
+teklinemod(s)
+register char *s;
 {
 	register int c;				/* DAG -- was char */
 
@@ -532,7 +537,7 @@ teklinemod(register char *s)
 }
 
 static void
-tekpoint(int xi, int yi) {
+tekpoint(xi,yi){
 	tekmove(xi,yi);
 	tekcont(xi,yi);
 }

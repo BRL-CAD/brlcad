@@ -62,12 +62,15 @@ static int last_ihigh;			/* last inten_high */
 static int ntomiss;			/* number of pixels to miss */
 static int col;				/* column; for PP 75 char/line crap */
 
-void	view_pixel(void) {}
-void	pknum(int arg);
+void	view_pixel() {}
+void	pknum();
 
 /* Support for pretty-picture files */
 int
-pphit(register struct application *ap, struct partition *PartHeadp, struct seg *segHeadp)
+pphit( ap, PartHeadp, segHeadp )
+register struct application *ap;
+struct partition *PartHeadp;
+struct seg	*segHeadp;
 {
 	register struct partition *pp;
 	register struct hit *hitp;
@@ -121,7 +124,8 @@ pphit(register struct application *ap, struct partition *PartHeadp, struct seg *
 }
 
 int
-ppmiss(struct application *ap)
+ppmiss(ap)
+struct application *ap;
 {
 	last_solidp = SOLTAB_NULL;
 	ntomiss++;
@@ -129,7 +133,7 @@ ppmiss(struct application *ap)
 }
 
 void
-view_eol(void)
+view_eol()
 {
 	pchar( '.' );		/* End of scanline */
 	last_solidp = SOLTAB_NULL;
@@ -140,7 +144,7 @@ view_eol(void)
  *  Called when the picture is finally done.
  */
 void
-view_end(void)
+view_end()
 {
 	fprintf( stdout, "/\n" );	/* end of view */
 	fflush( stdout );
@@ -154,7 +158,8 @@ view_end(void)
  *  until there are no more non-zero bits remaining.
  */
 void
-pknum(int arg)
+pknum( arg )
+int arg;
 {
 	register long i = arg;
 
@@ -168,7 +173,9 @@ pknum(int arg)
  *  			V I E W _ I N I T
  */
 int
-view_init(register struct application *ap, char *file, char *obj, int minus_o)
+view_init( ap, file, obj, minus_o )
+register struct application *ap;
+char *file, *obj;
 {
 	extern double azimuth, elevation;
 
@@ -185,9 +192,9 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o)
 	return(0);		/* no framebuffer needed */
 }
 
-void	view_2init(void) {;}
+void	view_2init()  {;}
 
-void	view_setup(void) {}
-void	view_cleanup(void) {}
+void	view_setup() {}
+void	view_cleanup() {}
 
-void application_init (void) {}
+void application_init () {}

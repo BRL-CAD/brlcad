@@ -81,7 +81,8 @@ static struct muves_comp muves_comp_head={ {BU_LIST_HEAD_MAGIC, &muves_comp_head
 
 
 void
-Free_muves_sys(struct bu_list *hp)
+Free_muves_sys( hp )
+struct bu_list *hp;
 {
 	struct muves_sys *sys;
 
@@ -95,7 +96,8 @@ Free_muves_sys(struct bu_list *hp)
 }
 
 void
-Free_cad_list(struct bu_list *hp)
+Free_cad_list( hp )
+struct bu_list *hp;
 {
 
 	while( BU_LIST_NON_EMPTY( hp ) )
@@ -109,7 +111,8 @@ Free_cad_list(struct bu_list *hp)
 }
 
 void
-Free_muves_comp(struct bu_list *hp)
+Free_muves_comp( hp )
+struct bu_list *hp;
 {
 	struct muves_comp *comp;
 
@@ -129,7 +132,11 @@ Free_muves_comp(struct bu_list *hp)
  *  routine to read MUVES input files and create structures to hold the data
  */
 int
-f_read_muves(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_read_muves( clientData, interp, argc, argv )
+ClientData clientData;
+Tcl_Interp *interp;
+int     argc;
+char    *argv[];
 {
 	FILE *muves_in;
 	char line[MUVES_LINE_LEN];
@@ -547,7 +554,11 @@ f_read_muves(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 }
 
 int
-Display_muves_comp(struct muves_comp *comp, int *e_argc, char ***e_argv, int *e_argv_len)
+Display_muves_comp( comp, e_argc, e_argv, e_argv_len )
+struct muves_comp *comp;
+int *e_argc;
+char ***e_argv;
+int *e_argv_len;
 {
 	struct cad_comp_list *cad;
 
@@ -566,7 +577,11 @@ Display_muves_comp(struct muves_comp *comp, int *e_argc, char ***e_argv, int *e_
 }
 
 int
-Display_muves_sys(struct muves_sys *sys, int *e_argc, char ***e_argv, int *e_argv_len)
+Display_muves_sys( sys, e_argc, e_argv, e_argv_len )
+struct muves_sys *sys;
+int *e_argc;
+char ***e_argv;
+int *e_argv_len;
 {
 	struct member_list *member;
 
@@ -597,7 +612,11 @@ Display_muves_sys(struct muves_sys *sys, int *e_argc, char ***e_argv, int *e_arg
  */
 
 int
-f_e_muves(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_e_muves( clientData, interp, argc, argv )
+ClientData clientData;
+Tcl_Interp *interp;
+int     argc;
+char    *argv[];
 {
 	struct muves_comp *comp;
 	struct muves_sys *sys;
@@ -645,7 +664,11 @@ f_e_muves(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  *  routine to list the muves comoponents
  */
 int
-f_l_muves(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_l_muves( clientData, interp, argc, argv )
+ClientData clientData;
+Tcl_Interp *interp;
+int     argc;
+char    *argv[];
 {
 	int i;
 
@@ -726,7 +749,11 @@ f_l_muves(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  *  routine to list the muves comoponents
  */
 int
-f_t_muves(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_t_muves( clientData, interp, argc, argv )
+ClientData clientData;
+Tcl_Interp *interp;
+int     argc;
+char    *argv[];
 {
 	struct muves_comp *comp;
 	struct muves_sys *sys;

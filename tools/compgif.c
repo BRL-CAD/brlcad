@@ -59,7 +59,7 @@ typedef struct str_table_node {
 	struct str_table_node *children;
 } strTableNode, *strTableNodePtr, **strTable;
 
-int pack_bits(int compress_size, int prefix, FILE *os);
+int pack_bits();
 
 
 /*
@@ -72,10 +72,10 @@ int pack_bits(int compress_size, int prefix, FILE *os);
  * each data item comes from successive bytes returned by infun.    *
  ********************************************************************
  */
-int compgif(int code_size, FILE *os, ifunptr infun)
-               /* i.e. for 8 bits/pixel code_size = 9; */
-         /* output stream should be open in write-binary mode */
-               /* input function should return consecutive pixel values */
+int compgif(code_size, os, infun)
+int code_size; /* i.e. for 8 bits/pixel code_size = 9; */
+FILE* os;/* output stream should be open in write-binary mode */
+ifunptr infun; /* input function should return consecutive pixel values */
 {
     strTable heap; /* our very own memory manager */
     int heap_index;
@@ -194,7 +194,10 @@ int compgif(int code_size, FILE *os, ifunptr infun)
  * the block, pass a negative argument.                                 *
  ************************************************************************
  */
-int pack_bits(int compress_size, int prefix, FILE *os)
+int pack_bits(compress_size, prefix, os)
+int compress_size;
+int prefix;
+FILE* os;
 {
     static int cur_bit = 8;
     static unsigned char block[BLOCKSIZE] = { 0 };

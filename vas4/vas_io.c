@@ -62,7 +62,7 @@ struct sgttyb vtty;
 #define VAS_PORT	"/dev/vas"
 #define BAUD		B300
 
-void	vas_response(char c);
+void	vas_response();
 
 int vas_fd;
 extern int debug;
@@ -73,7 +73,7 @@ extern int debug;
  *	return a file descriptor of NULL on error
  */
 void
-vas_open(void)
+vas_open()
 {
 
 	/* Open VAS Port */
@@ -162,7 +162,8 @@ vas_open(void)
  *  command, and the 'A' (send current activity) commands.
  */
 int
-vas_rawputc(char c)
+vas_rawputc(c)
+char c;
 {
 	int	got;
 
@@ -185,7 +186,8 @@ vas_rawputc(char c)
  *  else retransmit.
  */
 int
-vas_putc(char c)
+vas_putc(c)
+char c;
 {
 	int	got;
 	int	reply;
@@ -227,7 +229,8 @@ reread:
  *  Output a null terminated string to the VAS.
  */
 void
-vas_puts(char *s)
+vas_puts(s)
+char *s;
 {
 	while (*s != '\0' ) {
 		vas_putc(*s++);
@@ -240,7 +243,8 @@ vas_puts(char *s)
  *  Output a number in decimal to the VAS.
  */
 void
-vas_putnum(int n)
+vas_putnum(n)
+int	n;
 {
 	char	buf[32];
 
@@ -255,7 +259,7 @@ vas_putnum(int n)
  * Read a single character from the VAS, return EOF on error
  */
 int
-vas_getc(void)
+vas_getc()
 {
 	char c;
 
@@ -270,7 +274,7 @@ vas_getc(void)
  *			V A S _ C L O S E
  */
 void
-vas_close(void)
+vas_close()
 {
 	close(vas_fd);
 	vas_fd = -1;
@@ -288,7 +292,9 @@ vas_close(void)
  *	-1	failure
  */
 int
-vas_await(int c, int sec)
+vas_await(c, sec)
+int	c;
+int	sec;
 {
 	int	reply;
 	int	count;
@@ -310,7 +316,8 @@ vas_await(int c, int sec)
  *  but certainly beats looking at single-character codes.
  */
 void
-vas_response(char c)
+vas_response(c)
+char	c;
 {
 	fprintf(stderr,"---Got 0%o '%c' ", c, c);
 	switch(c)  {

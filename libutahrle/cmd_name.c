@@ -26,7 +26,8 @@
  */
 
 char *
-cmd_name(char **argv)
+cmd_name( argv )
+char **argv;
 {
     register char *cp, *a = *argv;
 

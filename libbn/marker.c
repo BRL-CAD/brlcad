@@ -42,7 +42,12 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "plot3.h"
 
 void
-tp_2marker(FILE *fp, register int c, double x, double y, double scale)
+tp_2marker( fp, c, x, y, scale )
+FILE	*fp;
+register int c;
+double	x;
+double	y;
+double	scale;
 {
 	char	mark_str[4];
 
@@ -70,7 +75,13 @@ float	*scale;
  *			T P _ 3 M A R K E R
  */
 void
-tp_3marker(FILE *fp, register int c, double x, double y, double z, double scale)
+tp_3marker( fp, c, x, y, z, scale )
+FILE	*fp;
+register int c;
+double	x;
+double	y;
+double	z;
+double	scale;
 {
 	char	mark_str[4];
 	mat_t	mat;

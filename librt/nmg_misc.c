@@ -49,7 +49,8 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
  *	N M G _ S N U R B _ C A L C _ L U _ U V _ O R I E N T
  */
 int
-nmg_snurb_calc_lu_uv_orient(const struct loopuse *lu)
+nmg_snurb_calc_lu_uv_orient( lu )
+const struct loopuse *lu;
 {
 	struct edgeuse *eu;
 	int edge_count=0;
@@ -170,7 +171,11 @@ nmg_snurb_calc_lu_uv_orient(const struct loopuse *lu)
 }
 
 void
-nmg_snurb_fu_eval(const struct faceuse *fu, const fastf_t u, const fastf_t v, fastf_t *pt_on_srf)
+nmg_snurb_fu_eval( fu, u, v, pt_on_srf )
+const struct faceuse *fu;
+const fastf_t u;
+const fastf_t v;
+point_t pt_on_srf;
 {
 	struct face *f;
 	hpoint_t tmp_pt;
@@ -205,7 +210,11 @@ nmg_snurb_fu_eval(const struct faceuse *fu, const fastf_t u, const fastf_t v, fa
 }
 
 void
-nmg_snurb_fu_get_norm(const struct faceuse *fu, const fastf_t u, const fastf_t v, fastf_t *norm)
+nmg_snurb_fu_get_norm( fu, u, v, norm )
+const struct faceuse *fu;
+const fastf_t u;
+const fastf_t v;
+vect_t norm;
 {
 	struct face *f;
 
@@ -231,7 +240,10 @@ nmg_snurb_fu_get_norm(const struct faceuse *fu, const fastf_t u, const fastf_t v
 }
 
 void
-nmg_snurb_fu_get_norm_at_vu(const struct faceuse *fu, const struct vertexuse *vu, fastf_t *norm)
+nmg_snurb_fu_get_norm_at_vu( fu, vu, norm )
+const struct faceuse *fu;
+const struct vertexuse *vu;
+vect_t norm;
 {
 	struct vertexuse_a_cnurb *va;
 
@@ -258,7 +270,8 @@ nmg_snurb_fu_get_norm_at_vu(const struct faceuse *fu, const struct vertexuse *vu
 }
 
 void
-nmg_find_zero_length_edges(const struct model *m)
+nmg_find_zero_length_edges( m )
+const struct model *m;
 {
 	struct bu_ptbl eu_tab;
 	struct edgeuse *eu;
@@ -306,7 +319,10 @@ nmg_find_zero_length_edges(const struct model *m)
  *	dir must be X,Y, or Z
  */
 struct face *
-nmg_find_top_face_in_dir(const struct shell *s, int dir, long int *flags)
+nmg_find_top_face_in_dir( s, dir , flags )
+const struct shell *s;
+int dir;
+long *flags;
 {
 	fastf_t extreme_value=(-MAX_FASTF);
 	fastf_t extreme_slope=(-MAX_FASTF);
@@ -608,7 +624,10 @@ nmg_find_top_face_in_dir(const struct shell *s, int dir, long int *flags)
  */
 
 struct face *
-nmg_find_top_face(const struct shell *s, int *dir, long int *flags)
+nmg_find_top_face( s, dir , flags )
+const struct shell *s;
+int *dir;
+long *flags;
 {
 	struct face *top_face;
 
@@ -643,7 +662,10 @@ struct top_face
 };
 
 static void
-nmg_assoc_void_shells(const struct nmgregion *r, struct bu_ptbl *shells, const struct bn_tol *ttol)
+nmg_assoc_void_shells( r , shells , ttol )
+const struct nmgregion *r;
+struct bu_ptbl *shells;
+const struct bn_tol *ttol;
 {
 	struct shell *outer_shell,*void_s,*s;
 	struct faceuse *fu;
@@ -851,7 +873,10 @@ nmg_assoc_void_shells(const struct nmgregion *r, struct bu_ptbl *shells, const s
  * to accomplish this. No geometry is altered.
  */
 int
-nmg_find_outer_and_void_shells(struct nmgregion *r, struct bu_ptbl ***shells, const struct bn_tol *tol)
+nmg_find_outer_and_void_shells( r , shells , tol )
+struct nmgregion *r;
+struct bu_ptbl ***shells;
+const struct bn_tol *tol;
 {
 	struct bu_ptbl *outer_shells;
 	struct shell *s;
@@ -937,7 +962,8 @@ nmg_find_outer_and_void_shells(struct nmgregion *r, struct bu_ptbl ***shells, co
  * pointer passed. Returns the number of flags set.
  */
 int
-nmg_mark_edges_real(const long int *magic_p)
+nmg_mark_edges_real( magic_p )
+const long *magic_p;
 {
 	struct bu_ptbl edges;
 	int i,count;
@@ -966,7 +992,9 @@ nmg_mark_edges_real(const long int *magic_p)
  */
 
 void
-nmg_tabulate_face_g_verts(struct bu_ptbl *tab, const struct face_g_plane *fg)
+nmg_tabulate_face_g_verts( tab , fg )
+struct bu_ptbl *tab;
+const struct face_g_plane *fg;
 {
 	struct face *f;
 
@@ -1036,7 +1064,9 @@ nmg_tabulate_face_g_verts(struct bu_ptbl *tab, const struct face_g_plane *fg)
  *
  */
 void
-nmg_isect_shell_self(struct shell *s, const struct bn_tol *tol)
+nmg_isect_shell_self( s , tol )
+struct shell *s;
+const struct bn_tol *tol;
 {
 	struct model *m;
 	struct nmgregion *r;
@@ -1144,7 +1174,10 @@ nmg_isect_shell_self(struct shell *s, const struct bn_tol *tol)
  */
 
 struct edgeuse *
-nmg_next_radial_eu(const struct edgeuse *eu, const struct shell *s, const int wires)
+nmg_next_radial_eu( eu , s , wires )
+const struct edgeuse *eu;
+const struct shell *s;
+const int wires;
 {
 	struct edgeuse *ret_eu;
 
@@ -1184,7 +1217,10 @@ nmg_next_radial_eu(const struct edgeuse *eu, const struct shell *s, const int wi
  */
 
 struct edgeuse *
-nmg_prev_radial_eu(const struct edgeuse *eu, const struct shell *s, const int wires)
+nmg_prev_radial_eu( eu , s , wires )
+const struct edgeuse *eu;
+const struct shell *s;
+const int wires;
 {
 	struct edgeuse *ret_eu;
 
@@ -1216,7 +1252,9 @@ nmg_prev_radial_eu(const struct edgeuse *eu, const struct shell *s, const int wi
  *	number of edgeuse/mate pairs radiall around eu that meet restrictions
  */
 int
-nmg_radial_face_count(const struct edgeuse *eu, const struct shell *s)
+nmg_radial_face_count( eu , s )
+const struct edgeuse *eu;
+const struct shell *s;
 {
 	int face_count=1;
 	struct edgeuse *eu1;
@@ -1250,7 +1288,9 @@ nmg_radial_face_count(const struct edgeuse *eu, const struct shell *s)
  *	1 - found a hole
  */
 int
-nmg_check_closed_shell(const struct shell *s, const struct bn_tol *tol)
+nmg_check_closed_shell( s , tol )
+const struct shell *s;
+const struct bn_tol *tol;
 {
 	struct faceuse *fu;
 
@@ -1298,7 +1338,10 @@ nmg_check_closed_shell(const struct shell *s, const struct bn_tol *tol)
  *	1 - src faceuse is now empty
  */
 int
-nmg_move_lu_between_fus(struct faceuse *dest, struct faceuse *src, struct loopuse *lu)
+nmg_move_lu_between_fus( dest , src , lu )
+struct faceuse *dest;
+struct faceuse *src;
+struct loopuse *lu;
 {
 	struct loopuse *lumate;
 	int src_is_empty;
@@ -1360,7 +1403,9 @@ nmg_move_lu_between_fus(struct faceuse *dest, struct faceuse *src, struct loopus
  *	is reversed.
  */
 void
-nmg_loop_plane_newell(const struct loopuse *lu, fastf_t *pl)
+nmg_loop_plane_newell( lu, pl )
+const struct loopuse *lu;
+plane_t pl;
 {
 	struct edgeuse *eu;
 	double hmin,hmax;
@@ -1437,7 +1482,9 @@ nmg_loop_plane_newell(const struct loopuse *lu, fastf_t *pl)
  */
 
 fastf_t
-nmg_loop_plane_area(const struct loopuse *lu, fastf_t *pl)
+nmg_loop_plane_area( lu , pl )
+const struct loopuse *lu;
+plane_t pl;
 {
 	fastf_t area;
 	fastf_t vect_mag;
@@ -1550,7 +1597,9 @@ nmg_loop_plane_area(const struct loopuse *lu, fastf_t *pl)
  */
 
 int
-nmg_calc_face_plane(struct faceuse *fu_in, fastf_t *pl)
+nmg_calc_face_plane( fu_in, pl )
+struct faceuse *fu_in;
+plane_t pl;
 {
 	struct faceuse *fu;
 	struct bu_ptbl verts;
@@ -1791,7 +1840,8 @@ nmg_calc_face_plane(struct faceuse *fu_in, fastf_t *pl)
  *
  */
 int
-nmg_calc_face_g(struct faceuse *fu)
+nmg_calc_face_g( fu )
+struct faceuse *fu;
 {
 	plane_t pl;
 	int ret_val;
@@ -1815,7 +1865,8 @@ nmg_calc_face_g(struct faceuse *fu)
  */
 
 fastf_t
-nmg_faceuse_area(const struct faceuse *fu)
+nmg_faceuse_area( fu )
+const struct faceuse *fu;
 {
 	struct loopuse *lu;
 	plane_t plane;
@@ -1849,7 +1900,8 @@ nmg_faceuse_area(const struct faceuse *fu)
 }
 
 fastf_t
-nmg_shell_area(const struct shell *s)
+nmg_shell_area( s )
+const struct shell *s;
 {
 	fastf_t area=0.0;
 	fastf_t tmp_area;
@@ -1873,7 +1925,8 @@ nmg_shell_area(const struct shell *s)
 }
 
 fastf_t
-nmg_region_area(const struct nmgregion *r)
+nmg_region_area( r )
+const struct nmgregion *r;
 {
 	struct shell *s;
 	fastf_t area=0.0;
@@ -1887,7 +1940,8 @@ nmg_region_area(const struct nmgregion *r)
 }
 
 fastf_t
-nmg_model_area(const struct model *m)
+nmg_model_area( m )
+const struct model *m;
 {
 	struct nmgregion *r;
 	fastf_t area=0.0;
@@ -1921,7 +1975,11 @@ XXX If not, can we document how they differ?
  */
 
 int
-rt_dist_line3_line3(fastf_t *dist, const fastf_t *p1, const fastf_t *d1, const fastf_t *p2, const fastf_t *d2, const struct bn_tol *tol)
+rt_dist_line3_line3( dist , p1 , d1 , p2 , d2 , tol )
+fastf_t dist[2];
+const point_t p1,p2;
+const vect_t d1,d2;
+const struct bn_tol *tol;
 {
 	fastf_t d1_d2;
 	point_t a1,a2;
@@ -2005,7 +2063,12 @@ XXX probably renamed as bn_dist_line3_line3().
  */
 
 int
-rt_dist_line3_lseg3(fastf_t *dist, const fastf_t *p, const fastf_t *d, const fastf_t *a, const fastf_t *b, const struct bn_tol *tol)
+rt_dist_line3_lseg3( dist , p , d , a , b , tol )
+fastf_t dist[2];
+const point_t p;
+const vect_t d;
+const point_t a,b;
+const struct bn_tol *tol;
 {
 	vect_t a_to_b;
 	vect_t a_dir;
@@ -2076,7 +2139,11 @@ rt_dist_line3_lseg3(fastf_t *dist, const fastf_t *p, const fastf_t *d, const fas
  *	of an bu_ptbl structure.
  */
 void
-nmg_purge_unwanted_intersection_points(struct bu_ptbl *vert_list, fastf_t *mag_list, const struct faceuse *fu, const struct bn_tol *tol)
+nmg_purge_unwanted_intersection_points(vert_list, mag_list, fu, tol)
+struct bu_ptbl		*vert_list;
+fastf_t			*mag_list;
+const struct faceuse	*fu;
+const struct bn_tol	*tol;
 {
 	int			i;
 	int			j;
@@ -2220,7 +2287,9 @@ nmg_purge_unwanted_intersection_points(struct bu_ptbl *vert_list, fastf_t *mag_l
  *	then we return 1.  Otherwise, we return 0.
  */
 int 
-nmg_in_or_ref(struct vertexuse *vu, struct bu_ptbl *b)
+nmg_in_or_ref(vu, b)
+struct vertexuse *vu;
+struct bu_ptbl *b;
 {
 	union {
 		struct vertexuse **vu;
@@ -2250,7 +2319,9 @@ nmg_in_or_ref(struct vertexuse *vu, struct bu_ptbl *b)
  *  computing the loops first, and working up to the nmgregions.
  */
 void
-nmg_rebound(struct model *m, const struct bn_tol *tol)
+nmg_rebound( m, tol )
+struct model		*m;
+const struct bn_tol	*tol;
 {
 	struct nmgregion	*r;
 	struct shell		*s;
@@ -2321,7 +2392,11 @@ nmg_rebound(struct model *m, const struct bn_tol *tol)
  *			N M G _ C O U N T _ S H E L L _ K I D S
  */
 void
-nmg_count_shell_kids(const struct model *m, long unsigned int *total_faces, long unsigned int *total_wires, long unsigned int *total_points)
+nmg_count_shell_kids(m, total_faces, total_wires, total_points)
+const struct model *m;
+unsigned long *total_wires;
+unsigned long *total_faces;
+unsigned long *total_points;
 {
 	short *tbl;
 
@@ -2375,7 +2450,12 @@ nmg_count_shell_kids(const struct model *m, long unsigned int *total_faces, long
  *	loop_size is the number of edgeuses in the loop (calculated by order_tbl)
  */
 static void
-order_tbl(struct bu_ptbl *tbl, int start_index, int **index, int tbl_size, int *loop_size)
+order_tbl( tbl, start_index , index , tbl_size , loop_size )
+struct bu_ptbl *tbl;
+int start_index;
+int **index;
+int tbl_size;
+int *loop_size;
 {
 	int i,j,k;
 	int found;
@@ -2444,7 +2524,9 @@ order_tbl(struct bu_ptbl *tbl, int start_index, int **index, int tbl_size, int *
  *
  */
 void
-nmg_close_shell(struct shell *s, const struct bn_tol *tol)
+nmg_close_shell( s , tol )
+struct shell *s;
+const struct bn_tol *tol;
 {
 	struct bu_ptbl eu_tbl;		/* table of free edgeuses from shell */
 	struct bu_ptbl vert_tbl;	/* table of vertices for use in nmg_cface */
@@ -2927,7 +3009,10 @@ nmg_close_shell(struct shell *s, const struct bn_tol *tol)
  *  correspondence.
  */
 struct shell *
-nmg_dup_shell(struct shell *s, long int ***trans_tbl, const struct bn_tol *tol)
+nmg_dup_shell( s , trans_tbl, tol )
+struct shell *s;
+long ***trans_tbl;
+const struct bn_tol *tol;
 {
 
 	struct model *m;
@@ -3149,7 +3234,8 @@ nmg_dup_shell(struct shell *s, long int ***trans_tbl, const struct bn_tol *tol)
 #define	NMG_PUSH( _ptr , _stack )	bu_ptbl_ins( _stack , (long *) _ptr );
 
 struct edgeuse
-*nmg_pop_eu(struct bu_ptbl *stack)
+*nmg_pop_eu( stack )
+struct bu_ptbl *stack;
 {
 	struct edgeuse *eu;
 
@@ -3167,7 +3253,9 @@ struct edgeuse
 }
 
 void
-nmg_reverse_radials(struct faceuse *fu, const struct bn_tol *tol)
+nmg_reverse_radials( fu, tol )
+struct faceuse *fu;
+const struct bn_tol *tol;
 {
 	struct loopuse *lu;
 
@@ -3221,7 +3309,9 @@ nmg_reverse_radials(struct faceuse *fu, const struct bn_tol *tol)
  */
 
 void
-nmg_reverse_face_and_radials(struct faceuse *fu, const struct bn_tol *tol)
+nmg_reverse_face_and_radials( fu , tol )
+struct faceuse *fu;
+const struct bn_tol *tol;
 {
 	struct loopuse *lu;
 
@@ -3283,7 +3373,8 @@ nmg_reverse_face_and_radials(struct faceuse *fu, const struct bn_tol *tol)
  * It is expected that this shell is the result of nmg_decompose_shells.
  */
 int
-nmg_shell_is_void(const struct shell *s)
+nmg_shell_is_void( s )
+const struct shell *s;
 {
 	struct model *m;
 	struct face *f;
@@ -3337,7 +3428,10 @@ nmg_shell_is_void(const struct shell *s)
  */
 
 void
-nmg_propagate_normals(struct faceuse *fu_in, long int *flags, const struct bn_tol *tol)
+nmg_propagate_normals( fu_in , flags , tol )
+struct faceuse *fu_in;
+long *flags;
+const struct bn_tol *tol;
 {
 	struct bu_ptbl stack;
 	struct loopuse *lu;
@@ -3469,7 +3563,8 @@ nmg_propagate_normals(struct faceuse *fu_in, long int *flags, const struct bn_to
  *	creates new edges so that there is no sharing of edges among shells
  */
 static void
-nmg_disconnect_shells(struct nmgregion *r)
+nmg_disconnect_shells( r )
+struct nmgregion *r;
 {
 	struct shell *s1;
 	struct bu_ptbl edges;
@@ -3592,7 +3687,8 @@ nmg_disconnect_shells(struct nmgregion *r)
  *	the radial faces agree in orientation.
  */
 void
-nmg_connect_same_fu_orients(struct shell *s)
+nmg_connect_same_fu_orients( s )
+struct shell *s;
 {
 	struct faceuse *fu;
 
@@ -3640,7 +3736,9 @@ nmg_connect_same_fu_orients(struct shell *s)
  */
 
 void
-nmg_fix_decomposed_shell_normals(struct shell *s, const struct bn_tol *tol)
+nmg_fix_decomposed_shell_normals( s, tol )
+struct shell *s;
+const struct bn_tol *tol;
 {
 	struct model *m;
 	struct face *f_top;
@@ -3761,7 +3859,9 @@ missed:
  *		This is useful if the indices in the region are being used for table look-up.
  */
 struct model *
-nmg_mk_model_from_region(struct nmgregion *r, int reindex)
+nmg_mk_model_from_region( r, reindex )
+struct nmgregion *r;
+int reindex;
 {
 	struct model *m;
 	struct bu_ptbl tbl;
@@ -3856,7 +3956,9 @@ nmg_mk_model_from_region(struct nmgregion *r, int reindex)
  *		7. Destroy the copy model.
  */
 void
-nmg_fix_normals(struct shell *s_orig, const struct bn_tol *tol)
+nmg_fix_normals(s_orig, tol)
+struct shell *s_orig;
+const struct bn_tol *tol;
 {
 	struct model *tmp_m;
 	struct model *m;
@@ -4045,7 +4147,9 @@ nmg_fix_normals(struct shell *s_orig, const struct bn_tol *tol)
  */
 
 int
-nmg_break_long_edges(struct shell *s, const struct bn_tol *tol)
+nmg_break_long_edges( s , tol )
+struct shell *s;
+const struct bn_tol *tol;
 {
 	struct faceuse *fu;
 	struct loopuse *lu;
@@ -4152,7 +4256,8 @@ nmg_break_long_edges(struct shell *s, const struct bn_tol *tol)
  *
  */
 struct faceuse *
-nmg_mk_new_face_from_loop(struct loopuse *lu)
+nmg_mk_new_face_from_loop( lu )
+struct loopuse *lu;
 {
 	struct shell *s;
 	struct faceuse *fu;
@@ -4223,7 +4328,10 @@ struct nmg_split_loops_state
 };
 
 void
-nmg_split_loops_handler(long int *fu_p, genptr_t sl_state, int after)
+nmg_split_loops_handler( fu_p , sl_state , after )
+long *fu_p;
+genptr_t sl_state;
+int after;
 {
 	struct faceuse *fu;
 	struct nmg_split_loops_state *state;
@@ -4416,7 +4524,9 @@ nmg_split_loops_handler(long int *fu_p, genptr_t sl_state, int after)
  *	Returns the number of faces modified.
  */
 int
-nmg_split_loops_into_faces(long int *magic_p, const struct bn_tol *tol)
+nmg_split_loops_into_faces( magic_p , tol )
+long		*magic_p;
+const struct bn_tol	*tol;
 {
 	struct model *m;
 	struct nmg_visit_handlers htab;
@@ -4461,7 +4571,9 @@ nmg_split_loops_into_faces(long int *magic_p, const struct bn_tol *tol)
  *		additional shells in the passed in shell's region.
  */
 int
-nmg_decompose_shell(struct shell *s, const struct bn_tol *tol)
+nmg_decompose_shell( s , tol )
+struct shell *s;
+const struct bn_tol *tol;
 {
 	int missed_faces;
 	int no_of_shells=1;
@@ -4923,10 +5035,17 @@ nmg_decompose_shell(struct shell *s, const struct bn_tol *tol)
  *  NON-PARALLEL because of rt_uniresource.
  */
 void
-nmg_stash_model_to_file(const char *filename, const struct model *m, const char *title)
+nmg_stash_model_to_file( filename, m, title )
+const char		*filename;
+const struct model	*m;
+const char		*title;
 {
 	struct rt_wdb		*fp;
 	struct rt_db_internal	intern;
+	struct bu_external	ext;
+	int			ret;
+	int			flags;
+	char			*name="error.s";
 
 	bu_log("nmg_stash_model_to_file('%s', x%x, %s)\n", filename, m, title);
 
@@ -4944,11 +5063,31 @@ nmg_stash_model_to_file(const char *filename, const struct model *m, const char 
 	intern.idb_meth = &rt_functab[ID_NMG];
 	intern.idb_ptr = (genptr_t)m;
 
-	/* Scale change on export is 1.0 -- no change */
-	if( wdb_put_internal( fp, "error.s", &intern, 1.0 ) < 0 )  {
-		bu_bomb("nmg_stash_model_to_file() wdb_put_internal failure\n");
+	if( fp->dbip->dbi_version <= 4 )  {
+		BU_INIT_EXTERNAL( &ext );
+		ret = intern.idb_meth->ft_export( &ext, &intern, 1.0, fp->dbip, &rt_uniresource );
+		if( ret < 0 )  {
+			bu_log("rt_db_put_internal(%s):  solid export failure\n",
+				name);
+			ret = -1;
+			goto out;
+		}
+		db_wrap_v4_external( &ext, name );
+	} else {
+		if( rt_db_cvt_to_external5( &ext, name, &intern, 1.0, fp->dbip, &rt_uniresource, intern.idb_major_type ) < 0 )  {
+			bu_log("wdb_export(%s): solid export failure\n",
+				name );
+			ret = -2;
+			goto out;
+		}
 	}
-	/* intern has been freed */
+	BU_CK_EXTERNAL( &ext );
+
+	flags = db_flags_internal( &intern );
+	ret = wdb_export_external( fp, &ext, name, flags, intern.idb_type );
+out:
+	bu_free_external( &ext );
+	wdb_close( fp );
 
 	bu_log("nmg_stash_model_to_file(): wrote error.s to '%s'\n",
 		filename);
@@ -4974,7 +5113,10 @@ struct nmg_unbreak_state
  *	of the killed edgeuse mate.
  */
 void
-nmg_unbreak_handler(long int *eup, genptr_t state, int after)
+nmg_unbreak_handler( eup , state , after )
+long	*eup;
+genptr_t state;
+int	after;
 {
 	struct edgeuse *eu1,*eu2;
 	struct edge *e;
@@ -5052,7 +5194,8 @@ nmg_unbreak_handler(long int *eup, genptr_t state, int after)
  *	returns the number of edges mended
  */
 int
-nmg_unbreak_region_edges(long int *magic_p)
+nmg_unbreak_region_edges( magic_p )
+long		*magic_p;
 {
 	struct model *m;
 	struct nmg_visit_handlers htab;
@@ -5109,7 +5252,12 @@ XXX This should be moved into libbn/plane.c,
 XXX probably named bn_dist_pt3_line3().
  */
 int
-rt_dist_pt3_line3(fastf_t *dist, fastf_t *pca, const fastf_t *a, const fastf_t *dir, const fastf_t *p, const struct bn_tol *tol)
+rt_dist_pt3_line3( dist, pca, a, dir, p, tol )
+fastf_t		*dist;
+point_t		pca;
+const point_t	a, p;
+const vect_t	dir;
+const struct bn_tol *tol;
 {
 	vect_t	AtoP;		/* P-A */
 	vect_t	unit_dir;	/* unitized dir vector */
@@ -5167,7 +5315,9 @@ rt_dist_pt3_line3(fastf_t *dist, fastf_t *pca, const fastf_t *a, const fastf_t *
  *
  */
 int
-nmg_mv_shell_to_region(struct shell *s, struct nmgregion *r)
+nmg_mv_shell_to_region( s , r )
+struct shell *s;
+struct nmgregion *r;
 {
 	int ret_val;
 
@@ -5211,7 +5361,11 @@ nmg_mv_shell_to_region(struct shell *s, struct nmgregion *r)
  *	Counts edges at this vertex where radial is mate (free_edges)
  */
 int
-nmg_find_isect_faces(const struct vertex *new_v, struct bu_ptbl *faces, int *free_edges, const struct bn_tol *tol)
+nmg_find_isect_faces( new_v , faces , free_edges , tol )
+const struct vertex *new_v;
+struct bu_ptbl *faces;
+int *free_edges;
+const struct bn_tol *tol;
 {
 	struct faceuse *fu;
 	struct face_g_plane *fg;
@@ -5289,7 +5443,10 @@ nmg_find_isect_faces(const struct vertex *new_v, struct bu_ptbl *faces, int *fre
  *	and modifies the geometry of the vertex to the new location
  */
 int
-nmg_simple_vertex_solve(struct vertex *new_v, const struct bu_ptbl *faces, const struct bn_tol *tol)
+nmg_simple_vertex_solve( new_v , faces, tol )
+struct vertex *new_v;
+const struct bu_ptbl *faces;
+const struct bn_tol *tol;
 {
 	struct vertex_g *vg;
 	int failed=0;
@@ -5418,7 +5575,9 @@ nmg_simple_vertex_solve(struct vertex *new_v, const struct bu_ptbl *faces, const
  *	1 - vertex is off face plane by at least tol->dist for at least one face
  */
 int
-nmg_ck_vert_on_fus(const struct vertex *v, const struct bn_tol *tol)
+nmg_ck_vert_on_fus( v , tol )
+const struct vertex *v;
+const struct bn_tol *tol;
 {
 	struct vertexuse *vu;
 	fastf_t max_dist=0.0;
@@ -5482,7 +5641,9 @@ struct intersect_fus
  */
 
 static void
-nmg_pr_inter(const struct vertex *new_v, const struct bu_ptbl *int_faces)
+nmg_pr_inter( new_v , int_faces )
+const struct vertex *new_v;
+const struct bu_ptbl *int_faces;
 {
 	int i;
 	struct bn_tol tol;
@@ -5583,7 +5744,10 @@ nmg_pr_inter(const struct vertex *new_v, const struct bu_ptbl *int_faces)
  */
 
 static int
-nmg_get_edge_lines(struct vertex *new_v, struct bu_ptbl *int_faces, const struct bn_tol *tol)
+nmg_get_edge_lines( new_v , int_faces , tol )
+struct vertex *new_v;
+struct bu_ptbl *int_faces;
+const struct bn_tol *tol;
 {
 	struct vertex_g *vg;
 	struct vertexuse *vu;
@@ -5831,7 +5995,11 @@ nmg_get_edge_lines(struct vertex *new_v, struct bu_ptbl *int_faces, const struct
  * edges and selecting the furthest one from new_v.
  */
 static int
-nmg_get_max_edge_inters(const struct vertex *new_v, struct bu_ptbl *int_faces, const struct bu_ptbl *faces, const struct bn_tol *tol)
+nmg_get_max_edge_inters( new_v , int_faces , faces , tol )
+const struct vertex *new_v;
+struct bu_ptbl *int_faces;
+const struct bu_ptbl *faces;
+const struct bn_tol *tol;
 {
 	struct model *m;
 	struct nmgregion *r;
@@ -6008,7 +6176,11 @@ nmg_get_max_edge_inters(const struct vertex *new_v, struct bu_ptbl *int_faces, c
  * have been joined.
  */
 static void
-nmg_fuse_inters(struct intersect_fus *i_fus, struct intersect_fus *j_fus, struct bu_ptbl *int_faces, const struct bn_tol *tol)
+nmg_fuse_inters( i_fus , j_fus , int_faces , tol )
+struct intersect_fus *i_fus;
+struct intersect_fus *j_fus;
+struct bu_ptbl *int_faces;
+const struct bn_tol *tol;
 {
 	struct edgeuse *radial_eu;
 	struct edgeuse *prev_eu;
@@ -6076,7 +6248,10 @@ nmg_fuse_inters(struct intersect_fus *i_fus, struct intersect_fus *j_fus, struct
  *
  */
 static void
-nmg_split_edges_at_pts(const struct vertex *new_v, struct bu_ptbl *int_faces, const struct bn_tol *tol)
+nmg_split_edges_at_pts( new_v , int_faces , tol )
+const struct vertex *new_v;
+struct bu_ptbl *int_faces;
+const struct bn_tol *tol;
 {
 	int edge_no;
 
@@ -6184,7 +6359,10 @@ nmg_split_edges_at_pts(const struct vertex *new_v, struct bu_ptbl *int_faces, co
  *
  */
 static void
-nmg_remove_short_eus_inter(struct vertex *new_v, struct bu_ptbl *int_faces, const struct bn_tol *tol)
+nmg_remove_short_eus_inter( new_v , int_faces , tol )
+struct vertex *new_v;
+struct bu_ptbl *int_faces;
+const struct bn_tol *tol;
 {
 	int edge_no;
 	struct vertexuse *vu;
@@ -6335,7 +6513,10 @@ nmg_remove_short_eus_inter(struct vertex *new_v, struct bu_ptbl *int_faces, cons
  *
  */
 static void
-nmg_simplify_inter(const struct vertex *new_v, struct bu_ptbl *int_faces, const struct bn_tol *tol)
+nmg_simplify_inter( new_v , int_faces , tol )
+const struct vertex *new_v;
+struct bu_ptbl *int_faces;
+const struct bn_tol *tol;
 {
 	int edge_no=0;
 	int next_edge_no;
@@ -6485,7 +6666,10 @@ nmg_simplify_inter(const struct vertex *new_v, struct bu_ptbl *int_faces, const 
  *
  */
 void
-nmg_make_faces_at_vert(struct vertex *new_v, struct bu_ptbl *int_faces, const struct bn_tol *tol)
+nmg_make_faces_at_vert( new_v , int_faces , tol )
+struct vertex *new_v;
+struct bu_ptbl *int_faces;
+const struct bn_tol *tol;
 {
 	struct loopuse *old_lu;
 	int edge_no=0,next_edge_no;
@@ -6720,7 +6904,8 @@ nmg_make_faces_at_vert(struct vertex *new_v, struct bu_ptbl *int_faces, const st
  * to the original vertex
  */
 void
-nmg_kill_cracks_at_vertex(const struct vertex *vp)
+nmg_kill_cracks_at_vertex( vp )
+const struct vertex *vp;
 {
 	struct bu_ptbl fus_at_vert;
 	struct vertexuse *vu;
@@ -6833,7 +7018,11 @@ nmg_kill_cracks_at_vertex(const struct vertex *vp)
  *		-1.0 if they don't
  */
 static fastf_t
-nmg_dist_to_cross(const struct intersect_fus *i_fus, const struct intersect_fus *j_fus, fastf_t *new_pt, const struct bn_tol *tol)
+nmg_dist_to_cross( i_fus , j_fus , new_pt , tol )
+const struct intersect_fus *i_fus;
+const struct intersect_fus *j_fus;
+point_t new_pt;
+const struct bn_tol *tol;
 {
 	plane_t pl;
 	struct edgeuse *i_next_eu,*j_next_eu;
@@ -7020,7 +7209,10 @@ nmg_dist_to_cross(const struct intersect_fus *i_fus, const struct intersect_fus 
  *
  */
 static void
-nmg_fix_crossed_loops(struct vertex *new_v, struct bu_ptbl *int_faces, const struct bn_tol *tol)
+nmg_fix_crossed_loops( new_v , int_faces , tol )
+struct vertex *new_v;
+struct bu_ptbl *int_faces;
+const struct bn_tol *tol;
 {
 	int edge_no;
 
@@ -7198,7 +7390,10 @@ nmg_fix_crossed_loops(struct vertex *new_v, struct bu_ptbl *int_faces, const str
  * Calculates a new geometry for new_v
  */
 static int
-nmg_calc_new_v(struct vertex *new_v, const struct bu_ptbl *int_faces, const struct bn_tol *tol)
+nmg_calc_new_v( new_v , int_faces , tol )
+struct vertex *new_v;
+const struct bu_ptbl *int_faces;
+const struct bn_tol *tol;
 {
 	plane_t *planes;
 	int pl_count;
@@ -7331,7 +7526,12 @@ nmg_calc_new_v(struct vertex *new_v, const struct bu_ptbl *int_faces, const stru
  */
 
 int
-nmg_complex_vertex_solve(struct vertex *new_v, const struct bu_ptbl *faces, const int free_edges, const int approximate, const struct bn_tol *tol)
+nmg_complex_vertex_solve( new_v , faces , free_edges , approximate , tol )
+struct vertex *new_v;
+const struct bu_ptbl *faces;
+const int free_edges;
+const int approximate;
+const struct bn_tol *tol;
 {
 	struct faceuse *fu;
 	struct face *fp1;
@@ -7520,7 +7720,9 @@ nmg_complex_vertex_solve(struct vertex *new_v, const struct bu_ptbl *faces, cons
  *		0 - no faceuses with bad normals were found
  */
 int
-nmg_bad_face_normals(const struct shell *s, const struct bn_tol *tol)
+nmg_bad_face_normals( s , tol )
+const struct shell *s;
+const struct bn_tol *tol;
 {
 	struct faceuse *fu;
 	struct loopuse *lu;
@@ -7578,7 +7780,9 @@ nmg_bad_face_normals(const struct shell *s, const struct bn_tol *tol)
  *
  */
 int
-nmg_faces_are_radial(const struct faceuse *fu1, const struct faceuse *fu2)
+nmg_faces_are_radial( fu1 , fu2 )
+const struct faceuse *fu1;
+const struct faceuse *fu2;
 {
 	struct edgeuse *eu,*eu_tmp;
 	struct loopuse *lu;
@@ -7633,7 +7837,10 @@ nmg_faces_are_radial(const struct faceuse *fu1, const struct faceuse *fu2)
  */
 
 int
-nmg_move_edge_thru_pt(struct edgeuse *mv_eu, const fastf_t *pt, const struct bn_tol *tol)
+nmg_move_edge_thru_pt( mv_eu , pt , tol )
+struct edgeuse *mv_eu;
+const point_t pt;
+const struct bn_tol *tol;
 {
 	struct faceuse *fu,*fu1;
 	struct edgeuse *eu,*eu1;
@@ -7989,7 +8196,9 @@ nmg_move_edge_thru_pt(struct edgeuse *mv_eu, const fastf_t *pt, const struct bn_
  *
  */
 void
-nmg_vlist_to_wire_edges(struct shell *s, const struct bu_list *vhead)
+nmg_vlist_to_wire_edges( s , vhead )
+struct shell *s;
+const struct bu_list *vhead;
 {
 	const struct bn_vlist *vp;
 	struct edgeuse *eu;
@@ -8048,7 +8257,13 @@ nmg_vlist_to_wire_edges(struct shell *s, const struct bu_list *vhead)
 }
 
 void
-nmg_follow_free_edges_to_vertex(const struct vertex *vpa, const struct vertex *vpb, struct bu_ptbl *bad_verts, const struct shell *s, const struct edgeuse *eu, struct bu_ptbl *verts, int *found)
+nmg_follow_free_edges_to_vertex( vpa, vpb, bad_verts, s, eu, verts, found )
+const struct vertex *vpa,*vpb;
+struct bu_ptbl *bad_verts;
+const struct shell *s;
+const struct edgeuse *eu;
+struct bu_ptbl *verts;
+int *found;
 {
 	struct vertexuse *vu;
 
@@ -8161,7 +8376,10 @@ nmg_follow_free_edges_to_vertex(const struct vertex *vpa, const struct vertex *v
 }
 
 static struct bu_ptbl *
-nmg_find_path(const struct vertex *vpa, const struct vertex *vpb, struct bu_ptbl *bad_verts, const struct shell *s)
+nmg_find_path( vpa, vpb, bad_verts, s )
+const struct vertex *vpa,*vpb;
+struct bu_ptbl *bad_verts;
+const struct shell *s;
 {
 	int done;
 	static struct bu_ptbl verts;
@@ -8253,7 +8471,10 @@ nmg_find_path(const struct vertex *vpa, const struct vertex *vpb, struct bu_ptbl
 }
 
 void
-nmg_glue_face_in_shell(const struct faceuse *fu, struct shell *s, const struct bn_tol *tol)
+nmg_glue_face_in_shell( fu , s , tol )
+const struct faceuse *fu;
+struct shell *s;
+const struct bn_tol *tol;
 {
 	struct loopuse *lu;
 
@@ -8370,7 +8591,11 @@ const struct bn_tol *tol;
 #endif
 
 static int
-nmg_make_connect_faces(struct shell *dst, struct vertex *vpa, struct vertex *vpb, struct bu_ptbl *verts, const struct bn_tol *tol)
+nmg_make_connect_faces( dst , vpa , vpb , verts , tol )
+struct shell *dst;
+struct vertex *vpa,*vpb;
+struct bu_ptbl *verts;
+const struct bn_tol *tol;
 {
 	int done=0;
 	int i,j;
@@ -8738,7 +8963,11 @@ struct dangle
 };
 
 int
-nmg_open_shells_connect(struct shell *dst, struct shell *src, const long int **copy_tbl, const struct bn_tol *tol)
+nmg_open_shells_connect( dst , src , copy_tbl , tol )
+struct shell *dst;
+struct shell *src;
+const long **copy_tbl;
+const struct bn_tol *tol;
 {
 	struct faceuse *fu;
 	struct loopuse *lu;
@@ -9011,7 +9240,10 @@ nmg_open_shells_connect(struct shell *dst, struct shell *src, const long int **c
  *
  */
 int
-nmg_in_vert(struct vertex *new_v, const int approximate, const struct bn_tol *tol)
+nmg_in_vert( new_v , approximate , tol )
+struct vertex *new_v;
+const int approximate;
+const struct bn_tol *tol;
 {
 	struct bu_ptbl faces;
 	int failed=0;
@@ -9064,7 +9296,8 @@ nmg_in_vert(struct vertex *new_v, const int approximate, const struct bn_tol *to
  */
 
 void
-nmg_mirror_model(struct model *m)
+nmg_mirror_model( m )
+struct model *m;
 {
 	struct bu_ptbl vertices;
 	struct nmgregion *r;
@@ -9123,7 +9356,8 @@ nmg_mirror_model(struct model *m)
 }
 
 int
-nmg_kill_cracks(struct shell *s)
+nmg_kill_cracks( s )
+struct shell *s;
 {
 	struct faceuse *fu;
 	struct faceuse *fu_next;
@@ -9302,7 +9536,8 @@ crack_top:
 }
 
 int
-nmg_kill_zero_length_edgeuses(struct model *m)
+nmg_kill_zero_length_edgeuses( m )
+struct model *m;
 {
 	struct nmgregion *r;
 	int empty_model=0;
@@ -9425,7 +9660,9 @@ nmg_kill_zero_length_edgeuses(struct model *m)
  * triangulated and broken into seperate faces
  */
 void
-nmg_make_faces_within_tol(struct shell *s, const struct bn_tol *tol)
+nmg_make_faces_within_tol( s, tol )
+struct shell *s;
+const struct bn_tol *tol;
 {
 	struct bu_ptbl faceuses;
 	struct faceuse *fu;
@@ -9493,7 +9730,9 @@ nmg_make_faces_within_tol(struct shell *s, const struct bn_tol *tol)
 }
 
 void
-nmg_intersect_loops_self(struct shell *s, const struct bn_tol *tol)
+nmg_intersect_loops_self( s, tol )
+struct shell *s;
+const struct bn_tol *tol;
 {
 	struct faceuse *fu;
 	struct bu_ptbl edgeuses;
@@ -9612,7 +9851,8 @@ top:
  *	cnurbs on the list.
  */
 struct edge_g_cnurb *
-rt_join_cnurbs(struct bu_list *crv_head)
+rt_join_cnurbs( crv_head )
+struct bu_list	*crv_head;
 {
 	struct edge_g_cnurb *crv,*next_crv;
 	struct edge_g_cnurb *new_crv=(struct edge_g_cnurb *)NULL;
@@ -9793,7 +10033,12 @@ rt_join_cnurbs(struct bu_list *crv_head)
  *	(as viewed from the +Z direction).
  */
 struct edge_g_cnurb *
-rt_arc2d_to_cnurb(fastf_t *i_center, fastf_t *i_start, fastf_t *i_end, int point_type, const struct bn_tol *tol)
+rt_arc2d_to_cnurb( i_center, i_start, i_end, point_type, tol )
+point_t i_center;
+point_t i_start;
+point_t i_end;
+int point_type;
+const struct bn_tol *tol;
 {
 	struct edge_g_cnurb *crv;
 	struct bu_list crv_head;
@@ -9992,7 +10237,10 @@ rt_arc2d_to_cnurb(fastf_t *i_center, fastf_t *i_start, fastf_t *i_end, int point
 }
 
 int
-nmg_break_edge_at_verts(struct edge *e, struct bu_ptbl *verts, const struct bn_tol *tol)
+nmg_break_edge_at_verts( e, verts, tol )
+struct edge *e;
+struct bu_ptbl *verts;
+const struct bn_tol *tol;
 {
 	int break_count=0;
 	int j;
@@ -10055,7 +10303,9 @@ start:
 }
 
 int
-nmg_break_edges(long int *magic_p, const struct bn_tol *tol)
+nmg_break_edges( magic_p, tol )
+long *magic_p;
+const struct bn_tol *tol;
 {
 	struct bu_ptbl edges;
 	struct bu_ptbl verts;
@@ -10085,7 +10335,9 @@ nmg_break_edges(long int *magic_p, const struct bn_tol *tol)
 
 
 static int
-Shell_is_arb(struct shell *s, struct bu_ptbl *tab)
+Shell_is_arb( s, tab )
+struct shell *s;
+struct bu_ptbl *tab;
 {
 	struct faceuse *fu;
 	struct face *f;
@@ -10784,7 +11036,9 @@ nmg_to_tgc(
  *	0 - otherwise
  */
 int
-nmg_lu_is_convex(struct loopuse *lu, const struct bn_tol *tol)
+nmg_lu_is_convex( lu, tol )
+struct loopuse *lu;
+const struct bn_tol *tol;
 {
 	struct edgeuse *eu1,*eu2,*eu3,*eu_start;
 
@@ -10841,7 +11095,10 @@ nmg_lu_is_convex(struct loopuse *lu, const struct bn_tol *tol)
  * XXX This routine is deprecated in favor of BoTs
  */
 int
-nmg_to_poly(const struct model *m, struct rt_pg_internal *poly_int, const struct bn_tol *tol)
+nmg_to_poly( m, poly_int, tol )
+const struct model *m;
+struct rt_pg_internal *poly_int;
+const struct bn_tol *tol;
 {
 	struct nmgregion *r;
 	struct shell  *s;
@@ -11013,7 +11270,9 @@ nmg_to_poly(const struct model *m, struct rt_pg_internal *poly_int, const struct
 }
 
 int
-nmg_simplify_shell_edges(struct shell *s, const struct bn_tol *tol)
+nmg_simplify_shell_edges( s, tol )
+struct shell *s;
+const struct bn_tol *tol;
 {
 	struct faceuse *fu;
 	int count=0;
@@ -11201,7 +11460,9 @@ nmg_simplify_shell_edges(struct shell *s, const struct bn_tol *tol)
 #define EDGE_COLLAPSE_DEBUG 0
 
 int
-nmg_select_collapse(const fastf_t max_dist1, const fastf_t max_dot1, const int flip1, const fastf_t max_dist2, const fastf_t max_dot2, const int flip2, const fastf_t max_dot, const fastf_t tol_dist)
+nmg_select_collapse( max_dist1, max_dot1, flip1, max_dist2, max_dot2, flip2, max_dot, tol_dist )
+const fastf_t max_dist1, max_dot1, max_dist2, max_dot2, max_dot, tol_dist;
+const int flip1, flip2;
 {
 	unsigned int ret;
 
@@ -11256,7 +11517,11 @@ bu_log( "choice = %d\n", ret );
  * returns number of edges collapsed
  */
 int
-nmg_edge_collapse(struct model *m, const struct bn_tol *tol, const fastf_t tol_coll, const fastf_t min_angle)
+nmg_edge_collapse( m, tol, tol_coll, min_angle )
+struct model *m;
+const struct bn_tol *tol;
+const fastf_t tol_coll;
+const fastf_t min_angle;
 {
 	fastf_t max_dot;
 	struct bu_ptbl edge_table;
@@ -11929,7 +12194,9 @@ nmg_edge_collapse(struct model *m, const struct bn_tol *tol, const fastf_t tol_c
  */
 
 struct rt_bot_internal *
-nmg_bot(struct shell *s, const struct bn_tol *tol)
+nmg_bot( s, tol )
+struct shell *s;
+const struct bn_tol *tol;
 {
 	struct rt_bot_internal	*bot;
 	struct bu_ptbl		nmg_vertices;

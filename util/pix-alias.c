@@ -55,7 +55,7 @@ struct aliashead {
 /*
  *	D O I T --- Main function of program
  */
-void doit(void)
+void doit()
 {
 	struct aliashead ah;
 	char *image;
@@ -115,7 +115,7 @@ void doit(void)
 	}
 }
 
-void usage(void)
+void usage()
 {
 	(void)fprintf(stderr,"Usage: %s [ -s squaresize ] [-w file_width ] [-n file_height ]\n", progname);
 	(void)fprintf(stderr,"\t< BRLpixfile > ALIASpixfile\n");
@@ -124,7 +124,9 @@ void usage(void)
 
 
 int
-main(int ac, char **av)
+main(ac,av)
+int ac;
+char *av[];
 {
 	int  c, optlen;
 

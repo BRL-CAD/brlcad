@@ -41,7 +41,9 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
  *  Make a database header (ID) record.
  */
 int
-mk_id(struct rt_wdb *fp, const char *title)
+mk_id( fp, title )
+struct rt_wdb		*fp;
+const char	*title;
 {
 	return mk_id_editunits( fp, title, 1.0 );
 }
@@ -57,7 +59,10 @@ mk_id(struct rt_wdb *fp, const char *title)
  *	0	success
  */
 int
-mk_id_units(struct rt_wdb *fp, const char *title, register const char *units)
+mk_id_units( fp, title, units )
+struct rt_wdb		*fp;
+const char	*title;
+register const char	*units;
 {
 	return mk_id_editunits( fp, title, bu_units_conversion(units) );
 }

@@ -39,11 +39,11 @@
 #define AMIN(i,j)    ( (i) < (j) ? (i) : (j) )
 
 struct oslo_mat *
-rt_nurb_calc_oslo(register int order, register const struct knot_vector *tau_kv, register struct knot_vector *t_kv, struct resource *res)
-                   
-                                           	/* old knot vector */
-                                   		/* new knot vector */
-                     
+rt_nurb_calc_oslo(order, tau_kv, t_kv, res )
+register int order;
+register const struct knot_vector * tau_kv;	/* old knot vector */
+register struct knot_vector * t_kv;		/* new knot vector */
+struct resource *res;
 {
 	register fastf_t	*t_p;
 	register const fastf_t	*tau_p;
@@ -178,7 +178,8 @@ rt_nurb_calc_oslo(register int order, register const struct knot_vector *tau_kv,
  *  rt_pr_oslo() - FOR DEBUGGING PURPOSES
  */
 void
-rt_nurb_pr_oslo(struct oslo_mat *om)
+rt_nurb_pr_oslo( om)
+struct oslo_mat * om;
 {
 	struct oslo_mat * omp;
 	int j;
@@ -202,7 +203,9 @@ rt_nurb_pr_oslo(struct oslo_mat *om)
  */
 
 void
-rt_nurb_free_oslo(struct oslo_mat *om, struct resource *res)
+rt_nurb_free_oslo( om, res )
+struct oslo_mat * om;
+struct resource *res;
 {
 	register struct oslo_mat * omp;
 

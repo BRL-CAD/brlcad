@@ -35,7 +35,7 @@ static struct vertex **f_vertl[256];
 /* declarations to support use of getopt() system call */
 char *options = "h3210";
 extern char *optarg;
-extern int optind, opterr, getopt(int, char *const *, const char *);
+extern int optind, opterr, getopt();
 
 char *progname = "(noname)";
 char plotfilename[1024];
@@ -46,7 +46,8 @@ int manifold[4] = { 1, 1, 1, 1 };
 /*
  *	U S A G E --- tell user how to invoke this program, then exit
  */
-void usage(char *s)
+void usage(s)
+char *s;
 {
 	if (s) (void)fputs(s, stderr);
 
@@ -62,7 +63,9 @@ void usage(char *s)
 /*
  *	P A R S E _ A R G S --- Parse through command line flags
  */
-int parse_args(int ac, char **av)
+int parse_args(ac, av)
+int ac;
+char *av[];
 {
 	int  c;
 
@@ -96,7 +99,8 @@ int parse_args(int ac, char **av)
 }
 
 void
-make_3manifold_bits(struct bn_tol *tol)
+make_3manifold_bits(tol)
+struct bn_tol *tol;
 {
 	plane_t plane;
 	struct faceuse *fu_end;
@@ -418,7 +422,8 @@ make_3manifold_bits(struct bn_tol *tol)
 }
 
 void
-make_2manifold_bits(struct bn_tol *tol)
+make_2manifold_bits(tol)
+struct bn_tol *tol;
 {
 	struct vertex *f2_vertl[8];
 
@@ -471,7 +476,8 @@ make_2manifold_bits(struct bn_tol *tol)
 }
 
 void
-make_1manifold_bits(struct bn_tol *tol)
+make_1manifold_bits(tol)
+struct bn_tol *tol;
 {
 	struct edgeuse *eu;
 
@@ -487,7 +493,8 @@ make_1manifold_bits(struct bn_tol *tol)
 }
 
 void
-make_0manifold_bits(struct bn_tol *tol)
+make_0manifold_bits(tol)
+struct bn_tol *tol;
 {
 #if 0
 	struct nmgregion *lrp;
@@ -518,7 +525,9 @@ make_0manifold_bits(struct bn_tol *tol)
  *	Call parse_args to handle command line arguments first, then
  *	process input.
  */
-int main(int ac, char **av)
+int main(ac,av)
+int ac;
+char *av[];
 {
 	struct bn_tol tol;
 	FILE *fdplot;

@@ -62,7 +62,8 @@ Usage: rle-pix [-c -d -h -H] [-C r/g/b]\n\
  *			G E T _ A R G S
  */
 static int
-get_args(int argc, register char **argv)
+get_args( argc, argv )
+register char	**argv;
 {
 	register int	c;
 
@@ -147,7 +148,9 @@ get_args(int argc, register char **argv)
  *			M A I N
  */
 int
-main(int argc, char **argv)
+main( argc, argv)
+int argc;
+char ** argv;
 {
 	register int i;
 	int	file_width;		/* unclipped width of rectangle */

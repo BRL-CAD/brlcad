@@ -36,7 +36,8 @@ unsigned char vals[1L << (24-3)];
 /*
  *	D O I T --- Main function of program
  */
-void doit(FILE *fd)
+void doit(fd)
+FILE *fd;
 {
 	unsigned long pixel, count;
 	int bytes;
@@ -68,7 +69,7 @@ void doit(FILE *fd)
 					(i >> 16) & 0x0ff);
 }
 
-void usage(void)
+void usage()
 {
 	(void) fprintf(stderr, "Usage: %s [ -v ] < PIXfile\n", progname);
 	exit(1);
@@ -80,9 +81,11 @@ void usage(void)
  *	Perform miscelaneous tasks such as argument parsing and
  *	I/O setup and then call "doit" to perform the task at hand
  */
-int main(int ac, char **av)
+int main(ac,av)
+int ac;
+char *av[];
 {
-	int  c, isatty(int);
+	int  c, isatty();
 	progname = *av;
 	
 	/* Get # of options & turn all the option flags off

@@ -69,8 +69,7 @@ Options:\n\
  -x #		Set librt debug flags\n\
 ";
 
-int	rayhit(register struct application *ap, struct partition *PartHeadp);
-int     raymiss(register struct application *ap);
+int	rayhit(), raymiss();
 
 /*
  *  			V I E W _ I N I T
@@ -80,7 +79,9 @@ int     raymiss(register struct application *ap);
  *  and are later called from do_run().
  */
 int
-view_init(register struct application *ap, char *file, char *obj, int minus_o)
+view_init( ap, file, obj, minus_o )
+register struct application *ap;
+char *file, *obj;
 {
 
 	if( !minus_o )
@@ -112,7 +113,8 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o)
  * 
  */
 void
-view_2init(struct application *ap)
+view_2init( ap )
+struct application	*ap;
 {
 
 	if( outfp == NULL )
@@ -146,7 +148,7 @@ view_2init(struct application *ap)
  *  do_frame().
  */
 int
-raymiss(register struct application *ap)
+raymiss()
 {
 	return(0);
 }
@@ -157,7 +159,7 @@ raymiss(register struct application *ap)
  *  This routine is called from do_run(), and in this case does nothing.
  */
 void
-view_pixel(void)
+view_pixel()
 {
 	return;
 }
@@ -169,7 +171,9 @@ view_pixel(void)
  *  Write information about this "cell".
  */
 int
-rayhit(struct application *ap, register struct partition *PartHeadp)
+rayhit( ap, PartHeadp )
+struct application *ap;
+register struct partition *PartHeadp;
 {
 	register struct partition *pp = PartHeadp->pt_forw;
 	point_t			hv;		/* GIFT h,v coords, in inches */
@@ -216,7 +220,7 @@ rayhit(struct application *ap, register struct partition *PartHeadp)
  *  View_eol() is called by rt_shootray() in do_run().  In this case,
  *  it does nothing.
  */
-void	view_eol(void)
+void	view_eol()
 {
 }
 
@@ -226,12 +230,12 @@ void	view_eol(void)
  *  View_end() is called by rt_shootray in do_run().
  */
 void
-view_end(void)
+view_end()
 {
 	fflush(outfp);
 }
 
-void view_setup(void) {}
-void view_cleanup(void) {}
+void view_setup() {}
+void view_cleanup() {}
 
-void application_init (void) {}
+void application_init () {}

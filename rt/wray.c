@@ -113,7 +113,11 @@ struct vldray
  *  			W R A Y
  */
 void
-wray(register struct partition *pp, register struct application *ap, FILE *fp, const fastf_t *inormal)
+wray( pp, ap, fp, inormal )
+register struct partition *pp;
+register struct application *ap;
+FILE *fp;
+const vect_t	inormal;
 {
 	LOCAL struct vldray vldray;
 	register struct hit *hitp= pp->pt_inhit;
@@ -151,7 +155,13 @@ wray(register struct partition *pp, register struct application *ap, FILE *fp, c
  *  has a proper outward pointing normal.
  */
 void
-wraypts(fastf_t *in, fastf_t *inorm, fastf_t *out, int id, struct application *ap, FILE *fp)
+wraypts( in, inorm, out, id, ap, fp )
+vect_t	in;
+vect_t	inorm;
+vect_t	out;
+int	id;
+struct application *ap;
+FILE	*fp;
 {
 	LOCAL struct vldray vldray;
 	vect_t	norm;
@@ -177,7 +187,10 @@ wraypts(fastf_t *in, fastf_t *inorm, fastf_t *out, int id, struct application *a
  *  Write "paint" into a VLD standard rayfile.
  */
 void
-wraypaint(fastf_t *start, fastf_t *norm, int paint, struct application *ap, FILE *fp)
+wraypaint( start, norm, paint, ap, fp )
+vect_t start, norm;
+struct application *ap;
+FILE *fp;
 {
 	LOCAL struct vldray vldray;
 

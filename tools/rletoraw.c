@@ -68,7 +68,7 @@
      }\
 }
 
-void usage(void) {
+void usage() {
     fprintf(stderr, "-a don't strip the alpha channel from the rle file\n");
     fprintf(stderr, "-s output data in scanline interleaved order\n");
     fprintf(stderr, "-N output data in non-interleaved order (eg. | split -Wid*Height -)\n");
@@ -85,7 +85,9 @@ void usage(void) {
     
 
 int
-main(int argc, char **argv)
+main(argc,argv) 
+int argc;
+char *argv[];
 { 
     int i, rle_err;
     char *nullbytes = NULL;

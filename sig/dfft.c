@@ -35,13 +35,13 @@ int	ascii_output = 0;
 int	normalize_output = 0;
 
 double	cbfilter[27];
-void	cbweights(double *filter, int window, int points);
+void	cbweights();
 double	cbsum;
-void	fftdisp(double *dat, int N);
-void	fftmag2(double *mags, double *dat, int N);
-void	fftphase(double *dat, int N);
+void	fftdisp();
+void	fftmag2();
+void	fftphase();
 void	rfft();
-void	LintoLog(double *in, double *out, int num);
+void	LintoLog();
 
 char usage[] = "\
 Usage: dfft [options] [width (1024)] < doubles > 512logmags\n\
@@ -53,7 +53,9 @@ Usage: dfft [options] [width (1024)] < doubles > 512logmags\n\
   -A     ascii output\n\
 ";
 
-int main(int argc, char **argv)
+int main( argc, argv )
+int argc;
+char **argv;
 {
 	int	i, n;
 	int	L;
@@ -121,7 +123,9 @@ int main(int argc, char **argv)
 }
 
 void
-fftdisp(double *dat, int N)
+fftdisp( dat, N )
+double	dat[];
+int	N;
 {
 	int	i, j;
 	double	mags[MAXOUT];
@@ -195,7 +199,9 @@ fftdisp(double *dat, int N)
 }
 
 void
-fftmag2(double *mags, double *dat, int N)
+fftmag2( mags, dat, N )
+double	*mags, *dat;
+int	N;
 {
 	int	i;
 	double	value, dB;
@@ -233,7 +239,9 @@ fftmag2(double *mags, double *dat, int N)
 }
 
 void
-fftphase(double *dat, int N)
+fftphase( dat, N )
+double	dat[];
+int	N;
 {
 	int	i;
 	double	value, out[MAXFFT];

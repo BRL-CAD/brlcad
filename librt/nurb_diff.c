@@ -41,7 +41,9 @@
  */
 
 struct face_g_snurb *
-rt_nurb_s_diff(const struct face_g_snurb *srf, int dir)
+rt_nurb_s_diff( srf, dir )
+const struct face_g_snurb *srf;
+int	dir;
 {
 	struct face_g_snurb *nsrf;
 	int	i;
@@ -115,7 +117,8 @@ rt_nurb_s_diff(const struct face_g_snurb *srf, int dir)
 /* Do the same thing for a curve. */
 
 struct edge_g_cnurb *
-rt_nurb_c_diff(const struct edge_g_cnurb *crv)
+rt_nurb_c_diff( crv )
+const struct edge_g_cnurb *crv;
 {
 
 	struct edge_g_cnurb *ncrv;
@@ -144,7 +147,15 @@ rt_nurb_c_diff(const struct edge_g_cnurb *crv)
 }
 
 void
-rt_nurb_mesh_diff(int order, const fastf_t *o_pts, fastf_t *n_pts, const fastf_t *knots, int o_stride, int n_stride, int o_size, int pt_type)
+rt_nurb_mesh_diff( order, o_pts, n_pts, knots, o_stride, n_stride, o_size, pt_type)
+int	order;
+const fastf_t *o_pts;
+fastf_t *n_pts;
+const fastf_t *knots;
+int	o_stride;
+int	n_stride;
+int	o_size;
+int	pt_type;
 {
 	int	i, k;
 	int	coords;

@@ -57,25 +57,25 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "fb.h"
 #include "./fblocal.h"
 
-static void	ab_log(FBIO *ifp, char *str);
-static int	ab_get_reply(int fd);
-static int	ab_mread(int fd, register char *bufp, int n);
-static void	ab_yuv_to_rgb(unsigned char *rgb_buf, unsigned char *yuv_buf, int len);
-static void	ab_rgb_to_yuv(unsigned char *yuv_buf, unsigned char *rgb_buf, int len);
+static void	ab_log();
+static int	ab_get_reply();
+static int	ab_mread();
+static void	ab_yuv_to_rgb();
+static void	ab_rgb_to_yuv();
 static int	ab_yuvio(int, char *, char *, int, int, int);
 
-_LOCAL_ int	ab_open(register FBIO *ifp, register char *file, int width, int height),
-		ab_close(FBIO *ifp),
-		ab_clear(FBIO *ifp, unsigned char *bgpp),
-		ab_read(register FBIO *ifp, int x, register int y, unsigned char *pixelp, int count),
-		ab_write(register FBIO *ifp, int x, int y, const unsigned char *pixelp, int count),
-		ab_rmap(register FBIO *ifp, register ColorMap *cmap),
-		ab_wmap(register FBIO *ifp, register ColorMap *cmap),
-		ab_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom),
-		ab_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom),
-		ab_cursor(FBIO *ifp, int mode, int x, int y),
-		ab_getcursor(FBIO *ifp, int *mode, int *x, int *y),
-		ab_help(FBIO *ifp);
+_LOCAL_ int	ab_open(),
+		ab_close(),
+		ab_clear(),
+		ab_read(),
+		ab_write(),
+		ab_rmap(),
+		ab_wmap(),
+		ab_view(),
+		ab_getview(),
+		ab_cursor(),
+		ab_getcursor(),
+		ab_help();
 
 FBIO abekas_interface = {
 	0,
@@ -188,7 +188,10 @@ static struct modeflags {
  *
  */
 _LOCAL_ int
-ab_open(register FBIO *ifp, register char *file, int width, int height)
+ab_open( ifp, file, width, height )
+register FBIO	*ifp;
+register char	*file;
+int		width, height;
 {
 	register char	*cp;
 	register int	i;
@@ -336,7 +339,9 @@ ab_open(register FBIO *ifp, register char *file, int width, int height)
  *
  *  If verbose mode is enabled, print the time and a message
  */
-static void ab_log(FBIO *ifp, char *str)
+static void ab_log(ifp, str)
+FBIO	*ifp;
+char	*str;
 {
 	time_t		now;
 	struct tm	*tmp;
@@ -360,7 +365,8 @@ static void ab_log(FBIO *ifp, char *str)
  *			A B _ R E A D F R A M E
  */
 static int
-ab_readframe(FBIO *ifp)
+ab_readframe(ifp)
+FBIO	*ifp;
 {
 	register int	y;
 
@@ -392,7 +398,8 @@ ab_readframe(FBIO *ifp)
  *			A B _ C L O S E
  */
 _LOCAL_ int
-ab_close(FBIO *ifp)
+ab_close( ifp )
+FBIO	*ifp;
 {
 	int	ret = 0;
 
@@ -434,7 +441,9 @@ ab_close(FBIO *ifp)
  *			A B _ C L E A R
  */
 _LOCAL_ int
-ab_clear(FBIO *ifp, unsigned char *bgpp)
+ab_clear( ifp, bgpp )
+FBIO		*ifp;
+unsigned char	*bgpp;
 {
 	register int	r,g,b;
 	register int	count;
@@ -464,7 +473,12 @@ ab_clear(FBIO *ifp, unsigned char *bgpp)
  *			A B _ R E A D
  */
 _LOCAL_ int
-ab_read(register FBIO *ifp, int x, register int y, unsigned char *pixelp, int count)
+ab_read( ifp, x, y, pixelp, count )
+register FBIO	*ifp;
+int		x;
+register int	y;
+unsigned char	*pixelp;
+int		count;
 {
 	register short		scan_count;	/* # pix on this scanline */
 	register char		*cp;
@@ -521,7 +535,11 @@ ab_read(register FBIO *ifp, int x, register int y, unsigned char *pixelp, int co
  *			A B _ W R I T E
  */
 _LOCAL_ int
-ab_write(register FBIO *ifp, int x, int y, const unsigned char *pixelp, int count)
+ab_write( ifp, x, y, pixelp, count )
+register FBIO	*ifp;
+int		x, y;
+const unsigned char	*pixelp;
+int		count;
 {
 	register short		scan_count;	/* # pix on this scanline */
 	register const unsigned char	*cp;
@@ -577,7 +595,10 @@ ab_write(register FBIO *ifp, int x, int y, const unsigned char *pixelp, int coun
 /*
  */
 _LOCAL_ int
-ab_cursor(FBIO *ifp, int mode, int x, int y)
+ab_cursor( ifp, mode, x, y )
+FBIO	*ifp;
+int	mode;
+int	x, y;
 {
 	fb_sim_cursor(ifp, mode, x, y);
 
@@ -587,7 +608,10 @@ ab_cursor(FBIO *ifp, int mode, int x, int y)
 /*
  */
 _LOCAL_ int
-ab_getcursor(FBIO *ifp, int *mode, int *x, int *y)
+ab_getcursor( ifp, mode, x, y )
+FBIO	*ifp;
+int	*mode;
+int	*x, *y;
 {
 	fb_sim_getcursor(ifp, mode, x, y);
 
@@ -597,7 +621,10 @@ ab_getcursor(FBIO *ifp, int *mode, int *x, int *y)
 /*
  */
 _LOCAL_ int
-ab_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
+ab_view( ifp, xcenter, ycenter, xzoom, yzoom )
+FBIO	*ifp;
+int	xcenter, ycenter;
+int	xzoom, yzoom;
 {
 	fb_sim_view(ifp, xcenter, ycenter, xzoom, yzoom);
 
@@ -607,7 +634,10 @@ ab_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 /*
  */
 _LOCAL_ int
-ab_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
+ab_getview( ifp, xcenter, ycenter, xzoom, yzoom )
+FBIO	*ifp;
+int	*xcenter, *ycenter;
+int	*xzoom, *yzoom;
 {
 	fb_sim_getview(ifp, xcenter, ycenter, xzoom, yzoom);
 
@@ -615,7 +645,9 @@ ab_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 }
 
 _LOCAL_ int
-ab_rmap(register FBIO *ifp, register ColorMap *cmap)
+ab_rmap( ifp, cmap )
+register FBIO		*ifp;
+register ColorMap	*cmap;
 {
 	register int	i;
 
@@ -628,7 +660,9 @@ ab_rmap(register FBIO *ifp, register ColorMap *cmap)
 }
 
 _LOCAL_ int
-ab_wmap(register FBIO *ifp, register ColorMap *cmap)
+ab_wmap( ifp, cmap )
+register FBIO		*ifp;
+register ColorMap	*cmap;
 {
 	/* Just pretend it worked OK */
 	return(0);
@@ -638,7 +672,8 @@ ab_wmap(register FBIO *ifp, register ColorMap *cmap)
  *			A B _ H E L P
  */
 _LOCAL_ int
-ab_help(FBIO *ifp)
+ab_help( ifp )
+FBIO	*ifp;
 {
 	struct	modeflags *mfp;
 
@@ -676,13 +711,13 @@ ab_help(FBIO *ifp)
  *	len	successful count
  */
 int
-ab_yuvio(int output, char *host, char *buf, int len, int frame, int to_network)
-   	       		/* 0=read(input), 1=write(output) */
-    	      
-    	     
-   	    
-   	      		/* frame number */
-   	           
+ab_yuvio( output, host, buf, len, frame, to_network )
+int	output;		/* 0=read(input), 1=write(output) */
+char	*host;
+char	*buf;
+int	len;
+int	frame;		/* frame number */
+int	to_network;
 {
 	struct sockaddr_in	sinme;		/* Client */
 	struct sockaddr_in	sinhim;		/* Server */
@@ -893,7 +928,8 @@ err:
 }
 
 static int
-ab_get_reply(int fd)
+ab_get_reply(fd)
+int	fd;
 {
 	char	rep_buf[128];
 	int	got;
@@ -934,7 +970,10 @@ ab_get_reply(int fd)
  * grouping as it is written with.  Written by Robert S. Miles, BRL.
  */
 static int
-ab_mread(int fd, register char *bufp, int n)
+ab_mread(fd, bufp, n)
+int	fd;
+register char	*bufp;
+int	n;
 {
 	register int	count = 0;
 	register int	nread;
@@ -995,7 +1034,10 @@ static double	vbuf[724];
 
 /* RGB to YUV */
 static void
-ab_rgb_to_yuv(unsigned char *yuv_buf, unsigned char *rgb_buf, int len)
+ab_rgb_to_yuv( yuv_buf, rgb_buf, len )
+unsigned char *yuv_buf;
+unsigned char *rgb_buf;
+int	len;
 {
 	register unsigned char *cp;
 	register double	*yp, *up, *vp;
@@ -1043,7 +1085,9 @@ ab_rgb_to_yuv(unsigned char *yuv_buf, unsigned char *rgb_buf, int len)
 
 /* YUV to RGB */
 static void
-ab_yuv_to_rgb(unsigned char *rgb_buf, unsigned char *yuv_buf, int len)
+ab_yuv_to_rgb( rgb_buf, yuv_buf, len )
+unsigned char *rgb_buf;
+unsigned char *yuv_buf;
 {
 	register unsigned char *rgbp;
 	register unsigned char *yuvp;

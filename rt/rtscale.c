@@ -72,13 +72,13 @@ Usage:  rtscale (width) (units) (interval) filename [string] >  file.pl\n\
 	filename	name of log file to be read\n\
 	[string]	optional, descriptive string\n";
 
-int	layout_n_plot(FILE *outfp, char *label, fastf_t *v2mod, fastf_t *m2view, int intervals, fastf_t m_len, char *descript);
-int	read_rt_file(FILE *infp, char *name, fastf_t *model2view);
-int	drawscale(FILE *outfp, fastf_t *startpt, fastf_t len, fastf_t hgt, fastf_t *lenv, fastf_t *hgtv, fastf_t *inv_hgtv);
-int	drawticks(FILE *outfp, fastf_t *centerpt, fastf_t *hgtv, fastf_t hgt, fastf_t *inv_hgtv);
+int	layout_n_plot();
+int	read_rt_file();
+int	drawscale();
+int	drawticks();
 int	overlay();
-void	make_border(FILE *outfp, fastf_t *v2mod);
-void	make_bounding_rpp(FILE *outfp, fastf_t *v2mod);
+void	make_border();
+void	make_bounding_rpp();
 
 static FILE	*fp;
 int		border;			/* flag for debugging; to be used later */
@@ -93,7 +93,10 @@ int		SEEN_DESCRIPT=0;	/* flag for descriptive string */
  *  It also processes its own arguments (argc and argv).
  */
 int
-main(int argc, char **argv)
+main(argc, argv)
+int	argc;
+char	**argv;
+
 {
 
 	mat_t		model2view;		/* matrix for converting from model to view space */
@@ -199,7 +202,15 @@ main(int argc, char **argv)
  */
 
 int
-layout_n_plot(FILE *outfp, char *label, fastf_t *v2mod, fastf_t *m2view, int intervals, fastf_t m_len, char *descript)
+layout_n_plot(outfp, label, v2mod, m2view, intervals, m_len, descript)
+FILE	*outfp;
+char	*label;
+mat_t	v2mod;
+mat_t	m2view;
+int	intervals;
+fastf_t	m_len;
+char	*descript;
+
 {
 
 
@@ -392,7 +403,14 @@ layout_n_plot(FILE *outfp, char *label, fastf_t *v2mod, fastf_t *m2view, int int
  */
 
 int
-drawscale(FILE *outfp, fastf_t *startpt, fastf_t len, fastf_t hgt, fastf_t *lenv, fastf_t *hgtv, fastf_t *inv_hgtv)
+drawscale(outfp, startpt, len, hgt, lenv, hgtv, inv_hgtv)
+FILE		*outfp;
+point_t		startpt;
+fastf_t		len;
+fastf_t		hgt;
+vect_t		lenv;
+vect_t		hgtv;
+vect_t		inv_hgtv;
 {
 
 	point_t		endpt;
@@ -426,7 +444,12 @@ drawscale(FILE *outfp, fastf_t *startpt, fastf_t len, fastf_t hgt, fastf_t *lenv
  */
 
 int
-drawticks(FILE *outfp, fastf_t *centerpt, fastf_t *hgtv, fastf_t hgt, fastf_t *inv_hgtv)
+drawticks(outfp, centerpt, hgtv, hgt, inv_hgtv)
+FILE		*outfp;
+point_t		centerpt;
+vect_t		hgtv;
+fastf_t		hgt;
+vect_t		inv_hgtv;
 {
 
 	point_t		top;		/* top of tick mark */
@@ -459,7 +482,9 @@ drawticks(FILE *outfp, fastf_t *centerpt, fastf_t *hgtv, fastf_t hgt, fastf_t *i
  */
 
 void
-make_border(FILE *outfp, fastf_t *v2mod)
+make_border(outfp, v2mod)
+FILE	*outfp;
+mat_t	v2mod;
 {
 
 	point_t		v_lleft_pt;		/* lower left point, view space */
@@ -504,7 +529,9 @@ make_border(FILE *outfp, fastf_t *v2mod)
  */
 
 void
-make_bounding_rpp(FILE *outfp, fastf_t *v2mod)
+make_bounding_rpp(outfp, v2mod)
+FILE	*outfp;
+mat_t	v2mod;
 {
 
 	point_t		v_min;		/* view space minimum coordinate */

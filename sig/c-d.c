@@ -16,7 +16,8 @@ double	ibuf[512];
 double	obuf[512];
 double	*obp;
 
-int main(int argc, char **argv)
+int main( argc, argv )
+int argc; char **argv;
 {
 	int	i, num, onum;
 

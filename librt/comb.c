@@ -41,7 +41,8 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 /* --- Begin John's pretty-printer --- */
 
 void
-Print_tree(union tree *tree)
+Print_tree( tree )
+union tree *tree;
 {
 	char *str;
 
@@ -55,7 +56,9 @@ Print_tree(union tree *tree)
 		printf( "NULL Tree\n" );
 }
 
-main(int argc, char **argv)
+main( argc , argv )
+int argc;
+char *argv[];
 {
 	struct db_i		*dbip;
 	struct directory	*dp;

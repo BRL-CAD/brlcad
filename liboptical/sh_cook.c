@@ -73,12 +73,12 @@ struct bu_structparse cook_parse[] = {
 	{"",   0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 
-HIDDEN int	cook_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip), cmirror_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip), cglass_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int	cook_render(register struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
-HIDDEN void	cook_print(register struct region *rp, char *dp);
-HIDDEN void	cook_free(char *cp);
-HIDDEN double	fresnel(double c, double n);
-HIDDEN double	beckmann(double a, double m2);
+HIDDEN int	cook_setup(), cmirror_setup(), cglass_setup();
+HIDDEN int	cook_render();
+HIDDEN void	cook_print();
+HIDDEN void	cook_free();
+HIDDEN double	fresnel();
+HIDDEN double	beckmann();
 
 struct mfuncs cook_mfuncs[] = {
 	{MF_MAGIC,	"cook",		0,		MFI_NORMAL|MFI_LIGHT,	0,
@@ -106,7 +106,12 @@ struct mfuncs cook_mfuncs[] = {
  *   there.
  */
 HIDDEN int
-cook_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
+cook_setup( rp, matparm, dpp, mfp, rtip )
+register struct region *rp;
+struct bu_vls	*matparm;
+char	**dpp;
+struct mfuncs	*mfp;
+struct rt_i	*rtip;
 {
 	register struct cook_specific *pp;
 
@@ -149,12 +154,12 @@ cook_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struc
  *			M I R R O R _ S E T U P
  */
 HIDDEN int
-cmirror_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
-                           
-             	         
-    	      
-                             
-                                /* New since 4.4 release */
+cmirror_setup( rp, matparm, dpp, mfp, rtip )
+register struct region *rp;
+struct bu_vls	*matparm;
+char	**dpp;
+struct mfuncs           *mfp;
+struct rt_i             *rtip;  /* New since 4.4 release */
 {
 	register struct cook_specific *pp;
 
@@ -191,12 +196,12 @@ cmirror_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, st
  *			G L A S S _ S E T U P
  */
 HIDDEN int
-cglass_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
-                           
-             	         
-    	      
-                             
-                                /* New since 4.4 release */
+cglass_setup( rp, matparm, dpp, mfp, rtip )
+register struct region *rp;
+struct bu_vls	*matparm;
+char	**dpp;
+struct mfuncs           *mfp;
+struct rt_i             *rtip;  /* New since 4.4 release */
 {
 	register struct cook_specific *pp;
 
@@ -233,7 +238,9 @@ cglass_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, str
  *			C O O K _ P R I N T
  */
 HIDDEN void
-cook_print(register struct region *rp, char *dp)
+cook_print( rp, dp )
+register struct region *rp;
+char	*dp;
 {
 	bu_struct_print(rp->reg_name, cook_parse, (char *)dp);
 }
@@ -242,7 +249,8 @@ cook_print(register struct region *rp, char *dp)
  *			C O O K _ F R E E
  */
 HIDDEN void
-cook_free(char *cp)
+cook_free( cp )
+char *cp;
 {
 	bu_free( cp, "cook_specific" );
 }
@@ -262,7 +270,11 @@ cook_free(char *cp)
  *       This is "a good approx for theta < ~70 degress."
  */
 HIDDEN int
-cook_render(register struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
+cook_render( ap, pp, swp, dp )
+register struct application *ap;
+struct partition	*pp;
+struct shadework	*swp;
+char	*dp;
 {
 	register struct light_specific *lp;
 	register fastf_t *intensity, *to_light;
@@ -373,9 +385,9 @@ cook_render(register struct application *ap, struct partition *pp, struct shadew
 }
 
 HIDDEN double
-fresnel(double c, double n)
-      	  	/* cos(theta) = V dot H */
-      	  	/* index of refraction */
+fresnel( c, n )
+double	c;	/* cos(theta) = V dot H */
+double	n;	/* index of refraction */
 {
 	double	g, gpc, gmc, t1, t2, f;
 
@@ -396,14 +408,16 @@ fresnel(double c, double n)
 
 	return( f );
 }
-double cos4(double a)
+double cos4(a)
+double a;
 {
 	double	c;
 
 	c = cos(a);
 	return( c*c*c*c );
 }
-double tan2(double a)
+double tan2(a)
+double a;
 {
 	double	t;
 
@@ -423,9 +437,9 @@ double tan2(double a)
  *  Here we are leaving it normalized 0 to 1 by not dividing by m^2.
  */
 HIDDEN double
-beckmann(double a, double m2)
-      	  		/* angle between N and H */
-      	   		/* rms slope squared (m^2) */
+beckmann( a, m2 )
+double	a;		/* angle between N and H */
+double	m2;		/* rms slope squared (m^2) */
 {
 	double	t1, t2;
 

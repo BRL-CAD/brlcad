@@ -40,13 +40,16 @@ extern FILE	*infp;
 
 extern char name_it[16];		/* argv[3] */
 
-void	namecvt(register int n, register char *cp, int c);
+void	namecvt();
 
 /*
  *			G E T L I N E
  */
 int
-getline(register char *cp, int buflen, char *title)
+getline( cp, buflen, title )
+register char *cp;
+int	buflen;
+char	*title;
 {
 	register int	c;
 	register int	count = buflen;
@@ -74,7 +77,10 @@ getline(register char *cp, int buflen, char *title)
  *			G E T I N T
  */
 int
-getint(char *cp, int start, int len)
+getint( cp, start, len )
+char	*cp;
+int	start;
+int	len;
 {
 	char	buf[128];
 
@@ -89,7 +95,10 @@ getint(char *cp, int start, int len)
  *			G E T D O U B L E
  */
 double
-getdouble(char *cp, int start, int len)
+getdouble( cp, start, len )
+char	*cp;
+int	start;
+int	len;
 {
 	char	buf[128];
 
@@ -102,7 +111,9 @@ getdouble(char *cp, int start, int len)
 
 /*		N A M E C V T	 */
 void
-namecvt(register int n, register char *cp, int c)
+namecvt( n, cp, c )
+register char *cp;
+register int n;
 {
 	static char str[32];
 

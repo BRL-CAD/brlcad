@@ -62,8 +62,8 @@ int	lchan1, lchan2;			/* Channel indices for left image. */
 int	rchan1, rchan2;			/* Channel indices for right image. */
 rle_pixel **lmap, **rmap;		/* Colormap for left/right images. */
 
-void convert_line(rle_pixel **out, rle_pixel **left, rle_pixel **right);
-int get_rle_setup(rle_hdr *the_hdr, int *xres, int *yres, char *prog, char *file);
+void convert_line();
+int get_rle_setup();
 
 /*
  * Read two named RLE files and produces a single image suitable for viewing
@@ -81,7 +81,9 @@ int get_rle_setup(rle_hdr *the_hdr, int *xres, int *yres, char *prog, char *file
  */
 
 int
-main(int argc, char **argv)
+main(argc, argv)
+int argc;
+char **argv;
 {
 	int y, i, Xtmp, Ytmp, scaleflag = 0;
 	char *leftname = NULL, *rightname = NULL;
@@ -115,10 +117,7 @@ main(int argc, char **argv)
 	     * Read headers of both images.
 	     */
 	    if ( (rle_err = 
-		  get_rle_setup(&left_hdr, 
-				&Xres, 
-				&Yres, 
-				cmd_name(argv),
+		  get_rle_setup(&left_hdr, &Xres, &Yres, cmd_name(argv),
 				leftname)) != RLE_SUCCESS )
 	    {
 		err_name = leftname;
@@ -241,7 +240,10 @@ main(int argc, char **argv)
 }
 
 int
-get_rle_setup(rle_hdr *the_hdr, int *xres, int *yres, char *prog, char *file)
+get_rle_setup(the_hdr, xres, yres, prog, file)
+int *xres, *yres;
+rle_hdr *the_hdr;
+char *prog, file;
 {
     	int err;
 
@@ -254,7 +256,8 @@ get_rle_setup(rle_hdr *the_hdr, int *xres, int *yres, char *prog, char *file)
 }
 
 void
-convert_line(rle_pixel **out, rle_pixel **left, rle_pixel **right)
+convert_line(out, left, right)
+rle_pixel **out, **left, **right;
 {
 	register int i;
 	

@@ -43,12 +43,12 @@ int	bartlett = 0;
 static int	endwin = 0;
 int	midwin = 0;
 
-void	fill_buffer(void);
-void	seek_sample(int n);
-void	biaswin(double *data, int L);
-void	bartwin(double *data, int L);
-void	hamwin(double *data, int length);
-void	coswin(double *data, int length, double percent);
+void	fill_buffer();
+void	seek_sample();
+void	biaswin();
+void	bartwin();
+void	hamwin();
+void	coswin();
 
 static char usage[] = "\
 Usage: dwin [options] [width (1024)] [step (width)] [start]\n\
@@ -60,7 +60,9 @@ Usage: dwin [options] [width (1024)] [step (width)] [start]\n\
   -m  start first sample at middle of buffer\n\
 ";
 
-int main(int argc, char **argv)
+int main( argc, argv )
+int argc;
+char **argv;
 {
 	int	L, step;
 
@@ -182,7 +184,7 @@ int main(int argc, char **argv)
  * Can only seek forward.
  */
 void
-seek_sample(int n)
+seek_sample( n )
 {
 	double	foo;
 
@@ -197,7 +199,7 @@ seek_sample(int n)
  * Fill the data buffer from the current input location.
  */
 void
-fill_buffer(void)
+fill_buffer()
 {
 	int	n, num_to_read;
 
@@ -229,7 +231,9 @@ buf_start, buf_num, num_to_read, buf_index );
 
 /* Bias window (half triangle) */
 void
-biaswin(double *data, int L)
+biaswin( data, L )
+double data[];
+int L;
 {
 	int	i;
 
@@ -240,7 +244,9 @@ biaswin(double *data, int L)
 
 /* Bartlett window (triangle) */
 void
-bartwin(double *data, int L)
+bartwin( data, L )
+double data[];
+int L;
 {
 	int	i;
 

@@ -24,7 +24,7 @@
 /* declarations to support use of getopt() system call */
 char *options = "w:o:n:t:b:u:c:rlhdm:T:R:";
 extern char *optarg;
-extern int optind, opterr, getopt(int, char *const *, const char *);
+extern int optind, opterr, getopt();
 
 int debug = 0;
 char *progname = "(noname)";
@@ -87,7 +87,8 @@ struct boardseg {
 /*
  *	U S A G E --- tell user how to invoke this program, then exit
  */
-void usage(char *s)
+void usage(s)
+char *s;
 {
 	if (s) (void)bu_log("%s\n", s);
 
@@ -104,7 +105,8 @@ progname,
 
 
 void
-set_translate(char *s)
+set_translate(s)
+char *s;
 {
 	double dx, dy, dz;
 
@@ -130,7 +132,9 @@ set_translate(char *s)
  * There is important information in dx,dy,dz,s .
  */
 void
-buildHrot(register matp_t mat, double alpha, double beta, double ggamma)
+buildHrot( mat, alpha, beta, ggamma )
+register matp_t mat;
+double alpha, beta, ggamma;
 {
 	static fastf_t calpha, cbeta, cgamma;
 	static fastf_t salpha, sbeta, sgamma;
@@ -181,7 +185,8 @@ buildHrot(register matp_t mat, double alpha, double beta, double ggamma)
 }
 
 void
-set_rotate(char *s)
+set_rotate(s)
+char *s;
 {
 	double rx, ry, rz;
 
@@ -203,7 +208,9 @@ set_rotate(char *s)
 /*
  *	P A R S E _ A R G S --- Parse through command line flags
  */
-int parse_args(int ac, char **av)
+int parse_args(ac, av)
+int ac;
+char *av[];
 {
 	int  c;
 	struct opening *op;
@@ -400,7 +407,9 @@ struct boardseg *seglist;
 
 
 void
-h_segs(double sz, double ez, struct boardseg *seglist, double sx, double ex)
+h_segs(sz, ez, seglist, sx, ex)
+double sz, ez, sx, ex;
+struct boardseg *seglist;
 {
 	struct opening *op;
 	struct boardseg *seg, *sp;
@@ -462,7 +471,10 @@ h_segs(double sz, double ez, struct boardseg *seglist, double sx, double ex)
 }
 
 void
-mksolid(struct rt_wdb *fd, point_t (*pts), struct wmember *wm_hd)
+mksolid(fd, pts, wm_hd)
+struct rt_wdb *fd;
+point_t pts[8];
+struct wmember *wm_hd;
 {
 	struct wmember *wm;
 	(void)sprintf(sol_name, "s.%s.%d", obj_name, sol_num++);
@@ -475,7 +487,10 @@ mksolid(struct rt_wdb *fd, point_t (*pts), struct wmember *wm_hd)
 }
 
 void
-mk_h_rpp(struct rt_wdb *fd, struct wmember *wm_hd, double xmin, double xmax, double ymin, double ymax, double zmin, double zmax)
+mk_h_rpp(fd, wm_hd, xmin, xmax, ymin, ymax, zmin, zmax)
+struct rt_wdb *fd;
+struct wmember *wm_hd;
+double xmin, xmax, ymin, ymax, zmin, zmax;
 {
 	point_t pts[8];
 	
@@ -492,7 +507,10 @@ mk_h_rpp(struct rt_wdb *fd, struct wmember *wm_hd, double xmin, double xmax, dou
 }
 
 void
-mk_v_rpp(struct rt_wdb *fd, struct wmember *wm_hd, double xmin, double xmax, double ymin, double ymax, double zmin, double zmax)
+mk_v_rpp(fd, wm_hd, xmin, xmax, ymin, ymax, zmin, zmax)
+struct rt_wdb *fd;
+struct wmember *wm_hd;
+double xmin, xmax, ymin, ymax, zmin, zmax;
 {
 	point_t pts[8];
 	
@@ -512,7 +530,11 @@ mk_v_rpp(struct rt_wdb *fd, struct wmember *wm_hd, double xmin, double xmax, dou
  *	put the sides on a frame opening
  */
 void
-frame_o_sides(struct rt_wdb *fd, struct wmember *wm_hd, struct opening *op, double h)
+frame_o_sides(fd, wm_hd, op, h)
+struct rt_wdb *fd;
+struct wmember *wm_hd;
+struct opening *op;
+double h;
 {
 	double sx, ex;
 
@@ -573,7 +595,10 @@ frame_o_sides(struct rt_wdb *fd, struct wmember *wm_hd, struct opening *op, doub
  *	Make the frame opening (top & bottom, call frame_o_sides for sides)
  */
 void
-frame_opening(struct rt_wdb *fd, struct wmember *wm_hd, struct opening *op)
+frame_opening(fd, wm_hd, op)
+struct rt_wdb *fd;
+struct wmember *wm_hd;
+struct opening *op;
 {
 	double pos;
 	int studs;
@@ -727,7 +752,8 @@ frame_opening(struct rt_wdb *fd, struct wmember *wm_hd, struct opening *op)
 
 
 void
-frame(struct rt_wdb *fd)
+frame(fd)
+struct rt_wdb *fd;
 {
 	struct boardseg *s_hd, *seg;
 	struct opening *op;
@@ -849,7 +875,8 @@ frame(struct rt_wdb *fd)
 }
 
 void
-sheetrock(struct rt_wdb *fd)
+sheetrock(fd)
+struct rt_wdb *fd;
 {
 	point_t pts[8];
 	struct wmember wm_hd;
@@ -896,7 +923,8 @@ sheetrock(struct rt_wdb *fd)
 }
 
 void
-mortar_brick(struct rt_wdb *fd)
+mortar_brick(fd)
+struct rt_wdb *fd;
 {
 	struct wmember wm_hd;
 #if 0
@@ -997,7 +1025,8 @@ mortar_brick(struct rt_wdb *fd)
 
 
 void
-brick(struct rt_wdb *fd)
+brick(fd)
+struct rt_wdb *fd;
 {
 	struct wmember wm_hd;
 #if 0
@@ -1053,7 +1082,9 @@ brick(struct rt_wdb *fd)
  *	Call parse_args to handle command line arguments first, then
  *	process input.
  */
-int main(int ac, char **av)
+int main(ac,av)
+int ac;
+char *av[];
 {
 	struct opening *op;
 	struct rt_wdb *db_fd;

@@ -30,9 +30,11 @@ struct	peaks {
 static char usage[] = "\
 Usage: dpeak [window_size (512)] < doubles\n";
 
-void	dumpmax(void);
+void	dumpmax();
 
-int main(int argc, char **argv)
+int main( argc, argv )
+int	argc;
+char	**argv;
 {
 	int	i, n, L;
 	double	last1, last2;
@@ -75,7 +77,7 @@ int main(int argc, char **argv)
 #define	NUMPEAKS 1
 
 void
-dumpmax(void)
+dumpmax()
 {
 	int	i, n;
 	struct	peaks max;

@@ -47,14 +47,16 @@ static const char rcs_ident[] = "$Id$";
 #define MALLOC_ERR {fprintf(stderr, "%s: ran out of heap space\n", \
 			    progname);exit(-2);}
 
-rle_map **allocmap(int nchan, int length, rle_map *cmap);
-void filemap(int tflag, char *mapfname, int nchan, int length, rle_map **amap), copymap(rle_map **inmap, int nchan, int length, rle_map **outmap), shiftmap(rle_map **map, int nchan, int length, int bits), copy_into_shortrow(rle_hdr *in_hdr, rle_pixel **rlerow, short int *shortrow), edge_enhance(rle_hdr *in_hdr, rle_pixel **row_b, rle_pixel **row_m, rle_pixel **row_t, rle_pixel **edge_row, int blend, int blend_divisor);
-void fsdither(rle_hdr *in_hdr, rle_map **map, int maplen, short int *row_bottom, short int *row_top, rle_pixel **outrow), find_closest(rle_map **map, int nchan, int maplen, rle_pixel *pixel, int *index);
+rle_map **allocmap();
+void filemap(), copymap(), shiftmap(), copy_into_shortrow(), edge_enhance();
+void fsdither(), find_closest();
 
 char *progname;
 
 int
-main(int argc, char **argv)
+main(argc, argv)
+int	argc;
+char	*argv[];
 {
     int i, temp, y;
     int oflag = 0;
@@ -202,7 +204,10 @@ main(int argc, char **argv)
 }
 
 void
-copy_into_shortrow(rle_hdr *in_hdr, rle_pixel **rlerow, short int *shortrow)
+copy_into_shortrow( in_hdr, rlerow, shortrow )
+rle_hdr *in_hdr;
+rle_pixel **rlerow;
+short *shortrow;
 {
     int chan,i;
 
@@ -216,7 +221,10 @@ copy_into_shortrow(rle_hdr *in_hdr, rle_pixel **rlerow, short int *shortrow)
 }
 
 void
-edge_enhance(rle_hdr *in_hdr, rle_pixel **row_b, rle_pixel **row_m, rle_pixel **row_t, rle_pixel **edge_row, int blend, int blend_divisor)
+edge_enhance(in_hdr, row_b, row_m, row_t, edge_row, blend, blend_divisor)
+rle_hdr *in_hdr;
+rle_pixel **row_b, **row_m, **row_t, **edge_row;
+int blend_divisor, blend;
 {
     int chan, i;
     int total, diff, avg, result;
@@ -270,7 +278,12 @@ edge_enhance(rle_hdr *in_hdr, rle_pixel **row_b, rle_pixel **row_m, rle_pixel **
 }
 
 void
-fsdither(rle_hdr *in_hdr, rle_map **map, int maplen, short int *row_bottom, short int *row_top, rle_pixel **outrow)
+fsdither(in_hdr, map, maplen, row_bottom, row_top, outrow)
+rle_hdr *in_hdr;
+rle_map **map;
+int maplen;
+short *row_bottom, *row_top;
+rle_pixel **outrow;
 {
     register rle_pixel *optr;
     register int j;
@@ -376,7 +389,10 @@ fsdither(rle_hdr *in_hdr, rle_map **map, int maplen, short int *row_bottom, shor
  *	[None]
  */
 void
-filemap(int tflag, char *mapfname, int nchan, int length, rle_map **amap)
+filemap( tflag, mapfname, nchan, length, amap )
+int tflag, nchan, length;
+char *mapfname;
+rle_map **amap;
 {
     FILE * mapfile;
     register int c, i;
@@ -466,7 +482,10 @@ filemap(int tflag, char *mapfname, int nchan, int length, rle_map **amap)
  *	[None]
  */
 rle_map **
-allocmap(int nchan, int length, rle_map *cmap)
+allocmap( nchan, length, cmap )
+int nchan;
+int length;
+rle_map * cmap;
 {
     rle_map ** map;
     register int i;
@@ -499,7 +518,9 @@ allocmap(int nchan, int length, rle_map *cmap)
  *	[None]
  */
 void
-shiftmap(rle_map **map, int nchan, int length, int bits)
+shiftmap( map, nchan, length, bits )
+int nchan, length, bits;
+rle_map **map;
 {
     register rle_map * e;
     register int i;
@@ -513,7 +534,9 @@ shiftmap(rle_map **map, int nchan, int length, int bits)
 }
 
 void
-copymap(rle_map **inmap, int nchan, int length, rle_map **outmap)
+copymap( inmap, nchan, length, outmap )
+rle_map **inmap, **outmap;
+int nchan, length;
 {
     register rle_map *ie, *oe;
     register int i;
@@ -524,7 +547,11 @@ copymap(rle_map **inmap, int nchan, int length, rle_map **outmap)
 }
 
 void
-find_closest(rle_map **map, int nchan, int maplen, rle_pixel *pixel, int *index)
+find_closest(map, nchan, maplen, pixel, index)
+rle_map ** map;
+int nchan, maplen;
+rle_pixel *pixel;
+int *index;
 {
     int i, closest, chan;
     long bestdist, dist;

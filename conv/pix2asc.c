@@ -27,7 +27,7 @@ unsigned char pix[3];		/* RGB of one pixel */
 char map[18] = "0123456789ABCDEFx";
 
 int
-main(void)
+main()
 {
 	while( !feof(stdin) &&
 	    fread( (char *)pix, sizeof(pix), 1, stdin) == 1 )  {

@@ -45,7 +45,8 @@ static char usage[] = "\
 Usage: fbcmrot [-h] [-i increment] steps_per_second\n";
 
 int
-get_args(int argc, register char **argv)
+get_args( argc, argv )
+register char **argv;
 {
 	register int c;
 
@@ -81,7 +82,8 @@ get_args(int argc, register char **argv)
 }
 
 int
-main(int argc, char **argv)
+main(argc, argv )
+char **argv;
 {
 	register int i;
 	struct timeval tv;

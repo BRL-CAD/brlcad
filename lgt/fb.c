@@ -24,13 +24,15 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./extern.h"
 #include "./screen.h"
 int		zoom;	/* Current zoom factor of frame buffer.		*/
-int		fb_Setup(char *file, int size);
-void		fb_Zoom_Window(void);
+int		fb_Setup();
+void		fb_Zoom_Window();
 
 /*	f b _ S e t u p ( )						*/
 int
-fb_Setup(char *file, int size)
-{
+fb_Setup( file, size )
+char	*file;
+int	size;
+	{
 #if SGI_WINCLOSE_BUG
 		/* XXX -- SGI BUG prohibits closing windows. */
 		static int	sgi_open = FALSE;
@@ -81,8 +83,8 @@ fb_Setup(char *file, int size)
 
 /*	f b _ Z o o m _ W i n d o w ( )					*/
 void
-fb_Zoom_Window(void)
-{	register int	xpos, ypos;
+fb_Zoom_Window()
+	{	register int	xpos, ypos;
 	zoom = fb_getwidth( fbiop ) / grid_sz;
 	xpos = ypos = grid_sz / 2;
 	if( tty )

@@ -25,7 +25,9 @@
 #include "nurb.h"
 
 struct face_g_snurb *
-rt_nurb_scopy(const struct face_g_snurb *srf, struct resource *res)
+rt_nurb_scopy( srf, res )
+const struct face_g_snurb * srf;
+struct resource *res;
 {
 	register struct face_g_snurb * n;
 	int i;
@@ -54,7 +56,8 @@ rt_nurb_scopy(const struct face_g_snurb *srf, struct resource *res)
 }
 
 struct edge_g_cnurb *
-rt_nurb_crv_copy(const struct edge_g_cnurb *crv)
+rt_nurb_crv_copy( crv )
+const struct edge_g_cnurb * crv;
 {
 	register struct edge_g_cnurb * n;
 	int i;

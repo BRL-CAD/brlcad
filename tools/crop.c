@@ -37,11 +37,13 @@ static const char rcs_ident[] = "$Header$";
 #include "externs.h"
 #include "rle.h"
 
-extern void rle_box(rle_hdr *the_hdr, int *xminp, int *xmaxp, int *yminp, int *ymaxp);
-int pos_box_vals(int x1, int y1, int x2, int y2);
+extern void rle_box();
+int pos_box_vals();
 
 int
-main(int argc, char **argv)
+main(argc, argv)
+int	argc;
+char	*argv[];
 {
     rle_pixel **scanline, **rows, **outrows;
     int xlen, i, j;
@@ -215,7 +217,8 @@ main(int argc, char **argv)
 
 /* Return 0 if all parameters >= 0, else -1. */
 int
-pos_box_vals(int x1, int y1, int x2, int y2)
+pos_box_vals(x1, y1, x2, y2)
+int x1, y1, x2, y2;
 {
   if ((x1 < 0) || (y1 < 0) || (x2 < 0) || (y2 < 0))
     return -1;

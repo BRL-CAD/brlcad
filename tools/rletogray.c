@@ -48,7 +48,9 @@ typedef FILE	*FILPTR;
  */
 
 int
-main(int argc, char **argv)
+main(argc, argv)
+int  argc;
+char *argv[];
 {
     char       *inpnam = NULL;	/* Input file name. */
     char       *prefix = NULL;	/* Output file name prefix. */

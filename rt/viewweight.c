@@ -62,9 +62,9 @@ Files:\n\
  $HOME/.density\n\
 ";
 
-int	hit(struct application *ap, struct partition *PartHeadp);
-int	miss(register struct application *ap);
-int	overlap(struct application *ap, struct partition *pp, struct region *reg1, struct region *reg2);
+int	hit();
+int	miss();
+int	overlap();
 
 int	noverlaps = 0;
 
@@ -96,8 +96,10 @@ extern int	output_is_binary;	/* !0 means output is binary */
  *  Returns 1 if framebuffer should be opened, else 0.
  */
 int
-view_init(register struct application *ap, char *file, char *obj, int minus_o)
-{
+view_init( ap, file, obj, minus_o )
+register struct application *ap;
+char *file, *obj;
+	{
 	register int i;
 	char buf[BUFSIZ+1];
 	static char null = (char) 0;
@@ -157,7 +159,8 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o)
 
 /* beginning of a frame */
 void
-view_2init(struct application *ap)
+view_2init( ap )
+struct application *ap;
 {
 	register struct region *rp;
 	register struct rt_i *rtip = ap->a_rt_i;
@@ -168,16 +171,17 @@ view_2init(struct application *ap)
 }
 
 /* end of each pixel */
-void	view_pixel(struct application *ap)
-{ }
+void	view_pixel(ap)
+struct application *ap; { }
 
 /* end of each line */
-void	view_eol(struct application *ap)
-{ }
+void	view_eol(ap)
+struct application *ap; { }
 
 /* end of a frame */
-void	view_end(struct application *ap)
-{
+void	view_end( ap )
+struct application *ap;
+	{
 	register struct datapoint *dp;
 	register struct region *rp;
 	register fastf_t total_weight = 0;
@@ -333,14 +337,16 @@ void	view_end(struct application *ap)
 	fprintf( outfp, "\nTotal mass = %g %s\n\n", total_weight, units );
 	}
 
-void	view_setup(void) {}
+void	view_setup() {}
 
 /* Associated with "clean" command, before new tree is loaded  */
-void	view_cleanup(void) {}
+void	view_cleanup() {}
 
 int
-hit(struct application *ap, struct partition *PartHeadp)
-{
+hit( ap, PartHeadp )
+struct application *ap;
+struct partition *PartHeadp;
+	{
 	struct partition *pp;
 	register struct xray *rp = &ap->a_ray;
 	genptr_t addp;
@@ -402,18 +408,23 @@ hit(struct application *ap, struct partition *PartHeadp)
 	}
 
 int
-miss(register struct application *ap)
-{
+miss( ap )
+register struct application *ap;
+	{
 	return(0);
 	}
 
 int
-overlap(struct application *ap, struct partition *pp, struct region *reg1, struct region *reg2)
-{
+overlap( ap, pp, reg1, reg2 )
+struct application      *ap;
+struct partition        *pp;
+struct region           *reg1;
+struct region           *reg2;
+	{
 	bu_semaphore_acquire( BU_SEM_SYSCALL );
 	noverlaps++;
         bu_semaphore_release( BU_SEM_SYSCALL );
 	return(0);
 	}
 
-void application_init (void) {}
+void application_init () {}

@@ -39,7 +39,12 @@ static const char libbu_rb_insert_RCSid[] = "@(#) $Header$";
  *	is equal (modulo the linear order) to a node already in the tree,
  *	_rb_insert() returns 1.  Otherwise, it returns 0.
  */
-static int _rb_insert (bu_rb_tree *tree, int order, struct bu_rb_node *new_node)
+static int _rb_insert (tree, order, new_node)
+
+bu_rb_tree		*tree;
+int			order;
+struct bu_rb_node	*new_node;
+
 {
     struct bu_rb_node	*node;
     struct bu_rb_node	*parent;
@@ -167,7 +172,11 @@ static int _rb_insert (bu_rb_tree *tree, int order, struct bu_rb_node *new_node)
  *	Otherwise, it returns the number of orders for which the new node
  *	was equal to a node already in the tree.
  */
-int bu_rb_insert (bu_rb_tree *tree, void *data)
+int bu_rb_insert (tree, data)
+
+bu_rb_tree	*tree;
+void		*data;
+
 {
     int				nm_orders;
     int				order;
@@ -306,7 +315,12 @@ int bu_rb_insert (bu_rb_tree *tree, void *data)
  *	sets the specified flag to the specified value and returns the
  *	previous value of the flag.
  */
-static int _rb_set_uniq (bu_rb_tree *tree, int order, int new_value)
+static int _rb_set_uniq (tree, order, new_value)
+
+bu_rb_tree	*tree;
+int		order;
+int		new_value;
+
 {
     int	prev_value;
 
@@ -329,12 +343,20 @@ static int _rb_set_uniq (bu_rb_tree *tree, int order, int new_value)
  *	specified flag to the specified value and returns the previous
  *	value of the flag.
  */
-int bu_rb_uniq_on (bu_rb_tree *tree, int order)
+int bu_rb_uniq_on (tree, order)
+
+bu_rb_tree	*tree;
+int		order;
+
 {
     return (_rb_set_uniq(tree, order, 1));
 }
 
-int bu_rb_uniq_off (bu_rb_tree *tree, int order)
+int bu_rb_uniq_off (tree, order)
+
+bu_rb_tree	*tree;
+int	order;
+
 {
     return (_rb_set_uniq(tree, order, 0));
 }
@@ -346,7 +368,11 @@ int bu_rb_uniq_off (bu_rb_tree *tree, int order)
  *	This function has two parameters: the tree and the order for
  *	which to query uniqueness.
  */
-int bu_rb_is_uniq (bu_rb_tree *tree, int order)
+int bu_rb_is_uniq (tree, order)
+
+bu_rb_tree	*tree;
+int		order;
+
 {
     BU_CKMAG(tree, BU_RB_TREE_MAGIC, "red-black tree");
     BU_RB_CKORDER(tree, order);
@@ -366,7 +392,11 @@ int bu_rb_is_uniq (bu_rb_tree *tree, int order)
  *	orders are specified unique, and the third is specified
  *	not-necessarily unique.
  */
-void bu_rb_set_uniqv (bu_rb_tree *tree, bitv_t flag_rep)
+void bu_rb_set_uniqv (tree, flag_rep)
+
+bu_rb_tree	*tree;
+bitv_t		flag_rep;
+
 {
     int	nm_orders;
     int	order;
@@ -395,7 +425,11 @@ void bu_rb_set_uniqv (bu_rb_tree *tree, bitv_t flag_rep)
  *	This function has two parameters: the tree, and the new value
  *	for all the flags.
  */
-static void _rb_set_uniq_all (bu_rb_tree *tree, int new_value)
+static void _rb_set_uniq_all (tree, new_value)
+
+bu_rb_tree	*tree;
+int		new_value;
+
 {
     int	nm_orders;
     int	order;
@@ -416,12 +450,18 @@ static void _rb_set_uniq_all (bu_rb_tree *tree, int new_value)
  *	These functions have one parameter: the tree for which to
  *	require uniqueness/permit nonuniqueness.
  */
-void bu_rb_uniq_all_on (bu_rb_tree *tree)
+void bu_rb_uniq_all_on (tree)
+
+bu_rb_tree	*tree;
+
 {
     _rb_set_uniq_all(tree, 1);
 }
 
-void bu_rb_uniq_all_off (bu_rb_tree *tree)
+void bu_rb_uniq_all_off (tree)
+
+bu_rb_tree	*tree;
+
 {
     _rb_set_uniq_all(tree, 0);
 }

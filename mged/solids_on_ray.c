@@ -175,7 +175,9 @@ int	depth;
  *	Does nothing.  Returns 1.
  */
 static int
-no_op(struct application *ap, struct partition *ph)
+no_op(ap, ph)
+struct application	*ap;
+struct partition	*ph;
 {
     return (1);
 }
@@ -186,7 +188,9 @@ no_op(struct application *ap, struct partition *ph)
  *	Builds the slash-separated path name for a struct solid.
  */
 void
-build_path_name_of_solid(struct bu_vls *vp, struct solid *sp)
+build_path_name_of_solid(vp, sp)
+struct bu_vls	*vp;
+struct solid	*sp;
 {
     bu_vls_trunc(vp, 0);
     db_path_to_vls(vp, &sp->s_fullpath);
@@ -463,7 +467,10 @@ struct seg		*finished_segs;
  *  e.g. from piercing the torus twice.
  */
 static int
-rpt_hits_mike(struct application *ap, struct partition *PartHeadp, struct seg *segp)
+rpt_hits_mike(ap, PartHeadp, segp)
+struct application	*ap;
+struct partition	*PartHeadp;
+struct seg		*segp;
 {
 	register struct partition	*pp;
 	int		len;
@@ -494,7 +501,8 @@ rpt_hits_mike(struct application *ap, struct partition *PartHeadp, struct seg *s
  */
 
 static int
-rpt_miss(struct application *ap)
+rpt_miss(ap)
+struct application	*ap;
 {
 	ap->a_uptr = NULL;
 
@@ -518,7 +526,14 @@ rpt_miss(struct application *ap)
  *	N.B. - It is the caller's responsibility to free the array
  *	of solid names.
  */
-char **skewer_solids (int argc, const char **argv, fastf_t *ray_orig, fastf_t *ray_dir, int full_path)
+char **skewer_solids (argc, argv, ray_orig, ray_dir, full_path)
+
+int		argc;
+const char	**argv;
+point_t		ray_orig;
+vect_t		ray_dir;
+int		full_path;
+
 {
     struct application	ap;
     struct rt_i		*rtip;

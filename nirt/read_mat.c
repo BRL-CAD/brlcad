@@ -32,7 +32,7 @@ extern int			nirt_debug;
  *
  */
 
-void read_mat (void)
+void read_mat ()
 {
     char	*buf;
     int		status = 0x0;

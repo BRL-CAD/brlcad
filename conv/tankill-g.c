@@ -70,7 +70,8 @@ struct comp_idents		/* structure for linked list of components */
  *	Returns the number of solids in this component (including the one just added)
  */
 static int
-Add_solid(int comp_code_num)
+Add_solid( comp_code_num )
+int comp_code_num;
 {
 	struct comp_idents *ptr;
 
@@ -125,7 +126,9 @@ static char *usage="Usage: tankill-g [-v] [-p] [-k] [-t tolerance] [-x lvl] [-X 
 	-X lvl -> sets the NMG debug flag to lvl\n";
 
 int
-main(int argc, char **argv)
+main( argc , argv )
+int argc;
+char *argv[];
 {
 	register int c;
 	int i;

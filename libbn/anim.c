@@ -842,7 +842,7 @@ normal value, and 0 when there is not yet information to remember.
 */
 int anim_steer_mat(mat_t  mat, vect_t point, int end)
 {
-	void anim_dir2mat(fastf_t *m, const fastf_t *d, const fastf_t *d2b), anim_add_trans(fastf_t *m, const fastf_t *post, const fastf_t *pre), anim_view_rev(fastf_t *m);
+	void anim_dir2mat(), anim_add_trans(), anim_view_rev();
 	static vect_t p1, p2, p3;
 	vect_t dir;
 	static vect_t norm;

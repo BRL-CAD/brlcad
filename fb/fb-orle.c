@@ -44,16 +44,18 @@ static int	ncolors = 3;
 static int	cmflag = 1;
 static int	crunch = 0;
 static int	xpos = 0, ypos = 0, xlen = 0, ylen = 0;
-static int	parsArgv(int argc, register char **argv);
-static void	prntUsage(void);
+static int	parsArgv();
+static void	prntUsage();
 static int	width = 512;
 static char	*fb_file = (char *)NULL;
 
-extern void	cmap_crunch(register RGBpixel (*scan_buf), register int pixel_ct, ColorMap *cmap);
+extern void	cmap_crunch();
 
 /*	m a i n ( )							*/
 int
-main(int argc, char **argv)
+main( argc, argv )
+int	argc;
+char	*argv[];
 {
 	static RGBpixel	scan_buf[1024];
 	static ColorMap	cmap;
@@ -140,7 +142,8 @@ main(int argc, char **argv)
 
 /*	p a r s A r g v ( )						*/
 static int
-parsArgv(int argc, register char **argv)
+parsArgv( argc, argv )
+register char	**argv;
 {
 	register int	c;
 	extern int	optind;
@@ -235,7 +238,7 @@ parsArgv(int argc, register char **argv)
 	Print usage message.
  */
 static void
-prntUsage(void)
+prntUsage()
 {
 	register char	**p = usage;
 

@@ -38,7 +38,9 @@ int	verbose = 0;
 static char usage[] = "\
 Usage: dstat [-v] [file.doubles]\n";
 
-int main(int argc, char **argv)
+int main( argc, argv )
+int argc;
+char **argv;
 {
 	int	i, n;
 	long	num_values;

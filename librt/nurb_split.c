@@ -42,7 +42,11 @@
  *  The original surface is undisturbed by this operation.
  */
 void
-rt_nurb_s_split(struct bu_list *split_hd, const struct face_g_snurb *srf, int dir, struct resource *res)
+rt_nurb_s_split( split_hd, srf, dir, res )
+struct bu_list	*split_hd;
+const struct face_g_snurb 	*srf;
+int		dir;
+struct resource *res;
 {
 	struct knot_vector new_kv;
 	fastf_t value;
@@ -254,7 +258,9 @@ rt_nurb_s_split(struct bu_list *split_hd, const struct face_g_snurb *srf, int di
  *  The original curve is undisturbed by this operation.
  */
 void
-rt_nurb_c_split(struct bu_list *split_hd, const struct edge_g_cnurb *crv)
+rt_nurb_c_split( split_hd, crv )
+struct bu_list		*split_hd;
+const struct edge_g_cnurb	*crv;
 {
 	struct knot_vector new_kv;
 	fastf_t value;

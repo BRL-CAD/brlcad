@@ -42,7 +42,8 @@ long	offmany;
 char usage[] = "Usage: pixdiff f1.pix f2.pix >file.pix\n";
 
 int
-main(int argc, char **argv)
+main(argc, argv)
+char **argv;
 {
 	register FILE *f1, *f2;
 

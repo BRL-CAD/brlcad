@@ -79,7 +79,7 @@ bn_vlblock_init(
  *			R T _ V L B L O C K _ I N I T
  */
 struct bn_vlblock *
-rt_vlblock_init(void)
+rt_vlblock_init()
 {
 	return bn_vlblock_init( &rt_g.rtg_vlfree, 32 );
 }
@@ -88,7 +88,8 @@ rt_vlblock_init(void)
  *			R T _ V L B L O C K _ F R E E
  */
 void
-rt_vlblock_free(struct bn_vlblock *vbp)
+rt_vlblock_free(vbp)
+struct bn_vlblock *vbp;
 {
 	int	i;
 
@@ -109,7 +110,9 @@ rt_vlblock_free(struct bn_vlblock *vbp)
  *			R T _ V L B L O C K _ F I N D
  */
 struct bu_list *
-rt_vlblock_find(struct bn_vlblock *vbp, int r, int g, int b)
+rt_vlblock_find( vbp, r, g, b )
+struct bn_vlblock *vbp;
+int	r, g, b;
 {
 	long	new;
 	int	n;
@@ -289,7 +292,7 @@ bn_vlist_cleanup( struct bu_list *hd )
 
 /*  XXX This needs to remain a LIBRT function. */
 void
-rt_vlist_cleanup(void)
+rt_vlist_cleanup()
 {
 	bn_vlist_cleanup( &rt_g.rtg_vlfree );
 }
@@ -365,7 +368,10 @@ bn_vlist_rpp( struct bu_list *hd, const point_t minn, const point_t maxx )
  *  and length are available conveniently.
  */
 void
-rt_vlist_export(struct bu_vls *vls, struct bu_list *hp, const char *name)
+rt_vlist_export( vls, hp, name )
+struct bu_vls	*vls;
+struct bu_list	*hp;
+const char	*name;
 {
 	register struct bn_vlist	*vp;
 	int		nelem;
@@ -423,7 +429,10 @@ rt_vlist_export(struct bu_vls *vls, struct bu_list *hp, const char *name)
  *  and received from another machine, into a vlist chain.
  */
 void
-rt_vlist_import(struct bu_list *hp, struct bu_vls *namevls, const unsigned char *buf)
+rt_vlist_import( hp, namevls, buf )
+struct bu_list	*hp;
+struct bu_vls	*namevls;
+const unsigned char	*buf;
 {
 	register const unsigned char	*bp;
 	const unsigned char		*pp;		/* point pointer */
@@ -466,7 +475,9 @@ rt_vlist_import(struct bu_list *hp, struct bu_vls *namevls, const unsigned char 
  *  including color.
  */
 void
-rt_plot_vlblock(FILE *fp, const struct bn_vlblock *vbp)
+rt_plot_vlblock( fp, vbp )
+FILE			*fp;
+const struct bn_vlblock	*vbp;
 {
 	int	i;
 
@@ -491,7 +502,9 @@ rt_plot_vlblock(FILE *fp, const struct bn_vlblock *vbp)
  *  Uses libplot3 routines to create the UNIX-Plot output.
  */
 void
-rt_vlist_to_uplot(FILE *fp, const struct bu_list *vhead)
+rt_vlist_to_uplot( fp, vhead )
+FILE			*fp;
+const struct bu_list	*vhead;
 {
 	register struct bn_vlist	*vp;
 
@@ -601,7 +614,8 @@ static const struct uplot rt_uplot_letters[] = {
  *	getshort		Read VAX-order 16-bit number
  */
 static int
-getshort(FILE *fp)
+getshort(fp)
+FILE	*fp;
 {
 	register long	v, w;
 
@@ -616,7 +630,11 @@ getshort(FILE *fp)
 }
 
 static void
-rt_uplot_get_args(FILE *fp, const struct uplot *up, char *carg, fastf_t *arg)
+rt_uplot_get_args( fp, up, carg, arg )
+FILE			*fp;
+const struct uplot	*up;
+char			*carg;
+fastf_t			*arg;
 {
 	int	i, j;
 	int	cc;
@@ -652,12 +670,12 @@ rt_uplot_get_args(FILE *fp, const struct uplot *up, char *carg, fastf_t *arg)
 }
 
 int
-rt_process_uplot_value(register struct bu_list **vhead, struct bn_vlblock *vbp, FILE *fp, register int c, double char_size)
-                       	        
-                 	     
-    			    
-            		  		/* the value to process */
-      			          
+rt_process_uplot_value( vhead, vbp, fp, c, char_size )
+register struct bu_list	**vhead;
+struct bn_vlblock	*vbp;
+FILE			*fp;
+register int		c;		/* the value to process */
+double			char_size;
 {
 	mat_t			mat;
 	const struct uplot	*up;
@@ -798,7 +816,10 @@ rt_process_uplot_value(register struct bu_list **vhead, struct bn_vlblock *vbp, 
  *  This might be more naturally located in mged/plot.c
  */
 int
-rt_uplot_to_vlist(struct bn_vlblock *vbp, register FILE *fp, double char_size)
+rt_uplot_to_vlist( vbp, fp, char_size )
+struct bn_vlblock	*vbp;
+register FILE		*fp;
+double			char_size;
 {
 	struct bu_list	*vhead;
 	register int	c;
@@ -827,7 +848,12 @@ rt_uplot_to_vlist(struct bn_vlblock *vbp, register FILE *fp, double char_size)
  *  Used by MGED's "labelvert" command.
  */
 void
-rt_label_vlist_verts(struct bn_vlblock *vbp, struct bu_list *src, fastf_t *mat, double sz, double mm2local)
+rt_label_vlist_verts( vbp, src, mat, sz, mm2local )
+struct bn_vlblock	*vbp;
+struct bu_list		*src;
+mat_t			mat;
+double			sz;
+double			mm2local;
 {
 	struct bn_vlist	*vp;
 	struct bu_list	*vhead;

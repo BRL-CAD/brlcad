@@ -86,8 +86,8 @@ fastf_t	maxval, minval;				/* Linked with TCL */
 Tcl_Interp	*interp;
 Tk_Window	tkwin;
 
-int	doit(ClientData cd, Tcl_Interp *interp, int argc, char **argv), doit1(ClientData cd, Tcl_Interp *interp, int argc, char **argv);
-void	find_minmax(void);
+int	doit(), doit1();
+void	find_minmax();
 void	rescale(BU_ARGS(int wav));
 void	show_color(BU_ARGS(int off));
 
@@ -100,7 +100,10 @@ char			*first_command = "no_command?";
  *  and add the name of that variable to the Tcl result string.
  */
 void
-assign_tabdata_to_tcl_var(Tcl_Interp *interp, const char *name, const struct bn_tabdata *tabp)
+assign_tabdata_to_tcl_var( interp, name, tabp )
+Tcl_Interp	*interp;
+const char	*name;
+const struct bn_tabdata *tabp;
 {
 	struct bu_vls	str;
 
@@ -120,7 +123,11 @@ assign_tabdata_to_tcl_var(Tcl_Interp *interp, const char *name, const struct bn_
  *  Takes no args, sets three Tcl variables, ntsc_r, ntsc_g, ntsc_b
  */
 int
-getntsccurves(ClientData cd, Tcl_Interp *interp, int argc, char **argv)
+getntsccurves( cd, interp, argc, argv )
+ClientData	cd;
+Tcl_Interp	*interp;
+int		argc;
+char		*argv[];
 {
 	extern struct bn_tabdata *rt_NTSC_r_tabdata;
 	extern struct bn_tabdata *rt_NTSC_g_tabdata;
@@ -215,7 +222,11 @@ getntsccurves(ClientData cd, Tcl_Interp *interp, int argc, char **argv)
  *  spectrum pointer should be an arg, not implicit.
  */
 int
-getspectrum(ClientData cd, Tcl_Interp *interp, int argc, char **argv)
+getspectrum( cd, interp, argc, argv )
+ClientData	cd;
+Tcl_Interp	*interp;
+int		argc;
+char		*argv[];
 {
 	int	wl;
 
@@ -241,7 +252,11 @@ getspectrum(ClientData cd, Tcl_Interp *interp, int argc, char **argv)
 }
 
 int
-getspectval(ClientData cd, Tcl_Interp *interp, int argc, char **argv)
+getspectval( cd, interp, argc, argv )
+ClientData	cd;
+Tcl_Interp	*interp;
+int		argc;
+char		*argv[];
 {
 	struct bn_tabdata	*sp;
 	int	x, y, wl;
@@ -294,7 +309,11 @@ getspectval(ClientData cd, Tcl_Interp *interp, int argc, char **argv)
  *  return the spectral data found there in Tcl string form.
  */
 int
-getspectxy(ClientData cd, Tcl_Interp *interp, int argc, char **argv)
+getspectxy( cd, interp, argc, argv )
+ClientData	cd;
+Tcl_Interp	*interp;
+int		argc;
+char		*argv[];
 {
 	struct bn_tabdata	*sp;
 	int	x, y;
@@ -337,7 +356,11 @@ getspectxy(ClientData cd, Tcl_Interp *interp, int argc, char **argv)
  *  Points at lower left corner of selected pixel.
  */
 int
-tcl_fb_cursor(ClientData cd, Tcl_Interp *interp, int argc, char **argv)
+tcl_fb_cursor( cd, interp, argc, argv )
+ClientData	cd;
+Tcl_Interp	*interp;
+int		argc;
+char		*argv[];
 {
 	FBIO	*ifp;
 	int	mode, x, y;
@@ -365,7 +388,11 @@ tcl_fb_cursor(ClientData cd, Tcl_Interp *interp, int argc, char **argv)
  *  Return value of one pixel as RGB tripple, in decimal
  */
 int
-tcl_fb_readpixel(ClientData cd, Tcl_Interp *interp, int argc, char **argv)
+tcl_fb_readpixel( cd, interp, argc, argv )
+ClientData	cd;
+Tcl_Interp	*interp;
+int		argc;
+char		*argv[];
 {
 	FBIO	*ifp;
 	int	mode, x, y;
@@ -391,7 +418,8 @@ tcl_fb_readpixel(ClientData cd, Tcl_Interp *interp, int argc, char **argv)
 }
 
 int
-tcl_appinit(Tcl_Interp *inter)
+tcl_appinit(inter)
+Tcl_Interp	*inter;
 {
 	interp = inter;	/* set global var */
 	if( Tcl_Init(interp) == TCL_ERROR )  {
@@ -441,7 +469,8 @@ void check( double x, double y, double z);
 
 /* Check identity of XYZ->RGB->spectrum->XYZ->RGB */
 void
-check(double x, double y, double z)
+check( x, y, z )
+double x, y, z;
 {
 	point_t	xyz;
 	point_t	rgb;
@@ -483,7 +512,7 @@ exit(2);
 }
 
 void
-conduct_tests(void)
+conduct_tests()
 {
 	struct bn_tabdata	*flat;
 	vect_t			xyz;
@@ -536,7 +565,8 @@ Usage: ssampview [-t] [-s squarefilesize] [-w file_width] [-n file_height]\n\
 
 
 int
-get_args(int argc, register char **argv)
+get_args( argc, argv )
+register char **argv;
 {
 	register int c;
 
@@ -575,7 +605,8 @@ get_args(int argc, register char **argv)
  *			M A I N
  */
 int
-main(int argc, char **argv)
+main( argc, argv )
+char	**argv;
 {
 
 	bu_debug = BU_DEBUG_COREDUMP;
@@ -632,7 +663,11 @@ main(int argc, char **argv)
 }
 
 int
-doit(ClientData cd, Tcl_Interp *interp, int argc, char **argv)
+doit( cd, interp, argc, argv )
+ClientData	cd;
+Tcl_Interp	*interp;
+int		argc;
+char		*argv[];
 {
 	int	wl;
 	char	cmd[96];
@@ -645,7 +680,11 @@ doit(ClientData cd, Tcl_Interp *interp, int argc, char **argv)
 }
 
 int
-doit1(ClientData cd, Tcl_Interp *interp, int argc, char **argv)
+doit1( cd, interp, argc, argv )
+ClientData	cd;
+Tcl_Interp	*interp;
+int		argc;
+char		*argv[];
 {
 	int	wl;
 	char	buf[32];
@@ -690,7 +729,7 @@ doit1(ClientData cd, Tcl_Interp *interp, int argc, char **argv)
 /*
  */
 void
-find_minmax(void)
+find_minmax()
 {
 	char			*cp;
 	int			todo;
@@ -726,7 +765,8 @@ find_minmax(void)
  *  given current min & max values.
  */
 void
-rescale(int wav)
+rescale(wav)
+int	wav;
 {
 	char		*cp;
 	unsigned char	*pp;
@@ -770,7 +810,8 @@ rescale(int wav)
  *  Go via CIE XYZ space.
  */
 void
-show_color(int off)
+show_color(off)
+int	off;
 {
 	char		*cp;
 	unsigned char	*pp;

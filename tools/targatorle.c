@@ -73,30 +73,19 @@ struct targafile {
       unsigned char   *cmap_data;     /* color Map data */
       };
 
-/*
- *	Nb. all quantities in the float structure are right justified.
- *	I.e., sign == 0 || sign == 1
- */
-
-struct fstruct {
-    unsigned short  sign;
-    unsigned short  exp;
-    unsigned long   mant;
-};
-
-
-
 /* Default color values */
 unsigned char	in_line[512];
 unsigned char	*outrows[4];
 unsigned char	redline[512], grnline[512], bluline[512], alfline[512];
 
-unsigned short *svaxswap(unsigned short int *sptr, long int nshort);
-long *lvaxswap(long int *lptr, long int nlong);
-void fvaxget(struct fstruct *fsptr, caddr_t fptr), fsunput(float *fptr, struct fstruct *fsptr), fsunget(struct fstruct *fsptr, float *fptr), fvaxput(caddr_t fptr, struct fstruct *fsptr);
+short *svaxswap();
+long *lvaxswap();
+void fvaxget(), fsunput(), fsunget(), fvaxput();
 
 int
-main(int argc, char **argv)
+main(argc,argv) 
+int argc;
+char *argv[];
 { 
     FILE       *infile,
     	       *outfile,
@@ -273,7 +262,9 @@ union l_byt {
 };
 
 long           *
-lvaxswap(long int *lptr, long int nlong)
+lvaxswap(lptr, nlong)
+long           *lptr;
+long            nlong;
 {
     long            i;
     unsigned char   tbyte;
@@ -303,8 +294,10 @@ union s_byt {
     short           sshort;
 };
 
-unsigned short          *
-svaxswap(unsigned short int *sptr, long int nshort)
+short          *
+svaxswap(sptr, nshort)
+short          *sptr;
+long            nshort;
 {
     long            i;
     unsigned char   tbyte;
@@ -319,7 +312,7 @@ svaxswap(unsigned short int *sptr, long int nshort)
 	sbytes[1] = tbyte;
 	sptr[i] = *Sbytes;
     }
-    return (&(sptr[nshort]));
+    return (&sptr[nshort]);
 }
 
 
@@ -349,8 +342,22 @@ svaxswap(unsigned short int *sptr, long int nshort)
  *		    e7m0-m6,se0-e6,m15-m22,m7-m14
  */
 
+/*
+ *	Nb. all quantities in the float structure are right justified.
+ *	I.e., sign == 0 || sign == 1
+ */
+
+struct fstruct {
+    unsigned short  sign;
+    unsigned short  exp;
+    unsigned long   mant;
+};
+
+
 float          *
-fvaxtosun(caddr_t fptr, long int nfloat)
+fvaxtosun(fptr, nfloat)
+caddr_t         fptr;
+long            nfloat;
 {
     struct fstruct  fs;
     long            i;
@@ -370,7 +377,9 @@ fvaxtosun(caddr_t fptr, long int nfloat)
 }
 
 float          *
-fsuntovax(float *fptr, long int nfloat)
+fsuntovax(fptr, nfloat)
+float          *fptr;
+long            nfloat;
 {
     struct fstruct  fs;
     long            i;
@@ -389,7 +398,9 @@ fsuntovax(float *fptr, long int nfloat)
 }
 
 void
-fvaxget(struct fstruct *fsptr, caddr_t fptr)
+fvaxget(fsptr, fptr)
+struct fstruct *fsptr;
+caddr_t         fptr;
 {
     register unsigned long ltmp;
 
@@ -405,7 +416,9 @@ fvaxget(struct fstruct *fsptr, caddr_t fptr)
 }
 
 void
-fsunget(struct fstruct *fsptr, float *fptr)
+fsunget(fsptr, fptr)
+struct fstruct *fsptr;
+float          *fptr;
 {
     register unsigned long ltmp;
 
@@ -417,7 +430,9 @@ fsunget(struct fstruct *fsptr, float *fptr)
 }
 
 void
-fvaxput(caddr_t fptr, struct fstruct *fsptr)
+fvaxput(fptr, fsptr)
+caddr_t         fptr;
+struct fstruct *fsptr;
 {
     register unsigned long ltmp;
 
@@ -434,7 +449,9 @@ fvaxput(caddr_t fptr, struct fstruct *fsptr)
 }
 
 void
-fsunput(float *fptr, struct fstruct *fsptr)
+fsunput(fptr, fsptr)
+float          *fptr;
+struct fstruct *fsptr;
 {
     register unsigned ltmp;
 

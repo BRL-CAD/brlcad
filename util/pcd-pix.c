@@ -89,17 +89,17 @@ typedef struct _implane implane;
 #define nullplane ((implane *) 0)
 
 
-static enum ERRORS readplain(dim w, dim h, implane *l, implane *c1, implane *c2);
-static void interpolate(implane *p);
-static void halve(implane *p);
-static void ycctorgb(dim w, dim h, implane *l, implane *c1, implane *c2);
+static enum ERRORS readplain();
+static void interpolate();
+static void halve();
+static void ycctorgb();
 #if 0
 static void readlpt();
 #endif
-static void readhqt(dim w, dim h, int n);
-static void decode(dim w, dim h, implane *f, implane *f1, implane *f2, int autosync);
-static void druckeid(void);
-static long Skip4Base(void);
+static void readhqt();
+static void decode();
+static void druckeid();
+static long Skip4Base();
 
 static FILE *fin=0,*fout=0;
 static char *pcdname=0;
@@ -146,7 +146,8 @@ static int clipped_high=0;
 
 static double lum_mul = 1.0;
 
-static void error(enum ERRORS e)
+static void error(e)
+enum ERRORS e;
 {
 
 	switch(e)
@@ -241,7 +242,9 @@ static void error(enum ERRORS e)
  *
  *  Allocate memory for one YCC color plane.
  */
-static void planealloc(implane *p, dim width, dim height)
+static void planealloc(p,width,height)
+implane *p;
+dim width,height;
 {
 	p->iwidth=p->iheight=0;
 	p->mwidth=width;
@@ -255,9 +258,9 @@ static void planealloc(implane *p, dim width, dim height)
  *			M A I N
  */
 int
-main(int argc, char **argv)
-         
-            
+main(argc,argv)
+int argc;
+char **argv;
 #define ASKIP { argc--; argv ++;}
 {
 	int bildnr;
@@ -686,7 +689,9 @@ main(int argc, char **argv)
 /*
  *			R E A D P L A I N
  */
-static enum ERRORS readplain(dim w, dim h, implane *l, implane *c1, implane *c2)
+static enum ERRORS readplain(w,h,l,c1,c2)
+dim w,h;
+implane *l,*c1,*c2;
 {
 	dim i;
 	uBYTE *pl=0,*pc1=0,*pc2=0;
@@ -754,7 +759,8 @@ static enum ERRORS readplain(dim w, dim h, implane *l, implane *c1, implane *c2)
  *  Take in image where iwidth is half of mwidth,
  *  output image where iwidth has been doubled.  (Height too).
  */
-static void interpolate(implane *p)
+static void interpolate(p)
+implane *p;
 {
 	dim w,h,x,y,yi;
 	uBYTE *optr,*nptr,*uptr;
@@ -821,7 +827,8 @@ static void interpolate(implane *p)
  *
  *  Image is shrunk by half, by discarding data values.
  */
-static void halve(implane *p)
+static void halve(p)
+implane *p;
 {
 	dim w,h,x,y;
 	uBYTE *optr,*nptr;
@@ -860,7 +867,9 @@ static void halve(implane *p)
  *  Convert and output.
  *  If "do_bw" flag is set, just output luminance channel.
  */
-static void ycctorgb(dim w, dim h, implane *l, implane *c1, implane *c2)
+static void ycctorgb(w,h,l,c1,c2)
+dim w,h;
+implane *l,*c1,*c2;
 {
 	int x,y;		/* not dim! */
 	uBYTE *pl,*pc1,*pc2;
@@ -943,7 +952,7 @@ struct ph1
 };
 
 
-static void druckeid(void)
+static void druckeid()
 {
 	struct ph1 *d;
 	char ss[100];
@@ -1023,7 +1032,10 @@ struct myhqt {
 #define E ((unsigned long) 1)
 
 
-static void readhqtsub(struct pcdhqt *source, struct myhqt *ziel, int *anzahl)
+static void readhqtsub(source,ziel,anzahl)
+struct pcdhqt *source;
+struct myhqt *ziel;
+int *anzahl;
 {
 	int i;
 	struct pcdquad *sub;
@@ -1067,7 +1079,9 @@ static void readhqtsub(struct pcdhqt *source, struct myhqt *ziel, int *anzahl)
 static struct myhqt myhuff0[256],myhuff1[256],myhuff2[256];
 static int          myhufflen0=0,myhufflen1=0,myhufflen2=0;
 
-static void readhqt(dim w, dim h, int n)
+static void readhqt(w,h,n)
+dim w,h;
+int n;
 {
 	uBYTE *ptr;
 
@@ -1091,7 +1105,10 @@ static void readhqt(dim w, dim h, int n)
  *
  *  Read the input stream, decoding into the given buffer(s).
  */
-static void decode(dim w, dim h, implane *f, implane *f1, implane *f2, int autosync)
+static void decode(w,h,f,f1,f2,autosync)
+dim w,h;
+implane *f,*f1,*f2;
+int autosync;
 {
 	int i,htlen,sum;
 	unsigned long maxwidth;
@@ -1232,7 +1249,7 @@ static void decode(dim w, dim h, implane *f, implane *f1, implane *f2, int autos
 
 }
 
-static int testbegin(void)
+static int testbegin()
 {
 	int i,j;
 	for(i=j=0;i<32;i++)
@@ -1242,7 +1259,7 @@ static int testbegin(void)
 
 }
 
-static long Skip4Base(void)
+static long Skip4Base()
 {
 	long cd_offset,cd_offhelp;
 

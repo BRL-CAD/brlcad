@@ -46,7 +46,8 @@ Usage: fbscanplot [-h] [-v] [-c] [-o] [-r]\n\
 	[-W scr_width] [-F outframebuffer] yline\n";
 
 int
-get_args(int argc, register char **argv)
+get_args( argc, argv )
+register char **argv;
 {
 	register int c;
 
@@ -90,7 +91,8 @@ get_args(int argc, register char **argv)
 }
 
 int
-main(int argc, char **argv)
+main( argc, argv )
+int argc; char **argv;
 {
 	register unsigned char *ip, *op;
 	register int y;

@@ -146,7 +146,11 @@ static char *p_nmgin[] = {
 /*	F _ I N S I D E ( ) :	control routine...reads all data
  */
 int
-f_inside(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_inside(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
 {
 	register int i;
 	struct directory	*dp;

@@ -80,7 +80,10 @@ struct sph_specific {
  *	If the ELL is really a SPH, stp->st_id is modified to ID_SPH.
  */
 int
-rt_sph_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
+rt_sph_prep( stp, ip, rtip )
+struct soltab		*stp;
+struct rt_db_internal	*ip;
+struct rt_i		*rtip;
 {
 	register struct sph_specific *sph;
 	LOCAL fastf_t	magsq_a, magsq_b, magsq_c;
@@ -183,7 +186,8 @@ rt_sph_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
  *			R T _ S P H _ P R I N T
  */
 void
-rt_sph_print(register const struct soltab *stp)
+rt_sph_print( stp )
+register const struct soltab *stp;
 {
 	register const struct sph_specific *sph =
 		(struct sph_specific *)stp->st_specific;
@@ -216,7 +220,11 @@ rt_sph_print(register const struct soltab *stp)
  *	>0	HIT
  */
 int
-rt_sph_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
+rt_sph_shot( stp, rp, ap, seghead )
+struct soltab		*stp;
+register struct xray	*rp;
+struct application	*ap;
+struct seg		*seghead;
 {
 	register struct sph_specific *sph =
 		(struct sph_specific *)stp->st_specific;
@@ -263,12 +271,12 @@ rt_sph_shot(struct soltab *stp, register struct xray *rp, struct application *ap
  *  This is the Becker vectorized version
  */
 void
-rt_sph_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
-             	               /* An array of solid pointers */
-           		       /* An array of ray pointers */
-                               /* array of segs (results returned) */
-   		  	       /* Number of ray/object pairs */
-                  	    
+rt_sph_vshot( stp, rp, segp, n, ap )
+struct soltab	       *stp[]; /* An array of solid pointers */
+struct xray		*rp[]; /* An array of ray pointers */
+struct  seg            segp[]; /* array of segs (results returned) */
+int		  	    n; /* Number of ray/object pairs */
+struct application	*ap;
 {
 	register struct sph_specific *sph;
 	LOCAL vect_t	ov;		/* ray orgin to center (V - P) */
@@ -321,7 +329,10 @@ rt_sph_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
  *  Given ONE ray distance, return the normal and entry/exit point.
  */
 void
-rt_sph_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
+rt_sph_norm( hitp, stp, rp )
+register struct hit *hitp;
+struct soltab *stp;
+register struct xray *rp;
 {
 	register struct sph_specific *sph =
 		(struct sph_specific *)stp->st_specific;
@@ -337,7 +348,10 @@ rt_sph_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
  *  Return the curvature of the sphere.
  */
 void
-rt_sph_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
+rt_sph_curve( cvp, hitp, stp )
+register struct curvature *cvp;
+register struct hit *hitp;
+struct soltab *stp;
 {
 	register struct sph_specific *sph =
 		(struct sph_specific *)stp->st_specific;
@@ -357,7 +371,11 @@ rt_sph_curve(register struct curvature *cvp, register struct hit *hitp, struct s
  *  v = elevation
  */
 void
-rt_sph_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
+rt_sph_uv( ap, stp, hitp, uvp )
+struct application *ap;
+struct soltab *stp;
+register struct hit *hitp;
+register struct uvcoord *uvp;
 {
 	register struct sph_specific *sph =
 		(struct sph_specific *)stp->st_specific;
@@ -395,7 +413,8 @@ rt_sph_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
  *		R T _ S P H _ F R E E
  */
 void
-rt_sph_free(register struct soltab *stp)
+rt_sph_free( stp )
+register struct soltab *stp;
 {
 	register struct sph_specific *sph =
 		(struct sph_specific *)stp->st_specific;
@@ -404,7 +423,7 @@ rt_sph_free(register struct soltab *stp)
 }
 
 int
-rt_sph_class(void)
+rt_sph_class()
 {
 	return(0);
 }

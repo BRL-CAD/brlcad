@@ -47,7 +47,10 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
  *	 1	t is inside angle ab
  */
 int
-nmg_is_angle_in_wedge(double a, double b, double t)
+nmg_is_angle_in_wedge( a, b, t )
+double	a;
+double	b;
+double	t;
 {
 	/* XXX What tolerance to use here (in radians)? */
 	if( NEAR_ZERO( a-t, 1.0e-8 ) )  return -2;
@@ -123,7 +126,10 @@ nmg_is_angle_in_wedge(double a, double b, double t)
  *  of eg2, as the two lines are very different.
  */
 struct edge_g_lseg *
-nmg_pick_best_edge_g(struct edgeuse *eu1, struct edgeuse *eu2, const struct bn_tol *tol)
+nmg_pick_best_edge_g(eu1, eu2, tol)
+struct edgeuse		*eu1;
+struct edgeuse		*eu2;
+const struct bn_tol	*tol;
 {
 	NMG_CK_EDGEUSE(eu1);
 	NMG_CK_EDGEUSE(eu2);
@@ -192,7 +198,10 @@ nmg_pick_best_edge_g(struct edgeuse *eu1, struct edgeuse *eu2, const struct bn_t
  *	unclosed space that nmg_check_radial will find.
  */
 void
-nmg_radial_join_eu(struct edgeuse *eu1, struct edgeuse *eu2, const struct bn_tol *tol)
+nmg_radial_join_eu(eu1, eu2, tol)
+struct edgeuse		*eu1;
+struct edgeuse		*eu2;
+const struct bn_tol	*tol;
 {
 
 	NMG_CK_EDGEUSE(eu1);
@@ -480,7 +489,9 @@ insert:
  *  The return is the number of edges meshed.
  */
 int
-nmg_mesh_two_faces(register struct faceuse *fu1, register struct faceuse *fu2, const struct bn_tol *tol)
+nmg_mesh_two_faces(fu1, fu2, tol)
+register struct faceuse *fu1, *fu2;
+const struct bn_tol	*tol;
 {
 	struct loopuse	*lu1;
 	struct loopuse	*lu2;
@@ -564,7 +575,10 @@ nmg_mesh_two_faces(register struct faceuse *fu1, register struct faceuse *fu2, c
  *  XXX probably should return(count);
  */
 void
-nmg_mesh_faces(struct faceuse *fu1, struct faceuse *fu2, const struct bn_tol *tol)
+nmg_mesh_faces(fu1, fu2, tol)
+struct faceuse		*fu1;
+struct faceuse		*fu2;
+const struct bn_tol	*tol;
 {
 	int	count = 0;
 
@@ -601,7 +615,10 @@ nmg_mesh_faces(struct faceuse *fu1, struct faceuse *fu2, const struct bn_tol *to
  *  The return is the number of edges meshed.
  */
 int
-nmg_mesh_face_shell(struct faceuse *fu1, struct shell *s, const struct bn_tol *tol)
+nmg_mesh_face_shell( fu1, s, tol )
+struct faceuse	*fu1;
+struct shell	*s;
+const struct bn_tol	*tol;
 {
 	register struct faceuse	*fu2;
 	int		count = 0;
@@ -630,7 +647,10 @@ nmg_mesh_face_shell(struct faceuse *fu1, struct shell *s, const struct bn_tol *t
  *  to the absolute minimum necessary.
  */
 int
-nmg_mesh_shell_shell(struct shell *s1, struct shell *s2, const struct bn_tol *tol)
+nmg_mesh_shell_shell( s1, s2, tol )
+struct shell	*s1;
+struct shell	*s2;
+const struct bn_tol	*tol;
 {
 	struct faceuse	*fu1;
 	struct faceuse	*fu2;

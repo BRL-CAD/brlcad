@@ -157,7 +157,10 @@ const struct bu_structparse rt_eto_parse[] = {
  *  	stp->st_specific for use by rt_eto_shot().
  */
 int
-rt_eto_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
+rt_eto_prep( stp, ip, rtip )
+struct soltab		*stp;
+struct rt_db_internal	*ip;
+struct rt_i		*rtip;
 {
 	register struct eto_specific *eto;
 	LOCAL vect_t	P, w1;	/* for RPP calculation */
@@ -262,7 +265,8 @@ rt_eto_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
  *			R T _ E T O _ P R I N T
  */
 void
-rt_eto_print(register const struct soltab *stp)
+rt_eto_print( stp )
+register const struct soltab *stp;
 {
 	register const struct eto_specific *eto =
 		(struct eto_specific *)stp->st_specific;
@@ -311,7 +315,11 @@ rt_eto_print(register const struct soltab *stp)
  *	>0	HIT
  */
 int
-rt_eto_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
+rt_eto_shot( stp, rp, ap, seghead )
+struct soltab		*stp;
+register struct xray	*rp;
+struct application	*ap;
+struct seg		*seghead;
 {
 	register struct eto_specific *eto =
 		(struct eto_specific *)stp->st_specific;
@@ -524,12 +532,12 @@ rt_eto_shot(struct soltab *stp, register struct xray *rp, struct application *ap
  *  This is the Becker vector version
  */
 void
-rt_eto_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
-             	               /* An array of solid pointers */
-           		       /* An array of ray pointers */
-                               /* array of segs (results returned) */
-   		  	       /* Number of ray/object pairs */
-                  	    
+rt_eto_vshot( stp, rp, segp, n, ap )
+struct soltab	       *stp[]; /* An array of solid pointers */
+struct xray		*rp[]; /* An array of ray pointers */
+struct  seg            segp[]; /* array of segs (results returned) */
+int		  	    n; /* Number of ray/object pairs */
+struct application	*ap;
 {
 }
 
@@ -556,7 +564,10 @@ rt_eto_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
  *	(df/dx, df/dy, df/dz)
  */
 void
-rt_eto_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
+rt_eto_norm( hitp, stp, rp)
+register struct hit *hitp;
+struct soltab *stp;
+register struct xray *rp;
 {
 	register struct eto_specific *eto =
 		(struct eto_specific *)stp->st_specific;
@@ -591,7 +602,10 @@ rt_eto_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
  *  Return the curvature of the eto.
  */
 void
-rt_eto_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
+rt_eto_curve( cvp, hitp, stp )
+register struct curvature *cvp;
+register struct hit *hitp;
+struct soltab *stp;
 {
 	fastf_t	a, b, ch, cv, dh, dv, k_circ, k_ell, phi, rad, xp,
 		yp1, yp2, work;
@@ -656,7 +670,11 @@ rt_eto_curve(register struct curvature *cvp, register struct hit *hitp, struct s
  *			R T _ E T O _ U V
  */
 void
-rt_eto_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
+rt_eto_uv( ap, stp, hitp, uvp )
+struct application	*ap;
+struct soltab		*stp;
+register struct hit	*hitp;
+register struct uvcoord	*uvp;
 {
 	fastf_t	horz, theta_u, theta_v, vert;
 	vect_t	Hit_Ell, Nu, Radius, Ru;
@@ -698,7 +716,8 @@ rt_eto_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
  *			R T _ E T O _ F R E E
  */
 void
-rt_eto_free(struct soltab *stp)
+rt_eto_free( stp )
+struct soltab *stp;
 {
 	register struct eto_specific *eto =
 		(struct eto_specific *)stp->st_specific;
@@ -707,7 +726,7 @@ rt_eto_free(struct soltab *stp)
 }
 
 int
-rt_eto_class(void)
+rt_eto_class()
 {
 	return(0);
 }
@@ -724,7 +743,11 @@ rt_eto_class(void)
  *
  */
 int
-rt_eto_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_eto_plot( vhead, ip, ttol, tol )
+struct bu_list		*vhead;
+struct rt_db_internal	*ip;
+const struct rt_tess_tol *ttol;
+const struct bn_tol	*tol;
 {
 	fastf_t		a, b;	/* axis lengths of ellipse */
 	fastf_t		ang, ch, cv, dh, dv, ntol, dtol, phi, theta;
@@ -867,13 +890,15 @@ rt_eto_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
  *	tolerance.
  */
 int
-rt_ell4(struct rt_pt_node *pts, fastf_t a, fastf_t b, fastf_t dtol, fastf_t ntol)
+rt_ell4( pts, a, b, dtol, ntol )
+fastf_t	a, b, dtol, ntol;
+struct rt_pt_node	*pts;
 {
 	fastf_t	dist, intr, m, theta0, theta1;
 	int	n;
 	point_t	mpt, p0, p1;
 	vect_t	norm_line, norm_ell;
-	struct rt_pt_node *new, *rt_ptalloc(void);
+	struct rt_pt_node *new, *rt_ptalloc();
 
 	/* endpoints of segment approximating ellipse */
 	VMOVE( p0, pts->p );
@@ -929,7 +954,7 @@ fastf_t	a, b, dtol, ntol;
 {
 	int		i;
 	point_t		*ell;
-	struct rt_pt_node	*ell_quad, *oldpos, *pos, *rt_ptalloc(void);
+	struct rt_pt_node	*ell_quad, *oldpos, *pos, *rt_ptalloc();
 
 	ell_quad = rt_ptalloc();
 	VSET( ell_quad->p, b, 0., 0. );
@@ -973,7 +998,12 @@ fastf_t	a, b, dtol, ntol;
  *			R T _ E T O _ T E S S
  */
 int
-rt_eto_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_eto_tess( r, m, ip, ttol, tol )
+struct nmgregion	**r;
+struct model		*m;
+struct rt_db_internal	*ip;
+const struct rt_tess_tol *ttol;
+const struct bn_tol	*tol;
 {
 	fastf_t		a, b;	/* axis lengths of ellipse */
 	fastf_t		ang, ch, cv, dh, dv, ntol, dtol, phi, theta;
@@ -1182,7 +1212,11 @@ failure:
  *  Apply modeling transformations at the same time.
  */
 int
-rt_eto_import(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
+rt_eto_import( ip, ep, mat, dbip )
+struct rt_db_internal		*ip;
+const struct bu_external	*ep;
+register const mat_t		mat;
+const struct db_i		*dbip;
 {
 	struct rt_eto_internal	*tip;
 	union record		*rp;
@@ -1224,7 +1258,11 @@ rt_eto_import(struct rt_db_internal *ip, const struct bu_external *ep, register 
  *  The name will be added by the caller.
  */
 int
-rt_eto_export(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
+rt_eto_export( ep, ip, local2mm, dbip )
+struct bu_external		*ep;
+const struct rt_db_internal	*ip;
+double				local2mm;
+const struct db_i		*dbip;
 {
 	struct rt_eto_internal	*tip;
 	union record		*eto;
@@ -1272,7 +1310,11 @@ rt_eto_export(struct bu_external *ep, const struct rt_db_internal *ip, double lo
  *  Apply modeling transformations at the same time.
  */
 int
-rt_eto_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
+rt_eto_import5( ip, ep, mat, dbip )
+     struct rt_db_internal	*ip;
+     const struct bu_external	*ep;
+     register const mat_t	mat;
+     const struct db_i		*dbip;
 {
 	struct rt_eto_internal	*tip;
 	fastf_t			vec[11];
@@ -1314,7 +1356,11 @@ rt_eto_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
  *  The name will be added by the caller.
  */
 int
-rt_eto_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
+rt_eto_export5( ep, ip, local2mm, dbip )
+struct bu_external		*ep;
+const struct rt_db_internal	*ip;
+double				local2mm;
+const struct db_i		*dbip;
 {
 	struct rt_eto_internal	*tip;
 	fastf_t			vec[11];
@@ -1362,7 +1408,11 @@ rt_eto_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
  *  Additional lines are indented one tab, and give parameter values.
  */
 int
-rt_eto_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
+rt_eto_describe( str, ip, verbose, mm2local )
+struct bu_vls		*str;
+const struct rt_db_internal	*ip;
+int			verbose;
+double			mm2local;
 {
 	register struct rt_eto_internal	*tip =
 		(struct rt_eto_internal *)ip->idb_ptr;
@@ -1405,7 +1455,8 @@ rt_eto_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
  *  Free the storage associated with the rt_db_internal version of this solid.
  */
 void
-rt_eto_ifree(struct rt_db_internal *ip)
+rt_eto_ifree( ip )
+struct rt_db_internal	*ip;
 {
 	register struct rt_eto_internal	*tip;
 

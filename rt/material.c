@@ -54,7 +54,9 @@ static const char *mdefault = "default"; /* Name of default material */
  *  list of material (shader) routines.
  */
 void
-mlib_add_shader(struct mfuncs **headp, struct mfuncs *mfp1)
+mlib_add_shader( headp, mfp1 )
+struct mfuncs **headp;
+struct mfuncs *mfp1;
 {
 	register struct mfuncs *mfp;
 
@@ -343,7 +345,7 @@ mlib_free( register struct region *rp )
  */
 /* VARARGS */
 int
-mlib_zero(void)
+mlib_zero()
 {
 	return(0);
 }
@@ -356,7 +358,7 @@ mlib_zero(void)
  */
 /* VARARGS */
 int
-mlib_one(void)
+mlib_one()
 {
 	return(1);
 }
@@ -366,6 +368,6 @@ mlib_one(void)
  */
 /* VARARGS */
 void
-mlib_void(void)
+mlib_void()
 {
 }

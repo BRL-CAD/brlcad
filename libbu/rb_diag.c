@@ -42,7 +42,11 @@ static int d_order;	/* Used by describe_node() */
  *	its depth in the tree.  Describe_node() is intended to be
  *	called by bu_rb_diagnose_tree().
  */
-static void describe_node (struct bu_rb_node *node, int depth)
+static void describe_node (node, depth)
+
+struct bu_rb_node	*node;
+int		depth;
+
 {
     bu_rb_tree			*tree;
     struct bu_rb_package	*package;
@@ -83,7 +87,12 @@ static void describe_node (struct bu_rb_node *node, int depth)
  *	to print out and the type of traversal (preorder, inorder, or
  *	postorder).
  */
-void bu_rb_diagnose_tree (bu_rb_tree *tree, int order, int trav_type)
+void bu_rb_diagnose_tree (tree, order, trav_type)
+
+bu_rb_tree	*tree;
+int		order;
+int		trav_type;
+
 {
     BU_CKMAG(tree, BU_RB_TREE_MAGIC, "red-black tree");
     BU_RB_CKORDER(tree, order);
@@ -107,7 +116,10 @@ void bu_rb_diagnose_tree (bu_rb_tree *tree, int order, int trav_type)
  *	tree.  bu_rb_summarize_tree() prints out the header information
  *	for the tree.  It is intended for diagnostic purposes.
  */
-void bu_rb_summarize_tree (bu_rb_tree *tree)
+void bu_rb_summarize_tree (tree)
+
+bu_rb_tree	*tree;
+
 {
     int		i;
 

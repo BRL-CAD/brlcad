@@ -121,7 +121,10 @@ static const char RCSparse[] = "@(#)$Header$ (BRL)";
  *			B U _ S T R U C T _ E X P O R T
  */
 int
-bu_struct_export(struct bu_external *ext, const genptr_t base, const struct bu_structparse *imp)
+bu_struct_export( ext, base, imp )
+struct bu_external	*ext;
+const genptr_t		base;
+const struct bu_structparse *imp;
 {
 	register char	*cp;		/* current possition in buffer */
 	char		*ep;		/* &ext->ext_buf[ext->ext_nbytes] */
@@ -273,7 +276,10 @@ bu_struct_export(struct bu_external *ext, const genptr_t base, const struct bu_s
  *			B U _ S T R U C T _ I M P O R T
  */
 int
-bu_struct_import(genptr_t base, const struct bu_structparse *imp, const struct bu_external *ext)
+bu_struct_import( base, imp, ext )
+genptr_t		base;
+const struct bu_structparse	*imp;
+const struct bu_external	*ext;
 {
 	register const unsigned char	*cp;	/* current possition in buffer */
 	const struct bu_structparse	*ip;	/* current imexport structure */
@@ -409,7 +415,9 @@ bu_struct_import(genptr_t base, const struct bu_structparse *imp, const struct b
  *  All formatting must have been accomplished previously.
  */
 int
-bu_struct_put(FILE *fp, const struct bu_external *ext)
+bu_struct_put( fp, ext )
+FILE *fp;
+const struct bu_external	*ext;
 {
 	BU_CK_GETPUT(ext);
 
@@ -422,7 +430,9 @@ bu_struct_put(FILE *fp, const struct bu_external *ext)
  *  Obtain the next structure in external form from a stdio file.
  */
 int
-bu_struct_get(struct bu_external *ext, FILE *fp)
+bu_struct_get( ext, fp )
+struct bu_external *ext;
+FILE *fp;
 {
 	register long i, len;
 
@@ -483,7 +493,9 @@ bu_struct_get(struct bu_external *ext, FILE *fp)
  *  to bu_struct_import().
  */
 void
-bu_struct_wrap_buf(struct bu_external *ext, genptr_t buf)
+bu_struct_wrap_buf( ext, buf )
+struct bu_external *ext;
+genptr_t buf;
 {
 	register long i, len;
 
@@ -529,7 +541,10 @@ bu_struct_wrap_buf(struct bu_external *ext, genptr_t buf)
  *               <0 upon failure
  */
 HIDDEN int
-bu_parse_double(const char *str, long int count, double *loc)
+bu_parse_double(str, count, loc)
+const char	*str;
+long		count;
+double		*loc;
 {
 	long	i;
 	int	dot_seen;
@@ -595,11 +610,11 @@ bu_parse_double(const char *str, long int count, double *loc)
  *	 0	entry found and processed
  */
 HIDDEN int
-bu_struct_lookup(register const struct bu_structparse *sdp, register const char *name, char *base, const char *const value)
-                                    	     	/* structure description */
-                   			      	/* struct member name */
-    					      	/* begining of structure */
-          			       	      	/* string containing value */
+bu_struct_lookup( sdp, name, base, value )
+register const struct bu_structparse	*sdp;	/* structure description */
+register const char			*name;	/* struct member name */
+char					*base;	/* begining of structure */
+const char			* const	value;	/* string containing value */
 {
 	register char *loc;
 	int i, retval = 0;
@@ -769,10 +784,10 @@ bu_struct_lookup(register const struct bu_structparse *sdp, register const char 
  *	 0	OK
  */
 int
-bu_struct_parse(const struct bu_vls *in_vls, const struct bu_structparse *desc, char *base)
-                   		        	/* string to parse through */
-                           	      		/* structure description */
-    				      		/* base addr of users struct */
+bu_struct_parse( in_vls, desc, base )
+const struct bu_vls		*in_vls;	/* string to parse through */
+const struct bu_structparse	*desc;		/* structure description */
+char				*base;		/* base addr of users struct */
 {
 	struct bu_vls	vls;
 	register char *cp;
@@ -866,7 +881,9 @@ bu_struct_parse(const struct bu_vls *in_vls, const struct bu_structparse *desc, 
  *	pretty-print a matrix
  */
 HIDDEN void
-bu_matprint(const char *name, register const double *mat)
+bu_matprint(name, mat)
+const char		*name;
+register const double	*mat;
 {
 	int	delta = strlen(name)+2;
 
@@ -922,11 +939,11 @@ bu_vls_matprint(struct bu_vls		*vls,
  *	representation in a VLS
  */
 void
-bu_vls_struct_item(struct bu_vls *vp, const struct bu_structparse *sdp, const char *base, int sep_char)
-                  
-                                     /* item description */
-                                  /* base address of users structure */
-                                 /* value separator */
+bu_vls_struct_item( vp, sdp, base, sep_char )
+struct bu_vls *vp;
+const struct bu_structparse *sdp;    /* item description */
+const char *base;                 /* base address of users structure */
+int sep_char;                    /* value separator */
 {
     register char *loc;
 
@@ -1009,7 +1026,12 @@ bu_vls_struct_item(struct bu_vls *vp, const struct bu_structparse *sdp, const ch
  *	in a VLS.
  */
 int
-bu_vls_struct_item_named(struct bu_vls *vp, const struct bu_structparse *parsetab, const char *name, const char *base, int sep_char)
+bu_vls_struct_item_named( vp, parsetab, name, base, sep_char )
+struct bu_vls *vp;
+const struct bu_structparse *parsetab;
+const char *name;
+const char *base;
+int sep_char;
 {
     register const struct bu_structparse *sdp;
 
@@ -1027,10 +1049,10 @@ bu_vls_struct_item_named(struct bu_vls *vp, const struct bu_structparse *parseta
  *			B U _ S T R U C T P R I N T
  */
 void
-bu_struct_print(const char *title, const struct bu_structparse *parsetab, const char *base)
-          			       
-                           	          /* structure description */
-          			      	  /* base address of users structure */
+bu_struct_print( title, parsetab, base )
+const char			*title;
+const struct bu_structparse	*parsetab;/* structure description */
+const char			*base;	  /* base address of users structure */
 {
 	register const struct bu_structparse	*sdp;
 	register char			*loc;
@@ -1171,7 +1193,11 @@ bu_struct_print(const char *title, const struct bu_structparse *parsetab, const 
  *			B U _ V L S _ P R I N T _ D O U B L E
  */
 HIDDEN void
-bu_vls_print_double(struct bu_vls *vls, const char *name, register long int count, register const double *dp)
+bu_vls_print_double(vls, name, count, dp)
+struct bu_vls		*vls;
+const char		*name;
+register long		count;
+register const double	*dp;
 {
 	register int tmpi;
 	register char *cp;
@@ -1198,10 +1224,10 @@ bu_vls_print_double(struct bu_vls *vls, const char *name, register long int coun
  *	by humans, but easier to parse with the computer.
  */
 void
-bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sdp, const char *base)
-      	      				     	/* vls to print into */
-                                    	     	/* structure description */
-          				      	/* structure ponter */
+bu_vls_struct_print( vls, sdp, base)
+struct	bu_vls				*vls;	/* vls to print into */
+register const struct bu_structparse	*sdp;	/* structure description */
+const char				*base;	/* structure ponter */
 {
 	register char			*loc;
 	register int			lastoff = -1;
@@ -1523,11 +1549,11 @@ bu_vls_struct_print2(struct bu_vls			*vls_out,
  * or "27in" rather than using mm all the time.
  */
 void
-bu_parse_mm(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value)
-                                    	     	/* structure description */
-                   			      	/* struct member name */
-    					      	/* begining of structure */
-          				       	/* string containing value */
+bu_parse_mm( sdp, name, base, value )
+register const struct bu_structparse	*sdp;	/* structure description */
+register const char			*name;	/* struct member name */
+char					*base;	/* begining of structure */
+const char				*value;	/* string containing value */
 {
 	double *p = (double *)(base+sdp->sp_offset);
 
@@ -1541,7 +1567,10 @@ bu_parse_mm(register const struct bu_structparse *sdp, register const char *name
 #define STATE_IN_QUOTED_VALUE	3
 
 int
-bu_key_eq_to_key_val(char *in, char **next, struct bu_vls *vls)
+bu_key_eq_to_key_val( in, next, vls )
+char *in;
+char **next;
+struct bu_vls *vls;
 {
 	char *iptr=in;
 	char *start;
@@ -1675,7 +1704,9 @@ bu_key_eq_to_key_val(char *in, char **next, struct bu_vls *vls)
  *	0	OK
  */
 int
-bu_shader_to_tcl_list(char *in, struct bu_vls *vls)
+bu_shader_to_tcl_list( in, vls )
+char *in;
+struct bu_vls *vls;
 {
 	char *iptr;
 	char *next=in;
@@ -1950,7 +1981,9 @@ bu_tcl_list_length( const char *in )
 }
 
 int
-bu_key_val_to_vls(struct bu_vls *vls, char *params)
+bu_key_val_to_vls( vls, params )
+struct bu_vls *vls;
+char *params;
 {
 	int len;
 	int j;
@@ -2000,7 +2033,9 @@ bu_key_val_to_vls(struct bu_vls *vls, char *params)
  *			B U _ S H A D E R _ T O _ K E Y _ E Q
  */
 int
-bu_shader_to_key_eq(char *in, struct bu_vls *vls)
+bu_shader_to_key_eq( in, vls )
+char *in;
+struct bu_vls *vls;
 {
 	int len;
 	int ret=0;

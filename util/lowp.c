@@ -23,7 +23,9 @@ char usage[] = "Usage: lowp file1.pix file2.pix file3.pix [width] > out.pix\n";
 int infd1, infd2, infd3;		/* input fd's */
 
 int
-main(int argc, char **argv)
+main(argc, argv)
+int argc;
+char **argv;
 {
 	static int x,y;
 

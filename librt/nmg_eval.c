@@ -76,7 +76,9 @@ static const char	*nmg_class_names[] = {
  *  the geometric arrangement of the vertices and the faceuse normal.
  */
 void
-nmg_ck_lu_orientation(struct loopuse *lu, const struct bn_tol *tolp)
+nmg_ck_lu_orientation( lu, tolp )
+struct loopuse		*lu;
+const struct bn_tol	*tolp;
 {
 	struct faceuse	*fu;
 	plane_t		fu_peqn;
@@ -114,7 +116,8 @@ nmg_ck_lu_orientation(struct loopuse *lu, const struct bn_tol *tolp)
  *  Convert an NMG_CLASS_xxx token into a string name.
  */
 const char *
-nmg_class_name(int class)
+nmg_class_name(class)
+int	class;
 {
 	if( class == NMG_CLASS_Unknown )  return "Unknown";
 	if( class < 0 || class > NMG_CLASS_BAD )  class = NMG_CLASS_BAD;
@@ -181,7 +184,12 @@ static const int		intersect_actions[8] = {
  *
  */
 void
-nmg_evaluate_boolean(struct shell *sA, struct shell *sB, int op, long int **classlist, const struct bn_tol *tol)
+nmg_evaluate_boolean( sA, sB, op, classlist, tol )
+struct shell	*sA;
+struct shell	*sB;
+int		op;
+long		*classlist[8];
+const struct bn_tol	*tol;
 {
 	int const	*actions;
 	struct nmg_bool_state	bool_state;
@@ -266,7 +274,9 @@ static int	nmg_eval_count = 0;	/* debug -- plot file numbering */
  *  Then, return the action code for an item of that classification.
  */
 int
-nmg_eval_action(long int *ptr, register struct nmg_bool_state *bs)
+nmg_eval_action( ptr, bs )
+long				*ptr;
+register struct nmg_bool_state	*bs;
 {
 	register int	ret;
 	register int	class;
@@ -350,7 +360,9 @@ out:
  *  Note that there is no moving of items from one shell to another.
  */
 static void
-nmg_eval_shell(register struct shell *s, struct nmg_bool_state *bs)
+nmg_eval_shell( s, bs )
+register struct shell	*s;
+struct nmg_bool_state *bs;
 {
 	struct faceuse	*fu;
 	struct faceuse	*nextfu;
@@ -597,7 +609,10 @@ nmg_eval_shell(register struct shell *s, struct nmg_bool_state *bs)
  *  Located here because definition of nmg_bool_state is local to this module.
  */
 static void
-nmg_eval_plot(struct nmg_bool_state *bs, int num, int delay)
+nmg_eval_plot( bs, num, delay )
+struct nmg_bool_state	*bs;
+int		num;
+int		delay;
 {
 	FILE	*fp;
 	char	fname[128];

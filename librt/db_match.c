@@ -56,7 +56,8 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
  *		\	Escapes special characters.
  */
 int
-db_regexp_match(register const char *pattern, register const char *string)
+db_regexp_match( pattern, string )
+register const char *pattern, *string;
 {
 	do {
 		switch( *pattern ) {
@@ -121,7 +122,10 @@ db_regexp_match(register const char *pattern, register const char *string)
  */
  
 int
-db_regexp_match_all(struct bu_vls *dest, struct db_i *dbip, const char *pattern)
+db_regexp_match_all( dest, dbip, pattern )
+struct bu_vls	*dest;
+struct db_i	*dbip;
+const char	*pattern;
 {
 	register int i, num;
 	register struct directory *dp;
@@ -145,7 +149,11 @@ db_regexp_match_all(struct bu_vls *dest, struct db_i *dbip, const char *pattern)
 
 
 HIDDEN void
-db_count_refs(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb_leaf, genptr_t dummy1, genptr_t dummy2, genptr_t dummy3)
+db_count_refs( dbip, comb, comb_leaf, dummy1, dummy2, dummy3 )
+struct db_i		*dbip;
+struct rt_comb_internal *comb;
+union tree		*comb_leaf;
+genptr_t		 dummy1, dummy2, dummy3;
 {
 	struct directory	*dp;
 

@@ -37,7 +37,11 @@
 #endif
 
 int
-main(int argc, char **argv)
+main(argc,argv)
+
+int argc;
+char *argv[];
+
 {							/*  START # 1  */
    struct rt_wdb *fpw;		/*  File to be written to.  */
    char filemged[26];		/*  Mged file create.  */

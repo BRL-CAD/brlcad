@@ -86,7 +86,11 @@ struct rt_imexport vertex_desc[] = {
  *  Usage:  polybinout file
  */
 int
-f_polybinout(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_polybinout(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int	argc;
+char	**argv;
 {
 	register struct solid		*sp;
 	register struct rt_vlist	*vp;

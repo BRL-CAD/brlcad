@@ -38,8 +38,8 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "../librt/debug.h"
 
 RT_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data));
-void	nmg_to_psurf(struct nmgregion *r, FILE *fp_psurf);
-void	jack_faces(struct nmgregion *r, FILE *fp_psurf, int *map);
+void	nmg_to_psurf();
+void	jack_faces();
 
 extern double nmg_eue_dist;		/* from nmg_plot.c */
 
@@ -71,7 +71,9 @@ static int	regions_done = 0;
  *			M A I N
  */
 int
-main(int argc, char **argv)
+main(argc, argv)
+int	argc;
+char	*argv[];
 {
 	char		*dot;
 	register int	c;
@@ -259,7 +261,11 @@ RT_CK_TESS_TOL(jack_tree_state.ts_ttol);
 *
 *  This routine must be prepared to run in parallel.
 */
-union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+union tree *do_region_end(tsp, pathp, curtree, client_data)
+register struct db_tree_state	*tsp;
+struct db_full_path	*pathp;
+union tree		*curtree;
+genptr_t		client_data;
 {
 	extern FILE		*fp_fig;
 	union tree		*ret_tree;
@@ -440,9 +446,9 @@ out:
 */
 
 void
-nmg_to_psurf(struct nmgregion *r, FILE *fp_psurf)
-                    		/* NMG region to be converted. */
-    		          	/* Jack format file to write vertex list to. */
+nmg_to_psurf(r, fp_psurf)
+struct nmgregion *r;		/* NMG region to be converted. */
+FILE		*fp_psurf;	/* Jack format file to write vertex list to. */
 {
 	int			i;
 	int			*map;	/* map from v->index to Jack vert # */
@@ -487,10 +493,10 @@ nmg_to_psurf(struct nmgregion *r, FILE *fp_psurf)
 *	list of face vertices is written to the Jack data base file.
 */
 void
-jack_faces(struct nmgregion *r, FILE *fp_psurf, int *map)
-                    		/* NMG region to be converted. */
-    		          	/* Jack format file to write face vertices to. */
-   		     
+jack_faces(r, fp_psurf, map)
+struct nmgregion *r;		/* NMG region to be converted. */
+FILE		*fp_psurf;	/* Jack format file to write face vertices to. */
+int		*map;
 {
 	struct edgeuse		*eu;
 	struct faceuse		*fu;

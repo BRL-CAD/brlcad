@@ -179,7 +179,8 @@ struct ptc_surf_list
 #define	CUT_SOLID_TYPE	3
 
 char *
-Build_unique_name(char *name)
+Build_unique_name( name )
+char *name;
 {
 	struct name_conv_list *ptr;
 	int name_len;
@@ -208,7 +209,10 @@ Build_unique_name(char *name)
 }
 
 static struct name_conv_list *
-Add_new_name(char *name, unsigned int obj, int type)
+Add_new_name( name , obj , type )
+char *name;
+unsigned int obj;
+int type;
 {
 	struct name_conv_list *ptr;
 
@@ -290,7 +294,10 @@ Add_new_name(char *name, unsigned int obj, int type)
 }
 
 static char *
-Get_unique_name(char *name, unsigned int obj, int type)
+Get_unique_name( name , obj , type )
+char *name;
+unsigned int obj;
+int type;
 {
 	struct name_conv_list *ptr,*prev;
 
@@ -328,7 +335,9 @@ Get_unique_name(char *name, unsigned int obj, int type)
 }
 
 static char *
-Get_solid_name(char *name, unsigned int obj)
+Get_solid_name( name , obj )
+char *name;
+unsigned int obj;
 {
 	struct name_conv_list *ptr;
 
@@ -344,7 +353,8 @@ Get_solid_name(char *name, unsigned int obj)
 }
 
 static void
-Convert_assy(char *line)
+Convert_assy( line )
+char line[MAX_LINE_LEN];
 {
 	struct wmember head;
 	struct wmember *wmem = NULL;
@@ -517,7 +527,12 @@ Convert_assy(char *line)
 }
 
 static void
-do_modifiers(char *line1, int *start, struct wmember *head, char *name, fastf_t *min, fastf_t *max)
+do_modifiers( line1, start, head, name, min, max )
+char *line1;
+int *start;
+struct wmember *head;
+char *name;
+point_t min, max;
 {
 	struct wmember *wmem;
 	int i;
@@ -650,7 +665,8 @@ do_modifiers(char *line1, int *start, struct wmember *head, char *name, fastf_t 
 }
 
 int
-Add_vert(fastf_t x, fastf_t y, fastf_t z)
+Add_vert( x, y, z )
+fastf_t x, y, z;
 {
 	int i;
 	fastf_t *v;
@@ -689,7 +705,8 @@ Add_vert(fastf_t x, fastf_t y, fastf_t z)
 }
 
 void
-Add_face(int *face)
+Add_face( face )
+int face[3];
 {
 	if( !bot_faces )
 	{
@@ -708,7 +725,8 @@ Add_face(int *face)
 }
 
 static void
-Convert_part(char *line)
+Convert_part( line )
+char line[MAX_LINE_LEN];
 {
 	char line1[MAX_LINE_LEN];
 	char name[MAX_LINE_LEN + 1];
@@ -1047,7 +1065,7 @@ Convert_part(char *line)
 }
 
 static void
-Convert_input(void)
+Convert_input()
 {
 	char line[ MAX_LINE_LEN ];
 
@@ -1074,7 +1092,7 @@ Convert_input(void)
 }
 
 static void
-Rm_nulls(void)
+Rm_nulls()
 {
 	struct db_i *dbip;
 	int i;	
@@ -1202,7 +1220,9 @@ Rm_nulls(void)
  *			M A I N
  */
 int
-main(int argc, char **argv)
+main(argc, argv)
+int	argc;
+char	*argv[];
 {
 	register int c;
 

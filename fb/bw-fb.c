@@ -33,10 +33,10 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "fb.h"
 
 /* defined in libbn/asize.c */
-extern int bn_common_file_size(int *, int *, const char *, int);
+extern int bn_common_file_size();
 
-int mread(int fd, register char *bp, register int num);
-int skipbytes(int fd, long int num);
+int mread();
+int skipbytes();
 
 #define	MAX_LINE	(16*1024)	/* Largest output scan line length */
 
@@ -70,7 +70,8 @@ Usage: bw-fb [-a -h -i -c -z -R -G -B] [-F framebuffer]\n\
 	[-x file_xoff] [-y file_yoff] [-X scr_xoff] [-Y scr_yoff]\n\
 	[-S squarescrsize] [-W scr_width] [-N scr_height] [file.bw]\n";
 int
-get_args(int argc, register char **argv)
+get_args( argc, argv )
+register char **argv;
 {
 	register int c;
 
@@ -169,7 +170,8 @@ get_args(int argc, register char **argv)
 }
 
 int
-main(int argc, char **argv)
+main( argc, argv )
+int argc; char **argv;
 {
 	register int	x, y, n;
 	int	xout, yout;		/* number of sceen output lines */
@@ -262,7 +264,7 @@ main(int argc, char **argv)
 			perror("bw-fb malloc");
 			goto general;
 		}
-		n = mread( infd, (char *)buf, npix );
+		n = mread( infd, buf, npix );
 		if( n != npix )  {
 			fprintf(stderr, "bw-fb: read got %d, s/b %d\n", n, npix );
 			if( n <= 0 )  exit(7);
@@ -331,7 +333,9 @@ general:
  * Throw bytes away.  Use reads into ibuf buffer if a pipe, else seek.
  */
 int
-skipbytes(int fd, long int num)
+skipbytes( fd, num )
+int	fd;
+long	num;
 {
 	int	n, try;
 
@@ -358,7 +362,10 @@ skipbytes(int fd, long int num)
  *  is important for pipes.
  */
 int
-mread(int fd, register char *bp, register int num)
+mread( fd, bp, num )
+int	fd;
+register char	*bp;
+register int	num;
 {
 	register int	n;
 	int	count;

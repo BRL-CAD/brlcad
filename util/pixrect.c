@@ -51,7 +51,9 @@ Usage: pixrect -w in_width -n in_height -W out_width -N out_height\n\
 
 
 int
-get_args(register int argc, register char **argv)
+get_args(argc,argv)
+register char **argv;
+register int 	argc;
 {
 	register int c;
 	register int inputmode = INTERACTIVE;
@@ -180,7 +182,9 @@ char	*buf;			/* output scanline buffer, malloc'd */
 int	outbytes;
 
 int
-main(register int argc, register char **argv)
+main(argc, argv)
+register char **argv;
+register int 	argc;
 {
 	int	row;
 	long	offset;

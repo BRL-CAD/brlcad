@@ -78,7 +78,10 @@ struct submodel_specific {
  *  	stp->st_specific for use by submodel_shot().
  */
 int
-rt_submodel_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
+rt_submodel_prep( stp, ip, rtip )
+struct soltab		*stp;
+struct rt_db_internal	*ip;
+struct rt_i		*rtip;
 {
 	struct rt_submodel_internal	*sip;
 	struct submodel_specific	*submodel;
@@ -245,7 +248,8 @@ done:
  *			R T _ S U B M O D E L _ P R I N T
  */
 void
-rt_submodel_print(register const struct soltab *stp)
+rt_submodel_print( stp )
+register const struct soltab *stp;
 {
 	register const struct submodel_specific *submodel =
 		(struct submodel_specific *)stp->st_specific;
@@ -270,7 +274,8 @@ rt_submodel_print(register const struct soltab *stp)
  *			R T _ S U B M O D E L _ A _ M I S S
  */
 int
-rt_submodel_a_miss(struct application *ap)
+rt_submodel_a_miss( ap )
+struct application	*ap;
 {
 	return 0;
 }
@@ -286,7 +291,10 @@ struct submodel_gobetween {
  *			R T _ S U B M O D E L _ A _ H I T
  */
 int
-rt_submodel_a_hit(struct application *ap, struct partition *PartHeadp, struct seg *segHeadp)
+rt_submodel_a_hit( ap, PartHeadp, segHeadp )
+struct application	*ap;
+struct partition	*PartHeadp;
+struct seg		*segHeadp;
 {
 	register struct partition *pp;
 	struct application	*up_ap;
@@ -445,7 +453,11 @@ rt_submodel_a_hit(struct application *ap, struct partition *PartHeadp, struct se
  *	>0	HIT
  */
 int
-rt_submodel_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
+rt_submodel_shot( stp, rp, ap, seghead )
+struct soltab		*stp;
+register struct xray	*rp;
+struct application	*ap;
+struct seg		*seghead;
 {
 	register struct submodel_specific *submodel =
 		(struct submodel_specific *)stp->st_specific;
@@ -525,12 +537,12 @@ rt_submodel_shot(struct soltab *stp, register struct xray *rp, struct applicatio
  *  Vectorized version.
  */
 void
-rt_submodel_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
-             	               /* An array of solid pointers */
-           		       /* An array of ray pointers */
-                               /* array of segs (results returned) */
-   		  	       /* Number of ray/object pairs */
-                  	    
+rt_submodel_vshot( stp, rp, segp, n, ap )
+struct soltab	       *stp[]; /* An array of solid pointers */
+struct xray		*rp[]; /* An array of ray pointers */
+struct  seg            segp[]; /* array of segs (results returned) */
+int		  	    n; /* Number of ray/object pairs */
+struct application	*ap;
 {
 	rt_vstub( stp, rp, segp, n, ap );
 }
@@ -541,7 +553,10 @@ rt_submodel_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n
  *  Given ONE ray distance, return the normal and entry/exit point.
  */
 void
-rt_submodel_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
+rt_submodel_norm( hitp, stp, rp )
+register struct hit	*hitp;
+struct soltab		*stp;
+register struct xray	*rp;
 {
 	RT_CK_HIT(hitp);
 
@@ -564,7 +579,10 @@ rt_submodel_norm(register struct hit *hitp, struct soltab *stp, register struct 
  *  Return the curvature of the submodel.
  */
 void
-rt_submodel_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
+rt_submodel_curve( cvp, hitp, stp )
+register struct curvature *cvp;
+register struct hit	*hitp;
+struct soltab		*stp;
 {
  	cvp->crv_c1 = cvp->crv_c2 = 0;
 
@@ -584,7 +602,11 @@ rt_submodel_curve(register struct curvature *cvp, register struct hit *hitp, str
  *  v = elevation
  */
 void
-rt_submodel_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
+rt_submodel_uv( ap, stp, hitp, uvp )
+struct application	*ap;
+struct soltab		*stp;
+register struct hit	*hitp;
+register struct uvcoord	*uvp;
 {
 	RT_CK_HIT(hitp);
 
@@ -597,7 +619,8 @@ rt_submodel_uv(struct application *ap, struct soltab *stp, register struct hit *
  *		R T _ S U B M O D E L _ F R E E
  */
 void
-rt_submodel_free(register struct soltab *stp)
+rt_submodel_free( stp )
+register struct soltab *stp;
 {
 	register struct submodel_specific *submodel =
 		(struct submodel_specific *)stp->st_specific;
@@ -631,7 +654,10 @@ rt_submodel_free(register struct soltab *stp)
  *			R T _ S U B M O D E L _ C L A S S
  */
 int
-rt_submodel_class(const struct soltab *stp, const fastf_t *min, const fastf_t *max, const struct bn_tol *tol)
+rt_submodel_class( stp, min, max, tol )
+const struct soltab    *stp;
+const vect_t		min, max;
+const struct bn_tol    *tol;
 {
 	return RT_CLASSIFY_UNIMPLEMENTED;
 }
@@ -647,7 +673,11 @@ struct goodies {
  *  This routine must be prepared to run in parallel.
  *  This routine should be generally exported for other uses.
  */
-HIDDEN union tree *rt_submodel_wireframe_leaf(struct db_tree_state *tsp, struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data)
+HIDDEN union tree *rt_submodel_wireframe_leaf( tsp, pathp, ip, client_data )
+struct db_tree_state	*tsp;
+struct db_full_path	*pathp;
+struct rt_db_internal	*ip;
+genptr_t		client_data;
 {
 	union tree	*curtree;
 	struct goodies	*gp;
@@ -699,7 +729,11 @@ HIDDEN union tree *rt_submodel_wireframe_leaf(struct db_tree_state *tsp, struct 
  *  which by definition, is all one color.
  */
 int
-rt_submodel_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_submodel_plot( vhead, ip, ttol, tol )
+struct bu_list		*vhead;
+struct rt_db_internal	*ip;
+const struct rt_tess_tol *ttol;
+const struct bn_tol	*tol;
 {
 	LOCAL struct rt_submodel_internal	*sip;
 	struct db_tree_state	state;
@@ -766,7 +800,12 @@ rt_submodel_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct 
  *	 0	OK.  *r points to nmgregion that holds this tessellation.
  */
 int
-rt_submodel_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_submodel_tess( r, m, ip, ttol, tol )
+struct nmgregion	**r;
+struct model		*m;
+struct rt_db_internal	*ip;
+const struct rt_tess_tol *ttol;
+const struct bn_tol	*tol;
 {
 	LOCAL struct rt_submodel_internal	*sip;
 
@@ -784,7 +823,11 @@ rt_submodel_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
  *  Apply modeling transformations as well.
  */
 int
-rt_submodel_import(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
+rt_submodel_import( ip, ep, mat, dbip )
+struct rt_db_internal		*ip;
+const struct bu_external	*ep;
+register const mat_t		mat;
+const struct db_i		*dbip;
 {
 	LOCAL struct rt_submodel_internal	*sip;
 	union record			*rp;
@@ -845,7 +888,11 @@ bn_mat_print("root2leaf", sip->root2leaf );
  *  The name is added by the caller, in the usual place.
  */
 int
-rt_submodel_export(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
+rt_submodel_export( ep, ip, local2mm, dbip )
+struct bu_external		*ep;
+const struct rt_db_internal	*ip;
+double				local2mm;
+const struct db_i		*dbip;
 {
 	struct rt_submodel_internal	*sip;
 	union record		*rec;
@@ -889,7 +936,11 @@ bu_log("rt_submodel_export: '%s'\n", rec->ss.ss_args);
  *  Apply modeling transformations as well.
  */
 int
-rt_submodel_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
+rt_submodel_import5( ip, ep, mat, dbip )
+struct rt_db_internal		*ip;
+const struct bu_external	*ep;
+register const mat_t		mat;
+const struct db_i		*dbip;
 {
 	LOCAL struct rt_submodel_internal	*sip;
 	struct bu_vls		str;
@@ -942,7 +993,11 @@ bn_mat_print("root2leaf", sip->root2leaf );
  *  The name is added by the caller, in the usual place.
  */
 int
-rt_submodel_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
+rt_submodel_export5( ep, ip, local2mm, dbip )
+struct bu_external		*ep;
+const struct rt_db_internal	*ip;
+double				local2mm;
+const struct db_i		*dbip;
 {
 	struct rt_submodel_internal	*sip;
 	struct bu_vls		str;
@@ -981,7 +1036,11 @@ bu_log("rt_submodel_export: '%s'\n", rec->ss.ss_args);
  *  Additional lines are indented one tab, and give parameter values.
  */
 int
-rt_submodel_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
+rt_submodel_describe( str, ip, verbose, mm2local )
+struct bu_vls		*str;
+const struct rt_db_internal	*ip;
+int			verbose;
+double			mm2local;
 {
 	register struct rt_submodel_internal	*sip =
 		(struct rt_submodel_internal *)ip->idb_ptr;
@@ -1003,7 +1062,8 @@ rt_submodel_describe(struct bu_vls *str, const struct rt_db_internal *ip, int ve
  *  Free the storage associated with the rt_db_internal version of this solid.
  */
 void
-rt_submodel_ifree(struct rt_db_internal *ip)
+rt_submodel_ifree( ip )
+struct rt_db_internal	*ip;
 {
 	register struct rt_submodel_internal	*sip;
 

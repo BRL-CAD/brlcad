@@ -94,7 +94,8 @@ Usage: sun-pix [-b -h -i -P -v -C] [sun.bitmap]\n";
 #define NET_LONG_LEN	4	/* # bytes to network long */
 
 unsigned long
-getlong(char *msgp)
+getlong(msgp)
+	char *msgp;
 {
 	register unsigned char *p = (unsigned char *) msgp;
 	register unsigned long u;
@@ -106,7 +107,8 @@ getlong(char *msgp)
 }
 
 int
-get_args(int argc, register char **argv)
+get_args( argc, argv )
+register char **argv;
 {
 	register int c;
 
@@ -181,11 +183,11 @@ get_args(int argc, register char **argv)
 #define ESCAPE		128
 
 int
-decoderead(unsigned char *buf, int size, int length, FILE *fp)
-             	     
-   		     		/* should be one! */
-   		       		/* number of items to read */
-    		    		/* input file pointer */
+decoderead(buf,size,length,fp)
+unsigned char	*buf;
+int		size;		/* should be one! */
+int		length;		/* number of items to read */
+FILE		*fp;		/* input file pointer */
 {
 	static	int	repeat = -1;
 	static	int	lastchar = 0;
@@ -236,7 +238,9 @@ decoderead(unsigned char *buf, int size, int length, FILE *fp)
 unsigned char bits[8] = { 128, 64, 32, 16, 8, 4, 2, 1 };
 
 int
-main(int argc, char **argv)
+main( argc, argv )
+int argc;
+char **argv;
 {
 	register int	x;
 	register int	off = 0;

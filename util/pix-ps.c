@@ -47,7 +47,7 @@ static int	pageheight = 792;	/* 11 inches */
 static char	*file_name;
 static FILE	*infp;
 
-void prolog(FILE *fp, char *name, int width, int height), postlog(FILE *fp), hexout(FILE *fp, int byte);
+void prolog(), postlog(), hexout();
 
 static char usage[] = "\
 Usage: pix-ps [-e] [-c|-l] [-L] [-h]\n\
@@ -55,7 +55,8 @@ Usage: pix-ps [-e] [-c|-l] [-L] [-h]\n\
         [-S inches_square] [-W inches_width] [-N inches_height] [file.pix]\n";
 
 int
-get_args(int argc, register char **argv)
+get_args( argc, argv )
+register char **argv;
 {
 	register int c;
 
@@ -127,7 +128,9 @@ get_args(int argc, register char **argv)
 }
 
 int
-main(int argc, char **argv)
+main( argc, argv )
+int	argc;
+char	**argv;
 {
 	FILE	*ofp = stdout;
 	int	num = 0;
@@ -188,10 +191,10 @@ main(int argc, char **argv)
 }
 
 void
-prolog(FILE *fp, char *name, int width, int height)
-    	    
-    	      
-   	              		/* in points */
+prolog( fp, name, width, height )
+FILE	*fp;
+char	*name;
+int	width, height;		/* in points */
 {
 	time_t	ltime;
 
@@ -231,7 +234,8 @@ prolog(FILE *fp, char *name, int width, int height)
 }
 
 void
-postlog(FILE *fp)
+postlog( fp )
+FILE	*fp;
 {
 	if( !encapsulated )
 		fputs( "%end(plot)\n", fp );
@@ -243,9 +247,9 @@ postlog(FILE *fp)
  * Print a byte in 2-character hexadecimal.
  */
 void
-hexout(FILE *fp, int byte)
-         
-         		/* 0 <= byte <= 255 */
+hexout(fp,byte)
+FILE *fp;
+int byte;		/* 0 <= byte <= 255 */
 {
 	int high, low;
 	static int symbol[16] = { '0', '1', '2', '3', '4', '5', '6',

@@ -49,7 +49,10 @@ RT_EXTERN(void rt_arbn_ifree, (struct rt_db_internal *ip) );
  *	!0	failure
  */
 int
-rt_arbn_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
+rt_arbn_prep( stp, ip, rtip )
+struct soltab		*stp;
+struct rt_db_internal	*ip;
+struct rt_i		*rtip;
 {
 	struct rt_arbn_internal	*aip;
 	vect_t		work;
@@ -143,7 +146,8 @@ rt_arbn_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
  *  			R T _ A R B N _ P R I N T
  */
 void
-rt_arbn_print(register const struct soltab *stp)
+rt_arbn_print( stp )
+register const struct soltab *stp;
 {
 }
 
@@ -159,7 +163,11 @@ rt_arbn_print(register const struct soltab *stp)
  *	>0	HIT
  */
 int
-rt_arbn_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
+rt_arbn_shot( stp, rp, ap, seghead )
+struct soltab		*stp;
+register struct xray	*rp;
+struct application	*ap;
+struct seg		*seghead;
 {
 	register struct rt_arbn_internal	*aip =
 		(struct rt_arbn_internal *)stp->st_specific;
@@ -230,12 +238,12 @@ rt_arbn_shot(struct soltab *stp, register struct xray *rp, struct application *a
  *			R T _ A R B N _ V S H O T
  */
 void
-rt_arbn_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
-             	               /* An array of solid pointers */
-           		       /* An array of ray pointers */
-                               /* array of segs (results returned) */
-   		 	       /* Number of ray/object pairs */
-                  	    
+rt_arbn_vshot( stp, rp, segp, n, ap )
+struct soltab	       *stp[]; /* An array of solid pointers */
+struct xray		*rp[]; /* An array of ray pointers */
+struct  seg            segp[]; /* array of segs (results returned) */
+int		 	    n; /* Number of ray/object pairs */
+struct application	*ap;
 {
 	rt_vstub( stp, rp, segp, n, ap );
 }
@@ -246,7 +254,10 @@ rt_arbn_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, st
  *  Given ONE ray distance, return the normal and entry/exit point.
  */
 void
-rt_arbn_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
+rt_arbn_norm( hitp, stp, rp )
+register struct hit *hitp;
+struct soltab *stp;
+register struct xray *rp;
 {
 	register struct rt_arbn_internal *aip =
 		(struct rt_arbn_internal *)stp->st_specific;
@@ -270,7 +281,10 @@ rt_arbn_norm(register struct hit *hitp, struct soltab *stp, register struct xray
  *  indicate no curvature.
  */
 void
-rt_arbn_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
+rt_arbn_curve( cvp, hitp, stp )
+register struct curvature *cvp;
+register struct hit *hitp;
+struct soltab *stp;
 {
 
 	bn_vec_ortho( cvp->crv_pdir, hitp->hit_normal );
@@ -286,7 +300,11 @@ rt_arbn_curve(register struct curvature *cvp, register struct hit *hitp, struct 
  *  v extends along the arb_V direction defined by Nx(B-A).
  */
 void
-rt_arbn_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
+rt_arbn_uv( ap, stp, hitp, uvp )
+struct application *ap;
+struct soltab *stp;
+register struct hit *hitp;
+register struct uvcoord *uvp;
 {
 	uvp->uv_u = uvp->uv_v = 0;
 	uvp->uv_du = uvp->uv_dv = 0;
@@ -296,7 +314,8 @@ rt_arbn_uv(struct application *ap, struct soltab *stp, register struct hit *hitp
  *			R T _ A R B N _ F R E E
  */
 void
-rt_arbn_free(register struct soltab *stp)
+rt_arbn_free( stp )
+register struct soltab *stp;
 {
 	register struct rt_arbn_internal *aip =
 		(struct rt_arbn_internal *)stp->st_specific;
@@ -317,7 +336,11 @@ rt_arbn_free(register struct soltab *stp)
  *  Note that the vectors will be drawn in no special order.
  */
 int
-rt_arbn_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_arbn_plot( vhead, ip, ttol, tol )
+struct bu_list		*vhead;
+struct rt_db_internal	*ip;
+const struct rt_tess_tol *ttol;
+const struct bn_tol	*tol;
 {
 	register struct rt_arbn_internal	*aip;
 	register int	i;
@@ -398,7 +421,7 @@ rt_arbn_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
  *			R T _ A R B N _ C L A S S
  */
 int
-rt_arbn_class(void)
+rt_arbn_class()
 {
 	return(0);
 }
@@ -419,7 +442,10 @@ struct arbn_edges
 #define		LOC(i,j)	i*(aip->neqn)+j
 
 static void
-Sort_edges(struct arbn_edges *edges, int *edge_count, const struct rt_arbn_internal *aip)
+Sort_edges( edges , edge_count , aip )
+struct arbn_edges *edges;
+int *edge_count;
+const struct rt_arbn_internal   *aip;
 {
 	int face;
 
@@ -493,7 +519,12 @@ Sort_edges(struct arbn_edges *edges, int *edge_count, const struct rt_arbn_inter
  *	 0	OK.  *r points to nmgregion that holds this tessellation.
  */
 int
-rt_arbn_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_arbn_tess( r, m, ip, ttol, tol )
+struct nmgregion	**r;
+struct model		*m;
+struct rt_db_internal	*ip;
+const struct rt_tess_tol *ttol;
+const struct bn_tol	*tol;
 {
 	LOCAL struct rt_arbn_internal	*aip;
 	struct shell		*s;
@@ -766,7 +797,11 @@ fail:
  *  Transform
  */
 int
-rt_arbn_import(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
+rt_arbn_import( ip, ep, mat, dbip )
+struct rt_db_internal		*ip;
+const struct bu_external	*ep;
+register const mat_t		mat;
+const struct db_i		*dbip;
 {
 	union record		*rp;
 	struct rt_arbn_internal	*aip;
@@ -819,7 +854,11 @@ rt_arbn_import(struct rt_db_internal *ip, const struct bu_external *ep, register
  *			R T _ A R B N _ E X P O R T
  */
 int
-rt_arbn_export(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
+rt_arbn_export( ep, ip, local2mm, dbip )
+struct bu_external		*ep;
+const struct rt_db_internal	*ip;
+double				local2mm;
+const struct db_i		*dbip;
 {
 	struct rt_arbn_internal	*aip;
 	union record		*rec;
@@ -876,7 +915,11 @@ rt_arbn_export(struct bu_external *ep, const struct rt_db_internal *ip, double l
  *  Transform
  */
 int
-rt_arbn_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
+rt_arbn_import5( ip, ep, mat, dbip )
+struct rt_db_internal		*ip;
+const struct bu_external	*ep;
+register const mat_t		mat;
+const struct db_i		*dbip;
 {
 	struct rt_arbn_internal	*aip;
 	register int		i;
@@ -935,7 +978,11 @@ rt_arbn_import5(struct rt_db_internal *ip, const struct bu_external *ep, registe
  *			R T _ A R B N _ E X P O R T 5
  */
 int
-rt_arbn_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
+rt_arbn_export5( ep, ip, local2mm, dbip )
+struct bu_external		*ep;
+const struct rt_db_internal	*ip;
+double				local2mm;
+const struct db_i		*dbip;
 {
 	struct rt_arbn_internal	*aip;
 	register int		i;
@@ -986,7 +1033,11 @@ rt_arbn_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
  *  Additional lines are indented one tab, and give parameter values.
  */
 int
-rt_arbn_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
+rt_arbn_describe( str, ip, verbose, mm2local )
+struct bu_vls		*str;
+const struct rt_db_internal	*ip;
+int			verbose;
+double			mm2local;
 {
 	register struct rt_arbn_internal	*aip =
 		(struct rt_arbn_internal *)ip->idb_ptr;
@@ -1018,7 +1069,8 @@ rt_arbn_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbos
  *  Free the storage associated with the rt_db_internal version of this solid.
  */
 void
-rt_arbn_ifree(struct rt_db_internal *ip)
+rt_arbn_ifree( ip )
+struct rt_db_internal	*ip;
 {
 	struct rt_arbn_internal	*aip;
 
@@ -1046,7 +1098,10 @@ rt_arbn_ifree(struct rt_db_internal *ip)
  */
 
 int
-rt_arbn_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const char *attr)
+rt_arbn_tclget( interp, intern, attr )
+Tcl_Interp			*interp;
+const struct rt_db_internal	*intern;
+const char			*attr;
 {
 	register struct rt_arbn_internal *arbn=(struct rt_arbn_internal *)intern->idb_ptr;
 	Tcl_DString	ds;
@@ -1119,7 +1174,11 @@ rt_arbn_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const ch
  */
 
 int
-rt_arbn_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, char **argv)
+rt_arbn_tcladjust( interp, intern, argc, argv )
+Tcl_Interp		*interp;
+struct rt_db_internal	*intern;
+int			argc;
+char			**argv;
 {
 	struct rt_arbn_internal *arbn;
 	unsigned char		*c;

@@ -25,7 +25,7 @@
 /* declarations to support use of getopt() system call */
 char *options = "w:n:s:L:H:O:S:V:D:f:co:v";
 extern char *optarg;
-extern int optind, opterr, getopt(int, char *const *, const char *);
+extern int optind, opterr, getopt();
 
 int do_convert = 1;
 char *progname = "(noname)";
@@ -56,7 +56,8 @@ xform(point_t t, point_t pt)
  *	U S A G E --- tell user how to invoke this program, then exit
  */
 void
-usage(char *s)
+usage(s)
+char *s;
 {
 	if (s) (void)fputs(s, stderr);
 
@@ -545,10 +546,12 @@ void (*terrain_func)() = func_fbm;
  *	P A R S E _ A R G S --- Parse through command line flags
  */
 int
-parse_args(int ac, char **av)
+parse_args(ac, av)
+int ac;
+char *av[];
 {
 	int  c;
-	char *strrchr(const char *, int);
+	char *strrchr();
 	double v;
 
 	if (  ! (progname=strrchr(*av, '/'))  )
@@ -628,7 +631,9 @@ parse_args(int ac, char **av)
  *	produce the noise field selected.  Write out binary in network order.
  */
 int
-main(int ac, char **av)
+main(ac,av)
+int ac;
+char *av[];
 {
 	int arg_count;
 	unsigned short *buf;

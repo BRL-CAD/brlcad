@@ -68,7 +68,9 @@ static struct mem_map *rt_mem_freemap = MAP_NULL;	/* Freelist of buffers */
  *	Algorithm is first fit.
  */
 unsigned long
-rt_memalloc(struct mem_map **pp, register unsigned int size)
+rt_memalloc( pp, size )
+struct mem_map **pp;
+register unsigned size;
 {
 	register struct mem_map *prevp = MAP_NULL;
 	register struct mem_map *curp;
@@ -115,7 +117,9 @@ rt_memalloc(struct mem_map **pp, register unsigned int size)
  *	Algorithm is BEST fit.
  */
 struct mem_map *
-rt_memalloc_nosplit(struct mem_map **pp, register unsigned int size)
+rt_memalloc_nosplit( pp, size )
+struct mem_map **pp;
+register unsigned size;
 {
 	register struct mem_map *prevp = MAP_NULL;
 	register struct mem_map *curp;
@@ -163,7 +167,10 @@ rt_memalloc_nosplit(struct mem_map **pp, register unsigned int size)
  *	Free space can be split
  */
 unsigned long
-rt_memget(struct mem_map **pp, register unsigned int size, unsigned int place)
+rt_memget( pp, size, place )
+struct mem_map **pp;
+register unsigned int size;
+unsigned int place;
 {
 	register struct mem_map *prevp, *curp;
 	unsigned int addr;
@@ -216,7 +223,10 @@ rt_memget(struct mem_map **pp, register unsigned int size, unsigned int place)
  *		Caller is responsible for returning unused portion.
  */
 unsigned long
-rt_memget_nosplit(struct mem_map **pp, register unsigned int size, unsigned int place)
+rt_memget_nosplit( pp, size, place )
+struct mem_map **pp;
+register unsigned int size;
+unsigned int place;
 {
 	register struct mem_map *prevp, *curp;
 
@@ -262,7 +272,10 @@ rt_memget_nosplit(struct mem_map **pp, register unsigned int size, unsigned int 
  *	or changing addresses.  Other wrap-around conditions are flagged.
  */
 void
-rt_memfree(struct mem_map **pp, unsigned int size, long unsigned int addr)
+rt_memfree( pp, size, addr )
+struct mem_map **pp;
+unsigned size;
+unsigned long addr;
 {
 	register int type = 0;
 	register struct mem_map *prevp = MAP_NULL;
@@ -353,7 +366,8 @@ rt_memfree(struct mem_map **pp, unsigned int size, long unsigned int addr)
  *  the freelist.
  */
 void
-rt_mempurge(struct mem_map **pp)
+rt_mempurge( pp )
+struct mem_map **pp;
 {
 	register struct mem_map *prevp = MAP_NULL;
 	register struct mem_map *curp;
@@ -378,7 +392,8 @@ rt_mempurge(struct mem_map **pp)
  *  Print a memory chain.
  */
 void
-rt_memprint(struct mem_map **pp)
+rt_memprint( pp )
+struct mem_map **pp;
 {
 	register struct mem_map *curp;
 
@@ -393,7 +408,7 @@ rt_memprint(struct mem_map **pp)
  *  Return all the storage used by the rt_mem_freemap.
  */
 void
-rt_memclose(void)
+rt_memclose()
 {
 	register struct mem_map *mp;
 

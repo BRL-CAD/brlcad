@@ -41,15 +41,15 @@
 #include "libtermio.h"
 
 /* defined in input.c */
-extern void initInput(void);
+extern void initInput();
 
 #ifdef BWISH
 /* defined in libtk/(unix|win|mac)/tk(Unix|Win|Mac)Init.c */
 void TkpDisplayWarning();
 #endif
 
-void Cad_MainLoop(void);
-void Cad_Exit(int status);
+void Cad_MainLoop();
+void Cad_Exit();
 
 #ifdef BWISH
 #	define CAD_RCFILENAME "~/.bwishrc"
@@ -72,7 +72,11 @@ void Cad_Exit(int status);
  *      depending on the script being interpreted.
  */
 void
-Cad_Main(int argc, char **argv, Tcl_AppInitProc (*appInitProc), Tcl_Interp *interp)
+Cad_Main(argc, argv, appInitProc, interp)
+     int argc;
+     char **argv;
+     Tcl_AppInitProc *appInitProc;
+     Tcl_Interp *interp;
 {
 	char *filename = NULL;
 	char *args;
@@ -155,7 +159,7 @@ Cad_Main(int argc, char **argv, Tcl_AppInitProc (*appInitProc), Tcl_Interp *inte
 }
 
 void
-Cad_MainLoop(void)
+Cad_MainLoop()
 {
 #ifdef BWISH
 	while (Tk_GetNumMainWindows() > 0) {

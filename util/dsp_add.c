@@ -19,7 +19,7 @@
 /* declarations to support use of getopt() system call */
 char *options = "h";
 extern char *optarg;
-extern int optind, opterr, getopt(int, char *const *, const char *);
+extern int optind, opterr, getopt();
 
 char *progname = "(noname)";
 
@@ -45,7 +45,7 @@ void usage(char *s)
 int parse_args(int ac, char *av[])
 {
 	int  c;
-	char *strrchr(const char *, int);
+	char *strrchr();
 
 	if (  ! (progname=strrchr(*av, '/'))  )
 		progname = *av;

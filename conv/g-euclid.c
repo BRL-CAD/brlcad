@@ -72,7 +72,10 @@ struct facets
 };
 
 void
-fastf_print(FILE *fp_out, int length, fastf_t f)
+fastf_print( fp_out, length, f )
+FILE *fp_out;
+int length;
+fastf_t f;
 {
 	char buffer[128];
 	char *ptr;
@@ -108,7 +111,8 @@ fastf_print(FILE *fp_out, int length, fastf_t f)
 }
 
 void
-insert_id(int id)
+insert_id( id )
+int id;
 {
 	int i;
 
@@ -129,7 +133,11 @@ insert_id(int id)
 }
 
 static int
-select_region(register struct db_tree_state *tsp, struct db_full_path *pathp, const struct rt_comb_internal *combp, genptr_t client_data)
+select_region( tsp, pathp, combp, client_data )
+register struct db_tree_state	*tsp;
+struct db_full_path	*pathp;
+const struct rt_comb_internal *combp;
+genptr_t		client_data;
 {
 	if(verbose )
 		bu_log( "select_region: curr_id = %d, tsp->ts_regionid = %d\n" , curr_id , tsp->ts_regionid);
@@ -141,7 +149,11 @@ select_region(register struct db_tree_state *tsp, struct db_full_path *pathp, co
 }
 
 static int
-get_reg_id(register struct db_tree_state *tsp, struct db_full_path *pathp, const struct rt_comb_internal *combp, genptr_t client_data)
+get_reg_id( tsp, pathp, combp, client_data )
+register struct db_tree_state	*tsp;
+struct db_full_path	*pathp;
+const struct rt_comb_internal *combp;
+genptr_t client_data;
 {
 	if( verbose )
 		bu_log( "get_reg_id: Adding id %d to list\n" , tsp->ts_regionid );
@@ -150,7 +162,11 @@ get_reg_id(register struct db_tree_state *tsp, struct db_full_path *pathp, const
 }
 
 static union tree *
-region_stub(register struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+region_stub( tsp, pathp, curtree, client_data )
+register struct db_tree_state	*tsp;
+struct db_full_path	*pathp;
+union tree		*curtree;
+genptr_t		client_data;
 {
 	bu_log( "region stub called, this shouldn't happen\n" );
 	rt_bomb( "region_stub\n" );
@@ -159,7 +175,11 @@ region_stub(register struct db_tree_state *tsp, struct db_full_path *pathp, unio
 }
 
 static union tree *
-leaf_stub(struct db_tree_state *tsp, struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data)
+leaf_stub( tsp, pathp, ip, client_data )
+struct db_tree_state    *tsp;
+struct db_full_path     *pathp;
+struct rt_db_internal	*ip;
+genptr_t		client_data;
 {
 	bu_log( "leaf stub called, this shouldn't happen\n" );
 	rt_bomb( "leaf_stub\n" );
@@ -168,7 +188,11 @@ leaf_stub(struct db_tree_state *tsp, struct db_full_path *pathp, struct rt_db_in
 }
 
 static void
-Write_euclid_face(const struct loopuse *lu, const int facet_type, const int regionid, const int face_number)
+Write_euclid_face( lu , facet_type , regionid , face_number )
+const struct loopuse *lu;
+const int facet_type;
+const int regionid;
+const int face_number;
 {
 	struct faceuse *fu;
 	struct edgeuse *eu;
@@ -217,7 +241,9 @@ Write_euclid_face(const struct loopuse *lu, const int facet_type, const int regi
 
 /*	Routine to write an nmgregion in the Euclid "decoded" format */
 static void
-Write_euclid_region(struct nmgregion *r, struct db_tree_state *tsp)
+Write_euclid_region( r , tsp )
+struct nmgregion *r;
+struct db_tree_state *tsp;
 {
 	struct shell *s;
 	struct facets *faces=NULL;
@@ -471,7 +497,9 @@ Write_euclid_region(struct nmgregion *r, struct db_tree_state *tsp)
  *			M A I N
  */
 int
-main(int argc, char **argv)
+main(argc, argv)
+int	argc;
+char	*argv[];
 {
 	int		i,j;
 	register int	c;
@@ -659,7 +687,11 @@ main(int argc, char **argv)
 *
 *  This routine must be prepared to run in parallel.
 */
-union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+union tree *do_region_end(tsp, pathp, curtree, client_data)
+register struct db_tree_state	*tsp;
+struct db_full_path	*pathp;
+union tree		*curtree;
+genptr_t		client_data;
 {
 	struct nmgregion	*r;
 	struct bu_list		vhead;

@@ -48,7 +48,7 @@ char	*xprefix = NULL;
 char	*yprefix = NULL;
 char	null_str = '\0';
 
-void	SimpleInput(void);
+void	SimpleInput();
 
 char usage[] = "\
 Usage: fbpoint [-h] [-x[prefix]] [-y[prefix]] [initx inity]\n";
@@ -69,7 +69,7 @@ q Q cr	QUIT\r\n\
 #define ctl(x)	(x&037)
 
 void
-SimpleInput(void)	/* ==== get keyboard input.	*/
+SimpleInput()	/* ==== get keyboard input.	*/
 {
 	register char ch;
 	static char c;
@@ -132,7 +132,8 @@ SimpleInput(void)	/* ==== get keyboard input.	*/
 }
 
 int
-main(int argc, char **argv)
+main(argc, argv)
+char **argv;
 {
 	int width, height;
 

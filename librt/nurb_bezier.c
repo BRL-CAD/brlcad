@@ -42,7 +42,10 @@
  *	1	Original surface was Bezier, only a copy was done.
  */
 int
-rt_nurb_bezier(struct bu_list *bezier_hd, const struct face_g_snurb *orig_surf, struct resource *res)
+rt_nurb_bezier( bezier_hd, orig_surf, res )
+struct bu_list		*bezier_hd;
+const struct face_g_snurb	*orig_surf;
+struct resource *res;
 {
 	struct face_g_snurb	*s;
 	int		dir;
@@ -75,7 +78,8 @@ rt_nurb_bezier(struct bu_list *bezier_hd, const struct face_g_snurb *orig_surf, 
 }
 
 int
-rt_bez_check(const struct face_g_snurb *srf)
+rt_bez_check( srf )
+const struct face_g_snurb * srf;
 {
 	NMG_CK_SNURB(srf);
 
@@ -97,7 +101,8 @@ rt_bez_check(const struct face_g_snurb *srf)
  */
 
 int
-nurb_crv_is_bezier(const struct edge_g_cnurb *crv)
+nurb_crv_is_bezier( crv )
+const struct edge_g_cnurb *crv;
 {
 	int i;
 	fastf_t knot_min, knot_max;
@@ -126,7 +131,9 @@ nurb_crv_is_bezier(const struct edge_g_cnurb *crv)
  */
 
 void
-nurb_c_to_bezier(struct bu_list *clist, struct edge_g_cnurb *crv)
+nurb_c_to_bezier( clist, crv )
+struct bu_list *clist;
+struct edge_g_cnurb *crv;
 {
 	fastf_t knot_min, knot_max;
 	int i;

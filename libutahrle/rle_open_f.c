@@ -43,7 +43,8 @@
  * 
  */
 FILE *
-rle_open_f_noexit(char *prog_name, char *file_name, char *mode)
+rle_open_f_noexit( prog_name, file_name, mode ) 
+char *prog_name, *file_name, *mode;
 {
     FILE *fp;
     char *err_str;
@@ -137,7 +138,8 @@ err:
 }
 
 FILE *
-rle_open_f(char *prog_name, char *file_name, char *mode)
+rle_open_f( prog_name, file_name, mode )
+char *prog_name, *file_name, *mode;
 {
     FILE *fp;
 

@@ -45,27 +45,27 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "wdb.h"
 
 /* defined in read.c */
-extern int getline(register char *cp, int buflen, char *title);
-extern int getint(char *cp, int start, int len);
-extern void namecvt(register int n, register char *cp, int c);
+extern int getline();
+extern int getint();
+extern void namecvt();
 
 /* defined in cvt.c */
-extern void col_pr(char *str);
+extern void col_pr();
 
 /* defined in solid.c */
-extern int read_arbn(char *name);
+extern int read_arbn();
 
 extern struct rt_wdb	*outfp;
 extern int	version;
 extern int	verbose;
 
-extern double	getdouble(char *cp, int start, int len);
+extern double	getdouble();
 extern int	sol_total, sol_work;
 
 char	scard[132];			/* Solid card buffer area */
 
-void	trim_trail_spaces(register char *cp);
-void	eat(int count);
+void	trim_trail_spaces();
+void	eat();
 
 /*
  *			G E T S O L D A T A
@@ -78,7 +78,10 @@ void	eat(int count);
  *	-1	failure
  */
 int
-getsoldata(double *dp, int num, int solid_num)
+getsoldata( dp, num, solid_num )
+double	*dp;
+int	num;
+int	solid_num;
 {
 	int	cd;
 	double	*fp;
@@ -128,7 +131,10 @@ getsoldata(double *dp, int num, int solid_num)
  *	-1	failure
  */
 int
-getxsoldata(double *dp, int num, int solid_num)
+getxsoldata( dp, num, solid_num )
+double	*dp;
+int	num;
+int	solid_num;
 {
 	int	cd;
 	double	*fp;
@@ -171,7 +177,8 @@ getxsoldata(double *dp, int num, int solid_num)
  *			T R I M _ T R A I L _ S P A C E S
  */
 void
-trim_trail_spaces(register char *cp)
+trim_trail_spaces( cp )
+register char	*cp;
 {
 	register char	*ep;
 
@@ -191,7 +198,7 @@ trim_trail_spaces(register char *cp)
  *	 1	EOF
  */
 int
-getsolid(void)
+getsolid()
 {
 	char	given_solid_num[16];
 	char	solid_type[16];
@@ -675,7 +682,8 @@ ell1:
 }
 
 int
-read_arbn(char *name)
+read_arbn( name )
+char	*name;
 {
 	int	npt;			/* # vertex pts to be read in */
 	int	npe;			/* # planes from 3 vertex points */
@@ -985,7 +993,8 @@ next_k:				;
  *  Eat the indicated number of input lines
  */
 void
-eat(int count)
+eat( count )
+int	count;
 {
 	char	lbuf[132];
 	int	i;

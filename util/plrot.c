@@ -45,7 +45,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #define	putsi(s) {putchar(s); putchar((s)>>8);}
 
-double	getdouble(FILE *fp);
+double	getdouble();
 
 char	cbuf[48];		/* COPY and SKIP macro buffer */
 
@@ -63,9 +63,9 @@ point_t	forced_space_min, forced_space_max;	/* forced space */
 int	rpp;			/* flag: compute new center values */
 int	Mflag;			/* flag: don't rebound space rpp */
 
-void	dofile(FILE *fp), copy_string(FILE *fp);
-void	two_coord_out(FILE *fp, fastf_t *m), three_coord_out(FILE *fp, fastf_t *m);
-void	two_dcoord_out(FILE *fp, fastf_t *m), three_dcoord_out(FILE *fp, fastf_t *m);
+void	dofile(), copy_string();
+void	two_coord_out(), three_coord_out();
+void	two_dcoord_out(), three_dcoord_out();
 
 static char usage[] = "\
 Usage: plrot [options] [file1 ... fileN] > file.plot\n\
@@ -90,7 +90,8 @@ Usage: plrot [options] [file1 ... fileN] > file.plot\n\
  *	In all cases, sets space_min and space_max.
  */
 int
-model_rpp(const fastf_t *min, const fastf_t *max)
+model_rpp( min, max )
+const point_t	min, max;
 {
 
 	if( space_set )  {
@@ -168,7 +169,8 @@ model_rpp(const fastf_t *min, const fastf_t *max)
 
 
 int
-getshort(FILE *fp)
+getshort( fp )
+FILE	*fp;
 {
 	register long	v, w;
 
@@ -185,7 +187,8 @@ getshort(FILE *fp)
 
 
 int
-get_args(int argc, register char **argv)
+get_args( argc, argv )
+register char **argv;
 {
 	register int c;
 	mat_t	tmp, m;
@@ -319,7 +322,9 @@ get_args(int argc, register char **argv)
  *			M A I N
  */
 int
-main(int argc, char **argv)
+main( argc, argv )
+int	argc;
+char	**argv;
 {
 	FILE	*fp=NULL;
 
@@ -355,7 +360,8 @@ main(int argc, char **argv)
  *			D O F I L E
  */
 void
-dofile(FILE *fp)
+dofile( fp )
+FILE	*fp;
 {
 	register int	c;
 
@@ -537,7 +543,8 @@ dofile(FILE *fp)
  *			C O P Y _ S T R I N G
  */
 void
-copy_string(FILE *fp)
+copy_string( fp )
+FILE	*fp;
 {
 	int	c;
 
@@ -549,7 +556,9 @@ copy_string(FILE *fp)
 /******* Coordinate Transforms / Output *******/
 
 void
-two_coord_out(FILE *fp, fastf_t *m)
+two_coord_out( fp, m )
+FILE	*fp;
+mat_t	m;
 {
 	point_t	p1;
 	short	p2[3];
@@ -566,7 +575,9 @@ two_coord_out(FILE *fp, fastf_t *m)
 }
 
 void
-three_coord_out(FILE *fp, fastf_t *m)
+three_coord_out( fp, m )
+FILE	*fp;
+mat_t	m;
 {
 	point_t	p1;
 	short	p2[3];
@@ -583,7 +594,9 @@ three_coord_out(FILE *fp, fastf_t *m)
 }
 
 void
-two_dcoord_out(FILE *fp, fastf_t *m)
+two_dcoord_out( fp, m )
+FILE	*fp;
+mat_t	m;
 {
 	unsigned char	buf[2*8];
 	double	p1[3];
@@ -600,7 +613,9 @@ two_dcoord_out(FILE *fp, fastf_t *m)
 }
 
 void
-three_dcoord_out(FILE *fp, fastf_t *m)
+three_dcoord_out( fp, m )
+FILE	*fp;
+mat_t	m;
 {
 	unsigned char	buf[3*8];
 	double	p1[3];
@@ -617,7 +632,8 @@ three_dcoord_out(FILE *fp, fastf_t *m)
 
 
 double
-getdouble(FILE *fp)
+getdouble( fp )
+FILE	*fp;
 {
 	double	d;
 	unsigned char	buf[8];

@@ -29,7 +29,7 @@ static const char RCSbundle[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "./debug.h"
 
-extern void	rt_plot_cell(union cutter *cutp, struct rt_shootray_status *ssp, struct bu_list *waiting_segs_hd, struct rt_i *rtip);		/* at end of file */
+extern void	rt_plot_cell();		/* at end of file */
 
 /*
  *			R T _ F I N D _ N U G R I D
@@ -37,13 +37,13 @@ extern void	rt_plot_cell(union cutter *cutp, struct rt_shootray_status *ssp, str
  *  Along the given axis, find which NUgrid cell this value lies in.
  *  Use method of binary subdivision.
  */
-extern int	rt_find_nugrid(struct nugridnode *nugnp, int axis, fastf_t val);
+extern int	rt_find_nugrid();
 
 
 /*
  *			R T _ A D V A N C E _ T O _ N E X T _ C E L L
  */
-extern const union cutter *rt_advance_to_next_cell(register struct rt_shootray_status *ssp);
+extern const union cutter *rt_advance_to_next_cell();
 
 /*
  *			R T _ S H O O T R A Y _ B U N D L E
@@ -76,7 +76,10 @@ extern const union cutter *rt_advance_to_next_cell(register struct rt_shootray_s
 /* XXX maybe parameter with NORM, UV, CURVE bits? */
 
 int
-rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays)
+rt_shootray_bundle( ap, rays, nrays )
+register struct application *ap;
+struct xray		*rays;
+int			nrays;
 {
 	struct rt_shootray_status	ss;
 	struct seg		new_segs;	/* from solid intersections */

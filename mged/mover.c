@@ -55,7 +55,9 @@ int	los_default = 100;	/* Line-of-sight estimate */
  * The object itself (solid or "leaf" combination) is relocated.
  */
 void
-moveHobj(register struct directory *dp, matp_t xlate)
+moveHobj( dp, xlate )
+register struct directory *dp;
+matp_t xlate;
 {
 	struct rt_db_internal	intern;
 
@@ -90,7 +92,10 @@ moveHobj(register struct directory *dp, matp_t xlate)
  * a pointer to an object within the COMB, and modifications.
  */
 void
-moveHinstance(struct directory *cdp, struct directory *dp, matp_t xlate)
+moveHinstance( cdp, dp, xlate )
+struct directory *cdp;
+struct directory *dp;
+matp_t xlate;
 {
 	struct rt_db_internal	intern;
 	struct rt_comb_internal	*comb;

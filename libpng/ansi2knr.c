@@ -281,8 +281,8 @@ BY ANY OTHER PARTY.
      extern char *malloc();
      extern void free();
 #  else
-     extern char *malloc(size_t);
-     extern int free(void *);
+     extern char *malloc();
+     extern int free();
 #  endif
 # endif
 
@@ -312,14 +312,16 @@ BY ANY OTHER PARTY.
 #define isidfirstchar(ch) (is_alpha(ch) || (ch) == '_')
 
 /* Forward references */
-char *skipspace(register char *p, register int dir);
-int writeblanks(char *start, char *end);
-int test1(char *buf);
-int convert1(char *buf, FILE *out, int header, int convert_varargs);
+char *skipspace();
+int writeblanks();
+int test1();
+int convert1();
 
 /* The main program */
 int
-main(int argc, char **argv)
+main(argc, argv)
+    int argc;
+    char *argv[];
 {	FILE *in, *out;
 #define bufsize 5000			/* arbitrary size */
 	char *buf;
@@ -425,9 +427,9 @@ wl:			fputs(buf, out);
 
 /* Skip over space and comments, in either direction. */
 char *
-skipspace(register char *p, register int dir)
-                     
-                     			/* 1 for forward, -1 for backward */
+skipspace(p, dir)
+    register char *p;
+    register int dir;			/* 1 for forward, -1 for backward */
 {	for ( ; ; )
 	   {	while ( is_space(*p) )
 		  p += dir;
@@ -449,7 +451,9 @@ skipspace(register char *p, register int dir)
  * Don't overwrite end-of-line characters.
  */
 int
-writeblanks(char *start, char *end)
+writeblanks(start, end)
+    char *start;
+    char *end;
 {	char *p;
 	for ( p = start; p < end; p++ )
 	  if ( *p != '\r' && *p != '\n' )
@@ -471,7 +475,8 @@ writeblanks(char *start, char *end)
  * prototypes, and confuse the algorithms.
  */
 int
-test1(char *buf)
+test1(buf)
+    char *buf;
 {	register char *p = buf;
 	char *bend;
 	char *endfn;
@@ -522,11 +527,11 @@ test1(char *buf)
 
 /* Convert a recognized function definition or header to K&R syntax. */
 int
-convert1(char *buf, FILE *out, int header, int convert_varargs)
-              
-              
-               			/* Boolean */
-                        	/* Boolean */
+convert1(buf, out, header, convert_varargs)
+    char *buf;
+    FILE *out;
+    int header;			/* Boolean */
+    int convert_varargs;	/* Boolean */
 {	char *endfn;
 	register char *p;
 	char **breaks;

@@ -40,11 +40,11 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
  *  This "C" interface expects arrays of INTs.
  */
 void
-tp_i2list(register FILE *fp, register int *x, register int *y, register int npoints)
-             	    
-            	   			/* array of points */
-            	   			/* array of points */
-            	        
+tp_i2list( fp, x, y, npoints )
+register FILE	*fp;
+register int	*x;			/* array of points */
+register int	*y;			/* array of points */
+register int	npoints;
 {
 	if( npoints <= 0 )
 		return;
@@ -63,11 +63,11 @@ tp_i2list(register FILE *fp, register int *x, register int *y, register int npoi
  *  This "C" interface expects arrays of DOUBLES.
  */
 void
-tp_2list(register FILE *fp, register double *x, register double *y, register int npoints)
-             	    
-               	   			/* array of points */
-               	   			/* array of points */
-            	        
+tp_2list( fp, x, y, npoints )
+register FILE	*fp;
+register double	*x;			/* array of points */
+register double	*y;			/* array of points */
+register int	npoints;
 {
 	if( npoints <= 0 )
 		return;
@@ -99,7 +99,12 @@ int		*n;
  *			T P _ 3 L I S T
  */
 void
-tp_3list(FILE *fp, register double *x, register double *y, register double *z, register int npoints)
+tp_3list( fp, x, y, z, npoints )
+FILE		*fp;
+register double	*x;
+register double	*y;
+register double	*z;
+register int	npoints;
 {
 	if( npoints <= 0 )
 		return;
@@ -151,15 +156,15 @@ int		*n;
  *	3	Draw line and marks
  */
 void
-tp_2mlist(FILE *fp, register double *x, register double *y, int npoints, int flag, int mark, int interval, double size)
-    		    
-               	   
-               	   			/* arrays of points */
-   		        
-   		     			/* TP_MARK|TP_LINE */
-   		     			/* marker character to use */
-   		         		/* marker drawn every N points */
-      		     			/* marker size */
+tp_2mlist( fp, x, y, npoints, flag, mark, interval, size )
+FILE		*fp;
+register double	*x;
+register double	*y;			/* arrays of points */
+int		npoints;
+int		flag;			/* TP_MARK|TP_LINE */
+int		mark;			/* marker character to use */
+int		interval;		/* marker drawn every N points */
+double		size;			/* marker size */
 {
 	register int i;			/* index variable */
 	register int counter;		/* interval counter */

@@ -48,11 +48,13 @@ fastf_t magic_factor = 1.0;
 #define	END	2
 #define STOP	3
 
-main(int argc, char **argv)
+main(argc,argv)
+int argc;
+char **argv;
 {
 	int count, status, num_read;
 	fastf_t point0[4],point1[4],point2[4],point3[4], yaw, pch, rll;
-	fastf_t f_prm_0(fastf_t x0, fastf_t x1, fastf_t x2, fastf_t h), f_prm_1(fastf_t x0, fastf_t x1, fastf_t x2, fastf_t h), f_prm_2(fastf_t x0, fastf_t x1, fastf_t x2, fastf_t h);
+	fastf_t f_prm_0(), f_prm_1(), f_prm_2();
 
 	VSETALL(point0,0.0);
 	VSETALL(point1,0.0);
@@ -106,11 +108,13 @@ main(int argc, char **argv)
 }
 
 
-get_orientation(fastf_t *p0, fastf_t *p1, fastf_t *p2, fastf_t (*function) (/* ??? */), fastf_t *p_yaw, fastf_t *p_pch, fastf_t *p_rll)
+get_orientation(p0,p1,p2,function, p_yaw, p_pch, p_rll)
+fastf_t p0[4],p1[4],p2[4], *p_yaw, *p_pch, *p_rll;
+fastf_t (*function)();
 {
 	int i;
 	fastf_t step,vel[3],accel[3];
-	fastf_t f_double_prm(fastf_t x0, fastf_t x1, fastf_t x2, fastf_t h),xyz2yaw(fastf_t *d),xyz2pch(fastf_t *d),bank(fastf_t *acc, fastf_t *vel);
+	fastf_t f_double_prm(),xyz2yaw(),xyz2pch(),bank();
 
 	static fastf_t last_yaw, last_pch, last_rll;
 	static int not_first_time, upside_down;
@@ -142,7 +146,8 @@ get_orientation(fastf_t *p0, fastf_t *p1, fastf_t *p2, fastf_t (*function) (/* ?
 }
 
 /* determine the yaw of the given direction vector */
-fastf_t	xyz2yaw(fastf_t *d)
+fastf_t	xyz2yaw(d)
+fastf_t	d[3];
 {
 	fastf_t yaw;
 	yaw = RTOD*atan2(d[1],d[0]);
@@ -151,7 +156,8 @@ fastf_t	xyz2yaw(fastf_t *d)
 }
 
 /* determine the pitch of the given direction vector */
-fastf_t	xyz2pch(fastf_t *d)
+fastf_t	xyz2pch(d)
+fastf_t	d[3];
 {
 	fastf_t x;
 	x = sqrt(d[0]*d[0] + d[1]*d[1]);
@@ -164,7 +170,8 @@ fastf_t	xyz2pch(fastf_t *d)
 	Algorithm: the bank angle is proportional to the cross product
 	of the horizontal velocity and horizontal acceleration, up to a 
 	maximum bank of 90 degrees in either direction. */
-fastf_t bank(fastf_t *acc, fastf_t *vel)
+fastf_t bank(acc,vel)
+fastf_t acc[3],vel[3];
 {
 	fastf_t cross;
 
@@ -176,26 +183,30 @@ fastf_t bank(fastf_t *acc, fastf_t *vel)
 }
 
 /* given f(t), f(t+h), f(t+2h), and h, calculate f'(t) */
-fastf_t f_prm_0(fastf_t x0, fastf_t x1, fastf_t x2, fastf_t h)
+fastf_t f_prm_0(x0,x1,x2,h)
+fastf_t x0,x1,x2,h;
 {
 	return  -(3.0*x0 - 4.0*x1 + x2)/(2*h);
 }
 
 /* given f(t), f(t+h), f(t+2h), and h, calculate f'(t+h) */
-fastf_t f_prm_1(fastf_t x0, fastf_t x1, fastf_t x2, fastf_t h)
+fastf_t f_prm_1(x0,x1,x2,h)
+fastf_t x0,x1,x2,h;
 {
 	return (x2 - x0)/(2*h);
 }
 
 /* given f(t), f(t+h), f(t+2h), and h, calculate f'(t+2h) */
-fastf_t f_prm_2(fastf_t x0, fastf_t x1, fastf_t x2, fastf_t h)
+fastf_t f_prm_2(x0,x1,x2,h)
+fastf_t x0,x1,x2,h;
 {
 	return (x0 - 4.0*x1 + 3.0*x2)/(2*h);
 }
 
 
 /* given f(t), f(t+h), f(t+2*h),  and h, calculate f'' */
-fastf_t f_double_prm(fastf_t x0, fastf_t x1, fastf_t x2, fastf_t h)
+fastf_t f_double_prm(x0,x1,x2,h)
+fastf_t x0,x1,x2,h;
 {
 	return (x0 - 2.0*x1 + x2)/(h*h);
 }
@@ -203,7 +214,9 @@ fastf_t f_double_prm(fastf_t x0, fastf_t x1, fastf_t x2, fastf_t h)
 
 /* code to read command line arguments*/
 #define OPT_STR "f:p:r"
-int get_args(int argc, char **argv)
+int get_args(argc,argv)
+int argc;
+char **argv;
 {
 	int c;
 	while ( (c=bu_getopt(argc,argv,OPT_STR)) != EOF) {

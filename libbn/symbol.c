@@ -47,12 +47,12 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
  *			T P _ 3 S Y M B O L
  */
 void
-tp_3symbol(FILE *fp, char *string, fastf_t *origin, fastf_t *rot, double scale)
-    	    
-    	        		/* string of chars to be plotted */
-       	       			/* lower left corner of 1st char */
-     	    			/* Transform matrix (WARNING: may xlate) */
-      	      			/* scale factor to change 1x1 char sz */
+tp_3symbol( fp, string, origin, rot, scale )
+FILE	*fp;
+char	*string;		/* string of chars to be plotted */
+point_t	origin;			/* lower left corner of 1st char */
+mat_t	rot;			/* Transform matrix (WARNING: may xlate) */
+double	scale;			/* scale factor to change 1x1 char sz */
 {
 	register unsigned char *cp;
 	double	offset;			/* offset of char from given x,y */
@@ -125,13 +125,13 @@ tp_3symbol(FILE *fp, char *string, fastf_t *origin, fastf_t *rot, double scale)
  *			T P _ 2 S Y M B O L
  */
 void
-tp_2symbol(FILE *fp, char *string, double x, double y, double scale, double theta)
-    	    
-    	        		/* string of chars to be plotted */
-      	  			/* x,y of lower left corner of 1st char */
-      	  
-      	      			/* scale factor to change 1x1 char sz */
-      	      			/* degrees ccw from X-axis */
+tp_2symbol( fp, string, x, y, scale, theta )
+FILE	*fp;
+char	*string;		/* string of chars to be plotted */
+double	x;			/* x,y of lower left corner of 1st char */
+double	y;
+double	scale;			/* scale factor to change 1x1 char sz */
+double	theta;			/* degrees ccw from X-axis */
 {
 	mat_t	mat;
 	vect_t	p;

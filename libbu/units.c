@@ -89,7 +89,8 @@ static const struct cvt_tab {
  *	>0.0	success
  */
 double
-bu_units_conversion(const char *str)
+bu_units_conversion(str)
+const char	*str;
 {
 	register char	*ip;
 	register int	c;
@@ -137,7 +138,8 @@ bu_units_conversion(const char *str)
  *	NULL	No known unit matches this conversion factor.
  */
 const char *
-bu_units_string(register const double mm)
+bu_units_string(mm)
+register const double	mm;
 {
 	register const struct cvt_tab	*tp;
 
@@ -177,7 +179,8 @@ bu_units_string(register const double mm)
  *	>0	on success
  */
 double
-bu_mm_value(const char *s)
+bu_mm_value(s)
+const char *s;
 {
 	double v;
 	char *ptr;	
@@ -213,11 +216,11 @@ bu_mm_value(const char *s)
  *  to allow input of floating point values in other units.
  */
 void
-bu_mm_cvt(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value)
-                                    	     	/* structure description */
-                   			      	/* struct member name */
-    					      	/* begining of structure */
-          				       	/* string containing value */
+bu_mm_cvt( sdp, name, base, value )
+register const struct bu_structparse	*sdp;	/* structure description */
+register const char			*name;	/* struct member name */
+char					*base;	/* begining of structure */
+const char				*value;	/* string containing value */
 {
 	register double *p = (double *)(base+sdp->sp_offset);
 

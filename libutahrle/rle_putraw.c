@@ -64,7 +64,10 @@ static const char rcs_ident[] = "$Id$";
  *	[None]
  */
 void
-rle_putraw(rle_op **scanraw, int *nraw, rle_hdr *the_hdr)
+rle_putraw( scanraw, nraw, the_hdr )
+rle_op **scanraw;
+int *nraw;
+rle_hdr *the_hdr;
 {
     register int channel;
     int scan_x,

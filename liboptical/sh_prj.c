@@ -68,11 +68,11 @@ struct prj_specific {
  *
  */
 static void 
-persp_hook(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value)
-                                    	     	/* structure description */
-                   			      	/* struct member name */
-    					      	/* begining of structure */
-          				       	/* string containing value */
+persp_hook( sdp, name, base, value )
+register const struct bu_structparse	*sdp;	/* structure description */
+register const char			*name;	/* struct member name */
+char					*base;	/* begining of structure */
+const char				*value;	/* string containing value */
 {
 	struct img_specific *img_sp = (struct img_specific *)base;
 
@@ -96,11 +96,11 @@ persp_hook(register const struct bu_structparse *sdp, register const char *name,
  *
  */
 static void 
-dimen_hook(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value)
-                                    	     	/* structure description */
-                   			      	/* struct member name */
-    					      	/* begining of structure */
-          				       	/* string containing value */
+dimen_hook( sdp, name, base, value )
+register const struct bu_structparse	*sdp;	/* structure description */
+register const char			*name;	/* struct member name */
+char					*base;	/* begining of structure */
+const char				*value;	/* string containing value */
 {
 	if (! strcmp("%f", sdp->sp_fmt)) {
 		fastf_t *f;
@@ -147,11 +147,11 @@ const char				*value;	/* string containing value */
  * XXX "orient" MUST ALWAYS BE THE LAST PARAMETER SPECIFIED FOR EACH IMAGE.
  */
 static void 
-orient_hook(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value)
-                                    	     	/* structure description */
-                   			      	/* struct member name */
-    					      	/* begining of structure */
-          				       	/* string containing value */
+orient_hook( sdp, name, base, value )
+register const struct bu_structparse	*sdp;	/* structure description */
+register const char			*name;	/* struct member name */
+char					*base;	/* begining of structure */
+const char				*value;	/* string containing value */
 {
 	struct prj_specific	*prj_sp;
 	struct img_specific	*img_sp = (struct img_specific *)base;
@@ -289,8 +289,8 @@ struct bu_structparse img_print_tab[] = {
 
 
 
-HIDDEN int	prj_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip), prj_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
-HIDDEN void	prj_print(register struct region *rp, char *dp), prj_free(char *cp);
+HIDDEN int	prj_setup(), prj_render();
+HIDDEN void	prj_print(), prj_free();
 
 /* The "mfuncs" structure defines the external interface to the shader.
  * Note that more than one shader "name" can be associated with a given
@@ -316,12 +316,12 @@ struct mfuncs prj_mfuncs[] = {
  *	Any shader-specific initialization should be done here.
  */
 HIDDEN int
-prj_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
-                      	    
-             		         
-    			      	/* pointer to reg_udata in *rp */
-             		     
-           		      	/* New since 4.4 release */
+prj_setup( rp, matparm, dpp, mfp, rtip)
+register struct region	*rp;
+struct bu_vls		*matparm;
+char			**dpp;	/* pointer to reg_udata in *rp */
+struct mfuncs		*mfp;
+struct rt_i		*rtip;	/* New since 4.4 release */
 {
 	struct prj_specific		*prj_sp;
 	struct img_specific		*img_sp;
@@ -433,7 +433,9 @@ prj_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct
  *	P R J _ P R I N T
  */
 HIDDEN void
-prj_print(register struct region *rp, char *dp)
+prj_print( rp, dp )
+register struct region *rp;
+char	*dp;
 {
 	struct prj_specific *prj_sp = (struct prj_specific *)dp;
 	struct img_specific *img_sp;
@@ -447,7 +449,8 @@ prj_print(register struct region *rp, char *dp)
  *	P R J _ F R E E
  */
 HIDDEN void
-prj_free(char *cp)
+prj_free( cp )
+char *cp;
 {
 	struct prj_specific *prj_sp = (struct prj_specific *)cp;
 
@@ -510,7 +513,11 @@ const point_t r_pt;
 }
 #endif
 static int
-project_point(fastf_t *sh_color, struct img_specific *img_sp, struct prj_specific *prj_sp, fastf_t *r_pt)
+project_point(sh_color, img_sp, prj_sp, r_pt)
+point_t sh_color;
+struct img_specific *img_sp;
+struct prj_specific *prj_sp;
+point_t r_pt;
 {
 	int x, y;
 	point_t sh_pt;
@@ -560,11 +567,11 @@ project_point(fastf_t *sh_color, struct img_specific *img_sp, struct prj_specifi
  *	structure.
  */
 int
-prj_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
-                  	    
-                	    
-                	     	/* defined in material.h */
-    			    	/* ptr to the shader-specific struct */
+prj_render( ap, pp, swp, dp )
+struct application	*ap;
+struct partition	*pp;
+struct shadework	*swp;	/* defined in material.h */
+char			*dp;	/* ptr to the shader-specific struct */
 {
 	register struct prj_specific *prj_sp =
 		(struct prj_specific *)dp;

@@ -34,19 +34,9 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "bu.h"
 
-struct uplot {
-	int	targ;	/* type of args */
-	int	narg;	/* number or args */
-	char	*desc;	/* description */
-	int	t3d;	/* non-zero if 3D */
-};
-
-void	putshort(short int s);
-void    putieee(double d);
-void    getstring(void);
-void	putargs(struct uplot *up);
-void    getargs(struct uplot *up);
-void	doscale(void);
+void	putshort(), putieee(), getstring();
+void	putargs(), getargs();
+void	doscale();
 
 #define	TBAD	0	/* no such command */
 #define TNONE	1	/* no arguments */
@@ -55,6 +45,12 @@ void	doscale(void);
 #define	TCHAR	4	/* unsigned chars */
 #define	TSTRING	5	/* linefeed terminated string */
 
+struct uplot {
+	int	targ;	/* type of args */
+	int	narg;	/* number or args */
+	char	*desc;	/* description */
+	int	t3d;	/* non-zero if 3D */
+};
 struct uplot uerror = { 0, 0, 0 };
 struct uplot letters[] = {
 /*A*/	{ 0, 0, 0, 0 },
@@ -117,7 +113,7 @@ struct uplot letters[] = {
 /*z*/	{ 0, 0, 0, 0 }
 };
 
-double	getieee(void);
+double	getieee();
 int	verbose;
 double	arg[6];			/* parsed plot command arguments */
 double	sp[6];			/* space command */
@@ -135,7 +131,9 @@ static char usage[] = "\
 Usage: pl-pl [-v] [-S] < unix_plot > unix_plot\n";
 
 int
-main(int argc, char **argv)
+main( argc, argv )
+int	argc;
+char	**argv;
 {
 	register int	c;
 	struct	uplot *up;
@@ -343,7 +341,7 @@ main(int argc, char **argv)
 
 
 void
-getstring(void)
+getstring()
 {
 	int	c;
 	char	*cp;
@@ -355,7 +353,7 @@ getstring(void)
 }
 
 short
-getshort(void)
+getshort()
 {
 	register long	v, w;
 
@@ -370,7 +368,7 @@ getshort(void)
 }
 
 double
-getieee(void)
+getieee()
 {
 	char	in[8];
 	double	d;
@@ -383,7 +381,8 @@ getieee(void)
 /*** Input args ***/
 
 void
-getargs(struct uplot *up)
+getargs( up )
+struct uplot *up;
 {
 	int	i;
 
@@ -411,7 +410,8 @@ getargs(struct uplot *up)
 /*** Output args ***/
 
 void
-putargs(struct uplot *up)
+putargs( up )
+struct uplot *up;
 {
 	int	i;
 
@@ -462,7 +462,8 @@ putargs(struct uplot *up)
 }
 
 void
-putshort(short int s)
+putshort( s )
+short s;
 {
 	/* For the sake of efficiency, we trust putc()
 	 * to write only one byte
@@ -472,7 +473,8 @@ putshort(short int s)
 }
 
 void
-putieee(double d)
+putieee( d )
+double	d;
 {
 	unsigned char	out[8];
 
@@ -481,7 +483,7 @@ putieee(double d)
 }
 
 void
-doscale(void)
+doscale()
 {
 	double	dx, dy, dz;
 	double	max;

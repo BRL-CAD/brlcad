@@ -70,8 +70,8 @@ struct bu_structparse tcl_parse_tab[] = {
 	{"",	0, (char *)0,	0,		BU_STRUCTPARSE_FUNC_NULL }
 };
 
-HIDDEN int	tcl_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip), tcl_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
-HIDDEN void	tcl_print(register struct region *rp, char *dp), tcl_free(char *cp);
+HIDDEN int	tcl_setup(), tcl_render();
+HIDDEN void	tcl_print(), tcl_free();
 
 /* The "mfuncs" structure defines the external interface to the shader.
  * Note that more than one shader "name" can be associated with a given
@@ -97,12 +97,12 @@ struct mfuncs tcl_mfuncs[] = {
  *	Any shader-specific initialization should be done here.
  */
 HIDDEN int
-tcl_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
-                      	    
-             		         
-    			      	/* pointer to reg_udata in *rp */
-             		     
-           		      	/* New since 4.4 release */
+tcl_setup( rp, matparm, dpp, mfp, rtip)
+register struct region	*rp;
+struct bu_vls		*matparm;
+char			**dpp;	/* pointer to reg_udata in *rp */
+struct mfuncs		*mfp;
+struct rt_i		*rtip;	/* New since 4.4 release */
 {
 	register struct tcl_specific	*tcl_sp;
 	int cpu;
@@ -164,7 +164,9 @@ tcl_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct
  *	T C L _ P R I N T
  */
 HIDDEN void
-tcl_print(register struct region *rp, char *dp)
+tcl_print( rp, dp )
+register struct region *rp;
+char	*dp;
 {
 	bu_struct_print( rp->reg_name, tcl_print_tab, (char *)dp );
 }
@@ -173,7 +175,8 @@ tcl_print(register struct region *rp, char *dp)
  *	T C L _ F R E E
  */
 HIDDEN void
-tcl_free(char *cp)
+tcl_free( cp )
+char *cp;
 {
 	bu_free( cp, "tcl_specific" );
 }
@@ -186,11 +189,11 @@ tcl_free(char *cp)
  *	structure.
  */
 int
-tcl_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
-                  	    
-                	    
-                	     	/* defined in material.h */
-    			    	/* ptr to the shader-specific struct */
+tcl_render( ap, pp, swp, dp )
+struct application	*ap;
+struct partition	*pp;
+struct shadework	*swp;	/* defined in material.h */
+char			*dp;	/* ptr to the shader-specific struct */
 {
 	register struct tcl_specific *tcl_sp =
 		(struct tcl_specific *)dp;

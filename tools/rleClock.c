@@ -47,26 +47,18 @@
 #include "rle.h"
 #include "./font.h"
 
-/*
- * Type definitions
- */
-
-typedef struct{
-    unsigned char red, green, blue;
-} color_t;
-
-void	lineDots(int x0, int y0, int x1, int y1, void (*func) (/* ??? */), int arg1, int arg2);
-void	ifImageSet(int i, int j, int value, color_t *color);
-void	drawHand(float place, float scale, float radius, int mask, int edge);
-void	rasterAddBits(int mask, int match, int value);
-void	polarLine(float r0, float a0, float r1, float a1, int arg1, int arg2);
-void	rasterWrite(FILE *fd);
-void	procargs(int argc, char **argv);
-void	usageExit(char *pgm);
-void	drawText(void);
-void	areaFlood(int firstX, int firstY, int mask, int match, int value);
-void	stackPush(int x, int y, int dir);
-int	stackPop(void);
+void	lineDots();
+void	ifImageSet();
+void	drawHand();
+void	rasterAddBits();
+void	polarLine();
+void	rasterWrite();
+void	procargs();
+void	usageExit();
+void	drawText();
+void	areaFlood();
+void	stackPush();
+int	stackPop();
 
 /*
  * Program parameters defaults
@@ -107,6 +99,14 @@ typedef char bool;
 #define RAST_BHAND_MASK 32
 #define RAST_TEXT 64
 #define RAST_TEXT_BACK 128
+
+/*
+ * Type definitions
+ */
+
+typedef struct{
+    unsigned char red, green, blue;
+} color_t;
 
 /*
  * Global variables
@@ -152,17 +152,19 @@ extern int Base[];
  * Forward declarations
  */
 
-int polarToX(float fRadius, float angle);
-int polarToY(float fRadius, float angle);
-float radians(float degrees);
-void setDot(int x, int y, int arg1, int arg2);
-rle_pixel **rasterAllocate(int height, int width);
-char *formatInterp(char *str);
-bool argGiven(char *argVar);
+int polarToX();
+int polarToY();
+float radians();
+void setDot();
+rle_pixel **rasterAllocate();
+char *formatInterp();
+bool argGiven();
 char **gargv;
 
 int
-main(int argc, char **argv)
+main(argc, argv)
+int	argc;
+char	*argv[];
 {
     int             i, j;
     float           theta;
@@ -284,7 +286,9 @@ main(int argc, char **argv)
     return 0;
 }
 void
-ifImageSet(int i, int j, int value, color_t *color)
+ifImageSet(i, j, value, color)
+int i, j, value;
+color_t *color;
 {
     if (Raster[i][j] & value) {
 	RedLine[i][j] = color->red;
@@ -294,7 +298,11 @@ ifImageSet(int i, int j, int value, color_t *color)
 }
 
 void
-drawHand(float place, float scale, float radius, int mask, int edge)
+drawHand(place, scale, radius, mask, edge)
+float place;
+float scale;
+float radius;
+int mask, edge;
 {
     float angle;
     angle = place / scale * 360;
@@ -312,7 +320,8 @@ drawHand(float place, float scale, float radius, int mask, int edge)
 }
 
 void
-rasterAddBits(int mask, int match, int value)
+rasterAddBits(mask, match, value)
+int mask, match, value;
 {
     int i, j;
 
@@ -325,7 +334,9 @@ rasterAddBits(int mask, int match, int value)
 }
 
 void
-polarLine(float r0, float a0, float r1, float a1, int arg1, int arg2)
+polarLine(r0, a0, r1, a1, arg1, arg2)
+float r0, a0, r1, a1;
+int arg1, arg2;
 {
 	lineDots(polarToX(r0, a0), 
 		 polarToY(r0, a0), 
@@ -343,7 +354,8 @@ polarLine(float r0, float a0, float r1, float a1, int arg1, int arg2)
  */
 
 void
-setDot(int x, int y, int arg1, int arg2)
+setDot(x, y, arg1, arg2)
+int x, y, arg1, arg2;
 {
     int i, j;
 
@@ -365,19 +377,24 @@ if(Debug)fprintf(stderr, "Setting %d, %d\n", x, y);
  */
 
 int
-polarToX(float fRadius, float angle)
+polarToX(fRadius, angle)
+float fRadius;
+float angle;
 {
     return (int)(fRadius * sin(radians(angle)) * XRadius) + XSize/2;
 }
 
 int
-polarToY(float fRadius, float angle)
+polarToY(fRadius, angle)
+float fRadius;
+float angle;
 {
     return (int)(fRadius * cos(radians(angle)) * YRadius) + YRadius;
 }
 
 float
-radians(float degrees)
+radians(degrees)
+float degrees;
 {
     return degrees/180.0 * 3.1415926;
 }
@@ -390,7 +407,8 @@ radians(float degrees)
  */
 
 rle_pixel **
-rasterAllocate(int height, int width)
+rasterAllocate(height, width)
+int height, width;
 {
     rle_pixel **new, *row;
     int i;
@@ -412,7 +430,8 @@ rasterAllocate(int height, int width)
  */
 
 void
-rasterWrite(FILE *fd)
+rasterWrite(fd)
+FILE *fd;
 {
     rle_pixel      *rows[4];
     int             i;
@@ -457,7 +476,10 @@ rasterWrite(FILE *fd)
  * This is why RIACS sent Nancy to grad school!
  */
 void
-lineDots(int x0, int y0, int x1, int y1, void (*func) (/* ??? */), int arg1, int arg2)
+lineDots(x0, y0, x1, y1, func, arg1, arg2)
+int x0, y0, x1, y1;
+void (*func)();
+int arg1, arg2;
 {
     int             e, x, y, delta_x, delta_y, tmp;
     bool            interchg = FALSE;
@@ -556,7 +578,9 @@ struct {
 };
 
 void
-procargs(int argc, char **argv)
+procargs(argc, argv)
+int argc;
+char *argv[];
 {
     int arg, i;
     color_t *color;
@@ -611,7 +635,8 @@ procargs(int argc, char **argv)
 	}
     }
 }
-bool argGiven(char *argVar)
+bool argGiven(argVar)
+char *argVar;
 {
     int i;
 
@@ -624,7 +649,8 @@ bool argGiven(char *argVar)
 }
 
 void
-usageExit(char *pgm)
+usageExit(pgm)
+char *pgm;
 {
     int             i;
 
@@ -665,7 +691,9 @@ usageExit(char *pgm)
  * in the font.
  */
 void
-charMinMaxWidth(char ch, int *min, int *max)
+charMinMaxWidth(ch, min, max)
+char ch;
+int *min, *max;
 {
     int epos, pos;
 
@@ -690,7 +718,9 @@ charMinMaxWidth(char ch, int *min, int *max)
     }
 }
 void
-charMinMaxHeight(char ch, int *min, int *max)
+charMinMaxHeight(ch, min, max)
+char ch;
+int *min, *max;
 {
     int epos, pos;
 
@@ -723,7 +753,8 @@ charMinMaxHeight(char ch, int *min, int *max)
  */
 
 char *
-formatInterp(char *str)
+formatInterp(str)
+char *str;
 {
     char *buf, *bufp;
     int state;
@@ -785,7 +816,7 @@ formatInterp(char *str)
 #define CHARPAD 25
 
 void
-drawText(void)
+drawText()
 {
     char           *string;
     int             i, j, xsize, ysize, min, max, basex;
@@ -868,7 +899,9 @@ int XMove[4] = {0, 1, 0, -1};
 int YMove[4] = {1, 0, -1, 0};
 
 void
-areaFlood(int firstX, int firstY, int mask, int match, int value)
+areaFlood(firstX, firstY, mask, match, value)
+int firstX, firstY;
+int mask, match, value;
 {
     register region_stack_t *sp;
 
@@ -899,7 +932,8 @@ areaFlood(int firstX, int firstY, int mask, int match, int value)
     }
 }
 void
-stackPush(int x, int y, int dir)
+stackPush(x, y, dir)
+int x, y, dir;
 {
     if (++Stack.top >= Stack.allocked) {
 	    Stack.allocked += 256;
@@ -911,7 +945,7 @@ if(Debug)fprintf(stderr, "Stack growing to %d\n", Stack.allocked);
 	Stack.s[Stack.top].dir = dir;
 }
 int
-stackPop(void)
+stackPop()
 {
 	Stack.top -= 1;
 	return Stack.top < 0;

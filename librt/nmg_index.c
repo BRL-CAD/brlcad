@@ -41,7 +41,8 @@ static const char RCSnmg_index[] = "@(#)$Header$ (BRL)";
  *	 -2	error:  unknown magic number
  */
 int
-nmg_index_of_struct(register const long int *p)
+nmg_index_of_struct( p )
+register const long	*p;
 {
 	switch(*p)  {
 	case NMG_MODEL_MAGIC:
@@ -112,7 +113,8 @@ nmg_index_of_struct(register const long int *p)
  *  Helper routine
  */
 static void
-nmg_mark_edge_g(long int *magic_p)
+nmg_mark_edge_g( magic_p )
+long	*magic_p;
 {
 	if( !magic_p )  rt_bomb("nmg_mark_edge_g bad magic\n");
 	switch( *magic_p )  {
@@ -141,7 +143,8 @@ nmg_mark_edge_g(long int *magic_p)
  *  which tended to blow their brains out on such a large subroutine.
  */
 void
-nmg_m_set_high_bit(struct model *m)
+nmg_m_set_high_bit( m )
+struct model	*m;
 {
 	struct nmgregion	*r;
 	struct shell		*s;
@@ -294,7 +297,9 @@ nmg_m_set_high_bit(struct model *m)
  *  the second pass can do less.
  */
 void
-nmg_m_reindex(struct model *m, register long int newindex)
+nmg_m_reindex( m, newindex )
+struct model	*m;
+register long	newindex;
 {
 	struct nmgregion	*r;
 	struct shell		*s;
@@ -462,7 +467,9 @@ nmg_m_reindex(struct model *m, register long int newindex)
  *
  */
 void
-nmg_vls_struct_counts(struct bu_vls *str, const struct nmg_struct_counts *ctr)
+nmg_vls_struct_counts( str, ctr )
+struct bu_vls			*str;
+const struct nmg_struct_counts	*ctr;
 {
 	BU_CK_VLS( str );
 
@@ -504,7 +511,9 @@ nmg_vls_struct_counts(struct bu_vls *str, const struct nmg_struct_counts *ctr)
  *			N M G _ P R _ S T R U C T _ C O U N T S
  */
 void
-nmg_pr_struct_counts(const struct nmg_struct_counts *ctr, const char *str)
+nmg_pr_struct_counts( ctr, str )
+const struct nmg_struct_counts	*ctr;
+const char			*str;
 {
 	struct bu_vls		vls;
 
@@ -525,7 +534,9 @@ nmg_pr_struct_counts(const struct nmg_struct_counts *ctr, const char *str)
  *	Caller is responsible for freeing it.
  */
 long **
-nmg_m_struct_count(register struct nmg_struct_counts *ctr, const struct model *m)
+nmg_m_struct_count( ctr, m )
+register struct nmg_struct_counts	*ctr;
+const struct model			*m;
 {
 	struct nmgregion	*r;
 	struct shell		*s;
@@ -719,7 +730,9 @@ nmg_m_struct_count(register struct nmg_struct_counts *ctr, const struct model *m
  *  Count 'em up, and print 'em out.
  */
 void
-nmg_struct_counts(const struct model *m, const char *str)
+nmg_struct_counts( m, str )
+const struct model	*m;
+const char		*str;
 {
 	struct nmg_struct_counts	cnts;
 	long	**tab;
@@ -738,7 +751,9 @@ nmg_struct_counts(const struct model *m, const char *str)
  *	model pointer is freed before return.
  */
 void
-nmg_merge_models(struct model *m1, struct model *m2)
+nmg_merge_models(m1, m2)
+struct model *m1;
+struct model *m2;
 {
 	struct nmgregion *r;
 
@@ -796,7 +811,8 @@ nmg_merge_models(struct model *m1, struct model *m2)
  *			N M G _ F I N D _ M A X _ I N D E X
  */
 long
-nmg_find_max_index(const struct model *m)
+nmg_find_max_index( m )
+const struct model *m;
 {
 	long			maxindex=0;
 	struct nmgregion	*r;

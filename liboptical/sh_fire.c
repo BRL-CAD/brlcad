@@ -170,8 +170,8 @@ struct bu_structparse fire_parse_tab[] = {
 	{"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 
-HIDDEN int	fire_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip), fire_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
-HIDDEN void	fire_print(register struct region *rp, char *dp), fire_free(char *cp);
+HIDDEN int	fire_setup(), fire_render();
+HIDDEN void	fire_print(), fire_free();
 
 /* The "mfuncs" structure defines the external interface to the shader.
  * Note that more than one shader "name" can be associated with a given
@@ -217,12 +217,12 @@ const double flame_colors[18][3] = {
  *	Any shader-specific initialization should be done here.
  */
 HIDDEN int
-fire_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
-                      	    
-             		         
-    			      	/* pointer to reg_udata in *rp */
-             		     
-           		      	/* New since 4.4 release */
+fire_setup( rp, matparm, dpp, mfp, rtip)
+register struct region	*rp;
+struct bu_vls		*matparm;
+char			**dpp;	/* pointer to reg_udata in *rp */
+struct mfuncs		*mfp;
+struct rt_i		*rtip;	/* New since 4.4 release */
 {
 	register struct fire_specific	*fire_sp;
 
@@ -287,7 +287,9 @@ fire_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struc
  *	F I R E _ P R I N T
  */
 HIDDEN void
-fire_print(register struct region *rp, char *dp)
+fire_print( rp, dp )
+register struct region *rp;
+char	*dp;
 {
 	bu_struct_print( rp->reg_name, fire_print_tab, (char *)dp );
 }
@@ -296,7 +298,8 @@ fire_print(register struct region *rp, char *dp)
  *	F I R E _ F R E E
  */
 HIDDEN void
-fire_free(char *cp)
+fire_free( cp )
+char *cp;
 {
 	bu_free( cp, "fire_specific" );
 }
@@ -309,11 +312,11 @@ fire_free(char *cp)
  *	structure.
  */
 int
-fire_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
-                  	    
-                	    
-                	     	/* defined in material.h */
-    			    	/* ptr to the shader-specific struct */
+fire_render( ap, pp, swp, dp )
+struct application	*ap;
+struct partition	*pp;
+struct shadework	*swp;	/* defined in material.h */
+char			*dp;	/* ptr to the shader-specific struct */
 {
 #define DEBUG_SPACE_PRINT(str, i_pt, o_pt) \
 	if (rdebug&RDEBUG_SHADE || fire_sp->fire_debug ) { \

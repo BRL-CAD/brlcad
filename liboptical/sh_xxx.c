@@ -115,8 +115,8 @@ struct bu_structparse xxx_parse_tab[] = {
 	{"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 
-HIDDEN int	xxx_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip), xxx_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
-HIDDEN void	xxx_print(register struct region *rp, char *dp), xxx_free(char *cp);
+HIDDEN int	xxx_setup(), xxx_render();
+HIDDEN void	xxx_print(), xxx_free();
 
 /* The "mfuncs" structure defines the external interface to the shader.
  * Note that more than one shader "name" can be associated with a given
@@ -147,12 +147,12 @@ struct mfuncs xxx_mfuncs[] = {
  *	-1	failure
  */
 HIDDEN int
-xxx_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
-                      	    
-             		         
-    			      	/* pointer to reg_udata in *rp */
-             		     
-           		      	/* New since 4.4 release */
+xxx_setup( rp, matparm, dpp, mfp, rtip)
+register struct region	*rp;
+struct bu_vls		*matparm;
+char			**dpp;	/* pointer to reg_udata in *rp */
+struct mfuncs		*mfp;
+struct rt_i		*rtip;	/* New since 4.4 release */
 {
 	register struct xxx_specific	*xxx_sp;
 	mat_t	tmp;
@@ -212,7 +212,9 @@ xxx_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct
  *	X X X _ P R I N T
  */
 HIDDEN void
-xxx_print(register struct region *rp, char *dp)
+xxx_print( rp, dp )
+register struct region *rp;
+char	*dp;
 {
 	bu_struct_print( rp->reg_name, xxx_print_tab, (char *)dp );
 }
@@ -221,7 +223,8 @@ xxx_print(register struct region *rp, char *dp)
  *	X X X _ F R E E
  */
 HIDDEN void
-xxx_free(char *cp)
+xxx_free( cp )
+char *cp;
 {
 	bu_free( cp, "xxx_specific" );
 }
@@ -234,11 +237,11 @@ xxx_free(char *cp)
  *	structure.
  */
 int
-xxx_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
-                  	    
-                	    
-                	     	/* defined in ../h/shadework.h */
-    			    	/* ptr to the shader-specific struct */
+xxx_render( ap, pp, swp, dp )
+struct application	*ap;
+struct partition	*pp;
+struct shadework	*swp;	/* defined in ../h/shadework.h */
+char			*dp;	/* ptr to the shader-specific struct */
 {
 	register struct xxx_specific *xxx_sp =
 		(struct xxx_specific *)dp;

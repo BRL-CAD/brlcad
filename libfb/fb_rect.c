@@ -39,7 +39,11 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
  *  particular display does not handle it.
  */
 int
-fb_sim_readrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
+fb_sim_readrect( ifp, xmin, ymin, width, height, pp )
+FBIO	*ifp;
+int	xmin, ymin;
+int	width, height;
+unsigned char	*pp;
 {
 	register int	y;
 	register int	tot;
@@ -73,7 +77,11 @@ fb_sim_readrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned c
  *  Clipping to the screen may reduce the total if caller was sloppy.
  */
 int
-fb_sim_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
+fb_sim_writerect( ifp, xmin, ymin, width, height, pp )
+FBIO	*ifp;
+int	xmin, ymin;
+int	width, height;
+const unsigned char	*pp;
 {
 	register int	y;
 	register int	tot;
@@ -99,7 +107,11 @@ fb_sim_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const uns
  */
 #define SIMBUF_SIZE	(24*1024)
 int
-fb_sim_bwreadrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
+fb_sim_bwreadrect( ifp, xmin, ymin, width, height, pp )
+FBIO	*ifp;
+int	xmin, ymin;
+int	width, height;
+unsigned char	*pp;
 {
 	register int	y;
 	register int	tot;
@@ -131,7 +143,11 @@ fb_sim_bwreadrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned
  *			F B _ S I M _ B W W R I T E R E C T
  */
 int
-fb_sim_bwwriterect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
+fb_sim_bwwriterect( ifp, xmin, ymin, width, height, pp )
+FBIO	*ifp;
+int	xmin, ymin;
+int	width, height;
+const unsigned char	*pp;
 {
 	register int	y;
 	register int	tot;

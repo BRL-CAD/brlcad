@@ -105,8 +105,8 @@ struct bu_structparse scloud_parse[] = {
 	{"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 
-HIDDEN int	scloud_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip), scloud_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp), tsplat_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
-HIDDEN void	scloud_print(register struct region *rp, char *dp), scloud_free(char *cp);
+HIDDEN int	scloud_setup(), scloud_render(), tsplat_render();
+HIDDEN void	scloud_print(), scloud_free();
 
 struct mfuncs scloud_mfuncs[] = {
 	{MF_MAGIC,	"scloud",	0,	MFI_HIT, MFF_PROC,
@@ -125,12 +125,12 @@ struct mfuncs scloud_mfuncs[] = {
  *	S C L O U D _ S E T U P
  */
 HIDDEN int
-scloud_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
-                           
-             	         
-    	      	/* pointer to reg_udata in *rp */
-             		     
-           		      
+scloud_setup( rp, matparm, dpp, mfp, rtip )
+register struct region *rp;
+struct bu_vls	*matparm;
+char	**dpp;	/* pointer to reg_udata in *rp */
+struct mfuncs		*mfp;
+struct rt_i		*rtip;
 {
 	register struct scloud_specific *scloud;
 	struct db_full_path full_path;
@@ -200,7 +200,9 @@ scloud_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, str
  *	S C L O U D _ P R I N T
  */
 HIDDEN void
-scloud_print(register struct region *rp, char *dp)
+scloud_print( rp, dp )
+register struct region *rp;
+char	*dp;
 {
 	(void)bu_struct_print( rp->reg_name, scloud_pr, (char *)dp );
 }
@@ -209,7 +211,8 @@ scloud_print(register struct region *rp, char *dp)
  *	S C L O U D _ F R E E
  */
 HIDDEN void
-scloud_free(char *cp)
+scloud_free( cp )
+char *cp;
 {
 	bu_free( cp, "scloud_specific" );
 }
@@ -223,7 +226,11 @@ scloud_free(char *cp)
  *	based upon noise value of surface spot.
  */
 int
-tsplat_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
+tsplat_render( ap, pp, swp, dp )
+struct application	*ap;
+struct partition	*pp;
+struct shadework	*swp;
+char	*dp;
 {
 	register struct scloud_specific *scloud_sp =
 		(struct scloud_specific *)dp;
@@ -255,7 +262,11 @@ tsplat_render(struct application *ap, struct partition *pp, struct shadework *sw
  *	S C L O U D _ R E N D E R
  */
 int
-scloud_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
+scloud_render( ap, pp, swp, dp )
+struct application	*ap;
+struct partition	*pp;
+struct shadework	*swp;
+char	*dp;
 {
 	register struct scloud_specific *scloud_sp =
 		(struct scloud_specific *)dp;

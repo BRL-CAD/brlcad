@@ -18,7 +18,7 @@
 #include<X11/Xlib.h>
 #include<X11/Xutil.h>
 
-main(void)
+main()
 {
    int ichoice;			/*  Choice.  */
    char *irX = "ir-X";		/*  Calls ir-X program.  */

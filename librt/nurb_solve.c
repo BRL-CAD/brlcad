@@ -37,12 +37,12 @@
  *  The solution is written into the solution[] array.
  */
 void
-rt_nurb_solve(fastf_t *mat_1, fastf_t *mat_2, fastf_t *solution, int dim, int coords)
-       	       		/* A and b array of the system Ax= b*/
-       	       
-       	          
-   	    		/* dimension of the matrix */
-   	       		/* Number of coordsinates for mat_2 and solution */
+rt_nurb_solve(mat_1, mat_2, solution, dim, coords)
+fastf_t	*mat_1;		/* A and b array of the system Ax= b*/
+fastf_t	*mat_2;
+fastf_t	*solution;
+int	dim;		/* dimension of the matrix */
+int	coords;		/* Number of coordsinates for mat_2 and solution */
 {
 	register int i, k;
 	fastf_t *y;
@@ -97,7 +97,10 @@ rt_nurb_solve(fastf_t *mat_1, fastf_t *mat_2, fastf_t *solution, int dim, int co
  *  Modifies both mat_1 and mat_2 values.
  */
 void
-rt_nurb_doolittle(fastf_t *mat_1, fastf_t *mat_2, int row, int coords)
+rt_nurb_doolittle(mat_1, mat_2,row, coords )
+fastf_t *mat_1, *mat_2;
+int row;
+int coords;
 {
 	register int i;
 	register int j;
@@ -190,11 +193,11 @@ rt_nurb_doolittle(fastf_t *mat_1, fastf_t *mat_2, int row, int coords)
 }
 
 void
-rt_nurb_forw_solve(const fastf_t *lu, const fastf_t *b, fastf_t *y, int n)		/* spl_solve lower trianglular matrix */
-                  
-                 
-           
-      
+rt_nurb_forw_solve(lu, b, y, n)		/* spl_solve lower trianglular matrix */
+const fastf_t *lu;
+const fastf_t *b;
+fastf_t *y;
+int n;
 {
 	register int i,j;
 	fastf_t tmp;
@@ -209,11 +212,11 @@ rt_nurb_forw_solve(const fastf_t *lu, const fastf_t *b, fastf_t *y, int n)		/* s
 }
 
 void
-rt_nurb_back_solve(const fastf_t *lu, const fastf_t *y, fastf_t *x, int n)		/* spl_solve upper triangular matrix */
-                  
-                 
-           
-      
+rt_nurb_back_solve( lu, y, x, n)		/* spl_solve upper triangular matrix */
+const fastf_t *lu;
+const fastf_t *y;
+fastf_t *x;
+int n;
 {
 	register int i,j;
 	fastf_t tmp;
@@ -229,7 +232,9 @@ rt_nurb_back_solve(const fastf_t *lu, const fastf_t *y, fastf_t *x, int n)		/* s
 }
 
 void
-rt_nurb_p_mat(const fastf_t *mat, int dim)
+rt_nurb_p_mat(mat, dim)
+const fastf_t * mat;
+int dim;
 {
 	int i;
 	

@@ -26,7 +26,10 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "fb.h"
 
 void
-cmap_crunch(register RGBpixel (*scan_buf), register int pixel_ct, ColorMap *cmap)
+cmap_crunch( scan_buf, pixel_ct, cmap )
+register RGBpixel	*scan_buf;
+register int		pixel_ct;
+ColorMap		*cmap;
 {
 	register unsigned short	*rp = cmap->cm_red;
 	register unsigned short	*gp = cmap->cm_green;

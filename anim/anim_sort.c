@@ -39,10 +39,12 @@
 int suppressed;		/* flag: suppress printing of 'clean;' commands */
 int incremental;	/* flag: order for incremental time resolution */
 
-int get_args(int argc, char **argv);
+int get_args();
 
 int
-main(int argc, char **argv)
+main(argc, argv)
+int argc;
+char **argv;
 {
 	int	length,frame_number, number, success, maxnum; 
 	int 	first_frame,spread,reserve; 
@@ -159,7 +161,9 @@ main(int argc, char **argv)
 
 #define OPT_STR "ci"
 
-int get_args(int argc, char **argv)
+int get_args(argc,argv)
+int argc;
+char **argv;
 {
 
         int c;

@@ -53,7 +53,9 @@ static unsigned char	line[512*3];
 static FILE	*fp;
 
 int
-main(int argc, char **argv)
+main( argc, argv )
+int argc;
+char **argv;
 {
 	register int i;
 

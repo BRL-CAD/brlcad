@@ -70,7 +70,9 @@ typedef FILE	*FILPTR;
 static char default_asciistr[] = "@BR*#$PX0woIcv:+!~\"., ";
 
 int
-main(int argc, char **argv)
+main(argc, argv)
+int  argc;
+char *argv[];
 {
     FILE   *infile;		/* Input file pointer. */
     char   *infnam = NULL;	/* Input file name. */

@@ -36,7 +36,9 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 /* Create a place holder for a nurb surface. */
 
 struct face_g_snurb *
-rt_nurb_new_snurb(int u_order, int v_order, int n_u, int n_v, int n_rows, int n_cols, int pt_type, struct resource *res)
+rt_nurb_new_snurb(u_order, v_order, n_u, n_v, n_rows, n_cols, pt_type, res)
+int u_order, v_order, n_u, n_v, n_rows, n_cols, pt_type;
+struct resource *res;
 {
 	register struct face_g_snurb * srf;
 	int pnum;
@@ -66,7 +68,8 @@ rt_nurb_new_snurb(int u_order, int v_order, int n_u, int n_v, int n_rows, int n_
 
 /* Create a place holder for a new nurb curve. */
 struct edge_g_cnurb *
-rt_nurb_new_cnurb(int order, int n_knots, int n_pts, int pt_type)
+rt_nurb_new_cnurb( order, n_knots, n_pts, pt_type)
+int order, n_knots, n_pts, pt_type;
 {
 	register struct edge_g_cnurb * crv;
 
@@ -97,7 +100,9 @@ rt_nurb_new_cnurb(int order, int n_knots, int n_pts, int pt_type)
  *  or use automatic variables to hold one.
  */
 void
-rt_nurb_clean_snurb(struct face_g_snurb *srf, struct resource *res)
+rt_nurb_clean_snurb( srf, res )
+struct face_g_snurb * srf;
+struct resource *res;
 {
 	NMG_CK_SNURB(srf);
 
@@ -117,7 +122,9 @@ rt_nurb_clean_snurb(struct face_g_snurb *srf, struct resource *res)
  *			R T _ N U R B _ F R E E _ S N U R B
  */
 void
-rt_nurb_free_snurb(struct face_g_snurb *srf, struct resource *res)
+rt_nurb_free_snurb( srf, res )
+struct face_g_snurb * srf;
+struct resource *res;
 {
 	NMG_CK_SNURB(srf);
 
@@ -140,7 +147,8 @@ rt_nurb_free_snurb(struct face_g_snurb *srf, struct resource *res)
  *  or use automatic variables to hold one.
  */
 void
-rt_nurb_clean_cnurb(struct edge_g_cnurb *crv)
+rt_nurb_clean_cnurb( crv )
+struct edge_g_cnurb * crv;
 {
 	NMG_CK_CNURB(crv);
 	bu_free( (char*)crv->k.knots, "rt_nurb_free_cnurb: knots");
@@ -159,7 +167,8 @@ rt_nurb_clean_cnurb(struct edge_g_cnurb *crv)
  *  Release a cnurb and all the storage that it references.
  */
 void
-rt_nurb_free_cnurb(struct edge_g_cnurb *crv)
+rt_nurb_free_cnurb( crv)
+struct edge_g_cnurb * crv;
 {
 	NMG_CK_CNURB(crv);
 	bu_free( (char*)crv->k.knots, "rt_nurb_free_cnurb: knots");
@@ -169,7 +178,8 @@ rt_nurb_free_cnurb(struct edge_g_cnurb *crv)
 }
 
 void
-rt_nurb_c_print(const struct edge_g_cnurb *crv)
+rt_nurb_c_print( crv)
+const struct edge_g_cnurb * crv;
 {
 	register fastf_t * ptr;
 	int i,j;
@@ -201,7 +211,9 @@ rt_nurb_c_print(const struct edge_g_cnurb *crv)
 }
 
 void
-rt_nurb_s_print(char *c, const struct face_g_snurb *srf)
+rt_nurb_s_print( c, srf )
+char * c;
+const struct face_g_snurb * srf;
 {
 
     bu_log("%s\n", c );
@@ -221,7 +233,8 @@ rt_nurb_s_print(char *c, const struct face_g_snurb *srf)
 }
 
 void
-rt_nurb_pr_kv(const struct knot_vector *kv)
+rt_nurb_pr_kv( kv )
+const struct knot_vector * kv;
 {
     register fastf_t * ptr = kv->knots;
     int i;
@@ -237,7 +250,8 @@ rt_nurb_pr_kv(const struct knot_vector *kv)
 }
 
 void
-rt_nurb_pr_mesh(const struct face_g_snurb *m)
+rt_nurb_pr_mesh( m )
+const struct face_g_snurb * m;
 {
 	int i,j,k;
 	fastf_t * m_ptr = m->ctl_points;
@@ -264,7 +278,8 @@ rt_nurb_pr_mesh(const struct face_g_snurb *m)
 }
 
 void
-rt_nurb_print_pt_type(int c)
+rt_nurb_print_pt_type(c)
+int c;
 {
 	int rat;
 

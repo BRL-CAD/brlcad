@@ -42,7 +42,7 @@
 /* Utah Raster Toolkit major version number. */
 #define URT_VERSION 	3.0
 
-void print_hdr(char *fname, rle_hdr *the_hdr, int rle_cnt), print_map(rle_hdr *the_hdr), print_codes(rle_hdr *the_hdr), print_brief_hdr(const char *fname, rle_hdr *the_hdr, int rle_cnt, int ncomment, char **comment_names);
+void print_hdr(), print_map(), print_codes(), print_brief_hdr();
 
 /*****************************************************************
  * TAG( main )
@@ -70,7 +70,9 @@ void print_hdr(char *fname, rle_hdr *the_hdr, int rle_cnt), print_map(rle_hdr *t
  */
 
 int
-main(int argc, char **argv)
+main( argc, argv )
+int argc;
+char **argv;
 {
     const char ** fname = NULL;
     const char *stdname = "-";
@@ -127,10 +129,10 @@ main(int argc, char **argv)
 		putchar( '\n' );
 
 	    if ( brief )
-		print_brief_hdr( (char *)the_file, &rle_dflt_hdr, rle_cnt,
+		print_brief_hdr( the_file, &rle_dflt_hdr, rle_cnt,
 				 cflag, comment_names );
 	    else
-		print_hdr( (char *)the_file, &rle_dflt_hdr, rle_cnt );
+		print_hdr( the_file, &rle_dflt_hdr, rle_cnt );
 	    if ( mflag )
 		print_map( &rle_dflt_hdr );
 	    if ( dbg_flag )
@@ -171,7 +173,10 @@ main(int argc, char **argv)
  *	[None]
  */
 void
-print_hdr(char *fname, rle_hdr *the_hdr, int rle_cnt)
+print_hdr( fname, the_hdr, rle_cnt )
+char *fname;
+rle_hdr *the_hdr;
+int rle_cnt;
 {
     register int i;
 
@@ -233,7 +238,11 @@ print_hdr(char *fname, rle_hdr *the_hdr, int rle_cnt)
  *	[None]
  */
 void
-print_brief_hdr(const char *fname, rle_hdr *the_hdr, int rle_cnt, int ncomment, char **comment_names)
+print_brief_hdr( fname, the_hdr, rle_cnt, ncomment, comment_names )
+char *fname;
+rle_hdr *the_hdr;
+int rle_cnt, ncomment;
+char **comment_names;
 {
     register int i;
 
@@ -305,7 +314,8 @@ print_brief_hdr(const char *fname, rle_hdr *the_hdr, int rle_cnt, int ncomment, 
  *	[None]
  */
 void
-print_map(rle_hdr *the_hdr)
+print_map( the_hdr )
+rle_hdr *the_hdr;
 {
     register int i, j;
     int c, maplen, ncmap;
@@ -344,7 +354,8 @@ print_map(rle_hdr *the_hdr)
  *	[None]
  */
 void
-print_codes(rle_hdr *the_hdr)
+print_codes( the_hdr )
+rle_hdr *the_hdr;
 {
     rle_pixel ** scans;
 

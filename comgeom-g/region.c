@@ -33,12 +33,12 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "wdb.h"
 
 /* defined in read.c */
-extern int getline(register char *cp, int buflen, char *title);
-extern int getint(char *cp, int start, int len);
-extern void namecvt(register int n, register char *cp, int c);
+extern int getline();
+extern int getint();
+extern void namecvt();
 
 /* defined in cvt.c */
-extern void col_pr(char *str);
+extern void col_pr();
 
 extern char	name_it[];
 
@@ -53,11 +53,11 @@ extern int	verbose;
 
 char	rcard[128];
 
-void	region_register(int reg_num, int id, int air, int mat, int los);
-void	group_init(void);
-void	group_register(char *name, int lo, int hi);
-void	group_add(register int val, char *name);
-void	group_write(void);
+void	region_register();
+void	group_init();
+void	group_register();
+void	group_add();
+void	group_write();
 
 /*
  *			G E T R E G I O N
@@ -69,7 +69,7 @@ void	group_write(void);
  *	 0	done
  */
 int
-getregion(void)
+getregion()
 {
 	int i, j;
 	int card;
@@ -210,7 +210,7 @@ top:
  * Load the region ID information into the structures
  */
 void
-getid(void)
+getid()
 {
 	int reg_num;
 	int id;
@@ -254,7 +254,7 @@ getid(void)
  *			R E G I O N _ R E G I S T E R
  */
 void
-region_register(int reg_num, int id, int air, int mat, int los)
+region_register( reg_num, id, air, mat, los )
 {
 	register struct wmember	*wp;
 
@@ -291,7 +291,7 @@ struct groups {
 int	ngroups;
 
 void
-group_init(void)
+group_init()
 {
 	group_register( "g00", 0, 0 );
 	group_register( "g0", 1, 99 );
@@ -318,7 +318,8 @@ group_init(void)
 }
 
 void
-group_register(char *name, int lo, int hi)
+group_register( name, lo, hi )
+char	*name;
 {
 	char	nbuf[32];
 	register struct wmember	*wp;
@@ -340,7 +341,9 @@ group_register(char *name, int lo, int hi)
 }
 
 void
-group_add(register int val, char *name)
+group_add( val, name )
+register int	val;
+char		*name;
 {
 	register int	i;
 
@@ -357,7 +360,7 @@ add:
 }
 
 void
-group_write(void)
+group_write()
 {
 	register struct wmember	*wp;
 	struct wmember		allhead;

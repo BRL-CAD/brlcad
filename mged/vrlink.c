@@ -56,8 +56,8 @@ static char		*tcp_port = "5555";	/* "gedd", remote mged */
 #define VRMSG_VLIST	5	/* transfer binary vlist block */
 #define VRMSG_CMD_REPLY	6	/* from MGED: reply to VRMSG_CMD */
 
-void	ph_cmd(register struct pkg_conn *pc, char *buf);
-void	ph_vlist(register struct pkg_conn *pc, unsigned char *buf);
+void	ph_cmd();
+void	ph_vlist();
 static struct pkg_switch pkgswitch[] = {
 	{ VRMSG_CMD,		ph_cmd,		"Command" },
 	{ VRMSG_VLIST,		ph_vlist,	"Import vlist" },
@@ -90,7 +90,8 @@ struct pkg_conn	*pc;
  *	 0	Don't print a prompt
  */
 int
-vr_event_hook(struct bu_vls *vp)
+vr_event_hook(vp)
+struct bu_vls	*vp;
 {
 	BU_CK_VLS(vp);
 
@@ -112,7 +113,7 @@ vr_event_hook(struct bu_vls *vp)
  *  Called from the Tk event handler
  */
 void
-vr_input_hook(void)
+vr_input_hook()
 {
 	int	val;
 
@@ -136,7 +137,7 @@ vr_input_hook(void)
  *  Called from ged.c refresh().
  */
 void
-vr_viewpoint_hook(void)
+vr_viewpoint_hook()
 {
 	struct bu_vls	str;
 	static struct bu_vls	old_str;
@@ -209,7 +210,11 @@ cmd_pov(ClientData	clientData,
  *  Syntax:  vrmgr host role
  */
 int
-f_vrmgr(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+f_vrmgr(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int	argc;
+char	*argv[];
 {
 	struct bu_vls	str;
 	char		*role;
@@ -287,7 +292,9 @@ f_vrmgr(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  *  and send a reply back.
  */
 void
-ph_cmd(register struct pkg_conn *pc, char *buf)
+ph_cmd(pc, buf)
+register struct pkg_conn *pc;
+char			*buf;
 {
 	int		status;
 
@@ -311,7 +318,9 @@ ph_cmd(register struct pkg_conn *pc, char *buf)
  *  Install whatever phantom solids he wants.
  */
 void
-ph_vlist(register struct pkg_conn *pc, unsigned char *buf)
+ph_vlist(pc, buf)
+register struct pkg_conn *pc;
+unsigned char		*buf;
 {
 	struct bu_list	vhead;
 	struct bu_vls	name;

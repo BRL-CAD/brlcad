@@ -40,11 +40,14 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 static char	*usage = "asc-pl [file.in [file.pl]]\n";
 
-static void	printusage(void);
-static int	check_syntax(char cmd, int needed, int got, int line);
+static void	printusage();
+static int	check_syntax();
 
 int
-main (int argc, char **argv)
+main (argc, argv)
+int	argc;
+char	*argv[];
+
 {
     char	*bp;
     char	buf[BUF_LEN];
@@ -235,12 +238,18 @@ main (int argc, char **argv)
     return 0;
 }
 
-static void printusage (void)
+static void printusage ()
 {
     (void) fputs(usage, stderr);
 }
 
-static int check_syntax (char cmd, int needed, int got, int line)
+static int check_syntax (cmd, needed, got, line)
+
+char	cmd;
+int	needed;
+int	got;
+int	line;
+
 {
     if (got < needed)
     {

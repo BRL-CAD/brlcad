@@ -36,7 +36,9 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #define getb(x)	((x) = getchar())
 
 int
-main(int argc, char **argv)
+main(argc,argv)
+int argc;
+char **argv;
 {
 	char colors[8][3];
 	int	numcolors = 0;

@@ -51,7 +51,9 @@
  *	[None]
  */
 static char *
-match(const char *n, const char *v)
+match( n, v )
+const char *n;
+const char *v;
 {
     for ( ; *n != '\0' && *n != '=' && *n == *v; n++, v++ )
 	;
@@ -81,7 +83,9 @@ match(const char *n, const char *v)
  *	[None]
  */
 char *
-rle_getcom(const char *name, rle_hdr *the_hdr)
+rle_getcom( name, the_hdr )
+const char *name;
+rle_hdr *the_hdr;
 {
     const char ** cp;
     char * v;
