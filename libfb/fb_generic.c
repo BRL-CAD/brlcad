@@ -37,7 +37,7 @@ static int fb_totally_numeric();
  * Disk interface enable flag.  Used so the the remote daemon
  * can turn off the disk interface.
  */
-int _disk_enable = 1;
+int _fb_disk_enable = 1;
 
 /*
  *		f b _ n u l l
@@ -173,7 +173,7 @@ int	width, height;
 	}
 #endif /* IF_REMOTE */
 	/* Assume it's a disk file */
-	if( _disk_enable ) {
+	if( _fb_disk_enable ) {
 		*ifp = disk_interface;
 	} else {
 		fb_log(	"fb_open: no such device \"%s\".\n", file );
@@ -241,7 +241,7 @@ fb_genhelp()
 		remote_interface.if_name,
 		remote_interface.if_type );
 #endif
-	if( _disk_enable ) {
+	if( _fb_disk_enable ) {
 		fb_log( "%-12s  %s\n",
 			disk_interface.if_name,
 			disk_interface.if_type );
@@ -290,10 +290,10 @@ register ColorMap	*cmap;
 }
 
 /*
- *			F B _ M A K E _ L I N E A R _ C O L O R M A P
+ *			F B _ M A K E _ L I N E A R _ C M A P
  */
 void
-fb_make_linear_colormap(cmap)
+fb_make_linear_cmap(cmap)
 register ColorMap	*cmap;
 {
 	register int i;
