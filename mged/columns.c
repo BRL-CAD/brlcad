@@ -28,6 +28,8 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
 #include "machine.h"
 #include "vmath.h"
@@ -38,7 +40,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 static int	col_count;		/* names listed on current line */
 static int	col_len;		/* length of previous name */
-#define TERMINAL_WIDTH	80
+#define TERMINAL_WIDTH	80		/* XXX */
 #define	COLUMNS	((TERMINAL_WIDTH + NAMESIZE - 1) / NAMESIZE)
 
 void
