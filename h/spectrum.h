@@ -7,6 +7,12 @@
  *  as compact as possible (typically just an array of power levels),
  *  with all the context stored in one place.
  *
+ *  NOTE that this is really a much more general mechanism than originally
+ *  envisioned -- these structures and support routines apply to
+ *  any measured "curve" or "function" or "table" with one independent
+ *  variable and scalar dependent variable(s).
+ *  It is unclear how to properly generalize the names....  Ahh, packaging.
+ *
  *  The context is kept in an 'rt_spectrum' structure, and
  *  the data for one particular sample are kept in an 'rt_spectral_sample'
  *  structure.
@@ -114,3 +120,29 @@ struct rt_spect_sample {
 	_ssamp->magic = RT_SPECT_SAMPLE_MAGIC; \
 	_ssamp->nwave = (_spect)->nwave; \
 	_ssamp->spectrum = (_spect); }
+
+RT_EXTERN( struct rt_spectrum	*rt_spect_uniform, (int num, double first,
+					double last));
+RT_EXTERN( void			rt_spect_add, (struct rt_spect_sample *out,
+					CONST struct rt_spect_sample *in1,
+					CONST struct rt_spect_sample *in2));
+RT_EXTERN( void			rt_spect_mul, (struct rt_spect_sample *out,
+					CONST struct rt_spect_sample *in1,
+					CONST struct rt_spect_sample *in2));
+RT_EXTERN( void			rt_spect_scale, (struct rt_spect_sample *out,
+					CONST struct rt_spect_sample *in1,
+					double scale));
+RT_EXTERN( double		rt_spect_area1, (CONST struct rt_spect_sample *in));
+RT_EXTERN( double		rt_spect_area2, (CONST struct rt_spect_sample *in));
+RT_EXTERN( void			rt_spect_make_CIE_XYZ, (
+					struct rt_spect_sample **x,
+					struct rt_spect_sample **y,
+					struct rt_spect_sample **z,
+					CONST struct rt_spectrum *spect));
+RT_EXTERN( void			rt_write_spect_sample, (CONST char *filename,
+					CONST struct rt_spect_sample *ss));
+RT_EXTERN( void			rt_spect_black_body, (struct rt_spect_sample *ss,
+					double temp, unsigned int n));
+RT_EXTERN( void			rt_spect_black_body_fast, (
+					struct rt_spect_sample *ss,
+					double temp));
