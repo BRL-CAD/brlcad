@@ -108,9 +108,10 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	memcpy(air_sp, &air_defaults, sizeof(struct air_specific) );
 
 	if (rp->reg_aircode == 0) {
-		rt_log("%s\n%s\n",
-		"*** WARNING: air shader applied to non-air region!!! ***",
-		"Set air flag with \"edcodes\" in mged");
+		bu_log("WARNING(%s): air shader '%s' applied to non-air region.\n%s\n",
+			rp->reg_name,
+			mfp->mf_name,
+			"  Set air flag with \"edcodes\" in mged");
 	}
 
 	if (rdebug&RDEBUG_SHADE) rt_log("\"%s\"\n", RT_VLS_ADDR(matparm) );
