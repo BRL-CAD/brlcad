@@ -38,7 +38,7 @@ struct db5_raw_internal {
 	unsigned char	minor_type;
 	long		object_length;		/* in bytes, on disk */
 	long		name_length;
-	unsigned char	*name;
+	char		*name;
 	long		interior_length;
 	unsigned char	*interior;
 	unsigned char	*buf;		/* if non-null needs to be bu_free()ed */
@@ -98,5 +98,18 @@ struct db5_ondisk_header {
 /* minor_type */
 #define DB5HDR_MINORTYPE_DLI_FREE			1
 #define DB5HDR_MINORTYPE_DLI_HEADER			2
+
+/*************************************************************************
+ *
+ *	What follows is the C programming API for the routines
+ *	implementing the v5 database.
+ *	It may want to live in a different header file.
+ *
+ ************************************************************************/
+
+struct attribute_value_pair {
+	char	*name;
+	char	*value;
+};
 
 #endif	/* DB5_H */
