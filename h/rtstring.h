@@ -42,13 +42,19 @@ struct rt_vls  {
 };
 #define RT_VLS_MAGIC		0x89333bbb
 
-#define RT_VLS_CHECK(_vls_p) { if (_vls_p->vls_magic != RT_VLS_MAGIC) { \
+#define RT_VLS_CHECK(_vp) { if ( !(_vp) || (_vp)->vls_magic != RT_VLS_MAGIC) { \
 				fprintf(stderr, \
 				"in %s at line %d RT_VLS_CHECK fails\n", \
-				__FILE__, __LINE__); abort(); }}
+				__FILE__, __LINE__); \
+				rt_vls_bomb("RT_VLS_CHECK", _vp); }}
 
-/* This macro is used to get a pointer to the current vls string */
-#define RT_VLS_ADDR(_vp)	((_vp)->vls_str)
+/*
+ *			R T _ V L S _ A D D R
+ *
+ *  Used to get a pointer to a vls string.
+ *  This macro is obsolete, and just referrs to the subroutine.
+ */
+#define RT_VLS_ADDR(_vp)	rt_vls_addr(_vp)
 
 /*
  *			R T _ V L S _ I N I T
@@ -62,14 +68,18 @@ struct rt_vls  {
  *  Subroutine declarations
  */
 RT_VLS_EXTERN(void rt_vls_init, (struct rt_vls *vp) );
-RT_VLS_EXTERN(void rt_vls_bomb, (char *str, struct rt_vls *badp) );
+RT_VLS_EXTERN(char *rt_vls_addr, (struct rt_vls *vp) );
+RT_VLS_EXTERN(void rt_vls_extend, (struct rt_vls *vp, int extra) );
 RT_VLS_EXTERN(int rt_vls_strlen, (struct rt_vls *vp) );
 RT_VLS_EXTERN(void rt_vls_trunc, (struct rt_vls *vp, int len) );
 RT_VLS_EXTERN(void rt_vls_free, (struct rt_vls *vp) );
-RT_VLS_EXTERN(void rt_vls_extend, (struct rt_vls *vp, int extra) );
 RT_VLS_EXTERN(void rt_vls_strcpy, (struct rt_vls *vp, char *s) );
+RT_VLS_EXTERN(void rt_vls_strncpy, (struct rt_vls *vp, char *s, int n) );
 RT_VLS_EXTERN(void rt_vls_strcat, (struct rt_vls *vp, char *s) );
+RT_VLS_EXTERN(void rt_vls_strncat, (struct rt_vls *vp, char *s, int n) );
 RT_VLS_EXTERN(void rt_vls_vlscat, (struct rt_vls *dest, struct rt_vls *src) );
 RT_VLS_EXTERN(void rt_vls_vlscatzap, (struct rt_vls *dest, struct rt_vls *src) );
+RT_VLS_EXTERN(void rt_vls_from_argv, (struct rt_vls *vp, int argc, char **argv) );
+RT_VLS_EXTERN(void rt_vls_bomb, (char *str, struct rt_vls *badp) );
 
 #endif /* SEEN_RTSTRING_H */
