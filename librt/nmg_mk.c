@@ -1074,6 +1074,7 @@ struct model *m;
 	FREE_MODEL(m);
 }
 
+
 /*			N M G _ V E R T E X _ G V
  *
  *	Associate some coordinates with a vertex
@@ -1100,6 +1101,25 @@ pointp_t	pt;
 		v->vg_p = vg;
 	}
 	VMOVE( vg->coord, pt );
+}
+
+/*	N M G _ V E R T E X _ G
+ *
+ *	a version that can take x, y, z coords and doesn't need a point 
+ *	array.  Mostly useful for quick and dirty programs.
+ */
+void
+nmg_vertex_g(v, x, y, z)
+register struct vertex *v;
+fastf_t x, y, z;
+{
+	point_t pt;
+	
+	pt[0] = x;
+	pt[1] = y;
+	pt[2] = z;
+
+	nmg_vertex_gv(v, pt);
 }
 
 /*			N M G _ L O O P _ G
