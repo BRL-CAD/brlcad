@@ -378,7 +378,6 @@ struct face_g_plane {
 	long			index;	/* struct # in this model */
 };
 
-/* !OLD_NMG */
 struct face_g_snurb {
 	struct rt_list		l;	/* magic, forw */
 	struct rt_list		f_hd;	/* list of faces sharing this surface */
@@ -835,12 +834,8 @@ struct nmg_struct_counts {
 	long	faceuse;
 	long	faceuse_a;
 	long	face;
-#if OLD_NMG
-	long	face_g;		/* face_g_plane */
-#else
 	long	face_g_plane;
 	long	face_g_snurb;
-#endif
 	long	loopuse;
 	long	loopuse_a;
 	long	loop;

@@ -1239,11 +1239,11 @@ CONST struct edgeuse	*eu2;
 		rt_log("nmg_2lu_identical() loops lu1=x%x lu2=x%x are shared, face geometry is not? fg1=x%x, fg2=x%x\n",
 			lu1, lu2, fu1->f_p->g.plane_p, fu2->f_p->g.plane_p);
 		rt_log("---- fu1, f=x%x, flip=%d\n", fu1->f_p, fu1->f_p->flip);
-		nmg_pr_fg(fu1->f_p->g.plane_p, 0);
+		nmg_pr_fg(fu1->f_p->g.magic_p, 0);
 		nmg_pr_fu_briefly(fu1, 0);
 
 		rt_log("---- fu2, f=x%x, flip=%d\n", fu2->f_p, fu2->f_p->flip);
-		nmg_pr_fg(fu2->f_p->g.plane_p, 0);
+		nmg_pr_fg(fu2->f_p->g.magic_p, 0);
 		nmg_pr_fu_briefly(fu2, 0);
 
 		/* Drop back to using a geometric calculation */

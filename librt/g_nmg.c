@@ -915,7 +915,7 @@ double		local2mm;
 		return;
 	case NMG_KIND_FACE_G_PLANE:
 		{
-			struct face_g_plane	*fg = (struct face_g *)ip;
+			struct face_g_plane	*fg = (struct face_g_plane *)ip;
 			struct disk_face_g_plane	*d;
 			plane_t			plane;
 			d = &((struct disk_face_g_plane *)op)[oindex];
@@ -1258,7 +1258,7 @@ mat_t		mat;
 		return 0;
 	case NMG_KIND_FACE_G_PLANE:
 		{
-			struct face_g_plane	*fg = (struct face_g *)op;
+			struct face_g_plane	*fg = (struct face_g_plane *)op;
 			struct disk_face_g_plane	*d;
 			plane_t			plane;
 			d = &((struct disk_face_g_plane *)ip)[iindex];

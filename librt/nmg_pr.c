@@ -203,17 +203,26 @@ char *h;
  *			N M G _ P R _ F G
  */
 void 
-nmg_pr_fg(fg, h)
-CONST struct face_g_plane *fg;
+nmg_pr_fg(magic, h)
+CONST long *magic;
 char *h;
 {
 	MKPAD(h);
 
-	rt_log("%sFACE_G %8x\n", h, fg);
-	NMG_CK_FACE_G_PLANE(fg);
+	switch( *magic )  {
+	case NMG_FACE_G_PLANE_MAGIC:
+		rt_log("%sFACE_G_PLANE %8x\n", h, magic);
 
-	rt_log("%s%fX + %fY + %fZ = %f\n", h, fg->N[0], fg->N[1],
-		fg->N[2], fg->N[3]);
+		rt_log("%s%fX + %fY + %fZ = %f\n", h,
+			V4ARGS( ((struct face_g_plane *)magic)->N ) );
+		break;
+	case NMG_FACE_G_SNURB_MAGIC:
+		rt_log("%sFACE_G_SNURB %8x\n", h, magic);
+		/* XXX What else? */
+		break;
+	default:
+		rt_bomb("nmg_pr_fg() bad magic\n");
+	}
 
 	Return;
 }
@@ -320,7 +329,7 @@ char *h;
 		f->max_pt[Z]);
 
 	if (f->g.plane_p)
-		nmg_pr_fg(f->g.plane_p, h);
+		nmg_pr_fg(f->g.magic_p, h);
 
 	Return;
 }

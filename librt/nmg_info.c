@@ -326,7 +326,7 @@ CONST struct faceuse	*fu2;
 
 	for( RT_LIST_FOR( fu1, faceuse, &s1->fu_hd ) )  {
 		register struct face	*f1;
-		register struct	face_g	*fg1;
+		register struct	face_g_plane	*fg1;
 		int			flip1, flip2;
 
 		NMG_CK_FACEUSE(fu1);
