@@ -462,14 +462,12 @@ hitit:
 			register struct soltab *stp;
 
 			stp = pp->pt_inseg->seg_stp;
-			rt_functab[stp->st_id].ft_norm(
-				pp->pt_inhit, stp, &(ap->a_ray) );
+			RT_HIT_NORM( pp->pt_inhit, stp, &(ap->a_ray) );
 
 			if( ap->a_onehit && pp->pt_inhit->hit_dist >= 0.0 )
 				break;
 			stp = pp->pt_outseg->seg_stp;
-			rt_functab[stp->st_id].ft_norm(
-				pp->pt_outhit, stp, &(ap->a_ray) );
+			RT_HIT_NORM( pp->pt_outhit, stp, &(ap->a_ray) );
 		}
 	}
 	if(rt_g.debug&DEBUG_SHOOT)  rt_pr_partitions(&FinalPart,"a_hit()");
