@@ -127,8 +127,11 @@ Tools\Binaries
 --------------
 Listed below are the binaries that get installed after compilation.  The testing status is listed where relevant.
 
-a-d sean
-alias-pix
+a-d
+  status: ok
+  desc: an ascii to double datafile conversion tool
+  notes: truncates ascii double input to float
+alias-pix sean
 all_sf
 anim_cascade
 anim_fly
