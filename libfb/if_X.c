@@ -1,4 +1,4 @@
-#define DEBUGX 1
+/*#define DEBUGX 1*/
 /*
  *			I F _ X . C
  *
@@ -935,9 +935,11 @@ FBIO	*ifp;
 				int	x, y;
 				unsigned char	*cp;
 				x = event.xbutton.x;
-				y = ifp->if_height - 1 - event.xbutton.y;
+				y = event.xbutton.y;
 				/* 8-bit display */
 				cp = &bytebuf[y*ifp->if_width + x];
+				/* quadrant reverse y for output */
+				y = ifp->if_height - 1 - event.xbutton.y;
 				fb_log("(%4d,%4d) index=%3d rgb=(%3d %3d %3d)\n",
 					x, y, *cp,
 					color_defs[*cp].red>>8,
@@ -1126,6 +1128,7 @@ FBIO *ifp;
 	int 			tot_levels;
 	int 			i;
 	Colormap		color_map;
+	int		tmp;
 
 	tot_levels = 256;
 
@@ -1156,6 +1159,20 @@ FBIO *ifp;
 	      x_pixel_table, tot_levels )) == 0) {
 		fprintf(stderr,"XAllocColorCells died\n");
 	}
+
+	/* XXX - HACK
+	 * Swap our white entry to 0, and our back entry to 1.
+	 * Fix x_pixel_table[] to remap them.  This is to allow
+	 * monochrome windows to still be readable while this colormap
+	 * is loaded.
+	 */
+	tmp = x_pixel_table[215];		/* save 215 (our white) */
+	x_pixel_table[215] = x_pixel_table[0];	/* move our White to 0 */
+	x_pixel_table[0] = tmp;			/* and orig 0 to 215 */
+
+	tmp = x_pixel_table[0];			/* save 0 (our black) */
+	x_pixel_table[0] = x_pixel_table[1];	/* move our Black to 1 */
+	x_pixel_table[1] = tmp;			/* and orig 1 to 0 */
 
 	/* put our colors into those cells */
 	for (i = 0; i < tot_levels; i++) {
