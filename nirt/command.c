@@ -306,7 +306,9 @@ int			ctp;
     if (do_backout)
     {
 	backout();
+#if 0
 	do_backout = 0;
+#endif
     }
 
     for (i = 0; i < 3; ++i)
