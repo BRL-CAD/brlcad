@@ -25,7 +25,10 @@
 			NN is the minute (00 - 59)
 			SS is the second (00 - 59)
 	The string is read and printed out in the form:
-		/MM/DD/YY at HH:NN:SS
+		/MM/DD/YYYY at HH:NN:SS
+
+	If the year is less than 50, 2000 is added to it, otherwise 1900
+	is added (Y2K compliancy??)
 
 	"eof" is the "end-of-field" delimiter
 	"eor" is the "end-of-record" delimiter	*/
@@ -37,8 +40,8 @@ void
 Readtime( id )
 char *id;
 {
-	int i=(-1),length=0,lencard,done=0;
-	char num[80];
+	int i=(-1),length=0,lencard,done=0,year;
+	char num[80],year_str[3];
 
 	if( card[counter] == eof ) /* This is an empty field */
 	{
@@ -85,8 +88,21 @@ char *id;
 	}
 
 	if( length > 5 && length < 16 )
-		rt_log( "%c%c/%c%c/%c%c" , num[2],num[3],num[4],num[5],
-			num[0],num[1] );
+	{
+		char year_str[3];
+		int year;
+
+		year_str[0] = num[0];
+		year_str[1] = num[1];
+		year_str[2] = '\0';
+		year = atoi( year_str );
+		if( year < 50 )
+			year += 2000;
+		else
+			year += 1900;
+		rt_log( "%c%c/%c%c/%d" , num[2],num[3],num[4],num[5],
+			year );
+	}
 
 	if( length > 12 && length < 16 )
 		rt_log( " at %c%c:%c%c:%c%c\n" , num[7],num[8],num[9],
