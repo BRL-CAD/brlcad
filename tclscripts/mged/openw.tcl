@@ -258,6 +258,18 @@ proc gui { args } {
 	global mged_color_scheme
 	global mged_Priv
 
+        # configure the stdout chanel for this platform
+        # this is supposedly done automatically by Tcl, but not
+        switch $::tcl_platform(platform) {
+	    "macintosh" -
+	    "unix" {
+		fconfigure stdout -translation lf
+	    }
+	    "windows" {
+		fconfigure stdout -translation crlf
+	    }
+	}
+
 	# set defaults
 	set save_id [cmd_win get]
 	set comb $mged_default(comb)
