@@ -175,6 +175,14 @@ trap '/bin/rm -f ${FILE}; exit 1' 1 2 3 15	# Clean up temp file
 	HAS_SYMLINKS=1;
 #endif
 
+#ifdef n16
+#	undef	mmax
+	MACHINE=mmax;
+	UNIXTYPE=SYSV;
+	HAS_TCP=1;
+	HAS_SYMLINKS=1;
+#endif
+
 EOF
 
 # Note that we depend on CPP's "#line" messages to be ignored as comments
