@@ -186,16 +186,16 @@ predictor_kill()
   av[1] = PREDICTOR_NAME;
   (void)f_erase_all((ClientData)NULL, interp, 2, av);
 
-  av[1] = "d _PREDIC_TRAIL_LL_";
+  av[1] = "_PREDIC_TRAIL_LL_";
   (void)f_erase_all((ClientData)NULL, interp, 2, av);
 
-  av[1] = "d _PREDIC_TRAIL_LR_";
+  av[1] = "_PREDIC_TRAIL_LR_";
   (void)f_erase_all((ClientData)NULL, interp, 2, av);
 
-  av[1] = "d _PREDIC_TRAIL_UR_";
+  av[1] = "_PREDIC_TRAIL_UR_";
   (void)f_erase_all((ClientData)NULL, interp, 2, av);
 
-  av[1] = "d _PREDIC_TRAIL_UL_";
+  av[1] = "_PREDIC_TRAIL_UL_";
   (void)f_erase_all((ClientData)NULL, interp, 2, av);
 
   init_trail( &tA );
