@@ -30,9 +30,15 @@ proc build_edit_menu_all { type } {
     global mged_mouse_behavior
     global mouse_behavior
     global mged_active_dm
+    global mged_edit_menu
 
     set win [winset]
     set id [get_player_id_dm $win]
+
+    if {[info exists mged_edit_menu($id)] && \
+	    [winfo exists $mged_edit_menu($id)]} {
+	destroy $mged_edit_menu($id)
+    }
 
     set paths [_mged_x -1]
     if {![llength $paths]} {
@@ -62,9 +68,15 @@ proc ray_build_edit_menu { type x y } {
     global mged_mouse_behavior
     global mouse_behavior
     global mged_active_dm
+    global mged_edit_menu
 
     set win [winset]
     set id [get_player_id_dm $win]
+
+    if {[info exists mged_edit_menu($id)] && \
+	    [winfo exists $mged_edit_menu($id)]} {
+	destroy $mged_edit_menu($id)
+    }
 
     set ray [mouse_shoot_ray $x $y]
     set paths [ray_get_info $ray in path]
@@ -115,9 +127,14 @@ proc ray_build_edit_menu { type x y } {
 
 proc build_solid_menu { type id paths } {
     global player_screen
+    global mged_edit_menu
+
+    if {[info exists mged_edit_menu($id)] && \
+	    [winfo exists $mged_edit_menu($id)]} {
+	destroy $mged_edit_menu($id)
+    }
 
     set top .em$id
-
     if [winfo exists $top] {
 	destroy $top
     }
@@ -130,6 +147,7 @@ proc build_solid_menu { type id paths } {
     }
 
     create_listbox $top $screen Solid $paths
+    set mged_edit_menu($id) $top
 
     switch $type {
 	s {
@@ -151,9 +169,14 @@ proc build_solid_menu { type id paths } {
 
 proc build_matrix_menu { id path } {
     global player_screen
+    global mged_edit_menu
+
+    if {[info exists mged_edit_menu($id)] && \
+	    [winfo exists $mged_edit_menu($id)]} {
+	destroy $mged_edit_menu($id)
+    }
 
     set top .mm$id
-
     if [winfo exists $top] {
 	destroy $top
     }
@@ -168,6 +191,8 @@ proc build_matrix_menu { id path } {
     regexp "\[^/\].*" $path match
     set path_components [split $match /]
     create_listbox $top $screen Matrix $path_components
+
+    set mged_edit_menu($id) $top
 
     bind_listbox $top "<ButtonPress-1>" "matrix_illum %W %x %y 1"
     bind_listbox $top "<Double-1>" "matrix_illum %W %x %y 0; destroy $top"
