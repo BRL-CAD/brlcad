@@ -49,9 +49,11 @@ static char RCSarb[] = "@(#)$Header$ (BRL)";
  *  Similarly, find the exit point closest to point P, i.e. it has
  *  the smallest value of k among the exit points.  The ray exits the solid
  *  here.
+ *
+ *  This algorithm is due to Cyrus & Beck, USAF.
  */
 
-struct arb_opt {
+struct oface {
 	float	arb_UVorig[3];		/* origin of UV coord system */
 	float	arb_U[3];		/* unit U vector (along B-A) */
 	float	arb_V[3];		/* unit V vector (perp to N and U) */
@@ -68,19 +70,21 @@ struct aface {
 
 /* One of these for each ARB, custom allocated to size */
 struct arb_specific  {
-	struct arb_opt	*arb_opt;	/* pointer to optional info */
 	int		arb_nmfaces;	/* number of faces */
+	struct oface	*arb_opt;	/* pointer to optional info */
 	struct aface	arb_face[4];	/* May really be up to [6] faces */
 };
 
 /* These hold temp values for the face being prep'ed */
 #define ARB_MAXPTS	4		/* All we need are 4 points */
-static point_t	arb_points[ARB_MAXPTS];	/* Actual points on plane */
-static int	arb_npts;		/* number of points on plane */
-
-static int	faces;			/* Number of faces done so far */
-static struct aface	face[6];	/* work area */
-static struct arb_opt	opt[6];		/* work area */
+struct prep_arb {
+	fastf_t	pa_vec[3*8];		/* Original points */
+	point_t	pa_points[ARB_MAXPTS];	/* Actual points on plane */
+	int	pa_npts;		/* number of points on plane */
+	int	pa_faces;		/* Number of faces done so far */
+	struct aface	pa_face[6];	/* required face info work area */
+	struct oface	pa_opt[6];	/* optional face info work area */
+};
 
 HIDDEN void	arb_add_pt();
 
@@ -101,11 +105,13 @@ static struct arb_info {
  *  			A R B _ P R E P
  */
 int
-arb_prep( vec, stp, mat, rtip )
-fastf_t		*vec;
+arb_prep( Xvec, stp, Xmat, rec, rtip, dp )
+fastf_t		*Xvec;
 struct soltab	*stp;
-matp_t		mat;
+matp_t		Xmat;
+union record	*rec;
 struct rt_i	*rtip;
+struct directory *dp;
 {
 	register fastf_t *op;		/* Used for scanning vectors */
 	LOCAL vect_t	work;		/* Vector addition work area */
@@ -114,6 +120,10 @@ struct rt_i	*rtip;
 	register int	j;
 	register int	k;
 	LOCAL fastf_t	f;
+	struct prep_arb	pa;
+
+	/* Convert from database to internal format */
+	rt_fastf_float( pa.pa_vec, rec->s.s_values, 8 );
 
 	/*
 	 * Process an ARB8, which is represented as a vector
@@ -124,17 +134,17 @@ struct rt_i	*rtip;
 	 * by rotating vectors and adding base vector.
 	 */
 	VSETALL( sum, 0 );
-	op = &vec[1*ELEMENTS_PER_VECT];
+	op = &pa.pa_vec[1*ELEMENTS_PER_VECT];
 #	include "noalias.h"
 	for( i=1; i<8; i++ )  {
-		VADD2( work, &vec[0], op );
-		MAT4X3PNT( op, mat, work );
+		VADD2( work, &pa.pa_vec[0], op );
+		MAT4X3PNT( op, stp->st_pathmat, work );
 		VADD2( sum, sum, op );			/* build the sum */
 		op += ELEMENTS_PER_VECT;
 	}
-	MAT4X3PNT( work, mat, vec );			/* first point */
-	VMOVE( vec, work );				/* 1st: IN PLACE*/
-	VADD2( sum, sum, vec );				/* sum=0th element */
+	MAT4X3PNT( work, stp->st_pathmat, pa.pa_vec );	/* first point */
+	VMOVE( pa.pa_vec, work );			/* 1st: IN PLACE*/
+	VADD2( sum, sum, pa.pa_vec );			/* sum=0th element */
 
 	/*
 	 *  Determine a point which is guaranteed to be within the solid.
@@ -149,48 +159,48 @@ struct rt_i	*rtip;
 
 	stp->st_specific = (int *) 0;
 
-	faces = 0;
+	pa.pa_faces = 0;
 	for( i=0; i<6; i++ )  {
-		arb_npts = 0;
+		pa.pa_npts = 0;
 		for( j=0; j<4; j++ )  {
 			register pointp_t point;
 
-			point = &vec[arb_info[i].ai_sub[j]*ELEMENTS_PER_VECT];
+			point = &pa.pa_vec[arb_info[i].ai_sub[j]*ELEMENTS_PER_VECT];
 
 			/* Verify that this point is not the same
 			 * as an earlier point
 			 */
-			for( k=0; k < arb_npts; k++ )  {
-				VSUB2( work, point, arb_points[k] );
+			for( k=0; k < pa.pa_npts; k++ )  {
+				VSUB2( work, point, pa.pa_points[k] );
 				if( MAGSQ( work ) < 0.005 )  {
 					/* the same -- skip it */
 					goto next_pt;
 				}
 			}
-			VMOVE( arb_points[arb_npts], point );
+			VMOVE( pa.pa_points[pa.pa_npts], point );
 
 			arb_add_pt(
 				point,
-				stp, arb_info[i].ai_title );
+				stp, arb_info[i].ai_title, &pa );
 next_pt:		;
 		}
 
-		if( arb_npts < 3 )  {
+		if( pa.pa_npts < 3 )  {
 			/* This face is BAD */
 			continue;
 		}
 
 		/* Scale U and V basis vectors by the inverse of Ulen and Vlen */
-		opt[faces].arb_Ulen = 1.0 / opt[faces].arb_Ulen;
-		opt[faces].arb_Vlen = 1.0 / opt[faces].arb_Vlen;
-		VSCALE( opt[faces].arb_U, opt[faces].arb_U, opt[faces].arb_Ulen );
-		VSCALE( opt[faces].arb_V, opt[faces].arb_V, opt[faces].arb_Vlen );
+		pa.pa_opt[pa.pa_faces].arb_Ulen = 1.0 / pa.pa_opt[pa.pa_faces].arb_Ulen;
+		pa.pa_opt[pa.pa_faces].arb_Vlen = 1.0 / pa.pa_opt[pa.pa_faces].arb_Vlen;
+		VSCALE( pa.pa_opt[pa.pa_faces].arb_U, pa.pa_opt[pa.pa_faces].arb_U, pa.pa_opt[pa.pa_faces].arb_Ulen );
+		VSCALE( pa.pa_opt[pa.pa_faces].arb_V, pa.pa_opt[pa.pa_faces].arb_V, pa.pa_opt[pa.pa_faces].arb_Vlen );
 
-		faces++;
+		pa.pa_faces++;
 	}
-	if( faces < 4  || faces > 6 )  {
+	if( pa.pa_faces < 4  || pa.pa_faces > 6 )  {
 		rt_log("arb(%s):  only %d faces present\n",
-			stp->st_name, faces);
+			stp->st_name, pa.pa_faces);
 		return(1);			/* Error */
 	}
 
@@ -204,17 +214,17 @@ next_pt:		;
 		register struct arb_specific *arbp;
 		arbp = (struct arb_specific *)rt_malloc(
 			sizeof(struct arb_specific) +
-			sizeof(struct aface) * (faces - 4),
+			sizeof(struct aface) * (pa.pa_faces - 4),
 			"arb_specific" );
-		arbp->arb_nmfaces = faces;
-		for( i=0; i < faces; i++ )
-			arbp->arb_face[i] = face[i];	/* struct copy */
+		arbp->arb_nmfaces = pa.pa_faces;
+		for( i=0; i < pa.pa_faces; i++ )
+			arbp->arb_face[i] = pa.pa_face[i];	/* struct copy */
 
 		/* Eventually this will be optional */
-		arbp->arb_opt = (struct arb_opt *)rt_malloc(
-			faces * sizeof(struct arb_opt), "arb_opt");
-		for( i=0; i < faces; i++ )
-			arbp->arb_opt[i] = opt[i];	/* struct copy */
+		arbp->arb_opt = (struct oface *)rt_malloc(
+			pa.pa_faces * sizeof(struct oface), "arb_opt");
+		for( i=0; i < pa.pa_faces; i++ )
+			arbp->arb_opt[i] = pa.pa_opt[i];	/* struct copy */
 
 		stp->st_specific = (int *)arbp;
 	}
@@ -225,7 +235,7 @@ next_pt:		;
 	 * bounding RPP.  Note that this center is NOT guaranteed
 	 * to be contained within the solid!
 	 */
-	op = &vec[0];
+	op = &pa.pa_vec[0];
 #	include "noalias.h"
 	for( i=0; i< 8; i++ ) {
 		VMINMAX( stp->st_min, stp->st_max, op );
@@ -253,40 +263,43 @@ next_pt:		;
  *  Static externs are used to build up the state of the current faces.
  */
 HIDDEN void
-arb_add_pt( point, stp, title )
+arb_add_pt( point, stp, title, pap )
 register pointp_t point;
-struct soltab *stp;
-char	*title;
+struct soltab	*stp;
+char		*title;
+struct prep_arb	*pap;
 {
 	register int i;
 	LOCAL vect_t work;
 	LOCAL vect_t P_A;		/* new point - A */
 	FAST fastf_t f;
 	register struct aface	*afp;
+	register struct oface	*ofp;
 
-	afp = &face[faces];
-	i = arb_npts++;		/* Current point number */
+	afp = &pap->pa_face[pap->pa_faces];
+	ofp = &pap->pa_opt[pap->pa_faces];
+	i = pap->pa_npts++;		/* Current point number */
 
 	/* The first 3 points are treated differently */
 	switch( i )  {
 	case 0:
 		VMOVE( afp->A, point );
-		VMOVE( opt[faces].arb_UVorig, point );
+		VMOVE( ofp->arb_UVorig, point );
 		return;					/* OK */
 	case 1:
-		VSUB2( opt[faces].arb_U, point, afp->A );	/* B-A */
-		f = MAGNITUDE( opt[faces].arb_U );
-		opt[faces].arb_Ulen = f;
+		VSUB2( ofp->arb_U, point, afp->A );	/* B-A */
+		f = MAGNITUDE( ofp->arb_U );
+		ofp->arb_Ulen = f;
 		f = 1/f;
-		VSCALE( opt[faces].arb_U, opt[faces].arb_U, f );
+		VSCALE( ofp->arb_U, ofp->arb_U, f );
 		return;					/* OK */
 	case 2:
 		VSUB2( P_A, point, afp->A );	/* C-A */
 		/* Check for co-linear, ie, (B-A)x(C-A) == 0 */
-		VCROSS( afp->N, opt[faces].arb_U, P_A );
+		VCROSS( afp->N, ofp->arb_U, P_A );
 		f = MAGNITUDE( afp->N );
 		if( NEAR_ZERO(f,0.005) )  {
-			arb_npts--;
+			pap->pa_npts--;
 			return;				/* BAD */
 		}
 		f = 1/f;
@@ -296,23 +309,23 @@ char	*title;
 		 * Get vector perp. to AB in face of plane ABC.
 		 * Scale by projection of AC, make this V.
 		 */
-		VCROSS( work, afp->N, opt[faces].arb_U );
+		VCROSS( work, afp->N, ofp->arb_U );
 		VUNITIZE( work );
 		f = VDOT( work, P_A );
-		VSCALE( opt[faces].arb_V, work, f );
-		f = MAGNITUDE( opt[faces].arb_V );
-		opt[faces].arb_Vlen = f;
+		VSCALE( ofp->arb_V, work, f );
+		f = MAGNITUDE( ofp->arb_V );
+		ofp->arb_Vlen = f;
 		f = 1/f;
-		VSCALE( opt[faces].arb_V, opt[faces].arb_V, f );
+		VSCALE( ofp->arb_V, ofp->arb_V, f );
 
 		/* Check for new Ulen */
-		VSUB2( P_A, point, opt[faces].arb_UVorig );
-		f = VDOT( P_A, opt[faces].arb_U );
-		if( f > opt[faces].arb_Ulen ) {
-			opt[faces].arb_Ulen = f;
+		VSUB2( P_A, point, ofp->arb_UVorig );
+		f = VDOT( P_A, ofp->arb_U );
+		if( f > ofp->arb_Ulen ) {
+			ofp->arb_Ulen = f;
 		} else if( f < 0.0 ) {
-			VJOIN1( opt[faces].arb_UVorig, opt[faces].arb_UVorig, f, opt[faces].arb_U );
-			opt[faces].arb_Ulen += (-f);
+			VJOIN1( ofp->arb_UVorig, ofp->arb_UVorig, f, ofp->arb_U );
+			ofp->arb_Ulen += (-f);
 		}
 
 		/*
@@ -328,21 +341,21 @@ char	*title;
 		return;					/* OK */
 	default:
 		/* Merely validate 4th and subsequent points */
-		VSUB2( P_A, point, opt[faces].arb_UVorig );
+		VSUB2( P_A, point, ofp->arb_UVorig );
 		/* Check for new Ulen, Vlen */
-		f = VDOT( P_A, opt[faces].arb_U );
-		if( f > opt[faces].arb_Ulen ) {
-			opt[faces].arb_Ulen = f;
+		f = VDOT( P_A, ofp->arb_U );
+		if( f > ofp->arb_Ulen ) {
+			ofp->arb_Ulen = f;
 		} else if( f < 0.0 ) {
-			VJOIN1( opt[faces].arb_UVorig, opt[faces].arb_UVorig, f, opt[faces].arb_U );
-			opt[faces].arb_Ulen += (-f);
+			VJOIN1( ofp->arb_UVorig, ofp->arb_UVorig, f, ofp->arb_U );
+			ofp->arb_Ulen += (-f);
 		}
-		f = VDOT( P_A, opt[faces].arb_V );
-		if( f > opt[faces].arb_Vlen ) {
-			opt[faces].arb_Vlen = f;
+		f = VDOT( P_A, ofp->arb_V );
+		if( f > ofp->arb_Vlen ) {
+			ofp->arb_Vlen = f;
 		} else if( f < 0.0 ) {
-			VJOIN1( opt[faces].arb_UVorig, opt[faces].arb_UVorig, f, opt[faces].arb_V );
-			opt[faces].arb_Vlen += (-f);
+			VJOIN1( ofp->arb_UVorig, ofp->arb_UVorig, f, ofp->arb_V );
+			ofp->arb_Vlen += (-f);
 		}
 
 		VSUB2( P_A, point, afp->A );
@@ -353,7 +366,7 @@ char	*title;
 			rt_log("arb(%s): face %s non-planar, dot=%g\n",
 				stp->st_name, title, f );
 #ifdef CONSERVATIVE
-			arb_npts--;
+			pap->pa_npts--;
 			return;				/* BAD */
 #endif
 		}
@@ -384,7 +397,7 @@ register struct soltab *stp;
 		VPRINT( "Normal", afp->N );
 		rt_log( "N.A = %g\n", afp->NdotA );
 		if( arbp->arb_opt )  {
-			register struct arb_opt	*op;
+			register struct oface	*op;
 			op = &(arbp->arb_opt[i]);
 			VPRINT( "UVorig", op->arb_UVorig );
 			VPRINT( "U", op->arb_U );
