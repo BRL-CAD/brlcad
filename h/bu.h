@@ -766,8 +766,8 @@ typedef int (*bu_hook_t)BU_ARGS((genptr_t, genptr_t));
  *  it depends on usage.
  */
 struct bu_attribute_value_pair {
-	char	*name;
-	char	*value;
+	const char	*name;
+	const char	*value;
 };
 
 /*

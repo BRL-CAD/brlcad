@@ -95,7 +95,7 @@ CONST char	*value;
 	for( BU_AVS_FOR(app, avp) )  {
 		if( strcmp( app->name, attribute ) != 0 )  continue;
 		if( app->value < avp->readonly_min || app->value > avp->readonly_max )
-			bu_free( app->value, "app->value" );
+			bu_free( (genptr_t)app->value, "app->value" );
 		app->value = bu_strdup( value );
 		return 1;
 	}
@@ -167,9 +167,9 @@ CONST char	*attribute;
 	for( BU_AVS_FOR(app, avp) )  {
 		if( strcmp( app->name, attribute ) != 0 )  continue;
 		if( app->name < avp->readonly_min || app->name > avp->readonly_max )
-			bu_free( app->name, "app->name" );
+			bu_free( (genptr_t)app->name, "app->name" );
 		if( app->value < avp->readonly_min || app->value > avp->readonly_max )
-			bu_free( app->value, "app->value" );
+			bu_free( (genptr_t)app->value, "app->value" );
 
 		/* Move last one down to fit */
 		epp = &avp->avp[avp->count--];
@@ -187,8 +187,7 @@ CONST char	*attribute;
  *			B U _ A V S _ F R E E
  */
 void
-bu_avs_free( avp )
-struct bu_attribute_value_set	*avp;
+bu_avs_free( struct bu_attribute_value_set *avp )
 {
 	struct bu_attribute_value_pair *app;
 
@@ -196,11 +195,11 @@ struct bu_attribute_value_set	*avp;
 
 	for( BU_AVS_FOR(app, avp) )  {
 		if( app->name < avp->readonly_min || app->name > avp->readonly_max )
-			bu_free( app->name, "app->name" );
+			bu_free( (genptr_t)app->name, "app->name" );
 		if( app->value < avp->readonly_min || app->value > avp->readonly_max )
-			bu_free( app->value, "app->value" );
+			bu_free( (genptr_t)app->value, "app->value" );
 	}
-	bu_free( avp->avp, "avp->avp" );
+	bu_free( (genptr_t)avp->avp, "avp->avp" );
 	avp->magic = -1L;
 }
 
