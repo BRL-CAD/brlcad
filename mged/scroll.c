@@ -51,33 +51,33 @@ static void	sl_itol();
 static double	sld_xadc, sld_yadc, sld_1adc, sld_2adc, sld_distadc;
 
 struct scroll_item scr_menu[] = {
-	{ "xslew",	sl_tol,		(fastf_t *)0,	"knob X" },
-	{ "yslew",	sl_tol,		(fastf_t *)1,	"knob Y" },
-	{ "zslew",	sl_tol,		(fastf_t *)2,	"knob Z" },
-	{ "zoom",	sl_tol,		(fastf_t *)3,	"knob S" },
-	{ "xrot",	sl_tol,		(fastf_t *)4,   "knob x" },
-	{ "yrot",	sl_tol,		(fastf_t *)5,   "knob y" },
-	{ "zrot",	sl_tol,		(fastf_t *)6,   "knob z" },
+	{ "xslew",	sl_tol,		0,	"knob X" },
+	{ "yslew",	sl_tol,		1,	"knob Y" },
+	{ "zslew",	sl_tol,		2,	"knob Z" },
+	{ "zoom",	sl_tol,		3,	"knob S" },
+	{ "xrot",	sl_tol,		4,   "knob x" },
+	{ "yrot",	sl_tol,		5,   "knob y" },
+	{ "zrot",	sl_tol,		6,   "knob z" },
 	{ "",		(void (*)())NULL, 0, "" }
       };
 
 struct scroll_item sl_abs_menu[] = {
-	{ "Xslew",	sl_tol,		(fastf_t *)0,	"knob aX" },
-	{ "Yslew",	sl_tol,		(fastf_t *)1,	"knob aY" },
-	{ "Zslew",	sl_tol,		(fastf_t *)2,	"knob aZ" },
-	{ "Zoom",	sl_tol,		(fastf_t *)3,	"knob aS" },
-	{ "Xrot",	sl_tol,		(fastf_t *)4,   "knob ax" },
-	{ "Yrot",	sl_tol,		(fastf_t *)5,   "knob ay" },
-	{ "Zrot",	sl_tol,		(fastf_t *)6,   "knob az" },
+	{ "Xslew",	sl_tol,		0,	"knob aX" },
+	{ "Yslew",	sl_tol,		1,	"knob aY" },
+	{ "Zslew",	sl_tol,		2,	"knob aZ" },
+	{ "Zoom",	sl_tol,		3,	"knob aS" },
+	{ "Xrot",	sl_tol,		4,   "knob ax" },
+	{ "Yrot",	sl_tol,		5,   "knob ay" },
+	{ "Zrot",	sl_tol,		6,   "knob az" },
 	{ "",		(void (*)())NULL, 0, "" }
 };
 
 struct scroll_item sl_adc_menu[] = {
-	{ "xadc",	sl_itol,	(fastf_t *)0, "knob xadc" },
-	{ "yadc",	sl_itol,	(fastf_t *)1, "knob yadc" },
-	{ "ang 1",	sl_itol,	(fastf_t *)2, "knob ang1" },
-	{ "ang 2",	sl_itol,	(fastf_t *)3, "knob ang2" },
-	{ "tick",	sl_itol,	(fastf_t *)4, "knob distadc" },
+	{ "xadc",	sl_itol,	0, "knob xadc" },
+	{ "yadc",	sl_itol,	1, "knob yadc" },
+	{ "ang 1",	sl_itol,	2, "knob ang1" },
+	{ "ang 2",	sl_itol,	3, "knob ang2" },
+	{ "tick",	sl_itol,	4, "knob distadc" },
 	{ "",		(void (*)())NULL, 0, "" }
 };
 
@@ -250,7 +250,7 @@ int y_top;
 	  for( mptr = *m; mptr->scroll_string[0] != '\0'; mptr++ )  {
 	    y += SCROLL_DY;		/* y is now bottom line pos */
 
-	    switch((int)mptr->scroll_val){
+	    switch(mptr->scroll_val){
 	    case 0:
 	      if(second_menu)
                 f = (double)dv_xadc / 2047.0;
