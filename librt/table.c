@@ -1279,17 +1279,36 @@ rt_generic_xform(
 	id = ip->idb_type;
 	BU_INIT_EXTERNAL(&ext);
 	/* Scale change on export is 1.0 -- no change */
-	if( rt_functab[id].ft_export( &ext, ip, 1.0, dbip, resp ) < 0 )  {
+	switch (dbip->dbi_version) {
+	case 4:
+	    if( rt_functab[id].ft_export( &ext, ip, 1.0, dbip, resp ) < 0 )  {
 		bu_log("rt_generic_xform():  %s export failure\n",
 			rt_functab[id].ft_name);
 		return -1;			/* FAIL */
-	}
-	if( (free || op == ip) )  rt_db_free_internal(ip, resp);
+	    }
+	    if( (free || op == ip) )  rt_db_free_internal(ip, resp);
 
-	RT_INIT_DB_INTERNAL(op);
-	if( rt_functab[id].ft_import( op, &ext, mat, dbip, resp ) < 0 )  {
+	    RT_INIT_DB_INTERNAL(op);
+	    if( rt_functab[id].ft_import( op, &ext, mat, dbip, resp ) < 0 )  {
 		bu_log("rt_generic_xform():  solid import failure\n");
 		return -1;			/* FAIL */
+	    }
+	    break;
+	case 5:
+	    if( rt_functab[id].ft_export5( &ext, ip, 1.0, dbip, resp, 0 ) < 0 )  {
+		bu_log("rt_generic_xform():  %s export failure\n",
+			rt_functab[id].ft_name);
+		return -1;			/* FAIL */
+	    }
+
+	    if( (free || op == ip) )  rt_db_free_internal(ip, resp);
+
+	    RT_INIT_DB_INTERNAL(op);
+	    if( rt_functab[id].ft_import5( op, &ext, mat, dbip, resp, 0 ) < 0 )  {
+		bu_log("rt_generic_xform():  solid import failure\n");
+		return -1;			/* FAIL */
+	    }
+	    break;
 	}
 
 	bu_free_external( &ext );
