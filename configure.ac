@@ -677,19 +677,20 @@ AC_PROG_LN_S
 AC_PROG_MAKE_SET
 AM_PROG_LEX
 AC_PROG_YACC
+
 # XXX libtool shouldn't be generated until after LD is set
 # dnl went poof in libtool 1.9 -- AC_PROG_LIBTOOL
 # LT_INIT
-AM_PROG_LIBTOOL
-#AC_PATH_PROG(LIBTOOL, libtool)
-#AC_SUBST(LIBTOOL)
-AC_PROG_RANLIB
-AM_PROG_LEX
+AC_PROG_LIBTOOL
 
-AN_MAKEVAR([AR], [BC_PROG_AR])
-AN_PROGRAM([ar], [BC_PROG_AR])
-AC_DEFUN([BC_PROG_AR], [AC_CHECK_TOOL(AR, ar, :)])
-BC_PROG_AR
+# AN_MAKEVAR([AR], [BC_PROG_AR])
+# AN_PROGRAM([ar], [BC_PROG_AR])
+# AC_DEFUN([BC_PROG_AR], [AC_CHECK_TOOL(AR, ar, :)])
+# BC_PROG_AR
+
+dnl May need AR so try to find it
+AC_PATH_PROG(AR, ar, [], $PATH:/usr/bin:/usr/local/bin:/usr/ccs/bin)
+AC_SUBST(AR)
 
 dnl check for basic shell facilities
 AC_PATH_PROG(SH, sh)
