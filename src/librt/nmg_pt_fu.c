@@ -21,15 +21,15 @@
  */
 #include "common.h"
 
-
-
 #include <stdio.h>
 #include <math.h>
+
 #include "machine.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"
 #include "plot3.h"
+
 
 /* vertex/edge distance 
  * Each loop geometry element (edge/vertex) has one of these computed.
@@ -901,7 +901,7 @@ HIDDEN void make_near_list( struct edge_info *edge_list, struct bu_list *near1)
 
 
 static void
-pl_pt_lu(struct fpi *fpi, struct loopuse *lu, struct edge_info *ei)
+pl_pt_lu(struct fpi *fpi, const struct loopuse *lu, struct edge_info *ei)
 {
 	FILE *fd;
 	char name[25];
@@ -1242,7 +1242,7 @@ out:
 
 
 static void
-plot_parity_error(struct faceuse *fu, fastf_t *pt)
+plot_parity_error(const struct faceuse *fu, const fastf_t *pt)
 {
 	long *b;
 	FILE *fp; 
