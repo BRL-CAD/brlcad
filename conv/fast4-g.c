@@ -121,6 +121,7 @@ RT_EXTERN( fastf_t mat_determinant , (mat_t matrix ) );
 #define		CQUAD		'q'
 #define		CCONE1		'c'
 #define		CCONE2		'd'
+#define		CCONE3		'e'
 #define		CSPHERE		's'
 #define		NMG		'n'
 #define		BOT		't'
@@ -1964,7 +1965,7 @@ do_ccone2()
 		make_region_name( name , group_id , comp_id , element_id , CCONE2 );
 		if( !getline() )
 		{
-			bu_log( "Unexpected EOF while reading continuation card for CCONE1\n" );
+			bu_log( "Unexpected EOF while reading continuation card for CCONE2\n" );
 			bu_log( "\tgroup_id = %d, comp_id = %d, element_id = %d\n",
 				group_id, comp_id, element_id );
 			rt_bomb( "CCONE2\n" );
@@ -2062,6 +2063,240 @@ do_ccone2()
 	Subtract_holes( &r_head , comp_id , group_id );
 
 	MK_REGION( fdout , &r_head , group_id , comp_id , element_id , CCONE2 )
+}
+
+void
+do_ccone3()
+{
+	int element_id;
+	int pt1, pt2, pt3, pt4, c1, c2, i;
+	char name[NAMESIZE+1];
+	fastf_t ro[4], ri[4], dot2, dot3, len03, len01, len12, len23;
+	vect_t diff, diff2, diff3, diff4;
+	struct wmember r_head;
+
+	strncpy( field , &line[8] , 8 );
+	element_id = atoi( field );
+
+	if( !pass )
+	{
+		make_region_name( name , group_id , comp_id , element_id , CCONE3 );
+		if( !getline() )
+		{
+			bu_log( "Unexpected EOF while reading continuation card for CCONE3\n" );
+			bu_log( "\tgroup_id = %d, comp_id = %d, element_id = %d\n",
+				group_id, comp_id, element_id );
+			rt_bomb( "CCONE2\n" );
+		}
+		return;
+	}
+
+	strncpy( field , &line[24] , 8 );
+	pt1 = atoi( field );
+
+	strncpy( field , &line[32] , 8 );
+	pt2 = atoi( field );
+
+	strncpy( field , &line[40] , 8 );
+	pt3 = atoi( field );
+
+	strncpy( field , &line[48] , 8 );
+	pt4 = atoi( field );
+
+	strncpy( field, &line[72], 8 );
+
+	if( !getline() )
+	{
+		bu_log( "Unexpected EOF while reading continuation card for CCONE3\n" );
+		bu_log( "\tgroup_id = %d, comp_id = %d, element_id = %d, c1 = %d\n",
+			group_id, comp_id, element_id , c1 );
+		rt_bomb( "CCONE3\n" );
+	}
+
+	if( strncmp( field, line, 8 ) )
+	{
+		bu_log( "WARNING: CCONE3 continuation flags disagree, %d vs %d\n" , c1 , c2 );
+		bu_log( "\tgroup_id = %d, comp_id = %d, element_id = %d\n",
+			group_id, comp_id, element_id );
+	}
+
+	for( i=0 ; i<4 ; i++ )
+	{
+		strncpy( field, &line[8*(i+1)], 8 );
+		ro[i] = atof( field ) * 25.4;
+		if( ro[i] < 0.0 )
+		{
+			bu_log( "ERROR: CCONE3 has illegal radius %f\n", ro[i] );
+			bu_log( "\tgroup_id = %d, comp_id = %d, element_id = %d\n",
+				group_id, comp_id, element_id );
+			return;
+		}
+		if( !strcmp( field, "        " ) )
+			ro[i] = -1.0;
+	}
+
+	for( i=0 ; i<4 ; i++ )
+	{
+		strncpy( field, &line[32 + 8*(i+1)], 8 );
+		ri[i] = atof( field ) * 25.4;
+		if( ri[i] < 0.0 )
+		{
+			bu_log( "ERROR: CCONE3 has illegal radius %f\n", ri[i] );
+			bu_log( "\tgroup_id = %d, comp_id = %d, element_id = %d\n",
+				group_id, comp_id, element_id );
+			return;
+		}
+		if( !strcmp( field, "        " ) )
+			ri[i] = -1.0;
+	}
+
+	VSUB2( diff4, grid_pts[pt4], grid_pts[pt1] );
+	VSUB2( diff3, grid_pts[pt3], grid_pts[pt1] );
+	VSUB2( diff2, grid_pts[pt2], grid_pts[pt1] );
+	dot3 = VDOT( diff4, diff3 );
+	dot2 = VDOT( diff4, diff2 );
+
+	len03 = MAGNITUDE( diff4 );
+	len01 = MAGNITUDE( diff2 );
+	len12 = MAGNITUDE( diff3 ) - len01;
+	len23 = len03 - len01 - len12;
+
+	for( i=0 ; i<4 ; i+=3 )
+	{
+		if( ro[i] ==-1.0 )
+		{
+			if( ri[i] == -1.0 )
+			{
+				bu_log( "ERROR: both inner and outer radii at g%d of a CCONE3 are undefined\n", i+1 );
+				bu_log( "\tgroup_id = %d, comp_id = %d, element_id = %d\n",
+					group_id, comp_id, element_id );
+				return;
+			}
+			else
+				ro[i] = ri[i];
+			
+		}
+		else if( ri[i] == -1.0 )
+			ri[i] = ro[i];
+	}
+
+	if( ro[1] == -1.0 )
+	{
+		if( ro[2] != -1.0 )
+			ro[1] = ro[0] + (ro[2] - ro[0]) * len01 / (len01 + len12);
+		else
+			ro[1] = ro[0] + (ro[3] - ro[0]) * len01 / len03;
+	}
+	if( ro[2] == -1.0 )
+	{
+		if( ro[1] != -1.0 )
+			ro[2] = ro[1] + (ro[3] - ro[1]) * len12 / (len12 + len23);
+		else
+			ro[2] = ro[0] + (ro[3] - ro[0]) * (len01 + len12) / len03;
+	}
+	if( ri[1] == -1.0 )
+	{
+		if( ri[2] != -1.0 )
+			ri[1] = ri[0] + (ri[2] - ri[0]) * len01 / (len01 + len12);
+		else
+			ri[1] = ri[0] + (ri[3] - ri[0]) * len01 / len03;
+	}
+	if( ri[2] == -1.0 )
+	{
+		if( ri[1] != -1.0 )
+			ri[2] = ri[1] + (ri[3] - ri[1]) * len12 / (len12 + len23);
+		else
+			ri[2] = ri[0] + (ri[3] - ri[0]) * (len01 + len12) / len03;
+	}
+
+	for( i=0 ; i<4 ; i++ )
+	{
+		if( ro[i] < SQRT_SMALL_FASTF )
+			ro[i] = SQRT_SMALL_FASTF;
+		if( ri[i] < SQRT_SMALL_FASTF )
+			ri[i] = SQRT_SMALL_FASTF;
+	}
+
+	BU_LIST_INIT( &r_head.l );
+
+	if( pt1 != pt2 )
+	{
+		VSUB2( diff, grid_pts[pt2], grid_pts[pt1] );
+
+		/* make first cone */
+		if( ro[0] != SQRT_SMALL_FASTF || ro[1] != SQRT_SMALL_FASTF )
+		{
+			make_solid_name( name, CCONE3, element_id, comp_id, group_id, 1 );
+			mk_trc_h( fdout, name, grid_pts[pt1], diff, ro[0], ro[1] );
+			if( mk_addmember( name , &r_head , WMOP_UNION ) == (struct wmember *)NULL )
+				bu_bomb( "mk_addmember failed!\n" );
+
+			/* and the inner cone */
+			if( ri[0] != SQRT_SMALL_FASTF || ri[1] != SQRT_SMALL_FASTF )
+			{
+				make_solid_name( name, CCONE3, element_id, comp_id, group_id, 11 );
+				mk_trc_h( fdout, name, grid_pts[pt1], diff, ri[0], ri[1] );
+				if( mk_addmember( name , &r_head , WMOP_SUBTRACT ) == (struct wmember *)NULL )
+					bu_bomb( "mk_addmember failed!\n" );
+			}
+
+			/* subtract any holes for this component */
+			Subtract_holes( &r_head , comp_id , group_id );
+		}
+	}
+
+	if( pt2 != pt3 )
+	{
+		VSUB2( diff, grid_pts[pt3], grid_pts[pt2] );
+
+		/* make second cone */
+		if( ro[1] != SQRT_SMALL_FASTF || ro[2] != SQRT_SMALL_FASTF )
+		{
+			make_solid_name( name, CCONE3, element_id, comp_id, group_id, 2 );
+			mk_trc_h( fdout, name, grid_pts[pt2], diff, ro[1], ro[2] );
+			if( mk_addmember( name , &r_head , WMOP_UNION ) == (struct wmember *)NULL )
+				bu_bomb( "mk_addmember failed!\n" );
+
+			/* and the inner cone */
+			if( ri[1] != SQRT_SMALL_FASTF || ri[2] != SQRT_SMALL_FASTF )
+			{
+				make_solid_name( name, CCONE3, element_id, comp_id, group_id, 22 );
+				mk_trc_h( fdout, name, grid_pts[pt2], diff, ri[1], ri[2] );
+				if( mk_addmember( name , &r_head , WMOP_SUBTRACT ) == (struct wmember *)NULL )
+					bu_bomb( "mk_addmember failed!\n" );
+			}
+
+			/* subtract any holes for this component */
+			Subtract_holes( &r_head , comp_id , group_id );
+		}
+	}
+
+	if( pt3 != pt4 )
+	{
+		VSUB2( diff, grid_pts[pt4], grid_pts[pt3] );
+
+		/* make third cone */
+		if( ro[2] != SQRT_SMALL_FASTF || ro[3] != SQRT_SMALL_FASTF )
+		{
+			make_solid_name( name, CCONE3, element_id, comp_id, group_id, 3 );
+			mk_trc_h( fdout, name, grid_pts[pt3], diff, ro[2], ro[3] );
+			if( mk_addmember( name , &r_head , WMOP_UNION ) == (struct wmember *)NULL )
+				bu_bomb( "mk_addmember failed!\n" );
+
+			/* and the inner cone */
+			if( ri[2] != SQRT_SMALL_FASTF || ri[3] != SQRT_SMALL_FASTF )
+			{
+				make_solid_name( name, CCONE3, element_id, comp_id, group_id, 33 );
+				mk_trc_h( fdout, name, grid_pts[pt3], diff, ri[2], ri[3] );
+				if( mk_addmember( name , &r_head , WMOP_SUBTRACT ) == (struct wmember *)NULL )
+					bu_bomb( "mk_addmember failed!\n" );
+			}
+
+			/* subtract any holes for this component */
+			Subtract_holes( &r_head , comp_id , group_id );
+		}
+	}
+	MK_REGION( fdout , &r_head , group_id , comp_id , element_id , CCONE3 )
 }
 
 void
@@ -2899,6 +3134,8 @@ int pass_number;
 			do_ccone1();
 		else if( !strncmp( line , "CCONE2" , 6 ) )
 			do_ccone2();
+		else if( !strncmp( line , "CCONE3" , 6 ) )
+			do_ccone3();
 		else if( !strncmp( line , "CSPHERE" , 7 ) )
 			do_sphere();
 		else if( !strncmp( line , "ENDDATA" , 7 ) )
