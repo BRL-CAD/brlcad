@@ -1379,13 +1379,6 @@ int	width, height;
 	ifp->if_width = width;
 	ifp->if_height = height;
 
-	ifp->if_zoomflag = 0;
-	SGI(ifp)->si_xzoom = 1;	/* for zoom fakeout */
-	SGI(ifp)->si_yzoom = 1;	/* for zoom fakeout */
-	SGI(ifp)->si_xcenter = width/2;
-	SGI(ifp)->si_ycenter = height/2;
-	SGI(ifp)->si_cmap_flag = !is_linear_cmap(ifp);
-
 	if( ismex() )  {
 		prefposition( WIN_L, WIN_R, WIN_B, WIN_T );
 		foreground();		/* Direct focus here, don't detach */
@@ -1413,6 +1406,13 @@ int	width, height;
 
 	if( sgi_getmem(ifp) < 0 )
 		return(-1);
+
+	ifp->if_zoomflag = 0;
+	SGI(ifp)->si_xzoom = 1;	/* for zoom fakeout */
+	SGI(ifp)->si_yzoom = 1;	/* for zoom fakeout */
+	SGI(ifp)->si_xcenter = width/2;
+	SGI(ifp)->si_ycenter = height/2;
+	SGI(ifp)->si_cmap_flag = !is_linear_cmap(ifp);
 
 	/*
 	 * Deal with the SGI hardware color map
