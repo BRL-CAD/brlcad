@@ -11,6 +11,11 @@
 
 #define FILES	xxx
 
+/* Don't let this JOVE get installed automatically,
+ * as it may be different from the JOVE provided in /usr/brl/bin.
+ */
+#define DONT_INSTALL	1
+
 #define JOVE_OBJ	jove_buf.o \
 		jove_c.o \
 		jove_delete.o \
@@ -37,7 +42,7 @@
 /* Explicit composition of each product */
 
 jove:	JOVE_OBJ
-	sh mkversion
+	sh ../SRCDIR/mkversion.sh
 	CC LDFLAGS -o jove JOVE_OBJ version.o LIBTERMLIB LIBES
 
 findcom:	findcom.o jove_tune.o
