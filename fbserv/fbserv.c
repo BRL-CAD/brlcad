@@ -3,8 +3,9 @@
  *
  *  Remote libfb server.
  *
- *  Author -
+ *  Authors -
  *	Phillip Dykstra
+ *	Michael John Muuss
  *  
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
@@ -37,13 +38,14 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "../libfb/pkgtypes.h"
 #include "./rfbd.h"
 
+#define NET_LONG_LEN	4	/* # bytes to network long */
+
 extern	char	*malloc();
-extern	double	atof();
 extern	int	_disk_enable;
 
 static	void	comm_error();
 
-static	struct	pkg_conn *pcp;
+static	struct	pkg_conn *rem_pcp;
 static	FBIO	*fbp;
 
 main( argc, argv )
@@ -60,7 +62,7 @@ int argc; char **argv;
 #ifdef BSD
 	/* Started by /etc/inetd, network fd=0 */
 	netfd = 0;
-	pcp = pkg_makeconn( netfd, pkg_switch, comm_error );
+	rem_pcp = pkg_makeconn( netfd, pkg_switch, comm_error );
 #else
 	while(1)  {
 		int stat;
@@ -69,8 +71,8 @@ int argc; char **argv;
 		 */
 		if( (netfd = pkg_initserver("mfb", 0, comm_error)) < 0 )
 			continue;
-		pcp = pkg_getclient( netfd, pkg_switch, comm_error, 0 );
-		if( pcp == PKC_ERROR )
+		rem_pcp = pkg_getclient( netfd, pkg_switch, comm_error, 0 );
+		if( rem_pcp == PKC_ERROR )
 			continue;
 		if( fork() == 0 )  {
 			/* Child */
@@ -96,7 +98,7 @@ int argc; char **argv;
 	}
 #endif
 
-	while( pkg_block(pcp) > 0 )
+	while( pkg_block(rem_pcp) > 0 )
 		;
 
 	exit(0);
@@ -182,7 +184,7 @@ va_dcl
 	va_end( ap );
 	
 	(void) sprintf( errbuf, fmt, a,b,c,d,e,f,g,h,i );
-	pkg_send( MSG_ERROR, errbuf, strlen(errbuf)+1, pcp );
+	pkg_send( MSG_ERROR, errbuf, strlen(errbuf)+1, rem_pcp );
 	return;
 }
 
@@ -207,10 +209,10 @@ char *buf;
 {
 	int	height, width;
 	long	ret;
-	char	rbuf[5*4+1];
+	char	rbuf[5*NET_LONG_LEN+1];
 
-	width = fbgetlong( &buf[0*4] );
-	height = fbgetlong( &buf[1*4] );
+	width = fbgetlong( &buf[0*NET_LONG_LEN] );
+	height = fbgetlong( &buf[1*NET_LONG_LEN] );
 
 	if( strlen(&buf[8]) == 0 )
 		fbp = fb_open( NULL, width, height );
@@ -224,13 +226,13 @@ fb_log(s);
 	}
 #endif
 	ret = fbp == FBIO_NULL ? -1 : 0;
-	(void)fbputlong( ret, &rbuf[0*4] );
-	(void)fbputlong( fbp->if_max_width, &rbuf[1*4] );
-	(void)fbputlong( fbp->if_max_height, &rbuf[2*4] );
-	(void)fbputlong( fbp->if_width, &rbuf[3*4] );
-	(void)fbputlong( fbp->if_height, &rbuf[4*4] );
+	(void)fbputlong( ret, &rbuf[0*NET_LONG_LEN] );
+	(void)fbputlong( fbp->if_max_width, &rbuf[1*NET_LONG_LEN] );
+	(void)fbputlong( fbp->if_max_height, &rbuf[2*NET_LONG_LEN] );
+	(void)fbputlong( fbp->if_width, &rbuf[3*NET_LONG_LEN] );
+	(void)fbputlong( fbp->if_height, &rbuf[4*NET_LONG_LEN] );
 
-	pkg_send( MSG_RETURN, rbuf, 5*4, pcp );
+	pkg_send( MSG_RETURN, rbuf, 5*NET_LONG_LEN, pcp );
 	if( buf ) (void)free(buf);
 }
 
@@ -238,10 +240,10 @@ rfbclose(pcp, buf)
 struct pkg_conn *pcp;
 char *buf;
 {
-	char	rbuf[4+1];
+	char	rbuf[NET_LONG_LEN+1];
 
 	(void)fbputlong( fb_close( fbp ), &rbuf[0] );
-	pkg_send( MSG_RETURN, rbuf, 4, pcp );
+	pkg_send( MSG_RETURN, rbuf, NET_LONG_LEN, pcp );
 	if( buf ) (void)free(buf);
 	fbp = FBIO_NULL;
 }
@@ -250,15 +252,15 @@ rfbclear(pcp, buf)
 struct pkg_conn *pcp;
 char *buf;
 {
-	Pixel	bg;
-	char	rbuf[4+1];
+	RGBpixel bg;
+	char	rbuf[NET_LONG_LEN+1];
 
-	bg.red = buf[0];
-	bg.green = buf[1];
-	bg.blue = buf[2];
-	bg.spare = 0;
-	(void)fbputlong( fb_clear( fbp, &bg ), rbuf );
-	pkg_send( MSG_RETURN, rbuf, 4, pcp );
+	bg[RED] = buf[0];
+	bg[GRN] = buf[1];
+	bg[BLU] = buf[2];
+
+	(void)fbputlong( fb_clear( fbp, bg ), rbuf );
+	pkg_send( MSG_RETURN, rbuf, NET_LONG_LEN, pcp );
 	if( buf ) (void)free(buf);
 }
 
@@ -268,20 +270,19 @@ char *buf;
 {
 	int	x, y, num;
 	int	ret;
-	char	rbuf[4+1];
 	static char	*scanbuf = NULL;
 	static int	buflen = 0;
 
-	x = fbgetlong( &buf[0*4] );
-	y = fbgetlong( &buf[1*4] );
-	num = fbgetlong( &buf[2*4] );
+	x = fbgetlong( &buf[0*NET_LONG_LEN] );
+	y = fbgetlong( &buf[1*NET_LONG_LEN] );
+	num = fbgetlong( &buf[2*NET_LONG_LEN] );
 
-	if( num > buflen ) {
+	if( num*sizeof(RGBpixel) > buflen ) {
 		if( scanbuf != NULL )
 			free( scanbuf );
-		buflen = num*sizeof(Pixel);
-		if( buflen < 1024*sizeof(Pixel) )
-			buflen = 1024*sizeof(Pixel);
+		buflen = num*sizeof(RGBpixel);
+		if( buflen < 1024*sizeof(RGBpixel) )
+			buflen = 1024*sizeof(RGBpixel);
 		if( (scanbuf = malloc( buflen )) == NULL ) {
 			fb_log("fb_read: malloc failed!");
 			if( buf ) (void)free(buf);
@@ -291,12 +292,9 @@ char *buf;
 	}
 
 	ret = fb_read( fbp, x, y, scanbuf, num );
-	(void)fbputlong( ret, &rbuf[0] );
-	pkg_send( MSG_RETURN, rbuf, 4, pcp );
-
-	/* Send back the data */
-	if( ret >= 0 )
-		pkg_send( MSG_DATA, scanbuf, num*sizeof(Pixel), pcp );
+	if( ret < 0 )  ret = 0;		/* map error indications */
+	/* sending a 0-length package indicates error */
+	pkg_send( MSG_DATA, scanbuf, ret*sizeof(RGBpixel), pcp );
 	if( buf ) (void)free(buf);
 }
 
@@ -305,19 +303,19 @@ struct pkg_conn *pcp;
 char *buf;
 {
 	int	x, y, num;
-	char	rbuf[4+1];
+	char	rbuf[NET_LONG_LEN+1];
 	int	ret;
 	int	type;
 
-	x = fbgetlong( &buf[0*4] );
-	y = fbgetlong( &buf[1*4] );
-	num = fbgetlong( &buf[2*4] );
+	x = fbgetlong( &buf[0*NET_LONG_LEN] );
+	y = fbgetlong( &buf[1*NET_LONG_LEN] );
+	num = fbgetlong( &buf[2*NET_LONG_LEN] );
 	type = pcp->pkc_type;
-	ret = fb_write( fbp, x, y, &buf[3*4], num );
+	ret = fb_write( fbp, x, y, (RGBpixel *)&buf[3*NET_LONG_LEN], num );
 
 	if( type < MSG_NORETURN ) {
-		(void)fbputlong( ret, &rbuf[0] );
-		pkg_send( MSG_RETURN, rbuf, 4, pcp );
+		(void)fbputlong( ret, &rbuf[0*NET_LONG_LEN] );
+		pkg_send( MSG_RETURN, rbuf, NET_LONG_LEN, pcp );
 	}
 	if( buf ) (void)free(buf);
 }
@@ -327,14 +325,14 @@ struct pkg_conn *pcp;
 char *buf;
 {
 	int	mode, x, y;
-	char	rbuf[4+1];
+	char	rbuf[NET_LONG_LEN+1];
 
-	mode = fbgetlong( &buf[0*4] );
-	x = fbgetlong( &buf[1*4] );
-	y = fbgetlong( &buf[2*4] );
+	mode = fbgetlong( &buf[0*NET_LONG_LEN] );
+	x = fbgetlong( &buf[1*NET_LONG_LEN] );
+	y = fbgetlong( &buf[2*NET_LONG_LEN] );
 
 	(void)fbputlong( fb_cursor( fbp, mode, x, y ), &rbuf[0] );
-	pkg_send( MSG_RETURN, rbuf, 4, pcp );
+	pkg_send( MSG_RETURN, rbuf, NET_LONG_LEN, pcp );
 	if( buf ) (void)free(buf);
 }
 
@@ -343,13 +341,13 @@ struct pkg_conn *pcp;
 char *buf;
 {
 	int	x, y;
-	char	rbuf[4+1];
+	char	rbuf[NET_LONG_LEN+1];
 
-	x = fbgetlong( &buf[0*4] );
-	y = fbgetlong( &buf[1*4] );
+	x = fbgetlong( &buf[0*NET_LONG_LEN] );
+	y = fbgetlong( &buf[1*NET_LONG_LEN] );
 
 	(void)fbputlong( fb_window( fbp, x, y ), &rbuf[0] );
-	pkg_send( MSG_RETURN, rbuf, 4, pcp );
+	pkg_send( MSG_RETURN, rbuf, NET_LONG_LEN, pcp );
 	if( buf ) (void)free(buf);
 }
 
@@ -358,13 +356,13 @@ struct pkg_conn *pcp;
 char *buf;
 {
 	int	x, y;
-	char	rbuf[4+1];
+	char	rbuf[NET_LONG_LEN+1];
 
-	x = fbgetlong( &buf[0*4] );
-	y = fbgetlong( &buf[1*4] );
+	x = fbgetlong( &buf[0*NET_LONG_LEN] );
+	y = fbgetlong( &buf[1*NET_LONG_LEN] );
 
 	(void)fbputlong( fb_zoom( fbp, x, y ), &rbuf[0] );
-	pkg_send( MSG_RETURN, rbuf, 4, pcp );
+	pkg_send( MSG_RETURN, rbuf, NET_LONG_LEN, pcp );
 	if( buf ) (void)free(buf);
 }
 
@@ -373,12 +371,12 @@ rfbrmap(pcp, buf)
 struct pkg_conn *pcp;
 char *buf;
 {
-	char	rbuf[4+1];
+	char	rbuf[NET_LONG_LEN+1];
 	ColorMap map;
 
-	(void)fbputlong( fb_rmap( fbp, &map ), &rbuf[0] );
-	pkg_send( MSG_DATA, &map, sizeof(map), pcp );
-	pkg_send( MSG_RETURN, rbuf, 4, pcp );
+	(void)fbputlong( fb_rmap( fbp, &map ), &rbuf[0*NET_LONG_LEN] );
+	pkg_send( MSG_DATA, (char *)&map, sizeof(map), pcp );
+	pkg_send( MSG_RETURN, rbuf, NET_LONG_LEN, pcp );
 	if( buf ) (void)free(buf);
 }
 
@@ -386,7 +384,7 @@ rfbwmap(pcp, buf)
 struct pkg_conn *pcp;
 char *buf;
 {
-	char	rbuf[4+1];
+	char	rbuf[NET_LONG_LEN+1];
 	long	ret;
 
 	if( pcp->pkc_len == 0 )
@@ -395,6 +393,6 @@ char *buf;
 		ret = fb_wmap( fbp, buf );
 
 	(void)fbputlong( ret, &rbuf[0] );
-	pkg_send( MSG_RETURN, rbuf, 4, pcp );
+	pkg_send( MSG_RETURN, rbuf, NET_LONG_LEN, pcp );
 	if( buf ) (void)free(buf);
 }
