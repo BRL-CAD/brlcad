@@ -114,6 +114,12 @@ extern int journal;
 #define LOGFILE	"/vld/lib/gedlog"	/* usage log */
 #endif
 
+#define TRY_PIPES 1
+
+#if TRY_PIPES
+int ged_pipe[2];
+#endif
+
 struct db_i	*dbip;			/* database instance pointer */
 
 struct device_values dm_values;		/* Dev Values, filled by dm-XX.c */
@@ -354,8 +360,16 @@ char **argv;
 	/* Reset the lights */
 	dmp->dmr_light( LIGHT_RESET, 0 );
 
+#if TRY_PIPES
+	(void)pipe(ged_pipe);
+	Tk_CreateFileHandler(fileno(stdin), TK_READABLE, stdin_input,
+			     (ClientData)STDIN_FILENO);
+	Tk_CreateFileHandler(ged_pipe[0], TK_READABLE, stdin_input,
+			     (ClientData)ged_pipe[0]);
+#else
 	Tk_CreateFileHandler(fileno(stdin), TK_READABLE, stdin_input,
 			     (ClientData)NULL);
+#endif
 
 	/* Caught interrupts take us back here, via longjmp() */
 	if( setjmp( jmp_env ) == 0 )  {
@@ -461,6 +475,11 @@ int mask;
     static int escaped = 0;
     static int bracketed = 0;
     static int freshline = 1;
+#if TRY_PIPES
+    int fd;
+
+    fd = (int)clientData;
+#endif
 
     /* When not in cbreak mode, just process an entire line of input, and
        don't do any command-line manipulation. */
@@ -518,7 +537,11 @@ int mask;
 
     /* Grab single character from stdin */
 
+#if TRY_PIPES
+    count = read(fd, (void *)&ch, 1);
+#else
     count = read(fileno(stdin), (void *)&ch, 1);
+#endif
     if (count <= 0 && feof(stdin))
 	f_quit(0, NULL);
 
