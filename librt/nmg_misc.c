@@ -559,15 +559,17 @@ char *h;
 }
 
 void
-nmg_pr_eg(eg, h);
+nmg_pr_eg(eg, h)
 struct edge_g *eg;
 char *h;
 {
 	MKPAD(h);
 	NMG_CK_EDGE_G(eg);
 	
-	rt_log("%sEDGE_G %8x %d  pt:(%f %f %f)  dir:(%f %f %f)",
-		h, eg, eg->usage, V3ARGS(eg->e_pt), V3ARGS(eg->e_dir));
+	rt_log("%sEDGE_G %8x pt:(%f %f %f)\n",
+		h, eg, V3ARGS(eg->e_pt));
+	rt_log("%s       use %d  dir:(%f %f %f)\n",
+		h, eg->usage, V3ARGS(eg->e_dir));
 
 	Return;
 }
