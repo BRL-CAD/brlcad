@@ -159,7 +159,7 @@ char	**argv;
 	 */
 	
 	for ( i = 0; i < file_height; i++ ) {
-		row = scanbuf + (file_height - i) * ROWSIZE;
+		row = scanbuf + (file_height-1 - i) * ROWSIZE;
 		fwrite(row, 1, ROWSIZE, stdout);
 	}
 
