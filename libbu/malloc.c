@@ -112,19 +112,21 @@ again:
 		bu_memdebug_len = 5120-2;
 		bu_memdebug = (struct memdebug *)calloc(
 			bu_memdebug_len, sizeof(struct memdebug) );
+		if( bu_memdebug == (struct memdebug *)0 )
+			bu_bomb("bu_memdebug_add() malloc failure\n");
 	} else {
 		size_t	old_len = bu_memdebug_len;
 		bu_memdebug_len *= 16;
 		bu_memdebug = (struct memdebug *)realloc(
 			(char *)bu_memdebug,
 			sizeof(struct memdebug) * bu_memdebug_len );
+		if( bu_memdebug == (struct memdebug *)0 )
+			bu_bomb("bu_memdebug_add() malloc failure\n");
 		bzero( (char *)&bu_memdebug[old_len],
 			(bu_memdebug_len-old_len) * sizeof(struct memdebug) );
 	}
 	bu_semaphore_release( BU_SEM_SYSCALL );
 
-	if( bu_memdebug == (struct memdebug *)0 )
-		bu_bomb("bu_memdebug_add() malloc failure\n");
 	goto top;
 }
 
