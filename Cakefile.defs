@@ -315,10 +315,13 @@ set -S2 "/bin/sh"
 /*		Warning 1203 is "nonstandard type for a bit field" (libpkg). */
 /*		Warning 1048 is "cast between pointer-to-object and pointer-to-function */
 /*		Warning 1110 is "statement is unreachable" */
+/*		Warning 1429 is "the type "long long" is nonstandard " (/usr/include/sys/time.h) */
+/*		Warning 1412 is "destination type of cast is too small to hold all pointers: truncation possible" */
+/*		Warning 1167 is "pointer points outside of underlying object" (tab/script.l) */
 #		define	OPTIMIZER	-O2 -OPT:fold_arith_limit=16000 \
 					-OPT:const_copy_limit=16000 \
 					-use_readonly_const \
-					-woff 1203,1048,1110 -Wl,-w
+					-woff 1429,1203,1048,1110,1412,1167 -Wl,-w
 /*		-Wl,-S doesn't work! use -Wl,-w.  SGI case #0390575. */
 #	else
 /*		This version for debugging with DBX */
@@ -336,12 +339,12 @@ set -S2 "/bin/sh"
 #		define	RANLIB	true
 #		define	STANDARD_LIBES	-lm -lmalloc -lc -rpath /usr/lib64:LIBDIR
 /*		When debugging libraries, -m and -v are helpful LD_OPTS */
-#		define	LD_OPTS		GFLAG -Wl,-woff,84 -Wl,-woff,85
+#		define	LD_OPTS		GFLAG -Wl,-woff,84,-woff,134 -Wl,-woff,85
 #	else
 /*		Static linked executables */
 #		define	RANLIB	ranlib5.sh
 #		define	STANDARD_LIBES	-lm -lmalloc -lc
-#		define	LD_OPTS		GFLAG -Wl,-woff,84 -Wl,-woff,85
+#		define	LD_OPTS		GFLAG -Wl,-woff,84,-woff,134 -Wl,-woff,85
 #	endif
 #	define	TCL_DEFS -woff 1048,1233,1412,1110 OPTIMIZER -DTCL_LIBRARY='"'TCLLIBDIR'"' -DTCL_PACKAGE_PATH='"'TCLLIBDIR'"' -DHAVE_UNISTD_H=1 -DHAVE_SYS_TIME_H=1 -DTIME_WITH_SYS_TIME=1 -DHAVE_TZNAME=1 -DHAVE_TIMEZONE_VAR=1 -DSTDC_HEADERS=1 -DNEED_MATHERR=1 -Dvfork=fork -DHAVE_BSDGETTIMEOFDAY=1 -DHAVE_SYS_IOCTL_H=1 -DHAVE_SYS_FILIO_H=1
 #	define	TK_DEFS -woff 1048,1233,1412,1110 OPTIMIZER -DTK_LIBRARY='"'TKLIBDIR'"' -DHAVE_UNISTD_H=1 -DHAVE_LIMITS_H=1 -DSTDC_HEADERS=1 -D__CHAR_UNSIGNED__=1
