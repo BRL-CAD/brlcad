@@ -15,9 +15,11 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <math.h>
 #include <assert.h>
 #if defined(HAVE_STDARG_H)
-#include <stdarg.h>
-#elif defined(HAVE_VARARGS_H)
-#include <varargs.h>
+#  include <stdarg.h>
+#else
+#  if defined(HAVE_VARARGS_H)
+#    include <varargs.h>
+#  endif
 #endif
 
 #include "machine.h"
@@ -436,7 +438,8 @@ prnt_Scroll( char *fmt, ... )
 	return;
 	}
 
-#elif !defined(HAVE_VARARGS_H)
+#else	/* defined(HAVE_STDARG_H) */
+#  if !defined(HAVE_VARARGS_H)
 
 void
 prnt_Scroll(fmt, a,b,c,d,e,f,g,h,i)
@@ -479,7 +482,7 @@ char *fmt;
 		(void) fprintf( stdout, fmt, a,b,c,d,e,f,g,h,i );
 	RES_RELEASE( &rt_g.res_syscall );		/* unlock */
 }
-#else
+#  else	/* defined(HAVE_VARARGS_H) */
 /*	p r n t _ S c r o l l ( )					*/
 /* VARARGS */
 void
@@ -528,4 +531,5 @@ va_dcl
 	RES_RELEASE( &rt_g.res_syscall );		/* unlock */
 	return;
 	}
-#endif /* HAVE_STDARG_H */
+#  endif	/* !defined(HAVE_VARARGS_H) */
+#endif		/* HAVE_STDARG_H */
