@@ -34,10 +34,7 @@
 static const char RCSphotonmap[] = "";
 #endif
 
-
 #include "photonmap.h"
-#include "plastic.h"
-#include "light.h"
 #include <stdlib.h>
 
 #define	NRoot(x,y) exp(log(x)/y)	/* Not in Use */
@@ -264,9 +261,15 @@ void SpecularReflect(vect_t normal, vect_t rdir) {
 void DiffuseReflect(vect_t normal, vect_t rdir) {
   /* Allow Photons to get a random direction at most 60 degrees to the normal */
   do {
+#ifdef WIN32
+    rdir[0]= 2.0*rand()/(double)RAND_MAX-1.0;
+    rdir[1]= 2.0*rand()/(double)RAND_MAX-1.0;
+    rdir[2]= 2.0*rand()/(double)RAND_MAX-1.0;
+#else
     rdir[0]= 2.0*drand48()-1.0;
     rdir[1]= 2.0*drand48()-1.0;
     rdir[2]= 2.0*drand48()-1.0;
+#endif
     VUNITIZE(rdir);
   } while (VDOT(rdir,normal) < 0.5);
 }
@@ -392,7 +395,7 @@ void GetMaterial(char *MS, vect_t spec, fastf_t *refi, fastf_t *transmit) {
 }
 
 
-fastf_t max(fastf_t a, fastf_t b, fastf_t c) {
+static fastf_t MaxFloat(fastf_t a, fastf_t b, fastf_t c) {
   return a > b ? a > c ? a : c : b > c ? b : c;
 }
 
@@ -510,10 +513,14 @@ int PHit(struct application *ap, struct partition *PartHeadp, struct seg *finish
   color[1]= part -> pt_regionp -> reg_mater.ma_color[1];
   color[2]= part -> pt_regionp -> reg_mater.ma_color[2];
 
-  prob_ref= max(color[0]+spec[0],color[1]+spec[1],color[2]+spec[2]);
+  prob_ref= MaxFloat(color[0]+spec[0],color[1]+spec[1],color[2]+spec[2]);
   prob_diff= ((color[0]+color[1]+color[2])/(color[0]+color[1]+color[2]+spec[0]+spec[1]+spec[2]))*prob_ref;
   prob_spec= prob_ref - prob_diff;
+#ifdef WIN32
+  prob= rand()/(double)RAND_MAX;
+#else
   prob= drand48();
+#endif
 
 /* bu_log("pr: %.3f, pd: %.3f, [%.3f,%.3f,%.3f] [%.3f,%.3f,%.3f]\n",prob_ref,prob_diff,color[0],color[1],color[2],spec[0],spec[1],spec[2]);*/
 /* bu_log("prob: %.3f, prob_diff: %.3f, pd+ps: %.3f\n",prob,prob_diff,prob_diff+prob_spec);*/
@@ -652,9 +659,15 @@ void EmitImportonsRandom(struct application *ap, point_t eye_pos) {
   while (PMap[PM_IMPORTANCE] -> StoredPhotons < PMap[PM_IMPORTANCE] -> MaxPhotons) {
     do {
       /* Set Ray Direction to application ptr */
+#ifdef WIN32
+      ap -> a_ray.r_dir[0]= 2.0*rand()/(double)RAND_MAX-1.0;
+      ap -> a_ray.r_dir[1]= 2.0*rand()/(double)RAND_MAX-1.0;
+      ap -> a_ray.r_dir[2]= 2.0*rand()/(double)RAND_MAX-1.0;
+#else
       ap -> a_ray.r_dir[0]= 2.0*drand48()-1.0;
       ap -> a_ray.r_dir[1]= 2.0*drand48()-1.0;
       ap -> a_ray.r_dir[2]= 2.0*drand48()-1.0;
+#endif
     } while (ap -> a_ray.r_dir[0]*ap -> a_ray.r_dir[0] + ap -> a_ray.r_dir[1]*ap -> a_ray.r_dir[1] + ap -> a_ray.r_dir[2]*ap -> a_ray.r_dir[2] > 1);
 
     /* Normalize Ray Direction */
@@ -699,14 +712,15 @@ void EmitPhotonsRandom(struct application *ap, double ScaleIndirect) {
       do {
 /*      do {*/
         /* Set Ray Direction to application ptr */
-/*
-        ap -> a_ray.r_dir[0]= 2.0*rand()/RAND_MAX-1.0;
-        ap -> a_ray.r_dir[1]= 2.0*rand()/RAND_MAX-1.0;
-        ap -> a_ray.r_dir[2]= 2.0*rand()/RAND_MAX-1.0;
-*/
+#ifdef WIN32
+	ap -> a_ray.r_dir[0]= 2.0*rand()/(double)RAND_MAX-1.0;
+	ap -> a_ray.r_dir[1]= 2.0*rand()/(double)RAND_MAX-1.0;
+	ap -> a_ray.r_dir[2]= 2.0*rand()/(double)RAND_MAX-1.0;
+#else
         ap -> a_ray.r_dir[0]= 2.0*drand48()-1.0;
         ap -> a_ray.r_dir[1]= 2.0*drand48()-1.0;
         ap -> a_ray.r_dir[2]= 2.0*drand48()-1.0;
+#endif
       } while (ap -> a_ray.r_dir[0]*ap -> a_ray.r_dir[0] + ap -> a_ray.r_dir[1]*ap -> a_ray.r_dir[1] + ap -> a_ray.r_dir[2]*ap -> a_ray.r_dir[2] > 1);
       /* Normalize Ray Direction */
       VUNITIZE(ap -> a_ray.r_dir);
@@ -821,8 +835,13 @@ void Irradiance(int pid, struct Photon *P, struct application *ap) {
   P -> Irrad[0]= P -> Irrad[1]= P -> Irrad[2]= 0.0;
   for (i= 1; i <= M; i++) {
     for (j= 1; j <= N; j++) {
+#ifdef WIN32
+      theta= asin(sqrt((j-rand()/(double)RAND_MAX)/M));
+      phi= (2*M_PI)*((i-rand()/(double)RAND_MAX)/N);
+#else
       theta= asin(sqrt((j-drand48())/M));
       phi= (2*M_PI)*((i-drand48())/N);
+#endif
 
       /* Assign pt */
       lap -> a_ray.r_pt[0]= P -> Pos[0];
@@ -956,7 +975,7 @@ void WritePhotons(struct PNode *Root, FILE *FH) {
 }
 
 
-void WriteFile(char *pmfile) {
+void WritePhotonFile(char *pmfile) {
   FILE		*FH;
   int		I1;
   short		S1;
@@ -1027,7 +1046,11 @@ void BuildPhotonMap(struct application *ap, point_t eye_pos, int cpus, int width
 
     PInit= 1;
 
+#ifdef WIN32
+    srand(RandomSeed);
+#else
     srand48(RandomSeed);
+#endif
 /*  bu_log("Photon Structure Size: %d\n",sizeof(struct PNode));*/
 
 /*
@@ -1067,7 +1090,7 @@ void BuildPhotonMap(struct application *ap, point_t eye_pos, int cpus, int width
       bu_log("  Building Importance Map...\n");
       EmitImportonsRandom(ap,eye_pos);
       BuildTree(Emit[PM_IMPORTANCE],PMap[PM_IMPORTANCE] -> StoredPhotons,PMap[PM_IMPORTANCE] -> Root);
-      ScaleFactor= max(BBMax[0]-BBMin[0],BBMax[1]-BBMin[1],BBMax[2]-BBMin[2]);
+      ScaleFactor= MaxFloat(BBMax[0]-BBMin[0],BBMax[1]-BBMin[1],BBMax[2]-BBMin[2]);
     }
 
     HitG= HitB= 0;
@@ -1076,7 +1099,7 @@ void BuildPhotonMap(struct application *ap, point_t eye_pos, int cpus, int width
 /*      EmitPhotonsRandom(ap, &(LightHead.l), LightIntensity);*/
 
     /* Generate Scale Factor */
-    ScaleFactor= max(BBMax[0]-BBMin[0],BBMax[1]-BBMin[1],BBMax[2]-BBMin[2]);
+    ScaleFactor= MaxFloat(BBMax[0]-BBMin[0],BBMax[1]-BBMin[1],BBMax[2]-BBMin[2]);
 
 bu_log("HitGB: %d,%d\n",HitG,HitB);
 bu_log("Scale Factor: %.3f\n",ScaleFactor);
@@ -1145,7 +1168,7 @@ bu_log("EPL: %d, Adjusted EPL: %d\n",(int)EPL,(int)(EPL*ratio));
     SanityCheck(PMap[PM_GLOBAL] -> Root,0);
 */
 
-    WriteFile(pmfile);
+    WritePhotonFile(pmfile);
 
     for (i= 0; i < PM_MAPS; i++)
       free(Emit[i]);
