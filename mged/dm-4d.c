@@ -167,7 +167,11 @@ register int y;
 	return(y);
 }
 
-#define map_entry(x)	((cueing_on) ? ((x) * 16) : ((x) + 16))
+#define CMAP_BASE	32
+#define CMAP_RAMP_WIDTH	16
+#define MAP_ENTRY(x)	((cueing_on) ? \
+			((x) * CMAP_RAMP_WIDTH + CMAP_BASE) : \
+			((x) + CMAP_BASE) )
 
 
 /*
@@ -428,11 +432,11 @@ double ratio;
 		setlinestyle( 1 );		/* set dot-dash */
 
 	if( white ) {
-		ovec = nvec = map_entry(DM_WHITE);
+		ovec = nvec = MAP_ENTRY(DM_WHITE);
 		/* Use the *next* to the brightest white entry */
 		if(cueing_on) shaderange(nvec+1, nvec+1, 0, 768);
 	} else {
-		if( (nvec = map_entry( sp->s_dmindex )) != ovec) {
+		if( (nvec = MAP_ENTRY( sp->s_dmindex )) != ovec) {
 			/* Use only the middle 14 to allow for roundoff...
 			 * Pity the poor fool who has defined a black object.
 			 * The code will use the "reserved" color map entries
@@ -505,7 +509,7 @@ register char *str;
 int x,y,size, colour;
 {
 	cmov2( GED2IRIS(x), GED2IRIS(y));
-	color( map_entry(colour) );
+	color( MAP_ENTRY(colour) );
 	charstr( str );
 }
 
@@ -520,7 +524,7 @@ int x2, y2;
 int dashed;
 {
 	register int nvec;
-	if((nvec = map_entry(DM_YELLOW)) != ovec) {
+	if((nvec = MAP_ENTRY(DM_YELLOW)) != ovec) {
 	  	if(cueing_on) shaderange(nvec, nvec, 0, 768);
 	  	ovec = nvec;
 	}
@@ -1028,14 +1032,15 @@ Ir_colorchange()
 		cueing_on = 0;
 	}
 	ir_nslots = 1<<ir_nslots;
+	if( ir_nslots > NSLOTS )  ir_nslots = NSLOTS;
 	if(cueing_on) {
-		ir_nslots = ir_nslots / 16 - 1;	/* peel off reserved ones */
+		/* peel off reserved ones */
+		ir_nslots = (ir_nslots - CMAP_BASE) / CMAP_RAMP_WIDTH;
 		depthcue(1);
 	} else {
-		ir_nslots -= 16;	/* peel off the reserved entries */
+		ir_nslots -= CMAP_BASE;	/* peel off the reserved entries */
 		depthcue(0);
 	}
-	if( ir_nslots > NSLOTS )  ir_nslots = NSLOTS;
 
 	if( ir_debug )  printf("colorchange\n");
 	ovec = -1;	/* Invalidate the old colormap entry */
@@ -1154,8 +1159,8 @@ int irlimit(i)
  *	for both depthcued and non-depthcued mode.  In depthcued mode,
  *	gen_color also generates the colormap ramps.  Note that in depthcued
  *	mode, DM_BLACK uses map entry 0, and does not generate a ramp for it.
- *	Non depthcued mode skips the first 16 colormap entries.  Also note
- * 	that the colormap ramps are generated from bright to dim.
+ *	Non depthcued mode skips the first CMAP_BASE colormap entries.
+ * 	Note that the colormap ramps are generated from bright to dim.
  */
 gen_color(c)
 int c;
@@ -1163,7 +1168,7 @@ int c;
 	if(cueing_on) {
 		
 		/*  Not much sense in making a ramp for DM_BLACK.  Besides
-		 *  which, doing so, would overwrite the bottom 16 color
+		 *  which, doing so, would overwrite the bottom color
 		 *  map entries, which is a no, no.
 		 */
 		if( c != DM_BLACK) {
@@ -1179,11 +1184,14 @@ int c;
 			  green = ir_rgbtab[c].g, blue = ir_rgbtab[c].b;
 			  i < 16;
 			  i++, red -= r_inc, green -= g_inc, blue -= b_inc)
-				mapcolor(c * 16 + i, (short)red, (short)green,
-				  (short)blue);
+				mapcolor( MAP_ENTRY(c) + i,
+					(short)red,
+					(short)green,
+					(short)blue );
 		}
 	} else {
-		mapcolor(c+16, ir_rgbtab[c].r, ir_rgbtab[c].g, ir_rgbtab[c].b);
+		mapcolor(c+CMAP_BASE,
+			ir_rgbtab[c].r, ir_rgbtab[c].g, ir_rgbtab[c].b);
 	}
 }
 
