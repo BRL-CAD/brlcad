@@ -175,6 +175,7 @@ BDIRS="bench \
 	libfb \
 	libtcl \
 	libtk \
+	libitcl \
 	libdm \
 	libz \
 	libpng \
