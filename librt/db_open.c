@@ -34,7 +34,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "machine.h"	/* before looking at __unix */
 
-#if defined(unix) || defined(__unix)
+#if defined(unix) || defined(__unix) || defined(__unix__)
 # include <sys/types.h>
 # include <sys/stat.h>
 #endif
@@ -94,7 +94,7 @@ char	*mode;
 {
 	register struct db_i	*dbip;
 	register int		i;
-#if defined(unix) || defined(__unix)
+#if defined(unix) || defined(__unix) || defined(__unix__)
 	struct stat		sb;
 #endif
 
@@ -103,14 +103,14 @@ char	*mode;
 	GETSTRUCT( dbip, db_i );
 	dbip->dbi_magic = DBI_MAGIC;
 
-#if defined(unix) || defined(__unix)
+#if defined(unix) || defined(__unix) || defined(__unix__)
 	if( stat( name, &sb ) < 0 )
 		goto fail;
 #endif
 
 	if( mode[0] == 'r' && mode[1] == '\0' )  {
 		/* Read-only mode */
-#		if defined(unix) || defined(__unix)
+#		if defined(unix) || defined(__unix) || defined(__unix__)
 			if( sb.st_size == 0 )  goto fail;
 			if( (dbip->dbi_fd = open( name, O_RDONLY )) < 0 )
 				goto fail;
@@ -147,7 +147,7 @@ char	*mode;
 		dbip->dbi_read_only = 1;
 	}  else  {
 		/* Read-write mode */
-#		if defined(unix) || defined(__unix)
+#		if defined(unix) || defined(__unix) || defined(__unix__)
 			if( (dbip->dbi_fd = open( name, O_RDWR )) < 0 )
 				goto fail;
 			if( (dbip->dbi_fp = fdopen( dbip->dbi_fd, "r+w" )) == NULL )
@@ -203,7 +203,7 @@ char *name;
 	strncpy( new.i.i_version, ID_VERSION, sizeof(new.i.i_version) );
 	strcpy( new.i.i_title, "Untitled MGED Database" );
 
-#	if defined(unix) || defined(__unix)
+#	if defined(unix) || defined(__unix) || defined(__unix__)
 	{
 		int	fd;
 		if( (fd = creat(name, 0644)) < 0 ||
@@ -240,7 +240,7 @@ register struct db_i	*dbip;
 	if(rt_g.debug&DEBUG_DB) rt_log("db_close(%s) x%x\n",
 		dbip->dbi_filename, dbip );
 
-#if defined(unix) || defined(__unix)
+#if defined(unix) || defined(__unix) || defined(__unix__)
 	(void)close( dbip->dbi_fd );
 #endif
 	fclose( dbip->dbi_fp );
