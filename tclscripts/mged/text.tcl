@@ -22,7 +22,7 @@
 # $Revision
 #
 
-proc distribute_text { w cmd str} {
+proc distribute_text { w cmd str } {
     global mged_players
 
     set src_id [get_player_id_t $w]
