@@ -80,9 +80,9 @@ f_hideline()
     vect_t	last_move;
     struct rt_i	*rtip;
     struct resource resource;
-    register struct application a;
-    register vect_t temp;
-    register vect_t last,dir;
+    struct application a;
+    vect_t temp;
+    vect_t last,dir;
     register struct vlist *vp;
 
 /*
@@ -210,7 +210,7 @@ register struct application *ap;
 struct partition *PartHeadp;
 {
     register char diff_solid;
-    register vect_t diff;
+    vect_t	diff;
     register fastf_t len;
 
     if (PartHeadp->pt_forw->pt_forw != PartHeadp)
