@@ -72,7 +72,7 @@ do
 			not_found=0
 			break
 		else
-			mkdir ${BINDIR}
+			mkdir -p ${BINDIR}
 			if test -d ${PREFIX}
 			then
 				# all is well
@@ -204,7 +204,7 @@ for LAST in \
 do
 	if test ! -d $BASEDIR/$LAST
 	then
-		mkdir $BASEDIR/$LAST
+		mkdir -p $BASEDIR/$LAST
 	fi
 done
 
