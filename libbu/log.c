@@ -298,16 +298,21 @@ char *fmt;
     
     if ( RT_LIST_IS_EMPTY( &(bu_log_hook_list.l) )  || bu_log_hooks_called) {
     	int ret;
+	int len;
+
 	if (bu_log_first_time) {
 	    bu_setlinebuf(stderr);
 	    bu_log_first_time = 0;
 	}
 
-    	bu_semaphore_acquire(BU_SEM_SYSCALL);
-    	ret = fwrite( bu_vls_addr(&output), bu_vls_strlen(&output), 1, stderr );
-	(void)fflush(stderr);
-    	bu_semaphore_release(BU_SEM_SYSCALL);
-    	if( ret != 1 )  bu_bomb("bu_log: write error");
+	len = bu_vls_strlen(&output);
+	if(len){
+	  bu_semaphore_acquire(BU_SEM_SYSCALL);
+	  ret = fwrite( bu_vls_addr(&output), len, 1, stderr );
+	  (void)fflush(stderr);
+	  bu_semaphore_release(BU_SEM_SYSCALL);
+	  if( ret != 1 )  bu_bomb("bu_log: write error");
+	}
 
     } else {
 	bu_call_hooks(bu_vls_addr(&output));
@@ -393,10 +398,15 @@ char *fmt;
     
     if ( RT_LIST_IS_EMPTY( &(bu_log_hook_list.l) ) || bu_log_hooks_called) {
     	int ret;
-    	bu_semaphore_acquire(BU_SEM_SYSCALL);
-    	ret = fwrite( bu_vls_addr(&output), bu_vls_strlen(&output), 1, fp );
-    	bu_semaphore_release(BU_SEM_SYSCALL);
-    	if( ret != 1 )  bu_bomb("bu_flog: write error");
+	int len;
+
+	len = bu_vls_strlen(&output);
+	if(len){
+	  bu_semaphore_acquire(BU_SEM_SYSCALL);
+	  ret = fwrite( bu_vls_addr(&output), len, 1, fp );
+	  bu_semaphore_release(BU_SEM_SYSCALL);
+	  if( ret != 1 )  bu_bomb("bu_flog: write error");
+	}
 
     } else {
 	bu_call_hooks(bu_vls_addr(&output));
