@@ -39,6 +39,7 @@ set helplib_data(wdb_kill)		{{object(s)} {kill/delete database object(s)}}
 set helplib_data(wdb_killall)		{{object(s)} {kill/delete database object(s), removing all references}}
 set helplib_data(wdb_killtree)		{{object(s)} {kill all paths belonging to object(s)}}
 set helplib_data(wdb_copy)		{{from to} {copy a database object}}
+set helplib_data(wdb_copyeval)		{{new_solid path_to_old_solid}	{copy an 'evaluated' path solid}}
 set helplib_data(wdb_move)		{{from to} {rename a database object}}
 set helplib_data(wdb_moveall)		{{from to} {rename all occurences of object}}
 set helplib_data(wdb_concat)		{{file.g prefix} {concatenate another GED file into the current database}}
@@ -63,6 +64,11 @@ set helplib_data(wdb_instance)		{{obj comb [op]} {add instance of obj to comb}}
 set helplib_data(wdb_observer)		{{cmd [args]} {Attach/detach observer to/from list}}
 set helplib_data(wdb_make_bb)		{{bbname object(s)} {make a bounding box (rpp) around the specified objects}}
 set helplib_data(wdb_make_name)		{{template | -s [num]}	{make an object name not occuring in the database}}
+set helplib_data(wdb_xpush)		{{object} {push object path transformations to solids, creating solids if necessary}}
+set helplib_data(wdb_shells)		{{nmg_model}	{breaks model into seperate shells}}
+set helplib_data(wdb_showmats)		{{path}	{show xform matrices along path}}
+set helplib_data(wdb_nmg_collapse)	{{nmg_solid new_solid maximum_error_distance [minimum_allowed_angle]}	{decimate NMG solid via edge collapse}}
+set helplib_data(wdb_nmg_simplify)	{{[arb|tgc|ell|poly] new_solid nmg_solid}	{simplify nmg_solid, if possible}}
 set helplib_data(vo_close)		{{} {close/destroy this view object}}
 set helplib_data(vo_size)		{{vsize} {set/get the view size}}
 set helplib_data(vo_invSize)		{{} {get the inverse view size}}
