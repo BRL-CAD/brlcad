@@ -3499,6 +3499,16 @@ init_objedit()
 	}
 	RT_CK_DB_INTERNAL( &es_int );
 
+	if( id == ID_ARB8 )
+	{
+		struct rt_arb_internal *arb;
+
+		arb = (struct rt_arb_internal *)es_int.idb_ptr;
+		RT_ARB_CK_MAGIC( arb );
+
+		es_type = rt_arb_std_type( &es_int , &mged_tol );
+	}
+
 	get_solid_keypoint( es_keypoint , &strp , &es_int , es_mat );
 
 	/* Save aggregate path matrix */
