@@ -1,39 +1,53 @@
-#			cad/Makefile
-# The Master Makefile for the BRL CAD Software Distribution
-#
-# Source -
-#	SECAD/VLD Computing Consortium, Bldg 394
-#	The U. S. Army Ballistic Research Laboratory
-#	Aberdeen Proving Ground, Maryland  21005-5066
+#################################################################
+#								#
+#			Makefile				#
+#								#
+# The Master Makefile for the BRL CAD Software Distribution	#
+#								#
+#  Author -							#
+#	Michael John Muuss					#
+#	BRL/SECAD, August 1986					#
+#								#
+# Source -							#
+#	SECAD/VLD Computing Consortium, Bldg 394		#
+#	The U. S. Army Ballistic Research Laboratory		#
+#	Aberdeen Proving Ground, Maryland  21005-5066		#
+#								#
+#  $Header$		#
+#								#
+#################################################################
 
 DISTDIR		= /m/dist/.
 FTPDIR		= /usr/spool/ftp/arch
 ARCHDIR		= /m/.
 
 # NOTE:  The following directories contain code which may not compile
-# on all systems:
+# on all systems.  In that case, they should be removed from $DIRS:
+#
 #	libpkg		BSD or SGI networking, remove if SYSV
 #	rfbd		BSD or SGI networking, remove if SYSV
-#	fbed		new, BSD or SGI only for now
 #
 DIRS		= h \
 		  doc \
 		  libsysv \
+		  libmalloc \
 		  conv bench \
 		  db pix \
 		  libpkg \
 		  libfb \
 		  rfbd \
 		  libtermio \
+		  libcursor \
 		  libplot3 \
+		  libtig \
 		  librle \
-		  librt rt \
+		  libspl librt rt \
 		  mged \
 		  util \
 		  fbed \
-		  libcursor \
 		  lgt \
-		  vdeck
+		  vdeck \
+		  whetstone dhrystone
 
 all:
 	@echo "Hopefully, all the Makefile.loc parameters are right"
@@ -46,11 +60,14 @@ all:
 
 benchmark:
 	cd libsysv; make depend; make -k
+	cd libmalloc; make depend; make -k
 	cd conv; make -k
 	cd db; make -k
 	cd pix; make -k
 	cd libpkg; make depend; make -k	  # needed for IF_REMOTE, rm if SYSV
 	cd libfb; make depend; make -k
+	cd libplot3; make depend; make -k
+	cd libspl; make depend; make -k
 	cd librt; make depend; make -k
 	cd rt; make depend; make -k
 
@@ -90,23 +107,42 @@ typeset:
 		(cd $$dir; make -k typeset) \
 	done
 
-# Temporary hack for Mike, dont use!
+# BRL-only:  install sources in distribution tree without installing products
 inst-dist:
 	-for dir in ${DIRS}; \
 	do	echo ---------- $$dir; \
 		(cd $$dir; make -k inst-dist) \
 	done
 
+TOP_FILES	= README Makefile Makefile.defs Makefile.rules
+checkin:
+	rcs -l ${TOP_FILES}
+	ci -u -f -r5 -sRel "-mRelease 1.24" ${TOP_FILES}
+	-for dir in ${DIRS}; \
+	do	echo ---------- $$dir; \
+		(cd $$dir; rm -f Makefile.bak; \
+		rcs -l *.[cshf1-9] Makefile*; \
+		ci -u -f -r5 -sRel "-mRelease 1.24" *.[cshf1-9] Makefile* ) \
+	done
+
+# Remove all .o files, leave products
 clean:
 	-for dir in ${DIRS}; \
 	do	echo ---------- $$dir; \
 		(cd $$dir; make -k clean) \
 	done
 
+# Remove all products, leave all .o files
 clobber:
 	-for dir in ${DIRS}; \
 	do	echo ---------- $$dir; \
 		(cd $$dir; make -k clobber) \
+	done
+
+lint:
+	-for dir in ${DIRS}; \
+	do	echo ---------- $$dir; \
+		(cd $$dir; make -k lint) \
 	done
 
 # Do a "make install" as step 1 of making a distribution.
