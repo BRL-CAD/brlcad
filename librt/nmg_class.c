@@ -844,21 +844,23 @@ CONST struct rt_tol	*tol;
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY)
 		rt_log("class_vu_vs_s(vu=x%x) pt=(%g,%g,%g)\n", vu, V3ARGS(pt) );
 
-	if( !(rt_g.NMG_debug & DEBUG_CLASSIFY) )  {
-		/* As an efficiency & consistency measure, check for vertex in class list */
-		reason = "of classlist";
-		if( NMG_INDEX_TEST(classlist[NMG_CLASS_AinB], vu->v_p) )  {
-			status = INSIDE;
-			goto out;
-		}
-		if( NMG_INDEX_TEST(classlist[NMG_CLASS_AonBshared], vu->v_p) )  {
-			status = ON_SURF;
-			goto out;
-		}
-		if( NMG_INDEX_TEST(classlist[NMG_CLASS_AoutB], vu->v_p) )  {
-			status = OUTSIDE;
-			goto out;
-		}
+	/* As a mandatory consistency measure, check for cached classification */
+	reason = "of cached classification";
+	if( NMG_INDEX_TEST(classlist[NMG_CLASS_AinB], vu->v_p) )  {
+		status = INSIDE;
+		goto out;
+	}
+	if( NMG_INDEX_TEST(classlist[NMG_CLASS_AonBshared], vu->v_p) )  {
+		status = ON_SURF;
+		goto out;
+	}
+	if( NMG_INDEX_TEST(classlist[NMG_CLASS_AonBanti], vu->v_p) )  {
+		status = ON_SURF;
+		goto out;
+	}
+	if( NMG_INDEX_TEST(classlist[NMG_CLASS_AoutB], vu->v_p) )  {
+		status = OUTSIDE;
+		goto out;
 	}
 
 	/* we use topology to determing if the vertex is "ON" the
@@ -917,9 +919,6 @@ CONST struct rt_tol	*tol;
 	reason = "of nmg_class_pt_s()";
 	class = nmg_class_pt_s(pt, sB, tol);
 	
-	/* XXX For major efficiency, should store classification for
-	 * XXX all other uses of this vertex in this shell (sA)!
-	 */
 	if( class == NMG_CLASS_AoutB )  {
 		NMG_INDEX_SET(classlist[NMG_CLASS_AoutB], vu->v_p);
 		status = OUTSIDE;
@@ -969,22 +968,25 @@ CONST struct rt_tol	*tol;
 	NMG_CK_SHELL(s);	
 	RT_CK_TOL(tol);
 	
-	if( !(rt_g.NMG_debug & DEBUG_CLASSIFY) )  {
-		/* check to see if edge is already in one of the lists */
-		reason = "of classlist";
-		if( NMG_INDEX_TEST(classlist[NMG_CLASS_AinB], eu->e_p) )  {
-			status = INSIDE;
-			goto out;
-		}
-		if( NMG_INDEX_TEST(classlist[NMG_CLASS_AonBshared], eu->e_p) )  {
-			status = ON_SURF;
-			goto out;
-		}
-		if( NMG_INDEX_TEST(classlist[NMG_CLASS_AoutB], eu->e_p) )  {
-			status = OUTSIDE;
-			goto out;
-		}
+	/* As a mandatory consistency measure, check for cached classification */
+	reason = "of cached classification";
+	if( NMG_INDEX_TEST(classlist[NMG_CLASS_AinB], eu->e_p) )  {
+		status = INSIDE;
+		goto out;
 	}
+	if( NMG_INDEX_TEST(classlist[NMG_CLASS_AonBshared], eu->e_p) )  {
+		status = ON_SURF;
+		goto out;
+	}
+	if( NMG_INDEX_TEST(classlist[NMG_CLASS_AonBanti], eu->e_p) )  {
+		status = ON_SURF;
+		goto out;
+	}
+	if( NMG_INDEX_TEST(classlist[NMG_CLASS_AoutB], eu->e_p) )  {
+		status = OUTSIDE;
+		goto out;
+	}
+
 	euv_cl = class_vu_vs_s(eu->vu_p, s, classlist, tol);
 	matev_cl = class_vu_vs_s(eu->eumate_p->vu_p, s, classlist, tol);
 	
@@ -1156,10 +1158,6 @@ CONST struct rt_tol	*tol;
 		nmg_class_status(euv_cl), nmg_class_status(matev_cl) );
 	rt_bomb("class_eu_vs_s() inconsistent edgeuse\n");
 out:
-	/* XXX For major efficiency, should store classification for
-	 * XXX all other edgeuses of this edge in this shell (sA)!
-	 * Nope, edges get the classification, not edgeuses.
-	 */
 	if (rt_g.NMG_debug & DEBUG_GRAPHCL)
 		nmg_show_broken_classifier_stuff((long *)eu, classlist, nmg_class_nothing_broken, 0, (char *)NULL);
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
