@@ -232,6 +232,7 @@ void do_run( int a, int b )
 	int waitret;
 	int p[2];
 	void *buffer;
+	struct resource *tmp_res;
 
 	buffer = calloc(npsw, sizeof(resource[0]));
 	if (buffer == NULL) {
@@ -291,10 +292,11 @@ void do_run( int a, int b )
 			if (read(p[0], buffer, sizeof(resource[0]) * npsw) == -1) {
 				perror("Unable to read from the communication pipe");
 			}
-			/* obliterate the raytrace instance pointer with what
-			 * the child left us with.
+
+			/* do not use the just read info to overwrite the resource structures.
+			 * doing so will hose the resources completely
 			 */
-			memcpy(resource, buffer, sizeof(resource[0]) * npsw);
+
 			/* parent ends up waiting on his child (and his child's threads) to
 			 * terminate.  we can get valid usage statistics on a child process.
 			 */
@@ -305,7 +307,16 @@ void do_run( int a, int b )
 
 	} /* end parallel case */
 
-
+#  if defined(linux )
+	tmp_res = (struct resource *)buffer;
+	for( cpu=0; cpu < npsw; cpu++ ) {
+		if ( tmp_res[cpu].re_magic != RESOURCE_MAGIC )  {
+			bu_log("ERROR: CPU %d resources corrupted, statistics bad\n", cpu);
+			continue;
+		}
+		rt_add_res_stats( ap.a_rt_i, &tmp_res[cpu] );
+	}
+#  else
 	/* Tally up the statistics */
 	for ( cpu=0; cpu < npsw; cpu++ ) {
 		if ( resource[cpu].re_magic != RESOURCE_MAGIC )  {
@@ -314,6 +325,7 @@ void do_run( int a, int b )
 		}
 		rt_add_res_stats( ap.a_rt_i, &resource[cpu] );
 	}
+#endif
 	return;
 }
 
