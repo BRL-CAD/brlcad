@@ -106,7 +106,7 @@ static char			*output_file = "nastran.g";
 static struct rt_wdb		*fdout;		/* brlcad output file */
 static FILE			*fdin;		/* NASTRAN input file */
 static FILE			*fdtmp;		/* temporary version of NASTRAN input */
-static char			*Usage="Usage:\n\t%s [-p] [-xX lvl] [-t tol.dist] -i NASTRAN_file -o brl-cad_file\n";
+static char			*Usage="Usage:\n\t%s [-p] [-xX lvl] [-t tol.dist] [-i NASTRAN_file] -o brl-cad_file\n";
 static long			start_off;
 static char			*delims=", \t";
 static struct coord_sys		coord_head;	/* head of linked list of coordinate systems */
