@@ -68,7 +68,7 @@ struct rt_list  {
 	struct rt_list	*forw;		/* "forward", "next" */
 	struct rt_list	*back;		/* "back", "last" */
 };
-#define RT_LIST_MAGIC	0x01016580
+#define RT_LIST_HEAD_MAGIC	0x01016580	/* Magic num for list head */
 #define RT_LIST_NULL	((struct rt_list *)0)
 
 
@@ -104,14 +104,20 @@ struct rt_list  {
 #define RT_LIST_IS_EMPTY(hp)	((hp)->forw == (hp))
 #define RT_LIST_NON_EMPTY(hp)	((hp)->forw != (hp))
 
+/* Handle list initialization */
+#define	RT_LIST_UNINITIALIZED(hp)	((hp)->forw == RT_LIST_NULL)
 #define RT_LIST_INIT(hp)	{ \
 	(hp)->forw = (hp)->back = (hp); \
-	(hp)->magic = RT_LIST_MAGIC;	/* sanity */ }
+	(hp)->magic = RT_LIST_HEAD_MAGIC;	/* used by circ. macros */ }
+#define RT_LIST_MAGIC_SET(hp,val)	(hp)->magic = (val);
+#define RT_LIST_MAGIC_WRONG(hp,val)	((hp)->magic != (val))
 
 /* Return re-cast pointer to first element on list.
  * No checking is performed to see if list is empty.
  */
 #define RT_LIST_LAST(structure,hp)	\
+	((struct structure *)((hp)->back))
+#define RT_LIST_PREV(structure,hp)	\
 	((struct structure *)((hp)->back))
 #define RT_LIST_FIRST(structure,hp)	\
 	((struct structure *)((hp)->forw))
@@ -178,13 +184,13 @@ struct rt_list  {
 
 /* Return pointer to circular next element; ie, ignoring the list head */
 #define RT_LIST_PNEXT_CIRC(structure,p)	\
-	((RT_LIST_FIRST_MAGIC((struct rt_list *)(p)) == RT_LIST_MAGIC) ? \
+	((RT_LIST_FIRST_MAGIC((struct rt_list *)(p)) == RT_LIST_HEAD_MAGIC) ? \
 		RT_LIST_PNEXT_PNEXT(structure,(struct rt_list *)(p)) : \
 		RT_LIST_PNEXT(structure,p) )
 
 /* Return pointer to circular last element; ie, ignoring the list head */
 #define RT_LIST_PLAST_CIRC(structure,p)	\
-	((RT_LIST_LAST_MAGIC((struct rt_list *)(p)) == RT_LIST_MAGIC) ? \
+	((RT_LIST_LAST_MAGIC((struct rt_list *)(p)) == RT_LIST_HEAD_MAGIC) ? \
 		RT_LIST_PLAST_PLAST(structure,(struct rt_list *)(p)) : \
 		RT_LIST_PLAST(structure,p) )
 
