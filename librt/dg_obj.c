@@ -83,6 +83,7 @@ static int dgo_tol_tcl();
 #endif
 static int dgo_rtcheck_tcl();
 static int dgo_observer_tcl();
+static int dgo_report_tcl();
 
 static union tree *dgo_wireframe_region_end();
 static union tree *dgo_wireframe_leaf();
@@ -91,6 +92,7 @@ static void dgo_cvt_vlblock_to_solids();
 int dgo_invent_solid();
 static void dgo_bound_solid();
 static void dgo_drawH_part2();
+static void dgo_eraseobjpath();
 static void dgo_eraseobjall();
 void dgo_eraseobjall_callback();
 static void dgo_eraseobj();
@@ -101,6 +103,7 @@ static void dgo_rt_write();
 static void dgo_rt_set_eye_model();
 
 static void dgo_notify();
+static void dgo_print_schain();
 
 struct dg_obj HeadDGObj;		/* head of drawable geometry object list */
 static struct solid FreeSolid;		/* head of free solid list */
@@ -120,6 +123,7 @@ static struct bu_cmdtab dgo_cmds[] = {
 	"label",		dgo_label_tcl,
 	"observer",		dgo_observer_tcl,
 	"overlay",		dgo_overlay_tcl,
+	"report",		dgo_report_tcl,
 	"rt",			dgo_rt_tcl,
 	"rtcheck",		dgo_rtcheck_tcl,
 #if 0
@@ -379,26 +383,6 @@ dgo_illum_tcl(clientData, interp, argc, argv)
 		register struct solid *forw;
 		register int i;
 
-#if 0
-		if (*argv[2] == *sp->s_path[0]->d_namep &&
-		    strcmp(argv[2], sp->s_path[0]->d_namep) == 0) {
-			found = 1;
-			if (illum)
-				sp->s_iflag = UP;
-			else
-				sp->s_iflag = DOWN;
-			FOR_REST_OF_SOLIDS(forw, sp, &dgop->dgo_headSolid){
-				if (forw->s_path[0] == sp->s_path[0]) {
-					if (illum)
-						forw->s_iflag = UP;
-					else
-						forw->s_iflag = DOWN;
-				}
-			}
-
-			break;
-		}
-#else
 		for (i = 0; i <= sp->s_last; ++i) {
 			if (*argv[2] == *sp->s_path[i]->d_namep &&
 			    strcmp(argv[2], sp->s_path[i]->d_namep) == 0) {
@@ -407,23 +391,8 @@ dgo_illum_tcl(clientData, interp, argc, argv)
 					sp->s_iflag = UP;
 				else
 					sp->s_iflag = DOWN;
-#if 0
-				if (i < sp->s_last) {
-					FOR_REST_OF_SOLIDS(forw, sp, &dgop->dgo_headSolid){
-						if (forw->s_path[i] == sp->s_path[i]) {
-							if (illum)
-								forw->s_iflag = UP;
-							else
-								forw->s_iflag = DOWN;
-						}
-					}
-				}
-
-				break;
-#endif
 			}
 		}
-#endif
 	}
 
 	if (!found) {
@@ -484,12 +453,7 @@ dgo_draw(dgop, interp, argc, argv, kind)
 	/*  First, delete any mention of these objects.
 	 *  Silently skip any leading options (which start with minus signs).
 	 */
-	for (i = 0; i < argc; i++) {
-		if ((dp = db_lookup(dgop->dgo_wdbp->dbip,  argv[i], LOOKUP_QUIET)) != DIR_NULL) {
-			dgo_eraseobj(dgop, interp, dp);
-		}
-	}
-
+	dgo_eraseobjpath(dgop, interp, argc, argv, LOOKUP_QUIET, 0);
 	dgo_drawtrees(dgop, interp, argc, argv, kind);
 	dgo_color_soltab(&dgop->dgo_headSolid);
 }
@@ -535,22 +499,6 @@ dgo_draw_tcl(clientData, interp, argc, argv)
 	return TCL_OK;
 }
 
-static void
-dgo_erase(dgop, interp, argc, argv)
-     struct dg_obj *dgop;
-     Tcl_Interp *interp;
-     int     argc;
-     char    **argv;
-{
-	register struct directory *dp;
-	register int i;
-
-	for (i = 0; i < argc; i++) {
-		if ((dp = db_lookup(dgop->dgo_wdbp->dbip,  argv[i], LOOKUP_NOISY)) != DIR_NULL)
-			dgo_eraseobj(dgop, interp, dp);
-	}
-}
-
 /*
  * Erase database objects.
  *
@@ -578,26 +526,10 @@ dgo_erase_tcl(clientData, interp, argc, argv)
 		return TCL_ERROR;
 	}
 
-	dgo_erase(dgop, interp, argc-2, argv+2);
+	dgo_eraseobjpath(dgop, interp, argc-2, argv+2, LOOKUP_NOISY, 0);
 	dgo_notify(dgop, interp);
 
 	return TCL_OK;
-}
-
-static void
-dgo_erase_all(dgop, interp, argc, argv)
-     struct dg_obj *dgop;
-     Tcl_Interp *interp;
-     int     argc;
-     char    **argv;
-{
-	register struct directory *dp;
-	register int i;
-
-	for (i = 0; i < argc; i++) {
-		if ((dp = db_lookup(dgop->dgo_wdbp->dbip,  argv[i], LOOKUP_NOISY)) != DIR_NULL)
-			dgo_eraseobjall(dgop, interp, dp);
-	}
 }
 
 /*
@@ -624,7 +556,7 @@ dgo_erase_all_tcl(clientData, interp, argc, argv)
 		return TCL_ERROR;
 	}
 
-	dgo_erase_all(dgop, interp, argc-2, argv+2);
+	dgo_eraseobjpath(dgop, interp, argc-2, argv+2, LOOKUP_NOISY, 1);
 	dgo_notify(dgop, interp);
 
 	return TCL_OK;
@@ -1590,6 +1522,36 @@ dgo_observer_tcl(clientData, interp, argc, argv)
 		      interp, argc - 2, argv + 2, bu_observer_cmds, 0);
 }
 
+/*
+ *  Report information about solid table, and per-solid VLS
+ */
+static int
+dgo_report_tcl(clientData, interp, argc, argv)
+     ClientData clientData;
+     Tcl_Interp *interp;
+     int	argc;
+     char	**argv;
+{
+	int		lvl = 0;
+	struct dg_obj	*dgop = (struct dg_obj *)clientData;
+
+	if (argc < 1 || 2 < argc) {
+		struct bu_vls vls;
+
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "helplib dg_report");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
+
+	if (argc > 1)
+		lvl = atoi(argv[1]);
+	dgo_print_schain(dgop, interp, lvl);
+
+	return TCL_OK;
+}
+
 /****************** utility routines ********************/
 
 struct dg_client_data {
@@ -2217,6 +2179,7 @@ dgo_invent_solid(dgop, interp, name, vhead, rgb, copy)
      int		copy;
 {
 	register struct directory	*dp;
+	struct directory		*dpp[2] = {DIR_NULL, DIR_NULL};
 	register struct solid		*sp;
 
 	if (dgop->dgo_wdbp->dbip == DBI_NULL)
@@ -2233,7 +2196,8 @@ dgo_invent_solid(dgop, interp, name, vhead, rgb, copy)
 		 * Name exists from some other overlay,
 		 * zap any associated solids
 		 */
-		dgo_eraseobjall(dgop, interp, dp);
+		dpp[0] = dp;
+		dgo_eraseobjall(dgop, interp, dpp);
 	}
 	/* Need to enter phony name in directory structure */
 	dp = db_diradd(dgop->dgo_wdbp->dbip,  name, RT_DIR_PHONY_ADDR, 0, DIR_SOLID, NULL);
@@ -2455,87 +2419,193 @@ dgo_eraseobjall_callback(dbip, interp, dp)
      Tcl_Interp *interp;
      struct directory *dp;
 {
-	struct dg_obj *dgop;
+	struct dg_obj		*dgop;
+	struct directory	*dpp[2] = {DIR_NULL, DIR_NULL};
 
+	dpp[0] = dp;
 	for (BU_LIST_FOR(dgop, dg_obj, &HeadDGObj.l))
 		/* drawable geometry objects associated database matches */
 		if (dgop->dgo_wdbp->dbip == dbip) {
-			dgo_eraseobjall(dgop, interp, dp);
+			dgo_eraseobjall(dgop, interp, dpp);
 			dgo_notify(dgop, interp);
 		}
 }
 
 /*
- *			E R A S E O B J A L L
- *
- * This routine goes through the solid table and deletes all displays
- * which contain the specified object in their 'path'
+ * Builds an array of directory pointers from argv and calls
+ * either dgo_eraseobj or dgo_eraseobjall.
  */
 static void
-dgo_eraseobjall(dgop, interp, dp)
+dgo_eraseobjpath(dgop, interp, argc, argv, noisy, all)
      struct dg_obj *dgop;
-     Tcl_Interp *interp;
-     register struct directory *dp;
+     Tcl_Interp	*interp;
+     int	argc;
+     char	**argv;
+     int	noisy;	
+     int	all;
 {
-  register struct solid *sp;
-  static struct solid *nsp;
-  register int i;
+	register struct directory *dp;
+	register int i;
+	struct bu_vls vls;
+	Tcl_Obj *save_result;
 
-  if(dgop->dgo_wdbp->dbip == DBI_NULL)
-    return;
+	save_result = Tcl_GetObjResult(interp);
+	Tcl_IncrRefCount(save_result);
 
-  RT_CK_DIR(dp);
-  sp = BU_LIST_NEXT(solid, &dgop->dgo_headSolid);
-  while (BU_LIST_NOT_HEAD(sp, &dgop->dgo_headSolid)) {
-	  nsp = BU_LIST_PNEXT(solid, sp);
-	  for (i=0; i<=sp->s_last; i++) {
-		  if (sp->s_path[i] != dp)
-			  continue;
+	bu_vls_init(&vls);
+	for (i = 0; i < argc; i++) {
+		int j;
+		char *list;
+		int ac;
+		char **av, **av_orig;
+		struct directory **dpp;
 
-		  BU_LIST_DEQUEUE(&sp->l);
-		  FREE_SOLID(sp, &FreeSolid.l);
+		bu_vls_trunc(&vls, 0);
+		bu_vls_printf(&vls, "split %s /", argv[i]);
+		if (Tcl_Eval(interp, bu_vls_addr(&vls)) != TCL_OK) {
+			continue;
+		}
+		list = Tcl_GetStringResult(interp);
+		Tcl_SplitList(interp, list, &ac, &av_orig);
 
-		  break;
-	  }
-	  sp = nsp;
-  }
+		/* skip first element if empty */
+		av = av_orig;
+		if (*av[0] == '\0') {
+			--ac;
+			++av;
+		}
 
-  if (dp->d_addr == RT_DIR_PHONY_ADDR) {
-    if (db_dirdelete(dgop->dgo_wdbp->dbip, dp) < 0) {
-	    Tcl_AppendResult(interp, "dgo_eraseobjall: db_dirdelete failed\n", (char *)NULL);
-    }
-  }
+		/* ignore last element if empty */
+		if (*av[ac-1] == '\0')
+			--ac;
+
+		dpp = bu_calloc(ac+1, sizeof(struct directory *), "eraseobjpath: directory pointers");
+		for (j = 0; j < ac; ++j)
+			if ((dp = db_lookup(dgop->dgo_wdbp->dbip, av[j], noisy)) != DIR_NULL)
+				dpp[j] = dp;
+			else
+				goto end;
+
+		dpp[j] = DIR_NULL;
+
+		if (all)
+			dgo_eraseobjall(dgop, interp, dpp);
+		else
+			dgo_eraseobj(dgop, interp, dpp);
+
+	end:
+		bu_free((genptr_t)dpp, "eraseobjpath: directory pointers");
+		Tcl_Free((char *)av_orig);
+	}
+	bu_vls_free(&vls);
+	Tcl_SetObjResult(interp, save_result);
+	Tcl_DecrRefCount(save_result);
 }
 
+/*
+ *			E R A S E O B J A L L
+ *
+ * This routine goes through the solid table and deletes all solids
+ * from the solid list which contain the specified object anywhere in their 'path'
+ */
 static void
-dgo_eraseobj(dgop, interp, dp)
+dgo_eraseobjall(dgop, interp, dpp)
      struct dg_obj *dgop;
      Tcl_Interp *interp;
-     register struct directory *dp;
+     register struct directory **dpp;
 {
+	register struct directory **tmp_dpp;
 	register struct solid *sp;
 	register struct solid *nsp;
+	register int i;
 
 	if(dgop->dgo_wdbp->dbip == DBI_NULL)
 		return;
 
-	RT_CK_DIR(dp);
+	for (tmp_dpp = dpp; *tmp_dpp != DIR_NULL; ++tmp_dpp)
+		RT_CK_DIR(*tmp_dpp);
+
+	sp = BU_LIST_NEXT(solid, &dgop->dgo_headSolid);
+	while (BU_LIST_NOT_HEAD(sp, &dgop->dgo_headSolid)) {
+		nsp = BU_LIST_PNEXT(solid, sp);
+		for (i=0; i <= sp->s_last; i++) {
+			/* look for first path element */
+			if (sp->s_path[i] != *dpp)
+				continue;
+
+			/* look for rest of path */
+			for (++i, tmp_dpp = dpp+1;
+			     i <= sp->s_last && *tmp_dpp != DIR_NULL;
+			     ++i, ++tmp_dpp)
+				if (sp->s_path[i] != *tmp_dpp)
+					goto end;
+
+			if (*tmp_dpp != DIR_NULL)
+				goto end;
+
+			BU_LIST_DEQUEUE(&sp->l);
+			FREE_SOLID(sp, &FreeSolid.l);
+
+			break;
+		}
+	end:
+		sp = nsp;
+	}
+
+	if ((*dpp)->d_addr == RT_DIR_PHONY_ADDR) {
+		if (db_dirdelete(dgop->dgo_wdbp->dbip, *dpp) < 0) {
+			Tcl_AppendResult(interp, "dgo_eraseobjall: db_dirdelete failed\n", (char *)NULL);
+		}
+	}
+}
+
+/*
+ *			E R A S E O B J
+ *
+ * This routine goes through the solid table and deletes all solids
+ * from the solid list which contain the specified object at the
+ * beginning of their 'path'
+ */
+static void
+dgo_eraseobj(dgop, interp, dpp)
+     struct dg_obj *dgop;
+     Tcl_Interp *interp;
+     register struct directory **dpp;
+{
+	register struct directory **tmp_dpp;
+	register struct solid *sp;
+	register struct solid *nsp;
+	register int i;
+
+	if(dgop->dgo_wdbp->dbip == DBI_NULL)
+		return;
+
+	if (*dpp == DIR_NULL)
+		return;
+
+	for (tmp_dpp = dpp; *tmp_dpp != DIR_NULL; ++tmp_dpp)
+		RT_CK_DIR(*tmp_dpp);
 
 	sp = BU_LIST_FIRST(solid, &dgop->dgo_headSolid);
 	while (BU_LIST_NOT_HEAD(sp, &dgop->dgo_headSolid)) {
 		nsp = BU_LIST_PNEXT(solid, sp);
-		if (*sp->s_path != dp) {
-			sp = nsp;
-			continue;
-		}
+		for (i = 0, tmp_dpp = dpp;
+		     i <= sp->s_last && *tmp_dpp != DIR_NULL;
+		     ++i, ++tmp_dpp)
+			if (sp->s_path[i] != *tmp_dpp)
+				goto end;
+
+		if (*tmp_dpp != DIR_NULL)
+			goto end;
 
 		BU_LIST_DEQUEUE(&sp->l);
 		FREE_SOLID(sp, &FreeSolid.l);
+	end:
 		sp = nsp;
 	}
 
-	if (dp->d_addr == RT_DIR_PHONY_ADDR ) {
-		if (db_dirdelete(dgop->dgo_wdbp->dbip, dp) < 0)  {
+	if ((*dpp)->d_addr == RT_DIR_PHONY_ADDR ) {
+		if (db_dirdelete(dgop->dgo_wdbp->dbip, *dpp) < 0) {
 			Tcl_AppendResult(interp, "dgo_eraseobj: db_dirdelete failed\n", (char *)NULL);
 		}
 	}
@@ -2878,4 +2948,99 @@ dgo_zapall(wdbp, interp)
 			dgo_zap(dgop, interp);
 			dgo_notify(dgop, interp);
 		}
+}
+
+/*
+ *			D G O _ P R _ S C H A I N
+ *
+ *  Given a pointer to a member of the circularly linked list of solids
+ *  (typically the head), chase the list and print out the information
+ *  about each solid structure.
+ */
+static void
+dgo_print_schain(dgop, interp, lvl)
+     struct dg_obj	*dgop;
+     Tcl_Interp		*interp;
+     int		lvl;			/* debug level */
+{
+	register struct solid		*sp;
+	register int			i;
+	register struct bn_vlist	*vp;
+	int				nvlist;
+	int				npts;
+	struct bu_vls 		vls;
+
+	if (dgop->dgo_wdbp->dbip == DBI_NULL)
+		return;
+
+	bu_vls_init(&vls);
+
+	FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid) {
+		if (lvl <= -2) {
+			/* print only leaves */
+			bu_vls_printf(&vls, "%s ", sp->s_path[sp->s_last]->d_namep);
+			continue;
+		}
+
+		for (i=0; i <= sp->s_last; i++)
+			bu_vls_printf(&vls, "/%s", sp->s_path[i]->d_namep);
+
+		if ((lvl != -1) && (sp->s_iflag == UP))
+			bu_vls_printf(&vls, " ILLUM");
+
+		bu_vls_printf(&vls, "\n");
+
+		if (lvl <= 0)
+			continue;
+
+		/* convert to the local unit for printing */
+		bu_vls_printf(&vls, "  cent=(%.3f,%.3f,%.3f) sz=%g ",
+			      sp->s_center[X]*dgop->dgo_wdbp->dbip->dbi_base2local,
+			      sp->s_center[Y]*dgop->dgo_wdbp->dbip->dbi_base2local,
+			      sp->s_center[Z]*dgop->dgo_wdbp->dbip->dbi_base2local,
+			      sp->s_size*dgop->dgo_wdbp->dbip->dbi_base2local);
+		bu_vls_printf(&vls, "reg=%d\n",sp->s_regionid);
+		bu_vls_printf(&vls, "  basecolor=(%d,%d,%d) color=(%d,%d,%d)%s%s%s\n",
+			      sp->s_basecolor[0],
+			      sp->s_basecolor[1],
+			      sp->s_basecolor[2],
+			      sp->s_color[0],
+			      sp->s_color[1],
+			      sp->s_color[2],
+			      sp->s_uflag?" U":"",
+			      sp->s_dflag?" D":"",
+			      sp->s_cflag?" C":"");
+
+		if (lvl <= 1)
+			continue;
+
+		/* Print the actual vector list */
+		nvlist = 0;
+		npts = 0;
+		for (BU_LIST_FOR(vp, bn_vlist, &(sp->s_vlist))) {
+			register int	i;
+			register int	nused = vp->nused;
+			register int	*cmd = vp->cmd;
+			register point_t *pt = vp->pt;
+
+			BN_CK_VLIST(vp);
+			nvlist++;
+			npts += nused;
+
+			if (lvl <= 2)
+				continue;
+
+			for (i = 0; i < nused; i++,cmd++,pt++) {
+				bu_vls_printf(&vls, "  %s (%g, %g, %g)\n",
+					      rt_vlist_cmd_descriptions[*cmd],
+					      V3ARGS(*pt));
+			}
+		}
+
+		bu_vls_printf(&vls, "  %d vlist structures, %d pts\n", nvlist, npts);
+		bu_vls_printf(&vls, "  %d pts (via rt_ck_vlist)\n", rt_ck_vlist(&(sp->s_vlist)));
+	}
+
+	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+	bu_vls_free(&vls);
 }
