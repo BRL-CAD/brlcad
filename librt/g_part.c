@@ -609,7 +609,7 @@ out:
 		/* XXX Remove printing after testing is complete */
 		struct bu_vls	str;
 		bu_vls_init(&str);
-		bu_vps_printf(&str, "rt_part_shot(%s): %d hits\n",
+		bu_vls_printf(&str, "rt_part_shot(%s): %d hits\n",
 			stp->st_name, hitp - &hits[0] );
 		rt_pr_hitarray_vls( &str, "unsorted particle", hits, hitp - &hits[0] );
 
