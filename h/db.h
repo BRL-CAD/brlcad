@@ -95,7 +95,7 @@ union record  {
 #define DBID_ARBN	'n'	/* Convex polyhedron with N faces */
 #define DBID_PIPE	'w'	/* pipe (wire) solid */
 #define DBID_PARTICLE	'p'	/* a particle (lozenge) */
-#define DBID_NMG	'N'	/* An NMG solid */
+#define DBID_NMG	'N'	/* NMG solid */
 
 	char	u_size[DB_MINREC];	/* Minimum record size */
 
@@ -135,6 +135,11 @@ union record  {
 #define ARSCONT 22	/* HACK extension record type for ARS solid */
 #define HALFSPACE 24	/* half-space */
 #define SPLINE   25	/* HACK and trouble */
+#define RPC	26	/* Right Parabolic Cylinder */
+#define RHC	27	/* Right Parabolic Cylinder */
+#define EPA	28	/* Elliptical Paraboloid */
+#define EHY	29	/* Elliptical Hyperboloid */
+#define ETO	30	/* Elliptical Torus */
 		char	s_name[NAMESIZE];	/* unique name */
 		short	s_cgtype;		/* COMGEOM solid type */
 #define RPP	1	/* axis-aligned rectangular parallelopiped */
