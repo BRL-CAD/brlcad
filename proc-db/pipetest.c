@@ -37,23 +37,23 @@ struct wdb_pipeseg  pipe1[] = {
 		0.05, 0.1, WDB_PIPESEG_TYPE_LINEAR
 	},
 
-	{
-		{(long)WDB_PIPESEG_MAGIC, 0, 0},
-		0, 5, 0,
-		0, 0, 0,
-		0.05, 0.1, WDB_PIPESEG_TYPE_LINEAR
-	},
 
 	{
 		{(long)WDB_PIPESEG_MAGIC, 0, 0},
-		4, 5, 0,
 		0, 5, 0,
+		4, 5, 0,
 		0.05, 0.1, WDB_PIPESEG_TYPE_BEND
 	},
 
 	{
 		{(long)WDB_PIPESEG_MAGIC, 0, 0},
-		0, 1, 0,
+		4, 9, 0,
+		0, 0, 0,
+		0.05, 0.1, WDB_PIPESEG_TYPE_LINEAR
+	},
+	{
+		{(long)WDB_PIPESEG_MAGIC, 0, 0},
+		9, 9, 0,
 		0, 0, 0,
 		0.05, 0.1, WDB_PIPESEG_TYPE_END
 	}
@@ -152,6 +152,7 @@ double	od;
 	RT_LIST_INIT( &head.l );
 	ps = (struct wdb_pipeseg *)calloc(1,sizeof(struct wdb_pipeseg));
 	ps->ps_type = WDB_PIPESEG_TYPE_LINEAR;
+	ps->l.magic = WDB_PIPESEG_MAGIC;
 	ps->ps_id = 0;
 	ps->ps_od = od;
 	VMOVE( ps->ps_start, pts[0] );
@@ -167,6 +168,7 @@ double	od;
 		/* End the linear segment by starting the bend */
 		ps = (struct wdb_pipeseg *)calloc(1,sizeof(struct wdb_pipeseg));
 		ps->ps_type = WDB_PIPESEG_TYPE_BEND;
+		ps->l.magic = WDB_PIPESEG_MAGIC;
 		ps->ps_id = 0;
 		ps->ps_od = od;
 		VMOVE( ps->ps_start, my_end );
@@ -176,6 +178,7 @@ double	od;
 		/* End the bend by starting the next linear section */
 		ps = (struct wdb_pipeseg *)calloc(1,sizeof(struct wdb_pipeseg));
 		ps->ps_type = WDB_PIPESEG_TYPE_LINEAR;
+		ps->l.magic = WDB_PIPESEG_MAGIC;
 		ps->ps_id = 0;
 		ps->ps_od = od;
 		VMOVE( ps->ps_start, next_start );
@@ -184,6 +187,7 @@ double	od;
 
 	ps = (struct wdb_pipeseg *)calloc(1,sizeof(struct wdb_pipeseg));
 	ps->ps_type = WDB_PIPESEG_TYPE_END;
+	ps->l.magic = WDB_PIPESEG_MAGIC;
 	ps->ps_id = 0;
 	ps->ps_od = od;
 	VMOVE( ps->ps_start, pts[npts-1] );
