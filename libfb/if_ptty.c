@@ -41,7 +41,8 @@ _LOCAL_ int	ptty_device_open(),
 		ptty_cmemory_addr(),
 		ptty_background_set(),
 		ptty_animate(),
-		ptty_setsize();
+		ptty_setsize(),
+		ptty_help();
 
 FBIO ptty_interface =
 		{
@@ -59,6 +60,7 @@ FBIO ptty_interface =
 		fb_null,			/* curs_set */
 		ptty_cmemory_addr,
 		fb_null,			/* screen addr cursor move */
+		ptty_help,
 		"Unix pseudo-tty Interface",
 		800,
 		1024,
@@ -315,3 +317,18 @@ register RGBpixel	*pixel;
 	return	(R_NTSC * (*pixel)[RED] + G_NTSC * (*pixel)[GRN]
 		+ B_NTSC * (*pixel)[BLU]);
 	}
+
+_LOCAL_ int
+ptty_help( ifp )
+FBIO	*ifp;
+{
+	fb_log( "Description: %s\n", ptty_interface.if_type );
+	fb_log( "Device: %s\n", ifp->if_name );
+	fb_log( "Max width/height: %d %d\n",
+		ptty_interface.if_max_width,
+		ptty_interface.if_max_height );
+	fb_log( "Default width/height: %d %d\n",
+		ptty_interface.if_width,
+		ptty_interface.if_height );
+	return(0);
+}
