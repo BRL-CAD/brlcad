@@ -274,7 +274,7 @@ register CONST struct soltab *stp;
 	rt_log("rd = %f\n", eto->eto_rd);
 	mat_print("R", eto->eto_R );
 	mat_print("invR", eto->eto_invR );
-	fprintf(stderr, "rpp: (%g, %g, %g) to (%g, %g, %g)\n",
+	rt_log( "rpp: (%g, %g, %g) to (%g, %g, %g)\n",
 		stp->st_min[X], stp->st_min[Y], stp->st_min[Z], 
 		stp->st_max[X], stp->st_max[Y], stp->st_max[Z]);
 }
@@ -1013,6 +1013,7 @@ struct rt_tol		*tol;
 	struct faceuse	**faces;
 	struct vertex	**vertp[4];
 	vect_t		Au, Bu, Nu, D, Cp, Dp, Xu;
+	int		fail=0;
 
 	RT_CK_DB_INTERNAL(ip);
 	tip = (struct rt_eto_internal *)ip->idb_ptr;
@@ -1024,7 +1025,8 @@ struct rt_tol		*tol;
 	if ( NEAR_ZERO(tip->eto_r, 0.0001) || NEAR_ZERO(b, 0.0001)
 		|| NEAR_ZERO(a, 0.0001)) {
 		rt_log("eto_tess: r, rd, or rc zero length\n");
-		return(-2);
+		fail = (-2);
+		goto failure;
 	}
 
 	/* Establish tolerances */
@@ -1085,7 +1087,8 @@ struct rt_tol		*tol;
 	/* make sure ellipse doesn't overlap itself when revolved */
 	if (ch > tip->eto_r || dh > tip->eto_r) {
 		rt_log("eto_tess: revolved ellipse overlaps itself\n");
-		return(-3);
+		fail = (-3);
+		goto failure;
 	}
 	
 	/* get memory for nells ellipses */
@@ -1144,18 +1147,22 @@ struct rt_tol		*tol;
 	/* Associate face geometry */
 	for( i=0; i < nfaces; i++ )  {
 		if( nmg_fu_planeeqn( faces[i], tol ) < 0 )
-			return -1;		/* FAIL */
+		{
+			fail = (-1);
+			goto failure;
+		}
 	}
 
 	/* Compute "geometry" for region and shell */
 	nmg_region_a( *r, tol );
 
+failure:	
 	rt_free( (char *)ell, "rt_mk_ell pts" );
 	rt_free( (char *)eto_ells, "ells[]" );
 	rt_free( (char *)verts, "rt_eto_tess *verts[]" );
 	rt_free( (char *)faces, "rt_eto_tess *faces[]" );
 
-	return(0);
+	return( fail );
 }
 
 /*
