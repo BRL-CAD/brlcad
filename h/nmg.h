@@ -325,10 +325,13 @@ struct model {
 	long			magic;
 	struct model_a		*ma_p;
 	struct nmg_list		r_hd;	/* list of regions */
+	long			index;	/* struct # in this model */
+	long			maxindex; /* # of structs so far */
 };
 
 struct model_a {
 	long			magic;
+	long			index;	/* struct # in this model */
 };
 
 /*
@@ -339,12 +342,14 @@ struct nmgregion {
 	struct model   		*m_p;	/* owning model */
 	struct nmgregion_a	*ra_p;	/* attributes */
 	struct nmg_list		s_hd;	/* list of shells in region */
+	long			index;	/* struct # in this model */
 };
 
 struct nmgregion_a {
 	long			magic;
 	point_t			min_pt;	/* minimums of bounding box */
 	point_t			max_pt;	/* maximums of bounding box */
+	long			index;	/* struct # in this model */
 };
 
 /*
@@ -359,12 +364,14 @@ struct shell {
 	struct nmg_list		lu_hd;	/* loop uses (edge groups) in shell */
 	struct nmg_list		eu_hd;	/* wire list (shell has wires) */
 	struct vertexuse	*vu_p;	/* internal ptr to single vertexuse */
+	long			index;	/* struct # in this model */
 };
 
 struct shell_a {
 	long			magic;
 	point_t			min_pt;	/* minimums of bounding box */
 	point_t			max_pt;	/* maximums of bounding box */
+	long			index;	/* struct # in this model */
 };
 
 /*
@@ -377,6 +384,7 @@ struct face {
 	long	   		magic;
 	struct faceuse		*fu_p;	/* Ptr up to one use of this face */
 	struct face_g		*fg_p;	/* geometry */
+	long			index;	/* struct # in this model */
 };
 
 struct face_g {
@@ -385,6 +393,7 @@ struct face_g {
 	plane_t			N;	/* Plane equation (incl normal) */
 	point_t			min_pt;	/* minimums of bounding box */
 	point_t			max_pt;	/* maximums of bounding box */
+	long			index;	/* struct # in this model */
 };
 
 struct faceuse {
@@ -395,10 +404,12 @@ struct faceuse {
 	struct face		*f_p;	/* face definition and attributes */
 	struct faceuse_a	*fua_p;	/* attributess */
 	struct nmg_list		lu_hd;	/* list of loops in face-use */
+	long			index;	/* struct # in this model */
 };
 
 struct faceuse_a {
 	long			magic;
+	long			index;	/* struct # in this model */
 };
 
 /*
@@ -429,12 +440,14 @@ struct loop {
 	long			magic;
 	struct loopuse		*lu_p;	/* Ptr to one use of this loop */
 	struct loop_g		*lg_p;  /* Geometry */
+	long			index;	/* struct # in this model */
 };
 
 struct loop_g {
 	long			magic;
 	point_t			min_pt;	/* minimums of bounding box */
 	point_t			max_pt;	/* maximums of bounding box */
+	long			index;	/* struct # in this model */
 };
 
 struct loopuse {
@@ -449,10 +462,12 @@ struct loopuse {
 	struct loop		*l_p;	/* loop definition and attributes */
 	struct loopuse_a	*lua_p;	/* attributes */
 	struct nmg_list		down_hd; /* eu list or vu pointer */
+	long			index;	/* struct # in this model */
 };
 
 struct loopuse_a {
 	long			magic;
+	long			index;	/* struct # in this model */
 };
 
 /*
@@ -465,10 +480,12 @@ struct edge {
 	long			magic;
 	struct edgeuse		*eu_p;	/* Ptr to one use of this edge */
 	struct edge_g		*eg_p;  /* geometry */
+	long			index;	/* struct # in this model */
 };
 
 struct edge_g {
 	long			magic;
+	long			index;	/* struct # in this model */
 };
 
 struct edgeuse {
@@ -484,10 +501,12 @@ struct edgeuse {
 	struct edgeuse_a	*eua_p;	    /* parametric space geom */
 	char	  		orientation;/* compared to geom (null if wire) */
 	struct vertexuse	*vu_p;	    /* first vu of eu in this orient */
+	long			index;	/* struct # in this model */
 };
 
 struct edgeuse_a {
 	long			magic;
+	long			index;	/* struct # in this model */
 };
 
 /*
@@ -502,11 +521,13 @@ struct vertex {
 	long			magic;
 	struct nmg_list		vu_hd;	/* heads list of vu's of this vertex */
 	struct vertex_g		*vg_p;	/* geometry */
+	long			index;	/* struct # in this model */
 };
 
 struct vertex_g {
 	long			magic;
 	point_t			coord;	/* coordinates of vertex in space */
+	long			index;	/* struct # in this model */
 };
 
 struct vertexuse {
@@ -519,11 +540,13 @@ struct vertexuse {
 	} up;
 	struct vertex		*v_p;	/* vertex definition and attributes */
 	struct vertexuse_a	*vua_p;	/* Attributes */
+	long			index;	/* struct # in this model */
 };
 
 struct vertexuse_a {
 	long			magic;
 	vect_t			N;	/* (opt) surface Normal at vertexuse */
+	long			index;	/* struct # in this model */
 };
 
 
@@ -540,28 +563,30 @@ extern char *rt_calloc();
 	p = (struct str *)rt_calloc(1,sizeof(struct str), "getstruct str")
 #endif
 
-#define GET_MODEL(p)	    NMG_GETSTRUCT(p, model)
-#define GET_MODEL_A(p)	    NMG_GETSTRUCT(p, model_a)
-#define GET_REGION(p)	    NMG_GETSTRUCT(p, nmgregion)
-#define GET_REGION_A(p)     NMG_GETSTRUCT(p, nmgregion_a)
-#define GET_SHELL(p)	    NMG_GETSTRUCT(p, shell)
-#define GET_SHELL_A(p)	    NMG_GETSTRUCT(p, shell_a)
-#define GET_FACE(p)	    NMG_GETSTRUCT(p, face)
-#define GET_FACE_G(p)	    NMG_GETSTRUCT(p, face_g)
-#define GET_FACEUSE(p)	    NMG_GETSTRUCT(p, faceuse)
-#define GET_FACEUSE_A(p)    NMG_GETSTRUCT(p, faceuse_a)
-#define GET_LOOP(p)	    NMG_GETSTRUCT(p, loop)
-#define GET_LOOP_G(p)	    NMG_GETSTRUCT(p, loop_g)
-#define GET_LOOPUSE(p)	    NMG_GETSTRUCT(p, loopuse)
-#define GET_LOOPUSE_A(p)    NMG_GETSTRUCT(p, loopuse_a)
-#define GET_EDGE(p)	    NMG_GETSTRUCT(p, edge)
-#define GET_EDGE_G(p)	    NMG_GETSTRUCT(p, edge_g)
-#define GET_EDGEUSE(p)	    NMG_GETSTRUCT(p, edgeuse)
-#define GET_EDGEUSE_A(p)    NMG_GETSTRUCT(p, edgeuse_a)
-#define GET_VERTEX(p)	    NMG_GETSTRUCT(p, vertex)
-#define GET_VERTEX_G(p)     NMG_GETSTRUCT(p, vertex_g)
-#define GET_VERTEXUSE(p)    NMG_GETSTRUCT(p, vertexuse)
-#define GET_VERTEXUSE_A(p)  NMG_GETSTRUCT(p, vertexuse_a)
+#define NMG_INCR_INDEX(_p,_m)	\
+	NMG_CK_MODEL(_m); (_p)->index = ((_m)->maxindex)++
+
+#define GET_MODEL_A(p,m)    {NMG_GETSTRUCT(p, model_a); NMG_INCR_INDEX(p,m);}
+#define GET_REGION(p,m)	    {NMG_GETSTRUCT(p, nmgregion); NMG_INCR_INDEX(p,m);}
+#define GET_REGION_A(p,m)   {NMG_GETSTRUCT(p, nmgregion_a); NMG_INCR_INDEX(p,m);}
+#define GET_SHELL(p,m)	    {NMG_GETSTRUCT(p, shell); NMG_INCR_INDEX(p,m);}
+#define GET_SHELL_A(p,m)    {NMG_GETSTRUCT(p, shell_a); NMG_INCR_INDEX(p,m);}
+#define GET_FACE(p,m)	    {NMG_GETSTRUCT(p, face); NMG_INCR_INDEX(p,m);}
+#define GET_FACE_G(p,m)	    {NMG_GETSTRUCT(p, face_g); NMG_INCR_INDEX(p,m);}
+#define GET_FACEUSE(p,m)    {NMG_GETSTRUCT(p, faceuse); NMG_INCR_INDEX(p,m);}
+#define GET_FACEUSE_A(p,m)  {NMG_GETSTRUCT(p, faceuse_a); NMG_INCR_INDEX(p,m);}
+#define GET_LOOP(p,m)	    {NMG_GETSTRUCT(p, loop); NMG_INCR_INDEX(p,m);}
+#define GET_LOOP_G(p,m)	    {NMG_GETSTRUCT(p, loop_g); NMG_INCR_INDEX(p,m);}
+#define GET_LOOPUSE(p,m)    {NMG_GETSTRUCT(p, loopuse); NMG_INCR_INDEX(p,m);}
+#define GET_LOOPUSE_A(p,m)  {NMG_GETSTRUCT(p, loopuse_a); NMG_INCR_INDEX(p,m);}
+#define GET_EDGE(p,m)	    {NMG_GETSTRUCT(p, edge); NMG_INCR_INDEX(p,m);}
+#define GET_EDGE_G(p,m)	    {NMG_GETSTRUCT(p, edge_g); NMG_INCR_INDEX(p,m);}
+#define GET_EDGEUSE(p,m)    {NMG_GETSTRUCT(p, edgeuse); NMG_INCR_INDEX(p,m);}
+#define GET_EDGEUSE_A(p,m)  {NMG_GETSTRUCT(p, edgeuse_a); NMG_INCR_INDEX(p,m);}
+#define GET_VERTEX(p,m)	    {NMG_GETSTRUCT(p, vertex); NMG_INCR_INDEX(p,m);}
+#define GET_VERTEX_G(p,m)   {NMG_GETSTRUCT(p, vertex_g); NMG_INCR_INDEX(p,m);}
+#define GET_VERTEXUSE(p,m)  {NMG_GETSTRUCT(p, vertexuse); NMG_INCR_INDEX(p,m);}
+#define GET_VERTEXUSE_A(p,m) {NMG_GETSTRUCT(p, vertexuse_a); NMG_INCR_INDEX(p,m);}
 
 #if __STDC__ && !alliant && !apollo
 # define FREESTRUCT(ptr, str) \
