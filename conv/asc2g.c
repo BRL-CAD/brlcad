@@ -205,6 +205,12 @@ combbld()	/* Build Combination record */
 	record.c.c_rgb[2] = (unsigned char)atoi( cp );
 	cp = nxt_spc( cp );
 
+	if( record.c.c_override == 0 )  {
+		record.c.c_rgb[0] = 0;			/* sanity */
+		record.c.c_rgb[1] = 0;
+		record.c.c_rgb[2] = 0;
+	}
+
 	temp_nflag = atoi( cp );
 	cp = nxt_spc( cp );
 	temp_pflag = atoi( cp );
