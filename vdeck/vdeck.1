@@ -1,50 +1,78 @@
-.TH VDECK 1 VMB
-'\"	last edit:	5/24/84	G S Moss
-'\"	SCCSID		@(#)vdeck.1	1.5
+.TH VDECK 1V VMB
+'\"	last edit:	84/05/27	D A Gwyn
+'\"	SCCS ID:	@(#)vdeck.1	1.6
 .SH NAME
-Vdeck \- Generate COM-GEOM decks from a
-.I vged
-file
+vdeck \- generate COM-GEOM decks from a GED file
 .SH SYNOPSIS
 .B vdeck
-{file}.g
+file.vg
 .SH DESCRIPTION
 A list of
-.I objects
+objects
 to be converted are selected interactively from the table of contents.
 String matching operators (wild cards) like those used to specify file
-or directory names as in
-.IB sh (1)
+or directory names in
+.IR sh\^ (1)
 are provided for this purpose, as well as to search for names in the
 table of contents.
-One or more COM-GEOM decks can be output.  Each deck consists of three
-files, the solid, region and region-id tables.
-.sp
-A menu of the commands and their usage is available by typing '?' to
+.P
+One or more COM-GEOM decks can be output.
+Each deck consists of three
+files:
+the solid,
+region,
+and region-id
+tables.
+These can be combined with
+.IR cat\^ (1).
+.P
+A menu of the commands and their usage is available by typing
+.B ?
+to
 the program.
-.sp
+.SH WARNING
+.I Vdeck\^
+is intended for new-style
+.RI (post- vged\^ )
+GED databases only.
+Such files usually have names ending with
+.BR .vg ,
+whereas old-style GED database names
+usually end in
+.BR .g .
 .SH FILES
-Output files:
-.sp
-.in +1.0
-solids,\ regions,\ region_ids\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Default file names
-.br
-{pre-fix}.st,\ {pre-fix}.rt,\ {pre-fix}.id\ \ \ \ Unique file names
-.in -1.0
-.sp
-Temporary files:
-.sp
-.in +1.0
-/tmp/disXXXXXX
-/tmp/regXXXXXX
-.in -1.0
-.sp
+.PD 0
+.TP "\w'/tmp/reg???   'u"
+solids
+default solid table output
+.TP
+regions
+default region table output
+.TP
+region_ids
+default region
+.SM ID
+table output
+.TP
+*.st
+unique solid table output
+.TP
+*.rt
+unique region table output
+.TP
+*.id
+unique region
+.SM ID
+table output
+.TP
+/tmp/dis???
+temporary
+.TP
+/tmp/reg???
+temporary
 .SH "SEE ALSO"
-vged(1), gedu(1), gedplot(1)
-.sp
+cat(1), ged2vged(1V), gedplot(1V), gedu(1V), vged(1V).
 .SH AUTHORS
-.in +1.0
 Gary S. Moss, BRL/VLD-VMB
 .br
 Keith Applin, BRL/VLD-TAB
-.in -1.0
