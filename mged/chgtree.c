@@ -32,12 +32,14 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <math.h>
+#include <signal.h>
 #include <stdio.h>
 #include "machine.h"
 #include "vmath.h"
 #include "db.h"
 #include "./sedit.h"
 #include "raytrace.h"
+#include "rtgeom.h"
 #include "./ged.h"
 #include "externs.h"
 #include "./solid.h"
@@ -85,7 +87,7 @@ char	**argv;
 {
 	register struct directory *proto;
 	register struct directory *dp;
-	union record		*rp;
+	struct rt_external external;
 
 	if( (proto = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
 		return;
@@ -95,21 +97,26 @@ char	**argv;
 		return;
 	}
 
-	if( (rp = db_getmrec( dbip, proto )) == (union record *)0 )
+	if( db_get_external( &external , proto , dbip ) )
 		READ_ERR_return;
+
+	/* no interuprts */
+	(void)signal( SIGINT, SIG_IGN );
 
 	if( (dp=db_diradd( dbip, argv[2], -1, proto->d_len, proto->d_flags)) == DIR_NULL ||
 	    db_alloc( dbip, dp, proto->d_len ) < 0 )  {
 	    	ALLOC_ERR_return;
 	}
 
-	/* All objects have name in the same place */
-	NAMEMOVE( argv[2], rp->c.c_name );
-	if( db_put( dbip, dp, rp, 0, proto->d_len ) < 0 )  WRITE_ERR_return;
+	if (db_put_external( &external, dp, dbip ) < 0 )
+	{
+		db_free_external( &external );
+		WRITE_ERR_return;
+	}
+	db_free_external( &external );
 
 	/* draw the new object */
 	f_edit( 2, argv+1 );	/* depends on name being in argv[2] ! */
-	rt_free( (char *)rp, "record" );
 }
 
 /* Create an instance of something */
@@ -353,40 +360,77 @@ char	**argv;
 {
 	register struct directory *proto;
 	register struct directory *dp;
-	union record record;
 	register int i;
+	struct rt_external external;
+	struct rt_db_internal internal;
+	struct rt_tgc_internal *tgc_ip;
+	int id;
+	int ngran;
 
 	if( (proto = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
 		return;
 
-	NAMEMOVE( argv[2], record.s.s_name );
-	if( db_lookup( dbip,  record.s.s_name, LOOKUP_QUIET ) != DIR_NULL )  {
-		aexists( record.s.s_name );
+	if( db_lookup( dbip,  argv[2], LOOKUP_QUIET ) != DIR_NULL )  {
+		aexists( argv[2] );
 		return;
 	}
 
-	if( db_get( dbip,  proto, &record, 0 , 1) < 0 )  READ_ERR_return;
+	/* get external representation of slid to be copied */
+	if( db_get_external( &external, proto, dbip ))
+		READ_ERR_return;
 
-	if(record.u_id != ID_SOLID || record.s.s_type != GENTGC )  {
-		(void)printf("%s: Not a cylinder\n",record.s.s_name);
+	/* make sure it is a TGC */
+	id = rt_id_solid( &external );
+	if( id != ID_TGC )
+	{
+		rt_log( "f_copy_inv: %d is not a cylinder\n" , argv[1] );
+		db_free_external( &external );
 		return;
 	}
 
-	if( (dp = db_diradd( dbip,  argv[2], -1, proto->d_len, DIR_SOLID )) == DIR_NULL ||
-	    db_alloc( dbip, dp, proto->d_len ) < 0 )  {
-	    	ALLOC_ERR_return;
+	/* import the TGC */
+	if( rt_functab[id].ft_import( &internal , &external , rt_identity ) < 0 )
+	{
+		rt_log( "f_copy_inv: import failure for %s\n" , argv[1] );
+		return;
 	}
+	db_free_external( &external );
+
+	tgc_ip = internal.idb_ptr;
 
 	/* translate to end of "original" cylinder */
-	for(i=0; i<3; i++) {
-		record.s.s_values[i] += record.s.s_values[i+3];
+	VADD2( tgc_ip->v , tgc_ip->v , tgc_ip->h );
+
+	/* now export the new TGC */
+	if( rt_functab[internal.idb_type].ft_export( &external, &internal, local2base ) < 0 )
+	{
+		rt_log( "f_copy_inv: export failure\n" );
+		rt_functab[internal.idb_type].ft_ifree( &internal );
+		return;
 	}
+	rt_functab[internal.idb_type].ft_ifree( &internal );   /* free internal rep */
 
 	/*
 	 * Update the disk record
 	 */
-	NAMEMOVE( argv[2], record.s.s_name );
-	if( db_put( dbip, dp, &record, 0, 1 ) < 0 )  WRITE_ERR_return;
+
+	/* no interuprts */
+	(void)signal( SIGINT, SIG_IGN );
+
+	ngran = (external.ext_nbytes+sizeof(union record)-1) / sizeof(union record);
+	if( (dp = db_diradd( dbip, argv[2], -1L, ngran, DIR_SOLID)) == DIR_NULL ||
+	    db_alloc( dbip, dp, 1 ) < 0 )
+	    {
+	    	db_free_external( &external );
+	    	ALLOC_ERR_return;
+	    }
+
+	if (db_put_external( &external, dp, dbip ) < 0 )
+	{
+		db_free_external( &external );
+		WRITE_ERR_return;
+	}
+	db_free_external( &external );
 
 	/* draw the new solid */
 	f_edit( 2, argv+1 );	/* depends on name being in argv[2] ! */
