@@ -773,13 +773,12 @@ char	**argv;
 
 #if 0
 	{
-		struct bu_vls vls;
+		char *str;
 
 		Tcl_AppendResult(interp, "evaluated tree:\n", (char *)NULL );
-		bu_vls_init( &vls );
-		db_tree_describe( &vls, final_tree, 0, 0, 1,0 );
-		Tcl_AppendResult(interp, bu_vls_addr( &vls ), (char *)NULL );
-		bu_vls_free( &vls );
+		str = rt_pr_tree_str( final_tree );
+		Tcl_AppendResult(interp, str, (char *)NULL );
+		bu_free( str, "str" );
 	}
 #endif
 	if( dp == DIR_NULL )
