@@ -256,6 +256,8 @@ union tree		*curtree;
 	struct nmgregion	*r;
 	struct rt_list		vhead;
 
+	RT_CK_FULL_PATH(pathp);
+	RT_CK_TREE(curtree);
 	RT_CK_TESS_TOL(tsp->ts_ttol);
 	RT_CK_TOL(tsp->ts_tol);
 	NMG_CK_MODEL(*tsp->ts_m);
@@ -405,6 +407,7 @@ union tree		*curtree;
 
 out:
 	GETUNION(curtree, tree);
+	curtree->magic = RT_TREE_MAGIC;
 	curtree->tr_op = OP_NOP;
 	return(curtree);
 }
