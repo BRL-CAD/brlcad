@@ -421,3 +421,83 @@ int	regflag;
 	return mk_lcomb( fp, combname, &head, regflag,
 		(char *)NULL, (char *)NULL, (unsigned char *)NULL, 1 );
 }
+
+/*
+ *		M K _ F A S T G E N _ R E G I O N
+ *
+ *	Code to create a region with the FASTGEN Plate-mode or FASTGEN Volume-mode
+ *	flags set
+ */
+int
+mk_fastgen_region( fp, name, headp, mode, matname, matparm, rgb, id, air, material, los, inherit )
+FILE		*fp;
+CONST char	*name;
+register struct wmember *headp;
+char		mode;
+CONST char	*matname;
+CONST char	*matparm;
+CONST unsigned char	*rgb;
+int	id;
+int	air;
+int	material;
+int	los;
+int	inherit;
+{
+	register struct wmember *wp;
+	register int len = 0;
+	union record rec;
+
+	/* Measure length of list */
+	for( BU_LIST_FOR( wp, wmember, &headp->l ) )  {
+		if( wp->l.magic != WMEMBER_MAGIC )  {
+			fprintf(stderr, "mk_fastgen_region:  corrupted linked list\n");
+			abort();
+		}
+		len++;
+	}
+
+	bzero( (char *)&rec, sizeof(rec) );
+	rec.c.c_id = ID_COMB;
+	if( mode == 'P' )
+		rec.c.c_flags = DBV4_REGION_FASTGEN_PLATE;
+	else if( mode == 'V' )
+		rec.c.c_flags = DBV4_REGION_FASTGEN_VOLUME;
+	else
+	{
+		fprintf( stderr, "ERROR: mk_fastgen_region: Unrecognized mode flag (%c)\n", mode );
+		abort();
+	}
+	rec.c.c_inherit = inherit;
+	rec.c.c_regionid = id;
+	rec.c.c_aircode = air;
+	rec.c.c_material = material;
+	rec.c.c_los = los;
+	NAMEMOVE( name, rec.c.c_name );
+	rec.c.c_pad1 = len;		/* backwards compat, was c_length */
+	if( matname ) {
+		strncpy( rec.c.c_matname, matname, sizeof(rec.c.c_matname) );
+		if( matparm )
+			strncpy( rec.c.c_matparm, matparm,
+				sizeof(rec.c.c_matparm) );
+	}
+	if( rgb )  {
+		rec.c.c_override = 1;
+		rec.c.c_rgb[0] = rgb[0];
+		rec.c.c_rgb[1] = rgb[1];
+		rec.c.c_rgb[2] = rgb[2];
+	}
+
+	if( fwrite( (char *)&rec, sizeof(rec), 1, fp ) != 1 )
+		return(-1);
+	
+	for( BU_LIST_FOR( wp, wmember, &headp->l ) )  {
+		if( mk_memb( fp, wp->wm_name, wp->wm_mat, wp->wm_op ) < 0 )  {
+			(void)mk_freemembers( headp );
+			return(-1);
+		}
+	}
+
+	/* Release the member structure dynamic storage */
+	return( mk_freemembers( headp ) );
+}
+
