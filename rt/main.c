@@ -32,6 +32,8 @@ static char RCSrt[] = "@(#)$Header$ (BRL)";
 # include <synch.h>
 # undef stderr
 # define stderr stdout
+# define PARALLEL 1
+# define MAX_PSW 128
 #endif
 
 extern char usage[];
@@ -49,6 +51,7 @@ int hex_out = 0;	/* Binary or Hex .pix output file */
 /***** end of sharing with viewing model *****/
 
 /***** variables shared with worker() */
+static struct application ap;
 static int	stereo = 0;	/* stereo viewing */
 vect_t left_eye_delta;
 static int	hypersample=0;	/* number of extra rays to fire */
@@ -58,13 +61,27 @@ vect_t	dy_model;	/* view delta-Y as model-space vector */
 static point_t	eye_model;	/* model-space location of eye */
 static point_t	viewbase_model;	/* model-space location of viewplane corner */
 static int npts;	/* # of points to shoot: x,y */
-int npsw = 1;		/* HEP: number of worker PSWs to run */
+int npsw = 1;		/* PARALLEL: number of worker PSWs to run */
 void worker();
-int work_word;		/* semaphored (x<<16)|y */
-#ifdef HEP
+int cur_pixel;		/* current pixel number, 0..last_pixel */
+int last_pixel;		/* last pixel number */
+
+#ifdef PARALLEL
 char *scanbuf;		/*** Output buffering, for parallelism */
+#ifdef cray
+#define MAX_PSW		4
+struct taskcontrol {
+	int	tsk_len;
+	int	tsk_id;
+	int	tsk_value;
+} taskcontrol[MAX_PSW];
+#endif
 #endif
 /***** end variables shared with worker() */
+
+#ifndef MAX_PSW
+#define MAX_PSW 1
+#endif
 
 /*
  *			M A I N
@@ -73,7 +90,6 @@ main(argc, argv)
 int argc;
 char **argv;
 {
-	static struct application ap;
 	static struct rt_i *rtip;
 	static vect_t temp;
 	static int matflag = 0;		/* read matrix from stdin */
@@ -165,6 +181,8 @@ char **argv;
 		case 'P':
 			/* Number of parallel workers */
 			npsw = atoi( &argv[0][2] );
+			if( npsw < 1 || npsw > MAX_PSW )
+				npsw = 1;
 			break;
 		default:
 			fprintf(stderr,"rt:  Option '%c' unknown\n", argv[0][1]);
@@ -178,11 +196,12 @@ char **argv;
 		fprintf(stderr, usage);
 		exit(2);
 	}
-	RES_RELEASE( &rt_g.res_pt );
-	RES_RELEASE( &rt_g.res_seg );
-	RES_RELEASE( &rt_g.res_malloc );
-	RES_RELEASE( &rt_g.res_bitv );
-#ifdef HEP
+	RES_INIT( &rt_g.res_pt );
+	RES_INIT( &rt_g.res_seg );
+	RES_INIT( &rt_g.res_malloc );
+	RES_INIT( &rt_g.res_bitv );
+	RES_INIT( &rt_g.res_printf );	/* HACK: used by worker */
+#ifdef PARALLEL
 	scanbuf = rt_malloc( npts*npts*3 + sizeof(long), "scanbuf" );
 #endif
 
@@ -242,21 +261,24 @@ char **argv;
 		rtip->mdl_min[Y], rtip->mdl_max[Y],
 		rtip->mdl_min[Z], rtip->mdl_max[Z] );
 
-#ifdef HEP
-	(void)Disete( &work_word );
-	if( npsw < 1 || npsw > 128 )
-		npsw = 4;
+#ifdef PARALLEL
 	/* Get enough dynamic memory to keep from making malloc sbrk() */
 	for( x=0; x<npsw; x++ )  {
 		rt_get_pt();
 		rt_get_seg();
-		get_bitv();
+		rt_get_bitv();
 	}
 	rt_free( rt_malloc( (20+npsw)*8192, "worker prefetch"), "worker");
 
-	fprintf(stderr,"creating %d worker PSWs\n", npsw );
+	fprintf(stderr,"PARALLEL: %d workers\n", npsw );
 	for( x=0; x<npsw; x++ )  {
-		Dcreate( worker, &ap );
+#ifdef HEP
+		Dcreate( worker );
+#endif
+#ifdef cray
+		taskcontrol[x].tsk_len = 3;
+		taskcontrol[x].tsk_value = x;
+#endif
 	}
 	fprintf(stderr,"creates done, DMend=%d.\n",sbrk(0) );
 #endif
@@ -374,24 +396,31 @@ do_more:
 
 	fflush(stdout);
 	fflush(stderr);
-	rt_prep_timer();	/* start timing actual run */
 
-	for( y = npts-1; y >= 0; y--)  {
-		for( x = 0; x < npts; x++)  {
-#ifndef HEP
-			work_word = (x<<16) | y;
-			worker( &ap );
-#else
-			/* Wait until empty, then fill */
-			Diawrite( &work_word, (x<<16) | y );
-#endif
-		}
-#ifndef HEP
-		view_eol( &ap );	/* End of scan line */
-#endif
+	cur_pixel = 0;
+	last_pixel = npts*npts - 1;
+
+	/*
+	 *  Compute the image
+	 */
+	rt_prep_timer();	/* start timing actual run */
+#ifdef PARALLEL
+#ifdef cray
+	/* Create any extra worker tasks */
+	for( x=0; x<npsw; x++ ) {
+		TSKSTART( &taskcontrol[x], worker );
 	}
+	/* Wait for them to finish */
+	for( x=0; x<npsw; x++ )  {
+		TSKWAIT( &taskcontrol[x] );
+	}
+#endif
+#else
+	worker();
+#endif
 	utime = rt_read_timer( outbuf, sizeof(outbuf) );	/* final time */
-#ifndef HEP
+
+#ifndef PARALLEL
 	view_end( &ap );		/* End of application */
 #endif
 
@@ -409,7 +438,7 @@ do_more:
 	fprintf(stderr,"Frame %d: %d rays in %.2f sec = %.2f rays/sec\n",
 		framenumber-1,
 		rtip->rti_nrays, utime, (double)(rtip->rti_nrays)/utime );
-#ifdef HEP
+#ifdef PARALLEL
 	if( write( fileno(outfp), scanbuf, npts*npts*3 ) != npts*npts*3 )  {
 		perror("pixel output write");
 		goto out;
@@ -440,8 +469,7 @@ out:
  *  Compute one pixel, and store it.
  */
 void
-worker( ap )
-register struct application *ap;
+worker()
 {
 	LOCAL struct application a;
 	LOCAL vect_t point;		/* Ref point on eye or view plane */
@@ -449,22 +477,20 @@ register struct application *ap;
 	register int com;
 
 	a.a_onehit = 1;
-#ifndef HEP
-	{
-		com = work_word;
-#else
 	while(1)  {
-		if( (com = Diaread( &work_word )) < 0 )
-			return;
-		/* Note: ap->... not valid until first time here */
-#endif
-		a.a_x = (com>>16)&0xFFFF;
-		a.a_y = (com&0xFFFF);
-		a.a_hit = ap->a_hit;
-		a.a_miss = ap->a_miss;
-		a.a_rt_i = ap->a_rt_i;
-		a.a_rbeam = ap->a_rbeam;
-		a.a_diverge = ap->a_diverge;
+		RES_ACQUIRE( &rt_g.res_printf );	/* HACK */
+		com = cur_pixel++;
+		RES_RELEASE( &rt_g.res_printf );	/* HACK */
+
+		if( com > last_pixel )  return;
+		/* Note: ap.... not valid until first time here */
+		a.a_x = com%npts;
+		a.a_y = npts-1 - com/npts;
+		a.a_hit = ap.a_hit;
+		a.a_miss = ap.a_miss;
+		a.a_rt_i = ap.a_rt_i;
+		a.a_rbeam = ap.a_rbeam;
+		a.a_diverge = ap.a_diverge;
 		VSETALL( colorsum, 0 );
 		for( com=0; com<=hypersample; com++ )  {
 			if( hypersample )  {
@@ -486,7 +512,7 @@ register struct application *ap;
 				VMOVE( a.a_ray.r_pt, eye_model );
 			} else {
 				VMOVE( a.a_ray.r_pt, point );
-			 	VMOVE( a.a_ray.r_dir, ap->a_ray.r_dir );
+			 	VMOVE( a.a_ray.r_dir, ap.a_ray.r_dir );
 			}
 			a.a_level = 0;		/* recursion level */
 			rt_shootray( &a );
@@ -519,8 +545,10 @@ register struct application *ap;
 			f = 1.0 / (hypersample+1);
 			VSCALE( a.a_color, colorsum, f );
 		}
-#ifndef HEP
+#ifndef PARALLEL
 		view_pixel( &a );
+		if( a.a_x == npts-1 )
+			view_eol( &a );		/* End of scan line */
 #else
 		{
 			register char *pixelp;
@@ -547,3 +575,17 @@ register struct application *ap;
 #endif
 	}
 }
+
+#ifdef cray
+#ifndef PARALLEL
+LOCKASGN(p)
+{
+}
+LOCKON(p)
+{
+}
+LOCKOFF(p)
+{
+}
+#endif
+#endif
