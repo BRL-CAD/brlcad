@@ -601,7 +601,7 @@ struct bn_table {
 
 /* Gets an bn_table, with x[] having size _nx+1 */
 #define BN_GET_TABLE(_table, _nx)  { \
-	if( (_nx) < 1 )  bn_bomb("RT_GET_TABLE() _nx < 1\n"); \
+	if( (_nx) < 1 )  bu_bomb("RT_GET_TABLE() _nx < 1\n"); \
 	_table = (struct bn_table *)bu_calloc( 1, \
 		sizeof(struct bn_table) + sizeof(fastf_t)*(_nx), \
 		"struct bn_table" ); \
