@@ -867,7 +867,7 @@ struct nmg_ptbl *next_tbl;
 {
 	long **p;
 
-	for (p=&a_tbl->buffer[a_tbl->end] ; p >= a_tbl->buffer ; p--) {
+	for (p = &a_tbl->buffer[a_tbl->end] ; p >= a_tbl->buffer ; p--) {
 		if (nmg_tbl(next_tbl, TBL_LOC, *p) >= 0)
 			return *p;
 	}
