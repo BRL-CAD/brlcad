@@ -68,6 +68,7 @@ static int cueing_on = 1;	/* Depth cueing flag - for colormap work */
 static int zclipping_on = 1;	/* Z Clipping flag */
 static int zbuffer_on = 1;	/* Hardware Z buffer is on */
 static int perspective_mode = 0;	/* Perspective flag */
+static int perspective_angle =3;	/* Angle of perspective */
 static int lighting_on = 0;	/* Lighting model on */
 static int ovec = -1;		/* Old color map entry number */
 static mat_t perspect_mat;
@@ -163,6 +164,69 @@ long gr_id;
 long win_l, win_b, win_r, win_t;
 long winx_size, winy_size;
 
+#if IR_WIDGETS
+# include "forms.h"
+# include "./mged_widgets.h"
+
+void button_call(obj, val)
+OBJECT *obj;
+long val;
+{	
+	short ev[4];
+
+
+	ev[0] = (short)val;
+	ev[1] = get_button(obj);
+	(void)fprintf(stdout, "button %d\n", ev[1]);
+	ev[2] = getvaluator(MOUSEX);
+	ev[3] = getvaluator(MOUSEY);
+
+	lbr_qenter(ev);
+}
+
+void toggle_call(obj, val)
+OBJECT *obj;
+long val;
+{
+	short ev[4];
+
+	ev[0] = (short)val;
+	ev[1] = 1;
+	ev[2] = getvaluator(MOUSEX);
+	ev[3] = getvaluator(MOUSEY);
+
+	lbr_qenter(ev);
+	ev[1] = 0;
+	lbr_qenter(ev);
+}
+
+void dial_call(obj, val)
+OBJECT *obj;
+long val;
+{
+
+}
+
+void help_call(obj, val)
+OBJECT *obj;
+long val;
+{
+	short ev[4];
+
+	ev[0] = val;
+	ev[1] = get_button(obj);
+	ev[2] = getvaluator(MOUSEX);
+	ev[3] = getvaluator(MOUSEY);
+
+	(void)fprintf(stdout, "help button %d\n", ev[1]);
+	
+	lbr_qenter(ev);
+}
+
+
+#endif
+
+
 /* Map +/-2048 GED space into -1.0..+1.0 :: x/2048*/
 #define GED2IRIS(x)	(((float)(x))*0.00048828125)
 static int
@@ -215,7 +279,9 @@ Ir_open()
 	inventory_t	*inv;
 	int		npix;
 	int		monitor;
-
+#if IR_WIDGETS
+	int		use_widgets=0;
+#endif
 	/*
 	 *  Take inventory of the hardware
 	 */
@@ -263,6 +329,9 @@ Ir_open()
 	case HZ60:
 		/* Regular hi-res monitor */
 		/* Use already established prefposition */
+#if IR_WIDGETS
+		use_widgets = 1;
+#endif
 		break;
 	case NTSC:
 		/* Television */
@@ -377,12 +446,17 @@ Ir_open()
 	}
 
 	/* Enable qdev() input from various devices */
+#if IR_WIDGETS
+	fl_usrqdevice(LEFTMOUSE);
+	fl_usrqdevice(MIDDLEMOUSE);
+	fl_usrqdevice(RIGHTMOUSE);
+#else
 	qdevice(LEFTMOUSE);
 	qdevice(MIDDLEMOUSE);
 	qdevice(RIGHTMOUSE);
 	tie(MIDDLEMOUSE, MOUSEX, MOUSEY);
-
-#if IR_KNOBS
+#endif
+#if IR_KNOBS || IR_WIDGETS
 	/*
 	 *  Turn on the dials and initialize them for -2048 to 2047
 	 *  range with a dead spot at zero (Iris knobs are 1024 units
@@ -391,15 +465,22 @@ Ir_open()
 	for(i = DIAL0; i < DIAL8; i++)
 		setvaluator(i, 0, -2048-NOISE, 2047+NOISE);
 	for(i = DIAL0; i < DIAL8; i++)
+# if IR_WIDGETS
+		fl_usrqdevice(i);
+# else
 		qdevice(i);
+# endif
 #endif
-#if IR_BUTTONS
+#if IR_BUTTONS || IR_WIDGETS
 	/*
 	 *  Enable all the buttons in the button table.
 	 */
 	for(i = 0; i < IR_BUTTONS; i++)
+#if IR_WIDGETS
+		fl_usrqdevice(i+SWBASE);
+#else
 		qdevice(i+SWBASE);
-
+#endif
 	/*
 	 *  For all possible button presses, build a table
 	 *  of MGED function to SGI button/light mappings.
@@ -414,12 +495,21 @@ Ir_open()
 # endif
 #endif
 
+#if IR_WIDGETS
+	fl_usrqdevice(F1KEY);	/* pf1 key for depthcue switching */
+	fl_usrqdevice(F2KEY);	/* pf2 for Z clipping */
+	fl_usrqdevice(F3KEY);	/* pf3 for perspective */
+	fl_usrqdevice(F4KEY);	/* pf4 for Z buffering */
+	fl_usrqdevice(F5KEY);	/* pf5 for lighting */
+	fl_usrqdevice(F6KEY);	/* pf6 for changing perspective */
+#else
 	qdevice(F1KEY);	/* pf1 key for depthcue switching */
 	qdevice(F2KEY);	/* pf2 for Z clipping */
 	qdevice(F3KEY);	/* pf3 for perspective */
 	qdevice(F4KEY);	/* pf4 for Z buffering */
 	qdevice(F5KEY);	/* pf5 for lighting */
-	
+	qdevice(F6KEY);	/* pf6 for changing perspective */
+#endif
 	while( getbutton(LEFTMOUSE)||getbutton(MIDDLEMOUSE)||getbutton(RIGHTMOUSE) )  {
 		printf("IRIS_open:  mouse button stuck\n");
 		sleep(1);
@@ -432,7 +522,16 @@ Ir_open()
 	/* Compute some viewing matricies */
 	mat_idn( nozclip_mat );
 	nozclip_mat[10] = 1.0e-20;
-/*	persp_mat( perspect_mat, 90.0, 1.0, 0.01, 1.0e10, 1.0 ); */
+	persp_mat( perspect_mat, 90.0, 1.0, 0.01, 1.0e10, 1.0 );
+
+#if IR_WIDGETS
+	if (use_widgets) {
+		create_the_forms();
+
+		show_forms(Button_Box, PLACE_SIZE, TRUE, "Soft Buttons");
+		show_forms(Dials, PLACE_SIZE, TRUE, "Soft Dials");
+	}
+#endif
 
 	return(0);
 }
@@ -454,6 +553,10 @@ Ir_close()
 	ir_clear_to_black();
 	frontbuffer(0);
 
+#if IR_WIDGETS
+	hide_form(Button_Box);
+	hide_form(Dials);
+#endif
 	winclose(gr_id);
 	return;
 }
@@ -895,7 +998,6 @@ Ir_input( cmd_fd, rateflg )
 	else
 		return(0);		/* just peripheral stuff */
 }
-
 /*
  *  C H E C K E V E N T S
  *
@@ -911,17 +1013,24 @@ checkevents()  {
 	static	knobs[8];	/*  Save values of dials  */
 	static	pending_middlemouse = 0;	/* state variable */
 
+#if IR_WIDGETS
+	n = fl_usrblkqread( values, NVAL );/* n is # of shorts returned */
+	if( ir_debug ) printf("blkqread gave %d\n", n);
+	for (valp = values ; n > 0  ; n -= 4, valp += 4 ) {
+		ret = *valp;
+
+#else
 	n = blkqread( values, NVAL );	/* n is # of shorts returned */
 	if( ir_debug ) printf("blkqread gave %d\n", n);
-
 	for( valp = values; n > 0; n -= 2, valp += 2 )  {
+
 		ret = *valp;
 		if( ir_debug ) printf("qread ret=%d, val=%d\n", ret, valp[1]);
-
+#endif
 #if IR_BUTTONS
 		if((ret >= SWBASE && ret < SWBASE+IR_BUTTONS)
 		  || ret == F1KEY || ret == F2KEY || ret == F3KEY
-		  || ret == F4KEY || ret == F5KEY
+		  || ret == F4KEY || ret == F5KEY || ret == F6KEY
 		) {
 			register int	i;
 
@@ -1010,28 +1119,7 @@ checkevents()  {
 					ir_dbtext("Perspect");
 					continue;
 				}
-				/* toggle perspective viewing */
-				if (--perspective_mode < 0) perspective_mode = 4;
-				switch (perspective_mode) {
-				case 4:
-					persp_mat( perspect_mat, 90.0,
-					    1.0, 0.01, 1.0e10, 1.0 );
-					break;
-				case 3:
-					persp_mat( perspect_mat, 60.0,
-					    1.0, 0.01, 1.0e10, 1.0 );
-					break;
-				case 2:
-					persp_mat( perspect_mat, 45.0,
-					    1.0, 0.01, 1.0e10, 1.0 );
-					break;
-				case 1:
-					persp_mat( perspect_mat, 30.0,
-					    1.0, 0.01, 1.0e10, 1.0 );
-					break;
-				case 0:
-					break;
-				}
+				perspective_mode = 1-perspective_mode;
 				dmaflag = 1;
 				kblights();
 				continue;
@@ -1103,6 +1191,36 @@ checkevents()  {
 				}
 				kblights();
 				dmaflag = 1;
+				continue;
+			} else if (ret == F6KEY) {
+				if (!valp[1]) continue; /* Ignore release */
+				/* Help mode */
+				if (button0) {
+					ir_dbtext("P-Angle");
+					continue;
+				}
+				/* toggle perspective matrix */
+				if (--perspective_angle < 0) perspective_angle = 3;
+				switch (perspective_angle) {
+				case 3:
+					persp_mat( perspect_mat, 90.0,
+					    1.0, 0.01, 1.0e10, 1.0 );
+					break;
+				case 2:
+					persp_mat( perspect_mat, 60.0,
+					    1.0, 0.01, 1.0e10, 1.0 );
+					break;
+				case 1:
+					persp_mat( perspect_mat, 45.0,
+					    1.0, 0.01, 1.0e10, 1.0 );
+					break;
+				case 0:
+					persp_mat( perspect_mat, 30.0,
+					    1.0, 0.01, 1.0e10, 1.0 );
+					break;
+				}
+				dmaflag = 1;
+				kblights();
 				continue;
 			}
 			/*
@@ -1201,6 +1319,43 @@ checkevents()  {
 			continue;
 		}
 #endif
+#if IR_WIDGETS
+		switch( ret ) {
+		case LEFTMOUSE:
+			if (winget() == gr_id && valp[1] &&
+			    dm_values.dv_penpress != DV_PICK )
+				dm_values.dv_penpress = DV_OUTZOOM;
+			break;
+		case MIDDLEMOUSE:
+			if (winget() == gr_id) {
+				dm_values.dv_xpen = irisX2ged( (int)valp[2] );
+				dm_values.dv_ypen = irisY2ged( (int)valp[3] );
+				dm_values.dv_penpress = DV_PICK;
+			}
+			break;
+		case RIGHTMOUSE:
+			if( winget() == gr_id() &&valp[1] &&
+			    dm_values.dv_penpress != DV_PICK )
+				dm_values.dv_penpress = DV_INZOOM;
+			break;
+		case REDRAW:
+			/* Window may have moved? */
+			dmaflag = 1;
+			refresh();		/* to fix back buffer */
+			dmaflag = 1;
+			break;
+		case INPUTCHANGE:
+			/* Means we got or lost the keyboard.  Ignore */
+			break;
+		case WMREPLY:
+			/* This guy speaks, but has nothing to say */
+			break;
+		default:
+			printf("IRIS device %d gave %d?\n", ret, valp[1]);
+			break;
+		}
+
+#else
 		switch( ret )  {
 		case LEFTMOUSE:
 			if( valp[1] && dm_values.dv_penpress != DV_PICK )
@@ -1255,6 +1410,7 @@ checkevents()  {
 			printf("IRIS device %d gave %d?\n", ret, valp[1]);
 			break;
 		}
+#endif
 	}
 }
 
@@ -1326,7 +1482,11 @@ Ir_statechange( a, b )
 	 */
 	switch( b )  {
 	case ST_VIEW:
+#if IR_WIDGETS
+		fl_usrunqdevice( MOUSEY );	/* constant tracking OFF */
+#else
 		unqdevice( MOUSEY );	/* constant tracking OFF */
+#endif
 		/* This should not affect the tie()'d MOUSEY events */
 		break;
 		
@@ -1334,11 +1494,19 @@ Ir_statechange( a, b )
 	case ST_O_PICK:
 	case ST_O_PATH:
 		/*  Have all changes of MOUSEY generate an event */
+#if IR_WIDGETS
+		fl_usrqdevice( MOUSEY );	/* constant tracking ON */
+#else
 		qdevice( MOUSEY );	/* constant tracking ON */
+#endif
 		break;
 	case ST_O_EDIT:
 	case ST_S_EDIT:
+#if IR_WIDGETS
+		fl_usrunqdevice( MOUSEY );	/* constant tracking OFF */
+#else
 		unqdevice( MOUSEY );	/* constant tracking OFF */
+#endif
 		break;
 	default:
 		(void)printf("Ir_statechange: unknown state %s\n", state_str[b]);
@@ -1599,7 +1767,7 @@ kblights()
 
 	lights = (cueing_on)
 		| (zclipping_on << 1)
-		| ((perspective_mode ? 1 : 0) << 2)
+		| (perspective_mode << 2)
 		| (zbuffer_on << 3);
 
 	lampon(lights);
