@@ -815,11 +815,6 @@ int		noblock;
 		}
 	} while( noblock == 0 );
 
-	/* "rest" state */
-	dm_values.dv_buttonpress = 0;
-	dm_values.dv_flagadc = 0;
-	dm_values.dv_penpress = 0;
-
 	if( FD_ISSET( display->fd, input ) )
 		checkevents();
 

@@ -414,8 +414,6 @@ int		noblock;
 	if( cnt < 0 )  {
 		perror("dm/select");
 	}
-
-	dm_values.dv_penpress = 0;
 }
 
 /* 

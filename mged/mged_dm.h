@@ -17,28 +17,7 @@
 
 #include "rtstring.h"		/* for vls string support */
 
-#define DV_PICK		1	/* dv_penpress for pick function */
-#define DV_INZOOM	2	/* dv_penpress for zoom in */
-#define DV_OUTZOOM	4	/* dv_penpress for zoom out */
-#define DV_SLEW		8	/* dv_penpress for view slew */
 struct device_values  {
-	int	dv_buttonpress;		/* Number of button pressed when !0 */
-	double	dv_xjoy;		/* Joystick,  -1.0 <= x <= +1.0 */
-	double	dv_yjoy;
-	double	dv_zjoy;
-	int	dv_xpen;		/* Tablet.  -2048 <= x,y <= +2047 */
-	int	dv_ypen;
-	int	dv_penpress;		/* !0 when tablet is pressed */
-	double	dv_zoom;		/* Zoom knob.  -1.0 <= zoom <= +1.0 */
-	double	dv_xslew;		/* View slew.  -1.0 <= slew <= +1.0 */
-	double	dv_yslew;
-	double	dv_zslew;
-	int	dv_xadc;		/* A/D cursor -2048 <= adc <= +2047 */
-	int	dv_yadc;
-	int	dv_1adc;		/* angle 1 for A/D cursor */
-	int	dv_2adc;		/* angle 2 for A/D cursor */
-	int	dv_distadc;		/* Tick distance */
-	int	dv_flagadc;		/* A/D cursor "changed" flag */
 	struct rt_vls	dv_string;	/* newline-separated "commands" from dm */
 };
 extern struct device_values dm_values;

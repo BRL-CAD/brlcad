@@ -1200,9 +1200,6 @@ input_waiting:
 	 * Set device interface structure for GED to "rest" state.
 	 * First, process any messages that came in.
 	 */
-	dm_values.dv_buttonpress = 0;
-	dm_values.dv_flagadc = 0;
-	dm_values.dv_penpress = 0;
 
 	if( i != 0 )
 		checkevents();

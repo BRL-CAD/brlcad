@@ -559,13 +559,6 @@ int		noblock;	/* !0 => poll */
 	FD_SET( sun_win_fd, &files );
 
 	/*
-	 * Set device interface structure for GED to "rest" state.
-	 */
-	dm_values.dv_buttonpress = 0;
-	dm_values.dv_flagadc = 0;
-	dm_values.dv_penpress = 0;
-
-	/*
 	 * Check for input on the keyboard or on the polled registers. 
 	 *
 	 * Suspend execution until either

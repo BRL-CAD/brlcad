@@ -512,8 +512,6 @@ int		noblock;
 		perror("dm-tek/select");
 	}
 
-	dm_values.dv_penpress = 0;
-
 	if( second_fd && FD_ISSET(second_fd, input) )
 		t49get_cursor();
 }
