@@ -92,7 +92,7 @@ matp_t	mat;
 struct region *regp;
 {
 	register struct soltab *stp;
-	register float f;
+	FAST fastf_t f;
 
 	/* Eliminate any [15] scaling */
 	f = mat[15];
@@ -294,6 +294,8 @@ int pos;
 	register char *cp = &line[0];
 	register int i;
 
+	line[0] = '/';
+	line[1] = '\0';
 	for( i=0; i<=pos; i++ )  {
 		(void)sprintf( cp, "/%s%c", path[i]->d_namep, '\0' );
 		cp += strlen(cp);
