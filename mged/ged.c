@@ -1241,11 +1241,11 @@ refresh()
 
   for( BU_LIST_FOR(p, dm_list, &head_dm_list.l) ){
     curr_dm_list = p;
-    dmaflag = 0;
   }
 
   curr_dm_list = save_dm_list;
   update_views = 0;
+  dmaflag = 0;
 }
 
 /*
