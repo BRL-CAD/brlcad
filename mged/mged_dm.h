@@ -119,7 +119,7 @@ struct shared_info {
   struct bu_vls _ang2_vls;
   struct bu_vls _distadc_vls;
 
-  /* Convenient pointer to the owner's (of the shared_info) tkName */
+  /* Convenient pointer to the owner's (of the shared_info) dm_pathName */
   struct bu_vls *opp;
 };
 
