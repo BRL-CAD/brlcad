@@ -148,9 +148,13 @@ struct application	*ap;
 	 * FT, MM, and CM.  However, GIFT  output is expected to be IN.
 	 * NOTE that variables "azimuth and elevation" are not valid
 	 * when the -M flag is used.
+	 * NOTE:  %10g was changed to %10f so that a decimal point is generated
+	 * even when the number is an integer.  Otherwise the client codes
+	 * get confused get confused and are unable to convert the number to
+	 * scientific notation.
 	 */
 	fprintf(outfp,
-		"     %-15.8f     %-15.8f                              %10g\n",
+		"     %-15.8f     %-15.8f                              %10f\n",
 		azimuth, elevation, MAGNITUDE(dx_model)*MM2IN );
 
 	regionfix( ap, "rtray.regexp" );		/* XXX */
@@ -469,7 +473,8 @@ void	view_eol()
  *  View_end() is called by rt_shootray in do_run().  It
  *  outputs a special 999.9 "end of view" marker, composed of
  *  a "999.9" shotline header, with one
- *  all-zero component record.
+ *  all-zero component record.  Note that the component count must also
+ *  be zero on this shotline, or else the client codes get confused.
  */
 void
 view_end()
@@ -477,7 +482,7 @@ view_end()
 	fprintf(outfp, SHOT_FMT,
 		999.9, 999.9,
 		999.9, 999.9,
-		1,			/* component count */
+		0,			/* component count */
 		0.0, 0.0,
 		azimuth, elevation );
 	/* An abbreviated component record:  just give item code 0 */
