@@ -2481,6 +2481,7 @@ BU_EXTERN(struct rt_pt_node *rt_ptalloc, () );
 
 /* memalloc.c -- non PARALLEL routines */
 BU_EXTERN(unsigned long rt_memalloc, (struct mem_map **pp, unsigned size) );
+BU_EXTERN(struct mem_map * rt_memalloc_nosplit, (struct mem_map **pp, unsigned size) );
 BU_EXTERN(unsigned long rt_memget, (struct mem_map **pp, unsigned int size,
 	unsigned int place) );
 BU_EXTERN(void rt_memfree, (struct mem_map **pp, unsigned size, unsigned long addr) );
