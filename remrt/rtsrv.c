@@ -216,12 +216,13 @@ char **argv;
 
 		/* Go into our own process group */
 		n = getpid();
-/* SysV uses setprgrp with no args and it can't fail */
-#ifndef SYSV
+
+		/* SysV uses setpgrp with no args and it can't fail */
+#if defined(SYSV) && !defined(_BSD_COMPAT)
+		setpgrp();
+#else
 		if( setpgrp( n, n ) < 0 )
 			perror("setpgrp");
-#else
-		setpgrp();
 #endif
 
 		/* Deal with CPU limits on "those kinds" of systems */
