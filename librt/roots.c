@@ -208,8 +208,13 @@ register complex	*nxZ;	/* initial guess for root	*/
 		 * but changes loop termination conditions somewhat.
 		 *
 		 * diff is |p0|**2.  nxZ = Z - p0.
+		 *
+		 * SGI XNS IRIS 3.5 compiler fails if following 2 assignments
+		 * are imbedded in the IF statement, as before.
 		 */
-		if( (b = CxAmplSq( nxZ )) < (diff = CxAmplSq( &p0 )) )
+		b = CxAmplSq( nxZ );
+		diff = CxAmplSq( &p0 );
+		if( b < diff )
 			continue;
 		if( (b-diff) == b )
 			return(i);		/* OK -- can't do better */
