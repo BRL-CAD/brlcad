@@ -207,6 +207,8 @@ void	drop_rtnode();
 void	setup_socket();
 char	*stamp();
 
+BU_EXTERN(int cmd_drop_rtnode, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
+
 
 static char usage[] = "\
 Usage:  rtsync [-d#] [-h] [-S squaresize] [-W width] [-N height] [-F framebuffer]\n\
@@ -301,7 +303,7 @@ char **argv;
 	if( i < 0 || i >= MAX_NODES )  {
 		/* Use this as a signal to generate a title. */
 		Tcl_AppendResult(interp,
-			"CP i_lps w_lps lump busy state", NULL);
+			"##: CP i_lps w_lps lump busy state", NULL);
 		return TCL_OK;
 	}
 	if( rtnodes[i].fd <= 0 )  {
@@ -310,13 +312,15 @@ char **argv;
 		return TCL_ERROR;
 	}
 	bu_vls_init(&str);
-	bu_vls_printf(&str, "%2.2d %5.5g %5.5g %4.4d %s %9s %s",
+	bu_vls_printf(&str, "%2.2d: %2.2d %5.5g %5.5g %4.4d %s %9s %s",
+		i,
 		rtnodes[i].ncpus,
 		rtnodes[i].i_lps,
 		rtnodes[i].w_lps,
 		rtnodes[i].lump,
 		rtnodes[i].busy ? "BUSY" : "wait",
-		states[rtnodes[i].state],
+		rtnodes[i].state == STATE_PREPPED ? "ok" :
+			states[rtnodes[i].state],
 		rtnodes[i].host->ht_name );
 	Tcl_AppendResult(interp, bu_vls_addr(&str), NULL);
 	bu_vls_free(&str);
@@ -760,6 +764,8 @@ char	*argv[];
 		(ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
 	(void)Tcl_CreateCommand(interp, "get_rtnode", get_rtnode,
 		(ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
+	(void)Tcl_CreateCommand(interp, "drop_rtnode", cmd_drop_rtnode,
+		(ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
 
 	/* Let main window pop up before running script */
 	while( Tcl_DoOneEvent(TCL_DONT_WAIT) != 0 ) ;
@@ -865,6 +871,7 @@ ClientData clientData;
 	int		lowest_index = 0;
 	char		buf[32];
 	double		total_lps;
+	int		nlines;
 
 	if( !pending_pov )  return;
 
@@ -908,11 +915,14 @@ ClientData clientData;
 	}
 
 	/* Second, allocate work as a fraction of that capability */
+	nlines = 0;
 	for( i = MAX_NODES-1; i >= 0; i-- )  {
 		if( rtnodes[i].fd <= 0 )  continue;
 		if( rtnodes[i].state != STATE_PREPPED )  continue;
 		rtnodes[i].lump = (int)ceil(height * rtnodes[i].w_lps / total_lps);
+		nlines += rtnodes[i].lump;
 	}
+	if( nlines < height )  bu_log("ERROR: nlines=%d, height=%d\n", nlines, height);
 
 	/* Third, actually dispatch the work */
 	start_line = 0;
@@ -924,12 +934,8 @@ ClientData clientData;
 		if( rtnodes[i].fd <= 0 )  continue;
 		if( rtnodes[i].state != STATE_PREPPED )  continue;
 
-		if( i <= lowest_index )  {
-			end_line = height-1;
-		} else {
-			end_line = start_line + rtnodes[i].lump-1;
-			if( end_line > height-1 )  end_line = height-1;
-		}
+		end_line = start_line + rtnodes[i].lump-1;
+		if( end_line > height-1 )  end_line = height-1;
 
 		bu_vls_init( &msg );
 		bu_vls_printf( &msg, "%d %d %d %s\n",
@@ -1012,6 +1018,59 @@ int	sub;
 		rtnodes[sub].fd = 0;
 	}
 	Tcl_DeleteFileHandler( rtnodes[sub].tcl_file );
+}
+
+/*
+ *			G E T _ R T N O D E _ B Y _ N A M E
+ */
+int
+get_rtnode_by_name( str )
+char *str;
+{
+	struct ihost	*ihp;
+	int		i;
+
+	if( isdigit( *str ) )  {
+		int	i;
+		i = atoi( str );
+		if( i < 0 || i >= MAX_NODES )  return -1;
+		return i;
+	}
+
+	if( (ihp = host_lookup_by_name( str, 0 )) == IHOST_NULL )
+		return -2;
+
+	for( i = MAX_NODES-1; i >= 0; i-- )  {
+		if( rtnodes[i].fd <= 0 )  continue;
+		if( rtnodes[i].host == ihp )  return i;
+	}
+	return -3;
+}
+
+/*
+ *			C M D  _ D R O P _ R T N O D E
+ */
+int
+cmd_drop_rtnode( clientData, interp, argc, argv )
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
+{
+	int	node;
+
+	if( argc != 2 )  {
+		Tcl_AppendResult(interp, "Usage: drop_rtnode hostname\n        drop_rtnode slot#\n", NULL);
+		return TCL_ERROR;
+	}
+	node = get_rtnode_by_name( argv[1] );
+	if( node < 0 )  {
+		Tcl_AppendResult(interp, "drop_rtnode ", argv[1],
+			": server not found\n");
+		return TCL_ERROR;
+	}
+	drop_rtnode(node);
+	return TCL_OK;
 }
 
 /*
@@ -1299,6 +1358,8 @@ char			*buf;
 		rtnodes[i].busy = 0;
 		rtnodes[i].lump = 0;
 		rtnodes[i].w_lps = 1;
+
+		Tcl_Eval( interp, "update_cpu_status" );
 
 		/* No more dialog, next pkg will be a POV */
 
