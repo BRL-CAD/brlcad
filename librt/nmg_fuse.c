@@ -594,6 +594,7 @@ CONST struct rt_tol	*tol;
 	return total;
 }
 
+#define TOL_MULTIPLES	1.0
 /*
  *			N M G _ C K _ F U _ V E R T S
  *
@@ -604,9 +605,9 @@ CONST struct rt_tol	*tol;
  *  Topology may have become inappropriately shared.
  *
  *  Returns -
- *	0	All is well, or all verts are within 10*tol->dist of fu2
+ *	0	All is well, or all verts are within TOL_MULTIPLES*tol->dist of fu2
  *	count	Number of verts *not* on fu2's surface when at least one is
- *		more than 10*tol->dist from fu2.
+ *		more than TOL_MULTIPLES*tol->dist from fu2.
  *
  *  XXX It would be more efficient to use nmg_vist() for this.
  */
@@ -666,7 +667,7 @@ CONST struct rt_tol	*tol;
 			count, worst, worst );
 	}
 
-	if( worst > 10.0*tol->dist )
+	if( worst > TOL_MULTIPLES*tol->dist )
 		return count;
 	else
 		return( 0 );
@@ -1319,6 +1320,8 @@ CONST struct rt_tol	*tol;		/* for printing */
 	struct nmg_radial	*rad;
 	fastf_t			amin;
 	fastf_t			amax;
+	int			non_wire_edges=0;
+	int			edge_count;
 	struct nmg_radial	*rmin = (struct nmg_radial *)NULL;
 	struct nmg_radial	*rmax = (struct nmg_radial *)NULL;
 
@@ -1342,6 +1345,7 @@ CONST struct rt_tol	*tol;		/* for printing */
 		if( rad->fu )  {
 			/* We depend on ang being strictly in the range 0..2pi */
 			rad->ang = nmg_measure_fu_angle( teu, xvec, yvec, zvec );
+			non_wire_edges++;
 
 			if( rad->ang < amin )  {
 				amin = rad->ang;
@@ -1381,37 +1385,60 @@ CONST struct rt_tol	*tol;		/* for printing */
 	}
 
 	/* At least one non-wire edgeuse was found */
-	if( hd->forw == hd->back )
+	if( non_wire_edges < 2 )
 	{
-		/* only one entry in list */
+		/* only one non wire entry in list */
 		return;
 	}
-	
+
 #if 0
 rt_log("amin=%g min_eu=x%x, amax=%g max_eu=x%x\n",
 rmin->ang * rt_radtodeg, rmin->eu,
 rmax->ang * rt_radtodeg, rmax->eu );
+{
+	struct nmg_radial *next;
+
+	for( RT_LIST_FOR( next, nmg_radial, hd ) )
+		rt_log( "%x: eu=%x, fu=%x, ang=%g\n" , next, next->eu, next->fu, next->ang );
+}
 #endif
 	/* Skip to extremal repeated max&min.  Ignore wires */
 	for(;;)  {
 		struct nmg_radial	*next;
+		struct nmg_radial	*first;
 		next = rmax;
+		first = rmax;
 		do {
 			next = RT_LIST_PNEXT_CIRC(nmg_radial, next);
 		} while( next->fu == (struct faceuse *)NULL );
 		if( next->ang >= amax )
+		{
 			rmax = next;		/* a repeated max */
+			if( rmax == first )	/* we have gone all the way around (All angles are same ) */
+				break;
+		}
 		else
 			break;
 	}
 	/* wires before min establish new rmin */
 	for(;;)  {
 		struct nmg_radial	*next;
+		struct nmg_radial	*first;
+
+		first = rmin;
 		while( (next = RT_LIST_PPREV_CIRC(nmg_radial, rmin))->fu == (struct faceuse *)NULL )
 			rmin = next;
 		next = RT_LIST_PPREV_CIRC(nmg_radial, rmin);
 		if( next->ang <= amin )
+		{
 			rmin = next;		/* a repeated min */
+			if( rmin == first )	/* all the way round again (All angles are same ) */
+			{
+				/* set rmin to next entry after rmax */
+				rmin = RT_LIST_PNEXT_CIRC( nmg_radial, rmax );
+				break;
+			}
+		}
 		else
 			break;
 	}
@@ -2435,7 +2462,11 @@ CONST struct rt_tol	*tol;
 		if (rt_g.NMG_debug & DEBUG_MESH_EU ) {
 			nmg_pr_fu_around_eu_vecs( eu, xvec, yvec, zvec, tol );
 		}
-if (rt_g.NMG_debug)  rt_bomb("nmg_eu_radial_check\n");
+if (rt_g.NMG_debug)
+{
+	nmg_stash_model_to_file( "radial_check.g", nmg_find_model( &eu->l.magic ), "error" );
+	rt_bomb("nmg_eu_radial_check\n");
+}
 	}
 
 	/* Release the storage */
