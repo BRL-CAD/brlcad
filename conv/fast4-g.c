@@ -3152,8 +3152,13 @@ int pass_number;
 	return( 0 );
 }
 
+/* This routine is called for each combination in the model (via db_functree).
+ * It looks for regions that consist of only one member. If that one member
+ * is a combination, then the tree from that combination is placed in the
+ * region (eliminating an extra, unnecessary redirection).
+ */
 void
-list_regions( dbip, dp, ptr )
+fix_regions( dbip, dp, ptr )
 struct db_i *dbip;
 struct directory *dp;
 genptr_t	ptr;
@@ -3257,7 +3262,7 @@ char *output_file;
 		db_close( dbip );
 		return;
 	}
-	db_functree( dbip, dp, list_regions, 0, NULL );
+	db_functree( dbip, dp, fix_regions, 0, NULL );
 }
 
 void
