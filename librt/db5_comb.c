@@ -86,7 +86,7 @@ db_tree_counter( const union tree *tp, struct db_tree_counter_state *tcsp )
 	switch( tp->tr_op )  {
 	case OP_DB_LEAF:
 		tcsp->n_leaf++;
-		if( tp->tr_l.tl_mat )  tcsp->n_mat++;
+		if( tp->tr_l.tl_mat && !bn_mat_is_identity(tp->tr_l.tl_mat) )  tcsp->n_mat++;
 		/* Over-estimate storage requirement for matrix # */
 		tcsp->leafbytes += strlen(tp->tr_l.tl_name) + 1 + 8;
 		return 1;
