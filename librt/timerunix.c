@@ -1,10 +1,12 @@
 /*
- *			T I M E R 5 2 . C
+ *			T I M E R U N I X . C
  *
  * Function -
  *	To provide timing information for RT.
- *	This version for System V, Release TWO.
- *	(This merely determines elapsed time, not CPU time, alas)
+ *	This version for any non-BSD UNIX system, including
+ *	System III, Vr1, Vr2.
+ *	Version 6 & 7 should also be able to use this (untested).
+ *	The time() and times() sys-calls are used for all timing.
  *
  *  Author -
  *	Michael John Muuss
@@ -36,6 +38,10 @@ static char RCStimer[] = "@(#)$Header $ (BRL)";
 bzero( str, n )
 {
 	memset( str, '\0', n );
+}
+
+bcopy(from, to, count)  {
+	memcpy( to, from, count );
 }
 
 /* Standard System V stuff */
@@ -80,8 +86,4 @@ char *str;
 		usert/realt*100 );
 	(void)strncpy( str, line, len );
 	return( usert );
-}
-
-bcopy(from, to, count)  {
-	memcpy( to, from, count );
 }
