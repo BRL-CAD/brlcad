@@ -1486,3 +1486,4 @@ declare 7 mac {
 declare 8 mac {
     int strcasecmp(const char *s1, const char *s2)
 }
+
