@@ -16,28 +16,34 @@
 #   BRL-CAD Package" agreement.
 #
 # Copyright Notice -
-#   This software is Copyright (C) 2004-2004 by the United States Army
+#   This software is Copyright (C) 2004 by the United States Army
 #   in all countries except the USA.  All rights reserved.
 #
 ###
 
 # locate ourselves for generating a file list
-findgen=""
-if [ -r "`dirname $0`/../gen.sh" ] ; then
-  findgen="`dirname $0`/.."
-else
-  for findgen in . .. ; do
-    if [ -r "$findgen/gen.sh" ] ; then
-      break;
-    fi
-  done
-fi
+findgen="$1"
 
+if [ ! -d "$findgen" ] ; then 
+
+  if [ -r "`dirname $0`/../gen.sh" ] ; then
+    findgen="`dirname $0`/.."
+  else
+    for dir in . .. ; do
+      if [ -r "$findgen/gen.sh" ] ; then
+	findgen="$dir"
+	break
+      fi
+    done
+  fi
+  
 # sanity check
-if [ ! -d "$findgen/sh" ] ; then
-  echo "ERROR: Unable to find our path relative to gen.sh"
-  exit 1
-fi
+  if [ ! -d "$findgen/sh" ] ; then
+    echo "ERROR: Unable to find our path relative to gen.sh"
+    exit 1
+  fi
+
+fi  
 
 # generate a list of files to check, excluding directories that are
 # not BRL-CAD sources, CVS, or start with a dot.
@@ -59,7 +65,9 @@ files="`find $findgen -type f | \
         grep -v '\.pdf$' |\
         grep -v '\.dll$' |\
         grep -v '\.gif$' |\
-        grep -v '\.png$' \
+        grep -v '\.png$' |\
+        grep -v '\.bak$' |\
+        grep -v '\.old$' \
       `"
 
 for file in $files ; do
@@ -107,6 +115,21 @@ for file in $files ; do
   else
     echo ". `basename $file` modified"
     mv $file $file.copyright.old
+    mv $file.copyright.new $file
+  fi
+
+  sed -E "s/Copyright \(C\) $year-$year/Copyright (C) $year/" < $file > $file.copyright.new
+
+  filediff="`diff $file $file.copyright.new`"
+  if [ "x$filediff" = "x" ] ; then
+    rm $file.copyright.new
+  elif [ ! "x`echo $filediff | grep \"No newline at end of file\"`" = "x" ] ; then
+    rm $file.copyright.new
+  elif [ ! "x`echo $filediff | grep \"Binary files\"`" = "x" ] ; then
+    rm $file.copyright.new
+  else
+    echo "WARNING: $file had Copyright span for the same year"
+    mv $file $file.copyright.2.old
     mv $file.copyright.new $file
   fi
 
