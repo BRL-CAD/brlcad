@@ -1156,7 +1156,7 @@ char	**argv;
 	{
 		VSET(center_model, -toViewcenter[MDX],
 		    -toViewcenter[MDY], -toViewcenter[MDZ]);
-		if (adcflag)
+		if (mged_variables.adcflag)
 		{
 		   Tcl_AppendResult(interp, "Firing through angle/distance cursor...\n",
 				    (char *)NULL);

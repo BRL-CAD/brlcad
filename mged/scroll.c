@@ -104,11 +104,18 @@ void sl_halt_scroll()
  */
 void sl_toggle_scroll()
 {
-	if( scroll_enabled == 0 )  {
- 	        rt_vls_printf( &dm_values.dv_string, "sliders on\n" );
-        } else {
-	        rt_vls_printf( &dm_values.dv_string, "sliders off\n" );
-	}
+  struct rt_vls cmd;
+
+  rt_vls_init(&cmd);
+
+  if( mged_variables.scroll_enabled == 0 )
+    rt_vls_strcpy( &cmd, "sliders on\n" );
+  else
+    rt_vls_strcpy( &cmd, "sliders off\n" );
+
+  (void)cmdline(&cmd, False);
+
+  rt_vls_free(&cmd);
 }
 
 /*
@@ -131,14 +138,14 @@ char **argv;
       return TCL_ERROR;
 
     if (argc == 1) {
-	Tcl_AppendResult(interp, scroll_enabled ? "1" : "0", (char *)NULL);
+	Tcl_AppendResult(interp, mged_variables.scroll_enabled ? "1" : "0", (char *)NULL);
 	return TCL_OK;
     }
 
-    if (Tcl_GetBoolean(interp, argv[1], &scroll_enabled) == TCL_ERROR)
+    if (Tcl_GetBoolean(interp, argv[1], &mged_variables.scroll_enabled) == TCL_ERROR)
 	return TCL_ERROR;
 
-    if (scroll_enabled) {
+    if (mged_variables.scroll_enabled) {
       if(mged_variables.rateknobs)
 	scroll_array[0] = scr_menu;
       else
@@ -222,7 +229,7 @@ int y_top;
 	fastf_t f;
 
 	/* XXX this should be driven by the button event */
-	if( adcflag && scroll_enabled )
+	if( mged_variables.adcflag && mged_variables.scroll_enabled )
 		scroll_array[1] = sl_adc_menu;
 	else
 		scroll_array[1] = SCROLL_NULL;
@@ -273,7 +280,7 @@ int y_top;
 		if(mged_variables.rateknobs)
 		  f = rate_zoom;
 		else
-		  f = rate_zoom;
+		  f = absolute_zoom;
 	      }
 	      break;
 	    case 4:
@@ -357,7 +364,7 @@ register int	pen_y;
 	struct scroll_item	**m;
 	register struct scroll_item     *mptr;
 
-	if( !scroll_enabled )  return(0);	/* not enabled */
+	if( !mged_variables.scroll_enabled )  return(0);	/* not enabled */
 
 	if( pen_y > scroll_top )
 		return(-1);	/* pen above menu area */

@@ -1769,14 +1769,14 @@ continue;
 			/*  Help MODE */
 			if(button0)  {
 				ir_dbtext(
-				    (adcflag ? kn1_knobs:kn2_knobs)[ret-DIAL0]);
+				    (mged_variables.adcflag ? kn1_knobs:kn2_knobs)[ret-DIAL0]);
 				continue;
 			}
 			/* Make a dead zone around 0 */
 			setting = irlimit(valp[1]);
 			switch(ret)  {
 			case DIAL0:
-				if(adcflag) {
+				if(mged_variables.adcflag) {
 					rt_vls_printf( &cmd, "knob ang1 %d\n",
 							setting );
 				}
@@ -1786,7 +1786,7 @@ continue;
 							setting/2048.0 );
 				break;
 			case DIAL2:
-				if(adcflag)
+				if(mged_variables.adcflag)
 					rt_vls_printf( &cmd , "knob ang2 %d\n",
 							setting );
 				else {
@@ -1799,7 +1799,7 @@ continue;
 				}
 				break;
 			case DIAL3:
-				if(adcflag)
+				if(mged_variables.adcflag)
 					rt_vls_printf( &cmd , "knob distadc %d\n",
 							setting );
 				else {
@@ -1812,7 +1812,7 @@ continue;
 				}
 				break;
 			case DIAL4:
-				if(adcflag)
+				if(mged_variables.adcflag)
 					rt_vls_printf( &cmd , "knob yadc %d\n",
 							setting );
 				else {
@@ -1833,7 +1833,7 @@ continue;
 						 setting/512.0 );
 				break;
 			case DIAL6:
-				if(adcflag)
+				if(mged_variables.adcflag)
 					rt_vls_printf( &cmd , "knob xadc %d\n",
 							setting );
 				else {

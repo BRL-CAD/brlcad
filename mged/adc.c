@@ -208,16 +208,23 @@ char	**argv;
 
 	if (argc == 1)
 	{
-	  if (adcflag)  {
+	  if (mged_variables.adcflag)  {
 	    dmp->dmr_light( LIGHT_OFF, BV_ADCURSOR );
-	    adcflag = 0;
+	    mged_variables.adcflag = 0;
 	  } else {
 	    dmp->dmr_light( LIGHT_ON, BV_ADCURSOR );
-	    adcflag = 1;
+	    mged_variables.adcflag = 1;
 	  }
 
-	  rt_vls_printf( &dm_values.dv_string, "set sliders(adc) %d; sliders %s\n",
-			 adcflag, scroll_enabled ? "on" : "off");
+	  if(mged_variables.scroll_enabled){
+	    struct rt_vls cmd;
+
+	    rt_vls_init(&cmd);
+	    rt_vls_strcpy(&cmd, "sliders on\n");
+	    (void)cmdline(&cmd, False);
+	    rt_vls_free(&cmd);
+	  }
+
 	  dmaflag = 1;
 	  return TCL_OK;
 	}

@@ -405,7 +405,7 @@ int call_dm;
 	 * This way the adc info will be displayed during editing
 	 */
 
-	if( adcflag ) {
+	if( mged_variables.adcflag ) {
 		/* Angle/Distance cursor */
 		point_t	pt1, pt2, pt3;
 		point_t	center_model;
