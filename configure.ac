@@ -22,6 +22,7 @@ AC_CANONICAL_TARGET
 AM_INIT_AUTOMAKE(brlcad, $BRLCAD_VERSION.$CONFIG_DATE)
 AM_CONFIG_HEADER(h/config.h)
 
+AC_PREFIX_DEFAULT (/usr/brlcad)
 
 dnl ***********************
 dnl *** Check arguments ***
