@@ -288,7 +288,6 @@ FBIO	*ifp;
 {
 	int	ret = 0;
 
-fb_log("ab_dclose, state=x%x\n", ifp->if_mode);
 	if( ifp->if_mode & STATE_USER_HAS_WRITTEN )  {
 		register int y;		/* in Abekas coordinates */
 
@@ -307,6 +306,7 @@ fb_log("Starting conversion\n");
 		    	ret = -1;
 		}
 	}
+fb_log("Conversion done\n");
 
 	/* Free dynamic memory */
 	free( ifp->if_yuv );
@@ -444,12 +444,10 @@ int		count;
 	 */
 	if( (ifp->if_mode & STATE_FRAME_WAS_READ) == 0 &&
 	    (ifp->if_mode & STATE_USER_HAS_WRITTEN) == 0 )  {
-fb_log("Initial check, x=%d, y=%d\n", x, y );
 		if( x != 0 || y != 0 )  {
 	    		/* Try to read in the frame */
 			(void)ab_readframe(ifp);
 		} else {
-fb_log("clear to black\n");
 			/* Just clear to black and proceed */
 			(void)ab_dclear( ifp, PIXEL_NULL );
 		}
@@ -883,8 +881,20 @@ int	len;
 	double	y, u, v;
 	unsigned char tmp;
 
-	unsigned char *rgbp;
-	unsigned char *yuvp;
+	register unsigned char *rgbp;
+	register unsigned char *yuvp;
+	static int first=1;
+
+	if(first)  {
+		register int i;
+		/* SETUP */
+		for( i = 0; i < 5; i++ ) {
+			y_filter[i] *= 219.0/255.0;
+			u_filter[i] *= 224.0/255.0;
+			v_filter[i] *= 224.0/255.0;
+		}
+		first = 0;
+	}
 
 	rgbp = rgb_buf;
 	yuvp = yuv_buf;
@@ -892,7 +902,7 @@ int	len;
 		/*
 		 * first pixel gives Y and both chroma
 		 */
-		VSET( rgb, *rgbp++/255.0, *rgbp++/255.0, *rgbp++/255.0 );
+		VSET( rgb, *rgbp++, *rgbp++, *rgbp++ );
 
 		y = VDOT( y_weights, rgb );
 		SHIFTUP( y_buf, y );
@@ -901,23 +911,14 @@ int	len;
 		v = VDOT( v_weights, rgb );
 		SHIFTUP( v_buf, v );
 
-		u = V5DOT(u_filter,u_buf);
-		y = V5DOT(y_filter,y_buf);
-		v = V5DOT(v_filter,v_buf);
-
-		u *= 224.0;			/* -112 .. +112 range */
-		*yuvp++ = floor(u) + 128;	/* centered on 128 */
-
-		y *= 219.0;			/* 16 .. 235 range */
-		*yuvp++ = floor(y) + 16;	/* offset by 16 */
-
-		v *= 224.0;			/* -112 .. +112 range */
-		*yuvp++ = floor(v) + 128;	/* centered on 128 */
+		*yuvp++ = V5DOT(u_filter,u_buf) + 128.0;
+		*yuvp++ = V5DOT(y_filter,y_buf) + 16.0;
+		*yuvp++ = V5DOT(v_filter,v_buf) + 128.0;
 
 		/*
 		 * second pixel just yields a Y
 		 */
-		VSET( rgb, *rgbp++/255.0, *rgbp++/255.0, *rgbp++/255.0 );
+		VSET( rgb, *rgbp++, *rgbp++, *rgbp++ );
 
 		y = VDOT( y_weights, rgb );
 		SHIFTUP( y_buf, y );
@@ -926,9 +927,6 @@ int	len;
 		v = VDOT( v_weights, rgb );
 		SHIFTUP( v_buf, v );
 
-		/* only filter a Y */
-		y = V5DOT(y_filter,y_buf);
-		y *= 219.0;			/* 16 .. 235 range */
-		*yuvp++ = floor(y) + 16;	/* offset by 16 */
+		*yuvp++ = V5DOT(y_filter,y_buf) + 16.0;
 	}
 }
