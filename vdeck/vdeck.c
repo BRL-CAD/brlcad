@@ -1,6 +1,6 @@
 /*
- *	@(#) vdeck.c			retrieved: 8/13/86 at 08:05:57,
- *	@(#) version 1.8		last edit: 10/11/83 at 09:31:19.
+ *	@(#) vdeck.c			retrieved: 8/13/86 at 08:06:17,
+ *	@(#) version 1.9		last edit: 10/11/83 at 10:57:24.
  *
  *	Written by Gary S. Moss.
  *	All rights reserved, Ballistic Research Laboratory.
@@ -17,10 +17,8 @@
 #include <stdio.h>
 #include <signal.h>
 #include <setjmp.h>
-#include "./ged_types.h"
-#include "./3d.h"
-#include "./vdeck.h"
 #include "./vextern.h"
+
 extern Directory	*diradd();
 extern double		fabs();
 extern long		lseek();
@@ -31,24 +29,15 @@ char			getcmd();
  */
 main( argc, argv )	char	*argv[];
 {
-	if( argc < 2 ) { menu( usage );	exit( 1 ); }
 	setbuf( stdout, malloc( BUFSIZ ) );
 
-	/* open  G E D  data base object file
-	 */
-	if( (objfd = open( argv[1], 0 )) < 0 )  {
-		perror( argv[1] );
+	if( ! parsArg( argc, argv ) ) {
 		menu( usage );
-		exit( 10 );
-	} else	objfile = argv[1];
+		exit( 1 );
+	}
+
 	builddir();	/* Build directory from object file.	 	*/
 	toc();		/* Build table of contents from directory.	*/
-
-	if( argc > 1 )
-	{	/* Add objects from command line to current list.	*/
-		pars_arg( argv, argc );
-		insert( arg_list, arg_ct );
-	}
 
 	/* C o m m a n d   I n t e r p r e t e r
 	 */
