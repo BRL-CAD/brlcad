@@ -21,9 +21,9 @@
 
 #include <stdio.h>
 #include <math.h>
-#include <brlcad/machine.h>
-#include <brlcad/vmath.h>
-#include "h/anim.h"
+#include "machine.h"
+#include "vmath.h"
+#include "anim.h"
 
 #ifndef	M_PI
 #define M_PI	3.14159265358979323846
