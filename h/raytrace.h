@@ -1304,13 +1304,14 @@ struct rt_vlist  {
 
 /* Place an entire chain of rt_vlist structs on the global freelist */
 #define RT_FREE_VLIST(hd)	{ \
-	RT_CK_VLIST( (hd) ); \
+	RT_CK_LIST_HEAD( (hd) ); \
 	RT_LIST_APPEND_LIST( &rt_g.rtg_vlfree, (hd) ); \
 	}
 
 #define RT_ADD_VLIST(hd,pnt,draw)  { \
-	register struct rt_vlist *_vp = RT_LIST_LAST( rt_vlist, (hd) ); \
-	RT_CK_VLIST(_vp); \
+	register struct rt_vlist *_vp; \
+	RT_CK_LIST_HEAD( hd ); \
+	_vp = RT_LIST_LAST( rt_vlist, (hd) ); \
 	if( RT_LIST_IS_HEAD( _vp, (hd) ) || _vp->nused >= RT_VLIST_CHUNK )  { \
 		RT_GET_VLIST(_vp); \
 		RT_LIST_INSERT( (hd), &(_vp->l) ); \
@@ -1965,6 +1966,7 @@ RT_EXTERN(struct edgeuse	*nmg_findeu, (CONST struct vertex *v1, CONST struct ver
 RT_EXTERN(struct edgeuse	*nmg_find_eu_in_face, (CONST struct vertex *v1,
 				CONST struct vertex *v2, CONST struct faceuse *fu,
 				CONST struct edgeuse *eup, int dangling_only));
+RT_EXTERN(struct edgeuse	*nmg_find_eu_of_vu, (CONST struct vertexuse *vu) );
 RT_EXTERN(struct edgeuse	*nmg_find_eu_with_vu_in_lu, (CONST struct loopuse *lu,
 				CONST struct vertexuse *vu) );
 RT_EXTERN(CONST struct edgeuse	*nmg_faceradial, (CONST struct edgeuse *eu) );
