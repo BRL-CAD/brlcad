@@ -478,6 +478,7 @@ int	width, height;
 	int x_pos, y_pos;	/* Lower corner of viewport */
 	register int i;
 	int f;
+	int *status;
 
 	/* the Silicon Graphics Library Window management routines
 	 * use shared memory. This causes lots of problems when you
@@ -496,9 +497,15 @@ int	width, height;
 	if(((f = fork()) != 0 ) && ( f != -1)) 
 	{
 		int k;
-		for(k=0; k< 20; k++)
+		for(k=0; k< 20; k++)  {
 			(void) close(k);
-		pause();		/* pause until killed */
+		}
+
+		wait(status);
+
+fprintf(stderr,"parent exit status = %d \n");
+
+/*		pause();*/		/* pause until killed */
 		exit(0);
 	}
 
@@ -621,6 +628,18 @@ mips_dclose( ifp )
 FBIO	*ifp;
 {
 	int menu, menuval, val, dev, f;
+	int k;
+
+	/*
+	 *  Since we plan to linger here, long after our invoker
+	 *  expected us to be gone, be certain that no file descriptors
+	 *  remain open to associate us with pipelines, network
+	 *  connections, etc., that were already established before
+	 *  the point that fb_open() was called.
+	 */
+	for( k=0; k < ifp->if_fd; k++)  {
+		(void) close(k);
+	}
 
 	kill(fb_parent, SIGUSR1);
 
