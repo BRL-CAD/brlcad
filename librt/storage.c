@@ -30,16 +30,18 @@
 static char RCSstorage[] = "@(#)$Header$";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "./debug.h"
 
-#ifdef BSD
-# include <strings.h>
-#else
+#ifdef USE_STRING_H
 # include <string.h>
+#else
+# include <strings.h>
 #endif
 
 #define MDB_MAGIC	0x12348969
@@ -344,11 +346,7 @@ CONST char	*str;
 	char		*ret;
 
 	ret = rt_malloc( (len = nelem*elsize), str );
-#ifdef SYSV
-	(void)memset( ret, '\0', len );
-#else
 	bzero( ret, len );
-#endif
 	return(ret);
 }
 
@@ -403,11 +401,7 @@ register CONST char *cp;
 	if( (base = rt_malloc( len, "rt_strdup" )) == (char *)0 )
 		rt_bomb("rt_strdup:  unable to allocate memory");
 
-#ifdef BSD
-	bcopy( cp, base, len );
-#else
 	memcpy( base, cp, len );
-#endif
 	return(base);
 }
 
@@ -534,7 +528,7 @@ register int nbytes;
 	register int n;
 	register int amt;
 
-#ifdef SYSV
+#if !defined(HAVE_CALTECH_MALLOC)
 	return(nbytes);
 #else
 	if (pagesz == 0)
