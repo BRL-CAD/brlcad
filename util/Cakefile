@@ -28,7 +28,8 @@
 	pl-asc pl-hpgl \
 	pl-pl pl-tek pl-ps pl-sgi \
 	plcolor pldebug plgetframe plline2 plrot plstat \
-	query rle-pix sgi-pix sun-pix xyz-pl msrandom pixblend pixmorph
+	query rle-pix sgi-pix sun-pix xyz-pl msrandom pixblend pixmorph \
+	pixborder
 
 /* SGI specific goodies: pix-ci */
 /* X11 specific program:  pl-X */
@@ -356,5 +357,8 @@ pixblend:	pixblend.o
 
 pixmorph:	pixmorph.o
 	CC LDFLAGS -o pixmorph pixmorph.o LIBFB LIBFB_LIBES LIBES
+
+pixborder:	pixborder.o
+	CC LDFLAGS -o pixborder pixborder.o LIBFB LIBFB_LIBES LIBES
 
 #include "../Cakefile.rules"
