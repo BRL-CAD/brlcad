@@ -29,6 +29,30 @@
 #	define	RB_ARGS(args)			()
 #endif
 
+/*
+ *			    R B _ L I S T
+ *
+ *		    List of nodes or packages
+ *
+ *	LIBREDBLACK(3) uses this structure to maintain lists of
+ *	all the nodes and all the packages in the tree.  Applications
+ *	should not muck with these things.  They are maintained only
+ *	to facilitate freeing rb_trees.
+ */
+struct rb_list
+{
+    struct rt_list	l;
+    union
+    {
+	struct rb_node    *rbl_n;
+	struct rb_package *rbl_p;
+    }			rbl_u;
+};
+#define	rbl_magic	l.magic
+#define	rbl_node	rbl_u.rbl_n
+#define	rbl_package	rbl_u.rbl_p
+#define	RB_LIST_NULL	((struct rb_list *) 0)
+
 
 /*
  *			R B _ T R E E
@@ -62,6 +86,8 @@ typedef struct
     struct rb_node	**rbt_root;	  /* The actual trees */
     char		*rbt_unique;	  /* Uniqueness flags */
     struct rb_node	*rbt_current;	  /* Current node */
+    struct rb_list	rbt_nodes;	  /* All nodes */
+    struct rb_list	rbt_packages;	  /* All packages */
     struct rb_node	*rbt_empty_node;  /* Sentinel representing nil */
 }	rb_tree;
 #define	RB_TREE_NULL	((rb_tree *) 0)
@@ -91,6 +117,7 @@ struct rb_package
 {
     long		rbp_magic;	/* Magic no. for integrity check */
     struct rb_node	**rbp_node;	/* Containing nodes */
+    struct rb_list	*rbp_list_pos;	/* Place in the list of all pkgs. */
     void		*rbp_data;	/* Application data */
 };
 #define	RB_PKG_NULL	((struct rb_package *) 0)
@@ -115,6 +142,7 @@ struct rb_node
     char		*rbn_color;	/* Colors of this node */
     struct rb_package	**rbn_package;	/* Contents of this node */
     int			rbn_pkg_refs;	/* How many orders are being used? */
+    struct rb_list	*rbn_list_pos;	/* Place in the list of all nodes */
 };
 #define	RB_NODE_NULL	((struct rb_node *) 0)
 
@@ -161,6 +189,17 @@ RB_EXTERN(void *rb_extreme,	(rb_tree	*tree,
 				 int		order,
 				 int		sense
 				));
+RB_EXTERN(void rb_free,		(rb_tree	*tree,
+				 void		(*free_data)()
+				));
+#define	RB_RETAIN_DATA	((void (*)()) 0)
+#define		rb_free1(t,f)						\
+		{							\
+		    RB_CKMAG((t), RB_TREE_MAGIC, "red-black tree");	\
+		    rt_free((char *) ((t) -> rbt_order),		\
+				"red-black order function");		\
+		    rb_free(t,f);					\
+		}
 RB_EXTERN(int rb_insert,	(rb_tree	*tree,
 				 void		*data
 				));
