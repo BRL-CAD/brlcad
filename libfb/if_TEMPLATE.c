@@ -48,9 +48,9 @@ FBIO DEVNAME_interface =  {
 	"Device description",		/* device description	*/
 	0,				/* max width		*/
 	0,				/* max height		*/
-	"shortname",			/* short device name	*/
-	0,				/* init/current width	*/
-	0,				/* init/current height	*/
+	"/dev/shortname",		/* short device name	*/
+	0,				/* default/current width  */
+	0,				/* default/current height */
 	-1,				/* file descriptor	*/
 	PIXEL_NULL,			/* page_base		*/
 	PIXEL_NULL,			/* page_curp		*/
