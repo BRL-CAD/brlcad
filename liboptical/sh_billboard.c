@@ -420,8 +420,10 @@ do_ray_image(struct application	*ap,
     /* get the radius of the beam at the image plane */
     radius = ap->a_rbeam + dist * ap->a_diverge;
 
-    //    dx = radius * VDOT(ap->a_ray.r_dir, bi->img_x);
-    //    dy = radius * VDOT(ap->a_ray.r_dir, bi->img_y);
+    /*
+      dx = radius * VDOT(ap->a_ray.r_dir, bi->img_x);
+      dy = radius * VDOT(ap->a_ray.r_dir, bi->img_y);
+    */
     dx = radius;
     dy = radius;
 
