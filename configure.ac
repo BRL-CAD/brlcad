@@ -1509,7 +1509,7 @@ fi
 
 # XXX nasty temp hack for backwards cake compatibility.
 # XXX the code that relies on this will be going away, but until then..
-if test "x$build_brlcad_64bit" = "xyes" -a test "x$host_os" = "xirix6.5" ; then
+if test "x$build_brlcad_64bit" = "xyes" -a "x$host_os" = "xirix6.5" ; then
 	CFLAGS="$CFLAGS -DIRIX64"
 else
 	CFLAGS="$CFLAGS -DIRIX"
