@@ -846,7 +846,7 @@ CONST struct rt_tol	*tol;
 	}
 
 	reason = "of nmg_class_pt_s()";
-	class = nmg_class_pt_s(pt, sB, 0, tol);
+	class = nmg_class_pt_s(pt, sB, 1, tol);
 	
 	if( class == NMG_CLASS_AoutB )  {
 		NMG_INDEX_SET(classlist[NMG_CLASS_AoutB], vu->v_p);
