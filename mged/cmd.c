@@ -580,8 +580,10 @@ static struct funtab funtab[] = {
 	f_vrot_center, 5, 5,FALSE,
 "whichid", "ident(s)", "lists all regions with given ident code",
 	f_which_id, 2, MAXARGS,FALSE,
+#ifdef MULTI_ATTACH
 "winset", "pathname", "sets the window focus to the Tcl/Tk window with pathname",
         f_winset, 1, 2, FALSE,
+#endif
 "x", "lvl", "print solid table & vector list",
 	f_debug, 1,2,FALSE,
 "xpush", "object", "Experimental Push Command",
@@ -2221,6 +2223,7 @@ set_e_axis_pos()
   }
 }
 
+#ifdef MULTI_ATTACH
 int
 f_winset( argc, argv )
 int     argc;
@@ -2245,3 +2248,4 @@ char    **argv;
   rt_log( "Unrecognized pathname - %s\n", argv[1] );
   return CMD_BAD;
 }
+#endif
