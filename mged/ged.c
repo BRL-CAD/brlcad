@@ -416,9 +416,9 @@ int mask;
     static int escaped = 0;
     static int bracketed = 0;
     static int freshline = 1;
-    int fd;
+    long fd;
 
-    fd = (int)clientData;
+    fd = (long)clientData;
 
     /* When not in cbreak mode, just process an entire line of input, and
        don't do any command-line manipulation. */
@@ -486,7 +486,7 @@ int mask;
 
     /* Grab single character from stdin */
 
-    count = read(fd, (void *)&ch, 1);
+    count = read((int)fd, (void *)&ch, 1);
     if (count <= 0 && feof(stdin)){
       char *av[2];
 
