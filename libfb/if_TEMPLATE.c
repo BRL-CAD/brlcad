@@ -102,7 +102,7 @@ FBIO	*ifp;
 _LOCAL_ int
 DEVNAME_clear( ifp, pp )
 FBIO	*ifp;
-RGBpixel	*pp;
+unsigned char	*pp;
 {
 	return(0);
 }
@@ -111,7 +111,7 @@ _LOCAL_ int
 DEVNAME_read( ifp, x, y, pixelp, count )
 FBIO	*ifp;
 int	x, y;
-RGBpixel	*pixelp;
+unsigned char	*pixelp;
 int	count;
 {
 	return(count);
@@ -121,7 +121,7 @@ _LOCAL_ int
 DEVNAME_write( ifp, x, y, pixelp, count )
 FBIO	*ifp;
 int	x, y;
-RGBpixel	*pixelp;
+unsigned char	*pixelp;
 int	count;
 {
 	return(count);
@@ -194,7 +194,7 @@ DEVNAME_readrect( ifp, xmin, ymin, width, height, pp )
 FBIO	*ifp;
 int	xmin, ymin;
 int	width, height;
-RGBpixel	*pp;
+unsigned char	*pp;
 {
 	return( width*height );
 }
@@ -204,7 +204,7 @@ DEVNAME_writerect( ifp, xmin, ymin, width, height, pp )
 FBIO	*ifp;
 int	xmin, ymin;
 int	width, height;
-RGBpixel	*pp;
+unsinged char	*pp;
 {
 	return( width*height );
 }
