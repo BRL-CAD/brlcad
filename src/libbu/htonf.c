@@ -27,9 +27,6 @@
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
- *  Release Status -
- *	Public Domain, Distribution Unlimited
  */
 #ifndef lint
 static const char libbu_htond_RCSid[] = "@(#)$Header$ (BRL)";

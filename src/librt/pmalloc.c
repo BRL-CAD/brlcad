@@ -37,9 +37,6 @@
  *		to store the memory blocks. Also replaced mlindx() routine
  *		with a faster (but less general) version that takes advantage
  *		of the fact that bucket sizes increase by powers of two.
- *  
- *  Copyright Notice -
- *	Public Domain, Distribution Unlimited
  *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * A  "smarter" malloc v1.0			William L. Sebok
