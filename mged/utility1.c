@@ -30,7 +30,6 @@
 #include "./sedit.h"
 #include "./objdir.h"
 
-void	aexists();
 extern double atof();
 extern void f_quit();
 
@@ -47,6 +46,8 @@ extern struct passwd *getpwuid();
 
 extern int	objfd;
 extern char	*filename;		/* data file name */
+
+void		tables(), edcodes(), changes(), prfield(), prename();
 
 /* structure to distinguish new solids from existing (old) solids */
 struct identt {
@@ -90,6 +91,7 @@ int discr[MAXSOL], idfd, rd_idfd;
 int flag;	/* which type of table to make */
 FILE *fopen(), *tabptr;
 
+void
 f_tables()
 {
 
@@ -206,6 +208,7 @@ char ctemp[7];
  *
  *
  */
+void
 f_edcodes( )
 {
 	register struct directory *dp;
@@ -249,6 +252,7 @@ char new_name[NAMESIZE];
 char prestr[15];
 int ncharadd;
 
+void
 f_dup( )
 {
 
@@ -419,6 +423,7 @@ f_dup( )
  *
  *
  */
+void
 f_cat( )
 {
 	FILE *catfp;
@@ -622,6 +627,7 @@ printf("POLYGONS not implemented yet.....SKIP %s\n",record.p.p_name);
 #define MAX_LEVELS 12
 struct directory *path[MAX_LEVELS];
 
+void
 tables( dp, pathpos, old_xlate, flag)
 register struct directory *dp;
 int pathpos;
@@ -926,8 +932,7 @@ int flag;
  *
  *
  */
-
-
+void
 edcodes( dp, pathpos )
 register struct directory *dp;
 int pathpos;
@@ -1204,8 +1209,10 @@ editline()
 	}	/* end of while loop */
 }
 
-
-
+/*
+ *			C H A N G E S 
+ */
+void
 changes( num )
 int num;
 {
@@ -1232,7 +1239,10 @@ int num;
 	return;
 }
 
-
+/*
+ *			P R F I E L D
+ */
+void
 prfield( num )
 int num;
 {
@@ -1264,6 +1274,7 @@ int num;
 /*    P R E N A M E ( ): 	actually adds prefix to a name
  *				new_name[] = prestr[] + old_name[]
  */
+void
 prename( old_name )
 char old_name[NAMESIZE];
 {
@@ -1281,7 +1292,7 @@ char old_name[NAMESIZE];
 /*
  *	F _ W H I C H _ I D ( ) :	finds all regions with given idents
  */
-
+void
 f_which_id( )
 {
 

@@ -114,6 +114,7 @@ static int	vsaved = 0;	/* set iff view saved */
 
 void btn_head_menu();
 void btn_item_hit();
+void	state_err();
 
 static struct menu_item first_menu[] = {
 	{ "(BUTTON MENU)", btn_head_menu, 1 },		/* chg to 2nd menu */
@@ -705,6 +706,7 @@ char *str;
 	return(0);		/* GOOD */
 }
 
+void
 state_err( str )
 char *str;
 {

@@ -211,7 +211,7 @@ f_in()
 		args += argcnt;
 	}
 	if( lookup( cmd_args[1], LOOKUP_QUIET ) != DIR_NULL )  {
-		(void)aexists( cmd_args[1] );
+		aexists( cmd_args[1] );
 		return;
 	}
 	if( strlen(cmd_args[1]) >= NAMESIZE )  {
@@ -879,7 +879,7 @@ int pos;
 	/* Check for Control-D (EOF) */
 	if( feof( stdin ) )  {
 		/* Control-D typed, let's hit the road */
-		(void)f_quit();
+		f_quit();
 		/* NOTREACHED */
 	}
 

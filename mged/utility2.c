@@ -37,13 +37,14 @@ static union record record;
 
 #define MAXLINE		512	/* Maximum number of chars per line */
 
-
-
-
+void		identitize();
+void		trace();
+void		matrix_print();
+void		push();
 
 /*  	F _ T A B O B J :   tabs objects as they appear in data file
  */
-
+void
 f_tabobj( )
 {
 	register struct directory *dp;
@@ -138,8 +139,7 @@ mat_t xform;
  *		    including the final parameters of the solids at the bottom
  *		    of the matching paths
  */
-
-
+void
 f_pathsum( )
 {
 	int i, flag, pos_in;
@@ -201,6 +201,7 @@ f_pathsum( )
 
 static union record saverec;
 
+void
 f_copyeval( )
 {
 
@@ -335,6 +336,7 @@ f_copyeval( )
 /* current path being traced */
 extern struct directory *path[MAX_LEVELS];
 
+void
 trace( dp, pathpos, old_xlate, flag)
 register struct directory *dp;
 int pathpos;
@@ -499,6 +501,7 @@ int flag;
  *
  * Print out the 4x4 matrix addressed by "m".
  */
+void
 matrix_print( m )
 register matp_t m;
 {
@@ -535,6 +538,7 @@ static int abort_flag;
  *	control routine for "pushing" transformations to bottom of paths
  *
  */
+void
 f_push( )
 {
 
@@ -668,8 +672,7 @@ f_push( )
  *	If matrices are different, then will not be able to "push" this object.
  *
  */
-
-
+void
 push( dp, pathpos, old_xlate )
 struct directory *dp;
 int pathpos;
@@ -793,6 +796,7 @@ mat_t	old_xlate;
  *	Traverses an objects paths, setting all member matrices == identity
  *
  */
+void
 identitize( dp )
 struct directory *dp;
 {

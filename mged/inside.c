@@ -44,9 +44,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./sedit.h"
 #include "./solid.h"
 
-extern void aexists();
 extern double atof();
-extern void f_quit();
 
 extern int	args;		/* total number of args available */
 extern int	argcnt;		/* holder for number of args added later */
@@ -54,6 +52,8 @@ extern int	newargs;	/* number of args from getcmd() */
 extern int	numargs;	/* number of args */
 extern char	*cmd_args[];	/* array of pointers to args */
 extern char	**promp;	/* pointer to a pointer to a char */
+
+void		center();
 
 static int	nface, np, nm, mp;
 static fastf_t	thick[6];
@@ -243,7 +243,7 @@ f_inside()
 		argcnt = getcmd(args);
 	}
 	if( lookup( cmd_args[args], LOOKUP_QUIET ) != DIR_NULL ) {
-		(void)aexists( cmd_args[args] );
+		aexists( cmd_args[args] );
 		return;
 	}
 	if( strlen(cmd_args[args]) >= NAMESIZE )  {
@@ -411,11 +411,11 @@ arbin()
 
 
 /* finds reference center point (pc[3]) for the arb */
-center( )
+void
+center()
 {
-
-	int i, j, k;
-	fastf_t ppc;
+	register int i, j, k;
+	register fastf_t ppc;
 
 	for(i=0; i<3; i++) {
 		ppc = 0.0;
@@ -425,9 +425,6 @@ center( )
 		}
 		pc[i] = ppc / (fastf_t)np;
 	}
-
-	return;
-
 }
 
 

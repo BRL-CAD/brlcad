@@ -113,6 +113,8 @@ char	cur_title[128];			/* current target title */
 char	*filename;			/* Name of database file */
 int	read_only = 0;			/* non-zero when read-only */
 void	conversions();
+void	rm_membs();
+void	killtree();
 
 static void file_put();
 static void printnode();
@@ -794,7 +796,11 @@ top:
  *  
  *  Increase the database size of an object by "count",
  *  by duplicating in a new area if necessary.
+ *  Returns:
+ *	-1	on error
+ *	0	on success
  */
+int
 db_grow( dp, count )
 register struct directory *dp;
 int count;
@@ -806,7 +812,7 @@ int count;
 
 	if( read_only )  {
 		(void)printf("db_grow on READ-ONLY file\n");
-		return;
+		return(-1);
 	}
 
 	/* Easy case -- see if at end-of-file */
@@ -817,9 +823,13 @@ int count;
 clean:
 		(void)lseek( objfd, extra_start, 0 );
 		zapper.u_id = ID_FREE;	/* The rest will be zeros */
-		for( i = 0; i < count; i++ )
-			(void)write( objfd, (char *)&zapper, sizeof(zapper) );
-		return;
+		for( i = 0; i < count; i++ )  {
+			if( write( objfd, (char *)&zapper, sizeof(zapper) ) != sizeof(zapper) )  {
+				perror("db_grow: write");
+				return(-1);
+			}
+		}
+		return(0);
 	}
 
 	/* Try to extend into free space immediately following current obj */
@@ -850,6 +860,7 @@ hard:
 	}
 	/* Release space that original copy consumed */
 	db_delete( &olddir );
+	return(0);
 }
 
 /*
@@ -1732,6 +1743,7 @@ f_killall()
  *  Note that the buffering of fread() may occasionally cause
  *  odd interactions...
  */
+void
 rm_membs( name )
 char *name;
 {
@@ -1790,9 +1802,7 @@ f_killtree()
 	}
 }
 
-
-
-
+void
 killtree( dp )
 register struct directory *dp;
 {

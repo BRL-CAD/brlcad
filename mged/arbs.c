@@ -39,11 +39,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./objdir.h"
 #include "./dm.h"
 
-extern void aexists();
 extern double atof();
 extern char *strcat(), *strcpy();
-
-double fabs();
 
 extern int 	numargs;
 extern char	*cmd_args[];
@@ -53,6 +50,7 @@ extern int	argcnt;
 extern char	**promp;
 
 static union record record;
+static int	cgarbs();
 
 #define MAXLINE	512
 #define XCOORD 0
@@ -79,7 +77,7 @@ char *p_arb3pt[] = {
  *				3.  thickness
  *
  */
-
+void
 f_3ptarb(  )
 {
 	int i, solve;
@@ -323,6 +321,7 @@ char *p_rfin[] = {
  *		3. rot and fallback angles
  *		4. thickness
  */
+void
 f_rfarb()
 {
 	struct directory *dp;

@@ -165,6 +165,7 @@ f_overlay()
  *
  *  This parallels much of the code in dodraw.c
  */
+int
 invent_solid( name, vhead )
 char	*name;
 struct vlhead	*vhead;
@@ -244,6 +245,7 @@ struct vlhead	*vhead;
 	/* Add to linked list of solid structs */
 	APPEND_SOLID( sp, HeadSolid.s_back );
 	dmp->dmr_viewchange( DM_CHGV_ADD, sp );
+	return(0);		/* OK */
 }
 
 /*

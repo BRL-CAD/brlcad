@@ -56,6 +56,7 @@ extern long	time();
 extern char	*strcat();
 
 void	aexists();
+void	ext4to6();
 
 int		newedge;		/* new edge for arb editing */
 
@@ -857,6 +858,7 @@ f_mirface()
  * Change the local units of the description.
  * Base unit is fixed so just changing the current local unit.
  */
+void
 f_units()
 {
 	int new_unit = 0;
@@ -894,6 +896,7 @@ f_units()
 /*
  *	Change the current title of the description
  */
+void
 f_title()
 {
 	register int i;
@@ -1341,6 +1344,7 @@ f_edgedir()
 /*	EXT4TO6():	extrudes face pt1 pt2 pt3 of an ARB4 "distance"
  *			to produce ARB6 using solid record "sp"
  */
+void
 ext4to6(pt1, pt2, pt3, sp)
 int pt1, pt2, pt3;
 register struct solidrec *sp;

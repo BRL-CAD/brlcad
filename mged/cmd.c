@@ -50,14 +50,15 @@ char *cmd_args[MAXARGS + 1];	/* array of pointers to args */
 
 extern int	cmd_glob();
 
+static void	f_help(), f_param(), f_comm();
 void	do_cmd();
-void	f_help(), f_center(), f_press(), f_view(), f_blast();
+void	f_center(), f_press(), f_view(), f_blast();
 void	f_edit(), f_evedit(), f_delobj();
 void	f_debug(), f_regdebug(), f_name(), f_copy(), f_instance();
 void	f_copy_inv(), f_killall(), f_killtree();
 void	f_region(), f_itemair(), f_mater(), f_kill(), f_list();
-void	f_zap(), f_group(), f_param(), f_mirror(), f_extrude();
-void	f_rm(), f_arbdef(), f_comm(), f_quit();
+void	f_zap(), f_group(), f_mirror(), f_extrude();
+void	f_rm(), f_arbdef(), f_quit();
 void	f_edcomb(), f_status(), f_vrot();
 void	f_refresh(), f_fix(), f_rt(), f_rrt();
 void	f_saveview(), f_savekey();
@@ -295,7 +296,7 @@ cmdline()
 
 	i = parse_line();
 	if( i == 0 ) {
-		(void)do_cmd();
+		do_cmd();
 		return 1;
 	}
 	if( i < 0 )

@@ -81,7 +81,8 @@ static int second_fd;		/* fd of Tektronix if not /dev/tty */
 static FILE *outfp;		/* Tektronix device to output on */
 static char ttybuf[BUFSIZ];
 
-static void tekmove(), tekcont();
+static void	tekmove(), tekcont(), get_cursor(), tekerase();
+static void	teklabel(), teklinemod(), tekpoint();
 
 /*
  * Display coordinate conversion:
@@ -158,13 +159,13 @@ Tek_prolog()
 		return;
 
 	/* If something significant has happened, clear screen and redraw */
-	erase();
+	tekerase();
 	/* Miniature typeface */
 	(void)putc(ESC,outfp);
 	(void)putc(';',outfp);
 
 	/* Put the center point up */
-	point( 0, 0 );
+	tekpoint( 0, 0 );
 }
 
 /*
@@ -288,7 +289,7 @@ Tek_puts( str, x, y, size, color )
 register u_char *str;
 {
 	tekmove(x,y);
-	label(str);
+	teklabel(str);
 }
 
 /*
@@ -302,9 +303,9 @@ int x2, y2;
 int dashed;
 {
 	if( dashed )
-		linemod("dotdashed");
+		teklinemod("dotdashed");
 	else
-		linemod("solid");
+		teklinemod("solid");
 	tekmove(x1,y1);
 	tekcont(x2,y2);
 }
@@ -319,7 +320,8 @@ int dashed;
  *  a return or linefeed.
  *  (The terminal is assumed to be in cooked mode)
  */
-static get_cursor()
+static void
+get_cursor()
 {
 	register char *cp;
 	char ibuf[64];
@@ -483,10 +485,10 @@ Tek_colorchange()
  *
  * The Tektronix is Quadrant I, 4096x4096 (not all visible).
  */
-int oloy = -1;
-int ohiy = -1;
-int ohix = -1;
-int oextra = -1;
+static int oloy = -1;
+static int ohiy = -1;
+static int ohix = -1;
+static int oextra = -1;
 
 /* The input we see is -2048..+2047 */
 /* Continue motion from last position */
@@ -542,7 +544,8 @@ tekmove(xi,yi)
 	tekcont(xi,yi);
 }
 
-erase()
+static void
+tekerase()
 {
 	extern unsigned sleep();	/* DAG -- was missing */
 
@@ -558,7 +561,8 @@ erase()
 		(void)sleep(3);
 }
 
-label(s)
+static void
+teklabel(s)
 register char *s;
 {
 	(void)putc(US,outfp);
@@ -567,7 +571,8 @@ register char *s;
 	ohix = ohiy = oloy = oextra = -1;
 }
 
-linemod(s)
+static void
+teklinemod(s)
 register char *s;
 {
 	register int c;				/* DAG -- was char */
@@ -592,7 +597,8 @@ register char *s;
 	(void)putc(c,outfp);
 }
 
-point(xi,yi){
+static void
+tekpoint(xi,yi){
 	tekmove(xi,yi);
 	tekcont(xi,yi);
 }

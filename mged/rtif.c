@@ -49,6 +49,8 @@ extern char	*filename;	/* Name of database file */
 extern int	numargs;	/* number of args */
 extern char	*cmd_args[];	/* array of pointers to args */
 
+void		setup_rt();
+
 /*
  *  			R T _ O L D W R I T E
  *  
@@ -143,6 +145,7 @@ mat_t	mat;
 #define LEN	128
 static char	*rt_cmd_vec[LEN];
 
+void
 setup_rt( vp )
 register char	**vp;
 {

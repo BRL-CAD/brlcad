@@ -27,8 +27,6 @@ extern double atof();
 extern int atoi();
 extern char *strcat(), *strcpy();
 
-double fabs();
-
 extern int 	numargs;
 extern char	*cmd_args[];
 extern int	newargs;
@@ -40,6 +38,9 @@ static fastf_t	plano[4], plant[4];
 
 static union record record;
 
+void		crname(), slope(), crdummy(), trcurve();
+void		bottom(), top(), crregion(), itoa();
+
 #define MAXLINE	512
 
 /*
@@ -47,7 +48,7 @@ static union record record;
  *	F _ A M T R A C K ( ) :	adds track given "wheel" info
  *
  */
-
+void
 f_amtrack(  )
 {
 
@@ -448,7 +449,7 @@ tryagain:	/* sent here to try next set of names */
 	return;
 }
 
-
+void
 crname(name, pos)
 char name[];
 int pos;
@@ -484,7 +485,7 @@ char name[];
 	return(0);
 }
 
-
+void
 tancir( cir1, cir2 )
 register fastf_t cir1[], cir2[];
 {
@@ -521,9 +522,7 @@ register fastf_t cir1[], cir2[];
 	return;
 }
 
-
-
-
+void
 slope( wh1, wh2 , t )
 fastf_t wh1[], wh2[], t[];
 {
@@ -592,8 +591,7 @@ fastf_t wh1[], wh2[], t[];
 	return;
 }
 
-
-
+void
 crdummy( w, t, flag )
 fastf_t	w[3], t[3];
 int	flag;
@@ -637,8 +635,7 @@ int	flag;
 
 }
 
-
-
+void
 trcurve( wh, t )
 fastf_t wh[], t[];
 {
@@ -650,10 +647,9 @@ fastf_t wh[], t[];
 	record.s.s_values[11] = wh[2] + t[2];
 	VMOVE(&record.s.s_values[12], &record.s.s_values[6]);
 	VMOVE(&record.s.s_values[15], &record.s.s_values[9]);
-	return;
 }
 
-
+void
 bottom( vec1, vec2, t )
 vect_t	vec1, vec2;
 fastf_t	t[];
@@ -677,11 +673,9 @@ fastf_t	t[];
 		j = i + 12;
 		VADD2(&record.s.s_values[j], &record.s.s_values[i], tvec);
 	}
-
-	return;
 }
 
-
+void
 top( vec1, vec2, t )
 vect_t	vec1, vec2;
 fastf_t	t[];
@@ -713,11 +707,9 @@ fastf_t	t[];
 		j = i + 12;
 		VADD2(&record.s.s_values[j], &record.s.s_values[i], tvec);
 	}
-
-	return;
 }
 
-
+void
 crregion( region, op, members, number, solidname )
 char region[], op[], solidname[];
 int members[], number;
@@ -734,8 +726,6 @@ int members[], number;
 		}
 		(void)combadd(dp, region, 1, op[i], 500+Trackpos+i, 0);
 	}
-
-	return;
 }
 
 
@@ -744,6 +734,7 @@ int members[], number;
 /*	==== I T O A ( )
  *	convert integer to ascii  wd format
  */
+void
 itoa( n, s, w )
 char	 s[];
 int   n,    w;

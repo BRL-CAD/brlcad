@@ -40,6 +40,7 @@ int	sedraw;			/* apply solid editing changes */
 struct solid	*illump;	/* == 0 if none, else points to ill. solid */
 int		ipathpos;	/* path index of illuminated element */
 				/* set by e9.c, cleared here */
+void		wrt_view(), wrt_point();
 static void	illuminate();
 
 /*
@@ -480,6 +481,7 @@ double alpha, beta, ggamma;
  *  return a matrix which applies the change with-respect-to
  *  the view center.
  */
+void
 wrt_view( out, change, in )
 register matp_t out, change, in;
 {
@@ -493,6 +495,7 @@ register matp_t out, change, in;
 	MAT_DELTAS( t1, -toViewcenter[MDX], -toViewcenter[MDY], -toViewcenter[MDZ] );
 	mat_mul( out, t1, t2 );
 }
+
 /*
  *  			W R T _ P O I N T
  *  
@@ -500,6 +503,7 @@ register matp_t out, change, in;
  *  return a matrix which applies the change with-respect-to
  *  "point".
  */
+void
 wrt_point( out, change, in, point )
 register matp_t out, change, in;
 register vect_t point;

@@ -109,7 +109,9 @@ static int second_fd;		/* fd of Tektronix if not /dev/tty */
 static FILE *outfp;		/* Tektronix device to output on */
 static char ttybuf[BUFSIZ];
 
-static void tekmove(), tekcont();
+static void	t49move(), t49cont(), t49debug();
+static void	get_cursor(), cancel_cursor();
+static void	t49label(), t49point(), t49linemod();
 
 /*
  * Display coordinate conversion:
@@ -230,7 +232,7 @@ T49_prolog()
 	ohix = ohiy = oloy = oextra = -1;
 
 	/* Put the center point up */
-	point( 0, 0 );
+	t49point( 0, 0 );
 }
 
 /*
@@ -241,7 +243,7 @@ T49_epilog()
 {
 	if( !dmaflag )
 		return;
-        tekmove( TITLE_XBASE, SOLID_YBASE );
+        t49move( TITLE_XBASE, SOLID_YBASE );
 	(void)putc(US,outfp);
 }
 
@@ -300,9 +302,9 @@ double ratio;
 				vclip( start, fin, clipmin, clipmax ) == 0
 			)  continue;
 
-			tekmove(	(int)( start[0] * 2047 ),
+			t49move(	(int)( start[0] * 2047 ),
 				(int)( start[1] * 2047 ) );
-			tekcont(	(int)( fin[0] * 2047 ),
+			t49cont(	(int)( fin[0] * 2047 ),
 				(int)( fin[1] * 2047 ) );
 			useful = 1;
 		}
@@ -351,8 +353,8 @@ void
 T49_puts( str, x, y, size, color )
 register u_char *str;
 {
-	tekmove(x,y);
-	label(str);
+	t49move(x,y);
+	t49label(str);
 }
 
 /*
@@ -366,11 +368,11 @@ int x2, y2;
 int dashed;
 {
 	if( dashed )
-		linemod("dotdashed");
+		t49linemod("dotdashed");
 	else
-		linemod("solid");
-	tekmove(x1,y1);
-	tekcont(x2,y2);
+		t49linemod("solid");
+	t49move(x1,y1);
+	t49cont(x2,y2);
 }
 
 /*
@@ -383,7 +385,8 @@ int dashed;
  *  a return or linefeed.
  *  (The terminal is assumed to be in cooked mode)
  */
-static get_cursor()
+static void
+get_cursor()
 {
 	register char *cp;
 	char ibuf[64];
@@ -551,7 +554,7 @@ T49_colorchange()
 /* The input we see is -2048..+2047 */
 /* Continue motion from last position */
 static void
-tekcont(x,y)
+t49cont(x,y)
 register int x,y;
 {
 	int hix,hiy,lox,loy,extra;
@@ -596,15 +599,16 @@ register int x,y;
 }
 
 static void
-tekmove(xi,yi)
+t49move(xi,yi)
 {
 /*	fprintf(outfp,"%cTekmove: x=%d, y=%d \n",US,xi+2048,yi+2048);   */
 								/* NRTC */
 	(void)putc(GS,outfp);			/* Next vector blank */
-	tekcont(xi,yi);
+	t49cont(xi,yi);
 }
 
-static cancel_cursor()
+static void
+cancel_cursor()
 {
 	extern unsigned sleep();
 	(void)fprintf(outfp, "%cKC", ESC);	/* Cancel crosshairs */
@@ -612,9 +616,8 @@ static cancel_cursor()
 	sleep(2);	/* Have to wait for terminal reset */
 }
 
-static label(s)
+static void t49label(s)
 register char *s;
-
 {
 int	length;				/* NRTC */
 char	hi, low;				/* NRTC */
@@ -633,7 +636,7 @@ char	hi, low;				/* NRTC */
 
 /* Line Mode Command - Select Tektronics Preset Line Display 4014 */
 
-static linemod(s)
+static void t49linemod(s)
 register char *s;
 {
 	char  c;
@@ -658,9 +661,10 @@ register char *s;
  
 }
 
-static point(xi,yi){
-        tekmove(xi,yi);
-	tekcont(xi,yi);
+static void
+t49point(xi,yi){
+        t49move(xi,yi);
+	t49cont(xi,yi);
 }
 
 /* ARGSUSED */

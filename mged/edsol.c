@@ -57,6 +57,7 @@ static void	arb5_mv_face(), arb4_mv_face(), arb8_rot_face(), arb7_rot_face();
 static void 	arb6_rot_face(), arb5_rot_face(), arb4_rot_face(), arb_control();
 
 void pscale();
+void	calc_planes();
 static short int fixv;		/* used in ROTFACE,f_eqn(): fixed vertex */
 
 /* data for solid editing */
@@ -1702,6 +1703,7 @@ init_objedit()
  *		calculate the plane (face) equations for an arb
  *		in solidrec pointed at by sp
  */
+void
 calc_planes( sp, type )
 struct solidrec *sp;
 int type;

@@ -138,6 +138,7 @@ static struct dm *which_dm[] = {
 	0
 };
 
+void
 release()
 {
 	register struct solid *sp;
@@ -154,6 +155,7 @@ release()
 	dmp = &dm_Null;
 }
 
+void
 attach(name)
 char *name;
 {
@@ -200,7 +202,7 @@ static void Nu_void() { ; }
 static unsigned Nu_unsign() { return(0); }
 
 /* ARGSUSED */
-static
+static int
 Nu_input( fd, noblock )
 {
 	if( isatty(fd) )
@@ -213,6 +215,7 @@ Nu_input( fd, noblock )
  *
  *  Prompt the user with his options, and loop until a valid choice is made.
  */
+void
 get_attached()
 {
 	char line[80];
