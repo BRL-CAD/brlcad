@@ -3268,7 +3268,7 @@ sedit()
 			/* Apply changes to solid */
 			/* xlate keypoint to origin, rotate, then put back. */
 #ifdef TRY_EDIT_NEW_WAY
-			switch(mged_variables->erotate_about){
+			switch(mged_variables->rotate_about){
 			case 'v':       /* View Center */
 			  VSET(work, 0.0, 0.0, 0.0);
 			  MAT4X3PNT(rot_point, view2model, work);
