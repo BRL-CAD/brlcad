@@ -593,7 +593,7 @@ char	**argv;
 		(void)fprintf(fp, "-p%g", mged_variables.perspective);
 	for( i=2; i < argc; i++ )
 		(void)fprintf(fp,"%s ", argv[i]);
-	(void)fprintf(fp,"\\\n $*\\\n -o %s.pix\\\n", base);
+	(void)fprintf(fp,"\\\n -o %s.pix\\\n $*\\\n", base);
 	(void)fprintf(fp," %s\\\n ", dbip->dbi_filename);
 
 	/* Find all unique top-level entrys.
