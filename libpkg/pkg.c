@@ -174,6 +174,7 @@ void (*errlog)();
 	}
 #endif
 #ifdef SGI_EXCELAN
+	sinme.sin_family = AF_INET;
 	sinme.sin_port = 0;		/* let kernel pick it */
 	if( (netfd = socket(SOCK_STREAM, 0, &sinme, 0)) <= 0 )  {
 		pkg_perror( errlog, "pkg_open:  client socket" );
@@ -460,7 +461,7 @@ register struct pkg_conn *pc;
 		i = select( pc->pkc_fd+1, &bits, (char *)0, (char *)0, &tv );
 #endif
 #ifdef SGI_EXCELAN
-		i = select( pc->pkc_fd+1, &bits, (char *)0, &tv );
+		i = select( pc->pkc_fd+1, &bits, (char *)0, tv.tv_usec );
 #endif
 		if( i > 0 && bits )
 			if( pkg_block(pc) < 0 )
