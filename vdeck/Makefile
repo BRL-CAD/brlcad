@@ -8,6 +8,8 @@
 .SUFFIXES:
 .SUFFIXES:  .zz
 
+SHELL		= /bin/sh
+
 all:
 	make $(MFLAGS) -$(MAKEFLAGS) \
 		-f ../Makefile.defs -f Makefile.loc -f ../Makefile.rules
