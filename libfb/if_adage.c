@@ -24,10 +24,11 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
  * (Frame Buffer Controller) to a known state.
  * The values for this table are derived from the
  * Ikonas-supplied program FBI, for compatability.
- * At present, three modes can be set:
+ * At present, these modes can be set:
  *	0 - LORES, 30 hz, interlaced
  *	1 - LORES, 60 hz, non-interlaced
  *	2 - HIRES, 30 hz, interlaced
+ *	3 - LORES, 30 hz, interlaced, with external sync and NTSC timing
  *
  * All that is provided is a prototype for the FBC registers;
  * the user is responsible for changing them (zooming, etc),
@@ -100,7 +101,7 @@ FBIO adage_interface =
 		0
 		};
 
-static struct ik_fbc ikfbc_setup[3] = {
+static struct ik_fbc ikfbc_setup[4] = {
     {
 	/* 0 - LORES, 30 hz, interlaced */
 	0,	32,		/* x, y, viewport */
@@ -128,6 +129,16 @@ static struct ik_fbc ikfbc_setup[3] = {
 	144,	1144,		/* was 144, 1166 */
 	FBC_HIRES | FBC_RS343, FBCH_PIXELCLOCK(19) | FBCH_DRIVEBPCK,
 	0,	64
+    }, {
+	/* 3 - LORES, 30 hz, interlaced, *NTSC*, external sync */
+	0,	32,		/* x, y, viewport */
+	511,	511,		/* x, y, sizeview */
+	0,	4067,		/* x, y, window */
+	0,	0,		/* x, y, zoom */
+	300,	560,		/* horiztime, nlines [no effect] */
+	FBC_EXTERNSYNC,	FBCH_PIXELCLOCK(47) | FBCH_DRIVEBPCK,
+				/* Lcontrol, Hcontrol */
+	0,	32		/* x, y, cursor */
     }
 };
 
@@ -177,6 +188,7 @@ typedef unsigned char IKONASpixel[4];
  *	/dev/ik		for ik0 (implicit number)
  *	/dev/ik3	for ik3
  *	/dev/ik4n	for ik4, no init
+ *	/dev/ik5v	for ik5, NTSC Video
  *
  *  Using the BRL-enhanced "lseek interface", we have to open a
  *  device node using a file name of the form:
@@ -199,6 +211,7 @@ int	width, height;
 	long	xbsval[34];
 	int	unit = 0;
 	int	noinit = 0;
+	int	ntsc = 0;
 
 	/* Only 512 and 1024 opens are available */
 	if( width > 512 || height > 512 )
@@ -212,8 +225,18 @@ int	width, height;
 	if( *cp && isdigit(*cp) )
 		(void)sscanf( cp, "%d", &unit );
 	while( *cp != '\0' && isdigit(*cp) )  cp++;	/* skip number */
-	if( *cp != '\0' && *cp == 'n' )
-		noinit = 1;
+	if( *cp != '\0' )  switch( *cp )  {
+		case 'n':
+			noinit = 1;
+			break;
+		case 'v':
+			ntsc = 1;
+			width = height = 512;
+			break;
+		default:
+			fb_log( "adage_device_open: Bad unit suffix\n" );
+			return(-1);
+	}
 
 	(void)sprintf( ourfile, "/dev/ik%d%c", unit, width>512 ? 'h' : 'l');
 
@@ -231,7 +254,9 @@ int	width, height;
 #endif
 	ifp->if_width = width;
 	ifp->if_height = height;
-	switch( ifp->if_width ) {
+	if( ntsc )  {
+		IKI(ifp)->mode = 3;
+	} else switch( ifp->if_width ) {
 	case 512:
 		IKI(ifp)->mode = 1;
 		break;
@@ -839,6 +864,7 @@ int	x, y;
 
 	switch( IKI(ifp)->mode )  {
 	case 0:
+	case 3:
 		top_margin = imax( 35, y_viewport+4 );
 		y_window = first_line - top_margin + 7;
 		break;
