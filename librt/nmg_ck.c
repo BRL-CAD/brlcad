@@ -164,6 +164,8 @@ struct edgeuse *eup;
 
 	if (!e->eu_p) rt_bomb("nmg_vedge() edge has null edgeuse pointer\n");
 
+	NMG_CK_EDGEUSE( e->eu_p );
+
 	eu = eup;
 	do {
 		NMG_CK_EDGEUSE(eu);
