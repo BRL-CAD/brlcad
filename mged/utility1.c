@@ -433,8 +433,7 @@ char	**argv;
 		/* Examine all COMB nodes */
 		for( i = 0; i < RT_DBNHASH; i++ )  {
 			for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw )  {
-				if( (dp->d_flags & DIR_COMB|DIR_REGION) !=
-				    (DIR_COMB|DIR_REGION) )
+				if( !(dp->d_flags & DIR_REGION) )
 					continue;
 				if( rt_db_get_internal( &intern, dp, dbip, (mat_t *)NULL ) < 0 )
 				{
