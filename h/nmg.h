@@ -140,6 +140,7 @@
 #define TBL_CAT  5	/* catenate one list onto another */
 #define TBL_RM	 6	/* remove all occurrences of an item from a list */
 #define TBL_INS_UNIQUE	 7	/* insert item into list, if not present */
+#define TBL_ZERO 8	/* replace all occurrences of an item by 0 */
 
 struct nmg_ptbl {
 	long	magic;	/* magic */
