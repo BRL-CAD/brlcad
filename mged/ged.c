@@ -497,34 +497,17 @@ char **argv;
 	if(interactive){
 	  /* This is an interactive mged, process .mgedrc */
 	  do_rc();
-#if 1
+
 	  /*
 	   * Initialze variables here in case the user specified changes
 	   * to the defaults in their .mgedrc file.
 	   */
-#endif
 
 	  if (classic_mged) {
 #ifdef DM_X
 	    get_attached();
 #endif
 	  } else {
-#ifdef WIN32
-	    if(1) {
-	      struct bu_vls vls;
-	      int status;
-
-	      bu_vls_init(&vls);
-	      bu_vls_strcpy(&vls, "gui");
-	      status = Tcl_Eval(interp, bu_vls_addr(&vls));
-	      bu_vls_free(&vls);
-
-	      if (status != TCL_OK) {
-		bu_log("%s", interp->result);
-		exit(1);
-	      }
-	    }
-#else
 
 	    if ((fork()) == 0){
 	      struct bu_vls vls;
@@ -543,6 +526,7 @@ char **argv;
 		exit(1);
 	      }
 
+#ifndef WIN32
 	      (void)pipe(pipe_out);
 	      (void)pipe(pipe_err);
 
@@ -556,12 +540,12 @@ char **argv;
 	      (void)dup(pipe_err[1]);
 	      (void)close(pipe_err[1]);
 
-#if 0
+#  if 0
 	      /* close stdin */
 	      (void)close(0);
-#endif
+#  endif
 	    }
-#endif  /* windows */
+#endif  /* WIN32 */
 	    else{
 	      exit(0);
 	    }
