@@ -393,6 +393,9 @@ Ir_open()
 		}
 	}
 	endinvent();		/* frees internal inventory memory */
+#if 0
+	printf("4D: gt=%d, zbuf=%d, rgb=%d\n", ir_is_gt, ir_has_zbuf, ir_has_rgb);
+#endif
 
 	/* Start out with the usual window */
 	foreground();
@@ -826,7 +829,6 @@ double ratio;
 		register int	*cmd = vp->cmd;
 		register point_t *pt = vp->pt;
 		for( i = 0; i < nused; i++,cmd++,pt++ )  {
-			float	norm[3];
 			switch( *cmd )  {
 			case RT_VLIST_LINE_MOVE:
 				/* Move, start line */
@@ -847,8 +849,8 @@ double ratio;
 				/* concave(TRUE); */
 				bgnpolygon();
 				/* Set surface normal (vl_pnt points outward) */
-				VMOVE( norm, *pt );
-				n3f(norm);
+				VMOVE( gtvec, *pt );
+				n3f(gtvec);
 				break;
 			case RT_VLIST_POLY_MOVE:
 				/* Polygon Move */
