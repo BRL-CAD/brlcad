@@ -27,6 +27,19 @@ static char RCSnmg_eval[] = "@(#)$Header$ (BRL)";
 #include "nmg.h"
 #include "raytrace.h"
 
+struct nmg_counter {
+	long	regions;
+	long	shells;
+	long	faces;
+	long	face_loops;
+	long	face_edges;
+	long	face_lone_verts;
+	long	wire_loops;
+	long	wire_loop_edges;
+	long	wire_edges;
+	long	lone_verts;
+};
+
 /*
  *			N M G _ R E V E R S E _ F A C E
  *
@@ -339,6 +352,7 @@ struct nmg_ptbl class_table[];
 	int		*actions;
 	int		i;
 	struct nmg_bool_state	bool_state;
+	struct nmg_counter	counter;
 
 	if (rt_g.NMG_debug & DEBUG_BOOLEVAL) {
 		rt_log("nmg_evaluate_boolean(sA=x%x, sB=x%x, op=%d)\n",
@@ -405,11 +419,17 @@ struct nmg_ptbl class_table[];
 	/* Regardless of what is in it, kill shell B */
 	nmg_ks( sB );
 
+	bzero( (char *)&counter, sizeof(counter) );
+	nmg_m_count( &counter, sA->r_p->m_p );
+	nmg_pr_count( &counter, "near end of nmg_evaluate_boolean()");
+
 #if 0
 	/* Remove loops/edges/vertices that appear more than once in result */
 	nmg_rm_redundancies( sA );
 #endif
 }
+
+static int	nmg_eval_count = 0;
 
 /*
  *			N M G _ E V A L _ S H E L L
@@ -439,6 +459,7 @@ struct nmg_bool_state *bs;
 	 *  For each face in the shell, process all the loops in the face,
 	 *  and then handle the face and all loops as a unit.
 	 */
+	nmg_eval_plot( bs, nmg_eval_count++, 1 );	/* debug */
 	fu = NMG_LIST_FIRST( faceuse, &s->fu_hd );
 	while( NMG_LIST_MORE( fu, faceuse, &s->fu_hd ) )  {
 		nextfu = NMG_LIST_PNEXT( faceuse, fu );
@@ -458,6 +479,7 @@ struct nmg_bool_state *bs;
 				/* Kill by demoting loop to edges */
 				if( nmg_demote_lu( lu ) )
 					rt_log("nmg_eval_shell() nmg_demote_lu(x%x) fail\n", lu);
+	nmg_eval_plot( bs, nmg_eval_count++, 1 );	/* debug */
 				lu = nextlu;
 				continue;
 			case BACTION_RETAIN:
@@ -487,6 +509,7 @@ struct nmg_bool_state *bs;
 			    nextfu == fu->fumate_p )
 				nextfu = NMG_LIST_PNEXT(faceuse, nextfu);
 			nmg_kfu( fu );		/* kill face & mate */
+	nmg_eval_plot( bs, nmg_eval_count++, 1 );	/* debug */
 			fu = nextfu;
 			continue;
 		}
@@ -499,6 +522,7 @@ struct nmg_bool_state *bs;
 				if (rt_g.NMG_debug & DEBUG_BOOLEVAL)
 			    		rt_log("faceuse x%x flipped\n", fu);
 				nmg_reverse_face( fu );
+	nmg_eval_plot( bs, nmg_eval_count++, 1 );	/* debug */
 			}
 		} else {
 			if( loops_retained > 0 )  {
@@ -515,6 +539,7 @@ struct nmg_bool_state *bs;
 			    nextfu == fu->fumate_p )
 				nextfu = NMG_LIST_PNEXT(faceuse, nextfu);
 			nmg_mv_fu_between_shells( bs->bs_dest, s, fu );
+	nmg_eval_plot( bs, nmg_eval_count++, 1 );	/* debug */
 			fu = nextfu;
 			continue;
 		}
@@ -526,6 +551,7 @@ struct nmg_bool_state *bs;
 	 *  Each loop is either a wire-loop, or a vertex-with-self-loop.
 	 *  Only consider wire loops here.
 	 */
+	nmg_eval_plot( bs, nmg_eval_count++, 1 );	/* debug */
 	lu = NMG_LIST_FIRST( loopuse, &s->lu_hd );
 	while( NMG_LIST_MORE( lu, loopuse, &s->lu_hd ) )  {
 		nextlu = NMG_LIST_PNEXT( loopuse, lu );
@@ -543,12 +569,14 @@ struct nmg_bool_state *bs;
 			/* kill loop & mate */
 			if( nmg_demote_lu( lu ) )
 				rt_log("nmg_eval_shell() nmg_demote_lu(x%x) fail\n", lu);
+	nmg_eval_plot( bs, nmg_eval_count++, 1 );	/* debug */
 			lu = nextlu;
 			continue;
 		case BACTION_RETAIN:
 		case BACTION_RETAIN_AND_FLIP:
 			if( lu->up.s_p == bs->bs_dest )  break;
 			nmg_mv_lu_between_shells( bs->bs_dest, s, lu );
+	nmg_eval_plot( bs, nmg_eval_count++, 1 );	/* debug */
 			lu = nextlu;
 			continue;
 		}
@@ -558,6 +586,7 @@ struct nmg_bool_state *bs;
 	/*
 	 *  For each wire-edge in the shell, ...
 	 */
+	nmg_eval_plot( bs, nmg_eval_count++, 1 );	/* debug */
 	eu = NMG_LIST_FIRST( edgeuse, &s->eu_hd );
 	while( NMG_LIST_MORE( eu, edgeuse, &s->eu_hd ) )  {
 		nexteu = NMG_LIST_PNEXT( edgeuse, eu );
@@ -572,6 +601,7 @@ struct nmg_bool_state *bs;
 				nexteu = NMG_LIST_PNEXT(edgeuse, nexteu);
 			if( nmg_demote_eu( eu ) )
 				rt_log("nmg_eval_shell() nmg_demote_eu(x%x) fail\n", eu);
+	nmg_eval_plot( bs, nmg_eval_count++, 1 );	/* debug */
 			eu = nexteu;
 			continue;
 		case BACTION_RETAIN:
@@ -581,6 +611,7 @@ struct nmg_bool_state *bs;
 			    nexteu == eu->eumate_p )
 				nexteu = NMG_LIST_PNEXT(edgeuse, nexteu);
 			nmg_mv_eu_between_shells( bs->bs_dest, s, eu );
+	nmg_eval_plot( bs, nmg_eval_count++, 1 );	/* debug */
 			eu = nexteu;
 			continue;
 		}
@@ -599,6 +630,7 @@ struct nmg_bool_state *bs;
 	 *  be demoted into vertex-with-self-loop objects above,
 	 *  which will be processed here.
 	 */
+	nmg_eval_plot( bs, nmg_eval_count++, 1 );	/* debug */
 	lu = NMG_LIST_FIRST( loopuse, &s->lu_hd );
 	while( NMG_LIST_MORE( lu, loopuse, &s->lu_hd ) )  {
 		nextlu = NMG_LIST_PNEXT( loopuse, lu );
@@ -619,6 +651,7 @@ struct nmg_bool_state *bs;
 			    nextlu == lu->lumate_p )
 				nextlu = NMG_LIST_PNEXT(loopuse, nextlu);
 			nmg_klu( lu );
+	nmg_eval_plot( bs, nmg_eval_count++, 0 );	/* debug */
 			lu = nextlu;
 			continue;
 		case BACTION_RETAIN:
@@ -628,6 +661,7 @@ struct nmg_bool_state *bs;
 			    nextlu == lu->lumate_p )
 				nextlu = NMG_LIST_PNEXT(loopuse, nextlu);
 			nmg_mv_lu_between_shells( bs->bs_dest, s, lu );
+	nmg_eval_plot( bs, nmg_eval_count++, 0 );	/* debug */
 			lu = nextlu;
 			continue;
 		}
@@ -637,22 +671,26 @@ struct nmg_bool_state *bs;
 	/*
 	 * Final case:  shell of a single vertexuse
 	 */
+	nmg_eval_plot( bs, nmg_eval_count++, 0 );	/* debug */
 	if( vu = s->vu_p )  {
 		NMG_CK_VERTEXUSE( vu );
 		NMG_CK_VERTEX( vu->v_p );
 		switch( nmg_eval_action( (genptr_t)vu->v_p, bs ) )  {
 		case BACTION_KILL:
 			nmg_kvu( vu );
+	nmg_eval_plot( bs, nmg_eval_count++, 0 );	/* debug */
 			s->vu_p = (struct vertexuse *)0;	/* sanity */
 			break;
 		case BACTION_RETAIN:
 		case BACTION_RETAIN_AND_FLIP:
 			if( vu->up.s_p == bs->bs_dest )  break;
 			nmg_mv_vu_between_shells( bs->bs_dest, s, vu );
+	nmg_eval_plot( bs, nmg_eval_count++, 0 );	/* debug */
 			s->vu_p = (struct vertexuse *)0;	/* sanity */
 			break;
 		}
 	}
+	nmg_eval_plot( bs, nmg_eval_count++, 1 );	/* debug */
 }
 
 /*
@@ -952,4 +990,127 @@ struct shell	*s;
 
 	/* There really shouldn't be a lone vertex by now */
 	if( s->vu_p )  rt_log("nmg_rm_redundancies() lone vertex?\n");
+}
+
+/*****/
+
+nmg_pr_count( ctr, str )
+struct nmg_counter	*ctr;
+char			*str;
+{
+	rt_log("nmg_pr_count(%s)\n", str);
+	rt_log("\t%6d regions\n", ctr->regions);
+	rt_log("\t%6d shells\n", ctr->shells);
+	rt_log("\t%6d faces\n", ctr->faces);
+	rt_log("\t%6d face_loops\n", ctr->face_loops);
+	rt_log("\t%6d face_edges\n", ctr->face_edges);
+	rt_log("\t%6d face_lone_verts\n", ctr->face_lone_verts);
+	rt_log("\t%6d wire_loops\n", ctr->wire_loops);
+	rt_log("\t%6d wire_loop_edges\n", ctr->wire_loop_edges);
+	rt_log("\t%6d wire_edges\n", ctr->wire_edges);
+	rt_log("\t%6d lone_verts\n", ctr->lone_verts);
+}
+
+nmg_m_count( ctr, m )
+struct model		*m;
+struct nmg_counter	*ctr;
+{
+	struct nmgregion	*r;
+	struct shell		*s;
+	struct faceuse		*fu;
+	struct loopuse		*lu;
+	struct edgeuse		*eu;
+
+	NMG_CK_MODEL(m);
+	for( NMG_LIST( r, nmgregion, &m->r_hd ) )  {
+		NMG_CK_REGION(r);
+		ctr->regions++;
+		for( NMG_LIST( s, shell, &r->s_hd ) )  {
+			NMG_CK_SHELL(s);
+			ctr->shells++;
+			/* Faces in shell */
+			for( NMG_LIST( fu, faceuse, &s->fu_hd ) )  {
+				NMG_CK_FACEUSE(fu);
+				ctr->faces++;
+				for( NMG_LIST( lu, loopuse, &fu->lu_hd ) )  {
+					NMG_CK_LOOPUSE(lu);
+					if( NMG_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC )  {
+						ctr->face_lone_verts++;
+						continue;
+					}
+					ctr->face_loops++;
+					for( NMG_LIST( eu, edgeuse, &lu->down_hd ) )  {
+						NMG_CK_EDGEUSE(eu);
+						ctr->face_edges++;
+					}
+				}
+			}
+			/* Wire loops in shell */
+			for( NMG_LIST( lu, loopuse, &s->lu_hd ) )  {
+				NMG_CK_LOOPUSE(lu);
+				if( NMG_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC )  {
+					ctr->lone_verts++;
+					continue;
+				}
+				ctr->wire_loops++;
+				for( NMG_LIST( eu, edgeuse, &lu->down_hd ) )  {
+					NMG_CK_EDGEUSE(eu);
+					ctr->wire_loop_edges++;
+				}
+			}
+			/* Wire edges in shell */
+			for( NMG_LIST( eu, edgeuse, &s->eu_hd ) )  {
+				NMG_CK_EDGEUSE(eu);
+				ctr->wire_edges++;
+			}
+		}
+	}
+}
+
+nmg_eval_plot( bs, num, delay )
+struct nmg_bool_state	*bs;
+int		num;
+int		delay;
+{
+	FILE	*fp;
+	char	fname[128];
+	struct faceuse	*fu;
+	struct nmg_ptbl b;
+
+	if( ! (rt_g.NMG_debug & DEBUG_PL_ANIM) )  return;
+
+	/* get space for list of items processed */
+	(void)nmg_tbl(&b, TBL_INIT, (long *)0);	
+
+	sprintf(fname, "/tmp/eval%d.pl", num);
+	if( (fp = fopen(fname,"w")) == NULL )  {
+		perror(fname);
+		return;
+	}
+	rt_log("Plotting %s\n", fname);
+
+	nmg_pl_s( fp, bs->bs_dest );
+	nmg_pl_s( fp, bs->bs_src );
+
+	fclose(fp);
+
+	(void)nmg_tbl(&b, TBL_FREE, (long *)NULL);
+
+#if 1
+	/* XXX MGED_only hack -- will not link with other applications */
+	/* Cause animation of boolean operation as it proceeds! */
+	{
+		char	buf[128];
+		sprintf( buf, "overlay %s\n", fname);
+		cmdline( buf );
+		event_check( 1 );	/* Take any device events */
+		refresh();		/* Force screen update */
+		if(delay)  {
+			/* delay 1/4 second */
+			(void)bsdselect( 0, 0, 250000 );
+		}
+		/* Save on disk space */
+		(void)unlink(fname);
+	}
+#endif
 }
