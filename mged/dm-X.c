@@ -475,7 +475,7 @@ XEvent *eventPtr;
 	switch( eventPtr->xbutton.button ) {
 	case Button1:
 	    /* Left mouse */
-	    rt_vls_strcat( &dm_values.dv_string, "L 1 %d %d\n", x, y);
+	    rt_vls_printf( &dm_values.dv_string, "L 1 %d %d\n", x, y);
 	    break;
 	case Button2:
 	    /* Middle mouse, up to down transition */
@@ -483,7 +483,7 @@ XEvent *eventPtr;
 	    break;
 	case Button3:
 	    /* Right mouse */
-	    rt_vls_strcat( &dm_values.dv_string, "R 1 %d %d\n", x, y);
+	    rt_vls_printf( &dm_values.dv_string, "R 1 %d %d\n", x, y);
 	    break;
 	}
     } else if( eventPtr->type == ButtonRelease ) {
