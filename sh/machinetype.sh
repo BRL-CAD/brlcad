@@ -106,7 +106,7 @@ then
 			4)	MACHINE=5d;;
 			5)	MACHINE=6d;;
 			6)	MACHINE=7d;;
-			*)	echo ERROR unknown SGI OS version `uname -a` 1>&2;;
+			*)	echo Warning unknown SGI OS version `uname -a` 1>&2;;
 			esac ;;
 		IRIX64) UNIXTYPE=SYSV; HAS_TCP=1; HAS_SYMLINKS=1;
 			PROCESSOR=` hinv | sed -n -e 's/^CPU: MIPS \(.*\) Proc.*$/\1/p' `
@@ -370,10 +370,10 @@ fi	# End of $MACHINE if-then-else.
 # See if we learned anything by all this
 if test x${MACHINE} = x
 then
-	echo "$0: ERROR, unable to determine machine type." 1>&2
+	echo "$0: Warning, unable to determine machine type." 1>&2
 	echo "$0: Consult installation instructions for details." 1>&2
-	MACHINE=//error//
-	UNIXTYPE=--error--
+	MACHINE=//unknown//
+	UNIXTYPE=--unknown--
 	HAS_TCP=0
 	HAS_SYMLINKS=0
 	# Performing an "exit 1" here does not help any if this script
