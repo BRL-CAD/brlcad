@@ -314,6 +314,7 @@ you should exit MGED now, and resolve the I/O problem, before continuing.\n")
 /* mged command variables for affecting the user environment */
 struct mged_variables {
 	int	autosize;
+	int	rateknobs;
     	int	sgi_win_size;
 	int	sgi_win_origin[2];
 	int	faceplate;

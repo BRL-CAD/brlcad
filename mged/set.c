@@ -28,6 +28,7 @@ extern void	reattach();			/* in attach.c */
 
 struct mged_variables mged_variables = {
 /* autosize */		1,
+/* rateknobs */		1,
 /* sgi_win_size */	0,
 /* sgi_win_origin */	{ 0, 0 },
 /* faceplate */		1,
@@ -59,6 +60,7 @@ nmg_eu_dist_set()
 #define MV_O(_m)	offsetof(struct mged_variables, _m)
 struct structparse mged_vparse[] = {
 	{"%d",	1, "autosize",		MV_O(autosize),		FUNC_NULL },
+	{"%d",	1, "rateknobs",		MV_O(rateknobs),	FUNC_NULL },
 	{"%d",	1, "sgi_win_size",	MV_O(sgi_win_size),	FUNC_NULL },
 	{"%d",	2, "sgi_win_origin",	MV_O(sgi_win_origin[0]),FUNC_NULL },
 	{"%d",	1, "faceplate",		MV_O(faceplate),	refresh_hook },
