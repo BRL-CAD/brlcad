@@ -149,6 +149,8 @@ proc gui_create_default { args } {
     global do_tearoffs
     global freshline
     global scratchline
+    global vi_delete_flag
+    global vi_search_flag
 
 # set defaults
     set save_id [lindex [cmd_get] 2]
@@ -385,7 +387,7 @@ menu .$id.m.file.m.cm_saveview -tearoff $do_tearoffs
 menubutton .$id.m.edit -text "Edit" -underline 0 -menu .$id.m.edit.m
 menu .$id.m.edit.m -tearoff $do_tearoffs
 .$id.m.edit.m add cascade -label "Add" -menu .$id.m.edit.m.cm_add
-.$id.m.edit.m add command -label "Solid" -underline 0 -command "esolmenu"
+.$id.m.edit.m add command -label "Solid" -underline 0 -command "build_esolmenu_all $id"
 .$id.m.edit.m add command -label "Matrix" -underline 0 -command "press oill"
 .$id.m.edit.m add command -label "Region" -underline 0 -command "init_red $id"
 #.$id.m.edit.m add separator
@@ -499,6 +501,10 @@ menu .$id.m.settings.m.cm_mb -tearoff $do_tearoffs
 	-label "Zoom Rectangle Area" -command "mged_apply $id \"set mouse_behavior \$mged_mouse_behavior($id)\""
 .$id.m.settings.m.cm_mb add radiobutton -value q -variable mged_mouse_behavior($id)\
 	-label "Query Ray" -command "mged_apply $id \"set mouse_behavior \$mged_mouse_behavior($id)\""
+.$id.m.settings.m.cm_mb add radiobutton -value s -variable mged_mouse_behavior($id)\
+	-label "Solid Edit" -command "mged_apply $id \"set mouse_behavior \$mged_mouse_behavior($id)\""
+.$id.m.settings.m.cm_mb add radiobutton -value o -variable mged_mouse_behavior($id)\
+	-label "Object Edit" -command "mged_apply $id \"set mouse_behavior \$mged_mouse_behavior($id)\""
 .$id.m.settings.m.cm_mb add radiobutton -value d -variable mged_mouse_behavior($id)\
 	-label "Default" -command "mged_apply $id \"set mouse_behavior \$mged_mouse_behavior($id)\""
 
@@ -689,13 +695,11 @@ frame .$id.status
 frame .$id.status.dpy
 frame .$id.status.illum
 
-set dm_id $mged_top($id).ur
-
-label .$id.status.cent -textvar mged_display($dm_id,center) -anchor w
-label .$id.status.size -textvar mged_display($dm_id,size) -anchor w
+label .$id.status.cent -textvar mged_display($mged_active_dm($id),center) -anchor w
+label .$id.status.size -textvar mged_display($mged_active_dm($id),size) -anchor w
 label .$id.status.units -textvar mged_display(units) -anchor w -padx 4
-label .$id.status.aet -textvar mged_display($dm_id,aet) -anchor w
-label .$id.status.ang -textvar mged_display($dm_id,ang) -anchor w -padx 4
+label .$id.status.aet -textvar mged_display($mged_active_dm($id),aet) -anchor w
+label .$id.status.ang -textvar mged_display($mged_active_dm($id),ang) -anchor w -padx 4
 label .$id.status.illum.label -textvar ia_illum_label($id)
 
 #==============================================================================
@@ -724,6 +728,8 @@ beginning_of_line .$id.t
 set moveView(.$id.t) 0
 set freshline(.$id.t) 1
 set scratchline(.$id.t) ""
+set vi_delete_flag(.$id.t) 0
+set vi_search_flag(.$id.t) 0
 
 .$id.t tag configure sel -background #fefe8e
 .$id.t tag configure result -foreground blue3
