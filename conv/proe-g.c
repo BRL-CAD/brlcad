@@ -59,8 +59,12 @@ extern int optind,opterr,optopt;
 extern int errno;
 
 #define NAME_LENGTH	79
+#define NAMESIZE	16	/* from db.h */
+
+static	struct wmember all_head;
 static char *input_file;	/* name of the input file */
 static char *brlcad_file;	/* name of output file */
+static char ret_name[NAMESIZE]; /* unique name built by Build_unique_name() */
 static char forced_name[NAME_LENGTH+1];	/* name specified on command line */
 static int stl_format=0;	/* Flag, non-zero indocates raw Stereolithography format input */
 static int polysolid=1;		/* Flag for polysolid output rather than NMG's */
@@ -114,8 +118,7 @@ static mat_t re_orient;		/* rotation matrix to put model in BRL-CAD orientation
 				 * (+x towards front +z is up ) */
 static int do_air=0;		/* When set, all regions are BRL-CAD "air" regions */
 static int do_reorient=1;	/* When set, reorient entire model to BRL-CAD style */
-
-#define NAMESIZE	16	/* from db.h */
+static unsigned int obj_count=0; /* Count of parts converted for "stl-g" conversions */
 
 struct render_verts
 {
@@ -168,6 +171,53 @@ struct ptc_surf_list
 #define	ASSEMBLY_TYPE	1
 #define	PART_TYPE	2
 #define	CUT_SOLID_TYPE	3
+
+char *
+Build_unique_name( name )
+char *name;
+{
+	char suff[NAMESIZE];
+	struct name_conv_list *ptr;
+	int name_len, suff_len;
+	int tries=0;
+
+	name_len = strlen( name );
+	strncpy( ret_name, name, NAMESIZE );
+	ret_name[NAMESIZE-1] = '\0';
+	ptr = name_root;
+	while( ptr )
+	{
+		if( !strncmp( ret_name , ptr->brlcad_name , NAMESIZE ) || !strncmp( ret_name , ptr->solid_name , NAMESIZE ) )
+		{
+			/* this name already exists, build a new one */
+			++tries;
+			sprintf( suff, "_%d", tries );
+			suff_len = strlen( suff );
+			if( suff_len >= NAMESIZE-1 )
+			{
+				bu_log( "Cannot build unique name for '%s'\n", name );
+				bu_log( "Conversion aborted\n" );
+				exit( 1 );
+			}
+			if( name_len + suff_len < NAMESIZE )
+			{
+				strcpy( ret_name, name );
+				strcat( ret_name, suff );
+			}
+			else
+			{
+				strncpy( ret_name, name, NAMESIZE );
+				sprintf( &ret_name[NAMESIZE-suff_len-1], "%s", suff );
+			}
+
+			ptr = name_root;
+		}
+
+		ptr = ptr->next;
+	}
+
+	return( ret_name );
+}
 
 static struct name_conv_list *
 Add_new_name( name , obj , type )
@@ -228,6 +278,7 @@ int type;
 	if( type != CUT_SOLID_TYPE )
 	{
 		/* make sure brlcad_name is unique */
+#if 0
 		suffix_insert = strlen( ptr->brlcad_name );
 		if( suffix_insert > NAMESIZE - 3 )
 			suffix_insert = NAMESIZE - 3;
@@ -262,8 +313,10 @@ int type;
 			else
 				ptr2 = ptr2->next;
 		}
-
 		strncpy( ptr->brlcad_name, tmp_name, NAMESIZE );
+#else
+		strncpy( ptr->brlcad_name, Build_unique_name( name ), NAMESIZE );
+#endif
 	}
 
 	if( type == ASSEMBLY_TYPE )
@@ -290,8 +343,7 @@ int type;
 		suffix_insert = NAMESIZE - 3;
 
 	strncpy( tmp_name, ptr->solid_name, NAMESIZE );
-	if( debug )
-		bu_log( "\tMaking sure %s is a unique solid name\n", tmp_name );
+#if 0
 	ptr2 = name_root;
 	try_char = '@';
 	while( ptr2 )
@@ -322,7 +374,9 @@ int type;
 	}
 
 	strncpy( ptr->solid_name, tmp_name, NAMESIZE );
-
+#else
+	strncpy( ptr->solid_name, Build_unique_name( ptr->solid_name ), NAMESIZE );
+#endif
 	return( ptr );
 }
 
@@ -790,7 +844,7 @@ char line[MAX_LINE_LEN];
 {
 	char line1[MAX_LINE_LEN];
 	char name[NAME_LENGTH + 1];
-	unsigned int obj;
+	unsigned int obj=0;
 	char *solid_name;
 	int tmp_count;
 	int start;
@@ -866,7 +920,10 @@ char line[MAX_LINE_LEN];
 	{
 		char tmp_str[NAME_LENGTH+1];
 		char *ptr;
-		int len;
+		int len, suff_len;
+
+		obj_count++;
+		obj = obj_count;
 
 		/* copy the file name into our work space */
 		strncpy( tmp_str, input_file, NAME_LENGTH );
@@ -887,6 +944,13 @@ char line[MAX_LINE_LEN];
 
 		/* now copy what is left to the name */
 		strcpy( name, ptr );
+		sprintf( tmp_str, "_%d", obj_count );
+		len = strlen( name );
+		suff_len = strlen( tmp_str );
+		if( len + suff_len < NAMESIZE-3 )
+			strcat( name, tmp_str );
+		else
+			sprintf( &name[NAMESIZE-suff_len-3], tmp_str );
 	}
 	else
 		strcpy( name, "noname" );
@@ -1288,6 +1352,8 @@ char line[MAX_LINE_LEN];
 
 		mk_lrcomb( fd_out, brlcad_name, &head, 1, (char *)NULL, (char *)NULL,
 		color, id_no, 0, 1, 100, 0 );
+		if( stl_format && face_count )
+			(void)mk_addmember( brlcad_name, &all_head, WMOP_UNION );
 		id_no++;
 	}
 
@@ -1624,7 +1690,15 @@ char	*argv[];
 	/* Create re-orient matrix */
 	bn_mat_angles( re_orient, 0.0, 90.0, 90.0 );
 
+	RT_LIST_INIT( &all_head.l );
+
 	Convert_input();
+
+	if( stl_format )
+	{
+		/* make a top level group */
+		mk_lcomb( fd_out, "all", &all_head, 0, (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0 );
+	}
 
 	fclose( fd_in );
 	fclose( fd_out );
