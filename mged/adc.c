@@ -131,9 +131,9 @@ adcursor()
 	/*
 	 * Position tic marks from dial 9.
 	 */
-	/* map -2048 - 2047 into 0 - 4096 * sqrt (2) */
+	/* map -2048 - 2047 into 0 - 2048 * sqrt (2) */
 	/* Tick distance */
-	c_tdist = ((fastf_t)(dm_values.dv_distadc) + 2047.0) * M_SQRT2;
+	c_tdist = ((fastf_t)(dm_values.dv_distadc) + 2047.0) * 0.5 * M_SQRT2;
 
 	d1 = c_tdist * cos (angle1);
 	d2 = c_tdist * sin (angle1);
