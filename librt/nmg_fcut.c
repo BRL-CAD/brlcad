@@ -1207,6 +1207,7 @@ got_loop:
 #else
 	qsort( (genptr_t)vs, nvu, sizeof(*vs), nmg_face_vu_compare );
 #endif
+
 	if(rt_g.NMG_debug&DEBUG_VU_SORT)
 	{
 		rt_log("Vertexuse table (after sort):\n");
@@ -1221,11 +1222,32 @@ got_loop:
 	}
 
 	/* Copy new vu's back to main array */
-	for( i=0; i < nvu; i++ )  {
-		rs->vu[start+i] = vs[i].vu;
+#if 0
+	/* XXX I'm not sure if this is right or not */
+	if( rs->state == NMG_STATE_IN )  {
+		/*
+		 *  If the state is IN, then need to traverse the vertexuse's
+		 *  in the opposite order.
+		 *  All the sorting is done from the point of view of
+		 *  being in OUT state.
+		 */
 		if(rt_g.NMG_debug&DEBUG_VU_SORT)
+			rt_log("Reversed processing order, state=IN.\n");
+		for( i=0; i < nvu; i++ )  {
+			rs->vu[start+i] = vs[nvu-1-i].vu;
+		}
+	} else
+#endif
+	{
+		for( i=0; i < nvu; i++ )  {
+			rs->vu[start+i] = vs[i].vu;
+		}
+	}
+	if(rt_g.NMG_debug&DEBUG_VU_SORT)  {
+		for( i=0; i < nvu; i++ )  {
 			rt_log(" vu[%d]=x%x, v=x%x\n",
 				start+i, rs->vu[start+i], rs->vu[start+i]->v_p );
+		}
 	}
 
 	rt_free( (char *)vs, "nmg_vu_stuff");
@@ -1250,6 +1272,7 @@ struct faceuse	*fu2;		/* for plane equation */
 point_t		pt;
 vect_t		dir;
 {
+	bzero( (char *)rs, sizeof(*rs) );
 	rs->vu = (struct vertexuse **)b->buffer;
 	rs->nvu = b->end;
 	rs->eg_p = (struct edge_g *)NULL;
@@ -1380,6 +1403,9 @@ fastf_t			*mag2;
 	cur1 = cur2 = 0;
 	for( ; cur1 < rs1->nvu && cur2 < rs2->nvu; cur1=nxt1, cur2=nxt2 )  {
 		int	old_rs1_state = rs1->state;
+
+		if(rt_g.NMG_debug&DEBUG_FCUT)
+			rt_log("\nnmg_face_combineX() vu block, index1=%d, index2=%d\n", cur1, cur2);
 
 		if( mag1[cur1] < mag2[cur2] )  {
 			nxt1 = nmg_face_next_vu_interval( rs1, cur1, mag1, rs2->state );
