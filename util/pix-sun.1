@@ -3,15 +3,10 @@
 pix\(hysun	\- convert a BRL PIX(5) format image to a Sun Rasterfile format
 .SH SYNOPSIS
 .B pix-sun
-[
-.I \-s squaresize
-]
-[
-.I \-w file_width
-]
-[
-.I \-n file_height
-]
+.RB [ \-d ]
+.RB [ \-s\ squaresize]
+.RB [ \-w\ file_width]
+.RB [ \-n\ file_height]
 < BRLpixfile > rasterfile
 .SH DESCRIPTION
 .Ipix\(hysun
@@ -21,10 +16,11 @@ format file on the standard input to a
 .I Sun Rasterfile
 format file on the standard output.  The rasterfile produced is a
 "standard" (as opposed to "byte encoded") image, with
-8 bits per
-pixel, with a pallete of 256 colors.
+8 bits per pixel, with a pallete of 256 colors.
 .SH OPTIONS
 .TP
+.B \-d
+.I use a dither map
 .B \-n file_height
 tells
 .I pix\(hysun
