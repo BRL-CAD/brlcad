@@ -48,6 +48,7 @@ char *filename;
 char *buf;
 int len;
 {
+	register struct rt_i	*rtip;
 	static union record	record;
 	register long	addr;
 
@@ -57,42 +58,43 @@ int len;
 	 *
 	 *  (Here we will allocate an rt_i struct, someday)
 	 */
-	bzero( (char *)&rt_i, sizeof(rt_i) );
-	if( (rt_i.fp = fopen(filename, "r")) == NULL )  {
+	rtip = &rt_i;		/* XXX malloc() this on a per-db basis */
+	bzero( (char *)rtip, sizeof(struct rt_i) );
+	if( (rtip->fp = fopen(filename, "r")) == NULL )  {
 		perror(filename);
 		return(RTI_NULL);
 	}
-	rt_i.needprep = 1;
-	rt_i.file = rt_strdup( filename );
+	rtip->needprep = 1;
+	rtip->file = rt_strdup( filename );
 
 	/* In case everything is a halfspace, set a minimum space */
-	VSETALL( rt_i.mdl_min, -0.1 );
-	VSETALL( rt_i.mdl_max,  0.1 );
-	VMOVE( rt_i.rti_inf_box.bn.bn_min, rt_i.mdl_min );
-	VMOVE( rt_i.rti_inf_box.bn.bn_max, rt_i.mdl_max );
-	rt_i.rti_inf_box.bn.bn_type = CUT_BOXNODE;
+	VSETALL( rtip->mdl_min, -0.1 );
+	VSETALL( rtip->mdl_max,  0.1 );
+	VMOVE( rtip->rti_inf_box.bn.bn_min, rtip->mdl_min );
+	VMOVE( rtip->rti_inf_box.bn.bn_max, rtip->mdl_max );
+	rtip->rti_inf_box.bn.bn_type = CUT_BOXNODE;
 
 	buf[0] = '\0';
 
 	/* In a portable way, read the header (even if not rewound) */
-	rewind( rt_i.fp );
-	if( fread( (char *)&record, sizeof record, 1, rt_i.fp ) != 1  ||
+	rewind( rtip->fp );
+	if( fread( (char *)&record, sizeof record, 1, rtip->fp ) != 1  ||
 	    record.u_id != ID_IDENT )  {
 		rt_log("WARNING:  File is lacking a proper MGED database header\n");
 		rt_log("This database should be converted before further use.\n");
 	}
-	rewind( rt_i.fp );
+	rewind( rtip->fp );
 
 	addr = -1;
 	while(1)  {
 #ifdef DB_MEM
 		addr++;		/* really, nrec;  ranges 0..n */
 #else
-		if( (addr = ftell(rt_i.fp)) == EOF )
+		if( (addr = ftell(rtip->fp)) == EOF )
 			rt_log("rt_dirbuild:  ftell() failure\n");
 #endif DB_MEM
-		if( fread( (char *)&record, sizeof record, 1, rt_i.fp ) != 1
-		    || feof(rt_i.fp) )
+		if( fread( (char *)&record, sizeof record, 1, rtip->fp ) != 1
+		    || feof(rtip->fp) )
 			break;
 
 		if(rt_g.debug&DEBUG_DB)rt_log("db x%x %c (0%o)\n",
@@ -128,12 +130,12 @@ int len;
 				nrec = 1;
 				while(1) {
 					register int here;
-					here = ftell( rt_i.fp );
+					here = ftell( rtip->fp );
 					if( fread( (char *)&rec, sizeof(rec), 1,
-					    rt_i.fp ) != 1 )
+					    rtip->fp ) != 1 )
 						break;
 					if( rec.u_id != ID_P_DATA )  {
-						fseek( rt_i.fp, here, 0 );
+						fseek( rtip->fp, here, 0 );
 						break;
 					}
 					nrec++;
@@ -154,7 +156,7 @@ int len;
 				/* Just skip over knots and control mesh */
 				j = (record.d.d_nknots + record.d.d_nctls);
 				while( j-- > 0 )
-					fread( (char *)&rec, sizeof(rec), 1, rt_i.fp );
+					fread( (char *)&rec, sizeof(rec), 1, rtip->fp );
 				continue;
 			}
 		case ID_MEMB:
@@ -169,27 +171,26 @@ int len;
 			continue;
 		}
 	}
-	rewind( rt_i.fp );
+	rewind( rtip->fp );
 
 #ifdef DB_MEM
 	/*
 	 * Obtain in-core copy of database, rather than doing lots of
 	 * random-access reads.  Here, "addr" is really "nrecords".
 	 */
-	if( (rt_i.rti_db = (union record *)rt_malloc(
+	if( (rtip->rti_db = (union record *)rt_malloc(
 	    addr*sizeof(union record), "in-core database"))
 	    == (union record *)0 )
 	    	rt_bomb("in-core database malloc failure");
-	rewind(rt_i.fp);
-	if( fread( (char *)rt_i.rti_db, sizeof(union record), addr,
-	    rt_i.fp) != addr )  {
+	rewind(rtip->fp);
+	if( fread( (char *)rtip->rti_db, sizeof(union record), addr,
+	    rtip->fp) != addr )  {
 	    	rt_log("rt_dirbuild:  problem reading db on 2nd pass\n");
 	    	return( RTI_NULL );	/* FAIL */
 	}
 #endif DB_MEM
 
-	/* Eventually, we will malloc() this on a per-db basis */
-	return( &rt_i );	/* OK */
+	return( rtip );	/* OK */
 }
 
 /*
@@ -245,4 +246,19 @@ long laddr;
 	dp->d_forw = rt_i.rti_DirHead;
 	rt_i.rti_DirHead = dp;
 	return( dp );
+}
+
+/*
+ *			R T _ P R _ D I R
+ */
+rt_pr_dir( rtip )
+register struct rt_i *rtip;
+{
+	register struct directory *dp;
+
+	rt_log("Dump of directory for rtip x%x\n", rtip);
+	for( dp = rtip->rti_DirHead; dp != DIR_NULL; dp=dp->d_forw )  {
+		rt_log("%.8x disk=%.8x anim=%.8x %s\n", dp, dp->d_addr,
+			dp->d_animate, dp->d_namep);
+	}
 }
