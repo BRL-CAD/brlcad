@@ -219,6 +219,8 @@ static struct funtab funtab[] = {
 	cmd_db, 1, MAXARGS, TRUE,
 "dbconcat", "file [prefix]", "concatenate 'file' onto end of present database.  Run 'dup file' first.",
 	f_concat, 2, 3, TRUE,
+"debugbu", "[hex_code]", "Show/set debugging bit vector for libbu",
+	f_debugbu,1,2,TRUE,
 "debugdir", "", "Print in-memory directory, for debugging",
 	f_debugdir, 1, 1, TRUE,
 "debuglib", "[hex_code]", "Show/set debugging bit vector for librt",

@@ -474,6 +474,37 @@ char	**argv;
 }
 
 int
+f_debugbu(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int	argc;
+char	**argv;
+{
+  struct bu_vls vls;
+
+  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+    return TCL_ERROR;
+
+  bu_vls_init(&vls);
+  start_catching_output(&vls);
+
+  if( argc >= 2 )  {
+    sscanf( argv[1], "%x", &bu_debug );
+  } else {
+    bu_printb( "Possible flags", 0xffffffffL, BU_DEBUG_FORMAT );
+    bu_log("\n");
+  }
+  bu_printb( "bu_debug", bu_debug, BU_DEBUG_FORMAT );
+  bu_log("\n");
+
+  stop_catching_output(&vls);
+  Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+  bu_vls_free(&vls);
+
+  return TCL_OK;
+}
+
+int
 f_debuglib(clientData, interp, argc, argv)
 ClientData clientData;
 Tcl_Interp *interp;
@@ -490,6 +521,7 @@ char	**argv;
 
   if( argc >= 2 )  {
     sscanf( argv[1], "%x", &rt_g.debug );
+    if( rt_g.debug )  bu_debug |= BU_DEBUG_COREDUMP;
   } else {
     bu_printb( "Possible flags", 0xffffffffL, DEBUG_FORMAT );
     bu_log("\n");
