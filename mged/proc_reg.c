@@ -30,7 +30,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./ged.h"
 #include "./dm.h"
 
-static void	center(), cpoint(), dwreg(), ellin(), move(), neg(), points(),
+static void	center(), cpoint(), dwreg(), ellin(), move(), points(),
 		regin(), solin(), solpl(), tgcin(), tplane(),
 		vectors();
 static int	arb(), cgarbs(), comparvec(), gap(), planeeq(), redoarb(), 
@@ -563,7 +563,6 @@ points()
  * 	Routines used by dwreg():
  *	  1. gap()   	puts gaps in the edges
  *	  2. region()	finds intersection of ray with a region
- *	  3. neg()	vector A = - vector B
  *	  4. cpoint()	finds point of intersection of three planes
  *	  5. center()	finds center point of an arb
  *	  6. tplane()	tests if plane is inside enclosing rpp
@@ -585,20 +584,17 @@ points()
 static float	peq[NPLANES*4];		/* plane equations for EACH region */
 static float	solrpp[NMEMB*6];	/* enclosing RPPs for each member of the region */
 static float	regi[NMEMB], rego[NMEMB];	/* distances along ray where ray enters and leaves the region */
-static float	pc[3];			/* center (interior) point of a solid */
-static float	rmn[3], rmx[3];		/* min,max's for the region */
-static float	smn[3], smx[3];		/* min,max's for a solid */
+static float	pcenter[3];		/* center (interior) point of a solid */
+static float	reg_min[3], reg_max[3];		/* min,max's for the region */
+static float	sol_min[3], sol_max[3];		/* min,max's for a solid */
 static float	xb[3];			/* starting point of ray */
 static float	wb[3];			/* direction cosines of ray */
 static float	rin, rout;		/* location where ray enters and leaves a solid */
 static float	ri, ro;			/* location where ray enters and leaves a region */
 static float	tol;			/* tolerance */
-static int	lmemb, umemb;		/* lower and upper limit of members of a region
-					 * from one OR to the next OR
-					 */
 static float	*sp, *savesp;		/* pointers to the solid parameter array m_param[] */
 static int	mlc[NMEMB];		/* location of last plane for each member */
-static int	la, lb, lc, id, jd, nint, ngaps;
+static int	la, lb, lc, id, jd, ngaps;
 static float	pinf = 1000000.0;
 static int	negpos;
 static char	oper;
@@ -610,9 +606,9 @@ dwreg()
 	static int k,l;
 	static int n,m;
 	static int itemp;
-	static float pi[3],po[3];
-	static float lenwb;
 	static float c1[3*4]={1.,0.,0.,0.,0.,1.,0.,0.,0.,0.,1.,0.};
+	static int lmemb, umemb;/* lower and upper limit of members of region
+				 * from one OR to the next OR */
 
 	/* calculate center and scale for COMPLETE REGION since may have ORs */
 	lmemb = umemb = 0;
@@ -622,7 +618,7 @@ dwreg()
 		for(umemb = lmemb+1; (umemb < nmemb && m_op[umemb] != 'u'); umemb++)
 			;
 		lc = 0;
-		regin(1);
+		regin(1, lmemb, umemb);
 		lmemb = umemb;
 		if(umemb >= nmemb)
 			break;
@@ -630,26 +626,20 @@ dwreg()
 
 	lmemb = 0;
 	savesp = &m_param[0];
-printf("nmemb=%d\n", nmemb);
-printf("all m_op: '%s'\n", m_op);
 
 orregion:	/* sent here if region has or's */
 	for(umemb = lmemb+1; (umemb < nmemb && m_op[umemb] != 'u'); umemb++)
 		;
 
-printf("doing range %d..%d\n", lmemb, umemb);
 	lc = 0;
-	regin(0);
+	regin(0, lmemb, umemb);
 
-
-	for(i=0; i<3; i++) c1[(i*4)+3]=rmn[i];
+	for(i=0; i<3; i++)
+		c1[(i*4)+3]=reg_min[i];
 	l=0;
-printf("mlc[] = ");
-for(id=lmemb;id<umemb;id++) printf("%d ", mlc[id]);
-printf("\n");
+
 	/* id loop processes all member to the next OR */
 	for(id=lmemb; id<umemb; id++) {
-printf("SOLID %d, mlc[] = %d, l=%d\n", id, mlc[id], l);
 		if(mlc[id] < l)
 			goto skipid;
 
@@ -659,7 +649,6 @@ printf("SOLID %d, mlc[] = %d, l=%d\n", id, mlc[id], l);
 			itemp = id;
 			if(i == mlc[id])
 				itemp = id + 1;
-printf("Starting solid %d/plane %d..%d\n", id, i, itemp);
 			for(jd=itemp; jd<umemb; jd++) {
 
 				negpos = 0;
@@ -669,9 +658,6 @@ printf("Starting solid %d/plane %d..%d\n", id, i, itemp);
 
 				/* plane j is associated with member jd */
 				for(j=m; j<=mlc[jd]; j++){
-printf("%c %d/%d, %c %d/%d\n",
-m_op[id], id, i,
-m_op[jd], jd, j );
 					if(id!=jd && m_op[id]=='-' && m_op[jd]=='-') { 
 						for(k=0; k<3; k++) {
 							if(solrpp[6*id+k] > solrpp[6*jd+k+3] || 
@@ -697,36 +683,36 @@ m_op[jd], jd, j );
 						}
 					}
 noskip:
-					if(fabs(VDOT(&peq[i*4],&peq[j*4]))<.9999){
-						/* planes not parallel */
+					if(fabs(VDOT(&peq[i*4],&peq[j*4]))>=.9999)
+						continue; /* planes parallel */
 
-						/* compute vector for ray */
-						VCROSS(wb,&peq[i*4],&peq[j*4]);
-						lenwb = MAGNITUDE( wb );
-						VSCALE(wb, wb, 1.0/lenwb);
+					/* planes not parallel */
+					/* compute direction vector for ray */
+					VCROSS(wb,&peq[i*4],&peq[j*4]);
+					VUNITIZE( wb );
 
-						/* starting point for this ray */
-						k=0;
-						if(fabs(wb[1]) > fabs(wb[0])) k=1;
-						if(fabs(wb[2]) > fabs(wb[k])) k=2;
-						if(wb[k] < 0.0)
-							neg( wb, wb, 3 );
-printf("cpoint %g,%g,%g k=%d i=%d j=%d\n", xb[0], xb[1], xb[2], k, i, j);
-						cpoint(&c1[k*4],&peq[i*4],&peq[j*4]);
+					k=0;
+					if(fabs(wb[1]) > fabs(wb[0])) k=1;
+					if(fabs(wb[2]) > fabs(wb[k])) k=2;
+					if(wb[k] < 0.0)  {
+						VREVERSE( wb, wb );
+					}
 
-						/* check if ray intersects region */
-						if(region()>0){
-							/* ray intersects region */
-							/* plot this ray  including gaps */
-							for(n=0; n<nint; n++){
-								for(k=0; k<3; k++){
-									 pi[k]=xb[k]+wb[k]*regi[n];
-									 po[k]=xb[k]+wb[k]*rego[n];
-								}
-								DM_GOTO(&pi[0], PEN_UP);
-								DM_GOTO(&po[0], PEN_DOWN);
-							}
-						}
+					/* starting point for this ray */
+					cpoint(xb,&c1[k*4],&peq[i*4],&peq[j*4]);
+
+					/* check if ray intersects region */
+					if( (k=region(lmemb,umemb))<=0)
+						continue;
+
+					/* ray intersects region */
+					/* plot this ray  including gaps */
+					for(n=0; n<k; n++){
+						static float pi[3],po[3];
+						VJOIN1( pi, xb, regi[n], wb );
+						VJOIN1( po, xb, rego[n], wb );
+						DM_GOTO( pi, PEN_UP);
+						DM_GOTO( po, PEN_DOWN);
 					}
 skplane:				 ;
 				}
@@ -836,28 +822,23 @@ back:		/* gap ends after end of ray */
 
 
 /* computes intersection of ray with region 
- *   	returns 1  if intersection
- *	        0  if no intersection
+ *   	returns ngaps+1	if intersection
+ *	        0	if no intersection
  */
-
 static int
-region()
+region(lmemb,umemb)
 {
 	register int	i, kd;
 	static float s1[3],s2[3];
 	static float a1, a2;
-	static float dum1, dum2;
 
-	nint=0;
 	ngaps=0;
 	ri = -1.0 * pinf;
 	ro=pinf;
 
 	/* does ray intersect region rpp */
-	for(i=0;i<3;i++){
-		s1[i]=rmn[i]-xb[i];
-		s2[i]=rmx[i]-xb[i];
-	}
+	VSUB2( s1, reg_min, xb );
+	VSUB2( s2, reg_max, xb );
 
 	/* find start & end point of ray with enclosing rpp */
 	for(i=0;i<3;i++){
@@ -868,15 +849,13 @@ region()
 				if(a1<tol) return(0);
 				MAX(ri,a2);
 				MIN(ro,a1);
-			}
-			else {
+			} else {
 				if(a2<tol) return(0);
 				MAX(ri,a1);
 				MIN(ro,a2);
 			}
 			if((ri+tol)>=ro) return(0);
-		}
-		else {
+		} else {
 			if(s1[i]>tol || s2[i]<(-1.0*tol)) 
 				return(0);
 		}
@@ -890,7 +869,7 @@ region()
 
 		/* if la > lb then no planes to check for this member */
 		if(la > lb)
-			goto nullsolid;
+			continue;
 
 		if(kd==id || kd==jd) oper='+';
 		if(oper!='-'){
@@ -900,56 +879,39 @@ region()
 			if(ngaps==0){
 				MAX(ri,rin);
 				MIN(ro,rout);
-			}
-			else{
-				dum1 = -1.0 * pinf;
-				dum2 = rin;
-				if(gap(dum1, dum2) <= 0)
+			} else{
+				if(gap(-pinf, rin) <= 0)
 					return(0);
-				dum1 = rout;
-				dum2 = pinf;
-				if(gap(dum1, dum2) <= 0)
+				if(gap(rout, pinf) <= 0)
 					return(0);
 			}
 		}
 		if(oper == '-') {
 			/* negative solid  look for gaps in ray */
 			if(arb() != 0) {
-				dum1 = rin;
-				dum2 = rout;
-				if(gap(dum1, dum2) <= 0)
+				if(gap(rin, rout) <= 0)
 					return(0);
 			}
 		}
 		if(ri+tol>=ro) return(0);
 		la=lb+1;
-nullsolid:
-		;
 	}
 
 	/*end of region - set number of intersections*/
-	nint=ngaps+1;
 	regi[0]=ri;
-	rego[nint-1]=ro;
-	return(1);
+	rego[ngaps]=ro;
+	return(ngaps+1);
 }
 
 
+/*
+ *			C P O I N T
+ *
+ * computes point of intersection of three planes, answer in "point".
+ */
 static void
-neg(a,b,n)
-register float *a, *b;
-int n;
-{
-	register int i;
-
-	for(i=0; i<n; i++)
-		*(b+i) = -1.0 * (*(a+i));
-}
-
-
-/* computes point of intersection of three planes */
-static void
-cpoint(c1,c2,c3)
+cpoint(point,c1,c2,c3)
+float *point;
 register float *c1, *c2, *c3;
 {
 	static float v1[4], v2[4], v3[4];
@@ -957,12 +919,15 @@ register float *c1, *c2, *c3;
 	static float d;
 
 	VCROSS(v1,c2,c3);
-	if((d=VDOT(c1,v1))==0) return;
+	if((d=VDOT(c1,v1))==0)  {
+		printf("cpoint failure\n");
+		return;
+	}
 	d = 1.0 / d;
 	VCROSS(v2,c1,c3);
 	VCROSS(v3,c1,c2);
 	for(i=0; i<3; i++)
-		xb[i]=d*(*(c1+3)*v1[i]-(*(c2+3))*v2[i]+(*(c3+3))*v3[i]);
+		point[i]=d*(c1[3]*v1[i]-c2[3]*v2[i]+c3[3]*v3[i]);
 }
 
 
@@ -980,45 +945,82 @@ center()
 			ppc += *(sp+k);
 			k+=3;
 		}
-		pc[i]=ppc/(float)m_type[id];
+		pcenter[i]=ppc/(float)m_type[id];
 	}
 }
 
 
-/* test if plane inside enclosing rpp */
+/*
+ *			T P L A N E
+ *
+ *  Register a plane which contains the 4 specified points,
+ *  unless they are degenerate, or lie outside the region RPP.
+ */
 static void
 tplane(p,q,r,s)
-register float *p, *q, *r, *s;
+float *p, *q, *r, *s;
 {
-	static float t;
-	static float *pp,*pf;
+	register float *pp,*pf;
 	register int i;
 
-	pp = &peq[lc*4];
+	/* If all 4 pts have coord outside region RPP,
+	 * discard this plane, as the polygon is definitely outside */
 	for(i=0;i<3;i++){
-		t=rmn[i]-tol;
+		FAST float t;
+		t=reg_min[i]-tol;
 		if(*(p+i)<t && *(q+i)<t && *(r+i)<t && *(s+i)<t)
 			return;
-		t=rmx[i]+tol;
+		t=reg_max[i]+tol;
 		if(*(p+i)>t && *(q+i)>t && *(r+i)>t  && *(s+i)>t)
 			return;
 	}
 
-	/* Does plane already exist? */
-	if(planeeq(p,q,r)==0) return;
+	/* Do these three points form a valid plane? */
+	/* WARNING!!  Fourth point is never even looked at!! */
+	pp = &peq[lc*4];
+	if(planeeq( pp, p,q,r)==0) return;
 
-	if((*(pp+3)-VDOT(pp,pc)) > 0.) neg(pp,pp,4);
+	if((pp[3]-VDOT(pp,pcenter)) > 0.)  {
+		VREVERSE( pp, pp );
+		pp[3] = -pp[3];
+	}
+
+	/* See if this plane already exists */
 	for(pf = &peq[0];pf<pp;pf+=4) {
 		 if(VDOT(pp,pf)>0.9999 && fabs(*(pp+3)-*(pf+3))<tol) 
 			return;
 	}
 
 	/* increment plane counter */
-	if(++lc > NPLANES) {
+	if(lc >= NPLANES) {
 		(void)printf("tplane: More than %d planes for a region - ABORTING\n", NPLANES);
-		lc--;
 		return;
 	}
+	lc++;		/* Save plane eqn */
+}
+
+/*
+ *			P L A N E E Q
+ *
+ * computes normalized plane eq from three points.
+ *  Returns 0 if plane is degenerate, 1 if plane is good.
+ */
+static int
+planeeq(eqn,p1,p2,p3)
+float *eqn;
+float *p1, *p2, *p3;
+{
+	static float vecl;
+	static float va[3],vb[3],vc[3];
+
+	VSUB2( va, p2, p1 );
+	VSUB2( vb, p3, p1 );
+	VCROSS(vc,va,vb);
+	vecl = MAGNITUDE( vc );
+	if(vecl<.0001) return(0);
+	VSCALE(eqn, vc, 1.0/vecl);
+	eqn[3] = VDOT(eqn, p1);
+	return(1);
 }
 
 /* finds intersection of ray with arbitrary convex polyhedron */
@@ -1070,7 +1072,7 @@ tgcin()
 
 	for(i=0;i<3;i++){
 		vt[i] = *(sp+i) + *(sp+i+3);
-		pc[i]=( *(sp+i) + vt[i])*.5;
+		pcenter[i]=( *(sp+i) + vt[i])*.5;
 		p[i] = *(sp+i) + *(sp+i+6);
 		t[i] = vt[i] + *(sp+i+12);
 	}
@@ -1123,7 +1125,7 @@ ellin()
 	register int i,j,ih,ie;
 
 	sgn = -1.;
-	for(i=0;i<3;i++) pc[i] = *(sp+i);
+	for(i=0;i<3;i++) pcenter[i] = *(sp+i);
 	for(ih=0;ih<2;ih++){
 		c2=1.;
 		s2=0.;
@@ -1169,13 +1171,13 @@ ellin()
 
 /* process region into planes */
 static void
-regin(flag)
+regin(flag, lmemb, umemb)
 int flag;	/* 1 if only calculating min,maxs   NO PLANE EQUATIONS */
 {
 	register int i,j;
 
-	tol=rmn[0]=rmn[1]=rmn[2] = -pinf;
-	rmx[0]=rmx[1]=rmx[2]=pinf;
+	tol=reg_min[0]=reg_min[1]=reg_min[2] = -pinf;
+	reg_max[0]=reg_max[1]=reg_max[2]=pinf;
 	sp = savesp;
 
 	/* find min max's */
@@ -1183,21 +1185,21 @@ int flag;	/* 1 if only calculating min,maxs   NO PLANE EQUATIONS */
 		solin(i);
 		if(m_op[i] != '-') {
 			for(j=0;j<3;j++){
-				MAX(rmn[j],smn[j]);
-				MIN(rmx[j],smx[j]);
+				MAX(reg_min[j],sol_min[j]);
+				MIN(reg_max[j],sol_max[j]);
 			}
 		}
 	}
 	for(i=0;i<3;i++){
-		MAX(tol,fabs(rmn[i]));
-		MAX(tol,fabs(rmx[i]));
+		MAX(tol,fabs(reg_min[i]));
+		MAX(tol,fabs(reg_max[i]));
 	}
 	tol=tol*0.00001;
 
 	if(flag == 0 ) {
 		/* find planes for each solid */
 		sp = savesp;
-		solpl();
+		solpl(lmemb,umemb);
 	}
 
 	/* save the parameter pointer in case region has ORs */
@@ -1220,15 +1222,15 @@ int num;
 		(void)printf("solin: Type %d Solid not known\n",*ity);
 		return;
 	}
-	smn[0]=smn[1]=smn[2]=pinf;
-	smx[0]=smx[1]=smx[2] = -pinf;
+	sol_min[0]=sol_min[1]=sol_min[2]=pinf;
+	sol_max[0]=sol_max[1]=sol_max[2] = -pinf;
 
 	/* ARB4,5,6,7,8 */
 	if(*ity<18){
 		for(i=0;i<*ity;i++){
 			for(j=0;j<3;j++){
-				MIN(smn[j],*sp);
-				MAX(smx[j],*sp);
+				MIN(sol_min[j],*sp);
+				MAX(sol_max[j],*sp);
 				sp++;
 			}
 		}
@@ -1244,10 +1246,10 @@ int num;
 			d = *(sp+15);
 			v1=sqrt(a*a+b*b);
 			v2=sqrt(c*c+d*d);
-			MIN(smn[i],*(sp)-v1);
-			MIN(smn[i],vt-v2);
-			MAX(smx[i],*(sp)+v1);
-			MAX(smx[i],vt+v2);			
+			MIN(sol_min[i],*(sp)-v1);
+			MIN(sol_min[i],vt-v2);
+			MAX(sol_max[i],*(sp)+v1);
+			MAX(sol_max[i],vt+v2);			
 		}
 		sp+=15;
 	}
@@ -1261,25 +1263,26 @@ int num;
 			b = *(sp+9);
 			v1=sqrt(a*a+b*b);
 			v2=sqrt(c*c+d*d);
-			MIN(smn[i],vb-v1);
-			MIN(smn[i],vt-v2);
-			MAX(smx[i],vb+v1);
-			MAX(smx[i],vt+v2);
+			MIN(sol_min[i],vb-v1);
+			MIN(sol_min[i],vt-v2);
+			MAX(sol_max[i],vb+v1);
+			MAX(sol_max[i],vt+v2);
 		}
 		sp+=9;
 	}
 
 	/* save min,maxs for this solid */
 	for(i=0; i<3; i++) {
-		solrpp[num*6+i] = smn[i];
-		solrpp[num*6+i+3] = smx[i];
+		solrpp[num*6+i] = sol_min[i];
+		solrpp[num*6+i+3] = sol_max[i];
 	}
 }
 
 
 /* converts all solids to ARBNs */
+/* Called only from regin() */
 static void
-solpl()
+solpl(lmemb,umemb)
 {
 	static float tt;
 	static int ls, n4;
@@ -1332,64 +1335,3 @@ solpl()
 		mlc[id]=lc-1;
 	}
 }
-
-
-/* computes normalized plane eq from three points */
-static int
-planeeq(p1,p2,p3)
-float *p1, *p2, *p3;
-{
-	static float vecl;
-	static float va[3],vb[3],vc[3];
-	register int i;
-
-	for(i=0;i<3;i++){
-		va[i] = *(p2+i) - *(p1+i);
-		vb[i] = *(p3+i) - *(p1+i);
-	}
-	VCROSS(vc,va,vb);
-	vecl = MAGNITUDE( vc );
-	if(vecl<.0001) return(0);
-	VSCALE(&peq[lc*4], vc, 1.0/vecl);
-	peq[(lc*4)+3] = VDOT(&peq[lc*4], p1);
-	return(1);
-}
-
-
-
-/* TYPE_ARB()	returns specific ARB type of record rec.  The record rec
- *		is also rearranged to "standard" form.
- */
-#ifdef never
-type_arb( rec )
-union record *rec;
-{
-	int i;
-	static int uvec[8], svec[11];
-
-	if( rec->s.s_type != GENARB8 )
-		return( 0 );
-
-	input = *rec;		/* copy */
-
-	/* convert input record to points */
-	points();
-
-	if( (i = cgarbs(uvec, svec)) == 0 )
-		return(0);
-
-	if( redoarb(uvec, svec, i) == 0 )
-		return( 0 );
-
-	/* convert to vectors in the rec record */
-	VMOVE(&rec->s.s_values[0], &input.s.s_values[0]);
-	for(i=3; i<=21; i+=3) {
-		VSUB2(&rec->s.s_values[i], &input.s.s_values[i], &input.s.s_values[0]);
-	}
-
-	return( input.s.s_cgtype );
-
-}
-#endif
-
-
