@@ -99,7 +99,7 @@ void usejoy();
 
 int knob_rot(vect_t rvec, char origin, int mf, int vf, int ef);
 int knob_tran();
-int mged_etran(struct view_obj *vop, char coords, vect_t tvec);
+int mged_etran(struct view_obj *vop, Tcl_Interp *interp, char coords, vect_t tvec);
 int mged_mtran();
 int mged_otran();
 int mged_vtran();
@@ -3153,7 +3153,7 @@ knob_tran(vect_t	tvec,
 {
 	if (EDIT_TRAN && ((mged_variables->mv_transform == 'e' &&
 			   !view_flag && !model_flag) || edit_flag))
-		mged_etran(view_state->vs_vop, mged_variables->mv_coords, tvec);
+		mged_etran(view_state->vs_vop, interp, mged_variables->mv_coords, tvec);
 	else if(model_flag || (mged_variables->mv_coords == 'm' && !view_flag))
 		mged_mtran(tvec);
 	else if(mged_variables->mv_coords == 'o')
@@ -4488,6 +4488,7 @@ char    **argv;
 
 int
 mged_erot(struct view_obj	*vop,
+	  Tcl_Interp		*interp,
 	  char			coords,
 	  char			rotate_about,
 	  mat_t			newrot)
@@ -4577,7 +4578,7 @@ mged_erot_xyz(char	rotate_about,
 	MAT_IDN(newrot);
 	bn_mat_angles(newrot, rvec[X], rvec[Y], rvec[Z]);
 
-	return mged_erot(view_state->vs_vop, mged_variables->mv_coords, rotate_about, newrot);
+	return mged_erot(view_state->vs_vop, interp, mged_variables->mv_coords, rotate_about, newrot);
 }
 
 int
@@ -4728,6 +4729,7 @@ cmd_arot(ClientData	clientData,
 
 int
 mged_etran(struct view_obj	*vop,
+	   Tcl_Interp		*interp,
 	   char			coords,
 	   vect_t		tvec)
 {
@@ -4837,7 +4839,7 @@ mged_tran(vect_t tvec)
 {
   if((state == ST_S_EDIT || state == ST_O_EDIT) &&
       mged_variables->mv_transform == 'e')
-    return mged_etran(view_state->vs_vop, mged_variables->mv_coords, tvec);
+    return mged_etran(view_state->vs_vop, interp, mged_variables->mv_coords, tvec);
 
   /* apply to View */
   if(mged_variables->mv_coords == 'm')
@@ -4863,8 +4865,9 @@ cmd_tra(ClientData	clientData,
 }
 
 int
-mged_escale(sfactor)
-fastf_t sfactor;
+mged_escale(struct view_obj	*vop,
+	    Tcl_Interp		*interp,
+	    fastf_t		sfactor)
 {
   fastf_t old_scale;
 
@@ -4985,14 +4988,13 @@ mged_vscale(fastf_t sfactor)
 }
 
 int
-mged_scale(sfactor)
-fastf_t sfactor;
+mged_scale(fastf_t sfactor)
 {
-  if((state == ST_S_EDIT || state == ST_O_EDIT) &&
-    mged_variables->mv_transform == 'e')
-    return mged_escale(sfactor);
+	if ((state == ST_S_EDIT || state == ST_O_EDIT) &&
+	    mged_variables->mv_transform == 'e')
+		return mged_escale(view_state->vs_vop, interp, sfactor);
 
-  return mged_vscale(sfactor);
+	return mged_vscale(sfactor);
 }
 
 int
