@@ -424,6 +424,7 @@ Ir_open()
 
 #if defined(INV_GR2)
                 case INV_GR2:		/* Elan Graphics */
+		case INV_NEWPORT:	/* INDY */
                         if(inv->state & INV_GR2_ELAN)
                         {
                                 ir_has_rgb = 1;
