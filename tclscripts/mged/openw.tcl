@@ -2893,12 +2893,10 @@ proc mged_draw_grid {id} {
     global mged_gui
 
     winset $mged_gui($id,active_dm)
-    rset grid draw $mged_gui($id,grid_draw)
+    mged_apply $id "rset grid draw $mged_gui($id,grid_draw)"
 
     # Reconcile the Tcl grid_draw with the internal grid_draw.
     # Note - the internal grid_draw cannot be set to 1 if a database
     #        is not currently open (i.e. dbip == DBI_NULL).
     set mged_gui($id,grid_draw) [rset grid draw]
-
-    # XXX - At the moment this routine does not honor the "apply_to" settings
 }
