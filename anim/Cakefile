@@ -24,8 +24,8 @@
 anim_cascade: anim_cascade.o LIBBN_DEP LIBBU_DEP
 	CC LDFLAGS anim_cascade.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o anim_cascade
 
-anim_fly: anim_fly.o
-	CC LDFLAGS anim_fly.o LIBES -o anim_fly
+anim_fly: anim_fly.o LIBBU_DEP
+	CC LDFLAGS anim_fly.o LIBES LIBBU LIBBU_LIBES -o anim_fly
 
 anim_hardtrack: anim_hardtrack.o LIBBN_DEP LIBBU_DEP
 	CC LDFLAGS anim_hardtrack.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o anim_hardtrack
@@ -45,8 +45,8 @@ anim_orient: anim_orient.o LIBBN_DEP LIBBU_DEP
 anim_script: anim_script.o LIBBN_DEP LIBBU_DEP
 	CC LDFLAGS anim_script.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o anim_script
 
-anim_sort: anim_sort.o
-	CC LDFLAGS anim_sort.o LIBES -o anim_sort
+anim_sort: anim_sort.o LIBBU_DEP
+	CC LDFLAGS anim_sort.o LIBES LIBBU LIBBU_LIBES -o anim_sort
 
 anim_time: anim_time.o 
 	CC LDFLAGS anim_time.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o anim_time
