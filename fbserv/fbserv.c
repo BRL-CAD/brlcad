@@ -488,8 +488,11 @@ char *buf;
 		(void)pkg_plong( &rbuf[0], fb_close( fbp ) );
 		fbp = FBIO_NULL;
 	}
-	if( pkg_send( MSG_RETURN, rbuf, NET_LONG_LEN, pcp ) != NET_LONG_LEN )
-		comm_error("pkg_send fb_close reply\n");
+	/* Don't check for errors, SGI linger mode or other events
+	 * may have already closed down all the file descriptors.
+	 * If communication has broken, other end will know we are gone.
+	 */
+	(void)pkg_send( MSG_RETURN, rbuf, NET_LONG_LEN, pcp );
 	if( buf ) (void)free(buf);
 }
 
