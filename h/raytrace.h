@@ -1521,7 +1521,7 @@ RT_EXTERN(void mat_htov_move, (vect_t dest, CONST hvect_t src) );
 RT_EXTERN(void mat_print, (CONST char *title, CONST mat_t m) );
 RT_EXTERN(void mat_trn, (mat_t dest, CONST mat_t src) );
 RT_EXTERN(void mat_ae, (mat_t dest, double azimuth, double elev) );
-RT_EXTERN(void mat_ae_vec, (fastf_t *azp, fastf_t *elp, vect_t src) );
+RT_EXTERN(void mat_ae_vec, (fastf_t *azp, fastf_t *elp, CONST vect_t src) );
 #define ae_vec(_az,_el,_vec)	mat_ae_vec(_az,_el,_vec)	/* compat */
 RT_EXTERN(void mat_angles, (mat_t dest, double alpha, double beta, double ggamma) );
 RT_EXTERN(void eigen2x2, (fastf_t *val1, fastf_t *val2,
