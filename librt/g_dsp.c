@@ -955,14 +955,24 @@ rt_dsp_prep( stp, ip, rtip )
 	bu_semaphore_release( RT_SEM_MODEL);
 	break;
     case RT_DSP_SRC_OBJ:
-	RT_CK_BINUNIF(dsp_ip->dsp_bip);
+	RT_CK_DB_INTERNAL(dsp_ip->dsp_bip);
+	RT_CK_BINUNIF(dsp_ip->dsp_bip->idb_ptr);
 	break;
     }
 
 
     BU_GETSTRUCT( dsp, dsp_specific );
     stp->st_specific = (genptr_t) dsp;
+
+    /* this works ok, because the mapped file keeps track of the number of
+     * uses.  However, the binunif interface does not.  We'll
+     * have to copy the data for that one.
+     */
     dsp->dsp_i = *dsp_ip;		/* struct copy */
+
+    /* this keeps the binary internal object from being freed */
+    dsp_ip->dsp_bip = (struct rt_db_internal *)NULL;	
+
 
     dsp->xsiz = dsp_ip->dsp_xcnt-1;	/* size is # cells or values-1 */
     dsp->ysiz = dsp_ip->dsp_ycnt-1;	/* size is # cells or values-1 */
@@ -1018,10 +1028,11 @@ rt_dsp_prep( stp, ip, rtip )
     switch (dsp_ip->dsp_datasrc) {
     case RT_DSP_SRC_V4_FILE: 
     case RT_DSP_SRC_FILE:
-	BU_CK_MAPPED_FILE(dsp_ip->dsp_mp);
+	BU_CK_MAPPED_FILE(dsp->dsp_i.dsp_mp);
 	break;
     case RT_DSP_SRC_OBJ:
-	RT_CK_BINUNIF(dsp_ip->dsp_bip);
+	RT_CK_DB_INTERNAL(dsp->dsp_i.dsp_bip);
+	RT_CK_BINUNIF(dsp->dsp_i.dsp_bip->idb_ptr);
 	break;
     }
 
@@ -2481,6 +2492,8 @@ rt_dsp_shot( stp, rp, ap, seghead )
 	BU_CK_MAPPED_FILE(dsp->dsp_i.dsp_mp);
 	break;
     case RT_DSP_SRC_OBJ:
+	RT_CK_DB_INTERNAL(dsp->dsp_i.dsp_bip);
+	    RT_CK_BINUNIF(dsp->dsp_i.dsp_bip->idb_ptr);
 	break;
     }
 
@@ -3401,9 +3414,11 @@ dsp_get_data(struct rt_dsp_internal	*dsp_ip,
 
 	if (get_obj_data(dsp_ip, ip, ep, mat, dbip))
 	    p = "object";
-	else
+	else {
+	RT_CK_DB_INTERNAL(dsp_ip->dsp_bip);
+	    RT_CK_BINUNIF(dsp_ip->dsp_bip->idb_ptr);
 	    return 0;
-
+	}
 	break;
     default:
 	bu_log("%s:%d Odd dsp data src '%c' s/b '%c' or '%c'\n", 
@@ -3512,6 +3527,10 @@ rt_dsp_import( ip, ep, mat, dbip )
     }
 
     if (BU_VLS_IS_INITIALIZED( &str )) bu_vls_free( &str );
+
+    RT_CK_DB_INTERNAL(dsp_ip->dsp_bip);
+    RT_CK_BINUNIF(dsp_ip->dsp_bip->idb_ptr);
+
     return(0);			/* OK */
 }
 
