@@ -135,8 +135,8 @@ if test "x$cache_file" = "x/dev/null" ; then
 		cache_file="$brlcad_cache"
 		CONFIG_CACHE="$cache_file"
 	else
-		CFLAGS=$CFLAGS -mips4 -KPIC -G 7 -DIRIX=6 -DIRIX64=65
-		LDFLAGS=$LDFLAGS -mips4 -KPIC -G 7
+		CFLAGS="$CFLAGS -mips4 -KPIC -G 7 -DIRIX=6 -DIRIX64=65"
+		LDFLAGS="$LDFLAGS -mips4 -KPIC -G 7"
 		AC_MSG_NOTICE([Automatic caching is unavailable on IRIX])
 	fi
 	AC_SUBST(CONFIG_CACHE)
