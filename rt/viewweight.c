@@ -194,31 +194,39 @@ struct application *ap;
 	time_t clock;
 	struct tm *locltime;
 	char *timeptr;
+	char *unitstr;
 
 	(void) time( &clock );
 	locltime = localtime( &clock );
 	timeptr = asctime( locltime );
 	
-        switch( dbp->dbi_localunit ) {
-                case ID_FT_UNIT:
-			strcpy( unit2, "ft." );
-                case ID_IN_UNIT:
-                        conversion = 0.002204623;  /* lbs./gram */
-			strcpy( units, "lbs." );
-                case ID_NO_UNIT:
-			break;
-                case ID_MM_UNIT:
-			conversion = 0.001;  /* kg/gram */
-			strcpy( units, "kg" );
-			strcpy( unit2, "mm" );
-			break;
-		case ID_M_UNIT:
-			conversion = 0.001;  /* kg/gram */
-			strcpy( units, "kg" );
-			strcpy( unit2, "m" );
-                case ID_CM_UNIT:
-			break;
-		}
+	if( dbp->dbi_base2local == 304.8 )  {
+		/* Feet */
+		strcpy( units, "grams" );
+		strcpy( unit2, "ft." );
+	} else if( dbp->dbi_base2local == 25.4 )  {
+		/* inches */
+                conversion = 0.002204623;  /* lbs./gram */
+		strcpy( units, "lbs." );
+		strcpy( unit2, "in." );
+	} else if( dbp->dbi_base2local == 1.0 )  {
+		/* mm */
+		conversion = 0.001;  /* kg/gram */
+		strcpy( units, "kg" );
+		strcpy( unit2, "mm" );
+	} else if( dbp->dbi_base2local == 1000.0 )  {
+		/* km */
+		conversion = 0.001;  /* kg/gram */
+		strcpy( units, "kg" );
+		strcpy( unit2, "m" );
+	} else if( dbp->dbi_base2local == 10.0 )  {
+		/* cm */
+		strcpy( units, "grams" );
+		strcpy( unit2, "in." );
+	} else {
+		bu_log("Warning: base2mm=%g, using default of %s--%s\n",
+			units, unit2 );
+	}
 	
 	if( noverlaps )
 		bu_log( "%d overlap%c detected.\n\n", noverlaps,
