@@ -365,7 +365,7 @@ combbld()
 	if( mk_lrcomb(stdout, name, &head, is_reg,
 		temp_nflag ? matname : (char *)0,
 		temp_pflag ? matparm : (char *)0,
-		override ? rgb : (char *)0,
+		override ? rgb : (unsigned char *)0,
 		regionid, aircode, material, los, inherit) < 0 )  {
 			fprintf(stderr,"asc2g: mk_rcomb fail\n");
 			exit(1);
