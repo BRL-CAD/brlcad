@@ -413,6 +413,7 @@ int				zzz;		/* compression, someday */
 	out->ext_magic = BU_EXTERNAL_MAGIC;
 	out->ext_nbytes = 0;
 	out->ext_buf = bu_malloc( need, "external object3" );
+	out->ext_nbytes = need;		/* temporary */
 
 	/* Determine encoding for the two kinds of length fields */
 	h_width = db5_select_length_encoding( (need+7)>>3 );
@@ -441,7 +442,7 @@ int				zzz;		/* compression, someday */
 
 	/* Build up the rest of the record */
 	cp = ((unsigned char *)out->ext_buf) + sizeof(struct db5_ondisk_header);
-	cp = db5_encode_length( cp, 0L, h_width );	/* will be replaced below */
+	cp = db5_encode_length( cp, 7L, h_width );	/* will be replaced below */
 
 	if( name )  {
 		cp = db5_encode_length( cp, namelen, i_width );
@@ -602,25 +603,38 @@ double		local2mm;
  *	 0	success
  */
 int
-rt_db_put_internal5( dp, dbip, ip )
+rt_db_put_internal5( dp, dbip, ip, attr )
 struct directory	*dp;
 struct db_i		*dbip;
 struct rt_db_internal	*ip;
+CONST struct bu_attribute_value_pair	*attr;
 {
+	struct bu_external	body;
 	struct bu_external	ext;
+	int			major, minor;
 	int			ret;
 
 	BU_INIT_EXTERNAL(&ext);
 	RT_CK_DB_INTERNAL( ip );
 
 	/* Scale change on export is 1.0 -- no change */
-	ret = ip->idb_meth->ft_export( &ext, ip, 1.0, dbip );
+	ret = ip->idb_meth->ft_export5( &body, ip, 1.0, dbip );
 	if( ret < 0 )  {
-		bu_log("rt_db_put_internal(%s):  solid export failure\n",
+		bu_log("rt_db_put_internal5(%s):  solid export failure\n",
 			dp->d_namep);
-		db_free_external( &ext );
+		db_free_external( &body );
 		return -2;		/* FAIL */
 	}
+
+	/* What about combinations? */
+	major = DB5HDR_MAJORTYPE_BRLCAD_GEOMETRY;
+	minor = ip->idb_type;	/* XXX not necessarily v5 numbers. */
+
+	db5_export_object3( &ext, DB5HDR_HFLAGS_DLI_APPLICATION_DATA_OBJECT,
+		dp->d_namep, attr, &body,
+		major, minor,
+		DB5HDR_IFLAGS_ZZZ_UNCOMPRESSED);
+	db_free_external( &body );
 
 	if( db_put_external( &ext, dp, dbip ) < 0 )  {
 		db_free_external( &ext );
@@ -661,7 +675,7 @@ CONST struct bu_attribute_value_pair	*attr;
 	RT_CK_DB_INTERNAL(ip);
 	RT_CK_FUNCTAB( ip->idb_meth );
 
-	if( ip->idb_meth->ft_export( &body, ip, conv2mm, NULL /*dbip*/ ) < 0 )  {
+	if( ip->idb_meth->ft_export5( &body, ip, conv2mm, NULL /*dbip*/ ) < 0 )  {
 		bu_log("rt_fwrite_internal5(%s): solid export failure\n",
 			name );
 		db_free_external( &body );
@@ -679,8 +693,8 @@ CONST struct bu_attribute_value_pair	*attr;
 		DB5HDR_IFLAGS_ZZZ_UNCOMPRESSED);
 	db_free_external( &body );
 
-	if( db_fwrite_external( fp, name, &ext ) < 0 )  {
-		bu_log("rt_fwrite_internal(%s): db_fwrite_external() error\n",
+	if( bu_fwrite_external( fp, &ext ) < 0 )  {
+		bu_log("rt_fwrite_internal5(%s): bu_fwrite_external() error\n",
 			name );
 		db_free_external( &ext );
 		return -3;
