@@ -113,6 +113,6 @@ noinst_HEADERS = \
 brlcad_version.h:
 	@sh $(top_srcdir)/sh/vers.sh brlcad_version "BRL-CAD" > $@
 
-# make sure that the build date is updated every time make is run
+# make sure that the build date/version is updated every time make is run
 all-local:
-	@sh $(top_srcdir)/sh/vers.sh brlcad_version "BRL-CAD" > build_date.h
+	@sh $(top_srcdir)/sh/vers.sh brlcad_version "BRL-CAD" > brlcad_version.h
