@@ -1647,7 +1647,9 @@ again_inner:
 		if( class2 == WEDGE2_IDENTICAL &&
 		    NEAR_ZERO( vs[inner_wedge].hi_ang - vs[inner_wedge].lo_ang, WEDGE_ANG_TOL )
 		    )  {
+#if 0
 rt_g.NMG_debug |= DEBUG_VU_SORT|DEBUG_FCUT;
+#endif
 			if(rt_g.NMG_debug&DEBUG_VU_SORT)
 				bu_log("nmg_special_wedge_processing:  inner and outer wedges from same loop, WEDGE2_IDENTICAL & 0deg spread, already in final form.\n");
 			exclude[inner_wedge] = 1;	/* Don't return this wedge again */
@@ -1739,7 +1741,9 @@ int			end;		/* last index + 1 */
 		"nmg_loop_stuff" );
 
 top:
+#if 0
 	if( retries > 20 )  rt_g.NMG_debug |= DEBUG_VU_SORT;
+#endif
 	if( retries++ > 24 )  rt_bomb("nmg_face_coincident_vu_sort() infinite loop\n");
 	/* Assess each vu, create list of loopuses, find max angles */
 	nloop = 0;

@@ -1876,8 +1876,10 @@ CONST struct bn_tol	*tol;
 
 		/* Check that all the verts of f1 are within tol of face */
 		if( nmg_ck_fu_verts( f1->fu_p, f1, tol ) != 0 )  {
-			PLPRINT(" f1", f1->g.plane_p->N);
-			nmg_pr_fu_briefly(f1->fu_p, 0);
+			if( rt_g.NMG_debug )  {
+				PLPRINT(" f1", f1->g.plane_p->N);
+				nmg_pr_fu_briefly(f1->fu_p, 0);
+			}
 			rt_bomb("nmg_model_face_fuse(): verts not within tol of containing face\n");
 		}
 

@@ -371,7 +371,9 @@ bu_log("went all the way around\n");
 				PLPRINT("  fur", fur->f_p->g.plane_p->N );
 				{
 					int debug = rt_g.NMG_debug;
+#if 0
 					rt_g.NMG_debug |= DEBUG_MESH;
+#endif
 					if( nmg_two_face_fuse(fu1->f_p, fur->f_p, tol) == 0 )
 						rt_bomb("faces didn't fuse?\n");
 					rt_g.NMG_debug = debug;
@@ -400,7 +402,9 @@ bu_log("went all the way around\n");
 			}
 
 cont:
+#if 0
 			if( iteration2 > 9997 )  rt_g.NMG_debug |= DEBUG_MESH_EU;
+#endif
 			/* If eu1 is only one pair of edgeuses, done */
 			if( eu1 == eur->eumate_p )  break;
 			eu1 = eur->eumate_p;
