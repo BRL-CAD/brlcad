@@ -164,6 +164,8 @@ BU_EXTERN(void		bn_mat_copy, (register mat_t dest,register CONST mat_t src));
 BU_EXTERN(void		bn_mat_mul, (register mat_t o, register CONST mat_t a,
 					register CONST mat_t b));
 BU_EXTERN(void		bn_mat_mul2, (register CONST mat_t i, register mat_t o));
+BU_EXTERN(void		bn_mat_mul3, (mat_t o, CONST mat_t a, CONST mat_t b,
+					CONST mat_t c));
 BU_EXTERN(void		bn_matXvec, (register hvect_t ov,
 					register CONST mat_t im,
 					register CONST hvect_t iv));
