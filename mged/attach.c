@@ -39,7 +39,7 @@ struct dm dm_Null = {
 	0.0,
 	"nu", "Null Display"
 };
-extern struct dm dm_Mg, dm_Vg, dm_Tek;
+extern struct dm dm_Mg, dm_Vg, dm_Tek, dm_Rat;
 
 struct dm *dmp = &dm_Null;	/* Ptr to current Display Manager package */
 
@@ -48,6 +48,7 @@ static struct dm *which_dm[] = {
 	&dm_Mg,
 	&dm_Vg,
 	&dm_Tek,
+	&dm_Rat,
 	&dm_Null,
 	0
 };
