@@ -24,7 +24,7 @@ rtsil_SOURCES = $(COMMON) viewsil.c
 rtwalk_SOURCES = rtwalk.c
 rtweight_SOURCES = $(COMMON) viewweight.c
 rtxray_SOURCES = $(COMMON) viewxray.c
-rt_bot_faces_SOURCES = rt_bot_faces_vers.c view_bot_faces.c main.c opt.c do.c worker.c
+rt_bot_faces_SOURCES = rt_bot_faces_vers.c view_bot_faces.c main.c opt.c do.c worker.c vers.c
 
 noinst_HEADERS = ext.h light.h rad.h scat.h
 
