@@ -618,7 +618,10 @@ typedef long	bitv_t;		/* largest integer type */
 # endif
 #endif
 
-/* POSIX (or at least the SGI versions does not define hypot) */
+/*
+ *  ANSI and POSIX do not seem to have prototypes for the hypot() routine,
+ *  but several vendors include it in their -lm math library.
+ */
 #if defined(_POSIX_SOURCE)
 	/* But the sgi -lm does have a hypot routine so lets use it */
 #if defined(__sgi) || defined(__convexc__)
@@ -628,5 +631,8 @@ typedef long	bitv_t;		/* largest integer type */
 #endif
 #endif
 
+#if SUNOS >= 52
+        extern double hypot(double, double);
 #endif
 
+#endif
