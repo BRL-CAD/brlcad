@@ -93,8 +93,6 @@ char	*argv[];
 					argv[0], bfile);
 				exit(1);
 			}
-			/* Create db. */
-			mk_id(fpout, "Jack NMG");	/* Db name. */
 		} else {
 			fclose(fpout);
 			if ((fpout = fopen(bfile, "a")) == NULL) {
@@ -105,6 +103,9 @@ char	*argv[];
 			}
 		}
 	}
+
+	/* Output BRL-CAD database header.  No problem if more than one. */
+	mk_id(fpout, jfile);
 
 	/* Make default region name if none given. */
 	if (!reg_name) {
