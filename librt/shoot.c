@@ -579,7 +579,11 @@ register struct application *ap;
 		VPRINT("Dir", ap->a_ray.r_dir);
 	}
 
+	/* Since this count provides the RTFM, it must be semaphored */
+	RES_ACQUIRE( &rt_g.res_stats );
 	rtip->rti_nrays++;
+	RES_RELEASE( &rt_g.res_stats );
+
 	if( rtip->needprep )
 		rt_prep(rtip);
 
