@@ -939,6 +939,11 @@ union tree	*tp;
 
 /*
  *			D B _ N O N _ U N I O N _ P U S H
+ *
+ *  If there are non-union operations in the tree,
+ *  above the region nodes, then rewrite the tree so that
+ *  the entire tree top is nothing but union operations,
+ *  and any non-union operations are clustered down near the region nodes.
  */
 void
 db_non_union_push( tp )
