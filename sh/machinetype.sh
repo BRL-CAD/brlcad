@@ -42,7 +42,7 @@ trap '/bin/rm -f ${FILE}; exit 1' 1 2 3 15	# Clean up temp file
 #	undef	aux
 	MACHINE=aux;
 	UNIXTYPE=SYSV;
-	HAS_TCP=0;
+	HAS_TCP=1;
 	HAS_SYMLINKS=1;
 #endif
 
