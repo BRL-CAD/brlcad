@@ -8,12 +8,12 @@
 #include "../Cakefile.defs"
 
 #if !defined(BUILD_LIBRARY)
-#define TCL_OPTS	--srcdir=[[pwd]]/../SRCDIR/"unix" --cache-file cache.MTYPE \
+#define TCL_OPTS	--srcdir=[[pwd]]/../SRCDIR/"unix" --quiet --cache-file cache.MTYPE \
 			 --exec-prefix=BASEDIR --prefix=BASEDIR
 #define PRODUCTS	libtcl.a tclsh
 #define	AFTER_MAKE	/**/
 #else
-#define TCL_OPTS	--srcdir=[[pwd]]/../SRCDIR/"unix" --enable-shared \
+#define TCL_OPTS	--srcdir=[[pwd]]/../SRCDIR/"unix" --quiet --enable-shared \
 			 --cache-file cache.MTYPE --exec-prefix=BASEDIR --prefix=BASEDIR
 #define PRODUCTS	libtcl.so tclsh
 #define SHARED_PRODUCT	libtcl.so''[[LIBVERS]]
@@ -21,7 +21,7 @@
 #endif
 
 PRODUCTS: Makefile.MTYPE cache.MTYPE
-	make -f Makefile.MTYPE
+	make `echo CAKEFLAGS | tr '\040' '\012' | grep -- -s` -f Makefile.MTYPE CAKEFLAGS
 
 Makefile.MTYPE cache.MTYPE:		if not exist Makefile.MTYPE or not exist cache.MTYPE
 	( \C\F\L\A\G\S=\"GFLAG OPTIMIZER PROFILER\"; \
@@ -33,14 +33,13 @@ Makefile.MTYPE cache.MTYPE:		if not exist Makefile.MTYPE or not exist cache.MTYP
 
 
 clean&:
-	make -f Makefile.MTYPE clean
+	make -f Makefile clean
 
 noprod&:
 	rm -rf *.so *.a
 
-clobber&: Makefile.MTYPE
-	make -f Makefile.MTYPE clean
-	rm -f *.MTYPE
+clobber&: 
+	rm -f *.MTYPE *.o *.a config.log config.status tclConfig.sh tclsh Makefile
 
 install&: Makefile.MTYPE
 	make -f Makefile.MTYPE install
