@@ -49,26 +49,26 @@ struct scroll_item *scroll_array[6];	/* Active scroll bar definitions */
 static void sl_tol();
 
 struct scroll_item scr_menu[] = {
-	{ "xslew",	sl_tol,		&rate_slew[X] },
-	{ "yslew",	sl_tol,		&rate_slew[Y] },
-	{ "zslew",	sl_tol,		&rate_slew[Z] },
-	{ "zoom",	sl_tol,		&rate_zoom },
-	{ "xrot",	sl_tol,		&rate_rotate[X] },
-	{ "yrot",	sl_tol,		&rate_rotate[Y] },
-	{ "zrot",	sl_tol,		&rate_rotate[Z] },
-	{ "",		(void (*)())NULL, 0 }
+	{ "xslew",	sl_tol,		&rate_slew[X],	"knob X" },
+	{ "yslew",	sl_tol,		&rate_slew[Y],	"knob Y" },
+	{ "zslew",	sl_tol,		&rate_slew[Z],	"knob Z" },
+	{ "zoom",	sl_tol,		&rate_zoom,	"knob S" },
+	{ "xrot",	sl_tol,		&rate_rotate[X],"knob x" },
+	{ "yrot",	sl_tol,		&rate_rotate[Y],"knob y" },
+	{ "zrot",	sl_tol,		&rate_rotate[Z],"knob z" },
+	{ "",		(void (*)())NULL, 0, "" }
 };
 
-static void	sl_xadc(), sl_yadc(), sl_1adc(), sl_2adc(), sl_distadc();
+static void	sl_itol();
 static double	sld_xadc, sld_yadc, sld_1adc, sld_2adc, sld_distadc;
 
 struct scroll_item sl_adc_menu[] = {
-	{ "xadc",	sl_xadc,	&sld_xadc },
-	{ "yadc",	sl_yadc,	&sld_yadc },
-	{ "ang 1",	sl_1adc,	&sld_1adc },
-	{ "ang 2",	sl_2adc,	&sld_2adc },
-	{ "tick",	sl_distadc,	&sld_distadc },
-	{ "",		(void (*)())NULL, 0 }
+	{ "xadc",	sl_itol,	&sld_xadc, "knob xadc" },
+	{ "yadc",	sl_itol,	&sld_yadc, "knob yadc" },
+	{ "ang 1",	sl_itol,	&sld_1adc, "knob ang1" },
+	{ "ang 2",	sl_itol,	&sld_2adc, "knob ang2" },
+	{ "tick",	sl_itol,	&sld_distadc, "knob distadc" },
+	{ "",		(void (*)())NULL, 0, "" }
 };
 
 
@@ -113,59 +113,34 @@ void sl_toggle_scroll()
  *  Where the floating point value pointed to by scroll_val		*
  *  in the range -1.0 to +1.0 is the only desired result,		*
  *  everything can bel handled by sl_tol().				*
- *  When conversion to integer is required, an individual handler	*
- *  is required for each slider.					*
  *									*
  ************************************************************************/
 #define SL_TOL	0.015		/* size of dead spot, 0.015 = 32/2047 */
 
-static void sl_tol( mptr )
+static void sl_tol( mptr, val )
 register struct scroll_item     *mptr;
+double				val;
 {
-
-	if( *mptr->scroll_val < -SL_TOL )   {
-		*(mptr->scroll_val) += SL_TOL;
-	} else if( *mptr->scroll_val > SL_TOL )   {
-		*(mptr->scroll_val) -= SL_TOL;
+	if( val < -SL_TOL )   {
+		val += SL_TOL;
+	} else if( val > SL_TOL )   {
+		val -= SL_TOL;
 	} else {
-		*(mptr->scroll_val) = 0.0;
+		val = 0.0;
 	}
-	check_nonzero_rates();
+	*(mptr->scroll_val) = val;
+	rt_vls_printf( &dm_values.dv_string, "%s %f\n",
+		mptr->scroll_cmd, val );
 }
 
-static void sl_xadc( mptr )
+static void sl_itol( mptr, val )
 register struct scroll_item     *mptr;
+double				val;
 {
-	rt_vls_printf(&dm_values.dv_string, "knob xadc %d\n",
-		(int)(*(mptr->scroll_val) * 2047) );
-}
-
-static void sl_yadc( mptr )
-register struct scroll_item     *mptr;
-{
-	rt_vls_printf(&dm_values.dv_string, "knob yadc %d\n",
-		(int)(*(mptr->scroll_val) * 2047) );
-}
-
-static void sl_1adc( mptr )
-register struct scroll_item     *mptr;
-{
-	rt_vls_printf(&dm_values.dv_string, "knob ang1 %d\n",
-		(int)(*(mptr->scroll_val) * 2047) );
-}
-
-static void sl_2adc( mptr )
-register struct scroll_item     *mptr;
-{
-	rt_vls_printf(&dm_values.dv_string, "knob ang2 %d\n",
-		(int)(*(mptr->scroll_val) * 2047) );
-}
-
-static void sl_distadc( mptr )
-register struct scroll_item     *mptr;
-{
-	rt_vls_printf(&dm_values.dv_string, "knob distadc %d\n",
-		(int)(*(mptr->scroll_val) * 2047) );
+	*(mptr->scroll_val) = val;
+	rt_vls_printf(&dm_values.dv_string, "%s %d\n",
+		mptr->scroll_cmd,
+		(int)(val * 2047) );
 }
 
 
@@ -251,6 +226,7 @@ register int	pen_y;
 	yy = scroll_top;
 	for( m = &scroll_array[0]; *m != SCROLL_NULL; m++ )  {
 		for( mptr = *m; mptr->scroll_string[0] != '\0'; mptr++ )  {
+			fastf_t	val;
 			yy += SCROLL_DY;	/* bottom line pos */
 			if( pen_y < yy )
 				continue;	/* pen below this item */
@@ -262,15 +238,15 @@ register int	pen_y;
 			 *  menu text area on the left.
 			 */
 			if( pen_x >= 0 )  {
-				*(mptr->scroll_val) = pen_x/2047.0;
+				val = pen_x/2047.0;
 			} else {
-				*(mptr->scroll_val) = pen_x/(double)(-MENUXLIM);
+				val = pen_x/(double)(-MENUXLIM);
 			}
 
 			/* See if hooked function has been specified */
 			if( mptr->scroll_func == ((void (*)())0) )  continue;
 
-			(*(mptr->scroll_func))(mptr);
+			(*(mptr->scroll_func))(mptr, val);
 			dmaflag = 1;
 			return( 1 );		/* scroll claims pen value */
 		}
