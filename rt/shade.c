@@ -220,12 +220,16 @@ register int	want;
 			}
 #endif
 			/* Check to make sure normals are OK */
-			if( (f=VDOT( ap->a_ray.r_dir, swp->sw_hit.hit_normal )) > 0 )  {
+			f = VDOT(ap->a_ray.r_dir,swp->sw_hit.hit_normal);
+			if (f > 0.0 &&
+			    !BN_VECT_ARE_PERP(f, &(ap->a_rt_i->rti_tol))) {
 				bu_log("shade_inputs(%s) flip N xy=%d,%d %s surf=%d dot=%g\n",
-					pp->pt_inseg->seg_stp->st_name,
-					ap->a_x, ap->a_y,
-					rt_functab[pp->pt_inseg->seg_stp->st_id].ft_name,
-					swp->sw_hit.hit_surfno, f);
+				       pp->pt_inseg->seg_stp->st_name,
+				       ap->a_x, ap->a_y,
+				       rt_functab[
+                                         pp->pt_inseg->seg_stp->st_id
+				       ].ft_name,
+				       swp->sw_hit.hit_surfno, f);
 				if( rdebug&RDEBUG_SHADE ) {
 					VPRINT("Dir ", ap->a_ray.r_dir);
 					VPRINT("Norm", swp->sw_hit.hit_normal);
