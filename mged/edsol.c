@@ -5082,6 +5082,7 @@ double	xangle, yangle, zangle;
  *  Put labels on the vertices of the currently edited solid.
  *  XXX This really should use import/export interface!!!  Or be part of it.
  */
+void
 label_edited_solid( pl, max_pl, xform, ip )
 struct rt_point_labels	pl[];
 int			max_pl;
