@@ -2390,7 +2390,8 @@ init_sedit(void)
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "begin_edit_callback");
+		bu_vls_strcpy(&vls, "begin_edit_callback ");
+		db_path_to_vls(&vls, &illump->s_fullpath);
 		(void)Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 	}
@@ -7390,7 +7391,7 @@ init_oedit(void)
 
 	/* begin edit callback */
 	bu_vls_init(&vls);
-	bu_vls_strcpy(&vls, "begin_edit_callback");
+	bu_vls_strcpy(&vls, "begin_edit_callback {}");
 	(void)Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 }
