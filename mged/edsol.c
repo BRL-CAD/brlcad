@@ -7869,8 +7869,6 @@ char **argv;
   return TCL_OK;
 }
 
-extern int rt_db_report();		/* XXX internal to librt/tcl.c */
-
 int
 f_get_edit_solid(clientData, interp, argc, argv)
 ClientData clientData;
@@ -7901,7 +7899,9 @@ char **argv;
 
   if(argc == 1){
     /* get solid type and parameters */
-    status = rt_db_report(interp, &es_int, (char *)0);
+    RT_CK_DB_INTERNAL(&es_int);
+    RT_CK_FUNCTAB(es_int.idb_meth);
+    status = es_int.idb_meth->ft_tclget(interp, &es_int, (char *)0);
     pto = Tcl_GetObjResult(interp);
 
     pnto = Tcl_NewObj();
@@ -7923,7 +7923,9 @@ char **argv;
   transform_editing_solid(&ces_int, es_mat, &es_int, 0);
 
   /* get solid type and parameters */
-  status = rt_db_report(interp, &ces_int, (char *)0);
+  RT_CK_DB_INTERNAL(&ces_int);
+  RT_CK_FUNCTAB(ces_int.idb_meth);
+  status = ces_int.idb_meth->ft_tclget(interp, &ces_int, (char *)0);
   pto = Tcl_GetObjResult(interp);
 
   pnto = Tcl_NewObj();

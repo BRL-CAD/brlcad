@@ -1213,12 +1213,15 @@ struct rt_wdb		*wdb;
  *  This is the generic routine to be listed in rt_functab[].ft_tclget
  *  for those solid types which are fully described by their ft_parsetab
  *  entry.
+ *
+ *  'attr' is specified to retrieve only one attribute, rather than all.
+ *  Example:  "db get ell.s B" to get only the B vector.
  */
 int
 rt_parsetab_tclget( interp, intern, attr )
-Tcl_Interp		*interp;
-struct rt_db_internal	*intern;
-CONST char		*attr;
+Tcl_Interp			*interp;
+CONST struct rt_db_internal	*intern;
+CONST char			*attr;
 {
 	register CONST struct bu_structparse	*sp = NULL;
 	register CONST struct rt_functab	*ftp;
@@ -1269,53 +1272,6 @@ CONST char		*attr;
 	Tcl_DStringResult( interp, &ds );
 	Tcl_DStringFree( &ds );
 	bu_vls_free( &str );
-
-	return status;
-}
-
-/*
- *			R T _ D B _ R E P O R T
- *
- *  Report on a particular object from the database.
- *  Used to support "db get".
- *  Also used in MGED for get_edit_solid.
- *  'attr' is specified to retrieve only one attribute, rather than all.
- *  Example:  "db get ell.s B" to get only the B vector.
- *  XXX This routine should go away soon, and be replaced by
- *  XXX idb_meth->ft_tclget().
- */
-int
-rt_db_report( interp, intern, attr )
-Tcl_Interp		*interp;
-CONST struct rt_db_internal	*intern;
-CONST char		*attr;
-{
-	register CONST struct bu_structparse	*sp = NULL;
-	register CONST struct rt_functab	*ftp;
-	int                     id, status;
-
-	RT_CK_DB_INTERNAL( intern );
-
-       /* Find out what type of object we are dealing with and report on it. */
-	id = intern->idb_type;
-	ftp = intern->idb_meth;
-	RT_CK_FUNCTAB(ftp);
-
-	/* return ftp->ft_tclget( interp, intern, attr ); */
-
-	switch( id ) {
-	case ID_COMBINATION:
-		status = rt_comb_tclget( interp, intern, attr );
-		break;
-	default:
-		if( ftp->ft_parsetab == (struct bu_structparse *)NULL ) {
-			Tcl_AppendResult( interp, ftp->ft_label,
- " {a Tcl output routine for this type of object has not yet been implemented}",
-				  (char *)NULL );
-			return TCL_OK;
-		}
-		status = rt_parsetab_tclget( interp, intern, attr );
-	}
 
 	return status;
 }
@@ -1372,12 +1328,7 @@ char	      **argv;
 	if( rt_tcl_import_from_path( interp, &intern, argv[1], wdb ) == TCL_ERROR )
 		return TCL_ERROR;
 
-	if( intern.idb_meth->ft_tclget )  {
-		status = intern.idb_meth->ft_tclget( interp, &intern, argv[2] );
-	} else {
-		status = rt_db_report( interp, &intern, argv[2] );
-	}
-
+	status = intern.idb_meth->ft_tclget( interp, &intern, argv[2] );
 	intern.idb_meth->ft_ifree( &intern );
 	return status;
 }
@@ -1456,13 +1407,13 @@ double			diameter;
 }
 
 /*
- *			R T _ G E N E R I C _ T C L A D J U S T
+ *			R T _ P A R S E T A B _ T C L A D J U S T
  *
  *  For those solids entirely defined by their parsetab.
  *  Invoked via rt_functab[].ft_tcladjust()
  */
 int
-rt_generic_tcladjust( interp, intern, argc, argv )
+rt_parsetab_tcladjust( interp, intern, argc, argv )
 Tcl_Interp		*interp;
 struct rt_db_internal	*intern;
 int			argc;
@@ -1551,17 +1502,9 @@ char	      **argv;
 		rt_generic_make( ftp, &intern, 0.0 );
 	}
 
-	if( ftp->ft_tcladjust )  {
-		if( ftp->ft_tcladjust( interp, &intern, argc-3,
-					argv+3 ) == TCL_ERROR ) {
-			rt_db_free_internal( &intern );
-			return TCL_ERROR;
-		}
-	} else {
-		if( rt_generic_tcladjust( interp, &intern, argc-3, argv+3 ) == TCL_ERROR )  {
-			rt_db_free_internal(&intern);
-			return TCL_ERROR;
-		}
+	if( ftp->ft_tcladjust( interp, &intern, argc-3, argv+3 ) == TCL_ERROR ) {
+		rt_db_free_internal( &intern );
+		return TCL_ERROR;
 	}
 
 	if( wdb_export( wdb, name, intern.idb_ptr, intern.idb_type,
@@ -1637,13 +1580,7 @@ char	      **argv;
 	id = intern.idb_type;
 	RT_CK_FUNCTAB(intern.idb_meth);
 
-	/* status = ftp->ft_tcladjust( interp, &intern, argc-3, argv+3 ) */
-	if( intern.idb_meth->ft_tcladjust )  {
-		status = intern.idb_meth->ft_tcladjust( interp, &intern, argc-3, argv+3 );
-	} else {
-		status = rt_generic_tcladjust( interp, &intern, argc-3, argv+3 );
-	}
-
+	status = intern.idb_meth->ft_tcladjust( interp, &intern, argc-3, argv+3 );
 	if( status == TCL_OK && wdb_export( wdb, name, intern.idb_ptr,
 					    intern.idb_type, 1.0 ) < 0 )  {
 		Tcl_AppendResult( interp, "wdb_export(", name,
@@ -1655,6 +1592,29 @@ char	      **argv;
 	rt_db_free_internal( &intern );
 	return status;
 }
+
+/*
+ *			R T _ P A R S E T A B _ T C L F O R M
+ *
+ *  Invoked via rt_functab[].ft_tclform()
+ */
+int
+rt_parsetab_tclform( ftp, interp)
+CONST struct rt_functab	*ftp;
+Tcl_Interp		*interp;
+{
+	RT_CK_FUNCTAB(ftp);
+
+	if( ftp->ft_parsetab )  {
+		bu_structparse_get_terse_form( interp, ftp->ft_parsetab );
+		return TCL_OK;
+	}
+	Tcl_AppendResult(interp, ftp->ft_label,
+		" is a valid object type, but a 'form' routine has not yet been implemented.",
+		(char *)NULL );
+	return TCL_ERROR;
+}
+
 
 /*
  *			R T _ D B _ F O R M
@@ -1683,20 +1643,7 @@ char **argv;
 			argv[1], "\".", (char *)NULL);
 		return TCL_ERROR;
 	}
-	if( ftp->ft_tclform )
-		return ftp->ft_tclform( ftp, interp );
-
-	sp = ftp->ft_parsetab;
-    
-	if (sp != NULL)
-		bu_structparse_get_terse_form(interp, sp);
-	else {
-		Tcl_AppendResult(interp, argv[1],
-			" is a valid object type, but a 'form' routine has not yet been implemented.",
-			(char *)NULL );
-		return TCL_ERROR;
-	}
-	return TCL_OK;
+	return ftp->ft_tclform( ftp, interp );
 }
 
 /*

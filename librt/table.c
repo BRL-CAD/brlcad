@@ -234,12 +234,74 @@ BU_EXTERN(int rt_comb_tclform, (CONST struct rt_functab *ftp,
 BU_EXTERN(void rt_comb_make, (CONST struct rt_functab *ftp,
 		struct rt_db_internal *intern, double diameter));
 
+/* generics for solid */
+BU_EXTERN(int rt_parsetab_tclget, (Tcl_Interp *interp,
+		CONST struct rt_db_internal *intern, CONST char *attr));
+BU_EXTERN(int rt_parsetab_tcladjust, (Tcl_Interp *interp,
+		struct rt_db_internal *intern, int argc, char **argv));
+BU_EXTERN(int rt_parsetab_tclform, (CONST struct rt_functab *ftp,
+		Tcl_Interp *interp));
+BU_EXTERN(void rt_generic_make, (CONST struct rt_functab *ftp,
+		struct rt_db_internal *intern, double diameter));
+
+
 /* XXX from shoot.c / vshoot.c */
 RT_EXTERN(void rt_vstub, (struct soltab *stp[], struct xray *rp[],
 	struct seg segp[], int n, struct application *ap ));
 RT_EXTERN(int rt_generic_xform, (struct rt_db_internal *op, 
 	CONST mat_t mat, struct rt_db_internal *ip,
 	int free));
+
+/* Stub Tcl interfaces */
+#if __STDC__
+int rt_nul_tclget(Tcl_Interp *interp, CONST struct rt_db_internal *intern, CONST char *attr)  {
+	Tcl_AppendResult(interp, "rt_nul_tclget", (char *)NULL);
+	return TCL_ERROR;
+}
+int rt_nul_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, char **argv)  {
+	Tcl_AppendResult(interp, "rt_nul_tcladjust", (char *)NULL);
+	return TCL_ERROR;
+}
+int rt_nul_tclform(CONST struct rt_functab *ftp, Tcl_Interp *interp) {
+	Tcl_AppendResult(interp, "rt_nul_tclform", (char *)NULL);
+	return TCL_ERROR;
+}
+void rt_nul_make(CONST struct rt_functab *ftp, struct rt_db_internal *intern, double diameter) {
+	bu_bomb("rt_nul_make invoked\n");
+}
+#else
+int rt_nul_tclget(interp, intern, attr)
+Tcl_Interp *interp;
+CONST struct rt_db_internal *intern;
+CONST char *attr;
+{
+	Tcl_AppendResult(interp, "rt_nul_tclget", (char *)NULL);
+	return TCL_ERROR;
+}
+int rt_nul_tcladjust(interp, intern, argc, argv)
+Tcl_Interp *interp;
+struct rt_db_internal *intern;
+int argc;
+char **argv;
+{
+	Tcl_AppendResult(interp, "rt_nul_tcladjust", (char *)NULL);
+	return TCL_ERROR;
+}
+int rt_nul_tclform(ftp, interp)
+CONST struct rt_functab *ftp;
+Tcl_Interp *interp;
+{
+	Tcl_AppendResult(interp, "rt_nul_tclform", (char *)NULL);
+	return TCL_ERROR;
+}
+void rt_nul_make(ftp, intern, diameter)
+CONST struct rt_functab *ftp;
+struct rt_db_internal *intern;
+double diameter;
+{
+	bu_bomb("rt_nul_make invoked\n");
+}
+#endif
 
 CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 	{RT_FUNCTAB_MAGIC, "ID_NULL", "NULL",
@@ -250,6 +312,8 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 		rt_nul_import,	rt_nul_export,	rt_nul_ifree,
 		rt_nul_describe,rt_nul_xform,	rt_nul_parse,
 		0,				0,
+		rt_nul_tclget,	rt_nul_tcladjust, rt_nul_tclform,
+		rt_nul_make,
 	},
 
 	{RT_FUNCTAB_MAGIC, "ID_TOR", "tor",
@@ -260,6 +324,8 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 		rt_tor_import,	rt_tor_export,	rt_tor_ifree,
 		rt_tor_describe,rt_tor_xform,	rt_tor_parse,
 		sizeof(struct rt_tor_internal),	RT_TOR_INTERNAL_MAGIC,	
+		rt_parsetab_tclget, rt_parsetab_tcladjust, rt_parsetab_tclform,
+		NULL,
 	},
 
 	{RT_FUNCTAB_MAGIC, "ID_TGC", "tgc",
@@ -270,6 +336,8 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 		rt_tgc_import,	rt_tgc_export,	rt_tgc_ifree,
 		rt_tgc_describe,rt_tgc_xform,	rt_tgc_parse,
 		sizeof(struct rt_tgc_internal), RT_TGC_INTERNAL_MAGIC,
+		rt_parsetab_tclget, rt_parsetab_tcladjust, rt_parsetab_tclform,
+		NULL,
 	},
 
 	{RT_FUNCTAB_MAGIC, "ID_ELL", "ell",
@@ -280,6 +348,8 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 		rt_ell_import,	rt_ell_export,	rt_ell_ifree,
 		rt_ell_describe,rt_ell_xform,	rt_ell_parse,
 		sizeof(struct rt_ell_internal), RT_ELL_INTERNAL_MAGIC,
+		rt_parsetab_tclget, rt_parsetab_tcladjust, rt_parsetab_tclform,
+		NULL,
 	},
 
 	{RT_FUNCTAB_MAGIC, "ID_ARB8", "arb8",
@@ -290,6 +360,8 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 		rt_arb_import,	rt_arb_export,	rt_arb_ifree,
 		rt_arb_describe,rt_arb_xform,	rt_arb_parse,
 		sizeof(struct rt_arb_internal), RT_ARB_INTERNAL_MAGIC,
+		rt_parsetab_tclget, rt_parsetab_tcladjust, rt_parsetab_tclform,
+		NULL,
 	},
 
 	{RT_FUNCTAB_MAGIC, "ID_ARS", "ars",
@@ -300,6 +372,8 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 		rt_ars_import,	rt_ars_export,	rt_ars_ifree,
 		rt_ars_describe,rt_ars_xform,	NULL,
 		sizeof(struct rt_ars_internal), RT_ARS_INTERNAL_MAGIC,
+		rt_parsetab_tclget, rt_parsetab_tcladjust, rt_parsetab_tclform,
+		NULL,
 	},
 
 	{RT_FUNCTAB_MAGIC, "ID_HALF", "half",
@@ -310,6 +384,8 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 		rt_hlf_import,	rt_hlf_export,	rt_hlf_ifree,
 		rt_hlf_describe,rt_generic_xform, rt_hlf_parse,
 		sizeof(struct rt_half_internal), RT_HALF_INTERNAL_MAGIC,
+		rt_parsetab_tclget, rt_parsetab_tcladjust, rt_parsetab_tclform,
+		NULL,
 	},
 
 	{RT_FUNCTAB_MAGIC, "ID_REC", "rec",
@@ -320,6 +396,8 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 		rt_tgc_import,	rt_tgc_export,	rt_tgc_ifree,
 		rt_tgc_describe,rt_rec_xform,	rt_tgc_parse,
 		sizeof(struct rt_tgc_internal), RT_TGC_INTERNAL_MAGIC,
+		rt_parsetab_tclget, rt_parsetab_tcladjust, rt_parsetab_tclform,
+		NULL,
 	},
 
 	{RT_FUNCTAB_MAGIC, "ID_POLY", "poly",
@@ -330,6 +408,8 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 		rt_pg_import,	rt_pg_export,	rt_pg_ifree,
 		rt_pg_describe, rt_pg_xform,	NULL,
 		sizeof(struct rt_pg_internal), RT_PG_INTERNAL_MAGIC,
+		rt_parsetab_tclget, rt_parsetab_tcladjust, rt_parsetab_tclform,
+		NULL,
 	},
 
 	{RT_FUNCTAB_MAGIC, "ID_BSPLINE", "bspline",
@@ -340,6 +420,8 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 		rt_nurb_import,	rt_nurb_export,	rt_nurb_ifree,
 		rt_nurb_describe,rt_nurb_xform,	NULL,
 		sizeof(struct rt_nurb_internal), RT_NURB_INTERNAL_MAGIC,
+		rt_parsetab_tclget, rt_parsetab_tcladjust, rt_parsetab_tclform,
+		NULL,
 	},
 
 	{RT_FUNCTAB_MAGIC, "ID_SPH", "sph",
@@ -350,6 +432,8 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 		rt_ell_import,	rt_ell_export,	rt_ell_ifree,
 		rt_ell_describe,rt_sph_xform,	rt_ell_parse,
 		sizeof(struct rt_ell_internal), RT_ELL_INTERNAL_MAGIC,
+		rt_parsetab_tclget, rt_parsetab_tcladjust, rt_parsetab_tclform,
+		NULL,
 	},
 
 	{RT_FUNCTAB_MAGIC, "ID_NMG", "nmg",
@@ -360,6 +444,8 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 		rt_nmg_import,	rt_nmg_export,	rt_nmg_ifree,
 		rt_nmg_describe,rt_nmg_xform,	NULL,
 		sizeof(struct model), NMG_MODEL_MAGIC,
+		rt_parsetab_tclget, rt_parsetab_tcladjust, rt_parsetab_tclform,
+		NULL,
 	},
 
 	{RT_FUNCTAB_MAGIC, "ID_EBM", "ebm",
@@ -370,6 +456,8 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 		rt_ebm_import,	rt_ebm_export,	rt_ebm_ifree,
 		rt_ebm_describe,rt_ebm_xform,	rt_ebm_parse,
 		sizeof(struct rt_ebm_internal), RT_EBM_INTERNAL_MAGIC,
+		rt_parsetab_tclget, rt_parsetab_tcladjust, rt_parsetab_tclform,
+		NULL,
 	},
 
 	{RT_FUNCTAB_MAGIC, "ID_VOL", "vol",
@@ -380,6 +468,8 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 		rt_vol_import,	rt_vol_export,	rt_vol_ifree,
 		rt_vol_describe,rt_vol_xform,	rt_vol_parse,
 		sizeof(struct rt_vol_internal), RT_VOL_INTERNAL_MAGIC,
+		rt_parsetab_tclget, rt_parsetab_tcladjust, rt_parsetab_tclform,
+		NULL,
 	},
 
 	{RT_FUNCTAB_MAGIC, "ID_ARBN", "arbn",
@@ -390,6 +480,8 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 		rt_arbn_import,	rt_arbn_export,	rt_arbn_ifree,
 		rt_arbn_describe,rt_arbn_xform,	NULL,
 		sizeof(struct rt_arbn_internal), RT_ARBN_INTERNAL_MAGIC,
+		rt_parsetab_tclget, rt_parsetab_tcladjust, rt_parsetab_tclform,
+		NULL,
 	},
 
 	{RT_FUNCTAB_MAGIC, "ID_PIPE", "pipe",
@@ -400,6 +492,8 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 		rt_pipe_import,	rt_pipe_export,	rt_pipe_ifree,
 		rt_pipe_describe,rt_pipe_xform,	NULL,
 		sizeof(struct rt_pipe_internal), RT_PIPE_INTERNAL_MAGIC,
+		rt_parsetab_tclget, rt_parsetab_tcladjust, rt_parsetab_tclform,
+		NULL,
 	},
 
 	{RT_FUNCTAB_MAGIC, "ID_PARTICLE", "part",
@@ -410,6 +504,8 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 		rt_part_import,	rt_part_export,	rt_part_ifree,
 		rt_part_describe,rt_part_xform,	rt_part_parse,
 		sizeof(struct rt_part_internal), RT_PART_INTERNAL_MAGIC,
+		rt_parsetab_tclget, rt_parsetab_tcladjust, rt_parsetab_tclform,
+		NULL,
 	},
 
 	{RT_FUNCTAB_MAGIC, "ID_RPC", "rpc",
@@ -420,6 +516,8 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 		rt_rpc_import,	rt_rpc_export,	rt_rpc_ifree,
 		rt_rpc_describe,rt_rpc_xform,	rt_rpc_parse,
 		sizeof(struct rt_rpc_internal), RT_RPC_INTERNAL_MAGIC,
+		rt_parsetab_tclget, rt_parsetab_tcladjust, rt_parsetab_tclform,
+		NULL,
 	},
 
 	{RT_FUNCTAB_MAGIC, "ID_RHC", "rhc",
@@ -430,6 +528,8 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 		rt_rhc_import,	rt_rhc_export,	rt_rhc_ifree,
 		rt_rhc_describe,rt_rhc_xform,	rt_rhc_parse,
 		sizeof(struct rt_rhc_internal), RT_RHC_INTERNAL_MAGIC,
+		rt_parsetab_tclget, rt_parsetab_tcladjust, rt_parsetab_tclform,
+		NULL,
 	},
 
 	{RT_FUNCTAB_MAGIC, "ID_EPA", "epa",
@@ -440,6 +540,8 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 		rt_epa_import,	rt_epa_export,	rt_epa_ifree,
 		rt_epa_describe,rt_epa_xform,	rt_epa_parse,
 		sizeof(struct rt_epa_internal), RT_EPA_INTERNAL_MAGIC,
+		rt_parsetab_tclget, rt_parsetab_tcladjust, rt_parsetab_tclform,
+		NULL,
 	},
 
 	{RT_FUNCTAB_MAGIC, "ID_EHY", "ehy",
@@ -450,6 +552,8 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 		rt_ehy_import,	rt_ehy_export,	rt_ehy_ifree,
 		rt_ehy_describe,rt_ehy_xform,	rt_ehy_parse,
 		sizeof(struct rt_ehy_internal), RT_EHY_INTERNAL_MAGIC,
+		rt_parsetab_tclget, rt_parsetab_tcladjust, rt_parsetab_tclform,
+		NULL,
 	},
 
 	{RT_FUNCTAB_MAGIC, "ID_ETO", "eto",
@@ -460,6 +564,8 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 		rt_eto_import,	rt_eto_export,	rt_eto_ifree,
 		rt_eto_describe,rt_eto_xform,	rt_eto_parse,
 		sizeof(struct rt_eto_internal), RT_ETO_INTERNAL_MAGIC,
+		rt_parsetab_tclget, rt_parsetab_tcladjust, rt_parsetab_tclform,
+		NULL,
 	},
 
 	{RT_FUNCTAB_MAGIC, "ID_GRIP", "grip",
@@ -470,6 +576,8 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 		rt_grp_import,	rt_grp_export,	rt_grp_ifree,
 		rt_grp_describe,rt_grp_xform,	NULL,
 		sizeof(struct rt_grip_internal), RT_GRIP_INTERNAL_MAGIC,
+		rt_parsetab_tclget, rt_parsetab_tcladjust, rt_parsetab_tclform,
+		NULL,
 	},
 
 	{RT_FUNCTAB_MAGIC, "ID_JOINT", "joint",
@@ -480,6 +588,8 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 		rt_nul_import,	rt_nul_export,	rt_nul_ifree,
 		rt_nul_describe,rt_nul_xform,	NULL,
 		0,				0,
+		rt_nul_tclget,	rt_nul_tcladjust, rt_nul_tclform,
+		rt_nul_make,
 	},
 
 	{RT_FUNCTAB_MAGIC, "ID_HF", "hf",
@@ -490,6 +600,8 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 		rt_hf_import,	rt_hf_export,	rt_hf_ifree,
 		rt_hf_describe,rt_hf_xform,	rt_hf_parse,
 		sizeof(struct rt_hf_internal), RT_HF_INTERNAL_MAGIC,
+		rt_parsetab_tclget, rt_parsetab_tcladjust, rt_parsetab_tclform,
+		NULL,
 	},
 
 	{RT_FUNCTAB_MAGIC, "ID_DSP", "dsp",
@@ -500,6 +612,8 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 		rt_dsp_import,	rt_dsp_export,	rt_dsp_ifree,
 		rt_dsp_describe,rt_dsp_xform,	rt_dsp_parse,
 		sizeof(struct rt_dsp_internal), RT_DSP_INTERNAL_MAGIC,
+		rt_parsetab_tclget, rt_parsetab_tcladjust, rt_parsetab_tclform,
+		NULL,
 	},
 
 	{RT_FUNCTAB_MAGIC, "ID_SKETCH", "sketch",
@@ -510,6 +624,8 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 		rt_sketch_import, rt_sketch_export, rt_sketch_ifree,
 		rt_sketch_describe,rt_sketch_xform, NULL,
 		sizeof(struct rt_sketch_internal), RT_SKETCH_INTERNAL_MAGIC,
+		rt_parsetab_tclget, rt_parsetab_tcladjust, rt_parsetab_tclform,
+		NULL,
 	},
 
 	{RT_FUNCTAB_MAGIC, "ID_EXTRUDE", "extrude",
@@ -520,6 +636,8 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 		rt_extrude_import,	rt_extrude_export,	rt_extrude_ifree,
 		rt_extrude_describe,rt_extrude_xform, NULL,
 		sizeof(struct rt_extrude_internal), RT_EXTRUDE_INTERNAL_MAGIC,
+		rt_parsetab_tclget, rt_parsetab_tcladjust, rt_parsetab_tclform,
+		NULL,
 	},
 
 	{RT_FUNCTAB_MAGIC, "ID_SUBMODEL", "submodel",
@@ -530,6 +648,8 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 		rt_submodel_import,	rt_submodel_export,	rt_submodel_ifree,
 		rt_submodel_describe,	rt_submodel_xform,	rt_submodel_parse,
 		sizeof(struct rt_submodel_internal), RT_SUBMODEL_INTERNAL_MAGIC,
+		rt_parsetab_tclget, rt_parsetab_tcladjust, rt_parsetab_tclform,
+		NULL,
 	},
 
 	{RT_FUNCTAB_MAGIC, "ID_FGP", "fgp",
@@ -540,6 +660,8 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 		rt_fgp_import,	rt_fgp_export,	rt_fgp_ifree,
 		rt_fgp_describe,rt_fgp_xform,	rt_fgp_parse,
 		sizeof(struct rt_fgp_internal), RT_FGP_INTERNAL_MAGIC,
+		rt_parsetab_tclget, rt_parsetab_tcladjust, rt_parsetab_tclform,
+		NULL,
 	},
 
 	{RT_FUNCTAB_MAGIC, "ID_BOT", "bot",
@@ -550,6 +672,8 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 		rt_bot_import,	rt_bot_export,	rt_bot_ifree,
 		rt_bot_describe,rt_bot_xform,	NULL,
 		sizeof(struct rt_bot_internal), RT_BOT_INTERNAL_MAGIC,
+		rt_parsetab_tclget, rt_parsetab_tcladjust, rt_parsetab_tclform,
+		NULL,
 	},
 
 	/* ID_MAXIMUM.  Add new solids _above_ this point */
@@ -575,6 +699,8 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 		rt_nul_import,	rt_nul_export,	rt_nul_ifree,
 		rt_nul_describe,rt_nul_xform,	NULL,
 		0,				0,
+		rt_nul_tclget,	rt_nul_tcladjust, rt_nul_tclform,
+		rt_nul_make,
 	}
 };
 CONST int rt_nfunctab = sizeof(rt_functab)/sizeof(struct rt_functab);
