@@ -1107,7 +1107,7 @@ set -S2 "/bin/sh"
 #	define	CC_DEFS -pipe -fPIC -Wall -pedantic
 #	define	LEX_OPTS	-l
 #	if BUILD_OPTIMIZED	
-#		define	OPTIMIZER	-O3 -fno-strict-aliasing
+#		define	OPTIMIZER	-O3 -fomit-frame-pointer -fno-strict-aliasing
 #	else
 #		define	OPTIMIZER	-O -g
 #		define	PROFILER	-pg  /* gprof profiling -- build staticly to include libraries */
