@@ -29,6 +29,46 @@ static char RCSdir[] = "@(#)$Header$";
 #include "./debug.h"
 
 /*
+ *			R T _ N E W _ R T I
+ *
+ *  Given a db_i database instance, create an rt_i instance.
+ *
+ *  XXX Perhaps the db_i structure should be reference counted?
+ */
+struct rt_i *
+rt_new_rti( dbip )
+struct db_i	*dbip;
+{
+	register struct rt_i	*rtip;
+	register int		i;
+
+	RT_CK_DIR( dbip );
+
+	GETSTRUCT( rtip, rt_i );
+	rtip->rti_magic = RTI_MAGIC;
+	for( i=0; i < RT_DBNHASH; i++ )  {
+		RT_LIST_INIT( &(rtip->rti_solidheads[i]) );
+	}
+	rtip->rti_dbip = dbip;
+	rtip->needprep = 1;
+
+	VSETALL( rtip->mdl_min,  INFINITY );
+	VSETALL( rtip->mdl_max, -INFINITY );
+	VSETALL( rtip->rti_inf_box.bn.bn_min, -0.1 );
+	VSETALL( rtip->rti_inf_box.bn.bn_max,  0.1 );
+	rtip->rti_inf_box.bn.bn_type = CUT_BOXNODE;
+
+	/* XXX These need to be improved */
+	rtip->rti_tol.magic = RT_TOL_MAGIC;
+	rtip->rti_tol.dist = 0.005;
+	rtip->rti_tol.dist_sq = rtip->rti_tol.dist * rtip->rti_tol.dist;
+	rtip->rti_tol.perp = 1e-6;
+	rtip->rti_tol.para = 1 - rtip->rti_tol.perp;
+
+	return rtip;
+}
+
+/*
  *			R T _ D I R B U I L D
  *
  *  Builds a directory of the object names.
@@ -60,31 +100,33 @@ int	len;
 	if( db_scan( dbip, (int (*)())db_diradd, 1 ) < 0 )
 	    	return( RTI_NULL );		/* FAIL */
 
-	GETSTRUCT( rtip, rt_i );
-	rtip->rti_magic = RTI_MAGIC;
-	for( i=0; i < RT_DBNHASH; i++ )  {
-		RT_LIST_INIT( &(rtip->rti_solidheads[i]) );
-	}
-	rtip->rti_dbip = dbip;
-	rtip->needprep = 1;
-
-	VSETALL( rtip->mdl_min,  INFINITY );
-	VSETALL( rtip->mdl_max, -INFINITY );
-	VSETALL( rtip->rti_inf_box.bn.bn_min, -0.1 );
-	VSETALL( rtip->rti_inf_box.bn.bn_max,  0.1 );
-	rtip->rti_inf_box.bn.bn_type = CUT_BOXNODE;
-
-	/* XXX These need to be improved */
-	rtip->rti_tol.magic = RT_TOL_MAGIC;
-	rtip->rti_tol.dist = 0.005;
-	rtip->rti_tol.dist_sq = rtip->rti_tol.dist * rtip->rti_tol.dist;
-	rtip->rti_tol.perp = 1e-6;
-	rtip->rti_tol.para = 1 - rtip->rti_tol.perp;
+	rtip = rt_new_rti( dbip );
 
 	if( buf != (char *)NULL )
 		strncpy( buf, dbip->dbi_title, len );
 
 	return( rtip );				/* OK */
+}
+
+/*
+ *			R T _ F R E E _ R T I
+ *
+ *  Release all the dynamic storage acquired by rt_dirbuild() and
+ *  any subsequent ray-tracing operations.
+ *
+ *  Note that any PARALLEL resource structures have to be freed separately.
+ *  Note that the rt_g structure needs to be cleaned separately.
+ */
+void
+rt_free_rti( rtip )
+struct rt_i	*rtip;
+{
+	RT_CK_RTI(rtip);
+
+	rt_clean( rtip );
+	db_close( rtip->rti_dbip );
+	rtip->rti_dbip = (struct db_i *)NULL;
+	rt_free( (char *)rtip, "struct rt_i" );
 }
 
 /*
