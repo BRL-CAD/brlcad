@@ -582,6 +582,7 @@ genptr_t		user_ptr3;
 {
 	char *obj_name;
 	char *comb_name;
+	register int sflag = (int)user_ptr3;
 
 	RT_CK_TREE( comb_leaf );
 
@@ -591,7 +592,10 @@ genptr_t		user_ptr3;
 
 	comb_name = (char *)comb_name_ptr;
 
-	Tcl_AppendResult(interp, obj_name, ":  member of ", comb_name, "\n", (char *)NULL );
+	if (sflag)
+	  Tcl_AppendElement(interp, comb_name);
+	else
+	  Tcl_AppendResult(interp, obj_name, ":  member of ", comb_name, "\n", (char *)NULL );
 }
 
 /*
@@ -607,6 +611,7 @@ int	argc;
 char	**argv;
 {
   register int	i,j,k;
+  register int sflag = 0;
   register struct directory *dp;
   struct rt_db_internal intern;
   register struct rt_comb_internal *comb=(struct rt_comb_internal *)NULL;
@@ -614,7 +619,7 @@ char	**argv;
   if(dbip == DBI_NULL)
     return TCL_OK;
 
-  if(argc < 1 || MAXARGS < argc){
+  if(argc < 2 || MAXARGS < argc){
     struct bu_vls vls;
 
     bu_vls_init(&vls);
@@ -622,6 +627,23 @@ char	**argv;
     Tcl_Eval(interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
     return TCL_ERROR;
+  }
+
+  if (strcmp(argv[1], "-s") == 0) {
+    --argc;
+    ++argv;
+
+    if(argc < 2){
+      struct bu_vls vls;
+
+      bu_vls_init(&vls);
+      bu_vls_printf(&vls, "help find");
+      Tcl_Eval(interp, bu_vls_addr(&vls));
+      bu_vls_free(&vls);
+      return TCL_ERROR;
+    }
+
+    sflag = 1;
   }
 
   if( setjmp( jmp_env ) == 0 )
@@ -645,7 +667,7 @@ char	**argv;
 	}
     	comb = (struct rt_comb_internal *)intern.idb_ptr;
 	for( k=0; k<argc; k++ )
-	    	db_tree_funcleaf( dbip, comb, comb->tree, Find_ref, (genptr_t)argv[k], (genptr_t)dp->d_namep, (genptr_t)NULL );
+	    	db_tree_funcleaf( dbip, comb, comb->tree, Find_ref, (genptr_t)argv[k], (genptr_t)dp->d_namep, (genptr_t)sflag );
 
     	rt_comb_ifree( &intern );
     }
