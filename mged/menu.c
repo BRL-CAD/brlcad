@@ -204,18 +204,18 @@ int y;
   case BV_RATE_TOGGLE:
     if(mged_variables->rateknobs){
       DM_SET_COLOR(dmp, DM_WHITE_R, DM_WHITE_G, DM_WHITE_B, 1);
-      DM_DRAW_STRING_2D( dmp, "Rate",
-			 GED2PM1(MENUX), GED2PM1(y-15), 0, 0 );
+      DM_DRAW_STRING_2D(dmp, "Rate",
+			GED2PM1(MENUX), GED2PM1(y-15), 0, 0);
       DM_SET_COLOR(dmp, DM_YELLOW_R, DM_YELLOW_G, DM_YELLOW_B, 1);
-      DM_DRAW_STRING_2D( dmp, "/Abs",
-			 GED2PM1(MENUX+4*40), GED2PM1(y-15), 0, 0 );
+      DM_DRAW_STRING_2D(dmp, "/Abs",
+			GED2PM1(MENUX+4*40), GED2PM1(y-15), 0, 0);
     }else{
       DM_SET_COLOR(dmp, DM_YELLOW_R, DM_YELLOW_G, DM_YELLOW_B, 1);
-      DM_DRAW_STRING_2D( dmp, "Rate/",
-			 GED2PM1(MENUX), GED2PM1(y-15), 0, 0 );
+      DM_DRAW_STRING_2D(dmp, "Rate/",
+			GED2PM1(MENUX), GED2PM1(y-15), 0, 0);
       DM_SET_COLOR(dmp, DM_WHITE_R, DM_WHITE_G, DM_WHITE_B, 1);
-      DM_DRAW_STRING_2D( dmp, "Abs",
-			 GED2PM1(MENUX+5*40), GED2PM1(y-15), 0, 0 );
+      DM_DRAW_STRING_2D(dmp, "Abs",
+			GED2PM1(MENUX+5*40), GED2PM1(y-15), 0, 0);
     }
     break;
   default:
@@ -271,8 +271,8 @@ int y_top;
 	  DM_SET_COLOR(dmp, DM_RED_R, DM_RED_G, DM_RED_B, 1);
 	else
 	  DM_SET_COLOR(dmp, DM_YELLOW_R, DM_YELLOW_G, DM_YELLOW_B, 1);
-	DM_DRAW_STRING_2D( dmp, mptr->menu_string,
-			   GED2PM1(MENUX), GED2PM1(y-15), 0, 0 );
+	DM_DRAW_STRING_2D(dmp, mptr->menu_string,
+			  GED2PM1(MENUX), GED2PM1(y-15), 0, 0);
       }
       DM_SET_COLOR(dmp, DM_YELLOW_R, DM_YELLOW_G, DM_YELLOW_B, 1);
       DM_DRAW_LINE_2D(dmp,
