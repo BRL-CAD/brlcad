@@ -593,6 +593,9 @@ int	catch_sigint;
 	size_reset();
 	new_mats();
 	(void)mged_svbase();
+
+	for(i = 0; i < VIEW_TABLE_SIZE; ++i)
+	  viewscale_table[i] = Viewscale;
       }
 
       color_soltab();
@@ -1136,6 +1139,49 @@ char	**argv;
   return TCL_OK;
 }
 
+int
+mged_aetview(iflag, azim, elev, twist)
+int iflag;
+fastf_t azim, elev, twist;
+{
+  int status = TCL_OK;
+  fastf_t o_twist;
+  fastf_t o_arz;
+  fastf_t o_larz;
+  char *av[5];
+  struct bu_vls vls;
+
+  /* grab old twist angle before it's lost */
+  o_twist = curr_dm_list->s_info->twist;
+  o_arz = absolute_rotate[Z];
+  o_larz = last_absolute_rotate[Z];
+
+  /* set view using azimuth and elevation angles */
+  if(iflag)
+    setview( 270.0 + elev + curr_dm_list->s_info->elevation,
+	     0.0,
+	     270.0 - azim - curr_dm_list->s_info->azimuth);
+  else
+    setview( 270.0 + elev, 0.0, 270.0 - azim );
+
+  bu_vls_init(&vls);
+
+  if(iflag)
+    bu_vls_printf(&vls, "knob -i -v az %f", -o_twist - twist);
+  else
+    bu_vls_printf(&vls, "knob -i -v az %f", -twist);
+
+  status = Tcl_Eval(interp, bu_vls_addr(&vls));
+  bu_vls_free(&vls);
+
+  absolute_rotate[Z] = o_arz;
+  last_absolute_rotate[Z] = o_larz;
+
+  Tcl_UpdateLinkedVar(interp, bu_vls_addr(&absolute_rotate_vls[Z]));
+
+  return status;
+}
+
 /* set view using azimuth, elevation and twist angles */
 int
 f_aetview(clientData, interp, argc, argv)
@@ -1145,11 +1191,8 @@ int	argc;
 char	**argv;
 {
   int iflag = 0;
-  int status = TCL_OK;
-  fastf_t o_twist;
-  fastf_t twist;
-  char *av[5];
   struct bu_vls vls;
+  fastf_t twist = 0.0;
 
   if(argc < 3 || 5 < argc){
     struct bu_vls vls;
@@ -1166,39 +1209,13 @@ char	**argv;
     iflag = 1;  /* treat arguments as incremental values */
     ++argv;
     --argc;
-  }
+  }else
+    twist = curr_dm_list->s_info->twist;
 
-  /* grab old twist angle before it's lost */
-  o_twist = curr_dm_list->s_info->twist;
-
-  /* set view using azimuth and elevation angles */
-  if(iflag)
-    setview( 270.0 + atof(argv[2]) + curr_dm_list->s_info->elevation,
-	     0.0,
-	     270.0 - atof(argv[1]) - curr_dm_list->s_info->azimuth);
-  else
-    setview( 270.0 + atof(argv[2]), 0.0, 270.0 - atof(argv[1]) );
-
-  if(argc == 4){ /* twist angle supplied */
+  if(argc == 4) /* twist angle supplied */
     twist = atof(argv[3]);
-#if 0
-    if(iflag)
-      status = mged_vrot(0.0, 0.0, -o_twist - twist);
-    else
-      status = mged_vrot(0.0, 0.0, -twist);
-#else
-    bu_vls_init(&vls);
-    if(iflag)
-      bu_vls_printf(&vls, "knob -i az %f", -o_twist - twist);
-    else
-      bu_vls_printf(&vls, "knob -i az %f", -twist);
 
-    status = Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-#endif
-  }
-
-  return status;
+  return mged_aetview(iflag, atof(argv[1]), atof(argv[2]), twist);
 }
 
 
@@ -1331,14 +1348,13 @@ int		lvl;			/* debug level */
 		  sp->s_center[Z]*base2local,
 		  sp->s_size*base2local );
     bu_vls_printf(&vls, "reg=%d\n",sp->s_regionid );
-    bu_vls_printf(&vls, "  color=(%d,%d,%d) %d,%d,%d i=%d\n",
+    bu_vls_printf(&vls, "  color=(%d,%d,%d) %d,%d,%d\n",
 		  sp->s_basecolor[0],
 		  sp->s_basecolor[1],
 		  sp->s_basecolor[2],
 		  sp->s_color[0],
 		  sp->s_color[1],
-		  sp->s_color[2],
-		  sp->s_dmindex );
+		  sp->s_color[2]);
 
     if( lvl <= 1 )  continue;
 
@@ -1594,7 +1610,12 @@ check_nonzero_rates()
       edit_rateflag_scale = 0;
   }else
     edit_rateflag_scale = 0;
- 
+
+  if( rate_azimuth )
+    rateflag_azimuth = 1;
+  else
+    rateflag_azimuth = 0;
+    
   dmaflag = 1;	/* values changed so update faceplate */
 }
 
@@ -1768,17 +1789,18 @@ char	**argv;
     if( strcmp( cmd, "zap" ) == 0 || strcmp( cmd, "zero" ) == 0 )  {
       char *av[3];
 
-      av[0] = "adc";
-      av[1] = "reset";
-      av[2] = (char *)NULL;
-
       VSETALL( rate_rotate, 0 );
       VSETALL( rate_slew, 0 );
       rate_zoom = 0;
       VSETALL( edit_rate_rotate, 0 );
       VSETALL( edit_rate_tran, 0 );
       edit_rate_scale = 0.0;
+      rate_azimuth = 0.0;
       knob_update_rate_vars();
+
+      av[0] = "adc";
+      av[1] = "reset";
+      av[2] = (char *)NULL;
 
       (void)f_adc( clientData, interp, 2, av );
 
@@ -2231,7 +2253,21 @@ char	**argv;
     default:
       goto usage;
     }
-  } else if( strcmp( cmd, "xadc" ) == 0 )  {
+  } else if( strcmp( cmd, "azim" ) == 0 ) {
+    if(incr_flag)
+      rate_azimuth += f;
+    else
+      rate_azimuth = f;
+
+    Tcl_UpdateLinkedVar(interp, bu_vls_addr(&rate_azimuth_vls));
+  } else if( strcmp( cmd, "aazim" ) == 0 ) {
+    if(incr_flag)
+      (void)mged_aetview(1, f, 0.0, 0.0);
+    else
+      (void)mged_aetview(0, f, curr_dm_list->s_info->elevation, curr_dm_list->s_info->twist);
+
+    Tcl_UpdateLinkedVar(interp, bu_vls_addr(&absolute_azimuth_vls));
+  } else if( strcmp( cmd, "xadc" ) == 0 ) {
 	  char *av[4];
 	  char    sval[32];
 
