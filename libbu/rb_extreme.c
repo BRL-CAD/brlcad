@@ -17,7 +17,7 @@
  *	This function has three parameters: the tree in which to find an
  *	extreme node, the order on which to do the search, and the sense
  *	(min or max).  On success, _rb_extreme() returns a pointer to
- *	the extreme node.  Otherwise, it returns RB_NODE_NULL.
+ *	the extreme node.
  */
 void *rb_extreme (rb_tree *tree, int order_nm, int sense)
 {
