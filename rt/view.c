@@ -873,6 +873,7 @@ char	*framename;
 		    sb.st_size > 0 )  {
 			/* File exists, with partial results */
 			register int	xx, yy;
+		    	int		got;
 
 			pix_start = sb.st_size / sizeof(RGBpixel);
 
@@ -891,9 +892,11 @@ char	*framename;
 				sizeof(RGBpixel), "sl_buf for continuation scanline");
 			if( fseek( outfp, yy*width*3L, 0 ) != 0 )
 		    		rt_log("fseek error\n");
-			if( fread( scanline[yy].sl_buf, sizeof(RGBpixel),
-			    width, outfp ) != width )
-		    		rt_log("fread error\n");
+		    	/* Read the fractional scanline */
+			got = fread( scanline[yy].sl_buf, sizeof(RGBpixel),
+			    xx, outfp );
+		    	if( got != xx )
+		    		rt_log("Unable to fread fractional scanline, wanted %d, got %d pixels\n", xx, got);
 
 			/* Account for pixels that don't need to be done */
 			scanline[yy].sl_left -= xx;
