@@ -21,6 +21,7 @@
  *  Authors -
  *	Michael John Muuss
  *	Charles M. Kennedy
+ *	Phillip Dykstra
  *  
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
@@ -67,6 +68,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 extern char *malloc();
 extern void perror();
 extern int errno;
+
+int pkg_nochecking = 0;	/* set to disable extra checking for input */
 
 /* Internal Functions */
 static void pkg_errlog();
@@ -147,7 +150,7 @@ void (*errlog)();
 #endif
 #ifdef SGI_EXCELAN
 		char **hostp = &host;
-		if((sinhim.sin_addr.s_addr = rhost(&hostp)) < 0) {
+		if((sinhim.sin_addr.s_addr = rhost(&hostp)) == -1) {
 			sprintf(errbuf,"pkg_open(%s,%s): unknown host\n",
 				host, service );
 			errlog(errbuf);
@@ -456,6 +459,8 @@ register struct pkg_conn *pc;
 			if( pkg_block(pc) < 0 )
 				return(-1);
 
+		if( pkg_nochecking )
+			continue;
 		/* Check socket for unexpected input */
 		tv.tv_sec = 0;
 		tv.tv_usec = 0;		/* poll -- no waiting */
@@ -556,6 +561,8 @@ register struct pkg_conn *pc;
 			if( pkg_block(pc) < 0 )
 				return(-1);
 
+		if( pkg_nochecking )
+			continue;
 		/* Check socket for unexpected input */
 		tv.tv_sec = 0;
 		tv.tv_usec = 0;		/* poll -- no waiting */
