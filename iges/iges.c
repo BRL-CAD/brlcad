@@ -749,7 +749,7 @@ FILE *fp_dir,*fp_param;
 		dir_entry[i] = DEFAULT;
 
 	/* Built list of vertex structs */
-	nmg_region_vertex_list( vtab, r );
+	nmg_vertex_tabulate( vtab, &r->l.magic );
 
 	/* write parameter data for vertex list entity */
 	rt_vls_printf( &str , "502,%d" , NMG_TBL_END( vtab  ) );
@@ -1197,6 +1197,7 @@ FILE *fp_dir,*fp_param;
 	struct vertex		*v;
 	struct rt_vls		str;
 	struct iges_properties	props;
+	int			outer_shell;
 	int			*shell_list;
 	int			i;
 	int			shell_count=0;
@@ -1205,8 +1206,16 @@ FILE *fp_dir,*fp_param;
 	int			prop_de;
 	int			color_de;
 
+	NMG_CK_REGION( r );
+
 	rt_vls_init( &str );
 
+	/* Decompose shells */
+	for (RT_LIST_FOR(s, shell, &r->s_hd))
+	{
+		NMG_CK_SHELL( s );
+		(void)nmg_decompose_shell( s );
+	}
 
 	/* Count shells */
 	for (RT_LIST_FOR(s, shell, &r->s_hd))
@@ -1215,6 +1224,36 @@ FILE *fp_dir,*fp_param;
 		shell_count++;
 	}
 	shell_list = (int *)rt_calloc( shell_count , sizeof( int ) , "shell_list" );
+
+	if( shell_count > 1 )
+	{
+		/* determine outer shell by picking shell with biggest bounding box */
+		double diagonal_length;
+
+		diagonal_length = 0.0;
+		outer_shell = (-1);
+		shell_count = 0;
+		nmg_region_a( r , &tol );
+		for (RT_LIST_FOR(s, shell, &r->s_hd))
+		{
+			struct shell_a *sa;
+			double tmp_length;
+			vect_t diagonal;
+
+			sa = s->sa_p;
+			NMG_CK_SHELL_A( sa );
+			VSUB2( diagonal , sa->max_pt , sa->min_pt );
+			tmp_length = MAGSQ( diagonal );
+			if( tmp_length > diagonal_length )
+			{
+				diagonal_length = tmp_length;
+				outer_shell = shell_count;
+			}
+			shell_count++;
+		}
+		if( outer_shell == (-1) )
+			rt_bomb( "write_shell_face_loop: couldn`t find outer shell\n" );
+	}
 
 	shell_count = 0;
 	for (RT_LIST_FOR(s, shell, &r->s_hd))
@@ -1433,12 +1472,15 @@ FILE *fp_dir,*fp_param;
 			color_de = get_color( props.color , fp_dir , fp_param );
 	}
 
-	/* XXX ASSUMES THAT FIRST SHELL IS THE OUTER SHELL XXX */
-	rt_vls_printf( &str , "186,%d,1,%d" , shell_list[0] , shell_count-1 );
+	/* Put outer shell in BREP object first */
+	rt_vls_printf( &str , "186,%d,1,%d" , shell_list[outer_shell] , shell_count-1 );
 
-	/* XXX ASSUMES THAT ANY ADDITIONAL SHELLS ARE VOID SHELLS (WRONG!!!!) XXX */
-	for( i=1 ; i<shell_count ; i++ )
-		rt_vls_printf( &str , "%d,1" , shell_list[i] );
+	/* Add all other shells */
+	for( i=0 ; i<shell_count ; i++ )
+	{
+		if( i != outer_shell )
+			rt_vls_printf( &str , ",%d,1" , shell_list[i] );
+	}
 
 	if( prop_de || name_de )
 	{
