@@ -44,8 +44,14 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "rtgeom.h"
 #include "./ged.h"
 #include "externs.h"
+#include "tcl.h"
 #include "./solid.h"
 #include "./dm.h"
+
+extern struct db_tree_state	mged_initial_tree_state;	/* dodraw.c */
+extern struct rt_tol		mged_tol;	/* from ged.c */
+extern struct rt_tess_tol	mged_ttol;	/* XXX needs to replace mged_abs_tol, et.al. from dodraw.c */
+extern Tcl_Interp		*interp;	/* from cmd.c */
 
 void	aexists();
 
@@ -594,3 +600,51 @@ fail:
 	db_free_1anim( anp );
 	return CMD_BAD;
 }
+
+/*
+ *			P A T H L I S T _ L E A F _ F U N C
+ */
+static union tree *
+pathlist_leaf_func( tsp, pathp, ext, id )
+struct db_tree_state	*tsp;
+struct db_full_path	*pathp;
+struct rt_external	*ext;
+int			id;
+{
+	char	*str;
+
+	RT_CK_FULL_PATH( pathp );
+
+	str = db_path_to_string( pathp );
+
+	Tcl_AppendElement( interp, str );
+
+	rt_free( str, "path string" );
+	return TREE_NULL;
+}
+
+/*
+ *			C M D _ P A T H L I S T
+ *
+ *  Given the name(s) of a database node(s), return a TCL list of all
+ *  paths from there to each leaf below it.
+ *
+ *  Similar to the "tree" command, only suitable for programs, not humans.
+ */
+int
+cmd_pathlist(clientData, interp, argc, argv)
+ClientData	clientData;
+Tcl_Interp	*interp;
+int		argc;
+CONST char	**argv;
+{
+	mged_initial_tree_state.ts_ttol = &mged_ttol;
+	mged_initial_tree_state.ts_tol = &mged_tol;
+
+	if( db_walk_tree( dbip, argc-1, argv+1, 1, &mged_initial_tree_state,
+	    0, 0, pathlist_leaf_func ) < 0 )
+		return TCL_ERROR;
+
+	return TCL_OK;
+}
+
