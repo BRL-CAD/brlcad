@@ -716,7 +716,7 @@ retry:
 	if( ++try > 10 )  rt_bomb("nmg_class_pt_s() retry count exhausted\n");
 	VUNITIZE(projection_dir);
 
-	if (rt_g.NMG_debug & DEBUG_CLASSIFY || try > 1)
+	if (rt_g.NMG_debug & DEBUG_CLASSIFY )
 		rt_log("\tPt=(%g, %g, %g) dir=(%g, %g, %g), reg_diam=%g\n",
 			V3ARGS(pt), V3ARGS(projection_dir), region_diameter);
 	
@@ -730,7 +730,7 @@ retry:
 
 out:
 	rt_free( (char *)faces_seen, "nmg_class_pt_s faces_seen[]" );
-	if (rt_g.NMG_debug & DEBUG_CLASSIFY || try > 1)
+	if (rt_g.NMG_debug & DEBUG_CLASSIFY )
 		rt_log("nmg_class_pt_s: returning %s, s=x%x, try=%d\n",
 			nmg_class_name(class), s, try );
 	return class;

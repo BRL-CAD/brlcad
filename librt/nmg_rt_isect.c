@@ -1812,6 +1812,7 @@ plane_t norm;
 	if (rt_g.NMG_debug & DEBUG_RT_ISECT) {
 		VPRINT("face Normal", norm);
 		rt_log("cos_angle wrt ray direction: %g\n", cos_angle);
+		rt_log( "fu x%x manifoldness = %d\n", fu_p, NMG_MANIFOLDS(rd->manifolds, fu_p) );
 	}
 
 
@@ -2530,6 +2531,20 @@ struct rt_tol *tol;
 	rd.rd_m = nmg_find_model( &s->l.magic );
 	rd.manifolds = nmg_manifolds(rd.rd_m);
 
+	if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT))
+	{
+		struct faceuse *fu;
+
+		rt_log( "Manifoldness for shell FU's\n" );
+		for( RT_LIST_FOR( fu, faceuse, &s->fu_hd ) )
+		{
+			if( fu->orientation != OT_SAME )
+				continue;
+
+			rt_log( "fu x%x: %d\n", fu, NMG_MANIFOLDS( rd.manifolds, fu ) );
+		}
+	}
+
 	/* Compute the inverse of the direction cosines */
 	if( !NEAR_ZERO( rp->r_dir[X], SQRT_SMALL_FASTF ) )  {
 		rd.rd_invdir[X]=1.0/rp->r_dir[X];
@@ -2644,10 +2659,10 @@ struct rt_tol *tol;
 	}
 	if (plus_class != minus_class || plus_class == NMG_CLASS_Unknown ||
 	    minus_class == NMG_CLASS_Unknown ) {
-		nmg_rt_print_hitlist(&rd.rd_hit);
+/*		nmg_rt_print_hitlist(&rd.rd_hit);
 		rt_log("minus_class = (%s) %d, hari_kari=%d\n", nmg_class_name(minus_class), minus_class, hari_kari_minus);
 		rt_log("plus_class = (%s)\n", nmg_class_name(plus_class));
-		rt_log("nmg_class_ray_vs_shell() -- can't tell\n");
+		rt_log("nmg_class_ray_vs_shell() -- can't tell\n"); */
 		plus_class = NMG_CLASS_Unknown;
 	}
 out:
