@@ -1248,7 +1248,7 @@ set -S2 "/bin/sh"
 #		endif
 #	endif
 #	define	BWISH_LIBES	MGED_LIBES LIBTCLCAD
-#	define	BWISH_CONFIG	-I''XINCDIR
+#	define	BWISH_CONFIG	-I''XINCDIR -DBWISH
 #	define	LIBDM_SAMPLE_LIBES \$"(LIBDM)" \$"(LIBTK)" \$"(LIBTCL)" \$"(LIBTK_LIBES)" \$"(LIBTCL_LIBES)" \$"(XLIBDIR)" -lXi -lXext -lX11
 /*	Use the system-provided libz and libpng */
 #	define	LIBZ_DIR	_use_system_z_
