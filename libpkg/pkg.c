@@ -572,7 +572,9 @@ char *buf;
 		return(-1);
 	}
 	while( hdr.pkg_magic != htons(PKG_MAGIC ) )  {
-		fb_log("pkg_gethdr: skipping noise\n");
+		fb_log("pkg_gethdr: skipping noise x%x %c\n",
+			*((unsigned char *)&hdr),
+			*((unsigned char *)&hdr) );
 		/* Slide over one byte and try again */
 		bcopy( ((char *)&hdr)+1, (char *)&hdr, sizeof(hdr)-1);
 		if( (i=read( fd, ((char *)&hdr)+sizeof(hdr)-1, 1 )) != 1 )  {
