@@ -47,7 +47,8 @@ extern void	(*nmg_plot_anim_upcall)();
 extern void	(*nmg_vlblock_anim_upcall)();
 extern void	(*nmg_mged_debug_display_hack)();
 long	nvectors;	/* number of vectors drawn so far */
-float default_wireframe_color[] = { 1.0, 0.0, 0.0 };  /* start with red */
+
+unsigned char geometry_default_color[] = { 255, 0, 0 };
 
 /*
  *  This is just like the rt_initial_tree_state in librt/tree.c,
@@ -566,8 +567,10 @@ int	kind;
 	mged_initial_tree_state.ts_ttol = &mged_ttol;
 	mged_initial_tree_state.ts_tol = &mged_tol;
 
+#if 0
 	/* set default wireframe color */
 	VMOVE(mged_initial_tree_state.ts_mater.ma_color, default_wireframe_color);
+#endif
 
 	mged_ttol.magic = RT_TESS_TOL_MAGIC;
 	mged_ttol.abs = mged_abs_tol;
@@ -761,16 +764,20 @@ struct solid		*existing_sp;
 		/* Take note of the base color */
 		if( mged_wireframe_color_override ) {
 		        /* a user specified the color, so arrange to use it */
-			sp->s_useBaseColor = 1;
+			sp->s_uflag = 1;
 			sp->s_basecolor[0] = mged_wireframe_color[0];
 			sp->s_basecolor[1] = mged_wireframe_color[1];
 			sp->s_basecolor[2] = mged_wireframe_color[2];
 		} else {
-			sp->s_useBaseColor = 0;
-			if( tsp )  {
-				sp->s_basecolor[0] = tsp->ts_mater.ma_color[0] * 255.;
-				sp->s_basecolor[1] = tsp->ts_mater.ma_color[1] * 255.;
-				sp->s_basecolor[2] = tsp->ts_mater.ma_color[2] * 255.;
+			sp->s_uflag = 0;
+			if (tsp) {
+			  if (!tsp->ts_mater.ma_override)
+			    sp->s_dflag = 1;
+			  else {
+			    sp->s_basecolor[0] = tsp->ts_mater.ma_color[0] * 255.;
+			    sp->s_basecolor[1] = tsp->ts_mater.ma_color[1] * 255.;
+			    sp->s_basecolor[2] = tsp->ts_mater.ma_color[2] * 255.;
+			  }
 			}
 		}
 		sp->s_iflag = DOWN;
@@ -895,6 +902,7 @@ matp_t matp;
 	db_free_full_path( &null_path );
 	db_free_full_path( &path );
 
+#if 0
 	/*
 	 *  Copy color out to solid structure, in case it changed.
 	 *  This is an odd place to do this, but...
@@ -904,13 +912,15 @@ matp_t matp;
 	sp->s_color[1] = sp->s_basecolor[1] = ts.ts_mater.ma_color[1] * 255.;
 	sp->s_color[2] = sp->s_basecolor[2] = ts.ts_mater.ma_color[2] * 255.;
 #else
-	if(!sp->s_useBaseColor){
+	if(!sp->s_uflag){
 	  /* the user did not specify a color */
 	  sp->s_basecolor[0] = ts.ts_mater.ma_color[0] * 255.;
 	  sp->s_basecolor[1] = ts.ts_mater.ma_color[1] * 255.;
 	  sp->s_basecolor[2] = ts.ts_mater.ma_color[2] * 255.;
 	}
 #endif
+#endif
+
 	mat_copy( matp, ts.ts_mat );	/* implicit return */
 
 	db_free_db_tree_state( &ts );
