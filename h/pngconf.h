@@ -268,11 +268,7 @@
 #  endif /* __linux__ */
 #endif /* PNG_SETJMP_SUPPORTED */
 
-#ifdef BSD
-#  include <strings.h>
-#else
-#  include <string.h>
-#endif
+# include <string.h>
 
 /* Other defines for things like memory and the like can go here.  */
 #ifdef PNG_INTERNAL
