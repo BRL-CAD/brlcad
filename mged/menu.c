@@ -367,6 +367,12 @@ char **argv;
   struct menu_vars *save_mvp;
 
   if(argc != 3){
+    struct bu_vls vls;
+
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help share_menu");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
     return TCL_ERROR;
   }
 
