@@ -949,6 +949,10 @@ proc set_text_key_bindings { id } {
 	break
     }
 
+    bind $w <Control-o> {
+	break
+    }
+
     bind $w <Control-p> {
 	prev_command %W
 	break
