@@ -261,9 +261,9 @@ struct sgiinfo {
 #define MODE_10NORMAL	(0<<9)
 #define MODE_10SYNC_ON_GREEN	(1<<9)
 
-#define MODE_11MASK	(1<<10)
-#define MODE_11NORMAL	(0<<10)
-#define MODE_11DELAY_WRITES_TILL_FLUSH	(1<<10)
+#define MODE_12MASK	(1<<11)
+#define MODE_12NORMAL	(0<<11)
+#define MODE_12DELAY_WRITES_TILL_FLUSH	(1<<11)
 
 #define MODE_15MASK	(1<<14)
 #define MODE_15NORMAL	(0<<14)
@@ -295,7 +295,7 @@ static struct modeflags {
 		"Don't use GT & Z-buffer hardware, if present (debug)" },
 	{ 's',	MODE_9MASK, MODE_9SINGLEBUF,
 		"On GT, single buffer, don't double buffer" },
-	{ 'd',	MODE_11DELAY_WRITES_TILL_FLUSH, MODE_11DELAY_WRITES_TILL_FLUSH,
+	{ 'D',	MODE_12DELAY_WRITES_TILL_FLUSH, MODE_12DELAY_WRITES_TILL_FLUSH,
 		"Don't update screen until fb_flush() is called.  (Double buffer sim)" },
 	{ 'z',	MODE_15MASK, MODE_15ZAP,
 		"Zap (free) shared memory.  Can also be done with fbfree command" },
@@ -1115,7 +1115,7 @@ int	width, height;
 	/*
 	 *  Set the operating mode for the newly created window.
 	 */
-	if( (ifp->if_mode & MODE_11MASK) == MODE_11DELAY_WRITES_TILL_FLUSH )
+	if( (ifp->if_mode & MODE_12MASK) == MODE_12DELAY_WRITES_TILL_FLUSH )
 		SGI(ifp)->mi_is_gt = 0;
 	if( SGI(ifp)->mi_is_gt )  {
 		if( (ifp->if_mode & MODE_9MASK) == MODE_9SINGLEBUF )  {
@@ -1210,7 +1210,7 @@ int	width, height;
 	 *  Display the existing contents of the memory segment.
 	 *  Make no assumptions about the state of the window.
 	 */
-	if( (ifp->if_mode & MODE_11MASK) != MODE_11DELAY_WRITES_TILL_FLUSH )  {
+	if( (ifp->if_mode & MODE_12MASK) != MODE_12DELAY_WRITES_TILL_FLUSH )  {
 		sgi_xmit_scanlines( ifp, 0, ifp->if_height, 0, ifp->if_width );
 		if( SGI(ifp)->mi_is_gt )  {
 			gt_zbuf_to_screen( ifp, -1 );
@@ -1724,7 +1724,7 @@ int		count;
 	if( qtest() )
 		sgi_inqueue(ifp);
 
-	if( (ifp->if_mode & MODE_11MASK) == MODE_11DELAY_WRITES_TILL_FLUSH )
+	if( (ifp->if_mode & MODE_12MASK) == MODE_12DELAY_WRITES_TILL_FLUSH )
 		return ret;
 
 	if( xstart + count <= ifp->if_width  )  {
@@ -1798,7 +1798,7 @@ CONST unsigned char	*pp;
 	if( qtest() )
 		sgi_inqueue(ifp);
 
-	if( (ifp->if_mode & MODE_11MASK) != MODE_11DELAY_WRITES_TILL_FLUSH )  {
+	if( (ifp->if_mode & MODE_12MASK) != MODE_12DELAY_WRITES_TILL_FLUSH )  {
 		sgi_xmit_scanlines( ifp, ymin, height, 0, ifp->if_width );
 		if( SGI(ifp)->mi_is_gt )  {
 			/* repaint screen from Z buffer */
@@ -2092,7 +2092,7 @@ _LOCAL_ int
 sgi_flush( ifp )
 FBIO	*ifp;
 {
-	if( (ifp->if_mode & MODE_11MASK) != MODE_11DELAY_WRITES_TILL_FLUSH )
+	if( (ifp->if_mode & MODE_12MASK) != MODE_12DELAY_WRITES_TILL_FLUSH )
 		return 0;
 
 	winset(ifp->if_fd);
