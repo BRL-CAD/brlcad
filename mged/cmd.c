@@ -53,6 +53,7 @@ char	*cmd_args[MAXARGS+2];	/* array of pointers to args */
 extern int	cmd_glob();
 
 static void	f_help(), f_fhelp(), f_comm();
+void	f_red();
 void	f_pov();
 void	f_vrmgr();
 void	f_echo();
@@ -260,6 +261,8 @@ static struct funtab {
 	f_quit,1,1,
 "r", "region <operation solid>", "create or extend a Region combination",
 	f_region,4,MAXARGS,
+"red", "object", "edit a group or region using a text editor",
+	f_red, 2, 2,
 "refresh", "", "send new control list",
 	f_refresh, 1,1,
 "regdebug", "", "toggle register print",

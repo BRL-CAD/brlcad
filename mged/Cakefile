@@ -13,7 +13,7 @@
 			cmd chgview chgmodel chgtree \
 			rtif anal typein predictor \
 			buttons clip menu adc edsol edarb \
-			proc_reg hideline polyif \
+			proc_reg hideline polyif red \
 			mater plot overlay inside \
 			concat utility1 utility2 track arbs \
 			facedef arb ell half tgc torus set \
