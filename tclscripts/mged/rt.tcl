@@ -1506,7 +1506,7 @@ proc PMMenu {id top enable} {
     entry $top.gridF4.pmLightIntensityEntry -width 8 -textvar rt_control($id,pmLightIntensityEntry)
     grid $top.gridF4.pmLightIntensityEntry -row 6 -column 1 -sticky news
 
-    scale $top.gridF4.pmLightIntensityScale -orient horizontal -showvalue 0 -from 0.01 -to 100.0 -resolution 0.01 -command "PMLinearEvent $top.gridF4.pmLightIntensityEntry" -variable rt_control($id,pmLightIntensityScale)
+    scale $top.gridF4.pmLightIntensityScale -orient horizontal -showvalue 0 -from 0.1 -to 10.0 -resolution 0.01 -command "PMLinearEvent $top.gridF4.pmLightIntensityEntry" -variable rt_control($id,pmLightIntensityScale)
     grid $top.gridF4.pmLightIntensityScale -row 6 -column 2 -sticky news
 
 
