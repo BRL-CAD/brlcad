@@ -38,6 +38,7 @@ class cadwidgets::Legend {
     public method getColor {val}
     public method rampRGB {val}
     public method postscript {args}
+    public method rgbValid {r g b}
 
     private variable low 0.0
     private variable high 1.0
@@ -107,8 +108,16 @@ configbody cadwidgets::Legend::rgbRange {
 	error "rgbRange: must specify R, G, and B for each color"
     }
 
-    if {[llength $rgb1] != 3} {
+    if {[llength $rgb2] != 3} {
 	error "rgbRange: must specify R, G, and B for each color"
+    }
+
+    if {![eval cadwidgets::Legend::rgbValid $rgb1]} {
+	error "Improper color specification - $rgb1"
+    }
+
+    if {![eval cadwidgets::Legend::rgbValid $rgb2]} {
+	error "Improper color specification - $rgb2"
     }
 
     set r1 [lindex $rgb1 0]
@@ -237,4 +246,27 @@ body cadwidgets::Legend::rampRGB {val} {
 
 body cadwidgets::Legend::postscript {args} {
     eval $itk_component(canvas) postscript $args
+}
+
+body cadwidgets::Legend::rgbValid {r g b} {
+    if {![string is integer $r]} {
+	    return 0
+    }
+    if {![string is integer $g]} {
+	    return 0
+    }
+    if {![string is integer $b]} {
+	    return 0
+    }
+    if {$r < 0 || 255 < $r} {
+	return 0
+    }
+    if {$g < 0 || 255 < $g} {
+	return 0
+    }
+    if {$b < 0 || 255 < $b} {
+	return 0
+    }
+
+    return 1
 }
