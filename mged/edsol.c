@@ -1048,6 +1048,7 @@ mat_t		mat;
 {
 	char	*cp = *strp;
 	point_t	mpt;
+	static char		buf[128];
 
 	RT_CK_DB_INTERNAL( ip );
 
@@ -1198,12 +1199,15 @@ mat_t		mat;
 				if( vertex_number < 1 || vertex_number > 8 )
 					vertex_number = 1;
 				VMOVE( mpt , arb->pt[vertex_number-1] );
-				sprintf( *strp , "V%d" , vertex_number );
+				sprintf( buf, "V%d", vertex_number );
+				*strp = buf;
 				break;
 			}
+
 			/* Default */
 			VMOVE( mpt , arb->pt[0] );
 			*strp = "V1";
+
 			break;
 		}
 	case ID_ELL:
@@ -1302,7 +1306,6 @@ mat_t		mat;
 				(struct rt_nurb_internal *) es_int.idb_ptr;
 			register struct snurb	*surf;
 			register fastf_t	*fp;
-			static char		buf[128];
 
 			RT_NURB_CK_MAGIC(sip);
 			surf = sip->srfs[spl_surfno];
@@ -1605,6 +1608,7 @@ init_sedit()
 
 		type = rt_arb_std_type( &es_int , &mged_tol );
 		es_type = type;
+
 		if( rt_arb_calc_planes( es_peqn , arb , es_type , &mged_tol ) )
 		{
 			rt_log( "Cannot calculate plane equations for ARB8\n" );
@@ -2602,6 +2606,7 @@ CONST vect_t	mousevec;
 	vect_t	pos_model;		/* Rotated screen space pos */
 	vect_t	tr_temp;		/* temp translation vector */
 	vect_t	temp;
+
 
 	if( es_edflag <= 0 )  return;
 	switch( es_edflag )  {
