@@ -153,28 +153,17 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 		vp = spl->spl_mesh;
 		i = rec.d.d_ctl_size[0]*rec.d.d_ctl_size[1];
 		for( ; i>0; i--, vp += rec.d.d_geom_type )  {
-			static vect_t	homog;
 			if( rec.d.d_geom_type == 3 )  {
-				MAT4X3PNT( homog, mat, vp );
-				VMOVE( vp, homog );
+				static vect_t	temp;
+				MAT4X3PNT( temp, mat, vp );
+				VMOVE( vp, temp );
 			} else {
-
-#define HDIVIDE(a,b)  \
-	(a)[X] = (b)[X] / (b)[H];\
-	(a)[Y] = (b)[Y] / (b)[H];\
-	(a)[Z] = (b)[Z] / (b)[H];
-				HDIVIDE( homog, vp );
-				MAT4X3PNT( vp, mat, homog );
+				static hvect_t	homog;
+				MAT4X4PNT( homog, mat, vp );
+				HDIVIDE( vp, homog );
 				/* Leaves us with [x,y,z,1] */
 			}
-#define MINMAX(a,b,c)	{ FAST fastf_t ftemp;\
-			if( (ftemp = (c)) < (a) )  a = ftemp;\
-			if( ftemp > (b) )  b = ftemp; }
-
-#define MM(v)	MINMAX( stp->st_min[X], stp->st_max[X], v[X] ); \
-		MINMAX( stp->st_min[Y], stp->st_max[Y], v[Y] ); \
-		MINMAX( stp->st_min[Z], stp->st_max[Z], v[Z] )
-			MM( vp );
+			VMINMAX( stp->st_min, stp->st_max, vp );
 		}
 
 		/* Preparations */
