@@ -56,7 +56,7 @@ register long	magic;
 {
 	switch(magic)  {
 	case 0:
-		return "NULL";
+		return "Zero_Magic_Number";
 	default:
 		return "Unknown_Magic";
 	/*
