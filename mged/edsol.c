@@ -859,10 +859,6 @@ replot_editing_solid()
 	}
 	RT_CK_DB_INTERNAL( ip );
 
-/* XXX This routine isn't taking into account the tree path,
- * XXX nor the provided es_mat argument!
- * XXX It's in dodraw.c -- fix it!
- */
 	(void)replot_modified_solid( illump, ip, es_mat );
 
 	if( !new_way )  {
@@ -871,7 +867,10 @@ replot_editing_solid()
 }
 
 /*
- * Works the new_way only.
+ *			T R A N S F O R M _ E D I T I N G _ S O L I D
+ *
+ * XXX This should be part of the import/export interface.
+ * XXX Each solid should know how to transform it's internal representation.
  */
 void
 transform_editing_solid(os, mat, is, free)
@@ -2147,7 +2146,6 @@ f_eqn()
 void
 sedit_accept()
 {
-	union record		*rec;
 	struct directory	*dp;
 	int	id;
 
@@ -2166,10 +2164,6 @@ sedit_accept()
 			return;				/* FAIL */
 		}
 	    	if( es_int.idb_ptr )  rt_functab[es_int.idb_type].ft_ifree( &es_int );
-
-		/* Depends on solid names always being in the same place */
-		rec = (union record *)es_ext.ext_buf;
-		NAMEMOVE( dp->d_namep, rec->s.s_name );
 
 		if( db_put_external( &es_ext, dp, dbip ) < 0 )  {
 			db_free_external( &es_ext );
