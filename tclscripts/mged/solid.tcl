@@ -201,12 +201,12 @@ has the following input fields:
     { attr,tgc  {V {0 0 0} H {0 0 4} A {1 0 0} B {0 .5 0} C {.5 0 0} D {0 1 0}} }
     { attr,rec  {V {0 0 0} H {0 0 4} A {1 0 0} B {0 .5 0} C {1 0 0} D {0 .5 0}} }
     { attr,half {N {0 0 1} d -1} }
-    { attr,rpc  {V {-1 -1 -1.5} H {0 0 1} B {0 .5 0} r .25} }
-    { attr,rhc  {V {-1 -1 -1.5} H {0 0 1} B {0 .5 0} r .25 c .1} }
-    { attr,epa  {V {-1 -1 -1.5} H {0 0 1} A {0 1 0} r_1 .5 r_2 .25} }
-    { attr,ehy  {V {-1 -1 -1.5} H {0 0 1} A {0 1 0} r_1 .5 r_2 .25 c .25} }
-    { attr,eto  {V {-1 -1 -1} N {0 0 1} C {.1 0 .1} r .5 r_d .05} }
-    { attr,part {V {-1 -1 -.5} H {0 0 1} r_v 0.5 r_h 0.25} }
+    { attr,rpc  {V {0 0 0} H {0 0 1} B {0 .5 0} r .25} }
+    { attr,rhc  {V {0 0 0} H {0 0 1} B {0 .5 0} r .25 c .1} }
+    { attr,epa  {V {0 0 0} H {0 0 1} A {0 1 0} r_1 .5 r_2 .25} }
+    { attr,ehy  {V {0 0 0} H {0 0 1} A {0 1 0} r_1 .5 r_2 .25 c .25} }
+    { attr,eto  {V {0 0 0} N {0 0 1} C {.1 0 .1} r .5 r_d .05} }
+    { attr,part {V {0 0 0} H {0 0 1} r_v 0.5 r_h 0.25} }
     { attr,dsp  {file "" sm 1 w 1 n 1 stom {1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1}} }
     { attr,hf   {cfile "" dfile "" fmt "" w 1 n 1 shorts 1 file2mm 1.0 v {0 0 0} \
 	    x {0 0 0} y {0 0 0} xlen 1 ylen 1 zscale 1} }
