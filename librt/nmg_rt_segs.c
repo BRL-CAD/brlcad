@@ -1126,7 +1126,7 @@ struct nmg_specific	*nmg_spec;
 	struct seg *seg_p;
 	int seg_count=0;
 
-/*	rt_g.NMG_debug = rt_g.NMG_debug | DEBUG_NMGRT;
+	rt_g.NMG_debug = rt_g.NMG_debug | DEBUG_NMGRT;
 	rt_log("============================ New Ray ===================================\n");
 	rt_log("Screen pos(%d %d)\n", ap->a_x, ap->a_y);
 
@@ -1134,6 +1134,7 @@ struct nmg_specific	*nmg_spec;
 	hl = nmg_isect_ray_model(rp, nmg_spec->nmg_invdir,
 		nmg_spec->nmg_model, &ap->a_rt_i->rti_tol);
 
+	rt_g.NMG_debug = rt_g.NMG_debug & ~DEBUG_NMGRT;
 
 	if (! hl || RT_LIST_IS_EMPTY(&hl->l)) {
 		if (rt_g.NMG_debug & DEBUG_NMGRT)

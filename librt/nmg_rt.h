@@ -37,15 +37,24 @@ struct hitmiss {
  *	intercept to the edge and update "plane_closest" if the current
  *	edge is closer to the intercept than the previous closest object.
  */
+#define NMG_PCA_EDGE	1
+#define NMG_PCA_EDGE_VERTEX 2
+#define NMG_PCA_VERTEX 3
 struct ray_data {
 	struct xray	*rp;
 	struct rt_tol	*tol;
-	struct hitmiss	**hitmiss;	/* 1 hitmiss struct for ea obj */
 	vect_t		invdir;
-	pointp_t	plane_pt;	/* ray plane(face) intercept point */
+	struct hitmiss	**hitmiss;	/* 1 hitmiss struct ptr for each obj */
+	struct rt_list	nmg_hits;	/* objects which have been hit */
+	struct rt_list	nmg_misses;	/* objects which have been missed/sub-hit */
+
+	pointp_t	plane_pt;	/* ray/plane(face) intercept point */
 	fastf_t		ray_dist_to_plane; /* parametric dist to plane */
 	fastf_t		plane_dist;	/* dist in plane (item -> plane_pt) */
 	long		*plane_closest;	/* ptr to item with min(plane_dist) */
+	int		plane_dist_type;/* is PCA at an  edge-span,
+					 *  edge-vertex, or vertex?
+					 */
 };
 
 #define GET_HITMISS(_p) { \
