@@ -1621,9 +1621,9 @@ set -S2 "/bin/sh"
 #	define	LIBCURSOR_DIR	../libcursor
 #	define	LIBCURSOR	-L''LIBCURSOR_DIR -lcursor
 #	define	LIBCURSOR_DEP	[[LIBVERS ../libcursor/libcursor.ARCH_SUF]]
-#	define	LIBFONT_DIR	../libfont
-#	define	LIBFONT		-L''LIBFONT_DIR -lfont
-#	define	LIBFONT_DEP	[[LIBVERS ../libfont/libfont.ARCH_SUF]]
+#	define	LIBFONT_DIR	LIBBU_DIR
+#	define	LIBFONT		/**/
+#	define	LIBFONT_DEP	/**/
 #	define	LIBSYSV_DIR	../libsysv
 #	define	LIBSYSV		-L''LIBSYSV_DIR -lsysv
 #	define	LIBSYSV_DEP	[[LIBVERS ../libsysv/libsysv.ARCH_SUF]]
@@ -1698,9 +1698,9 @@ set -S2 "/bin/sh"
 #	define	LIBCURSOR_DIR	../.libcursor.MTYPE
 #	define	LIBCURSOR	-L''LIBCURSOR_DIR -lcursor
 #	define	LIBCURSOR_DEP	[[LIBVERS ../.libcursor.MTYPE/libcursor.ARCH_SUF]]
-#	define	LIBFONT_DIR	../.libfont.MTYPE
-#	define	LIBFONT		-L''LIBFONT_DIR -lfont
-#	define	LIBFONT_DEP	[[LIBVERS ../.libfont.MTYPE/libfont.ARCH_SUF]]
+#	define	LIBFONT_DIR	LIBBU_DIR
+#	define	LIBFONT		/**/
+#	define	LIBFONT_DEP	/**/
 #	define	LIBSYSV_DIR	../.libsysv.MTYPE
 #	define	LIBSYSV		-L''LIBSYSV_DIR -lsysv
 #	define	LIBSYSV_DEP	[[LIBVERS ../.libsysv.MTYPE/libsysv.ARCH_SUF]]
