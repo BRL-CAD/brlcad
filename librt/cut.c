@@ -978,7 +978,7 @@ register union cutter *cutp;
  */
 void
 rt_pr_cut( cutp, lvl )
-register union cutter *cutp;
+register CONST union cutter *cutp;
 int lvl;			/* recursion level */
 {
 	register int i,j;

@@ -97,7 +97,7 @@ struct shootray_status {
 	fastf_t			model_end;
 	struct xray		newray;		/* closer ray start */
 	struct application	*ap;
-	union cutter		*lastcut;
+	CONST union cutter	*lastcut;
 	vect_t			inv_dir;	/* inverses of ap->a_ray.r_dir */
 	/* Begin NUgrid additions */
 	vect_t			abs_inv_dir;	/* absolute value of inv_dir */
@@ -115,7 +115,7 @@ struct shootray_status {
  *
  *  This version uses Gigante's non-uniform 3-D space grid/mesh discretization.
  */
-union cutter *
+CONST union cutter *
 rt_advance_to_next_cell( ssp )
 register struct shootray_status	*ssp;
 {
@@ -346,7 +346,7 @@ if(rt_g.debug&DEBUG_ADVANCE)rt_log("Exit axis is %s, t1=%g\n", ssp->out_axis==X 
  *
  *  This version uses Muuss' non-uniform binary space partitioning tree.
  */
-union cutter *
+CONST union cutter *
 rt_advance_to_next_cell( ssp )
 register struct shootray_status	*ssp;
 {
@@ -560,7 +560,7 @@ register struct application *ap;
 	auto struct partition	InitialPart;	/* Head of Initial Partitions */
 	auto struct partition	FinalPart;	/* Head of Final Partitions */
 	AUTO struct soltab	**stpp;
-	register union cutter	*cutp;
+	register CONST union cutter *cutp;
 	int			end_free_len;
 	AUTO struct rt_i	*rtip;
 	CONST int		debug_shoot = rt_g.debug & DEBUG_SHOOT;
@@ -660,7 +660,7 @@ register struct application *ap;
 		cutp = &(rtip->rti_inf_box);
 		stpp = &(cutp->bn.bn_list[cutp->bn.bn_len-1]);
 		for( ; stpp >= cutp->bn.bn_list; stpp-- )  {
-			register CONST struct soltab *stp = *stpp;
+			register struct soltab *stp = *stpp;
 
 			/* Shoot a ray */
 			if(debug_shoot)rt_log("shooting %s\n", stp->st_name);
@@ -751,7 +751,7 @@ register struct application *ap;
 		/* Consider all objects within the box */
 		stpp = &(cutp->bn.bn_list[cutp->bn.bn_len-1]);
 		for( ; stpp >= cutp->bn.bn_list; stpp-- )  {
-			register CONST struct soltab *stp = *stpp;
+			register struct soltab *stp = *stpp;
 
 			/* On m35.g, this block of code eats 15% of CPU! */
 			if( BITTEST( solidbits->be_v, stp->st_bit ) )  {
