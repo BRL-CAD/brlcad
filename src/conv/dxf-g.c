@@ -915,6 +915,12 @@ process_entities_polyline_vertex_code( int code )
 	int coord;
 
 	switch( code ) {
+	case -1:	/* initialize */
+		face[0] = 0;
+		face[1] = 0;
+		face[2] = 0;
+		face[3] = 0;
+		return( 0 );
 	case 8:		/* layer name */
 		if( curr_layer_name ) {
 			bu_free( curr_layer_name, "curr_layer_name" );
@@ -923,10 +929,6 @@ process_entities_polyline_vertex_code( int code )
 		break;
 	case 70:	/* vertex flag */
 		vertex_flag = atoi( line );
-		face[0] = 0;
-		face[1] = 0;
-		face[2] = 0;
-		face[3] = 0;
 		break;
 	case 71:
 	case 72:
@@ -1111,6 +1113,7 @@ process_entities_polyline_code( int code )
 			if( verbose)
 				bu_log( "Found a POLYLINE VERTEX\n" );
 			curr_state->sub_state = POLYLINE_VERTEX_ENTITY_STATE;
+			process_entities_code[POLYLINE_VERTEX_ENTITY_STATE]( -1 );
 			break;
 		} else {
 			if( verbose ) {
