@@ -734,42 +734,6 @@ again:
 	return(0);	/* OK */
 }
 
-#if 0	/* XXX rt_plookup replaced by db_follow_path_for_state */
-/*
- *			R T _ P L O O K U P
- * 
- *  Look up a path where the elements are separates by slashes.
- *  If the whole path is valid,
- *  set caller's pointer to point at path array.
- *
- *  Returns -
- *	# path elements on success
- *	-1	ERROR
- */
-int
-rt_plookup( rtip, dirp, cp, noisy )
-struct rt_i	*rtip;
-struct directory ***dirp;
-register char	*cp;
-int		noisy;
-{
-	struct db_tree_state	ts;
-	struct db_full_path	path;
-
-	bzero( (char *)&ts, sizeof(ts) );
-	ts.ts_dbip = rtip->rti_dbip;
-	mat_idn( ts.ts_mat );
-	path.fp_len = path.fp_maxlen = 0;
-	path.fp_names = (struct directory **)0;
-
-	if( db_follow_path_for_state( &ts, &path, cp, noisy ) < 0 )
-		return(-1);		/* ERROR */
-
-	*dirp = path.fp_names;
-	return(path.fp_len);
-}
-#endif
-
 /*
  *			R T _ B O U N D _ T R E E
  *
