@@ -1,7 +1,7 @@
 /*
  * tkCanvBezier.c --
  * 
- *	This module provides Bezier curse support for canvases.
+ *	This module provides Bezier curve support for canvases.
  *
  * Distribution status is public domain, distribution unlimited.
  *
@@ -17,7 +17,7 @@
 #define NUM_BEZIER_POINTS	50
 
 /*
- * The structure below defines the record for each bitmap item.
+ * The structure below defines the record for each bezier item.
  */
 typedef struct BezierItem {
 	Tk_Item header;
@@ -123,7 +123,7 @@ static Tk_ConfigSpec configSpecs[] = {
 };
 
 /*
- * The structures below defines the bitmap item type in terms of
+ * The structures below defines the bezier item type in terms of
  * procedures that can be invoked by generic item code.
  */
 Tk_ItemType tkBezierType = {
