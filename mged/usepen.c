@@ -48,8 +48,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 double	degtorad =  0.01745329251994329573;
 double	radtodeg = 57.29577951308232098299;
 
-struct solid	*illump;	/* == 0 if none, else points to ill. solid */
-int		ipathpos;	/* path index of illuminated element */
+struct solid	*illump = SOLID_NULL;	/* == 0 if none, else points to ill. solid */
+int		ipathpos = 0;	/* path index of illuminated element */
 				/* set by e9.c, cleared here */
 void		wrt_view(), wrt_point();
 static void	illuminate();
@@ -107,47 +107,54 @@ char	**argv;
 	mousevec[Z] = 0;
 
 	if (mged_variables.faceplate && mged_variables.show_menu) {
-        /*
-	 * If mouse press is in scroll area, see if scrolling, and if so,
-	 * divert this mouse press.
-	 */
-	if( (xpos >= MENUXLIM) && up || scroll_active && up)  {
-		register int i;
+	  /*
+	   * If mouse press is in scroll area, see if scrolling, and if so,
+	   * divert this mouse press.
+	   */
+	  if( (xpos >= MENUXLIM) && up || scroll_active && up)  {
+	    register int i;
 
-		if(scroll_active)
-		  ypos = scroll_y;
+	    if(scroll_active)
+	      ypos = scroll_y;
 
-		if( (i = scroll_select(xpos, ypos )) < 0 )  {
-		   Tcl_AppendResult(interp, "mouse press outside valid scroll area\n", (char *)NULL);
-		   return TCL_ERROR;
-		} 
-		if( i > 0 )  {
-		  scroll_active = 1;
-		  scroll_y = ypos;
+	    if( (i = scroll_select(xpos, ypos )) < 0 )  {
+	      Tcl_AppendResult(interp,
+			       "mouse press outside valid scroll area\n",
+			       (char *)NULL);
+	      return TCL_ERROR;
+	    } 
 
-		  /* Scroller bars claimed button press */
-		  return TCL_OK;
-		}
-		/* Otherwise, fall through */
+	    if( i > 0 )  {
+	      scroll_active = 1;
+	      scroll_y = ypos;
+
+	      /* Scroller bars claimed button press */
+	      return TCL_OK;
+	    }
+	    /* Otherwise, fall through */
+	  }
+
+	  /*
+	   * If menu is active, and mouse press is in menu area,
+	   * divert this mouse press for menu purposes.
+	   */
+	  if( xpos < MENUXLIM && up )  {
+	    register int i;
+
+	    if( (i = mmenu_select( ypos )) < 0 )  {
+	      Tcl_AppendResult(interp,
+			       "mouse press outside valid menu\n",
+			       (char *)NULL);
+	      return TCL_ERROR;
+	    }
+
+	    if( i > 0 )  {
+	      /* Menu claimed button press */
+	      return TCL_OK;
+	    }
+	    /* Otherwise, fall through */
+	  }
 	}
-
-	/*
-	 * If menu is active, and mouse press is in menu area,
-	 * divert this mouse press for menu purposes.
-	 */
-	if( xpos < MENUXLIM && up )  {
-		register int i;
-		if( (i = mmenu_select( ypos )) < 0 )  {
-		  Tcl_AppendResult(interp, "mouse press outside valid menu\n", (char *)NULL);
-		  return TCL_ERROR;
-		}
-		if( i > 0 )  {
-		  /* Menu claimed button press */
-		  return TCL_OK;
-		}
-		/* Otherwise, fall through */
-	}
-      }
 
 	/*
 	 *  In the best of all possible worlds, nothing should happen
