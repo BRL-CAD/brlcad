@@ -1,6 +1,25 @@
 /*
  *  			R O O T S . C
+ *
+ *  Functions -
+ *	polyRoots		Find the roots of a polynomial
+ *
+ *  Author -
+ *	Jeff Hanes
+ *  
+ *  Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005
+ *  
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1985 by the United States Army.
+ *	All rights reserved.
  */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (BRL)";
+#endif
+
 #include <math.h>
 #include <stdio.h>
 #include "vmath.h"
@@ -42,15 +61,17 @@ register complex	roots[];	/* space to put roots found	*/
 	/* Remove leading coefficients which are too close to zero,
 	 * to prevent the polynomial factoring from blowing up, below.
 	 */
-#define ALMOST_ZERO	(1.0e-12)
+#define ALMOST_ZERO	(1.0e-16)
 	while( eqn->cf[0] > -ALMOST_ZERO && eqn->cf[0] < ALMOST_ZERO )  {
-		fprintf(stderr,"polyRoots:  Leading coeff too small:"); pr_poly(eqn);
+		if( debug & DEBUG_ROOTS )  {
+			fprintf(stderr,"polyRoots:  Leading coeff too small, discarding.");
+			pr_poly(eqn);
+		}
 		for ( n=0; n <= eqn->dgr; n++ ){
 			eqn->cf[n] = eqn->cf[n+1];
 		}
 		if ( --eqn->dgr <= 0 )
 			return 0;
-		fprintf(stderr,"polyRoots:  After discarding coeff..."); pr_poly(eqn);
 	}
 
 	/* Factor the polynomial so the first coefficient is one
