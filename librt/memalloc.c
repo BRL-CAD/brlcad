@@ -34,7 +34,7 @@
  *	Aberdeen Proving Ground, Maryland  21005
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"
@@ -56,7 +56,7 @@ static struct mem_map *rt_mem_freemap = MAP_NULL;	/* Freelist of buffers */
 #define	M_BOVFL	00010	/* Bottom overflow */
 
 /*
- *			M E M A L L O C
+ *			R T _ M E M A L L O C
  *
  *	Takes:		& pointer of map,
  *			size.
@@ -105,7 +105,58 @@ register unsigned size;
 }
 
 /*
- *			M E M G E T
+ *			R T _ M E M A L L O C _ N O S P L I T
+ *
+ *	Takes:		& pointer of map,
+ *			size.
+ *
+ *	Returns:	NULL	Error
+ *			<addr>	Othewise
+ *
+ *	Comments:
+ *	Algorithm is BEST fit.
+ */
+struct mem_map *
+rt_memalloc_nosplit( pp, size )
+struct mem_map **pp;
+register unsigned size;
+{
+	register struct mem_map *prevp = MAP_NULL;
+	register struct mem_map *curp;
+	register struct mem_map *best = MAP_NULL, *best_prevp = MAP_NULL;
+
+	if( size == 0 )
+		return MAP_NULL;	/* fail */
+
+	for( curp = *pp; curp; curp = (prevp=curp)->m_nxtp )  {
+		if( curp->m_size < size )  continue;
+		if( curp->m_size == size )  {
+			best = curp;
+			best_prevp = prevp;
+			break;
+		}
+		/* This element has enough size */
+		if( best == MAP_NULL || curp->m_size < best->m_size )  {
+			best = curp;
+			best_prevp = prevp;
+		}
+	}
+	if( !best )
+		return MAP_NULL;		/* No space */
+
+	/* Move this element to free list, return it, unsplit */
+	if( best_prevp )
+		best_prevp->m_nxtp = best->m_nxtp;
+	else
+		*pp = best->m_nxtp;	/* Click list down at start */
+	best->m_nxtp = rt_mem_freemap;		/* Link it in */
+	rt_mem_freemap = best;			/* Make it the start */
+
+	return best;
+}
+
+/*
+ *			R T _ M E M G E T
  *
  *	Returns:	NULL	Error
  *			-1	Zero Request
@@ -113,6 +164,7 @@ register unsigned size;
  *
  *	Comments:
  *	Algorithm is first fit.
+ *	Free space can be split
  */
 unsigned long
 rt_memget( pp, size, place )
@@ -157,6 +209,55 @@ unsigned int place;
 		rt_mem_freemap = curp;			/* Make it the start */
 	}
 	return( addr );
+}
+
+/*
+ *			R T _ M E M G E T _ N O S P L I T
+ *
+ *	Returns:	0	Unable to satisfy request
+ *			<size>	Actual size of free block, may be larger
+ *				than requested size.
+ *
+ *
+ *	Comments:
+ *		Caller is responsible for returning unused portion.
+ */
+unsigned long
+rt_memget_nosplit( pp, size, place )
+struct mem_map **pp;
+register unsigned int size;
+unsigned int place;
+{
+	register struct mem_map *prevp, *curp;
+
+	prevp = MAP_NULL;		/* special for first pass through */
+	if( size == 0 )
+		bu_bomb("rt_memget_nosplit() size==0\n");
+
+	curp = *pp;
+	while( curp )  {
+		/*
+		 * Assumption:  We will always be APPENDING to an existing
+		 * memory allocation, so we search for a free piece of memory
+		 * which begins at 'place', without worrying about ones which
+		 * could begin earlier but be long enough to satisfy this
+		 * request.
+		 */
+		if( curp->m_addr == place && curp->m_size >= size )  {
+			size = curp->m_size;
+			/* put this element on the freelist */
+			if( prevp )
+				prevp->m_nxtp = curp->m_nxtp;
+			else
+				*pp = curp->m_nxtp;	/* Click list down at start */
+			curp->m_nxtp = rt_mem_freemap;		/* Link it in */
+			rt_mem_freemap = curp;			/* Make it the start */
+			return size;		/* actual size found */
+		}
+		curp = (prevp=curp)->m_nxtp;
+	}
+
+	return 0L;		/* No space found */
 }
 
 /*
