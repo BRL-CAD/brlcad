@@ -475,17 +475,6 @@ char	*dp;
 	return(1);
 }
 
-struct phong_specific {
-	int	shine;
-	double	wgt_specular;
-	double	wgt_diffuse;
-	double	transmit;	/* Moss "transparency" */
-	double	reflect;	/* Moss "transmission" */
-	double	refrac_index;
-} junk = {
-	10, 0.7, 0.3, 0, 0, 1.0
-};
-
 /*
  *  			B M P _ R E N D E R
  *  
@@ -561,7 +550,6 @@ char	*dp;
 		VPRINT("after", swp->sw_hit.hit_normal);
 	}
 
-	/*phong_render( ap, pp, swp, &junk );*/
 	return(1);
 }
 
