@@ -585,7 +585,7 @@ struct application *ap;
 
 	pp = InputHdp->pt_forw;
 	while( pp != InputHdp )  {
-		RT_CHECK_PT(pp);
+		RT_CK_PT(pp);
 		claiming_regions = 0;
 		if(rt_g.debug&DEBUG_PARTITION)  {
 			rt_log("rt_boolfinal: (%g,%g) x%d y%d lvl%d\n",
@@ -600,8 +600,9 @@ struct application *ap;
 		diff = pp->pt_inhit->hit_dist - pp->pt_outhit->hit_dist;
 		if( NEAR_ZERO( diff, ap->a_rt_i->rti_tol.dist ) )  {
 			if(rt_g.debug&DEBUG_PARTITION)  rt_log(
-				"rt_boolfinal:  Zero thickness partition: %s (%.18e,%.18e) x%d y%d lvl%d\n",
-				pp->pt_regionp->reg_name,
+				"rt_boolfinal:  Zero thickness partition, solids %s %s (%.18e,%.18e) x%d y%d lvl%d\n",
+				pp->pt_inseg->seg_stp->st_name,
+				pp->pt_outseg->seg_stp->st_name,
 				pp->pt_inhit->hit_dist,
 				pp->pt_outhit->hit_dist,
 				ap->a_x, ap->a_y, ap->a_level );
@@ -824,6 +825,7 @@ struct application *ap;
 			DEQUEUE_PT( newpp );
 			RT_CHECK_SEG(newpp->pt_inseg);		/* sanity */
 			RT_CHECK_SEG(newpp->pt_outseg);		/* sanity */
+			/* Record the "owning" region.  pt_regionp = NULL before here. */
 			newpp->pt_regionp = lastregion;
 
 			/*  See if this new partition extends the previous
