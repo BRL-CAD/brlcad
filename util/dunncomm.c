@@ -24,25 +24,46 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <fcntl.h>
 #include <signal.h>
 
-#ifdef BSD
-# include <sys/time.h>
-# include <sys/ioctl.h>
-struct	sgttyb	tty;
-#define TCSETA	TIOCSETP
-#define TCGETA	TIOCGETP
-#ifndef	XTABS
-#define	XTABS	(TAB1 | TAB2)
-#endif /* Not XTABS */
-#endif
+/*
+ *  This file will work IFF one of these three flags is set:
+ *	_POSIX_SOURCE	use POXIX termios and tcsetattr() call
+ *	SYSV		use SysV Rel3 termio and TCSETA ioctl
+ *	BSD		use Version 7 / BSD sgttyb and TIOCSETP ioctl
+ */
 
-#ifdef SYSV
+#if defined(_POSIX_SOURCE)
+#  if !defined(_XOPEN_SOURCE)
+#	define _XOPEN_SOURCE 1	/* to get TAB3, etc */
+#  endif
+#  undef SYSV
+#  undef BSD
+#  include <termios.h>
+
+	static struct termios	tty;
+
+#else	/* !defined(_POSIX_SOURCE) */
+
+#  ifdef BSD
+#    include <sys/time.h>
+#    include <sys/ioctl.h>
+     struct	sgttyb	tty;
+#    define TCSETA	TIOCSETP
+#    define TCGETA	TIOCGETP
+#    ifndef	XTABS
+#	define	XTABS	(TAB1 | TAB2)
+#    endif /* Not XTABS */
+#  endif	/* BSD */
+
+#  ifdef SYSV
 struct timeval {
 	int	tv_sec;
 	int	tv_usec;
 };
-# include <termio.h>
-struct	termio	tty;
-#endif /* SYSV */
+#   include <termio.h>
+    struct	termio	tty;
+#  endif /* SYSV */
+
+#endif /* _POSIX_SOURCE */
 
 int fd;
 char cmd;
@@ -68,8 +89,22 @@ dunnopen()
 
 	/* open the camera device */
 
-	if( (fd = open("/dev/camera", O_RDWR | O_NDELAY)) < 0 
-	     || ioctl(fd, TCGETA, &tty) < 0) {
+#if _POSIX_SOURCE
+	if( (fd = open("/dev/camera", O_RDWR | O_NONBLOCK)) < 0 )
+#else
+	if( (fd = open("/dev/camera", O_RDWR | O_NDELAY)) < 0 )
+#endif
+	{
+	     	printf("\007dunnopen: can't open /dev/camera\n");
+		close(fd);
+		exit(10);
+	}
+#if _POSIX_SOURCE
+	if( tcgetattr( fd, &tty ) < 0 )
+#else
+	if( ioctl(fd, TCGETA, &tty) < 0)
+#endif
+	{
 	     	printf("\007dunnopen: can't open /dev/camera\n");
 		close(fd);
 		exit(10);
@@ -81,7 +116,7 @@ dunnopen()
 	tty.sg_ispeed = tty.sg_ospeed = B9600;
 	tty.sg_flags = RAW | EVENP | ODDP | XTABS;
 #endif
-#ifdef SYSV
+#if defined(SYSV) || defined(_POSIX_SOURCE)
 	tty.c_cflag = B9600 | CS8;	/* Character size = 8 bits */
 	tty.c_cflag &= ~CSTOPB;		/* One stop bit */
 	tty.c_cflag |= CREAD;		/* Enable the reader */
@@ -101,7 +136,13 @@ dunnopen()
 	tty.c_lflag &= ~ISIG;		/* Signals OFF */
 	tty.c_lflag &= ~(ECHO|ECHOE|ECHOK);	/* Echo mode OFF */
 #endif
-	if( ioctl(fd, TCSETA, &tty) < 0 ) {
+
+#if _POSIX_SOURCE
+	if( tcsetattr( fd, TCSAFLUSH, &tty ) < 0 )
+#else
+	if( ioctl(fd, TCSETA, &tty) < 0 )
+#endif
+	{
 		perror("/dev/camera");
 		exit(20);
 	}
@@ -157,11 +198,13 @@ unsigned	n;
 
 goodstatus()
 {
+#ifdef BSD
 	struct timeval waittime, *timeout;
-	
+
 	timeout = &waittime;
 	timeout->tv_sec = 10;
 	timeout->tv_usec = 0;
+#endif
 	
 	cmd = ';';	/* status request cmd */
 	write(fd, &cmd, 1);	
@@ -174,7 +217,7 @@ goodstatus()
 	}
 #else
 	/* Set an alarm, and then just hang a read */
-	alarm(timeout->tv_sec);
+	alarm(10);
 #endif
 
 	mread(fd, status, 4);
@@ -209,9 +252,9 @@ goodstatus()
 void
 hangten()
 {
+#ifdef BSD
 	static struct timeval delaytime = { 0, 10000}; /* set timeout to 10mS*/
 
-#ifdef BSD
 	select(0, (int *)0, (int *)0, (int *)0, &delaytime);
 #else
 	register int i;
@@ -237,12 +280,15 @@ hangten()
 ready(nsecs)
 int nsecs;
 {
-	struct timeval waittime, *timeout;
 	register int i;
+
+#ifdef BSD
+	struct timeval waittime, *timeout;
 	timeout = &waittime;
 	timeout->tv_sec = nsecs;
 	timeout->tv_usec = 0;
-	
+#endif
+
 	cmd = ':';	/* ready test command */
 	write(fd, &cmd, 1);
 #ifdef BSD
@@ -283,10 +329,12 @@ void
 getexposure(title)
 char *title;
 {
+#ifdef BSD
 	struct timeval waittime;
 
 	waittime.tv_sec = 20;
 	waittime.tv_usec = 0;
+#endif
 
 	if(!ready(20)) {
 		printf("dunncolor: (getexposure) camera not ready\n");
@@ -306,7 +354,7 @@ char *title;
 		exit(40);
 	}
 #else
-	alarm(waittime.tv_sec);
+	alarm(20);
 #endif
 	mread(fd, values, 20);
 	alarm(0);
