@@ -240,12 +240,14 @@ char *buf;
 	height = 0;
 
 	cp = buf;
-	while( *cp == '-' )  {
+	while( *cp )  {
+		if( *cp != '-' )  continue;
+
 		switch( cp[1] )  {
 		case 'S':
 			stereo = 1;
 			break;
-		case 'h':
+		case 'H':
 			hypersample = atoi( &cp[2] );
 			break;
 		case 'A':
@@ -298,6 +300,12 @@ char *buf;
 				rt_log("npsw out of range 1..%d\n", MAX_PSW);
 				npsw = 1;
 			}
+			break;
+		case 'B':
+			/*  Remove all intentional random effects
+			 *  (dither, etc) for benchmarking.
+			 */
+			mathtab_constant();
 			break;
 		default:
 			rt_log("Option '%c' unknown\n", cp[1]);

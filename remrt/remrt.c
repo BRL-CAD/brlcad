@@ -99,6 +99,7 @@ struct frame {
 	long		fr_start;	/* start time */
 	long		fr_end;		/* end time */
 	int		fr_hyper;	/* hypersampling */
+	int		fr_benchmark;	/* Benchmark flag */
 	double		fr_zoomout;	/* perspective */
 	/* Current view */
 	double		fr_viewsize;
@@ -129,6 +130,7 @@ struct servers {
 int	npts = 64;
 int	hypersample = 0;
 double	zoomout = 0;
+int	benchmark = 0;
 extern double	atof();
 
 /* START */
@@ -498,9 +500,14 @@ FILE *fp;
 		printf("npts=%d, takes effect after next MAT\n", npts);
 		return;
 	}
-	if( strcmp( cmd_args[0], "h" ) == 0 )  {
+	if( strcmp( cmd_args[0], "-H" ) == 0 )  {
 		hypersample = atoi( cmd_args[1] );
 		printf("hypersample=%d, takes effect after next MAT\n", hypersample);
+		return;
+	}
+	if( strcmp( cmd_args[0], "-B" ) == 0 )  {
+		benchmark = 1;
+		printf("Benchmark flag=%d, takes effect after next MAT\n", benchmark);
 		return;
 	}
 	if( strcmp( cmd_args[0], "p" ) == 0 )  {
@@ -713,8 +720,9 @@ FILE *fp;
 			printf(" %4d  ", fr->fr_number);
 			printf("size=%d, zoomout=%f, ",
 				fr->fr_size, fr->fr_zoomout );
-			printf("viewsize = %f, ", fr->fr_viewsize);
-			printf("hypersample = %d", fr->fr_hyper);
+			printf("viewsize = %f\n", fr->fr_viewsize);
+			printf("\thypersample = %d, ", fr->fr_hyper);
+			printf("benchmark = %d, ", fr->fr_benchmark);
 			if( fr->fr_picture )  printf(" (Pic)");
 			printf("\n       servinit: ");
 			for( i=0; i<MAXSERVERS; i++ )
@@ -794,7 +802,8 @@ FILE *fp;
 		printf("load db.g trees\n");
 		printf("f #		set npts\n");
 		printf("p #		set zoomout\n");
-		printf("h #		set hypersampling\n");
+		printf("-H #		set hypersampling\n");
+		printf("-B		set benchmark flag\n");
 		printf("read script\n");
 		printf("mat file	load matrix from file\n");
 		printf("movie file a b\n");
@@ -1310,10 +1319,13 @@ register struct frame *fr;
 	char buf[BUFSIZ];
 
 	if( fr->fr_zoomout > 0 )  {
-		sprintf(buf, "-f%d -h%d -p%f",
+		sprintf(buf, "%s -f%d -H%d -p%f",
+			fr->fr_benchmark ? "-B" : "",
 			fr->fr_size, fr->fr_hyper, fr->fr_zoomout );
 	}  else  {
-		sprintf(buf, "-f%d -h%d", fr->fr_size, fr->fr_hyper );
+		sprintf(buf, "%s -f%d -H%d",
+			fr->fr_benchmark ? "-B" : "",
+			fr->fr_size, fr->fr_hyper );
 	}
 	if( pkg_send( MSG_OPTIONS, buf, strlen(buf)+1, sp->sr_pc ) < 0 )
 		dropclient(sp->sr_pc);
