@@ -961,26 +961,26 @@ char	**argv;
 		internal.idb_type = ID_NMG;
 		internal.idb_ptr = (genptr_t)m;
 	} else if( strcmp( argv[2], "pipe" ) == 0 ) {
-		struct wdb_pipeseg *ps;
+		struct wdb_pipept *ps;
 
 		internal.idb_type = ID_PIPE;
 		internal.idb_ptr = (genptr_t)rt_malloc( sizeof(struct rt_pipe_internal), "rt_pipe_internal" );
 		pipe_ip = (struct rt_pipe_internal *)internal.idb_ptr;
 		pipe_ip->pipe_magic = RT_PIPE_INTERNAL_MAGIC;
 		RT_LIST_INIT( &pipe_ip->pipe_segs_head );
-		GETSTRUCT( ps, wdb_pipeseg );
-		ps->ps_type = WDB_PIPESEG_TYPE_LINEAR;
+		GETSTRUCT( ps, wdb_pipept );
 		ps->l.magic = WDB_PIPESEG_MAGIC;
-		VSET( ps->ps_start, -toViewcenter[MDX] , -toViewcenter[MDY] , -toViewcenter[MDZ]-Viewscale );
-		ps->ps_od = 0.5*Viewscale;
-		ps->ps_id = 0.5*ps->ps_od;
+		VSET( ps->pp_coord, -toViewcenter[MDX] , -toViewcenter[MDY] , -toViewcenter[MDZ]-Viewscale );
+		ps->pp_od = 0.5*Viewscale;
+		ps->pp_id = 0.5*ps->pp_od;
+		ps->pp_bendradius = ps->pp_od;
 		RT_LIST_INSERT( &pipe_ip->pipe_segs_head, &ps->l );
-		GETSTRUCT( ps, wdb_pipeseg );
-		ps->ps_type = WDB_PIPESEG_TYPE_END;
+		GETSTRUCT( ps, wdb_pipept );
 		ps->l.magic = WDB_PIPESEG_MAGIC;
-		VSET( ps->ps_start, -toViewcenter[MDX] , -toViewcenter[MDY] , -toViewcenter[MDZ]+Viewscale );
-		ps->ps_od = 0.5*Viewscale;
-		ps->ps_id = 0.5*ps->ps_od;
+		VSET( ps->pp_coord, -toViewcenter[MDX] , -toViewcenter[MDY] , -toViewcenter[MDZ]+Viewscale );
+		ps->pp_od = 0.5*Viewscale;
+		ps->pp_id = 0.5*ps->pp_od;
+		ps->pp_bendradius = ps->pp_od;
 		RT_LIST_INSERT( &pipe_ip->pipe_segs_head, &ps->l );
 	} else if( strcmp( argv[2], "ars" ) == 0 ||
 		   strcmp( argv[2], "poly" ) == 0 ||

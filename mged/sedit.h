@@ -79,12 +79,12 @@
 #define	ECMD_NMG_EKILL		26	/* kill current edge */
 #define	ECMD_NMG_LEXTRU		27	/* Extrude loop */
 
-#define ECMD_PIPE_PICK		28	/* Pick pipe segment */
+#define ECMD_PIPE_PICK		28	/* Pick pipe point */
 #define	ECMD_PIPE_SPLIT		29	/* Split a pipe segment into two */
-#define	ECMD_PIPE_SEG_ADD	30	/* Add a pipe segment to end of pipe */
-#define	ECMD_PIPE_SEG_INS	31	/* Add a pipe segment to start of pipe */
-#define	ECMD_PIPE_SEG_DEL	32	/* Delete a pipe segment */
-#define	ECMD_PIPE_SEG_MOVE	33	/* Move a pipe segment */
+#define	ECMD_PIPE_PT_ADD	30	/* Add a pipe point to end of pipe */
+#define	ECMD_PIPE_PT_INS	31	/* Add a pipe point to start of pipe */
+#define	ECMD_PIPE_PT_DEL	32	/* Delete a pipe point */
+#define	ECMD_PIPE_PT_MOVE	33	/* Move a pipe point */
 
 extern fastf_t	es_scale;		/* scale factor */
 extern fastf_t 	es_para[3];		/* keyboard input parameter changes */
