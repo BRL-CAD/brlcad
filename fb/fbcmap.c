@@ -63,7 +63,7 @@ char *argv[];
 
 	if( ! pars_Argv( argc, argv ) )
 		{
-		(void) fprintf( stderr, "Usage : fbcmap	[-h] [(1-4)]\n" );
+		usage();
 		return	1;
 		}
 	if( fbopen( NULL, APPEND ) == -1 )
@@ -184,6 +184,7 @@ char *argv[];
 				"Color map #%d, flavor not implemented!\n",
 				flavor
 				);
+		usage();
 		return	1;
 	}
 	return fb_wmap( cp ) == -1;
@@ -213,3 +214,30 @@ register char	**argv;
 		flavor = atoi( argv[optind] );
 	return	1;
 	}
+
+
+usage()
+{
+	(void) fprintf( stderr, "Usage : fbcmap	[-h] [(1-5,10-12)]\n" );
+	(void) fprintf( stderr,
+			"Color map #0, linear (standard).\n"
+			);
+	(void) fprintf( stderr,
+			"Color map #1, reverse-linear (negative).\n"
+			);
+	(void) fprintf( stderr,
+		"Color map #2, corrected for POLAROID 809/891 film.\n"
+			);
+	(void) fprintf( stderr,
+			"Color map #3, low 100 entries black.\n"
+			);
+	(void) fprintf( stderr,
+	"Color map #4, amplify middle range to boost dim pictures.\n"
+			);
+	(void) fprintf( stderr,
+		"Color map #5, University of Utah's color map.\n"
+			);
+	(void) fprintf( stderr, "Color map #10, solid black.\n" );
+	(void) fprintf( stderr, "Color map #11, solid white.\n" );
+	(void) fprintf( stderr, "Color map #12, 18%% neutral grey.\n" );
+}
