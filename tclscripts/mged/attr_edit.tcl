@@ -46,7 +46,8 @@ class Attr_editor {
 	# only arg is an optional object name
 	set num_args [llength $args]
 	if { $num_args > 1 } {
-	    tk_messageBox -icon error -type ok -title "Error" -message "Incorrect number of arguments"
+	    tk_messageBox -icon error -type ok -title "Error"\
+		    -message "Incorrect number of arguments"
 	    destroy $itk_component(hull)
 	    return
 	}
@@ -72,7 +73,7 @@ class Attr_editor {
 	set objb $itk_interior.fr_obj.obj_e
 	grid $itk_interior.fr_obj.obj_l -row 0 -column 0 -sticky e -padx 3 -pady 3
 	grid $itk_interior.fr_obj.obj_e -row 0 -column 1 -sticky w -padx 3 -pady 3
-	grid $itk_interior.fr_obj -row 0 -column 0 -sticky ew -padx 3 -pady 3
+	grid $itk_interior.fr_obj -row 0 -column 0 -sticky new -padx 3 -pady 3
 	grid columnconfigure $itk_interior.fr_obj { 0 1 } -weight 1 -pad 3
 
 	itk_component add frame_attrs {
@@ -94,10 +95,11 @@ class Attr_editor {
 	grid $itk_interior.fr_attrs.attr_e -row 0 -column 3 -padx 3 -pady 3 -sticky w
 	grid $itk_interior.fr_attrs.asb -row 1 -column 0 -sticky nse -padx 3 -pady 3
 	grid $itk_interior.fr_attrs.attrs -row 1 -column 1 -sticky nsw -padx 3 -pady 3
-	grid $itk_interior.fr_attrs.txt -row 1 -column 2 -columnspan 2 -sticky nse -padx 3 -pady 3
+	grid $itk_interior.fr_attrs.txt -row 1 -column 2 -columnspan 2 -sticky nsew -padx 3 -pady 3
 	grid $itk_interior.fr_attrs.sbt -row 1 -column 4 -sticky nsw -padx 3 -pady 3
-	grid $itk_interior.fr_attrs -row 1 -column 0 -padx 3 -pady 3
-	grid columnconfigure $itk_interior.fr_attrs { 0 1 2 3 } -weight 1 -pad 3
+	grid $itk_interior.fr_attrs -row 1 -column 0 -padx 3 -pady 3 -sticky nsew
+	grid columnconfigure $itk_interior.fr_attrs { 0 1 2 3 4 } -weight 1 -pad 3
+	grid rowconfigure $itk_interior.fr_attrs 1 -weight 1 -pad 3
 
 	itk_component add controls {
 	    frame $itk_interior.frc -relief groove -bd 3
@@ -116,8 +118,11 @@ class Attr_editor {
 	grid $itk_interior.frc.reset_all -row 0 -column 3 -padx 3 -pady 3
 	grid $itk_interior.frc.dismiss -row 0 -column 4 -padx 3 -pady 3
 	grid $itk_interior.frc.delete_selected -row 1 -column 2 -padx 3 -pady 3
-	grid $itk_interior.frc -row 2 -column 0 -sticky ew -padx 3 -pady 3
+	grid $itk_interior.frc -row 2 -column 0 -sticky sew -padx 3 -pady 3
 	grid columnconfigure $itk_interior.frc { 0 1 2 3 4 } -weight 1 -pad 3
+
+	grid columnconfigure $itk_interior 0 -weight 1
+	grid rowconfigure $itk_interior 1 -weight 1
 
 	# this keeps the attribute name entry widget current when a selection is made
 	# in the attribute name list box
@@ -135,6 +140,75 @@ class Attr_editor {
 	# attribute name entry widget and hitting enter
 	bind $itk_interior.fr_attrs.attr_e <Key-Return> [code $this update_cur_attr_name]
 
+	# help on context data
+	hoc_register_data $itk_interior.fr_obj.obj_e "Object" {
+	    {summary "This window displays the currently selected database object. To select an object\n\
+		    type its name in this window and hit \"ENTER\". All the attributes of this object\n\
+		    will be placed in a local copy, and the names of all the attributes will be displayed\n\
+		    in the list below. If you select an object in this manner without using the \"ok\"\n\
+		    button first, any currently pending attribute edit operations performed in this\n\
+		    editor will be forgotten."}
+	}
+	hoc_register_data $itk_interior.fr_attrs.new "New Attribute" {
+	    {summary "Use this button to create a new attribute. After pressing this button,\n\
+		    Type the name of the new attribute into the \"Attribute Name\" window and\n\
+		    hit \"ENTER\". The new attribute name will be added to the local copy of\n\
+		    attributes for the currently select database object. You may then enter a\n\
+		    value for the new attribute by typing into the attribute value window.\n\
+		    The new attribute and value will not be saved to the database until you\n\
+		    press \"ok\" or \"apply\" buttons."}
+	}
+	hoc_register_data $itk_interior.fr_attrs.attr_e "Attribute Name" {
+	    {summary "This window displays the attribute currently selected for editing.\n\
+		    If nothing has been selected, you may type in an attribute name and hit\n\
+		    enter to select it. If an attribute name is already selected, you may edit\n\
+		    the attribute name in this window and hit enter to save the edited attribute\n\
+		    in the local copy.  Remember, attribute edits are not saved to the database\n\
+		    until \"ok\" or \"apply\" is selected."}
+	}
+	hoc_register_data $itk_interior.fr_attrs.attrs "Attribute Names List" {
+	    {summary "This window contains a list of the names of all the attributes in the local\n\
+		    copy of the attributes of the currently selected database object. You may select\n\
+		    one of these attributes for editing using the left mouse button. Remember, attribute\n\
+		    edits are not saved to the database until \"ok\" or \"apply\" is selected."}
+	}
+	hoc_register_data $itk_interior.fr_attrs.txt "Attribute Value" {
+	    {summary "This window displays the value of the local copy of the currently selected\n\
+		    attribute. You may edit this value simply by editing the contents of this window.\n\
+		    Remember, attribute edits are not saved to the database until \"ok\" or \"apply\"\n\
+		    is selected."}
+	}
+	hoc_register_data $itk_interior.frc.ok "ok" {
+	    {summary "Press this button to save all the pending attribute edits to the currently\n\
+		    selected database object and dismiss the attribute editor window. Remember,\n\
+		    attribute edits are not saved to the database until \"ok\" or \"apply\"\n\
+		    is selected."} 
+	}
+	hoc_register_data $itk_interior.frc.apply "apply" {
+	    {summary "Press this button to save all the pending attribute edits to the currently\n\
+		    selected database object without dismissing the attribute editor window. Remember,\n\
+		    attribute edits are not saved to the database until \"ok\" or \"apply\"\n\
+		    is selected."} 
+	}
+	hoc_register_data $itk_interior.frc.reset_sel "reset selected" {
+	    {summary "Press this button to reset the value of the local copy of the currently selected\n\
+		    attribute to that stored in the database. Remember, attribute edits are not saved to\n\
+		    the database until \"ok\" or \"apply\" is selected."}
+	}
+	hoc_register_data $itk_interior.frc.reset_all "reset all" {
+	    {summary "Press this button to reset the local copy of the attributes of the currently selected\n\
+		    object to those stored in the database. Remember, attribute edits are not saved to\n\
+		    the database until \"ok\" or \"apply\" is selected."}
+	}
+	hoc_register_data $itk_interior.frc.dismiss "dismiss" {
+	    {summary "Press this button to dismiss the attribute editor window without saving any\n\
+		    currently pending attribute edits to the database."}
+	}
+	hoc_register_data $itk_interior.frc.delete_selected "delete selected" {
+	    {summary "Press this button to delete the currently selected attribute from the local\n\
+		    copy of the currently selected object attributes. Remember, attribute edits are\n\
+		    not saved to the database until \"ok\" or \"apply\" is selected."}
+	}
     }
 
     # a proc to insure this is a singleton
@@ -219,9 +293,17 @@ class Attr_editor {
     }
 
     # method called to copy attribute name from attribute name entry widget to the
-    # currently indexed slot in the list of attribute names
+    # currently indexed slot in the list of attribute names, or if nothing is selected
+    # in the list, look for this attribute name and select it, if found
     method update_cur_attr_name {} {
-	if { $cur_index < 0 } return
+	if { $cur_index < 0 } {
+	    set cur_index [lsearch -exact $cur_attrs $cur_attr_name]
+	    if { $cur_index > -1 } {
+		$listb selection set $cur_index
+		update_attr_text
+	    }
+	    return
+	}
 
 	if { [attr_name_is_valid $cur_attr_name] == 0 } {
 	   tk_messageBox -icon error -type ok -title "Error: illegal attribute name"\
@@ -262,6 +344,8 @@ class Attr_editor {
     # returns 0 if all is well
     # returns 1 otherwise
     method do_apply {} {
+
+	if { $obj_name == "" } { return 1 }
 
 	# warn user if we may be copying attributes to a different object
 	if { $obj_name != $old_obj_name } {
