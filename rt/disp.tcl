@@ -120,6 +120,7 @@ proc scanline { {foo 0} } {
 	global line_num
 	global pixel_num
 	global rescale_scanline
+	global initial_maxval
 
 	set ymax 256
 
