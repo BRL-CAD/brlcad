@@ -96,8 +96,15 @@ struct scroll_item sl_adc_menu[] = {
  */
 void sl_halt_scroll()
 {
-	/* The 'knob' command will zero the rate_slew[] array, etc. */
-	bu_vls_printf(&dm_values.dv_string, "knob zero\n");
+  struct bu_vls cmd;
+
+  bu_vls_init(&cmd);
+
+  /* The 'knob' command will zero the rate_slew[] array, etc. */
+  bu_vls_strcpy(&cmd, "knob zero\n");
+  (void)cmdline(&cmd, False);
+
+  bu_vls_free(&cmd);
 }
 
 /*

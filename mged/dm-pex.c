@@ -71,7 +71,6 @@ static int Pex_doevent();
 #endif
 
 extern int dm_pipe[];
-extern struct device_values dm_values;	/* values read from devices */
 extern Tcl_Interp *interp;
 extern Tk_Window tkwin;
 

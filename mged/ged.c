@@ -90,8 +90,6 @@ int dm_pipe[2];
 
 struct db_i	*dbip;			/* database instance pointer */
 
-struct device_values dm_values;		/* Dev Values, filled by dm-XX.c */
-
 int    update_views;
 extern struct dm dm_Null;
 extern struct _mged_variables default_mged_variables;
@@ -264,7 +262,6 @@ char **argv;
 	es_edflag = -1;		/* no solid editing just now */
 
 	bu_vls_init( &curr_cmd_list->more_default );
-	bu_vls_init( &dm_values.dv_string );
 	bu_vls_init(&input_str);
 	bu_vls_init(&input_str_prefix);
 	bu_vls_init(&scratchline);
@@ -831,52 +828,13 @@ int	non_blocking;
 	   as possible before the next redraw (multiple keypresses, redraw
 	   events, etc... */
 	
-	while (Tk_DoOneEvent(TK_ALL_EVENTS|TK_DONT_WAIT)) {
-	    if( cmdline_hook )  
-		(*cmdline_hook)( &dm_values.dv_string ); 
-	    else {
-		/* Some commands (e.g. mouse events) queue further events. */
-		int oldlen;
-loopagain:
-		oldlen = bu_vls_strlen( &dm_values.dv_string );
-		(void)cmdline( &dm_values.dv_string, FALSE );
-		if( bu_vls_strlen( &dm_values.dv_string ) > oldlen ) {
-		    /* Remove cmds already done, and go again */
-		    bu_vls_nibble( &dm_values.dv_string, oldlen );
-		    goto loopagain;
-		}
-	    }
-	    bu_vls_trunc( &dm_values.dv_string, 0 );
-	}
+	while (Tk_DoOneEvent(TK_ALL_EVENTS|TK_DONT_WAIT));
     } else {
       Tk_DoOneEvent(TK_ALL_EVENTS);
     }
     
     non_blocking = 0;
 
-    /*
-     *  Process any "string commands" sent to us by the display manager.
-     *  (Or "invented" here, for compatability with old dm's).
-     *  Each one is expected to be newline terminated.
-     */
-
-    if( cmdline_hook )  
-	(*cmdline_hook)(&dm_values.dv_string); 
-    else {
-	/* Some commands (e.g. mouse events) queue further events. */
-	int oldlen;
-again:
-	oldlen = bu_vls_strlen( &dm_values.dv_string );
-	(void)cmdline( &dm_values.dv_string, FALSE );
-	if( bu_vls_strlen( &dm_values.dv_string ) > oldlen ) {
-	    /* Remove cmds already done, and go again */
-	    bu_vls_nibble( &dm_values.dv_string, oldlen );
-	    goto again;
-	}
-    }
-
-    bu_vls_trunc( &dm_values.dv_string, 0 );
-    
     /*
      * Set up window so that drawing does not run over into the
      * status line area, and menu area (if present).
@@ -1309,8 +1267,8 @@ sig2()
 void
 sig3()
 {
-  longjmp( jmp_env, 1 );
   (void)signal( SIGINT, SIG_IGN );
+  longjmp( jmp_env, 1 );
 }
 
 
