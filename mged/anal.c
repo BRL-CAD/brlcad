@@ -615,7 +615,7 @@ spline_anal()
  *  Sys-V math-library error catcher.
  *  Some callers of acos trip over DOMAIN errors all the time, so...
  */
-#ifdef SYSV
+#if defined(SYSV) || BSD >= 43
 int
 matherr(x)
 struct exception *x;
