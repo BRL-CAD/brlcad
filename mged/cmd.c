@@ -318,7 +318,7 @@ static struct funtab funtab[] = {
 	f_memprint, 1, 1,TRUE,
 "mirface", "#### axis", "mirror an ARB face",
 	f_mirface,3,3,TRUE,
-"mirror", "old new axis", "Arb mirror ??",
+"mirror", "old new axis", "mirror solid or combination around axis",
 	f_mirror,4,4,TRUE,
 "mv", "old new", "rename object",
 	f_name,3,3,TRUE,
