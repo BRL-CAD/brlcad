@@ -2167,7 +2167,10 @@ int n;
 /*
  *			N M G _ S _ T O _ V L I S T
  *
- *  poly_markers = 0 for vectors, 1 for polygon markers
+ *  poly_markers =
+ *	0 for vectors
+ *	1 for polygons
+ *	2 for polygons and surface normals drawn with vectors
  */
 nmg_s_to_vlist( vhead, s, poly_markers )
 struct vlhead	*vhead;
@@ -2181,8 +2184,6 @@ int		poly_markers;
 	struct vertexuse *vu;
 	struct vertex	*v;
 	register struct vertex_g *vg;
-	int		isfirst;
-	struct vertex_g	*first_vg;
 
 	NMG_CK_SHELL(s);
 	if (s->vu_p)  {
@@ -2220,30 +2221,49 @@ int		poly_markers;
 	    if (fu->orientation == OT_SAME) {
 		lu = fu->lu_p;
 		do {
+			int		isfirst;
+			struct vertex_g	*first_vg;
+			point_t		centroid;
+			int		npoints;
+
 			/* Consider this loop */
 			NMG_CK_LOOPUSE(lu);
 			eu = lu->down.eu_p;
 			NMG_CK_EDGEUSE(eu);
 			isfirst = 1;
 			first_vg = (struct vertex_g *)0;
-			do {
+			npoints = 0;
+			VSETALL( centroid, 0 );
+			do  {
 				/* Consider this edge */
 				vu = eu->vu_p;
 				NMG_CK_VERTEXUSE(vu);
 				v = vu->v_p;
 				NMG_CK_VERTEX(v);
 				vg = v->vg_p;
-				if( vg ) {
-					NMG_CK_VERTEX_G(vg);
-					if (isfirst) {
-						if( poly_markers) {
-							/* Insert a "start polygon, normal" marker */
-							ADD_VL( vhead, fg->N, 2 );
-						}
-						ADD_VL( vhead, vg->coord, 0 );
-						isfirst = 0;
-						first_vg = vg;
+				if( !vg ) {
+					eu = eu->next;
+					continue;
+				}
+				NMG_CK_VERTEX_G(vg);
+				VADD2( centroid, centroid, vg->coord );
+				npoints++;
+				if (isfirst) {
+					if( poly_markers) {
+						/* Insert a "start polygon, normal" marker */
+						ADD_VL( vhead, fg->N, 2 );
+						ADD_VL( vhead, vg->coord, 3 );	/* move */
 					} else {
+						/* move */
+						ADD_VL( vhead, vg->coord, 0 );
+					}
+					isfirst = 0;
+					first_vg = vg;
+				} else {
+					if( poly_markers) {
+						ADD_VL( vhead, vg->coord, 4 );
+					} else {
+						/* Draw */
 						ADD_VL( vhead, vg->coord, 1 );
 					}
 				}
@@ -2252,7 +2272,26 @@ int		poly_markers;
 
 			/* Draw back to the first vertex used */
 			if( !isfirst && first_vg )  {
-				ADD_VL( vhead, first_vg->coord, 1 );
+				if( poly_markers )  {
+					/* Draw, end polygon */
+					ADD_VL( vhead, first_vg->coord, 5 );
+				} else {
+					/* Draw */
+					ADD_VL( vhead, first_vg->coord, 1 );
+				}
+			}
+			if( poly_markers > 1 && npoints > 2 )  {
+				/* Draw surface normal as a little vector */
+				double	f;
+				vect_t	tocent;
+				f = 1.0 / npoints;
+				VSCALE( centroid, centroid, f );
+				ADD_VL( vhead, centroid, 0 );	/* move */
+				VSUB2( tocent, first_vg->coord, centroid );
+				f = MAGNITUDE( tocent ) * 0.5;
+				VSCALE( tocent, fg->N, f );
+				VADD2( centroid, centroid, tocent );
+				ADD_VL( vhead, centroid, 1 );	/* draw */
 			}
 
 			lu = lu->next;
@@ -2261,7 +2300,6 @@ int		poly_markers;
 	    fu = fu->next;
 	} while (fu != s->fu_p);
 }
-
 
 /*	F I N D E U
  *
