@@ -22,111 +22,105 @@
 
 check_externs "_mged_attach _mged_tie _mged_view_ring"
 
-if ![info exists tk_version] {
+if {![info exists tk_version]} {
     loadtk
 }
 
-if ![info exists mged_default(rot_factor)] {
+if {![info exists mged_default(rot_factor)]} {
     set mged_default(rot_factor) 1
 }
 
-if ![info exists mged_default(tran_factor)] {
+if {![info exists mged_default(tran_factor)]} {
     set mged_default(tran_factor) 0.01
 }
 
-if ![info exists mged_default(html_dir)] {
+if {![info exists mged_default(html_dir)]} {
     set mged_default(html_dir) [bu_brlcad_path html/manuals/mged]
 }
 
-if [info exists env(MGED_HTML_DIR)] {
-        set mged_html_dir $env(MGED_HTML_DIR)
-} else {
-        set mged_html_dir $mged_default(html_dir)
-}
-
-if ![info exists mged_default(web_browser)] {
+if {![info exists mged_default(web_browser)]} {
     set mged_default(web_browser) /usr/bin/netscape
 }
 
-if ![info exists mged_color_scheme] {
+if {![info exists mged_color_scheme]} {
     color_scheme_init
 }
 
-if ![info exists mged_players] {
+if {![info exists mged_players]} {
     set mged_players {}
 }
 
-if ![info exists mged_collaborators] {
+if {![info exists mged_collaborators]} {
     set mged_collaborators {}
 }
 
-if ![info exists mged_default(ggeom)] {
+if {![info exists mged_default(ggeom)]} {
     set mged_default(ggeom) -0+0
 }
 
-if ![info exists mged_default(geom)] {
+if {![info exists mged_default(geom)]} {
     # Position command window in upper left corner
     set mged_default(geom) +8+32
 }
 
-if ![info exists mged_default(id)] {
+if {![info exists mged_default(id)]} {
     set mged_default(id) "id"
 }
 
-if ![info exists mged_default(pane)] {
+if {![info exists mged_default(pane)]} {
     set mged_default(pane) "ur"
 }
 
-if ![info exists mged_default(multi_pane)] {
+if {![info exists mged_default(multi_pane)]} {
     set mged_default(multi_pane) 0
 }
 
-if ![info exists mged_default(config)] {
+if {![info exists mged_default(config)]} {
     set mged_default(config) b
 }
 
-if [info exists env(DISPLAY)] {
+if {[info exists env(DISPLAY)]} {
     set mged_default(display) $env(DISPLAY)
 } else {
-    if ![info exists mged_default(display)] {
+    if {![info exists mged_default(display)]} {
 	set mged_default(display) :0
     }
     set env(DISPLAY) $mged_default(display)
 }
 
-if ![info exists mged_default(gdisplay)] {
+if {![info exists mged_default(gdisplay)]} {
     set mged_default(gdisplay) $mged_default(display)
 }
 
-if ![info exists mged_default(dm_type)] {
+if {![info exists mged_default(dm_type)]} {
     set mged_default(dm_type) [dm_bestXType $mged_default(gdisplay)]
 }
 
-if ![info exists mged_default(comb)] {
+if {![info exists mged_default(comb)]} {
     set mged_default(comb) 0
 }
 
-if ![info exists mged_default(edit_style)] {
+if {![info exists mged_default(edit_style)]} {
     set mged_default(edit_style) emacs
 }
 
-if ![info exists mged_default(num_lines)] {
+if {![info exists mged_default(num_lines)]} {
     set mged_default(num_lines) 10
 }
 
-if ![info exists mged_default(tearoff_menus)] {
+if {![info exists mged_default(tearoff_menus)]} {
     set mged_default(tearoff_menus) 0
 }
 
-if ![info exists mged_gui(mged,screen)] {
+if {![info exists mged_gui(mged,screen)]} {
     set mged_gui(mged,screen) $mged_default(display)
 }
 
-if ![info exists mged_gui(databaseDir)] {
+if {![info exists mged_gui(databaseDir)]} {
     set mged_gui(databaseDir) [pwd]
 }
 
-if ![info exists mged_gui(loadScriptDir)] {
+if {![info exists mged_gui(loadScriptDir)]} {
     set mged_gui(loadScriptDir) [pwd]
 }
 
@@ -134,28 +128,60 @@ if {[font names] == ""} {
     font_init
 }
 
-if ![info exists mged_default(faceplate)] {
+if {![info exists mged_default(faceplate)]} {
     set mged_default(faceplate) 0
 }
 
-if ![info exists mged_default(orig_gui)] {
+if {![info exists mged_default(orig_gui)]} {
     set mged_default(orig_gui) 0
 }
 
-if ![info exists mged_default(zclip)] {
+if {![info exists mged_default(zclip)]} {
     set mged_default(zclip) 1
 }
 
-if ![info exists mged_default(perspective_mode)] {
+if {![info exists mged_default(perspective_mode)]} {
     set mged_default(perspective_mode) 0
 }
 
-if ![info exists mged_default(max_text_lines)] {
+if {![info exists mged_default(max_text_lines)]} {
     set mged_default(max_text_lines) 1000
 }
 
-if ![info exists mged_default(doubleClickTol)] {
+if {![info exists mged_default(doubleClickTol)]} {
     set mged_default(doubleClickTol) 500
+}
+
+if {[info exists env(MGED_HTML_DIR)]} {
+        set mged_html_dir $env(MGED_HTML_DIR)
+} else {
+        set mged_html_dir $mged_default(html_dir)
+}
+
+if {[info exists env(WEB_BROWSER)]} {
+    if {[file exists $env(WEB_BROWSER)]} {
+	set mged_browser $env(WEB_BROWSER)
+    }
+}
+
+if {![info exists mged_browser]} {
+    if {[file exists $mged_default(web_browser)]} {
+	set mged_browser $mged_default(web_browser)
+    } else {
+	if {[info exists env(PATH)]} {
+	    set pathlist [split $env(PATH) :]
+	    foreach path $pathlist {
+		if {[file exists $path/netscape]} {
+		    set mged_browser $path/netscape
+		    break;
+		}
+	    }
+	}
+
+	if {![info exists mged_browser]} {
+	    set mged_browser "Browser not found, check your PATH"
+	}
+    }
 }
 
 # Call this routine to initialize the "solid_data" array
@@ -182,6 +208,7 @@ proc gui { args } {
     global mged_gui
     global mged_default
     global mged_html_dir
+    global mged_browser
     global mged_players
     global mged_collaborators
     global mged_display
@@ -344,7 +371,7 @@ set mged_gui($id,dtype) $dtype
 set mged_gui($id,lastButtonPress) 0
 set mged_gui($id,lastItem) ""
 
-if ![dm_validXType $gscreen $dtype] {
+if {![dm_validXType $gscreen $dtype]} {
     return "gui: $gscreen does not support $dtype"
 }
 
@@ -355,7 +382,7 @@ if { [info exists tk_strictMotif] == 0 } {
 #==============================================================================
 # PHASE 1: Creation of main window
 #==============================================================================
-if [ winfo exists .$id ] {
+if {[ winfo exists .$id ]} {
     return "A session with the id \"$id\" already exists!"
 }
 	
@@ -373,7 +400,7 @@ if {$comb} {
 
     frame $mged_gui($id,dmc) -relief sunken -borderwidth 2
 
-    if [catch { openmv $id $mged_gui($id,top) $mged_gui($id,dmc) $screen $dtype } result] {
+    if {[catch { openmv $id $mged_gui($id,top) $mged_gui($id,dmc) $screen $dtype } result]} {
 	gui_destroy $id
 	return $result
     }
@@ -383,7 +410,7 @@ if {$comb} {
 
     toplevel $mged_gui($id,dmc) -screen $gscreen -relief sunken -borderwidth 2
 
-    if [catch { openmv $id $mged_gui($id,top) $mged_gui($id,dmc) $gscreen $dtype } result] {
+    if {[catch { openmv $id $mged_gui($id,top) $mged_gui($id,dmc) $gscreen $dtype } result]} {
 	gui_destroy $id
 	return $result
     }
@@ -1871,41 +1898,8 @@ hoc_register_menu_data "Help" "Apropos" "Apropos"\
 MGED's commands." }
           { see_also "apropos" } }
 
-# First, try to use the browser specified by
-# the WEB_BROWSER environment variable.
-if [info exists env(WEB_BROWSER)] {
-    if [ file exists $env(WEB_BROWSER) ] {
-	set web_cmd "exec $env(WEB_BROWSER) -display $screen\
-		$mged_html_dir/index.html &"
-    }
-}
-
-# Attempt to locate a browser
-if ![info exists web_cmd] {
-    # First, search the user's path
-    if [info exists env(PATH)] {
-	set pathlist [split $env(PATH) :]
-	foreach path $pathlist {
-	    if [file exists $path/netscape] {
-		set web_cmd "exec $path/netscape -display $screen \
-			$mged_html_dir/index.html &"
-		break;
-	    }
-	}
-    }
-
-    if ![info exists web_cmd] {
-	# Failing that, use the browser specified by mged_default(web_browser)
-	if [ file exists $mged_default(web_browser) ] {
-	    set web_cmd "exec $mged_default(web_browser) -display $screen\
-		    $mged_html_dir/index.html &"
-	} else {
-	    # When all else fails, admit defeat
-	    set web_cmd {puts "Sorry, a web browser is not available."; 
-	    puts "Please check your PATH."}
-	}
-    }
-}
+set web_cmd "exec \$mged_browser -display $screen \
+	\$mged_html_dir/index.html &"
 
 .$id.menubar.help add command -label "Manual" -underline 0 -command $web_cmd
 hoc_register_menu_data "Help" "Manual" "Manual"\
@@ -2237,7 +2231,7 @@ proc update_mged_vars { id } {
 
     winset $mged_gui($id,active_dm)
     set mged_gui($id,rateknobs) $rateknobs
-    if ![catch {adc draw} result] {
+    if {![catch {adc draw} result]} {
 	set mged_gui($id,adc_draw) $result
     }
     set mged_gui($id,model_draw) [rset ax model_draw]
@@ -2301,7 +2295,7 @@ proc set_mged_v_axes_pos { id } {
 proc toggle_button_menu { id } {
     global mged_gui
 
-    if [ winfo exists .mmenu$id ] {
+    if {[ winfo exists .mmenu$id ]} {
 	destroy .mmenu$id
 	set mged_gui($id,classic_buttons) 0
 	return
@@ -2332,7 +2326,7 @@ proc toggle_edit_info { id } {
 proc build_edit_info { id } {
     global mged_gui
 
-    if [winfo exists .sei$id] {
+    if {[winfo exists .sei$id]} {
 	raise .sei$id
 	return
     }
@@ -2351,7 +2345,7 @@ proc build_edit_info { id } {
 proc destroy_edit_info { id } {
     global mged_gui
 
-    if ![winfo exists .sei$id] {
+    if {![winfo exists .sei$id]} {
 	return
     }
 
@@ -2882,7 +2876,7 @@ proc get_cmd_win_height { id } {
 }
 
 proc mged_handle_configure { id } {
-    if [winfo exists .$id.rt] {
+    if {[winfo exists .$id.rt]} {
 	rt_handle_configure $id
     }
 }
