@@ -28,8 +28,8 @@
 	machine LIBRT_TIMER log bomb storage const pr hist global \
 	sphmap rtstring inout \
 	nmg_mk nmg_misc nmg_bool nmg_eval nmg_inter nmg_plot nmg_ck \
-	nmg_mesh nmg_comb nmg_class nmg_mod nmg_index nmg_rt nmg_manifolds \
-	units magic msr
+	nmg_mesh nmg_comb nmg_class nmg_mod nmg_index nmg_rt nmg_manif \
+	units magic msr vert
 
 #define NURB_OBJ	\
 	nurb_basis.o nurb_bound.o nurb_diff.o nurb_knot.o \
