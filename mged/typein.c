@@ -797,7 +797,9 @@ struct rt_db_internal	*intern;
 	intern->idb_ptr = (genptr_t)dsp;
 	dsp->magic = RT_DSP_INTERNAL_MAGIC;
 
-	strcpy( dsp->dsp_file, cmd_argvs[3] );
+	bu_vls_init( &dsp->dsp_file );
+	bu_vls_strcpy( &dsp->dsp_file, cmd_argvs[3] );
+
 	dsp->dsp_xcnt = atoi( cmd_argvs[4] );
 	dsp->dsp_ycnt = atoi( cmd_argvs[5] );
 	dsp->dsp_smooth = atoi( cmd_argvs[6] );

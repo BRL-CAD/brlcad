@@ -2732,7 +2732,7 @@ sedit()
 
 			RT_DSP_CK_MAGIC( dsp );
 
-			fname = get_file_name( dsp->dsp_file );
+			fname = get_file_name( bu_vls_addr(&dsp->dsp_file) );
 			if ( ! fname) break;
 
 			if( stat( fname, &stat_buf ) ) {
@@ -2753,7 +2753,7 @@ sedit()
 				mged_print_result( TCL_ERROR );
 				return;
 			}
-			strcpy( dsp->dsp_file, fname );
+			bu_vls_strcpy( &dsp->dsp_file, fname );
 
 			break;
 		}
