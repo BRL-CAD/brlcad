@@ -609,6 +609,7 @@ GC gc;
 #if 0
   XRectangle rect;
 #endif
+  int getmem_stat;
 
   ifp->if_width = width;
   ifp->if_height = height;
@@ -643,21 +644,22 @@ GC gc;
   xi->xi_gc = gc;
   xi->xi_cgc = gc;
 
+
   switch (vip->class) {
   case TrueColor:
     if (vip->depth >= 24) {
       xi->xi_mode = FLG_VT24 << 1;
-      xi->xi_flags = FLG_VT24 | FLG_XCMAP;
+      xi->xi_flags = FLG_VT24;
       xi->xi_wp = 0xFFFFFF;
       xi->xi_bp = 0x000000;
     } else if (vip->depth >= 16) {
       xi->xi_mode = FLG_VT16 << 1;
-      xi->xi_flags = FLG_VT16 | FLG_XCMAP;
+      xi->xi_flags = FLG_VT16;
       xi->xi_wp = 0xFFFFFF;
       xi->xi_bp = 0x000000;
     } else {
       xi->xi_mode = FLG_VS1 << 1;
-      xi->xi_flags = FLG_VS1 | FLG_XCMAP;
+      xi->xi_flags = FLG_VS1;
       xi->xi_wp = 0x0;
       xi->xi_bp = 0x1;
     }
@@ -710,13 +712,24 @@ GC gc;
     break;
   }
 
+  if (!(xi->xi_flags & FLG_XCMAP)) {
+	  xi->xi_redmap = (unsigned char *)malloc(256);
+	  xi->xi_grnmap = (unsigned char *)malloc(256);
+	  xi->xi_blumap = (unsigned char *)malloc(256);
+
+	  if (!xi->xi_redmap || !xi->xi_grnmap || !xi->xi_blumap) {
+		  fb_log("if_X24: Can't allocate colormap memory\n");
+		  return (-1);
+	  }
+  }
+
   xi->xi_iwidth = width;
   xi->xi_iheight = height;
 
   /* Allocate backing store (shared memory or local) */
-  if ((X24_getmem(ifp)) == -1) {
-    free((char *)xi);
-    return -1;
+  if ((getmem_stat = X24_getmem(ifp)) == -1) {
+	  free((char *)xi);
+	  return -1;
   }
 
 #if 0
@@ -749,6 +762,14 @@ GC gc;
 
   /* Make the Display connection available for selecting on */
   ifp->if_selfd = ConnectionNumber(xi->xi_dpy);
+
+  if (getmem_stat == 0) {
+	  X24_wmap(ifp, xi->xi_rgb_cmap);
+	  X24_blit(ifp, 0, 0, xi->xi_iwidth, xi->xi_iheight, BLIT_DISP);
+  } else {
+	  /* Set up default linear colormap */
+	  X24_wmap(ifp, NULL);
+  }
 
   /* Mark display ready */
   xi->xi_flags |= FLG_INIT;
