@@ -7,52 +7,60 @@ see that file for more historic information.
 
 
 ----------------------------------------------------------------------
---- 2004-06-01  Release 6.1.0                                      ---
+--- 2004-08-08  Release 7.0.0                                      ---
 ----------------------------------------------------------------------
 
 There is a lot to talk about this release.  In many ways, this is a
-major BRL-CAD release.  The number remains only a minor release update
-as the package is technically just an improvement of features since
-the previous release.  In the past two years, however, there has been
-a vast forray of BRL-CAD changes under way.
+major BRL-CAD release with the package entering the realm of Open
+Source software.  With this new public presence, BRL-CAD's source code
+has undergone major restructuring with a complete replacement of the
+build sytem and conversion of the sources towards standards
+compliance.
 
 
 OPEN SOURCE
 
-This marks the first release of BRL-CAD as open source software.  It
+This marks the first release of BRL-CAD as Open Source software.  It
 has taken several years and much hard work by many people to actually
 make this happen.  Special thanks goes out to the U.S. Army Research
 Laboratory for giving back to the community by allowing BRL-CAD to be
-released as open source software.
+released as Open Source software under the Open Source Initiative
+(OSI) approved NASA Open Source Agreement (NOSA).
 
-Given the vast size, complexity, and varied usage needs of BRL-CAD's
-source code and supporting data, several licenses were ultimately
-necessary.  BRL-CAD's libraries are all released under the LGPL
-allowing for a great degree of flexibility in how they may be used.
-The rest of BRL-CAD's source code that is not in a library and unless
-otherwise marked is covered by the GPL.  Support scripts, build files,
-images, and included geometry databases are either released under a
-BSD-style license or are in the public domain.  BRL-CAD's
-documentation is covered under the FDL.  The licenses are intended to
-foster and encourage improvements to BRL-CAD without taking away from
-the package's heritage and history.  See the COPYING file for more
-details and information.
+The majority of BRL-CAD is coveredy by the NOSA agreement.  However,
+given the vast size, complexity, and varied usage needs of BRL-CAD's
+source code and supporting data, there are portions that are also
+covered by other licenses allowing for a greater degree of flexibility
+in how they may be used.
+
+BRL-CAD's supporting shell scripts, build files, images, and included
+geometry databases are either released under a BSD-style license or
+are in the public domain.  See the individual files in question and
+the COPYING file for more details.  The licenses are intended to
+foster and encourage improvements to BRL-CAD and the Open Source
+community as a whole without taking away from the package's heritage
+and history.  See the COPYING file for more details and information.
 
 
 SOURCES REORGANIZED
 
-This release of BRL-CAD marks a new beginning for the project on many
-levels.  The source code has been drastically reorganized compared to
-the prior organization.  The source code now primarily lives under the
-src/ directory, external libraries are in the src/other/ directory.
-There are top-level documentation files available (such as this file
-and the README) to get developers and users familiar with the project.
+This release of BRL-CAD marks a new beginning for the project in terms
+of how to sources are organized and how the package is built.  BRL-CAD
+now uses the GNU Build System (autotools) for compilation.  The gen.sh
+and Cakefile-based build system is no more.  In addition to a new
+build system, the directory hierarchy has been reorganized.
+
 Following the GNU-style source code reorganization, BRL-CAD will now
-also follow the major.minor.patch (e.g. 6.1.0) version numbering
-convention.  In addition, the old cake and gen.sh build system has
-been completely replaced after considerable effort with one that
-utilizes the GNU Autotools.  Finally, several of the third-party
-libraries have been updated including tcl/tk and libpng.
+also follow the major.minor.patch (e.g. 7.0.0) version numbering
+convention.
+
+Source code now primarily lives under the top-level src/ directory,
+external libraries are in the src/other/ directory.  Several of the
+third-party libraries have been updated including tcl/tk and libpng.
+There are top-level documentation files available (such as this file
+and the README) to get users familiar with the project.  Developers
+that would like to get involved with BRL-CAD should refer to the
+HACKING file.
 
 
 ANSI CONFORMANCE
@@ -62,8 +70,7 @@ let go with the new preference of being fully compliant with the ANSI
 C standard (INCITS/ISO/IEC 9899-1999).  More efforts continue to
 complete this conversion, maintaining support for as many of the older
 compilers as is reasonably possible, as well as general source code
-clean up.  See the new HACKING file for for more information relevant
-to developers.
+clean up.  See the new HACKING file for for more information.
 
 
 NEW FEATURES
@@ -86,7 +93,9 @@ WINDOWS SUPPORT
 This release marks the first release with initial support for the
 Windows operating system platform.  All of the core BRL-CAD libraries
 as well as several tools (including mged, rt, nirt, asc2g, and more)
-were ported by 
+have completed the conversion.  While not yet a holistic port, all of
+the libraries and the core utilites have been ported and the rest will
+soon follow.
 
 
 ----------------------------------------------------------------------
