@@ -1538,11 +1538,11 @@ const struct db_i		*dbip;
 	MAT4X3VEC( tip->h, mat, rec.h );
 	VUNITIZE( tip->h );			/* just to be sure */
 
-	tip->r_a = rec.ra;
-	tip->r_h = rec.rh;
+	tip->r_a = rec.ra / mat[15];
+	tip->r_h = rec.rh / mat[15];
 
 	/* Prepare the extra information */
-	tip->r_b = rec.ra;
+	tip->r_b = tip->r_a;
 
 	/* Calculate two mutually perpendicular vectors, perpendicular to N */
 	bn_vec_ortho( tip->a, tip->h );		/* a has unit length */
