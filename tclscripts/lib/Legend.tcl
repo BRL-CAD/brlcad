@@ -33,7 +33,7 @@ class cadwidgets::Legend {
     itk_option define -slots slots Slots 10
     itk_option define -colorFunc colorFunc ColorFunc ""
 
-    public method drawToCanvas {c w h tags}
+    public method drawToCanvas {c x y w h tags}
     public method update {}
     public method getColor {val}
     public method rampRGB {val}
@@ -186,18 +186,18 @@ body cadwidgets::Legend::constructor {args} {
 body cadwidgets::Legend::destructor {} {
 }
 
-body cadwidgets::Legend::drawToCanvas {c w h tags} {
+body cadwidgets::Legend::drawToCanvas {c x y w h tags} {
     # calculate slot increment
     set si [expr {$w / double($itk_option(-slots))}]
 
     # calculate value increment
     set vi [expr {$dv / double($itk_option(-slots) - 1)}]
 
-    set y1 $yoff
+    set y1 $y
     set y2 [expr {$h + $y1}]
     for {set i 0} {$i < $itk_option(-slots)} {incr i} {
-	set x1 [expr {int($i * $si) + $xoff}]
-	set x2 [expr {int(($i + 1) * $si) + $xoff}]
+	set x1 [expr {int($i * $si) + $x}]
+	set x2 [expr {int(($i + 1) * $si) + $x}]
 	set val [expr {$vi * $i + $low}]
 	if {$itk_option(-colorFunc) == ""} {
 	    set rgb [eval format "#%.2x%.2x%.2x" [rampRGB $val]]
@@ -207,8 +207,8 @@ body cadwidgets::Legend::drawToCanvas {c w h tags} {
 	$c create rectangle $x1 $y1 $x2 $y2 \
 		-outline "" -fill $rgb -tags $tags
     }
-    $c create text $xoff $yoff -text $low -anchor s -tags $tags
-    $c create text [expr {$w + $xoff}] $yoff -text $high -anchor s -tags $tags
+    $c create text $x $y -text $low -anchor s -tags $tags
+    $c create text [expr {$w + $x}] $y -text $high -anchor s -tags $tags
 
     return
 }
@@ -217,7 +217,7 @@ body cadwidgets::Legend::update {} {
     $itk_component(canvas) delete all
     set w [expr {[winfo width $itk_component(canvas)] - (2 * $xoff)}]
     set h [expr {[winfo height $itk_component(canvas)] - $yoff}]
-    drawToCanvas $itk_component(canvas) $w $h legend
+    drawToCanvas $itk_component(canvas) $xoff $yoff $w $h legend
 }
 
 body cadwidgets::Legend::getColor {val} {
