@@ -735,3 +735,139 @@ CONST struct rt_tol	*tol;
 	}
 	return( (struct vertex *)0 );
 }
+
+/*
+ *			N M G _ S H E L L _ I S _ E M P T Y
+ *
+ *  See if this is an invalid shell
+ *  i.e., one that has absolutely nothing in it,
+ *  not even a lone vertexuse.
+ *
+ *  Returns -
+ *	1	yes, it is completely empty
+ *	0	no, not empty
+ */
+int
+nmg_shell_is_empty(s)
+register CONST struct shell *s;
+{
+
+	NMG_CK_SHELL(s);
+
+	if( RT_LIST_NON_EMPTY( &s->fu_hd ) )  return 0;
+	if( RT_LIST_NON_EMPTY( &s->lu_hd ) )  return 0;
+	if( RT_LIST_NON_EMPTY( &s->eu_hd ) )  return 0;
+	if( s->vu_p )  return 0;
+	return 1;
+}
+
+/*				N M G _ L U _ O F _ V U 
+ *
+ *	Given a vertexuse, return the loopuse somewhere above
+ */
+struct loopuse *
+nmg_lu_of_vu(vu)
+struct vertexuse *vu;
+{
+	NMG_CK_VERTEXUSE(vu);
+	
+	if (*vu->up.magic_p == NMG_EDGEUSE_MAGIC &&
+		*vu->up.eu_p->up.magic_p == NMG_LOOPUSE_MAGIC)
+			return(vu->up.eu_p->up.lu_p);
+	else if (*vu->up.magic_p != NMG_LOOPUSE_MAGIC)
+		rt_bomb("NMG vertexuse has no loopuse ancestor\n");
+
+	return(vu->up.lu_p);		
+}
+
+/*				N M G _ L U P S
+ *
+ *	return parent shell for loopuse
+ */
+struct shell *
+nmg_lups(lu)
+struct loopuse *lu;
+{
+	if (*lu->up.magic_p == NMG_SHELL_MAGIC) return(lu->up.s_p);
+	else if (*lu->up.magic_p != NMG_FACEUSE_MAGIC) 
+		rt_bomb("bad parent for loopuse\n");
+
+	return(lu->up.fu_p->s_p);
+}
+
+/*				N M G _ E U P S 
+ *
+ *	return parent shell of edgeuse
+ */
+struct shell *
+nmg_eups(eu)
+struct edgeuse *eu;
+{
+	if (*eu->up.magic_p == NMG_SHELL_MAGIC) return(eu->up.s_p);
+	else if (*eu->up.magic_p != NMG_LOOPUSE_MAGIC)
+		rt_bomb("bad parent for edgeuse\n");
+
+	return(nmg_lups(eu->up.lu_p));
+}
+
+/*				N M G _ F A C E R A D I A L
+ *
+ *	Looking radially around an edge, find another edge in the same
+ *	face as the current edge. (this could be the mate to the current edge)
+ */
+CONST struct edgeuse *
+nmg_faceradial(eu)
+CONST struct edgeuse *eu;
+{
+	CONST struct faceuse *fu;
+	CONST struct edgeuse *eur;
+
+	NMG_CK_EDGEUSE(eu);
+	NMG_CK_LOOPUSE(eu->up.lu_p);
+	fu = eu->up.lu_p->up.fu_p;
+	NMG_CK_FACEUSE(fu);
+
+	eur = eu->radial_p;
+
+	while (*eur->up.magic_p != NMG_LOOPUSE_MAGIC ||
+	    *eur->up.lu_p->up.magic_p != NMG_FACEUSE_MAGIC ||
+	    eur->up.lu_p->up.fu_p->f_p != fu->f_p)
+	    	eur = eur->eumate_p->radial_p;
+
+	return(eur);
+}
+
+
+/*
+ *			N M G _ R A D I A L _ F A C E _ E D G E _ I N _ S H E L L
+ *
+ *	looking radially around an edge, find another edge which is a part
+ *	of a face in the same shell
+ */
+struct edgeuse *
+nmg_radial_face_edge_in_shell(eu)
+struct edgeuse *eu;
+{
+	struct edgeuse *eur;
+	struct faceuse *fu;
+
+	NMG_CK_EDGEUSE(eu);
+	NMG_CK_LOOPUSE(eu->up.lu_p);
+	NMG_CK_FACEUSE(eu->up.lu_p->up.fu_p);
+
+	fu = eu->up.lu_p->up.fu_p;
+	eur = eu->radial_p;
+	NMG_CK_EDGEUSE(eur);
+
+	while (eur != eu->eumate_p) {
+		if (*eur->up.magic_p == NMG_LOOPUSE_MAGIC &&
+		    *eur->up.lu_p->up.magic_p == NMG_FACEUSE_MAGIC &&
+		    eur->up.lu_p->up.fu_p->s_p == fu->s_p)
+			break; /* found another face in shell */
+		else {
+			eur = eur->eumate_p->radial_p;
+			NMG_CK_EDGEUSE(eur);
+		}
+	}
+	return(eur);
+}

@@ -33,6 +33,116 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
  ************************************************************************/
 
 /*
+ *			N M G _ S H E L L _ C O P L A N A R _ F A C E _ M E R G E
+ *
+ *  A geometric routine to
+ *  find all pairs of faces in a shell that have the same plane equation
+ *  (to within the given tolerance), and combine them into a single face.
+ *
+ *  Note that this may result in some of the verticies being very slightly
+ *  off the plane equation, but the geometry routines need to be prepared
+ *  for this in any case.
+ *  If the "simplify" flag is set, pairs of loops in the face that touch
+ *  will be combined into a single loop where possible.
+ */
+void
+nmg_shell_coplanar_face_merge( s, tol, simplify )
+struct shell		*s;
+CONST struct rt_tol	*tol;
+CONST int		simplify;
+{
+	struct model	*m;
+	int		len;
+	int		*flags1;
+	int		*flags2;
+	struct faceuse	*fu1;
+	struct faceuse	*fu2;
+	struct face	*f1;
+	struct face	*f2;
+	struct face_g	*fg1;
+	struct face_g	*fg2;
+
+	NMG_CK_SHELL(s);
+	m = nmg_find_model( &s->l.magic );
+	len = sizeof(int) * m->maxindex;
+	flags1 = (int *)rt_calloc( sizeof(int), m->maxindex,
+		"nmg_shell_coplanar_face_merge flags1[]" );
+	flags2 = (int *)rt_calloc( sizeof(int), m->maxindex,
+		"nmg_shell_coplanar_face_merge flags2[]" );
+
+	/* Visit each face in the shell */
+	for( RT_LIST_FOR( fu1, faceuse, &s->fu_hd ) )  {
+		if( RT_LIST_NEXT_IS_HEAD(fu1, &s->fu_hd) )  break;
+		f1 = fu1->f_p;
+		NMG_CK_FACE(f1);
+		if( NMG_INDEX_TEST(flags1, f1) )  continue;
+		NMG_INDEX_SET(flags1, f1);
+
+		/* For this face, visit all remaining faces in the shell. */
+		/* Don't revisit any faces already considered. */
+		bcopy( flags1, flags2, len );
+		for( fu2 = RT_LIST_NEXT(faceuse, &fu1->l);
+		     RT_LIST_NOT_HEAD(fu2, &s->fu_hd);
+		     fu2 = RT_LIST_NEXT(faceuse,&fu2->l)
+		)  {
+			register fastf_t	dist;
+
+			f2 = fu2->f_p;
+			NMG_CK_FACE(f2);
+			if( NMG_INDEX_TEST(flags2, f2) )  continue;
+			NMG_INDEX_SET(flags2, f2);
+
+			/* If plane equations are different, done */
+			fg1 = f1->fg_p;
+			fg2 = f2->fg_p;
+			NMG_CK_FACE_G(fg1);
+			NMG_CK_FACE_G(fg2);
+
+			/* Compare distances from origin */
+			dist = fg1->N[3] - fg2->N[3];
+			if( !NEAR_ZERO(dist, tol->dist) )  continue;
+
+			/*
+			 *  Compare angle between normals.
+			 *  Can't just use RT_VECT_ARE_PARALLEL here,
+			 *  because they must point in the same direction.
+			 */
+			dist = VDOT( fg1->N, fg2->N );
+			if( !(dist >= tol->para) )  continue;
+
+			/*
+			 * Plane equations are the same, within tolerance.
+			 * Move everything into fu1, and
+			 * kill now empty faceuse, fumate, and face
+			 */
+			{
+				struct faceuse	*prev_fu;
+				prev_fu = RT_LIST_PREV(faceuse, &fu2->l);
+				/* The prev_fu can never be the head */
+				if( RT_LIST_IS_HEAD(prev_fu, &s->fu_hd) )
+					rt_bomb("prev is head?\n");
+
+				nmg_jf( fu1, fu2 );
+
+				fu2 = prev_fu;
+			}
+
+			/* There is now the option of simplifying the face,
+			 * by removing unnecessary edges.
+			 */
+			if( simplify )  {
+				struct loopuse *lu;
+
+				for (RT_LIST_FOR(lu, loopuse, &fu1->lu_hd))
+					nmg_simplify_loop(lu);
+			}
+		}
+	}
+	rt_free( (char *)flags1, "nmg_shell_coplanar_face_merge flags1[]" );
+	rt_free( (char *)flags2, "nmg_shell_coplanar_face_merge flags2[]" );
+}
+
+/*
  *			N M G _ S I M P L I F Y _ S H E L L
  *
  *  Simplify all the faces in this shell, where possible.
@@ -56,7 +166,7 @@ struct shell *s;
 			nmg_kfu( kfu );
 		}
 	}
-	if( nmg_is_shell_empty(s) )  return 1;
+	if( nmg_shell_is_empty(s) )  return 1;
 	return 0;
 }
 
@@ -162,6 +272,85 @@ struct shell	*s;
 
 	/* There really shouldn't be a lone vertex by now */
 	if( s->vu_p )  rt_log("nmg_rm_redundancies() lone vertex?\n");
+}
+
+/*
+ *			N M G _ S A N I T I Z E _ S _ L V
+ *
+ *	Remove those pesky little vertex-only loops of orientation "orient".
+ *	Typically these will be OT_BOOLPLACE markers created in the
+ *	process of doing intersections for the boolean operations.
+ */
+void
+nmg_sanitize_s_lv(s, orient)
+struct shell	*s;
+int		orient;
+{
+	struct faceuse *fu;
+	struct loopuse *lu, *lustart;
+	pointp_t pt;
+
+	NMG_CK_SHELL(s);
+
+	/* sanitize the loop lists in the faces of the shell */
+	fu = RT_LIST_FIRST(faceuse, &s->fu_hd);
+	while (RT_LIST_NOT_HEAD(fu, &s->fu_hd) ) {
+
+		/* all of those vertex-only/orient loops get deleted
+		 */
+		lu = RT_LIST_FIRST(loopuse, &fu->lu_hd);
+		while (RT_LIST_NOT_HEAD(lu, &fu->lu_hd)) {
+			if (lu->orientation == orient) {
+				lu = RT_LIST_PNEXT(loopuse,lu);
+				nmg_klu(RT_LIST_PLAST(loopuse, lu));
+			} else if (lu->orientation == OT_UNSPEC &&
+			    RT_LIST_FIRST_MAGIC(&lu->down_hd) ==
+			    NMG_VERTEXUSE_MAGIC) {
+				register struct vertexuse *vu;
+				vu = RT_LIST_FIRST(vertexuse, &lu->down_hd);
+				pt = vu->v_p->vg_p->coord;
+				VPRINT("nmg_sanitize_s_lv() OT_UNSPEC at", pt);
+				lu = RT_LIST_PNEXT(loopuse,lu);
+			} else {
+				lu = RT_LIST_PNEXT(loopuse,lu);
+			}
+		}
+
+		/* step forward, avoiding re-processing our mate (which would
+		 * have had it's loops processed with ours)
+		 */
+		if (RT_LIST_PNEXT(faceuse, fu) == fu->fumate_p)
+			fu = RT_LIST_PNEXT_PNEXT(faceuse, fu);
+		else
+			fu = RT_LIST_PNEXT(faceuse, fu);
+
+		/* If previous faceuse has no more loops, kill it */
+		if (RT_LIST_IS_EMPTY( &(RT_LIST_PLAST(faceuse, fu))->lu_hd )) {
+			/* All of the loopuses of the previous face were
+			 * BOOLPLACE's so the face will now go away
+			 */
+			nmg_kfu(RT_LIST_PLAST(faceuse, fu));
+		}
+	}
+
+	/* Sanitize any wire/vertex loops in the shell */
+	lu = RT_LIST_FIRST(loopuse, &s->lu_hd);
+	while (RT_LIST_NOT_HEAD(lu, &s->lu_hd) ) {
+		if (lu->orientation == orient) {
+			lu = RT_LIST_PNEXT(loopuse,lu);
+			nmg_klu(RT_LIST_PLAST(loopuse, lu));
+		} else if (lu->orientation == OT_UNSPEC &&
+		    RT_LIST_FIRST_MAGIC(&lu->down_hd) ==
+		    NMG_VERTEXUSE_MAGIC) {
+			register struct vertexuse *vu;
+			vu = RT_LIST_FIRST(vertexuse, &lu->down_hd);
+			pt = vu->v_p->vg_p->coord;
+			VPRINT("nmg_sanitize_s_lv() OT_UNSPEC at", pt);
+			lu = RT_LIST_PNEXT(loopuse,lu);
+		} else {
+			lu = RT_LIST_PNEXT(loopuse,lu);
+		}
+	}
 }
 
 /************************************************************************
