@@ -55,7 +55,8 @@ register char *cp;
 	/* Output string and save length for next tab. */
 	col_len = 0;
 	while ( *cp != '\0' )  {
-		(void)putchar( *cp++ );
+		(void)putchar( *cp );	/* is a macro */
+		++cp;
 		++col_len;
 	}
 	col_count++;
