@@ -48,6 +48,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 /* Experimental */
 #define MIXED_MODE 1
+#define TRY_PIPES 1
 
 #include "conf.h"
 
@@ -97,7 +98,6 @@ static int devbuttonrelease;
 #include "externs.h"
 #include "./solid.h"
 
-#define TRY_PIPES 1
 #define YSTEREO		491	/* subfield height, in scanlines */
 #define YOFFSET_LEFT	532	/* YSTEREO + YBLANK ? */
 
@@ -472,298 +472,6 @@ Ir_open()
 	int		win_size=1000;
 	int		win_o_x=272;
 	int		win_o_y=12;
-
-#if 0
-#ifdef DM_OGL
-	/* This is a hack to handle the fact that the sgi attach crashes
-	 * if a direct OpenGL context has been previously opened in the 
-	 * current mged session. This stops the attach before it crashes.
-	 */
-	ogl_sgi_used = 1;
-	if (ogl_ogl_used){
-		rt_log("Can't attach sgi, because a direct OpenGL context has\n");
-		rt_log("previously been opened in this session. To use sgi,\n");
-		rt_log("quit this session and reopen it.\n");
-		return(-1);
-	}
-#endif /* DM_OGL */
-	/*
-	 *  Take inventory of the hardware.
-	 *  See "types for class graphics" in /usr/include/sys/invent.h
-	 */
-	while( (inv = getinvent()) != (inventory_t *)0 )  {
-		if( inv->class != INV_GRAPHICS )  continue;
-		switch( inv->type )  {
-		default:
-#if 0
-			rt_log("mged/dm-4d.c: getinvent() INV_GRAPHICS type=%d not recognized, you need to modify the source code\n",
-			    inv->type);
-#endif
-			/* Since we recognize all the old devices, be
-			 * optimistic and assume that new devices are plush.
-			 * Or at least that GL can simulate everything adequately.
-			 */
-			ir_is_gt = 1;
-			ir_has_zbuf = 1;
-			ir_has_rgb = 1;
-			ir_has_doublebuffer = 1;
-			break;
-		case INV_GRODEV:			 /* 4D/60 machines */
-			ir_has_doublebuffer = 1;
-			if( inv->state & INV_GR1ZBUF24 )
-				ir_has_zbuf = 1;
-			break;
-		case INV_VGX:
-		case INV_VGXT:			/* VGX Turbo and SkyWriter */
-		case INV_GMDEV:			/* GT graphics */
-		case INV_CG2:
-			ir_is_gt = 1;
-			ir_has_zbuf = 1;
-			ir_has_rgb = 1;
-			ir_has_doublebuffer = 1;
-			break;
-		case INV_GR1BP:
-			ir_has_rgb = 1;
-			break;
-		case INV_GR1ZBUFFER:
-			ir_has_zbuf = 1;
-			break;
-		case INV_GR1BOARD:	/* Persoanl Iris */
-			if ( inv->state & INV_GR1RE2 )
-				ir_is_gt = 1;
-			if(inv->state & INV_GR1ZBUF24 )
-				ir_has_zbuf = 1;
-			if(inv->state & INV_GR1BIT24 )
-				ir_has_rgb = 1;
-			ir_has_doublebuffer = 1;
-			break;
-#if defined(INV_LIGHT)
-		case INV_LIGHT:		/* Entry Level Indigo */
-			ir_is_gt = 0;
-			ir_has_zbuf = 1;
-			ir_has_doublebuffer = 0;
-			ir_has_rgb = 1;
-			break;
-#endif
-
-#if defined(INV_GR2)
-		case INV_GR2:		/* Elan EXPRESS Graphics */
-			/* if(inv->state & INV_GR2_ELAN) */
-			/* Just let GL simulate it */
-			ir_has_rgb = 1;
-			ir_has_doublebuffer = 1;
-			ir_has_zbuf = 1;
-			ir_is_gt = 1;
-			/* if(inv->state & INV_GR2_EXTREME) */
-			break;
-#endif
-#if defined(INV_NEWPORT)
-		case INV_NEWPORT:
-			/* if(inv->state & INV_NEWPORT_XL) */
-			/* Just let GL simulate it */
-			ir_has_rgb = 1;
-			ir_has_doublebuffer = 1;
-			ir_has_zbuf = 1;
-			ir_is_gt = 1;
-#			if 0
-				if(inv->state & INV_NEWPORT_24)
-					ir_has_rgb = 1;
-#			endif
-			break;
-#endif
-		}
-	}
-	endinvent();		/* frees internal inventory memory */
-#if 0
-	rt_log("4D: gt=%d, zbuf=%d, rgb=%d\n", ir_is_gt, ir_has_zbuf, ir_has_rgb);
-#endif
-
-	/* Start out with the usual window */
-	foreground();
-#if 1
-	if (mged_variables.sgi_win_size > 0)
-		win_size = mged_variables.sgi_win_size;
-
-	if (mged_variables.sgi_win_origin[0] != 0)
-		win_o_x = mged_variables.sgi_win_origin[0];
-
-	if (mged_variables.sgi_win_origin[1] != 0)
-		win_o_y = mged_variables.sgi_win_origin[1];
-
-	prefposition( win_o_x, win_o_x+win_size, win_o_y, win_o_y+win_size);
-#else
-	prefposition( 376, 1276, 12, 912 );		/* Old, larger size */
-	prefposition( 376, 376+900, 112, 112+900 );	/* new, smaller size */
-#endif
-	if( (gr_id = winopen( "BRL MGED" )) == -1 )  {
-		rt_log( "No more graphics ports available.\n" );
-		return	-1;
-	}
-	keepaspect(1,1);	/* enforce 1:1 aspect ratio */
-	winconstraints();	/* remove constraints on the window size */
-
-	ir_oldmonitor = getmonitor();
-	if( mged_variables.eye_sep_dist )  {
-		if( sgi_has_stereo() )  {
-			setmonitor(STR_RECT);
-			stereo_is_on = 1;
-		} else {
-			rt_log("NOTICE: This SGI does not have stereo display capability\n");
-			stereo_is_on = 0;
-		}
-	}
-
-	/*
-	 *  If monitor is in special mode, close window and re-open.
-	 *  winconstraints() does not work, and getmonitor() can't
-	 *  be called before a window is open.
-	 */
-	switch( getmonitor() )  {
-	case HZ30:
-	case HZ30_SG:
-		/* Dunn camera, etc. */
-		/* Use already established prefposition */
-		break;
-	case STR_RECT:
-		/* Hi-res monitor in stereo mode, take over whole screen */
-		winclose(gr_id);
-		noborder();
-		foreground();
-#if defined(__sgi) && defined(__mips)
-		/* Deal with Irix 4.0 bug:  (+2,+0) offset due to border */
-		prefposition( 0-2, XMAXSCREEN-2, 0, YMAXSCREEN );
-#else
-		prefposition( 0, XMAXSCREEN, 0, YMAXSCREEN );
-#endif
-		if( (gr_id = winopen( "BRL MGED" )) == -1 )  {
-			rt_log( "No more graphics ports available.\n" );
-			return	-1;
-		}
-		break;
-	default:
-	case HZ60:
-		/* Regular hi-res monitor */
-		/* Use already established prefposition */
-		break;
-	case NTSC:
-		/* Television */
-		winclose(gr_id);
-		prefposition( 0, XMAX170, 0, YMAX170 );
-		foreground();
-		if( (gr_id = winopen( "BRL MGED" )) == -1 )  {
-			rt_log( "No more graphics ports available.\n" );
-			return	-1;
-		}
-		break;
-	case PAL:
-		/* Television */
-		winclose(gr_id);
-		prefposition( 0, XMAXPAL, 0, YMAXPAL );
-		foreground();
-		if( (gr_id = winopen( "BRL MGED" )) == -1 )  {
-			rt_log( "No more graphics ports available.\n" );
-			return	-1;
-		}
-		break;
-	}
-
-	/*
-	 *  Configure the operating mode of the pixels in this window.
-	 *  Do not output graphics, clear screen, etc, until *after*
-	 *  the call to gconfig().
-	 */
-	if( ir_has_rgb )  {
-		RGBmode();
-	} else {
-		/* one indexed color map of 4096 entries */
-		onemap();
-	}
-	if ( ir_has_doublebuffer)
-		doublebuffer();
-
-	gconfig();
-
-	/*
-	 * Establish GL library operating modes
-	 */
-	/* Don't draw polygon edges */
-	glcompat( GLC_OLDPOLYGON, 0 );
-
-	/* Z-range mapping */
-	/* Z range from getgdesc(GD_ZMIN)
-	 * to getgdesc(GD_ZMAX).
-	 * Hardware specific.
-	 */
-	glcompat( GLC_ZRANGEMAP, 0 );
-	/* Take off a smidgeon for wraparound, as suggested by SGI manual */
-	min_scr_z = getgdesc(GD_ZMIN)+15;
-	max_scr_z = getgdesc(GD_ZMAX)-15;
-
-	Ir_configure_window_shape();
-
-	/* Enable qdev() input from various devices */
-	qdevice(LEFTMOUSE);
-	qdevice(MIDDLEMOUSE);
-	qdevice(RIGHTMOUSE);
-	tie(LEFTMOUSE, MOUSEX, MOUSEY);
-	tie(MIDDLEMOUSE, MOUSEX, MOUSEY);
-	tie(RIGHTMOUSE, MOUSEX, MOUSEY);
-
-#if IR_KNOBS
-	/*
-	 *  Turn on the dials and initialize them for -2048 to 2047
-	 *  range with a dead spot at zero (Iris knobs are 1024 units
-	 *  per rotation).
-	 */
-	for(i = DIAL0; i < DIAL8; i++)
-		setvaluator(i, 0, -2048-NOISE, 2047+NOISE);
-	for(i = DIAL0; i < DIAL8; i++)
-		qdevice(i);
-#endif
-#if IR_BUTTONS
-	/*
-	 *  Enable all the buttons in the button table.
-	 */
-	for(i = 0; i < IR_BUTTONS; i++)
-		qdevice(i+SWBASE);
-	/*
-	 *  For all possible button presses, build a table
-	 *  of MGED function to SGI button/light mappings.
-	 */
-	for( i=0; i < IR_BUTTONS; i++ )  {
-		register int j;
-		if( (j = bmap[i]) != 0 )
-			invbmap[j] = i;
-	}
-# if 0
-	ir_dbtext(ir_title);
-# else
-	dbtext("");
-# endif
-#endif
-
-	qdevice(F1KEY);	/* pf1 key for depthcue switching */
-	qdevice(F2KEY);	/* pf2 for Z clipping */
-	qdevice(F3KEY);	/* pf3 for perspective */
-	qdevice(F4KEY);	/* pf4 for Z buffering */
-	qdevice(F5KEY);	/* pf5 for lighting */
-	qdevice(F6KEY);	/* pf6 for changing perspective */
-	qdevice(F7KEY);	/* pf7 for no faceplate */
-	qdevice(F12KEY);/* pf12 to zero knobs */
-	while( getbutton(LEFTMOUSE)||getbutton(MIDDLEMOUSE)||getbutton(RIGHTMOUSE) )  {
-		rt_log("IRIS_open:  mouse button stuck\n");
-		sleep(1);
-	}
-
-	/* Line style 0 is solid.  Program line style 1 as dot-dashed */
-	deflinestyle( 1, 0xCF33 );
-	setlinestyle( 0 );
-
-	ir_fd = qgetfd();
-
-	Tk_CreateFileHandler(ir_fd, 1, Ircheckevents, (void *)NULL);
-	return(0);
-#else
 	char ref[] = "mged_glx";
 	struct rt_vls str;
 	int j, k;
@@ -900,7 +608,6 @@ Done:
 	setlinestyle( 0 );
 
 	return (0);
-#endif
 }
 
 /*XXX Just experimenting */
@@ -1241,12 +948,12 @@ Ir_close()
 	ir_clear_to_black();
 	frontbuffer(0);
 
-	if( getmonitor() != ir_oldmonitor )
-		setmonitor(ir_oldmonitor);
-
 #if MIXED_MODE
 	Tk_DestroyWindow(xtkwin);
 #else
+	if( getmonitor() != ir_oldmonitor )
+		setmonitor(ir_oldmonitor);
+
 	winclose(gr_id);
 #endif
 	return;
