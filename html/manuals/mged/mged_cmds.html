@@ -674,18 +674,67 @@ and GIFT material code.
 </DD>
 <HR>
 
-<DT><a NAME="center"><B>center</B> <I>x y z</I></DT>
+<DT><a NAME="center"><B>center</B> <I>[x y z]</I></DT>
 
 <DD> The ``center'' command positions the center of the <I>mged</I> viewing cube at
-the specified model coordinates. This is accomplished by moving the eye while not
-changing the viewing direction. The <a href="#lookat">lookat</a> command performs
-a similar function by changing the viewing direction, but not moving the eye location.
+the specified model coordinates. This is accomplished by moving the eye position while not
+changing the viewing direction.
+(The <a href="#lookat">lookat</a> command performs
+a related function by changing the viewing direction, but not moving the eye location.)
+The coordinates are expected in the current editing units.
+In case the coordinates are the result of evaluating a formula,
+they are echoed back.
+If no coordinates are provided, the current center coordinates
+(in current editing units, not mm) are printed, and can be used
+in subsequent calcuation.
+<p>
+Because of the visible centering dot on the screen,
+the fact that zoom and rotation are performed with respect to the view center,
+that the default center-mouse behavior is to move the indicated point
+to the view center,
+and because the angle/distance
+cursors are centered by default,
+it is often convenient to use the center of the view when visually
+selecting key locations in the model for construction or animation.
+This command provides the means to set and retrieve those values
+numerically.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
 	<DD>
+	<kbd>mged></kbd> <b>center</b><br>
+	-- print out the coordinates of the center of the <I>mged</I> display<br>
+	</DD>
+	<br>
+
+	<DD>
 	<kbd>mged></kbd> <b>center 12.5 5.6 8.7</b><br>
 	-- move the center of the <I>mged</I> display to the point (12.5, 5.6, 8.7)<br>
+	</DD>
+	<br>
+
+	<DD>
+	<kbd>mged></kbd> <b>set oldcent [center]</b><br>
+	-- set the Tcl variable $oldcent to the display center coordinates<br>
+	</DD>
+	<br>
+
+	<DD>
+	<kbd>mged></kbd> <b> set glob_compat_mode 0 </b><br>
+	<kbd>mged></kbd> <b> units mm </b><br>
+	<kbd>mged></kbd> <b> eval center [vadd2 [center] {2 0 0}] </b><br>
+	-- move the center point two mm in the model +X direction.<br>
+	</DD>
+	<br>
+
+	<DD>
+	<kbd>mged></kbd> <b> units mm </b><br>
+	<kbd>mged></kbd> <b> db adjust sphere.s V [center] </b><br>
+	<kbd>mged></kbd> <b> redraw_vlist sphere.s </b><br>
+	-- update the "V" vertex of solid sphere.s in the database to
+	be located at the current center of the view, and recreate
+	the vector display lsits of
+	only those object(s) which were affected by the change.<br>
 	</DD>
 	</DL>
 </DD>
