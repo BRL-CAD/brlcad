@@ -10,8 +10,6 @@ cake  \
  g_nurb.o \
  g_nmg.o \
  cmd.o \
- complex.o \
- const.o \
  cut.o \
  dir.o \
  rtlex.o \
@@ -66,7 +64,6 @@ cake \
  hist.o \
  htond.o \
  global.o \
- mat.o \
  mater.o \
  memalloc.o \
  units.o \
@@ -95,13 +92,10 @@ cake \
  &
 
 cake \
- plane.o \
  plot3.o \
- polylib.o \
  nmg_bool.o \
  nmg_fuse.o \
  prep.o \
- qmath.o \
  roots.o \
  g_arbn.o \
  &
