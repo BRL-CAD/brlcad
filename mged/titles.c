@@ -30,6 +30,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #else
 #include <strings.h>
 #endif
+
+#include "tcl.h"
+
 #include "machine.h"
 #include "vmath.h"
 #include "db.h"
@@ -39,6 +42,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./titles.h"
 #include "./solid.h"
 #include "./sedit.h"
+#include "./mgedtcl.h"
 #include "./dm.h"
 
 int	state;
@@ -167,29 +171,111 @@ register struct rt_vls	*vp;
  * NOTE that this routine depends on being called AFTER dozoom();
  */
 void
-dotitles()
+dotitles(call_dm)
+int call_dm;
 {
-	register int i;
-	register char	*cp;		/* char pointer - for sprintf() */
-	register int y;			/* for menu computations */
-	static vect_t work,work1;		/* work vector */
-	static vect_t temp,temp1;
-	register int yloc, xloc;
-	auto fastf_t	az, el, twist;
-	auto char linebuf[512];
-	struct rt_vls	vls;
+	register int    i;
+	register int    y;			/* for menu computations */
+	static vect_t   work, work1;		/* work vector */
+	static vect_t   temp, temp1;
+	register int    yloc, xloc;
+	auto fastf_t	az, el, tw;
 	int		scroll_ybot;
+	struct rt_vls   vls;
+	typedef char    c_buf[80];
+	auto c_buf      cent_x, cent_y, cent_z, size, azimuth, elevation,
+	                twist, ang_x, ang_y, ang_z;
 
+	rt_vls_init(&vls);
+	
+	/* Set the Tcl variables to the appropriate values. */
+
+	Tcl_SetVar2(interp, MGED_DISPLAY_VAR, "state", state_str[state],
+		    TCL_GLOBAL_ONLY);
+	if (illump != SOLID_NULL) {
+	    struct rt_vls path_lhs, path_rhs;
+
+	    rt_vls_init(&path_lhs);
+	    rt_vls_init(&path_rhs);
+	    for (i = 0; i < ipathpos; i++)
+		rt_vls_printf(&path_lhs, "/%s", illump->s_path[i]->d_namep);
+	    for (; i <= illump->s_last; i++)
+		rt_vls_printf(&path_rhs, "/%s", illump->s_path[i]->d_namep);
+	    Tcl_SetVar2(interp, MGED_DISPLAY_VAR, "path_lhs",
+			rt_vls_addr(&path_lhs), TCL_GLOBAL_ONLY);
+	    Tcl_SetVar2(interp, MGED_DISPLAY_VAR, "path_rhs",
+			rt_vls_addr(&path_rhs), TCL_GLOBAL_ONLY);
+	    rt_vls_free(&path_rhs);
+	    rt_vls_free(&path_lhs);
+	} else {
+	    Tcl_SetVar2(interp, MGED_DISPLAY_VAR, "path_lhs", "",
+			TCL_GLOBAL_ONLY);
+	    Tcl_SetVar2(interp, MGED_DISPLAY_VAR, "path_rhs", "",
+			TCL_GLOBAL_ONLY);
+	}
+
+	sprintf(cent_x, "%.3f", -toViewcenter[MDX]*base2local);
+	sprintf(cent_y, "%.3f", -toViewcenter[MDY]*base2local);
+	sprintf(cent_z, "%.3f", -toViewcenter[MDZ]*base2local);
+
+	rt_vls_printf(&vls, "%s %s %s", cent_x, cent_y, cent_z);
+	Tcl_SetVar2(interp, MGED_DISPLAY_VAR, "center", rt_vls_addr(&vls),
+		    TCL_GLOBAL_ONLY);
+	rt_vls_trunc(&vls, 0);
+
+	sprintf(size, "%.3f", VIEWSIZE*base2local);
+	Tcl_SetVar2(interp, MGED_DISPLAY_VAR, "size", size, TCL_GLOBAL_ONLY);
+	rt_vls_trunc(&vls, 0);
+
+	Tcl_SetVar2(interp, MGED_DISPLAY_VAR, "units",
+		    (char *)rt_units_string(dbip->dbi_local2base),
+		    TCL_GLOBAL_ONLY);
+
+	/* Find current azimuth, elevation, and twist angles */
+	VSET( work , 0 , 0 , 1 );	/* view z-direction */
+	MAT4X3VEC( temp , view2model , work );
+	VSET( work1 , 1 , 0 , 0 );	/* view x-direction */
+	MAT4X3VEC( temp1 , view2model , work1 );
+
+	/* calculate angles using accuracy of 0.005, since display
+	 * shows 2 digits right of decimal point */
+	mat_aet_vec( &az , &el , &tw , temp , temp1 , (fastf_t)0.005 );
+
+	sprintf(azimuth,   "%3.2f", az);
+	sprintf(elevation, "%2.2f", el);
+	sprintf(twist,     "%3.2f", tw);
+	
+	Tcl_SetVar2(interp, MGED_DISPLAY_VAR, "azimuth", azimuth,
+		    TCL_GLOBAL_ONLY);
+	Tcl_SetVar2(interp, MGED_DISPLAY_VAR, "elevation", elevation,
+		    TCL_GLOBAL_ONLY);
+	Tcl_SetVar2(interp, MGED_DISPLAY_VAR, "twist", twist, TCL_GLOBAL_ONLY);
+
+	sprintf(ang_x, "%.2f", rate_rotate[X]);
+	sprintf(ang_y, "%.2f", rate_rotate[Y]);
+	sprintf(ang_z, "%.2f", rate_rotate[Z]);
+
+	rt_vls_printf(&vls, "%s %s %s", ang_x, ang_y, ang_z);
+	Tcl_SetVar2(interp, MGED_DISPLAY_VAR, "ang", rt_vls_addr(&vls),
+		    TCL_GLOBAL_ONLY);
+	rt_vls_trunc(&vls, 0);
+
+	Tcl_SetVar2(interp, MGED_DISPLAY_VAR, "adc", "", TCL_GLOBAL_ONLY);
+	Tcl_SetVar2(interp, MGED_DISPLAY_VAR, "keypoint", "", TCL_GLOBAL_ONLY);
+	Tcl_SetVar2(interp, MGED_DISPLAY_VAR, "fps", "", TCL_GLOBAL_ONLY);
+
+	if (!call_dm) {
+	    rt_vls_free(&vls);
+	    return;
+	}
+	
 #ifdef XMGED
 	if(dotitles_hook){
-	  (*dotitles_hook)();
-
-	  return;
+	    (*dotitles_hook)();
+	    rt_vls_free(&vls);
+	    return;
 	}
 #endif
-
-	RT_VLS_INIT( &vls );
-
 	/* Enclose window in decorative box.  Mostly for alignment. */
 	dmp->dmr_2d_line( XMIN, YMIN, XMAX, YMIN, 0 );
 	dmp->dmr_2d_line( XMAX, YMIN, XMAX, YMAX, 0 );
@@ -197,13 +283,15 @@ dotitles()
 	dmp->dmr_2d_line( XMIN, YMAX, XMIN, YMIN, 0 );
 
 	/* Line across the bottom, above two bottom status lines */
-	dmp->dmr_2d_line( XMIN, TITLE_YBASE-TEXT1_DY, XMAX, TITLE_YBASE-TEXT1_DY, 0 );
+	dmp->dmr_2d_line( XMIN, TITLE_YBASE-TEXT1_DY, XMAX,
+			  TITLE_YBASE-TEXT1_DY, 0 );
 
 	/* Display scroll bars */
 	scroll_ybot = scroll_display( SCROLLY ); 
 	y = MENUY;
 
 	/* Display state and local unit in upper right corner, boxed */
+
 	dmp->dmr_puts(state_str[state], MENUX, MENUY - MENU_DY, 1, DM_WHITE );
 #define YPOS	(MENUY - MENU_DY - 75 )
 	dmp->dmr_2d_line(MENUXLIM, YPOS, MENUXLIM, YMAX, 0);	/* vert. */
@@ -216,10 +304,12 @@ dotitles()
 	    (state==ST_O_PATH || state==ST_O_PICK || state==ST_S_PICK) )  {
 		for( i=0; i <= illump->s_last; i++ )  {
 			if( i == ipathpos  &&  state == ST_O_PATH )  {
-				dmp->dmr_puts( "[MATRIX]", MENUX, y, 0, DM_WHITE );
+				dmp->dmr_puts( "[MATRIX]", MENUX, y, 0,
+					       DM_WHITE );
 				y += MENU_DY;
 			}
-			dmp->dmr_puts( illump->s_path[i]->d_namep, MENUX, y, 0, DM_YELLOW );
+			dmp->dmr_puts( illump->s_path[i]->d_namep, MENUX, y, 0,
+				       DM_YELLOW );
 			y += MENU_DY;
 		}
 	}
@@ -235,12 +325,18 @@ dotitles()
 		MAT4X3PNT(temp, model2objview, es_keypoint);
 		xloc = (int)(temp[X]*2048);
 		yloc = (int)(temp[Y]*2048);
-		dmp->dmr_2d_line(xloc-TEXT0_DY, yloc+TEXT0_DY, xloc+TEXT0_DY, yloc-TEXT0_DY, 0);
-		dmp->dmr_2d_line(xloc-TEXT0_DY, yloc-TEXT0_DY, xloc+TEXT0_DY, yloc+TEXT0_DY, 0);
-		dmp->dmr_2d_line(xloc+TEXT0_DY, yloc+TEXT0_DY, xloc-TEXT0_DY, yloc+TEXT0_DY, 0);
-		dmp->dmr_2d_line(xloc+TEXT0_DY, yloc-TEXT0_DY, xloc-TEXT0_DY, yloc-TEXT0_DY, 0);
-		dmp->dmr_2d_line(xloc+TEXT0_DY, yloc+TEXT0_DY, xloc+TEXT0_DY, yloc-TEXT0_DY, 0);
-		dmp->dmr_2d_line(xloc-TEXT0_DY, yloc+TEXT0_DY, xloc-TEXT0_DY, yloc-TEXT0_DY, 0);
+		dmp->dmr_2d_line(xloc-TEXT0_DY, yloc+TEXT0_DY, xloc+TEXT0_DY,
+				 yloc-TEXT0_DY, 0);
+		dmp->dmr_2d_line(xloc-TEXT0_DY, yloc-TEXT0_DY, xloc+TEXT0_DY,
+				 yloc+TEXT0_DY, 0);
+		dmp->dmr_2d_line(xloc+TEXT0_DY, yloc+TEXT0_DY, xloc-TEXT0_DY,
+				 yloc+TEXT0_DY, 0);
+		dmp->dmr_2d_line(xloc+TEXT0_DY, yloc-TEXT0_DY, xloc-TEXT0_DY,
+				 yloc-TEXT0_DY, 0);
+		dmp->dmr_2d_line(xloc+TEXT0_DY, yloc+TEXT0_DY, xloc+TEXT0_DY,
+				 yloc-TEXT0_DY, 0);
+		dmp->dmr_2d_line(xloc-TEXT0_DY, yloc+TEXT0_DY, xloc-TEXT0_DY,
+				 yloc-TEXT0_DY, 0);
 	}
 
 	/* Label the vertices of the edited solid */
@@ -266,40 +362,20 @@ dotitles()
 	 */
 	create_text_overlay( &vls );
 	screen_vls( SOLID_XBASE, scroll_ybot+TEXT0_DY, &vls );
-	rt_vls_free( &vls );
 
 	/*
 	 * General status information on the next to last line
 	 */
-	(void)sprintf( &linebuf[0],
-		" cent=(%.3f, %.3f, %.3f), sz=%.3f %s, ",
-		-toViewcenter[MDX]*base2local,
-		-toViewcenter[MDY]*base2local,
-		-toViewcenter[MDZ]*base2local,
-		VIEWSIZE*base2local,
-		rt_units_string(dbip->dbi_local2base) );
+	rt_vls_printf(&vls,
+		      " cent=(%s, %s, %s), sz=%s %s, ", cent_x, cent_y, cent_z,
+		      size, rt_units_string(dbip->dbi_local2base));
 
-	cp = &linebuf[0];
-#define FINDNULL(p)	while(*p++); p--;	/* leaves p at NULL */
-	FINDNULL(cp);
-
-	/* Find current azimuth, elevation, and twist angles */
-	VSET( work , 0 , 0 , 1 );	/* view z-direction */
-	MAT4X3VEC( temp , view2model , work );
-	VSET( work1 , 1 , 0 , 0 );	/* view x-direction */
-	MAT4X3VEC( temp1 , view2model , work1 );
-
-	/* calculate angles using accuracy of 0.005, since display
-	 * shows 2 digits right of decimal point */
-	mat_aet_vec( &az , &el , &twist , temp , temp1 , (fastf_t)0.005 );
-
-	(void)sprintf( cp, "az=%3.2f el=%2.2f tw=%3.2f ang=(%.2f, %.2f, %.2f)",
-		az, el, twist,
-		rate_rotate[X],
-		rate_rotate[Y],
-		rate_rotate[Z] );
-	dmp->dmr_puts( &linebuf[0], TITLE_XBASE, TITLE_YBASE, 1, DM_WHITE );
-
+	rt_vls_printf(&vls,
+		       "az=%s el=%s tw=%s ang=(%s, %s, %s)",
+		      azimuth, elevation, twist, ang_x, ang_y, ang_z);
+	dmp->dmr_puts( rt_vls_addr(&vls), TITLE_XBASE, TITLE_YBASE, 1,
+		       DM_WHITE );
+	rt_vls_trunc(&vls, 0);
 	/*
 	 * Second status line
 	 */
@@ -325,37 +401,47 @@ dotitles()
 		    -toViewcenter[MDZ]);
 		MAT4X3VEC(pt2, Viewrot, center_model);
 		VADD2(pt3, pt1, pt2);
-		(void)sprintf( &linebuf[0],
+		rt_vls_printf( &vls,
 " curs:  a1=%.1f,  a2=%.1f,  dst=%.3f,  cent=(%.3f, %.3f),  delta=(%.3f, %.3f)",
 			angle1 * radtodeg, angle2 * radtodeg,
 			(c_tdist / 2047.0) *Viewscale*base2local,
 			pt3[X]*base2local, pt3[Y]*base2local,
 			(curs_x / 2047.0) *Viewscale*base2local,
 			(curs_y / 2047.0) *Viewscale*base2local );
-		dmp->dmr_puts( &linebuf[0], TITLE_XBASE, TITLE_YBASE + TEXT1_DY, 1, DM_YELLOW );
+		dmp->dmr_puts( rt_vls_addr(&vls), TITLE_XBASE,
+			      TITLE_YBASE + TEXT1_DY, 1, DM_YELLOW );
+		Tcl_SetVar2(interp, MGED_DISPLAY_VAR, "adc",
+			    rt_vls_addr(&vls), TCL_GLOBAL_ONLY);
 	} else if( state == ST_S_EDIT || state == ST_O_EDIT )  {
-		(void)sprintf( &linebuf[0],
-			" Keypoint: %s %s: (%g, %g, %g)\n",
+	        rt_vls_printf( &vls,
+			" Keypoint: %s %s: (%g, %g, %g)",
 			rt_functab[es_int.idb_type].ft_name+3,	/* Skip ID_ */
 			es_keytag,
 			es_keypoint[X] * base2local,
 			es_keypoint[Y] * base2local,
 			es_keypoint[Z] * base2local);
-		dmp->dmr_puts( &linebuf[0], TITLE_XBASE, TITLE_YBASE + TEXT1_DY, 1, DM_YELLOW );
+		dmp->dmr_puts( rt_vls_addr(&vls), TITLE_XBASE,
+			       TITLE_YBASE + TEXT1_DY, 1, DM_YELLOW );
+		Tcl_SetVar2(interp, MGED_DISPLAY_VAR, "keypoint",
+			    rt_vls_addr(&vls), TCL_GLOBAL_ONLY);
 	} else if( illump != SOLID_NULL )  {
 		/* Illuminated path */
-		(void)sprintf( linebuf, " Path: ");
+	        rt_vls_strcat(&vls, " Path: ");
 		for( i=0; i <= illump->s_last; i++ )  {
 			if( i == ipathpos  &&
 			    (state == ST_O_PATH || state == ST_O_EDIT) )
-				(void)strcat( &linebuf[0], "/__MATRIX__" );
-			cp = &linebuf[0];
-			FINDNULL(cp);
-			(void)sprintf(cp, "/%s", illump->s_path[i]->d_namep );
+				rt_vls_strcat( &vls, "/__MATRIX__" );
+			rt_vls_printf(&vls, "/%s", illump->s_path[i]->d_namep);
 		}
-		dmp->dmr_puts( &linebuf[0], TITLE_XBASE, TITLE_YBASE + TEXT1_DY, 1, DM_YELLOW );
+		dmp->dmr_puts( rt_vls_addr(&vls), TITLE_XBASE,
+			       TITLE_YBASE + TEXT1_DY, 1, DM_YELLOW );
 	} else {
-		(void)sprintf( linebuf, "%.2f fps", 1/frametime );
-		dmp->dmr_puts( &linebuf[0], TITLE_XBASE, TITLE_YBASE + TEXT1_DY, 1, DM_YELLOW );
+		rt_vls_printf(&vls, "%.2f fps", 1/frametime );
+		dmp->dmr_puts( rt_vls_addr(&vls), TITLE_XBASE,
+			       TITLE_YBASE + TEXT1_DY, 1, DM_YELLOW );
+		Tcl_SetVar2(interp, MGED_DISPLAY_VAR, "fps",
+			    rt_vls_addr(&vls), TCL_GLOBAL_ONLY);
 	}
+
+	rt_vls_free(&vls);
 }
