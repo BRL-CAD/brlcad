@@ -256,7 +256,7 @@ CONST struct rt_spect_sample	*in;
 /* This is the data for the CIE_XYZ curves take from Judd and
  *  Wyszecki (1975), table 2.6, these are for the 1931 standard
  *  observer with a 2-degree visual field.
- *  From Roy Hall.
+ *  From Roy Hall, pg 228.
  */
 static CONST double	rt_CIE_XYZ[81][4] = {
     {380, 0.0014, 0.0000, 0.0065}, {385, 0.0022, 0.0001, 0.0105},
@@ -324,6 +324,7 @@ struct rt_spect_sample		**z;
 CONST struct rt_spectrum	*spect;
 {
 	struct rt_spect_sample	*a, *b, *c;
+	fastf_t	xyz_scale;
 	int	i;
 	int	j;
 
@@ -366,7 +367,150 @@ again:
 		a->val[j] = b->val[j] = c->val[j] = 0;
 	}
 
+	/* Normalize the curves so that area under Y curve is 1.0 */
+	xyz_scale = rt_spect_area2( b );
+	if( fabs(xyz_scale) < VDIVIDE_TOL )  {
+		rt_log("rt_spect_make_CIE_XYZ(): Area = 0 (no luminance) in this part of the spectrum, skipping normalization step\n");
+		return;
+	}
+	xyz_scale = 1 / xyz_scale;
+	rt_spect_scale( a, a, xyz_scale );
+	rt_spect_scale( b, b, xyz_scale );
+	rt_spect_scale( c, c, xyz_scale );
 }
+
+/*
+ *   This is the NTSC primaries with D6500 white point for use as
+ *  the default initialization as given in sect 5.1.1 Color
+ *  Correction for Display.
+ *  From Roy Hall, page 228.
+ *  Gives the XYZ coordinates of the NTSC primaries and D6500 white.
+ *  Note:  X+Y+Z=1 for primaries (cf. equations of pg.54)
+ */
+CONST static point_t      rgb_NTSC[4] = {
+    {0.670,     0.330,      0.000},     /* red */
+    {0.210,     0.710,      0.080},     /* green */
+    {0.140,     0.080,      0.780},     /* blue */
+    {0.313,     0.329,      0.358}};    /* white */
+
+/*
+ *  Create the map from 
+ *  CIE XYZ perceptual space into
+ *  an idealized RGB space assuming NTSC primaries with D6500 white.
+ *  Only high-quality television-studio monitors are like this, but...
+ */
+void
+rt_make_ntsc_xyz2rgb( xyz2rgb )
+mat_t	xyz2rgb;
+{
+	mat_t	rgb2xyz;
+	point_t	tst, new;
+
+	if( rt_clr__cspace_to_xyz( rgb_NTSC, rgb2xyz ) == 0 )
+		rt_bomb("rt_make_ntsc_xyz2rgb() can't initialize color space\n");
+	mat_inv( xyz2rgb, rgb2xyz );
+
+#if 0
+	/* Verify that it really works, I'm a skeptic */
+	VSET( tst, 1, 1, 1 );
+	MAT3X3VEC( new, rgb2xyz, tst );
+	VPRINT( "white_xyz", new );
+	VSET( tst, 0.951368, 1, 1.08815);
+	MAT3X3VEC( new, xyz2rgb, tst );
+	VPRINT( "white_rgb", new );
+#endif
+}
+
+/* ****************************************************************
+ * clr__cspace_to_xyz (cspace, t_mat)
+ *  CLR_XYZ       cspace[4]   (in)  - the color space definition,
+ *                                      3 primaries and white
+ *  double        t_mat[3][3] (mod) - the color transformation
+ *
+ * Builds the transformation from a set of primaries to the CIEXYZ
+ *  color space.  This is the basis for the generation of the color
+ *  transformations in the CLR_ routine set.  The method used is
+ *  that detailed in Sect 3.2 Colorimetry and the RGB monitor.
+ *  Returns RGB to XYZ matrix.
+ *  From Roy Hall, pg 239-240.
+ *
+ *  The RGB white point of (1,1,1) times this matrix gives the
+ *  (Y=1 normalized) XYZ white point of (0.951368, 1, 1.08815)
+ *  From Roy Hall, pg 54.
+ *	MAT3X3VEC( xyz, rgb2xyz, rgb );
+ *
+ *  Returns -
+ *	0 if there is a singularity.
+ *	!0 if OK
+ */
+int
+rt_clr__cspace_to_xyz (cspace, rgb2xyz)
+CONST point_t	cspace[4];
+mat_t		rgb2xyz;
+{
+	int     ii, jj, kk, tmp_i, ind[3];
+	fastf_t  mult, white[3], scale[3];
+	mat_t	t_mat;
+
+	/* Might want to enforce X+Y+Z=1 for 4 inputs.  Roy does, on pg 229. */
+
+	/* normalize the white point to Y=1 */
+#define WHITE	3
+	if (cspace[WHITE][Y] <= 0.0) return 0;
+	white[0] = cspace[WHITE][X] / cspace[WHITE][Y];
+	white[1] = 1.0;
+	white[2] = cspace[WHITE][Z] / cspace[WHITE][Y];
+
+#define tmat(a,b)	t_mat[(a)*4+(b)]
+	mat_idn(t_mat);
+	for (ii=0; ii<=2; ii++) {
+		tmat(0,ii) = cspace[ii][X];
+		tmat(1,ii) = cspace[ii][Y];
+		tmat(2,ii) = cspace[ii][Z];
+		ind[ii] = ii;
+	}
+
+	/* gaussian elimination  with partial pivoting */
+	for (ii=0; ii<2; ii++) {
+		for (jj=ii+1; jj<=2; jj++)  {
+			if (fabs(tmat(ind[jj],ii)) > fabs(tmat(ind[ii],ii))) {
+				tmp_i=ind[jj];
+				ind[jj]=ind[ii];
+				ind[ii]=tmp_i;
+			}
+		}
+		if (tmat(ind[ii],ii) == 0.0) return 0;
+
+		for (jj=ii+1; jj<=2; jj++) {
+			mult = tmat(ind[jj],ii) / tmat(ind[ii],ii);
+			for (kk=ii+1; kk<=2; kk++)
+			tmat(ind[jj],kk) -= tmat(ind[ii],kk) * mult;
+			white[ind[jj]] -= white[ind[ii]] * mult;
+		}
+	}
+	if (tmat(ind[2],2) == 0.0) return 0;
+
+	/* back substitution to solve for scale */
+	scale[ind[2]] = white[ind[2]] / tmat(ind[2],2);
+	scale[ind[1]] = (white[ind[1]] - (tmat(ind[1],2) *
+			scale[ind[2]])) / tmat(ind[1],1);
+	scale[ind[0]] = (white[ind[0]] - (tmat(ind[0],1) *
+			scale[ind[1]]) - (tmat(ind[0],2) *
+			scale[ind[2]])) / tmat(ind[0],0);
+
+	/* build matrix.  Embed 3x3 in BRL-CAD 4x4 */
+	for (ii=0; ii<=2; ii++) {
+		rgb2xyz[0*4+ii] = cspace[ii][X] * scale[ii];
+		rgb2xyz[1*4+ii] = cspace[ii][Y] * scale[ii];
+		rgb2xyz[2*4+ii] = cspace[ii][Z] * scale[ii];
+			rgb2xyz[3*4+ii] = 0;
+	}
+	rgb2xyz[12] = rgb2xyz[13] = rgb2xyz[14];
+	rgb2xyz[15] = 1;
+
+	return 1;
+}
+
 
 /*
  *			R T _ S P E C T _ E V A L U A T E
