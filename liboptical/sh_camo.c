@@ -70,7 +70,7 @@ static struct camo_specific camo_defaults = {
 	{ 1.0, 1.0, 1.0 },	/* vscale */
 	{ .38, .29, .16 },	/* darker color c1 */
 	{ .1, .30, .04 },	/* basic color c2 */
-/*	{ .815, .635, .35 },	/* brighter color c3 */
+/*	{ .815, .635, .35 },	brighter color c3 */
 	{ .15, .15, .15 },	/* dark black */
 	{ 1000.0, 1000.0, 1000.0 }	/* delta into noise space */
 	};

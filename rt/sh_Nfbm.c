@@ -190,7 +190,7 @@ char	*dp;
 	double	cos_angle;
 	double	angle;
 	quat_t	q;
-	const static vect_t up = { 0.0, 0.0, 1.0 };
+	static const vect_t up = { 0.0, 0.0, 1.0 };
 	vect_t	N;
 	mat_t	mat;
 	int	i;
