@@ -862,6 +862,9 @@ mged_setup()
 	bu_vls_free(&str);
 	bu_vls_free(&str2);
 
+	Tcl_SetVar(interp, "mged_display(state)", state_str[state],
+		   TCL_GLOBAL_ONLY);
+
 	Tcl_ResetResult(interp);
 }
 
