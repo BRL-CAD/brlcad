@@ -60,7 +60,6 @@ struct mfuncs	**headp;
 	MFUNCS( txt_mfuncs );
 	MFUNCS( stk_mfuncs );
 	MFUNCS( cook_mfuncs );
-	MFUNCS( marble_mfuncs );
 	MFUNCS( stxt_mfuncs );
 	MFUNCS( points_mfuncs );
 	MFUNCS( toyota_mfuncs );
@@ -75,4 +74,5 @@ struct mfuncs	**headp;
 	MFUNCS( noise_mfuncs );
 	MFUNCS( prj_mfuncs );
 	MFUNCS( grass_mfuncs );
+
 }
