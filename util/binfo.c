@@ -51,15 +51,17 @@ Usage: binfo \
 int
 main(int argc, char *argv[])
 {
-	int i;
+  if (argc > 0) {
+    printf("%s", usage);
+  }
 
-	printf("binfo: bu_version=[%s]\n", bu_version);
-	printf("binfo: bn_version=[%s]\n", bn_version);
+  printf("binfo: bu_version=[%s]\n", bu_version);
+  printf("binfo: bn_version=[%s]\n", bn_version);
 #if 0
-	printf("binfo: rt_version=[%s]\n", rt_version);
+  printf("binfo: rt_version=[%s]\n", rt_version);
 #endif
-	printf("binfo: fb_version=[%s]\n", fb_version);
-
-	exit(0);
+  printf("binfo: fb_version=[%s]\n", fb_version);
+  
+  exit(0);
 }
 
