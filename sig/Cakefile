@@ -18,8 +18,8 @@
 #include "../Cakefile.prog"
 
 
-a-d: a-d.o
-	CC LDFLAGS -o a-d a-d.o LIBES
+a-d: a-d.o LIBBU_DEP
+	CC LDFLAGS -o a-d a-d.o LIBBU LIBBU_LIBES LIBES
 
 d-a: d-a.o
 	CC LDFLAGS -o d-a d-a.o LIBES

@@ -1,6 +1,11 @@
 /* Ascii to double */
+#include "conf.h"
 #include <stdio.h>
 #include <math.h>
+#include "machine.h"
+#include "bu.h"
+
+#define	COMMENT_CHAR	'#'
 
 static char usage[] = "\
 Usage: a-d [values] < ascii > doubles\n";
@@ -31,9 +36,30 @@ char	**argv;
 			d = atof( s );
 #else
 		/* XXX This one is slower but allows more than 1 per line */
-		while( scanf("%lf", &d) == 1 ) {
+		while (1) {
+		    int	ch;
+
+		    while (isspace(ch = getchar()))
+			;
+		    if (ch == COMMENT_CHAR) {
+			while (((ch = getchar()) != '\n') && (ch != EOF))
+			    ;
+		    }
+		    if (ch == EOF)
+			exit (0);
+		    else
+			ungetc(ch, stdin);
+
+		    if ( scanf("%lf", &d) == 1 ) {
 #endif
 			fwrite( &d, sizeof(d), 1, stdout );
+		    }
+		    else if (feof(stdin))
+			exit (0);
+		    else {
+			bu_log("Error in input stream\n");
+			exit (1);
+		    }
 		}
 	}
 	return(0);
