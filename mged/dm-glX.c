@@ -2024,7 +2024,7 @@ char	**argv;
 		bu_structprint("dm_gl internal variables", Ogl_vparse, (char *)0 );
 		bu_log("%s", bu_vls_addr(&vls) );
 	} else if( argc == 2 ) {
-	        bu_vls_name_print( &vls, Ogl_vparse, argv[1], (char *)0 );
+	        bu_vls_struct_item_named( &vls, Ogl_vparse, argv[1], (char *)0, ',');
 		bu_log( "%s\n", bu_vls_addr(&vls) );
   	} else {
 	        bu_vls_printf( &vls, "%s=\"", argv[1] );
