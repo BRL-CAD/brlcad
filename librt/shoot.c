@@ -239,9 +239,13 @@ register struct rt_shootray_status	*ssp;
 		
 top:		switch( curcut->cut_type ) {
 		case CUT_NUGRIDNODE: {
-/*
- *  This version uses Gigante's non-uniform 3-D space grid/mesh discretization.
- */
+			/*
+			 ****************************************************************************************
+			 *
+			 *  This portion implements Gigante's non-uniform 3-D space grid/mesh discretization.
+			 *
+			 ****************************************************************************************
+			 */
 			register int out_axis;
 			register CONST struct nu_axis  **nu_axis =
 			     (CONST struct nu_axis **)&curcut->nugn.nu_axis[0];
@@ -372,9 +376,13 @@ again:				t0 = ssp->tv[out_axis];
 		case CUT_CUTNODE:
 			/* fall through */
 		case CUT_BOXNODE:
-/*
- *  This version uses Muuss' non-uniform binary space partitioning tree.
- */
+			/*
+			 ****************************************************************************************
+			 *
+			 *  This portion implements Muuss' non-uniform binary space partitioning tree.
+			 *
+			 ****************************************************************************************
+			 */
 			t0 += OFFSET_DIST;
 			cutp = curcut;
 			break;
@@ -383,16 +391,23 @@ again:				t0 = ssp->tv[out_axis];
 		       "rt_advance_to_next_cell: unknown high-level cutnode" );
 		}
 
-test:		if( cutp==CUTTER_NULL ) {
-			/* Move up out of the current node, or return if there
-			   is nothing left to do. */
-			register struct rt_shootray_status *old = ssp->old_status;
+		if( cutp==CUTTER_NULL ) {
+pop_space_stack:
+			/*
+			 *  Pop the stack of nested space partitioning methods.
+			 *  Move up out of the current node, or return if there
+			 *  is nothing left to do.
+			 */
+			{
+				register struct rt_shootray_status *old = ssp->old_status;
 
-			if( old == NULL ) goto escaped_from_model;
-			*ssp = *old;		/* struct copy -- XXX SLOW! */
-			bu_free( old, "old rt_shootray_status" );
-			curcut = ssp->curcut;
-			continue;
+				if( old == NULL ) goto escaped_from_model;
+				*ssp = *old;		/* struct copy */
+				bu_free( old, "old rt_shootray_status" );
+				curcut = ssp->curcut;
+				cutp = CUTTER_NULL;
+				continue;
+			}
 		}
 
 		/* Compute position and bail if we're outside of the current level. */
@@ -414,10 +429,8 @@ test:		if( cutp==CUTTER_NULL ) {
 		/*  Given direction of travel, see if point is outside bound.
 		 *  This will be the model RPP for NUBSP.
 		 */
-		if( PT_DEPARTING_RPP( ssp->rstep, ssp->curmin, ssp->curmax, px, py, pz ) )  {
-			cutp = CUTTER_NULL;
-			goto test;
-		}
+		if( PT_DEPARTING_RPP( ssp->rstep, ssp->curmin, ssp->curmax, px, py, pz ) )
+			goto pop_space_stack;
 		
 		if( rt_g.debug&DEBUG_ADVANCE ) {
 			bu_log(
@@ -541,9 +554,11 @@ push:				;
 				if( push_flag > 3 ) {
 					bu_log( "rt_advance_to_next_cell(): INTERNAL ERROR: infinite loop aborted, ray %d,%d truncated\n",
 						ap->a_x, ap->a_y );
-					cutp = CUTTER_NULL;
-					goto escaped_from_model;
+					goto pop_space_stack;
 				}
+				/* See if point marched outside model RPP */
+				if( ssp->box_start > ssp->model_end )
+					goto pop_space_stack;
 				t0 = ssp->box_start + OFFSET_DIST;
 				goto top;
 			}
