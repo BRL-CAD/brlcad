@@ -731,7 +731,7 @@ char	**argv;
 		return CMD_BAD;
 	}
 
-	if( rt_functab[internal.idb_type].ft_export( &external, &internal, local2base ) < 0 )
+	if( rt_functab[internal.idb_type].ft_export( &external, &internal, 1.0 ) < 0 )
 	{
 		rt_log( "f_make: export failure\n" );
 		rt_functab[internal.idb_type].ft_ifree( &internal );
@@ -1021,7 +1021,9 @@ char	**argv;
 	struct edgeuse *eu;
 	struct vertex *v_new, *v;
 	unsigned long tw, tf, tp;
+#ifndef log10
 	double log10();
+#endif
 
 	rt_log("fracture:");
 	for (i=0 ; i < argc ; i++)
