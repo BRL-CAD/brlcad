@@ -26,11 +26,11 @@ findgen="$1"
 
 if [ ! -d "$findgen" ] ; then 
 
-  if [ -r "`dirname $0`/../gen.sh" ] ; then
+  if [ -r "`dirname $0`/../configure.ac" ] ; then
     findgen="`dirname $0`/.."
   else
     for dir in . .. ; do
-      if [ -r "$findgen/gen.sh" ] ; then
+      if [ -r "$findgen/configure.ac" ] ; then
 	findgen="$dir"
 	break
       fi
@@ -39,7 +39,7 @@ if [ ! -d "$findgen" ] ; then
   
 # sanity check
   if [ ! -d "$findgen/sh" ] ; then
-    echo "ERROR: Unable to find our path relative to gen.sh"
+    echo "ERROR: Unable to find our path relative to configure.ac"
     exit 1
   fi
 
@@ -50,7 +50,7 @@ fi
 files="`find $findgen -type f | \
         grep -v 'libtcl' | \
         grep -v 'libtk' | \
-        grep -v 'libitcl' | \
+        grep -v 'incrTcl' | \
         grep -v 'iwidgets' | \
         grep -v 'jove' | \
         grep -v 'libutahrle' | \
