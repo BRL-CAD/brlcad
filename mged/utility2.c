@@ -2116,40 +2116,17 @@ Tcl_Interp *interp;
 int argc;
 char **argv;
 {
-	struct directory *dp;
-	struct rt_db_internal intern;
-	struct rt_comb_internal *comb;
-	char id[10];
+	int		ret;
+	struct bu_vls	vls;
 
 	CHECK_DBI_NULL;
 
-	if(argc < 2){
-	  struct bu_vls vls;
+	bu_vls_init(&vls);
+	bu_build_cmd_vls(&vls, MGED_DB_NAME, argc, argv);
+	ret = Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
 
-	  bu_vls_init(&vls);
-	  bu_vls_printf(&vls, "help whatid");
-	  Tcl_Eval(interp, bu_vls_addr(&vls));
-	  bu_vls_free(&vls);
-	  return TCL_ERROR;
-	}
-
-	if( (dp=db_lookup( dbip, argv[1], LOOKUP_NOISY )) == DIR_NULL )
-		return TCL_ERROR;
-
-	if( !( dp->d_flags & DIR_REGION ) )
-	{
-		Tcl_AppendResult(interp, argv[1], " is not a region\n", (char *)NULL );
-		return TCL_ERROR;
-	}
-
-	if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )
-		return TCL_ERROR;
-	comb = (struct rt_comb_internal *)intern.idb_ptr;
-	sprintf( id, "%d\n", comb->region_id );
-	rt_comb_ifree( &intern, &rt_uniresource );
-	Tcl_AppendResult(interp, id, (char *)NULL );
-
-	return TCL_OK;
+	return ret;
 }
 
 int
