@@ -183,6 +183,8 @@ main( argc, argv )
 int argc; char **argv;
 {
 	int	netfd;
+	int	fbfd;
+	int	maxfd;
 	char	portname[32];
 
 
@@ -223,6 +225,9 @@ int argc; char **argv;
 		if( (fbp = fb_open(framebuffer, width, height)) == FBIO_NULL )
 			exit(1);
 
+		/* If zero, one isn't provided.  Don't want to select on stdin by accident. */
+		fbfd = fbp->if_selfd;
+
 		/* check/default port */
 		if( port_set ) {
 			if( port < 1024 )
@@ -236,26 +241,38 @@ int argc; char **argv;
 		if( (netfd = pkg_permserver(portname, 0, 0, comm_error)) < 0 )
 			exit(-1);
 
+		maxfd = netfd;
+		if (fbfd > maxfd)
+			maxfd = fbfd;
+
 		/* loop forever handling clients */
 		while( !got_fb_free ) {
 			fd_set infds;
 			struct timeval tv;
 
 			FD_ZERO(&infds);
-			FD_SET(netfd, &infds);	/* XXX FD_SET(fbfd, &infds) */
+			FD_SET(netfd, &infds);
+			if (fbfd > 0)
+				FD_SET(fbfd, &infds);
 			tv.tv_sec = 1L;
 			tv.tv_usec = 0L;
-			if( (select( netfd+1, &infds, (fd_set *)0, (fd_set *)0, 
+			if( (select( maxfd+1, &infds, (fd_set *)0, (fd_set *)0, 
 				     &tv )) == 0 ) {
 				/* Process fb events while waiting for client */
 				/*printf("select timeout waiting for client\n");*/
 				fb_poll(fbp);
 				continue;
 			}
-			rem_pcp = pkg_getclient( netfd, pkg_switch, comm_error, 0 );
-			if( rem_pcp == PKC_ERROR )
-				break;
-			do1();
+			if (fbfd > 0 && FD_ISSET(fbfd, &infds))
+				fb_poll(fbp);
+
+			if (FD_ISSET(netfd, &infds))
+			{
+				rem_pcp = pkg_getclient( netfd, pkg_switch, comm_error, 0 );
+				if( rem_pcp == PKC_ERROR )
+					break;
+				do1();
+			}
 		}
 		exit(0);
 	}
