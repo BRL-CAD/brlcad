@@ -50,6 +50,7 @@ static char RCSarb[] = "@(#)$Header$ (BRL)";
 #include "db.h"
 #include "rtstring.h"
 #include "raytrace.h"
+#include "nurb.h"
 #include "rtgeom.h"
 #include "./debug.h"
 
@@ -1145,6 +1146,171 @@ struct rt_tol		*tol;
 			return -1;		/* FAIL */
 #endif
 	}
+
+	/* Mark edges as real */
+	(void)nmg_mark_edges_real( &s->l );
+
+	/* Compute "geometry" for region and shell */
+	nmg_region_a( *r, tol );
+	return(0);
+}
+
+/*
+ *			R T _ A R B _ T N U R B
+ *
+ *  "Tessellate" an ARB into a trimmed-NURB-NMG data structure.
+ *  Purely a mechanical transformation of one faceted object
+ *  into another.
+ *
+ *  Depending on the application, it might be beneficial to keep ARBs
+ *  as planar-NMG objects; there is no real benefit to using B-splines
+ *  here, other than uniformity of the conversion for all solids.
+ *
+ *  Returns -
+ *	-1	failure
+ *	 0	OK.  *r points to nmgregion that holds this tessellation.
+ */
+int
+rt_arb_tnurb( r, m, ip, tol )
+struct nmgregion	**r;
+struct model		*m;
+struct rt_db_internal	*ip;
+struct rt_tol		*tol;
+{
+	LOCAL struct rt_arb_internal	*aip;
+	struct shell		*s;
+	struct prep_arb		pa;
+	register int		i;
+	struct faceuse		*fu[6];
+	struct vertex		*verts[8];
+	struct vertex		**vertp[4];
+	struct edgeuse		*eu;
+	struct loopuse		*lu;
+	point_t			uvw;
+
+	RT_CK_DB_INTERNAL(ip);
+	aip = (struct rt_arb_internal *)ip->idb_ptr;
+	RT_ARB_CK_MAGIC(aip);
+
+	bzero( (char *)&pa, sizeof(pa) );
+	pa.pa_doopt = 0;		/* no UV stuff */
+	pa.pa_tol_sq = tol->dist_sq;
+	if( rt_arb_mk_planes( &pa, aip, "(tnurb)" ) < 0 )  return(-2);
+
+	for( i=0; i<8; i++ )  verts[i] = (struct vertex *)0;
+
+	*r = nmg_mrsv( m );	/* Make region, empty shell, vertex */
+	s = RT_LIST_FIRST(shell, &(*r)->s_hd);
+
+	/* Process each face */
+	for( i=0; i < pa.pa_faces; i++ )  {
+		if( pa.pa_clockwise[i] != 0 )  {
+			/* Counter-Clockwise orientation (CCW) */
+			vertp[0] = &verts[pa.pa_pindex[0][i]];
+			vertp[1] = &verts[pa.pa_pindex[1][i]];
+			vertp[2] = &verts[pa.pa_pindex[2][i]];
+			if( pa.pa_npts[i] > 3 ) {
+				vertp[3] = &verts[pa.pa_pindex[3][i]];
+			}
+		} else {
+			register struct vertex	***vertpp = vertp;
+			/* Clockwise orientation (CW) */
+			if( pa.pa_npts[i] > 3 ) {
+				*vertpp++ = &verts[pa.pa_pindex[3][i]];
+			}
+			*vertpp++ = &verts[pa.pa_pindex[2][i]];
+			*vertpp++ = &verts[pa.pa_pindex[1][i]];
+			*vertpp++ = &verts[pa.pa_pindex[0][i]];
+		}
+		if( rt_g.debug & DEBUG_ARB8 )  {
+			rt_log("face %d, npts=%d, verts %d %d %d %d\n",
+				i, pa.pa_npts[i],
+				pa.pa_pindex[0][i], pa.pa_pindex[1][i],
+				pa.pa_pindex[2][i], pa.pa_pindex[3][i] );
+		}
+		/* The edges created will be linear, in parameter space...,
+		 * but need to have edge_g_cnurb geometry. */
+		if( (fu[i] = nmg_cmface( s, vertp, pa.pa_npts[i] )) == 0 )  {
+			rt_log("rt_arb_tnurb(%s): nmg_cmface() fail on face %d\n", i);
+			continue;
+		}
+		/* March around the fu's loop assigning uv parameter values */
+		lu = RT_LIST_FIRST( loopuse, &fu[i]->lu_hd );
+		NMG_CK_LOOPUSE(lu);
+		eu = RT_LIST_FIRST( edgeuse, &lu->down_hd );
+		NMG_CK_EDGEUSE(eu);
+
+		/* Loop always has Counter-Clockwise orientation (CCW) */
+		VSET( uvw, 0, 0, 0 );
+		nmg_vertexuse_a_cnurb( eu->vu_p, uvw );
+		eu = RT_LIST_NEXT( edgeuse, &eu->l );
+
+		VSET( uvw, 1, 0, 0 );
+		nmg_vertexuse_a_cnurb( eu->vu_p, uvw );
+		eu = RT_LIST_NEXT( edgeuse, &eu->l );
+
+		VSET( uvw, 1, 1, 0 );
+		nmg_vertexuse_a_cnurb( eu->vu_p, uvw );
+		eu = RT_LIST_NEXT( edgeuse, &eu->l );
+
+		if( pa.pa_npts[i] > 3 ) {
+			VSET( uvw, 0, 1, 0 );
+			nmg_vertexuse_a_cnurb( eu->vu_p, uvw );
+			eu = RT_LIST_NEXT( edgeuse, &eu->l );
+		}
+	}
+
+	/* Associate vertex geometry */
+	for( i=0; i<8; i++ )
+		if(verts[i]) nmg_vertex_gv(verts[i], aip->pt[i]);
+
+	/* Associate face geometry */
+	for( i=0; i < pa.pa_faces; i++ )  {
+		struct face_g_snurb	*fg;
+		int	j;
+
+		/* Let the library allocate all the storage */
+		nmg_face_g_snurb( fu[i],
+			2, 2,		/* u,v order */
+			4, 4,		/* Number of knots, u,v */
+			NULL, NULL,	/* initial u,v knot vectors */
+			2, 2,		/* n_rows, n_cols */
+			RT_NURB_MAKE_PT_TYPE( 3, RT_NURB_PT_XYZ, RT_NURB_PT_NONRAT ),
+			NULL );		/* initial mesh */
+
+		fg = fu[i]->f_p->g.snurb_p;
+		NMG_CK_FACE_G_SNURB(fg);
+
+		/* Assign surface knot vectors as 0, 0, 1, 1 */
+		fg->u.knots[0] = fg->u.knots[1] = 0;
+		fg->u.knots[2] = fg->u.knots[2] = 1;
+		fg->v.knots[0] = fg->v.knots[1] = 0;
+		fg->v.knots[2] = fg->v.knots[2] = 1;
+
+		/* Assign surface control points from the corners */
+		lu = RT_LIST_FIRST( loopuse, &fu[i]->lu_hd );
+		NMG_CK_LOOPUSE(lu);
+		eu = RT_LIST_FIRST( edgeuse, &lu->down_hd );
+		NMG_CK_EDGEUSE(eu);
+
+		for( j=0; j < pa.pa_npts[i]; j++ )  {
+			VMOVE( &fg->ctl_points[j*3], eu->vu_p->v_p->vg_p->coord );
+			eu = RT_LIST_NEXT( edgeuse, &eu->l );
+
+			/* Also associate edge geometry (trimming curve) */
+			nmg_edge_g_cnurb_plinear(eu);
+		}
+		if( pa.pa_npts[i] > 3 ) {
+			vect_t	c_b;
+			/*  Trimming curve describes a triangle ABC on face,
+			 *  generate a phantom fourth corner at A + (C-B)
+			 *  [3] = [0] + [2] - [1]
+			 */
+			VSUB2( c_b, &fg->ctl_points[2*3], &fg->ctl_points[1*3] );
+			VADD2( &fg->ctl_points[3*3], &fg->ctl_points[0*3], c_b );
+		}
+	}
+
 
 	/* Mark edges as real */
 	(void)nmg_mark_edges_real( &s->l );
