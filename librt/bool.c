@@ -786,6 +786,9 @@ struct resource	*resp;		/* resource pointer for this CPU */
 	*sp++ = TREE_NULL;
 stack:
 	switch( treep->tr_op )  {
+	case OP_NOP:
+		ret = 0;
+		goto pop;
 	case OP_SOLID:
 		ret = treep->tr_a.tu_stp->st_bit;	/* register temp */
 		ret = BITTEST( partp->pt_solhit, ret );
