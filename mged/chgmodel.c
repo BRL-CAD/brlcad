@@ -929,7 +929,7 @@ char	**argv;
 				NMG_CK_VERTEX(s->vu_p->v_p);
 				v = s->vu_p->v_p;
 
-	nmg_start_dup(m);
+/*	nmg_start_dup(m); */
 				new_model = nmg_mm();
 				new_r = nmg_mrsv(new_model);
 				new_s = RT_LIST_FIRST(shell, &r->s_hd);
@@ -937,7 +937,7 @@ char	**argv;
 				if (v->vg_p) {
 					nmg_vertex_gv(v_new, v->vg_p->coord);
 				}
-	nmg_end_dup();
+/*	nmg_end_dup(); */
 
 				sprintf(newname, "%s%0*d", prefix, maxdigits, i++);
 
