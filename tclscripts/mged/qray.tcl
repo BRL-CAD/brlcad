@@ -23,6 +23,12 @@ proc init_qray_control { id } {
     global mouse_behavior
     global use_air
 
+    if {[opendb] == ""} {
+	cad_dialog .$id.uncool $mged_gui($id,screen) "No database." \
+		"No database has been opened!" info 0 OK
+	return
+    }
+
     set top .$id.qray_control
 
     if [winfo exists $top] {
@@ -324,16 +330,20 @@ proc qray_reset { id } {
     set qray_control($id,basename) [qray basename]
 
     set qray_control($id,oddcolor) [qray oddcolor]
-    set_WidgetRGBColor $top.oddColorMB $qray_control($id,oddcolor)
+    setWidgetRGBColor $top.oddColorMB qray_control($id,oddcolor) \
+	    $qray_control($id,oddcolor)
 
     set qray_control($id,evencolor) [qray evencolor]
-    set_WidgetRGBColor $top.evenColorMB $qray_control($id,evencolor)
+    setWidgetRGBColor $top.evenColorMB qray_control($id,evencolor) \
+	    $qray_control($id,evencolor)
 
     set qray_control($id,voidcolor) [qray voidcolor]
-    set_WidgetRGBColor $top.voidColorMB $qray_control($id,voidcolor)
+    setWidgetRGBColor $top.voidColorMB qray_control($id,voidcolor) \
+	    $qray_control($id,voidcolor)
 
     set qray_control($id,overlapcolor) [qray overlapcolor]
-    set_WidgetRGBColor $top.overlapColorMB $qray_control($id,overlapcolor)
+    setWidgetRGBColor $top.overlapColorMB qray_control($id,overlapcolor) \
+	    $qray_control($id,overlapcolor)
 }
 
 proc qray_effects { id } {
