@@ -1,21 +1,26 @@
 /*
-	SCCS id:	@(#) librle.c	1.15
-	Last edit: 	6/18/86 at 10:05:45	G S M
-	Retrieved: 	8/13/86 at 10:30:20
-	SCCS archive:	/m/cad/librle/RCS/s.librle.c
-
-	Author : Gary S. Moss, BRL.
-
-	These routines are appropriate for RLE encoding a framebuffer image
-	from a program.
-	This library is derived from 'ik-rle' code authored by :
-		Mike Muuss, BRL.  10/18/83.
-		[With a heavy debt to Spencer Thomas, U. of Utah,
-		 for the RLE file format].
+ *			L I B R L E . C
+ *
+ *  These routines are appropriate for RLE encoding a framebuffer image
+ *  from a program.
+ *  This library is derived from 'ik-rle' code authored by :
+ *	Mike Muuss, BRL.  10/18/83.
+ *	[With a heavy debt to Spencer Thomas, U. of Utah,
+ *	 for the RLE file format].
+ *
+ *  Author -
+ *	Gary S. Moss
+ *  
+ *  Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5066
+ *  
+ *  Distribution Status -
+ *	Public Domain, Distribution Unlimited
  */
-#if ! defined( lint )
-static
-char	sccsTag[] = "@(#) librle.c	1.15	last edit 6/18/86 at 10:05:45";
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
@@ -846,17 +851,18 @@ int		n;
 
 /*	_ g e t _ C o l o r _ M a p _ S e g ( )
 	Read the color map stored in the RLE file.
-	The RLE format stores color map entries as short integers, so
-	we have to stuff them into u_chars.
+	The RLE format stores color map entries as short integers
+	RIGHT justified in the word, while libfb expects color
+	maps to be LEFT justified within a short.
  */
 HIDDEN
 _get_Color_Map_Seg( fp, cmap_seg )
 FILE	*fp;
-register u_char	*cmap_seg;
-	{	static short	rle_cmap[256];
-		register short	*cm = rle_cmap;
+register unsigned short	*cmap_seg;
+	{	static unsigned short	rle_cmap[256];
+		register unsigned short	*cm = rle_cmap;
 		register int	i;
-	if( fread( (char *) rle_cmap, sizeof(short), 256, fp ) != 256 )
+	if( fread( (char *) rle_cmap, sizeof(rle_cmap), 1, fp ) != 1 )
 		{
 		(void) fprintf( stderr,	"Failed to read color map!\n" );
 		return	-1;
@@ -864,25 +870,24 @@ register u_char	*cmap_seg;
 	for( i = 0; i < 256; i++, cm++ )
 		{
 		SWAB( *cm );
-		*cmap_seg++ = (u_char) *cm;
-		/* Must increment "cm" seperately due to bug in 4.2 BSD pcc. */
+		*cmap_seg++ = (*cm) << 8;
 		}
 	return	0;
 	}
 
 /*	_ p u t _ C o l o r _ M a p _ S e g ( )
-	Output color map segment to RLE file as shorts.
+	Output color map segment to RLE file as shorts.  See above.
  */
 HIDDEN
 _put_Color_Map_Seg( fp, cmap_seg )
 FILE	*fp;
-register u_char	*cmap_seg;
-	{	static short	rle_cmap[256];
-		register short	*cm = rle_cmap;
+register unsigned short	*cmap_seg;
+	{	static unsigned short	rle_cmap[256];
+		register unsigned short	*cm = rle_cmap;
 		register int	i;
 	for( i = 0; i < 256; i++, cm++ )
 		{
-		*cm = (short) *cmap_seg++;
+		*cm = *cmap_seg++ >> 8;
 		SWAB( *cm );
 		}
 	if( fwrite( (char *) rle_cmap, sizeof(rle_cmap), 1, fp ) != 1 )
@@ -901,13 +906,13 @@ register u_char	*cmap_seg;
 HIDDEN
 _put_Std_Map( fp )
 FILE	*fp;
-	{	static short	rle_cmap[256*3];
-		register short	*cm = rle_cmap;
+	{	static unsigned short	rle_cmap[256*3];
+		register unsigned short	*cm = rle_cmap;
 		register int	i, segment;
 	for( segment = 0; segment < 3; segment++ )
 		for( i = 0; i < 256; i++, cm++ )
 			{
-			*cm = (short) i;
+			*cm = i;
 			SWAB( *cm );
 			}
 	if( fwrite( (char *) rle_cmap, sizeof(rle_cmap), 1, fp ) != 1 )
