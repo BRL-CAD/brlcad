@@ -53,22 +53,22 @@ char **argv;
 	    	case ID_FREE:
 			continue;
 	    	case ID_SOLID:
-			(void)soldump();
+			soldump();
 			continue;
 	    	case ID_COMB:
-			(void)combdump();
+			combdump();
 			continue;
 	    	case ID_ARS_A:
-			(void)arsadump();
+			arsadump();
 	    		continue;
 	    	case ID_P_HEAD:
-			(void)polyhead();
+			polyhead();
 	    		continue;
 	    	case ID_P_DATA:
-			(void)polydata();
+			polydata();
 	    		continue;
 	    	case ID_IDENT:
-			(void)idendump();
+			idendump();
 	    		continue;
 	    	case ID_MATERIAL:
 			materdump();
@@ -201,7 +201,7 @@ combdump()	/* Print out Combination record information */
 	length = (int)record.c.c_length;	/* Get # of member records */
 
 	for( i = 0; i < length; i++ )  {
-		(void)membdump();
+		membdump();
 	}
 }
 
@@ -245,7 +245,7 @@ arsadump()	/* Print out ARS record information */
 	length = (int)record.a.a_totlen;	/* Get # of ARS B records */
 
 	for( i = 0; i < length; i++ )  {
-		(void)arsbdump();
+		arsbdump();
 	}
 }
 
