@@ -1939,7 +1939,7 @@ RT_EXTERN(int			rt_uplot_to_vlist, (struct rt_vlblock *vbp,
 				FILE *fp, double char_size) );
 RT_EXTERN(void			rt_label_vlist_verts, (struct rt_vlblock *vbp,
 				struct rt_list *src, mat_t mat,
-				double sz) );
+				double sz, double mm2local) );
 
 
 /************************************************************************
