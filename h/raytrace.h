@@ -1103,6 +1103,13 @@ extern struct rt_g rt_g;
  *  Definitions for librt which are specific to the
  *  particular model being processed, one copy for each model.
  *  Initially, a pointer to this is returned from rt_dirbuild().
+ *
+ *  During gettree processing, the most time consuming step is
+ *  searching the list of existing solids to see if a new solid is
+ *  actually an identical instance of a previous solid.
+ *  Therefore, the list has been divided into several lists.
+ *  The same macros & hash value that accesses the dbi_Head[] array
+ *  are used here.  The hash value is computed by db_dirhash().
  */
 struct rt_i {
 	long		rti_magic;	/* magic # for integrity check */
@@ -1118,7 +1125,6 @@ struct rt_i {
 	struct db_i	*rti_dbip;	/* prt to Database instance struct */
 	/* THESE ITEMS SHOULD BE CONSIDERED OPAQUE, AND SUBJECT TO CHANGE */
 	struct region	**Regions;	/* ptrs to regions [reg_bit] */
-	struct rt_list	rti_headsolid;	/* list of active solids */
 	struct region	*HeadRegion;	/* ptr of list of regions in model */
 	long		nregions;	/* total # of regions participating */
 	long		nsolids;	/* total # of solids participating */
@@ -1146,12 +1152,27 @@ struct rt_i {
 	struct histogram rti_hist_cutdepth; /* depth of cut tree */
 	struct soltab	**rti_Solids;	/* ptrs to soltab [st_bit] */
 	struct rt_tol	rti_tol;	/* Tolerances for this model */
+	struct rt_list	rti_solidheads[RT_DBNHASH]; /* active solid lists */
 };
 #define RTI_NULL	((struct rt_i *)0)
 #define RTI_MAGIC	0x99101658	/* magic # for integrity check */
 
 #define RT_CHECK_RTI(_p)	RT_CKMAG(_p, RTI_MAGIC, "struct rt_i")
 #define RT_CK_RTI(_p)		RT_CKMAG(_p, RTI_MAGIC, "struct rt_i")
+
+/*
+ *  Macros to painlessly visit all the active solids.  Serving suggestion:
+ *
+ *	RT_VISIT_ALL_SOLTABS_START( stp, rtip )  {
+ *		rt_pr_soltab( stp );
+ *	} RT_VISIT_ALL_SOLTABS_END
+ */
+#define RT_VISIT_ALL_SOLTABS_START(_s, _rti)	{ \
+	register struct rt_list	*_head = &((_rti)->rti_solidheads[0]); \
+	for( ; _head < &((_rti)->rti_solidheads[RT_DBNHASH]); _head++ ) \
+		for( RT_LIST_FOR( _s, soltab, _head ) )  {
+
+#define RT_VISIT_ALL_SOLTABS_END	} }
 
 /*
  *			V L I S T
@@ -1552,7 +1573,9 @@ RT_EXTERN(void db_free_external, ( struct rt_external *ep ) );
 RT_EXTERN(int db_scan, ( struct db_i *, int (*handler)(), int do_old_matter ) );
 					/* update db unit conversions */
 RT_EXTERN(void db_conversions, ( struct db_i *, int units ) );
+
 /* db_lookup.c */
+RT_EXTERN(int db_dirhash, (CONST char *str) );
 					/* convert name to directory ptr */
 RT_EXTERN(struct directory *db_lookup,( struct db_i *, char *name, int noisy ) );
 					/* add entry to directory */
