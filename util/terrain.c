@@ -22,7 +22,7 @@
 #include "bn.h"
 
 /* declarations to support use of getopt() system call */
-char *options = "w:n:s:L:H:O:S:V:D:f:co:";
+char *options = "w:n:qs:L:H:O:S:V:D:f:co:";
 extern char *optarg;
 extern int optind, opterr, getopt();
 
@@ -38,6 +38,8 @@ double fbm_size = 1.0;
 vect_t fbm_vscale = {0.0125, 0.0125, 0.0125};
 vect_t fbm_delta = {1000.0, 1000.0, 1000.0};
 double fbm_offset = 1.0;
+int quiet = 0;
+
 
 /* transform a point in integer X,Y,Z space to appropriate noise space */
 static void
@@ -89,7 +91,7 @@ func_fbm(unsigned short *buf)
 	vect_t t;
 	double v;
 
-	bu_log("fbm\n");
+	if (!quiet) bu_log("fbm\n");
 
 	pt[Z] = 0.0;
 	for (y=0 ; y < ydim ; y++) {
@@ -99,11 +101,14 @@ func_fbm(unsigned short *buf)
 
 			xform(t, pt);
 			v = bn_noise_fbm(t, fbm_h,fbm_lacunarity, fbm_octaves);
-			if (v > 1.0 || v < -1.0)
+
+			if (!quiet && (v > 1.0 || v < -1.0) )
 				bu_log("clamping noise value %g \n", v);
+
 			v = v * 0.5 + 0.5;
 			CLAMP(v, 0.0, 1.0);
-			buf[y*xdim + x] = 1.0 + 65535.0 * v;
+
+			buf[y*xdim + x] = 1.0 + 65534.0 * v;
 		}
 	}
 }
@@ -121,7 +126,7 @@ func_turb(unsigned short *buf)
 	vect_t t;
 	double v;
 
-	bu_log("turb\n");
+	if (!quiet) bu_log("turb\n");
 
 	pt[Z] = 0.0;
 	for (y=0 ; y < ydim ; y++) {
@@ -134,10 +139,10 @@ func_turb(unsigned short *buf)
 			v = bn_noise_turb(t, fbm_h, 
 					  fbm_lacunarity, fbm_octaves);
 
-			if (v > 1.0 || v < 0.0)
+			if (!quiet && (v > 1.0 || v < 0.0) )
 				bu_log("clamping noise value %g \n", v);
 			CLAMP(v, 0.0, 1.0);
-			buf[y*xdim + x] = 1.0 + 65535.0 * v;
+			buf[y*xdim + x] = 1.0 + 65534.0 * v;
 		}
 	}
 }
@@ -156,7 +161,7 @@ func_turb_up(short *buf)
 	vect_t t;
 	double v;
 
-	bu_log("1.0 - turb\n");
+	if (!quiet) bu_log("1.0 - turb\n");
 
 	pt[Z] = 0.0;
 	for (y=0 ; y < ydim ; y++) {
@@ -171,9 +176,9 @@ func_turb_up(short *buf)
 			CLAMP(v, 0.0, 1.0);
 			v = 1.0 - v;
 
-			if (v > 1.0 || v < 0.0)
+			if (!quiet && (v > 1.0 || v < 0.0) )
 				bu_log("clamping noise value %g \n", v);
-			buf[y*xdim + x] = 1 + 65535.0 * v;
+			buf[y*xdim + x] = 1 + 65534.0 * v;
 		}
 	}
 }
@@ -195,7 +200,7 @@ func_multi(short *buf)
 	double v;
 	double min_V, max_V;
 
-	bu_log("multi\n");
+	if (!quiet) bu_log("multi\n");
 
 	min_V = 10.0;
 	max_V =  -10.0;
@@ -217,14 +222,14 @@ func_multi(short *buf)
 			if (v < min_V) min_V = v;
 			if (v > max_V) max_V = v;
 
-			if (v > 1.0 || v < 0.0) {
+			if (!quiet && (v > 1.0 || v < 0.0)) {
 				bu_log("clamping noise value %g \n", v);
 				CLAMP(v, 0.0, 1.0);
 			}
-			buf[y*xdim + x] = 1 + 65535000.0 * v;
+			buf[y*xdim + x] = 1 + 65534000.0 * v;
 		}
 	}
-	bu_log("min_V: %g   max_V: %g\n", min_V, max_V);
+	if (!quiet) bu_log("min_V: %g   max_V: %g\n", min_V, max_V);
 
 }
 /***********************************************************************
@@ -242,7 +247,7 @@ func_ridged(unsigned short *buf)
 	double v;
 	double lo, hi;
 
-	bu_log("ridged\n");
+	if (!quiet) bu_log("ridged\n");
 
 	lo = 10.0;
 	hi = -10.0;
@@ -262,10 +267,10 @@ func_ridged(unsigned short *buf)
 			if (v > hi) hi = v;
 			v *= 0.5;
 
-			if (v > 1.0 || v < 0.0)
+			if (!quiet && (v > 1.0 || v < 0.0) )
 				bu_log("clamping noise value %g \n", v);
 			CLAMP(v, 0.0, 1.0);
-			buf[y*xdim + x] = 1.0 + 65535.0 * v;
+			buf[y*xdim + x] = 1.0 + 65534.0 * v;
 		}
 	}
 }
@@ -313,11 +318,11 @@ ice(point_t point, double h, double lacunarity, double octaves, double offset)
 
 		if (signal < lo) {
 			lo = signal;
-			bu_log("new low %g\n", lo);
+			if (!quiet) bu_log("new low %g\n", lo);
 		}
 		if (signal > hi) {
 			hi = signal;
-			bu_log("new high %g\n", hi);
+			if (!quiet) bu_log("new high %g\n", hi);
 		}
 
 		result += signal * weight;
@@ -349,11 +354,11 @@ lunar2(point_t point, double h, double lacunarity, double octaves, double offset
 
 		if (signal < lo) {
 			lo = signal;
-			bu_log("new low %g\n", lo);
+			if (!quiet) bu_log("new low %g\n", lo);
 		}
 		if (signal > hi) {
 			hi = signal;
-			bu_log("new high %g\n", hi);
+			if (!quiet) bu_log("new high %g\n", hi);
 		}
 
 		result += signal * pow(freq, -h);
@@ -374,9 +379,7 @@ land(point_t point, double h, double lacunarity, double octaves, double offset)
 {
 	int i = 0;
 	point_t pt;
-	double weight, signal, freq, result, value;
-	static double lo = 10.0;
-	static double hi = -10.0;
+	double weight, signal, freq, result;
 
 	PCOPY(pt, point);
 	freq =  1.0;
@@ -407,9 +410,7 @@ lee(point_t point, double h, double lacunarity, double octaves, double offset)
 {
 	int i = 0;
 	point_t pt;
-	double weight, signal, freq, result, value;
-	static double lo = 10.0;
-	static double hi = -10.0;
+	double weight, signal, freq, result;
 
 	PCOPY(pt, point);
 	freq =  1.0;
@@ -446,7 +447,7 @@ func_lee(unsigned short *buf)
 	double v;
 	double lo, hi;
 
-	bu_log("lee\n");
+	if (!quiet) bu_log("lee\n");
 
 	lo = 10.0;
 	hi = -10.0;
@@ -466,13 +467,13 @@ func_lee(unsigned short *buf)
 			if (v > hi) hi = v;
 			v *= 0.5;
 
-			if (v > 1.0 || v < 0.0)
+			if (!quiet && (v > 1.0 || v < 0.0) )
 				bu_log("clamping noise value %g \n", v);
 			CLAMP(v, 0.0, 1.0);
-			buf[y*xdim + x] = 1.0 + 65535.0 * v;
+			buf[y*xdim + x] = 1.0 + 65534.0 * v;
 		}
 	}
-	bu_log("min: %g max: %g\n", lo, hi);
+	if (!quiet) bu_log("min: %g max: %g\n", lo, hi);
 }
 
 
@@ -491,7 +492,7 @@ func_lunar(unsigned short *buf)
 	double v;
 	double lo, hi;
 
-	bu_log("lee\n");
+	if (!quiet) bu_log("lee\n");
 
 	lo = 10.0;
 	hi = -10.0;
@@ -518,21 +519,17 @@ func_lunar(unsigned short *buf)
 			if (v < lo) lo = v;
 			if (v > hi) hi = v;
 
-			if (v > 1.0 || v < 0.0)
+			if (!quiet && (v > 1.0 || v < 0.0) )
 				bu_log("clamping noise value %g \n", v);
 			CLAMP(v, 0.0, 1.0);
-			buf[y*xdim + x] = 1.0 + 65535.0 * v;
+			buf[y*xdim + x] = 1.0 + 65534.0 * v;
 		}
 	}
-	bu_log("min: %g max: %g\n", lo, hi);
+	if (!quiet) bu_log("min: %g max: %g\n", lo, hi);
 }
 
 
- 
-
-
-
-void (*terrain_func)();
+void (*terrain_func)() = func_fbm;
 
 /*
  *	P A R S E _ A R G S --- Parse through command line flags
@@ -562,6 +559,7 @@ char *av[];
 			break;
 		case 'n': if ((c=atoi(optarg)) > 0) ydim = c;
 			break;
+		case 'q' : quiet = !quiet; break;
 		case 's': if ((c=atoi(optarg)) > 0) xdim = ydim = c;
 			break;
 		case 'L': if ((v=atof(optarg)) >  0.0) fbm_lacunarity = v;
@@ -626,9 +624,6 @@ int ac;
 char *av[];
 {
 	int arg_count;
-	FILE *inp;
-	int status;
-	int x, y;
 	unsigned short *buf;
 	int in_cookie, out_cookie;
 	int count;
@@ -657,7 +652,7 @@ char *av[];
 		in_cookie = bu_cv_cookie("hus");
 		out_cookie = bu_cv_cookie("nus");
 		if (bu_cv_optimize(in_cookie) != bu_cv_optimize(out_cookie) ) {
-			bu_log("converting\n");
+			if (!quiet) bu_log("converting\n");
 			bu_cv_w_cookie(buf, out_cookie, count*sizeof(*buf), 
 				       buf, in_cookie, count);
 		}
