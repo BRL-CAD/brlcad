@@ -429,7 +429,7 @@ struct grass_specific *grass_sp;
         VUNITIZE(grass_sp->proto.b[blade].leaf[seg].N);
     }
     blade_rot(&grass_sp->proto.b[blade], &grass_sp->proto.b[blade], m, grass_sp->proto.root);
-    bn_bn_mat_mul2(r, m);
+    bn_mat_mul2(r, m);
   }
 
 
