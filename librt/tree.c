@@ -220,14 +220,9 @@ union tree			*curtree;
  *
  *  It is safe, and much faster, to use several different
  *  critical sections when searching different lists.
- *  Note that there are only 5 resource locks defined:
  *
- *	res_worker 	is used by db_walk_dispatcher(), so it can't be used
- * 			for fear of affecting load balancing.
- *	res_syscall	is used by rt_malloc() & database reading, so it
- *			can't be used either.
- *
- *  This unfortunately limits the code to having only 3 CPUs doing list
+ *  There are only 4 dedicated semaphores defined, TREE0 through TREE3.
+ *  This unfortunately limits the code to having only 4 CPUs doing list
  *  searching at any one time.  Hopefully, this is enough parallelism
  *  to keep the rest of the CPUs doing I/O and actual solid prepping.
  *
@@ -264,16 +259,19 @@ struct rt_i			*rtip;
 	have_match = 0;
 	hash = db_dirhash( dp->d_namep );
 
-	/* Enter the appropriate critical section */
-	switch( hash%3 )  {
+	/* Enter the appropriate dual critical-section */
+	switch( hash&3 )  {
 	case 0:
-		bu_semaphore_acquire( RT_SEM_MODEL );
+		bu_semaphore_acquire( RT_SEM_TREE0 );
 		break;
 	case 1:
-		bu_semaphore_acquire( RT_SEM_RESULTS );
+		bu_semaphore_acquire( RT_SEM_TREE1 );
+		break;
+	case 2:
+		bu_semaphore_acquire( RT_SEM_TREE2 );
 		break;
 	default:
-		bu_semaphore_acquire( RT_SEM_STATS );
+		bu_semaphore_acquire( RT_SEM_TREE3 );
 		break;
 	}
 
@@ -341,27 +339,30 @@ struct rt_i			*rtip;
 			stp->st_matp = (matp_t)0;
 		}
 		/* Add to the appropriate soltab list head */
-		/* PARALLEL NOTE:  Needs critical section on rt_solidheads element */
+		/* PARALLEL NOTE:  Uses critical section on rt_solidheads element */
 		BU_LIST_INSERT( &(rtip->rti_solidheads[hash]), &(stp->l) );
 
 		/* Also add to the directory structure list head */
-		/* PARALLEL NOTE:  Needs critical section on this 'dp' */
+		/* PARALLEL NOTE:  Uses critical section on this 'dp' */
 		BU_LIST_INSERT( &dp->d_use_hd, &(stp->l2) );
 
 		/* Tables of regions using this solid.  Usually small. */
 		bu_ptbl_init( &stp->st_regions, 7, "st_regions ptbl" );
 	}
 
-	/* Leave the appropriate critical section */
-	switch( hash%3 )  {
+	/* Leave the appropriate dual critical-section */
+	switch( hash&3 )  {
 	case 0:
-		bu_semaphore_release( RT_SEM_MODEL );
+		bu_semaphore_release( RT_SEM_TREE0 );
 		break;
 	case 1:
-		bu_semaphore_release( RT_SEM_RESULTS );
+		bu_semaphore_release( RT_SEM_TREE1 );
+		break;
+	case 2:
+		bu_semaphore_release( RT_SEM_TREE2 );
 		break;
 	default:
-		bu_semaphore_release( RT_SEM_STATS );
+		bu_semaphore_release( RT_SEM_TREE3 );
 		break;
 	}
 	return stp;
@@ -531,6 +532,12 @@ found_it:
  *  be modifying the linked list heads while locked on other semaphores
  *  (resources).  This is the strongest argument I can think of for
  *  removing the 3-way semaphore stuff in rt_find_identical_solid().
+ *
+ *  Called by -
+ *	db_free_tree()
+ *	rt_clean()
+ *	rt_gettrees()
+ *	rt_kill_deal_solid_refs()
  */
 void
 rt_free_soltab( stp )
