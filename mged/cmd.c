@@ -25,9 +25,14 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include <stdio.h>
 #include <math.h>
 #include <signal.h>
-#include <stdio.h>
+#ifdef BSD
+#include <strings.h>
+#else
+#include <string.h>
+#endif
 #include "machine.h"
 #include "vmath.h"
 #include "db.h"
@@ -331,30 +336,59 @@ static struct funtab {
 /*
  *			C M D L I N E
  *
- * This routine is called to process a user's command, as typed
- * on the standard input.  Once the
- * main loop of the editor is entered, this routine will be called
- * to process commands which have been typed in completely.
- * Return value non-zero means to print a prompt.  This is needed
- * when non-blocking I/O is used instead of select.
+ *  This routine is called to process a vls full of commands.
+ *  Each command is newline terminated.
+ *  The input string will not be altered in any way.
+ *
+ *  Returns -
+ *	!0	when a prompt needs to be printed.
+ *	 0	no prompt needed.
  */
 int
 cmdline(vp)
 struct rt_vls	*vp;
 {
 	int	i;
+	int	need_prompt = 0;
+	int	len;
+	register char	*cp;
+	char		*ep;
+	char		*end;
+	struct rt_vls	cmd;
 
 	RT_VLS_CHECK(vp);
 
-	i = parse_line(rt_vls_addr(vp));
-	if( i == 0 ) {
-		mged_cmd( numargs, cmd_args );
-		return 1;
-	}
-	if( i < 0 )
-		return 0;
+	if( (len = rt_vls_strlen( vp )) <= 0 )  return 0;
 
-	return 1;
+	cp = rt_vls_addr( vp );
+	end = cp + len;
+
+	rt_vls_init( &cmd );
+
+	while( cp < end )  {
+#ifdef BSD
+		ep = index( cp, '\n' );
+#else
+		ep = strchr( cp, '\n' );
+#endif
+		if( ep == NULL )  break;
+
+		/* Copy one cmd, incl newline.  Null terminate */
+		rt_vls_strncpy( &cmd, cp, ep-cp+1 );
+		/* parse_line insists on it ending with newline&null */
+		
+		i = parse_line(rt_vls_addr(&cmd));
+		if( i < 0 )  continue;	/* some kind of error */
+		if( i == 0 ) {
+			mged_cmd( numargs, cmd_args );
+		}
+		need_prompt = 1;
+
+		cp = ep+1;
+		rt_vls_free( &cmd );
+	}
+	rt_vls_free( &cmd );
+	return need_prompt;
 }
 
 /*
