@@ -695,7 +695,7 @@ double a, b;
 	if( d <= EPSILON )
 		return(0);	/* both nearly zero */
 	if( diff < 0.0 )  diff = -diff;
-	if( diff < EPSILON * d )
+	if( diff < 0.00001 * d )
 		return( 0 );	/* relative difference is small */
 	if( a < b )
 		return(-1);
