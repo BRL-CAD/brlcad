@@ -206,6 +206,9 @@ unsigned int	nsemaphores;
 {
 	int	i;
 
+#if !defined(PARALLEL)
+	return;					/* No support on this hardware */
+#else
 	if( bu_nsemaphores != 0 )  return;	/* Already called */
 	bu_semaphores = (struct bu_semaphores *)calloc(
 		nsemaphores,
@@ -284,6 +287,7 @@ unsigned int	nsemaphores;
 	 *  parallel operation has begun yet, and do acquire/release.
 	 */
 	bu_nsemaphores = nsemaphores;
+#endif	/* PARALLEL */
 }
 
 /*
