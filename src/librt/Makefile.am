@@ -155,4 +155,4 @@ EXTRA_DIST = g_bot_include.c
 
 BUILT_SOURCES = vers.c
 vers.c: $(SRCS)
-	sh $(top_srcdir)/sh/vers.sh rt_version "The BRL-CAD Ray-Tracing Library" > $@
+	@SH@ $(top_srcdir)/sh/vers.sh rt_version "The BRL-CAD Ray-Tracing Library" > $@

@@ -2,8 +2,6 @@
 
 lib_LTLIBRARIES = libbu.la
 
-VERSION = 19:1:`cat version`
-
 SRCS = \
 	association.c \
 	avs.c \
@@ -70,4 +68,4 @@ libbu_la_LDFLAGS = -version-info 19:1
 BUILT_SOURCES = vers.c
 
 vers.c: $(SRCS)
-	sh $(top_srcdir)/sh/vers.sh bu_version "The BRL-CAD Utility Library" > $@
+	@SH@ $(top_srcdir)/sh/vers.sh bu_version "The BRL-CAD Utility Library" > $@

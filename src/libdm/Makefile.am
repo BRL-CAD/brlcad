@@ -29,4 +29,4 @@ AM_CFLAGS = @X_CFLAGS@
 
 BUILT_SOURCES = vers.c
 vers.c: $(SRCS)
-	sh $(top_srcdir)/sh/vers.sh dm_version "The BRL-CAD Display Manager Library" > $@
+	@SH@ $(top_srcdir)/sh/vers.sh dm_version "The BRL-CAD Display Manager Library" > $@

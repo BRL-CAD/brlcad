@@ -15,4 +15,4 @@ EXTRA_DIST = $(man_MANS)
 
 BUILT_SOURCES = vers.c
 vers.c: $(SRCS)
-	sh $(top_srcdir)/sh/vers.sh libcursor_version "The BRL-CAD Curses Library" > $@
+	@SH@ $(top_srcdir)/sh/vers.sh libcursor_version "The BRL-CAD Curses Library" > $@

@@ -18,4 +18,4 @@ AM_CFLAGS = @X_CFLAGS@
 
 BUILT_SOURCES = vers.c
 vers.c: $(SRCS)
-	sh $(top_srcdir)/sh/vers.sh tclcad_version "BRL-CAD Routines for Tcl/Tk" > $@
+	@SH@ $(top_srcdir)/sh/vers.sh tclcad_version "BRL-CAD Routines for Tcl/Tk" > $@
