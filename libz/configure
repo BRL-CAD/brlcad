@@ -54,7 +54,7 @@ case "$1" in
 done
 
 test=ztest$$
-cat > $test.c <<EOF
+cat > ${test}.c <<EOF
 extern int getchar();
 int hello() {return getchar();}
 EOF
@@ -67,7 +67,7 @@ case "$cc" in
   *gcc*) gcc=1;;
 esac
 
-if test "$gcc" -eq 1 && ($cc -c $cflags $test.c) 2>/dev/null; then
+if test "$gcc" -eq 1 && ($cc -c $cflags ${test}.c) 2>/dev/null; then
   CC="$cc"
   SFLAGS=${CFLAGS-"-fPIC -O3"}
   CFLAGS="$cflags"
@@ -116,6 +116,9 @@ else
 	     SFLAGS=${CFLAGS-"-Kconform_pic -O"}
 	     CFLAGS=${CFLAGS-"-O"}
 	     LDSHARED=${LDSHARED-"cc -G"};;
+  AIX*)     SFLAGS=${CFLAGS-"-O4 -64"}
+	     CFLAGS=${CFLAGS-"-O4"}
+	     LDSHARED=${LDSHARED-"$CC -G"};;
   # send working options for other systems to support@gzip.org
   *)         SFLAGS=${CFLAGS-"-O"}
 	     CFLAGS=${CFLAGS-"-O"}
@@ -126,10 +129,19 @@ fi
 if test $shared -eq 1; then
   echo Checking for shared library support...
   # we must test in two steps (cc then ld), required at least on SunOS 4.x
-  if test "`($CC -c $SFLAGS $test.c) 2>&1`" = "" &&
-     test "`($LDSHARED -o $test$shared_ext $test.o) 2>&1`" = ""; then
+  echo "CC is $CC;"
+  echo "LDSHARED is $LDSHARED;"
+  echo "test is $test"
+  echo "$CC -c $SFLAGS ${test}.c"
+  echo "$LDSHARED -o ${test}${shared_ext} ${test}.o"
+#  if test "`($CC -c $SFLAGS ${test.}c) 2>&1`" = "" &&
+#     test "`($LDSHARED -o ${test}${shared_ext} ${test}.o) 2>&1`" = ""; then
+  rm -f ${test}${shared_ext}
+  __COMPILE_RESULT="`($CC -c $SFLAGS ${test}.c)`"
+  __SHARED_RESULT="`($LDSHARED -o ${test}${shared_ext} ${test}.o)`"
+  if test -f "${test}${shared_ext}" ; then
     CFLAGS="$SFLAGS"
-    LIBS="$SHAREDLIB.$VER"
+    LIBS="${SHAREDLIB}.${VER}"
     echo Building shared library $SHAREDLIB.$VER with $CC.
   elif test -z "$old_cc" -a -z "$old_cflags"; then
     echo No shared library suppport.
