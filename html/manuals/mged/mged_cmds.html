@@ -2043,7 +2043,13 @@ values for <I>solid_type</I> are:
 <DD> The ``inside'' command creates a new solid that is <I>inside</I> an existing solid.
 This command is typically used to create an <I>inside</I> solid that can be subtracted
 from the original solid to produce a hollow shell. The command is typically used with
-no arguments and it prompts the user for all needed information.
+no arguments and it prompts the user for all needed information, however, all the parameters
+may be supplied on the command line. If <I>MGED</I> is in
+<a href="brlcad_glossary.html#SOLID EDIT"><I>solid edit mode</I></a> when the ``inside''
+command is issued, then the solid currently being edited will be used as the ``outside_solid''.
+Similarly, if <I>MGED</I> is in <a href="brlcad_glossary.html#MATRIX EDIT"><I>matrix edit mode</I></a>
+when the ``inside'' command is executed, then the current <a href="brlcad_glossary.html#KEY SOLID">
+key solid</a> will be used as the outside solid.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
@@ -2051,6 +2057,10 @@ no arguments and it prompts the user for all needed information.
 	<kbd>mged></kbd> <b>inside out_arb in_arb 1 1 1 1 1 1</b><br>
 	-- create a solid named <I>in_arb</I> such that each face is 1 <a href="#units">unit</a>
 		from the corresponding face in <I>out_arb</I><br>
+	<kbd>mged></kbd> <b>inside in_arb 1 1 1 1 1 1</b><br>
+	-- create a solid named <I>in_arb</I> such that each face is 1 <a href="#units">unit</a>
+		from the corresponding face in the current <a href="brlcad_glossary.html#KEY SOLID">
+		key solid</a><br> or the solid currently being edited.
 	</DD>
 	</DL>
 </DD>
@@ -2804,7 +2814,7 @@ above order. If <I>tgc</I> is specified, the code will attempt to determine if t
 
 <DT><a NAME="oed"><B>oed</B> <I>path_lhs path_rhs</I></DT>
 
-<DD>The ``oed'' command places <I>mged</I> directly into the object edit mode.
+<DD>The ``oed'' command places <I>mged</I> directly into the matrix edit mode (formerly known as the object edit mode).
 The <I>path_rhs</I> must be a path to a
 <a href="brlcad_glossary.html#SOLID">primitive solid</a>,
 and <I>path_lhs</I> must be a path to a
@@ -2818,7 +2828,7 @@ in <I>path_rhs</I> is used as the reference solid during the object editing.
 	<DT><big>Examples:</big></DT>
 	<DD>
 	<kbd>mged></kbd> <b>oed group1/group2 region1/solida</b><br>
-	-- place <I>mged</I> into object edit mode, editing the matrix
+	-- place <I>mged</I> into matrix edit mode, editing the matrix
 		in <I>group2</I> that corresponds to <I>region1</I>, using <I>solida</I>
 		as the reference solid<br>
 	</DD>

@@ -166,6 +166,13 @@ the <a href=#TREE>tree</a>.
 </DD>
 <HR>
 
+<DT><a name="KEY SOLID"><B>key solid</B></DT>
+
+<DD>The <I>key solid</I> is the solid used to provide a reference during <a href="#MATRIX EDIT">matrix editing</a>
+operation. Rotations, translations, and scaling in this mode are performed about a point on the ``key solid''.
+</DD>
+<HR>
+
 <DT><a name="LOS"><B>LOS</B></DT>
 
 <DD>An <I>LOS</I> is a percentage (0 to 100) assigned to a <a href="#REGION">region</a>
@@ -185,6 +192,19 @@ This is intended to identify the material used to build the part.
 <I>Material codes</I> are assigned by the user
 and are not directly used by <I>BRL&#173CAD</I>, but are reported to applications that need them.
 </DD>
+</DD>
+<HR>
+
+<DT><a name="MATRIX EDIT"><B>matrix edit mode</B></DT>
+
+<DD>This is the mode that <a href="#MGED"><I>mged</I></a> is in while editing a transformation matrix
+in a <a href="#COMBINATION">combination</a>.
+It is characterized by the illumination of one object in the graphics window, and the appearance
+of matrix editing selections in the <I>Edit</I> menu. This mode may be entered through the <I>Matrix Selection..</I>
+entry of the <I>Edit</I> menu, or via the <a href="mged_cmds.html#oed"><I>oed</I></a> command.
+Editing operations such as rotation, translation, and scale may be performed in this mode and will
+affect all objects below the edited matix in the <a href=#TREE>tree</a>. These operations will be
+applied in reference to a <a href="#KEY SOLID">key solid</a> that is a leaf of that tree.
 </DD>
 <HR>
 
@@ -288,6 +308,16 @@ include:
 	</ul>
 
 <center><IMG SRC="prims.gif"></center>
+</DD>
+<HR>
+
+<DT><a name="SOLID EDIT"><B>solid edit mode</B></DT>
+
+<DD>This is the mode that <a href="#MGED"><I>mged</I></a> is in while editing an individual solid.
+It is characterized by the illumination of one solid in the graphics window, and the appearance
+of solid editing selections in the <I>Edit</I> menu. This mode may be entered through the <I>Solid Selection..</I>
+entry of the <I>Edit</I> menu, or via the <a href="mged_cmds.html#sed"><I>sed</I></a> command. Solid
+specific editing may be performed in this mode, as well as rotations, translations, and scaling.
 </DD>
 <HR>
 
