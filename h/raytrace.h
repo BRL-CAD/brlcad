@@ -524,6 +524,8 @@ struct application  {
 	fastf_t		a_color[9];	/* application-specific color */
 	vect_t		a_uvec;		/* application-specific vector */
 	vect_t		a_vvec;		/* application-specific vector */
+	fastf_t		a_refrac_index;	/* current index of refraction */
+	fastf_t		a_cumlen;	/* cumulative length of ray */
 };
 #define RT_AFN_NULL	((int (*)())0)
 
