@@ -55,7 +55,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #if BSD && !SYSV
 #  include <sys/time.h>		/* includes <time.h> */
 #else
-#  if CRAY1
+#  if CRAY1 && !__STDC__
 #	include <time.h>	/* includes <sys/time.h> */
 #  else
 #	include <sys/time.h>
