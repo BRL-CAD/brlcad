@@ -1324,6 +1324,7 @@ AC_CONFIG_FILES([
 	src/other/libtk/doc/Makefile
 	src/other/libtk/generic/Makefile
 	src/other/libtk/library/Makefile
+	src/other/libtk/library/pkgIndex.tcl
 	src/other/libtk/library/demos/Makefile
 	src/other/libtk/library/demos/images/Makefile
 	src/other/libtk/library/images/Makefile
