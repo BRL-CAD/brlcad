@@ -9,7 +9,8 @@
 			g-euclid euclid_format euclid_unformat tankill-g g-tankill \
 			viewpoint-g dxf-g g-nmg g-euclid1 fast4-g proe-g g-nff \
 			asc-nmg nmg-rib g-vrml g-x3d g-acad cy-g nastran-g g-wave g-stl \
-			nmg-bot g-shell.rect stl-g poly-bot dbupgrade enf-g bot_shell-vtk
+			nmg-bot g-shell.rect stl-g poly-bot dbupgrade enf-g bot_shell-vtk \
+			g-xxx g-xxx_facets
 #define	SRCSUFF	.c
 #define MANSECTION	1
 
@@ -22,6 +23,12 @@
 
 g-stl: g-stl.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBTCL_DEP LIBWDB_DEP
 	CC LDFLAGS g-stl.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBTCL LIBTCL_LIBES LIBES -o g-stl
+
+g-xxx: g-xxx.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBTCL_DEP LIBWDB_DEP
+	CC LDFLAGS g-xxx.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBTCL LIBTCL_LIBES LIBES -o g-xxx
+
+g-xxx_facets: g-xxx_facets.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBTCL_DEP LIBWDB_DEP
+	CC LDFLAGS g-xxx_facets.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBTCL LIBTCL_LIBES LIBES -o g-xxx_facets
 
 bot_shell-vtk: bot_shell-vtk.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBTCL_DEP LIBSYSV_DEP
 	CC LDFLAGS bot_shell-vtk.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBTCL LIBTCL_LIBES LIBES LIBSYSV -o bot_shell-vtk
