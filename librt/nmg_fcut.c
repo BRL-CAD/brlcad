@@ -1290,13 +1290,14 @@ int				ass;
  *		at this vertexuse.
  */
 static int
-nmg_special_wedge_processing( vs, start, end, lo_ang, hi_ang, wclass )
+nmg_special_wedge_processing( vs, start, end, lo_ang, hi_ang, wclass, tol )
 struct nmg_vu_stuff	*vs;
 int	start;		/* vu index of coincident range */
 int	end;
 double	lo_ang;
 double	hi_ang;
 int	wclass;
+CONST struct rt_tol	*tol;
 {
 	register int	i;
 	int	outer_wedge;
@@ -1304,6 +1305,8 @@ int	wclass;
 	struct loopuse	*outer_lu;
 	struct loopuse	*inner_lu;
 	int		not_these[128];
+
+	RT_CK_TOL(tol);
 
 	if(rt_g.NMG_debug&DEBUG_VU_SORT)  {
 		rt_log("nmg_special_wedge_processing(start=%d,end=%d, lo=%g, hi=%g, wclass=%s)\n",
@@ -1343,9 +1346,11 @@ again:
 	NMG_CK_LOOPUSE(inner_lu);
 
 	if( outer_lu == inner_lu )  {
+		struct loopuse	*new_lu;
 		if(rt_g.NMG_debug&DEBUG_VU_SORT)
 			rt_log("special_wedge:  inner and outer wedges from same loop, cutting loop\n");
-		(void)nmg_cut_loop( vs[outer_wedge].vu, vs[inner_wedge].vu );
+		new_lu = nmg_cut_loop( vs[outer_wedge].vu, vs[inner_wedge].vu );
+		if(new_lu)  nmg_lu_reorient(new_lu, tol);
 		return 1;
 	}
 
@@ -1367,7 +1372,7 @@ again:
 	/* Recurse on inner wedge */
 /* XXX Need to not process wedges already done (like, outer_wedge) */
 	if( nmg_special_wedge_processing( vs, start, end,
-	    vs[inner_wedge].lo_ang, vs[inner_wedge].hi_ang, wclass ) )
+	    vs[inner_wedge].lo_ang, vs[inner_wedge].hi_ang, wclass, tol ) )
 		return 1;	/* An inner wedge was cut */
 
 	if(rt_g.NMG_debug&DEBUG_VU_SORT)
@@ -1515,10 +1520,10 @@ got_loop:
 	/* XXX */
 
 	/* Here is where the special wedge-breaking code goes */
-	if( nmg_special_wedge_processing( vs, 0, nvu, 0.0, 180.0, WEDGE_RIGHT ) )
+	if( nmg_special_wedge_processing( vs, 0, nvu, 0.0, 180.0, WEDGE_RIGHT, rs->tol ) )
 		goto top;
 	/* XXX reclass on/on edges from WEDGE_RIGHT to WEDGE_LEFT here? */
-	if( nmg_special_wedge_processing( vs, 0, nvu, 360.0, 180.0, WEDGE_LEFT ) )
+	if( nmg_special_wedge_processing( vs, 0, nvu, 360.0, 180.0, WEDGE_LEFT, rs->tol ) )
 		goto top;
 
 	if(rt_g.NMG_debug&DEBUG_VU_SORT)
@@ -2653,15 +2658,10 @@ rt_log("force next eu to ray\n");
 			prev_lu = nmg_cut_loop( prev_vu, vu );
 			nmg_loop_g( lu->l_p, rs->tol );
 			nmg_loop_g( prev_lu->l_p, rs->tol );
-			if(is_crack)  {
-				struct face_g	*fg;
-				plane_t		n;
-				fg = fu->f_p->fg_p;
-				NMG_CK_FACE_G(fg);
-				NMG_GET_FU_PLANE( n, fu );
-				nmg_lu_reorient( lu, n, rs->tol );
-				nmg_lu_reorient( prev_lu, n, rs->tol );
-			}
+
+			nmg_lu_reorient( lu, rs->tol );
+			nmg_lu_reorient( prev_lu, rs->tol );
+
 			if(rt_g.NMG_debug&DEBUG_FCUT)  {
 				rt_log("After CUT, the final loop:\n");
 				nmg_pr_lu_briefly(nmg_lu_of_vu(rs->vu[pos]), (char *)0);
