@@ -1773,3 +1773,417 @@ nmg_dup_shell( struct shell *s , long ***trans_tbl )
 	
 	return( new_s );
 }
+
+/*	Routines to use the nmg_ptbl structures as a stack of edgeuse structures */
+
+#define	NMG_PUSH( _ptr , _stack )	nmg_tbl( _stack , TBL_INS , (long *) _ptr );
+
+static struct edgeuse
+*nmg_pop_eu( struct nmg_ptbl *stack )
+{
+	struct edgeuse *eu;
+
+	/* return a NULL if stack is empty */
+	if( NMG_TBL_END( stack ) == 0 )
+		return( (struct edgeuse *)NULL );
+
+	/* get last edgeuse on the stack */
+	eu = (struct edgeuse *)NMG_TBL_GET( stack , NMG_TBL_END( stack )-1 );
+
+	/* remove that edgeuse from the stack */
+	nmg_tbl( stack , TBL_RM , (long *)eu );
+
+	return( eu );
+}
+
+/*	N M G _ R E V E R S E _ F A C E _ A N D _ R A D I A L S
+ *
+ *	This routine calls "nmg_reverse_face" and also makes the radial
+ *	pointers connect faces of like orientation (i.e., OT_SAME to OT_SAME and
+ *	OT_OPPOSITE to OT_OPPOSITE).
+ */
+
+void
+nmg_reverse_face_and_radials( struct faceuse *fu )
+{
+	struct loopuse *lu;
+	struct edgeuse *eu;
+	struct faceuse *fu2;
+
+	NMG_CK_FACEUSE( fu );
+
+	/* reverse face */
+	nmg_reverse_face( fu );
+
+	/* Make sure we are now dealing with the OT_SAME faceuse */
+	if( fu->orientation == OT_SAME )
+		fu2 = fu;
+	else
+		fu2 = fu->fumate_p;
+
+	/* now fix radials */
+	for( RT_LIST_FOR( lu , loopuse , &fu2->lu_hd ) )
+	{
+		NMG_CK_LOOPUSE( lu );
+
+		/* skip loops of a single vertex */
+		if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+			continue;
+
+		for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
+		{
+			struct edgeuse *eu_radial;
+			struct edgeuse *eumate_radial;
+
+			/* maybe nothing to swap */
+			if( eu->eumate_p == eu->radial_p )
+				continue;
+
+			eu_radial = eu->radial_p;
+			eumate_radial = eu->eumate_p->radial_p;
+
+			/* if the radial pointer already points to an OT_SAME faceuse, it's O.K. */
+			if( eu_radial->up.lu_p->up.fu_p->orientation == OT_SAME )
+				continue;
+
+			/* swap radial pointers between this edgeuse and its mate */
+			eu->radial_p = eumate_radial;
+			eu->eumate_p->radial_p = eu_radial;
+			eu->radial_p->radial_p = eu;
+			eu->eumate_p->radial_p->radial_p = eu->eumate_p;
+		}
+	}
+}
+
+/*
+ *	N M G _ F I N D _ T O P _ F A C E
+ *
+ *	Finds the topmost face in a shell (in z-direction).
+ *	Expects to have a translation table (variable "flags") for
+ *	the model, and will ignore face structures that have their
+ *	flag set in the table.
+ */
+
+struct face *
+nmg_find_top_face( struct shell *s , long *flags )
+{
+	fastf_t max_z=(-MAX_FASTF);
+	fastf_t max_slope=(-MAX_FASTF);
+	vect_t edge;
+	struct face *f_top=(struct face *)NULL;
+	struct edge *e_top=(struct edge *)NULL;
+	struct vertex *vp_top=(struct vertex *)NULL;
+	struct loopuse *lu;
+	struct faceuse *fu;
+	struct edgeuse *eu,*eu1,*eu2;
+	struct vertexuse *vu;
+	int done;
+
+	NMG_CK_SHELL( s );
+
+	/* find vertex with greatest z coordinate */
+	for( RT_LIST_FOR( fu , faceuse , &s->fu_hd ) )
+	{
+		NMG_CK_FACEUSE( fu );
+		if( NMG_INDEX_TEST( flags , fu->f_p ) )
+			continue;
+		for( RT_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
+		{
+			NMG_CK_LOOPUSE( lu );
+			if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_EDGEUSE_MAGIC )
+			{
+				for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
+				{
+					NMG_CK_EDGEUSE( eu );
+					if( eu->vu_p->v_p->vg_p->coord[Z] > max_z )
+					{
+						max_z = eu->vu_p->v_p->vg_p->coord[Z];
+						vp_top = eu->vu_p->v_p;
+					}
+				}
+			}
+		}
+	}
+	if( vp_top == (struct vertex *)NULL )
+	{
+		rt_log( "Fix_normals: Could not find uppermost vertex" );
+		return( (struct face *)NULL );
+	}
+
+	/* find edge from vp_top with largest slope in +z direction */
+	for( RT_LIST_FOR( vu , vertexuse , &vp_top->vu_hd ) )
+	{
+		NMG_CK_VERTEXUSE( vu );
+		if( *vu->up.magic_p == NMG_EDGEUSE_MAGIC )
+		{
+			struct vertexuse *vu1;
+
+			eu = vu->up.eu_p;
+			NMG_CK_EDGEUSE( eu );
+
+			/* skip wire edges */
+			if( *eu->up.magic_p != NMG_LOOPUSE_MAGIC )
+				continue;
+
+			/* skip wire loops */
+			if( *eu->up.lu_p->up.magic_p != NMG_FACEUSE_MAGIC )
+				continue;
+
+			/* skip finished faces */
+			if( NMG_INDEX_TEST( flags , eu->up.lu_p->up.fu_p->f_p ) )
+				continue;
+
+			/* get vertex at other end of this edge */
+			vu1 = eu->eumate_p->vu_p;
+			NMG_CK_VERTEXUSE( vu1 );
+
+			/* make a unit vector in direction of edgeuse */
+			VSUB2( edge , vu1->v_p->vg_p->coord , vu->v_p->vg_p->coord );
+			VUNITIZE( edge );
+
+			/* check against current maximum slope */
+			if( edge[Z] > max_slope )
+			{
+				max_slope = edge[Z];
+				e_top = eu->e_p;
+			}
+		}
+	}
+	if( e_top == (struct edge *)NULL )
+	{
+		rt_log( "Fix_normals: Could not find uppermost edge" );
+		return( (struct face *)NULL );
+	}
+
+	/* now find the face containing e_top with "left-pointing vector" having the greatest slope */
+	max_slope = (-MAX_FASTF);
+	eu = e_top->eu_p;
+	eu1 = eu;
+	done = 0;
+	while( !done )
+	{
+		/* don't bother with anything but faces */
+		if( *eu1->up.magic_p == NMG_LOOPUSE_MAGIC )
+		{
+			lu = eu1->up.lu_p;
+			NMG_CK_LOOPUSE( lu );
+			if( *lu->up.magic_p == NMG_FACEUSE_MAGIC )
+			{
+				vect_t left;
+				vect_t edge_dir;
+				vect_t normal;
+
+				/* fu is a faceuse containing "eu1" */
+				fu = lu->up.fu_p;
+				NMG_CK_FACEUSE( fu );
+
+				/* make a vector in the direction of "eu1" */
+				VSUB2( edge_dir , eu1->vu_p->v_p->vg_p->coord , eu1->eumate_p->vu_p->v_p->vg_p->coord );
+
+				/* make a normal for this faceuse */
+				VMOVE( normal , fu->f_p->fg_p->N );
+				if( fu->orientation == OT_OPPOSITE )
+					VREVERSE( normal , normal );
+
+				/* edge direction cross normal gives vetor in face */
+				VCROSS( left , edge_dir , normal );
+
+				/* unitize to get slope */
+				VUNITIZE( left );
+
+				/* check against current max slope */
+				if( left[Z] > max_slope )
+				{
+					max_slope = left[Z];
+					f_top = fu->f_p;
+				}
+			}
+		}
+		/* go on to next radial face */
+		eu1 = eu1->eumate_p->radial_p;
+
+		/* check if we are back where we started */
+		if( eu1 == eu )
+			done = 1;
+	}
+
+	if( f_top == (struct face *)NULL )
+	{
+		rt_log( "Fix_normals: Could not find uppermost face" );
+		return( (struct face *)NULL );
+	}
+
+	return( f_top );
+}
+
+
+/*	N M G _ P R O P O G A T E _ N O R M A L S
+ *
+ *	This routine expects "fu_in" to have a correctly oriented normal.
+ *	It then checks all faceuses it can reach via radial structures, and
+ *	reverses faces and modifies radial structures as needed to result in
+ *	a consistent NMG shell structure. The "flags" variable is a translation table
+ *	for the model, and as each face is checked, its flag is set. Faces with flags
+ *	that have already been set will not be checked by this routine.
+ */
+
+void
+nmg_propagate_normals( struct faceuse *fu_in , long *flags )
+{
+	struct nmg_ptbl stack;
+	struct loopuse *lu;
+	struct edgeuse *eu,*eu1;
+	struct faceuse *fu;
+
+	NMG_CK_FACEUSE( fu_in );
+	fu = fu_in;
+
+	/* set flag for this face since we know this one is OK */
+	NMG_INDEX_SET( flags , fu->f_p );
+
+	/* Use the ptbl structure as a stack */
+	nmg_tbl( &stack , TBL_INIT , NULL );
+
+	/* push all edgeuses of "fu" onto the stack */
+	for( RT_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
+	{
+		NMG_CK_LOOPUSE( lu );
+		if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+			continue;
+		for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
+		{
+			NMG_PUSH( eu , &stack );
+		}
+	}
+
+	/* now pop edgeuses from stack, go to radial face, fix its normal,
+	 * and push its edgeuses onto the stack */
+
+	while( (eu1 = nmg_pop_eu( &stack )) != (struct edgeuse *)NULL )
+	{
+		/* eu1 is an edgeuse on an OT_SAME face, so its radial
+		 * should be in an OT_SAME also */
+
+		NMG_CK_EDGEUSE( eu1 );
+
+		/* go to the radial */
+		eu = eu1->radial_p;
+		NMG_CK_EDGEUSE( eu );
+
+		/* find the face that contains this edgeuse */
+		if( *eu->up.magic_p != NMG_LOOPUSE_MAGIC )
+			continue;
+
+		lu = eu->up.lu_p;
+		NMG_CK_LOOPUSE( lu );
+
+		if( *lu->up.magic_p != NMG_FACEUSE_MAGIC )
+			continue;
+
+		fu = lu->up.fu_p;
+		NMG_CK_FACEUSE( fu );
+
+		/* if this face has already been processed, skip it */
+		if( NMG_INDEX_TEST_AND_SET( flags , fu->f_p ) )
+		{
+			/* if orientation is wrong, or if the radial edges are in the same direction
+			 * then reverse the face and fix the radials */
+			if( fu->orientation != OT_SAME ||
+				( eu1->vu_p->v_p == eu->vu_p->v_p &&
+				 eu1->eumate_p->vu_p->v_p == eu->eumate_p->vu_p->v_p ))
+			{
+				nmg_reverse_face_and_radials( fu );
+			}
+
+			/* make sure we are dealing with an OT_SAME faceuse */
+			if( fu->orientation != OT_SAME )
+				fu = fu->fumate_p;
+
+			/* push all edgeuses of "fu" onto the stack */
+			for( RT_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
+			{
+				NMG_CK_LOOPUSE( lu );
+				if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+					continue;
+				for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
+				{
+					NMG_PUSH( eu , &stack );
+				}
+			}
+		}
+	}
+
+	/* free the stack */
+	nmg_tbl( &stack , TBL_FREE , NULL );
+}
+
+/*	N M G _ F I X _ N O R M A L S
+ *
+ *	Finds the topmost face in the shell, assumes its normal must have
+ *	a positive z-component, and makes it so if not.  Then propagates this
+ *	orientation though the radial structures.  Disjoint shells are handled
+ *	by flagging checked faces, and calling "nmg_find_top_face" again.
+ *
+ *	XXX - known bug: shells that are intended to describe void spaces (i.e., should
+ *			 have inward pointing normals), will end up with outward pointing
+ *			 normals.
+ *
+ */
+
+void
+nmg_fix_normals( struct shell *s )
+{
+	struct model *m;
+	struct face *f_top;
+	struct faceuse *fu;
+	struct loopuse *lu;
+	struct edgeuse *eu,*eu1,*eu2;
+	struct vertexuse *vu;
+	long *flags;
+	int missed_faces=1;
+
+	/* Make an index table to insure we visit each face once and only once */
+	m = s->r_p->m_p;
+	flags = (long *)rt_calloc( m->maxindex , sizeof( long ) , "nmg_fix_normals: flags" );
+
+	/* loop to catch disjoint shells */
+	while( missed_faces )
+	{
+		/* find the top face */
+		f_top = nmg_find_top_face( s , flags );	
+		NMG_CK_FACE( f_top );
+
+		/* f_top is the topmost face (in the +z direction), so its OT_SAME use should have a
+		 * normal with a positive z component */
+		if( f_top->fg_p->N[Z] < 0.0 )
+			nmg_reverse_face_and_radials( f_top->fu_p );
+
+		/* get OT_SAME use of top face */
+		fu = f_top->fu_p;
+		if( fu->orientation != OT_SAME )
+			fu = fu->fumate_p;
+
+		NMG_CK_FACEUSE( fu );
+
+		/* fu is now known to be a correctly oriented faceuse,
+		 * propagate this throughout the shell, face by face, by
+		 * traversing the shell using the radial edge structure */
+
+		nmg_propagate_normals( fu , flags );
+
+		/* check if all the faces have been processed */
+		missed_faces = 0;
+		for( RT_LIST_FOR( fu , faceuse , &s->fu_hd ) )
+		{
+			NMG_CK_FACEUSE( fu );
+			if( fu->orientation == OT_SAME )
+			{
+				if( !NMG_INDEX_TEST( flags , fu->f_p ) )
+					missed_faces++;
+			}
+		}
+	}
+
+	/* free some memory */
+	rt_free( (char *)flags , "nmg_fix_normals: flags" );
+}
