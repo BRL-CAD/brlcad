@@ -29,14 +29,17 @@ static char RCSplane[] = "@(#)$Header$ (BRL)";
  *
  *  Find the equation of a plane that contains three points.
  *  Note that normal vector created is expected to point out (see vmath.h),
- *  so C had better be counter-clockwise from B to follow the
- *  BRL-CAD outward-pointing normal convention.
+ *  so the vector from A to C had better be counter-clockwise
+ *  (about the point A) from the vector from A to B.
+ *  This follows the BRL-CAD outward-pointing normal convention, and the
+ *  right-hand rule for cross products.
  *
  *  XXX The tolerance here should be relative to the model diameter, not abs.
  *
  *  Explicit Return -
  *	 0	OK
- *	-1	Failure.  At least two of the points were not distinct.
+ *	-1	Failure.  At least two of the points were not distinct,
+ *		or all three were colinear.
  *
  *  Implicit Return -
  *	plane	The plane equation is stored here.
