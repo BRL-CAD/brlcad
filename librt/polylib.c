@@ -15,23 +15,49 @@ static poly	Zpoly = { 0, 0.0 };
  *	polyMul -- multiply two polynomials
  */
 poly *
-polyMul(mult1,mult2,product)
-register poly	*mult1, *mult2, *product;
+polyMul(m1,m2,product)
+register poly	*m1, *m2, *product;
 {
-	register int		ct1, ct2;
+	if( m1->dgr == 1 && m2->dgr == 1 )  {
+		product->dgr = 2;
+		product->cf[0] = m1->cf[0] * m2->cf[0];
+		product->cf[1] = m1->cf[0] * m2->cf[1] +
+				 m1->cf[1] * m2->cf[0];
+		product->cf[2] = m1->cf[1] * m2->cf[1];
+		return(product);
+	}
+	if( m1->dgr == 2 && m2->dgr == 2 )  {
+		product->dgr = 4;
+		product->cf[0] = m1->cf[0] * m2->cf[0];
+		product->cf[1] = m1->cf[0] * m2->cf[1] +
+				 m1->cf[1] * m2->cf[0];
+		product->cf[2] = m1->cf[0] * m2->cf[2] +
+				 m1->cf[1] * m2->cf[1] +
+				 m1->cf[2] * m2->cf[0];
+		product->cf[3] = m1->cf[1] * m2->cf[2] +
+				 m1->cf[2] * m2->cf[1];
+		product->cf[4] = m1->cf[2] * m2->cf[2];
+		return(product);
+	}
 
-	*product = Zpoly;
+	/* Not one of the common (or easy) cases. */
+	{
+		register int		ct1, ct2;
 
-	/* If the degree of the product will be larger than the
-	 * maximum size allowed in "polyno.h", then return a null
-	 * pointer to indicate failure.
-	 */
-	if ( (product->dgr = mult1->dgr + mult2->dgr) > MAXP )
-		return PM_NULL;
+		*product = Zpoly;
 
-	for ( ct1=0; ct1 <= mult1->dgr; ++ct1 ){
-		for ( ct2=0; ct2 <= mult2->dgr; ++ct2 ){
-			product->cf[ct1+ct2] += mult1->cf[ct1]*mult2->cf[ct2];
+		/* If the degree of the product will be larger than the
+		 * maximum size allowed in "polyno.h", then return a null
+		 * pointer to indicate failure.
+		 */
+		if ( (product->dgr = m1->dgr + m2->dgr) > MAXP )
+			return PM_NULL;
+
+		for ( ct1=0; ct1 <= m1->dgr; ++ct1 ){
+			for ( ct2=0; ct2 <= m2->dgr; ++ct2 ){
+				product->cf[ct1+ct2] +=
+					m1->cf[ct1] * m2->cf[ct2];
+			}
 		}
 	}
 	return product;
