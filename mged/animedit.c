@@ -2389,8 +2389,8 @@ double tol;
 	double f0,f1,f2;
 	double ax,bx,cx;
 	double x0,x1,x2,x3;
-	double besteval, bestvalue, origvalue;
-	int bestfreedom;
+	double besteval, bestvalue = 0, origvalue;
+	int bestfreedom = -1;
 	register struct joint *bestjoint;
 	register struct jointH *jh;
 
@@ -2968,7 +2968,7 @@ char **argv;
 	int	found;
 	char **myargv;
 	int myargc;
-	int result;
+	int result = 0;
 
 	/*
 	 * because this routine calls "mesh" in the middle, the command
@@ -3263,7 +3263,7 @@ struct joint *jp;
 	anp=jp->anim;
 	if (!anp || anp->magic != ANIMATE_MAGIC) {
 		char *sofar;
-		struct directory *dp;
+		struct directory *dp = NULL;
 		BU_GETSTRUCT(anp, animate);
 		anp->magic = ANIMATE_MAGIC;
 		db_init_full_path(&anp->an_path);
@@ -3500,7 +3500,7 @@ struct db_full_path	*pathp;
 	register int i,j;
 	register struct joint *jp;
 	int best;
-	struct joint *bestjp;
+	struct joint *bestjp = NULL;
 
 	if (joint_debug & DEBUG_J_MESH) {
 	  char *sofar = db_path_to_string(pathp);

@@ -293,13 +293,13 @@ int	fd;
 
 #if defined(SO_KEEPALIVE)
   if(setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, (char *)&on, sizeof(on)) < 0){
-    bu_log("setsockopt (SO_KEEPALIVE): %m");
+    bu_log("setsockopt (SO_KEEPALIVE): %m\n");
   }
 #endif
 #if defined(SO_RCVBUF)
   /* try to set our buffers up larger */
   {
-    int	m, n;
+    int	m = -1, n = -1;
     int	val;
     int	size;
 
@@ -314,7 +314,7 @@ int	fd;
     }
 
     if(m < 0 || n < 0)
-      bu_log("setup_socket: setsockopt()");
+      bu_log("setup_socket: setsockopt() SO_RCVBUF/SO_SNDBUF failed: %m\n");
   }
 #endif
 }
