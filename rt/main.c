@@ -108,7 +108,7 @@ register char **argv;
 	register int c;
 	register int i;
 
-	while( (c=getopt( argc, argv, "E:SJH:F:D:MA:x:X:s:f:a:e:l:O:o:p:P:Bb:n:w:iIU:V:" )) != EOF )  {
+	while( (c=getopt( argc, argv, "E:SJ:H:F:D:MA:x:X:s:f:a:e:l:O:o:p:P:Bb:n:w:iIU:V:" )) != EOF )  {
 		switch( c )  {
 		case 'U':
 			use_air = atoi( optarg );
@@ -123,7 +123,7 @@ register char **argv;
 			stereo = 1;
 			break;
 		case 'J':
-			jitter = 1;
+			sscanf( optarg, "%x", &jitter );
 			break;
 		case 'H':
 			hypersample = atoi( optarg );
