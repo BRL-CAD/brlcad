@@ -232,6 +232,7 @@ matp_t mat;
 			{
 				RT_INIT_DB_INTERNAL( &intern2 );
 				intern2.idb_type = ID_POLY;
+				intern2.idb_meth = &rt_functab[ID_POLY];
 				intern2.idb_ptr = (genptr_t)pg;
 				eptr->l.stp->st_id = ID_POLY;
 				if (rt_functab[ID_POLY].ft_prep( eptr->l.stp, &intern2, rtip ) < 0 )
@@ -1965,6 +1966,7 @@ fix_halfs()
 
 			RT_INIT_DB_INTERNAL( &intern2 );
 			intern2.idb_type = ID_POLY;
+			intern2.idb_meth = &rt_functab[ID_POLY];
 			intern2.idb_ptr = (genptr_t)pg;
 			rt_functab[tp->l.stp->st_id].ft_free( tp->l.stp );
 			tp->l.stp->st_specific = NULL;

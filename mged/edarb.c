@@ -709,6 +709,7 @@ char	**argv;
 
 	RT_INIT_DB_INTERNAL( &internal );
 	internal.idb_type = ID_ARB8;
+	internal.idb_meth = &rt_functab[ID_ARB8];
 	internal.idb_ptr = (genptr_t)&arb;
 	arb.magic = RT_ARB_INTERNAL_MAGIC;
 

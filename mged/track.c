@@ -596,6 +596,7 @@ int flags;
 
 				intern.idb_ptr = (genptr_t)arb;
 				intern.idb_type = ID_ARB8;
+				intern.idb_meth = &rt_functab[ID_ARB8];
 			}
 			break;
 		case ID_TGC:
@@ -615,6 +616,7 @@ int flags;
 
 				intern.idb_ptr = (genptr_t)tgc;
 				intern.idb_type = ID_TGC;
+				intern.idb_meth = &rt_functab[ID_TGC];
 			}
 			break;
 		default:

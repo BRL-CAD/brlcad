@@ -234,6 +234,7 @@ char	**argv;
 
 	RT_INIT_DB_INTERNAL( &internal );
 	internal.idb_type = ID_ARB8;
+	internal.idb_meth = &rt_functab[ID_ARB8];
 	internal.idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_arb_internal) , "rt_arb_internal" );
 	aip = (struct rt_arb_internal *)internal.idb_ptr;
 	aip->magic = RT_ARB_INTERNAL_MAGIC;
@@ -504,6 +505,7 @@ char	**argv;
 
 	RT_INIT_DB_INTERNAL( &internal );
 	internal.idb_type = ID_ARB8;
+	internal.idb_meth = &rt_functab[ID_ARB8];
 	internal.idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_arb_internal) , "rt_arb_internal" );
 	aip = (struct rt_arb_internal *)internal.idb_ptr;
 	aip->magic = RT_ARB_INTERNAL_MAGIC;

@@ -798,6 +798,7 @@ plane_t	planes[6];
 
 		/* put new solid in "ip" */
 		ip->idb_type = ID_NMG;
+		ip->idb_meth = &rt_functab[ID_NMG];
 		ip->idb_ptr = (genptr_t)m;
 	}
 

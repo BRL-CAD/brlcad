@@ -843,6 +843,7 @@ char	**argv;
 
 				RT_INIT_DB_INTERNAL( &new_intern );
 				new_intern.idb_type = ID_NMG;
+				new_intern.idb_meth = &rt_functab[ID_NMG];
 				new_intern.idb_ptr = (genptr_t)new_m;
 
 				if( rt_db_put_internal( new_dp, dbip, &new_intern ) < 0 )

@@ -1599,6 +1599,7 @@ char	**argv;
 	/* Export NMG as a new solid */
 	RT_INIT_DB_INTERNAL(&intern);
 	intern.idb_type = ID_NMG;
+	intern.idb_meth = &rt_functab[ID_NMG];
 	intern.idb_ptr = (genptr_t)mged_nmg_model;
 	mged_nmg_model = (struct model *)NULL;
 
@@ -1875,6 +1876,7 @@ char	**argv;
 	/* Export NMG as a new solid */
 	RT_INIT_DB_INTERNAL(&intern);
 	intern.idb_type = ID_NMG;
+	intern.idb_meth = &rt_functab[ID_NMG];
 	intern.idb_ptr = (genptr_t)mged_nmg_model;
 	mged_nmg_model = (struct model *)NULL;
 

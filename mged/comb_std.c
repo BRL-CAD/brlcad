@@ -817,6 +817,7 @@ char	**argv;
 
 		RT_INIT_DB_INTERNAL( &intern );
 		intern.idb_type = ID_COMBINATION;
+		intern.idb_meth = &rt_functab[ID_COMBINATION];
 		intern.idb_ptr = (genptr_t)comb;
 
 		if( (dp=db_diradd( dbip, comb_name, -1L, 0, DIR_COMB )) == DIR_NULL )

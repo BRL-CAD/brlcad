@@ -125,6 +125,7 @@ char **argv;
 			/* Export NMG as a new solid */
 			RT_INIT_DB_INTERNAL(&new_intern);
 			new_intern.idb_type = ID_NMG;
+			new_intern.idb_meth = &rt_functab[ID_NMG];
 			new_intern.idb_ptr = (genptr_t)m_tmp;
 
 			if( rt_db_put_internal( new_dp, dbip, &new_intern ) < 0 )  {
@@ -1731,6 +1732,7 @@ char *argv[];
 		{
 			new_intern.idb_ptr = (genptr_t)(&arb_int);
 			new_intern.idb_type = ID_ARB8;
+			new_intern.idb_meth = &rt_functab[ID_ARB8];
 			success = 1;
 		}
 		else if( do_arb )
@@ -1749,6 +1751,7 @@ char *argv[];
 				{
 					new_intern.idb_ptr = (genptr_t)(&arb_int);
 					new_intern.idb_type = ID_ARB8;
+					new_intern.idb_meth = &rt_functab[ID_ARB8];
 					success = 1;
 				}
 			}
@@ -1770,6 +1773,7 @@ char *argv[];
 		{
 			new_intern.idb_ptr = (genptr_t)(&tgc_int);
 			new_intern.idb_type = ID_TGC;
+			new_intern.idb_meth = &rt_functab[ID_TGC];
 			success = 1;
 		}
 		else if( do_tgc )
@@ -1798,6 +1802,7 @@ char *argv[];
 			{
 				new_intern.idb_ptr = (genptr_t)(&arb_int);
 				new_intern.idb_type = ID_ARB8;
+				new_intern.idb_meth = &rt_functab[ID_ARB8];
 				success = 1;
 			}
 			else if( do_arb )
@@ -1820,6 +1825,7 @@ char *argv[];
 		{
 			new_intern.idb_ptr = (genptr_t)(poly_int);
 			new_intern.idb_type = ID_POLY;
+			new_intern.idb_meth = &rt_functab[ID_POLY];
 			success = 1;
 		}
 		else if( do_poly )
@@ -2059,6 +2065,7 @@ char **argv;
 	/* set up internal structure */
 	RT_INIT_DB_INTERNAL( &new_intern );
 	new_intern.idb_type = ID_ARB8;
+	new_intern.idb_meth = &rt_functab[ID_ARB8];
 	new_intern.idb_ptr = (genptr_t)(&arb);
 
 	if( (dp=db_diradd( dbip, new_name, -1L, 0, DIR_SOLID)) == DIR_NULL )

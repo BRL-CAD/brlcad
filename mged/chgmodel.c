@@ -1572,6 +1572,7 @@ char	**argv;
 	 * sph | tor | tgc | rec | trc | rcc | grp | half | nmg | sketch | extrude> */
 	if( strcmp( argv[2], "arb8" ) == 0 )  {
 		internal.idb_type = ID_ARB8;
+		internal.idb_meth = &rt_functab[ID_ARB8];
 		internal.idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_arb_internal) , "rt_arb_internal" );
 		arb_ip = (struct rt_arb_internal *)internal.idb_ptr;
 		arb_ip->magic = RT_ARB_INTERNAL_MAGIC;
@@ -1592,6 +1593,7 @@ char	**argv;
 		arb_ip->pt[7][Z] += view_state->vs_Viewscale*2.0;
 	} else if( strcmp( argv[2], "arb7" ) == 0 )  {
 		internal.idb_type = ID_ARB8;
+		internal.idb_meth = &rt_functab[ID_ARB8];
 		internal.idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_arb_internal) , "rt_arb_internal" );
 		arb_ip = (struct rt_arb_internal *)internal.idb_ptr;
 		arb_ip->magic = RT_ARB_INTERNAL_MAGIC;
@@ -1612,6 +1614,7 @@ char	**argv;
 		arb_ip->pt[6][Z] += view_state->vs_Viewscale;
 	} else if( strcmp( argv[2], "arb6" ) == 0 )  {
 		internal.idb_type = ID_ARB8;
+		internal.idb_meth = &rt_functab[ID_ARB8];
 		internal.idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_arb_internal) , "rt_arb_internal" );
 		arb_ip = (struct rt_arb_internal *)internal.idb_ptr;
 		arb_ip->magic = RT_ARB_INTERNAL_MAGIC;
@@ -1635,6 +1638,7 @@ char	**argv;
 		arb_ip->pt[7][Z] += view_state->vs_Viewscale*2.0;
 	} else if( strcmp( argv[2], "arb5" ) == 0 )  {
 		internal.idb_type = ID_ARB8;
+		internal.idb_meth = &rt_functab[ID_ARB8];
 		internal.idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_arb_internal) , "rt_arb_internal" );
 		arb_ip = (struct rt_arb_internal *)internal.idb_ptr;
 		arb_ip->magic = RT_ARB_INTERNAL_MAGIC;
@@ -1656,6 +1660,7 @@ char	**argv;
 		}
 	} else if( strcmp( argv[2], "arb4" ) == 0 )  {
 		internal.idb_type = ID_ARB8;
+		internal.idb_meth = &rt_functab[ID_ARB8];
 		internal.idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_arb_internal) , "rt_arb_internal" );
 		arb_ip = (struct rt_arb_internal *)internal.idb_ptr;
 		arb_ip->magic = RT_ARB_INTERNAL_MAGIC;
@@ -1677,6 +1682,7 @@ char	**argv;
 		}
 	} else if( strcmp( argv[2], "sph" ) == 0 )  {
 		internal.idb_type = ID_ELL;
+		internal.idb_meth = &rt_functab[ID_ELL];
 		internal.idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_ell_internal) , "rt_ell_internal" );
 		ell_ip = (struct rt_ell_internal *)internal.idb_ptr;
 		ell_ip->magic = RT_ELL_INTERNAL_MAGIC;
@@ -1687,6 +1693,7 @@ char	**argv;
 	} else if(( strcmp( argv[2], "grp" ) == 0 ) ||
 		  ( strcmp( argv[2], "grip") == 0 )) {
 		internal.idb_type = ID_GRIP;
+		internal.idb_meth = &rt_functab[ID_GRIP];
 		internal.idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_grip_internal), "rt_grp_internal" );
 		grp_ip = (struct rt_grip_internal *) internal.idb_ptr;
 		grp_ip->magic = RT_GRIP_INTERNAL_MAGIC;
@@ -1696,6 +1703,7 @@ char	**argv;
 		grp_ip->mag = view_state->vs_Viewscale*0.75;
 	} else if( strcmp( argv[2], "ell" ) == 0 )  {
 		internal.idb_type = ID_ELL;
+		internal.idb_meth = &rt_functab[ID_ELL];
 		internal.idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_ell_internal) , "rt_ell_internal" );
 		ell_ip = (struct rt_ell_internal *)internal.idb_ptr;
 		ell_ip->magic = RT_ELL_INTERNAL_MAGIC;
@@ -1705,6 +1713,7 @@ char	**argv;
 		VSET( ell_ip->c, 0.0, 0.0, (0.25*view_state->vs_Viewscale) );	/* C */
 	} else if( strcmp( argv[2], "ellg" ) == 0 )  {
 		internal.idb_type = ID_ELL;
+		internal.idb_meth = &rt_functab[ID_ELL];
 		internal.idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_ell_internal) , "rt_ell_internal" );
 		ell_ip = (struct rt_ell_internal *)internal.idb_ptr;
 		ell_ip->magic = RT_ELL_INTERNAL_MAGIC;
@@ -1714,6 +1723,7 @@ char	**argv;
 		VSET( ell_ip->c, 0.0, 0.0, (0.25*view_state->vs_Viewscale) );	/* C */
 	} else if( strcmp( argv[2], "tor" ) == 0 )  {
 		internal.idb_type = ID_TOR;
+		internal.idb_meth = &rt_functab[ID_TOR];
 		internal.idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_tor_internal) , "rt_tor_internal" );
 		tor_ip = (struct rt_tor_internal *)internal.idb_ptr;
 		tor_ip->magic = RT_TOR_INTERNAL_MAGIC;
@@ -1726,6 +1736,7 @@ char	**argv;
 		VSET( tor_ip->b , 0.0 , 0.0 , view_state->vs_Viewscale );
 	} else if( strcmp( argv[2], "tgc" ) == 0 )  {
 		internal.idb_type = ID_TGC;
+		internal.idb_meth = &rt_functab[ID_TGC];
 		internal.idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_tgc_internal) , "rt_tgc_internal" );
 		tgc_ip = (struct rt_tgc_internal *)internal.idb_ptr;
 		tgc_ip->magic = RT_TGC_INTERNAL_MAGIC;
@@ -1737,6 +1748,7 @@ char	**argv;
 		VSET( tgc_ip->d,  0.0, (0.5*view_state->vs_Viewscale), 0.0 );
 	} else if( strcmp( argv[2], "tec" ) == 0 )  {
 		internal.idb_type = ID_TGC;
+		internal.idb_meth = &rt_functab[ID_TGC];
 		internal.idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_tgc_internal) , "rt_tgc_internal" );
 		tgc_ip = (struct rt_tgc_internal *)internal.idb_ptr;
 		tgc_ip->magic = RT_TGC_INTERNAL_MAGIC;
@@ -1748,6 +1760,7 @@ char	**argv;
 		VSET( tgc_ip->d,  0.0, (0.125*view_state->vs_Viewscale), 0.0 );
 	} else if( strcmp( argv[2], "rec" ) == 0 )  {
 		internal.idb_type = ID_TGC;
+		internal.idb_meth = &rt_functab[ID_TGC];
 		internal.idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_tgc_internal) , "rt_tgc_internal" );
 		tgc_ip = (struct rt_tgc_internal *)internal.idb_ptr;
 		tgc_ip->magic = RT_TGC_INTERNAL_MAGIC;
@@ -1759,6 +1772,7 @@ char	**argv;
 		VSET( tgc_ip->d,  0.0, (0.25*view_state->vs_Viewscale), 0.0 );
 	} else if( strcmp( argv[2], "trc" ) == 0 )  {
 		internal.idb_type = ID_TGC;
+		internal.idb_meth = &rt_functab[ID_TGC];
 		internal.idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_tgc_internal) , "rt_tgc_internal" );
 		tgc_ip = (struct rt_tgc_internal *)internal.idb_ptr;
 		tgc_ip->magic = RT_TGC_INTERNAL_MAGIC;
@@ -1770,6 +1784,7 @@ char	**argv;
 		VSET( tgc_ip->d,  0.0, (0.25*view_state->vs_Viewscale), 0.0 );
 	} else if( strcmp( argv[2], "rcc" ) == 0 )  {
 		internal.idb_type = ID_TGC;
+		internal.idb_meth = &rt_functab[ID_TGC];
 		internal.idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_tgc_internal) , "rt_tgc_internal" );
 		tgc_ip = (struct rt_tgc_internal *)internal.idb_ptr;
 		tgc_ip->magic = RT_TGC_INTERNAL_MAGIC;
@@ -1781,6 +1796,7 @@ char	**argv;
 		VSET( tgc_ip->d,  0.0, (0.5*view_state->vs_Viewscale), 0.0 );
 	} else if( strcmp( argv[2], "half" ) == 0 ) {
 		internal.idb_type = ID_HALF;
+		internal.idb_meth = &rt_functab[ID_HALF];
 		internal.idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_half_internal) , "rt_half_internal" );
 		half_ip = (struct rt_half_internal *)internal.idb_ptr;
 		half_ip->magic = RT_HALF_INTERNAL_MAGIC;
@@ -1788,6 +1804,7 @@ char	**argv;
 		half_ip->eqn[3] = (-view_state->vs_toViewcenter[MDZ]);
 	} else if( strcmp( argv[2], "rpc" ) == 0 ) {
 		internal.idb_type = ID_RPC;
+		internal.idb_meth = &rt_functab[ID_RPC];
 		internal.idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_rpc_internal) , "rt_rpc_internal" );
 		rpc_ip = (struct rt_rpc_internal *)internal.idb_ptr;
 		rpc_ip->rpc_magic = RT_RPC_INTERNAL_MAGIC;
@@ -1797,6 +1814,7 @@ char	**argv;
 		rpc_ip->rpc_r = view_state->vs_Viewscale*0.25;
 	} else if( strcmp( argv[2], "rhc" ) == 0 ) {
 		internal.idb_type = ID_RHC;
+		internal.idb_meth = &rt_functab[ID_RHC];
 		internal.idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_rhc_internal) , "rt_rhc_internal" );
 		rhc_ip = (struct rt_rhc_internal *)internal.idb_ptr;
 		rhc_ip->rhc_magic = RT_RHC_INTERNAL_MAGIC;
@@ -1807,6 +1825,7 @@ char	**argv;
 		rhc_ip->rhc_c = view_state->vs_Viewscale*0.10;
 	} else if( strcmp( argv[2], "epa" ) == 0 ) {
 		internal.idb_type = ID_EPA;
+		internal.idb_meth = &rt_functab[ID_EPA];
 		internal.idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_epa_internal) , "rt_epa_internal" );
 		epa_ip = (struct rt_epa_internal *)internal.idb_ptr;
 		epa_ip->epa_magic = RT_EPA_INTERNAL_MAGIC;
@@ -1817,6 +1836,7 @@ char	**argv;
 		epa_ip->epa_r2 = view_state->vs_Viewscale*0.25;
 	} else if( strcmp( argv[2], "ehy" ) == 0 ) {
 		internal.idb_type = ID_EHY;
+		internal.idb_meth = &rt_functab[ID_EHY];
 		internal.idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_ehy_internal) , "rt_ehy_internal" );
 		ehy_ip = (struct rt_ehy_internal *)internal.idb_ptr;
 		ehy_ip->ehy_magic = RT_EHY_INTERNAL_MAGIC;
@@ -1828,6 +1848,7 @@ char	**argv;
 		ehy_ip->ehy_c = ehy_ip->ehy_r2;
 	} else if( strcmp( argv[2], "eto" ) == 0 ) {
 		internal.idb_type = ID_ETO;
+		internal.idb_meth = &rt_functab[ID_ETO];
 		internal.idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_eto_internal) , "rt_eto_internal" );
 		eto_ip = (struct rt_eto_internal *)internal.idb_ptr;
 		eto_ip->eto_magic = RT_ETO_INTERNAL_MAGIC;
@@ -1838,6 +1859,7 @@ char	**argv;
 		eto_ip->eto_rd = view_state->vs_Viewscale*0.05;
 	} else if( strcmp( argv[2], "part" ) == 0 ) {
 		internal.idb_type = ID_PARTICLE;
+		internal.idb_meth = &rt_functab[ID_PARTICLE];
 		internal.idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_part_internal) , "rt_part_internal" );
 		part_ip = (struct rt_part_internal *)internal.idb_ptr;
 		part_ip->part_magic = RT_PART_INTERNAL_MAGIC;
@@ -1858,11 +1880,13 @@ char	**argv;
 		(void)nmg_meonvu( s->vu_p );
 		(void)nmg_ml( s );
 		internal.idb_type = ID_NMG;
+		internal.idb_meth = &rt_functab[ID_NMG];
 		internal.idb_ptr = (genptr_t)m;
 	} else if( strcmp( argv[2], "pipe" ) == 0 ) {
 		struct wdb_pipept *ps;
 
 		internal.idb_type = ID_PIPE;
+		internal.idb_meth = &rt_functab[ID_PIPE];
 		internal.idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_pipe_internal), "rt_pipe_internal" );
 		pipe_ip = (struct rt_pipe_internal *)internal.idb_ptr;
 		pipe_ip->pipe_magic = RT_PIPE_INTERNAL_MAGIC;
@@ -1885,6 +1909,7 @@ char	**argv;
 		char *av[3];
 
 		internal.idb_type = ID_EXTRUDE;
+		internal.idb_meth = &rt_functab[ID_EXTRUDE];
 		internal.idb_ptr = (genptr_t)bu_malloc( sizeof( struct rt_extrude_internal), "rt_extrude_internal" );
 		extrude_ip = (struct rt_extrude_internal *)internal.idb_ptr;
 		extrude_ip->magic = RT_EXTRUDE_INTERNAL_MAGIC;
@@ -1904,6 +1929,7 @@ char	**argv;
 		struct line_seg *lsg;
 
 		internal.idb_type = ID_SKETCH;
+		internal.idb_meth = &rt_functab[ID_SKETCH];
 		internal.idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_sketch_internal), "rt_sketch_internal" );
 		sketch_ip = (struct rt_sketch_internal *)internal.idb_ptr;
 		sketch_ip->magic = RT_SKETCH_INTERNAL_MAGIC;
@@ -2342,6 +2368,7 @@ struct model *m;
 	/* Export NMG as a new solid */
 	RT_INIT_DB_INTERNAL(&new_intern);
 	new_intern.idb_type = ID_NMG;
+	new_intern.idb_meth = &rt_functab[ID_NMG];
 	new_intern.idb_ptr = (genptr_t)m;
 
 	if( rt_db_put_internal( new_dp, dbip, &new_intern ) < 0 )  {

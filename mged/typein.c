@@ -715,6 +715,7 @@ struct rt_db_internal	*intern;
 
 	BU_GETSTRUCT( ebm, rt_ebm_internal );
 	intern->idb_type = ID_EBM;
+	intern->idb_meth = &rt_functab[ID_EBM];
 	intern->idb_ptr = (genptr_t)ebm;
 	ebm->magic = RT_EBM_INTERNAL_MAGIC;
 
@@ -743,6 +744,7 @@ struct rt_db_internal	*intern;
 
 	BU_GETSTRUCT( sip, rt_submodel_internal );
 	intern->idb_type = ID_SUBMODEL;
+	intern->idb_meth = &rt_functab[ID_SUBMODEL];
 	intern->idb_ptr = (genptr_t)sip;
 	sip->magic = RT_SUBMODEL_INTERNAL_MAGIC;
 
@@ -766,6 +768,7 @@ struct rt_db_internal	*intern;
 
 	BU_GETSTRUCT( dsp, rt_dsp_internal );
 	intern->idb_type = ID_DSP;
+	intern->idb_meth = &rt_functab[ID_DSP];
 	intern->idb_ptr = (genptr_t)dsp;
 	dsp->magic = RT_DSP_INTERNAL_MAGIC;
 
@@ -798,6 +801,7 @@ struct rt_db_internal	*intern;
 
 	BU_GETSTRUCT( hf, rt_hf_internal );
 	intern->idb_type = ID_HF;
+	intern->idb_meth = &rt_functab[ID_HF];
 	intern->idb_ptr = (genptr_t)hf;
 	hf->magic = RT_HF_INTERNAL_MAGIC;
 
@@ -862,6 +866,7 @@ struct rt_db_internal	*intern;
 
 	BU_GETSTRUCT( vol, rt_vol_internal );
 	intern->idb_type = ID_VOL;
+	intern->idb_meth = &rt_functab[ID_VOL];
 	intern->idb_ptr = (genptr_t)vol;
 	vol->magic = RT_VOL_INTERNAL_MAGIC;
 
@@ -926,6 +931,7 @@ char			*prompt[];
 	}
 
 	intern->idb_type = ID_PIPE;
+	intern->idb_meth = &rt_functab[ID_PIPE];
 	intern->idb_ptr = (genptr_t)bu_malloc( sizeof( struct rt_pipe_internal ), "rt_pipe_internal" );
 	pipe = (struct rt_pipe_internal *)intern->idb_ptr;
 	pipe->pipe_magic = RT_PIPE_INTERNAL_MAGIC;
@@ -1028,6 +1034,7 @@ char			*promp[];
 #endif
 
 	intern->idb_type = ID_ARS;
+	intern->idb_meth = &rt_functab[ID_ARS];
 	intern->idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_ars_internal), "rt_ars_internal");
 	arip = (struct rt_ars_internal *)intern->idb_ptr;
 	arip->magic = RT_ARS_INTERNAL_MAGIC;
@@ -1090,6 +1097,7 @@ struct rt_db_internal	*intern;
 	CHECK_DBI_NULL;
 
 	intern->idb_type = ID_HALF;
+	intern->idb_meth = &rt_functab[ID_HALF];
 	intern->idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_half_internal),
 		"rt_half_internal" );
 	hip = (struct rt_half_internal *)intern->idb_ptr;
@@ -1123,6 +1131,7 @@ struct rt_db_internal	*intern;
 	CHECK_DBI_NULL;
 
 	intern->idb_type = ID_ARB8;
+	intern->idb_meth = &rt_functab[ID_ARB8];
 	intern->idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_arb_internal),
 		"rt_arb_internal" );
 	aip = (struct rt_arb_internal *)intern->idb_ptr;
@@ -1170,6 +1179,7 @@ struct rt_db_internal	*intern;
 	CHECK_DBI_NULL;
 
 	intern->idb_type = ID_ELL;
+	intern->idb_meth = &rt_functab[ID_ELL];
 	intern->idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_ell_internal),
 		"rt_ell_internal" );
 	sip = (struct rt_ell_internal *)intern->idb_ptr;
@@ -1211,6 +1221,7 @@ struct rt_db_internal	*intern;
 		n = 12;
 
 	intern->idb_type = ID_ELL;
+	intern->idb_meth = &rt_functab[ID_ELL];
 	intern->idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_ell_internal),
 		"rt_ell_internal" );
 	eip = (struct rt_ell_internal *)intern->idb_ptr;
@@ -1282,6 +1293,7 @@ struct rt_db_internal	*intern;
 	CHECK_DBI_NULL;
 
 	intern->idb_type = ID_TOR;
+	intern->idb_meth = &rt_functab[ID_TOR];
 	intern->idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_tor_internal),
 		"rt_tor_internal" );
 	tip = (struct rt_tor_internal *)intern->idb_ptr;
@@ -1323,6 +1335,7 @@ struct rt_db_internal	*intern;
 	CHECK_DBI_NULL;
 
 	intern->idb_type = ID_TGC;
+	intern->idb_meth = &rt_functab[ID_TGC];
 	intern->idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_tgc_internal),
 		"rt_tgc_internal" );
 	tip = (struct rt_tgc_internal *)intern->idb_ptr;
@@ -1375,6 +1388,7 @@ struct rt_db_internal	*intern;
 	CHECK_DBI_NULL;
 
 	intern->idb_type = ID_TGC;
+	intern->idb_meth = &rt_functab[ID_TGC];
 	intern->idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_tgc_internal),
 		"rt_tgc_internal" );
 	tip = (struct rt_tgc_internal *)intern->idb_ptr;
@@ -1421,6 +1435,7 @@ struct rt_db_internal	*intern;
 	CHECK_DBI_NULL;
 
 	intern->idb_type = ID_TGC;
+	intern->idb_meth = &rt_functab[ID_TGC];
 	intern->idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_tgc_internal),
 		"rt_tgc_internal" );
 	tip = (struct rt_tgc_internal *)intern->idb_ptr;
@@ -1463,6 +1478,7 @@ struct rt_db_internal	*intern;
 	CHECK_DBI_NULL;
 
 	intern->idb_type = ID_TGC;
+	intern->idb_meth = &rt_functab[ID_TGC];
 	intern->idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_tgc_internal),
 		"rt_tgc_internal" );
 	tip = (struct rt_tgc_internal *)intern->idb_ptr;
@@ -1505,6 +1521,7 @@ struct rt_db_internal	*intern;
 	CHECK_DBI_NULL;
 
 	intern->idb_type = ID_TGC;
+	intern->idb_meth = &rt_functab[ID_TGC];
 	intern->idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_tgc_internal),
 		"rt_tgc_internal" );
 	tip = (struct rt_tgc_internal *)intern->idb_ptr;
@@ -1555,6 +1572,7 @@ struct rt_db_internal	*intern;
 	CHECK_DBI_NULL;
 
 	intern->idb_type = ID_ARB8;
+	intern->idb_meth = &rt_functab[ID_ARB8];
 	intern->idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_arb_internal),
 		"rt_arb_internal" );
 	aip = (struct rt_arb_internal *)intern->idb_ptr;
@@ -1612,6 +1630,7 @@ struct rt_db_internal	*intern;
 	CHECK_DBI_NULL;
 
 	intern->idb_type = ID_ARB8;
+	intern->idb_meth = &rt_functab[ID_ARB8];
 	intern->idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_arb_internal),
 		"rt_arb_internal" );
 	aip = (struct rt_arb_internal *)intern->idb_ptr;
@@ -1664,6 +1683,7 @@ struct rt_db_internal	*intern;
 	CHECK_DBI_NULL;
 
 	intern->idb_type = ID_PARTICLE;
+	intern->idb_meth = &rt_functab[ID_PARTICLE];
 	intern->idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_part_internal),
 		"rt_part_internal" );
 	part_ip = (struct rt_part_internal *)intern->idb_ptr;
@@ -1703,6 +1723,7 @@ struct rt_db_internal	*intern;
 	CHECK_DBI_NULL;
 
 	intern->idb_type = ID_RPC;
+	intern->idb_meth = &rt_functab[ID_RPC];
 	intern->idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_rpc_internal),
 		"rt_rpc_internal" );
 	rip = (struct rt_rpc_internal *)intern->idb_ptr;
@@ -1742,6 +1763,7 @@ struct rt_db_internal	*intern;
 	CHECK_DBI_NULL;
 
 	intern->idb_type = ID_RHC;
+	intern->idb_meth = &rt_functab[ID_RHC];
 	intern->idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_rhc_internal),
 		"rt_rhc_internal" );
 	rip = (struct rt_rhc_internal *)intern->idb_ptr;
@@ -1782,6 +1804,7 @@ struct rt_db_internal	*intern;
 	CHECK_DBI_NULL;
 
 	intern->idb_type = ID_EPA;
+	intern->idb_meth = &rt_functab[ID_EPA];
 	intern->idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_epa_internal),
 		"rt_epa_internal" );
 	rip = (struct rt_epa_internal *)intern->idb_ptr;
@@ -1826,6 +1849,7 @@ struct rt_db_internal	*intern;
 	CHECK_DBI_NULL;
 
 	intern->idb_type = ID_EHY;
+	intern->idb_meth = &rt_functab[ID_EHY];
 	intern->idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_ehy_internal),
 		"rt_ehy_internal" );
 	rip = (struct rt_ehy_internal *)intern->idb_ptr;
@@ -1871,6 +1895,7 @@ struct rt_db_internal	*intern;
 	CHECK_DBI_NULL;
 
 	intern->idb_type = ID_ETO;
+	intern->idb_meth = &rt_functab[ID_ETO];
 	intern->idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_eto_internal),
 		"rt_eto_internal" );
 	eip = (struct rt_eto_internal *)intern->idb_ptr;

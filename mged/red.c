@@ -544,6 +544,7 @@ char *str;
 
   RT_INIT_DB_INTERNAL( &intern );
   intern.idb_type = ID_COMBINATION;
+  intern.idb_meth = &rt_functab[ID_COMBINATION];
   intern.idb_ptr = (genptr_t)comb;
   comb->tree = final_tree;
 
@@ -1602,6 +1603,7 @@ char *old_name;
 
 	RT_INIT_DB_INTERNAL( &intern );
 	intern.idb_type = ID_COMBINATION;
+	intern.idb_meth = &rt_functab[ID_COMBINATION];
 	intern.idb_ptr = (genptr_t)comb;
 	comb->tree = final_tree;
 
