@@ -429,11 +429,11 @@ struct soltab		*stp;
 	u = hitp->hit_vpriv[0];
 	v = hitp->hit_vpriv[1];
 	
-	us = (struct snurb *) rt_nurb_s_diff(srf, ROW);
-	vs = (struct snurb *) rt_nurb_s_diff(srf, COL);
-	uus = (struct snurb *) rt_nurb_s_diff(us, ROW);
-	vvs = (struct snurb *) rt_nurb_s_diff(vs, COL);
-	uvs = (struct snurb *) rt_nurb_s_diff(vs, ROW);
+	us = (struct snurb *) rt_nurb_s_diff(srf, RT_NURB_SPLIT_ROW);
+	vs = (struct snurb *) rt_nurb_s_diff(srf, RT_NURB_SPLIT_COL);
+	uus = (struct snurb *) rt_nurb_s_diff(us, RT_NURB_SPLIT_ROW);
+	vvs = (struct snurb *) rt_nurb_s_diff(vs, RT_NURB_SPLIT_COL);
+	uvs = (struct snurb *) rt_nurb_s_diff(vs, RT_NURB_SPLIT_ROW);
 	
 	se = (fastf_t *) rt_nurb_s_eval(srf, u, v);
 	ue = (fastf_t *) rt_nurb_s_eval(us, u,v);
@@ -448,7 +448,7 @@ struct soltab		*stp;
 	rt_nurb_free_snurb( vvs);
 	rt_nurb_free_snurb( uvs);
 
-	if( EXTRACT_RAT( srf->mesh->pt_type ))
+	if( RT_NURB_IS_PT_RATIONAL( srf->mesh->pt_type ))
 	{
 		for( i = 0; i < 3; i++)
 		{
@@ -636,12 +636,12 @@ struct rt_tol		*tol;
 		tau1 = (struct knot_vector *) rt_nurb_kvmerge(tkv1, n->u_knots);
 		tau2 = (struct knot_vector *) rt_nurb_kvmerge(tkv2, n->v_knots);
 
-		r = (struct snurb *) rt_nurb_s_refine( n, COL, tau2);
-		c = (struct snurb *) rt_nurb_s_refine( r, ROW, tau1);
+		r = (struct snurb *) rt_nurb_s_refine( n, RT_NURB_SPLIT_COL, tau2);
+		c = (struct snurb *) rt_nurb_s_refine( r, RT_NURB_SPLIT_ROW, tau1);
 
-		coords = EXTRACT_COORDS(n->mesh->pt_type);
+		coords = RT_NURB_EXTRACT_COORDS(n->mesh->pt_type);
 	
-		if( EXTRACT_RAT(n->mesh->pt_type))
+		if( RT_NURB_IS_PT_RATIONAL(n->mesh->pt_type))
 		{
 			vp = c->mesh->ctl_points;
 			for(i= 0; 
@@ -756,9 +756,9 @@ register CONST mat_t		mat;
 		int			pt_type;
 		
 		if( rp->d.d_geom_type == 3)
-			pt_type = MAKE_PT_TYPE(3,PT_XYZ,0);
+			pt_type = RT_NURB_MAKE_PT_TYPE(3,RT_NURB_RT_NURB_PT_XYZ,0);
 		else
-			pt_type = MAKE_PT_TYPE(4,PT_XYZ,1);
+			pt_type = RT_NURB_MAKE_PT_TYPE(4,RT_NURB_RT_NURB_PT_XYZ,1);
 
 		sip->srfs[s] = (struct snurb *) rt_nurb_new_snurb(
 			rp->d.d_order[0],rp->d.d_order[1],
@@ -895,7 +895,7 @@ plane_t plane2;
 				
 				continue;
 			}
-			if ( dir == ROW)
+			if ( dir == RT_NURB_SPLIT_ROW)
 			{
 		                smin = (1.0 - smin) * psrf->u_knots->knots[0] +
                 		        smin * psrf->u_knots->knots[
@@ -975,7 +975,7 @@ struct uv_hit * h;
 	
 	pt = (fastf_t *) rt_nurb_s_eval(n->srf, h->u, h->v);
 
-	if( EXTRACT_RAT(n->srf->mesh->pt_type) )
+	if( RT_NURB_IS_PT_RATIONAL(n->srf->mesh->pt_type) )
 	{
 		hit->hit_point[0] = pt[0] / pt[3];
 		hit->hit_point[1] = pt[1] / pt[3];
@@ -1125,7 +1125,7 @@ double				local2mm;
 		rec[rec_ptr].d.d_ctl_size[0] = 	sip->srfs[s]->mesh->s_size[0];
 		rec[rec_ptr].d.d_ctl_size[1] = 	sip->srfs[s]->mesh->s_size[1];
 		rec[rec_ptr].d.d_geom_type = 
-			EXTRACT_COORDS(sip->srfs[s]->mesh->pt_type);
+			RT_NURB_EXTRACT_COORDS(sip->srfs[s]->mesh->pt_type);
 
 		vp = (double *) &rec[rec_ptr +1];
 		for(n = 0; n < rec[rec_ptr].d.d_kv_size[0]; n++)
@@ -1164,7 +1164,7 @@ struct snurb * srf;
 		srf->v_knots->k_size;
 	grans += (total_knots+7)/8;
 
-	total_points = EXTRACT_COORDS(srf->mesh->pt_type) *
+	total_points = RT_NURB_EXTRACT_COORDS(srf->mesh->pt_type) *
 		(srf->mesh->s_size[0] +
 		srf->mesh->s_size[1]);
 
@@ -1239,7 +1239,7 @@ double			mm2local;
 		/* print out all the points */
 		for(i=0; i < np->mesh->s_size[0]; i++)
 		{
-			sprintf( buf,"\tROW %d:\n", i);
+			sprintf( buf,"\tRT_NURB_SPLIT_ROW %d:\n", i);
 			rt_vls_strcat( str, buf );
 			for( j = 0; j < np->mesh->s_size[1]; j++)
 			{
@@ -1248,7 +1248,7 @@ double			mm2local;
 					mp[Y] * mm2local, 
 					mp[Z] * mm2local);
 				rt_vls_strcat( str, buf);
-				mp += EXTRACT_COORDS(np->mesh->pt_type);
+				mp += RT_NURB_EXTRACT_COORDS(np->mesh->pt_type);
 			}
 		}
 	}
@@ -1268,10 +1268,10 @@ point_t vmin, vmax;
 
 	ptr = srf->mesh->ctl_points;
 
-	coords = EXTRACT_COORDS(srf->mesh->pt_type);
+	coords = RT_NURB_EXTRACT_COORDS(srf->mesh->pt_type);
 
-	for( i = (srf->mesh->s_size[ROW] * 
-	    srf->mesh->s_size[COL] ); i > 0; i--)
+	for( i = (srf->mesh->s_size[RT_NURB_SPLIT_ROW] * 
+	    srf->mesh->s_size[RT_NURB_SPLIT_COL] ); i > 0; i--)
 	{
 		V_MIN( (vmin[0]), (ptr[0]));
 		V_MAX( (vmax[0]), (ptr[0]));
