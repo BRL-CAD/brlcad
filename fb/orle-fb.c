@@ -213,7 +213,7 @@ register int	dma_scans;
 	for( i = 0; i < dma_scans; ++i )
 		{
 #ifdef BSD
-		bcopy( (char *)buff_p, (char *)scan_p, scan_bytes );
+		bcopy( (char *)scan_p, (char *)buff_p, scan_bytes );
 #else
 		memcpy( (char *)scan_p, (char *)buff_p, scan_bytes );
 #endif
