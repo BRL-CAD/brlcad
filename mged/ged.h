@@ -7,12 +7,12 @@
  *	     V E R Y   I M P O R T A N T   N O T I C E ! ! !
  *
  *  Many people in the computer graphics field use post-multiplication,
- *  (thanks to Newman and Sproull) with column vectors, ie:
+ *  (thanks to Newman and Sproull) with row vectors, ie:
  *
  *		view_vec = model_vec * T
  *
  *  However, in the GED system, the more traditional representation
- *  of row vectors is used (ref: Gwyn).  Therefore, when transforming
+ *  of column vectors is used (ref: Gwyn).  Therefore, when transforming
  *  a vector by a matrix, pre-multiplication is used, ie:
  *
  *		view_vec = model2view_mat * model_vec
