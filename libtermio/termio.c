@@ -10,41 +10,35 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
 #include <fcntl.h>
 
-#ifndef _NFILE
-#define _NFILE	64
-#endif
+#include "machine.h"
 
 /*
  *  This file will work IFF one of these three flags is set:
- *	_POSIX_SOURCE	use POXIX termios and tcsetattr() call
+ *	HAVE_XOPEN	use POXIX termios and tcsetattr() call with XOPEN flags
  *	SYSV		use SysV Rel3 termio and TCSETA ioctl
  *	BSD		use Version 7 / BSD sgttyb and TIOCSETP ioctl
  */
 
-#if defined(_POSIX_SOURCE) || defined(_POSIX_C_SOURCE)
-#  if defined(_POSIX_C_SOURCE) && !defined(_POSIX_SOURCE)
-#	define _POSIX_SOURCE 1
-#  endif
-#  if !defined(_XOPEN_SOURCE)
-#	define _XOPEN_SOURCE 1	/* to get TAB3, etc */
-#  endif
+#if defined(HAVE_XOPEN)
 #  undef SYSV
 #  undef BSD
 #  include <termios.h>
 #  include <memory.h>
 
-static struct termios	save_tio[_NFILE], curr_tio[_NFILE];
+static struct termios	save_tio[FOPEN_MAX], curr_tio[FOPEN_MAX];
 
-#else	/* !defined(_POSIX_SOURCE) */
+#else	/* !defined(HAVE_XOPEN) */
 
 #  ifdef SYSV
 #    undef BSD
 #    include <termio.h>
 #    include <memory.h>
-	static struct termio	save_tio[_NFILE], curr_tio[_NFILE];
+	static struct termio	save_tio[FOPEN_MAX], curr_tio[FOPEN_MAX];
 #  endif /* SYSV */
 
 #  ifdef BSD
@@ -54,12 +48,12 @@ static struct termios	save_tio[_NFILE], curr_tio[_NFILE];
 #	define	XTABS	(TAB1 | TAB2)
 #      endif /* XTABS */
 
-	static struct sgttyb	save_tio[_NFILE], curr_tio[_NFILE];
+	static struct sgttyb	save_tio[FOPEN_MAX], curr_tio[FOPEN_MAX];
 #  endif /* BSD */
 
-#endif /* _POSIX_SOURCE */
+#endif /* HAVE_XOPEN */
 
-static int		fileStatus[_NFILE];
+static int		fileStatus[FOPEN_MAX];
 int			reset_Fil_Stat();
 void			save_Tty(), reset_Tty();
 void			set_Cbreak(), clr_Cbreak();
@@ -90,7 +84,7 @@ int	fd;
 #endif
 	(void) ioctl( fd, TCSETA, &curr_tio[fd] );
 #endif
-#ifdef _POSIX_SOURCE
+#ifdef HAVE_XOPEN
 	curr_tio[fd].c_lflag |= ICANON;		/* Canonical input ON.	*/
 	curr_tio[fd].c_cc[VEOF] = 4;		/* defaults!		*/
 	curr_tio[fd].c_cc[VEOL] = 0;		/*   best we can do.... */
@@ -118,7 +112,7 @@ int	fd;
 #endif
 	(void) ioctl( fd, TCSETA, &curr_tio[fd] );
 #endif
-#ifdef _POSIX_SOURCE
+#ifdef HAVE_XOPEN
 	curr_tio[fd].c_lflag &= ~ICANON;	/* Canonical input OFF. */
 	curr_tio[fd].c_cc[VMIN] = 1;
 	curr_tio[fd].c_cc[VTIME] = 0;
@@ -147,7 +141,7 @@ int	fd;
 #endif
 	(void) ioctl( fd, TCSETA, &curr_tio[fd] );
 #endif
-#ifdef _POSIX_SOURCE
+#ifdef HAVE_XOPEN
 	curr_tio[fd].c_lflag |= ICANON;		/* Canonical input ON.	*/
 	curr_tio[fd].c_lflag |= ISIG;		/* Signals ON.		*/
 	curr_tio[fd].c_cc[VEOF] = 4;		/* defaults!		*/
@@ -177,7 +171,7 @@ int	fd;
 #endif
 	(void) ioctl( fd, TCSETA, &curr_tio[fd] );
 #endif
-#ifdef _POSIX_SOURCE
+#ifdef HAVE_XOPEN
 	curr_tio[fd].c_lflag &= ~ICANON;	/* Canonical input OFF. */
 	curr_tio[fd].c_lflag &= ~ISIG;		/* Signals OFF.		*/
 	curr_tio[fd].c_cc[VMIN] = 1;
@@ -202,7 +196,7 @@ int	fd;
 	curr_tio[fd].c_lflag |= ECHO;		/* Echo mode ON.	*/
 	(void) ioctl( fd, TCSETA, &curr_tio[fd] );
 #endif
-#ifdef _POSIX_SOURCE
+#ifdef HAVE_XOPEN
 	curr_tio[fd].c_lflag |= ECHO;		/* Echo mode ON.	*/
 	(void)tcsetattr( fd, TCSANOW, &curr_tio[fd] );
 #endif
@@ -224,7 +218,7 @@ int	fd;
 	curr_tio[fd].c_lflag &= ~ECHO;		/* Echo mode OFF.	*/
 	(void) ioctl( fd, TCSETA, &curr_tio[fd] );
 #endif
-#ifdef _POSIX_SOURCE
+#ifdef HAVE_XOPEN
 	curr_tio[fd].c_lflag &= ~ECHO;		/* Echo mode OFF.	*/
 	(void)tcsetattr( fd, TCSANOW, &curr_tio[fd] );
 #endif
@@ -248,7 +242,7 @@ int	fd;
 #endif
 	(void) ioctl( fd, TCSETA, &curr_tio[fd] );
 #endif
-#ifdef _POSIX_SOURCE
+#ifdef HAVE_XOPEN
 	curr_tio[fd].c_oflag |= TAB3;		/* Tab expansion ON.	*/
 	(void)tcsetattr( fd, TCSANOW, &curr_tio[fd] );
 #endif
@@ -272,7 +266,7 @@ int	fd;
 #endif
 	(void) ioctl( fd, TCSETA, &curr_tio[fd] );
 #endif
-#ifdef _POSIX_SOURCE
+#ifdef HAVE_XOPEN
 	curr_tio[fd].c_oflag &= ~TAB3;		/* Tab expans. OFF.	*/
 	(void)tcsetattr( fd, TCSANOW, &curr_tio[fd] );
 #endif
@@ -295,7 +289,7 @@ int	fd;
 	(void) ioctl( fd, TCSETA, &curr_tio[fd] );
 #endif
 #endif
-#ifdef _POSIX_SOURCE
+#ifdef HAVE_XOPEN
 	curr_tio[fd].c_cflag |= HUPCL;
 	(void)tcsetattr( fd, TCSANOW, &curr_tio[fd] );
 #endif
@@ -319,7 +313,7 @@ clr_CRNL( fd )
 #endif
 	(void) ioctl( fd, TCSETA, &curr_tio[fd] );
 #endif
-#ifdef _POSIX_SOURCE
+#ifdef HAVE_XOPEN
 	curr_tio[fd].c_oflag &= ~(ONLCR|OCRNL);
 	curr_tio[fd].c_iflag &= ~(ICRNL|INLCR);
 	(void)tcsetattr( fd, TCSAFLUSH, &curr_tio[fd] );
@@ -340,7 +334,7 @@ get_O_Speed( fd )
 	return	save_tio[fd].c_cflag & CBAUD;
 #endif
 #endif
-#ifdef _POSIX_SOURCE
+#ifdef HAVE_XOPEN
 	return	cfgetospeed( &save_tio[fd] );
 #endif
 	}
@@ -358,7 +352,7 @@ int	fd;
 #ifdef SYSV
 	(void) ioctl( fd, TCGETA, &save_tio[fd] );
 #endif
-#ifdef _POSIX_SOURCE
+#ifdef HAVE_XOPEN
 	(void)tcgetattr( fd, &save_tio[fd] );
 #endif
 	copy_Tio( &curr_tio[fd], &save_tio[fd] );
@@ -379,7 +373,7 @@ int	fd;
 #if SYSV
 	(void) ioctl( fd, TCSETA, &save_tio[fd] ); /* Write setting.		*/
 #endif
-#if _POSIX_SOURCE
+#if HAVE_XOPEN
 	(void)tcsetattr( fd, TCSAFLUSH, &save_tio[fd] );
 #endif
 	return;
@@ -413,7 +407,7 @@ int	fd;
 #if defined(SYSV) || defined(BSD)
 	return	fcntl( fd, F_SETFL, O_NDELAY );
 #endif
-#if _POSIX_SOURCE
+#if HAVE_XOPEN
 	return	fcntl( fd, F_SETFL, FNDELAY );
 #endif
 	}
@@ -427,7 +421,7 @@ struct sgttyb	*to, *from;
 #ifdef SYSV
 struct termio	*to, *from;
 #endif
-#ifdef _POSIX_SOURCE
+#ifdef HAVE_XOPEN
 struct termios	*to;
 struct termios	*from;
 #endif
@@ -438,7 +432,7 @@ struct termios	*from;
 #ifdef SYSV
 	(void) memcpy( (char *) to, (char *) from, sizeof(struct termio) );
 #endif
-#ifdef _POSIX_SOURCE
+#ifdef HAVE_XOPEN
 	(void) memcpy( (char *) to, (char *) from, sizeof(struct termios) );
 #endif
 	return;
@@ -454,7 +448,7 @@ struct sgttyb	*tio_ptr;
 #ifdef SYSV
 struct termio	*tio_ptr;
 #endif
-#ifdef _POSIX_SOURCE
+#ifdef HAVE_XOPEN
 struct termios	*tio_ptr;
 #endif
 	{	register int	i;
@@ -482,7 +476,7 @@ struct termios	*tio_ptr;
 				);
 		}
 #endif
-#ifdef _POSIX_SOURCE
+#ifdef HAVE_XOPEN
 
 	(void) fprintf( stderr, "\tc_iflag=0x%x\n\r", tio_ptr->c_iflag );
 	(void) fprintf( stderr, "\tc_oflag=0x%x\n\r", tio_ptr->c_oflag );
