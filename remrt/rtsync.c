@@ -977,7 +977,12 @@ struct pkg_conn	*pcp;
 	}
 	bu_log("%s Connection from %s\n", stamp(), host->ht_name);
 
-	for( i = MAX_NODES-1; i >= 0; i-- )  {
+	/* Make this scan go low-to-high, so that new machines get
+	 * added in on the bottom.
+	 * Since new work is allocated bottom-to-top, it makes sure
+	 * new machines get a change to have their speed measured.
+	 */
+	for( i=0; i < MAX_NODES; i++ )  {
 		if( rtnodes[i].fd != 0 )  continue;
 		/* Found an available slot */
 		bzero( (char *)&rtnodes[i], sizeof(rtnodes[0]) );
