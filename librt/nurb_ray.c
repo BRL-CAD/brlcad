@@ -20,11 +20,14 @@
 #include <stdio.h>
 #include "machine.h"
 #include "vmath.h"
+#include "nmg.h"
+#include "raytrace.h"
 #include "nurb.h"
+#include "../librt/debug.h"
 
 struct snurb *
 rt_nurb_project_srf( srf, plane1, plane2)
-struct snurb *srf;
+CONST struct snurb *srf;
 plane_t plane1, plane2;
 {
 
@@ -42,7 +45,6 @@ plane_t plane1, plane2;
 	    srf->u_knots.k_size, srf->v_knots.k_size,
 	    srf->s_size[0], srf->s_size[1], n_pt_type);
 
-	psrf->next = (struct snurb *)0;
 	psrf->dir = RT_NURB_SPLIT_COL;
 
 	for ( i = 0; i < srf->u_knots.k_size; i++) {
@@ -103,7 +105,7 @@ struct internal_convex_hull {
 
 void
 rt_nurb_clip_srf( srf, dir, min, max)
-struct snurb *srf;
+CONST struct snurb *srf;
 int	dir;
 fastf_t *min, *max;
 {
@@ -268,10 +270,12 @@ fastf_t *min, *max;
 			*max = 1.0;	}
 }
 
-
+/*
+ *			R T _ N U R B _ R E G I O N _ F R O M _ S R F
+ */
 struct snurb *
 rt_nurb_region_from_srf( srf, dir, param1, param2)
-struct snurb *srf;
+CONST struct snurb *srf;
 int	dir;
 fastf_t param1, param2;
 {
@@ -304,23 +308,25 @@ fastf_t param1, param2;
 
 	}
 
-	region = (struct snurb *)
-		rt_nurb_s_refine( srf, dir, &new_knots);
+	region = rt_nurb_s_refine( srf, dir, &new_knots);
 
 	rt_free( (char *)new_knots.knots, "rt_nurb_region_from_srf:knotvalues");
 
 	return region;
 }
 
+/*
+ *			R T _ N U R B _ I N T E R S E C T
+ */
 struct rt_nurb_uv_hit *
-rt_nurb_intersect( srf, plane1, plane2)
-struct snurb * srf;
+rt_nurb_intersect( srf, plane1, plane2, uv_tol )
+CONST struct snurb * srf;
 plane_t plane1;
 plane_t plane2;
+double	uv_tol;
 {
 	struct rt_nurb_uv_hit * h;
 	struct snurb 	* psrf,
-			* s_list,
 			* osrf;
 	int 		dir,
 			sub;
@@ -329,26 +335,31 @@ plane_t plane2;
 			vmax;
 	fastf_t 	u[2],
 			v[2];
+	struct rt_list	plist;
 
+	NMG_CK_SNURB(srf);
 
 	h = (struct rt_nurb_uv_hit *) 0;
+	RT_LIST_INIT( &plist );
+
 	/* project the surface to a 2 dimensional problem */
-	s_list = (struct snurb * ) rt_nurb_project_srf(
-		srf, plane2, plane1);
+	/* NOTE that this gives a single snurb back, NOT a list */
+	psrf = rt_nurb_project_srf( srf, plane2, plane1 );
+	psrf->dir = 1;
+	RT_LIST_APPEND( &plist, &psrf->l );
 
 	if( rt_g.debug & DEBUG_SPLINE )
-		rt_nurb_s_print("srf", s_list);
-
-
-	s_list->dir = 1;
-
-	while ( s_list != ( struct snurb *)0)
-	{
+		rt_nurb_s_print("srf", psrf);
+	
+	/* This list starts out with only a single snurb,
+	 * but more may be added on as work progresses.
+	 */
+top:
+	while( RT_LIST_WHILE( psrf, snurb, &plist ) )  {
 		int flat;
 		
-		psrf = s_list;
-		s_list = s_list->next;
-
+		RT_LIST_DEQUEUE( &psrf->l );
+		NMG_CK_SNURB(psrf);
 		sub = 0;
 		flat = 0;
 		dir = psrf->dir;
@@ -376,28 +387,17 @@ plane_t plane2;
 
 			rt_nurb_clip_srf( psrf, dir, &smin, &smax);
 
-			if( (smax - smin) > .8)
-			{
-				struct snurb * s;
-
-				s = (struct snurb *) rt_nurb_s_split(
-					psrf, dir );
-				s->dir = dir;
-				s->next->dir = dir;
-				s->next->next = s_list;
-				s_list = s->next;
-				
+			if( (smax - smin) > .8)  {
+				/* Split surf, requeue both sub-surfs at head */
+				/* New surfs will have same dir as arg, here */
+				rt_nurb_s_split( &plist, psrf, dir );
 				rt_nurb_free_snurb( psrf );
-
-				psrf = s;
-				psrf->next = (struct snurb *) 0;
-				continue;
+				goto top;
 			}
 			if( smin > 1.0 || smax < 0.0 )
 			{
 				flat = 1;
 				rt_nurb_free_snurb( psrf );
-				
 				continue;
 			}
 			if ( dir == RT_NURB_SPLIT_ROW)
@@ -431,8 +431,7 @@ plane_t plane2;
 			v[0] = psrf->v_knots.knots[0];
 			v[1] = psrf->v_knots.knots[psrf->v_knots.k_size -1];
 			
-#define UV_TOL	1.0e-6	/* Paper says 1.0e-4 is reasonable for 1k images, not close up */
-                        if( (u[1] - u[0]) < UV_TOL && (v[1] - v[0]) < UV_TOL)
+                        if( (u[1] - u[0]) < uv_tol && (v[1] - v[0]) < uv_tol)
                         {
 				struct rt_nurb_uv_hit * hit;
                         	hit = (struct rt_nurb_uv_hit *) rt_malloc(

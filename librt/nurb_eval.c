@@ -20,6 +20,8 @@
 #include <math.h>
 #include "machine.h"
 #include "vmath.h"
+#include "nmg.h"
+#include "raytrace.h"
 #include "nurb.h"
 
 /* Algorithm -
@@ -31,7 +33,7 @@
 
 fastf_t *
 rt_nurb_s_eval( srf, u, v )
-struct snurb *srf;
+CONST struct snurb *srf;
 fastf_t	u;
 fastf_t v;
 {
@@ -44,8 +46,9 @@ fastf_t v;
 	fastf_t * diff_curve, *ev_pt;
 	fastf_t * final_value;
 	int	k_index;
-
 	int	coords = RT_NURB_EXTRACT_COORDS(srf->pt_type);
+
+	NMG_CK_SNURB(srf);
 
 	final_value = (fastf_t * ) rt_malloc( 
 	    sizeof (fastf_t) * coords,
@@ -104,15 +107,16 @@ fastf_t v;
 
 fastf_t *
 rt_nurb_c_eval( crv, param)
-struct cnurb *crv;
+CONST struct cnurb *crv;
 fastf_t param;
 {
-
 	fastf_t * pnts;
 	fastf_t * final_value;
 	fastf_t * ev_pt;
 	int	coords;
 	int	i, k_index;
+
+	NMG_CK_CNURB(crv);
 
 	coords = RT_NURB_EXTRACT_COORDS( crv->pt_type);
 
@@ -144,7 +148,7 @@ rt_nurb_eval_crv( crv, order, param, k_vec, k_index, coords )
 register fastf_t *crv;
 int	order;
 fastf_t	param;
-struct knot_vector *k_vec;
+CONST struct knot_vector *k_vec;
 int	k_index;
 int	coords;
 {

@@ -1,4 +1,5 @@
-/*	 	N U R B _ S P L I T . C
+/*
+ *			N U R B _ S P L I T . C
  *
  * Function -
  * 	Subdivide a nurb surface by inserting a multiple knot of
@@ -22,6 +23,8 @@
 #include <stdio.h>
 #include "machine.h"
 #include "vmath.h"
+#include "nmg.h"
+#include "raytrace.h"
 #include "nurb.h"
 
 /* Algorithm
@@ -33,12 +36,14 @@
  * add multiple knots at the mid point of the knot vector. Use the new
  * knot vector to pass to the oslo refinement process and split the surface.
  * Separate the surface and return the two resulting surface.
+ *
+ *  The original surface is undisturbed by this operation.
  */
-
-struct snurb *
-rt_nurb_s_split( srf, dir)
-struct snurb * srf;
-int dir;
+void
+rt_nurb_s_split( split_hd, srf, dir )
+struct rt_list	*split_hd;
+CONST struct snurb 	*srf;
+int		dir;
 {
 	struct knot_vector new_kv;
 	fastf_t value;
@@ -46,6 +51,8 @@ int dir;
 	int i;
 	int k_index;
 	struct snurb * srf1, * srf2;
+
+	NMG_CK_SNURB(srf);
 
 	if ( dir == RT_NURB_SPLIT_ROW )
 	{
@@ -70,8 +77,7 @@ int dir;
 		oslo = ( struct oslo_mat *) 
 			rt_nurb_calc_oslo( srf->order[RT_NURB_SPLIT_ROW], &srf->u_knots, &new_kv);
 
-		srf1 = (struct snurb *) rt_malloc( sizeof( struct snurb),
-			"rt_nurb_s_split: row snurb struct");
+		GET_SNURB( srf1 );
 		srf1->order[0]  = srf->order[0];
 		srf1->order[1]  = srf->order[1];
 		srf1->dir = RT_NURB_SPLIT_ROW;
@@ -90,8 +96,7 @@ int dir;
 				RT_NURB_EXTRACT_COORDS( srf1->pt_type),
 				"rt_nurb_s_split: srf1 row mesh control points");
 
-		srf2 = (struct snurb *) rt_malloc( sizeof( struct snurb),
-			"rt_nurb_s_split: row snurb struct");
+		GET_SNURB( srf2 );
 		srf2->order[0]  = srf->order[0];
 		srf2->order[1]  = srf->order[1];
 		srf2->dir = RT_NURB_SPLIT_ROW;
@@ -158,8 +163,7 @@ int dir;
 		oslo = ( struct oslo_mat *) 
 			rt_nurb_calc_oslo( srf->order[RT_NURB_SPLIT_COL], &srf->v_knots, &new_kv);
 
-		srf1 = (struct snurb *) rt_malloc( sizeof( struct snurb),
-			"rt_nurb_s_split: col snurb struct");
+		GET_SNURB( srf1 );
 		srf1->order[0]  = srf->order[0];
 		srf1->order[1]  = srf->order[1];
 		srf1->dir = RT_NURB_SPLIT_COL;
@@ -178,8 +182,7 @@ int dir;
 				RT_NURB_EXTRACT_COORDS( srf1->pt_type),
 				"rt_nurb_s_split: srf1 col mesh control points");
 
-		srf2 = (struct snurb *) rt_malloc( sizeof( struct snurb),
-			"rt_nurb_s_split: col snurb struct");
+		GET_SNURB( srf2 );
 		srf2->order[0]  = srf->order[0];
 		srf2->order[1]  = srf->order[1];
 		srf2->dir = RT_NURB_SPLIT_COL;
@@ -225,16 +228,17 @@ int dir;
 		}
 	}
 	
-	srf1->next = srf2;
-	srf2->next = (struct snurb *)0;
+	/* Arrangement will be:  head, srf1, srf2 */
+	RT_LIST_APPEND( split_hd, &srf2->l );
+	RT_LIST_APPEND( split_hd, &srf1->l );
 
 	rt_nurb_free_oslo(oslo);
 	rt_free( (char *)new_kv.knots, "rt_nurb_s_split: new kv knots");
-
-	return (struct snurb *) srf1;
 }
 
-/* rt_nurb_c_split()
+/*
+ *			R T _ N U R B _ C _ S P L I T
+ *
  * Split a NURB curve by inserting a multiple knot and return
  * the result of the two curves.
  *
@@ -246,11 +250,13 @@ int dir;
  * add multiple knots at the mid point of the knot vector. Use the new
  * knot vector to pass to the oslo refinement process and split the curve.
  * Separate the curve and return the two resulting curves.
+ *
+ *  The original curve is undisturbed by this operation.
  */
-
-struct cnurb *
-rt_nurb_c_split( crv)
-struct cnurb * crv;
+void
+rt_nurb_c_split( split_hd, crv )
+struct rt_list		*split_hd;
+CONST struct cnurb	*crv;
 {
 	struct knot_vector new_kv;
 	fastf_t value;
@@ -259,6 +265,8 @@ struct cnurb * crv;
 	int k_index;
 	struct cnurb * crv1, * crv2;
 	int coords;
+
+	NMG_CK_CNURB(crv);
 
 	coords = RT_NURB_EXTRACT_COORDS( crv->pt_type ),
 
@@ -283,9 +291,7 @@ struct cnurb * crv;
 	oslo = ( struct oslo_mat *) 
 		rt_nurb_calc_oslo( crv->order, &crv->knot, &new_kv);
 
-	crv1 = (struct cnurb *) rt_malloc( sizeof( struct cnurb),
-		"rt_nurb_c_split: cnurb struct");
-
+	GET_CNURB( crv1 );
 	crv1->order  = crv->order;
 	rt_nurb_kvextract(&crv1->knot, &new_kv, 0, k_index + crv->order);
 	crv1->pt_type = crv->pt_type;
@@ -295,9 +301,7 @@ struct cnurb * crv;
 			RT_NURB_EXTRACT_COORDS( crv1->pt_type),
 			"rt_nurb_c_split: crv1 control points");
 
-	crv2 = (struct cnurb *) rt_malloc( sizeof( struct cnurb),
-		"rt_nurb_c_split: crv2 cnurb struct");
-
+	GET_CNURB( crv2 );
 	crv2->order  = crv->order;
 	rt_nurb_kvextract(&crv2->knot, &new_kv, k_index, new_kv.k_size);
 	crv2->pt_type = crv->pt_type;
@@ -318,6 +322,7 @@ struct cnurb * crv;
 
 	rt_free( (char *) new_kv.knots, "rt_nurb_c_split; new_kv.knots" );
 
-	crv1->next = crv2;
-	return (struct cnurb *) crv1;
+	/* Arrangement will be:  head, crv1, crv2 */
+	RT_LIST_APPEND( split_hd, &crv2->l );
+	RT_LIST_APPEND( split_hd, &crv1->l );
 }

@@ -18,6 +18,8 @@
 #include <stdio.h>
 #include "machine.h"
 #include "vmath.h"
+#include "nmg.h"
+#include "raytrace.h"
 #include "nurb.h"
 
 /* Given a NURB surface and a direction, differentiate the surface
@@ -38,11 +40,13 @@
 
 struct snurb *
 rt_nurb_s_diff( srf, dir )
-struct snurb *srf;
+CONST struct snurb *srf;
 int	dir;
 {
 	struct snurb *nsrf;
 	int	i;
+
+	NMG_CK_SNURB(srf);
 
 	if (dir == RT_NURB_SPLIT_ROW) {
 		nsrf = (struct snurb *)
@@ -112,12 +116,14 @@ int	dir;
 
 struct cnurb *
 rt_nurb_c_diff( crv )
-struct cnurb *crv;
+CONST struct cnurb *crv;
 {
 
 	struct cnurb *ncrv;
 	fastf_t * opts, *npts;
 	int	i;
+
+	NMG_CK_CNURB(crv);
 
 	ncrv = (struct cnurb *) rt_nurb_new_cnurb( crv->order - 1, 
 	    crv->knot.k_size - 2, crv->c_size - 1, 
@@ -141,9 +147,9 @@ struct cnurb *crv;
 void
 rt_nurb_mesh_diff( order, o_pts, n_pts, knots, o_stride, n_stride, o_size, pt_type)
 int	order;
-fastf_t *o_pts;
+CONST fastf_t *o_pts;
 fastf_t *n_pts;
-fastf_t *knots;
+CONST fastf_t *knots;
 int	o_stride;
 int	n_stride;
 int	o_size;

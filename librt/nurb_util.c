@@ -1,4 +1,5 @@
-/*	N U R B _ U T I L . C
+/*
+ *			N U R B _ U T I L . C
  *
  *  Function -
  *	Utilities for NURB curves and surfaces.
@@ -18,9 +19,11 @@
 #include <stdio.h>
 #include "machine.h"
 #include "vmath.h"
+#include "nmg.h"
+#include "raytrace.h"
 #include "nurb.h"
 
-/* Create a paceholder for a nurb surface. */
+/* Create a place holder for a nurb surface. */
 
 struct snurb *
 rt_nurb_new_snurb(u_order, v_order, n_u_knots, n_v_knots, n_rows, n_cols, pt_type)
@@ -29,10 +32,7 @@ int u_order, v_order, n_u_knots, n_v_knots, n_rows, n_cols, pt_type;
 	register struct snurb * srf;
 	int pnum;
 	
-	srf = (struct snurb *) rt_malloc( sizeof ( struct snurb),
-		"rt_nurb_new: snurb struct");
-
-	srf->next = (struct snurb *) 0;
+	GET_SNURB(srf);
 	srf->order[0] = u_order;
 	srf->order[1] = v_order;
 	srf->dir = RT_NURB_SPLIT_ROW;
@@ -63,10 +63,7 @@ int order, n_knots, n_pts, pt_type;
 {
 	register struct cnurb * crv;
 
-	crv = (struct cnurb *) rt_malloc( sizeof(struct cnurb),
-		"rt_nurb_new_cnurb: cnurb struct");
-
-	crv->next = (struct cnurb *) 0;
+	GET_CNURB(crv);
 	crv->order = order;
 
 	crv->knot.k_size = n_knots;
@@ -91,6 +88,7 @@ void
 rt_nurb_free_snurb( srf )
 struct snurb * srf;
 {
+	NMG_CK_SNURB(srf);
     /* assume that links to other surface and curves are already deleted */
 
     rt_free( (char *)srf->u_knots.knots, "rt_nurb_free_snurb: u kv knots" );
@@ -107,6 +105,7 @@ void
 rt_nurb_free_cnurb( crv)
 struct cnurb * crv;
 {
+	NMG_CK_CNURB(crv);
 	rt_free( (char*)crv->knot.knots, "rt_nurb_free_cnurb: knots");
 	rt_free( (char*)crv->ctl_points, "rt_nurb_free_cnurb: control points");
 	rt_free( (char*)crv, "rt_nurb_free_cnurb: cnurb struct");
@@ -115,32 +114,33 @@ struct cnurb * crv;
 
 void
 rt_nurb_c_print( crv)
-struct cnurb * crv;
+CONST struct cnurb * crv;
 {
 	register fastf_t * ptr;
 	int i,j;
 
-	fprintf(stderr,"curve = {\n");
-	fprintf(stderr,"\tOrder = %d\n", crv->order);
-	fprintf(stderr,"\tKnot Vector = {\n\t\t");
+	NMG_CK_CNURB(crv);
+	rt_log("curve = {\n");
+	rt_log("\tOrder = %d\n", crv->order);
+	rt_log("\tKnot Vector = {\n\t\t");
 
 	for( i = 0; i < crv->knot.k_size; i++)
-		fprintf(stderr,"%3.2f  ", crv->knot.knots[i]);
+		rt_log("%3.2f  ", crv->knot.knots[i]);
 
-	fprintf(stderr,"\n\t}\n");
-	fprintf(stderr,"\t");
+	rt_log("\n\t}\n");
+	rt_log("\t");
 	rt_nurb_print_pt_type(crv->pt_type);
-	fprintf(stderr,"\tmesh = {\n");
+	rt_log("\tmesh = {\n");
 	for( ptr = &crv->ctl_points[0], i= 0;
 		i < crv->c_size; i++, ptr += RT_NURB_EXTRACT_COORDS(crv->pt_type))
 	{
-		fprintf(stderr,"\t\t");
+		rt_log("\t\t");
 		for(j = 0; j < RT_NURB_EXTRACT_COORDS(crv->pt_type); j++)
-			fprintf(stderr,"%4.5f\t", ptr[j]);
-		fprintf(stderr,"\n");
+			rt_log("%4.5f\t", ptr[j]);
+		rt_log("\n");
 
 	}
-	fprintf(stderr,"\t}\n}\n");
+	rt_log("\t}\n}\n");
 	
 
 }
@@ -148,18 +148,18 @@ struct cnurb * crv;
 void
 rt_nurb_s_print( c, srf )
 char * c;
-struct snurb * srf;
+CONST struct snurb * srf;
 {
 
-    fprintf ( stderr, "%s\n", c );
+    rt_log("%s\n", c );
 
-    fprintf ( stderr, "order %d %d\n", srf->order[0], srf->order[1] );
+    rt_log("order %d %d\n", srf->order[0], srf->order[1] );
 
-    fprintf(stderr, "u knot vector \n");
+    rt_log( "u knot vector \n");
 
     rt_nurb_pr_kv( &srf->u_knots );
 
-    fprintf(stderr, "v knot vector \n");
+    rt_log( "v knot vector \n");
 
     rt_nurb_pr_kv( &srf->v_knots );
 
@@ -169,45 +169,46 @@ struct snurb * srf;
 
 void
 rt_nurb_pr_kv( kv )
-struct knot_vector * kv;
+CONST struct knot_vector * kv;
 {
     register fastf_t * ptr = kv->knots;
     int i;
 
-    fprintf( stderr, "[%d]\t", kv->k_size );
+    rt_log("[%d]\t", kv->k_size );
 
 
     for( i = 0; i < kv->k_size; i++)
     {
-	fprintf( stderr, "%2.5f  ", *ptr++);
+	rt_log("%2.5f  ", *ptr++);
     }
-    fprintf(stderr,"\n");
+    rt_log("\n");
 }
 
 void
 rt_nurb_pr_mesh( m )
-struct snurb * m;
+CONST struct snurb * m;
 {
-
 	int i,j,k;
 	fastf_t * m_ptr = m->ctl_points;
 	int evp = RT_NURB_EXTRACT_COORDS(m->pt_type);
 
-	fprintf(stderr,"\t[%d] [%d]\n", m->s_size[0], m->s_size[1] );
+	NMG_CK_SNURB(m);
+
+	rt_log("\t[%d] [%d]\n", m->s_size[0], m->s_size[1] );
 
 	for( i = 0; i < m->s_size[0]; i++)
 	{
 		for( j =0; j < m->s_size[1]; j++)
 		{
-			fprintf(stderr,"\t");
+			rt_log("\t");
 
 			for(k = 0; k < evp; k++)
-				fprintf(stderr,"%f    ", m_ptr[k]);
+				rt_log("%f    ", m_ptr[k]);
 
-			fprintf(stderr,"\n");
+			rt_log("\n");
 			m_ptr += RT_NURB_EXTRACT_COORDS(m->pt_type);
 		}
-		fprintf(stderr,"\n");
+		rt_log("\n");
 	}
 }
 
@@ -222,17 +223,16 @@ int c;
 	rat = RT_NURB_IS_PT_RATIONAL(c);
 	
 	if( RT_NURB_EXTRACT_PT_TYPE(c) == RT_NURB_PT_XY)
-		fprintf(stderr,"Point Type = RT_NURB_PT_XY");
+		rt_log("Point Type = RT_NURB_PT_XY");
 	else 
 	if( RT_NURB_EXTRACT_PT_TYPE(c) == RT_NURB_PT_XYZ)
-		fprintf(stderr,"Point Type = RT_NURB_PT_XYX");
+		rt_log("Point Type = RT_NURB_PT_XYX");
 	else 
 	if( RT_NURB_EXTRACT_PT_TYPE(c) == RT_NURB_PT_UV)
-		fprintf(stderr,"Point Type = RT_NURB_PT_UV");
+		rt_log("Point Type = RT_NURB_PT_UV");
 
 	if( rat )
-		fprintf(stderr,"W\n");
+		rt_log("W\n");
 	else
-		fprintf(stderr,"\n");
+		rt_log("\n");
 }
-

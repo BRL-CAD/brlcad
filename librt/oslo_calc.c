@@ -38,10 +38,11 @@
 struct oslo_mat *
 rt_nurb_calc_oslo(order, tau_kv, t_kv )
 register int order;
-register struct knot_vector * tau_kv;	/* old knot vector */
-register struct knot_vector * t_kv;	/* new knot vector */
+register CONST struct knot_vector * tau_kv;	/* old knot vector */
+register struct knot_vector * t_kv;		/* new knot vector */
 {
-	register fastf_t * t_p, * tau_p;
+	register fastf_t	*t_p;
+	register CONST fastf_t	*tau_p;
 	fastf_t ah[20];
 	fastf_t newknots[20];			/* new knots */
 	register int  j;			/* d(j), j = 0 : # of new ctl points */

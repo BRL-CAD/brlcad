@@ -1,4 +1,5 @@
-/*	 	N U R B _ S P L I T . C
+/*
+ *			N U R B _ S P L I T . C
  *
  * Function -
  * 	Subdivide a nurb surface by inserting a multiple knot of
@@ -22,6 +23,8 @@
 #include <stdio.h>
 #include "machine.h"
 #include "vmath.h"
+#include "nmg.h"
+#include "raytrace.h"
 #include "nurb.h"
 
 /* Algorithm
@@ -35,7 +38,7 @@
  */
 
 struct snurb *
-rt_nurb_s_xsplit( srf,param, dir)
+rt_nurb_s_xsplit( srf, param, dir)
 struct snurb * srf;
 fastf_t param;
 int dir;
@@ -47,6 +50,8 @@ int dir;
 	int k_index;
 	struct snurb * srf1, * srf2;
 
+	NMG_CK_SNURB(srf);
+
 	if ( dir == RT_NURB_SPLIT_ROW )
 	{
 		rt_nurb_kvmult(&new_kv, &srf->u_knots, srf->order[0], param);
@@ -56,8 +61,7 @@ int dir;
 		oslo = ( struct oslo_mat *) 
 			rt_nurb_calc_oslo( srf->order[RT_NURB_SPLIT_ROW], &srf->u_knots, &new_kv);
 
-		srf1 = (struct snurb *) rt_malloc( sizeof( struct snurb),
-			"rt_nurb_s_xsplit: row snurb struct");
+		GET_SNURB(srf1);
 		srf1->order[0]  = srf->order[0];
 		srf1->order[1]  = srf->order[1];
 		srf1->dir = RT_NURB_SPLIT_ROW;
@@ -76,8 +80,7 @@ int dir;
 				RT_NURB_EXTRACT_COORDS( srf1->pt_type),
 				"rt_nurb_s_xsplit: srf1 row mesh control points");
 
-		srf2 = (struct snurb *) rt_malloc( sizeof( struct snurb),
-			"rt_nurb_s_xsplit: row snurb struct");
+		GET_SNURB(srf2);
 		srf2->order[0]  = srf->order[0];
 		srf2->order[1]  = srf->order[1];
 		srf2->dir = RT_NURB_SPLIT_ROW;
@@ -130,8 +133,7 @@ int dir;
 		oslo = ( struct oslo_mat *) 
 			rt_nurb_calc_oslo( srf->order[RT_NURB_SPLIT_COL], &srf->v_knots, &new_kv);
 
-		srf1 = (struct snurb *) rt_malloc( sizeof( struct snurb),
-			"rt_nurb_s_xsplit: row snurb struct");
+		GET_SNURB(srf1);
 		srf1->order[0]  = srf->order[0];
 		srf1->order[1]  = srf->order[1];
 		srf1->dir = RT_NURB_SPLIT_COL;
@@ -150,8 +152,7 @@ int dir;
 				RT_NURB_EXTRACT_COORDS( srf1->pt_type),
 				"rt_nurb_split: srf1 row mesh control points");
 
-		srf2 = (struct snurb *) rt_malloc( sizeof( struct snurb),
-			"rt_nurb_split: row snurb struct");
+		GET_SNURB(srf2);
 		srf2->order[0]  = srf->order[0];
 		srf2->order[1]  = srf->order[1];
 		srf2->dir = RT_NURB_SPLIT_COL;
@@ -197,13 +198,13 @@ int dir;
 		}
 	}
 	
-	srf1->next = srf2;
+	RT_LIST_APPEND( &srf1->l, &srf2->l );
 
 	rt_free( (char *) new_kv.knots, "rt_nurb_s_xsplit: new_kv.knots");
 
 	rt_nurb_free_oslo(oslo);
 
-	return (struct snurb *) srf1;
+	return srf1;
 }
 
 /* rt_nurb_c_xsplit()
@@ -229,6 +230,8 @@ fastf_t param;
 	struct cnurb * crv1, * crv2;
 	int coords;
 
+	NMG_CK_CNURB(crv);
+
 	coords = RT_NURB_EXTRACT_COORDS( crv->pt_type ),
 
 	k_index = crv->order;
@@ -237,10 +240,7 @@ fastf_t param;
 	oslo = ( struct oslo_mat *) 
 		rt_nurb_calc_oslo( crv->order, &crv->knot, &new_kv);
 
-	crv1 = (struct cnurb *) rt_malloc( sizeof( struct cnurb),
-		"rt_nurb_c_xsplit: cnurb struct");
-
-	crv1->next = (struct cnurb *)0;
+	GET_CNURB(crv1);
 	crv1->order  = crv->order;
 	rt_nurb_kvextract(&crv1->knot, &new_kv, 0, k_index + crv->order);
 	crv1->pt_type = crv->pt_type;
@@ -250,10 +250,7 @@ fastf_t param;
 			RT_NURB_EXTRACT_COORDS( crv1->pt_type),
 			"rt_nurb_c_xsplit: crv1 control points");
 
-	crv2 = (struct cnurb *) rt_malloc( sizeof( struct cnurb),
-		"rt_nurb_c_xsplit: crv2 cnurb struct");
-
-	crv2->next = (struct cnurb *)0;
+	GET_CNURB(crv2);
 	crv2->order  = crv->order;
 	rt_nurb_kvextract(&crv2->knot, &new_kv, k_index, new_kv.k_size);
 	crv2->pt_type = crv->pt_type;
@@ -274,6 +271,6 @@ fastf_t param;
 
 	rt_free( (char *) new_kv.knots, "rt_nurb_c_xsplit: new_kv.knots");
 
-	crv1->next = crv2;
-	return (struct cnurb *) crv1;
+	RT_LIST_APPEND( &crv1->l, &crv2->l );
+	return crv1;
 }

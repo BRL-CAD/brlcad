@@ -18,14 +18,18 @@
 #include <stdio.h>
 #include "machine.h"
 #include "vmath.h"
+#include "nmg.h"
+#include "raytrace.h"
 #include "nurb.h"
 
 struct snurb *
 rt_nurb_scopy( srf )
-struct snurb * srf;
+CONST struct snurb * srf;
 {
 	register struct snurb * n;
 	int i;
+
+	NMG_CK_SNURB(srf);
 
 	n = (struct snurb *) rt_nurb_new_snurb( srf->order[0], srf->order[1],
 		srf->u_knots.k_size, srf->v_knots.k_size, 

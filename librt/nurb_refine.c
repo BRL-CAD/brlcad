@@ -22,11 +22,19 @@
 #include <stdio.h>
 #include "machine.h"
 #include "vmath.h"
+#include "nmg.h"
+#include "raytrace.h"
 #include "nurb.h"
 
+/*
+ *			R T _ N U R B _ S _ R E F I N E
+ *
+ *  Returns a refined surface.
+ *  The original surface is unmodified.
+ */
 struct snurb *
 rt_nurb_s_refine( srf, dir, kv )
-struct snurb * srf;			/* Old surface to be refined */
+CONST struct snurb * srf;		/* Old surface to be refined */
 int dir;				/* Direction to refine */
 					/* Row = 0, Col = 1 */
 struct knot_vector *kv;			/* New knot vector */
@@ -35,12 +43,10 @@ struct knot_vector *kv;			/* New knot vector */
 	struct oslo_mat *oslo;	/* oslo refinement matrix */
 	int i;   
 
-	if (dir == RT_NURB_SPLIT_ROW) {		/* Row (u) direction */
+	NMG_CK_SNURB(srf);
 
-    		nurb_srf = (struct snurb *) rt_malloc( sizeof (struct snurb),
-			"rt_nurb_s_refine: row snurb struct");
-		
-		nurb_srf->next = (struct snurb *) 0;
+	if (dir == RT_NURB_SPLIT_ROW) {		/* Row (u) direction */
+		GET_SNURB(nurb_srf);
 		nurb_srf->order[0] = srf->order[0];
 		nurb_srf->order[1] = srf->order[1];
 		
@@ -81,11 +87,7 @@ struct knot_vector *kv;			/* New knot vector */
 		rt_nurb_free_oslo(oslo);
 
 	} else 	{		/* Col (v) direction */
-
-    		nurb_srf = (struct snurb *) rt_malloc( sizeof (struct snurb),
-			"rt_nurb_s_refine: row snurb struct");
-		
-		nurb_srf->next = (struct snurb *) 0;
+		GET_SNURB(nurb_srf);
 		nurb_srf->order[0] = srf->order[0];
 		nurb_srf->order[1] = srf->order[1];
 		
@@ -125,18 +127,19 @@ struct knot_vector *kv;			/* New knot vector */
 		}
 		rt_nurb_free_oslo( oslo );
 	} 
-
-    return nurb_srf;
+	return nurb_srf;
 }
 
 struct cnurb *
 rt_nurb_c_refine( crv, kv )
-struct cnurb * crv;
+CONST struct cnurb * crv;
 struct knot_vector * kv;
 {
 	struct oslo_mat * oslo;
 	struct cnurb * new_crv;
 	int i, coords;
+
+	NMG_CK_CNURB(crv);
 
 	coords = RT_NURB_EXTRACT_COORDS( crv->pt_type);
 
