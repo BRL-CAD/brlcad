@@ -72,6 +72,7 @@ extern long	nvectors;	/* from dodraw.c */
 
 extern struct rt_tol mged_tol;	/* from ged.c */
 
+static void abs_zoom();
 double		mged_abs_tol;
 double		mged_rel_tol = 0.01;		/* 1%, by default */
 double		mged_nrm_tol;			/* normal ang tol, radians */
@@ -324,6 +325,8 @@ size_reset()
 	Viewscale = radial[X];
 	V_MAX( Viewscale, radial[Y] );
 	V_MAX( Viewscale, radial[Z] );
+
+	i_Viewscale = Viewscale;
 }
 
 /*
@@ -1249,6 +1252,349 @@ check_nonzero_rates()
   dmaflag = 1;	/* values changed so update faceplate */
 }
 
+#if 1
+/* Main processing of knob twists.  "knob id val id val ..." */
+int
+f_knob(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int	argc;
+char	**argv;
+{
+  int	i;
+  fastf_t f;
+  char	*cmd;/* = argv[1];*/
+  static int aslewflag = 0;
+  vect_t	aslew;
+  int iknob = 0;
+  int do_tran = 0;
+
+  if(strstr(argv[0], "iknob"))
+    iknob = 1;
+
+  /* print the current values */
+  if(argc == 1){
+    struct rt_vls vls;
+
+    rt_vls_init(&vls);
+
+    if(mged_variables.rateknobs){
+      rt_vls_printf(&vls, "x = %f\n", rate_rotate[X]);
+      rt_vls_printf(&vls, "y = %f\n", rate_rotate[Y]);
+      rt_vls_printf(&vls, "z = %f\n", rate_rotate[Z]);
+      rt_vls_printf(&vls, "S = %f\n", rate_zoom);
+      rt_vls_printf(&vls, "X = %f\n", rate_slew[X]);
+      rt_vls_printf(&vls, "Y = %f\n", rate_slew[Y]);
+      rt_vls_printf(&vls, "Z = %f\n", rate_slew[Z]);
+    }else{
+      rt_vls_printf(&vls, "ax = %f\n", absolute_rotate[X]);
+      rt_vls_printf(&vls, "ay = %f\n", absolute_rotate[Y]);
+      rt_vls_printf(&vls, "az = %f\n", absolute_rotate[Z]);
+      rt_vls_printf(&vls, "aS = %f\n", absolute_zoom);
+      rt_vls_printf(&vls, "aX = %f\n", absolute_slew[X]);
+      rt_vls_printf(&vls, "aY = %f\n", absolute_slew[Y]);
+      rt_vls_printf(&vls, "aZ = %f\n", absolute_slew[Z]);
+    }
+
+    if(mged_variables.adcflag){
+      rt_vls_printf(&vls, "xadc = %d\n", dv_xadc);
+      rt_vls_printf(&vls, "yadc = %d\n", dv_yadc);
+      rt_vls_printf(&vls, "ang1 = %d\n", dv_1adc);
+      rt_vls_printf(&vls, "ang2 = %d\n", dv_2adc);
+      rt_vls_printf(&vls, "distadc = %d\n", dv_distadc);
+    }
+
+    Tcl_AppendResult(interp, rt_vls_addr(&vls), (char *)NULL);
+    rt_vls_free(&vls);
+
+/*XXX Should be returning TCL_OK */
+    return TCL_ERROR;
+  }
+
+  for(argc -= 1, ++argv; argc; --argc, ++argv){
+    cmd = *argv;
+    
+    if( strcmp( cmd, "zap" ) == 0 || strcmp( cmd, "zero" ) == 0 )  {
+      char	*av[] = {"adc", "reset", (char *)NULL};
+
+      VSETALL( rate_rotate, 0 );
+      VSETALL( rate_slew, 0 );
+      rate_zoom = 0;
+		
+      (void)f_adc( clientData, interp, 2, av );
+
+      if(knob_offset_hook)
+	knob_offset_hook();
+    } else if( strcmp( cmd, "calibrate" ) == 0 ) {
+      VSETALL( absolute_slew, 0.0 );
+    }else{
+      if(argc - 1){
+	i = atoi(argv[1]);
+	f = atof(argv[1]);
+	if( f < -1.0 )
+	  f = -1.0;
+	else if( f > 1.0 )
+	  f = 1.0;
+      }else
+	goto usage;
+
+      --argc;
+      ++argv;
+
+    if( cmd[1] == '\0' )  {
+      switch( cmd[0] )  {
+      case 'x':
+	if(iknob)
+	  rate_rotate[X] += f;
+	else
+	  rate_rotate[X] = f;
+	break;
+      case 'y':
+	if(iknob)
+	  rate_rotate[Y] += f;
+	else
+	  rate_rotate[Y] = f;
+	break;
+      case 'z':
+	if(iknob)
+	rate_rotate[Z] += f;
+      else
+	rate_rotate[Z] = f;
+      break;
+    case 'X':
+      if(iknob)
+	rate_slew[X] += f;
+      else
+	rate_slew[X] = f;
+      break;
+    case 'Y':
+      if(iknob)
+	rate_slew[Y] += f;
+      else
+	rate_slew[Y] = f;
+      break;
+    case 'Z':
+      if(iknob)
+	rate_slew[Z] += f;
+      else
+	rate_slew[Z] = f;
+      break;
+    case 'S':
+      if(iknob)
+	rate_zoom += f;
+      else
+	rate_zoom = f;
+      break;
+    default:
+      goto usage;
+    }
+  } else if( cmd[0] == 'a' && cmd[1] != '\0' && cmd[2] == '\0' ) {
+    struct rt_vls cmd_vls;
+
+		switch( cmd[1] ) {
+		case 'x':
+		  if(iknob){
+		    if((state == ST_S_EDIT || state == ST_O_EDIT) && EDIT_ROTATE){
+		      absolute_rotate[X] += f;
+		      (void)irot(absolute_rotate[X]*180.0,
+				 absolute_rotate[Y]*180.0,
+				 absolute_rotate[Z]*180.0);
+		    }else {
+		      (void)irot(f*180.0, 0.0, 0.0);
+		      absolute_rotate[X] += f;
+		    }
+		  }else{
+		    if((state == ST_S_EDIT || state == ST_O_EDIT) && EDIT_ROTATE){
+		      (void)irot((absolute_rotate[X])*180.0,
+				 absolute_rotate[Y]*180.0,
+				 absolute_rotate[Z]*180.0);
+		    }else {
+		    (void)irot((f - absolute_rotate[X])*180.0, 0.0, 0.0);
+		    }
+		    absolute_rotate[X] = f;
+		  }
+
+		  /* wrap around */
+		  if(absolute_rotate[X] < -1.0)
+		    absolute_rotate[X] = absolute_rotate[X] + 2.0;
+		  else if(absolute_rotate[X] > 1.0)
+		    absolute_rotate[X] = absolute_rotate[X] - 2.0;
+
+		  break;
+		case 'y':
+		  if(iknob){
+		    if((state == ST_S_EDIT || state == ST_O_EDIT) && EDIT_ROTATE){
+		      absolute_rotate[Y] += f;
+		      (void)irot(absolute_rotate[X]*180.0,
+				 absolute_rotate[Y]*180.0,
+				 absolute_rotate[Z]*180.0);
+		    }else {
+		      (void)irot(0.0, f*180.0, 0.0);
+		      absolute_rotate[Y] += f;
+		    }
+		  }else{
+		    if((state == ST_S_EDIT || state == ST_O_EDIT) && EDIT_ROTATE){
+		      (void)irot(absolute_rotate[X]*180.0,
+				 (absolute_rotate[Y])*180.0,
+				 absolute_rotate[Z]*180.0);
+		    }else {
+		      (void)irot(0.0, (f - absolute_rotate[Y])*180.0, 0.0);
+		    }
+		    absolute_rotate[Y] = f;
+		  }
+
+		  /* wrap around */
+		  if(absolute_rotate[Y] < -1.0)
+		    absolute_rotate[Y] = absolute_rotate[Y] + 2.0;
+		  else if(absolute_rotate[Y] > 1.0)
+		    absolute_rotate[Y] = absolute_rotate[Y] - 2.0;
+
+		  break;
+		case 'z':
+		  if(iknob){
+		    if((state == ST_S_EDIT || state == ST_O_EDIT) && EDIT_ROTATE){
+		      absolute_rotate[Z] += f;
+		      (void)irot(absolute_rotate[X]*180.0,
+				 absolute_rotate[Y]*180.0,
+				 absolute_rotate[Z]*180.0);
+		    }else {
+		      (void)irot(0.0, 0.0, f*180.0);
+		      absolute_rotate[Z] += f;
+		    }
+		  }else{
+		    if((state == ST_S_EDIT || state == ST_O_EDIT) && EDIT_ROTATE){
+		      (void)irot(absolute_rotate[X]*180.0,
+				 absolute_rotate[Y]*180.0,
+				 (absolute_rotate[Z])*180.0);
+		    }else {
+		      (void)irot(0.0, 0.0, (f - absolute_rotate[Z])*180.0);
+		    }
+		    absolute_rotate[Z] = f;
+		  }
+
+		  /* wrap around */
+		  if(absolute_rotate[Z] < -1.0)
+		    absolute_rotate[Z] = absolute_rotate[Z] + 2.0;
+		  else if(absolute_rotate[Z] > 1.0)
+		    absolute_rotate[Z] = absolute_rotate[Z] - 2.0;
+
+		  break;
+		case 'X':
+		  if(iknob)
+		    absolute_slew[X] += f;
+		  else
+		    absolute_slew[X] = f;
+
+		  do_tran = 1;
+		  break;
+		case 'Y':
+		  if(iknob)
+		    absolute_slew[Y] += f;
+		  else
+		    absolute_slew[Y] = f;
+
+		  do_tran = 1;
+		  break;
+		case 'Z':
+		  if(iknob)
+		    absolute_slew[Z] += f;
+		  else
+		    absolute_slew[Z] = f;
+
+		  do_tran = 1;
+		  break;
+		case 'S':
+		  if(iknob)
+		    absolute_zoom += f;
+		  else
+		    absolute_zoom = f;
+
+		  abs_zoom();
+		  break;
+		default:
+			goto usage;
+		}
+	} else if( strcmp( cmd, "xadc" ) == 0 )  {
+	  char    *av[] = {NULL, "x", NULL, NULL};
+	  char    sval[32];
+
+	  if(iknob)
+	    av[0] = "iadc";
+	  else
+	    av[0] = "adc";
+
+	  av[2] = sval;
+	  sprintf(sval, "%d", i);
+	  (void)f_adc(clientData, interp, 3, av);
+	} else if( strcmp( cmd, "yadc" ) == 0 )  {
+	  char    *av[] = {NULL, "y", NULL, NULL};
+	  char    sval[32];
+
+	  if(iknob)
+	    av[0] = "iadc";
+	  else
+	    av[0] = "adc";
+
+	  av[2] = sval;
+	  sprintf(sval, "%d", i);
+	  (void)f_adc(clientData, interp, 3, av);
+	} else if( strcmp( cmd, "ang1" ) == 0 )  {
+	  char    *av[] = {NULL, "a1", NULL, NULL};
+	  char    sval[32];
+
+	  if(iknob)
+	    av[0] = "iadc";
+	  else
+	    av[0] = "adc";
+
+	  av[2] = sval;
+	  sprintf(sval, "%f", 45.0*(1.0-(double)i/2047.0));
+	  (void)f_adc(clientData, interp, 3, av);
+	} else if( strcmp( cmd, "ang2" ) == 0 )  {
+	  char    *av[] = {NULL, "a2", NULL, NULL};
+	  char    sval[32];
+
+	  if(iknob)
+	    av[0] = "iadc";
+	  else
+	    av[0] = "adc";
+
+	  av[2] = sval;
+	  sprintf(sval, "%f", 45.0*(1.0-(double)i/2047.0));
+	  (void)f_adc(clientData, interp, 3, av);
+	} else if( strcmp( cmd, "distadc" ) == 0 )  {
+	  char    *av[] = {NULL, "dst", NULL, NULL};
+	  char    sval[32];
+
+	  if(iknob)
+	    av[0] = "iadc";
+	  else
+	    av[0] = "adc";
+
+	  av[2] = sval;
+	  sprintf(sval, "%f", ((double)i/2047.0 + 1.0)*Viewscale * base2local * M_SQRT2);
+	  (void)f_adc(clientData, interp, 3, av);
+	} else {
+usage:
+	  Tcl_AppendResult(interp,
+		"knob: x,y,z for rotation, S for scale, X,Y,Z for slew (rates, range -1..+1)\n",
+		"knob: ax,ay,az for absolute rotation, aS for absolute scale,\n",
+		"knob: aX,aY,aZ for absolute slew.  calibrate to set current slew to 0\n",
+		"knob: xadc, yadc, ang1, ang2, distadc (values, range -2048..+2047)\n",
+		"knob: zero (cancel motion)\n", (char *)NULL);
+
+	  return TCL_ERROR;
+	}
+      }
+  }
+
+  if(do_tran)
+    (void)tran( absolute_slew );
+
+  check_nonzero_rates();
+  return TCL_OK;
+}
+#else
 /* Main processing of a knob twist.  "knob id val" */
 int
 f_knob(clientData, interp, argc, argv)
@@ -1426,7 +1772,6 @@ char	**argv;
 		    absolute_slew[X] = f;
 
 		  (void)tran( absolute_slew );
-
 		  break;
 		case 'Y':
 		  if(iknob)
@@ -1435,7 +1780,6 @@ char	**argv;
 		    absolute_slew[Y] = f;
 
 		  (void)tran( absolute_slew );
-
 		  break;
 		case 'Z':
 		  if(iknob)
@@ -1444,9 +1788,14 @@ char	**argv;
 		    absolute_slew[Z] = f;
 
 		  (void)tran( absolute_slew );
-
 		  break;
 		case 'S':
+		  if(iknob)
+		    absolute_zoom += f;
+		  else
+		    absolute_zoom = f;
+
+		  abs_zoom();
 		  break;
 		default:
 			goto usage;
@@ -1519,8 +1868,10 @@ char	**argv;
 
 		VSETALL( rate_rotate, 0 );
 		VSETALL( rate_slew, 0 );
+#if 0
 		VSETALL( absolute_rotate, 0 );
 		VSETALL( absolute_slew, 0 );
+#endif
 		rate_zoom = 0;
 		
 		(void)f_adc( clientData, interp, 2, av );
@@ -1540,6 +1891,7 @@ usage:
 	check_nonzero_rates();
 	return TCL_OK;
 }
+#endif
 
 /*
  *			F _ T O L
@@ -1680,6 +2032,29 @@ char	**argv;
 	}
 	return TCL_OK;
 }
+
+/* absolute_zoom's value range is [-1.0, 1.0] */
+static void
+abs_zoom()
+{
+  char *av[] = {"zoom", "1", NULL};
+
+  /* Use initial Viewscale */
+  if(-SMALL_FASTF < absolute_zoom && absolute_zoom < SMALL_FASTF)
+    Viewscale = i_Viewscale;
+  else{
+    /* if positive */
+    if(absolute_zoom > 0)
+      /* scale i_Viewscale by values in [0.0, 1.0] range */
+      Viewscale = i_Viewscale * (1.0 - absolute_zoom);
+    else/* negative */
+      /* scale i_Viewscale by values in [1.0, 10.0] range */
+      Viewscale = i_Viewscale * (1.0 + (absolute_zoom * -9.0));
+  }
+
+  (void)f_zoom((ClientData)NULL, interp, 2, av);
+}
+
 
 /*
  *			F _ Z O O M
