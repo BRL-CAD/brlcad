@@ -27,10 +27,25 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "db.h"
 #include "vmath.h"
 
+#define PI	3.14159265358979323
+
 #ifdef SYSV
 #define bzero(str,n)		memset( str, '\0', n )
 #define bcopy(from,to,count)	memcpy( to, from, count )
 #endif
+
+/*
+ * Input Vector Fields
+ */
+#define F(i)	rec.s.s_values+(i-1)*3
+#define F1	rec.s.s_values+(1-1)*3
+#define F2	rec.s.s_values+(2-1)*3
+#define F3	rec.s.s_values+(3-1)*3
+#define F4	rec.s.s_values+(4-1)*3
+#define F5	rec.s.s_values+(5-1)*3
+#define F6	rec.s.s_values+(6-1)*3
+#define F7	rec.s.s_values+(7-1)*3
+#define F8	rec.s.s_values+(8-1)*3
 
 /*
  *			M K _ I D
@@ -179,19 +194,129 @@ fastf_t	r;
 	fwrite( (char *) &rec, sizeof(rec), 1, fp);
 }
 
+/*
+ *			M K _ E L L
+ *
+ * Make an ellipsoid centered at point with 3 perp. radius vectors.
+ */
+mk_ell( fp, name, point, a, b, c)
+FILE	*fp;
+char	*name;
+point_t	point;
+vect_t	a, b, c;
+{
+	register int i;
+	static union record rec;
+
+	bzero( (char *)&rec, sizeof(rec) );
+	rec.s.s_id = ID_SOLID;
+	rec.s.s_type = GENELL;
+	NAMEMOVE(name,rec.s.s_name);
+
+	VMOVE( &rec.s.s_values[0], point );
+	VMOVE( &rec.s.s_values[3], a );
+	VMOVE( &rec.s.s_values[6], b );
+	VMOVE( &rec.s.s_values[9], c );
+	
+	fwrite( (char *) &rec, sizeof(rec), 1, fp);
+}
 
 /*
- * Input Vector Fields
+ *			M K _ T O R
+ *
+ * Make a torus.  Specify center, normal,
+ * r1:  distance from center point to center of solid part,
+ * and r2: radius of solid part.
  */
-#define Fi	rec.s.s_values+(i-1)*3
-#define F1	rec.s.s_values+(1-1)*3
-#define F2	rec.s.s_values+(2-1)*3
-#define F3	rec.s.s_values+(3-1)*3
-#define F4	rec.s.s_values+(4-1)*3
-#define F5	rec.s.s_values+(5-1)*3
-#define F6	rec.s.s_values+(6-1)*3
-#define F7	rec.s.s_values+(7-1)*3
-#define F8	rec.s.s_values+(8-1)*3
+mk_tor( fp, name, center, n, r1, r2 )
+FILE	*fp;
+char	*name;
+point_t	center;
+vect_t	n;
+double	r1, r2;
+{
+	register int i;
+	static union record rec;
+	vect_t	work;
+	double	r3, r4;
+	double	m1, m2, m3, m4, m5, m6;
+
+	bzero( (char *)&rec, sizeof(rec) );
+	rec.s.s_id = ID_SOLID;
+	rec.s.s_type = TOR;
+	rec.s.s_cgtype = TOR;
+	NAMEMOVE(name,rec.s.s_name);
+
+	if( r1 <= 0 || r2 <= 0 || r1 <= r2 )  {
+		fprintf(stderr, "mk_tor(%s):  illegal r1=%g, r2=%g\n",
+			name, r1, r2);
+		return(-1);
+	}
+	r3=r1-r2;	/* Radius to inner circular edge */
+	r4=r1+r2;	/* Radius to outer circular edge */
+
+	VMOVE( F1, center );
+	VMOVE( F2, n );
+
+	/*
+	 * To allow for V being (0,0,0), for VCROSS purposes only,
+	 * we add (PI,PI,PI).  THIS DOES NOT GO OUT INTO THE FILE!!
+	 * work[] must NOT be colinear with N[].  We check for this
+	 * later.
+	 */
+	VMOVE(work, center);
+	work[0] += PI;
+	work[1] += PI;
+	work[2] += PI;
+
+	m2 = MAGNITUDE( F2 );		/* F2 is NORMAL to torus */
+	if( m2 <= 0.0 )  {
+		(void)fprintf(stderr, "mk_tor(%s): normal magnitude is zero!\n", name);
+		return(-1);		/* failure */
+	}
+	VSCALE( F2, F2, r2/m2 );	/* Give it radius length */
+
+	/* F3, F4 are perpendicular, goto center of Torus (solid part), for top/bottom */
+	VCROSS(F3,work,F2);
+	m1=MAGNITUDE(F3);
+	if( m1 <= 0.0 )  {
+		work[1] = 0.0;		/* Vector is colinear, so */
+		work[2] = 0.0;		/* make it different */
+		VCROSS(F3,work,F2);
+		m1=MAGNITUDE(F3);
+		if( m1 <= 0.0 )  {
+			(void)fprintf(stderr, "mk_tor(%s): cross product vector is zero!\n", name);
+			return(-1);	/* failure */
+		}
+	}
+	VSCALE(F3,F3,r1/m1);
+
+	VCROSS(F4,F3,F2);
+	m3=MAGNITUDE(F4);
+	if( m3 <= 0.0 )  {
+		(void)fprintf(stderr, "mk_tor(%s): magnitude m3 is zero!\n", name);
+		return(-1);	 /* failure */
+	}
+
+	VSCALE(F4,F4,r1/m3);
+	m5 = MAGNITUDE(F3);
+	m6 = MAGNITUDE( F4 );
+	if( m5 <= 0.0 || m6 <= 0.0 )  {
+		(void)fprintf(stderr, "mk_tor(%s): magnitude m5/m6 is zero!\n", name);
+		return(-1);	/* failure */
+	}
+
+	/* F5, F6 are perpendicular, goto inner edge of ellipse */
+	VSCALE( F5, F3, r3/m5 );
+	VSCALE( F6, F4, r3/m6 );
+
+	/* F7, F8 are perpendicular, goto outer edge of ellipse */
+	VSCALE( F7, F3, r4/m5 );
+	VSCALE( F8, F4, r4/m6 );
+	
+	fwrite( (char *) &rec, sizeof(rec), 1, fp);
+}
+
 
 /*
  * mk_rcc( name, base, height, radius)
@@ -205,7 +330,6 @@ vect_t	height;
 fastf_t	radius;
 {
 	static union record rec;
-	static float pi = 3.14159265358979323264;
 	fastf_t m1, m2;
 
 	bzero( (char *)&rec, sizeof(rec) );
@@ -216,9 +340,9 @@ fastf_t	radius;
 
 	VMOVE( F1, base );
 	VMOVE( F2, height  );
-	base[0] += pi;
-	base[1] += pi;
-	base[2] += pi;
+	base[0] += PI;
+	base[1] += PI;
+	base[2] += PI;
 	VCROSS( F3, base, F2 );
 	m1 = MAGNITUDE( F3 );
 	if( m1 == 0.0 )  {
