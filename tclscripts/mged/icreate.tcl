@@ -19,6 +19,12 @@
 # Description -
 #       Program to allow automated generation and interactive placement of new
 #       instances of preexisting combinations.
+#
+# Modifications -
+#        (Bob Parker):
+#             Generalized the code to accommodate multiple instances of the
+#             user interface.
+#
 
 #=============================================================================
 # PHASE 0: variable defaults
@@ -37,9 +43,10 @@ set ic(default_operation) "incr index"
 # the user to create new instances of existing objects.
 #=============================================================================
 
-proc icreate args {
+proc icreate { id args } {
     global ic
     global $ic(default_indexvar)
+    global player_screen
 
     set w .ic$ic(winnum)
     incr ic(winnum)
@@ -51,7 +58,7 @@ proc icreate args {
     }
 
     catch { destroy $w }
-    toplevel $w
+    toplevel $w -screen $player_screen($id)
     wm title $w "Instance Creation"
 
     # Make two frames: top one for entry fields and labels, buttom one for
@@ -82,7 +89,7 @@ proc icreate args {
     label $w.t.l.type     -text "Prototype"
     label $w.t.l.comb     -text "Comb to add to"
     label $w.t.l.ref      -text "Reference path" -relief raised -bd 1
-    bind $w.t.l.ref <1> "ic_reflist $w"
+    bind $w.t.l.ref <1> "ic_reflist $w $id"
 
     pack $w.t.l.format $w.t.l.indexvar $w.t.l.index $w.t.l.oper $w.t.l.type \
 	    $w.t.l.comb $w.t.l.ref -side top -fill y -expand yes -anchor w
@@ -202,8 +209,9 @@ proc ic_create { w } {
 # ic_reflist
 # Pops up a window list containing all of the possible reference solids
 
-proc ic_reflist { w } {
+proc ic_reflist { w id } {
     global ic
+    global player_screen
 
     catch { destroy $w.ref }
     if {[llength $ic($w,type)]==0} then {
@@ -211,7 +219,7 @@ proc ic_reflist { w } {
 	return
     }
     
-    toplevel $w.ref
+    toplevel $w.ref -screen $player_screen($id)
     wm title $w.ref "Reference solid list"
 
     listbox $w.ref.lbox

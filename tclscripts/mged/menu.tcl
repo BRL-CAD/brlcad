@@ -1,44 +1,62 @@
+#
+# Modifications -
+#        (Bob Parker):
+#             Generalized the code to accommodate multiple instances of the
+#             user interface.
+#
+
 proc mmenu_set { i menu } {
     global mmenu
-    set w .mmenu
+    global player_count
+    global player_ids
 
     set mmenu($i) $menu
-   
-    if { [llength $menu]<=0 } then {
-	pack forget $w.f$i
-	return
-    }
+    for { set j 0} { $j < $player_count } { incr j } {
+	set w .mmenu$player_ids($j)
 
-    .mmenu.f$i.l delete 0 end
-    foreach item $menu {
-	.mmenu.f$i.l insert end $item
-    }
-    .mmenu.f$i.l configure -height [llength $menu]
+	if {![winfo exists $w]} {
+	    return
+	}
 
-    if { [winfo ismapped $w.f$i]==0 } then {
-	set packcmd "pack $w.f$i -side top -fill both -expand yes"
-	for { set scan [expr $i-1] } { $scan >= 0 } { incr scan -1 } {
-	    if { [llength $mmenu($scan)]>0 } then {
-		lappend packcmd -after $w.f$scan
-		break
-	    }
+	if { [llength $menu]<=0 } then {
+	    pack forget $w.f$i
+	    continue
 	}
-	for { set scan [expr $i+1] } { $scan < $mmenu(num) } { incr scan } {
-	    if { [llength $mmenu($scan)]>0 } then {
-		lappend packcmd -before $w.f$scan
-		break
-	    }
+
+	$w.f$i.l delete 0 end
+	foreach item $menu {
+	    $w.f$i.l insert end $item
 	}
-	eval $packcmd
+	$w.f$i.l configure -height [llength $menu]
+
+	if { [winfo ismapped $w.f$i]==0 } then {
+	    set packcmd "pack $w.f$i -side top -fill both -expand yes"
+	    for { set scan [expr $i-1] } { $scan >= 0 } { incr scan -1 } {
+		if { [llength $mmenu($scan)]>0 } then {
+		    lappend packcmd -after $w.f$scan
+		    break
+		}
+	    }
+	    for { set scan [expr $i+1] } { $scan < $mmenu(num) } { incr scan } {
+		if { [llength $mmenu($scan)]>0 } then {
+		    lappend packcmd -before $w.f$scan
+		    break
+		}
+	    }
+	    eval $packcmd
+	}
     }
 }
 
-proc mmenu_init { } {
+proc mmenu_init { id } {
     global mmenu
-    
-    set w .mmenu
+    global player_ids
+    global player_count
+    global player_screen
+
+    set w .mmenu$id
     catch { destroy $w }
-    toplevel $w
+    toplevel $w -screen $player_screen($id)
     wm title $w "MGED Button Menu"
 
     label $w.state -textvariable mged_display(state)
@@ -51,25 +69,20 @@ proc mmenu_init { } {
 	incr mmenu(num)
 	
 	frame $w.f$i -relief raised -bd 1
-#	scrollbar $w.f$i.s -command "$w.f$i.l yview"
-#	listbox $w.f$i.l -bd 2 -yscroll "$w.f$i.s set"
-#	pack $w.f$i.s -side right -fill y
-	listbox $w.f$i.l -bd 2
+	listbox $w.f$i.l -bd 2 -exportselection false
         pack $w.f$i.l -side left -fill both -expand yes
-	bind $w.f$i.l <Double-Button-1> {
-	    press [selection get]
-	}
-	bind $w.f$i.l <Button-2> {
-	    tkListboxBeginSelect %W [%W index @%x,%y]
-	    press [selection get]
-	}
-	
+
+	bind $w.f$i.l <Double-Button-1> "doit_press $id %W"
+	bind $w.f$i.l <Button-2> "handle_select %W %y; doit_press $id %W"
+
 	mmenu_set $i $menu
 	incr i
     }
 
-    set mmenu(num) $i
     return
 }
 
-mmenu_init
+proc doit_press { id w } {
+    cmd_set $id
+    press [$w get [$w curselection]]
+}

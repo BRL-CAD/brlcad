@@ -1,5 +1,11 @@
 # editobj
 # Generic object editor for MGED
+#
+# Modifications -
+#        (Bob Parker):
+#             Generalized the code to accommodate multiple instances of the
+#             user interface.
+#
 
 set eoname(V) "Vertex"
 set eoname(A) "A vector"
@@ -11,16 +17,21 @@ set eoname(r) "Radius"
 set eoname(r_a) "Radius a"
 set eoname(r_h) "Radius h"
 
-proc editobj { oname } {
+proc editobj { id oname } {
     global eofin$oname
     global eoname
+    global player_screen
 
     set vals [db get $oname]
     set form [db form [lindex $vals 0]]
     set len [llength $form]
 
-    catch { destroy .eo$oname }
-    toplevel .eo$oname
+#    catch { destroy .eo$oname }
+    if { [winfo exists .eo$oname] } {
+	return "Someone is already editing $oname"
+    }
+
+    toplevel .eo$oname -screen $player_screen($id)
     wm title .eo$oname "Object editor: $oname"
 
     frame .eo$oname.t -borderwidth 2
