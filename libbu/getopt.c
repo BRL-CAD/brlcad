@@ -69,10 +69,15 @@ CONST char *ostr;
 		}
 	}				/* option letter okay? */
 	if ((bu_optopt = (int)*place++) == (int)':' || !(oli = strchr(ostr,bu_optopt))) {
+#if 0
 		if(*place == '\0') {
 			++bu_optind;
 			place = EMSG;
 		}
+#else
+		++bu_optind;
+		place = EMSG;
+#endif
 		tell(": illegal option -- ");
 	}
 	if (*++oli != ':') {		/* don't need argument */
