@@ -85,7 +85,7 @@ FBIO	*ifp;
 _LOCAL_ int
 DEVNAME_dclear( ifp, pp )
 FBIO	*ifp;
-Pixel	*pp;
+RGBpixel	*pp;
 {
 }
 
@@ -93,7 +93,7 @@ _LOCAL_ int
 DEVNAME_bread( ifp, x, y, pixelp, count )
 FBIO	*ifp;
 int	x, y;
-Pixel	*pixelp;
+RGBpixel	*pixelp;
 int	count;
 {
 }
@@ -102,7 +102,7 @@ _LOCAL_ int
 DEVNAME_bwrite( ifp, x, y, pixelp, count )
 FBIO	*ifp;
 int	x, y;
-Pixel	*pixelp;
+RGBpixel	*pixelp;
 int	count;
 {
 }
