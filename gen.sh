@@ -529,7 +529,8 @@ etags)
 	/bin/rm -f etags;
 	for dir in ${BDIRS}; do
 		echo -------------------------------- ${dir};
-		etags -a -o etags ${dir}/*.c
+#		etags -a -o etags ${dir}/*.c
+		find ${dir} -name \*.c -exec etags -a -o etags {} \;
 	done;;
 shell)
 	for dir in ${BDIRS}; do
