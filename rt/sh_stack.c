@@ -129,6 +129,10 @@ struct rt_i	*rtip;
  *  			S T K _ R E N D E R
  *  
  *  Evaluate all of the rendering functions in the stack.
+ *
+ *  Returns:
+ *	0	stack processing aborted
+ *	1	stack processed to completion
  */
 HIDDEN
 stk_render( ap, pp, swp, dp )
@@ -140,13 +144,18 @@ char	*dp;
 	register struct stk_specific *sp =
 		(struct stk_specific *)dp;
 	int	i;
+	int	ret_status;
 
 	for( i = 0; i < 16 && sp->mfuncs[i] != NULL; i++ ) {
 		if( rdebug&RDEBUG_SHADE && i > 0 )  {
 			pr_shadework( "before next stacked mf_render", swp );
 		}
-		if (!(sp->mfuncs[i]->mf_render( ap, pp, swp, sp->udata[i] )))
-			break; 
+
+		ret_status = sp->mfuncs[i]->mf_render( ap, pp, swp,
+			sp->udata[i] );
+
+		if ( ! ret_status ) return ret_status;
+
 	}
 	return(1);
 }
