@@ -613,19 +613,16 @@ sopno lev;			/* PLUS nesting level */
 		while (m->g->strip[ss] != SOP(O_BACK, i))
 			ss++;
 		return(backref(m, sp+len, stop, ss+1, stopst, lev));
-		break;
 	case OQUEST_:		/* to null or not */
 		dp = backref(m, sp, stop, ss+1, stopst, lev);
 		if (dp != NULL)
 			return(dp);	/* not */
 		return(backref(m, sp, stop, ss+OPND(s)+1, stopst, lev));
-		break;
 	case OPLUS_:
 		assert(m->lastpos != NULL);
 		assert(lev+1 <= m->g->nplus);
 		m->lastpos[lev+1] = sp;
 		return(backref(m, sp, stop, ss+1, stopst, lev+1));
-		break;
 	case O_PLUS:
 		if (sp == m->lastpos[lev])	/* last pass matched null */
 			return(backref(m, sp, stop, ss+1, stopst, lev-1));
@@ -636,7 +633,6 @@ sopno lev;			/* PLUS nesting level */
 			return(backref(m, sp, stop, ss+1, stopst, lev-1));
 		else
 			return(dp);
-		break;
 	case OCH_:		/* find the right one, if any */
 		ssub = ss + 1;
 		esub = ss + OPND(s) - 1;
@@ -657,7 +653,6 @@ sopno lev;			/* PLUS nesting level */
 			else
 				assert(OP(m->g->strip[esub]) == O_CH);
 		}
-		break;
 	case OLPAREN:		/* must undo assignment if rest fails */
 		i = OPND(s);
 		assert(0 < i && i <= m->g->nsub);
@@ -668,7 +663,6 @@ sopno lev;			/* PLUS nesting level */
 			return(dp);
 		m->pmatch[i].rm_so = offsave;
 		return(NULL);
-		break;
 	case ORPAREN:		/* must undo assignment if rest fails */
 		i = OPND(s);
 		assert(0 < i && i <= m->g->nsub);
@@ -679,7 +673,6 @@ sopno lev;			/* PLUS nesting level */
 			return(dp);
 		m->pmatch[i].rm_eo = offsave;
 		return(NULL);
-		break;
 	default:		/* uh oh */
 		assert(nope);
 		break;
