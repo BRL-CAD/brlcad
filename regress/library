@@ -758,6 +758,7 @@ mail ( ) {
 	warn "Unable to find sendmail -- hoping it is in path"
 	__MAILER="sendmail"
     fi
+    BOUNDARY="xxxxqwertyxxxx.${HOSTNAME}.$$"
 
     # find a decent echo (!!! may want to consolidate later with log)
     __LOGTEST=`echo -e "\t\ntest"`
@@ -842,7 +843,7 @@ mail ( ) {
 		if [ ! "x$DEBUG" = "x" ] ; then log "Processing attachment: [${__FILE}]" ; fi
 		__FILEBASE=`basename "$__FILE"`
 		__ATTACH="${__ATTACH}
---xxxxqwertyxxxx
+--${BOUNDARY}
 Content-Type: text/plain; charset=US-ASCII; name=\"$__FILEBASE\"
 Content-Description: ${__LABEL}
 Content-Disposition: attachment; filename=\"$__FILEBASE\"
@@ -861,14 +862,14 @@ Content-Transfer-Encoding: 7bit
 	    $__MAILER $__ADDR <<EOF
 Subject: ${__SUBJECT}
 MIME-Version: 1.0
-Content-type: multipart/mixed; boundary="xxxxqwertyxxxx"
+Content-type: multipart/mixed; boundary="${BOUNDARY}"
 Content-Transfer-Encoding: 7bit
 
 This message is in MIME format.  The first part should be readable text,
 while the remaining parts are likely unreadable without MIME-aware tools.
 Send mail to lamas@arl.army.mil for more info.
 
---xxxxqwertyxxxx
+--${BOUNDARY}
 Content-Type: text/plain; charset=US-ASCII; name="e-mail.body"
 Content-Description: ${__SUBJECT}
 Content-Disposition: inline; filename="e-mail.body"
@@ -878,7 +879,7 @@ ${__BODY}
 
 ${__ATTACH}
 
---xxxxqwertyxxxx--
+--${BOUNDARY}--
 EOF
         done
 
