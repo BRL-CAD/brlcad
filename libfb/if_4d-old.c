@@ -3,6 +3,10 @@
 /*
  *			I F _ 4 D . C
  *
+ *  BRL Frame Buffer Library interface for SGI Iris-4D.
+ *  Support for the 3030/2400 series ("Iris-3D") is in if_sgi.c
+ *  However, both are called /dev/sgi
+ *
  *  Authors -
  *	Paul R. Stay
  *	Michael John Muuss
@@ -80,12 +84,12 @@ FBIO mips_interface =
 		mips_curs_set,
 		mips_cmemory_addr,
 		fb_null,		/* cscreen_addr */
-		"Silicon Graphics 4D/60T",
+		"Silicon Graphics Iris-4D",
 		1280,			/* max width */
 		1024,			/* max height */
-		"/dev/mips",
-		1024,			/* current/default width  */
-		1024,			/* current/default height */
+		"/dev/sgi",
+		512,			/* current/default width  */
+		512,			/* current/default height */
 		-1,			/* file descriptor */
 		PIXEL_NULL,		/* page_base */
 		PIXEL_NULL,		/* page_curp */
@@ -135,17 +139,29 @@ struct mipsinfo {
 
 #define MARGIN	4			/* # pixels margin to screen edge */
 #define BANNER	18			/* Size of MEX title banner */
-#define WIN_L	(1024-ifp->if_width-MARGIN)
-#define WIN_R	(1024-1-MARGIN)
+#define WIN_L	(1280-ifp->if_width-MARGIN)
+#define WIN_R	(1280-1-MARGIN)
 #define WIN_B	MARGIN
 #define WIN_T	(ifp->if_height-1+MARGIN)
 
 static int map_size;			/* # of color map slots available */
 
-#define MODE_MALLOC	0		/* Use malloc memory */
-#define MODE_SHARED	1		/* Use Shared memory */
+/*
+ *  The mode has 2 independent bits:
+ *	SHARED -vs- MALLOC'ed memory for the image
+ *	TRANSIENT -vs- LINGERING windows
+ */
+#define MODE_1MASK	(1<<0)
+#define MODE_1MALLOC	(0<<0)		/* Use malloc memory */
+#define MODE_1SHARED	(1<<0)		/* Use Shared memory */
+
+#define MODE_2MASK	(1<<1)
+#define MODE_2TRANSIENT	(0<<1)
+#define MODE_2LINGERING (1<<1)
 
 static RGBpixel	rgb_table[4096];
+
+static int fb_parent;
 
 /*
  *			M I P S _ G E T M E M
@@ -193,13 +209,15 @@ FBIO	*ifp;
 	size = pixsize + sizeof(struct mips_cmap);
 	size = (size + 4096-1) & ~(4096-1);
 
-	if( ifp->if_mode == MODE_MALLOC )
-	{
-	
+	if( (ifp->if_mode & MODE_1MASK) == MODE_1MALLOC )  {
+		/*
+		 *  XXX In this mode, we REALLY should only malloc
+		 *  XXX as much memory as we need, rather than perhaps 4x
+		 *  XXX as much.  (eg, 512x512 wanted, 1024x1280 acquired).
+		 */
 		sp = malloc( size );
-		if( sp == 0 )
-		{
-			fb_log("if_sgi: frame buffer memory malloc failed\n");
+		if( sp == 0 )  {
+			fb_log("mips_getmem: frame buffer memory malloc failed\n");
 			goto fail;
 		}
 
@@ -216,7 +234,7 @@ FBIO	*ifp;
 		/* No existing one, create a new one */
 		if( (MIPS(ifp)->mi_shmid = shmget(
 		    SHMEM_KEY, size, IPC_CREAT|0666 )) < 0 )  {
-			fb_log("if_sgi: shmget failed, errno=%d\n", errno);
+			fb_log("mips_getmem: shmget failed, errno=%d\n", errno);
 			goto fail;
 		}
 		new = 1;
@@ -229,19 +247,19 @@ FBIO	*ifp;
 		new_brk = old_brk + 1024 * 1024;
 	new_brk = (char *)((((int)new_brk) + 4096-1) & ~(4096-1));
 	if( brk( new_brk ) < 0 )  {
-		fb_log("new brk(x%x) failure, errno=%d\n", new_brk, errno);
+		fb_log("mips_getmem: new brk(x%x) failure, errno=%d\n", new_brk, errno);
 		goto fail;
 	}
 
 	/* Open the segment Read/Write, near the current break */
 	if( (sp = shmat( MIPS(ifp)->mi_shmid, 0, 0 )) == (char *)(-1) )  {
-		fb_log("shmat returned x%x, errno=%d\n", sp, errno );
+		fb_log("mips_getmem: shmat returned x%x, errno=%d\n", sp, errno );
 		goto fail;
 	}
 
 	/* Restore the old break */
 	if( brk( old_brk ) < 0 )  {
-		fb_log("restore brk(x%x) failure, errno=%d\n", old_brk, errno);
+		fb_log("mips_getmem: restore brk(x%x) failure, errno=%d\n", old_brk, errno);
 		/* Take the memory and run */
 	}
 
@@ -253,7 +271,7 @@ FBIO	*ifp;
 		mips_cmwrite( ifp, COLORMAP_NULL );
 	return(0);
 fail:
-	fb_log("mips_getmem:  Unable to attach to shared memory.\nConsult comment in cad/libfb/if_sgi.c for details\n");
+	fb_log("mips_getmem:  Unable to attach to shared memory.\nConsult comment in cad/libfb/if_4d.c for details\n");
 	if( (sp = malloc( size )) == NULL )  {
 		fb_log("mips_getmem:  malloc failure\n");
 		return(-1);
@@ -303,7 +321,7 @@ register FBIO	*ifp;
 	short xscroff, yscroff, xscrpad, yscrpad;
 	short xwidth;
 	static RGBpixel black = { 0, 0, 0 };
-	im_setup;
+	im_setup;			/* declares GE & Windowstate vars */
 
 	if( MIPS(ifp)->mi_curs_on )
 		cursoff();		/* Cursor interferes with drawing */
@@ -366,13 +384,16 @@ register FBIO	*ifp;
 				(Scoord) ifp->if_height-1,
 				(RGBpixel *) black
 				);
-	for( y = ymin; y <= ymax; y++ )  {
 
-		ip = (unsigned char *)
-			&ifp->if_mem[(y*1024+xmin)*sizeof(RGBpixel)];
+	/*
+	 *  First, the Zoomed case
+	 */
+	if( ifp->if_zoomflag )  {
+		register Scoord l, b, r, t;
 
-		if( ifp->if_zoomflag )  {
-			register Scoord l, b, r, t;
+		for( y = ymin; y <= ymax; y++ )  {
+			ip = (unsigned char *)
+				&ifp->if_mem[(y*1024+xmin)*sizeof(RGBpixel)];
 
 			l = xscroff;
 			b = yscroff + (y-ymin)*MIPS(ifp)->mi_yzoom;
@@ -382,7 +403,7 @@ register FBIO	*ifp;
 				{
  					RGBcolor( ip[RED], ip[GRN], ip[BLU]);
 					r = l + MIPS(ifp)->mi_xzoom - 1;
-					rectfs( l, b, r, t );
+					im_rectfs( l, b, r, t );
 					l = r + 1;
 					ip += sizeof(RGBpixel);
 				}
@@ -401,13 +422,21 @@ register FBIO	*ifp;
 			}
 			continue;
 		}
+		goto out;
+	}
 
-		/* Non-zoomed case */
-		cmov2s(xscroff, yscroff +( y - ymin) );
+	/*
+	 *  The non-zoomed case
+	 */
+	for( y = ymin; y <= ymax; y++ )  {
+		register long amount, n;
+
+		ip = (unsigned char *)
+			&ifp->if_mem[(y*1024+xmin)*sizeof(RGBpixel)];
+
+		im_cmov2s(xscroff, yscroff +( y - ymin) );
 
 		if ( MIPS(ifp)->mi_cmap_flag == FALSE )  {
-			long amount, n;
-
 			n = xwidth;
 
 			while( n > 0 )
@@ -427,11 +456,11 @@ register FBIO	*ifp;
 				}
 				amount = amount;
 			}
+#ifdef never
 			im_freepipe;
+#endif
 			GEWAIT;
 		} else {
-			long amount, n;
-
 			n = xwidth;
 
 			while( n > 0 )
@@ -451,18 +480,31 @@ register FBIO	*ifp;
 				}
 				amount = amount;
 			}
+#ifdef never
 			im_freepipe;
+#endif
 			GEWAIT;
 		}
 	}
+	/*
+	 *  Releasing the pipe has been moved outside the main scanline
+	 *  loop, to prevent the kernel from switching windows
+	 *  from scanline to scanline as several windows repaint
+	 */
+	im_freepipe;
+	GEWAIT;
+
+	/* The common final section */
+out:
 	if( MIPS(ifp)->mi_curs_on )
-		curson();		/* Cursor interferes with reading! */
+		curson();		/* Cursor interferes with drawing */
 }
 
-int fb_parent;
-sigkid()
+/*
+ *			S I G K I D
+ */
+static int sigkid()
 {
-
 	exit(0);
 }
 
@@ -478,7 +520,35 @@ int	width, height;
 	int x_pos, y_pos;	/* Lower corner of viewport */
 	register int i;
 	int f;
-	int *status;
+	int	status;
+	static char	title[128];
+	int	mode;
+
+	/*
+	 *  First, attempt to determine operating mode for this open,
+	 *  based upon the "unit number".  For the SGI, this unit number
+	 *  is used as the operating mode.
+	 */
+	mode = MODE_1SHARED | MODE_2TRANSIENT;	/* defaults */
+	if( file != NULL )  {
+		register char *cp;
+
+		/* Locate the (optional) number */
+		for( cp = file; *cp != '\0' && !isdigit(*cp); cp++ ) ;
+
+		if( *cp && isdigit(*cp) )
+			(void)sscanf( cp, "%d", &mode );
+
+		if( mode >= 99 )  {
+			/* Only task: Attempt to release shared memory segment */
+			mips_zapmem();
+			return(-1);
+		}
+
+		/* Pick off just the mode bits of interest here */
+		mode &= (MODE_1MASK | MODE_2MASK);
+	}
+	ifp->if_mode = mode;
 
 	/* the Silicon Graphics Library Window management routines
 	 * use shared memory. This causes lots of problems when you
@@ -490,61 +560,40 @@ int	width, height;
 	 * as well as allow the frame buffer window to remain around
 	 * until killed by the menu subsystem.
     	 */
-	fb_parent = getpid();		/* save parent pid */
+	if( (ifp->if_mode & MODE_2MASK) == MODE_2LINGERING )  {
+		fb_parent = getpid();		/* save parent pid */
 
-	signal( SIGUSR1, sigkid);
+		signal( SIGUSR1, sigkid);
 
-	if(((f = fork()) != 0 ) && ( f != -1)) 
-	{
-		int k;
-		for(k=0; k< 20; k++)  {
-			(void) close(k);
+		if(((f = fork()) != 0 ) && ( f != -1))   {
+			int k;
+			for(k=0; k< 20; k++)  {
+				(void) close(k);
+			}
+
+			/*
+			 *  Wait until the child dies, of whatever cause,
+			 *  or until the child kills us.
+			 *  Pretty vicious, this computer society.
+			 */
+			while( (k = wait(&status)) != -1 && k != f )
+				/* NULL */ ;
+
+			exit(0);
 		}
-
-		wait(status);
-
-fprintf(stderr,"parent exit status = %d \n");
-
-/*		pause();*/		/* pause until killed */
-		exit(0);
 	}
-
-	if( file != NULL )  {
-		register char *cp;
-		int mode;	
-
-		/* "/dev/mips###" gives optional mode for shared memory*/
-		for( cp = file; *cp != '\0' && !isdigit(*cp); cp++ ) ;
-
-		if( *cp && isdigit(*cp) )
-			(void)sscanf( cp, "%d", &mode );
-
-		ifp->if_mode = MODE_SHARED;
-
-		if( mode == 1 ) 
-			ifp->if_mode = MODE_MALLOC;
-
-		if( mode > 99 )  {
-			/* Attempt to release shared memory segment */
-			mips_zapmem();
-			return(-1);
-		}
-	} else
-		ifp->if_mode = MODE_SHARED;
-	
 
 	if( (MIPSL(ifp) = (char *)calloc( 1, sizeof(struct mipsinfo) )) == NULL )  {
 		fb_log("mips_dopen:  mipsinfo malloc failed\n");
 		return(-1);
 	}
 
-	/* By default, pop up a 512x512 MEX window, rather than fullsize */
 	if( width <= 0 )
-		width = 512;
+		width = ifp->if_width;
 	if( height <= 0 )
-		height = 512;
-	if ( width > ifp->if_max_width)
-		width = ifp->if_max_width;
+		height = ifp->if_height;
+	if ( width > ifp->if_max_width - 2 * MARGIN)
+		width = ifp->if_max_width - 2 * MARGIN;
 	if ( height > ifp->if_max_height - 2 * MARGIN - BANNER)
 		height = ifp->if_max_height - 2 * MARGIN - BANNER;
 
@@ -560,10 +609,17 @@ fprintf(stderr,"parent exit status = %d \n");
 		fb_log( "No more graphics ports available.\n" );
 		return	-1;
 	}
-	if (ifp->if_mode == MODE_MALLOC)
-		wintitle( "BRL libfb Frame Buffer" );
-	else
-		wintitle( "BRL libfb Frame Buffer Shared Memory" );
+
+	/* Build a descriptive window title bar */
+	(void)sprintf( title, "BRL libfb /dev/sgi%d %s, %s",
+		ifp->if_mode,
+		((ifp->if_mode & MODE_2MASK) == MODE_2TRANSIENT) ?
+			"Transient Win" :
+			"Lingering Win",
+		((ifp->if_mode & MODE_1MASK) == MODE_1MALLOC) ?
+			"Private Mem" :
+			"Shared Mem" );
+	wintitle( title );
 	
 	/* Free window of position constraint.		*/
 	prefsize( (long)ifp->if_width, (long)ifp->if_height );
@@ -603,25 +659,15 @@ fprintf(stderr,"parent exit status = %d \n");
 	setcursor(1, 1, 0);
 
 	/* The screen has no useful state.  Restore it as it was before */
-	/* SMART deferral logic needed */
-	mips_repaint( ifp );
+	/* Smarter deferral logic needed */
+	if( (ifp->if_mode & MODE_1MASK) == MODE_1SHARED )
+		mips_repaint( ifp );
 	return	0;
 }
 
 /*
  *			M I P S _ D C L O S E
  *
- *  Finishing with a gexit() is mandatory.
- *  If we do a tpon() greset(), the text port pops up right
- *  away, spoiling the image.  Just doing the greset() causes
- *  the region of the text port to be disturbed, although the
- *  text port does not become readable.
- *
- *  Unfortunately, this means that the user has to run the
- *  "gclear" program before the screen can be used again,
- *  which is certainly a nuisance.  On the other hand, this
- *  means that images can be created AND READ BACK from
- *  separate programs, just like we do on the real framebuffers.
  */
 _LOCAL_ int
 mips_dclose( ifp )
@@ -629,48 +675,98 @@ FBIO	*ifp;
 {
 	int menu, menuval, val, dev, f;
 	int k;
+	FILE *fp = NULL;
+
+	if( (ifp->if_mode & MODE_2MASK) == MODE_2TRANSIENT )
+		goto out;
 
 	/*
+	 *  LINGER mode.  Don't return to caller until user mouses "close"
+	 *  menu item.  This may delay final processing in the calling
+	 *  function for some time, but the assumption is that the user
+	 *  wishes to compare this image with others.
+	 *
 	 *  Since we plan to linger here, long after our invoker
 	 *  expected us to be gone, be certain that no file descriptors
 	 *  remain open to associate us with pipelines, network
-	 *  connections, etc., that were already established before
+	 *  connections, etc., that were ALREADY ESTABLISHED before
 	 *  the point that fb_open() was called.
+	 *
+	 *  The simple for i=0..20 loop will not work, because that
+	 *  smashes some window-manager files.  Therefore, we content
+	 *  ourselves with eliminating stdin, stdout, and stderr,
+	 *  (fd 0,1,2), in the hopes that this will successfully
+	 *  terminate any pipes or network connections.  In the case
+	 *  of calls from rfbd, in normal (non -d) mode, it gets the
+	 *  network connection on stdin/stdout, so this is adequate.
 	 */
-	for( k=0; k < ifp->if_fd; k++)  {
-		(void) close(k);
-	}
+	fclose( stdin );
+	fclose( stdout );
+	fclose( stderr );
 
-	kill(fb_parent, SIGUSR1);
+	/* Line up at the "complaints window", just in case... */
+	fp = fopen("/dev/console", "w");
+
+	kill(fb_parent, SIGUSR1);	/* zap the lurking parent */
 
 	menu = defpup("close");
 	qdevice(RIGHTMOUSE);
 	qdevice(REDRAW);
 	
-	while(1)
-	{
-		while( (qtest()))
-		{
-			dev = qread( &val );
-			if (dev == RIGHTMOUSE)
-			{
-				menuval = dopup( menu );
-				if (menuval == 1 ) {
-				/* 20 minute blanking when fb closed */
-					blanktime( (long) 67 * 60 * 20L );	
-					gexit();
+	while(1)  {
+		val = 0;
+		dev = qread( &val );
+		switch( dev )  {
 
-					if( MIPSL(ifp) != NULL )
-						(void)free( (char *)MIPS(ifp) );
-					return(0);					
-				}
-			}
-			if (dev == REDRAW) {
-				reshapeviewport();
-				mips_repaint(ifp);
-			}
+		case RIGHTMOUSE:
+			menuval = dopup( menu );
+			if (menuval == 1 )
+				goto out;
+			break;
+
+		case REDRAW:
+			reshapeviewport();
+			mips_repaint(ifp);
+			break;
+
+		case INPUTCHANGE:
+		case CURSORX:
+		case CURSORY:
+			/* We don't need to do anything about these */
+			break;
+
+		case QREADERROR:
+			/* These are fatal errors, bail out */
+			if( fp ) fprintf(fp,"libfb/mips_dclose: qreaderror, aborting\n");
+			goto out;
+
+		default:
+			/*
+			 *  There is a tendency for infinite loops
+			 *  here.  With only a few qdevice() attachments
+			 *  done above, there shouldn't be too many
+			 *  unexpected things.  But, lots show up.
+			 *  At least this gives visibility.
+			 */
+			if( fp ) fprintf(fp,"libfb/mips_dclose: qread %d, val %d\r\n", dev, val );
+			break;
 		}
 	}
+out:
+	/*
+	 *  User is finally done with the frame buffer,
+	 *  return control to our caller (who may have more to do).
+	 *  set a 20 minute screensave blanking when fb is closed.
+	 *  We have no way of knowing if there are other libfb windows
+	 *  still open.
+	 */
+	blanktime( (long) 67 * 60 * 20L );
+	gexit();			/* mandatory */
+	if( fp )  fclose(fp);
+
+	if( MIPSL(ifp) != NULL )
+		(void)free( (char *)MIPS(ifp) );
+	return(0);
 }
 
 /*
