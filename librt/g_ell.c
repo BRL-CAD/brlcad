@@ -846,20 +846,24 @@ struct rt_tol		*tol;
 	if( ttol->rel <= 0.0 || ttol->rel >= 1.0 )  {
 		rel = 0.0;		/* none */
 	} else {
-		/* Convert rel to absolute by scaling by diameter */
-		rel = ttol->rel * 2 * radius;
+		/* Convert rel to absolute by scaling by radius */
+		rel = ttol->rel * radius;
 	}
 	if( ttol->abs <= 0.0 )  {
 		if( rel <= 0.0 )  {
 			/* No tolerance given, use a default */
-			rel = 2 * 0.10 * radius;	/* 10% */
+			rel = 0.10 * radius;	/* 10% */
 		} else {
 			/* Use absolute-ized relative tolerance */
 		}
 	} else {
 		/* Absolute tolerance was given, pick smaller */
 		if( ttol->rel <= 0.0 || rel > ttol->abs )
+		{
 			rel = ttol->abs;
+			if( rel > radius )
+				rel = radius;
+		}
 	}
 
 	/*
@@ -1477,10 +1481,11 @@ struct faceuse	*fu;
 CONST matp_t	m;
 {
 	struct face_g_snurb	*fg;
-	FAST fastf_t root2_2 = sqrt(2.0) * 0.5;
+	FAST fastf_t root2_2;
 	register fastf_t	*op;
 
 	NMG_CK_FACEUSE(fu);
+	root2_2 = sqrt(2.0)*0.5;
 
 	/* Let the library allocate all the storage */
 	/* The V direction runs from south to north pole */
