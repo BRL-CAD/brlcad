@@ -11,6 +11,7 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "./material.h"
+#include "./light.h"
 #include "./mathtab.h"
 #include "./rdebug.h"
 #define M_PI            3.14159265358979323846
@@ -183,11 +184,17 @@ char	*dp;
 	vect_t	v_cloud;/* vector representing ray/solid intersection */
 	double	thickness; /* magnitude of v_cloud (distance through solid) */
 	int	steps;	   /* # of samples along ray/solid intersection */
-	double	step_delta;/* distance between sample points */
+	double	step_delta;/* distance between sample points, texture space */
+	fastf_t	model_step; /* distance between sample points, model space */
 	int	i;
 	double  val;
 	double	trans;
 	double	sum;
+	point_t	incident_light;
+#if SEEK_MINVAL
+	double	minval = 1;
+	int	min_i;
+#endif
 
 	RT_CHECK_PT(pp);
 	RT_AP_CHECK(ap);
@@ -248,6 +255,8 @@ char	*dp;
 
 	steps = pow(scloud_sp->lacunarity, scloud_sp->octaves-1) * 4;
 	step_delta = thickness / (double)steps;
+	model_step = (pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist) /
+		(double)steps;
 
 #ifdef LEELOG
 	rt_log("steps=%d  delta=%g  thickness=%g\n",
@@ -256,6 +265,10 @@ char	*dp;
 	VUNITIZE(v_cloud);
 	VMOVE(pt, in_pt);
 	trans = 1.0;
+#if SEEK_MINVAL
+	minval = 1;
+	min_i = 0;
+#endif
 	for (i=0 ; i < steps ; i++ ) {
 		/* compute the next point in the cloud space */
 		VJOIN1(pt, in_pt, i*step_delta, v_cloud);
@@ -267,10 +280,63 @@ char	*dp;
 		val = CLAMP(val, 0.0, 1.0);
 		val *= 2.0;
 
-		trans *=  exp( - val * scloud_sp->max_d_p_mm * step_delta);
+		val = exp( - val * scloud_sp->max_d_p_mm * step_delta);
+		trans *= val;
+#if SEEK_MINVAL
+		if( val < minval )  {
+			minval = val;
+			min_i = i;
+		}
+#endif
 	}
-	
+
+	/* scloud is basically a white object with partial transparency */
 	swp->sw_transmit = trans;
+	if( swp->sw_xmitonly )  return 1;
+
+#if 1
+	/*
+	 *  At the point of maximum opacity, check light visibility
+	 *  for light color and cloud shadowing.
+	 *  OOPS:  Don't use an interior point, or light_visibility()
+	 *  will see an attenuated light source.
+	 */
+# if SEEK_MINVAL
+	swp->sw_hit.hit_dist = pp->pt_inhit->hit_dist + min_i * model_step;
+# else
+	swp->sw_hit.hit_dist = pp->pt_inhit->hit_dist;
+# endif
+	VJOIN1(swp->sw_hit.hit_point, ap->a_ray.r_pt, swp->sw_hit.hit_dist,
+ 		ap->a_ray.r_dir);
+	VREVERSE( swp->sw_hit.hit_normal, ap->a_ray.r_dir );
+	swp->sw_inputs |= MFI_HIT | MFI_NORMAL;
+	light_visibility( ap, swp, swp->sw_inputs );
+	VSETALL(incident_light, 0 );
+	for( i=ap->a_rt_i->rti_nlights-1; i>=0; i-- )  {
+		struct light_specific	*lp;
+		if( (lp = (struct light_specific *)swp->sw_visible[i]) == LIGHT_NULL )
+			continue;
+		/* XXX don't have a macro for this */
+		incident_light[0] += swp->sw_intensity[3*i+0] * lp->lt_color[0];
+		incident_light[1] += swp->sw_intensity[3*i+1] * lp->lt_color[1];
+		incident_light[2] += swp->sw_intensity[3*i+2] * lp->lt_color[2];
+	}
+	VELMUL( swp->sw_color, swp->sw_color, incident_light );
+#else
+	/*  Rather than assume the cloud is white, use the color of
+	 *  the first light source.  This is a hack.
+	 */
+	{
+		struct light_specific	*lp;
+		if( BU_LIST_NON_EMPTY(&LightHead.l) )  {
+			lp = BU_LIST_FIRST(light_specific, &LightHead.l);
+			VELMUL( swp->sw_color, swp->sw_color, lp->lt_color );
+		}
+	}
+#endif
+	if( rdebug&RDEBUG_SHADE ) {
+		pr_shadework( "scloud: after light vis, before rr_render", swp);
+	}
 
 	if( swp->sw_reflect > 0 || swp->sw_transmit > 0 )
 		(void)rr_render( ap, pp, swp );
