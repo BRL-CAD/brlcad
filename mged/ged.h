@@ -160,7 +160,7 @@ extern FILE *outfile;
 extern void		dir_build(), buildHrot(), dozoom(),
 			pr_schain();
 extern void		eraseobj(), mged_finish(), slewview(),
-			mmenu_init(), moveHinstance(), moveHobj(), pr_solid(),
+			mmenu_init(), moveHinstance(), moveHobj(),
 			quit(), refresh(), rej_sedit(), sedit(),
 			dir_print(),
 			setview(),
