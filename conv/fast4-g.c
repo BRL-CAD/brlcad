@@ -4311,52 +4311,64 @@ do_ccone1()
 		vect_t inner_height;
 		fastf_t inner_r1,inner_r2;
 		fastf_t length;
+		fastf_t sin_ang;
+		fastf_t slant_len;
+		fastf_t r1a,r2a;
 		vect_t height_dir;
 
 		length = MAGNITUDE( height );
 		VSCALE( height_dir , height , 1.0/length );
+		slant_len = sqrt( length*length + (r2 - r1)*(r2 - r1) );
+
+		sin_ang = length/slant_len;
 
 		if( end1 == END_OPEN )
 		{
-			inner_r1 = r1 - thick;
+			r1a = r1;
+			inner_r1 = r1 - thick/sin_ang;
 			VMOVE( base , grid_pts[pt1].pt );
 		}
 		else
 		{
-			inner_r1 = r1 + thick * (r2 - r1)/length - thick;
+			r1a = r1 + (r2 - r1)*thick/length;
+			inner_r1 = r1a - thick/sin_ang;
 			VJOIN1( base , grid_pts[pt1].pt , thick , height_dir );
 		}
 
-		if( inner_r1 < SQRT_SMALL_FASTF )
+		if( inner_r1 < 0.0 )
 		{
 			fastf_t dist_to_new_base;
 
+			dist_to_new_base = inner_r1 * length/(r1 - r2 );
 			inner_r1 = SQRT_SMALL_FASTF;
-			dist_to_new_base = length * ( thick + inner_r1 - r1)/(r2 - r1);
-
-			VJOIN1( base , grid_pts[pt1].pt , dist_to_new_base , height_dir );
+			VJOIN1( base , base , dist_to_new_base , height_dir );
 		}
+		else if( inner_r1 < SQRT_SMALL_FASTF )
+			inner_r1 = SQRT_SMALL_FASTF;
 
 		if( end2 == END_OPEN )
 		{
-			inner_r2 = r2 - thick;
+			r2a = r2;
+			inner_r2 = r2 - thick/sin_ang;
 			VMOVE( top , grid_pts[pt2].pt );
 		}
 		else
 		{
-			inner_r2 = r1 + (length - thick)*(r2 - r1)/length - thick;
+			r2a = r2 + (r1 - r2)*thick/length;
+			inner_r2 = r2a - thick/sin_ang;
 			VJOIN1( top , grid_pts[pt2].pt , -thick , height_dir );
 		}
 
-		if( inner_r2 < SQRT_SMALL_FASTF )
+		if( inner_r2 < 0.0 )
 		{
 			fastf_t dist_to_new_top;
 
+			dist_to_new_top = inner_r2 * length/(r2 - r1 );
 			inner_r2 = SQRT_SMALL_FASTF;
-			dist_to_new_top = length * ( thick + inner_r1 - r1)/(r2 - r1);
-
-			VJOIN1( top , grid_pts[pt1].pt , dist_to_new_top , height );
+			VJOIN1( top , top , -dist_to_new_top , height_dir );
 		}
+		else if( inner_r2 < SQRT_SMALL_FASTF )
+			inner_r2 = SQRT_SMALL_FASTF;
 
 		VSUB2( inner_height , top , base );
 		if( VDOT( inner_height , height ) < 0.0 )
