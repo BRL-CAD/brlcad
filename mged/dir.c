@@ -182,7 +182,7 @@ char	**argv;
     return TCL_ERROR;
 
   Tcl_AppendResult(interp, "Display manager free map:\n", (char *)NULL);
-  rt_memprint( &(dmp->dmr_map) );
+  rt_memprint( &(dmp->dm_map) );
   Tcl_AppendResult(interp, "Database free granule map:\n", (char *)NULL);
   rt_memprint( &(dbip->dbi_freep) );
 

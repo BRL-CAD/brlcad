@@ -168,30 +168,43 @@ void
 mmenu_display( y_top )
 int y_top;
 { 
-	static int menu, item;
-	register struct menu_item	**m;
-	register struct menu_item	*mptr;
-	register int y = y_top;
+  static int menu, item;
+  register struct menu_item	**m;
+  register struct menu_item	*mptr;
+  register int y = y_top;
 
-	menu_top = y - MENU_DY / 2;
-	dmp->dmr_2d_line(dmp, MENUXLIM, menu_top, XMIN, menu_top, 0);
+  menu_top = y - MENU_DY / 2;
+  dmp->dm_setColor(dmp, DM_YELLOW, 1);
+  dmp->dm_setLineAttr(dmp, 1, 0);
+  dmp->dm_drawLine2D(dmp, MENUXLIM, menu_top, XMIN, menu_top);
 
-	for( menu=0, m = menu_array; m < &menu_array[NMENU]; m++,menu++ )  {
-		if( *m == MENU_NULL )  continue;
-		for( item=0, mptr = *m;
-		     mptr->menu_string[0] != '\0' && y > TITLE_YBASE;
-		     mptr++, y += MENU_DY, item++ )  {
-			dmp->dmr_puts( dmp, mptr->menu_string, MENUX, y-15, 0,
-				mptr == *m ? DM_RED : DM_YELLOW );
-			dmp->dmr_2d_line(dmp, MENUXLIM, y+(MENU_DY/2), XMIN, y+(MENU_DY/2), 0);
-			if( cur_item == item && cur_menu == menu && menuflag )  {
-				/* prefix item selected with "==>" */
-				dmp->dmr_puts(dmp, "==>", XMIN, y-15, 0, DM_WHITE);
-			}
-		}
-	}
-	if( y == y_top )  return;	/* no active menus */
-	dmp->dmr_2d_line( dmp, MENUXLIM, menu_top-1, MENUXLIM, y-(MENU_DY/2), 0 );
+  for( menu=0, m = menu_array; m < &menu_array[NMENU]; m++,menu++ )  {
+    if( *m == MENU_NULL )  continue;
+    for( item=0, mptr = *m;
+	 mptr->menu_string[0] != '\0' && y > TITLE_YBASE;
+	 mptr++, y += MENU_DY, item++ )  {
+      if(mptr == *m)
+	dmp->dm_setColor(dmp, DM_RED, 1);
+      else
+	dmp->dm_setColor(dmp, DM_YELLOW, 1);
+      dmp->dm_drawString2D( dmp, mptr->menu_string, MENUX, y-15 );
+      dmp->dm_setColor(dmp, DM_YELLOW, 1);
+      dmp->dm_drawLine2D(dmp, MENUXLIM, y+(MENU_DY/2), XMIN,
+			 y+(MENU_DY/2));
+      if( cur_item == item && cur_menu == menu && menuflag )  {
+	/* prefix item selected with "==>" */
+	dmp->dm_setColor(dmp, DM_WHITE, 1);
+	dmp->dm_drawString2D(dmp, "==>", XMIN, y-15);
+      }
+    }
+  }
+
+  if( y == y_top )
+    return;	/* no active menus */
+
+  dmp->dm_setColor(dmp, DM_YELLOW, 1);
+  dmp->dm_setLineAttr(dmp, 1, 0);
+  dmp->dm_drawLine2D( dmp, MENUXLIM, menu_top-1, MENUXLIM, y-(MENU_DY/2) );
 }
 
 /*

@@ -83,14 +83,14 @@ int argc;
 char *argv[];
 {
   /* register application provided routines */
-  dmp->dmr_eventhandler = X_doevent;
-  dmp->dmr_cmd = X_dm;
-  dmp->dmr_statechange = X_statechange;
+  dmp->dm_eventHandler = X_doevent;
+  cmd_hook = X_dm;
+  state_hook = X_statechange;
 
-  if(dmp->dmr_init(dmp, argc, argv) == TCL_ERROR)
+  if(dmp->dm_init(dmp, argc, argv) == TCL_ERROR)
     return TCL_ERROR;
 
-  return dmp->dmr_open(dmp);
+  return dmp->dm_open(dmp);
 }
 
 static int
@@ -154,7 +154,7 @@ XEvent *eventPtr;
 
     switch(am_mode){
     case ALT_MOUSE_MODE_IDLE:
-      if(scroll_active && eventPtr->xmotion.state & ((struct x_vars *)dm_vars)->mb_mask)
+      if(scroll_active && eventPtr->xmotion.state & ((struct x_vars *)dmp->dm_vars)->mb_mask)
 	bu_vls_printf( &cmd, "M 1 %d %d\n", Xx_TO_GED(dmp, mx), Xy_TO_GED(dmp, my));
       else if(XdoMotion)
 	/* trackball not active so do the regular thing */
@@ -166,8 +166,8 @@ XEvent *eventPtr;
       break;
     case ALT_MOUSE_MODE_ROTATE:
        bu_vls_printf( &cmd, "iknob ax %f ay %f\n",
-		      (my - ((struct x_vars *)dm_vars)->omy)/512.0,
-		      (mx - ((struct x_vars *)dm_vars)->omx)/512.0 );
+		      (my - ((struct x_vars *)dmp->dm_vars)->omy)/512.0,
+		      (mx - ((struct x_vars *)dmp->dm_vars)->omx)/512.0 );
       break;
     case ALT_MOUSE_MODE_TRANSLATE:
       {
@@ -175,32 +175,32 @@ XEvent *eventPtr;
 
 	if((state == ST_S_EDIT || state == ST_O_EDIT) && !EDIT_ROTATE &&
 	   (edobj || es_edflag > 0)){
-	  fx = (mx/(fastf_t)((struct x_vars *)dm_vars)->width - 0.5) * 2;
-	  fy = (0.5 - my/(fastf_t)((struct x_vars *)dm_vars)->height) * 2;
+	  fx = (mx/(fastf_t)((struct x_vars *)dmp->dm_vars)->width - 0.5) * 2;
+	  fy = (0.5 - my/(fastf_t)((struct x_vars *)dmp->dm_vars)->height) * 2;
 	  bu_vls_printf( &cmd, "knob aX %f aY %f\n", fx, fy );
 	}else{
-	  fx = (mx - ((struct x_vars *)dm_vars)->omx) /
-	    (fastf_t)((struct x_vars *)dm_vars)->width * 2.0;
-	  fy = (((struct x_vars *)dm_vars)->omy - my) /
-	    (fastf_t)((struct x_vars *)dm_vars)->height * 2.0;
+	  fx = (mx - ((struct x_vars *)dmp->dm_vars)->omx) /
+	    (fastf_t)((struct x_vars *)dmp->dm_vars)->width * 2.0;
+	  fy = (((struct x_vars *)dmp->dm_vars)->omy - my) /
+	    (fastf_t)((struct x_vars *)dmp->dm_vars)->height * 2.0;
 	  bu_vls_printf( &cmd, "iknob aX %f aY %f\n", fx, fy );
 	}
       }
       break;
     case ALT_MOUSE_MODE_ZOOM:
       bu_vls_printf( &cmd, "iknob aS %f\n",
-		     (((struct x_vars *)dm_vars)->omy - my)/
-		     (fastf_t)((struct x_vars *)dm_vars)->height);
+		     (((struct x_vars *)dmp->dm_vars)->omy - my)/
+		     (fastf_t)((struct x_vars *)dmp->dm_vars)->height);
       break;
     }
 
-    ((struct x_vars *)dm_vars)->omx = mx;
-    ((struct x_vars *)dm_vars)->omy = my;
+    ((struct x_vars *)dmp->dm_vars)->omx = mx;
+    ((struct x_vars *)dmp->dm_vars)->omy = my;
   } else {
-    XGetWindowAttributes( ((struct x_vars *)dm_vars)->dpy,
-			  ((struct x_vars *)dm_vars)->win, &xwa);
-    ((struct x_vars *)dm_vars)->height = xwa.height;
-    ((struct x_vars *)dm_vars)->width = xwa.width;
+    XGetWindowAttributes( ((struct x_vars *)dmp->dm_vars)->dpy,
+			  ((struct x_vars *)dmp->dm_vars)->win, &xwa);
+    ((struct x_vars *)dmp->dm_vars)->height = xwa.height;
+    ((struct x_vars *)dmp->dm_vars)->width = xwa.width;
 
     goto end;
   }
@@ -273,16 +273,16 @@ char *argv[];
     if( argc < 2 )  {
       /* Bare set command, print out current settings */
       bu_struct_print("dm_X internal variables", X_vparse,
-		     (CONST char *)&((struct x_vars *)dm_vars)->mvars );
+		     (CONST char *)&((struct x_vars *)dmp->dm_vars)->mvars );
     } else if( argc == 2 ) {
       bu_vls_struct_item_named( &vls, X_vparse, argv[1],
-			 (CONST char *)&((struct x_vars *)dm_vars)->mvars, ',');
+			 (CONST char *)&((struct x_vars *)dmp->dm_vars)->mvars, ',');
       bu_log( "%s\n", bu_vls_addr(&vls) );
     } else {
       bu_vls_printf( &vls, "%s=\"", argv[1] );
       bu_vls_from_argv( &vls, argc-2, argv+2 );
       bu_vls_putc( &vls, '\"' );
-      bu_struct_parse( &vls, X_vparse, (char *)&((struct x_vars *)dm_vars)->mvars);
+      bu_struct_parse( &vls, X_vparse, (char *)&((struct x_vars *)dmp->dm_vars)->mvars);
     }
 
     bu_vls_free(&vls);
@@ -305,13 +305,13 @@ char *argv[];
     /* This assumes a 3-button mouse */
     switch(*argv[1]){
     case '1':
-      ((struct x_vars *)dm_vars)->mb_mask = Button1Mask;
+      ((struct x_vars *)dmp->dm_vars)->mb_mask = Button1Mask;
       break;
     case '2':
-      ((struct x_vars *)dm_vars)->mb_mask = Button2Mask;
+      ((struct x_vars *)dmp->dm_vars)->mb_mask = Button2Mask;
       break;
     case '3':
-      ((struct x_vars *)dm_vars)->mb_mask = Button3Mask;
+      ((struct x_vars *)dmp->dm_vars)->mb_mask = Button3Mask;
       break;
     default:
       Tcl_AppendResult(interp, "dm m: bad button value - ", argv[1], "\n", (char *)NULL);
@@ -346,8 +346,8 @@ char *argv[];
     }
 
     buttonpress = atoi(argv[2]);
-    ((struct x_vars *)dm_vars)->omx = atoi(argv[3]);
-    ((struct x_vars *)dm_vars)->omy = atoi(argv[4]);
+    ((struct x_vars *)dmp->dm_vars)->omx = atoi(argv[3]);
+    ((struct x_vars *)dmp->dm_vars)->omy = atoi(argv[4]);
 
     if(buttonpress){
       switch(*argv[1]){
@@ -367,10 +367,10 @@ char *argv[];
 	  av[4] = ystr;
 	  av[5] = NULL;
 
-	  sprintf(xstr, "%f", (((struct x_vars *)dm_vars)->omx/
-			       (fastf_t)((struct x_vars *)dm_vars)->width - 0.5) * 2);
-	  sprintf(ystr, "%f", (0.5 - ((struct x_vars *)dm_vars)->omy/
-			       (fastf_t)((struct x_vars *)dm_vars)->height) * 2);
+	  sprintf(xstr, "%f", (((struct x_vars *)dmp->dm_vars)->omx/
+			       (fastf_t)((struct x_vars *)dmp->dm_vars)->width - 0.5) * 2);
+	  sprintf(ystr, "%f", (0.5 - ((struct x_vars *)dmp->dm_vars)->omy/
+			       (fastf_t)((struct x_vars *)dmp->dm_vars)->height) * 2);
 	  status = f_knob((ClientData)NULL, interp, 5, av);
 	}
 

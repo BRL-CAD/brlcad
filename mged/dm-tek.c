@@ -43,6 +43,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 /* Display Manager package interface */
 
 #define TEKBOUND	1000.0	/* Max magnification in Rot matrix */
+int	Tek_init();
 int	Tek_open();
 void	Tek_close();
 MGED_EXTERN(void	Tek_input, (fd_set *input, int noblock) );
@@ -54,25 +55,31 @@ int	Tek_object();
 unsigned Tek_cvtvecs(), Tek_load();
 void	Tek_statechange(), Tek_viewchange(), Tek_colorchange();
 void	Tek_window(), Tek_debug();
+int     Tek_dm();
 
 struct dm dm_Tek = {
-	Tek_open, Tek_close,
-	Tek_input,
-	Tek_prolog, Tek_epilog,
-	Tek_normal, Tek_newrot,
-	Tek_update,
-	Tek_puts, Tek_2d_line,
-	Tek_light,
-	Tek_object,
-	Tek_cvtvecs, Tek_load,
-	Tek_statechange,
-	Tek_viewchange,
-	Tek_colorchange,
-	Tek_window, Tek_debug,
-	0,				/* no displaylist */
-	0,				/* can't rt to this */
-	TEKBOUND,
-	"tek", "Tektronix 4014"
+  Tek_init,
+  Tek_open, Tek_close,
+  Tek_input,
+  Tek_prolog, Tek_epilog,
+  Tek_normal, Tek_newrot,
+  Tek_update,
+  Tek_puts, Tek_2d_line,
+  Tek_light,
+  Tek_object,
+  Tek_cvtvecs, Tek_load,
+  Tek_statechange,
+  Tek_viewchange,
+  Tek_colorchange,
+  Tek_window, Tek_debug, Tek_dm, 0,
+  0,				/* no displaylist */
+  0,				/* can't rt to this */
+  TEKBOUND,
+  "tek", "Tektronix 4014",
+  0,
+  0,
+  0,
+  0
 };
 
 extern struct device_values dm_values;	/* values read from devices */
@@ -101,6 +108,11 @@ static void	teklabel(), teklinemod(), tekpoint();
  */
 #define	GED_TO_TEK(x)	(((x)+2048) * 780 / 1024)
 #define TEK_TO_GED(x)	(((x) * 1024 / 780) - 2048)
+
+Tek_init()
+{
+  return TCL_OK;
+}
 
 /*
  *			T E K _ O P E N
@@ -739,4 +751,12 @@ register int w[];
 	clipmax[0] = w[0] / 2047.;
 	clipmax[1] = w[2] / 2047.;
 	clipmax[2] = w[4] / 2047.;
+}
+
+int
+Tek_dm(argc, argv)
+int argc;
+char *argv[];
+{
+  return TCL_OK;
 }

@@ -140,7 +140,7 @@ int need_close;
 
 	if(name != NULL){
 	  for( BU_LIST_FOR(p, dm_list, &head_dm_list.l) ){
-	    if(strcmp(name, bu_vls_addr(&p->_dmp->dmr_pathName)))
+	    if(strcmp(name, bu_vls_addr(&p->_dmp->dm_pathName)))
 	      continue;
 
 	    /* found it */
@@ -166,13 +166,13 @@ int need_close;
 	if(need_close){
 	  /* Delete all references to display processor memory */
 	  FOR_ALL_SOLIDS(sp, &HeadSolid.l)  {
-	    rt_memfree( &(dmp->dmr_map), sp->s_bytes, (unsigned long)sp->s_addr );
+	    rt_memfree( &(dmp->dm_map), sp->s_bytes, (unsigned long)sp->s_addr );
 	    sp->s_bytes = 0;
 	    sp->s_addr = 0;
 	  }
-	  rt_mempurge( &(dmp->dmr_map) );
+	  rt_mempurge( &(dmp->dm_map) );
 
-	  dmp->dmr_close(dmp);
+	  dmp->dm_close(dmp);
 	}
 	
 	if(!--p->s_info->_rc)
@@ -205,7 +205,7 @@ reattach()
   char *av[4];
 
   av[0] = "attach";
-  av[1] = dmp->dmr_name;
+  av[1] = dmp->dm_name;
   av[2] = dname;
   av[3] = NULL;
 
@@ -259,16 +259,16 @@ char    **argv;
   if(argc == 1){
     wp = &which_dm[2];  /* not advertising dm_Plot or dm_PS */
     Tcl_AppendResult(interp, MORE_ARGS_STR,
-		     "attach (", (wp++)->dp->dmr_name, (char *)NULL);
+		     "attach (", (wp++)->dp->dm_name, (char *)NULL);
     for( ; wp->dp != (struct dm *)0; wp++ )
-      Tcl_AppendResult(interp, "|", wp->dp->dmr_name, (char *)NULL);
+      Tcl_AppendResult(interp, "|", wp->dp->dm_name, (char *)NULL);
     Tcl_AppendResult(interp, ")? ",  (char *)NULL);
     
     return TCL_ERROR;
   }
 
   for( wp = &which_dm[0]; wp->dp != (struct dm *)0; wp++ )
-    if( strcmp(argv[1], wp->dp->dmr_name ) == 0 )
+    if( strcmp(argv[1], wp->dp->dm_name ) == 0 )
       break;
 
   if(wp->dp == (struct dm *)0){
@@ -285,9 +285,9 @@ char    **argv;
     curr_dm_list = dmlp;
     BU_GETSTRUCT(dmp, dm);
     *dmp = *wp->dp;
-    dm_init = wp->init;
+    curr_dm_list->dm_init = wp->init;
     dm_var_init(o_dm_list, argv[2]);
-    dmp->dmr_vp = &Viewscale;
+    dmp->dm_vp = &Viewscale;
   }
 
   no_memory = 0;
@@ -298,18 +298,18 @@ char    **argv;
       goto Bad;
   }
 
-  if( dm_init(argc - 1, argv + 1) )
+  if( curr_dm_list->dm_init(argc - 1, argv + 1) )
     goto Bad;
 
-  Tcl_AppendResult(interp, "ATTACHING ", dmp->dmr_name, " (", dmp->dmr_lname,
+  Tcl_AppendResult(interp, "ATTACHING ", dmp->dm_name, " (", dmp->dm_lname,
 		   ")\n", (char *)NULL);
 
   FOR_ALL_SOLIDS(sp, &HeadSolid.l)  {
     /* Write vector subs into new display processor */
-    if( (sp->s_bytes = dmp->dmr_cvtvecs( dmp, sp )) != 0 )  {
-      sp->s_addr = rt_memalloc( &(dmp->dmr_map), sp->s_bytes );
+    if( (sp->s_bytes = dmp->dm_cvtvecs( dmp, sp )) != 0 )  {
+      sp->s_addr = rt_memalloc( &(dmp->dm_map), sp->s_bytes );
       if( sp->s_addr == 0 )  break;
-      sp->s_bytes = dmp->dmr_load(dmp, sp->s_addr, sp->s_bytes);
+      sp->s_bytes = dmp->dm_load(dmp, sp->s_addr, sp->s_bytes);
     } else {
       sp->s_addr = 0;
       sp->s_bytes = 0;
@@ -317,18 +317,20 @@ char    **argv;
   }
 
   color_soltab();
-  dmp->dmr_colorchange(dmp);
-  dmp->dmr_viewchange( dmp, DM_CHGV_REDO, SOLID_NULL );
+#if 0
+  dmp->dm_colorchange(dmp);
+  dmp->dm_viewchange( dmp, DM_CHGV_REDO, SOLID_NULL );
+#endif
   ++dmaflag;
   return TCL_OK;
 
 Bad:
   Tcl_AppendResult(interp, "attach(", argv[1], "): BAD\n", (char *)NULL);
 
-  if(dmp->dmr_vars != (genptr_t)0)
-    release((char *)NULL, 1);  /* relesae() will call dmr_close */
+  if(dmp->dm_vars != (genptr_t)0)
+    release((char *)NULL, 1);  /* relesae() will call dm_close */
   else
-    release((char *)NULL, 0);  /* release() will not call dmr_close */
+    release((char *)NULL, 0);  /* release() will not call dm_close */
 
   return TCL_ERROR;
 }
@@ -381,16 +383,17 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-  if( !dmp->dmr_cmd )  {
-    Tcl_AppendResult(interp, "The '", dmp->dmr_name,
-		     "' display manager does not support any local commands.\n", (char *)NULL);
+  if( !cmd_hook ){
+    Tcl_AppendResult(interp, "The '", dmp->dm_name,
+		     "' display manager does not support any local commands.\n",
+		     (char *)NULL);
     return TCL_ERROR;
   }
 
   if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
     return TCL_ERROR;
 
-  return dmp->dmr_cmd( argc-1, argv+1 );
+  return cmd_hook( argc-1, argv+1 );
 }
 
 /*
@@ -421,7 +424,7 @@ char    **argv;
         return TCL_ERROR;
 
   for( BU_LIST_FOR(p, dm_list, &head_dm_list.l) )
-    if(!strcmp(argv[1], bu_vls_addr(&p->_dmp->dmr_pathName)))
+    if(!strcmp(argv[1], bu_vls_addr(&p->_dmp->dm_pathName)))
       break;
 
   if(p == &head_dm_list){
@@ -438,7 +441,7 @@ char    **argv;
       bcopy((void *)sip, (void *)p->s_info, sizeof(struct shared_info));
       p->s_info->_rc = 1;
       p->_owner = 1;
-      p->_dmp->dmr_vp = &p->s_info->_Viewscale;
+      p->_dmp->dm_vp = &p->s_info->_Viewscale;
       
       return TCL_OK;
     }else
@@ -450,7 +453,7 @@ char    **argv;
     bcopy((void *)sip, (void *)p->s_info, sizeof(struct shared_info));
     p->s_info->_rc = 1;
     p->_owner = 1;
-    p->_dmp->dmr_vp = &p->s_info->_Viewscale;
+    p->_dmp->dm_vp = &p->s_info->_Viewscale;
 
     return TCL_OK;
   }
@@ -471,9 +474,9 @@ char    **argv;
     return TCL_ERROR;
 
   for( BU_LIST_FOR(p, dm_list, &head_dm_list.l) ){
-    if(p1 == (struct dm_list *)NULL && !strcmp(argv[1], bu_vls_addr(&p->_dmp->dmr_pathName)))
+    if(p1 == (struct dm_list *)NULL && !strcmp(argv[1], bu_vls_addr(&p->_dmp->dm_pathName)))
 	p1 = p;
-    else if(p2 == (struct dm_list *)NULL && !strcmp(argv[2], bu_vls_addr(&p->_dmp->dmr_pathName)))
+    else if(p2 == (struct dm_list *)NULL && !strcmp(argv[2], bu_vls_addr(&p->_dmp->dm_pathName)))
       p2 = p;
     else if(p1 != (struct dm_list *)NULL && p2 != (struct dm_list *)NULL)
       break;
@@ -497,7 +500,7 @@ char    **argv;
   /* p1 now shares p2's s_info */
   p1->s_info = p2->s_info;
 
-  p1->_dmp->dmr_vp = &p1->s_info->_Viewscale;
+  p1->_dmp->dm_vp = &p1->s_info->_Viewscale;
 
   /* increment the reference count */
   ++p2->s_info->_rc;

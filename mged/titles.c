@@ -82,7 +82,7 @@ register struct bu_vls	*vp;
 	/*
 	 * Set up for character output.  For the best generality, we
 	 * don't assume that the display can process a CRLF sequence,
-	 * so each line is written with a separate call to dmp->dmr_puts().
+	 * so each line is written with a separate call to dmp->dm_drawString2D().
 	 */
 
 	/* print solid info at top of screen */
@@ -137,7 +137,7 @@ register struct bu_vls	*vp;
  *
  * Set up for character output.  For the best generality, we
  * don't assume that the display can process a CRLF sequence,
- * so each line is written with a separate call to dmp->dmr_puts().
+ * so each line is written with a separate call to dmp->dm_drawString2D().
  */
 void
 screen_vls( xbase, ybase, vp )
@@ -169,7 +169,7 @@ register struct bu_vls	*vp;
 
 		}
 #endif
-		dmp->dmr_puts( dmp, start, xbase, y, 0, DM_YELLOW );
+		dmp->dm_drawString2D( dmp, start, xbase, y, 0, DM_YELLOW );
 		start = end+1;
 		y += TEXT0_DY;
 	}
@@ -275,6 +275,15 @@ int call_dm;
 	Tcl_SetVar2(interp, MGED_DISPLAY_VAR, "keypoint", "", TCL_GLOBAL_ONLY);
 	Tcl_SetVar2(interp, MGED_DISPLAY_VAR, "fps", "", TCL_GLOBAL_ONLY);
 
+#if 1
+	if (!call_dm) {
+	    bu_vls_free(&vls);
+	    return;
+	}
+#endif
+
+	dmp->dm_setLineAttr(dmp, 1, 0); /* linewidth - 1, not dashed */
+
 	/* Label the vertices of the edited solid */
 	if(es_edflag >= 0 || (state == ST_O_EDIT && illump->s_Eflag == 0))  {
 		mat_t			xform;
@@ -284,30 +293,33 @@ int call_dm;
 
 		label_edited_solid( pl, 8+1, xform, &es_int );
 
+		dmp->dm_setColor(dmp, DM_WHITE, 1);
 		for( i=0; i<8+1; i++ )  {
 			if( pl[i].str[0] == '\0' )  break;
-			dmp->dmr_puts( dmp, pl[i].str,
+			dmp->dm_drawString2D( dmp, pl[i].str,
 				((int)(pl[i].pt[X]*2048))+15,
-				((int)(pl[i].pt[Y]*2048))+15,
-				0, DM_WHITE );
+				((int)(pl[i].pt[Y]*2048))+15, 0 );
 		}
 	}
 
+#if 0
 	if (!call_dm) {
 	    bu_vls_free(&vls);
 	    return;
 	}
+#endif
 
 	/* Line across the bottom, above two bottom status lines */
-	dmp->dmr_2d_line( dmp, XMIN, TITLE_YBASE-TEXT1_DY, XMAX,
-			  TITLE_YBASE-TEXT1_DY, 0 );
+	dmp->dm_setColor(dmp, DM_YELLOW, 1);
+	dmp->dm_drawLine2D( dmp, XMIN, TITLE_YBASE-TEXT1_DY, XMAX,
+			      TITLE_YBASE-TEXT1_DY );
 
 	if(mged_variables.show_menu){
 	  /* Enclose window in decorative box.  Mostly for alignment. */
-	  dmp->dmr_2d_line( dmp, XMIN, YMIN, XMAX, YMIN, 0 );
-	  dmp->dmr_2d_line( dmp, XMAX, YMIN, XMAX, YMAX, 0 );
-	  dmp->dmr_2d_line( dmp, XMAX, YMAX, XMIN, YMAX, 0 );
-	  dmp->dmr_2d_line( dmp, XMIN, YMAX, XMIN, YMIN, 0 );
+	  dmp->dm_drawLine2D( dmp, XMIN, YMIN, XMAX, YMIN );
+	  dmp->dm_drawLine2D( dmp, XMAX, YMIN, XMAX, YMAX );
+	  dmp->dm_drawLine2D( dmp, XMAX, YMAX, XMIN, YMAX );
+	  dmp->dm_drawLine2D( dmp, XMIN, YMAX, XMIN, YMIN );
 
 	  /* Display scroll bars */
 	  scroll_ybot = scroll_display( SCROLLY ); 
@@ -316,8 +328,9 @@ int call_dm;
 
 	  /* Display state and local unit in upper right corner, boxed */
 #define YPOS	(MENUY - MENU_DY - 75 )
-	  dmp->dmr_puts(dmp, state_str[state], MENUX, MENUY - MENU_DY, 1, DM_WHITE );
-	  dmp->dmr_2d_line(dmp, MENUXLIM, YPOS, MENUXLIM, YMAX, 0);	/* vert. */
+	  dmp->dm_drawLine2D(dmp, MENUXLIM, YPOS, MENUXLIM, YMAX);	/* vert. */
+	  dmp->dm_setColor(dmp, DM_WHITE, 1);
+	  dmp->dm_drawString2D(dmp, state_str[state], MENUX, MENUY - MENU_DY, 1 );
 #undef YPOS
 	}else{
 	  scroll_ybot = SCROLLY;
@@ -330,16 +343,16 @@ int call_dm;
 	 */
 	if( illump != SOLID_NULL &&
 	    (state==ST_O_PATH || state==ST_O_PICK || state==ST_S_PICK) )  {
-		for( i=0; i <= illump->s_last; i++ )  {
-			if( i == ipathpos  &&  state == ST_O_PATH )  {
-				dmp->dmr_puts( dmp, "[MATRIX]", x, y, 0,
-					       DM_WHITE );
-				y += MENU_DY;
-			}
-			dmp->dmr_puts( dmp, illump->s_path[i]->d_namep, x, y, 0,
-				       DM_YELLOW );
-			y += MENU_DY;
-		}
+	  for( i=0; i <= illump->s_last; i++ )  {
+	    if( i == ipathpos  &&  state == ST_O_PATH )  {
+	      dmp->dm_setColor(dmp, DM_WHITE, 1);
+	      dmp->dm_drawString2D( dmp, "[MATRIX]", x, y, 0 );
+	      y += MENU_DY;
+	    }
+	    dmp->dm_setColor(dmp, DM_YELLOW, 1);
+	    dmp->dm_drawString2D( dmp, illump->s_path[i]->d_namep, x, y, 0 );
+	    y += MENU_DY;
+	  }
 	}
 
 	if(mged_variables.show_menu){
@@ -354,18 +367,19 @@ int call_dm;
 		MAT4X3PNT(temp, model2objview, es_keypoint);
 		xloc = (int)(temp[X]*2048);
 		yloc = (int)(temp[Y]*2048);
-		dmp->dmr_2d_line(dmp, xloc-TEXT0_DY, yloc+TEXT0_DY, xloc+TEXT0_DY,
-				 yloc-TEXT0_DY, 0);
-		dmp->dmr_2d_line(dmp, xloc-TEXT0_DY, yloc-TEXT0_DY, xloc+TEXT0_DY,
-				 yloc+TEXT0_DY, 0);
-		dmp->dmr_2d_line(dmp, xloc+TEXT0_DY, yloc+TEXT0_DY, xloc-TEXT0_DY,
-				 yloc+TEXT0_DY, 0);
-		dmp->dmr_2d_line(dmp, xloc+TEXT0_DY, yloc-TEXT0_DY, xloc-TEXT0_DY,
-				 yloc-TEXT0_DY, 0);
-		dmp->dmr_2d_line(dmp, xloc+TEXT0_DY, yloc+TEXT0_DY, xloc+TEXT0_DY,
-				 yloc-TEXT0_DY, 0);
-		dmp->dmr_2d_line(dmp, xloc-TEXT0_DY, yloc+TEXT0_DY, xloc-TEXT0_DY,
-				 yloc-TEXT0_DY, 0);
+		dmp->dm_setColor(dmp, DM_YELLOW, 1);
+		dmp->dm_drawLine2D(dmp, xloc-TEXT0_DY, yloc+TEXT0_DY, xloc+TEXT0_DY,
+				 yloc-TEXT0_DY);
+		dmp->dm_drawLine2D(dmp, xloc-TEXT0_DY, yloc-TEXT0_DY, xloc+TEXT0_DY,
+				 yloc+TEXT0_DY);
+		dmp->dm_drawLine2D(dmp, xloc+TEXT0_DY, yloc+TEXT0_DY, xloc-TEXT0_DY,
+				 yloc+TEXT0_DY);
+		dmp->dm_drawLine2D(dmp, xloc+TEXT0_DY, yloc-TEXT0_DY, xloc-TEXT0_DY,
+				 yloc-TEXT0_DY);
+		dmp->dm_drawLine2D(dmp, xloc+TEXT0_DY, yloc+TEXT0_DY, xloc+TEXT0_DY,
+				 yloc-TEXT0_DY);
+		dmp->dm_drawLine2D(dmp, xloc-TEXT0_DY, yloc+TEXT0_DY, xloc-TEXT0_DY,
+				 yloc-TEXT0_DY);
 	      }
 	}
 
@@ -390,8 +404,8 @@ int call_dm;
 	bu_vls_printf(&vls,
 		       "az=%s el=%s tw=%s ang=(%s, %s, %s)",
 		      azimuth, elevation, twist, ang_x, ang_y, ang_z);
-	dmp->dmr_puts( dmp, bu_vls_addr(&vls), TITLE_XBASE, TITLE_YBASE, 1,
-		       DM_WHITE );
+	dmp->dm_setColor(dmp, DM_WHITE, 1);
+	dmp->dm_drawString2D( dmp, bu_vls_addr(&vls), TITLE_XBASE, TITLE_YBASE, 1 );
 	bu_vls_trunc(&vls, 0);
 	/*
 	 * Second status line
@@ -425,8 +439,9 @@ int call_dm;
 			pt3[X]*base2local, pt3[Y]*base2local,
 			(curs_x / 2047.0) *Viewscale*base2local,
 			(curs_y / 2047.0) *Viewscale*base2local );
-		dmp->dmr_puts( dmp, bu_vls_addr(&vls), TITLE_XBASE,
-			      TITLE_YBASE + TEXT1_DY, 1, DM_YELLOW );
+		dmp->dm_setColor(dmp, DM_YELLOW, 1);
+		dmp->dm_drawString2D( dmp, bu_vls_addr(&vls), TITLE_XBASE,
+			      TITLE_YBASE + TEXT1_DY, 1 );
 		Tcl_SetVar2(interp, MGED_DISPLAY_VAR, "adc",
 			    bu_vls_addr(&vls), TCL_GLOBAL_ONLY);
 	} else if( state == ST_S_EDIT || state == ST_O_EDIT )  {
@@ -437,8 +452,9 @@ int call_dm;
 			es_keypoint[X] * base2local,
 			es_keypoint[Y] * base2local,
 			es_keypoint[Z] * base2local);
-		dmp->dmr_puts( dmp, bu_vls_addr(&vls), TITLE_XBASE,
-			       TITLE_YBASE + TEXT1_DY, 1, DM_YELLOW );
+		dmp->dm_setColor(dmp, DM_YELLOW, 1);
+		dmp->dm_drawString2D( dmp, bu_vls_addr(&vls), TITLE_XBASE,
+			       TITLE_YBASE + TEXT1_DY, 1 );
 		Tcl_SetVar2(interp, MGED_DISPLAY_VAR, "keypoint",
 			    bu_vls_addr(&vls), TCL_GLOBAL_ONLY);
 	} else if( illump != SOLID_NULL )  {
@@ -450,12 +466,14 @@ int call_dm;
 				bu_vls_strcat( &vls, "/__MATRIX__" );
 			bu_vls_printf(&vls, "/%s", illump->s_path[i]->d_namep);
 		}
-		dmp->dmr_puts( dmp, bu_vls_addr(&vls), TITLE_XBASE,
-			       TITLE_YBASE + TEXT1_DY, 1, DM_YELLOW );
+		dmp->dm_setColor(dmp, DM_YELLOW, 1);
+		dmp->dm_drawString2D( dmp, bu_vls_addr(&vls), TITLE_XBASE,
+			       TITLE_YBASE + TEXT1_DY, 1 );
 	} else {
 		bu_vls_printf(&vls, "%.2f fps", 1/frametime );
-		dmp->dmr_puts( dmp, bu_vls_addr(&vls), TITLE_XBASE,
-			       TITLE_YBASE + TEXT1_DY, 1, DM_YELLOW );
+		dmp->dm_setColor(dmp, DM_YELLOW, 1);
+		dmp->dm_drawString2D( dmp, bu_vls_addr(&vls), TITLE_XBASE,
+			       TITLE_YBASE + TEXT1_DY, 1 );
 		Tcl_SetVar2(interp, MGED_DISPLAY_VAR, "fps",
 			    bu_vls_addr(&vls), TCL_GLOBAL_ONLY);
 	}

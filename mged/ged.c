@@ -285,7 +285,7 @@ char **argv;
 	  bu_log("%s", interp->result);
 
 #if 0
-	dmp->dmr_window(windowbounds);
+	dmp->dm_setWinBounds(windowbounds);
 #endif
 
 	/* --- Now safe to process commands. --- */
@@ -324,8 +324,10 @@ char **argv;
 	dotitles(1);
 #endif
 
+#if 0
 	/* Reset the lights */
-	dmp->dmr_light( dmp, LIGHT_RESET, 0 );
+	dmp->dm_light( dmp, LIGHT_RESET, 0 );
+#endif
 
 	(void)pipe(dm_pipe);
 	Tk_CreateFileHandler(STDIN_FILENO, TK_READABLE, stdin_input,
@@ -847,7 +849,7 @@ int	non_blocking;
     windowbounds[3] = TITLE_YBASE-TEXT1_DY;	/* YLR */
 
 #if 0
-    dmp->dmr_window(windowbounds);	/* hack */
+    dmp->dm_setWinBounds(windowbounds);	/* hack */
 #endif
 
     save_dm_list = curr_dm_list;
@@ -951,7 +953,7 @@ refresh()
      */
 
     curr_dm_list = p;
-    dmp->dmr_window(dmp, windowbounds);
+    dmp->dm_setWinBounds(dmp, windowbounds);
 
     if(update_views || dmaflag || dirty) {
       double	elapsed_time;
@@ -964,11 +966,11 @@ refresh()
       if( mged_variables.predictor )
 	predictor_frame();
 
-      dmp->dmr_prolog(dmp);	/* update displaylist prolog */
+      dmp->dm_drawBegin(dmp);	/* update displaylist prolog */
 
       /*  Draw each solid in it's proper place on the screen
        *  by applying zoom, rotation, & translation.
-       *  Calls dmp->dmr_newrot() and dmp->dmr_object().
+       *  Calls dmp->dm_newrot() and dmp->dm_drawVList().
        */
       if( mged_variables.eye_sep_dist <= 0 )  {
 	/* Normal viewing */
@@ -980,7 +982,7 @@ refresh()
       }
 
       /* Restore to non-rotated, full brightness */
-      dmp->dmr_normal(dmp);
+      dmp->dm_normal(dmp);
 
       /* Compute and display angle/distance cursor */
       if (mged_variables.adcflag)
@@ -989,7 +991,10 @@ refresh()
       /* Display titles, etc., if desired */
       dotitles(mged_variables.faceplate);
 
-      dmp->dmr_epilog(dmp);
+      /* Draw center dot */
+      dmp->dm_drawVertex2D(dmp, 0, 0, DM_YELLOW);
+
+      dmp->dm_drawEnd(dmp);
 
       (void)rt_get_timer( (struct bu_vls *)0, &elapsed_time );
       /* Only use reasonable measurements */
@@ -1224,12 +1229,12 @@ char *arg;
 	timep[24] = '\0';	/* Chop off \n */
 
 	(void)sprintf(line, "%s [%s] time=%ld uid=%d (%s) %s\n",
-			event,
-			dmp->dmr_name,
-			now,
-			getuid(),
-			timep,
-			arg
+		      event,
+		      dmp->dm_name,
+		      now,
+		      getuid(),
+		      timep,
+		      arg
 	);
 
 	if( (logfd = open( LOGFILE, O_WRONLY|O_APPEND )) >= 0 )  {
@@ -1258,8 +1263,10 @@ int	exitcode;
 	for( BU_LIST_FOR(p, dm_list, &head_dm_list.l) ){
 	  curr_dm_list = p;
 
-	  dmp->dmr_light( dmp, LIGHT_RESET, 0 );	/* turn off the lights */
-	  dmp->dmr_close(dmp);
+	  dmp->dm_close(dmp);
+#if 0
+	  dmp->dm_light( dmp, LIGHT_RESET, 0 );	/* turn off the lights */
+#endif
 	}
 
 	if (cbreak_mode > 0)
@@ -1483,6 +1490,8 @@ char	**argv;
 				 (char *)NULL);
 		bu_vls_printf(&curr_cmd_list->more_default, "n");
 
+		dmaflag = 0;
+		update_views = 0;
 		return TCL_ERROR;
 	      }
 

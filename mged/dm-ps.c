@@ -45,8 +45,8 @@ PS_dm_init(argc, argv)
 int argc;
 char *argv[];
 {
-  if(dmp->dmr_init(dmp, argc, argv) == TCL_ERROR)
+  if(dmp->dm_init(dmp, argc, argv) == TCL_ERROR)
     return TCL_ERROR;
 
-  return dmp->dmr_open(dmp);
+  return dmp->dm_open(dmp);
 }

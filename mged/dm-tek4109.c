@@ -44,9 +44,6 @@ is different from the factory default.
 	NRTC
 */
 
-
-
-
 #include <stdio.h>
 #include <sys/time.h>		/* for struct timeval */
 #include "machine.h"
@@ -62,6 +59,7 @@ is different from the factory default.
 /* Display Manager package interface */
  
 #define TEKBOUND	1000.0	/* Max magnification in Rot matrix */
+int	T49_init();
 int	T49_open();
 void	T49_close();
 MGED_EXTERN(void	T49_input, (fd_set *input, int noblock) );
@@ -73,25 +71,31 @@ int	T49_object();
 unsigned T49_cvtvecs(), T49_load();
 void	T49_statechange(), T49_viewchange(), T49_colorchange();
 void	T49_window(), T49_debug();
+int     T49_dm();
 
 struct dm dm_T49 = {
-	T49_open, T49_close,
-	T49_input,
-	T49_prolog, T49_epilog,
-	T49_normal, T49_newrot,
-	T49_update,
-	T49_puts, T49_2d_line,
-	T49_light,
-	T49_object,
-	T49_cvtvecs, T49_load,
-	T49_statechange,
-	T49_viewchange,
-	T49_colorchange,
-	T49_window, T49_debug,
-	0,				/* no displaylist */
-	0,				/* can't rt to this */
-	TEKBOUND,
-	"tek4109", "Tektronix 4109"		/* NRTC */
+  T49_init,
+  T49_open, T49_close,
+  T49_input,
+  T49_prolog, T49_epilog,
+  T49_normal, T49_newrot,
+  T49_update,
+  T49_puts, T49_2d_line,
+  T49_light,
+  T49_object,
+  T49_cvtvecs, T49_load,
+  T49_statechange,
+  T49_viewchange,
+  T49_colorchange,
+  T49_window, T49_debug, T49_dm, 0,
+  0,				/* no displaylist */
+  0,				/* can't rt to this */
+  TEKBOUND,
+  "tek4109", "Tektronix 4109",		/* NRTC */
+  0,
+  0,
+  0,
+  0
 };
 
 extern struct device_values dm_values;	/* values read from devices */
@@ -126,6 +130,11 @@ static void	t49label(), t49point(), t49linemod();
 
 #define	GED_TO_TEK4109(x)	(((x)+2048) * 780 / 1024)
 #define TEK4109_TO_GED(x)	(((x) * 1024 / 780) - 2048)
+
+T49_init()
+{
+  return TCL_OK;
+}
 
 /*
  *			T E K _ O P E N
@@ -709,4 +718,12 @@ register int w[];
 	clipmax[0] = w[0] / 2047.;
 	clipmax[1] = w[2] / 2047.;
 	clipmax[2] = w[4] / 2047.;
+}
+
+int
+T49_dm(argc, argv)
+int argc;
+char *argv[];
+{
+  return TCL_OK;
 }

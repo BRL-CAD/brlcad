@@ -269,6 +269,10 @@ int	which_eye;
 	mat_t		tmat, tvmat;
 	mat_t		new;
 	matp_t		mat;
+	int linestyle = 0;  /* not dashed */
+	short r = -1;
+	short g = -1;
+	short b = -1;
 
 	ndrawn = 0;
 	inv_viewsize = 1 / VIEWSIZE;
@@ -357,32 +361,65 @@ mat_print("pmat", pmat);
 		mat = new;
 	}
 
-	dmp->dmr_newrot( dmp, mat, which_eye );
+	dmp->dm_newrot( dmp, mat, which_eye );
 
+	dmp->dm_setLineAttr(dmp, 1, linestyle); /* linewidth - 1, not dashed */
 	FOR_ALL_SOLIDS(sp, &HeadSolid.l)  {
-		sp->s_flag = DOWN;		/* Not drawn yet */
-		/* If part of object rotation, will be drawn below */
-		if( sp->s_iflag == UP )
-			continue;
+	  sp->s_flag = DOWN;		/* Not drawn yet */
+	  /* If part of object rotation, will be drawn below */
+	  if( sp->s_iflag == UP )
+	    continue;
 
-		ratio = sp->s_size * inv_viewsize;
+	  ratio = sp->s_size * inv_viewsize;
 
-		/*
-		 * Check for this object being bigger than 
-		 * dmp->dmr_bound * the window size, or smaller than a speck.
-		 */
-		 if( ratio >= dmp->dmr_bound || ratio < 0.001 )
-		 	continue;
+	  /*
+	   * Check for this object being bigger than 
+	   * dmp->dm_bound * the window size, or smaller than a speck.
+	   */
+	  if( ratio >= dmp->dm_bound || ratio < 0.001 )
+	    continue;
 
- 		if( dmp->dmr_object( dmp, (struct rt_vlist *)&sp->s_vlist,
-				     mat, sp==illump, sp->s_soldash,
-				     (short)sp->s_color[0],
-				     (short)sp->s_color[1],
-				     (short)sp->s_color[2],
-				     sp->s_dmindex) )  {
-			sp->s_flag = UP;
-			ndrawn++;
-		}
+	  if(linestyle != sp->s_soldash){
+	    linestyle = sp->s_soldash;
+	    dmp->dm_setLineAttr(dmp, 1, linestyle);
+	  }
+
+	  if(sp==illump){
+#if 0
+	    if(!DM_SAME_COLOR(r,g,b,DM_WHITE)){
+#else
+	      if(!DM_SAME_COLOR(r,g,b,DM_WHITE_R,DM_WHITE_G,DM_WHITE_B)){
+#endif
+	      dmp->dm_setColor(dmp, DM_WHITE, 1);
+#if 0
+	      DM_SET_COLOR(r,g,b,DM_WHITE);
+#else
+	      DM_SET_COLOR(r,g,b,DM_WHITE_R,DM_WHITE_G,DM_WHITE_B);
+#endif
+	    }
+	    if(dmp->dm_drawVList( dmp, (struct rt_vlist *)&sp->s_vlist, mat )){
+	      sp->s_flag = UP;
+	      ndrawn++;
+	    }
+	  }else{
+	    if(!DM_SAME_COLOR(r,g,b,
+			      (short)sp->s_color[0],
+			      (short)sp->s_color[1],
+			      (short)sp->s_color[2])){
+	      dmp->dm_setColor(dmp,
+			       (short)sp->s_color[0],
+			       (short)sp->s_color[1],
+			       (short)sp->s_color[2], 0);
+	      DM_SET_COLOR(r,g,b,
+			      (short)sp->s_color[0],
+			      (short)sp->s_color[1],
+			      (short)sp->s_color[2]);
+	    }
+	    if(dmp->dm_drawVList( dmp, (struct rt_vlist *)&sp->s_vlist, mat )) {
+	      sp->s_flag = UP;
+	      ndrawn++;
+	    }
+	  }
 	}
 
   if(mged_variables.w_axes)
@@ -404,32 +441,33 @@ mat_print("pmat", pmat);
 		mat_mul( new, pmat, model2objview );
 		mat = new;
 	}
-	dmp->dmr_newrot( dmp, mat, which_eye );
+	dmp->dm_newrot( dmp, mat, which_eye );
 	inv_viewsize /= modelchanges[15];
+	dmp->dm_setColor(dmp, DM_WHITE, 1);
 
 	FOR_ALL_SOLIDS(sp, &HeadSolid.l)  {
-		/* Ignore all objects not being rotated */
-		if( sp->s_iflag != UP )
-			continue;
+	  /* Ignore all objects not being rotated */
+	  if( sp->s_iflag != UP )
+	    continue;
 
-		ratio = sp->s_size * inv_viewsize;
+	  ratio = sp->s_size * inv_viewsize;
 
-		/*
-		 * Check for this object being bigger than 
-		 * dmp->dmr_bound * the window size, or smaller than a speck.
-		 */
-		 if( ratio >= dmp->dmr_bound || ratio < 0.001 )
-		 	continue;
+	  /*
+	   * Check for this object being bigger than 
+	   * dmp->dm_bound * the window size, or smaller than a speck.
+	   */
+	  if( ratio >= dmp->dm_bound || ratio < 0.001 )
+	    continue;
 
-		if( dmp->dmr_object( dmp, (struct rt_vlist *)&sp->s_vlist,
-				     mat, 1, sp->s_soldash,
-				     (short)sp->s_color[0],
-				     (short)sp->s_color[1],
-				     (short)sp->s_color[2],
-				     sp->s_dmindex) )  {
-			sp->s_flag = UP;
-			ndrawn++;
-		}
+	  if(linestyle != sp->s_soldash){
+	    linestyle = sp->s_soldash;
+	    dmp->dm_setLineAttr(dmp, 1, linestyle);
+	  }
+
+	  if( dmp->dm_drawVList( dmp, (struct rt_vlist *)&sp->s_vlist, mat )){
+	    sp->s_flag = UP;
+	    ndrawn++;
+	  }
 	}
 
   if(mged_variables.e_axes)
@@ -459,7 +497,7 @@ int axes;
   BU_LIST_APPEND(&h_vlist.l, &vlist.l);
 
   mat_idn(mr_mat);
-  dmp->dmr_newrot(dmp, mr_mat, 0);
+  dmp->dm_newrot(dmp, mr_mat, 0);
 
   if(axes_color_hook)
     (*axes_color_hook)(axes, &r, &g, &b, &index);
@@ -488,6 +526,9 @@ int axes;
   }
 
   vlist.nused = 6;
+
+  /* set the vertex label color */
+  dmp->dm_setColor(dmp, DM_YELLOW, 1);
 
   /* load vlist with axes */
   for(i = 0; i < 3; ++i){
@@ -592,12 +633,14 @@ int axes;
     MAT4X3PNT(v2, model2view, m2);
 
     /* label axes */
-    dmp->dmr_puts(dmp, labels[i], ((int)(2048.0 * v2[X])) + 15,
-		  ((int)(2048.0 * v2[Y])) + 15, 1, DM_YELLOW);
+    dmp->dm_drawString2D(dmp, labels[i], ((int)(2048.0 * v2[X])) + 15,
+		  ((int)(2048.0 * v2[Y])) + 15, 1);
   }
 
-  dmp->dmr_newrot(dmp, model2view, 0);
+  dmp->dm_newrot(dmp, model2view, 0);
 
   /* draw axes */
-  dmp->dmr_object( dmp, &h_vlist, model2view, 0, 0, r, g, b, index);
+  dmp->dm_setColor(dmp, r, g, b, 1);
+  dmp->dm_setLineAttr(dmp, 1, 0);  /* linewidth - 1, not dashed */
+  dmp->dm_drawVList(dmp, &h_vlist, model2view);
 }

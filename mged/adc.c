@@ -71,8 +71,10 @@ adcursor()
 	idxy[1] = (idxy[1] < MINVAL ? MINVAL : idxy[1]);
 	idxy[1] = (idxy[1] > MAXVAL ? MAXVAL : idxy[1]);
 
-	dmp->dmr_2d_line( dmp, MINVAL, idxy[1], MAXVAL, idxy[1], 0 ); /* Horiz */
-	dmp->dmr_2d_line( dmp, idxy[0], MAXVAL, idxy[0], MINVAL, 0);  /* Vert */
+	dmp->dm_setColor(dmp, DM_YELLOW, 1);
+	dmp->dm_setLineAttr(dmp, 1, 0);    /* linewidth - 1, not dashed */
+	dmp->dm_drawLine2D( dmp, MINVAL, idxy[1], MAXVAL, idxy[1] ); /* Horizontal */
+	dmp->dm_drawLine2D( dmp, idxy[0], MAXVAL, idxy[0], MINVAL );  /* Vertical */
 
 	curs_x = (fastf_t) (idxy[0]);
 	curs_y = (fastf_t) (idxy[1]);
@@ -101,8 +103,8 @@ adcursor()
 	y4 = curs_y + d1;
 	(void)clip ( &x3, &y3, &x4, &y4 );
 
-	dmp->dmr_2d_line( dmp, (int)x1, (int)Y1, (int)x2, (int)y2, 0 );
-	dmp->dmr_2d_line( dmp, (int)x3, (int)y3, (int)x4, (int)y4, 0 );
+	dmp->dm_drawLine2D( dmp, (int)x1, (int)Y1, (int)x2, (int)y2 );
+	dmp->dm_drawLine2D( dmp, (int)x3, (int)y3, (int)x4, (int)y4 );
 
 	d1 = cos (angle2) * 8000.0;
 	d2 = sin (angle2) * 8000.0;
@@ -118,9 +120,10 @@ adcursor()
 	y4 = curs_y + d1;
 	(void)clip ( &x3, &y3, &x4, &y4 );
 
-	/* Dashed lines */
-	dmp->dmr_2d_line( dmp, (int)x1, (int)Y1, (int)x2, (int)y2, 1 );
-	dmp->dmr_2d_line( dmp, (int)x3, (int)y3, (int)x4, (int)y4, 1 );
+	dmp->dm_setLineAttr(dmp, 1, 1);  /* linewidth - 1, dashed */
+	dmp->dm_drawLine2D( dmp, (int)x1, (int)Y1, (int)x2, (int)y2 );
+	dmp->dm_drawLine2D( dmp, (int)x3, (int)y3, (int)x4, (int)y4 );
+	dmp->dm_setLineAttr(dmp, 1, 0);  /* linewidth - 1, not dashed */
 
 	/*
 	 * Position tic marks from dial 9.
@@ -140,7 +143,7 @@ adcursor()
 	x2 = curs_x + d1 -t1;
 	y2 = curs_y + d2 + t2;
 	if (clip ( &x1, &Y1, &x2, &y2 ) == 0) {
-		dmp->dmr_2d_line( dmp, (int)x1, (int)Y1, (int)x2, (int)y2, 0 );
+	  dmp->dm_drawLine2D( dmp, (int)x1, (int)Y1, (int)x2, (int)y2 );
 	}
 
 	/* Quadrant 2 */
@@ -149,7 +152,7 @@ adcursor()
 	x2 = curs_x - d2 - t2;
 	y2 = curs_y + d1 - t1;
 	if (clip (&x1, &Y1, &x2, &y2) == 0) {
-		dmp->dmr_2d_line( dmp, (int)x1, (int)Y1, (int)x2, (int)y2, 0 );
+	  dmp->dm_drawLine2D( dmp, (int)x1, (int)Y1, (int)x2, (int)y2 );
 	}
 
 	/* Quadrant 3 */
@@ -158,7 +161,7 @@ adcursor()
 	x2 = curs_x - d1 + t1;
 	y2 = curs_y - d2 - t2;
 	if (clip (&x1, &Y1, &x2, &y2) == 0) {
-		dmp->dmr_2d_line( dmp, (int)x1, (int)Y1, (int)x2, (int)y2, 0 );
+	  dmp->dm_drawLine2D( dmp, (int)x1, (int)Y1, (int)x2, (int)y2 );
 	}
 
 	/* Quadrant 4 */
@@ -167,7 +170,7 @@ adcursor()
 	x2 = curs_x + d2 + t2;
 	y2 = curs_y - d1 + t1;
 	if (clip (&x1, &Y1, &x2, &y2) == 0) {
-		dmp->dmr_2d_line( dmp, (int)x1, (int)Y1, (int)x2, (int)y2, 0 );
+	  dmp->dm_drawLine2D( dmp, (int)x1, (int)Y1, (int)x2, (int)y2 );
 	}
 }
 
@@ -214,10 +217,14 @@ char	**argv;
 	if (argc == 1)
 	{
 	  if (mged_variables.adcflag)  {
-	    dmp->dmr_light( dmp, LIGHT_OFF, BV_ADCURSOR );
+#if 0
+	    dmp->dm_light( dmp, LIGHT_OFF, BV_ADCURSOR );
+#endif
 	    mged_variables.adcflag = 0;
 	  } else {
-	    dmp->dmr_light( dmp, LIGHT_ON, BV_ADCURSOR );
+#if 0
+	    dmp->dm_light( dmp, LIGHT_ON, BV_ADCURSOR );
+#endif
 	    mged_variables.adcflag = 1;
 	  }
 

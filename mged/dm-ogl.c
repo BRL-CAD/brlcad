@@ -141,14 +141,14 @@ int argc;
 char *argv[];
 {
   /* register application provided routines */
-  dmp->dmr_eventhandler = Ogl_doevent;
-  dmp->dmr_cmd = Ogl_dm;
-  dmp->dmr_statechange = Ogl_statechange;
+  dmp->dm_eventHandler = Ogl_doevent;
+  cmd_hook = Ogl_dm;
+  state_hook = Ogl_statechange;
 
-  if(dmp->dmr_init(dmp, argc, argv) == TCL_ERROR)
+  if(dmp->dm_init(dmp, argc, argv) == TCL_ERROR)
     return TCL_ERROR;
 
-  return dmp->dmr_open(dmp);
+  return dmp->dm_open(dmp);
 }
 
 static int
@@ -175,9 +175,9 @@ XEvent *eventPtr;
   if(curr_dm_list == DM_LIST_NULL)
     goto end;
 
-  if(!glXMakeCurrent(((struct ogl_vars *)dm_vars)->dpy,
-     ((struct ogl_vars *)dm_vars)->win,
-     ((struct ogl_vars *)dm_vars)->glxc))
+  if(!glXMakeCurrent(((struct ogl_vars *)dmp->dm_vars)->dpy,
+     ((struct ogl_vars *)dmp->dm_vars)->win,
+     ((struct ogl_vars *)dmp->dm_vars)->glxc))
     goto end;
 
   /* Forward key events to a command window */
@@ -202,7 +202,7 @@ XEvent *eventPtr;
 
   if ( eventPtr->type == Expose && eventPtr->xexpose.count == 0 ) {
     glClearColor(0.0, 0.0, 0.0, 0.0);
-    if (((struct ogl_vars *)dm_vars)->mvars.zbuf)
+    if (((struct ogl_vars *)dmp->dm_vars)->mvars.zbuf)
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     else
        glClear(GL_COLOR_BUFFER_BIT);
@@ -224,7 +224,7 @@ XEvent *eventPtr;
 
     switch(am_mode){
     case ALT_MOUSE_MODE_IDLE:
-      if(scroll_active && eventPtr->xmotion.state & ((struct ogl_vars *)dm_vars)->mb_mask)
+      if(scroll_active && eventPtr->xmotion.state & ((struct ogl_vars *)dmp->dm_vars)->mb_mask)
 	bu_vls_printf( &cmd, "M 1 %d %d\n", Ogl_irisX2ged(dmp, mx), Ogl_irisY2ged(dmp, my));
       else if(OgldoMotion)
 	/* do the regular thing */
@@ -236,8 +236,8 @@ XEvent *eventPtr;
       break;
     case ALT_MOUSE_MODE_ROTATE:
       bu_vls_printf( &cmd, "iknob ax %f ay %f\n",
-		     (my - ((struct ogl_vars *)dm_vars)->omy)/512.0,
-		     (mx - ((struct ogl_vars *)dm_vars)->omx)/512.0 );
+		     (my - ((struct ogl_vars *)dmp->dm_vars)->omy)/512.0,
+		     (mx - ((struct ogl_vars *)dmp->dm_vars)->omx)/512.0 );
       break;
     case ALT_MOUSE_MODE_TRANSLATE:
       {
@@ -245,30 +245,30 @@ XEvent *eventPtr;
 
 	if((state == ST_S_EDIT || state == ST_O_EDIT) && !EDIT_ROTATE &&
 	   (edobj || es_edflag > 0)){
-	  fx = (mx/(fastf_t)((struct ogl_vars *)dm_vars)->width - 0.5) * 2;
-	  fy = (0.5 - my/(fastf_t)((struct ogl_vars *)dm_vars)->height) * 2;
+	  fx = (mx/(fastf_t)((struct ogl_vars *)dmp->dm_vars)->width - 0.5) * 2;
+	  fy = (0.5 - my/(fastf_t)((struct ogl_vars *)dmp->dm_vars)->height) * 2;
 	  bu_vls_printf( &cmd, "knob aX %f aY %f\n", fx, fy);
 	}else{
-	  fx = (mx - ((struct ogl_vars *)dm_vars)->omx)/
-		(fastf_t)((struct ogl_vars *)dm_vars)->width * 2.0;
-	  fy = (((struct ogl_vars *)dm_vars)->omy - my)/
-		(fastf_t)((struct ogl_vars *)dm_vars)->height * 2.0;
+	  fx = (mx - ((struct ogl_vars *)dmp->dm_vars)->omx)/
+		(fastf_t)((struct ogl_vars *)dmp->dm_vars)->width * 2.0;
+	  fy = (((struct ogl_vars *)dmp->dm_vars)->omy - my)/
+		(fastf_t)((struct ogl_vars *)dmp->dm_vars)->height * 2.0;
 	  bu_vls_printf( &cmd, "iknob aX %f aY %f\n", fx, fy);
 	}
       }	     
       break;
     case ALT_MOUSE_MODE_ZOOM:
       bu_vls_printf( &cmd, "iknob aS %f\n",
-		     (((struct ogl_vars *)dm_vars)->omy - my)/
-		      (fastf_t)((struct ogl_vars *)dm_vars)->height);
+		     (((struct ogl_vars *)dmp->dm_vars)->omy - my)/
+		      (fastf_t)((struct ogl_vars *)dmp->dm_vars)->height);
       break;
     }
 
-      ((struct ogl_vars *)dm_vars)->omx = mx;
-      ((struct ogl_vars *)dm_vars)->omy = my;
+      ((struct ogl_vars *)dmp->dm_vars)->omx = mx;
+      ((struct ogl_vars *)dmp->dm_vars)->omy = my;
   }
 #if IR_KNOBS
-  else if( eventPtr->type == ((struct ogl_vars *)dm_vars)->devmotionnotify ){
+  else if( eventPtr->type == ((struct ogl_vars *)dmp->dm_vars)->devmotionnotify ){
     XDeviceMotionEvent *M;
     int setting;
     fastf_t f;
@@ -284,136 +284,136 @@ XEvent *eventPtr;
     switch(DIAL0 + M->first_axis){
     case DIAL0:
       if(mged_variables.adcflag) {
-	if(-NOISE < ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] &&
-	   ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] < NOISE &&
+	if(-NOISE < ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	   ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] < NOISE &&
 	   !dv_1adc )
-	  ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] +=
+	  ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
 	    M->axis_data[0] - knob_values[M->first_axis];
 	else
-	  ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] =
+	  ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] =
 	    dm_unlimit(dv_1adc) + M->axis_data[0] - knob_values[M->first_axis];
 
-	setting = dm_limit(((struct ogl_vars *)dm_vars)->knobs[M->first_axis]);
+	setting = dm_limit(((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis]);
 	bu_vls_printf( &cmd, "knob ang1 %d\n",
 		      setting );
       }
       break;
     case DIAL1:
       if(mged_variables.rateknobs){
-	if(-NOISE < ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] &&
-	   ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] < NOISE &&
+	if(-NOISE < ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	   ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] < NOISE &&
 	   !rate_zoom )
-	  ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] +=
+	  ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
 	    M->axis_data[0] - knob_values[M->first_axis];
 	else
-	  ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] =
+	  ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] =
 	    dm_unlimit((int)(512.5 * rate_zoom)) + M->axis_data[0] -
 	    knob_values[M->first_axis];
 
-	setting = dm_limit(((struct ogl_vars *)dm_vars)->knobs[M->first_axis]);
+	setting = dm_limit(((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis]);
 	bu_vls_printf( &cmd , "knob S %f\n",
 		       setting / 512.0 );
       }else{
-	if(-NOISE < ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] &&
-	   ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] < NOISE &&
+	if(-NOISE < ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	   ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] < NOISE &&
 	   !absolute_zoom )
-	  ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] += M->axis_data[0] -
+	  ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] += M->axis_data[0] -
 	    knob_values[M->first_axis];
 	else
-	  ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] =
+	  ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] =
 	    dm_unlimit((int)(512.5 * absolute_zoom)) + M->axis_data[0] -
 	    knob_values[M->first_axis];
 
-	setting = dm_limit(((struct ogl_vars *)dm_vars)->knobs[M->first_axis]);
+	setting = dm_limit(((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis]);
 	bu_vls_printf( &cmd , "knob aS %f\n",
 		       setting / 512.0 );
       }
       break;
     case DIAL2:
       if(mged_variables.adcflag){
-	if(-NOISE < ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] &&
-	   ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] < NOISE &&
+	if(-NOISE < ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	   ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] < NOISE &&
 	   !dv_2adc )
-	  ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] += M->axis_data[0] -
+	  ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] += M->axis_data[0] -
 	    knob_values[M->first_axis];
 	else
-	  ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] = dm_unlimit(dv_2adc) +
+	  ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] = dm_unlimit(dv_2adc) +
 	    M->axis_data[0] - knob_values[M->first_axis];
 
-	setting = dm_limit(((struct ogl_vars *)dm_vars)->knobs[M->first_axis]);
+	setting = dm_limit(((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis]);
 	bu_vls_printf( &cmd , "knob ang2 %d\n",
 		      setting );
       }else {
 	if(mged_variables.rateknobs){
-	  if(-NOISE < ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] &&
-	     ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] < NOISE &&
+	  if(-NOISE < ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	     ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] < NOISE &&
 	     !rate_rotate[Z] )
-	    ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] += M->axis_data[0] -
+	    ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] += M->axis_data[0] -
 	      knob_values[M->first_axis];
 	  else
-	    ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] =
+	    ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] =
 	      dm_unlimit((int)(512.5 * rate_rotate[Z])) +
 	      M->axis_data[0] - knob_values[M->first_axis];
 
-	  setting = dm_limit(((struct ogl_vars *)dm_vars)->knobs[M->first_axis]);
+	  setting = dm_limit(((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis]);
 	  bu_vls_printf( &cmd , "knob z %f\n",
 			 setting / 512.0 );
 	}else{
-	  if(-NOISE < ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] &&
-	     ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] < NOISE &&
+	  if(-NOISE < ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	     ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] < NOISE &&
 	     !absolute_rotate[Z] )
-	    ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] += M->axis_data[0] -
+	    ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] += M->axis_data[0] -
 	      knob_values[M->first_axis];
 	  else
-	    ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] =
+	    ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] =
 	      dm_unlimit((int)(512.5 * absolute_rotate[Z])) +
 	      M->axis_data[0] - knob_values[M->first_axis];
 
-	  f = dm_limit(((struct ogl_vars *)dm_vars)->knobs[M->first_axis]) / 512.0;
+	  f = dm_limit(((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis]) / 512.0;
 	  bu_vls_printf( &cmd , "knob az %f\n", dm_wrap(f));
 	}
       }
       break;
     case DIAL3:
       if(mged_variables.adcflag){
-	if(-NOISE < ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] &&
-	   ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] < NOISE &&
+	if(-NOISE < ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	   ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] < NOISE &&
 	   !dv_distadc)
-	  ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] += M->axis_data[0] -
+	  ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] += M->axis_data[0] -
 	    knob_values[M->first_axis];
 	else
-	  ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] = dm_unlimit(dv_distadc) +
+	  ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] = dm_unlimit(dv_distadc) +
 	    M->axis_data[0] - knob_values[M->first_axis];
 
-	setting = dm_limit(((struct ogl_vars *)dm_vars)->knobs[M->first_axis]);
+	setting = dm_limit(((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis]);
 	bu_vls_printf( &cmd , "knob distadc %d\n",
 		       setting );
       }else {
 	if(mged_variables.rateknobs){
-	  if(-NOISE < ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] &&
-	     ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] < NOISE &&
+	  if(-NOISE < ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	     ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] < NOISE &&
 	     !rate_slew[Z] )
-	    ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] +=
+	    ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
 	      M->axis_data[0] - knob_values[M->first_axis];
 	  else
-	    ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] =
+	    ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] =
 	      dm_unlimit((int)(512.5 * rate_slew[Z])) +
 	      M->axis_data[0] - knob_values[M->first_axis];
 
-	  setting = dm_limit(((struct ogl_vars *)dm_vars)->knobs[M->first_axis]);
+	  setting = dm_limit(((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis]);
 	  bu_vls_printf( &cmd , "knob Z %f\n",
 			 setting / 512.0 );
 	}else{
-	  if(-NOISE < ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] &&
-	     ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] < NOISE &&
+	  if(-NOISE < ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	     ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] < NOISE &&
 	     !absolute_slew[Z] )
-	    ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] += M->axis_data[0] - knob_values[M->first_axis];
+	    ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] += M->axis_data[0] - knob_values[M->first_axis];
 	  else
-	    ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] =
+	    ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] =
 	      dm_unlimit((int)(512.5 * absolute_slew[Z])) +
 	      M->axis_data[0] - knob_values[M->first_axis];
 
-	  setting = dm_limit(((struct ogl_vars *)dm_vars)->knobs[M->first_axis]);
+	  setting = dm_limit(((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis]);
 	  bu_vls_printf( &cmd , "knob aZ %f\n",
 			 setting / 512.0 );
 	}
@@ -421,152 +421,152 @@ XEvent *eventPtr;
       break;
     case DIAL4:
       if(mged_variables.adcflag){
-	if(-NOISE < ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] &&
-	   ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] < NOISE &&
+	if(-NOISE < ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	   ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] < NOISE &&
 	   !dv_yadc)
-	  ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] += M->axis_data[0] -
+	  ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] += M->axis_data[0] -
 	    knob_values[M->first_axis];
 	else
-	  ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] = dm_unlimit(dv_yadc) +
+	  ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] = dm_unlimit(dv_yadc) +
 	    M->axis_data[0] - knob_values[M->first_axis];
 
-	setting = dm_limit(((struct ogl_vars *)dm_vars)->knobs[M->first_axis]);
+	setting = dm_limit(((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis]);
 	bu_vls_printf( &cmd , "knob yadc %d\n",
 		      setting );
       }else{
 	if(mged_variables.rateknobs){
-	  if(-NOISE < ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] &&
-	     ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] < NOISE &&
+	  if(-NOISE < ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	     ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] < NOISE &&
 	     !rate_rotate[Y] )
-	    ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] +=
+	    ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
 	      M->axis_data[0] - knob_values[M->first_axis];
 	  else
-	    ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] =
+	    ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] =
 	      dm_unlimit((int)(512.5 * rate_rotate[Y])) +
 	      M->axis_data[0] - knob_values[M->first_axis];
 
-	  setting = dm_limit(((struct ogl_vars *)dm_vars)->knobs[M->first_axis]);
+	  setting = dm_limit(((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis]);
 	  bu_vls_printf( &cmd , "knob y %f\n",
 			 setting / 512.0 );
 	}else{
-	  if(-NOISE < ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] &&
-	     ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] < NOISE &&
+	  if(-NOISE < ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	     ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] < NOISE &&
 	     !absolute_rotate[Y] )
-	    ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] += M->axis_data[0] -
+	    ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] += M->axis_data[0] -
 	      knob_values[M->first_axis];
 	  else
-	    ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] =
+	    ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] =
 	      dm_unlimit((int)(512.5 * absolute_rotate[Y])) +
 	      M->axis_data[0] - knob_values[M->first_axis];
 
-	  f = dm_limit(((struct ogl_vars *)dm_vars)->knobs[M->first_axis]) / 512.0;
+	  f = dm_limit(((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis]) / 512.0;
 	  bu_vls_printf( &cmd , "knob ay %f\n", dm_wrap(f));
 	}
       }
       break;
     case DIAL5:
       if(mged_variables.rateknobs){
-	  if(-NOISE < ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] &&
-	     ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] < NOISE &&
+	  if(-NOISE < ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	     ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] < NOISE &&
 	     !rate_slew[Y] )
-	    ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] += M->axis_data[0] -
+	    ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] += M->axis_data[0] -
 	      knob_values[M->first_axis];
 	  else
-	    ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] =
+	    ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] =
 	      dm_unlimit((int)(512.5 * rate_slew[Y])) +
 	      M->axis_data[0] - knob_values[M->first_axis];
 	  
-	  setting = dm_limit(((struct ogl_vars *)dm_vars)->knobs[M->first_axis]);
+	  setting = dm_limit(((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis]);
 	  bu_vls_printf( &cmd , "knob Y %f\n",
 			 setting / 512.0 );
       }else{
-	  if(-NOISE < ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] &&
-	     ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] < NOISE &&
+	  if(-NOISE < ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	     ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] < NOISE &&
 	     !absolute_slew[Y] )
-	    ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] += M->axis_data[0] -
+	    ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] += M->axis_data[0] -
 	      knob_values[M->first_axis];
 	  else
-	    ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] =
+	    ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] =
 	      dm_unlimit((int)(512.5 * absolute_slew[Y])) +
 	      M->axis_data[0] - knob_values[M->first_axis];
 
-	  setting = dm_limit(((struct ogl_vars *)dm_vars)->knobs[M->first_axis]);
+	  setting = dm_limit(((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis]);
 	  bu_vls_printf( &cmd , "knob aY %f\n",
 			 setting / 512.0 );
       }
       break;
     case DIAL6:
       if(mged_variables.adcflag){
-	if(-NOISE < ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] &&
-	   ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] < NOISE &&
+	if(-NOISE < ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	   ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] < NOISE &&
 	   !dv_xadc)
-	  ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] += M->axis_data[0] -
+	  ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] += M->axis_data[0] -
 	    knob_values[M->first_axis];
 	else
-	  ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] = dm_unlimit(dv_xadc) +
+	  ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] = dm_unlimit(dv_xadc) +
 	    M->axis_data[0] - knob_values[M->first_axis];
 
-	setting = dm_limit(((struct ogl_vars *)dm_vars)->knobs[M->first_axis]);
+	setting = dm_limit(((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis]);
 	bu_vls_printf( &cmd , "knob xadc %d\n",
 		       setting );
       }else{
 	if(mged_variables.rateknobs){
-	  if(-NOISE < ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] &&
-	     ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] < NOISE &&
+	  if(-NOISE < ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	     ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] < NOISE &&
 	     !rate_rotate[X] )
-	    ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] += M->axis_data[0] -
+	    ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] += M->axis_data[0] -
 	      knob_values[M->first_axis];
 	  else
-	    ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] =
+	    ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] =
 	      dm_unlimit((int)(512.5 * rate_rotate[X])) +
 	      M->axis_data[0] - knob_values[M->first_axis];
 
-	  setting = dm_limit(((struct ogl_vars *)dm_vars)->knobs[M->first_axis]);
+	  setting = dm_limit(((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis]);
 	  bu_vls_printf( &cmd , "knob x %f\n",
 			 setting / 512.0 );
 	}else{
-	  if(-NOISE < ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] &&
-	     ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] < NOISE &&
+	  if(-NOISE < ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	     ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] < NOISE &&
 	     !absolute_rotate[X] )
-	    ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] += M->axis_data[0] -
+	    ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] += M->axis_data[0] -
 	      knob_values[M->first_axis];
 	  else
-	    ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] =
+	    ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] =
 	      dm_unlimit((int)(512.5 * absolute_rotate[X])) + M->axis_data[0] -
 	      knob_values[M->first_axis];
 
-	  f = dm_limit(((struct ogl_vars *)dm_vars)->knobs[M->first_axis]) / 512.0;
+	  f = dm_limit(((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis]) / 512.0;
 	  bu_vls_printf( &cmd , "knob ax %f\n", dm_wrap(f));
 	}
       }
       break;
     case DIAL7:
       if(mged_variables.rateknobs){
-	if(-NOISE < ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] &&
-	   ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] < NOISE &&
+	if(-NOISE < ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	   ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] < NOISE &&
 	   !rate_slew[X] )
-	  ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] += M->axis_data[0] -
+	  ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] += M->axis_data[0] -
 	    knob_values[M->first_axis];
 	else
-	  ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] =
+	  ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] =
 	    dm_unlimit((int)(512.5 * rate_slew[X])) +
 	    M->axis_data[0] - knob_values[M->first_axis];
 
-	setting = dm_limit(((struct ogl_vars *)dm_vars)->knobs[M->first_axis]);
+	setting = dm_limit(((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis]);
 	bu_vls_printf( &cmd , "knob X %f\n",
 		       setting / 512.0 );
       }else{
-	if(-NOISE < ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] &&
-	   ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] < NOISE &&
+	if(-NOISE < ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	   ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] < NOISE &&
 	   !absolute_slew[X] )
-	  ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] += M->axis_data[0] -
+	  ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] += M->axis_data[0] -
 	    knob_values[M->first_axis];
 	else
-	  ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] =
+	  ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] =
 	    dm_unlimit((int)(512.5 * absolute_slew[X])) +
 	    M->axis_data[0] - knob_values[M->first_axis];
 
-	setting = dm_limit(((struct ogl_vars *)dm_vars)->knobs[M->first_axis]);
+	setting = dm_limit(((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis]);
 	bu_vls_printf( &cmd , "knob aX %f\n",
 		       setting / 512.0 );
       }
@@ -580,7 +580,7 @@ XEvent *eventPtr;
   }
 #endif
 #if IR_BUTTONS
-  else if( eventPtr->type == ((struct ogl_vars *)dm_vars)->devbuttonpress ){
+  else if( eventPtr->type == ((struct ogl_vars *)dmp->dm_vars)->devbuttonpress ){
     XDeviceButtonEvent *B;
 
     B = (XDeviceButtonEvent * ) eventPtr;
@@ -598,7 +598,7 @@ XEvent *eventPtr;
     }else
       bu_vls_printf(&cmd, "press %s\n",
 		    label_button(bmap[B->button - 1]));
-  }else if( eventPtr->type == ((struct ogl_vars *)dm_vars)->devbuttonrelease ){
+  }else if( eventPtr->type == ((struct ogl_vars *)dmp->dm_vars)->devbuttonrelease ){
     XDeviceButtonEvent *B;
 
     B = (XDeviceButtonEvent * ) eventPtr;
@@ -684,15 +684,15 @@ char	**argv;
 
     if( argc < 2 )  {
       /* Bare set command, print out current settings */
-      bu_struct_print("dm_ogl internal variables", Ogl_vparse, (CONST char *)&((struct ogl_vars *)dm_vars)->mvars );
+      bu_struct_print("dm_ogl internal variables", Ogl_vparse, (CONST char *)&((struct ogl_vars *)dmp->dm_vars)->mvars );
     } else if( argc == 2 ) {
-      bu_vls_struct_item_named( &vls, Ogl_vparse, argv[1], (CONST char *)&((struct ogl_vars *)dm_vars)->mvars, ',');
+      bu_vls_struct_item_named( &vls, Ogl_vparse, argv[1], (CONST char *)&((struct ogl_vars *)dmp->dm_vars)->mvars, ',');
       bu_log( "%s\n", bu_vls_addr(&vls) );
     } else {
       bu_vls_printf( &vls, "%s=\"", argv[1] );
       bu_vls_from_argv( &vls, argc-2, argv+2 );
       bu_vls_putc( &vls, '\"' );
-      bu_struct_parse( &vls, Ogl_vparse, (char *)&((struct ogl_vars *)dm_vars)->mvars );
+      bu_struct_parse( &vls, Ogl_vparse, (char *)&((struct ogl_vars *)dmp->dm_vars)->mvars );
     }
 
     bu_vls_free(&vls);
@@ -715,13 +715,13 @@ char	**argv;
     /* This assumes a 3-button mouse */
     switch(*argv[1]){
     case '1':
-      ((struct ogl_vars *)dm_vars)->mb_mask = Button1Mask;
+      ((struct ogl_vars *)dmp->dm_vars)->mb_mask = Button1Mask;
       break;
     case '2':
-      ((struct ogl_vars *)dm_vars)->mb_mask = Button2Mask;
+      ((struct ogl_vars *)dmp->dm_vars)->mb_mask = Button2Mask;
       break;
     case '3':
-      ((struct ogl_vars *)dm_vars)->mb_mask = Button3Mask;
+      ((struct ogl_vars *)dmp->dm_vars)->mb_mask = Button3Mask;
       break;
     default:
       Tcl_AppendResult(interp, "dm m: bad button value - ", argv[1], "\n", (char *)NULL);
@@ -756,8 +756,8 @@ char	**argv;
     }
 
     buttonpress = atoi(argv[2]);
-    ((struct ogl_vars *)dm_vars)->omx = atoi(argv[3]);
-    ((struct ogl_vars *)dm_vars)->omy = atoi(argv[4]);
+    ((struct ogl_vars *)dmp->dm_vars)->omx = atoi(argv[3]);
+    ((struct ogl_vars *)dmp->dm_vars)->omy = atoi(argv[4]);
 
     if(buttonpress){
       switch(*argv[1]){
@@ -777,10 +777,10 @@ char	**argv;
 	  av[4] = ystr;
 	  av[5] = NULL;
 
-	  sprintf(xstr, "%f", (((struct ogl_vars *)dm_vars)->omx/
-			       (fastf_t)((struct ogl_vars *)dm_vars)->width - 0.5) * 2);
-	  sprintf(ystr, "%f", (0.5 - ((struct ogl_vars *)dm_vars)->omy/
-			       (fastf_t)((struct ogl_vars *)dm_vars)->height) * 2);
+	  sprintf(xstr, "%f", (((struct ogl_vars *)dmp->dm_vars)->omx/
+			       (fastf_t)((struct ogl_vars *)dmp->dm_vars)->width - 0.5) * 2);
+	  sprintf(ystr, "%f", (0.5 - ((struct ogl_vars *)dmp->dm_vars)->omy/
+			       (fastf_t)((struct ogl_vars *)dmp->dm_vars)->height) * 2);
 	  status = f_knob((ClientData)NULL, interp, 5, av);
 	}
 
@@ -804,11 +804,26 @@ char	**argv;
   return TCL_ERROR;
 }
 
+#if IR_KNOBS
+ogl_dbtext(str)
+{
+  Tcl_AppendResult(interp, "dm-ogl: You pressed Help key and '",
+		   str, "'\n", (char *)NULL);
+}
+#endif
+
 static void
 Ogl_colorchange()
 {
   color_soltab();
-  dmp->dmr_colorchange(dmp);
+  if(((struct ogl_vars *)dmp->dm_vars)->mvars.cueing_on) {
+    glEnable(GL_FOG);
+  }else{
+    glDisable(GL_FOG);
+  }
+#if 0
+  dmp->dm_colorchange(dmp);
+#endif
   ++dmaflag;
 }
 
@@ -843,7 +858,7 @@ set_perspective()
 static void
 do_linewidth()
 {
-  Ogl_do_linewidth(dmp);
+  dmp->dm_setLineAttr(dmp, ((struct ogl_vars *)dmp->dm_vars)->mvars.linewidth, 0);
   ++dmaflag;
 }
 
@@ -866,5 +881,5 @@ set_knob_offset()
   int i;
 
   for(i = 0; i < 8; ++i)
-    ((struct ogl_vars *)dm_vars)->knobs[i] = 0;
+    ((struct ogl_vars *)dmp->dm_vars)->knobs[i] = 0;
 }

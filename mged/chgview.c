@@ -213,7 +213,7 @@ char	**argv;
   if (f_zap(clientData, interp, 1, av) == TCL_ERROR)
     return TCL_ERROR;
 
-  if( dmp->dmr_displaylist )  {
+  if( dmp->dm_displaylist )  {
     /*
      * Force out the control list with NO solids being drawn,
      * then the display processor will not mind when we start
@@ -368,7 +368,7 @@ int	catch_sigint;
     }
   }
 
-  if( dmp->dmr_displaylist )  {
+  if( dmp->dm_displaylist )  {
     /* Force displaylist update before starting new drawing */
     update_views = 1;
     refresh();
@@ -410,7 +410,9 @@ int	catch_sigint;
       }
 
       color_soltab();
-      dmp->dmr_colorchange(dmp);
+#if 0
+      dmp->dm_colorchange(dmp);
+#endif
     }
 
     curr_dm_list = save_dm_list;
@@ -466,7 +468,7 @@ char	**argv;
 
 	Tcl_AppendResult(interp, "regdebug=", argv[1], "\n", (char *)NULL);
 
-	dmp->dmr_debug(dmp, regdebug);
+	dmp->dm_debug(dmp, regdebug);
 
 	return TCL_OK;
 }
@@ -842,7 +844,7 @@ char	**argv;
 
 	sp = BU_LIST_NEXT(solid, &HeadSolid.l);
 	while(BU_LIST_NOT_HEAD(sp, &HeadSolid.l)){
-		rt_memfree( &(dmp->dmr_map), sp->s_bytes, (unsigned long)sp->s_addr );
+		rt_memfree( &(dmp->dm_map), sp->s_bytes, (unsigned long)sp->s_addr );
 		dp = sp->s_path[0];
 		RT_CK_DIR(dp);
 		if( dp->d_addr == RT_DIR_PHONY_ADDR )  {
@@ -907,7 +909,7 @@ int	argc;
 char	**argv;
 {
 #if 0
-  attach( dmp->dmr_name );	/* reattach */
+  attach( dmp->dm_name );	/* reattach */
   dmaflag = 1;		/* causes refresh() */
   return CMD_OK;
 #else
@@ -988,8 +990,10 @@ register struct directory *dp;
 
 			if( state != ST_VIEW && illump == sp )
 				button( BE_REJECT );
-			dmp->dmr_viewchange( dmp, DM_CHGV_DEL, sp );
-			rt_memfree( &(dmp->dmr_map), sp->s_bytes, (unsigned long)sp->s_addr );
+#if 0
+			dmp->dm_viewchange( dmp, DM_CHGV_DEL, sp );
+#endif
+			rt_memfree( &(dmp->dm_map), sp->s_bytes, (unsigned long)sp->s_addr );
 			BU_LIST_DEQUEUE(&sp->l);
 			FREE_SOLID(sp, &FreeSolid.l);
 

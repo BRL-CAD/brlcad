@@ -2066,7 +2066,7 @@ char *argv[];
     for( BU_LIST_FOR(p_cmd, cmd_list, &head_cmd_list.l) )
       if(p_cmd->aim)
 	Tcl_AppendResult(interp, bu_vls_addr(&p_cmd->name), " ---> ",
-			 bu_vls_addr(&p_cmd->aim->_dmp->dmr_pathName),
+			 bu_vls_addr(&p_cmd->aim->_dmp->dm_pathName),
 			 "\n", (char *)NULL);
       else
 	Tcl_AppendResult(interp, bu_vls_addr(&p_cmd->name), " ---> ",
@@ -2074,7 +2074,7 @@ char *argv[];
 
     if(p_cmd->aim)
       Tcl_AppendResult(interp, bu_vls_addr(&p_cmd->name), " ---> ",
-		       bu_vls_addr(&p_cmd->aim->_dmp->dmr_pathName),
+		       bu_vls_addr(&p_cmd->aim->_dmp->dm_pathName),
 		       "\n", (char *)NULL);
     else
       Tcl_AppendResult(interp, bu_vls_addr(&p_cmd->name), " ---> ",
@@ -2098,7 +2098,7 @@ char *argv[];
   if(argc == 2){
     if(p_cmd->aim)
       Tcl_AppendResult(interp, bu_vls_addr(&p_cmd->name), " ---> ",
-		       bu_vls_addr(&p_cmd->aim->_dmp->dmr_pathName),
+		       bu_vls_addr(&p_cmd->aim->_dmp->dm_pathName),
 		       "\n", (char *)NULL);
     else
       Tcl_AppendResult(interp, bu_vls_addr(&p_cmd->name), " ---> ", "\n", (char *)NULL);
@@ -2107,11 +2107,11 @@ char *argv[];
   }
 
   for( BU_LIST_FOR(p_dm, dm_list, &head_dm_list.l) )
-    if(!strcmp(argv[2], bu_vls_addr(&p_dm->_dmp->dmr_pathName)))
+    if(!strcmp(argv[2], bu_vls_addr(&p_dm->_dmp->dm_pathName)))
       break;
 
   if(p_dm == &head_dm_list &&
-     strcmp(argv[2], bu_vls_addr(&head_dm_list._dmp->dmr_pathName))){
+     strcmp(argv[2], bu_vls_addr(&head_dm_list._dmp->dm_pathName))){
     Tcl_AppendResult(interp, "f_aim: unrecognized pathName - ", argv[2],
 		     "\n", (char *)NULL);
 
@@ -2130,7 +2130,7 @@ char *argv[];
 
   p_dm->aim = p_cmd;
   Tcl_AppendResult(interp, bu_vls_addr(&p_cmd->name), " ---> ",
-		   bu_vls_addr(&p_cmd->aim->_dmp->dmr_pathName),
+		   bu_vls_addr(&p_cmd->aim->_dmp->dm_pathName),
 		   "\n", (char *)NULL);
   
   return TCL_OK;
@@ -2451,7 +2451,7 @@ char    **argv;
 
   /* change primary focus to window argv[1] */
   for( BU_LIST_FOR(p, dm_list, &head_dm_list.l ) ){
-    if( !strcmp( argv[1], bu_vls_addr( &p->_dmp->dmr_pathName ) ) ){
+    if( !strcmp( argv[1], bu_vls_addr( &p->_dmp->dm_pathName ) ) ){
       curr_dm_list = p;
 
       if(curr_dm_list->aim)

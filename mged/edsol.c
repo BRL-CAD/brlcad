@@ -1911,9 +1911,11 @@ init_sedit()
 	sedit_menu();		/* put up menu header */
 
 	/* Finally, enter solid edit state */
-	dmp->dmr_light( dmp, LIGHT_ON, BE_ACCEPT );
-	dmp->dmr_light( dmp, LIGHT_ON, BE_REJECT );
-	dmp->dmr_light( dmp, LIGHT_OFF, BE_S_ILLUMINATE );
+#if 0
+	dmp->dm_light( dmp, LIGHT_ON, BE_ACCEPT );
+	dmp->dm_light( dmp, LIGHT_ON, BE_REJECT );
+	dmp->dm_light( dmp, LIGHT_OFF, BE_S_ILLUMINATE );
+#endif
 
 	(void)chg_state( ST_S_PICK, ST_S_EDIT, "Keyboard illuminate");
 	chg_l2menu(ST_S_EDIT);

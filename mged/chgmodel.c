@@ -1331,9 +1331,11 @@ char	**argv;
 
 	if(movedir != ROTARROW) {
 		/* NOT in object rotate mode - put it in obj rot */
-		dmp->dmr_light( dmp, LIGHT_ON, BE_O_ROTATE );
-		dmp->dmr_light( dmp, LIGHT_OFF, BE_O_SCALE );
-		dmp->dmr_light( dmp, LIGHT_OFF, BE_O_XY );
+#if 0
+		dmp->dm_light( dmp, LIGHT_ON, BE_O_ROTATE );
+		dmp->dm_light( dmp, LIGHT_OFF, BE_O_SCALE );
+		dmp->dm_light( dmp, LIGHT_OFF, BE_O_XY );
+#endif
 		movedir = ROTARROW;
 	}
 
@@ -1401,11 +1403,15 @@ char	**argv;
 
 	if(movedir != SARROW) {
 		/* Put in global object scale mode */
-		dmp->dmr_light( dmp, LIGHT_OFF, BE_O_ROTATE );
-		dmp->dmr_light( dmp, LIGHT_OFF, BE_O_XY );
+#if 0
+		dmp->dm_light( dmp, LIGHT_OFF, BE_O_ROTATE );
+		dmp->dm_light( dmp, LIGHT_OFF, BE_O_XY );
+#endif
 		if( edobj == 0 )
 			edobj = BE_O_SCALE;	/* default is global scaling */
-		dmp->dmr_light( dmp, LIGHT_ON, edobj );
+#if 0
+		dmp->dm_light( dmp, LIGHT_ON, edobj );
+#endif
 		movedir = SARROW;
 	}
 
@@ -1474,9 +1480,11 @@ char	**argv;
 
 	if( (movedir & (RARROW|UARROW)) == 0 ) {
 		/* put in object trans mode */
-		dmp->dmr_light( dmp, LIGHT_ON, BE_O_XY );
-		dmp->dmr_light( dmp, LIGHT_OFF, BE_O_SCALE );
-		dmp->dmr_light( dmp, LIGHT_OFF, BE_O_ROTATE );
+#if 0
+		dmp->dm_light( dmp, LIGHT_ON, BE_O_XY );
+		dmp->dm_light( dmp, LIGHT_OFF, BE_O_SCALE );
+		dmp->dm_light( dmp, LIGHT_OFF, BE_O_ROTATE );
+#endif
 		movedir = UARROW | RARROW;
 	}
 
@@ -1754,9 +1762,11 @@ char	**argv;
 
 	if(movedir != ROTARROW) {
 		/* NOT in object rotate mode - put it in obj rot */
-		dmp->dmr_light( dmp, LIGHT_ON, BE_O_ROTATE );
-		dmp->dmr_light( dmp, LIGHT_OFF, BE_O_SCALE );
-		dmp->dmr_light( dmp, LIGHT_OFF, BE_O_XY );
+#if 0
+		dmp->dm_light( dmp, LIGHT_ON, BE_O_ROTATE );
+		dmp->dm_light( dmp, LIGHT_OFF, BE_O_SCALE );
+		dmp->dm_light( dmp, LIGHT_OFF, BE_O_XY );
+#endif
 		movedir = ROTARROW;
 	}
 	VSET(specified_pt, atof(argv[1]), atof(argv[2]), atof(argv[3]));

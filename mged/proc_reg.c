@@ -108,7 +108,7 @@ char	**argv;
 		if( (dp = db_lookup( dbip,  argv[i], LOOKUP_NOISY )) == DIR_NULL )
 			continue;
 
-		if( dmp->dmr_displaylist )  {
+		if( dmp->dm_displaylist )  {
 			/*
 			 * Delete any portion of object
 			 * remaining from previous draw.
@@ -153,7 +153,9 @@ char	**argv;
 	}
 
 	color_soltab();
-	dmp->dmr_colorchange(dmp);
+#if 0
+	dmp->dm_colorchange(dmp);
+#endif
 	dmaflag = 1;
 
 	return TCL_OK;
@@ -525,15 +527,15 @@ struct mater_info	*materp;
 	sp->s_bytes = 0;
 
 	/* Cvt to displaylist, determine displaylist memory requirement. */
-	if( !no_memory && (sp->s_bytes = dmp->dmr_cvtvecs( dmp, sp )) != 0 )  {
+	if( !no_memory && (sp->s_bytes = dmp->dm_cvtvecs( dmp, sp )) != 0 )  {
 		/* Allocate displaylist storage for object */
-		sp->s_addr = rt_memalloc( &(dmp->dmr_map), sp->s_bytes );
+		sp->s_addr = rt_memalloc( &(dmp->dm_map), sp->s_bytes );
 		if( sp->s_addr == 0 )  {
 		  no_memory = 1;
 		  Tcl_AppendResult(interp, "Edraw: out of Displaylist\n", (char *)NULL);
 		  sp->s_bytes = 0;	/* not drawn */
 		} else {
-			sp->s_bytes = dmp->dmr_load(dmp, sp->s_addr, sp->s_bytes );
+			sp->s_bytes = dmp->dm_load(dmp, sp->s_addr, sp->s_bytes );
 		}
 	}
 
@@ -541,11 +543,15 @@ struct mater_info	*materp;
 	if( sp != illump )  {
 		/* Add to linked list of solid structs */
 	  BU_LIST_APPEND(HeadSolid.l.back, &sp->l);
-	  dmp->dmr_viewchange( dmp, DM_CHGV_ADD, sp );
+#if 0
+	  dmp->dm_viewchange( dmp, DM_CHGV_ADD, sp );
+#endif
 	} else {
 	  /* replacing illuminated solid -- struct already linked in */
 	  sp->s_iflag = UP;
-	  dmp->dmr_viewchange( dmp, DM_CHGV_REPL, sp );
+#if 0
+	  dmp->dm_viewchange( dmp, DM_CHGV_REPL, sp );
+#endif
 	}
 
 	return(1);		/* OK */

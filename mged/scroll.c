@@ -262,6 +262,8 @@ int y_top;
 	scroll_top = y_top;
 	y = y_top;
 
+	dmp->dm_setLineAttr(dmp, 1, 0);  /* linewidth - 1, not dashed */
+
 	for( m = &scroll_array[0]; *m != SCROLL_NULL; m++ )  {
 	  ++second_menu;
 	  for( mptr = *m; mptr->scroll_string[0] != '\0'; mptr++ )  {
@@ -356,17 +358,20 @@ int y_top;
 	    else
 	      xpos = 0;
 
-	    dmp->dmr_puts( dmp, mptr->scroll_string,
-			   xpos, y-SCROLL_DY/2, 0, DM_RED );
-	    dmp->dmr_2d_line(dmp, XMAX, y, MENUXLIM, y, 0);
+	    dmp->dm_setColor(dmp, DM_RED, 1);
+	    dmp->dm_drawString2D( dmp, mptr->scroll_string,
+			   xpos, y-SCROLL_DY/2, 0 );
+	    dmp->dm_setColor(dmp, DM_YELLOW, 1);
+	    dmp->dm_drawLine2D(dmp, XMAX, y, MENUXLIM, y);
 	  }
 	}
 
 
 	if( y != y_top )  {
-		/* Sliders were drawn, so make left vert edge */
-		dmp->dmr_2d_line( dmp, MENUXLIM, scroll_top-1,
-			MENUXLIM, y, 0 );
+	  /* Sliders were drawn, so make left vert edge */
+	  dmp->dm_setColor(dmp, DM_YELLOW, 1);
+	  dmp->dm_drawLine2D( dmp, MENUXLIM, scroll_top-1,
+			      MENUXLIM, y, 0, DM_YELLOW );
 	}
 	return( y );
 }
