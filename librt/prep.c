@@ -46,6 +46,9 @@ extern struct resource	rt_uniresource;		/* from shoot.c */
  *  This routine should be called just before the first call to rt_shootray().
  *  It should only be called ONCE per execution, unless rt_clean() is
  *  called inbetween.
+ *
+ *  Because this can be called from rt_shootray(), it may potentially be
+ *  called ncpu times, hence the critical section.
  */
 void
 rt_prep_parallel(rtip, ncpu)
@@ -59,11 +62,16 @@ int			ncpu;
 
 	RT_CK_RTI(rtip);
 
+	RES_ACQUIRE(&rt_g.res_results);	/* start critical section */
 	if(!rtip->needprep)  {
 		rt_log("WARNING: rt_prep() invoked a second time, ignored");
+		RES_RELEASE(&rt_g.res_results);
 		return;
 	}
-	rtip->needprep = 0;
+
+	/* This table is used for discovering the per-cpu resource structures */
+	bu_ptbl_init( &rtip->rti_resources, MAX_PSW );
+
 	if( rtip->nsolids <= 0 )  {
 		if( rtip->rti_air_discards > 0 )
 			rt_log("rt_prep: %d solids discarded due to air regions\n", rtip->rti_air_discards );
@@ -170,6 +178,7 @@ int			ncpu;
 	rt_regionfix(rtip);
 
 	/* Partition space */
+	/* This is the only part which uses multiple CPUs */
 	rt_cut_it(rtip, ncpu);
 
 	/* Plot bounding RPPs */
@@ -193,6 +202,8 @@ int			ncpu;
 			(void)fclose(plotfp);
 		}
 	}
+	rtip->needprep = 0;		/* prep is done */
+	RES_RELEASE(&rt_g.res_results);	/* end critical section */
 }
 
 /*
@@ -353,6 +364,68 @@ struct soltab		*stp;
 }
 
 /*
+ *			R T _ F R E E _ R E S O U R C E
+ *
+ *  Deallocate the per-cpu "private" memory resources.
+ *	segment freelist
+ *	partition freelist
+ *	solid_bitv freelist
+ *	region_ptbl freelist
+ *	re_boolstack
+ */
+void
+rt_free_resource( rtip, resp )
+struct rt_i	*rtip;
+struct resource	*resp;
+{
+	RT_CK_RTI(rtip);
+	RT_CK_RESOURCE(resp);
+
+	/* The 'struct seg' guys are malloc()ed in blocks, not individually */
+	RT_LIST_INIT( &resp->re_seg );	/* abandon the list of individuals */
+	{
+		struct seg **spp;
+		BU_CK_PTBL( &resp->re_seg_blocks );
+		for( BU_PTBL_FOR( spp, (struct seg **), &resp->re_seg_blocks ) )  {
+			RT_CK_SEG(*spp);	/* Head of block will be a valid seg */
+			bu_free( (genptr_t)(*spp), "struct seg" );
+		}
+		bu_ptbl_free( &resp->re_seg_blocks );
+	}
+
+	/* The 'struct partition' guys are individually malloc()ed */
+	{
+		struct partition *pp;
+		while( RT_LIST_WHILE( pp, partition, &resp->re_parthead ) )  {
+			RT_CK_PT(pp);
+			RT_LIST_DEQUEUE( (struct rt_list *)pp );
+			bu_ptbl_free( &pp->pt_solids_hit );
+			bu_free( (genptr_t)pp, "struct partition" );
+		}
+	}
+
+	/* The 'struct bu_bitv' guys on re_solid_bitv are individually malloc()ed */
+	{
+		struct bu_bitv	*bvp;
+		while( RT_LIST_WHILE( bvp, bu_bitv, &resp->re_solid_bitv ) )  {
+			BU_CK_BITV( bvp );
+			RT_LIST_DEQUEUE( &bvp->l );
+			bu_free( (genptr_t)bvp, "struct bu_bitv" );
+		}
+	}
+
+	/* The 'struct bu_ptbl' guys on re_region_ptbl are individually malloc()ed */
+	{
+		struct bu_ptbl	*tabp;
+		while( RT_LIST_WHILE( tabp, bu_ptbl, &resp->re_region_ptbl ) )  {
+			BU_CK_PTBL(tabp);
+			RT_LIST_DEQUEUE( &tabp->l );
+			bu_free( (genptr_t)tabp, "struct bu_ptbl" );
+		}
+	}
+}
+
+/*
  *			R T _ C L E A N
  *
  *  Release all the dynamic storage associated with a particular rt_i
@@ -403,11 +476,6 @@ register struct rt_i *rtip;
 	}
 	rtip->nsolids = 0;
 
-	/**** The best thing to do would be to hunt down the
-	 *  bitv and partition structs and release them, because
-	 *  they depend on the number of solids & regions!  XXX
-	 */
-
 	/* Clean out the array of pointers to regions, if any */
 	if( rtip->Regions )  {
 		rt_free( (char *)rtip->Regions, "rtip->Regions[]" );
@@ -420,9 +488,6 @@ register struct rt_i *rtip;
 		bzero( (char *)&(rtip->rti_inf_box), sizeof(union cutter) );
 	}
 	rt_cut_clean(rtip);
-	/* XXX struct seg is also bulk allocated, can't be freed. XXX */
-
-	/* Release partition structs.  XXX How to find them?  resource structs? */
 
 	/* Reset instancing counters in database directory */
 	for( i=0; i < RT_DBNHASH; i++ )  {
@@ -445,6 +510,21 @@ register struct rt_i *rtip;
 	if( rtip->rti_Solids )  {
 		rt_free( (char *)rtip->rti_Solids, "rtip->rti_Solids[]" );
 		rtip->rti_Solids = (struct soltab **)0;
+	}
+
+	/*
+	 *  Clean out every cpu's "struct resource".
+	 *  These are provided by the caller's application (or are
+	 *  defaulted to rt_uniresource) and can't themselves be freed.
+	 *  rt_shootray() saved a table of them for us to use here.
+ 	 */
+	BU_CK_PTBL( &rtip->rti_resources );
+	{
+		struct resource	**rpp;
+		for( BU_PTBL_FOR( rpp, (struct resource **), &rtip->rti_resources ) )  {
+			RT_CK_RESOURCE(*rpp);
+			rt_free_resource(rtip, *rpp);
+		}
 	}
 
 	/*

@@ -630,8 +630,16 @@ register struct application *ap;
 		/* If one is, they all probably are.  Runs once per processor. */
 		if( RT_LIST_UNINITIALIZED( &resp->re_solid_bitv ) )
 			RT_LIST_INIT(  &resp->re_solid_bitv );
-		if( RT_LIST_UNINITIALIZED( &resp->re_region_bitv ) )
-			RT_LIST_INIT(  &resp->re_region_bitv );
+		if( RT_LIST_UNINITIALIZED( &resp->re_region_ptbl ) )
+			RT_LIST_INIT(  &resp->re_region_ptbl );
+
+		/*
+		 *  Add this resource structure to the table.
+		 *  This is how per-cpu resource structures are discovered.
+		 */
+		RES_ACQUIRE(&rt_g.res_model);
+		bu_ptbl_ins_unique( &rtip->rti_resources, (long *)resp );
+		RES_RELEASE(&rt_g.res_model);
 	}
 	if( RT_LIST_IS_EMPTY( &resp->re_solid_bitv ) )  {
 		solidbits = bu_bitv_new( rtip->nsolids );
@@ -643,11 +651,11 @@ register struct application *ap;
 	}
 	bu_bitv_clear(solidbits);
 
-	if( RT_LIST_IS_EMPTY( &resp->re_region_bitv ) )  {
+	if( RT_LIST_IS_EMPTY( &resp->re_region_ptbl ) )  {
 		BU_GETSTRUCT( regionbits, bu_ptbl );
 		bu_ptbl_init( regionbits, 7 );
 	} else {
-		regionbits = RT_LIST_FIRST( bu_ptbl, &resp->re_region_bitv );
+		regionbits = RT_LIST_FIRST( bu_ptbl, &resp->re_region_ptbl );
 		RT_LIST_DEQUEUE( &regionbits->l );
 		BU_CK_PTBL(regionbits);
 	}
@@ -956,7 +964,7 @@ out:
 	BU_CK_BITV(solidbits);
 	RT_LIST_APPEND( &resp->re_solid_bitv, &solidbits->l );
 	BU_CK_PTBL(regionbits);
-	RT_LIST_APPEND( &resp->re_region_bitv, &regionbits->l );
+	RT_LIST_APPEND( &resp->re_region_ptbl, &regionbits->l );
 
 	/*
 	 *  Record essential statistics in per-processor data structure.

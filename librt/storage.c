@@ -53,14 +53,16 @@ register struct resource	*res;
 
 	RT_RESOURCE_CHECK(res);
 
-	if( res->re_seg.l.forw == RT_LIST_NULL )  {
-		RT_LIST_INIT( &(res->re_seg.l) );
+	if( RT_LIST_UNINITIALIZED( &res->re_seg ) )  {
+		RT_LIST_INIT( &(res->re_seg) );
+		bu_ptbl_init( &res->re_seg_blocks, 64 );
 	}
 	bytes = bu_malloc_len_roundup(64*sizeof(struct seg));
 	sp = (struct seg *)bu_malloc(bytes, "rt_get_seg()");
+	bu_ptbl_ins( &res->re_seg_blocks, (long *)sp );
 	while( bytes >= sizeof(struct seg) )  {
 		sp->l.magic = RT_SEG_MAGIC;
-		RT_LIST_INSERT(&(res->re_seg.l), &(sp->l));
+		RT_LIST_INSERT(&(res->re_seg), &(sp->l));
 		res->re_seglen++;
 		sp++;
 		bytes -= sizeof(struct seg);
