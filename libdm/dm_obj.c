@@ -40,6 +40,7 @@
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
+#include "solid.h"
 #include "dm.h"
 #ifdef USE_FBSERV
 #include "dm-X.h"
