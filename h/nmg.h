@@ -356,6 +356,9 @@ struct faceuse_a {
  *  forw pointer.  Take careful note that this is just a pointer,
  *  **not** the head of a linked list (single, double, or otherwise)!
  *  Exercise great care!
+ *
+ *  The edges of an exterior (OT_SAME) loop occur in counter-clockwise
+ *  order, as viewed from the normalward side (outside).
  */
 #define RT_LIST_SET_DOWN_TO_VERT(_hp,_vu)	{ \
 	(_hp)->forw = &((_vu)->l); (_hp)->back = (struct rt_list *)NULL; }
