@@ -424,7 +424,9 @@ db_identical_full_paths(
  *	0	if not.
  */
 int
-db_full_path_subset( const struct db_full_path *a, const struct db_full_path *b )
+db_full_path_subset(
+	const struct db_full_path *a,
+	const struct db_full_path *b )
 {
 	register int i;
 
