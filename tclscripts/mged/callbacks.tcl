@@ -35,6 +35,10 @@ proc opendb_callback { dbname } {
     }
 }
 
+if ![info exists in_begin_edit_callback] {
+    set in_begin_edit_callback 0
+}
+
 ## - begin_edit_callback
 #
 # This is called at the start of an edit.
@@ -43,10 +47,13 @@ proc begin_edit_callback {} {
     global mged_gui
     global mged_display
     global mged_players
+    global in_begin_edit_callback
 
     if ![info exists mged_players] {
 	return
     }
+
+    set in_begin_edit_callback 1
 
     if {$mged_display(state) == "SOL EDIT"} {
 	foreach id $mged_players {
@@ -69,6 +76,11 @@ proc begin_edit_callback {} {
 	    build_edit_info $id
 	}
     }
+
+    set in_begin_edit_callback 0
+
+    # empty result
+    set junk ""
 }
 
 ## - active_edit_callback
@@ -78,6 +90,11 @@ proc begin_edit_callback {} {
 #
 proc active_edit_callback {} {
     global mged_display
+    global in_begin_edit_callback
+
+    if {$in_begin_edit_callback} {
+	return
+    }
 
     if {$mged_display(state) == "SOL EDIT"} {
 	esolint_update
