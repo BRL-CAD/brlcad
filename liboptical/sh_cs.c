@@ -32,7 +32,7 @@ struct cs_specific {
 };
 
 /* The default values for the variables in the shader specific structure */
-CONST static
+static CONST
 struct cs_specific cs_defaults = {
 	cs_MAGIC,
 	0.0,

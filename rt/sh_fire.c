@@ -103,7 +103,7 @@ struct fire_specific {
 };
 
 /* The default values for the variables in the shader specific structure */
-CONST static
+static CONST
 struct fire_specific fire_defaults = {
 	fire_MAGIC,
 	0,			/* fire_debug */

@@ -126,7 +126,7 @@ char	**dpp;
 	}
 
 	pp->rms_sq = pp->rms_slope * pp->rms_slope;
-	pp->denom = 4.0 * M_PI * pp->rms_sq;
+	pp->denom = 4.0 * rt_pi * pp->rms_sq;
 
 	return(1);
 }

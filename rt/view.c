@@ -105,6 +105,8 @@ extern int	srv_scanlen;		/* BUFMODE_RTSRV buffer length */
 extern char	*scanbuf;		/* scanline(s) buffer */
 #endif
 
+void		free_scanlines();
+
 static int	buf_mode=0;
 #define BUFMODE_UNBUF	1		/* No output buffering */
 #define BUFMODE_DYNAMIC	2		/* Dynamic output buffering */
@@ -737,7 +739,7 @@ struct partition *PartHeadp;
 	ap->a_user = 1;		/* Signal view_pixel:  HIT */
 	return(0);
 }
-
+void
 free_scanlines()
 {
 	register int	y;
