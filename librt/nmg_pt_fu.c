@@ -138,7 +138,7 @@ found:
 	if (fpi->vu_func  &&
 	    ved->status == NMG_FPI_TOUCHED &&
 	    fpi->hits == NMG_FPI_PERUSE)
-		fpi->vu_func(vu, fpi);
+		fpi->vu_func(vu, fpi->pt, fpi->priv);
 
 	return ved->status;
 }
@@ -204,6 +204,7 @@ struct edge_info	*edge_list;
 	vect_t		left;
 	vect_t		pt_vec;
 	vect_t		v_to_pt;
+	int		found = 0;
 
 	NMG_CK_FPI(fpi);	
 	RT_CK_TOL(fpi->tol);
@@ -223,9 +224,10 @@ struct edge_info	*edge_list;
 			/* found the data for this edge */
 
 			if (rt_g.NMG_debug & DEBUG_PT_FU)
-				rt_log ("Edge previously classified\n");
+				rt_log ("pt previously classified WRT Edge\n");
 
 			ved = ed;
+			found = 1;
 			goto found;
 		}
 
@@ -235,9 +237,14 @@ struct edge_info	*edge_list;
 			/* The point is within tolerance of an endpoint
 			 * of the edge.
 			 */
-			if (rt_g.NMG_debug & DEBUG_PT_FU)
-				rt_log ("vertex of edge previously touched\n");
+			if (rt_g.NMG_debug & DEBUG_PT_FU) {
+				register struct vertex *v_p = 
+					(struct vertex *)ed->magic_p;
+				rt_log ("vertex (%g %g %g) of edge previously touched\n",
+					V3ARGS(v_p->vg_p->coord));
+			}
 			ved = ed;
+			found = 1;
 			goto found;
 		}
 	}
@@ -248,27 +255,16 @@ struct edge_info	*edge_list;
 	ved = (struct ve_dist *)rt_malloc(sizeof(struct ve_dist), "ve_dist structure");
 	ved->magic_p = &eu->e_p->magic;
 	ved->status = rt_dist_pt3_lseg3(&ved->dist, ved->pca,
-		eu->vu_p->v_p->vg_p->coord,
-		eu->eumate_p->vu_p->v_p->vg_p->coord,
-		fpi->pt,
-		fpi->tol);
+					eu->vu_p->v_p->vg_p->coord,
+					eu->eumate_p->vu_p->v_p->vg_p->coord,
+					fpi->pt,
+					fpi->tol);
 	ved->v1 = eu->vu_p->v_p;
 	ved->v2 = eu->eumate_p->vu_p->v_p;
 	RT_LIST_MAGIC_SET(&ved->l, NMG_VE_DIST_MAGIC);
 	RT_LIST_APPEND(&fpi->ve_dh, &ved->l);
 
-	/* call the user function for a topo/geometry touch */
-	if (fpi->eu_func &&
-	    fpi->hits == NMG_FPI_PERGEOM &&
-	    ved->dist < fpi->tol->dist )
-		fpi->eu_func(eu, fpi->pt, fpi->priv);
-
 found:
-	if (fpi->eu_func &&
-	    fpi->hits == NMG_FPI_PERUSE &&
-	    ved->dist < fpi->tol->dist )
-		fpi->eu_func(eu, fpi->pt, fpi->priv);
-
 
 	/* Add a struct for this edgeuse to the loop's list of dist-sorted
 	 * edgeuses.
@@ -282,34 +278,52 @@ found:
 
 	switch (ved->status) {
 	case 0: /* pt is on the edge(use) */
-		ei->class = NMG_CLASS_AinB;
+		ei->class = NMG_CLASS_AonBshared;
+		if (fpi->eu_func &&
+		    (fpi->hits == NMG_FPI_PERUSE ||
+		     (fpi->hits == NMG_FPI_PERGEOM && !found) ) ) {
+			fpi->eu_func(eu, fpi->pt, fpi->priv);
+		}
 		break;
 	case 1:	/* within tolerance of endpoint at ved->v1 */
-		ei->class = NMG_CLASS_AinB;
+		ei->class = NMG_CLASS_AonBshared;
 		/* add an entry for the vertex in the edge list so that
 		 * other uses of this vertex will claim the point is within
 		 * tolerance without re-computing
 		 */
 		ed = (struct ve_dist *)rt_malloc(sizeof(struct ve_dist), "ve_dist structure");
 		ed->magic_p = &ved->v1->magic;
-		ed->status = 1;
+		ed->status = ved->status;
 		ed->v1 = ed->v2 = ved->v1;
 
 		RT_LIST_APPEND(&fpi->ve_dh, &ed->l);
+
+		if (fpi->vu_func &&
+		    (fpi->hits == NMG_FPI_PERUSE ||
+		     (fpi->hits == NMG_FPI_PERGEOM && !found) ) ) {
+			fpi->vu_func(eu->vu_p, fpi->pt, fpi->priv);
+		}
+
 		break;
 	case 2:	/* within tolerance of endpoint at ved->v2 */
-		ei->class = NMG_CLASS_AinB;
+		ei->class = NMG_CLASS_AonBshared;
 		/* add an entry for the vertex in the edge list so that
 		 * other uses of this vertex will claim the point is within
 		 * tolerance without re-computing
 		 */
 		ed = (struct ve_dist *)rt_malloc(sizeof(struct ve_dist), "ve_dist structure");
 		ed->magic_p = &ved->v2->magic;
-		ed->status = 2;
+		ed->status = ved->status;
 		ed->v1 = ed->v2 = ved->v2;
 
 		RT_LIST_APPEND(&fpi->ve_dh, &ed->l);
+		if (fpi->vu_func &&
+		    (fpi->hits == NMG_FPI_PERUSE ||
+		     (fpi->hits == NMG_FPI_PERGEOM && !found) ) ) {
+			fpi->vu_func(eu->vu_p, fpi->pt, fpi->priv);
+		}
 		break;
+
 	case 3: /* PCA of pt on line is "before" ved->v1 of segment */
 		/* fallthrough */
 	case 4: /* PCA of pt on line is "before" ved->v2 of segment */
@@ -329,6 +343,8 @@ found:
 			ei->class = NMG_CLASS_AoutB;
 		break;
 	default:
+		rt_log("%s:%d status = %d\n", __FILE__, __LINE__, ved->status);
+		rt_bomb("Why did this happen?");
 		break;
 	}
 
@@ -355,6 +371,99 @@ found:
 	return ei;
 }
 
+/*
+ * Make a list of all edgeuses which are at the same distance as the
+ * first element on the list.  Toss out opposing pairs of edgeuses of the
+ * same edge.
+ *
+ */
+static void
+make_near_list(edge_list, near)
+struct edge_info *edge_list;
+struct rt_list *near;
+{
+	struct edge_info *ei;
+	struct edge_info *ei_p;
+	double dist;
+
+	RT_CK_LIST_HEAD(&edge_list->l);
+	RT_CK_LIST_HEAD(near);
+
+	ei = RT_LIST_FIRST(edge_info, &edge_list->l);
+	NMG_CK_EI(ei);
+	NMG_CK_VED(ei->ved_p);
+	dist = ei->ved_p->dist;
+	
+	/* create "near" list with all ei's at this dist */
+	for (RT_LIST_FOR(ei, edge_info, &edge_list->l)) {
+		NMG_CK_EI(ei);
+		NMG_CK_VED(ei->ved_p);
+		if (ei->ved_p->dist == dist) {
+			ei_p = RT_LIST_PLAST(edge_info, &ei->l);
+			RT_LIST_DEQUEUE(&ei->l);
+			RT_LIST_APPEND(near, &ei->l);
+			ei = ei_p;
+		}
+	}
+
+	if (rt_g.NMG_debug & DEBUG_PT_FU ) {
+		rt_log("dist %g near list\n", dist);
+		for (RT_LIST_FOR(ei, edge_info, near)) {
+			rt_log("\t(%g %g %g) -> (%g %g %g)\n",
+				V3ARGS(ei->eu_p->vu_p->v_p->vg_p->coord),
+				V3ARGS(ei->eu_p->eumate_p->vu_p->v_p->vg_p->coord));
+rt_log("\tdist:%g class:%s status:%d pca(%g %g %g)\n\t\tv1(%g %g %g) v2(%g %g %g)\n",
+			ei->ved_p->dist, nmg_class_name(ei->class),
+			ei->ved_p->status,
+			V3ARGS(ei->ved_p->pca),
+			V3ARGS(ei->ved_p->v1->vg_p->coord),
+			V3ARGS(ei->ved_p->v2->vg_p->coord));
+		}
+	}
+
+
+	/* toss opposing pairs of uses of the same edge from the list */
+	for (RT_LIST_FOR(ei, edge_info, near)) {
+		NMG_CK_EI(ei);
+		for (RT_LIST_FOR(ei_p, edge_info, near)) {
+			NMG_CK_EI(ei_p);
+			NMG_CK_VED(ei_p->ved_p);
+
+			/* if we've found an opposing use of the same
+			 *    edge toss the pair of them
+			 */
+			if (ei_p->ved_p->magic_p == ei->ved_p->magic_p &&
+			    ei_p->eu_p->vu_p != ei->eu_p->vu_p &&
+			    ei_p->eu_p->vu_p == ei->eu_p->eumate_p->vu_p ) {
+				if (rt_g.NMG_debug & DEBUG_PT_FU ) {
+					rt_log("tossing edgeuse pair:\n");
+					rt_log("(%g %g %g) -> (%g %g %g)\n",
+						V3ARGS(ei->eu_p->vu_p->v_p->vg_p->coord),
+						V3ARGS(ei->eu_p->eumate_p->vu_p->v_p->vg_p->coord));
+					rt_log("(%g %g %g) -> (%g %g %g)\n",
+						V3ARGS(ei_p->eu_p->vu_p->v_p->vg_p->coord),
+						V3ARGS(ei_p->eu_p->eumate_p->vu_p->v_p->vg_p->coord));
+				}
+
+				RT_LIST_DEQUEUE(&ei_p->l);
+				rt_free((char *)ei_p, "edge info struct");
+				ei_p = RT_LIST_PLAST(edge_info, &ei->l);
+				RT_LIST_DEQUEUE(&ei->l);
+				rt_free((char *)ei, "edge info struct");
+				ei = ei_p;
+			    	break;
+			}
+		}
+	}
+}
+
+
+
+
+
+
+
+
 
 
 /*	C O M P U T E _ L O O P _ C L A S S
@@ -371,10 +480,15 @@ struct edge_info *edge_list;
 {
 	struct edge_info *ei;
 	struct edge_info *ei_p;
-	double dist;
+	struct edge_info *ei_vdot_max;
+	double		vdot_max;
+	double		vdot_val;
+	vect_t		v_pt;
+	vect_t		left;
+	double		dist;
 	struct rt_list	near;
-	int lu_class = NMG_CLASS_Unknown;
-	
+	int 		lu_class = NMG_CLASS_Unknown;
+
 	if (rt_g.NMG_debug & DEBUG_PT_FU ) {
 		rt_log("compute_loop_class()\n");
 		for (RT_LIST_FOR(ei, edge_info, &edge_list->l)) {
@@ -390,78 +504,11 @@ rt_log("dist:%g class:%s status:%d pca(%g %g %g)\n\tv1(%g %g %g) v2(%g %g %g)\n"
 	RT_CK_LIST_HEAD(&edge_list->l);
 	RT_LIST_INIT(&near);
 
-
-
-	while (RT_LIST_NON_EMPTY(&edge_list->l)) {
-		ei = RT_LIST_FIRST(edge_info, &edge_list->l);
-		NMG_CK_EI(ei);
-		NMG_CK_VED(ei->ved_p);
-		dist = ei->ved_p->dist;
-	
-		/* create "near" list with all ei's at this dist */
-		for (RT_LIST_FOR(ei, edge_info, &edge_list->l)) {
-			NMG_CK_EI(ei);
-			NMG_CK_VED(ei->ved_p);
-			if (ei->ved_p->dist == dist) {
-				ei_p = RT_LIST_PLAST(edge_info, &ei->l);
-				RT_LIST_DEQUEUE(&ei->l);
-				RT_LIST_APPEND(&near, &ei->l);
-				ei = ei_p;
-			}
-		}
-
-		if (rt_g.NMG_debug & DEBUG_PT_FU ) {
-			rt_log("dist %g near list\n", dist);
-			for (RT_LIST_FOR(ei, edge_info, &near)) {
-				rt_log("(%g %g %g) -> (%g %g %g)\n",
-					V3ARGS(ei->eu_p->vu_p->v_p->vg_p->coord),
-					V3ARGS(ei->eu_p->eumate_p->vu_p->v_p->vg_p->coord));
-rt_log("dist:%g class:%s status:%d pca(%g %g %g)\n\tv1(%g %g %g) v2(%g %g %g)\n",
-				ei->ved_p->dist, nmg_class_name(ei->class),
-				ei->ved_p->status,
-				V3ARGS(ei->ved_p->pca),
-				V3ARGS(ei->ved_p->v1->vg_p->coord),
-				V3ARGS(ei->ved_p->v2->vg_p->coord));
-			}
-		}
-
-
-		/* toss opposing pairs of uses of the same edge from the list */
-		for (RT_LIST_FOR(ei, edge_info, &near)) {
-			NMG_CK_EI(ei);
-			for (RT_LIST_FOR(ei_p, edge_info, &near)) {
-				NMG_CK_EI(ei_p);
-				NMG_CK_VED(ei_p->ved_p);
-
-				/* if we've found an opposing use of the same
-				 *    edge toss the pair of them
-				 */
-				if (ei_p->ved_p->magic_p == ei->ved_p->magic_p &&
-				    ei_p->eu_p->vu_p != ei->eu_p->vu_p &&
-				    ei_p->eu_p->vu_p == ei->eu_p->eumate_p->vu_p ) {
-
-					if (rt_g.NMG_debug & DEBUG_PT_FU ) {
-						rt_log("tossing edgeuse pair:\n");
-						rt_log("(%g %g %g) -> (%g %g %g)\n",
-							V3ARGS(ei->eu_p->vu_p->v_p->vg_p->coord),
-							V3ARGS(ei->eu_p->eumate_p->vu_p->v_p->vg_p->coord));
-						rt_log("(%g %g %g) -> (%g %g %g)\n",
-							V3ARGS(ei_p->eu_p->vu_p->v_p->vg_p->coord),
-							V3ARGS(ei_p->eu_p->eumate_p->vu_p->v_p->vg_p->coord));
-					}
-
-					RT_LIST_DEQUEUE(&ei_p->l);
-					rt_free((char *)ei_p, "edge info struct");
-					ei_p = RT_LIST_PLAST(edge_info, &ei->l);
-					RT_LIST_DEQUEUE(&ei->l);
-					rt_free((char *)ei, "edge info struct");
-					ei = ei_p;
-				    	break;
-				}
-			}
-		}
-		
-		if (RT_LIST_NON_EMPTY(&near)) break;
+	/* get a list of "closest/useful" edges to use in classifying
+	 * the pt WRT the loop
+	 */
+	while (RT_LIST_IS_EMPTY(&near) && RT_LIST_NON_EMPTY(&edge_list->l)) {
+		make_near_list(edge_list, &near);
 	}
 	
 	if (RT_LIST_IS_EMPTY(&near)) {
@@ -482,41 +529,65 @@ rt_log("dist:%g class:%s status:%d pca(%g %g %g)\n\tv1(%g %g %g) v2(%g %g %g)\n"
 	}
 
 
-	if ((ei=RT_LIST_PNEXT(edge_info, &near)) == RT_LIST_PLAST(edge_info, &near)){
-		/* just one element */
-		if (rt_g.NMG_debug & DEBUG_PT_FU )
-			rt_log("just one element\n");
-		lu_class = ei->class;
-		goto departure;
-	}
+	vdot_max = 0.0;
+	ei_vdot_max = (struct edge_info *)NULL;
 
 	for (RT_LIST_FOR(ei, edge_info, &near)) {
 		NMG_CK_EI(ei);
 		NMG_CK_VED(ei->ved_p);
-		/* if there is an edge where the PCA is not at a vertex,
-		 * we can just classify the point with this edge
-		 */
-		if (ei->ved_p->status == 5) {
+		switch (ei->ved_p->status) {
+		case 0: /* pt is on edge */
+		case 1: /* pt is on ei->ved_p->v1 */
+		case 2:	/* pt is on ei->ved_p->v2 */
+			lu_class = NMG_CLASS_AonBshared;
+			goto departure;
+			break;
+		case 3: /* pt pca is v1 */
+			if (ei_vdot_max == (struct edge_info *)NULL) {
+				VSUB2(v_pt, fpi->pt, ei->ved_p->v1->vg_p->coord);
+				ei_vdot_max = ei;
+			}
+			/* fallthrough */
+		case 4: /* pt pca is v2 */
+			if (ei_vdot_max == (struct edge_info *)NULL) {
+				VSUB2(v_pt, fpi->pt, ei->ved_p->v2->vg_p->coord);
+				ei_vdot_max = ei;
+			}
+
+			nmg_find_eu_leftvec( left, ei->eu_p );
+
+			if (fabs(vdot_val=VDOT(v_pt, left)) > fabs(vdot_max)){
+				vdot_max = vdot_val;
+				ei_vdot_max = ei;
+				if (vdot_max > 0.0)
+					lu_class = NMG_CLASS_AinB;
+				else /*  vdot_max < 0.0 */
+					lu_class = NMG_CLASS_AoutB;
+			}
+
+			break;
+		case 5:
+			/* if there is an edge where the PCA is not 
+			 * at a vertex, we can just classify the point with
+			 * this edge.
+			 */
 			lu_class = ei->class;
 			if (rt_g.NMG_debug & DEBUG_PT_FU ) {
 				rt_log("found status 5 edge, loop class is %s\n", 
 					nmg_class_name(lu_class));
 			}
 			goto departure;
+			break;
+		default:
+			rt_log("%s:%d status = %d\n",
+				__FILE__, __LINE__, ei->ved_p->status);
+			rt_bomb("Why did this happen?");
+			break;
 		}
 	}
 
-	for (RT_LIST_FOR(ei, edge_info, &near)) {
-		NMG_CK_EI(ei);
-		NMG_CK_VED(ei->ved_p);
-		/* find the edgeuse which shares a vertex with the first
-		 * one on the list with the max VDOT with the vertex->pt
-		 * vector
-		 */
-		 /* XXX */
-	}
-
 departure:
+
 	/* the caller will get whatever is left of the edge_list, but
 	 * we need to free up the "near" list
 	 */
@@ -662,6 +733,10 @@ struct fpi	*fpi;
  * else
  *	Error! panic!
  *
+ *
+ *  Values for "call_on_hits"
+ *	1	find all elements pt touches, call user routine for each geom.
+ *	2	find all elements pt touches, call user routine for each use
  */
 int
 nmg_class_pt_fu_except(pt, fu, ignore_lu,
@@ -717,7 +792,8 @@ CONST struct rt_tol     *tol;
 		    lu_class == NMG_CLASS_AoutB )
 			ot_opposite_out++;
 		else if (lu->orientation == OT_SAME &&
-		    lu_class == NMG_CLASS_AinB )
+		    (lu_class == NMG_CLASS_AinB ||
+		     lu_class == NMG_CLASS_AonBshared))
 			ot_same_in++;
 	}
 
