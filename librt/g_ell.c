@@ -186,8 +186,8 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 
 	VSET( invsq, 1.0/magsq_a, 1.0/magsq_b, 1.0/magsq_c );
 
-	mat_zero( ell->ell_SoR );
-	mat_zero( R );
+	mat_idn( ell->ell_SoR );
+	mat_idn( R );
 
 	/* Compute R and Rinv matrices */
 	f = 1.0/sqrt(magsq_a);
