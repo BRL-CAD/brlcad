@@ -591,7 +591,7 @@ struct fu_pt_info *fpi;
 static void
 pl_pt_fu(fpi, fu)
 struct fu_pt_info *fpi;
-struct faceuse *fu;
+CONST struct faceuse *fu;
 {
 	FILE *fd;
 	char name[25];
