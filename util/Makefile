@@ -1,9 +1,9 @@
 
 #	Makefile -- for Frame buffer utilities
 
-#	last edit:	86/06/17	Gary S. Moss
+#	last edit:	86/06/18	Gary S. Moss
 
-#	SCCS ID:	@(#)Makefile	1.21
+#	SCCS ID:	@(#)Makefile	1.22
 
 PRODUCTS= pp-fb fbclear fbgrid rle-fb fb-rle fbcmap
 HEADERS =
@@ -37,7 +37,7 @@ LIBES	= ${S52_LIBES}
 SOURCES	= Makefile make_bsd ${CFILES} ${HEADERS} ${MANUALS}
 COMPAT=
 INS	= cp
-SHELL	= /bin/sh
+SHELL	= /usr/5bin/sh
 
 .DEFAULT:
 	$(GET) $(GFLAGS) -p s.$@ > $@
