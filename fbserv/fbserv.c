@@ -93,10 +93,10 @@ static	char	*framebuffer = NULL;	/* frame buffer name */
 static	int	width = 0;		/* use default size */
 static	int	height = 0;
 static	int	port = 0;
-static	int	port_set;		/* !0 if user supplied port num */
+static	int	port_set = 0;		/* !0 if user supplied port num */
 static	FBIO	*fbp;
-static	int	single_fb;	/* !0 => we are holding a reusable FB open */
-static	int	got_fb_free;	/* !0 => we have received an fb_free */
+static	int	single_fb = 0;	/* !0 => we are holding a reusable FB open */
+static	int	got_fb_free = 0;	/* !0 => we have received an fb_free */
 static	int	once_only = 0;
 static 	int	netfd;
 
@@ -257,6 +257,7 @@ int argc; char **argv;
 
 	/* No disk files on remote machine */
 	_fb_disk_enable = 0;
+	bzero((void *)clients, sizeof(struct client) * MAX_CLIENTS);
 
 	(void)signal( SIGPIPE, SIG_IGN );
 	(void)signal( SIGALRM, sigalarm );
