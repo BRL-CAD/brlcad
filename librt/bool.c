@@ -58,8 +58,7 @@ bool_regions( segp_in, FinalHdp )
 struct seg *segp_in;
 struct partition *FinalHdp;	/* Heads final circ list */
 {
-	register struct seg *segp = segp_in;
-	register struct soltab *stp;
+	register struct seg *segp;
 	register struct partition *pp;
 	LOCAL struct region ActRegHd;	/* Heads active circular forw list */
 	LOCAL int curbin;
@@ -75,16 +74,17 @@ struct partition *FinalHdp;	/* Heads final circ list */
 	if(debug&DEBUG_PARTITION) fprintf(stderr,"-------------------BOOL_REGIONS\n");
 	for( segp = segp_in; segp != SEG_NULL; segp = segp->seg_next )  {
 		register struct partition *newpp;		/* XXX */
-		FAST fastf_t dist;				/* XXX */
+		register struct seg *lastseg;
+		register struct hit *lasthit;
+		LOCAL lastflip;
 
 		/* Make sure seg's solid's region is on active list */
-		stp = segp->seg_stp;
-		if( stp->st_bin == 0 )  {
+		if( segp->seg_stp->st_bin == 0 )  {
 			register struct region *regp;		/* XXX */
 
-			if( (stp->st_bin = curbin++) >= NBINS )
+			if( (segp->seg_stp->st_bin = curbin++) >= NBINS )
 				rtbomb("bool_regions:  need > NBINS bins");
-			regp = stp->st_regionp;
+			regp = segp->seg_stp->st_regionp;
 			if( (regp != REGION_NULL) &&
 			   (regp->reg_active == REGION_NULL) )  {
 				regp->reg_active = ActRegHd.reg_active;
@@ -100,69 +100,44 @@ struct partition *FinalHdp;	/* Heads final circ list */
 		if( PartHd.pt_forw == &PartHd )  {
 			/* No partitions yet, simple! */
 			GET_PT_INIT( pp );
-			pp->pt_solhit[stp->st_bin] = TRUE;
-			pp->pt_instp = stp;
+			pp->pt_solhit[segp->seg_stp->st_bin] = TRUE;
+			pp->pt_inseg = segp;
 			pp->pt_inhit = &segp->seg_in;
-			pp->pt_outstp = stp;
+			pp->pt_outseg = segp;
 			pp->pt_outhit = &segp->seg_out;
 			APPEND_PT( pp, &PartHd );
 			goto done_weave;
 		}
-		dist = segp->seg_in.hit_dist;
-		if( fdiff(dist, PartHd.pt_back->pt_outdist) > 0 )  {
+		if( fdiff(segp->seg_in.hit_dist, PartHd.pt_back->pt_outdist) > 0 )  {
 			/* Segment starts beyond last partitions end */
 			GET_PT_INIT( pp );
-			pp->pt_solhit[stp->st_bin] = TRUE;
-			pp->pt_instp = stp;
+			pp->pt_solhit[segp->seg_stp->st_bin] = TRUE;
+			pp->pt_inseg = segp;
 			pp->pt_inhit = &segp->seg_in;
-			pp->pt_outstp = stp;
+			pp->pt_outseg = segp;
 			pp->pt_outhit = &segp->seg_out;
 			APPEND_PT( pp, PartHd.pt_back );
 			goto done_weave;
 		}
-		if( fdiff(segp->seg_out.hit_dist, PartHd.pt_back->pt_outdist) > 0 )  {
-			/*
-			 * Segment ends beyond the end of the last
-			 * partition.  Create an additional partition.
-			 *	PPPPPPPP
-			 *	    SSSSSSSS
-			 *	        |> pp
-			 */
-			GET_PT_INIT( pp );
-			pp->pt_solhit[stp->st_bin] = TRUE;
-			pp->pt_instp = PartHd.pt_back->pt_outstp;
-			pp->pt_inhit = PartHd.pt_back->pt_outhit;
-			pp->pt_inflip = 1;
-			pp->pt_outstp = stp;
-			pp->pt_outhit = &segp->seg_out;
-			APPEND_PT( pp, PartHd.pt_back );
-		}
+
+		lastseg = segp;
+		lasthit = &segp->seg_in;
+		lastflip = 0;
 		for( pp=PartHd.pt_forw; pp != &PartHd; pp=pp->pt_forw ) {
 			register int i;		/* XXX */
 
-			if( fdiff(dist, pp->pt_outdist) >= 0 )  {
+			if( fdiff(lasthit->hit_dist, pp->pt_outdist) >= 0 )  {
 				/* Seg starts after current partition ends,
 				 * or exactly at the end.
+				 *	PPPP
+				 *	      SSSS
 				 */
-				if( pp->pt_forw == &PartHd )  {
-					/* seg starts beyond last part. end:
-					 *	PPPP
-					 *	      SSSS
-					 */
-					GET_PT_INIT( newpp );
-					newpp->pt_solhit[stp->st_bin] = TRUE;
-					newpp->pt_instp = stp;
-					newpp->pt_inhit = &segp->seg_in;
-					newpp->pt_outstp = stp;
-					newpp->pt_outhit = &segp->seg_out;
-					APPEND_PT( newpp, pp );
-					goto done_weave;
-				}
 				continue;
 			}
-			i = fdiff(dist, pp->pt_indist);
+			i = fdiff(lasthit->hit_dist, pp->pt_indist);
 			if( i == 0 )  {
-equal_start:			/*
+equal_start:
+				/*
 				 * Segment and partition start at
 				 * (roughly) the same point.
 				 */
@@ -174,33 +149,21 @@ equal_start:			/*
 					 *	PPPP
 					 *	SSSS
 					 */
-					pp->pt_solhit[stp->st_bin] = TRUE;
+					pp->pt_solhit[segp->seg_stp->st_bin] = TRUE;
 					goto done_weave;
 				}
 				if( i > 0 )  {
-					/* Seg continues beyond part. end
-					 *	PPPPPPPP
-					 *	    SSSSSSSS
+					/*
+					 * Seg & partition start at same spot,
+					 * seg extends beyond partition end.
+					 *	PPPP
+					 *	SSSSSSSS
 					 *	pp  |  newpp
 					 */
-					pp->pt_solhit[stp->st_bin] = TRUE;
-					dist = pp->pt_outdist;
-					if( pp->pt_forw == &PartHd )  {
-						/* beyond last part. end */
-						GET_PT_INIT( newpp );
-						newpp->pt_solhit[stp->st_bin] = TRUE;
-						newpp->pt_instp = pp->pt_outstp;
-						newpp->pt_inhit = pp->pt_outhit;
-						newpp->pt_inflip = 1;
-						newpp->pt_outstp = stp;
-						newpp->pt_outhit = &segp->seg_out;
-						APPEND_PT( newpp, pp );
-						goto done_weave;
-					}
-					/*
-					 * The rest of the work is done in the
-					 * dist<indist case next pass through.
-					 */
+					pp->pt_solhit[segp->seg_stp->st_bin] = TRUE;
+					lasthit = pp->pt_outhit;
+					lastseg = pp->pt_outseg;
+					lastflip = 1;
 					continue;
 				}
 				/* Segment ends before partition ends
@@ -211,10 +174,11 @@ equal_start:			/*
 				GET_PT( newpp );
 				*newpp = *pp;		/* struct copy */
 				/* new partition contains segment */
-				newpp->pt_solhit[stp->st_bin] = TRUE;
-				newpp->pt_outstp = stp;
+				newpp->pt_solhit[segp->seg_stp->st_bin] = TRUE;
+				newpp->pt_outseg = segp;
 				newpp->pt_outhit = &segp->seg_out;
-				pp->pt_instp = stp;
+				newpp->pt_outflip = 0;
+				pp->pt_inseg = segp;
 				pp->pt_inhit = &segp->seg_out;
 				pp->pt_inflip = 1;
 				INSERT_PT( newpp, pp );
@@ -229,24 +193,25 @@ equal_start:			/*
 				 *	newpp|pp
 				 */
 				GET_PT_INIT( newpp );
-				newpp->pt_solhit[stp->st_bin] = TRUE;
-				newpp->pt_instp = stp;
-				newpp->pt_inhit = &segp->seg_in;
-				newpp->pt_outstp = stp;
-				newpp->pt_outhit = &segp->seg_out;
-				INSERT_PT( newpp, pp );
+				newpp->pt_solhit[segp->seg_stp->st_bin] = TRUE;
+				newpp->pt_inseg = lastseg;
+				newpp->pt_inhit = lasthit;
+				newpp->pt_inflip = lastflip;
 				if( fdiff(segp->seg_out.hit_dist, pp->pt_indist) <= 0 )  {
 					/* Seg ends before partition starts */
+					newpp->pt_outseg = segp;
+					newpp->pt_outhit = &segp->seg_out;
+					INSERT_PT( newpp, pp );
 					goto done_weave;
 				}
-				newpp->pt_outstp = pp->pt_instp;
-				newpp->pt_outhit = pp->pt_inhit;
-				newpp->pt_outflip = 1;
-				/* dist = pp->pt_indist; */
+				lastseg = newpp->pt_outseg = pp->pt_inseg;
+				lasthit = newpp->pt_outhit = pp->pt_inhit;
+				lastflip = newpp->pt_outflip = 1;
+				INSERT_PT( newpp, pp );
 				goto equal_start;
 			}
 			/*
-			 *	dist > pp->pt_indist
+			 *	lasthit->hit_dist > pp->pt_indist
 			 *
 			 *  Segment starts after partition starts,
 			 *  but before the end of the partition.
@@ -257,18 +222,33 @@ equal_start:			/*
 			 */
 			GET_PT( newpp );
 			*newpp = *pp;			/* struct copy */
-			/* new partition is span before seg joins partition */
-			pp->pt_instp = stp;
+			/* new part. is the span before seg joins partition */
+			pp->pt_inseg = segp;
 			pp->pt_inhit = &segp->seg_in;
-			newpp->pt_outstp = stp;
+			pp->pt_inflip = 0;
+			newpp->pt_outseg = segp;
 			newpp->pt_outhit = &segp->seg_in;
 			newpp->pt_outflip = 1;
 			INSERT_PT( newpp, pp );
 			goto equal_start;
 		}
-		fprintf(stderr,"bool_regions:  fell out of seg_weave loop\n");
-		/* Sorry about the goto's, but they give added protection */
-done_weave:	;
+
+		/*
+		 *  Segment has portion which extends beyond the end
+		 *  of the last partition.  Tack on the remainder.
+		 *  	PPPPP
+		 *  	     SSSSS
+		 */
+		GET_PT_INIT( newpp );
+		newpp->pt_solhit[segp->seg_stp->st_bin] = TRUE;
+		newpp->pt_inseg = lastseg;
+		newpp->pt_inhit = lasthit;
+		newpp->pt_inflip = lastflip;
+		newpp->pt_outseg = segp;
+		newpp->pt_outhit = &segp->seg_out;
+		APPEND_PT( newpp, PartHd.pt_back );
+
+done_weave:	; /* Sorry about the goto's, but they give clarity */
 		if(debug&DEBUG_PARTITION)
 			pr_partitions( &PartHd, "After weave" );
 	}
@@ -288,13 +268,19 @@ done_weave:	;
 
 	pp = PartHd.pt_forw;
 	while( pp != &PartHd )  {
-		LOCAL int hitcnt;
-		LOCAL struct region *lastregion;
+		register struct region *lastregion;
 		register struct region *regp;
+		LOCAL int hitcnt;
 
 		hitcnt = 0;
 		if(debug&DEBUG_PARTITION)
 			fprintf(stderr,"considering partition %.8x\n", pp );
+
+		/* Sanity check.  Remove later. */
+		if( pp->pt_forw != &PartHd && pp->pt_outdist > pp->pt_forw->pt_outdist )  {
+			fprintf(stderr,"bool_regions:  defect!\n");
+			pr_partitions( &PartHd, "With DEFECT" );
+		}
 
 		regp = ActRegHd.reg_active;
 		for( ; regp != &ActRegHd; regp = regp->reg_active )  {
@@ -330,8 +316,13 @@ done_weave:	;
 			newpp->pt_regionp = lastregion;
 			APPEND_PT( newpp, FinalHdp->pt_back );
 
-			/* Shameless efficiency hack */
-			if( !debug && one_hit_flag )  break;
+			/* Shameless efficiency hack:
+			 * If the application is for viewing only,
+			 * the first hit beyond the start point is
+			 * all we care about.
+			 */
+			if( one_hit_flag && newpp->pt_indist > 0.0 )
+				break;
 		}
 	}
 	if( debug&DEBUG_PARTITION )
@@ -342,8 +333,7 @@ done_weave:	;
 	 * and zap the reg_active chain.
 	 */
 	for( segp = segp_in; segp != SEG_NULL; segp = segp->seg_next )  {
-		stp = segp->seg_stp;
-		stp->st_bin = FALSE;
+		segp->seg_stp->st_bin = FALSE;
 	}
 	{
 		register struct region *regp;			/* XXX */
@@ -393,11 +383,6 @@ register struct partition *partp;
 		break;
 
 	case OP_SUBTRACT:
-		if( treep->tr_right->tr_op != OP_SOLID )  {
-			fprintf(stderr,"bool_eval: rhs of MINUS not Solid\n");
-			ret = FALSE;
-			break;
-		}
 		if( bool_eval( treep->tr_left, partp ) == FALSE )
 			ret = FALSE;		/* FALSE = FALSE - X */
 		else  {
@@ -428,9 +413,12 @@ char *title;
 	fprintf(stderr,"%.8x: forw=%.8x back=%.8x (HEAD)\n",
 		phead, phead->pt_forw, phead->pt_back );
 	for( pp = phead->pt_forw; pp != phead; pp = pp->pt_forw ) {
-		fprintf(stderr,"%.8x: forw=%.8x back=%.8x (%f,%f)\n",
+		fprintf(stderr,"%.8x: forw=%.8x back=%.8x (%f,%f)",
 			pp, pp->pt_forw, pp->pt_back,
 			pp->pt_indist, pp->pt_outdist );
+		fprintf(stderr,"%s%s\n",
+			pp->pt_inflip ? " Iflip" : "",
+			pp->pt_outflip ?" Oflip" : "" );
 #ifdef never
 		fprintf(stderr,"\t Nin=[%f,%f,%f] Nout=[%f,%f,%f]\n",
 			pp->pt_inhit->hit_normal[0],
