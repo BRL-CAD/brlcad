@@ -795,16 +795,6 @@ register struct directory *dp;
 	}
 }
 
-static char *mged_vl_draw_message[] = {
-	"line move ",
-	"line draw ",
-	"poly start",
-	"poly move ",
-	"poly draw ",
-	"poly end  ",
-	"**unknown*"
-};
-
 /*
  *			P R _ S C H A I N
  *
@@ -860,17 +850,20 @@ int		lvl;			/* debug level */
 			register int	*cmd = vp->cmd;
 			register point_t *pt = vp->pt;
 
+			RT_CK_VLIST( vp );
 			nvlist++;
 			npts += nused;
 			if( lvl <= 2 )  continue;
 
 			for( i = 0; i < nused; i++,cmd++,pt++ )  {
 				rt_log("  %s (%g, %g, %g)\n",
-					mged_vl_draw_message[*cmd],
+					rt_vlist_cmd_descriptions[*cmd],
 					V3ARGS( *pt ) );
 			}
 		}
 		rt_log("  %d vlist structures, %d pts\n", nvlist, npts );
+
+		rt_log("  %d pts (via rt_ck_vlist)\n", rt_ck_vlist( &(sp->s_vlist) ) );
 	}
 }
 
