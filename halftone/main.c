@@ -56,6 +56,9 @@ static char rcsid[] = "$Header$";
  *	Christopher T. Johnson	- 90/03/21
  *
  * $Log$
+ * Revision 11.2  1996/12/13  14:33:46  jra
+ * pix_common_file_size is now bn_common_file_size.
+ *
  * Revision 11.1  1995/01/04  10:21:51  mike
  * Release_4.4
  *
