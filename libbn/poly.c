@@ -332,6 +332,7 @@ register const struct bn_poly	*eqn;
 
 	c1 = eqn->cf[1];
 	if( Abs(c1) > SQRT_MAX_FASTF )  return(0);	/* FAIL */
+
 	c1_3rd = c1 * THIRD;
 	a = eqn->cf[2] - c1*c1_3rd;
 	if( Abs(a) > SQRT_MAX_FASTF )  return(0);	/* FAIL */
@@ -398,7 +399,10 @@ register const struct bn_poly	*eqn;
 	}
 	for ( i=0; i < 3; ++i )
 		roots[i].re -= c1_3rd;
-	bn_expecting_fpe = 0;
+
+	if( !bu_is_parallel() )
+		bn_expecting_fpe = 0;
+
 	return(1);		/* OK */
 }
 
