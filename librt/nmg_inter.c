@@ -984,7 +984,7 @@ struct faceuse		*fu2;		/* fu of eu2, for error checks */
 		nmg_ck_face_worthless_edges( fu1 );
 		nmg_ck_face_worthless_edges( fu2 );
 		(void)nmg_tbl(is->l2, TBL_INS_UNIQUE, &vu2b->l.magic);
-		return 2;
+		return 1;		/* eu1 not broken, just touched */
 	}
 
 	if ( dist[0] == 1 )  {
@@ -1024,7 +1024,7 @@ struct faceuse		*fu2;		/* fu of eu2, for error checks */
 		(void)nmg_tbl(is->l2, TBL_INS_UNIQUE, &vu2b->l.magic);
 		nmg_ck_face_worthless_edges( fu1 );
 		nmg_ck_face_worthless_edges( fu2 );
-		return 2;
+		return 1;		/* eu1 not broken, just touched */
 	}
 
 	/* eu2 intersect point is on eu1 line, but not between vertices */
