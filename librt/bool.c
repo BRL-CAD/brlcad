@@ -693,22 +693,22 @@ struct bu_ptbl	*sl;
 CONST struct partition *pp;
 CONST struct region *regp;
 {
-	CONST struct seg *segp;
+	CONST struct seg **segpp;
 
 	bu_ptbl_init( sl, 8, "region seglist for partition" );
 
 	/* Walk the partitions segment list */
-	for( BU_PTBL_FOR( segp, (CONST struct seg *), &pp->pt_seglist ) )  {
-		CONST struct region *srp;
+	for( BU_PTBL_FOR( segpp, (CONST struct seg **), &pp->pt_seglist ) )  {
+		CONST struct region **srpp;
 
-		RT_CK_SEG(segp);
+		RT_CK_SEG(*segpp);
 		/* For every segment in part, walk the solid's region list */
-		for( BU_PTBL_FOR( srp, (CONST struct region *), &segp->seg_stp->st_regions ) )  {
-			RT_CK_REGION(srp);
+		for( BU_PTBL_FOR( srpp, (CONST struct region **), &(*segpp)->seg_stp->st_regions ) )  {
+			RT_CK_REGION(*srpp);
 
-			if( srp != regp )  continue;
+			if( *srpp != regp )  continue;
 			/* This segment is part of a solid in this region */
-			bu_ptbl_ins_unique( sl, (long *)segp );
+			bu_ptbl_ins_unique( sl, (long *)(*segpp) );
 		}
 	}
 
@@ -960,10 +960,14 @@ struct partition	*InputHdp;
 		n_fastgen = 0;
 		for( i = n_regions-1; i >= 0; i-- )  {
 			struct region *regp = (struct region *)BU_PTBL_GET(regiontable, i);
+			if( regp == REGION_NULL ) continue;	/* empty slot in table */
 			RT_CK_REGION(regp);
 			if( regp->reg_is_fastgen != REGION_NON_FASTGEN )  n_fastgen++;
 		}
 		if( n_fastgen > 1 )  bu_log("WARNING: no code to resolve FASTGEN plate/plate overlaps (Yet)\n");
+
+		/* Compress out any null pointers in the table */
+		bu_ptbl_rm( regiontable, (long *)NULL );
 	}
 
 	lastregion = (struct region *)BU_PTBL_GET(regiontable, 0);
@@ -971,6 +975,7 @@ struct partition	*InputHdp;
 
 	for( i=1; i < BU_PTBL_LEN(regiontable); i++ )  {
 		struct region *regp = (struct region *)BU_PTBL_GET(regiontable, i);
+		if( regp == REGION_NULL ) continue;	/* empty slot in table */
 		RT_CK_REGION(regp);
 
 		/*
