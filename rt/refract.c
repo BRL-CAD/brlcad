@@ -115,6 +115,13 @@ struct shadework	*swp;
 		reflect = swp->sw_reflect;
 		transmit = swp->sw_transmit;
 	}
+	if(rdebug&RDEBUG_REFRACT) {
+		bu_log("rr_render(%s) START: lvl=%d reflect=%g, transmit=%g, xmitonly=%d\n",
+			pp->pt_regionp->reg_name,
+			ap->a_level,
+			reflect, transmit,
+			swp->sw_xmitonly );
+	}
 	if( reflect <= 0 && transmit <= 0 )
 		goto out;
 
@@ -219,8 +226,8 @@ struct shadework	*swp;
 	 */
 	if( transmit > 0 )  {
 		if(rdebug&RDEBUG_REFRACT) {
-			bu_log("rr_render: lvl=%d begin xmit through %s\n",
-				ap->a_level,
+			bu_log("rr_render: lvl=%d transmit=%g.  Calculate refraction at entrance to %s.\n",
+				ap->a_level, transmit,
 				pp->pt_regionp->reg_name );
 		}
 		/*
@@ -269,6 +276,11 @@ struct shadework	*swp;
 			}
 			goto do_reflection;
 		}
+		if(rdebug&RDEBUG_REFRACT) {
+			bu_log("rr_render: lvl=%d begin transmission through %s.\n",
+				ap->a_level,
+				pp->pt_regionp->reg_name );
+		}
 
 		/*
 		 *  Find new exit point from the inside. 
@@ -284,10 +296,10 @@ struct shadework	*swp;
 		 *  refraction angle based on the RI of the current and
 		 *  *next* regions along the ray.
 		 */
+		sub_ap.a_purpose = "rr first glass transmission ray";
 do_inside:
 		sub_ap.a_hit =  rr_hit;
 		sub_ap.a_miss = rr_miss;
-		sub_ap.a_purpose = "rr internal ray probing for glass exit pnt";
 		sub_ap.a_onehit = 3;
 		sub_ap.a_rbeam = ap->a_rbeam + swp->sw_hit.hit_dist * ap->a_diverge;
 		sub_ap.a_diverge = 0.0;
@@ -318,9 +330,13 @@ do_inside:
 			goto out;			/* abandon hope */
 		}
 
-		if(rdebug&RDEBUG_REFRACT)
-			bu_log("rr_render: calculating refraction @ exit from %s\n", pp->pt_regionp->reg_name);
-
+		if(rdebug&RDEBUG_REFRACT)  {
+			bu_log("rr_render: calculating refraction @ exit from %s (green)\n", pp->pt_regionp->reg_name);
+			bu_log("Start point to exit point:\n\
+vdraw o rr;vdraw p c 00ff00; vdraw w n 0 %g %g %g; vdraw w n 1 %g %g %g; vdraw s\n",
+				V3ARGS(sub_ap.a_ray.r_pt),
+				V3ARGS(sub_ap.a_uvec) );
+		}
 		/* NOTE: rr_hit returns EXIT Point in sub_ap.a_uvec,
 		 *  and returns EXIT Normal in sub_ap.a_vvec,
 		 *  and returns next RI in sub_ap.a_refrac_index
@@ -356,8 +372,10 @@ do_inside:
 			static long count = 0;		/* not PARALLEL, should be OK */
 
 			/* Reflected internally -- keep going */
-			if( (++sub_ap.a_level) <= max_ireflect )
+			if( (++sub_ap.a_level) <= max_ireflect )  {
+				sub_ap.a_purpose = "rr reflected internal ray, probing for glass exit point";
 				goto do_inside;
+			}
 
 			/*
 			 *  Internal Reflection limit exceeded -- just let
@@ -485,15 +503,20 @@ do_reflection:
 		VSUB2( sub_ap.a_ray.r_dir, work, to_eye );
 		sub_ap.a_purpose = "rr reflected ray";
 
-		if( rdebug&RDEBUG_RAYPLOT )  {
+		if( rdebug&(RDEBUG_RAYPLOT|RDEBUG_REFRACT) )  {
 			point_t		endpt;
 			/* Plot the surface normal -- forrest green */
 			/* plotfp */
-			pl_color( stdout, 100, 255, 100 );
+			if(rdebug&RDEBUG_RAYPLOT) pl_color( stdout, 192, 255, 192 );
 			f = sub_ap.a_rt_i->rti_radius * 0.02;
 			VJOIN1( endpt, sub_ap.a_ray.r_pt,
 				f, swp->sw_hit.hit_normal );
-			pdv_3line( stdout, sub_ap.a_ray.r_pt, endpt );
+			if(rdebug&RDEBUG_RAYPLOT) pdv_3line( stdout, sub_ap.a_ray.r_pt, endpt );
+			bu_log("Surface normal:\n\
+vdraw o rrnorm;vdraw p c c0ffc0;vdraw w n 0 %g %g %g;vdraw w n 1 %g %g %g;vdraw s\n",
+				V3ARGS(sub_ap.a_ray.r_pt),
+				V3ARGS(endpt) );
+
 		}
 
 		(void)rt_shootray( &sub_ap );
@@ -622,9 +645,10 @@ struct partition *PartHeadp;
 	register struct partition *pp;
 	register struct hit	*hitp;
 	register struct soltab	*stp;
-	struct partition	*psave;				
+	struct partition	*psave = (struct partition *)NULL;
 	struct shadework	sw;
 	struct application	appl;
+	int			ret;
 
 	RT_AP_CHECK(ap);
 
@@ -634,9 +658,11 @@ struct partition *PartHeadp;
 		if(rdebug&(RDEBUG_SHOWERR|RDEBUG_REFRACT))  {
 			bu_log("rr_hit:  %d,%d no hit out front?\n",
 				ap->a_x, ap->a_y );
-			return(0);	/* error */
+			ret = 0;	/* error */
+			goto out;
 		}
-		return(1);		/* treat as escaping ray */
+		ret = 1;		/* treat as escaping ray */
+		goto out;
 	}
 
 	/*
@@ -648,17 +674,20 @@ struct partition *PartHeadp;
 	 *  region that it started in, although not by much.
 	 */
 	psave = pp;
+	if(rdebug&RDEBUG_REFRACT) bu_log("rr_hit(%s)\n", psave->pt_regionp->reg_name);
 	for( ; pp != PartHeadp; pp = pp->pt_forw )
 		if( pp->pt_regionp == (struct region *)(ap->a_uptr) )  break;
 	if( pp == PartHeadp )  {
 		if(rdebug&(RDEBUG_SHOWERR|RDEBUG_REFRACT))  {
-			bu_log("rr_hit:  %d,%d Ray int.reflected in %s landed in %s\n",
+			bu_log("rr_hit:  %d,%d Ray internal to %s landed unexpectedly in %s\n",
 				ap->a_x, ap->a_y,
 				((struct region *)(ap->a_uptr))->reg_name,
 				psave->pt_regionp->reg_name );
-			return(0);	/* error */
+			ret = 0;	/* error */
+			goto out;
 		}
-		return(1);		/* treat as escaping ray */
+		ret = 1;		/* treat as escaping ray */
+		goto out;
 	}
 
 	/*
@@ -683,7 +712,8 @@ struct partition *PartHeadp;
 			ap->a_x, ap->a_y,
 			pp->pt_regionp->reg_name,
 			pp->pt_inhit->hit_dist);
-		return(0);		/* dreadful error */
+		ret = 0;		/* dreadful error */
+		goto out;
 	}
 
 	/*
@@ -716,7 +746,8 @@ struct partition *PartHeadp;
 			ap->a_x, ap->a_y,
 			pp->pt_inhit->hit_dist, hitp->hit_dist,
 			pp->pt_regionp->reg_name );
-		return(0);		/* dreadful error */
+		ret = 0;		/* dreadful error */
+		goto out;
 	}
 	VJOIN1( hitp->hit_point, ap->a_ray.r_pt,
 		hitp->hit_dist, ap->a_ray.r_dir );
@@ -757,8 +788,12 @@ struct partition *PartHeadp;
 			VSETALL( sw.sw_basecolor, 1 );
 #endif
 
-			if (rdebug&RDEBUG_SHADE)
+			if (rdebug&(RDEBUG_SHADE|RDEBUG_REFRACT))
 				bu_log("rr_hit calling viewshade to discover refractive index\n");
+			/* XXX Need better flag here, to keep viewshade
+			 * XXX from feeing the need to fire extra rays, etc.
+			 * XXX We need even less info that "sw_xmitonly".
+			 */
 
 			(void)viewshade( &appl, pp->pt_forw, &sw );
 
@@ -767,6 +802,9 @@ struct partition *PartHeadp;
 			bu_free( sw.msw_basecolor, "sw.msw_basecolor");
 #endif
 
+			if (rdebug&(RDEBUG_SHADE|RDEBUG_REFRACT))
+				bu_log("rr_hit refractive index = %g\n", sw.sw_refrac_index);
+
 			if( sw.sw_transmit > 0 )  {
 				ap->a_refrac_index = sw.sw_refrac_index;
 				if (rdebug&RDEBUG_SHADE)  {
@@ -774,11 +812,17 @@ struct partition *PartHeadp;
 						ap->a_refrac_index,
 						sw.sw_transmit );
 				}
-				return 3;	/* OK -- more glass follows */
+				ret= 3;	/* OK -- more glass follows */
+				goto out;
 			}
 		}
 	}
-	return 2;				/* OK -- no more glass */
+	ret = 2;				/* OK -- no more glass */
+out:
+	if(rdebug&RDEBUG_REFRACT) bu_log("rr_hit(%s) return=%d\n",
+		psave ? psave->pt_regionp->reg_name : "",
+		ret);
+	return ret;
 }
 
 /*
