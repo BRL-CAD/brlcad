@@ -432,7 +432,6 @@ f_which(clientData, interp, argc, argv)
      int	argc;
      char	**argv;
 {
-#if 1
 	int		ret;
 
 	CHECK_DBI_NULL;
@@ -446,28 +445,6 @@ f_which(clientData, interp, argc, argv)
 
 	(void)signal(SIGINT, SIG_IGN);
 	return ret;
-#else
-	int		ret;
-	struct bu_vls	vls;
-
-	CHECK_DBI_NULL;
-
-	bu_vls_init(&vls);
-	bu_build_cmd_vls(&vls, MGED_DB_NAME, argc, argv);
-
-	if (setjmp(jmp_env) == 0)
-		(void)signal(SIGINT, sig3);  /* allow interupts */
-        else {
-		bu_vls_free(&vls);
-		return TCL_OK;
-	}
-
-	ret = Tcl_Eval(interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-
-	(void)signal(SIGINT, SIG_IGN);
-	return ret;
-#endif
 }
 
 /*		F _ W H I C H _ S H A D E R
