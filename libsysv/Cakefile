@@ -12,7 +12,7 @@
  */
 #define PRODUCTS	libsysv.ARCH_SUF
 #define SRCDIR	libsysv
-#define FILES	linebuf regex redata EXTRA_FILES
+#define FILES	linebuf regex redata regcomp regerror regexec regfree EXTRA_FILES
 #define	SRCSUFF	.c
 #define MANSECTION	3
 
