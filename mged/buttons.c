@@ -785,17 +785,6 @@ be_s_edit()  {
 
 	edsol = BE_S_EDIT;
 	sedit_menu();		/* Install appropriate menu */
-#if 0
-	build_tcl_edit_menu();
-
-	bn_mat_idn(acc_rot_sol);
-	VSETALL( edit_absolute_rotate, 0.0 );
-	VSETALL( edit_absolute_tran, 0.0 );
-	edit_absolute_scale = 0;
-	acc_sc_sol = 1;
-
-	set_e_axes_pos(1);
-#endif
 }
 
 static void
