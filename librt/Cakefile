@@ -18,7 +18,7 @@
 	shoot \
 	cut bool \
 	db_open db_scan db_lookup db_io db_alloc db_walk \
-	db_path db_tree db_anim \
+	db_path db_tree db_comb db_anim \
 	memalloc tabdata \
 	table dir tree prep font \
 	g_arb g_ars g_ebm g_ell g_half g_pg g_rec g_sph g_nurb \
