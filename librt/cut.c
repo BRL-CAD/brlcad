@@ -58,6 +58,18 @@ register struct rt_i *rtip;
 	struct histogram xhist;
 	struct histogram yhist;
 	struct histogram zhist;
+	struct histogram start_hist[3];	/* where solid RPPs start */
+	struct histogram end_hist[3];	/* where solid RPPs end */
+	int	nu_ncells;		/* # cells along one axis */
+	int	nu_sol_per_cell;	/* avg # solids per cell */
+	struct nu_axis {
+		fastf_t	nu_pos;		/* cell start pos */
+		fastf_t	nu_width;	/* voxel size */
+	};
+	struct nu_axis	*nu_axis[3];
+	int	nu_cells_per_axis[3];
+	int	nu_max_ncells;		/* hard limit on nu_ncells */
+	int	i;
 
 	rtip->rti_CutHead.bn.bn_type = CUT_BOXNODE;
 	VMOVE( rtip->rti_CutHead.bn.bn_min, rtip->mdl_min );
@@ -102,26 +114,183 @@ register struct rt_i *rtip;
 	 *  when projected onto X, Y, and Z axes.
 	 *  First stage in implementing the Gigante NUgrid algorithm.
 	 *  (Proc. Ausgraph 1990, pg 157)
-	 *  XXX For small or huge models, needs a floating-point histogram.
+	 *  XXX For databases where the model diameter (diagonal through
+	 *  XXX the model RPP) is small or huge, a histogram with
+	 *  XXX floating-point ranges will be needed.
+	 *  XXX Integers should suffice for now.
+	 *
+	 *  Goal is to keep the average number of solids per cell constant.
+	 *  Assuming a uniform distribution, the number of cells along
+	 *  each axis will need to be (nsol / desired_avg)**(1/3).
+	 *  This is increased by two to err on the generous side,
+	 *  resulting in a 3*3*3 grid even for small numbers of solids.
 	 */
-#define	RT_NUGRID_NBINS	120
+	nu_ncells = (int)ceil( 2.0 +
+		pow( (double)(rtip->nsolids)/3.0, 1.0/3.0 ) );
+	nu_sol_per_cell = (rtip->nsolids + nu_ncells - 1) / nu_ncells;
+	nu_max_ncells = 2*nu_ncells + 8;
+if(rt_g.debug&DEBUG_CUT)  rt_log("\nnu_ncells=%d, nu_sol_per_cell=%d, nu_max_ncells=%d\n", nu_ncells, nu_sol_per_cell, nu_max_ncells );
+	for( i=0; i<3; i++ )  {
+		rt_hist_init( &start_hist[i],
+			(int)rtip->rti_pmin[i],
+			(int)rtip->rti_pmax[i],
+			nu_ncells*100 );
+		rt_hist_init( &end_hist[i],
+			(int)rtip->rti_pmin[i],
+			(int)rtip->rti_pmax[i],
+			nu_ncells*100 );
+	}
+#define	RT_NUGRID_NBINS	120		/* For plotting purposes only */
 	rt_hist_init( &xhist, (int)rtip->rti_pmin[X], (int)rtip->rti_pmax[X], RT_NUGRID_NBINS );
 	rt_hist_init( &yhist, (int)rtip->rti_pmin[Y], (int)rtip->rti_pmax[Y], RT_NUGRID_NBINS );
 	rt_hist_init( &zhist, (int)rtip->rti_pmin[Z], (int)rtip->rti_pmax[Z], RT_NUGRID_NBINS );
 	for( RT_LIST( stp, soltab, &(rtip->rti_headsolid) ) )  {
 		if( stp->st_aradius >= INFINITY )  continue;
-		rt_hist_range( &xhist, (int)stp->st_min[X], (int)stp->st_max[X] );
-		rt_hist_range( &yhist, (int)stp->st_min[Y], (int)stp->st_max[Y] );
-		rt_hist_range( &zhist, (int)stp->st_min[Z], (int)stp->st_max[Z] );
+		rt_hist_range( &xhist,
+			(int)stp->st_min[X], (int)stp->st_max[X] );
+		rt_hist_range( &yhist,
+			(int)stp->st_min[Y], (int)stp->st_max[Y] );
+		rt_hist_range( &zhist,
+			(int)stp->st_min[Z], (int)stp->st_max[Z] );
+		for( i=0; i<3; i++ )  {
+			RT_HISTOGRAM_TALLY( &start_hist[i],
+				(int)stp->st_min[i] );
+			RT_HISTOGRAM_TALLY( &end_hist[i],
+				(int)stp->st_max[i] );
+		}
 	}
 	if(rt_g.debug&DEBUG_CUT)  {
+		char	obuf[128];
 		rt_hist_pr( &xhist, "cut_tree:  solid RPP extent distribution in X" );
 		rt_hist_pr( &yhist, "cut_tree:  solid RPP extent distribution in Y" );
 		rt_hist_pr( &zhist, "cut_tree:  solid RPP extent distribution in Z" );
+		for( i=0; i<3; i++ )  {
+			sprintf(obuf, "cut_tree:  %c axis solid RPP start distribution\n",
+				"XYZ*"[i] );
+			rt_hist_pr( &start_hist[i], obuf );
+			sprintf(obuf, "cut_tree:  %c axis solid RPP end distribution\n",
+				"XYZ*"[i] );
+			rt_hist_pr( &end_hist[i], obuf );
+		}
 	}
+
+	for( i=0; i<3; i++ )  {
+		nu_axis[i] = (struct nu_axis *)rt_calloc( nu_max_ncells,
+			sizeof(struct nu_axis), "NUgrid axis" );
+	}
+
+	/*
+	 *  Next part of NUgrid algorithm:
+	 *  Decide where cell boundaries should be, along each axis.
+	 *  Each cell will be an interval across the histogram.
+	 *  For each interval, track the number of new solids that
+	 *  have *started* in the interval, and the number of existing solids
+	 *  that have *ended* in the interval.
+	 *  Continue widening the interval another histogram element
+	 *  in width, until either the number of starts or endings
+	 *  exceeds the goal for the average number of solids per
+	 *  cell, nu_sol_per_cell = (nsolids / nu_ncells).
+	 */
+	for( i=0; i<3; i++ )  {
+		int	pos;		/* Current interval start pos */
+		int	nstart = 0;
+		int	nend = 0;
+		struct histogram	*shp = &start_hist[i];
+		struct histogram	*ehp = &end_hist[i];
+		int	hindex = 0;
+		int	epos;
+		int	axi = 0;	/* nu_axis index */
+
+		if( shp->hg_min != ehp->hg_min )  rt_bomb("cut_it: hg_min error\n");
+		pos = shp->hg_min;
+		nu_axis[i][axi].nu_pos = pos;
+		for( hindex = 0; hindex < shp->hg_nbins; hindex++ )  {
+			if( pos > shp->hg_max )  break;
+			/* Advance interval one more histogram entry */
+			/* NOTE:  Peeks into histogram structures! */
+			nstart += shp->hg_bins[hindex];
+			nend += ehp->hg_bins[hindex];
+			pos += shp->hg_clumpsize;
+			if( nstart < nu_sol_per_cell &&
+			    nend < nu_sol_per_cell )  continue;
+			/* End current interval, start new one */
+			nu_axis[i][axi].nu_width = pos - nu_axis[i][axi].nu_pos;
+			if( axi >= nu_max_ncells-1 )  {
+				rt_log("NUgrid ran off end, axis=%d, axi=%d\n",
+					i, axi);
+				pos = shp->hg_max+1;
+				break;
+			}
+			nu_axis[i][++axi].nu_pos = pos;
+			nstart = 0;
+			nend = 0;
+		}
+		/* End final interval */
+		nu_axis[i][axi].nu_width = pos - nu_axis[i][axi].nu_pos;
+		nu_cells_per_axis[i] = axi+1;
+	}
+
+	/* For debugging */
+	if(rt_g.debug&DEBUG_CUT)  for( i=0; i<3; i++ )  {
+		register int j;
+		rt_log("\nNUgrid %c axis:  %d cells\n",
+			"XYZ*"[i], nu_cells_per_axis[i] );
+		for( j=0; j<nu_cells_per_axis[i]; j++ )  {
+			rt_log("  %g, w=%g\n",
+				nu_axis[i][j].nu_pos,
+				nu_axis[i][j].nu_width );
+		}
+	}
+
+#if 0
+	struct boxnode	*nu_grid;
+	struct boxnode	nu_xbox;
+	struct boxnode	nu_ybox;
+	vect_t		xmin, xmax;	/* bounds of x slice */
+	vect_t		ymin, ymax;	/* bounds of y slice of x slice */
+	/* For the moment, re-use "struct boxnode" */
+	nu_grid = (struct boxnode *)rt_malloc(
+		nu_cells_per_axis[X] * nu_cells_per_axis[Y] *
+		nu_cells_per_axis[Z], "3-D NUgrid array" );
+	nu_xbox.bn_len = 0;
+	nu_xbox.bn_maxlen = rtip->nsolids;
+	nu_xbox.bn_list = (struct soltab **)rt_malloc(
+		nu_xbox.bn_maxlen * sizeof(struct soltab *),
+		"xbox boxnode []" );
+	nu_ybox.bn_len = 0;
+	nu_ybox.bn_maxlen = rtip->nsolids;
+	nu_ybox.bn_list = (struct soltab **)rt_malloc(
+		nu_ybox.bn_maxlen * sizeof(struct soltab *),
+		"ybox boxnode []" );
+	for( xp = 0; xp < nu_cells_per_axis[X]; xp++ )  {
+		VMOVE( xmin, rtip->mdl_min );
+		VMOVE( xmax, rtip->mdl_max );
+		xmin[X] = nu_axis[X][xp].nu_pos;
+		xmax[X] = xmin[X] + nu_axis[X][xp].nu_width;
+		VMOVE( nu_xbox.bn_min, xmin );
+		VMOVE( nu_xbox.bn_max, xmax );
+		/* Search all solids for those in this X slice */
+		for( RT_LIST( stp, soltab, &(rtip->rti_headsolid) ) )  {
+			if( stp->st_aradius >= INFINITY )  {
+				/* Infinite solid */
+				nu_xbox.bn_list[nu_xbox.bn_len++] = stp;
+			} else {
+				if( !rt_ck_overlap( xmin, xmax, stp ) )
+					continue;
+				nu_xbox.bn_list[nu_xbox.bn_len++] = stp;
+			}
+		}
+	}
+#endif
+
+	/*  Finished with NUgrid data structures */
 	rt_hist_free( &xhist );
 	rt_hist_free( &yhist );
 	rt_hist_free( &zhist );
+	for( i=0; i<3; i++ )  {
+		rt_hist_free( &start_hist[i] );
+		rt_hist_free( &end_hist[i] );
+	}
 
 	/*  Dynamic decisions on tree limits.
 	 *  Note that there will be (2**rt_cutDepth)*rt_cutLen leaf slots,
