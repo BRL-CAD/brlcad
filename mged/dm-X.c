@@ -942,8 +942,8 @@ F	Toggle faceplate\n\
 				no_faceplate = !no_faceplate;
 				rt_vls_strcat( &dm_values.dv_string,
 					no_faceplate ?
-					"set faceplate=0\n" :
-					"set faceplate=1\n" );
+					"set faceplate 0\n" :
+					"set faceplate 1\n" );
 				break;
 			case '0':
 				rt_vls_printf( &dm_values.dv_string,
