@@ -111,8 +111,8 @@ char *av[];
 		fprintf(stderr, "Image is %dx%d (%d)\n", width, height, img_bytes);
 
 	/* bring the image into memory */
-	if ((i=fread(&img_buffer[0], 1, img_bytes, stdin)) != img_bytes) {
-		(void)fprintf(stderr, "%s: Error reading image %d of %d bytes read\n", progname, i, img_bytes);
+	if ((i=read(0, &img_buffer[0], img_bytes)) != img_bytes) {
+		(void)fprintf(stderr, "%s: Error reading image at %d of %d bytes read\n", progname, i, img_bytes);
 		return(-1);
 	}
 
@@ -145,6 +145,9 @@ char *av[];
 
 	ipu_print_config(dsp, units, divisor, conv,
 			mosaic, ipu_gamma, tray);
+
+	if( ipu_filetype == IPU_PALETTE_FILE )
+		ipu_set_palette(dsp, NULL);
 
 	if (!strcmp(progname, "pix-ipu"))
 		ipu_print_file(dsp, (char)1, copies, 0/*wait*/,
