@@ -27,7 +27,7 @@
 
 #if defined(__CAKE__irix5)
 # undef CFLAGS
-# define CFLAGS -O -I../h -DIRIX=5
+# define CFLAGS -O -I../h -DIRIX=5 -DHAVE_REGEX_DECL=1
 #endif
 
 
