@@ -47,7 +47,7 @@ extern struct device_values dm_values;
 struct dm {
 	int	(*dmr_open)();
 	void	(*dmr_close)();
-	int	(*dmr_input)();
+	void	(*dmr_input)MGED_ARGS((fd_set *input, int noblock));
 	void	(*dmr_prolog)();
 	void	(*dmr_epilog)();
 	void	(*dmr_normal)();
