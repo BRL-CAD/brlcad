@@ -11,7 +11,7 @@
 	bwcrop bwdiff bwfilter bwhist bwhisteq \
 	bwmod bwrect bwrot bwscale bwshrink \
 	bwstat bwthresh \
-	dpix-pix dunncolor dunnsnap \
+	cv dpix-pix dunncolor dunnsnap \
 	files-tape gencolor hd loop mac-pix \
 	op-bw orle-pix \
 	pix-alias pix-bw pix-bw3 pix-orle \
@@ -198,6 +198,9 @@ plgetframe:	plgetframe.o LIBPLOT
 /* Gets LIBPLOT from within LIBRT */
 plrot:		plrot.o LIBRT
 	CC LDFLAGS -o plrot plrot.o LIB_PRE''LIBRT LIBRT_LIBES LIBES
+
+cv:		cv.o LIBRT
+	CC LDFLAGS -o cv cv.o LIB_PRE''LIBRT LIBRT_LIBES LIBES
 
 op-bw:		op-bw.o
 	CC LDFLAGS -o op-bw op-bw.o LIBES
