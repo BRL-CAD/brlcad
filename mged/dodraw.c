@@ -614,7 +614,7 @@ int	kind;
 
 	/* Parse options. */
 	bu_optind = 1;		/* re-init bu_getopt() */
-	while( (c=bu_getopt(argc,argv,"dfnqstuvwSTP:C:")) != EOF )  {
+	while( (c=bu_getopt(argc,argv,"dfnqrstuvwSTP:C:")) != EOF )  {
 		switch(c)  {
 		case 'u':
 			mged_draw_edge_uses = 1;
@@ -674,6 +674,14 @@ int	kind;
 				mged_wireframe_color[1] = g;
 				mged_wireframe_color[2] = b;
 			}
+			break;
+		case 'r':
+			/* Draw in all-red, as in Release 3 and earlier */
+			/* Useful for spotting regions colored black */
+			mged_wireframe_color_override = 1;
+			mged_wireframe_color[0] = 255;
+			mged_wireframe_color[1] = 0;
+			mged_wireframe_color[2] = 0;
 			break;
 		default:
 			{
