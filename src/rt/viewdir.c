@@ -1,11 +1,27 @@
-/*
- *			V I E W_ R A Y_D I R E C T I O N
+/*                       V I E W D I R . C
+ * BRL-CAD
+ *
+ * Copyright (c) 1993-2004 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this file; see the file named COPYING for more
+ * information.
+ */
+/** @file viewdir.c
  *
  *  RT-View-Module for printing out the hit point of a ray and the ray's
  *  direction on a user-specified grid.
- *  
- *  
- *  
  *  
  *  Author -
  *	Susanne L. Muuss, J.D.
@@ -14,17 +30,13 @@
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
  */
-
 
 #ifndef lint
 static const char RCSraydir[] = "@(#)$Header$";
 #endif
 
 #include "common.h"
-
-
 
 #include <stdio.h>
 #include <math.h>

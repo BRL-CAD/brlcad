@@ -1,35 +1,50 @@
-/*
-*			R E A D - R T L O G . C
-*
-*  This is a program will read an RT log file.  It is meant to be
-*  used by any other program that needs to read an RT log file to
-*  extract the model size, orientation, eye position, azimuth, and 
-*  elevation from the log file.
-*  
-*
-*  Authors -
-*	Susanne L. Muuss, J.D.
-*	
-*
-*  Source -
-*	SECAD/VLD Computing Consortium, Bldg. 394
-*	The U. S. Army Ballistic Reasearch Laboratory
-*	Aberdeen Proving Ground, Maryland  21005
-*
-*/
+/*                    R E A D - R T L O G . C
+ * BRL-CAD
+ *
+ * Copyright (c) 1991-2004 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this file; see the file named COPYING for more
+ * information.
+ */
+/** @file read-rtlog.c
+ *
+ *  This is a program will read an RT log file.  It is meant to be
+ *  used by any other program that needs to read an RT log file to
+ *  extract the model size, orientation, eye position, azimuth, and 
+ *  elevation from the log file.
+ *
+ *  Authors -
+ *	Susanne L. Muuss, J.D.
+ *
+ *  Source -
+ *	SECAD/VLD Computing Consortium, Bldg. 394
+ *	The U. S. Army Ballistic Reasearch Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005
+ *
+ */
 #ifndef lint
 static const char RCSreadfile[] = "@(#)$Header$";
 #endif
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 #include <math.h>
 #include "machine.h"

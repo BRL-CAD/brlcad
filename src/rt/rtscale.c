@@ -1,53 +1,69 @@
-/*                    R T S C A L E 
-*
-*  This is a program will compute and plot an appropriate scale in the lower
-*  left corner of a given image.  The scale is layed out in view
-*  space coordinates and then translated into model coordinates, where it is
-*  plotted.  This plot can be overlayed onto any other UNIX-Plot file of onto
-*  a pix file.
-*  
-*  The scale will be a simple line with a certain number of tick marks along
-*  it.  It will always end with a "nice" number: that is, rounded to the 
-*  nearest 10 as appropriate.
-*
-*  The program consists of three parts:
-*	1) take view, orientation, eye_position, and size from the rt log 
-*          file, and use this information to build up the view2model matrix;
-*	2) lay out the scale in view-coordinates and convert all points to
-*	   model coordinates for plotting in model coordinates;
-*			and
-*	3) concatenate the scales and a copy of the original image into a
-*	   a composite that it printed on standard out.  For the moment this
-*	   is achieved by saying " cat scale.pl file.pl >> out.file ".  
-*	   The order of the files is very important: if not cat'ed in the
-*	   right order, the scales will be lost when plrot is applied though
-*	   they will still be seen with pl-sgi and mged. Later
-*	   this will be handled by scale.c as an fread() and fwrite().
-*
-*
-*  Authors -
-*	Susanne L. Muuss, J.D.
-*	
-*
-*  Source -
-*	SECAD/VLD Computing Consortium, Bldg. 394
-*	The U. S. Army Ballistic Research Laboratory
-*	Aberdeen Proving Ground, Maryland  21005
-*
-*/
+/*                       R T S C A L E . C
+ * BRL-CAD
+ *
+ * Copyright (c) 1991-2004 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this file; see the file named COPYING for more
+ * information.
+ */
+/** @file rtscale.c
+ *
+ *
+ *  This is a program will compute and plot an appropriate scale in the lower
+ *  left corner of a given image.  The scale is layed out in view
+ *  space coordinates and then translated into model coordinates, where it is
+ *  plotted.  This plot can be overlayed onto any other UNIX-Plot file of onto
+ *  a pix file.
+ *  
+ *  The scale will be a simple line with a certain number of tick marks along
+ *  it.  It will always end with a "nice" number: that is, rounded to the 
+ *  nearest 10 as appropriate.
+ *
+ *  The program consists of three parts:
+ *	1) take view, orientation, eye_position, and size from the rt log 
+ *          file, and use this information to build up the view2model matrix;
+ *	2) lay out the scale in view-coordinates and convert all points to
+ *	   model coordinates for plotting in model coordinates;
+ *			and
+ *	3) concatenate the scales and a copy of the original image into a
+ *	   a composite that it printed on standard out.  For the moment this
+ *	   is achieved by saying " cat scale.pl file.pl >> out.file ".  
+ *	   The order of the files is very important: if not cat'ed in the
+ *	   right order, the scales will be lost when plrot is applied though
+ *	   they will still be seen with pl-sgi and mged. Later
+ *	   this will be handled by scale.c as an fread() and fwrite().
+ *
+ *  Authors -
+ *	Susanne L. Muuss, J.D.
+ *
+ *  Source -
+ *	SECAD/VLD Computing Consortium, Bldg. 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005
+ */
 #ifndef lint
 static const char RCSscale[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 #include <math.h>
 #include "machine.h"

@@ -1,54 +1,71 @@
-/*                    R E G I S T E R
-*
-*  This is a program will register a Unix-Plot file with its companion
-*  pix file.  It is assumed that both images were ray-traced at the same
-*  rotation.  A homogeneous transformation matrix is constructed from the
-*  RT log files of the two images.  This matrix will permit the translation
-*  and scaling of the plot file so that it can be readily overlaid onto its
-*  pixel image mate.
-*  
-*  It is expected that the first log file given corresponds to the image
-*  file to be overlaid onto the image that corresponds to the second log
-*  file.  Also for the moment it is expected that the first log will
-*  correspond to a Unix-Plot file, whereas the second will correspond to a
-*  pixel file.  If both images where Unix-Plot files, they can be overlaid
-*  by simply concatentating them: "cat file.pl file.pl >> out.pl"
-*
-*  The program conisists of three parts:
-*	1) take view, orientation, eye_position, and size from two rt log 
-*          files, and use this information to build up the registration matrix;
-*	2) puts out a registration matrix and a new space command to be
-*	   used by plrot in lieu of -a#, -e#, -g to rotate/transform the 
-*	   UNIX_Plot file
-*			and
-*	3) involve pix-fb -o to do the overlaying of the actual files.
-*	4) Note: two pixel files (one lo-res, one hi-res) will be registered
-*	   later in a slightly different way.
-*
-*  Authors -
-*	Susanne L. Muuss, J.D.
-*	
-*
-*  Source -
-*	SECAD/VLD Computing Consortium, Bldg. 394
-*	The U. S. Army Ballistic Reasearch Laboratory
-*	Aberdeen Proving Ground, Maryland  21005
-*
-*/
+/*                       R T R E G I S . C
+ * BRL-CAD
+ *
+ * Copyright (c) 1991-2004 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this file; see the file named COPYING for more
+ * information.
+ */
+/** @file rtregis.c
+ *
+ *  This is a program will register a Unix-Plot file with its companion
+ *  pix file.  It is assumed that both images were ray-traced at the same
+ *  rotation.  A homogeneous transformation matrix is constructed from the
+ *  RT log files of the two images.  This matrix will permit the translation
+ *  and scaling of the plot file so that it can be readily overlaid onto its
+ *  pixel image mate.
+ *  
+ *  It is expected that the first log file given corresponds to the image
+ *  file to be overlaid onto the image that corresponds to the second log
+ *  file.  Also for the moment it is expected that the first log will
+ *  correspond to a Unix-Plot file, whereas the second will correspond to a
+ *  pixel file.  If both images where Unix-Plot files, they can be overlaid
+ *  by simply concatentating them: "cat file.pl file.pl >> out.pl"
+ *
+ *  The program conisists of three parts:
+ *	1) take view, orientation, eye_position, and size from two rt log 
+ *          files, and use this information to build up the registration matrix;
+ *	2) puts out a registration matrix and a new space command to be
+ *	   used by plrot in lieu of -a#, -e#, -g to rotate/transform the 
+ *	   UNIX_Plot file
+ *			and
+ *	3) involve pix-fb -o to do the overlaying of the actual files.
+ *	4) Note: two pixel files (one lo-res, one hi-res) will be registered
+ *	   later in a slightly different way.
+ *
+ *  Authors -
+ *	Susanne L. Muuss, J.D.
+ *
+ *  Source -
+ *	SECAD/VLD Computing Consortium, Bldg. 394
+ *	The U. S. Army Ballistic Reasearch Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005
+ *
+ */
 #ifndef lint
 static const char RCSregis[] = "@(#)$Header$";
 #endif
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 
 #include <math.h>

@@ -1,5 +1,24 @@
-/*
- *			V I E W _ B O T _ F A C E S
+/*                V I E W _ B O T _ F A C E S . C
+ * BRL-CAD
+ *
+ * Copyright (c) 2003-2004 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this file; see the file named COPYING for more
+ * information.
+ */
+/** @file view_bot_faces.c
  *
  *  Ray Tracing program view module to find visible bot faces
  *
@@ -9,9 +28,6 @@
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5068
- *  
- *
-
  */
 #ifndef lint
 static const char RCSray_bot_faces[] = "@(#)$Header$ (BRL)";
@@ -19,20 +35,18 @@ static const char RCSray_bot_faces[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #include <math.h>
 
 #ifdef HAVE_UNIX_IO
-# include <sys/types.h>
-# include <sys/stat.h>
+#  include <sys/types.h>
+#  include <sys/stat.h>
 #endif
 
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 
 #include "machine.h"
