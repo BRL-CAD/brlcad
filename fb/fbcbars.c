@@ -1,5 +1,5 @@
 /*
- *  			C B A R S - F B . C
+ *  			F B C B A R S . C
  *  
  *  Program to make vertical color scales arranged horizontally on screen.
  *  The wonderful thing about standards is that there are so many to
@@ -135,7 +135,7 @@ static RGBpixel botpart[5] = {
 };
 
 static char usage[] = "\
-Usage: cbars-fb [-fs] [-h] [-F framebuffer]\n\
+Usage: fbcbars [-fs] [-h] [-F framebuffer]\n\
 	[-S squarescrsize] [-W scr_width] [-N scr_height]\n\
 	-f	FCC/EBU bars\n\
 	-s	SMPTE bars\n";
@@ -181,7 +181,7 @@ register char **argv;
 	}
 
 	if ( argc > ++optind )
-		(void)fprintf( stderr, "cbars-fb: excess argument(s) ignored\n" );
+		(void)fprintf( stderr, "fbcbars: excess argument(s) ignored\n" );
 
 	return(1);		/* OK */
 }

@@ -41,7 +41,7 @@ int start_seq_number;
 		number_of_images,number_of_frames);
 
 	
-	SYSTEM("cbars-fb");	/* Start out with color bars */
+	SYSTEM("fbcbars");	/* Start out with color bars */
 
 	/* Make initial scene title matte recording */
 	SYSTEM("vas4 new");
