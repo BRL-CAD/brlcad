@@ -1950,7 +1950,7 @@ struct faceuse		*fu1, *fu2;
 #endif
 
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)
-		rt_log("nmg_isect_two_face2p\n");
+		rt_log("nmg_isect_two_face2p(fu1=x%x, fu2=x%x) START\n", fu1, fu2);
 
 	/* For every edge in f1, intersect with f2, incl. cutjoin */
 f1_again:
@@ -1976,6 +1976,12 @@ nmg_region_v_unique( fu2->s_p->r_p, &is->tol );
 			NMG_CK_EDGEUSE(eu);
 			if(eu->up.lu_p != lu)  goto f1_again;
 		}
+	}
+
+	/* Zap 2d cache, we are switching faces now */
+	if(is->vert2d)  {
+		rt_free( (char *)is->vert2d, "vert2d" );
+		is->vert2d = NULL;
 	}
 
 	/* For every edge in f2, intersect with f1, incl. cutjoin */
@@ -2004,7 +2010,10 @@ nmg_fu_touchingloops(fu1);
 nmg_fu_touchingloops(fu2);
 nmg_region_v_unique( fu1->s_p->r_p, &is->tol );
 nmg_region_v_unique( fu2->s_p->r_p, &is->tol );
+	if (rt_g.NMG_debug & DEBUG_POLYSECT)
+		rt_log("nmg_isect_two_face2p(fu1=x%x, fu2=x%x) END\n", fu1, fu2);
 }
+
 
 /*
  *			N M G _ I S E C T _ T W O _ F A C E 3 P
