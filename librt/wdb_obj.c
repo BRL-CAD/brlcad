@@ -164,6 +164,7 @@ HIDDEN int db5_scan();
 int wdb_init_obj();
 int wdb_get_tcl();
 int wdb_attr_tcl();
+int wdb_attr_rm_tcl();
 int wdb_pathsum_cmd();
 
 static int wdb_open_tcl();
@@ -246,6 +247,7 @@ static struct directory ** wdb_dir_getspace();
 static struct bu_cmdtab wdb_cmds[] = {
 	{"adjust",	wdb_adjust_tcl},
 	{"attr",	wdb_attr_tcl},
+	{"attr_rm",	wdb_attr_rm_tcl},
 	{"c",		wdb_comb_std_tcl},
 	{"cat",		wdb_cat_tcl},
 	{"close",	wdb_close_tcl},
@@ -6479,6 +6481,62 @@ wdb_unhide_tcl(ClientData	clientData,
 	return wdb_unhide_cmd(wdbp, interp, argc-1, argv+1);
 }
 
+int wdb_attr_rm_cmd(struct rt_wdb	*wdbp,
+	     Tcl_Interp		*interp,
+	     int		argc,
+	     char 		**argv)
+{
+	int			i;
+	struct directory	*dp;
+	struct bu_attribute_value_set avs;
+	struct bu_attribute_value_pair	*avpp;
+
+	/* this is only valid for v5 databases */
+	if( wdbp->dbip->dbi_version < 5 ) {
+		Tcl_AppendResult(interp, "Attributes are only available in database version 5 and later\n", (char *)NULL );
+		return TCL_ERROR;
+	}
+
+	if (argc < 2 ) {
+		Tcl_AppendResult(interp,
+				 "wrong # args: should be \"", argv[0],
+				 " objName [attribute] [[attribute] [attribute]...]\"", (char *)NULL);
+		return TCL_ERROR;
+	}
+	/* Verify that this wdb supports lookup operations
+	   (non-null dbip) */
+	if (wdbp->dbip == 0) {
+		Tcl_AppendResult(interp,
+				 "db does not support lookup operations",
+				 (char *)NULL);
+		return TCL_ERROR;
+	}
+
+	if( (dp=db_lookup( wdbp->dbip, argv[1], LOOKUP_NOISY)) == DIR_NULL )
+		return TCL_ERROR;
+
+	
+	if( db5_get_attributes( wdbp->dbip, &avs, dp ) ) {
+		Tcl_AppendResult(interp,
+				 "Cannot get attributes for object ", dp->d_namep, "\n", (char *)NULL );
+		return TCL_ERROR;
+	}
+
+	i = 2;
+	while( i < argc ) {
+		(void)bu_avs_remove( &avs, argv[i] );
+		i++;
+	}
+	if( db5_replace_attributes( dp, &avs, wdbp->dbip ) ) {
+		Tcl_AppendResult(interp, "Error: failed to update attributes\n", (char *)NULL );
+		bu_avs_free( &avs );
+		return TCL_ERROR;
+	}
+
+	/* avs is freed by db5_update_attributes() */
+	return TCL_OK;
+}
+
 int
 wdb_attr_cmd(struct rt_wdb	*wdbp,
 	     Tcl_Interp		*interp,
@@ -6575,6 +6633,17 @@ wdb_attr_tcl(ClientData	clientData,
 	struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
 	return wdb_attr_cmd(wdbp, interp, argc-1, argv+1);
+}
+
+int
+wdb_attr_rm_tcl(ClientData	clientData,
+	     Tcl_Interp     *interp,
+	     int		argc,
+	     char	      **argv)
+{
+	struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
+
+	return wdb_attr_rm_cmd(wdbp, interp, argc-1, argv+1);
 }
 
 int
