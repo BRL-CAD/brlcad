@@ -66,8 +66,8 @@ proc init_Raytrace { id } {
 
     toplevel $top -screen $player_screen($id)
 
-    frame $top.gridF -relief groove -bd 2
-    frame $top.gridF2
+    frame $top.gridF1 -relief groove -bd 2
+    frame $top.gridF2 -relief groove -bd 2
     frame $top.gridF3
     frame $top.framebufferF -relief sunken -bd 2
     frame $top.filenameF -relief sunken -bd 2
@@ -82,23 +82,36 @@ proc init_Raytrace { id } {
 	set file_state normal
     }
 
-    entry $top.framebufferE -relief flat -width 12 -textvar rt_fb($id)\
-	    -state $fb_state
     radiobutton $top.framebufferRB -text "Frame Buffer" -anchor w\
 	    -value framebuffer -variable rt_fb_or_file($id)\
 	    -command "rt_set_fb_state $id"
+    entry $top.framebufferE -relief flat -width 12 -textvar rt_fb($id)\
+	    -state $fb_state
+    menubutton $top.framebufferMB -relief raised -bd 2\
+	    -menu $top.framebufferMB.m
+    menu $top.framebufferMB.m -tearoff 0
+    $top.framebufferMB.m add command -label "Upper Left"\
+	    -command "set_rt_fb $id ul"
+    $top.framebufferMB.m add command -label "Upper Right"\
+	    -command "set_rt_fb $id ur"
+    $top.framebufferMB.m add command -label "Lower Left"\
+	    -command "set_rt_fb $id ll"
+    $top.framebufferMB.m add command -label "Lower Right"\
+	    -command "set_rt_fb $id lr"
 
-    entry $top.filenameE -relief flat -width 12 -textvar rt_file($id)\
-	    -state $file_state
     radiobutton $top.filenameRB -text "File Name" -anchor w\
 	    -value filename -variable rt_fb_or_file($id)\
 	    -command "rt_set_file_state $id"
+    entry $top.filenameE -relief flat -width 12 -textvar rt_file($id)\
+	    -state $file_state
 
     label $top.sizeL -text "Size" -anchor w
     entry $top.sizeE -relief flat -width 12 -textvar rt_size($id)
     menubutton $top.sizeMB -relief raised -bd 2\
 	    -menu $top.sizeMB.sizeM -indicatoron 1
     menu $top.sizeMB.sizeM -tearoff 0
+    $top.sizeMB.sizeM add command -label "winsize"\
+	    -command "rt_set_fb_size $id"
     $top.sizeMB.sizeM add command -label 128\
 	    -command "set rt_size($id) 128"
     $top.sizeMB.sizeM add command -label 256\
@@ -148,30 +161,31 @@ proc init_Raytrace { id } {
 
     grid $top.framebufferE -sticky "ew" -in $top.framebufferF
     grid $top.framebufferF $top.framebufferRB -sticky "ew"\
-	    -in $top.gridF -padx 8 -pady 8
+	    -in $top.gridF1 -padx 8 -pady 8
     grid $top.filenameE -sticky "ew" -in $top.filenameF
     grid $top.filenameF $top.filenameRB -sticky "ew"\
-	    -in $top.gridF -padx 8 -pady 8
+	    -in $top.gridF1 -padx 8 -pady 8
     grid columnconfigure $top.framebufferF 0 -weight 1
     grid columnconfigure $top.filenameF 0 -weight 1
-    grid columnconfigure $top.gridF 0 -weight 1
+    grid columnconfigure $top.gridF1 0 -weight 1
 
     grid $top.sizeE $top.sizeMB -sticky "ew" -in $top.sizeF
-    grid $top.sizeF $top.sizeL -sticky "ew" -in $top.gridF2 -pady 4
+    grid $top.sizeF $top.sizeL -sticky "ew" -in $top.gridF2 -padx 8 -pady 8
     grid $top.colorE $top.colorMB -sticky "ew" -in $top.colorF
-    grid $top.colorF $top.colorL -sticky "ew" -in $top.gridF2 -pady 4
+    grid $top.colorF $top.colorL -sticky "ew" -in $top.gridF2 -padx 8 -pady 8
+    grid $top.advancedB - -in $top.gridF2 -padx 8 -pady 8
 
     grid columnconfigure $top.sizeF 0 -weight 1
     grid columnconfigure $top.colorF 0 -weight 1
     grid columnconfigure $top.gridF2 0 -weight 1
 
-    grid $top.advancedB -sticky "nsew" -in $top.gridF3
-    grid configure $top.advancedB -columnspan 5
+#    grid $top.advancedB -sticky "nsew" -in $top.gridF3
+#    grid configure $top.advancedB -columnspan 5
     grid $top.raytraceB x $top.clearB x $top.dismissB -sticky "nsew" -in $top.gridF3
     grid columnconfigure $top.gridF3 1 -weight 1 -minsize 8
     grid columnconfigure $top.gridF3 3 -weight 1 -minsize 8
 
-    pack $top.gridF $top.gridF2 $top.gridF3 -side top -expand 1 -fill both\
+    pack $top.gridF1 $top.gridF2 $top.gridF3 -side top -expand 1 -fill both\
 	    -padx 8 -pady 8
 
     bind $top.colorE <Return> "rt_set_colorMB $id"
@@ -274,7 +288,6 @@ proc do_Raytrace { id } {
 	append rt_cmd " -l$rt_lmodel($id)"
     }
 
-
     catch {eval $rt_cmd}
 }
 
@@ -301,9 +314,9 @@ proc do_fbclear { id } {
     }
 
     if {$rt_fb($id) != ""} {
-	set result [catch { exec fbclear -F $rt_fb($id) $red $green $blue } rt_error]
+	set result [catch { exec fbclear -F $rt_fb($id) $red $green $blue & } rt_error]
     } else {
-	set result [catch { exec fbclear $red $green $blue } rt_error]
+	set result [catch { exec fbclear $red $green $blue & } rt_error]
     }
 
     if {$result != 0} {
@@ -374,12 +387,22 @@ proc rt_set_colorMB { id } {
     $top.colorMB configure -bg [format "#%02x%02x%02x" $red $green $blue]
 }
 
+proc rt_set_fb_size { id } {
+    global mged_active_dm
+    global rt_size
+
+    winset $mged_active_dm($id)
+    set rt_size($id) [dm size]
+}
+
 proc do_Advanced_Settings { id } {
     global player_screen
     global rt_hsample
     global rt_jitter
     global rt_lmodel
     global rt_nproc
+    global rt_rect_loc
+    global rt_rect_size
 
     set top .$id.do_rtAS
     if [winfo exists $top] {
@@ -389,12 +412,22 @@ proc do_Advanced_Settings { id } {
 
     toplevel $top -screen $player_screen($id)
 
-    frame $top.gridF
+    frame $top.gridF1 -relief groove -bd 2
     frame $top.gridF2
-    frame $top.nprocF -relief sunken -bd 2
-    frame $top.hsampleF -relief sunken -bd 2
-    frame $top.jitterF -relief sunken -bd 2
-    frame $top.lmodelF -relief sunken -bd 2
+#    frame $top.gridF3
+
+    frame $top.nprocF
+    frame $top.nprocFF -relief sunken -bd 2
+    frame $top.hsampleF
+    frame $top.hsampleFF -relief sunken -bd 2
+    frame $top.jitterF
+    frame $top.jitterFF -relief sunken -bd 2
+    frame $top.lmodelF
+    frame $top.lmodelFF -relief sunken -bd 2
+#    frame $top.rect_locF
+#    frame $top.rect_locF -relief sunken -bd 2
+#    frame $top.rect_sizeF
+#    frame $top.rect_sizeF -relief sunken -bd 2
 
     label $top.nprocL -text "# of Processors" -anchor w
     entry $top.nprocE -relief flat -width 4 -textvar rt_nproc($id)
@@ -434,31 +467,85 @@ proc do_Advanced_Settings { id } {
     $top.lmodelMB.lmodelM add command -label 5\
 	    -command "set rt_lmodel($id) 5"
 
+#    radiobutton $top.rectRB -text "Rectangle" -anchor w\
+#	    -value 1 -variable 
+
+#    label $top.rect_locL -text "Location" -anchor w
+#    entry $top.rect_locE -relief flat -textvar rt_rect_loc($id)
+
+#    label $top.rect_sizeL -text "Size" -anchor w
+#    entry $top.rect_sizeE -relief flat -textvar rt_rect_size($id
+
     button $top.dismissB -relief raised -text "Dismiss" \
 	    -command "catch { destroy $top }"
 
-    grid $top.nprocE -sticky "ew" -in $top.nprocF
-    grid $top.hsampleE -sticky "ew" -in $top.hsampleF
-    grid $top.jitterE $top.jitterMB -sticky "ew" -in $top.jitterF
-    grid $top.lmodelE $top.lmodelMB -sticky "ew" -in $top.lmodelF
+    grid $top.nprocL -sticky "ew" -in $top.nprocF
+    grid $top.nprocE -sticky "ew" -in $top.nprocFF
+    grid $top.nprocFF -sticky "ew" -in $top.nprocF
 
-    grid $top.nprocF $top.nprocL -sticky "ew" -in $top.gridF -pady 4
-    grid $top.hsampleF $top.hsampleL -sticky "ew" -in $top.gridF -pady 4
-    grid $top.jitterF $top.jitterL -sticky "ew" -in $top.gridF -pady 4
-    grid $top.lmodelF $top.lmodelL -sticky "ew" -in $top.gridF -pady 4
+    grid $top.hsampleL -sticky "ew" -in $top.hsampleF
+    grid $top.hsampleE -sticky "ew" -in $top.hsampleFF
+    grid $top.hsampleFF -sticky "ew" -in $top.hsampleF
+
+    grid $top.jitterL -sticky "ew" -in $top.jitterF
+    grid $top.jitterE $top.jitterMB -sticky "ew" -in $top.jitterFF
+    grid $top.jitterFF -sticky "ew" -in $top.jitterF
+
+    grid $top.lmodelL -sticky "ew" -in $top.lmodelF
+    grid $top.lmodelE $top.lmodelMB -sticky "ew" -in $top.lmodelFF
+    grid $top.lmodelFF -sticky "ew" -in $top.lmodelF
+
+    grid $top.nprocF x $top.hsampleF -sticky "ew" -in $top.gridF1 -padx 8 -pady 8
+    grid $top.jitterF x $top.lmodelF -sticky "ew" -in $top.gridF1 -padx 8 -pady 8
+
     grid $top.dismissB -in $top.gridF2
 
-    grid columnconfigure $top.nprocF 0 -weight 1
-    grid columnconfigure $top.hsampleF 0 -weight 1
-    grid columnconfigure $top.jitterF 0 -weight 1
-    grid columnconfigure $top.lmodelF 0 -weight 1
-    grid columnconfigure $top.gridF 0 -weight 1
+    grid $top.gridF1 -sticky "ew" -padx 8 -pady 8
+    grid $top.gridF2 -sticky "ew" -padx 8 -pady 8
 
-    pack $top.gridF $top.gridF2 -side top -expand 1 -fill both -padx 8 -pady 4
+    grid columnconfigure $top.nprocF 0 -weight 1
+    grid columnconfigure $top.nprocFF 0 -weight 1
+    grid columnconfigure $top.hsampleF 0 -weight 1
+    grid columnconfigure $top.hsampleFF 0 -weight 1
+    grid columnconfigure $top.jitterF 0 -weight 1
+    grid columnconfigure $top.jitterFF 0 -weight 1
+    grid columnconfigure $top.lmodelF 0 -weight 1
+    grid columnconfigure $top.lmodelFF 0 -weight 1
+    grid columnconfigure $top.gridF1 0 -weight 1
+    grid columnconfigure $top.gridF1 2 -weight 1
+    grid columnconfigure $top.gridF2 0 -weight 1
+    grid columnconfigure $top 0 -weight 1
 
     set pxy [winfo pointerxy $top]
     set x [lindex $pxy 0]
     set y [lindex $pxy 1]
     wm geometry $top +$x+$y
     wm title $top "Advanced Settings..."
+}
+
+proc set_rt_fb { id loc } {
+    global mged_top
+    global mged_active_dm
+    global rt_fb
+    global fb
+    global mged_fb
+    global listen
+    global mged_listen
+    
+    switch $loc {
+	ul {
+	    winset $mged_top.ul
+	    set rt_fb($id)
+	}
+    }
+
+    if {$mged_fb($id)} {
+	.$id.m.settings.m.cm_fb entryconfigure 6 -state normal
+	set mged_listen($id) $listen
+    } else {
+	.$id.m.settings.m.cm_fb entryconfigure 6 -state disabled
+	set mged_listen($id) $listen
+    }
+
+    winset $mged_active_dm($id)
 }
