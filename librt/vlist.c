@@ -33,6 +33,30 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 /************************************************************************
  *									*
+ *			Generic RT_LIST routines			*
+ *									*
+ ************************************************************************/
+
+/*
+ *			R T _ L I S T _ L E N
+ *
+ *  Returns the number of elements on an rt_list brand linked list.
+ */
+int
+rt_list_len( hd )
+register CONST struct rt_list	*hd;
+{
+	register int			count = 0;
+	register CONST struct rt_list	*ep;
+
+	for( RT_LIST_FOR( ep, rt_list, hd ) )  {
+		count++;
+	}
+	return count;
+}	
+
+/************************************************************************
+ *									*
  *			Generic VLBLOCK routines			*
  *									*
  ************************************************************************/
@@ -114,6 +138,36 @@ int	r, g, b;
 	 *  For now, just default to yellow.
 	 */
 	return( &(vbp->head[0]) );
+}
+
+/************************************************************************
+ *									*
+ *			Generic RT_VLIST routines			*
+ *									*
+ ************************************************************************/
+
+/*
+ *			R T _ V L I S T _ C O P Y
+ *
+ *  Duplicate the contents of a vlist.  Note that the copy may be more
+ *  densely packed than the source.
+ */
+void
+rt_vlist_copy( dest, src )
+struct rt_list	*dest;
+CONST struct rt_list	*src;
+{
+	struct rt_vlist	*vp;
+
+	for( RT_LIST_FOR( vp, rt_vlist, src ) )  {
+		register int	i;
+		register int	nused = vp->nused;
+		register int	*cmd = vp->cmd;
+		register point_t *pt = vp->pt;
+		for( i = 0; i < nused; i++,cmd++,pt++ )  {
+			RT_ADD_VLIST( dest, *pt, *cmd );
+		}
+	}
 }
 
 /*
