@@ -35,6 +35,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "./debug.h"
 
+/* Number of bytes used for each value of DB5HDR_WIDTHCODE_* */
 const int db5_enc_len[4] = {
 	1,
 	2,
@@ -899,6 +900,53 @@ rt_db_cvt_to_external5(
 }
 
 /*
+ *			D B _ W R A P _ V 5 _ E X T E R N A L
+ *
+ *  Modify name of external object, if necessary.
+ */
+int
+db_wrap_v5_external( struct bu_external *ep, const char *name )
+{
+	struct db5_raw_internal	raw;
+	struct bu_external	tmp;
+
+	BU_CK_EXTERNAL(ep);
+
+	/* Crack the external form into parts */
+	if( db5_get_raw_internal_ptr( &raw, (unsigned char *)ep->ext_buf ) == NULL )  {
+		bu_log("db_put_external5(%s) failure in db5_get_raw_internal_ptr()\n",
+			name);
+		return -1;
+	}
+	BU_ASSERT_LONG( raw.h_dli, ==, DB5HDR_HFLAGS_DLI_APPLICATION_DATA_OBJECT );
+
+	/* See if name needs to be changed */
+	if( raw.name.ext_buf == NULL || strcmp( name, raw.name.ext_buf ) != 0 )  {
+		/* Name needs to be changed.  Create new external form.
+		 * Make temporary copy so input isn't smashed
+		 * as new external object is constructed.
+		 */
+		tmp = *ep;		/* struct copy */
+		BU_INIT_EXTERNAL(ep);
+
+		db5_export_object3( ep,
+			DB5HDR_HFLAGS_DLI_APPLICATION_DATA_OBJECT,
+			name,
+			&raw.attributes,
+			&raw.body,
+			raw.major_type, raw.minor_type,
+			raw.a_zzz, raw.b_zzz );
+		/* 'raw' is invalid now, 'ep' has new external form. */
+		bu_free_external( &tmp );
+		return 0;
+	}
+
+	/* No changes needed, input object is properly named */
+	return 0;
+}
+
+
+/*
  *
  *			D B _ P U T _ E X T E R N A L 5
  *
@@ -924,12 +972,10 @@ rt_db_cvt_to_external5(
 int
 db_put_external5(struct bu_external *ep, struct directory *dp, struct db_i *dbip)
 {
-	struct db5_raw_internal	raw;
-	struct bu_external	tmp;
-
 	RT_CK_DBI(dbip);
 	RT_CK_DIR(dp);
 	BU_CK_EXTERNAL(ep);
+
 	if(rt_g.debug&DEBUG_DB) bu_log("db_put_external5(%s) ep=x%x, dbip=x%x, dp=x%x\n",
 		dp->d_namep, ep, dbip, dp );
 
@@ -942,30 +988,10 @@ db_put_external5(struct bu_external *ep, struct directory *dp, struct db_i *dbip
 	BU_ASSERT_LONG( dbip->dbi_version, ==, 5 );
 
 	/* First, change the name. */
-
-	/* Crack the external form into parts */
-	if( db5_get_raw_internal_ptr( &raw, (unsigned char *)ep->ext_buf ) == NULL )  {
-		bu_log("db_put_external5(%s) failure in db5_get_raw_internal_ptr()\n",
+	if( db_wrap_v5_external( ep, dp->d_namep ) < 0 )  {
+		bu_log("db_put_external5(%s) failure in db_wrap_v5_external()\n",
 			dp->d_namep);
 		return -1;
-	}
-	BU_ASSERT_LONG( raw.h_dli, ==, DB5HDR_HFLAGS_DLI_APPLICATION_DATA_OBJECT );
-
-	/* See if name needs to be changed */
-	if( raw.name.ext_buf == NULL || strcmp( dp->d_namep, raw.name.ext_buf ) != 0 )  {
-		/* Name needs to be changed.  Create new external form. */
-		tmp = *ep;		/* struct copy */
-		BU_INIT_EXTERNAL(ep);
-
-		db5_export_object3( ep,
-			DB5HDR_HFLAGS_DLI_APPLICATION_DATA_OBJECT,
-			dp->d_namep,
-			&raw.attributes,
-			&raw.body,
-			raw.major_type, raw.minor_type,
-			raw.a_zzz, raw.b_zzz );
-		bu_free_external( &tmp );
-		/* 'raw' is invalid now, 'ep' has new external form. */
 	}
 
 	/* Second, obtain storage for final object */
@@ -1065,6 +1091,8 @@ fail:
  *  Returns -
  *	0	OK
  *	<0	error
+ *
+ *  NOTE:  Users of this should be using wdb_export() instead!
  */
 int
 rt_fwrite_internal5( fp, name, ip, conv2mm )
