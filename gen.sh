@@ -715,7 +715,7 @@ Geometric Modeling and rendering package
 EOF
 
 	cat > desc << EOF
-The BRLCAD package is a suite of tools for gemetric modeling, analysis
+The BRL-CAD package is a suite of tools for gemetric modeling, analysis
 and rendering.  It consists of tons of code, including embeddable libraries.
 The GUI is in Tcl/Tk.
 EOF
@@ -734,12 +734,12 @@ EndOfFile
 	#
 	#  Create the packing list
 	#
+	#  The "png" package includes both libpng and libz
+	#
 	#########################################
 
 cat > contents << EOF
 @name brlcad-$RELEASE
-@pkgdep tcl-8.0.4
-@pkgdep tk-8.0.4
 @pkgdep png-1.0.3
 @cwd /usr
 @cwd /usr
