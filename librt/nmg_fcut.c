@@ -126,7 +126,8 @@ struct nmg_ray_state {
 	struct faceuse		*fu1;
 	struct faceuse		*fu2;
 	vect_t			left;		/* points left of ray, on face */
-	int			state;
+	int			state;		/* current (old) state */
+	int			last_action;	/* last action taken */
 	vect_t			ang_x_dir;	/* x axis for angle measure */
 	vect_t			ang_y_dir;	/* y axis for angle measure */
 	CONST struct rt_tol	*tol;
@@ -1718,14 +1719,16 @@ rt_log("nmg_join_2singvu_loops( x%x, x%x )\n", vu1, vu2 );
 
 #define NMG_ACTION_ERROR		0
 #define NMG_ACTION_NONE			1
-#define NMG_ACTION_VFY_EXT		2
-#define NMG_ACTION_VFY_MULTI		3
-#define NMG_ACTION_LONE_V_ESPLIT	4
-#define NMG_ACTION_LONE_V_JAUNT		5
-#define NMG_ACTION_CUTJOIN		6
+#define NMG_ACTION_NONE_OPTIM		2
+#define NMG_ACTION_VFY_EXT		3
+#define NMG_ACTION_VFY_MULTI		4
+#define NMG_ACTION_LONE_V_ESPLIT	5
+#define NMG_ACTION_LONE_V_JAUNT		6
+#define NMG_ACTION_CUTJOIN		7
 static char *action_names[] = {
 	"*ERROR*",
 	"-none-",
+	"none(optim)",
 	"VFY_EXT",
 	"VFY_MULTI",
 	"ESPLIT",
@@ -1842,6 +1845,19 @@ static CONST struct state_transitions nmg_state_is_in[17] = {
 
 /*
  *			N M G _ F A C E _ S T A T E _ T R A N S I T I O N
+ *
+ *  Given current (old) state, assess the current vertexuse, and
+ *  pull the appropriate action and new state from the tables.
+ *  Then perform the indicated action.
+ *
+ *  The real work happens in the nmg_assess_vu() and in the tables.
+ *
+ *  Explicit Returns -
+ *	Nothing useful yet.
+ *
+ *  Implicit Returns -
+ *	Modifications to the NMG shell being operated on.
+ *	Updated state etc. in nmg_ray_state structure.
  */
 int
 nmg_face_state_transition( rs, pos, multi, other_rs_state )
@@ -1901,6 +1917,7 @@ int			other_rs_state;
 	}
 	action = stp->action;
 	new_state = stp->new_state;
+	rs->last_action = action;
 #if 1
 	/*
 	 *  Major optimization here.
@@ -1912,7 +1929,7 @@ int			other_rs_state;
 	 */
 /* XXX This is a bit too agressive.  r5 */
 	if( other_rs_state == NMG_STATE_OUT && action != NMG_ACTION_ERROR )  {
-		action = NMG_ACTION_NONE;
+		action = NMG_ACTION_NONE_OPTIM;
 	}
 #endif
 
@@ -1986,6 +2003,7 @@ rt_log("force next eu to ray\n");
 	    	rt_bomb(rt_vls_addr(&str));
 	    }
 	case NMG_ACTION_NONE:
+	case NMG_ACTION_NONE_OPTIM:
 		if( *(vu->up.magic_p) == NMG_LOOPUSE_MAGIC )  {
 			lu = vu->up.lu_p;
 			/* Drop this loop of a single vertex in sanitize() */
