@@ -920,7 +920,7 @@ struct rt_anim_color {
 };
 
 struct animate {
-	/* XXX magic */
+	int	magic;				/* magic number */
 	struct animate	*an_forw;		/* forward link */
 	struct db_full_path an_path;		/* (sub)-path pattern */
 	short		an_type;		/* AN_MATRIX, AN_COLOR... */
@@ -936,6 +936,8 @@ struct animate {
 #define RT_AN_SOLID	4			/* Solid parameter anim */
 
 #define ANIM_NULL	((struct animate *)0)
+#define ANIMATE_MAGIC	0x414e4963		/* 1095649635 */
+#define RT_CK_ANIMATE(_p)	RT_CKMAG((_p), ANIMATE_MAGIC, "animate")
 
 /*
  *			R E S O U R C E
