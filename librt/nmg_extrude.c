@@ -195,6 +195,8 @@ struct rt_tol	*tol;
 	struct edgeuse	*eu;
 	struct loopuse	*lu;
 	struct vertex	*v;
+	struct faceuse	*fu_tmp;
+	plane_t pl;
 
 	cur = 0;
 	cnt = verts_in_nmg_face(fu);
@@ -228,7 +230,15 @@ struct rt_tol	*tol;
 			rt_bomb("translate_nmg_face: bad loopuse\n");
 	}
 
-	nmg_fu_planeeqn(fu, tol);
+	fu_tmp = fu;
+	if( fu_tmp->orientation != OT_SAME )
+		fu_tmp = fu_tmp->fumate_p;
+
+	if(nmg_loop_plane_area( RT_LIST_FIRST( loopuse , &fu_tmp->lu_hd ) , pl ) < 0.0 )
+	{
+		rt_bomb( "translate_nmg_face: Cannot calculate plane equation for face\n" );
+	}
+	nmg_face_g( fu_tmp , pl );
 	rt_free((char *)verts, "verts");
 }
 
