@@ -24,7 +24,7 @@
 #include "../Cakefile.prog"
 
 #define COMPLETE_LIBES	\
-	LIB_PRE''LIBRT RT_LIBES LIBMALLOC MGED_LIBES LIBES
+	LIB_PRE''LIBRT LIBRT_LIBES LIBMALLOC MGED_LIBES LIBES
 
 mged:	OBJ LIBRT
 	sh ../newvers.sh version "Graphics Editor (MGED)"
