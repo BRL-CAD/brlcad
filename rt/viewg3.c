@@ -127,6 +127,10 @@ char *file, *obj;
 
 /*
  *			V I E W _ 2 I N I T
+ *
+ *  View_2init is called by do_frame, which in turn is called by
+ *  main() in rt.c.  It writes the view-specific COVART header.
+ * 
  */
 void
 view_2init( ap )
@@ -143,7 +147,9 @@ struct application	*ap;
 	 * NOTE that GIFT provides several other numbers that are not used
 	 * by COVART;  this should be investigated.
 	 * NOTE that grid_spacing is assumed to be square (by COVART),
-	 * and that (for now), the units are MM.
+	 * and that the units have been converted from MM to IN.
+	 * COVART, given the appropriate code, will take, IN, M, 
+	 * FT, MM, and CM.  However, GIFT  output is expected to be IN.
 	 * NOTE that variables "azimuth and elevation" are not valid
 	 * when the -M flag is used.
 	 */
@@ -158,6 +164,8 @@ struct application	*ap;
  *			R A Y M I S S
  *
  *  Null function -- handle a miss
+ *  This function is called by rt_shootray(), which is called by
+ *  do_frame().
  */
 int
 raymiss()
