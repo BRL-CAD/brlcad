@@ -70,7 +70,6 @@ vas_open()
 	ioctl(vas_fd,TIOCEXCL,&vtty);	/* exclusive use */
 #endif
 #ifdef SYSV
-	ioctl( vas_fd, TCGETA, &vtty );
 	vtty.c_cflag = BAUD | CS8;      /* Character size = 8 bits */
 	vtty.c_cflag &= ~CSTOPB;         /* One stop bit */
 	vtty.c_cflag |= CREAD;           /* Enable the reader */
@@ -80,17 +79,15 @@ vas_open()
  
 	vtty.c_iflag &= ~(BRKINT|ICRNL|INLCR|IXON|IXANY|IXOFF);
 	vtty.c_iflag |= IGNBRK|IGNPAR;
-	vtty.c_iflag |= ISTRIP;
  
-	/*vtty.c_oflag &= ~(OPOST|ONLCR|OCRNL);    /* Turn off all post-processin!
-	vtty.c_oflag = 0;
+	vtty.c_oflag &= ~(OPOST|ONLCR|OCRNL);    /* Turn off all post-processin!
+	vtty.c_oflag |= TAB3;		/* output tab expansion ON */
 	vtty.c_cc[VMIN] = 1;
 	vtty.c_cc[VTIME] = 0;
 
 	vtty.c_lflag &= ~ICANON;         /* Raw mode */
 	vtty.c_lflag &= ~ISIG;           /* Signals OFF */
 	vtty.c_lflag &= ~(ECHO|ECHOE|ECHOK);     /* Echo mode OFF */
-	vtty.c_lflag = NOFLSH;              /* no processing */
 
 	if( ioctl(vas_fd, TCSETA, &vtty) < 0 ) { 
 		perror(VAS_PORT);
