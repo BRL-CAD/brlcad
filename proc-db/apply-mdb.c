@@ -25,7 +25,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include "machine.h"
 #include "db.h"
-#include "./mat_db.h"
+#include "../lgt/mat_db.h"
 
 union record rec;
 
@@ -48,7 +48,7 @@ char **argv;
 	    fread( (char *)&rec, sizeof(rec), 1, stdin ) == 1  &&
 	    !feof(stdin)
 	)  {
-		if( rec.u_id != ID_COMB || rec.c.c_flags != 'R' )  {
+		if( rec.u_id != ID_COMB || rec.c.c_flags != DBV4_NON_REGION )  {
 			fwrite( (char *)&rec, sizeof(rec), 1, stdout );
 			continue;
 		}
