@@ -869,8 +869,6 @@ char	**argv;
 	{
 		VSET(center_model, -toViewcenter[MDX],
 		    -toViewcenter[MDY], -toViewcenter[MDZ]);
-		printf("OK, at first center=(%g, %g, %g)\n",
-		    center_model[X], center_model[Y], center_model[Z]);
 		if (adcflag)
 		{
 		    (void) printf("Firing through angle/distance cursor...\n");
@@ -927,8 +925,6 @@ char	**argv;
 			}
 			VJOIN1(center_model, center_model, t_in, direction);
 		    }
-		    printf("OK, after backing up center=(%g, %g, %g)\n",
-			center_model[X], center_model[Y], center_model[Z]);
 
 		    VMOVEN(unit_H, model2view, 3);
 		    VMOVEN(unit_V, model2view + 4, 3);
@@ -936,8 +932,6 @@ char	**argv;
 			center_model, curs_x * Viewscale / 2047.0, unit_H);
 		    VJOIN1(center_model,
 			center_model, curs_y * Viewscale / 2047.0, unit_V);
-		    printf("OK, after shifting for ADC center=(%g, %g, %g)\n",
-			center_model[X], center_model[Y], center_model[Z]);
 		}
 		else
 		    (void) printf("Firing from view center...\n");
