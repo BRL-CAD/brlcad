@@ -5,11 +5,13 @@ a specified point.
 .SH SYNOPSIS
 .B anim_lookat 
 .B [\-f #]
+.B \[-v] 
 .B < in.table 
 .B > out.script
 .PP
 .B anim_lookat 
-.B \-[y|q] 
+.B \-[y|q]
+.B \[-v] 
 .B < in.table 
 .B > out.table
 
@@ -39,6 +41,12 @@ The
 option specifies that the output should be an eight-column animation table
 consisting of a time column, three position columns, and four columns 
 representing the x,y,z, and w coordinates of an orientation quaternion.
+.PP
+The
+.B \-v
+option specifies that the viewsize, calculated from the distance between the
+eye-point and look-at point, should be included in the output script, or as
+the second column of the output table.
 .SH AUTHOR
 Carl J. Nuzman
 .SH COPYRIGHT
