@@ -282,17 +282,20 @@ void initializeInfo(p, inter, name, depth)
     
     for (i = 0; i <= p->maxDepth; i++) {
       printf("Material for depth %d: [%s] ", i, DEFAULT_MAT);
-      gets(p->matArray[i].name);
+      fgets(p->matArray[i].name, 20, stdin);
+      if (strlen(p->matArray[i].name) > 0) p->matArray[i].name[strlen(p->matArray[i].name)-1] = 0;
       if (strcmp(p->matArray[i].name, "") == 0) {
 	strcpy(p->matArray[i].name, DEFAULT_MAT);
       }
       printf("Mat. params for depth %d: [%s] ", i, DEFAULT_MATPARAM);
-      gets(p->matArray[i].params);
+      fgets(p->matArray[i].params, 50, stdin);
+      if (strlen(p->matArray[i].params) > 0) p->matArray[i].params[strlen(p->matArray[i].params)-1] = 0;
       if (strcmp(p->matArray[i].params, "") == 0) {
 	strcpy(p->matArray[i].params, DEFAULT_MATPARAM);
       }
       printf("Mat. color for depth %d: [%s] ", i, DEFAULT_MATCOLOR);
-      gets(matName);
+      fgets(matName, 20, stdin);
+      if (strlen(matName) > 0) matName[strlen(matName)-1] = 0;
       if (strcmp(matName, "") == 0) {
 	sscanf(DEFAULT_MATCOLOR, "%d %d %d", &r, &g, &b);
 	p->matArray[i].color[0] = (char)r;

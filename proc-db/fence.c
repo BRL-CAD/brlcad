@@ -1936,7 +1936,8 @@ int main(argc, argv)
   if (interactive) {
     if (fenceFence) {
       if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "\nFence Name: [%s] ", fenceName);
-      gets(verboseinput);
+      fgets(verboseinput, DEFAULT_MAXNAMELENGTH, stdin);
+      if (strlen(verboseinput)>0) verboseinput[strlen(verboseinput)-1] = 0;
       if (debug) {
 	fprintf(DEFAULT_DEBUG_OUTPUT,"main:entered [%s] for fence name\n", verboseinput);
       }
@@ -1946,7 +1947,8 @@ int main(argc, argv)
       memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
 
       if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Start Position(x,y,z): [%f %f %f] ", fenceStartPosition[0], fenceStartPosition[1], fenceStartPosition[2]);
-      gets(verboseinput);
+      fgets(verboseinput, DEFAULT_MAXNAMELENGTH * 3, stdin);
+      if (strlen(verboseinput)>0) verboseinput[strlen(verboseinput)-1] = 0;
       if (debug) {
 	fprintf(DEFAULT_DEBUG_OUTPUT,"main:entered [%s] for start position\n", verboseinput);
       }
@@ -1956,7 +1958,8 @@ int main(argc, argv)
       memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
 
       if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "End Position(x,y,z): [%f %f %f] ", fenceEndPosition[0], fenceEndPosition[1], fenceEndPosition[2]);
-      gets(verboseinput);
+      fgets(verboseinput, DEFAULT_MAXNAMELENGTH*3, stdin);
+      if (strlen(verboseinput)>0) verboseinput[strlen(verboseinput)-1] = 0;
       if (debug) {
 	fprintf(DEFAULT_DEBUG_OUTPUT,"main:entered [%s] for end position\n", verboseinput);
       }
@@ -1966,7 +1969,8 @@ int main(argc, argv)
       memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
 
       if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Fence Height(i,j,k): [%f %f %f] ", fenceHeight[0], fenceHeight[1], fenceHeight[2]);
-      gets(verboseinput);
+      fgets(verboseinput, DEFAULT_MAXNAMELENGTH*3, stdin);
+      if (strlen(verboseinput)>0) verboseinput[strlen(verboseinput)-1] = 0;
       if (debug) {
 	fprintf(DEFAULT_DEBUG_OUTPUT,"main:entered [%s] for fence height\n", verboseinput);
       }
@@ -1987,7 +1991,8 @@ int main(argc, argv)
       }
 
       if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Fence Material: [%s] ", fenceMaterial);
-      gets(verboseinput);
+      fgets(verboseinput, DEFAULT_MAXNAMELENGTH*3, stdin);
+      if (strlen(verboseinput)>0) verboseinput[strlen(verboseinput)-1] = 0;
       if (debug) {
 	fprintf(DEFAULT_DEBUG_OUTPUT,"main:entered [%s] for fence material\n", verboseinput);
       }
@@ -1997,7 +2002,8 @@ int main(argc, argv)
       memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
 
       if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Fence Material Parameters: [%s] ", fenceMaterialParams);
-      gets(verboseinput);
+      fgets(verboseinput, DEFAULT_MAXNAMELENGTH*3, stdin);
+      if (strlen(verboseinput)>0) verboseinput[strlen(verboseinput)-1] = 0;
       if (debug) {
 	fprintf(DEFAULT_DEBUG_OUTPUT,"main:entered [%s] for fence material params\n", verboseinput);
       }
@@ -2007,7 +2013,8 @@ int main(argc, argv)
       memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
 
       if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Fence Material Color: [%d %d %d] ", fenceMaterialColor[0], fenceMaterialColor[1], fenceMaterialColor[2]);
-      gets(verboseinput);
+      fgets(verboseinput, DEFAULT_MAXNAMELENGTH*3, stdin);
+      if (strlen(verboseinput)>0) verboseinput[strlen(verboseinput)-1] = 0;
       if (debug) {
 	fprintf(DEFAULT_DEBUG_OUTPUT,"main:entered [%s] for fence material color\n", verboseinput);
       }
@@ -2036,7 +2043,8 @@ int main(argc, argv)
 
     if (fencePoles) {
       if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "\nPole Name: [%s] ", poleName);
-      gets(verboseinput);
+      fgets(verboseinput, DEFAULT_MAXNAMELENGTH, stdin);
+      if (strlen(verboseinput)>0) verboseinput[strlen(verboseinput)-1] = 0;
       if (debug) {
 	fprintf(DEFAULT_DEBUG_OUTPUT,"main:entered [%s] for pole name\n", verboseinput);
       }
@@ -2046,7 +2054,8 @@ int main(argc, argv)
       memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
 
       if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Pole Height: [%f] ", poleHeight);
-      gets(verboseinput);
+      fgets(verboseinput, DEFAULT_MAXNAMELENGTH, stdin);
+      if (strlen(verboseinput)>0) verboseinput[strlen(verboseinput)-1] = 0;
       if (debug) {
 	fprintf(DEFAULT_DEBUG_OUTPUT,"main:entered [%s] for pole height\n", verboseinput);
       }
@@ -2056,7 +2065,8 @@ int main(argc, argv)
       memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
 
       if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Pole Radius: [%f] ", poleRadius);
-      gets(verboseinput);
+      fgets(verboseinput, DEFAULT_MAXNAMELENGTH, stdin);
+      if (strlen(verboseinput)>0) verboseinput[strlen(verboseinput)-1] = 0;
       if (debug) {
 	fprintf(DEFAULT_DEBUG_OUTPUT,"main:entered [%s] for pole radius\n", verboseinput);
       }
@@ -2066,7 +2076,8 @@ int main(argc, argv)
       memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
 
       if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Pole Spacing: [%f] ", fencePoleSpacing);
-      gets(verboseinput);
+      fgets(verboseinput, DEFAULT_MAXNAMELENGTH, stdin);
+      if (strlen(verboseinput)>0) verboseinput[strlen(verboseinput)-1] = 0;
       if (debug) {
 	fprintf(DEFAULT_DEBUG_OUTPUT,"main:entered [%s] for pole spacing\n", verboseinput);
       }
@@ -2076,7 +2087,8 @@ int main(argc, argv)
       memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
 
       if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Pole Material: [%s] ", poleMaterial);
-      gets(verboseinput);
+      fgets(verboseinput, DEFAULT_MAXNAMELENGTH*3, stdin);
+      if (strlen(verboseinput)>0) verboseinput[strlen(verboseinput)-1] = 0;
       if (debug) {
 	fprintf(DEFAULT_DEBUG_OUTPUT,"main:entered [%s] for pole material\n", verboseinput);
       }
@@ -2086,7 +2098,8 @@ int main(argc, argv)
       memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
 
       if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Pole Material Parameters: [%s] ", poleMaterialParams);
-      gets(verboseinput);
+      fgets(verboseinput, DEFAULT_MAXNAMELENGTH*3, stdin);
+      if (strlen(verboseinput)>0) verboseinput[strlen(verboseinput)-1] = 0;
       if (debug) {
 	fprintf(DEFAULT_DEBUG_OUTPUT,"main:entered [%s] for pole material params\n", verboseinput);
       }
@@ -2096,7 +2109,8 @@ int main(argc, argv)
       memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
 
       if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Pole Material Color: [%d %d %d] ", poleMaterialColor[0], poleMaterialColor[1], poleMaterialColor[2]);
-      gets(verboseinput);
+      fgets(verboseinput, DEFAULT_MAXNAMELENGTH*3, stdin);
+      if (strlen(verboseinput)>0) verboseinput[strlen(verboseinput)-1] = 0;
       if (debug) {
 	fprintf(DEFAULT_DEBUG_OUTPUT,"main:entered [%s] for pole material color\n", verboseinput);
       }
@@ -2125,7 +2139,8 @@ int main(argc, argv)
 
     if (fenceMesh) {
       if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "\nMesh Name: [%s] ", meshName);
-      gets(verboseinput);
+      fgets(verboseinput, DEFAULT_MAXNAMELENGTH, stdin);
+      if (strlen(verboseinput)>0) verboseinput[strlen(verboseinput)-1] = 0;
       if (debug) {
 	fprintf(DEFAULT_DEBUG_OUTPUT,"main:entered [%s] for mesh name\n", verboseinput);
       }
@@ -2135,7 +2150,8 @@ int main(argc, argv)
       memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
 
       if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Mesh Height: [%f] ", meshHeight);
-      gets(verboseinput);
+      fgets(verboseinput, DEFAULT_MAXNAMELENGTH, stdin);
+      if (strlen(verboseinput)>0) verboseinput[strlen(verboseinput)-1] = 0;
       if (debug) {
 	fprintf(DEFAULT_DEBUG_OUTPUT,"main:entered [%s] for mesh height\n", verboseinput);
       }
@@ -2145,7 +2161,8 @@ int main(argc, argv)
       memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
 
       if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Mesh Width: [%f] ", meshWidth);
-      gets(verboseinput);
+      fgets(verboseinput, DEFAULT_MAXNAMELENGTH, stdin);
+      if (strlen(verboseinput)>0) verboseinput[strlen(verboseinput)-1] = 0;
       if (debug) {
 	fprintf(DEFAULT_DEBUG_OUTPUT,"main:entered [%s] for mesh width\n", verboseinput);
       }
@@ -2155,7 +2172,8 @@ int main(argc, argv)
       memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
 
       if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Mesh Material: [%s] ", meshMaterial);
-      gets(verboseinput);
+      fgets(verboseinput, DEFAULT_MAXNAMELENGTH*3, stdin);
+      if (strlen(verboseinput)>0) verboseinput[strlen(verboseinput)-1] = 0;
       if (debug) {
 	fprintf(DEFAULT_DEBUG_OUTPUT,"main:entered [%s] for mesh material\n", verboseinput);
       }
@@ -2165,7 +2183,8 @@ int main(argc, argv)
       memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
 
       if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Mesh Material Parameters: [%s] ", meshMaterialParams);
-      gets(verboseinput);
+      fgets(verboseinput, DEFAULT_MAXNAMELENGTH*3, stdin);
+      if (strlen(verboseinput)>0) verboseinput[strlen(verboseinput)-1] = 0;
       if (debug) {
 	fprintf(DEFAULT_DEBUG_OUTPUT,"main:entered [%s] for mesh material params\n", verboseinput);
       }
@@ -2175,7 +2194,8 @@ int main(argc, argv)
       memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
 
       if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Mesh Material Color: [%d %d %d] ", meshMaterialColor[0], meshMaterialColor[1], meshMaterialColor[2]);
-      gets(verboseinput);
+      fgets(verboseinput, DEFAULT_MAXNAMELENGTH*3, stdin);
+      if (strlen(verboseinput)>0) verboseinput[strlen(verboseinput)-1] = 0;
       if (debug) {
 	fprintf(DEFAULT_DEBUG_OUTPUT,"main:entered [%s] for mesh material color\n", verboseinput);
       }
@@ -2204,7 +2224,8 @@ int main(argc, argv)
       
     if (fenceWire) {
       if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "\nWire Name: [%s] ", wireName);
-      gets(verboseinput);
+      fgets(verboseinput, DEFAULT_MAXNAMELENGTH, stdin);
+      if (strlen(verboseinput)>0) verboseinput[strlen(verboseinput)-1] = 0;
       if (debug) {
 	fprintf(DEFAULT_DEBUG_OUTPUT,"main:entered [%s] for wire name\n", verboseinput);
       }
@@ -2214,7 +2235,8 @@ int main(argc, argv)
       memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
       
       if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Wire Radius: [%f] ", wireRadius);
-      gets(verboseinput);
+      fgets(verboseinput, DEFAULT_MAXNAMELENGTH, stdin);
+      if (strlen(verboseinput)>0) verboseinput[strlen(verboseinput)-1] = 0;
       if (debug) {
 	fprintf(DEFAULT_DEBUG_OUTPUT,"main:entered [%s] wire radius\n", verboseinput);
       }
@@ -2224,7 +2246,8 @@ int main(argc, argv)
       memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
 	
       if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Wire Angle: [%f] ", wireAngle);
-      gets(verboseinput);
+      fgets(verboseinput, DEFAULT_MAXNAMELENGTH, stdin);
+      if (strlen(verboseinput)>0) verboseinput[strlen(verboseinput)-1] = 0;
       if (debug) {
 	fprintf(DEFAULT_DEBUG_OUTPUT,"main:entered [%s] for wire angle\n", verboseinput);
       }
@@ -2234,7 +2257,8 @@ int main(argc, argv)
       memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
 
       if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Wire Material: [%s] ", wireMaterial);
-      gets(verboseinput);
+      fgets(verboseinput, DEFAULT_MAXNAMELENGTH*3, stdin);
+      if (strlen(verboseinput)>0) verboseinput[strlen(verboseinput)-1] = 0;
       if (debug) {
 	fprintf(DEFAULT_DEBUG_OUTPUT,"main:entered [%s] for wire material\n", verboseinput);
       }
@@ -2244,7 +2268,8 @@ int main(argc, argv)
       memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
 
       if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Wire Material Parameters: [%s] ", wireMaterialParams);
-      gets(verboseinput);
+      fgets(verboseinput, DEFAULT_MAXNAMELENGTH*3, stdin);
+      if (strlen(verboseinput)>0) verboseinput[strlen(verboseinput)-1] = 0;
       if (debug) {
 	fprintf(DEFAULT_DEBUG_OUTPUT,"main:entered [%s] for wire material params\n", verboseinput);
       }
@@ -2254,7 +2279,8 @@ int main(argc, argv)
       memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
 
       if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Wire Material Color: [%d %d %d] ", wireMaterialColor[0], wireMaterialColor[1], wireMaterialColor[2]);
-      gets(verboseinput);
+      fgets(verboseinput, DEFAULT_MAXNAMELENGTH*3, stdin);
+      if (strlen(verboseinput)>0) verboseinput[strlen(verboseinput)-1] = 0;
       if (debug) {
 	fprintf(DEFAULT_DEBUG_OUTPUT,"main:entered [%s] for wire material color\n", verboseinput);
       }
@@ -2280,7 +2306,8 @@ int main(argc, argv)
       memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
       
       if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Wire Segment Length: [%f] ", wireSegmentLength);
-      gets(verboseinput);
+      fgets(verboseinput, DEFAULT_MAXNAMELENGTH, stdin);
+      if (strlen(verboseinput)>0) verboseinput[strlen(verboseinput)-1] = 0;
       if (debug) {
 	fprintf(DEFAULT_DEBUG_OUTPUT,"main:entered [%s] for wire segment length\n", verboseinput);
       }
@@ -2290,7 +2317,8 @@ int main(argc, argv)
       memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
       
       if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Wire Segment Separation: [%f] ", wireSegmentSeparation);
-      gets(verboseinput);
+      fgets(verboseinput, DEFAULT_MAXNAMELENGTH, stdin);
+      if (strlen(verboseinput)>0) verboseinput[strlen(verboseinput)-1] = 0;
       if (debug) {
 	fprintf(DEFAULT_DEBUG_OUTPUT,"main:entered [%s] for wire segment separation\n", verboseinput);
       }
@@ -2300,7 +2328,8 @@ int main(argc, argv)
       memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
       
       if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Segment Name: [%s] ", segmentName);
-      gets(verboseinput);
+      fgets(verboseinput, DEFAULT_MAXNAMELENGTH, stdin);
+      if (strlen(verboseinput)>0) verboseinput[strlen(verboseinput)-1] = 0;
       if (debug) {
 	fprintf(DEFAULT_DEBUG_OUTPUT,"main:entered [%s] for segment name\n", verboseinput);
       }
