@@ -103,6 +103,7 @@ CONST mat_t		mat;
 		id = rt_id_solid( &ext );
 	}
 
+	/* ip is already initialized and should not be re-initialized */
 	if( rt_functab[id].ft_import( ip, &ext, mat, dbip ) < 0 )  {
 		bu_log("rt_db_get_internal(%s):  import failure\n",
 			dp->d_namep );
