@@ -24,7 +24,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <ctype.h>
 #include <signal.h>
 #include <errno.h>
-#if __STDC__
+#if __STDC__ && !apollo
 # include <stdarg.h>
 #else
 # include <varargs.h>
