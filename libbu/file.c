@@ -48,13 +48,14 @@ static char RCSrtstring[] = "@(#)$Header$ (BRL)";
  *
  *		XXX			XXX
  */
+char	dmy_eos = '\0';
 BU_FILE	bu_iob[1] = {
     {
 	BU_FILE_MAGIC, stdin, "stdin",
 	{
 	    BU_VLS_MAGIC, (char *) 0, 0, 0, 0
 	},
-	(char *) 0, 0, '#', -1
+	&dmy_eos, 0, '#', -1
     }
 };
 
@@ -128,6 +129,8 @@ register BU_FILE	*bfp;
     char	*cp;
     char	result;
 
+    BU_CK_FILE(bfp);
+
     /*
      *    If it's time to grab a line of input from the file, do so.
      */
@@ -170,9 +173,8 @@ register BU_FILE	*bfp;
     bu_log("File     '%s'...\n", bfp -> file_name);
     bu_log("  ptr      %x\n", bfp -> file_ptr);
     bu_log("  buf      '%s'\n", bu_vls_addr(&(bfp -> file_buf)));
-    bu_log("  bp       %d: '%c' (%o)\n",
-	bfp -> file_bp - bu_vls_addr(&(bfp -> file_buf)),
-	*(bfp -> file_bp), *(bfp -> file_bp));
+    bu_log("  bp       %d", bfp -> file_bp - bu_vls_addr(&(bfp -> file_buf)));
+    bu_log(": '%c' (%o)\n", *(bfp -> file_bp), *(bfp -> file_bp));
     bu_log("  linenm   %d\n", bfp -> file_linenm);
     bu_log("  comment  %c\n", bfp -> file_comment);
     bu_log("  buflen   %d\n", bfp -> file_buflen);
