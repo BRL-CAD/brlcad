@@ -75,6 +75,9 @@ struct db5_ondisk_header {
  *
  ************************************************************************/
 
+/* Name of global attribute-only object for storing database title & units */
+#define DB5_GLOBAL_OBJECT_NAME			"_GLOBAL"
+
 /* Kinds of compression */
 #define DB5_ZZZ_UNCOMPRESSED			0
 #define DB5_ZZZ_GNU_GZIP			1
