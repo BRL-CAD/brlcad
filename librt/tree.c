@@ -96,6 +96,12 @@ CONST struct db_full_path	*pathp;
  *  solids in this region have been visited.
  *
  *  This routine must be prepared to run in parallel.
+ *  As a result, note that the details of the solids pointed to
+ *  by the soltab pointers in the tree may not be filled in
+ *  when this routine is called (due to the way multiple instances of
+ *  solids are handled).
+ *  Therefore, everything which referred to the tree has been moved
+ *  out into the serial section.  (rt_tree_region_assign, rt_bound_tree)
  */
 HIDDEN union tree *rt_gettree_region_end( tsp, pathp, curtree )
 register CONST struct db_tree_state	*tsp;
@@ -104,7 +110,6 @@ union tree			*curtree;
 {
 	struct region		*rp;
 	struct directory	*dp;
-	point_t			region_min, region_max;
 
 	if( curtree->tr_op == OP_NOP )  {
 		/* Ignore empty regions */
@@ -126,15 +131,7 @@ union tree			*curtree;
 		rt_log("rt_gettree_region_end() %s\n", rp->reg_name );
 		rt_pr_tree( curtree, 0 );
 	}
-
-	/*
-	 *  Add a region and it's boolean tree to all the appropriate places.
-	 *  The	region and treetop are cross-linked, and the region is added
-	 *  to the linked list of regions.
-	 *  Positions in the region bit vector are established at this time.
-	 */
-	/* Cross-ref: Mark all solids & nodes as belonging to this region */
-	rt_tree_region_assign( curtree, rp );
+	
 	rp->reg_treetop = curtree;
 
 	/* Determine material properties */
@@ -143,28 +140,14 @@ union tree			*curtree;
 	if( rp->reg_mater.ma_override == 0 )
 		rt_region_color_map(rp);
 
-	/*
-	 *  Find region RPP, and update the model maxima and minima
-	 *
-	 *  Don't update min & max for halfspaces;  instead, add them
-	 *  to the list of infinite solids, for special handling.
-	 */
-	if( rt_bound_tree( curtree, region_min, region_max ) < 0 )  {
-		rt_log("rt_gettree_region_end() %s\n", rp->reg_name );
-		rt_bomb("rt_gettree_region_end(): rt_bound_tree() fail\n");
-	}
-
 	RES_ACQUIRE( &rt_g.res_results );	/* enter critical section */
-	if( region_max[X] >= INFINITY )  {
-		/* skip infinite region */
-	} else {
-		VMINMAX( rt_tree_rtip->mdl_min, rt_tree_rtip->mdl_max, region_min );
-		VMINMAX( rt_tree_rtip->mdl_min, rt_tree_rtip->mdl_max, region_max );
-	}
 
 	rp->reg_instnum = dp->d_uses++;
 
-	/* Add to linked list */
+	/*
+	 *  Add the region to the linked list of regions.
+	 *  Positions in the region bit vector are established at this time.
+	 */
 	rp->reg_forw = rt_tree_rtip->HeadRegion;
 	rt_tree_rtip->HeadRegion = rp;
 
@@ -380,11 +363,18 @@ int				id;
 	/*
 	 *  Check to see if this exact solid has already been processed.
 	 *  Match on leaf name and matrix.
+	 *  Note that there is a race here between having st_id filled
+	 *  in a few lines below (which is necessary for calling ft_prep),
+	 *  and ft_prep filling in st_aradius.  Fortunately, st_aradius
+	 *  starts out as zero, and will never go down to -1 unless this
+	 *  soltab structure has become a dead solid, so by testing against
+	 *  -1 (instead of <= 0, like before, oops), it isn't a problem.
 	 */
 	stp = rt_find_identical_solid( mat, dp, rt_tree_rtip );
 	if( stp->st_id != 0 )  {
-		if( stp->st_aradius <= 0 )
+		if( stp->st_aradius <= -1 )  {
 			return( TREE_NULL );	/* BAD: instance of dead solid */
+		}
 		goto found_it;
 	}
 
@@ -497,8 +487,10 @@ CONST char	**argv;
 int		ncpus;
 {
 	register struct soltab	*stp;
+	register struct region	*regp;
 	int			prev_sol_count;
 	int			i;
+	point_t			region_min, region_max;
 
 	RT_CHECK_RTI(rtip);
 
@@ -538,6 +530,33 @@ again:
 		if(rt_g.debug&DEBUG_SOLIDS)
 			rt_pr_soltab( stp );
 	} RT_VISIT_ALL_SOLTABS_END
+
+	/* Handle finishing touches on the trees that needed soltab structs
+	 * that the parallel code couldn't look at yet.
+	 */
+	for( regp=rtip->HeadRegion; regp != REGION_NULL; regp=regp->reg_forw )  {
+		RT_CK_REGION(regp);
+
+		/* The region and the entire tree are cross-referenced */
+		rt_tree_region_assign( regp->reg_treetop, regp );
+
+		/*
+		 *  Find region RPP, and update the model maxima and minima
+		 *
+		 *  Don't update min & max for halfspaces;  instead, add them
+		 *  to the list of infinite solids, for special handling.
+		 */
+		if( rt_bound_tree( regp->reg_treetop, region_min, region_max ) < 0 )  {
+			rt_log("rt_gettree_region_end() %s\n", regp->reg_name );
+			rt_bomb("rt_gettree_region_end(): rt_bound_tree() fail\n");
+		}
+		if( region_max[X] >= INFINITY )  {
+			/* skip infinite region */
+		} else {
+			VMINMAX( rtip->mdl_min, rtip->mdl_max, region_min );
+			VMINMAX( rtip->mdl_min, rtip->mdl_max, region_max );
+		}
+	}
 
 	if( i < 0 )  return(-1);
 
