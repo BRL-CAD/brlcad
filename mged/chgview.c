@@ -907,7 +907,7 @@ int	verbose;
 	if( rt_functab[id].ft_describe( outstrp, &intern,
 	    verbose, base2local ) < 0 )
 	  Tcl_AppendResult(interp, dp->d_namep, ": describe error\n", (char *)NULL);
-	rt_functab[id].ft_ifree( &intern );
+	rt_db_free_internal( &intern );
 }
 
 static void
@@ -921,7 +921,6 @@ int recurse;
   register struct directory *dp;
   register int arg;
   struct bu_vls str;
-  int id;
   char *listeval="listeval";
   struct rt_db_internal intern;
 
@@ -950,7 +949,7 @@ int recurse;
 
       dp = DB_FULL_PATH_CUR_DIR( &path );
 
-      if ((id = rt_db_get_internal(&intern, dp, dbip, ts.ts_mat)) < 0) {
+      if (rt_db_get_internal(&intern, dp, dbip, ts.ts_mat) < 0) {
 	Tcl_AppendResult(interp, "rt_db_get_internal(", dp->d_namep,
 			 ") failure\n", (char *)NULL );
 	continue;
@@ -960,10 +959,9 @@ int recurse;
 
       bu_vls_printf( &str, "%s:  ", argv[arg] );
 
-      if (rt_functab[id].ft_describe(&str, &intern, 99, base2local) < 0)
+      if (intern.idb_meth->ft_describe(&str, &intern, 99, base2local) < 0)
 	Tcl_AppendResult(interp, dp->d_namep, ": describe error\n", (char *)NULL);
-
-      rt_functab[id].ft_ifree( &intern );
+    	rt_db_free_internal( &intern );
     } else {
       if ((dp = db_lookup(dbip, argv[arg], LOOKUP_NOISY)) == DIR_NULL)
 	continue;
