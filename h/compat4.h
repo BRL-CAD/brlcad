@@ -328,28 +328,16 @@ extern "C" {
  * semaphore.c
  *
  * Backwards compatability for existing Release 4.4 LIBRT applications.
+ *  No #define compatability, edit source with "h/sed4" script for
+ *  automatic upgrade.
  *
  * RES_ACQUIRE( &rt_g.res_syscall )   becomes  bu_semaphore_acquire( BU_SEM_SYSCALL )
  * RES_RELEASE( &rt_g.res_syscall )   becomes  bu_semaphore_release( BU_SEM_SYSCALL )
  * 
- * res_syscall is 0		RT_SEM_SYSCALL == BU_SEM_SYSCALL
- * res_worker  is 1		RT_SEM_WORKER
- * res_stats   is 2		RT_SEM_STATS
- * res_results is 3		RT_SEM_RESULTS
- * res_model   is 4		RT_SEM_MODEL
  */
 #undef RES_INIT		/* machine.h may have defined these */
 #undef RES_ACQUIRE
 #undef RES_RELEASE
-#define RES_INIT(p) 	bu_semaphore_init(5)
-#define RES_ACQUIRE(p)	bu_semaphore_acquire( (p) - (&rt_g.res_syscall) )
-#define RES_RELEASE(p)	bu_semaphore_release( (p) - (&rt_g.res_syscall) )
-
-#define RT_SEM_SYSCALL	BU_SEM_SYSCALL		/* res_syscall */
-#define RT_SEM_WORKER	1			/* res_worker */
-#define RT_SEM_STATS	2			/* res_stats */
-#define RT_SEM_RESULTS	3			/* res_results */
-#define RT_SEM_MODEL	4			/* res_model */
 
 /* vls.c */
 #define rt_vls			bu_vls		/* struct rt_vls */
