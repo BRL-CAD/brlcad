@@ -412,7 +412,7 @@ void
 pr_prompt()
 {
 	if( interactive )
-		rt_log("\r%S", &mged_prompt);
+		rt_log("%S", &mged_prompt);
 }
 
 void
