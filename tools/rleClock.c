@@ -531,6 +531,7 @@ int arg1, arg2;
  * Argument line parser.  This version is table driven and requires exact match
  * on the argument switches.
  */
+#undef BOOL
 
 struct {
     bool show;
