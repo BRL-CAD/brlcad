@@ -33,8 +33,6 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #include <math.h>
 
@@ -135,10 +133,6 @@ struct bu_structparse view_parse[] = {
 	{"",	0, (char *)0,	0,				FUNC_NULL }
 };
 
-/********* spectral parameters from libmultispectral *************/
-extern const struct bn_table		*spectrum;	
-extern struct bn_tabdata		*background;		/* radiant emittance of bg */
-/********* spectral parameters from libmultispectral *************/
 
 /*
  *  Ensure that a_spectrum points to a valid spectral curve.
