@@ -469,7 +469,7 @@ int		howfar;
 	}
 	if( first_tlp->tl_op != OP_UNION )  {
 		first_tlp->tl_op = OP_UNION;	/* Fix it */
-		if( rt_g.debug & DEBUG_REGIONS )  {
+		if( rt_g.debug & DEBUG_TREEWALK )  {
 			rt_log("db_mkbool_tree() WARNING: non-union (%c) first operation ignored\n",
 				first_tlp->tl_op );
 		}
@@ -766,8 +766,10 @@ region_end:
 					sofar, *region_start_statepp );
 				goto fail;
 			}
-		    	rt_log("WARNING: db_recurse(): solid '%s' not contained in a region\n",
-		    		sofar );
+			if( rt_g.debug & DEBUG_REGIONS )  {
+			    	rt_log("WARNING: db_recurse(): solid '%s' not contained in a region\n",
+			    		sofar );
+			}
 
 			GETSTRUCT( ctsp, combined_tree_state );
 			ctsp->cts_s = *tsp;	/* struct copy */
