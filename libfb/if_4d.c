@@ -410,7 +410,8 @@ FBIO	*ifp;
 success:
 	ifp->if_mem = sp;
 	ifp->if_cmap = sp + pixsize;	/* cmap at end of area */
-	i = ifp->if_cmap->cmb[255];	/* try to deref last word */
+	i = CMB(ifp)[255];		/* try to deref last word */
+	CMB(ifp)[255] = i;
 
 	/* Provide non-black colormap on creation of new shared mem */
 	if(new)
@@ -848,39 +849,11 @@ int	width, height;
 			return(-1);
 		}
 	}
-	ifp->if_mode = mode;
-
-#ifdef IF_4D_AUTO_POSTSCRIPT
-	/*
-	 *  Now that the mode has been determined,
-	 *  ensure that the graphics system is running.
-	 *  XXX Note that ps_open_PostScript is not in the
-	 *  XXX shared libgl, so this can't be done in an
-	 *  XXX SGI processor-independent way.  Sigh.
-	 */
-	if( !(g_status = ps_open_PostScript()) )  {
-		char * grcond = "/etc/gl/grcond";
-		char * newshome = "/usr/brlcad/etc";		/* XXX */
-
-		f = fork();
-		if( f < 0 )  {
-			perror("fork");
-			return(-1);		/* error */
-		}
-		if( f == 0 )  {
-			/* Child */
-			chdir( newshome );
-			execl( grcond, (char *) 0 );
-			perror( grcond );
-			_exit(1);
-			/* NOTREACHED */
-		}
-		/* Parent */
-		while( !(g_status = ps_open_PostScript()) )  {
-			sleep(1);
-		}
-	}
+#if defined(__sgi) && defined(__mips)
+	/* XXX On Irix 4.0, something goes wrong with shared memory.  Hack */
+	mode |= MODE_1MALLOC;
 #endif
+	ifp->if_mode = mode;
 
 	/*
 	 *  Allocate extension memory section,
