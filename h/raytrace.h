@@ -2832,6 +2832,20 @@ BU_EXTERN(void			rt_dspline_n, (double *r, CONST mat_t m,
 					CONST double *knots, CONST int n,
 					CONST int depth, CONST double alpha));
 
+/* From nurb_bezier.c */
+BU_EXTERN( int rt_nurb_bezier, (struct bu_list *bezier_hd,
+		CONST struct face_g_snurb *orig_surf, struct resource *res));
+BU_EXTERN(int rt_bez_check, (CONST struct face_g_snurb * srf));
+BU_EXTERN(int nurb_crv_is_bezier, (CONST struct edge_g_cnurb *crv));
+BU_EXTERN(void nurb_c_to_bezier, (struct bu_list *clist, struct edge_g_cnurb *crv));
+
+
+/* From nurb_copy.c */
+BU_EXTERN(struct face_g_snurb *rt_nurb_scopy, (CONST struct face_g_snurb * srf,
+		struct resource *res));
+BU_EXTERN(struct edge_g_cnurb *rt_nurb_crv_copy, (CONST struct edge_g_cnurb * crv));
+
+
 #endif
 
 /*

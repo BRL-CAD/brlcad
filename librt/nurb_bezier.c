@@ -26,8 +26,6 @@
 #include "raytrace.h"
 #include "nurb.h"
 
-RT_EXTERN( struct edge_g_cnurb *rt_nurb_crv_copy, (struct edge_g_cnurb *crv ) );
-
 /*
  *			R T _ N U R B _ B E Z I E R
  *
