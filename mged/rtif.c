@@ -54,36 +54,33 @@ extern int event_check();
 extern int mged_svbase();
 void		setup_rt();
 
-/* nirt stuff */
-extern struct bu_vls nirt_even_color;
-extern struct bu_vls nirt_odd_color;
-extern struct bu_vls nirt_void_color;
-extern struct bu_vls nirt_basename;
+/* query ray stuff */
+extern struct bu_vls query_ray_basename;
 
-struct nirt_fmt {
+struct query_ray_fmt {
     struct bu_vls tclName;
     struct bu_vls fmt;
 };
-extern struct nirt_fmt *nirt_fmts;
+extern struct query_ray_fmt *query_ray_fmts;
 
-struct nirt_fmt_data {
+struct query_ray_fmt_data {
   char type;
   char *fmt;
 };
-extern struct nirt_fmt_data def_nirt_fmt_data[];
+extern struct query_ray_fmt_data def_query_ray_fmt_data[];
 
-#define NIRT_TEXT 't'
-#define NIRT_GRAPHICS 'g'
-#define NIRT_BOTH 'b'
-#define DO_NIRT_TEXT (mged_variables->nirt_behavior == NIRT_TEXT ||\
-		      mged_variables->nirt_behavior == NIRT_BOTH)
-#define DO_NIRT_GRAPHICS (mged_variables->nirt_behavior == NIRT_GRAPHICS ||\
-			  mged_variables->nirt_behavior == NIRT_BOTH)
-#define DO_NIRT_BOTH (mged_variables->nirt_behavior == NIRT_BOTH)
-#define NIRT_FORMAT_P_CMD "fmt p \"%e %e %e %e\\n\" x_in y_in z_in los"
-#define NIRT_FORMAT_NULL_CMD "fmt r \"\"; fmt h \"\"; fmt m \"\"; fmt o \"\"; fmt f \"\""
+#define QUERY_RAY_TEXT 't'
+#define QUERY_RAY_GRAPHICS 'g'
+#define QUERY_RAY_BOTH 'b'
+#define DO_QUERY_RAY_TEXT (mged_variables->query_ray_behavior == QUERY_RAY_TEXT ||\
+		      mged_variables->query_ray_behavior == QUERY_RAY_BOTH)
+#define DO_QUERY_RAY_GRAPHICS (mged_variables->query_ray_behavior == QUERY_RAY_GRAPHICS ||\
+			  mged_variables->query_ray_behavior == QUERY_RAY_BOTH)
+#define DO_QUERY_RAY_BOTH (mged_variables->query_ray_behavior == QUERY_RAY_BOTH)
+#define QUERY_RAY_FORMAT_P_CMD "fmt p \"%e %e %e %e\\n\" x_in y_in z_in los"
+#define QUERY_RAY_FORMAT_NULL_CMD "fmt r \"\"; fmt h \"\"; fmt m \"\"; fmt o \"\"; fmt f \"\""
 
-struct nirt_dataList {
+struct query_ray_dataList {
   struct bu_list l;
   fastf_t x_in;
   fastf_t y_in;
@@ -91,10 +88,10 @@ struct nirt_dataList {
   fastf_t los;
 };
 
-struct nirt_dataList HeadNirtData;
-void nirt_data_to_vlist();
+struct query_ray_dataList HeadQuery_RayData;
+void query_ray_data_to_vlist();
 
-/* End nirt format stuff */
+/* End query_ray format stuff */
 
 static int	tree_walk_needed;
 
@@ -1291,7 +1288,7 @@ char	**argv;
 /*
  *			F _ N I R T
  *
- *  Invoke NIRT with the current view & stuff
+ *  Invoke nirt with the current view & stuff
  */
 int
 f_nirt(clientData, interp, argc, argv)
@@ -1319,14 +1316,14 @@ char	**argv;
 	struct bu_vls vls;
 	struct bu_vls g_vls;
 	struct rt_vlblock *vbp;
-	struct nirt_dataList *ndlp;
+	struct query_ray_dataList *ndlp;
 
 	if(dbip == DBI_NULL)
 	  return TCL_OK;
 
 	if(argc < 1 || MAXARGS < argc){
 	  bu_vls_init(&vls);
-	  bu_vls_printf(&vls, "help nirt");
+	  bu_vls_printf(&vls, "help %s", argv[0]);
 	  Tcl_Eval(interp, bu_vls_addr(&vls));
 	  bu_vls_free(&vls);
 
@@ -1364,7 +1361,7 @@ char	**argv;
 	}
 
 	i = 0;
-	if(DO_NIRT_GRAPHICS){
+	if(DO_QUERY_RAY_GRAPHICS){
 	  vect_t cml;
 
 	  VSCALE(cml, center_model, base2local);
@@ -1372,11 +1369,11 @@ char	**argv;
 	  VSCALE(dir, dir, -1.0);
 
 	  *vp++ = "-e";
-	  *vp++ = NIRT_FORMAT_NULL_CMD;
+	  *vp++ = QUERY_RAY_FORMAT_NULL_CMD;
 	  *vp++ = "-e";
-	  *vp++ = NIRT_FORMAT_P_CMD;
+	  *vp++ = QUERY_RAY_FORMAT_P_CMD;
 
-	  if(DO_NIRT_TEXT){
+	  if(DO_QUERY_RAY_TEXT){
 	    char *cp;
 	    int count;
 
@@ -1387,7 +1384,7 @@ char	**argv;
 			  dir[X], dir[Y], dir[Z]);
 
 	    /* get 'r' format now; prepend its' format string with a newline */
-	    val = Tcl_GetVar(interp, bu_vls_addr(&nirt_fmts[0].tclName), TCL_GLOBAL_ONLY);
+	    val = Tcl_GetVar(interp, bu_vls_addr(&query_ray_fmts[0].tclName), TCL_GLOBAL_ONLY);
 
 	    /* find first '"' */
 	    while(*val != '"' && *val != '\0')
@@ -1423,14 +1420,14 @@ done:
 	  }
 	}
 
-	if(DO_NIRT_TEXT){
+	if(DO_QUERY_RAY_TEXT){
 	  /* read Tcl format variables and load into vp here */
-	  for(; def_nirt_fmt_data[i].fmt != (char *)NULL; ++i){
+	  for(; def_query_ray_fmt_data[i].fmt != (char *)NULL; ++i){
 	    *vp++ = "-e";
-	    val = Tcl_GetVar(interp, bu_vls_addr(&nirt_fmts[i].tclName), TCL_GLOBAL_ONLY);
-	    bu_vls_trunc(&nirt_fmts[i].fmt, 0);
-	    bu_vls_printf(&nirt_fmts[i].fmt, "fmt %c %s", def_nirt_fmt_data[i].type, val);
-	    *vp++ = bu_vls_addr(&nirt_fmts[i].fmt);
+	    val = Tcl_GetVar(interp, bu_vls_addr(&query_ray_fmts[i].tclName), TCL_GLOBAL_ONLY);
+	    bu_vls_trunc(&query_ray_fmts[i].fmt, 0);
+	    bu_vls_printf(&query_ray_fmts[i].fmt, "fmt %c %s", def_query_ray_fmt_data[i].type, val);
+	    *vp++ = bu_vls_addr(&query_ray_fmts[i].fmt);
 	  }
 	}
 
@@ -1443,7 +1440,7 @@ done:
 		*vp++ = argv[i];
 	*vp++ = dbip->dbi_filename;
 
-	setup_rt( vp, mged_variables->echo_nirt_cmd );
+	setup_rt( vp, mged_variables->echo_query_ray_cmd );
 
 	if(use_input_orig){
 	  bu_vls_init(&vls);
@@ -1486,7 +1483,7 @@ done:
 		exit(16);
 	}
 
-	/* use fp_in to feed view info to nirt */
+	/* use fp_in to feed view info to query_ray */
 	(void)close( pipe_in[0] );
 	fp_in = fdopen( pipe_in[1], "w" );
 
@@ -1502,11 +1499,11 @@ done:
 	rt_write(fp_in, center_model );
 	(void)fclose( fp_in );
 
-	if(DO_NIRT_GRAPHICS){
-	  if(DO_NIRT_TEXT)
-	    bu_vls_free(&g_vls); /* used to form part of nirt command above */
+	if(DO_QUERY_RAY_GRAPHICS){
+	  if(DO_QUERY_RAY_TEXT)
+	    bu_vls_free(&g_vls); /* used to form part of query_ray command above */
 
-	  BU_LIST_INIT(&HeadNirtData.l);
+	  BU_LIST_INIT(&HeadQuery_RayData.l);
 
 	  while(fgets(line, MAXLINE, fp_out) != (char *)NULL){
 	    if(line[0] == '\n'){
@@ -1514,8 +1511,8 @@ done:
 	      break;
 	    }
 
-	    BU_GETSTRUCT(ndlp, nirt_dataList);
-	    BU_LIST_APPEND(HeadNirtData.l.back, &ndlp->l);
+	    BU_GETSTRUCT(ndlp, query_ray_dataList);
+	    BU_LIST_APPEND(HeadQuery_RayData.l.back, &ndlp->l);
 
 	    if(sscanf(line, "%le %le %le %le",
 		      &ndlp->x_in, &ndlp->y_in, &ndlp->z_in, &ndlp->los) != 4)
@@ -1523,18 +1520,18 @@ done:
 	  }
 
 	  vbp = rt_vlblock_init();
-	  nirt_data_to_vlist(vbp, &HeadNirtData, dir);
-	  bu_list_free(&HeadNirtData.l);
-	  val = Tcl_GetVar(interp, bu_vls_addr(&nirt_basename), TCL_GLOBAL_ONLY);
-	  if(val == NULL) /* user must have unset nirt_ray_basename */
-	    cvt_vlblock_to_solids(vbp, "nirt_ray", 0);
+	  query_ray_data_to_vlist(vbp, &HeadQuery_RayData, dir);
+	  bu_list_free(&HeadQuery_RayData.l);
+	  val = Tcl_GetVar(interp, bu_vls_addr(&query_ray_basename), TCL_GLOBAL_ONLY);
+	  if(val == NULL) /* user must have unset query_ray_basename */
+	    cvt_vlblock_to_solids(vbp, "query_ray", 0);
 	  else
 	    cvt_vlblock_to_solids(vbp, val, 0);
 	  rt_vlblock_free(vbp);
 	  update_views = 1;
 	}
 
-	if(DO_NIRT_TEXT){
+	if(DO_QUERY_RAY_TEXT){
 	  while(fgets(line, MAXLINE, fp_out) != (char *)NULL)
 	    Tcl_AppendResult(interp, line, (char *)NULL);
 	}
@@ -1585,7 +1582,7 @@ char    **argv;
 
   if(argc < 3 || MAXARGS < argc){
     bu_vls_init(&vls);
-    bu_vls_printf(&vls, "help vnirt");
+    bu_vls_printf(&vls, "help %s", argv[0]);
     Tcl_Eval(interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
 
@@ -1596,13 +1593,13 @@ char    **argv;
    * The last two arguments are expected to be x,y in view coordinates.
    * It is also assumed that view z will be the front of the viewing cube.
    * These coordinates are converted to x,y,z in model coordinates and then
-   * converted to local units before being handed to nirt. All other
-   * arguments are passed straight through to nirt.
+   * converted to local units before being handed to query_ray. All other
+   * arguments are passed straight through to query_ray.
    */
   if(sscanf(argv[argc-2], "%lf", &view_ray_orig[X]) != 1 ||
      sscanf(argv[argc-1], "%lf", &view_ray_orig[Y]) != 1){
     bu_vls_init(&vls);
-    bu_vls_printf(&vls, "help vnirt");
+    bu_vls_printf(&vls, "help %s", argv[0]);
     Tcl_Eval(interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
 
@@ -1647,53 +1644,28 @@ char    **argv;
 }
 
 void
-nirt_data_to_vlist(vbp, headp, dir)
+query_ray_data_to_vlist(vbp, headp, dir)
 struct rt_vlblock *vbp;
-struct nirt_dataList *headp;
+struct query_ray_dataList *headp;
 vect_t dir;
 {
   register int i = 0;
   register struct bu_list *vhead;
-  register struct nirt_dataList *ndlp;
+  register struct query_ray_dataList *ndlp;
   vect_t in, out;
   vect_t last_out, last_in;
-  char *color;
-  int even_red, even_green, even_blue;
-  int odd_red, odd_green, odd_blue;
-  int void_red, void_green, void_blue;
 
-  /* get even color */
-  color = Tcl_GetVar(interp, bu_vls_addr(&nirt_even_color), TCL_GLOBAL_ONLY);
-  if(sscanf(color, "%d %d %d", &even_red, &even_green, &even_blue) != 3){
-    /* user must have improperly set or perhaps unset nirt_ray_colors(even) */
-    even_red = 255;
-    even_green = 255;
-    even_blue = 0;
-  }
-
-  /* get odd color */
-  color = Tcl_GetVar(interp, bu_vls_addr(&nirt_odd_color), TCL_GLOBAL_ONLY);
-  if(sscanf(color, "%d %d %d", &odd_red, &odd_green, &odd_blue) != 3){
-    /* user must have improperly set or perhaps unset nirt_ray_colors(odd) */
-    odd_red = 0;
-    odd_green = 255;
-    odd_blue = 255;
-  }
-
-  /* get void color */
-  color = Tcl_GetVar(interp, bu_vls_addr(&nirt_void_color), TCL_GLOBAL_ONLY);
-  if(sscanf(color, "%d %d %d", &void_red, &void_green, &void_blue) != 3){
-    /* user must have improperly set or perhaps unset nirt_ray_colors(void) */
-    void_red = 255;
-    void_green = 0;
-    void_blue = 255;
-  }
-
-  for(BU_LIST_FOR(ndlp, nirt_dataList, &headp->l)){
+  for(BU_LIST_FOR(ndlp, query_ray_dataList, &headp->l)){
     if(i % 2)
-      vhead = rt_vlblock_find(vbp, odd_red, odd_green, odd_blue); /* odd */
+      vhead = rt_vlblock_find(vbp,
+			      mged_variables->query_ray_color_odd[0],
+			      mged_variables->query_ray_color_odd[1],
+			      mged_variables->query_ray_color_odd[2]);
     else
-      vhead = rt_vlblock_find(vbp, even_red, even_green, even_blue); /* even */
+      vhead = rt_vlblock_find(vbp,
+			      mged_variables->query_ray_color_even[0],
+			      mged_variables->query_ray_color_even[1],
+			      mged_variables->query_ray_color_even[2]);
 
     VSET(in, ndlp->x_in, ndlp->y_in, ndlp->z_in);
     VJOIN1(out, in, ndlp->los, dir);
@@ -1703,7 +1675,10 @@ vect_t dir;
     RT_ADD_VLIST( vhead, out, RT_VLIST_LINE_DRAW );
 
     if(i && !VAPPROXEQUAL(last_out,in,SQRT_SMALL_FASTF)){
-      vhead = rt_vlblock_find(vbp, void_red, void_green, void_blue); /* between partitions */
+      vhead = rt_vlblock_find(vbp,
+			      mged_variables->query_ray_color_void[0],
+			      mged_variables->query_ray_color_void[1],
+			      mged_variables->query_ray_color_void[2]);
       RT_ADD_VLIST( vhead, last_out, RT_VLIST_LINE_MOVE );
       RT_ADD_VLIST( vhead, in, RT_VLIST_LINE_DRAW );
     }
