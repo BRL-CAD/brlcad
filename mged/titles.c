@@ -73,6 +73,7 @@ dotitles()
 	union record temp_rec;		/* copy of es_rec record */
 	mat_t new_mat;
 	register int yloc, xloc;
+	register float y_val;
 	auto char linebuf[512];
 
 	/* Enclose window in decorative box.  Mostly for alignment. */
@@ -242,10 +243,17 @@ dotitles()
 			cp = &linebuf[0];
 			FINDNULL( cp );
 			(void)sprintf(cp,":");
+			
+			/* This breaks on the 4D compilers if done
+			 * as part of the procedure call 
+			 * also if its a int so   (sigh....)
+			 */
+			y_val = (float) ((es_nlines + 2) *(TEXT0_DY))
+	                               + SOLID_YBASE + TEXT1_DY;
 
 			dmp->dmr_puts(	&linebuf[0],
 					SOLID_XBASE,
-					SOLID_YBASE+TEXT1_DY+(TEXT0_DY*(es_nlines+2)),
+					y_val,
 					1,
 					DM_RED);
 			/* print the evaluated (path) solid parameters */
@@ -257,13 +265,14 @@ dotitles()
 						&es_rec.s.s_values[i*3] );
 			}
 
-			yloc = SOLID_YBASE+(2*TEXT1_DY)+(TEXT0_DY*(es_nlines+2));
+			y_val = (float) SOLID_YBASE+(2*TEXT1_DY)+(TEXT0_DY*(es_nlines+2));
 			pr_solid( &temp_rec.s );
 
 			for(i=0; i<es_nlines; i++) {
+				yloc = (int) y_val + (TEXT0_DY*i);
 				dmp->dmr_puts(	&es_display[i*ES_LINELEN],
 						SOLID_XBASE,
-						yloc+(TEXT0_DY*i),
+						yloc,
 						0,
 						DM_RED );
 			}
