@@ -1755,9 +1755,9 @@ AC_SUBST(TKSTUB)
 dnl itcl/itk
 ITCL_VERSION="3.3"
 AC_SUBST(ITCL_VERSION)
-ITCL_LIBS='${top_builddir}/src/other/incrTcl/itcl/libitcl${ITCL_VERSION}.la'
+ITCL_LIBS='${top_builddir}/src/other/incrTcl/libitcl${ITCL_VERSION}.la'
 AC_SUBST(ITCL_LIBS)
-ITK_LIBS='${top_builddir}/src/other/incrTcl/itk/libitk${ITCL_VERSION}.la'
+ITK_LIBS='${top_builddir}/src/other/incrTcl/libitk${ITCL_VERSION}.la'
 AC_SUBST(ITK_LIBS)
 
 dnl sample applications

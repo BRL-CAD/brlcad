@@ -4,15 +4,6 @@ SUBDIRS = \
 	generic \
 	library
 
-lib_LTLIBRARIES = \
-	libitcl.la \
-	libitcl@ITCL_VERSION@.la
-
-libitcl_la_LIBADD = generic/libitg.la
-libitcl_la_SOURCES =
-libitcl@ITCL_VERSION@_la_LIBADD = $(libitcl_la_LIBADD)
-libitcl@ITCL_VERSION@_la_SOURCES = $(libitcl_la_SOURCES)
-
 brlcadscriptdir = $(libdir)/itcl@ITCL_VERSION@
 brlcadscript_SCRIPTS = pkgIndex.tcl
 

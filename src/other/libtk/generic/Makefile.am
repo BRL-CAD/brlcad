@@ -4,11 +4,10 @@ lib_LTLIBRARIES = \
 	libtkstub.la \
 	libtkstub@TK_VERSION@.la
 
-# XXX libtkPW.la is a hack to make the IRIX linker behave
-noinst_LTLIBRARIES = libtkg.la libtkPW.la
-
 libtkstub_la_SOURCES = tkStubLib.c
 libtkstub@TK_VERSION@_la_SOURCES = $(libtkstub_la_SOURCES)
+
+noinst_LTLIBRARIES = libtkg.la
 
 libtkg_la_LDFLAGS = -static
 libtkg_la_SOURCES = \
@@ -61,6 +60,7 @@ libtkg_la_SOURCES = \
 	tkOldConfig.c \
 	tkOption.c \
 	tkPack.c \
+	tkPanedWindow.c \
 	tkPlace.c \
 	tkRectOval.c \
 	tkScale.c \
@@ -83,11 +83,6 @@ libtkg_la_SOURCES = \
 	tkUtil.c \
 	tkVisual.c \
 	tkWindow.c
-
-# XXX libtkPW.la is a hack to make the IRIX linker behave
-libtkPW_la_LDFLAGS = -static
-libtkPW_la_SOURCES = \
-	tkPanedWindow.c
 
 noinst_HEADERS = \
 	default.h \

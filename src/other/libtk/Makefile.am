@@ -24,9 +24,102 @@ lib_LTLIBRARIES = \
 
 libtk_la_SOURCES =
 libtk_la_LDFLAGS = -version-info 19:1 -static
-
-# XXX tkPanedWindow.lo is a hack to make the IRIX linker behave
-libtk_la_LIBADD = unix/libtku.la generic/libtkg.la generic/tkPanedWindow.lo ${X_LIBS}
+libtk_la_LIBADD = \
+	generic/tk3d.lo \
+	generic/tkArgv.lo \
+	generic/tkAtom.lo \
+	generic/tkBind.lo \
+	generic/tkBitmap.lo \
+	generic/tkButton.lo \
+	generic/tkCanvArc.lo \
+	generic/tkCanvBezier.lo \
+	generic/tkCanvBmap.lo \
+	generic/tkCanvImg.lo \
+	generic/tkCanvLine.lo \
+	generic/tkCanvPoly.lo \
+	generic/tkCanvPs.lo \
+	generic/tkCanvText.lo \
+	generic/tkCanvUtil.lo \
+	generic/tkCanvWind.lo \
+	generic/tkCanvas.lo \
+	generic/tkClipboard.lo \
+	generic/tkCmds.lo \
+	generic/tkColor.lo \
+	generic/tkConfig.lo \
+	generic/tkConsole.lo \
+	generic/tkCursor.lo \
+	generic/tkEntry.lo \
+	generic/tkError.lo \
+	generic/tkEvent.lo \
+	generic/tkFocus.lo \
+	generic/tkFont.lo \
+	generic/tkFrame.lo \
+	generic/tkGC.lo \
+	generic/tkGeometry.lo \
+	generic/tkGet.lo \
+	generic/tkGrab.lo \
+	generic/tkGrid.lo \
+	generic/tkImage.lo \
+	generic/tkImgBmap.lo \
+	generic/tkImgGIF.lo \
+	generic/tkImgPPM.lo \
+	generic/tkImgPhoto.lo \
+	generic/tkListbox.lo \
+	generic/tkMain.lo \
+	generic/tkMenu.lo \
+	generic/tkMenuDraw.lo \
+	generic/tkMenubutton.lo \
+	generic/tkMessage.lo \
+	generic/tkObj.lo \
+	generic/tkOldConfig.lo \
+	generic/tkOption.lo \
+	generic/tkPack.lo \
+	generic/tkPanedWindow.lo \
+	generic/tkPlace.lo \
+	generic/tkRectOval.lo \
+	generic/tkScale.lo \
+	generic/tkScrollbar.lo \
+	generic/tkSelect.lo \
+	generic/tkStubImg.lo \
+	generic/tkStubInit.lo \
+	generic/tkStubLib.lo \
+	generic/tkStyle.lo \
+	generic/tkText.lo \
+	generic/tkTextBTree.lo \
+	generic/tkTextDisp.lo \
+	generic/tkTextImage.lo \
+	generic/tkTextIndex.lo \
+	generic/tkTextMark.lo \
+	generic/tkTextTag.lo \
+	generic/tkTextWind.lo \
+	generic/tkTrig.lo \
+	generic/tkUndo.lo \
+	generic/tkUtil.lo \
+	generic/tkVisual.lo \
+	generic/tkWindow.lo \
+	unix/tkUnix.lo \
+	unix/tkUnix3d.lo \
+	unix/tkUnixButton.lo \
+	unix/tkUnixColor.lo \
+	unix/tkUnixConfig.lo \
+	unix/tkUnixCursor.lo \
+	unix/tkUnixDialog.lo \
+	unix/tkUnixDraw.lo \
+	unix/tkUnixEmbed.lo \
+	unix/tkUnixEvent.lo \
+	unix/tkUnixFocus.lo \
+	unix/tkUnixFont.lo \
+	unix/tkUnixInit.lo \
+	unix/tkUnixKey.lo \
+	unix/tkUnixMenu.lo \
+	unix/tkUnixMenubu.lo \
+	unix/tkUnixScale.lo \
+	unix/tkUnixScrlbr.lo \
+	unix/tkUnixSelect.lo \
+	unix/tkUnixSend.lo \
+	unix/tkUnixWm.lo \
+	unix/tkUnixXId.lo \
+	${X_LIBS}
 
 libtk@TK_VERSION@_la_SOURCES = $(libtk_la_SOURCES)
 libtk@TK_VERSION@_la_LDFLAGS = $(libtk_la_LDFLAGS)
@@ -36,7 +129,10 @@ bin_PROGRAMS = wish wish.static
 
 # moved from unix to this dir
 wish_SOURCES =
-wish_LDADD = unix/libwish.la libtk.la ${TCL}
+wish_LDADD = \
+	unix/tkAppInit.lo \
+	libtk.la \
+	${TCL}
 
 wish_static_SOURCES = $(wish_SOURCES)
 wish_static_LDADD = $(wish_LDADD)
