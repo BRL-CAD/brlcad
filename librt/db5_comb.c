@@ -368,7 +368,8 @@ rt_comb_export5(
 		bu_vls_trunc( &value, 0 );
 		bu_vls_printf( &value, "%d/%d/%d", V3ARGS(comb->rgb) );
 		bu_avs_add_vls( avsp, "rgb", &value );
-	}
+	} else
+		bu_avs_remove( avsp, "rgb" );
 	/* optical shader string goes out in Tcl format */
 	if( bu_vls_strlen( &comb->shader ) > 0 )
 		bu_avs_add_vls( avsp, "oshader", &comb->shader );
@@ -614,6 +615,7 @@ finish:
 	if( ip->idb_avs.magic != BU_AVS_MAGIC )  return 0;	/* OK */
 
 	/* Unpack the attributes */
+	comb->rgb_valid = 0;
 	if( (ap = bu_avs_get( &ip->idb_avs, "rgb" )) != NULL )  {
 		int	ibuf[3];
 		if( sscanf( ap, "%d/%d/%d", ibuf, ibuf+1, ibuf+2 ) == 3 )  {
