@@ -2352,7 +2352,7 @@ rt_log("Mapping of old index to new index, and kind\n");
 		cp += kind_counts[i] * rt_nmg_disk_sizes[i];
 	}
 	/* disk_arrays[NMG_KIND_DOUBLE_ARRAY] is set properly because it is last */
-	rt_nmg_fastf_p = disk_arrays[NMG_KIND_DOUBLE_ARRAY];
+	rt_nmg_fastf_p = (unsigned char *)disk_arrays[NMG_KIND_DOUBLE_ARRAY];
 
 	/* Convert all the structures to their disk versions */
 	for( i = m->maxindex-1; i >= 0; i-- )  {
