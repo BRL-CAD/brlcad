@@ -60,25 +60,16 @@ typedef void *genptr_t;
 #define IND_ILL		3		/* PDP-11 */
 #define IND_CRAY	4
 
-static int Indian = IND_NOTSET;
-#define DBL_IEEE	0
-#define DBL_OTHER	1
+#define DBL_IEEE	1
+#define DBL_OTHER	2
 
 #if defined(sun) || (defined(alliant) && ! defined(i860)) || \
 	defined(ardent) || \
 	defined(stellar) || defined(sparc) || defined(mips) || \
 	defined(pyr) || defined(apollo) || defined(aux)
-#define DBL_FORMAT	DBL_IEEE
+#	define DBL_FORMAT	DBL_IEEE
 #else
-#if defined(n16) || defined(i860) || \
-	(defined(sgi) && !defined(mips)) || \
-	defined(vax) || defined(ibm) || defined(gould) || \
-	defined(CRAY1) || defined(CRAY2) || defined(eta10) || \
-	defined(convex)
-#define DBL_FORMAT	DBL_OTHER
-#else
-# include "vert.c: ERROR, no HtoND format defined (see htond.c)"
-#endif
+#	define DBL_FORMAT	DBL_OTHER
 #endif
 
 /* cv_cookie	Set's a bit vector after parsing an input string.
@@ -189,6 +180,105 @@ char *in;			/* input format */
 	}
 	return(result);
 }
+
+void
+cv_fmt_cookie( buf, buflen, cookie )
+char	*buf;
+int	buflen;
+int	cookie;
+{
+	register char *cp = buf;
+	int	len;
+
+	buflen--;
+	if( cookie == 0 )  {
+		strncpy( cp, "bogus!", buflen );
+		return;
+	}
+	sprintf( cp, "%d", cookie & CV_CHANNEL_MASK );
+	len = strlen(cp);
+	cp += len;
+	buflen -= len;
+
+	if( cookie & CV_HOST_MASK )  {
+		*cp++ = 'h';
+		buflen--;
+	} else {
+		*cp++ = 'n';
+		buflen--;
+	}
+
+	if( cookie & CV_SIGNED_MASK )  {
+		*cp++ = 's';
+		buflen--;
+	} else {
+		*cp++ = 'u';
+		buflen--;
+	}
+
+	switch( cookie & CV_TYPE_MASK )  {
+	case CV_8:
+		*cp++ = '8';
+		buflen--;
+		break;
+	case CV_16:
+		strncpy( cp, "16", buflen );
+		cp += 2;
+		buflen -= 2;
+		break;
+	case CV_32:
+		strncpy( cp, "32", buflen );
+		cp += 2;
+		buflen -= 2;
+		break;
+	case CV_64:
+		strncpy( cp, "64", buflen );
+		cp += 2;
+		buflen -= 2;
+		break;
+	case CV_D:
+		*cp++ = 'd';
+		buflen -= 1;
+		break;
+	default:
+		*cp++ = '?';
+		buflen -= 1;
+		break;
+	}
+
+	switch( cookie & CV_CONVERT_MASK )  {
+	case CV_CLIP:
+		*cp++ = 'C';
+		buflen -= 1;
+		break;
+	case CV_NORMAL:
+		*cp++ = 'N';
+		buflen -= 1;
+		break;
+	case CV_LIT:
+		*cp++ = 'L';
+		buflen -= 1;
+		break;
+	default:
+		*cp++ = 'X';
+		buflen -= 1;
+		break;
+	}
+	*cp = '\0';
+	if( buflen < 0 )  fprintf(stderr, "cv_pr_cookie:  call me with a bigger buffer\n");
+}
+
+void
+cv_pr_cookie( title, cookie )
+char	*title;
+int	cookie;
+{
+	char	buf[128];
+
+	cv_fmt_cookie( buf, sizeof(buf), cookie );
+	fprintf( stderr, "%s cookie '%s' (x%x)\n", title, buf, cookie );
+}
+
 /* cv - convert from one format to another.
  *
  * Entry:
@@ -213,6 +303,84 @@ int	count;
 	outcookie = cv_cookie(outfmt);
 	return(cv_w_cookie(out, outcookie, size, in, incookie, count));
 }
+
+/*
+ *			C V _ O P T I M I Z E
+ *
+ *  It is always more efficient to handle host data, rather than network.
+ *  If host and network formats are the same, and the request was for
+ *  network format, modify the cookie to request host format.
+ */
+int
+cv_optimize( cookie )
+register int	cookie;
+{
+	static int Indian = IND_NOTSET;
+	int	IsHost;
+	int	fmt;
+
+	if( cookie & CV_HOST_MASK )
+		return cookie;		/* already in most efficient form */
+
+	/* This is a network format request */
+	fmt  =  cookie & CV_TYPE_MASK;
+
+	/* Run time check:  which kind of integers does this machine have? */
+	if (Indian == IND_NOTSET) {
+		unsigned long int	testval;
+		register int		i;
+		for (i=0; i<4; i++) {
+			((char *)&testval)[i] = i+1;
+		}
+		if (sizeof (long int) == 8) {
+			Indian = IND_CRAY;	/* is this good enough? */
+		} else if (testval == 0x01020304) {
+			Indian = IND_BIG;
+		} else if (testval == 0x04030201) {
+			Indian = IND_LITTLE;
+		} else if (testval == 0x02010403) {
+			Indian = IND_ILL;
+		}
+	}
+
+	switch(fmt)  {
+	case CV_D:
+		if( DBL_FORMAT == DBL_IEEE )
+			cookie |= CV_HOST_MASK;	/* host uses network fmt */
+		return cookie;
+	case CV_8:
+		return cookie | CV_HOST_MASK;	/* bytes already host format */
+	case CV_16:
+	case CV_32:
+	case CV_64:
+		/* host is big-endian, so is network */
+		if( Indian == IND_BIG )
+			cookie |= CV_HOST_MASK;
+		return cookie;
+	}
+	return 0;			/* ERROR */
+}
+
+/*
+ *			C V _ I T E M L E N
+ *
+ *  Returns the number of bytes each "item" of type "cookie" occupies.
+ */
+int
+cv_itemlen( cookie )
+register int	cookie;
+{
+	register int	fmt = (cookie & CV_TYPE_MASK) >> CV_TYPE_SHIFT;
+	static int host_size_table[8] = {0, sizeof(char),
+		sizeof(short), sizeof(int),
+		sizeof(long int), sizeof(double)};
+	static int net_size_table[8] = {0,1,2,4,8,8};
+
+	if( cookie & CV_HOST_MASK )
+		return host_size_table[fmt];
+	return net_size_table[fmt];
+}
+
 /* cv_w_cookie - convert with cookie
  *
  * Entry:
@@ -307,9 +475,6 @@ genptr_t in;
 int	incookie;
 int	count;
 {
-	static int host_size_table[5] = {sizeof(char), sizeof(short), sizeof(int),
-		sizeof(long int), sizeof(double)};
-	static int net_size_table[5] = {1,2,4,8,8};
 	int	work_count = 4096;
 	int	number_done = 0;
 	int	inIsHost,outIsHost,infmt,outfmt,insize,outsize;
@@ -326,25 +491,12 @@ int	count;
 
 	if (work_count > count) work_count = count;
 
-/*
- * This is a run time check to see what type of integer arrangment is
- * in use.
- */
-	if (Indian == IND_NOTSET) {
-		unsigned long int	testval;
-		for (i=0; i<4; i++) {
-			((char *)&testval)[i] = i+1;
-		}
-		if (sizeof (long int) == 8) {
-			Indian = IND_CRAY;	/* is this good enough? */
-		} else if (testval == 0x01020304) {
-			Indian = IND_BIG;
-		} else if (testval == 0x04030201) {
-			Indian = IND_LITTLE;
-		} else if (testval == 0x02010403) {
-			Indian = IND_ILL;
-		}
-	}
+cv_pr_cookie( "incookie", incookie );
+cv_pr_cookie( "outcookie", outcookie );
+	incookie = cv_optimize( incookie );
+	outcookie = cv_optimize( outcookie );
+cv_pr_cookie( "optim incookie", incookie );
+cv_pr_cookie( "optim outcookie", outcookie );
 
 /*
  * break out the conversion code and the format code.
@@ -355,52 +507,12 @@ int	count;
 	outIsHost= outcookie& CV_HOST_MASK;
 	infmt  =  incookie & CV_TYPE_MASK;
 	outfmt = outcookie & CV_TYPE_MASK;
-
 /*
- * Check to see if host representation  is the same as net rep.
- * If the format is double then check to see if double is
- * the same as IEEE double floating point which is what we use
- * for network doubles.
- *
- * If the format is not double then byte ordering becomes important.
- * 8 bit values are single bytes (I HOPE) so they do not depend on
- * byte ordering.  I.E. all 8 bit sizes are treated as net == host
- * format.  Otherwise check for big indian ordering.
+ * Find the number of bytes required for one item of each kind.
  */
-	if (infmt == CV_D) {
-		if (DBL_FORMAT == DBL_IEEE) {
-			inIsHost = CV_HOST_MASK;	/* host == net format */
-		}
-	} else {
-		if (Indian == IND_BIG || infmt == CV_8) {
-			inIsHost = CV_HOST_MASK; /* host == net format */
-		}
-	}
-
-/*
- * Outformat testing is handled the same as the input format.
- */
-	if (outfmt == CV_D) {
-		if (DBL_FORMAT == DBL_IEEE) {
-			outIsHost = CV_HOST_MASK;
-		}
-	} else {
-		if (Indian == IND_BIG || outfmt == CV_8) {
-			outIsHost = CV_HOST_MASK;
-		}
-	}
-/*
- * outIsHost and inIsHost now correctly show network or host formats.  If
- * network format is the same as host format for THIS conversion then
- * network was changed to host conversion.
- *
- * Now that the conversion (Host or net) has been determended, us
- * the format to find the per entry size of an entry.
- */
-	outsize = (outIsHost) ? host_size_table[outfmt >> CV_TYPE_SHIFT] :
-	    net_size_table[outfmt >> CV_TYPE_SHIFT];
-	insize = (inIsHost) ? host_size_table[infmt >> CV_TYPE_SHIFT] :
-	    net_size_table[infmt >> CV_TYPE_SHIFT];
+	outsize = cv_itemlen( outcookie );
+	insize = cv_itemlen( incookie );
+fprintf(stderr,"insize=%d, outsize=%d\n", insize, outsize);
 
 /*
  * If the input format is the same as the output format then the
@@ -458,7 +570,6 @@ int	count;
  */
 		} else {
 			switch(incookie & (CV_SIGNED_MASK | CV_TYPE_MASK)) {
-#if 0
 			case CV_SIGNED_MASK | CV_16:
 				return(	htonss(out, size, in, count));
 			case CV_16:
@@ -467,7 +578,6 @@ int	count;
 				return( htonsl(out, size, in, count));
 			case CV_32:
 				return( htonul(out, size, in, count));
-#endif
 			case CV_D:
 				(void) htond(out, in, count);
 				return(count);
@@ -786,6 +896,11 @@ int			count;
 
 	for (i=0; i<count; i++) {
 		*out++ = ((signed char *)in)[0] << 8 | ((unsigned char *)in)[1];
+		/* XXX This needs sign extension here for the case of
+		 * XXX a negative 2-byte input on a 4 or 8 byte machine.
+		 * XXX The "signed char" trick isn't enough.
+		 * XXX Use your Cyber trick w/magic numbers or something.
+		 */
 		in = ((char *)in) + 2;
 	}
 	return(count);
@@ -828,6 +943,7 @@ int				count;
 		    ((unsigned char *)in)[1] << 16 | 
 		    ((unsigned char *)in)[2] << 8  |
 		    ((unsigned char *)in)[3];
+		/* XXX Sign extension here */
 		in = ((char *)in) + 4;
 	}
 	return(count);
@@ -851,6 +967,96 @@ int				count;
 		    ((unsigned char *)in)[2] <<  8 |
 		    ((unsigned char *)in)[3];
 		in = ((char *)in) + 4;
+	}
+	return(count);
+}
+
+/*****/
+int
+htonss(out, size, in, count)
+genptr_t		out;
+int			size;
+register short		*in;
+int			count;
+{
+	int		limit;
+	register int	i;
+	register unsigned char *cp = (unsigned char *)out;
+	register int	val;
+
+	limit = size / 2;
+	if( count > limit )  count = limit;
+
+	for (i=0; i<count; i++) {
+		*cp++ = (val = *in++)>>8;
+		*cp++ = val;
+	}
+	return(count);
+}
+int
+htonus(out, size, in, count)
+genptr_t		out;
+int			size;
+register unsigned short	*in;
+int			count;
+{
+	int		limit;
+	register int	i;
+	register unsigned char *cp = (unsigned char *)out;
+	register int	val;
+
+	limit = size / 2;
+	if( count > limit )  count = limit;
+
+	for (i=0; i<count; i++) {
+		*cp++ = (val = *in++)>>8;
+		*cp++ = val;
+	}
+	return(count);
+}
+int
+htonsl(out, size, in, count)
+genptr_t		out;
+int			size;
+register long		*in;
+int			count;
+{
+	int		limit;
+	register int	i;
+	register unsigned char *cp = (unsigned char *)out;
+	register long	val;
+
+	limit = size / 4;
+	if( count > limit )  count = limit;
+
+	for (i=0; i<count; i++) {
+		*cp++ = (val = *in++)>>24;
+		*cp++ = val>>16;
+		*cp++ = val>> 8;
+		*cp++ = val;
+	}
+	return(count);
+}
+int
+htonul(out, size, in, count)
+genptr_t		out;
+int			size;
+register unsigned long	*in;
+int			count;
+{
+	int		limit;
+	register int	i;
+	register unsigned char *cp = (unsigned char *)out;
+	register long	val;
+
+	limit = size / 4;
+	if( count > limit )  count = limit;
+
+	for (i=0; i<count; i++) {
+		*cp++ = (val = *in++)>>24;
+		*cp++ = val>>16;
+		*cp++ = val>> 8;
+		*cp++ = val;
 	}
 	return(count);
 }
