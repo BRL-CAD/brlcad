@@ -1518,8 +1518,8 @@ int	count;
 
 	ybase = y;
 
-	if( x < 0 || x > ifp->if_width ||
-	    y < 0 || y > ifp->if_height)
+	if( x < 0 || x >= ifp->if_width ||
+	    y < 0 || y >= ifp->if_height)
 		return(-1);
 
 	ret = 0;
@@ -1588,8 +1588,8 @@ int		count;
 	x = xstart;
 	ybase = y = ystart;
 
-	if( x < 0 || x > ifp->if_width ||
-	    y < 0 || y > ifp->if_height)
+	if( x < 0 || x >= ifp->if_width ||
+	    y < 0 || y >= ifp->if_height)
 		return(-1);
 
 	ret = 0;
