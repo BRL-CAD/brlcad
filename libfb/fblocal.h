@@ -20,9 +20,6 @@
 		fb_log( "\"%s\"(%d) : allocation of %d bytes failed.\n", \
 				__FILE__, __LINE__, _bytes_ )
 
-#define MAX_BYTES_DMA	(64*1024L)		/* Max # of bytes/dma.	*/
-#define MAX_PIXELS_DMA	(MAX_BYTES_DMA/sizeof(Pixel))
-
 /* System calls and run-time C library functions.			*/
 extern char	*malloc();
 extern char	*getenv();
