@@ -23,13 +23,68 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
+#include "fb.h"
 #include "./vas4.h"
 
-int	debug;
+extern int	getopt();
+extern char	*optarg;
+extern int	optind;
+
+int		debug;
+
+static char	*framebuffer = NULL;
+static int	scr_width = 0;		/* screen tracks file if not given */
+static int	scr_height = 0;
 
 void	usage(), usage_new(), usage_record(), usage_seq();
 void	program_recording(), record_add_to_scene(), do_record();
 void	get_tape_position();
+
+/*
+ *			G E T _ A R G S
+ */
+get_args( argc, argv )
+register char **argv;
+{
+	register int c;
+
+	while ( (c = getopt( argc, argv, "dhF:s:S:w:W:n:N:" )) != EOF )  {
+		switch( c )  {
+		case 'd':
+			debug = 1;
+			break;
+
+		case 'h':
+			/* high-res */
+			scr_height = scr_width = 1024;
+			break;
+		case 'F':
+			framebuffer = optarg;
+			break;
+		case 'S':
+		case 's':
+			/* square file size */
+			scr_height = scr_width = atoi(optarg);
+			break;
+		case 'w':
+		case 'W':
+			scr_width = atoi(optarg);
+			break;
+		case 'n':
+		case 'N':
+			scr_height = atoi(optarg);
+			break;
+
+		default:		/* '?' */
+			return(0);
+		}
+	}
+
+	if( optind >= argc )
+		return(0);
+
+	return(1);		/* OK */
+}
 
 /*
  *			M A I N
@@ -38,6 +93,7 @@ main(argc, argv)
 int argc;
 char **argv;
 {
+	register FBIO	*fbp = FBIO_NULL;
 	int scene_number = 1;
 	int start_frame = 1;
 	int number_of_frames;
@@ -47,13 +103,13 @@ char **argv;
 
 	exit_code = 0;
 
-	if (argc < 2)
+	if ( !get_args( argc, argv ) )  {
 		usage();
-
-	if( strcmp(argv[1], "-d") == 0 )  {
-		debug = 1;
-		argv++; argc--;
+		exit( 1 );
 	}
+
+	argc -= (optind-1);
+	argv += (optind-1);
 
 	/*
 	 *  First group of commands.
@@ -140,8 +196,10 @@ char **argv;
 	 *  VAS IV is opened and checked above,
 	 *  and VTR status is checked here.
 	 */
-	if( get_vtr_status(0) < 0 )
-		exit(1);
+	if( get_vtr_status(0) < 0 )  {
+		exit_code = 1;
+		goto done;
+	}
 	if( strcmp(argv[1], "search") == 0 )  {
 		if( argc >= 3 )
 			start_frame = str2frames(argv[2]);
@@ -152,12 +210,28 @@ char **argv;
 	}
 	else if( strcmp(argv[1], "time0") == 0 )  {
 		exit_code = time0();
+		goto done;
 	}
 	else if( strcmp( argv[1], "reset_time" ) == 0 )  {
 		exit_code = reset_tape_time();
 		goto done;
 	}
-	else if (strcmp(argv[1], "new") == 0) {
+
+	/*
+	 *  If this is running on a workstation, and a window has to be
+	 *  opened to cause image to be re-displayed, do so now.
+	 */
+	if( framebuffer != (char *)0 )  {
+		if( (fbp = fb_open( framebuffer, scr_width, scr_height )) == FBIO_NULL )  {
+			exit_code = 12;
+			goto done;
+		}
+	}
+
+	/*
+	 *  Commands that will actually record some image onto tape
+	 */
+	if (strcmp(argv[1], "new") == 0) {
 		if( argc >= 4 )  {
 			if( (start_frame = str2frames(argv[3])) < 1 )
 				usage_new();
@@ -205,7 +279,7 @@ char **argv;
 			number_of_frames = 1;
 		}
 		else {
-			usage_new();
+			usage_record();
 		}
 		record_add_to_scene(number_of_frames);
 		goto done;
@@ -217,13 +291,17 @@ char **argv;
 
 done:
 	vas_close();
+	if(fbp) fb_close(fbp);
 	exit(exit_code);
 }
 
 void
 usage()
 {
-	fprintf(stderr,"Usage: vas4 [-d] keyword [options]\n");
+	fprintf(stderr,"Usage: vas4 [-d] [-h] [-F framebuffer]\n");
+	fprintf(stderr,"	[-{sS} squarescrsize] [-{wW} scr_width] [-{nN} scr_height]\n");
+	fprintf(stderr,"	keyword [options]\n");
+	fprintf(stderr,"Keywords:\n");
 	fprintf(stderr,"  init\n");
 	fprintf(stderr,"  status\n");
 	fprintf(stderr,"  stop\n");
@@ -244,7 +322,7 @@ void
 usage_new()
 {
 	fprintf(stderr,"Usage: vas4 new [sn]\n");
-	fprintf(stderr,"\t[sn]\tscene number must be > 1\n");
+	fprintf(stderr,"\t[sn]\tscene number must be >= 1\n");
 	exit(1);
 }
 
@@ -252,7 +330,7 @@ void
 usage_record()
 {
 	fprintf(stderr,"Usage: vas4 record [nf]\n");
-	fprintf(stderr,"\t[nf]\tnumber of frames must be > 1\n");
+	fprintf(stderr,"\t[nf]\tnumber of frames must be >= 1\n");
 	exit(1);
 }
 
