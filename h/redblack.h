@@ -218,7 +218,7 @@ RB_EXTERN(void *rb_neighbor,	(rb_tree	*tree,
 				 int		order,
 				 int		sense
 				));
-RB_EXTERN(void *rb_rank,	(rb_tree	*tree,
+RB_EXTERN(int rb_rank,		(rb_tree	*tree,
 				 int		order
 				));
 #define		rb_rank1(t)	rb_rank1((t), 0)
