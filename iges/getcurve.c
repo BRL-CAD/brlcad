@@ -75,7 +75,8 @@ struct ptlist **curv_pts;
 				npts = 0;
 				break;
 			}
-			(*curv_pts) = (struct ptlist *)malloc( sizeof( struct ptlist ) );
+			(*curv_pts) = (struct ptlist *)rt_malloc( sizeof( struct ptlist ),
+					"Getcurve: curv_pts" );
 			ptr = (*curv_pts);
 
 			/* Read first point */
@@ -85,7 +86,8 @@ struct ptlist **curv_pts;
 
 			ptr->prev = NULL;
 			prev = ptr;
-			ptr->next = (struct ptlist *)malloc( sizeof( struct ptlist ) );
+			ptr->next = (struct ptlist *)rt_malloc( sizeof( struct ptlist ),
+					"Getcurve: ptr->next" );
 			ptr = ptr->next;
 
 			/* Read second point */
@@ -148,7 +150,8 @@ struct ptlist **curv_pts;
 			sindel = sin( delta );
 
 			/* Calculate points on curve */
-			(*curv_pts) = (struct ptlist *)malloc( sizeof( struct ptlist ) );
+			(*curv_pts) = (struct ptlist *)rt_malloc( sizeof( struct ptlist ),
+					"Getcurve: curv_pts" );
 			ptr = (*curv_pts);
 			prev = NULL;
 
@@ -156,7 +159,8 @@ struct ptlist **curv_pts;
 
 			ptr->prev = prev;
 			prev = ptr;
-			ptr->next = (struct ptlist *)malloc( sizeof( struct ptlist ) );
+			ptr->next = (struct ptlist *)rt_malloc( sizeof( struct ptlist ),
+					"Getcurve: ptr->next" );
 			ptr = ptr->next;
 			ptr->prev = prev;
 			VMOVE( tmp , start );
@@ -168,12 +172,13 @@ struct ptlist **curv_pts;
 				tmp[Y] = center[Y] + rx*sindel + ry*cosdel;
 				MAT4X3PNT( ptr->pt , *dir[curve]->rot , tmp );
 				prev = ptr;
-				ptr->next = (struct ptlist *)malloc( sizeof( struct ptlist ) );
+				ptr->next = (struct ptlist *)rt_malloc( sizeof( struct ptlist ),
+						"Getcurve: ptr->next" );
 				ptr = ptr->next;
 				ptr->prev = prev;
 			}
 			ptr = prev;
-			free( ptr->next );
+			rt_free( (char *)ptr->next, "Getcurve: ptr->next" );
 			ptr->next = NULL;
 			break;
 		}
@@ -204,6 +209,7 @@ struct ptlist **curv_pts;
 			{
 				case 1:
 				case 11:
+				case 40:
 				case 63:	/* data are coordinate pairs with common z */
 				{
 					if( interpflag != 1 )
@@ -214,7 +220,8 @@ struct ptlist **curv_pts;
 						break;
 					}
 					Readcnv( &common_z , "" );
-					(*curv_pts) = (struct ptlist *)malloc( sizeof( struct ptlist ) );
+					(*curv_pts) = (struct ptlist *)rt_malloc( sizeof( struct ptlist ),
+						"Getcurve: curv_pts" );
 					ptr = (*curv_pts);
 					ptr->prev = NULL;
 					for( i=0 ; i<ntuples ; i++ )
@@ -224,13 +231,14 @@ struct ptlist **curv_pts;
 						pt1[Z] = common_z;
 						MAT4X3PNT( ptr->pt , *dir[curve]->rot , pt1 );
 						prev = ptr;
-						ptr->next = (struct ptlist *)malloc( sizeof( struct ptlist ) );
+						ptr->next = (struct ptlist *)rt_malloc( sizeof( struct ptlist ),
+							"Getcurve: ptr->next" );
 						ptr = ptr->next;
 						ptr->prev = prev;
 						ptr->next = NULL;
 					}
 					ptr = ptr->prev;
-					free( ptr->next );
+					rt_free( (char *)ptr->next, "Getcurve: ptr->next" );
 					ptr->next = NULL;
 					npts = ntuples;
 					break;
@@ -245,7 +253,8 @@ struct ptlist **curv_pts;
 						npts = 0;
 						break;
 					}
-					(*curv_pts) = (struct ptlist *)malloc( sizeof( struct ptlist ) );
+					(*curv_pts) = (struct ptlist *)rt_malloc( sizeof( struct ptlist ),
+							"Getcurve: curv_pts" );
 					ptr = (*curv_pts);
 					ptr->prev = NULL;
 					for( i=0 ; i<ntuples ; i++ )
@@ -255,12 +264,13 @@ struct ptlist **curv_pts;
 						Readcnv( &pt1[Z] , "" );
 						MAT4X3PNT( ptr->pt , *dir[curve]->rot , pt1 );
 						prev = ptr;
-						ptr->next = (struct ptlist *)malloc( sizeof( struct ptlist ) );
+						ptr->next = (struct ptlist *)rt_malloc( sizeof( struct ptlist ),
+							"Getcurve: ptr->next" );
 						ptr = ptr->next;
 						ptr->prev = prev;
 					}
 					ptr = ptr->prev;
-					free( ptr->next );
+					rt_free( (char *)ptr->next, "Getcurve: ptr->next" );
 					ptr->next = NULL;
 					npts = ntuples;
 					break;
@@ -293,7 +303,8 @@ struct ptlist **curv_pts;
 			}
 	   		Readint( &i , "" );	/* Skip over type */
 	   		Readint( &i , "" );	/* Skip over continuity */
-	   		splroot = (struct spline *)malloc( sizeof( struct spline ) );
+	   		splroot = (struct spline *)rt_malloc( sizeof( struct spline ),
+					"Getcurve: splroot" );
 	   		splroot->start = NULL;
 	   		Readint( &splroot->ndim , "" ); /* 2->planar, 3->3d */
 	   		Readint( &splroot->nsegs , "" ); /* Number of segments */
@@ -305,12 +316,14 @@ struct ptlist **curv_pts;
 	   		{
 	   			if( seg == NULL )
 	   			{
-	   				seg = (struct segment *)malloc( sizeof( struct segment ) );
+	   				seg = (struct segment *)rt_malloc( sizeof( struct segment ),
+						"Getcurve: seg" );
 	   				splroot->start = seg;
 	   			}
 	   			else
 	   			{
-	   				seg->next = (struct segment *)malloc( sizeof( struct segment ) );
+	   				seg->next = (struct segment *)rt_malloc( sizeof( struct segment ),
+						"Getcurve: seg->next" );
 	   				seg = seg->next;
 	   			}
 	   			seg->segno = i+1;
@@ -335,7 +348,8 @@ struct ptlist **curv_pts;
 
 	   		/* Calculate points */
 
-			(*curv_pts) = (struct ptlist *)malloc( sizeof( struct ptlist ) );
+			(*curv_pts) = (struct ptlist *)rt_malloc( sizeof( struct ptlist ),
+					"Getcurve: curv_pts" );
 			ptr = (*curv_pts);
 			prev = NULL;
 			ptr->prev = NULL;
@@ -360,14 +374,15 @@ struct ptlist **curv_pts;
 	   					ptr->pt[j] *= conv_factor;
 	   				npts++;
 					prev = ptr;
-					ptr->next = (struct ptlist *)malloc( sizeof( struct ptlist ) );
+					ptr->next = (struct ptlist *)rt_malloc( sizeof( struct ptlist ),
+						"Getcurve: ptr->next" );
 					ptr = ptr->next;
 	   				ptr->prev = prev;
 	   			}
 	   			seg = seg->next;
 	   		}
 			ptr = ptr->prev;
-			free( ptr->next );
+			rt_free( (char *)ptr->next, "Getcurve: ptr->next" );
 			ptr->next = NULL;
 
 	   		/* free the used memory */
@@ -378,9 +393,9 @@ struct ptlist **curv_pts;
 	   			{
 	   				seg1 = seg;
 	   				seg = seg->next;
-	   				free( seg1 );
+	   				rt_free( (char *)seg1, "Getcurve: seg1" );
 	   			}
-	   			free( splroot );
+	   			rt_free( (char *)splroot, "Getcurve: splroot" );
 	   			splroot = NULL;
 	   		}
 			break;
@@ -532,7 +547,8 @@ struct ptlist **curv_pts;
 
 		   		/* Calculate points */
 
-				(*curv_pts) = (struct ptlist *)malloc( sizeof( struct ptlist ) );
+				(*curv_pts) = (struct ptlist *)rt_malloc( sizeof( struct ptlist ),
+						"Getcurve: curv_pts" );
 				ptr = (*curv_pts);
 	   			ptr->prev = NULL;
 	   			prev = NULL;
@@ -547,7 +563,8 @@ struct ptlist **curv_pts;
 	   			VSCALE( ptr->pt , ptr->pt , conv_factor );
    				npts++;
 				prev = ptr;
-				ptr->next = (struct ptlist *)malloc( sizeof( struct ptlist ) );
+				ptr->next = (struct ptlist *)rt_malloc( sizeof( struct ptlist ),
+					"Getcurve: ptr->next" );
 				ptr = ptr->next;
 				ptr->prev = prev;
 
@@ -564,7 +581,8 @@ struct ptlist **curv_pts;
 	   				VSCALE( ptr->pt , ptr->pt , conv_factor );
 	   				npts++;
 					prev = ptr;
-					ptr->next = (struct ptlist *)malloc( sizeof( struct ptlist ) );
+					ptr->next = (struct ptlist *)rt_malloc( sizeof( struct ptlist ),
+						"Getcurve: ptr->next" );
 					ptr = ptr->next;
 					ptr->prev = prev;
 	   			}
@@ -671,7 +689,8 @@ struct ptlist **curv_pts;
 	   			Matmult( *(dir[curve]->rot) , rot1 , rot2 );
 
 	   			/* calculate start point */
-				(*curv_pts) = (struct ptlist *)malloc( sizeof( struct ptlist ) );
+				(*curv_pts) = (struct ptlist *)rt_malloc( sizeof( struct ptlist ),
+					"Getcurve: curv_pts" );
 				ptr = (*curv_pts);
 	   			prev = NULL;
 	   		    	ptr->prev = NULL;
@@ -680,7 +699,8 @@ struct ptlist **curv_pts;
    				MAT4X3PNT( ptr->pt , rot2 , v3 );
 	   			npts++;
 				prev = ptr;
-				ptr->next = (struct ptlist *)malloc( sizeof( struct ptlist ) );
+				ptr->next = (struct ptlist *)rt_malloc( sizeof( struct ptlist ),
+						"Getcurve: ptr->next" );
 				ptr = ptr->next;
 				ptr->prev = prev;
 
@@ -702,7 +722,8 @@ struct ptlist **curv_pts;
 	   				MAT4X3PNT( ptr->pt , rot2 , tmp2 );
 	   				npts++;
 					prev = ptr;
-					ptr->next = (struct ptlist *)malloc( sizeof( struct ptlist ) );
+					ptr->next = (struct ptlist *)rt_malloc( sizeof( struct ptlist ),
+						"Getcurve: ptr->next" );
 					ptr = ptr->next;
 					ptr->prev = prev;
 	   			}
@@ -734,7 +755,7 @@ struct ptlist **curv_pts;
 			}
 
 			Readint( &ncurves , "" );
-			curvptr = (int *)calloc( ncurves , sizeof( int ) );
+			curvptr = (int *)rt_calloc( ncurves , sizeof( int ), "Getcurve: curvptr" );
 			for( i=0 ; i<ncurves ; i++ )
 			{
 				Readint( &curvptr[i] , "" );
@@ -762,7 +783,7 @@ struct ptlist **curv_pts;
 						ptr->next = ptr->next->next;
 						if( ptr->next != NULL )
 							ptr->next->prev = ptr;
-						free( tmp_ptr );
+						rt_free( (char *)tmp_ptr, "Getcurve: tmp_ptr" );
 						npts--;
 					}
 				}
@@ -827,7 +848,8 @@ struct ptlist **curv_pts;
 
 	   		/* Calculate points */
 
-			(*curv_pts) = (struct ptlist *)malloc( sizeof( struct ptlist ) );
+			(*curv_pts) = (struct ptlist *)rt_malloc( sizeof( struct ptlist ),
+				"Getcurve: curv_pts" );
 			ptr = (*curv_pts);
 			ptr->prev = NULL;
 			prev = NULL;
@@ -841,7 +863,8 @@ struct ptlist **curv_pts;
    				MAT4X3PNT( ptr->pt , *dir[curve]->rot , tmp );
    				npts++;
 				prev = ptr;
-				ptr->next = (struct ptlist *)malloc( sizeof( struct ptlist ) );
+				ptr->next = (struct ptlist *)rt_malloc( sizeof( struct ptlist ),
+					"Getcurve: ptr->next" );
 				ptr = ptr->next;
 				ptr->prev = prev;
 

@@ -110,7 +110,7 @@ Readglobal()
 				if( name != NULL )
 				{
 					mk_id( fdout , name );
-					free( name );
+					rt_free( name, "Readglobal: name" );
 				}
 				else
 					mk_id( fdout , "Un-named Product" );

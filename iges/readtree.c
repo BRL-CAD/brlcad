@@ -41,7 +41,8 @@ struct node *Readtree()
 		Readint( &op , "" );
 		if( op < 0 )	/* This is an operand */
 		{
-			ptr = (struct node *)malloc( sizeof( struct node ) );
+			ptr = (struct node *)rt_malloc( sizeof( struct node ),
+				"Readtree: ptr" );
 			ptr->op = op;
 			ptr->left = NULL;
 			ptr->right = NULL;
@@ -50,7 +51,8 @@ struct node *Readtree()
 		}
 		else	/* This is an operator */
 		{
-			ptr = (struct node *)malloc( sizeof( struct node ) );
+			ptr = (struct node *)rt_malloc( sizeof( struct node ),
+				"Readtree: ptr" );
 			ptr->op = op;
 			ptr->right = Pop();
 			ptr->left = Pop();

@@ -36,7 +36,7 @@ struct node *root,*parent;
 		return( (struct node *)NULL );
 
 
-	ptr = (struct node *)malloc( sizeof( struct node ) );
+	ptr = (struct node *)rt_malloc( sizeof( struct node ), "Copytree: ptr" );
 
 	*ptr = (*root);
 	ptr->parent = parent;

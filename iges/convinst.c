@@ -142,7 +142,7 @@ Convinst()
 
 				rt_log( "Must do a concatonation\n" );
 
-				rot = (mat_t *)malloc( sizeof( mat_t ) );
+				rot = (mat_t *)rt_malloc( sizeof( mat_t ), "Convinst: rot" );
 				Matmult( *(dir[i]->rot) , dir[pointer]->rot , rot );
 				dir[i]->rot = rot;
 			}

@@ -88,12 +88,14 @@ Convassem()
 		{
 			if( ptr == NULL )
 			{
-				root = (struct solid_list *)malloc( sizeof( struct solid_list ) );
+				root = (struct solid_list *)rt_malloc( sizeof( struct solid_list ),
+						"Convassem: root" );
 				ptr = root;
 			}
 			else
 			{
-				ptr->next = (struct solid_list *)malloc( sizeof( struct solid_list ) );
+				ptr->next = (struct solid_list *)rt_malloc( sizeof( struct solid_list ),
+						"Convassem: ptr->next" );
 				ptr = ptr->next;
 			}
 			ptr->next = NULL;
@@ -203,7 +205,7 @@ Convassem()
 		ptr = root;
 		while( ptr != NULL )
 		{
-			free( ptr );
+			rt_free( (char *)ptr, "convassem: ptr" );
 			ptr = ptr->next;
 		}
 	}

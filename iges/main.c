@@ -134,7 +134,7 @@ char *argv[];
 	int c;
 	char *output_file=(char *)NULL;
 
-	while( (c=getopt( argc , argv , "dntpo:" )) != EOF )
+	while( (c=getopt( argc , argv , "dntpo:x:X:" )) != EOF )
 	{
 		switch( c )
 		{
@@ -152,6 +152,16 @@ char *argv[];
 				break;
 			case 'p':
 				do_polysolids = 1;
+				break;
+			case 'x':
+				sscanf( optarg, "%x", &rt_g.debug );
+				break;
+			case 'X':
+				sscanf( optarg, "%x", &rt_g.NMG_debug );
+				break;
+			default:
+				usage();
+				exit(1);
 				break;
 		}
 	}
@@ -203,7 +213,7 @@ char *argv[];
 		exit(1);
 	}
 
-	identity = (mat_t *)malloc( sizeof( mat_t ) );
+	identity = (mat_t *)rt_malloc( sizeof( mat_t ), "main: identity" );
 	for( i=0 ; i<16 ; i++ )
 	{
 		if( !(i%5) )

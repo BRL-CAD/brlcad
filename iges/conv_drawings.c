@@ -81,7 +81,7 @@ char *id;
 	if( length < 1 )
 		(*str) = NULL;
 	else
-		(*str) = (char *)malloc( sizeof( char ) * length + 1 );
+		(*str) = (char *)rt_malloc( sizeof( char ) * length + 1, "Getstrg: str" );
 	for( i=0 ; i<length ; i++ )
 	{
 		if( counter > lencard )
@@ -199,7 +199,7 @@ struct rt_list *vhead;
 			rt_vlist_2string( vhead , str , (double)loc[X] , (double)loc[Y] , scale,
 				(double)(rot_ang*180.0*rt_invpi) );
 
-		free( str );
+		rt_free( str, "Note_to_vlist: str" );
 	}
 }
 
@@ -483,7 +483,7 @@ mat_t *xform;
 					struct ptlist *tmp_ptr;
 
 					tmp_ptr = ptr->next;
-					free( ptr );
+					rt_free( (char *)ptr, "Draw_entities: ptr" );
 					ptr = tmp_ptr;;
 				}
 				break;

@@ -87,7 +87,7 @@ struct node *root;
 			opa = Apop();
 
 			/* construct the character string (opa ptr->op opb) */
-			tmp = (char *)malloc( strlen( opa ) + strlen( opb ) + 6 );
+			tmp = (char *)rt_malloc( strlen( opa ) + strlen( opb ) + 6, "Showtree: tmp" );
 			if( ptr->parent != NULL )
 				strcpy( tmp , "(" );
 			else
@@ -129,7 +129,7 @@ Initastack()
 
 	jtop = (-1);
 	stklen = STKBLK;
-	stk = (char **)malloc( stklen*sizeof( char * ) );
+	stk = (char **)rt_malloc( stklen*sizeof( char * ), "Initastack: stk" );
 	if( stk == NULL )
 	{
 		fprintf( stderr , "Cannot allocate stack space\n" );
@@ -152,7 +152,7 @@ char *ptr;
 	if( jtop == stklen )
 	{
 		stklen += STKBLK;
-		stk = (char **)realloc( stk , stklen*sizeof( char *) );
+		stk = (char **)rt_realloc( (char *)stk , stklen*sizeof( char *), "Apush: stk" );
 		if( stk == NULL )
 		{
 			fprintf( stderr , "Cannot reallocate stack space\n" );
@@ -192,7 +192,7 @@ Afreestack()
 
 	jtop = (-1);
 	stklen = 0;
-	free( stk );
+	rt_free( (char *)stk, "Afreestack: stk" );
 	return;
 }
 
@@ -204,7 +204,7 @@ Initsstack() /* initialize the stack */
 
 	sjtop = (-1);
 	sstklen = STKBLK;
-	sstk = (struct node **)malloc( sstklen*sizeof( struct node * ) );
+	sstk = (struct node **)rt_malloc( sstklen*sizeof( struct node * ), "Initsstack: sstk" );
 	if( sstk == NULL )
 	{
 		fprintf( stderr , "Cannot allocate stack space\n" );
@@ -224,7 +224,7 @@ struct node *ptr;
 	if( sjtop == sstklen )
 	{
 		sstklen += STKBLK;
-		sstk = (struct node **)realloc( sstk , sstklen*sizeof( struct node *) );
+		sstk = (struct node **)rt_realloc( (char *)sstk , sstklen*sizeof( struct node *), "Spush: sstk" );
 		if( sstk == NULL )
 		{
 			fprintf( stderr , "Cannot reallocate stack space\n" );
@@ -260,6 +260,6 @@ static void
 Sfreestack()
 {
 	sjtop = (-1);
-	free( sstk );
+	rt_free( (char *)sstk, "Sfreestack: sstk" );
 	return;
 }

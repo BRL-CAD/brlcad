@@ -34,7 +34,7 @@ Initstack()
 
 	jtop = (-1);
 	stklen = STKBLK;
-	stk = (struct node **)malloc( stklen*sizeof( struct node * ) );
+	stk = (struct node **)rt_malloc( stklen*sizeof( struct node * ), "Initstack: stk" );
 	if( stk == NULL )
 	{
 		fprintf( stderr , "Cannot allocate stack space\n" );
@@ -54,7 +54,8 @@ struct node *ptr;
 	if( jtop == stklen )
 	{
 		stklen += STKBLK;
-		stk = (struct node **)realloc( stk , stklen*sizeof( struct node *) );
+		stk = (struct node **)rt_realloc( (char *)stk , stklen*sizeof( struct node *),
+			"Push: stk" );
 		if( stk == NULL )
 		{
 			fprintf( stderr , "Cannot reallocate stack space\n" );

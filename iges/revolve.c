@@ -161,13 +161,15 @@ int entityno;
 
 		if( trcs == NULL )
 		{
-			trcs = (struct trclist *)malloc( sizeof( struct trclist ) );
+			trcs = (struct trclist *)rt_malloc( sizeof( struct trclist ),
+				"Revolve: trcs" );
 			trcptr = trcs;
 			prev = NULL;
 		}
 		else if( trcptr->name[0] != '\0' )
 		{
-			trcptr->next = (struct trclist *)malloc( sizeof( struct trclist ) );
+			trcptr->next = (struct trclist *)rt_malloc( sizeof( struct trclist ),
+				"Revolve: trcptr->next" );
 			prev = trcptr;
 			trcptr = trcptr->next;
 		}
@@ -234,7 +236,7 @@ int entityno;
 	if( trcptr->name[0] == '\0' )
 	{
 		trcptr->prev->next = NULL;
-		free( trcptr );
+		rt_free( (char *)trcptr, "Revolve: trcptr" );
 	}
 
 	if( dir[entityno]->form == 1 ) /* curve closed on itself */
@@ -447,7 +449,7 @@ int entityno;
 	trcptr = trcs;
 	while( trcptr != NULL )
 	{
-		free( trcptr );
+		rt_free( (char *)trcptr, "Revolve: trcptr" );
 		trcptr = trcptr->next;
 	}
 	return( 1 );
@@ -461,7 +463,8 @@ struct trclist *trc,*ptr;
 
 	if( trc->subtr == NULL )
 	{
-		trc->subtr = (struct subtracts *)malloc( sizeof( struct subtracts ) );
+		trc->subtr = (struct subtracts *)rt_malloc( sizeof( struct subtracts ),
+			"Revolve: trc->subtr" );
 		subp = trc->subtr;
 	}
 	else
@@ -469,7 +472,8 @@ struct trclist *trc,*ptr;
 		subp = trc->subtr;
 		while( subp->next != NULL )
 			subp = subp->next;
-		subp->next = (struct subtracts *)malloc( sizeof( struct subtracts ) );
+		subp->next = (struct subtracts *)rt_malloc( sizeof( struct subtracts ),
+			"Revolve: subp->next" );
 		subp = subp->next;
 	}
 

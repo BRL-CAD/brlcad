@@ -56,11 +56,13 @@ Evalxform()
 			while( xform )
 			{
 				if( ptr == NULL )
-					ptr = (struct list *)malloc( sizeof( struct list ) );
+					ptr = (struct list *)rt_malloc( sizeof( struct list ),
+							"Evalxform: ptr" );
 				else
 				{
 					ptr1 = ptr;
-					ptr = (struct list *)malloc( sizeof( struct list ) );
+					ptr = (struct list *)rt_malloc( sizeof( struct list ),
+							"Evalxform: ptr" );
 				}
 				ptr->prev = ptr1;
 				ptr->index = xform;
