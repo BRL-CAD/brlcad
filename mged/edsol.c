@@ -812,6 +812,29 @@ int arg;
 			return;
 		}
 		nmg_pr_fu_around_eu( es_eu, &mged_tol );
+		{
+			struct model		*m;
+			struct rt_vlblock	*vbp;
+			long			*tab;
+
+			m = nmg_find_model( &es_eu->l.magic );
+			NMG_CK_MODEL(m);
+
+			/* get space for list of items processed */
+			tab = (long *)rt_calloc( m->maxindex+1, sizeof(long),
+				"nmg_ed tab[]");
+			vbp = rt_vlblock_init();
+
+			nmg_vlblock_around_eu(vbp, es_eu, tab);
+			cvt_vlblock_to_solids( vbp, "_EU_", 0 );	/* swipe vlist */
+
+			rt_vlblock_free(vbp);
+			rt_free( (char *)tab, "nmg_ed tab[]" );
+			dmaflag = 1;
+		}
+		if( *es_eu->up.magic_p == NMG_LOOPUSE_MAGIC )  {
+			nmg_veu( &es_eu->up.lu_p->down_hd, es_eu->up.magic_p );
+		}
 		/* no change of state or es_edflag */
 		return;
 	}
