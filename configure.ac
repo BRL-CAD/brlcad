@@ -787,6 +787,7 @@ AC_CONFIG_FILES([
 	src/mk/Makefile
 	src/nirt/Makefile
 	src/off/Makefile
+	src/other/Makefile
 	src/other/awf/Makefile
 	src/other/iwidgets/Makefile
 	src/other/iwidgets/doc/Makefile
