@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.3  91/08/30  18:46:09  mike
+ * Changed from BSD index/rindex nomenclature to SYSV strchr/strrchr.
+ * 
  * Revision 2.2  91/08/30  17:54:38  mike
  * Changed #include directives to distinguish between local and system header
  * files.
@@ -155,7 +158,7 @@ char	*str;
 	if (dir < 0)
 		fromchar--;
 	
-	if (fromchar >= strlen(linebuf) && dir > 0)
+	if (fromchar >= (int)strlen(linebuf) && dir > 0)
 		a1 = a1->l_next, fromchar = 0;
 	else if (fromchar < 0 && dir < 0)
 		a1 = a1->l_prev, fromchar = a1 ? length(a1) : 0;
