@@ -1,4 +1,4 @@
-/*                    S C A L E . P L O T
+/*                    R T S C A L E 
 *
 *  This is a program will compute and plot an appropriate scale in the lower
 *  left corner of a given image.  The scale is layed out in view
@@ -52,7 +52,7 @@ static char RCSscale[] = "@(#)$Header$ (BRL)";
 #define TRUE 1
 
 char usage[] = "\
-Usage:  scale (width) (units) (interval) < file > file.pl\n\
+Usage:  scale (width) (units) (interval)  filename > file.pl\n\
 	(width)		length of scale in model measurements\n\
 	(units)		sting denoting the unit type,\n\
 	(interval)	number of intervals on the scale\n";
@@ -62,6 +62,9 @@ int	read_rt_file();
 int	drawscale();
 int	drawticks();
 int	overlay();
+
+static FILE	*fp;
+
 
 /*
  *
@@ -92,8 +95,16 @@ char	**argv;
 	 * usage message.
 	 */
 
-	if(argc != 4)  {
+	if(argc != 5)  {
 		fputs(usage, stderr);
+		exit(-1);
+	}
+
+	/* Open an incoming file for reading */
+
+	fp = fopen( argv[4], "r");
+	if( fp == NULL )  {
+		perror(argv[4]);
 		exit(-1);
 	}
 
@@ -124,7 +135,7 @@ fprintf(stderr, "label=%s\n", label);
 	 * not elegant.)
 	 */
 
-	ret = read_rt_file(stdin, model2view);
+	ret = read_rt_file(fp, argv[4],  model2view);
 	if(ret < 0)  {
 		exit(-1);
 	}
@@ -311,13 +322,15 @@ mat_print("v2symbol", v2symbol);
  * This routine reads an rt_log file line by line until it either finds
  * view, orientation, eye_postion, and size of the model, or it hits the
  * end of file.  When a colon is found, sscanf() retrieves the
- * necessary information.  It takes a file pointer and a matrix
- * pointer as parameters.  It returns 0 okay or < 0 failure.
+ * necessary information.  It takes a file pointer, incoming file
+ * name and a matrix pointer as parameters.  
+ * It returns 0 okay or < 0 failure.
  */
 
 int
-read_rt_file(infp, model2view)
+read_rt_file(infp, name, model2view)
 FILE	*infp;
+char	*name;
 mat_t 	model2view;
 {
 
@@ -372,7 +385,7 @@ mat_t 	model2view;
 			/* Else report that there is a problem. */
 
 			fprintf(stderr, "read_rt_log: read failure on file %s\n",
-				string);
+				name);
 			return(-1);
 		}
 
