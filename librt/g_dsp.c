@@ -2881,7 +2881,7 @@ CONST struct db_i		*dbip;
 	 * than mm, we offer the opportunity to scale the solid
 	 * (to get it into mm) on the way out.
 	 */
-	dsp.dsp_mtos[15] /= local2mm;
+	dsp.dsp_stom[15] *= local2mm;
 
 	bu_vls_init( &str );
 	bu_vls_struct_print( &str, rt_dsp_ptab, (char *)&dsp);
@@ -2942,7 +2942,7 @@ CONST struct db_i		*dbip;
 	cp += SIZEOF_NETWORK_LONG;
 
 	/* convert matrix */
-	ntohd((unsigned char *)dsp_ip->dsp_mtos, cp, 16);
+	ntohd((unsigned char *)dsp_ip->dsp_stom, cp, 16);
 	cp += SIZEOF_NETWORK_DOUBLE * 16;
 	bn_mat_inv(dsp_ip->dsp_stom, dsp_ip->dsp_mtos);
 
@@ -3011,9 +3011,9 @@ CONST struct db_i		*dbip;
 	 * than mm, we offer the opportunity to scale the solid
 	 * (to get it into mm) on the way out.
 	 */
-	dsp_ip->dsp_mtos[15] /= local2mm;
+	dsp_ip->dsp_stom[15] *= local2mm;
 
-	htond(cp, (unsigned char *)dsp_ip->dsp_mtos, 16);
+	htond(cp, (unsigned char *)dsp_ip->dsp_stom, 16);
 	cp += SIZEOF_NETWORK_DOUBLE * 16;
 
 	bu_pshort( cp, (int)dsp_ip->dsp_smooth );
