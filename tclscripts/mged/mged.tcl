@@ -234,7 +234,7 @@ proc do_Open { id } {
 # pathname of the file. Note - the filename length is currently
 # limited to a max of 127 characters.
 #
-proc getFile { id parent dir ftypes title } {
+proc getFile { parent dir ftypes title } {
     global mged_gui
     upvar #0 $dir path
 
@@ -250,7 +250,7 @@ proc getFile { id parent dir ftypes title } {
 	if {$parent == "."} {
 	    set parent ""
 	}
-	cad_dialog $parent.uncool $mged_gui($id,screen) "Error" \
+	cad_dialog $parent.uncool $parent "Error" \
 		"Length of path is greater than 127 bytes." info 0 OK
 	return ""
     }
