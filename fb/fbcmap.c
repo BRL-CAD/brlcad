@@ -1,13 +1,13 @@
 /*
-	SCCS id:	@(#) fbcmap.c	1.4
-	Last edit: 	3/13/85 at 22:13:07	G S M
-	Retrieved: 	8/13/86 at 03:12:58
+	SCCS id:	@(#) fbcmap.c	1.5
+	Last edit: 	3/14/85 at 17:57:45	G S M
+	Retrieved: 	8/13/86 at 03:13:05
 	SCCS archive:	/m/cad/fb_utils/RCS/s.fbcmap.c
 
 */
 #if ! defined( lint )
 static
-char	sccsTag[] = "@(#) fbcmap.c	1.4	last edit 3/13/85 at 22:13:07";
+char	sccsTag[] = "@(#) fbcmap.c	1.5	last edit 3/14/85 at 17:57:45";
 #endif
 /*
 	F B C M A P
