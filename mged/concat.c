@@ -179,11 +179,11 @@ int			flags;
 	/* Add the prefix, if any */
 	if( ncharadd > 0 )  {
 		(void)strncpy( local, prestr, ncharadd );
-		(void)strncpy( local+ncharadd, name, NAMESIZE-ncharadd );
+		(void)strncpy( local+ncharadd, name, NAMESIZE-1-ncharadd );
 	} else {
 		(void)strncpy( local, name, NAMESIZE );
 	}
-	local[NAMESIZE] = '\0';
+	local[NAMESIZE-1] = '\0';
 		
 	/* Look up this new name in the existing (main) database */
 	if( (dp = db_lookup( dbip, local, LOOKUP_QUIET )) != DIR_NULL )  {
@@ -195,7 +195,7 @@ int			flags;
 		/* Shift name right two characters, and further prefix */
 		strncpy( local+2, loc2, NAMESIZE-2 );
 		local[1] = '_';			/* distinctive separater */
-		local[NAMESIZE] = '\0';		/* ensure null termination */
+		local[NAMESIZE-1] = '\0';	/* ensure null termination */
 
 		for( c = 'A'; c <= 'Z'; c++ )  {
 			local[0] = c;
@@ -228,6 +228,10 @@ int			flags;
 	/* Update the name, and any references */
 	if( flags & DIR_SOLID )  {
 		printf("adding solid '%s'\n", local );
+		if ((ncharadd + strlen(name)) >= NAMESIZE)
+			printf("WARNING: solid name \"%s%s\" truncated to \"%s\"\n",
+				prestr,name, local);
+
 		/* Depends on all kinds of solids having name in same place */
 		NAMEMOVE( local, rec->s.s_name );
 	} else {
