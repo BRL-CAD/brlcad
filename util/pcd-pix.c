@@ -228,6 +228,14 @@ enum ERRORS e;
 	exit(9);
 }
 
+/*
+ *			P L A N E A L L O C
+ *
+ *  Allocate memory for one YCC color plane.
+ *  Twice as much memory is allocated, so that the interpolators have
+ *  space to work in.
+ *  (versus 8X more, in the original code)
+ */
 static void planealloc(p,width,height)
 implane *p;
 dim width,height;
@@ -236,8 +244,7 @@ dim width,height;
 	p->mwidth=width;
 	p->mheight=height;
 
-	/* XXX Really 8 bytes per pixel? */
-	p->im = ( uBYTE * ) malloc  (width*height*sizeof(uBYTE));
+	p->im = ( uBYTE * ) malloc  (width*height*2);
 	if(!(p->im)) error(E_MEM);
 }
 
@@ -364,12 +371,12 @@ char **argv;
 	case S_Base16: 
 		w=BaseW/4;
 		h=BaseH/4;
-		planealloc(&Luma   ,w,h);
-		planealloc(&Chroma1,w,h);
-		planealloc(&Chroma2,w,h);
 
 		if(!do_overskip)
 		{ 
+			planealloc(&Luma   ,w,h);
+			planealloc(&Chroma1,w,h);
+			planealloc(&Chroma2,w,h);
 			SEEK(L_Head+1);
 			error(readplain(w,h,&Luma,&Chroma1,&Chroma2));
 			interpolate(&Chroma1);
@@ -377,12 +384,14 @@ char **argv;
 		}
 		else
 		{ 
+			planealloc(&Luma   ,w,h);
+			planealloc(&Chroma1,2*w,2*h);
+			planealloc(&Chroma2,2*w,2*h);
 			SEEK(L_Head+1);
 			error(readplain(w,h,&Luma,nullplane,nullplane));
 			SEEK(L_Head+L_Base16+1);
 			error(readplain(2*w,2*h,nullplane,&Chroma1,&Chroma2));
 		}
-
 
 		ycctorgb(w,h,&Luma,&Chroma1,&Chroma2);
 		/* Now Luma holds red, Chroma1 hold green, Chroma2 holds blue */
@@ -395,12 +404,12 @@ char **argv;
 	case S_Base4:  
 		w=BaseW/2;
 		h=BaseH/2;
-		planealloc(&Luma   ,w,h);
-		planealloc(&Chroma1,w,h);
-		planealloc(&Chroma2,w,h);
 
 		if(!do_overskip)
 		{ 
+			planealloc(&Luma   ,w,h);
+			planealloc(&Chroma1,w,h);
+			planealloc(&Chroma2,w,h);
 			SEEK(L_Head+L_Base16+1);
 			error(readplain(w,h,&Luma,&Chroma1,&Chroma2));
 			interpolate(&Chroma1);
@@ -408,6 +417,9 @@ char **argv;
 		}
 		else
 		{ 
+			planealloc(&Luma   ,w,h);
+			planealloc(&Chroma1,2*w,2*h);
+			planealloc(&Chroma2,2*w,2*h);
 			SEEK(L_Head+L_Base16+1);
 			error(readplain(w,h,&Luma,nullplane,nullplane));
 			SEEK(L_Head+L_Base16+L_Base4+1);
@@ -470,12 +482,12 @@ char **argv;
 	case S_4Base:  
 		w=BaseW*2;
 		h=BaseH*2;
-		planealloc(&Luma,w,h);
-		planealloc(&Chroma1,w,h);
-		planealloc(&Chroma2,w,h);
 
 		if(!do_overskip)
 		{
+			planealloc(&Luma,w,h);
+			planealloc(&Chroma1,w,h);
+			planealloc(&Chroma2,w,h);
 			SEEK(L_Head+L_Base16+L_Base4+1);
 			error(readplain(w/2,h/2,&Luma,&Chroma1,&Chroma2));
 			interpolate(&Luma);
@@ -492,6 +504,9 @@ char **argv;
 		}
 		else
 		{
+			planealloc(&Luma,w,h);
+			planealloc(&Chroma1,2*w,2*h);
+			planealloc(&Chroma2,2*w,2*h);
 			SEEK(L_Head+L_Base16+L_Base4+1);
 			error(readplain(w/2,h/2,&Luma,&Chroma1,&Chroma2));
 			interpolate(&Luma);
