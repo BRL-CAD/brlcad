@@ -335,7 +335,7 @@ particle_dump()
 		type = "cone";
 		break;
 	default:
-		fprintf(stderr, "g2asc: no particle type %s\n", type);
+		fprintf(stderr, "g2asc: no particle type %d\n", part->part_type);
 		exit(-1);
 	}
 
