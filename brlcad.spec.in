@@ -7,7 +7,7 @@ Vendor: AMSRC-SL-BE (ACST)
 Url: http://ftp.arl.army.mil/brlcad
 Group: 
 Source0: http://ftp.arl.army.mil/brlcad/@PACKAGE@-@VERSION@.tar.gz
-Buildroot: /usr/src/redhat/BUILD/@PACKAGE@
+Buildroot: /var/tmp/redhat/BUILD/@PACKAGE@
 
 %description
 
