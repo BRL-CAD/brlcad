@@ -203,6 +203,15 @@ cat << EOF > ${IN_FILE}
 	HAS_SYMLINKS=1;
 #endif
 
+#ifdef _AIX
+/*	IBM RS/6000 running AIX */
+#	undef	ibm
+	MACHINE=ibm;
+	UNIXTYPE=SYSV;
+	HAS_TCP=1;
+	HAS_SYMLINKS=1;
+#endif
+
 EOF
 
 # Run the file through the macro preprocessor.
