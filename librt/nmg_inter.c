@@ -2287,159 +2287,6 @@ nmg_region_v_unique( fu2->s_p->r_p, &is->tol );
 		rt_log("nmg_isect_two_face2p(fu1=x%x, fu2=x%x) END\n", fu1, fu2);
 }
 
-
-/*
- *			N M G _ I S E C T _ T W O _ F A C E 3 P
- *
- *  Handle the complete mutual intersection of
- *  two 3-D non-coplanar planar faces,
- *  including cutjoin and meshing.
- *
- *  The line of intersection has already been computed.
- */
-static void
-nmg_isect_two_face3p( is, fu1, fu2 )
-struct nmg_inter_struct	*is;
-struct faceuse		*fu1, *fu2;
-{
-	struct nmg_ptbl vert_list1, vert_list2;
-	int	again;		/* Need to do it again? */
-	int	trips;		/* Number of trips through loop */
-
-	NMG_CK_INTER_STRUCT(is);
-	NMG_CK_FACEUSE(fu1);
-	NMG_CK_FACEUSE(fu2);
-
-	if (rt_g.NMG_debug & DEBUG_POLYSECT) {
-		rt_log("nmg_isect_two_face3p( fu1=x%x, fu2=x%x )  START12\n", fu1, fu2);
-		VPRINT("isect ray is->pt ", is->pt);
-		VPRINT("isect ray is->dir", is->dir);
-	}
-
-	if( rt_g.NMG_debug & DEBUG_VERIFY )  {
-		nmg_vfu( &fu1->s_p->fu_hd, fu1->s_p );
-		nmg_vfu( &fu2->s_p->fu_hd, fu2->s_p );
-nmg_fu_touchingloops(fu1);
-nmg_fu_touchingloops(fu2);
-	}
-
-	(void)nmg_tbl(&vert_list1, TBL_INIT,(long *)NULL);
-	(void)nmg_tbl(&vert_list2, TBL_INIT,(long *)NULL);
-
-	again = 1;
-	for( trips = 0; again > 0 && trips < 3; trips++ )  {
-		again = 0;
-
-		(void)nmg_tbl(&vert_list1, TBL_RST,(long *)NULL);
-		(void)nmg_tbl(&vert_list2, TBL_RST,(long *)NULL);
-
-	    	is->l1 = &vert_list1;
-	    	is->l2 = &vert_list2;
-		is->s1 = fu1->s_p;
-		is->s2 = fu2->s_p;
-		is->fu1 = fu1;
-		is->fu2 = fu2;
-
-	    	if (rt_g.NMG_debug & (DEBUG_POLYSECT|DEBUG_FCUT|DEBUG_MESH)
-	    	    && rt_g.NMG_debug & DEBUG_PLOTEM) {
-	    	    	nmg_pl_2fu( "Iface%d.pl", 0, fu1, fu2, 0 );
-	    	}
-
-		if( nmg_isect_face3p_face3p(is, fu1, fu2) )  {
-			if (rt_g.NMG_debug & DEBUG_POLYSECT)
-				rt_log("nmg_isect_two_face3p(): re-building intersection line A\n");
-			again = 1;
-		}
-		if( rt_g.NMG_debug & DEBUG_VERIFY )  {
-nmg_fu_touchingloops(fu1);
-nmg_fu_touchingloops(fu2);
-			nmg_vfu( &fu1->s_p->fu_hd, fu1->s_p );
-			nmg_vfu( &fu2->s_p->fu_hd, fu2->s_p );
-		}
-
-		/*
-		 *  Now intersect the other way around, to catch any stragglers.
-		 */
-	    	if (rt_g.NMG_debug & DEBUG_FCUT) {
-		    	rt_log("nmg_isect_two_face3p(fu1=x%x, fu2=x%x) vert_lists A:\n", fu1, fu2);
-	    		nmg_pr_ptbl_vert_list( "vert_list1", &vert_list1 );
-	    		nmg_pr_ptbl_vert_list( "vert_list2", &vert_list2 );
-	    	}
-
-		if (rt_g.NMG_debug & DEBUG_POLYSECT) {
-			rt_log("nmg_isect_two_face3p( fu1=x%x, fu2=x%x )  START21\n", fu1, fu2);
-		}
-
-	    	is->l2 = &vert_list1;
-	    	is->l1 = &vert_list2;
-		is->s2 = fu1->s_p;
-		is->s1 = fu2->s_p;
-		is->fu2 = fu1;
-		is->fu1 = fu2;
-
-		if( nmg_isect_face3p_face3p(is, fu2, fu1) )  {
-			if (rt_g.NMG_debug & DEBUG_POLYSECT)
-				rt_log("nmg_isect_two_face3p(): re-building intersection line B\n");
-			again = 1;
-		}
-
-		if( rt_g.NMG_debug & DEBUG_VERIFY )  {
-nmg_fu_touchingloops(fu1);
-nmg_fu_touchingloops(fu2);
-			nmg_vfu( &fu1->s_p->fu_hd, fu1->s_p );
-			nmg_vfu( &fu2->s_p->fu_hd, fu2->s_p );
-		}
-	}
-
-	nmg_purge_unwanted_intersection_points(&vert_list1, fu2, &is->tol);
-	nmg_purge_unwanted_intersection_points(&vert_list2, fu1, &is->tol);
-
-    	if (rt_g.NMG_debug & DEBUG_FCUT) {
-	    	rt_log("nmg_isect_two_face3p(fu1=x%x, fu2=x%x) vert_lists B:\n", fu1, fu2);
-    		nmg_pr_ptbl_vert_list( "vert_list1", &vert_list1 );
-    		nmg_pr_ptbl_vert_list( "vert_list2", &vert_list2 );
-    	}
-
-    	if (vert_list1.end == 0 && vert_list2.end == 0) {
-    		/* there were no intersections */
-    		goto out;
-    	}
-
-	if (rt_g.NMG_debug & DEBUG_POLYSECT) {
-		rt_log("nmg_isect_two_face3p( fu1=x%x, fu2=x%x )  MIDDLE\n", fu1, fu2);
-	}
-
-	nmg_face_cutjoin(&vert_list1, &vert_list2, fu1, fu2, is->pt, is->dir, &is->tol);
-
-	if( rt_g.NMG_debug & DEBUG_VERIFY )  {
-nmg_fu_touchingloops(fu1);
-nmg_fu_touchingloops(fu2);
-nmg_region_v_unique( fu1->s_p->r_p, &is->tol );
-nmg_region_v_unique( fu2->s_p->r_p, &is->tol );
-		nmg_vfu( &fu1->s_p->fu_hd, fu1->s_p );
-		nmg_vfu( &fu2->s_p->fu_hd, fu2->s_p );
-	}
-
-#if 0
-	show_broken_stuff((long *)fu1, (long **)NULL, 1, 0);
-	show_broken_stuff((long *)fu2, (long **)NULL, 1, 0);
-#endif
-
-out:
-	(void)nmg_tbl(&vert_list1, TBL_FREE, (long *)NULL);
-	(void)nmg_tbl(&vert_list2, TBL_FREE, (long *)NULL);
-
-	if( rt_g.NMG_debug & DEBUG_VERIFY )  {
-		nmg_vfu( &fu1->s_p->fu_hd, fu1->s_p );
-		nmg_vfu( &fu2->s_p->fu_hd, fu2->s_p );
-	}
-	if (rt_g.NMG_debug & DEBUG_POLYSECT) {
-		rt_log("nmg_isect_two_face3p( fu1=x%x, fu2=x%x )  END\n", fu1, fu2);
-		VPRINT("isect ray is->pt ", is->pt);
-		VPRINT("isect ray is->dir", is->dir);
-	}
-}
-
 /*
  * NEWLINE!
  *			N M G _ I S E C T _ L I N E 2 _ E D G E 2 P
@@ -3315,15 +3162,11 @@ nmg_fu_touchingloops(fu2);
 		}
 		/* All is well */
 		bs.coplanar = 0;
-#if NEWLINE
 		nmg_isect_two_face3pNEW( &bs, fu1, fu2 );
-#else
-		nmg_isect_two_face3p( &bs, fu1, fu2 );
-#endif
 		break;
 	case -1:
 		/* co-planar faces */
-rt_log("co-planar faces (rt_isect_2planes)  WARNING: faces not shared.\n");
+		rt_log("co-planar faces (rt_isect_2planes)  WARNING: faces not shared.\n");
 coplanar:
 		bs.coplanar = 1;
 		nmg_isect_two_face2p( &bs, fu1, fu2 );
