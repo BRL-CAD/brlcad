@@ -86,12 +86,17 @@ struct db_i	*dbip;
 	VSETALL( rtip->rti_inf_box.bn.bn_max,  0.1 );
 	rtip->rti_inf_box.bn.bn_type = CUT_BOXNODE;
 
-	/* XXX These need to be improved */
+	/* XXX These defaults need to be improved */
 	rtip->rti_tol.magic = BN_TOL_MAGIC;
 	rtip->rti_tol.dist = 0.005;
 	rtip->rti_tol.dist_sq = rtip->rti_tol.dist * rtip->rti_tol.dist;
 	rtip->rti_tol.perp = 1e-6;
 	rtip->rti_tol.para = 1 - rtip->rti_tol.perp;
+
+	rtip->rti_ttol.magic = RT_TESS_TOL_MAGIC;
+	rtip->rti_ttol.abs = 0.0;
+	rtip->rti_ttol.rel = 0.01;
+	rtip->rti_ttol.norm = 0;
 
 	rtip->rti_space_partition = RT_PART_NUBSPT;
 	rtip->rti_nugrid_dimlimit = 0;
@@ -402,8 +407,6 @@ struct soltab		*stp;
 	struct rt_db_internal		intern;
 	int				id = stp->st_id;
 	int				rnum;
-	struct rt_tess_tol		ttol;
-	struct bn_tol			tol;
 	matp_t				mat;
 
 	BU_LIST_INIT( &vhead );
@@ -426,23 +429,11 @@ struct soltab		*stp;
 	}
 	RT_CK_DB_INTERNAL( &intern );
 
-	ttol.magic = RT_TESS_TOL_MAGIC;
-	ttol.abs = 0.0;
-	ttol.rel = 0.01;
-	ttol.norm = 0;
-
-	/* XXX These need to be improved */
-	tol.magic = BN_TOL_MAGIC;
-	tol.dist = 0.005;
-	tol.dist_sq = tol.dist * tol.dist;
-	tol.perp = 1e-6;
-	tol.para = 1 - tol.perp;
-
 	if( rt_functab[id].ft_plot(
 		&vhead,
 		&intern,
-		&ttol,
-		&tol
+		&rtip->rti_ttol,
+		&rtip->rti_tol
 	    ) < 0 )  {
 		bu_log("rt_plot_solid(%s): ft_plot() failure\n",
 			stp->st_name);
