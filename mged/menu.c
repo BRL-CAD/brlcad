@@ -162,10 +162,10 @@ struct menu_item *value;
     Tcl_DStringFree(&ds_menu);
     bu_vls_free(&menu_string);
 
-    for( BU_LIST_FOR(dlp, dm_list, &head_dm_list.l) ){
+    FOR_ALL_DISPLAYS(dlp, &head_dm_list.l){
       if(curr_dm_list->menu_vars == dlp->menu_vars &&
-	 dlp->_mged_variables.faceplate &&
-	 dlp->_mged_variables.orig_gui)
+	 dlp->_mged_variables->faceplate &&
+	 dlp->_mged_variables->orig_gui)
 	dlp->_dirty = 1;
     }
 }
@@ -181,7 +181,7 @@ struct menu_item *value;
 
   save_cmd_list = curr_cmd_list;
   save_dm_list = curr_dm_list;
-  for( BU_LIST_FOR(p, dm_list, &head_dm_list.l) ){
+  FOR_ALL_DISPLAYS(p, &head_dm_list.l){
     if(p->aim)
       curr_cmd_list = p->aim;
 
@@ -202,7 +202,7 @@ int y;
 
   switch(mptr->menu_arg){
   case BV_RATE_TOGGLE:
-    if(mged_variables.rateknobs){
+    if(mged_variables->rateknobs){
       dmp->dm_setColor(dmp, DM_WHITE, 1);
       dmp->dm_drawString2D( dmp, "Rate", MENUX, y-15, 0, 0 );
       dmp->dm_setColor(dmp, DM_YELLOW, 1);
@@ -238,7 +238,7 @@ int y_top;
   menu_top = y - MENU_DY / 2;
   dmp->dm_setColor(dmp, DM_YELLOW, 1);
 #if 1
-  dmp->dm_setLineAttr(dmp, mged_variables.linewidth, 0);
+  dmp->dm_setLineAttr(dmp, mged_variables->linewidth, 0);
 #else
   dmp->dm_setLineAttr(dmp, 1, 0);
 #endif
@@ -283,7 +283,7 @@ int y_top;
 
   dmp->dm_setColor(dmp, DM_YELLOW, 1);
 #if 1
-  dmp->dm_setLineAttr(dmp, mged_variables.linewidth, 0);
+  dmp->dm_setLineAttr(dmp, mged_variables->linewidth, 0);
 #else
   dmp->dm_setLineAttr(dmp, 1, 0);
 #endif
@@ -370,7 +370,7 @@ char **argv;
     return TCL_ERROR;
   }
 
-  for(BU_LIST_FOR(dlp1, dm_list, &head_dm_list.l))
+  FOR_ALL_DISPLAYS(dlp1, &head_dm_list.l)
     if(!strcmp(argv[1], bu_vls_addr(&dlp1->_dmp->dm_pathName)))
       break;
 
@@ -380,7 +380,7 @@ char **argv;
     return TCL_ERROR;
   }
 
-  for(BU_LIST_FOR(dlp2, dm_list, &head_dm_list.l))
+  FOR_ALL_DISPLAYS(dlp2, &head_dm_list.l)
     if(!strcmp(argv[2], bu_vls_addr(&dlp2->_dmp->dm_pathName)))
       break;
 
@@ -402,13 +402,53 @@ char **argv;
   dlp2->menu_vars = dlp1->menu_vars;
 
   /* check if save_mvp is being used elsewhere */
-  for(BU_LIST_FOR(dlp3, dm_list, &head_dm_list.l))
+  FOR_ALL_DISPLAYS(dlp3, &head_dm_list.l)
     if(save_mvp == dlp3->menu_vars)
       break;
 
   /* save_mvp is not being used */
   if(dlp3 == &head_dm_list)
     bu_free((genptr_t)save_mvp, "f_share_menu: save_mvp");
+
+  /* need to redraw this guy */
+  dlp2->_dirty = 1;
+
+  return TCL_OK;
+}
+
+int
+f_unshare_menu(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
+{
+  struct dm_list *dlp1, *dlp2;
+
+  if(argc != 2){
+    return TCL_ERROR;
+  }
+
+  FOR_ALL_DISPLAYS(dlp1, &head_dm_list.l)
+    if(!strcmp(argv[1], bu_vls_addr(&dlp1->_dmp->dm_pathName)))
+      break;
+
+  if(dlp1 == &head_dm_list){
+     Tcl_AppendResult(interp, "f_unshare_menu: unrecognized pathName - ",
+		      argv[1], "\n", (char *)NULL);
+    return TCL_ERROR;
+  }
+
+  FOR_ALL_DISPLAYS(dlp2, &head_dm_list.l)
+    if(dlp1 != dlp2 && dlp1->menu_vars == dlp2->menu_vars)
+      break;
+
+  /* not sharing a menu ---- nothing to do */
+  if(dlp2 == &head_dm_list)
+    return TCL_OK;
+
+  BU_GETSTRUCT(dlp1->menu_vars, menu_vars);
+  *dlp1->menu_vars = *dlp2->menu_vars;  /* struct copy */
 
   return TCL_OK;
 }

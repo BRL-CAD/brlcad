@@ -2069,7 +2069,7 @@ int both;    /* if(!both) then set only curr_e_axes_pos, otherwise
     bn_mat_idn(acc_rot_sol);
 #endif
 
-    mged_variables.transform = 'e';
+    mged_variables->transform = 'e';
     set_scroll();
   }
 }
@@ -2824,7 +2824,7 @@ sedit()
 			RT_ARB_CK_MAGIC( arb );
 
 #ifdef TRY_EDIT_NEW_WAY
-			if(mged_variables.context){
+			if(mged_variables->context){
 			  /* apply es_invmat to convert to real model space */
 			  MAT4X3PNT(work,es_invmat,es_para);
 			}else{
@@ -2939,7 +2939,7 @@ sedit()
 #ifdef TRY_EDIT_NEW_WAY
 				/* Borrow incr_change matrix here */
 				bn_mat_mul( incr_change, modelchanges, invsolr );
-				if(mged_variables.context){
+				if(mged_variables->context){
 				  /* calculate rotations about keypoint */
 				  bn_mat_xform_about_pt( edit, incr_change, es_keypoint );
 
@@ -3054,7 +3054,7 @@ sedit()
 				 * to desired new location.
 				 */
 #ifdef TRY_EDIT_NEW_WAY
-			  if(mged_variables.context){ /* move solid so that es_keypoint is at position es_para */
+			  if(mged_variables->context){ /* move solid so that es_keypoint is at position es_para */
 			    vect_t raw_para;
 
 			    MAT4X3PNT(raw_para, es_invmat, es_para);
@@ -3102,7 +3102,7 @@ sedit()
 			NMG_CK_SNURB(surf);
 			fp = &RT_NURB_GET_CONTROL_POINT( surf, spl_ui, spl_vi );
 #ifdef TRY_EDIT_NEW_WAY
-			if(mged_variables.context){
+			if(mged_variables->context){
 			  /* apply es_invmat to convert to real model space */
 			  MAT4X3PNT( fp, es_invmat, es_para );
 			}else{
@@ -3126,7 +3126,7 @@ sedit()
 			RT_TGC_CK_MAGIC(tgc);
 			if( inpara ) {
 #ifdef TRY_EDIT_NEW_WAY
-			  if(mged_variables.context){
+			  if(mged_variables->context){
 			    /* apply es_invmat to convert to real model coordinates */
 			    MAT4X3PNT( work, es_invmat, es_para );
 			    VSUB2(tgc->h, work, tgc->v);
@@ -3180,7 +3180,7 @@ sedit()
 			RT_TGC_CK_MAGIC(tgc);
 			if( inpara ) {
 #ifdef TRY_EDIT_NEW_WAY
-			  if(mged_variables.context){
+			  if(mged_variables->context){
 			    /* apply es_invmat to convert to real model coordinates */
 			    MAT4X3PNT( work, es_invmat, es_para );
 			    VSUB2(tgc->h, work, tgc->v);
@@ -3214,7 +3214,7 @@ sedit()
 	case EARB:   /* edit an ARB edge */
 		if( inpara ) { 
 #ifdef TRY_EDIT_NEW_WAY
-		  if(mged_variables.context){
+		  if(mged_variables->context){
 		    /* apply es_invmat to convert to real model space */
 		    MAT4X3PNT( work, es_invmat, es_para );
 		  }else{
@@ -3261,7 +3261,7 @@ sedit()
 			/* Apply changes to solid */
 			/* xlate keypoint to origin, rotate, then put back. */
 #ifdef TRY_EDIT_NEW_WAY
-			switch(mged_variables.rotate_about){
+			switch(mged_variables->rotate_about){
 			case 'v':       /* View Center */
 			  VSET(work, 0.0, 0.0, 0.0);
 			  MAT4X3PNT(rot_point, view2model, work);
@@ -3279,7 +3279,7 @@ sedit()
 			  break;
 			}
 
-			if(mged_variables.context){
+			if(mged_variables->context){
 			  /* calculate rotations about keypoint */
 			  bn_mat_xform_about_pt( edit, incr_change, rot_point );
 
@@ -3337,7 +3337,7 @@ sedit()
 				/* Apply incremental changes already in incr_change */
 			}
 
-			if(mged_variables.context){
+			if(mged_variables->context){
 			  /* calculate rotations about keypoint */
 			  bn_mat_xform_about_pt( edit, incr_change, es_keypoint );
 
@@ -3394,7 +3394,7 @@ sedit()
 				/* Apply incremental changes already in incr_change */
 			}
 
-			if(mged_variables.context){
+			if(mged_variables->context){
 			  /* calculate rotations about keypoint */
 			  bn_mat_xform_about_pt( edit, incr_change, es_keypoint );
 
@@ -3463,7 +3463,7 @@ sedit()
 				/* Apply incremental changes already in incr_change */
 			}
 
-			if(mged_variables.context){
+			if(mged_variables->context){
 			  /* calculate rotations about keypoint */
 			  bn_mat_xform_about_pt( edit, incr_change, es_keypoint );
 
@@ -3506,7 +3506,7 @@ sedit()
 				VMOVE( new_pt , es_mparam )
 			else if( inpara == 3 ){
 #ifdef TRY_EDIT_NEW_WAY
-			  if(mged_variables.context){
+			  if(mged_variables->context){
 			    /* apply es_invmat to convert to real model space */
 			    MAT4X3PNT( new_pt, es_invmat, es_para);
 			  }else{
@@ -3672,7 +3672,7 @@ sedit()
 				VMOVE( new_pt , es_mparam )
 			else if( inpara == 3 ){
 #ifdef TRY_EDIT_NEW_WAY
-			  if(mged_variables.context){
+			  if(mged_variables->context){
 			    /* apply es_invmat to convert to real model space */
 			    MAT4X3PNT( new_pt, es_invmat, es_para);
 			  }else{
@@ -3754,7 +3754,7 @@ sedit()
 				VMOVE( to_pt , es_mparam )
 			else if( inpara == 3 ){
 #ifdef TRY_EDIT_NEW_WAY
-			  if(mged_variables.context){
+			  if(mged_variables->context){
 			    /* apply es_invmat to convert to real model space */
 			    MAT4X3PNT( to_pt, es_invmat, es_para);
 			  }else{
@@ -3845,7 +3845,7 @@ sedit()
 			  VMOVE( new_pt , es_mparam )
 			else if( inpara == 3 ){
 #ifdef TRY_EDIT_NEW_WAY
-			  if(mged_variables.context){
+			  if(mged_variables->context){
 			    /* apply es_invmat to convert to real model space */
 			    MAT4X3PNT( new_pt, es_invmat, es_para);
 			  }else{
@@ -3886,7 +3886,7 @@ sedit()
 			  VMOVE( new_pt , es_mparam )
 			else if( inpara == 3 ){
 #ifdef TRY_EDIT_NEW_WAY
-			  if(mged_variables.context){
+			  if(mged_variables->context){
 			    /* apply es_invmat to convert to real model space */
 			    MAT4X3PNT( new_pt, es_invmat, es_para);
 			  }else{
@@ -3927,7 +3927,7 @@ sedit()
 				VMOVE( new_pt , es_mparam )
 			else if( inpara == 3 ){
 #ifdef TRY_EDIT_NEW_WAY
-			  if(mged_variables.context){
+			  if(mged_variables->context){
 			    /* apply es_invmat to convert to real model space */
 			    MAT4X3PNT( new_pt, es_invmat, es_para);
 			  }else{
@@ -3968,7 +3968,7 @@ sedit()
 				VMOVE( new_pt , es_mparam )
 			else if( inpara == 3 ){
 #ifdef TRY_EDIT_NEW_WAY
-			  if(mged_variables.context){
+			  if(mged_variables->context){
 			    /* apply es_invmat to convert to real model space */
 			    MAT4X3PNT( new_pt, es_invmat, es_para);
 			  }else{
@@ -4002,7 +4002,7 @@ sedit()
 				VMOVE( new_pt , es_mparam )
 			else if( inpara == 3 ){
 #ifdef TRY_EDIT_NEW_WAY
-			  if(mged_variables.context){
+			  if(mged_variables->context){
 			    /* apply es_invmat to convert to real model space */
 			    MAT4X3PNT( new_pt, es_invmat, es_para);
 			  }else{
@@ -4063,7 +4063,7 @@ sedit()
 				VMOVE( pick_pt, es_mparam )
 			else if( inpara == 3 ){
 #ifdef TRY_EDIT_NEW_WAY
-			  if(mged_variables.context){
+			  if(mged_variables->context){
 			    /* apply es_invmat to convert to real model space */
 			    MAT4X3PNT( pick_pt, es_invmat, es_para);
 			  }else{
@@ -4435,7 +4435,7 @@ sedit()
 			}
 			else if( inpara == 3 ){
 #ifdef TRY_EDIT_NEW_WAY
-			  if(mged_variables.context){
+			  if(mged_variables->context){
 			    /* apply es_invmat to convert to real model space */
 			    MAT4X3PNT( new_pt, es_invmat, es_para);
 			  }else{
@@ -4497,7 +4497,7 @@ sedit()
 			}
 			else if( inpara == 3 ){
 #ifdef TRY_EDIT_NEW_WAY
-			  if(mged_variables.context){
+			  if(mged_variables->context){
 			    /* apply es_invmat to convert to real model space */
 			    MAT4X3PNT( new_pt, es_invmat, es_para);
 			  }else{
@@ -4558,7 +4558,7 @@ sedit()
 			}
 			else if( inpara == 3 ){
 #ifdef TRY_EDIT_NEW_WAY
-			  if(mged_variables.context){
+			  if(mged_variables->context){
 			    /* apply es_invmat to convert to real model space */
 			    MAT4X3PNT( new_pt, es_invmat, es_para);
 			  }else{
@@ -6201,8 +6201,8 @@ oedit_accept()
 
 #ifdef DO_SINGLE_DISPLAY_LIST
 		save_dmlp = curr_dm_list;
-		for( BU_LIST_FOR(dmlp, dm_list, &head_dm_list.l) ){
-		  if(dmlp->_dmp->dm_displaylist && dmlp->_mged_variables.dlist){
+		FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l){
+		  if(dmlp->_dmp->dm_displaylist && dmlp->_mged_variables->dlist){
 		    curr_dm_list = dmlp;
 		    createDList(&HeadSolid);
 		  }
@@ -6267,8 +6267,8 @@ oedit_accept()
 
 #ifdef DO_SINGLE_DISPLAY_LIST
 	save_dmlp = curr_dm_list;
-	for( BU_LIST_FOR(dmlp, dm_list, &head_dm_list.l) ){
-	  if(dmlp->_dmp->dm_displaylist && dmlp->_mged_variables.dlist){
+	FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l){
+	  if(dmlp->_dmp->dm_displaylist && dmlp->_mged_variables->dlist){
 	    curr_dm_list = dmlp;
 	    createDList(&HeadSolid);
 	  }
@@ -6399,8 +6399,8 @@ sedit_accept()
 
 #ifdef DO_SINGLE_DISPLAY_LIST
 	save_dmlp = curr_dm_list;
-	for( BU_LIST_FOR(dmlp, dm_list, &head_dm_list.l) ){
-	  if(dmlp->_dmp->dm_displaylist && dmlp->_mged_variables.dlist){
+	FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l){
+	  if(dmlp->_dmp->dm_displaylist && dmlp->_mged_variables->dlist){
 	    curr_dm_list = dmlp;
 	    createDList(&HeadSolid);
 	  }
@@ -6487,8 +6487,8 @@ sedit_reject()
 
 #ifdef DO_SINGLE_DISPLAY_LIST
 	save_dmlp = curr_dm_list;
-	for( BU_LIST_FOR(dmlp, dm_list, &head_dm_list.l) ){
-	  if(dmlp->_dmp->dm_displaylist && dmlp->_mged_variables.dlist){
+	FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l){
+	  if(dmlp->_dmp->dm_displaylist && dmlp->_mged_variables->dlist){
 	    curr_dm_list = dmlp;
 	    createDList(&HeadSolid);
 	  }
