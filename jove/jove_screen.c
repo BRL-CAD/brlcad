@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 1.2  83/12/16  00:09:41  dpk
+ * Added distinctive RCS header
+ * 
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$";
@@ -31,16 +34,19 @@ struct scrimage
 	*nimage,	/* What lines should be where after redisplay */
 	*oimage;	/* What line are after redisplay */
 
-struct screenline	*Screen,	/* The screen */
+struct screenline	*Screen,	/* The screen, a bunch of screenline */
 			*Curline;	/* Current line */
 char	*cursor,			/* Offset into current line */
-	*cursend;
+	*cursend;			/* Pointer to last char in line */
 
 int	CapCol,
 	CapLine,
 
 	i_line,
 	i_col;
+
+#define sputc(c)	((*cursor != c) ? dosputc(c) : (cursor++, i_col++))
+#define soutputc(c)	if (--n > 0) sputc(c); else { sputc('!'); goto outahere;}
 
 make_scr()
 {
@@ -80,9 +86,18 @@ cl_eol()
 
 	if (cursor < Curline->s_length) {
 		clrline(cursor, Curline->s_length);
-		Curline->s_length = cursor;
 		Placur(i_line, i_col);
-		putpad(CE, 1);
+		if (CE)
+			putpad(CE, 1);
+		else {
+			/* Ugh.  The slow way */
+			register char *savecp = cursor;
+
+			while (cursor <= Curline->s_length)
+				sputc (' ');
+			cursor = savecp;
+		}
+		Curline->s_length = cursor;	/* Update end pointer */
 	}
 }
 
@@ -101,11 +116,7 @@ cl_scr()
 	UpdMesg++;
 }
 
-#define soutputc(c)	if (--n > 0) sputc(c); else { sputc('!'); goto outahere;}
-
 /* Output one character (if necessary) at the current position */
-
-#define sputc(c)	((*cursor != c) ? dosputc(c) : (cursor++, i_col++))
 
 dosputc(c)
 register char	c;
@@ -249,6 +260,7 @@ register int	nline,
 }
 
 extern int	diffnum;
+#define PrintHo()	putpad(HO, 1), CapLine = CapCol = 0
 
 /* Insert `num' lines a top, but leave all the lines BELOW `bottom'
  * alone (at least they won't look any different when we are done).
@@ -287,11 +299,12 @@ v_ins_line(num, top, bottom)
 	} else if (CS) {
 		Placur(0, 0);
 		printf(tgoto(CS, bottom, top));
-		Placur(top, 0);
+		PrintHo();
+		Placur(top, 0);		/* Conservative */
 		for (i = 0; i < num; i++)
 			putpad(SR, 0);
 		printf(tgoto(CS, LI - 1, 0));
-		Placur(0, 0);
+		PrintHo();			/* Conservative */
 	} else {
 		Placur(bottom - num + 1, 0);
 		for (i = 0; i < num; i++)
@@ -340,11 +353,12 @@ v_del_line(num, top, bottom)
 	} else if (CS) {
 		Placur(0, 0);
 		printf(tgoto(CS, bottom, top));
-		Placur(bottom, 0);
+		PrintHo();
+		Placur(bottom, 0);		/* Conservative */
 		for (i = 0; i < num; i++)
 			outchar('\n');
 		printf(tgoto(CS, LI - 1, 0));
-		Placur(0, 0);
+		PrintHo();			/* Conservative */
 	} else {
 		Placur(top, 0);
 		for (i = 0; i < num; i++)
@@ -390,7 +404,6 @@ struct cursaddr	*HorMin,
 
 #define	home()		Placur(0, 0)
 #define LowLine()	putpad(LL, 1), CapLine = LI - 1, CapCol = 0
-#define PrintHo()	putpad(HO, 1), CapLine = CapCol = 0
 
 struct cursaddr	WarpHor[NUMHOR],
 		WarpVert[NUMVERT],
