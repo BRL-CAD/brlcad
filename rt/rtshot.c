@@ -86,8 +86,8 @@ char **argv;
 	case 'x':
 		sscanf( argv[1], "%x", &rt_g.debug );
 		fprintf(stderr,"librt rt_g.debug=x%x\n", rt_g.debug);
-		argc--;
-		argv++;
+		argc -= 2;
+		argv += 2;
 		break;
 
 	case 'd':
