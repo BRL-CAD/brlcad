@@ -256,7 +256,7 @@ XEvent *eventPtr;
 
       break;
     case ALT_MOUSE_MODE_ROTATE:
-      bu_vls_printf( &cmd, "iknob ax %f ay %f\n",
+      bu_vls_printf( &cmd, "knob -i ax %f ay %f\n",
 		     (my - ((struct glx_vars *)dmp->dm_vars)->omy)/512.0,
 		     (mx - ((struct glx_vars *)dmp->dm_vars)->omx)/512.0 );
       break;
@@ -274,12 +274,12 @@ XEvent *eventPtr;
 	    (fastf_t)((struct glx_vars *)dmp->dm_vars)->width * 2.0;
 	  fy = (((struct glx_vars *)dmp->dm_vars)->omy - my)/
 	    (fastf_t)((struct glx_vars *)dmp->dm_vars)->height * 2.0;
-	  bu_vls_printf( &cmd, "iknob aX %f aY %f\n", fx, fy );
+	  bu_vls_printf( &cmd, "knob -i aX %f aY %f\n", fx, fy );
 	}
       }	     
       break;
     case ALT_MOUSE_MODE_ZOOM:
-      bu_vls_printf( &cmd, "iknob aS %f\n", (((struct glx_vars *)dmp->dm_vars)->omy - my)/
+      bu_vls_printf( &cmd, "knob -i aS %f\n", (((struct glx_vars *)dmp->dm_vars)->omy - my)/
 		     (fastf_t)((struct glx_vars *)dmp->dm_vars)->height);
       break;
     }
