@@ -14,6 +14,13 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "conf.h"
 
+#if defined(HAVE_GETOPT)
+#ifndef lint
+char getopt_dummy;   /* some systems can't handle empty object modules */
+#else
+#endif
+#else
+
 #include <stdio.h>
 
 #include "machine.h"
@@ -90,3 +97,5 @@ char	**nargv,
 	}
 	return(optopt);			/* dump back option letter */
 }
+
+#endif
