@@ -147,7 +147,7 @@ char **argv;
 	}
 
 	/* new style ascii database */
-	if (!strncmp(c1, "title", 5)) {
+	if (!strncmp(c1, "title", 5) || !strncmp(c1, "put ", 4) ) {
 		Tcl_Interp     *interp;
 		Tcl_Interp     *safe_interp;
 
