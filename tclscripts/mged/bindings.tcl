@@ -44,10 +44,10 @@ proc mged_bind_dm { w } {
     bind $w u "winset $w; svb"
     bind $w <F1> "winset $w; dm set depthcue !"
     bind $w <F2> "winset $w; dm set zclip !"
-    bind $w <F3> "winset $w; dm set perspective !"
+    bind $w <F3> "winset $w; set perspective_mode !"
     bind $w <F4> "winset $w; dm set zbuffer !"
     bind $w <F5> "winset $w; dm set lighting !"
-    bind $w <F6> "winset $w; dm set set_perspective !"
+    bind $w <F6> "winset $w; set toggle_perspective !"
     bind $w <F7> "winset $w; set faceplate !"
     bind $w <F8> "winset $w; set orig_gui !"
 # KeySym for <F9> --> 0xffc6 --> 65478

@@ -268,7 +268,9 @@ proc solc_create { w } {
     set solc(default_oper) $solc($w,oper)
 
     set solc(default_$solc($w,type)) [eval list [set solc($w,do)]]
+    press top
     eval db put $name $solc($w,type) [set solc($w,do)]
+    e $name
     sed $name
     press sxy
 
