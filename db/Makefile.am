@@ -30,7 +30,6 @@ MODELS = \
 	star.asc \
 	tank_car.asc \
 	terra.asc \
-	terra.asc \
 	truck.asc \
 	wave.asc \
 	woodsman.asc \
