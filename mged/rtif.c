@@ -55,6 +55,11 @@ static void setup_rt();
 
 static int tree_walk_needed;
 
+struct run_rt {
+       int			fd;
+       int			pid;
+};
+
 struct rtcheck {
        int			fd;
        FILE			*fp;
@@ -291,30 +296,41 @@ int printcmd;
 }
 
 static void
-rt_output_handler(clientData, mask)
-ClientData clientData;
-int mask;
+rt_output_handler(ClientData clientData, int mask)
 {
-  int fd = (int)((long)clientData & 0xFFFF);	/* fd's will be small */
-  int count;
-  char line[RT_MAXLINE];
-
-  /* Get data from rt */
+	struct run_rt *run_rtp = (struct run_rt *)clientData;
+	int count;
 #if 0
-  if((count = read((int)fd, line, RT_MAXLINE)) == 0){
+	char line[RT_MAXLINE+1];
+
+	/* Get data from rt */
+	if ((count = read((int)run_rtp->fd, line, RT_MAXLINE)) == 0) {
 #else
-  if((count = read((int)fd, line, 5120)) == 0){
+	char line[5120+1];
+
+	/* Get data from rt */
+	if ((count = read((int)run_rtp->fd, line, 5120)) == 0) {
 #endif
-    Tcl_DeleteFileHandler(fd);
-    close(fd);
+		int retcode;
+		int rpid;
 
-    return;
-  }
+		Tcl_DeleteFileHandler(run_rtp->fd);
+		close(run_rtp->fd);
 
-  line[count] = '\0';
+		/* wait for the forked process */
+		while ((rpid = wait(&retcode)) != run_rtp->pid && rpid != -1)
+			pr_wait_status(retcode);
 
-  /*XXX For now just blather to stderr */
-  bu_log("%s", line);
+		/* free run_rtp */
+		bu_free((genptr_t)run_rtp, "rt_output_handler: run_rtp");
+
+		return;
+	}
+
+	line[count] = '\0';
+
+	/*XXX For now just blather to stderr */
+	bu_log("%s", line);
 }
 
 static void
@@ -388,11 +404,13 @@ run_rt()
 	int pipe_in[2];
 	int pipe_err[2];
 	vect_t eye_model;
+	int		pid; 	 
+	struct run_rt	*run_rtp;
 
 	(void)pipe( pipe_in );
 	(void)pipe( pipe_err );
 	(void)signal( SIGINT, SIG_IGN );
-	if ( (fork()) == 0 )  {
+	if ((pid = fork()) == 0) {
 	  /* make this a process group leader */
 	  setpgid(0, 0);
 
@@ -430,8 +448,12 @@ run_rt()
 	FOR_ALL_SOLIDS(sp, &HeadSolid.l)
 		sp->s_wflag = DOWN;
 
-	Tcl_CreateFileHandler(pipe_err[0], TCL_READABLE,
-			      rt_output_handler, (ClientData)pipe_err[0]);
+	BU_GETSTRUCT(run_rtp, run_rt);
+	run_rtp->fd = pipe_err[0];
+	run_rtp->pid = pid;
+
+	Tcl_CreateFileHandler(run_rtp->fd, TCL_READABLE,
+			      rt_output_handler, (ClientData)run_rtp);
 
 	return 0;
 }
@@ -664,11 +686,11 @@ char	**argv;
 	if ( ( pid = fork()) == 0 )  {
 		/* Redirect stdin, stdout and stderr */
 		(void)close(0);
-		(void)dup( o_pipe[0] );
+		(void)dup(i_pipe[0]);
 		(void)close(1);
-		(void)dup( i_pipe[1] );
+		(void)dup(o_pipe[1]);
 		(void)close(2);
-		(void)dup( e_pipe[1] );
+		(void)dup(e_pipe[1]);
 
 		/* close pipes */
 		(void)close(i_pipe[0]);
@@ -688,8 +710,8 @@ char	**argv;
 	}
 
 	/* As parent, send view information down pipe */
-	(void)close( o_pipe[0] );
-	fp = fdopen( o_pipe[1], "w" );
+	(void)close(i_pipe[0]);
+	fp = fdopen(i_pipe[1], "w");
 	{
 		vect_t temp;
 		vect_t eye_model;
@@ -698,24 +720,24 @@ char	**argv;
 		MAT4X3PNT( eye_model, view_state->vs_view2model, temp );
 		rt_write(fp, eye_model );
 	}
-	(void)fclose( fp );
+	(void)fclose(fp);
 
 	/* close write end of pipes */
-	(void)close(i_pipe[1]);
+	(void)close(o_pipe[1]);
 	(void)close(e_pipe[1]);
 
 	BU_GETSTRUCT(rtcp, rtcheck);
 
 	/* initialize the rtcheck struct */
-	rtcp->fd = i_pipe[0];
-	rtcp->fp = fdopen(i_pipe[0], "r");
+	rtcp->fd = o_pipe[0];
+	rtcp->fp = fdopen(o_pipe[0], "r");
 	rtcp->pid = pid;
 	rtcp->vbp = rt_vlblock_init();
 	rtcp->vhead = rt_vlblock_find( rtcp->vbp, 0xFF, 0xFF, 0x00 );
 	rtcp->csize = view_state->vs_Viewscale * 0.01;
 
 	/* register file handlers */
-	Tcl_CreateFileHandler(i_pipe[0], TCL_READABLE,
+	Tcl_CreateFileHandler(rtcp->fd, TCL_READABLE,
 			      rtcheck_vector_handler, (ClientData)rtcp);
 	Tcl_CreateFileHandler(e_pipe[0], TCL_READABLE,
 			      rtcheck_output_handler, (ClientData)e_pipe[0]);
