@@ -20,6 +20,10 @@
 #  If the environment variable COMPUTE_SERVER is set before	#
 #  MGED is run, that network host is used to perform the	#
 #  raytracing.  Otherwise, BRL's XMP48 is used by default.	#
+#  This can be altered from within MGED by specifying the	#
+#  -C compute_server flag, which this script intercepts and	#
+#  uses to change the default/environment specification.	#
+#  The -C flag is not passed on to RT.				#
 #								#
 #  The compute server is assumed to have a different floating	#
 #  point format than the local machine, hence the conversion	#
@@ -50,8 +54,8 @@
 PROG_NAME=$0
 
 # Re-built the arguments, for easy parsing.
-# This list must track the list in rt.c
-set -- `getopt SH:F:D:MA:x:X:s:f:a:e:l:O:o:p:P:Bb:n:w:iI "$@"`
+# This list must track the list in rt.c, plus "-C"
+set -- `getopt C:SH:F:D:MA:x:X:s:f:a:e:l:O:o:p:P:Bb:n:w:iI "$@"`
 
 # If no compute server specified in users environment, use default.
 if test x$COMPUTE_SERVER = x
@@ -73,7 +77,8 @@ fi
 #  -s sets the square viewing size
 ARGS="-M -I -s256"
 
-# Grind through all the options, looking out specially for -F (framebuffer).
+# Grind through all the options, looking out specially for -F (framebuffer)
+# and -C (override compute-server)
 while :
 do
 	case $1 in
@@ -83,6 +88,8 @@ do
 		ARGS="$ARGS $1 $2"; shift;;
 	-F)
 		FB_FILE="$2"; shift;;
+	-C)
+		COMPUTE_SERVER="$2"; shift;;
 	--)
 		break;;
 	esac
