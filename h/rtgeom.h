@@ -508,6 +508,7 @@ struct rt_bot_internal
 
 /* flags for bot_flags */
 #define RT_BOT_HAS_SURFACE_NORMALS    0x1     /* This primitive may have surface normals at each face vertex */
+#define RT_BOT_USE_NORMALS	      0x2     /* Use the surface normals if they exist */
 
 #define	RT_BOT_INTERNAL_MAGIC		0x626F7472	/* botr */
 #define RT_BOT_CK_MAGIC(_p)	BU_CKMAG(_p,RT_BOT_INTERNAL_MAGIC,"rt_bot_internal")
