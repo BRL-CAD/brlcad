@@ -5,7 +5,6 @@
  *	dir_getspace	Allocate memory for table of directory entry pointers
  *	dir_print	Print table-of-contents of object file
  *	f_memprint	Debug, print memory & db free maps
- *	conversions	Builds conversion factors given a local unit
  *	dir_nref	Count number of times each db element referenced
  *	regexp_match	Does regular exp match given string?
  *	dir_summary	Summarize contents of directory by categories
@@ -158,57 +157,6 @@ f_memprint()
 	memprint( &(dmp->dmr_map) );
 	(void)printf("Database free granule map:\n");
 	memprint( &(dbip->dbi_freep) );
-}
-
-
-
-/*	builds conversion factors given the local unit
- */
-void
-conversions( local )
-int local;
-{
-
-	/* Base unit is MM */
-	switch( local ) {
-
-	case ID_NO_UNIT:
-		/* no local unit specified ... use the base unit */
-		localunit = record.i.i_units = ID_MM_UNIT;
-		local2base = 1.0;
-		break;
-
-	case ID_MM_UNIT:
-		/* local unit is mm */
-		local2base = 1.0;
-		break;
-
-	case ID_CM_UNIT:
-		/* local unit is cm */
-		local2base = 10.0;		/* CM to MM */
-		break;
-
-	case ID_M_UNIT:
-		/* local unit is meters */
-		local2base = 1000.0;		/* M to MM */
-		break;
-
-	case ID_IN_UNIT:
-		/* local unit is inches */
-		local2base = 25.4;		/* IN to MM */
-		break;
-
-	case ID_FT_UNIT:
-		/* local unit is feet */
-		local2base = 304.8;		/* FT to MM */
-		break;
-
-	default:
-		local2base = 1.0;
-		localunit = 6;
-		break;
-	}
-	base2local = 1.0 / local2base;
 }
 
 /*
