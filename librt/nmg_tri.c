@@ -157,7 +157,7 @@ struct rt_list *tbl2d, *tlist;
 }
 
 static int flatten_debug=0;
-static int tri_debug = 1;
+int tri_debug = 1;
 
 
 static struct pt2d *
@@ -1030,6 +1030,7 @@ struct rt_tol *tol;
 
 	VMOVE(pt,  vu1->v_p->vg_p->coord);
 	VSUB2(dir, vu2->v_p->vg_p->coord, pt);
+	VUNITIZE(dir);
 	nmg_face_rs_init(&rs, &b, fu1, fu1->fumate_p, pt, dir);
 	rs.tol = tol;
 
@@ -1120,13 +1121,14 @@ int void_ok;
 		rt_log("parent loops are not the same %s %d\n", __FILE__, __LINE__);
 		rt_bomb("goodnight\n");
 	}
-	collect_and_sort_vu(tbl2d, &p1, &p2);
+	collect_and_sort_vu(tbl2d, &p1, &p2, tol);
 	if (p1->vu_p->up.eu_p->up.lu_p != p2->vu_p->up.eu_p->up.lu_p) {
-		rt_log("parent loops are not the same %s %d\n", __FILE__, __LINE__);
 		if (void_ok) {
+			rt_log("parent loops are not the same %s %d,\n\ttrying join ", __FILE__, __LINE__);
 			join_mapped_loops(tbl2d, p1, p2, color, tol);
 			return (struct pt2d *)NULL;
 		}
+		rt_log("parent loops are not the same %s %d\n", __FILE__, __LINE__);
 		rt_bomb("goodnight\n");
 	}
 
@@ -1176,7 +1178,7 @@ struct rt_tol	*tol;
 		rt_bomb("goodnight\n");
 	}
 
-	collect_and_sort_vu(tbl2d, &p1, &p2);
+	collect_and_sort_vu(tbl2d, &p1, &p2, tol);
 
 	if (p1->vu_p->up.eu_p->up.lu_p == p2->vu_p->up.eu_p->up.lu_p) {
 		rt_log("parent loops are the same %s %d\n", __FILE__, __LINE__);
@@ -1266,12 +1268,16 @@ struct rt_tol	*tol;
 		rt_log("trying to cut ...\n");
 		print_trap(tp, tbl2d);
 
+		rt_log("postulating....\n");
+		collect_and_sort_vu(tbl2d, &top, &bot, tol);
+		rt_log("....postulated\n");
+
 		/* top/bottom points are not on same side of trapezoid. */
 
-		toplu = nmg_find_lu_of_vu(tp->top->vu_p);
-		botlu = nmg_find_lu_of_vu(tp->bot->vu_p);
-		NMG_CK_VERTEXUSE(tp->top->vu_p);
-		NMG_CK_VERTEXUSE(tp->bot->vu_p);
+		toplu = nmg_find_lu_of_vu(top->vu_p);
+		botlu = nmg_find_lu_of_vu(bot->vu_p);
+		NMG_CK_VERTEXUSE(top->vu_p);
+		NMG_CK_VERTEXUSE(bot->vu_p);
 		NMG_CK_LOOPUSE(toplu);
 		NMG_CK_LOOPUSE(botlu);
 
@@ -1281,7 +1287,7 @@ struct rt_tol	*tol;
 
 			/* points are in same loop.  Cut the loop */
 
-			(void)cut_mapped_loop(tbl2d, tp->top, tp->bot, cut_color, tol, 1);
+			(void)cut_mapped_loop(tbl2d, top, bot, cut_color, tol, 1);
 
 			/* if the bottom vertexuse is on a rising edge and
 			 * is a top vertex of another trapezoid then
@@ -1330,11 +1336,12 @@ struct rt_tol	*tol;
 					tp->bot->coord[X],
 					tp->bot->coord[Y]);
 
-			join_mapped_loops(tbl2d,tp->top, tp->bot, join_color, tol);
-
+			join_mapped_loops(tbl2d, top, bot, join_color, tol);
+			NMG_CK_LOOPUSE(toplu);
 		}
 
-		plfu( toplu->up.fu_p, tbl2d );
+		
+		plfu( nmg_find_fu_of_vu(tp->top->vu_p),  tbl2d );
 	}
 
 }
@@ -1376,6 +1383,8 @@ struct loopuse *lu;
 	int verts=0;
 	int cut_color[3] = { 90, 255, 90};
 	int join_color[3] = { 190, 255, 190};
+
+	NMG_CK_LOOPUSE(lu);
 
 	if (tri_debug)
 		rt_log("cutting unimonotone:\n");
@@ -1434,8 +1443,10 @@ struct loopuse *lu;
 			/* cut a triangular piece off of the loop to
 			 * create a new loop.
 			 */
+			NMG_CK_LOOPUSE(lu);
 			current = cut_mapped_loop(tbl2d, next, prev, cut_color, 0);
 			verts--;
+			NMG_CK_LOOPUSE(lu);
 
 			plfu( lu->up.fu_p, tbl2d );
 
@@ -1584,6 +1595,7 @@ struct rt_tol	*tol;
 	cut_diagonals(tbl2d, &tlist,tol);
 	rt_log("Diagonals are cut ----------\n");
 
+
 	/* now we're left with a face that has some triangle loops and some
 	 * uni-monotone loops.  Find the uni-monotone loops and triangulate.
 	 */
@@ -1619,3 +1631,26 @@ struct rt_tol	*tol;
 	return;
 }
 
+nmg_triangulate_model(m, tol)
+struct model *m;
+struct rt_tol   *tol;
+{
+	struct nmgregion *r;
+	struct shell *s;
+	struct faceuse *fu;
+	
+	NMG_CK_MODEL(m);
+
+	for (RT_LIST_FOR(r, nmgregion, &m->r_hd)) {
+		NMG_CK_REGION(r);
+		for (RT_LIST_FOR(s, shell, &r->s_hd)) {
+			NMG_CK_SHELL(s);
+			for (RT_LIST_FOR(fu, faceuse, &s->fu_hd)) {
+				NMG_CK_FACEUSE(fu);
+				if (fu->orientation == OT_SAME)
+					nmg_triangulate_face(fu, tol);
+			}
+		}
+	}
+
+}
