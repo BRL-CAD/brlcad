@@ -60,7 +60,7 @@ int cmd_init();
 int cmd_set();
 int cmd_get();
 int get_more_default();
-int f_tran(), f_irot();
+int tran(), irot();
 void set_tran(), gui_setup(), mged_setup(), cmd_setup();
 
 extern mat_t    ModelDelta;
@@ -292,12 +292,16 @@ static struct funtab funtab[] = {
 	f_in, 1, MAXARGS, TRUE,
 "inside", "", "finds inside solid per specified thicknesses",
 	f_inside, 1, MAXARGS, TRUE,
+#if 0
 "irot", "x y z", "incremental/relative rotate",
         f_irot, 4, 4, TRUE,
+#endif
 "item", "region item [air]", "change item # or air code",
 	f_itemair,3,4,TRUE,
+#if 0
 "itran", "x y z", "incremental/relative translate using normalized screen coordinates",
         f_tran, 4, 4,TRUE,
+#endif
 "joint", "command [options]", "articualtion/animation commands",
 	f_joint, 1, MAXARGS, TRUE,
 "journal", "fileName", "record all commands and timings to journal",
@@ -488,8 +492,10 @@ static struct funtab funtab[] = {
 	f_tops,1,1,TRUE,
 "track", "<parameters>", "adds tracks to database",
 	f_amtrack, 1, 27,TRUE,
+#if 0
 "tran", "x y z", "absolute translate using view coordinates",
         f_tran, 4, 4,TRUE,
+#endif
 "translate", "x y z", "trans object to x,y, z",
 	f_tr_obj,4,4,TRUE,
 "tree",	"object(s)", "print out a tree of all members of an object",
@@ -788,7 +794,12 @@ char **argv;
 	"X", (fastf_t *)NULL,
 	"Y", (fastf_t *)NULL,
 	"Z", (fastf_t *)NULL,
-	"S", (fastf_t *)NULL
+	"S", (fastf_t *)NULL,
+	"xadc", (fastf_t *)NULL,
+	"yadc", (fastf_t *)NULL,
+	"ang1", (fastf_t *)NULL,
+	"ang2", (fastf_t *)NULL,
+	"distadc", (fastf_t *)NULL,
     };
 
     if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
@@ -808,13 +819,22 @@ char **argv;
     knobs[11].variable = &rate_slew[Y];
     knobs[12].variable = &rate_slew[Z];
     knobs[13].variable = &rate_zoom;
+    knobs[14].variable = (fastf_t *)&dv_xadc;
+    knobs[15].variable = (fastf_t *)&dv_yadc;
+    knobs[16].variable = (fastf_t *)&dv_1adc;
+    knobs[17].variable = (fastf_t *)&dv_2adc;
+    knobs[18].variable = (fastf_t *)&dv_distadc;
 	
     if( argc < 2 ) {
 	Tcl_AppendResult(interp, "getknob: need a knob name", (char *)NULL);
 	return TCL_ERROR;
     }
 
+#if 0
     for (i = 0; i < sizeof(knobs); i++)
+#else
+      for (i = 0; i < 19; ++i)
+#endif
 	if (strcmp(knobs[i].knobname, argv[1]) == 0) {
 	    sprintf(interp->result, "%lf", *(knobs[i].variable));
 	    return TCL_OK;
@@ -2180,8 +2200,8 @@ char	*argv[];
     return TCL_ERROR;
   }
 
-  tabvec[X] =  x / 2047.0;
-  tabvec[Y] =  y / 2047.0;
+  tabvec[X] =  -x / 2047.0;
+  tabvec[Y] =  -y / 2047.0;
   tabvec[Z] = 0;
   slewview( tabvec );
 
@@ -2193,8 +2213,10 @@ set_e_axis_pos()
 {
   int	i;
 
-  tran_x = tran_y = tran_z = 0;
+#if 0
   rot_x = rot_y = rot_z = 0;
+#endif
+  VSETALL( absolute_slew, 0 );
 
   update_views = 1;
 
@@ -2329,7 +2351,7 @@ char    **argv;
 /*
  *                         S E T _ T R A N
  *
- * Calculate the values for tran_x, tran_y, and tran_z.
+ * Calculate the values for absolute_slew.
  *
  *
  */
@@ -2346,148 +2368,87 @@ fastf_t x, y, z;
   diff[Y] = y - e_axis_pos[Y];
   diff[Z] = z - e_axis_pos[Z];
   
-  /* If there is more than one active view, then tran_x/y/z
+  /* If there is more than one active view, then absolute_slew
      needs to be initialized for each view. */
   MAT_DELTAS_GET_NEG(old_pos, toViewcenter);
   VADD2(new_pos, old_pos, diff);
   MAT4X3PNT(view_pos, model2view, new_pos);
-
-  tran_x = view_pos[X];
-  tran_y = view_pos[Y];
-  tran_z = view_pos[Z];
+  VMOVE( absolute_slew, view_pos );
 }
 
 
 int
-f_tran(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int     argc;
-char    *argv[];
+tran(view_pos)
+vect_t view_pos;
 {
-  double x, y, z;
-  int itran;
-  char cmd[128];
-  vect_t view_pos;
   point_t old_pos;
   point_t new_pos;
   point_t diff;
-  struct rt_vls str;
-  int status;
 
-  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
-    return TCL_ERROR;
+  VMOVE( absolute_slew, view_pos );
 
-  sscanf(argv[1], "%lf", &x);
-  sscanf(argv[2], "%lf", &y);
-  sscanf(argv[3], "%lf", &z);
+  if(state == ST_S_EDIT || state == ST_O_EDIT){
+    int status;
+    char *av[] = {"M", "1", NULL, NULL, NULL};
+    char xval[32], yval[32];
 
-  itran = !strcmp(argv[0], "itran");
+    tran_set = 1;
+    av[2] = xval;
+    av[3] = yval;
+    sprintf(xval, "%d", (int)(absolute_slew[X]*2048.0));
+    sprintf(yval, "%d", (int)(absolute_slew[Y]*2048.0));
+    status = f_mouse((ClientData)NULL, interp, 4, av);
+    tran_set = 0;
 
-  if(itran){
-    tran_x += x;
-    tran_y += y;
-    tran_z += z;
+    if(status == TCL_OK)
+      return CMD_OK;
+    else
+      return CMD_BAD;
   }else{
-    tran_x = x;
-    tran_y = y;
-    tran_z = z;
-  }
+    MAT4X3PNT( new_pos, view2model, view_pos );
+    MAT_DELTAS_GET_NEG( old_pos, toViewcenter );
+    VSUB2( diff, new_pos, old_pos );
 
-  VSET( view_pos, tran_x, tran_y, tran_z );
-  MAT4X3PNT( new_pos, view2model, view_pos );
-  MAT_DELTAS_GET_NEG( old_pos, toViewcenter );
-  VSUB2( diff, new_pos, old_pos );
-
-  if(state == ST_S_EDIT || state == ST_O_EDIT)
-    sprintf(cmd, "M %d %d %d\n", 1, (int)(tran_x*2048.0), (int)(tran_y*2048.0));
-  else{
     VADD2(new_pos, orig_pos, diff);
     MAT_DELTAS_VEC( toViewcenter, new_pos);
     MAT_DELTAS_VEC( ModelDelta, new_pos);
     new_mats();
 
-    return TCL_OK;
+    return CMD_OK;
   }
-
-  tran_set = 1;
-  rt_vls_init(&str);
-  rt_vls_strcpy( &str, cmd );
-  status = cmdline(&str, False);
-  rt_vls_free(&str);
-  tran_set = 0;
-
-  if(status == CMD_OK)
-    return TCL_OK;
-
-  return TCL_ERROR;
 }
 
 int
-f_irot(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int argc;
-char *argv[];
+irot(x, y, z)
+fastf_t x, y, z;
 {
-  double x, y, z;
-  char cmd[128];
-  struct rt_vls str;
   vect_t view_pos;
   point_t new_pos;
   point_t old_pos;
   point_t diff;
   int status;
-
-  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
-    return TCL_ERROR;
-
-  rt_vls_init(&str);
-
-  sscanf(argv[1], "%lf", &x);
-  sscanf(argv[2], "%lf", &y);
-  sscanf(argv[3], "%lf", &z);
+  char *av[] = {"vrot", NULL, NULL, NULL, NULL};
+  char xval[32], yval[32], zval[32];
 
   MAT_DELTAS_GET(old_pos, toViewcenter);
 
-#if 1
-  sprintf(cmd, "vrot %f %f %f\n", x, y, z);
-#else
-  if(state == ST_VIEW)
-    sprintf(cmd, "vrot %f %f %f\n", x, y, z);
-  else{
-    rot_x += x;
-    rot_y += y;
-    rot_z += z;
+  av[1] = xval;
+  av[2] = yval;
+  av[3] = zval;
+  sprintf(xval, "%f", x);
+  sprintf(yval, "%f", y);
+  sprintf(zval, "%f", z);
+  status = f_vrot((ClientData)NULL, interp, 4, av);
 
-    if(state == ST_O_EDIT)
-      sprintf(cmd, "rotobj %f %f %f\n", rot_x, rot_y, rot_z);
-    else if(state == ST_S_EDIT)
-      sprintf(cmd, "p %f %f %f\n", rot_x, rot_y, rot_z);
-    else
-      return TCL_OK;
-  }
-#endif
+  MAT_DELTAS_GET_NEG(new_pos, toViewcenter);
+  VSUB2(diff, new_pos, orig_pos);
+  VADD2(new_pos, old_pos, diff);
+  VSET(view_pos, new_pos[X], new_pos[Y], new_pos[Z]);
+  MAT4X3PNT( new_pos, model2view, view_pos);
+  VMOVE( absolute_slew, new_pos );
 
-  rot_set = 1;
-  rt_vls_strcpy( &str, cmd );
-  status = cmdline(&str, False);
-  rt_vls_free(&str);
-  rot_set = 0;
+  if(status == TCL_OK)
+    return CMD_OK;
 
-  if(state == ST_VIEW){
-    MAT_DELTAS_GET_NEG(new_pos, toViewcenter);
-    VSUB2(diff, new_pos, orig_pos);
-    VADD2(new_pos, old_pos, diff);
-    VSET(view_pos, new_pos[X], new_pos[Y], new_pos[Z]);
-    MAT4X3PNT( new_pos, model2view, view_pos);
-    tran_x = new_pos[X];
-    tran_y = new_pos[Y];
-    tran_z = new_pos[Z];
-  }
-
-  if(status == CMD_OK)
-    return TCL_OK;
-
-  return TCL_ERROR;
+  return CMD_BAD;
 }
