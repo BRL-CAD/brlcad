@@ -19,6 +19,8 @@
 static char RCSid[] = "@(#)$Header$";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
 #ifdef USE_STRING_H
 #include <string.h>
