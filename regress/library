@@ -1,0 +1,186 @@
+#!/bin/sh
+#
+# library
+#   is a general purpose sh utility library providing a set of environment
+#   variables and function calls.  the primary intended usage is to aid the
+#   brlcad regression testing suite.
+#
+###
+#
+# FUNCTIONS
+#
+#   initializeVariable
+#       initializes a given variable to a defaultValue if it is not already set
+#   getHostName
+#       sets a var to the HOSTNAME from a variety of potential methods
+#   log
+#       writes output to a given log file
+#   acquireLock
+#       gets a file semaphore (!!! needs to be changed)
+#   releaseLock
+#       releases and creates a file semaphore that may be acquired
+#   acquireSemaphore
+#       !!!
+#   releaseSemaphore
+#       !!!
+#
+###
+#
+# GLOBALS
+# 
+#   LOG
+#       output is sent to $LOG, and is /dev/tty by default
+#   DEBUG  
+#       when defined, extra call details will be sent to $LOG.
+#       that means define DEBUG if you're modifying scripts for extra info
+#   HOSTNAME
+#       the host name derifed from 1) hostname command, 2) HOST env var,
+#       3) HOSTNAME env var, 4) default "unknown" value
+#   PWD
+#       current working directory path where library is included
+#
+###############################################################################
+
+# have to init LOG here so functions will output properly
+if [ x$LOG = x ] ; then 
+    export LOG=/dev/tty
+fi
+if [ ! x$DEBUG = x ]  ; then echo "LOG=$LOG" ; fi
+#
+# log [messageToWrite] [fileToWriteTo]
+#
+# log writes a given message out to a file name
+#
+function log {
+# for gratuitous logging...
+    if [ ! x$DEBUG = x ] ; then echo "log( \$1=[$1] \$2=[$2] )" >> $LOG ; fi
+
+    local MESSAGE="\$1"
+    if [ "x$2" = "x" ] ; then local FILE=$LOG ; else local FILE="$2" ; fi
+
+    # check for explicit escape option support
+    local LOGTEST=`echo "\t\ntest"`
+    if [ "x$LOGTEST" = "x\\t\\ntest" ] ; then local ECHO="echo -e" ; else local ECHO="echo" ; fi
+# for gratuitous logging...
+#    if [ ! x$DEBUG = x ] ; then echo "log: ECHO=[${ECHO}] MESSAGE=[${MESSAGE}] FILE=[${FILE}]" >> $LOG ; fi
+
+#    OUTPUT="$ECHO \"$MESSAGE\""
+#    eval "$OUTPUT >> $FILE"
+    eval "$ECHO \"$MESSAGE\" >> $FILE"
+}
+
+
+#
+# initializeVariable variableName [defaultValue]
+#
+# initializes a variable to a given value unless that variable
+# is already defined (e.g. already initialized).  this allows
+# script variables to also be overridden by environment variables
+#
+function initializeVariable {
+    if [ ! x$DEBUG = x ] ; then log "initializeVariable( \$1=[$1] \$2=[$2] )" ; fi
+
+    if [ x$1 = x ] ; then 
+	log "initializeVariable arg1 mismatch"
+	exit 
+    else 
+	local VAR=$1 
+    fi
+    # do not need to check since may be empty anyways
+    local DEF=$2
+
+    # stupid name to variable translation was a bitch..
+    local PVAR="echo \$$VAR"
+    if [ x`eval $PVAR` = x ] ; then
+	export $VAR=$DEF
+    fi
+
+    if [ ! x$DEBUG = x ] ; then log "initializeVariable: $VAR=[`eval $PVAR`]" ; fi
+}
+
+
+#
+# getHostName [variable] [defaultValue]
+#
+# attempts to derive the host name of the running machine.
+# precedence is given to the HOSTNAME and HOST environment
+# variables, then we try uname.  by default we set to
+# the HOSTNAME environment variable
+#
+# returns the host name set
+#
+function getHostName {
+    if [ ! x$DEBUG = x ] ; then log "getHostName( \$1=[${1}] \$2=[${2}] )" ; fi
+
+    if [ x$1 = x ] ; then 
+	local VAR="HOSTNAME"
+    else 
+	local VAR=$1
+	# do not forget to check system
+	initializeVariable $VAR "$HOST"
+	if [ x$VAR = x ] ; then export $VAR=$HOSTNAME ; fi
+    fi
+    if [ x$2 = x ] ; then local DEFVAL="unknown" ; else local DEFVAL=$2 ; fi
+
+    # multiple inits work (without the ifthen mess) since the set should
+    # not clobber a variable that already has a non-empty value set
+    if [ x$VAR = x ] ; then initializeVariable $VAR `hostname` ; fi
+    if [ x$VAR = x ] ; then initializeVariable $VAR $HOST ; fi
+    if [ x$VAR = x ] ; then initializeVariable $VAR `uname -n` ; fi
+    if [ x$VAR = x ] ; then initializeVariable $VAR $DEFVAL ; fi
+
+    local VARVAL="echo \$$VAR"
+    if [ ! x$DEBUG = x ] ; then log "getHostName: ${VAR}=[`eval $VARVAL`]" ; fi
+
+    # return value is only useful if DEBUG is off (since echo'd values are return values)
+    # return `eval $VARVAL`
+}
+
+
+#
+# acquireLock [lockFile] [retryCount] [waitLength]
+#
+function acquireLock {
+    if [ ! x$DEBUG = x ] ; then log "acquireLock( \$1=[$1] \$2=[$2] \$3=[$3] )" ; fi
+
+    if [ x$1 = x ] ; then local LOCK="local.lock" ; else local LOCK=$1 ; fi
+    if [ x$2 = x ] ; then local RETRY=1 ; else local RETRY=$2 ; fi
+    if [ x$3 = x ] ; then local WAIT=0 ; else local WAIT=$3 ; fi
+
+    while [ ! -f $LOCK ] ; do
+	RETRY=`expr $RETRY - 1`
+	if [ $RETRY -lt 1 ] ; then
+	    log "ERROR: Unable to obtain $LOCK"
+	    return 1
+	fi
+	log "Waiting for $LOCK... $RETRY attempts remain"
+	sleep $WAIT
+    done
+    rm $LOCK
+    log "Acquired $LOCK"
+
+    return 0
+}
+
+
+#
+# releaseLock lockFile
+#
+function releaseLock {
+    if [ ! x$DEBUG = x ] ; then log "releaseLock( \$1=[$1] )" ; fi
+
+    if [ x$1 = x ] ; then local LOCK="local.lock" ; else local LOCK=$1 ; fi
+    if [ -f $LOCK ] ; then
+	log "WARNING: Lock [$LOCK] is already released"
+	return 1
+    fi
+    touch $LOCK
+    log "Released $LOCK"
+    return 0
+}
+
+
+# GLOBAL STUFF
+# get a hostname and pwd to play with -- exports HOSTNAME and PWD accordingly
+getHostName
+initializeVariable PWD `pwd`

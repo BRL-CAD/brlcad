@@ -1,1 +1,1 @@
-30 5 * * * /vld/regress/brlcad_scripts/client.sh -d /c/regress| /bin/mail butler -s regression_client
+30 5 * * * /vld/regress/brlcad_scripts/client.sh -d /c/regress | /bin/mail morrison -s regression_client

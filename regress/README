@@ -24,6 +24,17 @@ actually test the package.
 
 
 
+
+Sean's Notes::
+
+The master.sh script may be run from any machine requesting regression tests to occur for any or all of the test machines listed in systems.d.  Depending on the architecture, the regressing machine may work on a copy of the brlcad package provided from 1) cvs, 2) a tar.gz, or 3) cvs and a tar.gz diff.  The package is then either worked on locally over nfs or copied to the remote machine via ssh.
+
+For each requested machine (default is all), a semaphore lock is independantly acquired.  If a lock was successful, then the client.sh script will run on the test architecture.  The client.sh script will wait until it is ok to run (within a timeout) and then runs client_build.sh to build the package cleanly.  If all builds well, client_test.sh is then run and any or all scripts listed in tests.d will exercise different capabilities of the package.
+
+Results are logged to files and summarys are individually mailed out as specified for each systems.d architecture.
+
+
+
 ---------------- Old content here --------------------------------------
 
 

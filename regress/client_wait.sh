@@ -4,6 +4,13 @@
 #  distribution, and then starts the regression test on the local machine.
 #
 
+# include standard utility functions
+. ./library
+
+echo "client_wait.sh"
+echo "=============="
+
+
 args=`getopt b:d:e:qr:u: $*`
 
 if [ $? != 0 ] ; then
@@ -13,13 +20,12 @@ fi
 
 set -- $args
 
-BEGIN_HOUR=20
+BEGIN_HOUR=18
 END_HOUR=7
-MAILUSER=acst
+MAILUSER=morrison@arl.army.mil
 QUIET=0
-BRLCAD_ROOT=/usr/brlcad
-SLEEP_DELTA=60
-
+BRLCAD_ROOT=/tmp/brlcad
+SLEEP_DELTA=1
 
 for i in $* ; do
 	case "$i" in
@@ -50,7 +56,7 @@ for i in $* ; do
 			shift 2;;
 		-u)
 			echo "-d $2";
-			MAILUSER=$2;
+			MAIUSERUSER=$2;
 			export MAILUSER
 			shift 2;;
 		--)
@@ -71,7 +77,7 @@ fi
 
 START_HOUR=`date | awk '{print $4}' | awk -F: '{print $1}'`
 if [ $START_HOUR -ge $END_HOUR ] ; then
-    echo "`hostname` started after end time $END_HOUR (at $START_HOUR)"
+    echo "$HOSTNAME started after end time ${END_HOUR}:00 (at ${START_HOUR}:`date | awk '{print $4}' | awk -F: '{print $2}'`)"
     exit 2
 fi
 
@@ -79,42 +85,44 @@ fi
 #  First we must sleep until the "cvs checkout" is complete or we are past
 #  when we are allowed to run
 #
-WAIT_MACH_TIME=`expr $SLEEP_DELTA \* 10`
+WAIT_MACH_TIME=`expr $SLEEP_DELTA \* 60`
 HOUR=$START_HOUR
 while [ ! -f $REGRESS_DIR/brlcad/sh/machinetype.sh ] ; do
     if [ $HOUR -ge $END_HOUR ] ; then
-	echo "`hostname` time expired waiting for creation of machinetype.sh"
+	echo "$HOSTNAME time expired waiting for creation of machinetype.sh"
 	exit 2
     fi
+    echo "Waiting for [$REGRESS_DIR/brlcad/sh/machinetype.sh] to get created...sleeping $WAIT_MACH_TIME seconds"
     sleep $WAIT_MACH_TIME
     HOUR=`date | awk '{print $4}' | awk -F: '{print $1}'`
 done
+echo "Verified that machinetype.sh exists"
 
-ARCH=`$REGRESS_DIR/brlcad/sh/machinetype.sh`
-export ARCH
+export ARCH=`${REGRESS_DIR}/brlcad/sh/machinetype.sh`
 
+echo "Regression testing an [$ARCH] architecture in [$REGRESS_DIR]"
+
+#
+# try to acquire the semaphore every minute until we run out of time
+#
 COUNT=0
 HOUR=`date | awk '{print $4}' | awk -F: '{print $1}'`
-while [ ! -f $REGRESS_DIR/start_$ARCH ] ; do
-    if [ $HOUR -ge $END_HOUR -o $HOUR -lt BEGIN_HOUR ] ; then
-	echo "`hostname` time expired waiting for creation of start_$ARCH"
+echo "HOUR=$HOUR, END_HOUR=$END_HOUR, BEGIN_HOUR=$BEGIN_HOUR"
+while ! eval "acquireLock ${REGRESS_DIR}/start_${ARCH}.semaphore 2 $SLEEP_DELTA" ; do
+    if [ $HOUR -ge $END_HOUR -o $HOUR -lt $BEGIN_HOUR ] ; then
+	echo "ERROR: time expired on $HOSTNAME waiting for creation of start_${ARCH}.semaphore"
 	exit 2
     fi
-    sleep $SLEEP_DELTA
     HOUR=`date | awk '{print $4}' | awk -F: '{print $1}'`
 done
 
-#
-#  Now we have got the go-ahead to build.
-#  Remove the semaphore file so that we don't accidentally re-start
-#
-rm $REGRESS_DIR/start_$ARCH
-mkdir $REGRESS_DIR/$ARCH
-cd $REGRESS_DIR/brlcad
-
+if [ ! -d ${REGRESS_DIR}/.regress.$ARCH ] ; then mkdir ${REGRESS_DIR}/.regress.$ARCH ; fi
 echo "$ARCH commencing build at `date`"
 
 #
 # run the build script out of the source tree
 #
-./regress/client_build.sh
+echo "Building source"
+./client_build.sh -d $REGRESS_DIR
+
+releaseLock ${REGRESS_DIR}/start_${ARCH}.semaphore
