@@ -342,7 +342,10 @@ mat_t m;
 	rt_log("MATRIX %s:\n  ", title);
 	for(i=0; i<16; i++)  {
 		rt_log(" %8.3f", m[i]);
-		if( (i&3) == 3 ) rt_log("\n  ");
+		if( i == 15 )
+			rt_log("\n");
+		else if( (i&3) == 3 )
+			rt_log("\n  ");
 	}
 }
 
