@@ -113,9 +113,9 @@ install-nobak&: inst-dist
 #endif
 
 #if defined(PRODUCTS)
-install-prod&: [[SUB X X.install-prod PRODUCTS]]
+install-prod&: [[SUB X X.iprod PRODUCTS]]
 
-install-prod-nobak&: [[SUB X X.install-prod-nobak PRODUCTS]]
+install-prod-nobak&: [[SUB X X.iprod-nobak PRODUCTS]]
 #else
 install-prod&:
 
@@ -123,7 +123,7 @@ install-prod-nobak&:
 #endif
 
 /* Here is where we depend on having /bin/sh as the shell */
-%.install-prod&: %
+%.iprod&: %
 	@echo ......checking % 1>&2 ; \
 	if cmp -s BINDIR/% %; \
 	then	exit 0; fi; \
@@ -135,7 +135,7 @@ install-prod-nobak&:
 		chmod BINPERM BINDIR/%; \
 	fi
 
-%.install-prod-nobak&: %
+%.iprod-nobak&: %
 	@echo ......checking % 1>&2 ; \
 	if cmp -s BINDIR/% %; \
 	then	exit 0; fi; \
