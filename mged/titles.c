@@ -474,27 +474,18 @@ if(mged_variables->faceplate){
 	 * This way the adc info will be displayed during editing
 	 */
 
-	if( mged_variables->adcflag ) {
-		/* Angle/Distance cursor */
-		point_t	pt1, pt2, pt3;
-		point_t	center_model;
+	if( adc_draw ) {
+	  fastf_t f;
 
-		VSET(pt1, 
-		    (dv_xadc / 2047.0) *Viewscale,
-		    (dv_yadc / 2047.0) *Viewscale, 0.0);
-		VSET(center_model, 
-		    -toViewcenter[MDX], -toViewcenter[MDY],
-		    -toViewcenter[MDZ]);
-		MAT4X3VEC(pt2, Viewrot, center_model);
-		VADD2(pt3, pt1, pt2);
-		bu_vls_trunc(&vls, 0);
-		bu_vls_printf( &vls,
-" curs:  a1=%.1f,  a2=%.1f,  dst=%.3f,  cent=(%.3f, %.3f),  delta=(%.3f, %.3f)",
-			mged_variables->adc_a1, mged_variables->adc_a2,
-			mged_variables->adc_dst,
-			pt3[X]*base2local, pt3[Y]*base2local,
-			(dv_xadc / 2047.0) *Viewscale*base2local,
-			(dv_yadc / 2047.0) *Viewscale*base2local );
+	  f = Viewscale * base2local;
+	  /* Angle/Distance cursor */
+	  bu_vls_trunc(&vls, 0);
+	  bu_vls_printf( &vls,
+			 " curs:  a1=%.1f,  a2=%.1f,  dst=%.3f,  cent=(%.3f, %.3f),  delta=(%.3f, %.3f)",
+			 adc_a1, adc_a2,
+			 adc_dst * f,
+			 adc_pos_grid[X] * f, adc_pos_grid[Y] * f,
+			 adc_pos_view[X] * f, adc_pos_view[Y] * f);
 		if(mged_variables->faceplate){
 		  DM_SET_COLOR(dmp, DM_YELLOW_R, DM_YELLOW_G, DM_YELLOW_B, 1);
 		  DM_DRAW_STRING_2D( dmp, bu_vls_addr(&vls),

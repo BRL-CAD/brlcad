@@ -185,14 +185,8 @@ register int bnum;
 {
 	register struct buttons *bp;
 
-	if( edsol && edobj ){
-	  struct bu_vls tmp_vls;
-
-	  bu_vls_init(&tmp_vls);
-	  bu_vls_printf(&tmp_vls, "WARNING: State error: edsol=%x, edobj=%x\n", edsol, edobj );
-	  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
-	  bu_vls_free(&tmp_vls);
-	}
+	if( edsol && edobj )
+	  bu_log("WARNING: State error: edsol=%x, edobj=%x\n", edsol, edobj);
 
 	/* Process the button function requested. */
 	for( bp = button_table; bp->bu_code >= 0; bp++ )  {
@@ -203,14 +197,7 @@ register int bnum;
 		return;
 	}
 
-	{
-	  struct bu_vls tmp_vls;
-	  
-	  bu_vls_init(&tmp_vls);
-	  bu_vls_printf(&tmp_vls, "button(%d):  Not a defined operation\n", bnum);
-	  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
-	  bu_vls_free(&tmp_vls);
-	}
+	bu_log("button(%d):  Not a defined operation\n", bnum);
 }
 
 /*
@@ -403,12 +390,12 @@ bv_vsave()
 static void
 bv_adcursor()
 {
-  if (mged_variables->adcflag)  {
+  if (adc_draw)  {
     /* Was on, turn off */
-    mged_variables->adcflag = 0;
+    adc_draw = 0;
   }  else  {
     /* Was off, turn on */
-    mged_variables->adcflag = 1;
+    adc_draw = 1;
   }
 
   set_scroll();

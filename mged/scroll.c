@@ -172,7 +172,7 @@ char **argv;
 	else
 	  scroll_array[0] = sl_abs_menu;
 
-	if(mged_variables->adcflag)
+	if(adc_draw)
 	  scroll_array[1] = sl_adc_menu;
 	else
 	  scroll_array[1] = SCROLL_NULL;
