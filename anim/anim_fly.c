@@ -65,6 +65,7 @@ char **argv;
 	fastf_t *points, *cur;
 	fastf_t yaw, pch, rll, stepsize, first[4], second[4];
 	fastf_t f_prm_0(), f_prm_1(), f_prm_2();
+	void get_orientation();	
 
 	yaw = pch = rll = 0.0;
 
@@ -167,7 +168,7 @@ char **argv;
 	}
 }
 
-
+void
 get_orientation(p0,p1,p2,function, p_yaw, p_pch, p_rll)
 fastf_t p0[4],p1[4],p2[4], *p_yaw, *p_pch, *p_rll;
 fastf_t (*function)();
