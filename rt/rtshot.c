@@ -83,7 +83,6 @@ int argc;
 char **argv;
 {
 	static struct rt_i *rtip;
-	Tcl_HashTable tbl;
 	char *title_file;
 	char idbuf[132];		/* First ID record info */
 	char *ptr;
@@ -258,10 +257,9 @@ err:
 	rtip->useair = use_air;
 
 	/* Walk trees */
-	if( rt_gettrees_muves( rtip, (const char **)attrs, &tbl, argc, (const char **)argv, 1 ) )
+	if( rt_gettrees_muves( rtip, (const char **)attrs, argc, (const char **)argv, 1 ) )
 	fprintf(stderr,"rt_gettrees FAILED\n");
 	ap.attrs = attrs;
-	ap.a_uptr = (genptr_t)&tbl;
 	rt_prep(rtip);
 
 	if( rdebug&RDEBUG_RAYPLOT )  {
@@ -348,7 +346,7 @@ struct partition *PartHeadp;
 			pp->pt_outseg->seg_stp->st_name,
 		        pp->pt_regionp->reg_bit);
 
-		entry = Tcl_FindHashEntry( (Tcl_HashTable *)ap->a_uptr,
+		entry = Tcl_FindHashEntry( (Tcl_HashTable *)ap->a_rt_i->Orca_hash_tbl,
 					   (char *)pp->pt_regionp->reg_bit );
 		if( !entry ) {
 			inv_mat = (matp_t)NULL;
