@@ -172,17 +172,19 @@ char	**argv;
 #define	V3525	SW31
 
 /*XXX*/
-float	tran[3];	/* x, y, z screen space translate */
-float	scal[3];	/* pre-translate scale */
+float	tran[3];	/* xyz screen space translate */
 
 view_loop()
 {
-	Matrix	m, newm;
+	Matrix	m;		/* our overall composite orientation matrix */
 	Device	event;
 	short	val;
 	int	end_it = 0;
 	int	o = 1;
 	long	menuval;
+	Matrix	rot;		/* rotations for this pass thru the loop */
+	float	scal[3];	/* scale */
+
 
 	/* Initial translate/rotate/scale matrix */
 	loadmatrix( centermat );
@@ -208,6 +210,8 @@ view_loop()
 		fval = val;
 
 		loadmatrix ( identmat );
+		tran[0] = tran[1] = tran[2] = 0;
+		scal[0] = scal[1] = scal[2] = 1;
 
 		switch (event) {
 		case ROTX:
@@ -336,26 +340,18 @@ view_loop()
 		if (end_it == 1)
 			break;
 
-#ifdef never
-		/* combine new rot/trans with old */
-		multmatrix( m );
-		getmatrix( m );
-
-		/* set up total viewing transformation */
-		loadmatrix( viewmat );
-		multmatrix( m );
-#else
-		getmatrix( newm );
-		newview( m, newm, viewmat, tran, scal );
-#endif
+		getmatrix( rot );
+		newview( m, rot, tran, scal, viewmat );
 
 		/* draw the object */
+		cursoff();
 		color(BLACK);
 		clear();
 		if( axis )
 			draw_axis();
 		for( o = minobj; o < maxobj; o++ )
 			callobj( o );
+		curson();
 		swapbuffers();
 
 		/* What was this select() ?? */
@@ -418,6 +414,7 @@ init_display()
 #ifdef mips
 		map_size = 1<<10;	/*XXX*/
 #endif mips
+		map_size -= MAP_RESERVED;	/* MEX's share */
 
 		/* The first 8 entries of the colormap are "known" colors */
 		mapcolor( 0, 000, 000, 000 );	/* BLACK */
@@ -430,12 +427,11 @@ init_display()
 		mapcolor( 7, 255, 255, 255 );	/* WHITE */
 
 		/* Use fixed color map with 10x10x10 color cube */
-		for( i = 0; i < map_size-MAP_RESERVED; i++ ) {
-			mapcolor( 	i+MAP_RESERVED,
-					(short)((i % 10) + 1) * 25,
-					(short)(((i / 10) % 10) + 1) * 25,
-					(short)((i / 100) + 1) * 25
-					);
+		for( i = 0; i < map_size; i++ ) {
+			mapcolor( i+MAP_RESERVED,
+				  (short)((i % 10) + 1) * 25,
+				  (short)(((i / 10) % 10) + 1) * 25,
+				  (short)((i / 100) + 1) * 25 );
 		}
 	} else {
 		/* not mex => 3030 with 12 planes/buffer */
@@ -452,6 +448,9 @@ init_display()
 				}
 			}
 		}
+		/* XXX - Hack for the cursor until the above code gets
+		 * fixed to avoid the first 8 magic entries! */
+		mapcolor( 1, 255, 000, 000 );	/* RED */
 	}
 
 	/* enable the mouse */
@@ -482,6 +481,8 @@ init_display()
 	noise( TRANY, 5 );
 	noise( TRANZ, 5 );
 	noise( ZOOM, 5 );
+
+	blanktime( 60 * 60 * 5L );	/* 5 minute blanking */
 
 	return	0;
 }
@@ -774,31 +775,23 @@ int	rx, ry, rz;
 #endif
 }
 
-newview( rotmat, rotdelta, viewmat, tran, scal )
-Matrix	rotmat, rotdelta, viewmat;
+newview( orient, rot, tran, scal, viewmat )
+Matrix	orient, rot, viewmat;
 float	tran[3], scal[3];
 {
 	/*
-	 * combine new rots with old
-	 *  rotmat = rotmat * rotdela
+	 * combine new operations with old
+	 *  orient = orient * scal * trans * rot * view
 	 */
-	loadmatrix( rotdelta );
-	multmatrix( rotmat );
-	getmatrix( rotmat );
+	loadmatrix( rot );
+	translate( tran[0], tran[1], tran[2] );
+	scale( scal[0], scal[1], scal[2] );
+	multmatrix( orient );
+	getmatrix( orient );
 
 	/* set up total viewing transformation */
 	loadmatrix( viewmat );
-	/*
-	 * mult m here rotates about view but translates along those
-	 * rotated model axis.
-	 */
-	translate( tran[0], tran[1], tran[2] );
-	scale( scal[0], scal[1], scal[2] );
-	/*
-	 * mult m here translates along view but rotates about about the
-	 * translated axis.
-	 */
-	multmatrix( m );
+	multmatrix( orient );
 }
 
 domenu( n )
