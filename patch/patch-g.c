@@ -1795,7 +1795,14 @@ int cnt;
 	else
 		mirror_name[0] = '\0';
 
-	if( !Build_solid( l, name, mirror_name, 0, centroid, 0.0, pl, &tol ) )
+	if( (RT_SETJUMP) || Build_solid( l, name, mirror_name, 0, centroid, 0.0, pl, &tol ) )
+	{
+		if( mirror_name[0] )
+			rt_log( "Failed to build solids %s and %s\n", name, mirror_name );
+		else
+			rt_log( "Failed to build solid %s\n", name );
+	}
+	else
 	{
 		count++;
 		(void) mk_addmember(name,&head,WMOP_UNION);
@@ -1807,6 +1814,7 @@ int cnt;
 			proc_region( mirror_name );
 		}
 	}
+	RT_UNSETJUMP;
 
 	if( debug )
 	{
@@ -2130,7 +2138,14 @@ int cnt;
 			else
 				mirror_name[0] = '\0';
 
-			if( !Build_solid( l, name, mirror_name, 1, centroid, thicks[thick_no], pl, &tol ) )
+			if( (RT_SETJUMP) || Build_solid( l, name, mirror_name, 1, centroid, thicks[thick_no], pl, &tol ) )
+			{
+				if( mirror_name[0] )
+					rt_log( "Failed to build solids %s and %s\n", name, mirror_name );
+				else
+					rt_log( "Failed to build solid %s\n", name );
+			}
+			else
 			{
 				count++;
 				(void) mk_addmember(name,&head,WMOP_UNION);
@@ -2142,6 +2157,7 @@ int cnt;
 					proc_region( mirror_name );
 				}
 			}
+			RT_UNSETJUMP;
 
 			if( debug )
 			{
