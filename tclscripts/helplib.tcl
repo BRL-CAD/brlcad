@@ -29,6 +29,7 @@ set helplib_data(dm_size)		{{[width [height]]} {Set/get the window size}}
 set helplib_data(dm_getaspect)		{{} {Get window's aspect ratio }}
 set helplib_data(dm_observer)		{{cmd [args]} {Attach/detach observer to/from list}}
 set helplib_data(wdb_close)		{{} {close/destroy this database object}}
+set helplib_data(wdb_comb_std)		{{[-gr] comb_name [boolean_expr]}	{create or extend a combination using standard notation}}
 set helplib_data(wdb_reopen)		{{[filename]} {open a database}}
 set helplib_data(wdb_dbip)		{{} {get dbip}}
 set helplib_data(wdb_hide)              {{[objects]} {set the "hidden" flag for the specified objects so they do not appear in a "t" or "ls" command output}}
