@@ -13,7 +13,7 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *  
  *  Copyright Notice -
- *	This software is Copyright (C) 1989 by the United States Army.
+ *	This software is Copyright (C) 1989-2004 by the United States Army.
  *	All rights reserved.
  *  
  *  @(#)$Header$
@@ -23,9 +23,12 @@
 extern int		use_air;		/* Handling of air in librt */
 /***** end of sharing with viewing model *****/
 
+/***** Variables declared in liboptical *****/
+extern vect_t		background;		/* background color */
+extern double		AmbientIntensity;	/* Ambient light intensity */
+
 /***** Variables declared in opt.c *****/
 extern char		*framebuffer;		/* desired framebuffer */
-extern double		AmbientIntensity;	/* Ambient light intensity */
 extern double		azimuth, elevation;
 extern int		lightmodel;		/* Select lighting model */
 extern int		rpt_overlap;		/* Warn about overlaps? */
@@ -80,15 +83,6 @@ extern int		incr_level;		/* current incremental level */
 extern int		incr_nlevel;		/* number of levels */
 extern int		npsw;			/* number of worker PSWs to run */
 extern struct resource	resource[];		/* memory resources */
-struct floatpixel {
-	double	ff_dist;		/* range to ff_hitpt[], <-INFINITY for miss */
-	float	ff_hitpt[3];
-	struct region *ff_regp;
-	int	ff_frame;		/* >= 0 means pixel was reprojected */
-	short	ff_x;			/* screen x,y coords of first location */
-	short	ff_y;
-	char	ff_color[3];
-};
 extern int		fullfloat_mode;
 extern int		reproject_mode;
 extern int		reproj_cur;	/* number of pixels reprojected this frame */
@@ -96,6 +90,11 @@ extern int		reproj_max;	/* out of total number of pixels */
 extern struct floatpixel	*curr_float_frame;	/* buffer of full frame */
 extern struct floatpixel	*prev_float_frame;
 /***** end variables shared with worker() *****/
+
+/***** Photon Mapping Variables *****/
+extern	double		pmargs[9];
+extern	char		pmfile[255];
+/***** ************************ *****/
 
 /***** variables shared with do.c *****/
 extern int		pix_start;		/* pixel to start at */

@@ -17,7 +17,7 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *  
  *  Copyright Notice -
- *	This software is Copyright (C) 1989 by the United States Army.
+ *	This software is Copyright (C) 1989-2004 by the United States Army.
  *	All rights reserved.
  */
 static const char RCSid[] = "@(#)$Header$ (BRL)";
@@ -382,7 +382,6 @@ extern int	height;
 extern int	matflag;
 extern int	interactive;
 extern int	benchmark;
-int		rdebug;
 int		rt_verbosity = -1;
 extern char	*outputfile;		/* output file name */
 extern int	desiredframe;

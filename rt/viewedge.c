@@ -19,7 +19,7 @@
  *	
  *
  *  Copyright Notice -
- *	This software is Copyright (C) 2001 by the United States Army.
+ *	This software is Copyright (C) 2001-2004 by the United States Army.
  * All rights reserved.  */
 #ifndef lint
 static const char RCSviewedge[] = "@(#)$Header$ (BRL)";
@@ -77,7 +77,6 @@ fastf_t		maxangle; /* Value of the cosine of the angle between
 
 typedef int color[3];
 color	foreground = { 255, 255, 255};
-color	background = { 0, 0, 1};
 
 /*
  * Flags that set which edges are detected.
@@ -271,7 +270,7 @@ view_init( struct application *ap, char *file, char *obj, int minus_o )
     /*    char idbuf[512]; */
     struct db_i *dbip;
     int nObjs;
-    char **objs;
+    const char **objs;
     int i;
 
     bu_log ("rtedge: loading occlusion geometry from %s.\n", file);
@@ -330,9 +329,15 @@ view_init( struct application *ap, char *file, char *obj, int minus_o )
 				 "occlusion_application structure");
 
       occlusion_apps[i]->a_rt_i = occlusion_rtip;
+      occlusion_apps[i]->a_resource = (struct resource *)BU_PTBL_GET( &occlusion_rtip->rti_resources, i );
       occlusion_apps[i]->a_onehit = 1;
       occlusion_apps[i]->a_hit = occlusion_hit;
       occlusion_apps[i]->a_miss = occlusion_miss;
+      if (rpt_overlap) {
+	      occlusion_apps[i]->a_logoverlap = ((void (*)())0);
+      } else {
+	      occlusion_apps[i]->a_logoverlap = rt_silent_logoverlap;
+      }
 
     }    		       
     bu_log ("rtedge: will perform occlusion testing.\n");
@@ -474,7 +479,6 @@ view_2init( struct application *ap )
    * the user can set it manually (so long as it isn't 0 0 1!).
    *
    */
-  bu_log("1\n");
   if (overlay) {
     if (background[RED] == 0 && 
 	background[GRN] == 0 &&
@@ -485,7 +489,6 @@ view_2init( struct application *ap )
       background[BLU] = bg_color[BLU];
     }
   }
-  bu_log("2\n");
   return;
 }
 
@@ -857,6 +860,7 @@ handle_main_ray( struct application *ap, register struct partition *PartHeadp,
   a2.a_onehit = 1;
   a2.a_rt_i = ap->a_rt_i;
   a2.a_resource = ap->a_resource;
+  a2.a_logoverlap = ap->a_logoverlap;
   
   VSUB2(a2.a_ray.r_pt, ap->a_ray.r_pt, dy_model); /* below */
   VMOVE(a2.a_ray.r_dir, ap->a_ray.r_dir);
@@ -1057,7 +1061,6 @@ static int occludes (struct application *ap, struct cell *here)
    * If the second geometry is closer, do not
    * color pixel
    */
-  occlusion_apps[cpu]->a_resource = ap->a_resource;
   VMOVE (occlusion_apps[cpu]->a_ray.r_pt, ap->a_ray.r_pt);
   VMOVE (occlusion_apps[cpu]->a_ray.r_dir, ap->a_ray.r_dir);
 
@@ -1087,35 +1090,3 @@ static int occludes (struct application *ap, struct cell *here)
   }    
   return 1;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

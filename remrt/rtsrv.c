@@ -12,7 +12,7 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *  
  *  Copyright Notice -
- *	This software is Copyright (C) 1985 by the United States Army.
+ *	This software is Copyright (C) 1985-2004 by the United States Army.
  *	All rights reserved.
  */
 static const char RCSid[] = "@(#)$Header$ (BRL)";
@@ -96,7 +96,7 @@ char		*beginptr;		/* sbrk() at start of program */
 /* Variables shared within mainline pieces */
 extern fastf_t	rt_dist_tol;		/* Value for rti_tol.dist */
 extern fastf_t	rt_perp_tol;		/* Value for rti_tol.perp */
-int		rdebug;			/* RT program debugging (not library) */
+extern int	rdebug;			/* RT program debugging (not library) */
 int		rt_verbosity = -1;
 static char idbuf[132];			/* First ID record info */
 

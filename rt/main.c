@@ -55,7 +55,7 @@ static const char RCSrt[] = "@(#)$Header$ (BRL)";
 
 extern char	usage[];
 
-int		rdebug;			/* RT program debugging (not library) */
+extern int	rdebug;			/* RT program debugging */
 int		rt_verbosity = -1;	/* blather incesantly by default */
 
 /***** Variables shared with viewing model *** */
@@ -173,6 +173,10 @@ int main(int argc, char **argv)
 	azimuth = 35.0;			/* GIFT defaults */
 	elevation = 25.0;
 
+	AmbientIntensity=0.4;
+	background[0] = background[1] = 0.0;
+	background[2] = 1.0/255.0; /* slightly non-black */
+
 	/* Before option processing, get default number of processors */
 	npsw = bu_avail_cpus();		/* Use all that are present */
 	if( npsw > DEFAULT_PSW )  npsw = DEFAULT_PSW;
@@ -219,6 +223,11 @@ int main(int argc, char **argv)
 		(void)fputs(usage, stderr);
 		exit(1);
 	}
+
+	if (rpt_overlap)
+		ap.a_logoverlap = ((void (*)())0);
+	else
+		ap.a_logoverlap = rt_silent_logoverlap;
 
 	/* If user gave no sizing info at all, use 512 as default */
 	if( width <= 0 && cell_width <= 0 )
@@ -280,8 +289,8 @@ int main(int argc, char **argv)
 		bu_log("\n");
 	}
 
-	if( rt_g.debug )  {
-		bu_printb( "librt RT_G_DEBUG", rt_g.debug, DEBUG_FORMAT );
+	if( RT_G_DEBUG )  {
+		bu_printb( "librt rt_g.debug", rt_g.debug, DEBUG_FORMAT );
 		bu_log("\n");
 	}
 	if( rdebug )  {
@@ -443,7 +452,7 @@ int main(int argc, char **argv)
 		 * called by rt_do_cmd().
 		 */
 		while( (buf = rt_read_cmd( stdin )) != (char *)0 )  {
-			if( rdebug&RDEBUG_PARSE )
+			if( R_DEBUG&RDEBUG_PARSE )
 				fprintf(stderr,"cmd: %s\n", buf );
 			ret = rt_do_cmd( rtip, buf, rt_cmdtab );
 			bu_free( buf, "rt_read_cmd command buffer" );

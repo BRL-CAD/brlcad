@@ -14,7 +14,7 @@
 #       The BRL-CAD Package" agreement.
 #
 # Copyright Notice -
-#       This software is Copyright (C) 1998 by the United States Army
+#       This software is Copyright (C) 1998-2004 by the United States Army
 #       in all countries except the USA.  All rights reserved.
 #
 # Description -
@@ -36,9 +36,9 @@ bind Menu <ButtonRelease> {
 # button -		Button that was released.
 #
 proc cad_MenuInvoke { w button } {
-    variable ::tk::Priv
+    global ::tk::Priv
 
-    if {$Priv(window) == ""} {
+    if { ([lsearch -exact [array name ::tk::Priv] window] != -1) && $::tk::Priv(window) == ""} {
 	# Mouse was pressed over a menu without a menu button, then
 	# dragged off the menu (possibly with a cascade posted) and
 	# released.  Unpost everything and quit.
@@ -105,7 +105,7 @@ proc cad_MenuFirstEntry { menu } {
     }   
 }
 
-proc tkTraverseWithinMenu { w char } {
+proc ::tk::TraverseWithinMenu { w char } {
     if {$char == ""} {
 	return
     }
@@ -141,8 +141,8 @@ proc tkTraverseWithinMenu { w char } {
     }
 }
 
-proc tkMenuNextMenu {menu direction} {
-    variable ::tk::Priv
+proc ::tk::MenuNextMenu {menu direction} {
+    global ::tk::Priv
 
     # First handle traversals into and out of cascaded menus.
 
@@ -163,7 +163,7 @@ proc tkMenuNextMenu {menu direction} {
 		if {([winfo class $parent] == "Menu")
 			&& ([$parent cget -type] == "menubar")} {
 		    tk_menuSetFocus $parent
-		    tkMenuNextEntry $parent 1
+		    ::tk::MenuNextEntry $parent 1
 		    return
 		}
 		set parent [winfo parent $parent]
@@ -195,12 +195,12 @@ proc tkMenuNextMenu {menu direction} {
     if {[winfo class $m2] == "Menu"} {
 	if {[$m2 cget -type] == "menubar"} {
 	    tk_menuSetFocus $m2
-	    tkMenuNextEntry $m2 -1
+	    ::tk::MenuNextEntry $m2 -1
 	    return
 	}
     }
 
-    set w $Priv(postedMb)
+    set w $::tk::Priv(postedMb)
     if {$w == ""} {
 	return
     }
@@ -230,8 +230,8 @@ proc tkMenuNextMenu {menu direction} {
     ::tk::MenuFirstEntry [$mb cget -menu]
 }
 
-proc tkMenuNextEntry {menu count} {
-    variable ::tk::Priv
+proc ::tk::MenuNextEntry {menu count} {
+    global ::tk::Priv
 
     if {[$menu index last] == "none"} {
 	return
@@ -280,12 +280,12 @@ proc tkMenuNextEntry {menu count} {
     }
 }
 
-proc tkMenuEscape menu {
-    global Priv
+proc ::tk::MenuEscape menu {
+    global ::tk::Priv
 
     set parent [winfo parent $menu]
     if {([winfo class $parent] != "Menu")} {
-	tkMenuUnpost $menu
+	::tk::MenuUnpost $menu
     } elseif {([$parent cget -type] == "menubar")} {
 	::tk::MenuUnpost $menu
 	::tk::RestoreOldGrab
@@ -294,7 +294,7 @@ proc tkMenuEscape menu {
 	if {[winfo class $grand_parent] != "Menu"} {
 	    ::tk::MenuUnpost $menu
 	} else {
-	    tkMenuNextMenu $menu left
+	    ::tk::MenuNextMenu $menu left
 	}
     }
 }

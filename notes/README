@@ -1,4 +1,31 @@
-bugs.txt  includes list of any bugs found anywhere in the package
-info.txt  list of notes about the different tools including notes
-  regarding testing
-types.txt  separate listings of commands based on parameter formatting
+TODO LIST
+=========
+
+Build with aquatk
+Finish integrating Geometry Browser
+Work on regression suite
+Update tcl/tk to latest 8.4
+ANSIfy the source code (test branch, finish script)
+Investigate and fix benchmark summary bug
+Write system identifier tool
+Make benchmarks nfs/multiuser friendly
+Convert documentation to DocBook
+Optimize raytrace pipeline
+Research high-speed triangle raytracer
+Work on minimal rt
+Remaster build architecture with autotools
+
+
+FILES 
+===== 
+
+There is some ancilliary information being held is some other files, they are described here:
+
+bugs.txt
+	includes a running list of any bugs found anywhere in the package
+
+info.txt
+	list of notes about the different tools including notes for future changes and some details on their present usage
+
+types.txt
+	separate listings of commands based on parameter formatting

@@ -214,6 +214,7 @@ set mged_help_data(shaded_mode)	{{[-a |-auto] [0|1|2]}	{get/set shaded mode}}
 set mged_help_data(shells)	$helplib_data(wdb_shells)
 set mged_help_data(showmats)	$helplib_data(wdb_showmats)
 set mged_help_data(size)	$helplib_data(vo_size)
+set mged_help_data(smooth_bot)  $helplib_data(wdb_smooth_bot)
 set mged_help_data(solids)	{{file object(s)}	{make ascii summary of solid parameters}}
 set mged_help_data(sph-part)	{{sph1name sph2name newname}	{create a part from two sph's}}
 set mged_help_data(status)	{{[state|Viewscale|base2local|local2base|

@@ -1,7 +1,3 @@
-
----
-Error given when asking for a list of the _GLOBAL object
-
 ---
 Incorrect color values are raytraced for a region that has the emission specified (at least unexpected).  Resulted in pink objects.
 
@@ -14,5 +10,3 @@ avg4 complains that an image output from pix-rle is not an rle.  does output the
 ---
 mged is hard-wired to the libraries.  i.e. mged knows the hard path to the libraries it needs.  question: would it be possible to make the linking reletive (e.g. ../lib/libfb.so, etc)
 
----
-unable to rotate an EBM while in solid edit mode.

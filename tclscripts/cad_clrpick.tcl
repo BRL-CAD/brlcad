@@ -35,15 +35,15 @@
 # The caller is responsible for calling "unset data"
 #
 proc cadColorWidget { mode parent child args } {
-    variable ::tk::Priv
+    global ::tk::Priv
 
     if ![winfo exists $parent] {
-	cad_dialog $Priv(cad_dialog) [winfo screen .]\
-		"cadColorWidget: parent does not exist"\
-		"cadColorWidget: parent does not exist - $parent"\
-		"" 0 OK
-
-	return {}
+      cad_dialog $::tk::Priv(cad_dialog) [winfo screen .]\
+	  "cadColorWidget: parent does not exist"\
+	  "cadColorWidget: parent does not exist - $parent"\
+	  "" 0 OK
+      
+      return {}
     }
 
     # Allow more than one color tool
@@ -90,7 +90,7 @@ proc cadColorWidget { mode parent child args } {
     set data(xoffset) [expr 3 + $data(indent)]
 
     # Create toplevel on parent's screen
-    toplevel $w -class ::tk::ColorDialog -screen [winfo screen $parent]
+    toplevel $w -class ::tk::dialog::color:: -screen [winfo screen $parent]
     cadColorWidget_Build $w $mode
 
 #    wm transient $w $parent

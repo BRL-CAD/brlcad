@@ -21,10 +21,10 @@ proc do_grid_spacing { id spacing_type } {
     global mged_gui
     global grid_control_spacing
     global localunit
-    variable ::tk::Priv
+    global ::tk::Priv
 
     if {[opendb] == ""} {
-	cad_dialog $Priv(cad_dialog) $mged_gui($id,screen) "No database." \
+	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "No database." \
 		"No database has been opened!" info 0 OK
 	return
     }
@@ -128,10 +128,10 @@ and 200. The tick spacing will be a power of
 proc do_grid_anchor { id } {
     global mged_gui
     global grid_control_anchor
-    variable ::tk::Priv
+    global ::tk::Priv
 
     if {[opendb] == ""} {
-	cad_dialog $Priv(cad_dialog) $mged_gui($id,screen) "No database." \
+	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "No database." \
 		"No database has been opened!" info 0 OK
 	return
     }
@@ -216,10 +216,10 @@ proc init_grid_control { id } {
     global mged_default
     global grid_control
     global localunit
-    variable ::tk::Priv
+    global ::tk::Priv
 
     if {[opendb] == ""} {
-	cad_dialog $Priv(cad_dialog) $mged_gui($id,screen) "No database." \
+	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "No database." \
 		"No database has been opened!" info 0 OK
 	return
     }
@@ -650,10 +650,10 @@ proc grid_control_update { sf } {
 }
 
 proc grid_autosize {} {
-    variable ::tk::Priv
+    global ::tk::Priv
 
     if {[opendb] == ""} {
-	cad_dialog $Priv(cad_dialog) $mged_gui($id,screen) "No database." \
+	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "No database." \
 		"No database has been opened!" info 0 OK
 	return
     }
@@ -677,10 +677,10 @@ proc grid_autosize {} {
 proc grid_spacing_autosize { id } {
     global mged_gui
     global grid_control_spacing
-    variable ::tk::Priv
+    global ::tk::Priv
 
     if {[opendb] == ""} {
-	cad_dialog $Priv(cad_dialog) $mged_gui($id,screen) "No database." \
+	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "No database." \
 		"No database has been opened!" info 0 OK
 	return
     }
@@ -750,10 +750,10 @@ proc grid_spacing_reset { id spacing_type } {
 proc set_grid_spacing { id grid_unit apply } {
     global mged_gui
     global grid_control
-    variable ::tk::Priv
+    global ::tk::Priv
 
     if {[opendb] == ""} {
-	cad_dialog $Priv(cad_dialog) $mged_gui($id,screen) "No database." \
+	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "No database." \
 		"No database has been opened!" info 0 OK
 	return
     }
@@ -774,10 +774,10 @@ proc set_grid_spacing { id grid_unit apply } {
 proc set_grid_spacing_htick { id grid_unit } {
     global mged_gui
     global grid_control
-    variable ::tk::Priv
+    global ::tk::Priv
 
     if {[opendb] == ""} {
-	cad_dialog $Priv(cad_dialog) $mged_gui($id,screen) "No database." \
+	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "No database." \
 		"No database has been opened!" info 0 OK
 	return
     }
@@ -796,10 +796,10 @@ proc set_grid_spacing_htick { id grid_unit } {
 proc set_grid_spacing_vtick { id grid_unit } {
     global mged_gui
     global grid_control
-    variable ::tk::Priv
+    global ::tk::Priv
 
     if {[opendb] == ""} {
-	cad_dialog $Priv(cad_dialog) $mged_gui($id,screen) "No database." \
+	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "No database." \
 		"No database has been opened!" info 0 OK
 	return
     }

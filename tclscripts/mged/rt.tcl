@@ -13,10 +13,10 @@ proc init_Raytrace { id } {
     global fb
     global rt_control
     global env
-    variable ::tk::Priv
+    global ::tk::Priv
 
     if {[opendb] == ""} {
-	cad_dialog $Priv(cad_dialog) $mged_gui($id,screen) "No database." \
+	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "No database." \
 		"No database has been opened!" info 0 OK
 	return
     }
@@ -388,7 +388,7 @@ proc do_Raytrace { id } {
     global port
     global fb_all
     global rt_control
-    variable ::tk::Priv
+    global ::tk::Priv
 
     if {$rt_control($id,cooked_src) == ""} {
 	return
@@ -420,7 +420,7 @@ proc do_Raytrace { id } {
 		append rt_cmd " -s $width"
 	    }
 	} else {
-	    cad_dialog $Priv(cad_dialog) $mged_gui($id,screen)\
+	    cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen)\
 		    "Improper size specification!"\
 		    "Improper size specification: $rt_control($id,size)"\
 		    "" 0 OK
@@ -449,7 +449,11 @@ proc do_Raytrace { id } {
 
     if {$rt_control($id,lmodel) != ""} {
 	append rt_cmd " -l$rt_control($id,lmodel)"
+	if {$rt_control($id,lmodel) == 7} {
+		append rt_cmd ",$rt_control($id,pmGlobalPhotonsEntry),$rt_control($id,pmCausticsPercentScale),$rt_control($id,pmIrradianceRaysScale),$rt_control($id,pmAngularTolerance),$rt_control($id,pmRandomSeedEntry),$rt_control($id,pmImportanceMapping),$rt_control($id,pmIrradianceHypersamplingCache),$rt_control($id,pmVisualizeIrradiance),$rt_control($id,pmScaleIndirectEntry),$rt_control($id,pmCacheFileEntry) -A0"
+	}
     }
+	#puts $rt_cmd
 
     if {$rt_control($id,other) != ""} {
 	append rt_cmd " $rt_control($id,other)"
@@ -501,7 +505,7 @@ proc do_Raytrace { id } {
 proc do_fbclear { id } {
     global mged_gui
     global rt_control
-    variable ::tk::Priv
+    global ::tk::Priv
 
     if {$rt_control($id,cooked_dest) == ""} {
 	return
@@ -511,7 +515,7 @@ proc do_fbclear { id } {
 	set result [regexp "^(\[0-9\]+)\[ \]+(\[0-9\]+)\[ \]+(\[0-9\]+)$" \
 		$rt_control($id,color) cmatch red green blue]
 	if {!$result} {
-	    cad_dialog $Priv(cad_dialog) $mged_gui($id,screen)\
+	    cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen)\
 		    "Improper color specification!"\
 		    "Improper color specification: $rt_control($id,color)"\
 		    "" 0 OK
@@ -527,7 +531,7 @@ proc do_fbclear { id } {
 	    $red $green $blue & } rt_error]
 
     if {$result != 0} {
-	cad_dialog $Priv(cad_dialog) $mged_gui($id,screen)\
+	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen)\
 		"RT Error!" "Rt Error: $rt_error" "" 0 OK
     }
 }
@@ -638,7 +642,8 @@ ray tracer will handle light." } }
     menu $top.lmodelMB.lmodelM -title "Light Model" -tearoff 0
     $top.lmodelMB.lmodelM add command -label "Full"\
 	    -command "set rt_control($id,lmodel) 0;\
-	    set rt_control($id,lmodelTitle) Full"
+	    set rt_control($id,lmodelTitle) \"Full\";\
+            PMMenu $id $top 0"
     hoc_register_menu_data "Light Model" "Full"\
 	    "Lighting Model - Full"\
 	    { { summary "This is the default. The full lighting model has the
@@ -653,14 +658,16 @@ are presently permitted), and shadow computations
 will be initiated automatically." } }
     $top.lmodelMB.lmodelM add command -label "Diffuse"\
 	    -command "set rt_control($id,lmodel) 1;\
-	    set rt_control($id,lmodelTitle) Diffuse"
+	    set rt_control($id,lmodelTitle) \"Diffuse\";\
+            PMMenu $id $top 0"
     hoc_register_menu_data "Light Model" "Diffuse"\
 	    "Lighting Model - Diffuse"\
 	    { { summary "This is a diffuse lighting model only and\
 is intended for debugging." } }
     $top.lmodelMB.lmodelM add command -label "Surface Normals"\
 	    -command "set rt_control($id,lmodel) 2;\
-	    set rt_control($id,lmodelTitle) \"Surface Normals\""
+	    set rt_control($id,lmodelTitle) \"Surface Normals\";\
+            PMMenu $id $top 0"
     hoc_register_menu_data "Light Model" "Surface Normals"\
 	    "Lighting Model - Surface Normals"\
 	    { { summary "This lighting model displays the surface normals
@@ -668,25 +675,35 @@ as colors which makes it useful for examining
 curvature and surface orientation." } }
     $top.lmodelMB.lmodelM add command -label "Diffuse - 3 light"\
 	    -command "set rt_control($id,lmodel) 3;\
-	    set rt_control($id,lmodelTitle) \"Diffuse - 3 light\""
+	    set rt_control($id,lmodelTitle) \"Diffuse - 3 light\";\
+            PMMenu $id $top 0"
     hoc_register_menu_data "Light Model" "Diffuse - 3 light"\
 	    "Lighting Model - Diffuse 3 Light"\
 	    { { summary "This is a three-light diffuse-lighting model\
 and is intended for debugging." } }
     $top.lmodelMB.lmodelM add command -label "Curvature - inverse radius"\
 	    -command "set rt_control($id,lmodel) 4;\
-	    set rt_control($id,lmodelTitle) \"Curvature - inverse radius\""
+	    set rt_control($id,lmodelTitle) \"Curvature - inverse radius\";\
+            PMMenu $id $top 0"
     hoc_register_menu_data "Light Model" "Curvature - inverse radius"\
 	    "Lighting Model - Curvature, Inverse Radius"\
 	    { { summary "This is a curvature debugging display,
 showing the inverse radius of curvature." } }
     $top.lmodelMB.lmodelM add command -label "Curvature - direction vector"\
 	    -command "set rt_control($id,lmodel) 5;\
-	    set rt_control($id,lmodelTitle) \"Curvature - direction vector\""
+	    set rt_control($id,lmodelTitle) \"Curvature - direction vector\";\
+            PMMenu $id $top 0"
     hoc_register_menu_data "Light Model" "Curvature - direction vector"\
 	    "Lighting Model - Curvature, Direction Vector"\
 	    { { summary "This is a curvature debugging display,
 showing the principal direction vector." } }
+    $top.lmodelMB.lmodelM add command -label "Photon Mapping"\
+	    -command "set rt_control($id,lmodel) 7;\
+	    set rt_control($id,lmodelTitle) \"Photon Mapping\";\
+	    PMMenu $id $top 1"
+    hoc_register_menu_data "Light Model" "Photon Mapping"\
+	    "Lighting Model - Photon Mapping"\
+	    { { summary "This is a replacement for the Full Phong lighting model." } }
 
     set hoc_data { { summary "A place to specify other rt options." } }
     label $top.otherL -text "Other Options" -anchor e
@@ -722,6 +739,11 @@ showing the principal direction vector." } }
 
     place_near_mouse $top
     wm title $top "Advanced Settings ($id)"
+
+    PMMenu $id $top 2
+    if {$rt_control($id,lmodelTitle) == "Photon Mapping"} {
+      PMMenu $id $top 1
+    }
 }
 
 ## - rt_update_dest
@@ -1269,13 +1291,28 @@ proc rt_init_vars { id win } {
 	set rt_control($id,topAS) .$id.rtAS
 	set rt_control($id,topOLE) .$id.rtOLE
 	set rt_control($id,olist) {}
-	set rt_control($id,nproc) 1
+	set rt_control($id,nproc) 16
 	set rt_control($id,hsample) 0
 	set rt_control($id,jitter) 0
 	set rt_control($id,jitterTitle) "None"
 	set rt_control($id,lmodel) 0
 	set rt_control($id,lmodelTitle) "Full"
 	set rt_control($id,other) {}
+
+        ## Photon Mapping Init Stuff
+	set rt_control($id,pmGlobalPhotonsEntry) 16384
+	set rt_control($id,pmGlobalPhotonsScale) 14
+	set rt_control($id,pmCausticsPercentScale) 0
+	set rt_control($id,pmIrradianceRaysEntry) 100
+	set rt_control($id,pmIrradianceRaysScale) 10
+	set rt_control($id,pmAngularTolerance) 60.0
+	set rt_control($id,pmRandomSeedEntry) 0
+	set rt_control($id,pmImportanceMapping) 0
+	set rt_control($id,pmIrradianceHypersamplingCache) 0
+	set rt_control($id,pmVisualizeIrradiance) 0
+	set rt_control($id,pmScaleIndirectScale) 1.0
+	set rt_control($id,pmCacheFileEntry) ""
+
 
 	# set widget padding
 	set rt_control($id,padx) 4
@@ -1354,7 +1391,206 @@ proc rt_solid_list_callback { id } {
     }
 }
 
+
 proc rt_handle_configure { id } {
     after cancel rt_set_fb_size $id
     after idle rt_set_fb_size $id
+}
+
+
+##
+##  Photon Mapping Interface Procedures (JLS_2003)
+##
+
+
+## Update for each inividual Entry/Scale pair
+proc PMNonLinearEvent {EntryWidget ScaleValue} {
+  ## Purge old characters
+  $EntryWidget delete 0 [string length [$EntryWidget get]]
+  ## Insert new characters
+  $EntryWidget insert 0 [expr int(pow(2,$ScaleValue))]
+}
+
+
+## Update for each inividual Entry/Scale pair
+proc PMLinearEvent {EntryWidget ScaleValue} {
+  ## Purge old characters
+  $EntryWidget delete 0 [string length [$EntryWidget get]]
+  ## Insert new characters
+  $EntryWidget insert 0 $ScaleValue
+}
+
+
+## Update for each inividual Entry/Scale pair
+proc PMRaysEvent {EntryWidget ScaleValue} {
+  ## Purge old characters
+  $EntryWidget delete 0 [string length [$EntryWidget get]]
+  ## Insert new characters
+  $EntryWidget insert 0 [expr int(pow($ScaleValue,2))]
+}
+
+
+proc PMMenu {id top enable} {
+  if {$enable == 2} {
+    ## Setup
+    frame $top.gridF4 -relief groove -bd 2
+
+    set hoc_data { { summary "Photon Mapping is used to simulate indirect illumination and caustics.\nThis is a substitute to using ambient light to simulate indirect illumination." } }
+
+    label $top.gridF4.pmOptionsLabel -text "Photon Mapping Controls" -foreground #666666
+    hoc_register_data $top.gridF4.pmOptionsLabel "Photon Mapping Synopsis" $hoc_data
+    grid $top.gridF4.pmOptionsLabel -row 0 -column 0 -columnspan 3
+
+
+    ## Number of Photons in the Global Map
+    set hoc_data { { summary "The total number of photons that will be used in the scene." } }
+
+    label $top.gridF4.pmGlobalPhotonsLabel -text "Global Photons"
+    grid $top.gridF4.pmGlobalPhotonsLabel -row 1 -column 0 -sticky e
+    hoc_register_data $top.gridF4.pmGlobalPhotonsLabel "Global Photons" $hoc_data
+
+    entry $top.gridF4.pmGlobalPhotonsEntry -width 8 -textvar rt_control($id,pmGlobalPhotonsEntry)
+    grid $top.gridF4.pmGlobalPhotonsEntry -row 1 -column 1 -sticky news
+    hoc_register_data $top.gridF4.pmGlobalPhotonsEntry "Global Photons" $hoc_data
+
+    scale $top.gridF4.pmGlobalPhotonsScale -orient horizontal -showvalue 0 -from 10 -to 24 -command "PMNonLinearEvent $top.gridF4.pmGlobalPhotonsEntry" -variable rt_control($id,pmGlobalPhotonsScale)
+    grid $top.gridF4.pmGlobalPhotonsScale -row 1 -column 2 -sticky news
+    hoc_register_data $top.gridF4.pmGlobalPhotonsScale "Global Photons" $hoc_data
+
+
+    ## Percent of Global Photons that Caustics may consume
+    set hoc_data { { summary "The percent of global photons that should be used as caustic photons.\nIf there are no caustics in the scene then the percentage of caustic\nphotons chosen will be wasted." } }
+
+    label $top.gridF4.pmCausticsPercentLabel -text "Caustics Percent"
+    grid $top.gridF4.pmCausticsPercentLabel -row 2 -column 0 -sticky e
+    hoc_register_data $top.gridF4.pmCausticsPercentLabel "Caustics Percent" $hoc_data
+
+    entry $top.gridF4.pmCausticsPercentEntry -width 8 -textvar rt_control($id,pmCausticsPercentEntry)
+    grid $top.gridF4.pmCausticsPercentEntry -row 2 -column 1 -sticky news
+    hoc_register_data $top.gridF4.pmCausticsPercentEntry "Caustics Percent" $hoc_data
+
+    scale $top.gridF4.pmCausticsPercentScale -orient horizontal -showvalue 0 -from 0 -to 100 -command "PMLinearEvent $top.gridF4.pmCausticsPercentEntry" -variable rt_control($id,pmCausticsPercentScale)
+    grid $top.gridF4.pmCausticsPercentScale -row 2 -column 2 -sticky news
+    hoc_register_data $top.gridF4.pmCausticsPercentScale "Caustics Percent" $hoc_data
+
+
+    ## Number of Sample Rays for Irradidance Hemisphere Sample
+    set hoc_data { { summary "The number of irradiance rays used to approximate irradiance at each irradiance cache point.\nIrradiance is the incoming light at a given point.  Increasing the number of rays will decrease\nthe amount of noise in the scene." } }
+
+    label $top.gridF4.pmIrradianceRaysLabel -text "Irradiance Rays"
+    grid $top.gridF4.pmIrradianceRaysLabel -row 3 -column 0 -sticky e
+    hoc_register_data $top.gridF4.pmIrradianceRaysLabel "Irradiance Rays" $hoc_data
+
+    entry $top.gridF4.pmIrradianceRaysEntry -width 8 -textvar rt_control($id,pmIrradianceRaysEntry)
+    grid $top.gridF4.pmIrradianceRaysEntry -row 3 -column 1 -sticky news
+    hoc_register_data $top.gridF4.pmIrradianceRaysEntry "Irradiance Rays" $hoc_data
+
+    scale $top.gridF4.pmIrradianceRaysScale -orient horizontal -showvalue 0 -from 4 -to 32 -command "PMRaysEvent $top.gridF4.pmIrradianceRaysEntry" -variable rt_control($id,pmIrradianceRaysScale)
+    grid $top.gridF4.pmIrradianceRaysScale -row 3 -column 2 -sticky news
+    hoc_register_data $top.gridF4.pmIrradianceRaysScale "Irradiance Rays" $hoc_data
+
+
+    ## Angular Tolerance Entry and Scale
+    set hoc_data { { summary "The angular tolerance used when looking for candidate photons.\nSetting this high will remove normal banding, however photons\nmay appear in unwanted areas around edges." } }
+
+    label $top.gridF4.pmAngularToleranceLabel -text "Angular Tol"
+    grid $top.gridF4.pmAngularToleranceLabel -row 4 -column 0 -sticky e
+    hoc_register_data $top.gridF4.pmAngularToleranceLabel "Angular Tolerance" $hoc_data
+
+    entry $top.gridF4.pmAngularToleranceEntry -width 8 -textvar rt_control($id,pmAngularTolerance)
+    grid $top.gridF4.pmAngularToleranceEntry -row 4 -column 1 -sticky news
+    hoc_register_data $top.gridF4.pmAngularToleranceEntry "Angular Tolerance" $hoc_data
+
+    scale $top.gridF4.pmAngularToleranceScale -orient horizontal -showvalue 0 -from 0 -to 180 -command "PMLinearEvent $top.gridF4.pmAngularToleranceEntry" -variable rt_control($id,pmAngularTolerance)
+    grid $top.gridF4.pmAngularToleranceScale -row 4 -column 2 -sticky news
+    hoc_register_data $top.gridF4.pmAngularToleranceScale "Angular Tolerance" $hoc_data
+
+
+    ## Random Seed for Emitting Photons
+    set hoc_data { { summary "Sets the random seed used for every part of photon mapping.\nFor large numbers of photons this setting will have no affect\non the scene.  This setting is useful for reproducing the same\nmap for a given scene." } }
+
+    label $top.gridF4.pmRandomSeedLabel -text "Random Seed"
+    grid $top.gridF4.pmRandomSeedLabel -row 5 -column 0 -sticky e
+    hoc_register_data $top.gridF4.pmRandomSeedLabel "Random Seed" $hoc_data
+
+    entry $top.gridF4.pmRandomSeedEntry -width 8 -textvar rt_control($id,pmRandomSeedEntry)
+    grid $top.gridF4.pmRandomSeedEntry -row 5 -column 1 -sticky news
+    hoc_register_data $top.gridF4.pmRandomSeedEntry "Random Seed" $hoc_data
+
+    scale $top.gridF4.pmRandomSeedScale -orient horizontal -showvalue 0 -from 0 -to 9 -command "PMLinearEvent $top.gridF4.pmRandomSeedEntry" -variable rt_control($id,pmRandomSeedScale)
+    grid $top.gridF4.pmRandomSeedScale -row 5 -column 2 -sticky news
+    hoc_register_data $top.gridF4.pmRandomSeedScale "Random Seed" $hoc_data
+
+
+    ## Scale Indirect
+    set hoc_data { { summary "This setting scales indirect illumination in the scene by the specified amount.\nThis is useful for tweaking the amount of global illumination the scene\nshould be receiving." } }
+
+    label $top.gridF4.pmScaleIndirectLabel -text "Scale Indirect"
+    grid $top.gridF4.pmScaleIndirectLabel -row 6 -column 0 -sticky e
+    hoc_register_data $top.gridF4.pmScaleIndirectLabel "Scale Indirect" $hoc_data
+
+    entry $top.gridF4.pmScaleIndirectEntry -width 8 -textvar rt_control($id,pmScaleIndirectEntry)
+    grid $top.gridF4.pmScaleIndirectEntry -row 6 -column 1 -sticky news
+    hoc_register_data $top.gridF4.pmScaleIndirectEntry "Scale Indirect" $hoc_data
+
+    scale $top.gridF4.pmScaleIndirectScale -orient horizontal -showvalue 0 -from 0.1 -to 10.0 -resolution 0.01 -command "PMLinearEvent $top.gridF4.pmScaleIndirectEntry" -variable rt_control($id,pmScaleIndirectScale)
+    grid $top.gridF4.pmScaleIndirectScale -row 6 -column 2 -sticky news
+    hoc_register_data $top.gridF4.pmScaleIndirectScale "Scale Indirect" $hoc_data
+
+
+    ## Cache File
+    set hoc_data { { summary "Entering a valid file name is this box permits saving and loading of the photon mapping\ndata.  This is useful for rendering a scene with static geometry without having to\ngenerate the data each time." } }
+
+    label $top.gridF4.pmCacheFileLabel -text "Load/Save File"
+    grid $top.gridF4.pmCacheFileLabel -row 7 -column 0 -sticky e
+    hoc_register_data $top.gridF4.pmCacheFileLabel "Load/Save Photon Map Data" $hoc_data
+
+    entry $top.gridF4.pmCacheFileEntry -width 8 -textvar rt_control($id,pmCacheFileEntry)
+    grid $top.gridF4.pmCacheFileEntry -row 7 -column 1 -columnspan 2 -sticky news
+    hoc_register_data $top.gridF4.pmCacheFileEntry "Load/Save Photon Map Data" $hoc_data
+
+
+    ## Generate Importons
+    set hoc_data { { summary "Use this setting to distribute the photons in a view dependent fashion.  This is useful when\nscenes are dominated by complex geometry in which only small portions are being viewed.\nImportance Mapping is view dependent and therefore should not be used in conjunction\nwith the file saving option unless the view remains static." } }
+
+    checkbutton $top.gridF4.pmImportanceMapping -text "Use Importance Mapping" -variable rt_control($id,pmImportanceMapping)
+    grid $top.gridF4.pmImportanceMapping -row 8 -column 1 -columnspan 2 -sticky w
+    hoc_register_data $top.gridF4.pmImportanceMapping "Importance Mapping" $hoc_data
+#    $top.gridF4.pmImportanceMapping select
+
+    ## Irradiance Hypersampling Cache
+    set hoc_data { { summary "With this option enabled only one irradiance and caustic lookup will be performed per pixel." } }
+
+    checkbutton $top.gridF4.pmIrradianceHypersamplingCache -text "Use Irradiance Hypersampling Cache" -variable rt_control($id,pmIrradianceHypersamplingCache)
+    grid $top.gridF4.pmIrradianceHypersamplingCache -row 9 -column 1 -columnspan 2 -sticky w
+    hoc_register_data $top.gridF4.pmIrradianceHypersamplingCache "Irradiance Hypersampling Cache" $hoc_data
+#    $top.gridF4.pmIrradianceHypersamplingCache select
+
+    ## Irradiance Visualization
+    set hoc_data { { summary "With this option enabled only the indirect illumination and caustics will be rendered." } }
+
+    checkbutton $top.gridF4.pmVisualizeIrradiance -text "Visualize Irradiance Cache" -variable rt_control($id,pmVisualizeIrradiance)
+    grid $top.gridF4.pmVisualizeIrradiance -row 10 -column 1 -columnspan 2 -sticky w
+    hoc_register_data $top.gridF4.pmVisualizeIrradiance "Visualize Irradiance" $hoc_data
+#    $top.gridF4.pmVisualizeIrradiance select
+
+    ## Edge Compensator
+#    checkbutton $top.gridF4.pmEdgeCompensation -text "Edge Compensation"
+#    grid $top.gridF4.pmEdgeCompensation -row 7 -column 0 -columnspan 2 -sticky w
+#    $top.gridF4.pmEdgeCompensation select
+
+    ## Use Direct Photons for Direct Illumination
+#    checkbutton $top.gridF4.pmDirectIllumination -text "Photon Map for Direct Illum."
+#    $top.gridF4.pmDirectIllumination select
+#    grid $top.gridF4.pmDirectIllumination -row 7 -column 2 -sticky w
+
+  } elseif {$enable == 1} {
+    if {[grid size $top.gridF1] != "2 6"} {
+      grid $top.gridF4 -sticky news -columnspan 2 -in $top.gridF1 -ipadx 8 -ipady 8
+    }
+  } else {
+    if {[grid size $top.gridF1] == "2 6"} {
+      grid remove $top.gridF4
+    }
+  }
 }

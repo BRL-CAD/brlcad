@@ -8,10 +8,10 @@
 
 proc init_asc2g { id } {
 	global mged_gui
-	global tkPriv
+	global ::tk::Priv
 	
 	if {[opendb] == ""} {
-		cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen) "No database." "No database has been opened!" info 0 OK
+		cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "No database." "No database has been opened!" info 0 OK
 		return
 	}
 	

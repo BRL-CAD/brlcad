@@ -21,7 +21,7 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *  
  *  Copyright Notice -
- *	This software is Copyright (C) 1990 by the United States Army.
+ *	This software is Copyright (C) 1990-2004 by the United States Army.
  *	All rights reserved.
  */
 #ifndef lint
@@ -195,7 +195,7 @@ struct partition *PartHeadp;
 		return(0);
 	}
 
-	if(rdebug&RDEBUG_HITS)  {
+	if(R_DEBUG&RDEBUG_HITS)  {
 		rt_pr_pt( ap->a_rt_i, pp );
 	}
 

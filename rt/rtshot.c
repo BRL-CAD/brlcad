@@ -16,7 +16,7 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *  
  *  Copyright Notice -
- *	This software is Copyright (C) 1987 by the United States Army.
+ *	This software is Copyright (C) 1987-2004 by the United States Army.
  *	All rights reserved.
  */
 #ifndef lint
@@ -43,6 +43,17 @@ static const char RCSrt[] = "@(#)$Header$ (BRL)";
 #include "../librt/debug.h"
 #include "plot3.h"
 
+extern void rt_raybundle_maker( struct xray	*rp,
+				double		radius,
+				const vect_t	avec,
+				const vect_t	bvec,
+				int		rays_per_ring,
+				int		nring);
+
+extern int rt_shootray_bundle( struct application *ap,
+			       struct xray		*rays,
+			       int			nrays);
+
 char	usage[] = "\
 Usage:  rtshot [options] model.g objects...\n\
  -U #		Set use_air flag\n\
@@ -58,9 +69,11 @@ Usage:  rtshot [options] model.g objects...\n\
  -O #		Set overlap-claimant handling\n\
  -o #		Set onehit flag\n\
  -r #		Set ray length\n\
+ -n #		Set number of rings for ray bundle\n\
+ -c #		Set number of rays per ring for ray bundle\n\
+ -R #		Set radius for ray bundle\n\
  -v \"attribute_name1 attribute_name2 ...\" Show attribute values\n";
 
-int		rdebug;			/* RT program debugging (not library) */
 static FILE	*plotfp;		/* For plotting into */
 
 struct application	ap;
@@ -73,6 +86,9 @@ fastf_t		set_ray_length = 0.0;
 vect_t		at_vect;
 int		overlap_claimant_handling = 0;
 int		use_air = 0;		/* Handling of air */
+int		rays_per_ring = 0;
+int		num_rings = 0;
+fastf_t		bundle_radius = 0.0;
 
 extern int hit(), miss();
 extern int rt_bot_tri_per_piece;
@@ -98,9 +114,26 @@ char **argv;
 		exit(1);
 	}
 
+	bzero( &ap, sizeof( struct application ) );
+
 	argc--;
 	argv++;
 	while( argv[0][0] == '-' ) switch( argv[0][1] )  {
+	case 'R':
+		bundle_radius = atof( argv[1] );
+		argc -= 2;
+		argv += 2;
+		break;
+	case 'n':
+		num_rings = atoi( argv[1] );
+		argc -= 2;
+		argv += 2;
+		break;
+	case 'c':
+		rays_per_ring = atoi( argv[1] );
+		argc -= 2;
+		argv += 2;
+		break;
 	case 'v':
 		/* count the number of attribute names provided */
 		ptr = argv[1];
@@ -254,6 +287,13 @@ err:
 
 	if( set_dir + set_pt + set_at != 2 )  goto err;
 
+	if( num_rings != 0 || rays_per_ring != 0 || bundle_radius != 0.0 ) {
+		if( num_rings <= 0 || rays_per_ring <= 0 || bundle_radius <= 0.0 ) {
+			fprintf( stderr, "Must have all of \"-R\", \"-n\", and \"-c\" set\n" );
+			goto err;
+		}
+	}
+
 	/* Load database */
 	title_file = argv[0];
 	argv++;
@@ -279,7 +319,7 @@ err:
 
 	rt_prep(rtip);
 
-	if( rdebug&RDEBUG_RAYPLOT )  {
+	if( R_DEBUG&RDEBUG_RAYPLOT )  {
 		if( (plotfp = fopen("rtshot.plot", "w")) == NULL )  {
 			perror("rtshot.plot");
 			exit(1);
@@ -303,6 +343,9 @@ err:
 	}
 	VUNITIZE( ap.a_ray.r_dir );
 
+	if( rays_per_ring ) {
+		bu_log( "Central Ray:\n" );
+	}
 	VPRINT( "Pnt", ap.a_ray.r_pt );
 	VPRINT( "Dir", ap.a_ray.r_dir );
 
@@ -320,7 +363,26 @@ err:
 	ap.a_purpose = "main ray";
 	ap.a_hit = hit;
 	ap.a_miss = miss;
-	(void)rt_shootray( &ap );
+
+	if( rays_per_ring ) {
+		vect_t avec, bvec;
+		struct xray *rp;
+
+		/* create orthogonal rays for basis of bundle */
+		bn_vec_ortho( avec, ap.a_ray.r_dir );
+		VCROSS( bvec, ap.a_ray.r_dir, avec );
+		VUNITIZE( bvec );
+
+		rp = (struct xray *)bu_calloc( sizeof( struct xray ),
+					       (rays_per_ring * num_rings) + 1,
+					       "ray bundle" );
+		rp[0] = ap.a_ray;	/* struct copy */
+		rp[0].magic = RT_RAY_MAGIC;
+		rt_raybundle_maker( rp, bundle_radius, avec, bvec, rays_per_ring, num_rings );
+		(void)rt_shootray_bundle( &ap, rp, (rays_per_ring * num_rings) + 1 );
+	} else {
+		(void)rt_shootray( &ap );
+	}
 
 	return(0);
 }
@@ -345,7 +407,7 @@ struct partition *PartHeadp;
 		rt_rebuild_overlaps( PartHeadp, ap, 0 );
 
 	/* First, plot ray start to inhit */
-	if( rdebug&RDEBUG_RAYPLOT )  {
+	if( R_DEBUG&RDEBUG_RAYPLOT )  {
 		if( pp->pt_inhit->hit_dist > 0.0001 )  {
 			VJOIN1( inpt, ap->a_ray.r_pt,
 				pp->pt_inhit->hit_dist, ap->a_ray.r_dir );
@@ -399,7 +461,7 @@ struct partition *PartHeadp;
 			point_t in_trans;
 
 			MAT4X3PNT( in_trans, inv_mat, inpt );
-			bu_log( "\ttranslated ORCA inhit = (%g %g %g)\n", V3ARGS( in_trans ) );
+			bu_log( "\ttransformed ORCA inhit = (%g %g %g)\n", V3ARGS( in_trans ) );
 		}
 
 		/* outhit info */
@@ -416,13 +478,17 @@ struct partition *PartHeadp;
 
 		if( inv_mat ) {
 			point_t out_trans;
+			vect_t dir_trans;
 
 			MAT4X3PNT( out_trans, inv_mat, outpt );
-			bu_log( "\ttranslated ORCA outhit = (%g %g %g)\n", V3ARGS( out_trans ) );
+			MAT4X3VEC( dir_trans, inv_mat, ap->a_ray.r_dir );
+			VUNITIZE( dir_trans );
+			bu_log( "\ttranformed ORCA outhit = (%g %g %g)\n", V3ARGS( out_trans ) );
+			bu_log( "\ttransformed ORCA ray direction = (%g %g %g)\n", V3ARGS( dir_trans ) );
 		}
 
 		/* Plot inhit to outhit */
-		if( rdebug&RDEBUG_RAYPLOT )  {
+		if( R_DEBUG&RDEBUG_RAYPLOT )  {
 			if( (out = pp->pt_outhit->hit_dist) >= INFINITY )
 				out = 10000;	/* to imply the direction */
 
@@ -460,7 +526,7 @@ int miss( ap )
 register struct application *ap;
 {
 	bu_log("missed\n");
-	if( rdebug&RDEBUG_RAYPLOT )  {
+	if( R_DEBUG&RDEBUG_RAYPLOT )  {
 		vect_t	out;
 
 		VJOIN1( out, ap->a_ray.r_pt,

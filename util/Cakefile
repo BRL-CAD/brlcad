@@ -7,6 +7,7 @@
 #define SRCDIR	util
 #define PRODUCTS	\
 	alias-pix ap-pix asc-pl azel bary buffer dbcp \
+	binfo \
 	bw-a bw-imp bw-pix bw-ps bw3-pix bw-png png-bw png_info \
 	bwcrop bwdiff bwfilter bwhist bwhisteq \
 	bwmod bwrect bwrot bwscale bwshrink \
@@ -414,7 +415,6 @@ pixcount:	pixcount.o LIBBN_DEP LIBBU_DEP LIBFB_DEP
 imgdims:	imgdims.o LIBBN_DEP LIBBU_DEP LIBTCL_DEP
 	CC LDFLAGS -o imgdims imgdims.o LIBBN LIBBU LIBTCL LIBTCL_LIBES LIBES
 
-
 terrain:	terrain.o LIBBN_DEP LIBBU_DEP LIBTCL_DEP
 	CC LDFLAGS -o terrain terrain.o LIBBN LIBBU LIBTCL LIBTCL_LIBES LIBES
 
@@ -430,5 +430,10 @@ rtwizard:	../SRCDIR/rtwizard
 	#ifdef NFS
 	cp ../SRCDIR/rtwizard rtwizard
 	#endif
+
+binfo:	binfo.o LIBFB_DEP LIBRT_DEP LIBTCL_DEP LIBBN_DEP LIBBU_DEP 
+	newvers.sh version "BRL-CAD info"
+	CC CFLAGS -c vers.c
+	CC LDFLAGS -o binfo binfo.o vers.o LIBFB LIBFB_LIBES LIBRT LIBTCL LIBTCL_LIBES LIBBN LIBBU LIBBU_LIBES LIBES
 
 #include "../Cakefile.rules"

@@ -14,7 +14,7 @@
  *      The BRL-CAD Package" agreement.
  *
  *  Copyright Notice -
- *      This software is Copyright (C) 1998 by the United States Army
+ *      This software is Copyright (C) 1998-2004 by the United States Army
  *      in all countries except the USA.  All rights reserved.
  */
 
@@ -27,12 +27,12 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <math.h>
+#include "png.h"
 #include "machine.h"
 #include "externs.h"
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
-#include "png.h"
 #include "zlib.h"
 
 static png_color_16 def_backgrd={ 0,0,0,0,0 };

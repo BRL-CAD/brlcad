@@ -20,10 +20,10 @@
 proc init_adc_control { id } {
     global mged_gui
     global mged_adc_control
-    variable ::tk::Priv
+    global ::tk::Priv
 
     if {[opendb] == ""} {
-	cad_dialog $Priv(cad_dialog) $mged_gui($id,screen) "No database." \
+	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "No database." \
 		"No database has been opened!" info 0 OK
 	return
     }
@@ -591,11 +591,11 @@ proc adc_clear { id } {
 
 proc adc_CBHandler { id } {
     global mged_gui
-    variable ::tk::Priv
+    global ::tk::Priv
 
     if {[opendb] == ""} {
 	set mged_gui($id,adc_draw) 0
-	cad_dialog $Priv(cad_dialog) $mged_gui($id,screen) "No database." \
+	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "No database." \
 		"No database has been opened!" info 0 OK
 	return
     }

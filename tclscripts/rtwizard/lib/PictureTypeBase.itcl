@@ -10,7 +10,7 @@
 #
 package require Itcl
 package require Itk
-package require Iwidgets 3.0
+package require Iwidgets
 
 namespace eval RtWizard {
   
@@ -372,9 +372,10 @@ namespace eval RtWizard {
 	#
 	# Set up a callback for readable events, and wait!
 	#
-	fileevent $pipe readable [ list testRead $pipe ]
-	fileevent $pipe writable [ list testWrite $pipe ]
-	vwait ::waiting
+# 	fileevent $pipe readable [ list testRead $pipe ]
+#	fileevent $pipe writable [ list testWrite $pipe ]
+#	vwait ::waiting
+	fconfigure $pipe -blocking true
 
 	catch "close $pipe" catchResult
 	puts $catchResult

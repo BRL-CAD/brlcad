@@ -11,10 +11,10 @@ check_externs "_mged_opendb _mged_ps"
 proc init_psTool { id } {
     global mged_gui
     global ps_control
-    variable ::tk::Priv
+    global ::tk::Priv
 
     if {[opendb] == ""} {
-	cad_dialog $Priv(cad_dialog) $mged_gui($id,screen) "No database." \
+	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "No database." \
 		"No database has been opened!" info 0 OK
 	return
     }
@@ -203,14 +203,14 @@ postscript dialog is then dismissed."} {see_also "ps"}}
 proc do_ps { id } {
     global mged_gui
     global ps_control
-    variable ::tk::Priv
+    global ::tk::Priv
 
     cmd_win set $id
     set ps_cmd "_mged_ps"
 
     if {$ps_control($id,file) != ""} {
 	if {[file exists $ps_control($id,file)]} {
-	    set result [cad_dialog $Priv(cad_dialog) $mged_gui($id,screen)\
+	    set result [cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen)\
 		    "Overwrite $ps_control($id,file)?"\
 		    "Overwrite $ps_control($id,file)?"\
 		    "" 0 OK Cancel]
@@ -220,7 +220,7 @@ proc do_ps { id } {
 	    }
 	}
     } else {
-	cad_dialog $Priv(cad_dialog) $mged_gui($id,screen)\
+	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen)\
 		"No file name specified!"\
 		"No file name specified!"\
 		"" 0 OK

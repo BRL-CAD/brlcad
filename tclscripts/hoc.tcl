@@ -150,14 +150,14 @@ proc hoc_register_menu_data { title label subject ksl } {
 #
 proc hoc_dialog { w index } {
     global hoc_data
-    variable ::tk::Priv
+    global ::tk::Priv
 
     set screen [winfo screen $w]
 
     if {[info exists hoc_data($index)]} {
 	set subject [lindex $hoc_data($index) 0]
 	set description [lindex $hoc_data($index) 1]
-	cad_dialog $Priv(cad_dialog) $screen $subject $description info 0 Dismiss
+	cad_dialog $::tk::Priv(cad_dialog) $screen $subject $description info 0 Dismiss
     }
 }
 

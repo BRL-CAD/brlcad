@@ -13,7 +13,7 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *  
  *  Copyright Notice -
- *	This software is Copyright (C) 1987 by the United States Army.
+ *	This software is Copyright (C) 1987-2004 by the United States Army.
  *	All rights reserved.
  */
 #ifndef lint
@@ -99,9 +99,11 @@ struct bu_vls   ray_data_file;  /* file name for ray data output */
 /***** end variables shared with viewg3.c *****/
 
 /***** variables shared with g_cline.c ******/
-
 extern fastf_t rt_cline_radius;
 /***** end variables shared with g_cline.c ******/
+
+/***** variables for frame buffer black pixel rendering *****/
+unsigned char *pixmap = NULL; /* Pixel Map for rerendering of black pixels */
 
 
 void		def_tree();
@@ -380,7 +382,7 @@ int cm_clean(int argc, char **argv)
 
 	rt_clean( ap.a_rt_i );
 
-	if(rdebug&RDEBUG_RTMEM_END)
+	if(R_DEBUG&RDEBUG_RTMEM_END)
 		bu_prmem( "After cm_clean" );
 	return(0);
 }
@@ -496,8 +498,13 @@ int cm_ae( int argc, char **argv)
  */
 int cm_opt(int argc, char **argv)
 {
-	if( get_args( argc, argv ) <= 0 )
+	int old_bu_optind=bu_optind;	/* need to restore this value after calling get_args() */
+
+	if( get_args( argc, argv ) <= 0 ) {
+		bu_optind = old_bu_optind;
 		return(-1);
+	}
+	bu_optind = old_bu_optind;
 	return(0);
 }
 
@@ -582,10 +589,10 @@ int framenumber;
 	struct bu_vls	times;
 	char framename[128];		/* File name to hold current frame */
 	struct rt_i *rtip = ap.a_rt_i;
-	double	utime;			/* CPU time used */
-	double	nutime;			/* CPU time used, normalized by ncpu */
+	double	utime = 0.0;			/* CPU time used */
+	double	nutime = 0.0;			/* CPU time used, normalized by ncpu */
 	double	wallclock;		/* # seconds of wall clock time */
-	int	npix;			/* # of pixel values to be done */
+	int	npix,i;			/* # of pixel values to be done */
 	int	lim;
 	vect_t	work, temp;
 	quat_t	quat;
@@ -602,7 +609,7 @@ int framenumber;
 			rtip->nsolids, rtip->nregions );
 
 	if (Query_one_pixel) {
-		query_rdebug = rdebug;
+		query_rdebug = R_DEBUG;
 		query_debug = RT_G_DEBUG;
 		rt_g.debug = rdebug = 0;
 	}
@@ -716,6 +723,11 @@ int framenumber;
 		bu_cpulimit_set( lim + npix / MINRATE + 100 );
 	}
 
+	/* Allocate data for pixel map for rerendering of black pixels */
+	pixmap= (unsigned char*)malloc(sizeof(RGBpixel)*width*height);
+	for (i= 0; i < width*height*sizeof(RGBpixel); i++)
+		pixmap[i]= 0;
+
 	/*
 	 *  If this image is unlikely to be for debugging,
 	 *  be gentle to the machine.
@@ -769,7 +781,7 @@ int framenumber;
 		 *  reading and writing, but must do it's own positioning.
 		 */
 		{
-			struct stat sb;
+			struct		stat	sb;
 			if( stat( framename, &sb ) >= 0 && sb.st_size > 0 )  {
 				/* File exists, with partial results */
 				register int	fd;
@@ -778,6 +790,10 @@ int framenumber;
 					perror( framename );
 					if( matflag )  return(0);	/* OK */
 					return(-1);			/* Bad */
+				}
+				/* Read existing pix data into the frame buffer */
+				if (sb.st_size) {
+					(void)fread(pixmap,1,sb.st_size,outfp);
 				}
 			}
 		}
@@ -799,7 +815,7 @@ int framenumber;
 	view_2init( &ap, framename );
 
 	/* Just while doing the ray-tracing */
-	if(rdebug&RDEBUG_RTMEM)
+	if(R_DEBUG&RDEBUG_RTMEM)
 		bu_debug |= (BU_DEBUG_MEM_CHECK|BU_DEBUG_MEM_LOG);
 
 	rtip->nshots = 0;
@@ -820,10 +836,12 @@ int framenumber;
 	 *  It may prove desirable to do this in chunks
 	 */
 	rt_prep_timer();
+
 	if( incr_mode )  {
 		for( incr_level = 1; incr_level <= incr_nlevel; incr_level++ )  {
 			if( incr_level > 1 )
 				view_2init( &ap, framename );
+
 			do_run( 0, (1<<incr_level)*(1<<incr_level)-1 );
 		}
 	} else {
@@ -843,7 +861,7 @@ int framenumber;
 	view_end( &ap );
 
 	/* Stop memory debug printing until next frame, leave full checking on */
-	if(rdebug&RDEBUG_RTMEM)
+	if(R_DEBUG&RDEBUG_RTMEM)
 		bu_debug &= ~BU_DEBUG_MEM_LOG;
 
 	/*
@@ -870,6 +888,14 @@ int framenumber;
 	} else
 #endif
 		nutime = utime;
+
+	/* prevent a bogus near-zero time to prevent infinate and near-infinate
+	 * results without relying on IEEE floating point zero comparison.
+	 */
+	if (NEAR_ZERO(nutime, VDIVIDE_TOL)) {
+	  bu_log("WARNING:  Raytrace timings are likely to be meaningless\n");
+	  nutime = VDIVIDE_TOL;
+	}
 
 	/*
 	 *  All done.  Display run statistics.
@@ -932,12 +958,13 @@ int framenumber;
 #endif
 	}
 
-	if(rdebug&RDEBUG_STATS)  {
+	if(R_DEBUG&RDEBUG_STATS)  {
 		/* Print additional statistics */
 		res_pr();
 	}
 
 	bu_log("\n");
+        free(pixmap);
 	return(0);		/* OK */
 }
 

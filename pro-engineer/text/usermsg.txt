@@ -30,6 +30,10 @@ Cannot get type of current model!!!
 There is no current model!!
 #
 #
+%CE USER_SKELETON
+Cannot convert skeleton models!!!
+#
+#
 %CW USER_NO_UNITS
 No units have been specified for this model, assuming inches!!!
 #

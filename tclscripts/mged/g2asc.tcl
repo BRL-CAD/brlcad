@@ -8,10 +8,10 @@
 
 proc init_g2asc { id } {
     global mged_gui
-    variable ::tk::Priv
+    global ::tk::Priv
 
     if {[opendb] == ""} {
-	cad_dialog $Priv(cad_dialog) $mged_gui($id,screen) "No database." \
+	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "No database." \
 		"No database has been opened!" info 0 OK
 	return
     }
@@ -30,7 +30,7 @@ to put the acsii converted database."}} OK Cancel]
     if { $ascii_filename != "" } {
 	if { $ret == 0 } {
 	    if [file exists $ascii_filename] {
-		set result [cad_dialog $Priv(cad_dialog) $mged_gui($id,screen)\
+		set result [cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen)\
 			"Overwrite $ascii_filename?"\
 			"Overwrite $ascii_filename?"\
 			"" 0 OK Cancel]
@@ -44,7 +44,7 @@ to put the acsii converted database."}} OK Cancel]
 	}
     } else {
 	if { $ret == 0 } {
-	    cad_dialog $Priv(cad_dialog) $mged_gui($id,screen)\
+	    cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen)\
 		    "No file name specified!"\
 		    "No file name specified!"\
 		    "" 0 OK

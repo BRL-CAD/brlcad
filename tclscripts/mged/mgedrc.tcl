@@ -101,6 +101,10 @@ proc dump_mged_state {fd} {
     global glob_compat_mode
     global mged_default
     global solid_data
+    global mged_players
+    global mged_gui
+
+    set id [lindex $mged_players 0]
 
     puts $fd $MGEDRC_HEADER
     puts $fd "# You can modify the values below. However, if you want"
@@ -162,7 +166,7 @@ proc dump_mged_state {fd} {
     puts $fd "# if the GUI combines the geometry and text windows"
     puts $fd "# in the same toplevel window (i.e. mged_default(comb) is 1"
     puts $fd "# or the \"gui\" command is issued with the -c option."
-    puts $fd "set mged_default(num_lines) $mged_default(num_lines)"
+    puts $fd "set mged_default(num_lines) $mged_gui($id,num_lines)"
     puts $fd ""
     puts $fd "# Determines where to look for MGED's html documentation"
     puts $fd "set mged_default(html_dir) $mged_default(html_dir)"
@@ -171,44 +175,62 @@ proc dump_mged_state {fd} {
 #    puts $fd "set mged_default(tearoff_menus) $mged_default(tearoff_menus)"
 #    puts $fd ""
     puts $fd "# Combines geometry and command windows"
-    puts $fd "set mged_default(comb) $mged_default(comb)"
+    puts $fd "set mged_default(comb) $mged_gui($id,comb)"
     puts $fd ""
     puts $fd "# Activate/deactivate display lists. Note - display lists"
     puts $fd "# increase the interactivity with the geometry, especially if"
     puts $fd "# displaying remotely. However, if the geometry is huge"
     puts $fd "# w.r.t. the amount of RAM on the machine used to display"
     puts $fd "# the geometry, it may cause the machine to thrash."
-    puts $fd "set mged_default(dlist) $mged_default(dlist)"
+    puts $fd "set mged_default(dlist) $mged_gui($id,dlist)"
     puts $fd ""
     puts $fd "# Display manager type (X or possibly ogl)"
-    puts $fd "set mged_default(dm_type) $mged_default(dm_type)"
+    puts $fd "set mged_default(dm_type) $mged_gui($id,dtype)"
     puts $fd ""
     puts $fd "# Sets the type of command line editing (emacs or vi)"
-    puts $fd "set mged_default(edit_style) $mged_default(edit_style)"
+    puts $fd "set mged_default(edit_style) $mged_gui($id,edit_style)"
     puts $fd ""
     puts $fd "# Position/size of command window"
-    puts $fd "set mged_default(geom) $mged_default(geom)"
+    puts $fd "set mged_default(geom) [winfo geometry .$id]"
     puts $fd ""
     puts $fd "# Position/size of geometry window or both if combined"
-    puts $fd "set mged_default(ggeom) $mged_default(ggeom)"
+    if { $mged_gui($id,comb) } {
+	puts $fd "set mged_default(geom) [winfo geometry .$id]"
+    } else {
+	puts $fd "set mged_default(ggeom) [winfo geometry $mged_gui($id,dmc)]"
+    }
     puts $fd ""
     puts $fd "# Activate/deactivate zclipping, F2"
-    puts $fd "set mged_default(zclip) $mged_default(zclip)"
+    puts $fd "set mged_default(zclip) $mged_gui($id,zclip)"
+    puts $fd ""
+    puts $fd "# zbuffer"
+    if { $mged_gui($id,dtype) == "ogl" } {
+	puts $fd "set mged_default(zbuffer) $mged_gui($id,zbuffer)"
+    } else {
+	puts $fd "set mged_default(zbuffer) $mged_default(zbuffer)"
+    }
+    puts $fd ""
+    puts $fd "# lighting"
+    if { $mged_gui($id,dtype) == "ogl" } {
+	puts $fd "set mged_default(lighting) $mged_gui($id,lighting)"
+    } else {
+	puts $fd "set mged_default(lighting) $mged_default(lighting)"
+    }
     puts $fd ""
     puts $fd "# Activate/deactivate perspective mode, F3"
-    puts $fd "set mged_default(perspective_mode) $mged_default(perspective_mode)"
+    puts $fd "set mged_default(perspective_mode) $mged_gui($id,perspective_mode)"
     puts $fd ""
     puts $fd "# Activate/deactivate old mged faceplate, F7"
-    puts $fd "set mged_default(faceplate) $mged_default(faceplate)"
+    puts $fd "set mged_default(faceplate) $mged_gui($id,faceplate)"
     puts $fd ""
     puts $fd "# Activate/deactivate old mged faceplate GUI, F8"
-    puts $fd "set mged_default(orig_gui) $mged_default(orig_gui)"
+    puts $fd "set mged_default(orig_gui) $mged_gui($id,orig_gui)"
     puts $fd ""
     puts $fd "# Specifies the active pane"
-    puts $fd "set mged_default(pane) $mged_default(pane)"
+    puts $fd "set mged_default(pane) [lindex [split $mged_gui($id,active_dm) .] 2]"
     puts $fd ""
     puts $fd "# Activate/deactivate muli-pane mode (i.e. four geometry windows or one)"
-    puts $fd "set mged_default(multi_pane) $mged_default(multi_pane)"
+    puts $fd "set mged_default(multi_pane) $mged_gui($id,multi_pane)"
     puts $fd ""
     puts $fd "# Specifies the web browser"
     puts $fd "set mged_default(web_browser) $mged_default(web_browser)"
