@@ -1029,70 +1029,55 @@ struct command_tab {
 	int	ct_max;		/* max number of words in cmd */
 };
 
-
 /*****************************************************************
  *                                                               *
  *          Applications interface to the RT library             *
  *                                                               *
  *****************************************************************/
 
+/*
+ *  A macro for providing function prototypes, regardless of whether
+ *  the compiler understands them or not.
+ *  It is vital that the argument list given for "args" be enclosed
+ *  in parens.
+ */
 #if __STDC__
-extern void rt_bomb(char *str);		/* Fatal error */
-extern void rt_log(char *, ... );	/* Log message */
-					/* Read named MGED db, build toc */
-extern struct rt_i *rt_dirbuild(char *filename, char *buf, int len);
-					/* Prepare for raytracing */
-extern void rt_prep(struct rt_i *rtip);
-					/* Shoot a ray */
-extern int rt_shootray(struct application *ap);
-					/* Get expr tree for object */
-extern int rt_gettree(struct rt_i *rtip, char *node);
-					/* Print seg struct */
-extern void rt_pr_seg(struct seg *segp);
-					/* Print the partitions */
-extern void rt_pr_partitions(struct rt_i *rtip,
-	struct partition *phead, char *title);
-					/* Find solid by leaf name */
-extern void rt_printb(char *s, unsigned long v, char *bits);
-					/* Print a bit vector */
-extern struct soltab *rt_find_solid(struct rt_i *rtip, char *name);
-					/* Parse arbitrary data structure */
-extern void rt_structparse(char *cp, struct structparse *tab, char *base );
-					/* Print arbitrary data structure */
-extern void rt_structprint(char *title, struct structparse *tab, char *base );
-extern char *rt_read_cmd(FILE *fp);	/* Read semi-colon terminated line */
-					/* do cmd from string via cmd table */
-extern int rt_do_cmd(struct rt_i *rtip, char *lp, struct command_tab *ctp);
-					/* Start the timer */
-extern void rt_prep_timer(void);
-					/* Read timer, return time + str */
-extern double rt_read_timer(char *str, int len);
-
-
-
+#	define	EXTERN(type_and_name,args)	extern type_and_name args
 #else
-
-extern void rt_bomb();			/* Fatal error */
-extern void rt_log();			/* Log message */
-
-extern struct rt_i *rt_dirbuild();	/* Read named MGED db, build toc */
-extern void rt_prep();			/* Prepare for raytracing */
-extern int rt_shootray();		/* Shoot a ray */
-
-extern int rt_gettree();		/* Get expr tree for object */
-extern void rt_pr_seg();		/* Print seg struct */
-extern void rt_pr_partitions();		/* Print the partitions */
-extern void rt_printb();		/* Print a bit vector */
-extern struct soltab *rt_find_solid();	/* Find solid by leaf name */
-extern void rt_structparse();		/* Parse arbitrary data structure */
-extern void rt_structprint();		/* Print arbitrary data structure */
-extern char *rt_read_cmd();		/* Read semi-colon terminated line */
-extern int rt_do_cmd();			/* do cmd from string via cmd table */
-
-extern void rt_prep_timer();		/* Start the timer */
-extern double rt_read_timer();		/* Read timer, return time + str */
-			
+#	define	EXTERN(type_and_name,args)	extern type_and_name()
 #endif
+
+EXTERN(void rt_bomb, (char *str) );	/* Fatal error */
+EXTERN(void rt_log, (char *, ... ) );	/* Log message */
+					/* Read named MGED db, build toc */
+EXTERN(struct rt_i *rt_dirbuild, (char *filename, char *buf, int len) );
+					/* Prepare for raytracing */
+EXTERN(void rt_prep, (struct rt_i *rtip) );
+					/* Shoot a ray */
+EXTERN(int rt_shootray, (struct application *ap) );
+					/* Get expr tree for object */
+EXTERN(int rt_gettree, (struct rt_i *rtip, char *node) );
+					/* Print seg struct */
+EXTERN(void rt_pr_seg, (struct seg *segp) );
+					/* Print the partitions */
+EXTERN(void rt_pr_partitions, (struct rt_i *rtip,
+	struct partition *phead, char *title) );
+					/* Find solid by leaf name */
+EXTERN(void rt_printb, (char *s, unsigned long v, char *bits) );
+					/* Print a bit vector */
+EXTERN(struct soltab *rt_find_solid, (struct rt_i *rtip, char *name) );
+					/* Parse arbitrary data structure */
+EXTERN(void rt_structparse, (char *cp, struct structparse *tab, char *base ) );
+					/* Print arbitrary data structure */
+EXTERN(void rt_structprint, (char *title, struct structparse *tab, char *base ) );
+EXTERN(char *rt_read_cmd, (FILE *fp) );	/* Read semi-colon terminated line */
+					/* do cmd from string via cmd table */
+EXTERN(int rt_do_cmd, (struct rt_i *rtip, char *lp, struct command_tab *ctp) );
+					/* Start the timer */
+EXTERN(void rt_prep_timer, (void) );
+					/* Read timer, return time + str */
+EXTERN(double rt_read_timer, (char *str, int len) );
+
 
 /* The matrix math routines */
 extern void mat_zero(), mat_idn(), mat_copy(), mat_mul(), matXvec();
@@ -1112,253 +1097,168 @@ extern double mat_atan2();
  *                                                               *
  *****************************************************************/
 
-#if __STDC__
 					/* visible malloc() */
-extern char *rt_malloc(unsigned int cnt, char *str);
+EXTERN(char *rt_malloc, (unsigned int cnt, char *str) );
 					/* visible free() */
-extern void rt_free(char *ptr, char *str);
+EXTERN(void rt_free, (char *ptr, char *str) );
 					/* visible realloc() */
-extern char *rt_realloc(char *ptr, unsigned int cnt, char *str);
+EXTERN(char *rt_realloc, (char *ptr, unsigned int cnt, char *str) );
 					/* visible calloc() */
-extern char *rt_calloc(unsigned nelem, unsigned elsize, char *str);
+EXTERN(char *rt_calloc, (unsigned nelem, unsigned elsize, char *str) );
 					/* Duplicate str w/malloc */
-extern char *rt_strdup(char *cp);
+EXTERN(char *rt_strdup, (char *cp) );
 
 					/* Weave segs into partitions */
-extern void rt_boolweave(struct seg *segp_in, struct partition *PartHeadp,
-	struct application *ap);
+EXTERN(void rt_boolweave, (struct seg *segp_in, struct partition *PartHeadp,
+	struct application *ap) );
 					/* Eval booleans over partitions */
-extern int rt_boolfinal(struct partition *InputHdp,
+EXTERN(int rt_boolfinal, (struct partition *InputHdp,
 	struct partition *FinalHdp,
 	fastf_t startdist, fastf_t enddist,
-	bitv_t *regionbits, struct application *ap);
+	bitv_t *regionbits, struct application *ap) );
 					/* Eval bool tree node */
-extern int rt_booleval(union tree *treep, struct partition *partp,
-	 struct region **trueregp, struct resource *resp);
+EXTERN(int rt_booleval, (union tree *treep, struct partition *partp,
+	 struct region **trueregp, struct resource *resp) );
 
-extern void rt_grow_boolstack(struct resource *res);
+EXTERN(void rt_grow_boolstack, (struct resource *res) );
 					/* Approx Floating compare */
-extern int rt_fdiff(double a, double b);
+EXTERN(int rt_fdiff, (double a, double b) );
 					/* Relative Difference */
-extern double rt_reldiff(double a, double b);
+EXTERN(double rt_reldiff, (double a, double b) );
 					/* Print a soltab */
-extern void rt_pr_soltab(struct soltab *stp);
+EXTERN(void rt_pr_soltab, (struct soltab *stp) );
 					/* Print a region */
-extern void rt_pr_region(struct region *rp);
+EXTERN(void rt_pr_region, (struct region *rp) );
 					/* Print an expr tree */
-extern void rt_pr_tree(union tree *tp, int lvl);
+EXTERN(void rt_pr_tree, (union tree *tp, int lvl) );
 					/* Print a partition */
-extern void rt_pr_pt(struct rt_i *rtip, struct partition *pp);
+EXTERN(void rt_pr_pt, (struct rt_i *rtip, struct partition *pp) );
 					/* Print a bit vector */
-extern void rt_pr_bitv(char *str, bitv_t *bv, int len);
+EXTERN(void rt_pr_bitv, (char *str, bitv_t *bv, int len) );
 					/* Print a hit point */
-extern void rt_pr_hit(char *str, struct hit *hitp);
+EXTERN(void rt_pr_hit, (char *str, struct hit *hitp) );
 					/* convert dbfloat->fastf_t */
 /* XXX these next two should be dbfloat_t, but that means
  * XXX including db.h in absolutely everything.  No way.
  */
-extern void rt_fastf_float(fastf_t *ff, float *fp, int n);
+EXTERN(void rt_fastf_float, (fastf_t *ff, float *fp, int n) );
 					/* convert dbfloat mat->fastf_t */
-extern void rt_mat_dbmat(fastf_t *ff, float *dbp);
+EXTERN(void rt_mat_dbmat, (fastf_t *ff, float *dbp) );
 					/* storage obtainers */
-extern void rt_get_seg(struct resource *res);
-extern void rt_get_pt(struct rt_i *rtip, struct resource *res);
-extern void rt_get_bitv(struct rt_i *rtip, struct resource *res);
+EXTERN(void rt_get_seg, (struct resource *res) );
+EXTERN(void rt_get_pt, (struct rt_i *rtip, struct resource *res) );
+EXTERN(void rt_get_bitv, (struct rt_i *rtip, struct resource *res) );
 					/* malloc rounder */
-extern int rt_byte_roundup(int nbytes);
+EXTERN(int rt_byte_roundup, (int nbytes) );
 					/* logical OR on bit vectors */
-extern void rt_bitv_or(bitv_t *out, bitv_t *in, int nbits);
+EXTERN(void rt_bitv_or, (bitv_t *out, bitv_t *in, int nbits) );
 					/* space partitioning */
-extern void rt_cut_it(struct rt_i *rtip);
+EXTERN(void rt_cut_it, (struct rt_i *rtip) );
 					/* print cut node */
-extern void rt_pr_cut(union cutter *cutp, int lvl);
+EXTERN(void rt_pr_cut, (union cutter *cutp, int lvl) );
 					/* free a cut tree */
-extern void rt_fr_cut(union cutter *cutp);
+EXTERN(void rt_fr_cut, (union cutter *cutp) );
 					/* regionid-driven color override */
-extern void rt_region_color_map(struct region *regp);
+EXTERN(void rt_region_color_map, (struct region *regp) );
 					/* process ID_MATERIAL record */
-extern void rt_color_addrec();
+EXTERN(void rt_color_addrec, () );
 					/* extend a cut box */
-extern void rt_cut_extend(union cutter *cutp, struct soltab *stp);
+EXTERN(void rt_cut_extend, (union cutter *cutp, struct soltab *stp) );
 					/* find RPP of one region */
-extern int rt_rpp_region(struct rt_i *rtip, char *reg_name,
-	fastf_t *min_rpp, fastf_t *max_rpp);
+EXTERN(int rt_rpp_region, (struct rt_i *rtip, char *reg_name,
+	fastf_t *min_rpp, fastf_t *max_rpp) );
 
 /* The database library */
 
 /* db_anim.c */
-extern int db_add_anim(struct db_i *dbip, struct animate *anp, int root);
-extern int db_do_anim(struct animate *anp, mat_t stack, mat_t arc,
-	struct mater_info *materp);
-extern void db_free_anim(struct db_i *dbip);
+EXTERN(int db_add_anim, (struct db_i *dbip, struct animate *anp, int root) );
+EXTERN(int db_do_anim, (struct animate *anp, mat_t stack, mat_t arc,
+	struct mater_info *materp) );
+EXTERN(void db_free_anim, (struct db_i *dbip) );
 
 /* db_path.c */
-extern void db_add_node_to_full_path(struct db_full_path *pp,
-	struct directory *dp);
-extern void db_dup_full_path(struct db_full_path *newp,
-	struct db_full_path *oldp);
-extern char *db_path_to_string(struct db_full_path *pp);
-extern void db_free_full_path(struct db_full_path *pp);
+EXTERN(void db_add_node_to_full_path, (struct db_full_path *pp,
+	struct directory *dp) );
+EXTERN(void db_dup_full_path, (struct db_full_path *newp,
+	struct db_full_path *oldp) );
+EXTERN(char *db_path_to_string, (struct db_full_path *pp) );
+EXTERN(void db_free_full_path, (struct db_full_path *pp) );
 
 /* db_open.c */
 					/* open an existing model database */
-extern struct db_i *db_open( char *name, char *mode );
+EXTERN(struct db_i *db_open, ( char *name, char *mode ) );
 					/* create a new model database */
-extern struct db_i *db_create( char *name );
+EXTERN(struct db_i *db_create, ( char *name ) );
 					/* close a model database */
-extern void db_close( struct db_i *dbip );
+EXTERN(void db_close, ( struct db_i *dbip ) );
 /* db_io.c */
 					/* malloc & read records */
-extern union record *db_getmrec( struct db_i *, struct directory *dp );
+EXTERN(union record *db_getmrec, ( struct db_i *, struct directory *dp ) );
 					/* get several records from db */
-extern int db_get( struct db_i *, struct directory *dp, union record *where,
-	int offset, int len );
+EXTERN(int db_get, (struct db_i *, struct directory *dp, union record *where,
+	int offset, int len ) );
 					/* put several records into db */
-extern int db_put( struct db_i *, struct directory *dp, union record *where,
-	int offset, int len );
+EXTERN(int db_put, ( struct db_i *, struct directory *dp, union record *where,
+	int offset, int len ) );
 /* db_scan.c */
 					/* read db (to build directory) */
-extern int db_scan( struct db_i *, int (*handler)() );
+EXTERN(int db_scan, ( struct db_i *, int (*handler)() ) );
 					/* update db unit conversions */
-extern void db_conversions( struct db_i *, int units );
+EXTERN(void db_conversions, ( struct db_i *, int units ) );
 /* db_lookup.c */
 					/* convert name to directory ptr */
-extern struct directory *db_lookup( struct db_i *, char *name, int noisy );
+EXTERN(struct directory *db_lookup,( struct db_i *, char *name, int noisy ) );
 					/* add entry to directory */
-extern struct directory *db_diradd( struct db_i *, char *name, long laddr,
-	int len, int flags );
+EXTERN(struct directory *db_diradd, ( struct db_i *, char *name, long laddr,
+	int len, int flags ) );
 					/* delete entry from directory */
-extern int db_dirdelete( struct db_i *, struct directory *dp );
+EXTERN(int db_dirdelete, ( struct db_i *, struct directory *dp ) );
 /* db_alloc.c */
 					/* allocate "count" granules */
-extern int db_alloc( struct db_i *, struct directory *dp, int count );
+EXTERN(int db_alloc, ( struct db_i *, struct directory *dp, int count ) );
 					/* grow by "count" granules */
-extern int db_grow( struct db_i *, struct directory *dp, int count );
+EXTERN(int db_grow, ( struct db_i *, struct directory *dp, int count ) );
 					/* truncate by "count" */
-extern int db_trunc( struct db_i *, struct directory *dp, int count );
+EXTERN(int db_trunc, ( struct db_i *, struct directory *dp, int count ) );
 					/* delete "recnum" from entry */
-extern int db_delrec( struct db_i *, struct directory *dp, int recnum );
+EXTERN(int db_delrec, ( struct db_i *, struct directory *dp, int recnum ) );
 					/* delete all granules assigned dp */
-extern int db_delete( struct db_i *, struct directory *dp );
+EXTERN(int db_delete, ( struct db_i *, struct directory *dp ) );
 					/* write FREE records from 'start' */
-extern int db_zapper( struct db_i *, struct directory *dp, int start );
+EXTERN(int db_zapper, ( struct db_i *, struct directory *dp, int start ) );
 
 /* machine.c */
 					/* change to new "nice" value */
-extern void rt_pri_set( int nval );
+EXTERN(void rt_pri_set, ( int nval ) );
 					/* get CPU time limit */
-extern int rt_cpuget(void);
+EXTERN(int rt_cpuget, (void) );
 					/* set CPU time limit */
-extern void rt_cpuset(int sec);
+EXTERN(void rt_cpuset, (int sec) );
 					/* find # of CPUs available */
-extern int rt_avail_cpus(void);
+EXTERN(int rt_avail_cpus, (void) );
 					/* run func in parallel */
-extern void rt_parallel( void (*func)(), int ncpu );
+EXTERN(void rt_parallel, ( void (*func)(), int ncpu ) );
 
 /* memalloc.c */
-extern unsigned long memalloc(struct mem_map **pp, unsigned size);
-extern unsigned long memget(struct mem_map **pp, unsigned int size,
-	unsigned int place);
-extern void memfree(struct mem_map **pp, unsigned size, unsigned long addr);
-extern void mempurge(struct mem_map **pp);
-extern void memprint(struct mem_map **pp);
+EXTERN(unsigned long memalloc, (struct mem_map **pp, unsigned size) );
+EXTERN(unsigned long memget, (struct mem_map **pp, unsigned int size,
+	unsigned int place) );
+EXTERN(void memfree, (struct mem_map **pp, unsigned size, unsigned long addr) );
+EXTERN(void mempurge, (struct mem_map **pp) );
+EXTERN(void memprint, (struct mem_map **pp) );
 
 /* plane.c */
-extern int rt_mk_plane_3pts(plane_t plane, point_t a, point_t b, point_t c);
-extern int rt_mkpoint_3planes(point_t pt, plane_t a, plane_t b, plane_t c);
-extern int rt_isect_ray_plane(fastf_t *dist, point_t pt, vect_t  dir, plane_t plane);
-extern int rt_isect_2planes(point_t pt, vect_t  dir, plane_t a, plane_t b, vect_t  rpp_min);
-extern int rt_isect_2lines(fastf_t *t, fastf_t *u, point_t p, vect_t d, point_t a, vect_t c);
-extern int rt_isect_line_lseg(fastf_t *t, point_t p, vect_t d, point_t a, point_t b);
-extern double rt_dist_line_point(point_t pt, vect_t dir, point_t a);
-extern double rt_dist_line_origin(point_t pt, vect_t dir);
-extern double rt_area_of_triangle(point_t a, point_t b, point_t c);
-extern int rt_isect_pt_lseg(fastf_t *dist, point_t a, point_t b, point_t p, fastf_t tolsq);
-extern double rt_dist_pt_lseg(point_t pca, point_t a, point_t b, point_t p);
-
-#else
-
-extern char *rt_malloc();		/* visible malloc() */
-extern void rt_free();			/* visible free() */
-extern char *rt_realloc();		/* visible realloc() */
-extern char *rt_calloc();		/* visible calloc() */
-extern char *rt_strdup();		/* Duplicate str w/malloc */
-
-extern void rt_boolweave();		/* Weave segs into partitions */
-extern int rt_boolfinal();		/* Eval booleans over partitions */
-extern int rt_booleval();		/* Eval bool tree node */
-extern void rt_grow_boolstack();
-extern int rt_fdiff();			/* Approx Floating compare */
-extern double rt_reldiff();		/* Relative Difference */
-extern void rt_pr_soltab();		/* Print a soltab */
-extern void rt_pr_region();		/* Print a region */
-extern void rt_pr_tree();		/* Print an expr tree */
-extern void rt_pr_pt();			/* Print a partition */
-extern void rt_pr_bitv();		/* Print a bit vector */
-extern void rt_pr_hit();		/* Print a hit point */
-extern void rt_fastf_float();		/* convert dbfloat->fastf_t */
-extern void rt_mat_dbmat();		/* convert dbfloat mat->fastf_t */
-extern void rt_get_seg();		/* storage obtainer */
-extern void rt_get_pt();
-extern void rt_get_bitv();
-extern int rt_byte_roundup();		/* malloc rounder */
-extern void rt_bitv_or();		/* logical OR on bit vectors */
-extern void rt_cut_it();		/* space partitioning */
-extern void rt_pr_cut();		/* print cut node */
-extern void rt_fr_cut();		/* free a cut tree */
-extern void rt_draw_box();		/* unix-plot an RPP */
-extern void rt_region_color_map();	/* regionid-driven color override */
-extern void rt_color_addrec();		/* process ID_MATERIAL record */
-extern void rt_cut_extend();		/* extend a cut box */
-extern int rt_rpp_region();		/* find RPP of one region */
-
-/* The database library */
-extern int db_add_anim();
-extern int db_do_anim();
-extern void db_free_anim();
-extern void db_add_node_to_full_path();
-extern void db_dup_full_path();
-extern char *db_path_to_string();
-extern void db_free_full_path();
-extern struct db_i *db_open();		/* open an existing model database */
-extern struct db_i *db_create();	/* create a new model database */
-extern void db_close();			/* close a model database */
-extern union record *db_getmrec();	/* malloc & read records */
-extern int db_get();			/* get several records from db */
-extern int db_put();			/* put several records into db */
-extern int db_scan();			/* read db (to build directory) */
-extern void db_conversions();		/* update db unit conversions */
-extern struct directory *db_lookup();	/* convert name to directory ptr */
-extern struct directory *db_diradd();	/* add entry to directory */
-extern int db_dirdelete();		/* delete entry from directory */
-extern int db_alloc();			/* allocate "count" granules */
-extern int db_grow();			/* grow by "count" granules */
-extern int db_trunc();			/* truncate by "count" */
-extern int db_delrec();			/* delete "recnum" from entry */
-extern int db_delete();			/* delete all granules assigned dp */
-extern int db_zapper();			/* write FREE records from 'start' */
-
-/* memalloc.c */
-extern unsigned long memalloc();
-extern unsigned long memget();
-extern void memfree();
-extern void mempurge();
-extern void memprint();
-
-/* plane.c */
-extern int rt_mk_plane_3pts();
-extern int rt_mkpoint_3planes();
-extern int rt_isect_ray_plane();
-extern int rt_isect_2planes();
-extern int rt_isect_2lines();
-extern int rt_isect_line_lseg();
-extern double rt_dist_line_point();
-extern double rt_dist_line_origin();
-extern double rt_area_of_triangle();
-extern int rt_isect_pt_lseg();
-extern double rt_dist_pt_lseg();
-
-#endif
+EXTERN(int rt_mk_plane_3pts, (plane_t plane, point_t a, point_t b, point_t c) );
+EXTERN(int rt_mkpoint_3planes, (point_t pt, plane_t a, plane_t b, plane_t c) );
+EXTERN(int rt_isect_ray_plane, (fastf_t *dist, point_t pt, vect_t  dir, plane_t plane) );
+EXTERN(int rt_isect_2planes, (point_t pt, vect_t  dir, plane_t a, plane_t b, vect_t  rpp_min) );
+EXTERN(int rt_isect_2lines, (fastf_t *t, fastf_t *u, point_t p, vect_t d, point_t a, vect_t c) );
+EXTERN(int rt_isect_line_lseg, (fastf_t *t, point_t p, vect_t d, point_t a, point_t b) );
+EXTERN(double rt_dist_line_point, (point_t pt, vect_t dir, point_t a) );
+EXTERN(double rt_dist_line_origin, (point_t pt, vect_t dir) );
+EXTERN(double rt_area_of_triangle, (point_t a, point_t b, point_t c) );
+EXTERN(int rt_isect_pt_lseg, (fastf_t *dist, point_t a, point_t b, point_t p, fastf_t tolsq) );
+EXTERN(double rt_dist_pt_lseg, (point_t pca, point_t a, point_t b, point_t p) );
 
 /* CxDiv, CxSqrt */
 extern void rt_pr_roots();		/* print complex roots */
