@@ -1823,7 +1823,7 @@ struct loopuse *lu;
 
 	NMG_CK_LOOPUSE(lu);
 	if (RT_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
-		return;
+		return 0;
 
 	eu = RT_LIST_FIRST(edgeuse, &lu->down_hd);
 	while (RT_LIST_NOT_HEAD(eu, &lu->down_hd) ) {
@@ -1995,7 +1995,7 @@ long	**trans_tbl;
 		if( new_v )  {
 			/* the new vertex already exists in the new model */
 			rt_log("nmg_dup_loop() existing vertex in new model\n");
-			return;
+			return (struct loopuse *)NULL;
 		}
 		/* nmg_mlv made a new vertex */
 		rt_log("nmg_dup_loop() new vertex in new model\n");
@@ -2008,7 +2008,8 @@ long	**trans_tbl;
 			/* Build a different vertex_g with same coordinates */
 			nmg_vertex_gv(new_v, old_v->vg_p->coord);
 		}
-		return;
+		nmg_loop_g(new_lu->l_p);
+		return new_lu;
 	}
 
 	/* This loop is an edge-loop.  This is a little more work
