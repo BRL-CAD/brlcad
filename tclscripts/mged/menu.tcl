@@ -135,8 +135,6 @@ proc do_arb_edit_menu { type menu1 menu2 menu3 } {
 
     set edit_type "none of above"
     foreach id $mged_players {
-	post_edit_info $id $type
-
 	.$id.menubar.settings.transform entryconfigure 2 -state normal
 	set mged_transform($id) "e"
 	set_transform $id
@@ -151,8 +149,9 @@ proc do_arb_edit_menu { type menu1 menu2 menu3 } {
 
 	.$id.menubar.edit entryconfigure 0 -state disabled
 	.$id.menubar.edit entryconfigure 1 -state disabled
-	.$id.menubar.edit entryconfigure 2 -state disabled
-	.$id.menubar.edit entryconfigure 3 -state disabled
+#	.$id.menubar.edit entryconfigure 2 -state disabled
+#	.$id.menubar.edit entryconfigure 3 -state disabled
+#	.$id.menubar.edit entryconfigure 4 -state disabled
 
 	.$id.menubar.edit insert 0 cascade -label "move edges" \
 		-menu .$id.menubar.edit.mvedges
@@ -224,8 +223,6 @@ proc do_edit_menu { type menu1 } {
 
     set edit_type "none of above"
     foreach id $mged_players {
-	post_edit_info $id $type
-
 	.$id.menubar.settings.transform entryconfigure 2 -state normal
 	set mged_transform($id) "e"
 	set_transform $id
@@ -366,8 +363,9 @@ proc undo_edit_menu {} {
 
 	.$id.menubar.edit entryconfigure 0 -state normal
 	.$id.menubar.edit entryconfigure 1 -state normal
-	.$id.menubar.edit entryconfigure 2 -state normal
-	.$id.menubar.edit entryconfigure 3 -state normal
+#	.$id.menubar.edit entryconfigure 2 -state normal
+#	.$id.menubar.edit entryconfigure 3 -state normal
+#	.$id.menubar.edit entryconfigure 4 -state normal
 
 	.$id.menubar.settings.transform entryconfigure 2 -state disabled
 	if {$mged_transform($id) == "e"} {
@@ -386,23 +384,5 @@ proc undo_edit_menu {} {
 	    set mged_rotate_about($id) "v"
 	    mged_apply $id "set rotate_about $mged_rotate_about($id)"
 	}
-    }
-}
-
-proc post_edit_info { id type } {
-    global debug_edit_info_type
-    global debug_edit_info_form
-
-    set result [catch { db form $type } form]
-
-    set debug_edit_info_type $type
-    set debug_edit_info_form $form
-
-    if $result {
-	# form does not exist for this type, so just display info
-	build_edit_info $id
-    } else {
-	# eventually allow edits -- for now just display info
-	build_edit_info $id
     }
 }
