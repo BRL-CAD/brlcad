@@ -3,7 +3,7 @@
  */
 
 #define SRCDIR	proc-db
-#define PRODUCTS	pyramid molecule clutter kurt room tube
+#define PRODUCTS	pyramid molecule clutter kurt room tube teapot
 #define	SRCSUFF	.c
 #define MANSECTION	1
 
@@ -11,36 +11,47 @@
 #include "../Cakefile.prog"
 
 /* These programs are not really for system-wide installation */
+#define DONT_INSTALL	1
 #undef BINDIR
 #define BINDIR	/tmp
 #define AFTERINSTALL	rm
-
-#define MATHTAB	../rt.MTYPE/mathtab.o
 
 /* Explicit composition of each product */
 
 tube:	tube.o 
 	CC LDFLAGS  tube.o LIBWDB \
-		LIBRT RT_CONFIG LIBSYSV LIBES -o tube
+		LIBRT RT_CONFIG RT_LIBES LIBSYSV LIBES -o tube
 
 room:	room.o common.o
 	CC LDFLAGS  room.o common.o LIBWDB \
-		LIBRT RT_CONFIG LIBSYSV LIBES -o room
+		LIBRT RT_CONFIG RT_LIBES LIBSYSV LIBES -o room
 
-clutter:	clutter.o common.o
+clutter:	clutter.o common.o mathtab.o
 	CC LDFLAGS  clutter.o common.o LIBWDB \
-		LIBRT RT_CONFIG MATHTAB LIBSYSV LIBES -o clutter
+		LIBRT RT_CONFIG RT_LIBES mathtab.o LIBSYSV LIBES -o clutter
 
 kurt:		kurt.o
-	CC LDFLAGS  kurt.o LIBWDB LIBRT RT_CONFIG \
+	CC LDFLAGS  kurt.o LIBWDB LIBRT RT_CONFIG RT_LIBES \
 		LIBSYSV LIBES -o kurt
 
 pyramid:	pyramid.o
 	CC LDFLAGS  pyramid.o LIBWDB \
-		LIBRT RT_CONFIG LIBSYSV LIBES -o pyramid
+		LIBRT RT_CONFIG RT_LIBES LIBSYSV LIBES -o pyramid
 
 molecule:	molecule.o 
 	CC LDFLAGS  molecule.o LIBWDB \
-		LIBRT RT_CONFIG LIBSYSV LIBES -o molecule
+		LIBRT RT_CONFIG RT_LIBES LIBSYSV LIBES -o molecule
+
+teapot:		tea.o
+	CC LDFLAGS tea.o LIBWDB LIBRT RT_CONFIG RT_LIBES LIBSYSV LIBES -o teapot
+
+/*
+ *  Special rules for additions from other directories
+ */
+%.o&:	rt,,%,o			if exist ../rt/%.c
+
+%9,,%,o&:	../%9/%.c [[cakeinclude.sh ../%9/%.c INCDIR ../%9]] \
+					if exist ../%9/%.c
+	CC CFLAGS -c ../%9/%.c
 
 #include "../Cakefile.rules"
