@@ -1,3 +1,31 @@
+/*
+ *                 V E G I T A T I O N . H
+ *
+ *      This is the header file to the program that generages geometry
+ *      that resembles or approximates a plant.  More specifically, 
+ *      the generator is geared towards generating trees and shrubbery.
+ *      The plants are generated based on specification of growth
+ *      parameters such as growth and branching rates.
+ *
+ *  Author -
+ *      Christopher Sean Morrison
+ *  
+ *  Source -
+ *      The U. S. Army Research Laboratory
+ *      Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *  
+ *  Distribution Notice -
+ *      Re-distribution of this software is restricted, as described in
+ *      your "Statement of Terms and Conditions for the Release of
+ *      The BRL-CAD Package" agreement.
+ *
+ *  Copyright Notice -
+ *      This software is Copyright (C) 1998 & 1999 by the United States
+ *      Army in all countries except the USA.  All rights reserved.
+ */
+#ifndef VEGITATION_H
+#define VEGITATION_H
+
 #include <stdio.h>
 #include <limits.h>
 #include <math.h>
@@ -142,3 +170,4 @@ typedef struct outputCounter {
 } outputCounter_t;
 #define INIT_OUTPUTCOUNTER_T(_i) { (_i)->primitives=0; (_i)->combinations=0; BU_LIST_INIT(&((_i)->combination).l); sprintf((_i)->name, "XXX"); BU_LIST_INIT(&((_i)->region).l); snprintf((_i)->plantName, MAX_STRING_LENGTH, "plant.r"); }
 
+#endif

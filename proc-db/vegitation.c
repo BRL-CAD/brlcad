@@ -1,6 +1,38 @@
+/*
+ *                      V E G I T A T I O N . C
+ *
+ *      This is for a program that generages geometry that resembles or
+ *      approximates a plant.  More specifically, the generator is geared
+ *      towards generating trees and shrubbery.  The plants are generated
+ *      based on specification of growth parameters such as growth and
+ *      branching rates.
+ *
+ *      The plant is composed of a number of "particle" primitives (which
+ *      is effectively branch growth segments and curved ball joints). The
+ *      plant is generated recursively with random probabilities (there is
+ *      a seed that may be set for repeatability) and growth parameters.
+ *
+ *  Author -
+ *      Christopher Sean Morrison
+ *  
+ *  Source -
+ *      The U. S. Army Research Laboratory
+ *      Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *  
+ *  Distribution Notice -
+ *      Re-distribution of this software is restricted, as described in
+ *      your "Statement of Terms and Conditions for the Release of
+ *      The BRL-CAD Package" agreement.
+ *
+ *  Copyright Notice -
+ *      This software is Copyright (C) 1998 & 1999 by the United States
+ *      Army in all countries except the USA.  All rights reserved.
+ *
+ ***********************************************************************/
+
 #include "./vegitation.h"
 
-void ageStructure(structure_t *structure) {
+static void ageStructure(structure_t *structure) {
   int i;
   
   /*
@@ -19,7 +51,7 @@ void ageStructure(structure_t *structure) {
 }
 
 
-int getSegmentCount(structure_t *structure, unsigned int minAge, unsigned int maxAge) {
+static int getSegmentCount(structure_t *structure, unsigned int minAge, unsigned int maxAge) {
   int i;
   int total;
   
@@ -41,7 +73,7 @@ int getSegmentCount(structure_t *structure, unsigned int minAge, unsigned int ma
 /* used 
  * http://geometryalgorithms.com/Archive/algorithm_0106/algorithm_0106.htm#dist3D_Segment_to_Segment() 
  * as reference */
-float segmentToSegmentDistance( const point_t S1P0, const point_t S1P1, const point_t S2P0, const point_t S2P1) {
+static float segmentToSegmentDistance( const point_t S1P0, const point_t S1P1, const point_t S2P0, const point_t S2P1) {
   vect_t u;
   vect_t v;
   vect_t w;
@@ -126,7 +158,7 @@ float segmentToSegmentDistance( const point_t S1P0, const point_t S1P1, const po
 }
 
 
-segmentList_t *findIntersectors(const growthSegment_t * const segment, const structure_t * const structure, const segmentList_t * const exemptList) {
+static segmentList_t *findIntersectors(const growthSegment_t * const segment, const structure_t * const structure, const segmentList_t * const exemptList) {
   int i, j;
   segmentList_t *bigList = NULL;
   segmentList_t *segList = NULL;
@@ -244,7 +276,7 @@ segmentList_t *findIntersectors(const growthSegment_t * const segment, const str
 }
 
 
-int branchWithProbability(plant_t *plant, structure_t* structure, unsigned int minAge, unsigned int maxAge, double probability) {
+static int branchWithProbability(plant_t *plant, structure_t* structure, unsigned int minAge, unsigned int maxAge, double probability) {
   int i;
   int total;
 
@@ -384,7 +416,7 @@ int branchWithProbability(plant_t *plant, structure_t* structure, unsigned int m
 
 }
 
-void branchGrowthPoints(plant_t *plant) {
+static void branchGrowthPoints(plant_t *plant) {
   int totalSegments;
   double segmentProbability;
   
@@ -420,7 +452,7 @@ void branchGrowthPoints(plant_t *plant) {
 }
 
 
-void growPlant(plant_t *plant) {
+static void growPlant(plant_t *plant) {
   int i;
   int growthSteps;
   int retryCount;
@@ -641,7 +673,7 @@ void growPlant(plant_t *plant) {
 }
 
 
-plant_t *createPlant(unsigned int age, vect_t position, double radius, vect_t direction, characteristic_t *characteristic ) {
+static plant_t *createPlant(unsigned int age, vect_t position, double radius, vect_t direction, characteristic_t *characteristic ) {
   plant_t *plant;
 
   /* List of growth points */
@@ -770,7 +802,7 @@ plant_t *createPlant(unsigned int age, vect_t position, double radius, vect_t di
 }
 
 
-int writeStructureToDisk(struct rt_wdb *fp, structure_t *structure, outputCounter_t *oc) {
+static int writeStructureToDisk(struct rt_wdb *fp, structure_t *structure, outputCounter_t *oc) {
   int i;
   vect_t height;
 
@@ -815,7 +847,7 @@ int writeStructureToDisk(struct rt_wdb *fp, structure_t *structure, outputCounte
 }
 
 
-int writePlantToDisk(struct rt_wdb *fp, plant_t *plant) {
+static int writePlantToDisk(struct rt_wdb *fp, plant_t *plant) {
   outputCounter_t oc;
 
   printf ("Writing a plant at %f %f %f of age %d to disk\n", plant->position[X], plant->position[Y], plant->position[Z], plant->age);
@@ -837,7 +869,7 @@ int writePlantToDisk(struct rt_wdb *fp, plant_t *plant) {
 }
 
 
-void destroyPlant(plant_t *plant) {
+static void destroyPlant(plant_t *plant) {
   int i;
 
   /* get rid of the plant structure properly */
@@ -880,7 +912,7 @@ void destroyPlant(plant_t *plant) {
 
 }
 
-int invalidCharacteristics(const characteristic_t * const c) {
+static int invalidCharacteristics(const characteristic_t * const c) {
   if (c->totalHeight <= 0.0) {
     fprintf(stderr, "Need positive plant height\n");
     return 1;
@@ -912,13 +944,15 @@ int main (int argc, char *argv[]) {
   struct rt_wdb *fp;
   plant_t *plant;
   characteristic_t c;
-  
-  unsigned int age=50;  /* how many iterations */
+
+  /* all distance units are in mm */
+
+  unsigned int age=20;  /* how many iterations */
   point_t position={0.0, 0.0, 0.0};
-  double trunkRadius = 50.0;  /* how big is the start base */
-  point_t direction={0.0, 0.0, 1.0};
-  double height = 2000.0;  /* about how tall is it */
-  double branchingRate = 0.8;  /* 0->1 probability to branch per iteration */
+  double trunkRadius = 300.0;  /* how big is the start base */
+  point_t direction={0.0, 0.0, 1.0}; /* positive z is "up" */
+  double height = 30000.0;  /* about how tall is it */
+  double branchingRate = 0.1;  /* 0->1 probability to branch per iteration */
   long seed;
 
   printf("Vegitation generator\n");
@@ -926,16 +960,16 @@ int main (int argc, char *argv[]) {
 
   if (argc > 1) {
     age = atoi(argv[1]);
-    printf("Growing for %d years\n", age);
   }
+  printf("Growing for %d years\n", age);
   if (argc > 2) {
     height = atof(argv[2]);
-    printf("Growing to about %f meters in height\n", height / 1000);
   }
+  printf("Growing to about %f meters in height\n", height / 1000);
   if (argc > 3) {
     trunkRadius = atof(argv[3]);
-    printf("Growing from a base width of %f meters\n", trunkRadius / 1000);
   }
+  printf("Growing from a base width of %f meters\n", trunkRadius / 1000);
   if (argc > 4) {
     branchingRate = atof(argv[4]);
   }
@@ -948,43 +982,43 @@ int main (int argc, char *argv[]) {
   srand48(seed);
   printf("Vegitation seed is %ld\n", seed);
 
-  fp=wdb_fopen("veg.g");
+  fp=wdb_fopen("vegitation.g");
 
   mk_id_units(fp, "Vegitation", "mm");
   
   INIT_CHARACTERISTIC_T(&c);
   c.totalHeight = height;
-  c.totalRadius = height * 5.0;  /* set to ratio of width to height */
+  c.totalRadius = height * 1.0;  /* set to ratio of width to height */
 
   c.minLength = 1.0; /* 1mm minimum branch length */
   c.minRadius = 1.0; /* 1mm minimum branch radius */
   c.lengthMinVariation = (c.totalHeight / age) * -0.1; /* -10% shorter than usual */
   c.lengthMaxVariation = (c.totalHeight / age) * 0.0;  /* 0% longer than usual */
 
-  c.radiusMinVariation = (c.totalRadius / age) * -0.02;  /* maybe a tad smaller */
-  c.radiusMaxVariation = (c.totalRadius / age) * 0.00; /* will not get bigger */
+  c.radiusMinVariation = (c.totalRadius / age) * -0.02;  /* maybe a tad smaller if < 0 */
+  c.radiusMaxVariation = (c.totalRadius / age) * 0.00; /* will not get bigger if 0 */
 
   /* set these to the delta potential change of branch (e.g. 0.1 is +- 10% of value) */
-  VSET(c.dirMinVariation, -1.1, -1.1, -1.1);
-  VSET(c.dirMaxVariation, 1.1, 1.1, 1.1);
+  VSET(c.dirMinVariation, -0.2, -0.2, -0.2);
+  VSET(c.dirMaxVariation, 0.2, 0.2, 0.2);
 
   c.branchingRate = branchingRate;
   c.minBranchingAge = 0;  /* minimum age of a segment before it may branch */
-  c.maxBranchingAge = 50;
+  c.maxBranchingAge = 50; /* branches older than this may not branch */
   c.branchAtEndpointRate = 0.1;  /* probability of branching on a joints (evergreens have this rate high)  */
 
   /* !!! bug in regrowth causing startpoint to shift -- do not set > 0 */
   c.regrowthAttempts=0;
-  c.growthEnergy=10;  /* how far (iteration wise) for a branch to grow each life iteration */
+  c.growthEnergy=1;  /* how far (iteration wise) for a branch to grow each life iteration */
 
   /* how inward or outwards the branches will go */
-  VSET(c.branchMinVariation, -1.0, -1.0, 0.0); /* branches just cannot go "inward" */
-  VSET(c.branchMaxVariation, 1.0, 1.0, 1.0);  /* branches cannot go "inwards" */
+  VSET(c.branchMinVariation, -0.8, -0.8, 0.0); /* branches just cannot go "inward" */
+  VSET(c.branchMaxVariation, 0.8, 0.8, 1.0);  /* branches cannot go "inwards" */
 
   c.dyingRate = 0.0;  /* unimplemnted */
   c.dyingAge = INT_MAX;  /* unimplemented */
   c.lengthDecayRate = 0.01; /* almost same length every year */
-  c.radiusDecayRate = 0.05;  /* radius gets smaller by about 5% every year */
+  c.radiusDecayRate = 0.15;  /* radius gets smaller by about 20% every year */
 
   if (invalidCharacteristics(&c)) {
     fprintf(stderr, "Invalid plant characteristics\n");
