@@ -2304,7 +2304,7 @@ struct mater_info *materp;
  *			D B _ R E G I O N _ M A T
  *
  *  Given the name of a region, return the matrix which maps model coordinates
- *     into "region" coordinates.
+ *  into "region" coordinates.
  */
 void
 db_region_mat(m, dbip, name)
@@ -2337,9 +2337,13 @@ CONST char *name;
 
 /*		D B _ S H A D E R _ M A T
  *
- *	Given a region, return a matrix which maps model coordinates into
- *	region "shader space".  This is a space where the bounding box
- *	of the region in region space is mapped into the unit cube
+ *  Given a region, return a matrix which maps model coordinates into
+ *  region "shader space".  This is a space where points in the model
+ *  within the bounding box of the region are mapped into "region"
+ *  space (the coordinate system in which the region is defined).
+ *  The area occupied by the region's bounding box (in region coordinates)
+ *  are then mapped into the unit cube.  This unit cube defines
+ *  "shader space".
  */
 void
 db_shader_mat(model_to_shader, dbip, rp)
@@ -2348,24 +2352,39 @@ CONST struct db_i *dbip;
 CONST struct region *rp;
 {
 	mat_t	model_to_region;
+	mat_t	m_xlate;
+	mat_t	m_scale;
 	mat_t	tmp;
-	vect_t	bb_min, bb_max, v_tmp;
+	vect_t	m_bb_min, m_bb_max, v_tmp, r_bb_min, r_bb_max;
 
 	/* get model-to-region space mapping */
 	db_region_mat(model_to_region, dbip, rp->reg_name);
 
-	/* 
-	 * scale space so that the range 0..1 in shader space covers 
-	 * the region bounding box exactly
+	/*
+	 * Obtain region bounding box
 	 */
+	VSETALL(m_bb_max, -INFINITY);
+	VSETALL(m_bb_min, INFINITY);
+	rt_bound_tree(rp->reg_treetop, m_bb_min, m_bb_max);
 
-	VSETALL(bb_max, -INFINITY);
-	VSETALL(bb_min, INFINITY);
-	rt_bound_tree(rp->reg_treetop, bb_min, bb_max);
+	/* convert bb values to "region" coordinates */
+	MAT4X3PNT(r_bb_min, model_to_region, m_bb_min)
+	MAT4X3PNT(r_bb_max, model_to_region, m_bb_max)
 
-	VSUB2(v_tmp, bb_max, bb_min);
+	/*
+	 * Translate bounding box to origin
+	 */
+	mat_idn(m_xlate);
+	VSCALE(v_tmp, r_bb_min, -1);
+	MAT_DELTAS_VEC(m_xlate, v_tmp);
+	mat_mul(tmp, m_xlate, model_to_region);
+
+	/* 
+	 * Scale the bounding box to unit cube
+	 */
+	VSUB2(v_tmp, r_bb_max, r_bb_min);
 	VINVDIR(v_tmp, v_tmp);
-	mat_idn(tmp);
-	MAT_SCALE_VEC(tmp, v_tmp);
-	mat_mul(model_to_shader, tmp, model_to_region);
+	mat_idn(m_scale);
+	MAT_SCALE_VEC(m_scale, v_tmp);
+	mat_mul(model_to_shader, m_scale, tmp);
 }
