@@ -862,35 +862,42 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
  *  Phillip Dykstra, 26 Sep 1985.
  *  Lee A. Butler, 14 March 1996.
  */
-
-/*
- * Create Quaternion from Vector and Rotation (in Radians) about vector.
+ 
+/* Create Quaternion from Vector and Rotation about vector.
+ *
  * To produce a quaternion representing a rotation by PI radians about X-axis:
  *
  *	VSET(axis, 1, 0, 0);
- *	Q_FROM_VROT_DEG( quat, M_PI, axis);
+ *	QUAT_FROM_VROT( quat, M_PI, axis);
+ *		or
+ *	QUAT_FROM_ROT( quat, M_PI, 1.0, 0.0, 0.0, 0.0 );
  *
- * Lee A. Butler
+ *  Alternatively, in degrees:
+ *	QUAT_FROM_ROT_DEG( quat, 180.0, 1.0, 0.0, 0.0, 0.0 );
+ *
  */
-#define QUAT_FROM_VROT_RAD(q, r, v) { \
-	register fastf_t rot = (r) * 0.5; \
+#define QUAT_FROM_ROT(q, r, x, y, z){ \
+	register fastf_t _rot = (r) * 0.5; \
+	QSET(q, x, y, z, cos(_rot)); \
+	VUNITIZE(q); \
+	_rot = sin(_rot); /* _rot is really just a temp variable now */ \
+	VSCALE(q, q, _rot ); }
+
+#define QUAT_FROM_VROT(q, r, v) { \
+	register fastf_t _rot = (r) * 0.5; \
 	VMOVE(q, v); \
 	VUNITIZE(q); \
-	(q)[W] = cos(rot); \
-	rot = sin(rot); \
-	VSCALE(q, q, rot ); }
+	(q)[W] = cos(_rot); \
+	_rot = sin(_rot); /* _rot is really just a temp variable now */ \
+	VSCALE(q, q, _rot ); }
 
-#define QUAT_FROM_ROT(q, r, x, y, z) {\
-	register fastf_t rot = (r) * 0.5; \
-	QSET(q, x, y, z, cos(rot)); \
-	VUNITIZE(q); \
-	rot = sin(rot); \
-	VSCALE(q, q, rot); }
+#define QUAT_FROM_VROT_DEG(q, r, v) \
+	QUAT_FROM_VROT(q, ((r)*(180.0/M_PI), v)
 
-/*
- * Create Quaternion from Vector and Rotation (in Degrees) about vector.
- */
-#define QUAT_FROM_VROT_DEG(q, r, v) Q_FROM_VROT_RAD(q, ((r)*(180.0/M_PI), v)
+#define QUAT_FROM_ROT_DEG(q, r, x, y, z) \
+	QUAT_FROM_ROT(q, ((r)*(180.0/M_PI), x, y, z)
+
+
 
 /* Set quaternion at `a' to have coordinates `b', `c', `d', `e' */
 #define QSET(a,b,c,d,e)	{ \
