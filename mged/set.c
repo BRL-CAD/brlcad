@@ -61,6 +61,7 @@ struct mged_variables mged_variables = {
 #define VIEW_TABLE_SIZE 7
 static int current_view = 0;
 static mat_t view_table[VIEW_TABLE_SIZE];
+static fastf_t view_scale_table[VIEW_TABLE_SIZE];
 static void     set_view();
 
 
@@ -223,10 +224,11 @@ Tcl_Interp *interp;
 		      unset_var, (ClientData)sp );
     }
 
-
-    /* Initialize view_table */
-    for(i = 0; i < VIEW_TABLE_SIZE; ++i)
+    /* Initialize view_table and view_scale_table */
+    for(i = 0; i < VIEW_TABLE_SIZE; ++i){
       mat_idn(view_table[i]);
+      view_scale_table[i] = 1;
+    }
 }
 
 int
@@ -263,6 +265,9 @@ set_view()
   /* save current view */
   mat_copy(view_table[current_view], Viewrot);
 
+  /* save current Viewscale */
+  view_scale_table[current_view] = Viewscale;
+
   /* toggle forward */
   if(mged_variables.view){
     if(++current_view > VIEW_TABLE_SIZE - 1)
@@ -273,8 +278,9 @@ set_view()
             current_view = VIEW_TABLE_SIZE - 1;
   }
 
-  /* restore previously saved view */
+  /* restore previously saved view and Viewscale */
   mat_copy(Viewrot, view_table[current_view]);
+  Viewscale = view_scale_table[current_view];
   new_mats();
 
   dmaflag = 1;
