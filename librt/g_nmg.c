@@ -384,8 +384,18 @@ CONST struct rt_tol	*tol;
 	*r = RT_LIST_FIRST(nmgregion, &(lm->r_hd) );
 	NMG_CK_REGION(*r);
 	if( RT_LIST_NEXT_NOT_HEAD( *r, &(lm->r_hd) ) )  {
-		rt_log("rt_nmg_tess: WARNING, NMG model contains more than one nmgregion.\n\tYou probably won't get what you expect!\n");
-		/* Let it proceed, on the off chance it's useful */
+		struct nmgregion *r2;
+
+		r2 = RT_LIST_PNEXT( nmgregion, &((*r)->l) );
+		while( RT_LIST_NOT_HEAD( &r2->l, &(lm->r_hd) ) )
+		{
+			struct nmgregion *next_r;
+
+			next_r = RT_LIST_PNEXT( nmgregion, &r2->l );
+			nmg_merge_regions( *r, r2, tol );
+
+			r2 = next_r;
+		}
 	}
 
 
