@@ -61,7 +61,7 @@ set solc(default_ehy)  {V {-1 -1 -1.5} H {0 0 1} A {0 1 0} r_1 .5 r_2 .25 \
 	                 c .25}
 set solc(descr_eto)  "Elliptical Torus"		 
 set solc(default_eto)  {V {-1 -1 -1} N {0 0 1} C {.1 0 .1} r .5 r_d .05}
-set solc(descr_part) "Particle Solid"
+set solc(descr_part) "Particle Primitive"
 set solc(default_part) {V {-1 -1 -.5} H {0 0 1} r_v 0.5 r_h 0.25}
 
 set solc(label,V) "Vertex"
@@ -109,7 +109,7 @@ proc solcreate { id args } {
 
     catch { destroy $w }
     toplevel $w -screen $mged_gui($id,screen)
-    wm title $w "Solid Creation"
+    wm title $w "Primitive Creation"
 
     # Make three frames: top one for entry fields and labels, middle one for
     # solid creation defaults, and bottom one for create and quit buttons
@@ -137,12 +137,12 @@ proc solcreate { id args } {
     label $w.t.l.indexvar -text "Index variable" -anchor w
     label $w.t.l.index    -text "Index" -anchor w
     label $w.t.l.oper     -text "Operation" -anchor w
-    label $w.t.l.type     -text "Solid type" -relief raised -bd 1 -anchor w
+    label $w.t.l.type     -text "Primitive type" -relief raised -bd 1 -anchor w
 
     pack $w.t.l.format $w.t.l.indexvar $w.t.l.index $w.t.l.oper $w.t.l.type \
 	    -side top -fill both -expand yes -anchor w
 
-    # For the "Solid type" label, allow left-clicking to get a list of solids
+    # For the "Primitive type" label, allow left-clicking to get a list of solids
 
     bind $w.t.l.type <1> "solc_list $w $id"
 
@@ -195,7 +195,7 @@ proc solc_list { w id } {
     
     catch { destroy $w.slist }
     toplevel $w.slist -screen $mged_gui($id,screen)
-    wm title $w.slist "Solid type list"
+    wm title $w.slist "Primitive type list"
 
     set solc($w,descr) ""
 

@@ -27,10 +27,10 @@ proc raypick { } {
 	set len [llength $solids]
 	echo \"solids_on_ray $x $y\" sees $len solid(s)
 	if { $len<=0 } then return
-	echo Solid list: $solids
+	echo Primitive list: $solids
 	
 	toplevel .raypick
-	wm title .raypick "Solid edit"
+	wm title .raypick "Primitive edit"
 	set i 0
 	foreach solid $solids {
 	    button .raypick.s$i -text $solid \

@@ -1048,10 +1048,10 @@ char	**argv;
 
 	if( flag == SOL_TABLE || flag == REG_TABLE ) {
 		(void)unlink( "/tmp/mged_discr\0" );
-		(void)fprintf(tabptr,"\n\nNumber Solids = %d  Number Regions = %d\n",
+		(void)fprintf(tabptr,"\n\nNumber Primitives = %d  Number Regions = %d\n",
 				numsol,numreg);
 
-		bu_vls_printf(&tmp_vls, "Processed %d Solids and %d Regions\n",
+		bu_vls_printf(&tmp_vls, "Processed %d Primitives and %d Regions\n",
 			      numsol,numreg);
 		Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 

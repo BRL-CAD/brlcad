@@ -54,7 +54,7 @@ Convinst()
 		pointer = (pointer - 1)/2;
 		if( pointer < 0 || pointer >= totentities )
 		{
-			bu_log( "Solid instance D%07d (%s) does not point to a legal solid\n",
+			bu_log( "Primitive instance D%07d (%s) does not point to a legal primitive\n",
 				dir[i]->direct , dir[i]->name );
 			continue;
 		}

@@ -711,7 +711,7 @@ next_one:
 		/* XXX */
 	default:
 		(void) fprintf( stderr,
-		    "vdeck: '%s' Solid type %s has no corresponding COMGEOM solid, skipping\n",
+		    "vdeck: '%s' Primitive type %s has no corresponding COMGEOM primitive, skipping\n",
 		    dp->d_namep, ip->idb_meth->ft_name );
 		vls_itoa( &sol, stp->st_bit+delsol, 5 );
 		rt_vls_strcat( &sol, ip->idb_meth->ft_name );

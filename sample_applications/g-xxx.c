@@ -531,7 +531,7 @@ struct directory *dp;
 		}
 
 		default:
-			bu_log( "Solid %s is unrecognized type (%d)\n", dp->d_namep, itrn.idb_type );
+			bu_log( "Primitive %s is unrecognized type (%d)\n", dp->d_namep, itrn.idb_type );
 			break;
 	}
 

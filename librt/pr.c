@@ -173,7 +173,7 @@ register const struct partition *pp;
 	rt_pr_hit_vls( v, "  In", pp->pt_inhit );
 	rt_pr_hit_vls( v, " Out", pp->pt_outhit );
 	bu_log_indent_vls( v );
-	bu_vls_strcat( v, "  Solids: " );
+	bu_vls_strcat( v, "  Primitives: " );
 	for( BU_PTBL_FOR( segpp, (struct seg **), &pp->pt_seglist ) )  {
 		stp = (*segpp)->seg_stp;
 		RT_CK_SOLTAB(stp);

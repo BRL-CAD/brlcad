@@ -178,17 +178,17 @@ static char	*type_name[NO_OF_TYPES]={
 			"Right Circular Cone Frustum",
 			"Sphere",
 			"Torus",
-			"Solid of Linear Extrusion",
+			"Linear Sketch Extrusion",
 			"Ellipsoid",
 			"Boolean Tree",
-			"Solid Assembly",
-			"Manifold Solid BREP Object",
+			"Assembly Primitive",
+			"Manifold Boundary Representation",
 			"Plane Surface",
 			"Color Definition",
 			"Attribute Table Definition",
 			"Property Entity",
 			"Attribute Table Instance",
-			"Solid Instance",
+			"Primitive Instance",
 			"Vertex List",
 			"Edge List",
 			"Loop",
@@ -2769,7 +2769,7 @@ FILE *fp_dir,*fp_param;
 			struct rt_bot_internal *bot=(struct rt_bot_internal *)ip->idb_ptr;
 			if( bot->mode != RT_BOT_SOLID )
 			{
-				bu_log( "Solid %s is a plate mode solid, and cannot be converted to IGES format!!!\n", name );
+				bu_log( "%s is a plate mode primitive, and cannot be converted to IGES format!!!\n", name );
 				return( 0 );
 			}
 		}

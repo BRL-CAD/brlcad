@@ -81,7 +81,7 @@ char **argv;
 	}
 
 	/* Only do this if in solid edit state */
-	if( not_state( ST_S_EDIT, "Solid Text Edit" ) )
+	if( not_state( ST_S_EDIT, "Primitive Text Edit" ) )
 	  return TCL_ERROR;
 
 	strcpy(tmpfil, tmpfil_init);

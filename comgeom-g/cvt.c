@@ -282,12 +282,12 @@ char **argv;
 	/*
 	 *  SOLID TABLE
 	 */
-	if(verbose) printf("Solid table\n");
+	if(verbose) printf("Primitive table\n");
 	sol_work = 0;
 	while( sol_work < sol_total ) {
 		i = getsolid();
 		if( i < 0 )  {
-			printf("error converting solid %d\n", sol_work);
+			printf("error converting primitive %d\n", sol_work);
 			/* Should we abort here? */
 			continue;
 		}

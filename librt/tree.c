@@ -591,7 +591,7 @@ genptr_t			client_data;
 
 	if(RT_G_DEBUG&DEBUG_SOLIDS)  {
 		struct bu_vls	str;
-		bu_log("\n---Solid %d: %s\n", stp->st_bit, dp->d_namep);
+		bu_log("\n---Primitive %d: %s\n", stp->st_bit, dp->d_namep);
 		bu_vls_init( &str );
 		/* verbose=1, mm2local=1.0 */
 		if( stp->st_meth->ft_describe( &str, ip, 1, 1.0, tsp->ts_resp, tsp->ts_dbip ) < 0 )  {

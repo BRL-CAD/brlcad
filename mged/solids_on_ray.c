@@ -239,7 +239,7 @@ struct seg		*finished_segs;
     /*
      *	Initialize the solid list
      */
-    if ((solids = bu_rb_create("Solid list", 2, rpt_solids_orders)) == BU_RB_TREE_NULL)
+    if ((solids = bu_rb_create("Primitive list", 2, rpt_solids_orders)) == BU_RB_TREE_NULL)
     {
 	bu_log("%s: %d: bu_rb_create() bombed\n", __FILE__, __LINE__);
 	exit (1);
@@ -273,7 +273,7 @@ struct seg		*finished_segs;
 	printf("    Partition <x%lx> is '%s' ",
 	    (long)pp, pp -> pt_regionp -> reg_name);
 	
-	printf("\n--- Solids hit on this partition ---\n");
+	printf("\n--- Primitives hit on this partition ---\n");
 	for (i = 0; i < (pp -> pt_seglist).end; ++i)
 	{
 	    stp = ((struct seg *)BU_PTBL_GET(&pp->pt_seglist, i))->seg_stp;
@@ -305,7 +305,7 @@ struct seg		*finished_segs;
 	RT_CK_SEG(segp);
 	RT_CK_SOLTAB(segp -> seg_stp);
 
-	printf("Solid #%d in this partition is ", index);fflush(stdout);
+	printf("Primitive #%d in this partition is ", index);fflush(stdout);
 	bu_vls_trunc(&sol_path_name, 0);
 	fp = &(segp -> seg_stp -> st_path);
 	if (fp -> magic != 0)

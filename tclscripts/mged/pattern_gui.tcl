@@ -160,7 +160,7 @@ body pattern_control::constructor {} {
 
     $itk_component(m_combo_r) add command -label Top -command "set combovar_r Top ; $windowtag update_depth r top"
     $itk_component(m_combo_r) add command -label Regions -command "set combovar_r Regions ; $windowtag update_depth r regions"
-    $itk_component(m_combo_r) add command -label Solids -command "set combovar_r Solids ; $windowtag update_depth r solids"
+    $itk_component(m_combo_r) add command -label Primitives -command "set combovar_r Primitives ; $windowtag update_depth r solids"
 
     $itk_component(b_combo_r) configure -menu $itk_component(m_combo_r)
 
@@ -441,7 +441,7 @@ body pattern_control::constructor {} {
 
 
     #bind $itk_component() <Enter> " set [list [scope helpvar]] {}"
-    bind $itk_component(l_combo_r) <Enter> " set [list [scope helpvar]]   {Depth of duplication of objects. ``top'' - only build top level objects.\n\t\t``regions'' - duplicate down to and including regions.\n\t\t``solids'' - duplicate down to and including primitives} "
+    bind $itk_component(l_combo_r) <Enter> " set [list [scope helpvar]]   {Depth of duplication of objects. ``top'' - only build top level objects.\n\t\t``regions'' - duplicate down to and including regions.\n\t\t``primitives'' - duplicate down to and including primitives} "
     bind $itk_component(l_group_r) <Enter> " set [list [scope helpvar]]   {Enter the name for the created group} "
     bind $itk_component(l_xdir_r) <Enter>  " set [list [scope helpvar]]   {Enter the X Direction Vector for the pattern}"
     bind $itk_component(l_ydir_r) <Enter>  " set [list [scope helpvar]]   {Enter the Y Direction Vector for the pattern}"
@@ -519,7 +519,7 @@ body pattern_control::constructor {} {
 
     $itk_component(m_combo_s) add command -label Top -command "set combovar_s Top ; $windowtag update_depth s top"
     $itk_component(m_combo_s) add command -label Regions -command "set combovar_s Regions ; $windowtag update_depth s regions"
-    $itk_component(m_combo_s) add command -label Solids -command "set combovar_s Solids ; $windowtag update_depth s solids"
+    $itk_component(m_combo_s) add command -label Primitives -command "set combovar_s Primitives ; $windowtag update_depth s solids"
 
     $itk_component(b_combo_s) configure -menu $itk_component(m_combo_s)
 
@@ -852,7 +852,7 @@ body pattern_control::constructor {} {
 
     
     #bind $itk_component() <Enter> " set [list [scope helpvar]] {}"
-    bind $itk_component(l_combo_s) <Enter> " set [list [scope helpvar]] {Depth of duplication of objects. ``top'' - only build top level objects.\n\t\t``regions'' - duplicate down to and including regions.\n\t\t``solids'' - duplicate down to and including primitives} "
+    bind $itk_component(l_combo_s) <Enter> " set [list [scope helpvar]] {Depth of duplication of objects. ``top'' - only build top level objects.\n\t\t``regions'' - duplicate down to and including regions.\n\t\t``primitives'' - duplicate down to and including primitives} "
     bind $itk_component(l_group_s) <Enter> " set [list [scope helpvar]] {Enter the name for the created group} "
     bind $itk_component(l_cpatt_s) <Enter> " set [list [scope helpvar]] {Enter the coordinates of center of pattern (mm)}"
     bind $itk_component(l_cobj_s) <Enter> " set [list [scope helpvar]] {Enter the coordinates of center of object to be duplicated (mm)}"
@@ -877,7 +877,7 @@ body pattern_control::constructor {} {
     bind $itk_component(l_obj_s) <Enter> " set [list [scope helpvar]] {Enter the list of objects to duplicate}"
     bind $itk_component(l_sstring_s) <Enter> " set [list [scope helpvar]] {Enter a string appearing in the objects to duplicate that you want to change (empty is OK)}"
     bind $itk_component(l_rstring_s) <Enter> " set [list [scope helpvar]] {Enter the string you want to replace the above string with (empty is OK)}"
-    bind $itk_component(l_incr_s) <Enter> " set [list [scope helpvar]] {Enter value to use in incrementing solid/region numbers (0 is OK)}"
+    bind $itk_component(l_incr_s) <Enter> " set [list [scope helpvar]] {Enter value to use in incrementing primitive/region numbers (0 is OK)}"
 
     foreach obj {l_combo_s l_group_s l_cpatt_s l_cobj_s cb_rotaz_s cb_rotel_s rb_num_s l_numaz_s l_numel_s l_delaz_s l_delel_s cb_list_s l_listaz_s l_listel_s rb_radius_s l_radius_s l_delta_s rb_radlist_s l_radlist_s l_startaz_s l_startel_s l_obj_s l_sstring_s l_rstring_s l_incr_s } {
 	
@@ -911,7 +911,7 @@ body pattern_control::constructor {} {
 
     $itk_component(m_combo_c) add command -label Top -command "set combovar_c Top ; $windowtag update_depth c top"
     $itk_component(m_combo_c) add command -label Regions -command "set combovar_c Regions ; $windowtag update_depth c regions"
-    $itk_component(m_combo_c) add command -label Solids -command "set combovar_c Solids ; $windowtag update_depth c solids"
+    $itk_component(m_combo_c) add command -label Primitives -command "set combovar_c Primitives ; $windowtag update_depth c solids"
 
     $itk_component(b_combo_c) configure -menu $itk_component(m_combo_c)
 
@@ -1330,7 +1330,7 @@ body pattern_control::constructor {} {
 
     #bind $itk_component() <Enter> " set [list [scope helpvar]] {}"
     bind $itk_component(rb_num_c) <Enter> " set [list [scope helpvar]] {Select to generate creation points based on number and delta of azimuths}"
-    bind $itk_component(l_combo_c) <Enter> " set [list [scope helpvar]] {Depth of duplication of objects. ``top'' - only build top level objects.\n\t\t``regions'' - duplicate down to and including regions.\n\t\t``solids'' - duplicate down to and including primitives}"
+    bind $itk_component(l_combo_c) <Enter> " set [list [scope helpvar]] {Depth of duplication of objects. ``top'' - only build top level objects.\n\t\t``regions'' - duplicate down to and including regions.\n\t\t``primitives'' - duplicate down to and including primitives}"
     bind $itk_component(l_group_c) <Enter> " set [list [scope helpvar]] {Enter the name for the created group}"
     bind $itk_component(l_cbase_c) <Enter> " set [list [scope helpvar]] {Enter the base of the created cylindrical pattern}"
     bind $itk_component(l_cobj_c) <Enter> " set [list [scope helpvar]] {Enter the coordinates of center of object to be duplicated (mm)}"
@@ -1356,7 +1356,7 @@ body pattern_control::constructor {} {
     bind $itk_component(l_lnum_c) <Enter> " set [list [scope helpvar]] {Enter a list of heights (mm)}"
     bind $itk_component(l_sstring_c) <Enter> " set [list [scope helpvar]] {Enter a string appearing in the objects to duplicate that you want to change (empty is OK)}"
     bind $itk_component(l_rstring_c) <Enter> " set [list [scope helpvar]] {Enter the string you want to replace the above string with (empty is OK)}"
-    bind $itk_component(l_incr_c) <Enter> " set [list [scope helpvar]] {Enter value to use in incrementing solid/region numbers (0 is OK)}"
+    bind $itk_component(l_incr_c) <Enter> " set [list [scope helpvar]] {Enter value to use in incrementing primitive/region numbers (0 is OK)}"
     
      foreach obj { l_combo_c \
                    l_group_c \

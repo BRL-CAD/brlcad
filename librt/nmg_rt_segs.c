@@ -916,7 +916,7 @@ struct soltab		*stp;
 			}
 
 			/* Now bomb off */
-			bu_log("Solid: %s, pixel=%d %d, lvl=%d %s\n",
+			bu_log("Primitive: %s, pixel=%d %d, lvl=%d %s\n",
 				rd->stp->st_dp->d_namep,
 				rd->ap->a_x, rd->ap->a_y, rd->ap->a_level,
 				rd->ap->a_purpose );
@@ -938,7 +938,7 @@ struct soltab		*stp;
 	    	bu_log("Ray: pt:(%g %g %g) dir:(%g %g %g)\n",
 	    		V3ARGS(rd->rp->r_pt), V3ARGS(rd->rp->r_dir) );
 		
-		bu_log("Solid: %s, pixel=%d %d, lvl=%d %s\n",
+		bu_log("Primitive: %s, pixel=%d %d, lvl=%d %s\n",
 			stp->st_dp->d_namep,
 			ap->a_x, ap->a_y, ap->a_level,
 			ap->a_purpose );
@@ -1112,7 +1112,7 @@ struct ray_data *rd;
 
 	bu_log("<---Unable to fix state transition\n");
 	pl_ray(rd);
-	bu_log("Solid: %s, pixel=%d %d,  lvl=%d %s\n",
+	bu_log("Primitive: %s, pixel=%d %d,  lvl=%d %s\n",
 		rd->stp->st_dp->d_namep,
 		rd->ap->a_x, rd->ap->a_y, rd->ap->a_level,
 		rd->ap->a_purpose );
@@ -1163,7 +1163,7 @@ struct ray_data	*rd;
 		/* this better be a 2-manifold face */
 		bu_log("%s[%d]: This better be a 2-manifold face\n",
 			__FILE__, __LINE__);
-		bu_log("Solid: %s, pixel=%d %d,  lvl=%d %s\n",
+		bu_log("Primitive: %s, pixel=%d %d,  lvl=%d %s\n",
 				rd->stp->st_dp->d_namep,
 				rd->ap->a_x, rd->ap->a_y, rd->ap->a_level,
 				rd->ap->a_purpose );

@@ -236,7 +236,7 @@ char	**argv;
 		if (ratio >= dmp->dmr_bound || ratio < 0.001)
 			continue;
 
-		Tcl_AppendResult(interp, "Solid\n", (char *)NULL);
+		Tcl_AppendResult(interp, "Primitive\n", (char *)NULL);
 		for( BU_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
 			register int	i;
 			register int	nused = vp->nused;

@@ -3845,7 +3845,7 @@ proc sketch_parse_col {str num output} {
 
 proc sketch_print {} {
 	set length [vdraw read l]
-	puts "Solid name is [vdraw read n]"
+	puts "Name is [vdraw read n]"
 	for {set i 0} { $i < $length} { incr i} {
 		puts [vdraw read $i]
 	}

@@ -58,7 +58,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 			{\
 			V_Print( "Fixed flipped entry normal, was",\
 				_normal, bu_log );\
-			bu_log( "Solid type %d\n", _stp->st_id );\
+			bu_log( "Primitive type %d\n", _stp->st_id );\
 			}\
 		VREVERSE( _normal, _normal );\
 		}\
@@ -76,7 +76,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 			{\
 			V_Print( "Fixed flipped exit normal, was",\
 				_normal, bu_log );\
-			bu_log( "Solid type %d\n", _stp->st_id );\
+			bu_log( "Primitive type %d\n", _stp->st_id );\
 			}\
 		VREVERSE( _normal, _normal );\
 		}\

@@ -192,7 +192,7 @@ struct resource *resp;
 		sol_id = dbint->ip.idb_type;
 
 		if (sol_id < 0 || sol_id > rt_nfunctab ) {
-			bu_log("Solid ID %ld out of bounds\n", sol_id);
+			bu_log("Primitive ID %ld out of bounds\n", sol_id);
 			rt_bomb("");
 		}
 
@@ -200,11 +200,11 @@ struct resource *resp;
 		if (sol_id != ID_ELL) {
 
 			if (op == OP_UNION)
-				bu_log( "Non-ellipse \"union\" solid of \"%s\" being ignored\n",
+				bu_log( "Non-ellipse \"union\" primitive of \"%s\" being ignored\n",
 					tb->name);
 
 			if (rdebug&RDEBUG_SHADE)
-				bu_log(" got a solid type %d \"%s\".  This solid ain't no ellipse bucko!\n",
+				bu_log(" got a primitive type %d \"%s\".  This primitive ain't no ellipse bucko!\n",
 					sol_id, rt_functab[sol_id].ft_name);
 
 			break;
@@ -214,7 +214,7 @@ struct resource *resp;
 		ell_p = (struct rt_ell_internal *)dbint->ip.idb_ptr;
 
 		if (rdebug&RDEBUG_SHADE)
-			bu_log(" got a solid type %d \"%s\"\n",
+			bu_log(" got a primitive type %d \"%s\"\n",
 				sol_id,
 				rt_functab[sol_id].ft_name);
 

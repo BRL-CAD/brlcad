@@ -172,7 +172,7 @@ has the following input fields:
     { label,epa  "Elliptical Paraboloid" }
     { label,ehy  "Right Hyperbolic Cylinder" }
     { label,eto  "Elliptical Torus" }
-    { label,part "Particle Solid" }
+    { label,part "Particle" }
     { label,dsp "Displacement Map" }
     { label,hf "Height Field" }
     { label,ebm "Extruded Bitmap" }
@@ -214,7 +214,7 @@ has the following input fields:
     { attr,vol  {file "" w 1 n 1 d 1 lo 0 hi 1 size {1 1 1} mat {1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1}} }
     { name,indexvar index }
     { name,op "incr index" }
-    { name,default "mySolid" }
+    { name,default "myPrimitive" }
     { entry,incr_op "\$val + 1.0" }
     { entry,decr_op "\$val - 1.0" }
     { entry,fmt "%.4f" }
