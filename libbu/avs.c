@@ -43,21 +43,21 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
  *			B U _ A V S _ I N I T
  */
 void
-bu_avs_init( avp, len, str )
-struct bu_attribute_value_set	*avp;
+bu_avs_init( avsp, len, str )
+struct bu_attribute_value_set	*avsp;
 int		len;
 CONST char	*str;
 {
 	if (bu_debug & BU_DEBUG_AVS)
-		bu_log("bu_avs_init(%8x, len=%d, %s)\n", avp, len, str);
+		bu_log("bu_avs_init(%8x, len=%d, %s)\n", avsp, len, str);
 
-	avp->magic = BU_AVS_MAGIC;
+	avsp->magic = BU_AVS_MAGIC;
 	if( len <= 0 )  len = 32;
-	avp->count = 0;
-	avp->max = len;
-	avp->avp = (struct bu_attribute_value_pair *)bu_calloc(avp->max,
+	avsp->count = 0;
+	avsp->max = len;
+	avsp->avp = (struct bu_attribute_value_pair *)bu_calloc(avsp->max,
 		sizeof(struct bu_attribute_value_pair), str);
-	avp->readonly_min = avp->readonly_max = NULL;
+	avsp->readonly_min = avsp->readonly_max = NULL;
 }
 
 /*
@@ -71,15 +71,15 @@ bu_avs_new( len, str )
 int		len;
 CONST char	*str;
 {
-	struct bu_attribute_value_set	*avp;
+	struct bu_attribute_value_set	*avsp;
 
-	BU_GETSTRUCT( avp, bu_attribute_value_set );
-	bu_avs_init( avp, len, "bu_avs_new" );
+	BU_GETSTRUCT( avsp, bu_attribute_value_set );
+	bu_avs_init( avsp, len, "bu_avs_new" );
 
 	if (bu_debug & BU_DEBUG_AVS)
-		bu_log("bu_avs_new(len=%d, %s) = x%x\n", len, str, avp);
+		bu_log("bu_avs_new(len=%d, %s) = x%x\n", len, str, avsp);
 
-	return avp;
+	return avsp;
 }
 
 /*
@@ -93,34 +93,34 @@ CONST char	*str;
  *	2	set extended with new attribute/value pair
  */
 int
-bu_avs_add( avp, attribute, value )
-struct bu_attribute_value_set	*avp;
+bu_avs_add( avsp, attribute, value )
+struct bu_attribute_value_set	*avsp;
 CONST char	*attribute;
 CONST char	*value;
 {
 	struct bu_attribute_value_pair *app;
 
-	BU_CK_AVS(avp);
+	BU_CK_AVS(avsp);
 
-	for( BU_AVS_FOR(app, avp) )  {
+	for( BU_AVS_FOR(app, avsp) )  {
 		if( strcmp( app->name, attribute ) != 0 )  continue;
-		if( AVS_IS_FREEABLE(avp, app->value) )
+		if( AVS_IS_FREEABLE(avsp, app->value) )
 			bu_free( (genptr_t)app->value, "app->value" );
 		app->value = bu_strdup( value );
 		return 1;
 	}
 
-	if( avp->count >= avp->max )  {
+	if( avsp->count >= avsp->max )  {
 		/* Allocate more space first */
-		avp->max *= 4;
-		avp->avp = (struct bu_attribute_value_pair *)bu_realloc(
-			avp->avp,
-			avp->max *
+		avsp->max *= 4;
+		avsp->avp = (struct bu_attribute_value_pair *)bu_realloc(
+			avsp->avp,
+			avsp->max *
 			sizeof(struct bu_attribute_value_pair),
 			"attribute_value_pair.avp[] (add)" );
 	}
 
-	app = &avp->avp[avp->count++];
+	app = &avsp->avp[avsp->count++];
 	app->name = bu_strdup(attribute);
 	app->value = bu_strdup(value);
 	return 2;
@@ -130,15 +130,15 @@ CONST char	*value;
  *			B U _ A V S _ A D D _ V L S
  */
 int
-bu_avs_add_vls( avp, attribute, value_vls )
-struct bu_attribute_value_set	*avp;
+bu_avs_add_vls( avsp, attribute, value_vls )
+struct bu_attribute_value_set	*avsp;
 const char		*attribute;
 const struct bu_vls	*value_vls;
 {
-	BU_CK_AVS(avp);
+	BU_CK_AVS(avsp);
 	BU_CK_VLS(value_vls);
 
-	return bu_avs_add( avp, attribute, bu_vls_addr(value_vls) );
+	return bu_avs_add( avsp, attribute, bu_vls_addr(value_vls) );
 }
 
 /*
@@ -163,13 +163,13 @@ bu_avs_merge( struct bu_attribute_value_set *dest, struct bu_attribute_value_set
  *			B U _ A V S _ G E T
  */
 const char *
-bu_avs_get( const struct bu_attribute_value_set *avp, const char *attribute )
+bu_avs_get( const struct bu_attribute_value_set *avsp, const char *attribute )
 {
 	struct bu_attribute_value_pair *app;
 
-	BU_CK_AVS(avp);
+	BU_CK_AVS(avsp);
 
-	for( BU_AVS_FOR(app, avp) )  {
+	for( BU_AVS_FOR(app, avsp) )  {
 		if( strcmp( app->name, attribute ) != 0 )  continue;
 		return app->value;
 	}
@@ -184,25 +184,25 @@ bu_avs_get( const struct bu_attribute_value_set *avp, const char *attribute )
  *	 0	OK
  */
 int
-bu_avs_remove( avp, attribute )
-struct bu_attribute_value_set	*avp;
+bu_avs_remove( avsp, attribute )
+struct bu_attribute_value_set	*avsp;
 CONST char	*attribute;
 {
 	struct bu_attribute_value_pair *app, *epp;
 
-	BU_CK_AVS(avp);
+	BU_CK_AVS(avsp);
 
-	for( BU_AVS_FOR(app, avp) )  {
+	for( BU_AVS_FOR(app, avsp) )  {
 		if( strcmp( app->name, attribute ) != 0 )  continue;
-		if( AVS_IS_FREEABLE( avp, app->name ) )
+		if( AVS_IS_FREEABLE( avsp, app->name ) )
 			bu_free( (genptr_t)app->name, "app->name" );
 		app->name = NULL;	/* sanity */
-		if( AVS_IS_FREEABLE( avp, app->value ) )
+		if( AVS_IS_FREEABLE( avsp, app->value ) )
 			bu_free( (genptr_t)app->value, "app->value" );
 		app->value = NULL;	/* sanity */
 
 		/* Move last one down to replace it */
-		epp = &avp->avp[avp->count--];
+		epp = &avsp->avp[avsp->count--];
 		if( app != epp )  {
 			*app = *epp;		/* struct copy */
 		}
@@ -217,21 +217,21 @@ CONST char	*attribute;
  *			B U _ A V S _ F R E E
  */
 void
-bu_avs_free( struct bu_attribute_value_set *avp )
+bu_avs_free( struct bu_attribute_value_set *avsp )
 {
 	struct bu_attribute_value_pair *app;
 
-	BU_CK_AVS(avp);
+	BU_CK_AVS(avsp);
 
-	for( BU_AVS_FOR(app, avp) )  {
-		if( AVS_IS_FREEABLE( avp, app->name ) )
+	for( BU_AVS_FOR(app, avsp) )  {
+		if( AVS_IS_FREEABLE( avsp, app->name ) )
 			bu_free( (genptr_t)app->name, "app->name" );
 		app->name = NULL;	/* sanity */
-		if( AVS_IS_FREEABLE( avp, app->value ) )
+		if( AVS_IS_FREEABLE( avsp, app->value ) )
 			bu_free( (genptr_t)app->value, "app->value" );
 		app->value = NULL;	/* sanity */
 	}
-	bu_free( (genptr_t)avp->avp, "bu_avs_free avp->avp" );
+	bu_free( (genptr_t)avsp->avp, "bu_avs_free avsp->avp" );
 }
 
 
@@ -239,17 +239,17 @@ bu_avs_free( struct bu_attribute_value_set *avp )
  *			B U _ A V S _ P R I N T
  */
 void
-bu_avs_print( const struct bu_attribute_value_set *avp, const char *title )
+bu_avs_print( const struct bu_attribute_value_set *avsp, const char *title )
 {
 	struct bu_attribute_value_pair	*avpp;
 	int i;
 
-	BU_CK_AVS(avp);
+	BU_CK_AVS(avsp);
 
 	bu_log("bu_avs_print: %s\n", title);
 
-	avpp = avp->avp;
-	for( i = 0; i < avp->count; i++, avpp++ )  {
+	avpp = avsp->avp;
+	for( i = 0; i < avsp->count; i++, avpp++ )  {
 		bu_log(" %s = %s\n", avpp->name, avpp->value );
 	}
 }
