@@ -52,6 +52,7 @@ vect_t		dx_model;		/* view delta-X as model-space vect */
 vect_t		dy_model;		/* view delta-Y as model-space vect */
 fastf_t		cell_width;		/* model space grid cell width */
 fastf_t		cell_height;		/* model space grid cell height */
+int		cell_newsize=0;		/* new grid cell size */
 point_t		eye_model;		/* model-space location of eye */
 fastf_t         eye_backoff = 1.414;	/* dist from eye to center */
 int		width;			/* # of pixels in X */
@@ -196,9 +197,11 @@ register char **argv;
 			break;
 		case 'g':
 			cell_width = atof( optarg );
+			cell_newsize = 1;
 			break;
 		case 'G':
 			cell_height = atof( optarg );
+			cell_newsize = 1;
 			break;
 
 		case 'a':
