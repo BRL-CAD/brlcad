@@ -178,22 +178,6 @@ union record *recordp;
 	}
 	(void)memcpy( (char *)sp->s_vlist, (char *)veclist, count );
 
-	/* Cvt to displaylist, determine displaylist memory requirement. */
-	if( (sp->s_bytes = dmp->dmr_cvtvecs( sp )) > 0 )  {
-
-		/* Allocate displaylist storage for object */
-		sp->s_addr = memalloc( &(dmp->dmr_map), sp->s_bytes );
-		if( sp->s_addr == 0 )  {
-			no_memory = 1;
-			(void)printf("draw: out of Displaylist\n");
-			return(-1);		/* ERROR */
-		}
-		sp->s_bytes = dmp->dmr_load( sp->s_addr, sp->s_bytes );
-	} else {
-		sp->s_addr = 0;
-		sp->s_bytes = 0;
-	}
-
 	/* set solid/dashed line flag */
 	if( sp != illump )  {
 		sp->s_iflag = DOWN;
@@ -217,6 +201,22 @@ union record *recordp;
 	} else {
 		/* replacing illuminated solid -- struct already linked in */
 		sp->s_iflag = UP;
+	}
+
+	/* Cvt to displaylist, determine displaylist memory requirement. */
+	if( (sp->s_bytes = dmp->dmr_cvtvecs( sp )) > 0 )  {
+
+		/* Allocate displaylist storage for object */
+		sp->s_addr = memalloc( &(dmp->dmr_map), sp->s_bytes );
+		if( sp->s_addr == 0 )  {
+			no_memory = 1;
+			(void)printf("draw: out of Displaylist\n");
+			return(-1);		/* ERROR */
+		}
+		sp->s_bytes = dmp->dmr_load( sp->s_addr, sp->s_bytes );
+	} else {
+		sp->s_addr = 0;
+		sp->s_bytes = 0;
 	}
 
 	/* Compute maximum */
