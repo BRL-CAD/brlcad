@@ -80,47 +80,44 @@ static Cursor	cursor =  {
  */
 static int	sgi_nwindows = 0;
 
-extern int	fb_sim_readrect();
-
 /* Internal routines */
 _LOCAL_ void	sgi_cminit();
 
 /* Exported routines */
-_LOCAL_ int	sgi_dopen(),
-		sgi_dclose(),
-		sgi_dclear(),
-		sgi_bread(),
-		sgi_bwrite(),
-		sgi_cmread(),
-		sgi_cmwrite(),
-		sgi_viewport_set(),
-		sgi_window_set(),
-		sgi_zoom_set(),
-		sgi_curs_set(),
-		sgi_cmemory_addr(),
+_LOCAL_ int	sgi_open(),
+		sgi_close(),
+		sgi_clear(),
+		sgi_read(),
+		sgi_write(),
+		sgi_rmap(),
+		sgi_wmap(),
+		sgi_view(),
+		sgi_getview(),
+		sgi_setcursor(),
+		sgi_cursor(),
 		sgi_writerect(),
+		sgi_poll(),
 		sgi_free(),
 		sgi_help();
 
 /* This is the ONLY thing that we "export" */
 FBIO sgi_interface =
 		{
-		sgi_dopen,
-		sgi_dclose,
-		fb_null,		/* reset? */
-		sgi_dclear,
-		sgi_bread,
-		sgi_bwrite,
-		sgi_cmread,
-		sgi_cmwrite,
-		sgi_viewport_set,
-		sgi_window_set,
-		sgi_zoom_set,
-		sgi_curs_set,
-		sgi_cmemory_addr,
-		fb_null,		/* cscreen_addr */
+		sgi_open,
+		sgi_close,
+		sgi_clear,
+		sgi_read,
+		sgi_write,
+		sgi_rmap,
+		sgi_wmap,
+		sgi_view,
+		sgi_getview,
+		sgi_setcursor,
+		sgi_cursor,
+		fb_sim_getcursor,
 		fb_sim_readrect,
 		sgi_writerect,
+		sgi_poll,		/* handle events */
 		fb_null,		/* flush */
 		sgi_free,		/* free*/
 		sgi_help,
@@ -130,7 +127,11 @@ FBIO sgi_interface =
 		"/dev/sgi",
 		512,			/* current/default width  */
 		512,			/* current/default height */
+		-1,			/* select fd */
 		-1,			/* file descriptor */
+		1, 1,			/* zoom */
+		256, 256,		/* window */
+		0, 0, 0,		/* cursor */
 		PIXEL_NULL,		/* page_base */
 		PIXEL_NULL,		/* page_curp */
 		PIXEL_NULL,		/* page_endp */
@@ -174,10 +175,6 @@ struct sgi_pixel {
  */
 struct sgiinfo {
 	short	mi_curs_on;
-	short	mi_xzoom;
-	short	mi_yzoom;
-	short	mi_xcenter;
-	short	mi_ycenter;
 	int	mi_rgb_ct;
 	short	mi_cmap_flag;
 	int	mi_shmid;
@@ -511,8 +508,8 @@ int		npix;
 		} else {
 			sw_zoom = 0;
 		}
-		if( SGI(ifp)->mi_xcenter != ifp->if_width/2 ||
-		    SGI(ifp)->mi_ycenter != ifp->if_height/2 )  {
+		if( ifp->if_xcenter != ifp->if_width/2 ||
+		    ifp->if_ycenter != ifp->if_height/2 )  {
 		    	sw_zoom = 1;
 		}
 		sgi_clipper( ifp, &clip );
@@ -678,7 +675,7 @@ int		npix;
 		 *  Memory addresses increment by 1.
 		 *  Screen addresses increment by mi_?zoom.
 		 */
-		yscr = SGI(ifp)->mi_yoff + clip.yscroff + y * SGI(ifp)->mi_yzoom;
+		yscr = SGI(ifp)->mi_yoff + clip.yscroff + y * ifp->if_yzoom;
 		xscrmin = SGI(ifp)->mi_xoff+clip.xscroff;
 		xscrmax = SGI(ifp)->mi_xoff+ifp->if_width-1-clip.xscrpad;
 		for( n=nlines; n>0; n--, y++ )  {
@@ -693,13 +690,13 @@ int		npix;
 				sizeof(struct sgi_pixel)];
 			op = SGI(ifp)->mi_scanline;
 			for( x=clip.xmin; x<=clip.xmax; x++ )  {
-				for( rep=0; rep<SGI(ifp)->mi_xzoom; rep++ )  {
+				for( rep=0; rep<ifp->if_xzoom; rep++ )  {
 					*op++ = *sgip;	/* struct copy */
 				}
 				sgip++;
 				}
 			if( sw_cmap )  {
-				x=(clip.xmax-clip.xmin)*SGI(ifp)->mi_xzoom;
+				x=(clip.xmax-clip.xmin)*ifp->if_xzoom;
 				op = SGI(ifp)->mi_scanline;
 				for( ; x>=0; x-- )  {
 					op[x].red   = CMR(ifp)[op[x].red];
@@ -710,7 +707,7 @@ int		npix;
 			/* X direction replication is handled above,
 			 * Y direction replication is done by this loop.
 			 */
-			for( rep=0; rep<SGI(ifp)->mi_yzoom; rep++ )  {
+			for( rep=0; rep<ifp->if_yzoom; rep++ )  {
 				if( SGI(ifp)->mi_is_gt )
 					lrectwrite(
 						xscrmin, yscr,
@@ -747,10 +744,10 @@ static int sigkid()
 /************************************************************************/
 
 /*
- *			S G I _ D O P E N
+ *			S G I _ O P E N
  */
 _LOCAL_ int
-sgi_dopen( ifp, file, width, height )
+sgi_open( ifp, file, width, height )
 FBIO	*ifp;
 char	*file;
 int	width, height;
@@ -855,7 +852,7 @@ int	width, height;
 	 *  addressed by SGI(ifp)->mi_xxx
 	 */
 	if( (SGIL(ifp) = (char *)calloc( 1, sizeof(struct sgiinfo) )) == NULL )  {
-		fb_log("sgi_dopen:  sgiinfo malloc failed\n");
+		fb_log("sgi_open:  sgiinfo malloc failed\n");
 		return(-1);
 	}
 	SGI(ifp)->mi_shmid = -1;	/* indicate no shared memory */
@@ -893,7 +890,7 @@ int	width, height;
 
 			exit(0);
 		} else if( f < 0 )  {
-			fb_log("sgi_dopen:  linger-mode fork failure\n");
+			fb_log("sgi_open:  linger-mode fork failure\n");
 			return(-1);
 		}
 		/* Child Process falls through */
@@ -1088,10 +1085,10 @@ int	width, height;
 	 *  after a reboot).
 	 */
 	ifp->if_zoomflag = 0;
-	SGI(ifp)->mi_xzoom = 1;	/* for zoom fakeout */
-	SGI(ifp)->mi_yzoom = 1;	/* for zoom fakeout */
-	SGI(ifp)->mi_xcenter = width/2;
-	SGI(ifp)->mi_ycenter = height/2;
+	ifp->if_xzoom = 1;	/* for zoom fakeout */
+	ifp->if_yzoom = 1;	/* for zoom fakeout */
+	ifp->if_xcenter = width/2;
+	ifp->if_ycenter = height/2;
 	SGI(ifp)->mi_xoff = 0;
 	SGI(ifp)->mi_yoff = 0;
 	SGI(ifp)->mi_pid = getpid();
@@ -1156,6 +1153,11 @@ int	width, height;
 		gt_zbuf_to_screen( ifp, -1 );
 	}
 
+	/* Make the file descriptor available for selecting on */
+	ifp->if_selfd = qgetfd();
+	if( ifp->if_selfd < 0 )
+		ifp->if_selfd = -1;	/* in case of errors */
+
 	return	0;
 }
 
@@ -1212,7 +1214,7 @@ FBIO	*ifp;
 		if( SGI(ifp)->mi_shmid != -1 ) {
 			/* detach from shared memory */
 			if( shmdt( ifp->if_mem ) == -1 ) {
-				fb_log("sgi_dclose shmdt failed, errno=%d\n", errno);
+				fb_log("sgi_close shmdt failed, errno=%d\n", errno);
 				return -1;
 			}
 		} else {
@@ -1226,6 +1228,19 @@ FBIO	*ifp;
 
 	sgi_nwindows--;
 	return(0);
+}
+
+/*
+ *			S G I _ P O L L
+ *
+ *  Handle input events.
+ */
+_LOCAL_ int
+sgi_poll( ifp )
+FBIO	*ifp;
+{
+	while( qtest() )
+		sgi_inqueue(ifp);
 }
 
 /*
@@ -1250,11 +1265,11 @@ FBIO	*ifp;
 }
 
 /*
- *			S G I _ D C L O S E
+ *			S G I _ C L O S E
  *
  */
 _LOCAL_ int
-sgi_dclose( ifp )
+sgi_close( ifp )
 FBIO	*ifp;
 {
 	int menu, menuval, val, dev, f;
@@ -1337,7 +1352,7 @@ FBIO	*ifp;
 
 		case QREADERROR:
 			/* These are fatal errors, bail out */
-			if( fp ) fprintf(fp,"libfb/sgi_dclose: qreaderror, aborting\n");
+			if( fp ) fprintf(fp,"libfb/sgi_close: qreaderror, aborting\n");
 			goto out;
 
 		default:
@@ -1348,7 +1363,7 @@ FBIO	*ifp;
 			 *  unexpected things.  But, lots show up.
 			 *  At least this gives visibility.
 			 */
-			if( fp ) fprintf(fp,"libfb/sgi_dclose: qread %d, val %d\r\n", dev, val );
+			if( fp ) fprintf(fp,"libfb/sgi_close: qread %d, val %d\r\n", dev, val );
 			break;
 		}
 	}
@@ -1359,10 +1374,10 @@ out:
 }
 
 /*
- *			S G I _ D C L E A R
+ *			S G I _ C L E A R
  */
 _LOCAL_ int
-sgi_dclear( ifp, pp )
+sgi_clear( ifp, pp )
 FBIO	*ifp;
 register RGBpixel	*pp;
 {
@@ -1411,28 +1426,43 @@ register RGBpixel	*pp;
 }
 
 /*
- *			S G I _ W I N D O W _ S E T
+ *			S G I _ V I E W
  */
 _LOCAL_ int
-sgi_window_set( ifp, x, y )
+sgi_view( ifp, xcenter, ycenter, xzoom, yzoom )
 FBIO	*ifp;
-int	x, y;
+int	xcenter, ycenter;
+int	xzoom, yzoom;
 {
 
-	if(sgi_mpfail(ifp, "window_set", y)) return(-1);
+	if(sgi_mpfail(ifp, "view", ycenter)) return(-1);
 	winset(ifp->if_fd);
 
 	if( qtest() )
 		sgi_inqueue(ifp);
 
-	if( SGI(ifp)->mi_xcenter == x && SGI(ifp)->mi_ycenter == y )
+	if( xzoom < 1 ) xzoom = 1;
+	if( yzoom < 1 ) yzoom = 1;
+	if( ifp->if_xcenter == xcenter && ifp->if_ycenter == ycenter
+	  && ifp->if_xzoom == xzoom && ifp->if_yzoom == yzoom )
 		return(0);
-	if( x < 0 || x >= ifp->if_width )
+
+	if( xcenter < 0 || xcenter >= ifp->if_width )
 		return(-1);
-	if( y < 0 || y >= ifp->if_height )
+	if( ycenter < 0 || ycenter >= ifp->if_height )
 		return(-1);
-	SGI(ifp)->mi_xcenter = x;
-	SGI(ifp)->mi_ycenter = y;
+	if( xzoom >= ifp->if_width || yzoom >= ifp->if_height )
+		return(-1);
+
+	ifp->if_xcenter = xcenter;
+	ifp->if_ycenter = ycenter;
+	ifp->if_xzoom = xzoom;
+	ifp->if_yzoom = yzoom;
+
+	if( ifp->if_xzoom > 1 || ifp->if_yzoom > 1 )
+		ifp->if_zoomflag = 1;
+	else	ifp->if_zoomflag = 0;
+
 	if( SGI(ifp)->mi_is_gt )  {
 		/* Transmitting the Zbuffer is all that is needed */
 		gt_zbuf_to_screen( ifp, -1 );
@@ -1443,51 +1473,37 @@ int	x, y;
 }
 
 /*
- *			S G I _ Z O O M _ S E T
+ *			S G I _ G E T V I E W
  */
 _LOCAL_ int
-sgi_zoom_set( ifp, x, y )
+sgi_getview( ifp, xcenter, ycenter, xzoom, yzoom )
 FBIO	*ifp;
-int	x, y;
+int	*xcenter, *ycenter;
+int	*xzoom, *yzoom;
 {
 
-	if(sgi_mpfail(ifp, "zoom_set", y)) return(-1);
+	if(sgi_mpfail(ifp, "getview", ycenter)) return(-1);
 	winset(ifp->if_fd);
 
 	if( qtest() )
 		sgi_inqueue(ifp);
 
-	if( x < 1 ) x = 1;
-	if( y < 1 ) y = 1;
-	if( SGI(ifp)->mi_xzoom == x && SGI(ifp)->mi_yzoom == y )
-		return(0);
-	if( x >= ifp->if_width || y >= ifp->if_height )
-		return(-1);
+	*xcenter = ifp->if_xcenter;
+	*ycenter = ifp->if_ycenter;
+	*xzoom = ifp->if_yzoom;
+	*yzoom = ifp->if_yzoom;
 
-	SGI(ifp)->mi_xzoom = x;
-	SGI(ifp)->mi_yzoom = y;
-
-	if( SGI(ifp)->mi_xzoom > 1 || SGI(ifp)->mi_yzoom > 1 )
-		ifp->if_zoomflag = 1;
-	else	ifp->if_zoomflag = 0;
-
-	if( SGI(ifp)->mi_is_gt ) {
-		/* Transmitting the Zbuffer is all that is needed */
-		gt_zbuf_to_screen( ifp, -1 );
-	} else {
-		sgi_xmit_scanlines( ifp, 0, ifp->if_height, 0, ifp->if_width );
-	}
 	return(0);
 }
 
 /*
- *			S G I _ B R E A D
+ *			S G I _ R E A D
  *
  *  Makes no reference to the graphics library at all.
  *  Data is copied from the memory segment.
  */
 _LOCAL_ int
-sgi_bread( ifp, x, y, pixelp, count )
+sgi_read( ifp, x, y, pixelp, count )
 FBIO	*ifp;
 int	x, y;
 RGBpixel	*pixelp;
@@ -1541,14 +1557,14 @@ int	count;
 }
 
 /*
- *			S G I _ B W R I T E
+ *			S G I _ W R I T E
  *
  *  The task of this routine is to reformat the pixels into
  *  SGI internal form, and then arrange to have them sent to
  *  the screen separately.
  */
 _LOCAL_ int
-sgi_bwrite( ifp, xstart, ystart, pixelp, count )
+sgi_write( ifp, xstart, ystart, pixelp, count )
 register FBIO	*ifp;
 int		xstart;
 int		ystart;
@@ -1637,7 +1653,7 @@ int		count;
 	 * Handle events after updating the memory, and
 	 * before updating the screen
 	 */
-	if(sgi_mpfail(ifp, "bwrite", y)) return(-1);
+	if(sgi_mpfail(ifp, "write", y)) return(-1);
 	winset(ifp->if_fd);
 
 	if( qtest() )
@@ -1724,23 +1740,12 @@ RGBpixel	*pp;
 }
 
 /*
- *			S G I _ V I E W P O R T _ S E T
- */
-_LOCAL_ int
-sgi_viewport_set( ifp, left, top, right, bottom )
-FBIO	*ifp;
-int	left, top, right, bottom;
-{
-	return(0);
-}
-
-/*
- *			S G I _ C M R E A D
+ *			S G I _ R M A P
  *
  *  Make no access to the graphics system at all.
  */
 _LOCAL_ int
-sgi_cmread( ifp, cmp )
+sgi_rmap( ifp, cmp )
 register FBIO	*ifp;
 register ColorMap	*cmp;
 {
@@ -1793,17 +1798,17 @@ register FBIO	*ifp;
 }
 
 /*
- *			 S G I _ C M W R I T E
+ *			 S G I _ W M A P
  */
 _LOCAL_ int
-sgi_cmwrite( ifp, cmp )
+sgi_wmap( ifp, cmp )
 register FBIO	*ifp;
 register ColorMap	*cmp;
 {
 	register int	i;
 	int		prev;	/* !0 = previous cmap was non-linear */
 
-	if(sgi_mpfail(ifp, "cmwrite", 0)) return(-1);
+	if(sgi_mpfail(ifp, "wmap", 0)) return(-1);
 	winset(ifp->if_fd);
 
 	if( qtest() )
@@ -1836,10 +1841,10 @@ register ColorMap	*cmp;
 }
 
 /*
- *			S G I _ C U R S _ S E T
+ *			S G I _ S E T C U R S O R
  */
 _LOCAL_ int
-sgi_curs_set( ifp, bits, xbits, ybits, xorig, yorig )
+sgi_setcursor( ifp, bits, xbits, ybits, xorig, yorig )
 FBIO	*ifp;
 unsigned char	*bits;
 int		xbits, ybits;
@@ -1849,7 +1854,7 @@ int		xorig, yorig;
 	register int	xbytes;
 	Cursor		newcursor;
 
-	if(sgi_mpfail(ifp, "curs_set", yorig)) return(-1);
+	if(sgi_mpfail(ifp, "setcursor", yorig)) return(-1);
 	winset(ifp->if_fd);
 
 	if( qtest() )
@@ -1878,10 +1883,10 @@ int		xorig, yorig;
 }
 
 /*
- *			S G I _ C M E M O R Y _ A D D R
+ *			S G I _ C U R S O R
  */
 _LOCAL_ int
-sgi_cmemory_addr( ifp, mode, x, y )
+sgi_cursor( ifp, mode, x, y )
 FBIO	*ifp;
 int	mode;
 int	x, y;
@@ -1891,11 +1896,13 @@ int	x, y;
 	short	xwidth;
 	long left, bottom, x_size, y_size;
 
-	if(sgi_mpfail(ifp, "cmemory_addr", y)) return(-1);
+	if(sgi_mpfail(ifp, "cursor", y)) return(-1);
 	winset(ifp->if_fd);
 
 	if( qtest() )
 		sgi_inqueue(ifp);
+
+	fb_sim_cursor(ifp, mode, x, y);
 
 	SGI(ifp)->mi_curs_on = mode;
 	if( ! mode )  {
@@ -1903,15 +1910,15 @@ int	x, y;
 		cursoff();
 		return	0;
 	}
-	xwidth = ifp->if_width/SGI(ifp)->mi_xzoom;
+	xwidth = ifp->if_width/ifp->if_xzoom;
 	i = xwidth/2;
-	xmin = SGI(ifp)->mi_xcenter - i;
-	i = (ifp->if_height/2)/SGI(ifp)->mi_yzoom;
-	ymin = SGI(ifp)->mi_ycenter - i;
+	xmin = ifp->if_xcenter - i;
+	i = (ifp->if_height/2)/ifp->if_yzoom;
+	ymin = ifp->if_ycenter - i;
 	x -= xmin;
 	y -= ymin;
-	x *= SGI(ifp)->mi_xzoom;
-	y *= SGI(ifp)->mi_yzoom;
+	x *= ifp->if_xzoom;
+	y *= ifp->if_yzoom;
 	setcursor( 1, 1, 0 );			/* our cursor */
 	curson();
 	getsize(&x_size, &y_size);
@@ -2044,12 +2051,12 @@ int		one_y;
 		if( one_y < clip.ymin || one_y > clip.ymax )
 			return;
 		/* This scanline is in bounds */
-		clip.yscroff += (one_y - clip.ymin) * SGI(ifp)->mi_yzoom;
+		clip.yscroff += (one_y - clip.ymin) * ifp->if_yzoom;
 		clip.ymin = clip.ymax = one_y;
 	}
 
 	/* rectzoom only works on GT and PI machines */
-	rectzoom( (double) SGI(ifp)->mi_xzoom, (double) SGI(ifp)->mi_yzoom);
+	rectzoom( (double) ifp->if_xzoom, (double) ifp->if_yzoom);
 
 	if( SGI(ifp)->mi_doublebuffer )  {
 		/*
@@ -2096,30 +2103,30 @@ register struct sgi_clip	*clp;
 	clp->xscroff = clp->yscroff = 0;
 	clp->xscrpad = clp->yscrpad = 0;
 
-	i = (ifp->if_width/2)/SGI(ifp)->mi_xzoom;
-	clp->xmin = SGI(ifp)->mi_xcenter - i;
-	clp->xmax = SGI(ifp)->mi_xcenter + i - 1;
+	i = (ifp->if_width/2)/ifp->if_xzoom;
+	clp->xmin = ifp->if_xcenter - i;
+	clp->xmax = ifp->if_xcenter + i - 1;
 
-	i = (ifp->if_height/2)/SGI(ifp)->mi_yzoom;
-	clp->ymin = SGI(ifp)->mi_ycenter - i;
-	clp->ymax = SGI(ifp)->mi_ycenter + i - 1;
+	i = (ifp->if_height/2)/ifp->if_yzoom;
+	clp->ymin = ifp->if_ycenter - i;
+	clp->ymax = ifp->if_ycenter + i - 1;
 
 	if( clp->xmin < 0 )  {
-		clp->xscroff = -(clp->xmin * SGI(ifp)->mi_xzoom);
+		clp->xscroff = -(clp->xmin * ifp->if_xzoom);
 		clp->xmin = 0;
 	}
 	if( clp->ymin < 0 )  {
-		clp->yscroff = -(clp->ymin * SGI(ifp)->mi_yzoom);
+		clp->yscroff = -(clp->ymin * ifp->if_yzoom);
 		clp->ymin = 0;
 	}
 
 	if( clp->xmax > ifp->if_width-1 )  {
-		clp->xscrpad = (clp->xmax - (ifp->if_width-1)) * SGI(ifp)->mi_xzoom;
+		clp->xscrpad = (clp->xmax - (ifp->if_width-1)) * ifp->if_xzoom;
 		clp->xmax = ifp->if_width-1;
 	}
 
 	if( clp->ymax > ifp->if_height-1 )  {
-		clp->yscrpad = (clp->ymax - (ifp->if_height-1)) * SGI(ifp)->mi_yzoom;
+		clp->yscrpad = (clp->ymax - (ifp->if_height-1)) * ifp->if_yzoom;
 		clp->ymax = ifp->if_height-1;
 	}
 }
