@@ -1,5 +1,6 @@
 #include <unistd.h>
 #include <stdio.h>
+#include <math.h>
 #include "prodevelop.h"
 #include "pro_hardware.h"
 #include "pro_wchar_t.h"
@@ -16,7 +17,9 @@ extern char *tempnam();
 
 extern int errno;
 
-static int quality;
+static double quality;
+static double qual[2];
+static double obj_size;
 static int curr_win_id;
 static int win_id;
 
@@ -29,7 +32,23 @@ static	wchar_t		  msgfil[PRODEV_NAME_SIZE];
 #define	MAX_LINE_LEN	512
 #define DEFAULT_QUALITY 3
 
+#define	X	0
+#define	Y	1
+#define	Z	2
+
 #define	V3ARGS(x)	(x)[0], (x)[1], (x)[2]
+
+#define VSUB2(a,b,c)	{ \
+			(a)[X] = (b)[X] - (c)[X];\
+			(a)[Y] = (b)[Y] - (c)[Y];\
+			(a)[Z] = (b)[Z] - (c)[Z]; }
+
+/* Return scalar magnitude squared of vector at `a' */
+#define MAGSQ(a)	( (a)[X]*(a)[X] + (a)[Y]*(a)[Y] + (a)[Z]*(a)[Z] )
+#define MAG2SQ(a)	( (a)[X]*(a)[X] + (a)[Y]*(a)[Y] )
+
+/* Return scalar magnitude of vector at `a' */
+#define MAGNITUDE(a)	sqrt( MAGSQ( a ) )
 
 struct object_list
 {
@@ -138,7 +157,7 @@ char *name;
 		win_id = pro_open_object_window( obj_info.name , obj_info.type , attrib );
 	pro_set_current_window( win_id );
 	progr_display_object( tmp_obj );
-	if( !pro_export_file_from_pro( wtmp_file_name , tmp_obj , PRO_RENDER_FILE , NULL , &quality , NULL , NULL ) )
+	if( !pro_export_file_from_pro( wtmp_file_name , tmp_obj , PRO_RENDER_FILE , NULL , NULL , qual , NULL ) )
 	{
 		fprintf( stderr , "Failed to export part (%s) to file (%s)\n" , name , tmp_file_name );
 		promsg_print( MSGFIL , "USER_EXPORT_FAILED" , tmp_file_name , name );
@@ -441,13 +460,12 @@ proe_brl()
 	Pro_object_info obj_info;
 	char output_file[PRODEV_NAME_SIZE+4];
 	wchar_t buff[256];
-	int range[2];
 	int unit_subtype;
 	wchar_t unit_name[PRODEV_NAME_SIZE];
 	double conv_factor;
-
-	range[0] = 1;
-	range[1] = 10;
+	double envelope[2][3];
+	double obj_diag[3];
+	double tmp;
 
 	win_id = (-1);
 
@@ -481,6 +499,12 @@ proe_brl()
 	else
 		conv_factor *= 25.4;
 
+	if( !prodb_get_envelope( obj, envelope ) )
+	{
+		fprintf( stderr, "Cannot get object envelope\n");
+		return( 1 );
+	}
+
 	pro_wstr_to_str( output_file , obj_info.name );
 	strcat( output_file , ".brl" );
 	promsg_print( MSGFIL , "USER_GET_OUTPUT_FILE_NAME" , output_file );
@@ -489,10 +513,20 @@ proe_brl()
 		pro_wstr_to_str( output_file , buff );
 
 	quality = DEFAULT_QUALITY;
-	promsg_print( MSGFIL , "USER_GET_QUALITY" , &quality );
+	VSUB2( obj_diag, envelope[0], envelope[1] );
+	obj_size = MAGNITUDE( obj_diag );
+	qual[0] = obj_size/(100.0 * quality );
+	qual[1] = 0.0;
 
-	if( promsg_getint( &quality , range ) )
-		quality = DEFAULT_QUALITY;
+	promsg_print( MSGFIL , "USER_GET_CHORD_HEIGHT" , &qual[0]);
+
+	if( !promsg_getdouble( &tmp , NULL ) )
+		qual[0] = tmp;
+
+	promsg_print( MSGFIL, "USER_GET_ANGLE_CONTROL", &qual[1] );
+
+	if( !promsg_getdouble( &tmp , NULL ) )
+		qual[1] = tmp;
 
 	if( (fd_out = fopen( output_file , "w" )) == NULL )
 	{
