@@ -28,14 +28,16 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #define NONAME	"NoNaMe"		/* For null string names */
 
-extern void	idendump(), polyhead(), polydata();
-extern void	soldump(), combdump(), membdump(), arsadump(), arsbdump();
 extern void	exit();
 extern int	close(), creat(), open(), read(), write();
 extern int	printf(), fprintf();
 extern long	lseek();
 
-static union record	record;		/* GED database record */
+void	idendump(), polyhead(), polydata();
+void	soldump(), combdump(), membdump(), arsadump(), arsbdump();
+void	materdump();
+
+union record	record;		/* GED database record */
 int	count;				/* Number of records */
 
 main()
@@ -67,6 +69,9 @@ main()
 		}
 		else if( record.u_id == ID_IDENT )  {
 			(void)idendump();
+		}
+		else if( record.u_id == ID_MATERIAL )  {
+			materdump();
 		}
 		else  {
 			(void)fprintf(stderr,"VG2ASC: bad record type\n");
@@ -224,4 +229,17 @@ arsbdump()	/* Print out ARS B record information */
 		(void)printf("%.9e ", record.b.b_values[i] );
 	}
 	(void)printf("\n");			/* Terminate w/ a newline */
+}
+
+void
+materdump()
+{
+	(void)printf( "%c %d %d %d %d %d %d %s\n",
+		record.md.md_id,
+		record.md.md_flags,
+		record.md.md_low,
+		record.md.md_hi,
+		record.md.md_r,
+		record.md.md_g,
+		record.md.md_b );
 }

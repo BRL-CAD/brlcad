@@ -6,7 +6,7 @@
  *
  *  Usage:  asc2g < file.asc > file.g
  *  
- *  Author -
+ *  Authors -
  *  	Charles M Kennedy
  *  	Michael J Muuss
  *  
@@ -28,13 +28,15 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #define NONAME "NoNaMe"			/* For null string names */
 
-extern void	identbld(), polyhbld(), polydbld();
-extern void	solbld(), combbld(), membbld(), arsabld(), arsbbld();
 extern void	exit();
 extern int	close(), creat(), open(), read(), write();
 extern int	printf(), fprintf(), sscanf();		/* bzero()? */
 extern long	lseek();
 extern char	*strcpy();
+
+void	identbld(), polyhbld(), polydbld();
+void	solbld(), combbld(), membbld(), arsabld(), arsbbld();
+void	materbld();
 
 static union record	record;		/* GED database record */
 int	count;				/* Number of records */
@@ -101,6 +103,10 @@ main()
 			/* Build the record */
 			identbld();
 			/* Write out the record */
+			(void)write( 1, (char *)&record, sizeof record );
+		}
+		else if( buf[0] == ID_MATERIAL )  {
+			materbld();
 			(void)write( 1, (char *)&record, sizeof record );
 		}
 		else  {
@@ -357,4 +363,22 @@ polydbld()	/* Build Polydata record */
 		&record.q.q_norms[4][2]
 	);
 	record.q.q_count = (char)temp1;
+}
+
+void
+materbld()
+{
+	int flags, low, hi, r, g, b;
+
+	(void)sscanf( buf, "%c %d %d %d %d %d %d %s",
+		&record.md.md_id,
+		&flags, &low, &hi,
+		&r, &g, &b,
+		record.md.md_material );
+	record.md.md_flags = flags;
+	record.md.md_low = low;
+	record.md.md_hi = hi;
+	record.md.md_r = r;
+	record.md.md_g = g;
+	record.md.md_b = b;
 }
