@@ -123,21 +123,6 @@ RT_EXTERN(void			nmg_isect_vert2p_face2p, (struct nmg_inter_struct *is,
 
 static struct nmg_inter_struct	*nmg_hack_last_is;	/* see nmg_isect2d_final_cleanup() */
 
-/* XXX move to libplot3/plot3.c */
-void
-pdv_3ray( fp, pt, dir, t )
-FILE		*fp;
-CONST point_t	pt;
-CONST vect_t	dir;
-double		t;
-{
-	point_t	tip;
-
-	VJOIN1( tip, pt, t, dir );
-	pdv_3move( fp, pt );
-	pdv_3cont( fp, tip );
-}
-
 struct vertexuse *
 nmg_make_dualvu( v, fu, tol )
 struct vertex *v;
