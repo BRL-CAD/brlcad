@@ -1949,12 +1949,29 @@ char *buf;
 	fr->fr_cpu += info.li_cpusec;
 	sp->sr_l_percent = info.li_percent;
 	if( sp->sr_l_elapsed > MIN_ELAPSED_TIME )  {
+		double	blend1;	/* fraction of historical value to use */
+		double	blend2;	/* fraction of new value to use */
+
+		if( sp->sr_l_elapsed > ASSIGNMENT_TIME )  {
+			/*
+			 *  Took longer than expected, put more weight on
+			 *  this sample, and less on the historical values.
+			 */
+			blend1 = 0.5;
+		} else {
+			/*
+			 *  Took less time than expected, don't get excited.
+			 *  Place more emphasis on historical values.
+			 */
+			blend1 = 0.8;
+		}
+		blend2 = 1 - blend1;
+
 		sp->sr_l_el_rate = npix / sp->sr_l_elapsed;
-#define BLEND	0.8
-		sp->sr_w_elapsed = BLEND * sp->sr_w_elapsed +
-			(1.0-BLEND) * sp->sr_l_el_rate;
-		sp->sr_w_rays = BLEND * sp->sr_w_rays +
-			(1.0-BLEND) * (info.li_nrays/sp->sr_l_elapsed);
+		sp->sr_w_elapsed = blend1 * sp->sr_w_elapsed +
+				blend2 * sp->sr_l_el_rate;
+		sp->sr_w_rays = blend1 * sp->sr_w_rays +
+				blend2 * (info.li_nrays/sp->sr_l_elapsed);
 		sp->sr_l_cpu = info.li_cpusec;
 		sp->sr_s_cpu += info.li_cpusec;
 		sp->sr_s_elapsed += sp->sr_l_el_rate;
