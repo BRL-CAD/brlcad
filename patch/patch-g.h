@@ -59,7 +59,7 @@ fastf_t		first[5][3];
 fastf_t		normal[5][3];
 point_t		ce[4];
 point_t		centroid,Centroid;	/* object, description centroids */
-char		rgb[3];
+unsigned char	rgb[3];
 int debug = 0;
 float mmtin = 25.4;
 fastf_t third = 0.333333333;
