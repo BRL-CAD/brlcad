@@ -257,7 +257,7 @@ CONST struct rt_tol	*tol;
 	/* Write sA and sB into separate files, if wanted? */
 
 	/* Move everything left in sB into sA.  sB is killed. */
-	nmg_js( sA, sB );
+	nmg_js( sA, sB, tol );
 
 	/* Plot the result */
 	if (rt_g.NMG_debug & DEBUG_BOOLEVAL && rt_g.NMG_debug & DEBUG_PLOTEM) {
