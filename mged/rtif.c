@@ -697,7 +697,7 @@ work:
 	    	case -1:
 	    		/* First step:  put eye in center */
 		       	Viewscale = scale;
-		       	mat_copy( Viewrot, rot );
+		       	bn_mat_copy( Viewrot, rot );
 			MAT_DELTAS( toViewcenter,
 				-eye_model[X],
 				-eye_model[Y],
@@ -714,7 +714,7 @@ work:
 	    		break;
 	    	case 0:
 		       	Viewscale = scale;
-			mat_idn(Viewrot);	/* top view */
+			bn_mat_idn(Viewrot);	/* top view */
 			MAT_DELTAS( toViewcenter,
 				-eye_model[X],
 				-eye_model[Y],
@@ -895,7 +895,7 @@ static int	rtif_currentframe;
  *  Called on SIGINT from within preview.
  *  Close things down and abort.
  *
- *  WARNING:  If the ^C happened when bu_free() had already done a RES_ACQUIRE,
+ *  WARNING:  If the ^C happened when bu_free() had already done a bu_semaphore_acquire,
  *  then any further calls to bu_free() will hang.
  *  It isn't clear how to handle this.
  */
@@ -1001,7 +1001,7 @@ char	**argv;
 	 *  Initialize the view to the current one in MGED
 	 *  in case a view specification is never given.
 	 */
-	mat_copy(rtif_viewrot, Viewrot);
+	bn_mat_copy(rtif_viewrot, Viewrot);
 	VSET(temp, 0, 0, 1);
 	MAT4X3PNT(rtif_eye_model, view2model, temp);
 
@@ -1254,10 +1254,10 @@ char	**argv;
 	  vect_t neg_Z_axis;
 
 	  VSET(neg_Z_axis, 0.0, 0.0, -1.0);
-	  mat_fromto( rtif_viewrot, dir, neg_Z_axis);
+	  bn_mat_fromto( rtif_viewrot, dir, neg_Z_axis);
 	}
 #else
-	mat_lookat( rtif_viewrot, dir, yflip );
+	bn_mat_lookat( rtif_viewrot, dir, yflip );
 #endif
 
 	/*  Final processing is deferred until cm_end(), but eye_pt
@@ -1319,7 +1319,7 @@ int	argc;
 	}
 	
 	/* First step:  put eye at view center (view 0,0,0) */
-       	mat_copy( Viewrot, rtif_viewrot );
+       	bn_mat_copy( Viewrot, rtif_viewrot );
 	MAT_DELTAS( toViewcenter,
 		-rtif_eye_model[X],
 		-rtif_eye_model[Y],

@@ -31,6 +31,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
+#include "bn.h"
 #include "db.h"
 #include "nmg.h"
 #include "raytrace.h"
@@ -92,7 +93,7 @@ static int		mged_shade_per_vertex_normals=0;
 static struct model	*mged_nmg_model;
 struct rt_tess_tol	mged_ttol;	/* XXX needs to replace mged_abs_tol, et.al. */
 
-extern struct rt_tol		mged_tol;	/* from ged.c */
+extern struct bn_tol		mged_tol;	/* from ged.c */
 
 /*
  *		M G E D _ P L O T _ A N I M _ U P C A L L _ H A N D L E R
@@ -221,7 +222,7 @@ union tree		*curtree;
 HIDDEN union tree *mged_wireframe_leaf( tsp, pathp, ep, id )
 struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
-struct rt_external	*ep;
+struct bu_external	*ep;
 int			id;
 {
 	struct rt_db_internal	intern;
@@ -230,7 +231,7 @@ int			id;
 	struct bu_list	vhead;
 
 	RT_CK_TESS_TOL(tsp->ts_ttol);
-	RT_CK_TOL(tsp->ts_tol);
+	BN_CK_TOL(tsp->ts_tol);
 
 	BU_LIST_INIT( &vhead );
 
@@ -317,7 +318,7 @@ union tree		*curtree;
 	int			failed;
 
 	RT_CK_TESS_TOL(tsp->ts_ttol);
-	RT_CK_TOL(tsp->ts_tol);
+	BN_CK_TOL(tsp->ts_tol);
 	NMG_CK_MODEL(*tsp->ts_m);
 
 	BU_LIST_INIT( &vhead );
@@ -727,9 +728,9 @@ struct solid		*existing_sp;
 	/* Solid is successfully drawn */
 	if( !existing_sp )  {
 		/* Add to linked list of solid structs */
-		RES_ACQUIRE( &rt_g.res_model );
+		bu_semaphore_acquire( &rt_g.res_model );
 		BU_LIST_APPEND(HeadSolid.l.back, &sp->l);
-		RES_RELEASE( &rt_g.res_model );
+		bu_semaphore_release( &rt_g.res_model );
 #if 0
 		dmp->dm_viewchange( dmp, DM_CHGV_ADD, sp );
 #endif
@@ -761,7 +762,7 @@ matp_t matp;
 	auto mat_t		tmat;
 	register int		i;
 
-	mat_idn( matp );
+	bn_mat_idn( matp );
 	for( i=0; i <= depth; i++ )  {
 		parentp = sp->s_path[i];
 		kidp = sp->s_path[i+1];
@@ -781,8 +782,8 @@ matp_t matp;
 
 			/* convert matrix to fastf_t from disk format */
 			rt_mat_dbmat( xmat, rp[j].M.m_mat );
-			mat_mul( tmat, matp, xmat );
-			mat_copy( matp, tmat );
+			bn_mat_mul( tmat, matp, xmat );
+			bn_mat_copy( matp, tmat );
 			goto next_level;
 		}
 		Tcl_AppendResult(interp, "pathHmat: unable to follow ", parentp->d_namep,
@@ -808,7 +809,7 @@ int
 replot_original_solid( sp )
 struct solid	*sp;
 {
-	struct rt_external	ext;
+	struct bu_external	ext;
 	struct rt_db_internal	intern;
 	struct directory	*dp;
 	mat_t			mat;
@@ -822,7 +823,7 @@ struct solid	*sp;
 	}
 	pathHmat( sp, mat, sp->s_last-1 );
 
-	RT_INIT_EXTERNAL( &ext );
+	BU_INIT_EXTERNAL( &ext );
 	if( db_get_external( &ext, dp, dbip ) < 0 )  return(-1);
 
 	if( (id = rt_id_solid( &ext )) == ID_NULL )  {
@@ -841,7 +842,7 @@ struct solid	*sp;
 	}
 	RT_CK_DB_INTERNAL( &intern );
 
-	if( replot_modified_solid( sp, &intern, rt_identity ) < 0 )  {
+	if( replot_modified_solid( sp, &intern, bn_mat_identity ) < 0 )  {
 	    	if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );
 		db_free_external( &ext );
 		return(-1);
@@ -1076,7 +1077,7 @@ union tree		*curtree;
 
 	if( curtree->tr_op == OP_NOP )  return  curtree;
 
-	RES_ACQUIRE( &rt_g.res_model );
+	bu_semaphore_acquire( &rt_g.res_model );
 	if( mged_facetize_tree )  {
 		union tree	*tr;
 		tr = (union tree *)bu_calloc(1, sizeof(union tree), "union tree");
@@ -1089,7 +1090,7 @@ union tree		*curtree;
 	} else {
 		mged_facetize_tree = curtree;
 	}
-	RES_RELEASE( &rt_g.res_model );
+	bu_semaphore_release( &rt_g.res_model );
 
 	/* Tree has been saved, and will be freed later */
 	return( TREE_NULL );
@@ -1108,7 +1109,7 @@ char	**argv;
 	int			ncpu;
 	int			triangulate;
 	char			*newname;
-	struct rt_external	ext;
+	struct bu_external	ext;
 	struct rt_db_internal	intern;
 	struct directory	*dp;
 	int			ngran;
@@ -1257,7 +1258,7 @@ char	**argv;
 	intern.idb_ptr = (genptr_t)mged_nmg_model;
 	mged_nmg_model = (struct model *)NULL;
 
-	RT_INIT_EXTERNAL( &ext );
+	BU_INIT_EXTERNAL( &ext );
 
 	/* Scale change on export is 1.0 -- no change */
 	if( rt_functab[ID_NMG].ft_export( &ext, &intern, 1.0 ) < 0 )  {
@@ -1318,7 +1319,7 @@ char	**argv;
 	int			ncpu;
 	int			triangulate;
 	char			*newname;
-	struct rt_external	ext;
+	struct bu_external	ext;
 	struct rt_db_internal	intern;
 	struct directory	*dp;
 	union tree		*tmp_tree;
@@ -1525,7 +1526,7 @@ char	**argv;
 	intern.idb_ptr = (genptr_t)mged_nmg_model;
 	mged_nmg_model = (struct model *)NULL;
 
-	RT_INIT_EXTERNAL( &ext );
+	BU_INIT_EXTERNAL( &ext );
 
 	/* Scale change on export is 1.0 -- no change */
 	if( rt_functab[ID_NMG].ft_export( &ext, &intern, 1.0 ) < 0 )  {

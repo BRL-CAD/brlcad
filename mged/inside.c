@@ -42,6 +42,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
+#include "bn.h"
 #include "db.h"			/* XXX needed for NAMESIZE */
 #include "nmg.h"
 #include "rtgeom.h"
@@ -52,11 +53,11 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./mged_solid.h"
 #include "./mged_dm.h"
 
-BU_EXTERN( void nmg_invert_shell , ( struct shell *s , CONST struct rt_tol *tol ) );
-BU_EXTERN( struct shell *nmg_extrude_shell , ( struct shell *s, fastf_t thick , int normal_ward , int approximate , CONST struct rt_tol *tol ) );
+BU_EXTERN( void nmg_invert_shell , ( struct shell *s , CONST struct bn_tol *tol ) );
+BU_EXTERN( struct shell *nmg_extrude_shell , ( struct shell *s, fastf_t thick , int normal_ward , int approximate , CONST struct bn_tol *tol ) );
 
 extern struct rt_db_internal	es_int;	/* from edsol.c */
-extern struct rt_tol		mged_tol;	/* from ged.c */
+extern struct bn_tol		mged_tol;	/* from ged.c */
 
 extern char	**promp;	/* pointer to a pointer to a char */
 
@@ -196,7 +197,7 @@ char **argv;
 	  }
 	  /* use the solid at bottom of path (key solid) */
 	  /* apply es_mat and modelchanges editing to parameters */
-	  mat_mul(newmat, modelchanges, es_mat);
+	  bn_mat_mul(newmat, modelchanges, es_mat);
 	  transform_editing_solid( &intern, newmat, &es_int, 0 );
 	  outdp = illump->s_path[illump->s_last];
 
@@ -219,7 +220,7 @@ char **argv;
 	  }
 	  ++arg;
 
-	  if( rt_db_get_internal( &intern, outdp, dbip, rt_identity ) < 0 ) {
+	  if( rt_db_get_internal( &intern, outdp, dbip, bn_mat_identity ) < 0 ) {
 	    (void)signal( SIGINT, SIG_IGN );
 	    TCL_READ_ERR_return;
 	  }
@@ -573,7 +574,7 @@ plane_t	planes[6];
 	  bu_vls_init(&tmp_vls);
 	  
 	  /* calculate the four possible intersect points */
-	  if( rt_mkpoint_3planes( pt[0] , planes[1] , planes[2] , planes[3] ) )
+	  if( bn_mkpoint_3planes( pt[0] , planes[1] , planes[2] , planes[3] ) )
 	    {
 	      bu_vls_printf(&tmp_vls, "Cannot find inside arb5\n" );
 	      bu_vls_printf(&tmp_vls, "Cannot find intersection of three planes for point 0:\n" );
@@ -584,7 +585,7 @@ plane_t	planes[6];
 	      bu_vls_free(&tmp_vls);
 	      return( 1 );
 	    }
-	  if( rt_mkpoint_3planes( pt[1] , planes[2] , planes[3] , planes[4] ) )
+	  if( bn_mkpoint_3planes( pt[1] , planes[2] , planes[3] , planes[4] ) )
 	    {
 	      bu_vls_printf(&tmp_vls, "Cannot find inside arb5\n" );
 	      bu_vls_printf(&tmp_vls, "Cannot find intersection of three planes for point 1:\n" );
@@ -595,7 +596,7 @@ plane_t	planes[6];
 	      bu_vls_free(&tmp_vls);
 	      return( 1 );
 	    }
-	  if( rt_mkpoint_3planes( pt[2] , planes[3] , planes[4] , planes[1] ) )
+	  if( bn_mkpoint_3planes( pt[2] , planes[3] , planes[4] , planes[1] ) )
 	    {
 	      bu_vls_printf(&tmp_vls, "Cannot find inside arb5\n" );
 	      bu_vls_printf(&tmp_vls, "Cannot find intersection of three planes for point 2:\n" );
@@ -606,7 +607,7 @@ plane_t	planes[6];
 	      bu_vls_free(&tmp_vls);
 	      return( 1 );
 	    }
-	  if( rt_mkpoint_3planes( pt[3] , planes[4] , planes[1] , planes[2] ) )
+	  if( bn_mkpoint_3planes( pt[3] , planes[4] , planes[1] , planes[2] ) )
 	    {
 	      bu_vls_printf(&tmp_vls, "Cannot find inside arb5\n" );
 	      bu_vls_printf(&tmp_vls, "Cannot find intersection of three planes for point 3:\n" );
@@ -618,7 +619,7 @@ plane_t	planes[6];
 	      return( 1 );
 	    }
 			
-		if( rt_pt3_pt3_equal( pt[0] , pt[1] , &mged_tol ) )
+		if( bn_pt3_pt3_equal( pt[0] , pt[1] , &mged_tol ) )
 		{
 			/* if any two of the calculates intersection points are equal,
 			 * then all four must be equal
@@ -702,7 +703,7 @@ plane_t	planes[6];
 					continue;
 
 				NMG_GET_FU_PLANE( pl , fu );
-				if( rt_coplanar( planes[i] , pl , &mged_tol ) > 0 )
+				if( bn_coplanar( planes[i] , pl , &mged_tol ) > 0 )
 				{
 					/* found the NMG face geometry that matches arb face i */
 					found = 1;

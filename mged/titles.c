@@ -33,11 +33,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <strings.h>
 #endif
 
-#include "tcl.h"
-
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
+#include "bn.h"
 #include "db.h"
 #include "raytrace.h"
 #include "externs.h"
@@ -93,7 +92,7 @@ register struct bu_vls	*vp;
 		bu_vls_strcat( vp, dp->d_namep );
 		bu_vls_strcat( vp, ": ");
 
-		vls_solid( vp, &es_int, rt_identity );
+		vls_solid( vp, &es_int, bn_mat_identity );
 
 		if(illump->s_last) {
 			bu_vls_strcat( vp, "\n** PATH --  ");
@@ -122,7 +121,7 @@ register struct bu_vls	*vp;
 			mat_t	new_mat;
 			/* NOT an evaluated region */
 			/* object edit option selected */
-			mat_mul(new_mat, modelchanges, es_mat);
+			bn_mat_mul(new_mat, modelchanges, es_mat);
 
 			vls_solid( vp, &es_int, new_mat );
 		}
@@ -255,7 +254,7 @@ int call_dm;
 
 	/* calculate angles using accuracy of 0.005, since display
 	 * shows 2 digits right of decimal point */
-	mat_aet_vec( &az , &el , &tw , temp , temp1 , (fastf_t)0.005 );
+	bn_aet_vec( &az , &el , &tw , temp , temp1 , (fastf_t)0.005 );
 
 	sprintf(azimuth,   "%3.2f", az);
 	sprintf(elevation, "%2.2f", el);
@@ -295,7 +294,7 @@ int call_dm;
 		mat_t			xform;
 		struct rt_point_labels	pl[8+1];
 
-		mat_mul( xform, model2objview, es_mat );
+		bn_mat_mul( xform, model2objview, es_mat );
 
 		label_edited_solid( pl, 8+1, xform, &es_int );
 

@@ -90,19 +90,19 @@ nmg_eu_dist_set()
 
 #define MV_O(_m)	offsetof(struct _mged_variables, _m)
 struct bu_structparse mged_vparse[] = {
-	{"%d",	1, "autosize",		MV_O(autosize),		FUNC_NULL },
+	{"%d",	1, "autosize",		MV_O(autosize),		BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",	1, "rateknobs",		MV_O(rateknobs),	set_scroll },
 	{"%d",	1, "adcflag",		MV_O(adcflag),          set_scroll },
 	{"%d",	1, "scroll_enabled",	MV_O(scroll_enabled),   set_scroll },
-	{"%d",	1, "sgi_win_size",	MV_O(sgi_win_size),	FUNC_NULL },
-	{"%d",	2, "sgi_win_origin",	MV_O(sgi_win_origin[0]),FUNC_NULL },
+	{"%d",	1, "sgi_win_size",	MV_O(sgi_win_size),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%d",	2, "sgi_win_origin",	MV_O(sgi_win_origin[0]),BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",	1, "faceplate",		MV_O(faceplate),	refresh_hook },
 	{"%d",	1, "show_menu",		MV_O(show_menu),	refresh_hook },
 	{"%d",  1, "w_axes",            MV_O(w_axes),           refresh_hook },
 	{"%d",  1, "v_axes",            MV_O(v_axes),           refresh_hook },
 	{"%d",  1, "e_axes",            MV_O(e_axes),           refresh_hook },
-	{"%d",  1, "send_key",          MV_O(send_key),         FUNC_NULL },
-	{"%d",  1, "hot_key",           MV_O(hot_key),         FUNC_NULL },
+	{"%d",  1, "send_key",          MV_O(send_key),         BU_STRUCTPARSE_FUNC_NULL },
+	{"%d",  1, "hot_key",           MV_O(hot_key),         BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",  1, "view",              MV_O(view),             set_view },
 	{"%d",  1, "edit",              MV_O(edit),             set_scroll },
 	{"%d",  1, "context",           MV_O(context),          refresh_hook },
@@ -112,10 +112,10 @@ struct bu_structparse mged_vparse[] = {
 	{"%f",	1, "perspective",	MV_O(perspective),	refresh_hook },
 	{"%f",  1, "nmg_eu_dist",	MV_O(nmg_eu_dist),	nmg_eu_dist_set },
 	{"%f",  1, "eye_sep_dist",	MV_O(eye_sep_dist),	reattach },
-	{"%s",  MAXLINE, "union_op",	MV_O(union_lexeme[0]),	FUNC_NULL },
-	{"%s",  MAXLINE, "intersection_op",MV_O(intersection_lexeme[0]),	FUNC_NULL },
-	{"%s",  MAXLINE, "difference_op",	MV_O(difference_lexeme[0]),	FUNC_NULL },
-	{"",	0,  (char *)0,		0,			FUNC_NULL }
+	{"%s",  MAXLINE, "union_op",	MV_O(union_lexeme[0]),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%s",  MAXLINE, "intersection_op",MV_O(intersection_lexeme[0]),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%s",  MAXLINE, "difference_op",	MV_O(difference_lexeme[0]),	BU_STRUCTPARSE_FUNC_NULL },
+	{"",	0,  (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 
 /**
@@ -278,7 +278,7 @@ set_view()
   point_t new_pos;
 
   /* save current view */
-  mat_copy(viewrot_table[current_view], Viewrot);
+  bn_mat_copy(viewrot_table[current_view], Viewrot);
 
   /* save current Viewscale */
   viewscale_table[current_view] = Viewscale;
@@ -298,7 +298,7 @@ set_view()
     MAT4X3PNT(model_pos, view2model, edit_absolute_tran);
 #endif
   /* restore previously saved view and Viewscale */
-  mat_copy(Viewrot, viewrot_table[current_view]);
+  bn_mat_copy(Viewrot, viewrot_table[current_view]);
   Viewscale = viewscale_table[current_view];
   new_mats();
 #if 0

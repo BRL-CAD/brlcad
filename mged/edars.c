@@ -52,7 +52,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./mged_dm.h"
 #include "./menu.h"
 
-extern struct rt_tol		mged_tol;	/* from ged.c */
+extern struct bn_tol		mged_tol;	/* from ged.c */
 void
 find_nearest_ars_pt( crv, col, ars, pick_pt, dir )
 int *crv;
@@ -75,7 +75,7 @@ vect_t dir;
 		{
 			fastf_t dist_sq;
 
-			dist_sq = rt_distsq_line3_pt3( pick_pt, dir, &ars->curves[i][j*3] );
+			dist_sq = bn_distsq_line3_pt3( pick_pt, dir, &ars->curves[i][j*3] );
 			if( dist_sq < min_dist_sq )
 			{
 				min_dist_sq = dist_sq;

@@ -25,10 +25,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <math.h>
-
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
+#include "bn.h"
 #include "./sedit.h"
 #include "raytrace.h"
 #include "rtgeom.h"
@@ -38,7 +38,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./mged_dm.h"
 
 extern struct rt_db_internal	es_int;	/* from edsol.c */
-extern struct rt_tol		mged_tol;		/* from ged.c */
+extern struct bn_tol		mged_tol;		/* from ged.c */
 
 static void	do_anal();
 static void	arb_anal();
@@ -106,7 +106,7 @@ char	*argv[];
 		  state_err( "Default SOLID Analyze" );
 		  return TCL_ERROR;
 		}
-		mat_mul(new_mat, modelchanges, es_mat);
+		bn_mat_mul(new_mat, modelchanges, es_mat);
 
 		if( rt_db_get_internal( &intern, ndp, dbip, new_mat ) < 0 )  {
 		  Tcl_AppendResult(interp, "rt_db_get_internal() error\n", (char *)NULL);
@@ -125,7 +125,7 @@ char	*argv[];
 		if( (ndp = db_lookup( dbip,  argv[i], LOOKUP_NOISY )) == DIR_NULL )
 			continue;
 
-		if( rt_db_get_internal( &intern, ndp, dbip, rt_identity ) < 0 )  {
+		if( rt_db_get_internal( &intern, ndp, dbip, bn_mat_identity ) < 0 )  {
 		  Tcl_AppendResult(interp, "rt_db_get_internal() error\n", (char *)NULL);
 		  return TCL_ERROR;
 		}
@@ -353,7 +353,7 @@ int		face;
 point_t		center_pt;		/* reference center point */
 CONST struct rt_arb_internal	*arb;
 int		type;
-CONST struct rt_tol	*tol;
+CONST struct bn_tol	*tol;
 {
 	register int i, j, k;
 	int a, b, c, d;		/* 4 points of face to look at */
@@ -373,7 +373,7 @@ CONST struct rt_tol	*tol;
 		return 0;
 
 	/* find plane eqn for this face */
-	if( rt_mk_plane_3pts( plane, arb->pt[a], arb->pt[b],
+	if( bn_mk_plane_3pts( plane, arb->pt[a], arb->pt[b],
 	    arb->pt[c], tol ) < 0 )  {
 		bu_vls_printf(vp,"| %d%d%d%d |         ***NOT A PLANE***                                          |\n",
 				a+1,b+1,c+1,d+1);
@@ -474,7 +474,7 @@ static double
 find_vol( loc, arb, tol )
 int	loc;
 struct rt_arb_internal	*arb;
-struct rt_tol		*tol;
+struct bn_tol		*tol;
 {
 	int a, b, c, d;
 	fastf_t vol, height, len[3], temp, areabase;
@@ -489,7 +489,7 @@ struct rt_tol		*tol;
 	/* d = "top" point of arb4 */
 	d = farb4[loc][3];
 
-	if( rt_mk_plane_3pts( plane, arb->pt[a], arb->pt[b],
+	if( bn_mk_plane_3pts( plane, arb->pt[a], arb->pt[b],
 	    arb->pt[c], tol ) < 0 )
 		return 0.0;
 

@@ -33,7 +33,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./mged_solid.h"
 
 extern struct rt_db_internal	es_int;	/* from edsol.c */
-extern struct rt_tol		mged_tol;		/* from ged.c */
+extern struct bn_tol		mged_tol;		/* from ged.c */
 
 char *p_rotfb[] = {
 	"Enter rot, fb angles: ",
@@ -338,7 +338,7 @@ static int
 get_3pts( plane, argv, tol)
 plane_t		plane;
 char		*argv[];
-CONST struct rt_tol	*tol;
+CONST struct bn_tol	*tol;
 {
 	int i;
 	point_t	a,b,c;
@@ -350,7 +350,7 @@ CONST struct rt_tol	*tol;
 	for(i=0; i<3; i++)
 		c[i] = atof(argv[6+i]) * local2base;
 
-	if( rt_mk_plane_3pts( plane, a, b, c, tol ) < 0 )  {
+	if( bn_mk_plane_3pts( plane, a, b, c, tol ) < 0 )  {
 	  Tcl_AppendResult(interp, "Facedef: not a plane\n", (char *)NULL);
 	  return(-1);		/* failure */
 	}

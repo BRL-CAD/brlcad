@@ -52,10 +52,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 void	ext4to6(),old_ext4to6();
 
-extern struct rt_external	es_ext;
+extern struct bu_external	es_ext;
 extern struct rt_db_internal	es_int;
 extern struct rt_db_internal	es_int_orig;
-extern struct rt_tol		mged_tol;		/* from ged.c */
+extern struct bn_tol		mged_tol;		/* from ged.c */
 
 /* face definitions for each arb type */
 int arb_faces[5][24] = {
@@ -318,7 +318,7 @@ bu_log("moving edge: %d%d  bound planes: %d %d\n",pt1+1,pt2+1,bp1+1,bp2+1);
 /*
 bu_log("redo plane %d with points %d %d %d\n",newp+1,p1+1,p2+1,p3+1);
 */
-			if( rt_mk_plane_3pts( es_peqn[newp], arb->pt[p1], arb->pt[p2],
+			if( bn_mk_plane_3pts( es_peqn[newp], arb->pt[p1], arb->pt[p2],
 						arb->pt[p3], &mged_tol ) )
 				goto err;
 
@@ -339,7 +339,7 @@ bu_log("redo plane %d with points %d %d %d\n",newp+1,p1+1,p2+1,p3+1);
 /*
 bu_log("REdo plane %d with points %d %d %d\n",newp+1,p1+1,p2+1,p3+1);
 */
-			if( rt_mk_plane_3pts( es_peqn[newp], arb->pt[p1], arb->pt[p2],
+			if( bn_mk_plane_3pts( es_peqn[newp], arb->pt[p1], arb->pt[p2],
 					arb->pt[p3], &mged_tol ))
 				goto err;
 		}
@@ -367,7 +367,7 @@ bu_log("intersect: type=%d   point = %d\n",es_type,p1+1);
 /*
 bu_log("redo plane 2 == 5,6,7 for ARB7\n");
 */
-		if(  rt_mk_plane_3pts( es_peqn[2], arb->pt[4], arb->pt[5], arb->pt[6], &mged_tol ))
+		if(  bn_mk_plane_3pts( es_peqn[2], arb->pt[4], arb->pt[5], arb->pt[6], &mged_tol ))
 			goto err;
 	}
 
@@ -436,7 +436,7 @@ struct solidrec *sp;
 	VMOVE( b, &sp->s_values[use2*3] );
 	VMOVE( c, &sp->s_values[use3*3] );
 
-	return( rt_mk_plane_3pts( es_peqn[loc], a, b, c, &mged_tol ) );
+	return( bn_mk_plane_3pts( es_peqn[loc], a, b, c, &mged_tol ) );
 }
 
 /* planes to define ARB vertices */
@@ -475,7 +475,7 @@ struct solidrec *sp;
 	i2 = rt_arb_planes[j][loc+1];
 	i3 = rt_arb_planes[j][loc+2];
 
-	if( rt_mkpoint_3planes( vec1, es_peqn[i1], es_peqn[i2],
+	if( bn_mkpoint_3planes( vec1, es_peqn[i1], es_peqn[i2],
 	    es_peqn[i3] ) < 0 )
 		return(1);
 
@@ -504,8 +504,8 @@ vect_t	dir;
 	struct rt_arb_internal *arb;
 	fastf_t	t1, t2;
 
-	if( rt_isect_line3_plane( &t1, thru, dir, es_peqn[bp1], &mged_tol ) < 0 ||
-	    rt_isect_line3_plane( &t2, thru, dir, es_peqn[bp2], &mged_tol ) < 0 )  {
+	if( bn_isect_line3_plane( &t1, thru, dir, es_peqn[bp1], &mged_tol ) < 0 ||
+	    bn_isect_line3_plane( &t2, thru, dir, es_peqn[bp2], &mged_tol ) < 0 )  {
 	  Tcl_AppendResult(interp, "edge (direction) parallel to face normal\n", (char *)NULL);
 	  return( 1 );
 	}
@@ -617,7 +617,7 @@ char	**argv;
 	}
 
 	/* find plane containing this face */
-	if( rt_mk_plane_3pts( es_peqn[6], larb.pt[pt[0]], larb.pt[pt[1]],
+	if( bn_mk_plane_3pts( es_peqn[6], larb.pt[pt[0]], larb.pt[pt[1]],
 				larb.pt[pt[2]], &mged_tol ) )
 	{
 	  Tcl_AppendResult(interp, "face: ", argv[1], " is not a plane\n", (char *)NULL);
@@ -732,7 +732,7 @@ char	**argv;
 {
 	register struct directory *dp;
 	struct rt_db_internal	internal;
-	struct rt_external	external;
+	struct bu_external	external;
 	struct rt_arb_internal	arb;
 	int i, j;
 	fastf_t rota, fb;
@@ -1430,7 +1430,7 @@ rt_arb_calc_points( arb, cgtype, planes, tol )
 struct rt_arb_internal	*arb;
 int		cgtype;
 plane_t		planes[6];
-CONST struct rt_tol	*tol;
+CONST struct bn_tol	*tol;
 {
 	int	i;
 	point_t	pt[8];
@@ -1482,5 +1482,5 @@ int			loc;
 	i2 = rt_arb_planes[j][loc+1];
 	i3 = rt_arb_planes[j][loc+2];
 
-	return rt_mkpoint_3planes( point, planes[i1], planes[i2], planes[i3] );
+	return bn_mkpoint_3planes( point, planes[i1], planes[i2], planes[i3] );
 }

@@ -34,6 +34,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
+#include "bn.h"
 #include "db.h"
 #include "raytrace.h"
 #include "externs.h"
@@ -51,7 +52,7 @@ char		memb_oper;	/* operation for present member of processed region */
 
 extern int	no_memory;	/* flag indicating memory for drawing is used up */
 extern long	nvectors;	/* from dodraw.c */
-extern struct rt_tol		mged_tol;		/* from ged.c */
+extern struct bn_tol		mged_tol;		/* from ged.c */
 
 void		Edrawtree();
 void		EdrawHobj();
@@ -185,7 +186,7 @@ struct directory	*dp;
 
 	root_mater = mged_no_mater;	/* struct copy */
 
-	mat_idn( root );
+	bn_mat_idn( root );
 	/* Could apply root animations here ? */
 
 	EdrawHobj( dp, ROOT, 0, root, 0, &root_mater );
@@ -207,7 +208,7 @@ matp_t		old_xlate;
 int		regionid;
 struct mater_info *materp;
 {
-	struct rt_external	ext;
+	struct bu_external	ext;
 	union record	*rp;
 	auto mat_t	new_xlate;	/* Accumulated translation matrix */
 	auto int	i;
@@ -286,11 +287,11 @@ struct mater_info *materp;
 			if( curmater.ma_cinherit == DB_INH_LOWER )  {
 				curmater.ma_override = 1;
 				curmater.ma_color[0] =
-					((double)(rp[0].c.c_rgb[0]))*rt_inv255;
+					((double)(rp[0].c.c_rgb[0]))*bn_inv255;
 				curmater.ma_color[1] =
-					((double)(rp[0].c.c_rgb[1]))*rt_inv255;
+					((double)(rp[0].c.c_rgb[1]))*bn_inv255;
 				curmater.ma_color[2] =
-					((double)(rp[0].c.c_rgb[2]))*rt_inv255;
+					((double)(rp[0].c.c_rgb[2]))*bn_inv255;
 				curmater.ma_cinherit = rp[0].c.c_inherit;
 			}
 		}
@@ -371,7 +372,7 @@ struct mater_info *materp;
 		 */
 		rt_mat_dbmat( xmat, mp->m_mat );
 		/* Check here for animation to apply */
-		mat_mul(new_xlate, old_xlate, xmat);
+		bn_mat_mul(new_xlate, old_xlate, xmat);
 
 		/* Recursive call */
 		EdrawHobj(
@@ -401,7 +402,7 @@ register struct solid	*sp;
 int			flag;
 int			pathpos;
 mat_t			xform;
-struct rt_external	*ep;
+struct bu_external	*ep;
 int			regionid;
 struct mater_info	*materp;
 {
@@ -1212,7 +1213,7 @@ orregion:	/* sent here if region has or's */
 						}
 					}
 noskip:
-					if( rt_isect_2planes( xb, wb,
+					if( bn_isect_2planes( xb, wb,
 					    &peq[i*4], &peq[j*4], reg_min, &mged_tol ) < 0 )
 						continue;
 
@@ -1468,7 +1469,7 @@ fastf_t *p, *q, *r, *s;
 	/* WARNING!!  Fourth point is never even looked at!! */
 	pp = &peq[lc*4];
 	/* Dist tol here used to be 1e-6 */
-	if( rt_mk_plane_3pts( pp, p, q, r, &mged_tol ) < 0 )  return;
+	if( bn_mk_plane_3pts( pp, p, q, r, &mged_tol ) < 0 )  return;
 
 	if((pp[3]-VDOT(pp,pcenter)) > 0.)  {
 		VREVERSE( pp, pp );

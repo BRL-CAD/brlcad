@@ -49,8 +49,8 @@ struct bu_structparse polygon_desc[] = {
 	{"%d", 1, "magic", offsetof(struct polygon_header, magic), BU_STRUCTPARSE_FUNC_NULL },
 	{"%d", 1, "ident", offsetof(struct polygon_header, ident), BU_STRUCTPARSE_FUNC_NULL },
 	{"%d", 1, "interior", offsetof(struct polygon_header, interior), BU_STRUCTPARSE_FUNC_NULL },
-	{"%f", 3, "normal", offsetofarray(struct polygon_header, normal), BU_STRUCTPARSE_FUNC_NULL },
-	{"%c", 3, "color", offsetofarray(struct polygon_header, color), BU_STRUCTPARSE_FUNC_NULL },
+	{"%f", 3, "normal", bu_offsetofarray(struct polygon_header, normal), BU_STRUCTPARSE_FUNC_NULL },
+	{"%c", 3, "color", bu_offsetofarray(struct polygon_header, color), BU_STRUCTPARSE_FUNC_NULL },
 	{"%d", 1, "npts", offsetof(struct polygon_header, npts), BU_STRUCTPARSE_FUNC_NULL },
 	{"",   0, (char *)0, 0, BU_STRUCTPARSE_FUNC_NULL }
 };
@@ -64,8 +64,8 @@ struct rt_imexport  polygon_desc[] = {
 	{"%d",	offsetof(struct polygon_header, magic),		1 },
 	{"%d",	offsetof(struct polygon_header, ident),		1 },
 	{"%d",	offsetof(struct polygon_header, interior),	1 },
-	{"%f",	offsetofarray(struct polygon_header, normal),	3 },
-	{"%c",	offsetofarray(struct polygon_header, color),	3 },
+	{"%f",	bu_offsetofarray(struct polygon_header, normal),	3 },
+	{"%c",	bu_offsetofarray(struct polygon_header, color),	3 },
 	{"%d",	offsetof(struct polygon_header, npts),		1 },
 	{"",	0,						0 }
 };
@@ -97,7 +97,7 @@ char	**argv;
 #define MAX_VERTS	1024
 	vect_t	verts[MAX_VERTS];
 	int	need_normal = 0;
-	struct	rt_external	obuf;
+	struct	bu_external	obuf;
 
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;
@@ -172,23 +172,23 @@ char	**argv;
 						VSUB2( e2, verts[0], verts[2] );
 						VCROSS( ph.normal, e1, e2 );
 					}
-					if( rt_struct_export( &obuf, (genptr_t)&ph, polygon_desc ) < 0 )  {
+					if( bu_struct_export( &obuf, (genptr_t)&ph, polygon_desc ) < 0 )  {
 					  Tcl_AppendResult(interp, "header export error\n", (char *)NULL);
 					  break;
 					}
-					if (rt_struct_put(fp, &obuf) != obuf.ext_nbytes) {
-						perror("rt_struct_put");
+					if (bu_struct_put(fp, &obuf) != obuf.ext_nbytes) {
+						perror("bu_struct_put");
 						break;
 					}
 					db_free_external( &obuf );
 					/* Now export the vertices */
 					vertex_desc[0].sp_count = ph.npts * 3;
-					if( rt_struct_export( &obuf, (genptr_t)verts, vertex_desc ) < 0 )  {
+					if( bu_struct_export( &obuf, (genptr_t)verts, vertex_desc ) < 0 )  {
 					  Tcl_AppendResult(interp, "vertex export error\n", (char *)NULL);
 					  break;
 					}
-					if( rt_struct_put( fp, &obuf ) != obuf.ext_nbytes )  {
-						perror("rt_struct_buf");
+					if( bu_struct_put( fp, &obuf ) != obuf.ext_nbytes )  {
+						perror("bu_struct_wrap_buf");
 						break;
 					}
 					db_free_external( &obuf );

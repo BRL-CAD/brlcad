@@ -53,7 +53,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./mged_dm.h"
 #include "./menu.h"
 
-extern struct rt_tol		mged_tol;	/* from ged.c */
+extern struct bn_tol		mged_tol;	/* from ged.c */
 void
 split_pipept( pipe_hd, ps, new_pt )
 struct bu_list *pipe_hd;
@@ -326,11 +326,11 @@ CONST point_t pt;
 {
 	struct wdb_pipept *ps;
 	struct wdb_pipept *nearest=(struct wdb_pipept *)NULL;
-	struct rt_tol tmp_tol;
+	struct bn_tol tmp_tol;
 	fastf_t min_dist = MAX_FASTF;
 	vect_t dir,work;
 
-	tmp_tol.magic = RT_TOL_MAGIC;
+	tmp_tol.magic = BN_TOL_MAGIC;
 	tmp_tol.dist = 0.0;
 	tmp_tol.dist_sq = tmp_tol.dist * tmp_tol.dist;
 	tmp_tol.perp = 0.0;
@@ -344,7 +344,7 @@ CONST point_t pt;
 	{
 		fastf_t dist;
 
-		dist = rt_dist_line3_pt3( pt, dir, ps->pp_coord );
+		dist = bn_dist_line3_pt3( pt, dir, ps->pp_coord );
 		if( dist < min_dist )
 		{
 			min_dist = dist;

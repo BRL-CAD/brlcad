@@ -344,7 +344,7 @@ char **argv;
 	register struct directory *dp;
 	char			name[NAMESIZE+2];
 	struct rt_db_internal	internal;
-	struct rt_external	external;
+	struct bu_external	external;
 	char			*new_cmd[3], **menu;
 	int			ngran;		/* number of db granules */
 	int			id;
@@ -605,7 +605,7 @@ do_extern_update:
  */
 int
 strsol_in( ep, sol, argc, argv )
-struct rt_external	*ep;
+struct bu_external	*ep;
 char			*sol;
 int 			 argc;
 char 		       **argv;
@@ -619,7 +619,7 @@ char 		       **argv;
 	  return CMD_MORE;
 	}
 
-	RT_INIT_EXTERNAL(ep);
+	BU_INIT_EXTERNAL(ep);
 	ep->ext_nbytes = sizeof(union record)*DB_SS_NGRAN;
 	ep->ext_buf = (genptr_t)bu_calloc( 1, ep->ext_nbytes, "ebm external");
 	rec = (union record *)ep->ext_buf;
@@ -927,7 +927,7 @@ struct rt_db_internal	*intern;
 	
 	/* convert ELL1 format into ELLG format */
 	/* calculate B vector */
-	vec_ortho( eip->b, eip->a );
+	bn_vec_ortho( eip->b, eip->a );
 	VUNITIZE( eip->b );
 	VSCALE( eip->b, eip->b, r_rev);
 
@@ -1057,7 +1057,7 @@ struct rt_db_internal	*intern;
 	  return(1);	/* failure */
 	}
 
-	vec_ortho( tip->a, tip->h );
+	bn_vec_ortho( tip->a, tip->h );
 	VUNITIZE( tip->a );
 	VCROSS( tip->b, tip->h, tip->a );
 	VUNITIZE( tip->b );
@@ -1183,7 +1183,7 @@ struct rt_db_internal	*intern;
 	  return(1);	/* failure */
 	}
 
-	vec_ortho( tip->a, tip->h );
+	bn_vec_ortho( tip->a, tip->h );
 	VUNITIZE( tip->a );
 	VCROSS( tip->b, tip->h, tip->a );
 	VUNITIZE( tip->b );

@@ -27,6 +27,7 @@
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
+#include "bn.h"
 #include "nmg.h"
 #include "db.h"
 #include "raytrace.h"
@@ -42,7 +43,7 @@ void		trace();
 void		matrix_print();
 void		push();
 
-extern struct rt_tol	mged_tol;	/* from ged.c */
+extern struct bn_tol	mged_tol;	/* from ged.c */
 
 BU_EXTERN( struct shell *nmg_dup_shell, ( struct shell *s, long ***trans_tbl, struct bn_tol *tol ) );
 BU_EXTERN( struct rt_i *rt_new_rti, (struct db_i *dbip) );
@@ -69,7 +70,7 @@ char **argv;
 	if( (old_dp = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
 	  return TCL_ERROR;
 
-	if( rt_db_get_internal( &old_intern, old_dp, dbip, rt_identity ) < 0 )
+	if( rt_db_get_internal( &old_intern, old_dp, dbip, bn_mat_identity ) < 0 )
 	{
 	  Tcl_AppendResult(interp, "rt_db_get_internal() error\n", (char *)NULL);
 	  return TCL_ERROR;
@@ -324,9 +325,9 @@ char	**argv;
 	}
 
 #if 0
-	mat_idn(identity);
+	bn_mat_idn(identity);
 #endif
-	mat_idn( xform );
+	bn_mat_idn( xform );
 
 	trace(obj[0], 0, identity, flag);
 
@@ -359,7 +360,7 @@ char **argv;
 {
 
 	struct directory *dp;
-	struct rt_external external,new_ext;
+	struct bu_external external,new_ext;
 	struct rt_db_internal internal,new_int;
 	mat_t	start_mat;
 	int	id;
@@ -384,7 +385,7 @@ char **argv;
 	  return TCL_ERROR;
 	}
 
-	mat_idn( start_mat );
+	bn_mat_idn( start_mat );
 
 	if( setjmp( jmp_env ) == 0 )
 	  (void)signal( SIGINT, sig3);  /* allow interupts */
@@ -401,14 +402,14 @@ char **argv;
 	}
 
 	/* Make sure that final component in path is a solid */
-	RT_INIT_EXTERNAL( &external );
+	BU_INIT_EXTERNAL( &external );
 	if( db_get_external( &external , obj[argc-3] , dbip ) )
 	{
 	  db_free_external( &external );
 	  (void)signal( SIGINT, SIG_IGN );
 	  TCL_READ_ERR_return;
 	}
-	RT_CK_EXTERNAL( &external );
+	BU_CK_EXTERNAL( &external );
 
 	if( (id=rt_id_solid( &external )) == ID_NULL )
 	{
@@ -540,7 +541,7 @@ int flag;
 				continue;
 
 			rt_mat_dbmat( xmat, record.M.m_mat );
-			mat_mul(new_xlate, old_xlate, xmat);
+			bn_mat_mul(new_xlate, old_xlate, xmat);
 
 			/* Recursive call */
 			trace(nextdp, pathpos+1, new_xlate, flag);
@@ -563,7 +564,7 @@ int flag;
 	}
 
 	/* have the desired path up to objpos */
-	mat_copy(xform, old_xlate);
+	bn_mat_copy(xform, old_xlate);
 	prflag = 1;
 
 	if(flag == CPEVAL) { 
@@ -643,7 +644,7 @@ static int push_error;
 HIDDEN union tree *push_leaf( tsp, pathp, ep, id)
 struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
-struct rt_external	*ep;
+struct bu_external	*ep;
 int			id;
 {
 	union tree	*curtree;
@@ -651,7 +652,7 @@ int			id;
 	register struct push_id *pip;
 
 	RT_CK_TESS_TOL(tsp->ts_ttol);
-	RT_CK_TOL(tsp->ts_tol);
+	BN_CK_TOL(tsp->ts_tol);
 
 	dp = pathp->fp_names[pathp->fp_len-1];
 
@@ -672,10 +673,10 @@ int			id;
  *  for each tree walk.  If it is not, then d_uses is NOT a safe
  *  way to check and this method will always work.)
  */
-	RES_ACQUIRE(&rt_g.res_worker);
+	bu_semaphore_acquire(&rt_g.res_worker);
 	FOR_ALL_PUSH_SOLIDS(pip) {
 	  if (pip->pi_dir == dp ) {
-	    if (!rt_mat_is_equal(pip->pi_mat,
+	    if (!bn_mat_is_equal(pip->pi_mat,
 				 tsp->ts_mat, tsp->ts_tol)) {
 	      char *sofar = db_path_to_string(pathp);
 
@@ -685,7 +686,7 @@ int			id;
 	      push_error = 1;
 	    }
 
-	    RES_RELEASE(&rt_g.res_worker);
+	    bu_semaphore_release(&rt_g.res_worker);
 	    BU_GETUNION(curtree, tree);
 	    curtree->magic = RT_TREE_MAGIC;
 	    curtree->tr_op = OP_NOP;
@@ -699,12 +700,12 @@ int			id;
 	    "Push ident");
 	pip->magic = MAGIC_PUSH_ID;
 	pip->pi_dir = dp;
-	mat_copy(pip->pi_mat, tsp->ts_mat);
+	bn_mat_copy(pip->pi_mat, tsp->ts_mat);
 	pip->back = pi_head.back;
 	pi_head.back = pip;
 	pip->forw = &pi_head;
 	pip->back->forw = pip;
-	RES_RELEASE(&rt_g.res_worker);
+	bu_semaphore_release(&rt_g.res_worker);
 	BU_GETUNION(curtree, tree);
 	curtree->magic = RT_TREE_MAGIC;
 	curtree->tr_op = OP_NOP;
@@ -738,7 +739,11 @@ static struct db_tree_state push_initial_tree_state = {
 		0,		/* override */
 		DB_INH_LOWER,	/* color inherit */
 		DB_INH_LOWER,	/* mater inherit */
+#if 0
 		""		/* shader */
+#else
+		NULL		/* shader */
+#endif
 #if __STDC__
 	}
 #endif
@@ -774,12 +779,12 @@ char **argv;
 #endif
 	extern 	int optind;
 	extern	char *optarg;
-	extern	struct rt_tol	mged_tol;	/* from ged.c */
+	extern	struct bn_tol	mged_tol;	/* from ged.c */
 	extern	struct rt_tess_tol mged_ttol;
 	int	i;
 	int	id;
 	struct push_id *pip;
-	struct rt_external	es_ext;
+	struct bu_external	es_ext;
 	struct rt_db_internal	es_int;
 
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
@@ -863,7 +868,7 @@ char **argv;
  * the matrix we've stored for each solid.
  */
 	FOR_ALL_PUSH_SOLIDS(pip) {
-		RT_INIT_EXTERNAL(&es_ext);
+		BU_INIT_EXTERNAL(&es_ext);
 		RT_INIT_DB_INTERNAL(&es_int);
 		if (db_get_external( &es_ext, pip->pi_dir, dbip) < 0) {
 		  Tcl_AppendResult(interp, "f_push: Read error fetching '",
@@ -937,7 +942,7 @@ struct directory *dp;
 #if 0
 	mat_t	identity;
 
-	mat_idn( identity );
+	bn_mat_idn( identity );
 #endif
 	if( db_get( dbip, dp, &record, 0, 1) < 0 )  READ_ERR_return;
 	if( record.u_id == ID_COMB ) {
@@ -1017,7 +1022,7 @@ struct db_i *db_ip;
 struct directory *dp;
 {
 	struct object_use *use;
-	struct rt_external sol_ext;
+	struct bu_external sol_ext;
 	struct rt_db_internal sol_int;
 	int id;
 
@@ -1077,7 +1082,7 @@ struct directory *dp;
 		use = (struct object_use *)bu_malloc( sizeof( struct object_use ), "Make_new_name: use" );
 
 		/* set xform for this object_use to all zeros */
-		mat_zero( use->xform );
+		bn_mat_zero( use->xform );
 		use->used = 0;
 		NAMEMOVE( dp->d_namep, name );
 
@@ -1117,7 +1122,7 @@ struct directory *dp;
 mat_t xform;
 {
 	struct directory *found;
-	struct rt_external sol_ext;
+	struct bu_external sol_ext;
 	struct rt_db_internal sol_int;
 	struct object_use *use;
 	int id;
@@ -1134,7 +1139,7 @@ mat_t xform;
 	/* Look for a copy that already has this transform matrix */
 	for( BU_LIST_FOR( use, object_use, &dp->d_use_hd ) )
 	{
-		if( rt_mat_is_equal( xform, use->xform, &mged_tol ) )
+		if( bn_mat_is_equal( xform, use->xform, &mged_tol ) )
 		{
 			/* found a match, no need to make another copy */
 			use->used = 1;
@@ -1151,7 +1156,7 @@ mat_t xform;
 
 		found = use->dp;
 		use->used = 1;
-		mat_copy( use->xform, xform );
+		bn_mat_copy( use->xform, xform );
 		break;
 	}
 
@@ -1168,7 +1173,7 @@ mat_t xform;
 	  return( DIR_NULL );
 	}
 
-	RT_INIT_EXTERNAL( &sol_ext );
+	BU_INIT_EXTERNAL( &sol_ext );
 
 	if( db_get_external( &sol_ext, dp, dbip ) < 0 )
 	{
@@ -1217,7 +1222,7 @@ mat_t xform;
 	/* Look for a copy that already has this transform matrix */
 	for( BU_LIST_FOR( use, object_use, &dp->d_use_hd ) )
 	{
-		if( rt_mat_is_equal( xform, use->xform, &mged_tol ) )
+		if( bn_mat_is_equal( xform, use->xform, &mged_tol ) )
 		{
 			/* found a match, no need to make another copy */
 			use->used = 1;
@@ -1242,7 +1247,7 @@ mat_t xform;
 
 		/* apply transform matrix for this arc */
 		rt_mat_dbmat( arc_mat, rp[i].M.m_mat );
-		mat_mul( new_xform, xform, arc_mat );
+		bn_mat_mul( new_xform, xform, arc_mat );
 
 		/* Copy member with current tranform matrix */
 		if( (dp_new=Copy_object( dp2, new_xform )) == DIR_NULL )
@@ -1256,7 +1261,7 @@ mat_t xform;
 		NAMEMOVE( dp_new->d_namep, rp[i].M.m_instname );
 
 		/* make transform for this arc the identity matrix */
-		rt_dbmat_mat( rp[i].M.m_mat, rt_identity );
+		rt_dbmat_mat( rp[i].M.m_mat, bn_mat_identity );
 	}
 
 	/* Get a use of this object */
@@ -1268,7 +1273,7 @@ mat_t xform;
 			continue;	/* already used */
 		found = use->dp;
 		use->used = 1;
-		mat_copy( use->xform, xform );
+		bn_mat_copy( use->xform, xform );
 		break;
 	}
 
@@ -1416,7 +1421,7 @@ char **argv;
 	/* Make new names */
 	db_functree( dbip, old_dp, Make_new_name, Make_new_name );
 
-	mat_idn( xform );
+	bn_mat_idn( xform );
 
 	/* Make new objects */
 	(void) Copy_object( old_dp, xform );
@@ -1479,11 +1484,11 @@ char **argv;
 				  bu_log( "\n\tOccurrence #%d:\n", count );
 
 				rt_mat_dbmat( matrix, rp[j].M.m_mat );
-				mat_print( "", matrix );
+				bn_mat_print( "", matrix );
 				if( count == 1 )
 				{
 					mat_t tmp_mat;
-					mat_mul( tmp_mat, acc_matrix, matrix );
+					bn_mat_mul( tmp_mat, acc_matrix, matrix );
 					MAT_COPY( acc_matrix, tmp_mat );
 				}
 				found = 1;
@@ -1513,7 +1518,7 @@ char **argv;
 	  Tcl_AppendResult(interp, "\nAccumulated matrix:\n", (char *)NULL);
 
 	start_catching_output(&tmp_vls);
-	mat_print( "", acc_matrix );
+	bn_mat_print( "", acc_matrix );
 	stop_catching_output(&tmp_vls);
 	Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 	bu_vls_free(&tmp_vls);
@@ -1531,7 +1536,7 @@ char *argv[];
 	struct directory *dp;
 	struct rt_db_internal nmg_intern;
 	struct rt_db_internal new_intern;
-	struct rt_external new_extern;
+	struct bu_external new_extern;
 	struct model *m;
 	struct nmgregion *r;
 	struct shell *s;
@@ -1587,7 +1592,7 @@ char *argv[];
 	  return TCL_ERROR;
 	}
 
-	if( rt_db_get_internal( &nmg_intern, dp, dbip, rt_identity ) < 0 )
+	if( rt_db_get_internal( &nmg_intern, dp, dbip, bn_mat_identity ) < 0 )
 	{
 	  Tcl_AppendResult(interp, "rt_db_get_internal() error\n", (char *)NULL);
 	  return TCL_ERROR;
@@ -1733,7 +1738,7 @@ char **argv;
 	struct directory	*dp;
 	struct rt_arb_internal	arb;
 	struct rt_db_internal	new_intern;
-	struct rt_external	new_extern;
+	struct bu_external	new_extern;
 	struct region		*regp;
 	int			ngran;
 	char			*new_name;
@@ -1898,7 +1903,7 @@ char **argv;
 	RT_INIT_DB_INTERNAL( &new_intern );
 	new_intern.idb_type = ID_ARB8;
 	new_intern.idb_ptr = (genptr_t)(&arb);
-	RT_INIT_EXTERNAL( &new_extern );
+	BU_INIT_EXTERNAL( &new_extern );
 
 	/* export it */
 	if( rt_functab[new_intern.idb_type].ft_export( &new_extern, &new_intern, 1.0 ) < 0 )

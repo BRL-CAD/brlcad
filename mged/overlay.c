@@ -96,8 +96,8 @@ char	**argv;
 	  return TCL_ERROR;
 
 	vbp = rt_vlblock_init();
-	mat_idn(mat);
-	mat_inv( mat, Viewrot );
+	bn_mat_idn(mat);
+	bn_mat_inv( mat, Viewrot );
 	scale = VIEWSIZE / 100;		/* divide by # chars/screen */
 
 	for( i=1; i<argc; i++ )  {

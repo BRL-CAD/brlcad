@@ -22,8 +22,11 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
+#include <math.h>
 #include "machine.h"
+#include "bu.h"
 #include "vmath.h"
+#include "bn.h"
 #include "db.h"
 #include "./mged_solid.h"
 #include "raytrace.h"
@@ -153,7 +156,7 @@ matp_t old_xlate;
 		 * convert matrix to fastf_t from disk format.
 		 */
 		rt_mat_dbmat( xmat, mp->m_mat );
-		mat_mul(new_xlate, old_xlate, xmat);
+		bn_mat_mul(new_xlate, old_xlate, xmat);
 
 		/* Recursive call */
 		drawHobj(
@@ -188,7 +191,7 @@ matp_t matp;
 	auto mat_t		tmat;
 	register int		i;
 
-	mat_idn( matp );
+	bn_mat_idn( matp );
 	for( i=0; i <= depth; i++ )  {
 		parentp = sp->s_path[i];
 		kidp = sp->s_path[i+1];
@@ -208,8 +211,8 @@ matp_t matp;
 
 			/* convert matrix to fastf_t from disk format */
 			rt_mat_dbmat( xmat, rp[j].M.m_mat );
-			mat_mul( tmat, matp, xmat );
-			mat_copy( matp, tmat );
+			bn_mat_mul( tmat, matp, xmat );
+			bn_mat_copy( matp, tmat );
 			goto next_level;
 		}
 		(void)printf("pathHmat: unable to follow %s/%s path\n",

@@ -86,7 +86,7 @@ char	**argv;
 	char			name[NAMESIZE+2];
 	struct directory	*dp;
 	struct rt_db_internal	internal;
-	struct rt_external	external;
+	struct bu_external	external;
 	struct rt_arb_internal	*aip;
 
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
@@ -356,7 +356,7 @@ char	**argv;
 	vect_t			norm;
 	fastf_t			ndotv;
 	struct rt_db_internal	internal;
-	struct rt_external	external;
+	struct bu_external	external;
 	struct rt_arb_internal	*aip;
 
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
@@ -782,7 +782,7 @@ int
 rt_arb_get_cgtype( cgtype, arb, tol, uvec, svec )
 int			*cgtype;
 struct rt_arb_internal	*arb;
-CONST struct rt_tol	*tol;
+CONST struct bn_tol	*tol;
 register int *uvec;	/* array of unique points */
 register int *svec;	/* array of like points */
 {
@@ -791,7 +791,7 @@ register int *svec;	/* array of like points */
 	int	si;
 
 	RT_ARB_CK_MAGIC(arb);
-	RT_CK_TOL(tol);
+	BN_CK_TOL(tol);
 
 	done = NO;		/* done checking for like vectors */
 
@@ -922,14 +922,14 @@ register int *svec;	/* array of like points */
 int
 rt_arb_std_type( ip, tol )
 struct rt_db_internal	*ip;
-CONST struct rt_tol	*tol;
+CONST struct bn_tol	*tol;
 {
 	struct rt_arb_internal	*arb;
 	int uvec[8], svec[11];
 	int	cgtype = 0;
 
 	RT_CK_DB_INTERNAL(ip);
-	RT_CK_TOL(tol);
+	BN_CK_TOL(tol);
 
 	if( ip->idb_type != ID_ARB8 )  bu_bomb("rt_arb_std_type: not ARB!\n");
 

@@ -40,6 +40,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
+#include "bn.h"
 #include "nmg.h"
 #include "db.h"
 #include "raytrace.h"
@@ -47,7 +48,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./ged.h"
 #include "./sedit.h"
 
-extern struct rt_tol    mged_tol;       /* from ged.c */
+extern struct bn_tol    mged_tol;       /* from ged.c */
 
 int readcodes(), writecodes();
 int loadcodes(), printcodes();
@@ -181,7 +182,7 @@ char	**argv;
 
 	/* make table of the objects */
 #if 0
-	mat_idn( identity );
+	bn_mat_idn( identity );
 #endif
 	for(i=2; i<argc; i++) {
 		if( (dp = db_lookup( dbip, argv[i],LOOKUP_NOISY)) != DIR_NULL )
@@ -593,7 +594,7 @@ int flag;
 				continue;
 
 			rt_mat_dbmat( xmat, record.M.m_mat );
-			mat_mul(new_xlate, old_xlate, xmat);
+			bn_mat_mul(new_xlate, old_xlate, xmat);
 
 			/* Recursive call */
 			tables(nextdp, pathpos+1, new_xlate, flag);
@@ -640,7 +641,7 @@ int flag;
 	else {
 		(void)strncpy(identt.i_name, record.a.a_name, NAMESIZE);
 	}
-	mat_copy(identt.i_mat, old_xlate);
+	bn_mat_copy(identt.i_mat, old_xlate);
 
 	/* first (quick) look discriminator is based on name alone */
 	dchar = 0;
@@ -1111,7 +1112,7 @@ char	**argv;
 	if( (dp=db_lookup( dbip, nmg_solid_name, LOOKUP_NOISY ) ) == DIR_NULL )
 		return TCL_ERROR;
 
-	if( rt_db_get_internal( &nmg_intern, dp, dbip, rt_identity ) < 0 )
+	if( rt_db_get_internal( &nmg_intern, dp, dbip, bn_mat_identity ) < 0 )
 	{
 		Tcl_AppendResult(interp, "rt_db_get_internal() error\n", (char *)NULL);
 		return TCL_ERROR;

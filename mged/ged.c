@@ -63,7 +63,6 @@ in all countries except the USA.  All rights reserved.";
 #include <signal.h>
 #include <time.h>
 
-#include "tcl.h"
 #include "tk.h"
 
 /* defined in cmd.c */
@@ -74,6 +73,7 @@ extern Tk_Window tkwin;
 #include "externs.h"
 #include "bu.h"
 #include "vmath.h"
+#include "bn.h"
 #include "db.h"
 #include "raytrace.h"
 #include "./ged.h"
@@ -118,7 +118,7 @@ static int	do_rc();
 static void	log_event();
 extern char	version[];		/* from vers.c */
 
-struct rt_tol	mged_tol;		/* calculation tolerance */
+struct bn_tol	mged_tol;		/* calculation tolerance */
 
 static char *units_str[] = {
 	"none",
@@ -195,11 +195,11 @@ char **argv;
 	 */
 	if( bu_avail_cpus() > 1 )  {
 		rt_g.rtg_parallel = 1;
-		RES_INIT( &rt_g.res_syscall );
-		RES_INIT( &rt_g.res_worker );
-		RES_INIT( &rt_g.res_stats );
-		RES_INIT( &rt_g.res_results );
-		RES_INIT( &rt_g.res_model );
+		bu_semaphore_init( &rt_g.res_syscall );
+		bu_semaphore_init( &rt_g.res_worker );
+		bu_semaphore_init( &rt_g.res_stats );
+		bu_semaphore_init( &rt_g.res_results );
+		bu_semaphore_init( &rt_g.res_model );
 	}
 
 	/* Set up linked lists */
@@ -235,17 +235,17 @@ char **argv;
 	es_edflag = -1;
 	inpara = newedge = 0;
 
-	mat_idn( identity );		/* Handy to have around */
+	bn_mat_idn( identity );		/* Handy to have around */
 	/* init rotation matrix */
 	Viewscale = 500;		/* => viewsize of 1000mm (1m) */
-	mat_idn( Viewrot );
-	mat_idn( toViewcenter );
-	mat_idn( modelchanges );
-	mat_idn( ModelDelta );
-	mat_idn( acc_rot_sol );
+	bn_mat_idn( Viewrot );
+	bn_mat_idn( toViewcenter );
+	bn_mat_idn( modelchanges );
+	bn_mat_idn( ModelDelta );
+	bn_mat_idn( acc_rot_sol );
 
 	/* These values match old GED.  Use 'tol' command to change them. */
-	mged_tol.magic = RT_TOL_MAGIC;
+	mged_tol.magic = BN_TOL_MAGIC;
 	mged_tol.dist = 0.005;
 	mged_tol.dist_sq = mged_tol.dist * mged_tol.dist;
 	mged_tol.perp = 1e-6;
@@ -990,7 +990,7 @@ int	non_blocking;
 	}
 
 	/* Scaling (zooming) takes place around view center */
-	mat_idn( scale_mat );
+	bn_mat_idn( scale_mat );
 	scale_mat[15] = 1/factor;
 
 	wrt_view( ModelDelta, scale_mat, ModelDelta );
@@ -1143,13 +1143,13 @@ double	xangle, yangle, zangle;
 	 * Apply delta viewing rotation for non-edited parts.
 	 * The view rotates around the VIEW CENTER.
 	 */
-	mat_idn( newrot );
+	bn_mat_idn( newrot );
 	buildHrot( newrot, xangle, yangle, zangle );
 
-	mat_mul2( newrot, Viewrot );
+	bn_mat_mul2( newrot, Viewrot );
 	{
 		mat_t	newinv;
-		mat_inv( newinv, newrot );
+		bn_mat_inv( newinv, newrot );
 		wrt_view( ModelDelta, newinv, ModelDelta );
 	}
 	new_mats();
@@ -1167,7 +1167,7 @@ CONST point_t	ang;
 {
 	point_t	rad;
 
-	VSCALE( rad, ang, rt_pi );	/* range from -pi to +pi */
+	VSCALE( rad, ang, bn_pi );	/* range from -pi to +pi */
 	buildHrot( Viewrot, rad[X], rad[Y], rad[Z] );
 	new_mats();
 }
@@ -1224,9 +1224,9 @@ vect_t view_pos;
   MAT_DELTAS_VEC_NEG( toViewcenter, new_model_center );
 
   VSUB2( diff, new_model_center, old_model_center );
-  mat_idn( delta );
+  bn_mat_idn( delta );
   MAT_DELTAS_VEC( delta, diff );
-  mat_mul2( delta, ModelDelta );
+  bn_mat_mul2( delta, ModelDelta );
   new_mats();
 
   VSET(temp, -orig_pos[X], -orig_pos[Y], -orig_pos[Z]);
@@ -1350,9 +1350,9 @@ sig3()
 void
 new_mats()
 {
-	mat_mul( model2view, Viewrot, toViewcenter );
+	bn_mat_mul( model2view, Viewrot, toViewcenter );
 	model2view[15] = Viewscale;
-	mat_inv( view2model, model2view );
+	bn_mat_inv( view2model, model2view );
 
 #if 1
 	{
@@ -1367,7 +1367,7 @@ new_mats()
 
 	  /* calculate angles using accuracy of 0.005, since display
 	   * shows 2 digits right of decimal point */
-	  mat_aet_vec( &curr_dm_list->s_info->azimuth,
+	  bn_aet_vec( &curr_dm_list->s_info->azimuth,
 		       &curr_dm_list->s_info->elevation,
 		       &curr_dm_list->s_info->twist,
 		       temp , temp1 , (fastf_t)0.005 );
@@ -1385,8 +1385,8 @@ new_mats()
 
 	      curr_dm_list = p;
 
-	      mat_mul( model2objview, model2view, modelchanges );
-	      mat_inv( objview2model, model2objview );
+	      bn_mat_mul( model2objview, model2view, modelchanges );
+	      bn_mat_inv( objview2model, model2objview );
 	    }
 
 	    curr_dm_list = save_dm_list;

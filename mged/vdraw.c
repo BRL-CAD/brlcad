@@ -685,26 +685,26 @@ char **argv;
 		Tcl_AppendResult(interp, result_string, (char *)NULL);
 		return TCL_OK;
 	case 'y':	/*ypr*/
-		mat_trn( mymat, Viewrot);
+		bn_mat_trn( mymat, Viewrot);
 		anim_v_unpermute(mymat);
 		c = anim_mat2ypr(temp, mymat);
 		if (c==2) { 
 			Tcl_AppendResult(interp, "mat2ypr - matrix is not a rotation matrix", (char *)NULL);
 			return TCL_ERROR;
 		}
-		VSCALE(temp, temp, rt_radtodeg);	
+		VSCALE(temp, temp, bn_radtodeg);	
 		sprintf(result_string,"%.12g %.12g %.12g",temp[0],temp[1],temp[2]);
 		Tcl_AppendResult(interp, result_string, (char *)NULL);
 		return TCL_OK;
 	case 'a': 	/* aet*/
-		mat_trn(mymat,Viewrot);
+		bn_mat_trn(mymat,Viewrot);
 		anim_v_unpermute(mymat);
 		c = anim_mat2ypr(temp, mymat);
 		if (c==2) { 
 			Tcl_AppendResult(interp, "mat2ypr - matrix is not a rotation matrix", (char *)NULL);
 			return TCL_ERROR;
 		}
-		VSCALE(temp, temp, rt_radtodeg);	
+		VSCALE(temp, temp, bn_radtodeg);	
 		if (temp[0] >= 180.0 ) temp[0] -= 180;
 		if (temp[0] < 180.0 ) temp[0] += 180;
 		temp[1] = -temp[1];
@@ -863,11 +863,11 @@ char **argv;
 	} else if (in_ypr) {
 		anim_dy_p_r2mat(mymat, ypr[0], ypr[1], ypr[2]);
 		anim_v_permute(mymat);
-		mat_trn(Viewrot, mymat);
+		bn_mat_trn(Viewrot, mymat);
 	} else if (in_aet) {
 		anim_dy_p_r2mat(mymat, aet[0]+180.0, -aet[1], -aet[2]);
 		anim_v_permute(mymat);
-		mat_trn(Viewrot, mymat);
+		bn_mat_trn(Viewrot, mymat);
 	} else if (in_center && in_eye) {
 		VSUB2( dir, center, eye);
 		Viewscale = MAGNITUDE(dir);
@@ -876,14 +876,14 @@ char **argv;
 		VSET(norm, -Viewrot[0], -Viewrot[1], 0.0);
 		anim_dirn2mat(mymat, dir, norm);
 		anim_v_permute(mymat);
-		mat_trn(Viewrot, mymat);
+		bn_mat_trn(Viewrot, mymat);
 	}
 
 	if (in_center) {
 		MAT_DELTAS_VEC_NEG( toViewcenter, center);
 	} else if (in_eye) {
 		VSET(temp, 0.0, 0.0, Viewscale);
-		mat_trn(mymat, Viewrot);
+		bn_mat_trn(mymat, Viewrot);
 		MAT4X3PNT( dir, mymat, temp);
 		VSUB2(temp, dir, eye);
 		MAT_DELTAS_VEC( toViewcenter, temp);

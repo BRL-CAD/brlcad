@@ -33,6 +33,7 @@ static char RCSid[] = "@(#)$Header$";
 #include "externs.h"
 #include "bu.h"
 #include "vmath.h"
+#include "bn.h"
 #include "db.h"
 #include "raytrace.h"
 #include "rtgeom.h"
@@ -2279,7 +2280,7 @@ struct hold_point *hp;
 	mat_t mat;
 	struct joint *jp;
 	struct rt_grip_internal *gip;
-	struct rt_external	es_ext;
+	struct bu_external	es_ext;
 	struct rt_db_internal	es_int;
 	int id;
 
@@ -2294,8 +2295,8 @@ struct hold_point *hp;
 			MAT4X3PNT(loc, mat, hp->point);
 			return 1;
 		}
-		mat_idn(mat);
-		RT_INIT_EXTERNAL(&es_ext);
+		bn_mat_idn(mat);
+		BU_INIT_EXTERNAL(&es_ext);
 		RT_INIT_DB_INTERNAL(&es_int);
 		if (db_get_external( &es_ext,
 		    hp->path.fp_names[hp->path.fp_len-1], dbip) < 0) return 0;
@@ -3318,7 +3319,7 @@ struct joint *jp;
 	/*
 	 * Build the base matrix.  Ident with translate back to origin.
 	 */
-	mat_idn(ANIM_MAT);
+	bn_mat_idn(ANIM_MAT);
 	MAT_DELTAS_VEC_NEG(ANIM_MAT, jp->location);
 
 	/*
@@ -3329,14 +3330,14 @@ struct joint *jp;
 		/*
 		 * Build a quat from that.
 		 */
-		tmp = (jp->rots[i].current * rt_degtorad)/2.0;
+		tmp = (jp->rots[i].current * bn_degtorad)/2.0;
 		VMOVE(q1, jp->rots[i].quat);
 		if (joint_debug & DEBUG_J_MOVE) {
 		  struct bu_vls tmp_vls;
 
 		  bu_vls_init(&tmp_vls);
 		  bu_vls_printf(&tmp_vls, "joint move: rotating %g around (%g %g %g)\n",
-				tmp*2*rt_radtodeg, q1[X], q1[Y], q1[Z]);
+				tmp*2*bn_radtodeg, q1[X], q1[Y], q1[Z]);
 		  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 		  bu_vls_free(&tmp_vls);
 		}
@@ -3351,8 +3352,8 @@ struct joint *jp;
 		 * Build matrix.
 		 */
 		quat_quat2mat(m2,q1);
-		mat_copy(m1, ANIM_MAT);
-		mat_mul(ANIM_MAT, m2, m1);
+		bn_mat_copy(m1, ANIM_MAT);
+		bn_mat_mul(ANIM_MAT, m2, m1);
 		/*
 		 * rmult matrix into the mat we are building.
 		 */
@@ -3366,7 +3367,7 @@ struct joint *jp;
 		 * build matrix.
 		 */
 		tmp = jp->dirs[i].current;
-		mat_idn(m2);
+		bn_mat_idn(m2);
 		MAT_DELTAS(m2, jp->dirs[i].unitvec[X]*tmp,
 		    jp->dirs[i].unitvec[Y]*tmp,
 		    jp->dirs[i].unitvec[Z]*tmp);
@@ -3380,18 +3381,18 @@ struct joint *jp;
 		  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 		  bu_vls_free(&tmp_vls);
 		}
-		mat_copy(m1, ANIM_MAT);
-		mat_mul(ANIM_MAT, m2, m1);
+		bn_mat_copy(m1, ANIM_MAT);
+		bn_mat_mul(ANIM_MAT, m2, m1);
 	}
 	/*
 	 * Now move the whole thing back to original location.
 	 */
-	mat_idn(m2);
+	bn_mat_idn(m2);
 	MAT_DELTAS_VEC(m2, jp->location);
-	mat_copy(m1, ANIM_MAT);
-	mat_mul(ANIM_MAT,m2,m1);
+	bn_mat_copy(m1, ANIM_MAT);
+	bn_mat_mul(ANIM_MAT,m2,m1);
 	if (joint_debug & DEBUG_J_MOVE) {
-		mat_print("joint move: ANIM_MAT", ANIM_MAT);
+		bn_mat_print("joint move: ANIM_MAT", ANIM_MAT);
 	}
 }
 int
@@ -3555,7 +3556,7 @@ struct db_full_path	*pathp;
 HIDDEN union tree *mesh_leaf( tsp, pathp, ep, id)
 struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
-struct rt_external	*ep;
+struct bu_external	*ep;
 int			id;
 {
 	struct	rt_db_internal	internal;
