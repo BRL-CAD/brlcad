@@ -22,6 +22,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
+#include <ctype.h>
 #include <gl.h>
 #include <gl2/immed.h>
 #undef RED
@@ -199,6 +200,8 @@ register RGBpixel	*pixelp;
 	rgb_table[i][GRN] = g; \
 	rgb_table[i][BLU] = b; }
 
+#define if_mode		u1.l		/* Local flag for mode */
+
 _LOCAL_ int
 sgw_dopen( ifp, file, width, height )
 FBIO	*ifp;
@@ -206,6 +209,12 @@ char	*file;
 int	width, height;
 {	register Colorindex i;
 
+	if( file != NULL )  {
+		register char *cp;
+		/* "/dev/sgiw###" gives optional mode */
+		for( cp = file; *cp != NULL && !isdigit(*cp); cp++ ) ;
+		sscanf( cp, "%d", &ifp->if_mode );
+	}
 	if ( width > ifp->if_max_width - 2 * MARGIN) 
 		width = ifp->if_max_width - 2 * MARGIN;
 
@@ -239,14 +248,18 @@ int	width, height;
 	SET( 6, 000, 255, 000 );	/* CYAN */
 	SET( 7, 255, 255, 255 );	/* WHITE */
 
-#if MAP_PREALLOCATED
-	for( i = MAP_RESERVED; i < MAP_SIZE; i++ )
-		mapcolor( 	i,
-				(short)((i % 10) + 1) * 25,
-				(short)(((i / 10) % 10) + 1) * 25,
-				(short)((i / 100) + 1) * 25
-				);
-#endif
+	/* Mode 0 builds color map on the fly */
+	if( ifp->if_mode )
+		{
+		/* Mode 1 uses fixed color map */
+		for( i = MAP_RESERVED; i < MAP_SIZE; i++ )
+			mapcolor( 	i,
+					(short)((i % 10) + 1) * 25,
+					(short)(((i / 10) % 10) + 1) * 25,
+					(short)((i / 100) + 1) * 25
+					);
+		}
+
 	singlebuffer();
 	gconfig();		/* Must be called after singlebuffer().	*/
 
@@ -333,21 +346,24 @@ int	count;
 			}
 		for( i = 0; i < scan_count; i++, pixelp++) 
 			{
-#if MAP_PREALLOCATED
-			(*pixelp)[RED] =   (colors[i] % 10 + 1) * 25;
-			colors[i] /= 10;
-			(*pixelp)[GRN] = (colors[i] % 10 + 1) * 25;
-			colors[i] /= 10;
-			(*pixelp)[BLU] =  (colors[i] % 10 + 1) * 25;
-#else
-				register int	ci = colors[i];
-			if( ci < rgb_ct )
+			if( ifp->if_mode )
 				{
-				COPYRGB( *pixelp, rgb_table[ci]);
+				(*pixelp)[RED] =   (colors[i] % 10 + 1) * 25;
+				colors[i] /= 10;
+				(*pixelp)[GRN] = (colors[i] % 10 + 1) * 25;
+				colors[i] /= 10;
+				(*pixelp)[BLU] =  (colors[i] % 10 + 1) * 25;
 				}
 			else
-				(*pixelp)[RED] = (*pixelp)[GRN] = (*pixelp)[BLU] = 0;
-#endif
+				{
+				register int	ci = colors[i];
+				if( ci < rgb_ct )
+					{
+					COPYRGB( *pixelp, rgb_table[ci]);
+					}
+				else
+					(*pixelp)[RED] = (*pixelp)[GRN] = (*pixelp)[BLU] = 0;
+				}
 			}
 		count -= scan_count;
 		x = 0;
@@ -388,13 +404,14 @@ int	count;
 				i -= chunk;
 				for( ; chunk > 0; chunk--, pixelp++ )
 					{
-#if MAP_PREALLOCATED
-					colori =  ((*pixelp)[RED]/26);
-					colori += ((*pixelp)[GRN]/26) * 10;
-					colori += ((*pixelp)[BLU]/26) * 100;
-#else
-					colori = get_Color_Index( pixelp );
-#endif
+					if( ifp->if_mode )
+						{
+						colori =  ((*pixelp)[RED]/26);
+						colori += ((*pixelp)[GRN]/26) * 10;
+						colori += ((*pixelp)[BLU]/26) * 100;
+						}
+					else
+						colori = get_Color_Index( pixelp );
 					hole->s = colori;
 					}
 				}
@@ -406,13 +423,15 @@ int	count;
 					register Coord	r = x + xzoom - 1,
 							t = ypos - yzoom + 1;
 				CMOV2S( hole, x, ypos );
-#if MAP_PREALLOCATED
-				col =  ((*pixelp)[RED]/26);
-				col += ((*pixelp)[GRN]/26) * 10;
-				col += ((*pixelp)[BLU]/26) * 100;
-#else
-				col = get_Color_Index( pixelp );
-#endif
+				if( ifp->if_mode )
+					{
+					col =  ((*pixelp)[RED]/26);
+					col += ((*pixelp)[GRN]/26) * 10;
+					col += ((*pixelp)[BLU]/26) * 100;
+					}
+				else
+					col = get_Color_Index( pixelp );
+
 				color( col );
 				im_rectf( (Coord)x, (Coord)ypos, r, t );
 				x += xzoom;
