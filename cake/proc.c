@@ -10,6 +10,9 @@ rcs_id[] = "$Header$";
 #include	<errno.h>
 #include	<signal.h>
 #include	<fcntl.h>
+#if defined(vax) && defined(BSD)
+# undef BSD	/* is defined in sys/param.h */
+#endif
 #include	<sys/param.h>
 
 extern	List	*active_procs;		/* of Proc	*/
