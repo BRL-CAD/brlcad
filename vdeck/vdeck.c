@@ -1317,7 +1317,8 @@ register char *prefix;
 
 	/*  Build the whole card deck.	*/
 	/*  '1' indicates one CPU.  This code isn't ready for parallelism */
-	if( db_walk_tree( dbip, curr_ct, curr_list, 1, &rt_initial_tree_state,
+	if( db_walk_tree( dbip, curr_ct, (CONST char **)curr_list,
+	    1, &rt_initial_tree_state,
 	    0, region_end, gettree_leaf ) < 0 )  {
 		fprintf(stderr,"Unable to treewalk any trees!\n");
 	    	exit(11);
