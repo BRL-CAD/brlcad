@@ -110,6 +110,7 @@ CONST struct face	*f2;
 		got_three = 0;
 		for( RT_LIST_FOR( eu1, edgeuse, &lu1->down_hd ) )  {
 			nverts++;
+			NMG_CK_EDGE_G_LSEG(eu1->g.lseg_p);
 			if( !magic1 )  {
 				magic1 = eu1->g.magic_p;
 			} else if( !magic2 )  {
@@ -117,7 +118,8 @@ CONST struct face	*f2;
 					magic2 = eu1->g.magic_p;
 				}
 			} else {
-				if( eu1->g.magic_p != magic1 && eu1->g.magic_p != magic2 )  {
+				if( eu1->g.magic_p != magic1 &&
+				    eu1->g.magic_p != magic2 )  {
 					got_three = 1;
 				}
 			}
@@ -662,8 +664,8 @@ CONST struct rt_tol	*tol;
 {
 	register struct face_g_plane	*fg1;
 	register struct face_g_plane	*fg2;
-	FAST fastf_t		dist;
 	int			flip2 = 0;
+	int			code;
 
 	NMG_CK_FACE(f1);
 	NMG_CK_FACE(f2);
@@ -706,73 +708,27 @@ CONST struct rt_tol	*tol;
 			rt_log("nmg_two_face_fuse(x%x, x%x) faces have a common loop, they MUST be fused.  flip2=%d\n",
 				f1, f2, flip2);
 		}
+rt_log("common_bigloop says 'fuse'.\n");
 		goto must_fuse;
 	}
 
-	/* Compare distances from origin */
-	dist = fg1->N[3] - fg2->N[3];
-	if( !NEAR_ZERO(dist, tol->dist) )  {
-		/* How about with reversed normal? */
-		dist = fg1->N[3] + fg2->N[3];
-		if( !NEAR_ZERO(dist, tol->dist) )  {
-			if (rt_g.NMG_debug & DEBUG_MESH)  {
-				rt_log("nmg_two_face_fuse(x%x, x%x) delta dist from origin=%g \n",
-					f1, f2, dist);
-				PLPRINT(" fg1", fg1->N);
-				PLPRINT(" fg2", fg2->N);
-			}
-			return 0;
+	/* See if faces are coplanar */
+	code = rt_coplanar( fg1->N, fg2->N, tol );
+	if( code <= 0 )  {
+		if (rt_g.NMG_debug & DEBUG_MESH)  {
+			rt_log("nmg_two_face_fuse(x%x, x%x) faces non-coplanar\n",
+				f1, f2);
 		}
-		/* Dist matches, how about direction?
-		 * Dot will be -1 if dirs are opposite.
-		 */
-		dist = -VDOT( fg1->N, fg2->N );
-		if( !(dist >= tol->para) )  {
-			if (rt_g.NMG_debug & DEBUG_MESH)  {
-				rt_log("nmg_two_face_fuse(x%x, x%x) A vdot=%g, tol=%g \n",
-					f1, f2, dist, tol->para);
-				PLPRINT(" fg1", fg1->N);
-				PLPRINT(" fg2", fg2->N);
-			}
-			return 0;
-		}
-
-		/* Geometric match, with flipped signs */
-		flip2 = 1;
-	} else {
-		/* Dist matches, how about direction?
-		 * Dot will be +1 if dirs are the same.
-		 */
-		dist = VDOT( fg1->N, fg2->N );
-		if( !(dist >= tol->para) )  {
-			if( NEAR_ZERO( fg1->N[3], tol->dist ) )  {
-				/* Plane runs through origin, need to check both signs */
-				if( !(-dist >= tol->para) )  {
-					if (rt_g.NMG_debug & DEBUG_MESH)  {
-						rt_log("nmg_two_face_fuse(x%x, x%x) B vdot=%g, tol=%g \n",
-							f1, f2, dist, tol->para);
-						PLPRINT(" fg1", fg1->N);
-						PLPRINT(" fg2", fg2->N);
-					}
-					return 0;
-				}
-				/* Geometric match, with flipped signs */
-				flip2 = 1;
-			} else {
-				if (rt_g.NMG_debug & DEBUG_MESH)  {
-					rt_log("nmg_two_face_fuse(x%x, x%x) C vdot=%g, tol=%g \n",
-						f1, f2, dist, tol->para);
-					PLPRINT(" fg1", fg1->N);
-					PLPRINT(" fg2", fg2->N);
-				}
-				return 0;
-			}
-		} else {
-			/* Geometric match, same sign */
-		}
+		return 0;
 	}
+	if( code == 1 )
+		flip2 = 0;
+	else
+		flip2 = 1;
+
 	if (rt_g.NMG_debug & DEBUG_MESH)  {
-		rt_log("nmg_two_face_fuse: plane eqns match, flip2=%d\n", flip2);
+		rt_log("nmg_two_face_fuse(x%x, x%x) coplanar faces, rt_coplanar code=%d, flip2=%d\n",
+			f1, f2, code, flip2);
 	}
 
 	/*
