@@ -698,7 +698,6 @@ CONST struct rt_tol	*tol;
 {
 	int		hitcount = 0;
 	int		stat;
-	fastf_t 	dist;
 	point_t 	plane_pt;
 	CONST struct faceuse	*fu;
 	struct model	*m;
@@ -755,7 +754,7 @@ retry:
 
 		/* See if this point lies on this face */
 		NMG_GET_FU_PLANE( n, fu );
-		if( (dist = fabs(DIST_PT_PLANE(pt, n))) < tol->dist)  {
+		if( (fabs(DIST_PT_PLANE(pt, n))) < tol->dist)  {
 			/* Point lies on this plane, it may be possible to
 			 * short circuit everything.
 			 */
