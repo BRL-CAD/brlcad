@@ -33,3 +33,12 @@ btclsh_LDADD = \
 	${LIBRT} \
 	${ITCL_LIBS} \
 	${TERMIO}
+
+# hack to work around the irix compiler crashing on the libtool btclsh
+# relink attempt when we get to tclscripts.
+.libs/lt-btclsh: btclsh
+	@if test -f "$(top_builddir)/src/bwish/.libs/btclsh" ; then \
+		$(CP) $(top_builddir)/src/bwish/.libs/btclsh $(top_builddir)/src/bwish/.libs/lt-btclsh ; \
+	fi
+
+all-am: .libs/lt-btclsh
