@@ -1982,59 +1982,19 @@ struct face_g_plane *fg_p;
 	int			pt_class;
 	plane_t			tol_norm;
 
-	/* perform the geometric intersection of the ray with the plane 
-	 * of the face.
+	/* the geometric intersection of the ray with the plane 
+	 * of the face has already been done by isect_ray_faceuse().
 	 */
 	NMG_GET_FU_PLANE( norm, fu_p );
-	code = bn_isect_line3_plane(&dist, rd->rp->r_pt, rd->rp->r_dir,
-			norm, rd->tol);
-
-
-	if (code < 0) {
-		/* ray is parallel to halfspace and (-1)inside or (-2)outside
-		 * the halfspace.
-		 */
-		if (rt_g.NMG_debug & DEBUG_RT_ISECT)
-			bu_log("\tray misses halfspace of plane\n");
-
-		GET_HITMISS(myhit);
-		NMG_INDEX_ASSIGN(rd->hitmiss, fu_p->f_p, myhit);
-		myhit->hit.hit_private = (genptr_t)fu_p->f_p;
-		BU_LIST_MAGIC_SET(&myhit->l, NMG_RT_MISS_MAGIC);
-		BU_LIST_INSERT(&rd->rd_miss, &myhit->l);
-#ifndef FAST_NMG
-		NMG_CK_HITMISS(myhit);
-#endif
-		return;
-	} else if (code == 0) {
-		/* XXX gack!  ray lies in plane.  
-		 * In leiu of doing 2D intersection we define such rays
-		 * as "missing" the face.  We rely on other faces to generate
-		 * hit points.
-		 */
-#if 0
-		bu_log("\tWarning:  Ignoring ray in plane of face (NOW A MISS) XXX\n");
-#endif
-		GET_HITMISS(myhit);
-		NMG_INDEX_ASSIGN(rd->hitmiss, fu_p->f_p, myhit);
-		myhit->hit.hit_private = (genptr_t)fu_p->f_p;
-		BU_LIST_MAGIC_SET(&myhit->l, NMG_RT_MISS_MAGIC);
-		BU_LIST_INSERT(&rd->rd_miss, &myhit->l);
-#ifndef FAST_NMG
-		NMG_CK_HITMISS(myhit);
-#endif
-
-		return;
-	}
-
 
 	/* ray hits plane:
 	 *
-	 * Compute the ray/plane intersection point.
+	 * Get the ray/plane intersection point.
 	 * Then compute whether this point lies within the area of the face.
 	 */
 
-	VJOIN1(plane_pt, rd->rp->r_pt, dist, rd->rp->r_dir);
+	VMOVE(plane_pt, rd->plane_pt )
+	dist = rd->ray_dist_to_plane;
 
 	if (DIST_PT_PLANE(plane_pt, norm) > rd->tol->dist) {
 		bu_log("%s:%d plane_pt (%g %g %g) @ dist (%g)out of tolerance\n",
@@ -2166,6 +2126,8 @@ struct faceuse *fu_p;
 {
 
 	struct hitmiss		*myhit;
+	struct face		*fp;
+	struct face_g_plane	*fgp;
 
 	if (fu_p->orientation == OT_OPPOSITE) return;
 
@@ -2175,12 +2137,12 @@ struct faceuse *fu_p;
 
 	NMG_CK_FACEUSE(fu_p);
 	NMG_CK_FACEUSE(fu_p->fumate_p);
-	NMG_CK_FACE(fu_p->f_p);
-	NMG_CK_FACE_G_PLANE(fu_p->f_p->g.plane_p);
+	fp = fu_p->f_p;
+	NMG_CK_FACE(fp);
 
 
 	/* if this face already processed, we are done. */
-	if (myhit = NMG_INDEX_GET(rd->hitmiss, fu_p->f_p)) {
+	if (myhit = NMG_INDEX_GET(rd->hitmiss, fp)) {
 		if (BU_LIST_MAGIC_OK((struct bu_list *)myhit,
 		    NMG_RT_HIT_MAGIC)) {
 			if (rt_g.NMG_debug & DEBUG_RT_ISECT)
@@ -2204,7 +2166,53 @@ struct faceuse *fu_p;
 
 
 	/* bounding box intersection */
-	if (!rt_in_rpp(rd->rp, rd->rd_invdir,
+	if( *fp->g.magic_p == NMG_FACE_G_PLANE_MAGIC )
+	{
+		int code;
+		fastf_t dist;
+		point_t hit_pt;
+		point_t min,max;
+
+		fgp = fu_p->f_p->g.plane_p;
+		NMG_CK_FACE_G_PLANE(fgp);
+
+		code = bn_isect_line3_plane( &dist, rd->rp->r_pt, rd->rp->r_dir, fgp->N, rd->tol );
+		if( code < 1 )
+		{
+			GET_HITMISS(myhit);
+			NMG_INDEX_ASSIGN(rd->hitmiss, fu_p->f_p, myhit);
+			myhit->hit.hit_private = (genptr_t)fu_p->f_p;
+			BU_LIST_MAGIC_SET(&myhit->l, NMG_RT_MISS_MAGIC);
+			BU_LIST_INSERT(&rd->rd_miss, &myhit->l);
+#ifndef FAST_NMG
+		    	NMG_CK_HITMISS(myhit);
+#endif
+
+			if (rt_g.NMG_debug & DEBUG_RT_ISECT)
+				bu_log("missed bounding box\n");
+			return;
+		}
+		VJOIN1( hit_pt, rd->rp->r_pt, dist, rd->rp->r_dir )
+		if( !V3PT_IN_RPP( hit_pt, fp->min_pt, fp->max_pt ) )
+		{
+			GET_HITMISS(myhit);
+			NMG_INDEX_ASSIGN(rd->hitmiss, fu_p->f_p, myhit);
+			myhit->hit.hit_private = (genptr_t)fu_p->f_p;
+			BU_LIST_MAGIC_SET(&myhit->l, NMG_RT_MISS_MAGIC);
+			BU_LIST_INSERT(&rd->rd_miss, &myhit->l);
+#ifndef FAST_NMG
+		    	NMG_CK_HITMISS(myhit);
+#endif
+
+			if (rt_g.NMG_debug & DEBUG_RT_ISECT)
+				bu_log("hit point not within face bounding box\n");
+			return;
+		}
+
+		VMOVE( rd->plane_pt, hit_pt )
+		rd->ray_dist_to_plane = dist;
+	}
+	else if (!rt_in_rpp(rd->rp, rd->rd_invdir,
 	    fu_p->f_p->min_pt, fu_p->f_p->max_pt) ) {
 		GET_HITMISS(myhit);
 		NMG_INDEX_ASSIGN(rd->hitmiss, fu_p->f_p, myhit);
