@@ -1,0 +1,82 @@
+-*- Text -*-
+Utah Raster Toolkit 3.1 alpha distribution.
+-----------------------------------
+
+Changed configuration variable SYS_TIME_H to USE_TIME_H.  The sense is
+reversed: if you previously #defined SYS_TIME_H, you should now NOT
+define USE_TIME_H.  And vice-versa.
+
+------------------------------------
+See 'CHANGES.raw' for the unedited list of checkin messages.
+
+-----------------------------------
+rle_hdr struct now has too much state, decided to treat it more as an
+"object", with init, copy functions.  This means that stuff referred
+to by pointers in the header is no longer shared after copying a
+header, and is safe to free or reuse.  The programming discipline is a
+little harder, and some programs depended on sharing structure (I
+probably haven't found all of these).
+
+One benefit made possible by this change is that the file name and
+program name are now stored in the header, so error messages can be a
+little more meaningful.  See rle_names().  If you have called
+rle_names(), then the last two arguments to rle_get_setup_ok are
+ignored and can be NULLed.
+
+Updating to use the rle_hdr "object".
+
+1. All rle_hdrs should be initialized by calling rle_hdr_init:
+	rle_hdr	in_hdr, out_hdr;
+	in_hdr = *rle_hdr_init( (rle_hdr *)0 );
+	out_hdr = *rle_hdr_init( (rle_hdr *)0 );
+-> Search for all header declarations and insert these statements in the code
+   immediately following.  If you use rle_dflt_hdr, switch to using a
+   separately declared rle_hdr.
+
+2. Instead of copying one header to another by assignment, use rle_hdr_cp:
+	(void)rle_hdr_cp( &in_hdr, &out_hdr );
+-> If you followed our naming scheme (all header variables end with
+   _hdr), you can search for the regular expression '_hdr *=' to find
+   all header assignments.
+
+3. Call rle_names shortly before or after opening the file.  The command and
+   file name will be used in error messages printed by the library.
+	rle_names( &in_hdr, cmd_name( argv ), infname, 0 );
+	rle_names( &out_hdr, in_hdr.cmd, outfname, 0 );
+	in_hdr.rle_file = rle_open_f( in_hdr.cmd, infname, "r" );
+   Once set, the file and command names are not changed by rle_hdr_cp (so
+   copying in_hdr to out_hdr as above will not change the registered output
+   file name).
+-> Search for all instances of rle_open_f.  Insert the call to
+   rle_names immediately after it.  If you have only a single output file,
+   you may wish to add names to the output header right after you open
+   the input file.
+
+The library has safety checks, so that using unitialized headers
+should still be safe (for backwards compatibility).  There is a 1 in
+2^32 chance of a bomb.
+
+----------------------------------
+File changes
+
+Removed getmac.  Superseded by cnv/rlepict (should this be in get/?)
+Alias image conversions (#define ALIAS), aliastorle and rletoalias.
+RLE to CGM conversion (#define CGM), rletocgm.
+RLE to TARGA (already had TARGA to RLE), rletotarga.
+SGI image format conversions (#define SGICONV), rletoiris and iristorle.
+VICAR image conversions (#define VICAR), rletovcr and vcrtorle.
+A NeXT viewer in get/next (#define NEXT), RLEViewer.
+An Amiga viewer in get/getami (#define AMIGA), getami and show3.
+A viewer to display on a Mac via NCSA telnet (#define GETICR), geticr.
+Tools to generate a color cube (rleccube), a grid (rlegrid), and to
+interpolate between two images (rleinterp).
+
+-----------------------------------
+Man pages are generally not up to date.
+
+-----------------------------------
+
+Some programs have not been compiled, as I don't have access to the
+right machines.  I have not linted or 'gcc -ansi' checked the code
+yet. 
+
