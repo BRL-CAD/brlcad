@@ -1149,7 +1149,8 @@ register union tree *tp;
 	/* Determine material properties */
 	regp->reg_mfuncs = MF_NULL;
 	regp->reg_udata = (char *)0;
-	rt_region_color_map(regp);
+	if( regp->reg_mater.ma_override == 0 )
+		rt_region_color_map(regp);
 
 	regp->reg_bit = rtip->nregions;	/* Add to bit vectors */
 	/* Will be added to rtip->Regions[] in final prep stage */
