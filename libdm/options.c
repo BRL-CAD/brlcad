@@ -1,3 +1,25 @@
+/*
+ *				O P T I O N S . C
+ *
+ * Option processing routines.
+ * 
+ * Source -
+ *	SLAD CAD Team
+ *	The U. S. Army Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005
+ *
+ * Author -
+ *	Robert G. Parker
+ *
+ *  Distribution Notice -
+ *	Re-distribution of this software is restricted, as described in
+ *	your "Statement of Terms and Conditions for the Release of
+ *	The BRL-CAD Package" agreement.
+ *
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1999 by the United States Army
+ *	in all countries except the USA.  All rights reserved.
+ */
 #include "conf.h"
 
 #include "tk.h"
