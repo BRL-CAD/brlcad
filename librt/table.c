@@ -250,6 +250,10 @@ BU_EXTERN(int rt_bot_tclget, (Tcl_Interp *interp,
 BU_EXTERN(int rt_bot_tcladjust, (Tcl_Interp *interp,
 		struct rt_db_internal *intern, int argc, char **argv));
 
+/* SKETCH */
+BU_EXTERN(int rt_sketch_tclget, (Tcl_Interp *interp,
+		CONST struct rt_db_internal *intern, CONST char *attr));
+
 /* XXX from shoot.c / vshoot.c */
 RT_EXTERN(void rt_vstub, (struct soltab *stp[], struct xray *rp[],
 	struct seg segp[], int n, struct application *ap ));
@@ -631,12 +635,12 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 		rt_sketch_import, rt_sketch_export, rt_sketch_ifree,
 		rt_sketch_describe,rt_sketch_xform, NULL,
 		sizeof(struct rt_sketch_internal), RT_SKETCH_INTERNAL_MAGIC,
-		rt_parsetab_tclget, rt_parsetab_tcladjust, rt_parsetab_tclform,
+		rt_sketch_tclget, rt_parsetab_tcladjust, rt_parsetab_tclform,
 		NULL,
 	},
 
 	{RT_FUNCTAB_MAGIC, "ID_EXTRUDE", "extrude",
-		0,		/* 27 Solid of extrusion */
+		1,		/* 27 Solid of extrusion */
 		rt_extrude_prep,	rt_extrude_shot,	rt_extrude_print,	rt_extrude_norm,
 		rt_extrude_uv,		rt_extrude_curve,	rt_extrude_class,	rt_extrude_free,
 		rt_extrude_plot,	rt_extrude_vshot,	rt_extrude_tess,	rt_nul_tnurb,

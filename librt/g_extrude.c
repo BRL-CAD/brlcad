@@ -57,87 +57,35 @@ static char RCSextrude[] = "@(#)$Header$ (BRL)";
 BU_EXTERN( struct rt_sketch_internal *rt_copy_sketch, (CONST struct rt_sketch_internal *sketch_ip ) );
 
 struct extrude_specific {
-	fastf_t mag_h;
+	mat_t rot, irot;	/* rotation and translation to get extrsuion vector in +z direction with V at origin */
+	vect_t unit_h;		/* unit vector in direction of extrusion vector */
+	vect_t u_vec;		/* u vector rotated and projected */
+	vect_t v_vec;		/* v vector rotated and projected */
+	vect_t rot_axis;	/* axis of rotation for rotation matrix */
+	vect_t perp;		/* vector in pl1_rot plane and normal to rot_axis */
+	plane_t pl1, pl2;	/* plane equations of the top and bottom planes (not rotated) */
+	plane_t pl1_rot;	/* pl1 rotated by rot */
+	point_t *verts;		/* sketch vertices projected onto a plane normal to extrusion vector */
+	struct curve crv;	/* copy of the referenced curve */
 };
 
-/*
- *			R T _ E X T R _ R O T A T E
- *
- *			(copied from rt_tgc_rotate)
- *
- *  To rotate vectors  A  and  B  ( where  A  is perpendicular to  B )
- *  to the X and Y axes respectively, create a rotation matrix
- *
- *	    | A' |
- *	R = | B' |
- *	    | C' |
- *
- *  where  A',  B'  and  C'  are vectors such that
- *
- *	A' = A/|A|	B' = B/|B|	C' = C/|C|
- *
- *  where    C = H - ( H.A' )A' - ( H.B' )B'
- *
- *  The last operation ( Gram Schmidt method ) finds the component
- *  of the vector  H  perpendicular  A  and to  B.  This is, therefore
- *  the normal for the base and top of the extrusion.
- */
-static void
-rt_extr_rotate( eip, Rot, Inv  )
-CONST struct rt_extrude_internal *eip;
-mat_t		Rot, Inv;
-{
-	LOCAL vect_t	uA, uB, uC;	/*  unit vectors		*/
-	LOCAL fastf_t	mag_ha,		/*  magnitude of H in the	*/
-			mag_hb;		/*    A and B directions	*/
-	LOCAL mat_t	tmp_mat1, tmp_mat2;
-	LOCAL vect_t	tmp_h;
+static struct bn_tol extr_tol={			/* a fake tolerance structure for the intersection routines */
+	BN_TOL_MAGIC,
+	RT_LEN_TOL,
+	RT_LEN_TOL*RT_LEN_TOL,
+	0.0,
+	1.0};
 
-	/* copy A and B, then 'unitize' the results			*/
-	VMOVE( uA, eip->u_vec );
-	VUNITIZE( uA );
-	VMOVE( uB, eip->v_vec );
-	VUNITIZE( uB );
+#define MAX_HITS 64
 
-	/*  Find component of H in the A direction			*/
-	mag_ha = VDOT( eip->h, uA );
-	/*  Find component of H in the B direction			*/
-	mag_hb = VDOT( eip->h, uB );
+/* defines for surf_no in the hit struct (a negative surf_no indicates an exit point) */
+#define TOP_FACE	1	/* extruded face */
+#define BOTTOM_FACE	2	/* face in uv-plane */
+#define LINE_SEG	3
+#define CARC_SEG	4
+#define NURB_SEG	5
 
-	/*  Subtract the A and B components of H to find the component
-	 *  perpendicular to both, then 'unitize' the result.
-	 */
-	VJOIN2( uC, eip->h, -mag_ha, uA, -mag_hb, uB );
-	VUNITIZE( uC );
-
-	bn_mat_idn( Rot );
-	bn_mat_idn( Inv );
-	bn_mat_idn( tmp_mat1 );
-	bn_mat_idn( tmp_mat2 );
-
-	tmp_mat1[0] = uA[X];
-	tmp_mat1[1] = uA[Y];
-	tmp_mat1[2] = uA[Z];
-
-	tmp_mat1[4] = uB[X];
-	tmp_mat1[5] = uB[Y];
-	tmp_mat1[6] = uB[Z];
-
-	tmp_mat1[8]  = uC[X];
-	tmp_mat1[9]  = uC[Y];
-	tmp_mat1[10] = uC[Z];
-
-	MAT_DELTAS_VEC_NEG( Rot, eip->V )
-	bn_mat_mul2( tmp_mat1, Rot );
-
-	MAT4X3VEC( tmp_h, Rot, eip->h );
-
-	tmp_mat2[2] = tmp_h[X]/tmp_h[Z];
-	tmp_mat2[6] = tmp_h[Y]/tmp_h[Z];
-
-	bn_mat_mul2( tmp_mat2, Rot );
-
-}
+#define DEBUG	0
 
 /*
  *  			R T _ E X T R U D E _ P R E P
@@ -162,28 +110,215 @@ struct rt_i		*rtip;
 {
 	struct rt_extrude_internal *eip;
 	register struct extrude_specific *extr;
-	LOCAL mat_t	Rot, iRot;
-	LOCAL point_t	tmp_pt;
+	struct rt_sketch_internal *skt;
+	LOCAL vect_t tmp, tmp2;
+	fastf_t tmp_f;
+	int i, curve_no;
+	int vert_count;
+	int curr_vert;
 	
 	eip = (struct rt_extrude_internal *)ip->idb_ptr;
 	RT_EXTRUDE_CK_MAGIC( eip );
+	skt = eip->skt;
+	RT_SKETCH_CK_MAGIC( skt );
+
+	/* find referenced curve */
+	curve_no = -1;
+	for( i=0 ; i<skt->curve_count ; i++ )
+	{
+		if( !strcmp( skt->curves[i].crv_name, eip->curve_name ) )
+		{
+			curve_no = i;
+			break;
+		}
+	}
+
+	if( curve_no < 0 )
+	{
+		bu_log( "ERROR: rt_extrude_prep(): solid (%s) references non-existent curve (%s) in sketch (%s)\n",
+			stp->st_dp->d_namep, eip->curve_name, eip->sketch_name );
+		return( -1 );	/* failure */
+	}
 
 	BU_GETSTRUCT( extr, extrude_specific );
 	stp->st_specific = (genptr_t)extr;
 
-	rt_extr_rotate( eip, Rot, iRot );
-	bn_mat_print( "extrude rotation", Rot );
+	VMOVE( extr->unit_h, eip->h );
+	VUNITIZE(extr->unit_h );
 
-	MAT4X3PNT( tmp_pt, Rot, eip->V );
-	VPRINT( "original Vertex:", eip->V );
-	VPRINT( "rotated vertex:", tmp_pt );
-	MAT4X3VEC( tmp_pt, Rot, eip->h );
-	VPRINT( "orinal height:", eip->h );
-	VPRINT( "rotated height:", tmp_pt );
-	MAT4X3VEC( tmp_pt, Rot, eip->u_vec );
-	VPRINT( "rotated u_vec:", tmp_pt );
-	MAT4X3VEC( tmp_pt, Rot, eip->v_vec );
-	VPRINT( "rotated v_vec:", tmp_pt );
+	/* build a transformation matrix to rotate extrusion vector to z-axis */
+	VSET( tmp, 0, 0, 1 )
+	bn_mat_fromto( extr->rot, eip->h, tmp );
+
+	/* and translate to origin */
+	extr->rot[MDX] = -VDOT( eip->V, &extr->rot[0] );
+	extr->rot[MDY] = -VDOT( eip->V, &extr->rot[4] );
+	extr->rot[MDZ] = -VDOT( eip->V, &extr->rot[8] );
+
+	/* and save the inverse */
+	bn_mat_inv( extr->irot, extr->rot );
+
+	tmp_f = VDOT( tmp, extr->unit_h );
+	if( tmp_f < 0.0 )
+		tmp_f = -tmp_f;
+	tmp_f -= 1.0;
+	if( NEAR_ZERO( tmp_f, SQRT_SMALL_FASTF ) )
+	{
+		VSET( extr->rot_axis, 1.0, 0.0, 0.0 );
+		VSET( extr->perp, 0.0, 1.0, 0.0 );
+	}
+	else
+	{
+		VCROSS( extr->rot_axis, tmp, extr->unit_h );
+		VUNITIZE( extr->rot_axis );
+		VCROSS( tmp2, tmp, extr->rot_axis );
+		MAT4X3VEC( extr->perp, extr->rot, tmp2 );
+		VUNITIZE( extr->perp );
+	}
+
+	/* calculate plane equations of top and bottom planes */
+	VCROSS( extr->pl1, eip->u_vec, eip->v_vec );
+	VUNITIZE( extr->pl1 )
+	extr->pl1[3] = VDOT( extr->pl1, eip->V );
+	VMOVE( extr->pl2, extr->pl1 );
+	VADD2( tmp, eip->V, eip->h );
+	extr->pl2[3] = VDOT( extr->pl2, tmp );
+
+	vert_count = skt->vert_count;
+	/* count how many additional vertices we will need for arc centers */
+	for( i=0 ; i<skt->curves[curve_no].seg_count ; i++ )
+	{
+		struct carc_seg *csg=(struct carc_seg *)skt->curves[curve_no].segments[i];
+
+		if( csg->magic != CURVE_CARC_MAGIC )
+			continue;
+
+		if( csg->radius <= 0.0 )
+			continue;
+
+		vert_count++;
+	}
+
+	/* apply the rotation matrix  to all the vertices */
+	extr->verts = (point_t *)bu_calloc( vert_count, sizeof( point_t ), "extr->verts" );
+	VSETALL( stp->st_min, MAX_FASTF );
+	VSETALL( stp->st_max, -MAX_FASTF );
+	for( i=0 ; i<skt->vert_count ; i++ )
+	{
+		VJOIN2( tmp, eip->V, skt->verts[i][0], eip->u_vec, skt->verts[i][1], eip->v_vec );
+		VMINMAX( stp->st_min, stp->st_max, tmp );
+		MAT4X3PNT( extr->verts[i], extr->rot, tmp );
+	}
+	curr_vert = skt->vert_count;
+
+	/* and the u,v vectors */
+	MAT4X3VEC( extr->u_vec, extr->rot, eip->u_vec );
+	MAT4X3VEC( extr->v_vec, extr->rot, eip->v_vec );
+
+	/* calculate the rotated pl1 */
+	VCROSS( extr->pl1_rot, extr->u_vec, extr->v_vec );
+	VUNITIZE( extr->pl1_rot );
+	extr->pl1_rot[3] = VDOT( extr->pl1_rot, extr->verts[0] );
+
+	/* copy the curve */
+	rt_copy_curve( &extr->crv, &skt->curves[curve_no] );
+
+	/* if any part of the curve is a circular arc, the arc may extend beyond the listed vertices */
+	for( i=0 ; i<skt->curves[curve_no].seg_count ; i++ )
+	{
+		struct carc_seg *csg=(struct carc_seg *)skt->curves[curve_no].segments[i];
+		struct carc_seg *csg_extr=(struct carc_seg *)extr->crv.segments[i];
+		point_t center;
+
+		if( csg->magic != CURVE_CARC_MAGIC )
+			continue;
+
+		if( csg->radius <= 0.0 )
+		{
+			point_t start;
+			fastf_t radius;
+
+			csg_extr->center = csg->end;
+			VJOIN2( start, eip->V, skt->verts[csg->start][0], eip->u_vec, skt->verts[csg->start][1], eip->v_vec );
+			VJOIN2( center, eip->V, skt->verts[csg->end][0], eip->u_vec, skt->verts[csg->end][1], eip->v_vec );
+			VSUB2( tmp, start, center );
+			radius = MAGNITUDE( tmp );
+			csg_extr->radius = -radius;	/* need the correct magnitude for normal calculation */
+			VJOIN1( tmp, center, radius, eip->u_vec );
+			VMINMAX( stp->st_min, stp->st_max, tmp );
+			VJOIN1( tmp, center, -radius, eip->u_vec );
+			VMINMAX( stp->st_min, stp->st_max, tmp );
+			VJOIN1( tmp, center, radius, eip->v_vec );
+			VMINMAX( stp->st_min, stp->st_max, tmp );
+			VJOIN1( tmp, center, -radius, eip->v_vec );
+			VMINMAX( stp->st_min, stp->st_max, tmp );
+		}
+		else
+		{
+			point_t start, end, mid;
+			vect_t s_to_m;
+			vect_t bisector;
+			fastf_t dist;
+			fastf_t magsq_s2m;
+
+			VJOIN2( start, eip->V, skt->verts[csg->start][0], eip->u_vec, skt->verts[csg->start][1], eip->v_vec );
+			VJOIN2( end, eip->V, skt->verts[csg->end][0], eip->u_vec, skt->verts[csg->end][1], eip->v_vec );
+			VBLEND2( mid, 0.5, start, 0.5, end );
+			VSUB2( s_to_m, mid, start );
+			VCROSS( bisector, extr->pl1, s_to_m );
+			VUNITIZE( bisector );
+			magsq_s2m = MAGSQ( s_to_m );
+			if( magsq_s2m >= csg->radius*csg->radius )
+			{
+				bu_log( "Impossible radius for circular arc (%s) in extrusion (%s)!!!\n", 
+						extr->crv.crv_name, stp->st_dp->d_namep );
+				return( -1 );
+			}
+			dist = sqrt( csg->radius*csg->radius - magsq_s2m );
+
+			/* save arc center */
+			if( csg->center_is_left )
+				VJOIN1( center, mid, dist, bisector )
+			else
+				VJOIN1( center, mid, -dist, bisector )
+			MAT4X3PNT( extr->verts[curr_vert], extr->rot, center );
+			csg_extr->center = curr_vert;
+			curr_vert++;
+
+			VJOIN1( tmp, center, csg->radius, eip->u_vec );
+			VMINMAX( stp->st_min, stp->st_max, tmp );
+			VJOIN1( tmp, center, -csg->radius, eip->u_vec );
+			VMINMAX( stp->st_min, stp->st_max, tmp );
+			VJOIN1( tmp, center, csg->radius, eip->v_vec );
+			VMINMAX( stp->st_min, stp->st_max, tmp );
+			VJOIN1( tmp, center, -csg->radius, eip->v_vec );
+			VMINMAX( stp->st_min, stp->st_max, tmp );
+		}
+	}
+
+	VADD2( tmp, stp->st_min, eip->h );
+	VADD2( tmp2, stp->st_max, eip->h );
+	VMINMAX( stp->st_min, stp->st_max, tmp );
+	VMINMAX( stp->st_min, stp->st_max, tmp2 );
+	VBLEND2( stp->st_center, 0.5, stp->st_min, 0.5, stp->st_max );
+	VSUB2( tmp, stp->st_max, stp->st_min );
+	stp->st_aradius = 0.5 * MAGNITUDE( tmp );
+	stp->st_bradius = stp->st_aradius;
+
+#if DEBUG
+	bn_mat_print( "Rotation matrix", extr->rot );
+	VPRINT( "extrusion vector", eip->h );
+	MAT4X3VEC( tmp, extr->rot, eip->h )
+	VPRINT( "         rotated", tmp );
+	VPRINT( "solid vertex", eip->V );
+	MAT4X3PNT( tmp, extr->rot, eip->V );
+	VPRINT( "     rotated", tmp );
+	VPRINT( "bounding box min", stp->st_min );
+	VPRINT( "bounding box max", stp->st_max );
+	VPRINT( "bounding sphere center", stp->st_center );
+	bu_log( "approximating sphere radius = %g\n", stp->st_aradius );
+	bu_log( "bounding sphere radius = %g\n", stp->st_bradius );
+#endif
 
 	return(0);              /* OK */
 }
@@ -195,6 +330,236 @@ void
 rt_extrude_print( stp )
 register CONST struct soltab *stp;
 {
+}
+
+int
+get_quadrant( v, local_x, local_y, vx, vy )
+vect_t local_x, local_y;
+point2d_t v;
+fastf_t *vx, *vy;
+{
+
+	*vx = V2DOT( v, local_x );
+	*vy = V2DOT( v, local_y );
+
+	if( *vy >= 0.0 )
+	{
+		if( *vx >= 0.0 )
+			return( 1 );
+		else
+			return( 2 );
+	}
+	else
+	{
+		if( *vx >= 0.0 )
+			return( 4 );
+		else
+			return( 3 );
+	}
+}
+
+int
+isect_line_earc( dist, ray_start, ray_dir, center, ra, rb, norm, start, end, orientation )
+fastf_t dist[2];
+point_t ray_start;
+vect_t ray_dir;
+point_t center, start, end;
+vect_t ra, rb, norm;
+int orientation;	/* 0 -> ccw, !0 -> cw */
+{
+	int dist_count;
+	vect_t local_x, local_y, local_z;
+	fastf_t vx, vy;
+	fastf_t ex, ey;
+	fastf_t sx, sy;
+	int quad_start, quad_end, quad_pt;
+	point2d_t to_pt, pt;
+	int i;
+
+	dist_count = isect_line2_ellipse( dist, ray_start, ray_dir, center, ra, rb);
+
+	if( dist_count == 0 )
+		return( 0 );
+
+	if( orientation )
+		VREVERSE( local_z, norm )
+	else
+		VMOVE( local_z, norm )
+
+	VMOVE( local_x, ra );
+
+	VCROSS( local_y, local_z, local_x );
+
+	V2SUB2( to_pt, end, center );
+	quad_end = get_quadrant( to_pt, local_x, local_y, &ex, &ey );
+	V2SUB2( to_pt, start, center );
+	quad_start = get_quadrant( to_pt, local_x, local_y, &sx, &sy );
+
+	i = 0;
+	while( i < dist_count )
+	{
+		int omit;
+
+		omit = 0;
+		V2JOIN1( pt, ray_start, dist[i], ray_dir );
+		V2SUB2( to_pt, pt, center );
+		quad_pt = get_quadrant( to_pt, local_x, local_y, &vx, &vy );
+
+		if( quad_start < quad_end )
+		{
+			if( quad_pt > quad_end )
+				omit = 1;
+			else if( quad_pt < quad_start )
+				omit = 1;
+			else if( quad_pt == quad_end )
+			{
+				switch( quad_pt )
+				{
+					case 1:
+					case 2:
+						if( vx < ex )
+							omit = 1;
+						break;
+					case 3:
+					case 4:
+						if( vx > ex )
+							omit = 1;
+						break;
+				}
+			}
+			else if( quad_pt == quad_start )
+			{
+				switch( quad_pt )
+				{
+					case 1:
+					case 2:
+						if( vx > sx )
+							omit = 1;
+						break;
+					case 3:
+					case 4:
+						if( vx < sx )
+							omit = 1;
+						break;
+				}
+			}
+		}
+		else if( quad_start > quad_end )
+		{
+			if( quad_pt > quad_end && quad_pt < quad_start )
+				omit = 1;
+			else if( quad_pt == quad_end )
+			{
+				switch( quad_pt )
+				{
+					case 1:
+					case 2:
+						if( vx < ex )
+							omit = 1;
+						break;
+					case 3:
+					case 4:
+						if( vx > ex )
+							omit = 1;
+						break;
+				}
+			}
+			else if( quad_pt == quad_start )
+			{
+				switch( quad_pt )
+				{
+					case 1:
+					case 2:
+						if( vx > sx )
+							omit = 1;
+						break;
+					case 3:
+					case 4:
+						if( vx < sx )
+							omit = 1;
+						break;
+				}
+			}
+		}
+		else		/* quad_start == quad_end */
+		{
+			if( quad_pt != quad_start )
+				omit = 1;
+			else
+			{
+				switch( quad_pt )
+				{
+					case 1:
+					case 2:
+						if( vx < ex || vx > sx )
+							omit = 1;
+						break;
+					case 3:
+					case 4:
+						if( vx > ex || vx < sx )
+							omit = 1;
+						break;
+				}
+			}
+		}
+		if( omit )
+		{
+			if( i == 0 )
+				dist[0] = dist[1];
+			dist_count--;
+		}
+		else
+			i++;
+	}
+
+	return( dist_count );
+}
+
+int
+isect_line2_ellipse( dist, ray_start, ray_dir, center, ra, rb )
+fastf_t dist[2];
+point_t ray_start, center;
+vect_t ray_dir, ra, rb;
+{
+	fastf_t a, b, c;
+	point2d_t pmc;
+	fastf_t pmcda, pmcdb;
+	fastf_t ra_sq, rb_sq;
+	fastf_t ra_4, rb_4;
+	fastf_t dda, ddb;
+	fastf_t disc;
+
+	V2SUB2( pmc, ray_start, center );
+	pmcda = V2DOT( pmc, ra );
+	pmcdb = V2DOT( pmc, rb );
+	ra_sq = V2DOT( ra, ra );
+	ra_4 = ra_sq * ra_sq;
+	rb_sq = V2DOT( rb, rb );
+	rb_4 = rb_sq * rb_sq;
+	if( ra_4 < SMALL_FASTF || rb_4 < SMALL_FASTF )
+		bu_bomb( "ERROR: isect_line2_ellipse: semi-axis length is too small!!!\n" );
+
+	dda = V2DOT( ray_dir, ra );
+	ddb = V2DOT( ray_dir, rb );
+
+	a = dda*dda/ra_4 + ddb*ddb/rb_4;
+	b = 2.0 * (pmcda*dda/ra_4 + pmcdb*ddb/rb_4);
+	c = pmcda*pmcda/ra_4 + pmcdb*pmcdb/rb_4 - 1.0;
+
+	disc = b*b - 4.0*a*c;
+
+	if( disc < 0.0 )
+		return( 0 );
+
+	if( disc == 0.0 )
+	{
+		dist[0] = -b/(2.0*a);
+		return( 1 );
+	}
+
+	dist[0] = (-b - sqrt( disc )) / (2.0*a);
+	dist[1] = (-b + sqrt( disc )) / (2.0*a);
+	return( 2 );
 }
 
 /*
@@ -215,7 +580,437 @@ register struct xray	*rp;
 struct application	*ap;
 struct seg		*seghead;
 {
-	return(0);			/* MISS */
+	struct extrude_specific *extr=(struct extrude_specific *)stp->st_specific;
+	register int i, j, k;
+	fastf_t dist_top, dist_bottom, to_bottom;
+	fastf_t dist[2];
+	fastf_t dot_pl1, dir_dot_z;
+	point_t tmp, tmp2;
+	point_t ray_start, ray_dir;	/* 2D */
+	struct curve *crv;
+	struct hit hits[MAX_HITS];
+	fastf_t dists_before[MAX_HITS];
+	fastf_t dists_after[MAX_HITS];
+	fastf_t *dists;
+	int dist_count;
+	int hit_count=0;
+	int hits_before_bottom=0, hits_after_top=0;
+	int code;
+	int check_inout=0;
+	int top_face=TOP_FACE, bot_face=BOTTOM_FACE;
+	int surfno;
+	int free_dists=0;
+
+	crv = &extr->crv;
+
+#if DEBUG
+bu_log( "in rt_extrude_shot: ray start = (%g %g %g), dir=(%g %g %g)\n", V3ARGS( rp->r_pt ), V3ARGS( rp->r_dir ) );
+#endif
+	/* intersect with top and bottom planes */
+	dot_pl1 = VDOT( rp->r_dir, extr->pl1 );
+	if( NEAR_ZERO( dot_pl1, SMALL_FASTF ) )
+	{
+		/* ray is parallel to top and bottom faces */
+		dist_bottom = DIST_PT_PLANE( rp->r_pt, extr->pl1 );
+		dist_top = DIST_PT_PLANE( rp->r_pt, extr->pl2 );
+#if DEBUG
+bu_log( "Ray is parallel to top and bottom faces\n" );
+bu_log( "\tdist_bottom=%g, dist_top = %g\n", dist_bottom, dist_top );
+#endif
+		if( dist_bottom < 0.0 && dist_top < 0.0 )
+			return( 0 );
+		if( dist_bottom > 0.0 && dist_top > 0.0 )
+			return( 0 );
+		dist_bottom = -MAX_FASTF;
+		dist_top = MAX_FASTF;
+	}
+	else
+	{
+		dist_bottom = -DIST_PT_PLANE( rp->r_pt, extr->pl1 )/dot_pl1;
+		to_bottom = dist_bottom;					/* need to remember this */
+		dist_top = -DIST_PT_PLANE( rp->r_pt, extr->pl2 )/dot_pl1;	/* pl1 and pl2 are parallel */
+		if( dist_bottom > dist_top )
+		{
+			fastf_t tmp1;
+
+			tmp1 = dist_bottom;
+			dist_bottom = dist_top;
+			dist_top = tmp1;
+			top_face = BOTTOM_FACE;
+			bot_face = TOP_FACE;
+		}
+#if DEBUG
+bu_log( "\tdist_bottom=%g, dist_top = %g\n", dist_bottom, dist_top );
+#endif
+	}
+
+	/* rotate ray */
+	MAT4X3PNT( ray_start, extr->rot, rp->r_pt );
+	MAT4X3VEC( ray_dir, extr->rot, rp->r_dir );
+#if DEBUG
+bu_log( "transformed ray: (%g %g %g), in dir (%g %g %g)\n", V3ARGS( ray_start ), V3ARGS( ray_dir ) );
+#endif
+
+	dir_dot_z = ray_dir[Z];
+	if( dir_dot_z < 0.0 )
+		dir_dot_z = -dir_dot_z;
+
+	if( NEAR_ZERO( dir_dot_z - 1.0, SMALL_FASTF ) )
+	{
+		/* ray is parallel to extrusion vector
+		 * set mode to just count intersections for Jordan Theorem
+		 */
+		check_inout = 1;
+
+		/* set the ray start to the intersection of the original ray and the base plane */
+		VJOIN1( tmp, rp->r_pt, to_bottom, rp->r_dir );
+		MAT4X3PNT( ray_start, extr->rot, tmp );
+
+		/* use the u vector as the ray direction */
+		VMOVE( ray_dir, extr->u_vec );
+#if DEBUG
+bu_log( "ray is parallel to extrusion vector, using pt=(%g %g %g), dir=(%g %g %g) to check in/out\n",
+V3ARGS( ray_start ), V3ARGS( ray_dir ) );
+#endif
+	}
+
+	/* intersect with projected curve */
+	for( i=0 ; i<crv->seg_count ; i++ )
+	{
+		long *lng=(long *)crv->segments[i];
+		struct line_seg *lsg;
+		struct carc_seg *csg;
+		fastf_t diff;
+
+		if( free_dists )
+			bu_free( (char *)dists, "dists" );
+
+		switch( *lng )
+		{
+			case CURVE_LSEG_MAGIC:
+				lsg = (struct line_seg *)lng;
+				VSUB2( tmp, extr->verts[lsg->end], extr->verts[lsg->start] );
+				VMOVE( tmp2, extr->verts[lsg->start] );
+				code = bn_isect_line2_line2( dist, ray_start, ray_dir, tmp2, tmp, &extr_tol );
+#if DEBUG
+bu_log( "Intersection line segment (%g %g %g)<->(%g %g %g)\n", V3ARGS( extr->verts[lsg->start] ), V3ARGS( extr->verts[lsg->end] ) );
+bu_log( "\tintersection code is %d, dist[0]=%g, dist[1]=%g\n", code, dist[0], dist[1] );
+#endif
+				if( code < 1 )
+					continue;
+
+				if( dist[1] > 1.0 || dist[1] < 0.0 )
+					continue;
+				dists = dist;
+				dist_count = 1;
+				free_dists = 0;
+				surfno = LINE_SEG;
+				break;
+			case CURVE_CARC_MAGIC:
+				/* circular arcs become elliptical arcs when projected in the XY-plane */
+				csg = (struct carc_seg *)lng;
+				{
+					vect_t ra, rb;
+					fastf_t radius;
+
+					if( csg->radius <= 0.0 )
+					{
+						/* full circle */
+						radius = -csg->radius;
+
+						/* build the ellipse */
+						VSCALE( ra, extr->rot_axis, radius );
+						VSCALE( rb, extr->perp, radius );
+
+						dist_count = isect_line2_ellipse( dist, ray_start, ray_dir, extr->verts[csg->end], ra, rb );
+						MAT4X3PNT( tmp, extr->irot, extr->verts[csg->end] ); /* used later in hit->vpriv */
+					}
+					else
+					{
+						VSCALE( ra, extr->rot_axis, csg->radius );
+						VSCALE( rb, extr->perp, csg->radius );
+						dist_count = isect_line_earc( dist, ray_start, ray_dir, extr->verts[csg->center], ra, rb, extr->pl1_rot, extr->verts[csg->start], extr->verts[csg->end], csg->orientation );
+						MAT4X3PNT( tmp, extr->irot, extr->verts[csg->center] ); /* used later in hit->vpriv */
+					}
+				}
+				if( dist_count < 1 )
+					continue;
+
+				dists = dist;
+				free_dists = 0;
+				surfno = CARC_SEG;
+				break;
+			case CURVE_NURB_MAGIC:
+				break;
+			default:
+				bu_log( "Unrecognized curve segment type in curve (%s) referenced by extrusion (%s)\n",
+					crv->crv_name, stp->st_dp->d_namep );
+				bu_bomb( "Unrecognized curve segment type in curve\n" );
+				break;
+		}
+
+		for( j=0 ; j<hit_count ; j++ )
+		{
+			k = 0;
+			while( k < dist_count )
+			{
+				diff = dists[k] - hits[j].hit_dist;
+				if( NEAR_ZERO( diff, extr_tol.dist ) )
+				{
+					int n;
+#if DEBUG
+bu_log( "\tskipping this intersection (same dist as a previous one)\n" );
+#endif
+					for( n=k ; n<dist_count-1 ; n++ )
+						dists[n] = dists[n+1];
+					dist_count--;
+				}
+				else
+					k++;
+			}
+		}
+		for( j=0 ; j<hits_before_bottom ; j++ )
+		{
+			k = 0;
+			while( k < dist_count )
+			{
+				diff = dists[k] - dists_before[j];
+				if( NEAR_ZERO( diff, extr_tol.dist ) )
+				{
+					int n;
+#if DEBUG
+bu_log( "\tskipping this intersection (same dist as a previous one)\n" );
+#endif
+					for( n=k ; n<dist_count-1 ; n++ )
+						dists[n] = dists[n+1];
+					dist_count--;
+				}
+				else
+					k++;
+			}
+		}
+		for( j=0 ; j<hits_after_top ; j++ )
+		{
+			k = 0;
+			while( k < dist_count )
+			{
+				diff = dists[k] - dists_after[j];
+				if( NEAR_ZERO( diff, extr_tol.dist ) )
+				{
+					int n;
+#if DEBUG
+bu_log( "\tskipping this intersection (same dist as a previous one)\n" );
+#endif
+					for( n=k ; n<dist_count-1 ; n++ )
+						dists[n] = dists[n+1];
+					dist_count--;
+				}
+				else
+					k++;
+			}
+		}
+
+
+		if( check_inout )
+		{
+			for( j=0 ; j<dist_count ; j++ )
+			{
+				if( dists[j] < 0.0 )
+					hit_count++;
+			}
+			continue;
+		}
+
+		for( j=0 ; j<dist_count ; j++ )
+		{
+			if( dists[j] < dist_bottom )
+			{
+				if( hits_before_bottom >= MAX_HITS )
+				{
+					bu_log( "ERROR: rt_extrude_shot: too many hits before bottom on extrusion (%s), limit is %d\n",
+					stp->st_dp->d_namep, MAX_HITS );
+					bu_bomb( "ERROR: rt_extrude_shot: too many hits before bottom on extrusion\n" );
+				}
+				dists_before[hits_before_bottom] = dists[j];
+				hits_before_bottom++;
+#if DEBUG
+bu_log( "hit before bottom is now %d\n", hits_before_bottom );
+#endif
+				continue;
+			}
+			if( dists[j] > dist_top )
+			{
+				if( hits_after_top >= MAX_HITS )
+				{
+					bu_log( "ERROR: rt_extrude_shot: too many hits after top on extrusion (%s), limit is %d\n",
+					stp->st_dp->d_namep, MAX_HITS );
+					bu_bomb( "ERROR: rt_extrude_shot: too many hits after top on extrusion\n" );
+				}
+				dists_after[hits_after_top] = dists[j];
+				hits_after_top++;
+#if DEBUG
+bu_log( "hit after top is now %d\n", hits_after_top );
+#endif
+				continue;
+			}
+
+			/* got a hit at distance dists[j] */
+#if DEBUG
+bu_log( "got a hit at dist=%g\n", dist[0] );
+#endif
+			if( hit_count >= MAX_HITS )
+			{
+				bu_log( "Too many hits on extrusion (%s), limit is %d\n",
+					stp->st_dp->d_namep, MAX_HITS );
+				bu_bomb( "Too many hits on extrusion\n" );
+			}
+			hits[hit_count].hit_magic = RT_HIT_MAGIC;
+			hits[hit_count].hit_dist = dists[j];
+			hits[hit_count].hit_surfno = surfno;
+			switch( *lng )
+			{
+				case CURVE_CARC_MAGIC:
+					hits[hit_count].hit_private = (genptr_t)csg; 
+					VMOVE( hits[hit_count].hit_vpriv, tmp );
+					break;
+				case CURVE_LSEG_MAGIC:
+					VMOVE( hits[hit_count].hit_vpriv, tmp );
+					break;
+				default:
+					bu_log( "ERROR: rt_extrude_shot: unrecognized segment type in solid %s\n",
+						stp->st_dp->d_namep );
+					bu_bomb( "ERROR: rt_extrude_shot: unrecognized segment type in solid\n" );
+					break;
+			}
+			hit_count++;
+		}
+	}
+
+	if( free_dists )
+		bu_free( (char *)dists, "dists" );
+
+	if( check_inout )
+	{
+		if( hit_count&1 )
+		{
+			register struct seg *segp;
+
+			hit_count = 2;
+			hits[0].hit_magic = RT_HIT_MAGIC;
+			hits[0].hit_dist = dist_bottom;
+			hits[0].hit_surfno = bot_face;
+			VMOVE( hits[0].hit_normal, extr->pl1 );
+
+			hits[1].hit_magic = RT_HIT_MAGIC;
+			hits[1].hit_dist = dist_top;
+			hits[1].hit_surfno = -top_face;
+			VMOVE( hits[1].hit_normal, extr->pl1 );
+
+			RT_GET_SEG(segp, ap->a_resource);
+			segp->seg_stp = stp;
+			segp->seg_in = hits[0];		/* struct copy */
+			segp->seg_out = hits[1];	/* struct copy */
+			BU_LIST_INSERT( &(seghead->l), &(segp->l) );
+#if DEBUG
+bu_log( "hit top and bottom faces\n" );
+#endif
+			return( 2 );
+		}
+		else
+		{
+#if DEBUG
+bu_log( "returning 0\n" );
+#endif
+			return( 0 );
+		}
+	}
+
+#if DEBUG
+bu_log( "hit_count = %d\n", hit_count );
+#endif
+	if( hit_count )
+	{
+		/* Sort hits, Near to Far */
+		{
+			register int j;
+			LOCAL struct hit temp;
+
+			for( i=0; i < hit_count-1; i++ )  {
+				for( j=i+1; j < hit_count; j++ )  {
+					if( hits[i].hit_dist <= hits[j].hit_dist )
+						continue;
+					temp = hits[j];		/* struct copy */
+					hits[j] = hits[i];	/* struct copy */
+					hits[i] = temp;		/* struct copy */
+				}
+			}
+		}
+	}
+
+	if( hits_before_bottom & 1 )
+	{
+#if DEBUG
+bu_log( "Adding bottom face hit at dist=%g\n", dist_bottom );
+#endif
+		if( hit_count >= MAX_HITS )
+		{
+			bu_log( "Too many hits on extrusion (%s), limit is %d\n",
+				stp->st_dp->d_namep, MAX_HITS );
+			bu_bomb( "Too many hits on extrusion\n" );
+		}
+		for( i=hit_count-1 ; i>=0 ; i-- )
+			hits[i+1] = hits[i];
+		hits[0].hit_magic = RT_HIT_MAGIC;
+		hits[0].hit_dist = dist_bottom;
+		hits[0].hit_surfno = bot_face;
+		VMOVE( hits[0].hit_normal, extr->pl1 );
+		hit_count++;
+	}
+
+	if( hits_after_top & 1 )
+	{
+#if DEBUG
+bu_log( "Adding top face hit at dist=%g\n", dist_top );
+#endif
+		if( hit_count >= MAX_HITS )
+		{
+			bu_log( "Too many hits on extrusion (%s), limit is %d\n",
+				stp->st_dp->d_namep, MAX_HITS );
+			bu_bomb( "Too many hits on extrusion\n" );
+		}
+		hits[hit_count].hit_magic = RT_HIT_MAGIC;
+		hits[hit_count].hit_dist = dist_top;
+		hits[hit_count].hit_surfno = top_face;
+		VMOVE( hits[hit_count].hit_normal, extr->pl1 );
+		hit_count++;
+	}
+
+	if( hit_count%2 )
+	{
+		bu_log( "ERROR: rt_extrude_shot(): odd number of hits (%d) (ignoring last hit)\n", hit_count );
+		bu_log( "ray start = (%20.10f %20.10f %20.10f)\n", V3ARGS( rp->r_pt ) );
+		bu_log( "ray dir = (%20.10f %20.10f %20.10f)", V3ARGS( rp->r_dir ) );
+bu_bomb( "ERROR\n" );
+		hit_count--;
+	}
+
+	/* build segments */
+	{
+		register struct seg *segp;
+
+		for( i=0; i < hit_count; i += 2 )  {
+			RT_GET_SEG(segp, ap->a_resource);
+			segp->seg_stp = stp;
+			segp->seg_in = hits[i];		/* struct copy */
+			segp->seg_out = hits[i+1];	/* struct copy */
+			segp->seg_out.hit_surfno = -segp->seg_out.hit_surfno;	/* for exit hits */
+			BU_LIST_INSERT( &(seghead->l), &(segp->l) );
+		}
+	}
+#if DEBUG
+bu_log( "returning %d hits\n", hit_count );
+#endif
+	return( hit_count );
 }
 
 #define RT_EXTRUDE_SEG_MISS(SEG)	(SEG).seg_stp=RT_SOLTAB_NULL
@@ -247,7 +1042,54 @@ register struct hit	*hitp;
 struct soltab		*stp;
 register struct xray	*rp;
 {
+        struct extrude_specific *extr=(struct extrude_specific *)stp->st_specific;
+	fastf_t alpha;
+	point_t hit_in_plane;
+	vect_t tmp, tmp2;
+
 	VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
+
+	switch( hitp->hit_surfno )
+	{
+		case LINE_SEG:
+			MAT4X3VEC( tmp, extr->irot, hitp->hit_vpriv );
+			VCROSS( hitp->hit_normal, extr->unit_h, tmp );
+			VUNITIZE( hitp->hit_normal );
+			break;
+		case -LINE_SEG:
+			MAT4X3VEC( tmp, extr->irot, hitp->hit_vpriv );
+			VCROSS( hitp->hit_normal, extr->unit_h, tmp );
+			VUNITIZE( hitp->hit_normal );
+			break;
+		case TOP_FACE:
+		case BOTTOM_FACE:
+		case -TOP_FACE:
+		case -BOTTOM_FACE:
+			break;
+		case CARC_SEG:
+		case -CARC_SEG:
+			alpha = DIST_PT_PLANE( hitp->hit_point, extr->pl1 ) / VDOT( extr->unit_h, extr->pl1 );
+			VJOIN1( hit_in_plane, hitp->hit_point, -alpha, extr->unit_h );
+			VSUB2( tmp, hit_in_plane, hitp->hit_vpriv );
+			VCROSS( tmp2, extr->pl1, tmp );
+			VCROSS( hitp->hit_normal, tmp2, extr->unit_h );
+			VUNITIZE( hitp->hit_normal );
+			break;
+		default:
+			bu_bomb( "ERROR: rt_extrude_norm(): unrecognized surf_no in hit structure!!!\n" );
+			break;
+	}
+	if( hitp->hit_surfno < 0 )
+	{
+		if( VDOT( hitp->hit_normal, rp->r_dir ) < 0.0 )
+			VREVERSE( hitp->hit_normal, hitp->hit_normal );
+	}
+	else
+	{
+		if( VDOT( hitp->hit_normal, rp->r_dir ) > 0.0 )
+			VREVERSE( hitp->hit_normal, hitp->hit_normal );
+	}
+
 }
 
 /*
@@ -261,10 +1103,35 @@ register struct curvature *cvp;
 register struct hit	*hitp;
 struct soltab		*stp;
 {
- 	cvp->crv_c1 = cvp->crv_c2 = 0;
+        struct extrude_specific *extr=(struct extrude_specific *)stp->st_specific;
+	struct carc_seg *csg;
+	fastf_t radius;
+	vect_t diff;
 
-	/* any tangent direction */
- 	vec_ortho( cvp->crv_pdir, hitp->hit_normal );
+	switch( hitp->hit_surfno )
+	{
+		case LINE_SEG:
+		case -LINE_SEG:
+			VMOVE( cvp->crv_pdir, hitp->hit_vpriv );
+			VUNITIZE( cvp->crv_pdir );
+			cvp->crv_c1 = cvp->crv_c2 = 0;
+			break;
+		case CARC_SEG:
+		case -CARC_SEG:
+			csg = (struct carc_seg *)hitp->hit_private;
+			VCROSS( cvp->crv_pdir, extr->unit_h, hitp->hit_normal );
+			VSUB2( diff, hitp->hit_point, hitp->hit_vpriv );
+			if( csg->radius < 0.0 )
+				radius = -csg->radius;
+			else
+				radius = csg->radius;
+			if( VDOT( hitp->hit_normal, diff ) > 0.0 )
+				cvp->crv_c1 = 1.0 / radius;
+			else
+				cvp->crv_c1 = -1.0 / radius;
+			cvp->crv_c2 = 0;
+			break;
+	}
 }
 
 /*
@@ -327,6 +1194,15 @@ CONST struct bn_tol	*tol;
 	RT_CK_DB_INTERNAL(ip);
 	extrude_ip = (struct rt_extrude_internal *)ip->idb_ptr;
 	RT_EXTRUDE_CK_MAGIC(extrude_ip);
+
+	if( !extrude_ip->skt )
+	{
+		bu_log( "rt_extrude_plot: ERROR: no sketch for extrusion!!!!\n" );
+
+		RT_ADD_VLIST( vhead, extrude_ip->V, BN_VLIST_LINE_MOVE );
+		RT_ADD_VLIST( vhead, extrude_ip->V, BN_VLIST_LINE_DRAW );
+		return( 0 );
+	}
 
 	sketch_ip = extrude_ip->skt;
 	RT_SKETCH_CK_MAGIC( sketch_ip );
@@ -442,28 +1318,32 @@ CONST struct db_i		*dbip;
 		return(-1);
 	}
 
-	sketch_name = (char *)rp + sizeof( struct extr_rec );
-	if( (dp=db_lookup( dbip, sketch_name, LOOKUP_NOISY)) == DIR_NULL )
-	{
-		bu_log( "rt_extrude_import: ERROR: Cannot find sketch (%.16s) for extrusion (%.16s)\n",
-			sketch_name, rp->extr.ex_name );
-		return( -1 );
-	}
-
-	if( rt_db_get_internal( &tmp_ip, dp, dbip, bn_mat_identity ) != ID_SKETCH )
-	{
-		bu_log( "rt_extrude_import: ERROR: Cannot import sketch (%.16s) for extrusion (%.16s)\n",
-			sketch_name, rp->extr.ex_name );
-		return( -1 );
-	}
-
 	RT_INIT_DB_INTERNAL( ip );
 	ip->idb_type = ID_EXTRUDE;
 	ip->idb_meth = &rt_functab[ID_EXTRUDE];
 	ip->idb_ptr = bu_malloc( sizeof(struct rt_extrude_internal), "rt_extrude_internal");
 	extrude_ip = (struct rt_extrude_internal *)ip->idb_ptr;
 	extrude_ip->magic = RT_EXTRUDE_INTERNAL_MAGIC;
-	extrude_ip->skt = (struct rt_sketch_internal *)tmp_ip.idb_ptr;
+
+	sketch_name = (char *)rp + sizeof( struct extr_rec );
+	if( (dp=db_lookup( dbip, sketch_name, LOOKUP_NOISY)) == DIR_NULL )
+	{
+		bu_log( "rt_extrude_import: ERROR: Cannot find sketch (%.16s) for extrusion (%.16s)\n",
+			sketch_name, rp->extr.ex_name );
+		extrude_ip->skt = (struct rt_sketch_internal *)NULL;
+	}
+	else
+	{
+		if( rt_db_get_internal( &tmp_ip, dp, dbip, bn_mat_identity ) != ID_SKETCH )
+		{
+			bu_log( "rt_extrude_import: ERROR: Cannot import sketch (%.16s) for extrusion (%.16s)\n",
+				sketch_name, rp->extr.ex_name );
+			bu_free( ip->idb_ptr, "extrusion" );
+			return( -1 );
+		}
+		else
+			extrude_ip->skt = (struct rt_sketch_internal *)tmp_ip.idb_ptr;
+	}
 
 	ntohd( (unsigned char *)tmp_vec, rp->extr.ex_V, 3 );
 	MAT4X3PNT( extrude_ip->V, mat, tmp_vec );
@@ -647,8 +1527,10 @@ int free;
 		rt_functab[ip->idb_type].ft_ifree( ip );
 		ip->idb_ptr = (genptr_t) 0;
 	}
-	else
+	else if( eip->skt )
 		eop->skt = rt_copy_sketch( eip->skt );
+	else
+		eop->skt = (struct rt_sketch_internal *)NULL;
 
 	if( bu_debug&BU_DEBUG_MEM_CHECK )
 	{

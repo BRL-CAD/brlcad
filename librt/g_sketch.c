@@ -45,6 +45,7 @@ static char RCSsketch[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <math.h>
+#include "tcl.h"
 #include "machine.h"
 #include "vmath.h"
 #include "db.h"
@@ -222,6 +223,7 @@ struct curve                    *crv;
 	fastf_t pt[4];
 	vect_t semi_a, semi_b;
 	fastf_t radius;
+	vect_t norm;
 
 	if( bu_debug&BU_DEBUG_MEM_CHECK )
 	{
@@ -251,14 +253,16 @@ struct curve                    *crv;
 
 				delta = M_PI/4.0;
 				csg = (struct carc_seg *)lng;
-				if( csg->radius < 0.0 )
+				if( csg->radius <= 0.0 )
 				{
 					VJOIN2( center, V, sketch_ip->verts[csg->end][0], u_vec, sketch_ip->verts[csg->end][1], v_vec);
 					VJOIN2( pt, V, sketch_ip->verts[csg->start][0], u_vec, sketch_ip->verts[csg->start][1], v_vec);
 					VSUB2( semi_a, pt, center );
-					VJOIN2( pt, V, -sketch_ip->verts[csg->start][1], u_vec, sketch_ip->verts[csg->start][0], v_vec);
-					VSUB2( semi_b, pt, center );
+					VCROSS( norm, u_vec, v_vec );
+					VCROSS( semi_b, norm, semi_a );
+					VUNITIZE( semi_b );
 					radius = MAGNITUDE( semi_a );
+					VSCALE( semi_b, semi_b, radius );
 				}
 				else if( csg->radius < SMALL_FASTF )
 				{
@@ -296,7 +300,7 @@ struct curve                    *crv;
 					if( norm < delta )
 						delta = norm;
 				}
-				if( csg->radius < 0.0 )
+				if( csg->radius <= 0.0 )
 				{
 					/* this is a full circle */
 					nsegs = ceil( 2.0 * M_PI / delta );
@@ -357,16 +361,15 @@ struct curve                    *crv;
 				end_ang = atan2( end2d[Y]-center2d[Y], end2d[X]-center2d[X] );
 				if( csg->orientation ) /* clock-wise */
 				{
-					if( end_ang > start_ang )
+					while( end_ang > start_ang )
 						end_ang -= 2.0 * M_PI;
-					tot_ang = start_ang - end_ang;
 				}
 				else /* counter-clock-wise */
 				{
-					if( end_ang < start_ang )
+					while( end_ang < start_ang )
 						end_ang += 2.0 * M_PI;
-					tot_ang = end_ang - start_ang;
 				}
+				tot_ang = end_ang - start_ang;
 				nsegs = ceil( tot_ang / delta );
 				if( nsegs < 3 )
 					nsegs = 3;
@@ -1125,6 +1128,67 @@ struct rt_db_internal	*ip;
 
 }
 
+void
+rt_copy_curve( crv_out, crv_in )
+struct curve *crv_out;
+CONST struct curve *crv_in;
+{
+	int i, j;
+
+	strncpy( crv_out->crv_name, crv_in->crv_name, SKETCH_NAME_LEN );
+	crv_out->seg_count = crv_in->seg_count;
+	crv_out->reverse = (int *)bu_calloc( crv_out->seg_count, sizeof( int ), "crv->reverse" );
+	crv_out->segments = (genptr_t *)bu_calloc( crv_out->seg_count, sizeof( genptr_t ), "crv->segments" );
+	for( j=0 ; j<crv_out->seg_count ; j++ )
+	{
+		long *lng;
+		struct line_seg *lsg_out, *lsg_in;
+		struct carc_seg *csg_out, *csg_in;
+		struct nurb_seg *nsg_out, *nsg_in;
+
+		crv_out->reverse[j] = crv_in->reverse[j];
+		lng = (long *)crv_in->segments[j];
+		switch( *lng )
+		{
+			case CURVE_LSEG_MAGIC:
+				lsg_in = (struct line_seg *)lng;
+				lsg_out = (struct line_seg *)bu_malloc( sizeof( struct line_seg ), "line_seg" );
+				crv_out->segments[j] = (genptr_t)lsg_out;
+				*lsg_out = *lsg_in;
+				break;
+			case CURVE_CARC_MAGIC:
+				csg_in = (struct carc_seg *)lng;
+				csg_out = (struct carc_seg *)bu_malloc( sizeof( struct carc_seg ), "carc_seg" );
+				crv_out->segments[j] = (genptr_t)csg_out;
+				*csg_out = *csg_in;
+				break;
+			case CURVE_NURB_MAGIC:
+				nsg_in = (struct nurb_seg *)lng;
+				nsg_out = (struct nurb_seg *)bu_malloc( sizeof( struct nurb_seg ), "nurb_seg" );
+				crv_out->segments[j] = (genptr_t)nsg_out;
+				*nsg_out = *nsg_in;
+				nsg_out->ctl_points = (int *)bu_calloc( nsg_in->c_size, sizeof( int ), "nsg_out->ctl_points" );
+				for( i=0 ; i<nsg_out->c_size ; i++ )
+					nsg_out->ctl_points[i] = nsg_in->ctl_points[i];
+				if( RT_NURB_IS_PT_RATIONAL( nsg_in->pt_type ) )
+				{
+					nsg_out->weights = (fastf_t *)bu_malloc( nsg_out->c_size * sizeof( fastf_t ), "nsg_out->weights" );
+					for( i=0 ; i<nsg_out->c_size ; i++ )
+						nsg_out->weights[i] = nsg_in->weights[i];
+				}
+				else
+					nsg_out->weights = (fastf_t *)NULL;
+				nsg_out->k.knots = bu_malloc( nsg_in->k.k_size * sizeof( fastf_t ), "nsg_out->k.knots" );
+				for( i=0 ; i<nsg_in->k.k_size ; i++ )
+					nsg_out->k.knots[i] = nsg_in->k.knots[i];
+				break;
+			default:
+				bu_bomb( "rt_copy_sketch: ERROR: unrecognized segment type!!!!\n" );
+		}
+	}
+	
+}
+
 struct rt_sketch_internal *
 rt_copy_sketch( sketch_ip )
 CONST struct rt_sketch_internal *sketch_ip;
@@ -1152,62 +1216,10 @@ CONST struct rt_sketch_internal *sketch_ip;
 	for( i=0 ; i<out->curve_count ; i++ )
 	{
 		struct curve *crv_out, *crv_in;
-		int j;
 
 		crv_out = &out->curves[i];
 		crv_in = &sketch_ip->curves[i];
-		strncpy( crv_out->crv_name, crv_in->crv_name, SKETCH_NAME_LEN );
-		crv_out->seg_count = crv_in->seg_count;
-		crv_out->reverse = (int *)bu_calloc( crv_out->seg_count, sizeof( int ), "crv->reverse" );
-		crv_out->segments = (genptr_t *)bu_calloc( crv_out->seg_count, sizeof( genptr_t ), "crv->segments" );
-		for( j=0 ; j<crv_out->seg_count ; j++ )
-		{
-			long *lng;
-			struct line_seg *lsg_out, *lsg_in;
-			struct carc_seg *csg_out, *csg_in;
-			struct nurb_seg *nsg_out, *nsg_in;
-
-			crv_out->reverse[j] = crv_in->reverse[j];
-			lng = (long *)crv_in->segments[j];
-			switch( *lng )
-			{
-				case CURVE_LSEG_MAGIC:
-					lsg_in = (struct line_seg *)lng;
-					lsg_out = (struct line_seg *)bu_malloc( sizeof( struct line_seg ), "line_seg" );
-					crv_out->segments[j] = (genptr_t)lsg_out;
-					*lsg_out = *lsg_in;
-					break;
-				case CURVE_CARC_MAGIC:
-					csg_in = (struct carc_seg *)lng;
-					csg_out = (struct carc_seg *)bu_malloc( sizeof( struct carc_seg ), "carc_seg" );
-					crv_out->segments[j] = (genptr_t)csg_out;
-					*csg_out = *csg_in;
-					break;
-				case CURVE_NURB_MAGIC:
-					nsg_in = (struct nurb_seg *)lng;
-					nsg_out = (struct nurb_seg *)bu_malloc( sizeof( struct nurb_seg ), "nurb_seg" );
-					crv_out->segments[j] = (genptr_t)nsg_out;
-					*nsg_out = *nsg_in;
-					nsg_out->ctl_points = (int *)bu_calloc( nsg_in->c_size, sizeof( int ), "nsg_out->ctl_points" );
-					for( i=0 ; i<nsg_out->c_size ; i++ )
-						nsg_out->ctl_points[i] = nsg_in->ctl_points[i];
-					if( RT_NURB_IS_PT_RATIONAL( nsg_in->pt_type ) )
-					{
-						nsg_out->weights = (fastf_t *)bu_malloc( nsg_out->c_size * sizeof( fastf_t ), "nsg_out->weights" );
-						for( i=0 ; i<nsg_out->c_size ; i++ )
-							nsg_out->weights[i] = nsg_in->weights[i];
-					}
-					else
-						nsg_out->weights = (fastf_t *)NULL;
-					nsg_out->k.knots = bu_malloc( nsg_in->k.k_size * sizeof( fastf_t ), "nsg_out->k.knots" );
-					for( i=0 ; i<nsg_in->k.k_size ; i++ )
-						nsg_out->k.knots[i] = nsg_in->k.knots[i];
-					break;
-				default:
-					bu_log( "rt_copy_sketch: ERROR: unrecognized segment type!!!!\n" );
-					return( (struct rt_sketch_internal *)NULL );
-			}
-		}
+		rt_copy_curve( crv_out, crv_in );
 	}
 
 	/* fix back pointers */
@@ -1288,4 +1300,164 @@ CONST struct rt_sketch_internal *sketch_ip;
 	}
 
 	return( out );
+}
+
+int
+curve_to_tcl_list( vls, crv )
+struct bu_vls *vls;
+struct curve *crv;
+{
+	int j;
+
+	bu_vls_printf( vls, " %s {SL {", crv->crv_name );
+	for( j=0 ; j<crv->seg_count ; j++ )
+	{
+		switch( (*(long *)crv->segments[j]) )
+		{
+		    case CURVE_LSEG_MAGIC:
+			{
+				struct line_seg *lsg = (struct line_seg *)crv->segments[j];
+				bu_vls_printf( vls, " { line S %d E %d }", lsg->start, lsg->end );
+			}
+			break;
+		    case CURVE_CARC_MAGIC:
+			{
+				struct carc_seg *csg = (struct carc_seg *)crv->segments[j];
+				bu_vls_printf( vls, " { carc S %d E %d R %.25g L %d O %d }",
+					csg->start, csg->end, csg->radius,
+					csg->center_is_left, csg->orientation );
+			}
+			break;
+		    case CURVE_NURB_MAGIC:
+			{
+				int k;
+				struct nurb_seg *nsg = (struct nurb_seg *)crv->segments[j];
+				bu_vls_printf( vls, " { nurb O %d T %d K {",
+					nsg->order, nsg->pt_type );
+				for( k=0 ; k<nsg->k.k_size ; k++ )
+					bu_vls_printf( vls, " %.25g", nsg->k.knots[k] );
+				bu_vls_strcat( vls, "} P {" );
+				for( k=0 ; k<nsg->c_size ; k++ )
+					bu_vls_printf( vls, " %d", nsg->ctl_points[k] );
+				if( nsg->weights )
+				{
+					bu_vls_strcat( vls, "} W {" );
+					for( k=0 ; k<nsg->c_size ; k++ )
+						bu_vls_printf( vls, " %.25g", nsg->weights[k] );
+					}
+				bu_vls_strcat( vls, "} }" );
+			}
+			break;
+		}
+	}
+	bu_vls_strcat( vls, " }}" );	/* end of segment list */
+
+	return( 0 );
+}
+
+int
+rt_sketch_tclget( interp, intern, attr )
+Tcl_Interp			*interp;
+CONST struct rt_db_internal	*intern;
+CONST char			*attr;
+{
+	register struct rt_sketch_internal *skt=(struct rt_sketch_internal *)intern->idb_ptr;
+	Tcl_DString     ds;
+	struct bu_vls   vls;
+	int i;
+
+	RT_SKETCH_CK_MAGIC( skt );
+
+	Tcl_DStringInit( &ds );
+	bu_vls_init( &vls );
+
+	if( attr == (char *)NULL )
+	{
+		bu_vls_strcpy( &vls, "sketch" );
+		bu_vls_printf( &vls, " V {%.25g %.25g %.25g}", V3ARGS( skt->V ) );
+		bu_vls_printf( &vls, " A {%.25g %.25g %.25g}", V3ARGS( skt->u_vec ) );
+		bu_vls_printf( &vls, " B {%.25g %.25g %.25g}", V3ARGS( skt->v_vec ) );
+		bu_vls_strcat( &vls, " VL {" );
+		for( i=0 ; i<skt->vert_count ; i++ )
+			bu_vls_printf( &vls, " {%.25g %.25g}", V2ARGS( skt->verts[i] ) );
+		bu_vls_strcat( &vls, " }" );
+		bu_vls_strcat( &vls, " CL {" );
+		for( i=0 ; i<skt->curve_count ; i++ )
+		{
+			struct curve *crv;
+			int j;
+
+			crv = &skt->curves[i];
+			bu_vls_strcat( &vls, " {" );
+			if( curve_to_tcl_list( &vls, crv ) )
+			{
+				bu_vls_free( &vls );
+				return( TCL_ERROR );
+			}
+			bu_vls_strcat( &vls, " }" );
+		}
+		bu_vls_strcat( &vls, " }" );	/* end of curve list */
+	}
+	else if( !strcmp( attr, "V" ) )
+		bu_vls_printf( &vls, "%.25g %.25g %.25g", V3ARGS( skt->V ) );
+	else if( !strcmp( attr, "A" ) )
+		bu_vls_printf( &vls, "%.25g %.25g %.25g", V3ARGS( skt->u_vec ) );
+	else if( !strcmp( attr, "B" ) )
+		bu_vls_printf( &vls, "%.25g %.25g %.25g", V3ARGS( skt->v_vec ) );
+	else if( !strcmp( attr, "VL" ) )
+	{
+		for( i=0 ; i<skt->vert_count ; i++ )
+			bu_vls_printf( &vls, " {%.25g %.25g}", V2ARGS( skt->verts[i] ) );
+	}
+	else if( !strcmp( attr, "CL" ) )
+	{
+		for( i=0 ; i<skt->curve_count ; i++ )
+		{
+			struct curve *crv;
+			int j;
+
+			crv = &skt->curves[i];
+			if( curve_to_tcl_list( &vls, crv ) )
+			{
+				bu_vls_free( &vls );
+				return( TCL_ERROR );
+			}
+		}
+	}
+	else if( *attr == 'V' )
+	{
+		i = atoi( (attr+1) );
+		if( i < 0 || i >= skt->vert_count )
+		{
+			Tcl_SetResult( interp, "ERROR: Illegal vertex number\n", TCL_STATIC );
+			bu_vls_free( &vls );
+			return( TCL_ERROR );
+		}
+
+		bu_vls_printf( &vls, "%.25g %.25g", V2ARGS( skt->verts[i] ) );
+	}
+	else
+	{
+		for( i=0 ; i<skt->curve_count ; i++ )
+		{
+			struct curve *crv=&skt->curves[i];;
+
+			if( !strcmp( attr, crv->crv_name ) )
+			{
+				if( curve_to_tcl_list( &vls, crv ) )
+				{
+					Tcl_SetResult( interp, "ERROR: converting curve to TCL\n", TCL_STATIC );
+					bu_vls_free( &vls );
+					return( TCL_ERROR );
+				}
+				break;
+			}
+		}
+	}
+
+	Tcl_DStringAppendElement( &ds, bu_vls_addr( &vls ) );
+	Tcl_DStringResult( interp, &ds );
+	Tcl_DStringFree( &ds );
+	bu_vls_free( &vls );
+	return( TCL_OK );
 }
