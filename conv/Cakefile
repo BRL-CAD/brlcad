@@ -9,7 +9,7 @@
 			g-euclid euclid_format euclid_unformat tankill-g g-tankill \
 			viewpoint-g dxf-g g-nmg g-euclid1 fast4-g proe-g \
 			asc-nmg nmg-rib g-vrml g-acad cy-g nastran-g g-wave \
-			nmg-polysolid g-shell.rect stl-g g4-g5 g5-g4 poly-bot
+			nmg-bot g-shell.rect stl-g g4-g5 g5-g4 poly-bot
 #define	SRCSUFF	.c
 #define MANSECTION	1
 
@@ -22,8 +22,8 @@
 poly-bot: poly-bot.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBWDB_DEP LIBTCL_DEP
 	CC LDFLAGS poly-bot.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBTCL LIBTCL_LIBES LIBES -o poly-bot
 
-nmg-polysolid: nmg-polysolid.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBTCL_DEP LIBWDB_DEP
-	CC LDFLAGS nmg-polysolid.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBTCL LIBTCL_LIBES LIBES -o nmg-polysolid
+nmg-bot: nmg-bot.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBTCL_DEP LIBWDB_DEP
+	CC LDFLAGS nmg-bot.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBTCL LIBTCL_LIBES LIBES -o nmg-bot
 
 g-sgp: g-sgp.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBTCL_DEP LIBWDB_DEP
 	CC LDFLAGS g-sgp.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBTCL LIBTCL_LIBES LIBES -o g-sgp
