@@ -856,9 +856,9 @@ matp_t matp;
 	 *  Copy color out to solid structure, in case it changed.
 	 *  This is an odd place to do this, but...
 	 */
-	sp->s_basecolor[0] = ts.ts_mater.ma_color[0] * 255.;
-	sp->s_basecolor[1] = ts.ts_mater.ma_color[1] * 255.;
-	sp->s_basecolor[2] = ts.ts_mater.ma_color[2] * 255.;
+	sp->s_color[0] = sp->s_basecolor[0] = ts.ts_mater.ma_color[0] * 255.;
+	sp->s_color[1] = sp->s_basecolor[1] = ts.ts_mater.ma_color[1] * 255.;
+	sp->s_color[2] = sp->s_basecolor[2] = ts.ts_mater.ma_color[2] * 255.;
 	mat_copy( matp, ts.ts_mat );	/* implicit return */
 
 	db_free_db_tree_state( &ts );
