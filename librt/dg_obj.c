@@ -611,7 +611,7 @@ dgo_who_tcl(clientData, interp, argc, argv)
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "help dgo_who");
+		bu_vls_printf(&vls, "helplib dgo_who");
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
@@ -822,7 +822,7 @@ char	**argv;
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
-	  bu_vls_printf(&vls, "help dgo_rt");
+	  bu_vls_printf(&vls, "helplib dgo_rt");
 	  Tcl_Eval(interp, bu_vls_addr(&vls));
 	  bu_vls_free(&vls);
 	  return TCL_ERROR;
@@ -2056,7 +2056,7 @@ dgo_drawtrees(dgop, interp, argc, argv, kind)
 				struct bu_vls vls;
 
 				bu_vls_init(&vls);
-				bu_vls_printf(&vls, "help %s", argv[0]);
+				bu_vls_printf(&vls, "helplib %s", argv[0]);
 				Tcl_Eval(interp, bu_vls_addr(&vls));
 				bu_vls_free(&vls);
 				bu_free((genptr_t)dgcdp, "dgo_drawtrees: dgcdp");
