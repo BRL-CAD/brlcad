@@ -40,7 +40,7 @@ char *argv[];
 {
   dm_var_init(o_dm_list);
 
-  if((dmp = dm_open(DM_TYPE_PS, argc, argv)) == DM_NULL)
+  if ((dmp = dm_open(interp, DM_TYPE_PS, argc, argv)) == DM_NULL)
     return TCL_ERROR;
 
   return TCL_OK;

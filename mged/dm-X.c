@@ -70,7 +70,7 @@ char *argv[];
   cmd_hook = X_dm;
 
   Tk_DeleteGenericHandler(doEvent, (ClientData)NULL);
-  if((dmp = dm_open(DM_TYPE_X, argc-1, argv)) == DM_NULL)
+  if((dmp = dm_open(interp, DM_TYPE_X, argc-1, argv)) == DM_NULL)
     return TCL_ERROR;
 
   /* keep display manager in sync */
