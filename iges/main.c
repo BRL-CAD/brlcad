@@ -41,6 +41,7 @@ struct iges_directory **dir;
 struct reglist *regroot;
 struct iges_edge_list *edge_root;
 struct iges_vertex_list *vertex_root;
+struct rt_tol tol;
 
 char operator[]={
 	' ',
@@ -49,6 +50,7 @@ char operator[]={
 	'-' };
 
 mat_t *identity;
+
 extern char	version[];
 
 main( argc , argv )
@@ -85,10 +87,16 @@ char *argv[];
 	printf( "%s", version+5);
 	printf( "Please direct bug reports to <jra@brl.mil>\n\n" );
 
+	/* Initialize some variables */
 	ntypes = NTYPES;
 	regroot = NULL;
 	edge_root = NULL;
 	vertex_root = NULL;
+	tol.magic = RT_TOL_MAGIC;
+	tol.dist = 0.005;
+	tol.dist_sq = tol.dist * tol.dist;
+	tol.perp = 1e-6;
+	tol.para = 1 - tol.perp;
 
 	argc -= optind;
 	argv += optind;

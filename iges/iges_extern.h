@@ -30,3 +30,4 @@ extern struct types typecount[]; /* Count of how many entities of each type actu
 extern char operator[]; /* characters representing operators: 'u', '+', and '-' */
 extern struct iges_edge_list *edge_root;
 extern struct iges_vertex_list *vertex_root;
+extern struct rt_tol tol;
