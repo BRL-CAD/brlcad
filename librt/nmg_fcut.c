@@ -157,8 +157,6 @@ struct nmg_ray_state {
 	CONST struct rt_tol	*tol;
 };
 
-RT_EXTERN(void			nmg_face_lu_plot, ( struct loopuse *lu, struct vertexuse *vu1, struct vertexuse *vu2) );
-
 /*
  *			P T B L _ V S O R T
  *
