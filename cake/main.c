@@ -547,10 +547,16 @@ out:
 	sprintf( buf2, "-D__CAKE__%s", buf );
 	cppargv[cppargc++] = new_name(buf2);
 
+	/* The runtime environment variable overrides compile-time one */
+	if( getenv("BRLCAD_ROOT") == NULL )  {
 #if defined(BRLCAD_ROOT_STRING)
-	sprintf( buf2, "-DBRLCAD_ROOT=%s", BRLCAD_ROOT_STRING );
-	cppargv[cppargc++] = new_name(buf2);
+		sprintf( buf2, "-DBRLCAD_ROOT=%s", BRLCAD_ROOT_STRING );
+		cppargv[cppargc++] = new_name(buf2);
 #endif
+	} else {
+		sprintf( buf2, "-DBRLCAD_ROOT=%s", getenv("BRLCAD_ROOT") );
+		cppargv[cppargc++] = new_name(buf2);
+	}
 
 	return;
 }
