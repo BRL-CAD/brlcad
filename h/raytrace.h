@@ -1141,7 +1141,8 @@ struct rt_i {
 	struct nu_axis	*rti_nu_axis[3];           /* arrays of slabs slicing space into cells */
 	int		 rti_nu_cells_per_axis[3]; /* number of slabs */
 	int		 rti_nu_stepsize[3];       /* number of cells to jump for one step in each axis */
-	union cutter	*rti_nu_grid;		   /* array of boxnodes */
+	union cutter	*rti_nu_grid;	 /* array of boxnodes */
+	double		 rti_nu_gfactor; /* constant in numcells computation */
 };
 	
 #define RTI_NULL	((struct rt_i *)0)
