@@ -690,8 +690,6 @@ struct rt_nurb_uv_hit * h;
 		hit->hit_point[2] = pt[2];
 	}
 
-	rt_free( (char *) pt, "point");
-	
 	VSUB2( vecsub, hit->hit_point, r->r_pt);
 	hit->hit_dist = VDOT( vecsub, r->r_dir);
 	hit->hit_uv[0] = h->u;
@@ -714,6 +712,7 @@ CONST struct rt_tol	*tol;
 	/* Shouldn't be discarded, because shootray moves start pt around */
 	if( hit->hit_dist < .001)
 	{
+
 		rt_free( (char *) hit, "internal_add_hit: hit");
 		return;
 	}
