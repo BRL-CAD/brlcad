@@ -21,12 +21,12 @@ LEXOPTS=
 
 PROGS = base ccincl later need needed cakesub subcmd usrc gsrc cakeinclude
 
-BINDIR=/usr/brlcad/bin
-
 all:		$(PROGS)
 
 install:	$(PROGS)
-		cp $(PROGS) $(BINDIR)
+		eval `machinetype.sh -v` ; \
+		BINDIR=$${BASEDIR}/bin; \
+		cp $(PROGS) $${BINDIR}
 
 base:		base.o pattern_s.o
 		$(CC) $(CFLAGS) -o base base.o pattern_s.o
