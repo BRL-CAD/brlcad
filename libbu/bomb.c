@@ -62,6 +62,21 @@ CONST char *str;
 		}
 	}
 
+#if defined(unix) || defined(__unix) || defined(O_WRONLY)
+	/*
+	 * No application level error handling,
+	 * go to extra pains to ensure that user gets to see this message.
+	 * For example, mged hijacks output sent to stderr.
+	 */
+	{
+		int	fd = open("/dev/tty", 1);
+		if( fd >= 0 )  {
+			write( fd, str, strlen(str) );
+			close(fd);
+		}
+	}
+#endif
+
 	/* If in parallel mode, try to signal the leader to die. */
 	bu_kill_parallel();
 
