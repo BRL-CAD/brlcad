@@ -22,6 +22,7 @@
 	pixhist3d-pl pixhist3d pixinterp2x pixmatte pixmerge \
 	pixrect pixrot pixsaturate pixscale pixshrink pixstat \
 	pixtile pixuntile pixembed \
+	pixcut pixpaste \
 	pl-asc pl-hpgl \
 	pl-pl pl-tek pl-ps pl-sgi \
 	plcolor pldebug plgetframe plline2 plrot plstat \
@@ -187,6 +188,12 @@ pixscale:	pixscale.o
 
 pixembed:	pixembed.o
 	CC LDFLAGS -o pixembed pixembed.o LIBES
+
+pixcut:	pixcut.o
+	CC LDFLAGS -o pixcut pixcut.o LIB_PRE''LIBFB LIBFB_LIBES LIBES
+
+pixpaste:	pixpaste.o
+	CC LDFLAGS -o pixpaste pixpaste.o LIB_PRE''LIBFB LIBFB_LIBES LIBES
 
 pixstat:	pixstat.o
 	CC LDFLAGS -o pixstat pixstat.o LIBES
