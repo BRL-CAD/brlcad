@@ -255,7 +255,6 @@ register char **argv;
 					fprintf(stderr,"Bogus aspect %d, using 1.0\n", aspect);
 					aspect = 1;
 				}
-				printf("Aspect = %f\n", aspect);
 			}
 			break;
 		default:		/* '?' */
