@@ -25,6 +25,7 @@ option add *Splash.background blue widgetDefault
 option add *Splash.foreground yellow widgetDefault
 option add *Splash.borderWidth 2 widgetDefault
 option add *Splash.relief raised widgetDefault
+option add *Splash.cursor watch widgetDefault
 
 class Splash {
     inherit itk::Toplevel
@@ -58,6 +59,7 @@ body Splash::constructor {args} {
     eval itk_initialize $args
 
     pack $itk_component(message) -expand yes -fill both
+
     wm overrideredirect $itk_component(hull) 1
     update idletasks
     center
