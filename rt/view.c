@@ -699,7 +699,6 @@ view_init( ap, file, obj, minus_o )
 register struct application *ap;
 char *file, *obj;
 {
-	register int i;
 
 #ifndef RTSRV
 	if( incr_mode )  {
@@ -726,8 +725,6 @@ char *file, *obj;
 	case 2:
 		scanbuf = rt_malloc( width*height*3 + sizeof(long), "scanbuf [frame]" );
 		npix_left = (int *)rt_malloc( height*sizeof(int), "npix_left[]" );
-		for( i=0; i<height; i++ )
-			npix_left[i] = width;
 		rt_log("Buffering full frames, fb write at end of line\n");
 		break;
 	case 3:
@@ -756,6 +753,7 @@ char *file, *obj;
 view_2init( ap )
 register struct application *ap;
 {
+	register int i;
 	extern int hit_nothing();
 
 	ap->a_miss = hit_nothing;
@@ -788,4 +786,14 @@ register struct application *ap;
 	ibackground[0] = background[0] * 255;
 	ibackground[1] = background[1] * 255;
 	ibackground[2] = background[2] * 255;
+
+	switch( buf_mode )  {
+	case 2:
+		for( i=0; i<height; i++ )
+			npix_left[i] = width;
+		break;
+	default:
+		break;
+	}
+
 }
