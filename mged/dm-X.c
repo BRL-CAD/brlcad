@@ -23,6 +23,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #define DO_XSELECTINPUT 0
 #define TRY_PIPES 1
+#define TRY_MULTIBUFFERING 0  /* Leave this off. The Multibuffering extension doesn't work */
 
 #include "conf.h"
 
@@ -39,6 +40,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #define XLIB_ILLEGAL_ACCESS	/* necessary on facist SGI 5.0.1 */
 #include "tk.h"
 #include <X11/Xutil.h>
+#include <X11/extensions/Xext.h>
+#include <X11/extensions/multibuf.h>
 
 
 #include "machine.h"
@@ -119,6 +122,11 @@ struct x_vars {
   Display *dpy;
   Tk_Window xtkwin;
   Window win;
+#if TRY_MULTIBUFFERING
+  Multibuffer buffers[2];
+  Multibuffer curr_buf;
+  int doublebuffer;
+#endif
   int width;
   int height;
   GC gc;
@@ -210,8 +218,9 @@ X_close()
     Tk_DestroyWindow(((struct x_vars *)dm_vars)->xtkwin);
 
 #if 1
-  rt_free(dm_vars, "X_close: dm_vars");
   Tk_DeleteGenericHandler(Xdoevent, (ClientData)curr_dm_list);
+  rt_free(dm_vars, "X_close: dm_vars");
+  rt_vls_free(&pathName);
 #else
   /* to prevent events being processed after window destroyed */
   win = -1;
@@ -226,7 +235,12 @@ X_close()
 void
 X_prolog()
 {
-  XClearWindow(((struct x_vars *)dm_vars)->dpy, ((struct x_vars *)dm_vars)->win);
+#if TRY_MULTIBUFFERING
+  if(!((struct x_vars *)dm_vars)->doublebuffer)
+    XClearWindow(((struct x_vars *)dm_vars)->dpy, ((struct x_vars *)dm_vars)->win);
+#else
+    XClearWindow(((struct x_vars *)dm_vars)->dpy, ((struct x_vars *)dm_vars)->win);
+#endif
 }
 
 /*
@@ -238,6 +252,18 @@ X_epilog()
     /* Put the center point up last */
     draw( 0, 0, 0, 0 );
 
+#if TRY_MULTIBUFFERING
+    if(((struct x_vars *)dm_vars)->doublebuffer){
+      /* dpy, size of buffer array, buffer array, minimum delay, maximum delay */
+      XmbufDisplayBuffers(((struct x_vars *)dm_vars)->dpy, 1,
+			  &((struct x_vars *)dm_vars)->curr_buf, 0, 0);
+
+      /* swap buffers */
+      ((struct x_vars *)dm_vars)->curr_buf =
+	((struct x_vars *)dm_vars)->curr_buf == ((struct x_vars *)dm_vars)->buffers[0] ?
+	((struct x_vars *)dm_vars)->buffers[1] : ((struct x_vars *)dm_vars)->buffers[0];
+    }
+#endif
     /* Prevent lag between events and updates */
     XSync(((struct x_vars *)dm_vars)->dpy, 0);
 }
@@ -479,7 +505,7 @@ int dashed;
     draw( x1, y1, x2, y2 );
 }
 
-int
+static int
 Xdoevent(clientData, eventPtr)
 ClientData clientData;
 XEvent *eventPtr;
@@ -774,6 +800,7 @@ xsetup( name )
 char	*name;
 {
   static int count = 0;
+  int first_event, first_error;
   char *cp;
   XGCValues gcv;
   XColor a_color;
@@ -855,12 +882,14 @@ char	*name;
   ((struct x_vars *)dm_vars)->xtkwin = Tk_CreateWindowFromPath(interp, tkwin,
 						       rt_vls_addr(&pathName), name);
 
-  /*
-   * Create the X drawing window by calling create_x which
-   * is defined in xinit.tk
-   */
   rt_vls_strcpy(&str, "init_x ");
+#if 0
+  rt_vls_printf(&str, "%s %d\n", rt_vls_addr(&pathName), ((struct x_vars *)dm_vars)->width);
+#else
   rt_vls_printf(&str, "%s\n", rt_vls_addr(&pathName));
+  rt_log("pathname = %s\n", rt_vls_addr(&pathName));
+#endif
+
 
   if(cmdline(&str, FALSE) == CMD_BAD){
     rt_vls_free(&str);
@@ -868,6 +897,7 @@ char	*name;
   }
 
   rt_vls_free(&str);
+
   ((struct x_vars *)dm_vars)->dpy = Tk_Display(((struct x_vars *)dm_vars)->xtkwin);
   ((struct x_vars *)dm_vars)->width =
     DisplayWidth(((struct x_vars *)dm_vars)->dpy,
@@ -882,6 +912,9 @@ char	*name;
   else
     ((struct x_vars *)dm_vars)->height = ((struct x_vars *)dm_vars)->width;
 
+  Tk_GeometryRequest(((struct x_vars *)dm_vars)->xtkwin,
+		     ((struct x_vars *)dm_vars)->width, 
+		     ((struct x_vars *)dm_vars)->height);
 #endif
 
 #if 0
@@ -892,6 +925,32 @@ char	*name;
   Tk_MakeWindowExist(((struct x_vars *)dm_vars)->xtkwin);
   ((struct x_vars *)dm_vars)->win =
       Tk_WindowId(((struct x_vars *)dm_vars)->xtkwin);
+
+#if TRY_MULTIBUFFERING
+  if(!XmbufQueryExtension(((struct x_vars *)dm_vars)->dpy,
+			  &first_event, &first_error)){
+    ((struct x_vars *)dm_vars)->doublebuffer = 0;
+    rt_log("xsetup: no multi-buffering extension available on %s\n", name);
+  }else{
+    int num;
+
+    num = XmbufCreateBuffers(((struct x_vars *)dm_vars)->dpy,
+			  ((struct x_vars *)dm_vars)->win, 2,
+			  MultibufferUpdateActionBackground,
+			  MultibufferUpdateHintFrequent,
+			  ((struct x_vars *)dm_vars)->buffers);
+    if(num != 2){
+      if(num)
+	XmbufDestroyBuffers(((struct x_vars *)dm_vars)->dpy,
+			    ((struct x_vars *)dm_vars)->win);
+      ((struct x_vars *)dm_vars)->doublebuffer = 0;
+      rt_log("xsetup: failed to get 2 buffers\n");
+    }else{
+      ((struct x_vars *)dm_vars)->doublebuffer = 1;
+      ((struct x_vars *)dm_vars)->curr_buf = ((struct x_vars *)dm_vars)->buffers[1];
+    }
+  }
+#endif
 
   a_screen = Tk_ScreenNumber(((struct x_vars *)dm_vars)->xtkwin);
   a_visual = Tk_Visual(((struct x_vars *)dm_vars)->xtkwin);
@@ -1008,6 +1067,7 @@ char	*name;
 
     Tk_SetWindowBackground(((struct x_vars *)dm_vars)->xtkwin, ((struct x_vars *)dm_vars)->bg);
     Tk_MapWindow(((struct x_vars *)dm_vars)->xtkwin);
+
     return 0;
 }
 
@@ -1062,30 +1122,18 @@ char *argv[];
 
     if( argc < 2 )  {
       /* Bare set command, print out current settings */
-#ifdef MULTI_ATTACH
       rt_structprint("dm_X internal variables", X_vparse,
 		     (CONST char *)&((struct x_vars *)dm_vars)->mvars );
-#else
-      rt_structprint("dm_X internal variables", X_vparse, (char *)0 );
-#endif
       rt_log("%s", rt_vls_addr(&vls) );
     } else if( argc == 2 ) {
-#ifdef MULTI_ATTACH
       rt_vls_name_print( &vls, X_vparse, argv[1],
 			 (CONST char *)&((struct x_vars *)dm_vars)->mvars);
-#else
-      rt_vls_name_print( &vls, X_vparse, argv[1], (char *)0 );
-#endif
       rt_log( "%s\n", rt_vls_addr(&vls) );
     } else {
       rt_vls_printf( &vls, "%s=\"", argv[1] );
       rt_vls_from_argv( &vls, argc-2, argv+2 );
       rt_vls_putc( &vls, '\"' );
-#ifdef MULTI_ATTACH
       rt_structparse( &vls, X_vparse, (char *)&((struct x_vars *)dm_vars)->mvars);
-#else
-      rt_structparse( &vls, X_vparse, (char *)0 );
-#endif
     }
 
     rt_vls_free(&vls);
@@ -1115,14 +1163,14 @@ char *argv[];
   return CMD_BAD;
 }
 
-void
+static void
 x_var_init()
 {
   dm_vars = (char *)rt_malloc(sizeof(struct x_vars), "x_var_init: x_vars");
   bzero((void *)dm_vars, sizeof(struct x_vars));
 }
 
-int
+static int
 X_load_startup()
 {
   FILE    *fp;
@@ -1194,7 +1242,7 @@ X_load_startup()
 }
 
 
-struct dm_list *
+static struct dm_list *
 get_dm_list(window)
 Window window;
 {
@@ -1284,7 +1332,8 @@ int	X_object();
 unsigned X_cvtvecs(), X_load();
 void	X_statechange(), X_viewchange(), X_colorchange();
 void	X_window(), X_debug(), X_selectargs();
-int     X_dm();
+static int     X_dm();
+static int   X_load_startup();
 
 struct dm dm_X = {
 	X_open, X_close,
@@ -2105,8 +2154,15 @@ char	*name;
     xtkwin = Tk_CreateWindow(interp, tkwin, "mged", NULL);
 #endif
 
+#if 1
+    if( X_load_startup() ){
+      rt_log( "xsetup: Error loading startup file\n");
+      return -1;
+    }
+#else
 /*XXX* Temporary */
     Tcl_EvalFile(interp, "/m/cad/mged/sample_bindings");
+#endif
 #endif
 
     /* Open the display - XXX see what NULL does now */
@@ -2274,7 +2330,7 @@ set_perspective()
   dmaflag = 1;
 }
 
-int
+static int
 X_dm(argc, argv)
 int argc;
 char *argv[];
@@ -2323,5 +2379,76 @@ char *argv[];
 
   rt_log("dm: bad command - %s\n", argv[0]);
   return CMD_BAD;
+}
+
+static int
+X_load_startup()
+{
+  FILE    *fp;
+  struct rt_vls str;
+  char *path;
+  char *filename;
+  int     found;
+
+#define DM_X_RCFILE "sample_bindings"
+
+  found = 0;
+  rt_vls_init( &str );
+
+  if((filename = getenv("DM_X_RCFILE")) == (char *)NULL )
+        filename = DM_X_RCFILE;
+
+  if((path = getenv("MGED_LIBRARY")) != (char *)NULL ){
+    rt_vls_strcpy( &str, path );
+    rt_vls_strcat( &str, "/" );
+    rt_vls_strcat( &str, filename );
+
+    if ((fp = fopen(rt_vls_addr(&str), "r")) != NULL )
+      found = 1;
+  }
+
+  if(!found){
+    if( (path = getenv("HOME")) != (char *)NULL )  {
+      rt_vls_strcpy( &str, path );
+      rt_vls_strcat( &str, "/" );
+      rt_vls_strcat( &str, filename );
+
+      if( (fp = fopen(rt_vls_addr(&str), "r")) != NULL )
+	found = 1;
+    }
+  }
+
+  if( !found ) {
+    if( (fp = fopen( filename, "r" )) != NULL )  {
+      rt_vls_strcpy( &str, filename );
+      found = 1;
+    }
+  }
+
+/*XXX Temporary, so things will work without knowledge of the new environment
+      variables */
+  if( !found ) {
+    rt_vls_strcpy( &str, "/m/cad/mged/");
+    rt_vls_strcat( &str, filename);
+
+    if( (fp = fopen(rt_vls_addr(&str), "r")) != NULL )
+      found = 1;
+  }
+
+  if(!found){
+    rt_vls_free(&str);
+    return -1;
+  }
+
+  fclose( fp );
+
+  if (Tcl_EvalFile( interp, rt_vls_addr(&str) ) == TCL_ERROR) {
+    rt_log("Error reading %s: %s\n", filename, interp->result);
+    rt_vls_free(&str);
+    return -1;
+  }
+
+  rt_vls_free(&str);
+  return 0;
 }
 #endif
