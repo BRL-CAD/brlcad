@@ -1,4 +1,4 @@
-#define PLOT_BOTH_FACES	0
+#define PLOT_BOTH_FACES	1
 /*
  *			N M G _ F C U T . C
  *
@@ -1857,7 +1857,7 @@ CONST struct rt_tol	*tol;
  */
 void
 nmg_stash_model_to_file( filename, m, title )
-CONST char	*filename;
+char		*filename;
 struct model	*m;
 CONST char	*title;
 {
@@ -1865,6 +1865,9 @@ CONST char	*title;
 	struct rt_external	ext;
 	struct rt_db_internal	intern;
 	union record		rec;
+
+	rt_log("nmg_stash_model_to_file(x%x '%s', x%x, %s)\n", filename, filename, m, title);
+filename = "error.g";	/* XXX First arg is getting trashed! */
 
 	NMG_CK_MODEL(m);
 
@@ -1895,6 +1898,6 @@ CONST char	*title;
 	fwrite( (char *)&rec, sizeof(rec), 1, fp );
 	fwrite( ext.ext_buf, ext.ext_nbytes, 1, fp );
 	fclose(fp);
-	rt_log("nmg_stash_model_to_file(): wrote %s\n", filename);
+	rt_log("nmg_stash_model_to_file(): wrote '%s'\n", filename);
 }
                                                                                                                                       
