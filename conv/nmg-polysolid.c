@@ -65,9 +65,9 @@ nmg_conv(struct rt_db_internal *intern, const char *name )
 		rt_db_free_internal( intern );
 		return;
 	}
-/* XXX convert in place to BoT */
-	write_shell_as_polysolid( fdout, name, s);
+	mk_bot_from_nmg( fdout, name, s);
 	BU_UNSETJUMP;
+	if(verbose) bu_log("Wrote %s\n", name);
 	rt_db_free_internal( intern );
 }
 
