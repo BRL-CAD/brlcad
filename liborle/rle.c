@@ -1,7 +1,7 @@
 /*
-	SCCS id:	@(#) librle.c	1.3
-	Last edit: 	3/22/85 at 13:59:56	G S M
-	Retrieved: 	8/13/86 at 10:27:09
+	SCCS id:	@(#) librle.c	1.4
+	Last edit: 	3/22/85 at 14:23:05	G S M
+	Retrieved: 	8/13/86 at 10:27:22
 	SCCS archive:	/m/cad/librle/RCS/s.librle.c
 
 	Author : Gary S. Moss, BRL.
@@ -16,12 +16,14 @@
  */
 #if ! defined( lint )
 static
-char	sccsTag[] = "@(#) librle.c	1.3	last edit 3/22/85 at 13:59:56";
+char	sccsTag[] = "@(#) librle.c	1.4	last edit 3/22/85 at 14:23:05";
 #endif
 #include <stdio.h>
 #include <fb.h>
 #include <rle.h>
-extern int	debug, verbose;
+typedef unsigned char	u_char;
+int	rle_debug = 0;
+int	rle_verbose = 0;
 
 #define CUR red		/* Must be rightmost part of Pixel.		*/
 /* 
@@ -45,7 +47,7 @@ extern int	debug, verbose;
 #define SkipBlankLines(nblank) \
 	{ \
 	putshort(RSkipLines(nblank)); \
-	if( debug ) (void) fprintf( stderr, "SkipLines %d\n", nblank ); \
+	if( rle_debug ) (void) fprintf( stderr, "SkipLines %d\n", nblank ); \
 	}
 
 /* Select a color and do "carriage return" to start of scanline.
@@ -54,7 +56,7 @@ extern int	debug, verbose;
 #define SetColor(c) \
 	{ \
 	putshort(RSetColor((_bw_flag ? 0 : c))); \
-	if(debug)  (void) fprintf( stderr, "SetColor %d\n", c); \
+	if(rle_debug)  (void) fprintf( stderr, "SetColor %d\n", c); \
 	}
 
 /* Skip a run of background.						*/
@@ -63,7 +65,8 @@ extern int	debug, verbose;
 	if( nskip > 0 ) \
 		{ \
 		putshort( RSkipPixels(nskip) ); \
-		if(debug) (void) fprintf( stderr, "SkipPixels %d\n", nskip); \
+		if( rle_debug) \
+			 (void) fprintf( stderr, "SkipPixels %d\n", nskip); \
 		} \
 	}
 
@@ -74,7 +77,7 @@ extern int	debug, verbose;
 #define NewScanLine() \
 	{ \
 	putshort(RNewLine); \
-	if(debug) (void) fprintf( stderr, "New Scan Line\n" ); \
+	if(rle_debug) (void) fprintf( stderr, "New Scan Line\n" ); \
 	}
 
 /* Output an enumerated set of intensities for current color channel.	*/
@@ -82,7 +85,7 @@ extern int	debug, verbose;
 	{ \
 	putshort(RRunData(num)); \
 	putshort(color); \
-	if(debug) \
+	if(rle_debug) \
 		(void) fprintf( stderr, \
 				"Run Data, len=%d, intensity=%d\n", \
 				 num, color ); \
@@ -195,13 +198,13 @@ Pixel	*bgpixel;
 		}
 	switch( setup.magic & ~0xff) {
 	case RMAGIC :
-		if( verbose )
+		if( rle_verbose )
 			(void) fprintf( stderr,	verbage[0] );
 		_bw_flag = 0;
 		mode = setup.magic & 0xFF;
 		break;
 	case WMAGIC :
-		if( verbose )
+		if( rle_verbose )
 			(void) fprintf( stderr, verbage[1] );
 		_bw_flag = 1;
 		mode = setup.magic & 0xFF;
@@ -213,7 +216,7 @@ Pixel	*bgpixel;
 #ifdef POSFLAG
 	if( posflag )
 		{
-		if( verbose )
+		if( rle_verbose )
 			(void) fprintf( stderr,
 					"Originally positioned at (%d, %d)\n",
 					setup.xpos, setup.ypos
@@ -229,7 +232,7 @@ Pixel	*bgpixel;
 			setup.ypos = posy % _fbsize;
 			}
 		}
-	if (verbose) 
+	if( rle_verbose )
 		(void) fprintf( stderr,
 				"Positioned at (%d, %d), size (%d %d)\n",
 				setup.xpos,
@@ -240,7 +243,7 @@ Pixel	*bgpixel;
 #endif POSFLAG
 	switch( mode ) {
 	case 'B' : /* Background given.					*/
-		if( verbose )
+		if( rle_verbose )
 			(void) fprintf( stderr,
 					verbage[3],
 					setup.bg_r, setup.bg_g, setup.bg_b
@@ -254,11 +257,11 @@ Pixel	*bgpixel;
 			}
 		break;
 	case 'O': /* Overlay mode.					*/
-		if( verbose )
+		if( rle_verbose )
 			(void) fprintf( stderr, verbage[4] );
 		break;
 	default:
-		if( verbose )
+		if( rle_verbose )
 			(void) fprintf( stderr, verbage[5] );
 		(void) fprintf( stderr, "unknown display mode x%x\n", mode );
 		break;
@@ -302,7 +305,7 @@ rle_rmap( fp, cmap )
 FILE		*fp;
 ColorMap	*cmap;
 	{
-	if(verbose)
+	if( rle_verbose )
 		(void) fprintf( stderr, "Reading color map\n");
 	if(	_get_Color_Map_Seg( fp, cmap->cm_red ) == -1
 	     ||	_get_Color_Map_Seg( fp, cmap->cm_green ) == -1
@@ -321,7 +324,7 @@ rle_wmap( fp, cmap )
 FILE		*fp;
 ColorMap	*cmap;
 	{
-	if(verbose)
+	if( rle_verbose )
 		(void) fprintf( stderr, "Writing color map\n" );
 	if(	_put_Color_Map_Seg( fp, cmap->cm_red ) == -1
 	     ||	_put_Color_Map_Seg( fp, cmap->cm_green ) == -1
@@ -356,7 +359,7 @@ Pixel	*scan_buf;
 		}
 	while( _Get_Inst( fp, &inst ) != EOF )
 		{
-		if( debug )
+		if( rle_debug )
 			(void) fprintf( stderr,
 					"op %d, datum %d\n",
 					inst.opcode,
@@ -366,7 +369,7 @@ Pixel	*scan_buf;
 			{
 			case RSkipLinesOp :
 				lines_to_skip = inst.datum;
-				if( debug )
+				if( rle_debug )
 					(void) fprintf( stderr,
 							"Skip Lines %d\n",
 							lines_to_skip
@@ -376,7 +379,7 @@ Pixel	*scan_buf;
 				else
 					return	dirty_flag;
 			case RSetColorOp:
-				if( debug )
+				if( rle_debug )
 					(void) fprintf( stderr,
 							"Set Color %d\n",
 							inst.datum
@@ -416,7 +419,7 @@ Pixel	*scan_buf;
 				break;
 			case RSkipPixelsOp:
 				n = inst.datum;
-				if( debug )
+				if( rle_debug )
 					(void) fprintf( stderr,
 							"Skip Pixels %d\n",
 							n
@@ -425,7 +428,7 @@ Pixel	*scan_buf;
 				break;
 			case RByteDataOp:
 				n = inst.datum + 1;
-				if( debug )
+				if( rle_debug )
 					(void) fprintf( stderr,
 						"Byte Data, count=%d.\n",
 							n
@@ -468,7 +471,7 @@ Pixel	*scan_buf;
 				*p++ = getc( fp );
 				*p++ = getc( fp );
 				}
-				if(debug)
+				if(rle_debug)
 					(void) fprintf( stderr,	
 							"Run-Data(len=%d,inten=%d)\n",
 							n,
@@ -500,7 +503,7 @@ Pixel	*scan_buf;
 						"Unrecognized opcode: %d (x%x x%x)\n",
 						inst.opcode, inst.opcode, inst.datum
 						);
-				if( ! debug )
+				if( ! rle_debug )
 					return	-1;
 			}
 		}
@@ -607,7 +610,7 @@ register Pixel *endpix;
 			}
 		pixelp++;
 		}
-	if(verbose)
+	if( rle_verbose )
 		(void) fprintf( stderr," (%d segments)\n", nseg );
 	if( nseg >= NSEG )
 		{
@@ -772,7 +775,7 @@ int	n;
 		}
 	if( n & 1 )
 		(void) putc( 0, fp );	/* short align output */
-	if( debug )
+	if( rle_debug )
 		(void) fprintf( stderr, "Byte Data, len=%d\n", n );
 	return;
 	}
