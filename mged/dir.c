@@ -45,6 +45,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "tcl.h"
+#include "tk.h"
 
 #include "machine.h"
 #include "vmath.h"
@@ -105,7 +106,9 @@ register int num_entries;
  * in the object file.
  */
 int
-dir_print(argc, argv)
+dir_print(clientData, interp, argc, argv)
+ClientData	clientData;
+Tcl_Interp	*interp;
 int	argc;
 char	**argv;
 {
