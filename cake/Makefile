@@ -44,22 +44,21 @@ cake:		$(OBJ) $(GOBJ)
 all:		cake lint tags
 
 # This needs to be run all as one line, so variables are not lost.
-#		echo BINDIR=$${BINDIR};
-
 install:	cake
 		eval `machinetype.sh -v` ; \
-		BINDIR=$${BASEDIR}/bin; \
-		MANDIR=$${BASEDIR}/man/man1; \
-		if test -f $${BINDIR}/cake; then \
-			mv -f $${BINDIR}/cake $${BINDIR}/cake.bak; fi; \
-		mv cake $${BINDIR}/cake; \
-		chmod 555  $${BINDIR}/cake; \
-		rm -f $${BINDIR}/fake; \
-		ln -s $${BINDIR}/cake $${BINDIR}/fake; \
-		rm -f $${MANDIR}/cake.1 $${MANDIR}/fake.1; \
-		cp cake.1 $${MANDIR}; \
-		chmod 444 $${MANDIR}/cake.1; \
-		ln -s $${MANDIR}/cake.1 $${MANDIR}/fake.1
+		BRLCAD_BINDIR=$${BASEDIR}/bin; \
+		BRLCAD_MANDIR=$${BASEDIR}/man/man1; \
+		echo BRLCAD_BINDIR=$${BRLCAD_BINDIR}; \
+		if test -f $${BRLCAD_BINDIR}/cake; then \
+			mv -f $${BRLCAD_BINDIR}/cake $${BRLCAD_BINDIR}/cake.bak; fi; \
+		mv cake $${BRLCAD_BINDIR}/cake; \
+		chmod 555  $${BRLCAD_BINDIR}/cake; \
+		rm -f $${BRLCAD_BINDIR}/fake; \
+		ln -s $${BRLCAD_BINDIR}/cake $${BRLCAD_BINDIR}/fake; \
+		rm -f $${BRLCAD_MANDIR}/cake.1 $${BRLCAD_MANDIR}/fake.1; \
+		cp cake.1 $${BRLCAD_MANDIR}; \
+		chmod 444 $${BRLCAD_MANDIR}/cake.1; \
+		ln -s $${BRLCAD_MANDIR}/cake.1 $${BRLCAD_MANDIR}/fake.1
 
 $(OBJ):		$(HDR)
 $(GOBJ):	$(HDR)
