@@ -1,0 +1,3 @@
+This image type produces a simple line drawing.   
+
+To produce this image, you will need to specify the objects you want to render, and the view information (e.g. azimuth and elevation). You may select arbitrary line and background colors.

@@ -1,0 +1,11 @@
+Hi!
+
+You have elected to produce a simple line drawing. In order to produce this image you will need to specify the items that you wish to render. You will also need to specify the view parameters, that is, the view orientation and size. 
+
+To change the azimuth, use the View:Azimuth control. The default is 35 degrees. To change the elevation, use the View:Elevation control. The default is 25 degrees. To change the size, use the View:Size control. 
+
+You may also use MGED shift-grips to change the view parameters.
+
+You may change the line color by using the Options:Line Color tool. The default line color is black. To change the background color, use the Options:Non-line Color control. The default background color is white. Although the Options:Occlusion Mode control is active, it has not affect for this image type.
+
+Use the Steps menu to move between steps. They may be done in any order.
