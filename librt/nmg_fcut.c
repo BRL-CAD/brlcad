@@ -46,6 +46,10 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "nmg.h"
 #include "raytrace.h"
 
+/* XXX move to raytrace.h */
+RT_EXTERN(struct edgeuse	*nmg_ebreaker, (struct vertex *v,
+				struct edgeuse *eu, CONST struct rt_tol *tol));
+
 /* States of the state machine */
 #define NMG_STATE_ERROR		0
 #define NMG_STATE_OUT		1
@@ -2707,7 +2711,7 @@ struct rt_tol *tol;	/* tolerance for collinearity check */
 
 				if(rt_g.NMG_debug&DEBUG_FCUT)
 					rt_log( "\tvu1 is on vu2's eu, creating new edge (MAGSQ=%g, tol->dist_sq=%g)\n" , dist_to_loop_sq , tol->dist_sq );
-				new_eu = nmg_ebreak( vu1->v_p , vu2->up.eu_p );
+				new_eu = nmg_ebreaker( vu1->v_p , vu2->up.eu_p, tol );
 				nmg_klu( vu1->up.lu_p );
 				return( 1 );
 			}
@@ -2731,7 +2735,7 @@ struct rt_tol *tol;	/* tolerance for collinearity check */
 
 				if(rt_g.NMG_debug&DEBUG_FCUT)
 					rt_log( "\tvu1 is on eu that ends at vu2, creating new edge (MAGSQ=%g, tol->dist_sq=%g)\n" , dist_to_loop_sq , tol->dist_sq );
-				new_eu = nmg_ebreak( vu1->v_p , eu_to );
+				new_eu = nmg_ebreaker( vu1->v_p , eu_to, tol );
 				nmg_klu( vu1->up.lu_p );
 				return( 1 );
 			}
@@ -3006,8 +3010,9 @@ rt_log("force next eu to ray\n");
 			/* Edge already ends at same vertex */
 			rs->vu[pos] = RT_LIST_PNEXT_CIRC(edgeuse, eu)->vu_p;
 		} else {
-			/* Break edge */
-			rs->vu[pos] = nmg_ebreak( vu->v_p, eu )->vu_p;
+			/* Break edge, force onto isect line */
+			nmg_edge_geom_isect_line( eu->e_p, rs );
+			rs->vu[pos] = nmg_ebreaker( vu->v_p, eu, rs->tol )->vu_p;
 		}
 		/* Kill lone vertex loop (and vertexuse) */
 		nmg_klu(lu);

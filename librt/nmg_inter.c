@@ -58,6 +58,10 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "raytrace.h"
 #include "./debug.h"
 
+/* XXX move to raytrace.h */
+RT_EXTERN(struct edgeuse	*nmg_ebreaker, (struct vertex *v,
+				struct edgeuse *eu, CONST struct rt_tol *tol));
+
 #define ISECT_NONE	0
 #define ISECT_SHARED_V	1
 #define ISECT_SPLIT1	2
@@ -779,7 +783,7 @@ struct edgeuse		*eu1;		/* Edge to be broken (in fu1) */
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
 			rt_log("re-using vertex v=x%x from other shell\n", v2);
 
-		eu1forw = nmg_ebreak(v2, eu1);
+		eu1forw = nmg_ebreaker(v2, eu1, &(is->tol));
 		vu1_final = eu1forw->vu_p;
 		vu2_final = nmg_enlist_vu( is, vu1_final, 0 );
 	} else {
@@ -806,7 +810,7 @@ rt_log("%%%%%% point is outside face loop, no need to break eu1?\n");
 			 */
 		}
 
-		eu1forw = nmg_ebreak((struct vertex *)NULL, eu1);
+		eu1forw = nmg_ebreaker((struct vertex *)NULL, eu1, &is->tol);
 		vu1_final = eu1forw->vu_p;
 		nmg_vertex_gv(vu1_final->v_p, hit_pt);
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
@@ -971,7 +975,7 @@ struct nmg_inter_struct	*is;
 		break;
 	case 3:
 		/* P is in the middle, break edge */
-		new_eu = nmg_ebreak( v2, eu1 );
+		new_eu = nmg_ebreaker( v2, eu1, &is->tol );
 		if (rt_g.NMG_debug & DEBUG_POLYSECT) {
 			rt_log("nmg_break_eu_on_v() breaking eu=x%x on v=x%x, new_eu=x%x\n",
 				eu1, v2, new_eu );
@@ -1040,7 +1044,7 @@ CONST struct rt_tol	*tol;
 		if( NEAR_ZERO( a-vdist, tol->dist ) )  continue;
 		if( NEAR_ZERO( b-vdist, tol->dist ) )  continue;
 		if( !rt_between( a, vdist, b, tol ) )  continue;
-		new_eu = nmg_ebreak( v, *eup );
+		new_eu = nmg_ebreaker( v, *eup, tol );
 #if 0
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
 #else
@@ -1387,7 +1391,7 @@ struct faceuse		*fu2;		/* fu of eu2, for error checks */
 		/* Break eu2 on our first vertex */
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
 			rt_log("\tbreaking eu2 on vu1a\n");
-		vu = nmg_ebreak( vu1a->v_p, eu2 )->vu_p;
+		vu = nmg_ebreaker( vu1a->v_p, eu2, &is->tol )->vu_p;
 		nmg_enlist_vu( is, vu1a, vu );
 		ret = ISECT_SPLIT2;	/* eu1 not broken, just touched */
 		goto topo;
@@ -1426,7 +1430,7 @@ struct faceuse		*fu2;		/* fu of eu2, for error checks */
 		/* Break eu2 on our second vertex */
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
 			rt_log("\tbreaking eu2 on vu1b\n");
-		vu = nmg_ebreak( vu1b->v_p, eu2 )->vu_p;
+		vu = nmg_ebreaker( vu1b->v_p, eu2, &is->tol )->vu_p;
 		nmg_enlist_vu( is, vu1b, vu );
 		ret = ISECT_SPLIT2;	/* eu1 not broken, just touched */
 		goto topo;
@@ -1455,7 +1459,7 @@ struct faceuse		*fu2;		/* fu of eu2, for error checks */
 			if (rt_g.NMG_debug & DEBUG_POLYSECT)
 			    	VPRINT("\t\tBreaking eu2 at intersect point", hit_pt);
 			new_v2 = nmg_find_pt_in_model(m, hit_pt, &(is->tol) );
-			new_vu2 = nmg_ebreak( new_v2, eu2 )->vu_p;
+			new_vu2 = nmg_ebreaker( new_v2, eu2, &is->tol )->vu_p;
 			if( !new_v2 )  {
 				/* A new vertex was created, assign geom */
 				nmg_vertex_gv( new_vu2->v_p, hit_pt );	/* 3d geom */
@@ -1481,14 +1485,14 @@ struct faceuse		*fu2;		/* fu of eu2, for error checks */
 	if( dist[1] == 0 )  {
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
 			rt_log("\t\tintersect point is vu2a\n");
-		vu = nmg_ebreak( vu2a->v_p, eu1 )->vu_p;
+		vu = nmg_ebreaker( vu2a->v_p, eu1, &is->tol )->vu_p;
 		nmg_enlist_vu( is, vu2a, vu );
 		ret |= ISECT_SPLIT1;
 		goto topo;
 	} else if( dist[1] == 1 )  {
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
 			rt_log("\t\tintersect point is vu2b\n");
-		vu = nmg_ebreak( vu2b->v_p, eu1 )->vu_p;
+		vu = nmg_ebreaker( vu2b->v_p, eu1, &is->tol )->vu_p;
 		nmg_enlist_vu( is, vu2b, vu );
 		ret |= ISECT_SPLIT1;
 		goto topo;
@@ -2464,7 +2468,7 @@ if( !rt_between(vu1a->v_p->vg_p->coord[X], hit_pt[X], vu1b->v_p->vg_p->coord[X],
 		 * Can't just search other face, might miss relevant vert.
 		 */
 		new_v = nmg_find_pt_in_model(fu2->s_p->r_p->m_p, hit_pt, &(is->tol));
-		vu1_final = nmg_ebreak(new_v, eu1)->vu_p;
+		vu1_final = nmg_ebreaker(new_v, eu1, &is->tol)->vu_p;
 		ret = 1;
 		if( !new_v )  {
 			nmg_vertex_gv( vu1_final->v_p, hit_pt );	/* 3d geom */
@@ -3172,7 +3176,7 @@ hit_b:
 					if( hit_v == vu1a->v_p || hit_v == vu1b->v_p )
 						rt_bomb("About to make 0-length edge!\n");
 				}
-				new_eu = nmg_ebreak(hit_v, *eu1);
+				new_eu = nmg_ebreaker(hit_v, *eu1, &is->tol);
 				/* XXX What about realloc() moving the array? */
 				nmg_tbl( eu1_list, TBL_INS_UNIQUE, &new_eu->l.magic );
 				vu1_midpt = new_eu->vu_p;
@@ -3779,7 +3783,7 @@ top:
 			return;
 		}
 		/* Break eu2 on vu1a */
-		nmg_ebreak( vu1a->v_p, eu2 );
+		nmg_ebreaker( vu1a->v_p, eu2, &is->tol );
 		return;
 	} else if( dist[0] == 1 )  {
 		/* Hit is at vu1b */
@@ -3793,7 +3797,7 @@ top:
 			return;
 		}
 		/* Break eu2 on vu1b */
-		nmg_ebreak( vu1b->v_p, eu2 );
+		nmg_ebreaker( vu1b->v_p, eu2, &is->tol );
 		return;
 	} else {
 		/* Hit on eu1 is between vu1a and vu1b */
@@ -3801,11 +3805,11 @@ top:
 
 		if( dist[1] == 0 )  {
 			/* Hit is at vu2a */
-			nmg_ebreak( vu2a->v_p, eu1 );
+			nmg_ebreaker( vu2a->v_p, eu1, &is->tol );
 			return;
 		} else if( dist[1] == 1 )  {
 			/* Hit is at vu2b */
-			nmg_ebreak( vu2b->v_p, eu1 );
+			nmg_ebreaker( vu2b->v_p, eu1, &is->tol );
 			return;
 		}
 		/* Hit is amidships on both eu1 and eu2. */
@@ -3851,7 +3855,7 @@ struct edgeuse		*eu2;
 		break;
 	case 3:
 		/* Hit is in the span AB somewhere, break edge */
-		vu2 = nmg_ebreak( vu1->v_p, eu2 )->vu_p;
+		vu2 = nmg_ebreaker( vu1->v_p, eu2, &is->tol )->vu_p;
 		break;
 	default:
 		rt_bomb("nmg_isect_vertex3_edge3p()\n");
