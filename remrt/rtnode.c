@@ -670,8 +670,7 @@ char *buf;
 	(void)free(buf);
 
 	/*
-	 * initialize application -- it will allocate 1 line and
-	 * set buf_mode=1, as well as do mlib_init().
+	 * Initialize application -- do mlib_init().
 	 */
 	(void)view_init( &ap, title_file, title_obj, 0 );
 
@@ -784,7 +783,7 @@ char			*buf;
 
 	grid_setup();
 
-	/* initialize lighting */
+	/* initialize lighting, set buf_mode=BUFMODE_DYNAMIC */
 	print_on = 0;
 	view_2init( &ap );
 	print_on = saved_print_on;
