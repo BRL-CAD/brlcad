@@ -169,7 +169,7 @@ int	enter;
 		(addr_tmp>> 8) & 0xff,
 		(addr_tmp    ) & 0xff );
 	if( enter == 0 )  {
-		rt_log("%s: unknown host\n");
+		rt_log("%s: unknown host\n", name);
 		return( IHOST_NULL );
 	}
 
