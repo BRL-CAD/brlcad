@@ -96,7 +96,10 @@ char	**dpp;
 	/* get or default shader parameters */
 	ptp->pt_file[0] = '\0';
 	ptp->pt_size = -1;
-	rt_structparse( matparm, points_parse, (char *)ptp );
+	if( rt_structparse( matparm, points_parse, (char *)ptp ) < 0 )  {
+		rt_free( (char *)ptp, "points_specific" );
+		return(-1);
+	}
 	if( ptp->pt_size < 0 )
 		ptp->pt_size = 512;
 	if( ptp->pt_file[0] == '\0' )

@@ -438,7 +438,10 @@ char	**argv;
 	}
 	rt_vls_init( &str );
 	rt_vls_from_argv( &str, argc-1, argv+1 );
-	rt_structparse( &str, set_parse, (char *)0 );
+	if( rt_structparse( &str, set_parse, (char *)0 ) < 0 )  {
+		rt_vls_free( &str );
+		return(-1);
+	}
 	rt_vls_free( &str );
 	return(0);
 }

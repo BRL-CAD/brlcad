@@ -124,7 +124,10 @@ genptr_t	*dpp;
 	lp->lt_infinite = 0;
 	lp->lt_rp = rp;
 	lp->lt_name = rt_strdup( rp->reg_name );
-	rt_structparse( matparm, light_parse, (char *)lp );
+	if( rt_structparse( matparm, light_parse, (char *)lp ) < 0 )  {
+		rt_free( (char *)lp, "light_specific" );
+		return(-1);
+	}
 
 	if( lp->lt_angle > 180 )  lp->lt_angle = 180;
 	lp->lt_cosangle = cos( (double) lp->lt_angle * 0.0174532925199433 );

@@ -117,7 +117,10 @@ char	**dpp;
 	pp->refrac_index = RI_AIR;
 	pp->extinction = 0.0;
 
-	rt_structparse( matparm, phong_parse, (char *)pp );
+	if( rt_structparse( matparm, phong_parse, (char *)pp ) < 0 )  {
+		rt_free( (char *)pp, "phong_specific" );
+		return(-1);
+	}
 
 	if( pp->transmit > 0 )
 		rp->reg_transmit = 1;
@@ -148,7 +151,10 @@ char	**dpp;
 	pp->refrac_index = 1.65;
 	pp->extinction = 0.0;
 
-	rt_structparse( matparm, phong_parse, (char *)pp );
+	if( rt_structparse( matparm, phong_parse, (char *)pp ) < 0 )  {
+		rt_free( (char *)pp, "phong_specific" );
+		return(-1);
+	}
 
 	if( pp->transmit > 0 )
 		rp->reg_transmit = 1;
@@ -180,7 +186,10 @@ char	**dpp;
 	pp->refrac_index = 1.65;
 	pp->extinction = 0.0;
 
-	rt_structparse( matparm, phong_parse, (char *)pp );
+	if( rt_structparse( matparm, phong_parse, (char *)pp ) < 0 )  {
+		rt_free( (char *)pp, "phong_specific" );
+		return(-1);
+	}
 
 	if( pp->transmit > 0 )
 		rp->reg_transmit = 1;

@@ -104,7 +104,10 @@ char	**dpp;
 
 	spp->sp_file[0] = '\0';
 	spp->sp_w = -1;
-	rt_structparse( matparm, spm_parse, (char *)spp );
+	if( rt_structparse( matparm, spm_parse, (char *)spp ) < 0 )  {
+		rt_free( (char *)spp, "spm_specific" );
+		return(-1);
+	}
 	if( spp->sp_w < 0 )  spp->sp_w = 512;
 	if( spp->sp_file[0] == '\0' )
 		goto fail;

@@ -132,7 +132,10 @@ char	**dpp;
 	pp->rd[1] = fresnel( 0.0, pp->n[1] ) / rt_pi;
 	pp->rd[2] = fresnel( 0.0, pp->n[2] ) / rt_pi;
 
-	rt_structparse( matparm, cook_parse, (char *)pp );
+	if( rt_structparse( matparm, cook_parse, (char *)pp ) < 0 )  {
+		rt_free( (char *)pp, "cook_specific" );
+		return(-1);
+	}
 
 	pp->m2 = ( pp->m < 0.001 ) ? 0.0001 : pp->m * pp->m;
 	if( pp->transmit > 0 )
@@ -171,7 +174,8 @@ char	**dpp;
 	pp->rd[1] = fresnel( 0.0, pp->n[1] ) / rt_pi;
 	pp->rd[2] = fresnel( 0.0, pp->n[2] ) / rt_pi;
 
-	rt_structparse( matparm, cook_parse, (char *)pp );
+	if( rt_structparse( matparm, cook_parse, (char *)pp ) < 0 )
+		return(-1);
 
 	pp->m2 = ( pp->m < 0.001 ) ? 0.0001 : pp->m * pp->m;
 	if( pp->transmit > 0 )
@@ -210,7 +214,8 @@ char	**dpp;
 	pp->rd[1] = fresnel( 0.0, pp->n[1] ) / rt_pi;
 	pp->rd[2] = fresnel( 0.0, pp->n[2] ) / rt_pi;
 
-	rt_structparse( matparm, cook_parse, (char *)pp );
+	if( rt_structparse( matparm, cook_parse, (char *)pp ) < 0 )
+		return(-1);
 
 	pp->m2 = ( pp->m < 0.001 ) ? 0.0001 : pp->m * pp->m;
 	if( pp->transmit > 0 )

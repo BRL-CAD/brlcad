@@ -189,7 +189,10 @@ char			**dpp;
 		return(-1);
 
 	/**	Get input values  **/
-	rt_structparse( matparm, stxt_parse, (char *)stp );
+	if( rt_structparse( matparm, stxt_parse, (char *)stp ) < 0 )  {
+		rt_free( (char *)stp, "stxt_specific" );
+		return(-1);
+	}
 	/*** DEFAULT SIZE OF STXT FILES ***/
 	if( stp->stx_w < 0 )  stp->stx_w = 512;
 	if( stp->stx_n < 0 )  stp->stx_n = stp->stx_w;

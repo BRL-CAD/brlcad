@@ -282,7 +282,10 @@ char			**dpp;
 	tp->tx_file[0] = '\0';
 	tp->tx_w = tp->tx_fw = tp->tx_n = -1;
 	tp->tx_trans_valid = 0;
-	rt_structparse( matparm, txt_parse, (char *)tp );
+	if( rt_structparse( matparm, txt_parse, (char *)tp ) < 0 )  {
+		rt_free( (char *)tp, "txt_specific" );
+		return(-1);
+	}
 	if( tp->tx_w < 0 )  tp->tx_w = 512;
 	if( tp->tx_n < 0 )  tp->tx_n = tp->tx_w;
 	if( tp->tx_fw < 0 )  tp->tx_fw = tp->tx_w;
@@ -381,7 +384,10 @@ char			**dpp;
 	GETSTRUCT( ckp, ckr_specific );
 	*dpp = (char *)ckp;
 	ckp->ckr_a[0] = ckp->ckr_a[1] = ckp->ckr_a[2] = 255;
-	rt_structparse( matparm, ckr_parse, (char *)ckp );
+	if( rt_structparse( matparm, ckr_parse, (char *)ckp ) < 0 )  {
+		rt_free( (char *)ckp, "ckr_specific" );
+		return(-1);
+	}
 	ckp->ckr_a[0] &= 0x0ff;
 	ckp->ckr_a[1] &= 0x0ff;
 	ckp->ckr_a[2] &= 0x0ff;
