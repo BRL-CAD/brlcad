@@ -300,6 +300,12 @@ union tree *tp;
 			eptr->l.op = tp->tr_op;
 			BU_LIST_INIT( &eptr->l.seghead );
 			break;
+		case OP_NOP:
+			/* add a NULL solid  */
+			BU_GETUNION( eptr, E_tree );
+			eptr->magic = E_TREE_MAGIC;
+			eptr->l.m = (struct model *)NULL;
+			break;
 	}
 	return( eptr );
 }
