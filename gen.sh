@@ -408,10 +408,10 @@ install-tcl)
 	done;;
 
 ami)
-	$BRLCAD_ROOT/tclscripts/ami.tcl $BRLCAD_ROOT/tclscripts
+	( cd tclscripts && cake -k ${TARGET} )
 
 	for dir in ${TSDIRS}; do
-	    $BRLCAD_ROOT/tclscripts/ami.tcl $BRLCAD_ROOT/tclscripts/$dir
+	    ( cd tclscripts/$dir && cake -k ${TARGET} )
 	done;;
 
 tags)
