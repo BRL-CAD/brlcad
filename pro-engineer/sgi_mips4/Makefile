@@ -29,7 +29,7 @@ INCS = \
   -I$(BASEDIR)/include/brlcad
 
 # Compiler
-CC = cc -n32 -mips4
+CC = cc -n32 -mips4 -woff 1521
 # to build C++, uncomment these lines
 #CC = CC -n32 -mips4
 
@@ -53,12 +53,11 @@ PTLIB       = $(PROTOOL_SYS)/obj/protoolkit.a
 PTLIB_DLL   = $(PROTOOL_SYS)/obj/protk_dll.a
 PTCLIBS     = $(PTLIB) $(PDLIB)
 PTCLIBS_DLL = $(PTLIB_DLL) $(PDLIB_DLL)
-BRLLIBS     = -L $(BASEDIR)/lib -lbu
+BRLLIBS     = -L$(BASEDIR)/lib -lbu -lbn -ltcl
 SYSLIBS     = -lc -lm -lw
 
 # Object files
 OBJS = proe-brl.o
-
 
 exe: $(EXE)
 
