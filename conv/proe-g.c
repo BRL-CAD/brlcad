@@ -644,44 +644,6 @@ do_modifiers(char *line1, int *start, struct wmember *head, char *name, fastf_t 
 	}
 }
 
-int
-Add_vert(fastf_t x, fastf_t y, fastf_t z)
-{
-	int i;
-	fastf_t *v;
-	point_t new_v;
-	vect_t diff;
-	fastf_t dist_sq;
-
-	VSET( new_v, x, y, z );
-
-	/* first search for this vertex in list */
-	for( i=0 ; i<bot_vcurr ; i++ )
-	{
-		v = &bot_verts[i*3];
-		VSUB2( diff, v, new_v );
-		dist_sq = MAGSQ( diff );
-		if( dist_sq <= tol.dist_sq )
-			return( i );
-	}
-
-	/* didn't find it, so add a new vertex to the list */
-	if( !bot_verts )
-	{
-		bot_verts = (fastf_t *)bu_malloc( 3 * BOT_VBLOCK * sizeof( fastf_t ), "bot_verts" );
-		bot_vsize = BOT_VBLOCK;
-		bot_vcurr = 0;
-	}
-	else if( bot_vcurr >= bot_vsize )
-	{
-		/* increase size of vertex array */
-		bot_vsize += BOT_VBLOCK;
-		bot_verts = (fastf_t *)bu_realloc( (void *)bot_verts, bot_vsize * 3 * sizeof( fastf_t ), "bot_verts increase" );
-	}
-
-	VMOVE( &bot_verts[bot_vcurr * 3], new_v );
-	return( bot_vcurr++ );
-}
 
 void
 Add_face(int *face)
