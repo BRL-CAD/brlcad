@@ -1275,12 +1275,13 @@ register struct frame *fr;
 	fr->fr_height = height;
 
 	rt_vls_trunc( &fr->fr_cmd, 0 );	/* Start fresh */
-	sprintf(buf, "opt -w%d -n%d -H%d -p%g -U%d -J%x -A%g -l%d -E%g",
+	sprintf(buf, "opt -w%d -n%d -H%d -p%g -U%d -J%x -A%g -l%d -E%g -x%x -X%x",
 		fr->fr_width, fr->fr_height,
 		hypersample, rt_perspective,
 		use_air, jitter,
 		AmbientIntensity, lightmodel,
-		eye_backoff );
+		eye_backoff,
+		rdebug, rt_g.debug );
 	rt_vls_strcat( &fr->fr_cmd, buf );
 	if( interactive )  rt_vls_strcat( &fr->fr_cmd, " -I");
 	if( benchmark )  rt_vls_strcat( &fr->fr_cmd, " -B");
