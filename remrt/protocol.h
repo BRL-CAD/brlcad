@@ -57,11 +57,11 @@ struct line_info  {
 #define LINE_O(x)	offsetof(struct  line_info, x)
 
 struct rt_imexport desc_line_info[] =  {
-	"%d",		LINE_O(li_startpix),	1,
-	"%d",		LINE_O(li_endpix),	1,
-	"%d",		LINE_O(li_frame),	1,
-	"%d",		LINE_O(li_nrays),	1,
-	"%f",		LINE_O(li_cpusec),	1,
-	"%f",		LINE_O(li_percent),	1,
-	"",		0,			0
+	{"%d",		LINE_O(li_startpix),	1 },
+	{"%d",		LINE_O(li_endpix),	1 },
+	{"%d",		LINE_O(li_frame),	1 },
+	{"%d",		LINE_O(li_nrays),	1 },
+	{"%f",		LINE_O(li_cpusec),	1 },
+	{"%f",		LINE_O(li_percent),	1 },
+	{"",		0,			0 }
 };
