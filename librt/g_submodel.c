@@ -344,7 +344,9 @@ struct seg		*segHeadp;
 		MAT4XSCALOR( up_segp->seg_in.hit_dist, submodel->subm2m, inseg->seg_in.hit_dist);
 		up_segp->seg_in.hit_dist -= gp->delta;
 		MAT4XSCALOR( up_segp->seg_out.hit_dist, submodel->subm2m, outseg->seg_out.hit_dist);
-		up_segp->seg_in.hit_dist -= gp->delta;
+		up_segp->seg_out.hit_dist -= gp->delta;
+
+		BU_ASSERT_DOUBLE(up_segp->seg_in.hit_dist, <=, up_segp->seg_out.hit_dist );
 
 		/* Link to ray in upper model, not submodel */
 		up_segp->seg_in.hit_rayp = &up_ap->a_ray;
