@@ -1501,6 +1501,6 @@ struct rt_db_internal	*ip;
 	tip = (struct rt_tor_internal *)ip->idb_ptr;
 	RT_TOR_CK_MAGIC(tip);
 
-	rt_free( (char *)tip, "tor ifree" );
+	rt_free( (char *)tip, "rt_tor_internal" );
 	ip->idb_ptr = GENPTR_NULL;	/* sanity */
 }
