@@ -29,12 +29,13 @@
 #	define _POSIX_SOURCE	1
 #endif
 
-#if defined(sgi) || defined(__sgi)
+#if defined(sgi) || defined(__sgi) || defined(IRIX)
 #	if IRIX < 6
 #		define HAS_SGIGL	1	/* Old GL */
 #	else
 #		define HAS_OPENGL	1	/* OpenGL */
 #	endif
+#	define HAVE_GETOPT_H	1
 #endif
 
 #if defined(_GNU_SOURCE)
@@ -55,6 +56,7 @@
  *	HAVE_STRING_H		Usually the preferred include (for strdup and
  *				strtok).  Historically, SYSV territory, but
  *				nowadays it looks like everyone's got it.
+ *	HAVE_GETOPT_H
  */
 
 #if defined(__STDC__)
@@ -141,6 +143,10 @@
 
 #if defined(BSD) || defined(linux) || defined(sgi) || defined(_BSD_SOURCE)
 #	define HAVE_GETHOSTNAME	1
+#endif
+
+#if defined(linux)
+#	define HAVE_GETOPT_H	1
 #endif
 
 #if defined(SYSV) || defined(__NetBSD__) || defined(__bsdi__) || defined(__stardent)
