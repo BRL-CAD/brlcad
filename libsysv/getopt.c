@@ -20,15 +20,17 @@ extern char	*index();
 /*
  * get option letter from argument vector
  */
-int	opterr = 1,		/* useless, never set or used */
-	optind = 1,		/* index into parent argv vector */
-	optopt;			/* character checked for validity */
+int	opterr = 1;		/* set to zero to suppress errors */
+int	optind = 1;		/* index into parent argv vector */
+int	optopt;			/* character checked for validity */
 char	*optarg;		/* argument associated with option */
 
 #define BADCH	(int)'?'
 #define EMSG	""
-#define tell(s)	fputs(*nargv,stderr);fputs(s,stderr); \
-		fputc(optopt,stderr);fputc('\n',stderr);return(BADCH);
+#define tell(s)	if(opterr)  { \
+		fputs(*nargv,stderr);fputs(s,stderr); \
+		fputc(optopt,stderr);fputc('\n',stderr); \
+	} return(BADCH);
 
 getopt(nargc,nargv,ostr)
 int	nargc;
