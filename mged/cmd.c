@@ -91,6 +91,7 @@ static struct cmdtab cmdtab[] = {
 	"ae", f_aetview,
 	"aip", f_aip,
 	"analyze", f_analyze,
+	"apply_edit_solid", f_sedit_apply,
 	"arb", f_arbdef,
 	"arced", f_arced,
 	"area", f_area,
