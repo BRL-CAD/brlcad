@@ -19,10 +19,10 @@ firpass:	firpass.o subroutines.o LIBRT
 	CC LDFLAGS firpass.o subroutines.o LIB_PRE''LIBRT RT_LIBES LIBMALLOC LIBES -o firpass
 
 secpass:        secpass.o subroutines.o LIBRT
-        CC LDFLAGS -g secpass.o subroutines.o LIB_PRE''LIBRT RT_LIBES LIBMALLOC LIBES -o secpass
+        CC LDFLAGS secpass.o subroutines.o LIB_PRE''LIBRT RT_LIBES LIBMALLOC LIBES -o secpass
 
 shapefact:  shapefact.o LIBRT
-        CC LDFLAGS -g shapefact.o LIB_PRE''LIBRT RT_LIBES LIBMALLOC LIBES -o shapefact
+        CC LDFLAGS shapefact.o LIB_PRE''LIBRT RT_LIBES LIBMALLOC LIBES -o shapefact
 
 lint:
 	lint LFLAGS -I''INCDIR ../irprep/firpass.c ../irprep/subroutines.c > SRCDIR.lint
