@@ -256,7 +256,8 @@ char **argv;
 	while(1) {
 		(void)signal( SIGINT, SIG_IGN );
 
-		rateflag = event_check( rateflag );
+		/* This test stops optimizers from complaining about an infinite loop */
+		if( (rateflag = event_check( rateflag )) < 0 )  break;
 
 		/* apply solid editing changes if necessary */
 		if( sedraw > 0) {
@@ -271,7 +272,6 @@ char **argv;
 		 */	 
 		refresh();
 	}
-	/* NOTREACHED */
 }
 
 /*
@@ -279,6 +279,10 @@ char **argv;
  *
  *  Check for events, and dispatch them.
  *  Eventually, this will be done entirely by generating commands
+ *
+ *  Returns -
+ *	 0	no events detected
+ *	>0	number of events detected
  */
 int
 event_check( non_blocking )
