@@ -101,7 +101,7 @@ struct partition *PartHeadp;
 	}
 
 	if(rdebug&RDEBUG_HITS)  {
-		rt_pr_pt(pp);
+		rt_pr_pt( ap->a_rt_i, pp );
 	}
 
 	hitp = pp->pt_inhit;
@@ -114,7 +114,7 @@ struct partition *PartHeadp;
 		/* XXX */
 		rt_log("radhit:  GAK, eye inside solid (%g)\n", hitp->hit_dist );
 		for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
-			rt_pr_pt(pp);
+			rt_pr_pt( ap->a_rt_i, pp );
 		return(0);
 	}
 
@@ -293,7 +293,7 @@ struct partition *PartHeadp;
 		/* XXX */
 		rt_log("hiteye:  GAK2, eye inside solid (%g)\n", hitp->hit_dist );
 		for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
-			rt_pr_pt(pp);
+			rt_pr_pt( ap->a_rt_i, pp );
 		return(0);
 	}
 	/*RT_HIT_NORM( hitp, pp->pt_inseg->seg_stp, &(ap->a_ray) );*/
