@@ -152,6 +152,8 @@ RT_DECLARE_INTERFACE(epa)
 RT_DECLARE_INTERFACE(ehy)
 #define rt_eto_xform rt_generic_xform
 RT_DECLARE_INTERFACE(eto)
+#define rt_grp_xform rt_generic_xform
+RT_DECLARE_INTERFACE(grp)
 
 /* XXX from shoot.c / vshoot.c */
 RT_EXTERN(void rt_vstub, (struct soltab *stp[], struct xray *rp[],
@@ -315,6 +317,13 @@ struct rt_functab rt_functab[ID_MAXIMUM+2] = {
 		rt_eto_import,	rt_eto_export,	rt_eto_ifree,
 		rt_eto_describe,rt_eto_xform,
 
+	"ID_GRIP",	0,
+		rt_grp_prep,	rt_grp_shot,	rt_grp_print,	rt_grp_norm,
+		rt_grp_uv,	rt_grp_curve,	rt_grp_class,	rt_grp_free,
+		rt_grp_plot,	rt_grp_vshot,	rt_grp_tess,
+		rt_grp_import,	rt_grp_export,	rt_grp_ifree,
+		rt_grp_describe,rt_grp_xform,
+
 	">ID_MAXIMUM",	0,
 		rt_nul_prep,	rt_nul_shot,	rt_nul_print,	rt_nul_norm,
 		rt_nul_uv,	rt_nul_curve,	rt_nul_class,	rt_nul_free,
@@ -423,6 +432,7 @@ static char idmap[] = {
 	ID_EPA,		/* HACK: EPA 28: elliptical paraboloid */
 	ID_EHY,		/* HACK: EHY 29: elliptical hyperboloid */
 	ID_ETO,		/* HACK: ETO 29: elliptical torus */
+	ID_GRIP,	/* HACK: GRP 30: grip pseudo solid */
 	ID_NULL		/* n+1 */
 };
 
