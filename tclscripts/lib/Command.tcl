@@ -25,7 +25,6 @@ class Command {
 
     private variable hist ""
     private variable scratchline ""
-    private variable cmd_prefix ""
     private variable moveView 0
     private variable freshline 1
 
@@ -38,11 +37,12 @@ class Command {
 
     public variable edit_style emacs
     public variable prompt "> "
-    public variable db_glob 0
+    public variable cmd_prefix ""
+    public variable selection_color #fefe8e
     public variable prompt_color red1
+    public variable cmd_color black
     public variable oldcmd_color red3
     public variable result_color blue3
-    public variable selection_color #fefe8e
 
     constructor {args} {
 	eval itk_initialize $args
@@ -112,18 +112,47 @@ class Command {
     private method doButtonBindings {}
     private method doKeyBindings {}
     private method doControl_a {}
+    private method doControl_c {}
+    private method doMeta_d {}
+    private method doMeta_BackSpace {}
+    private method doReturn {}
+    private method doLeft {}
+    private method doRight {}
+
+    public method history {args}
 }
 
 configbody Command::edit_style {
     switch $edit_style {
-	emacs {
-	}
+	emacs -
 	vi {
+	    doKeyBindings
 	}
 	default {
 	    return -code error "Bad edit_style"
 	}
     }
+
+}
+
+configbody Command::selection_color {
+	$itk_component(text) tag configure sel -foreground $selection_color
+}
+
+configbody Command::prompt_color {
+	$itk_component(text) tag configure prompt -foreground $prompt_color
+}
+
+configbody Command::cmd_color {
+	$itk_component(text) tag configure cmd -foreground $cmd_color
+}
+
+configbody Command::oldcmd_color {
+	$itk_component(text) tag configure oldcmd -foreground $oldcmd_color
+}
+
+configbody Command::result_color {
+	$itk_component(text) tag configure result -foreground $result_color
 }
 
 body Command::invoke {} {
@@ -132,12 +161,7 @@ body Command::invoke {} {
     set cmd [concat $cmd_prefix [$w get promptEnd insert]]
 
     if [info complete $cmd] {
-	if {$db_glob} {
-	    catch {db_glob $cmd} globbed_cmd
-	    set result [catch {uplevel #0 $globbed_cmd} msg]
-	} else {
-	    set result [catch {uplevel #0 $cmd} msg]
-	}
+	set result [catch {uplevel #0 $cmd} msg]
 
 	if {$result != 0} {
 	    $w tag add oldcmd promptEnd insert
@@ -154,7 +178,6 @@ body Command::invoke {} {
 	}
 
 	$hist add $cmd
-	set cmd_prefix ""
 	print_prompt
     }
     $w see insert
@@ -382,7 +405,6 @@ body Command::execute {} {
 body Command::interrupt {} {
     set w $itk_component(text)
 
-    set cmd_prefix ""
     $w insert insert \n
     print_prompt
     $w see insert
@@ -604,7 +626,7 @@ body Command::vi_process_edit {c state} {
 	}
 	d {
 	    if {$delete_flag} {
-		delete_line $w
+		delete_line
 		set delete_flag 0
 	    } else {
 		set delete_flag 1
@@ -613,13 +635,13 @@ body Command::vi_process_edit {c state} {
 	}
 	e {
 	    if {$delete_flag} {
-		delete_end_word $w
+		delete_end_word
 	    } elseif {$change_flag} {
-		delete_end_word $w
-		vi_insert_mode $w
+		delete_end_word
+		vi_insert_mode
 		set change_flag 0
 	    } else {
-		end_word $w
+		end_word
 	    }
 	    set delete_flag 0
 	}
@@ -628,41 +650,41 @@ body Command::vi_process_edit {c state} {
 	}
 	h {
 	    if {$delete_flag} {
-		backward_delete_char $w
+		backward_delete_char
 		set delete_flag 0
 	    } elseif {$change_flag} {
-		backward_delete_char $w
-		vi_insert_mode $w
+		backward_delete_char
+		vi_insert_mode
 		set change_flag 0
 	    } else {
-		backward_char $w
+		backward_char
 	    }
 	}
 	i {
-	    vi_insert_mode $w
+	    vi_insert_mode
 	    set delete_flag 0
 	    set change_flag 0
 	}
 	j {
-	    next $w
+	    next
 	    set delete_flag 0
 	    set change_flag 0
 	}
 	k {
-	    prev $w
+	    prev
 	    set delete_flag 0
 	    set change_flag 0
 	}
 	l {
 	    if {$delete_flag} {
-		delete_char $w
+		delete_char
 		set delete_flag 0
 	    } elseif {$change_flag} {
-		delete_char $w
-		vi_insert_mode $w
+		delete_char
+		vi_insert_mode
 		set change_flag 0
 	    } else {
-		forward_char $w
+		forward_char
 	    }
 	}
 	r {
@@ -671,42 +693,42 @@ body Command::vi_process_edit {c state} {
 	    set change_flag 0
 	}
 	s {
-	    delete_char $w
-	    vi_insert_mode $w
+	    delete_char
+	    vi_insert_mode
 	    set delete_flag 0
 	    set change_flag 0
 	}
 	w {
 	    if {$delete_flag} {
-		delete_word $w
+		delete_word
 		set delete_flag 0
 	    } elseif {$change_flag} {
-		delete_word $w
-		vi_insert_mode $w
+		delete_word
+		vi_insert_mode
 		set change_flag 0
 	    } else {
-		forward_word $w
+		forward_word
 	    }
 	}
 	x {
-	    delete_char $w
+	    delete_char
 	    set delete_flag 0
 	    set change_flag 0
 	}
 	A {
-	    end_of_line $w
-	    vi_insert_mode $w
+	    end_of_line
+	    vi_insert_mode
 	    set delete_flag 0
 	    set change_flag 0
 	}
 	C {
-	    delete_end_of_line $w
-	    vi_insert_mode $w
+	    delete_end_of_line
+	    vi_insert_mode
 	    set delete_flag 0
 	    set change_flag 0
 	}
 	D {
-	    delete_end_of_line $w
+	    delete_end_of_line
 	    set delete_flag 0
 	    set change_flag 0
 	}
@@ -714,31 +736,31 @@ body Command::vi_process_edit {c state} {
 	    set search_flag F
 	}
 	I {
-	    beginning_of_line $w
-	    vi_insert_mode $w
+	    beginning_of_line
+	    vi_insert_mode
 	    set delete_flag 0
 	    set change_flag 0
 	}
 	R {
-	    vi_overwrite_mode $w
+	    vi_overwrite_mode
 	    set delete_flag 0
 	    set change_flag 0
 	}
 	X {
-	    backward_delete_char $w
+	    backward_delete_char
 	    set delete_flag 0
 	    set change_flag 0
 	}
 	$ {
 	    if {$delete_flag} {
-		delete_end_of_line $w
+		delete_end_of_line
 		set delete_flag 0
 	    } elseif {$change_flag} {
-		delete_end_of_line $w
-		vi_insert_mode $w
+		delete_end_of_line
+		vi_insert_mode
 		set change_flag 0
 	    } else {
-		end_of_line $w
+		end_of_line
 	    }
 	}
 	default {
@@ -755,7 +777,7 @@ body Command::vi_process_overwrite {c state} {
 	return
     }
 
-    delete_char $w
+    delete_char
     $w insert insert $c
 }
 # End - VI Specific Callbacks
@@ -909,85 +931,36 @@ body Command::doKeyBindings {} {
 	vi {
 	    vi_insert_mode
 
-	    bind $w <Escape> {
-		[code $this vi_edit_mode]
-		break
-	    }
-
-	    bind $w <Left> {
-		[code $this backward_char; vi_edit_mode]
-		break
-	    }
-
-	    bind $w <Right> {
-		[code $this forward_char; vi_edit_mode]
-		break
-	    }
-
-
-	    bind $w <Control-d> {
-		break
-	    }
-
-	    bind $w <Control-u> {
-		[code $this delete_beginning_of_line]
-		break
-	    }
-
-	    bind $w <Return> {
-		[code $this execute; vi_insert_mode]
-		break
-	    }
-
-	    bind $w <KP_Enter> {
-		[code $this execute; vi_insert_mode]
-		break
-	    }
-
-	    bind $w <Delete> {
-		[code $this backward_delete_char]
-		break
-	    }
+	    bind $w <Escape> "[code $this vi_edit_mode]; break"
+	    bind $w <Control-d> "break"
+	    bind $w <Control-u> "[code $this delete_beginning_of_line]; break"
 	}
 	default
 	    -
 	emacs {
 	    bind $w <Escape> "break"
-	    bind $w <Left> "[code $this backward_char]; break"
-	    bind $w <Right> "[code $this forward_char]; break"
 	    bind $w <Control-d> "[code $this delete_char]; break"
 	    bind $w <Control-u> "[code $this delete_line]; break"
 	    bind $w <BackSpace> "[code $this backward_delete_char]; break"
-	    bind $w <Delete> "[code $this backward_delete_char]; break"
-	    bind $w <Return> "[code $this execute]; break"
-	    bind $w <KP_Enter> "[code $this execute]; break"
 	    bind $w <space> {}
 	    bind $w <KeyPress> {}
 	}
     }
 
 # Common Key Bindings
+    bind $w <Return> "[code $this doReturn]; break"
+    bind $w <KP_Enter> "[code $this doReturn]; break"
+    bind $w <Delete> "[code $this backward_delete_char]; break"
+    bind $w <Left> "[code $this doLeft]; break"
+    bind $w <Right> "[code $this doRight]; break"
     bind $w <Control-a> "[code $this doControl_a]; break"
     bind $w <Control-b> "[code $this backward_char]; break"
-
-    bind $w <Control-c> {
-	[code $this
-	interrupt
-	if {\$edit_style == "vi"} {
-	    vi_insert_mode
-	}]
-	break
-    }
-
+    bind $w <Control-c> "[code $this doControl_c]; break"
     bind $w <Control-e> "[code $this end_of_line]; break"
     bind $w <Control-f> "[code $this forward_char]; break"
     bind $w <Control-k> "[code $this delete_end_of_line]; break"
     bind $w <Control-n> "[code $this next]; break"
-
-    bind $w <Control-o> {
-	break
-    }
-
+    bind $w <Control-o> "break"
     bind $w <Control-p> "[code $this prev]; break"
     bind $w <Control-t> "[code $this transpose]; break"
     bind $w <Control-w> "[code $this backward_delete_word]; break"
@@ -995,20 +968,8 @@ body Command::doKeyBindings {} {
     bind $w <Down> "[code $this next]; break"
     bind $w <Home> "[code $this beginning_of_line]; break"
     bind $w <End> "[code $this end_of_line]; break"
-
-    bind $w <Meta-d> {
-	if [%W compare insert < promptEnd] {
-	    break
-	}
-	[code $this cursor_highlight]
-    }
-
-    bind $w <Meta-BackSpace> {
-	if [%W compare insert <= promptEnd] {
-	    break
-	}
-	[code $this cursor_highlight]
-    }
+    bind $w <Meta-d> "[code $this doMeta_d]; break"
+    bind $w <Meta-BackSpace> "[code $this doMeta_BackSpace]; break"
 
     bind $w <Alt-Key> {
 	tkTraverseToMenu %W %A
@@ -1059,4 +1020,51 @@ body Command::doControl_a {} {
     } else {
 	beginning_of_line
     }
+}
+
+body Command::doControl_c {} {
+    interrupt
+    if {$edit_style == "vi"} {
+	vi_insert_mode
+    }
+}
+
+body Command::doMeta_d {} {
+    if [%W compare insert < promptEnd] {
+	break
+    }
+    cursor_highlight
+}
+
+body Command::doMeta_BackSpace {} {
+    if [%W compare insert <= promptEnd] {
+	break
+    }
+    cursor_highlight
+}
+
+body Command::doReturn {} {
+    execute
+    if {$edit_style == "vi"} {
+	vi_insert_mode
+    }
+}
+
+body Command::doLeft {} {
+    backward_char
+    if {$edit_style == "vi"} {
+	vi_edit_mode
+    }
+}
+
+body Command::doRight {} {
+    forward_char
+    if {$edit_style == "vi"} {
+	vi_edit_mode
+    }
+}
+
+############################## Command Object's Interface ##############################
+body Command::history {args} {
+    eval $hist history $args
 }
