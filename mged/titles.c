@@ -59,8 +59,8 @@ char	*state_str[] = {
 	"UNKNOWN",
 };
 
+extern mat_t perspective_mat;  /* defined in dozoom.c */
 extern struct rt_db_internal	es_int;
-
 
 /*
  *			C R E A T E _ T E X T _ O V E R L A Y
@@ -320,7 +320,14 @@ struct bu_vls *overlay_vls;
 		mat_t			xform;
 		struct rt_point_labels	pl[8+1];
 
-		bn_mat_mul( xform, model2objview, es_mat );
+		if( mged_variables.perspective <= 0)
+		  bn_mat_mul( xform, model2objview, es_mat );
+		else{
+		  mat_t tmat;
+
+		  bn_mat_mul( tmat, model2objview, es_mat );
+		  bn_mat_mul( xform, perspective_mat, tmat );
+		}
 
 		label_edited_solid( pl, 8+1, xform, &es_int );
 
