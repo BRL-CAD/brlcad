@@ -852,7 +852,7 @@ struct rt_tol		*tol;
 	for( i = 0; i < arip->ncurves-1; i++ )  {
 		int double_ended;
 
-		if( VAPPROXEQUAL( &arip->curves[i][1*ELEMENTS_PER_VECT], &arip->curves[i][k*ELEMENTS_PER_VECT], tol->dist ) )
+		if( k != 1 && VAPPROXEQUAL( &arip->curves[i][1*ELEMENTS_PER_VECT], &arip->curves[i][k*ELEMENTS_PER_VECT], tol->dist ) )
 			double_ended = 1;
 		else
 			double_ended = 0;
