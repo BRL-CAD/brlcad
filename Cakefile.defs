@@ -1203,12 +1203,13 @@ set -S2 "/bin/sh"
 #	else
 #		define	OPTIMIZER	-g -fno-common
 #	endif
+#	define	CC_DEFS -pipe -W -Wall -Wundef -Dlint
+/* -Wmissing-prototypes -Wstrict-prototypes  -Wmissing-declarations -W -pedantic -ansi*/
 #	if BUILD_SHARED	
 #		error "ERROR: Building with shared libraries is not supported via cake"
 #		error "       (use ProjectBuilder)"
 /*		Shared library version support.  */
 /*		PowerPC code is position-independant by default (and by design) (i.e. no nee d for -fPIC) */
-#		define	CC_DEFS -pipe -Wall 
 /* #		define	ARCH_SUF	so */
 #		define	ARCH_SUF	dylib
 /*#		define	LIBVERS ../sh/sharedlibvers.sh*/
@@ -1219,7 +1220,6 @@ set -S2 "/bin/sh"
 #		define  RANLIB	true
 #	else
 /*		Static linked executables */
-#		define	CC_DEFS -pipe -Wall
 #		define  RANLIB	ranlib
 #		define	STANDARD_LIBES -lm -lc -framework Foundation
 #	endif
