@@ -105,7 +105,8 @@ struct dm dm_plot = {
   0,				/* no perspective */
   0,				/* no lighting */
   0,				/* no zbuffer */
-  0				/* no zclipping */
+  0,				/* no zclipping */
+  0				/* Tcl interpreter */
 };
 
 struct plot_vars head_plot_vars;
@@ -118,9 +119,10 @@ static mat_t plotmat;
  *
  */
 struct dm *
-plot_open(argc, argv)
+plot_open(interp, argc, argv)
      int	argc;
      char	*argv[];
+     Tcl_Interp *interp;
 {
 	static int	count = 0;
 	struct dm	*dmp;
@@ -131,6 +133,7 @@ plot_open(argc, argv)
 		return DM_NULL;
 
 	*dmp = dm_plot; /* struct copy */
+	dmp->dm_interp = interp;
 
 	dmp->dm_vars.priv_vars = (genptr_t)bu_calloc(1, sizeof(struct plot_vars), "plot_open: plot_vars");
 	BU_GETSTRUCT(dmp->dm_vars.priv_vars, plot_vars);
@@ -312,7 +315,7 @@ plot_loadMatrix(dmp, mat, which_eye)
 {
 	Tcl_Obj	*obj;
 
-	obj = Tcl_GetObjResult(interp);
+	obj = Tcl_GetObjResult(dmp->dm_interp);
 	if (Tcl_IsShared(obj))
 		obj = Tcl_DuplicateObj(obj);
 
@@ -334,7 +337,7 @@ plot_loadMatrix(dmp, mat, which_eye)
 	}
 
 	bn_mat_copy(plotmat, mat);
-	Tcl_SetObjResult(interp, obj);
+	Tcl_SetObjResult(dmp->dm_interp, obj);
 	return TCL_OK;
 }
 
@@ -591,7 +594,7 @@ plot_debug(dmp, lvl)
 {
 	Tcl_Obj	*obj;
 
-	obj = Tcl_GetObjResult(interp);
+	obj = Tcl_GetObjResult(dmp->dm_interp);
 	if (Tcl_IsShared(obj))
 		obj = Tcl_DuplicateObj(obj);
 
@@ -599,7 +602,7 @@ plot_debug(dmp, lvl)
 	(void)fflush(((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp);
 	Tcl_AppendStringsToObj(obj, "flushed\n", (char *)NULL);
 
-	Tcl_SetObjResult(interp, obj);
+	Tcl_SetObjResult(dmp->dm_interp, obj);
 	return TCL_OK;
 }
 

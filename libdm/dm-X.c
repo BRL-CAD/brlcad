@@ -31,11 +31,15 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "tk.h"
 #include <X11/Xutil.h>
 
+#define USE_DIALS_AND_BUTTONS 0
+
 #ifdef HAVE_XOSDEFS_H
 #include <X11/Xfuncproto.h>
 #include <X11/Xosdefs.h>
 #endif
+#if USE_DIALS_AND_BUTTONS
 #include <X11/extensions/XInput.h>
+#endif
 #if defined(linux)
 #	undef   X_NOT_STDC_ENV
 #	undef   X_NOT_POSIX
@@ -127,16 +131,14 @@ struct dm dm_X = {
   0,				/* no perspective */
   0,				/* no lighting */
   0,				/* no zbuffer */
-  0				/* no zclipping */
+  0,				/* no zclipping */
+  0				/* Tcl interpreter */
 };
 
 fastf_t min_short = (fastf_t)SHRT_MIN;
 fastf_t max_short = (fastf_t)SHRT_MAX;
 
 extern int vectorThreshold;	/* defined in libdm/tcl.c */ 
-
-/* Currently, the application must define these. */
-extern Tk_Window tkwin;
 
 /*
  *			X _ O P E N
@@ -145,29 +147,38 @@ extern Tk_Window tkwin;
  *
  */
 struct dm *
-X_open(argc, argv)
-int argc;
-char *argv[];
+X_open(interp, argc, argv)
+     Tcl_Interp *interp;
+     int argc;
+     char *argv[];
 {
   static int count = 0;
-  int j, k;
   int make_square = -1;
   XGCValues gcv;
+#if USE_DIALS_AND_BUTTONS
+  int j, k;
   int ndevices;
   int nclass = 0;
   XDeviceInfoPtr olist, list;
   XDevice *dev;
   XEventClass e_class[15];
   XInputClassInfo *cip;
+#endif
   struct bu_vls str;
   struct bu_vls init_proc_vls;
   struct dm *dmp;
+  Tk_Window tkwin;
+
+  if ((tkwin = Tk_MainWindow(interp)) == NULL) {
+	  return DM_NULL;
+  }
 
   BU_GETSTRUCT(dmp, dm);
   if(dmp == DM_NULL)
     return DM_NULL;
 
   *dmp = dm_X; /* struct copy */
+  dmp->dm_interp = interp;
 
   dmp->dm_vars.pub_vars = (genptr_t)bu_calloc(1, sizeof(struct dm_xvars), "X_open: dm_xvars");
   if(dmp->dm_vars.pub_vars == (genptr_t)NULL){
@@ -367,6 +378,7 @@ char *argv[];
       goto Skip_dials;
   }
 
+#if USE_DIALS_AND_BUTTONS
   /*
    * Take a look at the available input devices. We're looking
    * for "dial+buttons".
@@ -420,6 +432,7 @@ char *argv[];
   }
 Done:
   XFreeDeviceList(olist);
+#endif
 
 Skip_dials:
 #ifndef CRAY2

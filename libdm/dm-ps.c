@@ -104,7 +104,8 @@ struct dm dm_ps = {
   0,				/* no perspective */
   0,				/* no lighting */
   0,				/* no zbuffer */
-  0				/* no zclipping */
+  0,				/* no zclipping */
+  0				/* Tcl interpreter */
 };
 
 char ps_usage[] = "Usage: ps [-f font] [-t title] [-c creator] [-s size in inches]\
@@ -120,7 +121,8 @@ static mat_t psmat;
  *
  */
 struct dm *
-ps_open(argc, argv)
+ps_open(interp, argc, argv)
+     Tcl_Interp *interp;
      int	argc;
      char	*argv[];
 {
@@ -133,6 +135,7 @@ ps_open(argc, argv)
 		return DM_NULL;
 
 	*dmp = dm_ps;  /* struct copy */
+	dmp->dm_interp = interp;
 
 	dmp->dm_vars.priv_vars = (genptr_t)bu_calloc(1, sizeof(struct ps_vars), "ps_open: ps_vars");
 	if (dmp->dm_vars.priv_vars == (genptr_t)NULL) {
@@ -411,7 +414,7 @@ int which_eye;
 {
 	Tcl_Obj	*obj;
 
-	obj = Tcl_GetObjResult(interp);
+	obj = Tcl_GetObjResult(dmp->dm_interp);
 	if (Tcl_IsShared(obj))
 		obj = Tcl_DuplicateObj(obj);
 
@@ -434,7 +437,7 @@ int which_eye;
 
 	bn_mat_copy(psmat, mat);
 
-	Tcl_SetObjResult(interp, obj);
+	Tcl_SetObjResult(dmp->dm_interp, obj);
 	return TCL_OK;
 }
 

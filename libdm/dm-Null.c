@@ -64,7 +64,8 @@ struct dm dm_Null = {
   0,				/* no perspective */
   0,				/* no lighting */
   0,				/* no zbuffer */
-  0				/* no zclipping */
+  0,				/* no zclipping */
+  0				/* Tcl interpreter */
 };
 
 int Nu_int0() { return TCL_OK; }

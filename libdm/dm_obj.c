@@ -318,7 +318,10 @@ dmo_open_tcl(clientData, interp, argc, argv)
 			av[i+newargs] = argv[i];
 		av[i+newargs] = (char *)NULL;
 
-		if ((dmp = dm_open(type, ac, av)) == DM_NULL) {
+		if ((dmp = dm_open(interp, type, ac, av)) == DM_NULL) {
+			if (Tcl_IsShared(obj))
+				obj = Tcl_DuplicateObj(obj);
+
 			Tcl_AppendStringsToObj(obj,
 					       "dmo_open_tcl: Failed to open - ",
 					       argv[name_index],
@@ -339,7 +342,6 @@ dmo_open_tcl(clientData, interp, argc, argv)
 	/* initialize dm_obj */
 	bu_vls_init(&dmop->dmo_name);
 	bu_vls_strcpy(&dmop->dmo_name,argv[name_index]);
-	dmop->dmo_interp = interp;
 	dmop->dmo_dmp = dmp;
 	VSETALL(dmop->dmo_dmp->dm_clipmin, -2048.0);
 	VSETALL(dmop->dmo_dmp->dm_clipmax, 2047.0);
@@ -1763,6 +1765,6 @@ dmo_fbs_callback(clientData)
 {
 	struct dm_obj *dmop = (struct dm_obj *)clientData;
 
-	bu_observer_notify(dmop->dmo_interp, &dmop->dmo_observers,
+	bu_observer_notify(dmop->dmo_dmp->dm_interp, &dmop->dmo_observers,
 			   bu_vls_addr(&dmop->dmo_name));
 }

@@ -65,9 +65,11 @@
 #define YSTEREO		491	/* subfield height, in scanlines */
 #define YOFFSET_LEFT	532	/* YSTEREO + YBLANK ? */
 
-extern int vectorThreshold;	/* defined in libdm/tcl.c */ 
+#define USE_VECTOR_THRESHHOLD 0
 
-extern Tk_Window tkwin;
+#if USE_VECTOR_THRESHHOLD
+extern int vectorThreshold;	/* defined in libdm/tcl.c */ 
+#endif
 
 static int ogl_actively_drawing;
 HIDDEN XVisualInfo *ogl_choose_visual();
@@ -133,18 +135,19 @@ struct dm dm_ogl = {
   1.0, /* aspect ratio */
   0,
   {0, 0},
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,				/* clipmin */
-  0,				/* clipmax */
+  {0, 0, 0, 0, 0},		/* bu_vls path name*/
+  {0, 0, 0, 0, 0},		/* bu_vls full name drawing window */
+  {0, 0, 0, 0, 0},		/* bu_vls short name drawing window */
+  {0, 0, 0},			/* bg color */
+  {0, 0, 0},			/* fg color */
+  {0.0, 0.0, 0.0},		/* clipmin */
+  {0.0, 0.0, 0.0},		/* clipmax */
   0,				/* no debugging */
   0,				/* no perspective */
   0,				/* no lighting */
-  1,				/* no zbuffer */
-  0				/* no zclipping */
+  1,				/* zbuffer */
+  0,				/* no zclipping */
+  0				/* Tcl interpreter */
 };
 
 HIDDEN fastf_t default_viewscale = 1000.0;
@@ -180,9 +183,10 @@ int fastfog;
  *
  */
 struct dm *
-ogl_open(argc, argv)
-int argc;
-char *argv[];
+ogl_open(interp, argc, argv)
+     Tcl_Interp *interp;
+     int argc;
+     char *argv[];
 {
   static int count = 0;
   GLfloat backgnd[4];
@@ -198,12 +202,18 @@ char *argv[];
   struct bu_vls init_proc_vls;
   Display *tmp_dpy;
   struct dm *dmp;
+  Tk_Window tkwin;
+
+  if((tkwin = Tk_MainWindow(interp)) == NULL){
+	  return DM_NULL;
+  }
 
   BU_GETSTRUCT(dmp, dm);
   if(dmp == DM_NULL)
     return DM_NULL;
 
   *dmp = dm_ogl; /* struct copy */
+  dmp->dm_interp = interp;
 
   dmp->dm_vars.pub_vars = (genptr_t)bu_calloc(1, sizeof(struct dm_xvars), "ogl_open: dm_xvars");
   if(dmp->dm_vars.pub_vars == (genptr_t)NULL){
@@ -927,7 +937,9 @@ ogl_drawVList(dmp, vp)
 {
 	register struct rt_vlist	*tvp;
 	int				first;
+#if USE_VECTOR_THRESHHOLD
 	static int			nvectors = 0;
+#endif
 
 	if (dmp->dm_debugLevel)
 		bu_log("ogl_drawVList()\n");
@@ -977,7 +989,7 @@ ogl_drawVList(dmp, vp)
 			}
 		}
 
-#if 0
+#if USE_VECTOR_THRESHHOLD
 /*XXX The Tcl_DoOneEvent below causes the following error:
 X Error of failed request:  GLXBadContextState
 */
