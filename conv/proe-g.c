@@ -467,7 +467,7 @@ char line[MAX_LINE_LEN];
 			brlcad_name = Get_unique_name( memb_name , memb_obj , PART_TYPE );
 			if( debug )
 				bu_log( "\tmember (%s)\n" , brlcad_name );
-			wmem = mk_addmember( brlcad_name , &head , WMOP_UNION );
+			wmem = mk_addmember( brlcad_name , &head.l , WMOP_UNION );
 		}
 		else if( !strncmp( &line1[start] , "matrix" , 6 ) || !strncmp( &line1[start] , "MATRIX" , 6 ) )
 		{
@@ -662,7 +662,7 @@ point_t min, max;
 			else
 			{
 				/* Add this cut to the region */
-				wmem = mk_addmember( ptr->solid_name, head,
+				wmem = mk_addmember( ptr->solid_name, &(head->l),
 						WMOP_SUBTRACT );
 
 				if( top_level && do_reorient )
@@ -752,7 +752,6 @@ char line[MAX_LINE_LEN];
 	char name[NAME_LENGTH + 1];
 	unsigned int obj=0;
 	char *solid_name;
-	int tmp_count;
 	int start;
 	int i;
 	int face_count=0;
@@ -765,7 +764,6 @@ char line[MAX_LINE_LEN];
 	struct wmember *wmem;
 	vect_t normal;
 	int solid_in_region=0;
-	int solid_is_written=0;
 	point_t part_max,part_min;	/* Part RPP */
 
 	if( rt_g.debug & DEBUG_MEM_FULL )
@@ -986,7 +984,7 @@ char line[MAX_LINE_LEN];
 		{
 			if( face_count )
 			{
-				wmem = mk_addmember( solid_name , &head , WMOP_UNION );
+				wmem = mk_addmember( solid_name , &head.l , WMOP_UNION );
 				if( top_level && do_reorient )
 				{
 					/* apply re_orient transformation here */
@@ -1031,7 +1029,7 @@ char line[MAX_LINE_LEN];
 
 	if( face_count && !solid_in_region )
 	{
-		wmem = mk_addmember( solid_name , &head , WMOP_UNION );
+		wmem = mk_addmember( solid_name , &head.l , WMOP_UNION );
 		if( top_level && do_reorient )
 		{
 			/* apply re_orient transformation here */
@@ -1062,14 +1060,14 @@ char line[MAX_LINE_LEN];
 			mk_lrcomb( fd_out, brlcad_name, &head, 1, (char *)NULL, (char *)NULL,
 			color, const_id, 0, mat_code, 100, 0 );
 			if( stl_format && face_count )
-				(void)mk_addmember( brlcad_name, &all_head, WMOP_UNION );
+				(void)mk_addmember( brlcad_name, &all_head.l, WMOP_UNION );
 		}
 		else
 		{
 			mk_lrcomb( fd_out, brlcad_name, &head, 1, (char *)NULL, (char *)NULL,
 			color, id_no, 0, mat_code, 100, 0 );
 			if( stl_format && face_count )
-				(void)mk_addmember( brlcad_name, &all_head, WMOP_UNION );
+				(void)mk_addmember( brlcad_name, &all_head.l, WMOP_UNION );
 			id_no++;
 		}
 	}
@@ -1085,6 +1083,7 @@ char line[MAX_LINE_LEN];
 
 	return;
 
+#if 0
 empty_model:
 	{
 		char *save_name;
@@ -1096,7 +1095,7 @@ empty_model:
 		bu_ptbl_ins( &null_parts, (long *)save_name );
 		return;
 	}
-
+#endif
 }
 
 static void
@@ -1172,7 +1171,6 @@ Rm_nulls()
 			if( dp->d_flags & DIR_SOLID )
 				continue;
 
-top:
 			if( rt_db_get_internal( &intern, dp, dbip, (matp_t)NULL ) < 1 )
 			{
 				bu_log( "Cannot get internal form of combination %s\n", dp->d_namep );
