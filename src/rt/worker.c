@@ -242,9 +242,6 @@ void do_run( int a, int b )
 {
 	int		cpu;
 
-	cur_pixel = a;
-	last_pixel = b;
-
 #  if defined(linux)
 	int pid, wpid;
 	int waitret;
@@ -264,6 +261,8 @@ void do_run( int a, int b )
 	}
 #  endif
 
+	cur_pixel = a;
+	last_pixel = b;
 
 	if( !rt_g.rtg_parallel )  {
 		/*
