@@ -56,7 +56,7 @@ char **argv;
 	}
 
 	pix_line = 512;
-	while( argv[1][0] == '-' )  {
+	while( argc > 1 && argv[1][0] == '-' )  {
 		switch( argv[1][1] )  {
 		case 'h':
 			pix_line = 1024;

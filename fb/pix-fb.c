@@ -52,7 +52,7 @@ char **argv;
 
 	fbsize = 512;
 	nlines = 512;
-	while( argv[1] != NULL && argv[1][0] == '-' )  {
+	while( argc > 1 && argv[1][0] == '-' )  {
 		if( strcmp( argv[1], "-h" ) == 0 )  {
 			fbsize = 1024;
 			nlines = 1024;
