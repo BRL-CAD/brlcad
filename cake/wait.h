@@ -34,9 +34,9 @@ union wait	{
 	 * Terminated process status.
 	 */
 	struct {
-		unsigned short	w_Termsig:7;	/* termination signal */
-		unsigned short	w_Coredump:1;	/* core dump indicator */
-		unsigned short	w_Retcode:8;	/* exit code if w_termsig==0 */
+		unsigned int	w_Termsig:7;	/* termination signal */
+		unsigned int	w_Coredump:1;	/* core dump indicator */
+		unsigned int	w_Retcode:8;	/* exit code if w_termsig==0 */
 	} w_T;
 	/*
 	 * Stopped process status.  Returned
@@ -44,8 +44,8 @@ union wait	{
 	 * with the WUNTRACED option bit.
 	 */
 	struct {
-		unsigned short	w_Stopval:8;	/* == W_STOPPED if stopped */
-		unsigned short	w_Stopsig:8;	/* signal that stopped us */
+		unsigned int	w_Stopval:8;	/* == W_STOPPED if stopped */
+		unsigned int	w_Stopsig:8;	/* signal that stopped us */
 	} w_S;
 };
 #define	w_termsig	w_T.w_Termsig
