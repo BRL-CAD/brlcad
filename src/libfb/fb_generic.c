@@ -171,7 +171,7 @@ fb_open(char *file, int width, int height)
 	}
 	if( file == NULL || *file == '\0' )  {
 		/* No name given, check environment variable first.	*/
-		if( (file = getenv( "FB_FILE" )) == NULL || *file == '\0' )  {
+		if( (file = (char *)getenv( "FB_FILE" )) == NULL || *file == '\0' )  {
 			/* None set, use first device as default */
 			*ifp = *(_if_list[0]);	/* struct copy */
 			file = ifp->if_name;
@@ -223,7 +223,7 @@ fb_open(char *file, int width, int height)
 
 found_interface:
 	/* Copy over the name it was opened by. */
-	if( (ifp->if_name = malloc( (unsigned) strlen( file ) + 1 ))
+	if( (ifp->if_name = (char*)malloc( (unsigned) strlen( file ) + 1 ))
 	    == (char *) NULL
 	    )
 	{
