@@ -95,8 +95,8 @@ struct faceuse	*fu;
 void
 nmg_translate_face(fu, Vec, tol)
 struct faceuse	*fu;
-vect_t		Vec;
-struct bn_tol	*tol;
+CONST vect_t		Vec;
+CONST struct bn_tol	*tol;
 {
 	int		cnt,		/* Number of vertices in face. */
 			cur,
@@ -188,7 +188,7 @@ struct bn_tol	*tol;
 int
 nmg_extrude_face(fu, Vec, tol)
 struct faceuse	*fu;	/* Face to extrude. */
-vect_t		Vec;	/* Magnitude and direction of extrusion. */
+CONST vect_t		Vec;	/* Magnitude and direction of extrusion. */
 CONST struct bn_tol	*tol;	/* NMG tolerances. */
 {
 	fastf_t		cosang;
@@ -1199,7 +1199,7 @@ CONST struct bn_tol *tol;
 				if( nmg_check_closed_shell( is , tol ) )
 				{
 					bu_log( "nmg_extrude_shell: inside shell is not closed, calling nmg_close_shell\n" );
-					nmg_close_shell( is );
+					nmg_close_shell( is, tol );
 				}
 
 				nmg_shell_coplanar_face_merge( is , tol , 0 );
@@ -1220,7 +1220,8 @@ CONST struct bn_tol *tol;
 				else
 				{
 					/* connect the boundaries of the two open shells */
-					nmg_open_shells_connect( s_tmp , is , copy_tbl , tol );
+					nmg_open_shells_connect( s_tmp , is ,
+						(CONST long **)copy_tbl , tol );
 				}
 			}
 		}

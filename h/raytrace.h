@@ -2604,6 +2604,32 @@ BU_EXTERN(int			nmg_2edgeuse_g_coincident,
 				CONST struct edgeuse	*eu2,
 				CONST struct bn_tol	*tol));
 
+/* From nmg_extrude.c */
+BU_EXTERN(void			nmg_translate_face, (struct faceuse *fu,
+				CONST vect_t		Vec,
+				CONST struct bn_tol	*tol));
+BU_EXTERN(int			nmg_extrude_face, (struct faceuse *fu,
+				CONST vect_t Vec,
+				CONST struct bn_tol	*tol));
+BU_EXTERN(struct vertexuse	*nmg_find_vertex_in_lu, (CONST struct vertex *v,
+				CONST struct loopuse *lu));
+BU_EXTERN(void			nmg_fix_overlapping_loops, (struct shell *s,
+				CONST struct bn_tol *tol));
+BU_EXTERN(void			nmg_break_crossed_loops, (struct shell *is,
+				CONST struct bn_tol *tol));
+BU_EXTERN(struct shell		*nmg_extrude_cleanup, (struct shell *is,
+				CONST int is_void,
+				CONST struct bn_tol *tol));
+BU_EXTERN(void			nmg_hollow_shell, (struct shell *s,
+				CONST fastf_t thick,
+				CONST int approximate,
+				CONST struct bn_tol *tol));
+BU_EXTERN(struct shell		*nmg_extrude_shell,
+				(struct shell *s,
+				CONST fastf_t dist,
+				CONST int normal_ward,
+				CONST int approximate,
+				CONST struct bn_tol *tol));
 
 /* From nmg_pr.c */
 BU_EXTERN(char *		nmg_orientation, (int orientation) );
