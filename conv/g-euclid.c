@@ -74,6 +74,9 @@ register struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
 union tree		*curtree;
 {
+	if(verbose )
+		rt_log( "select_region: curr_id = %d, tsp->ts_regionid = %d\n" , curr_id , tsp->ts_regionid);
+
 	if( tsp->ts_regionid == curr_id )
 		return( 0 );
 	else
@@ -86,6 +89,8 @@ register struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
 union tree		*curtree;
 {
+	if( verbose )
+		rt_log( "get_reg_id: Adding id %d to list\n" , tsp->ts_regionid );
 	nmg_tbl( &idents , TBL_INS_UNIQUE , (long *)tsp->ts_regionid );
 	return( -1 );
 }
@@ -124,6 +129,10 @@ CONST int face_number;
 	int vertex_count=0;
 
 	NMG_CK_LOOPUSE( lu );
+
+	if( verbose )
+		rt_log( "Write_euclid_face: lu=x%x, facet_type=%d, regionid=%d, face_number=%d\n",
+			lu,facet_type,regionid,face_number );
 
 	if( RT_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC )
 		return;
@@ -165,6 +174,9 @@ struct db_tree_state *tsp;
 
 	NMG_CK_REGION( r );
 
+	if( verbose )
+		rt_log( "Write_euclid_region: r=x%x\n" , r );
+
 	/* if bounds haven't been calculated, do it now */
 	if( r->ra_p == NULL )
 		nmg_region_a( r , &tol );
@@ -174,12 +186,12 @@ struct db_tree_state *tsp;
 	{
 		if( r->ra_p->min_pt[i] < (-999999.0) )
 		{
-			rt_log( "g-tankill: Coordinates too large (%g) for Euclid format\n" , r->ra_p->min_pt[i] );
+			rt_log( "g-euclid: Coordinates too large (%g) for Euclid format\n" , r->ra_p->min_pt[i] );
 			return;
 		}
 		if( r->ra_p->max_pt[i] > 9999999.0 )
 		{
-			rt_log( "g-tankill: Coordinates too large (%g) for Euclid format\n" , r->ra_p->max_pt[i] );
+			rt_log( "g-euclid: Coordinates too large (%g) for Euclid format\n" , r->ra_p->max_pt[i] );
 			return;
 		}
 	}
@@ -279,6 +291,8 @@ struct db_tree_state *tsp;
 				{
 					if( faces[loop1].facet_type != 1 )
 						continue;
+rt_log( "Hole Loop:\n" );
+nmg_pr_lu_briefly( faces[loop1].lu , (char *)NULL );
 
 					/* loop1 is a hole look for loops containing loop1 */
 					outer_loop_count = 0;
@@ -291,6 +305,8 @@ struct db_tree_state *tsp;
 
 						class = nmg_classify_lu_lu( faces[loop1].lu,
 								faces[loop2].lu , &tol );
+rt_log( "Possible outer loop classified %s (%d):\n" , nmg_class_name( class ) , class );
+nmg_pr_lu_briefly( faces[loop2].lu , (char *)NULL );
 
 						if( class != NMG_CLASS_AinB )
 							continue;
@@ -299,6 +315,7 @@ struct db_tree_state *tsp;
 						faces[loop2].facet_type = (-2);
 						outer_loop_count++;
 					}
+rt_log( "outer_loop_count = %d\n" , outer_loop_count );
 
 					if( outer_loop_count > 1 )
 					{
@@ -350,8 +367,10 @@ struct db_tree_state *tsp;
 				{
 					if( faces[i].facet_type < 0 )
 					{
-						rt_log( "Failed to classify loops in component code %d\n" , tsp->ts_regionid );
-						goto outt;
+						/* all holes have been placed 
+						 * so these must be simple faces
+						 */
+						faces[i].facet_type = 0;
 					}
 
 					if( faces[i].facet_type == 1 && faces[i].outer_loop == NULL )
@@ -413,7 +432,6 @@ char	*argv[];
 	int		i,j,ret;
 	register int	c;
 	double		percent;
-	struct rt_vls	fig_file;
 
 #ifdef BSD
 	setlinebuf( stderr );
@@ -431,11 +449,6 @@ char	*argv[];
 #if MEMORY_LEAK_CHECKING
 	rt_g.debug |= DEBUG_MEM_FULL;
 #endif
-	the_model = nmg_mm();
-	tree_state = rt_initial_tree_state;	/* struct copy */
-	tree_state.ts_tol = &tol;
-	tree_state.ts_ttol = &ttol;
-	tree_state.ts_m = &the_model;
 
 	ttol.magic = RT_TESS_TOL_MAGIC;
 	/* Defaults, updated by command line options. */
@@ -449,6 +462,12 @@ char	*argv[];
 	tol.dist_sq = tol.dist * tol.dist;
 	tol.perp = 1e-6;
 	tol.para = 1 - tol.perp;
+
+	the_model = nmg_mm();
+	tree_state = rt_initial_tree_state;	/* struct copy */
+	tree_state.ts_m = &the_model;
+	tree_state.ts_tol = &tol;
+	tree_state.ts_ttol = &ttol;
 
 	/* Initialize ident table */
 	nmg_tbl( &idents , TBL_INIT , NULL );
@@ -530,7 +549,7 @@ char	*argv[];
 
 	fprintf( fp_out , "$03" );
 
-	/* First produce a list of region ident codes */
+	/* First produce an unordered list of region ident codes */
 	ret = db_walk_tree(dbip, argc-optind, (CONST char **)(&argv[optind]),
 		1,			/* ncpu */
 		&tree_state,
@@ -554,8 +573,15 @@ char	*argv[];
 		}
 		curr_id = next_id;
 		face_count = 0;
-rt_log( "Processing id %d\n" , curr_id );
+
+		rt_log( "Processing id %d\n" , curr_id );
+
 		/* Walk indicated tree(s).  Each region will be output separately */
+		tree_state = rt_initial_tree_state;	/* struct copy */
+		tree_state.ts_m = &the_model;
+		tree_state.ts_tol = &tol;
+		tree_state.ts_ttol = &ttol;
+
 		ret = db_walk_tree(dbip, argc-optind, (CONST char **)(&argv[optind]),
 			1,			/* ncpu */
 			&tree_state,
@@ -576,12 +602,11 @@ rt_log( "Processing id %d\n" , curr_id );
 		regions_written, percent );
 
 	/* Release dynamic storage */
-	nmg_km(the_model);
 	rt_vlist_cleanup();
 	db_close(dbip);
 
 #if MEMORY_LEAK_CHECKING
-	rt_prmem("After complete G-TANKILL conversion");
+	rt_prmem("After complete G-EUCLID conversion");
 #endif
 
 	return 0;
@@ -602,6 +627,9 @@ union tree		*curtree;
 	extern FILE		*fp_fig;
 	struct nmgregion	*r;
 	struct rt_list		vhead;
+
+	if( verbose )
+		rt_log( "do_region_end: regionid = %d\n" , tsp->ts_regionid );
 
 	RT_CK_TESS_TOL(tsp->ts_ttol);
 	RT_CK_TOL(tsp->ts_tol);
@@ -641,28 +669,26 @@ union tree		*curtree;
 
 		/* Get rid of (m)any other intermediate structures */
 		if( (*tsp->ts_m)->magic == NMG_MODEL_MAGIC )
-		{
 			nmg_km(*tsp->ts_m);
-		}
 		else
-		{
 			rt_log("WARNING: tsp->ts_m pointer corrupted, ignoring it.\n");
-		}
-	
+
 		/* Now, make a new, clean model structure for next pass. */
 		*tsp->ts_m = nmg_mm();
+	
 		goto out;
 	}
+	if( verbose )
+		rt_log( "\tEvaluating region\n" );
 	r = nmg_booltree_evaluate(curtree, tsp->ts_tol);	/* librt/nmg_bool.c */
 	RT_UNSETJUMP;		/* Relinquish the protection */
 	regions_converted++;
 	if (r != 0)
 	{
-		/* Write the region to the TANKILL file */
+		/* Write the region to the EUCLID file */
 		Write_euclid_region( r , tsp );
 
-		/* NMG region is no longer necessary */
-		nmg_kr(r);
+		nmg_kr( r );
 	}
 
 	/*
