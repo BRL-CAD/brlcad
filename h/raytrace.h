@@ -72,6 +72,20 @@
 #define RT_PCOEF_TOL	(1.0e-10)
 
 /*
+ *  Macros for providing function prototypes, regardless of whether
+ *  the compiler understands them or not.
+ *  It is vital that the argument list given for "args" be enclosed
+ *  in parens.
+ */
+#if __STDC__
+#	define	RT_EXTERN(type_and_name,args)	extern type_and_name args
+#	define	RT_ARGS(args)			args
+#else
+#	define	RT_EXTERN(type_and_name,args)	extern type_and_name()
+#	define	RT_ARGS(args)			()
+#endif
+
+/*
  * Handy memory allocator
  */
 
@@ -247,6 +261,7 @@ struct curvature {
  */
 #define RT_CURVE( curvp, hitp, stp )  { \
 	register int id = (stp)->st_id; \
+	RT_CHECK_SOLTAB(stp); \
 	if( id <= 0 || id > ID_MAXIMUM )  { \
 		rt_log("stp=x%x, id=%d.\n", stp, id); \
 		rt_bomb("RT_CURVE:  bad st_id"); \
@@ -266,6 +281,7 @@ struct uvcoord {
 };
 #define RT_HIT_UVCOORD( ap, stp, hitp, uvp )  { \
 	register int id = (stp)->st_id; \
+	RT_CHECK_SOLTAB(stp); \
 	if( id <= 0 || id > ID_MAXIMUM )  { \
 		rt_log("stp=x%x, id=%d.\n", stp, id); \
 		rt_bomb("RT_UVCOORD:  bad st_id"); \
@@ -285,7 +301,6 @@ struct uvcoord {
  */
 struct seg {
 	struct rt_list	l;
-	long		seg_magic;	/* sanity checking */
 	struct hit	seg_in;		/* IN information */
 	struct hit	seg_out;	/* OUT information */
 	struct soltab	*seg_stp;	/* pointer back to soltab */
@@ -328,13 +343,12 @@ struct seg {
  * Leaf name and Xform matrix are unique identifier.
  */
 struct soltab {
+	struct rt_list	l;		/* links, headed by rti_headsolid */
 	int		st_id;		/* Solid ident */
 	vect_t		st_center;	/* Centroid of solid */
 	fastf_t		st_aradius;	/* Radius of APPROXIMATING sphere */
 	fastf_t		st_bradius;	/* Radius of BOUNDING sphere */
 	genptr_t	st_specific;	/* -> ID-specific (private) struct */
-	struct soltab	*st_forw;	/* Forward linked list of solids */
-	struct soltab	*st_back;	/* Backward links */
 	struct directory *st_dp;	/* Directory entry of solid */
 	char		*st_name;	/* Leaf name of solid */
 	vect_t		st_min;		/* min X, Y, Z of bounding RPP */
@@ -344,7 +358,18 @@ struct soltab {
 	bitv_t		*st_regions;	/* bit vect of region #'s (const) */
 	mat_t		st_pathmat;	/* Xform matrix on path */
 };
-#define SOLTAB_NULL	((struct soltab *)0)
+#define st_name		st_dp->d_namep
+#define RT_SOLTAB_NULL	((struct soltab *)0)
+#define	SOLTAB_NULL	RT_SOLTAB_NULL	/* backwards compat */
+#define RT_SOLTAB_MAGIC	0x92bfcde0
+
+#define RT_CHECK_SOLTAB(_p)	{ \
+	if( (_p)->l.magic != RT_SOLTAB_MAGIC )  { \
+		rt_log("RT_CHECK_SOLTAB(x%x) magic was x%x, s/b x%x, %s line %d\n", \
+			(_p), (_p)->l.magic, RT_SOLTAB_MAGIC, \
+			__FILE__, __LINE__ ); \
+		rt_bomb("bad soltab ptr\n"); \
+	} }
 
 /*
  *  Values for Solid ID.
@@ -375,19 +400,30 @@ struct soltab {
  *  Table is indexed by ID_xxx value of particular solid.
  */
 struct rt_functab {
-	char		*ft_name;
-	int		ft_use_rpp;
-	int		(*ft_prep)();
-	int 		(*ft_shot)();
-	void		(*ft_print)();
-	void		(*ft_norm)();
-	void		(*ft_uv)();
-	void		(*ft_curve)();
-	int		(*ft_classify)();
-	void		(*ft_free)();
-	int		(*ft_plot)();
-	void		(*ft_vshot)();
-	int		(*ft_tessellate)();
+	char	*ft_name;
+	int	ft_use_rpp;
+	int	(*ft_prep) RT_ARGS((struct soltab *stp, union record *rec,
+			struct rt_i *rtip));
+	int 	(*ft_shot) RT_ARGS((struct soltab *stp, struct xray *rp,
+			struct application *ap, struct seg *seghead));
+	void	(*ft_print) RT_ARGS((struct soltab *stp));
+	void	(*ft_norm) RT_ARGS((struct hit *hitp, struct soltab *stp,
+			struct xray *rp));
+	void	(*ft_uv) RT_ARGS((struct application *ap, struct soltab *stp,
+			struct hit *hitp, struct uvcoord *uvp));
+	void	(*ft_curve) RT_ARGS((struct curvature *cvp, struct hit *hitp,
+			struct soltab *stp));
+	int	(*ft_classify)();
+	void	(*ft_free) RT_ARGS((struct soltab *stp));
+	int	(*ft_plot) RT_ARGS((union record *rp, mat_t mat,
+			struct vlhead *vhead, struct directory *dp,
+			double abs_tol, double rel_tol, double norm_tol));
+	void	(*ft_vshot) RT_ARGS((struct soltab *stp[], struct xray *rp[],
+			struct seg segp[], int n, struct resource *resp));
+	int	(*ft_tessellate) RT_ARGS((struct nmgregion **r,
+			struct model *m, union record *rp,
+			mat_t mat, struct directory *dp,
+			double abs_tol, double rel_tol, double norm_tol));
 };
 extern struct rt_functab rt_functab[];
 extern int rt_nfunctab;
@@ -486,6 +522,7 @@ struct region  {
  */
 #define RT_HIT_NORM( hitp, stp, rayp )  { \
 	register int id = (stp)->st_id; \
+	RT_CHECK_SOLTAB(stp); \
 	if( id <= 0 || id > ID_MAXIMUM ) { \
 		rt_log("stp=x%x, id=%d. hitp=x%x, rayp=x%x\n", stp, id, hitp, rayp); \
 		rt_bomb("RT_HIT_NORM:  bad st_id");\
@@ -1001,7 +1038,7 @@ extern struct rt_g rt_g;
  */
 struct rt_i {
 	struct region	**Regions;	/* ptrs to regions [reg_bit] */
-	struct soltab	*HeadSolid;	/* ptr to list of solids in model */
+	struct rt_list	rti_headsolid;	/* list of active solids */
 	struct region	*HeadRegion;	/* ptr of list of regions in model */
 	struct db_i	*rti_dbip;	/* prt to Database instance struct */
 	vect_t		mdl_min;	/* min corner of model bounding RPP */
@@ -1143,18 +1180,6 @@ struct command_tab {
  *                                                               *
  *****************************************************************/
 
-/*
- *  A macro for providing function prototypes, regardless of whether
- *  the compiler understands them or not.
- *  It is vital that the argument list given for "args" be enclosed
- *  in parens.
- */
-#if __STDC__
-#	define	RT_EXTERN(type_and_name,args)	extern type_and_name args
-#else
-#	define	RT_EXTERN(type_and_name,args)	extern type_and_name()
-#endif
-
 RT_EXTERN(void rt_bomb, (char *str) );	/* Fatal error */
 RT_EXTERN(void rt_log, (char *, ... ) );	/* Log message */
 					/* Read named MGED db, build toc */
@@ -1185,7 +1210,10 @@ RT_EXTERN(int rt_do_cmd, (struct rt_i *rtip, char *lp, struct command_tab *ctp) 
 RT_EXTERN(void rt_prep_timer, (void) );
 					/* Read timer, return time + str */
 RT_EXTERN(double rt_read_timer, (char *str, int len) );
-
+					/* Plot a solid */
+RT_EXTERN(int rt_plot_solid, (FILE *fp, struct rt_i *rtip, struct soltab *stp) );
+					/* Release storage assoc with rt_i */
+RT_EXTERN(void rt_clean, (struct rt_i *rtip) );
 
 /* The matrix math routines */
 RT_EXTERN(double mat_atan2, (double y, double x) );
