@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 1.1  2004/05/20 14:50:00  morrison
+ * Sources that are external to BRL-CAD are moved from the top level to src/other/.
+ *
  * Revision 11.7  2000/08/24 23:12:23  mike
  *
  * lint, RCSid
@@ -154,7 +157,7 @@ static const char RCSid[] = "@(#)$Header$";
 #include "./termcap.h"
 
 #include <signal.h>
-#if HAVE_TERMIOS_H
+#if defined(HAVE_TERMIOS_H)
 #  if !defined(_XOPEN_SOURCE)
 #	define _XOPEN_SOURCE 1	/* to get TAB3, etc */
 #  endif
@@ -336,7 +339,7 @@ charp()
 		if (ioctl(0, FIONREAD, (char *) &c) == -1)
 			c = 0;
 #else
-#if defined(SYS5) || HAVE_TERMIOS_H
+#if defined(SYS5) || defined(HAVE_TERMIOS_H)
 		int c, flags;
 
 		/* Since VMIN=1, we need to be able to poll for input
@@ -346,7 +349,7 @@ charp()
 		 * characters here, to see if there are any.
 		 */
 		flags = fcntl( Input, F_GETFL, 0);
-#  if HAVE_TERMIOS_H
+#  if defined(HAVE_TERMIOS_H)
 		(void)fcntl( Input, F_SETFL, flags|O_NONBLOCK );
 #  else
 		(void)fcntl( Input, F_SETFL, flags|O_NDELAY );
@@ -463,7 +466,7 @@ register int	prompt;
 int	OKXonXoff = 0;		/* ^S and ^Q initially DON'T work */
 
 #ifndef	BRLUNIX
-# if HAVE_TERMIOS_H
+# if defined(HAVE_TERMIOS_H)
 struct termios	oldtty, newtty;
 # else
 #  if defined(SYS5)
@@ -479,7 +482,7 @@ struct sg_brl	oldtty, newtty;
 void
 ttsetup() {
 #ifndef BRLUNIX
-#  if HAVE_TERMIOS_H
+#  if defined(HAVE_TERMIOS_H)
 	if (tcgetattr( 0, &oldtty ) < 0) {
 #  else
 #    if defined(SYS5)
@@ -498,7 +501,7 @@ ttsetup() {
 	/* One time setup of "raw mode" stty struct */
 	newtty = oldtty;
 #ifndef BRLUNIX
-#if !defined(SYS5) && !HAVE_TERMIOS_H
+#if !defined(SYS5) && !defined(HAVE_TERMIOS_H)
 	newtty.sg_flags &= ~(ECHO | CRMOD);
 	newtty.sg_flags |= CBREAK;
 #else
@@ -625,7 +628,7 @@ ttinit()
 void
 ttyset(n)
 {
-#if HAVE_TERMIOS_H
+#if defined(HAVE_TERMIOS_H)
 	struct termios	tty;
 #else
 # if defined(SYS5)
@@ -640,7 +643,7 @@ ttyset(n)
 	else
 		tty = oldtty;
 
-#if HAVE_TERMIOS_H
+#if defined(HAVE_TERMIOS_H)
 	if (tcsetattr( 0, TCSANOW, &tty) == -1)
 #else
 #  if !defined(SYS5)
