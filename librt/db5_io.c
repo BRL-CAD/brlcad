@@ -164,16 +164,17 @@ int			format;
 {
 	switch( format )  {
 	case DB5HDR_WIDTHCODE_8BIT:
-		if( (*lenp = (*cp)) & 0x80 ) *lenp |= 0xFFFFFF00;
+		if( (*lenp = (*cp)) & 0x80 ) *lenp |= (-1L ^ 0xFF);
 		return 1;
 	case DB5HDR_WIDTHCODE_16BIT:
-		if( (*lenp = BU_GSHORT(cp)) & 0x8000 )  *lenp |= 0xFFFF0000;
+		if( (*lenp = BU_GSHORT(cp)) & 0x8000 )  *lenp |= (-1L ^ 0xFFFF);
 		return 2;
 	case DB5HDR_WIDTHCODE_32BIT:
-		*lenp = BU_GLONG(cp);
+		if( (*lenp = BU_GLONG(cp)) & 0x80000000 )
+			*lenp |= (-1L ^ 0xFFFFFFFF);
 		return 4;
 	case DB5HDR_WIDTHCODE_64BIT:
-#if 0
+#if defined(IRIX64)
 		if( sizeof(long) >= 8 )  {
 			*lenp = BU_GLONGLONG(cp);
 			return 8;
