@@ -66,6 +66,9 @@ lint&:
 tags:	[[echo SRC_LIST]]
 	ctags SRC_LIST
 
+TAGS:	[[echo SRC_LIST]]
+	etags SRC_LIST
+
 flow&:	[[echo SRC_LIST]]
 	cflow -I''INCDIR SRC_LIST > SRCDIR.flow
 
