@@ -147,30 +147,7 @@ char	**argv;
 					pl_linmod( fp, "solid");
 				Dashing = sp->s_soldash;
 			}
-			for( RT_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
-				register int	i;
-				register int	nused = vp->nused;
-				register int	*cmd = vp->cmd;
-				register point_t *pt = vp->pt;
-				for( i = 0; i < nused; i++,cmd++,pt++ )  {
-					switch( *cmd )  {
-					case RT_VLIST_POLY_START:
-						break;
-					case RT_VLIST_POLY_MOVE:
-					case RT_VLIST_LINE_MOVE:
-						pdv_3move( fp, *pt );
-						break;
-					case RT_VLIST_POLY_DRAW:
-					case RT_VLIST_POLY_END:
-					case RT_VLIST_LINE_DRAW:
-						pdv_3cont( fp, *pt );
-						break;
-					default:
-						rt_log("unknown vlist cmd x%x\n",
-							*cmd );
-					}
-				}
-			}
+			rt_vlist_to_uplot( fp, &(sp->s_vlist) );
 		}
 		goto out;
 	}
