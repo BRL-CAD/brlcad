@@ -956,4 +956,4 @@ set -S2 "/bin/sh"
 #define	SRC	[[SUB X X''SRCSUFF FILES]]
 #define	OBJ	[[SUB X X''OBJSUFF BASE_FILES]]
 #define	OBJSUFF .o
-#define	HDR_DEP	[[cakeinclude.sh ../SRCDIR/%.c INCDIR ../SRCDIR]]
+#define	HDR_DEP	[[cakeinclude -i INCDIR -s ../SRCDIR ../SRCDIR/%.c]]
