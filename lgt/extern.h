@@ -21,7 +21,7 @@
 
 /* Set pre-processor switch for getting signal() handler declarations right.
  */
-#if __STDC__ || (defined(SYSV) && ! defined(cray))
+#if (__STDC__ && _UNICOS != 4) || (defined(SYSV) && ! defined(cray))
 #define STD_SIGNAL_DECLS 1
 #else
 #define STD_SIGNAL_DECLS 0
