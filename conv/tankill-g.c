@@ -322,7 +322,7 @@ char *argv[];
 		        NMG_CK_FACEUSE( fu );
 		        if( fu->orientation == OT_SAME )
 		        {
-		                if( nmg_fu_planeeqn( fu , &tol ) )
+		                if( nmg_calc_face_g( fu ) )
 		                        rt_log( "Failed to calculate plane eqn\n" );
 		        }
 		    }
