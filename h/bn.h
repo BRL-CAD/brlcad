@@ -111,7 +111,7 @@ BU_EXTERN(int			bn_common_file_size, (int *width,
 BU_EXTERN(int			bn_common_name_size, (int *width,
 						      int *height,
 						      char *name));
-BU_EXTERN(int			bn_common_image_zie, (int *width,
+BU_EXTERN(int			bn_common_image_size, (int *width,
 						      int *height,
 						      int num_pixels));
 
