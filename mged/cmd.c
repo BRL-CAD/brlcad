@@ -119,6 +119,9 @@ extern int db_warn;	/* defined in ged.c */
 extern int db_upgrade;	/* defined in ged.c */
 extern int db_version;	/* defined in ged.c */
 
+extern struct rt_tess_tol     mged_ttol; /* do_draw.c */
+extern struct bn_tol	      mged_tol; /* ged.c */
+
 int glob_compat_mode = 1;
 int output_as_return = 1;
 
@@ -3262,9 +3265,20 @@ cmd_tol(ClientData	clientData,
 	int		argc,
 	char		**argv)
 {
+	int ret;
+
 	CHECK_DBI_NULL;
 
-	return wdb_tol_cmd(wdbp, interp, argc, argv);
+	ret = wdb_tol_cmd(wdbp, interp, argc, argv);
+
+	/* hack to keep mged tolerance settings current */
+	mged_ttol = wdbp->wdb_ttol;
+	mged_tol = wdbp->wdb_tol;
+	mged_abs_tol = mged_ttol.abs;
+	mged_rel_tol = mged_ttol.rel;
+	mged_nrm_tol = mged_ttol.norm;
+
+	return( ret );
 }
 
 /* defined in chgview.c */
