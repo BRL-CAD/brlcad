@@ -339,6 +339,16 @@ Ir_open()
 	while( (inv = getinvent()) != (inventory_t *)0 )  {
 		if( inv->class != INV_GRAPHICS )  continue;
 		switch( inv->type )  {
+		default:
+			printf("mged/dm-4d.c: getinvent() INV_GRAPHICS type=%d not recognized, you need to modify the source code\n");
+			/* Since we recognize all the old devices, be
+			 * optimistic and assume that new devices are plush.
+			 */
+			ir_is_gt = 1;
+			ir_has_zbuf = 1;
+			ir_has_rgb = 1;
+			ir_has_doublebuffer = 1;
+			break;
 		case INV_GRODEV:			 /* 4D/60 machines */
 			ir_has_doublebuffer = 1;
 			if( inv->state & INV_GR1ZBUF24 )
