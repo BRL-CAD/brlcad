@@ -25,7 +25,7 @@
  *
  *  General Symbols and Types Defined -
  *
- *	const -
+ *	CONST  - deprecated - (use const)
  *		A portable way of indicating that the ANSI C "const"
  *		keyword is desired, when compiling on an ANSI compiler.
  *
@@ -37,7 +37,7 @@
  *		pointers to data bytes, so a declaration of "char *"
  *		isn't generic enough.
  *
- *	SIGNED - deprecated -
+ *	SIGNED - deprecated - (use signed)
  *		A portable way of declaring a signed variable, since
  *		the "signed" keyword is not known in K&R compilers.  e.g.:
  *			register SIGNED int twoway;
@@ -577,31 +577,27 @@ typedef long	bitv_t;		/* largest integer type */
 #  define GENPTR_NULL	((genptr_t)0)
 #endif
 
-/* A portable way of handling the ANSI C const keyword: use const */
-#if !defined(const)
-# if __STDC__
-#	define	const	const
-# else
-#	define	const	/**/
-# endif
+/* A portable way of handling pre-ANSI C: remove const keyword */
+#if !defined(__STDC__)
+#  define	const	/**/
 #endif
-#undef const
-#define const const
+#if defined(CONST)
+#  undef  CONST
+#endif
+#define CONST deprecated
 
 /* Even in C++ not all compilers know the "bool" keyword yet */
 #if !defined(BOOL_T)
 # define BOOL_T	int
 #endif
 
-/* A portable way of dealing with pre-ANSI C.  Assume signed variables */
-#if !defined(SIGNED)
-# if __STDC__
-#	define SIGNED	signed
-# else
-#	define SIGNED	/**/
-# endif
+/* A portable way of handling pre-ANSI C: remove signed keyword */
+#if !defined(__STDC__)
+#  define	signed	/**/
 #endif
-#undef SIGNED
+#if defined(SIGNED)
+#  undef SIGNED
+#endif
 #define SIGNED deprecated
 
 /*
