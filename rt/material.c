@@ -86,6 +86,8 @@ try_load(const char *path, const char *material)
 	/* check for the appropriate symbol in the library */
 	shader_mfuncs = dlsym(handle, "shader_mfuncs");
 	if ( (dl_error_str=dlerror()) != (char *)NULL) {
+		if(rdebug&RDEBUG_MATERIAL)
+			bu_log("dlsym(%s) error=%s\n", path, dl_error_str);
 		dlclose(handle);
 		return (struct mfuncs *)NULL;
 	}
@@ -116,19 +118,27 @@ load_dynamic_shader(const char *material,
 	void *handle;
 	struct mfuncs *shader_mfuncs;
 	char libname[MAXPATHLEN];
-	char cwd[MAXPATHLEN];
+	char *cwd;
 	char sym[MAXPATHLEN];
-	getcwd(cwd);
+
+	/* Obtain current directory, as dynamically allocated string */
+	cwd = getcwd(NULL, -1);
 
 	/* Look in the current working directory for lib{material}.so.1 */
 	sprintf(libname, "%s/lib%s.so.1", cwd, material);
-	if ( shader_mfuncs = try_load(libname, material) )
-		 return shader_mfuncs;
+	if ( shader_mfuncs = try_load(libname, material) )  {
+		free(cwd);
+		return shader_mfuncs;
+	}
 
 	/* Look in the current working directory for libshaders.so.1 */
-	sprintf(libname, "%s/libshaders.so.1", cwd, material);
-	if ( shader_mfuncs = try_load(libname, material) )
+	sprintf(libname, "%s/libshaders.so.1", cwd);
+	if ( shader_mfuncs = try_load(libname, material) )  {
+		free(cwd);
 		return shader_mfuncs;
+	}
+	free(cwd);
+	cwd = NULL;	/* sanity */
 
 	/* Look in the location indicated by $LD_LIBRARY_PATH */
 	sprintf(libname, "lib%s.so.1", material);
