@@ -312,6 +312,19 @@ fprintf(stderr,"az=%g, el=%g, twist=%g\n", az, el, twist);
 		out_mat( mat, stdout );
 		return(0);
 	}
+	if( strcmp( words[0], "quat" ) == 0 )  {
+		mat_t	mat;
+		quat_t	quat;
+
+		/* Usage: quat x,y,z,w */
+		if( nwords < 5 ) return -1;
+		QSET( quat, atof(words[1]), atof(words[2]),
+			atof(words[3]), atof(words[4]) );
+
+		quat_quat2mat( mat, quat );
+		out_mat( mat, stdout);
+		return 0;
+	}
 	return(-2);		/* Unknown keyword */
 }
 
