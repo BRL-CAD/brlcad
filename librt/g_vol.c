@@ -404,7 +404,7 @@ CONST mat_t			mat;
 {
 	union record	*rp;
 	register struct rt_vol_internal *vip;
-	struct rt_vls	str;
+	struct bu_vls	str;
 	FILE		*fp;
 	int		nbytes;
 	register int	y;
@@ -433,19 +433,19 @@ CONST mat_t			mat;
 	/* Default VOL cell size in ideal coordinates is one unit/cell */
 	VSETALL( vip->cellsize, 1 );
 
-	rt_vls_init( &str );
-	rt_vls_strcpy( &str, rp->ss.ss_args );
-	if( bu_structparse( &str, rt_vol_parse, (char *)vip ) < 0 )  {
-		rt_vls_free( &str );
+	bu_vls_init( &str );
+	bu_vls_strcpy( &str, rp->ss.ss_args );
+	if( bu_struct_parse( &str, rt_vol_parse, (char *)vip ) < 0 )  {
+		bu_vls_free( &str );
 		return -2;
 	}
-	rt_vls_free( &str );
+	bu_vls_free( &str );
 
 	/* Check for reasonable values */
 	if( vip->file[0] == '\0' || vip->xdim < 1 ||
 	    vip->ydim < 1 || vip->zdim < 1 || vip->mat[15] <= 0.0 ||
 	    vip->lo < 0 || vip->hi > 255 )  {
-	    	bu_structprint("Unreasonable VOL parameters", rt_vol_parse,
+	    	bu_struct_print("Unreasonable VOL parameters", rt_vol_parse,
 			(char *)vip );
 	    	return(-1);
 	}
@@ -504,7 +504,7 @@ double				local2mm;
 	struct rt_vol_internal	*vip;
 	struct rt_vol_internal	vol;	/* scaled version */
 	union record		*rec;
-	struct rt_vls		str;
+	struct bu_vls		str;
 
 	RT_CK_DB_INTERNAL(ip);
 	if( ip->idb_type != ID_VOL )  return(-1);
@@ -520,13 +520,13 @@ double				local2mm;
 	ep->ext_buf = (genptr_t)rt_calloc( 1, ep->ext_nbytes, "vol external");
 	rec = (union record *)ep->ext_buf;
 
-	RT_VLS_INIT( &str );
-	bu_vls_structprint( &str, rt_vol_parse, (char *)&vol );
+	bu_vls_init( &str );
+	bu_vls_struct_print( &str, rt_vol_parse, (char *)&vol );
 
 	rec->ss.ss_id = DBID_STRSOL;
 	strncpy( rec->ss.ss_keyword, "vol", NAMESIZE-1 );
-	strncpy( rec->ss.ss_args, rt_vls_addr(&str), DB_SS_LEN-1 );
-	rt_vls_free( &str );
+	strncpy( rec->ss.ss_args, bu_vls_addr(&str), DB_SS_LEN-1 );
+	bu_vls_free( &str );
 
 	return(0);
 }
@@ -540,7 +540,7 @@ double				local2mm;
  */
 int
 rt_vol_describe( str, ip, verbose, mm2local )
-struct rt_vls		*str;
+struct bu_vls		*str;
 struct rt_db_internal	*ip;
 int			verbose;
 double			mm2local;
@@ -549,10 +549,10 @@ double			mm2local;
 		(struct rt_vol_internal *)ip->idb_ptr;
 
 	RT_VOL_CK_MAGIC(vip);
-	rt_vls_strcat( str, "thresholded volumetric solid (VOL)\n\t");
+	bu_vls_strcat( str, "thresholded volumetric solid (VOL)\n\t");
 
-	bu_vls_structprint( str, rt_vol_parse, (char *)vip );
-	rt_vls_strcat( str, "\n" );
+	bu_vls_struct_print( str, rt_vol_parse, (char *)vip );
+	bu_vls_strcat( str, "\n" );
 
 	return(0);
 }

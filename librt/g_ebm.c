@@ -521,7 +521,7 @@ CONST mat_t			mat;
 {
 	union record	*rp;
 	register struct rt_ebm_internal *eip;
-	struct rt_vls	str;
+	struct bu_vls	str;
 	int		nbytes;
 	register int	y;
 	mat_t		tmat;
@@ -544,22 +544,22 @@ CONST mat_t			mat;
 	/* Provide default orientation info */
 	mat_idn( eip->mat );
 
-	rt_vls_init( &str );
-	rt_vls_strcpy( &str, rp->ss.ss_args );
-	if( bu_structparse( &str, rt_ebm_parse, (char *)eip ) < 0 )  {
-		rt_vls_free( &str );
+	bu_vls_init( &str );
+	bu_vls_strcpy( &str, rp->ss.ss_args );
+	if( bu_struct_parse( &str, rt_ebm_parse, (char *)eip ) < 0 )  {
+		bu_vls_free( &str );
 		rt_free( (char *)eip , "rt_ebm_import: eip" );
 		ip->idb_type = ID_NULL;
 		ip->idb_ptr = (genptr_t)NULL;
 		return -2;
 	}
-	rt_vls_free( &str );
+	bu_vls_free( &str );
 
 	/* Check for reasonable values */
 	if( eip->file[0] == '\0' || eip->xdim < 1 ||
 	    eip->ydim < 1 || eip->mat[15] <= 0.0 ||
 	    eip->tallness <= 0.0 )  {
-	    	bu_structprint( "Unreasonable EBM parameters", rt_ebm_parse,
+	    	bu_struct_print( "Unreasonable EBM parameters", rt_ebm_parse,
 	    		(char *)eip );
 	    	rt_free( (char *)eip , "rt_ebm_import: eip" );
 	    	ip->idb_type = ID_NULL;
@@ -619,7 +619,7 @@ double				local2mm;
 	struct rt_ebm_internal	*eip;
 	struct rt_ebm_internal	ebm;	/* scaled version */
 	union record		*rec;
-	struct rt_vls		str;
+	struct bu_vls		str;
 
 	RT_CK_DB_INTERNAL(ip);
 	if( ip->idb_type != ID_EBM )  return(-1);
@@ -635,13 +635,13 @@ double				local2mm;
 	ep->ext_buf = (genptr_t)rt_calloc( 1, ep->ext_nbytes, "ebm external");
 	rec = (union record *)ep->ext_buf;
 
-	RT_VLS_INIT( &str );
-	bu_vls_structprint( &str, rt_ebm_parse, (char *)&ebm );
+	bu_vls_init( &str );
+	bu_vls_struct_print( &str, rt_ebm_parse, (char *)&ebm );
 
 	rec->ss.ss_id = DBID_STRSOL;
 	strncpy( rec->ss.ss_keyword, "ebm", NAMESIZE-1 );
-	strncpy( rec->ss.ss_args, rt_vls_addr(&str), DB_SS_LEN-1 );
-	rt_vls_free( &str );
+	strncpy( rec->ss.ss_args, bu_vls_addr(&str), DB_SS_LEN-1 );
+	bu_vls_free( &str );
 
 	return(0);
 }
@@ -655,7 +655,7 @@ double				local2mm;
  */
 int
 rt_ebm_describe( str, ip, verbose, mm2local )
-struct rt_vls		*str;
+struct bu_vls		*str;
 struct rt_db_internal	*ip;
 int			verbose;
 double			mm2local;
@@ -664,10 +664,10 @@ double			mm2local;
 		(struct rt_ebm_internal *)ip->idb_ptr;
 
 	RT_EBM_CK_MAGIC(eip);
-	rt_vls_strcat( str, "extruded bitmap (EBM)\n\t");
+	bu_vls_strcat( str, "extruded bitmap (EBM)\n\t");
 
-	bu_vls_structprint( str, rt_ebm_parse, (char *)eip );
-	rt_vls_strcat( str, "\n" );
+	bu_vls_struct_print( str, rt_ebm_parse, (char *)eip );
+	bu_vls_strcat( str, "\n" );
 
 	return(0);
 }

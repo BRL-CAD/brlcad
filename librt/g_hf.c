@@ -1717,7 +1717,7 @@ register CONST mat_t		mat;
 {
 	LOCAL struct rt_hf_internal	*xip;
 	union record			*rp;
-	struct rt_vls			str;
+	struct bu_vls			str;
 	struct rt_mapped_file		*mp;
 	vect_t				tmp;
 	int				in_cookie;	/* format cookie */
@@ -1752,17 +1752,17 @@ register CONST mat_t		mat;
 	strcpy( xip->fmt, "nd" );
 
 	/* Process parameters found in .g file */
-	rt_vls_init( &str );
-	rt_vls_strcpy( &str, rp->ss.ss_args );
-	if( bu_structparse( &str, rt_hf_parse, (char *)xip ) < 0 )  {
-		rt_vls_free( &str );
+	bu_vls_init( &str );
+	bu_vls_strcpy( &str, rp->ss.ss_args );
+	if( bu_struct_parse( &str, rt_hf_parse, (char *)xip ) < 0 )  {
+		bu_vls_free( &str );
 err1:
 		rt_free( (char *)xip , "rt_hf_import: xip" );
 		ip->idb_type = ID_NULL;
 		ip->idb_ptr = (genptr_t)NULL;
 		return -2;
 	}
-	rt_vls_free( &str );
+	bu_vls_free( &str );
 
 	/* If "cfile" was specified, process parameters from there */
 	if( xip->cfile[0] )  {
@@ -1776,16 +1776,16 @@ err1:
 			rt_log("rt_hf_import() unable to open cfile=%s\n", xip->cfile);
 			goto err1;
 		}
-		rt_vls_init( &str );
-		while( rt_vls_gets( &str, fp ) >= 0 )
-			rt_vls_strcat( &str, " " );
+		bu_vls_init( &str );
+		while( bu_vls_gets( &str, fp ) >= 0 )
+			bu_vls_strcat( &str, " " );
 		RES_ACQUIRE( &rt_g.res_syscall );
 		fclose(fp);
 		RES_RELEASE( &rt_g.res_syscall );
-		if( bu_structparse( &str, rt_hf_cparse, (char *)xip ) < 0 )  {
+		if( bu_struct_parse( &str, rt_hf_cparse, (char *)xip ) < 0 )  {
 			rt_log("rt_hf_import() parse error in cfile input '%s'\n",
-				rt_vls_addr(&str) );
-			rt_vls_free( &str );
+				bu_vls_addr(&str) );
+			bu_vls_free( &str );
 			goto err1;
 		}
 	}
@@ -1887,7 +1887,7 @@ double				local2mm;
 {
 	struct rt_hf_internal	*xip;
 	union record		*rec;
-	struct rt_vls		str;
+	struct bu_vls		str;
 
 	RT_CK_DB_INTERNAL(ip);
 	if( ip->idb_type != ID_HF )  return(-1);
@@ -1904,8 +1904,8 @@ double				local2mm;
 	ep->ext_buf = (genptr_t)rt_calloc( 1, ep->ext_nbytes, "hf external");
 	rec = (union record *)ep->ext_buf;
 
-	RT_VLS_INIT( &str );
-	bu_vls_structprint( &str, rt_hf_parse, (char *)&xip );
+	bu_vls_init( &str );
+	bu_vls_struct_print( &str, rt_hf_parse, (char *)&xip );
 
 	/* Any changes made by solid editing affect .g file only,
 	 * and not the cfile, if specified.
@@ -1913,8 +1913,8 @@ double				local2mm;
 
 	rec->s.s_id = DBID_STRSOL;
 	strncpy( rec->ss.ss_keyword, "hf", NAMESIZE-1 );
-	strncpy( rec->ss.ss_args, rt_vls_addr(&str), DB_SS_LEN-1 );
-	rt_vls_free( &str );
+	strncpy( rec->ss.ss_args, bu_vls_addr(&str), DB_SS_LEN-1 );
+	bu_vls_free( &str );
 
 	return(0);
 }
@@ -1928,7 +1928,7 @@ double				local2mm;
  */
 int
 rt_hf_describe( str, ip, verbose, mm2local )
-struct rt_vls		*str;
+struct bu_vls		*str;
 struct rt_db_internal	*ip;
 int			verbose;
 double			mm2local;
@@ -1938,9 +1938,9 @@ double			mm2local;
 
 	RT_VLS_CHECK(str);
 	RT_HF_CK_MAGIC(xip);
-	rt_vls_printf( str, "Height Field (HF)  mm2local=%g\n", mm2local);
-	bu_vls_structprint( str, rt_hf_parse, ip->idb_ptr );
-	rt_vls_strcat( str, "\n" );
+	bu_vls_printf( str, "Height Field (HF)  mm2local=%g\n", mm2local);
+	bu_vls_struct_print( str, rt_hf_parse, ip->idb_ptr );
+	bu_vls_strcat( str, "\n" );
 
 	return(0);
 }
