@@ -11,6 +11,9 @@ proc mouse_get_spath { x y } {
 
     set win [winset]
     set id [get_player_id_dm $win]
+    if {$id == "mged"} {
+	return
+    }
 
     if {[info exists mged_gui($id,edit_menu)] && \
 	    [winfo exists $mged_gui($id,edit_menu)]} {
@@ -77,6 +80,9 @@ proc mouse_get_spath_and_pos { x y } {
 
     set win [winset]
     set id [get_player_id_dm $win]
+    if {$id == "mged"} {
+	return
+    }
 
     set mged_gui($id,mgs_path) [mouse_get_spath $x $y]
 
@@ -130,6 +136,9 @@ proc mouse_get_comb { x y } {
 
     set win [winset]
     set id [get_player_id_dm $win]
+    if {$id == "mged"} {
+	return
+    }
 
     if {[info exists mged_gui($id,edit_menu)] && \
 	    [winfo exists $mged_gui($id,edit_menu)]} {
@@ -233,18 +242,61 @@ proc mouse_matrix_edit_select { x y } {
     }
 }
 
+proc mouse_rt_obj_select { x y } {
+    global mged_players
+    global mged_gui
+    global rt_control
+    global port
+
+    set win [winset]
+    set id [get_player_id_dm $win]
+    if {$id == "mged"} {
+	return
+    }
+
+    set spath_and_pos [mouse_get_spath_and_pos $x $y]
+    if {[llength $spath_and_pos] != 2} {
+	return
+    }
+
+    set spath [lindex $spath_and_pos 0]
+    set sindex [lindex $spath_and_pos 1]
+    incr sindex
+    set component [lindex [split $spath /] $sindex]
+
+    mouse_update_rt_vars $id $win
+
+    switch $rt_control($id,omode) {
+	all
+            -
+	one {
+	    set rt_control($id,olist) $component
+	    do_Raytrace $id
+	}
+	several {
+	    lappend rt_control($id,olist) $component
+	}
+    }
+
+    return
+}
+
 proc mouse_comb_edit_select { x y } {
     global mged_players
     global mged_gui
     global comb_control
+
+    set win [winset]
+    set id [get_player_id_dm $win]
+    if {$id == "mged"} {
+	return
+    }
 
     set comb [mouse_get_comb $x $y]
     if {$comb == "" || $comb == " "} {
 	return
     }
 
-    set win [winset]
-    set id [get_player_id_dm $win]
     init_comb $id
     set comb_control($id,name) $comb
     comb_reset $id
@@ -261,4 +313,36 @@ proc place_near_mouse { top } {
     set y [lindex $pxy 1]
 
     catch { wm geometry $top +$x+$y }
+}
+
+
+## - mouse_update_rt_vars
+#
+# Assumes that winset has been called prior to invoking this proc.
+#
+proc mouse_update_rt_vars { id win } {
+    global rt_control
+
+    if ![info exists rt_control($id,top)] {
+	set rt_control($id,top) .$id.rt
+	set rt_control($id,topAS) .$id.rtAS
+	set rt_control($id,color) [rset cs bg]
+	set rt_control($id,nproc) 1
+	set rt_control($id,hsample) 0
+	set rt_control($id,jitter) 0
+	set rt_control($id,jitterTitle) "None"
+	set rt_control($id,lmodel) 0
+	set rt_control($id,lmodelTitle) "Full"
+
+	# set widget padding
+	set rt_control($id,padx) 4
+	set rt_control($id,pady) 2
+    }
+
+    set rt_control($id,color) [rset cs bg]
+    rt_cook_src $id $win
+    rt_cook_dest $id $win
+
+    set size [dm size]
+    set rt_control($id,size) "[lindex $size 0]x[lindex $size 1]"
 }
