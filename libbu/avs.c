@@ -223,7 +223,7 @@ const char	*attribute;
 			app->value = NULL;	/* sanity */
 			
 			/* Move last one down to replace it */
-			epp = &avsp->avp[avsp->count--];
+			epp = &avsp->avp[--avsp->count];
 			if( app != epp )  {
 				*app = *epp;		/* struct copy */
 			}
