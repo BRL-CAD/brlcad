@@ -1228,7 +1228,7 @@ f_prefix()
  *	Good for pulling parts out of a description.
  */
 
-#define MAX_KEEPCOUNT	  500
+#define MAX_KEEPCOUNT	  2000
 static char	*keep_names[MAX_KEEPCOUNT];
 static int	keepfd;
 static int	keep_count;
@@ -1255,6 +1255,10 @@ f_keep() {
 	for(i = 2; i < numargs; i++) {
 		if( (dp = lookup(cmd_args[i], LOOKUP_NOISY)) != DIR_NULL )
 			file_put(dp);
+		if( keep_count >= MAX_KEEPCOUNT ) {
+			(void)printf("ERROR: exceeded MAX objects to keep, %d objects kept\n",MAX_KEEPCOUNT);
+			break;
+		}
 	}
 	(void) close(keepfd);
 }
@@ -1277,6 +1281,9 @@ register struct directory *dp;
 
 	/* write this record to the keep file if new object */
 	keep_names[keep_count++] = dp->d_namep;
+
+	if( keep_count >= MAX_KEEPCOUNT ) 
+		return;
 
 	db_getrec (dp, (char *)&record, 0);
 	(void)write(keepfd, (char *)&record, sizeof record);
@@ -1369,3 +1376,56 @@ int cont;		/* non-zero when continuing partly printed line */
 		cont = 0;
 	}
 }
+
+
+
+/*	F _ M V A L L
+ *
+ *	rename all occurences of an object
+ *	format:	mvall oldname newname
+ *
+ */
+void
+f_mvall()
+{
+	register FILE *fp;
+	long seekptr;
+
+	if( strlen(cmd_args[2]) > NAMESIZE ) {
+		(void)printf("ERROR: name length limited to %d characters\n",
+				NAMESIZE);
+		return;
+	}
+
+	if( (fp = fopen(filename, "r+")) == NULL ) {
+		(void)printf("f_mvall: fopen failed\n");
+		return;
+	}
+
+	/* no interupts */
+	(void)signal( SIGINT, SIG_IGN );
+
+	/* rename the record itself */
+	f_name();
+
+	/* rename all member records with this name */
+	seekptr = 0;
+	for( ; fread( (char*)&record, sizeof(record), 1, fp ) == 1 &&
+	     ! feof(fp);
+	    seekptr += sizeof(record) )  {
+
+		if( record.u_id == ID_MEMB ) {
+			if( strcmp( cmd_args[1], record.M.m_instname ) == 0 ) {
+				/* match -- change this name */
+				(void)strcpy(record.M.m_instname, cmd_args[2]);
+				(void)fseek( fp, seekptr, 0 );
+				fwrite( (char *)&record.M, sizeof(record), 1, fp );
+				(void)fseek(fp, seekptr+sizeof(record), 0);
+			}
+		}
+	}
+
+}
+
+
+
