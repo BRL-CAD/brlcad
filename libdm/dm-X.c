@@ -1013,8 +1013,6 @@ struct dm *dmp;
 int lvl;
 {
   dmp->dm_debugLevel = lvl;
-  XFlush(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy);
-  bu_log("flushed\n");
 
   return TCL_OK;
 }
