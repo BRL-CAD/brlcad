@@ -145,8 +145,12 @@ char	*dp;
 	int dx, dy;
 	register fastf_t r,g,b;
 
+	RT_CK_AP(ap);
+	RT_CHECK_PT(pp);
+
 	if( rdebug & RDEBUG_SHADE )
-		bu_log( "in txt_render(): du=%g, dv=%g\n", swp->sw_uv.uv_du, swp->sw_uv.uv_dv );
+		bu_log( "in txt_render(): du=%g, dv=%g\n", 
+			swp->sw_uv.uv_du, swp->sw_uv.uv_dv );
 	/*
 	 * If no texture file present, or if
 	 * texture isn't and can't be read, give debug colors
@@ -482,6 +486,8 @@ struct rt_i             *rtip;  /* New since 4.4 release */
 			tp->mp->buflen );
 		return -1;				/* FAIL */
 	}
+	if( rdebug & RDEBUG_SHADE )
+		bu_struct_print("texture", txt_parse, (char *)tp);
 
 	return 1;				/* OK */
 }
