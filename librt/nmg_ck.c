@@ -149,7 +149,7 @@ CONST long *eg;
 	}
 
 	/* Ensure that all edgeuses on the edge_g_* list point to me */
-	for( BU_LIST_FOR( eu2, rt_list, &((struct edge_g_lseg *)eg)->eu_hd2 ) )  {
+	for( BU_LIST_FOR( eu2, bu_list, &((struct edge_g_lseg *)eg)->eu_hd2 ) )  {
 		struct edgeuse	*eu;
 
 		if( eu2 == NULL)
@@ -1062,7 +1062,7 @@ CONST struct bn_tol *tol;
 	VMOVE( e_dir , eg->e_dir );
 	VUNITIZE( e_dir );
 
-	for( BU_LIST_FOR( eu2 , rt_list , &eg->eu_hd2 ) )
+	for( BU_LIST_FOR( eu2 , bu_list , &eg->eu_hd2 ) )
 	{
 		struct edgeuse *eu;
 		struct vertex *v1,*v2;
