@@ -126,17 +126,10 @@ typedef struct FBIO_ {
 
 #define FB_MAGIC	0xfbfb00fb
 
-#ifdef NULL
-#define PIXEL_NULL	(unsigned char *) NULL
-#define RGBPIXEL_NULL	(unsigned char *) NULL
-#define COLORMAP_NULL	(ColorMap *) NULL
-#define FBIO_NULL	(FBIO *) NULL
-#else
 #define PIXEL_NULL	(unsigned char *) 0
 #define RGBPIXEL_NULL	(unsigned char *) 0
 #define COLORMAP_NULL	(ColorMap *) 0
 #define FBIO_NULL	(FBIO *) 0
-#endif
 
 /* Library entry points which are macros. */
 #define fb_gettype(_ifp)		(_ifp->if_type)
