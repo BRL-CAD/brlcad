@@ -39,7 +39,7 @@ extern void	perror();
 extern char	*malloc();
 extern int	printf(), write();
 
-#define NVL	2000
+#define NVL	5000
 static struct veclist veclist[NVL];
 
 struct veclist *vlp;		/* pointer to first free veclist element */
