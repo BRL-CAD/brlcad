@@ -65,6 +65,10 @@
 #ifndef VMATH_H
 #define VMATH_H seen
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef sqrt
 	/* In case <math.h> has not been included, define sqrt() here */
 #	if __STDC__
@@ -1053,5 +1057,9 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 	(_lo1)[X] >= (_lo2)[X] && (_hi1)[X] <= (_hi2)[X] && \
 	(_lo1)[Y] >= (_lo2)[Y] && (_hi1)[Y] <= (_hi2)[Y] && \
 	(_lo1)[Z] >= (_lo2)[Z] && (_hi1)[Z] <= (_hi2)[Z] )
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* VMATH_H */

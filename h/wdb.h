@@ -45,6 +45,11 @@
 
 #ifndef WDB_H
 #define WDB_H seen
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  *  Macros for providing function prototypes, regardless of whether
  *  the compiler understands them or not.
@@ -196,5 +201,9 @@ extern double	mk_conv2mm;		/* Conversion factor to mm */
  */
 WDB_EXTERN(int mk_freemembers, (struct wmember *headp) );
 WDB_EXTERN(int mk_export_fwrite, (FILE *fp, char *name, genptr_t gp, int id));
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* WDB_H */
