@@ -88,6 +88,8 @@ char *argv[];
 		exit( 1 );
 	}
 
+	rt_init_resource( &rt_uniresource, 0, NULL );
+
 	/* Scan the database */
 	db_dirbuild( dbip );
 
@@ -98,7 +100,7 @@ char *argv[];
 		printf( "%s\n" , argv[i] );
 
 		dp = db_lookup( dbip , argv[i] , 1 );
-		if( rt_db_get_internal( &ip, dp, dbip, NULL ) < 0 )  {
+		if( rt_db_get_internal( &ip, dp, dbip, NULL, &rt_uniresource ) < 0 )  {
 			bu_log("import of %s failed\n", dp->d_namep);
 			continue;
 		}
@@ -109,7 +111,7 @@ char *argv[];
 		if( ip.idb_type != ID_COMBINATION )
 		{
 			bu_log( "idb_type = %d\n" , ip.idb_type );
-			rt_db_free_internal( &ip );
+			rt_db_free_internal( &ip, &rt_uniresource );
 			continue;
 		}
 
@@ -127,9 +129,11 @@ char *argv[];
 		);
 
 		/* John's way */
+		bu_log( "Pretty print:\n" );
 		Print_tree( comb->tree );
 
 		/* Standard way */
+		bu_log( "Standard print:\n" );
 		rt_pr_tree( comb->tree, 1 );
 
 		/* Compact way */
@@ -145,31 +149,8 @@ char *argv[];
 		if( db_ck_v4gift_tree( comb->tree ) < 0 )
 			bu_log("ERROR: db_ck_v4gift_tree is unhappy\n");
 
-		/* write original external form into a file */
-		bu_vls_printf( &file, "/tmp/%s.a", argv[i] );
-		if( (fp = fopen(bu_vls_addr(&file), "w")) != NULL )  {
-			fwrite( ep.ext_buf, ep.ext_nbytes, 1, fp );
-			fclose(fp);
-		}
-		bu_free_external( &ep );
-		bu_vls_free( &file );
-
-		/* Convert internal back to external, and write both to files */
-		bu_vls_printf( &file, "/tmp/%s.b", argv[i] );
-		bu_mem_barriercheck();
-
-		rt_db_put_internal( dp, dbip, &ip );
-		bu_mem_barriercheck();
-
-		if( (fp = fopen(bu_vls_addr(&file), "w")) != NULL )  {
-			fwrite( ep.ext_buf, ep.ext_nbytes, 1, fp );
-			fclose(fp);
-		}
-		bu_free_external( &ep );
-		bu_vls_free( &file );
-
 		/* Test the lumberjacks */
-		rt_db_free_internal( &ip );
+		rt_db_free_internal( &ip, &rt_uniresource );
 
 	}
 }
