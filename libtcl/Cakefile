@@ -9,12 +9,12 @@
 
 #if !defined(BUILD_LIBRARY)
 #define TCL_OPTS	--srcdir=[[pwd]]/../SRCDIR/"unix" --cache-file cache.MTYPE \
-			 --exec-prefix=BINDIR --prefix=BINDIR
+			 --exec-prefix=BASEDIR --prefix=BASEDIR
 #define PRODUCTS	libtcl.a tclsh
 #define	AFTER_MAKE	/**/
 #else
 #define TCL_OPTS	--srcdir=[[pwd]]/../SRCDIR/"unix" --enable-shared \
-			 --cache-file cache.MTYPE --exec-prefix=BINDIR --prefix=BINDIR
+			 --cache-file cache.MTYPE --exec-prefix=BASEDIR --prefix=BASEDIR
 #define PRODUCTS	libtcl.so tclsh
 #define SHARED_PRODUCT	libtcl.so''[[LIBVERS]]
 #define	AFTER_MAKE	mv libtcl.so SHARED_PRODUCT ; sharedliblink.sh SHARED_PRODUCT
