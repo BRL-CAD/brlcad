@@ -1856,23 +1856,6 @@ struct rt_vls	*vp;
     return need_prompt;
 }
 
-struct rt_vls look_result;
-
-int
-look_hit(ap, PartHeadp)
-register struct application *ap;
-struct partition *PartHeadp;
-{
-    rt_vls_strcat(&look_result, "H");
-}
-
-int
-look_miss(ap)
-register struct application *ap;
-{
-    rt_vls_strcat(&look_result, "M");
-}
-
 int
 cmd_look(clientData, interp, argc, argv)
 ClientData clientData;
@@ -1880,48 +1863,26 @@ Tcl_Interp *interp;
 int argc;
 char **argv;
 {
-    vect_t               temp;
-    double               viewX, viewY;
-    struct rt_i         *rtip;
-    struct application   a;
-    char                 title[2];
+    double viewX, viewY;
 
     if (argc < 3) {
-	Tcl_SetResult(interp, "wrong # args: should be \"look viewX viewY \
-objList\"",
-		      TCL_STATIC);
+	Tcl_AppendResult(interp, "wrong # args: should be ", argv[0],
+			 " scrH scrV", (char *)NULL);
 	return TCL_ERROR;
     }
 
     if (Tcl_GetDouble(interp, argv[1], &viewX) != TCL_OK) return TCL_ERROR;
-    if (Tcl_GetDouble(interp, argv[2], &viewY) != TCL_OK) return TCL_ERROR;
-
-    bzero((void *)&a, sizeof(struct application));
-
-    rtip = rt_dirbuild(dbip->dbi_filename, title, 0);
-    while (argc > 4) {
-	rt_gettree(rtip, argv[3]);
-	--argc;
-	++argv;
-    }
-
-    a.a_hit = look_hit;
-    a.a_miss = look_miss;
-    a.a_rt_i = rtip;
-    a.a_level = 0;
     
-    VSET(temp, viewX, viewY, 0);
-    MAT4X3PNT(a.a_ray.r_pt, view2model, temp);
-    VSET(temp, 0, 0, 1);
-    MAT4X3PNT(a.a_ray.r_dir, view2model, temp);
-    VUNITIZE(a.a_ray.r_dir);
+    /* Do stuff. */
 
-    rt_vls_init(&look_result);
+    Tcl_SetResult(interp, "foo", TCL_STATIC);
+
+    Tcl_SetResult(interp, rt_vls_addr(&vls), TCL_VOLATILE);
+    rt_vls_free(&vls);
     
-    rt_shootray_for_sols(&a);
+
+    Tcl_AppendElement(interp, "This { is really \\ fu\"nk}y.");
     
-    Tcl_SetResult(interp, rt_vls_addr(&look_result), TCL_VOLATILE);
-    rt_vls_free(&look_result);
     return TCL_OK;
 }
 
