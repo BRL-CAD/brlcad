@@ -341,8 +341,6 @@ char	*dp;
 		val = bn_noise_turb(pt, scloud_sp->h_val, 
 			scloud_sp->lacunarity, scloud_sp->octaves );
 
-		if (rdebug&RDEBUG_SHADE)
-			
 		density = scloud_sp->min_d_p_mm + val * delta_dpmm;
 
 		val = exp( - density * step_delta);

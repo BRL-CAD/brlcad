@@ -83,6 +83,33 @@ CONST char				*value;	/* string containing value */
 	*p = !*p;
 }
 
+/*
+ *
+ */
+static void
+light_pt_set( sdp, name, base, value )
+register CONST struct bu_structparse	*sdp;	/* structure description */
+register CONST char			*name;	/* struct member name */
+char					*base;	/* begining of structure */
+CONST char				*value;	/* string containing value */
+{
+	struct light_specific *lsp = (struct light_specific *)base;
+	fastf_t *p = (fastf_t *)(base+sdp->sp_offset);
+
+	if ( lsp->lt_pt_count >= MAX_LIGHT_SAMPLES ) return;
+
+	if (! strcmp("pt", name) ) {
+		/* user just specified point, set normal to zeros */
+		p[3] = p[4] = p[5] = 0.0;
+	} else if ( strcmp("pn", name) ) {
+		bu_log("*********** unknown option in light_pt_set %s:%d\n",
+		       __FILE__, __LINE__);
+		return;
+	}
+
+	memcpy( &lsp->lt_sample_pts[ lsp->lt_pt_count++ ], p,
+		sizeof( struct light_pt ) );
+}
 
 struct bu_structparse light_print_tab[] = {
 {"%f",	1, "bright",	LIGHT_O(lt_intensity),	BU_STRUCTPARSE_FUNC_NULL },
@@ -119,6 +146,9 @@ struct bu_structparse light_parse[] = {
 {"%d",	1, "visible",	LIGHT_O(lt_visible),	light_cvt_visible },
 {"%d",  1, "invisible",	LIGHT_O(lt_invisible),	light_cvt_visible },
 {"%d",	1, "v",		LIGHT_O(lt_visible),	light_cvt_visible },
+
+{"%f",	3, "pt",	LIGHT_OA(lt_parse_pt), light_pt_set },
+{"%f",	6, "pn",	LIGHT_OA(lt_parse_pt), light_pt_set },
 
 {"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL }
 };
@@ -1328,12 +1358,15 @@ struct light_obs_stuff *los;
 char flags[MAX_LIGHT_SAMPLES];
 {
 	struct application sub_ap;
-	double radius, angle, cos_angle, x, y; 
+	double radius = 0.0;
+	double angle = 0.0;
+	double cos_angle, x, y; 
 	point_t shoot_pt;
 	vect_t shoot_dir;
 	int shot_status;
 	vect_t dir, rdir;
-	int idx, k;
+	int idx;
+	int k = 0;
 	struct light_pt *lpt;
 	int tryagain = 0;
 
@@ -1347,6 +1380,7 @@ retry:
 		VMOVE( shoot_dir, los->lsp->lt_vec );
 
 	} else if (los->lsp->lt_pt_count > 0) {
+		static const vect_t zero = { 0.0, 0.0, 0.0 };
 
 		/* pick a point at random from the list of points on
 		 * the surface of the light.  If the normals indicate
@@ -1378,8 +1412,18 @@ retry:
 			VUNITIZE(dir);
 			VREVERSE(rdir, dir);
 
-			if (VDOT(los->swp->sw_hit.hit_normal, dir) > 0.0 &&
-			    VDOT(lpt->lp_norm, rdir) > 0.0) {
+
+			/* if the surface normals of the light and hit point
+			 * indicate that light could pass between the two
+			 * points, then we have a good choice
+			 *
+			 * If the light point has no surface normal, then
+			 * this is a general point usable from any angle
+			 * so again we can shoot at this point
+			 */
+			if ( VDOT(los->swp->sw_hit.hit_normal, dir) > 0.0 &&
+			     ( VEQUAL(lpt->lp_norm, zero) || 
+			       VDOT(lpt->lp_norm, rdir) > 0.0 )		) {
 
 				/* ok, we can shoot at this sample point */
 				if (rdebug & RDEBUG_LIGHT ) 
@@ -1424,6 +1468,7 @@ retry:
 		VSUB2(shoot_dir, shoot_pt, los->swp->sw_hit.hit_point);
 		
 	} else {
+
 		if (rdebug & RDEBUG_LIGHT ) 
 			bu_log("shooting at approximating sphere\n");
 		/* We're going to shoot at a point on the apporximating
@@ -1561,12 +1606,18 @@ retry:
 		bu_log("shot_status: %d\n", shot_status);
 
 	if (shot_status < 0) {
-		bu_log("was radius: %g of (%g) angle: %g\n",
-			radius, los->lsp->lt_radius, 
-			angle);
+		if (los->lsp->lt_infinite) {
+		}  else if (los->lsp->lt_pt_count > 0) {
+			bu_log("was pt %d\n (%g %g %g) normal %g %g %g\n", k,
+			       V3ARGS(los->lsp->lt_sample_pts[k].lp_pt),
+			       V3ARGS(los->lsp->lt_sample_pts[k].lp_norm) );
+		} else {
+			bu_log("was radius: %g of (%g) angle: %g\n",
+			       radius, los->lsp->lt_radius, angle);
 
-		bu_log("re-shooting\n");
-		goto retry;
+			bu_log("re-shooting\n");
+			goto retry;
+		}
 	}
 
 	if (shot_status > 0 )  {

@@ -215,7 +215,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	register struct tthrm_specific	*tthrm_sp;
 	struct bu_mapped_file	*tt_file;
 	char			*tt_data;
-	long			cyl_tot;
+	long			cyl_tot = 0;
 	long			tseg;
 	float			*fp;
 	float			fv[4];
@@ -227,7 +227,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	static const double	inv_nodes = 1.0/8.0;
 	int			node;
 	int			i;
-	int			long_size;
+	int			long_size = 0;
 	int			file_size_long;
 	int			file_size_int;
 
