@@ -43,53 +43,28 @@ cmd_overlay(ClientData	clientData,
 	    int		argc,
 	    char	**argv)
 {
-#if 1
 	int		ret;
+	struct bu_vls	char_size;
+	int		ac;
+	char		*av[5];
 
-	if ((ret = dgo_overlay_cmd(dgop, interp, argc, argv)) == TCL_OK)
+	ac = argc + 1;
+	bu_vls_init(&char_size);
+	bu_vls_printf(&char_size, "%lf", view_state->vs_vop->vo_scale * 0.01);
+	av[0] = argv[0];		/* command name */
+	av[1] = argv[1];		/* plotfile name */
+	av[2] = bu_vls_addr(&char_size);
+	if (argc == 3) {
+		av[3] = argv[2];	/* name */
+		av[4] = (char *)0;
+	} else
+		av[3] = (char *)0;
+
+	if ((ret = dgo_overlay_cmd(dgop, interp, ac, av)) == TCL_OK)
 		update_views = 1;
 
+	bu_vls_free(&char_size);
 	return ret;
-#else
-	char		*name;
-	FILE		*fp;
-	int		ret;
-	struct bn_vlblock	*vbp;
-
-	if(argc < 2 || 3 < argc){
-	  struct bu_vls vls;
-
-	  bu_vls_init(&vls);
-	  bu_vls_printf(&vls, "help overlay");
-	  Tcl_Eval(interp, bu_vls_addr(&vls));
-	  bu_vls_free(&vls);
-	  return TCL_ERROR;
-	}
-
-	if( argc == 2 )
-		name = "_PLOT_OVERLAY_";
-	else
-		name = argv[2];
-
-	if( (fp = fopen(argv[1], "r")) == NULL )  {
-		perror(argv[1]);
-		return TCL_ERROR;
-	}
-
-	vbp = rt_vlblock_init();
-	ret = rt_uplot_to_vlist(vbp, fp, view_state->vs_vop->vo_scale * 0.01);
-	fclose(fp);
-	if( ret < 0 )  {
-		rt_vlblock_free(vbp);
-		return TCL_ERROR;
-	}
-
-	cvt_vlblock_to_solids( vbp, name, 0 );
-
-	rt_vlblock_free(vbp);
-	update_views = 1;
-	return TCL_OK;
-#endif
 }
 
 /* Usage:  labelvert solid(s) */
