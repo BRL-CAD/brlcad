@@ -8,8 +8,8 @@
 #include "complex.h"
 
 int		polyRoots();
-static void	synthetic(), deflate();
-static int	findRoot(), evalpoly();
+HIDDEN void	synthetic(), deflate();
+HIDDEN int	findRoot(), evalpoly();
 
 /*	>>>  p o l y R o o t s ( )  <<<
  *	
@@ -135,7 +135,7 @@ register complex	roots[];	/* space to put roots found	*/
  *	possible.
  *
  */
-static int
+HIDDEN int
 findRoot( eqn, nxZ )
 register poly		*eqn;	/* polynomial			*/
 register complex	*nxZ;	/* initial guess for root	*/
@@ -223,7 +223,7 @@ register complex	*nxZ;	/* initial guess for root	*/
  *		d0 = c0,	di = d(i-1)*Z + ci,	i = 1,2,...n-2
  *
  */
-static void
+HIDDEN void
 synthetic( cZ, eqn, b, c, d )
 register poly		*eqn;
 register complex	*cZ, *b, *c, *d;
@@ -264,7 +264,7 @@ register complex	*cZ, *b, *c, *d;
  *		b0 = a0,	bi = b(i-1)*Z + ai,	i = 1,2,...n
  *
  */
-static int
+HIDDEN int
 evalpoly( eqn, roots, nroots )
 register poly		*eqn;
 register complex	roots[];
@@ -291,7 +291,7 @@ register int		nroots;
  *
  *	Deflates a polynomial by a given root.
  */
-static void
+HIDDEN void
 deflate( oldP, root )
 register poly		*oldP;
 register complex		*root;

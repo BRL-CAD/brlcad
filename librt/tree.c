@@ -1,4 +1,3 @@
-#define HIDDEN /**/
 /*
  *			T R E E
  *
