@@ -145,7 +145,7 @@ CONST struct rt_tol	*tol;
 	m4 = MAGNITUDE( trip->tri_wn );
 	if( m1 < tol->dist || m2 < tol->dist ||
 	    m3 < tol->dist || m4 < tol->dist )  {
-		free( (char *)trip);
+		rt_free( (char *)trip, "getstruct tri_specific");
 		if( rt_g.debug & DEBUG_ARB8 )
 			rt_log("pg(%s): degenerate facet\n", stp->st_name);
 		return(0);			/* BAD */
