@@ -197,14 +197,14 @@ struct rt_tess_tol  {
 /* Acquire storage for a given struct, eg, GETSTRUCT(ptr,structname); */
 #if __STDC__ && !alliant && !apollo
 # define GETSTRUCT(_p,_str) \
-	_p = (struct _str *)rt_calloc(1,sizeof(struct _str), "getstruct " #_str)
+	_p = (struct _str *)rt_calloc(1,sizeof(struct _str), _str #" (getstruct)" )
 # define GETUNION(_p,_unn) \
-	_p = (union _unn *)rt_calloc(1,sizeof(union _unn), "getstruct " #_unn)
+	_p = (union _unn *)rt_calloc(1,sizeof(union _unn), _unn #"(getstruct)")
 #else
 # define GETSTRUCT(_p,_str) \
-	_p = (struct _str *)rt_calloc(1,sizeof(struct _str), "getstruct _str")
+	_p = (struct _str *)rt_calloc(1,sizeof(struct _str), "_str (getstruct)")
 # define GETUNION(_p,_unn) \
-	_p = (union _unn *)rt_calloc(1,sizeof(union _unn), "getstruct _unn")
+	_p = (union _unn *)rt_calloc(1,sizeof(union _unn), "_unn (getstruct)")
 #endif
 
 /*
