@@ -4138,8 +4138,16 @@ proc sketch_text_from_table {tid {needcol -1}} {
 # Uncomment the following command in order to run the animator 
 # automatically when anim.tcl is sourced.
 
-proc animmate { {p .} } {
-	sketch_popup_main $p
+proc animmate { id {p .} } {
+    global mged_gui
+
+    if {[opendb] == ""} {
+	cad_dialog .$id.uncool $mged_gui($id,screen) "No database." \
+		"No database has been opened!" info 0 OK
+	return
+    }
+
+    sketch_popup_main $p
 }
 
 #animmate

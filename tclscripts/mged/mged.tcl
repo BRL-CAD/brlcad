@@ -230,6 +230,12 @@ proc do_Open { id } {
 proc do_Concat { id } {
     global mged_gui
 
+    if {[opendb] == ""} {
+	cad_dialog .$id.uncool $mged_gui($id,screen) "No database." \
+		"No database has been opened!" info 0 OK
+	return
+    }
+
     set file_types {{{MGED Database} {.g}} {{All Files} {*}}}
     set ia_filename [tk_getOpenFile -parent .$id -filetypes $file_types \
 	    -initialdir $mged_gui(databaseDir) \
@@ -280,7 +286,15 @@ proc do_LoadScript { id } {
 }
 
 proc do_Units { id } {
+    global mged_gui
     global mged_display
+
+    if {[opendb] == ""} {
+	set mged_display(units) ""
+	cad_dialog .$id.uncool $mged_gui($id,screen) "No database." \
+		"No database has been opened!" info 0 OK
+	return
+    }
 
     _mged_units $mged_display(units)
 }
