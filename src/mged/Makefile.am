@@ -100,7 +100,9 @@ mged_SOURCES = \
 	vers.c \
 	vparse.c \
 	vrlink.c
-mged_LDADD = @DM@ @FB@ @ITCL_LIBS@ @ITK_LIBS@ @SYSV@ @TERMIO@ @TK_LIBS@ @WDB@ @GL_LIBS@ @PNG_LIBS@
+
+LDFLAGS = -bind_at_load
+mged_LDADD = @ITCL_LIBS@ @ITK_LIBS@ @TK_LIBS@ @TERMIO@ @WDB@ @DM@ @FB@ @SYSV@ @GL_LIBS@ @PNG_LIBS@
 
 cad_boundp_SOURCES = cad_boundp.c
 cad_boundp_LDADD = @BU@
