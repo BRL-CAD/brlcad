@@ -18,7 +18,8 @@
 	poly \
 	qmath \
 	rand \
-	wavelet
+	wavelet \
+	asize
 
 #define VERSION_VARIABLE	bn_version
 #define LIBRARY_TITLE		"The BRL-CAD Numerical Computation Library"
