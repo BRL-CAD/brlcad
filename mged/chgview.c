@@ -51,7 +51,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
-#include "db.h"
 #include "mater.h"
 #include "raytrace.h"
 #include "nmg.h"
@@ -617,6 +616,225 @@ char	**argv;
 }
 
 /*
+ *			M G E D _ C O M B _ D E S C R I B E
+ *
+ *  Describe the non-tree portion of a combination node.
+ */
+void
+mged_comb_describe( vls, comb )
+struct bu_vls			*vls;
+CONST struct rt_comb_internal	*comb;
+{
+	RT_CK_COMB(comb);
+
+	if( comb->region_flag ) {
+		bu_vls_printf( vls,
+		       "REGION id=%d  (air=%d, los=%d, GIFTmater=%d) ",
+			comb->region_id,
+			comb->aircode,
+			comb->los,
+			comb->GIFTmater );
+	}
+
+	bu_vls_strcat( vls, "--\n" );
+	if( bu_vls_strlen(&comb->shader_name) > 0 ) {
+		bu_vls_printf( vls,
+			"Shader '%s' '%s'\n",
+		bu_vls_addr(&comb->shader_name),
+			bu_vls_addr(&comb->shader_param) );
+	}
+
+	if( comb->rgb_valid ) {
+		bu_vls_printf( vls,
+			"Color %d %d %d\n",
+			comb->rgb[0],
+			comb->rgb[1],
+			comb->rgb[2]);
+	}
+
+	if( bu_vls_strlen(&comb->shader_name) > 0 || comb->rgb_valid )  {
+		if( comb->inherit ) {
+			bu_vls_strcat( vls, 
+	"(These material properties override all lower ones in the tree)\n");
+		}
+	}
+}
+
+#define STAT_ROT	1
+#define STAT_XLATE	2
+#define STAT_PERSP	4
+#define STAT_SCALE	8
+/*
+ *			M A T _ C A T E G O R I Z E
+ *
+ *  Describe with a bit vector the effects this matrix will have.
+ */
+int
+mat_categorize( matp )
+CONST mat_t	matp;
+{
+	int	status = 0;
+
+	if( !matp )  return 0;
+
+	if( matp[0] != 1.0 || matp[5] != 1.0 || matp[10] != 1.0 )
+		status |= STAT_ROT;
+
+	if( matp[MDX] != 0.0 ||
+	    matp[MDY] != 0.0 ||
+	    matp[MDZ] != 0.0 )
+		status |= STAT_XLATE;
+
+	if( matp[12] != 0.0 ||
+	    matp[13] != 0.0 ||
+	    matp[14] != 0.0 )
+		status |= STAT_PERSP;
+
+	if( matp[15] != 1.0 )  status |= STAT_SCALE;
+
+	return status;
+}
+
+/*
+ *			M G E D _ T R E E _ D E S C R I B E
+ */
+void
+mged_tree_describe( vls, tp, indented, lvl, verbose )
+struct bu_vls		*vls;
+CONST union tree	*tp;
+int			indented;
+int			lvl;
+int			verbose;
+{
+	int	status;
+
+	BU_CK_VLS(vls);
+	RT_CK_TREE(tp);
+	switch( tp->tr_op )  {
+
+	case OP_DB_LEAF:
+		status = mat_categorize( tp->tr_l.tl_mat );
+
+		if( verbose )  {
+			/* One per line, out onto the vls */
+			if( !indented )  bu_vls_spaces( vls, 2*lvl );
+			bu_vls_strcat( vls, tp->tr_l.tl_name );
+			if( status & STAT_ROT ) {
+				fastf_t	az, el;
+				ae_vec( &az, &el, tp->tr_l.tl_mat ?
+					tp->tr_l.tl_mat : rt_identity );
+				bu_vls_printf( vls, 
+					" az=%g, el=%g, ",
+					az, el );
+			}
+			if( status & STAT_XLATE ) {
+				bu_vls_printf( vls, " [%g,%g,%g]",
+					tp->tr_l.tl_mat[MDX]*base2local,
+					tp->tr_l.tl_mat[MDY]*base2local,
+					tp->tr_l.tl_mat[MDZ]*base2local);
+			}
+			if( status & STAT_SCALE ) {
+				bu_vls_printf( vls, " scale %g",
+					1.0/tp->tr_l.tl_mat[15] );
+			}
+			if( status & STAT_PERSP ) {
+				bu_vls_printf( vls, 
+					" Perspective=[%g,%g,%g]??",
+					tp->tr_l.tl_mat[12],
+					tp->tr_l.tl_mat[13],
+					tp->tr_l.tl_mat[14] );
+			}
+			bu_vls_printf( vls, "\n" );
+		} else {
+			/* Many per line, using columnation */
+			if( status )  {
+				register char	*cp;
+				struct bu_vls	str;
+				char	buf[8];
+
+				bu_vls_init( &str );
+				bu_vls_strcpy( &str, tp->tr_l.tl_name );
+				cp = buf;
+				*cp++ = '/';
+				if( status & STAT_ROT )  *cp++ = 'R';
+				if( status & STAT_XLATE) *cp++ = 'T';
+				if( status & STAT_SCALE) *cp++ = 'S';
+				if( status & STAT_PERSP) *cp++ = 'P';
+				*cp = '\0';
+				bu_vls_strcat( vls, buf );
+				vls_col_item( vls, bu_vls_addr(&str) );
+				bu_vls_trunc( &str, 0 );
+			} else {
+				vls_col_item( vls, tp->tr_l.tl_name );
+			}
+		}
+		return;
+
+		/* This node is known to be a binary op */
+	case OP_UNION:
+		if( verbose )  {
+			if(!indented) bu_vls_spaces( vls, 2*lvl );
+			bu_vls_strcat( vls, "u " );
+		}
+		goto bin;
+	case OP_INTERSECT:
+		if( verbose )  {
+			if(!indented) bu_vls_spaces( vls, 2*lvl );
+			bu_vls_strcat( vls, "+ " );
+		}
+		goto bin;
+	case OP_SUBTRACT:
+		if( verbose )  {
+			if(!indented) bu_vls_spaces( vls, 2*lvl );
+			bu_vls_strcat( vls, "- " );
+		}
+		goto bin;
+	case OP_XOR:
+		if( verbose )  {
+			if(!indented) bu_vls_spaces( vls, 2*lvl );
+			bu_vls_strcat( vls, "^ " );
+		}
+bin:
+		mged_tree_describe( vls, tp->tr_b.tb_left, 1, lvl+1, verbose );
+		mged_tree_describe( vls, tp->tr_b.tb_right, 0, lvl+1, verbose );
+		return;
+
+		/* This node is known to be a unary op */
+	case OP_NOT:
+		if( verbose )  {
+			if(!indented) bu_vls_spaces( vls, 2*lvl );
+			bu_vls_strcat( vls, "! " );
+		}
+		goto unary;
+	case OP_GUARD:
+		if( verbose )  {
+			if(!indented) bu_vls_spaces( vls, 2*lvl );
+			bu_vls_strcat( vls, "G " );
+		}
+		goto unary;
+	case OP_XNOP:
+		if( verbose )  {
+			if(!indented) bu_vls_spaces( vls, 2*lvl );
+			bu_vls_strcat( vls, "X " );
+		}
+unary:
+		mged_tree_describe( vls, tp->tr_b.tb_left, 1, lvl+1 );
+		return;
+
+	case OP_NOP:
+		if( verbose )  {
+			if(!indented) bu_vls_spaces( vls, 2*lvl );
+			bu_vls_strcat( vls, "NOP\n" );
+		}
+		return;
+
+	default:
+		bu_log("mged_tree_describe: bad op %d\n", tp->tr_op);
+		bu_bomb("mged_tree_describe\n");
+	}
+}
+
+/*
  *			D O _ L I S T
  */
 void
@@ -626,14 +844,13 @@ register struct directory *dp;
 int	verbose;
 {
 	register int	i;
-	register union record	*rp;
 	int			id;
-	struct rt_external	ext;
+	struct bu_external	ext;
 	struct rt_db_internal	intern;
 	mat_t			ident;
 	struct bu_vls		str;
-	bu_vls_init( &str );
 
+	bu_vls_init( &str );
 	bu_vls_printf( outstrp, "%s:  ", dp->d_namep );
 	RT_INIT_EXTERNAL(&ext);
 	if( db_get_external( &ext, dp, dbip ) < 0 )  {
@@ -641,121 +858,26 @@ int	verbose;
 			   ") failure\n", (char *)NULL);
 	  return;
 	}
-	rp = (union record *)ext.ext_buf;
 
-	/* XXX This should be converted to _import and _describe routines! */
-	if( rp[0].u_id == ID_COMB )  {
+	if( dp->d_flags & DIR_COMB )  {
+		struct rt_comb_internal	*comb;
+
 		/* Combination */
 		bu_vls_printf( outstrp, "%s (len %d) ", dp->d_namep, 
 			       dp->d_len-1 );
-		if( rp[0].c.c_flags == 'R' ) {
-			bu_vls_printf( outstrp,
-			       "REGION id=%d  (air=%d, los=%d, GIFTmater=%d) ",
-				rp[0].c.c_regionid,
-				rp[0].c.c_aircode,
-				rp[0].c.c_los,
-				rp[0].c.c_material );
+
+		if( rt_comb_v4_import( &intern, &ext, NULL ) < 0 ||
+		    intern.idb_type != ID_COMBINATION )  {
+			Tcl_AppendResult(interp, "rt_comb_v4_import(",
+				dp->d_namep, ") failure\n", (char *)NULL);
+			goto out;
 		}
-		bu_vls_strcat( outstrp, "--\n" );
-		if( rp[0].c.c_matname[0] ) {
-			bu_vls_printf( outstrp,
-				"Material '%s' '%s'\n",
-				rp[0].c.c_matname,
-				rp[0].c.c_matparm);
-		}
-		if( rp[0].c.c_override == 1 ) {
-			bu_vls_printf( outstrp,
-				"Color %d %d %d\n",
-				rp[0].c.c_rgb[0],
-				rp[0].c.c_rgb[1],
-				rp[0].c.c_rgb[2]);
-		}
-		if( rp[0].c.c_matname[0] || rp[0].c.c_override )  {
-			if( rp[0].c.c_inherit == DB_INH_HIGHER ) {
-				bu_vls_strcat( outstrp, 
-	"(These material properties override all lower ones in the tree)\n");
-			}
-		}
-
-		for( i=1; i < dp->d_len; i++ )  {
-			mat_t	xmat;
-			int	status;
-
-			status = 0;
-#define STAT_ROT	1
-#define STAT_XLATE	2
-#define STAT_PERSP	4
-#define STAT_SCALE	8
-
-			/* See if this matrix does anything */
-			rt_mat_dbmat( xmat, rp[i].M.m_mat );
-
-			if( xmat[0] != 1.0 || xmat[5] != 1.0 
-						|| xmat[10] != 1.0 )
-				status |= STAT_ROT;
-
-			if( xmat[MDX] != 0.0 ||
-			    xmat[MDY] != 0.0 ||
-			    xmat[MDZ] != 0.0 )
-				status |= STAT_XLATE;
-
-			if( xmat[12] != 0.0 ||
-			    xmat[13] != 0.0 ||
-			    xmat[14] != 0.0 )
-				status |= STAT_PERSP;
-
-			if( xmat[15] != 1.0 )  status |= STAT_SCALE;
-
-			if( verbose )  {
-				bu_vls_printf( outstrp, "  %c %s",
-					rp[i].M.m_relation, 
-					rp[i].M.m_instname );
-				if( status & STAT_ROT ) {
-					fastf_t	az, el;
-					ae_vec( &az, &el, xmat );
-					bu_vls_printf( outstrp, 
-						" az=%g, el=%g, ",
-						az, el );
-				}
-				if( status & STAT_XLATE ) {
-					bu_vls_printf( outstrp, " [%g,%g,%g]",
-						xmat[MDX]*base2local,
-						xmat[MDY]*base2local,
-						xmat[MDZ]*base2local);
-				}
-				if( status & STAT_SCALE ) {
-					bu_vls_printf( outstrp, " scale %g",
-						1.0/xmat[15] );
-				}
-				if( status & STAT_PERSP ) {
-					bu_vls_printf( outstrp, 
-						" ??Perspective=[%g,%g,%g]??",
-						xmat[12], xmat[13], xmat[14] );
-				}
-				bu_vls_printf( outstrp, "\n" );
-			} else {
-				register char	*cp;
-
-				bu_vls_trunc( &str, 0 );
-				bu_vls_printf( &str, "%c %s",
-					rp[i].M.m_relation, 
-					rp[i].M.m_instname );
-
-				cp = bu_vls_addr( &str );
-				if( status )  {
-					cp += strlen(cp);
-					*cp++ = '/';
-					if( status & STAT_ROT )  *cp++ = 'R';
-					if( status & STAT_XLATE) *cp++ = 'T';
-					if( status & STAT_SCALE) *cp++ = 'S';
-					if( status & STAT_PERSP) *cp++ = 'P';
-					*cp = '\0';
-				}
-				vls_col_item( outstrp, bu_vls_addr(&str) );
-				bu_vls_trunc( &str, 0 );
-			}
-		}
+		comb = (struct rt_comb_internal *)intern.idb_ptr;
+		RT_CK_COMB(comb);
+		mged_comb_describe( outstrp, comb );
+		mged_tree_describe( outstrp, comb->tree, 0, 1, verbose );
 		if( !verbose )  vls_col_eol( outstrp );
+		rt_comb_ifree( &intern );
 		goto out;
 	}
 
