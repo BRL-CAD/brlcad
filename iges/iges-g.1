@@ -1,24 +1,24 @@
-.TH CONV-IGS2G 1 BRL/CAD
+.TH IGES-G 1 BRL-CAD
 .SH NAME
-conv-igs2g \- IGES Translator (IGES CSG to BRL/CAD)
+iges-g \- IGES Translator (IGES CSG to BRL-CAD)
 .SH SYNOPSIS
-.B conv-igs2g
-iges_file database.g
+.B iges-g
+file.iges database.g
 .SH DESCRIPTION
-.I Conv-igs2g\^
+.I iges-g\^
 converts the specified
-.I iges_file
-to a BRL/CAD
+.I file.iges
+to a BRL-CAD
 .I database.g
-file. The iges file is expected to conform to the ANSI standard,
+file. The IGES file is expected to conform to the ANSI standard,
 ASME Y14.26M-1989, which
-is esentially IGES 4.0. All IGES CSG objects are converted to BRLCAD
+is esentially IGES 4.0. All IGES CSG objects are converted to BRL-CAD
 equivalents. Most conversions are exact, with the exceptions of the solid of
-revolution and the solid of linear extrusion. These solids do not exist in BRL/CAD
+revolution and the solid of linear extrusion. These solids do not exist in BRL-CAD
 and are therefore approximated. The solid of revolution is built from a series of
 truncated right cones developed by approximating the curve to be revolved with a series
 of straight line segements. The extrusion is similarly handled by approximating the
-curve to be extruded with straight line segments and using that to build a BRL/CAD
+curve to be extruded with straight line segments and using that to build a BRL-CAD
 polysolid. An all-encompassing group is created, with the name "all", that includes
 all the objects in the database not referenced by other objects.
 IGES non-uniform rational B-spline surfaces (NURBS) are also converted, but this translator is not intended
@@ -26,7 +26,7 @@ to be a BREP translator at this time. All NURBS are combined into
 a single BRLCAD spline solid named "nurb.s".
 .SH EXAMPLE
 .RS
-$ \|\fIconv-igs2g \|sample.iges \|sample.g\fP
+$ \|\fIiges-g \|sample.iges \|sample.g\fP
 .RE
 .SH "SEE ALSO"
 ASME Y14.26M-1989,
