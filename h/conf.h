@@ -141,6 +141,21 @@
 #	define HAVE_XOSDEFS_H	1
 #endif
 
+#if defined(__NetBSD__)
+#	define USE_PROTOTYPES	1
+#	define USE_STRING_H	1
+#	define HAVE_STDLIB_H	1
+#	define HAVE_STDARG_H	1
+#	define HAVE_UNISTD_H	1
+#	define HAVE_SYS_MMAN_H	1
+#	define HAVE_SBRK_DECL	1
+#	define HAVE_GETOPT	1
+#	define HAVE_GETOPT_DECL 1
+#	define HAVE_REGEX_DECL	1
+#	define HAVE_SYS_ERRLIST_DECL	1
+#	define HAVE_SBRK_DECL		1
+#endif
+
 #if defined(__STDC__)
 #	define HAVE_STDLIB_H	1
 #	define HAVE_STDARG_H	1
@@ -217,10 +232,6 @@
 #	define USE_SYSV_RE 1
 #endif
 
-#if defined(__NetBSD__)
-#	define HAVE_REGEX_DECL	1
-#endif
-
 #if !defined(SYSV)
 #	define HAVE_VFORK	1
 #endif
@@ -265,16 +276,6 @@
 #	if !defined(_XOPEN_SOURCE)				/* XXX */
 #		define _XOPEN_SOURCE	1
 #	endif
-#endif
-
-/*
- *	NetBSD's pedantic sys_errlist declaration means we don't want to
- *	make our own (it declares it as "const char const *" which collides.)
- */
-
-#ifdef __NetBSD__
-#	define HAVE_SYS_ERRLIST_DECL	1
-#	define HAVE_SBRK_DECL		1
 #endif
 
 #if !defined(SYSV)			/* XXXXXXXXX */
