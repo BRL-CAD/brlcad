@@ -30,6 +30,9 @@ static char RCSrefract[] = "@(#)$Header$ (BRL)";
 #define MAX_IREFLECT	9	/* Maximum internal reflection level */
 #define MAX_BOUNCE	4	/* Maximum recursion level */
 
+#define MSG_PROLOGUE	20		/* # initial messages to see */
+#define MSG_INTERVAL	4000		/* message interval thereafter */
+
 #define RI_AIR		1.0    /* Refractive index of air.		*/
 
 HIDDEN int	rr_hit(), rr_miss();
@@ -56,19 +59,19 @@ char	*dp;
 	if( swp->sw_reflect <= 0 && swp->sw_transmit <= 0 )
 		goto finish;
 
+	if( (swp->sw_inputs & (MFI_HIT|MFI_NORMAL)) != (MFI_HIT|MFI_NORMAL) )
+		shade_inputs( ap, pp, swp, MFI_HIT|MFI_NORMAL );
+
 	if( ap->a_level >= MAX_BOUNCE )  {
 		/* Nothing more to do for this ray */
 		static long count = 0;		/* Not PARALLEL, should be OK */
 
-		if( ++count > 100 )  {
-			if( (count%100) != 3 )  goto show_quench;
-			rt_log("(bounces omitted)\n");
+		if( count++ < MSG_PROLOGUE || (count%MSG_INTERVAL) == 3 )  {
+			rt_log("rr_render: %d,%d Max bounces=%d: %s\n",
+				ap->a_x, ap->a_y,
+				ap->a_level,
+				pp->pt_regionp->reg_name );
 		}
-		rt_log("rr_render: Maximum bounces=%d, stopping with %s at %d,%d\n",
-			ap->a_level,
-			pp->pt_inseg->seg_stp->st_name,
-			ap->a_x, ap->a_y );
-show_quench:	;
 		if(rdebug&RDEBUG_SHOWERR)  {
 			VSET( swp->sw_color, 99, 99, 0 );	/* Yellow */
 		} else {
@@ -118,11 +121,15 @@ show_quench:	;
 			swp->sw_reflect, sub_ap.a_color);
 	}
 	if( swp->sw_transmit > 0 )  {
-
-		/* Calculate refraction at entrance. */
+		/*
+		 *  Calculate refraction at entrance.
+		 *  XXX A fairly serious bug with this code is that it doees
+		 *  not handle the case of two adjacent pieces of glass,
+		 *  ie, the RI of the last/current medium
+		 *  does not propagate along the ray.
+		 */
 		sub_ap = *ap;		/* struct copy */
 		sub_ap.a_level = 0;	/* # of internal reflections */
-		sub_ap.a_onehit = 1;
 		sub_ap.a_user = (int)(pp->pt_regionp);
 		VMOVE( sub_ap.a_ray.r_pt, swp->sw_hit.hit_point );
 		VMOVE( incident_dir, ap->a_ray.r_dir );
@@ -146,21 +153,45 @@ do_inside:
 		sub_ap.a_hit =  rr_hit;
 		sub_ap.a_miss = rr_miss;
 		sub_ap.a_purpose = "internal reflection";
+		sub_ap.a_onehit = 1;
 		if( rt_shootray( &sub_ap ) == 0 )  {
-			if(rdebug&RDEBUG_HITS)rt_log("rr_render: Refracted ray missed '%s' -- RETRYING, lvl=%d\n",
-				pp->pt_inseg->seg_stp->st_name,
-				sub_ap.a_level );
-			/* Back off just a little bit, and try again */
-			/* Useful when striking exactly in corners */
+			vect_t	voffset;
+			register fastf_t	f;
+
+			/*
+			 *  Internal reflection missed, or hit the wrong
+			 *  thing, or encountered other adversity.
+			 *  [Move the ray start point 1% or 1mm
+			 *  (whichever is smaller) towards the solids'
+			 *  center point, and try again. XXX This is wrong
+			 *  if the entry point was due to a subtracted solid].
+			 */
+/**			if(rdebug&RDEBUG_HITS)**/
+				rt_log("rr_render: Refracted ray missed '%s' -- RETRYING, lvl=%d xy=%d,%d\n",
+				pp->pt_regionp->reg_name,
+				sub_ap.a_level,
+				ap->a_x, ap->a_y );
+#ifdef later
+			VSUB2( voffset, sub_ap.a_ray.r_pt,
+				pp->pt_inseg->seg_stp->st_center );
+			f = MAGNITUDE(voffset);
+			if( f > 1.0 )
+				f = 1.0/f;		/* use 1mm */
+			else
+				f = 0.01/f;		/* use 1% */
 			VJOIN1( sub_ap.a_ray.r_pt, sub_ap.a_ray.r_pt,
-				-0.5, incident_dir );
+				f, voffset );
+#else
+			VJOIN1( sub_ap.a_ray.r_pt, sub_ap.a_ray.r_pt,
+				-10, incident_dir );
+#endif
 			sub_ap.a_purpose = "backed off, internal reflection";
+			sub_ap.a_onehit = 0;
 			if( rt_shootray( &sub_ap ) == 0 )  {
-				rt_log("rr_render: Refracted ray missed 2x '%s', lvl=%d\n",
-					pp->pt_inseg->seg_stp->st_name,
-					sub_ap.a_level );
-				VPRINT("pt", sub_ap.a_ray.r_pt );
-				VPRINT("dir", sub_ap.a_ray.r_dir );
+				rt_log("rr_render: Refracted ray missed 2x '%s', lvl=%d, xy=%d,%d\n",
+					pp->pt_regionp->reg_name,
+					sub_ap.a_level,
+					ap->a_x, ap->a_y );
 				VSET( swp->sw_color, 0, 99, 0 );	/* green */
 				goto finish;		/* abandon hope */
 			}
@@ -193,19 +224,17 @@ do_inside:
 			if( (++sub_ap.a_level) <= MAX_IREFLECT )
 				goto do_inside;
 
-			/* A chattering should probably be supressed, except
+			/* All chattering should probably be supressed, except
 			 * in the SHOWERR case, as this will be the "normal"
 			 * behavior now.
 			 */
-			if( ++count > 100 )  {
-				if( (count%100) != 3 )  goto show_rstop;
-				rt_log("(internal reflections omitted)\n");
+			if( count++ < MSG_PROLOGUE || (count%MSG_INTERVAL) == 3 )  {
+				rt_log("rr_render: %d,%d Int.reflect=%d: %s lvl=%d\n",
+					sub_ap.a_x, sub_ap.a_y,
+					sub_ap.a_level,
+					pp->pt_regionp->reg_name,
+					ap->a_level );
 			}
-			rt_log("rr_render: %s Internal reflection stopped after %d bounces, (x%d, y%d, lvl=%d)\n",
-				pp->pt_inseg->seg_stp->st_name,
-				sub_ap.a_level,
-				sub_ap.a_x, sub_ap.a_y, ap->a_level );
-show_rstop:		;
 			if(rdebug&RDEBUG_SHOWERR) {
 				VSET( swp->sw_color, 0, 9, 0 );	/* green */
 				goto finish;
@@ -272,15 +301,16 @@ struct partition *PartHeadp;
 	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
 		if( pp->pt_outhit->hit_dist > 0.0 )  break;
 	if( pp == PartHeadp )  {
-		if(rdebug&RDEBUG_SHOWERR)
+/**		if(rdebug&RDEBUG_SHOWERR) **/
 			rt_log("rr_hit:  no hit out front?\n");
 		goto bad;
 	}
 	if( pp->pt_regionp != (struct region *)(ap->a_user) )  {
-		if(rdebug&RDEBUG_HITS)
+/**		if(rdebug&RDEBUG_HITS) **/
 			rt_log("rr_hit:  Ray reflected within %s now in %s!\n",
 				((struct region *)(ap->a_user))->reg_name,
 				pp->pt_regionp->reg_name );
+		rt_pr_partitions(ap->a_rt_i, PartHeadp, "RR: Whole Partition" );
 		goto bad;
 	}
 
@@ -328,7 +358,7 @@ struct partition *PartHeadp;
 	hitp = pp->pt_outhit;
 	stp = pp->pt_outseg->seg_stp;
 	if( hitp->hit_dist >= INFINITY )  {
-		if(rdebug&RDEBUG_SHOWERR)
+/**		if(rdebug&RDEBUG_SHOWERR) **/
 			rt_log("rr_hit:  (%g,%g) bad!\n",
 				pp->pt_inhit->hit_dist, hitp->hit_dist);
 		goto bad;
