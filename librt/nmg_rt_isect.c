@@ -2017,9 +2017,14 @@ struct face_g_plane *fg_p;
 	 */
 	rd->face_subhit = 0;
 	rd->ray_dist_to_plane = dist;
-	pt_class = nmg_class_pt_fu_except(plane_pt, fu_p, (struct loopuse *)NULL,
-		eu_touch_func, vu_touch_func, (char *)rd, NMG_FPI_PERGEOM, 0,
-		rd->tol);
+	if( rd->classifying_ray )
+		pt_class = nmg_class_pt_fu_except(plane_pt, fu_p, (struct loopuse *)NULL,
+			0, 0, (char *)rd, NMG_FPI_PERGEOM, 1,
+			rd->tol);
+	else
+		pt_class = nmg_class_pt_fu_except(plane_pt, fu_p, (struct loopuse *)NULL,
+			eu_touch_func, vu_touch_func, (char *)rd, NMG_FPI_PERGEOM, 0,
+			rd->tol);
 
 
 	GET_HITMISS(myhit);
@@ -2603,6 +2608,7 @@ struct rt_tol *tol;
 	rd.magic = NMG_RAY_DATA_MAGIC;
 	rd.hitmiss = (struct hitmiss **)rt_calloc( rd.rd_m->maxindex,
 		sizeof(struct hitmiss *), "nmg geom hit list");
+	rd.classifying_ray = 1;
 
 	/* initialize the lists of things that have been hit/missed */
 	RT_LIST_INIT(&rd.rd_hit);
