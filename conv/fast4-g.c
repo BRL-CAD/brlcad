@@ -237,6 +237,7 @@ struct fast_fus
 	fastf_t thick;
 	int pos;
 	int element;
+	int pt1, pt2, pt3;
 	struct fast_fus *next;
 } *fus_root;
 
@@ -1010,10 +1011,11 @@ struct faceuse *fu;
 }
 
 void
-Add_fu( fu, thick, pos, element_no )
+Add_fu( fu, thick, pos, pt1, pt2, pt3, element_no )
 struct faceuse *fu;
 fastf_t thick;
 int pos;
+int pt1, pt2, pt3;
 int element_no;
 {
 	struct fast_fus *fus;
@@ -1036,6 +1038,9 @@ int element_no;
 	fus->fu = fu;
 	fus->thick = thick;
 	fus->pos = pos;
+	fus->pt1 = pt1;
+	fus->pt2 = pt2;
+	fus->pt3 = pt3;
 	fus->element = element_no;
 }
 
@@ -4009,35 +4014,56 @@ Make_arb6_obj()
 
 		NMG_GET_FU_NORMAL( normal , fu );
 
-		eu = RT_LIST_FIRST( edgeuse , &lu->down_hd );
-		NMG_CK_EDGEUSE( eu );
-		v = eu->vu_p->v_p;
-		NMG_CK_VERTEX( v );
-		vg = v->vg_p;
-		NMG_CK_VERTEX_G( vg );
-		VMOVE( pts[0] , vg->coord );
+		if( fus->pt1 < 0 || fus->pt2 < 0 || fus->pt3 < 0 )
+		{
+#if 1
+			continue;
+#else
+			eu = RT_LIST_FIRST( edgeuse , &lu->down_hd );
+			NMG_CK_EDGEUSE( eu );
+			v = eu->vu_p->v_p;
+			NMG_CK_VERTEX( v );
+			vg = v->vg_p;
+			NMG_CK_VERTEX_G( vg );
+			VMOVE( pts[0] , vg->coord );
 
-		eu = RT_LIST_PNEXT( edgeuse , eu );
-		NMG_CK_EDGEUSE( eu );
-		v = eu->vu_p->v_p;
-		NMG_CK_VERTEX( v );
-		vg = v->vg_p;
-		NMG_CK_VERTEX_G( vg );
-		VMOVE( pts[1] , vg->coord );
+			eu = RT_LIST_PNEXT( edgeuse , eu );
+			NMG_CK_EDGEUSE( eu );
+			v = eu->vu_p->v_p;
+			NMG_CK_VERTEX( v );
+			vg = v->vg_p;
+			NMG_CK_VERTEX_G( vg );
+			VMOVE( pts[1] , vg->coord );
 
-		eu = RT_LIST_PNEXT( edgeuse , eu );
-		NMG_CK_EDGEUSE( eu );
-		v = eu->vu_p->v_p;
-		NMG_CK_VERTEX( v );
-		vg = v->vg_p;
-		NMG_CK_VERTEX_G( vg );
-		VMOVE( pts[4] , vg->coord );
-		VMOVE( pts[5] , pts[4] );
+			eu = RT_LIST_PNEXT( edgeuse , eu );
+			NMG_CK_EDGEUSE( eu );
+			v = eu->vu_p->v_p;
+			NMG_CK_VERTEX( v );
+			vg = v->vg_p;
+			NMG_CK_VERTEX_G( vg );
+			VMOVE( pts[4] , vg->coord );
+			VMOVE( pts[5] , pts[4] );
+#endif
+		}
+		else
+		{
+			VMOVE( pts[0], grid_pts[fus->pt1].pt )
+			VMOVE( pts[1], grid_pts[fus->pt2].pt )
+			VMOVE( pts[4], grid_pts[fus->pt3].pt )
+		}
 
-		VJOIN1( pts[3] , pts[0] , fus->thick , normal );
-		VJOIN1( pts[2] , pts[1] , fus->thick , normal );
-		VJOIN1( pts[6] , pts[4] , fus->thick , normal );
-		VMOVE( pts[7] , pts[6] );
+		/* move one side of the arb6 half the thickness */
+		VJOIN1( pts[3] , pts[0] , 0.5*fus->thick , normal );
+		VJOIN1( pts[2] , pts[1] , 0.5*fus->thick , normal );
+		VJOIN1( pts[6] , pts[4] , 0.5*fus->thick , normal );
+
+		/* move the other side the full thickness */
+		VJOIN1( pts[0], pts[3], -fus->thick, normal );
+		VJOIN1( pts[1], pts[2], -fus->thick, normal );
+		VJOIN1( pts[4], pts[6], -fus->thick, normal );
+
+		VMOVE( pts[7], pts[6] );
+		VMOVE( pts[5], pts[4] );
 
 		sprintf( arb6_name , "arb.%d.%d" , tmp_id , arb_count );
 		arb_count++;
@@ -4549,7 +4575,7 @@ make_nmg_objects()
 
 						/* add new face to `fus_root' list */
 						fus = Find_fus( fu );
-						Add_fu( new_fu, fus->thick, fus->pos, fus->element );
+						Add_fu( new_fu, fus->thick, fus->pos, -1, -1, -1, fus->element );
 					}
 				}
 			}
@@ -5529,7 +5555,7 @@ int pos;
 
 	/* save faceuse and thickness info for plate mode */
 	if( mode == PLATE_MODE )
-		Add_fu( fu, thick, pos, element_id );
+		Add_fu( fu, thick, pos, pt1, pt2, pt3, element_id );
 
 	if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
 		rt_log( "ERROR: rt_mem_barriercheck failed in make_fast_fu\n" );
