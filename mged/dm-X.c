@@ -207,7 +207,9 @@ double ratio;
 	XSegment *segp;			/* current segment */
 	XGCValues gcv;
 	int	nseg;			/* number of segments */
-	int	x, y, lastx, lasty;
+	int	x, y;
+	int	lastx = 0;
+	int	lasty = 0;
 
 	if( sp->s_soldash ) {
 		XSetLineAttributes( dpy, gc, 1, LineOnOffDash, CapButt, JoinMiter );
@@ -319,6 +321,7 @@ register u_char *str;
 	case DM_BLUE:
 		fg = blue;
 		break;
+	default:
 	case DM_YELLOW:
 		fg = yellow;
 		break;
