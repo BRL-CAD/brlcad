@@ -246,7 +246,7 @@ db5_diradd_handler(
 int
 db_dirbuild( struct db_i *dbip )
 {
-	char	header[8];
+	unsigned char	header[8];
 
 	RT_CK_DBI(dbip);
 
