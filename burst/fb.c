@@ -18,7 +18,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 bool
 imageInit()
-	{
+	{	bool needopen = false;
+		static char lastfbfile[LNBUFSZ]={0}; /* last fbfile */
 	devwid = 512;
 	devhgt = 512;
 	if( fbfile[0] == NUL )
@@ -34,7 +35,16 @@ imageInit()
 		zoom--;
 	if( zoom < 1 )
 		zoom = 1;
+
+	/* Determine whether it is necessary to open fbfile. */
 	if( fbiop == FBIO_NULL || fb_getwidth( fbiop ) != devwid )
+		needopen = true; /* not currently open or size changed */
+	else
+	if( lastfbfile[0] != NUL && strcmp( fbfile, lastfbfile ) != 0 )
+		needopen = true; /* name changed */
+	(void) strcpy( lastfbfile, fbfile );
+
+	if( needopen )
 		{
 		if( ! openFbDevice( fbfile ) )
 			return	false;
