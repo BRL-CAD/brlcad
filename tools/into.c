@@ -25,12 +25,13 @@
  * Copyright (c) 1983 Spencer W. Thomas
  */
 
-#include "rle_config.h"
 #include <stdio.h>
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/param.h>			/* for MAXPATHLEN */
 #include <sys/stat.h>
+
+#include "rle_config.h"
 
 #ifdef USE_STDLIB_H
 #include <stdlib.h>
