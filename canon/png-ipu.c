@@ -43,8 +43,15 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
+#ifdef USE_STRING_H
 #include <string.h>
+#else
+#include <strings.h>
+#endif
+
 #if defined(__sgi) || defined(sgi)
 #include <sys/types.h>
 #include <fcntl.h>
