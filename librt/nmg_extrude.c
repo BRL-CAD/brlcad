@@ -13,6 +13,7 @@
  *	This software is Copyright (C) 1993 by the United States Army.
  *	All rights reserved.
  */
+#include "conf.h"
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
@@ -27,6 +28,7 @@
 
 RT_EXTERN( struct shell *nmg_dup_shell , ( struct shell *s , long ***copy_tbl ) );
 RT_EXTERN( void nmg_isect_shell_self , ( struct shell *s , CONST struct rt_tol *tol ) );
+RT_EXTERN( fastf_t nmg_loop_plane_area , ( struct loopuse *lu , plane_t pl ) );
 
 /*
  *	E x t r u d e _ N M G _ F a c e
@@ -925,9 +927,6 @@ CONST struct rt_tol *tol;
 	/* Extrusion may create loops that overlap */
 	nmg_fix_overlapping_loops( is , tol );
 
-	/* Or loops that cross themselves */
-	nmg_break_crossed_loops( is , tol );
-
 	/* look for self-touching loops */
 	for( RT_LIST_FOR( fu , faceuse , &is->fu_hd ) )
 	{
@@ -1142,22 +1141,30 @@ CONST struct rt_tol *tol;
 
 	m = nmg_find_model( (long *)s );
 
+	/* remember region where this shell came from */
 	old_r = s->r_p;
 	NMG_CK_REGION( old_r );
 
+	/* move this shell to another region */
 	new_r = nmg_mrsv( m );
 	s_tmp = RT_LIST_FIRST( shell , &new_r->s_hd );
 	(void)nmg_mv_shell_to_region( s , new_r );
+
+	/* decompose this shell */
 	(void)nmg_decompose_shell( s , tol );
+
+	/* kill the extra shell created by nmg_mrsv above */
 	(void)nmg_ks( s_tmp );
 
 	/* recompute the bounding boxes */
 	nmg_region_a( new_r , tol );
 
+	/* make a list of all the shells in the new region */
 	nmg_tbl( &shells , TBL_INIT , (long *)NULL );
 	for( RT_LIST_FOR( s_tmp , shell , &new_r->s_hd ) )
 		nmg_tbl( &shells , TBL_INS , (long *)s_tmp );
 
+	/* extrude a copy of each shell, one at a time */
 	for( shell_no=0 ; shell_no<NMG_TBL_END( &shells ) ; shell_no ++ )
 	{
 		s_tmp = (struct shell *)NMG_TBL_GET( &shells , shell_no );
@@ -1431,6 +1438,46 @@ CONST struct rt_tol *tol;
 		}
 
 		nmg_tbl( &verts , TBL_FREE , (long *)NULL );
+
+		if( approximate )	/* need to recalculate plane eqns */
+		{
+			for( RT_LIST_FOR( fu , faceuse , &s_tmp->fu_hd ) )
+			{
+				struct loopuse *lu;
+				int got_plane=0;
+
+				if( fu->orientation != OT_SAME )
+					continue;
+
+				for( RT_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
+				{
+					fastf_t area;
+					plane_t pl;
+
+					if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+						continue;
+
+					if( lu->orientation != OT_SAME )
+						continue;
+
+					area = nmg_loop_plane_area( lu , pl );
+
+					if( area > 0.0 )
+					{
+						nmg_face_g( fu , pl );
+						got_plane = 1;
+						break;
+					}
+				}
+				if( !got_plane )
+				{
+					rt_log( "nmg_extrude_shell: Cannot recalculate plane for face:\n" );
+					nmg_pr_fu_briefly( fu , (char *)NULL );
+					failed = 1;
+					goto out;
+				}
+			}
+		}
 
 		/* recompute the bounding boxes */
 		nmg_region_a( s_tmp->r_p , tol );
