@@ -111,6 +111,7 @@
     private variable scratchline ""
     private variable moveView 0
     private variable freshline 1
+    private variable do_history 0
 
     private variable overwrite_flag 0
     private variable change_flag 0
@@ -174,24 +175,27 @@
 }
 
 ::itcl::body Command::constructor {args} {
-	eval itk_initialize $args
+    eval itk_initialize $args
 
-	doBindings
+    doBindings
 
-	# create command history object
+    # create command history object
+    if {[info command ch_open] != ""} {
+	set do_history 1
 	set hist [string map {:: "" . _} $this]
 	set hist [ch_open [subst $hist]_hist]
+    }
 
-	# initialize text widget
-	print_prompt
-	$itk_component(text) insert insert " "
-	beginning_of_line
+    # initialize text widget
+    print_prompt
+    $itk_component(text) insert insert " "
+    beginning_of_line
 
-	$itk_component(text) tag configure sel -background $itk_option(-selection_color)
-	$itk_component(text) tag configure prompt -foreground $itk_option(-prompt_color)
-	$itk_component(text) tag configure cmd -foreground $itk_option(-cmd_color)
-	$itk_component(text) tag configure oldcmd -foreground $itk_option(-oldcmd_color)
-	$itk_component(text) tag configure result -foreground $itk_option(-result_color)
+    $itk_component(text) tag configure sel -background $itk_option(-selection_color)
+    $itk_component(text) tag configure prompt -foreground $itk_option(-prompt_color)
+    $itk_component(text) tag configure cmd -foreground $itk_option(-cmd_color)
+    $itk_component(text) tag configure oldcmd -foreground $itk_option(-oldcmd_color)
+    $itk_component(text) tag configure result -foreground $itk_option(-result_color)
 }
 
 ::itcl::body Command::destructor {} {
@@ -283,7 +287,9 @@
 	    }
 	}
 
-	$hist add $hcmd
+	if {$do_history} {
+	    $hist add $hcmd
+	}
 	print_prompt
 
 	# get rid of oldest output
