@@ -28,7 +28,7 @@ static FILE	*outfp;
 
 extern char	*malloc();
 
-static FILE	*infp = stdin;
+static FILE	*infp;
 static char	*infile;
 
 static int	background[3];
