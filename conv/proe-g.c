@@ -48,13 +48,13 @@ static char RCSid[] = "$Header$";
 #include "raytrace.h"
 #include "wdb.h"
 #include "../librt/debug.h"
+#include "regex.h"
 
 RT_EXTERN( fastf_t nmg_loop_plane_area , ( struct loopuse *lu , plane_t pl ) );
 RT_EXTERN( fastf_t mat_determinant , ( mat_t m ) );
 RT_EXTERN( fastf_t mat_det3 , ( mat_t m ) );
 RT_EXTERN( struct edgeuse *nmg_next_radial_eu, ( struct edgeuse *eu, struct shell *s, int wires ) );
 
-extern char *__loc1;	/* used by regex */
 extern char *optarg;
 extern int optind,opterr,optopt;
 extern int errno;
@@ -69,7 +69,7 @@ static int debug=0;		/* Debug flag */
 static int cut_count=0;		/* count of assembly cut HAF solids created */
 static int do_regex=0;		/* flag to indicate if 'u' option is in effect */
 static int do_simplify=0;	/* flag to try to simplify solids */
-static char *reg_cmp=(char *)NULL;		/* compiled regular expression */
+static regex_t *reg_cmp=(regex_t *)NULL;		/* compiled regular expression */
 static char *usage="proe-g [-psdar] [-u reg_exp] [-x rt_debug_flag] [-X nmg_debug_flag] proe_file.brl output.g\n\
 	where proe_file.brl is the output from Pro/Engineer's BRL-CAD EXPORT option\n\
 	and output.g is the name of a BRL-CAD database file to receive the conversion.\n\
@@ -179,6 +179,7 @@ int type;
 	ptr->obj = obj;
 	if( do_regex && type != CUT_SOLID_TYPE )
 	{
+#if 0
 		after_match = regex( reg_cmp, ptr->name );
 		if( after_match && *after_match != '\0' )
 		{
@@ -195,6 +196,44 @@ int type;
 				strncpy( str, after_match, NAMESIZE-2-i );
 			}
 		}
+#else
+		size_t no_of_matches=0;
+		regmatch_t *matches;
+
+		if( !regexec( reg_cmp, ptr->name, &no_of_matches, matches, 0 ) )
+		{
+			int i=0;
+			char *str = ptr->brlcad_name;
+
+			while( ptr->name[i] )
+			{
+				int match_no;
+				int keep=1;
+
+				for( match_no=0 ; match_no<no_of_matches ; match_no++ )
+				{
+					if( matches[match_no].rm_so <= i && matches[match_no].rm_eo >= i )
+					{
+						keep = 0;
+						break;
+					}
+				}
+
+				if( keep )
+				{
+					if( str - ptr->brlcad_name == NAMESIZE-1 )
+					{
+						str++;
+						break;
+					}
+					*str++ = ptr->name[i++];
+				}
+				else
+					++i;
+			}
+			*str = '\0';
+		}
+#endif
 		else
 			strncpy( ptr->brlcad_name , name , NAMESIZE-2 );
 		if( debug )
@@ -1348,8 +1387,12 @@ char	*argv[];
 			break;
 		case 'u':
 			do_regex = 1;
+#if 0
 			reg_cmp = regcmp( optarg, (char *)0 );
-			if( reg_cmp == (char *)NULL )
+#else
+			reg_cmp = re_comp( optarg, (char *)0 );
+#endif
+			if( reg_cmp != (char *)NULL )
 			{
 				rt_log( "proe-g: Bad regular expression (%s)\n", optarg );
 				rt_log( usage, argv[0] );
