@@ -202,7 +202,7 @@ register struct application *ap;
 	}
 	if( pixfp != NULL )  {
 		if( hex_out )  {
-			fprintf(pixfp, "%2.2x %2.2x %2.2x\n", r, g, b);
+			fprintf(pixfp, "%2.2x%2.2x%2.2x\n", r, g, b);
 		} else {
 			*pixelp++ = r;
 			*pixelp++ = g;
