@@ -113,40 +113,40 @@ int mk_id_editunits(
  *  Solid conversion routines
  */
 /* wdb.c */
-WDB_EXTERN(int mk_half, (struct rt_wdb *fp, char *name, CONST vect_t norm, double d) );
+WDB_EXTERN(int mk_half, (struct rt_wdb *fp, const char *name, const vect_t norm, double d) );
 int mk_grip( 
 	struct rt_wdb *wdbp,
 	const char *name,
 	const point_t center,
 	const vect_t normal,
 	const fastf_t magnitude );
-WDB_EXTERN(int mk_rpp, (struct rt_wdb *fp, char *name, CONST point_t min,
-			CONST point_t max) );
-WDB_EXTERN(int mk_wedge, (struct rt_wdb *fp, char *name, CONST point_t vert,
-			CONST vect_t xdirv, CONST vect_t zdirv,
+WDB_EXTERN(int mk_rpp, (struct rt_wdb *fp, const char *name, const point_t min,
+			const point_t max) );
+WDB_EXTERN(int mk_wedge, (struct rt_wdb *fp, const char *name, const point_t vert,
+			const vect_t xdirv, const vect_t zdirv,
 			fastf_t xlen, fastf_t ylen, fastf_t zlen,
 			fastf_t x_top_len) );
-WDB_EXTERN(int mk_arb4, (struct rt_wdb *fp, char *name, CONST fastf_t *pts4) );
-WDB_EXTERN(int mk_arb8, (struct rt_wdb *fp, char *name, CONST fastf_t *pts8) );
-WDB_EXTERN(int mk_sph, (struct rt_wdb *fp, char *name, CONST point_t center,
+WDB_EXTERN(int mk_arb4, (struct rt_wdb *fp, const char *name, const fastf_t *pts4) );
+WDB_EXTERN(int mk_arb8, (struct rt_wdb *fp, const char *name, const fastf_t *pts8) );
+WDB_EXTERN(int mk_sph, (struct rt_wdb *fp, const char *name, const point_t center,
 			fastf_t radius) );
-WDB_EXTERN(int mk_ell, (struct rt_wdb *fp, char *name, CONST point_t center,
-			CONST vect_t a, CONST vect_t b, CONST vect_t c) );
-WDB_EXTERN(int mk_tor, (struct rt_wdb *fp, char *name, CONST point_t center,
-			CONST vect_t inorm, double r1, double r2) );
-WDB_EXTERN(int mk_rcc, (struct rt_wdb *fp, char *name, CONST point_t base,
-			CONST vect_t height, fastf_t radius) );
-WDB_EXTERN(int mk_tgc, (struct rt_wdb *fp, char *name, CONST point_t base,
-			CONST vect_t height, CONST vect_t a, CONST vect_t b,
-			CONST vect_t c, CONST vect_t d) );
-WDB_EXTERN(int mk_cone, (struct rt_wdb *fp, char *name, CONST point_t base,
-			CONST vect_t dirv, fastf_t height, fastf_t rad1,
+WDB_EXTERN(int mk_ell, (struct rt_wdb *fp, const char *name, const point_t center,
+			const vect_t a, const vect_t b, const vect_t c) );
+WDB_EXTERN(int mk_tor, (struct rt_wdb *fp, const char *name, const point_t center,
+			const vect_t inorm, double r1, double r2) );
+WDB_EXTERN(int mk_rcc, (struct rt_wdb *fp, const char *name, const point_t base,
+			const vect_t height, fastf_t radius) );
+WDB_EXTERN(int mk_tgc, (struct rt_wdb *fp, const char *name, const point_t base,
+			const vect_t height, const vect_t a, const vect_t b,
+			const vect_t c, const vect_t d) );
+WDB_EXTERN(int mk_cone, (struct rt_wdb *fp, const char *name, const point_t base,
+			const vect_t dirv, fastf_t height, fastf_t rad1,
 			fastf_t rad2) );
 #define mk_trc(wrong)	+++error+++	/* This routine no longer exists */
-WDB_EXTERN(int mk_trc_h, (struct rt_wdb *fp, char *name, CONST point_t base,
-			CONST vect_t height, fastf_t radbase, fastf_t radtop) );
-WDB_EXTERN(int mk_trc_top, (struct rt_wdb *fp, char *name, CONST point_t ibase,
-			CONST point_t itop, fastf_t radbase, fastf_t radtop) );
+WDB_EXTERN(int mk_trc_h, (struct rt_wdb *fp, const char *name, const point_t base,
+			const vect_t height, fastf_t radbase, fastf_t radtop) );
+WDB_EXTERN(int mk_trc_top, (struct rt_wdb *fp, const char *name, const point_t ibase,
+			const point_t itop, fastf_t radbase, fastf_t radtop) );
 int mk_rpc(
 	struct rt_wdb *wdbp,
 	const char *name,
@@ -188,8 +188,8 @@ int mk_eto(
 	fastf_t rrot,
 	fastf_t sminor );
 
-WDB_EXTERN(int mk_arbn, (struct rt_wdb *fp, char *name, int neqn, plane_t eqn[]) );
-WDB_EXTERN(int mk_ars, (struct rt_wdb *fp, char *name, int ncurves, int pts_per_curve,
+WDB_EXTERN(int mk_arbn, (struct rt_wdb *fp, const char *name, int neqn, plane_t eqn[]) );
+WDB_EXTERN(int mk_ars, (struct rt_wdb *fp, const char *name, int ncurves, int pts_per_curve,
 			fastf_t	*curves[]) );
 
 #define mk_bsolid(fp,name,nsurf,res)	+++error+++
@@ -246,9 +246,9 @@ int mk_cline(
 	fastf_t thickness );
 
 /* pipe.c */
-WDB_EXTERN(int mk_particle, (struct rt_wdb *fp, char *name, point_t vertex,
+WDB_EXTERN(int mk_particle, (struct rt_wdb *fp, const char *name, point_t vertex,
 			vect_t height, double vradius, double hradius) );
-WDB_EXTERN(int mk_pipe, (struct rt_wdb *fp, char *name, struct wdb_pipept *headp) );
+WDB_EXTERN(int mk_pipe, (struct rt_wdb *fp, const char *name, struct wdb_pipept *headp) );
 void mk_pipe_free( struct wdb_pipept *headp );
 void mk_add_pipe_pt(
 	struct wdb_pipept *headp,
@@ -258,17 +258,20 @@ void mk_add_pipe_pt(
 	double bendradius );
 void mk_pipe_init( struct wdb_pipept *head );
 
+/* g_pipe.c */
+int rt_pipe_ck( const struct wdb_pipept *headp );
+
 /* strsol.c */
-WDB_EXTERN(int mk_dsp, (struct rt_wdb *fp, CONST char *name, CONST char *file,
-			int xdim, int ydim, CONST matp_t mat));
-WDB_EXTERN(int mk_ebm, (struct rt_wdb *fp, CONST char *name, CONST char *file,
-			int xdim, int ydim, fastf_t tallness, CONST matp_t mat));
-WDB_EXTERN(int mk_vol, (struct rt_wdb *fp, CONST char *name, CONST char *file,
+WDB_EXTERN(int mk_dsp, (struct rt_wdb *fp, const char *name, const char *file,
+			int xdim, int ydim, const matp_t mat));
+WDB_EXTERN(int mk_ebm, (struct rt_wdb *fp, const char *name, const char *file,
+			int xdim, int ydim, fastf_t tallness, const matp_t mat));
+WDB_EXTERN(int mk_vol, (struct rt_wdb *fp, const char *name, const char *file,
 			int xdim, int ydim, int zdim, int lo, int hi,
-			CONST vect_t cellsize, CONST matp_t mat));
+			const vect_t cellsize, const matp_t mat));
 #define mk_strsol(fp,name,solid,arg)	+++error+++
-WDB_EXTERN(int mk_submodel, (struct rt_wdb *fp, CONST char *name, CONST char *file,
-			CONST char *treetop, int meth));
+WDB_EXTERN(int mk_submodel, (struct rt_wdb *fp, const char *name, const char *file,
+			const char *treetop, int meth));
 
 /*
  *  The polysolid has been replaced by the BoT.
@@ -290,24 +293,24 @@ WDB_EXTERN(int mk_submodel, (struct rt_wdb *fp, CONST char *name, CONST char *fi
  *  First you build a list of nodes with mk_addmember,
  *  then you output the combination.
  */
-WDB_EXTERN(struct wmember *mk_addmember, (CONST char *name,
+WDB_EXTERN(struct wmember *mk_addmember, (const char *name,
 			struct wmember *headp, int op) );
-WDB_EXTERN(int mk_lcomb, (struct rt_wdb *fp, CONST char *name, struct wmember *headp,
+WDB_EXTERN(int mk_lcomb, (struct rt_wdb *fp, const char *name, struct wmember *headp,
 			int region_flag,
-			CONST char *matname, CONST char *matparm,
-			CONST unsigned char *rgb,
+			const char *matname, const char *matparm,
+			const unsigned char *rgb,
 			int inherit_flag) );
-WDB_EXTERN(int mk_lrcomb, (struct rt_wdb *fp, CONST char *name, struct wmember *headp,
+WDB_EXTERN(int mk_lrcomb, (struct rt_wdb *fp, const char *name, struct wmember *headp,
 			int region_flag,
-			CONST char *matname, CONST char *matparm,
-			CONST unsigned char *rgb,
+			const char *matname, const char *matparm,
+			const unsigned char *rgb,
 			int id, int air, int material, int los,
 			int inherit_flag) );
 
 /* Convenience routines for quickly making combinations */
 int mk_comb1( struct rt_wdb *fp,
-	CONST char *combname,
-	CONST char *membname,
+	const char *combname,
+	const char *membname,
 	int regflag );
 int
 mk_region1(

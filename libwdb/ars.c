@@ -47,7 +47,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 int
 mk_ars( filep, name, ncurves, pts_per_curve, curves )
 struct rt_wdb	*filep;
-char	*name;
+const char	*name;
 int	ncurves;
 int	pts_per_curve;
 fastf_t	**curves;

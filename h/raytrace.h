@@ -2562,6 +2562,8 @@ BU_EXTERN(void db_functree, (struct db_i *dbip, struct directory *dp,
 BU_EXTERN(void rt_ell, (fastf_t *ov, CONST fastf_t *V, CONST fastf_t *A,
 			CONST fastf_t *B, int sides) );
 
+/* g_pipe.c:  rt_pipe_ck() is declared in h/wdb.h because of arg type */
+
 /* g_rpc.c */
 BU_EXTERN(int rt_mk_parabola, (struct rt_pt_node *pts, fastf_t r, fastf_t b, fastf_t dtol, fastf_t ntol));
 BU_EXTERN(struct rt_pt_node *rt_ptalloc, () );

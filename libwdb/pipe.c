@@ -51,7 +51,7 @@ static const char part_RCSid[] = "@(#)$Header$ (BRL)";
 int
 mk_particle( fp, name, vertex, height, vradius, hradius )
 struct rt_wdb	*fp;
-char	*name;
+const char	*name;
 point_t	vertex;
 vect_t	height;
 double	vradius;
@@ -84,7 +84,7 @@ double	hradius;
 int
 mk_pipe( fp, name, headp )
 struct rt_wdb		*fp;
-char			*name;
+const char			*name;
 struct wdb_pipept	*headp;
 {
 	struct rt_pipe_internal		*pipe;

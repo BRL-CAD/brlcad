@@ -3730,8 +3730,7 @@ struct rt_db_internal	*ip;
  *		LINEAR sections are collinear.
  */
 int
-rt_pipe_ck( headp )
-struct wdb_pipept *headp;
+rt_pipe_ck( const struct wdb_pipept *headp )
 {
 	int error_count=0;
 	struct wdb_pipept *cur,*prev,*next;

@@ -6,7 +6,7 @@
 rm -f ./moss.ssamp*
 
 ./rttherm -P1 -o moss.ssamp -M -s64 -X100 -!00010000 -X0f7 $* \
-  ../.db.m4i64/moss.g all.g \
+  ../.db.li/moss.g all.g \
 	<< EOF
 viewsize 1.572026215e+02;
 eye_pt 6.379990387e+01 3.271768951e+01 3.366661453e+01;

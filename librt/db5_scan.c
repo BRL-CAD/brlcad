@@ -266,7 +266,7 @@ db_dirbuild( struct db_i *dbip )
 		const char		*cp;
 
 		/* File is v5 format */
-bu_log("WARNING:  %s is BRL-CAD v5 format.\nWARNING:  You probably need a newer version of this program to read it.\n", dbip->dbi_filename);
+bu_log("NOTICE:  %s is BRL-CAD v5 format.\n", dbip->dbi_filename);
 		dbip->dbi_version = 5;
 		if( db5_scan( dbip, db5_diradd_handler, NULL ) < 0 )  {
 			bu_log("db_dirbuild(%s): db5_scan() failed\n",

@@ -44,7 +44,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"
@@ -352,6 +352,12 @@ char *p_rpp[] = {
 	"Enter ZMAX: "
 };
 
+char *p_orpp[] = {
+	"Enter XMAX, YMAX, ZMAX: ",
+	"Enter YMAX, ZMAX: ",
+	"Enter ZMAX: "
+};
+
 char *p_rpc[] = {
 	"Enter X, Y, Z of vertex: ",
 	"Enter Y: ",
@@ -451,8 +457,8 @@ char **argv;
 	int			nvals, (*fn_in)();
 	int			arb_in(), box_in(), ehy_in(), ell_in(),
 				epa_in(), eto_in(), half_in(), rec_in(),
-				rcc_in(), rhc_in(), rpc_in(), rpp_in(),
-				sph_in(), tec_in(), tgc_in(), tor_in(),
+				rcc_in(), rhc_in(), rpc_in(), rpp_in(), orpp_in(),
+				sph_in(), tec_in(), tgc_in(), tor_in(), ars_in(),
 				trc_in(), ebm_in(), vol_in(), hf_in(), bot_in(),
 				dsp_in(), submodel_in(), part_in(), pipe_in();
 
@@ -644,9 +650,13 @@ char **argv;
 		menu = p_box;
 		fn_in = box_in;
 	} else if( strcmp( argv[2], "rpp" ) == 0 )  {
-		nvals = 6*1;
+		nvals = 3*2;
 		menu = p_rpp;
 		fn_in = rpp_in;
+	} else if( strcmp( argv[2], "orpp" ) == 0 )  {
+		nvals = 3*1;
+		menu = p_orpp;
+		fn_in = orpp_in;
 	} else if( strcmp( argv[2], "rpc" ) == 0 )  {
 		nvals = 3*3 + 1;
 		menu = p_rpc;
@@ -683,23 +693,25 @@ char **argv;
 	  return TCL_ERROR;
 	}
 
-	if (fn_in(argv, &internal, menu) != 0)  {
+	if (fn_in(argv, &internal, name) != 0)  {
 	  Tcl_AppendResult(interp, "ERROR, ", argv[2], " not made!\n", (char *)NULL);
 	  rt_db_free_internal( &internal );
 	  return TCL_ERROR;
 	}
 
 do_new_update:
-	if( (dp=db_diradd( dbip, name, -1L, 0, DIR_SOLID, NULL)) == DIR_NULL )
-	{
-		rt_db_free_internal( &internal );
-		Tcl_AppendResult(interp, "Cannot add '", name, "' to directory\n", (char *)NULL );
-		return TCL_ERROR;
-	}
-	if( rt_db_put_internal( dp, dbip, &internal ) < 0 )
-	{
-		rt_db_free_internal( &internal );
-		TCL_WRITE_ERR_return;
+	/* The function may have already written via LIBWDB */
+	if( internal.idb_ptr != NULL )  {
+		if( (dp=db_diradd( dbip, name, -1L, 0, DIR_SOLID, NULL)) == DIR_NULL )  {
+			rt_db_free_internal( &internal );
+			Tcl_AppendResult(interp, "Cannot add '", name, "' to directory\n", (char *)NULL );
+			return TCL_ERROR;
+		}
+		if( rt_db_put_internal( dp, dbip, &internal ) < 0 )
+		{
+			rt_db_free_internal( &internal );
+			TCL_WRITE_ERR_return;
+		}
 	}
 
 	if( dont_draw )  return TCL_OK;
@@ -1346,37 +1358,30 @@ struct rt_db_internal	*intern;
  *					1 if unsuccessful read
  */
 int
-sph_in(cmd_argvs, intern)
+sph_in(cmd_argvs, intern, name)
 char			*cmd_argvs[];
 struct rt_db_internal	*intern;
+const char		*name;
 {
+	point_t			center;
 	fastf_t			r;
 	int			i;
-	struct rt_ell_internal	*sip;
 
 	CHECK_DBI_NULL;
 
-	intern->idb_type = ID_ELL;
-	intern->idb_meth = &rt_functab[ID_ELL];
-	intern->idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_ell_internal),
-		"rt_ell_internal" );
-	sip = (struct rt_ell_internal *)intern->idb_ptr;
-	sip->magic = RT_ELL_INTERNAL_MAGIC;
-
 	for (i = 0; i < ELEMENTS_PER_PT; i++) {
-		sip->v[i] = atof(cmd_argvs[3+i]) * local2base;
+		center[i] = atof(cmd_argvs[3+i]) * local2base;
 	}
 	r = atof(cmd_argvs[6]) * local2base;
-	VSET( sip->a, r, 0., 0. );
-	VSET( sip->b, 0., r, 0. );
-	VSET( sip->c, 0., 0., r );
 	
 	if (r < RT_LEN_TOL) {
 	  Tcl_AppendResult(interp, "ERROR, radius must be greater than zero!\n", (char *)NULL);
 	  return(1);	/* failure */
 	}
-	
-	return(0);	/* success */
+
+	if( mk_sph( wdbp, name, center, r ) < 0 )
+		return 1;	/* failure */
+	return 0;	/* success */
 }
 
 /*   E L L _ I N ( ) :   	reads ell parameters from keyboard
@@ -1798,52 +1803,78 @@ struct rt_db_internal	*intern;
  *					1 if unsuccessful read
  */
 int
-rpp_in(cmd_argvs, intern)
+rpp_in(cmd_argvs, intern, name)
 char			*cmd_argvs[];
 struct rt_db_internal	*intern;
+const char		*name;
 {
-	fastf_t			xmin, xmax, ymin, ymax, zmin, zmax;
-	struct rt_arb_internal	*aip;
+	point_t		min, max;
 
 	CHECK_DBI_NULL;
 
-	intern->idb_type = ID_ARB8;
-	intern->idb_meth = &rt_functab[ID_ARB8];
-	intern->idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_arb_internal),
-		"rt_arb_internal" );
-	aip = (struct rt_arb_internal *)intern->idb_ptr;
-	aip->magic = RT_ARB_INTERNAL_MAGIC;
+	min[X] = atof(cmd_argvs[3+0]) * local2base;
+	max[X] = atof(cmd_argvs[3+1]) * local2base;
+	min[Y] = atof(cmd_argvs[3+2]) * local2base;
+	max[Y] = atof(cmd_argvs[3+3]) * local2base;
+	min[Z] = atof(cmd_argvs[3+4]) * local2base;
+	max[Z] = atof(cmd_argvs[3+5]) * local2base;
 
-	xmin = atof(cmd_argvs[3+0]) * local2base;
-	xmax = atof(cmd_argvs[3+1]) * local2base;
-	ymin = atof(cmd_argvs[3+2]) * local2base;
-	ymax = atof(cmd_argvs[3+3]) * local2base;
-	zmin = atof(cmd_argvs[3+4]) * local2base;
-	zmax = atof(cmd_argvs[3+5]) * local2base;
-
-	if (xmin >= xmax) {
+	if (min[X] >= max[X]) {
 	  Tcl_AppendResult(interp, "ERROR, XMIN greater than XMAX!\n", (char *)NULL);
 	  return(1);	/* failure */
 	}
-	if (ymin >= ymax) {
+	if (min[Y] >= max[Y]) {
 	  Tcl_AppendResult(interp, "ERROR, YMIN greater than YMAX!\n", (char *)NULL);
 	  return(1);	/* failure */
 	}
-	if (zmin >= zmax) {
+	if (min[Z] >= max[Z]) {
 	  Tcl_AppendResult(interp, "ERROR, ZMIN greater than ZMAX!\n", (char *)NULL);
 	  return(1);	/* failure */
 	}
 
-	VSET( aip->pt[0], xmax, ymin, zmin );
-	VSET( aip->pt[1], xmax, ymax, zmin );
-	VSET( aip->pt[2], xmax, ymax, zmax );
-	VSET( aip->pt[3], xmax, ymin, zmax );
-	VSET( aip->pt[4], xmin, ymin, zmin );
-	VSET( aip->pt[5], xmin, ymax, zmin );
-	VSET( aip->pt[6], xmin, ymax, zmax );
-	VSET( aip->pt[7], xmin, ymin, zmax );
+	if( mk_rpp( wdbp, name, min, max ) < 0 )
+		return 1;
+	return 0;	/* success */
+}
 
-	return(0);	/* success */
+/*
+ *			O R P P _ I N ( )
+ *
+ * Reads origin-min rpp (box) parameters from keyboard
+ *				returns 0 if successful read
+ *					1 if unsuccessful read
+ */
+int
+orpp_in(cmd_argvs, intern, name)
+char			*cmd_argvs[];
+struct rt_db_internal	*intern;
+const char		*name;
+{
+	point_t		min, max;
+
+	CHECK_DBI_NULL;
+
+	VSETALL( min, 0 );
+	max[X] = atof(cmd_argvs[3+0]) * local2base;
+	max[Y] = atof(cmd_argvs[3+1]) * local2base;
+	max[Z] = atof(cmd_argvs[3+2]) * local2base;
+
+	if (min[X] >= max[X]) {
+	  Tcl_AppendResult(interp, "ERROR, XMIN greater than XMAX!\n", (char *)NULL);
+	  return(1);	/* failure */
+	}
+	if (min[Y] >= max[Y]) {
+	  Tcl_AppendResult(interp, "ERROR, YMIN greater than YMAX!\n", (char *)NULL);
+	  return(1);	/* failure */
+	}
+	if (min[Z] >= max[Z]) {
+	  Tcl_AppendResult(interp, "ERROR, ZMIN greater than ZMAX!\n", (char *)NULL);
+	  return(1);	/* failure */
+	}
+
+	if( mk_rpp( wdbp, name, min, max ) < 0 )
+		return 1;
+	return 0;	/* success */
 }
 
 /*   P A R T _ I N ( ) :	reads particle parameters from keyboard

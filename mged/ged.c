@@ -130,6 +130,7 @@ extern struct _rubber_band default_rubber_band;
 int pipe_out[2];
 int pipe_err[2];
 struct db_i *dbip = DBI_NULL;	/* database instance pointer */
+struct rt_wdb *wdbp = RT_WDB_NULL;
 int update_views = 0;
 int (*cmdline_hook)() = NULL;
 jmp_buf	jmp_env;		/* For non-local gotos */
@@ -2122,7 +2123,14 @@ char	**argv;
 	bu_vls_strcpy(&vls, "db close; .inmem close");
 	(void)Tcl_Eval( interp, bu_vls_addr(&vls) );
 
-	/* Establish TCL access to both disk and in-memory databases */
+	/* Provide LIBWDB C access to the on-disk database */
+	if( (wdbp = wdb_dbopen( dbip, RT_WDB_TYPE_DB_DISK )) == RT_WDB_NULL )  {
+		Tcl_AppendResult(interp, "wdb_dbopen() failed?\n", (char *)NULL);
+		return TCL_ERROR;
+	}
+
+	/* Establish LIBWDB TCL access to both disk and in-memory databases */
+	/* This creates "db" and ".inmem" Tcl objects */
 	bu_vls_strcpy(&vls, "set wdbp [wdb_open db disk [get_dbip]]; wdb_open .inmem inmem [get_dbip]");
 	if( Tcl_Eval( interp, bu_vls_addr(&vls) ) != TCL_OK )  {
 		bu_vls_printf(&msg, "%s\n%s\n",

@@ -90,6 +90,7 @@ extern double	degtorad, radtodeg;	/* Defined in usepen.c */
  */
 extern struct db_i	*dbip;		       /* defined in ged.c */
 extern int		 dbih;		       /* defined in ged.c */
+extern struct rt_wdb	*wdbp;			/* defined in ged.c */
 #define	base2local	(dbip->dbi_base2local)
 #define local2base	(dbip->dbi_local2base)
 #define	cur_title	(dbip->dbi_title)      /* current model title */
