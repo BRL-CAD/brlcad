@@ -34,6 +34,26 @@ static const char RCSell[] = "@(#)$Header$ (BRL)";
 #include "rtgeom.h"
 #include "./debug.h"
 
+/* this array depends on the values of the definitions of the DB5_MINORTYPE_BINU_... in db5.h */
+const char *binu_types[]={
+	NULL,
+	NULL,
+	"binary(float)",
+	"binary(double)",
+	"binary(u_8bit_int)",
+	"binary(u_16bit_int)",
+	"binary(u_32bit_int)",
+	"binary(u_64bit_int)",
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	"binary(8bit_int)",
+	"binary(16bit_int)",
+	"binary(32bit_int)",
+	"binary(64bit_int)"
+};
+
 /*
  * XXX these are the interface routines needed for table.c
  */
