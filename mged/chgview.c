@@ -972,16 +972,17 @@ char	**argv;
 	{
 	    path_piece = path_parse(argv[1]);
 	    for (nm_pieces = 0; path_piece[nm_pieces] != 0; ++nm_pieces)
-		rt_log("OK, next piece is '%s'\n", path_piece[nm_pieces]);
+		;
 
 	    if (nm_pieces == 0)
 	    {
-		rt_log("Bad solid path: '%s'\n", argv[1]);
+		(void) rt_log("Bad solid path: '%s'\n", argv[1]);
 		goto bail_out;
 	    }
 	    basename = path_piece[nm_pieces - 1];
-	    rt_log("OK, now, basename is '%s'\n", basename);
 	}
+	else
+	    basename = argv[1];
 
 	if( (dp = db_lookup( dbip,  basename, LOOKUP_NOISY )) == DIR_NULL )
 		goto bail_out;
@@ -992,7 +993,7 @@ char	**argv;
 	    case ST_S_PICK:
 		if (!(dp -> d_flags & DIR_SOLID))
 		{
-		    rt_log("%s is not a solid\n", basename);
+		    (void) rt_log("%s is not a solid\n", basename);
 		    goto bail_out;
 		}
 		FOR_ALL_SOLIDS(sp)
@@ -1009,22 +1010,13 @@ char	**argv;
 			    sname = sp -> s_path[i] -> d_namep;
 			    if ((*sname != *(path_piece[j]))
 			     || strcmp(sname, path_piece[j]))
-			    {
 			        a_new_match = 0;
-				rt_log("strcmp(%s, %s) != 0\n",
-				    sname, path_piece[j]);
-			    }
-			    else
-				rt_log("strcmp(%s, %s) == 0\n",
-				    sname, path_piece[j]);
 			}
 			if (a_new_match && ((i >= 0) || (j < 0)))
 			{
 			    lastfound = sp;
 			    ++nmatch;
 			}
-			rt_log("a_new_match=%d, j=%d, i=%d\n",
-			    a_new_match, j, i);
 		    }
 		    sp->s_iflag = DOWN;
 		}
@@ -1046,11 +1038,11 @@ char	**argv;
 		goto bail_out;
 	}
 	if( nmatch <= 0 )  {
-		rt_log("%s not being displayed\n", argv[1]);
+		(void) rt_log("%s not being displayed\n", argv[1]);
 		goto bail_out;
 	}
 	if( nmatch > 1 )  {
-		rt_log("%s multiply referenced\n", argv[1]);
+		(void) rt_log("%s multiply referenced\n", argv[1]);
 		goto bail_out;
 	}
 	/* Make the specified solid the illuminated solid */
@@ -1066,8 +1058,8 @@ char	**argv;
 	dmaflag = 1;
 	if (path_piece)
 	{
-	    while (*path_piece != 0)
-		rt_free(*path_piece++, "f_ill: char *");
+	    for (i = 0; path_piece[i] != 0; ++i)
+		rt_free(path_piece[i], "f_ill: char *");
 	    rt_free((char *) path_piece, "f_ill: char **");
 	}
 	return CMD_OK;
@@ -1077,8 +1069,8 @@ bail_out:
 	button(BE_REJECT);
     if (path_piece)
     {
-	while (*path_piece != 0)
-	    rt_free(*path_piece++, "f_ill: char *");
+	for (i = 0; path_piece[i] != 0; ++i)
+	    rt_free(path_piece[i], "f_ill: char *");
 	rt_free((char *) path_piece, "f_ill: char **");
     }
     return CMD_BAD;
