@@ -1186,43 +1186,16 @@ setview( a1, a2, a3 )
 double a1, a2, a3;		/* DOUBLE angles, in degrees */
 {
   point_t model_pos;
-  point_t new_pos;
+  point_t temp;
 
-#if 0
-  if(EDIT_TRAN)
-    MAT4X3PNT(model_pos, view2model, edit_absolute_tran);
-#endif
   buildHrot( Viewrot, a1 * degtorad, a2 * degtorad, a3 * degtorad );
   new_mats();
-#if 0
-  if(EDIT_TRAN)
-    MAT4X3PNT(edit_absolute_tran, model2view, model_pos);
-#endif
-  VSET(new_pos, -orig_pos[X], -orig_pos[Y], -orig_pos[Z]);
-  MAT4X3PNT(absolute_slew, model2view, new_pos);
 
-  if(tkwin != NULL)
+  VSET(temp, -orig_pos[X], -orig_pos[Y], -orig_pos[Z]);
+  MAT4X3PNT(absolute_slew, model2view, temp);
+
+  if(BU_LIST_NON_EMPTY(&head_cmd_list.l))
     Tcl_Eval(interp, "set_sliders");
-}
-
-void
-aslewview( view_pos )
-vect_t view_pos;
-{
-  struct bu_vls vls;
-  vect_t model_pos;
-  vect_t diff;
-  extern point_t e_axes_pos;
-
-  MAT4X3PNT(model_pos, view2model, view_pos);
-  VSUB2(diff, model_pos, e_axes_pos);
-  VSCALE(diff, diff, 1/Viewscale);
-
-  bu_vls_init(&vls);
-  bu_vls_printf(&vls, "knob aX %f aY %f aZ %f",
-		diff[X], diff[Y], diff[Z]);
-  Tcl_Eval(interp, bu_vls_addr(&vls));
-  bu_vls_free(&vls);
 }
 
 /*
@@ -1235,9 +1208,10 @@ void
 slewview( view_pos )
 vect_t view_pos;
 {
-  point_t	old_model_center;
-  point_t	new_model_center;
-  vect_t	diff;
+  point_t old_model_center;
+  point_t new_model_center;
+  vect_t diff;
+  vect_t temp;
   mat_t	delta;
 
   MAT_DELTAS_GET_NEG( old_model_center, toViewcenter );
@@ -1250,6 +1224,12 @@ vect_t view_pos;
   MAT_DELTAS_VEC( delta, diff );
   mat_mul2( delta, ModelDelta );
   new_mats();
+
+  VSET(temp, -orig_pos[X], -orig_pos[Y], -orig_pos[Z]);
+  MAT4X3PNT(absolute_slew, model2view, temp);
+
+  if(BU_LIST_NON_EMPTY(&head_cmd_list.l))
+    (void)Tcl_Eval(interp, "set_sliders");
 }
 
 /*

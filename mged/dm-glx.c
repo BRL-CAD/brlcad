@@ -256,32 +256,31 @@ XEvent *eventPtr;
 		     (mx - ((struct glx_vars *)dmp->dm_vars)->omx) * 0.25 );
       break;
     case ALT_MOUSE_MODE_TRANSLATE:
-      {
+      if(EDIT_TRAN && mged_variables.edit){
+	vect_t view_pos;
+
+	view_pos[X] = (mx/(fastf_t)((struct glx_vars *)dmp->dm_vars)->width
+		       - 0.5) * 2.0;
+	view_pos[Y] = (0.5 - my/
+		       (fastf_t)((struct glx_vars *)dmp->dm_vars)->height) * 2.0;
+	view_pos[Z] = 0.0;
+
+	if(state == ST_S_EDIT)
+	  sedit_mouse(view_pos);
+	else
+	  objedit_mouse(view_pos);
+
+	goto end;
+      }else{
 	fastf_t fx, fy;
 
-	if(EDIT_TRAN && mged_variables.edit){
-#if 1
-	  vect_t view_pos;
+	fx = (mx - ((struct glx_vars *)dmp->dm_vars)->omx)/
+	  (fastf_t)((struct glx_vars *)dmp->dm_vars)->width * 2.0;
+	fy = (((struct glx_vars *)dmp->dm_vars)->omy - my)/
+	  (fastf_t)((struct glx_vars *)dmp->dm_vars)->height * 2.0;
+	bu_vls_printf( &cmd, "knob -i aX %f aY %f\n", fx, fy );
+      }
 
-	  view_pos[X] = (mx/(fastf_t)((struct glx_vars *)dmp->dm_vars)->width
-			 - 0.5) * 2.0;
-	  view_pos[Y] = (0.5 - my/
-			 (fastf_t)((struct glx_vars *)dmp->dm_vars)->height) * 2.0;
-	  view_pos[Z] = 0.0;
-	  aslewview(view_pos);
-#else
-	  fx = (mx/(fastf_t)((struct glx_vars *)dmp->dm_vars)->width - 0.5) * 2.0;
-	  fy = (0.5 - my/(fastf_t)((struct glx_vars *)dmp->dm_vars)->height) * 2.0;
-	  bu_vls_printf( &cmd, "knob aX %f aY %f\n", fx, fy );
-#endif
-	}else{
-	  fx = (mx - ((struct glx_vars *)dmp->dm_vars)->omx)/
-	    (fastf_t)((struct glx_vars *)dmp->dm_vars)->width * 2.0;
-	  fy = (((struct glx_vars *)dmp->dm_vars)->omy - my)/
-	    (fastf_t)((struct glx_vars *)dmp->dm_vars)->height * 2.0;
-	  bu_vls_printf( &cmd, "knob -i aX %f aY %f\n", fx, fy );
-	}
-      }	     
       break;
     case ALT_MOUSE_MODE_ZOOM:
       bu_vls_printf( &cmd, "knob -i aS %f\n", (((struct glx_vars *)dmp->dm_vars)->omy - my)/
@@ -779,7 +778,6 @@ char	**argv;
       case 't':
 	am_mode = ALT_MOUSE_MODE_TRANSLATE;
 	if(EDIT_TRAN && mged_variables.edit){
-#if 1
 	  vect_t view_pos;
 
 	  view_pos[X] = (((struct glx_vars *)dmp->dm_vars)->omx /
@@ -788,17 +786,11 @@ char	**argv;
 	  view_pos[Y] = (0.5 - ((struct glx_vars *)dmp->dm_vars)->omy /
 			 (fastf_t)((struct glx_vars *)dmp->dm_vars)->height) * 2.0;
 	  view_pos[Z] = 0.0;
-	  aslewview(view_pos);
-#else
-	  bu_vls_init(&vls);
-	  bu_vls_printf(&vls, "knob aX %f aY %f\n",
-			(((struct glx_vars *)dmp->dm_vars)->omx /
-			 (fastf_t)((struct glx_vars *)dmp->dm_vars)->width - 0.5) * 2,
-			(0.5 - ((struct glx_vars *)dmp->dm_vars)->omy /
-			 (fastf_t)((struct glx_vars *)dmp->dm_vars)->height) * 2);
-	  status = Tcl_Eval(interp, bu_vls_addr(&vls));
-	  bu_vls_free(&vls);
-#endif
+
+	  if(state == ST_S_EDIT)
+	    sedit_mouse(view_pos);
+	  else
+	    objedit_mouse(view_pos);
 	}
 
 	break;

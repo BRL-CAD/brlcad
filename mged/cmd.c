@@ -65,7 +65,7 @@ void mged_setup(), cmd_setup(), mged_compat();
 void mged_print_result();
 
 extern mat_t    ModelDelta;
-
+extern void sedit_trans();
 extern int mged_vrot();
 extern int gui_setup();
 extern int cmd_stuff_str();
@@ -2510,20 +2510,9 @@ set_e_axes_pos()
   if(EDIT_ROTATE)
     VSETALL( edit_absolute_rotate, 0.0 )
   else if(EDIT_TRAN)
-#if 0
-    MAT4X3PNT( edit_absolute_tran, model2view, e_axes_pos )
-#else
-  VSETALL( edit_absolute_tran, 0.0 )
-#endif
+    VSETALL( edit_absolute_tran, 0.0 )
 
-#if 0
-  {
-    point_t new_pos;
-
-    VSET(new_pos, -orig_pos[X], -orig_pos[Y], -orig_pos[Z]);
-    MAT4X3PNT(absolute_slew, model2view, new_pos);
-  }
-#endif
+  mat_idn(acc_rot_sol);
 #endif
 }
 
@@ -2600,7 +2589,7 @@ int view_flag;
     MAT4X3PNT(new_pos, model2view, model_pos);
 
     if(state = ST_S_EDIT){
-      sedit_mouse(new_pos);
+      sedit_trans(new_pos);
     }else
       objedit_mouse(new_pos);
   }else{/* slew the view */
@@ -2609,10 +2598,13 @@ int view_flag;
     VSUB2( diff, new_pos, old_pos )
     VADD2(new_pos, orig_pos, diff)
     MAT_DELTAS_VEC( toViewcenter, new_pos)
-#if 0
-    MAT_DELTAS_VEC( ModelDelta, new_pos)
-#endif
     new_mats();
+
+    VSET(new_pos, -orig_pos[X], -orig_pos[Y], -orig_pos[Z]);
+    MAT4X3PNT(absolute_slew, model2view, new_pos);
+
+    if(tkwin != NULL)
+      (void)Tcl_Eval(interp, "set_sliders");
   }
 
   return CMD_OK;

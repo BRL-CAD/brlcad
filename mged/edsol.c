@@ -2251,7 +2251,6 @@ sedit()
 		pr_prompt();
 		fixv--;
 		es_edflag = ECMD_ARB_ROTATE_FACE;
-		mat_idn( acc_rot_sol );
 		dmaflag = 1;	/* draw arrow, etc */
 		set_e_axes_pos();
 		break;
@@ -3610,16 +3609,12 @@ CONST vect_t	mousevec;
 			point_t	pt;
 			vect_t	delta;
 			mat_t	xlatemat;
-#if 0
+
 			MAT4X3PNT( temp, es_mat, es_keypoint );
 			MAT4X3PNT( pos_view, model2view, temp );
 			pos_view[X] = mousevec[X];
 			pos_view[Y] = mousevec[Y];
 			MAT4X3PNT( temp, view2model, pos_view );
-#else
-			/* Experimental */
-			MAT4X3PNT( temp, view2model, mousevec );
-#endif
 			MAT4X3PNT( pt, es_invmat, temp );
 
 			/* Need vector from current vertex/keypoint
@@ -3629,6 +3624,23 @@ CONST vect_t	mousevec;
 			mat_idn( xlatemat );
 			MAT_DELTAS_VEC_NEG( xlatemat, delta );
 			transform_editing_solid(&es_int, xlatemat, &es_int, 1);
+
+			{
+/*XXXXX  More experimentation */
+			  extern point_t e_axes_pos;
+			  vect_t model_pos;
+			  vect_t diff;
+			  fastf_t inv_Viewscale = 1/Viewscale;
+
+			  MAT4X3PNT( pos_view, model2view, es_keypoint);
+			  mousevec[Z] = pos_view[Z];
+			  MAT4X3PNT(model_pos, view2model, mousevec);
+			  VSUB2(diff, model_pos, e_axes_pos);
+			  VSCALE(edit_absolute_tran, diff, inv_Viewscale);
+
+			  if(BU_LIST_NON_EMPTY(&head_cmd_list.l))
+			    (void)Tcl_Eval(interp, "set_sliders");
+			}
 		}
 		sedraw = 1;
 		return;
@@ -3640,16 +3652,12 @@ CONST vect_t	mousevec;
 		 * project result back to model space.
 		 * Leave desired location in es_mparam.
 		 */
-#if 0
+
 		MAT4X3PNT( temp, es_mat, es_keypoint );
 		MAT4X3PNT( pos_view, model2view, temp );
 		pos_view[X] = mousevec[X];
 		pos_view[Y] = mousevec[Y];
 		MAT4X3PNT( temp, view2model, pos_view );
-#else
-		/* Experimental */
-		MAT4X3PNT( temp, view2model, mousevec );
-#endif
 		MAT4X3PNT( es_mparam, es_invmat, temp );
 		es_mvalid = 1;	/* es_mparam is valid */
 		/* Leave the rest to code in sedit() */
@@ -3663,7 +3671,6 @@ CONST vect_t	mousevec;
 				(struct rt_tgc_internal *)es_int.idb_ptr;
 			RT_TGC_CK_MAGIC(tgc);
 
-#if 0
 			VADD2( temp, tgc->v, tgc->h );
 			MAT4X3PNT(pos_model, es_mat, temp);
 			MAT4X3PNT( pos_view, model2view, pos_model );
@@ -3671,10 +3678,6 @@ CONST vect_t	mousevec;
 			pos_view[Y] = mousevec[Y];
 			/* Do NOT change pos_view[Z] ! */
 			MAT4X3PNT( temp, view2model, pos_view );
-#else
-			/* Experimental */
-			MAT4X3PNT( temp, view2model, mousevec );
-#endif
 			MAT4X3PNT( tr_temp, es_invmat, temp );
 			VSUB2( tgc->h, tr_temp, tgc->v );
 		}
@@ -3690,16 +3693,12 @@ CONST vect_t	mousevec;
 
 			VMOVE( temp , arb->pt[es_menu] );
 		}
-#if 0
+
 		MAT4X3PNT(pos_model, es_mat, temp);
 		MAT4X3PNT(pos_view, model2view, pos_model);
 		pos_view[X] = mousevec[X];
 		pos_view[Y] = mousevec[Y];
 		MAT4X3PNT(temp, view2model, pos_view);
-#else
-		/* Experimental */
-		MAT4X3PNT( temp, view2model, mousevec );
-#endif
 		MAT4X3PNT(pos_model, es_invmat, temp);
 		editarb( pos_model );
 		sedraw = 1;
@@ -3881,6 +3880,210 @@ CONST vect_t	mousevec;
 	mat_idn( incr_change );
 	new_mats();
 }
+
+
+void
+sedit_trans(tvec)
+vect_t tvec;
+{
+  vect_t temp;
+  vect_t pos_model;
+
+  if( es_edflag <= 0 )
+    return;
+
+  switch( es_edflag ) {
+  case STRANS:
+    /* 
+     * Use mouse to change solid's location.
+     * Project solid's keypoint into view space,
+     * replace X,Y and Z components, and
+     * project result back to model space.
+     * Then move keypoint there.
+     */
+    {
+      point_t	pt;
+      vect_t	delta;
+      mat_t	xlatemat;
+
+      MAT4X3PNT( temp, view2model, tvec );
+      MAT4X3PNT( pt, es_invmat, temp );
+
+      /* Need vector from current vertex/keypoint
+       * to desired new location.
+       */
+      VSUB2( delta, es_keypoint, pt );
+      mat_idn( xlatemat );
+      MAT_DELTAS_VEC_NEG( xlatemat, delta );
+      transform_editing_solid(&es_int, xlatemat, &es_int, 1);
+    }
+
+    break;
+  case ECMD_VTRANS:
+    /* 
+     * Use mouse to change a vertex location.
+     * Project vertex (in solid keypoint) into view space,
+     * replace X,Y and Z components, and
+     * project result back to model space.
+     * Leave desired location in es_mparam.
+     */
+    MAT4X3PNT( temp, view2model, tvec );
+    MAT4X3PNT( es_mparam, es_invmat, temp );
+    es_mvalid = 1;	/* es_mparam is valid */
+    /* Leave the rest to code in sedit() */
+
+    break;
+  case ECMD_TGC_MV_H:
+  case ECMD_TGC_MV_HH:
+    /* Use mouse to change location of point V+H */
+    {
+      vect_t tr_temp;
+      struct rt_tgc_internal	*tgc = 
+	(struct rt_tgc_internal *)es_int.idb_ptr;
+      RT_TGC_CK_MAGIC(tgc);
+
+      MAT4X3PNT( temp, view2model, tvec );
+      MAT4X3PNT( tr_temp, es_invmat, temp );
+      VSUB2( tgc->h, tr_temp, tgc->v );
+    }
+
+    break;
+  case PTARB:
+    /* move an arb point to indicated point */
+    /* point is located at es_values[es_menu*3] */
+    {
+      struct rt_arb_internal *arb=
+	(struct rt_arb_internal *)es_int.idb_ptr;
+      RT_ARB_CK_MAGIC( arb );
+
+      VMOVE( temp , arb->pt[es_menu] );
+    }
+
+    MAT4X3PNT( temp, view2model, tvec );
+    MAT4X3PNT(pos_model, es_invmat, temp);
+    editarb( pos_model );
+
+    break;
+  case EARB:
+    /* move arb edge, through indicated point */
+    MAT4X3PNT( temp, view2model, tvec );
+    /* apply inverse of es_mat */
+    MAT4X3PNT( pos_model, es_invmat, temp );
+    editarb( pos_model );
+
+    break;
+  case ECMD_ARB_MOVE_FACE:
+    /* move arb face, through  indicated  point */
+    MAT4X3PNT( temp, view2model, tvec );
+
+    /* apply inverse of es_mat */
+    MAT4X3PNT( pos_model, es_invmat, temp );
+
+    /* change D of planar equation */
+    es_peqn[es_menu][3]=VDOT(&es_peqn[es_menu][0], pos_model);
+
+    /* calculate new vertices, put in record as vectors */
+    {
+      struct rt_arb_internal *arb=
+	(struct rt_arb_internal *)es_int.idb_ptr;
+      
+      RT_ARB_CK_MAGIC( arb );
+      (void)rt_arb_calc_points( arb , es_type , es_peqn , &mged_tol );
+    }
+
+    break;
+  case ECMD_NMG_EPICK:
+    /* XXX Should just leave desired location in es_mparam for sedit() */
+    {
+      struct model	*m = 
+	(struct model *)es_int.idb_ptr;
+      struct edge	*e;
+      struct rt_tol	tmp_tol;
+      NMG_CK_MODEL(m);
+
+      /* Picking an edge should not depend on tolerances! */
+      tmp_tol.magic = RT_TOL_MAGIC;
+      tmp_tol.dist = 0.0;
+      tmp_tol.dist_sq = tmp_tol.dist * tmp_tol.dist;
+      tmp_tol.perp = 0.0;
+      tmp_tol.para = 1 - tmp_tol.perp;
+
+      if( (e = nmg_find_e_nearest_pt2( &m->magic,
+				       tvec,
+				       model2view,
+				       &tmp_tol )) == (struct edge *)NULL )  {
+	Tcl_AppendResult(interp,
+			 "ECMD_NMG_EPICK: unable to find an edge\n",
+			 (char *)NULL);
+	sedraw = 0;
+	return;
+      }
+      es_eu = e->eu_p;
+      NMG_CK_EDGEUSE(es_eu);
+
+      {
+	struct bu_vls tmp_vls;
+
+	bu_vls_init(&tmp_vls);
+	bu_vls_printf(&tmp_vls,
+		      "edgeuse selected=x%x (%g %g %g) <-> (%g %g %g)\n",
+		      es_eu, V3ARGS( es_eu->vu_p->v_p->vg_p->coord ),
+		      V3ARGS( es_eu->eumate_p->vu_p->v_p->vg_p->coord ) );
+	Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	bu_vls_free(&tmp_vls);
+      }
+    }
+  break;
+
+  case ECMD_NMG_LEXTRU:
+  case ECMD_NMG_EMOVE:
+  case ECMD_NMG_ESPLIT:
+  case ECMD_PIPE_PICK:
+  case ECMD_PIPE_SPLIT:
+  case ECMD_PIPE_PT_MOVE:
+  case ECMD_PIPE_PT_ADD:
+  case ECMD_PIPE_PT_INS:
+  case ECMD_ARS_PICK:
+  case ECMD_ARS_MOVE_PT:
+  case ECMD_ARS_MOVE_CRV:
+  case ECMD_ARS_MOVE_COL:
+    MAT4X3PNT( temp, view2model, tvec );
+    /* apply inverse of es_mat */
+    MAT4X3PNT( es_mparam, es_invmat, temp );
+    es_mvalid = 1;
+
+    break;
+  default:
+    Tcl_AppendResult(interp,
+		     "mouse press undefined in this solid edit mode\n",
+		     (char *)NULL);
+    sedraw = 0;
+    return;
+  }
+
+  sedit();
+}
+
+void
+sedit_scale()
+{
+#if 0
+	case SSCALE:
+	case PSCALE:
+		/* use mouse to get a scale factor */
+		es_scale = 1.0 + 0.25 * ((fastf_t)
+			(mousevec[Y] > 0 ? mousevec[Y] : -mousevec[Y]));
+		if ( mousevec[Y] <= 0 )
+			es_scale = 1.0 / es_scale;
+
+		/* accumulate scale factor */
+		acc_sc_sol *= es_scale;
+
+		sedraw = 1;
+		return;
+#endif
+}
+
 
 /*
  *			V L S _ S O L I D

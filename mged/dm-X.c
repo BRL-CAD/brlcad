@@ -165,21 +165,31 @@ XEvent *eventPtr;
 		      (mx - ((struct x_vars *)dmp->dm_vars)->omx) * 0.25 );
       break;
     case ALT_MOUSE_MODE_TRANSLATE:
-      {
+      if(EDIT_TRAN && mged_variables.edit){
+	vect_t view_pos;
+
+	view_pos[X] = (mx/(fastf_t)((struct x_vars *)dmp->dm_vars)->width
+		       - 0.5) * 2.0;
+	view_pos[Y] = (0.5 - my/
+		       (fastf_t)((struct x_vars *)dmp->dm_vars)->height) * 2.0;
+	view_pos[Z] = 0.0;
+
+	if(state == ST_S_EDIT)
+	  sedit_mouse(view_pos);
+	else
+	  objedit_mouse(view_pos);
+
+	goto end;
+      }else{
 	fastf_t fx, fy;
 
-	if(EDIT_TRAN && mged_variables.edit){
-	  fx = (mx/(fastf_t)((struct x_vars *)dmp->dm_vars)->width - 0.5) * 2;
-	  fy = (0.5 - my/(fastf_t)((struct x_vars *)dmp->dm_vars)->height) * 2;
-	  bu_vls_printf( &cmd, "knob aX %f aY %f\n", fx, fy );
-	}else{
-	  fx = (mx - ((struct x_vars *)dmp->dm_vars)->omx) /
-	    (fastf_t)((struct x_vars *)dmp->dm_vars)->width * 2.0;
-	  fy = (((struct x_vars *)dmp->dm_vars)->omy - my) /
-	    (fastf_t)((struct x_vars *)dmp->dm_vars)->height * 2.0;
-	  bu_vls_printf( &cmd, "knob -i aX %f aY %f\n", fx, fy );
-	}
+	fx = (mx - ((struct x_vars *)dmp->dm_vars)->omx) /
+	  (fastf_t)((struct x_vars *)dmp->dm_vars)->width * 2.0;
+	fy = (((struct x_vars *)dmp->dm_vars)->omy - my) /
+	  (fastf_t)((struct x_vars *)dmp->dm_vars)->height * 2.0;
+	bu_vls_printf( &cmd, "knob -i aX %f aY %f\n", fx, fy );
       }
+
       break;
     case ALT_MOUSE_MODE_ZOOM:
       bu_vls_printf( &cmd, "knob -i aS %f\n",
@@ -346,14 +356,19 @@ char *argv[];
 	am_mode = ALT_MOUSE_MODE_TRANSLATE;
 
 	if(EDIT_TRAN && mged_variables.edit){
-	  bu_vls_init(&vls);
-	  bu_vls_printf(&vls, "knob aX %f aY %f\n",
-			(((struct x_vars *)dmp->dm_vars)->omx /
-			 (fastf_t)((struct x_vars *)dmp->dm_vars)->width - 0.5) * 2,
-			(0.5 - ((struct x_vars *)dmp->dm_vars)->omy /
-			 (fastf_t)((struct x_vars *)dmp->dm_vars)->height) * 2);
-	  status = Tcl_Eval(interp, bu_vls_addr(&vls));
-	  bu_vls_free(&vls);
+	  vect_t view_pos;
+
+	  view_pos[X] = (((struct x_vars *)dmp->dm_vars)->omx /
+			 (fastf_t)((struct x_vars *)dmp->dm_vars)->width -
+			 0.5) * 2.0;
+	  view_pos[Y] = (0.5 - ((struct x_vars *)dmp->dm_vars)->omy /
+			 (fastf_t)((struct x_vars *)dmp->dm_vars)->height) * 2.0;
+	  view_pos[Z] = 0.0;
+
+	  if(state == ST_S_EDIT)
+	    sedit_mouse(view_pos);
+	  else
+	    objedit_mouse(view_pos);
 	}
 
 	break;

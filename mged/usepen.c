@@ -196,21 +196,7 @@ char	**argv;
 	   * Use the DT for moving view center.
 	   * Make indicated point be new view center (NEW).
 	   */
-#if 1
-	  {
-	    struct bu_vls vls;
-	    int status;
-
-	    bu_vls_init(&vls);
-	    bu_vls_printf(&vls, "sv %d %d", xpos, ypos);
-	    status = Tcl_Eval(interp, bu_vls_addr(&vls));
-	    bu_vls_free(&vls);
-
-	    return status;
-	  }
-#else
 	  slewview( mousevec );
-#endif
 	  return TCL_OK;
 
 	case ST_O_PICK:
@@ -226,27 +212,10 @@ char	**argv;
 	  return TCL_OK;
 
 	case ST_S_EDIT:
-	  if((SEDIT_TRAN || SEDIT_SCALE) && mged_variables.edit){
-#if 0
-	    mousevec[Z] = edit_absolute_tran[Z];
-#endif
-	    aslewview( mousevec );
-	  }else
-#if 1
-	  {
-	    struct bu_vls vls;
-	    int status;
-
-	    bu_vls_init(&vls);
-	    bu_vls_printf(&vls, "sv %d %d", xpos, ypos);
-	    status = Tcl_Eval(interp, bu_vls_addr(&vls));
-	    bu_vls_free(&vls);
-
-	    return status;
-	  }
-#else
+	  if((SEDIT_TRAN || SEDIT_SCALE) && mged_variables.edit)
+	    sedit_mouse( mousevec );
+	  else
 	    slewview( mousevec );
-#endif
 	  return TCL_OK;
 
 	case ST_O_PATH:
@@ -277,23 +246,10 @@ char	**argv;
 
 	case ST_O_EDIT:
 	  if((OEDIT_TRAN || OEDIT_SCALE) && mged_variables.edit)
-	    aslewview( mousevec );
+	    objedit_mouse( mousevec );
 	  else
-#if 1
-	  {
-	    struct bu_vls vls;
-	    int status;
-
-	    bu_vls_init(&vls);
-	    bu_vls_printf(&vls, "sv %d %d", xpos, ypos);
-	    status = Tcl_Eval(interp, bu_vls_addr(&vls));
-	    bu_vls_free(&vls);
-
-	    return status;
-	  }
-#else
 	    slewview( mousevec );
-#endif
+
 	  return TCL_OK;
 
 	default:
