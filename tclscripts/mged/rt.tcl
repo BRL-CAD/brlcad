@@ -423,6 +423,7 @@ proc do_fbclear { id } {
 proc rt_set_fb_state { id } {
     global mged_gui
 
+    winset $mged_gui($id,active_dm)
     set mged_gui($id,fb) 1
     set_fb $id
 
@@ -437,6 +438,7 @@ proc rt_set_fb_state { id } {
 proc rt_set_file_state { id } {
     global mged_gui
 
+    winset $mged_gui($id,active_dm)
     set mged_gui($id,fb) 0
     set_fb $id
 
@@ -451,7 +453,7 @@ proc rt_set_fb_size { id } {
     global mged_gui
     global rt_control
 
-    winset $mged_gui($id,top).$mged_gui($id,dm_loc)
+    winset $mged_gui($id,active_dm)
     set size [dm size]
     set rt_control($id,size) "[lindex $size 0]x[lindex $size 1]"
 }
