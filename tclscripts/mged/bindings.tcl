@@ -30,9 +30,9 @@ proc print_return_val str {
 
 proc default_key_bindings { w } {
     bind $w a "winset $w; adc; break"
-    bind $w e "winset $w; set e_axes !; break"
-    bind $w v "winset $w; set v_axes !; break"
-    bind $w w "winset $w; set m_axes !; break"
+    bind $w e "update_axes_draw $w edit; break"
+    bind $w m "update_axes_draw $w model; break"
+    bind $w v "update_axes_draw $w view; break"
     bind $w i "winset $w; aip f; break"
     bind $w I "winset $w; aip b; break"
     bind $w p "winset $w; M 1 0 0; break"
@@ -80,9 +80,9 @@ proc default_key_bindings { w } {
     bind $w <Control-Shift-Down> "winset $w; knob -i aY \$mged_tran_factor; break"
     bind $w <Control-Shift-Up> "winset $w; knob -i aY -\$mged_tran_factor; break"
 
-    bind $w <Control-n> "winset $w; next_view; break"
-    bind $w <Control-p> "winset $w; prev_view; break"
-    bind $w <Control-t> "winset $w; toggle_view; break"
+    bind $w <Control-n> "winset $w; _mged_view_ring next; break"
+    bind $w <Control-p> "winset $w; _mged_view_ring prev; break"
+    bind $w <Control-t> "winset $w; _mged_view_ring toggle; break"
 
     # Throw away other key events
     bind $w <KeyPress> {
@@ -112,8 +112,8 @@ proc forward_key_bindings { w } {
 # First, unset the default key bindings
     bind $w a {}
     bind $w e {}
+    bind $w m {}
     bind $w v {}
-    bind $w w {}
     bind $w i {}
     bind $w I {}
     bind $w p {}
@@ -242,4 +242,20 @@ proc default_mouse_bindings { w } {
 	bind $w <Alt-Shift-Control-ButtonPress-2> "winset $w; dm con s y %x %y; break"
 	bind $w <Alt-Shift-Control-ButtonPress-3> "winset $w; dm con s z %x %y; break"
     }   
+}
+
+proc update_axes_draw { w type } {
+    global mged_players
+    global mged_active_dm
+    global mged_axes
+
+    winset $w;
+    rset ax $type\_draw !
+
+    foreach id $mged_players {
+	if {$mged_active_dm($id) == $w} {
+	    set mged_axes($id,$type\_draw) [rset ax $type\_draw]
+	    break
+	}
+    }
 }
