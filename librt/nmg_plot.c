@@ -218,14 +218,30 @@ CONST vectp_t		normal;
 		/* Draw surface normal as a little vector */
 		double	f;
 		vect_t	tocent;
+		point_t	tip;
 		f = 1.0 / npoints;
 		VSCALE( centroid, centroid, f );
 		RT_ADD_VLIST( vhead, centroid, RT_VLIST_LINE_MOVE );
 		VSUB2( tocent, first_vg->coord, centroid );
 		f = MAGNITUDE( tocent ) * 0.5;
-		VSCALE( tocent, normal, f );
-		VADD2( centroid, centroid, tocent );
-		RT_ADD_VLIST( vhead, centroid, RT_VLIST_LINE_DRAW );
+		VJOIN1( tip, centroid, f, normal );
+		RT_ADD_VLIST( vhead, tip, RT_VLIST_LINE_DRAW );
+
+		/* For any vertexuse attributes with normals, draw them too */
+		for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
+			struct vertexuse_a_plane	*vua;
+			/* Consider this edge */
+			vu = eu->vu_p;
+			if( !vu->a.magic_p || *vu->a.magic_p != NMG_VERTEXUSE_A_PLANE_MAGIC )  continue;
+			vua = vu->a.plane_p;
+			v = vu->v_p;
+			vg = v->vg_p;
+			if( !vg )  continue;
+			NMG_CK_VERTEX_G(vg);
+			RT_ADD_VLIST( vhead, vg->coord, RT_VLIST_LINE_MOVE );
+			VJOIN1( tip, vg->coord, f, vua->N );
+			RT_ADD_VLIST( vhead, tip, RT_VLIST_LINE_DRAW );
+		}
 	}
 }
 
