@@ -56,6 +56,69 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 extern struct rt_tol		mged_tol;	/* from ged.c */
 
 void
+pipe_scale_od( db_int, scale )
+struct rt_db_internal *db_int;
+fastf_t scale;
+{
+	struct wdb_pipeseg *ps;
+	struct rt_pipe_internal *pipe=(struct rt_pipe_internal *)db_int->idb_ptr;
+
+	RT_PIPE_CK_MAGIC( pipe );
+
+	if( scale < 1.0 )
+	{
+		/* check that this can be done */
+		for( RT_LIST_FOR( ps, wdb_pipeseg, &pipe->pipe_segs_head ) )
+		{
+			if( ps->ps_id > ps->ps_od*scale )
+			{
+				rt_log( "Cannot make OD less than ID\n" );
+				return;
+			}
+		}
+	}
+
+	for( RT_LIST_FOR( ps, wdb_pipeseg, &pipe->pipe_segs_head ) )
+		ps->ps_od *= scale;
+}
+void
+pipe_scale_id( db_int, scale )
+struct rt_db_internal *db_int;
+fastf_t scale;
+{
+	struct wdb_pipeseg *ps;
+	struct rt_pipe_internal *pipe=(struct rt_pipe_internal *)db_int->idb_ptr;
+	fastf_t tmp_id;
+
+	RT_PIPE_CK_MAGIC( pipe );
+
+	if( scale > 1.0 || scale < 0.0 )
+	{
+		/* check that this can be done */
+		for( RT_LIST_FOR( ps, wdb_pipeseg, &pipe->pipe_segs_head ) )
+		{
+			if( scale > 0.0 )
+				tmp_id = ps->ps_id*scale;
+			else
+				tmp_id = (-scale);
+			if( ps->ps_od < tmp_id )
+			{
+				rt_log( "Cannot make ID greater than OD\n" );
+				return;
+			}
+		}
+	}
+
+	for( RT_LIST_FOR( ps, wdb_pipeseg, &pipe->pipe_segs_head ) )
+	{
+		if( scale > 0.0 )
+			ps->ps_id *= scale;
+		else
+			ps->ps_id = (-scale);
+	}
+}
+
+void
 pipe_seg_scale_od( ps, scale )
 struct wdb_pipeseg *ps;
 fastf_t scale;
@@ -64,6 +127,7 @@ fastf_t scale;
 	struct wdb_pipeseg *next;
 	int seg_count=0;
 	int id_eq_od=0;
+	fastf_t tmp_od;
 
 	RT_CKMAG( ps, WDB_PIPESEG_MAGIC, "pipe segment" );
 
@@ -73,17 +137,30 @@ fastf_t scale;
 		/* need to check that the new OD is not less than ID
 		 * of any affected segment.
 		 */
+		if( scale < 0.0 )
+			tmp_od = (-scale);
+		else
+			tmp_od = scale*ps->ps_od;
+		if( ps->ps_id > tmp_od )
+		{
+			rt_log( "Cannot make OD smaller than ID\n" );
+			return;
+		}
 		prev = RT_LIST_PREV( wdb_pipeseg, &ps->l );
 		while( prev->l.magic != RT_LIST_HEAD_MAGIC &&
 			 prev->ps_type == WDB_PIPESEG_TYPE_BEND )
 		{
-			if( prev->ps_id > scale*prev->ps_od )
+			if( scale < 0.0 )
+				tmp_od = (-scale);
+			else
+				tmp_od = scale*prev->ps_od;
+			if( prev->ps_id > tmp_od )
 			{
 				rt_log( "Cannot make OD smaller than ID\n" );
 				return;
 			}
 			seg_count++;
-			if( prev->ps_id == scale*prev->ps_od )
+			if( prev->ps_id == tmp_od )
 				id_eq_od++;
 			prev = RT_LIST_PREV( wdb_pipeseg, &prev->l );
 		}
@@ -92,23 +169,31 @@ fastf_t scale;
 			next = RT_LIST_NEXT( wdb_pipeseg, &ps->l );
 			while( next->ps_type == WDB_PIPESEG_TYPE_BEND )
 			{
-				if( next->ps_id > scale*prev->ps_od )
+				if( scale < 0.0 )
+					tmp_od = (-scale);
+				else
+					tmp_od = scale*next->ps_od;
+				if( next->ps_id > tmp_od )
 				{
 					rt_log( "Cannot make OD smaller than ID\n" );
 					return;
 				}
 				seg_count++;
-				if( next->ps_id == scale*next->ps_od )
+				if( next->ps_id == tmp_od )
 					id_eq_od++;
 				next = RT_LIST_NEXT( wdb_pipeseg, &next->l );
 			}
-			if( next->ps_id > scale*prev->ps_od )
+			if( scale < 0.0 )
+				tmp_od = (-scale);
+			else
+				tmp_od = scale*next->ps_od;
+			if( next->ps_id > tmp_od )
 			{
 				rt_log( "Cannot make OD smaller than ID\n" );
 				return;
 			}
 			seg_count++;
-			if( next->ps_id == scale*next->ps_od )
+			if( next->ps_id == tmp_od )
 				id_eq_od++;
 		}
 		if( seg_count && id_eq_od == seg_count )
@@ -118,12 +203,18 @@ fastf_t scale;
 		}
 	}
 
-	ps->ps_od *= scale;
+	if( scale > 0.0 )
+		ps->ps_od *= scale;
+	else
+		ps->ps_od = (-scale);
 	prev = RT_LIST_PREV( wdb_pipeseg, &ps->l );
 	while( prev->l.magic != RT_LIST_HEAD_MAGIC &&
 		 prev->ps_type == WDB_PIPESEG_TYPE_BEND )
 	{
-		prev->ps_od *= scale;
+		if( scale > 0.0 )
+			prev->ps_od *= scale;
+		else
+			prev->ps_od = (-scale);
 		prev = RT_LIST_PREV( wdb_pipeseg, &prev->l );
 	}
 
@@ -132,10 +223,133 @@ fastf_t scale;
 		next = RT_LIST_NEXT( wdb_pipeseg, &ps->l );
 		while( next->ps_type == WDB_PIPESEG_TYPE_BEND )
 		{
-			next->ps_od *= scale;
+			if( scale > 0.0 )
+				next->ps_od *= scale;
+			else
+				next->ps_od = (-scale);
 			next = RT_LIST_PNEXT_CIRC( wdb_pipeseg, &next->l );
 		}
-		next->ps_od *= scale;
+		if( scale > 0.0 )
+			next->ps_od *= scale;
+		else
+			next->ps_od = (-scale);
+	}
+}
+void
+pipe_seg_scale_id( ps, scale )
+struct wdb_pipeseg *ps;
+fastf_t scale;
+{
+	struct wdb_pipeseg *prev;
+	struct wdb_pipeseg *next;
+	int seg_count=0;
+	int id_eq_od=0;
+	fastf_t tmp_id;
+
+	RT_CKMAG( ps, WDB_PIPESEG_MAGIC, "pipe segment" );
+
+	/* make sure we can make this change */
+	if( scale > 1.0 || scale < 0.0 )
+	{
+		/* need to check that the new ID is not greater than OD
+		 * of any affected segment.
+		 */
+		if( scale > 0.0 )
+			tmp_id = scale*ps->ps_id;
+		else
+			tmp_id = (-scale);
+		if( ps->ps_od < tmp_id )
+		{
+			rt_log( "Cannot make ID greater than OD\n" );
+			return;
+		}
+		prev = RT_LIST_PREV( wdb_pipeseg, &ps->l );
+		while( prev->l.magic != RT_LIST_HEAD_MAGIC &&
+			 prev->ps_type == WDB_PIPESEG_TYPE_BEND )
+		{
+			if( scale > 0.0 )
+				tmp_id = scale*prev->ps_id;
+			else
+				tmp_id = (-scale);
+			if( prev->ps_od < tmp_id )
+			{
+				rt_log( "Cannot make ID greater than OD\n" );
+				return;
+			}
+			seg_count++;
+			if( prev->ps_od == tmp_id )
+				id_eq_od++;
+			prev = RT_LIST_PREV( wdb_pipeseg, &prev->l );
+		}
+		if( ps->ps_type == WDB_PIPESEG_TYPE_BEND )
+		{
+			next = RT_LIST_NEXT( wdb_pipeseg, &ps->l );
+			while( next->ps_type == WDB_PIPESEG_TYPE_BEND )
+			{
+				if( scale > 0.0 )
+					tmp_id = scale*next->ps_id;
+				else
+					tmp_id = (-scale);
+				if( next->ps_od < tmp_id )
+				{
+					rt_log( "Cannot make ID greater than OD\n" );
+					return;
+				}
+				seg_count++;
+				if( next->ps_od == tmp_id )
+					id_eq_od++;
+				next = RT_LIST_NEXT( wdb_pipeseg, &next->l );
+			}
+			if( scale > 0.0 )
+				tmp_id = scale*next->ps_id;
+			else
+				tmp_id = (-scale);
+			if( next->ps_od < tmp_id )
+			{
+				rt_log( "Cannot make ID greater than OD\n" );
+				return;
+			}
+			seg_count++;
+			if( next->ps_od == tmp_id )
+				id_eq_od++;
+		}
+		if( seg_count && id_eq_od == seg_count )
+		{
+			rt_log( "Cannot make zero wall thickness pipe\n" );
+			return;
+		}
+	}
+
+	if( scale > 0.0 )
+		ps->ps_id *= scale;
+	else
+		ps->ps_id = (-scale);
+	prev = RT_LIST_PREV( wdb_pipeseg, &ps->l );
+	while( prev->l.magic != RT_LIST_HEAD_MAGIC &&
+		 prev->ps_type == WDB_PIPESEG_TYPE_BEND )
+	{
+		if( scale > 0.0 )
+			prev->ps_id *= scale;
+		else
+			prev->ps_od = (-scale);
+		prev = RT_LIST_PREV( wdb_pipeseg, &prev->l );
+	}
+
+	if( ps->ps_type == WDB_PIPESEG_TYPE_BEND )
+	{
+		next = RT_LIST_NEXT( wdb_pipeseg, &ps->l );
+		while( next->ps_type == WDB_PIPESEG_TYPE_BEND )
+		{
+			if( scale > 0.0 )
+				next->ps_id *= scale;
+			else
+				next->ps_id = (-scale);
+			next = RT_LIST_PNEXT_CIRC( wdb_pipeseg, &next->l );
+		}
+		if( scale > 0.0 )
+			next->ps_id *= scale;
+		else
+			next->ps_id = (-scale);
 	}
 }
 
@@ -245,7 +459,7 @@ vect_t dir;
 		VUNITIZE( dir );
 		return;
 	}
-	if( next->ps_type == WDB_PIPESEG_TYPE_BEND )
+	if( next->ps_type == WDB_PIPESEG_TYPE_BEND || next->ps_type == WDB_PIPESEG_TYPE_END )
 	{
 		vect_t to_start;
 		vect_t to_end;
@@ -293,6 +507,7 @@ CONST struct wdb_pipeseg *ps;
 				bend_radius = MAGNITUDE( to_start );
 				return( bend_radius );
 			}
+			next = RT_LIST_NEXT( wdb_pipeseg, &next->l );
 		}
 		if( prev->l.magic != RT_LIST_HEAD_MAGIC )
 		{
@@ -302,6 +517,7 @@ CONST struct wdb_pipeseg *ps;
 				bend_radius = MAGNITUDE( to_start );
 				return( bend_radius );
 			}
+			prev = RT_LIST_PREV( wdb_pipeseg, &prev->l );
 		}
 	}
 
@@ -729,5 +945,243 @@ CONST point_t pt;
 		}
 	}
 	return( nearest );
+}
+
+void
+add_pipeseg( pipe, new_pt )
+struct rt_pipe_internal *pipe;
+CONST point_t new_pt;
+{
+	struct wdb_pipeseg *end_ps;
+	struct wdb_pipeseg *last_ps;
+	struct wdb_pipeseg *new_linear;
+	struct wdb_pipeseg *new_bend;
+	point_t old_end;
+	fastf_t bend_radius;
+	vect_t end_dir;
+	vect_t tmp_dir;
+	vect_t normal;
+	vect_t to_start;
+	vect_t to_end;
+	vect_t d1,d2;
+	fastf_t angle;
+	fastf_t dist_to_center;
+	mat_t mat;
+
+	RT_PIPE_CK_MAGIC( pipe );
+
+	end_ps = RT_LIST_LAST( wdb_pipeseg, &pipe->pipe_segs_head );
+	RT_CKMAG( end_ps, WDB_PIPESEG_MAGIC, "pipe segment" );
+	
+	if( end_ps->ps_type != WDB_PIPESEG_TYPE_END )
+	{
+		rt_log( "This pipe doesn't have and 'END' segment!!!\n" );
+		return;
+	}
+	VMOVE( old_end, end_ps->ps_start );
+	last_ps = RT_LIST_PREV( wdb_pipeseg, &end_ps->l );
+	RT_CKMAG( last_ps, WDB_PIPESEG_MAGIC, "pipe segment" );
+	if( last_ps->l.magic == RT_LIST_HEAD_MAGIC )
+	{
+		/* This pipe is just an END segment */
+		GETSTRUCT( new_linear, wdb_pipeseg );
+		new_linear->ps_type = WDB_PIPESEG_TYPE_LINEAR;
+		new_linear->l.magic = WDB_PIPESEG_MAGIC;
+		new_linear->ps_od = end_ps->ps_od;
+		new_linear->ps_id = end_ps->ps_id;
+		VMOVE( new_linear->ps_start, old_end );
+		VMOVE( end_ps->ps_start, new_pt );
+		RT_LIST_INSERT( &end_ps->l, &new_linear->l );
+	}
+
+	VSUB2( tmp_dir, new_pt, old_end );
+	dist_to_center = MAGNITUDE( tmp_dir );
+	if( dist_to_center < RT_LEN_TOL )	/* nothing new needed */
+		return;
+	VUNITIZE( tmp_dir );
+
+	bend_radius = get_bend_radius( last_ps );
+
+	if( last_ps->ps_type == WDB_PIPESEG_TYPE_LINEAR )
+	{
+		VSUB2( end_dir, last_ps->ps_start, old_end );
+		VUNITIZE( end_dir );
+		if( NEAR_ZERO( VDOT( end_dir, tmp_dir ) + 1.0, RT_DOT_TOL ) )
+		{
+			/* new point is in same direction as last segment, so just strech it */
+			return;
+		}
+	}
+	else
+	{
+		get_bend_start_line( last_ps, old_end, end_dir );
+		VREVERSE( end_dir, end_dir );
+		VSUB2( tmp_dir, new_pt, old_end );
+		VUNITIZE( tmp_dir );
+	}
+
+	VMOVE( end_ps->ps_start, new_pt );
+
+	GETSTRUCT( new_linear, wdb_pipeseg );
+	new_linear->ps_type = WDB_PIPESEG_TYPE_LINEAR;
+	new_linear->l.magic = WDB_PIPESEG_MAGIC;
+	new_linear->ps_od = last_ps->ps_od;
+	new_linear->ps_id = last_ps->ps_id;
+
+	if( last_ps->ps_type != WDB_PIPESEG_TYPE_BEND )
+	{
+		GETSTRUCT( new_bend, wdb_pipeseg );
+		new_bend->ps_type = WDB_PIPESEG_TYPE_BEND;
+		new_bend->l.magic = WDB_PIPESEG_MAGIC;
+		new_bend->ps_od = last_ps->ps_od;
+		new_bend->ps_id = last_ps->ps_id;
+		VMOVE( new_bend->ps_start, old_end );
+	}
+	else
+		new_bend = last_ps;
+
+	/* get bend center for new bend */
+	VCROSS( normal, end_dir, tmp_dir );
+	VUNITIZE( normal );
+	VCROSS( to_start, normal, end_dir );
+	VUNITIZE( to_start );
+	VJOIN1( new_bend->ps_bendcenter, old_end, bend_radius, to_start );
+
+	/* calculate start point for new linear segment */
+	VSUB2( tmp_dir, new_bend->ps_bendcenter, new_pt );
+	angle = asin( bend_radius/MAGNITUDE( tmp_dir ) );
+	mat_arb_rot( mat, new_bend->ps_bendcenter, normal, -angle );
+	VCROSS( d1, tmp_dir, normal );
+	MAT4X3VEC( to_end, mat, d1 );
+	VUNITIZE( to_end );
+	VJOIN1( new_linear->ps_start, new_bend->ps_bendcenter, bend_radius, to_end );
+
+	if( new_bend != last_ps )
+		RT_LIST_APPEND( &last_ps->l, &new_bend->l );
+	RT_LIST_APPEND( &new_bend->l, &new_linear->l );
+
+	/* make sure new bend is less than 180 degrees */
+	VREVERSE( to_start, to_start );
+	VCROSS( d2, to_start, normal );
+	angle = atan2( VDOT( to_end, d2 ), VDOT( to_end, to_start) );
+	if( angle < 0.0 )
+		angle += 2.0*rt_pi;
+	if( angle > rt_pi - RT_DOT_TOL )
+		break_bend( new_bend, to_start, d2, angle/2.0 );
+}
+
+
+void
+ins_pipeseg( pipe, new_pt )
+struct rt_pipe_internal *pipe;
+CONST point_t new_pt;
+{
+	struct wdb_pipeseg *start_ps;
+	struct wdb_pipeseg *next_ps;
+	struct wdb_pipeseg *new_linear;
+	struct wdb_pipeseg *new_bend;
+	fastf_t dist_to_start;
+	vect_t tmp_dir;
+	vect_t start_dir;
+	vect_t normal;
+	vect_t to_start;
+	vect_t to_end;
+	vect_t d1,d2;
+	point_t old_start;
+	fastf_t bend_radius;
+	fastf_t angle;
+	mat_t mat;
+
+	RT_PIPE_CK_MAGIC( pipe );
+
+	start_ps = RT_LIST_FIRST( wdb_pipeseg, &pipe->pipe_segs_head );
+	RT_CKMAG( start_ps, WDB_PIPESEG_MAGIC, "pipe segment" );
+
+	if( start_ps->ps_type == WDB_PIPESEG_TYPE_END )
+	{
+		/* This pipe is just an END segment */
+		GETSTRUCT( new_linear, wdb_pipeseg );
+		new_linear->ps_type = WDB_PIPESEG_TYPE_LINEAR;
+		new_linear->l.magic = WDB_PIPESEG_MAGIC;
+		new_linear->ps_od = start_ps->ps_od;
+		new_linear->ps_id = start_ps->ps_id;
+		VMOVE( new_linear->ps_start, new_pt );
+		RT_LIST_INSERT( &start_ps->l, &new_linear->l );
+	}
+
+	VSUB2( tmp_dir, new_pt, start_ps->ps_start );
+	dist_to_start = MAGNITUDE( tmp_dir );
+	if( dist_to_start < RT_LEN_TOL )	/* nothing new needed */
+		return;
+
+	bend_radius = get_bend_radius( start_ps );
+
+	if( start_ps->ps_type == WDB_PIPESEG_TYPE_LINEAR )
+	{
+		VMOVE( old_start, start_ps->ps_start );
+		next_ps = RT_LIST_NEXT( wdb_pipeseg, &start_ps->l );
+		RT_CKMAG( next_ps, WDB_PIPESEG_MAGIC, "pipe segment" );
+		VSUB2( start_dir, next_ps->ps_start, old_start );
+		if( NEAR_ZERO( VDOT( start_dir, tmp_dir ) + 1.0, RT_DOT_TOL ) )
+		{
+			/* new point is in same direction as first segment, so just strech it */
+			VMOVE( start_ps->ps_start, new_pt );
+			return;
+		}
+	}
+	else
+	{
+		get_bend_end_line( start_ps, old_start, start_dir );
+		VREVERSE( start_dir, start_dir );
+		VSUB2( tmp_dir, new_pt, old_start );
+		VUNITIZE( tmp_dir );
+	}
+
+	GETSTRUCT( new_linear, wdb_pipeseg );
+	new_linear->ps_type = WDB_PIPESEG_TYPE_LINEAR;
+	new_linear->l.magic = WDB_PIPESEG_MAGIC;
+	new_linear->ps_od = start_ps->ps_od;
+	new_linear->ps_id = start_ps->ps_id;
+	VMOVE( new_linear->ps_start, new_pt );
+
+	if( start_ps->ps_type != WDB_PIPESEG_TYPE_BEND )
+	{
+		GETSTRUCT( new_bend, wdb_pipeseg );
+		new_bend->ps_type = WDB_PIPESEG_TYPE_BEND;
+		new_bend->l.magic = WDB_PIPESEG_MAGIC;
+		new_bend->ps_od = start_ps->ps_od;
+		new_bend->ps_id = start_ps->ps_id;
+	}
+	else
+		new_bend = start_ps;
+
+	/* get bend center for new bend */
+	VCROSS( normal, start_dir, tmp_dir );
+	VUNITIZE( normal );
+	VCROSS( to_start, normal, start_dir );
+	VUNITIZE( to_start );
+	VJOIN1( new_bend->ps_bendcenter, old_start, bend_radius, to_start );
+
+	/* calculate end point for new linear segment */
+	VSUB2( tmp_dir, new_bend->ps_bendcenter, new_pt );
+	angle = asin( bend_radius/MAGNITUDE( tmp_dir ) );
+	mat_arb_rot( mat, new_bend->ps_bendcenter, normal, -angle );
+	VCROSS( d1, tmp_dir, normal );
+	MAT4X3VEC( to_end, mat, d1 );
+	VUNITIZE( to_end );
+	VJOIN1( new_bend->ps_start, new_bend->ps_bendcenter, bend_radius, to_end );
+
+	if( new_bend != start_ps )
+		RT_LIST_INSERT( &start_ps->l, &new_bend->l );
+	RT_LIST_INSERT( &new_bend->l, &new_linear->l );
+
+	/* make sure new bend is less than 180 degrees */
+	VREVERSE( to_start, to_start );
+	VCROSS( d2, to_start, normal );
+	angle = atan2( VDOT( to_end, d2 ), VDOT( to_end, to_start) );
+	if( angle < 0.0 )
+		angle += 2.0*rt_pi;
+	if( angle > rt_pi - RT_DOT_TOL )
+		break_bend( new_bend, to_start, d2, angle/2.0 );
 }
 

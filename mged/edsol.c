@@ -176,6 +176,11 @@ int	es_menu;		/* item selected from menu */
 #define MENU_PIPE_PREV_SEG	62
 #define MENU_PIPE_SPLIT		63
 #define MENU_PSEG_OD		64
+#define MENU_PSEG_ID		65
+#define	MENU_PIPE_SCALE_OD	66
+#define	MENU_PIPE_SCALE_ID	67
+#define	MENU_PIPE_ADD_SEG	68
+#define MENU_PIPE_INS_SEG	69
 
 extern int arb_faces[5][24];	/* from edarb.c */
 
@@ -483,7 +488,12 @@ struct menu_item pipe_menu[] = {
 	{ "next segment", pipe_ed, MENU_PIPE_NEXT_SEG },
 	{ "previous segment", pipe_ed, MENU_PIPE_PREV_SEG },
 	{ "split segment", pipe_ed, MENU_PIPE_SPLIT },
+	{ "append segmemt", pipe_ed, MENU_PIPE_ADD_SEG },
+	{ "prepend segment", pipe_ed, MENU_PIPE_INS_SEG },
 	{ "scale segment OD", pipe_ed, MENU_PSEG_OD },
+	{ "scale segment ID", pipe_ed, MENU_PSEG_ID },
+	{ "scale pipe OD", pipe_ed, MENU_PIPE_SCALE_OD },
+	{ "scale pipe ID", pipe_ed, MENU_PIPE_SCALE_ID },
 	{ "", (void (*)())NULL, 0 }
 };
 
@@ -677,7 +687,9 @@ int arg;
 			}
 			es_menu = arg;
 			es_edflag = ECMD_PIPE_SPLIT;
+		break;
 		case MENU_PSEG_OD:
+		case MENU_PSEG_ID:
 			if( !es_pipeseg )
 			{
 				rt_log( "No Pipe Segment selected\n" );
@@ -687,6 +699,18 @@ int arg;
 			es_menu = arg;
 			es_edflag = PSCALE;
 		break;
+		case MENU_PIPE_SCALE_OD:
+		case MENU_PIPE_SCALE_ID:
+			es_menu = arg;
+			es_edflag = PSCALE;
+		break;
+		case MENU_PIPE_ADD_SEG:
+			es_menu = arg;
+			es_edflag = ECMD_PIPE_SEG_ADD;
+		break;
+		case MENU_PIPE_INS_SEG:
+			es_menu = arg;
+			es_edflag = ECMD_PIPE_SEG_INS;
 	}
 #ifdef XMGED
 	set_e_axis_pos();
@@ -2842,6 +2866,52 @@ sedit()
 			split_pipeseg( &pipe->pipe_segs_head, es_pipeseg, new_pt );
 		}
 		break;
+	case ECMD_PIPE_SEG_ADD:
+		{
+			struct rt_pipe_internal *pipe=
+				(struct rt_pipe_internal *)es_int.idb_ptr;
+			point_t new_pt;
+
+			RT_PIPE_CK_MAGIC( pipe );
+
+			if( es_mvalid )
+				VMOVE( new_pt , es_mparam )
+			else if( inpara == 3 )
+				VMOVE( new_pt , es_para )
+			else if( inpara && inpara != 3 )
+			{
+				rt_log( "x y z coordinates required for 'append segment'\n" );
+				break;
+			}
+			else if( !es_mvalid && !inpara )
+				break;
+
+			add_pipeseg( pipe, new_pt );
+		}
+		break;
+	case ECMD_PIPE_SEG_INS:
+		{
+			struct rt_pipe_internal *pipe=
+				(struct rt_pipe_internal *)es_int.idb_ptr;
+			point_t new_pt;
+
+			RT_PIPE_CK_MAGIC( pipe );
+
+			if( es_mvalid )
+				VMOVE( new_pt , es_mparam )
+			else if( inpara == 3 )
+				VMOVE( new_pt , es_para )
+			else if( inpara && inpara != 3 )
+			{
+				rt_log( "x y z coordinates required for 'prepend segment'\n" );
+				break;
+			}
+			else if( !es_mvalid && !inpara )
+				break;
+
+			ins_pipeseg( pipe, new_pt );
+		}
+		break;
 	default:
 		rt_log("sedit():  unknown edflag = %d.\n", es_edflag );
 	}
@@ -3053,6 +3123,8 @@ CONST vect_t	mousevec;
 	case ECMD_NMG_ESPLIT:
 	case ECMD_PIPE_PICK:
 	case ECMD_PIPE_SPLIT:
+	case ECMD_PIPE_SEG_ADD:
+	case ECMD_PIPE_SEG_INS:
 		MAT4X3PNT( temp, view2model, mousevec );
 		/* apply inverse of es_mat */
 		MAT4X3PNT( es_mparam, es_invmat, temp );
@@ -3776,10 +3848,89 @@ pscale()
 			
 			if( inpara ) {
 				/* take es_mat[15] (path scaling) into account */
-				es_scale = es_para[0] * es_mat[15]/es_pipeseg->ps_od;
+				if( es_pipeseg->ps_od > 0.0 )
+					es_scale = es_para[0] * es_mat[15]/es_pipeseg->ps_od;
+				else
+					es_scale = (-es_para[0] * es_mat[15]);
 			}
 			pipe_seg_scale_od( es_pipeseg, es_scale );
 		}
+		break;
+	case MENU_PSEG_ID:	/* scale ID of one pipe segment */
+		{
+			if( !es_pipeseg )
+			{
+				rt_log( "pscale: no pipe segment selected for scaling\n" );
+				return;
+			}
+			
+			if( inpara ) {
+				/* take es_mat[15] (path scaling) into account */
+				if( es_pipeseg->ps_id > 0.0 )
+					es_scale = es_para[0] * es_mat[15]/es_pipeseg->ps_id;
+				else
+					es_scale = (-es_para[0] * es_mat[15]);
+			}
+			pipe_seg_scale_id( es_pipeseg, es_scale );
+		}
+		break;
+	case MENU_PIPE_SCALE_OD:	/* scale entire pipe OD */
+		if( inpara )
+		{
+			struct rt_pipe_internal *pipe =
+				(struct rt_pipe_internal *)es_int.idb_ptr;
+			struct wdb_pipeseg *ps;
+
+			RT_PIPE_CK_MAGIC( pipe );
+
+			ps = RT_LIST_FIRST( wdb_pipeseg, &pipe->pipe_segs_head );
+			RT_CKMAG( ps, WDB_PIPESEG_MAGIC, "wdb_pipeseg" );
+
+			if( ps->ps_od > 0.0 )
+				es_scale = es_para[0] * es_mat[15]/ps->ps_od;
+			else
+			{
+				while( ps->l.magic != RT_LIST_HEAD_MAGIC && ps->ps_od <= 0.0 )
+					ps = RT_LIST_NEXT( wdb_pipeseg, &ps->l );
+
+				if( ps->l.magic == RT_LIST_HEAD_MAGIC )
+				{
+					rt_log( "Entire pipe solid has zero OD!!!!\n" );
+					return;
+				}
+
+				es_scale = es_para[0] * es_mat[15]/ps->ps_od;
+			}
+		}
+		pipe_scale_od( &es_int, es_scale );
+		break;
+	case MENU_PIPE_SCALE_ID:	/* scale entire pipe ID */
+		if( inpara )
+		{
+			struct rt_pipe_internal *pipe =
+				(struct rt_pipe_internal *)es_int.idb_ptr;
+			struct wdb_pipeseg *ps;
+
+			RT_PIPE_CK_MAGIC( pipe );
+
+			ps = RT_LIST_FIRST( wdb_pipeseg, &pipe->pipe_segs_head );
+			RT_CKMAG( ps, WDB_PIPESEG_MAGIC, "wdb_pipeseg" );
+
+			if( ps->ps_id > 0.0 )
+				es_scale = es_para[0] * es_mat[15]/ps->ps_id;
+			else
+			{
+				while( ps->l.magic != RT_LIST_HEAD_MAGIC && ps->ps_id <= 0.0 )
+					ps = RT_LIST_NEXT( wdb_pipeseg, &ps->l );
+
+				/* Check if entire pipe has zero ID */
+				if( ps->l.magic == RT_LIST_HEAD_MAGIC )
+					es_scale = (-es_para[0] * es_mat[15]);
+				else
+					es_scale = es_para[0] * es_mat[15]/ps->ps_id;
+			}
+		}
+		pipe_scale_id( &es_int, es_scale );
 		break;
 	}
 }
@@ -4084,11 +4235,24 @@ char	**argv;
 	}
 
 	if( es_edflag == PSCALE || es_edflag == SSCALE )  {
-		if(es_para[0] <= 0.0) {
-			rt_log("ERROR: SCALE FACTOR <= 0\n");
-			inpara = 0;
-			sedraw = 0;
-			return CMD_BAD;
+		if( es_menu == MENU_PSEG_OD || es_menu == MENU_PSEG_ID || MENU_PIPE_SCALE_ID )
+		{
+			if( es_para[0] < 0.0 )
+			{
+				rt_log("ERROR: SCALE FACTOR < 0\n");
+				inpara = 0;
+				sedraw = 0;
+				return CMD_BAD;
+			}
+		}
+		else
+		{
+			if(es_para[0] <= 0.0) {
+				rt_log("ERROR: SCALE FACTOR <= 0\n");
+				inpara = 0;
+				sedraw = 0;
+				return CMD_BAD;
+			}
 		}
 	}
 
@@ -4108,6 +4272,8 @@ char	**argv;
 		case ECMD_NMG_LEXTRU:
 		case ECMD_PIPE_PICK:
 		case ECMD_PIPE_SPLIT:
+		case ECMD_PIPE_SEG_ADD:
+		case ECMD_PIPE_SEG_INS:
 			/* must convert to base units */
 			es_para[0] *= local2base;
 			es_para[1] *= local2base;
