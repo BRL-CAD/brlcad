@@ -488,14 +488,14 @@ struct region  {
  *  due to the effect of animations, so partition structures can be expected
  *  to change length over the course of a single application program.
  */
-#define RT_HIT_NORM( _hitp, _stp, rayp )  { \
+#define RT_HIT_NORM( _hitp, _stp, _rayp )  { \
 	register int _id = (_stp)->st_id; \
 	RT_CHECK_SOLTAB(_stp); \
 	if( _id <= 0 || _id > ID_MAXIMUM ) { \
-		rt_log("stp=x%x, id=%d. hitp=x%x, rayp=x%x\n", _stp, _id, _hitp, rayp); \
+		rt_log("stp=x%x, id=%d. hitp=x%x, rayp=x%x\n", _stp, _id, _hitp, _rayp); \
 		rt_bomb("RT_HIT_NORM:  bad st_id");\
 	} \
-	rt_functab[_id].ft_norm(_hitp, _stp, rayp); }
+	rt_functab[_id].ft_norm(_hitp, _stp, _rayp); }
 
 struct partition {
 	long		pt_magic;		/* sanity check */
@@ -1617,8 +1617,10 @@ RT_EXTERN(void db_pr_combined_tree_state,
 	(CONST struct combined_tree_state *ctsp));
 RT_EXTERN(int db_apply_state_from_comb, (struct db_tree_state *tsp,
 	CONST struct db_full_path *pathp, CONST struct rt_external *ep));
+#if defined(DB_H)
 RT_EXTERN(int db_apply_state_from_memb, (struct db_tree_state *tsp,
 	struct db_full_path *pathp, CONST struct member	*mp));
+#endif
 RT_EXTERN(int db_follow_path_for_state, (struct db_tree_state *tsp,
 	struct db_full_path *pathp, CONST char *orig_str, int noisy));
 RT_EXTERN(union tree *db_recurse, (struct db_tree_state	*tsp,
