@@ -3,7 +3,7 @@
  *
  * $Header$
  *
-
+ */
 /* jove.h header file to be included by EVERYONE */
 
 #ifdef SYSV
@@ -27,6 +27,10 @@
 #	define strrchr(sp,c)	rindex(sp,c)
 	extern char *index();
 	extern char *rindex();
+#endif
+
+#if defined(__STDC__) || (BSD >= 44) || defined(_POSIX_SOURCE)
+#	define HAS_TERMIOS	1
 #endif
 
 #include <setjmp.h>
