@@ -660,6 +660,7 @@ png_link_works=no
 dnl AC_CHECK_LIB(png, png_check_sig, png_link_works=yes)
 AC_CHECK_LIB(png, png_access_version_number, png_link_works=yes)
 AC_MSG_RESULT($png_link_works)
+
  dnl check whether there is a useable math library
 m_link_works=no
 AC_CHECK_LIB(m, cos, m_link_works=yes)
@@ -1102,7 +1103,7 @@ AC_CHECK_FUNC(strdup, AC_DEFINE(HAVE_STRDUP_DECL,1,strdup))
 
 AC_CHECK_FUNCS(socket, SOCKET="" ,
 	       [AC_CHECK_LIB(socket, socket, SOCKET="-lsocket", 
-			     AC_MSG_NOTICE([<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<])
+			     AC_MSG_NOTICE([>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>])
 			     AC_MSG_ERROR([*** No internet socket found ***]))
 	       ])
 AC_SUBST(SOCKET)
@@ -1176,7 +1177,7 @@ else
 			AC_MSG_ERROR([*** Building libpng was disabled, yet no system png library was found ***])
 		fi
 	else
-		dnl automatic detection
+		dnl automatic detection, we need to build if it won't run or won't link
 		if test "x$png_works" = "xno" ; then
 			build_brlcad_png=yes
 		elif test "x$png_link_works" = "xno" ; then
