@@ -1,3 +1,0 @@
-# Tcl package index file, version 1.0
-
-package ifneeded Itk @ITCL_VERSION@ [list load "@ITK_PKG_FILE@" Itk]
