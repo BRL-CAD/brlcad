@@ -49,8 +49,6 @@ static char RCSarb[] = "@(#)$Header$ (BRL)";
 #include "db.h"
 #include "./debug.h"
 
-void	arb_print();
-
 /* The internal (in memory) form of an ARB8 -- 8 points in space */
 struct arb_internal {
 	fastf_t	arbi_pt[3*8];
@@ -68,8 +66,7 @@ struct oface {
 /* One of these for each face */
 struct aface {
 	fastf_t	A[3];			/* "A" point */
-	fastf_t	N[3];			/* Unit-length Normal (outward) */
-	fastf_t	NdotA;			/* Normal dot A */
+	plane_t	peqn;			/* Plane equation, unit normal */
 };
 
 /* One of these for each ARB, custom allocated to size */
@@ -80,20 +77,18 @@ struct arb_specific  {
 };
 
 /* These hold temp values for the face being prep'ed */
-#define ARB_MAXPTS	4		/* All we need are 4 points */
 struct prep_arb {
-	point_t		pa_points[ARB_MAXPTS];	/* Actual points on plane */
 	vect_t		pa_center;	/* center point */
-	int		pa_npts;	/* number of points on plane */
 	int		pa_faces;	/* Number of faces done so far */
+	int		pa_npts[6];	/* # of points on face's plane */
+	int		pa_pindex[4][6]; /* subscr in arbi_pt[] */
 	struct aface	pa_face[6];	/* required face info work area */
 	struct oface	pa_opt[6];	/* optional face info work area */
 	/* These elements must be initialized before using */
+	fastf_t		pa_tol_sq;	/* points-are-equal tol sq */
 	int		pa_doopt;	/* compute pa_opt[] stuff */
 	char		*pa_name;	/* string for error messages */
 };
-
-HIDDEN void	arb_add_pt();
 
 /*
  *  Layout of arb in input record.
@@ -103,7 +98,7 @@ HIDDEN void	arb_add_pt();
 static struct arb_info {
 	char	*ai_title;
 	int	ai_sub[4];
-} arb_info[6] = {
+} rt_arb_info[6] = {
 	{ "1234", 3, 2, 1, 0 },		/* "bottom" face */
 	{ "8765", 4, 5, 6, 7 },		/* "top" face */
 	{ "1485", 4, 7, 3, 0 },
@@ -113,7 +108,141 @@ static struct arb_info {
 };
 
 /*
- *			A R B _ M K _ P L A N E S
+ *			R T _ A R B _ A D D _ P T
+ *
+ *  Add another point to a struct arb_specific, checking for unique pts.
+ *  The first two points are easy.  The third one triggers most of the
+ *  plane calculations, and forth and subsequent ones are merely
+ *  checked for validity.
+ *
+ *  Returns -
+ *	 0	point was accepted
+ *	-1	point was rejected
+ */
+HIDDEN int
+rt_arb_add_pt( point, title, pap, ptno )
+register pointp_t point;
+char		*title;
+struct prep_arb	*pap;
+int		ptno;	/* current point # on face */
+{
+	LOCAL vect_t	work;
+	LOCAL vect_t	P_A;		/* new point minus A */
+	FAST fastf_t	f;
+	register struct aface	*afp;
+	register struct oface	*ofp;
+
+	afp = &pap->pa_face[pap->pa_faces];
+	ofp = &pap->pa_opt[pap->pa_faces];
+
+	/* The first 3 points are treated differently */
+	switch( ptno )  {
+	case 0:
+		VMOVE( afp->A, point );
+		if( pap->pa_doopt )  {
+			VMOVE( ofp->arb_UVorig, point );
+		}
+		return(0);				/* OK */
+	case 1:
+		VSUB2( ofp->arb_U, point, afp->A );	/* B-A */
+		f = MAGNITUDE( ofp->arb_U );
+		if( NEAR_ZERO( f, SQRT_SMALL_FASTF ) )  {
+			return(-1);			/* BAD */
+		}
+		ofp->arb_Ulen = f;
+		f = 1/f;
+		VSCALE( ofp->arb_U, ofp->arb_U, f );
+		/* Note that arb_U is used to build N, below */
+		return(0);				/* OK */
+	case 2:
+		VSUB2( P_A, point, afp->A );	/* C-A */
+		/* Check for co-linear, ie, |(B-A)x(C-A)| ~= 0 */
+		VCROSS( afp->peqn, ofp->arb_U, P_A );
+		f = MAGNITUDE( afp->peqn );
+		if( NEAR_ZERO(f,0.005) )  {
+			return(-1);			/* BAD */
+		}
+		f = 1/f;
+		VSCALE( afp->peqn, afp->peqn, f );
+
+		if( pap->pa_doopt )  {
+			/*
+			 * Get vector perp. to AB in face of plane ABC.
+			 * Scale by projection of AC, make this V.
+			 */
+			VCROSS( work, afp->peqn, ofp->arb_U );
+			VUNITIZE( work );
+			f = VDOT( work, P_A );
+			VSCALE( ofp->arb_V, work, f );
+			f = MAGNITUDE( ofp->arb_V );
+			ofp->arb_Vlen = f;
+			f = 1/f;
+			VSCALE( ofp->arb_V, ofp->arb_V, f );
+
+			/* Check for new Ulen */
+			VSUB2( P_A, point, ofp->arb_UVorig );
+			f = VDOT( P_A, ofp->arb_U );
+			if( f > ofp->arb_Ulen ) {
+				ofp->arb_Ulen = f;
+			} else if( f < 0.0 ) {
+				VJOIN1( ofp->arb_UVorig, ofp->arb_UVorig, f,
+					ofp->arb_U );
+				ofp->arb_Ulen += (-f);
+			}
+		}
+
+		/*
+		 *  If C-A is clockwise from B-A, then the normal
+		 *  points inwards, so we need to fix it here.
+		 */
+		VSUB2( work, afp->A, pap->pa_center );
+		f = VDOT( work, afp->peqn );
+		if( f < 0.0 )  {
+			VREVERSE(afp->peqn, afp->peqn);	/* "fix" normal */
+		}
+		afp->peqn[3] = VDOT( afp->peqn, afp->A );
+		return(0);				/* OK */
+	default:
+		/* Merely validate 4th and subsequent points */
+		if( pap->pa_doopt )  {
+			VSUB2( P_A, point, ofp->arb_UVorig );
+			/* Check for new Ulen, Vlen */
+			f = VDOT( P_A, ofp->arb_U );
+			if( f > ofp->arb_Ulen ) {
+				ofp->arb_Ulen = f;
+			} else if( f < 0.0 ) {
+				VJOIN1( ofp->arb_UVorig, ofp->arb_UVorig, f,
+					ofp->arb_U );
+				ofp->arb_Ulen += (-f);
+			}
+			f = VDOT( P_A, ofp->arb_V );
+			if( f > ofp->arb_Vlen ) {
+				ofp->arb_Vlen = f;
+			} else if( f < 0.0 ) {
+				VJOIN1( ofp->arb_UVorig, ofp->arb_UVorig, f,
+					ofp->arb_V );
+				ofp->arb_Vlen += (-f);
+			}
+		}
+
+		VSUB2( P_A, point, afp->A );
+		VUNITIZE( P_A );		/* Checking direction only */
+		f = VDOT( afp->peqn, P_A );
+		if( ! NEAR_ZERO(f,0.005) )  {
+			/* Non-planar face */
+			rt_log("arb(%s): face %s[%d] non-planar, dot=%g\n",
+				pap->pa_name, title, ptno, f );
+#ifdef CONSERVATIVE
+			return(-1);			/* BAD */
+#endif
+		}
+		return(0);				/* OK */
+	}
+	/* NOTREACHED */
+}
+
+/*
+ *			R T _ A R B _ M K _ P L A N E S
  *
  *  Given an arb_internal structure with 8 points in it,
  *  compute the face information.
@@ -123,22 +252,22 @@ static struct arb_info {
  *	<0	failure
  */
 HIDDEN int
-arb_mk_planes( pap, aip )
+rt_arb_mk_planes( pap, aip )
 register struct prep_arb	*pap;
 struct arb_internal		*aip;
 {
 	register fastf_t *op;		/* Used for scanning vectors */
-	LOCAL vect_t	work;		/* Vector addition work area */
 	LOCAL vect_t	sum;		/* Sum of all endpoints */
 	register int	i;
 	register int	j;
 	register int	k;
 	LOCAL fastf_t	f;
+	int		equiv_pts[8];
 
 	/*
 	 *  Determine a point which is guaranteed to be within the solid.
 	 *  This is done by averaging all the vertices.  This center is
-	 *  needed for arb_add_pt, which demands a point inside the solid.
+	 *  needed for rt_arb_add_pt, which demands a point inside the solid.
 	 *  The center of the enclosing RPP strategy used for the bounding
 	 *  sphere can be tricked by thin plates which are non-axis aligned,
 	 *  so this dual-strategy is required.  (What a bug hunt!).
@@ -152,34 +281,75 @@ struct arb_internal		*aip;
 	}
 	VSCALE( pap->pa_center, sum, 0.125 );	/* sum/8 */
 
+	/*
+	 *  Find all points that are equivalent, within the specified tol.
+	 *  Build the array equiv_pts[] so that it is indexed by
+	 *  vertex number, and returns the lowest numbered equivalent
+	 *  vertex (or it's own vertex number, if non-equivalent).
+	 */
+	equiv_pts[0] = 0;
+	for( i=1; i<8; i++ )  {
+		register pointp_t	point;
+		point = &aip->arbi_pt[i*ELEMENTS_PER_VECT];
+		for( j = i-1; j >= 0; j-- )  {
+			/* Compare vertices I and J */
+			LOCAL vect_t		work;
+
+			VSUB2( work, point, &aip->arbi_pt[j*ELEMENTS_PER_VECT] );
+			if( MAGSQ( work ) < pap->pa_tol_sq )  {
+				/* Points I and J are the same, J is lower */
+				equiv_pts[i] = equiv_pts[j];
+				goto next_point;
+			}
+		}
+		equiv_pts[i] = i;
+	next_point: ;
+	}
+	if( rt_g.debug & DEBUG_ARB8 )  {
+		rt_log("arb(%s) equiv_pts[] = %d %d %d %d %d %d %d %d\n",
+		pap->pa_name,
+		equiv_pts[0], equiv_pts[1], equiv_pts[2], equiv_pts[3],
+		equiv_pts[4], equiv_pts[5], equiv_pts[6], equiv_pts[7]);
+	}
+
 	pap->pa_faces = 0;
 	for( i=0; i<6; i++ )  {
-		pap->pa_npts = 0;
-		for( j=0; j<4; j++ )  {
-			register pointp_t point;
+		int		npts;
 
-			point = &aip->arbi_pt[arb_info[i].ai_sub[j]*ELEMENTS_PER_VECT];
+		npts = 0;
+		for( j=0; j<4; j++ )  {
+			int	pt_index;
+
+			pt_index = rt_arb_info[i].ai_sub[j];
+			if( rt_g.debug & DEBUG_ARB8 )  {
+				rt_log("face %d, j=%d, npts=%d, orig_vert=%d, vert=%d\n",
+					i, j, npts,
+					pt_index, equiv_pts[pt_index] );
+			}
+			pt_index = equiv_pts[pt_index];
 
 			/* Verify that this point is not the same
-			 * as an earlier point
+			 * as an earlier point, by checking point indices
 			 */
 #			include "noalias.h"
-			for( k=0; k < pap->pa_npts; k++ )  {
-				VSUB2( work, point, pap->pa_points[k] );
-				if( MAGSQ( work ) < 0.005 )  {
-					/* the same -- skip it */
-					goto next_pt;
+			for( k = npts-1; k >= 0; k-- )  {
+				if( pap->pa_pindex[k][pap->pa_faces] == pt_index )  {
+					/* Point is the same -- skip it */
+					goto skip_pt;
 				}
 			}
-			VMOVE( pap->pa_points[pap->pa_npts], point );
+			if( rt_arb_add_pt(
+			    &aip->arbi_pt[pt_index*ELEMENTS_PER_VECT],
+			    rt_arb_info[i].ai_title, pap, npts ) == 0 )  {
+				/* Point was accepted */
+				pap->pa_pindex[npts][pap->pa_faces] = pt_index;
+				npts++;
+			}
 
-			arb_add_pt(
-				point,
-				arb_info[i].ai_title, pap );
-next_pt:		;
+skip_pt:		;
 		}
 
-		if( pap->pa_npts < 3 )  {
+		if( npts < 3 )  {
 			/* This face is BAD */
 			continue;
 		}
@@ -197,6 +367,7 @@ next_pt:		;
 			VSCALE( ofp->arb_V, ofp->arb_V, ofp->arb_Vlen );
 		}
 
+		pap->pa_npts[pap->pa_faces] = npts;
 		pap->pa_faces++;
 	}
 	if( pap->pa_faces < 4  || pap->pa_faces > 6 )  {
@@ -208,7 +379,7 @@ next_pt:		;
 }
 
 /*
- *			A R B _ S E T U P
+ *			R T _ A R B _ S E T U P
  *
  *  This is packaged as a separate function, so that it can also be
  *  called "on the fly" from the UV mapper.
@@ -218,32 +389,33 @@ next_pt:		;
  *	!0	failure
  */
 HIDDEN int
-arb_setup( stp, rec, rtip, uv_wanted )
+rt_arb_setup( stp, rec, rtip, uv_wanted )
 struct soltab	*stp;
 union record	*rec;
 struct rt_i	*rtip;
 int		uv_wanted;
 {
-	register int	i;
-	struct arb_internal ai;
-	struct prep_arb	pa;
+	register int		i;
+	struct arb_internal	ai;
+	struct prep_arb		pa;
 
 	if( rec == (union record *)0 )  {
 		rec = db_getmrec( rtip->rti_dbip, stp->st_dp );
-		i = arb_import( &ai, rec, stp->st_pathmat );
+		i = rt_arb_import( &ai, rec, stp->st_pathmat );
 		rt_free( (char *)rec, "arb record" );
 	} else {
-		i = arb_import( &ai, rec, stp->st_pathmat );
+		i = rt_arb_import( &ai, rec, stp->st_pathmat );
 	}
 	if( i < 0 )  {
-		rt_log("arb_setup(%s): db import failure\n", stp->st_name);
+		rt_log("rt_arb_setup(%s): db import failure\n", stp->st_name);
 		return(-1);		/* BAD */
 	}
 
 	pa.pa_doopt = uv_wanted;
 	pa.pa_name = stp->st_name;
+	pa.pa_tol_sq = 0.005;
 
-	if( arb_mk_planes( &pa, &ai ) < 0 )  {
+	if( rt_arb_mk_planes( &pa, &ai ) < 0 )  {
 		return(-2);		/* Error */
 	}
 
@@ -314,138 +486,7 @@ int		uv_wanted;
 }
 
 /*
- *			A R B _ A D D _ P T
- *
- *  Add another point to a struct arb_specific, checking for unique pts.
- *  The first two points are easy.  The third one triggers most of the
- *  plane calculations, and forth and subsequent ones are merely
- *  checked for validity.
- *
- *  Static externs are used to build up the state of the current faces.
- */
-HIDDEN void
-arb_add_pt( point, title, pap )
-register pointp_t point;
-char		*title;
-struct prep_arb	*pap;
-{
-	register int	i;
-	LOCAL vect_t	work;
-	LOCAL vect_t	P_A;		/* new point minus A */
-	FAST fastf_t	f;
-	register struct aface	*afp;
-	register struct oface	*ofp;
-
-	afp = &pap->pa_face[pap->pa_faces];
-	ofp = &pap->pa_opt[pap->pa_faces];
-	i = pap->pa_npts++;		/* Current point number */
-
-	/* The first 3 points are treated differently */
-	switch( i )  {
-	case 0:
-		VMOVE( afp->A, point );
-		if( pap->pa_doopt )  {
-			VMOVE( ofp->arb_UVorig, point );
-		}
-		return;					/* OK */
-	case 1:
-		VSUB2( ofp->arb_U, point, afp->A );	/* B-A */
-		f = MAGNITUDE( ofp->arb_U );
-		ofp->arb_Ulen = f;
-		f = 1/f;
-		VSCALE( ofp->arb_U, ofp->arb_U, f );
-		/* Note that arb_U is used to build N, below */
-		return;					/* OK */
-	case 2:
-		VSUB2( P_A, point, afp->A );	/* C-A */
-		/* Check for co-linear, ie, |(B-A)x(C-A)| ~= 0 */
-		VCROSS( afp->N, ofp->arb_U, P_A );
-		f = MAGNITUDE( afp->N );
-		if( NEAR_ZERO(f,0.005) )  {
-			pap->pa_npts--;
-			return;				/* BAD */
-		}
-		f = 1/f;
-		VSCALE( afp->N, afp->N, f );
-
-		if( pap->pa_doopt )  {
-			/*
-			 * Get vector perp. to AB in face of plane ABC.
-			 * Scale by projection of AC, make this V.
-			 */
-			VCROSS( work, afp->N, ofp->arb_U );
-			VUNITIZE( work );
-			f = VDOT( work, P_A );
-			VSCALE( ofp->arb_V, work, f );
-			f = MAGNITUDE( ofp->arb_V );
-			ofp->arb_Vlen = f;
-			f = 1/f;
-			VSCALE( ofp->arb_V, ofp->arb_V, f );
-
-			/* Check for new Ulen */
-			VSUB2( P_A, point, ofp->arb_UVorig );
-			f = VDOT( P_A, ofp->arb_U );
-			if( f > ofp->arb_Ulen ) {
-				ofp->arb_Ulen = f;
-			} else if( f < 0.0 ) {
-				VJOIN1( ofp->arb_UVorig, ofp->arb_UVorig, f,
-					ofp->arb_U );
-				ofp->arb_Ulen += (-f);
-			}
-		}
-
-		/*
-		 *  If C-A is clockwise from B-A, then the normal
-		 *  points inwards, so we need to fix it here.
-		 */
-		VSUB2( work, afp->A, pap->pa_center );
-		f = VDOT( work, afp->N );
-		if( f < 0.0 )  {
-			VREVERSE(afp->N, afp->N);	/* "fix" normal */
-		}
-		afp->NdotA = VDOT( afp->N, afp->A );
-		return;					/* OK */
-	default:
-		/* Merely validate 4th and subsequent points */
-		if( pap->pa_doopt )  {
-			VSUB2( P_A, point, ofp->arb_UVorig );
-			/* Check for new Ulen, Vlen */
-			f = VDOT( P_A, ofp->arb_U );
-			if( f > ofp->arb_Ulen ) {
-				ofp->arb_Ulen = f;
-			} else if( f < 0.0 ) {
-				VJOIN1( ofp->arb_UVorig, ofp->arb_UVorig, f,
-					ofp->arb_U );
-				ofp->arb_Ulen += (-f);
-			}
-			f = VDOT( P_A, ofp->arb_V );
-			if( f > ofp->arb_Vlen ) {
-				ofp->arb_Vlen = f;
-			} else if( f < 0.0 ) {
-				VJOIN1( ofp->arb_UVorig, ofp->arb_UVorig, f,
-					ofp->arb_V );
-				ofp->arb_Vlen += (-f);
-			}
-		}
-
-		VSUB2( P_A, point, afp->A );
-		VUNITIZE( P_A );		/* Checking direction only */
-		f = VDOT( afp->N, P_A );
-		if( ! NEAR_ZERO(f,0.005) )  {
-			/* Non-planar face */
-			rt_log("arb(%s): face %s non-planar, dot=%g\n",
-				pap->pa_name, title, f );
-#ifdef CONSERVATIVE
-			pap->pa_npts--;
-			return;				/* BAD */
-#endif
-		}
-		return;					/* OK */
-	}
-}
-
-/*
- *  			A R B _ P R E P
+ *  			R T _ A R B _ P R E P
  *
  *  This is the actual LIBRT "prep" interface.
  *
@@ -454,19 +495,19 @@ struct prep_arb	*pap;
  *	!0	failure
  */
 int
-arb_prep( stp, rec, rtip )
+rt_arb_prep( stp, rec, rtip )
 struct soltab	*stp;
 union record	*rec;
 struct rt_i	*rtip;
 {
-	return( arb_setup( stp, rec, rtip, 0 ) );
+	return( rt_arb_setup( stp, rec, rtip, 0 ) );
 }
 
 /*
- *  			A R B _ P R I N T
+ *  			R T _ A R B _ P R I N T
  */
 void
-arb_print( stp )
+rt_arb_print( stp )
 register struct soltab *stp;
 {
 	register struct arb_specific *arbp =
@@ -482,8 +523,7 @@ register struct soltab *stp;
 	for( i=0; i < arbp->arb_nmfaces; i++ )  {
 		afp = &(arbp->arb_face[i]);
 		VPRINT( "A", afp->A );
-		VPRINT( "Normal", afp->N );
-		rt_log( "N.A = %g\n", afp->NdotA );
+		HPRINT( "Peqn", afp->peqn );
 		if( arbp->arb_opt )  {
 			register struct oface	*op;
 			op = &(arbp->arb_opt[i]);
@@ -497,7 +537,7 @@ register struct soltab *stp;
 }
 
 /*
- *			A R B _ S H O T
+ *			R T _ A R B _ S H O T
  *  
  * Function -
  *	Shoot a ray at an ARB8.
@@ -512,7 +552,7 @@ register struct soltab *stp;
  *  	segp	HIT
  */
 struct seg *
-arb_shot( stp, rp, ap )
+rt_arb_shot( stp, rp, ap )
 struct soltab *stp;
 register struct xray *rp;
 struct application	*ap;
@@ -533,8 +573,8 @@ struct application	*ap;
 		FAST fastf_t	dxbdn;
 		FAST fastf_t	s;
 
-		dxbdn = VDOT( afp->N, rp->r_pt ) - afp->NdotA;
-		if( (dn = -VDOT( afp->N, rp->r_dir )) < -SQRT_SMALL_FASTF )  {
+		dxbdn = VDOT( afp->peqn, rp->r_pt ) - afp->peqn[3];
+		if( (dn = -VDOT( afp->peqn, rp->r_dir )) < -SQRT_SMALL_FASTF )  {
 			/* exit point, when dir.N < 0.  out = min(out,s) */
 			if( out > (s = dxbdn/dn) )  {
 				out = s;
@@ -560,7 +600,7 @@ struct application	*ap;
 	}
 	/* Validate */
 	if( iplane == -1 || oplane == -1 )  {
-		rt_log("arb_shoot(%s): 1 hit => MISS\n",
+		rt_log("rt_arb_shoot(%s): 1 hit => MISS\n",
 			stp->st_name);
 		return( SEG_NULL );	/* MISS */
 	}
@@ -584,12 +624,12 @@ struct application	*ap;
 
 #define SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;	
 /*
- *			A R B _ V S H O T
+ *			R T _ A R B _ V S H O T
  *
  *  This is the Becker vector version
  */
 void
-arb_vshot( stp, rp, segp, n, resp)
+rt_arb_vshot( stp, rp, segp, n, resp)
 struct soltab	       *stp[]; /* An array of solid pointers */
 struct xray		*rp[]; /* An array of ray pointers */
 struct  seg            segp[]; /* array of segs (results returned) */
@@ -625,9 +665,9 @@ struct resource         *resp; /* pointer to a list of free segs */
 			if ( arbp->arb_nmfaces <= j )
 				continue; /* faces of this ARB are done */
 
-			dxbdn = VDOT( arbp->arb_face[j].N, rp[i]->r_pt ) -
-				arbp->arb_face[j].NdotA;
-			if( (dn = -VDOT( arbp->arb_face[j].N, rp[i]->r_dir )) <
+			dxbdn = VDOT( arbp->arb_face[j].peqn, rp[i]->r_pt ) -
+				arbp->arb_face[j].peqn[3];
+			if( (dn = -VDOT( arbp->arb_face[j].peqn, rp[i]->r_dir )) <
 							-SQRT_SMALL_FASTF )  {
 			   /* exit point, when dir.N < 0.  out = min(out,s) */
 			   if( segp[i].seg_out.hit_dist > (s = dxbdn/dn) )  {
@@ -675,12 +715,12 @@ struct resource         *resp; /* pointer to a list of free segs */
 }
 
 /*
- *  			A R B _ N O R M
+ *  			R T _ A R B _ N O R M
  *
  *  Given ONE ray distance, return the normal and entry/exit point.
  */
 void
-arb_norm( hitp, stp, rp )
+rt_arb_norm( hitp, stp, rp )
 register struct hit *hitp;
 struct soltab *stp;
 register struct xray *rp;
@@ -691,18 +731,18 @@ register struct xray *rp;
 
 	VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
 	h = (int)hitp->hit_private;
-	VMOVE( hitp->hit_normal, arbp->arb_face[h].N );
+	VMOVE( hitp->hit_normal, arbp->arb_face[h].peqn );
 }
 
 /*
- *			A R B _ C U R V E
+ *			R T _ A R B _ C U R V E
  *
  *  Return the "curvature" of the ARB face.
  *  Pick a principle direction orthogonal to normal, and 
  *  indicate no curvature.
  */
 void
-arb_curve( cvp, hitp, stp )
+rt_arb_curve( cvp, hitp, stp )
 register struct curvature *cvp;
 register struct hit *hitp;
 struct soltab *stp;
@@ -713,7 +753,7 @@ struct soltab *stp;
 }
 
 /*
- *  			A R B _ U V
+ *  			R T _ A R B _ U V
  *  
  *  For a hit on a face of an ARB, return the (u,v) coordinates
  *  of the hit point.  0 <= u,v <= 1.
@@ -721,7 +761,7 @@ struct soltab *stp;
  *  v extends along the arb_V direction defined by Nx(B-A).
  */
 void
-arb_uv( ap, stp, hitp, uvp )
+rt_arb_uv( ap, stp, hitp, uvp )
 struct application *ap;
 struct soltab *stp;
 register struct hit *hitp;
@@ -743,12 +783,12 @@ register struct uvcoord *uvp;
 		 */
 		RES_ACQUIRE( &rt_g.res_model );
 		if( arbp->arb_opt == (struct oface *)0 )  {
-			ret = arb_setup(stp, (union record *)0, ap->a_rt_i, 1);
+			ret = rt_arb_setup(stp, (union record *)0, ap->a_rt_i, 1);
 		}
 		RES_RELEASE( &rt_g.res_model );
 
 		if( ret != 0 || arbp->arb_opt == (struct oface *)0 )  {
-			rt_log("arb_uv(%s) dyanmic setup failure st_specific=x%x, optp=x%x\n",
+			rt_log("rt_arb_uv(%s) dyanmic setup failure st_specific=x%x, optp=x%x\n",
 				stp->st_name,
 		    		stp->st_specific, arbp->arb_opt );
 			return;
@@ -774,10 +814,10 @@ register struct uvcoord *uvp;
 }
 
 /*
- *			A R B _ F R E E
+ *			R T _ A R B _ F R E E
  */
 void
-arb_free( stp )
+rt_arb_free( stp )
 register struct soltab *stp;
 {
 	register struct arb_specific *arbp =
@@ -795,14 +835,14 @@ register struct soltab *stp;
 	ADD_VL( vhead, &valp[d*3], 1 );
 
 /*
- *  			A R B _ P L O T
+ *  			R T _ A R B _ P L O T
  *
  *  Plot an ARB by tracing out four "U" shaped contours
  *  This draws each edge only once.
  *  XXX No checking for degenerate faces is done, but probably should be.
  */
 int
-arb_plot( rp, matp, vhead, dp )
+rt_arb_plot( rp, matp, vhead, dp )
 register union record	*rp;
 register matp_t		matp;
 struct vlhead		*vhead;
@@ -810,8 +850,8 @@ struct directory	*dp;
 {
 	struct arb_internal	ai;
 
-	if( arb_import( &ai, rp, matp ) < 0 )  {
-		rt_log("arb_plot(%s): db import failure\n", dp->d_namep);
+	if( rt_arb_import( &ai, rp, matp ) < 0 )  {
+		rt_log("rt_arb_plot(%s): db import failure\n", dp->d_namep);
 		return(-1);
 	}
 
@@ -823,16 +863,16 @@ struct directory	*dp;
 }
 
 /*
- *			A R B _ C L A S S
+ *			R T _ A R B _ C L A S S
  */
 int
-arb_class()
+rt_arb_class()
 {
 	return(0);
 }
 
 /*
- *			A R B _ I M P O R T
+ *			R T _ A R B _ I M P O R T
  *
  *  Import an ARB8 from the database format to the internal format.
  *  There are two parts to this:  First, the database is presently
@@ -846,7 +886,7 @@ arb_class()
  *  by rotating each vector and adding in the base vector.
  */
 int
-arb_import( aip, rp, matp )
+rt_arb_import( aip, rp, matp )
 struct arb_internal	*aip;
 union record		*rp;
 register matp_t		matp;
@@ -859,7 +899,7 @@ register matp_t		matp;
 	
 	/* Check record type */
 	if( rp->u_id != ID_SOLID )  {
-		rt_log("arb_import: defective record, id=x%x\n", rp->u_id);
+		rt_log("rt_arb_import: defective record, id=x%x\n", rp->u_id);
 		return(-1);
 	}
 
@@ -884,7 +924,7 @@ register matp_t		matp;
 }
 
 /*
- *			A R B _ T E S S
+ *			R T _ A R B _ T E S S
  *
  *  "Tessellate" an ARB into an NMG data structure.
  *  Purely a mechanical transformation of one faceted object
@@ -895,43 +935,59 @@ register matp_t		matp;
  *	 0	OK.  *r points to nmgregion that holds this tessellation.
  */
 int
-arb_tess( r, m, rp, mat, dp )
+rt_arb_tess( r, m, rp, mat, dp, abs_tol, rel_tol, norm_tol )
 struct nmgregion	**r;
 struct model		*m;
-register union record	*rp;
-register mat_t		mat;
+union record		*rp;
+mat_t			mat;
 struct directory	*dp;
+double			abs_tol;
+double			rel_tol;
+double			norm_tol;
 {
 	struct shell		*s;
 	struct arb_internal	ai;
+	struct prep_arb		pa;
 	register int		i;
-	struct faceuse		*outfaceuses[6];
+	struct faceuse		*fu[6];
 	struct vertex		*verts[8];
 	struct vertex		**vertp[4];
-	int			face;
-	plane_t			plane;
-	int			j;
 
-	if( arb_import( &ai, rp, mat ) < 0 )  {
-		rt_log("arb_tess(%s): import failure\n", dp->d_namep);
+	if( rt_arb_import( &ai, rp, mat ) < 0 )  {
+		rt_log("rt_arb_tess(%s): import failure\n", dp->d_namep);
 		return(-1);
 	}
+	bzero( (char *)&pa, sizeof(pa) );
+	pa.pa_doopt = 0;		/* no UV stuff */
+	pa.pa_name = dp->d_namep;
+	pa.pa_tol_sq = 0.005;	/* XXX need real tolerance here! XXX */
+	if( rt_arb_mk_planes( &pa, &ai ) < 0 )  return(-2);
 
-	for( i=0; i<6; i++ )  outfaceuses[i] = (struct faceuse *)0;
 	for( i=0; i<8; i++ )  verts[i] = (struct vertex *)0;
 
 	*r = nmg_mrsv( m );	/* Make region, empty shell, vertex */
 	s = m->r_p->s_p;
 
-	/*  List the vertices for each face in clockwise order */
-	for( i=0; i<6; i++ )  {
-		register struct arb_info	*aip = &arb_info[i];
-
-		vertp[0] = &verts[aip->ai_sub[0]];
-		vertp[1] = &verts[aip->ai_sub[1]];
-		vertp[2] = &verts[aip->ai_sub[2]];
-		vertp[3] = &verts[aip->ai_sub[3]];
-		outfaceuses[i] = nmg_cmface(s, vertp, 4);
+	/* Process each face */
+	for( i=0; i < pa.pa_faces; i++ )  {
+		vertp[0] = &verts[pa.pa_pindex[0][i]];
+		vertp[1] = &verts[pa.pa_pindex[1][i]];
+		vertp[2] = &verts[pa.pa_pindex[2][i]];
+		if( pa.pa_npts[i] > 3 ) {
+			vertp[3] = &verts[pa.pa_pindex[3][i]];
+		} else {
+			vertp[3] = (struct vertex **)0;
+		}
+		if( rt_g.debug & DEBUG_ARB8 )  {
+			rt_log("face %d, npts=%d, verts %d %d %d %d\n",
+				i, pa.pa_npts[i],
+				pa.pa_pindex[0][i], pa.pa_pindex[1][i],
+				pa.pa_pindex[2][i], pa.pa_pindex[3][i] );
+		}
+		if( (fu[i] = nmg_cmface( s, vertp, pa.pa_npts[i] )) == 0 )  {
+			rt_log("rt_arb_tess(%s): nmg_cmface() fail on face %d\n", i);
+			continue;
+		}
 	}
 
 	/* Associate vertex geometry */
@@ -939,8 +995,8 @@ struct directory	*dp;
 		if(verts[i]) nmg_vertex_gv(verts[i], &ai.arbi_pt[3*i]);
 
 	/* Associate face geometry */
-	for (i=0 ; i < 6 ; ++i) {
-		if(outfaceuses[i])  rt_mk_nmg_planeeqn( outfaceuses[i] );
+	for( i=0; i < pa.pa_faces; i++ )  {
+		nmg_face_g( fu[i], pa.pa_face[i].peqn );
 	}
 
 	/* Compute "geometry" for region and shell */
