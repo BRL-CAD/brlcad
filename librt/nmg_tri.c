@@ -1949,8 +1949,10 @@ CONST struct rt_tol	*tol;
 			p1->vu_p->v_p->vg_p->coord[1],
 			p1->vu_p->v_p->vg_p->coord[2]);
 	} else if (p1->vu_p->up.eu_p->up.lu_p == p2->vu_p->up.eu_p->up.lu_p) {
-		rt_log("parent loops are the same %s %d\n",
-			__FILE__, __LINE__);
+		if (rt_g.NMG_debug & DEBUG_TRI) {
+			rt_log("parent loops are the same %s %d\n",
+				__FILE__, __LINE__);
+		}
 		(void)cut_mapped_loop(tbl2d, p1, p2, color, tol, 1);
 		return;
 	}
