@@ -1740,6 +1740,8 @@ RT_EXTERN(char *db_path_to_string, (CONST struct db_full_path *pp) );
 RT_EXTERN(void db_free_full_path, (struct db_full_path *pp) );
 RT_EXTERN(void db_region_mat, (mat_t m, CONST struct db_i *dbip,
 				CONST char *name) );
+RT_EXTERN(void db_shader_mat, (mat_t model_to_shader, CONST struct db_i *dbip,
+				CONST struct region *rp) );
 /* db_open.c */
 					/* open an existing model database */
 RT_EXTERN(struct db_i *db_open, ( char *name, char *mode ) );

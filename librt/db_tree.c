@@ -1716,6 +1716,11 @@ int depth;			/* number of arcs */
 
 	RT_CHECK_DBI(dbip);
 	RT_CK_FULL_PATH(pathp);
+
+
+	/* XXX case where depth == 0 and pathp->fp_len=2 */
+
+
 	/*
 	 * if depth <= 0 then use the full path.
 	 */
@@ -1729,7 +1734,7 @@ int depth;			/* number of arcs */
 	/*
 	 * if there is no arc, return ident matrix now
 	 */
-	if (depth == 1) return 1;
+	if (depth == 0) return 1;
 
 	for (i=0; i < depth; i++) {
 		parentp = pathp->fp_names[i];
@@ -1872,4 +1877,42 @@ CONST char *name;
 	 * to "region" space
 	 */
 	mat_inv(m, region_to_model);
+}
+
+
+
+/*		D B _ M O D E L _ T O _ S H A D E R _ M A T
+ *
+ *	Given a region, return a matrix which maps model coordinates into
+ *	region "shader space".  This is a space where the bounding box
+ *	of the region in region space is mapped into the unit cube
+ */
+void
+db_shader_mat(model_to_shader, dbip, rp)
+mat_t model_to_shader;
+CONST struct db_i *dbip;
+CONST struct region *rp;
+{
+	mat_t	model_to_region;
+	mat_t	tmp;
+	vect_t	bb_min, bb_max, v_tmp;
+
+
+	/* get model-to-region space mapping */
+	db_region_mat(model_to_region, dbip, rp->reg_name);
+
+	/* 
+	 * scale space so that the range 0..1 in shader space covers 
+	 * the region bounding box exactly
+	 */
+
+	VSETALL(bb_max, -INFINITY);
+	VSETALL(bb_min, INFINITY);
+	rt_bound_tree(rp->reg_treetop, bb_min, bb_max);
+
+	VSUB2(v_tmp, bb_max, bb_min);
+	VINVDIR(v_tmp, v_tmp);
+	mat_idn(tmp);
+	MAT_SCALE_VEC(tmp, v_tmp);
+	mat_mul(model_to_shader, tmp, model_to_region);
 }
