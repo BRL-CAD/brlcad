@@ -2878,11 +2878,20 @@ struct nmg_ptbl		*eu2_list;
 	if( is->on_eg )  {
 		if( !rt_2line3_colinear(
 		    is->pt, is->dir,
-		    is->on_eg->e_pt, is->on_eg->e_dir, 1e5, &(is->tol) ) )  {
+		    is->on_eg->e_pt, is->on_eg->e_dir, 1000.0, &(is->tol) ) )  {
+		    	vect_t	unit_e_dir;
+		    	fastf_t	dot;
+
+		    	VMOVE( unit_e_dir, is->on_eg->e_dir );
+		    	VUNITIZE( unit_e_dir );
+
 			VPRINT("   is->pt   ", is->pt);
 			VPRINT("   is->dir  ", is->dir);
+			VPRINT("unit  e_dir ", unit_e_dir);
 			VPRINT("on_eg->e_pt ", is->on_eg->e_pt);
 			VPRINT("on_eg->e_dir", is->on_eg->e_dir);
+		    	dot = VDOT(is->dir, unit_e_dir);
+		    	rt_log(" dot=%g, ang=%g deg\n", dot, acos(dot) * rt_radtodeg );
 			rt_log("WARNING nmg_isect_line2_face2pNEW() is->pt and on_eg lines differ.  Using on_eg line.\n");
 		}
 		/* Ensure absolute consistency between the two versions of the line! */
@@ -3473,6 +3482,7 @@ CONST struct edgeuse	*eu;
 	rt_log("Wrote %s\n", buf);
 }
 
+/* XXX Move to nmg_info.c */
 /*
  *			N M G _ F I N D _ E G _ B E T W E E N _ 2 F G
  *
@@ -3622,6 +3632,50 @@ CONST struct rt_tol	*tol;
 	return (struct edge_g_lseg *)NULL;
 }
 
+/* XXX Move to nmg_info.c */
+/*
+ *			N M G _ D O E S _ F U _ U S E _ E G
+ *
+ *  See if any edgeuse in the given faceuse
+ *  lies on the indicated edge geometry (edge_g).
+ *  This is a topology check only.
+ *
+ *  Returns -
+ *	NULL	No
+ *	eu	Yes, here is one edgeuse that does.  There may be more.
+ */
+struct edgeuse *
+nmg_does_fu_use_eg( fu1, eg )
+CONST struct faceuse	*fu1;
+CONST long		*eg;
+{
+	CONST struct loopuse	*lu1;
+	register struct edgeuse	*eu1;
+
+	NMG_CK_FACEUSE(fu1);
+	NMG_CK_EDGE_G_EITHER(eg);
+
+	for( RT_LIST_FOR( lu1, loopuse, &fu1->lu_hd ) )  {
+		NMG_CK_LOOPUSE(lu1);
+		if( RT_LIST_FIRST_MAGIC(&lu1->down_hd) == NMG_VERTEXUSE_MAGIC )
+			continue;
+		if (rt_g.NMG_debug & DEBUG_BASIC)  {
+			rt_log(" visiting lu1=x%x, fu1=x%x\n",
+				lu1, fu1 );
+		}
+		for( RT_LIST_FOR( eu1, edgeuse, &lu1->down_hd ) )  {
+			if( eu1->g.magic_p == eg )  goto out;
+		}
+	}
+	eu1 = (struct edgeuse *)NULL;
+out:
+	if (rt_g.NMG_debug & DEBUG_BASIC)  {
+		rt_log("nmg_does_fu_use_eg(fu1=x%x, eg=x%x) eu1=x%x\n",
+			fu1, eg, eu1 );
+	}
+	return eu1;
+}
+
 /* XXX move to plane.c */
 /*
  *			R T _ L I N E _ O N _ P L A N E
@@ -3713,6 +3767,7 @@ struct faceuse		*fu1, *fu2;
 	/* Topology search */
 	/* See if 2 faces share an edge already.  If so, get edge_geom line */
 	if( (is->on_eg = nmg_find_eg_between_2fg(fu1, fu2, &(is->tol))) )  {
+
 		NMG_CK_EDGE_G_LSEG(is->on_eg);
 #if TOO_STRICT
 		/* Verify that this edge_g is with tol of both planes */
@@ -3724,6 +3779,19 @@ struct faceuse		*fu1, *fu2;
 			is->on_eg = NULL;
 		}
 #endif
+		/*
+		 *  There is a topological edge_g in common between
+		 *  the two face geometries.
+		 *  If it isn't used by at least one edge of *both* faceuses,
+		 *  then we know there can't be an intersection.
+		 */
+		if( is->on_eg )  {
+			struct edgeuse	*eu1, *eu2;
+
+			eu1 = nmg_does_fu_use_eg( fu1, is->on_eg );
+			eu2 = nmg_does_fu_use_eg( fu2, is->on_eg );
+			if( !eu1 || !eu2 )  goto outfast;
+		}
 	}
 	if( !is->on_eg )  {
 		/* Geometry search */
@@ -3848,6 +3916,7 @@ out:
 	(void)nmg_tbl(&eu1_list, TBL_FREE, (long *)NULL);
 	(void)nmg_tbl(&eu2_list, TBL_FREE, (long *)NULL);
 
+outfast:
 	if( rt_g.NMG_debug & DEBUG_VERIFY )  {
 		nmg_vfu( &fu1->s_p->fu_hd, fu1->s_p );
 		nmg_vfu( &fu2->s_p->fu_hd, fu2->s_p );
