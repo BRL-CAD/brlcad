@@ -758,6 +758,20 @@ set -S2 "/bin/sh"
 #if defined(__CAKE__alpha)
 /*	DEC Alpha AXP running OSF/1 Version 3 */
 #	undef	alpha
+#	define	CC_OPTS	-std1 -readonly_strings
+#	define	OPTIMIZER	-O2 -Olimit 1400 -fp_reorder
+#	if 1	/* PRODUCTION=1 */
+/*		Shared library version support */
+#		define	ARCH_SUF	so
+#		define	LIBVERS ../sharedlibvers.sh
+#		define	BUILD_LIBRARY	ld -S -shared -o
+#		define	EXTRA_OBJ_NO_DEPENDENCY	-lm -lc
+#		define	RANLIB	true
+#		define	STANDARD_LIBES	-lm -lc -Wl,-rpath -Wl,/usr/lib:LIBDIR
+#	else
+/*		Static linked executables */
+#		define	RANLIB	ranlib5.sh
+#	endif
 #	define	MTYPE	alpha
 #	define	BSD	44
 #	define	HAS_TCP	1
