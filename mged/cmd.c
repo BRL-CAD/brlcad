@@ -2252,6 +2252,8 @@ cmd_adjust(ClientData	clientData,
 	   int		argc,
 	   char		**argv)
 {
+	CHECK_DBI_NULL;
+
 	return wdb_adjust_cmd(wdbp, interp, argc, argv);
 }
 
@@ -2261,6 +2263,8 @@ cmd_attr(ClientData	clientData,
 	 int		argc,
 	 char		**argv)
 {
+	CHECK_DBI_NULL;
+
 	return wdb_attr_cmd(wdbp, interp, argc, argv);
 }
 
@@ -2270,6 +2274,8 @@ cmd_attr_rm(ClientData	clientData,
 	 int		argc,
 	 char		**argv)
 {
+	CHECK_DBI_NULL;
+
 	return wdb_attr_rm_cmd(wdbp, interp, argc, argv);
 }
 
@@ -2279,6 +2285,8 @@ cmd_dbip(ClientData	clientData,
 	 int		argc,
 	 char		**argv)
 {
+	CHECK_DBI_NULL;
+
 	return wdb_dbip_cmd(wdbp, interp, argc, argv);
 }
 
@@ -2288,6 +2296,8 @@ cmd_dump(ClientData	clientData,
 	 int		argc,
 	 char		**argv)
 {
+	CHECK_DBI_NULL;
+
 	return wdb_dump_cmd(wdbp, interp, argc, argv);
 }
 
@@ -2297,6 +2307,8 @@ cmd_form(ClientData	clientData,
 	 int		argc,
 	 char		**argv)
 {
+	CHECK_DBI_NULL;
+
 	return wdb_form_cmd(wdbp, interp, argc, argv);
 }
 
@@ -2306,6 +2318,8 @@ cmd_get(ClientData	clientData,
 	int		argc,
 	char		**argv)
 {
+	CHECK_DBI_NULL;
+
 	return wdb_get_cmd(wdbp, interp, argc, argv);
 }
 
@@ -2315,6 +2329,8 @@ cmd_match(ClientData	clientData,
 	  int		argc,
 	  char		**argv)
 {
+	CHECK_DBI_NULL;
+
 	return wdb_match_cmd(wdbp, interp, argc, argv);
 }
 
@@ -2324,6 +2340,8 @@ cmd_put(ClientData	clientData,
 	int		argc,
 	char		**argv)
 {
+	CHECK_DBI_NULL;
+
 	return wdb_put_cmd(wdbp, interp, argc, argv);
 }
 
@@ -2333,6 +2351,8 @@ cmd_rt_gettrees(ClientData	clientData,
 		int		argc,
 		char		**argv)
 {
+	CHECK_DBI_NULL;
+
 	return wdb_rt_gettrees_cmd(wdbp, interp, argc, argv);
 }
 
@@ -2342,6 +2362,8 @@ cmd_dbversion(ClientData	clientData,
 	      int		argc,
 	      char		**argv)
 {
+	CHECK_DBI_NULL;
+
 	return wdb_version_cmd(wdbp, interp, argc, argv);
 }
 
@@ -2831,7 +2853,7 @@ cmd_units(ClientData	clientData,
 	sf = dbip->dbi_base2local;
 	ret = wdb_units_cmd(wdbp, interp, argc, argv);
 
-	set_localunit_TclVar();
+ 	set_localunit_TclVar();
 	sf = dbip->dbi_base2local / sf;
 	update_grids(sf);
 	update_views = 1;
@@ -3205,6 +3227,8 @@ cmd_vdraw(ClientData	clientData,
 	  int		argc,
 	  char		**argv)
 {
+	CHECK_DBI_NULL;
+
 	return dgo_vdraw_cmd(dgop, interp, argc, argv);
 }
 
