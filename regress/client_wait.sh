@@ -109,5 +109,12 @@ done
 #  Remove the semaphore file so that we don't accidentally re-start
 #
 rm $REGRESS_DIR/start_$ARCH
+mkdir $REGRESS_DIR/$ARCH
+cd $REGRESS_DIR/brlcad
 
-echo "$ARCH commencing build"
+echo "$ARCH commencing build at `date`"
+
+#
+# run the build script out of the source tree
+#
+./regress/client_build.sh

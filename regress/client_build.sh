@@ -29,4 +29,6 @@ echo "`hostname` compilation complete" >> $REGRESS_DIR/$ARCH/MAKE_LOG
 echo ./gen.sh -s install	  >> $REGRESS_DIR/$ARCH/MAKE_LOG
 ./gen.sh -s install		  >> $REGRESS_DIR/$ARCH/MAKE_LOG 2>&1
 
-echo "`hostname` installation complete" >> $REGRESS_DIR/$ARCH/MAKE_LOG
+echo "`hostname` $ARCH installation complete" >> $REGRESS_DIR/$ARCH/MAKE_LOG
+
+$REGRESS_DIR/brlcad/regress/client_test.sh
