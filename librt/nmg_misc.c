@@ -41,6 +41,115 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "db.h"		/* for debugging stuff at bottom */
 
+/*	N M G _ N E X T _ R A D I A L _ E D G E U S E
+ *
+ * Traverse radial edgeuse around specified edgeuse looking for
+ * one that meets optional restrictions. If a shell is specified
+ * only edgeuse from that shell will be considered. If wires is
+ * non-zero, wire edges will be considered, otherwise, wire edges
+ * are ignored.
+ *
+ * returns:
+ *	radial edgeuse
+ */
+
+struct edgeuse *
+nmg_next_radial_eu( eu , s , wires )
+CONST struct edgeuse *eu;
+CONST struct shell *s;
+CONST int wires;
+{
+	struct edgeuse *ret_eu;
+
+	NMG_CK_EDGEUSE( eu );
+	NMG_CK_SHELL( s );
+
+	if( s && nmg_find_s_of_eu( eu ) != s )
+		rt_bomb( "nmg_find_radial_eu: eu is not in specified shell\n" );
+
+	if( !wires && !nmg_find_fu_of_eu( eu ) )
+		rt_bomb( "nmg_find_radial_eu: wire edges not specified, but eu is a wire!!\n" );
+
+	ret_eu = eu->eumate_p->radial_p;
+	while( ( !wires & (nmg_find_fu_of_eu( ret_eu ) == (struct faceuse *)NULL)) ||
+		( (s != (struct shell *)NULL) & nmg_find_s_of_eu( ret_eu ) != s  ) )
+			ret_eu = ret_eu->eumate_p->radial_p;
+
+	return( ret_eu );
+}
+
+/*	N M G _ P R E V _ R A D I A L _ E D G E U S E
+ *
+ * Traverse radial edgeuse around specified edgeuse in opposite
+ * direction from nmg_next_radial_eu, looking for
+ * one that meets optional restrictions. If a shell is specified
+ * only edgeuse from that shell will be considered. If wires is
+ * non-zero, wire edges will be considered, otherwise, wire edges
+ * are ignored.
+ *
+ * returns:
+ *	radial edgeuse
+ */
+
+struct edgeuse *
+nmg_prev_radial_eu( eu , s , wires )
+CONST struct edgeuse *eu;
+CONST struct shell *s;
+CONST int wires;
+{
+	struct edgeuse *ret_eu;
+
+	NMG_CK_EDGEUSE( eu );
+	NMG_CK_SHELL( s );
+
+	if( s && nmg_find_s_of_eu( eu ) != s )
+		rt_bomb( "nmg_find_radial_eu: eu is not in specified shell\n" );
+
+	if( !wires && !nmg_find_fu_of_eu( eu ) )
+		rt_bomb( "nmg_find_radial_eu: wire edges not specified, but eu is a wire!!\n" );
+
+	ret_eu = eu->radial_p->eumate_p;
+	while( ( !wires & (nmg_find_fu_of_eu( ret_eu ) == (struct faceuse *)NULL)) ||
+		( (s != (struct shell *)NULL) & nmg_find_s_of_eu( ret_eu ) != s  ) )
+			ret_eu = ret_eu->radial_p->eumate_p;
+
+	return( ret_eu );
+}
+
+/*	N M G _ R A D I A L _ F A C E _ C O U N T
+ *
+ * Counts the number of faces (actually, the number of radial edgeuse/mate pairs)
+ * around eu. If s is specified, only edgeuses in shell s are counted. Wire
+ * edgeuses are not counted.
+ *
+ * returns:
+ *	number of edgeuse/mate pairs radiall around eu that meet restrictions
+ */
+int
+nmg_radial_face_count( eu , s )
+CONST struct edgeuse *eu;
+CONST struct shell *s;
+{
+	int face_count=1;
+	struct edgeuse *eu1;
+
+	NMG_CK_EDGEUSE( eu );
+	if( s )
+		NMG_CK_SHELL( s );
+
+	/* count radial faces on this edge */
+	eu1 = eu->eumate_p->radial_p;
+	while( eu1 != eu && eu1 != eu->eumate_p )
+	{
+		/* ignore other shells and don't count wires */
+		if( (!s || nmg_find_s_of_eu( eu1 ) == s) &&
+			nmg_find_fu_of_eu( eu1 ) != (struct faceuse *)NULL )
+				face_count++;
+		eu1 = eu1->eumate_p->radial_p;
+	}
+
+	return( face_count );
+}
 
 /*	N M G _ M O V E _ L U _ B E T W E E N _ F U S
  *
@@ -1605,7 +1714,7 @@ long *flags;
 		{
 			lu = eu1->up.lu_p;
 			NMG_CK_LOOPUSE( lu );
-			if( *lu->up.magic_p == NMG_FACEUSE_MAGIC )
+			if( *lu->up.magic_p == NMG_FACEUSE_MAGIC && lu->orientation == OT_SAME )
 			{
 				vect_t left;
 				vect_t edge_dir;
@@ -1700,6 +1809,7 @@ CONST struct shell *s;
 	rt_free( (char *)flags , "nmg_shell_is_void: flags" );
 
 	NMG_CK_FACE( f );
+	NMG_CK_FACE_G( f->fg_p );
 	fu = f->fu_p;
 	NMG_CK_FACEUSE( fu );
 
@@ -2171,8 +2281,6 @@ int after;
 		}
 	}
 
-rt_log( "nmg_split_loops_handler: fu x%x has %d OT_SAME loops and %d OT_OPPOSITE loops\n", fu , otsame_loops, otopp_loops );
-
 	/* if there is only one OT_SAME loop in this faceuse, nothing to do */
 	if( otsame_loops == 1 )
 		return;
@@ -2191,7 +2299,7 @@ rt_log( "nmg_split_loops_handler: fu x%x has %d OT_SAME loops and %d OT_OPPOSITE
 			struct loopuse *lu1;
 			plane_t plane;
 			int index;
-rt_log( "%d otsame loops\n" , otsame_loops );
+
 			lu_next = RT_LIST_PNEXT( loopuse , &lu->l );
 
 			if( otsame_loops == 1 )
@@ -2205,7 +2313,6 @@ rt_log( "%d otsame loops\n" , otsame_loops );
 				lu = lu_next;
 				continue;
 			}
-rt_log( "\tlu x%x is OT_SAME\n" , lu );
 
 			/* find OT_OPPOSITE loops for this exterior loop */
 			for( RT_LIST_FOR( lu1 , loopuse , &fu->lu_hd ) )
@@ -2220,7 +2327,7 @@ rt_log( "\tlu x%x is OT_SAME\n" , lu );
 				/* skip loops that are not within lu */
 				if( nmg_classify_lu_lu( lu1 , lu , tol ) != NMG_CLASS_AinB )
 					continue;
-rt_log( "\t\tlu x%x is OT_OPPOSITE inside lu x%x\n" , lu1 , lu );
+
 				/* lu1 is an OT_OPPOSITE loopuse within the OT_SAME lu
 				 * but lu1 may be within yet another loopuse that is
 				 * also within lu (nested loops)
@@ -2240,7 +2347,6 @@ rt_log( "\t\tlu x%x is OT_OPPOSITE inside lu x%x\n" , lu1 , lu );
 							/* Yes, lu1 is within lu2, so lu1 is not
 							 * a hole in lu
 							 */
-rt_log( "\t\t\tx%x is within x%x, so not a hole in x%x\n" , lu1, lu2, lu );
 							hole_in_lu = 0;;
 							break;
 						}
@@ -2248,13 +2354,11 @@ rt_log( "\t\t\tx%x is within x%x, so not a hole in x%x\n" , lu1, lu2, lu );
 				}
 
 				if( hole_in_lu )
-				{
-rt_log( "\t\t\tAdding x%x to list of holes in x%x\n" , lu1 , lu );
 					nmg_tbl( &inside_loops , TBL_INS , (long *)lu1 );
-				}
 			}
 
 			NMG_GET_FU_PLANE( plane , fu );
+
 			new_fu = nmg_mk_new_face_from_loop( lu );
 			nmg_face_g( new_fu , plane );
 			for( index=0 ; index<NMG_TBL_END( &inside_loops ) ; index++ )
@@ -2264,8 +2368,6 @@ rt_log( "\t\t\tAdding x%x to list of holes in x%x\n" , lu1 , lu );
 			}
 			nmg_tbl( &inside_loops , TBL_RST , (long *)NULL );
 			otsame_loops--;
-nmg_pr_fu_briefly( new_fu , (char *)NULL );
-nmg_pr_fu_briefly( new_fu->fumate_p , (char *)NULL );
 		}
 		nmg_tbl( &inside_loops , TBL_FREE , (long *)NULL );
 	}
@@ -2294,7 +2396,6 @@ nmg_pr_fu_briefly( new_fu->fumate_p , (char *)NULL );
 				}
 				else
 				{
-rt_log( "ALL LOOPS should be OT_SAME, x%x is %s\n" , lu , nmg_orientation( lu->orientation ) );
 					NMG_GET_FU_PLANE( plane , fu->fumate_p );
 				}
 				new_fu = nmg_mk_new_face_from_loop( lu );
@@ -2423,22 +2524,8 @@ struct rt_tol *tol;
 
 		for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
 		{
-			int face_count=1;
-
-			NMG_CK_EDGEUSE( eu );
-
-			/* count radial faces on this edge */
-			eu1 = eu->eumate_p->radial_p;
-			while( eu1 != eu && eu1 != eu->eumate_p )
-			{
-				/* ignore other shells */
-				if( nmg_find_s_of_eu( eu1 ) == s )
-					face_count++;
-				eu1 = eu1->eumate_p->radial_p;
-			}
-
 			/* build two lists, one of winged edges, the other not */
-			if( face_count > 2 )
+			if( nmg_radial_face_count( eu , s ) > 2 )
 				nmg_tbl( &shared_edges , TBL_INS_UNIQUE , (long *)eu );
 			else
 				nmg_tbl( &stack , TBL_INS_UNIQUE , (long *)eu );
@@ -2484,22 +2571,8 @@ struct rt_tol *tol;
 
                                 for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
                                 {
-                                	int face_count=1;
-
-                                	NMG_CK_EDGEUSE( eu );
-
-					/* count radial faces on this edge */
-					eu1 = eu->eumate_p->radial_p;
-					while( eu1 != eu && eu1 != eu->eumate_p )
-					{
-						/* ignore other shells */
-						if( nmg_find_s_of_eu( eu1 ) == s )
-							face_count++;
-						eu1 = eu1->eumate_p->radial_p;
-					}
-
 					/* build two lists, one of winged edges, the other not */
-					if( face_count > 2 )
+					if( nmg_radial_face_count( eu , s ) > 2 )
 						nmg_tbl( &shared_edges , TBL_INS_UNIQUE , (long *)eu );
 					else
 						nmg_tbl( &stack , TBL_INS_UNIQUE , (long *)eu );
@@ -2550,6 +2623,12 @@ struct rt_tol *tol;
 			int faces_at_edge=0;
 			int k;
 
+			/* Construct a list of shells for this edge.
+			 * shells_at_edge[i] is the number of edgeuses of this
+			 * edge that have been assigned to shell number i.
+			 * shells_at_edge[0] si the number of uses of this edge
+			 * that have not been asigned to any shell yet
+			 */
 			for( k=0 ; k<=no_of_shells ; k++ )
 				shells_at_edge[k] = 0;
 
@@ -2561,36 +2640,125 @@ struct rt_tol *tol;
 			eu1 = eu;
 			do
 			{
+				struct faceuse *fu_of_eu;
+
+				fu_of_eu = nmg_find_fu_of_eu( eu1 );
+
 				faces_at_edge++;
-				fu = nmg_find_fu_of_eu( eu1 );
-				if( !NMG_INDEX_TEST( flags , fu ) )
+				if( !NMG_INDEX_TEST( flags , fu_of_eu ) )
 					unassigned_eu = eu1;
-				shells_at_edge[ NMG_INDEX_GET( flags , fu ) ]++;
-				eu1 = eu1->eumate_p->radial_p;
+				shells_at_edge[ NMG_INDEX_GET( flags , fu_of_eu ) ]++;
+
+				eu1 = nmg_next_radial_eu( eu1 , s , 0 );
 			}
 			while( eu1 != eu );
 
 			if( shells_at_edge[0] == 1 && unassigned_eu )
 			{
-				/* Only one face at this edge is unassigned, should be
+				/* Only one edgeuse at this edge is unassigned, should be
 				 * able to determine which shell it belongs in */
-
-
-				/* Make sure everything is O.K. so far */
-				if( faces_at_edge & 1 )
-					rt_bomb( "nmg_decompose_shell: Odd number of faces at edge\n" );
 
 				for( j=1 ; j<=no_of_shells ; j++ )
 				{
 					if( shells_at_edge[j] == 1 )
 					{
+						/* unassigned edgeuse should belong to shell j */
 						new_shell_no = j;
 						break;
 					}
 				}
 			}
+			else if( shells_at_edge[0] == 0 )
+			{
+				/* all uses of this edge have been assigned
+				 * it can be deleted from the table
+				 */
+				nmg_tbl( &shared_edges , TBL_RM , (long *)eu );
+			}
 			if( new_shell_no )
 				break;
+		}
+
+		if( !new_shell_no )
+		{
+			/* Couldn't find a definite edgeuse to start a new shell
+			 * so use radial parity to pick an edgeuse that should not be
+			 * part of the same shell as ones already assigned
+			 */
+			for( i=0 ; i<NMG_TBL_END( &shared_edges ) ; i++ )
+			{
+				struct faceuse *fu_of_eu1;
+				int found_missed_face=0;
+
+				eu = (struct edgeuse *)NMG_TBL_GET( &shared_edges , i );
+				NMG_CK_EDGEUSE( eu );
+
+				eu1 = eu;
+				do
+				{
+					/* look for unassigned edgeuses */
+					fu_of_eu1 = nmg_find_fu_of_eu( eu1 );
+					NMG_CK_FACEUSE( fu_of_eu1 );
+					if( !NMG_INDEX_TEST( flags , fu_of_eu1 ) )
+					{
+						struct edgeuse *eu2;
+						struct faceuse *fu_of_eu2;
+
+						/* look for a neighboring edgeuse that
+						 * has been assigned
+						 */
+						eu2 = nmg_prev_radial_eu( eu1 , s , 0 );
+						fu_of_eu2 = nmg_find_fu_of_eu( eu2 );
+						NMG_CK_FACEUSE( fu_of_eu2 );
+						if( NMG_INDEX_TEST( flags , fu_of_eu2 ) )
+						{
+							/* eu2 has been assigned
+							 * compare orientation parity
+							 */
+							if( fu_of_eu2->orientation ==
+								fu_of_eu1->orientation )
+							{
+								/* These should not be in the same
+								 * shell, so start a new shell
+								 * at this faceuse
+								 */
+								missed_fu = fu_of_eu1;
+								found_missed_face = 1;
+							}
+						}
+						if( found_missed_face )
+							break;
+
+						eu2 = nmg_next_radial_eu( eu1 , s , 0 );
+						fu_of_eu2 = nmg_find_fu_of_eu( eu2 );
+						NMG_CK_FACEUSE( fu_of_eu2 );
+						if( NMG_INDEX_TEST( flags , fu_of_eu2 ) )
+						{
+							/* eu2 has been assigned
+							 * compare orientation parity
+							 */
+							if( fu_of_eu2->orientation ==
+								fu_of_eu1->orientation )
+							{
+								/* These should not be in the same
+								 * shell, so start a new shell
+								 * at this faceuse
+								 */
+								missed_fu = fu_of_eu1;
+								found_missed_face = 1;
+							}
+						}
+
+					}
+					if( found_missed_face )
+						break;
+					eu1 = nmg_next_radial_eu( eu1 , s , 0 );
+				}
+				while( eu1 != eu );
+
+				if( found_missed_face )
+					break;
+			}
 		}
 
 		rt_free( (char *)shells_at_edge , "nmg_decompose_shell: shells_at_edge" );
@@ -2625,22 +2793,8 @@ struct rt_tol *tol;
 
                                 for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
                                 {
-                                	int face_count = 1;
-
-                                	NMG_CK_EDGEUSE( eu );
-
-					/* count radial faces on this edge */
-					eu1 = eu->eumate_p->radial_p;
-					while( eu1 != eu && eu1 != eu->eumate_p )
-					{
-						/* ignore other shells */
-						if( nmg_find_s_of_eu( eu1 ) == s )
-							face_count++;
-						eu1 = eu1->eumate_p->radial_p;
-					}
-
 					/* build two lists, one of winged edges, the other not */
-					if( face_count > 2 )
+					if( nmg_radial_face_count( eu , s ) > 2 )
 						nmg_tbl( &shared_edges , TBL_INS_UNIQUE , (long *)eu );
 					else
 						nmg_tbl( &stack , TBL_INS_UNIQUE , (long *)eu );
@@ -2685,21 +2839,8 @@ struct rt_tol *tol;
 	                                        continue;
 	                                for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
 	                                {
-	                                	int face_count = 1;
-	                                	NMG_CK_EDGEUSE( eu );
-
-						/* count radial faces on this edge */
-						eu1 = eu->eumate_p->radial_p;
-						while( eu1 != eu && eu1 != eu->eumate_p )
-						{
-							/* ignore other shells */
-							if( nmg_find_s_of_eu( eu1 ) == s )
-								face_count++;
-							eu1 = eu1->eumate_p->radial_p;
-						}
-
 						/* build two lists, one of winged edges, the other not */
-						if( face_count > 2 )
+						if( nmg_radial_face_count( eu , s ) > 2 )
 							nmg_tbl( &shared_edges , TBL_INS_UNIQUE , (long *)eu );
 						else
 							nmg_tbl( &stack , TBL_INS_UNIQUE , (long *)eu );
@@ -3688,7 +3829,6 @@ CONST struct rt_tol *tol;
 {
 	struct model *m;
 	struct nmgregion *r;
-	point_t min_pt,max_pt;
 	vect_t diag;
 	int edge_no;
 
@@ -3704,11 +3844,6 @@ CONST struct rt_tol *tol;
 	r = RT_LIST_FIRST( nmgregion , &m->r_hd );
 	NMG_CK_REGION( r );
 	NMG_CK_REGION_A( r->ra_p );
-
-	/* create a generous (3X) bounding box for the model */
-	VSUB2( diag , r->ra_p->max_pt , r->ra_p->min_pt );
-	VADD2( max_pt , r->ra_p->max_pt , diag );
-	VSUB2( min_pt , r->ra_p->min_pt , diag );
 
 	/* loop through edges departing from new_v */
 	for( edge_no=0 ; edge_no<NMG_TBL_END( int_faces ) ; edge_no++ )
@@ -3789,24 +3924,6 @@ CONST struct rt_tol *tol;
 		{
 			VJOIN1( edge_fus->pt , edge_fus->start , max_dist , edge_fus->dir );
 			edge_fus->got_pt = 1;
-
-			if( !V3PT_IN_RPP( edge_fus->pt , min_pt , max_pt ) )
-			{
-				/* Make sure this point is somewher around the model!! */
-				int i;
-
-				rt_log( "nmg_get_max_edge_inters: edge intersect point is outside region bounding box\n" );
-
-				for( i=0 ; i < NMG_TBL_END( int_faces ) ; i++ )
-				{
-					struct intersect_fus *i_fus;
-
-					i_fus = (struct intersect_fus *)NMG_TBL_GET( int_faces , i );
-
-					rt_free( (char *)i_fus , "nmg_get_edge_lines: i_fus" );
-				}
-				return( 1 );
-			}
 		}
 	}
 
@@ -4049,6 +4166,9 @@ CONST struct rt_tol *tol;
 		struct intersect_fus *edge_fus;
 
 		edge_fus = (struct intersect_fus *)NMG_TBL_GET( int_faces , edge_no );
+
+		if( !edge_fus->vp )
+			continue;
 
 		if( !rt_pt3_pt3_equal( new_v->vg_p->coord , edge_fus->vp->vg_p->coord , tol ) )
 			continue;
@@ -5085,7 +5205,10 @@ CONST struct rt_tol *tol;
 		rt_log( "nmg_calc_new_v\n" );
 
 	edge_fus = (struct intersect_fus *)NMG_TBL_GET( int_faces , NMG_TBL_END( int_faces)-1 );
-	VMOVE( prev_pt , edge_fus->vp->vg_p->coord )
+	if( edge_fus->vp )
+		VMOVE( prev_pt , edge_fus->vp->vg_p->coord )
+	else
+		VMOVE( prev_pt , new_v->vg_p->coord );
 
 	VSET( ave_pt , 0.0 , 0.0 , 0.0 )
 
@@ -5101,6 +5224,9 @@ CONST struct rt_tol *tol;
 			if( free_edge_count > 2 )
 				rt_bomb( "nmg_calc_new_v: Too many free edges\n" );
 		}
+
+		if( !edge_fus->vp )
+			continue;
 
 		if( !rt_pt3_pt3_equal( prev_pt , edge_fus->vp->vg_p->coord , tol ) )
 		{
