@@ -314,8 +314,6 @@ int	non_blocking;
 {
 	fd_set		input;
 	vect_t		knobvec;	/* knob slew */
-	int		i;
-	int		len;
 	int		formerly_non_blocking = non_blocking;
 	static int	need_penup = 0;
 	static struct device_values	old_values;
@@ -714,7 +712,6 @@ vect_t view_pos;
 	point_t	new_model_center;
 	vect_t	diff;
 	mat_t	delta;
-	mat_t	temp;
 
 	MAT_DELTAS_GET_NEG( old_model_center, toViewcenter );
 
@@ -739,7 +736,7 @@ char *event;
 char *arg;
 {
 	char line[128];
-	long now;
+	time_t now;
 	char *timep;
 	int logfd;
 
