@@ -49,6 +49,14 @@
 #include "rtlist.h"
 #endif
 
+#ifndef SEEN_COMPAT4_H
+#include "compat4.h"
+#endif
+
+#ifndef SEEN_BU_H
+#include "bu.h"
+#endif
+
 #ifndef NULL
 #define NULL 0
 #endif
@@ -71,7 +79,7 @@
 #define DEBUG_MESH_EU	0x00001000	/* 13 nmg_mesh: list edges meshed */
 #define DEBUG_POLYTO	0x00002000	/* 14 nmg_misc: polytonmg */
 #define DEBUG_LABEL_PTS 0x00004000	/* 15 label points in plot files */
-#define DEBUG_INS	0x00008000	/* 16 nmg_tbl table insert */
+/***#define DEBUG_INS	0x00008000	/* 16 nmg_tbl table insert */
 #define DEBUG_NMGRT	0x00010000	/* 17 ray tracing */
 #define DEBUG_FINDEU	0x00020000	/* 18 nmg_mod: nmg_findeu() */
 #define DEBUG_CMFACE	0x00040000	/* 19 nmg_mod: nmg_cmface() */
@@ -85,7 +93,7 @@
 #define DEBUG_MANIF	0x04000000	/* 029 nmg_manif */
 #define NMG_DEBUG_FORMAT \
 "\020\033MANIF\032PTFU\031TRIANG\030RT_ISECT\
-\027RT_SEGS\026FCUT\025VU_SORT\024CUTLOOP\023CMFACE\022FINDEU\021RT_ISECT\020TBL_INS\
+\027RT_SEGS\026FCUT\025VU_SORT\024CUTLOOP\023CMFACE\022FINDEU\021RT_ISECT\020(FREE)\
 \017LABEL_PTS\016POLYTO\015MESH_EU\014MESH\013BASIC\012BOOLEVAL\011CLASSIFY\
 \010BOOL\7VERIFY\6POLYSECT\5PLOTEM\4PL_LOOP\3GRAPHCL\2PL_SLOW\1PL_ANIM"
 
@@ -124,43 +132,6 @@
 #define OT_OPPOSITE 2    /* orientation opposite */
 #define OT_UNSPEC   3    /* orientation unspecified */
 #define OT_BOOLPLACE 4   /* object is intermediate data for boolean ops */
-
-
-
-/* support for pointer tables.  Our table is currently un-ordered, and is
- * merely a list of objects.  The support routine nmg_tbl manipulates the
- * list structure for you.  Objects to be referenced (inserted, deleted,
- * searched for) are passed as a "pointer to long" to the support routine.
- */
-#define TBL_INIT 0	/* initialize list pointer struct & get storage */
-#define TBL_INS	 1	/* insert an item (long *) into a list */
-#define TBL_LOC  2	/* locate a (long *) in an existing list */
-#define TBL_FREE 3	/* deallocate buffer associated with a list */
-#define TBL_RST	 4	/* empty a list, but keep storage on hand */
-#define TBL_CAT  5	/* catenate one list onto another */
-#define TBL_RM	 6	/* remove all occurrences of an item from a list */
-#define TBL_INS_UNIQUE	 7	/* insert item into list, if not present */
-#define TBL_ZERO 8	/* replace all occurrences of an item by 0 */
-
-struct nmg_ptbl {
-	long	magic;	/* magic */
-	int	end;	/* index into buffer of first available location */
-	int	blen;	/* # of (long *)'s worth of storage at *buffer */
-	long  **buffer;	/* data storage area */
-};
-#define NMG_PTBL_MAGIC		0x7074626c		/* "ptbl" */
-#define NMG_CK_PTBL(_p)		NMG_CKMAG(_p, NMG_PTBL_MAGIC, "nmg_ptbl")
-
-/*
- *  For those routines that have to "peek" into the ptbl a little bit.
- *  A handy way to visit all the elements of the list is:
- *	for( eup = (struct edgeuse **)NMG_TBL_LASTADDR(&eutab);
- *	     eup >= (struct edgeuse **)NMG_TBL_BASEADDR(&eutab); eup-- )  {
- */
-#define NMG_TBL_BASEADDR(p)	((p)->buffer)
-#define NMG_TBL_LASTADDR(p)	((p)->buffer + (p)->end - 1)
-#define NMG_TBL_END(p)		((p)->end)
-#define NMG_TBL_GET(p,i)	((p)->buffer[(i)])
 
 /*
  *  Magic Numbers.
@@ -720,7 +691,7 @@ struct vertexuse_a_cnurb {
 
 
 struct nmg_boolstruct {
-	struct nmg_ptbl	ilist;		/* vertexuses on intersection line */
+	struct bu_ptbl	ilist;		/* vertexuses on intersection line */
 	fastf_t		tol;
 	point_t		pt;		/* line of intersection */
 	vect_t		dir;
