@@ -165,7 +165,7 @@ static CONST char *action_names[] = {
 
 /* The "ray" here is the intersection line between two faces */
 struct nmg_ray_state {
-	/* XXX could use a magic number */
+	long			magic;
 	struct vertexuse	**vu;		/* ptr to vu array */
 	int			nvu;		/* len of vu[] */
 	point_t			pt;		/* The ray */
@@ -182,6 +182,8 @@ struct nmg_ray_state {
 	vect_t			ang_y_dir;	/* y axis for angle measure */
 	CONST struct rt_tol	*tol;
 };
+#define NMG_RAYSTATE_MAGIC	0x54322345
+#define NMG_CK_RAYSTATE(_p)	NMG_CKMAG(_p, NMG_RAYSTATE_MAGIC, "nmg_ray_state")
 
 /*
  *			P T B L _ V S O R T
@@ -540,6 +542,7 @@ int			pos;
 	register int		i;
 
 	NMG_CK_EDGEUSE(eu);
+	NMG_CK_RAYSTATE(rs);
 	RT_CK_TOL(rs->tol);
 	v = eu->vu_p->v_p;
 	NMG_CK_VERTEX(v);
@@ -716,6 +719,7 @@ int			pos;
 	int		prev_ass;
 	int		ass;
 
+	NMG_CK_RAYSTATE(rs);
 	vu = rs->vu[pos];
 	NMG_CK_VERTEXUSE( vu );
 	if( *vu->up.magic_p == NMG_LOOPUSE_MAGIC )  {
@@ -1417,6 +1421,7 @@ int				ass;
 	struct vertexuse	*vu;
 	int		this;
 
+	NMG_CK_RAYSTATE(rs);
 	vu = vsp->vu;
 	NMG_CK_VERTEXUSE(vu);
 	NMG_CK_LOOPUSE(lu);
@@ -1662,6 +1667,8 @@ int			end;		/* last index + 1 */
 	if(rt_g.NMG_debug&DEBUG_VU_SORT)
 		rt_log("nmg_face_coincident_vu_sort(, %d, %d) START\n", start, end);
 
+	NMG_CK_RAYSTATE(rs);
+
 	num = end - start;
 	vs = (struct nmg_vu_stuff *)rt_malloc( sizeof(struct nmg_vu_stuff)*num,
 		"nmg_vu_stuff" );
@@ -1895,13 +1902,14 @@ struct faceuse	*fu;
  *  Mike's notes "The 'Left' Vector Choice" dated 27-Aug-93, page 1.
  */
 void
-nmg_face_rs_init( rs, b, fu1, fu2, pt, dir, tol )
+nmg_face_rs_init( rs, b, fu1, fu2, pt, dir, eg, tol )
 struct nmg_ray_state	*rs;
 struct nmg_ptbl	*b;		/* table of vertexuses in fu1 on intercept line */
 struct faceuse	*fu1;		/* face being worked */
 struct faceuse	*fu2;		/* for plane equation */
 point_t		pt;
 vect_t		dir;
+struct edge_g		*eg;	/* may be null.  Geom of isect line. */
 CONST struct rt_tol	*tol;
 {
 	plane_t	n1;
@@ -1912,10 +1920,11 @@ CONST struct rt_tol	*tol;
 	NMG_CK_FACEUSE(fu2);
 
 	bzero( (char *)rs, sizeof(*rs) );
+	rs->magic = NMG_RAYSTATE_MAGIC;
 	rs->tol = tol;
 	rs->vu = (struct vertexuse **)b->buffer;
 	rs->nvu = b->end;
-	rs->eg_p = (struct edge_g *)NULL;
+	rs->eg_p = eg;
 	rs->sA = fu1->s_p;
 	rs->sB = fu2->s_p;
 	rs->fu1 = fu1;
@@ -2014,6 +2023,7 @@ int		other_rs_state;
 	int	m;
 	struct vertex	*v;
 
+	NMG_CK_RAYSTATE(rs);
 	RT_CK_TOL(rs->tol);
 
 	if( cur == rs->nvu-1 || mag[cur+1] != mag[cur] )  {
@@ -2095,6 +2105,8 @@ fastf_t			*mag2;
 	register int	cur1, cur2;
 	register int	nxt1, nxt2;
 
+	NMG_CK_RAYSTATE(rs1);
+	NMG_CK_RAYSTATE(rs2);
 	RT_CK_TOL(rs1->tol);
 	RT_CK_TOL(rs2->tol);
 
@@ -2123,11 +2135,13 @@ fastf_t			*mag2;
 				rt_log("\nnmg_face_combineX() doing index1 block (at end)\n");
 			nxt1 = nmg_face_next_vu_interval( rs1, cur1, mag1, rs2->state );
 			nxt2 = cur2;
+			if( !rs2->eg_p )  rs2->eg_p = rs1->eg_p;
 		} else if( mag1[cur1] > mag2[cur2] )  {
 			if(rt_g.NMG_debug&DEBUG_FCUT)
 				rt_log("\nnmg_face_combineX() doing index2 block (at end)\n");
 			nxt1 = cur1;
 			nxt2 = nmg_face_next_vu_interval( rs2, cur2, mag2, old_rs1_state );
+			if( !rs1->eg_p )  rs1->eg_p = rs2->eg_p;
 		} else {
 			struct vertexuse	*vu1;
 			struct vertexuse	*vu2;
@@ -2143,9 +2157,12 @@ fastf_t			*mag2;
 			if(rt_g.NMG_debug&DEBUG_FCUT)
 				rt_log("\nnmg_face_combineX() doing index1 block\n");
 			nxt1 = nmg_face_next_vu_interval( rs1, cur1, mag1, rs2->state );
+			if( !rs2->eg_p )  rs2->eg_p = rs1->eg_p;
+
 			if(rt_g.NMG_debug&DEBUG_FCUT)
 				rt_log("\nnmg_face_combineX() doing index2 block\n");
 			nxt2 = nmg_face_next_vu_interval( rs2, cur2, mag2, old_rs1_state );
+			if( !rs1->eg_p )  rs1->eg_p = rs2->eg_p;
 		}
 	}
 
@@ -2156,9 +2173,11 @@ fastf_t			*mag2;
 	for( ; cur1 < rs1->nvu; cur1 = nxt1 )  {
 		nxt1 = nmg_face_next_vu_interval( rs1, cur1, mag1, rs2->state );
 	}
+	if( !rs2->eg_p )  rs2->eg_p = rs1->eg_p;
 	for( ; cur2 < rs2->nvu; cur2 = nxt2 )  {
 		nxt2 = nmg_face_next_vu_interval( rs2, cur2, mag2, rs1->state );
 	}
+	if( !rs1->eg_p )  rs1->eg_p = rs2->eg_p;
 
 	if( rs1->state != NMG_STATE_OUT || rs2->state != NMG_STATE_OUT )  {
 		rt_log("ERROR nmg_face_combine() ended in state '%s'/'%s'?\n",
@@ -2225,6 +2244,7 @@ struct nmg_ptbl		*ob;	/* other rs's vu list */
 	struct vertex		*v;
 	int		zot;
 
+	NMG_CK_RAYSTATE(rs);
 	NMG_CK_PTBL(b);
 	NMG_CK_PTBL(ob);
 
@@ -2284,14 +2304,15 @@ doit:
  *  one may have multiple uses of a vertex, while the other has only
  *  a single use of that same vertex.
  */
-void
-nmg_face_cutjoin(b1, b2, fu1, fu2, pt, dir, tol)
+struct edge_g *
+nmg_face_cutjoin(b1, b2, fu1, fu2, pt, dir, eg, tol)
 struct nmg_ptbl	*b1;		/* table of vertexuses in fu1 on intercept line */
 struct nmg_ptbl	*b2;		/* table of vertexuses in fu2 on intercept line */
 struct faceuse	*fu1;		/* face being worked */
 struct faceuse	*fu2;		/* for plane equation */
 point_t		pt;
 vect_t		dir;
+struct edge_g		*eg;	/* may be null.  geometry of isect line */
 CONST struct rt_tol	*tol;
 {
 	fastf_t		*mag1;
@@ -2302,7 +2323,7 @@ CONST struct rt_tol	*tol;
 	struct nmg_ray_state	rs2;
 
 	if(rt_g.NMG_debug&DEBUG_FCUT)  {
-		rt_log("\nnmg_face_cutjoin(fu1=x%x, fu2=x%x) START\n", fu1, fu2);
+		rt_log("\nnmg_face_cutjoin(fu1=x%x, fu2=x%x) eg=x%x START\n", fu1, fu2, eg);
 	}
 
 	RT_CK_TOL(tol);
@@ -2411,8 +2432,8 @@ top:
 			rt_log( "nmg_face_cutjoin: intersection list for face 2 doesn't contain vertexuses from face 2!!!\n" );
 	}
 
-	nmg_face_rs_init( &rs1, b1, fu1, fu2, pt, dir, tol );
-	nmg_face_rs_init( &rs2, b2, fu2, fu1, pt, dir, tol );
+	nmg_face_rs_init( &rs1, b1, fu1, fu2, pt, dir, eg, tol );
+	nmg_face_rs_init( &rs2, b2, fu2, fu1, pt, dir, eg, tol );
 
 	/* Ensure that small angles don't plunk vertexuses down onto the intersection line */
 	if( nmg_onon_fix( &rs1, b1, b2 ) || nmg_onon_fix( &rs2, b2, b1 ) )  goto top;
@@ -2432,8 +2453,10 @@ top:
 			rt_log("nmg_face_cutjoin() meshed %d edges\n", i);
 	}
 	if(rt_g.NMG_debug&DEBUG_FCUT)  {
-		rt_log("nmg_face_cutjoin(fu1=x%x, fu2=x%x) END\n", fu1, fu2);
+		rt_log("nmg_face_cutjoin(fu1=x%x, fu2=x%x) eg=x%x END\n", fu1, fu2, rs1.eg_p);
 	}
+	if( eg && !rs1.eg_p )  rt_bomb("nmg_face_cutjoin() lost edge_g?\n");
+	return rs1.eg_p;
 }
 
 /*
@@ -2453,6 +2476,7 @@ struct nmg_ray_state	*rs;
 	register struct edge_g	*eg;
 
 	NMG_CK_EDGE(e);
+	NMG_CK_RAYSTATE(rs);
 	if( !e->eg_p )  {
 		/* No edge geometry so far */
 		if( !rs->eg_p )  {
@@ -2749,6 +2773,7 @@ int			other_rs_state;
 	int			action;
 	int			e_pos;
 
+	NMG_CK_RAYSTATE(rs);
 	vu = rs->vu[pos];
 	NMG_CK_VERTEXUSE(vu);
 	RT_CK_TOL(rs->tol);
