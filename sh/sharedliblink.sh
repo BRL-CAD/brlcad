@@ -16,7 +16,10 @@ cd `dirname $1`
 
 NONUM=`basename $1 | sed -e 's/\\.so\\..*/.so/`
 
-if [ $1 != $NONUM ] ; then
+# If the shared library has a version number, link numbered to unnumbered.
+# If no version number, don't do anything.
+if test "$1" != "$NONUM"
+then
 	rm -f $NONUM
 	ln -s $1 $NONUM
 fi
