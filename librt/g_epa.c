@@ -979,6 +979,7 @@ struct rt_tol		*tol;
 	struct pt_node	*old, *pos_a, *pos_b, *pts_a, *pts_b, *rt_ptalloc();
 	struct shell	*s;
 	struct faceuse	**outfaceuses;
+	struct loopuse	*lu;
 	struct edgeuse	*eu, *eu2;
 	struct vertex	*vertp[3];
 	struct vertex	***vells = (struct vertex ***)NULL;
@@ -1133,16 +1134,11 @@ struct rt_tol		*tol;
 	ellipses = (fastf_t **)rt_malloc( nell * sizeof(fastf_t *), "fastf_t ell[]");
 	/* keep track of whether pts in each ellipse are doubled or not */
 	pts_dbl = (int *)rt_malloc( nell * sizeof(int), "dbl ints" );
-	if (!ellipses) {
+	if (!ellipses || !pts_dbl) {
 		fprintf(stderr, "rt_epa_tess: no mem!\n");
 		goto fail;
 	}
 	
-	/* make array of ptrs to epa ellipses */
-	ellipses = (fastf_t **)rt_malloc( nell * sizeof(fastf_t *), "fastf_t ell[]");
-	/* keep track of whether pts in each ellipse are doubled or not */
-	pts_dbl = (int *)rt_malloc( nell * sizeof(int), "dbl ints" );
-
 	/* make ellipses at each z level */
 	i = 0;
 	nseg = 0;
@@ -1174,13 +1170,6 @@ struct rt_tol		*tol;
 		ellipses[i] = (fastf_t *)rt_malloc(3*(nseg+1)*sizeof(fastf_t),
 			"pts ell");
 		rt_ell( ellipses[i], V, A, B, nseg, ntol, dtol );
-		
-		i++;
-		pos_a = pos_a->next;
-		pos_b = pos_b->next;
-	}
-	if (pts_dbl[i-1])
-		nseg /= 2;	/* # segs in top ellipse */
 
 	/*
 	 *	put epa geometry into nmg data structures
@@ -1220,6 +1209,9 @@ struct rt_tol		*tol;
 		NMG_CK_VERTEX( vells[nell-1][i] );
 		nmg_vertex_gv( vells[nell-1][i], &ellipses[nell-1][3*i] );
 	}
+
+	/* Mark the edges of this face as real, this is the only real edge */
+	(void)nmg_mark_edges_real( &outfaceuses[0]->l );
 	
 	/* connect ellipses with triangles */
 	for (i = nell-2; i >= 0; i--) {	/* skip top ellipse */
@@ -1346,7 +1338,6 @@ struct rt_tol		*tol;
 	/* XXX just for testing, to make up for loads of triangles ... */
 	nmg_shell_coplanar_face_merge( s, tol, 1 );
 	
-fail:
 	/* free mem */
 	rt_free( (char *)outfaceuses, "faceuse []");
 	for (i = 0; i < nell; i++) {
@@ -1358,6 +1349,19 @@ fail:
 	rt_free( (char *)vells, "vertex [][]");
 
 	return(0);
+
+fail:
+	/* free mem */
+	rt_free( (char *)outfaceuses, "faceuse []");
+	for (i = 0; i < nell; i++) {
+		rt_free( (char *)ellipses[i], "pts ell");
+	        rt_free( (char *)vells[i], "vertex []");
+	}
+	rt_free( (char *)ellipses, "fastf_t ell[]");
+	rt_free( (char *)pts_dbl, "dbl ints" );
+	rt_free( (char *)vells, "vertex [][]");
+
+	return(-1);
 }
 
 /*
@@ -1393,6 +1397,7 @@ register CONST mat_t		mat;
 	MAT4X3PNT( xip->epa_V, mat, &rp->s.s_values[0*3] );
 	MAT4X3VEC( xip->epa_H, mat, &rp->s.s_values[1*3] );
 	MAT4X3VEC( xip->epa_Au, mat, &rp->s.s_values[2*3] );
+	VUNITIZE( xip->epa_Au );
 	xip->epa_r1 = rp->s.s_values[3*3] / mat[15];
 	xip->epa_r2 = rp->s.s_values[3*3+1] / mat[15];
 
@@ -1419,6 +1424,7 @@ double				local2mm;
 {
 	struct rt_epa_internal	*xip;
 	union record		*epa;
+	fastf_t			mag_h;
 
 	RT_CK_DB_INTERNAL(ip);
 	if( ip->idb_type != ID_EPA )  return(-1);
@@ -1437,15 +1443,17 @@ double				local2mm;
 		rt_log("rt_epa_export: Au not a unit vector!\n");
 		return(-1);
 	}
+
+	mag_h = MAGNITUDE(xip->epa_H);
 	
-	if (MAGNITUDE(xip->epa_H) < RT_LEN_TOL
+	if ( mag_h < RT_LEN_TOL
 		|| xip->epa_r1 < RT_LEN_TOL
 		|| xip->epa_r2 < RT_LEN_TOL) {
 		rt_log("rt_epa_export: not all dimensions positive!\n");
 		return(-1);
 	}
 	
-	if ( !NEAR_ZERO( VDOT(xip->epa_Au, xip->epa_H), RT_DOT_TOL) ) {
+	if ( !NEAR_ZERO( VDOT(xip->epa_Au, xip->epa_H)/mag_h, RT_DOT_TOL) ) {
 		rt_log("rt_epa_export: Au and H are not perpendicular!\n");
 		return(-1);
 	}
@@ -1458,7 +1466,7 @@ double				local2mm;
 	/* Warning:  type conversion */
 	VSCALE( &epa->s.s_values[0*3], xip->epa_V, local2mm );
 	VSCALE( &epa->s.s_values[1*3], xip->epa_H, local2mm );
-	VSCALE( &epa->s.s_values[2*3], xip->epa_Au, local2mm );
+	VMOVE( &epa->s.s_values[2*3], xip->epa_Au ); /* don't scale a unit vector */
 	epa->s.s_values[3*3] = xip->epa_r1 * local2mm;
 	epa->s.s_values[3*3+1] = xip->epa_r2 * local2mm;
 
