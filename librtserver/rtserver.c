@@ -437,6 +437,16 @@ rts_init()
 	/* Things like bu_malloc() must have these initialized for use with parallel processing */
 	bu_semaphore_init( RT_SEM_LAST );
 
+	input_queue_mutex = NULL;
+	output_queue_mutex = NULL;
+
+	input_queue = NULL;
+	output_queue = NULL;
+	num_queues = 0;
+
+	threads = NULL;
+	num_threads = 0;
+
 	/* initialize the rtserver resources (cached structures) */
 	rts_resource_init();
 
@@ -1412,17 +1422,19 @@ rts_shutdown()
 		pthread_t thread = threads[i];
 		pthread_join( thread, NULL );
 	}
-	num_threads = 0;
 
 	/* clean up */
-	bu_free( (char *)threads, "threads" );
+	if( num_threads ) {
+		bu_free( (char *)threads, "threads" );
+	}
 	threads = NULL;
+	num_threads = 0;
 
 	for( i=0 ; i<num_geometries ; i++ ) {
 		rts_clean( i );
 	}
 
-	if( dbip ) {
+	if( dbip && dbip->dbi_magic == DBI_MAGIC ) {
 		db_close( dbip );
 	}
 	num_geometries = 0;
@@ -1467,39 +1479,49 @@ rts_shutdown()
 	}
 
 	/* free resources */
-	while( BU_LIST_NON_EMPTY( &rts_resource.rtserver_results ) ) {
-		struct rtserver_result *p;
-		p = (struct rtserver_result *)BU_LIST_FIRST( rtserver_result, &rts_resource.rtserver_results );
-		BU_LIST_DEQUEUE( &p->l );
-		bu_free( (char *)p, "rtserver_result" );
+	if( BU_LIST_IS_INITIALIZED( &rts_resource.rtserver_results ) ) {
+		while( BU_LIST_NON_EMPTY( &rts_resource.rtserver_results ) ) {
+			struct rtserver_result *p;
+			p = (struct rtserver_result *)BU_LIST_FIRST( rtserver_result, &rts_resource.rtserver_results );
+			BU_LIST_DEQUEUE( &p->l );
+			bu_free( (char *)p, "rtserver_result" );
+		}
 	}
 
-	while( BU_LIST_NON_EMPTY( &rts_resource.ray_results ) ) {
-		struct ray_result *p;
-		p = (struct ray_result *)BU_LIST_FIRST( ray_result, &rts_resource.ray_results );
-		BU_LIST_DEQUEUE( &p->l );
-		bu_free( (char *)p, "ray_result" );
+	if( BU_LIST_IS_INITIALIZED( &rts_resource.ray_results ) ) {
+		while( BU_LIST_NON_EMPTY( &rts_resource.ray_results ) ) {
+			struct ray_result *p;
+			p = (struct ray_result *)BU_LIST_FIRST( ray_result, &rts_resource.ray_results );
+			BU_LIST_DEQUEUE( &p->l );
+			bu_free( (char *)p, "ray_result" );
+		}
 	}
 
-	while( BU_LIST_NON_EMPTY( &rts_resource.ray_hits ) ) {
-		struct ray_hit *p;
-		p = (struct ray_hit *)BU_LIST_FIRST( ray_hit, &rts_resource.ray_hits );
-		BU_LIST_DEQUEUE( &p->l );
-		bu_free( (char *)p, "ray_hit" );
+	if( BU_LIST_IS_INITIALIZED( &rts_resource.ray_hits ) ) {
+		while( BU_LIST_NON_EMPTY( &rts_resource.ray_hits ) ) {
+			struct ray_hit *p;
+			p = (struct ray_hit *)BU_LIST_FIRST( ray_hit, &rts_resource.ray_hits );
+			BU_LIST_DEQUEUE( &p->l );
+			bu_free( (char *)p, "ray_hit" );
+		}
 	}
 
-	while( BU_LIST_NON_EMPTY( &rts_resource.rtserver_jobs ) ) {
-		struct rtserver_job *p;
-		p = (struct rtserver_job *)BU_LIST_FIRST( rtserver_job, &rts_resource.rtserver_jobs );
-		BU_LIST_DEQUEUE( &p->l );
-		bu_free( (char *)p, "rtserver_job" );
+	if( BU_LIST_IS_INITIALIZED( &rts_resource.rtserver_jobs ) ) {
+		while( BU_LIST_NON_EMPTY( &rts_resource.rtserver_jobs ) ) {
+			struct rtserver_job *p;
+			p = (struct rtserver_job *)BU_LIST_FIRST( rtserver_job, &rts_resource.rtserver_jobs );
+			BU_LIST_DEQUEUE( &p->l );
+			bu_free( (char *)p, "rtserver_job" );
+		}
 	}
 
-	for( i=0 ; i<BU_PTBL_LEN( &rts_resource.xrays ) ; i++ ) {
-		struct xray *p = (struct xray *)BU_PTBL_GET( &rts_resource.xrays, i );
-		bu_free( (char *)p, "xray" );
+	if( rts_resource.xrays.l.magic == BU_PTBL_MAGIC ) {
+		for( i=0 ; i<BU_PTBL_LEN( &rts_resource.xrays ) ; i++ ) {
+			struct xray *p = (struct xray *)BU_PTBL_GET( &rts_resource.xrays, i );
+			bu_free( (char *)p, "xray" );
+		}
+		bu_ptbl_free( &rts_resource.xrays );
 	}
-	bu_ptbl_free( &rts_resource.xrays );
 
 	needs_initialization = 1;
 }
@@ -1956,6 +1978,7 @@ Java_mil_army_arl_muves_rtserver_RtServerImpl_rtsInit(JNIEnv *env, jobject obj, 
 	int rts_load_return=0;
 	int i;
 
+	rts_shutdown();
 	rts_init();
 
 	if( len < 4 ) {
