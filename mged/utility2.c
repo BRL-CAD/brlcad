@@ -985,10 +985,12 @@ struct directory *dp;
 }
 
 static void
-zero_dp_counts( db_ip, dp )
+zero_dp_counts( db_ip, dp, ptr )
 struct db_i *db_ip;
 struct directory *dp;
+genptr_t	ptr;
 {
+  Tcl_Interp	*interp = (Tcl_Interp *)ptr;
   RT_CK_DIR( dp );
 
   dp->d_nref = 0;
@@ -999,9 +1001,10 @@ struct directory *dp;
 }
 
 static void
-zero_nrefs( db_ip, dp )
+zero_nrefs( db_ip, dp, ptr )
 struct db_i *db_ip;
 struct directory *dp;
+genptr_t	ptr;
 {
 	RT_CK_DIR( dp );
 
@@ -1009,9 +1012,10 @@ struct directory *dp;
 }
 
 static void
-increment_uses( db_ip, dp )
+increment_uses( db_ip, dp, ptr )
 struct db_i *db_ip;
 struct directory *dp;
+genptr_t	ptr;
 {
 	RT_CK_DIR( dp );
 
@@ -1019,9 +1023,10 @@ struct directory *dp;
 }
 
 static void
-increment_nrefs( db_ip, dp )
+increment_nrefs( db_ip, dp, ptr )
 struct db_i *db_ip;
 struct directory *dp;
+genptr_t	ptr;
 {
 	RT_CK_DIR( dp );
 
@@ -1037,9 +1042,10 @@ struct object_use
 };
 
 static void
-Free_uses( db_ip, dp )
+Free_uses( db_ip, dp, ptr )
 struct db_i *db_ip;
 struct directory *dp;
+genptr_t	ptr;
 {
 	struct object_use *use;
 	struct bu_external sol_ext;
@@ -1068,9 +1074,10 @@ struct directory *dp;
 }
 
 static void
-Make_new_name( db_ip, dp )
+Make_new_name( db_ip, dp, ptr )
 struct db_i *db_ip;
 struct directory *dp;
+genptr_t	ptr;
 {
 	struct object_use *use;
 	int use_no;
@@ -1418,10 +1425,10 @@ char **argv;
 	  return TCL_ERROR;
 
 	/* initialize use and reference counts */
-	db_functree( dbip, old_dp, zero_dp_counts, zero_dp_counts );
+	db_functree( dbip, old_dp, zero_dp_counts, zero_dp_counts, (genptr_t)interp );
 
 	/* Count uses */
-	db_functree( dbip, old_dp, increment_uses, increment_uses );
+	db_functree( dbip, old_dp, increment_uses, increment_uses, NULL );
 
 	/* Get list of tree tops in this model */
 	bu_ptbl( &tops, BU_PTBL_INIT, (long *)NULL );
@@ -1466,7 +1473,7 @@ char **argv;
 		struct directory *dp;
 
 		dp = (struct directory *)BU_PTBL_GET( &tops, i );
-		db_functree( dbip, dp, zero_nrefs, zero_nrefs );
+		db_functree( dbip, dp, zero_nrefs, zero_nrefs, NULL );
 	}
 
 	/* count references in entire model */
@@ -1475,14 +1482,14 @@ char **argv;
 		struct directory *dp;
 
 		dp = (struct directory *)BU_PTBL_GET( &tops, i );
-		db_functree( dbip, dp, increment_nrefs, increment_nrefs );
+		db_functree( dbip, dp, increment_nrefs, increment_nrefs, NULL );
 	}
 
 	/* Free list of tree-tops */
 	bu_ptbl( &tops, BU_PTBL_FREE, (long *)NULL );
 
 	/* Make new names */
-	db_functree( dbip, old_dp, Make_new_name, Make_new_name );
+	db_functree( dbip, old_dp, Make_new_name, Make_new_name, NULL );
 
 	bn_mat_idn( xform );
 
@@ -1490,7 +1497,7 @@ char **argv;
 	(void) Copy_object( old_dp, xform );
 
 	/* Free use lists and delete unused directory entries */
-	db_functree( dbip, old_dp, Free_uses, Free_uses );
+	db_functree( dbip, old_dp, Free_uses, Free_uses, NULL );
 
 	return TCL_OK;
 }

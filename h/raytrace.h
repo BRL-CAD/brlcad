@@ -2139,6 +2139,12 @@ BU_EXTERN(int rt_db_put_internal, (struct directory *dp, struct db_i *dbip,
 
 /* db_comb.c */
 
+/* db_walk.c */
+BU_EXTERN(void db_functree, (struct db_i *dbip, struct directory *dp,
+	void (*comb_func)(struct db_i *, struct directory *, genptr_t),
+	void (*leaf_func)(struct db_i *, struct directory *, genptr_t),
+	genptr_t client_data));
+
 /* g_epa.c */
 BU_EXTERN(void rt_ell, (fastf_t *ov, CONST fastf_t *V, CONST fastf_t *A,
 			CONST fastf_t *B, int sides) );

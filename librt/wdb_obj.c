@@ -649,7 +649,7 @@ wdb_adjust_tcl( clientData, interp, argc, argv )
 {
 	register struct directory	*dp;
 	register CONST struct bu_structparse	*sp = NULL;
-	int				 id, status, i;
+	int				 status, i;
 	char				*name;
 	struct rt_db_internal		 intern;
 	mat_t				 idn;
@@ -684,7 +684,6 @@ wdb_adjust_tcl( clientData, interp, argc, argv )
 	RT_CK_DB_INTERNAL( &intern );
 
 	/* Find out what type of object we are dealing with and tweak it. */
-	id = intern.idb_type;
 	RT_CK_FUNCTAB(intern.idb_meth);
 
 	status = intern.idb_meth->ft_tcladjust( interp, &intern, argc-3, argv+3 );
@@ -1702,7 +1701,9 @@ wdb_killtree_tcl(clientData, interp, argc, argv)
 	for (i=1; i<argc; i++) {
 		if ((dp = db_lookup(wdbop->wdb_wp->dbip, argv[i], LOOKUP_NOISY)) == DIR_NULL)
 			continue;
-		db_functree(wdbop->wdb_wp->dbip, dp, wdb_killtree_callback, wdb_killtree_callback);
+		db_functree(wdbop->wdb_wp->dbip, dp,
+			wdb_killtree_callback, wdb_killtree_callback,
+			(genptr_t)interp );
 	}
 
 	return TCL_OK;
@@ -1712,21 +1713,24 @@ wdb_killtree_tcl(clientData, interp, argc, argv)
  *			K I L L T R E E
  */
 HIDDEN void
-wdb_killtree_callback(dbip, dp)
+wdb_killtree_callback(dbip, dp, ptr)
      struct db_i	*dbip;
      register struct directory *dp;
+     genptr_t *ptr;
 {
+	Tcl_Interp *interp = (Tcl_Interp *)ptr;
+
 	if (dbip == DBI_NULL)
 		return;
 
-	Tcl_AppendResult(curr_interp, "KILL ", (dp->d_flags & DIR_COMB) ? "COMB" : "Solid",
+	Tcl_AppendResult(interp, "KILL ", (dp->d_flags & DIR_COMB) ? "COMB" : "Solid",
 			 ":  ", dp->d_namep, "\n", (char *)NULL);
 
 	/* notify drawable geometry objects associated with this database object */
-	dgo_eraseobjall_callback(curr_interp, dbip, dp);
+	dgo_eraseobjall_callback(interp, dbip, dp);
 
 	if (db_delete(dbip, dp) < 0 || db_dirdelete(dbip, dp) < 0) {
-		Tcl_AppendResult(curr_interp,
+		Tcl_AppendResult(interp,
 				 "an error occurred while deleting ",
 				 dp->d_namep, "\n", (char *)NULL);
 	}

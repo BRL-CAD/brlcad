@@ -63,10 +63,10 @@ RT_EXTERN( void write_vertex_list , ( struct nmgregion *r , struct nmg_ptbl *vta
 RT_EXTERN( void nmg_region_edge_list , ( struct nmg_ptbl *tab , struct nmgregion *r ) );
 RT_EXTERN( int nmgregion_to_iges , ( char *name , struct nmgregion *r , int dependent , FILE *fp_dir , FILE *fp_param ) );
 RT_EXTERN( int write_shell_face_loop , ( struct nmgregion *r , int edge_de , struct nmg_ptbl *etab , int vert_de , struct nmg_ptbl *vtab , FILE *fp_dir , FILE *fp_param ) );
-RT_EXTERN( void csg_comb_func , ( struct db_i *dbip , struct directory *dp ) );
-RT_EXTERN( void csg_leaf_func , ( struct db_i *dbip , struct directory *dp ) );
+RT_EXTERN( void csg_comb_func , ( struct db_i *dbip , struct directory *dp , genptr_t ptr ) );
+RT_EXTERN( void csg_leaf_func , ( struct db_i *dbip , struct directory *dp , genptr_t ptr ) );
 RT_EXTERN( void set_iges_tolerances , ( struct rt_tol *set_tol , struct rt_tess_tol *set_ttol ) );
-RT_EXTERN( void count_refs , ( struct db_i *dbip , struct directory *dp ) );
+RT_EXTERN( void count_refs , ( struct db_i *dbip , struct directory *dp , genptr_t ptr ) );
 
 static char usage[] = "Usage: %s [-f|t|m] [-v] [-s] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-d dist_tol] [-o output_file] brlcad_db.g object(s)\n\
 	options:\n\
@@ -317,7 +317,7 @@ char	*argv[];
 /*	for( i=1 ; i<argc ; i++ )
 	{
 		dp = db_lookup( dbip , argv[i] , 1 );
-		db_functree( dbip , dp , count_refs , 0 );
+		db_functree( dbip , dp , count_refs , 0 , NULL );
 	}	*/
 
 	/* tree tops must have independent status, so we need to remember them */
@@ -330,7 +330,7 @@ char	*argv[];
 		 * as a single manifold solid BREP object */
 
 		ret = db_walk_tree(dbip, argc-1, (CONST char **)(argv+1),
-			1,			/* ncpu */
+			ncpu,
 			&tree_state,
 			0,			/* take all regions */
 			do_nmg_region_end,
@@ -345,7 +345,7 @@ char	*argv[];
 			for( i=1 ; i<argc ; i++ )
 			{
 				dp = db_lookup( dbip , argv[i] , 1 );
-				db_functree( dbip , dp , csg_comb_func , 0 );
+				db_functree( dbip , dp , csg_comb_func , 0 , NULL );
 			}
 		}
 	}
@@ -358,7 +358,7 @@ char	*argv[];
 		for( i=1 ; i<argc ; i++ )
 		{
 			dp = db_lookup( dbip , argv[i] , 1 );
-			db_functree( dbip , dp , csg_comb_func , csg_leaf_func );
+			db_functree( dbip , dp , csg_comb_func , csg_leaf_func , NULL );
 		}
 	}
 	else if( mode == TRIMMED_SURF_MODE )
@@ -367,7 +367,7 @@ char	*argv[];
 		 * of trimmed NURBS */
 
 		ret = db_walk_tree(dbip, argc-1, (CONST char **)(argv+1),
-			1,			/* ncpu */
+			ncpu,
 			&tree_state,
 			0,			/* take all regions */
 			do_nmg_region_end,
@@ -703,9 +703,10 @@ int *de_pointers;
 }
 
 void
-csg_comb_func( dbip , dp )
+csg_comb_func( dbip , dp , ptr )
 struct db_i *dbip;
 struct directory *dp;
+genptr_t	ptr;
 {
 	struct rt_db_internal intern;
 	struct rt_comb_internal *comb;
@@ -796,9 +797,10 @@ struct directory *dp;
 }
 
 void
-csg_leaf_func( dbip , dp )
+csg_leaf_func( dbip , dp , ptr )
 struct db_i *dbip;
 struct directory *dp;
+genptr_t ptr;
 {
 	struct rt_external	ep;
 	struct rt_db_internal	ip;
@@ -853,9 +855,10 @@ genptr_t		user_ptr1,user_ptr2,user_ptr3;
 }
 
 void
-count_refs( dbip , dp )
+count_refs( dbip , dp , ptr )
 struct db_i *dbip;
 struct directory *dp;
+genptr_t ptr;
 {
 	struct rt_db_internal intern;
 	struct rt_comb_internal *comb;

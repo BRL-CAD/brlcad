@@ -826,15 +826,16 @@ char	**argv;
  *  	Save named objects in specified file.
  *	Good for pulling parts out of one model for use elsewhere.
  */
-static FILE	*keepfp;
+BU_EXTERN(void node_write, (struct db_i *dbip, struct directory *dp, genptr_t ptr));
 
 void
-node_write( dbip, dp )
+node_write( dbip, dp, ptr )
 struct db_i	*dbip;
 register struct directory *dp;
+genptr_t	ptr;
 {
+	FILE		*keepfp = (FILE *)ptr;
 	struct rt_db_internal	intern;
-	int			want;
 
 	if( dp->d_nref++ > 0 )
 		return;		/* already written */
@@ -852,6 +853,7 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
+	FILE			*keepfp;
 	register struct directory *dp;
 	struct bu_vls		title;
 	struct bu_vls		units;
@@ -929,7 +931,7 @@ char	**argv;
 	for(i = 2; i < argc; i++) {
 		if( (dp = db_lookup( dbip, argv[i], LOOKUP_NOISY)) == DIR_NULL )
 			continue;
-		db_functree( dbip, dp, node_write, node_write );
+		db_functree( dbip, dp, node_write, node_write, (genptr_t)keepfp );
 	}
 
 	fclose(keepfp);
@@ -1387,7 +1389,7 @@ char	**argv;
 	for(i=1; i<argc; i++) {
 		if( (dp = db_lookup( dbip, argv[i], LOOKUP_NOISY) ) == DIR_NULL )
 			continue;
-		db_functree( dbip, dp, killtree, killtree );
+		db_functree( dbip, dp, killtree, killtree, (genptr_t)interp );
 	}
 
 	(void)signal( SIGINT, SIG_IGN );
@@ -1399,10 +1401,12 @@ char	**argv;
  *			K I L L T R E E
  */
 void
-killtree( dbip, dp )
+killtree( dbip, dp, ptr )
 struct db_i	*dbip;
 register struct directory *dp;
+genptr_t	ptr;
 {
+  Tcl_Interp	*interp = (Tcl_Interp *)ptr;
   register struct dm_list *dmlp;
   register struct dm_list *save_dmlp;
 
