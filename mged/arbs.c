@@ -952,7 +952,7 @@ points()
  *	svec[11]
  *			Entries [0] and [1] are special
  */
-static int
+int
 rt_arb_get_cgtype( cgtype, arb, tol, uvec, svec )
 int			*cgtype;
 struct rt_arb_internal	*arb;
