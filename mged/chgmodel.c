@@ -1317,6 +1317,7 @@ char	**argv;
 
 	CHECK_DBI_NULL;
 
+	sf = dbip->dbi_base2local;
 	ret = invoke_db_wrapper(interp, argc, argv);
 
 	set_localunit_TclVar();
