@@ -726,6 +726,9 @@ AC_SUBST(LIBTOOL_DEPS)
 # AC_DEFUN([BC_PROG_AR], [AC_CHECK_TOOL(AR, ar, :)])
 # BC_PROG_AR
 
+# XXX tests for ranlib may be required.  "ar ts" was used in cake for
+# sgi and aix so more compensation may be required still.
+
 dnl May need AR so try to find it
 AC_PATH_PROG(AR, ar, [], $PATH:/usr/bin:/usr/local/bin:/usr/ccs/bin)
 AC_SUBST(AR)
@@ -1865,8 +1868,6 @@ AC_SUBST(STLIB_LD)
 AC_SUBST(SHLIB_LD_LIBS)
 AC_SUBST(CC_SEARCH_FLAGS)
 AC_SUBST(LD_SEARCH_FLAGS)
-RANLIB=ranlib
-AC_SUBST(RANLIB)
 TCL_LIB_FLAG='-ltcl8.4'
 AC_SUBST(TCL_LIB_FLAG)
 TCL_BUILD_LIB_SPEC='-L../../libtcl/.libs -ltcl8.4 -Wl,--rpath -Wl,${libdir}'
