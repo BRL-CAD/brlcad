@@ -196,7 +196,7 @@ char *tbl;
 	 * points in shells form 0-manifold objects.
 	 */
 	if (sp->vu_p) {
-		NMG_CK_VERTEX(sp->vu_p);
+		NMG_CK_VERTEXUSE(sp->vu_p);
 		NMG_SET_MANIFOLD(tbl, sp, NMG_0MANIFOLD);
 		NMG_SET_MANIFOLD(tbl, sp->vu_p, NMG_0MANIFOLD);
 		NMG_SET_MANIFOLD(tbl, sp->vu_p->v_p, NMG_0MANIFOLD);
