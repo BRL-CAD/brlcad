@@ -541,8 +541,7 @@ fastf_t	a, b, c;
  *  take the difference, and form the rotation matrix.
  *  See mat_ae for that algorithm.
  *
- *  The input 'from' and 'to' vectors must be unit length.
- *
+ *  The input 'from' and 'to' vectors need not be unit length.
  *  MAT4X3VEC( to, m, from ) is the identity that is created.
  */
 void
@@ -556,7 +555,8 @@ vect_t	to;
 	LOCAL double cos_az, cos_el;
 
 	az = mat_atan2( to[Y], to[X] ) - mat_atan2( from[Y], from[X] );
-	el = asin( to[Z] ) - asin( from[Z] );
+	el = mat_atan2( to[Z], hypot( to[X], to[Y] ) ) -
+	     mat_atan2( from[Z], hypot( from[X], from[Y] ) );
 
 	sin_az = sin(az);
 	cos_az = cos(az);
@@ -583,33 +583,173 @@ vect_t	to;
 }
 
 /*
- *			M A T _ L O O K A T
+ *			M A T _ X R O T
  *
- *  Given a direction vector D, product a matrix suitable for use
- *  as a "model2view" matrix that transforms the vector D
- *  into the -Z ("view") axis.
- *
- *  Note that due to the special property of mat_fromto()
- *  that prevents "twist" on the vector by orienting on the X-Y
- *  plane, we must first find the transformation that maps
- *  D into the +X axis, and then rotate to the -Z axis.
+ *  Given the sin and cos of an X rotation angle, produce the rotation matrix.
  */
 void
-mat_lookat( rot, dir )
-mat_t rot;
-vect_t dir;
+mat_xrot( m, sinx, cosx )
+mat_t	m;
+double	sinx, cosx;
 {
-	mat_t	second;
+	m[0] = 1.0;
+	m[1] = 0.0;
+	m[2] = 0.0;
+	m[3] = 0.0;
+
+	m[4] = 0.0;
+	m[5] = cosx;
+	m[6] = -sinx;
+	m[7] = 0.0;
+
+	m[8] = 0.0;
+	m[9] = sinx;
+	m[10] = cosx;
+	m[11] = 0.0;
+
+	m[12] = m[13] = m[14] = 0.0;
+	m[15] = 1.0;
+}
+
+/*
+ *			M A T _ Y R O T
+ *
+ *  Given the sin and cos of a Y rotation angle, produce the rotation matrix.
+ */
+void
+mat_yrot( m, siny, cosy )
+mat_t	m;
+double	siny, cosy;
+{
+	m[0] = cosy;
+	m[1] = 0.0;
+	m[2] = -siny;
+	m[3] = 0.0;
+
+	m[4] = 0.0;
+	m[5] = 1.0;
+	m[6] = 0.0;
+	m[7] = 0.0;
+
+	m[8] = siny;
+	m[9] = 0.0;
+	m[10] = cosy;
+
+	m[11] = 0.0;
+	m[12] = m[13] = m[14] = 0.0;
+	m[15] = 1.0;
+}
+
+/*
+ *			M A T _ Z R O T
+ *
+ *  Given the sin and cos of a Z rotation angle, produce the rotation matrix.
+ */
+void
+mat_zrot( m, sinz, cosz )
+mat_t	m;
+double	sinz, cosz;
+{
+	m[0] = cosz;
+	m[1] = -sinz;
+	m[2] = 0.0;
+	m[3] = 0.0;
+
+	m[4] = sinz;
+	m[5] = cosz;
+	m[6] = 0.0;
+	m[7] = 0.0;
+
+	m[8] = 0.0;
+	m[9] = 0.0;
+	m[10] = 1.0;
+	m[11] = 0.0;
+
+	m[12] = m[13] = m[14] = 0.0;
+	m[15] = 1.0;
+}
+
+
+/*
+ *			M A T _ L O O K A T
+ *
+ *  Given a direction vector D of unit length,
+ *  product a matrix which rotates that vector D onto the -Z axis.
+ *  This matrix will be suitable for use as a "model2view" matrix.
+ *
+ *  This is done in several steps.
+ *	1)  Rotate D about Z to match +X axis.  Azimuth adjustment.
+ *	2)  Rotate D about Y to match -Y axis.  Elevation adjustment.
+ *	3)  Rotate D about Z to make projection of X axis again point
+ *	    in the +X direction.  Twist adjustment.
+ *	4)  Optionally, flip sign on Y axis if original Z becomes inverted.
+ *	    This can be nice for static frames, but is astonishing when
+ *	    used in animation.
+ */
+void
+mat_lookat( rot, dir, yflip )
+mat_t	rot;
+vect_t	dir;
+int	yflip;
+{
 	mat_t	first;
+	mat_t	second;
+	mat_t	prod12;
+	mat_t	third;
 	vect_t	x;
+	vect_t	z;
+	vect_t	t1;
+	fastf_t	hypot_xy;
+	vect_t	xproj;
+	vect_t	zproj;
 
-	/* Rotate from Dir to +X */
+	/* First, rotate D around Z axis to match +X axis (azimuth) */
+	hypot_xy = hypot( dir[X], dir[Y] );
+	mat_zrot( first, -dir[Y] / hypot_xy, dir[X] / hypot_xy );
+#if 0
+rt_log(" az angle=%g\n", mat_atan2( -dir[Y] / hypot_xy, dir[X] / hypot_xy )/mat_degtorad );
+#endif
+
+	/* Next, rotate D around Y axis to match -Z axis (elevation) */
+	mat_yrot( second, -hypot_xy, -dir[Z] );
+#if 0
+rt_log(" el angle=%g\n", mat_atan2( -hypot_xy, -dir[Z] )/mat_degtorad );
+#endif
+	mat_mul( prod12, second, first );
+
+	/* Produce twist correction, by re-orienting projection of X axis */
 	VSET( x, 1, 0, 0 );
-	mat_fromto( first, dir, x );
+	MAT4X3VEC( xproj, prod12, x );
+	hypot_xy = hypot( xproj[X], xproj[Y] );
+	if( hypot_xy < 1.0e-10 )  {
+		rt_log("Warning: mat_lookat:  unable to twist correct, hypot=%g\n", hypot_xy);
+		VPRINT( "xproj", xproj );
+		mat_copy( rot, prod12 );
+		return;
+	}
+	mat_zrot( third, -xproj[Y] / hypot_xy, xproj[X] / hypot_xy );
+#if 0
+rt_log(" tw angle=%g\n", mat_atan2( -xproj[Y] / hypot_xy, xproj[X] / hypot_xy )/mat_degtorad);
+#endif
+	mat_mul( rot, third, prod12 );
 
-	/* Rotate so that +X is now -Z axis */
-	mat_angles( second, -90.0, 0.0, 90.0 );
-	mat_mul( rot, second, first );
+	if( yflip )  {
+		VSET( z, 0, 0, 1 );
+		MAT4X3VEC( zproj, rot, z );
+		/* If original Z inverts sign, flip sign on resulting Y */
+		if( zproj[Y] < 0.0 )  {
+			mat_copy( prod12, rot );
+			mat_idn( third );
+			third[5] = -1;
+			mat_mul( rot, third, prod12 );
+		}
+	}
+
+	/* Check the final results */
+	MAT4X3VEC( t1, rot, dir );
+	if( t1[Z] > -0.98 )  {
+		rt_log("Error:  mat_lookat final= (%g, %g, %g)\n", t1[X], t1[Y], t1[Z] );
+	}
 }
 
 /*
