@@ -8212,10 +8212,7 @@ crack_top:
 				NMG_CK_EDGEUSE( eu_next );
 				/* check if eu and eu_next form a jaunt */
 				if( eu->vu_p->v_p != eu_next->eumate_p->vu_p->v_p )
-				{
-					eu = RT_LIST_PNEXT( edgeuse, &eu->l );
 					continue;
-				}
 
 				if( nmg_keu( eu ) )
 					empty_loop = 1;
