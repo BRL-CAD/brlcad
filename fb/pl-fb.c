@@ -333,7 +333,7 @@ char **argv;
 
 	/* Open frame buffer, adapt to slightly smaller ones */
 	if( (fbp = fb_open( NULL, Npixels, Nscanlines )) == FBIO_NULL )  {
-		fprintf(stderr,"fbplot: fb_open failed\n");
+		fprintf(stderr,"plot-fb: fb_open failed\n");
 		exit(1);
 	}
 	Npixels = fb_getwidth(fbp);
@@ -360,19 +360,19 @@ char **argv;
 
 	buffersize = lines_per_band*Npixels*sizeof(RGBpixel);
 	if( (buffer = (RGBpixel *)malloc(buffersize)) == RGBPIXEL_NULL)  {
-		fprintf(stderr,"fbplot:  malloc error\n");
+		fprintf(stderr,"plot-fb:  malloc error\n");
 		exit(1);
 	}
 	band = (struct band *)malloc(BANDS*sizeof(struct band));
 	if( band == (struct band *)0 )  {
-		fprintf(stderr,"fbplot: malloc error2\n");
+		fprintf(stderr,"plot-fb: malloc error2\n");
 		exit(1);
 	}
 	bzero( (char *)band, BANDS*sizeof(struct band) );
 	bandEnd = &band[BANDS];
 
 	if( debug )
-		fprintf(stderr, "fbplot output of %s\n", filename);
+		fprintf(stderr, "plot-fb output of %s\n", filename);
 
 	SetSigs();			/* set signal catchers */
 
@@ -895,7 +895,7 @@ OutBuild()				/* returns true if successful */
 	    	if( overlay )  {
 	    		/* Read in current band */
 		    	if( fb_read( fbp, 0, ystart, buffer, buffersize/sizeof(RGBpixel) ) <= 0 )
-	    			fprintf(stderr,"fbplot:  band read error\n");
+	    			fprintf(stderr,"plot-fb:  band read error\n");
 	    	} else {
 			/* clear pixels in the band */
 			bzero( (char *)buffer, buffersize );
