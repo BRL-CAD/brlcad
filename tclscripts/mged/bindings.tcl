@@ -70,6 +70,9 @@ proc mged_bind_dm { w } {
     bind $w <Control-n> "winset $w; next_view"
     bind $w <Control-p> "winset $w; prev_view"
     bind $w <Control-t> "winset $w; toggle_view"
+
+# troublesome ones
+    bind $w <Tab> "break"
 }
 
 proc print_return_val str {
