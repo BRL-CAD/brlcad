@@ -4,7 +4,8 @@
  *  Data Display - shows doubles on a framebuffer in various ways.
  */
 #include <stdio.h>
-#include <brlcad/fb.h>
+#include "machine.h"
+#include "fb.h"
 
 #define	MAXPTS 4096
 
