@@ -1090,13 +1090,33 @@ RT_EXTERN(double rt_read_timer, (char *str, int len) );
 
 
 /* The matrix math routines */
-extern void mat_zero(), mat_idn(), mat_copy(), mat_mul(), matXvec();
-extern void mat_inv(), mat_trn(), mat_ae(), mat_angles();
-extern void vtoh_move(), htov_move(), mat_print();
-extern void eigen2x2(), mat_fromto(), mat_lookat();
-extern void ae_vec(), vec_ortho(), vec_perp();
-extern void mat_xrot(), mat_yrot(), mat_zrot();
-extern double mat_atan2();
+RT_EXTERN(double mat_atan2, (double y, double x) );
+RT_EXTERN(void mat_zero, (mat_t m) );
+RT_EXTERN(void mat_idn, (mat_t m) );
+RT_EXTERN(void mat_copy, (mat_t dest, mat_t src) );
+RT_EXTERN(void mat_mul, (mat_t dest, mat_t a, mat_t b) );
+RT_EXTERN(void matXvec, (vect_t dest, mat_t m, vect_t src) );
+RT_EXTERN(void mat_inv, (mat_t dest, mat_t src) );
+/* XXX these two need mat_ on their names */
+RT_EXTERN(void vtoh_move, (hvect_t dest, vect_t src) );
+RT_EXTERN(void htov_move, (vect_t dest, hvect_t src) );
+RT_EXTERN(void mat_print, (char *title, mat_t m) );
+RT_EXTERN(void mat_trn, (mat_t dest, mat_t src) );
+RT_EXTERN(void mat_ae, (mat_t dest, double azimuth, double elev) );
+/* XXX new name */
+RT_EXTERN(void ae_vec, (fastf_t *azp, fastf_t *elp, vect_t src) );
+RT_EXTERN(void mat_angles, (mat_t dest, double alpha, double beta, double ggamma) );
+/* XXX new name */
+RT_EXTERN(void eigen2x2, (fastf_t *val1, fastf_t *val2,
+	vect_t vec1, vect_t vec2, double a, double b, double c) );
+RT_EXTERN(void mat_fromto, (mat_t dest, vect_t from, vect_t to) );
+RT_EXTERN(void mat_xrot, (mat_t dest, double sinx, double cosx) );
+RT_EXTERN(void mat_yrot, (mat_t dest, double siny, double cosy) );
+RT_EXTERN(void mat_zrot, (mat_t dest, double sinz, double cosz) );
+RT_EXTERN(void mat_lookat, (mat_t dest, vect_t dir, int yflip) );
+/* XXX new names */
+RT_EXTERN(void vec_ortho, (vect_t dest, vect_t src) );
+RT_EXTERN(void vec_perp, (vect_t dest, vect_t src) );
 
 /*****************************************************************
  *                                                               *
