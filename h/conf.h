@@ -56,6 +56,14 @@
 #	define HAVE_UNISTD_H	1
 #endif
 
+/*
+ * XXX SunOS 4.X also has <unistd.h> but I am not sure if including it
+ * works since I am only working on SunOS 5.X
+ */
+#if SUNOS >= 52
+#	define HAVE_UNISTD_H	1
+#endif
+
 #if !defined(CRAY1)			/* XXX ??? */
 #	define HAVE_VARARGS_H	1	/* In case we don't HAVE_STDARG_H */
 #endif
