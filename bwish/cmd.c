@@ -29,6 +29,7 @@
 
 #include "conf.h"
 #include "tcl.h"
+#include "tk.h"
 
 #include "machine.h"
 #include "externs.h"
@@ -55,12 +56,17 @@ HIDDEN struct bu_cmdtab bwish_cmds[] =
 	{(char *)NULL,		CMD_NULL}
 };
 
+extern Tk_PhotoImageFormat tkImgFmtPIX;
+
 int
 cmdInit(interp)
      Tcl_Interp *interp;
 {
 	/* Register bwish commands */
 	bu_register_cmds(interp, bwish_cmds);
+
+	/* Add pix format for images */
+	Tk_CreatePhotoImageFormat(&tkImgFmtPIX);
 
 	/* initialize command history */
 	historyInit();
