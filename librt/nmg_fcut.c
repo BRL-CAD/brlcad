@@ -109,6 +109,23 @@ static CONST char *nmg_v_assessment_names[32] = {
 	"?30",
 	"?31"
 };
+#define NMG_LEFT_LEFT	NMG_V_COMB(NMG_E_ASSESSMENT_LEFT,NMG_E_ASSESSMENT_LEFT)
+#define NMG_LEFT_RIGHT	NMG_V_COMB(NMG_E_ASSESSMENT_LEFT,NMG_E_ASSESSMENT_RIGHT)
+#define NMG_LEFT_ON_FORW NMG_V_COMB(NMG_E_ASSESSMENT_LEFT,NMG_E_ASSESSMENT_ON_FORW)
+#define NMG_LEFT_ON_REV	NMG_V_COMB(NMG_E_ASSESSMENT_LEFT,NMG_E_ASSESSMENT_ON_REV)
+#define NMG_RIGHT_LEFT	NMG_V_COMB(NMG_E_ASSESSMENT_RIGHT,NMG_E_ASSESSMENT_LEFT)
+#define NMG_RIGHT_RIGHT	NMG_V_COMB(NMG_E_ASSESSMENT_RIGHT,NMG_E_ASSESSMENT_RIGHT)
+#define NMG_RIGHT_ON_FORW NMG_V_COMB(NMG_E_ASSESSMENT_RIGHT,NMG_E_ASSESSMENT_ON_FORW)
+#define NMG_RIGHT_ON_REV NMG_V_COMB(NMG_E_ASSESSMENT_RIGHT,NMG_E_ASSESSMENT_ON_REV)
+#define NMG_ON_FORW_LEFT NMG_V_COMB(NMG_E_ASSESSMENT_ON_FORW,NMG_E_ASSESSMENT_LEFT)
+#define NMG_ON_FORW_RIGHT NMG_V_COMB(NMG_E_ASSESSMENT_ON_FORW,NMG_E_ASSESSMENT_RIGHT)
+#define NMG_ON_FORW_ON_FORW NMG_V_COMB(NMG_E_ASSESSMENT_ON_FORW,NMG_E_ASSESSMENT_ON_FORW)
+#define NMG_ON_FORW_ON_REV NMG_V_COMB(NMG_E_ASSESSMENT_ON_FORW,NMG_E_ASSESSMENT_ON_REV)
+#define NMG_ON_REV_LEFT	NMG_V_COMB(NMG_E_ASSESSMENT_ON_REV,NMG_E_ASSESSMENT_LEFT)
+#define NMG_ON_REV_RIGHT NMG_V_COMB(NMG_E_ASSESSMENT_ON_REV,NMG_E_ASSESSMENT_RIGHT)
+#define NMG_ON_REV_ON_FORW NMG_V_COMB(NMG_E_ASSESSMENT_ON_REV,NMG_E_ASSESSMENT_ON_FORW)
+#define NMG_ON_REV_ON_REV NMG_V_COMB(NMG_E_ASSESSMENT_ON_REV,NMG_E_ASSESSMENT_ON_REV)
+#define NMG_LONE	NMG_V_ASSESSMENT_LONE
 
 static CONST char *nmg_e_assessment_names[4] = {
 	"LEFT",
@@ -1028,7 +1045,7 @@ tie_break:
 	}
 out:
 	if(rt_g.NMG_debug&DEBUG_VU_SORT)  {
-		rt_log("nmg_face_vu_comapre(x%x, x%x) %s %s, %s\n",
+		rt_log("nmg_face_vu_compare(x%x, x%x) %s %s, %s\n",
 			a, b,
 			WEDGECLASS2STR(a->wedge_class),
 			WEDGECLASS2STR(b->wedge_class),
@@ -1253,16 +1270,31 @@ top:
 		 *  in which case, let just one through.  (return 'start+1');
 		 */
 		if( *(rs->vu[i]->up.magic_p) == NMG_LOOPUSE_MAGIC )  {
-			if( i <= start && nvu == 0 )  {
-				rt_free( (char *)vs, "nmg_vu_stuff");
-				rt_free( (char *)ls, "nmg_loop_stuff");
-				return start+1;	/* end point */
+			if( nvu > 0 || i > start )  {
+				/* Drop this loop of a single vertex in sanitize() */
+				lu->orientation =
+				  lu->lumate_p->orientation = OT_BOOLPLACE;
+				/* "continue" keeps vu from being added to vs[] */
+				continue;
 			}
-			/* Drop this loop of a single vertex in sanitize() */
-			lu->orientation =
-			  lu->lumate_p->orientation = OT_BOOLPLACE;
-			continue;
 		}
+
+		/*
+		 *  At a multiple vertexuse vertex, eliminate all the
+		 *  NMG_ON_REV_ON_FORW and NMG_ON_FORW_ON_REV vu's.
+		 *  If they are all such, then send just one through.
+		 */
+		if( ass==NMG_ON_REV_ON_FORW || ass==NMG_ON_FORW_ON_REV )  {
+			if( nvu > 0 || i > start )  {
+				/* At least one other kind already seen,
+				 * or at least one other vu still to be
+				 * processed, toss this one.
+				 * XXX What about if last one is a lone-vu-loop, and should be tossed in place of this corner vu?
+				 */
+				continue;
+			}
+		}
+
 		vs[nvu].vu = rs->vu[i];
 		vs[nvu].seq = -1;		/* Not assigned yet */
 
@@ -1797,24 +1829,6 @@ struct nmg_ray_state	*rs;
  *  State machine transition tables
  *  Indexed by MNG_V_ASSESSMENT values.
  */
-#define NMG_LEFT_LEFT	NMG_V_COMB(NMG_E_ASSESSMENT_LEFT,NMG_E_ASSESSMENT_LEFT)
-#define NMG_LEFT_RIGHT	NMG_V_COMB(NMG_E_ASSESSMENT_LEFT,NMG_E_ASSESSMENT_RIGHT)
-#define NMG_LEFT_ON_FORW NMG_V_COMB(NMG_E_ASSESSMENT_LEFT,NMG_E_ASSESSMENT_ON_FORW)
-#define NMG_LEFT_ON_REV	NMG_V_COMB(NMG_E_ASSESSMENT_LEFT,NMG_E_ASSESSMENT_ON_REV)
-#define NMG_RIGHT_LEFT	NMG_V_COMB(NMG_E_ASSESSMENT_RIGHT,NMG_E_ASSESSMENT_LEFT)
-#define NMG_RIGHT_RIGHT	NMG_V_COMB(NMG_E_ASSESSMENT_RIGHT,NMG_E_ASSESSMENT_RIGHT)
-#define NMG_RIGHT_ON_FORW NMG_V_COMB(NMG_E_ASSESSMENT_RIGHT,NMG_E_ASSESSMENT_ON_FORW)
-#define NMG_RIGHT_ON_REV NMG_V_COMB(NMG_E_ASSESSMENT_RIGHT,NMG_E_ASSESSMENT_ON_REV)
-#define NMG_ON_FORW_LEFT NMG_V_COMB(NMG_E_ASSESSMENT_ON_FORW,NMG_E_ASSESSMENT_LEFT)
-#define NMG_ON_FORW_RIGHT NMG_V_COMB(NMG_E_ASSESSMENT_ON_FORW,NMG_E_ASSESSMENT_RIGHT)
-#define NMG_ON_FORW_ON_FORW NMG_V_COMB(NMG_E_ASSESSMENT_ON_FORW,NMG_E_ASSESSMENT_ON_FORW)
-#define NMG_ON_FORW_ON_REV NMG_V_COMB(NMG_E_ASSESSMENT_ON_FORW,NMG_E_ASSESSMENT_ON_REV)
-#define NMG_ON_REV_LEFT	NMG_V_COMB(NMG_E_ASSESSMENT_ON_REV,NMG_E_ASSESSMENT_LEFT)
-#define NMG_ON_REV_RIGHT NMG_V_COMB(NMG_E_ASSESSMENT_ON_REV,NMG_E_ASSESSMENT_RIGHT)
-#define NMG_ON_REV_ON_FORW NMG_V_COMB(NMG_E_ASSESSMENT_ON_REV,NMG_E_ASSESSMENT_ON_FORW)
-#define NMG_ON_REV_ON_REV NMG_V_COMB(NMG_E_ASSESSMENT_ON_REV,NMG_E_ASSESSMENT_ON_REV)
-#define NMG_LONE	NMG_V_ASSESSMENT_LONE
-
 
 struct state_transitions {
 	int	assessment;
