@@ -430,6 +430,10 @@ menu .$id.menubar.file.pref -tearoff $do_tearoffs
 	-menu .$id.menubar.file.pref.cle
 .$id.menubar.file.pref add cascade -label "Special Characters" -underline 0\
 	-menu .$id.menubar.file.pref.special_chars
+.$id.menubar.file.pref add cascade -label "Wireframe Highlight Color" -underline 0\
+	-menu .$id.menubar.file.pref.wireframe_highlight_color
+.$id.menubar.file.pref add cascade -label "Default Wireframe Color" -underline 0\
+	-menu .$id.menubar.file.pref.default_wireframe_color
 
 menu .$id.menubar.file.pref.units -tearoff $do_tearoffs
 .$id.menubar.file.pref.units add radiobutton -value um -variable mged_display(units)\
@@ -463,6 +467,48 @@ menu .$id.menubar.file.pref.special_chars -tearoff $do_tearoffs
 	-label "Tcl Evaluation" -underline 0
 .$id.menubar.file.pref.special_chars add radiobutton -value 1 -variable glob_compat_mode\
 	-label "Object Name Matching" -underline 0
+
+menu .$id.menubar.file.pref.wireframe_highlight_color -tearoff $do_tearoffs
+.$id.menubar.file.pref.wireframe_highlight_color add command -label black -underline 0\
+	-command "set wireframe_highlight_color {0 0 0}"
+.$id.menubar.file.pref.wireframe_highlight_color add command -label white -underline 0\
+	-command "set wireframe_highlight_color {255 255 255}"
+.$id.menubar.file.pref.wireframe_highlight_color add command -label red -underline 0\
+	-command "set wireframe_highlight_color {255 0 0}"
+.$id.menubar.file.pref.wireframe_highlight_color add command -label green -underline 0\
+	-command "set wireframe_highlight_color {0 255 0}"
+.$id.menubar.file.pref.wireframe_highlight_color add command -label blue -underline 0\
+	-command "set wireframe_highlight_color {0 0 255}"
+.$id.menubar.file.pref.wireframe_highlight_color add command -label yellow -underline 0\
+	-command "set wireframe_highlight_color {255 255 0}"
+.$id.menubar.file.pref.wireframe_highlight_color add command -label cyan -underline 0\
+	-command "set wireframe_highlight_color {0 255 255}"
+.$id.menubar.file.pref.wireframe_highlight_color add command -label magenta -underline 0\
+	-command "set wireframe_highlight_color {255 0 255}"
+.$id.menubar.file.pref.wireframe_highlight_color add separator
+.$id.menubar.file.pref.wireframe_highlight_color add command -label "Color Tool..." -underline 6\
+	-command "chooseWireframeHighlightColor $id"
+
+menu .$id.menubar.file.pref.default_wireframe_color -tearoff $do_tearoffs
+.$id.menubar.file.pref.default_wireframe_color add command -label black -underline 0\
+	-command "set default_wireframe_color {0 0 0}"
+.$id.menubar.file.pref.default_wireframe_color add command -label white -underline 0\
+	-command "set default_wireframe_color {255 255 255}"
+.$id.menubar.file.pref.default_wireframe_color add command -label red -underline 0\
+	-command "set default_wireframe_color {255 0 0}"
+.$id.menubar.file.pref.default_wireframe_color add command -label green -underline 0\
+	-command "set default_wireframe_color {0 255 0}"
+.$id.menubar.file.pref.default_wireframe_color add command -label blue -underline 0\
+	-command "set default_wireframe_color {0 0 255}"
+.$id.menubar.file.pref.default_wireframe_color add command -label yellow -underline 0\
+	-command "set default_wireframe_color {255 255 0}"
+.$id.menubar.file.pref.default_wireframe_color add command -label cyan -underline 0\
+	-command "set default_wireframe_color {0 255 255}"
+.$id.menubar.file.pref.default_wireframe_color add command -label magenta -underline 0\
+	-command "set default_wireframe_color {255 0 255}"
+.$id.menubar.file.pref.default_wireframe_color add separator
+.$id.menubar.file.pref.default_wireframe_color add command -label "Color Tool..." -underline 6\
+	-command "chooseDefaultWireframeColor $id"
 
 menu .$id.menubar.edit -tearoff $do_tearoffs
 .$id.menubar.edit add command -label "Solid..." -underline 0 \
@@ -873,7 +919,9 @@ menu .$id.menubar.tools -tearoff $do_tearoffs
 .$id.menubar.tools add command -label "Combination Edit Tool..." -underline 0\
 	-command "init_comb $id"
 .$id.menubar.tools add command -label "Color Edit Tool..." -underline 1\
-	-command "cadColorWidget tool .$id -title \"Color Edit Tool\" -initialcolor black"
+	-command "cadColorWidget tool .$id colorEditTool\
+	-title \"Color Edit Tool\"\
+	-initialcolor black"
 .$id.menubar.tools add separator
 .$id.menubar.tools add checkbutton -offvalue 0 -onvalue 1 -variable buttons_on($id)\
 	-label "Classic Menu Tool..." -underline 0\
@@ -916,11 +964,28 @@ frame .$id.status.dpy
 frame .$id.status.illum
 
 label .$id.status.cent -textvar mged_display($mged_active_dm($id),center) -anchor w
+hoc_create_label_binding .$id.status.cent "View Center"\
+	{ { summary "These numbers indicate the view center in\nmodel coordinates (local units)." }
+          { see_also "center, view, viewget, viewset" } }
 label .$id.status.size -textvar mged_display($mged_active_dm($id),size) -anchor w
+hoc_create_label_binding .$id.status.size "View Size"\
+	{ { summary "This number indicates the view size (local units)." }
+          { see_also size} }
 label .$id.status.units -textvar mged_display(units) -anchor w -padx 4
+hoc_create_label_binding .$id.status.units "Units"\
+	{ { summary "     This indicates the local units.     " }
+          { see_also units} }
 label .$id.status.aet -textvar mged_display($mged_active_dm($id),aet) -anchor w
+hoc_create_label_binding .$id.status.aet "View Orientation"\
+	{ { summary "These numbers indicate the view orientation using azimuth,\nelevation and twist." }
+        { see_also "ae, view, viewget, viewset" } }
 label .$id.status.ang -textvar mged_display($mged_active_dm($id),ang) -anchor w -padx 4
+hoc_create_label_binding .$id.status.ang "Rateknobs"\
+	{ { summary "These numbers give some indication of\nrate of rotation about the x,y,z axes." }
+        { see_also knob} }
 label .$id.status.illum.label -textvar ia_illum_label($id)
+hoc_create_label_binding .$id.status.illum.label "Status Area"\
+	{ { summary "This area is for displaying either the frames per second,\nthe illuminated path or the keypoint during an edit." } }
 
 #==============================================================================
 # PHASE 4: Text widget for interaction
@@ -943,6 +1008,7 @@ if {$use_grid_gm} {
 scrollbar .$id.s -relief flat -command ".$id.t yview"
 
 bind .$id.t <Enter> "focus .$id.t; break"
+hoc_create_binding .$id.t "Command Window" { { summary "Enter commands here!" } }
 
 set mged_edit_style($id) $mged_default_edit_style
 set dm_insert_char_flag(.$id.t) 0
@@ -1991,10 +2057,14 @@ proc choosePaneColor { id } {
     set rgb_str [_mged_dm bg]
     set rgb [format "#%02x%02x%02x" [lindex $rgb_str 0] [lindex $rgb_str 1] [lindex $rgb_str 2]]
 
-    cadColorWidget dialog $mged_top($id) -title "Pane Color"\
+    set parent $mged_top($id)
+    set child pane_color
+
+    cadColorWidget dialog $parent $child\
+	    -title "Pane Color"\
 	    -initialcolor $rgb\
-	    -ok "pane_color_ok $id $mged_top($id).colorWidget"\
-	    -cancel "pane_color_cancel $id $mged_top($id).colorWidget"
+	    -ok "pane_color_ok $id $parent.$child"\
+	    -cancel "cadColorWidget_destroy $parent.$child"
 }
 
 proc pane_color_ok { id w } {
@@ -2006,8 +2076,60 @@ proc pane_color_ok { id w } {
     unset data
 }
 
-proc pane_color_cancel { id w } {
+proc chooseWireframeHighlightColor { id } {
+    global wireframe_highlight_color
+    global mged_top
+    global mged_active_dm
+
+    winset $mged_active_dm($id)
+    set rgb_str $wireframe_highlight_color
+    set rgb [format "#%02x%02x%02x" [lindex $wireframe_highlight_color 0]\
+	    [lindex $wireframe_highlight_color 1] [lindex $wireframe_highlight_color 2]]
+
+    set parent $mged_top($id)
+    set child wire_hl_color
+
+    cadColorWidget dialog $parent $child\
+	    -title "Wireframe Highlight Color"\
+	    -initialcolor $rgb\
+	    -ok "wireframeHighlightColor_ok $parent.$child"\
+	    -cancel "cadColorWidget_destroy $parent.$child"
+}
+
+proc wireframeHighlightColor_ok { w } {
+    global wireframe_highlight_color
     upvar #0 $w data
+
+    set wireframe_highlight_color "$data(red) $data(green) $data(blue)"
+
+    destroy $w
+    unset data
+}
+
+proc chooseDefaultWireframeColor { id } {
+    global default_wireframe_color
+    global mged_top
+    global mged_active_dm
+
+    winset $mged_active_dm($id)
+    set rgb [format "#%02x%02x%02x" [lindex $default_wireframe_color 0]\
+	    [lindex $default_wireframe_color 1] [lindex $default_wireframe_color 2]]
+
+    set parent $mged_top($id)
+    set child def_wire_color
+
+    cadColorWidget dialog $parent $child\
+	    -title "Default Wireframe Color"\
+	    -initialcolor $rgb\
+	    -ok "defaultWireframeColor_ok $parent.$child"\
+	    -cancel "cadColorWidget_destroy $parent.$child"
+}
+
+proc defaultWireframeColor_ok { w } {
+    global default_wireframe_color
+    upvar #0 $w data
+
+    set default_wireframe_color "$data(red) $data(green) $data(blue)"
 
     destroy $w
     unset data
