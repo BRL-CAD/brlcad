@@ -8,13 +8,6 @@
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
-/*
-	Originally extracted from SCCS archive:
-		SCCS id:	@(#) ir.c	2.1
-		Modified: 	12/10/86 at 16:03:25	G S M
-		Retrieved: 	2/4/87 at 08:53:25
-		SCCS archive:	/vld/moss/src/lgt/s.ir.c
-*/
 
 #include <stdio.h>
 #include "machine.h"
@@ -29,6 +22,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #define Avg_Fah(sum)	((sum)/(sample_sz))
 #define Kelvin2Fah( f )	(9.0/5.0)*((f)-273.15) + 32.0
 #define S_BINS		10
+#define HUE_TOL		0.5
 
 static RGBpixel	black = { 0, 0, 0 };
 static int	ir_max_index = -1;
@@ -36,33 +30,55 @@ RGBpixel	*ir_table = RGBPIXEL_NULL;
 
 _LOCAL_ void	temp_To_RGB();
 
+int
+ir_Chk_Table()
+	{
+	if( ir_table == PIXEL_NULL )
+		{	char	input_ln[MAX_LN];
+		get_Input( input_ln, MAX_LN, "Enter minimum temperature : " );
+		if( sscanf( input_ln, "%d", &ir_min ) != 1 )
+			{
+			prnt_Scroll( "Could not read minimum temperature." );
+			return	0;
+			}
+		get_Input( input_ln, MAX_LN, "Enter maximum temperature : " );
+		if( sscanf( input_ln, "%d", &ir_max ) != 1 )
+			{
+			prnt_Scroll( "Could not read maximum temperature." );
+			return	0;
+			}
+		if( ! init_Temp_To_RGB() )
+			return	0;
+		}
+	return	1;
+	}
+
 _LOCAL_ int
 adjust_Page( y )
 int	y;
 	{	int	scans_per_page = fbiop->if_ppixels/fbiop->if_width;
 		int	newy = y - (y % scans_per_page);
-	return	newy < grid_sz / 2 ? grid_sz / 2 : newy;
+	return	newy;
 	}
 
 #define D_XPOS	(x-xmin)
 void
-display_Temps( xmin, ymax )
-int	xmin, ymax;
+display_Temps( xmin, ymin )
+int	xmin, ymin;
 	{	register int	x, y;
 		register int	interval = ((grid_sz*3+2)/4)/(S_BINS+2);
 		register int	xmax = xmin+(interval*S_BINS);
-		register int	ymin;
+		register int	ymax;
 		fastf_t		xrange = xmax - xmin;
 
 	/* Avoid page thrashing of frame buffer.			*/
-	ymax = adjust_Page( ymax );
-	ymin = ymax - interval;
+	ymin = adjust_Page( ymin );
+	ymax = ymin + interval;
 
-	if( ir_table == RGBPIXEL_NULL )
-		{
-		rt_log( "IR table not initialized.\n" );
+	/* Initialize ir_table if necessary.				*/
+	if( ! ir_Chk_Table() )
 		return;
-		}
+
 	for( y = ymin; y <= ymax; y++ )
 		{
 		x = xmin;
@@ -135,10 +151,6 @@ FILE	*fp;
 	{	register int	fy;
 		register int	rx, ry;
 		int		min, max;
-	if( ! fb_Setup( fb_file, IR_DATA_WID ) )
-		return	0;
-/*	fbiop->if_debug = FB_DEBUG_BIO | FB_DEBUG_BRW | FB_DEBUG_RW;*/
-	fb_Zoom_Window();
 	if(	fread( (char *) &min, (int) sizeof(int), 1, fp ) != 1
 	     ||	fread( (char *) &max, (int) sizeof(int), 1, fp ) != 1
 		)
@@ -167,7 +179,9 @@ FILE	*fp;
 		(void) fflush( stdout );
 		}
 	if( ! init_Temp_To_RGB() )
+		{
 		return	0;
+		}
  	for( ry = 0, fy = grid_sz-1; ; ry += ir_aperture, fy-- )
 		{
 		if( fb_seek( fbiop, 0, fy ) == -1 )
@@ -193,8 +207,7 @@ FILE	*fp;
 						{
 						if( ir_octree.o_temp == ABSOLUTE_ZERO )
 							ir_octree.o_temp = AMBIENT - 1;
-						display_Temps( grid_sz/8, fy );
-						close_Output_Device();
+						display_Temps( grid_sz/8, 0 );
 						return	1;
 						}
 					}
@@ -315,23 +328,124 @@ init_Temp_To_RGB()
 	return	1;
 	}
 
-pixel_To_Temp( pixel )
-register RGBpixel	*pixel;
+int
+same_Hue( pixel1p, pixel2p )
+register RGBpixel	*pixel1p, *pixel2p;
+	{	fastf_t	rval1, gval1, bval1;
+		fastf_t	rval2, gval2, bval2;
+		fastf_t	rratio, gratio, bratio;
+	if(	(*pixel1p)[RED] == (*pixel2p)[RED]
+	    &&	(*pixel1p)[GRN] == (*pixel2p)[GRN]
+	    &&	(*pixel1p)[BLU] == (*pixel2p)[BLU]
+		)
+		return	1;
+	rval1 = (*pixel1p)[RED];
+	gval1 = (*pixel1p)[GRN];
+	bval1 = (*pixel1p)[BLU];
+	rval2 = (*pixel2p)[RED];
+	gval2 = (*pixel2p)[GRN];
+	bval2 = (*pixel2p)[BLU];
+	if( rval1 == 0.0 )
+		{
+		if( rval2 != 0.0 )
+			return	0;
+		else /* Both red values are zero. */
+			rratio = 0.0;
+		}
+	else
+	if( rval2 == 0.0 )
+		return	0;
+	else /* Neither red value is zero. */
+		rratio = rval1/rval2;
+	if( gval1 == 0.0 )
+		{
+		if( gval2 != 0.0 )
+			return	0;
+		else /* Both green values are zero. */
+			gratio = 0.0;
+		}
+	else
+	if( gval2 == 0.0 )
+		return	0;
+	else /* Neither green value is zero. */
+		gratio = gval1/gval2;
+	if( bval1 == 0.0 )
+		{
+		if( bval2 != 0.0 )
+			return	0;
+		else /* Both blue values are zero. */
+			bratio = 0.0;
+		}
+	else
+	if( bval2 == 0.0 )
+		return	0;
+	else /* Neither blue value is zero. */
+		bratio = bval1/bval2;
+	if( rratio == 0.0 )
+		{
+		if( gratio == 0.0 )
+			return	1;
+		else
+		if( bratio == 0.0 )
+			return	1;
+		else
+		if( AproxEq( gratio, bratio, HUE_TOL ) )
+			return	1;
+		else
+			return	0;
+		}
+	else
+	if( gratio == 0.0 )
+		{
+		if( bratio == 0.0 )
+			return	1;
+		else
+		if( AproxEq( bratio, rratio, HUE_TOL ) )
+			return	1;
+		else
+			return	0;
+		}
+	else
+	if( bratio == 0.0 )
+		{
+		if( AproxEq( rratio, gratio, HUE_TOL ) )
+			return	1;
+		else
+			return	0;
+		}
+	else
+		{
+		if(	AproxEq( rratio, gratio, HUE_TOL )
+		    &&	AproxEq( gratio, bratio, HUE_TOL )
+			)
+			return	1;
+		else
+			return	0;
+		}
+	}
+
+int
+pixel_To_Temp( pixelp )
+register RGBpixel	*pixelp;
 	{
-#ifdef CRAY2
-		RGBpixel	*p, *q = (RGBpixel *) ir_table[ir_max-ir_min];
+#ifdef CRAY2 /* Compiler bug, register pointers don't always compile. */
+		RGBpixel	*p;
+		RGBpixel	*q = (RGBpixel *) ir_table[ir_max-ir_min];
 #else
-		register RGBpixel	*p, *q = (RGBpixel *) ir_table[ir_max-ir_min];
+		register RGBpixel *p;
+		register RGBpixel *q = (RGBpixel *) ir_table[ir_max-ir_min];
 #endif	
 		register int	temp = ir_min;
 	for( p = (RGBpixel *) ir_table[0]; p <= q; p++, temp++ )
 		{
-		if(	(int) (*p)[RED] == (int) (*pixel)[RED]
-		    &&	(int) (*p)[GRN] == (int) (*pixel)[GRN]
-		    &&	(int) (*p)[BLU] == (int) (*pixel)[BLU]
-			)
+		if( same_Hue( p, pixelp ) )
 			return	temp;
 		}
+/*	prnt_Scroll( "Pixel=(%d,%d,%d): not assigned a temperature.\n",
+		(int)(*pixelp)[RED],
+		(int)(*pixelp)[GRN],
+		(int)(*pixelp)[BLU]
+		);*/
 	return	ABSOLUTE_ZERO;
 	}
 

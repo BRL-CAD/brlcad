@@ -8,13 +8,6 @@
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
-/*
-	Originally extracted from SCCS archive:
-		SCCS id:	@(#) lgt.c	2.3
-		Modified: 	2/4/87 at 08:50:41	G S M
-		Retrieved: 	2/4/87 at 08:53:05
-		SCCS archive:	/vld/moss/src/lgt/s.lgt.c
-*/
 
 #include <stdio.h>
 #include <fcntl.h>
@@ -93,9 +86,19 @@ char	*argv[];
 			{
 		case SIGINT :
 			if( (norml_sig = signal( i, SIG_IGN )) == SIG_IGN )
-				abort_sig = SIG_IGN;
+				{
+				if( ! tty )
+					abort_sig = SIG_IGN;
+				else
+					{ /* MEX windows on IRIS (other than
+						the console) ignore SIGINT. */
+					prnt_Scroll( "WARNING: Signal 1 was being ignored!" );
+					goto	tty_sig;
+					}
+				}
 			else
 				{
+tty_sig:
 				norml_sig = intr_sig;
 				abort_sig = abort_RT;
 				(void) signal( i,  norml_sig );

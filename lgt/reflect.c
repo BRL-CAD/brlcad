@@ -11,13 +11,6 @@
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
-/*
-	Originally extracted from SCCS archive:
-		SCCS id:	@(#) reflect.c	2.3
-		Modified: 	1/30/87 at 17:20:16	G S M
-		Retrieved: 	2/4/87 at 08:52:40
-		SCCS archive:	/vld/moss/src/lgt/s.reflect.c
-*/
 
 #include <stdio.h>
 #include <signal.h>
@@ -33,55 +26,47 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./tree.h"
 #include "./screen.h"
 #include "./extern.h"
+/* WARNING: These checks are still necessary in ARSes because of bug in LIBRT
+	which flips normals */
 #define Check_Iflip( _pp, _normal, _rdir, _stp )\
-	{\
+	{	fastf_t	f;\
 	if( _pp->pt_inflip )\
 		{\
 		ScaleVec( _normal, -1.0 );\
 		_pp->pt_inflip = 0;\
 		}\
-	}
-#if 0 /* WARNING: These checks are still necessary in ARSes because of bug in LIBRT
-		which flips normals */
-	{	fastf_t	f;\
 	f = Dot( _rdir, _normal );\
 	if( f >= 0.0 )\
 		{\
-		if( ! _pp->pt_inflip && rt_g.debug )\
+		if( ! _pp->pt_inflip && (rt_g.debug&DEBUG_NORML) )\
 			{\
 			V_Print( "Fixed flipped entry normal, was", _normal, rt_log );\
 			rt_log( "Solid type %d\n", _stp->st_id );\
 			}\
 		ScaleVec( _normal, -1.0 );\
 		}\
-	}\
+	}
 
-#endif
-
+/* WARNING: These checks are still necessary in ARSes because of bug in LIBRT
+	which flips normals */
 #define Check_Oflip( _pp, _normal, _rdir, _stp )\
-	{\
+	{	fastf_t	f;\
 	if( _pp->pt_outflip )\
 		{\
 		ScaleVec( _normal, -1.0 );\
 		_pp->pt_outflip = 0;\
 		}\
-	}
-#if 0 /* WARNING: These checks are still necessary in ARSes because of bug in LIBRT
-		which flips normals */
-	{	fastf_t	f;\
 	f = Dot( _rdir, _normal );\
 	if( f <= 0.0 )\
 		{\
-		if( ! _pp->pt_outflip && rt_g.debug )\
+		if( ! _pp->pt_outflip && (rt_g.debug&DEBUG_NORML) )\
 			{\
 			V_Print( "Fixed flipped exit normal, was", _normal, rt_log );\
 			rt_log( "Solid type %d\n", _stp->st_id );\
 			}\
 		ScaleVec( _normal, -1.0 );\
 		}\
-	}\
-
-#endif
+	}
 
 #define TWO_PI		6.28318530717958647692528676655900576839433879875022
 #define RI_AIR		1.0    /* Refractive index of air.		*/
@@ -151,7 +136,7 @@ _LOCAL_ int		f_Model(), f_Probe(), f_Shadow(), f_HL_Hit(), f_Region();
 /* "Miss" application routines to pass to "rt_shootray()".		*/
 _LOCAL_ int		f_Backgr(), f_Error(), f_Lit(), f_HL_Miss(), f_R_Miss();
 /* "Overlap" application routines to pass to "rt_shootray()".		*/
-_LOCAL_ int		f_Overlap();
+_LOCAL_ int		f_Overlap(), f_NulOverlap();
 
 _LOCAL_ int		refract();
 
@@ -201,14 +186,14 @@ render_Model()
 		{
 		ag.a_hit = f_IR_Model;
 		ag.a_miss = f_IR_Backgr;
-		ag.a_overlap = report_overlaps ? NULL : f_Overlap;
+		ag.a_overlap = report_overlaps ? f_Overlap : f_NulOverlap;
 		}
 	else
 	if( query_region )
 		{
 		ag.a_hit = f_Region;
 		ag.a_miss = f_R_Miss;
-		ag.a_overlap = report_overlaps ? NULL : f_Overlap;
+		ag.a_overlap = report_overlaps ? f_Overlap : f_NulOverlap;
 		}
 	else
 	if( hiddenln_draw )
@@ -222,14 +207,14 @@ render_Model()
 			}
 		ag.a_hit = f_HL_Hit;
 		ag.a_miss = f_HL_Miss;
-		ag.a_overlap = report_overlaps ? NULL : f_Overlap;
+		ag.a_overlap = report_overlaps ? f_Overlap : f_NulOverlap;
 		max_bounce = 0;
 		}
 	else
 		{
 		ag.a_hit = f_Model;
 		ag.a_miss = f_Backgr;
-		ag.a_overlap = report_overlaps ? NULL : f_Overlap;
+		ag.a_overlap = report_overlaps ? f_Overlap : f_NulOverlap;
 		}
 	ag.a_rt_i = rt_ip;
 	ag.a_onehit = max_bounce > 0 ? 0 : 1;
@@ -256,7 +241,7 @@ render_Model()
 		}
 	else
 		cell_sz = modl_radius * 2.0/ (fastf_t) a_gridsz * grid_scale;
-	if( rt_g.debug )
+	if( rt_g.debug & DEBUG_CELLSIZE )
 		rt_log( "Cell size is %g mm.\n", cell_sz );
 
 	Scale2Vec( grid_hor, cell_sz, grid_dh );
@@ -615,30 +600,8 @@ struct partition *pt_headp;
 			Trie		*triep;
 			Octree		*octreep;
 			int		fahrenheit;
-		if( ir_offset )
-			{	RGBpixel	pixel;
-				int	x = ap->a_x + x_fb_origin - ir_mapx;
-				int	y = ap->a_y + y_fb_origin - ir_mapy;
-			/* Map temperature from IR image using offsets.	*/
-			RES_ACQUIRE( &rt_g.res_stats );
-			if(	x < 0 || y < 0
-			    ||	fb_read( fbiop, x, y, pixel, 1 ) == -1
-				)
-				fahrenheit = AMBIENT-1;
-			else
-				fahrenheit = pixel_To_Temp( (RGBpixel *) pixel );
-			RES_RELEASE( &rt_g.res_stats );
-			}
-		else
-		if( ir_doing_paint )
-			/* User specified temp. of current rectangle.	*/
-			fahrenheit = ir_paint;
-		else
-			/* Unknown temperature, use out-of-band value.	*/
-			fahrenheit = AMBIENT-1;
-		if( ir_table == PIXEL_NULL )
+		if( ! ir_Chk_Table() )
 			{
-			rt_log( "Must read real IR data or IR data base first.\n" );
 			fatal_error = TRUE;
 			return	-1;
 			}
@@ -655,6 +618,27 @@ struct partition *pt_headp;
 		else
 		if( ir_mapping & IR_EDIT )
 			{
+			if( ir_offset )
+				{	RGBpixel	pixel;
+					int	x = ap->a_x + x_fb_origin - ir_mapx;
+					int	y = ap->a_y + y_fb_origin - ir_mapy;
+				/* Map temperature from IR image using offsets.	*/
+				RES_ACQUIRE( &rt_g.res_stats );
+				if(	x < 0 || y < 0
+				    ||	fb_read( fbiop, x, y, pixel, 1 ) == -1
+					)
+					fahrenheit = AMBIENT-1;
+				else
+					fahrenheit = pixel_To_Temp( (RGBpixel *) pixel );
+				RES_RELEASE( &rt_g.res_stats );
+				}
+			else
+			if( ir_doing_paint )
+				/* User specified temp. of current rectangle.	*/
+				fahrenheit = ir_paint;
+			else
+				/* Unknown temperature, use out-of-band value.	*/
+				fahrenheit = AMBIENT-1;
 			RES_ACQUIRE( &rt_g.res_worker );
 			triep = add_Trie( pp->pt_regionp->reg_name, &reg_triep );
 			octreep = add_Region_Octree(	&ir_octree,
@@ -850,7 +834,7 @@ register Lgt_Source		*lgt_entry;
 			return	0.0;
 		ang_dist = sqrt( 1.0 - Sqr( cos_angl ) );
 		rel_radius = lgt_entry->radius / pp->pt_inhit->hit_dist;
-		if( rt_g.debug & DEBUG_GAUSS )
+		if( rt_g.debug & DEBUG_RGB )
 			{
 			rt_log( "\t\tcos. of angle to lgt center = %g\n", cos_angl );
 			rt_log( "\t\t           angular distance = %g\n", ang_dist );
@@ -1865,8 +1849,34 @@ fastf_t	R;
 	}
 
 _LOCAL_ int
-/*ARGSUSED*/
 f_Overlap( ap, pp, reg1, reg2 )
+register struct application	*ap;
+register struct partition	*pp;
+struct region			*reg1, *reg2;
+	{	point_t	pt;
+		fastf_t	depth = pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist;
+	if( depth < OVERLAPTOL )
+		return	1;
+	VJOIN1( pt, ap->a_ray.r_pt, pp->pt_inhit->hit_dist,
+		ap->a_ray.r_dir );
+	rt_log( "OVERLAP:\n" );
+	rt_log( "reg=%s sol=%s,\n",
+		reg1->reg_name, pp->pt_inseg->seg_stp->st_name
+		);
+	rt_log( "reg=%s sol=%s,\n",
+		reg2->reg_name, pp->pt_outseg->seg_stp->st_name
+		);
+	rt_log( "(x%d y%d lvl%d) depth %gmm at (%g,%g,%g)\n",
+		ap->a_x, ap->a_y, ap->a_level,
+		depth,
+		pt[X], pt[Y], pt[Z]
+		);
+	return	1;
+	}
+
+_LOCAL_ int
+/*ARGSUSED*/
+f_NulOverlap( ap, pp, reg1, reg2 )
 struct application	*ap;
 struct partition	*pp;
 struct region		*reg1, *reg2;

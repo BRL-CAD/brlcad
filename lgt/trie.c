@@ -8,13 +8,6 @@
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
-/*
-	Originally extracted from SCCS archive:
-		SCCS id:	@(#) trie.c	2.1
-		Modified: 	12/10/86 at 16:04:07	G S M
-		Retrieved: 	2/4/87 at 08:53:47
-		SCCS archive:	/vld/moss/src/lgt/s.trie.c
-*/
 
 #include <stdio.h>
 #include "machine.h"
@@ -354,7 +347,9 @@ FILE	*fp;
 			}
 		}
 	if( ! init_Temp_To_RGB() )
+		{
 		return	0;
+		}
 	while( fgets( name_buf, MAX_TRIE_LEVEL, fp ) != NULL )
 		{
 		name_buf[strlen(name_buf)-1] = '\0'; /* Clobber new-line.*/
@@ -453,7 +448,8 @@ char	*msg;
 			{
 		case SP :
 			{
-			if( (oclistp = get_Trie( buffer, reg_triep ))
+			if(	reg_triep == TRIE_NULL
+			    ||	(oclistp = get_Trie( buffer, reg_triep ))
 				== OCLIST_NULL
 				)
 				(void) putchar( BEL );
@@ -592,7 +588,8 @@ char	*msg;
 		case CR :
 		case LF :
 		case EOF :
-			if( (oclistp = get_Trie( buffer, reg_triep ))
+			if(	reg_triep == TRIE_NULL
+			    ||	(oclistp = get_Trie( buffer, reg_triep ))
 				== OCLIST_NULL
 				)
 				{

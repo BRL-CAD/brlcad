@@ -8,13 +8,6 @@
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
-/*
-	Originally extracted from SCCS archive:
-		SCCS id:	@(#) sgi_dep.c	2.2
-		Modified: 	1/30/87 at 17:22:18	G S M
-		Retrieved: 	2/4/87 at 08:53:30
-		SCCS archive:	/vld/moss/src/lgt/s.sgi_dep.c
-*/
 
 #ifdef sgi
 #include <stdio.h>
@@ -33,6 +26,8 @@ long		main_menu;
 long		buffering_menu;
 long		cursorect_menu;
 long		debugging_menu;
+long		irflags_menu;
+long		irpaint_menu;
 long		grid_size_menu;
 long		lgts_edit_menu;
 long		lgts_prnt_menu;
@@ -47,9 +42,9 @@ int
 sgi_User_Input( args )
 char	**args;
 	{
+	prnt_Status();
 	for( ; ; )
 		{
-		prnt_Status();
 		if( qtest() )
 			{	short	val;
 				long	dev = qread( &val );
@@ -86,7 +81,7 @@ char	**args;
 				fb_log( "dev=%d val=%d\n", (int) dev, (int) val );
 				break;
 				}
-			(void) fflush( stdout ); /* Debugging */
+			prnt_Status();
 			}
 		}
 	}
@@ -114,6 +109,8 @@ sgi_Init_Popup_Menu()
 	{	long	grid_cntl_menu;
 		long	file_name_menu;
 		long	light_src_menu;
+		long	special_menu;
+		long	infrared_menu;
 		long	materials_menu;
 		long	raytracer_menu;
 		long	one_digit_menu;
@@ -141,7 +138,9 @@ sgi_Init_Popup_Menu()
 	winattach();
 	buffering_menu = defpup( "buffering %t|unbuffered %x0|paged buffering %x1|scan line buffered%x2" );
 	cursorect_menu = defpup( "cursor input %t|tag pixel %x0|sweep rectangle %x1|window in %x2|window out %x3|query region %x4" );
-	debugging_menu = defpup( "debugging %t|reset all flags %x0|all rays %x1|shoot %x2|db %x16|solids %x32|regions %x64|arb8 %x128|spline %x256|roots %x4096|partitioning %x8192|cut %x16384|boxing %x32768|memory allocation %x65536|testing %x131072|fdiff %x262144|RGB %x524288|refraction %x1048576|normals %x2097152|shadows %x4194304|gaussian beam %x8388608|octree %x16777216" );
+	debugging_menu = defpup( "debugging %t|reset all flags %x0|all rays %x1|shoot %x2|db %x16|solids %x32|regions %x64|arb8 %x128|spline %x256|roots %x4096|partitioning %x8192|cut %x16384|boxing %x32768|memory allocation %x65536|testing %x131072|fdiff %x262144|RGB %x524288|refraction %x1048576|normals %x2097152|shadows %x4194304|cell size %x8388608|octree %x16777216" );
+	irpaint_menu = defpup( "temperature painting from cursor module %t|ON %x1|OFF %x0" );
+	irflags_menu = defpup( "infrared module flags %t|read only %x1|edit %x2|octree rendering %x4|reset all flags %x0" );
 	grid_cntl_menu = defpup( "gridding parameters %t|resolution %x71|distance to model centroid %x102|perspective %x112|roll %x97|field of view %x103|image translation %x68|grid translation %x116|over sampling factor %x65|key frame input %x106|movie setup %x74|animate %x70" );
 	grid_size_menu = defpup( "resolution %t|16-by-16 %x16|32-by-32 %x32|64-by-64 %x64|128-by-128 %x128|256-by-256 %x256|512-by-512 %x512|1024-by-1024 %x1024" );
 	file_name_menu = defpup( "files %t|frame buffer %x111|error/debug log %x79|write script %x83|save image %x72|read image %x104|texture map %x84" );
@@ -192,14 +191,19 @@ sgi_Init_Popup_Menu()
 				fifties_menu,
 				sixties_partial_menu
 				);
-	materials_menu = defpup( "material attributes %t|print entry %x109|modify entry %x77|read database %x119|write database %x87" );
+	infrared_menu = defpup( "infrared module %t|set flags %x115|read real IR data %x73|read IR data base %x117|write IR data base %x85|automatic mapping offsets %x100|specify noise threshold %x105|set temperature %x78|assign temperature by region %x81|print temperatures by region %x80|display color assignment legend %x90" );
 	raytracer_menu = defpup( "raytrace %t|go %x82|submit batch run %x66" );
-	main_menu = defpup( "main menu %t|raytrace %m %x35|gridding parameters %m %x35|buffering %x46|debugging %x101|shell escape %x33|background color %x98|maximum ray bounces %x75|tracking cursor (on/off) %x99|cursor input %x67|clear frame buffer %x69|redraw text %x114|light sources %m %x35|material attributes %m %x35|files %m %x35|quit %x113",
+	materials_menu = defpup( "material attributes %t|print entry %x109|modify entry %x77|read database %x119|write database %x87" );
+	special_menu = defpup( "special applications %t|infrared modeling %m %x35|hidden-line drawing %x107",
+				infrared_menu
+				);
+	main_menu = defpup( "main menu %t|raytrace %m %x35|gridding parameters %m %x35|buffering %x46|debugging %x101|shell escape %x33|background color %x98|maximum ray bounces %x75|tracking cursor (on/off) %x99|cursor input %x67|clear frame buffer %x69|redraw text %x114|light sources %m %x35|material attributes %m %x35|files %m %x35|special applications %m %x35|quit %x113",
 				raytracer_menu,
 				grid_cntl_menu,
 				light_src_menu,
 				materials_menu,
-				file_name_menu
+				file_name_menu,
+				special_menu
 				);
 	qdevice(MENUBUTTON);
 	qdevice(KEYBD);
@@ -237,7 +241,6 @@ int	origin, x, y, x0, y0;
 			qreset();
 			(void) fb_setcursor( fbiop, arrowcursor, 16, 16, 0, 0 );
 			(void) fb_cursor( fbiop, tracking_cursor, grid_sz/2, grid_sz/2 );
-			close_Output_Device();
 			return	1;
 		case MIDDLEMOUSE :
 			sgi_Pt_Select( x, y, &x0, &y0, &origin );
@@ -321,10 +324,7 @@ int	origin, x, y, x0, y0;
 			{
 		case MENUBUTTON :
 			/* Wait for user to let go.			*/
-			for(	;
-			      !	qtest()
-			    ||	qread( &val ) != MENUBUTTON;
-				)
+			for( ; ! qtest() || qread( &val ) != MENUBUTTON; )
 				;
 			unqdevice( MOUSEX );
 			unqdevice( MOUSEY );
@@ -333,9 +333,11 @@ int	origin, x, y, x0, y0;
 			tracking_cursor = flag;
 			(void) fb_setcursor( fbiop, arrowcursor, 16, 16, 0, 0 );
 			(void) fb_cursor( fbiop, tracking_cursor, grid_sz/2, grid_sz/2 );
-			close_Output_Device();
 			return	1;
 		case MIDDLEMOUSE :
+			/* Wait for user to let go.			*/
+			for( ; ! qtest() || qread( &val ) != MIDDLEMOUSE; )
+				;
 			sgi_Pt_Select( x, y, &x0, &y0, &origin );
 			sgi_Pt_Select( x, y, &x0, &y0, &origin );
 			user_interrupt = FALSE;
@@ -422,7 +424,6 @@ int	origin, x, y, x0, y0, out_flag;
 			qreset();
 			(void) fb_setcursor( fbiop, arrowcursor, 16, 16, 0, 0 );
 			(void) fb_cursor( fbiop, tracking_cursor, grid_sz/2, grid_sz/2 );
-			close_Output_Device();
 			return	1;
 		case MIDDLEMOUSE :
 			Toggle( origin );

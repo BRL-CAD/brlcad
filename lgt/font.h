@@ -7,16 +7,9 @@
 			Maryland 21005-5066
 			(301)278-6647 or AV-298-6647
 */
-/*
-	Originally extracted from SCCS archive:
-		SCCS id:	@(#) font.h	2.1
-		Modified: 	12/10/86 at 16:04:33	G S M
-		Retrieved: 	2/4/87 at 08:53:58
-		SCCS archive:	/vld/moss/src/lgt/s.font.h
-*/
 /*	font.h - Header file for putting fonts up.			*/
 #define INCL_FONT
-#if defined(sel) || defined(gould) || defined(alliant)
+#if defined(sel) || defined(gould) || defined(alliant) || defined( sgi )
 #define BIGENDIAN
 #endif
 #if defined(BIGENDIAN)
@@ -43,7 +36,9 @@ struct dispatch
 	char		up, down, left, right;
 	short		width;
 	};
-#define FONTDIR		"/vld/moss/src/lgt"	/* Font directory.	*/
+#ifndef FONTDIR
+#define FONTDIR		"/usr/lib/vfont"	/* Font directory.	*/
+#endif
 #define FONTNAME	"times.r.6"		/* Default font name.	*/
 #define FONTNAMESZ	128
 #define FONTCOLOR_RED	0.0
