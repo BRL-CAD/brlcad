@@ -46,7 +46,7 @@ typedef	long	Cast;
 #define	MAXGSTACK	128		/* size of goal stack */
 #define	MAXARGSIZE	1024		/* length of one arg.  BRL, was 128 */
 #define	MAXPATSIZE	(8*1024)	/* max pattern size. BRL, was 512 */
-#define	MAXLEXBUF	(8*1024)	/* BRL, was 2048 */
+#define	MAXLEXBUF	32768		/* BRL, was 2048.  YYLMAX forced in Makefile */
 #define	MAXSIZE		(16*1024)	/* general buffer size. BRL, was 2048 */
 #define	MAXSCRIPT	16384		/* max script (rule action text) */
 #define	MAXNEST		8

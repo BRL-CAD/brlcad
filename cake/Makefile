@@ -75,7 +75,8 @@ cake_g.c:	cake_g.y
 
 cake_s.c:	cake_s.l
 		$(LEX) $(LEXOPTS) cake_s.l
-		mv -f lex.yy.c cake_s.c
+		sed -e 's/#.*define.*YYLMAX.*/#define YYLMAX 32768/'  <lex.yy.c >cake_s.c
+		rm -f lex.yy.c
 
 var:		$(SRC) $(GSRC)
 		var -DATT $(COPTS) $(SRC) $(GSRC) > Var

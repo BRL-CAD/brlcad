@@ -20,7 +20,19 @@ rcs_id[] = "$Header$";
 #define	ret(x)	return x
 #endif
 
-/* YYLMAX must be defined here; it can't be defined in conf.h */
+/*
+ * YYLMAX must be defined here; it can't be defined in conf.h,
+ * because the lex startoff code contains a #define YYLMAX BUFSIZ
+ * which will be seen before here.
+ *
+ * Even worse, on Solaris (and perhaps others), the lex startoff code
+ * declares char yytext[YYLMAX]; before we've gotten here,
+ * resulting in buffer overruns on LIBRT.
+ *
+ * As a consequence, we must depend on the Makefile for cake
+ * to run a SED script to replace any system-provided #define YYLMAX
+ * with a pleasantly plump value (32768).  -Mike Muuss, ARL.
+ */
 #undef	YYLMAX
 #define	YYLMAX		MAXLEXBUF
 
