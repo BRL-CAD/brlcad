@@ -24,6 +24,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <netinet/in.h>		/* For htonl(), etc */
 #include <syslog.h>
 #include	"./pkg.h"
 #include	"./pkgtypes.h"
