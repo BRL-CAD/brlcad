@@ -306,11 +306,54 @@ CONST vect_t		zvec;
 
 	ret = rt_angle_measure( left, xvec, yvec );
 
+#if 0
 	if (rt_g.NMG_debug & DEBUG_MESH_EU)  {
 		rt_log("\tnmg_measure_fu_angle(x%x) = %g radians (%g deg)\n",
 			eu, ret, ret * rt_radtodeg);
 	}
+#endif
 	return ret;
+}
+
+/*
+ *			N M G _ I S _ A N G L E _ I N _ W E D G E
+ *
+ *  Determine if T lies within angle AB, such that A < T < B.
+ *  The angle B is expected to be "more ccw" than A.
+ *  Because of the wrap from 2pi to 0, B may have a smaller numeric value.
+ *
+ *  Returns -
+ *	-2	t is equal to a
+ *	-1	t is equal to b
+ *	 0	t is outside angle ab
+ *	 1	t is inside angle ab
+ */
+int
+nmg_is_angle_in_wedge( a, b, t )
+double	a;
+double	b;
+double	t;
+{
+	/* XXX What tolerance to use here (in radians)? */
+	if( NEAR_ZERO( a-t, 1.0e-8 ) )  return -2;
+	if( NEAR_ZERO( b-t, 1.0e-8 ) )  return -1;
+
+	/* If A==B, if T is not also equal, it's outside the wedge */
+	if( NEAR_ZERO( a-b, 1.0e-8 ) )  return 0;
+
+	if( b < a )  {
+		/* B angle has wrapped past zero, add on 2pi */
+		if( t <= b )  {
+			/* Range is A..0, 0..B, and 0<t<B; so T is in wedge */
+			return 1;
+		}
+		b += rt_twopi;
+	}
+	if( NEAR_ZERO( b-t, 1.0e-8 ) )  return -1;
+
+	if( t < a )  return 0;
+	if( t > b )  return 0;
+	return 1;
 }
 
 /*
@@ -378,10 +421,11 @@ struct edgeuse *eu1, *eu2;
 		rt_log( "Faces around eu1:\n" );
 		nmg_pr_fu_around_eu_vecs( eu1, xvec, yvec, zvec );
 		rt_log( "Faces around eu2:\n" );
-		nmg_pr_fu_around_eu( eu2, xvec, yvec, zvec );
+		nmg_pr_fu_around_eu_vecs( eu2, xvec, yvec, zvec );
 	}
 
 	for ( iteration1=0; eu2 && iteration1 < 10000; iteration1++ ) {
+		int	code = 0;
 		struct edgeuse	*first_eu1 = eu1;
 		/* Resume where we left off from last eu2 insertion */
 
@@ -418,13 +462,10 @@ struct edgeuse *eu1, *eu2;
 			 *  then insert face here.
 			 *  Special handling if abs1==abs2 or abs2==absr.
 			 */
-
-			/* XXX I believe the problem here is with this (non-circular)
-			 * relation ('if' test).
-			 * How about (angle12>angle1r) && (angle12<angle1r+2pi)
-			 */
-			/* Search termination condition */
-			if( angle12 > angle1r )  break;
+			code = nmg_is_angle_in_wedge( abs1, absr, abs2 );
+			if (rt_g.NMG_debug & (DEBUG_MESH_EU|DEBUG_MESH) )
+				rt_log("    code=%d %s\n", code, (code!=0)?"INSERT_HERE":"skip");
+			if( code != 0 )  break;
 
 			if( iteration2 > 9997 )  rt_g.NMG_debug |= DEBUG_MESH_EU;
 			/* If eu1 is only one pair of edgeuses, done */
@@ -448,7 +489,7 @@ struct edgeuse *eu1, *eu2;
 		 *  (or somewhere).
 		 *  XXX What tolerance to use here?  (radians)
 		 */
-		if( NEAR_ZERO( angle12-angle1r, 1.0e-6 ) ) {
+		if( code < 0 ) {
 			rt_log("nmg_radial_join_eu: WARNING 2 faces should have been fused.\n");
 		}
 
@@ -465,7 +506,10 @@ struct edgeuse *eu1, *eu2;
 				eu1, eu2,
 				angle12*rt_radtodeg, angle1r*rt_radtodeg);
 
-		/* make eu2 radial to eu1 */
+		/*
+		 *  Make eu2 radial to eu1.
+		 *  This should insert eu2 between eu1 and eu1->radial_p.
+		 */
 		nmg_moveeu(eu1, eu2);
 
 		if (rt_g.NMG_debug & DEBUG_MESH_EU)  {
