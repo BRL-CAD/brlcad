@@ -176,10 +176,13 @@ struct rt_tol *tol;
 			continue;
 
 		/* calculate plane for this faceuse */
-		if( nmg_calc_face_g( outfaceuses[i] ) )
+		if( !outfaceuses[i]->f_p->g.magic_p )
 		{
-			rt_log( "nmg_calc_face_g failed\n" );
-			nmg_pr_fu_briefly( outfaceuses[i], "" );
+			if( nmg_calc_face_g( outfaceuses[i] ) )
+			{
+				rt_log( "nmg_calc_face_g failed\n" );
+				nmg_pr_fu_briefly( outfaceuses[i], "" );
+			}
 		}
 	}
 
@@ -234,134 +237,138 @@ struct rt_tol *tol;
 	if( nmg_kill_zero_length_edgeuses( m ) )
 		return( 1 );
 #endif
-	/* Glue faceuses together. */
-	if( debug )
-		rt_log( "\tEdge fuse\n" );
-	(void)nmg_model_edge_fuse( m, tol );
 
-	/* Compute "geometry" for model, region, and shell */
-	if( debug )
-		rt_log( "\trebound\n" );
-	nmg_rebound( m , tol );
-
-	/* fix the normals */
-	if( debug )
-		rt_log( "\tFix normals\n" );
-	for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )
+	if( !polysolid )
 	{
-		for( RT_LIST_FOR( s, shell, &r->s_hd ) )
-			nmg_fix_normals( s, tol );
-	}
+		/* Glue faceuses together. */
+		if( debug )
+			rt_log( "\tEdge fuse\n" );
+		(void)nmg_model_edge_fuse( m, tol );
 
-	if( debug )
-		rt_log( "\tJoin touching loops\n" );
-	for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )
-	{
-		for( RT_LIST_FOR( s, shell, &r->s_hd ) )
-			nmg_s_join_touchingloops( s, tol );
-	}
+		/* Compute "geometry" for model, region, and shell */
+		if( debug )
+			rt_log( "\trebound\n" );
+		nmg_rebound( m , tol );
 
-	/* kill cracks */
-	if( debug )
-		rt_log( "\tKill cracks\n" );
-	r = RT_LIST_FIRST( nmgregion, &m->r_hd );
-	while( RT_LIST_NOT_HEAD( &r->l, &m->r_hd ) )
-	{
-		struct nmgregion *next_r;
-
-		next_r = RT_LIST_PNEXT( nmgregion, &r->l );
-
-		s = RT_LIST_FIRST( shell , &r->s_hd );
-		while( RT_LIST_NOT_HEAD( &s->l, &r->s_hd ) )
+		/* fix the normals */
+		if( debug )
+			rt_log( "\tFix normals\n" );
+		for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )
 		{
-			struct shell *next_s;
+			for( RT_LIST_FOR( s, shell, &r->s_hd ) )
+				nmg_fix_normals( s, tol );
+		}
 
-			next_s = RT_LIST_PNEXT( shell, &s->l );
+		if( debug )
+			rt_log( "\tJoin touching loops\n" );
+		for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )
+		{
+			for( RT_LIST_FOR( s, shell, &r->s_hd ) )
+				nmg_s_join_touchingloops( s, tol );
+		}
 
-			if( nmg_kill_cracks( s ) )
+		/* kill cracks */
+		if( debug )
+			rt_log( "\tKill cracks\n" );
+		r = RT_LIST_FIRST( nmgregion, &m->r_hd );
+		while( RT_LIST_NOT_HEAD( &r->l, &m->r_hd ) )
+		{
+			struct nmgregion *next_r;
+
+			next_r = RT_LIST_PNEXT( nmgregion, &r->l );
+
+			s = RT_LIST_FIRST( shell , &r->s_hd );
+			while( RT_LIST_NOT_HEAD( &s->l, &r->s_hd ) )
 			{
-				if( nmg_ks( s ) )
-					return_val = 1;
+				struct shell *next_s;
+
+				next_s = RT_LIST_PNEXT( shell, &s->l );
+				
+				if( nmg_kill_cracks( s ) )
+				{
+					if( nmg_ks( s ) )
+						return_val = 1;
+				}
+				if( return_val )
+					break;
+				s = next_s;
 			}
 			if( return_val )
 				break;
-			s = next_s;
+			r = next_r;
 		}
+
 		if( return_val )
-			break;
-		r = next_r;
-	}
+			return( return_val );
 
-	if( return_val )
-		return( return_val );
-
-	if( debug )
-		rt_log( "\tSplit touching loops\n" );
-	for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )
-	{
-		for( RT_LIST_FOR( s, shell, &r->s_hd ) )
-			nmg_s_split_touchingloops( s, tol);
-	}
-
-	/* kill cracks */
-	if( debug )
-		rt_log( "\tKill cracks\n" );
-	r = RT_LIST_FIRST( nmgregion, &m->r_hd );
-	while( RT_LIST_NOT_HEAD( &r->l, &m->r_hd ) )
-	{
-		struct nmgregion *next_r;
-
-		next_r = RT_LIST_PNEXT( nmgregion, &r->l );
-
-		s = RT_LIST_FIRST( shell , &r->s_hd );
-		while( RT_LIST_NOT_HEAD( &s->l, &r->s_hd ) )
+		if( debug )
+			rt_log( "\tSplit touching loops\n" );
+		for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )
 		{
-			struct shell *next_s;
+			for( RT_LIST_FOR( s, shell, &r->s_hd ) )
+				nmg_s_split_touchingloops( s, tol);
+		}
 
-			next_s = RT_LIST_PNEXT( shell, &s->l );
+		/* kill cracks */
+		if( debug )
+			rt_log( "\tKill cracks\n" );
+		r = RT_LIST_FIRST( nmgregion, &m->r_hd );
+		while( RT_LIST_NOT_HEAD( &r->l, &m->r_hd ) )
+		{
+			struct nmgregion *next_r;
 
-			if( nmg_kill_cracks( s ) )
+			next_r = RT_LIST_PNEXT( nmgregion, &r->l );
+			
+			s = RT_LIST_FIRST( shell , &r->s_hd );
+			while( RT_LIST_NOT_HEAD( &s->l, &r->s_hd ) )
 			{
-				if( nmg_ks( s ) )
-					return_val = 1;
+				struct shell *next_s;
+
+				next_s = RT_LIST_PNEXT( shell, &s->l );
+
+				if( nmg_kill_cracks( s ) )
+				{
+					if( nmg_ks( s ) )
+						return_val = 1;
+				}
+				if( return_val )
+					break;
+				s = next_s;
 			}
 			if( return_val )
 				break;
-			s = next_s;
+			r = next_r;
 		}
+
 		if( return_val )
-			break;
-		r = next_r;
-	}
+			return( return_val );
 
-	if( return_val )
-		return( return_val );
-
-	/* verify face plane calculations */
-	if( debug )
-		rt_log( "\tMake faces within tolerance\n" );
-	for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )
-	{
-		for( RT_LIST_FOR( s, shell, &r->s_hd ) )
-			nmg_make_faces_within_tol( s, tol );
-	}
+		/* verify face plane calculations */
+		if( debug )
+			rt_log( "\tMake faces within tolerance\n" );
+		for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )
+		{
+			for( RT_LIST_FOR( s, shell, &r->s_hd ) )
+				nmg_make_faces_within_tol( s, tol );
+		}
 #if 0
-	/* Fuse */
-	if( debug )
-		rt_log( "\tFuse\n" );
-	(void)nmg_model_fuse( m, tol );
+		/* Fuse */
+		if( debug )
+			rt_log( "\tFuse\n" );
+		(void)nmg_model_fuse( m, tol );
 
-	if( debug )
-		rt_log( "\tJoin and split touching loops\n" );
-	for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )
-	{
-		for( RT_LIST_FOR( s, shell, &r->s_hd ) )
+		if( debug )
+			rt_log( "\tJoin and split touching loops\n" );
+		for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )
 		{
-			nmg_s_join_touchingloops( s, tol );
-			nmg_s_split_touchingloops( s, tol);
+			for( RT_LIST_FOR( s, shell, &r->s_hd ) )
+			{
+				nmg_s_join_touchingloops( s, tol );
+				nmg_s_split_touchingloops( s, tol);
+			}
 		}
-	}
 #endif
+	}
 	if( rt_g.debug & DEBUG_MEM_FULL )
 	{
 		rt_log( "Barrier check at end of nmg_process_imported_model:\n" );
