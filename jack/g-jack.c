@@ -387,7 +387,9 @@ union tree		*curtree;
 		/* Write segment attributes to .fig figure file. */
 		fprintf(fp_fig, "\tsegment %s_seg {\n", rt_vls_addr(&file));
 		fprintf(fp_fig, "\t\tpsurf=\"%s.pss\";\n", rt_vls_addr(&file));
-		fprintf(fp_fig, "\t\tattribute=%s;\n", rt_vls_addr(&file));
+		if (tsp->ts_mater.ma_override != 0)
+			fprintf(fp_fig,
+				"\t\tattribute=%s;\n", rt_vls_addr(&file));
 		fprintf(fp_fig, "\t\tsite base->location=trans(0,0,0);\n");
 		fprintf(fp_fig, "\t}\n");
 
