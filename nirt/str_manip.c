@@ -4,8 +4,13 @@ static char RCSid[] = "$Header$";
 #endif
 
 /*	INCLUDES	*/
+#include "conf.h"
+
 #include <stdio.h>
 #include <ctype.h>
+
+#include "machine.h"
+#include "vmath.h"
 #include "./nirt.h"
 
 int str_dbl(buf, Result)
