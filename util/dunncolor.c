@@ -58,10 +58,10 @@ char **argv;
 		exit(25);
 	}
 
-	send('A',atoi(*++argv));
-	send('R',atoi(*++argv));
-	send('G',atoi(*++argv));
-	send('B',atoi(*++argv));
+	dunnsend('A',atoi(*++argv));
+	dunnsend('R',atoi(*++argv));
+	dunnsend('G',atoi(*++argv));
+	dunnsend('B',atoi(*++argv));
 
 	getexposure("new");
 

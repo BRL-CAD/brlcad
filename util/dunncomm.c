@@ -314,11 +314,11 @@ char *title;
 }
 
 /*
- *			S E N D
+ *			D U N N S E N D
  *
  */
 int
-send(color,val)
+dunnsend(color,val)
 char color;
 int val;
 {
@@ -330,7 +330,7 @@ int val;
 	}
 
 	if(!ready(5)) {
-		printf("dunncolor: send(), camera not ready\n");
+		printf("dunncolor: dunnsend(), camera not ready\n");
 		return(-1);
 	}
 
