@@ -360,7 +360,7 @@ all)
 		cd ${DIRPRE}${dir}${DIRSUF}
 		if test -f ../${dir}/fast.sh
 		then
-			../${dir}/fast.sh
+			../${dir}/fast.sh ${SILENT}
 		else
 			cake -k ${SILENT}
 		fi
