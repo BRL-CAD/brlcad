@@ -602,6 +602,7 @@ int
 sgi_Ungetchar( c )
 int	c;
 	{	short	val = c;
-	return	qenter( KEYBD, val );
+	qenter( KEYBD, val );
+	return c;
 	}
 #endif
