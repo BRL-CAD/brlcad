@@ -40,17 +40,16 @@ AC_SUBST(X_LIBS)
 
 dnl tcl
 dnl try to find a system tcl, otherwise build it?
-case "$target" in
-	*-*-*bsd*)
-		TCL_LIBS="-L/usr/local/lib -ltcl84"
-		;;
-	*)
-		TCL_LIBS="-ltcl8.4"
-		;;
-esac
-dnl TCL_LIBS='$(top_builddir)'/libtcl8.4/libtcl.la
-dnl TCL=libtcl8.4
-TCL=
+dnl case "$target" in
+dnl 	*-*-*bsd*)
+dnl 		TCL_LIBS="-L/usr/local/lib -ltcl84"
+dnl 		;;
+dnl 	*)
+dnl 		TCL_LIBS="-ltcl8.4"
+dnl 		;;
+dnl esac
+TCL_LIBS='$(top_builddir)'/libtcl8.4/libtcl.la
+TCL=libtcl8.4
 AC_SUBST(TCL)
 AC_SUBST(TCL_LIBS)
 
@@ -165,6 +164,9 @@ AC_OUTPUT([
 	html/manuals/mged/Makefile
 	html/manuals/mged/animmate/Makefile
 	html/manuals/shaders/Makefile
+	libtcl8.4/Makefile
+	libtcl8.4/generic/Makefile
+	libtcl8.4/unix/Makefile
 	libbn/Makefile
 	libbu/Makefile
 	libdm/Makefile

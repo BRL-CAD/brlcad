@@ -1,6 +1,7 @@
 # $Id$
 SUBDIRS=@TCL@ @TK@ @ITCL@\
 	h\
+	libtcl8.4\
 	libbn\
 	libbu\
 	libdm\
