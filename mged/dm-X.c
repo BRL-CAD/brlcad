@@ -37,6 +37,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
+#include "tcl.h"
+#include "tk.h"
+
 #include "machine.h"
 #include "externs.h"
 #include "vmath.h"
@@ -48,7 +51,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 static void	label();
 static void	draw();
-static void	checkevents();
 static int	xsetup();
 
 /* Display Manager package interface */
@@ -64,7 +66,7 @@ void	X_puts(), X_2d_line(), X_light();
 int	X_object();
 unsigned X_cvtvecs(), X_load();
 void	X_statechange(), X_viewchange(), X_colorchange();
-void	X_window(), X_debug();
+void	X_window(), X_debug(), X_selectargs();
 
 struct dm dm_X = {
 	X_open, X_close,
@@ -89,13 +91,15 @@ struct dm dm_X = {
 
 extern struct device_values dm_values;	/* values read from devices */
 
-static int	height, width;
+static int height, width;
+static Tcl_Interp *xinterp;
+static Tk_Window xtkwin;
+static int XdoMotion = 0;
 
-static Display	*dpy;			/* X display pointer */
-static Window	win;			/* X window */
+static XColor *black, *white, *yellow, *red, *blue, *gray;
+static XColor *bd, *bg, *fg;
+
 static GC	gc;			/* X Graphics Context */
-static unsigned long	black,gray,white,yellow,red,blue;
-static unsigned long	bd, bg, fg;	/* color of border, background, foreground */
 static int	is_monochrome = 0;
 static XFontStruct *fontstruct;		/* X Font */
 
@@ -159,7 +163,15 @@ X_open()
 void
 X_close()
 {
-	XCloseDisplay( dpy );
+    Tk_FreeColor(gray);
+    Tk_FreeColor(blue);
+    Tk_FreeColor(yellow);
+    Tk_FreeColor(red);
+    Tk_FreeColor(white);
+    Tk_FreeColor(black);
+    XFreeGC(Tk_Display(xtkwin), gc);
+    Tk_DestroyWindow(xtkwin);
+    Tcl_DeleteInterp(xinterp);
 }
 
 /*
@@ -170,13 +182,13 @@ X_close()
 void
 X_prolog()
 {
-	if( !dmaflag )
-		return;
+    if( !dmaflag )
+	return;
 
-	XClearWindow( dpy, win );
+    XClearWindow(Tk_Display(xtkwin), Tk_WindowId(xtkwin));
 
-	/* Put the center point up */
-	draw( 0, 0, 0, 0 );
+    /* Put the center point up */
+    draw( 0, 0, 0, 0 );
 }
 
 /*
@@ -185,8 +197,9 @@ X_prolog()
 void
 X_epilog()
 {
-	XSync( dpy, 0 );	/* Prevent lag between events and updates */
-	return;
+    /* Prevent lag between events and updates */
+    XSync(Tk_Display(xtkwin), 0);
+    return;
 }
 
 /*
@@ -210,137 +223,142 @@ mat_t mat;
  *
  *  Returns 0 if object could be drawn, !0 if object was omitted.
  */
+
 /* ARGSUSED */
 int
 X_object( sp, mat, ratio, white_flag )
 register struct solid *sp;
 mat_t mat;
 double ratio;
-int	white_flag;
+int white_flag;
 {
-	static vect_t   pnt;
-	register struct rt_vlist	*vp;
-	int useful = 0;
-	XSegment segbuf[1024];		/* XDrawSegments list */
-	XSegment *segp;			/* current segment */
-	XGCValues gcv;
-	int	nseg;			/* number of segments */
-	int	x, y;
-	int	lastx = 0;
-	int	lasty = 0;
+    static vect_t   pnt;
+    register struct rt_vlist	*vp;
+    int useful = 0;
+    XSegment segbuf[1024];		/* XDrawSegments list */
+    XSegment *segp;			/* current segment */
+    XGCValues gcv;
+    int	nseg;			        /* number of segments */
+    int	x, y;
+    int	lastx = 0;
+    int	lasty = 0;
+    Display *dpy;
+    Window win;
 
-	XChangeGC( dpy, gc, GCForeground, &gcv );
+    dpy = Tk_Display(xtkwin);
+    win = Tk_WindowId(xtkwin);
 
-	if( sp->s_soldash ) {
-		XSetLineAttributes( dpy, gc, 1, LineOnOffDash, CapButt, JoinMiter );
-	} else {
-		XSetLineAttributes( dpy, gc, 1, LineSolid, CapButt, JoinMiter );
-	}
+    XChangeGC(dpy, gc, GCForeground, &gcv);
 
-	nseg = 0;
-	segp = segbuf;
-	for( RT_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
-		register int	i;
-		register int	nused = vp->nused;
-		register int	*cmd = vp->cmd;
-		register point_t *pt = vp->pt;
+    if( sp->s_soldash )
+	XSetLineAttributes( dpy, gc, 1, LineOnOffDash, CapButt, JoinMiter );
+    else
+	XSetLineAttributes( dpy, gc, 1, LineSolid, CapButt, JoinMiter );
 
-		/* Viewing region is from -1.0 to +1.0 */
-		/* 2^31 ~= 2e9 -- dynamic range of a long int */
-		/* 2^(31-11) = 2^20 ~= 1e6 */
+    nseg = 0;
+    segp = segbuf;
+    for( RT_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
+	register int	i;
+	register int	nused = vp->nused;
+	register int	*cmd = vp->cmd;
+	register point_t *pt = vp->pt;
+
+	/* Viewing region is from -1.0 to +1.0 */
+	/* 2^31 ~= 2e9 -- dynamic range of a long int */
+	/* 2^(31-11) = 2^20 ~= 1e6 */
+	/* Integerize and let the X server do the clipping */
+	for( i = 0; i < nused; i++,cmd++,pt++ )  {
+	    switch( *cmd )  {
+	    case RT_VLIST_POLY_START:
+	    case RT_VLIST_POLY_VERTNORM:
+		continue;
+	    case RT_VLIST_POLY_MOVE:
+	    case RT_VLIST_LINE_MOVE:
+		/* Move, not draw */
+		MAT4X3PNT( pnt, mat, *pt );
+		if( pnt[0] < -1e6 || pnt[0] > 1e6 ||
+		   pnt[1] < -1e6 || pnt[1] > 1e6 )
+		    continue; /* omit this point (ugh) */
+		pnt[0] *= 2047;
+		pnt[1] *= 2047;
+		x = GED_TO_Xx(pnt[0]);
+		y = GED_TO_Xy(pnt[1]);
+		lastx = x;
+		lasty = y;
+		continue;
+	    case RT_VLIST_POLY_DRAW:
+	    case RT_VLIST_POLY_END:
+	    case RT_VLIST_LINE_DRAW:
+		/* draw */
+		MAT4X3PNT( pnt, mat, *pt );
+		if( pnt[0] < -1e6 || pnt[0] > 1e6 ||
+		   pnt[1] < -1e6 || pnt[1] > 1e6 )
+		    continue; /* omit this point (ugh) */
 		/* Integerize and let the X server do the clipping */
-		for( i = 0; i < nused; i++,cmd++,pt++ )  {
-			switch( *cmd )  {
-			case RT_VLIST_POLY_START:
-			case RT_VLIST_POLY_VERTNORM:
-				continue;
-			case RT_VLIST_POLY_MOVE:
-			case RT_VLIST_LINE_MOVE:
-				/* Move, not draw */
-				MAT4X3PNT( pnt, mat, *pt );
-				if( pnt[0] < -1e6 || pnt[0] > 1e6 ||
-				    pnt[1] < -1e6 || pnt[1] > 1e6 )
-					continue; /* omit this point (ugh) */
-				pnt[0] *= 2047;
-				pnt[1] *= 2047;
-				x = GED_TO_Xx(pnt[0]);
-				y = GED_TO_Xy(pnt[1]);
-				lastx = x;
-				lasty = y;
-				continue;
-			case RT_VLIST_POLY_DRAW:
-			case RT_VLIST_POLY_END:
-			case RT_VLIST_LINE_DRAW:
-				/* draw */
-				MAT4X3PNT( pnt, mat, *pt );
-				if( pnt[0] < -1e6 || pnt[0] > 1e6 ||
-				    pnt[1] < -1e6 || pnt[1] > 1e6 )
-					continue; /* omit this point (ugh) */
-				/* Integerize and let the X server do the clipping */
-				/*XXX Color */
-				gcv.foreground = fg;
-				if( white_flag && !is_monochrome )  {
-					gcv.foreground = white;
-				}
-				XChangeGC( dpy, gc, GCForeground, &gcv );
-
-				pnt[0] *= 2047;
-				pnt[1] *= 2047;
-				x = GED_TO_Xx(pnt[0]);
-				y = GED_TO_Xy(pnt[1]);
-
-				segp->x1 = lastx;
-				segp->y1 = lasty;
-				segp->x2 = x;
-				segp->y2 = y;
-				nseg++;
-				segp++;
-				lastx = x;
-				lasty = y;
-				useful = 1;
-				if( nseg == 1024 ) {
-					XDrawSegments( dpy, win, gc, segbuf, nseg );
-					/* Thicken the drawing, if monochrome */
-					if( white_flag && is_monochrome ) {
-						int	i;
-						/* XXX - width and height don't work on Sun! */
-						/* Thus the following gross hack */
-						segp = segbuf;
-						for( i = 0; i < nseg; i++ ) {
-							segp->x1++;
-							segp->y1++;
-							segp->x2++;
-							segp->y2++;
-							segp++;
-						}
-						XDrawSegments( dpy, win, gc, segbuf, nseg );
-					}
-					nseg = 0;
-					segp = segbuf;
-				}
-				break;
-			}
+		/*XXX Color */
+		gcv.foreground = fg->pixel;
+		if( white_flag && !is_monochrome )  {
+		    gcv.foreground = white->pixel;
 		}
-	}
-	if( nseg ) {
-		XDrawSegments( dpy, win, gc, segbuf, nseg );
-		if( white_flag && is_monochrome ) {
+		XChangeGC( dpy, gc, GCForeground, &gcv );
+		
+		pnt[0] *= 2047;
+		pnt[1] *= 2047;
+		x = GED_TO_Xx(pnt[0]);
+		y = GED_TO_Xy(pnt[1]);
+
+		segp->x1 = lastx;
+		segp->y1 = lasty;
+		segp->x2 = x;
+		segp->y2 = y;
+		nseg++;
+		segp++;
+		lastx = x;
+		lasty = y;
+		useful = 1;
+		if( nseg == 1024 ) {
+		    XDrawSegments( dpy, win, gc, segbuf, nseg );
+		    /* Thicken the drawing, if monochrome */
+		    if( white_flag && is_monochrome ) {
 			int	i;
 			/* XXX - width and height don't work on Sun! */
 			/* Thus the following gross hack */
 			segp = segbuf;
 			for( i = 0; i < nseg; i++ ) {
-				segp->x1++;
-				segp->y1++;
-				segp->x2++;
-				segp->y2++;
-				segp++;
+			    segp->x1++;
+			    segp->y1++;
+			    segp->x2++;
+			    segp->y2++;
+			    segp++;
 			}
 			XDrawSegments( dpy, win, gc, segbuf, nseg );
+		    }
+		    nseg = 0;
+		    segp = segbuf;
 		}
+		break;
+	    }
 	}
+    }
+    if( nseg ) {
+	XDrawSegments( dpy, win, gc, segbuf, nseg );
+	if( white_flag && is_monochrome ) {
+	    int	i;
+	    /* XXX - width and height don't work on Sun! */
+	    /* Thus the following gross hack */
+	    segp = segbuf;
+	    for( i = 0; i < nseg; i++ ) {
+		segp->x1++;
+		segp->y1++;
+		segp->x2++;
+		segp->y2++;
+		segp++;
+	    }
+	    XDrawSegments( dpy, win, gc, segbuf, nseg );
+	}
+    }
 
-	return(useful);
+    return(useful);
 }
 
 /*
@@ -364,7 +382,8 @@ X_normal()
 void
 X_update()
 {
-	XFlush( dpy );
+    XSync(Tk_Display(xtkwin), 0);
+/*    XFlush(Tk_Display(xtkwin));*/
 }
 
 /*
@@ -383,24 +402,24 @@ register char *str;
 
 	switch( color )  {
 	case DM_BLACK:
-		fg = black;
+		fg = black->pixel;
 		break;
 	case DM_RED:
-		fg = red;
+		fg = red->pixel;
 		break;
 	case DM_BLUE:
-		fg = blue;
+		fg = blue->pixel;
 		break;
 	default:
 	case DM_YELLOW:
-		fg = yellow;
+		fg = yellow->pixel;
 		break;
 	case DM_WHITE:
-		fg = gray;
+		fg = gray->pixel;
 		break;
 	}
 	gcv.foreground = fg;
-	XChangeGC( dpy, gc, GCForeground, &gcv );
+	XChangeGC( Tk_Display(xtkwin), gc, GCForeground, &gcv );
 	label( (double)x, (double)y, str );
 }
 
@@ -414,18 +433,179 @@ int x1, y1;
 int x2, y2;
 int dashed;
 {
-	XGCValues gcv;
+    XGCValues gcv;
 
-	gcv.foreground = yellow;
-	XChangeGC( dpy, gc, GCForeground, &gcv );
-	if( dashed ) {
-		XSetLineAttributes( dpy, gc, 1, LineOnOffDash, CapButt, JoinMiter );
-	} else {
-		XSetLineAttributes( dpy, gc, 1, LineSolid, CapButt, JoinMiter );
-	}
-	draw( x1, y1, x2, y2 );
+    gcv.foreground = yellow->pixel;
+    XChangeGC( Tk_Display(xtkwin), gc, GCForeground, &gcv );
+    if( dashed ) {
+	XSetLineAttributes(Tk_Display(xtkwin),
+			   gc, 1, LineOnOffDash, CapButt, JoinMiter );
+    } else {
+	XSetLineAttributes(Tk_Display(xtkwin),
+			   gc, 1, LineSolid, CapButt, JoinMiter );
+    }
+    draw( x1, y1, x2, y2 );
 }
 
+void
+Xdoevent(clientData, eventPtr)
+ClientData clientData;
+XEvent *eventPtr;
+{
+    KeySym key;
+    char keybuf[4];
+    int cnt;
+    XComposeStatus compose_stat;
+    Display *dpy;
+    Window win;
+
+    dpy = Tk_Display(xtkwin);
+    win = Tk_WindowId(xtkwin);
+
+    if (eventPtr->type == Expose || eventPtr->type == ConfigureNotify) {
+	if (eventPtr->xexpose.count == 0) {
+	    height = Tk_Height(xtkwin);
+	    width = Tk_Width(xtkwin);
+	    rt_vls_printf( &dm_values.dv_string, "refresh\n");
+	}
+    } else if( eventPtr->type == MotionNotify ) {
+	int	x, y;
+	if ( !XdoMotion )
+	    return;
+	x = (eventPtr->xmotion.x/(double)width - 0.5) * 4095;
+	y = (0.5 - eventPtr->xmotion.y/(double)height) * 4095;
+	rt_vls_printf( &dm_values.dv_string, "M 0 %d %d\n", x, y );
+    } else if( eventPtr->type == ButtonPress ) {
+	/* There may also be ButtonRelease events */
+	int	x, y;
+	/* In MGED this is a "penpress" */
+	x = (eventPtr->xbutton.x/(double)width - 0.5) * 4095;
+	y = (0.5 - eventPtr->xbutton.y/(double)height) * 4095;
+	switch( eventPtr->xbutton.button ) {
+	case Button1:
+	    /* Left mouse: Zoom out */
+	    rt_vls_strcat( &dm_values.dv_string, "zoom 0.5\n");
+	    break;
+	case Button2:
+	    /* Middle mouse, up to down transition */
+	    rt_vls_printf( &dm_values.dv_string, "M 1 %d %d\n", x, y);
+	    break;
+	case Button3:
+	    /* Right mouse: Zoom in */
+	    rt_vls_strcat( &dm_values.dv_string, "zoom 2\n");
+	    break;
+	}
+    } else if( eventPtr->type == ButtonRelease ) {
+	int	x, y;
+	x = (eventPtr->xbutton.x/(double)width - 0.5) * 4095;
+	y = (0.5 - eventPtr->xbutton.y/(double)height) * 4095;
+	switch( eventPtr->xbutton.button ) {
+	case Button1:
+	    /* Left mouse: Zoom out.  Do nothing more */
+	    break;
+	case Button2:
+	    /* Middle mouse, down to up transition */
+	    rt_vls_printf( &dm_values.dv_string, "M 0 %d %d\n", x, y);
+	    break;
+	case Button3:
+	    /* Right mouse: Zoom in.  Do nothing more. */
+	    break;
+	}
+    } else if( eventPtr->type == KeyPress ) {
+	register int i;
+	/* Turn these into MGED "buttonpress" or knob functions */
+	
+	cnt = XLookupString(&eventPtr->xkey, keybuf, sizeof(keybuf),
+			    &key, &compose_stat);
+
+	for(i=0 ; i < cnt ; i++){
+
+	    switch( *keybuf ) {
+	    case '?':
+		rt_log( "\nKey Help Menu:\n\
+0	Zero 'knobs'\n\
+x	Increase xrot\n\
+y	Increase yrot\n\
+z	Increase zrot\n\
+X	Increase Xslew\n\
+Y	Increase Yslew\n\
+Z	Increase Zslew\n\
+f	Front view\n\
+t	Top view\n\
+b	Bottom view\n\
+l	Left view\n\
+r	Right view\n\
+R	Rear view\n\
+3	35,25 view\n\
+4	45,45 view\n\
+F	Toggle faceplate\n\
+" );
+		break;
+	    case 'F':
+		/* Toggle faceplate on/off */
+		no_faceplate = !no_faceplate;
+		rt_vls_strcat( &dm_values.dv_string,
+			      no_faceplate ?
+			      "set faceplate 0\n" :
+			      "set faceplate 1\n" );
+		break;
+	    case '0':
+		rt_vls_printf( &dm_values.dv_string, "knob zero\n" );
+		break;
+	    case 'x':
+		/* 6 degrees per unit */
+		rt_vls_printf( &dm_values.dv_string, "knob +x 0.1\n" );
+		break;
+	    case 'y':
+		rt_vls_printf( &dm_values.dv_string, "knob +y 0.1\n" );
+		break;
+	    case 'z':
+		rt_vls_printf( &dm_values.dv_string, "knob +z 0.1\n" );
+		break;
+	    case 'X':
+		/* viewsize per unit */
+		rt_vls_printf( &dm_values.dv_string, "knob +X 0.1\n" );
+		break;
+	    case 'Y':
+		rt_vls_printf( &dm_values.dv_string, "knob +Y 0.1\n" );
+		break;
+	    case 'Z':
+		rt_vls_printf( &dm_values.dv_string, "knob +Z 0.1\n" );
+		break;
+	    case 'f':
+		rt_vls_strcat( &dm_values.dv_string, "press front\n");
+		break;
+	    case 't':
+		rt_vls_strcat( &dm_values.dv_string, "press top\n");
+		break;
+	    case 'b':
+		rt_vls_strcat( &dm_values.dv_string, "press bottom\n");
+		break;
+	    case 'l':
+		rt_vls_strcat( &dm_values.dv_string, "press left\n");
+		break;
+	    case 'r':
+		rt_vls_strcat( &dm_values.dv_string, "press right\n");
+		break;
+	    case 'R':
+		rt_vls_strcat( &dm_values.dv_string, "press rear\n");
+		break;
+	    case '3':
+		rt_vls_strcat( &dm_values.dv_string, "press 35,25\n");
+		break;
+	    case '4':
+		rt_vls_strcat( &dm_values.dv_string, "press 45,45\n");
+		break;
+	    default:
+		rt_log("dm-X: The key '%c' is not defined\n", key);
+		break;
+	    }
+	}
+    } else {
+/* 	rt_log( "Unknown event type\n" ) */;
+    }
+}
+	    
 /*
  *			X _ I N P U T
  *
@@ -437,73 +617,17 @@ int dashed;
  * Implicit Return -
  *	If any files are ready for input, their bits will be set in 'input'.
  *	Otherwise, 'input' will be all zeros.
+ *
+ * DEPRECATED 
+ *
  */
+/* ARGSUSED */
 void
 X_input( input, noblock )
 fd_set		*input;
 int		noblock;
 {
-	struct timeval	tv;
-	fd_set		files;
-	int		width;
-	int		cnt;
-	register int	i;
-
-#if defined(_SC_OPEN_MAX)
-	if( (width = sysconf(_SC_OPEN_MAX)) <= 0 )
-#endif
-		width = 32;
-
-	files = *input;		/* save, for restore on each loop */
-	FD_SET( dpy->fd, &files );	/* check X fd too */
-
-	/*
-	 * Check for input on the keyboard, mouse, or window system.
-	 *
-	 * Suspend execution until either
-	 *  1)  User types a full line
-	 *  2)  Mouse or Window input arrives
-	 *  3)  The timelimit on SELECT has expired
-	 *
-	 * If a RATE operation is in progress (zoom, rotate, slew)
-	 * in which we still have to update the display,
-	 * do not suspend execution.
-	 */
-	do {
-		*input = files;
-		i = XPending( dpy );
-		if( i > 0 ) {
-			/* Don't select if we have some input! */
-			FD_ZERO( input );
-			FD_SET( dpy->fd, input );
-			goto input_waiting;
-			/* Any other input will be found on next call */
-		}
-
-		tv.tv_sec = 0;
-		if( noblock )  {
-			tv.tv_usec = 0;
-		}  else  {
-			/* 1/20th second */
-			tv.tv_usec = 50000;
-		}
-		cnt = select( width, input, (fd_set *)0,  (fd_set *)0, &tv );
-		if( cnt < 0 )  {
-			perror("dm-X.c/select");
-			break;
-		}
-		if( noblock )  break;
-		for( i=0; i<width; i++ )  {
-			if( FD_ISSET(i, input) )  goto input_waiting;
-		}
-	} while( noblock == 0 );
-
-input_waiting:
-
-	if( FD_ISSET( dpy->fd, input ) )
-		checkevents();
-
-	return;
+    return;
 }
 
 /* 
@@ -548,24 +672,25 @@ int	a, b;
 	 */
 	switch( b )  {
 	case ST_VIEW:
-		/* constant tracking OFF */
-		XSelectInput( dpy, win, ExposureMask|ButtonPressMask|KeyPressMask );
-		break;
+	    /* constant tracking OFF */
+	    XdoMotion = 0;
+	    break;
 	case ST_S_PICK:
 	case ST_O_PICK:
 	case ST_O_PATH:
-		/* constant tracking ON */
-		XSelectInput( dpy, win, PointerMotionMask|ExposureMask|ButtonPressMask|KeyPressMask );
-		break;
+	    /* constant tracking ON */
+	    XdoMotion = 1;
+	    break;
 	case ST_O_EDIT:
 	case ST_S_EDIT:
-		/* constant tracking OFF */
-		XSelectInput( dpy, win, ExposureMask|ButtonPressMask|KeyPressMask );
-		break;
+	    /* constant tracking OFF */
+	    XdoMotion = 0;
+	    break;
 	default:
-		rt_log("X_statechange: unknown state %s\n", state_str[b]);
-		break;
+	    rt_log("X_statechange: unknown state %s\n", state_str[b]);
+	    break;
 	}
+
 	/*X_viewchange( DM_CHGV_REDO, SOLID_NULL );*/
 }
 
@@ -584,7 +709,7 @@ X_colorchange()
 void
 X_debug(lvl)
 {
-	XFlush( dpy );
+	XFlush(Tk_Display(xtkwin));
 	rt_log("flushed\n");
 }
 
@@ -620,9 +745,11 @@ int	x2, y2;		/* to point */
 	sy2 = GED_TO_Xy( y2 );
 
 	if( sx1 == sx2 && sy1 == sy2 )
-		XDrawPoint( dpy, win, gc, sx1, sy1 );
+		XDrawPoint(Tk_Display(xtkwin), Tk_WindowId(xtkwin),
+			   gc, sx1, sy1 );
 	else
-		XDrawLine( dpy, win, gc, sx1, sy1, sx2, sy2 );
+		XDrawLine(Tk_Display(xtkwin), Tk_WindowId(xtkwin),
+			  gc, sx1, sy1, sx2, sy2 );
 }
 
 static void
@@ -638,7 +765,8 @@ char	*str;
 	/* The following makes the menu look good, the rest bad */
 	/*sy += (fontstruct->max_bounds.ascent + fontstruct->max_bounds.descent)/2;*/
 
-	XDrawString( dpy, win, gc, sx, sy, str, strlen(str) );
+	XDrawString( Tk_Display(xtkwin), Tk_WindowId(xtkwin),
+		    gc, sx, sy, str, strlen(str) );
 }
 
 #define	FONT	"6x10"
@@ -659,358 +787,81 @@ static int
 xsetup( name )
 char	*name;
 {
-	char	hostname[80];
-	char	display[80];
-	char	*envp, *cp;
-	unsigned long	bw;		/* border width */
-	XSizeHints xsh;
-	XEvent	event;
-	XGCValues gcv;
-	XColor a_color;
-	Visual	*a_visual;
-	int a_screen;
-	Colormap  a_cmap;
+    char *cp;
+    XGCValues gcv;
+    XColor a_color;
+    Visual *a_visual;
+    int a_screen;
+    Colormap  a_cmap;
 
-	width = height = 512;
+    width = height = 512;
 
-	if( name == NULL || *name == '\0' ) {
-		if( (envp = getenv("DISPLAY")) == NULL ) {
-			/* Env not set, use local host */
-			gethostname( hostname, 80 );
-			sprintf( display, "%s:0", hostname );
-			envp = display;
-		}
-	} else {
-		envp = name;
-	}
+    xinterp = Tcl_CreateInterp(); /* Dummy interpreter */
+    xtkwin = Tk_CreateMainWindow(xinterp, name, "MGED", "MGED");
 
-	/* Open the display - XXX see what NULL does now */
-	if( (dpy = XOpenDisplay( envp )) == NULL ) {
-		rt_log( "dm-X: Can't open X display\n" );
-		return -1;
-	}
+    /* Open the display - XXX see what NULL does now */
+    if( xtkwin == NULL ) {
+	rt_log( "dm-X: Can't open X display\n" );
+	return -1;
+    }
 
-#if 0
-	/* Load the font to use */
-	/* Answering this extra question all the time is irritating */
-	rt_log("Font [6x10]? ");
-	(void)fgets( line, sizeof(line), stdin );
-	line[strlen(line)-1] = '\0';		/* remove newline */
-	if( line[0] != NULL )
-		cp = line;
-	else
-#endif
-		cp = FONT;
+    /* Get colormap indices for the colors we use. */
+    black  = Tk_GetColor(xinterp, xtkwin, Tk_GetUid("black"));
+    white  = Tk_GetColor(xinterp, xtkwin, Tk_GetUid("white"));
+    red    = Tk_GetColor(xinterp, xtkwin, Tk_GetUid("red"));
+    yellow = Tk_GetColor(xinterp, xtkwin, Tk_GetUid("yellow"));
+    blue   = Tk_GetColor(xinterp, xtkwin, Tk_GetUid("blue"));
+    gray   = Tk_GetColor(xinterp, xtkwin, Tk_GetUid("gray"));
 
-#ifdef ultrix
-	cp = FONT2;	/* XXX Is this still necessary? */
-#endif
+    /* Select border, background, foreground colors,
+     * and border width.
+     */
 
-	if( (fontstruct = XLoadQueryFont(dpy, cp)) == NULL ) {
-		/* Try hardcoded backup font */
-		if( (fontstruct = XLoadQueryFont(dpy, FONT2)) == NULL ) {
-			rt_log( "dm-X: Can't open font '%s' or '%s'\n", cp, FONT2 );
-			return -1;
-		}
-	}
+    if (Tk_Visual(xtkwin)->class == GrayScale ||
+	Tk_Visual(xtkwin)->class == StaticGray)  {
+	is_monochrome = 1;
+	bd = black;
+	bg = white;
+	fg = black;
+    } else {
+	/* Hey, it's a color server.  Ought to use 'em! */
+	is_monochrome = 0;
+	bd = white;
+	bg = black;
+	fg = white;
+    }
 
-	a_screen = DefaultScreen(dpy);
-	a_visual = DefaultVisual(dpy, a_screen);
+    if (!is_monochrome && fg != red && red != black) fg = red;
 
-	/* Get color map inddices for the colors we use. */
-	black = BlackPixel( dpy, a_screen );
-	white = WhitePixel( dpy, a_screen );
+    Tk_GeometryRequest(xtkwin, width+10, height+10);
+    Tk_SetWindowBackground(xtkwin, black->pixel);
+    Tk_MakeWindowExist(xtkwin);
 
-	a_cmap = DefaultColormap(dpy, a_screen);
-	a_color.red = 255<<8;
-	a_color.green=0;
-	a_color.blue=0;
-	a_color.flags = DoRed | DoGreen| DoBlue;
-	if ( ! XAllocColor(dpy, a_cmap, &a_color)) {
-		rt_log( "dm-X: Can't Allocate red\n");
-		return -1;
-	}
-	red = a_color.pixel;
-	if ( red == white ) red = black;
-
-	a_color.red = 200<<8;
-	a_color.green=200<<8;
-	a_color.blue=0<<8;
-	a_color.flags = DoRed | DoGreen| DoBlue;
-	if ( ! XAllocColor(dpy, a_cmap, &a_color)) {
-		rt_log( "dm-X: Can't Allocate yellow\n");
-		return -1;
-	}
-	yellow = a_color.pixel;
-	if (yellow == white) yellow = black;
-
-	a_color.red = 0;
-	a_color.green=0;
-	a_color.blue=255<<8;
-	a_color.flags = DoRed | DoGreen| DoBlue;
-	if ( ! XAllocColor(dpy, a_cmap, &a_color)) {
-		rt_log( "dm-X: Can't Allocate blue\n");
-		return -1;
-	}
-	blue = a_color.pixel;
-	if (blue == white) blue = black;
-
-	a_color.red = 128<<8;
-	a_color.green=128<<8;
-	a_color.blue= 128<<8;
-	a_color.flags = DoRed | DoGreen| DoBlue;
-	if ( ! XAllocColor(dpy, a_cmap, &a_color)) {
-		rt_log( "dm-X: Can't Allocate gray\n");
-		return -1;
-	}
-	gray = a_color.pixel;
-	if (gray == white) gray = black;
-
-	/* Select border, background, foreground colors,
-	 * and border width.
-	 */
-	if( a_visual->class == GrayScale || a_visual->class == StaticGray )  {
-		is_monochrome = 1;
-		bd = BlackPixel( dpy, a_screen );
-		bg = WhitePixel( dpy, a_screen );
-		fg = BlackPixel( dpy, a_screen );
-	} else {
-		/* Hey, it's a color server.  Ought to use 'em! */
-		is_monochrome = 0;
-		bd = WhitePixel( dpy, a_screen );
-		bg = BlackPixel( dpy, a_screen );
-		fg = WhitePixel( dpy, a_screen );
-	}
-	if( !is_monochrome && fg != red && red != black )  fg = red;
-	bw = 1;
-
-	/* Fill in XSizeHints struct to inform window
-	 * manager about initial size and location.
-	 */
-	xsh.flags = (PSize);
-	xsh.height = height + 10;
-	xsh.width = width + 10;
-	xsh.x = xsh.y = 0;
-
-	win = XCreateSimpleWindow( dpy, DefaultRootWindow(dpy),
-		xsh.x, xsh.y, xsh.width, xsh.height,
-		bw, bd, bg );
-	if( win == 0 ) {
-		rt_log( "dm-X: Can't create window\n" );
-		return -1;
-	}
-
-	/* Set standard properties for Window Managers */
-	XSetStandardProperties( dpy, win, "MGED", "MGED", None, NULL, 0, &xsh );
-	XSetWMHints( dpy, win, &xwmh );
-
-	/* Create a Graphics Context for drawing */
+    gcv.foreground = fg->pixel;
+    gcv.background = bg->pixel;
 #ifndef CRAY2
-	gcv.font = fontstruct->fid;
-#endif
-	gcv.foreground = fg;
-	gcv.background = bg;
-#ifndef CRAY2
-	gc = XCreateGC( dpy, win, (GCFont|GCForeground|GCBackground), &gcv );
+    cp = FONT;
+    if ((fontstruct = XLoadQueryFont(Tk_Display(xtkwin), cp)) == NULL ) {
+	/* Try hardcoded backup font */
+	if ((fontstruct = XLoadQueryFont(Tk_Display(xtkwin), FONT2)) == NULL) {
+	    rt_log( "dm-X: Can't open font '%s' or '%s'\n", cp, FONT2 );
+	    return -1;
+	}
+    }
+    gcv.font = fontstruct->fid;
+    gc = XCreateGC(Tk_Display(xtkwin), Tk_WindowId(xtkwin),
+		   (GCFont|GCForeground|GCBackground), &gcv );
 #else
-	gc = XCreateGC( dpy, win, (GCForeground|GCBackground), &gcv );
+    gc = XCreateGC(Tk_Display(xtkwin), Tk_WindowId(xtkwin),
+		   (GCForeground|GCBackground), &gcv);
 #endif
-
-	XSelectInput( dpy, win, ExposureMask|ButtonPressMask|KeyPressMask );
-	XMapWindow( dpy, win );
-
-	while( 1 ) {
-		XNextEvent( dpy, &event );
-		if( event.type == Expose && event.xexpose.count == 0 ) {
-			XWindowAttributes xwa;
-
-			/* remove other exposure events */
-			while( XCheckTypedEvent(dpy, Expose, &event) ) ;
-
-			if( XGetWindowAttributes( dpy, win, &xwa ) == 0 )
-				break;
-
-			width = xwa.width;
-			height = xwa.height;
-			break;
-		}
-	}
-	return	0;
-}
-
-/*
- *  Only called when we *know* there is at least one event to process.
- *  (otherwise we would block in XNextEvent)
- */
-static void
-checkevents()
-{
-	XEvent	event;
-	KeySym	key;
-	char keybuf[4];
-	int cnt;
-	XComposeStatus compose_stat;
-
-	while( XPending( dpy ) > 0 ) {
-		XNextEvent( dpy, &event );
-		if( event.type == Expose ) {
-			if( event.xexpose.count == 0 ) {
-				XWindowAttributes xwa;
-				XGetWindowAttributes( dpy, win, &xwa );
-				height = xwa.height;
-				width = xwa.width;
-				rt_vls_printf( &dm_values.dv_string, "refresh\n");
-			}
-		} else if( event.type == MotionNotify ) {
-			int	x, y;
-			x = (event.xmotion.x/(double)width - 0.5) * 4095;
-			y = (0.5 - event.xmotion.y/(double)height) * 4095;
-			rt_vls_printf( &dm_values.dv_string, "M 0 %d %d\n",
-				x, y );
-		} else if( event.type == ButtonPress ) {
-			/* There may also be ButtonRelease events */
-			int	x, y;
-			/* In MGED this is a "penpress" */
-			x = (event.xbutton.x/(double)width - 0.5) * 4095;
-			y = (0.5 - event.xbutton.y/(double)height) * 4095;
-			switch( event.xbutton.button ) {
-			case Button1:
-				/* Left mouse: Zoom out */
-				rt_vls_strcat( &dm_values.dv_string, "zoom 0.5\n");
-				break;
-			case Button2:
-				/* Middle mouse, up to down transition */
-				rt_vls_printf( &dm_values.dv_string, "M 1 %d %d\n",
-					x, y);
-				break;
-			case Button3:
-				/* Right mouse: Zoom in */
-				rt_vls_strcat( &dm_values.dv_string, "zoom 2\n");
-				break;
-			}
-		} else if( event.type == ButtonRelease ) {
-			int	x, y;
-			x = (event.xbutton.x/(double)width - 0.5) * 4095;
-			y = (0.5 - event.xbutton.y/(double)height) * 4095;
-			switch( event.xbutton.button ) {
-			case Button1:
-				/* Left mouse: Zoom out.  Do nothing more */
-				break;
-			case Button2:
-				/* Middle mouse, down to up transition */
-				rt_vls_printf( &dm_values.dv_string, "M 0 %d %d\n",
-					x, y);
-				break;
-			case Button3:
-				/* Right mouse: Zoom in.  Do nothing more. */
-				break;
-			}
-		} else if( event.type == KeyPress ) {
-		    register int i;
-			/* Turn these into MGED "buttonpress" or knob functions */
-
-		    cnt = XLookupString(&event.xkey, keybuf, sizeof(keybuf),
-						&key, &compose_stat);
-
-		    for(i=0 ; i < cnt ; i++){
-
-			switch( *keybuf ) {
-			case '?':
-				rt_log( "\nKey Help Menu:\n\
-0	Zero 'knobs'\n\
-x	Increase xrot\n\
-y	Increase yrot\n\
-z	Increase zrot\n\
-X	Increase Xslew\n\
-Y	Increase Yslew\n\
-Z	Increase Zslew\n\
-f	Front view\n\
-t	Top view\n\
-b	Bottom view\n\
-l	Left view\n\
-r	Right view\n\
-R	Rear view\n\
-3	35,25 view\n\
-4	45,45 view\n\
-F	Toggle faceplate\n\
-" );
-				break;
-			case 'F':
-				/* Toggle faceplate on/off */
-				no_faceplate = !no_faceplate;
-				rt_vls_strcat( &dm_values.dv_string,
-					no_faceplate ?
-					"set faceplate 0\n" :
-					"set faceplate 1\n" );
-				break;
-			case '0':
-				rt_vls_printf( &dm_values.dv_string,
-					"knob zero\n" );
-				break;
-			case 'x':
-				/* 6 degrees per unit */
-				rt_vls_printf( &dm_values.dv_string,
-					"knob +x 0.1\n" );
-				break;
-			case 'y':
-				rt_vls_printf( &dm_values.dv_string,
-					"knob +y 0.1\n" );
-				break;
-			case 'z':
-				rt_vls_printf( &dm_values.dv_string,
-					"knob +z 0.1\n" );
-				break;
-			case 'X':
-				/* viewsize per unit */
-				rt_vls_printf( &dm_values.dv_string,
-					"knob +X 0.1\n" );
-				break;
-			case 'Y':
-				rt_vls_printf( &dm_values.dv_string,
-					"knob +Y 0.1\n" );
-				break;
-			case 'Z':
-				rt_vls_printf( &dm_values.dv_string,
-					"knob +Z 0.1\n" );
-				break;
-			case 'f':
-				rt_vls_strcat( &dm_values.dv_string,
-					"press front\n");
-				break;
-			case 't':
-				rt_vls_strcat( &dm_values.dv_string,
-					"press top\n");
-				break;
-			case 'b':
-				rt_vls_strcat( &dm_values.dv_string,
-					"press bottom\n");
-				break;
-			case 'l':
-				rt_vls_strcat( &dm_values.dv_string,
-					"press left\n");
-				break;
-			case 'r':
-				rt_vls_strcat( &dm_values.dv_string,
-					"press right\n");
-				break;
-			case 'R':
-				rt_vls_strcat( &dm_values.dv_string,
-					"press rear\n");
-				break;
-			case '3':
-				rt_vls_strcat( &dm_values.dv_string,
-					"press 35,25\n");
-				break;
-			case '4':
-				rt_vls_strcat( &dm_values.dv_string,
-					"press 45,45\n");
-				break;
-			default:
-				rt_log("dm-X: The key '%c' is not defined\n", key);
-				break;
-			}
-		    }
-		} else
-			rt_log( "Unknown event type\n" );
-	}
+    
+    /* Register the file descriptor with the Tk event handler */
+    Tk_CreateEventHandler(xtkwin,
+			  ExposureMask|ButtonPressMask|KeyPressMask|
+			  PointerMotionMask|StructureNotifyMask,
+			  Xdoevent, (ClientData)NULL);
+	
+    Tk_MapWindow(xtkwin);
+    return 0;
 }
