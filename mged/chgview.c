@@ -64,6 +64,25 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #define M_SQRT2		1.41421356237309504880
 #endif
 
+#ifdef XMGED
+extern int (*rot_hook)();
+extern int (*set_tran_hook)();
+extern int (*tran_hook)();
+extern int (*knob_hook)();
+int local_rt_arb_describe();
+void check_nonzero_rates();
+
+extern int update_views;   /* from dm-X.h */
+extern int irot_set;
+extern double irot_x;
+extern double irot_y;
+extern double irot_z;
+extern double tran_x;
+extern double tran_y;
+extern double tran_z;
+extern point_t orig_pos;
+#endif
+
 extern long	nvectors;	/* from dodraw.c */
 
 extern struct rt_tol mged_tol;	/* from ged.c */
@@ -98,6 +117,10 @@ char	**argv;
 {
 	register struct directory *dp;
 	register int i;
+
+#ifdef XMGED
+	update_views = 1;
+#endif
 
 	for( i = 1; i < argc; i++ )  {
 		if( (dp = db_lookup( dbip,  argv[i], LOOKUP_NOISY )) != DIR_NULL )
@@ -136,9 +159,22 @@ char	**argv;
 	if( not_state( ST_VIEW, "View Rotate") )
 		return CMD_BAD;
 
+#ifdef XMGED
+	if(!irot_set){
+          irot_x += atof(argv[1]);
+          irot_y += atof(argv[2]);
+          irot_z += atof(argv[3]);
+        }
+#endif
+
 	usejoy(	atof(argv[1]) * degtorad,
 		atof(argv[2]) * degtorad,
 		atof(argv[3]) * degtorad );
+
+#ifdef XMGED
+	if(rot_hook)
+          (*rot_hook)();
+#endif
 
 	return CMD_OK;
 }
@@ -189,6 +225,10 @@ f_edit(argc, argv)
 int	argc;
 char	**argv;
 {
+#ifdef XMGED
+        update_views = 1;
+#endif
+
 	return edit_com( argc, argv, 1, 1 );
 }
 
@@ -198,6 +238,10 @@ f_ev(argc, argv)
 int	argc;
 char	**argv;
 {
+#ifdef XMGED
+        update_views = 1;
+#endif
+
 	return edit_com( argc, argv, 3, 1 );
 }
 
@@ -218,6 +262,10 @@ f_evedit(argc, argv)
 int	argc;
 char	**argv;
 {
+#ifdef XMGED
+        update_views = 1
+#endif
+
 	return edit_com( argc, argv, 2, 1 );
 }
 #endif
@@ -308,7 +356,11 @@ int	catch_sigint;
 	}
 
 	if( catch_sigint )
+#ifdef XMGED
+		(void)signal( SIGINT, cur_sigint );	/* allow interupts after here */
+#else
 		(void)signal( SIGINT, sig2 );	/* allow interupts after here */
+#endif
 
 	nvectors = 0;
 	rt_prep_timer();
@@ -321,6 +373,13 @@ int	catch_sigint;
 	    HeadSolid.s_forw != &HeadSolid)  {
 		size_reset();
 		new_mats();
+
+#ifdef XMGED
+		MAT_DELTAS_GET(orig_pos, toViewcenter);
+		tran_x = 0.0;
+		tran_y = 0.0;
+		tran_z = 0.0;
+#endif
 	}
 
 	dmp->dmr_colorchange();
@@ -339,7 +398,11 @@ char	**argv;
 	if( argc > 1 )  lvl = atoi(argv[1]);
 
 	rt_log("ndrawn=%d\n", ndrawn);
+#ifdef XMGED
+	(void)signal( SIGINT, cur_sigint );	/* allow interupts */
+#else
 	(void)signal( SIGINT, sig2 );	/* allow interupts */
+#endif
 	pr_schain( &HeadSolid, lvl );
 
 	return CMD_OK;
@@ -384,7 +447,11 @@ f_debugmem( argc, argv )
 int	argc;
 char	**argv;
 {
+#ifdef XMGED
+	(void)signal( SIGINT, cur_sigint );	/* allow interupts */
+#else
 	(void)signal( SIGINT, sig2 );	/* allow interupts */
+#endif
 	rt_prmem("Invoked via MGED command");
 	return CMD_OK;
 }
@@ -580,8 +647,12 @@ char	**argv;
 
 
 	rt_vls_init( &str );
-	
+
+#ifdef XMGED
+	(void)signal( SIGINT, cur_sigint );	/* allow interupts */
+#else	
 	(void)signal( SIGINT, sig2 );	/* allow interupts */
+#endif
 	for( arg = 1; arg < argc; arg++ )  {
 		if( (dp = db_lookup( dbip, argv[arg], LOOKUP_NOISY )) == DIR_NULL )
 			continue;
@@ -659,6 +730,9 @@ char	**argv;
 	register struct solid *nsp;
 	struct directory	*dp;
 
+#ifdef XMGED
+	update_views = 1;
+#endif
 	no_memory = 0;
 
 	/* FIRST, reject any editing in progress */
@@ -776,6 +850,9 @@ register struct directory *dp;
 	static struct solid *nsp;
 	register int i;
 
+#ifdef XMGED
+	update_views = 1;
+#endif
 	RT_CK_DIR(dp);
 	sp=HeadSolid.s_forw;
 	while( sp != &HeadSolid )  {
@@ -934,6 +1011,10 @@ char	**argv;
 	if( not_state( ST_VIEW, "keyboard solid edit start") )
 		return CMD_BAD;
 
+#ifdef XMGED
+	update_views = 1;
+#endif
+
 	button(BE_S_ILLUMINATE);	/* To ST_S_PICK */
 	return f_ill(argc, argv);	/* Illuminate named solid --> ST_S_EDIT */
 }
@@ -975,7 +1056,147 @@ char	**argv;
 	char	*cmd = argv[1];
 	static int aslewflag = 0;
 	vect_t	aslew;
+#ifdef XMGED
+  int iknob;
 
+  if(knob_hook != NULL)
+    return (*knob_hook)(argc, argv);
+
+  if(!strcmp(argv[0], "iknob"))
+    iknob = 1;
+  else
+    iknob = 0;
+
+  if( !aslewflag ) {
+    VSETALL( absolute_slew, 0.0 );
+    aslewflag = 1;
+  }
+
+  if(argc == 2)  {
+    i = 0;
+    f = 0;
+  } else {
+    i = atoi(argv[2]);
+    f = atof(argv[2]);
+    if( f < -1.0 )
+      f = -1.0;
+    else if( f > 1.0 )
+      f = 1.0;
+  }
+  if( cmd[1] == '\0' )  {
+    switch( cmd[0] )  {
+    case 'x':
+      if(iknob)
+	rate_rotate[X] += f;
+      else
+	rate_rotate[X] = f;
+      break;
+    case 'y':
+      if(iknob)
+	rate_rotate[Y] += f;
+      else
+	rate_rotate[Y] = f;
+      break;
+    case 'z':
+      if(iknob)
+	rate_rotate[Z] += f;
+      else
+	rate_rotate[Z] = f;
+      break;
+    case 'X':
+      if(iknob)
+	rate_slew[X] += f;
+      else
+	rate_slew[X] = f;
+      break;
+    case 'Y':
+      if(iknob)
+	rate_slew[Y] += f;
+      else
+	rate_slew[Y] = f;
+      break;
+    case 'Z':
+      if(iknob)
+	rate_slew[Z] += f;
+      else
+	rate_slew[Z] = f;
+      break;
+    case 'S':
+      if(iknob)
+	rate_zoom += f;
+      else
+	rate_zoom = f;
+      break;
+    default:
+      goto usage;
+    }
+  } else if( cmd[0] == 'a' && cmd[1] != '\0' && cmd[2] == '\0' ) {
+		switch( cmd[1] ) {
+		case 'x':
+			VSETALL(rate_rotate, 0);
+
+			if(iknob)
+			  absolute_rotate[X] += f;
+			else
+			  absolute_rotate[X] = f;
+
+			absview_v( absolute_rotate );
+			break;
+		case 'y':
+			VSETALL(rate_rotate, 0);
+
+			if(iknob)
+			  absolute_rotate[Y] += f;
+			else
+			  absolute_rotate[Y] = f;
+
+			absview_v( absolute_rotate );
+			break;
+		case 'z':
+			VSETALL(rate_rotate, 0);
+
+			if(iknob)
+			  absolute_rotate[Z] += f;
+			else
+			  absolute_rotate[Z] = f;
+
+			absview_v( absolute_rotate );
+			break;
+		case 'X':
+			aslew[X] = f - absolute_slew[X];
+			aslew[Y] = absolute_slew[Y];
+			aslew[Z] = absolute_slew[Z];
+			slewview( aslew );
+
+			if(iknob)
+			  absolute_slew[X] += f;
+			else
+			  absolute_slew[X] = f;
+
+			break;
+		case 'Y':
+			aslew[X] = absolute_slew[X];
+			aslew[Y] = f - absolute_slew[Y];
+			aslew[Z] = absolute_slew[Z];
+			slewview( aslew );
+
+			if(iknob)
+			  absolute_slew[Y] += f;
+			else
+			  absolute_slew[Y] = f;
+
+			break;
+		case 'Z':
+			aslew[X] = absolute_slew[X];
+			aslew[Y] = absolute_slew[Y];
+			aslew[Z] = f - absolute_slew[Z];
+			slewview( aslew );
+
+			if(iknob)
+			  absolute_slew[Z] += f;
+			else
+			  absolute_slew[Z] = f;
+#else
 	if( !aslewflag ) {
 		VSETALL( absolute_slew, 0.0 );
 		aslewflag = 1;
@@ -1055,6 +1276,7 @@ char	**argv;
 			aslew[Z] = f - absolute_slew[Z];
 			slewview( aslew );
 			absolute_slew[Z] = f;
+#endif
 			break;
 		case 'S':
 			break;
@@ -1168,9 +1390,9 @@ char	**argv;
 		if( argv[argind][0] == 'a' )  {
 			/* Absolute tol */
 			if( f <= 0.0 )
-				mged_abs_tol = 0.0;	/* None */
+			        mged_abs_tol = 0.0;	/* None */
 			else
-				mged_abs_tol = f * local2base;
+			        mged_abs_tol = f * local2base;
 			return CMD_OK;
 		}
 		else if( argv[argind][0] == 'r' )  {
@@ -1229,6 +1451,14 @@ int	argc;
 char	**argv;
 {
 	double	val;
+#ifdef XMGED
+	vect_t view_pos;
+	point_t new_pos;
+	point_t old_pos;
+	point_t diff;
+
+	MAT_DELTAS_GET(old_pos, toViewcenter);
+#endif
 
 	val = atof(argv[1]);
 	if( val < SMALL_FASTF || val > INFINITY )  {
@@ -1240,6 +1470,27 @@ char	**argv;
 
 	Viewscale /= val;
 	new_mats();
+
+#ifdef XMGED
+	if(state == ST_S_EDIT || state == ST_O_EDIT){
+	  tran_x *= val;
+	  tran_y *= val;
+	  tran_z *= val;
+	}else{
+	  MAT_DELTAS_GET_NEG(new_pos, toViewcenter);
+	  VSUB2(diff, new_pos, orig_pos);
+	  VADD2(new_pos, old_pos, diff);
+	  VSET(view_pos, new_pos[X], new_pos[Y], new_pos[Z]);
+	  MAT4X3PNT( new_pos, model2view, view_pos);
+	  tran_x = new_pos[X];
+	  tran_y = new_pos[Y];
+	  tran_z = new_pos[Z];
+	}
+
+	if(tran_hook)
+	  (*tran_hook)();
+#endif
+
 	return CMD_OK;
 }
 
