@@ -7,7 +7,7 @@
 #define SRCDIR	conv
 #define PRODUCTS	asc2g g2asc conv-vg2g pix2asc asc2pix euclid-g \
 			g-euclid euclid_format euclid_unformat tankill-g g-tankill \
-			viewpoint-g dxf-g g-nmg g-euclid1 fast4-g proe-g \
+			viewpoint-g dxf-g g-nmg g-euclid1 fast4-g proe-g g-nff \
 			asc-nmg nmg-rib g-vrml g-x3d g-acad cy-g nastran-g g-wave \
 			nmg-bot g-shell.rect stl-g poly-bot dbupgrade enf-g bot_shell-vtk
 #define	SRCSUFF	.c
@@ -43,6 +43,9 @@ nastran-g: nastran-g.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBTCL_DEP LIBWDB_DEP
 
 g-acad: g-acad.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBTCL_DEP LIBWDB_DEP
 	CC LDFLAGS g-acad.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBTCL LIBTCL_LIBES LIBES -o g-acad
+
+g-nff: g-nff.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBTCL_DEP LIBWDB_DEP
+	CC LDFLAGS g-nff.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBTCL LIBTCL_LIBES LIBES -o g-nff
 
 g-wave: g-wave.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBTCL_DEP LIBWDB_DEP
 	CC LDFLAGS g-wave.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBTCL LIBTCL_LIBES LIBES -o g-wave
