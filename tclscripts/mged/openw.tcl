@@ -20,7 +20,7 @@
 # $Revision
 #
 
-check_externs "_mged_attach _mged_aim _mged_add_view _mged_delete_view _mged_get_view _mged_goto_view _mged_next_view _mged_prev_view _mged_toggle_view"
+check_externs "_mged_attach _mged_tie _mged_view_ring"
 
 if [info exists env(MGED_HTML_DIR)] {
         set mged_html_dir $env(MGED_HTML_DIR)
@@ -121,8 +121,7 @@ proc gui_create_default { args } {
     global mged_fb_all
     global mged_fb_overlay
     global mged_rubber_band
-    global mged_grid_draw
-    global mged_grid_snap
+    global mged_grid
     global mged_mouse_behavior
     global mged_qray_effects
     global mged_coords
@@ -130,12 +129,8 @@ proc gui_create_default { args } {
     global mged_transform
     global mged_rateknobs
     global mged_adc_draw
-    global mged_v_axes_pos
-    global mged_v_axes
-    global mged_m_axes
-    global mged_e_axes
+    global mged_axes
     global mged_apply_to
-    global mged_grid_control
     global mged_apply_list
     global mged_edit_style
     global mged_top
@@ -323,7 +318,6 @@ set mged_show_cmd($id) $scw
 set mged_show_dm($id) $sgw
 set mged_show_status($id) 1
 set mged_apply_to($id) 0
-set mged_grid_control($id) 0
 set edit_info_pos($id) "+0+0"
 set mged_num_lines($id) $mged_default_num_lines
 
@@ -585,12 +579,12 @@ menu .$id.menubar.view -tearoff $do_tearoffs
 	-command "mged_apply $id \"knob zero\""
 
 menu .$id.menubar.viewring -tearoff $do_tearoffs
-.$id.menubar.viewring add command -label "Add View" -underline 0 -command "do_add_view $id"
+.$id.menubar.viewring add command -label "Add View" -underline 0 -command "view_ring_add $id"
 .$id.menubar.viewring add cascade -label "Select View" -underline 0 -menu .$id.menubar.viewring.select
 .$id.menubar.viewring add cascade -label "Delete View" -underline 0 -menu .$id.menubar.viewring.delete
-.$id.menubar.viewring add command -label "Next View" -underline 0 -command "do_next_view $id"
-.$id.menubar.viewring add command -label "Prev View" -underline 0 -command "do_prev_view $id"
-.$id.menubar.viewring add command -label "Last View" -underline 0 -command "do_toggle_view $id"
+.$id.menubar.viewring add command -label "Next View" -underline 0 -command "view_ring_next $id"
+.$id.menubar.viewring add command -label "Prev View" -underline 0 -command "view_ring_prev $id"
+.$id.menubar.viewring add command -label "Last View" -underline 0 -command "view_ring_toggle $id"
 
 menu .$id.menubar.viewring.select -tearoff $do_tearoffs -postcommand "do_view_ring_labels $id"
 do_view_ring_entries $id s
@@ -729,40 +723,38 @@ menu .$id.menubar.settings.fb -tearoff $do_tearoffs
 #	-command "choosePaneColor $id"
 
 menu .$id.menubar.settings.vap -tearoff $do_tearoffs
-.$id.menubar.settings.vap add radiobutton -value 0 -variable mged_v_axes_pos($id)\
+.$id.menubar.settings.vap add radiobutton -value 0 -variable mged_axes($id,view_pos)\
 	-label "Center" -underline 0\
-	-command "mged_apply $id \"set v_axes_pos {0 0}\""
-.$id.menubar.settings.vap add radiobutton -value 1 -variable mged_v_axes_pos($id)\
+	-command "mged_apply $id \"rset ax view_pos 0 0\""
+.$id.menubar.settings.vap add radiobutton -value 1 -variable mged_axes($id,view_pos)\
 	-label "Lower Left" -underline 2\
-	-command "mged_apply $id \"set v_axes_pos {-1750 -1750}\""
-.$id.menubar.settings.vap add radiobutton -value 2 -variable mged_v_axes_pos($id)\
+	-command "mged_apply $id \"rset ax view_pos -1750 -1750\""
+.$id.menubar.settings.vap add radiobutton -value 2 -variable mged_axes($id,view_pos)\
 	-label "Upper Left" -underline 6\
-	-command "mged_apply $id \"set v_axes_pos {-1750 1750}\""
-.$id.menubar.settings.vap add radiobutton -value 3 -variable mged_v_axes_pos($id)\
+	-command "mged_apply $id \"rset ax view_pos -1750 1750\""
+.$id.menubar.settings.vap add radiobutton -value 3 -variable mged_axes($id,view_pos)\
 	-label "Upper Right" -underline 6\
-	-command "mged_apply $id \"set v_axes_pos {1750 1750}\""
-.$id.menubar.settings.vap add radiobutton -value 4 -variable mged_v_axes_pos($id)\
+	-command "mged_apply $id \"rset ax view_pos 1750 1750\""
+.$id.menubar.settings.vap add radiobutton -value 4 -variable mged_axes($id,view_pos)\
 	-label "Lower Right" -underline 3\
-	-command "mged_apply $id \"set v_axes_pos {1750 -1750}\""
+	-command "mged_apply $id \"rset ax view_pos 1750 -1750\""
 
 menu .$id.menubar.settings.grid -tearoff $do_tearoffs
 .$id.menubar.settings.grid add command -label "Anchor..." -underline 0\
 	-command "do_grid_anchor $id"
-#.$id.menubar.settings.grid add command -label "Color..." -underline 0\
-#	-command "do_grid_color $id"
 .$id.menubar.settings.grid add cascade -label "Spacing" -underline 1\
 	-menu .$id.menubar.settings.grid.spacing
 .$id.menubar.settings.grid add separator
-.$id.menubar.settings.grid add checkbutton -offvalue 0 -onvalue 1 -variable mged_grid_snap($id)\
+.$id.menubar.settings.grid add checkbutton -offvalue 0 -onvalue 1 -variable mged_grid($id,snap)\
 	-label "Snap To Grid" -underline 0\
-	-command "mged_apply $id \"set grid_snap \$mged_grid_snap($id)\""
-.$id.menubar.settings.grid add checkbutton -offvalue 0 -onvalue 1 -variable mged_grid_draw($id)\
+	-command "mged_apply $id \"rset grid snap \$mged_grid($id,snap)\""
+.$id.menubar.settings.grid add checkbutton -offvalue 0 -onvalue 1 -variable mged_grid($id,draw)\
 	-label "Draw Grid" -underline 0\
-	-command "mged_apply $id \"set grid_draw \$mged_grid_draw($id)\""
+	-command "mged_apply $id \"rset grid draw \$mged_grid($id,draw)\""
 
 menu .$id.menubar.settings.grid.spacing -tearoff $do_tearoffs
 .$id.menubar.settings.grid.spacing add command -label "Autosize" -underline 0\
-	-command "grid_control_autosize $id; grid_spacing_apply $id b"
+	-command "grid_spacing_autosize $id; grid_spacing_apply $id b"
 .$id.menubar.settings.grid.spacing add command -label "Arbitrary..." -underline 1\
 	-command "do_grid_spacing $id b"
 .$id.menubar.settings.grid.spacing add separator
@@ -796,7 +788,7 @@ menu .$id.menubar.settings.grid.spacing -tearoff $do_tearoffs
 
 menu .$id.menubar.settings.grid_spacing -tearoff $do_tearoffs
 .$id.menubar.settings.grid_spacing add command -label "Autosize" -underline 0\
-	-command "grid_control_autosize $id; grid_spacing_apply $id b"
+	-command "grid_spacing_autosize $id; grid_spacing_apply $id b"
 .$id.menubar.settings.grid_spacing add command -label "Arbitrary..." -underline 1\
 	-command "do_grid_spacing $id b"
 .$id.menubar.settings.grid_spacing add separator
@@ -865,12 +857,12 @@ menu .$id.menubar.settings.transform -tearoff $do_tearoffs
 	-command "set_transform $id" -state disabled
 
 menu .$id.menubar.modes -tearoff $do_tearoffs
-.$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_grid_draw($id)\
+.$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_grid($id,draw)\
 	-label "Draw Grid" -underline 0\
-	-command "mged_apply $id \"set grid_draw \$mged_grid_draw($id)\""
-.$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_grid_snap($id)\
+	-command "mged_apply $id \"rset grid draw \$mged_grid($id,draw)\""
+.$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_grid($id,snap)\
 	-label "Snap To Grid" -underline 0\
-	-command "mged_apply $id \"set grid_snap \$mged_grid_snap($id)\""
+	-command "mged_apply $id \"rset grid snap \$mged_grid($id,snap)\""
 .$id.menubar.modes add separator
 .$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_fb($id)\
 	-label "Framebuffer Active" -underline 0 \
@@ -881,7 +873,7 @@ menu .$id.menubar.modes -tearoff $do_tearoffs
 .$id.menubar.modes add separator
 .$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_rubber_band($id)\
 	-label "Persistent Rubber Band" -underline 0\
-	-command "mged_apply $id \"set rubber_band \$mged_rubber_band($id)\""
+	-command "mged_apply $id \"rset rb draw \$mged_rubber_band($id)\""
 .$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_adc_draw($id)\
 	-label "Angle/Dist Cursor" -underline 0 \
 	-command "mged_apply $id \"adc draw \$mged_adc_draw($id)\""
@@ -914,14 +906,14 @@ if {$comb} {
 
 menu .$id.menubar.modes.axes -tearoff $do_tearoffs
 .$id.menubar.modes.axes add checkbutton -offvalue 0 -onvalue 1\
-	-variable mged_v_axes($id) -label "View" -underline 0\
-	-command "mged_apply $id \"set v_axes \$mged_v_axes($id)\""
+	-variable mged_axes($id,view_draw) -label "View" -underline 0\
+	-command "mged_apply $id \"rset ax view_draw \$mged_axes($id,view_draw)\""
 .$id.menubar.modes.axes add checkbutton -offvalue 0 -onvalue 1\
-	-variable mged_m_axes($id) -label "Model" -underline 0\
-	-command "mged_apply $id \"set m_axes \$mged_m_axes($id)\""
+	-variable mged_axes($id,model_draw) -label "Model" -underline 0\
+	-command "mged_apply $id \"rset ax model_draw \$mged_axes($id,model_draw)\""
 .$id.menubar.modes.axes add checkbutton -offvalue 0 -onvalue 1\
-	-variable mged_e_axes($id) -label "Edit" -underline 0\
-	-command "mged_apply $id \"set e_axes \$mged_e_axes($id)\""
+	-variable mged_axes($id,edit_draw) -label "Edit" -underline 0\
+	-command "mged_apply $id \"rset ax edit_draw \$mged_axes($id,edit_draw)\""
 
 menu .$id.menubar.tools -tearoff $do_tearoffs
 .$id.menubar.tools add command -label "ADC Control Panel..." -underline 0\
@@ -1147,8 +1139,8 @@ if {[info procs mged_MenuFirstEntry] == ""} {
 
 cmd_init $id
 setupmv $id
-aim $id $mged_active_dm($id)
-cs_set active 1
+tie $id $mged_active_dm($id)
+rset cs mode 1
 
 if { $join_c } {
     jcs $id
@@ -1162,9 +1154,9 @@ set mged_qray_effects($id) [qray effects]
 cmd_set $save_id
 
 # cause all 4 windows to share menu state
-share_menu $mged_top($id).ul $mged_top($id).ur
-share_menu $mged_top($id).ul $mged_top($id).ll
-share_menu $mged_top($id).ul $mged_top($id).lr
+share m $mged_top($id).ul $mged_top($id).ur
+share m $mged_top($id).ul $mged_top($id).ll
+share m $mged_top($id).ul $mged_top($id).lr
 
 do_rebind_keys $id
 bind $mged_dmc($id) <Configure> "setmv $id"
@@ -1176,7 +1168,7 @@ set dbname [_mged_opendb]
 set_wm_title $id $dbname
 
 # Force display manager windows to update their respective color schemes
-mged_apply_local $id "cs_set active \[cs_set active\]"
+mged_apply_local $id "rset cs mode \[rset cs mode\]"
 
 wm protocol $mged_top($id) WM_DELETE_WINDOW "gui_destroy_default $id"
 wm geometry $mged_top($id) -0+0
@@ -1290,15 +1282,6 @@ proc update_mged_vars { id } {
     global mged_active_dm
     global rateknobs
     global mged_rateknobs
-    global mged_adc_draw
-    global m_axes
-    global mged_m_axes
-    global v_axes
-    global mged_v_axes
-    global v_axes_pos
-    global mged_v_axes_pos
-    global e_axes
-    global mged_e_axes
     global use_air
     global mged_use_air
     global listen
@@ -1309,8 +1292,6 @@ proc update_mged_vars { id } {
     global mged_fb_all
     global fb_overlay
     global mged_fb_overlay
-    global rubber_band
-    global mged_rubber_band
     global mouse_behavior
     global mged_mouse_behavior
     global coords
@@ -1319,30 +1300,30 @@ proc update_mged_vars { id } {
     global mged_rotate_about
     global transform
     global mged_transform
-    global grid_draw
-    global mged_grid_draw
-    global grid_snap
-    global mged_grid_snap
     global faceplate
     global mged_faceplate
+    global mged_adc_draw
+    global mged_axes
+    global mged_grid
+    global mged_rubber_band
 
     winset $mged_active_dm($id)
     set mged_rateknobs($id) $rateknobs
     set mged_adc_draw($id) [adc draw]
-    set mged_m_axes($id) $m_axes
-    set mged_v_axes($id) $v_axes
-    set mged_e_axes($id) $e_axes
+    set mged_axes($id,model_draw) [rset ax model_draw]
+    set mged_axes($id,view_draw) [rset ax view_draw]
+    set mged_axes($id,edit_draw) [rset ax edit_draw]
     set mged_use_air($id) $use_air
     set mged_fb($id) $fb
     set mged_fb_all($id) $fb_all
     set mged_fb_overlay($id) $fb_overlay
-    set mged_rubber_band($id) $rubber_band
+    set mged_rubber_band($id) [rset rb draw]
     set mged_mouse_behavior($id) $mouse_behavior
     set mged_coords($id) $coords
     set mged_rotate_about($id) $rotate_about
     set mged_transform($id) $transform
-    set mged_grid_draw($id) $grid_draw
-    set mged_grid_snap($id) $grid_snap
+    set mged_grid($id,draw) [rset grid draw]
+    set mged_grid($id,snap) [rset grid snap]
     set mged_faceplate($id) $faceplate
 
     if {$mged_fb($id)} {
@@ -1357,22 +1338,22 @@ proc update_mged_vars { id } {
 }
 
 proc set_mged_v_axes_pos { id } {
-    global v_axes_pos
-    global mged_v_axes_pos
+    global mged_axes
 
-    set hpos [lindex $v_axes_pos 0]
-    set vpos [lindex $v_axes_pos 1]
+    set view_pos [rset ax view_pos]
+    set hpos [lindex $view_pos 0]
+    set vpos [lindex $view_pos 1]
 
     if {$hpos == 0 && $vpos == 0} {
-	set mged_v_axes_pos($id) 0
+	set mged_axes($id,view_pos) 0
     } elseif {$hpos < 0 && $vpos < 0} {
-	set mged_v_axes_pos($id) 1
+	set mged_axes($id,view_pos) 1
     } elseif {$hpos < 0 && $vpos > 0} {
-	set mged_v_axes_pos($id) 2
+	set mged_axes($id,view_pos) 2
     } elseif {$hpos > 0 && $vpos > 0} {
-	set mged_v_axes_pos($id) 3
+	set mged_axes($id,view_pos) 3
     } else {
-	set mged_v_axes_pos($id) 4
+	set mged_axes($id,view_pos) 4
     }
 }
 
@@ -1469,7 +1450,7 @@ proc jcs { id } {
 	    return "jcs: me thinks the session is corrupted"
 	}
 
-	catch { share_view $ow $nw }
+	catch { share view $ow $nw }
 	reconfig_gui_default $id
     }
 
@@ -1492,7 +1473,7 @@ proc qcs { id } {
 	return "qcs: unrecognized pathname - $mged_active_dm($id)"
     }
 
-    catch {unshare_view $w}
+    catch {share -u view $w}
     set mged_collaborators [lreplace $mged_collaborators $i $i]
 }
 
@@ -1510,17 +1491,23 @@ proc pmp {} {
     return $mged_players
 }
 
-proc aim args {
+proc tie args {
     if { [llength $args] == 2 } {
-	if ![winfo exists .[lindex $args 0]] {
+	if {[lindex $args 0] == "-u"} {
+	    set i 1
+	} else {
+	    set i 0
+	}
+
+	if ![winfo exists .[lindex $args $i]] {
 	    return
 	}
     }
 
-    set result [eval _mged_aim $args]
+    set result [eval _mged_tie $args]
     
     if { [llength $args] == 2 } {
-	reconfig_gui_default [lindex $args 0]
+	reconfig_gui_default [lindex $args $i]
     }
 
     return $result
@@ -1554,21 +1541,21 @@ proc set_active_dm { id } {
 
     # make inactive
     winset $mged_active_dm($id)
-    cs_set active 0
+    rset cs mode 0
 
     set mged_active_dm($id) $tmp_dm
     set mged_small_dmc($id) $mged_dmc($id).$vloc.$hloc
 
     # make active
     winset $mged_active_dm($id)
-    cs_set active 1
+    rset cs mode 1
 
     trace variable mged_display($mged_active_dm($id),fps) w "ia_changestate $id"
 
     update_mged_vars $id
-    set view_ring($id) [get_view]
+    set view_ring($id) [view_ring get]
 
-    aim $id $mged_active_dm($id)
+    tie $id $mged_active_dm($id)
 
     if {!$mged_multi_view($id)} {
 # unpack previously active dm
@@ -1732,7 +1719,7 @@ proc set_dm_win { id } {
     }
 }
 
-proc do_add_view { id } {
+proc view_ring_add { id } {
     global mged_active_dm
     global mged_dm_loc
     global view_ring
@@ -1744,7 +1731,7 @@ proc do_add_view { id } {
 #    }
     winset $mged_active_dm($id)
 
-    _mged_add_view
+    _mged_view_ring add
 
     set i [lsearch -exact $mged_collaborators $id]
     if {$i != -1 && "$mged_top($id).ur" == "$mged_active_dm($id)"} {
@@ -1753,17 +1740,17 @@ proc do_add_view { id } {
 		do_view_ring_entries $cid s
 		do_view_ring_entries $cid d
 		winset $mged_active_dm($cid)
-		set view_ring($cid) [get_view]
+		set view_ring($cid) [view_ring get]
 	    }
 	}
     } else {
 	do_view_ring_entries $id s
 	do_view_ring_entries $id d
-	set view_ring($id) [get_view]
+	set view_ring($id) [view_ring get]
     }
 }
 
-proc do_delete_view { id vid } {
+proc view_ring_delete { id vid } {
     global mged_active_dm
     global mged_dm_loc
     global view_ring
@@ -1775,7 +1762,7 @@ proc do_delete_view { id vid } {
 #    }
     winset $mged_active_dm($id)
 
-    _mged_delete_view $vid
+    _mged_view_ring delete $vid
 
     set i [lsearch -exact $mged_collaborators $id]
     if { $i != -1 && "$mged_top($id).ur" == "$mged_active_dm($id)"} {
@@ -1784,17 +1771,17 @@ proc do_delete_view { id vid } {
 		do_view_ring_entries $cid s
 		do_view_ring_entries $cid d
 		winset $mged_active_dm($cid)
-		set view_ring($cid) [get_view]
+		set view_ring($cid) [view_ring get]
 	    }
 	}
     } else {
 	do_view_ring_entries $id s
 	do_view_ring_entries $id d
-	set view_ring($id) [get_view]
+	set view_ring($id) [view_ring get]
     }
 }
 
-proc do_goto_view { id vid } {
+proc view_ring_goto { id vid } {
     global mged_active_dm
     global mged_dm_loc
     global view_ring
@@ -1806,7 +1793,7 @@ proc do_goto_view { id vid } {
 #    }
     winset $mged_active_dm($id)
 
-    _mged_goto_view $vid
+    _mged_view_ring goto $vid
 
     set i [lsearch -exact $mged_collaborators $id]
     if { $i != -1 && "$mged_top($id).ur" == "$mged_active_dm($id)"} {
@@ -1820,7 +1807,7 @@ proc do_goto_view { id vid } {
     }
 }
 
-proc do_next_view { id } {
+proc view_ring_next { id } {
     global mged_active_dm
     global mged_dm_loc
     global view_ring
@@ -1832,22 +1819,22 @@ proc do_next_view { id } {
 #    }
     winset $mged_active_dm($id)
 
-    _mged_next_view
+    _mged_view_ring next
 
     set i [lsearch -exact $mged_collaborators $id]
     if { $i != -1 && "$mged_top($id).ur" == "$mged_active_dm($id)"} {
 	foreach cid $mged_collaborators {
 	    if {"$mged_top($cid).ur" == "$mged_active_dm($cid)"} {
 		winset $mged_active_dm($cid)
-		set view_ring($cid) [get_view]
+		set view_ring($cid) [view_ring get]
 	    }
 	}
     } else {
-	set view_ring($id) [get_view]
+	set view_ring($id) [view_ring get]
     }
 }
 
-proc do_prev_view { id } {
+proc view_ring_prev { id } {
     global mged_active_dm
     global mged_dm_loc
     global view_ring
@@ -1859,22 +1846,22 @@ proc do_prev_view { id } {
 #    }
     winset $mged_active_dm($id)
 
-    _mged_prev_view
+    _mged_view_ring prev
 
     set i [lsearch -exact $mged_collaborators $id]
     if { $i != -1 && "$mged_top($id).ur" == "$mged_active_dm($id)"} {
 	foreach cid $mged_collaborators {
 	    if {"$mged_top($cid).ur" == "$mged_active_dm($cid)"} {
 		winset $mged_active_dm($cid)
-		set view_ring($cid) [get_view]
+		set view_ring($cid) [view_ring get]
 	    }
 	}
     } else {
-	set view_ring($id) [get_view]
+	set view_ring($id) [view_ring get]
     }
 }
 
-proc do_toggle_view { id } {
+proc view_ring_toggle { id } {
     global mged_active_dm
     global mged_dm_loc
     global view_ring
@@ -1886,25 +1873,25 @@ proc do_toggle_view { id } {
 #    }
     winset $mged_active_dm($id)
 
-    _mged_toggle_view
+    _mged_view_ring toggle
 
     set i [lsearch -exact $mged_collaborators $id]
     if { $i != -1 && "$mged_top($id).ur" == "$mged_active_dm($id)"} {
 	foreach cid $mged_collaborators {
 	    if {"$mged_top($cid).ur" == "$mged_active_dm($cid)"} {
 		winset $mged_active_dm($cid)
-		set view_ring($cid) [get_view]
+		set view_ring($cid) [view_ring get]
 	    }
 	}
     } else {
-	set view_ring($id) [get_view]
+	set view_ring($id) [view_ring get]
     }
 }
 
 proc do_view_ring_entries { id m } {
     global view_ring
 
-    set views [get_view -a]
+    set views [view_ring get -a]
     set llen [llength $views]
 
     if {$m == "s"} {
@@ -1912,14 +1899,14 @@ proc do_view_ring_entries { id m } {
 	$w delete 0 end
 	for {set i 0} {$i < $llen} {incr i} {
 	    $w add radiobutton -value [lindex $views $i] -variable view_ring($id)\
-		    -label [lindex $views $i] -command "do_goto_view $id [lindex $views $i]"
+		    -label [lindex $views $i] -command "view_ring_goto $id [lindex $views $i]"
 	}
     } elseif {$m == "d"} {
 	set w .$id.menubar.viewring.delete
 	$w delete 0 end
 	for {set i 0} {$i < $llen} {incr i} {
 	    $w add command -label [lindex $views $i]\
-		    -command "do_delete_view $id [lindex $views $i]"
+		    -command "view_ring_delete $id [lindex $views $i]"
 	}
     } else {
 	puts "Usage: do_view_ring_entries w s|d"
@@ -1931,14 +1918,14 @@ proc do_view_ring_labels { id } {
     global view_ring
 
     winset $mged_active_dm($id)
-    set save_view [get_view]
-    set views [get_view -a]
+    set save_view [view_ring get]
+    set views [view_ring get -a]
     set llen [llength $views]
 
     set ws .$id.menubar.viewring.select
     set wd .$id.menubar.viewring.delete
     for {set i 0} {$i < $llen} {incr i} {
-	goto_view [lindex $views $i]
+	view_ring goto [lindex $views $i]
 	set aet [view aet]
 	set aet [format "az=%.2f el=%.2f tw=%.2f"\
 		[lindex $aet 0] [lindex $aet 1] [lindex $aet 2]]
@@ -1950,7 +1937,7 @@ proc do_view_ring_labels { id } {
 	$wd entryconfigure $i -label "$center $size $aet"
     }
 
-    goto_view $save_view
+    view_ring goto $save_view
 }
 
 proc toggle_status_bar { id } {
@@ -2000,20 +1987,20 @@ proc set_transform { id } {
 proc do_rebind_keys { id } {
     global mged_top
 
-    bind $mged_top($id).ul <Control-n> "winset $mged_top($id).ul; do_next_view $id; break" 
-    bind $mged_top($id).ur <Control-n> "winset $mged_top($id).ur; do_next_view $id; break" 
-    bind $mged_top($id).ll <Control-n> "winset $mged_top($id).ll; do_next_view $id; break" 
-    bind $mged_top($id).lr <Control-n> "winset $mged_top($id).lr; do_next_view $id; break" 
+    bind $mged_top($id).ul <Control-n> "winset $mged_top($id).ul; view_ring_next $id; break" 
+    bind $mged_top($id).ur <Control-n> "winset $mged_top($id).ur; view_ring_next $id; break" 
+    bind $mged_top($id).ll <Control-n> "winset $mged_top($id).ll; view_ring_next $id; break" 
+    bind $mged_top($id).lr <Control-n> "winset $mged_top($id).lr; view_ring_next $id; break" 
 
-    bind $mged_top($id).ul <Control-p> "winset $mged_top($id).ul; do_prev_view $id; break" 
-    bind $mged_top($id).ur <Control-p> "winset $mged_top($id).ur; do_prev_view $id; break" 
-    bind $mged_top($id).ll <Control-p> "winset $mged_top($id).ll; do_prev_view $id; break" 
-    bind $mged_top($id).lr <Control-p> "winset $mged_top($id).lr; do_prev_view $id; break" 
+    bind $mged_top($id).ul <Control-p> "winset $mged_top($id).ul; view_ring_prev $id; break" 
+    bind $mged_top($id).ur <Control-p> "winset $mged_top($id).ur; view_ring_prev $id; break" 
+    bind $mged_top($id).ll <Control-p> "winset $mged_top($id).ll; view_ring_prev $id; break" 
+    bind $mged_top($id).lr <Control-p> "winset $mged_top($id).lr; view_ring_prev $id; break" 
 
-    bind $mged_top($id).ul <Control-t> "winset $mged_top($id).ul; do_toggle_view $id; break" 
-    bind $mged_top($id).ur <Control-t> "winset $mged_top($id).ur; do_toggle_view $id; break" 
-    bind $mged_top($id).ll <Control-t> "winset $mged_top($id).ll; do_toggle_view $id; break" 
-    bind $mged_top($id).lr <Control-t> "winset $mged_top($id).lr; do_toggle_view $id; break" 
+    bind $mged_top($id).ul <Control-t> "winset $mged_top($id).ul; view_ring_toggle $id; break" 
+    bind $mged_top($id).ur <Control-t> "winset $mged_top($id).ur; view_ring_toggle $id; break" 
+    bind $mged_top($id).ll <Control-t> "winset $mged_top($id).ll; view_ring_toggle $id; break" 
+    bind $mged_top($id).lr <Control-t> "winset $mged_top($id).lr; view_ring_toggle $id; break" 
 }
 
 proc adc { args } {
