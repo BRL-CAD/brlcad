@@ -170,4 +170,5 @@ typedef struct outputCounter {
 } outputCounter_t;
 #define INIT_OUTPUTCOUNTER_T(_i) { (_i)->primitives=0; (_i)->combinations=0; BU_LIST_INIT(&((_i)->combination).l); sprintf((_i)->name, "XXX"); BU_LIST_INIT(&((_i)->region).l); snprintf((_i)->plantName, MAX_STRING_LENGTH, "plant.r"); }
 
+
 #endif /* __VEGITATION_H__ */
