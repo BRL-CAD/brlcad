@@ -218,7 +218,7 @@ int	count;
 	static int net_size_table[5] = {1,2,4,8,8};
 	int bytes_per;
 	double *working;
-	unsigned long int *hostnet;
+	double *hostnet;
 	int i;
 	int	work_count = 4096;
 	int inputconvert = 0;
@@ -248,9 +248,12 @@ int	count;
 	    host_size_table[ (outcookie & CV_TYPE_MASK) >> CV_TYPE_SHIFT] :
 	    net_size_table[ (outcookie & CV_TYPE_MASK) >> CV_TYPE_SHIFT] ;
 
-	if (Indian != IND_BIG && !(incookie & CV_HOST_MASK)) {
+	if (Indian != IND_BIG && !(incookie & CV_HOST_MASK) &&
+	    (bytes_per != 1)) {
 		inputconvert = 1;
-		hostnet = (unsigned long int *) malloc(work_count*sizeof(double));
+		hostnet = (unsigned int *) malloc(work_count*bytes_per));
+	} else {
+		hostnet = in;
 	}
 		
 /*
@@ -268,19 +271,37 @@ int	count;
  * net to host
  */
 		if (inputconvert) {
-			register int j;
-			if (Indian == IND_LITTLE) {
-				for (j=0; j<work_count; j++) {
-					for (i=0; i<bytes_per; i++) {
-						((char *)&hostnet[j])[i] =
-						    ((char *)&in[j])[bytes_per - i - 1];
+			switch (Indian) {
+			case IND_LITTLE:
+				if (bytes_per == 2) {
+					for (j=0; j<work_count*bytes_per; j+=bytes_per) {
+						hostnet[j]   = in[j+1];
+						hostnet[j+1] = in[j];
+					}
+				} else if (bytes_per == 4) {
+					for (j=0; j<work_count*bytes_per; j+=bytes_per) {
+						hostnet[j]   = in[j+3];
+						hostnet[j+1] = in[j+2];
+						hostnet[j+2] = in[j+1];
+						hostnet[j+3] = in[j];
+					}
+				} else if (bytes_per == 8) {
+					for (j=0; j<work_count*bytes_per; j+=bytes_per) {
+						hostnet[j]   = in[j+7];
+						hostnet[j+1] = in[j+6];
+						hostnet[j+2] = in[j+5];
+						hostnet[j+3] = in[j+4];
+						hostnet[j+4] = in[j+3];
+						hostnet[j+5] = in[j+2];
+						hostnet[j+6] = in[j+1];
+						hostnet[j+7] = in[j];
 					}
 				}
-			} 
-/* else IND_CRAY and IND_ILL */
-		} else {
-			hostnet = (unsigned long int *) in;
+				in += work_count*bytes_per;
+				break;
+			case IND_CRAY:
 		}
+
 /*
  * to double.
  */
@@ -296,5 +317,28 @@ int	count;
 /*
  * to host.
  */
+	}
+}
+
+
+/*
+ * Vert procedures.
+ */
+if {Host format) {
+	if (input format == double) {
+		work = in;
+	} else {
+		*work = *(cast *)in;
+	}
+} else {	/* network format */
+	if (input format == double) {
+		ntohd()
+	} else if (input size == native size || unsigned) {
+		*work = (cast) (*in << 8 | *(in+1));
+	} else if (input size != native size ) {
+		register long int tmp;
+		tmp = *in << 8 | *(in+1);
+		*work = (cast) (tmp & 0x800) ? ((-1L) & ~0xffff) | tmp :
+		    tmp;
 	}
 }
