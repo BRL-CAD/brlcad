@@ -19,10 +19,6 @@
  *	This software is Copyright (C) 1994 by the United States Army
  *	in all countries except the USA.  All rights reserved.
  */
-#ifndef lint
-static char RCSid[] = "@(#)$Header$ (ARL)";
-#endif
-
 #include "conf.h"
 
 #include <stdio.h>
@@ -34,681 +30,659 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "./nmg_rt.h"
 
 
+/* vertex/edge distance 
+ * Each loop geometry element (edge/vertex) has one of these computed.
+ * We keep track of them for the whole face so that this value is computed
+ * only once per geometry element.  This way we get consistent answers
+ */
+struct ve_dist {
+	struct rt_list	l;
+	long		*magic_p;/* pointer to edge/vertex structure */
+	double		dist;	/* distance from point to edge */
+	point_t		pca;	/* point of closest approach */
+	struct vertex	*v1;
+	struct vertex	*v2;
+	int		status;	/* return code from rt_dist_pt3_lseg3 */
+};
+#define NMG_VE_DIST_MAGIC	0x102938
+#define NMG_CK_VED(_p)	NMG_CKMAG(_p, NMG_VE_DIST_MAGIC, "vertex/edge_dist")
 
+/* The loop builds a list of these things so that it can figure out the point
+ * classification based upon the classification of the pt vs each edge of
+ * the loop.  This list is sorted in ascending "ved_p->dist" order.
+ */
+struct edge_info {
+	struct rt_list		l;
+	struct ve_dist 		*ved_p;	  /* ptr to ve_dist for this item */
+	struct edgeuse		*eu_p;	  /* edgeuse pointer */
+	int			class;	  /* pt classification WRT this item use */
+};
+#define NMG_EDGE_INFO_MAGIC 0xe100
+#define NMG_CK_EI(_p)	NMG_CKMAG(_p, NMG_EDGE_INFO_MAGIC, "edge_info")
 
-static void
-nmg_class_pt_eu(fpi, eu)
-struct fu_pt_info	*fpi;
-struct edgeuse	*eu;
-{
-	fastf_t	dist = -1.0;
-	point_t	pca;
-	int	status;
-	struct edgeuse *eunext;
+struct fpi {
+	long			magic;
+	CONST struct rt_tol	*tol;
+	CONST struct faceuse	*fu_p;
+	struct rt_list	ve_dh;		/* ve_dist list head */
+	plane_t		norm;		/* surface normal for face(use) */
+	pointp_t	pt;		/* pt in plane of face to classify */
+	void		(*eu_func)();	/* call w/eu when pt on edgeuse */
+	void		(*vu_func)();	/* call w/vu when pt on vertexuse */
+	CONST char	*priv;		/* caller's private data */
+	int		hits;		/* flag PERUSE/PERGEOM */
+};
+#define NMG_FPI_MAGIC 12345678 /* fpi\0 */
+#define NMG_CK_FPI(_fpi) \
+	NMG_CKMAG(_fpi, NMG_FPI_MAGIC, "fu_pt_info") ; \
+	RT_CK_TOL( _fpi->tol ); \
+	RT_CK_LIST_HEAD(&_fpi->ve_dh)
 
-	NMG_CK_FPI(fpi);
-	RT_CK_TOL(fpi->tol);
-	NMG_CK_EDGEUSE(eu);
-	NMG_CK_VERTEXUSE(eu->vu_p);
-	NMG_CK_VERTEX(eu->vu_p->v_p);
-	NMG_CK_VERTEX_G(eu->vu_p->v_p->vg_p);
-	NMG_CK_EDGEUSE(eu->eumate_p);
-	NMG_CK_VERTEXUSE(eu->eumate_p->vu_p);
-	NMG_CK_VERTEX(eu->eumate_p->vu_p->v_p);
-	NMG_CK_VERTEX_G(eu->eumate_p->vu_p->v_p->vg_p);
+#define NMG_FPI_TOUCHED	27
+#define NMG_FPI_MISSED  32768
 
-	eunext = RT_LIST_PNEXT_CIRC(edgeuse, &eu->l);	
-	NMG_CK_VERTEXUSE(eunext->vu_p);
-	NMG_CK_VERTEX(eunext->vu_p->v_p);
-	NMG_CK_VERTEX_G(eunext->vu_p->v_p->vg_p);
-
-	if (rt_g.NMG_debug & DEBUG_PT_FU )
-		rt_log("nmg_class_pt_eu( (%g %g %g)->(%g %g %g) )\n",
-			V3ARGS(eu->vu_p->v_p->vg_p->coord),
-			V3ARGS(eunext->vu_p->v_p->vg_p->coord));
-
-	/* if this edgeuse's vertexuse is on a previously processed & touched
-	 * vertex:
-	 *	if the user wants to get called for each use,
-	 *		make the call for this use.
-	 *	mark this edgeuse as processed.
-	 *	return
-	 */
-	if (NMG_INDEX_GET(fpi->tbl, eu->vu_p->v_p) == NMG_FPI_TOUCHED) {
-		if (fpi->vu_func && fpi->allhits == NMG_FPI_PERUSE)
-			fpi->vu_func(eu->vu_p, fpi);
-
-		NMG_INDEX_ASSIGN(fpi->tbl, eu->e_p, NMG_FPI_TOUCHED);
-		if (rt_g.NMG_debug & DEBUG_PT_FU )
-			rt_log("\teu->vu->v previously touched\n");
-
-		return;
-	}
-
-	/* if the next edgeuse's vertexuse is on a previously 
-	 * processed & touched vertex:
-	 *	if the user wants to get called for each use,
-	 *		make the call for this use.
-	 *	mark this edgeuse as processed.
-	 *	return
-	 */
-	if (NMG_INDEX_GET(fpi->tbl, eunext->vu_p->v_p) == NMG_FPI_TOUCHED) {
-		if (fpi->vu_func && fpi->allhits == NMG_FPI_PERUSE)
-			fpi->vu_func(eunext->vu_p, fpi);
-
-		NMG_INDEX_ASSIGN(fpi->tbl, eu->e_p, NMG_FPI_TOUCHED);
-		if (rt_g.NMG_debug & DEBUG_PT_FU )
-			rt_log("\teunext->vu->v previously touched\n");
-
-		return;
-	}
-
-
-	/* The verticies at the ends of this edge were missed or hit
-	 * previously processed.
-	 */
-	switch (NMG_INDEX_GET(fpi->tbl, eu->e_p)) {
-	case NMG_FPI_TOUCHED:
-		/* The edgeuse has been pre-determined to be touching.
-		 * This was a touch on the edge span.
-		 *
-		 * If the user wants to get called for each use, make the
-		 * call for this edgeuse.
-		 */
-		if (rt_g.NMG_debug & DEBUG_PT_FU )
-			rt_log ("\teu previously hit\n");
-
-		if (fpi->eu_func && fpi->allhits == NMG_FPI_PERUSE)
-			fpi->eu_func(eu, fpi);
-
-		return;
-	case NMG_FPI_MISSED:
-		if (rt_g.NMG_debug & DEBUG_PT_FU )
-			rt_log ("\teu previously missed\n");
-
-		return;
-	}
-
-
-	/* The edgeuse was not previously processed, 
-	 * so it's time to do it now.
-	 */
-	if (rt_g.NMG_debug & DEBUG_PT_FU )
-		rt_log ("\tprocessing eu (%g %g %g) -> (%g %g %g)\n",
-			V3ARGS(eu->vu_p->v_p->vg_p->coord),
-			V3ARGS(eunext->vu_p->v_p->vg_p->coord));
-
-	status = rt_dist_pt3_lseg3(&dist, pca,
-		eu->vu_p->v_p->vg_p->coord,
-		eu->eumate_p->vu_p->v_p->vg_p->coord,
-		fpi->pt,
-		fpi->tol);
-
-
-	switch (status) {
-	case 0: /* pt is on the edge(use)
-		 * store edgeuse ptr in closest,
-		 * set dist_in_plane = 0.0
-		 *
-		 * dist is the parametric distance along the edge where
-		 * the PCA occurrs!
-		 */
-
-		fpi->dist_in_plane = 0.0;
-		VMOVE(fpi->pca, pca);
-		fpi->closest = &eu->l.magic;
-		fpi->PCA_loc = NMG_PCA_EDGE;
-		fpi->pt_class = NMG_CLASS_AonBshared;
-		if (rt_g.NMG_debug & DEBUG_PT_FU )
-			rt_log(	"\tplane_pt on eu, (new dist: %g)\n",
-				fpi->dist_in_plane);
-		if (fpi->eu_func)
-			fpi->eu_func(eu, fpi);
-		NMG_INDEX_ASSIGN(fpi->tbl, eu->vu_p->v_p, NMG_FPI_MISSED);
-		NMG_INDEX_ASSIGN(fpi->tbl, eu->e_p, NMG_FPI_TOUCHED);
-		break;
-	case 1:	/* within tolerance of endpoint at eu->vu_p.
-		   store vertexuse ptr in closest,
-		   set dist_in_plane = 0.0 */
-		if (dist < fpi->dist_in_plane) {
-			fpi->dist_in_plane = 0.0;
-			VMOVE(fpi->pca, pca);
-			fpi->closest = &eu->vu_p->l.magic;
-			fpi->PCA_loc = NMG_PCA_EDGE_VERTEX;
-			fpi->pt_class = NMG_CLASS_AonBshared;
-			if (rt_g.NMG_debug & DEBUG_PT_FU )
-				rt_log("\tplane_pt on vu (new dist %g)\n",
-					fpi->dist_in_plane);
-		} else {
-			if (rt_g.NMG_debug & DEBUG_PT_FU )
-				rt_log("\tplane_pt on vu(dist %g) keeping old dist %g)\n",
-					dist, fpi->dist_in_plane);
-		}
-		if (fpi->vu_func)
-			fpi->vu_func(eu->vu_p, fpi);
-
-		NMG_INDEX_ASSIGN(fpi->tbl, eu->vu_p->v_p, NMG_FPI_TOUCHED);
-		NMG_INDEX_ASSIGN(fpi->tbl, eu->e_p, NMG_FPI_TOUCHED);
-		break;
-	case 2:	/* within tolerance of endpoint at eu->eumate_p
-		   store vertexuse ptr (eu->next) in closest,
-		   set dist_in_plane = 0.0 */
-		if (dist < fpi->dist_in_plane) {
-			fpi->dist_in_plane = 0.0;
-			VMOVE(fpi->pca, pca);
-			fpi->closest = &eunext->vu_p->l.magic;
-			fpi->PCA_loc = NMG_PCA_EDGE_VERTEX;
-			fpi->pt_class = NMG_CLASS_AonBshared;
-			if (rt_g.NMG_debug & DEBUG_PT_FU )
-				rt_log("\tplane_pt on next(eu)->vu (new dist %g)\n",
-					fpi->dist_in_plane);
-		} else {
-			if (rt_g.NMG_debug & DEBUG_PT_FU )
-				rt_log("\tplane_pt on next(eu)->vu(dist %g) keeping old dist %g)\n",
-					dist, fpi->dist_in_plane);
-		}
-		if (fpi->vu_func)
-			fpi->vu_func(eunext->vu_p, fpi);
-
-		NMG_INDEX_ASSIGN(fpi->tbl, eunext->vu_p->v_p, NMG_FPI_TOUCHED);
-		NMG_INDEX_ASSIGN(fpi->tbl, eunext->e_p, NMG_FPI_TOUCHED);
-		NMG_INDEX_ASSIGN(fpi->tbl, eu->e_p, NMG_FPI_TOUCHED);
-
-		break;
-	case 3: /* PCA of pt on line is "before" eu->vu_p of seg */
-		if (dist < fpi->dist_in_plane) {
-			fpi->dist_in_plane = dist;
-			VMOVE(fpi->pca, pca);
-			fpi->closest = &eu->vu_p->l.magic;
-			fpi->PCA_loc = NMG_PCA_EDGE_VERTEX;
-
-			if (rt_g.NMG_debug & DEBUG_PT_FU )
-				rt_log("\tvu of eu is new \"closest to plane_pt\" (new dist %g)\n",
-					fpi->dist_in_plane);
-		} else {
-			if (rt_g.NMG_debug & DEBUG_PT_FU )
-				rt_log("\tvu of eu is PCA (dist %g).  keeping old dist %g\n",
-					dist, fpi->dist_in_plane);
-		}
-		NMG_INDEX_ASSIGN(fpi->tbl, eu->e_p, NMG_FPI_MISSED);
-		break;
-	case 4: /* PCA of pt on line is "after" eu->eumate_p->vu_p of seg */
-		if (dist < fpi->dist_in_plane) {
-			eu = RT_LIST_PNEXT_CIRC(edgeuse, &(eu->l));
-			fpi->dist_in_plane = dist;
-			VMOVE(fpi->pca, pca);
-			fpi->closest = &eu->vu_p->l.magic;
-			fpi->PCA_loc = NMG_PCA_EDGE_VERTEX;
-			if (rt_g.NMG_debug & DEBUG_PT_FU )
-				rt_log("\tvu of next(eu) is new \"closest to plane_pt\" (new dist %g)\n",
-					fpi->dist_in_plane);
-		} else {
-			if (rt_g.NMG_debug & DEBUG_PT_FU )
-				rt_log("\tvu of next(eu) is PCA (dist %g).  keeping old dist %g\n",
-					dist, fpi->dist_in_plane);
-		}
-		NMG_INDEX_ASSIGN(fpi->tbl, eu->vu_p->v_p, NMG_FPI_MISSED);
-		NMG_INDEX_ASSIGN(fpi->tbl, eunext->vu_p->v_p, NMG_FPI_MISSED);
-		NMG_INDEX_ASSIGN(fpi->tbl, eu->e_p, NMG_FPI_MISSED);
-		break;
-	case 5: /* PCA is along length of edge, but point is NOT on edge.
-		 *  if edge is closer to plane_pt than any previous item,
-		 *  store edgeuse ptr in closest and set dist_in_plane
-		 */
-		if (dist < fpi->dist_in_plane) {
-			fpi->dist_in_plane = dist;
-			VMOVE(fpi->pca, pca);
-			fpi->closest = &eu->l.magic;
-			fpi->PCA_loc = NMG_PCA_EDGE;
-			if (rt_g.NMG_debug & DEBUG_PT_FU )
-				rt_log("\teu is new \"closest to plane_pt\" (new dist %g)\n",
-					fpi->dist_in_plane);
-		} else {
-			if (rt_g.NMG_debug & DEBUG_PT_FU )
-				rt_log("\teu dist is %g, keeping old dist %g)\n",
-					dist, fpi->dist_in_plane);
-		}
-		NMG_INDEX_ASSIGN(fpi->tbl, eu->vu_p->v_p, NMG_FPI_MISSED);
-		NMG_INDEX_ASSIGN(fpi->tbl, eunext->vu_p->v_p, NMG_FPI_MISSED);
-		NMG_INDEX_ASSIGN(fpi->tbl, eu->e_p, NMG_FPI_MISSED);
-		break;
-	default :
-		rt_log("Look, there has to be SOMETHING about this edge/plane_pt %s %d\n",
-			__FILE__, __LINE__);
-		rt_bomb("");
-		break;
-	}
-}
+#ifdef USE_PROTOTYPES
+static int	nmg_class_pt_vu(struct fpi *fpi, struct vertexuse *vu);
+static void	pl_pt_e(struct fpi *fpi, struct edge_info *ei);
+static struct edge_info *nmg_class_pt_eu(struct fpi *fpi, struct edgeuse *eu, struct edge_info *edge_list);
+static int	compute_loop_class(struct fpi *fpi,struct loopuse *lu,struct edge_info *edge_list);
+static int	nmg_class_pt_lu(struct loopuse *lu, struct fpi *fpi);
+int		nmg_class_pt_fu_except(point_t pt, CONST struct faceuse *fu, CONST struct loopuse *ignore_lu, void (*eu_func)(), void (*vu_func)(), CONST char *priv, CONST int call_on_hits, CONST struct rt_tol *tol);
+#endif
 /*
- *			N M G _ C L A S S _ P T _ L U
+ *	N M G _ C L A S S _ P T _ V U 
  *
- *  Determine if the point fpi->plane_pt is IN, ON, or OUT of the
- *  area enclosed by the loop.
- *
- *  Implicit Return -
- *	Updated "closest" structure if appropriate.
+ *	Classify a point vs a vertex (touching/missed)
  */
-static void
-nmg_class_pt_lu(fpi, lu)
-struct fu_pt_info	*fpi;
-CONST struct loopuse	*lu;
+static int
+nmg_class_pt_vu(fpi, vu)
+struct fpi *fpi;
+struct vertexuse *vu;
 {
-	vect_t		delta;
-	pointp_t	lu_pt;
-	fastf_t		dist;
-	struct loop_g	*lg;
+	vect_t delta;
+	struct ve_dist	*ve_d, *ved;
 
-	NMG_CK_LOOPUSE(lu);
-	NMG_CK_LOOP(lu->l_p);
-	lg = lu->l_p->lg_p;
-	NMG_CK_LOOP_G(lg);
-	NMG_CK_FPI(fpi);
+	NMG_CK_VERTEXUSE(vu);
 
-	if (rt_g.NMG_debug & DEBUG_PT_FU ) {
-		rt_log(
-		    "nmg_class_pt_lu\tPt: (%g %g %g)\n\tinitial class is %s\n",
-		    fpi->pt, nmg_class_name(fpi->pt_class));
+	/* see if we've classified this vertex WRT the point already */
+	for (RT_LIST_FOR(ved, ve_dist, &fpi->ve_dh)){
+		NMG_CK_VED(ved);
+		if (ved->magic_p == &vu->v_p->magic) {
+			ved->dist;
+			goto found;
+		}
 	}
 
-	/* if this isn't a loop of a face, or if we've already tested
-	 * this loop, we're outta here
+	/* if we get here, we didn't find the vertex in the list of
+	 * previously classified geometry.  Create an entry in the
+	 * face's list of processed geometry.
 	 */
-	if (lu->up.fu_p != fpi->fu_p || NMG_INDEX_TEST(fpi->tbl, lu))
-		return;
- 
-	if( !V3PT_IN_RPP_TOL( fpi->pt, lg->min_pt, lg->max_pt, fpi->tol ) )  {
-		if (rt_g.NMG_debug & DEBUG_PT_FU )
-			rt_log("\tPoint is outside loop RPP\n");
-		NMG_INDEX_SET(fpi->tbl, lu);
-		NMG_INDEX_SET(fpi->tbl, lu->lumate_p);
-		return;
+	VSUB2(delta, vu->v_p->vg_p->coord, fpi->pt);
+
+	ved = (struct ve_dist *) rt_malloc(sizeof(struct ve_dist), "ve_dist structure");
+	ved->magic_p = &vu->v_p->magic;
+	ved->dist = MAGNITUDE(delta);
+	if (ved->dist < fpi->tol->dist ) {
+		ved->status = NMG_FPI_TOUCHED;
+		if (fpi->hits == NMG_FPI_PERGEOM)
+			fpi->vu_func(vu, fpi->pt, fpi->priv);
 	}
+	else ved->status = NMG_FPI_MISSED;
+	VMOVE(ved->pca, vu->v_p->vg_p->coord);
+	ved->v1 = ved->v2 = vu->v_p;
 
-	if (RT_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_EDGEUSE_MAGIC) {
-		register struct edgeuse	*eu;
-		for (RT_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
-			
-			nmg_class_pt_eu(fpi, eu);
+	RT_LIST_MAGIC_SET(&ved->l, NMG_VE_DIST_MAGIC);
+	RT_LIST_APPEND(&fpi->ve_dh, &ved->l);
+found:
 
-			/* If point lies ON edge, we might be done */
-			if( fpi->allhits == NMG_FPI_FIRST &&
-			    fpi->pt_class == NMG_CLASS_AonBshared )
-				 break;
-		}
-	} else if (RT_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC) {
-		register struct vertexuse *vu;
+	if (fpi->vu_func  &&
+	    ved->status == NMG_FPI_TOUCHED &&
+	    fpi->hits == NMG_FPI_PERUSE)
+		fpi->vu_func(vu, fpi);
 
-		vu = RT_LIST_FIRST(vertexuse, &lu->down_hd);
-
-		/* check to see if this vertex was previously processed */
-		switch (NMG_INDEX_GET(fpi->tbl, vu->v_p)) {
-		case NMG_FPI_TOUCHED:
-			if (fpi->vu_func && fpi->allhits == NMG_FPI_PERUSE)
-				fpi->vu_func(vu, fpi);
-			/* fallthrough */
-		case NMG_FPI_MISSED:
-			/* if this point were going to be the "closest"
-			 * element, it has already been chosen
-			 */
-			return;
-		}
-
-		lu_pt = vu->v_p->vg_p->coord;
-		VSUB2(delta, fpi->pt, lu_pt);
-		dist = MAGNITUDE(delta);
-		
-		if (dist < fpi->tol->dist) {
-			/* this is a touch */
-			dist = 0.0;
-			if (fpi->vu_func)
-				fpi->vu_func(vu, fpi);
-
-			NMG_INDEX_ASSIGN(fpi->tbl, vu->v_p, NMG_FPI_TOUCHED);
-		} else {
-			NMG_INDEX_ASSIGN(fpi->tbl, vu->v_p, NMG_FPI_MISSED);
-		}
-
-		if (dist < fpi->dist_in_plane) {
-			if (lu->orientation == OT_OPPOSITE) {
-				fpi->pt_class = NMG_CLASS_AoutB;
-			} else if (lu->orientation == OT_SAME) {
-				fpi->pt_class = NMG_CLASS_AonBshared;
-			} else {
-				nmg_pr_orient(lu->orientation, "\t");
-				rt_bomb("nmg_class_pt_lu: bad orientation for face loopuse(vertex)\n");
-			}
-			if (rt_g.NMG_debug & DEBUG_PT_FU )
-				rt_log("\t\t closer to loop pt (%g, %g, %g)\n",
-					V3ARGS(lu_pt) );
-
-			fpi->PCA_loc = NMG_PCA_VERTEX;
-			fpi->closest = &vu->l.magic;
-			fpi->dist_in_plane = dist;
-			VMOVE(fpi->pca, vu->v_p->vg_p->coord);
-		}
-	} else {
-		rt_bomb("nmg_class_pt_lu() bad child of loopuse\n");
-	}
-
-	NMG_INDEX_SET(fpi->tbl, lu);
-	NMG_INDEX_SET(fpi->tbl, lu->lumate_p);
-
-	if (rt_g.NMG_debug & DEBUG_PT_FU )
-		rt_log("nmg_class_pt_lu\treturning, closest=%g %s\n",
-			fpi->dist_in_plane, nmg_class_name(fpi->pt_class) );
+	return ved->status;
 }
 
-
-
-
-/*
- *      The Paul Tanenbaum "patch"
- *	If the vertex of the edge is closer to the point than the
- *	span of the edge, we must pick the edge leaving the vertex
- *	which has the smallest value of VDOT(eu->left, vp) where vp
- *	is the normalized vector from V to P and eu->left is the
- *	normalized "face" vector of the edge.  This handles the case
- *	diagramed below, where either e1 OR e2 could be the "closest"
- *	edge based upon edge-point distances.
- *
- *
- *	    \	    /
- *		     o P
- *	      \   /
- *
- *	      V o
- *	       /-\
- *	      /---\
- *	     /-   -\
- *	    /-	   -\
- *	e1 /-	    -\	e2
- */
 static void
-Tanenbaum_patch(fpi, vu_p)
-struct fu_pt_info *fpi;
-struct vertexuse *vu_p;
-{
-
-    	/* find the appropriate "closest edge" use of this vertex. */
-    	vect_t pv;
-    	vect_t left;	/* vector pointing "left" from edgeuse into faceuse */
-	double vdot_min = 2.0;
-	double newvdot;
-    	struct edgeuse *closest_eu;
-    	struct faceuse *fu;
-    	struct vertexuse *vu;
-	struct edgeuse *eu;
-
-	if (rt_g.NMG_debug & DEBUG_PT_FU )
-		rt_log("Tanenbaum_patch()\n");
-
-
-    	/* First we form the unit vector PV */
-    	VSUB2(pv, fpi->pt, vu_p->v_p->vg_p->coord);
-    	VUNITIZE(pv);
-
-    	/* for each edge in this faceuse about the vertex, determine
-    	 * the angle between PV and the "left" vector.  Classify the
-	 * plane_pt WRT the edge for which VDOT(left, P) with P
-    	 */
-    	for (RT_LIST_FOR(vu, vertexuse, &vu_p->v_p->vu_hd)) {
-		/* if there is a faceuse ancestor of this vertexuse
-		 * which is associated with this face, then perform
-    		 * the VDOT and save the results.
-    		 */
-    		fu = nmg_find_fu_of_vu(vu);
-		if (*vu->up.magic_p == NMG_EDGEUSE_MAGIC &&
-		    fu == fpi->fu_p || fu->fumate_p == fpi->fu_p) {
-
-		    	if( nmg_find_eu_leftvec(left, eu=vu->up.eu_p ) < 0 ) {
-		    		rt_log("%s[line:%d]: bad LEFT vector\n",
-		    			__FILE__,__LINE__);
-		    		rt_bomb("");
-		    	}
-		    	VUNITIZE(left);
-
-			newvdot = VDOT(left, pv);
-		    	/* if the "left" vector of eu is "more opposed"
-		    	 * to the vector pv than the previous edge,
-		    	 * remember this edge as the "closest" one
-		    	 */
-			if (newvdot < vdot_min) {
-				closest_eu = eu;
-				vdot_min = newvdot;
-			}
-		}
-	}
-	fu = nmg_find_fu_of_eu(closest_eu);
-	if (fu == fpi->fu_p) {
-	    	eu = closest_eu;
-	} else if (fu == fpi->fu_p->fumate_p) {
-	    	eu = closest_eu->eumate_p;
-	} else {
-		rt_log("%s[line:%d] Why can't I find this edge in this face?\n",
-			__FILE__, __LINE__);
-		rt_bomb("");
-	}
-
-	/* now we know which edgeuse to compare against */
-	if (vdot_min < 0.0)
-		fpi->pt_class = NMG_CLASS_AoutB;
-	else
-		fpi->pt_class = NMG_CLASS_AinB;
-}
-
-
-
-
-
-/*	D E D U C E _ P T _ C L A S S
- *
- *	For those occasions when the plane_pt is not within tolerance of
- *	any element of the faceuse, we must deduce the pt classification
- *	based upon the "closest" element to the pt.
- */
-static void
-deduce_pt_class(fpi)
-struct fu_pt_info *fpi;
-{
-	struct edgeuse		*eu;
-	struct vertexuse	*vu;
-	struct loopuse		*lu;
-	vect_t			left;
-	vect_t			vupt_v;
-
-	NMG_CK_FPI(fpi);
-
-	if (rt_g.NMG_debug & DEBUG_PT_FU )
-		rt_log("deduce_pt_class()\n");
-
-
-	/* compute in/out based upon closest element */
-	if (*fpi->closest == NMG_EDGEUSE_MAGIC) {
-		struct faceuse *fu;
-		struct edgeuse *eu1;
-
-		/* PCA along span of edgeuse */
-		eu = (struct edgeuse *)fpi->closest;
-		fu = nmg_find_fu_of_eu( eu );
-		if( !fu )
-		{
-			rt_log("%s[line:%d]: deduce_pt_class: eu not in a fu\n",
-				__FILE__,__LINE__);
-			rt_bomb("");
-		}
-
-		/* default is point is outside */
-		fpi->pt_class = NMG_CLASS_AoutB;
-
-		/* check all uses of this edge in this fu,
-		 * if any say point is "in", then it must be "in"
-		 */
-		eu1 = eu;
-		do
-		{
-			struct edgeuse *next_eu;
-
-			next_eu = eu1->radial_p->eumate_p;
-			/* make sure we stay in this fu */
-			if( nmg_find_fu_of_eu( eu1 ) != fu )
-			{
-				if( nmg_find_fu_of_eu( eu1->eumate_p ) == fu )
-					eu1 = eu1->eumate_p;
-				else
-				{
-					eu1 = next_eu;
-					continue;
-				}
-			}
-			if( nmg_find_eu_leftvec( left, eu1 ) < 0 ) {
-				rt_log("%s[line:%d]: bad LEFT vector\n",
-					__FILE__,__LINE__);
-				rt_bomb("");
-			}
-			/* form vector "vupt" from vu to pt, if VDOT(vupt, left)
-			 * is less than 0, pt is on "outside" of edge.
-			 */
-			VSUB2(vupt_v, fpi->pt, eu1->vu_p->v_p->vg_p->coord);
-			if (VDOT(vupt_v, left) >= 0.0)
-			{
-				if (rt_g.NMG_debug & DEBUG_PT_FU )
-rt_log("vdot w/eu (%g %g %g)->(%g %g %g) left\n\tsuggests NMG_CLASS_AinB\n",
-				V3ARGS(eu1->vu_p->v_p->vg_p->coord),
-				V3ARGS(eu1->eumate_p->vu_p->v_p->vg_p->coord));
-				
-				fpi->pt_class = NMG_CLASS_AinB;
-				break;
-			}
-
-			eu1 = next_eu;
-		} while( eu1 != eu && eu1 != eu->eumate_p );
-
-	} else if (*fpi->closest == NMG_VERTEXUSE_MAGIC) {
-		vu = (struct vertexuse *)fpi->closest;
-		if (*vu->up.magic_p == NMG_EDGEUSE_MAGIC) {
-			/* point is off one end or the other of edge
-			 */
-			Tanenbaum_patch(fpi, vu);
-
-		} else if (*vu->up.magic_p == NMG_LOOPUSE_MAGIC) {
-			lu = (struct loopuse *)vu->up.magic_p;
-			if (lu->orientation == OT_OPPOSITE)
-				fpi->pt_class = NMG_CLASS_AinB;
-			else if (lu->orientation == OT_SAME)
-				fpi->pt_class = NMG_CLASS_AoutB;
-			else {
-				rt_log("%s[line:%d] Bad orientation \"%s\"for loopuse(vertex)\n",
-					__FILE__, __LINE__,
-					nmg_orientation(lu->orientation));
-				rt_bomb("");
-			}
-		} else if (*vu->up.magic_p == NMG_SHELL_MAGIC) {
-			rt_log("%s[line:%d] vertexuse parent is SHELL???\nnmg_class_pt_fu_except(%g %g %g)\n",
-				__FILE__, __LINE__,
-				V3ARGS(fpi->pt));
-			rt_bomb("");
-		} else {
-			rt_log("%s[line:%d] Bad vertexuse parent?\nnmg_class_pt_fu_except(%g %g %g)\n",
-				__FILE__, __LINE__,
-				V3ARGS(fpi->pt));
-			rt_bomb("");
-		}
-	}
-}
-
-
-
-
-static void
-pl_pt_fu(fpi, fu)
-struct fu_pt_info *fpi;
-CONST struct faceuse *fu;
+pl_pt_e(fpi, ei)
+struct fpi *fpi;
+struct edge_info *ei;
 {
 	FILE *fd;
 	char name[25];
 	long *b;
 	static int plot_file_number=0;
 
-	NMG_CK_FACEUSE(fu);
-	NMG_CK_FPI(fpi);
-
+	NMG_CK_FPI(fpi);	
+	NMG_CK_FACEUSE(fpi->fu_p);
+	NMG_CK_EI(ei);
 	
-	sprintf(name, "pt_fu%02d.pl", plot_file_number++);
+	sprintf(name, "pt_e%02d.pl", plot_file_number++);
 	if ((fd=fopen(name, "w")) == (FILE *)NULL) {
 		perror(name);
 		abort();
 	}
 
-	rt_log("\tplotting %s\n", name);
-	b = (long *)rt_calloc( fu->s_p->r_p->m_p->maxindex,
+	rt_log("\toverlay %s\n", name);
+	b = (long *)rt_calloc( fpi->fu_p->s_p->r_p->m_p->maxindex,
 		sizeof(long), "bit vec"),
 
 	pl_erase(fd);
 	pd_3space(fd,
-		fu->f_p->min_pt[0]-1.0,
-		fu->f_p->min_pt[1]-1.0,
-		fu->f_p->min_pt[2]-1.0,
-		fu->f_p->max_pt[0]+1.0,
-		fu->f_p->max_pt[1]+1.0,
-		fu->f_p->max_pt[2]+1.0);
+		fpi->fu_p->f_p->min_pt[0]-1.0,
+		fpi->fu_p->f_p->min_pt[1]-1.0,
+		fpi->fu_p->f_p->min_pt[2]-1.0,
+		fpi->fu_p->f_p->max_pt[0]+1.0,
+		fpi->fu_p->f_p->max_pt[1]+1.0,
+		fpi->fu_p->f_p->max_pt[2]+1.0);
 	
-	nmg_pl_fu(fd, fu, b, 255, 255, 255);
+	nmg_pl_fu(fd, fpi->fu_p, b, 255, 255, 255);
 
 	pl_color(fd, 255, 255, 50);
-	pdv_3line(fd, fpi->pca, fpi->pt);
+	pdv_3line(fd, ei->ved_p->pca, fpi->pt);
 
 	rt_free((char *)b, "bit vec");
 	fclose(fd);
 }
 
-/*
- *			N M G _ C L A S S _ P T _ F U
+/*	N M G _ C L A S S _ P T _ E U
  *
- *  This is intended as a general user interface routine.
- *  Given the Cartesian coordinates for a point which is known to
- *  lie in the plane of a faceuse, return the classification for that point
- *  with respect to all the loops on that face.
+ * If there is no ve_dist structure for this edge, compute one and
+ * add it to the list.
  *
- *  The algorithm used is to find the edge which the point is closest
- *  to, and classifiy with respect to that.
- *
- *  "ignore_lu" is optional.  When non-null, it points to a loopuse (and it's
- *  mate) which will not be considered in the assessment of this point.
- *  This is used by nmg_lu_reorient() to work on one lu in the face.
- *
- *  The point is "A", and the face is "B".
- *
- *  Returns -
- *	struct fu_pt_info *	The user is responsible for calling rt_free
- * 				On this storage.
- *
- *	fpi->pt_class has one of the following:
- *	NMG_CLASS_AinB		pt is INSIDE the area of the faceuse.
- *	NMG_CLASS_AonBshared	pt is ON a loop boundary.
- *	NMG_CLASS_AoutB		pt is OUTSIDE the area of the faceuse.
- *
- *
- *  Values for "allhits"
- *	0	return after finding first element pt touches
- *	1	find all elements pt touches, call user routine for each geom.
- *	2	find all elements pt touches, call user routine for each use
+ * Sort an edge_info structure into the loops list of edgeuse status
  */
-struct fu_pt_info *
-nmg_class_pt_fu_except(pt, fu, ignore_lu, 
-			eu_func, vu_func, priv, allhits, tol)
-point_t			pt;
-CONST struct faceuse	*fu;
-CONST struct loopuse	*ignore_lu;
-void			(*eu_func)();	/* func to call when pt on edgeuse */
-void			(*vu_func)();	/* func to call when pt on vertexuse*/
-char			*priv;		/* private data for [ev]u_func */
-CONST int		allhits;	/* return after finding first hit */
-CONST struct rt_tol	*tol;
+static struct edge_info *
+nmg_class_pt_eu(fpi, eu, edge_list)
+struct fpi		*fpi;
+struct edgeuse		*eu;
+struct edge_info	*edge_list;
 {
-	struct loopuse		*lu;
-	struct fu_pt_info	*fpi;
-	fastf_t			dist;
-	struct model		*m;
+	struct ve_dist	*ved, *ed;
+	struct edge_info	*ei_p;
+	struct edge_info	*ei;
+	vect_t		left;
+	vect_t		pt_vec;
+	vect_t		v_to_pt;
+
+	NMG_CK_FPI(fpi);	
+	RT_CK_TOL(fpi->tol);
+
+	if (rt_g.NMG_debug & DEBUG_PT_FU) {
+		rt_log("pt (%g %g %g) vs_edge (%g %g %g) (%g %g %g)\n",
+			V3ARGS(fpi->pt),
+			V3ARGS(eu->vu_p->v_p->vg_p->coord),
+			V3ARGS(eu->eumate_p->vu_p->v_p->vg_p->coord));
+	}
+
+	/* try to find this edge in the list of ve_dist's */
+	for (RT_LIST_FOR(ed, ve_dist, &fpi->ve_dh)) {
+		NMG_CK_VED(ed);
+		if (ed->magic_p == &eu->e_p->magic) {
+
+			/* found the data for this edge */
+
+			if (rt_g.NMG_debug & DEBUG_PT_FU)
+				rt_log ("Edge previously classified\n");
+
+			ved = ed;
+			goto found;
+		}
+
+		if (ed->dist <= fpi->tol->dist &&
+		    (ed->magic_p == &eu->vu_p->v_p->magic ||
+		     ed->magic_p == &eu->eumate_p->vu_p->v_p->magic) ) {
+			/* The point is within tolerance of an endpoint
+			 * of the edge.
+			 */
+			if (rt_g.NMG_debug & DEBUG_PT_FU)
+				rt_log ("vertex of edge previously touched\n");
+			ved = ed;
+			goto found;
+		}
+	}
+
+	/* we didn't find a ve_dist structure for this edge, so we'll
+	 * have to do the calculations.
+	 */
+	ved = (struct ve_dist *)rt_malloc(sizeof(struct ve_dist), "ve_dist structure");
+	ved->magic_p = &eu->e_p->magic;
+	ved->status = rt_dist_pt3_lseg3(&ved->dist, ved->pca,
+		eu->vu_p->v_p->vg_p->coord,
+		eu->eumate_p->vu_p->v_p->vg_p->coord,
+		fpi->pt,
+		fpi->tol);
+	ved->v1 = eu->vu_p->v_p;
+	ved->v2 = eu->eumate_p->vu_p->v_p;
+	RT_LIST_MAGIC_SET(&ved->l, NMG_VE_DIST_MAGIC);
+	RT_LIST_APPEND(&fpi->ve_dh, &ved->l);
+
+	/* call the user function for a topo/geometry touch */
+	if (fpi->eu_func &&
+	    fpi->hits == NMG_FPI_PERGEOM &&
+	    ved->dist < fpi->tol->dist )
+		fpi->eu_func(eu, fpi->pt, fpi->priv);
+
+found:
+	if (fpi->eu_func &&
+	    fpi->hits == NMG_FPI_PERUSE &&
+	    ved->dist < fpi->tol->dist )
+		fpi->eu_func(eu, fpi->pt, fpi->priv);
+
+
+	/* Add a struct for this edgeuse to the loop's list of dist-sorted
+	 * edgeuses.
+	 */
+	ei = (struct edge_info *)rt_malloc(sizeof(struct edge_info), "struct edge_info");
+	ei->ved_p = ved;
+	ei->eu_p = eu;
+	RT_LIST_MAGIC_SET(&ei->l, NMG_EDGE_INFO_MAGIC);
+
+	/* compute the status (ei->status) of the point WRT this edge */
+
+	switch (ved->status) {
+	case 0: /* pt is on the edge(use) */
+		ei->class = NMG_CLASS_AinB;
+		break;
+	case 1:	/* within tolerance of endpoint at ved->v1 */
+		ei->class = NMG_CLASS_AinB;
+		/* add an entry for the vertex in the edge list so that
+		 * other uses of this vertex will claim the point is within
+		 * tolerance without re-computing
+		 */
+		ed = (struct ve_dist *)rt_malloc(sizeof(struct ve_dist), "ve_dist structure");
+		ed->magic_p = &ved->v1->magic;
+		ed->status = 1;
+		ed->v1 = ed->v2 = ved->v1;
+
+		RT_LIST_APPEND(&fpi->ve_dh, &ed->l);
+		break;
+	case 2:	/* within tolerance of endpoint at ved->v2 */
+		ei->class = NMG_CLASS_AinB;
+		/* add an entry for the vertex in the edge list so that
+		 * other uses of this vertex will claim the point is within
+		 * tolerance without re-computing
+		 */
+		ed = (struct ve_dist *)rt_malloc(sizeof(struct ve_dist), "ve_dist structure");
+		ed->magic_p = &ved->v2->magic;
+		ed->status = 2;
+		ed->v1 = ed->v2 = ved->v2;
+
+		RT_LIST_APPEND(&fpi->ve_dh, &ed->l);
+		break;
+	case 3: /* PCA of pt on line is "before" ved->v1 of segment */
+		/* fallthrough */
+	case 4: /* PCA of pt on line is "before" ved->v2 of segment */
+		ei->class = NMG_CLASS_AoutB;
+		break;
+
+	case 5: /* PCA is along length of edge, but point is NOT on edge. */
+		if (nmg_find_eu_leftvec( left, eu ))
+			rt_bomb("can't find left vector\n");
+		/* take dot product of v->pt vector with left to determine
+		 * if pt is inside/left of edge
+		 */
+		VSUB2(v_to_pt, fpi->pt, ved->pca);
+		if (VDOT(v_to_pt, left) >= 0.0)
+			ei->class = NMG_CLASS_AinB;
+		else
+			ei->class = NMG_CLASS_AoutB;
+		break;
+	default:
+		break;
+	}
+
+
+	if (rt_g.NMG_debug & DEBUG_PT_FU) {
+		rt_log("pt @ dist %g from edge classed %s vs edge\n",
+			ei->ved_p->dist, nmg_class_name(ei->class));
+		pl_pt_e(fpi, ei);
+	}
+
+	/* now that it's complete, add ei to the edge list */
+	for (RT_LIST_FOR(ei_p, edge_info, &edge_list->l)) {
+		/* if the distance to this edge is smaller, or
+		 * if the distance is the same & the edge is the same
+		 *	Insert edge_info struct here in list
+		 */
+		if (ved->dist < ei_p->ved_p->dist ||
+		   (ved->dist == ei_p->ved_p->dist &&
+		    ei_p->ved_p->magic_p == ved->magic_p) )
+			break;
+	}
+
+	RT_LIST_INSERT(&ei_p->l, &ei->l);
+	return ei;
+}
+
+
+
+/*	C O M P U T E _ L O O P _ C L A S S
+ *
+ * Given a list of edge_info structures for the edges of a loop,
+ *	determine what the classification for the loop should be.
+ */
+
+static int
+compute_loop_class(fpi, lu, edge_list)
+struct fpi *fpi;
+struct loopuse *lu;
+struct edge_info *edge_list;
+{
+	struct edge_info *ei;
+	struct edge_info *ei_p;
+	double dist;
+	struct rt_list	near;
+	int lu_class = NMG_CLASS_Unknown;
+	
+	if (rt_g.NMG_debug & DEBUG_PT_FU ) {
+		rt_log("compute_loop_class()\n");
+		for (RT_LIST_FOR(ei, edge_info, &edge_list->l)) {
+rt_log("dist:%g class:%s status:%d pca(%g %g %g)\n\tv1(%g %g %g) v2(%g %g %g)\n",
+				ei->ved_p->dist, nmg_class_name(ei->class),
+				ei->ved_p->status,
+				V3ARGS(ei->ved_p->pca),
+				V3ARGS(ei->ved_p->v1->vg_p->coord),
+				V3ARGS(ei->ved_p->v2->vg_p->coord));
+		}
+	}
+
+	RT_CK_LIST_HEAD(&edge_list->l);
+	RT_LIST_INIT(&near);
+
+
+
+	while (RT_LIST_NON_EMPTY(&edge_list->l)) {
+		ei = RT_LIST_FIRST(edge_info, &edge_list->l);
+		NMG_CK_EI(ei);
+		NMG_CK_VED(ei->ved_p);
+		dist = ei->ved_p->dist;
+	
+		/* create "near" list with all ei's at this dist */
+		for (RT_LIST_FOR(ei, edge_info, &edge_list->l)) {
+			NMG_CK_EI(ei);
+			NMG_CK_VED(ei->ved_p);
+			if (ei->ved_p->dist == dist) {
+				ei_p = RT_LIST_PLAST(edge_info, &ei->l);
+				RT_LIST_DEQUEUE(&ei->l);
+				RT_LIST_APPEND(&near, &ei->l);
+				ei = ei_p;
+			}
+		}
+
+		if (rt_g.NMG_debug & DEBUG_PT_FU ) {
+			rt_log("dist %g near list\n", dist);
+			for (RT_LIST_FOR(ei, edge_info, &near)) {
+				rt_log("(%g %g %g) -> (%g %g %g)\n",
+					V3ARGS(ei->eu_p->vu_p->v_p->vg_p->coord),
+					V3ARGS(ei->eu_p->eumate_p->vu_p->v_p->vg_p->coord));
+rt_log("dist:%g class:%s status:%d pca(%g %g %g)\n\tv1(%g %g %g) v2(%g %g %g)\n",
+				ei->ved_p->dist, nmg_class_name(ei->class),
+				ei->ved_p->status,
+				V3ARGS(ei->ved_p->pca),
+				V3ARGS(ei->ved_p->v1->vg_p->coord),
+				V3ARGS(ei->ved_p->v2->vg_p->coord));
+			}
+		}
+
+
+		/* toss opposing pairs of uses of the same edge from the list */
+		for (RT_LIST_FOR(ei, edge_info, &near)) {
+			NMG_CK_EI(ei);
+			for (RT_LIST_FOR(ei_p, edge_info, &near)) {
+				NMG_CK_EI(ei_p);
+				NMG_CK_VED(ei_p->ved_p);
+
+				/* if we've found an opposing use of the same
+				 *    edge toss the pair of them
+				 */
+				if (ei_p->ved_p->magic_p == ei->ved_p->magic_p &&
+				    ei_p->eu_p->vu_p != ei->eu_p->vu_p &&
+				    ei_p->eu_p->vu_p == ei->eu_p->eumate_p->vu_p ) {
+
+					if (rt_g.NMG_debug & DEBUG_PT_FU ) {
+						rt_log("tossing edgeuse pair:\n");
+						rt_log("(%g %g %g) -> (%g %g %g)\n",
+							V3ARGS(ei->eu_p->vu_p->v_p->vg_p->coord),
+							V3ARGS(ei->eu_p->eumate_p->vu_p->v_p->vg_p->coord));
+						rt_log("(%g %g %g) -> (%g %g %g)\n",
+							V3ARGS(ei_p->eu_p->vu_p->v_p->vg_p->coord),
+							V3ARGS(ei_p->eu_p->eumate_p->vu_p->v_p->vg_p->coord));
+					}
+
+					RT_LIST_DEQUEUE(&ei_p->l);
+					rt_free((char *)ei_p, "edge info struct");
+					ei_p = RT_LIST_PLAST(edge_info, &ei->l);
+					RT_LIST_DEQUEUE(&ei->l);
+					rt_free((char *)ei, "edge info struct");
+					ei = ei_p;
+				    	break;
+				}
+			}
+		}
+		
+		if (RT_LIST_NON_EMPTY(&near)) break;
+	}
+	
+	if (RT_LIST_IS_EMPTY(&near)) {
+		/* This was a "crack" or "snake" loop */
+		
+		if (lu->orientation == OT_SAME) {
+			lu_class = NMG_CLASS_AoutB;
+		} else if (lu->orientation == OT_OPPOSITE) {
+			lu_class = NMG_CLASS_AinB;
+		} else
+			rt_bomb("bad lu orientation\n");
+
+		if (rt_g.NMG_debug & DEBUG_PT_FU ) {
+			rt_log("list was empty, so class is %s\n", 
+				nmg_class_name(lu_class));
+		}
+		goto departure;
+	}
+
+
+	if ((ei=RT_LIST_PNEXT(edge_info, &near)) == RT_LIST_PLAST(edge_info, &near)){
+		/* just one element */
+		if (rt_g.NMG_debug & DEBUG_PT_FU )
+			rt_log("just one element\n");
+		lu_class = ei->class;
+		goto departure;
+	}
+
+	for (RT_LIST_FOR(ei, edge_info, &near)) {
+		NMG_CK_EI(ei);
+		NMG_CK_VED(ei->ved_p);
+		/* if there is an edge where the PCA is not at a vertex,
+		 * we can just classify the point with this edge
+		 */
+		if (ei->ved_p->status == 5) {
+			lu_class = ei->class;
+			if (rt_g.NMG_debug & DEBUG_PT_FU ) {
+				rt_log("found status 5 edge, loop class is %s\n", 
+					nmg_class_name(lu_class));
+			}
+			goto departure;
+		}
+	}
+
+	for (RT_LIST_FOR(ei, edge_info, &near)) {
+		NMG_CK_EI(ei);
+		NMG_CK_VED(ei->ved_p);
+		/* find the edgeuse which shares a vertex with the first
+		 * one on the list with the max VDOT with the vertex->pt
+		 * vector
+		 */
+		 /* XXX */
+	}
+
+departure:
+	/* the caller will get whatever is left of the edge_list, but
+	 * we need to free up the "near" list
+	 */
+	while (RT_LIST_WHILE(ei, edge_info, &near)) {
+		RT_LIST_DEQUEUE( &ei->l );
+		rt_free( (char *)ei, "edge_info struct");
+	}
+	
+	if (rt_g.NMG_debug & DEBUG_PT_FU ) {
+		rt_log("compute_loop_class() returns %s\n", 
+			nmg_class_name(lu_class));
+	}
+
+	return lu_class;
+}
+/*
+ *
+ * For each edgeuse, compute an edge_info structure.
+ *
+ * if min_dist == 0 return ON
+ *
+ * For dist min -> max
+ *	if even # of uses of edge in this loop
+ *		"ignore" all uses of this edge since we can't answer the
+ *		    "spike" problem:	*---------*
+ *					| .	  |
+ *					*---*	  |  .
+ *					|	  *----*
+ *					|	  |
+ *					*---------*
+ *	else (odd # of uses of edge in this loop)
+ *		"ignore" consecutive uses of the same edge to avoid the
+ *		    "accordian pleat" problem:	*-------*
+ *						|  .	|
+ *						*----*	|
+ *						*----*	|
+ *						*----*	|
+ *						*----*--*
+ *		classify pt WRT remaining edgeuse
+ *
+ * The "C-clamp" problem:
+ *	*---------------* 
+ *	|		|
+ *	|  *----*	|
+ *	|  |	|   .	|
+ *	|  |	*-------*
+ *	|  |	|	|
+ *	|  *----*	|
+ *	|		|
+ *	*---------------* 
+ *
+ */
+static int
+nmg_class_pt_lu(lu, fpi)
+struct loopuse	*lu;
+struct fpi	*fpi;
+{
+	int 	lu_class = NMG_CLASS_Unknown;
+
+	NMG_CK_FPI(fpi);
+	NMG_CK_LOOPUSE(lu);
+	NMG_CK_LOOP(lu->l_p);
+	NMG_CK_LOOP_G(lu->l_p->lg_p);
+
+
+
+	if (RT_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_EDGEUSE_MAGIC) {
+		register struct edgeuse	*eu;
+		struct edge_info edge_list;
+		struct edge_info *ei;
+
+		RT_LIST_INIT(&edge_list.l);
+
+		for (RT_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+			ei = nmg_class_pt_eu(fpi, eu, &edge_list);
+			NMG_CK_EI(ei);
+			NMG_CK_VED(ei->ved_p);
+			if (ei->ved_p->dist < fpi->tol->dist) {
+				lu_class = NMG_CLASS_AinB;
+				break;
+			}
+		}
+		/* */
+		if (lu_class == NMG_CLASS_Unknown)
+			lu_class = compute_loop_class(fpi, lu, &edge_list);
+		else if (rt_g.NMG_debug & DEBUG_PT_FU )
+			rt_log("loop class already known (pt must touch edge)\n");
+
+		/* free up the edge_list elements */
+		while ( RT_LIST_WHILE(ei, edge_info, &edge_list.l) ) {
+			RT_LIST_DEQUEUE( &ei->l );
+			rt_free( (char *)ei, "edge info struct");
+		}
+	} else if (RT_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC) {
+		register struct vertexuse *vu;
+		int v_class;
+
+		v_class = nmg_class_pt_vu(fpi, vu);
+
+		switch (lu->orientation) {
+		case OT_SAME:
+			if (v_class == NMG_FPI_TOUCHED)
+				lu_class = NMG_CLASS_AinB;
+			else
+				lu_class = NMG_CLASS_AoutB;
+			break;
+		case OT_OPPOSITE:
+				lu_class = NMG_CLASS_AinB;
+			break;
+		default:
+			rt_bomb("Loop orientation error\n");
+			break;
+		}
+	} else {
+		rt_log("%s:%d bad child of loopuse\n", __FILE__, __LINE__);
+		rt_bomb("crash and burn\n");
+	}
+
+
+	if (rt_g.NMG_debug & DEBUG_PT_FU )
+		rt_log("pt classed %s vs loop\n", nmg_class_name(lu_class));
+
+	return lu_class;
+}
+
+
+
+/*
+ *
+ * Classify a point on a face's plane as being inside/outside the area
+ * of the face.
+ *
+ * For each loopuse, compute IN/ON/OUT
+ *
+ * if any loop has pt classified as "ON" return "ON"
+ *
+ * ignore all OT_SAME loops w/pt classified as "OUT"
+ * ignore all OT_OPPOSITE loops w/pt classified as "IN"
+ * If (# OT_SAME loops == # OT_OPPOSITE loops)
+ *	pt is "OUT"
+ * else if (# OT_SAME loops - 1 == # OT_OPPOSITE loops)
+ *	pt is "IN"
+ * else
+ *	Error! panic!
+ *
+ */
+int
+nmg_class_pt_fu_except(pt, fu, ignore_lu,
+	eu_func, vu_func, priv, call_on_hits, tol)
+point_t pt;
+CONST struct faceuse *fu;
+CONST struct loopuse    *ignore_lu;
+void                    (*eu_func)();   /* func to call when pt on edgeuse */
+void                    (*vu_func)();   /* func to call when pt on vertexuse*/
+CONST char		*priv;          /* private data for [ev]u_func */
+CONST int		call_on_hits;
+CONST struct rt_tol     *tol;
+{
+	struct fpi	fpi;
+	struct loopuse	*lu;
+	int		ot_same_in = 0;
+	int		ot_opposite_out = 0;
+	int		lu_class;
+	int		fu_class = NMG_CLASS_Unknown;
+	double		dist;
+	struct ve_dist	*ved_p;
 
 	NMG_CK_FACEUSE(fu);
 	NMG_CK_FACE(fu->f_p);
@@ -716,79 +690,59 @@ CONST struct rt_tol	*tol;
 	if(ignore_lu) NMG_CK_LOOPUSE(ignore_lu);
 	RT_CK_TOL(tol);
 
-
-	if (rt_g.NMG_debug & DEBUG_PT_FU )
-		rt_log("nmg_class_pt_fu_except()\n");
-
-	fpi = (struct fu_pt_info *)rt_malloc(sizeof(*fpi), "struct fu_pt_info");
-
 	/* Validate distance from point to plane */
-	NMG_GET_FU_PLANE( fpi->norm, fu );
-	if( (dist=fabs(DIST_PT_PLANE( pt, fpi->norm ))) > tol->dist )  {
+	NMG_GET_FU_PLANE( fpi.norm, fu );
+	if( (dist=fabs(DIST_PT_PLANE( pt, fpi.norm ))) > tol->dist )  {
 		rt_log("nmg_class_pt_fu_except() ERROR, point (%g,%g,%g)\nnot on face %g %g %g %g,\ndist=%g\n",
-			V3ARGS(pt), V4ARGS(fpi->norm), dist );
+			V3ARGS(pt), V4ARGS(fpi.norm), dist );
 	}
 
-	m = nmg_find_model((CONST long *)fu);
-	fpi->tbl = rt_calloc(m->maxindex, 1, "nmg_class_pt_fu_except() proc tbl");
-
-	fpi->tol = tol;
-	fpi->fu_p = fu;
-	fpi->pt = pt;
-	fpi->pt_class = NMG_CLASS_Unknown;
-	fpi->eu_func = eu_func;
-	fpi->vu_func = vu_func;
-	fpi->allhits = allhits;
-	fpi->dist_in_plane = MAX_FASTF;
-	VSET(fpi->pca, 0.0, 0.0, 0.0);
-	fpi->closest = (long *)NULL;
-	fpi->priv = priv;
-	fpi->magic = NMG_FPI_MAGIC;
-
+	fpi.fu_p = fu;
+	fpi.tol = tol;
+	RT_LIST_INIT(&fpi.ve_dh);
+	fpi.pt = pt;
+	fpi.eu_func = eu_func;
+	fpi.vu_func = vu_func;
+	fpi.priv = priv;
+	fpi.hits = call_on_hits;
+	fpi.magic = NMG_FPI_MAGIC;
 
 	for (RT_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
 		if( ignore_lu && (ignore_lu==lu || ignore_lu==lu->lumate_p) )
 			continue;
 
-		nmg_class_pt_lu(fpi, lu);
+		lu_class = nmg_class_pt_lu(lu, &fpi);
 
-		/* If point lies ON loop edge, we are done */
-		if( allhits == NMG_FPI_FIRST && 
-		    fpi->pt_class != NMG_CLASS_Unknown )
-			break;
+		if (lu->orientation == OT_OPPOSITE &&
+		    lu_class == NMG_CLASS_AoutB )
+			ot_opposite_out++;
+		else if (lu->orientation == OT_SAME &&
+		    lu_class == NMG_CLASS_AinB )
+			ot_same_in++;
 	}
 
+	if (rt_g.NMG_debug & DEBUG_PT_FU )
+		rt_log("loops ot_same_in:%d ot_opposite_out:%d\n",
+			ot_same_in, ot_opposite_out);
 
-	if (fpi->pt_class == NMG_CLASS_AinB ||
-	    fpi->pt_class == NMG_CLASS_AoutB ||
-	    fpi->pt_class == NMG_CLASS_AonBshared)
-		goto exit_ramp;
-
-	if (fpi->pt_class != NMG_CLASS_Unknown) {
-		rt_log("%s[line:$d]: bad classification \"%s\" for point in face?\n",
-			__FILE__, __LINE__, nmg_class_name(fpi->pt_class));
+	if (ot_same_in == ot_opposite_out) fu_class = NMG_CLASS_AoutB;
+	else if (ot_same_in - 1 != ot_opposite_out) {
+		/* Panic time!  How did I get a parity mis-match? */
+		rt_log("nmg_class_pt_fu_except(%g %g %g) Parity error @ %s:%d\n",
+			V3ARGS(pt), __FILE__, __LINE__);
 		rt_bomb("");
+	} else 
+		fu_class = NMG_CLASS_AinB;
+
+	while (RT_LIST_WHILE(ved_p, ve_dist, &fpi.ve_dh)) {
+		RT_LIST_DEQUEUE( &ved_p->l );
+		rt_free( (char *)ved_p, "ve_dist struct");
 	}
 
-	if (fpi->closest == (long *)NULL) {
-		/* The plane point was never within a bounding RPP of a loop.
-		 * Therefore, we are decidedly OUTside the area of the face.
-		 */
-		fpi->pt_class = NMG_CLASS_AoutB;
-	} else
-		deduce_pt_class(fpi);
 
-exit_ramp:
-	if (rt_g.NMG_debug & DEBUG_PT_FU ) {
-		if (fpi->pt_class != NMG_CLASS_Unknown)
-			pl_pt_fu(fpi, fu);
-		else
-			rt_log("class = unknown, skipping plot\n");
+	if (rt_g.NMG_debug & DEBUG_PT_FU )
+		rt_log("nmg_class_pt_fu_except() returns %s\n",
+			nmg_class_name(fu_class));
 
-		rt_log("nmg_class_pt_fu_except(): point is classed %s\n",
-			nmg_class_name(fpi->pt_class));
-	}
-	return fpi;
+	return fu_class;
 }
-
-
