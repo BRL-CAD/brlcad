@@ -333,7 +333,7 @@ static struct funtab {
 	f_tree, 2, MAXARGS,
 "units", "[mm|cm|m|in|ft|...]", "change units",
 	f_units,1,2,
-"vrmgr", "host {master|slave|observer}", "link with Virtual Reality manager",
+"vrmgr", "host {master|slave|overview}", "link with Virtual Reality manager",
 	f_vrmgr, 3, MAXARGS,
 "vrot", "xdeg ydeg zdeg", "rotate viewpoint",
 	f_vrot,4,4,
