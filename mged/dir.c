@@ -201,57 +201,6 @@ char	**argv;
   return TCL_OK;
 }
 
-HIDDEN void
-Count_refs( dbip, comb, comb_leaf, user_ptr1, user_ptr2, user_ptr3 )
-struct db_i		*dbip;
-struct rt_comb_internal *comb;
-union tree		*comb_leaf;
-genptr_t		user_ptr1, user_ptr2, user_ptr3;
-{
-	struct directory *dp;
-
-	RT_CK_DBI( dbip );
-	RT_CK_TREE( comb_leaf );
-
-	if( (dp = db_lookup( dbip, comb_leaf->tr_l.tl_name, LOOKUP_QUIET)) != DIR_NULL )
-		dp->d_nref++;
-}
-
-/*
- *			D I R _ N R E F
- *
- * Count the number of time each directory member is referenced
- * by a COMBination record.
- */
-void
-dir_nref( )
-{
-	register int		i,j;
-	register struct directory *dp;
-	struct rt_db_internal	intern;
-	struct rt_comb_internal *comb;
-
-	/* First, clear any existing counts */
-	for( i = 0; i < RT_DBNHASH; i++ )  {
-		for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw )
-			dp->d_nref = 0;
-	}
-
-	/* Examine all COMB nodes */
-	for( i = 0; i < RT_DBNHASH; i++ )  {
-		for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw )  {
-			if( !(dp->d_flags & DIR_COMB) )
-				continue;
-
-			if( rt_db_get_internal( &intern, dp, dbip, (mat_t *)NULL ) < 0 )
-				continue;
-			comb = (struct rt_comb_internal *)intern.idb_ptr;
-			db_tree_funcleaf( dbip, comb, comb->tree, Count_refs, (genptr_t)NULL, (genptr_t)NULL, (genptr_t)NULL );
-			rt_comb_ifree( &intern );
-		}
-	}
-}
-
 /*
  *  			D I R _ S U M M A R Y
  *
@@ -363,7 +312,7 @@ char	**argv;
 	  return TCL_OK;
 	}
 
-	dir_nref();
+	db_update_nref( dbip );
 	/*
 	 * Find number of possible entries and allocate memory
 	 */
