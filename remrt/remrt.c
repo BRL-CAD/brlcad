@@ -95,6 +95,7 @@ void		host_helper();
 void		start_helper();
 void		build_start_cmd();
 void		drop_server();
+void		send_do_lines();
 
 struct vls  {
 	char	*vls_str;
@@ -244,18 +245,28 @@ struct ihost		*host_lookup_by_addr();
 struct ihost		*host_lookup_by_hostent();
 struct ihost		*make_default_host();
 
-/* RT Options */
+/* variables shared with viewing model */
+extern double	AmbientIntensity;
+extern double	azimuth, elevation;
+extern int	lightmodel;
+int		use_air = 0;
+
+/* variables shared with worker() */
+extern int	hypersample;
+extern int	jitter;
+extern fastf_t	rt_perspective;
+extern fastf_t	aspect;
+extern fastf_t	eye_backoff;
 extern int	width;
 extern int	height;
-extern int	hypersample;
+
+/* variables shared with do.c */
 extern int	matflag;
-extern double	rt_perspective;
+extern int	interactive;
 extern int	benchmark;
 int		rdebug;
-int		use_air = 0;
 extern char	*outputfile;		/* output file name */
 extern char	*framebuffer;
-extern double	azimuth, elevation;
 extern int	desiredframe;
 
 extern struct rt_g	rt_g;
@@ -350,7 +361,8 @@ char	**argv;
 		 * record it somewhere */
 		rt_log("REMRT out of clients\n");
 	} else {
-		rt_log("Automatic REMRT listening at port %d\n", pkg_permport);
+		rt_log("Automatic REMRT listening at port %d, reading script on stdin\n",
+			pkg_permport);
 		clients = 0;
 
 		/* parse command line args for sizes, etc */
@@ -885,11 +897,20 @@ register struct frame *fr;
 	fr->fr_height = height;
 
 	fr->fr_cmd.vls_cur = 0;	/* free existing? */
-	if( benchmark )  vls_cat( &fr->fr_cmd, "opt -B;" );
-	sprintf(buf, "opt -w%d -n%d -H%d -p%g;",
+	sprintf(buf, "opt -w%d -n%d -H%d -p%g -U%d -J%x -A%g -l%d -E%g",
 		fr->fr_width, fr->fr_height,
-		hypersample, rt_perspective );
+		hypersample, rt_perspective,
+		use_air, jitter,
+		AmbientIntensity, lightmodel,
+		eye_backoff );
 	vls_cat( &fr->fr_cmd, buf );
+	if( interactive )  vls_cat( &fr->fr_cmd, " -I");
+	if( benchmark )  vls_cat( &fr->fr_cmd, " -B");
+	if( aspect != 1.0 )  {
+		sprintf(buf, " -V%g", aspect);
+		vls_cat( &fr->fr_cmd, buf );
+	}
+	vls_cat( &fr->fr_cmd, ";" );
 
 	bzero( fr->fr_servinit, sizeof(fr->fr_servinit) );
 
