@@ -38,6 +38,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 # include <sys/stat.h>
 #endif
 
+int	debug = 0;
 
 char	*prototype;		/* Contains full text of prototype document */
 
@@ -123,11 +124,13 @@ char	*tokenwords[NTOKENWORDS+1];
 do_lines( fp )
 FILE	*fp;
 {
-	char	token[128];
+#define TOKLEN	128
+	char	token[TOKLEN];
 	int	ntokenwords;
 	register char	*cp;
 	register char	*tp;
 	int	chan;
+	int	i;
 
 	for( line=0; /*NIL*/; line++ )  {
 		linebuf[0] = '\0';
@@ -141,10 +144,16 @@ FILE	*fp;
 		    linebuf[0] == '\n' )
 			continue;
 
+		if(debug)  {
+			fprintf(stderr, "Prototype=\n%s", prototype);
+			fprintf(stderr, "Line %d='%s'\n", line, linebuf);
+		}
+
 		/* Here, there is no way to check for too many words */
 		nwords = rt_split_cmd( chanwords, NCHANS+1, linebuf );
 
 		for( cp=prototype; *cp != '\0'; )  {
+			if(debug) fputc( *cp, stderr );
 			/* Copy all plain text, verbatim */
 			if( *cp != '@' )  {
 				putc( *cp++, stdout );
@@ -164,20 +173,23 @@ FILE	*fp;
 			if( *cp == '(' )  {
 				cp++;		/* skip '(' */
 				tp = token;
-				while( *cp && *cp != ')' )
+				while( *cp && *cp != ')' && tp<&token[TOKLEN-1])  {
 					*tp++ = *cp++;
+				}
 				*tp++ = '\0';
 				cp++;		/* skip ')' */
 			} else if( isdigit( *cp ) )  {
 				tp = token;
-				while( isdigit( *cp ) )
+				while( isdigit( *cp ) && tp<&token[TOKLEN-1] )  {
 					*tp++ = *cp++;
+				}
 				*tp++ = '\0';
 			} else {
 				fprintf( stderr,"Line %d:  Bad sequence '@%c'\n", line, *cp);
 				fprintf( stdout, "@%c", *cp++ );
 				continue;
 			}
+			if(debug) fprintf(stderr,"token='%s'\n", token);
 
 			if( isdigit( token[0] ) )  {
 				fputs( chanwords[str2chan_index(token)],
@@ -194,35 +206,110 @@ FILE	*fp;
 			}
 
 			/* Check here for multi-word tokens */
-			ntokenwords = rt_split_cmd( tokenwords, NTOKENWORDS+1, token );
+			ntokenwords = rt_split_cmd( tokenwords, NTOKENWORDS+1,
+				token );
 
-			if( strcmp( tokenwords[0], "rot" ) == 0 )  {
-				mat_t	mat;
-
-				mat_idn( mat );
-				mat_angles( mat, 
-				    atof( chanwords[str2chan_index(tokenwords[1])] ),
-				    atof( chanwords[str2chan_index(tokenwords[2])] ),
-				    atof( chanwords[str2chan_index(tokenwords[3])] ) );
-				out_mat( mat, stdout );
-				continue;
-			}
-			if( strcmp( tokenwords[0], "xlate" ) == 0 )  {
-				mat_t	mat;
-
-				mat_idn( mat );
-				MAT_DELTAS( mat, 
-				    atof( chanwords[str2chan_index(tokenwords[1])] ),
-				    atof( chanwords[str2chan_index(tokenwords[2])] ),
-				    atof( chanwords[str2chan_index(tokenwords[3])] ) );
-				out_mat( mat, stdout );
-				continue;
+			/*  If first character of a word is '%', that
+			 *  signifies substituting the value of the
+			 *  indicated channel.  Otherwise the word is literal.
+			 */
+			for( i=1; i<ntokenwords; i++ )  {
+				int	chan;
+				if( tokenwords[i][0] != '%' )  continue;
+				chan = str2chan_index( &tokenwords[i][1] );
+				tokenwords[i] = chanwords[chan];
 			}
 
-			fprintf(stderr,"Line %d: keyword @(%s) unknown\n", line, token);
-			fprintf(stdout, "@(%s)", token );
+			if( (i=multi_words( tokenwords, ntokenwords )) >= 0 )
+				continue;
+
+			if( i == -1 )  {
+				fprintf(stderr,
+					"Line %d: keyword @(%s) encountered error\n",
+					line, token);
+				fprintf(stdout,
+					"@(%s)", token );
+			} else {
+				fprintf(stderr,
+					"Line %d: keyword @(%s) unknown\n",
+					line, token);
+				fprintf(stdout,
+					"@(%s)", token );
+			}
+			for( i=0; i<ntokenwords; i++ )  {
+				fprintf( stderr,
+					"word[%2d] = '%s'\n",
+					i, tokenwords[i] );
+			}
 		}
 	}
+}
+
+/*
+ *  Returns -
+ *	-2	unknown keyword
+ *	-1	error in processing keyword
+ *	 0	OK
+ */
+int
+multi_words( words, nwords )
+char	*words[];
+int	nwords;
+{
+
+	if( strcmp( words[0], "rot" ) == 0 )  {
+		mat_t	mat;
+
+		/* Expects rotations rx, ry, rz */
+		if( nwords < 4 )  return(-1);
+		mat_idn( mat );
+		mat_angles( mat, 
+		    atof( words[1] ),
+		    atof( words[2] ),
+		    atof( words[3] ) );
+		out_mat( mat, stdout );
+		return(0);
+	}
+	if( strcmp( words[0], "xlate" ) == 0 )  {
+		mat_t	mat;
+
+		if( nwords < 4 )  return(-1);
+		/* Expects translations tx, ty, tz */
+		mat_idn( mat );
+		MAT_DELTAS( mat, 
+		    atof( words[1] ),
+		    atof( words[2] ),
+		    atof( words[3] ) );
+		out_mat( mat, stdout );
+		return(0);
+	}
+	if( strcmp( words[0], "orient" ) == 0 )  {
+		register int i;
+		mat_t	mat;
+		double	args[8];
+
+		/* Expects tx, ty, tz, rx, ry, rz, [scale]. */
+		/* All rotation is done first, then translation */
+		/* Note: word[0] and args[0] are the keyword */
+		if( nwords < 6+1 )  return(-1);
+		for( i=1; i<6+1; i++ )
+			args[i] = 0;
+		args[7] = 1.0;	/* optional */
+		for( i=1; i<nwords; i++ )
+			args[i] = atof( words[i] );
+		mat_idn( mat );
+		mat_angles( mat, args[4], args[5], args[6] );
+		MAT_DELTAS( mat, args[1], args[2], args[3] );
+		if( args[7] > -1e-17 && args[7] < 1e-17 )  {
+			/* Nearly zero, signal error */
+			fprintf(stderr,"Line %d, orient scale arg '%s' is zero\n", words[7] );
+			return(-1);
+		}
+		mat[15] = 1 / args[7];
+		out_mat( mat, stdout );
+		return(0);
+	}
+	return(-2);		/* Unknown keyword */
 }
 
 /*
