@@ -575,7 +575,7 @@ const struct db_i		*dbip;
 	VSETALL( vip->cellsize, 1 );
 
 	bu_vls_init( &str );
-	bu_vls_strcpy( &str, ep->ext_buf );
+	bu_vls_strncpy( &str, ep->ext_buf, ep->ext_nbytes );
 	if( bu_struct_parse( &str, rt_vol_parse, (char *)vip ) < 0 )  {
 		bu_vls_free( &str );
 		return -2;
