@@ -51,10 +51,10 @@ install:	cake
 			mv -f $(BINDIR)/cake $(BINDIR)/cake.bak; fi
 		mv cake $(BINDIR)/cake
 		rm -f $(BINDIR)/fake
-		ln $(BINDIR)/cake $(BINDIR)/fake
+		ln -s $(BINDIR)/cake $(BINDIR)/fake
 		rm -f $(MANDIR)/cake.1 $(MANDIR)/fake.1
 		cp cake.1 $(MANDIR)
-		ln $(MANDIR)/cake.1 $(MANDIR)/fake.1
+		ln -s $(MANDIR)/cake.1 $(MANDIR)/fake.1
 
 $(OBJ):		$(HDR)
 $(GOBJ):	$(HDR)
