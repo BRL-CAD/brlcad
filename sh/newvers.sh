@@ -30,7 +30,9 @@ eval `machinetype.sh -b`	# sets MACHINE, UNIXTYPE, etc
 # Obtain RELEASE, RCS_REVISION, and REL_DATE
 if test -r ../gen.sh
 then
+	# XXX The following line causes DEC Alpha's /bin/sh to dump core.
 	eval `grep '^RELEASE=' ../gen.sh`
+	##RELEASE=4.4;	RCS_REVISION=11;	# Uncomment for Alpha workaround.
 else
 	RELEASE='??.??'
 fi
