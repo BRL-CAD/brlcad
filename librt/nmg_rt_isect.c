@@ -1958,7 +1958,9 @@ struct face_g_plane *fg_p;
 		 * as "missing" the face.  We rely on other faces to generate
 		 * hit points.
 		 */
+#if 0
 		bu_log("\tWarning:  Ignoring ray in plane of face (NOW A MISS) XXX\n");
+#endif
 		GET_HITMISS(myhit);
 		NMG_INDEX_ASSIGN(rd->hitmiss, fu_p->f_p, myhit);
 		myhit->hit.hit_private = (genptr_t)fu_p->f_p;
