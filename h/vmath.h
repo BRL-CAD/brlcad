@@ -161,9 +161,11 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 	}
 
 /* Reverse the direction of b and store it in a */
-#define VREVERSE(a,b)	(a)[X] = -(b)[X]; \
+#define VREVERSE(a,b)	\
+		{	(a)[X] = -(b)[X]; \
 			(a)[Y] = -(b)[Y]; \
-			(a)[Z] = -(b)[Z];
+			(a)[Z] = -(b)[Z]; \
+		}
 
 /* Add vectors at `b' and `c', store result at `a' */
 #ifdef SHORT_VECTORS
