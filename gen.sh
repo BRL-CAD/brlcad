@@ -24,18 +24,19 @@ SHELL=/bin/sh
 export SHELL
 
 # Set to 0 for non-NFS environment (default)
-NFS=1
+NFS=0
 
 # Label number for this CAD Release,
 # RCS main Revision number, and date.
 #RELEASE=M.N;	RCS_REVISION=X;		REL=DATE=dd-mmm-yy
-#RELEASE=2.10;	RCS_REVISION=8;		REL_DATE=xx-Sep-88	# internal
-RELEASE=2.9;	RCS_REVISION=8;		REL_DATE=31-Sep-88	# internal
-#RELEASE=2.8;	RCS_REVISION=8;		REL_DATE=21-Sep-88	# internal
-#RELEASE=2.7;	RCS_REVISION=8;		REL_DATE=12-Sep-88	# internal
-#RELEASE=2.6;	RCS_REVISION=8;		REL_DATE=09-Sep-88	# internal
-#RELEASE=2.5;	RCS_REVISION=8;		REL_DATE=08-Sep-88	# internal
-#RELEASE=2.4;	RCS_REVISION=8;		REL_DATE=10-Jun-88	# internal
+RELEASE=3.0;	RCS_REVISION=8;		REL_DATE=05-Oct-88
+#RELEASE=2.10;	RCS_REVISION=7;		REL_DATE=04-Oct-88	# internal
+#RELEASE=2.9;	RCS_REVISION=7;		REL_DATE=31-Sep-88	# internal
+#RELEASE=2.8;	RCS_REVISION=7;		REL_DATE=21-Sep-88	# internal
+#RELEASE=2.7;	RCS_REVISION=7;		REL_DATE=12-Sep-88	# internal
+#RELEASE=2.6;	RCS_REVISION=7;		REL_DATE=09-Sep-88	# internal
+#RELEASE=2.5;	RCS_REVISION=7;		REL_DATE=08-Sep-88	# internal
+#RELEASE=2.4;	RCS_REVISION=7;		REL_DATE=10-Jun-88	# internal
 #RELEASE=2.3;	RCS_REVISION=7;		REL_DATE=02-Nov-87
 #RELEASE=2.0;	RCS_REVISION=6;		REL_DATE=11-Jul-87
 #RELEASE=1.24;	RCS_REVISION=5;		REL_DATE=11-Jun-87
@@ -261,7 +262,8 @@ shell)
 
 checkin)
 	echo " RCS_Revision ${RCS_REVISION}"
-	CI_ARGS='-f -r${RCS_REVISION} -sRel${RELEASE} -mRelease_${RELEASE}'
+	REL_NODOT=`echo ${RELEASE}|tr . _`
+	CI_ARGS="-f -r${RCS_REVISION} -sRel${REL_NODOT} -mRelease_${RELEASE}"
 	rcs -l ${TOP_FILES}
 	ci -u ${CI_ARGS} ${TOP_FILES}
 	for dir in ${ADIRS} ${BDIRS}; do
