@@ -86,9 +86,9 @@ int	width, height;
 			(unsigned long)ifp, file, width, height );
 
 	/* check for default size */
-	if( width == 0 )
+	if( width <= 0 )
 		width = ifp->if_width;
-	if( height == 0 )
+	if( height <= 0 )
 		height = ifp->if_height;
 
 	/* set debug bit vector */
@@ -100,7 +100,7 @@ int	width, height;
 		ifp->if_debug = 0;
 	}
 
-	/* Give the user whatever with was asked for */
+	/* Give the user whatever width was asked for */
 	ifp->if_width = width;
 	ifp->if_height = height;
 
