@@ -190,6 +190,7 @@ struct part_internal {
 struct part_specific {
 	struct part_internal	part_int;
 	mat_t			part_SoR;	/* Scale(Rot(vect)) */
+	mat_t			part_invRoS;	/* invRot(Scale(vect)) */
 };
 
 /* hit_private flags for which end was hit */
@@ -226,6 +227,7 @@ struct rt_i		*rtip;
 	mat_t		R, Rinv;
 	mat_t		S;
 	vect_t		max, min;
+	vect_t		tip;
 
 	if( rec == (union record *)0 )  {
 		rec = db_getmrec( rtip->rti_dbip, stp->st_dp );
@@ -272,9 +274,10 @@ struct rt_i		*rtip;
 	mat_idn( S );
 	S[ 0] = 1.0 / pi.part_vrad;	/* |A| = |B| */
 	S[ 5] = S[0];
-	S[10] = MAGNITUDE( pi.part_H );
+	S[10] = 1.0 / MAGNITUDE( pi.part_H );
 
 	mat_mul( part->part_SoR, S, R );
+	mat_mul( part->part_invRoS, Rinv, S );
 
 	/* RPP and bounding sphere */
 	VJOIN1( stp->st_center, pi.part_V, 0.5, pi.part_H );
@@ -288,14 +291,15 @@ struct rt_i		*rtip;
 	stp->st_min[Z] = pi.part_V[Z] - pi.part_vrad;
 	stp->st_max[Z] = pi.part_V[Z] + pi.part_vrad;
 
-	min[X] = pi.part_V[X] - pi.part_hrad;
-	max[X] = pi.part_V[X] + pi.part_hrad;
-	min[Y] = pi.part_V[Y] - pi.part_hrad;
-	max[Y] = pi.part_V[Y] + pi.part_hrad;
-	min[Z] = pi.part_V[Z] - pi.part_hrad;
-	max[Z] = pi.part_V[Z] + pi.part_hrad;
-	VMIN( stp->st_min, min );
-	VMAX( stp->st_max, max );
+	VADD2( tip, pi.part_V, pi.part_H );
+	min[X] = tip[X] - pi.part_hrad;
+	max[X] = tip[X] + pi.part_hrad;
+	min[Y] = tip[Y] - pi.part_hrad;
+	max[Y] = tip[Y] + pi.part_hrad;
+	min[Z] = tip[Z] - pi.part_hrad;
+	max[Z] = tip[Z] + pi.part_hrad;
+	VMINMAX( stp->st_min, stp->st_max, min );
+	VMINMAX( stp->st_min, stp->st_max, max );
 
 	/* Determine bounding sphere from the RPP */
 	{
@@ -320,6 +324,30 @@ register struct soltab *stp;
 {
 	register struct part_specific *part =
 		(struct part_specific *)stp->st_specific;
+
+	VPRINT("part_V", part->part_int.part_V );
+	VPRINT("part_H", part->part_int.part_V );
+	rt_log("part_vrad=%g\n", part->part_int.part_vrad );
+	rt_log("part_hrad=%g\n", part->part_int.part_hrad );
+
+	switch( part->part_int.part_type )  {
+	case RT_PARTICLE_TYPE_SPHERE:
+		rt_log("part_type = SPHERE\n");
+		break;
+	case RT_PARTICLE_TYPE_CYLINDER:
+		rt_log("part_type = CYLINDER\n");
+		mat_print("part_SoR", part->part_SoR );
+		mat_print("part_invRoS", part->part_invRoS );
+		break;
+	case RT_PARTICLE_TYPE_CONE:
+		rt_log("part_type = CONE\n");
+		mat_print("part_SoR", part->part_SoR );
+		mat_print("part_invRoS", part->part_invRoS );
+		break;
+	default:
+		rt_log("part_type = %d ???\n", part->part_int.part_type );
+		break;
+	}
 }
 
 /*
@@ -399,23 +427,25 @@ struct seg		*seghead;
 		goto check_hemispheres;
 
 	/* Find roots of the equation, using forumla for quadratic */
+	/* Note that vrad' = 1 and hrad' = hrad/vrad */
 	{
 		FAST fastf_t	a, b, c;
 		FAST fastf_t	root;		/* root of radical */
 		FAST fastf_t	m, msq;
 
-		m = part->part_int.part_hrad - part->part_int.part_vrad;
-
+#define VRAD_PRIME	1
+#define HRAD_PRIME	(part->part_int.part_hrad / part->part_int.part_vrad)
+		m = HRAD_PRIME - VRAD_PRIME;
 
 		a = dprime[X]*dprime[X] + dprime[Y]*dprime[Y] -
 			(msq = m*m) * dprime[Z]*dprime[Z];
 		b = 2 * (dprime[X]*pprime[X] + dprime[Y]*pprime[Y] -
 			msq * dprime[Z]*pprime[Z] -
-			m * part->part_int.part_vrad * dprime[Z] );
+			m * VRAD_PRIME * dprime[Z] );
 		c = pprime[X]*pprime[X] + pprime[Y]*pprime[Y] -
 			msq * pprime[Z]*pprime[Z] -
-			2 * m * part->part_int.part_vrad * pprime[Z] -
-			part->part_int.part_vrad * part->part_int.part_vrad;
+			2 * m * VRAD_PRIME * pprime[Z] -
+			VRAD_PRIME * VRAD_PRIME;
 
 		if( (root = b*b - 4 * a * c) <= 0 )
 			goto check_hemispheres;
@@ -537,8 +567,11 @@ register struct xray	*rp;
 		VUNITIZE( hitp->hit_normal );
 		break;
 	case RT_PARTICLE_SURF_BODY:
-		/* XXX unfinished */
-		VSET( hitp->hit_normal, 1, 0, 0 );
+		/* compute it */
+		hitp->hit_vpriv[Z] = 0.0;
+		MAT4X3VEC( hitp->hit_normal, part->part_invRoS,
+			hitp->hit_vpriv );
+		VUNITIZE( hitp->hit_normal );
 		break;
 	}
 }
