@@ -44,10 +44,10 @@ _LOCAL_ int	do_Bitpad();
 _LOCAL_ int	fb_Setup();
 _LOCAL_ int	pars_Argv();
 _LOCAL_ int	push_Macro();
-#if defined( BSD ) || defined( sgi )
-_LOCAL_ int	general_Handler();
-#else
+#if STD_SIGNAL_DECLS
 _LOCAL_ void	general_Handler();
+#else
+_LOCAL_ int	general_Handler();
 #endif
 _LOCAL_ void	init_Try();
 _LOCAL_ void	fb_Paint();
@@ -1808,6 +1808,8 @@ int	sig;
 		restore_Tty();
 		abort();
 		/*NOTREACHED*/
+	case SIGALRM :
+		break;
 #ifdef SYSV
 	case SIGCLD :
 		break;
@@ -1835,10 +1837,10 @@ int	sig;
 		break;
 		}
 	(void) signal( sig, general_Handler );
-#if defined( BSD ) || defined( sgi )
-	return	sig;
-#else
+#if STD_SIGNAL_DECLS
 	return;
+#else
+	return	sig;
 #endif
 	}
 

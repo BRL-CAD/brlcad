@@ -26,6 +26,14 @@
 #include "./try.h"
 #endif
 
+/* Set pre-processor switch for getting signal() handler declarations right.
+ */
+#if __STDC__ || (defined(SYSV) && ! defined(cray))
+#define STD_SIGNAL_DECLS 1
+#else
+#define STD_SIGNAL_DECLS 0
+#endif
+
 typedef struct
 	{
 	int	p_x;
