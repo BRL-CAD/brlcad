@@ -216,6 +216,8 @@ int	es_menu;		/* item selected from menu */
 #define	MENU_BOT_MOVET		99
 #define	MENU_BOT_MODE		100
 #define	MENU_BOT_ORIENT		101
+#define	MENU_BOT_THICK		102
+#define	MENU_BOT_FMODE		103
 
 extern int arb_faces[5][24];	/* from edarb.c */
 
@@ -606,6 +608,8 @@ struct menu_item bot_menu[] = {
 	{ "move triangle", bot_ed, ECMD_BOT_MOVET },
 	{ "select mode", bot_ed, ECMD_BOT_MODE },
 	{ "select orientation", bot_ed, ECMD_BOT_ORIENT },
+	{ "set face thickness", bot_ed, ECMD_BOT_THICK },
+	{ "set face mode", bot_ed, ECMD_BOT_FMODE },
 	{ "", (void (*)())NULL, 0 }
 };
 
@@ -3038,53 +3042,207 @@ sedit()
 		}
 		break;
 	case ECMD_BOT_MODE:
-	  {
-	    struct rt_bot_internal *bot =
-	      (struct rt_bot_internal *)es_int.idb_ptr;
-	    char *radio_result;
-	    char mode[10];
-	    int ret_tcl;
+		{
+			struct rt_bot_internal *bot =
+				(struct rt_bot_internal *)es_int.idb_ptr;
+			char *radio_result;
+			char mode[10];
+			int ret_tcl;
 
-	    RT_BOT_CK_MAGIC( bot );
-	    sprintf( mode, " %d", bot->mode - 1);
-	    ret_tcl = Tcl_VarEval( interp, "cad_radio", " .bot_mode_radio ",
+			RT_BOT_CK_MAGIC( bot );
+			sprintf( mode, " %d", bot->mode - 1);
+			ret_tcl = Tcl_VarEval( interp, "cad_radio", " .bot_mode_radio ",
 				   bu_vls_addr( &pathName ), " _bot_mode_result",
 				   " \"BOT Mode\"", "  \"Select the desired mode\"", mode,
 				   " { surface volume plate plate/nocosine }",
 				   " { \"In surface mode, each triangle represents part of a zero thickness surface and no volume is enclosed\" \"In volume mode, the triangles are expected to enclose a volume and that volume becomes the solid\" \"In plate mode, each triangle represents a plate with a specified thickness\" \"In plate/nocosine mode, each triangle represents a plate with a specified thickness, but the LOS thickness reported by the raytracer is independent of obliquity angle\" } ", (char *)NULL );
-	    if( ret_tcl != TCL_OK )
-	      {
-		Tcl_AppendResult(interp, "Mode selection failed!!!\n", (char *)NULL );
+			if( ret_tcl != TCL_OK )
+			{
+				Tcl_AppendResult(interp, "Mode selection failed!!!\n", (char *)NULL );
+				break;
+			}
+			radio_result = Tcl_GetVar( interp, "_bot_mode_result", TCL_GLOBAL_ONLY );
+			bot->mode = atoi( radio_result ) + 1;
+		}
 		break;
-	      }
-	    radio_result = Tcl_GetVar( interp, "_bot_mode_result", TCL_GLOBAL_ONLY );
-	    bot->mode = atoi( radio_result ) + 1;
-	  }
-	  break;
 	case ECMD_BOT_ORIENT:
-	  {
-	    struct rt_bot_internal *bot =
-	      (struct rt_bot_internal *)es_int.idb_ptr;
-	    char *radio_result;
-	    char orient[10];
-	    int ret_tcl;
+		{
+			struct rt_bot_internal *bot =
+				(struct rt_bot_internal *)es_int.idb_ptr;
+			char *radio_result;
+			char orient[10];
+			int ret_tcl;
 
-	    RT_BOT_CK_MAGIC( bot );
-	    sprintf( orient, " %d", bot->orientation - 1);
-	    ret_tcl = Tcl_VarEval( interp, "cad_radio", " .bot_orient_radio ",
+			RT_BOT_CK_MAGIC( bot );
+			sprintf( orient, " %d", bot->orientation - 1);
+			ret_tcl = Tcl_VarEval( interp, "cad_radio", " .bot_orient_radio ",
 				   bu_vls_addr( &pathName ), " _bot_orient_result",
 				   " \"BOT Face Orientation\"", "  \"Select the desired orientation\"", orient,
 				   " { none right-hand-rule left-hand-rule }",
 				   " { \"No orientation means that there is no particular order for the vertices of the triangles\" \"right-hand-rule means that the vertices of each triangle are ordered such that the right-hand-rule produces an outward pointing normal\"  \"left-hand-rule means that the vertices of each triangle are ordered such that the left-hand-rule produces an outward pointing normal\" } ", (char *)NULL );
-	    if( ret_tcl != TCL_OK )
-	      {
-		Tcl_AppendResult(interp, "Face orientation selection failed!!!\n", (char *)NULL );
+			if( ret_tcl != TCL_OK )
+			{
+				Tcl_AppendResult(interp, "Face orientation selection failed!!!\n", (char *)NULL );
+				break;
+			}
+			radio_result = Tcl_GetVar( interp, "_bot_orient_result", TCL_GLOBAL_ONLY );
+			bot->orientation = atoi( radio_result ) + 1;
+		}
 		break;
-	      }
-	    radio_result = Tcl_GetVar( interp, "_bot_orient_result", TCL_GLOBAL_ONLY );
-	    bot->orientation = atoi( radio_result ) + 1;
-	  }
-	  break;
+	case ECMD_BOT_THICK:
+		{
+			struct rt_bot_internal *bot =
+				(struct rt_bot_internal *)es_int.idb_ptr;
+			int i, face_no;
+
+			RT_BOT_CK_MAGIC( bot );
+
+			if( bot->mode != RT_BOT_PLATE && bot->mode != RT_BOT_PLATE_NOCOS )
+			{
+				(void)Tcl_VarEval( interp, "cad_dialog ", ".bot_err ", "$mged_gui(mged,screen) ", "{Not Plate Mode} ",
+					"{Cannot edit face thickness in a non-plate BOT} ", "\"\" ", "0 ", "OK ",
+					(char *)NULL );
+				break;
+			}
+
+			if( bot_verts[0] < 0 || bot_verts[1] < 0 || bot_verts[2] < 0 )
+			{
+				int ret_tcl;
+
+				/* setting thickness for all faces */
+				if( !inpara )
+					break;
+
+				(void)Tcl_VarEval( interp, "cad_dialog ", ".bot_err ",
+					"$mged_gui(mged,screen) ", "{Setting Thickness for All Faces} ",
+					"{No face is selected, so this operation will modify all the faces in this BOT} ",
+					"\"\" ", "0 ", "OK ", "CANCEL ", (char *)NULL );
+				if( atoi( interp->result) )
+					break;
+
+				for( i=0 ; i<bot->num_faces ; i++ )
+					bot->thickness[i] = es_para[0] * local2base;
+			}
+			else
+			{
+				/* setting thickness for just one face */
+				if( !inpara )
+					break;
+
+				face_no = -1;
+				for( i=0 ; i < bot->num_faces ; i++ )
+				{
+					if( bot_verts[0] == bot->faces[i*3] &&
+					    bot_verts[1] == bot->faces[i*3+1] &&
+					    bot_verts[2] == bot->faces[i*3+2] )
+					{
+						face_no = i;
+						break;
+					}
+				}
+				if( face_no < 0 )
+				{
+					bu_log( "Cannot find face with vertices %d %d %d!!\n",
+						V3ARGS( bot_verts ) );
+					break;
+				}
+
+				bot->thickness[face_no] = es_para[0] * local2base;
+			}
+		}
+		break;
+	case ECMD_BOT_FMODE:
+		{
+			struct rt_bot_internal *bot =
+				(struct rt_bot_internal *)es_int.idb_ptr;
+			char fmode[10];
+			char *radio_result;
+			int face_no;
+			int ret_tcl;
+
+			RT_BOT_CK_MAGIC( bot );
+
+			if( bot->mode != RT_BOT_PLATE && bot->mode != RT_BOT_PLATE_NOCOS )
+			{
+				(void)Tcl_VarEval( interp, "cad_dialog ", ".bot_err ", "$mged_gui(mged,screen) ", "{Not Plate Mode} ",
+					"{Cannot edit face mode in a non-plate BOT} ", "\"\" ", "0 ", "OK ",
+					(char *)NULL );
+				break;
+			}
+
+			if( bot_verts[0] < 0 || bot_verts[1] < 0 || bot_verts[2] < 0 )
+			{
+				int ret_tcl;
+
+				/* setting mode for all faces */
+				(void)Tcl_VarEval( interp, "cad_dialog ", ".bot_err ",
+					"$mged_gui(mged,screen) ", "{Setting Mode for All Faces} ",
+					"{No face is selected, so this operation will modify all the faces in this BOT} ",
+					"\"\" ", "0 ", "OK ", "CANCEL ", (char *)NULL );
+				if( atoi( interp->result) )
+					break;
+
+				face_no = -2;
+			}
+			else
+			{
+				/* setting thickness for just one face */
+				face_no = -1;
+				for( i=0 ; i < bot->num_faces ; i++ )
+				{
+					if( bot_verts[0] == bot->faces[i*3] &&
+					    bot_verts[1] == bot->faces[i*3+1] &&
+					    bot_verts[2] == bot->faces[i*3+2] )
+					{
+						face_no = i;
+						break;
+					}
+				}
+				if( face_no < 0 )
+				{
+					bu_log( "Cannot find face with vertices %d %d %d!!\n",
+						V3ARGS( bot_verts ) );
+					break;
+				}
+			}
+
+			if( face_no > -1 )
+				sprintf( fmode, " %d", BU_BITTEST( bot->face_mode, face_no ) );
+			else
+				sprintf( fmode, " %d", BU_BITTEST( bot->face_mode, 0 ) );
+
+			ret_tcl = Tcl_VarEval( interp, "cad_radio", " .bot_fmode_radio ", bu_vls_addr( &pathName ),
+					       " _bot_fmode_result ", "\"BOT Face Mode\"",
+					       " \"Select the desired face mode\"", fmode,
+					       " { {Thickness appended to hit point} {Thickness centered about hit point} }",
+					       " { {This selection will place the plate thickness rayward of the hit point} {This selection will place the plate thickness centered about the hit point} } ",
+					       (char *)NULL );
+			if( ret_tcl != TCL_OK )
+			{
+				bu_log( "ERROR: cad_radio: %s\n", interp->result );
+				break;
+			}
+			radio_result = Tcl_GetVar( interp, "_bot_fmode_result", TCL_GLOBAL_ONLY );
+
+			if( face_no > -1 )
+			{
+				if( atoi( radio_result ) )
+					BU_BITSET( bot->face_mode, face_no );
+				else
+					BU_BITCLR( bot->face_mode, face_no );
+			}
+			else
+			{
+				if( atoi( radio_result ) )
+				{
+					for( i=0 ; i<bot->num_faces ; i++ )
+						BU_BITSET( bot->face_mode, i );
+				}
+				else
+					bu_bitv_clear( bot->face_mode );
+			}
+		}
+		break;
 	case ECMD_ARB_MAIN_MENU:
 		/* put up control (main) menu for GENARB8s */
 		menu_state->ms_flag = 0;

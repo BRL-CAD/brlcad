@@ -112,6 +112,8 @@
 #define	ECMD_BOT_MOVET		69	/* move a BOT triangle */
 #define	ECMD_BOT_MODE		70	/* set BOT mode */
 #define	ECMD_BOT_ORIENT		71	/* set BOT face orientation */
+#define	ECMD_BOT_THICK		72	/* set face thickness (one or all) */
+#define	ECMD_BOT_FMODE		73	/* set face mode (one or all) */
 
 #define SEDIT_ROTATE (state == ST_S_EDIT && \
 		      (es_edflag == SROT || \
