@@ -753,7 +753,11 @@ va_dcl
 	(void) vsprintf( cp, fmt, ap );
 #else
 	strbuf._flag = _IOWRT|_IOSTRG;
+#if defined(sun)
+	strbuf._ptr = (unsigned char *)cp;
+#else
 	strbuf._ptr = cp;
+#endif
 	strbuf._cnt = sizeof(buf)-(cp-buf);
 	(void) _doprnt( fmt, ap, &strbuf );
 	putc( '\0', &strbuf );
