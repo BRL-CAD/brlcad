@@ -217,7 +217,7 @@ struct rt_tol	*tol;	/* NMG tolerances. */
 	cosang = VDOT(Vec, n);
 	if (NEAR_ZERO(cosang, MIKE_TOL))
 		rt_bomb("extrude_nmg_face: extrusion cannot be parallel to face\n");
-	else if (cosang > 0.)
+	if (cosang > 0.)
 		nmg_translate_face(fu, Vec, tol);
 	else if (cosang < 0.)
 		nmg_translate_face(fu2->fumate_p, Vec, tol);

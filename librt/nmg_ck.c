@@ -263,8 +263,7 @@ long	*up_magic_p;
 		if (RT_LIST_PPREV_CIRC(edgeuse,eunext) != eu )  {
 		    if (eunext->l.back)
 			rt_bomb("nmg_veu() next edgeuse has back that points elsewhere\n");
-		    else
-			rt_bomb("nmg_veu() next edgeuse has NULL back\n");
+		    rt_bomb("nmg_veu() next edgeuse has NULL back\n");
 		}
 
 		/*
@@ -315,12 +314,12 @@ long	*up_magic_p;
 		/* Check mate and radial */
 		if (eu->eumate_p->l.magic != NMG_EDGEUSE_MAGIC)
 			rt_bomb("nmg_veu() edgeuse mate is bad edgeuse\n");
-		else if (eu->eumate_p->eumate_p != eu)
+		if (eu->eumate_p->eumate_p != eu)
 			rt_bomb("nmg_veu() edgeuse mate spurns edgeuse\n");
 
 		if (eu->radial_p->l.magic != NMG_EDGEUSE_MAGIC)
 			rt_bomb("nmg_veu() edgeuse radial is bad edgeuse\n");
-		else if (eu->radial_p->radial_p != eu)
+		if (eu->radial_p->radial_p != eu)
 			rt_bomb("nmg_veu() edgeuse radial denies knowing edgeuse\n");
 
 		nmg_vedge(eu->e_p, eu);
@@ -422,7 +421,7 @@ long		*up;
 
 		if (!lu->l.forw)
 			rt_bomb("nmg_vlu() loopuse has null forw pointer\n");
-		else if (RT_LIST_PNEXT_PLAST(loopuse,lu) != lu )
+		if (RT_LIST_PNEXT_PLAST(loopuse,lu) != lu )
 			rt_bomb("nmg_vlu() forw loopuse has back pointing somewhere else\n");
 
 		if (!lu->lumate_p)
@@ -450,9 +449,7 @@ long		*up;
 
 		if (!lu->l_p)
 			rt_bomb("nmg_vlu() loopuse has Null loop pointer\n");
-		else {
-			nmg_vloop(lu->l_p, lu);
-		}
+		nmg_vloop(lu->l_p, lu);
 
 		if( RT_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_EDGEUSE_MAGIC)
 			nmg_veu( &lu->down_hd, &lu->l.magic);
@@ -798,7 +795,7 @@ char *str;
 
 		if (!eur) rt_bomb(
 			strcat(errstr, "nmg_ck_eu() radial path leads to null ptr\n"));
-		else if (eur == eu) rt_bomb(
+		if (eur == eu) rt_bomb(
 			strcat(errstr, "nmg_ck_eu() Never saw eumate\n"));
 
 		eu_next = RT_LIST_PNEXT_CIRC(edgeuse, eu);

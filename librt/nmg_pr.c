@@ -963,11 +963,10 @@ CONST fastf_t		*mag;
 				rt_log("ERROR vertexuse's parent disowns us!\n");
 				if (((struct vertexuse *)(vu->up.lu_p->lumate_p->down_hd.forw))->l.magic == NMG_VERTEXUSE_MAGIC)
 					rt_bomb("lumate has vertexuse\n");
-				else
-					rt_bomb("lumate has garbage\n");
+				rt_bomb("lumate has garbage\n");
 			}
 		} else {
-			rt_log("UNKNOWN");
+			rt_log("vu up UNKNOWN");
 		}
 		rt_log("\tv=x%x, vu=x%x, dist=%g\n", v , vu, mag[i] );
 	}
