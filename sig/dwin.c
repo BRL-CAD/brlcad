@@ -35,6 +35,8 @@ int	bartlett = 0;
 int	endwin = 0;
 int	midwin = 0;
 
+void	fill_buffer();
+
 static char usage[] = "\
 Usage: dwin [options] [width (1024)] [step (width)] [start]\n\
   -w  apply window (80%% split Cosine)\n\
@@ -180,6 +182,7 @@ seek_sample( n )
 /*
  * Fill the data buffer from the current input location.
  */
+void
 fill_buffer()
 {
 	int	n, num_to_read;

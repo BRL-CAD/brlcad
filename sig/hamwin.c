@@ -12,6 +12,7 @@ static int	_init_length = 0;	/* Internal: last initialized size */
 static int	maxinitlen = 0;
 static double	*hamwintab = NULL;
 
+void
 hamwin( data, length )
 double	*data;
 int	length;
@@ -35,6 +36,7 @@ int	length;
 /*
  * Complex Data Version.
  */
+void
 chamwin( data, length )
 COMPLEX	*data;
 int	length;
@@ -62,6 +64,7 @@ int	length;
  *  of a given length.
  *  Returns zero on failure.
  */
+int
 init_hamwintab( size )
 int size;
 {

@@ -12,6 +12,7 @@ static int	_init_length = 0;	/* Internal: last initialized size */
 static int	maxinitlen = 0;
 static double	*coswintab = NULL;
 
+void
 coswin( data, length, percent )
 double	*data;
 int	length;
@@ -39,6 +40,7 @@ double	percent;
 /*
  * Complex Data Version.
  */
+void
 ccoswin( data, length, percent )
 COMPLEX	*data;
 int	length;
@@ -69,6 +71,7 @@ double	percent;
  * Internal routine to initialize the cosine window table for
  *  a given effect length (number of sample at each end effected).
  */
+int
 init_coswintab( size )
 int size;
 {
