@@ -108,20 +108,6 @@ grid_setup()
 		MAT_DELTAS_VEC_NEG( toEye, eye_model );
 		mat_mul( model2view, Viewrotscale, toEye );
 		mat_inv( view2model, model2view );
-#if 0
-VPRINT("hv_wanted", hv_wanted);
-VPRINT("hv_delta", hv_delta);
-VPRINT("m_delta", m_delta);
-
-		/* As a check, go again... */
-		VSET( v_ll, -1, -1, 0 );
-		MAT4X3PNT( m_ll, view2model, v_ll );
-		MAT4X3PNT( hv_ll, model2hv, m_ll );
-		VSET( hv_wanted, floor(hv_ll[X]), floor(hv_ll[Y]),floor(hv_ll[Z]) );
-		VSUB2( hv_delta, hv_ll, hv_wanted );
-VPRINT("hv_wanted", hv_wanted);
-VPRINT("check hv_delta", hv_delta );
-#endif
 	}
 
 	/* Create basis vectors dx and dy for emanation plane (grid) */
