@@ -62,7 +62,10 @@ struct model	*m;
  *		have to invent one for the moment.  This is bogus.
  */
 void
-write_shell_as_polysolid( FILE *out_fp , char *name , struct shell *s )
+write_shell_as_polysolid( out_fp, name, s)
+FILE *out_fp;
+char *name;
+struct shell *s;
 {
 	struct faceuse *fu;
 	struct loopuse *lu;
