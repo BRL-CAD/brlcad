@@ -903,6 +903,11 @@ struct rt_tol		*tol;
 		}
 	}
 
+	/* ARS solids are often built with incorrect face normals.
+	 * Don't depend on them to be correct.
+	 */
+	nmg_fix_normals( s , tol );
+
 	/* Compute "geometry" for region and shell */
 	nmg_region_a( *r, tol );
 
