@@ -191,6 +191,7 @@ char	**dpp;		/* udata pointer address */
 char	**mpp;		/* mfuncs pointer address */
 {
 	register struct mfuncs *mfp;
+	struct rt_vls	arg;
 	char	matname[32];
 	int	i;
 
@@ -223,9 +224,12 @@ char	**mpp;		/* mfuncs pointer address */
 found:
 	*mpp = (char *)mfp;
 	*dpp = (char *)0;
-	if( mfp->mf_setup( rp, cp, dpp ) < 0 )  {
+	RT_VLS_INIT( &arg );
+	rt_vls_strcat( &arg, cp );
+	if( mfp->mf_setup( rp, &arg, dpp ) < 0 )  {
 		/* What to do if setup fails? */
 		return(-1);		/* BAD */
 	}
+	rt_vls_free( &arg );
 	return(0);			/* OK */
 }
