@@ -792,17 +792,29 @@ identbld()
 	case ID_MM_UNIT:
 		unit_str = "mm";
 		break;
+	case ID_UM_UNIT:
+		unit_str = "um";
+		break;
 	case ID_CM_UNIT:
 		unit_str = "cm";
 		break;
 	case ID_M_UNIT:
 		unit_str = "m";
 		break;
+	case ID_KM_UNIT:
+		unit_str = "km";
+		break;
 	case ID_IN_UNIT:
 		unit_str = "in";
 		break;
 	case ID_FT_UNIT:
 		unit_str = "ft";
+		break;
+	case ID_YD_UNIT:
+		unit_str = "yard";
+		break;
+	case ID_MI_UNIT:
+		unit_str = "mile";
 		break;
 	default:
 		fprintf(stderr,"asc2g: unknown units = %d\n", units);
