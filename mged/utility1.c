@@ -12,14 +12,6 @@
  *
  */
 
-#ifdef BSD
-# include <sys/types.h>
-# include <sys/stat.h>
-#endif
-#ifdef SYSV
-# include <stat.h>
-#endif
-
 #include <time.h>
 #include <pwd.h>
 #include <signal.h>
@@ -98,8 +90,6 @@ f_tables()
 	char *timep;
 	long now;
 	struct passwd *getpwuid();
-	int fstat();
-	struct stat filest, *fbuf;
 	static char sortcmd[80] = "sort -n +1 -2 -o /tmp/ord_id < ";
 	static char catcmd[80] = "cat /tmp/ord_id >> ";
 
@@ -135,7 +125,7 @@ f_tables()
 
 	if( flag == SOL_TABLE || flag == REG_TABLE ) {
 		/* temp file for discrimination of solids */
-		if( (idfd = creat("/tmp/mged_discr", 0666)) < 0 ) {
+		if( (idfd = creat("/tmp/mged_discr", 0600)) < 0 ) {
 			perror( "/tmp/mged_discr" );
 			return;
 		}
@@ -147,16 +137,8 @@ f_tables()
 	timep[24] = '\0';
 	(void)fprintf(tabptr,"1 -8    Summary Table {%s}  (written: %s)\n",cmd_args[0],timep);
 	(void)fprintf(tabptr,"2 -7         file name    : %s\n",filename);    
-	fbuf = &filest;
-	if( fstat( objfd, fbuf ) == -1 ) {
-		perror( "fstat()" );
-		return;
-	}
-	timep = ctime(&fbuf->st_mtime);
-	timep[24] = '\0';
-
-	(void)fprintf(tabptr,"3 -6         file owner   : %s\n",getpwuid((int)fbuf->st_uid)->pw_gecos);
-	(void)fprintf(tabptr,"4 -5         file last mod: %s\n",timep);
+	(void)fprintf(tabptr,"3 -6         \n");
+	(void)fprintf(tabptr,"4 -5         \n");
 	(void)fprintf(tabptr,"5 -4         user         : %s\n",getpwuid(getuid())->pw_gecos);
 	(void)fprintf(tabptr,"6 -3         target title : %s\n",cur_title);
 	(void)fprintf(tabptr,"7 -2         target units : %s\n",unit_str[localunit]);
