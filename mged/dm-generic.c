@@ -40,6 +40,21 @@ extern int menu_select();		/* defined in menu.c */
 
 int doMotion = 0;
 
+struct bu_structparse dm_xvars_vparse[] = {
+	{"%x",	1,	"dpy",			XVARS_MV_O(dpy),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%x",	1,	"win",			XVARS_MV_O(win),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%x",	1,	"top",			XVARS_MV_O(top),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%x",	1,	"tkwin",		XVARS_MV_O(xtkwin),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%d",	1,	"depth",		XVARS_MV_O(depth),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%x",	1,	"cmap",			XVARS_MV_O(cmap),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%x",	1,	"vip",			XVARS_MV_O(vip),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%x",	1,	"fontstruct",		XVARS_MV_O(fontstruct),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%d",	1,	"devmotionnotify",	XVARS_MV_O(devmotionnotify),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%d",	1,	"devbuttonpress",	XVARS_MV_O(devbuttonpress),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%d",	1,	"devbuttonrelease",	XVARS_MV_O(devbuttonrelease),	BU_STRUCTPARSE_FUNC_NULL },
+	{"",	0,	(char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
+};
+
 /*
  *  Based upon new state, possibly do extra stuff,
  *  including enabling continuous tablet tracking,
@@ -103,8 +118,8 @@ char **argv;
     return TCL_OK;
   }
 
-  if( !strcmp( argv[0], "m" )){
-    if( argc < 3){
+  if(!strcmp(argv[0], "m")){
+    if(argc < 3){
       Tcl_AppendResult(interp, "dm m: need more parameters\n",
 		       "dm m xpos ypos\n", (char *)NULL);
       return TCL_ERROR;
@@ -242,7 +257,7 @@ end:
   }
 
   if(!strcmp(argv[0], "am")){
-    if( argc < 4){
+    if(argc < 4){
       Tcl_AppendResult(interp, "dm am: need more parameters\n",
 		       "dm am <r|t|s> xpos ypos\n", (char *)NULL);
       return TCL_ERROR;
@@ -518,11 +533,11 @@ end:
     return TCL_OK;
   }
 
-  if( !strcmp( argv[0], "size" )){
+  if(!strcmp(argv[0], "size")){
     int width, height;
 
     /* get the window size */
-    if( argc == 1 ){
+    if(argc == 1){
       bu_vls_init(&vls);
       bu_vls_printf(&vls, "%d %d", dmp->dm_width, dmp->dm_height);
       Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
@@ -543,6 +558,31 @@ end:
 
     Tcl_AppendResult(interp, "Usage: dm size [width height]\n", (char *)NULL);
     return TCL_ERROR;
+  }
+
+  if(!strcmp(argv[0], "get")){
+    if(argc == 1){
+      struct bu_vls tmp_vls;
+
+      bu_vls_init(&tmp_vls);
+      start_catching_output(&tmp_vls);
+
+      /* Bare set command, print out current settings */
+      bu_struct_print("dm internal variables", dm_xvars_vparse,
+		      (CONST char *)dmp->dm_vars.pub_vars);
+
+      stop_catching_output(&tmp_vls);
+      Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+      bu_vls_free(&tmp_vls);
+    }else if(argc == 2){
+      bu_vls_init(&vls);
+      bu_vls_struct_item_named(&vls, dm_xvars_vparse, argv[1],
+			       (CONST char *)dmp->dm_vars.pub_vars, ',');
+      Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+      bu_vls_free(&vls);
+    }
+
+    return TCL_OK;
   }
 
   Tcl_AppendResult(interp, "dm: bad command - ", argv[0], "\n", (char *)NULL);
