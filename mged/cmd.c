@@ -57,10 +57,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #define MORE_ARGS_STR    "more arguments needed::"
 
-int cmd_sig2();
 int cmd_mged_glob();
 int cmd_init();
 int cmd_set();
+int get_more_default();
 int f_tran(), f_irot();
 void set_tran();
 
@@ -954,13 +954,13 @@ int interactive;
     }
 
 #if 1
-    (void)Tcl_CreateCommand(interp, "sigint", cmd_sig2, (ClientData)NULL,
-			    (Tcl_CmdDeleteProc *)NULL);
     (void)Tcl_CreateCommand(interp, "mged_glob", cmd_mged_glob, (ClientData)NULL,
 			    (Tcl_CmdDeleteProc *)NULL);
     (void)Tcl_CreateCommand(interp, "cmd_init", cmd_init, (ClientData)NULL,
 			    (Tcl_CmdDeleteProc *)NULL);
     (void)Tcl_CreateCommand(interp, "cmd_set", cmd_set, (ClientData)NULL,
+			    (Tcl_CmdDeleteProc *)NULL);
+    (void)Tcl_CreateCommand(interp, "get_more_default", get_more_default, (ClientData)NULL,
 			    (Tcl_CmdDeleteProc *)NULL);
 #endif
 
@@ -990,6 +990,7 @@ int interactive;
 }
 
 
+/* initialize a new command window */
 int
 cmd_init(clientData, interp, argc, argv)
 ClientData clientData;
@@ -1009,11 +1010,12 @@ char **argv;
   RT_LIST_APPEND(&head_cmd_list.l, &clp->l);
   strcpy((char *)clp->name, argv[1]);
   clp->cur_hist = head_cmd_list.cur_hist;
-
+  rt_vls_init(&clp->more_default);
   return TCL_OK;
 }
 
 
+/* sets the current command window */
 int
 cmd_set(clientData, interp, argc, argv)
 ClientData clientData;
@@ -1042,18 +1044,27 @@ char **argv;
   if(curr_cmd_list->aim)
     curr_dm_list = curr_cmd_list->aim;
 
+  rt_vls_trunc(&curr_cmd_list->more_default, 0);
   return TCL_OK;
 }
 
 
 int
-cmd_sig2(clientData, interp, argc, argv)
+get_more_default(clientData, interp, argc, argv)
 ClientData clientData;
 Tcl_Interp *interp;
 int argc;
 char **argv;
 {
-  sig2();
+  struct cmd_list *p;
+
+  if(argc != 1){
+    Tcl_SetResult(interp, "Usage: get_more_default", TCL_STATIC);
+    return TCL_ERROR;
+  }
+
+  Tcl_SetResult(interp, rt_vls_addr(&curr_cmd_list->more_default), TCL_VOLATILE);
+  return TCL_OK;
 }
 
 
