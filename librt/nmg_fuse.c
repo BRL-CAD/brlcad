@@ -3688,6 +3688,20 @@ CONST struct bn_tol	*tol;
 	{
 		/* Only joining two edges, let's keep it simple */
 		nmg_je( eu1, eu2 );
+		if( eu1->g.magic_p && eu2->g.magic_p )
+		{
+			if( eu1->g.magic_p != eu2->g.magic_p )
+				nmg_jeg( eu1->g.lseg_p, eu2->g.lseg_p );
+		}
+		else if( eu1->g.magic_p && !eu2->g.magic_p )
+			(void)nmg_use_edge_g( eu2, eu1->g.magic_p );
+		else if( !eu1->g.magic_p && eu2->g.magic_p )
+			(void)nmg_use_edge_g( eu1, eu2->g.magic_p );
+		else
+		{
+			nmg_edge_g( eu1 );
+			nmg_use_edge_g( eu2, eu1->g.magic_p );
+		}
 		return;
 	}
 
