@@ -1,4 +1,4 @@
-## $Id$#
+# $Id$#
 
 EXTRA_PROGRAMS = proe-brl
 EXTRA_LTLIBRARIES = libproe2brl.la
