@@ -34,9 +34,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 extern int	getopt();
 extern char	*optarg;
 extern int	optind;
+char *progname = "(noname)";
 
 char	*file_name;
-FILE	*infp;
 
 char usage[] = "\
 Usage: bwmod {-a add -s sub -m mult -d div -A(abs) -e exp -r root} [file.bw]\n";
@@ -45,14 +45,16 @@ Usage: bwmod {-a add -s sub -m mult -d div -A(abs) -e exp -r root} [file.bw]\n";
 #define MULT	2
 #define	ABS	3
 #define	POW	4
-
-#define	BUFLEN	1024
+#define	BUFLEN	(8192*2)	/* usually 2 pages of memory, 16KB */
 
 int	numop = 0;		/* number of operations */
 int	op[256];		/* operations */
 double	val[256];		/* arguments to operations */
-double	buf[BUFLEN];		/* working buffer */
-unsigned char obuf[BUFLEN];	/* output buffer */
+unsigned char ibuf[BUFLEN];	/* input buffer */
+unsigned char mapbuf[256];	/* translation buffer/lookup table */
+unsigned char clip_h[256];	/* map of values which clip high */
+unsigned char clip_l[256];	/* map of values which clip low */
+
 
 get_args( argc, argv )
 register char **argv;
@@ -78,7 +80,7 @@ register char **argv;
 			op[ numop ] = MULT;
 			d = atof(optarg);
 			if( d == 0.0 ) {
-				fprintf( stderr, "bwmod: divide by zero!\n" );
+				(void)fprintf( stderr, "bwmod: divide by zero!\n" );
 				exit( 2 );
 			}
 			val[ numop++ ] = 1.0 / d;
@@ -95,7 +97,7 @@ register char **argv;
 			op[ numop ] = POW;
 			d = atof(optarg);
 			if( d == 0.0 ) {
-				fprintf( stderr, "bwmod: zero root!\n" );
+				(void)fprintf( stderr, "bwmod: zero root!\n" );
 				exit( 2 );
 			}
 			val[ numop++ ] = 1.0 / d;
@@ -107,13 +109,12 @@ register char **argv;
 	}
 
 	if( optind >= argc )  {
-		if( isatty(fileno(stdin)) )
+		if( isatty((int)fileno(stdin)) )
 			return(0);
 		file_name = "-";
-		infp = stdin;
 	} else {
 		file_name = argv[optind];
-		if( (infp = fopen(file_name, "r")) == NULL )  {
+		if( freopen(file_name, "r", stdin) == NULL )  {
 			(void)fprintf( stderr,
 				"bwmod: cannot open \"%s\" for reading\n",
 				file_name );
@@ -127,82 +128,73 @@ register char **argv;
 	return(1);		/* OK */
 }
 
-main( argc, argv )
+void mk_trans_tbl()
+{
+	register int j, i;
+	register double d;
+
+	(void)bzero((char *)clip_h, sizeof(clip_h));
+	(void)bzero((char *)clip_l, sizeof(clip_l));
+
+	/* create translation map */
+	for (j = 0; j < sizeof(mapbuf) ; ++j) {
+		d = j;
+		for (i=0 ; i < numop ; i++) {
+			switch (op[i]) {
+			case ADD : d += val[i]; break;
+			case MULT: d *= val[i]; break;
+			case POW : d = pow( d, val[i]); break;
+			case ABS : if (d < 0.0) d = - d; break;
+			default  : (void)fprintf(stderr, "%s: error in op\n", progname); break;
+			}
+		}
+		if (d > 255.0) {
+			clip_h[j] = 1;
+			mapbuf[j] = 255;
+		} else if (d < 0.0) {
+			clip_l[j] = 1;
+			mapbuf[j] = 0;
+		} else
+			mapbuf[j] = d + 0.5;
+	}
+}
+
+int main( argc, argv )
 int argc;
 char **argv;
 {
-	int	i, n;
-#ifdef sgi
-	double	*bp;		/* avoid SGI -Zf reg pointer ++ problem */
-#else
-	register double	*bp;
-#endif
-	register double	arg;
-	register int j;
-	long	value;
-	unsigned char ibuf[BUFLEN];
-	long	clip_high, clip_low;
+	register int	j, n;
+	unsigned long clip_high, clip_low;
+	
+	progname = *argv;
 
-	if( !get_args( argc, argv ) || isatty(fileno(infp))
+	if( !get_args( argc, argv ) || isatty(fileno(stdin))
 	    || isatty(fileno(stdout)) ) {
 		(void)fputs(usage, stderr);
 		exit( 1 );
 	}
 
-	clip_high = clip_low = 0;
+	mk_trans_tbl();
 
-	while( (n = fread(ibuf, sizeof(*ibuf), BUFLEN, infp)) > 0 ) {
-		for( i = 0; i < n; i++ )
-			buf[i] = ibuf[i];
-		for( i = 0; i < numop; i++ ) {
-			arg = val[ i ];
-			switch( op[i] ) {
-			case ADD:
-				bp = &buf[0];
-				for( j = n; j > 0; j-- ) {
-					*bp++ += arg;
-				}
-				break;
-			case MULT:
-				bp = &buf[0];
-				for( j = n; j > 0; j-- ) {
-					*bp++ *= arg;
-				}
-				break;
-			case POW:
-				bp = &buf[0];
-				for( j = n; j > 0; j-- ) {
-					*bp++ = pow( *bp, arg );
-				}
-				break;
-			case ABS:
-				bp = &buf[0];
-				for( j = n; j > 0; j-- ) {
-					if( *bp < 0.0 )
-						*bp = - *bp;
-					bp++;
-				}
-				break;
-			default:
-				break;
-			}
+	clip_high = clip_low = 0;
+	while ( (n=read(0, (void *)ibuf, (unsigned)sizeof(ibuf))) > 0) {
+		/* translate */
+		for (j=0 ; j < n ; ++j) {
+			ibuf[j] = mapbuf[ibuf[j]];
+			if (clip_h[j]) clip_high++;
+			else if (clip_l[j]) clip_low++;
 		}
-		for( i = 0; i < n; i++ ) {
-			value = buf[i] + 0.5;	/* double -> long */
-			if( value > 255 ) {
-				obuf[i] = 255;
-				clip_high++;
-			} else if( value < 0 ) {
-				obuf[i] = 0;
-				clip_low++;
-			} else
-				obuf[i] = value;
+		/* output */
+		if (write(1, (void *)ibuf, (unsigned)n) != n) {
+			(void)fprintf(stderr, "%s: Error writing stdout\n",
+				progname);
+			exit(-1);
 		}
-		fwrite( obuf, sizeof(*obuf), n, stdout );
 	}
 
 	if( clip_high != 0 || clip_low != 0 ) {
-		fprintf( stderr, "bwmod: clipped %d high, %d low\n",
+		(void)fprintf( stderr, "bwmod: clipped %lu high, %lu low\n",
 			clip_high, clip_low );
 	}
+	return(0);
 }
