@@ -2623,7 +2623,7 @@ point_t Q;
 vect_t e_in;
 point_t pt1, pt2;
 {
-	fastf_t de, dd, ee, Qe, Pe, denom;
+	fastf_t de, Qe, Pe, denom;
 	vect_t diff, PmQ, tmp;
 	vect_t d, e;
 	fastf_t len_e, inv_len_e, len_d, inv_len_d;
@@ -2666,7 +2666,7 @@ point_t pt1, pt2;
 			dist[1] = VDOT( PmQ, tmp )/denom;
 			Qe = VDOT( Q, e );
 			Pe = VDOT( P, e );
-			dist[0] = (dist[1] + (Qe - Pe))/de;
+			dist[0] = dist[1] * de - VDOT( PmQ, d );
 		}
 	}
 	VJOIN1( pt1, P, dist[0], d );
