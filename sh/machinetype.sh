@@ -84,6 +84,7 @@ then
 		7)	MACHINE=8d;;
 		*)	echo ERROR unknown SGI software version `uname -a` 1>&2;;
 		esac;;
+	IRIX64)	UNIXTYPE=SYSV; HAS_TCP=1; HAS_SYMLINKS=1; MACHINE=7d;;
 	esac; fi
 fi
 
