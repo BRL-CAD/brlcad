@@ -29,14 +29,14 @@
  * than approximate it.
  */
 
-fastf_t *
-rt_nurb_s_norm(srf, u, v)
+void
+rt_nurb_s_norm(srf, u, v, norm)
 struct snurb * srf;
 fastf_t u, v;
+fastf_t * norm;
 {
 	struct snurb *usrf, *vsrf;
 	point_t uvec, vvec;
-	fastf_t * norm = (fastf_t *)NULL;
 	fastf_t p;
 	fastf_t se[4], ue[4], ve[4];
 	int i;
@@ -97,12 +97,10 @@ fastf_t u, v;
 		VSUB2(uvec, se, ue);
 		VSUB2(vvec, se, ve);
 
-		norm = (fastf_t *) rt_malloc( 3 * sizeof( fastf_t ),
-				"normal");
 		VCROSS( norm, uvec, vvec);
 		VUNITIZE( norm );
 
-		return norm;		
+		return;		
 
 	}
 	/* Case (linear, > linear) Use the linear direction to approximate
@@ -112,7 +110,6 @@ fastf_t u, v;
 	{
 		rt_nurb_s_eval( srf, u, v, se);
 		
-		norm = (fastf_t *) rt_malloc( 3 * sizeof(fastf_t),"normal");
 		p = 0.0;
 		for( i = 0; i < srf->u_knots.k_size -1; i++)
 		{
@@ -165,13 +162,12 @@ fastf_t u, v;
 		VUNITIZE(norm);
 
 		rt_nurb_free_snurb(vsrf);
-		return norm;
+		return;
 	}
 	if( srf->order[1] == 2 && srf->order[0] > 2 )
 	{
 		rt_nurb_s_eval( srf, u, v, se);
 		
-		norm = (fastf_t *) rt_malloc( 3 * sizeof(fastf_t),"normal");
 		p = 0.0;
 		for( i = 0; i < srf->v_knots.k_size -1; i++)
 		{
@@ -224,15 +220,12 @@ fastf_t u, v;
 		VUNITIZE(norm);		
 
 		rt_nurb_free_snurb(usrf);
-		return norm;
+		return;
 	}
 	
 	/* Case Non Rational (order > 2, order > 2) */
 	if( !RT_NURB_IS_PT_RATIONAL(srf->pt_type))
 	{
-
-		norm = (fastf_t *) rt_malloc( sizeof( fastf_t) * 3, 
-			"rt_nurb_norm: fastf_t for norm");
 
 		usrf = (struct snurb *) rt_nurb_s_diff( srf, RT_NURB_SPLIT_ROW);
 		vsrf = (struct snurb *) rt_nurb_s_diff( srf, RT_NURB_SPLIT_COL);
@@ -246,7 +239,7 @@ fastf_t u, v;
 		rt_nurb_free_snurb(usrf);
 		rt_nurb_free_snurb(vsrf);
 		
-		return norm;
+		return;
 	}
 
 	/* Case Rational (order > 2, order > 2) */
@@ -255,9 +248,6 @@ fastf_t u, v;
 		fastf_t w, inv_w;
 		vect_t unorm, vnorm;
 		int i;
-
-		norm = (fastf_t *) rt_malloc( sizeof( fastf_t) * 3, 
-			"rt_nurb_norm: fastf_t for norm");
 
 		rt_nurb_s_eval(srf, u, v, se);
 
@@ -285,8 +275,7 @@ fastf_t u, v;
 		rt_nurb_free_snurb(usrf);
 		rt_nurb_free_snurb(vsrf);
 		
-		return norm;
+		return;
 	}
-	/* This will be a null pointer, is this an error? */
-	return norm;
+	return;
 }
