@@ -923,9 +923,16 @@ fp->ff_frame, fp->ff_color[0], fp->ff_color[1], fp->ff_color[2],
 fp->ff_dist, V3ARGS(fp->ff_hitpt) );
 #endif
 			for( ; npix > 0; fp++,npix-- )  {
-				*op++ = fp->ff_color[0];
-				*op++ = fp->ff_color[1];
-				*op++ = fp->ff_color[2];
+				if( fp->ff_frame < 0 && fp->ff_dist > -INFINITY )  {
+					/* orange: Pixel not valid */
+					*op++ = 50;
+					*op++ = 50;
+					*op++ = 0;
+				} else {
+					*op++ = fp->ff_color[0];
+					*op++ = fp->ff_color[1];
+					*op++ = fp->ff_color[2];
+				}
 			}
 			npix = fb_writerect( fbp, 0, start_line,
 				width, nlines, bigbuf );
