@@ -9,7 +9,19 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
+#include <math.h>
+#include <assert.h>
+
+#include "machine.h"
+#include "externs.h"
+#include "vmath.h"
+#include "raytrace.h"
+#include "fb.h"
+#include "./hmenu.h"
+#include "./lgt.h"
 #include "./extern.h"
 #include "./vecmath.h"
 #include "./tree.h"
@@ -21,14 +33,14 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 static RGBpixel	black = { 0, 0, 0 };
 static int	ir_max_index = -1;
-RGBpixel	*ir_table = RGBPIXEL_NULL;
+RGBpixel	*ir_table = (RGBpixel *)RGBPIXEL_NULL;
 
 STATIC void	temp_To_RGB();
 
 int
 ir_Chk_Table()
 	{
-	if( ir_table == PIXEL_NULL )
+	if( ir_table == (RGBpixel *)PIXEL_NULL )
 		{
 		get_Input( input_ln, MAX_LN, "Enter minimum temperature : " );
 		if( sscanf( input_ln, "%d", &ir_min ) != 1 )
@@ -95,11 +107,11 @@ int	xmin, ymin;
 					/* LINT: this should be an &ir_table...,
 						allowed by ANSI C, but not current
 						compilers. */
-				(void) fb_wpixel( fbiop, (RGBpixel *) black );
+				(void) fb_wpixel( fbiop, (unsigned char *) black );
 				}
 			else
 				{
-				(void) fb_wpixel( fbiop, pixel );
+				(void) fb_wpixel( fbiop, (unsigned char *) pixel );
 				}
 			}
 		}
@@ -216,7 +228,7 @@ FILE	*fp;
 				return	0;
 				}
 			pixel = (RGBpixel *) ir_table[index];
-			(void) fb_wpixel( fbiop, pixel );
+			(void) fb_wpixel( fbiop, (unsigned char *)pixel );
 			}
 		}
 	}
@@ -300,7 +312,7 @@ init_Temp_To_RGB()
 		return	0;
 		}
 	sample_sz = Sqr( ir_aperture );
-	if( ir_table != RGBPIXEL_NULL )
+	if( ir_table != (RGBpixel *)RGBPIXEL_NULL )
 		/* Table already initialized presumably from another view,
 			since range may differ we must create a different
 			table of color assignment, so free storage and re-
@@ -308,7 +320,7 @@ init_Temp_To_RGB()
 		 */
 		free( (char *) ir_table );
 	ir_table = (RGBpixel *) malloc( (unsigned)(sizeof(RGBpixel)*((ir_max-ir_min)+1)) );
-	if( ir_table == RGBPIXEL_NULL )
+	if( ir_table == (RGBpixel *)RGBPIXEL_NULL )
 		{
 		Malloc_Bomb(sizeof(RGBpixel)*((ir_max-ir_min)+1));
 		fatal_error = TRUE;
