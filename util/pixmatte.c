@@ -171,8 +171,10 @@ register char	**argv;
 			break;
 		case 'w':
 			c = atoi(optarg);
-			if( c > 1 && c < sizeof(pconst) )
+			if( c >= 1 && c < sizeof(pconst) )
 				width = c;
+			else
+				usage("Illegal width specified\n", 1);
 			break;
 		default:		/* '?' */
 			usage("unknown option\n", 1);
@@ -349,7 +351,7 @@ fail:
 			exit(1);
 		}
 	}
-	fprintf( stderr, "pixmatte: %d element comparisons true, %d false\n",
-		true_cnt, false_cnt );
+	fprintf( stderr, "pixmatte: %d element comparisons true, %d false (width=%d)\n",
+		true_cnt, false_cnt, width );
 	return(0);
 }
