@@ -145,6 +145,25 @@ struct rt_i	*rtip;
 
 	rt_clean( rtip );
 
+#if 0
+	/* XXX These can't be freed here either, because we allocated
+	 * them all on rt_uniresource, which doesn't discriminate
+	 * on which db_i they go with.
+	 */
+
+	/* The 'struct directory' guys are malloc()ed in big blocks */
+	resp->re_directory_hd = NULL;	/* abandon list */
+	if( BU_LIST_IS_INITIALIZED( &resp->re_directory_blocks.l ) )  {
+		struct directory **dpp;
+		BU_CK_PTBL( &resp->re_directory_blocks );
+		for( BU_PTBL_FOR( dpp, (struct directory **), &resp->re_directory_blocks ) )  {
+			RT_CK_DIR(*dpp);	/* Head of block will be a valid seg */
+			bu_free( (genptr_t)(*dpp), "struct directory block" );
+		}
+		bu_ptbl_free( &resp->re_directory_blocks );
+	}
+#endif
+
 	db_close_client( rtip->rti_dbip, (long *)rtip );
 	rtip->rti_dbip = (struct db_i *)NULL;
 
@@ -376,7 +395,7 @@ int			ncpu;
 		FILE		*plotfp;
 
 		if( (plotfp=fopen("rtsolids.pl", "w")) != NULL)  {
-			rt_plot_all_solids( plotfp, rtip );
+			rt_plot_all_solids( plotfp, rtip, resp );
 			(void)fclose(plotfp);
 		}
 	}
@@ -430,9 +449,10 @@ struct rt_i	*rtip;
  *			R T _ P L O T _ A L L _ S O L I D S
  */
 void
-rt_plot_all_solids( fp, rtip )
-FILE		*fp;
-struct rt_i	*rtip;
+rt_plot_all_solids(
+	FILE		*fp,
+	struct rt_i	*rtip,
+	struct resource	*resp)
 {
 	register struct soltab	*stp;
 
@@ -448,7 +468,7 @@ struct rt_i	*rtip;
 		if( stp->st_aradius >= INFINITY )
 			continue;
 
-		(void)rt_plot_solid( fp, rtip, stp );
+		(void)rt_plot_solid( fp, rtip, stp, resp );
 	} RT_VISIT_ALL_SOLTABS_END
 }
 
@@ -463,14 +483,15 @@ struct rt_i	*rtip;
  *	 0	OK
  */
 int
-rt_vlist_solid( vhead, rtip, stp )
-struct rt_i		*rtip;
-struct soltab		*stp;
-struct bu_list		*vhead;
+rt_vlist_solid(
+	struct bu_list		*vhead,
+	struct rt_i		*rtip,
+	const struct soltab	*stp,
+	struct resource		*resp)
 {
 	struct rt_db_internal		intern;
 
-	if( rt_db_get_internal( &intern, stp->st_dp, rtip->rti_dbip, stp->st_matp ) < 0 )  {
+	if( rt_db_get_internal( &intern, stp->st_dp, rtip->rti_dbip, stp->st_matp, resp ) < 0 )  {
 		bu_log("rt_vlist_solid(%s): rt_db_get_internal() failed\n",
 			stp->st_name);
 		return(-1);			/* FAIL */
@@ -485,10 +506,10 @@ struct bu_list		*vhead;
 	    ) < 0 )  {
 		bu_log("rt_vlist_solid(%s): ft_plot() failure\n",
 			stp->st_name);
-		rt_db_free_internal( &intern );
+		rt_db_free_internal( &intern, resp );
 	    	return(-2);
 	}
-	rt_db_free_internal( &intern );
+	rt_db_free_internal( &intern, resp );
 	return 0;
 }
 
@@ -504,10 +525,11 @@ struct bu_list		*vhead;
  *	 0	OK
  */
 int
-rt_plot_solid( fp, rtip, stp )
-register FILE		*fp;
-struct rt_i		*rtip;
-struct soltab		*stp;
+rt_plot_solid(
+	register FILE		*fp,
+	struct rt_i		*rtip,
+	const struct soltab	*stp,
+	struct resource		*resp)
 {
 	struct bu_list			vhead;
 	struct region			*regp;
@@ -517,7 +539,7 @@ struct soltab		*stp;
 
 	BU_LIST_INIT( &vhead );
 
-	if( rt_vlist_solid( &vhead, rtip, stp ) < 0 )  {
+	if( rt_vlist_solid( &vhead, rtip, stp, resp ) < 0 )  {
 		bu_log("rt_plot_solid(%s): rt_vlist_solid() failed\n",
 			stp->st_name);
 		return(-1);			/* FAIL */
@@ -549,13 +571,23 @@ struct soltab		*stp;
  *	This routine should initialize all the same resources
  *	that rt_clean_resource() releases.
  *	It shouldn't allocate any dynamic memory, just init pointers & lists.
+ *
+ *  if( BU_LIST_UNINITIALIZED( &resp->re_parthead ) )
+ *  indicates that this initialization is needed.
+ *
+ *  Note that this routine is also called as part of rt_clean_resource().
+ *
+ *  Special case, resp == rt_uniresource, no rtip is required.
  */
 void
-rt_init_resource( resp, cpu_num )
-struct resource *resp;
-int		cpu_num;
+rt_init_resource(
+	struct resource *resp,
+	int		cpu_num,
+	struct rt_i	*rtip)
 {
 	int i;
+
+	if( resp != &rt_uniresource )  RT_CK_RTI(rtip);
 
 	resp->re_magic = RESOURCE_MAGIC;
 	resp->re_cpu = cpu_num;
@@ -567,6 +599,9 @@ int		cpu_num;
 
 	if( BU_LIST_UNINITIALIZED( &resp->re_seg_blocks.l ) )
 		bu_ptbl_init( &resp->re_seg_blocks, 64, "re_seg_blocks ptbl" );
+
+	if( BU_LIST_UNINITIALIZED( &resp->re_directory_blocks.l ) )
+		bu_ptbl_init( &resp->re_directory_blocks, 64, "re_directory_blocks ptbl" );
 
 	if( BU_LIST_UNINITIALIZED( &resp->re_parthead ) )
 		BU_LIST_INIT( &resp->re_parthead )
@@ -593,6 +628,23 @@ int		cpu_num;
 
 	resp->re_boolstack = NULL;
 	resp->re_boolslen = 0;
+
+	if( resp == &rt_uniresource )  return;
+
+	/* Ensure that this CPU's resource structure is registered in rt_i */
+	/* It may already be there when we're called from rt_clean_resource */
+	{
+		struct resource	*ores = (struct resource *)
+			BU_PTBL_GET(&rtip->rti_resources, cpu_num);
+		if( ores != NULL && ores != resp )  {
+			bu_log("rt_init_resource(cpu=%d) re-registering resource, had x%x, new=x%x\n",
+				cpu_num,
+				ores,
+				resp );
+			bu_bomb("rt_init_resource() re-registration\n");
+		}
+		BU_PTBL_SET(&rtip->rti_resources, cpu_num, resp);
+	}
 }
 
 /*
@@ -612,6 +664,10 @@ int		cpu_num;
  *  Note that the resource struct's storage is not freed (it may be static
  *  or otherwise allocated by a LIBRT application) but any dynamic
  *  memory pointed to by it is freed.
+ *
+ *  One exception to this is that the re_directory_hd and re_directory_blocks
+ *  are not touched, because the "directory" structures (which are really
+ *  part of the db_i) continue to be in use.
  */
 void
 rt_clean_resource( rtip, resp )
@@ -630,10 +686,15 @@ struct resource	*resp;
 		BU_CK_PTBL( &resp->re_seg_blocks );
 		for( BU_PTBL_FOR( spp, (struct seg **), &resp->re_seg_blocks ) )  {
 			RT_CK_SEG(*spp);	/* Head of block will be a valid seg */
-			bu_free( (genptr_t)(*spp), "struct seg" );
+			bu_free( (genptr_t)(*spp), "struct seg block" );
 		}
 		bu_ptbl_free( &resp->re_seg_blocks );
 	}
+
+	/*
+	 *  The 'struct directory' guys are malloc()ed in big blocks,
+	 *  but CAN'T BE FREED HERE!  We are not done with the db_i yet.
+	 */
 
 	/* The "struct hitmiss' guys are individually malloc()ed */
 	if( BU_LIST_IS_INITIALIZED( &resp->re_nmgfree ) )  {
@@ -693,7 +754,7 @@ struct resource	*resp;
 	rt_res_pieces_clean( resp, rtip );
 
 	/* Reinitialize pointers, to be tidy.  No storage is allocated. */
-	rt_init_resource( resp, resp->re_cpu );
+	rt_init_resource( resp, resp->re_cpu, rtip );
 }
 
 /*
@@ -729,7 +790,7 @@ register struct rt_i *rtip;
 	while( BU_LIST_WHILE( regp, region, &rtip->HeadRegion ) )  {
 		RT_CK_REGION(regp);
 		BU_LIST_DEQUEUE(&(regp->l));
-		db_free_tree( regp->reg_treetop );
+		db_free_tree( regp->reg_treetop, &rt_uniresource );
 		bu_free( (genptr_t)regp->reg_name, "region name str");
 		regp->reg_name = (char *)0;
 		if( regp->reg_mater.ma_shader )
@@ -800,8 +861,13 @@ register struct rt_i *rtip;
 			RT_CK_RESOURCE(*rpp);
 			/* Clean but do not free the resource struct */
 			rt_clean_resource(rtip, *rpp);
+#if 0
+/* XXX Can't do this, or 'clean' command in RT animation script will dump core. */
+/* rt expects them to stay inited and remembered, forever. */
+/* Submodels will clean up after themselves */
 			/* Forget remembered ptr, but keep ptbl allocated */
 			*rpp = NULL;
+#endif
 		}
 	}
 	if( rt_uniresource.re_magic )  {
@@ -859,16 +925,16 @@ register struct rt_i *rtip;
  *	 0	success
  */
 int
-rt_del_regtree( rtip, delregp )
-struct rt_i *rtip;
-register struct region *delregp;
+rt_del_regtree( struct rt_i *rtip, register struct region *delregp, struct resource *resp )
 {
+	RT_CK_RESOURCE(resp);
+
 	if( rt_g.debug & DEBUG_REGIONS )
 		bu_log("rt_del_regtree(%s): region deleted\n", delregp->reg_name);
 
 	BU_LIST_DEQUEUE(&(delregp->l));
 
-	db_free_tree( delregp->reg_treetop );
+	db_free_tree( delregp->reg_treetop, resp );
 	delregp->reg_treetop = TREE_NULL;
 	bu_free( (char *)delregp->reg_name, "region name str");
 	delregp->reg_name = (char *)0;
@@ -949,6 +1015,8 @@ register struct rt_i	*rtip;
 
 	RT_CK_RTI(rtip);
 	RT_CK_DBI(rtip->rti_dbip);
+
+	db_ck_directory(rtip->rti_dbip);
 
 	RT_VISIT_ALL_SOLTABS_START( stp, rtip )  {
 		RT_CK_SOLTAB(stp);

@@ -121,11 +121,14 @@ struct hf_specific {
  *	There is no record in the V5 database for an HF.
  */
 int
-rt_hf_to_dsp(struct rt_db_internal *db_intern)
+rt_hf_to_dsp(struct rt_db_internal *db_intern, struct resource *resp)
 {
 	struct rt_hf_internal	*hip = (struct rt_hf_internal *)db_intern;
 	struct rt_dsp_internal	*dsp;
 	mat_t 			tmp, mat;
+
+	RT_CK_DB_INTERNAL(db_intern);
+	RT_CK_RESOURCE(resp);
 
 	BU_GETSTRUCT( dsp, rt_dsp_internal );
 	dsp->dsp_xcnt = hip->w;
@@ -151,10 +154,12 @@ rt_hf_to_dsp(struct rt_db_internal *db_intern)
 
 	/* XXX There is more logic needed here */
 
-	rt_db_free_internal( db_intern );
+
 	db_intern->idb_ptr = (genptr_t)dsp;
 	db_intern->idb_type = ID_DSP;
 	db_intern->idb_meth = &rt_functab[ID_DSP];
+
+	rt_db_free_internal( db_intern, resp );
 
 	return -1;
 

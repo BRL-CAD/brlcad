@@ -1086,7 +1086,8 @@ rt_db_cvt_to_external5(
 	const char *name,
 	const struct rt_db_internal *ip,
 	double conv2mm,
-	struct db_i *dbip)
+	struct db_i *dbip,
+	struct resource *resp)
 {
 	struct bu_external	attributes;
 	struct bu_external	body;
@@ -1094,10 +1095,11 @@ rt_db_cvt_to_external5(
 
 	RT_CK_DB_INTERNAL( ip );
 	if(dbip) RT_CK_DBI(dbip);	/* may be null */
+	RT_CK_RESOURCE(resp);
 	BU_INIT_EXTERNAL( &body );
 
 	/* Scale change on export is 1.0 -- no change */
-	if( ip->idb_meth->ft_export5( &body, ip, conv2mm, dbip ) < 0 )  {
+	if( ip->idb_meth->ft_export5( &body, ip, conv2mm, dbip, resp ) < 0 )  {
 		bu_log("rt_db_cvt_to_external5(%s):  ft_export5 failure\n",
 			name);
 		bu_free_external( &body );
@@ -1260,20 +1262,22 @@ db_put_external5(struct bu_external *ep, struct directory *dp, struct db_i *dbip
  *	 0	success
  */
 int
-rt_db_put_internal5( dp, dbip, ip )
-struct directory	*dp;
-struct db_i		*dbip;
-struct rt_db_internal	*ip;
+rt_db_put_internal5(
+	struct directory	*dp,
+	struct db_i		*dbip,
+	struct rt_db_internal	*ip,
+	struct resource		*resp)
 {
 	struct bu_external	ext;
 
 	RT_CK_DIR(dp);
 	RT_CK_DBI(dbip);
 	RT_CK_DB_INTERNAL( ip );
+	RT_CK_RESOURCE(resp);
 
 	BU_ASSERT_LONG( dbip->dbi_version, ==, 5 );
 
-	if( rt_db_cvt_to_external5( &ext, dp->d_namep, ip, 1.0, dbip ) < 0 )  {
+	if( rt_db_cvt_to_external5( &ext, dp->d_namep, ip, 1.0, dbip, resp ) < 0 )  {
 		bu_log("rt_db_put_internal5(%s):  export failure\n",
 			dp->d_namep);
 		goto fail;
@@ -1298,64 +1302,13 @@ struct rt_db_internal	*ip;
 	}
 ok:
 	bu_free_external( &ext );
-	rt_db_free_internal( ip );
+	rt_db_free_internal( ip, resp );
 	return 0;			/* OK */
 
 fail:
 	bu_free_external( &ext );
-	rt_db_free_internal( ip );
+	rt_db_free_internal( ip, resp );
 	return -2;		/* FAIL */
-}
-
-/*
- *			R T _ F W R I T E _ I N T E R N A L 5
- *
- *  Put an object in internal format out onto a file in external format.
- *
- *  The internal representation is always freed.
- *
- *  Can't really require a dbip parameter, as many callers won't have one.
- *
- *  Returns -
- *	0	OK
- *	<0	error
- *
- *  This routine isn't used anymore.
- *  NOTE:  Potential users of this routine really should consider using
- *  wdb_put_internal() instead!
- */
-int
-rt_fwrite_internal5( fp, name, ip, conv2mm )
-FILE			*fp;
-CONST char		*name;
-struct rt_db_internal	*ip;
-double			conv2mm;
-{
-	struct bu_external	ext;
-
-	RT_CK_DB_INTERNAL(ip);
-	RT_CK_FUNCTAB( ip->idb_meth );
-
-	if( rt_db_cvt_to_external5( &ext, name, ip, conv2mm, NULL ) < 0 )  {
-		bu_log("rt_fwrite_internal5(%s):  export failure\n",
-			name);
-		bu_free_external( &ext );
-		rt_db_free_internal( ip );
-		return -1;		/* FAIL */
-	}
-	BU_CK_EXTERNAL( &ext );
-
-	if( bu_fwrite_external( fp, &ext ) < 0 )  {
-		bu_log("rt_fwrite_internal5(%s): bu_fwrite_external() error\n",
-			name );
-		bu_free_external( &ext );
-		rt_db_free_internal( ip );
-		return -2;		/* FAIL */
-	}
-	bu_free_external( &ext );
-	rt_db_free_internal( ip );
-	return 0;
-
 }
 
 /*
@@ -1374,7 +1327,8 @@ rt_db_external5_to_internal5(
 	const struct bu_external	*ep,
 	const char			*name,
 	const struct db_i		*dbip,
-	const mat_t			mat)
+	const mat_t			mat,
+	struct resource			*resp)
 {
 	register int		id;
 	struct db5_raw_internal	raw;
@@ -1419,10 +1373,10 @@ rt_db_external5_to_internal5(
 	}
 
 	/* ip has already been initialized, and should not be re-initted */
-	if( rt_functab[id].ft_import5( ip, &raw.body, mat, dbip ) < 0 )  {
+	if( rt_functab[id].ft_import5( ip, &raw.body, mat, dbip, resp ) < 0 )  {
 		bu_log("rt_db_get_internal5(%s):  import failure\n",
 			name );
-		rt_db_free_internal( ip );
+		rt_db_free_internal( ip, resp );
 		return -1;		/* FAIL */
 	}
 	/* Don't free &raw.body */
@@ -1447,11 +1401,12 @@ rt_db_external5_to_internal5(
  *	id	On success.
  */
 int
-rt_db_get_internal5( ip, dp, dbip, mat )
-struct rt_db_internal	*ip;
-CONST struct directory	*dp;
-CONST struct db_i	*dbip;
-CONST mat_t		mat;
+rt_db_get_internal5(
+	struct rt_db_internal	*ip,
+	const struct directory	*dp,
+	const struct db_i	*dbip,
+	const mat_t		mat,
+	struct resource		*resp)
 {
 	struct bu_external	ext;
 	int			ret;
@@ -1464,7 +1419,7 @@ CONST mat_t		mat;
 	if( db_get_external( &ext, dp, dbip ) < 0 )
 		return -2;		/* FAIL */
 
-	ret = rt_db_external5_to_internal5( ip, &ext, dp->d_namep, dbip, mat );
+	ret = rt_db_external5_to_internal5( ip, &ext, dp->d_namep, dbip, mat, resp );
 	bu_free_external(&ext);
 	return ret;
 }

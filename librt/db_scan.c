@@ -372,7 +372,7 @@ db_update_ident( struct db_i *dbip, const char *new_title, double local2mm )
 
 	if( dbip->dbi_version > 4 )  return db5_update_ident( dbip, new_title, local2mm );
 
-	dir.d_namep = "/IDENT/";
+	RT_DIR_SET_NAMEP(&dir, "/IDENT/");
 	dir.d_addr = 0L;
 	dir.d_len = 1;
 	dir.d_magic = RT_DIR_MAGIC;

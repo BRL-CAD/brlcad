@@ -1607,6 +1607,7 @@ dgo_wireframe_leaf(tsp, pathp, ip, client_data)
 
 	RT_CK_TESS_TOL(tsp->ts_ttol);
 	BN_CK_TOL(tsp->ts_tol);
+	RT_CK_RESOURCE(tsp->ts_resp);
 
 	BU_LIST_INIT(&vhead);
 
@@ -1657,7 +1658,7 @@ dgo_wireframe_leaf(tsp, pathp, ip, client_data)
 	}
 
 	/* Indicate success by returning something other than TREE_NULL */
-	BU_GETUNION(curtree, tree);
+	RT_GET_TREE(curtree, tsp->ts_resp);
 	curtree->magic = RT_TREE_MAGIC;
 	curtree->tr_op = OP_NOP;
 
@@ -1700,6 +1701,9 @@ dgo_nmg_region_start(tsp, pathp, combp, client_data)
 		db_pr_tree_state(tsp);
 	}
 
+	RT_CK_DBI(tsp->ts_dbip);
+	RT_CK_RESOURCE(tsp->ts_resp);
+
 	BU_LIST_INIT(&vhead);
 
 	RT_CK_COMB(combp);
@@ -1730,7 +1734,7 @@ dgo_nmg_region_start(tsp, pathp, combp, client_data)
 			matp = (matp_t)NULL;
 		}
 	}
-	if (rt_db_get_internal(&intern, dp, tsp->ts_dbip, matp) < 0)
+	if (rt_db_get_internal(&intern, dp, tsp->ts_dbip, matp, &rt_uniresource) < 0)
 		return 0;	/* proceed as usual */
 
 	switch (intern.idb_type) {
@@ -1789,7 +1793,7 @@ dgo_nmg_region_start(tsp, pathp, combp, client_data)
 	default:
 		break;
 	}
-	rt_db_free_internal(&intern);
+	rt_db_free_internal(&intern, tsp->ts_resp);
 	return 0;
 
 out:
@@ -1797,7 +1801,7 @@ out:
 	db_add_node_to_full_path(pathp, dp);
 	dgo_drawH_part2(0, &vhead, pathp, tsp, SOLID_NULL, dgcdp);
 	DB_FULL_PATH_POP(pathp);
-	rt_db_free_internal(&intern);
+	rt_db_free_internal(&intern, tsp->ts_resp);
 	dgcdp->fastpath_count++;
 	return -1;	/* SKIP THIS REGION */
 }
@@ -1822,6 +1826,7 @@ dgo_nmg_region_end(tsp, pathp, curtree, client_data)
 	RT_CK_TESS_TOL(tsp->ts_ttol);
 	BN_CK_TOL(tsp->ts_tol);
 	NMG_CK_MODEL(*tsp->ts_m);
+	RT_CK_RESOURCE(tsp->ts_resp);
 
 	BU_LIST_INIT( &vhead );
 
@@ -1846,27 +1851,27 @@ dgo_nmg_region_end(tsp, pathp, curtree, client_data)
 				" failed!!!\n", (char *)NULL );
 			bu_free((genptr_t)sofar, "path string");
 			if( curtree )
-				db_free_tree( curtree );
+				db_free_tree( curtree, tsp->ts_resp );
 			return (union tree *)NULL;
 		}
-		failed = nmg_boolean( curtree, *tsp->ts_m, tsp->ts_tol );
+		failed = nmg_boolean( curtree, *tsp->ts_m, tsp->ts_tol, tsp->ts_resp );
 		BU_UNSETJUMP;
 		if( failed )  {
-			db_free_tree( curtree );
+			db_free_tree( curtree, tsp->ts_resp );
 			return (union tree *)NULL;
 		}
 	}
 	else if( curtree->tr_op != OP_NMG_TESS )
 	{
 	  Tcl_AppendResult(dgcdp->interp, "Cannot use '-d' option when Boolean evaluation is required\n", (char *)NULL);
-	  db_free_tree( curtree );
+	  db_free_tree( curtree, tsp->ts_resp );
 	  return (union tree *)NULL;
 	}
 	r = curtree->tr_d.td_r;
 	NMG_CK_REGION(r);
 
 	if( dgcdp->do_not_draw_nmg_solids_during_debugging && r )  {
-		db_free_tree( curtree );
+		db_free_tree( curtree, tsp->ts_resp );
 		return (union tree *)NULL;
 	}
 
@@ -1880,7 +1885,7 @@ dgo_nmg_region_end(tsp, pathp, curtree, client_data)
 				" failed!!!\n", (char *)NULL );
 			bu_free((genptr_t)sofar, "path string");
 			if( curtree )
-				db_free_tree( curtree );
+				db_free_tree( curtree, tsp->ts_resp );
 			return (union tree *)NULL;
 		}
 		nmg_triangulate_model(*tsp->ts_m, tsp->ts_tol);
@@ -1916,7 +1921,7 @@ dgo_nmg_region_end(tsp, pathp, curtree, client_data)
 			nmg_vlblock_r(dgcdp->draw_edge_uses_vbp, r, 1);
 		}
 		/* NMG region is no longer necessary, only vlist remains */
-		db_free_tree( curtree );
+		db_free_tree( curtree, tsp->ts_resp );
 		return (union tree *)NULL;
 	}
 

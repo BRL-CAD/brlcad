@@ -152,10 +152,12 @@ db_flatten_tree(
 	struct rt_tree_array	*rt_tree_array,
 	union tree		*tp,
 	int			op,
-	int			free)
+	int			free,
+	struct resource		*resp)
 {
 
 	RT_CK_TREE(tp);
+	RT_CK_RESOURCE(resp);
 
 	switch( tp->tr_op )  {
 	case OP_DB_LEAF:
@@ -167,13 +169,13 @@ db_flatten_tree(
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
 		/* This node is known to be a binary op */
-		rt_tree_array = db_flatten_tree( rt_tree_array, tp->tr_b.tb_left, op, free );
-		rt_tree_array = db_flatten_tree( rt_tree_array, tp->tr_b.tb_right, tp->tr_op, free );
+		rt_tree_array = db_flatten_tree( rt_tree_array, tp->tr_b.tb_left, op, free, resp );
+		rt_tree_array = db_flatten_tree( rt_tree_array, tp->tr_b.tb_right, tp->tr_op, free, resp );
 		if(free)  {
 			/* The leaves have been stolen, free the binary op */
 			tp->tr_b.tb_left = TREE_NULL;
 			tp->tr_b.tb_right = TREE_NULL;
-			bu_free( (char *)tp, "union tree (db_flatten_tree");
+			RT_FREE_TREE( tp, resp )
 		}
 		return rt_tree_array;
 
@@ -195,7 +197,8 @@ rt_comb_import4(
 	struct rt_db_internal		*ip,
 	const struct bu_external	*ep,
 	const matp_t			matrix,		/* NULL if identity */
-	const struct db_i		*dbip)
+	const struct db_i		*dbip,
+	struct resource			*resp)
 {
 	union record		*rp;
 	struct rt_tree_array	*rt_tree_array;
@@ -251,7 +254,7 @@ rt_comb_import4(
 			mat_t			diskmat;
 			char			namebuf[NAMESIZE+2];
 
-			BU_GETUNION( tp, tree );
+			RT_GET_TREE( tp, resp );
 			rt_tree_array[j].tl_tree = tp;
 			tp->tr_l.magic = RT_TREE_MAGIC;
 			tp->tr_l.tl_op = OP_DB_LEAF;
@@ -298,7 +301,7 @@ rt_comb_import4(
 		}
 	}
 	if( node_count )
-		tree = db_mkgift_tree( rt_tree_array, node_count, (struct db_tree_state *)NULL );
+		tree = db_mkgift_tree( rt_tree_array, node_count, &rt_uniresource );
 	else
 		tree = (union tree *)NULL;
 
@@ -402,7 +405,8 @@ rt_comb_export4(
 	struct bu_external		*ep,
 	const struct rt_db_internal	*ip,
 	double				local2mm,
-	const struct db_i		*dbip)
+	const struct db_i		*dbip,
+	struct resource			*resp)
 {
 	struct rt_comb_internal	*comb;
 	int			node_count;
@@ -415,12 +419,13 @@ rt_comb_export4(
 	struct bu_vls		tmp_vls;
 
 	RT_CK_DB_INTERNAL( ip );
+	RT_CK_RESOURCE(resp);
 	if( ip->idb_type != ID_COMBINATION ) bu_bomb("rt_comb_export4() type not ID_COMBINATION");
 	comb = (struct rt_comb_internal *)ip->idb_ptr;
 	RT_CK_COMB(comb);
 
 	if( comb->tree && db_ck_v4gift_tree( comb->tree ) < 0 )  {
-		db_non_union_push( comb->tree );
+		db_non_union_push( comb->tree, resp );
 		if( db_ck_v4gift_tree( comb->tree ) < 0 )  {
 			/* Need to further modify tree */
 			bu_log("rt_comb_export4() Unfinished: need to V4-ify tree\n");
@@ -435,7 +440,8 @@ rt_comb_export4(
 		rt_tree_array = (struct rt_tree_array *)bu_calloc( node_count , sizeof( struct rt_tree_array ) , "rt_tree_array" );
 
 		/* Convert tree into array form */
-		actual_count = db_flatten_tree( rt_tree_array, comb->tree, OP_UNION, 1 ) - rt_tree_array;
+		actual_count = db_flatten_tree( rt_tree_array, comb->tree,
+			OP_UNION, 1, resp ) - rt_tree_array;
 		BU_ASSERT_LONG( actual_count, ==, node_count );
 		comb->tree = TREE_NULL;
 	} else {
@@ -475,7 +481,7 @@ rt_comb_export4(
 		} else {
 			rt_dbmat_mat( rp[j+1].M.m_mat, bn_mat_identity );
 		}
-		db_free_tree( tp );
+		db_free_tree( tp, resp );
 	}
 
 	/* Build the Combination record, on the front */
@@ -558,7 +564,8 @@ db_tree_flatten_describe(
 	const union tree	*tp,
 	int			indented,
 	int			lvl,
-	double			mm2local)
+	double			mm2local,
+	struct resource		*resp)
 {
 	int node_count;
 	struct rt_tree_array	*rt_tree_array;
@@ -568,6 +575,7 @@ db_tree_flatten_describe(
 	union tree *ntp;
 
 	BU_CK_VLS(vls);
+	RT_CK_RESOURCE(resp);
 
 	if( !tp )
 	{
@@ -589,12 +597,12 @@ db_tree_flatten_describe(
 	 *  argument is 'const'.  Before getting started, make a
 	 *  private copy just for us.
 	 */
-	ntp = db_dup_subtree( tp );
+	ntp = db_dup_subtree( tp, resp );
 	RT_CK_TREE(ntp);
 
 	/* Convert to "v4 / GIFT style", so that the flatten makes sense. */
 	if( db_ck_v4gift_tree( ntp ) < 0 )
-		db_non_union_push( ntp );
+		db_non_union_push( ntp, resp );
 	RT_CK_TREE(ntp);
 
 	node_count = db_tree_nleaves( ntp );
@@ -603,7 +611,7 @@ db_tree_flatten_describe(
 	/*
 	 * free=0 means that the tree won't have any leaf nodes freed.
 	 */
-	(void)db_flatten_tree( rt_tree_array, ntp, OP_UNION, 0 );
+	(void)db_flatten_tree( rt_tree_array, ntp, OP_UNION, 0, resp );
 
 	for( i=0 ; i<node_count ; i++ )
 	{
@@ -660,7 +668,7 @@ db_tree_flatten_describe(
 	}
 
 	if( rt_tree_array ) bu_free( (genptr_t)rt_tree_array, "rt_tree_array" );
-	db_free_tree( ntp );
+	db_free_tree( ntp, resp );
 }
 
 /*
@@ -777,9 +785,11 @@ db_comb_describe(
 	struct bu_vls	*str,
 	const struct rt_comb_internal	*comb,
 	int		verbose,
-	double		mm2local)
+	double		mm2local,
+	struct resource	*resp)
 {
 	RT_CK_COMB(comb);
+	RT_CK_RESOURCE(resp);
 
 	if( comb->region_flag ) {
 		bu_vls_printf( str,
@@ -820,7 +830,7 @@ db_comb_describe(
 
 	if( comb->tree )  {
 		if( verbose )  {
-			db_tree_flatten_describe( str, comb->tree, 0, 1, mm2local );
+			db_tree_flatten_describe( str, comb->tree, 0, 1, mm2local, resp );
 		} else {
 			rt_pr_tree_vls( str, comb->tree );
 		}
@@ -835,16 +845,17 @@ db_comb_describe(
  *  Free the storage associated with the rt_db_internal version of this combination.
  */
 void
-rt_comb_ifree( struct rt_db_internal *ip )
+rt_comb_ifree( struct rt_db_internal *ip, struct resource *resp )
 {
 	register struct rt_comb_internal	*comb;
 
 	RT_CK_DB_INTERNAL(ip);
+	RT_CK_RESOURCE(resp);
 	comb = (struct rt_comb_internal *)ip->idb_ptr;
 	RT_CK_COMB(comb);
 
 	/* If tree hasn't been stolen, release it */
-	if(comb->tree) db_free_tree( comb->tree );
+	if(comb->tree) db_free_tree( comb->tree, resp );
 	comb->tree = NULL;
 
 	bu_vls_free( &comb->shader );
@@ -857,21 +868,26 @@ rt_comb_ifree( struct rt_db_internal *ip )
 
 /*
  *			R T _ C O M B _ D E S C R I B E
+ *
+ *  rt_functab[ID_COMBINATION].ft_describe() method
  */
 int
 rt_comb_describe(
 	struct bu_vls	*str,
 	const struct rt_db_internal *ip,
 	int		verbose,
-	double		mm2local)
+	double		mm2local,
+	struct resource	*resp)
 {
 	CONST struct rt_comb_internal	*comb;
 
 	RT_CK_DB_INTERNAL(ip);
+	RT_CK_RESOURCE(resp);
+
 	comb = (struct rt_comb_internal *)ip->idb_ptr;
 	RT_CK_COMB(comb);
 
-	db_comb_describe( str, comb, verbose, mm2local );
+	db_comb_describe( str, comb, verbose, mm2local, resp );
 	return 0;
 }
 
@@ -991,7 +1007,8 @@ db_ck_v4gift_tree( CONST union tree *tp )
 union tree *
 db_mkbool_tree( 
 	struct rt_tree_array *rt_tree_array,
-	int		howfar)
+	int		howfar,
+	struct resource	*resp)
 {
 	register struct rt_tree_array *tlp;
 	register int		i;
@@ -999,6 +1016,8 @@ db_mkbool_tree(
 	register union tree	*xtp;
 	register union tree	*curtree;
 	register int		inuse;
+
+	RT_CK_RESOURCE(resp);
 
 	if( howfar <= 0 )
 		return(TREE_NULL);
@@ -1035,7 +1054,7 @@ db_mkbool_tree(
 		if( tlp->tl_tree == TREE_NULL )
 			continue;
 
-		BU_GETUNION( xtp, tree );
+		RT_GET_TREE( xtp, resp );
 		xtp->magic = RT_TREE_MAGIC;
 		xtp->tr_b.tb_left = curtree;
 		xtp->tr_b.tb_right = tlp->tl_tree;
@@ -1054,13 +1073,15 @@ union tree *
 db_mkgift_tree(
 	struct rt_tree_array	*trees,
 	int			subtreecount,
-	struct db_tree_state	*tsp)
+	struct resource		*resp)
 {
 	register struct rt_tree_array *tstart;
 	register struct rt_tree_array *tnext;
 	union tree		*curtree;
 	int	i;
 	int	j;
+
+	RT_CK_RESOURCE(resp);
 
 	/*
 	 * This is how GIFT interpreted equations, so it is duplicated here.
@@ -1079,7 +1100,7 @@ db_mkgift_tree(
 			continue;
 		if( (j = tnext-tstart) <= 0 )
 			continue;
-		curtree = db_mkbool_tree( tstart, j );
+		curtree = db_mkbool_tree( tstart, j, resp );
 		/* db_mkbool_tree() has side effect of zapping tree array,
 		 * so build new first node in array.
 		 */
@@ -1095,7 +1116,7 @@ db_mkgift_tree(
 		tstart = tnext;
 	}
 
-	curtree = db_mkbool_tree( trees, subtreecount );
+	curtree = db_mkbool_tree( trees, subtreecount, resp );
 	if(rt_g.debug&DEBUG_TREEWALK)  {
 		bu_log("db_mkgift_tree() returns:\n");
 		rt_pr_tree(curtree, 0);

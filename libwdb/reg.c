@@ -100,6 +100,8 @@ mk_tree_pure( struct rt_comb_internal *comb, struct bu_list *member_hd )
  *  Add some nodes to a new or existing combination's tree,
  *  with GIFT precedence and semantics.
  *
+ *  NON-PARALLEL due to rt_uniresource
+ *
  *  Returns -
  *	-1	ERROR
  *	0	OK
@@ -119,7 +121,7 @@ mk_tree_gift( struct rt_comb_internal *comb, struct bu_list *member_hd )
 
 	if( comb->tree && db_ck_v4gift_tree( comb->tree ) < 0 )
 	{
-		db_non_union_push( comb->tree );
+		db_non_union_push( comb->tree, &rt_uniresource );
 		if( db_ck_v4gift_tree( comb->tree ) < 0 )
 		{
 			bu_log("mk_tree_gift() Cannot flatten tree for editing\n");
@@ -136,7 +138,8 @@ mk_tree_gift( struct rt_comb_internal *comb, struct bu_list *member_hd )
 	if( comb->tree )  {
 		/* Release storage for non-leaf nodes, steal leaves */
 		actual_count = (struct rt_tree_array *)db_flatten_tree(
-			tree_list, comb->tree, OP_UNION, 1 ) - tree_list;
+			tree_list, comb->tree, OP_UNION,
+			1, &rt_uniresource ) - tree_list;
 		BU_ASSERT_LONG( actual_count, ==, node_count );
 		comb->tree = TREE_NULL;
 	} else {
@@ -177,7 +180,7 @@ mk_tree_gift( struct rt_comb_internal *comb, struct bu_list *member_hd )
 	BU_ASSERT_LONG( node_count, ==, actual_count + new_nodes );
 
 	/* rebuild the tree with GIFT semantics */
-	comb->tree = (union tree *)db_mkgift_tree( tree_list, node_count, (struct db_tree_state *)NULL );
+	comb->tree = (union tree *)db_mkgift_tree( tree_list, node_count, &rt_uniresource );
 
 	bu_free( (char *)tree_list, "mk_tree_gift: tree_list" );
 

@@ -238,11 +238,12 @@ rt_comb_v5_serialize(
  *			R T _ C O M B _ E X P O R T 5
  */
 int
-rt_comb_export5( ep, ip, local2mm, dbip )
-struct bu_external		*ep;
-CONST struct rt_db_internal	*ip;
-double				local2mm;
-CONST struct db_i		*dbip;
+rt_comb_export5(
+	struct bu_external		*ep,
+	const struct rt_db_internal	*ip,
+	double				local2mm,
+	const struct db_i		*dbip,
+	struct resource			*resp)
 {
 	struct rt_comb_internal	*comb;
 	struct db_tree_counter_state		tcs;
@@ -257,6 +258,7 @@ CONST struct db_i		*dbip;
 	struct bu_vls	value;
 
 	RT_CK_DB_INTERNAL( ip );
+	RT_CK_RESOURCE(resp);
 
 	if( ip->idb_type != ID_COMBINATION ) bu_bomb("rt_comb_export5() type not ID_COMBINATION");
 	comb = (struct rt_comb_internal *)ip->idb_ptr;
@@ -419,11 +421,12 @@ CONST struct db_i		*dbip;
  *	-1	FAIL
  */
 int
-rt_comb_import5(ip, ep, mat, dbip)
-struct rt_db_internal	*ip;
-const struct bu_external *ep;
-const mat_t		mat;
-const struct db_i	*dbip;
+rt_comb_import5(
+	struct rt_db_internal	*ip,
+	const struct bu_external *ep,
+	const mat_t		mat,
+	const struct db_i	*dbip,
+	struct resource		*resp)
 {
 	struct rt_comb_internal	*comb;
 	unsigned char	*cp;
@@ -442,6 +445,9 @@ const struct db_i	*dbip;
 
 	RT_CK_DB_INTERNAL( ip );
 	BU_CK_EXTERNAL(ep);
+	RT_CK_DBI(dbip);
+	RT_CK_RESOURCE(resp);
+
 	ip->idb_type = ID_COMBINATION;
 	ip->idb_meth = &rt_functab[ID_COMBINATION];
 	BU_GETSTRUCT( comb, rt_comb_internal );
@@ -469,7 +475,7 @@ const struct db_i	*dbip;
 			union tree	*tp;
 			long		mi;
 
-			BU_GETUNION( tp, tree );
+			RT_GET_TREE( tp, resp );
 			tp->tr_l.magic = RT_TREE_MAGIC;
 			tp->tr_l.tl_op = OP_DB_LEAF;
 			tp->tr_l.tl_name = bu_strdup( (const char *)leafp );
@@ -496,7 +502,7 @@ const struct db_i	*dbip;
 				comb->tree = tp;
 			} else {
 				union tree	*unionp;
-				BU_GETUNION( unionp, tree );
+				RT_GET_TREE( unionp, resp );
 				unionp->tr_b.magic = RT_TREE_MAGIC;
 				unionp->tr_b.tb_op = OP_UNION;
 				unionp->tr_b.tb_left = comb->tree;
@@ -523,7 +529,7 @@ const struct db_i	*dbip;
 		union tree	*tp;
 		long		mi;
 
-		BU_GETUNION( tp, tree );
+		RT_GET_TREE( tp, resp );
 		tp->tr_b.magic = RT_TREE_MAGIC;
 
 		switch( *exprp )  {

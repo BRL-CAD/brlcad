@@ -768,6 +768,8 @@ register struct application *ap;
 	ap->a_finished_segs_hdp = &finished_segs;
 
 	if( BU_LIST_UNINITIALIZED( &resp->re_parthead ) )  {
+		/* XXX This shouldn't happen any more */
+		bu_log("rt_shootray() resp=x%x uninitialized, fixing it\n", resp);
 		/*
 		 *  We've been handed a mostly un-initialized resource struct,
 		 *  with only a magic number and a cpu number filled in.
@@ -775,12 +777,10 @@ register struct application *ap;
 		 *  This is how application-provided resource structures
 		 *  are remembered for later cleanup by the library.
 		 */
-		rt_init_resource( resp, resp->re_cpu );
+		rt_init_resource( resp, resp->re_cpu, rtip );
 	}
 	/* Ensure that this CPU's resource structure is registered */
-	if( BU_PTBL_GET(&rtip->rti_resources, resp->re_cpu) == NULL )  {
-		BU_PTBL_GET(&rtip->rti_resources, resp->re_cpu) = (long *)resp;
-	}
+	BU_ASSERT_PTR( BU_PTBL_GET(&rtip->rti_resources, resp->re_cpu), !=, NULL );
 
 	if( BU_LIST_IS_EMPTY( &resp->re_solid_bitv ) )  {
 		solidbits = bu_bitv_new( rtip->nsolids );
@@ -1365,6 +1365,8 @@ int	n;		/* First cell is #0 */
 		rt_prep_parallel(rtip, 1);	/* Stay on our CPU */
 
 	if( BU_LIST_UNINITIALIZED( &resp->re_parthead ) )  {
+		/* XXX This shouldn't happen any more */
+		bu_log("rt_cell_n_on_ray() resp=x%x uninitialized, fixing it\n", resp);
 		/*
 		 *  We've been handed a mostly un-initialized resource struct,
 		 *  with only a magic number and a cpu number filled in.
@@ -1372,12 +1374,10 @@ int	n;		/* First cell is #0 */
 		 *  This is how application-provided resource structures
 		 *  are remembered for later cleanup by the library.
 		 */
-		rt_init_resource( resp, resp->re_cpu );
+		rt_init_resource( resp, resp->re_cpu, rtip );
 	}
 	/* Ensure that this CPU's resource structure is registered */
-	if( BU_PTBL_GET(&rtip->rti_resources, resp->re_cpu) == NULL )  {
-		BU_PTBL_GET(&rtip->rti_resources, resp->re_cpu) = (long *)resp;
-	}
+	BU_ASSERT_PTR( BU_PTBL_GET(&rtip->rti_resources, resp->re_cpu), !=, NULL );
 
 	/* Verify that direction vector has unit length */
 	if(rt_g.debug) {
@@ -1923,7 +1923,7 @@ struct rt_i		*rtip;
 	for( ; stpp >= cutp->bn.bn_list; stpp-- )  {
 		register struct soltab *stp = *stpp;
 
-		rt_plot_solid( fp, rtip, stp );
+		rt_plot_solid( fp, rtip, stp, ap->a_resource );
 	}
 
 	/* Plot interval of ray in box, in green */

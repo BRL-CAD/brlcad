@@ -200,7 +200,7 @@ char **argv;
 	/* Plot all of the solids */
 	if( rdebug > 0 )  {
 		pl_color( plotfp, 150, 150, 150 );
-		rt_plot_all_solids( plotfp, rtip );
+		rt_plot_all_solids( plotfp, rtip, &rt_uniresource );
 	}
 
 	/* Take a walk */

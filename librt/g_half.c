@@ -494,12 +494,13 @@ CONST struct bn_tol		*tol;
  *	 0	success
  */
 int
-rt_hlf_xform(op, mat, ip, free, dbip)
-struct rt_db_internal	*op;
-CONST mat_t		mat;
-struct rt_db_internal *ip;
-int	free;
-struct db_i	*dbip;
+rt_hlf_xform(
+	struct rt_db_internal	*op,
+	CONST mat_t		mat,
+	struct rt_db_internal *ip,
+	int		free,
+	struct db_i	*dbip,
+	struct resource	*resp)
 {
 	struct rt_half_internal *hip, *hop;
 	point_t			orig_pt, pt;
@@ -523,7 +524,7 @@ struct db_i	*dbip;
 	 * We are done with the input solid so free it if required.
 	 */
 	if (free && ip != op)
-		rt_db_free_internal( ip );
+		rt_db_free_internal( ip, resp );
 
 	/*
 	 * The transformed normal is all that is required.

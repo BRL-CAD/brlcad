@@ -298,9 +298,13 @@ register struct db_i	*dbip;
 		for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; )  {
 			RT_CK_DIR(dp);
 			nextdp = dp->d_forw;
-			bu_free( dp->d_namep, "d_namep" );
-			dp->d_namep = (char *)NULL;
-			bu_free( (char *)dp, "dir");
+			RT_DIR_FREE_NAMEP(dp);	/* frees d_namep */
+
+			/* Put 'dp' back on the freelist */
+			dp->d_forw = rt_uniresource.re_directory_hd;
+			rt_uniresource.re_directory_hd = dp;
+			dp->d_forw = NULL;
+
 			dp = nextdp;
 		}
 		dbip->dbi_Head[i] = DIR_NULL;	/* sanity*/

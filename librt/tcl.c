@@ -734,9 +734,7 @@ const union tree		*tp;
  *  the in-memory form of that tree.
  */
 union tree *
-db_tcl_tree_parse( interp, str )
-Tcl_Interp	*interp;
-char		*str;
+db_tcl_tree_parse( Tcl_Interp *interp, const char *str, struct resource *resp )
 {
 	int	argc;
 	char	**argv;
@@ -772,7 +770,7 @@ Tcl_AppendResult( interp, "\n\n", NULL);
 	switch( argv[0][0] )  {
 	case 'l':
 		/* Leaf node: {l name {mat}} */
-		BU_GETUNION( tp, tree );
+		RT_GET_TREE( tp, resp );
 		tp->tr_l.magic = RT_TREE_MAGIC;
 		tp->tr_op = OP_DB_LEAF;
 		tp->tr_l.tl_name = bu_strdup( argv[1] );
@@ -801,22 +799,22 @@ Tcl_AppendResult( interp, "\n\n", NULL);
 
 	case 'u':
 		/* Binary: Union: {u {lhs} {rhs}} */
-		BU_GETUNION( tp, tree );
+		RT_GET_TREE( tp, resp );
 		tp->tr_b.tb_op = OP_UNION;
 		goto binary;
 	case 'n':
 		/* Binary: Intersection */
-		BU_GETUNION( tp, tree );
+		RT_GET_TREE( tp, resp );
 		tp->tr_b.tb_op = OP_INTERSECT;
 		goto binary;
 	case '-':
 		/* Binary: Union */
-		BU_GETUNION( tp, tree );
+		RT_GET_TREE( tp, resp );
 		tp->tr_b.tb_op = OP_SUBTRACT;
 		goto binary;
 	case '^':
 		/* Binary: Xor */
-		BU_GETUNION( tp, tree );
+		RT_GET_TREE( tp, resp );
 		tp->tr_b.tb_op = OP_XOR;
 		goto binary;
 binary:
@@ -825,20 +823,20 @@ binary:
 			Tcl_AppendResult( interp, "db_tcl_tree_parse: binary operator ",
 				argv[0], " has insufficient operands in ",
 				str, (char *)NULL );
-			bu_free( (char *)tp, "union tree" );
+			RT_FREE_TREE( tp, resp );
 			tp = TREE_NULL;
 			goto out;
 		}
-		tp->tr_b.tb_left = db_tcl_tree_parse( interp, argv[1] );
+		tp->tr_b.tb_left = db_tcl_tree_parse( interp, argv[1], resp );
 		if( tp->tr_b.tb_left == TREE_NULL )  {
-			bu_free( (char *)tp, "union tree" );
+			RT_FREE_TREE( tp, resp );
 			tp = TREE_NULL;
 			goto out;
 		}
-		tp->tr_b.tb_right = db_tcl_tree_parse( interp, argv[2] );
+		tp->tr_b.tb_right = db_tcl_tree_parse( interp, argv[2], resp );
 		if( tp->tr_b.tb_left == TREE_NULL )  {
-			db_free_tree( tp->tr_b.tb_left );
-			bu_free( (char *)tp, "union tree" );
+			db_free_tree( tp->tr_b.tb_left, resp );
+			RT_FREE_TREE( tp, resp );
 			tp = TREE_NULL;
 			goto out;
 		}
@@ -846,17 +844,17 @@ binary:
 
 	case '!':
 		/* Unary: not {! {lhs}} */
-		BU_GETUNION( tp, tree );
+		RT_GET_TREE( tp, resp );
 		tp->tr_b.tb_op = OP_NOT;
 		goto unary;
 	case 'G':
 		/* Unary: GUARD {G {lhs}} */
-		BU_GETUNION( tp, tree );
+		RT_GET_TREE( tp, resp );
 		tp->tr_b.tb_op = OP_GUARD;
 		goto unary;
 	case 'X':
 		/* Unary: XNOP {X {lhs}} */
-		BU_GETUNION( tp, tree );
+		RT_GET_TREE( tp, resp );
 		tp->tr_b.tb_op = OP_XNOP;
 		goto unary;
 unary:
@@ -869,7 +867,7 @@ unary:
 			tp = TREE_NULL;
 			goto out;
 		}
-		tp->tr_b.tb_left = db_tcl_tree_parse( interp, argv[1] );
+		tp->tr_b.tb_left = db_tcl_tree_parse( interp, argv[1], resp );
 		if( tp->tr_b.tb_left == TREE_NULL )  {
 			bu_free( (char *)tp, "union tree" );
 			tp = TREE_NULL;
@@ -879,7 +877,7 @@ unary:
 
 	case 'N':
 		/* NOP: no args.  {N} */
-		BU_GETUNION( tp, tree );
+		RT_GET_TREE( tp, resp );
 		tp->tr_b.tb_op = OP_XNOP;
 		tp->tr_b.magic = RT_TREE_MAGIC;
 		break;
@@ -1046,14 +1044,15 @@ CONST char			*item;
  *  Example -
  *	rgb "1 2 3" ...
  *
- *  Invoked via rt_functab[].ft_tcladjust()
+ *  Invoked via rt_functab[ID_COMBINATION].ft_tcladjust()
  */
 int
-rt_comb_tcladjust( interp, intern, argc, argv )
-Tcl_Interp		*interp;
-struct rt_db_internal	*intern;
-int			argc;
-char			**argv;
+rt_comb_tcladjust(
+	Tcl_Interp		*interp,
+	struct rt_db_internal	*intern,
+	int			argc,
+	char			**argv,
+	struct resource		*resp )
 {
 	struct rt_comb_internal	       *comb;
 	char	buf[128];
@@ -1061,6 +1060,7 @@ char			**argv;
 	double	d;
 
 	RT_CK_DB_INTERNAL(intern);
+	RT_CK_RESOURCE(resp);
 	comb = (struct rt_comb_internal *)intern->idb_ptr;
 	RT_CK_COMB(comb);
 
@@ -1177,19 +1177,19 @@ char			**argv;
 
 			if( strcmp( argv[1], "none" ) == 0 )
 			{
-				db_free_tree( comb->tree );
+				db_free_tree( comb->tree, resp );
 				comb->tree = TREE_NULL;
 			}
 			else
 			{
-				new = db_tcl_tree_parse( interp, argv[1] );
+				new = db_tcl_tree_parse( interp, argv[1], resp );
 				if( new == TREE_NULL )  {
 					Tcl_AppendResult( interp, "db adjust tree: bad tree '",
 						argv[1], "'\n", (char *)NULL );
 					return TCL_ERROR;
 				}
 				if( comb->tree )
-					db_free_tree( comb->tree );
+					db_free_tree( comb->tree, resp );
 				comb->tree = new;
 			}
 		} else {

@@ -1220,11 +1220,12 @@ CONST struct bn_tol	*tol;
  *  Apply modeling transformations as well.
  */
 int
-rt_extrude_import( ip, ep, mat, dbip )
+rt_extrude_import( ip, ep, mat, dbip, resp )
 struct rt_db_internal		*ip;
 CONST struct bu_external	*ep;
 register CONST mat_t		mat;
 CONST struct db_i		*dbip;
+struct resource			*resp;
 {
 	LOCAL struct rt_extrude_internal	*extrude_ip;
 	struct rt_db_internal			tmp_ip;
@@ -1260,7 +1261,7 @@ CONST struct db_i		*dbip;
 	}
 	else
 	{
-		if( rt_db_get_internal( &tmp_ip, dp, dbip, bn_mat_identity ) != ID_SKETCH )
+		if( rt_db_get_internal( &tmp_ip, dp, dbip, bn_mat_identity, resp ) != ID_SKETCH )
 		{
 			bu_log( "rt_extrude_import: ERROR: Cannot import sketch (%.16s) for extrusion (%.16s)\n",
 				sketch_name, rp->extr.ex_name );
@@ -1386,11 +1387,12 @@ CONST struct db_i		*dbip;
  *  Apply modeling transformations as well.
  */
 int
-rt_extrude_import5( ip, ep, mat, dbip )
-struct rt_db_internal		*ip;
-CONST struct bu_external	*ep;
-register CONST mat_t		mat;
-CONST struct db_i		*dbip;
+rt_extrude_import5(
+	struct rt_db_internal		*ip,
+	CONST struct bu_external	*ep,
+	register CONST mat_t		mat,
+	CONST struct db_i		*dbip,
+	struct resource			*resp)
 {
 	LOCAL struct rt_extrude_internal	*extrude_ip;
 	struct rt_db_internal			tmp_ip;
@@ -1420,7 +1422,7 @@ CONST struct db_i		*dbip;
 	}
 	else
 	{
-		if( rt_db_get_internal( &tmp_ip, dp, dbip, bn_mat_identity ) != ID_SKETCH )
+		if( rt_db_get_internal( &tmp_ip, dp, dbip, bn_mat_identity, resp ) != ID_SKETCH )
 		{
 			bu_log( "rt_extrude_import: ERROR: Cannot import sketch (%s) for extrusion\n",
 				sketch_name );
@@ -1515,17 +1517,19 @@ struct rt_db_internal	*ip;
 }
 
 int
-rt_extrude_xform( op, mat, ip, free, dbip )
-struct rt_db_internal *op;
-CONST mat_t mat;
-struct rt_db_internal *ip;
-int free;
-struct db_i *dbip;
+rt_extrude_xform(
+	struct rt_db_internal *op,
+	const mat_t mat,
+	struct rt_db_internal *ip,
+	int free,
+	struct db_i *dbip,
+	struct resource *resp)
 {
 	struct rt_extrude_internal	*eip, *eop;
 	point_t tmp_vec;
 
 	RT_CK_DB_INTERNAL( ip );
+	RT_CK_RESOURCE(resp)
 	eip = (struct rt_extrude_internal *)ip->idb_ptr;
 	RT_EXTRUDE_CK_MAGIC( eip );
 
@@ -1562,7 +1566,7 @@ struct db_i *dbip;
 	{
 		eop->skt = eip->skt;
 		eip->skt = (struct rt_sketch_internal *)NULL;
-		rt_db_free_internal( ip );
+		rt_db_free_internal( ip, resp );
 	}
 	else if( eip->skt )
 		eop->skt = rt_copy_sketch( eip->skt );

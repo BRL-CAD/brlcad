@@ -153,6 +153,8 @@ db5_diradd_handler(
 			dbip, rip->name, laddr, rip->object_length );
 	}
 
+	/* XXX Extend db_diradd() to do this, and then call it! */
+
 	if( db_lookup( dbip, rip->name.ext_buf, LOOKUP_QUIET ) != DIR_NULL )  {
 		register int	c;
 
@@ -176,14 +178,15 @@ db5_diradd_handler(
 			rip->name.ext_buf, cp );
 	}
 
-	BU_GETSTRUCT( dp, directory );
-	dp->d_magic = RT_DIR_MAGIC;
+	/* Duplicates the guts of db_diradd() */
+	RT_GET_DIRECTORY( dp, &rt_uniresource );
+	RT_CK_DIR(dp);
 	BU_LIST_INIT( &dp->d_use_hd );
 	if( cp )  {
-		dp->d_namep = bu_strdup( cp );
+		RT_DIR_SET_NAMEP( dp, cp );		/* sets d_namep */
 		bu_vls_free( &local );
 	} else {
-		dp->d_namep = bu_strdup( rip->name.ext_buf );
+		RT_DIR_SET_NAMEP( dp, rip->name.ext_buf ); /* sets d_namep */
 	}
 	dp->d_un.file_offset = laddr;
 	switch( rip->major_type )  {
@@ -219,6 +222,10 @@ db5_diradd_handler(
 		dp->d_flags = 0;
 	}
 	dp->d_len = rip->object_length;		/* in bytes */
+	BU_LIST_INIT( &dp->d_use_hd );
+	dp->d_animate = NULL;
+	dp->d_nref = 0;
+	dp->d_uses = 0;
 
 	headp = &(dbip->dbi_Head[db_dirhash(dp->d_namep)]);
 	dp->d_forw = *headp;
@@ -273,6 +280,7 @@ bu_log("NOTICE:  %s is BRL-CAD v5 format.\n", dbip->dbi_filename);
 				dbip->dbi_filename);
 			return -1;
 		}
+
 		/* Need to retrieve _GLOBAL object and obtain title and units */
 		if( (dp = db_lookup( dbip, DB5_GLOBAL_OBJECT_NAME, LOOKUP_NOISY )) == DIR_NULL )  {
 			bu_log("db_dirbuild(%s): improper v5 database, no %s object\n",

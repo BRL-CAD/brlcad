@@ -5031,6 +5031,8 @@ CONST struct bn_tol *tol;
  *
  *  Store an NMG model as a separate .g file, for later examination.
  *  Don't free the model, as the caller may still have uses for it.
+ *
+ *  NON-PARALLEL because of rt_uniresource.
  */
 void
 nmg_stash_model_to_file( filename, m, title )
@@ -5038,17 +5040,15 @@ CONST char		*filename;
 CONST struct model	*m;
 CONST char		*title;
 {
-	FILE	*fp;
-	struct bu_external	ext;
+	struct rt_wdb		*fp;
 	struct rt_db_internal	intern;
-	union record		rec;
 
 	bu_log("nmg_stash_model_to_file('%s', x%x, %s)\n", filename, m, title);
 
 	NMG_CK_MODEL(m);
 	nmg_vmodel(m);
 
-	if( (fp = fopen(filename, "w")) == NULL )  {
+	if( (fp = wdb_fopen(filename)) == NULL )  {
 		perror(filename);
 		return;
 	}
@@ -5057,25 +5057,15 @@ CONST char		*title;
 	intern.idb_type = ID_NMG;
 	intern.idb_meth = &rt_functab[ID_NMG];
 	intern.idb_ptr = (genptr_t)m;
-	BU_INIT_EXTERNAL( &ext );
 
 	/* Scale change on export is 1.0 -- no change */
-	if( rt_functab[ID_NMG].ft_export( &ext, &intern, 1.0, DBI_NULL ) < 0 )  {
-		bu_log("nmg_stash_model_to_file: solid export failure\n");
-		bu_free_external( &ext );
-		bu_bomb("nmg_stash_model_to_file() ft_export() error\n");
+	if( wdb_put_internal( fp, "error.s", &intern, 1.0 ) < 0 )  {
+		bu_bomb("nmg_stash_model_to_file() wdb_put_internal failure\n");
 	}
-	NAMEMOVE( "error", ((union record *)ext.ext_buf)->s.s_name );
+	/* intern has been freed */
 
-	bzero( (char *)&rec, sizeof(rec) );
-	rec.u_id = ID_IDENT;
-	strcpy( rec.i.i_version, ID_VERSION );
-	strncpy( rec.i.i_title, title, sizeof(rec.i.i_title)-1 );
-	fwrite( (char *)&rec, sizeof(rec), 1, fp );
-	fwrite( ext.ext_buf, ext.ext_nbytes, 1, fp );
-	fclose(fp);
-	bu_free_external( &ext );
-	bu_log("nmg_stash_model_to_file(): wrote '%s' in %d bytes\n", filename, ext.ext_nbytes);
+	bu_log("nmg_stash_model_to_file(): wrote error.s to '%s'\n",
+		filename);
 }
 
 /* state for nmg_unbreak_edge */

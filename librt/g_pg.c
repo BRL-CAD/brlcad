@@ -875,13 +875,17 @@ struct rt_db_internal	*ip;
  *	0	OK
  */
 int
-rt_pg_to_bot( struct rt_db_internal *ip, const struct bn_tol *tol )
+rt_pg_to_bot( struct rt_db_internal *ip, const struct bn_tol *tol, struct resource *resp )
 {
 	struct rt_pg_internal *ip_pg;
 	struct rt_bot_internal *ip_bot;
 	int max_pts;
 	int max_tri;
 	int p, i;
+
+	RT_CK_DB_INTERNAL(ip);
+	RT_CK_TOL( tol );
+	RT_CK_RESOURCE( resp );
 
 	if( ip->idb_type != ID_POLY )
 	{
@@ -891,7 +895,6 @@ rt_pg_to_bot( struct rt_db_internal *ip, const struct bn_tol *tol )
 	ip_pg = (struct rt_pg_internal *)ip->idb_ptr;
 
 	RT_PG_CK_MAGIC( ip_pg );
-	RT_CK_TOL( tol );
 
 	ip_bot = (struct rt_bot_internal *)bu_malloc( sizeof( struct rt_bot_internal ), "BOT internal" );
 	ip_bot->magic = RT_BOT_INTERNAL_MAGIC;
@@ -965,7 +968,7 @@ rt_pg_to_bot( struct rt_db_internal *ip, const struct bn_tol *tol )
 
 	ip_bot->faces = (int *)bu_realloc( ip_bot->faces, ip_bot->num_faces * 3 * sizeof( int ), "BOT faces" );
 
-	rt_db_free_internal( ip );
+	rt_db_free_internal( ip, resp );
 
 	ip->idb_type = ID_BOT;
 	ip->idb_meth = &rt_functab[ID_BOT];

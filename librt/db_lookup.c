@@ -88,6 +88,26 @@ CONST struct db_i	*dbip;
 }
 
 /*
+ *			D B _ C K _ D I R E C T O R Y
+ *
+ *  For debugging, ensure that all the linked-lists for the directory
+ *  structure are intact.
+ */
+void
+db_ck_directory(const struct db_i *dbip)
+{
+	register struct directory *dp;
+	int		i;
+
+	RT_CK_DBI(dbip);
+
+	for (i = 0; i < RT_DBNHASH; i++)  {
+		for (dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw)
+			RT_CK_DIR(dp);
+	}
+}
+
+/*
  *			D B _ D I R H A S H
  *  
  *  Internal function to return pointer to head of hash chain
@@ -230,15 +250,18 @@ genptr_t		ptr;		/* unused client_data from db_scan() */
 	}
 
 	/* 'name' not found in directory, add it */
-	BU_GETSTRUCT( dp, directory );		/* calls bu_malloc */
-	dp->d_magic = RT_DIR_MAGIC;
-	dp->d_namep = bu_strdup( name );	/* calls bu_malloc */
+	RT_GET_DIRECTORY( dp, &rt_uniresource );
+	RT_CK_DIR(dp);
+	RT_DIR_SET_NAMEP( dp, name );		/* sets d_namep */
 	dp->d_un.file_offset = laddr;
 	dp->d_flags = flags & ~(RT_DIR_INMEM);
 	dp->d_len = len;
 	dp->d_forw = *headp;
 	BU_LIST_INIT( &dp->d_use_hd );
 	*headp = dp;
+	dp->d_animate = NULL;
+	dp->d_nref = 0;
+	dp->d_uses = 0;
 	return( dp );
 }
 
@@ -301,18 +324,23 @@ register struct directory	*dp;
 	}
 
 	if( *headp == dp )  {
-		bu_free( dp->d_namep, "dir name" );
+		RT_DIR_FREE_NAMEP(dp);	/* frees d_namep */
 		*headp = dp->d_forw;
-		bu_free( (char *)dp, "struct directory" );
+
+		/* Put 'dp' back on the freelist */
+		dp->d_forw = rt_uniresource.re_directory_hd;
+		rt_uniresource.re_directory_hd = dp;
 		return(0);
 	}
 	for( findp = *headp; findp != DIR_NULL; findp = findp->d_forw )  {
 		if( findp->d_forw != dp )
 			continue;
-		bu_free( dp->d_namep, "dir name" );
+		RT_DIR_FREE_NAMEP(dp);	/* frees d_namep */
 		findp->d_forw = dp->d_forw;
-		bzero( (char *)dp, sizeof(struct directory) );	/* sanity */
-		bu_free( (char *)dp, "struct directory" );
+
+		/* Put 'dp' back on the freelist */
+		dp->d_forw = rt_uniresource.re_directory_hd;
+		rt_uniresource.re_directory_hd = dp;
 		return(0);
 	}
 	return(-1);
@@ -358,8 +386,8 @@ CONST char			*newname;
 
 out:
 	/* Effect new name */
-	bu_free( dp->d_namep, "d_namep" );
-	dp->d_namep = bu_strdup( newname );
+	RT_DIR_FREE_NAMEP(dp);			/* frees d_namep */
+	RT_DIR_SET_NAMEP( dp, newname );	/* sets d_namep */
 
 	/* Add to new linked list */
 	headp = &(dbip->dbi_Head[db_dirhash(newname)]);
@@ -416,5 +444,40 @@ register CONST struct db_i	*dbip;
 			else
 				bu_log("\n");
 		}
+	}
+}
+
+
+/*
+ *  			D B _ G E T _ D I R E C T O R Y
+ *  
+ *  This routine is called by the RT_GET_DIRECTORY macro when the freelist
+ *  is exhausted.  Rather than simply getting one additional structure,
+ *  we get a whole batch, saving overhead.
+ */
+void
+db_get_directory(register struct resource *resp)
+{
+	register struct directory	*dp;
+	register int		bytes;
+
+	RT_RESOURCE_CHECK(resp);
+	BU_CK_PTBL( &resp->re_directory_blocks );
+
+	BU_ASSERT_PTR( resp->re_directory_hd, ==, NULL );
+
+	/* Get a BIG block */
+	bytes = bu_malloc_len_roundup(1024*sizeof(struct directory));
+	dp = (struct directory *)bu_malloc(bytes, "db_get_directory()");
+
+	/* Record storage for later */
+	bu_ptbl_ins( &resp->re_directory_blocks, (long *)dp );
+
+	while( bytes >= sizeof(struct directory) )  {
+		dp->d_magic = RT_DIR_MAGIC;
+		dp->d_forw = resp->re_directory_hd;
+		resp->re_directory_hd = dp;
+		dp++;
+		bytes -= sizeof(struct directory);
 	}
 }

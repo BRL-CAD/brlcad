@@ -168,10 +168,11 @@ struct rt_i		*rtip;
 	/*
 	 *  Initialize per-processor resources for the submodel.
 	 *  We treewalk here with only one processor (CPU 0).
+	 *  rt_gettrees() will pluck the 0th resource out of the rtip table.
 	 *  rt_submodel_shot() will get additional resources as needed.
 	 */
 	resp = (struct resource *)BU_PTBL_GET(&sub_rtip->rti_resources, 0);
-	rt_init_resource( resp, 0 );
+	rt_init_resource( resp, 0, sub_rtip );
 
 	/* Propagate some important settings downward */
 	sub_rtip->useair = rtip->useair;
@@ -473,16 +474,12 @@ struct seg		*seghead;
 	 */
 	restbl = &submodel->rtip->rti_resources;	/* a ptbl */
 	cpu = ap->a_resource->re_cpu;
-	if( !( cpu < BU_PTBL_END(restbl) ) )  {
-		bu_log("ptbl_end=%d, ptbl_blen=%d, cpu=%d\n",
-			BU_PTBL_END(restbl), restbl->blen, cpu );
-	}
-	BU_ASSERT( cpu < BU_PTBL_END(restbl) );
+	BU_ASSERT_LONG( cpu, <, BU_PTBL_END(restbl) );
 	if( (resp = (struct resource *)BU_PTBL_GET(restbl, cpu)) == NULL )  {
 		/* First ray for this cpu for this submodel, alloc up */
 		BU_GETSTRUCT( resp, resource );
 		BU_PTBL_SET(restbl, cpu, resp);
-		rt_init_resource( resp, cpu );
+		rt_init_resource( resp, cpu, submodel->rtip );
 	}
 	RT_CK_RESOURCE(resp);
 	sub_ap.a_resource = resp;
@@ -599,6 +596,26 @@ register struct soltab *stp;
 {
 	register struct submodel_specific *submodel =
 		(struct submodel_specific *)stp->st_specific;
+	struct resource	**rpp;
+	struct rt_i	*rtip;
+
+	RT_CK_SUBMODEL_SPECIFIC(submodel);
+	rtip = submodel->rtip;
+	RT_CK_RTI(rtip);
+
+	/* Specificially free resource structures here */
+	BU_CK_PTBL( &rtip->rti_resources );
+	for( BU_PTBL_FOR( rpp, (struct resource **), &rtip->rti_resources ) )  {
+		if( *rpp == NULL )  continue;
+		if( *rpp == &rt_uniresource )  continue;
+		RT_CK_RESOURCE(*rpp);
+		/* Cleans but does not free the resource struct */
+		rt_clean_resource(rtip, *rpp);
+		bu_free( *rpp, "struct resource (submodel)" );
+		/* Forget remembered ptr */
+		*rpp = NULL;
+	}
+	/* Keep the ptbl allocated. */
 
 	rt_free_rti( submodel->rtip );
 
@@ -640,6 +657,7 @@ genptr_t		client_data;
 	RT_CK_TESS_TOL(tsp->ts_ttol);
 	BN_CK_TOL(tsp->ts_tol);
 	RT_CK_DB_INTERNAL(ip );
+	RT_CK_RESOURCE(tsp->ts_resp);
 
 	gp = (struct goodies *)tsp->ts_m;	/* hack */
 	RT_CK_DBI(gp->dbip);
@@ -665,7 +683,7 @@ genptr_t		client_data;
 	}
 
 	/* Indicate success by returning something other than TREE_NULL */
-	BU_GETUNION( curtree, tree );
+	RT_GET_TREE( curtree, tsp->ts_resp);
 	curtree->magic = RT_TREE_MAGIC;
 	curtree->tr_op = OP_NOP;
 

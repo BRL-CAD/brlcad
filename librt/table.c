@@ -81,22 +81,28 @@ CONST struct bu_structparse rt_nul_parse[] = {
 			struct model *m, struct rt_db_internal *ip, \
 			CONST struct bn_tol *tol)); \
 	BU_EXTERN(int rt_##name##_import5, (struct rt_db_internal *ip, \
-			CONST struct bu_external *ep, CONST mat_t mat, CONST struct db_i *dbip)); \
+			CONST struct bu_external *ep, CONST mat_t mat, \
+			CONST struct db_i *dbip, struct resource *resp )); \
 	BU_EXTERN(int rt_##name##_export5, (struct bu_external *ep, \
 			CONST struct rt_db_internal *ip, \
-			double local2mm, CONST struct db_i *dbip )); \
+			double local2mm, CONST struct db_i *dbip, \
+			struct resource *resp )); \
 	BU_EXTERN(int rt_##name##_import, (struct rt_db_internal *ip, \
-			CONST struct bu_external *ep, CONST mat_t mat, CONST struct db_i *dbip)); \
+			CONST struct bu_external *ep, CONST mat_t mat, \
+			CONST struct db_i *dbip, struct resource *resp )); \
 	BU_EXTERN(int rt_##name##_export, (struct bu_external *ep, \
 			CONST struct rt_db_internal *ip, \
-			double local2mm, CONST struct db_i *dbip )); \
-	BU_EXTERN(void rt_##name##_ifree, (struct rt_db_internal *ip)); \
+			double local2mm, CONST struct db_i *dbip, \
+			struct resource *resp )); \
+	BU_EXTERN(void rt_##name##_ifree, (struct rt_db_internal *ip, \
+			struct resource *resp)); \
 	BU_EXTERN(int rt_##name##_describe, (struct bu_vls *str, \
 			CONST struct rt_db_internal *ip, int verbose, \
 			double mm2local)); \
 	BU_EXTERN(int rt_##name##_xform, (struct rt_db_internal *op, \
 			CONST mat_t mat, struct rt_db_internal *ip, \
-			int free, struct db_i *dbip)); \
+			int free, struct db_i *dbip, \
+			struct resource *resp)); \
 	extern CONST struct bu_structparse rt_##name##_parse[];
 #else
 # define RT_DECLARE_INTERFACE(name)	\
@@ -147,13 +153,15 @@ CONST struct bu_structparse rt_nul_parse[] = {
 	BU_EXTERN(int rt_/**/name/**/_export, (struct bu_external *ep, \
 			CONST struct rt_db_internal *ip, \
 			double local2mm, CONST struct db_i *dbip )); \
-	BU_EXTERN(void rt_/**/name/**/_ifree, (struct rt_db_internal *ip)); \
+	BU_EXTERN(void rt_/**/name/**/_ifree, (struct rt_db_internal *ip, \
+			struct resource *resp)); \
 	BU_EXTERN(int rt_/**/name/**/_describe, (struct bu_vls *str, \
 			CONST struct rt_db_internal *ip, int verbose, \
 			double mm2local)); \
 	BU_EXTERN(int rt_/**/name/**/_xform, (struct rt_db_internal *op, \
 			CONST mat_t mat, struct rt_db_internal *ip, \
-			int free, struct db_i *dbip)); \
+			int free, struct db_i *dbip, \
+			struct resource *resp)); \
 	extern CONST struct bu_structparse rt_/**/name/**/_parse[];
 #endif
 
@@ -264,7 +272,8 @@ BU_EXTERN(int rt_binmime_import5, (struct rt_db_internal *ip,
 BU_EXTERN(int rt_binunif_export5, (struct bu_external *ep,
 		CONST struct rt_db_internal *ip,
 		CONST struct db_i *dbip ));
-BU_EXTERN(void rt_binunif_ifree, (struct rt_db_internal *ip));
+BU_EXTERN(void rt_binunif_ifree, (struct rt_db_internal *ip,
+		struct resource *resp));
 BU_EXTERN(int rt_binunif_describe, (struct bu_vls *str,
 		CONST struct rt_db_internal *ip, int verbose,
 		double mm2local));
@@ -273,7 +282,8 @@ BU_EXTERN(int rt_binunif_describe, (struct bu_vls *str,
 BU_EXTERN(int rt_comb_tclget, (Tcl_Interp *interp,
 		CONST struct rt_db_internal *intern, CONST char	*item));
 BU_EXTERN(int rt_comb_tcladjust, (Tcl_Interp *interp,
-		struct rt_db_internal *intern, int argc, char **argv));
+		struct rt_db_internal *intern, int argc, char **argv,
+		struct resource *resp));
 BU_EXTERN(int rt_comb_tclform, (CONST struct rt_functab *ftp,
 		Tcl_Interp *interp));
 BU_EXTERN(void rt_comb_make, (CONST struct rt_functab *ftp,
@@ -283,7 +293,8 @@ BU_EXTERN(void rt_comb_make, (CONST struct rt_functab *ftp,
 BU_EXTERN(int rt_parsetab_tclget, (Tcl_Interp *interp,
 		CONST struct rt_db_internal *intern, CONST char *attr));
 BU_EXTERN(int rt_parsetab_tcladjust, (Tcl_Interp *interp,
-		struct rt_db_internal *intern, int argc, char **argv));
+		struct rt_db_internal *intern, int argc, char **argv,
+		struct resource *));
 BU_EXTERN(int rt_parsetab_tclform, (CONST struct rt_functab *ftp,
 		Tcl_Interp *interp));
 BU_EXTERN(void rt_generic_make, (CONST struct rt_functab *ftp,
@@ -293,24 +304,28 @@ BU_EXTERN(void rt_generic_make, (CONST struct rt_functab *ftp,
 BU_EXTERN(int rt_bot_tclget, (Tcl_Interp *interp,
 		CONST struct rt_db_internal *intern, CONST char *attr));
 BU_EXTERN(int rt_bot_tcladjust, (Tcl_Interp *interp,
-		struct rt_db_internal *intern, int argc, char **argv));
+		struct rt_db_internal *intern, int argc, char **argv,
+		struct resource *resp));
 
 /* SKETCH */
 BU_EXTERN(int rt_sketch_tclget, (Tcl_Interp *interp,
 		CONST struct rt_db_internal *intern, CONST char *attr));
 BU_EXTERN(int rt_sketch_tcladjust, (Tcl_Interp *interp,
-		struct rt_db_internal *intern, int argc, char **argv));
+		struct rt_db_internal *intern, int argc, char **argv,
+		struct resource *resp));
 /* CLINE */
 BU_EXTERN(int rt_cline_tclget, (Tcl_Interp *interp,
 		CONST struct rt_db_internal *intern, CONST char *attr));
 BU_EXTERN(int rt_cline_tcladjust, (Tcl_Interp *interp,
-		struct rt_db_internal *intern, int argc, char **argv));
+		struct rt_db_internal *intern, int argc, char **argv,
+		struct resource *resp));
 
 /* EXTRUSION */
 BU_EXTERN(int rt_extrude_tclget, (Tcl_Interp *interp,
 		CONST struct rt_db_internal *intern, CONST char *attr));
 BU_EXTERN(int rt_extrude_tcladjust, (Tcl_Interp *interp,
-		struct rt_db_internal *intern, int argc, char **argv));
+		struct rt_db_internal *intern, int argc, char **argv,
+		struct resource *resp));
 
 /* XXX from shoot.c / vshoot.c */
 BU_EXTERN(void rt_vstub, (struct soltab *stp[], struct xray *rp[],
@@ -319,7 +334,7 @@ BU_EXTERN(void rt_vstub, (struct soltab *stp[], struct xray *rp[],
 /* From here in table.c */
 BU_EXTERN(int rt_generic_xform, (struct rt_db_internal *op, 
 	CONST mat_t mat, struct rt_db_internal *ip,
-	int free, struct db_i *dbip));
+	int free, struct db_i *dbip, struct resource *resp));
 
 /* Stub Tcl interfaces */
 #if __STDC__
@@ -327,7 +342,8 @@ int rt_nul_tclget(Tcl_Interp *interp, CONST struct rt_db_internal *intern, CONST
 	Tcl_AppendResult(interp, "rt_nul_tclget", (char *)NULL);
 	return TCL_ERROR;
 }
-int rt_nul_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, char **argv)  {
+int rt_nul_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, char **argv, struct resource *resp)  {
+	RT_CK_RESOURCE(resp);
 	Tcl_AppendResult(interp, "rt_nul_tcladjust", (char *)NULL);
 	return TCL_ERROR;
 }
@@ -947,23 +963,27 @@ int NDEF(rt_nul_tnurb,(struct nmgregion **r,
 			CONST struct bn_tol *tol))
 int NDEF(rt_nul_import5,(struct rt_db_internal *ip,
 			CONST struct bu_external *ep,
-			CONST mat_t mat, CONST struct db_i *dbip ))
+			CONST mat_t mat, CONST struct db_i *dbip,
+			struct resource *resp ))
 int NDEF(rt_nul_export5,(struct bu_external *ep,
 			CONST struct rt_db_internal *ip,
-			double local2mm, CONST struct db_i *dbip ))
+			double local2mm, CONST struct db_i *dbip,
+			struct resource *resp ))
 int NDEF(rt_nul_import,(struct rt_db_internal *ip,
 			CONST struct bu_external *ep,
-			CONST mat_t mat, CONST struct db_i *dbip ))
+			CONST mat_t mat, CONST struct db_i *dbip,
+			struct resource *resp ))
 int NDEF(rt_nul_export,(struct bu_external *ep,
 			CONST struct rt_db_internal *ip,
-			double local2mm, CONST struct db_i *dbip ))
-void DEF(rt_nul_ifree,(struct rt_db_internal *ip))
+			double local2mm, CONST struct db_i *dbip,
+			struct resource *resp ))
+void DEF(rt_nul_ifree,(struct rt_db_internal *ip, struct resource *resp))
 int NDEF(rt_nul_describe,(struct bu_vls *str,
 			CONST struct rt_db_internal *ip,
 			int verbose, double mm2local))
 int NDEF(rt_nul_xform, (struct rt_db_internal *op,
 			CONST mat_t mat, struct rt_db_internal *ip,
-			int free, struct db_i *dbip))
+			int free, struct db_i *dbip, struct resource *resp))
 
 /* Map for database solidrec objects to internal objects */
 static char idmap[] = {
@@ -1125,31 +1145,33 @@ CONST char *label;
  *	 0	OK
  */
 int
-rt_generic_xform(op, mat, ip, free, dbip)
+rt_generic_xform(op, mat, ip, free, dbip, resp)
 struct rt_db_internal	*op;
 CONST mat_t		mat;
 struct rt_db_internal	*ip;
 int			free;
 struct db_i		*dbip;
+struct resource		*resp;
 {
 	struct bu_external	ext;
 	int			id;
 
 	RT_CK_DB_INTERNAL( ip );
 	RT_CK_DBI(dbip);
+	RT_CK_RESOURCE(resp);
 
 	id = ip->idb_type;
 	BU_INIT_EXTERNAL(&ext);
 	/* Scale change on export is 1.0 -- no change */
-	if( rt_functab[id].ft_export( &ext, ip, 1.0, dbip ) < 0 )  {
+	if( rt_functab[id].ft_export( &ext, ip, 1.0, dbip, resp ) < 0 )  {
 		bu_log("rt_generic_xform():  %s export failure\n",
 			rt_functab[id].ft_name);
 		return -1;			/* FAIL */
 	}
-	if( (free || op == ip) )  rt_db_free_internal(ip);
+	if( (free || op == ip) )  rt_db_free_internal(ip, resp);
 
 	RT_INIT_DB_INTERNAL(op);
-	if( rt_functab[id].ft_import( op, &ext, mat, dbip ) < 0 )  {
+	if( rt_functab[id].ft_import( op, &ext, mat, dbip, resp ) < 0 )  {
 		bu_log("rt_generic_xform():  solid import failure\n");
 		return -1;			/* FAIL */
 	}

@@ -158,6 +158,8 @@ int			nrays;
 	ap->a_finished_segs_hdp = &finished_segs;
 
 	if( BU_LIST_UNINITIALIZED( &resp->re_parthead ) )  {
+		/* XXX This shouldn't happen any more */
+		bu_log("rt_shootray_bundle() resp=x%x uninitialized, fixing it\n", resp);
 		/*
 		 *  We've been handed a mostly un-initialized resource struct,
 		 *  with only a magic number and a cpu number filled in.
@@ -165,11 +167,10 @@ int			nrays;
 		 *  This is how application-provided resource structures
 		 *  are remembered for later cleanup by the library.
 		 */
-		rt_init_resource( resp, resp->re_cpu );
+		rt_init_resource( resp, resp->re_cpu, rtip );
 
-		bu_semaphore_acquire(RT_SEM_MODEL);
-		bu_ptbl_ins_unique( &rtip->rti_resources, (long *)resp );
-		bu_semaphore_release(RT_SEM_MODEL);
+		/* Ensure that this CPU's resource structure is registered */
+		BU_ASSERT_PTR( BU_PTBL_GET(&rtip->rti_resources, resp->re_cpu), !=, NULL );
 	}
 	if( BU_LIST_IS_EMPTY( &resp->re_solid_bitv ) )  {
 		solidbits = bu_bitv_new( rtip->nsolids );

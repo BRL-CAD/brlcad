@@ -172,8 +172,7 @@ genptr_t		 dummy1, dummy2, dummy3;
  */
 
 void
-db_update_nref( dbip )
-struct db_i    *dbip;
+db_update_nref( struct db_i *dbip, struct resource *resp )
 {
 	register int			i;
 	register struct directory      *dp;
@@ -181,6 +180,7 @@ struct db_i    *dbip;
 	struct rt_comb_internal	       *comb;
 
 	RT_CK_DBI( dbip );
+	RT_CK_RESOURCE(resp);
 
 	/* First, clear any existing counts */
 	for( i = 0; i < RT_DBNHASH; i++ )
@@ -192,20 +192,20 @@ struct db_i    *dbip;
 		for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw ){
 			if( !(dp->d_flags & DIR_COMB) )
 				continue;
-			if( rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL) < 0 )
+			if( rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL, resp) < 0 )
 				continue;
 			if( intern.idb_type != ID_COMBINATION )  {
 				bu_log("NOTICE: %s was marked a combination, but isn't one?  Clearing flag\n",
 					dp->d_namep);
 				dp->d_flags &= ~DIR_COMB;
-				rt_db_free_internal( &intern );
+				rt_db_free_internal( &intern, resp );
 				continue;
 			}
 			comb = (struct rt_comb_internal *)intern.idb_ptr;
 			db_tree_funcleaf( dbip, comb, comb->tree,
 					  db_count_refs, (genptr_t)NULL,
 					  (genptr_t)NULL, (genptr_t)NULL );
-			rt_db_free_internal( &intern );
+			rt_db_free_internal( &intern, resp );
 		}
 	}
 }

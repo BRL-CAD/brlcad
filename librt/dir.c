@@ -82,11 +82,12 @@ rt_dirbuild( const char *filename, char *buf, int len )
  *	id	On success.
  */
 int
-rt_db_get_internal( ip, dp, dbip, mat )
-struct rt_db_internal	*ip;
-CONST struct directory	*dp;
-CONST struct db_i	*dbip;
-CONST mat_t		mat;
+rt_db_get_internal(
+	struct rt_db_internal	*ip,
+	const struct directory	*dp,
+	const struct db_i	*dbip,
+	const mat_t		mat,
+	struct resource		*resp)
 {
 	struct bu_external	ext;
 	register int		id;
@@ -95,7 +96,7 @@ CONST mat_t		mat;
 	RT_INIT_DB_INTERNAL(ip);
 
 	if( dbip->dbi_version > 4 )
-		return  rt_db_get_internal5( ip, dp, dbip, mat );
+		return  rt_db_get_internal5( ip, dp, dbip, mat, resp );
 
 	if( db_get_external( &ext, dp, dbip ) < 0 )
 		return -2;		/* FAIL */
@@ -109,10 +110,10 @@ CONST mat_t		mat;
 	}
 
 	/* ip is already initialized and should not be re-initialized */
-	if( rt_functab[id].ft_import( ip, &ext, mat, dbip ) < 0 )  {
+	if( rt_functab[id].ft_import( ip, &ext, mat, dbip, resp ) < 0 )  {
 		bu_log("rt_db_get_internal(%s):  import failure\n",
 			dp->d_namep );
-	    	rt_db_free_internal( ip );
+	    	rt_db_free_internal( ip, resp );
 		bu_free_external( &ext );
 		return -1;		/* FAIL */
 	}
@@ -134,10 +135,11 @@ CONST mat_t		mat;
  *	 0	success
  */
 int
-rt_db_put_internal( dp, dbip, ip )
-struct directory	*dp;
-struct db_i		*dbip;
-struct rt_db_internal	*ip;
+rt_db_put_internal(
+	struct directory	*dp,
+	struct db_i		*dbip,
+	struct rt_db_internal	*ip,
+	struct resource		*resp)
 {
 	struct bu_external	ext;
 	int			ret;
@@ -146,18 +148,18 @@ struct rt_db_internal	*ip;
 	RT_CK_DB_INTERNAL( ip );
 
 	if( dbip->dbi_version > 4 )
-		return  rt_db_put_internal5( dp, dbip, ip );
+		return  rt_db_put_internal5( dp, dbip, ip, resp );
 
 	/* Scale change on export is 1.0 -- no change */
-	ret = ip->idb_meth->ft_export( &ext, ip, 1.0, dbip );
+	ret = ip->idb_meth->ft_export( &ext, ip, 1.0, dbip, resp );
 	if( ret < 0 )  {
 		bu_log("rt_db_put_internal(%s):  solid export failure\n",
 			dp->d_namep);
-		rt_db_free_internal( ip );
+		rt_db_free_internal( ip, resp );
 		bu_free_external( &ext );
 		return -2;		/* FAIL */
 	}
-	rt_db_free_internal( ip );
+	rt_db_free_internal( ip, resp );
 
 	if( db_put_external( &ext, dp, dbip ) < 0 )  {
 		bu_free_external( &ext );
@@ -193,7 +195,7 @@ rt_fwrite_internal(
 	RT_CK_FUNCTAB( ip->idb_meth );
 	BU_INIT_EXTERNAL( &ext );
 
-	if( ip->idb_meth->ft_export( &ext, ip, conv2mm, NULL /*dbip*/ ) < 0 )  {
+	if( ip->idb_meth->ft_export( &ext, ip, conv2mm, NULL /*dbip*/, &rt_uniresource ) < 0 )  {
 		bu_log("rt_file_put_internal(%s): solid export failure\n",
 			name );
 		bu_free_external( &ext );
@@ -216,12 +218,13 @@ rt_fwrite_internal(
  *			R T _ D B _ F R E E _ I N T E R N A L
  */
 void
-rt_db_free_internal( struct rt_db_internal *ip )
+rt_db_free_internal( struct rt_db_internal *ip, struct resource *resp )
 {
 	RT_CK_DB_INTERNAL( ip );
+	RT_CK_RESOURCE(resp);
 	RT_CK_FUNCTAB( ip->idb_meth );
 	if( ip->idb_ptr )  {
-		ip->idb_meth->ft_ifree(ip);
+		ip->idb_meth->ft_ifree(ip, resp);
 		ip->idb_ptr = NULL;		/* sanity.  Should be handled by INIT, below */
 	}
 	if( ip->idb_avs.magic == BU_AVS_MAGIC )  bu_avs_free(&ip->idb_avs);
@@ -244,22 +247,23 @@ rt_db_lookup_internal (
 	const char *obj_name,
 	struct directory **dpp,
 	struct rt_db_internal *ip,
-	int noisy )
+	int noisy,
+	struct resource *resp)
 {
     struct directory		*dp;
 
     if (obj_name == (char *) 0)
     {
 	if (noisy == LOOKUP_NOISY)
-	    bu_log("No object specified\n");
+	    bu_log("rt_db_lookup_internal() No object specified\n");
 	return ID_NULL;
     }
     if ((dp = db_lookup(dbip, obj_name, noisy)) == DIR_NULL)
 	return ID_NULL;
-    if (rt_db_get_internal(ip, dp, dbip, (matp_t) NULL ) < 0 )
+    if (rt_db_get_internal(ip, dp, dbip, (matp_t) NULL, resp ) < 0 )
     {
 	if (noisy == LOOKUP_NOISY)
-	    bu_log("Failed to get internal form of object '%s'\n",
+	    bu_log("rt_db_lookup_internal() Failed to get internal form of object '%s'\n",
 		dp -> d_namep);
 	return ID_NULL;
     }

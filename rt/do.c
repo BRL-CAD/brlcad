@@ -498,11 +498,7 @@ register struct rt_i	*rtip;
 {
 	struct bu_vls	times;
 
-	if( rtip->rti_magic != RTI_MAGIC )  {
-		bu_log("rtip=x%x, rti_magic=x%x s/b x%x\n", rtip,
-			rtip->rti_magic, RTI_MAGIC );
-		rt_bomb("def_tree:  bad rtip\n");
-	}
+	RT_CK_RTI(rtip);
 
 	bu_vls_init( &times );
 	rt_prep_timer();

@@ -552,7 +552,7 @@ struct rt_i	*rtip;
 			{
 				struct region *r = BU_LIST_NEXT( region, &regp->l );
 				/* zap reg_udata? beware of light structs */
-				rt_del_regtree( rtip, regp );
+				rt_del_regtree( rtip, regp, &rt_uniresource );
 				regp = r;
 				continue;
 			}

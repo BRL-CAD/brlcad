@@ -53,7 +53,7 @@ wdb_fopen( const char *filename )
 	struct db_i	*dbip;
 
 	if( rt_uniresource.re_magic != RESOURCE_MAGIC )
-		rt_init_resource( &rt_uniresource, 0 );
+		rt_init_resource( &rt_uniresource, 0, NULL );
 
 	if( (dbip = db_create( filename )) == DBI_NULL )
 		return RT_WDB_NULL;
@@ -92,7 +92,7 @@ wdb_dbopen( struct db_i *dbip, int mode )
 	}
 
 	if( rt_uniresource.re_magic != RESOURCE_MAGIC )
-		rt_init_resource( &rt_uniresource, 0 );
+		rt_init_resource( &rt_uniresource, 0, NULL );
 
 	BU_GETSTRUCT(wdbp, rt_wdb);
 	wdbp->l.magic = RT_WDB_MAGIC;
@@ -125,6 +125,8 @@ wdb_dbopen( struct db_i *dbip, int mode )
  *	-2	db_get_external failure (from rt_db_get_internal)
  *	-3	Attempt to import from write-only (stream) file.
  *	-4	Name not found in database TOC.
+ *
+ *  NON-PARALLEL because of rt_uniresource
  */
 int
 wdb_import(
@@ -138,7 +140,7 @@ wdb_import(
 	if( (dp = db_lookup( wdbp->dbip, name, LOOKUP_QUIET )) == DIR_NULL )
 		return -4;
 
-	return rt_db_get_internal( internp, dp, wdbp->dbip, mat );
+	return rt_db_get_internal( internp, dp, wdbp->dbip, mat, &rt_uniresource );
 }
 
 /*
@@ -263,6 +265,8 @@ wdb_export_external(
  *  Use this routine in preference to wdb_export() whenever the
  *  caller already has an rt_db_internal structure handy.
  *
+ *  NON-PARALLEL because of rt_uniresource
+ *
  *  Returns -
  *	 0	OK
  *	<0	error
@@ -283,7 +287,7 @@ wdb_put_internal(
 
 	if( wdbp->dbip->dbi_version <= 4 )  {
 		BU_INIT_EXTERNAL( &ext );
-		ret = ip->idb_meth->ft_export( &ext, ip, local2mm, wdbp->dbip );
+		ret = ip->idb_meth->ft_export( &ext, ip, local2mm, wdbp->dbip, &rt_uniresource );
 		if( ret < 0 )  {
 			bu_log("rt_db_put_internal(%s):  solid export failure\n",
 				name);
@@ -292,7 +296,7 @@ wdb_put_internal(
 		}
 		db_wrap_v4_external( &ext, name );
 	} else {
-		if( rt_db_cvt_to_external5( &ext, name, ip, local2mm, wdbp->dbip ) < 0 )  {
+		if( rt_db_cvt_to_external5( &ext, name, ip, local2mm, wdbp->dbip, &rt_uniresource ) < 0 )  {
 			bu_log("wdb_export(%s): solid export failure\n",
 				name );
 			ret = -2;
@@ -305,7 +309,7 @@ wdb_put_internal(
 	ret = wdb_export_external( wdbp, &ext, name, flags );
 out:
 	bu_free_external( &ext );
-	rt_db_free_internal( ip );
+	rt_db_free_internal( ip, &rt_uniresource );
 	return ret;
 }
 

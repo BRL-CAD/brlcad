@@ -1688,7 +1688,7 @@ char	**argv;
 
 	plotfp = fopen( "ebm.pl", "w" );
 
-	Tdir.d_namep = "Tsolid";
+	RT_DIR_SET_NAMEP(&Tdir, "Tsolid");
 	Tsolid.st_dp = &Tdir;
 	Tappl.a_purpose = "testing";
 	Tappl.a_resource = &resource;
