@@ -23,6 +23,8 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "raytrace.h"
 #include "spectrum.h"
 #include "fb.h"
+#include "tcl.h"
+#include "tk.h"
 
 int	width = 64;
 int	height = 64;
@@ -40,7 +42,74 @@ char	*pixels;
 
 fastf_t	maxval, minval;
 
+Tcl_Interp	*interp;
+Tk_Window	tkwin;
+
+int	doit(), doit1();
+
+int
+getspectval( cd, interp, argc, argv )
+ClientData	cd;
+Tcl_Interp	*interp;
+int		argc;
+char		*argv[];
+{
+	struct rt_spect_sample	*sp;
+	int	x, y, wl;
+	char	*cp;
+
+	if( argc != 4 )  {
+		interp->result = "Usage: getspect x y wl";
+		return TCL_ERROR;
+	}
+	x = atoi(argv[1]);
+	y = atoi(argv[2]);
+	wl = atoi(argv[3]);
+
+	RT_CK_SPECTRUM(spectrum);
+
+	if( x < 0 || x > width || y < 0 || y > height )  {
+		interp->result = "x or y out of range";
+		return TCL_ERROR;
+	}
+	if( wl < 0 || wl >= spectrum->nwave )  {
+		interp->result = "wavelength out of range";
+		return TCL_ERROR;
+	}
+	cp = pixels + (y * RT_SIZEOF_SPECT_SAMPLE(spectrum) + x) * RT_SIZEOF_SPECT_SAMPLE(spectrum);
+	sp = (struct rt_spect_sample *)cp;
+	RT_CK_SPECT_SAMPLE(sp);
+	sprintf( interp->result, "%g", sp->val[wl] );
+	return TCL_OK;
+}
+
+int
+tcl_appinit(inter)
+Tcl_Interp	*inter;
+{
+	interp = inter;	/* set global var */
+	if( Tcl_Init(interp) == TCL_ERROR )  {
+		return TCL_ERROR;
+	}
+	Tcl_CreateCommand(interp, "doit", doit, (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
+	Tcl_CreateCommand(interp, "doit1", doit1, (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
+
+	tkwin = Tk_CreateMainWindow( interp, (char *)NULL, "disp", "disp" );
+	if( tkwin == NULL )  return TCL_ERROR;
+	Tk_GeometryRequest(tkwin, 100, 20);
+
+	/* Run tk.tcl script */
+	if( Tk_Init(interp) == TCL_ERROR )  return TCL_ERROR;
+
+	/* Handle any delayed events which result */
+	while (Tk_DoOneEvent(TK_DONT_WAIT | TK_ALL_EVENTS))
+		;
+
+	return TCL_OK;
+}
+
 main( argc, argv )
+char	**argv;
 {
 	int	len;
 	int	fd;
@@ -71,17 +140,59 @@ main( argc, argv )
 	}
 	close(fd);
 
+
 	find_minmax();
 	rt_log("min = %g, max=%g Watts\n", minval, maxval );
 
-	for( i = 0; i < spectrum->nwave; i++ )  {
-		rt_log("%g um to %g um\n", spectrum->wavel[i] * 0.001,
-			spectrum->wavel[i+1] * 0.001 );
-		rescale(i);
-		fb_writerect( fbp, 0, 0, width, height, pixels );
-		fb_poll(fbp);
-	}
+	Tcl_Main( argc, argv, tcl_appinit );
+	/* NOTREACHED */
+
 	return 0;
+}
+
+int
+doit( cd, interp, argc, argv )
+ClientData	cd;
+Tcl_Interp	*interp;
+int		argc;
+char		*argv[];
+{
+	int	wl;
+	char	cmd[96];
+
+	for( wl = 0; wl < spectrum->nwave; wl++ )  {
+		sprintf( cmd, "doit1 %d", wl );
+		Tcl_Eval( interp, cmd );
+	}
+
+}
+
+int
+doit1( cd, interp, argc, argv )
+ClientData	cd;
+Tcl_Interp	*interp;
+int		argc;
+char		*argv[];
+{
+	int	wl;
+
+	if( argc != 2 )  {
+		interp->result = "Usage: doit1 wavel#";
+		return TCL_ERROR;
+	}
+	wl = atoi(argv[1]);
+	if( wl < 0 || wl >= spectrum->nwave )  {
+		interp->result = "Wavelength number out of range";
+		return TCL_ERROR;
+	}
+
+	rt_log("%d: %g um to %g um\n",
+		wl,
+		spectrum->wavel[wl] * 0.001,
+		spectrum->wavel[wl+1] * 0.001 );
+	rescale(wl);
+	fb_writerect( fbp, 0, 0, width, height, pixels );
+	fb_poll(fbp);
 }
 
 /*
