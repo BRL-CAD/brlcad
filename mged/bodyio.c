@@ -2,8 +2,8 @@
  *			B O D Y I O . C
  *
  * Functions -
- *	cmd_bodyread - read an object's body from a file
- *	cmd_bodywrite - write an object's body to a file
+ *	cmd_import_body - read an object's body from a file
+ *	cmd_export_body - write an object's body to a file
  *
  *  Author -
  *	Paul J. Tanenbaum
@@ -56,26 +56,22 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./sedit.h"
 
 /*
- *		C M D _ B O D Y R E A D ( )
+ *		C M D _ I M P O R T _ B O D Y ( )
  *
  *	Read an object's body from disk file
  *
  */
 int
-cmd_bodyread(clientData, interp, argc, argv )
+cmd_import_body(clientData, interp, argc, argv )
 ClientData clientData;
 Tcl_Interp *interp;
 int	argc;
 char	*argv[];
 {
     register struct directory	*dp;
-#if 0
-    struct bu_external		ext;
-    struct db5_raw_internal	raw;
-#endif
     struct stat			stat_buf;
     int				major_code, minor_code;
-    unsigned char		majc, minc;
+    int				majc, minc;
     char			*descrip;
     struct bu_vls		vls;
     struct rt_db_internal	intern;
@@ -133,7 +129,7 @@ char	*argv[];
     /*
      *	Check to see if we need to create a new object
      */
-    if( (dp = db_lookup( dbip, argv[1], LOOKUP_NOISY)) == DIR_NULL ) {
+    if(( dp = db_lookup( dbip, argv[1], LOOKUP_NOISY)) == DIR_NULL ) {
 	bu_vls_init( &vls );
 	bu_vls_printf( &vls, "I don't feel like creating object %s\n", argv[1] );
 	Tcl_SetResult(interp, bu_vls_addr( &vls ), TCL_VOLATILE );
@@ -204,7 +200,7 @@ char	*argv[];
 
 	    gotten = read( fd, (void *) (bip->u.uint8), stat_buf.st_size);
 	    if (gotten == -1) {
-		perror( "bodyread" );
+		perror( "import_body" );
 		return TCL_ERROR;
 	    } else if (gotten < stat_buf.st_size) {
 		bu_vls_init( &vls );
@@ -216,13 +212,16 @@ char	*argv[];
 		mged_print_result( TCL_ERROR );
 		return TCL_ERROR;
 	    }
+	    bu_log("gotten=%d,  minor_code is %d\n", gotten, minor_code);
 	    bip->count = gotten / db5_type_sizeof_n_binu( minor_code );
 	    bu_log("Got 'em!\nThink I own %d of 'em\n", bip->count);
+	    fflush(stderr);
 
 	    intern.idb_type = ID_BINUNIF;
 	    intern.idb_meth = &rt_functab[ID_BINUNIF];
 	    intern.idb_ptr = (genptr_t)bip;
-	    rt_db_put_internal5( dp, dbip, &intern, &rt_uniresource );
+	    rt_binunif_dump(bip);
+	    rt_db_put_internal5( dp, dbip, &intern, &rt_uniresource, DB5_MAJORTYPE_BINARY_UNIF );
 	    rt_db_free_internal( &intern, &rt_uniresource );
 	    break;
 	default:
@@ -239,13 +238,13 @@ char	*argv[];
 }
 
 /*
- *		C M D _ B O D Y W R I T E ( )
+ *		C M D _ E X P O R T _ B O D Y ( )
  *
  *	Write an object's body to disk file
  *
  */
 int
-cmd_bodywrite(clientData, interp, argc, argv )
+cmd_export_body(clientData, interp, argc, argv )
 ClientData clientData;
 Tcl_Interp *interp;
 int	argc;
@@ -259,14 +258,12 @@ char	*argv[];
     struct bu_external		ext;
     struct db5_raw_internal	raw;
     struct rt_db_internal	intern;
-#if 0
-    struct stat			stat_buf;
-#endif
     struct rt_binunif_internal	*bip;
     struct bu_vls		vls;
 #if 0
     int				status;
 #endif
+    char			tmp[1028];
 
     CHECK_DBI_NULL;
 
@@ -290,8 +287,12 @@ char	*argv[];
 	mged_print_result( TCL_ERROR );
 	return TCL_ERROR;
     }
+    RT_INIT_DB_INTERNAL(&intern);
+    if ( rt_db_get_internal5( &intern, dp, dbip, NULL, &rt_uniresource) 
+	!= ID_BINUNIF ) {
+#if 0
     if ( db_get_external( &ext, dp, dbip ) < 0 )
-    {
+#endif
 	(void)signal( SIGINT, SIG_IGN );
 	TCL_READ_ERR_return;
     }
@@ -315,52 +316,72 @@ char	*argv[];
 	mged_print_result( TCL_ERROR );
 	return TCL_ERROR;
     }
+    if (db5_type_descrip_from_codes(tmp, raw.major_type, raw.minor_type))
+	tmp[0] = '\0';
+    bu_log("cmd_export_body() sees type (%d, %d)='%s'\n",
+	raw.major_type, raw.minor_type, tmp);
     switch (raw.major_type) {
 	case DB5_MAJORTYPE_BINARY_UNIF:
-	    if ( rt_binunif_import5( &intern,
-			raw.minor_type, &ext, dbip ) ) {
+#if 0
+	    if ( rt_binunif_import5( &intern, &ext, 0, dbip,
+		    &rt_uniresource, raw.minor_type  ) ) {
 		(void)signal( SIGINT, SIG_IGN );
 		TCL_READ_ERR_return;
-		
 	    }
+#endif
 	    bip = (struct rt_binunif_internal *) intern.idb_ptr;
+	    RT_CK_BINUNIF(bip);
+	    rt_binunif_dump(bip);
 	    bufp = (void *) bip->u.uint8;
+	    bu_log("cmd_export_body() thinks bip->count=%d\n", bip->count);
 	    switch (bip -> type) {
 		case DB5_MINORTYPE_BINU_FLOAT:
+		    bu_log("bip->type switch... float");
 		    nbytes = (size_t) (bip->count * sizeof(float));
 		    break;
 		case DB5_MINORTYPE_BINU_DOUBLE:
+		    bu_log("bip->type switch... double");
 		    nbytes = (size_t) (bip->count * sizeof(double));
 		    break;
 		case DB5_MINORTYPE_BINU_8BITINT:
 		case DB5_MINORTYPE_BINU_8BITINT_U:
+		    bu_log("bip->type switch... 8bitint");
 		    nbytes = (size_t) (bip->count);
 		    break;
 		case DB5_MINORTYPE_BINU_16BITINT:
 		case DB5_MINORTYPE_BINU_16BITINT_U:
+		    bu_log("bip->type switch... 16bitint");
 		    nbytes = (size_t) (bip->count * 2);
 		    break;
 		case DB5_MINORTYPE_BINU_32BITINT:
 		case DB5_MINORTYPE_BINU_32BITINT_U:
+		    bu_log("bip->type switch... 32bitint");
 		    nbytes = (size_t) (bip->count * 4);
 		    break;
 		case DB5_MINORTYPE_BINU_64BITINT:
 		case DB5_MINORTYPE_BINU_64BITINT_U:
+		    bu_log("bip->type switch... 64bitint");
 		    nbytes = (size_t) (bip->count * 8);
+		    break;
+		default:
+		    /* XXX	This shouln't happen!!    */
+		    bu_log("bip->type switch... default");
 		    break;
 	    }
 	    break;
 	default:
+	    bu_log("I'm in the default\n");
 	    bufp = (void *) ext.ext_buf;
 	    nbytes = (size_t) ext.ext_nbytes;
 	    break;
     }
+    bu_log("going to write %ld bytes\n", nbytes);
     if ( (written = write(fd, bufp, nbytes) ) != nbytes ) {
     	perror(argv[1]);
 	bu_free_external( &ext );
 	bu_vls_init( &vls );
 	bu_vls_printf( &vls,
-	    "Incomplete write of object %s to file %s, got %d, s/b=%d\n",
+	    "Incomplete write of object %s to file %s, got %ld, s/b=%ld\n",
 	    argv[2], argv[1], written, nbytes );
 	Tcl_SetResult(interp, bu_vls_addr( &vls ), TCL_VOLATILE );
 	bu_vls_free( &vls );

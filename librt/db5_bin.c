@@ -98,9 +98,11 @@ rt_bin_mime_import5(struct rt_db_internal * ip,
  */
 int
 rt_binunif_import5( struct rt_db_internal	*ip,
-		    CONST unsigned char		minor_type,
 		    CONST struct bu_external	*ep,
-		    CONST struct db_i		*dbip )
+		    CONST mat_t			mat,
+		    CONST struct db_i		*dbip,
+		    struct resource		*resp,
+		    CONST int			minor_type)
 {
 	struct rt_binunif_internal	*bip;
 	int				i;
@@ -118,7 +120,7 @@ rt_binunif_import5( struct rt_db_internal	*ip,
 
 	RT_CK_DB_INTERNAL( ip );
 	ip->idb_type = ID_BINUNIF;
-	ip->idb_meth = 0;
+	ip->idb_meth = &rt_functab[ID_BINUNIF];
 	ip->idb_ptr = bu_malloc( sizeof(struct rt_binunif_internal),
 	    "rt_binunif_internal");
 
@@ -182,7 +184,19 @@ rt_binunif_import5( struct rt_db_internal	*ip,
 	return 0;		/* OK */
 }
 
-
+/*
+ *			R T _ B I N U N I F _ D U M P
+ *
+ *  Diagnostic routine
+ */
+void
+rt_binunif_dump( struct rt_binunif_internal *bip) {
+    RT_CK_BINUNIF(bip);
+    bu_log("rt_bin_unif_internal <%x>...", bip);
+    bu_log("  type = x%x = %d", bip -> type, bip -> type);
+    bu_log("  count = %ld", bip -> count);
+    bu_log("- - - - -");
+}
 
 
 /*
@@ -232,11 +246,13 @@ rt_bin_import5( struct rt_db_internal		*ip,
 		CONST struct bu_external	*ep,
 		CONST struct db_i		*dbip )
 {
+    RT_CK_DB_INTERNAL(ip);
+
     switch (major_type) {
 	case DB5_MAJORTYPE_BINARY_EXPM:
 	    return rt_binexpm_import5( ip, minor_type, ep, dbip );
 	case DB5_MAJORTYPE_BINARY_UNIF:
-	    return rt_binunif_import5( ip, minor_type, ep, dbip );
+	    return rt_binunif_import5( ip, ep, 0, dbip, 0, minor_type );
 	case DB5_MAJORTYPE_BINARY_MIME:
 	    return rt_binmime_import5( ip, minor_type, ep, dbip );
     }
@@ -249,7 +265,10 @@ rt_bin_import5( struct rt_db_internal		*ip,
 int
 rt_binunif_export5( struct bu_external		*ep,
 		    CONST struct rt_db_internal	*ip,
-		    CONST struct db_i		*dbip )
+		    double			local2mm,	/* we ignore */
+		    CONST struct db_i		*dbip,
+		    struct resource		*resp,
+		    CONST int			minor_type )
 {
 	struct rt_binunif_internal	*bip;
 	int				i;
@@ -321,8 +340,8 @@ rt_binunif_export5( struct bu_external		*ep,
 /*
  *			R T _ B I N U N I F _ D E S C R I B E
  *
- *  Make human-readable formatted presentation of this solid.
- *  First line describes type of solid.
+ *  Make human-readable formatted presentation of this object.
+ *  First line describes type of object.
  *  Additional lines are indented one tab, and give parameter values.
  */
 int
@@ -335,10 +354,14 @@ rt_binunif_describe( struct bu_vls		*str,
 	char					buf[256];
 	unsigned short				wid;
 
+	bu_made_it();
 	bip = (struct rt_binunif_internal *) ip->idb_ptr;
 	RT_CK_BINUNIF(bip);
+	rt_binunif_dump(bip);
 	bu_vls_strcat( str, "uniform-array binary object (BINUNIF)\n");
 	wid = (bip->type & DB5_MINORTYPE_BINU_WID_MASK) >> 4;
+	bu_made_it();
+	bu_log("bip->count is %d\n", bip->count);
 	switch (wid) {
 	    case 0:
 		sprintf( buf, "%ld ", bip->count ); break;
@@ -349,14 +372,16 @@ rt_binunif_describe( struct bu_vls		*str,
 	    case 3:
 		sprintf( buf, "%ld quadruples of ", bip->count / 4 ); break;
 	}
+	bu_made_it();
 	bu_vls_strcat( str, buf );
+	bu_made_it();
 	switch (bip->type & DB5_MINORTYPE_BINU_ATM_MASK) {
 	    case DB5_MINORTYPE_BINU_FLOAT:
 		bu_vls_strcat( str, "floats\n"); break;
 	    case DB5_MINORTYPE_BINU_DOUBLE:
 		bu_vls_strcat( str, "doubles\n"); break;
 	    case DB5_MINORTYPE_BINU_8BITINT:
-		bu_vls_strcat( str, "chars\n"); break;
+		bu_vls_strcat( str, "8-bit ints\n"); break;
 	    case DB5_MINORTYPE_BINU_16BITINT:
 		bu_vls_strcat( str, "16-bit ints\n"); break;
 	    case DB5_MINORTYPE_BINU_32BITINT:
@@ -364,7 +389,7 @@ rt_binunif_describe( struct bu_vls		*str,
 	    case DB5_MINORTYPE_BINU_64BITINT:
 		bu_vls_strcat( str, "64-bit ints\n"); break;
 	    case DB5_MINORTYPE_BINU_8BITINT_U:
-		bu_vls_strcat( str, "unsigned chars\n"); break;
+		bu_vls_strcat( str, "unsigned 8-bit ints\n"); break;
 	    case DB5_MINORTYPE_BINU_16BITINT_U:
 		bu_vls_strcat( str, "unsigned 16-bit ints\n"); break;
 	    case DB5_MINORTYPE_BINU_32BITINT_U:
@@ -372,6 +397,8 @@ rt_binunif_describe( struct bu_vls		*str,
 	    case DB5_MINORTYPE_BINU_64BITINT_U:
 		bu_vls_strcat( str, "unsigned 64-bit ints\n"); break;
 	}
+	bu_made_it();
+	bu_log("str contains: '%s'\n", bu_vls_addr(str));
 
 	return(0);
 }

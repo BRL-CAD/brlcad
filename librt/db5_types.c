@@ -34,11 +34,11 @@ static const char RCSell[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 
 struct db5_type {
-    unsigned char	major_code;
-    unsigned char	minor_code;
-    unsigned char	heed_minor;
-    char		*tag;
-    char		*description;
+    int		major_code;
+    int		minor_code;
+    int		heed_minor;
+    char	*tag;
+    char	*description;
 };
 
 /*
@@ -146,34 +146,52 @@ CONST static struct db5_type type_table[] = {
 	DB5_MAJORTYPE_BINARY_EXPM, 0, 0, "binexpm", "experimental binary"
     },
     {
-	DB5_MAJORTYPE_BINARY_UNIF, DB5_MINORTYPE_BINU_FLOAT, 1, "bin_float", "array of floats"
+	DB5_MAJORTYPE_BINARY_UNIF, DB5_MINORTYPE_BINU_FLOAT, 1, "float", "array of floats"
     },
     {
-	DB5_MAJORTYPE_BINARY_UNIF, DB5_MINORTYPE_BINU_DOUBLE, 1, "bin_double", "array of doubles"
+	DB5_MAJORTYPE_BINARY_UNIF, DB5_MINORTYPE_BINU_FLOAT, 1, "f", "array of floats"
     },
     {
-	DB5_MAJORTYPE_BINARY_UNIF, DB5_MINORTYPE_BINU_8BITINT_U, 1, "bin_8u", "array of unsigned 8-bit ints"
+	DB5_MAJORTYPE_BINARY_UNIF, DB5_MINORTYPE_BINU_DOUBLE, 1, "double", "array of doubles"
     },
     {
-	DB5_MAJORTYPE_BINARY_UNIF, DB5_MINORTYPE_BINU_16BITINT_U, 1, "bin_16u", "array of unsigned 16-bit ints"
+	DB5_MAJORTYPE_BINARY_UNIF, DB5_MINORTYPE_BINU_DOUBLE, 1, "d", "array of doubles"
     },
     {
-	DB5_MAJORTYPE_BINARY_UNIF, DB5_MINORTYPE_BINU_32BITINT_U, 1, "bin_32u", "array of unsigned 32-bit ints"
+	DB5_MAJORTYPE_BINARY_UNIF, DB5_MINORTYPE_BINU_8BITINT_U, 1, "u8", "array of unsigned 8-bit ints"
     },
     {
-	DB5_MAJORTYPE_BINARY_UNIF, DB5_MINORTYPE_BINU_64BITINT_U, 1, "bin_64u", "array of unsigned 64-bit ints"
+	DB5_MAJORTYPE_BINARY_UNIF, DB5_MINORTYPE_BINU_16BITINT_U, 1, "u16", "array of unsigned 16-bit ints"
     },
     {
-	DB5_MAJORTYPE_BINARY_UNIF, DB5_MINORTYPE_BINU_8BITINT, 1, "bin_8", "array of 8-bit ints"
+	DB5_MAJORTYPE_BINARY_UNIF, DB5_MINORTYPE_BINU_32BITINT_U, 1, "u32", "array of unsigned 32-bit ints"
     },
     {
-	DB5_MAJORTYPE_BINARY_UNIF, DB5_MINORTYPE_BINU_16BITINT, 1, "bin_16", "array of 16-bit ints"
+	DB5_MAJORTYPE_BINARY_UNIF, DB5_MINORTYPE_BINU_32BITINT_U, 1, "uint", "array of unsigned 32-bit ints"
     },
     {
-	DB5_MAJORTYPE_BINARY_UNIF, DB5_MINORTYPE_BINU_32BITINT, 1, "bin_32", "array of 32-bit ints"
+	DB5_MAJORTYPE_BINARY_UNIF, DB5_MINORTYPE_BINU_32BITINT_U, 1, "ui", "array of unsigned 32-bit ints"
     },
     {
-	DB5_MAJORTYPE_BINARY_UNIF, DB5_MINORTYPE_BINU_64BITINT, 1, "bin_64", "array of 64-bit ints"
+	DB5_MAJORTYPE_BINARY_UNIF, DB5_MINORTYPE_BINU_64BITINT_U, 1, "u64", "array of unsigned 64-bit ints"
+    },
+    {
+	DB5_MAJORTYPE_BINARY_UNIF, DB5_MINORTYPE_BINU_8BITINT, 1, "8", "array of 8-bit ints"
+    },
+    {
+	DB5_MAJORTYPE_BINARY_UNIF, DB5_MINORTYPE_BINU_16BITINT, 1, "16", "array of 16-bit ints"
+    },
+    {
+	DB5_MAJORTYPE_BINARY_UNIF, DB5_MINORTYPE_BINU_32BITINT, 1, "32", "array of 32-bit ints"
+    },
+    {
+	DB5_MAJORTYPE_BINARY_UNIF, DB5_MINORTYPE_BINU_32BITINT, 1, "int", "array of 32-bit ints"
+    },
+    {
+	DB5_MAJORTYPE_BINARY_UNIF, DB5_MINORTYPE_BINU_32BITINT, 1, "i", "array of 32-bit ints"
+    },
+    {
+	DB5_MAJORTYPE_BINARY_UNIF, DB5_MINORTYPE_BINU_64BITINT, 1, "64", "array of 64-bit ints"
     },
     {
 	DB5_MAJORTYPE_BINARY_UNIF, 0, 0, "binunif", "uniform-array binary"
@@ -190,7 +208,7 @@ CONST static struct db5_type type_table[] = {
 };
 
 int
-db5_type_tag_from_major( char **tag, CONST unsigned char major ) {
+db5_type_tag_from_major( char **tag, CONST int major ) {
     register struct db5_type	*tp;
 
     for (tp = (struct db5_type *) type_table;
@@ -205,7 +223,7 @@ db5_type_tag_from_major( char **tag, CONST unsigned char major ) {
 }
 
 int
-db5_type_descrip_from_major( char **descrip, CONST unsigned char major ) {
+db5_type_descrip_from_major( char **descrip, CONST int major ) {
     register struct db5_type	*tp;
 
     for (tp = (struct db5_type *) type_table;
@@ -220,8 +238,7 @@ db5_type_descrip_from_major( char **descrip, CONST unsigned char major ) {
 }
 
 int
-db5_type_tag_from_codes( char **tag, CONST unsigned char major,
-			CONST unsigned char minor ) {
+db5_type_tag_from_codes( char **tag, CONST int major, CONST int minor ) {
     register struct db5_type	*tp;
     register int		found_minors = 0;
 
@@ -241,8 +258,8 @@ db5_type_tag_from_codes( char **tag, CONST unsigned char major,
 }
 
 int
-db5_type_descrip_from_codes( char **descrip, CONST unsigned char major,
-			    CONST unsigned char minor ) {
+db5_type_descrip_from_codes( char **descrip, CONST int major,
+			    CONST int minor ) {
     register struct db5_type	*tp;
     register int		found_minors = 0;
 
@@ -262,8 +279,7 @@ db5_type_descrip_from_codes( char **descrip, CONST unsigned char major,
 }
 
 int
-db5_type_codes_from_tag( unsigned char *major, unsigned char *minor,
-			CONST char *tag ) {
+db5_type_codes_from_tag( int *major, int *minor, CONST char *tag ) {
     register struct db5_type	*tp;
 
 
@@ -280,8 +296,7 @@ db5_type_codes_from_tag( unsigned char *major, unsigned char *minor,
 }
 
 int
-db5_type_codes_from_descrip( unsigned char *major, unsigned char *minor,
-			    CONST char *descrip ) {
+db5_type_codes_from_descrip( int *major, int *minor, CONST char *descrip ) {
     register struct db5_type	*tp;
 
 
@@ -299,7 +314,7 @@ db5_type_codes_from_descrip( unsigned char *major, unsigned char *minor,
 }
 
 size_t
-db5_type_sizeof_h_binu( CONST unsigned char minor ) {
+db5_type_sizeof_h_binu( CONST int minor ) {
     switch ( minor ) {
 	case DB5_MINORTYPE_BINU_FLOAT:
 	    return sizeof(float);
@@ -322,7 +337,7 @@ db5_type_sizeof_h_binu( CONST unsigned char minor ) {
 }
 
 size_t
-db5_type_sizeof_n_binu( CONST unsigned char minor ) {
+db5_type_sizeof_n_binu( CONST int minor ) {
     switch ( minor ) {
 	case DB5_MINORTYPE_BINU_FLOAT:
 	    return (size_t) SIZEOF_NETWORK_FLOAT;

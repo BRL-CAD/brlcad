@@ -1087,18 +1087,18 @@ rt_db_cvt_to_external5(
 	const struct rt_db_internal *ip,
 	double conv2mm,
 	struct db_i *dbip,
-	struct resource *resp)
+	struct resource *resp,
+	CONST int major)
 {
 	struct bu_external	attributes;
 	struct bu_external	body;
-	int			major, minor;
+	int			minor;
 
 	RT_CK_DB_INTERNAL( ip );
 	if(dbip) RT_CK_DBI(dbip);	/* may be null */
 	RT_CK_RESOURCE(resp);
 	BU_INIT_EXTERNAL( &body );
 
-	major = DB5_MAJORTYPE_BRLCAD;
 	minor = ip->idb_type;	/* XXX not necessarily v5 numbers. */
 
 	/* Scale change on export is 1.0 -- no change */
@@ -1266,7 +1266,8 @@ rt_db_put_internal5(
 	struct directory	*dp,
 	struct db_i		*dbip,
 	struct rt_db_internal	*ip,
-	struct resource		*resp)
+	struct resource		*resp,
+	CONST int		major)
 {
 	struct bu_external	ext;
 
@@ -1277,7 +1278,7 @@ rt_db_put_internal5(
 
 	BU_ASSERT_LONG( dbip->dbi_version, ==, 5 );
 
-	if( rt_db_cvt_to_external5( &ext, dp->d_namep, ip, 1.0, dbip, resp ) < 0 )  {
+	if( rt_db_cvt_to_external5( &ext, dp->d_namep, ip, 1.0, dbip, resp, major ) < 0 )  {
 		bu_log("rt_db_put_internal5(%s):  export failure\n",
 			dp->d_namep);
 		goto fail;
@@ -1340,17 +1341,18 @@ rt_db_external5_to_internal5(
 	BU_ASSERT_LONG( dbip->dbi_version, ==, 5 );
 
 	if( db5_get_raw_internal_ptr( &raw, ep->ext_buf ) < 0 )  {
-		bu_log("rt_db_get_internal5(%s):  import failure\n",
+		bu_log("rt_db_external5_to_internal5(%s):  import failure\n",
 			name );
 		return -3;
 	}
 
-	if( raw.major_type == DB5_MAJORTYPE_BRLCAD )  {
+	if(( raw.major_type == DB5_MAJORTYPE_BRLCAD )
+	 ||( raw.major_type == DB5_MAJORTYPE_BINARY_UNIF)) {
 		id = raw.minor_type;
 		/* As a convenience to older ft_import routines */
 		if( mat == NULL )  mat = bn_mat_identity;
 	} else {
-		bu_log("rt_db_get_internal5(%s):  unable to import non-BRL-CAD object, major=%d\n",
+		bu_log("rt_db_external5_to_internal5(%s):  unable to import non-BRL-CAD object, major=%d\n",
 			name, raw.major_type );
 		return -1;		/* FAIL */
 	}
@@ -1360,21 +1362,21 @@ rt_db_external5_to_internal5(
 	 */
 	if( raw.attributes.ext_buf )  {
 		if( db5_import_attributes( &ip->idb_avs, &raw.attributes ) < 0 )  {
-			bu_log("rt_db_get_internal5(%s):  mal-formed attributes in database\n",
+			bu_log("rt_db_external5_to_internal5(%s):  mal-formed attributes in database\n",
 				name );
 			return -8;
 		}
 	}
 
 	if( !raw.body.ext_buf )  {
-		bu_log("rt_db_get_internal5(%s):  object has no body\n",
+		bu_log("rt_db_external5_to_internal5(%s):  object has no body\n",
 			name );
 		return -4;
 	}
 
 	/* ip has already been initialized, and should not be re-initted */
 	if( rt_functab[id].ft_import5( ip, &raw.body, mat, dbip, resp, id ) < 0 )  {
-		bu_log("rt_db_get_internal5(%s):  import failure\n",
+		bu_log("rt_db_external5_to_internal5(%s):  import failure\n",
 			name );
 		rt_db_free_internal( ip, resp );
 		return -1;		/* FAIL */
