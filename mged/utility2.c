@@ -138,7 +138,9 @@ mat_t xform;
  *		    of the matching paths
  */
 void
-f_pathsum( )
+f_pathsum(argc, argv)
+int	argc;
+char	**argv;
 {
 	int i, flag, pos_in;
 
@@ -148,9 +150,6 @@ f_pathsum( )
 	 *      ANY path the same up to this point is considered as matching
 	 */
 	prflag = 0;
-
-	pos_in = args = numargs;
-	argcnt = 0;
 
 	/* interupts */
 	(void)signal( SIGINT, sig2 );
@@ -165,11 +164,18 @@ f_pathsum( )
 		flag = LISTEVAL;
 	}
 
-	/* get the path - ignore any input so far */
-	(void)printf("Enter the path (space is delimiter): ");
-	argcnt = getcmd(args);
-	args += argcnt;
-	objpos = argcnt;
+	if( argc < 2 )  {
+		pos_in = args = argc;
+		/* get the path */
+		(void)printf("Enter the path (space is delimiter): ");
+		argcnt = getcmd(args);
+		args += argcnt;
+		objpos = argcnt;
+	} else {
+		pos_in = args = 1;
+		argcnt = argc-1;
+		objpos = argc-1;
+	}
 
 	/* build directory pointer array for desired path */
 	for(i=0; i<objpos; i++) {
@@ -189,7 +195,6 @@ f_pathsum( )
 			(void)printf("/%s",obj[i]->d_namep);
 		(void)printf("  NOT FOUND\n");
 	}
-
 }
 
 
