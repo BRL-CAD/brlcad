@@ -365,6 +365,8 @@ db_update_ident( struct db_i *dbip, const char *new_title, double local2mm )
 	if(rt_g.debug&DEBUG_DB) bu_log("db_update_ident( x%x, '%s', %g )\n",
 		dbip, new_title, local2mm );
 
+	BU_ASSERT_LONG( dbip->dbi_version, >, 0 );
+
 	if( dbip->dbi_read_only )
 		return(-1);
 
