@@ -371,7 +371,7 @@ prepend=no
 if [ "x$foundtitle" = "x0" ] ; then
     prepend=yes
 else
-    licline="`echo "$block" | tail -5 | head -1`"
+    licline="`echo "$block" | tail -7 | head -1`"
     foundfileheader="`head -50 $FILE | grep "$licline" | wc | awk '{print $1}'`"
     if [ "x$foundfileheader" = "x0" ] ; then
 	prepend=yes
