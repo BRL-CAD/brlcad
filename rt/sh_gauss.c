@@ -32,33 +32,6 @@
 #include "./mathtab.h"
 #include "./rdebug.h"
 
-/*
- *  Generic settable parameters.
- *  By setting the "base address" to zero in the bu_structparse call,
- *  the actual memory address is given here as the structure offset.
- *
- *  Strictly speaking, the C language only permits initializers of the
- *  form: address +- constant, where here the intent is to measure the
- *  byte address of the indicated variable.
- *  Matching compensation code for the CRAY is located in librt/parse.c
- */
-#if CRAY
-#	define byteoffset(_i)	(((int)&(_i)))	/* actually a word offset */
-#else
-#  if IRIX > 5
-#	define byteoffset(_i)	((size_t)__INTADDR__(&(_i)))
-#  else
-#    if sgi || __convexc__ || ultrix || _HPUX_SOURCE
-	/* "Lazy" way.  Works on reasonable machines with byte addressing */
-#	define byteoffset(_i)	((int)((char *)&(_i)))
-#    else
-	/* "Conservative" way of finding # bytes as diff of 2 char ptrs */
-#	define byteoffset(_i)	((int)(((char *)&(_i))-((char *)0)))
-#    endif
-#  endif
-#endif
-
-
 /* The internal representation of the solids must be stored so that we
  * can access their parameters at shading time.  This is done with
  * a list of "struct reg_db_internals".  Each struct holds the
@@ -94,6 +67,8 @@ struct tree_bark {
 struct gauss_specific {
 	long	magic;	/* magic # for memory validity check, must come 1st */
 	double	gauss_sigma;	/* # std dev represented by ell bounds */
+	point_t	gauss_min;
+	point_t gauss_max;
 	mat_t	gauss_m_to_sh;	/* model to shader space matrix */
 	struct	rt_list	dbil;
 };
@@ -104,6 +79,8 @@ static CONST
 struct gauss_specific gauss_defaults = {
 	gauss_MAGIC,
 	4.0,
+	{0.0, 0.0, 0.0}, /* min */
+	{0.0, 0.0, 0.0}, /* max */
 	{	0.0, 0.0, 0.0, 0.0,
 		0.0, 0.0, 0.0, 0.0,
 		0.0, 0.0, 0.0, 0.0,
@@ -125,7 +102,7 @@ struct bu_structparse gauss_print_tab[] = {
 
 };
 struct bu_structparse gauss_parse_tab[] = {
-	{"i",	byteoffset(gauss_print_tab[0]), "gauss_print_tab", 0, FUNC_NULL },
+	{"i",	bu_byteoffset(gauss_print_tab[0]), "gauss_print_tab", 0, FUNC_NULL },
 	{"%f",  1, "s",			SHDR_O(gauss_sigma),	FUNC_NULL },
 	{"",	0, (char *)0,		0,			FUNC_NULL }
 };
@@ -348,7 +325,9 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	 * matrix to rotate it into alignment.  We're going to have to do
 	 * computation in the space defined by this ellipsoid.
 	 */
-/*	db_shader_mat(gauss_sp->gauss_m_to_sh, rtip, rp); */
+/*	db_shader_mat(gauss_sp->gauss_m_to_sh, rtip, rp, gauss_sp->gauss_min,
+		gauss_sp->gauss_max);
+ */
 
 
 	if( rdebug&RDEBUG_SHADE) {
@@ -586,6 +565,3 @@ char			*dp;	/* ptr to the shader-specific struct */
 
 	return(1);
 }
-
-
-

@@ -50,35 +50,6 @@
 #include "./mathtab.h"
 #include "./rdebug.h"
 
-/*
- *  Generic settable parameters.
- *  By setting the "base address" to zero in the bu_structparse call,
- *  the actual memory address is given here as the structure offset.
- *
- *  Strictly speaking, the C language only permits initializers of the
- *  form: address +- constant, where here the intent is to measure the
- *  byte address of the indicated variable.
- *  Matching compensation code for the CRAY is located in librt/parse.c
- */
-#if CRAY
-#	define byteoffset(_i)	(((int)&(_i)))	/* actually a word offset */
-#else
-#  if IRIX > 5
-#	define byteoffset(_i)	((size_t)__INTADDR__(&(_i)))
-#  else
-#    if sgi || __convexc__ || ultrix || _HPUX_SOURCE
-	/* "Lazy" way.  Works on reasonable machines with byte addressing */
-#	define byteoffset(_i)	((int)((char *)&(_i)))
-#    else
-	/* "Conservative" way of finding # bytes as diff of 2 char ptrs */
-#	define byteoffset(_i)	((int)(((char *)&(_i))-((char *)0)))
-#    endif
-#  endif
-#endif
-
-
-
-
 #define fire_MAGIC 0x46697265   /* ``Fire'' */
 #define CK_fire_SP(_p) RT_CKMAG(_p, fire_MAGIC, "fire_specific")
 
@@ -97,6 +68,8 @@ struct fire_specific {
 	vect_t	noise_scale;
 	vect_t	noise_delta;
 
+	point_t fire_min;
+	point_t fire_max;
 	mat_t	fire_m_to_sh;		/* model to shader space matrix */
 	mat_t	fire_sh_to_noise;	/* shader to noise space matrix */
 	mat_t	fire_colorspline_mat;
@@ -114,6 +87,8 @@ struct fire_specific fire_defaults = {
 	2.0,			/* noise_octaves */
 	{ 10.0, 10.0, 10.0 },	/* noise_scale */
 	{ 0.0, 0.0, 0.0 },	/* noise_delta */
+	{ 0.0, 0.0, 0.0 },	/* fire_min */
+	{ 0.0, 0.0, 0.0 },	/* fire_max */
 
 	{	/* fire_m_to_sh */
 		1.0, 0.0, 0.0, 0.0,
@@ -149,19 +124,21 @@ struct bu_structparse fire_print_tab[] = {
 	{"%f",	1, "lacunarity", SHDR_O(noise_lacunarity),	FUNC_NULL },
 	{"%f",	1, "H", 	SHDR_O(noise_h_val),		FUNC_NULL },
 	{"%f",	1, "octaves", 	SHDR_O(noise_octaves),		FUNC_NULL },
-	{"%f",  1, "scale",	SHDR_AO(noise_scale),		FUNC_NULL },
+	{"%f",  3, "scale",	SHDR_AO(noise_scale),		FUNC_NULL },
 	{"%f",  3, "delta",	SHDR_AO(noise_delta),		FUNC_NULL },
+	{"%f",	3,  "max",	SHDR_AO(fire_max),		FUNC_NULL },
+	{"%f",	3,  "min",	SHDR_AO(fire_min),		FUNC_NULL },
 	{"",	0, (char *)0,		0,			FUNC_NULL }
 
 };
 struct bu_structparse fire_parse_tab[] = {
-	{"i",	byteoffset(fire_print_tab[0]), "fire_print_tab", 0, FUNC_NULL },
+	{"i",	bu_byteoffset(fire_print_tab[0]), "fire_print_tab", 0, FUNC_NULL },
 	{"%f",  1, "f",		SHDR_O(fire_flicker),		FUNC_NULL },
 	{"%f",  1, "st",	SHDR_O(fire_stretch),		FUNC_NULL },
 	{"%f",	1, "l",		SHDR_O(noise_lacunarity),	FUNC_NULL },
 	{"%f",	1, "H", 	SHDR_O(noise_h_val),		FUNC_NULL },
 	{"%f",	1, "o", 	SHDR_O(noise_octaves),		FUNC_NULL },
-	{"%f",  1, "sc",	SHDR_AO(noise_scale),		FUNC_NULL },
+	{"%f",  3, "sc",	SHDR_AO(noise_scale),		FUNC_NULL },
 	{"%f",  3, "d",		SHDR_AO(noise_delta),		FUNC_NULL },
 	{"",	0, (char *)0,		0,			FUNC_NULL }
 };
@@ -251,7 +228,8 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	 * we need to get a matrix to perform the appropriate transform(s).
 	 */
 
-	db_shader_mat(fire_sp->fire_m_to_sh, rtip, rp);
+	db_shader_mat(fire_sp->fire_m_to_sh, rtip, rp, fire_sp->fire_min,
+		fire_sp->fire_max);
 
 	/* Build matrix to map shader space to noise space.
 	 * XXX If only we could get the frametime at this point
@@ -481,16 +459,16 @@ char			*dp;	/* ptr to the shader-specific struct */
 	if (lumens < 0.0) lumens = 0.0;
 	else if (lumens > 1.0) lumens = 1.0;
 
-	swp->sw_transmit = 1.0 - lumens;
-	if( swp->sw_reflect > 0 || swp->sw_transmit > 0 )
-		(void)rr_render( ap, pp, swp );
 
 	rt_dspline_n(color, fire_sp->fire_colorspline_mat, flame_colors,
 		18, 3, lumens);
 
 	VMOVE(swp->sw_color, color);
-	VSETALL(swp->sw_basecolor, 1.0);
+/*	VSETALL(swp->sw_basecolor, 1.0);*/
 
+	swp->sw_transmit = 1.0 - (lumens * 4.);
+	if( swp->sw_reflect > 0 || swp->sw_transmit > 0 )
+		(void)rr_render( ap, pp, swp );
 
 	return(1);
 }
