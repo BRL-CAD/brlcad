@@ -116,13 +116,13 @@ do-uninstall-stub&:  [[SUB ../SRCDIR/X.stub X.uninstall-stub ../SRCDIR/''*.stub]
 #endif
 
 #if !defined(DONT_INSTALL)
-install&: install-prod install-man install-stub inst-dist
+install&: install-prod install-man install-stub
 
-install-nobak&: install-prod-nobak install-man install-stub inst-dist
+install-nobak&: install-prod-nobak install-man install-stub
 #else
-install&:  inst-dist
+install&:
 
-install-nobak&: inst-dist
+install-nobak&:
 #endif
 
 #if defined(SHARED_PRODUCT)
@@ -213,14 +213,10 @@ do-install-stub&: [[SUB ../SRCDIR/X.stub X.install-stub ../SRCDIR/''*.stub]]
 	./Cakefile \\\\*.[hcsfyl] \\\\*.sh \
 	\\\\*.MANSECTION \\\\*.MANSECTION.stub \\\\*.doc
 #endif
-#define IS_MASTER	{{test x''MASTERHOST = x`GETHOST`}}
 
-inst-dist&:	inst-dist-main	if IS_MASTER
-
-/* inst-dist is also called from "install", so say nothing if not master */
-inst-dist&:			if not IS_MASTER
-
-inst-dist-main&: dist-clobber [[SUB X X.do-inst-dist INSTALL_PATTERNS]]
+/* inst-dist is never run automatically, it has to be run by hand. */
+/* inst-dist is run from gen.sh as part of the final packaging of a distribution */
+inst-dist&: dist-clobber [[SUB X X.do-inst-dist INSTALL_PATTERNS]]
 
 dist-clobber&:
 	-rm -fr DISTRIBUTION/SRCDIR

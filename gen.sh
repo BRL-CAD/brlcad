@@ -396,7 +396,7 @@ install|install-nobak|uninstall)
 	done;;
 #  These directives operate in the source directory
 #
-#  inst-dist	BRL-only:  inst sources in dist tree without inst products
+#  inst-dist	install sources in /dist tree without installing any products
 #
 install-man|inst-dist|print|typeset|nroff)
 	for dir in ${ADIRS} ${BDIRS}; do
@@ -509,12 +509,11 @@ checkin)
 
 #
 # Steps in creating a distribution:
-#	"make rcs-lock"	to make sure everything is checked in already
-#	"make checkin"	to mark the RCS archives
-#	"make install"	to install released binaries, copy over source tree.
-#			(or "make inst-dist" for trial attempts)
-#	"make dist"	to polish up distribution tree
-#	"make arch"	to create TAR archive
+#	"make rcs-lock"	to make sure everything is checked in & locked already
+#	"make checkin"	to mark the RCS archives as released.  Unlock.
+#	"make inst-dist" to copy source tree over to /dist
+#	"make dist"	to polish up distribution tree in /dist
+#	"make arch"	to create TAR archive in /arch
 #
 dist)
 	if test `grep '^#define[ 	]*NFS' Cakefile.defs|wc -l` -eq 0
