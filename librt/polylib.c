@@ -405,7 +405,7 @@ register complex	root[];
 		U = Max3( u[0].re, u[1].re, u[2].re );
 	}
 
-#define NearZero( a )		{ if ( a < 0.0 && a > -SMALL ) a = 0.0; }
+#define NearZero( a )		{ if ( a < 0.0 && a > -1.0e-8 ) a = 0.0; }
 	p = eqn->cf[1]*eqn->cf[1]*0.25 + U - eqn->cf[2];
 	U *= 0.5;
 	q = U*U - eqn->cf[4];
@@ -428,12 +428,12 @@ register complex	root[];
 	q2 = U + q;
 
 	p = quad1.cf[1]*q2 + quad2.cf[1]*q1 - eqn->cf[3];
-	if( Abs( p ) < SMALL){
+	if( Abs( p ) < 1.0e-8){
 		quad1.cf[2] = q1;
 		quad2.cf[2] = q2;
 	} else {
 		p = quad1.cf[1]*q1 + quad2.cf[1]*q2 - eqn->cf[3];
-		if( Abs( p ) < SMALL ){
+		if( Abs( p ) < 1.0e-8 ){
 			quad1.cf[2] = q2;
 			quad2.cf[2] = q1;
 		} else

@@ -132,20 +132,19 @@ register struct application *ap;
 	}
 
 	/* Compute the inverse of the direction cosines */
-#define ZERO_COS	1.0e-20
-	if( !NEAR_ZERO( ap->a_ray.r_dir[X], ZERO_COS ) )  {
+	if( !NEAR_ZERO( ap->a_ray.r_dir[X], SQRT_SMALL_FASTF ) )  {
 		inv_dir[X]=1.0/ap->a_ray.r_dir[X];
 	} else {
 		inv_dir[X] = INFINITY;
 		ap->a_ray.r_dir[X] = 0.0;
 	}
-	if( !NEAR_ZERO( ap->a_ray.r_dir[Y], ZERO_COS ) )  {
+	if( !NEAR_ZERO( ap->a_ray.r_dir[Y], SQRT_SMALL_FASTF ) )  {
 		inv_dir[Y]=1.0/ap->a_ray.r_dir[Y];
 	} else {
 		inv_dir[Y] = INFINITY;
 		ap->a_ray.r_dir[Y] = 0.0;
 	}
-	if( !NEAR_ZERO( ap->a_ray.r_dir[Z], ZERO_COS ) )  {
+	if( !NEAR_ZERO( ap->a_ray.r_dir[Z], SQRT_SMALL_FASTF ) )  {
 		inv_dir[Z]=1.0/ap->a_ray.r_dir[Z];
 	} else {
 		inv_dir[Z] = INFINITY;

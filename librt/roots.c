@@ -62,8 +62,7 @@ register complex	roots[];	/* space to put roots found	*/
 	/* Remove leading coefficients which are too close to zero,
 	 * to prevent the polynomial factoring from blowing up, below.
 	 */
-#define ALMOST_ZERO	(1.0e-16)
-	while( eqn->cf[0] > -ALMOST_ZERO && eqn->cf[0] < ALMOST_ZERO )  {
+	while( eqn->cf[0] > -SMALL && eqn->cf[0] < SMALL )  {
 		for ( n=0; n <= eqn->dgr; n++ ){
 			eqn->cf[n] = eqn->cf[n+1];
 		}
@@ -137,7 +136,6 @@ register complex	roots[];	/* space to put roots found	*/
 	return n;
 }
 
-
 /*	>>>  f i n d R o o t ( )  <<<
  *
  *	Calculates one root of a polynomial ( p(Z) ) using Laguerre's
@@ -166,8 +164,8 @@ register complex	*nxZ;	/* initial guess for root	*/
 	LOCAL complex	p1_H;		/* p1 - H, temporary */
 	LOCAL complex  cZ, cH;		/* 'Z' and H(Z) in comment	*/
 	LOCAL complex  T;		/* temporary for making H */
-	LOCAL fastf_t	diff;		/* test values for convergence	*/
-	LOCAL fastf_t	b;		/* floating temps */
+	FAST fastf_t	diff;		/* test values for convergence	*/
+	FAST fastf_t	b;		/* floating temps */
 	LOCAL int	n;
 	register int	i;		/* iteration counter		*/
 
@@ -205,23 +203,25 @@ register complex	*nxZ;	/* initial guess for root	*/
 
 		/* Use proportional convergence test to allow very small
 		 * roots and avoid wasting time on large roots.
-		 * THIS IS WIERD, AND COSTLY, using CxAmpl().
-		 * Using CxAmplSq() saves lots of cycles;  the loop
-		 * termination induced by SMALL will change, but probably
-		 * not by vast amounts.
+		 * The original version used CxAmpl(), which requires
+		 * a square root.  Using CxAmplSq() saves lots of cycles,
+		 * but changes loop termination conditions somewhat.
+		 *
+		 * diff is |p0|**2.  nxZ = Z - p0.
 		 */
-		b = CxAmplSq( nxZ );		/* Was CxAmpl() */
-		diff = CxAmplSq( &p0 );		/* nxZ - Z = -p0 */
-
-		if ( b < diff )
+		if( (b = CxAmplSq( nxZ )) < (diff = CxAmplSq( &p0 )) )
 			continue;
-		else if ( diff > (b - diff)*SMALL ) 
+		if( (b-diff) == b )
+			return(i);		/* OK -- can't do better */
+		if( diff > (b - diff)*SMALL ) 
 			continue;
-		return(i);	/* OK */
+		return(i);			/* OK */
 	}
 
 	/* If the thing hasn't converged yet, it probably won't. */
-	rt_log("findRoot:  didn't converge in 20 iterations\n");
+	rt_log("findRoot:  didn't converge in %d iterations, b=%g, diff=%g\n",
+		i, b, diff);
+	rt_log("nxZ=%gR+%gI, p0=%gR+%gI\n", nxZ->re, nxZ->im, p0.re, p0.im);
 	return(-1);		/* ERROR */
 }
 
@@ -247,11 +247,12 @@ register complex	*nxZ;	/* initial guess for root	*/
  */
 HIDDEN void
 synthetic( cZ, eqn, b, c, d )
-register poly		*eqn;
-register complex	*cZ, *b, *c, *d;
+register complex	*cZ;		/* input */
+register poly		*eqn;		/* input */
+register complex	*b, *c, *d;	/* outputs */
 {
 	register int	n;
-	LOCAL int	m;
+	register int	m;
 
 	CxCons(b,eqn->cf[0],0.0);
 	*c = *b;
