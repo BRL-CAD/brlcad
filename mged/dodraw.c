@@ -426,6 +426,8 @@ union tree		*curtree;
 		rt_free(sofar, "path string");
 	}
 
+	if( curtree->tr_op == OP_NOP )  return  curtree;
+
 	r = mged_nmg_doit( curtree );
 	if( r != 0 )  {
 		int	style;
@@ -1011,6 +1013,8 @@ union tree		*curtree;
 			sofar);
 		rt_free(sofar, "path string");
 	}
+
+	if( curtree->tr_op == OP_NOP )  return  curtree;
 
 	RES_ACQUIRE( &rt_g.res_model );
 	if( mged_facetize_tree )  {
