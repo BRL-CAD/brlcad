@@ -91,7 +91,7 @@ char		*beginptr;		/* sbrk() at start of program */
 extern fastf_t	rt_dist_tol;		/* Value for rti_tol.dist */
 extern fastf_t	rt_perp_tol;		/* Value for rti_tol.perp */
 int		rdebug;			/* RT program debugging (not library) */
-
+int		rt_verbosity = -1;
 static char idbuf[132];			/* First ID record info */
 
 /* State flags */

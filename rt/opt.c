@@ -133,7 +133,7 @@ register char **argv;
 	bu_optind = 1;		/* restart */
 
 #define GETOPT_STR	\
-	".:,:@:a:b:c:d:e:f:g:ij:l:n:o:p:rs:w:x:A:BC:D:E:F:G:H:IJ:K:MN:O:P:RST:U:V:X:!:"
+	".:,:@:a:b:c:d:e:f:g:ij:l:n:o:p:v:rs:w:x:A:BC:D:E:F:G:H:IJ:K:MN:O:P:RST:U:V:X:!:"
 
 	while( (c=bu_getopt( argc, argv, GETOPT_STR )) != EOF )  {
 		switch( c )  {
@@ -328,6 +328,9 @@ register char **argv;
 				fprintf(stderr,"persp=%g out of range\n", rt_perspective);
 				rt_perspective = 0;
 			}
+			break;
+		case 'v': /* Set level of "non-debug" debugging output */
+			sscanf( bu_optarg, "%x", &rt_verbosity );
 			break;
 		case 'E':
 			eye_backoff = atof( bu_optarg );

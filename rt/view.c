@@ -962,7 +962,8 @@ char *file, *obj;
 {
 	extern char	liboptical_version[];
 
-	bu_log("%s", liboptical_version+5);
+	if (rt_verbosity & VERBOSE_LIBVERSIONS)
+		bu_log("%s", liboptical_version+5);
 
 	optical_shader_init(&mfHead);	/* in liboptical/init.c */
 
@@ -1267,7 +1268,8 @@ bu_log("mallocing curr_float_frame\n");
 		bu_log("Low overhead scanline-per-CPU buffering\n");
 		/* Fall through... */
 	case BUFMODE_DYNAMIC:
-		if( buf_mode == BUFMODE_DYNAMIC )
+		if( buf_mode == BUFMODE_DYNAMIC &&
+		    rt_verbosity & VERBOSE_OUTPUTFILE)
 			bu_log("Dynamic scanline buffering\n");
 		if( sub_grid_mode )  {
 			for( i=sub_ymin; i<=sub_ymax; i++ )

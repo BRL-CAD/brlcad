@@ -416,20 +416,23 @@ light_init()
 		if( lp->lt_fraction > 0 )  continue;	/* overridden */
 		lp->lt_fraction = lp->lt_intensity / inten;
 	}
-	bu_log("Lighting: Ambient = %d%%\n", (int)(AmbientIntensity*100));
-	for( BU_LIST_FOR( lp, light_specific, &(LightHead.l) ) )  {
-		RT_CK_LIGHT(lp);
-		bu_log( "  %s: (%g, %g, %g), aimed at (%g, %g, %g)\n",
-			lp->lt_name,
-			lp->lt_pos[X], lp->lt_pos[Y], lp->lt_pos[Z],
-			lp->lt_aim[X], lp->lt_aim[Y], lp->lt_aim[Z] );
-		bu_log( "  %s: %s, %s, %g lumens (%d%%), halfang=%g\n",
-			lp->lt_name,
-			lp->lt_invisible ? "invisible":"visible",
-			lp->lt_shadows ? "casts shadows":"no shadows",
-			lp->lt_intensity,
-			(int)(lp->lt_fraction*100),
-			lp->lt_angle );
+	if (rt_verbosity & VERBOSE_LIGHTINFO) {
+		bu_log("Lighting: Ambient = %d%%\n", (int)(AmbientIntensity*100));
+
+		for( BU_LIST_FOR( lp, light_specific, &(LightHead.l) ) )  {
+			RT_CK_LIGHT(lp);
+			bu_log( "  %s: (%g, %g, %g), aimed at (%g, %g, %g)\n",
+				lp->lt_name,
+				lp->lt_pos[X], lp->lt_pos[Y], lp->lt_pos[Z],
+				lp->lt_aim[X], lp->lt_aim[Y], lp->lt_aim[Z] );
+			bu_log( "  %s: %s, %s, %g lumens (%d%%), halfang=%g\n",
+				lp->lt_name,
+				lp->lt_invisible ? "invisible":"visible",
+				lp->lt_shadows ? "casts shadows":"no shadows",
+				lp->lt_intensity,
+				(int)(lp->lt_fraction*100),
+				lp->lt_angle );
+		}
 	}
 	if( nlights > SW_NLIGHTS )  {
 		bu_log("Number of lights limited to %d\n", SW_NLIGHTS);

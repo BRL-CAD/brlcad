@@ -48,3 +48,23 @@ extern int	rdebug;
 \013RTMEM_END\
 \012STATS\010REFRACT\
 \7LIGHT\6PARSE\5SHADE\4RTMEM\3SHOWERR\2MATERIAL\1HITS"
+
+
+/*
+ *	A Bit vector to determine how much stuff rt prints when not in
+ *	debugging mode.
+ *
+ */
+extern int	rt_verbosity;
+/*	   flag_name		value		prints */
+#define VERBOSE_LIBVERSIONS  0x00000001	/* Library version strings */
+#define VERBOSE_MODELTITLE   0x00000002	/* model title */
+#define VERBOSE_TOLERANCE    0x00000004	/* model tolerance */
+#define VERBOSE_STATS	     0x00000008	/* stats about rt_gettrees() */
+#define VERBOSE_FRAMENUMBER  0x00000010	/* current frame number */
+#define VERBOSE_VIEWDETAIL   0x00000020	/* view specifications */
+#define VERBOSE_LIGHTINFO    0x00000040	/* scene lights */
+#define VERBOSE_INCREMENTAL  0x00000080	/* progressive/incremental state */
+#define VERBOSE_MULTICPU     0x00000100	/* # of CPU's to be used */
+#define VERBOSE_OUTPUTFILE   0x00000200	/* name of output image */
+

@@ -320,7 +320,8 @@ CONST char	**argv;
 		bu_log("rt_gettrees(%s) FAILED\n", argv[0]);
 	(void)rt_get_timer( &times, NULL );
 
-	bu_log("GETTREE: %s\n", bu_vls_addr(&times) );
+	if (rt_verbosity & VERBOSE_STATS)
+		bu_log("GETTREE: %s\n", bu_vls_addr(&times) );
 	bu_vls_free( &times );
 	return(0);
 }
@@ -529,12 +530,15 @@ register struct rt_i	*rtip;
 	if( rt_gettrees(rtip, nobjs, (CONST char **)objtab, npsw) < 0 )
 		bu_log("rt_gettrees(%s) FAILED\n", objtab[0]);
 	(void)rt_get_timer( &times, NULL );
-	bu_log("GETTREE: %s\n", bu_vls_addr(&times));
+
+	if (rt_verbosity & VERBOSE_STATS)
+		bu_log("GETTREE: %s\n", bu_vls_addr(&times));
 	bu_vls_free( &times );
 
 #ifdef HAVE_SBRK
-	bu_log("Additional dynamic memory used=%d. bytes\n",
-		(char *)sbrk(0)-beginptr );
+	if (rt_verbosity & VERBOSE_STATS)
+		bu_log("Additional dynamic memory used=%d. bytes\n",
+			(char *)sbrk(0)-beginptr );
 	beginptr = (char *) sbrk(0);
 #endif
 }
@@ -561,12 +565,14 @@ struct rt_i	*rtip;
 		rt_prep_parallel(rtip, npsw);
 
 		(void)rt_get_timer( &times, NULL );
-		bu_log( "PREP: %s\n", bu_vls_addr(&times) );
+		if (rt_verbosity & VERBOSE_STATS)
+			bu_log( "PREP: %s\n", bu_vls_addr(&times) );
 		bu_vls_free( &times );
 	}
 #ifdef HAVE_SBRK
-	bu_log("Additional dynamic memory used=%d. bytes\n",
-		(char *)sbrk(0)-beginptr );
+	if (rt_verbosity & VERBOSE_STATS)
+		bu_log("Additional dynamic memory used=%d. bytes\n",
+			(char *)sbrk(0)-beginptr );
 	beginptr = (char *) sbrk(0);
 #endif
 }
@@ -592,22 +598,25 @@ int framenumber;
 	vect_t	work, temp;
 	quat_t	quat;
 
-	bu_log( "\n...................Frame %5d...................\n",
-		framenumber);
+	if (rt_verbosity & VERBOSE_FRAMENUMBER)
+		bu_log( "\n...................Frame %5d...................\n",
+			framenumber);
 
 	/* Compute model RPP, etc */
 	do_prep( rtip );
 
-	bu_log("Tree: %d solids in %d regions\n",
-		rtip->nsolids, rtip->nregions );
+	if (rt_verbosity & VERBOSE_VIEWDETAIL)
+		bu_log("Tree: %d solids in %d regions\n",
+			rtip->nsolids, rtip->nregions );
 	if( rtip->nsolids <= 0 )  {
 		bu_log("rt ERROR: No solids\n");
 		exit(3);
 	}
-	bu_log("Model: X(%g,%g), Y(%g,%g), Z(%g,%g)\n",
-		rtip->mdl_min[X], rtip->mdl_max[X],
-		rtip->mdl_min[Y], rtip->mdl_max[Y],
-		rtip->mdl_min[Z], rtip->mdl_max[Z] );
+	if (rt_verbosity & VERBOSE_VIEWDETAIL)
+		bu_log("Model: X(%g,%g), Y(%g,%g), Z(%g,%g)\n",
+			rtip->mdl_min[X], rtip->mdl_max[X],
+			rtip->mdl_min[Y], rtip->mdl_max[Y],
+			rtip->mdl_min[Z], rtip->mdl_max[Z] );
 
 	/*
 	 *  Perform Grid setup.
@@ -618,40 +627,44 @@ int framenumber;
 	VSET( work, 0, 0, 1 );
 	MAT3X3VEC( temp, view2model, work );
 	bn_ae_vec( &azimuth, &elevation, temp );
-	bu_log(
-		"View: %g azimuth, %g elevation off of front view\n",
-		azimuth, elevation);
+
+	if (rt_verbosity & VERBOSE_VIEWDETAIL)
+		bu_log(
+			"View: %g azimuth, %g elevation off of front view\n",
+			azimuth, elevation);
 	quat_mat2quat( quat, model2view );
-	bu_log("Orientation: %g, %g, %g, %g\n", V4ARGS(quat) );
-	bu_log("Eye_pos: %g, %g, %g\n", V3ARGS(eye_model) );
-	bu_log("Size: %gmm\n", viewsize);
+	if (rt_verbosity & VERBOSE_VIEWDETAIL) {
+		bu_log("Orientation: %g, %g, %g, %g\n", V4ARGS(quat) );
+		bu_log("Eye_pos: %g, %g, %g\n", V3ARGS(eye_model) );
+		bu_log("Size: %gmm\n", viewsize);
 #if 0
 	/*
 	 *  This code shows how the model2view matrix can be reconstructed
 	 *  using the information from the Orientation, Eye_pos, and Size
 	 *  messages.
 	 */
-	{
-		mat_t	rotscale, xlate;
-		mat_t	new;
-		quat_t	newquat;
+		{
+			mat_t	rotscale, xlate;
+			mat_t	new;
+			quat_t	newquat;
 
-		bn_mat_print("model2view", model2view);
-		quat_quat2mat( rotscale, quat );
-		rotscale[15] = 0.5 * viewsize;
-		bn_mat_idn( xlate );
-		MAT_DELTAS( xlate, -eye_model[X], -eye_model[Y], -eye_model[Z] );
-		bn_mat_mul( new, rotscale, xlate );
-		bn_mat_print("reconstructed m2v", new);
-		quat_mat2quat( newquat, new );
-		HPRINT( "reconstructed orientation:", newquat );
-	}
+			bn_mat_print("model2view", model2view);
+			quat_quat2mat( rotscale, quat );
+			rotscale[15] = 0.5 * viewsize;
+			bn_mat_idn( xlate );
+			MAT_DELTAS( xlate, -eye_model[X], -eye_model[Y], -eye_model[Z] );
+			bn_mat_mul( new, rotscale, xlate );
+			bn_mat_print("reconstructed m2v", new);
+			quat_mat2quat( newquat, new );
+			HPRINT( "reconstructed orientation:", newquat );
+		}
 #endif
-	bu_log("Grid: (%g, %g) mm, (%d, %d) pixels\n",
-		cell_width, cell_height,
-		width, height );
-	bu_log("Beam: radius=%g mm, divergence=%g mm/1mm\n",
-		ap.a_rbeam, ap.a_diverge );
+		bu_log("Grid: (%g, %g) mm, (%d, %d) pixels\n",
+			cell_width, cell_height,
+			width, height );
+		bu_log("Beam: radius=%g mm, divergence=%g mm/1mm\n",
+			ap.a_rbeam, ap.a_diverge );
+	}
 
 	/* Process -b and ??? options now, for this frame */
 	if( pix_start == -1 )  {
@@ -777,7 +790,9 @@ int framenumber;
 			return(-1);			/* Bad */
 		}
 #endif /* CRAY_COS */
-		bu_log("Output file is '%s'\n", framename);
+		if (rt_verbosity & VERBOSE_OUTPUTFILE)
+			bu_log("Output file is '%s' %dx%d pixels\n", 
+				framename, width, height);
 	}
 
 	/* initialize lighting, may update pix_start */
@@ -795,7 +810,8 @@ int framenumber;
 	rtip->nhits = 0;
 	rtip->rti_nrays = 0;
 
-	bu_log("\n");
+	if (rt_verbosity & (VERBOSE_LIGHTINFO|VERBOSE_STATS))
+		bu_log("\n");
 	fflush(stdout);
 	fflush(stderr);
 
@@ -849,39 +865,42 @@ int framenumber;
 	/*
 	 *  All done.  Display run statistics.
 	 */
-	bu_log("SHOT: %s\n", bu_vls_addr( &times ) );
+	if (rt_verbosity & VERBOSE_STATS)
+		bu_log("SHOT: %s\n", bu_vls_addr( &times ) );
 	bu_vls_free( &times );
 #ifdef HAVE_SBRK
-	bu_log("Additional dynamic memory used=%d. bytes\n",
-		(char *)sbrk(0)-beginptr );
-		beginptr = (char *) sbrk(0);
+	if (rt_verbosity & VERBOSE_STATS)
+		bu_log("Additional dynamic memory used=%d. bytes\n",
+			(char *)sbrk(0)-beginptr );
+			beginptr = (char *) sbrk(0);
 #endif
-	bu_log("%ld solid/ray intersections: %ld hits + %ld miss\n",
-		rtip->nshots, rtip->nhits, rtip->nmiss );
-	bu_log("pruned %.1f%%:  %ld model RPP, %ld dups skipped, %ld solid RPP\n",
-		rtip->nshots>0?((double)rtip->nhits*100.0)/rtip->nshots:100.0,
-		rtip->nmiss_model, rtip->ndup, rtip->nmiss_solid );
-	bu_log("%8d empty boxnodes (%s)\n", rtip->nempty_cells,
-	       rtip->rti_space_partition == RT_PART_NUGRID ? "NUGrid" :
-	       "NUBSPT" );
-	bu_log(
-		"Frame %5d: %8d pixels in %10.2f sec = %10.2f pixels/sec\n",
-		framenumber,
-		width*height, nutime, ((double)(width*height))/nutime );
-	bu_log(
-		"Frame %5d: %8d rays   in %10.2f sec = %10.2f rays/sec (RTFM)\n",
-		framenumber,
-		rtip->rti_nrays, nutime, ((double)(rtip->rti_nrays))/nutime );
-	bu_log(
-		"Frame %5d: %8d rays   in %10.2f sec = %10.2f rays/CPU_sec\n",
-		framenumber,
-		rtip->rti_nrays, utime, ((double)(rtip->rti_nrays))/utime );
-	bu_log(
-		"Frame %5d: %8d rays   in %10.2f sec = %10.2f rays/sec (wallclock)\n",
-		framenumber,
-		rtip->rti_nrays,
-		wallclock, ((double)(rtip->rti_nrays))/wallclock );
-
+	if (rt_verbosity & VERBOSE_STATS) {
+		bu_log("%ld solid/ray intersections: %ld hits + %ld miss\n",
+			rtip->nshots, rtip->nhits, rtip->nmiss );
+		bu_log("pruned %.1f%%:  %ld model RPP, %ld dups skipped, %ld solid RPP\n",
+			rtip->nshots>0?((double)rtip->nhits*100.0)/rtip->nshots:100.0,
+			rtip->nmiss_model, rtip->ndup, rtip->nmiss_solid );
+		bu_log("%8d empty boxnodes (%s)\n", rtip->nempty_cells,
+		       rtip->rti_space_partition == RT_PART_NUGRID ? "NUGrid" :
+		       "NUBSPT" );
+		bu_log(
+			"Frame %5d: %8d pixels in %10.2f sec = %10.2f pixels/sec\n",
+			framenumber,
+			width*height, nutime, ((double)(width*height))/nutime );
+		bu_log(
+			"Frame %5d: %8d rays   in %10.2f sec = %10.2f rays/sec (RTFM)\n",
+			framenumber,
+			rtip->rti_nrays, nutime, ((double)(rtip->rti_nrays))/nutime );
+		bu_log(
+			"Frame %5d: %8d rays   in %10.2f sec = %10.2f rays/CPU_sec\n",
+			framenumber,
+			rtip->rti_nrays, utime, ((double)(rtip->rti_nrays))/utime );
+		bu_log(
+			"Frame %5d: %8d rays   in %10.2f sec = %10.2f rays/sec (wallclock)\n",
+			framenumber,
+			rtip->rti_nrays,
+			wallclock, ((double)(rtip->rti_nrays))/wallclock );
+	}
 	if( outfp != NULL )  {
 #ifdef CRAY_COS
 		int status;

@@ -45,6 +45,7 @@ static char RCSrt[] = "@(#)$Header$ (BRL)";
 extern char	usage[];
 
 int		rdebug;			/* RT program debugging (not library) */
+int		rt_verbosity = -1;	/* blather incesantly by default */
 
 /***** Variables shared with viewing model *** */
 FBIO		*fbp = FBIO_NULL;	/* Framebuffer handle */
@@ -105,14 +106,6 @@ char **argv;
 
 	bu_setlinebuf( stderr );
 
-	/* Identify the versions of the libraries we are using. */
-	(void)fprintf(stderr, "%s%s%s%s\n",
-		version+5,
-		rt_version+5,
-		bn_version+5,
-		bu_version+5
-	      );	/* +5 to skip @(#) */
-
 #ifdef HAVE_SBRK
 	beginptr = (char *) sbrk(0);
 #endif
@@ -132,6 +125,16 @@ char **argv;
 		(void)fputs(usage, stderr);
 		exit(1);
 	}
+	/* Identify the versions of the libraries we are using. */
+	if (rt_verbosity & VERBOSE_LIBVERSIONS) {
+		(void)fprintf(stderr, "%s%s%s%s\n",
+			version+5,
+			rt_version+5,
+			bn_version+5,
+			bu_version+5
+		      );	/* +5 to skip @(#) */
+	}
+
 	if( bu_optind >= argc )  {
 		fprintf(stderr,"rt:  MGED database not specified\n");
 		(void)fputs(usage, stderr);
@@ -151,8 +154,10 @@ char **argv;
 		while( (1<<incr_nlevel) < x )
 			incr_nlevel++;
 		height = width = 1<<incr_nlevel;
-		fprintf(stderr, "incremental resolution, nlevels = %d, width=%d\n",
-			incr_nlevel, width);
+		if (rt_verbosity & VERBOSE_INCREMENTAL)
+			fprintf(stderr, 
+			    "incremental resolution, nlevels = %d, width=%d\n",
+			    incr_nlevel, width);
 	}
 
 	/*
@@ -168,7 +173,8 @@ char **argv;
 	if( npsw > MAX_PSW )  npsw = MAX_PSW;
 	if( npsw > 1 )  {
 	    rt_g.rtg_parallel = 1;
-	    fprintf(stderr,"Planning to run with %d processors\n", npsw );
+	    if (rt_verbosity & VERBOSE_MULTICPU)
+	        fprintf(stderr,"Planning to run with %d processors\n", npsw );
 	} else
 		rt_g.rtg_parallel = 0;
 
@@ -209,7 +215,8 @@ char **argv;
 		exit(2);
 	}
 	ap.a_rt_i = rtip;
-	bu_log("db title:  %s\n", idbuf);
+	if (rt_verbosity & VERBOSE_MODELTITLE)
+		bu_log("db title:  %s\n", idbuf);
 
 	/* Copy values from command line options into rtip */
 	rtip->rti_space_partition = space_partition;
@@ -224,7 +231,8 @@ char **argv;
 		rtip->rti_tol.perp = rt_perp_tol;
 		rtip->rti_tol.para = 1 - rt_perp_tol;
 	}
-	rt_pr_tol( &rtip->rti_tol );
+	if (rt_verbosity & VERBOSE_TOLERANCE)
+		rt_pr_tol( &rtip->rti_tol );
 
 	/* before view_init */
 	if( outputfile && strcmp( outputfile, "-") == 0 )
@@ -291,8 +299,9 @@ char **argv;
 	}
 
 #ifdef HAVE_SBRK
-	fprintf(stderr,"initial dynamic memory use=%ld.\n",
-		(long)((char *)sbrk(0)-beginptr) );
+	if (rt_verbosity & VERBOSE_STATS)
+		fprintf(stderr,"initial dynamic memory use=%ld.\n",
+			(long)((char *)sbrk(0)-beginptr) );
 	beginptr = (char *) sbrk(0);
 #endif
 

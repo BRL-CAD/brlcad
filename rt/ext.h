@@ -24,6 +24,7 @@ extern int		use_air;		/* Handling of air in librt */
 /***** end of sharing with viewing model *****/
 
 /***** Variables declared in opt.c *****/
+extern char		*framebuffer;		/* desired framebuffer */
 extern double		AmbientIntensity;	/* Ambient light intensity */
 extern double		azimuth, elevation;
 extern int		lightmodel;		/* Select lighting model */
@@ -38,9 +39,15 @@ extern int		sub_ymin;
 extern int		sub_xmax;		/* upper right of sub rectangle */
 extern int		sub_ymax;
 
-/***** variables declared in rt.c *****/
+/***** variables from main.c *****/
+extern FILE		*outfp;			/* optional output file */
+extern int		output_is_binary;	/* !0 means output is binary */
+extern mat_t		view2model;
+extern mat_t		model2view;
+extern vect_t		left_eye_delta;
 extern struct application	ap;
 extern vect_t		left_eye_delta;
+extern int		rt_verbosity;
 
 /***** variables shared with worker() ******/
 extern int		stereo;			/* stereo viewing */
@@ -101,12 +108,5 @@ extern int		interactive;		/* human is watching results */
 extern int		benchmark;		/* No random numbers:  benchmark */
 /***** end variables shared with do.c *****/
 
-/***** variables from rt.c *****/
-extern char		*framebuffer;		/* desired framebuffer */
-extern FILE		*outfp;			/* optional output file */
-extern int		output_is_binary;	/* !0 means output is binary */
-extern mat_t		view2model;
-extern mat_t		model2view;
-extern vect_t		left_eye_delta;
 
 extern void		worker();
