@@ -495,48 +495,20 @@ register long	newindex;
 
 /*
  *			N M G _ P R _ S T R U C T _ C O U N T S
- *
- *  XXX This version is depricated, in favor of nmg_vls_struct_counts()
  */
 void
 nmg_pr_struct_counts( ctr, str )
-struct nmg_struct_counts	*ctr;
-char				*str;
+CONST struct nmg_struct_counts	*ctr;
+/*CONST*/ char			*str;
 {
+	struct rt_vls		vls;
+
 	rt_log("nmg_pr_count(%s)\n", str);
-	rt_log(" Actual structure counts:\n");
-	rt_log("\t%6d model\n", ctr->model);
-	rt_log("\t%6d model_a\n", ctr->model_a);
-	rt_log("\t%6d region\n", ctr->region);
-	rt_log("\t%6d region_a\n", ctr->region_a);
-	rt_log("\t%6d shell\n", ctr->shell);
-	rt_log("\t%6d shell_a\n", ctr->shell_a);
-	rt_log("\t%6d face\n", ctr->face);
-	rt_log("\t%6d face_g\n", ctr->face_g);
-	rt_log("\t%6d faceuse\n", ctr->faceuse);
-	rt_log("\t%6d faceuse_a\n", ctr->faceuse_a);
-	rt_log("\t%6d loopuse\n", ctr->loopuse);
-	rt_log("\t%6d loopuse_a\n", ctr->loopuse_a);
-	rt_log("\t%6d loop\n", ctr->loop);
-	rt_log("\t%6d loop_g\n", ctr->loop_g);
-	rt_log("\t%6d edgeuse\n", ctr->edgeuse);
-	rt_log("\t%6d edgeuse_a\n", ctr->edgeuse_a);
-	rt_log("\t%6d edge\n", ctr->edge);
-	rt_log("\t%6d edge_g\n", ctr->edge_g);
-	rt_log("\t%6d vertexuse\n", ctr->vertexuse);
-	rt_log("\t%6d vertexuse_a\n", ctr->vertexuse_a);
-	rt_log("\t%6d vertex\n", ctr->vertex);
-	rt_log("\t%6d vertex_g\n", ctr->vertex_g);
-	rt_log(" Abstractions:\n");
-	rt_log("\t%6d max_structs\n", ctr->max_structs);
-	rt_log("\t%6d face_loops\n", ctr->face_loops);
-	rt_log("\t%6d face_edges\n", ctr->face_edges);
-	rt_log("\t%6d face_lone_verts\n", ctr->face_lone_verts);
-	rt_log("\t%6d wire_loops\n", ctr->wire_loops);
-	rt_log("\t%6d wire_loop_edges\n", ctr->wire_loop_edges);
-	rt_log("\t%6d wire_edges\n", ctr->wire_edges);
-	rt_log("\t%6d wire_lone_verts\n", ctr->wire_lone_verts);
-	rt_log("\t%6d shells_of_lone_vert\n", ctr->shells_of_lone_vert);
+
+	rt_vls_init( &vls );
+	nmg_vls_struct_counts( &vls, ctr );
+	rt_log("%s", rt_vls_addr( &vls ) );
+	rt_vls_free( &vls );
 }
 
 /*
@@ -596,7 +568,7 @@ CONST struct nmg_struct_counts	*ctr;
 long **
 nmg_m_struct_count( ctr, m )
 register struct nmg_struct_counts	*ctr;
-struct model				*m;
+/*CONST*/ struct model			*m;
 {
 	struct nmgregion	*r;
 	struct shell		*s;
@@ -611,8 +583,11 @@ struct model				*m;
 	register long		**ptrs;
 
 #define NMG_UNIQ_INDEX(_p,_type)	\
-	if( (_p)->index > m->maxindex )  \
+	if( (_p)->index > m->maxindex )  { \
+		rt_log("x%x (%s) has index %d, m->maxindex=%d\n", (_p), \
+			rt_identify_magic(*((long *)(_p))), (_p)->index, m->maxindex ); \
 		rt_bomb("nmg_m_struct_count index overflow\n"); \
+	} \
 	if( ptrs[(_p)->index] == (long *)0 )  { \
 		ptrs[(_p)->index] = (long *)(_p); \
 		ctr->_type++; \
@@ -829,6 +804,24 @@ struct model				*m;
 	return ptrs;
 }
 
+/*
+ *
+ *  Count 'em up, and print 'em out.
+ */
+void
+nmg_struct_counts( m, str )
+/*CONST*/ struct model	*m;
+/*CONST*/ char		*str;
+{
+	struct nmg_struct_counts	cnts;
+	long	**tab;
+
+	NMG_CK_MODEL(m);
+
+	tab = nmg_m_struct_count( &cnts, m );
+	rt_free( (char *)tab, "nmg_m_struct_count" );
+	nmg_pr_struct_counts( &cnts, str );
+}
 
 /*			N M G _ M E R G _ M O D E L S
  *
@@ -860,7 +853,9 @@ struct model *m2;
 	 */
 
 	nmg_m_reindex(m2, m1->maxindex);
+	m1->maxindex = m2->maxindex;		/* big enough for both */
 
+	/* Rehome all the regions in m2, and move them from m2 to m1 */
 	for ( RT_LIST_FOR(r, nmgregion, &(m2->r_hd)) ) {
 		NMG_CK_REGION(r);
 		r->m_p = m1;
