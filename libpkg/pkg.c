@@ -115,6 +115,18 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #	define bcopy(from,to,count)	memcpy( to, from, count )
 #endif
 
+#if defined(__stardent)
+/* <sys/byteorder.h> seems to be wrong, and this is a LITTLE_ENDIAN machine */
+#	undef	htons
+#	define	htons(x)	((((x)&0xFF)<<8)|(((x)>>8)&0xFF))
+#	undef	htonl
+#	define	htonl(x)	( \
+	((((x)    )&0xFF)<<24) | \
+	((((x)>> 8)&0xFF)<<16) | \
+	((((x)>>16)&0xFF)<< 8) | \
+	((((x)>>24)&0xFF)    )   )
+#endif
+
 #if !__STDC__ && !USE_PROTOTYPES
 extern char	*getenv();
 extern char	*malloc();
@@ -519,11 +531,13 @@ void (*errlog)();
 	if( errlog == NULL )
 		errlog = pkg_errlog;
 
+#ifdef FIONBIO
 	if(nodelay)  {
 		onoff = 1;
 		if( ioctl(fd, FIONBIO, &onoff) < 0 )
 			pkg_perror( errlog, "pkg_getclient: FIONBIO 1" );
 	}
+#endif
 	do  {
 		s2 = accept(fd, (char *)&from, &fromlen);
 		if (s2 < 0) {
@@ -535,6 +549,7 @@ void (*errlog)();
 			return(PKC_ERROR);
 		}
 	}  while( s2 < 0);
+#ifdef FIONBIO
 	if(nodelay)  {		
 		onoff = 0;
 		if( ioctl(fd, FIONBIO, &onoff) < 0 )
@@ -542,6 +557,7 @@ void (*errlog)();
 		if( ioctl(s2, FIONBIO, &onoff) < 0 )
 			pkg_perror( errlog, "pkg_getclient: FIONBIO 3");
 	}
+#endif
 
 	return( pkg_makeconn(s2, switchp, errlog) );
 #endif
