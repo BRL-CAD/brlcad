@@ -5,6 +5,10 @@
  *  and asynchronous messages across stream connections.
  *
  *  Functions -
+ *	pkg_gshort	Get a 16-bit short from a char[2] array
+ *	pkg_glong	Get a 32-bit long from a char[4] array
+ *	pkg_pshort	Put a 16-bit short into a char[2] array
+ *	pkg_plong	Put a 32-bit long into a char[4] array
  *	pkg_open	Open a network connection to a host/server
  *	pkg_transerver	Become a transient network server
  *	pkg_permserver	Create a network server, and listen for connection
@@ -93,6 +97,78 @@ static char errbuf[80];
 #define	MAXQLEN	512	/* largest packet we will queue on stream */
 
 /*
+ * Routines to insert/extract short/long's into char arrays,
+ * independend of machine byte order and word-alignment.
+ */
+
+/*
+ *			P K G _ G S H O R T
+ */
+unsigned short
+pkg_gshort(msgp)
+	char *msgp;
+{
+	register unsigned char *p = (unsigned char *) msgp;
+#ifdef vax
+	/*
+	 * vax compiler doesn't put shorts in registers
+	 */
+	register unsigned long u;
+#else
+	register unsigned short u;
+#endif
+
+	u = *p++ << 8;
+	return ((unsigned short)(u | *p));
+}
+
+/*
+ *			P K G _ G L O N G
+ */
+unsigned long
+pkg_glong(msgp)
+	char *msgp;
+{
+	register unsigned char *p = (unsigned char *) msgp;
+	register unsigned long u;
+
+	u = *p++; u <<= 8;
+	u |= *p++; u <<= 8;
+	u |= *p++; u <<= 8;
+	return (u | *p);
+}
+
+/*
+ *			P K G _ P S H O R T
+ */
+char *
+pkg_pshort(msgp, s)
+register char *msgp;
+register unsigned short s;
+{
+
+	msgp[1] = s;
+	msgp[0] = s >> 8;
+	return(msgp+2);
+}
+
+/*
+ *			P K G _ P L O N G
+ */
+char *
+pkg_plong(msgp, l)
+register char *msgp;
+register unsigned long l;
+{
+
+	msgp[3] = l;
+	msgp[2] = (l >>= 8);
+	msgp[1] = (l >>= 8);
+	msgp[0] = l >> 8;
+	return(msgp+4);
+}
+
+/*
  *			P K G _ O P E N
  *
  *  We are a client.  Make a connection to the server.
@@ -113,11 +189,7 @@ void (*errlog)();
 	struct sockaddr_in sinhim;		/* Server */
 	register struct hostent *hp;
 	register int netfd;
-#ifdef cray
 	unsigned long addr_tmp;
-#else
-	struct in_addr addr_tmp;
-#endif
 
 	/* Check for default error handler */
 	if( errlog == NULL )
@@ -150,8 +222,12 @@ void (*errlog)();
 	if( atoi( host ) > 0 )  {
 		/* Numeric */
 		sinhim.sin_family = AF_INET;
+#ifdef cray
 		addr_tmp = inet_addr(host);
 		sinhim.sin_addr = addr_tmp;
+#else
+		sinhim.sin_addr.s_addr = addr_tmp;
+#endif
 	} else {
 #ifdef BSD
 		if( (hp = gethostbyname(host)) == NULL )  {
@@ -162,8 +238,12 @@ void (*errlog)();
 		}
 		sinhim.sin_family = hp->h_addrtype;
 		bcopy(hp->h_addr, (char *)&addr_tmp, hp->h_length);
+#ifdef cray
 		sinhim.sin_addr = addr_tmp;
-#endif
+#else
+		sinhim.sin_addr.s_addr = addr_tmp;
+#endif cray
+#endif BSD
 #ifdef SGI_EXCELAN
 		char **hostp = &host;
 		if((sinhim.sin_addr.s_addr = rhost(&hostp)) == -1) {
@@ -531,9 +611,9 @@ register struct pkg_conn *pc;
 			return(-1);	/* assumes 2nd write would fail too */
 	}
 
-	hdr.pkg_magic = htons(PKG_MAGIC);
-	hdr.pkg_type = htons(type);	/* should see if it's a valid type */
-	hdr.pkg_len = htonl(len);
+	pkg_pshort( hdr.pkh_magic, PKG_MAGIC );
+	pkg_pshort( hdr.pkh_type, type );	/* should see if valid type */
+	pkg_plong( hdr.pkh_len, len );
 
 #ifdef HAS_WRITEV
 	cmdvec[0].iov_base = (caddr_t)&hdr;
@@ -621,9 +701,9 @@ register struct pkg_conn *pc;
 			return(-1);	/* assumes 2nd write would fail too */
 	}
 
-	hdr.pkg_magic = htons(PKG_MAGIC);
-	hdr.pkg_type = htons(type);	/* should see if it's a valid type */
-	hdr.pkg_len = htonl(len1+len2);
+	pkg_pshort( hdr.pkh_magic, PKG_MAGIC );
+	pkg_pshort( hdr.pkh_type, type );	/* should see if valid type */
+	pkg_plong( hdr.pkh_len, len1+len2 );
 
 #ifdef HAS_WRITEV
 	cmdvec[0].iov_base = (caddr_t)&hdr;
@@ -693,9 +773,9 @@ register struct pkg_conn *pc;
 		pkg_flush( pc );
 
 	/* Queue it */
-	hdr.pkg_magic = htons(PKG_MAGIC);
-	hdr.pkg_type = htons(type);
-	hdr.pkg_len = htonl(len);
+	pkg_pshort( hdr.pkh_magic, PKG_MAGIC );
+	pkg_pshort( hdr.pkh_type, type );	/* should see if valid type */
+	pkg_plong( hdr.pkh_len, len );
 
 	bcopy( &hdr, &(pc->pkc_stream[pc->pkc_strpos]), sizeof(struct pkg_header) );
 	pc->pkc_strpos += sizeof(struct pkg_header);
@@ -765,10 +845,10 @@ again:
 			return(-1);
 
 	if( pkg_gethdr( pc, buf ) < 0 )  return(-1);
-	if( pc->pkc_hdr.pkg_type != type )  {
+	if( pc->pkc_type != type )  {
 		/* A message of some other type has unexpectedly arrived. */
-		if( pc->pkc_hdr.pkg_len > 0 )  {
-			if( (pc->pkc_buf = malloc(pc->pkc_hdr.pkg_len+2)) == NULL )  {
+		if( pc->pkc_len > 0 )  {
+			if( (pc->pkc_buf = malloc(pc->pkc_len+2)) == NULL )  {
 				pkg_perror(pc->pkc_errlog, "pkg_waitfor: malloc");
 				return(-1);
 			}
@@ -777,14 +857,14 @@ again:
 		goto again;
 	}
 	pc->pkc_left = -1;
-	if( pc->pkc_hdr.pkg_len == 0 )
+	if( pc->pkc_len == 0 )
 		return(0);
-	if( pc->pkc_hdr.pkg_len > len )  {
+	if( pc->pkc_len > len )  {
 		register char *bp;
 		int excess;
 		sprintf(errbuf,
 			"pkg_waitfor:  message %d exceeds buffer %d\n",
-			pc->pkc_hdr.pkg_len, len );
+			pc->pkc_len, len );
 		(pc->pkc_errlog)(errbuf);
 		if( (i = pkg_mread( pc, buf, len )) != len )  {
 			sprintf(errbuf,
@@ -792,7 +872,7 @@ again:
 			(pc->pkc_errlog)(errbuf);
 			return(-1);
 		}
-		excess = pc->pkc_hdr.pkg_len - len;	/* size of excess message */
+		excess = pc->pkc_len - len;	/* size of excess message */
 		if( (bp = malloc(excess)) == NULL )  {
 			pkg_perror(pc->pkc_errlog, "pkg_waitfor: excess malloc");
 			return(-1);
@@ -810,13 +890,13 @@ again:
 	}
 
 	/* Read the whole message into the users buffer */
-	if( (i = pkg_mread( pc, buf, pc->pkc_hdr.pkg_len )) != pc->pkc_hdr.pkg_len )  {
+	if( (i = pkg_mread( pc, buf, pc->pkc_len )) != pc->pkc_len )  {
 		sprintf(errbuf,
-			"pkg_waitfor:  pkg_mread %d gave %d\n", pc->pkc_hdr.pkg_len, i );
+			"pkg_waitfor:  pkg_mread %d gave %d\n", pc->pkc_len, i );
 		(pc->pkc_errlog)(errbuf);
 		return(-1);
 	}
-	return( pc->pkc_hdr.pkg_len );
+	return( pc->pkc_len );
 }
 
 /*
@@ -846,16 +926,16 @@ register struct pkg_conn *pc;
 				return((char *)0);
 		if( pkg_gethdr( pc, (char *)0 ) < 0 )
 			return((char *)0);
-	}  while( pc->pkc_hdr.pkg_type != type );
+	}  while( pc->pkc_type != type );
 
 	pc->pkc_left = -1;
-	if( pc->pkc_hdr.pkg_len == 0 )
+	if( pc->pkc_len == 0 )
 		return((char *)0);
 
 	/* Read the whole message into the dynamic buffer */
-	if( (i = pkg_mread( pc, pc->pkc_buf, pc->pkc_hdr.pkg_len )) != pc->pkc_hdr.pkg_len )  {
+	if( (i = pkg_mread( pc, pc->pkc_buf, pc->pkc_len )) != pc->pkc_len )  {
 		sprintf(errbuf,
-			"pkg_bwaitfor:  pkg_mread %d gave %d\n", pc->pkc_hdr.pkg_len, i );
+			"pkg_bwaitfor:  pkg_mread %d gave %d\n", pc->pkc_len, i );
 		(pc->pkc_errlog)(errbuf);
 	}
 	return( pc->pkc_buf );
@@ -938,7 +1018,7 @@ register struct pkg_conn *pc;
 	for( i=0; pc->pkc_switch[i].pks_handler != NULL; i++ )  {
 		register char *tempbuf;
 
-		if( pc->pkc_switch[i].pks_type != pc->pkc_hdr.pkg_type )
+		if( pc->pkc_switch[i].pks_type != pc->pkc_type )
 			continue;
 		/*
 		 * NOTICE:  User Handler must free() message buffer!
@@ -949,12 +1029,12 @@ register struct pkg_conn *pc;
 		pc->pkc_buf = (char *)0;
 		pc->pkc_curpos = (char *)0;
 		pc->pkc_left = -1;		/* safety */
-		/* pc->pkc_hdr.pkg_type, pc->pkc_hdr.pkg_len are preserved */
+		/* pc->pkc_type, pc->pkc_len are preserved */
 		pc->pkc_switch[i].pks_handler(pc, tempbuf);
 		return(1);
 	}
 	sprintf(errbuf,"pkg_get:  no handler for message type %d, len %d\n",
-		pc->pkc_hdr.pkg_type, pc->pkc_hdr.pkg_len );
+		pc->pkc_type, pc->pkc_len );
 	(pc->pkc_errlog)(errbuf);
 	(void)free(pc->pkc_buf);
 	pc->pkc_buf = (char *)0;
@@ -993,7 +1073,7 @@ char *buf;
 		}
 		return(-1);
 	}
-	while( pc->pkc_hdr.pkg_magic != htons(PKG_MAGIC ) )  {
+	while( pkg_gshort(pc->pkc_hdr.pkh_magic) != PKG_MAGIC )  {
 		sprintf(errbuf,"pkg_gethdr: skipping noise x%x %c\n",
 			*((unsigned char *)&pc->pkc_hdr),
 			*((unsigned char *)&pc->pkc_hdr) );
@@ -1008,18 +1088,18 @@ char *buf;
 			return(-1);
 		}
 	}
-	pc->pkc_hdr.pkg_type = ntohs(pc->pkc_hdr.pkg_type);	/* host order */
-	pc->pkc_hdr.pkg_len = ntohl(pc->pkc_hdr.pkg_len);
-	if( pc->pkc_hdr.pkg_len < 0 )  pc->pkc_hdr.pkg_len = 0;
+	pc->pkc_type = pkg_gshort(pc->pkc_hdr.pkh_type);	/* host order */
+	pc->pkc_len = pkg_glong(pc->pkc_hdr.pkh_len);
+	if( pc->pkc_len < 0 )  pc->pkc_len = 0;
 	pc->pkc_buf = (char *)0;
-	pc->pkc_left = pc->pkc_hdr.pkg_len;
+	pc->pkc_left = pc->pkc_len;
 	if( pc->pkc_left == 0 )  return(1);		/* msg here, no data */
 
 	if( buf )  {
 		pc->pkc_buf = buf;
 	} else {
 		/* Prepare to read message into dynamic buffer */
-		if( (pc->pkc_buf = malloc(pc->pkc_hdr.pkg_len+2)) == NULL )  {
+		if( (pc->pkc_buf = malloc(pc->pkc_len+2)) == NULL )  {
 			pkg_perror(pc->pkc_errlog, "pkg_gethdr: malloc");
 			return(-1);
 		}
