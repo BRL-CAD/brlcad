@@ -1343,7 +1343,7 @@ wdb_pathsum_tcl(clientData, interp, argc, argv)
      char    **argv;
 {
 	struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
-	int flag;
+	int flag = WDB_CPEVAL;
 	mat_t	wdb_xform;
 	struct db_full_path	desired_path;
 
@@ -3050,6 +3050,9 @@ wdb_print_node(wdbp, interp, dp, pathpos, prefix)
 			actual_count = (struct rt_tree_array *)db_flatten_tree( rt_tree_array, comb->tree, OP_UNION, 1 ) - rt_tree_array;
 			BU_ASSERT_PTR( actual_count, ==, node_count );
 			comb->tree = TREE_NULL;
+		} else {
+			actual_count = 0;
+			rt_tree_array = NULL;
 		}
 
 		for (i=0 ; i<actual_count ; i++) {
@@ -3087,7 +3090,7 @@ wdb_print_node(wdbp, interp, dp, pathpos, prefix)
 				wdb_print_node(wdbp, interp, nextdp, pathpos+1, op);
 			db_free_tree( rt_tree_array[i].tl_tree );
 		}
-		bu_free((char *)rt_tree_array, "printnode: rt_tree_array");
+		if(rt_tree_array) bu_free((char *)rt_tree_array, "printnode: rt_tree_array");
 	}
 	rt_db_free_internal(&intern);
 }
