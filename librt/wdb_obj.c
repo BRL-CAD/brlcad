@@ -2041,7 +2041,7 @@ wdb_do_update(dbip, comb, comb_leaf, user_ptr1, user_ptr2, user_ptr3)
 	char	*mref;
 	char	mref4[RT_NAMESIZE+2];
 	struct bu_vls mref5;
-	char	*prestr;
+	struct bu_vls *prestr;
 	int	*ncharadd;
 
 	if(dbip == DBI_NULL)
@@ -2051,17 +2051,17 @@ wdb_do_update(dbip, comb, comb_leaf, user_ptr1, user_ptr2, user_ptr3)
 	RT_CK_TREE(comb_leaf);
 
 	ncharadd = (int *)user_ptr1;
-	prestr = (char *)user_ptr2;
+	prestr = (struct bu_vls *)user_ptr2;
 
 	if( dbip->dbi_version < 5 ) {
 		mref = mref4;
-		(void)strncpy(mref, prestr, *ncharadd);
+		(void)strncpy(mref, bu_vls_addr( prestr ), *ncharadd);
 		(void)strncpy(mref+(*ncharadd),
 			      comb_leaf->tr_l.tl_name,
 			      RT_NAMESIZE-(*ncharadd) );
 	} else {
 		bu_vls_init( &mref5 );
-		bu_vls_strncpy( &mref5, prestr, *ncharadd); 
+		bu_vls_vlscat( &mref5, prestr );
 		bu_vls_strcat( &mref5, comb_leaf->tr_l.tl_name );
 		mref = bu_vls_addr( &mref5 );
 	}
@@ -2128,8 +2128,12 @@ wdb_dir_add5(
 	bu_vls_init( &local5 );
 
 	/* Add the prefix, if any */
-	bu_vls_strncpy( &local5, dasp->wdbp->wdb_prestr, dasp->wdbp->wdb_ncharadd);
-	bu_vls_strcat( &local5, rip->name.ext_buf );
+	if( dasp->wdbp->wdb_ncharadd > 0 ) {
+		bu_vls_vlscat( &local5, &dasp->wdbp->wdb_prestr );
+		bu_vls_strcat( &local5, rip->name.ext_buf );
+	} else {
+		bu_vls_strcat( &local5, rip->name.ext_buf );
+	}
 	local = bu_vls_addr( &local5 );
 
 	if( rip->minor_type != DB5_MINORTYPE_BRLCAD_COMBINATION ) {
@@ -2224,7 +2228,7 @@ wdb_dir_add5(
 		if (dasp->wdbp->wdb_ncharadd && comb->tree) {
 			db_tree_funcleaf(dasp->main_dbip, comb, comb->tree, wdb_do_update,
 			 (genptr_t)&(dasp->wdbp->wdb_ncharadd),
-			 (genptr_t)dasp->wdbp->wdb_prestr, (genptr_t)NULL);
+			 (genptr_t)&(dasp->wdbp->wdb_prestr), (genptr_t)NULL);
 		}
 
 		/* add to the main directory */
@@ -2290,7 +2294,7 @@ wdb_dir_add(input_dbip, name, laddr, len, flags, ptr)
 	if( dasp->main_dbip->dbi_version < 5 ) {
 		local = local4;
 		if (dasp->wdbp->wdb_ncharadd > 0) {
-			(void)strncpy(local, dasp->wdbp->wdb_prestr, dasp->wdbp->wdb_ncharadd);
+			(void)strncpy(local, bu_vls_addr( &dasp->wdbp->wdb_prestr ), dasp->wdbp->wdb_ncharadd);
 			(void)strncpy(local+dasp->wdbp->wdb_ncharadd, name, RT_NAMESIZE-dasp->wdbp->wdb_ncharadd);
 		} else {
 			(void)strncpy(local, name, RT_NAMESIZE);
@@ -2298,7 +2302,7 @@ wdb_dir_add(input_dbip, name, laddr, len, flags, ptr)
 		local[RT_NAMESIZE] = '\0';
 	} else {
 		bu_vls_init( &local5 );
-		bu_vls_strncpy( &local5, dasp->wdbp->wdb_prestr, dasp->wdbp->wdb_ncharadd);
+		bu_vls_vlscat( &local5, &dasp->wdbp->wdb_prestr );
 		bu_vls_strcat( &local5, name );
 		local = bu_vls_addr( &local5 );
 	}
@@ -2330,7 +2334,7 @@ wdb_dir_add(input_dbip, name, laddr, len, flags, ptr)
 				bu_vls_trunc( &local5, 0 );
 				bu_vls_putc( &local5, c );
 				bu_vls_putc( &local5, '_' );
-				bu_vls_strncat( &local5, dasp->wdbp->wdb_prestr, dasp->wdbp->wdb_ncharadd);
+				bu_vls_strncat( &local5, bu_vls_addr( &dasp->wdbp->wdb_prestr ), dasp->wdbp->wdb_ncharadd);
 				bu_vls_strcat( &local5, name );
 				local = bu_vls_addr( &local5 );
 				if ((dp = db_lookup(dasp->main_dbip, local, LOOKUP_QUIET)) == DIR_NULL)
@@ -2386,7 +2390,7 @@ wdb_dir_add(input_dbip, name, laddr, len, flags, ptr)
 		if (dasp->main_dbip->dbi_version < 5 && (dasp->wdbp->wdb_ncharadd + strlen(name)) > (unsigned)RT_NAMESIZE)
 			Tcl_AppendResult(dasp->interp,
 					 "WARNING: solid name \"",
-					 dasp->wdbp->wdb_prestr, name,
+					 bu_vls_addr( &dasp->wdbp->wdb_prestr ), name,
 					 "\" truncated to \"",
 					 local, "\"\n", (char *)NULL);
 	} else if(flags & DIR_COMB) {
@@ -2399,12 +2403,12 @@ wdb_dir_add(input_dbip, name, laddr, len, flags, ptr)
 		if (dasp->wdbp->wdb_ncharadd && comb->tree) {
 			db_tree_funcleaf(dasp->main_dbip, comb, comb->tree, wdb_do_update,
 			 (genptr_t)&(dasp->wdbp->wdb_ncharadd),
-			 (genptr_t)dasp->wdbp->wdb_prestr, (genptr_t)NULL);
+			 (genptr_t)&(dasp->wdbp->wdb_prestr), (genptr_t)NULL);
 		}
 	} else {
 		Tcl_AppendResult(dasp->interp,
 				 "WARNING: object name \"",
-				 dasp->wdbp->wdb_prestr, name,
+				 bu_vls_addr( &dasp->wdbp->wdb_prestr ), name,
 				 "\" is of an unsupported type, not copied.\n",
 				 (char *)NULL);
 		return -1;
@@ -2458,16 +2462,18 @@ wdb_concat_tcl(clientData, interp, argc, argv)
 		return TCL_ERROR;
 	}
 
-	if (strcmp(argv[3], "/") == 0) {
-		/* No prefix desired */
-		(void)strcpy(wdbp->wdb_prestr, "\0");
-	} else {
-		(void)strcpy(wdbp->wdb_prestr, argv[3]);
+	bu_vls_trunc( &wdbp->wdb_prestr, 0 );
+	if (strcmp(argv[3], "/") != 0) {
+		(void)bu_vls_strcpy(&wdbp->wdb_prestr, argv[3]);
 	}
 
-	if ((wdbp->wdb_ncharadd = strlen(wdbp->wdb_prestr)) > 12) {
-		wdbp->wdb_ncharadd = 12;
-		wdbp->wdb_prestr[12] = '\0';
+	if( wdbp->dbip->dbi_version < 5 ) {
+		if ((wdbp->wdb_ncharadd = bu_vls_strlen(&wdbp->wdb_prestr)) > 12) {
+			wdbp->wdb_ncharadd = 12;
+			bu_vls_trunc( &wdbp->wdb_prestr, 12 );
+		}
+	} else {
+		wdbp->wdb_ncharadd = bu_vls_strlen(&wdbp->wdb_prestr);
 	}
 
 	/* open the input file */
@@ -2548,7 +2554,7 @@ wdb_dir_check(input_dbip, name, laddr, len, flags, ptr)
 
 	/* Add the prefix, if any */
 	if (dcsp->wdbp->wdb_ncharadd > 0) {
-		(void)strncpy( local, dcsp->wdbp->wdb_prestr, dcsp->wdbp->wdb_ncharadd );
+		(void)strncpy( local, bu_vls_addr( &dcsp->wdbp->wdb_prestr ), dcsp->wdbp->wdb_ncharadd );
 		(void)strncpy( local+dcsp->wdbp->wdb_ncharadd, name, RT_NAMESIZE-dcsp->wdbp->wdb_ncharadd );
 	} else {
 		(void)strncpy( local, name, RT_NAMESIZE );
@@ -2592,15 +2598,14 @@ wdb_dup_tcl(clientData, interp, argc, argv)
 		return TCL_ERROR;
 	}
 
+	bu_vls_trunc( &wdbp->wdb_prestr, 0 );
 	if( argc == 4 )
-		(void)strcpy(wdbp->wdb_prestr, argv[3]);
-	else
-		wdbp->wdb_prestr[0] = '\0';
+		(void)bu_vls_strcpy(&wdbp->wdb_prestr, argv[3]);
 
 	wdbp->wdb_num_dups = 0;
-	if ((wdbp->wdb_ncharadd = strlen(wdbp->wdb_prestr)) > 12) {
+	if ((wdbp->wdb_ncharadd = bu_vls_strlen(&wdbp->wdb_prestr)) > 12) {
 		wdbp->wdb_ncharadd = 12;
-		wdbp->wdb_prestr[12] = '\0';
+		bu_vls_trunc( &wdbp->wdb_prestr, 12 );
 	}
 
 	/* open the input file */
@@ -2616,7 +2621,7 @@ wdb_dup_tcl(clientData, interp, argc, argv)
 	if (wdbp->wdb_ncharadd) {
 		Tcl_AppendResult(interp, "  For comparison, all names in ",
 				 argv[2], " were prefixed with:  ",
-				 wdbp->wdb_prestr, "\n", (char *)NULL);
+				 bu_vls_addr( &wdbp->wdb_prestr ), "\n", (char *)NULL);
 	}
 
 	/* Get array to hold names of duplicates */
@@ -4640,11 +4645,12 @@ wdb_make_name_tcl(clientData, interp, argc, argv)
 
 	bu_vls_init(&obj_name);
 	for (cp = argv[2], len = 0; *cp != '\0'; ++cp, ++len) {
-		if (*cp == '@')
+		if (*cp == '@') {
 			if (*(cp + 1) == '@')
 				++cp;
 			else
 				break;
+		}
 		bu_vls_putc(&obj_name, *cp);
 	}
 	bu_vls_putc(&obj_name, '\0');
