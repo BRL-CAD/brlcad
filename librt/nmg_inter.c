@@ -41,30 +41,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "nmg.h"
 #include "raytrace.h"
 
-/* XXX move to vmath.h, incorporate in librt/shoot.c */
-/* Given a direction vector, compute the inverses of each element. */
-/* When division by zero would have occured, mark inverse as INFINITY. */
-#define VINVDIR( _inv, _dir )	{ \
-	if( (_dir)[X] < -SQRT_SMALL_FASTF || (_dir)[X] > SQRT_SMALL_FASTF )  { \
-		(_inv)[X]=1.0/(_dir)[X]; \
-	} else { \
-		(_dir)[X] = 0.0; \
-		(_inv)[X] = INFINITY; \
-	} \
-	if( (_dir)[Y] < -SQRT_SMALL_FASTF || (_dir)[Y] > SQRT_SMALL_FASTF )  { \
-		(_inv)[Y]=1.0/(_dir)[Y]; \
-	} else { \
-		(_dir)[Y] = 0.0; \
-		(_inv)[Y] = INFINITY; \
-	} \
-	if( (_dir)[Z] < -SQRT_SMALL_FASTF || (_dir)[Z] > SQRT_SMALL_FASTF )  { \
-		(_inv)[Z]=1.0/(_dir)[Z]; \
-	} else { \
-		(_dir)[Z] = 0.0; \
-		(_inv)[Z] = INFINITY; \
-	} \
-    }
-
 struct nmg_inter_struct {
 	long		magic;
 	struct nmg_ptbl	*l1;		/* vertexuses on the line of */
