@@ -7,7 +7,8 @@
 
 #define SRCDIR	rt
 #define PRODUCTS	rt rtrad rtpp rtray rtshot rtwalk rtcheck \
-			rtg3 rtxray rthide
+			rtg3 rtxray rthide rtfrac rtrange \
+			rtregis rtscale
 #define	SRCSUFF	.c
 #define MANSECTION	1
 
@@ -103,14 +104,34 @@ rthide:	RTHIDE_OBJ LIBRT
 	CC CFLAGS -c vers.c
 	CC LDFLAGS RTHIDE_OBJ vers.o LIB_PRE''LIBRT LIB_PRE''LIBFB LIBFB_LIBES LIBRT_LIBES LIBMALLOC LIBES -o rthide
 
+#define RTFRAC_OBJ	RTUIF viewfrac.o regionfix.o 
+
+rtfrac:	RTFRAC_OBJ LIBRT
+	sh ../newvers.sh version "RT Volume Fractions"
+	CC CFLAGS -c vers.c
+	CC LDFLAGS RTFRAC_OBJ vers.o LIB_PRE''LIBRT LIB_PRE''LIBFB LIBFB_LIBES LIBRT_LIBES LIBMALLOC LIBES -o rtfrac
+
+#define RTRANGE_OBJ	RTUIF viewrange.o regionfix.o 
+
+rtrange:	RTRANGE_OBJ LIBRT
+	sh ../newvers.sh version "RT Range Plot"
+	CC CFLAGS -c vers.c
+	CC LDFLAGS RTRANGE_OBJ vers.o LIB_PRE''LIBRT LIB_PRE''LIBFB LIBFB_LIBES LIBRT_LIBES LIBMALLOC LIBES -o rtrange
+
 #define RTDUMMY_OBJ	RTUIF viewdummy.o regionfix.o 
 
 rtdummy:	RTDUMMY_OBJ LIBRT
 	sh ../newvers.sh version "RT Dummy"
 	CC CFLAGS -c vers.c
-	CC LDFLAGS RTDUMMY_OBJ vers.o LIB_PRE''LIBRT LIB_PRE''LIBFB LIBFB_LIBES LIBRT_LIBES LIBMALLOC LIBES -o rtdummy
+	CC LDFLAGS RTDUMMY_OBJ vers.o LIB_PRE''LIBRT LIBRT_LIBES LIB_PRE''LIBFB LIBFB_LIBES LIBMALLOC LIBES -o rtdummy
 
 rtexample:	LIBRT rtexample.o
-	CC LDFLAGS rtexample.o LIB_PRE''LIBRT LIB_PRE''LIBFB LIBFB_LIBES LIBRT_LIBES LIBMALLOC LIBES -o rtexample
+	CC LDFLAGS rtexample.o LIB_PRE''LIBRT LIBRT_LIBES LIB_PRE''LIBFB LIBFB_LIBES LIBMALLOC LIBES -o rtexample
+
+rtregis:	LIBRT rtregis.o read-rtlog.o
+	CC LDFLAGS rtregis.o read-rtlog.o LIB_PRE''LIBRT LIBRT_LIBES LIBMALLOC LIBES -o rtregis
+
+rtscale:	LIBRT LIBWDB rtscale.o read-rtlog.o
+	CC LDFLAGS rtscale.o read-rtlog.o LIB_PRE''LIBRT LIBRT_LIBES LIB_PRE''LIBWDB LIB_PRE''LIBPLOT LIBMALLOC LIBES -o rtscale
 
 #include "../Cakefile.rules"
