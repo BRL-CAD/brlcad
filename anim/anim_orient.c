@@ -62,9 +62,9 @@ int argc;
 char **argv;
 {
 	int num_read;
-	fastf_t	angle[3],quat[4],matrix[16];
-	void zyx2mat(),ypr2mat(),quat2mat(), an_mat_print();
-	int mat2ypr(),mat2zyx(),mat2quat();
+	fastf_t	angle[3],quat[4],matrix[16],vmatrix[16];
+	void anim_zyx2mat(),anim_ypr2mat(),anim_quat2mat(), anim_mat_print();
+	int anim_mat2ypr(),anim_mat2zyx(),anim_mat2quat();
 
 	if(!get_args(argc,argv))
 		fprintf(stderr,"Get_args error.\n");
@@ -79,7 +79,14 @@ char **argv;
 		else if (input_mode==QUAT){
 			num_read = scanf("%lf %lf %lf %lf", quat,quat+1,quat+2,quat+3);
 		}
-		else if ((input_mode==V_MAT)||(input_mode==O_MAT)){
+		else if (input_mode==V_MAT) { /*transpose matrix as it's read in */
+			num_read = 0;
+			num_read += scanf("%lf %lf %lf %lf",matrix,matrix+4,matrix+8,matrix+12);
+			num_read += scanf("%lf %lf %lf %lf",matrix+1,matrix+5,matrix+9,matrix+13);
+			num_read += scanf("%lf %lf %lf %lf",matrix+2,matrix+6,matrix+10,matrix+14);
+			num_read += scanf("%lf %lf %lf %lf",matrix+3,matrix+7,matrix+11,matrix+15);
+		}
+		else if (input_mode==O_MAT){
 			num_read = 0;
 			num_read += scanf("%lf %lf %lf %lf",matrix,matrix+1,matrix+2,matrix+3);
 			num_read += scanf("%lf %lf %lf %lf",matrix+4,matrix+5,matrix+6,matrix+7);
@@ -99,49 +106,50 @@ char **argv;
 
 		/* convert to (object) matrix form */
 		if (input_mode==YPR){
-			ypr2mat(matrix,angle);
+			anim_ypr2mat(matrix,angle);
 		}
 		else if (input_mode==XYZ){
-			zyx2mat(matrix,angle);
+			anim_zyx2mat(matrix,angle);
 		}
 		else if (input_mode==QUAT){
-			quat2mat(matrix,quat);
+			anim_quat2mat(matrix,quat);
 		}
 		else if (input_mode==V_MAT){
-			transpose(matrix);
+			;/* do nothing - already transposed on read */
 		}
 
 		if (permute){
 			if (input_mode==YPR)
-				v_permute(matrix);
+				anim_v_permute(matrix);
 			else if (output_mode==YPR)
-				un_v_permute(matrix);
+				anim_v_unpermute(matrix);
 		}
 
 		/* convert from matrix form and print result*/
 		if (output_mode==YPR){
-			mat2ypr(angle,matrix);
+			anim_mat2ypr(angle,matrix);
 		        if (output_units==DEGREES)
 		                VSCALE(angle,angle,RTOD);
 			printf("%f\t%f\t%f\n",angle[0],angle[1],angle[2]);
 		}
 		else if (output_mode==XYZ){
-			mat2zyx(angle,matrix);
+			anim_mat2zyx(angle,matrix);
 		        if (output_units==DEGREES)
 		                VSCALE(angle,angle,RTOD);
 			printf("%f\t%f\t%f\n",angle[0],angle[1],angle[2]);
 		}
 		else if (output_mode==QUAT){
-			mat2quat(quat,matrix);
+			anim_mat2quat(quat,matrix);
 			printf("%f\t%f\t%f\t%f\n",quat[0],quat[1],quat[2],quat[3]);
 		}
 		else if (output_mode==V_MAT){
-			transpose(matrix);
-			an_mat_print(matrix,0);
+			mat_trn(vmatrix,matrix);
+/*			transpose(matrix);*/
+			anim_mat_print(vmatrix,0);
 			printf("\n");
 		}
 		else if (output_mode==O_MAT){
-			an_mat_print(matrix,0);
+			anim_mat_print(matrix,0);
 			printf("\n");
 		}
 
