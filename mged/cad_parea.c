@@ -16,7 +16,6 @@
  */
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
-static char	sccsid[] = "@(#)cad_parea.c	1.6";
 #endif
 
 #include "conf.h"
@@ -53,6 +52,7 @@ Usage() 				/* print usage message */
 }
 
 
+int
 main( argc, argv )			/* "cad_parea" entry point */
 int		argc;		/* argument count */
 char		*argv[];	/* argument strings */
