@@ -100,16 +100,37 @@ applymap
   status: ok
   desc: apply the color map in an RLE file to the pixel data
 asc-nmg
-  
+  status: ok  
 asc-pl
+  status: ok, bad form
+  desc: converts an ascii format plot file to plot3 format
+  notes: asc-pl is a bad misnomer since all other references are to the ascii brlcad databases or ascii formated raw image datafiles
 asc2g
+  status: partial
+  desc: converts an ascii formatted file to a brlcad database
+  notes: fails on import of v5 database created with g2asc
 asc2pix
+  status: ok
+  desc: converts a raw image ascii datafile to a raw image datafile
 avg4
+  status: partial
+  desc: downfilter an rle image by simple averaging
+  notes: doesn't think an image created from pix-rle is an rle (rle-fb works fine on the same file), though it works
 awf
+  status: ok
+  desc: "amazingly workable (text) formatter" text processor
 azel
+  status: ok
+  desc: coordinate system converter and/or rotation system
 bary
+  status: ok
+  desc: computes weighted sums of points in 3d space
 brlcad-check.sh
+  status: ok
+  desc: performs setup checking of brlcad package prior to build/install
 brlman
+  status: ok
+  desc: alternative to man for systems that don't have nroff (awf is used instead)
 buffer
 burst
 bw-a
@@ -139,6 +160,8 @@ cad_boundp
 cad_parea
 cadbug.sh
 cake
+  status: ok
+  desc: crummy make
 cakeinclude
 cakeinclude.sh
 cakesub
@@ -238,7 +261,13 @@ g-tankill
 g-vrml
 g-wave
 g2asc
+  status: partial
+  desc: converts a brlcad database to an ascii datafile
+  notes: chokes on the _GLOBAL object
 g4-g5
+  status: partial
+  desc: converts a brlcad v4 database to a brlcad v5 database
+  notes: chokes on the _GLOBAL object
 g_diff
 g_lint
 gencolor
@@ -306,10 +335,14 @@ pix-png
 pix-ppm
 pix-ps
 pix-rle
+  status: ok
+  desc: converts a raw image datafile to an RLE datafile
 pix-spm
 pix-sun
 pix-yuv
 pix2asc
+  status: ok
+  desc: converts a raw image datafile to a raw image ascii datafile
 pix3filter
 pixautosize
 pixbackgnd
@@ -386,7 +419,11 @@ remapid
 remrt
 repos
 rle-fb
-rle-pix sean
+  status: ok
+  desc: send an RLE datafile to a framebuffer
+rle-pix
+  status: ok
+  desc: converts an RLE datafile to a raw image datafile
 rleClock
 rleaddcom
 rlebg
