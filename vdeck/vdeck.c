@@ -1,7 +1,7 @@
 /*
-	SCCS id:	@(#) vdeck.c	2.14
-	Last edit: 	7/10/86 at 14:54:11
-	Retrieved: 	8/13/86 at 08:15:21
+	SCCS id:	@(#) vdeck.c	2.15
+	Last edit: 	8/12/86 at 08:58:59
+	Retrieved: 	8/13/86 at 08:15:47
 	SCCS archive:	/m/cad/vdeck/RCS/s.vdeck.c
 
 	Author:		Gary S. Moss
@@ -12,7 +12,7 @@
 */
 #if ! defined( lint )
 static
-char	sccsTag[] = "@(#) vdeck.c	2.14	last edit 7/10/86 at 14:54:11";
+char	sccsTag[] = "@(#) vdeck.c	2.15	last edit 8/12/86 at 08:58:59";
 #endif
 
 /*
@@ -413,6 +413,7 @@ matp_t			old_xlate;
 				lookup( mp->m_instname, NOISY )) == DIR_NULL
 				)
 				continue;
+#if defined( BRANCH_NAMING )
 			if( mp->m_brname[0] != 0 )
 				{
 				/* Create an alias.  First step towards
@@ -430,6 +431,7 @@ matp_t			old_xlate;
 					nextdirp = diradd(mp->m_brname,
 							nextdirp->d_addr );
 				}
+#endif
 			mat_mul( new_xlate, old_xlate, mp->m_mat );
 
 			/* Recursive call.				*/
