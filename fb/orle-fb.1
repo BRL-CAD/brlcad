@@ -1,0 +1,85 @@
+.TH RLE-FB 1V VMB
+'\"	last edit:	85/03/28	G. S. Moss
+'\"	SCCS ID:	@(#)rle-fb.1	1.1
+.SH NAME
+rle-fb \- Restore Run-Length Encoded image onto a framebuffer
+.SH SYNOPSIS
+.B rle-ik
+[
+.B -Ov
+] [
+.B -b
+(
+.B rgbBG
+)] [
+.B -pX Y
+] [
+.B file.rle
+]
+.SH DESCRIPTION
+Restores an Alpha_1 standard format run-length encoded (RLE)
+file saved with
+.I fb-rle
+or similar program.
+If
+.I file.rle\^
+is not specified, the standard input is read.
+By default, the device ``/dev/ik0l'',
+is used to display the decoded image.
+This may be changed by setting the environment
+variable
+.B
+.SM FB_FILE
+to the name of another device or file name,
+and exporting it before execution of 
+.IR rle-fb\^ .
+Images may be written to disk or any supported framebuffer device.
+.I Rle-fb\^
+determines the type and size of the saved file (color or B&W)
+and acts accordingly.
+.TP
+.B -v
+Provides a verbose description of the parameters of the saved image
+on the standard error output.
+.TP
+.B -O
+Restores the image data in \fIoverlay\fP mode.
+Only areas of the original image which were not the background color are
+restored.  The rest of the image already in the frame buffer is undisturbed.
+Note that this mode uses twice as many DMAs to the frame buffer as
+the normal mode, as the previous image must be read back into the host.
+.TP
+.B -bX
+If the image is not being restored in overlay mode, the background is
+normally set to the value recorded in the RLE file.  This option permits
+the user to specify an alternate background color from a limited
+set of colors.  The character \fBX\fR can be any of `r' (red),
+`g' (green), `b' (blue), `B' (black), or `G' (18% grey).
+.TP
+.B -p X Y
+Reposition the image.  The original lower left corner is positioned at [x, y]
+before restoring the image.  A warning:  A saved image should not be
+repositioned so that any saved data wraps around the X borders.
+.TP
+.B file.rle
+Name of file to restore.  Must be in Alpha_1 RLE format.
+.SH EXAMPLE
+In the Bourne shell :
+.br
+$ \fIFB_FILE=/dev/ik1l export FB_FILE\fR
+.br
+$ \fI\|rle-fb \|\-O \|tank.rle\fR
+In the C shell :
+.br
+% \fI\|setenv \|FB_FILE \|tank.fb\fR
+.br
+% \fI\|rle-fb \|\-v \|< \|tank.rle\fR
+.SH FILES
+/vld/lib/librle.a, /vld/lib/libfb.a
+.SH AUTHORS
+.PP 
+Gary S. Moss, BRL-VLD
+.br
+Michael John Muuss, BRL-SECAD
+.SH SEE ALSO
+fb-rle(1V)
