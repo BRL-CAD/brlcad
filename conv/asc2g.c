@@ -208,7 +208,6 @@ strsolbld()
 	register char *np;
 	char keyword[10];
 	char name[NAMELEN+1];
-	struct rt_vls vls;
 
 	cp = buf;
 
@@ -324,24 +323,21 @@ solbld()
 	register char *np;
 	register int i;
 
-	char	s_id;			/* id code for the record */
 	char	s_type;			/* id for the type of primitive */
-	short	s_cgtype;		/* comgeom solid type */
 	fastf_t	val[24];		/* array of values/parameters for solid */
 	point_t	center;			/* center; used by many solids */
 	point_t pnts[9];		/* array of points for the arbs */
 	point_t	norm;
-	point_t	min, max;
-	vect_t	a, b, c, d, n, r1, r2;	/* various vectors required */
+	vect_t	a, b, c, d, n;		/* various vectors required */
 	vect_t	height;			/* height vector for tgc */
 	vect_t	breadth;		/* breadth vector for rpc */
 	double	dd, rad1, rad2;
 
 	cp = buf;
-	s_id = *cp++;
+	cp++;				/* ident */
 	cp = nxt_spc( cp );		/* skip the space */
+	s_type = atoi(cp);
 
-	s_type = (char)atoi( cp );
 	cp = nxt_spc( cp );
 
 	np = name;
@@ -351,7 +347,7 @@ solbld()
 	*np = '\0';
 	
 	cp = nxt_spc( cp );
-	s_cgtype = (short)atoi( cp );
+	/* Comgeom solid type */
 
 	for( i = 0; i < 24; i++ )  {
 		cp = nxt_spc( cp );
@@ -502,13 +498,10 @@ combbld()
 	int 		temp_nflag, temp_pflag;
 
 	char		override;
-	char		id;		/* == ID_COMB */
 	char		reg_flags;	/* region flag */
 	int		is_reg;
 	short		regionid;
 	short		aircode;
-	short		length;		/* DEPRECTED: number of members expected */
-	short		num;		/* DEPRECATED: Comgeom reference number */
 	short		material;	/* GIFT material code */
 	short		los;		/* LOS estimate */
 	unsigned char	rgb[3];		/* Red, green, blue values */
@@ -523,7 +516,7 @@ combbld()
 	temp_nflag = temp_pflag = 0;	/* indicators for optional fields */
 
 	cp = buf;
-	id = *cp++;			/* ID_COMB */
+	cp++;				/* ID_COMB */
 	cp = nxt_spc( cp );		/* skip the space */
 
 	reg_flags = *cp++;
@@ -541,9 +534,9 @@ combbld()
 	cp = nxt_spc( cp );
 	aircode = (short)atoi( cp );
 	cp = nxt_spc( cp );
-	length = (short)atoi( cp );		/* unused */
+	/* DEPRECTED: number of members expected */
 	cp = nxt_spc( cp );
-	num = (short)atoi( cp );		/* unused */
+	/* DEPRECATED: Comgeom reference number */
 	cp = nxt_spc( cp );
 	material = (short)atoi( cp );
 	cp = nxt_spc( cp );
@@ -620,13 +613,12 @@ struct wmember	*headp;
 	register char 	*cp;
 	register char 	*np;
 	register int 	i;
-	char		id;
 	char		relation;	/* boolean operation */
 	char		inst_name[NAMESIZE+2];
 	struct wmember	*memb;
 
 	cp = buf;
-	id = *cp++;
+	cp++;				/* ident */
 	cp = nxt_spc( cp );		/* skip the space */
 
 	relation = *cp++;
@@ -657,12 +649,8 @@ struct wmember	*headp;
 void
 arsabld()
 {
-
-
 	register char *cp;
 	register char *np;
-	point_t	      max[3];
-	point_t	      min[3];
 
 	cp = buf;
 	record.a.a_id = *cp++;
@@ -713,7 +701,6 @@ arsbbld()
 {
 	register char *cp;
 	register int i;
-	point_t	      pnt[8];		/* need 8 points */
 
 	cp = buf;
 	record.b.b_id = *cp++;
@@ -767,14 +754,13 @@ identbld()
 {
 	register char	*cp;
 	register char	*np;
-	char		id;		/* a freebie */
 	char		units;		/* units code number */
 	char		version[6];
 	char		title[72];
 	char		*unit_str = "none";
 
 	cp = buf;
-	id = *cp++;
+	cp++;				/* ident */
 	cp = nxt_spc( cp );		/* skip the space */
 
 	units = (char)atoi( cp );
@@ -843,10 +829,9 @@ polyhbld()
 
 	register char	*cp;
 	register char	*np;
-	char		id;
 
 	cp = buf;
-	id = *cp++;
+	cp++;				/* ident */
 	cp = nxt_spc( cp );		/* skip the space */
 
 	np = name;
@@ -868,13 +853,12 @@ polydbld()
 {
 	register char	*cp;
 	register int	i, j;
-	char		id;
 	char		count;		/* number of vertices */
 	fastf_t		verts[5][3];	/* vertices for the polygon */
 	fastf_t		norms[5][3];	/* normals at each vertex */
 
 	cp = buf;
-	id = *cp++;
+	cp++;				/* ident */
 	cp = nxt_spc( cp );		/* skip the space */
 
 	count = (char)atoi( cp );
@@ -907,7 +891,6 @@ materbld()
 {
 
 	register char *cp;
-	register char *np;
 
 	cp = buf;
 	record.md.md_id = *cp++;
@@ -939,12 +922,11 @@ bsplbld()
 {
 	register char	*cp;
 	register char	*np;
-	char		id;
 	short		nsurf;		/* number of surfaces */
 	fastf_t		resolution;	/* resolution of flatness */
 	
 	cp = buf;
-	id = *cp++;
+	cp++;				/* ident */
 	cp = nxt_spc( cp );		/* skip the space */
 
 	np = name;
@@ -1079,9 +1061,7 @@ pipebld()
 {
 
 	char			name[NAMELEN];
-	char			ident;
 	char			type[TYPELEN];
-	int			ret;
 	fastf_t			id;
 	fastf_t			od;
 	point_t			start;
@@ -1094,7 +1074,7 @@ pipebld()
 	/* Process the first buffer */
 
 	cp = buf;
-	ident = *cp++;			/* not used later */
+	cp++;				/* ident, not used later */
 	cp = nxt_spc( cp );		/* skip spaces */
 
 	np = name;
@@ -1129,11 +1109,11 @@ pipebld()
 		VMOVE(sp->ps_start, start);
 
 		/* Identify type */
-		if( (ret = (strcmp( type, "end" ))) == 0)  {
+		if( ((strcmp( type, "end" ))) == 0)  {
 			sp->ps_type = WDB_PIPESEG_TYPE_END;
-		} else if( (ret = (strcmp( type, "linear" ))) == 0)  {
+		} else if( ((strcmp( type, "linear" ))) == 0)  {
 			sp->ps_type = WDB_PIPESEG_TYPE_LINEAR;
-		} else if( (ret = (strcmp( type, "bend"))) == 0)  {
+		} else if( ((strcmp( type, "bend"))) == 0)  {
 			sp->ps_type = WDB_PIPESEG_TYPE_BEND;
 			VMOVE(sp->ps_bendcenter, bendcenter);
 		} else  {
@@ -1141,7 +1121,7 @@ pipebld()
 		}
 
 		RT_LIST_INSERT( &head.l, &sp->l);
-	} while( (ret = (strcmp (type , "end"))) != 0);
+	} while( ((strcmp (type , "end"))) != 0);
 
 	mk_pipe(ofp, name, &head);
 	mk_pipe_free( &head );
@@ -1160,13 +1140,10 @@ particlebld()
 
 	char		name[NAMELEN];
 	char		ident;
-	char		type[TYPELEN];
 	point_t		vertex;
 	vect_t		height;
 	double		vrad;
 	double		hrad;
-	register char	*cp;
-	register char	*np;
 
 
 	/* Read all the information out of the existing buffer.  Note that
@@ -1198,9 +1175,7 @@ arbnbld()
 {
 
 	char		name[NAMELEN];
-	char		ident;
 	char		type[TYPELEN];
-	int		ret;
 	int		i;
 	int		neqn;			/* number of eqn expected */
 	plane_t		*eqn;			/* pointer to plane equations for faces */
@@ -1210,7 +1185,7 @@ arbnbld()
 	/* Process the first buffer */
 
 	cp = buf;
-	ident = *cp++;				/* not used later */
+	cp++;					/* ident */
 	cp = nxt_spc(cp);			/* skip spaces */
 
 	np = name;

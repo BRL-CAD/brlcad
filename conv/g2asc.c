@@ -222,7 +222,6 @@ strsol_dump()	/* print out strsol solid info */
 {
 	union record rec[DB_SS_NGRAN];
 	char *cp;
-	int i;
 
 	/* get all the strsol granules */
 	rec[0] = record;	/* struct copy the current record */
@@ -314,11 +313,8 @@ pipe_dump()	/* Print out Pipe record information */
 {
 
 	int			ngranules;	/* number of granules, total */
-	int			count;
-	int			ret;
 	char			*name;
 	struct rt_pipe_internal	*pipe;		/* want a struct for the head, not a ptr. */
-	struct wdb_pipeseg	head;		/* actual head, not a ptr. */
 	struct rt_external	ext;
 	struct rt_db_internal	intern;
 
@@ -328,7 +324,7 @@ pipe_dump()	/* Print out Pipe record information */
 	get_ext( &ext, ngranules );
 
 	/* Hand off to librt's import() routine */
-	if( (ret = rt_pipe_import( &intern, &ext, id_mat )) != 0 )  {
+	if( (rt_pipe_import( &intern, &ext, id_mat )) != 0 )  {
 		fprintf(stderr, "g2asc: pipe import failure\n");
 		exit(-1);
 	}
@@ -399,8 +395,6 @@ struct wdb_pipeseg	*headp;
 void
 particle_dump()
 {
-	int			ret;
-	char			*type;
 	struct rt_part_internal 	*part;	/* head for the structure */
 	struct rt_external	ext;
 	struct rt_db_internal	intern;
@@ -408,7 +402,7 @@ particle_dump()
 	get_ext( &ext, 1 );
 
 	/* Hand off to librt's import() routine */
-	if( (ret = rt_part_import( &intern, &ext, id_mat )) != 0 )  {
+	if( (rt_part_import( &intern, &ext, id_mat )) != 0 )  {
 		fprintf(stderr, "g2asc: particle import failure\n");
 		exit(-1);
 	}
@@ -422,13 +416,10 @@ particle_dump()
 
 	switch( part->part_type )  {
 	case RT_PARTICLE_TYPE_SPHERE:
-		type = "sphere";
 		break;
 	case RT_PARTICLE_TYPE_CYLINDER:
-		type = "cylinder";
 		break;
 	case RT_PARTICLE_TYPE_CONE:
-		type = "cone";
 		break;
 	default:
 		fprintf(stderr, "g2asc: no particle type %d\n", part->part_type);
@@ -456,7 +447,6 @@ void
 arbn_dump()
 {
 	int		ngranules;	/* number of granules to be read */
-	int		ret;		/* return code catcher */
 	int		i;		/* a counter */
 	char		*name;
 	struct rt_arbn_internal	*arbn;
@@ -469,7 +459,7 @@ arbn_dump()
 	get_ext( &ext, ngranules );
 
 	/* Hand off to librt's import() routine */
-	if( (ret = rt_arbn_import( &intern, &ext, id_mat )) != 0 )  {
+	if( (rt_arbn_import( &intern, &ext, id_mat )) != 0 )  {
 		fprintf(stderr, "g2asc: arbn import failure\n");
 		exit(-1);
 	}
@@ -503,8 +493,6 @@ arbn_dump()
 int
 combdump()	/* Print out Combination record information */
 {
-	register int i;
-	register int length;	/* Keep track of number of members */
 	int	m1, m2;		/* material property flags */
 	struct rt_list	head;
 	struct mchain {
