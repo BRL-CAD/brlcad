@@ -943,7 +943,7 @@ genptr_t		p;
 struct nmg_exp_counts	*ecnt;
 {
 	int	index;
-	int	ret;
+	int	ret=0;	/* zero is NOT the default value, this is just to satisfy CRAY compilers */
 
 	/* If null pointer, return new subscript of zero */
 	if( p == 0 )  {
