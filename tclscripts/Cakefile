@@ -23,7 +23,7 @@
 all&:
 	@echo "SRCDIR:  all done"
 
-ami&:
+tclIndex:
 	./ami.tcl ../tclscripts
 
 #include "../Cakefile.rules"
