@@ -215,7 +215,7 @@ int	width, height;
 	 && (mode & MODE_2MASK) == MODE_2PREREAD ) {
 		/* Pre read all of the image data and cmap */
 		fb_readrect( MI(ifp)->fbp, 0, 0,
-			ifp->if_width, ifp->if_height, MI(ifp)->mem );
+			ifp->if_width, ifp->if_height, (unsigned char *)MI(ifp)->mem );
 	 	fb_rmap( MI(ifp)->fbp, &(MI(ifp)->cmap) );
 	} else {
 		/* Image data begins black, colormap linear */
@@ -238,7 +238,7 @@ FBIO	*ifp;
 		}
 		if( MI(ifp)->mem_dirty ) {
 			fb_writerect( MI(ifp)->fbp, 0, 0,
-				ifp->if_width, ifp->if_height, MI(ifp)->mem );
+				ifp->if_width, ifp->if_height, (unsigned char *)MI(ifp)->mem );
 		}
 		fb_close( MI(ifp)->fbp );
 		MI(ifp)->fbp = FBIO_NULL;
@@ -252,7 +252,7 @@ FBIO	*ifp;
 _LOCAL_ int
 mem_clear( ifp, pp )
 FBIO	*ifp;
-RGBpixel	*pp;
+unsigned char	*pp;
 {
 	RGBpixel v;
 	register int n;
@@ -261,9 +261,9 @@ RGBpixel	*pp;
 	if( pp == RGBPIXEL_NULL ) {
 		v[RED] = v[GRN] = v[BLU] = 0;
 	} else {
-		v[RED] = (*pp)[RED];
-		v[GRN] = (*pp)[GRN];
-		v[BLU] = (*pp)[BLU];
+		v[RED] = (pp)[RED];
+		v[GRN] = (pp)[GRN];
+		v[BLU] = (pp)[BLU];
 	}
 
 	cp = MI(ifp)->mem;
@@ -292,7 +292,7 @@ _LOCAL_ int
 mem_read( ifp, x, y, pixelp, count )
 FBIO	*ifp;
 int	x, y;
-RGBpixel	*pixelp;
+unsigned char	*pixelp;
 int	count;
 {
 	int	pixels_to_end;
@@ -315,7 +315,7 @@ _LOCAL_ int
 mem_write( ifp, x, y, pixelp, count )
 FBIO	*ifp;
 int	x, y;
-RGBpixel	*pixelp;
+CONST unsigned char	*pixelp;
 int	count;
 {
 	int	pixels_to_end;
@@ -351,7 +351,7 @@ ColorMap	*cmp;
 _LOCAL_ int
 mem_wmap( ifp, cmp )
 FBIO	*ifp;
-ColorMap	*cmp;
+CONST ColorMap	*cmp;
 {
 	if( cmp == COLORMAP_NULL )  {
 		fb_make_linear_cmap( &(MI(ifp)->cmap) );
@@ -398,7 +398,7 @@ int	*xzoom, *yzoom;
 _LOCAL_ int
 mem_setcursor( ifp, bits, xbits, ybits, xorig, yorig )
 FBIO	*ifp;
-unsigned char *bits;
+CONST unsigned char *bits;
 int	xbits, ybits;
 int	xorig, yorig;
 {
@@ -459,7 +459,7 @@ FBIO	*ifp;
 		}
 		if( MI(ifp)->mem_dirty ) {
 			fb_writerect( MI(ifp)->fbp, 0, 0,
-				ifp->if_width, ifp->if_height, MI(ifp)->mem );
+				ifp->if_width, ifp->if_height, (unsigned char *)MI(ifp)->mem );
 			MI(ifp)->mem_dirty = 0;
 		}
 		return	fb_flush( MI(ifp)->fbp );

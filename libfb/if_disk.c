@@ -160,11 +160,11 @@ FBIO	*ifp;
 _LOCAL_ int
 dsk_clear( ifp, bgpp )
 FBIO	*ifp;
-RGBpixel	*bgpp;
+unsigned char	*bgpp;
 {
 	static RGBpixel	black = { 0, 0, 0 };
 
-	if( bgpp == (RGBpixel *)NULL )
+	if( bgpp == (unsigned char *)NULL )
 		return disk_color_clear( ifp, black );
 
 	return	disk_color_clear( ifp, bgpp );
@@ -174,7 +174,7 @@ _LOCAL_ int
 dsk_read( ifp, x, y, pixelp, count )
 FBIO	*ifp;
 int	x,  y;
-RGBpixel	*pixelp;
+unsigned char	*pixelp;
 int	count;
 {
 	register long bytes = count * (long) sizeof(RGBpixel);
@@ -209,7 +209,7 @@ _LOCAL_ int
 dsk_write( ifp, x, y, pixelp, count )
 FBIO	*ifp;
 int	x, y;
-RGBpixel	*pixelp;
+CONST unsigned char	*pixelp;
 long	count;
 {
 	register long	bytes = count * (long) sizeof(RGBpixel);
@@ -262,7 +262,7 @@ ColorMap	*cmap;
 _LOCAL_ int
 dsk_wmap( ifp, cmap )
 FBIO	*ifp;
-ColorMap	*cmap;
+CONST ColorMap	*cmap;
 {
 	if( cmap == (ColorMap *) NULL )
 		/* Do not write default map to file. */
@@ -290,23 +290,23 @@ ColorMap	*cmap;
 _LOCAL_ int
 disk_color_clear( ifp, bpp )
 FBIO	*ifp;
-register RGBpixel	*bpp;
+register unsigned char	*bpp;
 {
-	static RGBpixel	*pix_buf = NULL;
-	register RGBpixel *pix_to;
+	static unsigned char	*pix_buf = NULL;
+	register unsigned char *pix_to;
 	register long	i;
 	int	fd, pixelstodo;
 
 	if( pix_buf == NULL )
-		if( (pix_buf = (RGBpixel *) malloc(DISK_DMA_BYTES)) == PIXEL_NULL ) {
+		if( (pix_buf = (unsigned char *) malloc(DISK_DMA_BYTES)) == PIXEL_NULL ) {
 			Malloc_Bomb(DISK_DMA_BYTES);
 			return	-1;
 		}
 
 	/* Fill buffer with background color. */
 	for( i = DISK_DMA_PIXELS, pix_to = pix_buf; i > 0; i-- ) {
-		COPYRGB( *pix_to, *bpp );
-		pix_to++;
+		COPYRGB( pix_to, bpp );
+		pix_to += sizeof(RGBpixel);
 	}
 
 	/* Set start of framebuffer */
