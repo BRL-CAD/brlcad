@@ -42,8 +42,6 @@ point_t		viewbase_model;	/* model-space location of viewplane corner */
 /* Local communication with worker() */
 HIDDEN int cur_pixel;		/* current pixel number, 0..last_pixel */
 HIDDEN int last_pixel;		/* last pixel number */
-HIDDEN int nworkers_started;	/* number of workers started */
-HIDDEN int nworkers_finished;	/* number of workers properly finished */
 
 /*
  *			G R I D _ S E T U P
@@ -201,32 +199,17 @@ do_run( a, b )
 	cur_pixel = a;
 	last_pixel = b;
 
-	nworkers_started = 0;
-	nworkers_finished = 0;
 	if( !rt_g.rtg_parallel )  {
 		/*
 		 * SERIAL case -- one CPU does all the work.
 		 */
 		npsw = 1;
-		worker();
+		worker(0);
 	} else {
 		/*
 		 *  Parallel case.
 		 */
 		bu_parallel( worker, npsw );
-	}
-	/*
-	 *  Ensure that all the workers are REALLY finished.
-	 *  On some systems, if threads core dump, the rest of
-	 *  the gang keeps going, so this can actually happen (sigh).
-	 */
-	if( nworkers_finished != npsw )  {
-		bu_log("\n***ERROR: %d workers did not finish!\n\n",
-			npsw - nworkers_finished);
-	}
-	if( nworkers_started != npsw )  {
-		bu_log("\nNOTICE:  only %d workers started, expected %d\n",
-			nworkers_started, npsw );
 	}
 
 	/* Tally up the statistics */
@@ -242,18 +225,21 @@ do_run( a, b )
 
 #define CRT_BLEND(v)	(0.26*(v)[X] + 0.66*(v)[Y] + 0.08*(v)[Z])
 #define NTSC_BLEND(v)	(0.30*(v)[X] + 0.59*(v)[Y] + 0.11*(v)[Z])
+int	stop_worker = 0;
 
 /*
  *  			W O R K E R
  *  
  *  Compute some pixels, and store them.
  *  A "self-dispatching" parallel algorithm.
+ *  Executes until there is no more work to be done, or is told to stop.
  *
  *  In order to reduce the traffic through the res_worker critical section,
  *  a multiple pixel block may be removed from the work queue at once.
  */
 void
-worker()
+worker(cpu)
+int	cpu;
 {
 	LOCAL struct application a;
 	LOCAL vect_t point;		/* Ref point on eye or view plane */
@@ -261,11 +247,6 @@ worker()
 	int	pixel_start;
 	int	pixelnum;
 	int	samplenum;
-	int	cpu;			/* our CPU (PSW) number */
-
-	bu_semaphore_acquire( RT_SEM_WORKER );
-	cpu = nworkers_started++;
-	bu_semaphore_release( RT_SEM_WORKER );
 
 	/* The more CPUs at work, the bigger the bites we take */
 	if( per_processor_chunk <= 0 )  per_processor_chunk = npsw;
@@ -274,6 +255,8 @@ worker()
 	RT_CK_RESOURCE( &resource[cpu] );
 
 	while(1)  {
+		if( stop_worker )  return;
+
 		bu_semaphore_acquire( RT_SEM_WORKER );
 		pixel_start = cur_pixel;
 		cur_pixel += per_processor_chunk;
@@ -282,9 +265,9 @@ worker()
 		for( pixelnum = pixel_start; pixelnum < pixel_start+per_processor_chunk; pixelnum++ )  {
 
 			if( pixelnum > last_pixel )
-				goto out;
+				return;
 
-			/* Obtain fresh copy of application struct */
+			/* Obtain fresh copy of global application struct */
 			a = ap;				/* struct copy */
 			a.a_resource = &resource[cpu];
 
@@ -364,8 +347,4 @@ worker()
 				view_eol( &a );		/* End of scan line */
 		}
 	}
-out:
-	bu_semaphore_acquire( RT_SEM_WORKER );
-	nworkers_finished++;
-	bu_semaphore_release( RT_SEM_WORKER );
 }
