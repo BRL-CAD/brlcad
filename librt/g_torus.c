@@ -261,6 +261,7 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	VSCALE( A, A, f );
 	VUNITIZE( B );
 	VSCALE( B, B, f );
+	VSCALE( Hv, Hv, r2 );
 
 	/* There are 8 corners to the enclosing RPP;  find max and min */
 	VADD3( temp, tor->tor_V, B, Hv );
@@ -339,27 +340,86 @@ register struct xray *rp;
 	LOCAL vect_t	dprime;		/* D' */
 	LOCAL vect_t	pprime;		/* P' */
 	LOCAL vect_t	work;		/* temporary vector */
-	LOCAL double	k[4];		/* possible intersections */
-	LOCAL int	npts;		/* # intersection points */
+	LOCAL poly	C;		/* The final equation */
+	LOCAL complex	val[MAXP];	/* The complex roots */
+	LOCAL double	k[4];		/* The real roots */
+	register int	i;
+	LOCAL int	j;
+	LOCAL poly	A, Asqr;
+	LOCAL poly	X2_Y2;		/* X**2 + Y**2 */
 
-	/* out, Mat, vect */
+	/* Convert vector into the space of the unit torus */
 	MAT4X3VEC( dprime, tor->tor_SoR, rp->r_dir );
 	VSUB2( work, rp->r_pt, tor->tor_V );
 	MAT4X3VEC( pprime, tor->tor_SoR, work );
 
-	npts = stdTorus( pprime, dprime, tor->tor_alpha, k);
-	if( npts != 2 && npts != 4 )
+	/*
+	 *  Given a line and a ratio, alpha, finds the equation of the
+	 *  unit torus in terms of the variable 't'.
+	 *
+	 *  The equation for the torus is:
+	 *
+	 * [ X**2 + Y**2 + Z**2 + (1 - alpha**2) ]**2 - 4*( X**2 + Y**2 ) = 0
+	 *
+	 *  First, find X, Y, and Z in terms of 't' for this line, then
+	 *  substitute them into the equation above.
+	 *
+	 *  	Wx = Dx*t + Px
+	 *
+	 *  	Wx**2 = Dx**2 * t**2  +  2 * Dx * Px  +  Px**2
+	 *  		[0]                [1]           [2]    dgr=2
+	 */
+	X2_Y2.dgr = 2;
+	X2_Y2.cf[0] = pprime[X] * pprime[X] + pprime[Y] * pprime[Y];
+	X2_Y2.cf[1] = 2.0 * (pprime[X] * pprime[X] + pprime[Y] * pprime[Y]);
+	X2_Y2.cf[2] = pprime[X] * pprime[X] + pprime[Y] * pprime[Y];
+
+	/* A = X2_Y2 + Z2 */
+	A.dgr = 2;
+	A.cf[0] = X2_Y2.cf[0] + pprime[Z] * pprime[Z];
+	A.cf[1] = X2_Y2.cf[1] + 2.0 * pprime[Z] * pprime[Z];
+	A.cf[2] = X2_Y2.cf[2] + pprime[Z] * pprime[Z] +
+		  1.0 - tor->tor_alpha * tor->tor_alpha;
+
+	(void) polyMul( &A, &A, &Asqr );
+	(void) polyScal( &X2_Y2, 4.0 );
+	(void) polySub( &Asqr, &X2_Y2, &C );
+
+	/*  It is known that the equation is 4th order.  Therefore,
+	 *  if the root finder returns other than 4 roots, error.
+	 */
+	if ( (i = polyRoots( &C, val )) != 4 ){
+		fprintf(stderr,"stdTorus:  polyRoots() 4!=%d\n", i);
+		pr_roots( i, val );
+		return(SEG_NULL);		/* MISS */
+	}
+
+	/*  Only real roots indicate an intersection in real space.
+	 *
+	 *  Look at each root returned; if the imaginary part is zero
+	 *  or sufficiently close, then use the real part as one value
+	 *  of 't' for the intersections
+	 */
+	for ( j=0, i=0; j < 4; j++ ){
+		if( NEAR_ZERO( val[j].im ) )
+			k[i++] = val[j].re;
+	}
+	/* Here, 'i' is number of points found */
+	if( i == 0 )
 		return(SEG_NULL);		/* No hit */
+	if( i != 2 && i != 4 )  {
+		fprintf(stderr,"tor_shot: reduced 4 to %d roots\n",i);
+		pr_roots( 4, val );
+		return(SEG_NULL);		/* No hit */
+	}
 
 	/* Most distant to least distant */
-	PtSort( k, npts );
+	PtSort( k, i );
 
-	/* Will be either 2 or 4 hit points */
 	/* k[1] is entry point, and k[0] is exit point */
 	GET_SEG(segp);
 	segp->seg_stp = stp;
 
-	/* ASSERT that MAGNITUDE(rp->r_dir) == 1 */
 	segp->seg_in.hit_dist = k[1];
 	segp->seg_out.hit_dist = k[0];
 	segp->seg_flag = SEG_IN | SEG_OUT;
@@ -374,7 +434,7 @@ register struct xray *rp;
 	VJOIN1( work, pprime, k[0], dprime );
 	tornormal( segp->seg_out.hit_normal, work, tor );
 
-	if( npts == 2 )
+	if( i == 2 )
 		return(segp);			/* HIT */
 				
 	/* 4 points */
@@ -446,88 +506,6 @@ register struct tor_specific *tor;
 		4.0 * w * hit[Z] );
 	VUNITIZE( work );
 	MAT3XVEC( norm, tor->tor_invR, work );
-}
-
-/*
- *	>>>  s t d T o r u s ( )  <<<
- *
- *  Given a line and a ratio, alpha, finds the roots of the
- *  equation for that unit torus and line.
- *  Returns the number of real roots found.
- *
- *  Given a line and a ratio, alpha, finds the equation of the
- *  unit torus in terms of the variable 't'.
- *
- *  The equation for the torus is:
- *
- *      [ X**2 + Y**2 + Z**2 + (1 - alpha**2) ]**2 - 4*( X**2 + Y**2 )  =  0
- *
- *  First, find X, Y, and Z in terms of 't' for this line, then
- *  substitute them into the equation above.
- *
- *  	Wx = Dx*t + Px
- *
- *  	Wx**2 = Dx**2 * t**2  +  2 * Dx * Px  +  Px**2
- *  		[0]                [1]           [2]    dgr=2
- */
-HIDDEN int
-stdTorus(Point,Direc,alpha,t)
-vect_t	Point, Direc;
-double	alpha, t[];
-{
-	LOCAL poly	C;
-	LOCAL complex	val[MAXP];
-	register int	i, l, npts;
-	LOCAL poly	tfun, tsqr[3];
-	LOCAL poly	A, Asqr;
-	LOCAL poly	X2_Y2;		/* X**2 + Y**2 */
-	LOCAL int	m;
-
-	/*  Express each variable (X, Y, and Z) as a linear equation
-	 *  in 't'.  Then square each of those.
-	 */
-	for ( m=0; m < 3; ++m ){
-		tfun.dgr = 1;
-		tfun.cf[0] = Direc[m];
-		tfun.cf[1] = Point[m];
-		(void) polyMul(&tfun,&tfun,&tsqr[m]);
-	}
-
-	/*  Substitute the resulting binomials into the torus equation	*/
-	(void) polyAdd( &tsqr[0], &tsqr[1], &X2_Y2 );
-	(void) polyAdd( &X2_Y2, &tsqr[2], &A );
-	A.cf[2] += 1.0 - alpha * alpha;		/* pow(alpha,2.0) */
-	(void) polyMul( &A, &A, &Asqr );
-	(void) polyScal( &X2_Y2, 4.0 );
-	(void) polySub( &Asqr, &X2_Y2, &C );
-
-	/*  It is known that the equation is 4th order.  Therefore,
-	 *  if the root finder returns other than 4 roots, there must
-	 *  be a problem somewhere, so return an error value.
-	 */
-	if ( (npts = polyRoots( &C, val )) != 4 ){
-		fprintf(stderr,"stdTorus:  polyRoots() 4!=%d\n", npts);
-		pr_poly( &C );
-		pr_roots( npts, val );
-		return(-1);		/* BAD */
-	}
-
-	/*  Only real roots indicate an intersection in real space.
-	 *
-	 *  Look at each root returned; if the imaginary part is zero
-	 *  or sufficiently close, then use the real part as one value
-	 *  of 't' for the intersections
-	 */
-	for ( l=0, i=0; l < npts; l++ ){
-		if( NEAR_ZERO( val[l].im ) )
-			t[i++] = val[l].re;
-	}
-	/* Here, 'i' is number of points being returned */
-	if( i != 0 && i != 2 && i != 4 )  {
-		fprintf(stderr,"stdTorus reduced 4 to %d roots != {2,4}\n",i);
-		pr_roots( npts, val );
-	}
-	return i;
 }
 
 /*	>>>  s o r t ( )  <<<
