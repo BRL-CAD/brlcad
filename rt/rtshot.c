@@ -207,9 +207,8 @@ struct partition *PartHeadp;
 	register struct soltab *stp;
 	struct curvature cur;
 	fastf_t out;
-	vect_t inpt, outpt;
-	struct hit	inhit;
-	struct hit	outhit;
+	point_t inpt, outpt;
+	vect_t	inormal, onormal;
 
 	if( (pp=PartHeadp->pt_forw) == PartHeadp )
 		return(0);		/* Nothing hit?? */
@@ -231,26 +230,26 @@ struct partition *PartHeadp;
 
 		/* inhit info */
 		stp = pp->pt_inseg->seg_stp;
-		inhit = *pp->pt_inhit;		/* struct copy */
-		RT_HIT_NORM( &inhit, stp, &(ap->a_ray) );
-		if( pp->pt_inflip ) {
-			VREVERSE( inhit.hit_normal, inhit.hit_normal );
-		}
-		rt_pr_hit( "  In", &inhit );
-		RT_CURVATURE( &cur, &inhit, pp->pt_inflip, stp );
-		rt_log("    PDir (%g, %g, %g) c1=%g, c2=%g\n",
+		VJOIN1( inpt, ap->a_ray.r_pt, pp->pt_inhit->hit_dist, ap->a_ray.r_dir );
+		RT_HIT_NORMAL( inormal, pp->pt_inhit, stp, &(ap->a_ray), pp->pt_inflip );
+		RT_CURVATURE( &cur, pp->pt_inhit, pp->pt_inflip, stp );
+
+		rt_pr_hit( "  In", pp->pt_inhit );
+		VPRINT(    "  Ipoint", inpt );
+		VPRINT(    "  Inormal", inormal );
+		rt_log(    "   PDir (%g, %g, %g) c1=%g, c2=%g\n",
 			V3ARGS(cur.crv_pdir), cur.crv_c1, cur.crv_c2);
 
 		/* outhit info */
-		outhit = *pp->pt_outhit;	/* struct copy */
 		stp = pp->pt_outseg->seg_stp;
-		RT_HIT_NORM( &outhit, stp, &(ap->a_ray) );
-		if( pp->pt_outflip ) {
-			VREVERSE( outhit.hit_normal, outhit.hit_normal );
-		}
-		rt_pr_hit( " Out", &outhit );
-		RT_CURVATURE( &cur, &outhit, pp->pt_outflip, stp );
-		rt_log("    PDir (%g, %g, %g) c1=%g, c2=%g\n",
+		VJOIN1( outpt, ap->a_ray.r_pt, pp->pt_inhit->hit_dist, ap->a_ray.r_dir );
+		RT_HIT_NORMAL( onormal, pp->pt_outhit, stp, &(ap->a_ray), pp->pt_outflip );
+		RT_CURVATURE( &cur, pp->pt_outhit, pp->pt_outflip, stp );
+
+		rt_pr_hit( "  Out", pp->pt_outhit );
+		VPRINT(    "  Opoint", outpt );
+		VPRINT(    "  Onormal", onormal );
+		rt_log(    "   PDir (%g, %g, %g) c1=%g, c2=%g\n",
 			V3ARGS(cur.crv_pdir), cur.crv_c1, cur.crv_c2);
 
 		/* Plot inhit to outhit */
@@ -258,8 +257,6 @@ struct partition *PartHeadp;
 			if( (out = pp->pt_outhit->hit_dist) >= INFINITY )
 				out = 10000;	/* to imply the direction */
 
-			VJOIN1( inpt, ap->a_ray.r_pt,
-				inhit.hit_dist, ap->a_ray.r_dir );
 			VJOIN1( outpt,
 				ap->a_ray.r_pt, out,
 				ap->a_ray.r_dir );

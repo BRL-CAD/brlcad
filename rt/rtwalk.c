@@ -385,10 +385,9 @@ struct partition *PartHeadp;
 	}
 	hitp = pp->pt_inhit;
 	stp = pp->pt_inseg->seg_stp;
-	RT_HIT_NORM( hitp, stp, &(ap->a_ray) );
+	VJOIN1( hit_cur_try, ap->a_ray.r_pt, pp->pt_inhit->hit_dist, ap->a_ray.r_dir );
+	RT_HIT_NORMAL( norm_cur_try, hitp, stp, &(ap->a_ray), pp->pt_inflip );
 	RT_CURVATURE( &curve_cur, hitp, pp->pt_inflip, stp );
-	VMOVE( hit_cur_try, hitp->hit_point );
-	VMOVE( norm_cur_try, hitp->hit_normal );
 
 	clear_dist = hitp->hit_dist - 1;	/* Decrease 1mm */
 

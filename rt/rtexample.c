@@ -106,8 +106,9 @@ struct partition *PartHeadp;
 	register struct hit *hitp;
 	register struct soltab *stp;
 	struct curvature cur;
-	struct hit	ihit;
-	struct hit	ohit;
+	point_t		pt;
+	vect_t		inormal;
+	vect_t		onormal;
 
 	/* examine each partition until we get back to the head */
 	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )  {
@@ -119,28 +120,15 @@ struct partition *PartHeadp;
 		/* inhit info */
 		hitp = pp->pt_inhit;
 		stp = pp->pt_inseg->seg_stp;
-		/*
-		 * This next macro fills in the normal and hit_point in hitp.
-		 * If you just want the hit point, get it from the hit
-		 * distance by:
-		 * VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
-		 */
-		RT_HIT_NORM( hitp, stp, &(ap->a_ray) );
-		/*
-		 * If the flip flag is on, it means that the outward
-		 * pointing normal actually points the other way so we
-		 * need to reverse it.  The application is responsible
-		 * for doing this because it's just a reference to the
-		 * actual hit point on the segment, and may be referred to
-		 * in it's non-flipped sense in the next (or previous)
-		 * partition.  It is this sharing which requires the
-		 * application to make it's own copy of the hit, too.
-		 */
-		ihit = *hitp;	/* struct copy */
-		if( pp->pt_inflip ) {
-			VREVERSE( ihit.hit_normal, ihit.hit_normal );
-		}
-		rt_pr_hit( "  In", &ihit );
+
+		VJOIN1( pt, ap->a_ray.r_pt, hitp->hit_dist, ap->a_ray.r_dir );
+
+		/* This macro takes care of the flip flag and all that */
+		RT_HIT_NORMAL( inormal, hitp, stp, &(ap->a_ray), pp->pt_inflip );
+
+		rt_pr_hit( "  In", hitp );
+		VPRINT(    "  Ipoint", pt );
+		VPRINT(    "  Inormal", inormal );
 		/*
 		 * This next macro fills in the curvature information
 		 * which consists on a principle direction vector, and
@@ -148,7 +136,7 @@ struct partition *PartHeadp;
 		 * and perpendicular to it.  Positive curvature bends
 		 * toward the outward pointing normal.
 		 */
-		RT_CURVATURE( &cur, &ihit, pp->pt_inflip, stp );
+		RT_CURVATURE( &cur, hitp, pp->pt_inflip, stp );
 		VPRINT("PDir", cur.crv_pdir );
 		rt_log(" c1=%g\n", cur.crv_c1);
 		rt_log(" c2=%g\n", cur.crv_c2);
@@ -156,12 +144,12 @@ struct partition *PartHeadp;
 		/* outhit info */
 		hitp = pp->pt_outhit;
 		stp = pp->pt_outseg->seg_stp;
-		RT_HIT_NORM( hitp, stp, &(ap->a_ray) );
-		ohit = *hitp;		/* struct copy */
-		if( pp->pt_outflip ) {
-			VREVERSE( ohit.hit_normal, ohit.hit_normal );
-		}
-		rt_pr_hit( " Out", &ohit );
+		VJOIN1( pt, ap->a_ray.r_pt, hitp->hit_dist, ap->a_ray.r_dir );
+		RT_HIT_NORMAL( onormal, hitp, stp, &(ap->a_ray), pp->pt_outflip );
+
+		rt_pr_hit( "  Out", hitp );
+		VPRINT(    "  Opoint", pt );
+		VPRINT(    "  Onormal", onormal );
 	}
 
 	/*

@@ -658,16 +658,11 @@ struct partition *PartHeadp;
 		return(0);
 	}
 	hitp = pp->pt_inhit;
-	RT_HIT_NORM( hitp, pp->pt_inseg->seg_stp, &(ap->a_ray) );
+	RT_HIT_NORMAL( normal, hitp, pp->pt_inseg->seg_stp, &(ap->a_ray), pp->pt_inflip );
 
 	/*
 	 * Diffuse reflectance from each light source
 	 */
-	if( pp->pt_inflip )  {
-		VREVERSE( normal, hitp->hit_normal );
-	} else {
-		VMOVE( normal, hitp->hit_normal );
-	}
 	switch( lightmodel )  {
 	case 1:
 		/* Light from the "eye" (ray source).  Note sign change */

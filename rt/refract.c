@@ -544,13 +544,10 @@ struct partition *PartHeadp;
 	}
 	VJOIN1( hitp->hit_point, ap->a_ray.r_pt,
 		hitp->hit_dist, ap->a_ray.r_dir );
-	RT_HIT_NORM( hitp, stp, &(ap->a_ray) );
-	if( pp->pt_outflip )  {
-		VREVERSE( hitp->hit_normal, hitp->hit_normal );
-	}
+	RT_HIT_NORMAL( ap->a_vvec, hitp, stp, &(ap->a_ray), pp->pt_outflip );
 
 	/* For refraction, want exit normal to point inward. */
-	VREVERSE( ap->a_vvec, hitp->hit_normal );
+	VREVERSE( ap->a_vvec, ap->a_vvec );
 	VMOVE( ap->a_uvec, hitp->hit_point );
 	ap->a_cumlen += (hitp->hit_dist - pp->pt_inhit->hit_dist);
 

@@ -319,17 +319,11 @@ register struct partition *PartHeadp;
 	}
 	hitp = pp->pt_inhit;
 
-	/* Calculate the hit normal and the hit distance.  This is done
-	 * by giving RT_HIT_NORM() the address of the hit partition so it
-	 * can fill this in.  From there the hit point and the hit normal
-	 * can be extracted.
-	 *
-	 *  Note:  In addition to giving the surface normal, it also
-	 *  computes:
-	 *  VJOIN1( hitp->hit_point, ap->a_ray.r_pt,
-	 *	hitp->hit_dist, ap->a_ray.r_dir );
-	 */
-	RT_HIT_NORM(hitp, pp->pt_inseg->seg_stp, &(ap->a_ray));
+	VMOVE(posp->c_rdir, ap->a_ray.r_dir);
+	VJOIN1( posp->c_hit, ap->a_ray.r_pt, hitp->hit_dist, ap->a_ray.r_dir );
+
+	/* Calculate the hit normal and the hit distance. */
+	RT_HIT_NORMAL( posp->c_normal, hitp, pp->pt_inseg->seg_stp, &(ap->a_ray), pp->pt_inflip);
 
 
 	/* Now store the distance and the region_id in the appropriate
@@ -341,6 +335,7 @@ register struct partition *PartHeadp;
 	 * the value of ap->a_x + 1 will be stored in a struct cell pointer
 	 * to vitiate the need to recompute this value repeatedly. LATER.
 	 */
+	posp->c_dist = hitp->hit_dist;
 
 	/*
 	 * Output the ray data: screen plane (pixel) coordinates
@@ -357,10 +352,6 @@ register struct partition *PartHeadp;
 	 */
 	if(posp->c_id == ID_BACKGROUND)
 		posp->c_id = 1;
-	posp->c_dist = hitp->hit_dist;
-	VMOVE(posp->c_hit, hitp->hit_point);
-	VMOVE(posp->c_normal, hitp->hit_normal);
-	VMOVE(posp->c_rdir, ap->a_ray.r_dir);
 	return(0);
 }
 

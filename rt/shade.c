@@ -148,7 +148,7 @@ register struct shadework *swp;
  *  Compute the necessary fields in the shadework structure.
  *
  *  Note that only hit_dist is valid in pp_inhit.
- *  RT_HIT_NORM() must be called if hit_norm is needed,
+ *  Must calculate it if hit_norm is needed,
  *  after which pt_inflip must be handled.
  *  RT_HIT_UVCOORD() must have hit_point computed
  *  in advance.
@@ -187,7 +187,7 @@ register int	want;
 			FAST fastf_t f;
 			/* Get surface normal for hit point */
 			/* Stupid SysV CPP needs this on one line */
-			RT_HIT_NORM( &(swp->sw_hit), pp->pt_inseg->seg_stp, &(ap->a_ray) );
+			RT_HIT_NORMAL( swp->sw_hit.hit_normal, &(swp->sw_hit), pp->pt_inseg->seg_stp, &(ap->a_ray), pp->pt_inflip );
 
 #ifdef never
 			if( swp->sw_hit.hit_normal[X] < -1.01 || swp->sw_hit.hit_normal[X] > 1.01 ||
@@ -198,13 +198,6 @@ register int	want;
 				return;
 			}
 #endif
-			if( pp->pt_inflip )  {
-				VREVERSE( swp->sw_hit.hit_normal, swp->sw_hit.hit_normal );
-				/* Don't modify pp->pt_inflip here, it's the original.
-				 * swp->sw_hit is a copy, not the original hit;
-				 */
-			}
-
 			/* Check to make sure normals are OK */
 			if( (f=VDOT( ap->a_ray.r_dir, swp->sw_hit.hit_normal )) > 0 )  {
 				rt_log("shade_inputs(%s) flip N xy=%d,%d %s surf=%d dot=%g\n",

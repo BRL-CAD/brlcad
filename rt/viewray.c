@@ -90,38 +90,27 @@ register struct partition *PartHeadp;
 {
 	register struct partition *pp = PartHeadp->pt_forw;
 	struct partition	*np;	/* next partition */
+	vect_t		inormal;
+	vect_t		onormal;
+	vect_t		inormal2;
 
 	if( pp == PartHeadp )
 		return(0);		/* nothing was actually hit?? */
 
 	/* "1st entry" paint */
-	RT_HIT_NORM( pp->pt_inhit, pp->pt_inseg->seg_stp, &(ap->a_ray) );
-	if( pp->pt_inflip )  {
-		VREVERSE( pp->pt_inhit->hit_normal, pp->pt_inhit->hit_normal );
-		pp->pt_inflip = 0;
-	}
-	wraypaint( pp->pt_inhit->hit_point, pp->pt_inhit->hit_normal,
+	RT_HIT_NORMAL( inormal, pp->pt_inhit, pp->pt_inseg->seg_stp, &(ap->a_ray), pp->pt_inflip );
+	wraypaint( pp->pt_inhit->hit_point, inormal,
 		PAINT_FIRST_ENTRY, ap, outfp );
 
 	for( ; pp != PartHeadp; pp = pp->pt_forw )  {
 		/* Write the ray for this partition */
-		RT_HIT_NORM( pp->pt_inhit, pp->pt_inseg->seg_stp, &(ap->a_ray) );
-		if( pp->pt_inflip )  {
-			VREVERSE( pp->pt_inhit->hit_normal,
-				  pp->pt_inhit->hit_normal );
-			pp->pt_inflip = 0;
-		}
+		RT_HIT_NORMAL( inormal, pp->pt_inhit, pp->pt_inseg->seg_stp, &(ap->a_ray), pp->pt_inflip );
 
 		if( pp->pt_outhit->hit_dist < INFINITY )  {
 			/* next macro must be on one line for 3d compiler */
-			RT_HIT_NORM( pp->pt_outhit, pp->pt_outseg->seg_stp, &(ap->a_ray) );
-			if( pp->pt_outflip )  {
-				VREVERSE( pp->pt_outhit->hit_normal,
-					  pp->pt_outhit->hit_normal );
-				pp->pt_outflip = 0;
-			}
+			RT_HIT_NORMAL( onormal, pp->pt_outhit, pp->pt_outseg->seg_stp, &(ap->a_ray), pp->pt_outflip );
 		}
-		wray( pp, ap, outfp );
+		wray( pp, ap, outfp, inormal );
 
 		/*
 		 * If there is a subsequent partition that does not
@@ -132,12 +121,7 @@ register struct partition *PartHeadp;
 			break;		/* end of list */
 
 		/* Obtain next inhit normals & hit point, for code below */
-		RT_HIT_NORM( np->pt_inhit, np->pt_inseg->seg_stp, &(ap->a_ray) );
-		if( np->pt_inflip )  {
-			VREVERSE( np->pt_inhit->hit_normal,
-				  np->pt_inhit->hit_normal );
-			np->pt_inflip = 0;
-		}
+		RT_HIT_NORMAL( inormal2, np->pt_inhit, np->pt_inseg->seg_stp, &(ap->a_ray), np->pt_inflip );
 
 		if( rt_fdiff( pp->pt_outhit->hit_dist,
 			      np->pt_inhit->hit_dist) >= 0 )  {
@@ -152,7 +136,7 @@ register struct partition *PartHeadp;
 					continue;	/* both are solid */
 				/* output "internal exit" paint */
 				wraypaint( pp->pt_outhit->hit_point,
-					pp->pt_outhit->hit_normal,
+					onormal,
 					PAINT_INTERN_EXIT, ap, outfp );
 			} else {
 				/* Exiting air */
@@ -160,7 +144,7 @@ register struct partition *PartHeadp;
 					continue;	/* both are air */
 				/* output "internal entry" paint */
 				wraypaint( np->pt_inhit->hit_point,
-					np->pt_inhit->hit_normal,
+					inormal2,
 					PAINT_INTERN_ENTRY, ap, outfp );
 			}
 			continue;
@@ -173,24 +157,25 @@ register struct partition *PartHeadp;
 		 *  and put "internal entry" paint on in point.
 		 */
 		wraypaint( pp->pt_outhit->hit_point,
-			pp->pt_outhit->hit_normal,
+			onormal,
 			PAINT_INTERN_EXIT, ap, outfp );
 
 		wraypts( pp->pt_outhit->hit_point,
-			pp->pt_outhit->hit_normal,
+			onormal,
 			np->pt_inhit->hit_point,
 			PAINT_AIR, ap, outfp );
 
 		wraypaint( np->pt_inhit->hit_point,
-			np->pt_inhit->hit_normal,
+			inormal2,
 			PAINT_INTERN_ENTRY, ap, outfp );
 	}
 
 	/* "final exit" paint -- ray va(r)nishes off into the sunset */
 	pp = PartHeadp->pt_back;
 	if( pp->pt_outhit->hit_dist < INFINITY )  {
+		RT_HIT_NORMAL( inormal, pp->pt_inhit, pp->pt_inseg->seg_stp, &(ap->a_ray), pp->pt_inflip );
 		wraypaint( pp->pt_outhit->hit_point,
-			pp->pt_outhit->hit_normal,
+			inormal,
 			PAINT_FINAL_EXIT, ap, outfp );
 	}
 	return(0);

@@ -201,13 +201,7 @@ register struct partition *PartHeadp;
 		MAT4X3PNT( hv, model2hv, center );
 	}
 
-	/* next macro must be on one line for 3d compiler */
-	RT_HIT_NORM( pp->pt_inhit, pp->pt_inseg->seg_stp, &(ap->a_ray) );
-	if( pp->pt_inflip )  {
-		VREVERSE( normal, pp->pt_inhit->hit_normal );
-	} else {
-		VMOVE( normal, pp->pt_inhit->hit_normal );
-	}
+	RT_HIT_NORMAL( normal, pp->pt_inhit, pp->pt_inseg->seg_stp, &(ap->a_ray), pp->pt_inflip );
 	dot = -VDOT( normal, ap->a_ray.r_dir );
 	if( dot < 0 )  dot = 0;
 	fprintf( outfp, "%g %g %g\n",

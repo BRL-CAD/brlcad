@@ -219,33 +219,30 @@ struct partition *PartHeadp;
 		return(0);
 	}
 
-	RT_HIT_NORM( hitp, pp->pt_inseg->seg_stp, &(ap->a_ray) );
-	if( pp->pt_inflip ) {
-		VREVERSE( hitp->hit_normal, hitp->hit_normal );
-	}
+	rayp = &rayinfo[ ap->a_level ];
+
+	RT_HIT_NORMAL( rayp->norm, hitp, pp->pt_inseg->seg_stp, &(ap->a_ray), pp->pt_inflip );
 
 	if(rdebug&RDEBUG_HITS)  {
 		rt_pr_hit( " In", hitp );
 	}
 
-	rayp = &rayinfo[ ap->a_level ];
 	rayp->dist = hitp->hit_dist;
 	rayp->reg = pp->pt_regionp->reg_regionid;
 	rayp->sol = pp->pt_inseg->seg_stp->st_id;
 	rayp->surf = hitp->hit_surfno;
 	RT_CURVATURE( &(rayp->curvature), hitp, pp->pt_inflip, pp->pt_inseg->seg_stp );
-	if( VDOT( hitp->hit_normal, ap->a_ray.r_dir ) < 0 ) {
+	if( VDOT( rayp->norm, ap->a_ray.r_dir ) < 0 ) {
 		rt_log(" debug: flipping curvature\n");
 		rayp->curvature.crv_c1 = - rayp->curvature.crv_c1;
 		rayp->curvature.crv_c2 = - rayp->curvature.crv_c2;
 	}
 	VMOVE( rayp->ip, hitp->hit_point );
-	VMOVE( rayp->norm, hitp->hit_normal );
 
 	/* Compute the specular direction */
 	VREVERSE( to_eye, ap->a_ray.r_dir );
-	f = 2 * VDOT( to_eye, hitp->hit_normal );
-	VSCALE( work, hitp->hit_normal, f );
+	f = 2 * VDOT( to_eye, rayp->norm );
+	VSCALE( work, rayp->norm, f );
 	/* I have been told this has unit length */
 	VSUB2( rayp->spec, work, to_eye );
 
@@ -255,7 +252,7 @@ struct partition *PartHeadp;
 		rayp->sight = 1;	/* the 1st intersect is always visible */
 	} else {
 		/* Check for visibility */
-		rayp->sight = isvisible( ap, hitp );
+		rayp->sight = isvisible( ap, hitp, rayp->norm );
 	}
 
 	/*
@@ -359,9 +356,10 @@ struct partition *PartHeadp;
  *   than the distance back to the eye.
  */
 static int
-isvisible( ap, hitp )
+isvisible( ap, hitp, norm )
 struct application *ap;
 struct hit *hitp;
+CONST vect_t	norm;
 {
 	struct application sub_ap;
 	vect_t	rdir;
@@ -369,7 +367,7 @@ struct hit *hitp;
 	/* compute the ray direction */
 	VSUB2( rdir, firstray.r_pt, hitp->hit_point );
 	VUNITIZE( rdir );
-	if( VDOT(rdir, hitp->hit_normal) < 0 )
+	if( VDOT(rdir, norm) < 0 )
 		return( 0 );	/* backfacing */
 
 	sub_ap = *ap;	/* struct copy */

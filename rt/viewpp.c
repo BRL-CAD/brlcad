@@ -76,6 +76,7 @@ struct partition *PartHeadp;
 	register struct hit *hitp;
 	LOCAL double cosI0;
 	register int i,j;
+	vect_t		normal;
 
 	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
 		if( pp->pt_outhit->hit_dist >= 0.0 )  break;
@@ -84,11 +85,11 @@ struct partition *PartHeadp;
 		return(0);
 	}
 	hitp = pp->pt_inhit;
-	RT_HIT_NORM( hitp, pp->pt_inseg->seg_stp, &(ap->a_ray) );
+	RT_HIT_NORMAL( normal, hitp, pp->pt_inseg->seg_stp, &(ap->a_ray), pp->pt_inflip );
 
 #define pchar(c) {putc(c,stdout);if(col++==74){putc('\n',stdout);col=0;}}
 
-	cosI0 = -VDOT(hitp->hit_normal, ap->a_ray.r_dir);
+	cosI0 = -VDOT(normal, ap->a_ray.r_dir);
 	if( pp->pt_inflip )
 		cosI0 = -cosI0;
 	if( cosI0 <= 0.0 )  {

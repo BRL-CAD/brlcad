@@ -461,13 +461,7 @@ register struct partition *PartHeadp;
 		 *  Hence the one sign change.
 		 *  XXX this should probably be done with atan2()
 		 */
-		/* next macro must be on one line for 3d compiler */
-		RT_HIT_NORM( pp->pt_inhit, pp->pt_inseg->seg_stp, &(ap->a_ray) );
-		if( pp->pt_inflip )  {
-			VREVERSE( normal, pp->pt_inhit->hit_normal );
-		} else {
-			VMOVE( normal, pp->pt_inhit->hit_normal );
-		}
+		RT_HIT_NORMAL( normal, pp->pt_inhit, pp->pt_inseg->seg_stp, &(ap->a_ray), pp->pt_inflip );
 		dot_prod = VDOT( ap->a_ray.r_dir, normal );
 		if( dot_prod > 1.0 )
 			dot_prod = 1.0;
@@ -476,13 +470,7 @@ register struct partition *PartHeadp;
 
 		in_obliq = acos( -dot_prod ) *
 			mat_radtodeg;
-		/* next macro must be on one line for 3d compiler */
-		RT_HIT_NORM( pp->pt_outhit, pp->pt_outseg->seg_stp, &(ap->a_ray) );
-		if( pp->pt_outflip )  {
-			VREVERSE( normal, pp->pt_outhit->hit_normal );
-		} else {
-			VMOVE( normal, pp->pt_outhit->hit_normal );
-		}
+		RT_HIT_NORMAL( normal, pp->pt_outhit, pp->pt_outseg->seg_stp, &(ap->a_ray), pp->pt_outflip );
 		dot_prod = VDOT( ap->a_ray.r_dir, normal );
 		if( dot_prod > 1.0 )
 			dot_prod = 1.0;

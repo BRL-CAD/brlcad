@@ -57,7 +57,9 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 /* XXX Move to raytrace.h when routine goes into LIBRT */
 RT_EXTERN( double	rt_pixel_footprint, (CONST struct application *ap,
-				CONST struct hit *hitp, CONST struct seg *segp));
+				CONST struct hit *hitp,
+				CONST struct seg *segp,
+				CONST vect_t normal));
 
 
 int		use_air = 0;		/* Handling of air in librt */
@@ -413,6 +415,7 @@ struct partition *PartHeadp;
 	fastf_t		cosine;
 	fastf_t		powerfrac;
 	struct rt_tabdata	*pixelp;
+	vect_t		normal;
 
 	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
 		if( pp->pt_outhit->hit_dist >= 0.0 )  break;
@@ -542,15 +545,12 @@ degK = 700;
 
 	VJOIN1( hitp->hit_point, ap->a_ray.r_pt,
 		hitp->hit_dist, ap->a_ray.r_dir );
-	RT_HIT_NORM( hitp, pp->pt_inseg->seg_stp, &(ap->a_ray) );
-	if( pp->pt_inflip )  {
-		VREVERSE( hitp->hit_normal, hitp->hit_normal );
-		pp->pt_inflip = 0;	/* shouldnt be needed */
-	}
-	cm2 = rt_pixel_footprint(ap, hitp, pp->pt_inseg) * 0.01;	/* mm**2 to cm**2 */
+	RT_HIT_NORMAL( normal, hitp, pp->pt_inseg->seg_stp, &(ap->a_ray), pp->pt_inflip );
+
+	cm2 = rt_pixel_footprint(ap, hitp, pp->pt_inseg, normal) * 0.01;	/* mm**2 to cm**2 */
 
 	/* To convert slanted surface to equivalent perp area */
-	cosine = -VDOT( hitp->hit_normal, ap->a_ray.r_dir );
+	cosine = -VDOT( normal, ap->a_ray.r_dir );
 	if( cosine < 0 )  rt_log("cosine = %g < 0\n", cosine);
 
 	/*  Fraction of a surrounding sphere which the pixel occupies,
@@ -729,16 +729,17 @@ void application_init ()
 
 /*
  *
- *  hitp->hit_point and hitp->hit_normal must be computed by caller.
+ *  hitp->hit_point and normal must be computed by caller.
  * 
  *  Return -
  *	area of ray footprint, in mm**2 (square milimeters).
  */
 double
-rt_pixel_footprint(ap, hitp, segp)
+rt_pixel_footprint(ap, hitp, segp, normal)
 CONST struct application *ap;
 CONST struct hit	*hitp;
 CONST struct seg	*segp;
+CONST vect_t		normal;
 {
 	plane_t	perp;
 	plane_t	surf_tan;
@@ -751,7 +752,7 @@ CONST struct seg	*segp;
 	/*  If surface normal is nearly perpendicular to ray,
 	 *  (i.e. ray is parallel to surface), abort
 	 */
-	if( fabs(VDOT(ap->a_ray.r_dir, hitp->hit_normal)) <= 1.0e-10 )  {
+	if( fabs(VDOT(ap->a_ray.r_dir, normal)) <= 1.0e-10 )  {
 parallel:
 		rt_log("rt_pixel_footprint() ray parallel to surface\n");	/* debug */
 		return 0;
@@ -777,7 +778,7 @@ parallel:
 		 h_radius, dx_model, -v_radius, dy_model );	/* LR */
 
 	/* Approximate surface at hit point by a (tangent) plane */
-	VMOVE( surf_tan, hitp->hit_normal );
+	VMOVE( surf_tan, normal );
 	surf_tan[3] = VDOT( surf_tan, hitp->hit_point );
 
 	/*
