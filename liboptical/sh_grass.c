@@ -1005,7 +1005,6 @@ double curr_dist;
 	int ppc;	/* # plants in this cell */
 	struct plant pl;
 	double dist_to_cell;
-	double seed;
 
 	CK_grass_SP(grass_sp);
 
@@ -1190,8 +1189,6 @@ char			*dp;	/* ptr to the shader-specific struct */
 	double		t_orig[2];
 	long		tD_iter[2];
 	long		cell_num[3];	/* cell number */
-	long		old_cell_num[3];	/* cell number */
-	point_t		in_pt_m;	/* model space in/out */
 	point_t		out_pt_m;
 
 
@@ -1202,8 +1199,6 @@ char			*dp;	/* ptr to the shader-specific struct */
 
 	if( rdebug&RDEBUG_SHADE)
 		bu_struct_print( "grass_render Parameters:", grass_print_tab, (char *)grass_sp );
-
-	VMOVE(in_pt_m, swp->sw_hit.hit_point);
 
 	swp->sw_transmit = 1.0;
 
@@ -1383,7 +1378,6 @@ char			*dp;	/* ptr to the shader-specific struct */
 		if (gr.occlusion >= 1.0)
 			goto done;
 
-		VMOVE(old_cell_num, cell_num);
 		if (t[X] < t[Y]) {
 			if( rdebug&RDEBUG_SHADE)
 				bu_log("stepping X %le\n", t[X]);

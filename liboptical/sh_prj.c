@@ -155,14 +155,9 @@ CONST char				*value;	/* string containing value */
 	struct prj_specific	*prj_sp;
 	struct img_specific	*img_sp = (struct img_specific *)base;
 	struct img_specific	*img_new;
-	FILE			*fd;
-	char			*img_file;
-	unsigned		buf_size;
-	size_t			n;
 	mat_t			trans, scale, tmp, xform;
 	vect_t			v_tmp;
 	point_t			p_tmp;
-	unsigned long		*ulp;
 
 
 	BU_CK_LIST_HEAD(&img_sp->l);
@@ -489,7 +484,6 @@ CONST point_t r_pt;
 	int i, x, y;
 	point_t sh_pts[CORNER_PTS];
 	struct pixel_ext	pe;
-	unsigned char *pixel[CORNER_PTS];
 
 	/* project hit plane corner points into image space */
 	for (i=0 ; i < CORNER_PTS ; i++) {
@@ -505,7 +499,6 @@ CONST point_t r_pt;
 		sh_pts[i][Y] *= img_sp->i_height - 1;
 		x = sh_pts[i][X];
 		y = sh_pts[i][Y];
-		pixel[i] = &img_sp->i_img[x*3 + y*img_sp->i_width*3 ];
 		sh_pts[i][X] = x;
 		sh_pts[i][y] = y;
 	}
@@ -577,7 +570,7 @@ char			*dp;	/* ptr to the shader-specific struct */
 		(struct prj_specific *)dp;
 	point_t r_pt;
 	plane_t	r_N;
-	int x, y, i, status;
+	int i, status;
 	struct img_specific *img_sp;
 	point_t	sh_color;
 	point_t	final_color;

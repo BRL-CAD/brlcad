@@ -148,9 +148,6 @@ struct mfuncs		*mfp;
 struct rt_i		*rtip;	/* New since 4.4 release */
 {
 	register struct brick_specific	*brick_sp;
-	mat_t	tmp;
-	vect_t	bb_min, bb_max, v_tmp;
-
 
 	/* check the arguments */
 	RT_CHECK_RTI(rtip);
@@ -243,7 +240,7 @@ char			*dp;	/* ptr to the shader-specific struct */
 	static int first = 1;
         vect_t incident_ray;
         vect_t surface_normal;
-        fastf_t scoord, tcoord, ss ,tt, sbrick, tbrick, w, h;
+        fastf_t ss ,tt, sbrick, tbrick, w, h;
        
 	/* check the validity of the arguments we got */
 	RT_AP_CHECK(ap);
