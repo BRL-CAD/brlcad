@@ -106,30 +106,42 @@ int			vrmgr_listen_fd;	/* for new connections */
 struct pkg_conn		*vrmgr_pc;		/* connection to VRMGR */
 struct ihost		*vrmgr_ihost;		/* host of vrmgr_pc */
 char			*pending_pov;		/* pending new POV */
+int			print_on = 1;
 
 /*
  *  Package handlers for the RTSYNC protocol.
  *  Numbered differently, to prevent confusion with other PKG protocols.
  */
+#define RTSYNCMSG_PRINT	 999	/* StoM:  Diagnostic message */
 #define RTSYNCMSG_ALIVE	1001	/* StoM:  protocol version, # of processors */
 #define RTSYNCMSG_POV	1007	/* MtoS:  pov, min_res, start&end lines */
 #define RTSYNCMSG_HALT	1008	/* MtoS:  abandon frame & xmit, NOW */
 #define RTSYNCMSG_DONE	1009	/* StoM:  halt=0/1, res, elapsed, etc... */
 
 void	rtsync_ph_alive();
+void	rtsync_ph_done();
+void	ph_print();
 static struct pkg_switch rtsync_pkgswitch[] = {
 	{ RTSYNCMSG_ALIVE,	rtsync_ph_alive, "RTNODE is alive" },
+	{ RTSYNCMSG_POV,	ph_default,	"POV" },
+	{ RTSYNCMSG_HALT,	ph_default,	"HALT" },
+	{ RTSYNCMSG_DONE,	rtsync_ph_done, "RTNODE assignment done" },
+	{ RTSYNCMSG_PRINT,	ph_print,	"Log Message" },
 	{ 0,			0,		(char *)0 }
 };
 
 int			rtsync_listen_fd;	/* for new connections */
 
 /*
+ *			R T N O D E
+ *
+ *  One per compute server host.
  */
 struct rtnode {
 	int		fd;
 	struct pkg_conn	*pkg;
 	struct ihost	*host;
+	int		ncpus;		/* Ready when > 0, for now */
 };
 #define MAX_NODES	32
 struct rtnode	rtnodes[MAX_NODES];
@@ -210,6 +222,9 @@ char	*argv[];
 	if( (fbp = fb_open(framebuffer, width, height)) == FBIO_NULL )
 		exit(1);
 
+	width = fb_getwidth(fbp);
+	height = fb_getheight(fbp);
+
 	/* Listen for VRMGR Master PKG connections from MGED */
 	if( (vrmgr_listen_fd = pkg_permserver("5555", "tcp", 8, rt_log)) < 0 )  {
 		rt_log("Unable to listen on 5555\n");
@@ -266,11 +281,13 @@ char	*argv[];
 		tv.tv_usec = 0L;
 		if( (select( max_fd+1, &infds, (fd_set *)0, (fd_set *)0, 
 			     &tv )) == 0 ) {
-			printf("select timeout\n");
+			/* printf("select timeout\n"); */
 			if(fbp) fb_poll(fbp);
 			continue;
 		}
-printf("infds = x%x, select_list=x%x\n", infds.fds_bits[0], select_list.fds_bits[0] );
+#if 0
+		printf("infds = x%x, select_list=x%x\n", infds.fds_bits[0], select_list.fds_bits[0] );
+#endif
 		/* Handle any events from the framebuffer */
 		if (fbp && fbp->if_selfd > 0 && FD_ISSET(fbp->if_selfd, &infds))
 			fb_poll(fbp);
@@ -336,7 +353,73 @@ printf("infds = x%x, select_list=x%x\n", infds.fds_bits[0], select_list.fds_bits
 				rt_log("pkg_process error encountered (2)\n");
 			}
 		}
+
+		/* Dispatch work */
+		dispatcher();
+
 	}
+}
+
+/*
+ *			D I S P A T C H E R
+ */
+int
+dispatcher()
+{
+	register int	i;
+	int		ncpu = 0;
+	static int	sent_one = 0;
+	int		start_line;
+	int		lowest_index = 0;
+
+	if( !pending_pov )  return 0;
+	if( sent_one )  return 0;
+
+	for( i = MAX_NODES-1; i >= 0; i-- )  {
+		if( rtnodes[i].fd != 0 )  continue;
+		if( rtnodes[i].ncpus <= 0 )  continue;
+		ncpu += rtnodes[i].ncpus;
+		lowest_index = i;
+	}
+	if( ncpu <= 0 )  return 0;
+
+	/* Have some CPUS! Parcel up 'height' scanlines. */
+	start_line = 0;
+	for( i = MAX_NODES-1; i >= 0; i-- )  {
+		int	end_line;
+		int	count;
+		struct rt_vls	msg;
+
+		if( start_line >= height )  break;
+		if( rtnodes[i].fd != 0 )  continue;
+		if( rtnodes[i].ncpus <= 0 )  continue;
+
+		if( i <= lowest_index )  {
+			end_line = height-1;
+		} else {
+			count = (int)ceil( ((double)rtnodes[i].ncpus) / ncpu * height );
+			end_line = start_line + count;
+			if( end_line > height-1 )  end_line = height-1;
+		}
+
+		rt_vls_init( &msg );
+		rt_vls_printf( &msg, "%d %d %d %s\n",
+			256,
+			start_line, end_line,
+			pending_pov+4 );
+		if( pkg_send( RTSYNCMSG_POV, rt_vls_addr(&msg), rt_vls_strlen(&msg)+1, rtnodes[i].pkg ) < 0 )  {
+			drop_rtnode( i );
+			rt_vls_free(&msg);
+			continue;	/* Don't update start_line */
+		}
+		rt_log("%s sending %d..%d to %s\n", stamp(), start_line, end_line, rtnodes[i].host->ht_name);
+
+		rt_vls_free(&msg);
+		start_line = end_line + 1;
+	}
+
+	free( pending_pov );
+	pending_pov = NULL;
 }
 
 /*
@@ -359,6 +442,8 @@ struct pkg_conn	*pcp;
 		FD_SET(pcp->pkc_fd, &select_list);
 		if( pcp->pkc_fd > max_fd )  max_fd = pcp->pkc_fd;
 		setup_socket( pcp->pkc_fd );
+		rtnodes[i].host = host_lookup_of_fd(pcp->pkc_fd);
+rt_log("%s Connection from %s\n", stamp(), rtnodes[i].host->ht_name);
 		return;
 	}
 	rt_log("rtsync: too many rtnode clients.  My cup runneth over!\n");
@@ -520,11 +605,38 @@ rtsync_ph_alive(pc, buf)
 register struct pkg_conn *pc;
 char			*buf;
 {
+	struct rtnode	*np;
+	register int	i;
+	int		ncpu;
+
+	ncpu = atoi(buf);
+
+	for( i = MAX_NODES-1; i >= 0; i-- )  {
+		if( rtnodes[i].pkg != pc )  continue;
+
+		/* Found it */
+		rt_log("%s ALIVE %d cpus, %s\n", stamp(),
+			ncpu, rtnodes[i].host->ht_name );
+
+		np->ncpus = ncpu;
+		if( buf )  free(buf);
+	}
+	rt_bomb("ALIVE Message received from phantom pkg?\n");
+}
+
+/*
+ *			R T S Y N C _ P H _ D O N E
+ */
+void
+rtsync_ph_done(pc, buf)
+register struct pkg_conn *pc;
+char			*buf;
+{
 	struct ihost	*ihp;
 
-	rt_log("It's alive!\n");
+	rt_log("It's done! %s\n", buf);
 	ihp = host_lookup_of_fd( pc->pkc_fd );
-	if(ihp) rt_log("  %s is alive\n", ihp->ht_name );
+	if(ihp) rt_log("  %s is done\n", ihp->ht_name );
 	if( buf )  free(buf);
 }
 
@@ -549,4 +661,25 @@ stamp()
 		tmp->tm_hour, tmp->tm_min, tmp->tm_sec );
 
 	return(buf);
+}
+
+/*
+ *			P H _ P R I N T
+ */
+void
+ph_print(pc, buf)
+register struct pkg_conn *pc;
+char *buf;
+{
+	if(print_on)  {
+		struct ihost	*ihp = host_lookup_of_fd(pc->pkc_fd);
+
+		rt_log("%s %s: %s",
+			stamp(),
+			ihp ? ihp->ht_name : "NONAME",
+			buf );
+		if( buf[strlen(buf)-1] != '\n' )
+			rt_log("\n");
+	}
+	if(buf) (void)free(buf);
 }
