@@ -847,6 +847,7 @@ struct rt_tol		*tol;
 /* convert 2D address to index into 1D array */
 #define PT(www,lll)	((((www)%nells)*npts)+((lll)%npts))
 #define PTA(ww,ll)	(&eto_ells[PT(ww,ll)*3])
+#define NMA(ww,ll)	(norms[PT(ww,ll)])
 
 		/* make ellipse */
 		for (j = 0; j < npts; j++) {
@@ -1013,6 +1014,7 @@ struct rt_tol		*tol;
 	struct faceuse	**faces;
 	struct vertex	**vertp[4];
 	vect_t		Au, Bu, Nu, D, Cp, Dp, Xu;
+	vect_t		*norms;	/* normal vectors for each vertex */
 	int		fail=0;
 
 	RT_CK_DB_INTERNAL(ip);
@@ -1093,6 +1095,7 @@ struct rt_tol		*tol;
 	
 	/* get memory for nells ellipses */
 	eto_ells = (fastf_t *)rt_malloc(nells * npts * sizeof(point_t), "ells[]");
+	norms = (vect_t *)rt_calloc( nells*npts , sizeof( vect_t ) , "rt_eto_tess: norms" );
 
 	/* place each ellipse properly to make eto */
 	for (i = 0, ang = 0.; i < nells; i++, ang += theta) {
@@ -1110,6 +1113,9 @@ struct rt_tol		*tol;
 		for (j = 0; j < npts; j++) {
 			VJOIN2( PTA(i,j),
 				Ell_V, ell[j][X], Dp, ell[j][Y], Cp );
+			VBLEND2( NMA(i,j),
+				a*a*ell[j][X], Dp , b*b*ell[j][Y], Cp );
+			VUNITIZE( NMA(i,j) );
 		}
 	}
 
@@ -1153,6 +1159,35 @@ struct rt_tol		*tol;
 		}
 	}
 
+	/* associate vertexuse normals */
+	for( i=0 ; i<nells ; i++ )
+	{
+		for( j=0 ; j<npts ; j++ )
+		{
+			struct vertexuse *vu;
+			vect_t rev_norm;
+
+			VREVERSE( rev_norm , NMA(i,j) );
+
+			NMG_CK_VERTEX( verts[PT(i,j)] );
+
+			for( RT_LIST_FOR( vu , vertexuse , &verts[PT(i,j)]->vu_hd ) )
+			{
+				struct faceuse *fu;
+
+				NMG_CK_VERTEXUSE( vu );
+
+				fu = nmg_find_fu_of_vu( vu );
+				NMG_CK_FACEUSE( fu );
+
+				if( fu->orientation == OT_SAME )
+					nmg_vertexuse_nv( vu , NMA(i,j) );
+				else if( fu->orientation == OT_OPPOSITE )
+					nmg_vertexuse_nv( vu , rev_norm );
+			}
+		}
+	}
+
 	/* Compute "geometry" for region and shell */
 	nmg_region_a( *r, tol );
 
@@ -1161,6 +1196,7 @@ failure:
 	rt_free( (char *)eto_ells, "ells[]" );
 	rt_free( (char *)verts, "rt_eto_tess *verts[]" );
 	rt_free( (char *)faces, "rt_eto_tess *faces[]" );
+	rt_free( (char *)norms, "rt_eto_tess: norms[]" );
 
 	return( fail );
 }
