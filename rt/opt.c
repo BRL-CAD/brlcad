@@ -104,8 +104,8 @@ char		*framebuffer;		/* desired framebuffer */
 
 int		space_partition = 	/*space partitioning algorithm to use*/
 			RT_PART_NUGRID;
-double		nu_gfactor = 1.3;	/* constant factor in NUgrid algorithm,
-					   if applicable */
+double		nu_gfactor = RT_NU_GFACTOR_DEFAULT;
+		      /* constant factor in NUgrid algorithm, if applicable */
 
 #define MAX_WIDTH	(32*1024)
 
