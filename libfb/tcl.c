@@ -93,7 +93,7 @@ int
 Fb_Init(interp)
      Tcl_Interp *interp;
 {
-	char *version_number;
+	const char *version_number;
 
 	/* register commands */
 	bu_register_cmds(interp, cmdtab);
