@@ -52,15 +52,10 @@ struct functab functab[] = {
 /*
  *  Hooks for unimplemented routines
  */
+#define DEF(func)	func() { printf("func unimplemented\n"); }
 
-
-#define UNIMPLEMENTED(type) \
-	DEF(type/**/_prep) \
-	struct seg * DEF(type/**/_shot) \
-	DEF(type/**/_print)
-
-half() { printf("half unimplemented\n"); }
-null() { printf("null unimplemented\n"); }
+DEF(half_prep); struct seg * DEF(half_shot); DEF(half_print);
+DEF(null_prep); struct seg * DEF(null_shot); DEF(null_print);
 
 double timer_print();
 
