@@ -724,7 +724,7 @@ menu .$id.menubar.create -title "Create" -tearoff $mged_default(tearoff_menus)
 .$id.menubar.create add cascade\
 	-label "Cones & Cyls" -underline 0 -menu .$id.menubar.create.cones
 .$id.menubar.create add cascade\
-	-label "Ellipses" -underline 0 -menu .$id.menubar.create.ell
+	-label "Ellipsoids" -underline 0 -menu .$id.menubar.create.ell
    
 menu .$id.menubar.create.arb8 -title "Arb8" -tearoff $mged_default(tearoff_menus)
 menu .$id.menubar.create.cones -title "Cones & Cyls" -tearoff $mged_default(tearoff_menus)
