@@ -157,6 +157,8 @@ struct dm dm_glx = {
   1,
   0,
   0,
+  0,
+  0,
   1.0, /* aspect ratio */
   0,
   0,
@@ -1049,16 +1051,18 @@ int strict;
 
 
 static int
-glx_setLineAttr(dmp, width, dashed)
+glx_setLineAttr(dmp, width, style)
 struct dm *dmp;
 int width;
-int dashed;
+int style;
 {
-  ((struct glx_vars *)dmp->dm_vars)->mvars.linewidth = width;
+  dmp->dm_lineWidth = width;
+  dmp->dm_lineStyle = style;
+
   linewidth(width);
 
-  if(dashed)
-    setlinestyle(1);    /* into dot-dash */
+  if(style == DM_DASHED_LINE)
+    setlinestyle(1);
   else
     setlinestyle(0);
 
