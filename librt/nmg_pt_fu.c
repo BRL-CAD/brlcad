@@ -41,7 +41,7 @@ nmg_class_pt_eu(fpi, eu)
 struct fu_pt_info	*fpi;
 struct edgeuse	*eu;
 {
-	fastf_t	dist=-1.0;
+	fastf_t	dist = -1.0;
 	point_t	pca;
 	int	status;
 	struct edgeuse *eunext;
