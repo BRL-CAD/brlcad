@@ -10,10 +10,26 @@
  *	Xf(k) = Sum x(n)( cos(2PI(nk/N)) - isin(2PI(nk/N)) )
  *	        n=0
  *
- *  Phil Dykstra, 12 Oct 84 and beyond.
+ *  Author -
+ *	Phil Dykstra, 12 Oct 84 and beyond.
+ *  
+ *  Source -
+ *	The U. S. Army Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *  
+ *  Distribution Status -
+ *	Public Domain, Distribution Unlimited.
  */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (ARL)";
+#endif
+
+#include "conf.h"
+
 #include <stdio.h>	/* for stderr */
 #include <math.h>	/* for double sin(), cos() */
+
+#include "externs.h"
 
 #define	MAXSIZE	65536	/* Needed for sin/cos tables */
 int	_init_size = 0;	/* Internal: shows last initialized size */
