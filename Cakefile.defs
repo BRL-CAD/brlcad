@@ -810,7 +810,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #		define	LIBVERS		../sh/sharedlibvers.sh
 #		define	BUILD_LIBRARY	ld -Bdynamic -G -o
 #		define	RANLIB		true
-#		define	STANDARD_LIBES	-lm -lnsl -lsocket -ldl -R /usr/lib:LIBDIR:XLIBDIR
+#		define	STANDARD_LIBES	-lm -lnsl -lsocket -ldl -R LIBDIR:XLIBDIR:/usr/lib
 #	else
 #		define  ARCH_SUF	a
 #		define	LIBVERS		../sh/newvers.sh
