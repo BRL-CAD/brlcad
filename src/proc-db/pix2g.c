@@ -5,8 +5,6 @@
  */
 #include "common.h"
 
-
-
 #include <stdio.h>
 #include <unistd.h>
 #include <math.h>
@@ -18,6 +16,7 @@
 #include "raytrace.h"
 #include "rtgeom.h"
 #include "wdb.h"
+
 
 /* workers acquire semaphore number 0 on smp machines */
 #define P2G_WORKER RT_SEM_LAST
