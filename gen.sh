@@ -389,6 +389,35 @@ install|install-nobak|uninstall)
 		echo -------------------------------- pro-engineer/${dir};
 		( cd pro-engineer/${dir} && cake -k ${SILENT} ${TARGET} )
 	done;;
+
+perms)
+	#########################################
+	#
+	#Set File/directory ownership/permissions
+	#
+	#########################################
+
+	chown -R bin.bin /usr/brlcad
+
+	for dir in /usr/brlcad/etc /usr/brlcad/html /usr/brlcad/include \
+		/usr/brlcad/man /usr/brlcad/sample_applications \
+		/usr/brlcad/tclscripts /usr/brlcad/vfont; do
+
+		find ${dir} -type f -exec chmod 664 {} \;
+	done
+
+	#
+	# We leave tcl and tk alone since they are well set already
+	#
+
+	chmod 775 /usr/brlcad/bin/*
+	find /usr/brlcad/lib -type f -exec chmod 664 {} \;
+	find /usr/brlcad/lib -type l -exec chmod 775 {} \;
+	
+	find /usr/brlcad -type d -exec chmod 775 {} \;
+
+	
+	;;
 #  These directives operate in the source directory
 #
 #  inst-dist	install sources in /dist tree without installing any products
