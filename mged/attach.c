@@ -281,8 +281,6 @@ char    **argv;
     curr_dm_list = dmlp;
     BU_GETSTRUCT(dmp, dm);
     *dmp = *wp->dp;
-    dmp->dmr_hp = &HeadSolid;  /*XXX Temporary */
-    dmp->dmr_cfunc = color_soltab;
     dm_init = wp->init;
     dm_var_init(o_dm_list, argv[2]);
     dmp->dmr_vp = &Viewscale;
@@ -315,9 +313,6 @@ char    **argv;
   }
 
   dmp->dmr_colorchange(dmp);
-#if 0  /* dmr_colorchange already does this */
-  color_soltab();
-#endif
   dmp->dmr_viewchange( dmp, DM_CHGV_REDO, SOLID_NULL );
   ++dmaflag;
   return TCL_OK;
