@@ -225,8 +225,7 @@ struct faceuse *fu;
 			 * the intersection operation, it doesn't really
 			 * count
 			 */
-			if (fu2lu->orientation != OT_SAME &&
-			    fu2lu->orientation != OT_OPPOSITE)
+			if (fu2lu->orientation != OT_SAME)
 			    	continue;
 
 			if (NMG_EXTENT_OVERLAP(

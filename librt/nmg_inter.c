@@ -626,11 +626,10 @@ struct faceuse	*fu2;
 			NMG_CK_LOOP_G(fu2lu->l_p->lg_p);
 
 			/* If this loop is just some drek deposited as part of
-			 * the intersection operation, it doesn't really
-			 * count
+			 * the intersection operation, or it defines a hole
+			 * int the face, it doesn't really count.
 			 */
-			if (fu2lu->orientation != OT_SAME &&
-			    fu2lu->orientation != OT_OPPOSITE)
+			if (fu2lu->orientation != OT_SAME)
 			    	continue;
 
 			if (NMG_EXTENT_OVERLAP(
