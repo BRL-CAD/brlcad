@@ -1,0 +1,295 @@
+.TH ANIM_TRACK 1 BRL/CAD
+.SH NAME
+anim_track  - make an animation script for the links and wheels of a
+dynamically changing tracked vehicle. 
+.SH SYNOPSIS
+.B
+anim_track [options] linkname trackfile < in.table > out.script
+.SH DESCRIPTION
+.I anim_track 
+is designed to produce an animation script for the
+animation of the track and/or the wheels defining a track. The main 
+difference between 
+.I anim_hardtrack
+and 
+.I anim_track
+is that 
+.I anim_hardtrack 
+assumes that the positions of the wheels are constant with
+respect to the vehicle, while
+.I anim_track
+reads in new wheel positions for each frame.
+.PP
+On the command line, the 
+.B linkname 
+is the base name shared by all of the track's links. The
+output script will contain animation commands for a series of objects,
+linkname.0, linkname.1, and so on. A typical example of a linkname might
+be "tank/track_rt/links/link". 
+.PP
+Important
+information about the track is included in the 
+.BR trackfile , 
+which has the following format:
+.nf
+
+num_wheels num_links track_length y_offset
+x_pos  z_pos  (radius)		
+x_pos  z_pos  (radius)
+x_pos  z_pos  (radius)
+etc.
+
+.fi
+The number of wheels, number of links, and total track length  are 
+specified on the first line,
+followed by the distance between the center of the vehicle and the xz
+plane that intersects the wheels. 
+For the purposes of 
+.I anim_track, 
+the x-axis is the direction the
+vehicle faces, y is to the left and the z-axis is up. In terms of these
+coordinates, the wheels should originally lie in an xz plane. 
+A positive 
+.B y_offset 
+means that the
+track is to the left of the vehicle's center, and a negative 
+.B y_offset
+means that the track is to the right.
+The remaining lines of
+.B trackfile 
+indicate the x and z coordinates
+and radius of each of the wheels which define the track. If they all
+have the same radius, the radius can be specified with the 
+.B \-r#
+option, in
+which case the radii should not appear in 
+.BR trackfile . 
+The wheels
+should be listed in clockwise order, looking from the right. Wheel.0
+should be the top, front wheel, and wheel.(n-1) should be the top, back
+wheel. The track will be linear between all the way around, except that
+any extra slack will be put in a caternary (hanging cable) arch between
+wheel.(n-1) and wheel.0.
+The original positions of the wheels in the database are important only
+if the wheels are to be animated along with the links; however, all the
+other parameters in 
+.B trackfile
+are always important.
+.PP
+.B in.table 
+is an animation table which specifies the distance that the
+track has rolled and gives the position of each of the
+wheels for each frame.
+By default, it is assumed that it contains a time
+column, a distance column, and then an x and z position column for each
+wheel, from wheel.0 to wheel.(n-1). There should be a total of 2(n+1)
+columns, where n is the number of wheels.
+.SH
+OPTIONS:
+.TP
+.B \-c
+Calculate distances. Rather than specifying the distance traveled
+explicitly, the position and orientation of the vehicle to which the
+track is attached is specified. 
+.I anim_track 
+uses this information to
+calculated the distance that the track should have rolled. If the
+.B \-c 
+option is used, then the distance column of
+.B in.table
+should be replaced by six columns specifying 3D position, yaw, pitch,
+and roll of the vehicle.
+.TP
+.B \-b # # #
+Specify the yaw, pitch, and roll of the track's axes
+with respect to the world axes. The y_offset and the x and z positions
+of the wheels are with respect to the track's axes.
+.TP
+.B \-d # # #
+Specify (in world coordinates) the centroid of the vehicle
+of which the track is a part. The y_offset and the x and z positions of
+the wheels are measured from this point. If distance is explicitly
+given, then this point is not important. However if the distance is
+being calculated (see the
+.B \-c 
+option) then it is important that the center of the vehicle be given.
+.PP
+When calling 
+.I ascript 
+to handle the animation of the vehicle
+itself, the parameters following the 
+.B -b 
+and 
+.B -d 
+options should be identical
+to those used for 
+.IR anim_track .
+.TP
+.B \-w wname
+Along with scripts to animate the links, print animation
+scripts to move and rotate each wheel. The wheels are named wname.0, 
+wname.1, and
+so on, where wname.0 is the first wheel listed in 
+.BR trackfile .
+If only the wheels are to be animated, the 
+.B num_links 
+should be set to zero in 
+.BR trackfile .
+.TP
+.B \-s
+Strech the track. If the wheels are spread in such a way that the track
+is not long enough to get around them, then the track length is
+increased as
+needed. The extra track length remains for the rest of the animation.
+.TP
+.B \-e
+Make the track eleastic. If the wheels are spread in such a way that the
+track is not long enough to get around them, then the track length is
+increased as needed. The track returns to it's original length
+whenever possible.
+.TP
+.B \-i#
+Specify the initial offset of the first link. If this option is
+not used, the initial position of linkname.0 is assumed to be the
+point where the caternary section meets wheel.0. 
+If it is used, the argument specifies the distance clockwise around the
+track from the default position to the actual desired offset. This
+option can be useful for lining up the links with gears of a drive
+wheel, for example. 
+.TP
+.B \-f#
+Specify the integer with which to begin numbering frames.
+Default is zero.
+.TP
+.B \-r #
+Specify the common radius of all wheels - otherwise the radii
+must be provided in 
+.BR infofile .
+.SS Output:
+.PP
+	The output is a script containing as many frames as there
+are positions in 
+.BR in.table . 
+If there are 
+.I n 
+links and 
+.I k 
+wheels, each
+frame contain 
+.I n+k 
+anim commands, either:
+.nf
+
+anim linkname.i matrix lmul
+[... matrix ...] ;
+				or
+anim wname.j matrix lmul		(see -w option)
+[... matrix ...] ;
+ 
+for 0<=i<n and 0<=j<k. 
+
+.fi
+.SH EXAMPLES
+A typical use of 
+.I anim_track  
+would be to make an animation of a tank rolling across
+bumpy ground. By some method you obtain the position of the center of
+the tank and its orientation at each time. You also nead to obtain the
+position of the each wheel relative to the vehicle center at each time.
+All of this information is placed in
+.BR in.table .
+The model of the tank is stored in
+model.g as a combination named "tank". Its centroid is at the
+point (0,0,1000) and it faces the y-axis. An animation script for the
+tank itself is created as follows:
+.PP
+ascript -d 0 0 1000 -b 90 0 0 /tank < tank.table > tank.script
+.PP
+Here 
+.B tank.table
+specifies the position and orientation of the tank; the 
+.B \-d 
+and
+.B \-b
+options specify the position and orientation of the tank in the
+database.
+.PP
+Now, a file called
+.B rtrackfile 
+is created, using the following information: There are ninety-six
+links which make up the track (tank/rtrack/link.i, 0<=i<96). Since each
+link is 10cm long, the total length of the track is 9.6m. 
+An idlerwheel, two
+roadwheels and a drivewheel (tank/rwheel/wheel.i, 0<=i<3) define
+the shape of the right track. In the tank's coordinate system, the plane
+of the right track lies 1.3m to the right of the center. The
+idlerwheel sits 2.0m ahead of center, the front
+roadwheel sits 1.5m ahead of center and .95m down, the back roadwheel
+sits 1.5m behind the center and 0.95m down, and finally the drivewheel
+is 2.0m behind the center. The roadwheels are both of radius 50mm, while
+the remaining wheels have a radius of 60mm. 
+The resulting 
+.B rtrackfile 
+is:
+.nf
+
+4 96 9600 -1300
+2000    0       60
+1500    -950    50
+-1500   -950    50
+-2000   0       60
+
+.fi
+This 
+.B rtrackfile 
+would be the same, regardless of the position and
+orientation of the vehicle in the model, because the displacements are
+relative to the vehicle's own coordinates (x = front, y=  left, z = up).
+The links of the right track are all
+stored at the origin. The outer, ground contacting surface should be
+facing up and the inner, wheel-contacting surface should be facing down,
+with the center of the surface facing the origin. 
+.PP
+The appropriate call to 
+.I anim_track 
+would now be:
+.PP
+anim_track -c -w tank/rwheel -d 0 0 1000 -b 90 0 0 tank/rtrack/link 
+rtrackfile < in.table > rtrack.script
+.PP
+.B rtrack.script 
+by itself causes the wheels to move and rotate and the
+links to roll around them. When the entire tank, including to track,
+is moved along across the ground by 
+.BR track.script , 
+the full effect is acheived. The two scripts
+can be combined
+with a script for the left track, using
+.IR anim_sort ,
+to make the complete script.
+.SH DIAGNOSTICS
+If the 
+.B \-s
+or
+.B \-e
+options are not used, and the track length is not sufficient to 
+circumscribe the
+wheels in a given frame, the program halts and prints the message:
+.PP
+Anim_track: error in frame 3: track too short.
+
+.SH BUGS
+Tracks must have at least two wheels. The front edge of wheel(n-1) must
+stay behind the back edge of wheel.0, or the results are unpredictable.
+(Usually a lot of NaN's on the output).
+.SH SEE ALSO
+anim_script(1), anim_hardtrack(1)
+.SH AUTHOR
+Carl J. Nuzman
+.SH COPYRIGHT
+	This software is Copyright (C) 1993 by the United States Army
+in all countries except the USA.  All rights reserved.
+.SH "BUG REPORTS"
+Reports of bugs or problems should be submitted via electronic
+mail to <CAD@BRL.MIL>.
+
