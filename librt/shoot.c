@@ -98,6 +98,9 @@ register struct application *ap;
 	register union cutter	*cutp;
 	AUTO fastf_t		odist_corr, obox_start, obox_end;	/* temp */
 	AUTO int		push_flag = 0;
+	double			fraction;
+	int			exponent;
+
 
 	if( ap->a_resource == RESOURCE_NULL )
 		ap->a_resource = &rt_uniresource;
@@ -290,23 +293,40 @@ register struct application *ap;
 
 		/* Don't get stuck within the same box for long */
 		if( cutp==lastcut )  {
-			rt_log("%d,%d box push dist_corr o=%e n=%e model_end=%e\n",
-				ap->a_x, ap->a_y,
-				odist_corr, dist_corr, model_end );
-			rt_log("box_start o=%e n=%e, box_end o=%e n=%e\n",
-				obox_start, box_start,
-				obox_end, box_end );
-			VPRINT("a_ray.r_pt", ap->a_ray.r_pt);
-		     	VPRINT("Point", newray.r_pt);
-			VPRINT("Dir", newray.r_dir);
-		     	rt_pr_cut( cutp, 0 );
-			box_start = box_end + 1.0;/* Advance 1mm */
-			push_flag = 1;
+			if( rt_g.debug&DEBUG_SHOOT )  {
+				rt_log("%d,%d box push dist_corr o=%e n=%e model_end=%e\n",
+					ap->a_x, ap->a_y,
+					odist_corr, dist_corr, model_end );
+				rt_log("box_start o=%e n=%e, box_end o=%e n=%e\n",
+					obox_start, box_start,
+					obox_end, box_end );
+				VPRINT("a_ray.r_pt", ap->a_ray.r_pt);
+			     	VPRINT("Point", newray.r_pt);
+				VPRINT("Dir", newray.r_dir);
+			     	rt_pr_cut( cutp, 0 );
+			}
+
+			/* Advance 1mm, or smallest value that hardware
+			 * floating point resolution will allow.
+			 */
+			fraction = frexp( box_end, &exponent );
+			if( exponent <= 0 )  {
+				/* Never advance less than 1mm */
+				box_start = box_end + 1.0;
+			} else {
+				if( sizeof(fastf_t) <= 4 )
+					fraction += 1.0e-5;
+				else
+					fraction += 1.0e-14;
+				box_start = ldexp( fraction, exponent );
+			}
+			push_flag++;
 			continue;
 		}
 		if( push_flag )  {
 			push_flag = 0;
-			rt_log("Finally escaped with dist_corr=%e, box_start=%e, box_end=%e\n",
+			rt_log("%d,%d Escaped %d. dist_corr=%e, box_start=%e, box_end=%e\n",
+				ap->a_x, ap->a_y, push_flag,
 				dist_corr, box_start, box_end );
 		}
 		lastcut = cutp;
@@ -327,7 +347,21 @@ rt_log("\nrt_shootray:  missed box: rmin,rmax(%g,%g) box(%g,%g)\n",
 		     	}
 		     	if( box_end >= INFINITY )  break;
 			box_start = box_end;
-			box_end += 1.0;		/* Advance 1mm */
+
+			/* Advance 1mm, or smallest value that hardware
+			 * floating point resolution will allow.
+			 */
+			fraction = frexp( box_end, &exponent );
+			if( exponent <= 0 )  {
+				/* Never advance less than 1mm */
+				box_end += 1.0;
+			} else {
+				if( sizeof(fastf_t) <= 4 )
+					fraction += 1.0e-5;
+				else
+					fraction += 1.0e-14;
+				box_end = ldexp( fraction, exponent );
+			}
 		     	continue;
 		}
 		odist_corr = dist_corr;
