@@ -169,6 +169,7 @@ typedef long	bitv_t;		/* largest integer type */
  *				*
  ********************************/
 #define __unix	1		/* It really is unix */
+#define LITTLE_ENDIAN	1	/* Under the influence of Intel Corp */
 typedef double	fastf_t;	/* double|float, "Fastest" float type */
 #define LOCAL	auto		/* for parallel cpus */
 #define FAST	register	/* LOCAL|register, for fastest floats */
