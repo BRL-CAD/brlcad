@@ -121,7 +121,6 @@ char	strarg[512];		/* string buffer */
 
 #define	DEFAULT_SIZE	6.75	/* default output size in inches */
 
-extern int	getopt(int, char *const *, const char *);
 extern char	*optarg;
 extern int	optind;
 

@@ -29,7 +29,11 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #ifdef HAVE_TERMCAP_H
 #  include <termcap.h>
+#else
+extern char	*getenv(), *tgetstr(const char *, char **);
+extern int	tgetent(void *, const char *);
 #endif
+
 #ifdef __ppc__
 #  include <curses.h>
 #endif
@@ -40,8 +44,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #define TBUFSIZ		1024
 #define MAX_TERM_LEN	80
 
-extern char	*getenv(), *tgetstr(const char *, char **);
-extern int	tgetent(void *, const char *);
+
 #if ! defined( BSD )
 extern void	clr_Tabs(), save_Tty();
 #endif

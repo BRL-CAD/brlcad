@@ -19,7 +19,9 @@
 /* declarations to support use of getopt() system call */
 char *options = "h";
 extern char *optarg;
-extern int optind, opterr, getopt(int, char *const *, const char *);
+extern int optind, opterr; 
+
+/* , getopt(int, char *const *, const char *);*/ 
 
 char *progname = "(noname)";
 

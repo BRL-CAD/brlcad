@@ -36,10 +36,11 @@ extern void predictor_hook(void);		/* in ged.c */
 
 extern void set_port(void);
 
+extern void set_perspective(void);
+
 static void set_dirty_flag(void);
 static void nmg_eu_dist_set(void);
 static void set_dlist(void);
-static void set_perspective(void);
 static void establish_perspective(void);
 static void toggle_perspective(void);
 static void set_coords(void);
@@ -409,7 +410,7 @@ set_dlist(void)
   curr_dm_list = save_dlp;
 }
 
-static void
+extern void
 set_perspective(void)
 {
 	/* if perspective is set to something greater than 0, turn perspective mode on */

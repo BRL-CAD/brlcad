@@ -331,7 +331,7 @@ general:
  * Throw bytes away.  Use reads into ibuf buffer if a pipe, else seek.
  */
 int
-skipbytes(int fd, long int num)
+skipbytes(int fd, off_t num)
 {
 	int	n, try;
 
