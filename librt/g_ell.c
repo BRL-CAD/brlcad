@@ -1210,6 +1210,8 @@ CONST struct db_i		*dbip;
 
 	BU_CK_EXTERNAL( ep );
 
+	BU_ASSERT_LONG( ep->ext_nbytes, ==, SIZEOF_NETWORK_DOUBLE * 3*4 );
+
 	RT_INIT_DB_INTERNAL( ip );
 	ip->idb_type = ID_ELL;
 	ip->idb_meth = &rt_functab[ID_ELL];
