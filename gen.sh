@@ -571,8 +571,13 @@ dist)
 #	note that date and time
 	date > ${DISTDIR}/Date_of_distribution
 
+	if test "$CVSROOT" = ""
+	then
+		CVSROOT=cad.arl.mil:/c/CVS
+		export CVSROOT
+	fi
+
 #	create the args for the "cvs export"
-	shift
 	if test $# -eq 0
 	then
 		CVS_ARGS="-D now"
