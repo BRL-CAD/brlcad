@@ -277,9 +277,9 @@ int argc; char **argv;
 	while(1) {
 		int stat;
 		rem_pcp = pkg_getclient( netfd, pkg_switch, comm_error, 0 );
-		if( rem_pcp == PKC_ERROR )  {
-			exit(2);	/* continue?! */
-		}
+		if( rem_pcp == PKC_ERROR )
+			break;		/* continue is unlikely to work */
+
 		if( fork() == 0 )  {
 			/* 1st level child process */
 			(void)close(netfd);	/* Child is not listener */
@@ -300,6 +300,7 @@ int argc; char **argv;
 			(void)wait( &stat );
 		}
 	}
+	exit(2);	/* ERROR exit */
 }
 
 static void
