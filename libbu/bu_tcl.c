@@ -704,20 +704,29 @@ Tcl_Interp *interp;
 int argc;
 char **argv;
 {
-	char *out;
+	struct bu_vls vls;
+	char *next;
 	int i=0;
+
+	bu_vls_init( &vls );
 
 	while( ++i < argc )
 	{
-		out = bu_key_eq_to_key_val( argv[i] );
+		if( bu_key_eq_to_key_val( argv[i], &next, &vls ) )
+		{
+			bu_vls_free( &vls );
+			return TCL_ERROR;
+		}
 
 		if( i < argc - 1 )
-			Tcl_AppendResult(interp, out, " ", NULL );
+			Tcl_AppendResult(interp, bu_vls_addr( &vls ) , " ", NULL );
 		else
-			Tcl_AppendResult(interp, out, NULL );
+			Tcl_AppendResult(interp, bu_vls_addr( &vls ), NULL );
 
-		bu_free( out, "bu_tcl_key_eq_to_key_val:out" );
+		bu_vls_trunc( &vls, 0 );
 	}
+
+	bu_vls_free( &vls );
 	return TCL_OK;
 
 }
@@ -729,13 +738,19 @@ Tcl_Interp *interp;
 int argc;
 char **argv;
 {
-	char *out;
+	struct bu_vls vls;
 
-	out = bu_shader_to_key_val( argv[1] );
+	bu_vls_init( &vls );
 
-	Tcl_AppendResult(interp, out, NULL );
+	if( bu_shader_to_tcl_list( argv[1], &vls ) )
+	{
+		bu_vls_free( &vls );
+		return( TCL_ERROR );
+	}
 
-	bu_free( out, "bu_tcl_shader_to_key_val:out" );
+	Tcl_AppendResult(interp, bu_vls_addr( &vls ), NULL );
+
+	bu_vls_free( &vls );
 
 	return TCL_OK;
 
@@ -770,16 +785,22 @@ Tcl_Interp *interp;
 int argc;
 char **argv;
 {
-	char *out;
+	struct bu_vls vls;
 
-	out = bu_shader_to_key_eq( argv[1] );
 
-	Tcl_AppendResult(interp, out, NULL );
+	bu_vls_init( &vls );
 
-	bu_free( out, "bu_tcl_shader_to_key_eq:out" );
+	if( bu_shader_to_key_eq( argv[1], &vls ) )
+	{
+		bu_vls_free( &vls );
+		return TCL_ERROR;
+	}
+
+	Tcl_AppendResult(interp, bu_vls_addr( &vls ), NULL );
+
+	bu_vls_free( &vls );
 
 	return TCL_OK;
-
 }
 
 /*
@@ -820,7 +841,7 @@ Tcl_Interp *interp;
 		"bu_key_eq_to_key_val",	bu_tcl_key_eq_to_key_val,
 		(ClientData)0, (Tcl_CmdDeleteProc *)NULL);
 	(void)Tcl_CreateCommand(interp,
-		"bu_shader_to_key_val",	bu_tcl_shader_to_key_val,
+		"bu_shader_to_tcl_list",	bu_tcl_shader_to_key_val,
 		(ClientData)0, (Tcl_CmdDeleteProc *)NULL);
 	(void)Tcl_CreateCommand(interp,
 		"bu_key_val_to_key_eq",	bu_tcl_key_val_to_key_eq,

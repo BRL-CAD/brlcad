@@ -1469,18 +1469,19 @@ CONST char				*value;	/* string containing value */
 #define STATE_IN_VALUE		2
 #define STATE_IN_QUOTED_VALUE	3
 
-char *
-bu_key_eq_to_key_val( in )
-CONST char *in;
+int
+bu_key_eq_to_key_val( in, next, vls )
+char *in;
+char **next;
+struct bu_vls *vls;
 {
-	CONST char *iptr=in;
-	char *optr;
-	char *out;
+	char *iptr=in;
+	char *start;
 	int state=STATE_IN_KEYWORD;
 
-	/* output string should be same length as input string */
-	out = (char *)bu_malloc( strlen( in ) + 1, "bu_key_eq_to_key_val:out" );
-	optr = out;
+	BU_CK_VLS( vls );
+
+	*next = NULL;
 
 	while ( *iptr )
 	{
@@ -1493,17 +1494,28 @@ CONST char *in;
 				while( isspace( *iptr ) )
 					iptr++;
 
-				/* copy keyword up to '=' (skipping white space) */
-				while( *iptr != '=' )
+				if( *iptr == ';' )
 				{
-					if( isspace( *iptr ) )
-						iptr++;
-					else
-						*optr++ = *iptr++;
+					/* found end of a stack element */
+					*next = iptr+1;
+					return( 0 );
 				}
 
+				/* copy keyword up to '=' */
+				start = iptr;
+				while( *iptr && *iptr != '=' )
+					iptr++;
+
+				bu_vls_strncat( vls, start, iptr - start );
+
 				/* add a single space after keyword */
-				*optr++ = ' ';
+				bu_vls_putc( vls, ' ' );
+
+				if( !*iptr )
+				{
+					bu_log( "Error: no '=' found for keyword in '%s'\n", in );
+					return( 1 );
+				}
 
 				/* skip over '=' in input */
 				iptr++;
@@ -1530,12 +1542,16 @@ CONST char *in;
 				}
 
 				/* copy value up to next white space or end of string */
+				start = iptr;
 				while( *iptr && !isspace( *iptr ) )
-					*optr++ = *iptr++;
+					iptr++;
+
+				bu_vls_strncat( vls, start, iptr - start );
 
 				if( *iptr ) /* more to come */
 				{
-					*optr++ = ' ';
+					bu_vls_putc( vls, ' ' );
+
 					/* switch back to keyword state */
 					state = STATE_IN_KEYWORD;
 				}
@@ -1545,226 +1561,362 @@ CONST char *in;
 				/* copy byte-for-byte to end quote (watch out for escaped quote)
 				 * replace quotes with '{' '}' */
 
-				*optr++ = '{';
+				bu_vls_putc( vls, '{' );
 				while( 1 )
 				{
 					if( *iptr == '"' && *prev != '\\' )
 					{
-						*optr++ = '}';
+						bu_vls_putc( vls, '}' );
 						iptr++;
 						break;
 					}
-					*prev = *optr;
-					*optr++ = *iptr++;
+					bu_vls_putc( vls, *iptr );
+					prev = iptr++;
 				}
 
-				if( *iptr ) /* more to come */
-				{
-					*optr++ = ' ';
-					/* switch back to keyword state */
-					state = STATE_IN_KEYWORD;
-				}
+				if( *iptr && *iptr != ';' ) /* more to come */
+					bu_vls_putc( vls, ' ' );
+
+				/* switch back to keyword state */
+				state = STATE_IN_KEYWORD;
 
 				break;
 		}
 	}
-
-	*optr++ = '\0';
-	return( out );
+	return( 0 );
 }
 
-char *
-bu_shader_to_key_val( in )
-CONST char *in;
+int
+bu_shader_to_tcl_list( in, vls )
+char *in;
+struct bu_vls *vls;
 {
-	CONST char *iptr=in;
-	char *out;
+	char *iptr;
 	char *out_params=(char *)NULL;
-	CONST char *shader;
+	char *next=in;
+	char *shader;
 	int shader_name_len=0;
+	int is_stack=0;
+	int stack_count=0;
 
-	/* skip over shader name */
-	while( isspace( *iptr ) )
-		iptr++;
+	BU_CK_VLS( vls );
 
-	shader = iptr;
-	while( *iptr && !isspace( *iptr ) )
-		iptr++;
-	shader_name_len = iptr - shader;
-
-	while( isspace( *iptr ) )
-		iptr++;
-
-	/* iptr now points at start of parameters */
-	if( *iptr )
-		out_params = bu_key_eq_to_key_val( iptr );
-
-	if( out_params )
+	while( next )
 	{
-		out = bu_malloc( strlen( out_params ) + shader_name_len + 1, "bu_shader_to key_val:out" );
-		strncpy( out, shader, shader_name_len );
-		strcat( out, " " );
-		strcat( out, out_params );
-		bu_free( out_params, "bu_shader_to key_val:out_params" );
-	}
-	else
-	{
-		out = bu_malloc( shader_name_len + 1, "bu_shader_to key_val:out" );
-		strncpy( out, shader, shader_name_len );
-	}
+		iptr = next;
 
-	return( out );
-}
+		/* skip over white space */
+		while( isspace( *iptr ) )
+			iptr++;
 
-char *
-bu_key_val_to_key_eq( in )
-CONST char *in;
-{
-	char *out;
-	char *optr;
-	CONST char *iptr=in;
-	int list_depth=0;
-	int state=STATE_IN_KEYWORD;
+		/* this is start of shader name */
+		shader = iptr;
 
-	/* output string should be same length as input string */
-	out = (char *)bu_malloc( strlen( in ) + 1, "bu_key_val_to_key_eq:out" );
-	optr = out;
+		/* find end of shader name */
+		while( *iptr && !isspace( *iptr ) && *iptr != ';' )
+			iptr++;
+		shader_name_len = iptr - shader;
 
-	while( *iptr )
-	{
-		char *prev = '\0';
-
-		switch( state )
+		if( !strncmp( shader, "stack", 5 ) )
 		{
-			case STATE_IN_KEYWORD:
-				/* skip leading white space */
-				while( *iptr && isspace( *iptr ) )
-					iptr++;
-
-				/* copy keyword up to first ' ' */
-				while( *iptr && !isspace( *iptr ) )
-					*optr++ = *iptr++;
-
-				/* add a '=' after keyword */
-				*optr++ = '=';
-
-				/* skip over ' ' in input */
-				iptr++;
-
-				/* switch to value state */
-				state = STATE_IN_VALUE;
-
-				break;
-			case STATE_IN_VALUE:
-				/* skip excess white space */
-				while( *iptr && isspace( *iptr ) )
-					iptr++;
-
-				/* check for list start */
-				if( *iptr == '{' )
-				{
-					/* switch to quoted value state */
-					state = STATE_IN_QUOTED_VALUE;
-
-					/* skip over '{' */
-					iptr++;
-
-					break;
-				}
-
-				/* copy value up to next white space or end of string */
-				while( *iptr && !isspace( *iptr ) )
-					*optr++ = *iptr++;
-
-				if( *iptr ) /* more to come */
-				{
-					*optr++ = ' ';
-					/* switch back to keyword state */
-					state = STATE_IN_KEYWORD;
-				}
-
-				break;
-			case STATE_IN_QUOTED_VALUE:
-				/* copy byte-for-byte to of list
-				 * watch out for escaped quotes or included lists.
-				 * replace ending '}' with '"' */
-
-				list_depth++;
-				*optr++ = '\"';
-				while( 1 )
-				{
-					if( *iptr == '}' )
-					{
-						if( *prev != '\\' && list_depth == 1 )
-						{
-							*optr++ = '"';
-							iptr++;
-							break;
-						}
-						else if( *prev != '\\' )
-							list_depth--;
-					}
-					else if( *iptr == '{' && *prev != '\\' )
-						list_depth++;
-
-					*prev = *optr;
-					*optr++ = *iptr++;
-				}
-
-				if( *iptr ) /* more to come */
-				{
-					*optr++ = ' ';
-					/* switch back to keyword state */
-					state = STATE_IN_KEYWORD;
-				}
-
-				break;
+			bu_vls_strcpy( vls, "stack {" );
+			is_stack = 1;
+			next = iptr;
+			continue;
 		}
+
+		if( is_stack )
+			bu_vls_strcat( vls, " {" );
+
+		bu_vls_strncat( vls, shader, shader_name_len );
+
+		/* skip more white space */
+		while( *iptr && isspace( *iptr ) )
+			iptr++;
+
+		bu_vls_strcat( vls, " {" );
+		/* iptr now points at start of parameters, if any */
+		if( *iptr && *iptr != ';' )
+		{
+			if( bu_key_eq_to_key_val( iptr, &next, vls ) )
+				return( 1 );
+		}
+		else if( *iptr && *iptr == ';' )
+			next = ++iptr;
+		else
+			next = (char *)NULL;
+		bu_vls_putc( vls, '}' );
+
+		if( is_stack )
+			bu_vls_putc( vls, '}' );
 	}
 
-	*optr++ = '\0';
-	return( out );
+	if( is_stack )
+		bu_vls_putc( vls, '}' );
+
+	return( 0 );
 }
 
 char *
-bu_shader_to_key_eq( in )
-CONST char *in;
+bu_list_elem( in, index )
+char *in;
+int index;
 {
-	CONST char *iptr=in;
-	char *out;
-	char *out_params=(char *)NULL;
-	CONST char *shader;
-	int shader_name_len=0;
+	int depth=0;
+	int count=0;
+	int len=0;
+	char *ptr=in;
+	char *prev=NULL;
+	char *start=NULL;
+	char *end=NULL;
+	char *out=NULL;
 
-	/* skip over shader name */
-	while( isspace( *iptr ) )
-		iptr++;
-
-	shader = iptr;
-	while( *iptr && !isspace( *iptr ) )
-		iptr++;
-	shader_name_len = iptr - shader;
-
-	while( isspace( *iptr ) )
-		iptr++;
-
-	/* iptr now points at start of parameters */
-	if( *iptr )
-		out_params = bu_key_val_to_key_eq( iptr );
-
-	if( out_params )
+	while( *ptr )
 	{
-		out = bu_malloc( strlen( out_params ) + shader_name_len + 1, "bu_shader_to key_val:out" );
-		strncpy( out, shader, shader_name_len );
-		strcat( out, " " );
-		strcat( out, out_params );
-		bu_free( out_params, "bu_shader_to key_val:out_params" );
+		/* skip leading white space */
+		while( *ptr && isspace( *ptr ) )
+		{
+			prev = ptr;
+			ptr++;
+		}
+
+		if( !*ptr )
+			break;
+
+		if( depth == 0 && count == index )
+			start = ptr;
+
+		if( *ptr == '{' )
+		{
+			depth++;
+			prev = ptr;
+			ptr++;
+		}
+		else if( *ptr == '}' )
+		{
+			depth--;
+			if( depth == 0 )
+				count++;
+			if( start && depth == 0 )
+			{
+				end = ptr;
+				break;
+			}
+			prev = ptr;
+			ptr++;
+		}
+		else
+		{
+			while( *ptr &&
+				(!isspace( *ptr ) || *prev == '\\') &&
+				(*ptr != '}' || *prev == '\\') )
+			{
+				prev = ptr;
+				ptr++;
+			}
+			if( depth == 0 )
+				count++;
+
+			if( start && depth == 0 )
+			{
+				end = ptr-1;
+				break;
+			}
+		}
+	}
+
+	if( !start )
+		return( (char *)NULL );
+
+	if( *start == '{' )
+	{
+		if( *end != '}' )
+		{
+			bu_log( "Error in list (uneven braces??): %s\n", in );
+			return( (char *)NULL );
+		}
+
+		/* remove enclosing braces */
+		start++;
+		while( start < end && isspace( *start ) )
+			start++;
+
+		end--;
+		while( end > start && isspace( *end ) && *(end-1) != '\\' )
+			end--;
+
+		if( start == end )
+			return( (char *)NULL );
+	}
+
+	len = end - start + 1;
+	out = bu_malloc( len+1, "bu_list_elem:out" );
+	strncpy( out, start, len );
+	*(out + len) = '\0';
+
+	return( out );
+}
+
+int
+bu_tcl_list_length( in )
+char *in;
+{
+	int count=0;
+	int depth=0;
+	char *ptr=in;
+	char *prev=NULL;
+
+	while( *ptr )
+	{
+		/* skip leading white space */
+		while( *ptr && isspace( *ptr ) )
+		{
+			prev = ptr;
+			ptr++;
+		}
+
+		if( !*ptr )
+			break;
+
+		if( *ptr == '{' )
+		{
+			if( depth == 0 )
+				count++;
+			depth++;
+			prev = ptr;
+			ptr++;
+		}
+		else if( *ptr == '}' )
+		{
+			depth--;
+			prev = ptr;
+			ptr++;
+		}
+		else
+		{
+			if( depth == 0 )
+				count++;
+
+			while( *ptr &&
+				(!isspace( *ptr ) || *prev == '\\') &&
+				(*ptr != '}' || *prev == '\\') )
+			{
+				prev = ptr;
+				ptr++;
+			}
+		}
+	}
+
+	return( count );
+}
+
+int
+bu_key_val_to_vls( vls, params )
+struct bu_vls *vls;
+char *params;
+{
+	int len;
+	int j;
+
+	len = bu_tcl_list_length( params );
+
+	if( len%2 )
+	{
+		bu_log( "bu_shader_to_key_eq: Error: shader parameters must be even numbered!!\n\t%s\n", params );
+		return( 1 );
+	}
+
+	for( j=0 ; j<len ; j += 2 )
+	{
+		char *keyword;
+		char *value;
+
+		keyword = bu_list_elem( params, j );
+		value = bu_list_elem( params, j+1 );
+
+		bu_vls_putc( vls, ' ' );
+		bu_vls_strcat( vls, keyword );
+		bu_vls_putc( vls, '=' );
+		if( bu_tcl_list_length( value ) > 1  )
+		{
+			bu_vls_putc( vls, '"' );
+			bu_vls_strcat( vls, value );
+			bu_vls_putc( vls, '"' );
+		}
+		else
+			bu_vls_strcat( vls, value );
+	}
+	return( 0 );
+}
+
+int
+bu_shader_to_key_eq( in, vls )
+char *in;
+struct bu_vls *vls;
+{
+	int len;
+	char *shader;
+	char *params;
+
+	BU_CK_VLS( vls );
+
+	len = bu_tcl_list_length( in );
+
+	if( len != 2 )
+	{
+		bu_log( "bu_shader_to_key_eq: Error: shader must have two elements!!\n\t%s\n", in );
+		return 1;
+	}
+
+	shader = bu_list_elem( in, 0 );
+	params = bu_list_elem( in, 1 );
+
+	if( strcmp( shader, "stack" ) )
+	{
+		bu_vls_strcpy( vls, shader );
+		if( bu_key_val_to_vls( vls, params ) )
+			return( 1 );
 	}
 	else
 	{
-		out = bu_malloc( shader_name_len + 1, "bu_shader_to key_val:out" );
-		strncpy( out, shader, shader_name_len );
+		/* stacked shaders */
+
+		int i,j;
+
+		bu_vls_strcpy( vls, "stack " );
+
+		bu_free( shader, "bu_shader_to_key_eq:shader" );
+
+		/* get number of shaders in the stack */
+		len = bu_tcl_list_length( params );
+
+		/* process each shader in the stack */
+		for( i=0 ; i<len ; i++ )
+		{
+			char *shader1, *shade1_name, *params1;
+			int len1;
+
+			/* each parameter must be a shader specification in itself */
+			shader1 = bu_list_elem( params, i );
+
+			len1 = bu_tcl_list_length( shader1 );
+			if( len1 != 2 )
+			{
+				bu_log( "bu_shader_to_key_eq: Error: shader must have two elements!!\n\t%s\n", in );
+				return 1;
+			}
+
+			shade1_name = bu_list_elem( shader1, 0 );
+			params1 = bu_list_elem( shader1, 1 );
+
+			if( i>0 && i<len )
+				bu_vls_putc( vls, ';' );
+
+			bu_vls_strcat( vls, shade1_name );
+			if( bu_key_val_to_vls( vls, params1 ) )
+				return( 1 );
+		}
 	}
 
-	return( out );
+	return 0;
 }
