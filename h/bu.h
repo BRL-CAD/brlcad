@@ -1517,6 +1517,10 @@ BU_EXTERN(void			bu_printfile, (struct bu_file *bfp) );
 BU_EXTERN(int			bu_file_exists, (const char *path) );
 BU_EXTERN(char			*bu_brlcad_path, (const char *rhs) );
 
+/* fopen_uniq */
+BU_EXTERN(FILE *		bu_fopen_uniq, (const char *outfmt,
+						const char *namefmt,
+						int n) );
 /* getopt.c */
 extern int			bu_opterr;
 extern int			bu_optind;
