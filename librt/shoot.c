@@ -878,12 +878,13 @@ register struct application *ap;
 		}
 
 		/*
-		 *  If a_onehit <= 0 and a_ray_length <= 0, then the ray
+		 *  If a_onehit == 0 and a_ray_length <= 0, then the ray
 		 *  is traced to +infinity.
 		 *
-		 *  If a_onehit > 0, then it indicates how many hit points
+		 *  If a_onehit != 0, then it indicates how many hit points
 		 *  (which are greater than the ray start point of 0.0)
 		 *  the application requires, ie, partitions with inhit >= 0.
+		 *  (If negative, indicates number of non-air hits needed).
 		 *  If this box yielded additional segments,
 		 *  immediately weave them into the partition list,
 		 *  and perform final boolean evaluation.
@@ -893,7 +894,7 @@ register struct application *ap;
 		 *  All partitions will have valid in and out distances.
 		 *  a_ray_length is treated similarly to a_onehit.
 		 */
-		if( ap->a_onehit > 0 && BU_LIST_NON_EMPTY( &(waiting_segs.l) ) )  {
+		if( ap->a_onehit != 0 && BU_LIST_NON_EMPTY( &(waiting_segs.l) ) )  {
 			int	done;
 
 			/* Weave these segments into partition list */
