@@ -117,8 +117,6 @@ extern void	sl_toggle_scroll();
 void		btn_head_menu();
 void		btn_item_hit();
 
-void		state_err();
-
 static struct menu_item first_menu[] = {
 	{ "(BUTTON MENU)", btn_head_menu, 1 },		/* chg to 2nd menu */
 	{ "", (void (*)())NULL, 0 }

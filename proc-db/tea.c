@@ -12,11 +12,13 @@
 #include "db.h"			/* BRLCAD data base format */
 #include "vmath.h"		/* BRLCAD Vector macros */
 #include "../libspl/b_spline.h"		/* BRLCAD Spline data structures */
+#include "raytrace.h"
+#include "../librt/debug.h"	/* rt_g.debug flag settings */
+
 #include "./tea.h"		/* IEEE Data Structures */
 #include "./ducks.h"		/* Teapot Vertex data */
 #include "./patches.h"		/* Teapot Patch data */
-#include "raytrace.h"
-#include "../librt/debug.h"	/* rt_g.debug flag settings */
+
 
 extern dt ducks[DUCK_COUNT];		/* Vertex data of teapot */
 extern pt patches[PATCH_COUNT];		/* Patch data of teapot */
