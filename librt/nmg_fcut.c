@@ -1313,9 +1313,32 @@ CONST struct rt_tol	*tol;
 	RT_CK_TOL(tol);
 
 	if(rt_g.NMG_debug&DEBUG_VU_SORT)  {
+		char			buf[128];
+		FILE			*fp;
+		struct model		*m;
+		long			*b;
+		struct rt_vlblock	*vbp;
+		static int		num = 0;
+
 		rt_log("nmg_special_wedge_processing(start=%d,end=%d, lo=%g, hi=%g, wclass=%s)\n",
 			start, end, lo_ang, hi_ang,
 			WEDGECLASS2STR(wclass) );
+
+		/* Plot all the loops that touch here. */
+		m = nmg_find_model((long *)vs[start].vu);
+		b = (long *)rt_calloc( m->maxindex, sizeof(long), "nmg_special_wedge_processing flag[]" );
+		vbp = rt_vlblock_init();
+		for( i=start; i < end; i++ )  {
+			nmg_vlblock_lu(vbp, nmg_lu_of_vu(vs[i].vu), b,
+				255, 0, 0, 0 );
+		}
+		sprintf(buf, "wedge%d.pl", num++);
+		fp = fopen(buf, "w");
+		rt_plot_vlblock( fp, vbp );
+		fclose(fp);
+		rt_log("wrote %s\n", buf);
+		rt_free( (char *)b, "nmg_special_wedge_processing flag[]" );
+		rt_vlblock_free(vbp);
 	}
 
 	if( end-start >= 128 )  rt_bomb("nmg_special_wedge_processing: array overflow\n");
@@ -1366,6 +1389,7 @@ again:
 		return 1;		/* cutjoin was done */
 	}
 
+	/* XXX Or they could be WEDGE2_IDENTICAL */
 	if(rt_g.NMG_debug&DEBUG_VU_SORT)
 		rt_log("wedge at vu[%d] is inside wedge at vu[%d]\n", inner_wedge, outer_wedge);
 
@@ -1386,14 +1410,21 @@ again:
 	    vs[inner_wedge].lo_ang, vs[inner_wedge].hi_ang, wclass, exclude, tol ) )
 		return 1;	/* An inner wedge was cut */
 
-#if 0
+#if 1
+	/*
+	 *  Inner and outer are different loopuses,
+	 *  have different orientations,
+	 *  and have nothing complex inside the wedge of the inner loop.
+	 *  Join inner and outer loops here, to impose a proper vu ordering.
+	 */
 	if(rt_g.NMG_debug&DEBUG_VU_SORT)
-		rt_log("Inner wedge was not cut, need to consider cut/joinhere\n");
+		rt_log("Inner wedge is simple, join inner and outer loops.\n");
 
-	rt_bomb("XXX special wedge processing needed\n");
-	return 1;
+	vs[inner_wedge].vu = nmg_join_2loops( vs[outer_wedge].vu,
+		vs[inner_wedge].vu );
+	return 1;		/* cutjoin was done */
 #else
-	/* Can we get by with not doing anything more? */
+	/* This is adequate for Test16.r to work, but is a hack. */
 	if(rt_g.NMG_debug&DEBUG_VU_SORT)
 		rt_log("No inner wedges needed cutting, nothing further to do.\n");
 	return 0;
