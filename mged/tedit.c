@@ -80,7 +80,7 @@ f_tedit()
 		writesolid( &es_rec.s );
 	}
 
-	if( editit() )  {
+	if( editit( tmpfil ) )  {
 		if( es_rec.s.s_type == GENARB8 )  {
 			readsolid( &lsolid );
 
@@ -154,7 +154,8 @@ register struct solidrec *sp;
 }
 
 /* Run $EDITOR on temp file */
-editit()
+editit( file )
+char *file;
 {
 #ifdef BSD42
 	register pid, xpid;
@@ -174,7 +175,7 @@ editit()
 		if ((ed = getenv("EDITOR")) == (char *)0)
 			ed = DEFEDITOR;
 		(void)printf("Invoking %s...\n", ed);
-		(void)execlp(ed, ed, tmpfil, 0);
+		(void)execlp(ed, ed, file, 0);
 		perror(ed);
 		exit(1);
 	}
@@ -207,7 +208,7 @@ editit()
 		if ((ed = getenv("EDITOR")) == (char *)0)
 			ed = DEFEDITOR;
 		(void)printf("Invoking %s...\n", ed);
-		(void)execlp(ed, ed, tmpfil, 0);
+		(void)execlp(ed, ed, file, 0);
 		perror(ed);
 		exit(1);
 	}

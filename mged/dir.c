@@ -76,7 +76,8 @@ static struct directory *DirHead[NHASH];
 
 static struct mem_map *dbfreep = MAP_NULL; /* map of free granules */
 
-static long	objfdend;		/* End+1 position of object file */
+#define BAD_EOF	(-1L)			/* eof_addr not set yet */
+static long	eof_addr = BAD_EOF;	/* End+1 position of object file */
 int		objfd;			/* FD of object file */
 
 union record	record;
@@ -99,6 +100,8 @@ char	cur_title[128];			/* current target title */
 char	*filename;			/* Name of database file */
 static int read_only = 0;		/* non-zero when read-only */
 void	conversions();
+
+extern void color_addrec();
 
 /*
  *  			D B _ O P E N
@@ -250,6 +253,11 @@ dir_build()  {
 		addr += sizeof(record);
 		continue;
 
+	case ID_MATERIAL:
+		color_addrec( &record, addr );
+		addr += sizeof(record);
+		continue;
+
 	default:
 		(void)printf( "dir_build:  unknown record %c (0%o) erased\n",
 			record.u_id, record.u_id );
@@ -265,9 +273,7 @@ dir_build()  {
 	}
 
 	/* Record current end of objects file */
-	objfdend = ftell(fp);
-	if( objfdend != addr )
-		(void)printf("ftell=%d, addr=%d\n", objfdend, addr);
+	eof_addr = addr;
 	(void)fclose(fp);
 }
 
@@ -543,9 +549,12 @@ int count;
 top:
 	if( (addr = memalloc( &dbfreep, (unsigned)count )) == 0L )  {
 		/* No contiguous free block, append to file */
-		dp->d_addr = objfdend;
+		if( (dp->d_addr = eof_addr) == BAD_EOF )  {
+			(void)printf("db_alloc while reading database?\n");
+			return;
+		}
 		dp->d_len = count;
-		objfdend += count * sizeof(union record);
+		eof_addr += count * sizeof(union record);
 		return;
 	}
 	dp->d_addr = addr * sizeof(union record);
@@ -578,8 +587,8 @@ int count;
 	}
 
 	/* Easy case -- see if at end-of-file */
-	if( dp->d_addr + dp->d_len * sizeof(union record) == objfdend )  {
-		objfdend += count * sizeof(union record);
+	if( dp->d_addr + dp->d_len * sizeof(union record) == eof_addr )  {
+		eof_addr += count * sizeof(union record);
 		dp->d_len += count;
 		return;
 	}
@@ -605,6 +614,7 @@ hard:
 	/* Sigh, got to duplicate it in some new space */
 	olddir = *dp;				/* struct copy */
 	db_alloc( dp, dp->d_len + count );	/* fixes addr & len */
+	/* TODO:  malloc, db_getmany, db_putmany, free.  Whack. */
 	for( i=0; i < olddir.d_len; i++ )  {
 		db_getrec( &olddir, &rec, i );
 		db_putrec( dp, &rec, i );

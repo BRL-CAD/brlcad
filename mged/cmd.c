@@ -61,6 +61,7 @@ void	f_mirface(), f_units(), f_title();
 void	f_rot_obj(), f_tr_obj(), f_sc_obj();
 void	f_analyze(), f_sed();
 void	f_ill(), f_knob(), f_tops(), f_summary();
+void	f_prcolor(), f_color(), f_edcolor();
 
 static struct funtab {
 	char *ft_name;
@@ -171,8 +172,14 @@ static struct funtab {
 	f_make,3,3,
 "tops", "", "find all top level objects",
 	f_tops,1,1,
-"summary", "[s r g]", "count/list solid/reg/groups\n",
+"summary", "[s r g]", "count/list solid/reg/groups",
 	f_summary,1,2,
+"prcolor", "", "print color&material table",
+	f_prcolor, 1, 1,
+"color", "low high r g b str", "make color entry",
+	f_color, 7, 7,
+"edcolor", "", "text edit color table",
+	f_edcolor, 1, 1,
 "memprint", "", "print memory maps",
 	f_memprint,1,1
 };
