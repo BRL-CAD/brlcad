@@ -4,6 +4,10 @@
  * $Revision$
  *
  * $Log$
+ * Revision 11.2  1995/06/21  03:44:53  gwyn
+ * Eliminated trailing blanks.
+ * Eliminated blank line at EOF.
+ *
  * Revision 11.1  95/01/04  10:35:21  mike
  * Release_4.4
  *
@@ -460,8 +464,8 @@ extern int	CapCol,
 		CapLine;
 
 struct cursaddr {
-	int	c_numchars,
-		(*c_func)();
+	int	c_numchars;
+	void	(*c_func)();
 };
 
 char	*Cmstr;
@@ -493,6 +497,7 @@ struct cursaddr	WarpHor[NUMHOR],
 
 int	phystab = 8;
 
+void
 GoDirect(line, col)
 register int	line,
 		col;
@@ -500,17 +505,22 @@ register int	line,
 	putpad(Cmstr, 1), CapLine = line, CapCol = col;
 }
 
+void
 RetTab(col)
 register int	col;
 {
-	outchar('\r'), CapCol = 0, ForTab(col);
+	outchar('\r');
+	CapCol = 0;
+	ForTab(col);
 }
 
+void
 HomeGo(line, col)
 {
 	PrintHo(), DownMotion(line), ForTab(col);
 }
 
+void
 BottomUp(line, col)
 register int	line,
 		col;
@@ -518,6 +528,7 @@ register int	line,
 	LowLine(), UpMotion(line), ForTab(col);
 }
 
+void
 ForTab(col)
 register int	col;
 {
@@ -546,6 +557,7 @@ register int	col;
 
 extern struct screenline	*Screen;
 
+void
 ForMotion(col)
 register int	col;
 {
@@ -563,6 +575,7 @@ register int	col;
 	}
 }
 
+void
 BackMotion(col)
 register int	col;
 {
@@ -575,6 +588,7 @@ register int	col;
 	}
 }
 
+void
 DownMotion(line)
 register int	line;
 {
@@ -584,6 +598,7 @@ register int	line;
 	}
 }
 
+void
 UpMotion(line)
 register int	line;
 {
@@ -593,6 +608,7 @@ register int	line;
 	}
 }
 
+void
 InitCM()
 {
 	WarpHor[FORWARD].c_func = ForMotion;

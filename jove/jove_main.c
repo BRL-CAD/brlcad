@@ -4,6 +4,15 @@
  * $Revision$
  *
  * $Log$
+ * Revision 11.4  1995/06/21  03:42:30  gwyn
+ * Eliminated trailing blanks.
+ * BinShell, version, Joverc are now arrays rather than string literal pointers.
+ * Changed memcpy calls back to bcopy.  (Fixed confusing use of SYSV vs. SYS5.)
+ * Fixed varargs functions, using VA_* macros.
+ * Fixed usage of FNDELAY, which is obsolete.
+ * Improved use of conditionals dealing with system variations.
+ * Made reset of SIGINT handler independent of SIGTSTP.
+ *
  * Revision 11.3  95/01/04  23:26:50  mike
  * Irix 5.3 fix
  *
@@ -351,6 +360,7 @@ charp()
 }
 
 
+void
 ResetTerm()
 {
 	if (TI)
@@ -362,6 +372,7 @@ ResetTerm()
 	ttyset(1);
 }
 
+void
 UnsetTerm()
 {
 	ttyset(0);
@@ -375,6 +386,7 @@ UnsetTerm()
 	flusho();
 }
 
+void
 PauseJove()
 {
 #ifdef SIGTSTP
@@ -390,6 +402,7 @@ PauseJove()
 
 #define	DOCOMMAND	1		/* Must be non-zero */
 
+void
 SubShell()
 {
 	register char yorn;
@@ -406,6 +419,7 @@ SubShell()
 	ClAndRedraw();
 }
 
+void
 RunShell(prompt)
 register int	prompt;
 {
@@ -452,6 +466,7 @@ struct sgttyb	oldtty, newtty;
 struct sg_brl	oldtty, newtty;
 #endif
 
+void
 ttsetup() {
 #ifndef BRLUNIX
 #  if HAS_TERMIOS
@@ -523,12 +538,14 @@ ttsetup() {
 #endif
 }
 
+void
 ReInitTTY()
 {
 	ttyset(0);	/* Back to original settings */
 	ttinit();
 }
 
+void
 ttsize()
 {
 #ifdef TIOCGWINSZ
@@ -555,6 +572,7 @@ ttsize()
 #endif
 }
 
+void
 ttinit()
 {
 #if defined(TIOCSLTC) && !defined(SYS5)
@@ -594,6 +612,7 @@ ttinit()
 
 /* If "n" is zero, reset to orignal modes */
 #ifndef BRLUNIX
+void
 ttyset(n)
 {
 #if HAS_TERMIOS
@@ -632,6 +651,7 @@ ttyset(n)
 #endif
 }
 #else	/* BRLUNIX */
+void
 ttyset(n)
 {
 	struct sg_brl	tty;
@@ -829,12 +849,14 @@ confirm(VA_T(const char *fmt) VA_ALIST)
 		longjmp(mainjmp, COMPLAIN);
 }
 
+void
 byebye(status)
 {
 	flusho();
 	exit(status);
 }
 
+void
 Recurse()
 {
 	RecDepth++;

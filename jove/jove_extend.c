@@ -4,6 +4,12 @@
  * $Revision$
  *
  * $Log$
+ * Revision 11.2  1995/06/21  03:40:53  gwyn
+ * Eliminated trailing blanks.
+ * RunEdit() now returns null pointer upon ^G abort; was nonportable (char*)-1.
+ * Findcom is now an array rather than pointer to (unmodifiable) string literal.
+ * Must cast 0 when used as null pointer constant in argument list.
+ *
  * Revision 11.1  95/01/04  10:35:13  mike
  * Release_4.4
  *
@@ -71,11 +77,13 @@ min(a, b)
 	return a < b ? a : b;
 }
 
+void
 BindAKey()
 {
 	BindSomething(functions);
 }
 
+void
 BindMac()
 {
 	BindSomething(macros);
@@ -114,6 +122,7 @@ struct function	*funcs;
 	Asking = 0;
 }
 
+void
 UnBound()
 {
 	Beep();
@@ -124,6 +133,7 @@ UnBound()
 extern int	EscPrefix(),
 		CtlxPrefix();
 
+void
 KeyDesc()
 {
 	int	key;
@@ -158,6 +168,7 @@ struct function	**map;
 	return;
 }
 
+void
 DescCom()
 {
 	int	com;
@@ -176,6 +187,7 @@ DescCom()
 	SetWind(savewp);
 }
 
+void
 Beep()
 {
 	extern int	errormsg;
@@ -185,6 +197,7 @@ Beep()
 	errormsg = 0;
 }
 
+void
 Apropos()
 {
 	register struct function	*fp;
@@ -229,6 +242,7 @@ register char	*pattern,
 	return 0;
 }
 
+void
 Extend()
 {
 	int	command;
@@ -451,6 +465,7 @@ char	*what;
 	return save;
 }
 
+void
 Source()
 {
 	char	*com = ask((char *) 0, FuncName());
@@ -480,6 +495,7 @@ char	*file;
 	return 1;
 }
 
+void
 BufPos()
 {
 	register LINE	*lp = curbuf->b_zero;
@@ -496,6 +512,7 @@ BufPos()
 
 extern char	quots[];
 
+void
 SetQchars()
 {
 	char	*chars = ask((char *) 0, FuncName());

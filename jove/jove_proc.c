@@ -4,6 +4,19 @@
  * $Revision$
  *
  * $Log$
+ * Revision 11.2  1995/06/21  03:43:58  gwyn
+ * Eliminated trailing blanks.
+ * Use tempnam() where available.
+ * Process buffer temp file was mode 644, now 600.
+ * ProcTmp, cerrfmt, lerrfmt are now arrays rather than string literal pointers.
+ * Use LBSIZE instead of hard-wired 100.
+ * Fixed all the pseudo-varargs functions, using VA_* macros.
+ * SIGTSTP branch had same code as other branch!
+ * Must cast 0 when used as null pointer constant in argument list.
+ * Improved child status return.
+ * Added check for too many arguments to UNIX command.
+ * Create pipe in privacy mode.
+ *
  * Revision 11.1  95/01/04  10:35:19  mike
  * Release_4.4
  *
@@ -136,11 +149,13 @@ BUFFER	 *b;
 	return lp;
 }
 
+void
 CParse()
 {
 	ErrParse(cerrfmt);
 }
 
+void
 LintParse()
 {
 	ErrParse(lerrfmt);
@@ -149,6 +164,7 @@ LintParse()
 /* Parse for C/LINT errors in the current buffer.  Set up for the next-error
    command. */
 
+void
 ErrParse(fmtstr)
 char	*fmtstr;
 {
@@ -177,6 +193,7 @@ char	*fmtstr;
    and then go find each occurrence of the mispelled words that the user
    says to go find.  Check out SpParse() */
 
+void
 SpellCom()
 {
 	WINDOW	*errwind,
@@ -271,6 +288,7 @@ nextword:
 
 /* Free up all the errors */
 
+void
 ErrFree()
 {
 	register struct error	*ep;
@@ -284,6 +302,7 @@ ErrFree()
    one window and the buffer with the error in another window.
    It checks to make sure that the error actually exists. */
 
+void
 NextError()
 {
 	register int	i = exp;
@@ -292,6 +311,7 @@ NextError()
 		DoNextErr();
 }
 
+void
 DoNextErr()
 {
 	/* Make sure we haven't deleted the line with the actual error
@@ -317,6 +337,7 @@ DoNextErr()
  * non-zero), parse the errors, and go the first error.
  */
 
+void
 MakeErrors()
 {
 	WINDOW	*old = curwind;
@@ -353,6 +374,7 @@ MakeErrors()
  *  non-zero), parse the errors, and go the first error.
  *  BRL Addition, Mike Muuss, 30-Aug-91.
  */
+void
 CakeErrors()
 {
 	WINDOW	*old = curwind;
@@ -407,6 +429,7 @@ char	*command;
 
 static char	ShcomBuf[LBSIZE] = {0};	/* I hope ??? */
 
+void
 ShToBuf()
 {
 	char	bufname[LBSIZE];
@@ -415,6 +438,7 @@ ShToBuf()
 	DoShell(bufname, ask(ShcomBuf, "Command: "));
 }
 
+void
 ShellCom()
 {
 	strcpy(ShcomBuf, ask(ShcomBuf, FuncName()));
@@ -425,6 +449,7 @@ ShellCom()
    give a numeric argument, in which case it inserts the output at the
    current position in the buffer.  */
 
+void
 DoShell(bufname, command)
 char	*bufname,
 	*command;
@@ -439,12 +464,14 @@ char	*bufname,
 	SetWind(savewp);
 }
 
+void
 com_finish(status, com)
 char	*com;
 {
 	s_mess("\"%s\" completed %ssuccessfully", com, status ? "un" : "");
 }
 
+void
 dopipe(p)
 int	p[];
 {
@@ -452,6 +479,7 @@ int	p[];
 		complain("Cannot pipe");
 }
 
+void
 PipeClose(p)
 int	p[];
 {
@@ -545,6 +573,7 @@ UnixToBuf(VA_T(char *bufname) VA_T(int disp) VA_T(int clobber)
 
 /* Send a region to shell.  Now we can beautify C and sort programs */
 
+void
 RegToShell()
 {
 	char	com[LBSIZE];
@@ -567,6 +596,7 @@ RegToShell()
 /* Writes the region to a tmp file and then run the command with input
    from that file */
 
+void
 RegToUnix(bufname, replace, line1, char1, line2, char2, func)
 char	*bufname;
 LINE	*line1,

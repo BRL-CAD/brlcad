@@ -4,6 +4,11 @@
  * $Revision$
  *
  * $Log$
+ * Revision 11.2  1995/06/21  03:45:25  gwyn
+ * Eliminated trailing blanks.
+ * Don't assume SYS5 implies TAB3.
+ * Removed redundant declaration of sprint().
+ *
  * Revision 11.1  95/01/04  10:35:24  mike
  * Release_4.4
  *
@@ -138,6 +143,7 @@ char	**meas[] = {
 	&TI, &TE, &M_AL, &M_DL, &M_IC, &M_DC, 0
 };
 
+void
 TermError(str)
 char	*str;
 {
@@ -148,6 +154,7 @@ char	*str;
 	exit(1);
 }
 
+void
 getTERM()
 {
 	char	*getenv();
@@ -256,6 +263,7 @@ getTERM()
 #include <ctype.h>
 /* Find TERMINFO %p# strings in the string and kill them */
 /* This is a SYS5 bug fix.   -DPK- */
+void
 TERMINFOfix(cp)
 char *cp;
 {
@@ -275,6 +283,7 @@ char *cp;
 
 IOBUF	termout;
 
+void
 outc(c)
 register int	c;
 {
@@ -283,6 +292,7 @@ register int	c;
 
 /* Put a string with padding */
 
+void
 putpad(str, lines)
 char	*str;
 {
@@ -293,6 +303,7 @@ char	*str;
  * some, then return to main, to process them, aborting redisplay.
  */
 
+void
 flushout(x, p)
 IOBUF	*p;
 {
@@ -320,6 +331,7 @@ IOBUF	*p;
    This sets the int BufSize to the right number or chars,
    allocates the buffer, and initiaizes `termout'.  */
 
+void
 settout()
 {
 	static int speeds[] = {

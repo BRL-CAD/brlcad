@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 11.2  1995/06/21  03:43:22  gwyn
+ * Eliminated trailing blanks.
+ *
  * Revision 11.1  95/01/04  10:35:18  mike
  * Release_4.4
  *
@@ -62,12 +65,14 @@ LINE	*line;
 	return DoMakeMark(curbuf, line, col);
 }
 
+void
 DelMark(m)
 MARK	*m;
 {
 	DoDelMark(curbuf, m);
 }
 
+void
 DoDelMark(b, m)
 BUFFER	*b;
 register MARK	*m;
@@ -86,6 +91,7 @@ register MARK	*m;
 	free((char *) m);
 }
 
+void
 AllMarkSet(b, line, col)
 BUFFER	*b;
 register LINE	*line;
@@ -96,6 +102,7 @@ register LINE	*line;
 		MarkSet(mp, line, col);
 }
 
+void
 MarkSet(m, line, column)
 MARK	*m;
 LINE	*line;
@@ -131,6 +138,7 @@ PopMark()
 	curbuf->b_themark = pmark;
 }
 
+void
 SetMark()
 {
 	if (exp_p)
@@ -164,6 +172,7 @@ CurMark()
 	return curmark;
 }
 
+void
 PtToMark()
 {
 	LINE	*mline;
@@ -219,6 +228,7 @@ register LINE	*line1,
 	}
 }
 
+void
 IFixMarks(line1, char1, line2, char2)
 register LINE	*line1,
 		*line2;

@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 11.2  1995/06/21  03:41:33  gwyn
+ * Eliminated trailing blanks.
+ *
  * Revision 11.1  95/01/04  10:35:15  mike
  * Release_4.4
  *
@@ -68,6 +71,7 @@ LINE	*after;
  * principle.  After all this isn't LISP or anything like that.
  */
 
+void
 LineInsert()
 {
 	register int	num = exp;
@@ -102,12 +106,14 @@ LineInsert()
 	IFixMarks(olddot, oldchar, curline, curchar);
 }
 
+void
 LineAI()
 {
 	LineInsert();
 	whitesp(getline(curline->l_prev->l_dline, genbuf), linebuf);
 }
 
+void
 whitesp(from, to)
 register char	*from,
 		*to;
@@ -121,6 +127,7 @@ register char	*from,
 	IFixMarks(curline, oldchar, curline, curchar);
 }
 
+void
 len_error(flag)
 {
 	char	*mesg = "line too long";
@@ -130,6 +137,7 @@ len_error(flag)
 
 /* Insert num number of c's at offset atchar in a linebuf of LBSIZE */
 
+void
 insert(c, buf, atchar, num, max)
 char	c, *buf;
 {
@@ -160,6 +168,7 @@ char	c, *buf;
  *     'c'.
  */
 
+void
 OverWrite()
 {
 	int	i, num;
@@ -171,11 +180,13 @@ OverWrite()
 	}
 }
 
+void
 SelfInsert()
 {
 	Insert(LastKeyStruck);
 }
 
+void
 Insert(c)
 {
 	SetModified(curbuf);
@@ -189,6 +200,7 @@ Insert(c)
  * Tab in to the right place for c mode
  */
 
+void
 CTab()
 {
 	if (strlen(linebuf) == 0)
@@ -196,6 +208,7 @@ CTab()
 	Insert('\t');
 }
 
+void
 QuotChar()
 {
 	int	c;
@@ -220,6 +233,7 @@ char	*line;
  * the same amount as the matching '{' is indented.
  */
 
+void
 DoParen()
 {
 	BUFLOC	*bp;
@@ -273,6 +287,7 @@ c_indent()
 	whitesp(genbuf, linebuf);
 }
 
+void
 AtMargin()
 {
 	int	open_kludge = 0;
@@ -310,6 +325,7 @@ Newline()
 	LineInsert();
 }
 
+void
 TextInsert()
 {
 	Insert(LastKeyStruck);
@@ -317,6 +333,7 @@ TextInsert()
 		AtMargin();
 }
 
+void
 ins_str(str)
 register char	*str;
 {
@@ -332,6 +349,7 @@ register char	*str;
 	makedirty(curline);
 }
 
+void
 linecopy(onto, atchar, from)
 register char	*onto, *from;
 register int	atchar;
@@ -345,6 +363,7 @@ register int	atchar;
 			len_error(ERROR);
 }
 
+void
 OpenLine()
 {
 	int	num = exp;
@@ -421,6 +440,7 @@ struct chunk	*fchunk = 0;
 
 LINE	*ffline = 0;	/* First free line */
 
+void
 freeline(line)
 register LINE	*line;
 {
@@ -432,6 +452,7 @@ register LINE	*line;
 	ffline = line;
 }
 
+void
 lfreelist(first)
 register LINE	*first;
 {
@@ -441,6 +462,7 @@ register LINE	*first;
 
 /* Append region from line1 to line2 onto the free list of lines */
 
+void
 lfreereg(line1, line2)
 register LINE	*line1,
 		*line2;
@@ -501,6 +523,7 @@ nbufline()
 /* Remove the free lines in chunk c from the free list because they are
    no longer free. */
 
+void
 remfreelines(c)
 register struct chunk	*c;
 {
@@ -522,6 +545,7 @@ register struct chunk	*c;
    through each chunk, and if every line in a given chunk is not allocated,
    the entire chunk is `free'd by "free()"  */
 
+void
 GCchunks()
 {
 	register struct chunk	*cp;

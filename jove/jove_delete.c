@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 11.2  1995/06/21  03:39:34  gwyn
+ * Eliminated trailing blanks.
+ *
  * Revision 11.1  95/01/04  10:35:10  mike
  * Release_4.4
  *
@@ -110,6 +113,7 @@ char	*buf;
 /* Assumes that either line1 or line2 is actual the current line, so it can
    put its result into linebuf. */
 
+void
 patchup(line1, char1, line2, char2)
 register LINE	*line1,
 		*line2;
@@ -202,6 +206,7 @@ register LINE	*line1,
 
 /* Delete character forward */
 
+void
 DelNChar()
 {
 	del_char(1);
@@ -209,6 +214,7 @@ DelNChar()
 
 /* Delete character backward */
 
+void
 DelPChar()
 {
 	del_char(0);
@@ -219,6 +225,7 @@ DelPChar()
  * region between the two with patchup().
  */
 
+void
 del_char(forward)
 {
 	BUFLOC	newdot,
@@ -244,6 +251,7 @@ del_char(forward)
    backwards) to the last entry. */
 
 
+void
 reg_kill(line1, char1, line2, char2, backwards)
 LINE	*line1, *line2;
 {
@@ -306,6 +314,7 @@ register int	*char1,
 	*char2 = tchar;
 }
 
+void
 DelReg()
 {
 	register MARK	*mp = CurMark();
@@ -313,6 +322,7 @@ DelReg()
 	reg_kill(mp->m_line, mp->m_char, curline, curchar, 0);
 }
 
+void
 DelWtSpace()
 {
 	register char	c;

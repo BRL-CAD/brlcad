@@ -4,6 +4,12 @@
  * $Revision$
  *
  * $Log$
+ * Revision 11.2  1995/06/21  03:40:22  gwyn
+ * Eliminated trailing blanks.
+ * Eliminated blank line at EOF.
+ * Use LBSIZE instead of hard-wired 100.
+ * Fixed varargs functions, using VA_* macros.
+ *
  * Revision 11.1  95/01/04  10:35:12  mike
  * Release_4.4
  *
@@ -180,6 +186,7 @@ char	*str;
 
 #define strcop(lp,str)		for (--lp, pp = str; (*lp++ = *pp++); )
 
+void
 ModeLine(w)
 WINDOW	*w;
 {
@@ -251,6 +258,7 @@ BUFFER	*cb;		/* Current Buffer.	*/
     return -1;
 }
 
+void
 RedrawDisplay()
 {
 	LINE	*newtop = prev_line(curwind->w_line, exp_p ?
@@ -262,6 +270,7 @@ RedrawDisplay()
 		SetTop(curwind, newtop);
 }
 
+void
 v_clear(line1, line2)
 register int	line1,
 		line2;
@@ -274,11 +283,13 @@ register int	line1,
 	}
 }
 
+void
 ClAndRedraw()
 {
 	cl_scr();
 }
 
+void
 NextPage()
 {
 	LINE	*newline;
@@ -294,6 +305,7 @@ NextPage()
 	}
 }
 
+void
 PrevPage()
 {
 	LINE	*newline;
@@ -344,6 +356,7 @@ int	UseBuffers = 0;		/* Don't create buffers by default. It may
 /* Tell With Buffers sets everything up so that we can clean up after
    ourselves when we are told to. */
 
+void
 TellWBuffers(bname, clobber)
 char	*bname;
 {
@@ -358,6 +371,7 @@ char	*bname;
 /* Tell With Screen.  If gobble is non-zero we DON'T ungetc characters as
    they are typed  e.g. --more-- or at the end of the list. */
 
+void
 TellWScreen(gobble)
 {
 	WhichKind = WITHSCREEN;
@@ -416,6 +430,7 @@ char	*string;
 	return OKAY;
 }
 
+void
 StopTelling()
 {
 	if (WhichKind == WITHBUFFER) {

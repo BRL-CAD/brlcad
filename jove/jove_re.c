@@ -4,6 +4,11 @@
  * $Revision$
  *
  * $Log$
+ * Revision 11.2  1995/06/21  03:44:28  gwyn
+ * Eliminated trailing blanks.
+ * Changed memcpy calls back to bcopy.
+ * Use LBSIZE instead of hard-wired 100.
+ *
  * Revision 11.1  95/01/04  10:35:20  mike
  * Release_4.4
  *
@@ -113,6 +118,7 @@ int	dir,
 #define CharCom(a, b) (IsFlagSet(globflags, CASEIND) ? \
 	(Upper(a) == Upper(b)) : (a == b))
 
+void
 REerror(str)
 char	*str;
 {
@@ -132,11 +138,13 @@ nextc()
 	return c;
 }
 
+void
 QRepSearch()
 {
 	replace(1);
 }
 
+void
 RepSearch()
 {
 	replace(0);
@@ -145,6 +153,7 @@ RepSearch()
 /* Prompt for search and replacement string and do the substitution.
    The point is saved and restored at the end. */
 
+void
 replace(query)
 {
 	MARK	*save = MakeMark(curline, curchar);
@@ -213,17 +222,20 @@ int	magic;		/* 0=> don't process "*[." regular expression chars */
 	return 0;
 }
 
+void
 setsearch(str)
 char	*str;
 {
 	strcpy(searchbuf, str);
 }
 
+void
 ForSearch()
 {
 	search(1);
 }
 
+void
 RevSearch()
 {
 	search(0);
@@ -232,6 +244,7 @@ RevSearch()
 /* Prompts for a search string.  Complains if the string cannot be found.
    Searches don't wrap line in ed/vi */
 
+void
 search(forward)
 {
 	BUFLOC	*newdot;
@@ -252,6 +265,7 @@ search(forward)
 /* Perform the substitution.  Both the replacement and search strings have
    been compiled already.  This knows how to deal with query replace. */
 
+void
 substitute(query)
 {
 	LINE	*lp;
@@ -338,6 +352,7 @@ done:
 
 /* Compile the substitution string */
 
+void
 compsub(seof)
 {
 	register int	c;
@@ -357,6 +372,7 @@ compsub(seof)
 	*p++ = 0;
 }
 
+void
 dosub(base)
 char	*base;
 {
@@ -409,6 +425,7 @@ register char	*sp,
 	return sp;
 }
 
+void
 putmatch(which, buf, size)
 char	*buf;
 {
@@ -821,11 +838,13 @@ static char	IncBuf[LBSIZE],
 int	FirstInc = 0;
 jmp_buf	incjmp;
 
+void
 IncFSearch()
 {
 	IncSearch(1);
 }
 
+void
 IncRSearch()
 {
 	IncSearch(-1);
@@ -833,6 +852,7 @@ IncRSearch()
 
 extern char	searchbuf[];
 
+void
 IncSearch(direction)
 {
 	BUFLOC	bp;
@@ -1008,6 +1028,7 @@ tagerr:				complain("Bad tag file format");
 	return 0;
 }
 
+void
 TagError(tag)
 char	*tag;
 {
@@ -1051,6 +1072,7 @@ char	*tagname;
 
 /* Called from user typing ^X t */
 
+void
 FindTag()
 {
 	char	*tagname;

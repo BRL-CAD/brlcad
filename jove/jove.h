@@ -189,7 +189,12 @@ extern int	CheckTime,
  */
 
 #define outchar(c) Putc(c, (&termout))
-#define Putc(x,p) (--(p)->io_cnt>=0 ? ((int)(*(p)->io_ptr++=(unsigned)(x))):flushout(x, p))
+/* #define Putc(x,p) (--(p)->io_cnt>=0 ?  ((void)(*(p)->io_ptr++=(unsigned)(x))):flushout(x, p) ) */
+#define Putc(x,p)	{ if( --(p)->io_cnt >= 0 ) \
+				(*(p)->io_ptr++=(unsigned)(x)); \
+			  else \
+				flushout(x, p); \
+			}
 
 /*
  * C doesn't have a (void) cast, so we have to fake it for lint's sake.
@@ -504,6 +509,87 @@ extern void	s_mess(VA_T(const char *) VA_DOTS);
 extern void	jprintf(VA_T(const char *) VA_DOTS);
 extern int	UnixToBuf(VA_T(char *) VA_T(int) VA_T(int) VA_T(const char *)
 			VA_DOTS);
+
+extern void b_format(),
+	tiewind(),
+	set_ino(),
+	setfname(),
+	setbname(),
+	FindMatch(),
+	del_char(),
+	InsChar(),
+	DelChar(),
+	do_cl_eol(),
+	UpdateLine(),
+	CalcScroll(),
+	CalcTop(),
+	UpdateMesg(),
+	Beep(),
+	ReadMacs(),
+	WriteMacs(),
+	SetMacro(),
+	MacNolen(),
+	NameMac(),	
+	DoMacro(),
+	ExecMacro(),
+	Forget(),
+	Remember(),
+	InitBindings(),
+	lfreereg(),
+	OpenLine(),
+	Insert(),
+	insert(),
+	whitesp(),
+	byebye(),
+	ttyset(),
+	ttinit(),
+	RunShell(),
+	PtToMark(),
+	MarkSet(),
+	DoDelMark(),
+	CaseReg(),
+	case_reg(),
+	lower(),
+	upper(),
+	case_word(),
+	SetDot(),
+	DotTo(),
+	Eol(),
+	down_line(),
+	OutOfBounds(),
+	PrevLine(),
+	NextLine(),
+	BackChar(),
+	ForChar(),
+	ArgIns(),
+	SetLine(),
+	DoJustify(),
+	dword(),
+	RegToUnix(),
+	com_finish(),
+	DoShell(),
+	DoNextErr(),
+	NextError(),
+	ErrFree(),
+	ErrParse(),
+	IncSearch(),
+	dosub(),
+	compsub(),
+	substitute(),
+	search(),
+	replace(),
+	UpMotion(),
+	DownMotion(),
+	BackMotion(),
+	ForMotion(),
+	ForTab(),
+	flushout(),
+	TERMINFOfix(),
+	zero_wind(),
+	SetTop(),
+	WindSize(),
+	pop_wind(),
+	v_clear();
 
 #define	SAVE_NO		0
 #define	SAVE_ASK	1

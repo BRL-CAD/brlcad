@@ -4,6 +4,11 @@
  * $Revision$
  *
  * $Log$
+ * Revision 11.2  1995/06/21  03:41:04  gwyn
+ * Eliminated trailing blanks.
+ * WriteMacs() now uses Dfltmode instead of hard-wired 0644.
+ * Changed memcpy calls back to bcopy.
+ *
  * Revision 11.1  95/01/04  10:35:13  mike
  * Release_4.4
  *
@@ -60,12 +65,14 @@ struct function	functions[NFUNCS],	/* Wired functions */
 		macros[NMACROS],	/* Macros */
 		variables[NVARS];	/* Variables */
 
+void
 tmany(str)
 char	*str;
 {
 	complain("too many %s", str);
 }
 
+void
 DefFunc(name, func)
 char	*name;
 int	(*func)();
@@ -78,6 +85,7 @@ int	(*func)();
 	nfuncs++;
 }
 
+void
 DefVar(name, varptr)
 char	*name;
 int	*varptr;
@@ -116,7 +124,6 @@ extern int
 	CtlxPrefix(),
 	AppReg(),
 	Apropos(),
-	BackChar(),
 	Bparen(),
 	BackWord(),
 	Bof(),
@@ -151,13 +158,10 @@ extern int
 	KeyDesc(),
 	DescCom(),
 	Eof(),
-	Eol(),
 	Eos(),
 	Eow(),
 	BufErase(),
-	PtToMark(),
 	Extend(),
-	ExecMacro(),
 	RunMacro(),
 	Leave(),
 	RegToShell(),
@@ -166,7 +170,6 @@ extern int
 	FindTag(),
 	FindCursorTag(),
 	ToIndent(),
-	ForChar(),
 	Fparen(),
 	ForWord(),
 	FourTime(),
@@ -175,18 +178,13 @@ extern int
 	IncFSearch(),
 	IncRSearch(),
 	InsFile(),
-	InitBindings(),
 	Justify(),
 	BufKill(),
 	KillEOL(),
 	BufList(),
 	NotModified(),
-	NameMac(),
 	Newline(),
-	OpenLine(),
 	LineAI(),
-	NextError(),
-	NextLine(),
 	NextPage(),
 	NextWindow(),
 	OverWrite(),
@@ -197,17 +195,14 @@ extern int
 	LintParse(),
 	PauseJove(),	/* Same as SubShell if no Job-Control */
 	SubShell(),
-	PrevLine(),
 	PrevPage(),
 	PrevWindow(),
 	QRepSearch(),
 	QuotChar(),
 	ReadFile(),
-	ReadMacs(),
 	RedrawDisplay(),
 	ReInitTTY(),
 	RepSearch(),
-	Beep(),
 	DownScroll(),
 	UpScroll(),
 	ForSearch(),
@@ -222,8 +217,6 @@ extern int
 	Source(),
 	SpellCom(),
 	SplitWind(),
-	Remember(),
-	Forget(),
 	StrLength(),
 	TextInsert(),
 	TransChar(),
@@ -232,7 +225,6 @@ extern int
 	SaveFile(),
 	WtModBuf(),
 	WriteFile(),
-	WriteMacs(),
 	WrtReg(),
 	Yank(),
 	YankPop(),
@@ -240,13 +232,14 @@ extern int
 	SetQchars(),
 	WNumLines();
 
+void
 InitFuncs()
 {
 	DefFunc("Prefix-1", EscPrefix);
 	DefFunc("Prefix-2", CtlxPrefix);
 	DefFunc("append-region", AppReg);
 	DefFunc("apropos", Apropos);
-	DefFunc("backward-char", BackChar);
+	DefFunc("backward-char", (int (*)())BackChar);
 	DefFunc("backward-paren", Bparen);
 	DefFunc("backward-word", BackWord);
 	DefFunc("beginning-of-file", Bof);
@@ -280,13 +273,13 @@ InitFuncs()
 	DefFunc("describe-key", KeyDesc);
 	DefFunc("describe-command", DescCom);
 	DefFunc("end-of-file", Eof);
-	DefFunc("end-of-line", Eol);
+	DefFunc("end-of-line", (int (*)())Eol);
 	DefFunc("end-of-sentence", Eos);
 	DefFunc("end-of-window", Eow);
 	DefFunc("erase-buffer", BufErase);
-	DefFunc("exchange-point-and-mark", PtToMark);
+	DefFunc("exchange-point-and-mark", (int (*)())PtToMark);
 	DefFunc("execute-extended-command", Extend);
-	DefFunc("execute-keyboard-macro", ExecMacro);
+	DefFunc("execute-keyboard-macro", (int (*)())ExecMacro);
 	DefFunc("execute-macro", RunMacro);
 	DefFunc("exit-jove", Leave);
 	DefFunc("filter-region", RegToShell);
@@ -295,7 +288,7 @@ InitFuncs()
 	DefFunc("find-tag", FindTag);
 	DefFunc("find-cursor-tag", FindCursorTag);
 	DefFunc("first-non-blank", ToIndent);
-	DefFunc("forward-char", ForChar);
+	DefFunc("forward-char", (int (*)())ForChar);
 	DefFunc("forward-paren", Fparen);
 	DefFunc("forward-word", ForWord);
 	DefFunc("four-times", FourTime);
@@ -304,18 +297,18 @@ InitFuncs()
 	DefFunc("i-search-forward", IncFSearch);
 	DefFunc("i-search-reverse", IncRSearch);
 	DefFunc("insert-file", InsFile);
-	DefFunc("init-bindings", InitBindings);
+	DefFunc("init-bindings", (int (*)())InitBindings);
 	DefFunc("justify-paragraph", Justify);
 	DefFunc("kill-buffer", BufKill);
 	DefFunc("kill-to-end-of-line", KillEOL);
 	DefFunc("list-buffers", BufList);
 	DefFunc("make-buffer-unmodified", NotModified);
-	DefFunc("name-keyboard-macro", NameMac);
+	DefFunc("name-keyboard-macro", (int (*)())NameMac);
 	DefFunc("newline", Newline);
-	DefFunc("newline-and-backup", OpenLine);
+	DefFunc("newline-and-backup", (int (*)())OpenLine);
 	DefFunc("newline-and-indent", LineAI);
-	DefFunc("next-error", NextError);
-	DefFunc("next-line", NextLine);
+	DefFunc("next-error", (int (*)())NextError);
+	DefFunc("next-line", (int (*)())NextLine);
 	DefFunc("next-page", NextPage);
 	DefFunc("next-window", NextWindow);
 	DefFunc("number-lines-in-window", WNumLines);
@@ -326,18 +319,18 @@ InitFuncs()
 	DefFunc("parse-LINT-errors", LintParse);
 	DefFunc("pause-jove", PauseJove);
 	DefFunc("pop-mark", PopMark);
-	DefFunc("previous-line", PrevLine);
+	DefFunc("previous-line", (int (*)())PrevLine);
 	DefFunc("previous-page", PrevPage);
 	DefFunc("previous-window", PrevWindow);
 	DefFunc("print", PrVar);
 	DefFunc("query-replace-search", QRepSearch);
 	DefFunc("quote-char", QuotChar);
 	DefFunc("read-file", ReadFile);
-	DefFunc("read-macros-from-file", ReadMacs);
+	DefFunc("read-macros-from-file", (int (*)())ReadMacs);
 	DefFunc("redraw-display", RedrawDisplay);
 	DefFunc("reinitialize-terminal", ReInitTTY);
 	DefFunc("replace-search", RepSearch);
-	DefFunc("ring-the-bell", Beep);
+	DefFunc("ring-the-bell", (int (*)())Beep);
 	DefFunc("scroll-down", DownScroll);
 	DefFunc("scroll-up", UpScroll);
 	DefFunc("search-forward", ForSearch);
@@ -353,8 +346,8 @@ InitFuncs()
 	DefFunc("source", Source);
 	DefFunc("spell-buffer", SpellCom);
 	DefFunc("split-current-window", SplitWind);
-	DefFunc("start-remembering", Remember);
-	DefFunc("stop-remembering", Forget);		/* Not bad */
+	DefFunc("start-remembering", (int (*)())Remember);
+	DefFunc("stop-remembering", (int (*)())Forget);		/* Not bad */
 	DefFunc("string-length", StrLength);
 	DefFunc("sub-shell", SubShell);
 	DefFunc("suspend-jove", PauseJove);
@@ -363,7 +356,7 @@ InitFuncs()
 	DefFunc("unbound", UnBound);
 	DefFunc("vt100-arrow-keys", VtKeys);
 	DefFunc("write-current-file", SaveFile);
-	DefFunc("write-macros-to-file", WriteMacs);
+	DefFunc("write-macros-to-file", (int (*)())WriteMacs);
 	DefFunc("write-modified-files", WtModBuf);
 	DefFunc("write-named-file", WriteFile);
 	DefFunc("write-region", WrtReg);
@@ -406,6 +399,7 @@ register int 	(*func)();
 	return 0;
 }
 
+void
 BindFunc(map, letter, func)
 struct function	*map[];
 int	(*func)();
@@ -417,6 +411,7 @@ int	(*func)();
 	map[letter] = fp;
 }
 
+void
 ZeroMap(map)
 struct function	*map[];
 {
@@ -426,6 +421,7 @@ struct function	*map[];
 		map[i] = 0;
 }
 
+void
 BindInserts(func)
 FUNC	func;
 {
@@ -436,6 +432,7 @@ FUNC	func;
 	BindFunc(mainmap, CTL('I'), func);
 }
 
+void
 InitBindings()
 {
 	/* Most just insert themselves */
@@ -443,21 +440,21 @@ InitBindings()
 
 	BindFunc(mainmap, CTL('@'), SetMark);
 	BindFunc(mainmap, CTL('A'), Bol);
-	BindFunc(mainmap, CTL('B'), BackChar);
+	BindFunc(mainmap, CTL('B'), (int (*)())BackChar);
 	BindFunc(mainmap, CTL('C'), CapChar);
 	BindFunc(mainmap, CTL('D'), DelNChar);
-	BindFunc(mainmap, CTL('E'), Eol);
-	BindFunc(mainmap, CTL('F'), ForChar);
-	BindFunc(mainmap, CTL('G'), Beep);
+	BindFunc(mainmap, CTL('E'), (int (*)())Eol);
+	BindFunc(mainmap, CTL('F'), (int (*)())ForChar);
+	BindFunc(mainmap, CTL('G'), (int (*)())Beep);
 	BindFunc(mainmap, CTL('H'), DelPChar);
 	BindFunc(mainmap, CTL('I'), CTab);
 	BindFunc(mainmap, CTL('J'), LineAI);
 	BindFunc(mainmap, CTL('K'), KillEOL);
 	BindFunc(mainmap, CTL('L'), ClAndRedraw);
 	BindFunc(mainmap, CTL('M'), Newline);
-	BindFunc(mainmap, CTL('N'), NextLine);
-	BindFunc(mainmap, CTL('O'), OpenLine);
-	BindFunc(mainmap, CTL('P'), PrevLine);
+	BindFunc(mainmap, CTL('N'), (int (*)())NextLine);
+	BindFunc(mainmap, CTL('O'), (int (*)())OpenLine);
+	BindFunc(mainmap, CTL('P'), (int (*)())PrevLine);
 	BindFunc(mainmap, CTL('Q'), QuotChar);
 	BindFunc(mainmap, CTL('^'), QuotChar);
 	BindFunc(mainmap, CTL('R'), IncRSearch);
@@ -549,7 +546,7 @@ InitBindings()
 	BindFunc(pref2map, CTL('K'), DelReg);
 	BindFunc(pref2map, CTL('L'), CasRegLower);
 	BindFunc(pref2map, CTL('M'), WtModBuf);
-	BindFunc(pref2map, CTL('N'), NextError);
+	BindFunc(pref2map, CTL('N'), (int (*)())NextError);
 	BindFunc(pref2map, CTL('O'), DelBlnkLines);
 	BindFunc(pref2map, CTL('R'), ReadFile);
 	BindFunc(pref2map, CTL('S'), SaveFile);
@@ -557,7 +554,7 @@ InitBindings()
 	BindFunc(pref2map, CTL('U'), CasRegUpper);
 	BindFunc(pref2map, CTL('V'), FindFile);
 	BindFunc(pref2map, CTL('W'), WriteFile);
-	BindFunc(pref2map, CTL('X'), PtToMark);
+	BindFunc(pref2map, CTL('X'), (int (*)())PtToMark);
 	BindFunc(pref2map, CTL('\\'), SaveFile);
 	BindFunc(pref2map, '?', KeyDesc);
 	BindFunc(pref2map, '1', OneWindow);
@@ -595,6 +592,7 @@ FuncName()
 
 int	Interactive;	/* True when we invoke with the command handler? */
 
+void
 ExecFunc(fp, interactive)
 struct function	*fp;
 {
@@ -629,6 +627,7 @@ int	stackp = 0;
 
 char	*rem = "remember";
 
+void
 FixMacros()
 {
 	register int	i;
@@ -643,6 +642,7 @@ FixMacros()
 	KeyMacro.Flags = KeyMacro.Offset = 0;
 }
 
+void
 MacErr(name1, name2)
 char	*name1,
 	*name2;
@@ -652,6 +652,7 @@ char	*name1,
 	complain("Can't %s recursively; no longer %sing", name1, name2);
 }
 
+void
 Remember()
 {
 	if (KeyMacro.Flags & DEFINE)
@@ -669,6 +670,7 @@ PrefChar(c)
 			mainmap[c]->f.Func == CtlxPrefix);
 }
 
+void
 Forget()
 {
 	char	*cp;
@@ -680,16 +682,18 @@ Forget()
 		cp = &m->Body[m->MacLength - 2];
 		if (PrefChar(*cp))
 			m->MacLength -= 2;
-		else if (functions[*++cp].f.Func == Forget)
+		else if (functions[*++cp].f.Func == (int (*)())Forget)
 			m->MacLength--;
 	}
 }
 
+void
 ExecMacro()
 {
 	DoMacro(&KeyMacro);
 }
 
+void
 DoMacro(mac)
 struct macro	*mac;
 {
@@ -727,6 +731,7 @@ char	*name;
 	return 0;
 }
 
+void
 NameMac()
 {
 	char	*name;
@@ -753,18 +758,21 @@ NameMac()
 	DefMac(name, m);
 }
 
+void
 MacInit()
 {
 	SetMacro(&KeyMacro, "keyboard-macro");
 	FixMacros();
 }
 
+void
 MacNolen(m)
 struct macro	*m;
 {
 	m->MacLength = m->Offset = 0;
 }
 
+void
 SetMacro(m, name)
 struct macro	*m;
 char	*name;
@@ -777,6 +785,7 @@ char	*name;
 	m->Ntimes = m->Flags = 0;
 }
 
+void
 MacPutc(c)
 int	c;
 {
@@ -815,6 +824,7 @@ RunMacro()
 	return 0;
 }
 
+void
 WriteMacs()
 {
 	struct function	*mp;
@@ -840,6 +850,7 @@ WriteMacs()
 	ignore(close(macfd));
 }
 
+void
 ReadMacs()
 {
 	char	*file;

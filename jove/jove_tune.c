@@ -16,7 +16,7 @@ char	BinShell[]	= "/bin/sh";	/* /bin/sh (preferably) or /bin/csh */
 					/* getenv("SHELL") will overide */
 /* Following paths are edited during the "make" process to create tune.c from jove_tune.c: */
 char	Describe[]	= "LibDir/describe.com";
-char	Findcom[]	= "LibDir/findcom";
+char	Findcom[]	= "BinDir/findcom";
 char	Joverc[]	= "LibDir/joverc";
 			/* Where to search for the describe command */
 int	Dfltmode	= 0644;

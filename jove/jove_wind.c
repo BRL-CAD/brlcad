@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 11.2  1995/06/21  03:46:08  gwyn
+ * Eliminated trailing blanks.
+ *
  * Revision 11.1  95/01/04  10:35:25  mike
  * Release_4.4
  *
@@ -73,6 +76,7 @@ WINDOW	*w;
 	return 0;
 }
 
+void
 initwinds(b)
 BUFFER	*b;
 {
@@ -118,6 +122,7 @@ getwind()
  * window gets the body.  Resets link list and fwind if necessary.
  */
 
+void
 del_wind(wp)
 WINDOW	*wp;
 {
@@ -246,6 +251,7 @@ WINDOW	*new;
 
 /* Delete the current window if it isn't the only one left */
 
+void
 DelCurWindow()
 {
 	del_wind(curwind);
@@ -265,6 +271,7 @@ numwindows()
 	return num;
 }
 
+void
 WindFind()
 {
 	char	*fname = ask((char *) 0, FuncName());
@@ -283,6 +290,7 @@ WindFind()
 
 /* Go into one window mode by deleting all the other windows */
 
+void
 OneWindow()
 {
 	while (curwind->w_next != curwind)
@@ -312,6 +320,7 @@ char	*name;
  * window
  */
 
+void
 NextWindow()
 {
 	WINDOW	*new = next_wind(curwind);
@@ -323,6 +332,7 @@ NextWindow()
 
 /* Scroll the next window */
 
+void
 PageNWind()
 {
 	if (numwindows() == 1)
@@ -336,6 +346,7 @@ PageNWind()
  * `clobber' is non-zero.
  */
 
+void
 pop_wind(name, clobber)
 char	*name;
 {
@@ -357,11 +368,13 @@ char	*name;
 	SetBuf(newb);
 }
 
+void
 GrowWindow()
 {
 	WindSize(curwind, abs(exp));
 }
 
+void
 ShrWindow()
 {
 	WindSize(curwind, -abs(exp));
@@ -371,6 +384,7 @@ ShrWindow()
  * second is the increment.
  */
 
+void
 WindSize(w, inc)
 register WINDOW	*w;
 {
@@ -390,6 +404,7 @@ register WINDOW	*w;
  * This is for numbering the lines only.
  */
 
+void
 SetTop(w, line)
 WINDOW	*w;
 register LINE	*line;
@@ -408,6 +423,7 @@ register LINE	*line;
 	w->w_topnum = num;
 }
 
+void
 WNumLines()
 {
 	zero_wind(curwind);
@@ -419,6 +435,7 @@ WNumLines()
 	SetTop(curwind, curwind->w_top);
 }
 
+void
 zero_wind(wp)
 register WINDOW	*wp;
 {

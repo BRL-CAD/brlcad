@@ -4,6 +4,12 @@
  * $Revision$
  *
  * $Log$
+ * Revision 11.2  1995/06/21  03:43:41  gwyn
+ * Eliminated trailing blanks.
+ * RunEdit() now returns null pointer upon ^G abort; was nonportable (char*)-1.
+ * Fixed varargs functions, using VA_* macros.
+ * Use LBSIZE instead of hard-wired 100.
+ *
  * Revision 11.1  95/01/04  10:35:18  mike
  * Release_4.4
  *
@@ -78,6 +84,7 @@ void	Bow();
 void	DOTsave();
 void	CapChar();
 
+void
 PrefAbort(str)
 char	*str;
 {
@@ -85,6 +92,7 @@ char	*str;
 	rbell();
 }
 
+void
 Unknown(pref, c)
 char	pref,
 	c;
@@ -99,6 +107,7 @@ register int	c;
 	return (islower(c) ? toupper(c) : c);
 }
 
+void
 FourTime()
 {
 	exp_p = 1;
@@ -223,16 +232,19 @@ CopyRegion()
 		curbuf->b_status &= ~B_MODIFIED;
 }
 
+void
 DelNWord()
 {
 	dword(1);
 }
 
+void
 DelPWord()
 {
 	dword(0);
 }
 
+void
 dword(forward)
 {
 	BUFLOC	savedot;
@@ -243,16 +255,19 @@ dword(forward)
 	reg_kill(savedot.p_line, savedot.p_char, curline, curchar, !forward);
 }
 
+void
 UppWord()
 {
 	case_word(1);
 }
 
+void
 LowWord()
 {
 	case_word(0);
 }
 
+void
 ToIndent()
 {
 	register char	*cp, c;
@@ -273,6 +288,7 @@ GoLine()
 
 int	RMargin = RMARGIN;
 
+void
 VtKeys()
 {
 	int	c = getch();
@@ -299,6 +315,7 @@ VtKeys()
 	}
 }
 
+void
 Justify()
 {
 	BUFLOC	*bp;
@@ -321,6 +338,7 @@ Justify()
 
 extern int	diffnum;
 
+void
 DoJustify(l1, l2, scrunch)		/* Justify text */
 LINE	*l1,
 	*l2;
@@ -394,6 +412,7 @@ LINE	*l1,
 	this_cmd = 0;		/* So everything is under control */
 }
 
+void
 ChrToOct()
 {
 	int	c = getch();
@@ -421,6 +440,7 @@ char	*buf,
 	return 0;
 }
 
+void
 StrLength()
 {
 	static char	inquotes[] = "Where are the quotes?";
@@ -451,6 +471,7 @@ StrLength()
 	s_mess("%d characters", numchars);
 }
 
+void
 SplitWind()
 {
 	curwind = div_wind(curwind);
@@ -467,6 +488,7 @@ register LINE	*lp;
 
 /* Transpos cur_char with cur_char - 1 */
 
+void
 TransChar()
 {
 	char	c;
@@ -487,12 +509,14 @@ TransChar()
 	}
 }
 
+void
 SetLine(line)
 register LINE	*line;
 {
 	DotTo(line, 0);
 }
 
+void
 UpScroll()
 {
 	SetTop(curwind, next_line(curwind->w_top, exp));
@@ -500,6 +524,7 @@ UpScroll()
 		SetLine(next_line(curwind->w_top, HALF(curwind)));
 }
 
+void
 DownScroll()
 {
 	SetTop(curwind, prev_line(curwind->w_top, exp));
@@ -507,6 +532,7 @@ DownScroll()
 		SetLine(next_line(curwind->w_top, HALF(curwind)));
 }
 
+void
 Leave()
 {
 	BUFFER	*bp;
@@ -520,6 +546,7 @@ Leave()
 	longjmp(mainjmp, QUIT);
 }
 
+void
 KillEOL()
 {
 	LINE	*line2;
@@ -570,6 +597,7 @@ CtlxPrefix()
 		ExecFunc(fp, 0);
 }
 
+void
 Yank()
 {
 	LINE	*line,
@@ -587,7 +615,7 @@ Yank()
 	SetDot(dot);
 }
 
-static	NumArg = 1;
+static int	NumArg = 1;
 
 GetFour(InputFunc)
 int	(*InputFunc)();
@@ -819,6 +847,7 @@ ask(VA_T(char *def) VA_T(const char *fmt) VA_ALIST)
 	return begin;
 }
 
+void
 YankPop()
 {
 	LINE	*line,
@@ -851,6 +880,7 @@ YankPop()
 	SetDot(dot);
 }
 
+void
 WtModBuf()
 {
 	int	askp = exp_p;
@@ -882,11 +912,13 @@ WtModBuf()
 	SetBuf(oldb);
 }
 
+void
 NotModified()
 {
 	SetUnmodified(curbuf);
 }
 
+void
 ArgIns(at, next)
 char	*at;
 {
@@ -957,6 +989,7 @@ register int	num;
 	return line;
 }
 
+void
 ForChar()
 {
 	register int	num = exp;
@@ -972,6 +1005,7 @@ ForChar()
 	}
 }
 
+void
 BackChar()
 {
 	register int	num = exp;
@@ -988,6 +1022,7 @@ BackChar()
 	}
 }
 
+void
 NextLine()
 {
 	if (lastp(curline))
@@ -995,6 +1030,7 @@ NextLine()
 	down_line(1);
 }
 
+void
 PrevLine()
 {
 	if (firstp(curline))
@@ -1002,11 +1038,13 @@ PrevLine()
 	down_line(0);
 }
 
+void
 OutOfBounds()
 {
 	complain("");
 }
 
+void
 down_line(down)
 {
 	LINE	*(*func)() = down ? next_line : prev_line;
@@ -1057,16 +1095,19 @@ LINE	*line;
 	return pp - base - 1;
 }
 
+void
 Bol()
 {
 	curchar = 0;
 }
 
+void
 Eol()
 {
 	curchar += strlen(&linebuf[curchar]);
 }
 
+void
 DotTo(line, col)
 LINE	*line;
 {
@@ -1080,6 +1121,7 @@ LINE	*line;
 /* If bp->p_line is != current line, then save current line.  Then set dot
    to bp->p_line, and if they weren't equal get that line into linebuf  */
 
+void
 SetDot(bp)
 register BUFLOC	*bp;
 {
@@ -1093,6 +1135,7 @@ register BUFLOC	*bp;
 		getDOT();
 }
 
+void
 Eof()
 {
 	SetMark();
@@ -1100,6 +1143,7 @@ Eof()
 	Eol();
 }
 
+void
 Bof()
 {
 	SetMark();
@@ -1108,6 +1152,7 @@ Bof()
 
 char	REsent[] = "[?.!]\"  *\\|[.?!]  *\\|[.?!][\"]*$";
 
+void
 Bos()
 {
 	int	num = exp;
@@ -1283,6 +1328,7 @@ CapChar()
 	}
 }
 
+void
 CapWord()
 {
 	int num = exp;
@@ -1304,6 +1350,7 @@ CapWord()
 	}
 }
 
+void
 case_word(up)
 {
 	BUFLOC bp;
@@ -1313,6 +1360,7 @@ case_word(up)
 	case_reg(bp.p_line, bp.p_char, curline, curchar, up);
 }
 
+void
 upper(c)
 register char	*c;
 {
@@ -1320,6 +1368,7 @@ register char	*c;
 		*c -= 040;
 }
 
+void
 lower(c)
 register char	*c;
 {
@@ -1327,6 +1376,7 @@ register char	*c;
 		*c += 040;
 }
 
+void
 case_reg(line1, char1, line2, char2, up)
 LINE	*line1,
 	*line2;
@@ -1361,16 +1411,19 @@ LINE	*line1,
 	getDOT();
 }
 
+void
 CasRegLower()
 {
 	CaseReg(0);
 }
 
+void
 CasRegUpper()
 {
 	CaseReg(1);
 }
 
+void
 CaseReg(up)
 {
 	register MARK	*mp = CurMark();

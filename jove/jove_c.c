@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 11.2  1995/06/21  03:39:14  gwyn
+ * Eliminated trailing blanks.
+ *
  * Revision 11.1  95/01/04  10:35:09  mike
  * Release_4.4
  *
@@ -102,11 +105,13 @@ done:
 	return &ret;
 }
 
+void
 Fparen()
 {
 	FindMatch(1);
 }
 
+void
 Bparen()
 {
 	FindMatch(-1);
@@ -116,6 +121,7 @@ Bparen()
  * in the buffer.
  */
 
+void
 FindMatch(dir)
 {
 	BUFLOC	*bp;

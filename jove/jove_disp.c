@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 11.2  1995/06/21  03:40:01  gwyn
+ * Eliminated trailing blanks.
+ *
  * Revision 11.1  95/01/04  10:35:11  mike
  * Release_4.4
  *
@@ -70,6 +73,7 @@ extern char	mesgbuf[];
    buffer.  If the w->w_line or w->w_top are deleted and this procedure
    is not called, the redisplay routine will barf. */
 
+void
 KludgeWindows(line1, line2)
 LINE	*line1;
 register LINE	*line2;
@@ -355,6 +359,7 @@ register WINDOW	*w;
 /* Make `buf' modified and tell the redisplay code to update the modeline
    if it will need to be changed. */
 
+void
 SetModified(buf)
 BUFFER	*buf;
 {
@@ -366,6 +371,7 @@ BUFFER	*buf;
 	DOLsave++;
 }
 
+void
 SetUnmodified(buf)
 BUFFER	*buf;
 {
@@ -377,6 +383,7 @@ BUFFER	*buf;
 /* Write whatever is in mesgbuf (maybe we are Asking,  or just printed
    a message.  Turns off the Update Mesg line flag */
 
+void
 UpdateMesg()
 {
 	i_set(LI - 1, 0);
@@ -402,6 +409,7 @@ GotoDot()
 
 /* Put the current line of `w' in the middle of the window */
 
+void
 CalcTop(w)
 WINDOW	*w;
 {
@@ -413,6 +421,7 @@ int	ScrollStep = 0;		/* Full scrolling */
 /* Calculate the new topline of the screen; different when in single-scroll
    mode */
 
+void
 CalcScroll(w)
 register WINDOW	*w;
 {
@@ -488,9 +497,11 @@ register int	at,
 	return 1;
 }
 
+void
 DeTab(StartCol, buf, outbuf, limit)
 register char	*buf;
 char	*outbuf;
+int limit;
 {
 	register char	*op = outbuf,
 			c;
@@ -526,6 +537,7 @@ char	*outbuf;
  * characters typed
  */
 
+void
 UpdateLine(w, linenum)
 register WINDOW	*w;
 register int	linenum;
@@ -556,7 +568,7 @@ register int	linenum;
 			} else
 				bptr = getcptr(np->Line, buff);
 			DeTab(np->StartCol, bptr,
-				outbuf, (sizeof outbuf) - 1);
+				outbuf, (int)(sizeof outbuf) - 1);
 			if (IDchar(outbuf, linenum, 0))
 				oimage[linenum] = *np;
 			else if (i_set(linenum, 0), swrite(outbuf))
@@ -573,6 +585,7 @@ register int	linenum;
 	}
 }
 
+void
 do_cl_eol(linenum)
 register int	linenum;
 {
@@ -596,6 +609,7 @@ int	CElen = 0;
 /*
  *  Initialization routine.  Called from jove_term.c.
  */
+void
 disp_opt_init()
 {
 	if (DC) DClen = strlen(DC);
@@ -715,6 +729,7 @@ extern int	CapCol;
 extern char	*cursend;
 extern struct screenline	*Curline;
 
+void
 DelChar(lineno, col, num)
 {
 	register int	i;
@@ -742,6 +757,7 @@ DelChar(lineno, col, num)
 	sp->s_length -= num;
 }
 
+void
 InsChar(lineno, col, num, new)
 char	*new;
 {
