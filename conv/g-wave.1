@@ -2,7 +2,7 @@
 .SH NAME
 g-wave \- Wavefront Translator (BRL-CAD to Wavefront)
 .SH SYNOPSIS
-.B g-Wavefront [-vi] [-xX lvl]
+.B g-wave [-vi] [-xX lvl]
 [-e error_file] [-D calculation_tolerance ]
 [-a abs_tol] [-r rel_tol] [-n norm_tol] [-o Wavefront_file] database.g object(s)
 .SH DESCRIPTION
@@ -39,12 +39,14 @@ The
 option specifies a file for receiving the error messages.
 .SH EXAMPLE
 .RS
-$ \|\fIg-Wavefront \|-o sample.Wavefront \|sample.g \|sample_object\fP
+$ \|\fIg-wave \|-o sample.Wavefront \|sample.g \|sample_object\fP
 .RE
 .SH DIAGNOSTICS
 Error messages are intended to be self-explanatory.
-.SH AUTHOR
+.SH AUTHORS
 John Anderson
+.br
+William Mermagen, Jr.
 .SH SOURCE
 SLAD/BVLD/VMB Advanced Computer Systems Team
 .br
