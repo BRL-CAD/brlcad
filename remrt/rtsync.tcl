@@ -73,12 +73,28 @@ button .status.drop -text "DROP" -command \
 	{set node_num [lindex [selection get] 0]; \
 	drop_rtnode $node_num; update_cpu_status}
 listbox .status.list -height 1 -width 60
+label .status.global1 -textvariable cur_global1_status
+label .status.global2 -textvariable cur_global2_status
+label .status.global3 -textvariable cur_global3_status
+label .status.global4 -textvariable cur_global4_status
 pack .status.incr .status.decr .status.drop -side left -in .status.incr_fr
-pack .status.button .status.incr_fr .status.list -side top -in .status
+pack .status.button .status.incr_fr .status.list \
+	.status.global1 .status.global2 .status.global3 .status.global4 \
+	-side top -in .status
+	
 
 
 proc update_cpu_status {} {
 	global	cur_vrmgr_status
+	global	cur_global1_status
+	global	cur_global2_status
+	global	cur_global3_status
+	global	cur_global4_status
+
+	set cur_global1_status [get_stats -1]
+	set cur_global2_status [get_stats -2]
+	set cur_global3_status [get_stats -3]
+	set cur_global4_status [get_stats -4]
 
 	set nodes [list_rtnodes]
 
