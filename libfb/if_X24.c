@@ -614,14 +614,14 @@ GC gc;
 	  xi->xi_mode = FLG_VT16 << 1;
       else
 	  xi->xi_mode = FLG_VS1 << 1;
-  } else if (vip->class = DirectColor) {
+  } else if (vip->class == DirectColor) {
       if (vip->depth >= 24)
 	  xi->xi_mode = FLG_VD24 << 1;
       else if (vip->depth >= 16)
 	  xi->xi_mode = FLG_VD16 << 1;
       else
 	  xi->xi_mode = FLG_VS1 << 1;
-  } else if (vip->class = PseudoColor) {
+  } else if (vip->class == PseudoColor) {
       if (vip->depth >= 8)
 	  xi->xi_mode = FLG_VP8 << 1;
       else
