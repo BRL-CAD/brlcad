@@ -451,9 +451,11 @@ struct application *ap;
 		struct floatpixel	*tmp;
 		/* Transmitting scanlines, is done by rtsync before calling here. */
 		/* Exchange previous and current buffers.  No freeing. */
-		tmp = prev_float_frame;
-		prev_float_frame = curr_float_frame;
-		curr_float_frame = tmp;
+		if( reproject_mode != 2 )  {
+			tmp = prev_float_frame;
+			prev_float_frame = curr_float_frame;
+			curr_float_frame = tmp;
+		}
 	}
 
 	if( scanline )  free_scanlines();
@@ -1031,6 +1033,7 @@ bu_log("mallocing curr_float_frame\n");
 			     fp >= curr_float_frame; fp--
 			) {
 				fp->ff_frame = -1;
+fp->ff_color[0] = fp->ff_color[1] = 50; fp->ff_color[2] = 0;	/* orange -- sanity */
 			}
 		}
 
@@ -1060,16 +1063,34 @@ bu_log("mallocing curr_float_frame\n");
 				op = &curr_float_frame[iy*width + ix];
 				/* Don't reproject again if new val is more distant */
 				if( op->ff_frame >= 0 )  {
-					/* XXX Need to recompute both distances from current eye_pt! */
-/* XXXXXX This is main source of speckles */
-					if( op->ff_dist < ip->ff_dist )  continue;
+					point_t o_pt;
+#if 0
+static int foo;
+#endif
+					/* Recompute both distances from current eye_pt! */
+					/* Inefficient, only need Z component. */
+					MAT4X3PNT(o_pt, model2view, op->ff_hitpt);
+#if 0
+if( foo != curframe )  {
+extern int print_on;
+	foo = curframe;
+	print_on = 1;
+	bu_log("  ip=(%g,%g,%g) ip_view=(%g,%g,%g)\n  op=(%g,%g,%g), o_pt=(%g,%g,%g)\n",
+		V3ARGS(ip->ff_hitpt), V3ARGS(new_view_pt),
+		V3ARGS(op->ff_hitpt), V3ARGS(o_pt) );
+}
+#endif
+					if( o_pt[Z] > new_view_pt[Z] )  continue;
 					else count--;	/* Don't double-count */
 				}
 				/* Don't reproject too many times */
 				/* See if old pixel is more then N frames old */
+#if 0
 				agelim = ((iy+ix)&03)+2;
+agelim = 30;
 				if( curframe - ip->ff_frame >= agelim )
 					continue;
+#endif
 				/* re-use old pixel as new pixel */
 				*op = *ip;	/* struct copy */
 				count++;

@@ -37,6 +37,7 @@ menu .mbar.help.menu
 .mbar.help.menu add command -label "Exit" -command "exit"
 menu .mbar.debug.menu
 .mbar.debug.menu add command -label "Reproject ON" -command "do_reproject_mode 1"
+.mbar.debug.menu add command -label "Reproject HOLD" -command "do_reproject_mode 2"
 .mbar.debug.menu add command -label "Reproject OFF" -command "do_reproject_mode 0"
 .mbar.debug.menu add command -label "Net Speed Test ON" -command "net_speed_test 1"
 .mbar.debug.menu add command -label "Net Speed Test OFF" -command "net_speed_test 0"
