@@ -442,20 +442,20 @@ set -S2 "/bin/sh"
 /*	Silicon Graphics 4D, running IRIX64 6.4 (on a MIPS4 machine) */
 #	undef	sgi
 #	define	MTYPE	m4i64
-#	if 0	/* PRODUCTION=1 */
+#	if 1	/* PRODUCTION=1 */
 /*		This version for production: optimization & shared libraries */
-/*		Warning 1174 is "variable declared but never referenced". */
-/*		Warning 1032 is "expression must have arithmetic type". */
+/*		Warning 1429 is "the type "long long" is nonstandard " (/usr/include/sys/time.h) */
 /*		Warning 1203 is "nonstandard type for a bit field" (libpkg). */
 /*		Warning 1048 is "cast between pointer-to-object and pointer-to-function */
 /*		Warning 1110 is "statement is unreachable" */
-/*		Warning 1429 is "the type "long long" is nonstandard " (/usr/include/sys/time.h) */
 /*		Warning 1412 is "destination type of cast is too small to hold all pointers: truncation possible" */
 /*		Warning 1167 is "pointer points outside of underlying object" (tab/script.l) */
-#		define	OPTIMIZER	-O2 -OPT:fold_arith_limit=16000 \
-					-OPT:const_copy_limit=16000 \
-					-use_readonly_const \
-					-woff 1429,1203,1048,1110,1412,1167 -Wl,-w
+/*		Warning 1209 is "controlling expression is constant" */
+#		define	OPTIMIZER	-O3 -r10000 \
+			-OPT:const_copy_limit=20000:Olimit=0 \
+			-use_readonly_const \
+			-woff 1429,1203,1048,1110,1412,1167,1209 \
+			-Wl,-w
 /*		-Wl,-S doesn't work! use -Wl,-w.  SGI case #0390575. */
 #	else
 /*		This version for debugging with DBX */
@@ -516,10 +516,11 @@ set -S2 "/bin/sh"
 /*		Warning 1429 is "the type "long long" is nonstandard " (/usr/include/sys/time.h) */
 /*		Warning 1412 is "destination type of cast is too small to hold all pointers: truncation possible" */
 /*		Warning 1167 is "pointer points outside of underlying object" (tab/script.l) */
-#		define	OPTIMIZER	-O2 -OPT:fold_arith_limit=16000 \
-					-OPT:const_copy_limit=16000 \
-					-use_readonly_const \
-					-woff 1429,1203,1048,1110,1412,1167 -Wl,-w
+#		define	OPTIMIZER	-O3 -r10000 \
+			-OPT:const_copy_limit=20000:Olimit=0 \
+			-use_readonly_const \
+			-woff 1429,1203,1048,1110,1412,1167,1209 \
+			-Wl,-w
 /*		-Wl,-S doesn't work! use -Wl,-w.  SGI case #0390575. */
 #	else
 /*		This version for debugging with DBX */
