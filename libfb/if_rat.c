@@ -13,12 +13,15 @@
  *	Indianapolis, IN  46206-0420
  *
  */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (BRL)";
+#endif
 
 #include <stdio.h>
 #include <fcntl.h>
 #include <sys/types.h>
+#include "fb.h"
 #include "./fblocal.h"
-#include "./fb.h"
 
 /* typedef unsigned char	u_char;	*/
 int	_fbfd;
@@ -79,7 +82,7 @@ FBIO rat_interface =  {
 	rat_curs_set,			/* curs_set		*/
 	rat_cmemory_addr,		/* cursor_move_memory_addr */
 	rat_cscreen_addr,		/* cursor_move_screen_addr */
-	"Raster Technology one/80",	/* device description	*/
+	"Raster Technology One/80",	/* device description	*/
 	1024,				/* max width		*/
 	1024,				/* max height		*/
 	"/dev/rt",			/* short device name	*/
