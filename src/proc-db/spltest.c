@@ -7,8 +7,11 @@
 static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "common.h"
+
 #include <stdio.h>
 #include <math.h>
+
 #include "machine.h"
 #include "vmath.h"
 #include "rtlist.h"
@@ -17,19 +20,28 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "rtgeom.h"
 #include "wdb.h"
 
+
 struct rt_nurb_internal	si;
 
 void make_face( point_t a, point_t b, point_t c, point_t d, int order);
 
+
 main(int argc, char **argv)
 {
 	point_t	a,b,c,d;
+	struct rt_wdb *fp;
 
 	si.magic = RT_NURB_INTERNAL_MAGIC;
 	si.nsrf = 0;
 	si.srfs = (struct face_g_snurb **)bu_malloc( sizeof(struct face_g_snurb *)*100, "snurb ptrs");
 
-	mk_id( stdout, "Mike's Spline Test" );
+	if ((fp = wdb_fopen(argv[1])) == NULL) {
+	  bu_log("unable to open new database [%s]\n", argv[1]);
+	  perror("unable to open database file");
+	  exit(1);
+	}
+
+	mk_id( fp, "Mike's Spline Test" );
 
 	VSET( a,  0,  0,  0 );
 	VSET( b, 10,  0,  0 );
@@ -38,7 +50,7 @@ main(int argc, char **argv)
 
 	make_face( a, b, c, d, 2 );
 
-	mk_export_fwrite( stdout, "spl", (genptr_t)&si, ID_BSPLINE );
+	mk_export_fwrite( fp, "spl", (genptr_t)&si, ID_BSPLINE );
 }
 
 void
