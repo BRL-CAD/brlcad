@@ -60,7 +60,7 @@ static FILE	*fd_plot=NULL;		/* file for plot output */
 static FILE	*fd_muves=NULL;		/* file for MUVES data, output CHGCOMP and CBACKING data */
 static int	grid_size;		/* Number of points that will fit in current grid_pts array */
 static int	max_grid_no=0;		/* Maximum grid number used */
-static int	mode=0;			/* Plate mode (1) or volume mode (2) */
+static int	mode=0;			/* Plate mode (1) or volume mode (2), of current component */
 static int	group_id=(-1);		/* Group identification number from SECTION card */
 static int	comp_id=(-1);		/* Component identification number from SECTION card */
 static int	region_id=0;		/* Region id number (group id no X 1000 + component id no) */
@@ -135,14 +135,18 @@ void make_solid_name();
 /* convenient macro for building regions */
 #define		MK_REGION( fp , headp , name , r_id ) \
 			{\
-				if( !quiet ) \
-					bu_log( "Making region: %s\n", name ); \
-				if( mode == 1 )\
+				if( mode == 1 ) {\
+					if( !quiet )\
+						bu_log( "Making region: %s (PLATE)\n", name ); \
 					mk_fastgen_region( fp , name , &((headp)->l) , 'P' ,\
 						(char *)NULL, (char *)NULL, (unsigned char *)NULL, r_id, 0, 0, 0, 0 ); \
-				else if( mode == 2 )\
+				}\
+				else if( mode == 2 ) {\
+					if( !quiet ) \
+						bu_log( "Making region: %s (VOLUME)\n", name ); \
 					mk_fastgen_region( fp , name , &((headp)->l) , 'V' ,\
 						(char *)NULL, (char *)NULL, (unsigned char *)NULL, r_id, 0, 0, 0, 0 ); \
+				}\
 				else\
 				{\
 					bu_log( "Illegal mode (%d), while trying to make region (%s)\n",\
@@ -209,6 +213,7 @@ struct name_tree
 {
 	long magic;
 	int region_id;
+	int mode;		/* PLATE_MODE or VOLUME_MODE */
 	int inner;		/* 0 => this is a base/group name for a FASTGEN element */
 	int in_comp_group;	/* > 0 -> region already in a component group */
 	char name[NAMESIZE+1];
@@ -922,6 +927,7 @@ int reg_id;
 	new_ptr->nleft = (struct name_tree *)NULL;
 	new_ptr->nright = (struct name_tree *)NULL;
 	new_ptr->region_id = reg_id;
+	new_ptr->mode = mode;
 	new_ptr->inner = -1;
 	new_ptr->in_comp_group = 0;
 	strncpy( new_ptr->name , name , NAMESIZE+1 );
@@ -3302,8 +3308,9 @@ void make_regions()
 		while( splt && splt->ident_to_split != ptr1->region_id )
 			splt = splt->next;
 
+		mode = ptr1->mode;
 		if( debug )
-			bu_log( "Build region for %s %d\n", ptr1->name, ptr1->region_id );
+			bu_log( "Build region for %s %d, mode = %d\n", ptr1->name, ptr1->region_id, mode );
 
 		if( splt )
 		{
