@@ -49,7 +49,9 @@ CONST struct db_tree_state	rt_initial_tree_state = {
 	0,			/* ts_dbip */
 	0,			/* ts_sofar */
 	0, 0, 0, 0,		/* region, air, gmater, LOS */
+#if __STDC__
 	{
+#endif
 		/* struct mater_info ts_mater */
 		1.0, 1.0, 1.0,		/* color, RGB */
 		0,			/* override */
@@ -57,7 +59,10 @@ CONST struct db_tree_state	rt_initial_tree_state = {
 		DB_INH_LOWER,		/* mater inherit */
 		"",			/* material name */
 		""			/* material params */
-	},
+#if __STDC__
+	}
+#endif
+	,
 	1.0, 0.0, 0.0, 0.0,
 	0.0, 1.0, 0.0, 0.0,
 	0.0, 0.0, 1.0, 0.0,
