@@ -27,18 +27,18 @@ esac
 AC_DEFINE(EXTERN_STDOUT,,[Stdout is extern])
 
 dnl libs
+SAVELIBS="${LIBS}"
 
 dnl need curses, would prefer ncurses
-SAVELIBS="${LIBS}"
 LIBS=
 AC_SEARCH_LIBS(initscr, ncurses curses,, AC_MSG_ERROR([Need curses!]))
 CURSES="${LIBS}"
-LIBS="${SAVELIBS}"
 
-SAVELIBS="${LIBS}"
 LIBS=
 AC_SEARCH_LIBS(getvideo, gl, AC_DEFINE(HAS_SGIGL,1, Irix GL is present.))
 SGIGL="${LIBS}"
+
+
 LIBS="${SAVELIBS}"
 
 AC_SEARCH_LIBS(mallopt,malloc)
@@ -48,6 +48,8 @@ AC_SEARCH_LIBS(matherr,mx)
 dnl X
 X_LIBS="-L/usr/X11R6/lib -lX11 -lXi"
 
+
+dnl tcl
 TCLVER=8.4
 TCL=libtcl${TCLVER}
 TCL_LIBS='${top_builddir}/${TCL}/${TCL}.la ${DL} ${SOCKET} -lm'
@@ -59,12 +61,14 @@ else
     TCL_BUILD_CFLAGS="-DTCL_PACKAGE_PATH=\\\"$libdir\\\" -DTCL_LIBRARY=\\\"$TCL_LIBRARY\\\""
 fi
 
+
 dnl tk
 TKVER="8.4"
 TK_LIBS='${top_builddir}/libtk${TKVER}/libtk${TKVER}.la ${TCL_LIBS} ${X_LIBS}'
 TK_LIBRARY="$prefix/tk${TKVER}"
 
-ITCL_VERSION="3.2"
+dnl itcl
+ITCL_VERSION="3.3"
 ITCL_LIBS='${top_builddir}/libitcl/itcl/libitcl.la'
 ITK_LIBS='${top_builddir}/libitcl/itk/libitk.la'
 
@@ -75,15 +79,7 @@ AC_HEADER_STDC
 AC_CHECK_HEADERS(float.h getopt.h limits.h limits.h memory.h stdarg.h stdlib.h string.h sys/ioctl_compat.h sys/machd.h sys/mman.h sys/select.h sys/socket.h sys/stat.h sys/time.h sys/types.h termcap.h termios.h time.h unistd.h varargs.h xosdefs.h)
 AC_CHECK_HEADER(sys/stat.h, AC_DEFINE(HAVE_UNIX_IO,, Fix this, sys/types.h and sys/stat.h ...))
 AC_CHECK_HEADER(sys/time.h, AC_DEFINE(TIME_WITH_SYS_TIME,1,sys/time.h))
-AC_DIAGNOSE([obsolete],[AC_STRUCT_ST_BLKSIZE:
-        your code should no longer depend upon `HAVE_ST_BLKSIZE', but
-        `HAVE_STRUCT_STAT_ST_BLKSIZE'.  Remove this warning and
-        the `AC_DEFINE' when you adjust the code.])
-AC_CHECK_MEMBERS([struct stat.st_blksize],[AC_DEFINE(HAVE_ST_BLKSIZE, 1,
-                            [Define to 1 if your `struct stat' has
-                             `st_blksize'.  Deprecated, use
-                             `HAVE_STRUCT_STAT_ST_BLKSIZE' instead.])])
-
+AC_CHECK_MEMBERS([struct stat.st_blksize],[AC_DEFINE(HAVE_ST_BLKSIZE, 1, [the old blksize define])])
 
 JAVA_CFLAGS=
 have_java=no
@@ -131,7 +127,7 @@ AC_CHECK_FUNC(strdup, AC_DEFINE(HAVE_STRDUP_DECL,1,strdup))
 AC_CHECK_FUNCS(dlopen, DL="" ,[AC_CHECK_LIB(dl, dlopen, DL="-ldl", AC_CHECK_LIB(dld, dlopen, DL="-ldld", AC_MSG_ERROR([No dynamic loader found])))])
 AC_CHECK_FUNCS(drand gethostname vprintf sbrk vfork dlopen bzero strdup strcasecmp strchr getopt writev regex strdup)
 AC_CHECK_FUNCS(socket, SOCKET="" ,[AC_CHECK_LIB(socket, socket, SOCKET="-lsocket", AC_MSG_ERROR([No internet socket found]))])
-AC_CHECK_FUNCS(re_comp, REGEX_LIB="", [AC_CHECK_LIB(compat, re_comp, REGEX_LIB="-lcompat",)])
+dnl AC_CHECK_FUNCS(re_comp, REGEX_LIB="", [AC_CHECK_LIB(compat, re_comp, REGEX_LIB="-lcompat",)])
 
 dnl TODO this needs to be fixed to actually test...
 case "$target" in
