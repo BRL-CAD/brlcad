@@ -2621,7 +2621,7 @@ struct nmg_ray_state *rs;
 
 			if( other_is_in_best )
 			{
-				if( class == NMG_CLASS_AinB || (class == NMG_CLASS_AonBshared && lu->orientation == OT_OPPOSITE) )
+				if( class == NMG_CLASS_AinB || (class == NMG_CLASS_AonBshared && lu->orientation == OT_SAME) )
 				{
 
 					best_vu = rs->vu[i];
@@ -2636,7 +2636,7 @@ struct nmg_ray_state *rs;
 			}
 			else
 			{
-				if( class == NMG_CLASS_AoutB ||  (class == NMG_CLASS_AonBshared && lu->orientation == OT_OPPOSITE) )
+				if( class == NMG_CLASS_AoutB || (class == NMG_CLASS_AonBshared && lu->orientation == OT_OPPOSITE) )
 				{
 					best_vu = rs->vu[i];
 					best_lu = lu;
