@@ -235,19 +235,11 @@ struct dm_list {
 #define eventHandler curr_dm_list->_eventHandler
 #define mged_variables curr_dm_list->_mged_variables
 
-#if 1
 #define menu_array curr_dm_list->menu_vars->_menu_array
 #define menuflag curr_dm_list->menu_vars->_menuflag
 #define menu_top curr_dm_list->menu_vars->_menu_top
 #define cur_menu curr_dm_list->menu_vars->_cur_menu
 #define cur_item curr_dm_list->menu_vars->_cur_menu_item
-#else
-#define menu_array curr_dm_list->_menu_array
-#define menuflag curr_dm_list->_menuflag
-#define menu_top curr_dm_list->_menu_top
-#define cur_menu curr_dm_list->_cur_menu
-#define cur_item curr_dm_list->_cur_menu_item
-#endif
 
 #define curs_x curr_dm_list->s_info->_curs_x
 #define curs_y curr_dm_list->s_info->_curs_y
@@ -395,9 +387,6 @@ struct dm_list {
 #define BE_S_CONTEXT    4+32
 
 #define BV_MAXFUNC	64	/* largest code used */
-
-#define MGED_EVENT_HANDLER_NULL (int (*)())NULL
-#define DM_EVENTHANDLER(_dmp,_clientData,_eventPtr) _dmp->dm_eventHandler(_clientData,_eventPtr)
 
 #define FOR_ALL_DISPLAYS(p,hp) \
 	for(BU_LIST_FOR(p,dm_list,hp))

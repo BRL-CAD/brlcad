@@ -162,9 +162,6 @@ char	**argv;
 	}
 
 	color_soltab();
-#if 0
-	dmp->dm_colorchange(dmp);
-#endif
 
 	return TCL_OK;
 }
@@ -271,9 +268,6 @@ char	**argv;
 	(void)unlink( tempfile );
 
 	color_soltab();
-#if 0
-	dmp->dm_colorchange(dmp);
-#endif
 
 	return TCL_OK;
 }
