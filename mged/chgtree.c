@@ -446,7 +446,7 @@ char	**argv;
 	VADD2( tgc_ip->v , tgc_ip->v , tgc_ip->h );
 
 	/* now export the new TGC */
-	if( rt_functab[internal.idb_type].ft_export( &external, &internal, local2base ) < 0 )
+	if( rt_functab[internal.idb_type].ft_export( &external, &internal, (double)1.0 ) < 0 )
 	{
 		rt_log( "f_copy_inv: export failure\n" );
 		rt_functab[internal.idb_type].ft_ifree( &internal );
