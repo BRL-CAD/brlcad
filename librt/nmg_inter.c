@@ -4083,6 +4083,7 @@ CONST struct rt_tol	*tol;
 	struct edgeuse	*eu1;
 	struct edgeuse	*eu2;
 	char		*flags;
+	int		flag_len;
 
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)
 		rt_log("nmg_crackshells(s1=x%x, s2=x%x)\n", s1, s2);
@@ -4125,7 +4126,8 @@ CONST struct rt_tol	*tol;
 		return;
 
 	/* XXX This is dangerous:  maxindex will grow rapidly! */
-	flags = (char *)rt_calloc( s1->r_p->m_p->maxindex * 4, sizeof(char),
+	flag_len = s1->r_p->m_p->maxindex * 10;
+	flags = (char *)rt_calloc( flag_len, sizeof(char),
 		"nmg_crackshells flags[]" );
 
 	/*
@@ -4133,6 +4135,7 @@ CONST struct rt_tol	*tol;
 	 *  if they overlap the extent of shell 2
 	 */
 	for( RT_LIST_FOR( fu1, faceuse, &s1->fu_hd ) )  {
+		if( s1->r_p->m_p->maxindex >= flag_len )  rt_bomb("nmg_crackshells() flag_len overrun\n");
 		NMG_CK_FACEUSE(fu1);
 		f1 = fu1->f_p;
 		NMG_CK_FACE(f1);
@@ -4248,6 +4251,7 @@ CONST struct rt_tol	*tol;
 		/* Check vert of s1 against vert of s2 */
 		/* Unnecessary: already done by vertex fuser */
 	}
+	if( s1->r_p->m_p->maxindex >= flag_len )  rt_bomb("nmg_crackshells() flag_len overrun by end\n");
 
 	/* Release storage from bogus isect line */
 	(void)nmg_tbl(&vert_list1, TBL_FREE, (long *)NULL);
