@@ -73,10 +73,10 @@ CONST char *rhs;
 	char		*lhs;
 
 	/* The environment variable, if set, takes priority */
-	if( (lhs = getenv("BRLCAD_BASEDIR")) != NULL )  {
+	if( (lhs = getenv("BRLCAD_ROOT")) != NULL )  {
 		if( bu_file_exists(lhs) )
 			goto ok;
-		bu_log("You set environment variable BRLCAD_BASEDIR to '%s', which does not exist.  Seeking=%s\n", lhs, rhs);
+		bu_log("You set environment variable BRLCAD_ROOT to '%s', which does not exist.  Seeking=%s\n", lhs, rhs);
 		bu_bomb("bu_brlcad_path()");
 	}
 
@@ -90,11 +90,11 @@ CONST char *rhs;
 Unable to find the directory that BRL-CAD is installed in\n\
 while seeking '%s'.\n\
 This version of LIBBU was compiled to expect BRL-CAD in '%s'.\n\
-Please set your environment variable BRLCAD_BASEDIR with the correct path.\n\
+Please set your environment variable BRLCAD_ROOT with the correct path.\n\
 csh/tcsh users:\n\
-	setenv BRLCAD_BASEDIR /usr/brlcad\n\
+	setenv BRLCAD_ROOT /usr/brlcad\n\
 sh/bash users:\n\
-	BRLCAD_BASEDIR=/usr/brlcad; export BRLCAD_BASEDIR\n",
+	BRLCAD_ROOT=/usr/brlcad; export BRLCAD_ROOT\n",
 		rhs, lhs);
 	bu_bomb("bu_brlcad_path()");
 
