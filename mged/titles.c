@@ -229,6 +229,7 @@ dotitles(struct bu_vls *overlay_vls)
 	typedef char    c_buf[80];
 	auto c_buf      cent_x, cent_y, cent_z, size, ang_x, ang_y, ang_z;
 	int             ss_line_not_drawn=1; /* true if the second status line has not been drawn */
+	fastf_t		tmp_val;
 
 	if(dbip == DBI_NULL)
 	  return;
@@ -262,15 +263,36 @@ dotitles(struct bu_vls *overlay_vls)
 	  Tcl_SetVar(interp, bu_vls_addr(&vls), "", TCL_GLOBAL_ONLY);
 	}
 
-	sprintf(cent_x, "%.3f", -view_state->vs_vop->vo_center[MDX]*base2local);
-	sprintf(cent_y, "%.3f", -view_state->vs_vop->vo_center[MDY]*base2local);
-	sprintf(cent_z, "%.3f", -view_state->vs_vop->vo_center[MDZ]*base2local);
+	/* take some care here to avoid buffer overrun */
+	tmp_val = -view_state->vs_vop->vo_center[MDX]*base2local;
+	if( fabs( tmp_val ) < 10e70 ) {
+		sprintf(cent_x, "%.3f", tmp_val);
+	} else {
+		sprintf(cent_x, "%.3g", tmp_val);
+	}
+	tmp_val = -view_state->vs_vop->vo_center[MDY]*base2local;
+	if( fabs( tmp_val ) < 10e70 ) {
+		sprintf(cent_y, "%.3f", tmp_val);
+	} else {
+		sprintf(cent_y, "%.3g", tmp_val);
+	}
+	tmp_val = -view_state->vs_vop->vo_center[MDZ]*base2local;
+	if( fabs( tmp_val ) < 10e70 ) {
+		sprintf(cent_z, "%.3f", tmp_val);
+	} else {
+		sprintf(cent_z, "%.3g", tmp_val);
+	}
 	bu_vls_trunc(&vls, 0);
 	bu_vls_printf(&vls, "cent=(%s %s %s)", cent_x, cent_y, cent_z);
 	Tcl_SetVar(interp, bu_vls_addr(&curr_dm_list->dml_center_name),
 		   bu_vls_addr(&vls), TCL_GLOBAL_ONLY);
 
-	sprintf(size, "sz=%.3f", view_state->vs_vop->vo_size*base2local);
+	tmp_val = view_state->vs_vop->vo_size*base2local;
+	if( fabs( tmp_val ) < 10e70 ) {
+		sprintf(size, "sz=%.3f", tmp_val);
+	} else {
+		sprintf(size, "sz=%.3g", tmp_val);
+	}
 	Tcl_SetVar(interp, bu_vls_addr(&curr_dm_list->dml_size_name),
 		    size, TCL_GLOBAL_ONLY);
 
