@@ -45,6 +45,11 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "RtServerImpl.h"
 
+static int working_threads=0;
+static int max_working_threads=0;
+static pthread_mutex_t counter_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+
 /* number of cpus (only used for call to rt_prep_parallel) */
 int ncpus=1;
 
@@ -179,7 +184,7 @@ fillItemTree( jobject parent_node,
 #define RTS_FREE_RTSERVER_JOB( _p ) \
         { \
                 int _i; \
-                if( (_p)->l.forw ) { \
+		if( (_p)->l.forw != NULL && BU_LIST_NON_EMPTY( &((_p)->l) ) ) { \
                        BU_LIST_DEQUEUE( &((_p)->l) ); \
                 } \
                 for( _i=0 ; _i<BU_PTBL_LEN( &(_p)->rtjob_rays) ; _i++ ) { \
@@ -209,7 +214,9 @@ fillItemTree( jobject parent_node,
         }
 
 #define RTS_FREE_RAY_HIT( _p ) \
-        BU_LIST_DEQUEUE( &(_p)->l ); \
+	if(  (_p)->l.forw != NULL && BU_LIST_NON_EMPTY( &(_p)->l ) ) {\
+	        BU_LIST_DEQUEUE( &(_p)->l ); \
+	} \
         pthread_mutex_lock( &resource_mutex ); \
         BU_LIST_APPEND( &rts_resource.ray_hits, &(_p)->l ); \
         pthread_mutex_unlock( &resource_mutex ); \
@@ -221,7 +228,9 @@ fillItemTree( jobject parent_node,
                 while( BU_LIST_WHILE( _rhp, ray_hit, &(_p)->hitHead.l ) ) { \
                         RTS_FREE_RAY_HIT( _rhp ); \
                 } \
-                BU_LIST_DEQUEUE( &((_p)->l) ); \
+		if( (_p)->l.forw != NULL && BU_LIST_NON_EMPTY( &((_p)->l) ) ) {\
+	                BU_LIST_DEQUEUE( &((_p)->l) ); \
+		} \
                 pthread_mutex_lock( &resource_mutex ); \
                 BU_LIST_INSERT( &rts_resource.ray_results, &((_p)->l) ); \
                 pthread_mutex_unlock( &resource_mutex ); \
@@ -265,8 +274,9 @@ fillItemTree( jobject parent_node,
                 } \
                 if( (_p)->the_job ) { \
                      RTS_FREE_RTSERVER_JOB( (_p)->the_job ); \
+		     (_p)->the_job = NULL; \
                 } \
-                if( (_p)->l.forw ) { \
+                if( (_p)->l.forw != NULL && BU_LIST_NON_EMPTY( &((_p)->l) ) ) { \
                         BU_LIST_DEQUEUE( &((_p)->l) ); \
                 } \
                 pthread_mutex_lock( &resource_mutex ); \
@@ -275,6 +285,31 @@ fillItemTree( jobject parent_node,
         }
                 
 
+struct rtserver_job *
+rts_get_rtserver_job()
+{
+	struct rtserver_job *ajob;
+
+	RTS_GET_RTSERVER_JOB( ajob );
+
+	return ajob;
+}
+
+struct xray *
+rts_get_xray()
+{
+	struct xray *aray;
+
+	RTS_GET_XRAY( aray );
+
+	return aray;
+}
+
+void
+rts_free_rtserver_result( struct rtserver_result *result )
+{
+	RTS_FREE_RTSERVER_RESULT( result );
+}
 
 /* count the number of members in a bu_list structure */
 int
@@ -301,6 +336,12 @@ rts_resource_init()
 	BU_LIST_INIT( &rts_resource.rtserver_jobs );
 	bu_ptbl_init( &rts_resource.xrays, 128, "xrays" );
         pthread_mutex_unlock( &resource_mutex ); \
+}
+
+int
+get_max_working_threads()
+{
+	return max_working_threads;
 }
 
 
@@ -1043,6 +1084,14 @@ rtserver_thread( void *num )
 				BU_LIST_DEQUEUE( &ajob->l );
 				pthread_mutex_unlock( &input_queue_mutex[queue] );
 
+				pthread_mutex_lock( &counter_mutex );
+				working_threads++;
+				if( working_threads > max_working_threads ) {
+					max_working_threads = working_threads;
+				}
+				/*				fprintf( stderr, "max threads working at one time is: %d\n", max_working_threads ); */
+				pthread_mutex_unlock( &counter_mutex );
+
 				/* if this job is an exit signal, just exit */
 				if( ajob->exit_flag ) {
 					pthread_exit( (void *)0 );
@@ -1130,6 +1179,10 @@ rtserver_thread( void *num )
 					pthread_cond_broadcast( &output_queue_ready );
 					pthread_mutex_unlock( &output_queue_ready_mutex );
 				}
+
+				pthread_mutex_lock( &counter_mutex );
+				working_threads--;
+				pthread_mutex_unlock( &counter_mutex );
 
 				break;
 			} else {
@@ -1291,17 +1344,18 @@ rts_submit_job_and_wait( struct rtserver_job *ajob )
 
 		/* check for a result */
 		if( BU_LIST_NON_EMPTY( &output_queue[queue].l ) ) {
+			int found=0;
 			/* look for our result */
 			for( BU_LIST_FOR( aresult, rtserver_result, &output_queue[queue].l ) ) {
 				if( aresult->the_job->rtjob_id == id &&
 				    aresult->the_job->sessionid == sessionid ) {
 					BU_LIST_DEQUEUE( &aresult->l );
+				    	found = 1;
 					break;
 				}
 			}
 
-			if( aresult->the_job->rtjob_id == id &&
-			    aresult->the_job->sessionid == sessionid ) {
+			if( found ) {
 
 				/* unlock the queue */
 				pthread_mutex_unlock( &output_queue_mutex[queue] );
@@ -2010,6 +2064,10 @@ Java_mil_army_arl_muves_rtserver_RtServerImpl_rtsInit(JNIEnv *env, jobject obj, 
 	int thread_count, queue_count;
 	int i;
 
+	if( num_threads > 0 ) {
+		return ret;
+	}
+
 	rts_shutdown();
 	rts_init();
 
@@ -2305,6 +2363,13 @@ Java_mil_army_arl_muves_rtserver_RtServerImpl_getBoundingBox(JNIEnv *env, jobjec
 	}
 
 	return( bb );
+}
+
+void
+get_model_extents( int sessionid, point_t min, point_t max )
+{
+	VMOVE( min , rts_geometry[sessionid]->rts_mdl_min );
+	VMOVE( max , rts_geometry[sessionid]->rts_mdl_max );
 }
 
 #ifdef TESTING

@@ -18,3 +18,9 @@ AM_CFLAGS = ${JAVA_CFLAGS}
 librtserver_la_LDFLAGS = -version-info $(VERSION) ${JAVA_LDFLAGS}
 
 librtserver_la_LIBADD = ${RT} ${BN} ${BU} ${TCL}
+
+EXTRA_PROGRAMS = rtserverTest
+
+rtserverTest_SOURCES = rtserverTest.c
+
+rtserverTest_LDADD = ${lib_LTLIBRARIES}
