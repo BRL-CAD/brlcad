@@ -48,7 +48,7 @@
 
 #ifndef sqrt
 #	if defined(__STDC__) || (defined(sgi) && defined(mips))
-		extern double sqrt(double x);
+		extern double sqrt(double _sqrt_arg_x);
 #	else
 		extern double sqrt();
 #	endif
