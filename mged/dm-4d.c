@@ -40,6 +40,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <gl/gl.h>		/* SGI IRIS library */
 #include <gl/device.h>		/* SGI IRIS library */
 #include <gl/get.h>		/* SGI IRIS library */
+#include <gl/cg2vme.h>		/* SGI IRIS, for DE_R1 defn on IRIX 3 */
+#include <gl/addrs.h>		/* SGI IRIS, for DER1_STEREO defn on IRIX 3 */
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/invent.h>
@@ -342,13 +344,16 @@ Ir_open()
 				ir_has_rgb = 1;
 			ir_has_doublebuffer = 1;
 			break;
+#if defined(INV_LIGHT)
 		case INV_LIGHT:		/* Entry Level Indigo */
 			ir_is_gt = 0;
 			ir_has_zbuf = 1;
 			ir_has_doublebuffer = 0;
 			ir_has_rgb = 1;
 			break;
+#endif
 
+#if defined(INV_GR2)
                 case INV_GR2:		/* Elan Graphics */
                         if(inv->state & INV_GR2_ELAN)
                         {
@@ -358,7 +363,7 @@ Ir_open()
                                 ir_is_gt = 1;
                         }
                         break;
-
+#endif
 		}
 	}
 	endinvent();		/* frees internal inventory memory */
@@ -2134,4 +2139,43 @@ make_materials()
     lmdef (DEFLMODEL, 3, 0, local);
 
 
+}
+
+/*
+ *  Check to see if setmonitor(STR_RECT) will work.
+ *  Returns -
+ *	> 0	If stereo is available
+ *	0	If not
+ */
+int
+sgi_has_stereo()
+{
+#if !defined(__sgi) && !defined(__mips)
+	/* IRIX 3 systems, test to see if DER1_STEREO bit is
+	 * read/write (no hardware underneath), or
+	 * read only (hardware underneath, which can't be read back.
+	 */
+	int	rw_orig, rw1, rw2;
+
+	rw_orig = getvideo(DE_R1);
+	rw1 = rw_orig ^ DER1_STEREO;	/* Toggle the bit */
+	setvideo(DE_R1, rw1);
+	rw2 = getvideo(DE_R1);
+	if( rw1 != rw2 )  {
+		setvideo(DE_R1, rw_orig);/* Restore original state */
+		return 1;		/* Has stereo */
+	}
+	rw1 = rw1 ^ DER1_STEREO;	/* Toggle the bit, again */
+	setvideo(DE_R1, rw1);
+	rw2 = getvideo(DE_R1);
+	if( rw1 != rw2 )  {
+		setvideo(DE_R1, rw_orig);/* Restore original state */
+		return 1;		/* Has stereo */
+	}
+	setvideo(DE_R1, rw_orig);	/* Restore original state */
+	return 0;			/* Does not have stereo */
+#else
+	/* IRIX 4 systems */
+	return getgdesc(GD_STEREO);
+#endif
 }
