@@ -284,7 +284,7 @@ set -S2 "/bin/sh"
 /*	Silicon Graphics 4D, running IRIX 6.0 (on a 64-bit machine) */
 #	undef	sgi
 #	define	MTYPE	7d
-#	if 0	/* PRODUCTION=1 */
+#	if 1	/* PRODUCTION=1 */
 /*		This version for production: optimization & shared libraries */
 /*		Warning 1174 is "variable declared but never referenced". */
 /*		Warning 1032 is "expression must have arithmetic type". */
@@ -552,13 +552,13 @@ set -S2 "/bin/sh"
 #	define	HAS_TCP		1
 
 #	if 1	/* PRODUCTION=1 */
-#		define	OPTIMIZER	-fast -xO4
+#		define	OPTIMIZER	-dalign -xcg92 -xO4
 #	else
 #		define	OPTIMIZER	-g
 #	endif
-#	define	CC_OPTS		-Xc -K PIC
+#	define	CC_OPTS		-Xc -K PIC -v
 /*	SunPro C 2.0.1 does not define __sparc or sparc.  3.0 on does */
-#	define	CC_DEFS		-D_REENTRANT -D__sparc -DSUNOS=52
+#	define	CC_DEFS		-D_REENTRANT -D__sparc -DSUNOS=53
 
 /*	Shared library support */
 #	define	ARCH_SUF	so
@@ -580,7 +580,7 @@ set -S2 "/bin/sh"
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -I''XINCDIR -DIF_X
 #	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -R''XLIBDIR -lX11 -lnsl -lsocket
 
-#  if 0	/* PRODUCTION=1 */
+#  if 1	/* PRODUCTION=1 */
 #	define	MGED_OBJS	dm-X
 #	define	MGED_CONFIG	-DDM_X -I''XINCDIR
 #	define	MGED_LIBES	-L''XLIBDIR -R''XLIBDIR -lX11 -lnsl -lsocket
@@ -589,7 +589,9 @@ set -S2 "/bin/sh"
 #	define	XGLHOME		/opt/SUNWits/Graphics-sw/xgl-3.0
 #	define	MGED_OBJS	dm-X dm-xgl
 #	define	MGED_CONFIG	-DDM_X -DDM_XGL -I''XINCDIR -I''XGLHOME/include
-#	define	MGED_LIBES	-L''XLIBDIR -L''XGLHOME/lib -R''XLIBDIR -R''XGLHOME/lib -lxview -lolgx -lX11 -lxgl -lnsl -lsocket
+#	define	MGED_LIBES	-L''XLIBDIR -L''XGLHOME/lib -R''XLIBDIR \
+				-R''XGLHOME/lib \
+				-lX11 -lxgl -lnsl -lsocket -lXi
 #  endif
 
 /*	XMGED requires a Motif license and include/X11/Xm/Xm.h */
@@ -728,7 +730,7 @@ set -S2 "/bin/sh"
 #	define	HAS_SYMLINKS 1
 #	define	RANLIB	ar -s
 #	define	CC	gcc
-#	if 0	/* PRODUCTION=1 */
+#	if 1	/* PRODUCTION=1 */
 #		define	OPTIMIZER	-O2
 #	else
 #		define	OPTIMIZER	-g
@@ -774,7 +776,7 @@ set -S2 "/bin/sh"
  *								*
  *	These platforms have not been tested by ARL,		*
  *	and are considered "unsupported" system types.		*
- *	Many of these should work with little or no work.	*
+ *	Many of these should work with little or no effort.	*
  *								*
  ****************************************************************/
 
