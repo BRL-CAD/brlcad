@@ -2,13 +2,13 @@
  *		J O V E _ T U N E . C
  */
 
-#ifdef SYS5_SGI
-char	*TempFile	= "jovetXXXXXX";
-#else
+char	*TempFilePrefix	= "jovet";	/* for tempnam */
 char	*TempFile	= "/usr/tmp/jovetXXXXXX";
-#endif			/* Where jove should put the temp file */
+			/* Where mktemp should put the temp file */
+
 char	*ProcTmp	= "/tmp/jovepXXXXXX";
 			/* Where jove should put process temp files */
+
 char	*BinShell	= "/bin/sh";	/* /bin/sh or /bin/csh */
 					/* getenv("SHELL") will overide */
 char	*Describe	= "/usr/brl/lib/jove/describe.com";
