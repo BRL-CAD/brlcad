@@ -69,7 +69,7 @@ struct vrml_mat {
 };
 
 #define PL_O(_m)	offsetof(struct vrml_mat, _m)
-#define PL_OA(_m)	offsetofarray(struct vrml_mat, _m)
+#define PL_OA(_m)	bu_offsetofarray(struct vrml_mat, _m)
 
 struct bu_structparse vrml_mat_parse[]={
 	{"%s", TXT_NAME_LEN, "ma_shader", PL_OA(shader), 	FUNC_NULL },
@@ -80,8 +80,8 @@ struct bu_structparse vrml_mat_parse[]={
 	{"%f",	1, "angle",		PL_O(lt_angle),		FUNC_NULL },
 	{"%f",	1, "fract",		PL_O(lt_fraction),	FUNC_NULL },
 	{"%f",	3, "aim",		PL_OA(lt_dir),		FUNC_NULL },
-	{"%d",  1, "w",         	PL_O(tx_w),             FUNC_NULL },
-	{"%d",  1, "n",         	PL_O(tx_n),             FUNC_NULL },
+	{"%d",  1, "w",         	PL_O(tx_w),             BU_STRUCTPARSE_FUNC_NULL },
+	{"%d",  1, "n",         	PL_O(tx_n),             BU_STRUCTPARSE_FUNC_NULL },
 	{"%s",  TXT_NAME_LEN, "file",	PL_OA(tx_file), 	FUNC_NULL },
 	{"",	0, (char *)0,		0,			FUNC_NULL }
 };
@@ -100,7 +100,7 @@ static char	*out_file = NULL;	/* Output filename */
 static FILE	*fp_out;		/* Output file pointer */
 static struct db_i		*dbip;
 static struct rt_tess_tol	ttol;
-static struct rt_tol		tol;
+static struct bn_tol		tol;
 static struct model		*the_model;
 
 static struct db_tree_state	tree_state;	/* includes tol & model */
@@ -134,7 +134,7 @@ union tree			*curtree;
 	id = rt_db_get_internal( &intern, dp, dbip, (matp_t)NULL );
 	if( id < 0 )
 	{
-		rt_log( "Cannot internal form of %s\n", dp->d_namep );
+		bu_log( "Cannot internal form of %s\n", dp->d_namep );
 		return( -1 );
 	}
 
@@ -199,7 +199,7 @@ char	*argv[];
 	ttol.norm = 0.0;
 
 	/* XXX These need to be improved */
-	tol.magic = RT_TOL_MAGIC;
+	tol.magic = BN_TOL_MAGIC;
 	tol.dist = 0.005;
 	tol.dist_sq = tol.dist * tol.dist;
 	tol.perp = 1e-6;
@@ -212,7 +212,7 @@ char	*argv[];
 		nmg_eue_dist = 2.0;
 	}
 
-	RT_LIST_INIT( &rt_g.rtg_vlfree );	/* for vlist macros */
+	BU_LIST_INIT( &rt_g.rtg_vlfree );	/* for vlist macros */
 
 	/* Get command line arguments. */
 	while ((c = getopt(argc, argv, "d:a:n:o:r:vx:P:X:")) != EOF) {
@@ -264,7 +264,7 @@ char	*argv[];
 	/* Open brl-cad database */
 	if ((dbip = db_open( argv[optind] , "r")) == DBI_NULL)
 	{
-		rt_log( "Cannot open %s\n" , argv[optind] );
+		bu_log( "Cannot open %s\n" , argv[optind] );
 		perror(argv[0]);
 		exit(1);
 	}
@@ -276,7 +276,7 @@ char	*argv[];
 	{
 		if ((fp_out = fopen( out_file , "w")) == NULL)
 		{
-			rt_log( "Cannot open %s\n" , out_file );
+			bu_log( "Cannot open %s\n" , out_file );
 			perror( argv[0] );
 			return 2;
 		}
@@ -297,7 +297,7 @@ char	*argv[];
 		dp = db_lookup( dbip, argv[i], LOOKUP_QUIET );
 		if( dp == DIR_NULL )
 		{
-			rt_log( "Cannot find %s\n", argv[i] );
+			bu_log( "Cannot find %s\n", argv[i] );
 			continue;
 		}
 
@@ -326,11 +326,11 @@ char	*argv[];
 	/* Release dynamic storage */
 	nmg_km(the_model);
 
-	rt_vlist_cleanup();
+	bn_vlist_cleanup();
 	db_close(dbip);
 
 #if MEMORY_LEAK_CHECKING
-	rt_prmem("After complete G-NMG conversion");
+	bu_prmem("After complete G-NMG conversion");
 #endif
 
 	return 0;
@@ -344,7 +344,7 @@ struct model *m;
 struct mater_info *mater;
 {
 	struct nmgregion *reg;
-	struct nmg_ptbl verts;
+	struct bu_ptbl verts;
 	struct vrml_mat mat;
 	struct bu_vls vls;
 	char *tok;
@@ -446,7 +446,7 @@ struct mater_info *mater;
 
 			if( (tex_fd = open( mat.tx_file, O_RDONLY )) == (-1) )
 			{
-				rt_log( "Cannot open texture file (%s)\n", mat.tx_file );
+				bu_log( "Cannot open texture file (%s)\n", mat.tx_file );
 				perror( "g-vrml: " );
 			}
 			else
@@ -494,21 +494,21 @@ struct mater_info *mater;
 	if( !is_light )
 	{
 		/* triangulate any faceuses with holes */
-		for( RT_LIST_FOR( reg, nmgregion, &m->r_hd ) )
+		for( BU_LIST_FOR( reg, nmgregion, &m->r_hd ) )
 		{
 			struct shell *s;
 
 			NMG_CK_REGION( reg );
-			s = RT_LIST_FIRST( shell, &reg->s_hd );
-			while( RT_LIST_NOT_HEAD( s, &reg->s_hd ) )
+			s = BU_LIST_FIRST( shell, &reg->s_hd );
+			while( BU_LIST_NOT_HEAD( s, &reg->s_hd ) )
 			{
 				struct shell *next_s;
 				struct faceuse *fu;
 
 				NMG_CK_SHELL( s );
-				next_s = RT_LIST_PNEXT( shell, &s->l );
-				fu = RT_LIST_FIRST( faceuse, &s->fu_hd );
-				while( RT_LIST_NOT_HEAD( &fu->l, &s->fu_hd ) )
+				next_s = BU_LIST_PNEXT( shell, &s->l );
+				fu = BU_LIST_FIRST( faceuse, &s->fu_hd );
+				while( BU_LIST_NOT_HEAD( &fu->l, &s->fu_hd ) )
 				{
 					struct faceuse *next_fu;
 					struct loopuse *lu;
@@ -517,7 +517,7 @@ struct mater_info *mater;
 
 					NMG_CK_FACEUSE( fu );
 
-					next_fu = RT_LIST_PNEXT( faceuse, &fu->l );
+					next_fu = BU_LIST_PNEXT( faceuse, &fu->l );
 
 					if( fu->orientation != OT_SAME )
 					{
@@ -526,7 +526,7 @@ struct mater_info *mater;
 					}
 
 					/* check if this faceuse has any holes */
-					for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
+					for( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
 					{
 						NMG_CK_LOOPUSE( lu );
 						if( lu->orientation == OT_OPPOSITE )
@@ -534,12 +534,12 @@ struct mater_info *mater;
 							/* this is a hole, so
 							 * triangulate the faceuse
 							 */
-							if( RT_SETJUMP )
+							if( BU_SETJUMP )
 							{
-								RT_UNSETJUMP;
-								rt_log( "A face has failed triangulation!!!!\n" );
+								BU_UNSETJUMP;
+								bu_log( "A face has failed triangulation!!!!\n" );
 								if( next_fu == fu->fumate_p )
-									next_fu = RT_LIST_PNEXT( faceuse, &next_fu->l );
+									next_fu = BU_LIST_PNEXT( faceuse, &next_fu->l );
 								if( nmg_kfu( fu ) )
 								{
 									(void) nmg_ks( s );
@@ -549,7 +549,7 @@ struct mater_info *mater;
 							}
 							if( !face_is_dead )
 								nmg_triangulate_fu( fu, &tol );
-							RT_UNSETJUMP;
+							BU_UNSETJUMP;
 							break;
 						}
 
@@ -572,13 +572,13 @@ struct mater_info *mater;
 		VSETALL( ave_pt, 0.0 );
 	}
 
-	for( i=0 ; i<NMG_TBL_END( &verts ) ; i++ )
+	for( i=0 ; i<BU_PTBL_END( &verts ) ; i++ )
 	{
 		struct vertex *v;
 		struct vertex_g *vg;
 		point_t pt_meters;
 
-		v = (struct vertex *)NMG_TBL_GET( &verts, i );
+		v = (struct vertex *)BU_PTBL_GET( &verts, i );
 		NMG_CK_VERTEX( v );
 		vg = v->vg_p;
 		NMG_CK_VERTEX_G( vg );
@@ -604,7 +604,7 @@ struct mater_info *mater;
 	{
 		fastf_t one_over_count;
 
-		one_over_count = 1.0/(fastf_t)NMG_TBL_END( &verts );
+		one_over_count = 1.0/(fastf_t)BU_PTBL_END( &verts );
 		VSCALE( ave_pt, ave_pt, one_over_count );
 	}
 
@@ -612,17 +612,17 @@ struct mater_info *mater;
 	if( !is_light )
 	{
 		fprintf( fp, "\tIndexedFaceSet {\n\t\tcoordIndex [\n" );
-		for( RT_LIST_FOR( reg, nmgregion, &m->r_hd ) )
+		for( BU_LIST_FOR( reg, nmgregion, &m->r_hd ) )
 		{
 			struct shell *s;
 
 			NMG_CK_REGION( reg );
-			for( RT_LIST_FOR( s, shell, &reg->s_hd ) )
+			for( BU_LIST_FOR( s, shell, &reg->s_hd ) )
 			{
 				struct faceuse *fu;
 
 				NMG_CK_SHELL( s );
-				for( RT_LIST_FOR( fu, faceuse, &s->fu_hd ) )
+				for( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )
 				{
 					struct loopuse *lu;
 
@@ -631,13 +631,13 @@ struct mater_info *mater;
 					if( fu->orientation != OT_SAME )
 						continue;
 
-					for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
+					for( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
 					{
 						struct edgeuse *eu;
 
 						NMG_CK_LOOPUSE( lu );
 
-						if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+						if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
 							continue;
 
 						if( !first )
@@ -646,7 +646,7 @@ struct mater_info *mater;
 							first = 0;
 
 						fprintf( fp, "\t\t\t" );
-						for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+						for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
 						{
 							struct vertex *v;
 
@@ -654,7 +654,7 @@ struct mater_info *mater;
 
 							v = eu->vu_p->v_p;
 							NMG_CK_VERTEX( v );
-							fprintf( fp, " %d,", nmg_tbl( &verts, TBL_LOC, (long *)v ) );
+							fprintf( fp, " %d,", bu_ptbl_locate( &verts, (long *)v ) );
 						}
 						fprintf( fp, "-1" );
 					}
@@ -699,22 +699,22 @@ union tree		*curtree;
 {
 	extern FILE		*fp_fig;
 	struct nmgregion	*r;
-	struct rt_list		vhead;
+	struct bu_list		vhead;
 	union tree		*ret_tree;
 
 	RT_CK_TESS_TOL(tsp->ts_ttol);
-	RT_CK_TOL(tsp->ts_tol);
+	BN_CK_TOL(tsp->ts_tol);
 	NMG_CK_MODEL(*tsp->ts_m);
 
-	RT_LIST_INIT(&vhead);
+	BU_LIST_INIT(&vhead);
 
 	if (rt_g.debug&DEBUG_TREEWALK || verbose) {
 		char	*sofar = db_path_to_string(pathp);
-		rt_log("\ndo_region_end(%d %d%%) %s\n",
+		bu_log("\ndo_region_end(%d %d%%) %s\n",
 			regions_tried,
 			regions_tried>0 ? (regions_converted * 100) / regions_tried : 0,
 			sofar);
-		rt_free(sofar, "path string");
+		bu_free(sofar, "path string");
 	}
 
 	if (curtree->tr_op == OP_NOP)
@@ -724,10 +724,10 @@ union tree		*curtree;
 
 	regions_tried++;
 	/* Begin rt_bomb() protection */
-	if( RT_SETJUMP )
+	if( BU_SETJUMP )
 	{
 		/* Error, bail out */
-		RT_UNSETJUMP;		/* Relinquish the protection */
+		BU_UNSETJUMP;		/* Relinquish the protection */
 
 		/* Sometimes the NMG library adds debugging bits when
 		 * it detects an internal error, before rt_bomb().
@@ -747,7 +747,7 @@ union tree		*curtree;
 		}
 		else
 		{
-			rt_log("WARNING: tsp->ts_m pointer corrupted, ignoring it.\n");
+			bu_log("WARNING: tsp->ts_m pointer corrupted, ignoring it.\n");
 		}
 	
 		/* Now, make a new, clean model structure for next pass. */
@@ -761,7 +761,7 @@ union tree		*curtree;
 	else
 		r = (struct nmgregion *)NULL;
 
-	RT_UNSETJUMP;		/* Relinquish the protection */
+	BU_UNSETJUMP;		/* Relinquish the protection */
 	regions_converted++;
 	if (r != 0)
 	{
@@ -773,12 +773,12 @@ union tree		*curtree;
 		int empty_model=0;
 
 		/* Kill cracks */
-		s = RT_LIST_FIRST( shell, &r->s_hd );
-		while( RT_LIST_NOT_HEAD( &s->l, &r->s_hd ) )
+		s = BU_LIST_FIRST( shell, &r->s_hd );
+		while( BU_LIST_NOT_HEAD( &s->l, &r->s_hd ) )
 		{
 			struct shell *next_s;
 
-			next_s = RT_LIST_PNEXT( shell, &s->l );
+			next_s = BU_LIST_PNEXT( shell, &s->l );
 			if( nmg_kill_cracks( s ) )
 			{
 				if( nmg_ks( s ) )
@@ -820,7 +820,7 @@ union tree		*curtree;
 	db_free_tree(curtree);		/* Does an nmg_kr() */
 
 out:
-	GETUNION(curtree, tree);
+	BU_GETUNION(curtree, tree);
 	curtree->magic = RT_TREE_MAGIC;
 	curtree->tr_op = OP_NOP;
 	return(curtree);

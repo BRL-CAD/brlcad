@@ -137,15 +137,15 @@ top:
  */
 void
 get_ext( ep, ngran )
-struct rt_external	*ep;
+struct bu_external	*ep;
 int			ngran;
 {
 	int	count;
 
-	RT_INIT_EXTERNAL(ep);
+	BU_INIT_EXTERNAL(ep);
 
 	ep->ext_nbytes = ngran * sizeof(union record);
-	ep->ext_buf = (genptr_t)rt_malloc( ep->ext_nbytes, "get_ext ext_buf" );
+	ep->ext_buf = (genptr_t)bu_malloc( ep->ext_nbytes, "get_ext ext_buf" );
 
 	/* Copy the freebie (first) record into the array of records.  */
 	bcopy( (char *)&record, (char *)ep->ext_buf, sizeof(union record) );
@@ -177,11 +177,11 @@ nmg_dump()
 	}
 
 	/* get number of granules needed for this NMG */
-	granules = rt_glong(record.nmg.N_count);
+	granules = bu_glong(record.nmg.N_count);
 
 	/* get the array of structure counts */
 	for( j=0 ; j<26 ; j++ )
-		struct_count[j] = rt_glong( &record.nmg.N_structs[j*4] );
+		struct_count[j] = bu_glong( &record.nmg.N_structs[j*4] );
 
 	/* output some header info */
 	(void)printf( "%c %d %.16s %ld\n",
@@ -315,10 +315,10 @@ pipe_dump()	/* Print out Pipe record information */
 	int			ngranules;	/* number of granules, total */
 	char			*name;
 	struct rt_pipe_internal	*pipe;		/* want a struct for the head, not a ptr. */
-	struct rt_external	ext;
+	struct bu_external	ext;
 	struct rt_db_internal	intern;
 
-	ngranules = rt_glong(record.pwr.pwr_count)+1;
+	ngranules = bu_glong(record.pwr.pwr_count)+1;
 	name = record.pwr.pwr_name;
 
 	get_ext( &ext, ngranules );
@@ -345,7 +345,7 @@ pipe_dump()	/* Print out Pipe record information */
 void
 dump_pipe_segs(name, headp)
 char			*name;
-struct rt_list	*headp;
+struct bu_list	*headp;
 {
 
 	struct wdb_pipept	*sp;
@@ -354,7 +354,7 @@ struct rt_list	*headp;
 
 	/* print parameters for each point: one point per line */
 
-	for( RT_LIST_FOR( sp, wdb_pipept, headp ) )  {
+	for( BU_LIST_FOR( sp, wdb_pipept, headp ) )  {
 			printf( "%26.20e %26.20e %26.20e %26.20e %26.20e %26.20e\n",
 				sp->pp_id, sp->pp_od, sp->pp_bendradius, V3ARGS( sp->pp_coord ) );
 	}
@@ -369,7 +369,7 @@ void
 particle_dump()
 {
 	struct rt_part_internal 	*part;	/* head for the structure */
-	struct rt_external	ext;
+	struct bu_external	ext;
 	struct rt_db_internal	intern;
 
 	get_ext( &ext, 1 );
@@ -423,10 +423,10 @@ arbn_dump()
 	int		i;		/* a counter */
 	char		*name;
 	struct rt_arbn_internal	*arbn;
-	struct rt_external	ext;
+	struct bu_external	ext;
 	struct rt_db_internal	intern;
 
-	ngranules = rt_glong(record.n.n_grans)+1;
+	ngranules = bu_glong(record.n.n_grans)+1;
 	name = record.n.n_name;
 
 	get_ext( &ext, ngranules );
@@ -467,9 +467,9 @@ int
 combdump()	/* Print out Combination record information */
 {
 	int	m1, m2;		/* material property flags */
-	struct rt_list	head;
+	struct bu_list	head;
 	struct mchain {
-		struct rt_list	l;
+		struct bu_list	l;
 		union record	r;
 	};
 	struct mchain	*mp;
@@ -480,10 +480,10 @@ combdump()	/* Print out Combination record information */
 	 *  Gobble up all subsequent member records, so that
 	 *  an accurate count of them can be output.
 	 */
-	RT_LIST_INIT( &head );
+	BU_LIST_INIT( &head );
 	mcount = 0;
 	while(1)  {
-		GETSTRUCT( mp, mchain );
+		BU_GETSTRUCT( mp, mchain );
 		if( fread( (char *)&mp->r, sizeof(mp->r), 1, stdin ) != 1
 		    || feof( stdin ) )
 			break;
@@ -491,7 +491,7 @@ combdump()	/* Print out Combination record information */
 			ret_mp = mp;	/* Handle it later */
 			break;
 		}
-		RT_LIST_INSERT( &head, &(mp->l) );
+		BU_LIST_INSERT( &head, &(mp->l) );
 		mcount++;
 	}
 
@@ -545,15 +545,15 @@ combdump()	/* Print out Combination record information */
 	/*
 	 *  Output the member records now
 	 */
-	while( RT_LIST_WHILE( mp, mchain, &head ) )  {
+	while( BU_LIST_WHILE( mp, mchain, &head ) )  {
 		membdump( &mp->r );
-		RT_LIST_DEQUEUE( &mp->l );
-		rt_free( (char *)mp, "mchain");
+		BU_LIST_DEQUEUE( &mp->l );
+		bu_free( (char *)mp, "mchain");
 	}
 
 	if( ret_mp )  {
 		bcopy( (char *)&ret_mp->r, (char *)&record, sizeof(record) );
-		rt_free( (char *)ret_mp, "mchain");
+		bu_free( (char *)ret_mp, "mchain");
 		return 1;
 	}
 	return 0;

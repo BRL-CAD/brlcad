@@ -81,38 +81,38 @@ static void
 lu_to_rib(lu, fu_normal, norms, points)
 struct loopuse *lu;
 vect_t fu_normal;
-struct rt_vls *norms;
-struct rt_vls *points;
+struct bu_vls *norms;
+struct bu_vls *points;
 {
 	struct edgeuse *eu;
 	struct vertexuse *vu;
 
 	NMG_CK_LOOPUSE(lu);
 
-	if (RT_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_EDGEUSE_MAGIC) {
-		for (RT_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+	if (BU_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_EDGEUSE_MAGIC) {
+		for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
 			NMG_CK_EDGEUSE(eu);
 			NMG_CK_VERTEXUSE(eu->vu_p);
 			NMG_CK_VERTEX(eu->vu_p->v_p);
 			NMG_CK_VERTEX_G(eu->vu_p->v_p->vg_p);
-			rt_vls_printf(points, "%g %g %g  ",
+			bu_vls_printf(points, "%g %g %g  ",
 				V3ARGS(eu->vu_p->v_p->vg_p->coord));
 
 			if (eu->vu_p->a.magic_p && *eu->vu_p->a.magic_p == NMG_VERTEXUSE_A_PLANE_MAGIC)
-				rt_vls_printf(norms, "%g %g %g  ",
+				bu_vls_printf(norms, "%g %g %g  ",
 					V3ARGS(eu->vu_p->a.plane_p->N));
 			else
-				rt_vls_printf(norms, "%g %g %g  ",
+				bu_vls_printf(norms, "%g %g %g  ",
 					V3ARGS(fu_normal));
 		}
-	} else if (RT_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_VERTEXUSE_MAGIC) {
-		vu = RT_LIST_FIRST(vertexuse,  &lu->down_hd );
-		rt_vls_printf(points, "%g %g %g", V3ARGS(vu->v_p->vg_p->coord));
+	} else if (BU_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_VERTEXUSE_MAGIC) {
+		vu = BU_LIST_FIRST(vertexuse,  &lu->down_hd );
+		bu_vls_printf(points, "%g %g %g", V3ARGS(vu->v_p->vg_p->coord));
 		if (*vu->a.magic_p == NMG_VERTEXUSE_A_PLANE_MAGIC)
-			rt_vls_printf(norms, "%g %g %g  ",
+			bu_vls_printf(norms, "%g %g %g  ",
 				V3ARGS(vu->a.plane_p->N));
 		else
-			rt_vls_printf(norms, "%g %g %g  ",
+			bu_vls_printf(norms, "%g %g %g  ",
 				V3ARGS(fu_normal));
 	} else {
 		rt_bomb("bad child of loopuse\n");
@@ -123,16 +123,16 @@ void
 nmg_to_rib(m)
 struct model *m;
 {
-	struct rt_tol tol;
+	struct bn_tol tol;
 	struct nmgregion *r;
 	struct shell *s;
 	struct faceuse *fu;
 	struct loopuse *lu;
-	struct rt_vls points;
-	struct rt_vls norms;
+	struct bu_vls points;
+	struct bu_vls norms;
 	vect_t fu_normal;
 
-	tol.magic = RT_TOL_MAGIC;
+	tol.magic = BN_TOL_MAGIC;
 	tol.dist = 0.05;
 	tol.dist_sq = 0.0025;
 	tol.perp = 0.00001;
@@ -142,23 +142,23 @@ struct model *m;
 	if (triangulate)
 		nmg_triangulate_model(m, &tol);
 
-	rt_vls_init(&norms);
-	rt_vls_init(&points);
+	bu_vls_init(&norms);
+	bu_vls_init(&points);
 
-	for (RT_LIST_FOR(r, nmgregion, &m->r_hd))
-	    for (RT_LIST_FOR(s, shell, &r->s_hd))
-		for (RT_LIST_FOR(fu, faceuse, &s->fu_hd)) {
+	for (BU_LIST_FOR(r, nmgregion, &m->r_hd))
+	    for (BU_LIST_FOR(s, shell, &r->s_hd))
+		for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
 		    if (fu->orientation != OT_SAME)
 		    	continue;
 
 		    NMG_GET_FU_NORMAL(fu_normal, fu);
 
-		    for (RT_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
-		    	rt_vls_strcpy(&norms, "");
-		    	rt_vls_strcpy(&points, "");
+		    for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
+		    	bu_vls_strcpy(&norms, "");
+		    	bu_vls_strcpy(&points, "");
 			lu_to_rib(lu, fu_normal, &norms, &points);
 		    	printf("Polygon \"P\" [ %s ] \"N\" [ %s ]\n",
-		    		rt_vls_addr(&points), rt_vls_addr(&norms));
+		    		bu_vls_addr(&points), bu_vls_addr(&norms));
 		    }
 		}
 }
@@ -205,7 +205,7 @@ char *av[];
 			exit(-1);
 		}
 		
-		mat_idn( my_mat );
+		bn_mat_idn( my_mat );
 		if ((id=rt_db_get_internal( &ip, dp, dbip, my_mat ))<0) {
 			fprintf(stderr, "%s: rt_db_get_internal() failed\n", progname);
 			exit(-1);

@@ -54,7 +54,7 @@ static char	*out_file = NULL;	/* Output filename */
 static FILE	*fp_out;		/* Output file pointer */
 static struct db_i		*dbip;
 static struct rt_tess_tol	ttol;
-static struct rt_tol		tol;
+static struct bn_tol		tol;
 static struct model		*the_model;
 
 static struct db_tree_state	tree_state;	/* includes tol & model */
@@ -75,7 +75,7 @@ char	*argv[];
 
 	port_setlinebuf( stderr );
 
-	RT_LIST_INIT( &rt_g.rtg_vlfree );	/* for vlist macros */
+	BU_LIST_INIT( &rt_g.rtg_vlfree );	/* for vlist macros */
 
 	/* tesselation tolerances
 	 * only needed if you tessellate any solids
@@ -89,7 +89,7 @@ char	*argv[];
 	/* calculational tolerances
 	 * mostly used by NMG routines
 	 */
-	tol.magic = RT_TOL_MAGIC;
+	tol.magic = BN_TOL_MAGIC;
 	tol.dist = 0.005;
 	tol.dist_sq = tol.dist * tol.dist;
 	tol.perp = 1e-6;
@@ -120,14 +120,14 @@ char	*argv[];
 			break;
 		case 'x':		/* librt debug flag (see librt/debug.h) */
 			sscanf( optarg, "%x", &rt_g.debug );
-			rt_printb( "librt rt_g.debug", rt_g.debug, DEBUG_FORMAT );
-			rt_log("\n");
+			bu_printb( "librt rt_g.debug", rt_g.debug, DEBUG_FORMAT );
+			bu_log("\n");
 			break;
 		case 'X':		/* NMG debug flag (see h/nmg.h) */
 			sscanf( optarg, "%x", &rt_g.NMG_debug );
 			NMG_debug = rt_g.NMG_debug;
-			rt_printb( "librt rt_g.NMG_debug", rt_g.NMG_debug, NMG_DEBUG_FORMAT );
-			rt_log("\n");
+			bu_printb( "librt rt_g.NMG_debug", rt_g.NMG_debug, NMG_DEBUG_FORMAT );
+			bu_log("\n");
 			break;
 		default:
 			fprintf(stderr, usage, argv[0]);
@@ -144,7 +144,7 @@ char	*argv[];
 	/* Open brl-cad database */
 	if ((dbip = db_open( argv[optind] , "r")) == DBI_NULL)
 	{
-		rt_log( "Cannot open %s\n" , argv[optind] );
+		bu_log( "Cannot open %s\n" , argv[optind] );
 		perror(argv[0]);
 		exit(1);
 	}
@@ -159,7 +159,7 @@ char	*argv[];
 	{
 		if ((fp_out = fopen( out_file , "w")) == NULL)
 		{
-			rt_log( "Cannot open %s\n" , out_file );
+			bu_log( "Cannot open %s\n" , out_file );
 			perror( argv[0] );
 			exit( 2 );
 		}
@@ -177,13 +177,13 @@ char	*argv[];
 		dp = db_lookup( dbip , argv[i] , 0 );
 		if( dp == DIR_NULL )
 		{
-			rt_log( "WARNING!!! Could not find %s, skipping\n", argv[i] );
+			bu_log( "WARNING!!! Could not find %s, skipping\n", argv[i] );
 			continue;
 		}
 		db_functree( dbip , dp , comb_func , solid_func );
 	}
 
-	rt_vlist_cleanup();
+	bn_vlist_cleanup();
 	db_close(dbip);
 
 	return 0;

@@ -50,7 +50,7 @@ static int	face_count;		/* Count of faces output for a region id */
 static int	alarm_secs;		/* Number of seconds to allow for conversion, 0 means no limit */
 static struct db_i		*dbip;
 static struct rt_tess_tol	ttol;
-static struct rt_tol		tol;
+static struct bn_tol		tol;
 static struct model		*the_model;
 
 static struct db_tree_state	tree_state;	/* includes tol & model */
@@ -103,7 +103,7 @@ fastf_t f;
 	ptr = strchr( buffer, '.' );
 	if( (ptr - buffer) > length )
 	{
-		rt_log( "Value (%f) too large for format length (%d)\n" , f, length );
+		bu_log( "Value (%f) too large for format length (%d)\n" , f, length );
 		rt_bomb( "fastf_print\n" );
 	}
 
@@ -134,22 +134,22 @@ FILE *fp_out;
 	NMG_CK_LOOPUSE( lu );
 
 	if( verbose )
-		rt_log( "Write_euclid_face: lu=x%x, facet_type=%d, regionid=%d, face_number=%d\n",
+		bu_log( "Write_euclid_face: lu=x%x, facet_type=%d, regionid=%d, face_number=%d\n",
 			lu,facet_type,regionid,face_number );
 
-	if( RT_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC )
+	if( BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC )
 		return;
 
 	if( *lu->up.magic_p != NMG_FACEUSE_MAGIC )
 		return;
 
-	for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
+	for( BU_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
 		vertex_count++;
 
 	fprintf( fp_out , "%10d%3d     0.    1%5d" , regionid , facet_type , vertex_count );
 
 	vertex_count = 0;
-	for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
+	for( BU_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
 	{
 		struct vertex *v;
 		int i;
@@ -185,7 +185,7 @@ FILE *fp_out;
 	NMG_CK_REGION( r );
 
 	if( verbose )
-		rt_log( "Write_euclid_region: r=x%x\n" , r );
+		bu_log( "Write_euclid_region: r=x%x\n" , r );
 
 	face_count = 0;
 
@@ -198,22 +198,22 @@ FILE *fp_out;
 	{
 		if( r->ra_p->min_pt[i] < (-999999.0) )
 		{
-			rt_log( "g-euclid: Coordinates too large (%g) for Euclid format\n" , r->ra_p->min_pt[i] );
+			bu_log( "g-euclid: Coordinates too large (%g) for Euclid format\n" , r->ra_p->min_pt[i] );
 			return;
 		}
 		if( r->ra_p->max_pt[i] > 9999999.0 )
 		{
-			rt_log( "g-euclid: Coordinates too large (%g) for Euclid format\n" , r->ra_p->max_pt[i] );
+			bu_log( "g-euclid: Coordinates too large (%g) for Euclid format\n" , r->ra_p->max_pt[i] );
 			return;
 		}
 	}
 
 	/* write out each face in the region */
-	for( RT_LIST_FOR( s , shell , &r->s_hd ) )
+	for( BU_LIST_FOR( s , shell , &r->s_hd ) )
 	{
 		struct faceuse *fu;
 
-		for( RT_LIST_FOR( fu , faceuse , &s->fu_hd ) )
+		for( BU_LIST_FOR( fu , faceuse , &s->fu_hd ) )
 		{
 			struct loopuse *lu;
 			int no_of_loops=0;
@@ -223,9 +223,9 @@ FILE *fp_out;
 				continue;
 
 			/* count the loops in this face */
-			for( RT_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
+			for( BU_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
 			{
-				if( RT_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC )
+				if( BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC )
 					continue;
 
 				no_of_loops++;
@@ -234,12 +234,12 @@ FILE *fp_out;
 			if( !no_of_loops )
 				continue;
 
-			faces = (struct facets *)rt_calloc( no_of_loops , sizeof( struct facets ) , "g-euclid: faces" );
+			faces = (struct facets *)bu_calloc( no_of_loops , sizeof( struct facets ) , "g-euclid: faces" );
 
 			i = 0;
-			for( RT_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
+			for( BU_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
 			{
-				if( RT_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC )
+				if( BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC )
 					continue;
 
 				faces[i].lu = lu;
@@ -354,7 +354,7 @@ FILE *fp_out;
 
 					if( outer_loop_count != 1 )
 					{
-						rt_log( "Failed to find outer loop for hole in component %d\n" , tsp->ts_regionid );
+						bu_log( "Failed to find outer loop for hole in component %d\n" , tsp->ts_regionid );
 						goto outt;
 					}
 
@@ -381,7 +381,7 @@ FILE *fp_out;
 
 					if( faces[i].facet_type == 1 && faces[i].outer_loop == NULL )
 					{
-						rt_log( "Failed to find outer loop for hole in component %d\n" , tsp->ts_regionid );
+						bu_log( "Failed to find outer loop for hole in component %d\n" , tsp->ts_regionid );
 						goto outt;
 					}
 				}
@@ -415,7 +415,7 @@ FILE *fp_out;
 				Write_euclid_face( faces[i].lu , 0 , tsp->ts_regionid , ++face_count , fp_out );
 			}
 
-			rt_free( (char *)faces , "g-euclid: faces" );
+			bu_free( (char *)faces , "g-euclid: faces" );
 			faces = (struct facets*)NULL;
 		}
 	}
@@ -424,7 +424,7 @@ FILE *fp_out;
 
    outt:
 	if( faces )
-		rt_free( (char *)faces , "g-euclid: faces" );
+		bu_free( (char *)faces , "g-euclid: faces" );
 	return;
 }
 
@@ -452,7 +452,7 @@ char	*argv[];
 	ttol.norm = 0.0;
 
 	/* XXX These need to be improved */
-	tol.magic = RT_TOL_MAGIC;
+	tol.magic = BN_TOL_MAGIC;
 	tol.dist = 0.005;
 	tol.dist_sq = tol.dist * tol.dist;
 	tol.perp = 1e-6;
@@ -464,7 +464,7 @@ char	*argv[];
 	tree_state.ts_tol = &tol;
 	tree_state.ts_ttol = &ttol;
 
-	RT_LIST_INIT( &rt_g.rtg_vlfree );	/* for vlist macros */
+	BU_LIST_INIT( &rt_g.rtg_vlfree );	/* for vlist macros */
 
 	/* Get command line arguments. */
 	while ((c = getopt(argc, argv, "a:n:r:s:vx:P:X:")) != EOF) {
@@ -512,7 +512,7 @@ char	*argv[];
 	/* Open brl-cad database */
 	if ((dbip = db_open( argv[optind] , "r")) == DBI_NULL)
 	{
-		rt_log( "Cannot open %s\n" , argv[optind] );
+		bu_log( "Cannot open %s\n" , argv[optind] );
 		perror(argv[0]);
 		exit(1);
 	}
@@ -537,7 +537,7 @@ char	*argv[];
 	nmg_km( the_model );
 
 #if MEMORY_LEAK_CHECKING
-	rt_prmem("After conversions");
+	bu_prmem("After conversions");
 #endif
 
 	percent = 0;
@@ -552,11 +552,11 @@ char	*argv[];
 		regions_written, percent );
 
 	/* Release dynamic storage */
-	rt_vlist_cleanup();
+	bn_vlist_cleanup();
 	db_close(dbip);
 
 #if MEMORY_LEAK_CHECKING
-	rt_prmem("After complete G-EUCLID conversion");
+	bu_prmem("After complete G-EUCLID conversion");
 #endif
 
 	return 0;
@@ -576,26 +576,26 @@ union tree		*curtree;
 {
 	FILE			*fp_out;
 	struct nmgregion	*r;
-	struct rt_list		vhead;
+	struct bu_list		vhead;
 	struct directory	*dir;
 	union tree		*ret_tree;
 
 	if( verbose )
-		rt_log( "do_region_end: regionid = %d\n" , tsp->ts_regionid );
+		bu_log( "do_region_end: regionid = %d\n" , tsp->ts_regionid );
 
 	RT_CK_TESS_TOL(tsp->ts_ttol);
-	RT_CK_TOL(tsp->ts_tol);
+	BN_CK_TOL(tsp->ts_tol);
 	NMG_CK_MODEL(*tsp->ts_m);
 
-	RT_LIST_INIT(&vhead);
+	BU_LIST_INIT(&vhead);
 
 	if (rt_g.debug&DEBUG_TREEWALK || verbose) {
 		char	*sofar = db_path_to_string(pathp);
-		rt_log("\ndo_region_end(%d %d%%) %s\n",
+		bu_log("\ndo_region_end(%d %d%%) %s\n",
 			regions_tried,
 			regions_tried>0 ? (regions_converted * 100) / regions_tried : 0,
 			sofar);
-		rt_free(sofar, "path string");
+		bu_free(sofar, "path string");
 	}
 
 	if (curtree->tr_op == OP_NOP)
@@ -604,19 +604,19 @@ union tree		*curtree;
 	dir = DB_FULL_PATH_CUR_DIR( pathp );
 	if( (fp_out = fopen( dir->d_namep , "w" )) == NULL )
 	{
-		rt_log(" Cannot open file %s\n" , dir->d_namep );
+		bu_log(" Cannot open file %s\n" , dir->d_namep );
 		perror( "g-euclid" );
 		rt_bomb( "g-euclid: Cannot open output file\n" );
 	}
 
-	rt_log( "\n\nProcessing region %s:\n" , dir->d_namep );
+	bu_log( "\n\nProcessing region %s:\n" , dir->d_namep );
 
 	regions_tried++;
 	/* Begin rt_bomb() protection */
-	if( RT_SETJUMP )
+	if( BU_SETJUMP )
 	{
 		/* Error, bail out */
-		RT_UNSETJUMP;		/* Relinquish the protection */
+		BU_UNSETJUMP;		/* Relinquish the protection */
 
 		(void)alarm( 0 );
 
@@ -631,28 +631,28 @@ union tree		*curtree;
 		/* Release the tree memory & input regions */
 		db_free_tree(curtree);		/* Does an nmg_kr() */
 
-		rt_vlist_cleanup();
+		bn_vlist_cleanup();
 
 		/* Get rid of (m)any other intermediate structures */
 		if( (*tsp->ts_m)->magic == NMG_MODEL_MAGIC )
 			nmg_km(*tsp->ts_m);
 		else
-			rt_log("WARNING: tsp->ts_m pointer corrupted, ignoring it.\n");
+			bu_log("WARNING: tsp->ts_m pointer corrupted, ignoring it.\n");
 
 		/* Now, make a new, clean model structure for next pass. */
 		*tsp->ts_m = nmg_mm();
 
 #if MEMORY_LEAK_CHECKING
-		rt_prmem("After Failure:");
+		bu_prmem("After Failure:");
 #endif
 
 
-		rt_log( "FAILED: %s\n" , dir->d_namep );
+		bu_log( "FAILED: %s\n" , dir->d_namep );
 	
 		goto out;
 	}
 	if( verbose )
-		rt_log( "\tEvaluating region\n" );
+		bu_log( "\tEvaluating region\n" );
 
 	signal( SIGALRM , handler );
 
@@ -668,7 +668,7 @@ union tree		*curtree;
 
 	(void)alarm( 0 );
 
-	RT_UNSETJUMP;		/* Relinquish the protection */
+	BU_UNSETJUMP;		/* Relinquish the protection */
 	regions_converted++;
 	if (r != 0)
 	{
@@ -677,12 +677,12 @@ union tree		*curtree;
 		int empty_model=0;
 
 		/* Kill cracks */
-		s = RT_LIST_FIRST( shell, &r->s_hd );
-		while( RT_LIST_NOT_HEAD( &s->l, &r->s_hd ) )
+		s = BU_LIST_FIRST( shell, &r->s_hd );
+		while( BU_LIST_NOT_HEAD( &s->l, &r->s_hd ) )
 		{
 			struct shell *next_s;
 
-			next_s = RT_LIST_PNEXT( shell, &s->l );
+			next_s = BU_LIST_PNEXT( shell, &s->l );
 			if( nmg_kill_cracks( s ) )
 			{
 				if( nmg_ks( s ) )
@@ -704,17 +704,17 @@ union tree		*curtree;
 		if( !empty_region && !empty_model )
 			Write_euclid_region( r , tsp , fp_out );
 
-		rt_log( "Wrote region %s\n" , dir->d_namep );
+		bu_log( "Wrote region %s\n" , dir->d_namep );
 
 		if( (*tsp->ts_m)->magic == NMG_MODEL_MAGIC )
 			nmg_km(*tsp->ts_m);
 		else
-			rt_log("WARNING: tsp->ts_m pointer corrupted, ignoring it.\n");
+			bu_log("WARNING: tsp->ts_m pointer corrupted, ignoring it.\n");
 
 		/* Now, make a new, clean model structure for next pass. */
 		*tsp->ts_m = nmg_mm();
 
-		rt_vlist_cleanup();
+		bn_vlist_cleanup();
 	}
 
 	/*
@@ -726,7 +726,7 @@ union tree		*curtree;
 	db_free_tree(curtree);		/* Does an nmg_kr() */
 
 #if MEMORY_LEAK_CHECKING
-	rt_prmem("After Success:");
+	bu_prmem("After Success:");
 #endif
 
 out:
@@ -734,7 +734,7 @@ out:
 	if( fp_out )
 		fclose( fp_out );
 
-	GETUNION(curtree, tree);
+	BU_GETUNION(curtree, tree);
 	curtree->magic = RT_TREE_MAGIC;
 	curtree->tr_op = OP_NOP;
 	return(curtree);

@@ -134,10 +134,10 @@ char	*argv[];
 #if MEMORY_LEAK_CHECKING
 	rt_g.debug |= DEBUG_MEM_FULL;
 #endif
-	RT_LIST_INIT( &rt_g.rtg_vlfree );	/* for vlist macros */
+	BU_LIST_INIT( &rt_g.rtg_vlfree );	/* for vlist macros */
 
 	/* XXX These need to be improved */
-	tol.magic = RT_TOL_MAGIC;
+	tol.magic = BN_TOL_MAGIC;
 	tol.dist = 0.1;
 	tol.dist_sq = tol.dist * tol.dist;
 	tol.perp = 1e-6;
@@ -160,13 +160,13 @@ char	*argv[];
 			break;
 		case 'x':
 			sscanf( optarg, "%x", &rt_g.debug );
-			rt_printb( "librt rt_g.debug", rt_g.debug, DEBUG_FORMAT );
-			rt_log("\n");
+			bu_printb( "librt rt_g.debug", rt_g.debug, DEBUG_FORMAT );
+			bu_log("\n");
 			break;
 		case 'X':
 			sscanf( optarg, "%x", &rt_g.NMG_debug );
-			rt_printb( "librt rt_g.NMG_debug", rt_g.NMG_debug, NMG_DEBUG_FORMAT );
-			rt_log("\n");
+			bu_printb( "librt rt_g.NMG_debug", rt_g.NMG_debug, NMG_DEBUG_FORMAT );
+			bu_log("\n");
 			break;
 		default:
 			fprintf(stderr, usage, argv[0]);
@@ -183,7 +183,7 @@ char	*argv[];
 	/* Open brl-cad database */
 	if( (dbip = db_open( argv[optind], "r" )) == DBI_NULL )
 	{
-		rt_log( "Cannot open %s\n" , argv[optind] );
+		bu_log( "Cannot open %s\n" , argv[optind] );
 		perror(argv[0]);
 		exit(1);
 	}

@@ -71,12 +71,12 @@ struct vlist {
 	struct vertex	*vt[MAX_PTS_PER_FACE];
 };
 
-struct nmg_ptbl groups[11];
+struct bu_ptbl groups[11];
 
 static int polysolids;
 static int debug;
 static char	usage[] = "Usage: %s [-v] [-i euclid_db] [-o brlcad_db] [-d tolerance] [-p] [-xX lvl]\n\t\t(-p indicates write as polysolids)\n ";
-static struct rt_tol  tol;
+static struct bn_tol  tol;
 
 void
 Find_loop_crack( s )
@@ -84,29 +84,29 @@ struct shell *s;
 {
 	struct faceuse *fu;
 
-	for( RT_LIST_FOR( fu, faceuse, &s->fu_hd ) )
+	for( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )
 	{
 		struct loopuse *lu;
 
-		for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
+		for( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
 		{
 			struct edgeuse *eu;
 			int found=0;
 
-			if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+			if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
 				continue;
 
-			for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+			for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
 			{
 				struct edgeuse *eu_next;
 
-				eu_next = RT_LIST_PNEXT_CIRC( edgeuse, &eu->l );
+				eu_next = BU_LIST_PNEXT_CIRC( edgeuse, &eu->l );
 				if( eu->vu_p->v_p == eu_next->vu_p->v_p )
 				{
 					found = 2;
 					break;
 				}
-				eu_next = RT_LIST_PNEXT_CIRC( edgeuse, &eu_next->l );
+				eu_next = BU_LIST_PNEXT_CIRC( edgeuse, &eu_next->l );
 
 				if( eu->vu_p->v_p == eu_next->vu_p->v_p )
 				{
@@ -119,9 +119,9 @@ struct shell *s;
 				continue;
 
 			if( found == 1 )
-				rt_log( "Found a crack:\n" );
+				bu_log( "Found a crack:\n" );
 			else if( found ==2 )
-				rt_log( "Found a zero length edge:\n" );
+				bu_log( "Found a zero length edge:\n" );
 			nmg_pr_fu_briefly( fu, "" );
 		}
 	}
@@ -144,7 +144,7 @@ char	*argv[];
 	polysolids = 0;
 	debug = 0;
 
-        tol.magic = RT_TOL_MAGIC;
+        tol.magic = BN_TOL_MAGIC;
         tol.dist = 0.005;
         tol.dist_sq = tol.dist * tol.dist;
         tol.perp = 1e-6;
@@ -217,7 +217,7 @@ char	*argv[];
 	mk_id( fpout, title );
 
 	for( i=0 ; i<11 ; i++ )
-		nmg_tbl( &groups[i] , TBL_INIT , (long *)NULL );
+		bu_ptbl_init( &groups[i] , 64, " &groups[i] ");
 
 	euclid_to_brlcad(fpin, fpout);
 
@@ -243,10 +243,10 @@ int		reg_id;
 	struct shell *s;
 	struct wmember head;
 
-	RT_LIST_INIT( &head.l );
+	BU_LIST_INIT( &head.l );
 
-	r = RT_LIST_FIRST( nmgregion , &m->r_hd );
-	s = RT_LIST_FIRST( shell , &r->s_hd );
+	r = BU_LIST_FIRST( nmgregion , &m->r_hd );
+	s = BU_LIST_FIRST( shell , &r->s_hd );
 
 	sprintf(id, "%d", reg_id);
 	rname = malloc(sizeof(id) + 3);	/* Region name. */
@@ -259,11 +259,11 @@ int		reg_id;
 	{
 		int something_left=1;
 
-		while( RT_LIST_NOT_HEAD( s, &r->s_hd ) )
+		while( BU_LIST_NOT_HEAD( s, &r->s_hd ) )
 		{
 			struct shell *next_s;
 
-			next_s = RT_LIST_PNEXT( shell, &s->l );
+			next_s = BU_LIST_PNEXT( shell, &s->l );
 			if( nmg_simplify_shell( s ) )
 			{
 				if( nmg_ks( s ) )
@@ -288,20 +288,20 @@ int		reg_id;
 
 	if( mk_addmember( sname, &head, WMOP_UNION ) == WMEMBER_NULL )
 	{
-		rt_log( "add_nmg_to_db: mk_addmember failed for solid %s\n" , sname );
+		bu_log( "add_nmg_to_db: mk_addmember failed for solid %s\n" , sname );
 		rt_bomb( "add_nmg_to_db: FAILED\n" );
 	}
 
 	if( mk_lrcomb( fpout, rname, &head, 1, (char *)NULL, (char *)NULL,
 	    (unsigned char *)NULL, gift_ident, 0, 0, 100, 0 ) )
 	{
-		rt_log( "add_nmg_to_db: mk_rlcomb failed for region %s\n" , rname );
+		bu_log( "add_nmg_to_db: mk_rlcomb failed for region %s\n" , rname );
 		rt_bomb( "add_nmg_to_db: FAILED\n" );
 	}
 
-	nmg_tbl( &groups[group_id] , TBL_INS , (long *)rname );
+	bu_ptbl_ins( &groups[group_id] , (long *)rname );
 
-	rt_free( (char *)sname , "euclid-g: solid name" );
+	bu_free( (char *)sname , "euclid-g: solid name" );
 }
 
 static void
@@ -313,23 +313,23 @@ FILE *fpout;
 	struct wmember head_all;
 	char group_name[18];
 
-	RT_LIST_INIT( &head.l );
-	RT_LIST_INIT( &head_all.l );
+	BU_LIST_INIT( &head.l );
+	BU_LIST_INIT( &head_all.l );
 
 	for( i=0 ; i<11 ; i++ )
 	{
 
-		if( NMG_TBL_END( &groups[i] ) < 1 )
+		if( BU_PTBL_END( &groups[i] ) < 1 )
 			continue;
 
-		for( j=0 ; j<NMG_TBL_END( &groups[i] ) ; j++ )
+		for( j=0 ; j<BU_PTBL_END( &groups[i] ) ; j++ )
 		{
 			char *region_name;
 
-			region_name = (char *)NMG_TBL_GET( &groups[i] , j );
+			region_name = (char *)BU_PTBL_GET( &groups[i] , j );
 			if( mk_addmember( region_name , &head , WMOP_UNION ) == WMEMBER_NULL )
 			{
-				rt_log( "build_groups: mk_addmember failed for region %s\n" , region_name );
+				bu_log( "build_groups: mk_addmember failed for region %s\n" , region_name );
 				rt_bomb( "build_groups: FAILED\n" );
 			}
 		}
@@ -342,13 +342,13 @@ FILE *fpout;
 		j = mk_lfcomb( fpout , group_name , &head , 0 )
 		if( j )
 		{
-			rt_log( "build_groups: mk_lcomb failed for group %s\n" , group_name );
+			bu_log( "build_groups: mk_lcomb failed for group %s\n" , group_name );
 			rt_bomb( "build_groups: mk_lcomb FAILED\n" );
 		}
 
 		if( mk_addmember( group_name , &head_all , WMOP_UNION ) == WMEMBER_NULL )
 		{
-			rt_log( "build_groups: mk_addmember failed for group %s\n" , group_name );
+			bu_log( "build_groups: mk_addmember failed for group %s\n" , group_name );
 			rt_bomb( "build_groups: FAILED\n" );
 		}
 	}
@@ -432,7 +432,7 @@ int reg_id;
 	int shell_no;
 	int gift_ident, group_id;
 
-	RT_LIST_INIT( &head.l );
+	BU_LIST_INIT( &head.l );
 
 	for( shell_no=0 ; shell_no < shell_count ; shell_no++ )
 	{
@@ -449,7 +449,7 @@ int reg_id;
 
 		if( mk_addmember( sol_name, &head, WMOP_UNION ) == WMEMBER_NULL )
 		{
-			rt_log( "add_shells_to_db: mk_addmember failed for solid %s\n" , sol_name );
+			bu_log( "add_shells_to_db: mk_addmember failed for solid %s\n" , sol_name );
 			rt_bomb( "add_shells_to_db: FAILED\n" );
 		}
 
@@ -463,10 +463,10 @@ int reg_id;
 
 			/* Move this shell to a seperate model and write to .g file */
 			m_tmp = nmg_mmr();
-			r_tmp = RT_LIST_FIRST( nmgregion , &m_tmp->r_hd );
-			RT_LIST_DEQUEUE( &s->l );
+			r_tmp = BU_LIST_FIRST( nmgregion , &m_tmp->r_hd );
+			BU_LIST_DEQUEUE( &s->l );
 			s->r_p = r_tmp;
-			RT_LIST_APPEND( &r_tmp->s_hd, &s->l )
+			BU_LIST_APPEND( &r_tmp->s_hd, &s->l )
 
 			nmg_m_reindex( m_tmp , 0 );
 
@@ -486,16 +486,16 @@ int reg_id;
 	if( group_id > 10 )
 		group_id = 10;
 
-	reg_name = (char *)rt_malloc( strcspn( sol_name, "." ) + 3, "reg_name" );
+	reg_name = (char *)bu_malloc( strcspn( sol_name, "." ) + 3, "reg_name" );
 	sprintf( reg_name, "%d.r", reg_id );
 	if( mk_lrcomb( fpout, reg_name, &head, 1, (char *)NULL, (char *)NULL,
 	    (unsigned char *)NULL, gift_ident, 0, 0, 100, 0 ) )
 	{
-		rt_log( "add_nmg_to_db: mk_rlcomb failed for region %s\n" , reg_name );
+		bu_log( "add_nmg_to_db: mk_rlcomb failed for region %s\n" , reg_name );
 		rt_bomb( "add_nmg_to_db: FAILED\n" );
 	}
 
-	nmg_tbl( &groups[group_id] , TBL_INS , (long *)reg_name );
+	bu_ptbl_ins( &groups[group_id] , (long *)reg_name );
 }
 
 /*
@@ -521,7 +521,7 @@ int	reg_id;
 
 	m = nmg_mm();		/* Make nmg model. */
 	r = nmg_mrsv(m);	/* Make region, empty shell, vertex. */
-	s = RT_LIST_FIRST(shell, &r->s_hd);
+	s = BU_LIST_FIRST(shell, &r->s_hd);
 
 	nv = 0;			/* Initially no vertices for this region. */
 	face = 0;		/* No faces either. */
@@ -541,9 +541,9 @@ int	reg_id;
 			case 0:	/* Simple facet (no holes). */
 				if( debug )
 				{
-					rt_log( "Making simple face:\n" );
+					bu_log( "Making simple face:\n" );
 					for( i=0; i<np; i++ )
-						rt_log( "\t( %g %g %g )\n" , V3ARGS( &vert.pt[lst[i]*3] ));
+						bu_log( "\t( %g %g %g )\n" , V3ARGS( &vert.pt[lst[i]*3] ));
 				}
 				outfaceuses[face] = nmg_cface(s, vertlist, np);
 				face++;
@@ -552,9 +552,9 @@ int	reg_id;
 			case 1:	/* Facet is a hole. */
 				if( debug )
 				{
-					rt_log( "Making a hole:\n" );
+					bu_log( "Making a hole:\n" );
 					for( i=0; i<np; i++ )
-						rt_log( "\t( %g %g %g )\n" , V3ARGS( &vert.pt[lst[i]*3] ));
+						bu_log( "\t( %g %g %g )\n" , V3ARGS( &vert.pt[lst[i]*3] ));
 				}
 				nmg_add_loop_to_face(s, outfaceuses[hole_face],
 					vertlist, np, OT_OPPOSITE);
@@ -563,9 +563,9 @@ int	reg_id;
 			case 2:	/* Facet will be given at least one hole. */
 				if( debug )
 				{
-					rt_log( "Making face which will get a hole:\n" );
+					bu_log( "Making face which will get a hole:\n" );
 					for( i=0; i<np; i++ )
-						rt_log( "\t( %g %g %g )\n" , V3ARGS( &vert.pt[lst[i]*3] ));
+						bu_log( "\t( %g %g %g )\n" , V3ARGS( &vert.pt[lst[i]*3] ));
 				}
 				outfaceuses[face] = nmg_cface(s, vertlist, np);
 				hole_face = face;
@@ -588,28 +588,28 @@ int	reg_id;
 	} while (reg_id == cur_id);
 
 	if( rt_g.debug&DEBUG_MEM_FULL )
-		rt_prmem( "After building faces:\n" );
+		bu_prmem( "After building faces:\n" );
 
 	/* Associate the vertex geometry, ccw. */
 	if( debug )
-		rt_log( "Associating vertex geometry:\n" );
+		bu_log( "Associating vertex geometry:\n" );
 	for (i = 0; i < nv; i++)
 	{
 		if (vert.vt[i])
 		{
 			if( debug )
-				rt_log( "\t( %g %g %g )\n" , V3ARGS( &vert.pt[3*i] ) );
+				bu_log( "\t( %g %g %g )\n" , V3ARGS( &vert.pt[3*i] ) );
 			nmg_vertex_gv(vert.vt[i], &vert.pt[3*i]);
 		}
 	}
 
 	if( debug )
-		rt_log( "Calling nmg_model_vertex_fuse()\n" );
+		bu_log( "Calling nmg_model_vertex_fuse()\n" );
 	(void)nmg_model_vertex_fuse( m, &tol );
 
 	/* Break edges on vertices */
 	if( debug )
-		rt_log( "Calling nmg_model_break_e_on_v()\n" );
+		bu_log( "Calling nmg_model_break_e_on_v()\n" );
 	(void)nmg_model_break_e_on_v( m, &tol );
 
 	/* kill zero length edgeuses */
@@ -621,7 +621,7 @@ int	reg_id;
 	}
 
 	/* kill cracks */
-	s = RT_LIST_FIRST( shell , &r->s_hd );
+	s = BU_LIST_FIRST( shell , &r->s_hd );
 	if( nmg_kill_cracks( s ) )
 	{
 		if( nmg_ks( s ) )
@@ -636,11 +636,11 @@ int	reg_id;
 		return( cur_id );
 
 	if( rt_g.debug&DEBUG_MEM_FULL )
-		rt_prmem( "Before assoc face geom:\n" );
+		bu_prmem( "Before assoc face geom:\n" );
 
 	/* Associate the face geometry. */
 	if( debug )
-		rt_log( "Associating face geometry:\n" );
+		bu_log( "Associating face geometry:\n" );
 	for (i = 0; i < face; i++)
 	{
 		/* skip faceuses that were killed */
@@ -650,24 +650,24 @@ int	reg_id;
 		/* calculate plane for this faceuse */
 		if( nmg_calc_face_g( outfaceuses[i] ) )
 		{
-			rt_log( "nmg_calc_face_g failed\n" );
+			bu_log( "nmg_calc_face_g failed\n" );
 			nmg_pr_fu_briefly( outfaceuses[i], "" );
 		}
 	}
 
 	/* Compute "geometry" for model, region, and shell */
 	if( debug )
-		rt_log( "Rebound\n" );
+		bu_log( "Rebound\n" );
 	nmg_rebound( m , &tol );
 
 #if 0
 	/* Break edges on vertices */
 	if( debug )
-		rt_log( "Calling nmg_model_break_e_on_v()\n" );
+		bu_log( "Calling nmg_model_break_e_on_v()\n" );
 	(void)nmg_model_break_e_on_v( m, &tol );
 
 	/* kill cracks */
-	s = RT_LIST_FIRST( shell , &r->s_hd );
+	s = BU_LIST_FIRST( shell , &r->s_hd );
 	if( nmg_kill_cracks( s ) )
 	{
 		if( nmg_ks( s ) )
@@ -691,32 +691,32 @@ int	reg_id;
 #endif
 
 	if( rt_g.debug&DEBUG_MEM_FULL )
-		rt_prmem( "Before glueing faces:\n" );
+		bu_prmem( "Before glueing faces:\n" );
 
 	/* Glue faceuses together. */
 	if( debug )
-		rt_log( "Glueing faces\n" );
+		bu_log( "Glueing faces\n" );
 	(void)nmg_model_edge_fuse( m, &tol );
 
 	/* Compute "geometry" for model, region, and shell */
 	if( debug )
-		rt_log( "Rebound\n" );
+		bu_log( "Rebound\n" );
 	nmg_rebound( m , &tol );
 
 	/* fix the normals */
 	if( debug )
-		rt_log( "Fix normals\n" );
+		bu_log( "Fix normals\n" );
 	nmg_fix_normals( s, &tol );
 
 	if( rt_g.debug&DEBUG_MEM_FULL )
-		rt_prmem( "After fixing normals:\n" );
+		bu_prmem( "After fixing normals:\n" );
 
 	if( debug )
-		rt_log( "nmg_s_join_touchingloops( %x )\n", s );
+		bu_log( "nmg_s_join_touchingloops( %x )\n", s );
 	nmg_s_join_touchingloops( s, &tol );
 
 	/* kill cracks */
-	s = RT_LIST_FIRST( shell , &r->s_hd );
+	s = BU_LIST_FIRST( shell , &r->s_hd );
 	if( nmg_kill_cracks( s ) )
 	{
 		if( nmg_ks( s ) )
@@ -731,11 +731,11 @@ int	reg_id;
 		return( cur_id );
 
 	if( debug )
-		rt_log( "nmg_s_split_touchingloops( %x )\n", s );
+		bu_log( "nmg_s_split_touchingloops( %x )\n", s );
 	nmg_s_split_touchingloops( s, &tol);
 
 	/* kill cracks */
-	s = RT_LIST_FIRST( shell , &r->s_hd );
+	s = BU_LIST_FIRST( shell , &r->s_hd );
 	if( nmg_kill_cracks( s ) )
 	{
 		if( nmg_ks( s ) )
@@ -753,21 +753,21 @@ int	reg_id;
 	if( debug )
 	{
 		nmg_stash_model_to_file( "before_tri.g", m, "before_tri" );
-		rt_log( "Verify plane equations:\n" );
+		bu_log( "Verify plane equations:\n" );
 	}
 
 	if( rt_g.debug&DEBUG_MEM_FULL )
-		rt_prmem( "Before nmg_make_faces_within_tol():\n" );
+		bu_prmem( "Before nmg_make_faces_within_tol():\n" );
 
 	nmg_make_faces_within_tol( s, &tol );
 
 	if( rt_g.debug&DEBUG_MEM_FULL )
-		rt_prmem( "After nmg_make_faces_within_tol():\n" );
+		bu_prmem( "After nmg_make_faces_within_tol():\n" );
 
 	if( debug )
 	{
-		rt_log( "Checking faceuses:\n" );
-		for( RT_LIST_FOR( fu, faceuse, &s->fu_hd ) )
+		bu_log( "Checking faceuses:\n" );
+		for( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )
 		{
 			struct loopuse *lu;
 			struct edgeuse *eu;
@@ -783,30 +783,30 @@ int	reg_id;
 			NMG_GET_FU_PLANE( pl, fu );
 
 			if( debug )
-				rt_log( "faceuse x%x ( %g %g %g %g )\n", fu, V4ARGS( pl ) );
+				bu_log( "faceuse x%x ( %g %g %g %g )\n", fu, V4ARGS( pl ) );
 
 			/* check if all the vertices for this face lie on the plane */
-			for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
+			for( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
 			{
 				NMG_CK_LOOPUSE( lu );
 
-				if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_VERTEXUSE_MAGIC )
+				if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_VERTEXUSE_MAGIC )
 				{
-					vu = RT_LIST_FIRST( vertexuse, &lu->down_hd );
+					vu = BU_LIST_FIRST( vertexuse, &lu->down_hd );
 					dist_to_plane = DIST_PT_PLANE( vu->v_p->vg_p->coord, pl );
 					if( dist_to_plane > tol.dist || dist_to_plane < -tol.dist )
-						rt_log( "\tvertex x%x ( %g %g %g ) is %g off plane\n",
+						bu_log( "\tvertex x%x ( %g %g %g ) is %g off plane\n",
 							vu->v_p, V3ARGS( vu->v_p->vg_p->coord ), dist_to_plane );
 				}
 				else
 				{
-					for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+					for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
 					{
 						NMG_CK_EDGEUSE( eu );
 						vu = eu->vu_p;
 						dist_to_plane = DIST_PT_PLANE( vu->v_p->vg_p->coord, pl );
 						if( dist_to_plane > tol.dist || dist_to_plane < -tol.dist )
-							rt_log( "\tvertex x%x ( %g %g %g ) is %g off plane\n",
+							bu_log( "\tvertex x%x ( %g %g %g ) is %g off plane\n",
 								vu->v_p, V3ARGS( vu->v_p->vg_p->coord ), dist_to_plane );
 					}
 				}
@@ -815,17 +815,17 @@ int	reg_id;
 	}
 
 	if( debug )
-		rt_log( "%d vertices out of tolerance after fixing out of tolerance faces\n" , nmg_ck_geometry( m , &tol ) );
+		bu_log( "%d vertices out of tolerance after fixing out of tolerance faces\n" , nmg_ck_geometry( m , &tol ) );
 #if 0
 	/* Fuse */
 	if( debug )
 	{
 		nmg_stash_model_to_file( "before_fuse.g", m, "before_fuse" );
-		rt_log( "Fuse model:\n" );
+		bu_log( "Fuse model:\n" );
 	}
 	i = nmg_model_fuse( m, &tol );
 	if( debug )
-		rt_log( "\t%d objects fused\n" , i );
+		bu_log( "\t%d objects fused\n" , i );
 #endif
 
 	nmg_s_join_touchingloops( s, &tol );
@@ -842,17 +842,17 @@ int	reg_id;
 	{
 		/* This shell has more than one part */
 		struct shell **shells;
-		struct nmg_ptbl verts;
+		struct bu_ptbl verts;
 		int shell1_no, shell2_no, outer_shell_count=0;
 		short *in_out;
 		short *shell_inout;
 
-		shell_inout = (short *)rt_calloc( shell_count, sizeof( short ), "shell_inout" );
-		in_out = (short *)rt_calloc( shell_count * shell_count , sizeof( short ) , "in_out" );
+		shell_inout = (short *)bu_calloc( shell_count, sizeof( short ), "shell_inout" );
+		in_out = (short *)bu_calloc( shell_count * shell_count , sizeof( short ) , "in_out" );
 
-		nmg_tbl( &verts , TBL_INIT , (long *)NULL );
+		bu_ptbl_init( &verts , 64, " &verts ");
 
-		shells = (struct shell **)rt_calloc( shell_count, sizeof( struct shell *), "shells" );
+		shells = (struct shell **)bu_calloc( shell_count, sizeof( struct shell *), "shells" );
 
 		/* fuse geometry */
 		(void)nmg_model_vertex_fuse( m, &tol );
@@ -860,14 +860,14 @@ int	reg_id;
 		i = 0;
 
 		if( debug )
-			rt_log( "\nShell decomposed into %d sub-shells\n", shell_count );
+			bu_log( "\nShell decomposed into %d sub-shells\n", shell_count );
 
 
 		/* insure that bounding boxes are available
 		 * and that all the shells are closed.
 		 */
 		shell1_no = (-1);
-		for( RT_LIST_FOR( s , shell , &r->s_hd ) )
+		for( BU_LIST_FOR( s , shell , &r->s_hd ) )
 		{
 			shells[++shell1_no] = s;
 			if( !s->sa_p )
@@ -875,8 +875,8 @@ int	reg_id;
 
 			if( nmg_check_closed_shell( s , &tol ) )
 			{
-				rt_log( "Warning: Region %d is not a closed surface\n" , reg_id );
-				rt_log( "\tCreating new faces to close region\n" );
+				bu_log( "Warning: Region %d is not a closed surface\n" , reg_id );
+				bu_log( "\tCreating new faces to close region\n" );
 				nmg_close_shell( s , &tol );
 				if( nmg_check_closed_shell( s , &tol ) )
 					rt_bomb( "Cannot close shell\n" );
@@ -884,7 +884,7 @@ int	reg_id;
 		}
 
 		shell1_no = (-1);
-		for( RT_LIST_FOR( s, shell , &r->s_hd ) )
+		for( BU_LIST_FOR( s, shell , &r->s_hd ) )
 		{
 			struct shell *s2;
 			int outside=0;
@@ -895,7 +895,7 @@ int	reg_id;
 			nmg_vertex_tabulate( &verts, &s->l.magic );
 
 			shell2_no = (-1);
-			for( RT_LIST_FOR( s2 , shell , &r->s_hd ) )
+			for( BU_LIST_FOR( s2 , shell , &r->s_hd ) )
 			{
 				int j;
 				int in=0;
@@ -907,11 +907,11 @@ int	reg_id;
 				if( s2 == s )
 					continue;
 
-				for( j=0 ; j<NMG_TBL_END( &verts ) ; j++ )
+				for( j=0 ; j<BU_PTBL_END( &verts ) ; j++ )
 				{
 					struct vertex *v;
 
-					v = (struct vertex *)NMG_TBL_GET( &verts , j );
+					v = (struct vertex *)BU_PTBL_GET( &verts , j );
 					NMG_CK_VERTEX( v );
 
 					if( nmg_find_v_in_shell( v, s2, 1 ) )
@@ -944,10 +944,10 @@ int	reg_id;
 
 			}
 
-			nmg_tbl( &verts , TBL_RST, (long *)NULL );
+			bu_ptbl_reset( &verts );
 		}
 
-		nmg_tbl( &verts, TBL_FREE, (long *)NULL );
+		bu_ptbl_free( &verts);
 
 		/* determine which shells are outer shells, which are inner,
 		 * and which must be inverted
@@ -1035,15 +1035,15 @@ int	reg_id;
 		else
 			add_shells_to_db( fpdb, shell_count, shells, reg_id );
 
-		rt_free( (char *)shells, "shells" );
-		rt_free( (char *)shell_inout, "shell_inout" );
-		rt_free( (char *)in_out, "in_out" );
+		bu_free( (char *)shells, "shells" );
+		bu_free( (char *)shell_inout, "shell_inout" );
+		bu_free( (char *)in_out, "in_out" );
 	}
 	else
 #endif
 	{
 		if( debug )
-			rt_log( "Writing model to database:\n" );
+			bu_log( "Writing model to database:\n" );
 		add_nmg_to_db( fpdb, m, reg_id );
 	}
 
@@ -1077,7 +1077,7 @@ struct vlist	*vert;
 	*ni = (int)num_points;
 
 	if( debug )
-		rt_log( "facet type %d has %d points:\n", facet_type,  *ni );
+		bu_log( "facet type %d has %d points:\n", facet_type,  *ni );
 	
 	/* Read in data points. */
 	for (i = 0; i < *ni; i++)
@@ -1085,22 +1085,22 @@ struct vlist	*vert;
 		fscanf(fp, "%*d %lf %lf %lf", &x, &y, &z);
 
 		if( debug )
-			rt_log( "\tpoint #%d ( %g %g %g )\n", i+1, x, y, z );
+			bu_log( "\tpoint #%d ( %g %g %g )\n", i+1, x, y, z );
 
 		if ((lst[i] = find_vert(vert, *nv, x, y, z)) == -1)
 		{
 			lst[i] = store_vert(vert, nv, x, y, z);
 			if( debug )
-				rt_log( "\t\tStoring vertex ( %g %g %g ) at index %d\n" , x, y, z, lst[i] );
+				bu_log( "\t\tStoring vertex ( %g %g %g ) at index %d\n" , x, y, z, lst[i] );
 		}
 		else if( debug )
-			rt_log( "\t\tFound vertex ( %g %g %g ) at index %d\n" , x, y, z, lst[i] );
+			bu_log( "\t\tFound vertex ( %g %g %g ) at index %d\n" , x, y, z, lst[i] );
 	}
 
 	/* Read in plane equation. */
 	fscanf(fp, "%*d %lf %lf %lf %lf", &a, &b, &c, &d);
 	if( debug )
-		rt_log( "plane equation for face is ( %f %f %f %f )\n", a, b, c, d );
+		bu_log( "plane equation for face is ( %f %f %f %f )\n", a, b, c, d );
 
 	/* Remove duplicate points (XXX this should be improved). */
 	for (i = 0; i < *ni; i++)
@@ -1109,7 +1109,7 @@ struct vlist	*vert;
 				int increment;
 
 				if( debug )
-					rt_log( "\tComparing vertices at indices lst[%d]=%d and lst[%d]=%d\n", i, lst[i], j, lst[j] );
+					bu_log( "\tComparing vertices at indices lst[%d]=%d and lst[%d]=%d\n", i, lst[i], j, lst[j] );
 				
 				if( j == i+1 || (i == 0 && j == (*ni-1))  )
 					increment = 1;
@@ -1120,7 +1120,7 @@ struct vlist	*vert;
 				}
 				else
 				{
-					rt_log( "warning: removing distant duplicates\n" );
+					bu_log( "warning: removing distant duplicates\n" );
 					increment = 1;
 				}
 
@@ -1152,7 +1152,7 @@ fastf_t		x, y, z;
 	found = 0;
 	for (i = 0; i < nv; i++)
 	{
-		if( rt_pt3_pt3_equal( &vert->pt[3*i], new_pt, &tol ) )
+		if( bn_pt3_pt3_equal( &vert->pt[3*i], new_pt, &tol ) )
 		{
 			found = 1;
 			break;

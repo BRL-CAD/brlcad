@@ -142,14 +142,14 @@ char *argv[];
 	delta_angle = bn_twopi/(fastf_t)nlg;
 
 	/* allocate memory to hold vertices */
-	curves = (fastf_t **)rt_malloc( (nlt+2)*sizeof( fastf_t ** ), "ars curve pointers" );
+	curves = (fastf_t **)bu_malloc( (nlt+2)*sizeof( fastf_t ** ), "ars curve pointers" );
 	for( y=0 ; y<nlt+2 ; y++ )
-		curves[y] = (fastf_t *)rt_calloc( (nlg+1)*3,
+		curves[y] = (fastf_t *)bu_calloc( (nlg+1)*3,
 			sizeof(fastf_t), "ars curve" );
 
 	/* allocate memory for a table os sines and cosines */
-	sins = (fastf_t *)rt_calloc( nlg+1, sizeof( fastf_t ), "sines" );
-	coss = (fastf_t *)rt_calloc( nlg+1, sizeof( fastf_t ), "cosines" );
+	sins = (fastf_t *)bu_calloc( nlg+1, sizeof( fastf_t ), "sines" );
+	coss = (fastf_t *)bu_calloc( nlg+1, sizeof( fastf_t ), "cosines" );
 
 	/* fill in the sines and cosines table */
 	for( x=0 ; x<nlg ; x++ )

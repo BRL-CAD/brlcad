@@ -46,7 +46,7 @@ main()
 		int i;
 
 		if( npts > 0 )
-			pts = (point_t *)rt_calloc( npts , sizeof( point_t ) , "pts" );
+			pts = (point_t *)bu_calloc( npts , sizeof( point_t ) , "pts" );
 
 		for( i=0 ; i<npts ; i++ )
 		{
@@ -97,7 +97,7 @@ main()
 		}
 
 		if( npts > 0 )
-			rt_free( (char *)pts , "pts" );
+			bu_free( (char *)pts , "pts" );
 	}
 	return 0;
 }

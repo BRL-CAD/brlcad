@@ -58,7 +58,7 @@ static char	*out_file = NULL;	/* Output filename */
 static FILE	*fp_out;		/* Output file pointer */
 static struct db_i		*dbip;
 static struct rt_tess_tol	ttol;
-static struct rt_tol		tol;
+static struct bn_tol		tol;
 static struct model		*the_model;
 
 static struct db_tree_state	tree_state;	/* includes tol & model */
@@ -86,7 +86,7 @@ union tree		*curtree;
 {
 	extern FILE		*fp_fig;
 	struct nmgregion	*r;
-	struct rt_list		vhead;
+	struct bu_list		vhead;
 	union tree		*ret_tree;
 	char			*sofar;
 	struct bu_vls		shader_params;
@@ -98,18 +98,18 @@ union tree		*curtree;
 	struct wmember headp;
 
 	RT_CK_TESS_TOL(tsp->ts_ttol);
-	RT_CK_TOL(tsp->ts_tol);
+	BN_CK_TOL(tsp->ts_tol);
 	NMG_CK_MODEL(*tsp->ts_m);
 
-	RT_LIST_INIT(&vhead);
+	BU_LIST_INIT(&vhead);
 
 	if (rt_g.debug&DEBUG_TREEWALK || verbose) {
 		sofar = db_path_to_string(pathp);
-		rt_log("\ndo_region_end(%d %d%%) %s\n",
+		bu_log("\ndo_region_end(%d %d%%) %s\n",
 			regions_tried,
 			regions_tried>0 ? (regions_converted * 100) / regions_tried : 0,
 			sofar);
-		rt_free(sofar, "path string");
+		bu_free(sofar, "path string");
 	}
 
 	if (curtree->tr_op == OP_NOP)
@@ -117,14 +117,14 @@ union tree		*curtree;
 
 	regions_tried++;
 	/* Begin rt_bomb() protection */
-	if( RT_SETJUMP )
+	if( BU_SETJUMP )
 	{
 		/* Error, bail out */
-		RT_UNSETJUMP;		/* Relinquish the protection */
+		BU_UNSETJUMP;		/* Relinquish the protection */
 
 		sofar = db_path_to_string(pathp);
-		rt_log( "FAILED: %s\n", sofar );
-		rt_free( (char *)sofar, "sofar" );
+		bu_log( "FAILED: %s\n", sofar );
+		bu_free( (char *)sofar, "sofar" );
 
 		/* Sometimes the NMG library adds debugging bits when
 		 * it detects an internal error, before rt_bomb().
@@ -144,7 +144,7 @@ union tree		*curtree;
 		}
 		else
 		{
-			rt_log("WARNING: tsp->ts_m pointer corrupted, ignoring it.\n");
+			bu_log("WARNING: tsp->ts_m pointer corrupted, ignoring it.\n");
 		}
 	
 		/* Now, make a new, clean model structure for next pass. */
@@ -153,7 +153,7 @@ union tree		*curtree;
 	}
 	ret_tree = nmg_booltree_evaluate(curtree, tsp->ts_tol);	/* librt/nmg_bool.c */
 
-	RT_UNSETJUMP;		/* Relinquish the protection */
+	BU_UNSETJUMP;		/* Relinquish the protection */
 	if( ret_tree )
 		r = ret_tree->tr_d.td_r;
 	else
@@ -182,12 +182,12 @@ union tree		*curtree;
 		int empty_model=0;
 
 		/* Kill cracks */
-		s = RT_LIST_FIRST( shell, &r->s_hd );
-		while( RT_LIST_NOT_HEAD( &s->l, &r->s_hd ) )
+		s = BU_LIST_FIRST( shell, &r->s_hd );
+		while( BU_LIST_NOT_HEAD( &s->l, &r->s_hd ) )
 		{
 			struct shell *next_s;
 
-			next_s = RT_LIST_PNEXT( shell, &s->l );
+			next_s = BU_LIST_PNEXT( shell, &s->l );
 			if( nmg_kill_cracks( s ) )
 			{
 				if( nmg_ks( s ) )
@@ -228,7 +228,7 @@ union tree		*curtree;
 		else
 			color = (unsigned char *)NULL;
 
-		RT_LIST_INIT( &headp.l );
+		BU_LIST_INIT( &headp.l );
 		(void)mk_addmember( nmg_name , &headp , WMOP_UNION );
 		if( mk_lrcomb( fp_out,
 		    pathp->fp_names[pathp->fp_len-1]->d_namep, &headp, 1,
@@ -236,19 +236,19 @@ union tree		*curtree;
 		    tsp->ts_regionid, tsp->ts_aircode, tsp->ts_gmater,
 		    tsp->ts_los, tsp->ts_mater.ma_cinherit ) )
 		{
-			rt_log( "G-nmg: error in making region (%s)\n" , pathp->fp_names[pathp->fp_len-1]->d_namep );
+			bu_log( "G-nmg: error in making region (%s)\n" , pathp->fp_names[pathp->fp_len-1]->d_namep );
 		}
 	}
 	else
 	{
-		RT_LIST_INIT( &headp.l );
+		BU_LIST_INIT( &headp.l );
 		if( mk_lrcomb( fp_out,
 		    pathp->fp_names[pathp->fp_len-1]->d_namep, &headp, 1,
 		    shader, bu_vls_addr( &shader_params ), color,
 		    tsp->ts_regionid, tsp->ts_aircode, tsp->ts_gmater,
 		    tsp->ts_los, tsp->ts_mater.ma_cinherit ) )
 		{
-			rt_log( "G-nmg: error in making region (%s)\n" , pathp->fp_names[pathp->fp_len-1]->d_namep );
+			bu_log( "G-nmg: error in making region (%s)\n" , pathp->fp_names[pathp->fp_len-1]->d_namep );
 		}
 	}
 
@@ -265,9 +265,9 @@ union tree		*curtree;
 out:
 
 	if( rt_g.debug&DEBUG_MEM_FULL )
-		rt_prmem( "At end of do_region_end()" );
+		bu_prmem( "At end of do_region_end()" );
 
-	GETUNION(curtree, tree);
+	BU_GETUNION(curtree, tree);
 	curtree->magic = RT_TREE_MAGIC;
 	curtree->tr_op = OP_NOP;
 	return(curtree);
@@ -337,7 +337,7 @@ struct directory *dp;
 	RT_CK_COMB( comb );
 
 	if( verbose )
-		rt_log( "Combination - %s\n" , dp->d_namep );
+		bu_log( "Combination - %s\n" , dp->d_namep );
 
 	if( comb->tree && db_ck_v4gift_tree( comb->tree ) < 0 )
 	{
@@ -365,13 +365,13 @@ struct directory *dp;
 
 	if( actual_count < 1 )
 	{
-		rt_log( "Warning: empty combination (%s)\n" , dp->d_namep );
+		bu_log( "Warning: empty combination (%s)\n" , dp->d_namep );
 		dp->d_uses = 0;
 		rt_db_free_internal( &intern );
 		return;
 	}
 
-	RT_LIST_INIT( &headp.l );
+	BU_LIST_INIT( &headp.l );
 
 	for( i=0 ; i<actual_count ; i++ )
 	{
@@ -424,7 +424,7 @@ struct directory *dp;
 	    comb->aircode, comb->GIFTmater,comb->los,
 	    comb->inherit ) )
 		{
-			rt_log( "G-nmg: error in making region (%s)\n" , dp->d_namep );
+			bu_log( "G-nmg: error in making region (%s)\n" , dp->d_namep );
 		}
 }
 
@@ -446,7 +446,7 @@ char	*argv[];
 #if MEMORY_LEAK_CHECKING
 	rt_g.debug |= DEBUG_MEM_FULL;
 #endif
-	RT_LIST_INIT( &rt_g.rtg_vlfree );	/* for vlist macros */
+	BU_LIST_INIT( &rt_g.rtg_vlfree );	/* for vlist macros */
 
 	ttol.magic = RT_TESS_TOL_MAGIC;
 	/* Defaults, updated by command line options. */
@@ -455,7 +455,7 @@ char	*argv[];
 	ttol.norm = 0.0;
 
 	/* XXX These need to be improved */
-	tol.magic = RT_TOL_MAGIC;
+	tol.magic = BN_TOL_MAGIC;
 	tol.dist = 0.005;
 	tol.dist_sq = tol.dist * tol.dist;
 	tol.perp = 1e-6;
@@ -490,14 +490,14 @@ char	*argv[];
 			break;
 		case 'x':
 			sscanf( optarg, "%x", &rt_g.debug );
-			rt_printb( "librt rt_g.debug", rt_g.debug, DEBUG_FORMAT );
-			rt_log("\n");
+			bu_printb( "librt rt_g.debug", rt_g.debug, DEBUG_FORMAT );
+			bu_log("\n");
 			break;
 		case 'X':
 			sscanf( optarg, "%x", &rt_g.NMG_debug );
 			NMG_debug = rt_g.NMG_debug;
-			rt_printb( "librt rt_g.NMG_debug", rt_g.NMG_debug, NMG_DEBUG_FORMAT );
-			rt_log("\n");
+			bu_printb( "librt rt_g.NMG_debug", rt_g.NMG_debug, NMG_DEBUG_FORMAT );
+			bu_log("\n");
 			break;
 		default:
 			fprintf(stderr, usage, argv[0]);
@@ -514,7 +514,7 @@ char	*argv[];
 	/* Open brl-cad database */
 	if ((dbip = db_open( argv[optind] , "r")) == DBI_NULL)
 	{
-		rt_log( "Cannot open %s\n" , argv[optind] );
+		bu_log( "Cannot open %s\n" , argv[optind] );
 		perror(argv[0]);
 		exit(1);
 	}
@@ -526,7 +526,7 @@ char	*argv[];
 	{
 		if ((fp_out = fopen( out_file , "w")) == NULL)
 		{
-			rt_log( "Cannot open %s\n" , out_file );
+			bu_log( "Cannot open %s\n" , out_file );
 			perror( argv[0] );
 			return 2;
 		}
@@ -547,17 +547,17 @@ char	*argv[];
 		dp = db_lookup( dbip , argv[i] , 0 );
 		if( dp == DIR_NULL )
 		{
-			rt_log( "WARNING!!! Could not find %s, skipping\n", argv[i] );
+			bu_log( "WARNING!!! Could not find %s, skipping\n", argv[i] );
 			continue;
 		}
 		db_functree( dbip , dp , csg_comb_func , 0 );
 	}
 
-	rt_vlist_cleanup();
+	bn_vlist_cleanup();
 	db_close(dbip);
 
 #if MEMORY_LEAK_CHECKING
-	rt_prmem("After complete G-NMG conversion");
+	bu_prmem("After complete G-NMG conversion");
 #endif
 
 	percent = 100;

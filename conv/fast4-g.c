@@ -93,11 +93,11 @@ static int	region_list_len=0;	/* actual length of the malloc'd region_list array
 static int	do_plot=0;		/* flag indicating plot file should be created */
 static struct cline    *cline_last_ptr; /* Pointer to last element in linked list of clines */
 static struct wmember  group_head[11];	/* Lists of regions for groups */
-static struct nmg_ptbl stack;		/* Stack for traversing name_tree */
+static struct bu_ptbl stack;		/* Stack for traversing name_tree */
 static struct model	*m;		/* NMG model for surface elements */
 static struct nmgregion	*r;		/* NMGregion */
 static struct shell	*s;		/* NMG shell */
-static struct rt_tol	tol;		/* Tolerance struct for NMG's */
+static struct bn_tol	tol;		/* Tolerance struct for NMG's */
 
 static struct faceuse	**dup_fu;	/* NMG faceuses that were duplicates */
 static int		dup_count=0;	/* number of faceuses in the dup_fu list */
@@ -125,7 +125,7 @@ static char	*usage="Usage:\n\tfast4-g [-dnwp] [-c component_list] [-o plot_file]
 
 RT_EXTERN( fastf_t nmg_loop_plane_area , ( struct loopuse *lu , plane_t pl ) );
 RT_EXTERN( struct shell *nmg_dup_shell , ( struct shell *s , long ***copy_tbl, struct bn_tol *tol ) );
-RT_EXTERN( struct shell *nmg_extrude_shell , ( struct shell *s1 , fastf_t thick , int normal_ward , int approximate , struct rt_tol *tol ) );
+RT_EXTERN( struct shell *nmg_extrude_shell , ( struct shell *s1 , fastf_t thick , int normal_ward , int approximate , struct bn_tol *tol ) );
 RT_EXTERN( struct edgeuse *nmg_next_radial_eu , ( CONST struct edgeuse *eu , CONST struct shell *s , int wires ) );
 RT_EXTERN( struct faceuse *nmg_mk_new_face_from_loop , ( struct loopuse *lu ) );
 RT_EXTERN( fastf_t mat_determinant , (mat_t matrix ) );
@@ -164,13 +164,13 @@ RT_EXTERN( void Fix_normals, ( struct shell *sh ) );
 					(char *)NULL, (char *)NULL, (unsigned char *)NULL, r_id, 0, 0, 0, 0 ); \
 			}
 
-#define	PUSH( ptr )	nmg_tbl( &stack , TBL_INS , (long *)ptr )
-#define POP( structure , ptr )	{ if( NMG_TBL_END( &stack ) == 0 ) \
+#define	PUSH( ptr )	bu_ptbl_ins( &stack , (long *)ptr )
+#define POP( structure , ptr )	{ if( BU_PTBL_END( &stack ) == 0 ) \
 				ptr = (struct structure *)NULL; \
 			  else \
 			  { \
-			  	ptr = (struct structure *)NMG_TBL_GET( &stack , NMG_TBL_END( &stack )-1 ); \
-			  	nmg_tbl( &stack , TBL_RM , (long *)ptr ); \
+			  	ptr = (struct structure *)BU_PTBL_GET( &stack , BU_PTBL_END( &stack )-1 ); \
+			  	bu_ptbl_rm( &stack , (long *)ptr ); \
 			  } \
 			}
 
@@ -204,9 +204,9 @@ struct cline
 #define CK_TREE_MAGIC( ptr )	\
 	{\
 		if( !ptr )\
-			rt_log( "ERROR: Null name_tree pointer, file=%s, line=%d\n", __FILE__, __LINE__ );\
+			bu_log( "ERROR: Null name_tree pointer, file=%s, line=%d\n", __FILE__, __LINE__ );\
 		else if( ptr->magic != NAME_TREE_MAGIC )\
-			rt_log( "ERROR: bad name_tree pointer (x%x), file=%s, line=%d\n", ptr, __FILE__, __LINE__ );\
+			bu_log( "ERROR: bad name_tree pointer (x%x), file=%s, line=%d\n", ptr, __FILE__, __LINE__ );\
 	}
 
 struct name_tree
@@ -464,7 +464,7 @@ int pt1, pt2, pt3, pt4;
 
 	if( !elem_root )
 	{
-		elem_root = (struct elem_list *)rt_malloc( sizeof( struct elem_list ), "Add_elem: elem_root" );
+		elem_root = (struct elem_list *)bu_malloc( sizeof( struct elem_list ), "Add_elem: elem_root" );
 		elem = elem_root;
 	}
 	else
@@ -473,7 +473,7 @@ int pt1, pt2, pt3, pt4;
 		while( elem->next )
 			elem = elem->next;
 
-		elem->next = (struct elem_list *)rt_malloc( sizeof( struct elem_list ), "Add_elem: elem" );
+		elem->next = (struct elem_list *)bu_malloc( sizeof( struct elem_list ), "Add_elem: elem" );
 		elem = elem->next;
 	}
 
@@ -1043,7 +1043,7 @@ int element_no;
 
 	if( !fus_root )
 	{
-		fus_root = (struct fast_fus *)rt_malloc( sizeof( struct fast_fus ) , "fus_root" );
+		fus_root = (struct fast_fus *)bu_malloc( sizeof( struct fast_fus ) , "fus_root" );
 		fus = fus_root;
 	}
 	else
@@ -1051,7 +1051,7 @@ int element_no;
 		fus = fus_root;
 		while( fus->next )
 			fus = fus->next;
-		fus->next = (struct fast_fus *)rt_malloc( sizeof( struct fast_fus ) , "fus" );
+		fus->next = (struct fast_fus *)bu_malloc( sizeof( struct fast_fus ) , "fus" );
 		fus = fus->next;
 	}
 
@@ -1073,7 +1073,7 @@ Check_names()
 	if( !name_root )
 		return;
 
-	nmg_tbl( &stack , TBL_RST , (long *)NULL );
+	bu_ptbl_reset( &stack );
 
 	CK_TREE_MAGIC( name_root )
 	/* ident order */
@@ -1128,7 +1128,7 @@ int in;
 	if( int_list_count == int_list_length )
 	{
 		if( int_list_length == 0 )
-			int_list = (int *)rt_malloc( INT_LIST_BLOCK*sizeof( int ) , "insert_id: int_list" );
+			int_list = (int *)bu_malloc( INT_LIST_BLOCK*sizeof( int ) , "insert_id: int_list" );
 		else
 			int_list = (int *)rt_realloc( (char *)int_list , (int_list_length + INT_LIST_BLOCK)*sizeof( int ) , "insert_id: int_list" );
 		int_list_length += INT_LIST_BLOCK;
@@ -1137,14 +1137,14 @@ int in;
 	int_list[int_list_count] = in;
 	int_list_count++;
 
-	if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
-		rt_log( "ERROR: rt_mem_barriercheck failed in insert_int\n" );
+	if( rt_g.debug&DEBUG_MEM_FULL &&  bu_mem_barriercheck() )
+		bu_log( "ERROR: bu_mem_barriercheck failed in insert_int\n" );
 }
 
 void
 tmp_shell_coplanar_face_merge( s, tmp_tol, simplify )
 struct shell		*s;
-CONST struct rt_tol	*tmp_tol;
+CONST struct bn_tol	*tmp_tol;
 CONST int		simplify;
 {
 	struct model	*m;
@@ -1161,16 +1161,16 @@ CONST int		simplify;
 	NMG_CK_SHELL(s);
 	m = nmg_find_model( &s->l.magic );
 	len = sizeof(char) * m->maxindex * 2;
-	flags1 = (char *)rt_calloc( sizeof(char), m->maxindex * 2,
+	flags1 = (char *)bu_calloc( sizeof(char), m->maxindex * 2,
 		"tmp_shell_coplanar_face_mergetmp flags1[]" );
-	flags2 = (char *)rt_calloc( sizeof(char), m->maxindex * 2,
+	flags2 = (char *)bu_calloc( sizeof(char), m->maxindex * 2,
 		"tmp_shell_coplanar_face_merge flags2[]" );
 
 	/* Visit each face in the shell */
-	for( RT_LIST_FOR( fu1, faceuse, &s->fu_hd ) )  {
+	for( BU_LIST_FOR( fu1, faceuse, &s->fu_hd ) )  {
 		plane_t		n1;
 
-		if( RT_LIST_NEXT_IS_HEAD(fu1, &s->fu_hd) )  break;
+		if( BU_LIST_NEXT_IS_HEAD(fu1, &s->fu_hd) )  break;
 		f1 = fu1->f_p;
 		NMG_CK_FACE(f1);
 		if( NMG_INDEX_TEST(flags1, f1) )  continue;
@@ -1183,9 +1183,9 @@ CONST int		simplify;
 		/* For this face, visit all remaining faces in the shell. */
 		/* Don't revisit any faces already considered. */
 		bcopy( flags1, flags2, len );
-		for( fu2 = RT_LIST_NEXT(faceuse, &fu1->l);
-		     RT_LIST_NOT_HEAD(fu2, &s->fu_hd);
-		     fu2 = RT_LIST_NEXT(faceuse,&fu2->l)
+		for( fu2 = BU_LIST_NEXT(faceuse, &fu1->l);
+		     BU_LIST_NOT_HEAD(fu2, &s->fu_hd);
+		     fu2 = BU_LIST_NEXT(faceuse,&fu2->l)
 		)  {
 			register fastf_t	dist;
 			plane_t			n2;
@@ -1212,7 +1212,7 @@ CONST int		simplify;
 
 				/*
 				 *  Compare angle between normals.
-				 *  Can't just use RT_VECT_ARE_PARALLEL here,
+				 *  Can't just use BN_VECT_ARE_PARALLEL here,
 				 *  because they must point in the same direction.
 				 */
 				dist = VDOT( n1, n2 );
@@ -1228,9 +1228,9 @@ CONST int		simplify;
 			{
 				struct faceuse	*prev_fu;
 
-				prev_fu = RT_LIST_PREV(faceuse, &fu2->l);
+				prev_fu = BU_LIST_PREV(faceuse, &fu2->l);
 				/* The prev_fu can never be the head */
-				if( RT_LIST_IS_HEAD(prev_fu, &s->fu_hd) )
+				if( BU_LIST_IS_HEAD(prev_fu, &s->fu_hd) )
 					rt_bomb("prev is head?\n");
 				if( nmg_ck_fu_verts( fu1 , fu1->f_p , tmp_tol ) )
 					rt_bomb( "tmp_shell_coplanar_face_merge: verts not on face\n" );
@@ -1239,10 +1239,10 @@ CONST int		simplify;
 				{
 					if( debug )
 					{
-						rt_log( "Merging coplanar faces:\n" );
-						rt_log( "plane = ( %f %f %f %f )\n" , V4ARGS( fu1->f_p->g.plane_p->N ) );
+						bu_log( "Merging coplanar faces:\n" );
+						bu_log( "plane = ( %f %f %f %f )\n" , V4ARGS( fu1->f_p->g.plane_p->N ) );
 						nmg_pr_fu_briefly( fu1 , (char *)NULL );
-						rt_log( "plane = ( %f %f %f %f )\n" , V4ARGS( fu2->f_p->g.plane_p->N ) );
+						bu_log( "plane = ( %f %f %f %f )\n" , V4ARGS( fu2->f_p->g.plane_p->N ) );
 						nmg_pr_fu_briefly( fu2 , (char *)NULL );
 					}
 					nmg_jf( fu1, fu2 );
@@ -1259,20 +1259,20 @@ CONST int		simplify;
 			if( simplify )  {
 				struct loopuse *lu;
 
-				for (RT_LIST_FOR(lu, loopuse, &fu1->lu_hd))
+				for (BU_LIST_FOR(lu, loopuse, &fu1->lu_hd))
 					nmg_simplify_loop(lu);
 			}
 		}
 	}
-	rt_free( (char *)flags1, "tmp_shell_coplanar_face_merge flags1[]" );
-	rt_free( (char *)flags2, "tmp_shell_coplanar_face_merge flags2[]" );
+	bu_free( (char *)flags1, "tmp_shell_coplanar_face_merge flags1[]" );
+	bu_free( (char *)flags2, "tmp_shell_coplanar_face_merge flags2[]" );
 
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
-		rt_log("tmp_shell_coplanar_face_merge(s=x%x, tol=x%x, simplify=%d)\n",
+		bu_log("tmp_shell_coplanar_face_merge(s=x%x, tol=x%x, simplify=%d)\n",
 			s, tmp_tol, simplify);
 	}
-	if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
-		rt_log( "ERROR: rt_mem_barriercheck failed in tmp_shell_coplanar_face_merge\n" );
+	if( rt_g.debug&DEBUG_MEM_FULL &&  bu_mem_barriercheck() )
+		bu_log( "ERROR: bu_mem_barriercheck failed in tmp_shell_coplanar_face_merge\n" );
 }
 
 void
@@ -1285,7 +1285,7 @@ int group_id;
 	struct hole_list *list_ptr;
 
 	if( debug )
-		rt_log( "Subtract_holes( comp_id=%d, group_id=%d )\n" , comp_id , group_id );
+		bu_log( "Subtract_holes( comp_id=%d, group_id=%d )\n" , comp_id , group_id );
 
 	hole_ptr = hole_root;
 	while( hole_ptr )
@@ -1313,11 +1313,11 @@ int group_id;
 
 				if( !ptr || ptr->region_id != reg_id )
 				{
-					rt_log( "ERROR: Can't find holes to subtract for group %d, component %d\n" , group_id , comp_id );
+					bu_log( "ERROR: Can't find holes to subtract for group %d, component %d\n" , group_id , comp_id );
 					return;
 				}
 
-				nmg_tbl( &stack , TBL_RST , (long *)NULL );
+				bu_ptbl_reset( &stack );
 
 				while( ptr && ptr->region_id == reg_id )
 				{
@@ -1342,8 +1342,8 @@ int group_id;
 		}
 		hole_ptr = hole_ptr->next;
 	}
-	if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
-		rt_log( "ERROR: rt_mem_barriercheck failed in subtract_holes\n" );
+	if( rt_g.debug&DEBUG_MEM_FULL &&  bu_mem_barriercheck() )
+		bu_log( "ERROR: bu_mem_barriercheck failed in subtract_holes\n" );
 }
 
 void
@@ -1356,11 +1356,11 @@ List_holes()
 
 	while( hole_ptr )
 	{
-		rt_log( "Holes for Group %d, Component %d:\n" , hole_ptr->group, hole_ptr->component );
+		bu_log( "Holes for Group %d, Component %d:\n" , hole_ptr->group, hole_ptr->component );
 		list_ptr = hole_ptr->holes;
 		while( list_ptr )
 		{
-			rt_log( "\tgroup %d component %d\n" , list_ptr->group, list_ptr->component );
+			bu_log( "\tgroup %d component %d\n" , list_ptr->group, list_ptr->component );
 			list_ptr = list_ptr->next;
 		}
 		hole_ptr = hole_ptr->next;
@@ -1372,9 +1372,9 @@ List_names()
 {
 	struct name_tree *ptr;
 
-	nmg_tbl( &stack , TBL_RST , (long *)NULL );
+	bu_ptbl_reset( &stack );
 
-	rt_log( "\nNames in ident order:\n" );
+	bu_log( "\nNames in ident order:\n" );
 	ptr = name_root;
 	while( 1 )
 	{
@@ -1387,11 +1387,11 @@ List_names()
 		if( !ptr )
 			break;
 
-		rt_log( "%s %d %d\n" , ptr->name , ptr->region_id , ptr->element_id );
+		bu_log( "%s %d %d\n" , ptr->name , ptr->region_id , ptr->element_id );
 		ptr = ptr->rright;
 	}
 
-	rt_log( "\tAlphabetical list of names:\n" );
+	bu_log( "\tAlphabetical list of names:\n" );
 	ptr = name_root;
 	while( 1 )
 	{
@@ -1404,7 +1404,7 @@ List_names()
 		if( !ptr )
 			break;
 
-		rt_log( "%s\n" , ptr->name );
+		bu_log( "%s\n" , ptr->name );
 		ptr = ptr->nright;
 	}
 }
@@ -1629,9 +1629,9 @@ char *name;
 			/* This was the only name in the tree */
 			*root = (struct name_tree *)NULL;
 		}
-		rt_free( (char *)ptr , "Delete_name: ptr" );
-		if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
-			rt_log( "ERROR: rt_mem_barriercheck failed in Delete_name\n" );
+		bu_free( (char *)ptr , "Delete_name: ptr" );
+		if( rt_g.debug&DEBUG_MEM_FULL &&  bu_mem_barriercheck() )
+			bu_log( "ERROR: bu_mem_barriercheck failed in Delete_name\n" );
 		return;
 	}
 	else
@@ -1705,13 +1705,13 @@ char *name;
 
 	if( !found )
 	{
-		rt_log( "name (%s) deleted from name tree, but not found in ident tree!!\n" , name );
+		bu_log( "name (%s) deleted from name tree, but not found in ident tree!!\n" , name );
 		rt_bomb( "Delete_name\n" );
 	}
 
 	if( !parent )
 	{
-		rt_log( "name (%s) is root of ident tree, but not name tree!!\n" , name );
+		bu_log( "name (%s) is root of ident tree, but not name tree!!\n" , name );
 		rt_bomb( "Delete_name\n" );
 	}
 
@@ -1742,9 +1742,9 @@ char *name;
 		else
 			parent->rleft = ptr->rleft;
 	}
-	rt_free( (char *)ptr , "Delete_name: ptr" );
-	if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
-		rt_log( "ERROR: rt_mem_barriercheck failed in Delete_name\n" );
+	bu_free( (char *)ptr , "Delete_name: ptr" );
+	if( rt_g.debug&DEBUG_MEM_FULL &&  bu_mem_barriercheck() )
+		bu_log( "ERROR: bu_mem_barriercheck failed in Delete_name\n" );
 	Check_names();
 }
 
@@ -1762,11 +1762,11 @@ char *name;
 
 	if( found )
 	{
-		rt_log( "Insert_name: %s already in name tree\n" , name );
+		bu_log( "Insert_name: %s already in name tree\n" , name );
 		return;
 	}
 
-	new_ptr = (struct name_tree *)rt_malloc( sizeof( struct name_tree ) , "Insert_name: new_ptr" );
+	new_ptr = (struct name_tree *)bu_malloc( sizeof( struct name_tree ) , "Insert_name: new_ptr" );
 
 	strncpy( new_ptr->name , name , NAMESIZE+1 );
 	new_ptr->nleft = (struct name_tree *)NULL;
@@ -1789,7 +1789,7 @@ char *name;
 	{
 		if( ptr->nright )
 		{
-			rt_log( "Insert_name: ptr->nright not null\n" );
+			bu_log( "Insert_name: ptr->nright not null\n" );
 			rt_bomb( "\tCannot insert new node\n" );
 		}
 		ptr->nright = new_ptr;
@@ -1798,13 +1798,13 @@ char *name;
 	{
 		if( ptr->nleft )
 		{
-			rt_log( "Insert_name: ptr->nleft not null\n" );
+			bu_log( "Insert_name: ptr->nleft not null\n" );
 			rt_bomb( "\tCannot insert new node\n" );
 		}
 		ptr->nleft = new_ptr;
 	}
-	if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
-		rt_log( "ERROR: rt_mem_barriercheck failed in Insert_name\n" );
+	if( rt_g.debug&DEBUG_MEM_FULL &&  bu_mem_barriercheck() )
+		bu_log( "ERROR: bu_mem_barriercheck failed in Insert_name\n" );
 }
 
 void
@@ -1819,7 +1819,7 @@ int el_id;
 	int diff;
 
 	if( debug )
-		rt_log( "Insert_region_name( name=%s, reg_id=%d, el_id=%d\n" , name, reg_id, el_id );
+		bu_log( "Insert_region_name( name=%s, reg_id=%d, el_id=%d\n" , name, reg_id, el_id );
 
 	rptr_model = Search_ident( name_root , reg_id , el_id , &foundr );
 	nptr_model = Search_names( name_root , name , &foundn );
@@ -1829,14 +1829,14 @@ int el_id;
 
 	if( foundn != foundr )
 	{
-		rt_log( "Insert_region_name: name %s ident %d element %d\n\tfound name is %d\n\tfound ident is %d\n",
+		bu_log( "Insert_region_name: name %s ident %d element %d\n\tfound name is %d\n\tfound ident is %d\n",
 			name, reg_id, el_id, foundn, foundr );
 		List_names();
 		rt_bomb( "\tCannot insert new node\n" );
 	}
 
 	/* Add to tree for entire model */
-	new_ptr = (struct name_tree *)rt_malloc( sizeof( struct name_tree ) , "Insert_region_name: new_ptr" );
+	new_ptr = (struct name_tree *)bu_malloc( sizeof( struct name_tree ) , "Insert_region_name: new_ptr" );
 	new_ptr->rleft = (struct name_tree *)NULL;
 	new_ptr->rright = (struct name_tree *)NULL;
 	new_ptr->nleft = (struct name_tree *)NULL;
@@ -1857,7 +1857,7 @@ int el_id;
 		{
 			if( nptr_model->nright )
 			{
-				rt_log( "Insert_region_name: nptr_model->nright not null\n" );
+				bu_log( "Insert_region_name: nptr_model->nright not null\n" );
 				rt_bomb( "\tCannot insert new node\n" );
 			}
 			nptr_model->nright = new_ptr;
@@ -1866,7 +1866,7 @@ int el_id;
 		{
 			if( nptr_model->nleft )
 			{
-				rt_log( "Insert_region_name: nptr_model->nleft not null\n" );
+				bu_log( "Insert_region_name: nptr_model->nleft not null\n" );
 				rt_bomb( "\tCannot insert new node\n" );
 			}
 			nptr_model->nleft = new_ptr;
@@ -1882,7 +1882,7 @@ int el_id;
 		{
 			if( rptr_model->rright )
 			{
-				rt_log( "Insert_region_name: rptr_model->rright not null\n" );
+				bu_log( "Insert_region_name: rptr_model->rright not null\n" );
 				rt_bomb( "\tCannot insert new node\n" );
 			}
 			rptr_model->rright = new_ptr;
@@ -1891,15 +1891,15 @@ int el_id;
 		{
 			if( rptr_model->rleft )
 			{
-				rt_log( "Insert_region_name: rptr_model->rleft not null\n" );
+				bu_log( "Insert_region_name: rptr_model->rleft not null\n" );
 				rt_bomb( "\tCannot insert new node\n" );
 			}
 			rptr_model->rleft = new_ptr;
 		}
 	}
 	Check_names();
-	if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
-		rt_log( "ERROR: rt_mem_barriercheck failed in Insert_region_name\n" );
+	if( rt_g.debug&DEBUG_MEM_FULL &&  bu_mem_barriercheck() )
+		bu_log( "ERROR: bu_mem_barriercheck failed in Insert_region_name\n" );
 }
 
 char *
@@ -1915,7 +1915,7 @@ int el_id;
 	reg_id = g_id * 1000 + c_id;
 
 	if( debug )
-		rt_log( "find_region_name( g_id=%d, c_id=%d, el_id=%d ), reg_id=%d\n" , g_id, c_id, el_id, reg_id );
+		bu_log( "find_region_name( g_id=%d, c_id=%d, el_id=%d ), reg_id=%d\n" , g_id, c_id, el_id, reg_id );
 
 	ptr = Search_ident( name_root , reg_id , el_id , &found );
 
@@ -1955,8 +1955,8 @@ char *name;
 
 		(void)Search_names( name_root , name , &found );
 	}
-	if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
-		rt_log( "ERROR: rt_mem_barriercheck failed in make_unique_name\n" );
+	if( rt_g.debug&DEBUG_MEM_FULL &&  bu_mem_barriercheck() )
+		bu_log( "ERROR: bu_mem_barriercheck failed in make_unique_name\n" );
 }
 
 void
@@ -1966,13 +1966,13 @@ int reg_id;
 {
 	if( group_id < 0 || group_id > 10 )
 	{
-		rt_log( "add_to_series: region (%s) not added, illegal group number %d, region_id=$d\n" ,
+		bu_log( "add_to_series: region (%s) not added, illegal group number %d, region_id=$d\n" ,
 			name , group_id , reg_id );
 		return;
 	}
 
 	if( mk_addmember( name , &group_head[group_id] , WMOP_UNION ) == (struct wmember *)NULL )
-		rt_log( "add_to_series: mk_addmember failed for region %s\n" , name );
+		bu_log( "add_to_series: mk_addmember failed for region %s\n" , name );
 }
 
 void
@@ -1982,12 +1982,12 @@ make_comp_group()
 	struct name_tree *ptr;
 	char name[NAMESIZE+1];
 
-	if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
-		rt_log( "ERROR: rt_mem_barriercheck failed in make_comp_group\n" );
+	if( rt_g.debug&DEBUG_MEM_FULL &&  bu_mem_barriercheck() )
+		bu_log( "ERROR: bu_mem_barriercheck failed in make_comp_group\n" );
 
-	RT_LIST_INIT( &g_head.l );
+	BU_LIST_INIT( &g_head.l );
 
-	nmg_tbl( &stack , TBL_RST , (long *)NULL );
+	bu_ptbl_reset( &stack );
 
 	ptr = name_root;
 	while( 1 )
@@ -2005,7 +2005,7 @@ make_comp_group()
 		{
 			if( mk_addmember( ptr->name , &g_head , WMOP_UNION ) == (struct wmember *)NULL )
 			{
-				rt_log( "make_comp_group: Could not add %s to group for ident %d\n" , ptr->name , ptr->region_id );
+				bu_log( "make_comp_group: Could not add %s to group for ident %d\n" , ptr->name , ptr->region_id );
 				break;
 			}
 			ptr->in_comp_group = 1;
@@ -2013,7 +2013,7 @@ make_comp_group()
 		ptr = ptr->nright;
 	}
 
-	if( RT_LIST_NON_EMPTY( &g_head.l ) )
+	if( BU_LIST_NON_EMPTY( &g_head.l ) )
 	{
 		char *tmp_name;
 
@@ -2024,7 +2024,7 @@ make_comp_group()
 			sprintf( name , "comp_%d" , region_id );
 			make_unique_name( name );
 			if( warnings )
-				rt_log( "Creating default name (%s) for group %d component %d\n",
+				bu_log( "Creating default name (%s) for group %d component %d\n",
 						name , group_id , comp_id );
 			Insert_name( &name_root , name );
 		}
@@ -2041,25 +2041,25 @@ do_groups()
 	struct wmember head_all;
 
 	if( debug )
-		rt_log( "do_groups\n" );
+		bu_log( "do_groups\n" );
 
-	RT_LIST_INIT( &head_all.l );
+	BU_LIST_INIT( &head_all.l );
 
 	for( group_no=0 ; group_no < 11 ; group_no++ )
 	{
 		char name[NAMESIZE+1];
 
-		if( RT_LIST_IS_EMPTY( &group_head[group_no].l ) )
+		if( BU_LIST_IS_EMPTY( &group_head[group_no].l ) )
 			continue;
 
 		sprintf( name , "%dxxx_series" , group_no );
 		mk_lfcomb( fdout , name , &group_head[group_no] , 0 );
 
 		if( mk_addmember( name , &head_all , WMOP_UNION ) == (struct wmember *)NULL )
-			rt_log( "do_groups: mk_addmember failed to add %s to group all\n" , name );
+			bu_log( "do_groups: mk_addmember failed to add %s to group all\n" , name );
 	}
 
-	if( RT_LIST_NON_EMPTY( &head_all.l ) )
+	if( BU_LIST_NON_EMPTY( &head_all.l ) )
 		mk_lfcomb( fdout , "all" , &head_all , 0 );
 }
 
@@ -2077,15 +2077,15 @@ do_name()
 		return;
 
 	if( debug )
-		rt_log( "do_name: %s\n" , line );
+		bu_log( "do_name: %s\n" , line );
 
 	strncpy( field , &line[8] , 8 );
 	g_id = atoi( field );
 
 	if( g_id != group_id )
 	{
-		rt_log( "$NAME card for group %d in section for group %d ignored\n" , g_id , group_id );
-		rt_log( "%s\n" , line );
+		bu_log( "$NAME card for group %d in section for group %d ignored\n" , g_id , group_id );
+		bu_log( "%s\n" , line );
 		return;
 	}
 
@@ -2094,8 +2094,8 @@ do_name()
 
 	if( c_id != comp_id )
 	{
-		rt_log( "$NAME card for component %d in section for component %d ignored\n" , c_id , comp_id );
-		rt_log( "%s\n" , line );
+		bu_log( "$NAME card for component %d in section for component %d ignored\n" , c_id , comp_id );
+		bu_log( "%s\n" , line );
 		return;
 	}
 
@@ -2135,8 +2135,8 @@ do_name()
 	Insert_region_name( name_name , region_id , 0 );
 
 	name_count = 0;
-	if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
-		rt_log( "ERROR: rt_mem_barriercheck failed in do_name\n" );
+	if( rt_g.debug&DEBUG_MEM_FULL &&  bu_mem_barriercheck() )
+		bu_log( "ERROR: bu_mem_barriercheck failed in do_name\n" );
 }
 
 void
@@ -2153,7 +2153,7 @@ char type;
 	r_id = g_id * 1000 + c_id;
 
 	if( debug )
-		rt_log( "make_region_name( g_id=%d, c_id=%d, element_id=%d, type=%c )\n" , g_id, c_id, element_id, type );
+		bu_log( "make_region_name( g_id=%d, c_id=%d, element_id=%d, type=%c )\n" , g_id, c_id, element_id, type );
 
 	tmp_name = find_region_name( g_id , c_id , element_id );
 	if( tmp_name )
@@ -2214,15 +2214,15 @@ do_grid()
 	if( !pass )	/* not doing geometry yet */
 		return;
 
-	if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
-		rt_log( "ERROR: rt_mem_barriercheck failed at start of do_grid\n" );
+	if( rt_g.debug&DEBUG_MEM_FULL &&  bu_mem_barriercheck() )
+		bu_log( "ERROR: bu_mem_barriercheck failed at start of do_grid\n" );
 
 	strncpy( field , &line[8] , 8 );
 	grid_no = atoi( field );
 
 	if( grid_no < 1 )
 	{
-		rt_log( "ERROR: grid id number = %d\n" , grid_no );
+		bu_log( "ERROR: grid id number = %d\n" , grid_no );
 		rt_bomb( "BAD GRID ID NUMBER\n" );
 	}
 
@@ -2246,8 +2246,8 @@ do_grid()
 
 	if( grid_no > max_grid_no )
 		max_grid_no = grid_no;
-	if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
-		rt_log( "ERROR: rt_mem_barriercheck failed at end of do_grid\n" );
+	if( rt_g.debug&DEBUG_MEM_FULL &&  bu_mem_barriercheck() )
+		bu_log( "ERROR: bu_mem_barriercheck failed at end of do_grid\n" );
 }
 
 void
@@ -2259,9 +2259,9 @@ make_cline_regions()
 	int sph_no;
 
 	if( debug )
-		rt_log( "make_cline_regions\n" );
+		bu_log( "make_cline_regions\n" );
 
-	RT_LIST_INIT( &head.l );
+	BU_LIST_INIT( &head.l );
 
 	/* make a list of all the endpoints */
 	cline_ptr = cline_root;
@@ -2279,11 +2279,11 @@ make_cline_regions()
 	{
 		int pt_no;
 		int line_no;
-		struct nmg_ptbl lines;
+		struct bu_ptbl lines;
 		fastf_t sph_radius=0.0;
 		fastf_t sph_inner_radius=0.0;
 
-		nmg_tbl( &lines , TBL_INIT , (long *)NULL );
+		bu_ptbl_init( &lines , 64, " &lines ");
 
 		pt_no = int_list[sph_no];
 
@@ -2302,13 +2302,13 @@ make_cline_regions()
 				    (cline_ptr->radius - cline_ptr->thick > sph_inner_radius ) )
 					sph_inner_radius =  cline_ptr->radius - cline_ptr->thick;
 
-				nmg_tbl( &lines , TBL_INS , (long *)cline_ptr );
+				bu_ptbl_ins( &lines , (long *)cline_ptr );
 			}
 
 			cline_ptr = cline_ptr->next;
 		}
 
-		if( NMG_TBL_END( &lines ) > 1 )
+		if( BU_PTBL_END( &lines ) > 1 )
 		{
 			/* make a joint where CLINE's meet */
 
@@ -2320,8 +2320,8 @@ make_cline_regions()
 			/* Union sphere */
 			if( mk_addmember( name , &head , WMOP_UNION ) == (struct wmember *)NULL )
 			{
-				rt_log( "make_cline_regions: mk_addmember failed for outer sphere %s\n" , name );
-				nmg_tbl( &lines , TBL_FREE , (long *)NULL );
+				bu_log( "make_cline_regions: mk_addmember failed for outer sphere %s\n" , name );
+				bu_ptbl_free( &lines );
 				break;
 			}
 
@@ -2334,22 +2334,22 @@ make_cline_regions()
 
 				if( mk_addmember( name , &head , WMOP_SUBTRACT ) == (struct wmember *)NULL )
 				{
-					rt_log( "make_cline_regions: mk_addmember failed for outer sphere %s\n" , name );
-					nmg_tbl( &lines , TBL_FREE , (long *)NULL );
+					bu_log( "make_cline_regions: mk_addmember failed for outer sphere %s\n" , name );
+					bu_ptbl_free( &lines );
 					break;
 				}
 			}
 
 			/* subtract all outer cylinders that touch this point */
-			for( line_no=0 ; line_no < NMG_TBL_END( &lines ) ; line_no++ )
+			for( line_no=0 ; line_no < BU_PTBL_END( &lines ) ; line_no++ )
 			{
-				cline_ptr = (struct cline *)NMG_TBL_GET( &lines , line_no );
+				cline_ptr = (struct cline *)BU_PTBL_GET( &lines , line_no );
 
 				get_solid_name( name , CLINE , cline_ptr->element_id , comp_id , group_id , 0 );
 				if( mk_addmember( name , &head , WMOP_SUBTRACT ) == (struct wmember *)NULL )
 				{
-					rt_log( "make_cline_regions: mk_addmember failed for line at joint %s\n" , name );
-					nmg_tbl( &lines , TBL_FREE , (long *)NULL );
+					bu_log( "make_cline_regions: mk_addmember failed for line at joint %s\n" , name );
+					bu_ptbl_free( &lines );
 					break;
 				}
 			}
@@ -2358,7 +2358,7 @@ make_cline_regions()
 			Subtract_holes( &head , comp_id , group_id );
 
 			/* now make the region */
-			if( RT_LIST_NON_EMPTY( &head.l ) )
+			if( BU_LIST_NON_EMPTY( &head.l ) )
 				MK_REGION( fdout , &head , group_id , comp_id , -pt_no , CLINE )
 		}
 		else
@@ -2374,10 +2374,10 @@ make_cline_regions()
 		}
 
 		/* make regions for all CLINE elements that start at this pt_no */
-		for( line_no=0 ; line_no < NMG_TBL_END( &lines ) ; line_no++ )
+		for( line_no=0 ; line_no < BU_PTBL_END( &lines ) ; line_no++ )
 		{
 			int i;
-			cline_ptr = (struct cline *)NMG_TBL_GET( &lines , line_no ) ;
+			cline_ptr = (struct cline *)BU_PTBL_GET( &lines , line_no ) ;
 			if( cline_ptr->pt1 != pt_no )
 				continue;
 
@@ -2387,7 +2387,7 @@ make_cline_regions()
 			/* start region */
 			if( mk_addmember( name , &head , WMOP_UNION ) == (struct wmember *)NULL )
 			{
-				rt_log( "make_cline_regions: mk_addmember failed for outer solid %s\n" , name );
+				bu_log( "make_cline_regions: mk_addmember failed for outer solid %s\n" , name );
 				break;
 			}
 			cline_ptr->made = 1;
@@ -2398,17 +2398,17 @@ make_cline_regions()
 				get_solid_name( name , CLINE , cline_ptr->element_id , comp_id , group_id , 1 );
 				if( mk_addmember( name , &head , WMOP_SUBTRACT ) == (struct wmember *)NULL )
 				{
-					rt_log( "make_cline_regions: mk_addmember failed for inner solid %s\n" , name );
+					bu_log( "make_cline_regions: mk_addmember failed for inner solid %s\n" , name );
 					break;
 				}
 			}
 
 			/* subtract outside cylinders of any other clines that use this grid point */
-			for( i=0 ; i < NMG_TBL_END( &lines ) ; i++ )
+			for( i=0 ; i < BU_PTBL_END( &lines ) ; i++ )
 			{
 				struct cline *ptr2;
 
-				ptr2 = (struct cline *)NMG_TBL_GET( &lines , i );
+				ptr2 = (struct cline *)BU_PTBL_GET( &lines , i );
 
 				if( ptr2 != cline_ptr &&
 				    ptr2->pt1 == pt_no || ptr2->pt2 == pt_no )
@@ -2416,7 +2416,7 @@ make_cline_regions()
 					get_solid_name( name , CLINE , ptr2->element_id , comp_id , group_id , 0 );
 					if( mk_addmember( name , &head , WMOP_SUBTRACT ) == (struct wmember *)NULL )
 					{
-						rt_log( "make_cline_regions: mk_addmember failed for inner solid %s\n" , name );
+						bu_log( "make_cline_regions: mk_addmember failed for inner solid %s\n" , name );
 						break;
 					}
 				}
@@ -2428,7 +2428,7 @@ make_cline_regions()
 			/* make the region */
 			MK_REGION( fdout , &head , group_id , comp_id , cline_ptr->element_id , CLINE );
 		}
-		nmg_tbl( &lines , TBL_FREE , (long *)NULL );
+		bu_ptbl_free( &lines );
 	}
 
 	int_list_count = 0;
@@ -2442,14 +2442,14 @@ make_cline_regions()
 		ptr = cline_ptr;
 		cline_ptr = cline_ptr->next;
 
-		rt_free( (char *)ptr , "make_cline_regions: cline_ptr" );
+		bu_free( (char *)ptr , "make_cline_regions: cline_ptr" );
 	}
 
 	cline_root = (struct cline *)NULL;
 	cline_last_ptr = (struct cline *)NULL;
 
-	if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
-		rt_log( "ERROR: rt_mem_barriercheck failed in make_cline_regions\n" );
+	if( rt_g.debug&DEBUG_MEM_FULL &&  bu_mem_barriercheck() )
+		bu_log( "ERROR: bu_mem_barriercheck failed in make_cline_regions\n" );
 
 }
 
@@ -2483,26 +2483,26 @@ do_sphere()
 	radius = atof( field );
 	if( radius <= 0.0 )
 	{
-		rt_log( "do_sphere: illegal radius (%f), skipping sphere\n" , radius );
-		rt_log( "\telement %d, component %d, group %d\n" , element_id , comp_id , group_id );
+		bu_log( "do_sphere: illegal radius (%f), skipping sphere\n" , radius );
+		bu_log( "\telement %d, component %d, group %d\n" , element_id , comp_id , group_id );
 		return;
 	}
 
 	if( center_pt < 1 || center_pt > max_grid_no )
 	{
-		rt_log( "do_sphere: illegal grid number for center point %d, skipping sphere\n" , center_pt );
-		rt_log( "\telement %d, component %d, group %d\n" , element_id , comp_id , group_id );
+		bu_log( "do_sphere: illegal grid number for center point %d, skipping sphere\n" , center_pt );
+		bu_log( "\telement %d, component %d, group %d\n" , element_id , comp_id , group_id );
 		return;
 	}
 
-	RT_LIST_INIT( &sphere_region.l );
+	BU_LIST_INIT( &sphere_region.l );
 
 	make_solid_name( name , CSPHERE , element_id , comp_id , group_id , 0 );
 	mk_sph( fdout , name , grid_pts[center_pt].pt , radius );
 
 	if( mk_addmember( name ,  &sphere_region , WMOP_UNION ) == (struct wmember *)NULL )
 	{
-		rt_log( "do_sphere: Error in adding %s to sphere region\n" , name );
+		bu_log( "do_sphere: Error in adding %s to sphere region\n" , name );
 		rt_bomb( "do_sphere" );
 	}
 
@@ -2511,8 +2511,8 @@ do_sphere()
 		inner_radius = radius - thick;
 		if( thick > 0.0 && inner_radius <= 0.0 )
 		{
-			rt_log( "do_sphere: illegal thickness (%f), skipping inner sphere\n" , thick );
-			rt_log( "\telement %d, component %d, group %d\n" , element_id , comp_id , group_id );
+			bu_log( "do_sphere: illegal thickness (%f), skipping inner sphere\n" , thick );
+			bu_log( "\telement %d, component %d, group %d\n" , element_id , comp_id , group_id );
 			return;
 		}
 
@@ -2521,7 +2521,7 @@ do_sphere()
 
 		if( mk_addmember( name , &sphere_region , WMOP_SUBTRACT ) == (struct wmember *)NULL )
 		{
-			rt_log( "do_sphere: Error in subtracting %s from sphere region\n" , name );
+			bu_log( "do_sphere: Error in subtracting %s from sphere region\n" , name );
 			rt_bomb( "do_sphere" );
 		}
 	}
@@ -2546,20 +2546,20 @@ void
 Check_normals()
 {
 	/* XXXX This routine is far from complete */
-	struct nmg_ptbl verts;
+	struct bu_ptbl verts;
 	struct shell *s1;
 
 	if( debug )
-		rt_log( "Check_normals\n" );
+		bu_log( "Check_normals\n" );
 	
-	nmg_tbl( &verts , TBL_INIT , (long *)NULL );
+	bu_ptbl_init( &verts , 64, " &verts ");
 
 	NMG_CK_SHELL( s );
 
 	nmg_decompose_shell( s , &tol );
 
 	/* Calculate center of shell */
-	for( RT_LIST_FOR( s1 , shell , &r->s_hd ) )
+	for( BU_LIST_FOR( s1 , shell , &r->s_hd ) )
 	{
 		struct vertex *v;
 		point_t shell_center;
@@ -2572,18 +2572,18 @@ Check_normals()
 
 		nmg_vertex_tabulate( &verts , &s1->l.magic );
 
-		for( i=0 ; i<NMG_TBL_END( &verts ) ; i++ )
+		for( i=0 ; i<BU_PTBL_END( &verts ) ; i++ )
 		{
-			v = (struct vertex *)NMG_TBL_GET( &verts , i );
+			v = (struct vertex *)BU_PTBL_GET( &verts , i );
 			VADD2( shell_center , shell_center , v->vg_p->coord );
 		}
 
-		VSCALE( shell_center , shell_center , (fastf_t)(NMG_TBL_END( &verts ) ) );
+		VSCALE( shell_center , shell_center , (fastf_t)(BU_PTBL_END( &verts ) ) );
 
-		nmg_tbl( &verts , TBL_RST , (long *)NULL );
+		bu_ptbl_reset( &verts );
 
 		/* check if outward normal points away from center */
-		for( RT_LIST_FOR( fu , faceuse , &s1->fu_hd ) )
+		for( BU_LIST_FOR( fu , faceuse , &s1->fu_hd ) )
 		{
 			vect_t norm;
 			vect_t to_center;
@@ -2597,9 +2597,9 @@ Check_normals()
 				continue;
 
 			NMG_GET_FU_NORMAL( norm , fu );
-			lu = RT_LIST_FIRST( loopuse , &fu->lu_hd );
+			lu = BU_LIST_FIRST( loopuse , &fu->lu_hd );
 			NMG_CK_LOOPUSE( lu );
-			eu = RT_LIST_FIRST( edgeuse , &lu->down_hd );
+			eu = BU_LIST_FIRST( edgeuse , &lu->down_hd );
 			NMG_CK_EDGEUSE( eu );
 
 			v = eu->vu_p->v_p;
@@ -2609,7 +2609,7 @@ Check_normals()
 			VSUB2( to_center , shell_center , v->vg_p->coord )
 
 			dot = VDOT( to_center , norm );
-			if( RT_VECT_ARE_PERP( dot , &tol ) )
+			if( BN_VECT_ARE_PERP( dot , &tol ) )
 			{
 				/* shell center is on face, probably only one face */
 				break;
@@ -2624,12 +2624,12 @@ Check_normals()
 		}
 	}
 
-	s1 = RT_LIST_FIRST( shell , &r->s_hd );
-	while( RT_LIST_NOT_HEAD( s1 , &r->s_hd ) )
+	s1 = BU_LIST_FIRST( shell , &r->s_hd );
+	while( BU_LIST_NOT_HEAD( s1 , &r->s_hd ) )
 	{
 		struct shell *next_s;
 
-		next_s = RT_LIST_PNEXT( shell , &s1->l );
+		next_s = BU_LIST_PNEXT( shell , &s1->l );
 
 		if( s1 == s )
 		{
@@ -2642,7 +2642,7 @@ Check_normals()
 		s1 = next_s;
 	}
 
-	nmg_tbl( &verts , TBL_FREE , (long *)NULL );
+	bu_ptbl_free( &verts );
 }
 
 int
@@ -2701,8 +2701,8 @@ Sort_fus_by_thickness()
 		fus = fus->next;
 	}
 
-	if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
-		rt_log( "ERROR: rt_mem_barriercheck failed in sort_fus_by_thickness\n" );
+	if( rt_g.debug&DEBUG_MEM_FULL &&  bu_mem_barriercheck() )
+		bu_log( "ERROR: bu_mem_barriercheck failed in sort_fus_by_thickness\n" );
 
 	return( num_thicks );
 }
@@ -2712,21 +2712,21 @@ Recalc_edge_g( new_s )
 struct shell * new_s;
 {
 	int i;
-	struct nmg_ptbl list;
+	struct bu_ptbl list;
 	int *flags;
 
-	nmg_tbl( &list , TBL_INIT , (long *)NULL );
+	bu_ptbl_init( &list , 64, " &list ");
 
-	flags = (int *)rt_calloc( m->maxindex , sizeof( int ) , "Recalc_edge_g: flags" );
+	flags = (int *)bu_calloc( m->maxindex , sizeof( int ) , "Recalc_edge_g: flags" );
 
 	nmg_edgeuse_tabulate( &list , &new_s->l.magic );
 
 	/* get rid of all the old edge geometry */
-	for( i=0 ; i<NMG_TBL_END( &list ) ; i++ )
+	for( i=0 ; i<BU_PTBL_END( &list ) ; i++ )
 	{
 		struct edgeuse	*eu;
 
-		eu = (struct edgeuse *)NMG_TBL_GET( &list , i );
+		eu = (struct edgeuse *)BU_PTBL_GET( &list , i );
 		NMG_CK_EDGEUSE( eu );
 
 		if( eu->g.magic_p )
@@ -2738,11 +2738,11 @@ struct shell * new_s;
 		}
 	}
 
-	for( i=0 ; i<NMG_TBL_END( &list ) ; i++ )
+	for( i=0 ; i<BU_PTBL_END( &list ) ; i++ )
 	{
 		struct edgeuse		*eu;
 
-		eu = (struct edgeuse *)NMG_TBL_GET( &list , i );
+		eu = (struct edgeuse *)BU_PTBL_GET( &list , i );
 		NMG_CK_EDGEUSE( eu );
 
 		if( NMG_INDEX_TEST_AND_SET( flags , eu ) )
@@ -2753,12 +2753,12 @@ struct shell * new_s;
 		}
 	}
 
-	rt_free( (char *)flags , "Recalc_edge_g: flags" );
+	bu_free( (char *)flags , "Recalc_edge_g: flags" );
 
-	nmg_tbl( &list , TBL_FREE , (long *)NULL );
+	bu_ptbl_free( &list );
 
-	if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
-		rt_log( "ERROR: rt_mem_barriercheck failed in Recalc_edge_g\n" );
+	if( rt_g.debug&DEBUG_MEM_FULL &&  bu_mem_barriercheck() )
+		bu_log( "ERROR: bu_mem_barriercheck failed in Recalc_edge_g\n" );
 }
 
 void
@@ -2768,9 +2768,9 @@ struct shell *new_s;
 	struct faceuse *fu;
 	int *flags;
 
-	flags = (int *)rt_calloc( m->maxindex , sizeof( int ) , "Recalc_face_g: flags " );
+	flags = (int *)bu_calloc( m->maxindex , sizeof( int ) , "Recalc_face_g: flags " );
 
-	for( RT_LIST_FOR( fu , faceuse , &new_s->fu_hd ) )
+	for( BU_LIST_FOR( fu , faceuse , &new_s->fu_hd ) )
 	{
 		struct face *f;
 		struct face_g_plane *fg;
@@ -2788,20 +2788,20 @@ struct shell *new_s;
 		if( NMG_INDEX_TEST_AND_SET( flags , fg ) )
 		{
 			if( debug )
-				rt_log( "Recalculating geometry for face x%x fg=x%x\n", f, fg );
+				bu_log( "Recalculating geometry for face x%x fg=x%x\n", f, fg );
 			(void)nmg_calc_face_g( fu );
 			if( debug )
 			{
 				NMG_CK_FACE_G_PLANE( fu->f_p->g.plane_p );
-				rt_log( "New geometry is ( %g %g %g %g )\n", V4ARGS( fu->f_p->g.plane_p->N ) );
+				bu_log( "New geometry is ( %g %g %g %g )\n", V4ARGS( fu->f_p->g.plane_p->N ) );
 			}
 		}
 	}
 
-	rt_free( (char *)flags , "Recalc_face_g: flags" );
+	bu_free( (char *)flags , "Recalc_face_g: flags" );
 
-	if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
-		rt_log( "ERROR: rt_mem_barriercheck failed in Recalc_face_g\n" );
+	if( rt_g.debug&DEBUG_MEM_FULL &&  bu_mem_barriercheck() )
+		bu_log( "ERROR: bu_mem_barriercheck failed in Recalc_face_g\n" );
 }
 
 int
@@ -2810,18 +2810,18 @@ struct shell *new_s;
 CONST fastf_t thick;
 {
 	struct faceuse *fu;
-	struct nmg_ptbl verts;
+	struct bu_ptbl verts;
 	long *flags;
 	int vert_no;
 	int failures=0;
 
-	flags = (long *)rt_calloc( m->maxindex , sizeof( long ) , "Adjust_vertices: flags" );
+	flags = (long *)bu_calloc( m->maxindex , sizeof( long ) , "Adjust_vertices: flags" );
 
 	if( debug )
-		rt_log( "Adjust_vertices( s=x%x, thick = %g )\n", new_s, thick );
+		bu_log( "Adjust_vertices( s=x%x, thick = %g )\n", new_s, thick );
 
 	/* now adjust all the planes, first move them by distance "thick" */
-	for( RT_LIST_FOR( fu , faceuse , &new_s->fu_hd ) )
+	for( BU_LIST_FOR( fu , faceuse , &new_s->fu_hd ) )
 	{
 		struct face_g_plane *fg_p;
 
@@ -2835,56 +2835,56 @@ CONST fastf_t thick;
 		{
 			if( debug )
 			{
-				rt_log( "Moving face_g x%x ( %f %f %f %f ) from face x%x" ,
+				bu_log( "Moving face_g x%x ( %f %f %f %f ) from face x%x" ,
 					fu->f_p->g.plane_p,
 					V4ARGS( fu->f_p->g.plane_p->N ) ,
 					fu->f_p );
-				rt_log( "\tflip = %d\n" , fu->f_p->flip );
+				bu_log( "\tflip = %d\n" , fu->f_p->flip );
 			}
 			if( fu->f_p->flip )
 				fg_p->N[3] -= thick;
 			else
 				fg_p->N[3] += thick;
 			if( debug )
-				rt_log( " to (%f %f %f %f)\n", V4ARGS( fu->f_p->g.plane_p->N ) );
+				bu_log( " to (%f %f %f %f)\n", V4ARGS( fu->f_p->g.plane_p->N ) );
 		}
 	}
 
-	rt_free( (char *)flags , "Adjust_vertices: flags" );
+	bu_free( (char *)flags , "Adjust_vertices: flags" );
 
 	/* get table of vertices in this shell */
 	nmg_vertex_tabulate( &verts , &new_s->l.magic );
 
 	/* now move all the vertices */
-	for( vert_no = 0 ; vert_no < NMG_TBL_END( &verts ) ; vert_no++ )
+	for( vert_no = 0 ; vert_no < BU_PTBL_END( &verts ) ; vert_no++ )
 	{
 		struct vertex *new_v;
 
-		new_v = (struct vertex *)NMG_TBL_GET( &verts , vert_no );
+		new_v = (struct vertex *)BU_PTBL_GET( &verts , vert_no );
 		NMG_CK_VERTEX( new_v );
 
 		if( debug )
-			rt_log( "\tMoving vertex x%x from ( %g %g %g ) ", new_v, V3ARGS( new_v->vg_p->coord ) );
+			bu_log( "\tMoving vertex x%x from ( %g %g %g ) ", new_v, V3ARGS( new_v->vg_p->coord ) );
 
 		if( nmg_in_vert( new_v , 1 , &tol ) )
 		{
-			rt_log( "Adjust_vertices: Failed to calculate new vertex at v=x%x was ( %f %f %f )\n",
+			bu_log( "Adjust_vertices: Failed to calculate new vertex at v=x%x was ( %f %f %f )\n",
 				new_v , V3ARGS( new_v->vg_p->coord ) );
-			rt_log( "\tgroup id %d, component id %d\n" , group_id , comp_id );
+			bu_log( "\tgroup id %d, component id %d\n" , group_id , comp_id );
 			failures++;
 		}
 
 		if( debug )
-			rt_log( "to ( %g %g %g )\n", V3ARGS( new_v->vg_p->coord ) );
+			bu_log( "to ( %g %g %g )\n", V3ARGS( new_v->vg_p->coord ) );
 	}
 
-	nmg_tbl( &verts , TBL_FREE , (long *)NULL );
+	bu_ptbl_free( &verts );
 
 	/* since we used approximate mode in nmg_in_vert, recalculate planes */
 	Recalc_face_g( new_s );
 
-	if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
-		rt_log( "ERROR: rt_mem_barriercheck failed in Adjust_vertices\n" );
+	if( rt_g.debug&DEBUG_MEM_FULL &&  bu_mem_barriercheck() )
+		bu_log( "ERROR: bu_mem_barriercheck failed in Adjust_vertices\n" );
 
 	return( failures );
 }
@@ -2922,7 +2922,7 @@ CONST struct vertexuse *vu;
 
 	s_vu = nmg_find_s_of_vu( vu );
 
-	for( RT_LIST_FOR( vu1 , vertexuse , &vu->v_p->vu_hd ) )
+	for( BU_LIST_FOR( vu1 , vertexuse , &vu->v_p->vu_hd ) )
 	{
 		if( nmg_find_s_of_vu( vu1 ) != s_vu )
 			return( 1 );
@@ -2945,12 +2945,12 @@ struct vertex *new_v;
 	NMG_CK_VERTEX( new_v );
 
 	old_v = vu->v_p;
-	tmp_vu = RT_LIST_FIRST( vertexuse , &old_v->vu_hd );
-	while( RT_LIST_NOT_HEAD( tmp_vu , &old_v->vu_hd ) )
+	tmp_vu = BU_LIST_FIRST( vertexuse , &old_v->vu_hd );
+	while( BU_LIST_NOT_HEAD( tmp_vu , &old_v->vu_hd ) )
 	{
 		struct vertexuse *next_vu;
 
-		next_vu = RT_LIST_PNEXT( vertexuse , tmp_vu );
+		next_vu = BU_LIST_PNEXT( vertexuse , tmp_vu );
 		if( nmg_find_s_of_vu( tmp_vu ) == new_s )
 			nmg_movevu( tmp_vu , new_v );
 
@@ -2962,28 +2962,28 @@ void
 Glue_shell_faces( new_s )
 struct shell *new_s;
 {
-	struct nmg_ptbl faces;
+	struct bu_ptbl faces;
 	struct faceuse *fu;
 
 	NMG_CK_SHELL( new_s );
 
-	nmg_tbl( &faces , TBL_INIT , (long *)NULL );
+	bu_ptbl_init( &faces , 64, " &faces ");
 
-	for( RT_LIST_FOR( fu , faceuse , &new_s->fu_hd ) )
+	for( BU_LIST_FOR( fu , faceuse , &new_s->fu_hd ) )
 	{
 		NMG_CK_FACEUSE( fu );
 
 		if( fu->orientation != OT_SAME )
 			continue;
 
-		nmg_tbl( &faces , TBL_INS , (long *)fu );
+		bu_ptbl_ins( &faces , (long *)fu );
 	}
-	nmg_gluefaces( (struct faceuse **)NMG_TBL_BASEADDR( &faces) , NMG_TBL_END( &faces ), &tol );
+	nmg_gluefaces( (struct faceuse **)BU_PTBL_BASEADDR( &faces) , BU_PTBL_END( &faces ), &tol );
 
-	nmg_tbl( &faces , TBL_FREE , (long *)NULL );
+	bu_ptbl_free( &faces );
 
-	if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
-		rt_log( "ERROR: rt_mem_barriercheck failed in Glue_shell_faces\n" );
+	if( rt_g.debug&DEBUG_MEM_FULL &&  bu_mem_barriercheck() )
+		bu_log( "ERROR: bu_mem_barriercheck failed in Glue_shell_faces\n" );
 }
 
 struct shell *
@@ -3002,10 +3002,10 @@ CONST struct shell *source_shell;
 
 	NMG_CK_SHELL( source_shell );
 
-	r = RT_LIST_FIRST( nmgregion, &m->r_hd );
+	r = BU_LIST_FIRST( nmgregion, &m->r_hd );
 
 	new_s = nmg_msv( r );
-	s = RT_LIST_LAST( shell, &r->s_hd );
+	s = BU_LIST_LAST( shell, &r->s_hd );
 
 	fus = fus_root;
 	while( fus )
@@ -3017,7 +3017,7 @@ CONST struct shell *source_shell;
 		fus = fus->next;
 	}
 
-	if( RT_LIST_IS_EMPTY( &new_s->fu_hd ) )
+	if( BU_LIST_IS_EMPTY( &new_s->fu_hd ) )
 	{
 		nmg_ks( new_s );
 		new_s = (struct shell *)NULL;
@@ -3063,21 +3063,21 @@ CONST struct shell *source_shell;
 	vert_new = (struct vertex **)bu_calloc( BU_PTBL_END( &vert_repl ), sizeof( struct vertex *), "new vertex array" );
 
 	/* disconnect faceuses from those not in this shell */
-	for( RT_LIST_FOR( fu , faceuse , &new_s->fu_hd ) )
+	for( BU_LIST_FOR( fu , faceuse , &new_s->fu_hd ) )
 	{
 		struct loopuse *lu;
 
 		if( fu->orientation != OT_SAME )
 			continue;
 
-		for( RT_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
+		for( BU_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
 		{
 			struct edgeuse *eu;
 
-			if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+			if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
 				continue;
 
-			for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
+			for( BU_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
 			{
 				struct edgeuse *eu_radial;
 				struct vertex *v1,*v2;
@@ -3095,7 +3095,7 @@ CONST struct shell *source_shell;
 				 */
 				if( adj_root == (struct adjacent_faces *)NULL )
 				{
-					adj_root = (struct adjacent_faces *)rt_malloc(
+					adj_root = (struct adjacent_faces *)bu_malloc(
 						sizeof( struct adjacent_faces ),
 						"Get_shell: adj_root" );
 					adj = adj_root;
@@ -3105,7 +3105,7 @@ CONST struct shell *source_shell;
 					adj = adj_root;
 					while( adj->next )
 						adj = adj->next;
-					adj->next = (struct adjacent_faces *)rt_malloc(
+					adj->next = (struct adjacent_faces *)bu_malloc(
 						sizeof( struct adjacent_faces ),
 						"Get_shell: adj_next" );
 					adj = adj->next;
@@ -3171,8 +3171,8 @@ CONST struct shell *source_shell;
 	bu_free( (char *)vert_new, "new vertex array" );
 	Glue_shell_faces( new_s );
 
-	if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
-		rt_log( "ERROR: rt_mem_barriercheck failed in Get_shell\n" );
+	if( rt_g.debug&DEBUG_MEM_FULL &&  bu_mem_barriercheck() )
+		bu_log( "ERROR: bu_mem_barriercheck failed in Get_shell\n" );
 
 	return( new_s );
 }
@@ -3202,12 +3202,12 @@ struct shell *s1;
 		verts[2] = eu2->eumate_p->vu_p->v_p;
 
 		new_fu = nmg_cface( s1 , verts , 3 );
-		lu = RT_LIST_FIRST( loopuse , &new_fu->lu_hd );
+		lu = BU_LIST_FIRST( loopuse , &new_fu->lu_hd );
 		area = nmg_loop_plane_area( lu , pl );
 		if( area < 0.0 )
 		{
-			rt_log( "Cannot calculate plane equation for new face: \n" );
-			rt_log( "\t( %f %f %f ), ( %f %f %f ), ( %f %f %f )\n",
+			bu_log( "Cannot calculate plane equation for new face: \n" );
+			bu_log( "\t( %f %f %f ), ( %f %f %f ), ( %f %f %f )\n",
 				V3ARGS( verts[0]->vg_p->coord ),
 				V3ARGS( verts[1]->vg_p->coord ),
 				V3ARGS( verts[2]->vg_p->coord ) );
@@ -3233,12 +3233,12 @@ struct shell *s1;
 		verts[2] = eu2->vu_p->v_p;
 
 		new_fu = nmg_cface( s1 , verts , 3 );
-		lu = RT_LIST_FIRST( loopuse , &new_fu->lu_hd );
+		lu = BU_LIST_FIRST( loopuse , &new_fu->lu_hd );
 		area = nmg_loop_plane_area( lu , pl );
 		if( area < 0.0 )
 		{
-			rt_log( "Cannot calculate plane equation for new face: \n" );
-			rt_log( "\t( %f %f %f ), ( %f %f %f ), ( %f %f %f )\n",
+			bu_log( "Cannot calculate plane equation for new face: \n" );
+			bu_log( "\t( %f %f %f ), ( %f %f %f ), ( %f %f %f )\n",
 				V3ARGS( verts[0]->vg_p->coord ),
 				V3ARGS( verts[1]->vg_p->coord ),
 				V3ARGS( verts[2]->vg_p->coord ) );
@@ -3250,8 +3250,8 @@ struct shell *s1;
 			nmg_loop_g( lu->l_p , &tol );
 		}
 	}
-	if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
-		rt_log( "ERROR: rt_mem_barriercheck failed in Build_connecting_face\n" );
+	if( rt_g.debug&DEBUG_MEM_FULL &&  bu_mem_barriercheck() )
+		bu_log( "ERROR: bu_mem_barriercheck failed in Build_connecting_face\n" );
 }
 
 void
@@ -3336,11 +3336,11 @@ long **tbl;
 		NMG_GET_FU_NORMAL( norm, adj->fu1 );
 		Sort_vertices_along_vect( norm, verts );
 
-		(void) rt_dist_pt3_lseg3( &dist, pca, verts[0]->vg_p->coord,
+		(void) bn_dist_pt3_lseg3( &dist, pca, verts[0]->vg_p->coord,
 					verts[3]->vg_p->coord, verts[1]->vg_p->coord, &tol );
 		VMOVE( verts[1]->vg_p->coord, pca );
 
-		(void) rt_dist_pt3_lseg3( &dist, pca, verts[0]->vg_p->coord,
+		(void) bn_dist_pt3_lseg3( &dist, pca, verts[0]->vg_p->coord,
 					verts[3]->vg_p->coord, verts[2]->vg_p->coord, &tol );
 		VMOVE( verts[2]->vg_p->coord, pca );
 
@@ -3374,11 +3374,11 @@ long **tbl;
 			NMG_GET_FU_NORMAL( norm, adj->fu1 );
 			Sort_vertices_along_vect( norm, verts );
 
-			(void) rt_dist_pt3_lseg3( &dist, pca, verts[0]->vg_p->coord,
+			(void) bn_dist_pt3_lseg3( &dist, pca, verts[0]->vg_p->coord,
 						verts[3]->vg_p->coord, verts[1]->vg_p->coord, &tol );
 			VMOVE( verts[1]->vg_p->coord, pca );
 
-			(void) rt_dist_pt3_lseg3( &dist, pca, verts[0]->vg_p->coord,
+			(void) bn_dist_pt3_lseg3( &dist, pca, verts[0]->vg_p->coord,
 						verts[3]->vg_p->coord, verts[2]->vg_p->coord, &tol );
 			VMOVE( verts[2]->vg_p->coord, pca );
 
@@ -3417,8 +3417,8 @@ long **tbl;
 
 		adj = adj->next;
 	}
-	if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
-		rt_log( "ERROR: rt_mem_barriercheck failed in Reunite_face\n" );
+	if( rt_g.debug&DEBUG_MEM_FULL &&  bu_mem_barriercheck() )
+		bu_log( "ERROR: bu_mem_barriercheck failed in Reunite_face\n" );
 }
 
 /* Support routine for "Stitch_adj_shells"
@@ -3452,7 +3452,7 @@ long **dup_tbl;
 
 	if( eu1->radial_p != eu1->eumate_p )
 	{
-		rt_log( "Connect_at_adj_edges: Called with non dangling edge!!\n" );
+		bu_log( "Connect_at_adj_edges: Called with non dangling edge!!\n" );
 		rt_bomb( "Connect_at_adj_edges\n" );
 	}
 
@@ -3465,7 +3465,7 @@ long **dup_tbl;
 	v1a = (struct vertex *)NULL;
 	v1d = (struct vertex *)NULL;
 
-	for( RT_LIST_FOR( vu, vertexuse, &v1b->vu_hd ) )
+	for( BU_LIST_FOR( vu, vertexuse, &v1b->vu_hd ) )
 	{
 		if( *vu->up.magic_p != NMG_EDGEUSE_MAGIC )
 			continue;
@@ -3482,7 +3482,7 @@ long **dup_tbl;
 		NMG_CK_VERTEX( v1a );
 		break;
 	}
-	for( RT_LIST_FOR( vu, vertexuse, &v1c->vu_hd ) )
+	for( BU_LIST_FOR( vu, vertexuse, &v1c->vu_hd ) )
 	{
 		if( *vu->up.magic_p != NMG_EDGEUSE_MAGIC )
 			continue;
@@ -3514,7 +3514,7 @@ long **dup_tbl;
 	v2a = (struct vertex *)NULL;
 	v2d = (struct vertex *)NULL;
 
-	for( RT_LIST_FOR( vu, vertexuse, &v2b->vu_hd ) )
+	for( BU_LIST_FOR( vu, vertexuse, &v2b->vu_hd ) )
 	{
 		if( *vu->up.magic_p != NMG_EDGEUSE_MAGIC )
 			continue;
@@ -3531,7 +3531,7 @@ long **dup_tbl;
 		NMG_CK_VERTEX( v2a );
 		break;
 	}
-	for( RT_LIST_FOR( vu, vertexuse, &v2c->vu_hd ) )
+	for( BU_LIST_FOR( vu, vertexuse, &v2c->vu_hd ) )
 	{
 		if( *vu->up.magic_p != NMG_EDGEUSE_MAGIC )
 			continue;
@@ -3551,14 +3551,14 @@ long **dup_tbl;
 
 	if( !v1a || !v1d || !v2a || !v2d )
 	{
-		rt_log( "Connect_at_adj_edges: Could not find vertices for adjacent edges\n" );
+		bu_log( "Connect_at_adj_edges: Could not find vertices for adjacent edges\n" );
 		rt_bomb( "Connect_at_adj_edges\n" );
 	}
 
 	eu2 = nmg_findeu( v2b, v2c, s2, (struct edgeuse *)NULL, 1 );
 	if( !eu2 )
 	{
-		rt_log( "Connect_at_adj_edges: Could not find eu2 corresponding to eu1\n" );
+		bu_log( "Connect_at_adj_edges: Could not find eu2 corresponding to eu1\n" );
 		rt_bomb( "Connect_at_adj_edges\n" );
 	}
 
@@ -3594,12 +3594,12 @@ long **dup_tbl;
 		}
 
 		fu = nmg_cface( s1, verts, 3 );
-		lu = RT_LIST_FIRST( loopuse , &fu->lu_hd );
+		lu = BU_LIST_FIRST( loopuse , &fu->lu_hd );
 		area = nmg_loop_plane_area( lu , pl );
 		if( area < 0.0 )
 		{
-			rt_log( "Cannot calculate plane equation for new face: \n" );
-			rt_log( "\t( %f %f %f ), ( %f %f %f ), ( %f %f %f )\n",
+			bu_log( "Cannot calculate plane equation for new face: \n" );
+			bu_log( "\t( %f %f %f ), ( %f %f %f ), ( %f %f %f )\n",
 				V3ARGS( verts[0]->vg_p->coord ),
 				V3ARGS( verts[1]->vg_p->coord ),
 				V3ARGS( verts[2]->vg_p->coord ) );
@@ -3625,12 +3625,12 @@ long **dup_tbl;
 		}
 
 		fu = nmg_cface( s2, verts, 3 );
-		lu = RT_LIST_FIRST( loopuse , &fu->lu_hd );
+		lu = BU_LIST_FIRST( loopuse , &fu->lu_hd );
 		area = nmg_loop_plane_area( lu , pl );
 		if( area < 0.0 )
 		{
-			rt_log( "Cannot calculate plane equation for new face: \n" );
-			rt_log( "\t( %f %f %f ), ( %f %f %f ), ( %f %f %f )\n",
+			bu_log( "Cannot calculate plane equation for new face: \n" );
+			bu_log( "\t( %f %f %f ), ( %f %f %f ), ( %f %f %f )\n",
 				V3ARGS( verts[0]->vg_p->coord ),
 				V3ARGS( verts[1]->vg_p->coord ),
 				V3ARGS( verts[2]->vg_p->coord ) );
@@ -3706,13 +3706,13 @@ Extrude_faces()
 	long **dup_tbl;
 
 	if( debug )
-		rt_log( "Extrude_faces:\n" );
+		bu_log( "Extrude_faces:\n" );
 
 	num_thicks = Sort_fus_by_thickness();
 	if( debug )
-		rt_log( "\tComponent has %d unique thicknesses\n", num_thicks );
+		bu_log( "\tComponent has %d unique thicknesses\n", num_thicks );
 
-	thicks = (fastf_t *)rt_calloc( num_thicks , sizeof( fastf_t ) , "Extrude_faces: thicks" );
+	thicks = (fastf_t *)bu_calloc( num_thicks , sizeof( fastf_t ) , "Extrude_faces: thicks" );
 	i = 0;
 	fus = fus_root;
 	only_center = fus->pos;
@@ -3736,8 +3736,8 @@ Extrude_faces()
 	 * surfaces that the extruder cannot handle, i.e, where the web and flange
 	 * of an "I" beam come together	the extrusion cannot be performed.
 	 */
-	r = RT_LIST_FIRST( nmgregion, &m->r_hd );
-	s = RT_LIST_FIRST( shell, &r->s_hd );
+	r = BU_LIST_FIRST( nmgregion, &m->r_hd );
+	s = BU_LIST_FIRST( shell, &r->s_hd );
 	shell_count = nmg_decompose_shell( s, &tol );
 
 	/* rebound the region */
@@ -3749,16 +3749,16 @@ Extrude_faces()
 		nmg_stash_model_to_file( "shell.g", m, "before fix normals" );
 	}
 
-	for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )
+	for( BU_LIST_FOR( r, nmgregion, &m->r_hd ) )
 	{
 		NMG_CK_REGION( r )
-		for( RT_LIST_FOR( s, shell, &r->s_hd ) )
+		for( BU_LIST_FOR( s, shell, &r->s_hd ) )
 		{
 			NMG_CK_SHELL( s );
 			Fix_normals( s );
 
-			if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
-				rt_log( "ERROR: rt_mem_barriercheck failed in make_nmg_objects (after fix_normals)\n" );
+			if( rt_g.debug&DEBUG_MEM_FULL &&  bu_mem_barriercheck() )
+				bu_log( "ERROR: bu_mem_barriercheck failed in make_nmg_objects (after fix_normals)\n" );
 		}
 	}
 
@@ -3770,22 +3770,22 @@ Extrude_faces()
 
 	/* make array of shells, each with unique combination of "center postion"
 	 * original shell, and thickness */
-	shells = (struct shell **)rt_calloc( num_thicks*shell_count*2 ,
+	shells = (struct shell **)bu_calloc( num_thicks*shell_count*2 ,
 		sizeof( struct shell *) , "Extrude_faces: shells" );
 
 	/* and another for the opposite (extruded) side */
-	dup_shells = (struct shell **)rt_calloc( num_thicks*shell_count*2 ,
+	dup_shells = (struct shell **)bu_calloc( num_thicks*shell_count*2 ,
 		sizeof( struct shell *) , "Extrude_faces: dup_shells" );
 
 	/* make an array of the source shells */
-	source_shells = (struct shell **)rt_calloc( shell_count,
+	source_shells = (struct shell **)bu_calloc( shell_count,
 		sizeof( struct shell *) , "Extrude_faces: source_shells" );
 
 
 	/* fill in the source shells array */
-	r = RT_LIST_FIRST( nmgregion, &m->r_hd );
-	source_shells[0] = RT_LIST_FIRST( shell, &r->s_hd );
-	for( RT_LIST_FOR( s1, shell, &r->s_hd ) )
+	r = BU_LIST_FIRST( nmgregion, &m->r_hd );
+	source_shells[0] = BU_LIST_FIRST( shell, &r->s_hd );
+	for( BU_LIST_FOR( s1, shell, &r->s_hd ) )
 	{
 		int found=0;
 
@@ -3807,10 +3807,10 @@ Extrude_faces()
 
 		if( !found )
 		{
-			rt_log( "Extrude_faces: ERROR: too many shells!!!\n" );
-			rt_free( (char *)shells, "Extrude_faces: shells" );
-			rt_free( (char *)dup_shells, "Extrude_faces: dup_shells" );
-			rt_free( (char *)source_shells, "Extrude_faces: source_shells" );
+			bu_log( "Extrude_faces: ERROR: too many shells!!!\n" );
+			bu_free( (char *)shells, "Extrude_faces: shells" );
+			bu_free( (char *)dup_shells, "Extrude_faces: dup_shells" );
+			bu_free( (char *)source_shells, "Extrude_faces: source_shells" );
 			return( 1 );
 		}
 	}
@@ -3839,7 +3839,7 @@ Extrude_faces()
 						center, source_shells[source_shell_no] );
 				if( debug && shells[shell_no] )
 				{
-					rt_log( "Shell thickness = %g, center position = %d, source shell = x%x:\n",
+					bu_log( "Shell thickness = %g, center position = %d, source shell = x%x:\n",
 						thicks[thick_no], center, source_shells[source_shell_no] );
 				}
 			}
@@ -3864,10 +3864,10 @@ Extrude_faces()
 		/* Extrude distance is one-half the thickness */
 		if( Adjust_vertices( shells[shell_no] , (fastf_t)(thicks[thick_no]/2.0) ) )
 		{
-			rt_free( (char *)thicks , "Extrude_faces: thicks" );
-			rt_free( (char *)shells , "Extrude_faces: shells" );
-			rt_free( (char *)dup_shells , "Extrude_faces: dup_shells" );
-			rt_free( (char *)source_shells, "Extrude_faces: source_shells" );
+			bu_free( (char *)thicks , "Extrude_faces: thicks" );
+			bu_free( (char *)shells , "Extrude_faces: shells" );
+			bu_free( (char *)dup_shells , "Extrude_faces: dup_shells" );
+			bu_free( (char *)source_shells, "Extrude_faces: source_shells" );
 			return( 1 );
 		}
 	    }
@@ -3875,7 +3875,7 @@ Extrude_faces()
 
 	/* make a translation table to store correspondence between original and dups */
 	table_size = m->maxindex;
-	dup_tbl = (long **)rt_calloc( m->maxindex , sizeof( long *) , "Extrude_faces: dup_tbl" );
+	dup_tbl = (long **)bu_calloc( m->maxindex , sizeof( long *) , "Extrude_faces: dup_tbl" );
 
 	/* Now extrude all the faces by the entire thickness */
 	for( thick_no=0 ; thick_no<num_thicks ; thick_no++ )
@@ -3911,41 +3911,41 @@ Extrude_faces()
 
 			if( Adjust_vertices( dup_shells[shell_no] , thicks[thick_no] ) )
 			{
-				rt_free( (char *)thicks , "Extrude_faces: thicks" );
-				rt_free( (char *)shells , "Extrude_faces: shells" );
-				rt_free( (char *)dup_shells , "Extrude_faces: dup_shells" );
-				rt_free( (char *)dup_tbl , "Extrude_faces: dup_tbl" );
-				rt_free( (char *)trans_tbl , "Extrude_faces: trans_tbl" );
-				rt_free( (char *)source_shells, "Extrude_faces: source_shells" );
+				bu_free( (char *)thicks , "Extrude_faces: thicks" );
+				bu_free( (char *)shells , "Extrude_faces: shells" );
+				bu_free( (char *)dup_shells , "Extrude_faces: dup_shells" );
+				bu_free( (char *)dup_tbl , "Extrude_faces: dup_tbl" );
+				bu_free( (char *)trans_tbl , "Extrude_faces: trans_tbl" );
+				bu_free( (char *)source_shells, "Extrude_faces: source_shells" );
 				return( 1 );
 			}
 			if( nmg_open_shells_connect( shells[shell_no],
 						dup_shells[shell_no],
 						trans_tbl, &tol ) )
 			{
-				rt_log( "Extrude_faces: Failed to connect shells\n" );
-				rt_free( (char *)thicks , "Extrude_faces: thicks" );
-				rt_free( (char *)shells , "Extrude_faces: shells" );
-				rt_free( (char *)dup_shells , "Extrude_faces: dup_shells" );
-				rt_free( (char *)dup_tbl , "Extrude_faces: dup_tbl" );
-				rt_free( (char *)trans_tbl , "Extrude_faces: trans_tbl" );
-				rt_free( (char *)source_shells, "Extrude_faces: source_shells" );
+				bu_log( "Extrude_faces: Failed to connect shells\n" );
+				bu_free( (char *)thicks , "Extrude_faces: thicks" );
+				bu_free( (char *)shells , "Extrude_faces: shells" );
+				bu_free( (char *)dup_shells , "Extrude_faces: dup_shells" );
+				bu_free( (char *)dup_tbl , "Extrude_faces: dup_tbl" );
+				bu_free( (char *)trans_tbl , "Extrude_faces: trans_tbl" );
+				bu_free( (char *)source_shells, "Extrude_faces: source_shells" );
 				return( 1 );
 			}
-			rt_free( (char *)trans_tbl , "Extrude_faces: trans_tbl" );
+			bu_free( (char *)trans_tbl , "Extrude_faces: trans_tbl" );
 		    }
 		}
 	}
 
-	for( RT_LIST_FOR( tmp_r, nmgregion, &m->r_hd ) )
+	for( BU_LIST_FOR( tmp_r, nmgregion, &m->r_hd ) )
 	{
 		struct shell *next_s;
 
-		s = RT_LIST_FIRST( shell, &tmp_r->s_hd );
-		while( RT_LIST_NOT_HEAD( &s->l, &tmp_r->s_hd ) )
+		s = BU_LIST_FIRST( shell, &tmp_r->s_hd );
+		while( BU_LIST_NOT_HEAD( &s->l, &tmp_r->s_hd ) )
 		{
-			next_s = RT_LIST_PNEXT( shell, &s->l );
-			if( RT_LIST_IS_EMPTY( &s->fu_hd ) )
+			next_s = BU_LIST_PNEXT( shell, &s->l );
+			if( BU_LIST_IS_EMPTY( &s->fu_hd ) )
 				nmg_ks( s );
 
 			s = next_s;
@@ -3959,25 +3959,25 @@ Extrude_faces()
 	}
 
 	/* Re-calculate face geometries */
-	for( RT_LIST_FOR( tmp_r, nmgregion, &m->r_hd ) )
+	for( BU_LIST_FOR( tmp_r, nmgregion, &m->r_hd ) )
 	{
-		for( RT_LIST_FOR( s , shell, &tmp_r->s_hd ) )
+		for( BU_LIST_FOR( s , shell, &tmp_r->s_hd ) )
 		{
 			NMG_CK_SHELL( s );
 			Recalc_face_g( s );
 		}
 	}
 
-	rt_free( (char *)thicks , "Extrude_faces: thicks" );
-	rt_free( (char *)shells , "Extrude_faces: shells" );
-	rt_free( (char *)dup_shells , "Extrude_faces: dup_shells" );
-	rt_free( (char *)dup_tbl , "Extrude_faces: dup_tbl" );
-	rt_free( (char *)source_shells, "Extrude_faces: source_shells" );
+	bu_free( (char *)thicks , "Extrude_faces: thicks" );
+	bu_free( (char *)shells , "Extrude_faces: shells" );
+	bu_free( (char *)dup_shells , "Extrude_faces: dup_shells" );
+	bu_free( (char *)dup_tbl , "Extrude_faces: dup_tbl" );
+	bu_free( (char *)source_shells, "Extrude_faces: source_shells" );
 
 	(void)nmg_kill_zero_length_edgeuses( m );
 
-	if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
-		rt_log( "ERROR: rt_mem_barriercheck failed in Extrude_faces\n" );
+	if( rt_g.debug&DEBUG_MEM_FULL &&  bu_mem_barriercheck() )
+		bu_log( "ERROR: bu_mem_barriercheck failed in Extrude_faces\n" );
 
 	if( debug )
 	{
@@ -4001,7 +4001,7 @@ Make_arb6_obj()
 
 	tmp_id = group_id * 1000 + comp_id;
 
-	RT_LIST_INIT( &arb6_head.l );
+	BU_LIST_INIT( &arb6_head.l );
 
 	fus = fus_root;
 	while( fus )
@@ -4022,14 +4022,14 @@ Make_arb6_obj()
 			fu = fu->fumate_p;
 		if( fu->orientation != OT_SAME )
 		{
-			rt_log( "Make_arb6_obj: face has no OT_SAME use (fu=x%x)\n" , fu );
+			bu_log( "Make_arb6_obj: face has no OT_SAME use (fu=x%x)\n" , fu );
 			return;
 		}
 
-		lu = RT_LIST_FIRST( loopuse , &fu->lu_hd );
-		if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+		lu = BU_LIST_FIRST( loopuse , &fu->lu_hd );
+		if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
 		{
-			rt_log( "Make_arb6_obj: Failed (loop without edgeuses)\n" );
+			bu_log( "Make_arb6_obj: Failed (loop without edgeuses)\n" );
 			return;
 		}
 
@@ -4040,7 +4040,7 @@ Make_arb6_obj()
 #if 1
 			continue;
 #else
-			eu = RT_LIST_FIRST( edgeuse , &lu->down_hd );
+			eu = BU_LIST_FIRST( edgeuse , &lu->down_hd );
 			NMG_CK_EDGEUSE( eu );
 			v = eu->vu_p->v_p;
 			NMG_CK_VERTEX( v );
@@ -4048,7 +4048,7 @@ Make_arb6_obj()
 			NMG_CK_VERTEX_G( vg );
 			VMOVE( pts[0] , vg->coord );
 
-			eu = RT_LIST_PNEXT( edgeuse , eu );
+			eu = BU_LIST_PNEXT( edgeuse , eu );
 			NMG_CK_EDGEUSE( eu );
 			v = eu->vu_p->v_p;
 			NMG_CK_VERTEX( v );
@@ -4056,7 +4056,7 @@ Make_arb6_obj()
 			NMG_CK_VERTEX_G( vg );
 			VMOVE( pts[1] , vg->coord );
 
-			eu = RT_LIST_PNEXT( edgeuse , eu );
+			eu = BU_LIST_PNEXT( edgeuse , eu );
 			NMG_CK_EDGEUSE( eu );
 			v = eu->vu_p->v_p;
 			NMG_CK_VERTEX( v );
@@ -4092,7 +4092,7 @@ Make_arb6_obj()
 		mk_arb8( fdout , arb6_name , &pts[0][X] );
 
 		if( mk_addmember( arb6_name , &arb6_head , WMOP_UNION ) == WMEMBER_NULL )
-			rt_log( "Make_arb6_obj: Failed to add %s to member list\n" , arb6_name );
+			bu_log( "Make_arb6_obj: Failed to add %s to member list\n" , arb6_name );
 
 		fus = fus->next;
 	}
@@ -4110,7 +4110,7 @@ Make_arb6_obj()
 
 		tmp = fus;
 		fus = fus->next;
-		rt_free( (char *)tmp , "make_nmg_objects: fus" );
+		bu_free( (char *)tmp , "make_nmg_objects: fus" );
 	}
 	fus_root = (struct fast_fus *)NULL;
 
@@ -4119,11 +4119,11 @@ Make_arb6_obj()
 	mk_lfcomb( fdout, name, &arb6_head, 0 );
 
 	/* make region containing nmg object */
-	RT_LIST_INIT( &head.l );
+	BU_LIST_INIT( &head.l );
 
 	if( mk_addmember( name , &head , WMOP_UNION ) == (struct wmember *)NULL )
 	{
-		rt_log( "make_nmg_objects: mk_addmember failed\n" , name );
+		bu_log( "make_nmg_objects: mk_addmember failed\n" , name );
 		rt_bomb( "Cannot make nmg region\n" );
 	}
 
@@ -4132,8 +4132,8 @@ Make_arb6_obj()
 
 	MK_REGION( fdout , &head , group_id , comp_id , nmgs , NMG )
 
-	if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
-		rt_log( "ERROR: rt_mem_barriercheck failed in make_arb6_obj\n" );
+	if( rt_g.debug&DEBUG_MEM_FULL &&  bu_mem_barriercheck() )
+		bu_log( "ERROR: bu_mem_barriercheck failed in make_arb6_obj\n" );
 }
 
 void
@@ -4152,46 +4152,46 @@ struct shell *sh;
 	long *flags;
 	plane_t pl1,old_pl;
 	point_t centroid;
-	struct nmg_ptbl verts;
+	struct bu_ptbl verts;
 	int i;
 	mat_t matrix,inverse;
 	point_t vsum;
 	fastf_t det;
 	double one_over_vertex_count;
 
-	nmg_tbl( &verts, TBL_INIT, (long *)NULL );
+	bu_ptbl_init( &verts, 64, " &verts");
 
 	if( debug )
-		rt_log( "Fix_normals( sh = x%x )\n",sh );
+		bu_log( "Fix_normals( sh = x%x )\n",sh );
 
 	VSETALL( centroid, 0.0 );
 
-	fu = RT_LIST_FIRST( faceuse, &sh->fu_hd );
+	fu = BU_LIST_FIRST( faceuse, &sh->fu_hd );
 	NMG_GET_FU_PLANE( old_pl, fu );
 
 	nmg_vertex_tabulate( &verts, &sh->l.magic );
-	for( i=0 ; i<NMG_TBL_END( &verts ) ; i++ )
+	for( i=0 ; i<BU_PTBL_END( &verts ) ; i++ )
 	{
 		struct vertex *v;
 
-		v = (struct vertex *)NMG_TBL_GET( &verts, i );
+		v = (struct vertex *)BU_PTBL_GET( &verts, i );
 		VADD2( centroid, centroid, v->vg_p->coord );
 	}
 
-	VSCALE( centroid, centroid, (fastf_t)(NMG_TBL_END( &verts ) ) )
+	VSCALE( centroid, centroid, (fastf_t)(BU_PTBL_END( &verts ) ) )
 
 	/* build matrix */
-	mat_zero( matrix );
+	bn_mat_zero( matrix );
 	VSET( vsum , 0.0 , 0.0 , 0.0 );
 
-	one_over_vertex_count = 1.0/(double)(NMG_TBL_END( &verts ));
+	one_over_vertex_count = 1.0/(double)(BU_PTBL_END( &verts ));
 
-	for( i=0 ; i<NMG_TBL_END( &verts ) ; i++ )
+	for( i=0 ; i<BU_PTBL_END( &verts ) ; i++ )
 	{
 		struct vertex *v;
 		struct vertex_g *vg;
 
-		v = (struct vertex *)NMG_TBL_GET( &verts , i );
+		v = (struct vertex *)BU_PTBL_GET( &verts , i );
 		vg = v->vg_p;
 
 		matrix[0] += vg->coord[X] * vg->coord[X];
@@ -4219,7 +4219,7 @@ struct shell *sh;
 		fastf_t inv_len_pl;
 
 		/* invert matrix */
-		mat_inv( inverse , matrix );
+		bn_mat_inv( inverse , matrix );
 
 		/* get normal vector */
 		MAT4X3PNT( pl1 , inverse , vsum );
@@ -4248,10 +4248,10 @@ struct shell *sh;
 		/* singular matrix, may occur if all vertices have the same zero
 		 * component.
 		 */
-		v0 = (struct vertex *)NMG_TBL_GET( &verts , 0 );
-		for( i=1 ; i<NMG_TBL_END( &verts ) ; i++ )
+		v0 = (struct vertex *)BU_PTBL_GET( &verts , 0 );
+		for( i=1 ; i<BU_PTBL_END( &verts ) ; i++ )
 		{
-			v = (struct vertex *)NMG_TBL_GET( &verts , i );
+			v = (struct vertex *)BU_PTBL_GET( &verts , i );
 
 			if( v->vg_p->coord[X] != v0->vg_p->coord[X] )
 				x_same = 0;
@@ -4291,15 +4291,15 @@ struct shell *sh;
 		}
 		else
 		{
-			rt_log( "Fix_normals: Cannot calculate plane for fu x%x\n" , fu );
+			bu_log( "Fix_normals: Cannot calculate plane for fu x%x\n" , fu );
 			nmg_pr_fu_briefly( fu , (char *)NULL );
-			rt_log( "%d verts\n" , NMG_TBL_END( &verts ) );
+			bu_log( "%d verts\n" , BU_PTBL_END( &verts ) );
 		}
 	}
 
-	nmg_tbl( &verts , TBL_FREE , (long *)NULL );
+	bu_ptbl_free( &verts );
 
-	for( RT_LIST_FOR( fu , faceuse , &sh->fu_hd ) )
+	for( BU_LIST_FOR( fu , faceuse , &sh->fu_hd ) )
 	{
 		struct faceuse *fu1;
 
@@ -4308,7 +4308,7 @@ struct shell *sh;
 			continue;
 
 		NMG_GET_FU_NORMAL( norm , fu );
-		for( RT_LIST_FOR( fu1 , faceuse , &sh->fu_hd ) )
+		for( BU_LIST_FOR( fu1 , faceuse , &sh->fu_hd ) )
 		{
 			vect_t norm1;
 			fastf_t dot;
@@ -4333,11 +4333,11 @@ struct shell *sh;
 	else
 		planar = 0;
 
-	fu = RT_LIST_FIRST( faceuse, &sh->fu_hd );
+	fu = BU_LIST_FIRST( faceuse, &sh->fu_hd );
 	NMG_CK_FACEUSE( fu );
 
 	/* Create a flags array for the model to make sure each face gets its orientation set */
-	flags = (long *)rt_calloc( m->maxindex , sizeof( long ) , "patch-g: flags" );
+	flags = (long *)bu_calloc( m->maxindex , sizeof( long ) , "patch-g: flags" );
 
 	/* loop to catch all faces */
 	missed_faces = 1;
@@ -4356,8 +4356,8 @@ struct shell *sh;
 		if( !planar )
 		{
 			/* calculate "out" direction, from centroid to face */
-			lu = RT_LIST_FIRST( loopuse , &fu->lu_hd );
-			eu = RT_LIST_FIRST( edgeuse , &lu->down_hd );
+			lu = BU_LIST_FIRST( loopuse , &fu->lu_hd );
+			eu = BU_LIST_FIRST( edgeuse , &lu->down_hd );
 			VSUB2( out , eu->vu_p->v_p->vg_p->coord , centroid );
 			VUNITIZE( out );
 
@@ -4378,7 +4378,7 @@ struct shell *sh;
 
 		/* check if all the faces have been processed */
 		missed_faces = 0;
-		for( RT_LIST_FOR( fu1 , faceuse , &sh->fu_hd ) )
+		for( BU_LIST_FOR( fu1 , faceuse , &sh->fu_hd ) )
 		{
 			NMG_CK_FACEUSE( fu1 );
 			if( fu1->orientation == OT_SAME )
@@ -4388,7 +4388,7 @@ struct shell *sh;
 					fu = fu1;
 					missed_faces++;
 					if( debug )
-						rt_log( "\t\tMissed some faces on the first try\n" );
+						bu_log( "\t\tMissed some faces on the first try\n" );
 					break;
 				}
 			}
@@ -4447,7 +4447,7 @@ int
 make_nmg_objects()
 {
 	struct faceuse *fu;
-	struct nmg_ptbl faces;
+	struct bu_ptbl faces;
 	struct fast_fus *fus;
 	struct adjacent_faces *adj;
 	struct elem_list *elem;
@@ -4455,7 +4455,7 @@ make_nmg_objects()
 	int failed=0;
 	char name[NAMESIZE+1];
 
-	if( !m ||  RT_LIST_IS_EMPTY( &s->fu_hd ) )
+	if( !m ||  BU_LIST_IS_EMPTY( &s->fu_hd ) )
 	{
 		char *bad_name;
 
@@ -4467,7 +4467,7 @@ make_nmg_objects()
 			s = (struct shell *)NULL;
 		}
 
-		rt_log( "***********component %s, group #%d, component #%d is empty, skipping\n",
+		bu_log( "***********component %s, group #%d, component #%d is empty, skipping\n",
 			name_name, group_id , comp_id );
 
 		while( (bad_name = find_nmg_region_name( group_id , comp_id ) ) )
@@ -4488,27 +4488,27 @@ make_nmg_objects()
 
 	(void)nmg_break_edges( &m->magic, &tol );
 
-	nmg_tbl( &faces , TBL_INIT , (long *)NULL );
+	bu_ptbl_init( &faces , 64, " &faces ");
 
-	for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )
+	for( BU_LIST_FOR( r, nmgregion, &m->r_hd ) )
 	{
-		for( RT_LIST_FOR( s, shell, &r->s_hd ) )
+		for( BU_LIST_FOR( s, shell, &r->s_hd ) )
 		{
 			if( debug )
 				bu_log( "shell x%x", s );
-			nmg_tbl( &faces, TBL_RST, (long *)NULL );
-			for( RT_LIST_FOR( fu , faceuse , &s->fu_hd ) )
+			bu_ptbl_reset( &faces);
+			for( BU_LIST_FOR( fu , faceuse , &s->fu_hd ) )
 			{
 				NMG_CK_FACEUSE( fu );
 
 				if( fu->orientation != OT_SAME )
 					continue;
 
-				nmg_tbl( &faces , TBL_INS , (long *)fu );
+				bu_ptbl_ins( &faces , (long *)fu );
 			}
 			if( debug )
 				bu_log( " has %d faces\n", BU_PTBL_END( &faces ) );
-			nmg_gluefaces( (struct faceuse **)NMG_TBL_BASEADDR( &faces) , NMG_TBL_END( &faces ), &tol );
+			nmg_gluefaces( (struct faceuse **)BU_PTBL_BASEADDR( &faces) , BU_PTBL_END( &faces ), &tol );
 		}
 	}
 
@@ -4520,9 +4520,9 @@ make_nmg_objects()
 		/* check for extra internal faces based on list of duplicates */
 		Rm_internal_faces();
 
-		for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )
+		for( BU_LIST_FOR( r, nmgregion, &m->r_hd ) )
 		{
-			for( RT_LIST_FOR( s, shell, &r->s_hd ) )
+			for( BU_LIST_FOR( s, shell, &r->s_hd ) )
 			{
 				nmg_fix_normals( s , &tol );
 			}
@@ -4542,14 +4542,14 @@ make_nmg_objects()
 		{
 			char name[NAMESIZE+1];
 
-			rt_log( "\tExtrude faces\n" );
+			bu_log( "\tExtrude faces\n" );
 			sprintf( name , "shell.%d.%d" , group_id , comp_id );
 			mk_nmg( fdout , name , m );
 			fflush( fdout );
 		}
 
-		if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
-			rt_log( "ERROR: rt_mem_barriercheck failed in make_nmg_objects (before triangulation)\n" );
+		if( rt_g.debug&DEBUG_MEM_FULL &&  bu_mem_barriercheck() )
+			bu_log( "ERROR: bu_mem_barriercheck failed in make_nmg_objects (before triangulation)\n" );
 
 		/* make all faces triangular
 		 * nmg_break_long_edges may have made non-triangular faces
@@ -4557,11 +4557,11 @@ make_nmg_objects()
 		nmg_triangulate_model( m , &tol );
 
 		/* Split loops created by triangulation into separate faces */
-		for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )
+		for( BU_LIST_FOR( r, nmgregion, &m->r_hd ) )
 		{
-			for( RT_LIST_FOR( s, shell, &r->s_hd ) )
+			for( BU_LIST_FOR( s, shell, &r->s_hd ) )
 			{
-				for( RT_LIST_FOR( fu, faceuse, &s->fu_hd ) )
+				for( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )
 				{
 					struct loopuse *lu;
 					struct loopuse *next_lu;
@@ -4569,20 +4569,20 @@ make_nmg_objects()
 					if( fu->orientation != OT_SAME )
 						continue;
 
-					lu = RT_LIST_FIRST( loopuse, &fu->lu_hd );
-					next_lu = RT_LIST_PNEXT( loopuse, &lu->l );
-					while( RT_LIST_NOT_HEAD( &next_lu->l, &fu->lu_hd ) )
+					lu = BU_LIST_FIRST( loopuse, &fu->lu_hd );
+					next_lu = BU_LIST_PNEXT( loopuse, &lu->l );
+					while( BU_LIST_NOT_HEAD( &next_lu->l, &fu->lu_hd ) )
 					{
 						struct faceuse *new_fu;
 						struct fast_fus *fus;
 						plane_t pl;
 
 						lu = next_lu;
-						next_lu = RT_LIST_PNEXT( loopuse, &lu->l );
+						next_lu = BU_LIST_PNEXT( loopuse, &lu->l );
 
 						if( lu->orientation != OT_SAME )
 						{
-							rt_log( "make_nmg_objects: found loop with orientation (%s) after triangulation\n",
+							bu_log( "make_nmg_objects: found loop with orientation (%s) after triangulation\n",
 								nmg_orientation( lu->orientation ) );
 							rt_bomb( "make_nmg_objects: found loop with bad orientation after triangulation\n" );
 						}
@@ -4602,58 +4602,58 @@ make_nmg_objects()
 			}
 		}
 
-		if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
-			rt_log( "ERROR: rt_mem_barriercheck failed in make_nmg_objects (after triangulation)\n" );
+		if( rt_g.debug&DEBUG_MEM_FULL &&  bu_mem_barriercheck() )
+			bu_log( "ERROR: bu_mem_barriercheck failed in make_nmg_objects (after triangulation)\n" );
 
 		if( debug )
-			rt_log( "extrude faces\n" );
+			bu_log( "extrude faces\n" );
 
 		if( Check_acute_angles() )
 		{
-			nmg_tbl( &faces , TBL_FREE , (long *)NULL );
+			bu_ptbl_free( &faces );
 			failed = 1;
 			goto out;
 		}
 
 		if( Extrude_faces() )
 		{
-			rt_log( "Failed to Extrude group_id = %d, component_id = %d\n" , group_id , comp_id );
-			nmg_tbl( &faces , TBL_FREE , (long *)NULL );
+			bu_log( "Failed to Extrude group_id = %d, component_id = %d\n" , group_id , comp_id );
+			bu_ptbl_free( &faces );
 			failed = 1;
 			goto out;
 		}
 
 		nmg_rebound( m , &tol );
 
-		if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
-			rt_log( "ERROR: rt_mem_barriercheck failed in make_nmg_objects (after extrusion)\n" );
+		if( rt_g.debug&DEBUG_MEM_FULL &&  bu_mem_barriercheck() )
+			bu_log( "ERROR: bu_mem_barriercheck failed in make_nmg_objects (after extrusion)\n" );
 
 		NMG_CK_MODEL( m );
-		for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )
+		for( BU_LIST_FOR( r, nmgregion, &m->r_hd ) )
 		{
 			struct shell *next_shell;
 
 			NMG_CK_REGION( r );
-			s = RT_LIST_FIRST( shell, &r->s_hd );
-			while( RT_LIST_NOT_HEAD( &s->l, &r->s_hd ) )
+			s = BU_LIST_FIRST( shell, &r->s_hd );
+			while( BU_LIST_NOT_HEAD( &s->l, &r->s_hd ) )
 			{
 				NMG_CK_SHELL( s );
 
-				next_shell = RT_LIST_PNEXT( shell, &s->l );
-				nmg_tbl( &faces , TBL_RST , (long *)NULL );
+				next_shell = BU_LIST_PNEXT( shell, &s->l );
+				bu_ptbl_reset( &faces );
 
-				for( RT_LIST_FOR( fu , faceuse , &s->fu_hd ) )
+				for( BU_LIST_FOR( fu , faceuse , &s->fu_hd ) )
 				{
 					NMG_CK_FACEUSE( fu );
 
 					if( fu->orientation != OT_SAME )
 						continue;
 
-					nmg_tbl( &faces , TBL_INS , (long *)fu );
+					bu_ptbl_ins( &faces , (long *)fu );
 				}
-				if( NMG_TBL_END( &faces ) )
+				if( BU_PTBL_END( &faces ) )
 				{
-					nmg_gluefaces( (struct faceuse **)NMG_TBL_BASEADDR( &faces) , NMG_TBL_END( &faces ), &tol );
+					nmg_gluefaces( (struct faceuse **)BU_PTBL_BASEADDR( &faces) , BU_PTBL_END( &faces ), &tol );
 				}
 				else
 				{
@@ -4665,13 +4665,13 @@ make_nmg_objects()
 						nmg_km( m );
 						r = (struct nmgregion *)NULL;
 						m = (struct model *)NULL;
-						rt_log( "***********component %s, group #%d, component #%d is empty, skipping\n",
+						bu_log( "***********component %s, group #%d, component #%d is empty, skipping\n",
 							name_name, group_id , comp_id );
 
 						while( (bad_name = find_nmg_region_name( group_id , comp_id ) ) )
 							Delete_name( &name_root , bad_name );
 
-						nmg_tbl( &faces, TBL_FREE, (long *)NULL );
+						bu_ptbl_free( &faces);
 						return( 0 );
 					}
 				}
@@ -4679,25 +4679,25 @@ make_nmg_objects()
 			}
 		}
 
-		if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
-			rt_log( "ERROR: rt_mem_barriercheck failed in make_nmg_objects (after making table of faceuses)\n" );
+		if( rt_g.debug&DEBUG_MEM_FULL &&  bu_mem_barriercheck() )
+			bu_log( "ERROR: bu_mem_barriercheck failed in make_nmg_objects (after making table of faceuses)\n" );
 
 	}
-	nmg_tbl( &faces , TBL_FREE , (long *)NULL );
+	bu_ptbl_free( &faces );
 
-	if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
-		rt_log( "ERROR: rt_mem_barriercheck failed in make_nmg_objects (after TBL_FREE of faces)\n" );
+	if( rt_g.debug&DEBUG_MEM_FULL &&  bu_mem_barriercheck() )
+		bu_log( "ERROR: bu_mem_barriercheck failed in make_nmg_objects (after BU_PTBL_FREE of faces)\n" );
 
 	/* recompute the bounding boxes */
 	nmg_rebound( m , &tol );
 
-	if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
-		rt_log( "ERROR: rt_mem_barriercheck failed in make_nmg_objects (after rebound)\n" );
+	if( rt_g.debug&DEBUG_MEM_FULL &&  bu_mem_barriercheck() )
+		bu_log( "ERROR: bu_mem_barriercheck failed in make_nmg_objects (after rebound)\n" );
 
 	/*  Make sure faces are within tolerance */
-	for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )
+	for( BU_LIST_FOR( r, nmgregion, &m->r_hd ) )
 	{
-		for( RT_LIST_FOR( s, shell, &r->s_hd ) )
+		for( BU_LIST_FOR( s, shell, &r->s_hd ) )
 		{
 			nmg_make_faces_within_tol( s, &tol );
 		}
@@ -4706,22 +4706,22 @@ make_nmg_objects()
 	if( !polysolids )
 	{
 		if( debug )
-			rt_log( "Coplanar face merge\n" );
+			bu_log( "Coplanar face merge\n" );
 
-		for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )
+		for( BU_LIST_FOR( r, nmgregion, &m->r_hd ) )
 		{
-			for( RT_LIST_FOR( s, shell, &r->s_hd ) )
+			for( BU_LIST_FOR( s, shell, &r->s_hd ) )
 			{
 				tmp_shell_coplanar_face_merge( s , &tol , 0 );
 			}
 		}
 
-		if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
-			rt_log( "ERROR: rt_mem_barriercheck failed in make_nmg_objects (after tmp_shell_coplanar_face_merge)\n" );
+		if( rt_g.debug&DEBUG_MEM_FULL &&  bu_mem_barriercheck() )
+			bu_log( "ERROR: bu_mem_barriercheck failed in make_nmg_objects (after tmp_shell_coplanar_face_merge)\n" );
 
-		for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )
+		for( BU_LIST_FOR( r, nmgregion, &m->r_hd ) )
 		{
-			for( RT_LIST_FOR( s, shell, &r->s_hd ) )
+			for( BU_LIST_FOR( s, shell, &r->s_hd ) )
 			{
 				Recalc_face_g( s );
 			}
@@ -4737,13 +4737,13 @@ make_nmg_objects()
 		fflush( fdout );
 	}
 
-	if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
-		rt_log( "ERROR: rt_mem_barriercheck failed in make_nmg_objects (after model_fuse)\n" );
+	if( rt_g.debug&DEBUG_MEM_FULL &&  bu_mem_barriercheck() )
+		bu_log( "ERROR: bu_mem_barriercheck failed in make_nmg_objects (after model_fuse)\n" );
 
 	make_nmg_name( name , region_id );
 
-	if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
-		rt_log( "ERROR: rt_mem_barriercheck failed in make_nmg_objects (after make_nmg_name)\n" );
+	if( rt_g.debug&DEBUG_MEM_FULL &&  bu_mem_barriercheck() )
+		bu_log( "ERROR: bu_mem_barriercheck failed in make_nmg_objects (after make_nmg_name)\n" );
 
 	if( polysolids )
 	{
@@ -4752,12 +4752,12 @@ make_nmg_objects()
 		struct wmember tmp_head;
 		int count;
 
-		RT_LIST_INIT( &tmp_head.l );
+		BU_LIST_INIT( &tmp_head.l );
 
-		for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )
+		for( BU_LIST_FOR( r, nmgregion, &m->r_hd ) )
 		{
 			NMG_CK_REGION( r );
-			for( RT_LIST_FOR( s, shell, &r->s_hd ) )
+			for( BU_LIST_FOR( s, shell, &r->s_hd ) )
 			{
 				NMG_CK_SHELL( s );
 				Recalc_edge_g( s );
@@ -4787,10 +4787,10 @@ make_nmg_objects()
 				if( debug )
 					bu_log( "%d edge_g's fused\n", count );
 
-		for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )
+		for( BU_LIST_FOR( r, nmgregion, &m->r_hd ) )
 		{
 			NMG_CK_REGION( r );
-			for( RT_LIST_FOR( s, shell, &r->s_hd ) )
+			for( BU_LIST_FOR( s, shell, &r->s_hd ) )
 			{
 				int tmp_id;
 
@@ -4817,10 +4817,10 @@ make_nmg_objects()
 	{
 
 		/* Check if a valid closed shell has been produced */
-		for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )
+		for( BU_LIST_FOR( r, nmgregion, &m->r_hd ) )
 		{
 			NMG_CK_REGION( r );
-			for( RT_LIST_FOR( s, shell, &r->s_hd ) )
+			for( BU_LIST_FOR( s, shell, &r->s_hd ) )
 			{
 				NMG_CK_SHELL( s );
 
@@ -4832,21 +4832,21 @@ make_nmg_objects()
 
 				if( nmg_ck_closed_surf( s , &tol ) )
 				{
-					rt_log( "Final shell is not closed\n" );
+					bu_log( "Final shell is not closed\n" );
 					return( 1 );
 				}
 			}
 		}
 
 		if( debug )
-			rt_log( "model fuse\n" );
+			bu_log( "model fuse\n" );
 
 		nmg_model_fuse( m , &tol );
 
-		for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )
+		for( BU_LIST_FOR( r, nmgregion, &m->r_hd ) )
 		{
 			NMG_CK_REGION( r );
-			for( RT_LIST_FOR( s, shell, &r->s_hd ) )
+			for( BU_LIST_FOR( s, shell, &r->s_hd ) )
 			{
 				NMG_CK_SHELL( s );
 
@@ -4854,14 +4854,14 @@ make_nmg_objects()
 			}
 		}
 
-		if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
-			rt_log( "ERROR: rt_mem_barriercheck failed in make_nmg_objects (before mk_nmg)\n" );
+		if( rt_g.debug&DEBUG_MEM_FULL &&  bu_mem_barriercheck() )
+			bu_log( "ERROR: bu_mem_barriercheck failed in make_nmg_objects (before mk_nmg)\n" );
 
 		mk_nmg( fdout , name , m );
 		fflush( fdout );
 
-		if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
-			rt_log( "ERROR: rt_mem_barriercheck failed in make_nmg_objects (after mk_nmg)\n" );
+		if( rt_g.debug&DEBUG_MEM_FULL &&  bu_mem_barriercheck() )
+			bu_log( "ERROR: bu_mem_barriercheck failed in make_nmg_objects (after mk_nmg)\n" );
 	}
 
 	try_count = 0;
@@ -4879,7 +4879,7 @@ out:	nmg_km( m );
 
 		tmp = fus;
 		fus = fus->next;
-		rt_free( (char *)tmp , "make_nmg_objects: fus" );
+		bu_free( (char *)tmp , "make_nmg_objects: fus" );
 	}
 	fus_root = (struct fast_fus *)NULL;
 
@@ -4890,7 +4890,7 @@ out:	nmg_km( m );
 
 		tmp = adj;
 		adj = adj->next;
-		rt_free( (char *)tmp , "make_nmg_objects: adj" );
+		bu_free( (char *)tmp , "make_nmg_objects: adj" );
 	}
 	adj_root = (struct adjacent_faces *)NULL;
 
@@ -4901,7 +4901,7 @@ out:	nmg_km( m );
 
 		tmp = elem;
 		elem = elem->next;
-		rt_free( (char *)tmp, "make_nmg_objects: elem" );
+		bu_free( (char *)tmp, "make_nmg_objects: elem" );
 	}
 	elem_root = (struct elem_list *)NULL;
 
@@ -4911,11 +4911,11 @@ out:	nmg_km( m );
 		return(1);
 
 	/* make region containing nmg object */
-	RT_LIST_INIT( &head.l );
+	BU_LIST_INIT( &head.l );
 
 	if( mk_addmember( name , &head , WMOP_UNION ) == (struct wmember *)NULL )
 	{
-		rt_log( "make_nmg_objects: mk_addmember failed\n" , name );
+		bu_log( "make_nmg_objects: mk_addmember failed\n" , name );
 		rt_bomb( "Cannot make nmg region\n" );
 	}
 
@@ -4924,8 +4924,8 @@ out:	nmg_km( m );
 
 	MK_REGION( fdout , &head , group_id , comp_id , nmgs , NMG )
 
-	if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
-		rt_log( "ERROR: rt_mem_barriercheck failed in make_nmg_obj\n" );
+	if( rt_g.debug&DEBUG_MEM_FULL &&  bu_mem_barriercheck() )
+		bu_log( "ERROR: bu_mem_barriercheck failed in make_nmg_obj\n" );
 
 	return( 0 );
 }
@@ -4950,7 +4950,7 @@ fastf_t radius;
 {
 	struct cline *cline_ptr;
 
-	cline_ptr = (struct cline *)rt_malloc( sizeof( struct cline ) , "Add_to_clines: cline_ptr" );
+	cline_ptr = (struct cline *)bu_malloc( sizeof( struct cline ) , "Add_to_clines: cline_ptr" );
 
 	cline_ptr->pt1 = pt1;
 	cline_ptr->pt2 = pt2;
@@ -4967,8 +4967,8 @@ fastf_t radius;
 
 	cline_last_ptr = cline_ptr;
 
-	if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
-		rt_log( "ERROR: rt_mem_barriercheck failed in Add_to_clines\n" );
+	if( rt_g.debug&DEBUG_MEM_FULL &&  bu_mem_barriercheck() )
+		bu_log( "ERROR: bu_mem_barriercheck failed in Add_to_clines\n" );
 }
 
 void
@@ -4982,7 +4982,7 @@ do_cline()
 	char name[NAMESIZE+1];
 
 	if( debug )
-		rt_log( "do_cline: %s\n" , line );
+		bu_log( "do_cline: %s\n" , line );
 
 	strncpy( field , &line[8] , 8 );
 	element_id = atoi( field );
@@ -4991,8 +4991,8 @@ do_cline()
 	pt1 = atoi( field );
 	if( pass && (pt1 < 1 || pt1 > max_grid_no) )
 	{
-		rt_log( "Illegal grid point (%d) in CLINE, skipping\n", pt1 );
-		rt_log( "\telement %d, component %d, group %d\n" , element_id , comp_id , group_id );
+		bu_log( "Illegal grid point (%d) in CLINE, skipping\n", pt1 );
+		bu_log( "\telement %d, component %d, group %d\n" , element_id , comp_id , group_id );
 		return;
 	}
 
@@ -5000,15 +5000,15 @@ do_cline()
 	pt2 = atoi( field );
 	if( pass && (pt2 < 1 || pt2 > max_grid_no) )
 	{
-		rt_log( "Illegal grid point in CLINE (%d), skipping\n", pt2 );
-		rt_log( "\telement %d, component %d, group %d\n" , element_id , comp_id , group_id );
+		bu_log( "Illegal grid point in CLINE (%d), skipping\n", pt2 );
+		bu_log( "\telement %d, component %d, group %d\n" , element_id , comp_id , group_id );
 		return;
 	}
 
 	if( pt1 == pt2 )
 	{
-		rt_log( "Ilegal grid points in CLINE ( %d and %d ), skipping\n", pt1 , pt2 );
-		rt_log( "\telement %d, component %d, group %d\n" , element_id , comp_id , group_id );
+		bu_log( "Ilegal grid points in CLINE ( %d and %d ), skipping\n", pt1 , pt2 );
+		bu_log( "\telement %d, component %d, group %d\n" , element_id , comp_id , group_id );
 		return;
 	}
 
@@ -5032,9 +5032,9 @@ do_cline()
 
 	if( thick > radius )
 	{
-		rt_log( "ERROR: CLINE thickness (%f) greater than radius (%f)\n", thick, radius );
-		rt_log( "\tnot making inner cylinder\n" );
-		rt_log( "\telement %d, component %d, group %d\n" , element_id , comp_id , group_id );
+		bu_log( "ERROR: CLINE thickness (%f) greater than radius (%f)\n", thick, radius );
+		bu_log( "\tnot making inner cylinder\n" );
+		bu_log( "\telement %d, component %d, group %d\n" , element_id , comp_id , group_id );
 		thick = 0.0;
 	}
 	else if( thick > 0.0 )
@@ -5068,8 +5068,8 @@ do_ccone1()
 		make_region_name( outer_name , group_id , comp_id , element_id , CCONE1 );
 		if( !getline() )
 		{
-			rt_log( "Unexpected EOF while reading continuation card for CCONE1\n" );
-			rt_log( "\tgroup_id = %d, comp_id = %d, element_id = %d\n",
+			bu_log( "Unexpected EOF while reading continuation card for CCONE1\n" );
+			bu_log( "\tgroup_id = %d, comp_id = %d, element_id = %d\n",
 				group_id, comp_id, element_id );
 			rt_bomb( "CCONE1\n" );
 		}
@@ -5093,8 +5093,8 @@ do_ccone1()
 
 	if( !getline() )
 	{
-		rt_log( "Unexpected EOF while reading continuation card for CCONE1\n" );
-		rt_log( "\tgroup_id = %d, comp_id = %d, element_id = %d, c1 = %d\n",
+		bu_log( "Unexpected EOF while reading continuation card for CCONE1\n" );
+		bu_log( "\tgroup_id = %d, comp_id = %d, element_id = %d, c1 = %d\n",
 			group_id, comp_id, element_id , c1 );
 		rt_bomb( "CCONE1\n" );
 	}
@@ -5104,8 +5104,8 @@ do_ccone1()
 
 	if( c1 != c2 )
 	{
-		rt_log( "WARNING: CCONE1 continuation flags disagree, %d vs %d\n" , c1 , c2 );
-		rt_log( "\tgroup_id = %d, comp_id = %d, element_id = %d\n",
+		bu_log( "WARNING: CCONE1 continuation flags disagree, %d vs %d\n" , c1 , c2 );
+		bu_log( "\tgroup_id = %d, comp_id = %d, element_id = %d\n",
 			group_id, comp_id, element_id );
 	}
 
@@ -5120,10 +5120,10 @@ do_ccone1()
 
 	if( r1 < 0.0 || r2 < 0.0 )
 	{
-		rt_log( "ERROR: CCONE1 has illegal radii, %f and %f\n" , r1/25.4 , r2/25.4 );
-		rt_log( "\tgroup_id = %d, comp_id = %d, element_id = %d\n",
+		bu_log( "ERROR: CCONE1 has illegal radii, %f and %f\n" , r1/25.4 , r2/25.4 );
+		bu_log( "\tgroup_id = %d, comp_id = %d, element_id = %d\n",
 			group_id, comp_id, element_id );
-		rt_log( "\tCCONE1 solid ignored\n" );
+		bu_log( "\tCCONE1 solid ignored\n" );
 		return;
 	}
 
@@ -5131,29 +5131,29 @@ do_ccone1()
 	{
 		if( thick <= 0.0 )
 		{
-			rt_log( "ERROR: Plate mode CCONE1 has illegal thickness (%f)\n" , thick/25.4 );
-			rt_log( "\tgroup_id = %d, comp_id = %d, element_id = %d\n",
+			bu_log( "ERROR: Plate mode CCONE1 has illegal thickness (%f)\n" , thick/25.4 );
+			bu_log( "\tgroup_id = %d, comp_id = %d, element_id = %d\n",
 				group_id, comp_id, element_id );
-			rt_log( "\tCCONE1 solid ignored\n" );
+			bu_log( "\tCCONE1 solid ignored\n" );
 			return;
 		}
 
 		if( r1-thick <= SQRT_SMALL_FASTF && r2-thick <= SQRT_SMALL_FASTF )
 		{
-			rt_log( "ERROR: Plate mode CCONE1 has too large thickness (%f)\n" , thick/25.4 );
-			rt_log( "\tgroup_id = %d, comp_id = %d, element_id = %d\n",
+			bu_log( "ERROR: Plate mode CCONE1 has too large thickness (%f)\n" , thick/25.4 );
+			bu_log( "\tgroup_id = %d, comp_id = %d, element_id = %d\n",
 				group_id, comp_id, element_id );
-			rt_log( "\tCCONE1 solid ignored\n" );
+			bu_log( "\tCCONE1 solid ignored\n" );
 			return;
 		}
 	}
 
 	if( pt1 < 1 || pt1 > max_grid_no || pt2 < 1 || pt2 > max_grid_no || pt1 == pt2 )
 	{
-		rt_log( "ERROR: CCONE1 has illegal grid points ( %d and %d)\n" , pt1 , pt2 );
-		rt_log( "\tgroup_id = %d, comp_id = %d, element_id = %d\n",
+		bu_log( "ERROR: CCONE1 has illegal grid points ( %d and %d)\n" , pt1 , pt2 );
+		bu_log( "\tgroup_id = %d, comp_id = %d, element_id = %d\n",
 			group_id, comp_id, element_id );
-		rt_log( "\tCCONE1 solid ignored\n" );
+		bu_log( "\tCCONE1 solid ignored\n" );
 		return;
 	}
 
@@ -5168,7 +5168,7 @@ do_ccone1()
 	make_solid_name( outer_name , CCONE1 , element_id , comp_id , group_id , 0 );
 	mk_trc_h( fdout , outer_name , grid_pts[pt1].pt , height , r1 , r2 );
 
-	RT_LIST_INIT( &r_head.l );
+	BU_LIST_INIT( &r_head.l );
 	if( mk_addmember( outer_name , &r_head , WMOP_UNION ) == (struct wmember *)NULL )
 		rt_bomb( "CCONE1: mk_addmember failed\n" );
 
@@ -5243,10 +5243,10 @@ do_ccone1()
 		VSUB2( inner_height , top , base );
 		if( VDOT( inner_height , height ) < 0.0 )
 		{
-			rt_log( "ERROR: CCONE1 height (%f) too small for thickness (%f)\n" , length/25.4 , thick/25.4 );
-			rt_log( "\tgroup_id = %d, comp_id = %d, element_id = %d\n",
+			bu_log( "ERROR: CCONE1 height (%f) too small for thickness (%f)\n" , length/25.4 , thick/25.4 );
+			bu_log( "\tgroup_id = %d, comp_id = %d, element_id = %d\n",
 				group_id, comp_id, element_id );
-			rt_log( "\tCCONE1 inner solid ignored\n" );
+			bu_log( "\tCCONE1 inner solid ignored\n" );
 		}
 		else
 		{
@@ -5285,8 +5285,8 @@ do_ccone2()
 		make_region_name( name , group_id , comp_id , element_id , CCONE2 );
 		if( !getline() )
 		{
-			rt_log( "Unexpected EOF while reading continuation card for CCONE1\n" );
-			rt_log( "\tgroup_id = %d, comp_id = %d, element_id = %d\n",
+			bu_log( "Unexpected EOF while reading continuation card for CCONE1\n" );
+			bu_log( "\tgroup_id = %d, comp_id = %d, element_id = %d\n",
 				group_id, comp_id, element_id );
 			rt_bomb( "CCONE2\n" );
 		}
@@ -5307,8 +5307,8 @@ do_ccone2()
 
 	if( !getline() )
 	{
-		rt_log( "Unexpected EOF while reading continuation card for CCONE2\n" );
-		rt_log( "\tgroup_id = %d, comp_id = %d, element_id = %d, c1 = %d\n",
+		bu_log( "Unexpected EOF while reading continuation card for CCONE2\n" );
+		bu_log( "\tgroup_id = %d, comp_id = %d, element_id = %d, c1 = %d\n",
 			group_id, comp_id, element_id , c1 );
 		rt_bomb( "CCONE2\n" );
 	}
@@ -5318,8 +5318,8 @@ do_ccone2()
 
 	if( c1 != c2 )
 	{
-		rt_log( "WARNING: CCONE2 continuation flags disagree, %d vs %d\n" , c1 , c2 );
-		rt_log( "\tgroup_id = %d, comp_id = %d, element_id = %d\n",
+		bu_log( "WARNING: CCONE2 continuation flags disagree, %d vs %d\n" , c1 , c2 );
+		bu_log( "\tgroup_id = %d, comp_id = %d, element_id = %d\n",
 			group_id, comp_id, element_id );
 	}
 
@@ -5334,16 +5334,16 @@ do_ccone2()
 
 	if( pt1 == pt2 )
 	{
-		rt_log( "ERROR: CCONE2 has same endpoints %d and %d\n", pt1, pt2 );
-		rt_log( "\tgroup_id = %d, comp_id = %d, element_id = %d\n",
+		bu_log( "ERROR: CCONE2 has same endpoints %d and %d\n", pt1, pt2 );
+		bu_log( "\tgroup_id = %d, comp_id = %d, element_id = %d\n",
 			group_id, comp_id, element_id );
 		return;
 	}
 
 	if( ro1 < 0.0 || ro2 < 0.0 || ri1 < 0.0 || ri2 < 0.0 )
 	{
-		rt_log( "ERROR: CCONE2 has illegal radii %f %f %f %f\n" , ro1, ro2, ri1, ri2 );
-		rt_log( "\tgroup_id = %d, comp_id = %d, element_id = %d\n",
+		bu_log( "ERROR: CCONE2 has illegal radii %f %f %f %f\n" , ro1, ro2, ri1, ri2 );
+		bu_log( "\tgroup_id = %d, comp_id = %d, element_id = %d\n",
 			group_id, comp_id, element_id );
 		return;
 	}
@@ -5354,7 +5354,7 @@ do_ccone2()
 	if( ro2 < SQRT_SMALL_FASTF )
 		ro2 = SQRT_SMALL_FASTF;
 
-	RT_LIST_INIT( &r_head.l );
+	BU_LIST_INIT( &r_head.l );
 
 	VSUB2( height , grid_pts[pt2].pt , grid_pts[pt1].pt );
 
@@ -5395,7 +5395,7 @@ struct hole_list *ptr;
 
 	if( !hole_root )
 	{
-		hole_root = (struct holes *)rt_malloc( sizeof( struct holes ) , "Add_holes: hole_root" );
+		hole_root = (struct holes *)bu_malloc( sizeof( struct holes ) , "Add_holes: hole_root" );
 		hole_root->group = gr;
 		hole_root->component = comp;
 		hole_root->holes = ptr;
@@ -5428,7 +5428,7 @@ struct hole_list *ptr;
 		}
 	}
 
-	hole_ptr->next = (struct holes *)rt_malloc( sizeof( struct holes ) , "Add_holes: hole_ptr->next" );
+	hole_ptr->next = (struct holes *)bu_malloc( sizeof( struct holes ) , "Add_holes: hole_ptr->next" );
 	hole_ptr = hole_ptr->next;
 	hole_ptr->group = gr;
 	hole_ptr->component = comp;
@@ -5450,7 +5450,7 @@ do_hole_wall()
 		return;
 
 	if( debug )
-		rt_log( "do_hole_wall: %s\n" , line );
+		bu_log( "do_hole_wall: %s\n" , line );
 
 	s_len = strlen( line );
 	if( s_len > 80 )
@@ -5479,12 +5479,12 @@ do_hole_wall()
 
 		if( list_ptr )
 		{
-			list_ptr->next = (struct hole_list *)rt_malloc( sizeof( struct hole_list ) , "do_hole_wall: list_ptr" );
+			list_ptr->next = (struct hole_list *)bu_malloc( sizeof( struct hole_list ) , "do_hole_wall: list_ptr" );
 			list_ptr = list_ptr->next;
 		}
 		else
 		{
-			list_ptr = (struct hole_list *)rt_malloc( sizeof( struct hole_list ) , "do_hole_wall: list_ptr" );
+			list_ptr = (struct hole_list *)bu_malloc( sizeof( struct hole_list ) , "do_hole_wall: list_ptr" );
 			list_start = list_ptr;
 		}
 
@@ -5530,7 +5530,7 @@ int pos;
 	plane_t pl;
 
 	if( debug )
-		rt_log( "make_fast_fu: ( %f %f %f )\n\t( %f %f %f )\n\t( %f %f %f )\n" ,
+		bu_log( "make_fast_fu: ( %f %f %f )\n\t( %f %f %f )\n\t( %f %f %f )\n" ,
 			V3ARGS( grid_pts[pt1].pt ), V3ARGS( grid_pts[pt2].pt ), V3ARGS( grid_pts[pt3].pt ) );
 
 	verts[0] = &grid_pts[pt1].v;
@@ -5543,24 +5543,24 @@ int pos;
 		NMG_CK_MODEL( m );
 		r = nmg_mrsv( m );
 		NMG_CK_REGION( r );
-		s = RT_LIST_FIRST( shell , &r->s_hd );
+		s = BU_LIST_FIRST( shell , &r->s_hd );
 	}
 
 	if( debug )
-		rt_log( "\tm = x%x\n" , m );
+		bu_log( "\tm = x%x\n" , m );
 
 	fu = nmg_cmface( s , verts , 3 );
 	if( !fu )
 	{
-		rt_log( "make_fast_fu: nmg_cmface failed\n" );
-		rt_log( "\telement %d, component %d, group %d\n" , element_id , comp_id , group_id );
+		bu_log( "make_fast_fu: nmg_cmface failed\n" );
+		bu_log( "\telement %d, component %d, group %d\n" , element_id , comp_id , group_id );
 		return;
 	}
 
 	if( debug )
-		rt_log( "\tfu = x%x\n" , fu );
+		bu_log( "\tfu = x%x\n" , fu );
 
-	lu = RT_LIST_FIRST( loopuse , &fu->lu_hd );
+	lu = BU_LIST_FIRST( loopuse , &fu->lu_hd );
 	nmg_vertex_gv( grid_pts[pt1].v , grid_pts[pt1].pt );
 	nmg_vertex_gv( grid_pts[pt2].v , grid_pts[pt2].pt );
 	nmg_vertex_gv( grid_pts[pt3].v , grid_pts[pt3].pt );
@@ -5569,8 +5569,8 @@ int pos;
 	if( area <= 0.0 )
 	{
 		(void)nmg_kfu( fu );
-		rt_log( "make_fast_fu: ignoring degenerate face\n" );
-		rt_log( "\telement %d, component %d, group %d\n" , element_id , comp_id , group_id );
+		bu_log( "make_fast_fu: ignoring degenerate face\n" );
+		bu_log( "\telement %d, component %d, group %d\n" , element_id , comp_id , group_id );
 		return;
 	}
 
@@ -5581,8 +5581,8 @@ int pos;
 	if( mode == PLATE_MODE )
 		Add_fu( fu, thick, pos, pt1, pt2, pt3, element_id );
 
-	if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
-		rt_log( "ERROR: rt_mem_barriercheck failed in make_fast_fu\n" );
+	if( rt_g.debug&DEBUG_MEM_FULL &&  bu_mem_barriercheck() )
+		bu_log( "ERROR: bu_mem_barriercheck failed in make_fast_fu\n" );
 }
 
 static int
@@ -5597,31 +5597,31 @@ int pt1, pt2, pt3;
 		return( 0 );
 	}
 
-	for( RT_LIST_FOR( tmp_r, nmgregion, &m->r_hd ) )
+	for( BU_LIST_FOR( tmp_r, nmgregion, &m->r_hd ) )
 	{
 		struct shell *tmp_s;
 
-		for( RT_LIST_FOR( tmp_s, shell, &tmp_r->s_hd ) )
+		for( BU_LIST_FOR( tmp_s, shell, &tmp_r->s_hd ) )
 		{
 			struct faceuse *fu;
 
-			for( RT_LIST_FOR( fu, faceuse, &tmp_s->fu_hd ) )
+			for( BU_LIST_FOR( fu, faceuse, &tmp_s->fu_hd ) )
 			{
 				struct loopuse *lu;
 
 				if( fu->orientation != OT_SAME )
 					continue;
 
-				for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
+				for( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
 				{
 					struct edgeuse *eu;
 					int found=0;
 					int vert_count=0;
 
-					if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+					if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
 						continue;
 
-					for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+					for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
 					{
 						struct vertex *v;
 
@@ -5657,7 +5657,7 @@ do_tri()
 	int overlap;
 
 	if( debug )
-		rt_log( "do_tri: %s\n" , line );
+		bu_log( "do_tri: %s\n" , line );
 
 	strncpy( field , &line[8] , 8 );
 	element_id = atoi( field );
@@ -5679,17 +5679,17 @@ do_tri()
 
 	if( pt1 == pt2 || pt2 == pt3 || pt1 == pt3 )
 	{
-		rt_log( "do_tri: ignoring degenerate CTRI element\n" );
-		rt_log( "\telement %d, component %d, group %d\n" , element_id , comp_id , group_id );
+		bu_log( "do_tri: ignoring degenerate CTRI element\n" );
+		bu_log( "\telement %d, component %d, group %d\n" , element_id , comp_id , group_id );
 		return;
 	}
 
 	/* check if this face has already been modelled (FASTGEN4 error) */
 	if( Check_for_dup_face( pt1, pt2, pt3 ) )
 	{
-		rt_log( "Duplicate face in element %d, component %d, group %d\n" , element_id , comp_id , group_id );
-		rt_log( "\t grid points %d %d %d\n", pt1, pt2, pt3 );
-		rt_log( "\tthis face ignored\n" );
+		bu_log( "Duplicate face in element %d, component %d, group %d\n" , element_id , comp_id , group_id );
+		bu_log( "\t grid points %d %d %d\n", pt1, pt2, pt3 );
+		bu_log( "\tthis face ignored\n" );
 		return;
 	}
 
@@ -5699,8 +5699,8 @@ do_tri()
 		thick = atof( field ) * 25.4;
 		if( thick <= 0.0 )
 		{
-			rt_log( "do_tri: illegal thickness (%f), skipping CTRI element\n" , thick );
-			rt_log( "\telement %d, component %d, group %d\n" , element_id , comp_id , group_id );
+			bu_log( "do_tri: illegal thickness (%f), skipping CTRI element\n" , thick );
+			bu_log( "\telement %d, component %d, group %d\n" , element_id , comp_id , group_id );
 			return;
 		}
 
@@ -5712,12 +5712,12 @@ do_tri()
 
 		if( pos != POS_CENTER && pos != POS_FRONT )
 		{
-			rt_log( "do_tri: illegal postion parameter (%d), must be one or two\n" , pos );
-			rt_log( "\telement %d, component %d, group %d\n" , element_id , comp_id , group_id );
+			bu_log( "do_tri: illegal postion parameter (%d), must be one or two\n" , pos );
+			bu_log( "\telement %d, component %d, group %d\n" , element_id , comp_id , group_id );
 			return;
 		}
 		if( debug )
-			rt_log( "\tplate mode: thickness = %f\n" , thick );
+			bu_log( "\tplate mode: thickness = %f\n" , thick );
 	}
 
 	overlap = Check_tri_overlap( element_id, pt1, pt2, pt3);
@@ -5749,7 +5749,7 @@ do_quad()
 	element_id = atoi( field );
 
 	if( debug )
-		rt_log( "do_quad: %s\n" , line );
+		bu_log( "do_quad: %s\n" , line );
 
 	if( !nmgs )
 		nmgs = element_id;
@@ -5775,8 +5775,8 @@ do_quad()
 		thick = atof( field ) * 25.4;
 		if( thick <= 0.0 )
 		{
-			rt_log( "do_quad: illegal thickness (%f), skipping CQUAD element\n" , thick );
-			rt_log( "\telement %d, component %d, group %d\n" , element_id , comp_id , group_id );
+			bu_log( "do_quad: illegal thickness (%f), skipping CQUAD element\n" , thick );
+			bu_log( "\telement %d, component %d, group %d\n" , element_id , comp_id , group_id );
 			return;
 		}
 
@@ -5788,8 +5788,8 @@ do_quad()
 
 		if( pos != POS_CENTER && pos != POS_FRONT )
 		{
-			rt_log( "do_quad: illegal postion parameter (%d), must be one or two\n" , pos );
-			rt_log( "\telement %d, component %d, group %d\n" , element_id , comp_id , group_id );
+			bu_log( "do_quad: illegal postion parameter (%d), must be one or two\n" , pos );
+			bu_log( "\telement %d, component %d, group %d\n" , element_id , comp_id , group_id );
 			return;
 		}
 	}
@@ -5817,16 +5817,16 @@ do_quad()
 
 	if( pt1 == pt2 || pt2 == pt3 || pt1 == pt3 )
 	{
-		rt_log( "do_quad: ignoring degenerate triangular face in CQUAD element\n" );
-		rt_log( "\t\t%d %d %d\n", pt1, pt2, pt3 );
-		rt_log( "\telement %d, component %d, group %d\n" , element_id , comp_id , group_id );
+		bu_log( "do_quad: ignoring degenerate triangular face in CQUAD element\n" );
+		bu_log( "\t\t%d %d %d\n", pt1, pt2, pt3 );
+		bu_log( "\telement %d, component %d, group %d\n" , element_id , comp_id , group_id );
 		skipped = 1;
 	}
 	else if( Check_for_dup_face( pt1, pt2, pt3 ) )
 	{
-		rt_log( "Duplicate face in element %d, component %d, group %d\n" , element_id , comp_id , group_id );
-		rt_log( "\t grid points %d %d %d\n", pt1, pt2, pt3 );
-		rt_log( "\tthis face ignored\n" );
+		bu_log( "Duplicate face in element %d, component %d, group %d\n" , element_id , comp_id , group_id );
+		bu_log( "\t grid points %d %d %d\n", pt1, pt2, pt3 );
+		bu_log( "\tthis face ignored\n" );
 		skipped = 1;
 	}
 	else
@@ -5849,16 +5849,16 @@ do_quad()
 
 	if( pt1 == pt3 || pt3 == pt4 || pt1 == pt4 )
 	{
-		rt_log( "do_quad: ignoring degenerate triangular face in CQUAD element\n" );
-		rt_log( "\t\t%d %d %d\n", pt1, pt3, pt4 );
-		rt_log( "\telement %d, component %d, group %d\n" , element_id , comp_id , group_id );
+		bu_log( "do_quad: ignoring degenerate triangular face in CQUAD element\n" );
+		bu_log( "\t\t%d %d %d\n", pt1, pt3, pt4 );
+		bu_log( "\telement %d, component %d, group %d\n" , element_id , comp_id , group_id );
 		skipped += 2;
 	}
 	else if( Check_for_dup_face( pt1, pt3, pt4 ) )
 	{
-		rt_log( "Duplicate face in element %d, component %d, group %d\n" , element_id , comp_id , group_id );
-		rt_log( "\t grid points %d %d %d\n", pt1, pt3, pt4 );
-		rt_log( "\tthis face ignored\n" );
+		bu_log( "Duplicate face in element %d, component %d, group %d\n" , element_id , comp_id , group_id );
+		bu_log( "\t grid points %d %d %d\n", pt1, pt3, pt4 );
+		bu_log( "\tthis face ignored\n" );
 		skipped += 2;
 	}
 	else
@@ -5914,7 +5914,7 @@ int final;
 	static int	old_region_id;
 
 	if( debug )
-		rt_log( "do_section: %s\n" , line );
+		bu_log( "do_section: %s\n" , line );
 
 	prev_sect = curr_sect;
 	curr_sect = curr_offset;
@@ -5931,29 +5931,29 @@ int final;
 
 			if( nmgs )
 			{
-			    if( (RT_SETJUMP) || make_nmg_objects() )
+			    if( (BU_SETJUMP) || make_nmg_objects() )
 			    {
 				struct fast_fus *fus;
 				struct adjacent_faces *adj;
 			    	struct elem_list *elem;
 
-				rt_log( "***********component %s, group #%d, component #%d failed\n",
+				bu_log( "***********component %s, group #%d, component #%d failed\n",
 					name_name, group_id , comp_id );
 
 				if( m )
 				{
 					nmg_km( m );
 
-					if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
-						rt_log( "ERROR: rt_mem_barriercheck failed in Do_section after nmg_km()\n" );
+					if( rt_g.debug&DEBUG_MEM_FULL &&  bu_mem_barriercheck() )
+						bu_log( "ERROR: bu_mem_barriercheck failed in Do_section after nmg_km()\n" );
 
 					m = (struct model *)NULL;
 					r = (struct nmgregion *)NULL;
 					s = (struct shell *)NULL;
 				}
 
-				if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
-					rt_log( "ERROR: rt_mem_barriercheck failed in Do_section before freeing fus list\n" );
+				if( rt_g.debug&DEBUG_MEM_FULL &&  bu_mem_barriercheck() )
+					bu_log( "ERROR: bu_mem_barriercheck failed in Do_section before freeing fus list\n" );
 
 				/* clear lists */
 				fus = fus_root;
@@ -5963,12 +5963,12 @@ int final;
 
 					tmp = fus;
 					fus = fus->next;
-					rt_free( (char *)tmp , "Do_section: fus" );
+					bu_free( (char *)tmp , "Do_section: fus" );
 				}
 				fus_root = (struct fast_fus *)NULL;
 
-				if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
-					rt_log( "ERROR: rt_mem_barriercheck failed in Do_section before freeing adj_face list\n" );
+				if( rt_g.debug&DEBUG_MEM_FULL &&  bu_mem_barriercheck() )
+					bu_log( "ERROR: bu_mem_barriercheck failed in Do_section before freeing adj_face list\n" );
 
 				adj = adj_root;
 				while( adj )
@@ -5977,7 +5977,7 @@ int final;
 
 					tmp = adj;
 					adj = adj->next;
-					rt_free( (char *)tmp , "Do_section: adj" );
+					bu_free( (char *)tmp , "Do_section: adj" );
 				}
 				adj_root = (struct adjacent_faces *)NULL;
 
@@ -5988,14 +5988,14 @@ int final;
 
 					tmp = elem;
 					elem = elem->next;
-					rt_free( (char *)tmp, "Do_section: elem" );
+					bu_free( (char *)tmp, "Do_section: elem" );
 				}
 				elem_root = (struct elem_list *)NULL;
 
 			    	dup_count = 0;
 
-				if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
-					rt_log( "ERROR: rt_mem_barriercheck failed in Do_section after freeing adj_face list\n" );
+				if( rt_g.debug&DEBUG_MEM_FULL &&  bu_mem_barriercheck() )
+					bu_log( "ERROR: bu_mem_barriercheck failed in Do_section after freeing adj_face list\n" );
 
 				/* If a plate-mode component failed, try again using arb6's */
 				if( mode == PLATE_MODE )
@@ -6007,12 +6007,12 @@ int final;
 					{
 						if( fseek( fdin , prev_sect , SEEK_SET ) )
 						{
-							rt_log( "Cannot seek in input file, not retrying group %d, comnponent %d\n",
+							bu_log( "Cannot seek in input file, not retrying group %d, comnponent %d\n",
 								group_id , comp_id );
 						}
 						else
 						{
-							rt_log( "Retrying group %d, component %d\n",
+							bu_log( "Retrying group %d, component %d\n",
 								group_id , comp_id );
 							(void)getline();
 							old_region_id = region_id;
@@ -6021,7 +6021,7 @@ int final;
 				}
 				conv_count--;
 			    }
-			    RT_UNSETJUMP;
+			    BU_UNSETJUMP;
 			}
 			make_cline_regions();
 			make_comp_group();
@@ -6073,12 +6073,12 @@ int final;
 		}
 
 		if( pass )
-			rt_log( "Making component %s, group #%d, component #%d\n",
+			bu_log( "Making component %s, group #%d, component #%d\n",
 				name_name, group_id , comp_id );
 
 		if( comp_id > 999 )
 		{
-			rt_log( "Illegal component id number %d, changed to 999\n" , comp_id );
+			bu_log( "Illegal component id number %d, changed to 999\n" , comp_id );
 			comp_id = 999;
 		}
 
@@ -6086,7 +6086,7 @@ int final;
 		mode = atoi( field );
 		if( mode != 1 && mode != 2 )
 		{
-			rt_log( "Illegal mode (%d) for group %d component %d, using volume mode\n",
+			bu_log( "Illegal mode (%d) for group %d component %d, using volume mode\n",
 				mode, group_id, comp_id );
 			mode = 2;
 		}
@@ -6109,13 +6109,13 @@ fastf_t thick;
 	struct shell *s1;
 	struct faceuse *fu;
 	struct vertex **verts[4];
-	struct nmg_ptbl faces;
+	struct bu_ptbl faces;
 
-	nmg_tbl( &faces , TBL_INIT , (long *)NULL );
+	bu_ptbl_init( &faces , 64, " &faces ");
 
 	m1 = nmg_mm();
 	r1 = nmg_mrsv( m1 );
-	s1 = RT_LIST_FIRST( shell , &r1->s_hd );
+	s1 = BU_LIST_FIRST( shell , &r1->s_hd );
 	NMG_CK_SHELL( s1 );
 
 	verts[0] = &grid_pts[pts[0]].v;
@@ -6124,7 +6124,7 @@ fastf_t thick;
 	verts[3] = &grid_pts[pts[3]].v;
 
 	fu = nmg_cmface( s1 , verts , 4 );
-	nmg_tbl( &faces , TBL_INS , (long *)fu );
+	bu_ptbl_ins( &faces , (long *)fu );
 
 	verts[0] = &grid_pts[pts[4]].v;
 	verts[1] = &grid_pts[pts[5]].v;
@@ -6132,7 +6132,7 @@ fastf_t thick;
 	verts[3] = &grid_pts[pts[7]].v;
 
 	fu = nmg_cmface( s1 , verts , 4 );
-	nmg_tbl( &faces , TBL_INS , (long *)fu );
+	bu_ptbl_ins( &faces , (long *)fu );
 
 	verts[0] = &grid_pts[pts[0]].v;
 	verts[1] = &grid_pts[pts[1]].v;
@@ -6140,7 +6140,7 @@ fastf_t thick;
 	verts[3] = &grid_pts[pts[4]].v;
 
 	fu = nmg_cmface( s1 , verts , 4 );
-	nmg_tbl( &faces , TBL_INS , (long *)fu );
+	bu_ptbl_ins( &faces , (long *)fu );
 
 	verts[0] = &grid_pts[pts[1]].v;
 	verts[1] = &grid_pts[pts[5]].v;
@@ -6148,7 +6148,7 @@ fastf_t thick;
 	verts[3] = &grid_pts[pts[2]].v;
 
 	fu = nmg_cmface( s1 , verts , 4 );
-	nmg_tbl( &faces , TBL_INS , (long *)fu );
+	bu_ptbl_ins( &faces , (long *)fu );
 
 	verts[0] = &grid_pts[pts[2]].v;
 	verts[1] = &grid_pts[pts[6]].v;
@@ -6156,7 +6156,7 @@ fastf_t thick;
 	verts[3] = &grid_pts[pts[3]].v;
 
 	fu = nmg_cmface( s1 , verts , 4 );
-	nmg_tbl( &faces , TBL_INS , (long *)fu );
+	bu_ptbl_ins( &faces , (long *)fu );
 
 	verts[0] = &grid_pts[pts[0]].v;
 	verts[1] = &grid_pts[pts[4]].v;
@@ -6164,22 +6164,22 @@ fastf_t thick;
 	verts[3] = &grid_pts[pts[3]].v;
 
 	fu = nmg_cmface( s1 , verts , 4 );
-	nmg_tbl( &faces , TBL_INS , (long *)fu );
+	bu_ptbl_ins( &faces , (long *)fu );
 
 	for( i=0 ; i<8 ; i++ )
 		nmg_vertex_gv( grid_pts[pts[i]].v , grid_pts[pts[i]].pt );
 
 	i = 0;
-	while( i < NMG_TBL_END( &faces ) )
+	while( i < BU_PTBL_END( &faces ) )
 	{
 		struct loopuse *lu;
 		fastf_t area;
 		plane_t pl;
 
-		fu = (struct faceuse *)NMG_TBL_GET( &faces , i );
+		fu = (struct faceuse *)BU_PTBL_GET( &faces , i );
 		NMG_CK_FACEUSE( fu );
 
-		lu = RT_LIST_FIRST( loopuse , &fu->lu_hd );
+		lu = BU_LIST_FIRST( loopuse , &fu->lu_hd );
 		NMG_CK_LOOPUSE( lu );
 
 		area = nmg_loop_plane_area( lu , pl );
@@ -6187,7 +6187,7 @@ fastf_t thick;
 		if( area <= 0.0 )
 		{
 			nmg_kfu( fu );
-			nmg_tbl( &faces , TBL_RM , (long *)fu );
+			bu_ptbl_rm( &faces , (long *)fu );
 		}
 		else
 		{
@@ -6196,8 +6196,8 @@ fastf_t thick;
 		}
 	}
 
-	nmg_gluefaces( (struct faceuse **)NMG_TBL_BASEADDR( &faces) , NMG_TBL_END( &faces ), &tol );
-	nmg_tbl( &faces , TBL_FREE , (long *)NULL );
+	nmg_gluefaces( (struct faceuse **)BU_PTBL_BASEADDR( &faces) , BU_PTBL_END( &faces ), &tol );
+	bu_ptbl_free( &faces );
 
 	nmg_fix_normals( s1 , &tol );
 
@@ -6230,8 +6230,8 @@ do_hex1()
 	{
 		if( !getline() )
 		{
-			rt_log( "Unexpected EOF while reading continuation card for CHEX1\n" );
-			rt_log( "\tgroup_id = %d, comp_id = %d, element_id = %d\n",
+			bu_log( "Unexpected EOF while reading continuation card for CHEX1\n" );
+			bu_log( "\tgroup_id = %d, comp_id = %d, element_id = %d\n",
 				group_id, comp_id, element_id );
 			rt_bomb( "CHEX1\n" );
 		}
@@ -6249,8 +6249,8 @@ do_hex1()
 
 	if( !getline() )
 	{
-		rt_log( "Unexpected EOF while reading continuation card for CHEX1\n" );
-		rt_log( "\tgroup_id = %d, comp_id = %d, element_id = %d, c1 = %d\n",
+		bu_log( "Unexpected EOF while reading continuation card for CHEX1\n" );
+		bu_log( "\tgroup_id = %d, comp_id = %d, element_id = %d, c1 = %d\n",
 			group_id, comp_id, element_id , cont1 );
 		rt_bomb( "CHEX1\n" );
 	}
@@ -6260,8 +6260,8 @@ do_hex1()
 
 	if( cont1 != cont2 )
 	{
-		rt_log( "Continuation card numbers do not match for CHEX1 element (%d vs %d)\n", cont1 , cont2 );
-		rt_log( "\tskipping CHEX1 element: group_id = %d, comp_id = %d, element_id = %d\n",
+		bu_log( "Continuation card numbers do not match for CHEX1 element (%d vs %d)\n", cont1 , cont2 );
+		bu_log( "\tskipping CHEX1 element: group_id = %d, comp_id = %d, element_id = %d\n",
 			group_id, comp_id, element_id );
 		return;
 	}
@@ -6278,7 +6278,7 @@ do_hex1()
 	make_solid_name( name , CHEX1 , element_id , comp_id , group_id , 0 );
 	mk_arb8( fdout , name , &points[0][X] );
 
-	RT_LIST_INIT( &head.l );
+	BU_LIST_INIT( &head.l );
 
 	if( mk_addmember( name , &head , WMOP_UNION ) == (struct wmember *)NULL )
 		rt_bomb( "CHEX1: mk_addmember failed\n" );
@@ -6291,8 +6291,8 @@ do_hex1()
 		thick = atof( field ) * 25.4;
 		if( thick <= 0.0 )
 		{
-			rt_log( "do_hex1: illegal thickness (%f), skipping CHEX1 element\n" , thick );
-			rt_log( "\telement %d, component %d, group %d\n" , element_id , comp_id , group_id );
+			bu_log( "do_hex1: illegal thickness (%f), skipping CHEX1 element\n" , thick );
+			bu_log( "\telement %d, component %d, group %d\n" , element_id , comp_id , group_id );
 			return;
 		}
 
@@ -6304,8 +6304,8 @@ do_hex1()
 
 		if( pos != POS_CENTER && pos != POS_FRONT )
 		{
-			rt_log( "do_hex1: illegal postion parameter (%d), must be 1 or 2, skipping CHEX1 element\n" , pos );
-			rt_log( "\telement %d, component %d, group %d\n" , element_id , comp_id , group_id );
+			bu_log( "do_hex1: illegal postion parameter (%d), must be 1 or 2, skipping CHEX1 element\n" , pos );
+			bu_log( "\telement %d, component %d, group %d\n" , element_id , comp_id , group_id );
 			return;
 		}
 
@@ -6314,9 +6314,9 @@ do_hex1()
 
 		if( m1 == (struct model *)NULL )
 		{
-			rt_log( "do_hex1: Could not find inside for CHEX1 element\n" , pos );
-			rt_log( "\tLeaving CHEX1 element solid\n" );
-			rt_log( "\telement %d, component %d, group %d\n" , element_id , comp_id , group_id );
+			bu_log( "do_hex1: Could not find inside for CHEX1 element\n" , pos );
+			bu_log( "\tLeaving CHEX1 element solid\n" );
+			bu_log( "\telement %d, component %d, group %d\n" , element_id , comp_id , group_id );
 			MK_REGION( fdout , &head , group_id , comp_id , element_id , CHEX1 )
 			return;
 		}
@@ -6334,8 +6334,8 @@ do_hex1()
 	}
 	MK_REGION( fdout , &head , group_id , comp_id , element_id , CHEX1 )
 
-	if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
-		rt_log( "ERROR: rt_mem_barriercheck failed in Do_hex1\n" );
+	if( rt_g.debug&DEBUG_MEM_FULL &&  bu_mem_barriercheck() )
+		bu_log( "ERROR: bu_mem_barriercheck failed in Do_hex1\n" );
 }
 
 void
@@ -6356,8 +6356,8 @@ do_hex2()
 	{
 		if( !getline() )
 		{
-			rt_log( "Unexpected EOF while reading continuation card for CHEX2\n" );
-			rt_log( "\tgroup_id = %d, comp_id = %d, element_id = %d\n",
+			bu_log( "Unexpected EOF while reading continuation card for CHEX2\n" );
+			bu_log( "\tgroup_id = %d, comp_id = %d, element_id = %d\n",
 				group_id, comp_id, element_id );
 			rt_bomb( "CHEX2\n" );
 		}
@@ -6375,8 +6375,8 @@ do_hex2()
 
 	if( !getline() )
 	{
-		rt_log( "Unexpected EOF while reading continuation card for CHEX2\n" );
-		rt_log( "\tgroup_id = %d, comp_id = %d, element_id = %d, c1 = %d\n",
+		bu_log( "Unexpected EOF while reading continuation card for CHEX2\n" );
+		bu_log( "\tgroup_id = %d, comp_id = %d, element_id = %d, c1 = %d\n",
 			group_id, comp_id, element_id , cont1 );
 		rt_bomb( "CHEX2\n" );
 	}
@@ -6386,8 +6386,8 @@ do_hex2()
 
 	if( cont1 != cont2 )
 	{
-		rt_log( "Continuation card numbers do not match for CHEX2 element (%d vs %d)\n", cont1 , cont2 );
-		rt_log( "\tskipping CHEX2 element: group_id = %d, comp_id = %d, element_id = %d\n",
+		bu_log( "Continuation card numbers do not match for CHEX2 element (%d vs %d)\n", cont1 , cont2 );
+		bu_log( "\tskipping CHEX2 element: group_id = %d, comp_id = %d, element_id = %d\n",
 			group_id, comp_id, element_id );
 		return;
 	}
@@ -6404,7 +6404,7 @@ do_hex2()
 	make_solid_name( name , CHEX2 , element_id , comp_id , group_id , 0 );
 	mk_arb8( fdout , name , &points[0][X] );
 
-	RT_LIST_INIT( &head.l );
+	BU_LIST_INIT( &head.l );
 
 	if( mk_addmember( name , &head , WMOP_UNION ) == (struct wmember *)NULL )
 		rt_bomb( "CHEX2: mk_addmember failed\n" );
@@ -6414,8 +6414,8 @@ do_hex2()
 
 	MK_REGION( fdout , &head , group_id , comp_id , element_id , CHEX1 )
 
-	if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
-		rt_log( "ERROR: rt_mem_barriercheck failed in Do_hex2\n" );
+	if( rt_g.debug&DEBUG_MEM_FULL &&  bu_mem_barriercheck() )
+		bu_log( "ERROR: bu_mem_barriercheck failed in Do_hex2\n" );
 }
 
 int
@@ -6424,12 +6424,12 @@ int pass_number;
 {
 
 	if( debug )
-		rt_log( "\n\nProcess_input( pass = %d ), try = %d\n" , pass_number , try_count );
-/*	rt_prmem( "At start of Process_input:" );	*/
+		bu_log( "\n\nProcess_input( pass = %d ), try = %d\n" , pass_number , try_count );
+/*	bu_prmem( "At start of Process_input:" );	*/
 
 	if( pass_number != 0 && pass_number != 1 )
 	{
-		rt_log( "Process_input: illegal pass number %d\n" , pass_number );
+		bu_log( "Process_input: illegal pass number %d\n" , pass_number );
 		rt_bomb( "Process_input" );
 	}
 
@@ -6477,7 +6477,7 @@ int pass_number;
 			break;
 		}
 		else
-			rt_log( "ERROR: skipping unrecognized data type\n%s\n" , line );
+			bu_log( "ERROR: skipping unrecognized data type\n%s\n" , line );
 
 		curr_offset = ftell( fdin );
 		(void)getline();
@@ -6490,7 +6490,7 @@ int pass_number;
 
 	if( debug )
 	{
-		rt_log( "At pass %d:\n" , pass );
+		bu_log( "At pass %d:\n" , pass );
 		List_names();
 	}
 
@@ -6658,7 +6658,7 @@ char *argv[];
 	char *plot_file=NULL;
 
 	/* Initialze tolerance struct */
-        tol.magic = RT_TOL_MAGIC;
+        tol.magic = BN_TOL_MAGIC;
         tol.dist = 0.005;
         tol.dist_sq = tol.dist * tol.dist;
         tol.perp = 1e-6;
@@ -6705,14 +6705,14 @@ char *argv[];
 				break;
 			case 'D':
 				tol.dist = atof( optarg );
-				rt_log( "tolerance distance set to %f\n" , tol.dist );
+				bu_log( "tolerance distance set to %f\n" , tol.dist );
 				tol.dist_sq = tol.dist * tol.dist;
 				break;
 			case 'P':
 				tol.perp = atof( optarg );
-				rt_log( "tolerance perpendicular set to %f\n" , tol.perp );
+				bu_log( "tolerance perpendicular set to %f\n" , tol.perp );
 				tol.para = 1.0 - tol.perp;
-				rt_log( "tolerance parallel set to %f\n" , tol.para );
+				bu_log( "tolerance parallel set to %f\n" , tol.para );
 				break;
 			default:
 				rt_bomb( usage );
@@ -6728,14 +6728,14 @@ char *argv[];
 
 	if( (fdin=fopen( argv[optind] , "r" )) == (FILE *)NULL )
 	{
-		rt_log( "Cannot open FASTGEN4 file (%s)\n" , argv[optind] );
+		bu_log( "Cannot open FASTGEN4 file (%s)\n" , argv[optind] );
 		perror( "fast4-g" );
 		exit( 1 );
 	}
 
 	if( (fdout=fopen( argv[optind+1] , "w" )) == (FILE *)NULL )
 	{
-		rt_log( "Cannot open file for output (%s)\n" , argv[optind+1] );
+		bu_log( "Cannot open file for output (%s)\n" , argv[optind+1] );
 		perror( "fast4-g" );
 		exit( 1 );
 	}
@@ -6752,17 +6752,17 @@ char *argv[];
 
 	if( rt_g.debug )
 	{
-		rt_printb( "librt rt_g.debug", rt_g.debug, DEBUG_FORMAT );
-		rt_log("\n");
+		bu_printb( "librt rt_g.debug", rt_g.debug, DEBUG_FORMAT );
+		bu_log("\n");
 	}
 	if( rt_g.NMG_debug )
 	{
-		rt_printb( "librt rt_g.NMG_debug", rt_g.NMG_debug, NMG_DEBUG_FORMAT );
-		rt_log("\n");
+		bu_printb( "librt rt_g.NMG_debug", rt_g.NMG_debug, NMG_DEBUG_FORMAT );
+		bu_log("\n");
 	}
 
 	grid_size = GRID_BLOCK;
-	grid_pts = (struct fast_verts *)rt_malloc( grid_size * sizeof( struct fast_verts ) , "fast4-g: grid_pts" );
+	grid_pts = (struct fast_verts *)bu_malloc( grid_size * sizeof( struct fast_verts ) , "fast4-g: grid_pts" );
 
 	cline_root = (struct cline *)NULL;
 	cline_last_ptr = (struct cline *)NULL;
@@ -6778,7 +6778,7 @@ char *argv[];
 	elem_root = (struct elem_list *)NULL;
 
 	dup_count = 0;
-	dup_fu = (struct faceuse **)rt_calloc( DUP_BLOCK, sizeof( struct faceuse *), "dup_fu" );
+	dup_fu = (struct faceuse **)bu_calloc( DUP_BLOCK, sizeof( struct faceuse *), "dup_fu" );
 	dup_size = DUP_BLOCK;
 
 	name_name[0] = '\0';
@@ -6790,10 +6790,10 @@ char *argv[];
 	r = (struct nmgregion *)NULL;
 	s = (struct shell *)NULL;
 
-	nmg_tbl( &stack , TBL_INIT , (long *)NULL );
+	bu_ptbl_init( &stack , 64, " &stack ");
 
 	for( i=0 ; i<11 ; i++ )
-		RT_LIST_INIT( &group_head[i].l );
+		BU_LIST_INIT( &group_head[i].l );
 
 	Process_input( 0 );
 
@@ -6815,7 +6815,7 @@ char *argv[];
 	fclose( fdout );
 	Post_process( output_file );
 
-	rt_log( "%d components converted out of %d attempted\n" , conv_count , comp_count );
-	rt_log( "\t%d rejections or failures converted on second try (as a group of ARB6 solids)\n", second_chance );
-	rt_log( "\tFor a total of %d components converted\n" , conv_count+second_chance );
+	bu_log( "%d components converted out of %d attempted\n" , conv_count , comp_count );
+	bu_log( "\t%d rejections or failures converted on second try (as a group of ARB6 solids)\n", second_chance );
+	bu_log( "\tFor a total of %d components converted\n" , conv_count+second_chance );
 }

@@ -80,8 +80,8 @@ char **argv;
 	ofp = stdout;
 
 #if 0
-(void)fprintf(stderr, "About to call rt_log\n");
-rt_log("Hello cold cruel world!\n");
+(void)fprintf(stderr, "About to call bu_log\n");
+bu_log("Hello cold cruel world!\n");
 (void)fprintf(stderr, "About to begin\n");
 #endif
 
@@ -112,7 +112,7 @@ after_read:
 
 		/* Check record type */
 		if( debug )
-			rt_log("rec %c\n", buf[0] );
+			bu_log("rec %c\n", buf[0] );
 		switch( buf[0] )  {
 		case ID_SOLID:
 			solbld();
@@ -123,7 +123,7 @@ after_read:
 			continue;
 
 		case ID_MEMB:
-			rt_log("Warning: unattached Member record, ignored\n");
+			bu_log("Warning: unattached Member record, ignored\n");
 			continue;
 
 		case ID_ARS_A:
@@ -179,8 +179,8 @@ after_read:
 			continue;
 
 		default:
-			rt_log("asc2g: bad record type '%c' (0%o), skipping\n", buf[0], buf[0]);
-			rt_log("%s\n", buf );
+			bu_log("asc2g: bad record type '%c' (0%o), skipping\n", buf[0], buf[0]);
+			bu_log("%s\n", buf );
 			continue;
 		}
 	}
@@ -202,8 +202,8 @@ strsolbld()
 
 	if( *cp != DBID_STRSOL )
 	{
-		rt_log( "asc2g: expecting STRSOL, found '%c' (0%o) (skipping)\n" , buf[0], buf[0] );
-		rt_log( "%s\n" , buf );
+		bu_log( "asc2g: expecting STRSOL, found '%c' (0%o) (skipping)\n" , buf[0], buf[0] );
+		bu_log( "%s\n" , buf );
 		return;
 	}
 
@@ -225,7 +225,7 @@ strsolbld()
 	cp[strlen(cp)-1] = '\0';
 
 	if( mk_strsol( ofp, name, keyword, cp ) )  {
-		rt_log("asc2g(%s) couldn't convert %s type solid\n",
+		bu_log("asc2g(%s) couldn't convert %s type solid\n",
 			name, keyword );
 	}
 }
@@ -245,7 +245,7 @@ nmgbld()
 
 	if( sizeof( union record )%32 )
 	{
-		rt_log( "asc2g: nmgbld() will only work with union records with size multipe of 32\n" );
+		bu_log( "asc2g: nmgbld() will only work with union records with size multipe of 32\n" );
 		exit( -1 );
 	}
 
@@ -254,7 +254,7 @@ nmgbld()
 
 	if( fgets( buf, BUFSIZE, ifp ) == (char *)0 )
 	{
-		rt_log( "Unexpected EOF while reading NMG data\n" );
+		bu_log( "Unexpected EOF while reading NMG data\n" );
 		exit( -1 );
 	}
 
@@ -268,9 +268,9 @@ nmgbld()
 	record.nmg.N_id = nmg_id;
 	record.nmg.N_version = version;
 	strncpy( record.nmg.N_name , name , NAMESIZE );
-	rt_plong( record.nmg.N_count , granules );
+	bu_plong( record.nmg.N_count , granules );
 	for( i=0 ; i<26 ; i++ )
-		rt_plong( &record.nmg.N_structs[i*4] , struct_count[i] );
+		bu_plong( &record.nmg.N_structs[i*4] , struct_count[i] );
 
 	/* write out first record */
 	(void)fwrite( (char *)&record , sizeof( union record ) , 1 , ofp );
@@ -285,7 +285,7 @@ nmgbld()
 
 			if( fgets( buf, BUFSIZE, ifp ) == (char *)0 )
 			{
-				rt_log( "Unexpected EOF while reading NMG data\n" );
+				bu_log( "Unexpected EOF while reading NMG data\n" );
 				exit( -1 );
 			}
 
@@ -464,7 +464,7 @@ solbld()
 			break;
 
 		default:
-			rt_log("asc2g: bad solid %s s_type= %d, skipping\n",
+			bu_log("asc2g: bad solid %s s_type= %d, skipping\n",
 				name, s_type);
 	}
 
@@ -505,7 +505,7 @@ combbld()
 	char		inherit;	/* Inheritance property */
 
 	/* Set all flags initially. */
-	RT_LIST_INIT( &head.l );
+	BU_LIST_INIT( &head.l );
 
 	override = 0;
 	temp_nflag = temp_pflag = 0;	/* indicators for optional fields */
@@ -772,7 +772,7 @@ identbld()
 	*np = '\0';
 
 	if( strcmp( version, ID_VERSION ) != 0 )  {
-		rt_log("WARNING:  input file version (%s) is not %s\n",
+		bu_log("WARNING:  input file version (%s) is not %s\n",
 			version, ID_VERSION);
 	}
 
@@ -817,7 +817,7 @@ identbld()
 	}
 
 	if( mk_id_units(ofp, title, unit_str) < 0 )  {
-		rt_log("asc2g: unable to write database ID\n");
+		bu_log("asc2g: unable to write database ID\n");
 		exit(2);
 	}
 }
@@ -1018,7 +1018,7 @@ bsurfbld()
 	/* Malloc and clear memory for the KNOT DATA and read it */
 	nbytes = record.d.d_nknots * sizeof(union record);
 	if( (vp = (float *)malloc(nbytes))  == (float *)0 )  {
-		rt_log( "asc2g: spline knot malloc error\n");
+		bu_log( "asc2g: spline knot malloc error\n");
 		exit(1);
 	}
 	fp = vp;
@@ -1038,7 +1038,7 @@ bsurfbld()
 	/* Malloc and clear memory for the CONTROL MESH data and read it */
 	nbytes = record.d.d_nctls * sizeof(union record);
 	if( (vp = (float *)malloc(nbytes))  == (float *)0 )  {
-		rt_log( "asc2g: control mesh malloc error\n");
+		bu_log( "asc2g: control mesh malloc error\n");
 		exit(1);
 	}
 	fp = vp;
@@ -1088,7 +1088,7 @@ pipebld()
 
 	/* Read data lines and process */
 
-	RT_LIST_INIT( &head.l );
+	BU_LIST_INIT( &head.l );
 	fgets( buf, BUFSIZE, ifp);
 	while( strncmp (buf , "END_PIPE", 8 ) )
 	{
@@ -1111,7 +1111,7 @@ pipebld()
 		sp->pp_bendradius = bendradius;
 		VSET( sp->pp_coord, x, y, z );
 
-		RT_LIST_INSERT( &head.l, &sp->l);
+		BU_LIST_INSERT( &head.l, &sp->l);
 		fgets( buf, BUFSIZE, ifp);
 	}
 
@@ -1188,24 +1188,24 @@ arbnbld()
 	cp = nxt_spc(cp);
 
 	neqn = atoi(cp);			/* find number of eqns */
-/*rt_log("neqn = %d\n", neqn);
+/*bu_log("neqn = %d\n", neqn);
  */
 	/* Check to make sure plane equations actually came in. */
 	if( neqn <= 0 )  {
-		rt_log("asc2g: warning: %d equations counted for arbn %s\n", neqn, name);
+		bu_log("asc2g: warning: %d equations counted for arbn %s\n", neqn, name);
 	}
 
-/*rt_log("mallocing space for eqns\n");
+/*bu_log("mallocing space for eqns\n");
  */
 	/* Malloc space for the in-coming plane equations */
 	if( (eqn = (plane_t *)malloc( sizeof( plane_t ) * neqn ) ) == NULL)  {
-		rt_log("asc2g: malloc failure for arbn\n");
+		bu_log("asc2g: malloc failure for arbn\n");
 		exit(-1);
 	}
 
 	/* Now, read the plane equations and put in appropriate place */
 
-/*rt_log("starting to dump eqns\n");
+/*bu_log("starting to dump eqns\n");
  */
 	for( i = 0; i < neqn; i++ )  {
 		fgets( buf, BUFSIZE, ifp);
@@ -1213,7 +1213,7 @@ arbnbld()
 			&eqn[i][X], &eqn[i][Y], &eqn[i][Z], &eqn[i][3]);
 	}
 
-/*rt_log("sending info to mk_arbn\n");
+/*bu_log("sending info to mk_arbn\n");
  */
 	mk_arbn( ofp, name, neqn, eqn);
 }

@@ -78,16 +78,16 @@ nmg_conv()
 	if( BU_LIST_NEXT( shell, &s->l) != (struct shell *)&r->s_hd )
 		bu_bomb( "ERROR: this code works only for NMG models with one shell!!!\n" );
 
-	if( RT_SETJUMP )
+	if( BU_SETJUMP )
 	{
-		RT_UNSETJUMP;
+		BU_UNSETJUMP;
 		bu_log( "Failed to convert %s\n", record.nmg.N_name );
 		(void)fseek( fdout, out_offset, SEEK_SET );
 		rt_db_free_internal( &intern );
 		return;
 	}
 	write_shell_as_polysolid( fdout, record.nmg.N_name, s);
-	RT_UNSETJUMP;
+	BU_UNSETJUMP;
 	rt_db_free_internal( &intern );
 }
 
@@ -145,7 +145,7 @@ char *argv[];
 		    	case DBID_NMG:
 				offset = ftell( dbip->dbi_fp );
 				out_offset = ftell( fdout );
-				granules = rt_glong(record.nmg.N_count);
+				granules = bu_glong(record.nmg.N_count);
 				offset += granules * sizeof( union record );
 		    		nmg_conv();
 				fseek( dbip->dbi_fp, offset, SEEK_SET );

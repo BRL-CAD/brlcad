@@ -86,7 +86,7 @@ int comp_code_num;
 	/* if list is empty, start one */
 	if( id_root == NULL )
 	{
-		id_root = (struct comp_idents *)rt_malloc( sizeof( struct comp_idents ) , "tankill-g: idents list" );
+		id_root = (struct comp_idents *)bu_malloc( sizeof( struct comp_idents ) , "tankill-g: idents list" );
 		id_root->next = (struct comp_idents *)NULL;
 		id_root->ident = comp_code_num;
 		id_root->no_of_solids = 1;
@@ -108,7 +108,7 @@ int comp_code_num;
 		else
 		{
 			/* make a new entry for this component */
-			ptr->next = (struct comp_idents *)rt_malloc( sizeof( struct comp_idents ) , "tankill-g: idents list " );
+			ptr->next = (struct comp_idents *)bu_malloc( sizeof( struct comp_idents ) , "tankill-g: idents list " );
 			ptr = ptr->next;
 			ptr->next = NULL;
 			ptr->ident = comp_code_num;
@@ -154,8 +154,8 @@ char *argv[];
 	struct shell *s;
 	struct shell *s2;
 	struct faceuse *fu;
-	struct nmg_ptbl faces;
-	struct rt_tol tol;
+	struct bu_ptbl faces;
+	struct bn_tol tol;
 	struct wmember reg_head;
 	struct comp_idents *ptr;
 	char name[NAMESIZE+1];
@@ -169,7 +169,7 @@ char *argv[];
 	/* Set defaults */
 
         /* XXX These need to be improved */
-        tol.magic = RT_TOL_MAGIC;
+        tol.magic = BN_TOL_MAGIC;
         tol.dist = 0.005;
         tol.dist_sq = tol.dist * tol.dist;
         tol.perp = 1e-6;
@@ -180,7 +180,7 @@ char *argv[];
 	polysolids = 0;
 	input_file = (char *)NULL;
 	id_root = (struct comp_idents *)NULL;
-	nmg_tbl( &faces , TBL_INIT , NULL );
+	bu_ptbl_init( &faces , 64, " &faces ");
 
 	/* get command line arguments */
 	while ((c = getopt(argc, argv, "vkpt:i:o:x:X:")) != EOF)
@@ -192,13 +192,13 @@ char *argv[];
 				break;
 			case 'x':
 				sscanf( optarg, "%x", &rt_g.debug );
-				rt_printb( "librt rt_g.debug", rt_g.debug, DEBUG_FORMAT );
-				rt_log("\n");
+				bu_printb( "librt rt_g.debug", rt_g.debug, DEBUG_FORMAT );
+				bu_log("\n");
 				break;
 			case 'X':
 				sscanf( optarg, "%x", &rt_g.NMG_debug );
-				rt_printb( "librt rt_g.NMG_debug", rt_g.NMG_debug, NMG_DEBUG_FORMAT );
-				rt_log("\n");
+				bu_printb( "librt rt_g.NMG_debug", rt_g.NMG_debug, NMG_DEBUG_FORMAT );
+				bu_log("\n");
 				break;
 			case 'k': /* keep component codes of 1001 */
 				keep_1001 = 1;
@@ -217,7 +217,7 @@ char *argv[];
 					perror( "tankill-g" );
 					rt_bomb( "Cannot open input file" );
 				}
-				input_file = rt_malloc( sizeof( optarg ) +1 , "tankill-g: input file name" );
+				input_file = bu_malloc( sizeof( optarg ) +1 , "tankill-g: input file name" );
 				strcpy( input_file , optarg );
 				break;
 			case 'o': /* output file name */
@@ -242,7 +242,7 @@ char *argv[];
 		mk_id( out_fp , input_file );
 
 	/* make some space to store the vertices */
-	verts = (struct tankill_verts *)rt_malloc( array_size*sizeof( struct tankill_verts ) , "tankill-g: verts array " );
+	verts = (struct tankill_verts *)bu_malloc( array_size*sizeof( struct tankill_verts ) , "tankill-g: verts array " );
 
 	/* read the number of vertices to expect */
 	while( fscanf( in_fp , "%d" , &no_of_verts ) != EOF )
@@ -250,7 +250,7 @@ char *argv[];
 		/* make a new shell */
 		m = nmg_mm();
 		r = nmg_mrsv( m );
-		s = RT_LIST_FIRST( shell , &r->s_hd );
+		s = BU_LIST_FIRST( shell , &r->s_hd );
 
 		/* make sure there is enough room */
 		if( no_of_verts > array_size )
@@ -268,7 +268,7 @@ char *argv[];
 		}
 
 		if( verbose )
-			rt_log( "Component code %d (%d vertices)\n", comp_code, no_of_verts );
+			bu_log( "Component code %d (%d vertices)\n", comp_code, no_of_verts );
 
 		/* read the surroundings code (I think this is like the space code in GIFT/FASTGEN) */
 		if( fscanf( in_fp , "%d " , &surr_code ) == EOF )
@@ -293,7 +293,7 @@ char *argv[];
 		if( comp_code == 1001 && !keep_1001 )
 		{
 			if( verbose )
-				rt_log( "Skipping component code %d (%d vertices)\n", comp_code, no_of_verts );
+				bu_log( "Skipping component code %d (%d vertices)\n", comp_code, no_of_verts );
 			continue;
 		}
 
@@ -303,9 +303,9 @@ char *argv[];
 		while( vert_no < no_of_verts - 2 )
 		{
 			/* skip combinations that won't make a face */
-			if( rt_3pts_collinear( verts[vert_no].coord , verts[vert_no+1].coord , verts[vert_no+2].coord , &tol ) )
+			if( bn_3pts_collinear( verts[vert_no].coord , verts[vert_no+1].coord , verts[vert_no+2].coord , &tol ) )
 				vert_no++;
-			else if( !rt_3pts_distinct( verts[vert_no].coord , verts[vert_no+1].coord , verts[vert_no+2].coord , &tol ) )
+			else if( !bn_3pts_distinct( verts[vert_no].coord , verts[vert_no+1].coord , verts[vert_no+2].coord , &tol ) )
 				vert_no++;
 			else
 			{
@@ -340,19 +340,19 @@ char *argv[];
 		}
 
 		/* calculate plane equations for faces */
-		for (RT_LIST_FOR(s, shell, &r->s_hd))
+		for (BU_LIST_FOR(s, shell, &r->s_hd))
 		{
 		    NMG_CK_SHELL( s );
-		    for (RT_LIST_FOR(fu, faceuse, &s->fu_hd))
+		    for (BU_LIST_FOR(fu, faceuse, &s->fu_hd))
 		    {
 		        NMG_CK_FACEUSE( fu );
 		        if( fu->orientation == OT_SAME )
 		        {
 		                if( nmg_calc_face_g( fu ) )
-		                        rt_log( "Failed to calculate plane eqn\n" );
+		                        bu_log( "Failed to calculate plane eqn\n" );
 
 				/* save the face in a table */
-				nmg_tbl( &faces , TBL_INS , (long *)fu );
+				bu_ptbl_ins( &faces , (long *)fu );
 		        }
 		    }
 		}
@@ -367,20 +367,20 @@ char *argv[];
 		 * upper edge
 		 */
 
-		s = RT_LIST_FIRST( shell , &r->s_hd );
+		s = BU_LIST_FIRST( shell , &r->s_hd );
 		nmg_break_long_edges( s , &tol );
 
 		/* glue all the faces together */
-		nmg_gluefaces( (struct faceuse **)NMG_TBL_BASEADDR( &faces) , NMG_TBL_END( &faces ), &tol );
+		nmg_gluefaces( (struct faceuse **)BU_PTBL_BASEADDR( &faces) , BU_PTBL_END( &faces ), &tol );
 
 		/* re-initialize the face list */
-		nmg_tbl( &faces , TBL_RST , NULL );
+		bu_ptbl_reset( &faces );
 
 		/* Calculate bounding boxes */
 		nmg_region_a( r , &tol );
 
 		/* fix the normals */
-		s = RT_LIST_FIRST( shell , &r->s_hd );
+		s = BU_LIST_FIRST( shell , &r->s_hd );
 
 		nmg_fix_normals( s, &tol );
 
@@ -388,11 +388,11 @@ char *argv[];
 		sprintf( name , "s.%d.%d" , comp_code , Add_solid( comp_code ) );
 
 		/* write the solid to the brlcad database */
-		s = RT_LIST_FIRST( shell, &r->s_hd );
+		s = BU_LIST_FIRST( shell, &r->s_hd );
 		if( polysolids )
 		{
 			if( verbose )
-				rt_log( "\twriting polysolid %s\n", name );
+				bu_log( "\twriting polysolid %s\n", name );
 			write_shell_as_polysolid( out_fp , name , s );
 		}
 		else
@@ -401,7 +401,7 @@ char *argv[];
 /*			nmg_shell_coplanar_face_merge( s , &tol , 1 );
 			if( nmg_simplify_shell( s ) )
 			{
-				rt_log( "tankill-g: nmg_simplify_shell emptied %s\n" , name );
+				bu_log( "tankill-g: nmg_simplify_shell emptied %s\n" , name );
 				nmg_km( m );
 				continue;
 			}
@@ -409,7 +409,7 @@ char *argv[];
 			{
 				/* write it out */
 				if( verbose )
-					rt_log( "\twriting polysolid %s\n", name );
+					bu_log( "\twriting polysolid %s\n", name );
 				mk_nmg( out_fp , name , m );
 			}
 		}
@@ -420,13 +420,13 @@ char *argv[];
 	}
 
 	/* free the memory for the face list */
-	nmg_tbl( &faces , TBL_FREE , NULL );
+	bu_ptbl_free( &faces );
 
 	/* Make regions */
 	ptr = id_root;
 	while( ptr != NULL )
 	{
-		RT_LIST_INIT( &reg_head.l );
+		BU_LIST_INIT( &reg_head.l );
 
 		/* make linked list of members */
 		for( i=0 ; i<ptr->no_of_solids ; i++ )
@@ -443,9 +443,9 @@ char *argv[];
 		if( verbose )
 		{
 			if( ptr->ident == 1000 )
-				rt_log( "Creating air region %s\n", name );
+				bu_log( "Creating air region %s\n", name );
 			else
-				rt_log( "Creating region %s\n", name );
+				bu_log( "Creating region %s\n", name );
 		}
 		if( ptr->ident == 1000 )
 		{
@@ -471,7 +471,7 @@ char *argv[];
 	/* Make groups based on ident numbers */
 	for( i=0 ; i<100 ; i++ )
 	{
-		RT_LIST_INIT( &reg_head.l );
+		BU_LIST_INIT( &reg_head.l );
 
 		group_len[i] = 0;
 		ptr = id_root;
@@ -495,7 +495,7 @@ char *argv[];
 
 			/* make the group */
 			if( verbose )
-				rt_log( "Creating group %s\n", name );
+				bu_log( "Creating group %s\n", name );
 			if( mk_lcomb( out_fp , name , &reg_head , 0,
 				(char *)NULL, (char *)NULL,
 				(unsigned char *)NULL, 0 ) )
@@ -511,7 +511,7 @@ char *argv[];
 		int do_group;
 		int k;
 
-		RT_LIST_INIT( &reg_head.l );
+		BU_LIST_INIT( &reg_head.l );
 
 		do_group = 0;
 		for( k=i*10 ; k<(i+1)*10 ; k++ )
@@ -530,7 +530,7 @@ char *argv[];
 			/* make the group */
 			sprintf( name , "%dXXX_codes" , i );
 			if( verbose )
-				rt_log( "Creating group %s\n", name );
+				bu_log( "Creating group %s\n", name );
 			if( mk_lcomb( out_fp , name , &reg_head , 0,
 			(char *)NULL, (char *)NULL, (unsigned char *)0, 0 ) )
 			{
@@ -541,7 +541,7 @@ char *argv[];
 
 	/* Make top level group "all" */
 
-	RT_LIST_INIT( &reg_head.l );
+	BU_LIST_INIT( &reg_head.l );
 
 	for( i=0 ; i<10 ; i++ )
 	{
@@ -563,14 +563,14 @@ char *argv[];
 			sprintf( name , "%dXXX_codes" , i );
 
 			if( mk_addmember( name , &reg_head , WMOP_UNION ) == WMEMBER_NULL )
-				rt_log( "mk_admember failed for %s\n" , name );
+				bu_log( "mk_admember failed for %s\n" , name );
 			all_len++;
 		}
 	}
 	if( all_len )
 	{
 		if( verbose )
-			rt_log( "Creating top level group 'all'\n" );
+			bu_log( "Creating top level group 'all'\n" );
 		if( mk_lcomb( out_fp , "all" , &reg_head , 0,
 		    (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0 ) )
 			rt_bomb( "tankill: Error in freeing region memory" );

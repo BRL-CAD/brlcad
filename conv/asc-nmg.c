@@ -123,7 +123,7 @@ char	*reg_name, *grp_name;
 {
 	struct model	*m;
 	struct nmgregion	*r;
-	struct rt_tol	tol;
+	struct bn_tol	tol;
 	struct shell	*s;
 	vect_t		Ext;
 	struct faceuse *fu;
@@ -133,25 +133,25 @@ char	*reg_name, *grp_name;
 
 	m = nmg_mm();		/* Make nmg model. */
 	r = nmg_mrsv(m);	/* Make region, empty shell, vertex */
-	s = RT_LIST_FIRST(shell, &r->s_hd);
+	s = BU_LIST_FIRST(shell, &r->s_hd);
 	descr_to_nmg(s, fpin, Ext);	/* Convert ascii description to nmg. */
 
         /* Copied from proc-db/nmgmodel.c */
-	tol.magic = RT_TOL_MAGIC;
+	tol.magic = BN_TOL_MAGIC;
 	tol.dist = 0.01;
 	tol.dist_sq = tol.dist * tol.dist;
 	tol.perp = 0.001;
 	tol.para = 0.999;
 
 	/* Associate the face geometry. */
-	fu = RT_LIST_FIRST( faceuse , &s->fu_hd );
-	if (nmg_loop_plane_area(RT_LIST_FIRST(loopuse, &fu->lu_hd), pl) < 0.0)
+	fu = BU_LIST_FIRST( faceuse , &s->fu_hd );
+	if (nmg_loop_plane_area(BU_LIST_FIRST(loopuse, &fu->lu_hd), pl) < 0.0)
 		return(-1);
 	else
 		nmg_face_g( fu , pl );
 
 	if (!NEAR_ZERO(MAGNITUDE(Ext), 0.001))
-		nmg_extrude_face(RT_LIST_FIRST(faceuse, &s->fu_hd), Ext, &tol);
+		nmg_extrude_face(BU_LIST_FIRST(faceuse, &s->fu_hd), Ext, &tol);
 
 	nmg_region_a(r, &tol);	/* Calculate geometry for region and shell. */
 
@@ -313,7 +313,7 @@ vect_t		Ext;	/* Extrusion vector. */
 			break;
 
 		default:
-			rt_log("descr_to_nmg: unexpected token \"%s\"\n", token);
+			bu_log("descr_to_nmg: unexpected token \"%s\"\n", token);
 			rt_bomb("");
 			break;
 		}

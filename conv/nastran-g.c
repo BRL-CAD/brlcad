@@ -1196,7 +1196,7 @@ char *argv[];
 	units = INCHES;
 
 	/* XXX These need to be improved */
-	tol.magic = RT_TOL_MAGIC;
+	tol.magic = BN_TOL_MAGIC;
 	tol.dist = 0.005;
 	tol.dist_sq = tol.dist * tol.dist;
 	tol.perp = 1e-6;
@@ -1208,14 +1208,14 @@ char *argv[];
 		{
 			case 'x':
 				sscanf( optarg, "%x", &rt_g.debug );
-				rt_printb( "librt rt_g.debug", rt_g.debug, DEBUG_FORMAT );
-				rt_log("\n");
+				bu_printb( "librt rt_g.debug", rt_g.debug, DEBUG_FORMAT );
+				bu_log("\n");
 				break;
 			case 'X':
 				sscanf( optarg, "%x", &rt_g.NMG_debug );
 				NMG_debug = rt_g.NMG_debug;
-				rt_printb( "librt rt_g.NMG_debug", rt_g.NMG_debug, NMG_DEBUG_FORMAT );
-				rt_log("\n");
+				bu_printb( "librt rt_g.NMG_debug", rt_g.NMG_debug, NMG_DEBUG_FORMAT );
+				bu_log("\n");
 				break;
 			case 't':		/* calculational tolerance */
 				tol.dist = atof( optarg );

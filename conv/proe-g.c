@@ -65,7 +65,7 @@ static char forced_name[NAME_LENGTH+1];	/* name specified on command line */
 static int stl_format=0;	/* Flag, non-zero indocates raw Stereolithography format input */
 static int polysolid=1;		/* Flag for polysolid output rather than NMG's */
 static int solid_count=0;	/* count of solids converted */
-static struct rt_tol tol;	/* Tolerance structure */
+static struct bn_tol tol;	/* Tolerance structure */
 static int id_no=1000;		/* Ident numbers */
 static int air_no=1;		/* Air numbers */
 static int debug=0;		/* Debug flag */
@@ -107,7 +107,7 @@ static char *stl_usage="%s [-psda] [-c units_str] [-u reg_exp] [-x rt_debug_flag
 static char *usage;
 static FILE *fd_in;		/* input file (from Pro/E) */
 static FILE *fd_out;		/* Resulting BRL-CAD file */
-static struct nmg_ptbl null_parts; /* Table of NULL solids */
+static struct bu_ptbl null_parts; /* Table of NULL solids */
 static float conv_factor=1.0;	/* conversion factor from model units to mm */
 static int top_level=1;		/* flag to catch top level assembly or part */
 static mat_t re_orient;		/* rotation matrix to put model in BRL-CAD orientation
@@ -153,7 +153,7 @@ union ptc_surf
 
 struct ptc_surf_list
 {
-	struct rt_list	l;
+	struct bu_list	l;
 	int type;
 	union ptc_surf	surf;
 } *surf_root=(struct ptc_surf_list *)NULL;
@@ -181,17 +181,17 @@ int type;
 	char try_char='@';
 
 	if( debug )
-		rt_log( "Add_new_name( %s, x%x, %d )\n", name, obj, type );
+		bu_log( "Add_new_name( %s, x%x, %d )\n", name, obj, type );
 
 	if( type != ASSEMBLY_TYPE && type != PART_TYPE && type != CUT_SOLID_TYPE )
 	{
-		rt_log( "Bad type for name (%s) in Add_new_name\n", name );
+		bu_log( "Bad type for name (%s) in Add_new_name\n", name );
 		rt_bomb( "Add_new_name\n" );
 	}
 
 
 	/* Add a new name */
-	ptr = (struct name_conv_list *)rt_malloc( sizeof( struct name_conv_list ) , "Add_new_name: prev->next" );
+	ptr = (struct name_conv_list *)bu_malloc( sizeof( struct name_conv_list ) , "Add_new_name: prev->next" );
 	ptr->next = (struct name_conv_list *)NULL;
 	strncpy( ptr->name , name, 80 );
 	ptr->obj = obj;
@@ -215,7 +215,7 @@ int type;
 		else
 			strncpy( ptr->brlcad_name , name , NAMESIZE-2 );
 		if( debug )
-			rt_log( "\tafter reg_ex, name is %s\n", ptr->brlcad_name );
+			bu_log( "\tafter reg_ex, name is %s\n", ptr->brlcad_name );
 	}
 	else if( type == CUT_SOLID_TYPE )
 		ptr->brlcad_name[0] = '\0';
@@ -234,29 +234,29 @@ int type;
 
 		strncpy( tmp_name, ptr->brlcad_name, NAMESIZE );
 		if( debug )
-			rt_log( "\tMaking sure %s is a unique name\n", tmp_name );
+			bu_log( "\tMaking sure %s is a unique name\n", tmp_name );
 		ptr2 = name_root;
 		while( ptr2 )
 		{
 			if( !strncmp( tmp_name , ptr2->brlcad_name , NAMESIZE ) || !strncmp( tmp_name , ptr2->solid_name , NAMESIZE ) )
 			{
 				if( debug )
-					rt_log( "\t\t%s matches existing name (%s or %s)\n", tmp_name, ptr2->brlcad_name, ptr2->solid_name );
+					bu_log( "\t\t%s matches existing name (%s or %s)\n", tmp_name, ptr2->brlcad_name, ptr2->solid_name );
 				try_char++;
 				if( try_char == '[' )
 					try_char = 'a';
 				if( debug )
-					rt_log( "\t\t\ttry_char = %c\n", try_char );
+					bu_log( "\t\t\ttry_char = %c\n", try_char );
 				if( try_char == '{' )
 				{
-					rt_log( "Too many objects with same name (%s)\n" , ptr->brlcad_name );
+					bu_log( "Too many objects with same name (%s)\n" , ptr->brlcad_name );
 					exit(1);
 				}
 
 				strncpy( tmp_name, ptr->brlcad_name, NAMESIZE );
 				sprintf( &tmp_name[suffix_insert] , "_%c" , try_char );
 				if( debug )
-					rt_log( "\t\tNew name to try is %s\n", tmp_name );
+					bu_log( "\t\tNew name to try is %s\n", tmp_name );
 				ptr2 = name_root;
 			}
 			else
@@ -291,7 +291,7 @@ int type;
 
 	strncpy( tmp_name, ptr->solid_name, NAMESIZE );
 	if( debug )
-		rt_log( "\tMaking sure %s is a unique solid name\n", tmp_name );
+		bu_log( "\tMaking sure %s is a unique solid name\n", tmp_name );
 	ptr2 = name_root;
 	try_char = '@';
 	while( ptr2 )
@@ -299,22 +299,22 @@ int type;
 		if( !strncmp( tmp_name , ptr2->brlcad_name , NAMESIZE ) || !strncmp( tmp_name , ptr2->solid_name , NAMESIZE ) )
 		{
 			if( debug )
-				rt_log( "\t\t%s matches existing name (%s or %s)\n", tmp_name, ptr2->brlcad_name, ptr2->solid_name );
+				bu_log( "\t\t%s matches existing name (%s or %s)\n", tmp_name, ptr2->brlcad_name, ptr2->solid_name );
 			try_char++;
 			if( try_char == '[' )
 				try_char = 'a';
 			if( debug )
-				rt_log( "\t\t\ttry_char = %c\n", try_char );
+				bu_log( "\t\t\ttry_char = %c\n", try_char );
 			if( try_char == '{' )
 			{
-				rt_log( "Too many solids with same name (%s)\n" , ptr->solid_name );
+				bu_log( "Too many solids with same name (%s)\n" , ptr->solid_name );
 				exit(1);
 			}
 
 			strncpy( tmp_name, ptr->solid_name, NAMESIZE );
 			sprintf( &tmp_name[suffix_insert] , "_%c" , try_char );
 			if( debug )
-				rt_log( "\t\tNew name to try is %s\n", tmp_name );
+				bu_log( "\t\tNew name to try is %s\n", tmp_name );
 			ptr2 = name_root;
 		}
 		else
@@ -404,19 +404,19 @@ char line[MAX_LINE_LEN];
 
 	if( rt_g.debug & DEBUG_MEM_FULL )
 	{
-		rt_log( "Barrier check at start of Convert_assy:\n" );
-		if( rt_mem_barriercheck() )
+		bu_log( "Barrier check at start of Convert_assy:\n" );
+		if( bu_mem_barriercheck() )
 			rt_bomb( "Barrier check failed!!!\n" );
 	}
 
-	RT_LIST_INIT( &head.l );
+	BU_LIST_INIT( &head.l );
 
 	start = (-1);
 	/* skip leading blanks */
 	while( isspace( line[++start] ) && line[start] != '\0' );
 	if( strncmp( &line[start] , "assembly" , 8 ) && strncmp( &line[start] , "ASSEMBLY" , 8 ) )
 	{
-		rt_log( "PROE-G: Convert_assy called for non-assembly:\n%s\n" , line );
+		bu_log( "PROE-G: Convert_assy called for non-assembly:\n%s\n" , line );
 		return;
 	}
 
@@ -434,10 +434,10 @@ char line[MAX_LINE_LEN];
 	/* get object pointer */
 	sscanf( &line[start] , "%x %f" , &obj, &junk );
 
-	rt_log( "Converting Assembly: %s\n" , name );
+	bu_log( "Converting Assembly: %s\n" , name );
 
 	if( debug )
-		rt_log( "Convert_assy: %s x%x\n" , name , obj );
+		bu_log( "Convert_assy: %s x%x\n" , name , obj );
 
 	while( fgets( line1, MAX_LINE_LEN, fd_in ) )
 	{
@@ -453,12 +453,12 @@ char line[MAX_LINE_LEN];
 			{
 				struct wmember *wp;
 
-				rt_log( "\tmake assembly ( %s)\n" , brlcad_name );
-				for( RT_LIST_FOR( wp, wmember, &head.l ) )
-					rt_log( "\t%c %s\n", wp->wm_op, wp->wm_name );
+				bu_log( "\tmake assembly ( %s)\n" , brlcad_name );
+				for( BU_LIST_FOR( wp, wmember, &head.l ) )
+					bu_log( "\t%c %s\n", wp->wm_op, wp->wm_name );
 			}
 			else
-				rt_log( "\tUsing name: %s\n", brlcad_name );
+				bu_log( "\tUsing name: %s\n", brlcad_name );
 
 			mk_lcomb( fd_out , brlcad_name , &head , 0 ,
 			(char *)NULL , (char *)NULL , (unsigned char *)NULL , 0 );
@@ -479,7 +479,7 @@ char line[MAX_LINE_LEN];
 
 			brlcad_name = Get_unique_name( memb_name , memb_obj , PART_TYPE );
 			if( debug )
-				rt_log( "\tmember (%s)\n" , brlcad_name );
+				bu_log( "\tmember (%s)\n" , brlcad_name );
 			wmem = mk_addmember( brlcad_name , &head , WMOP_UNION );
 		}
 		else if( !strncmp( &line1[start] , "matrix" , 6 ) || !strncmp( &line1[start] , "MATRIX" , 6 ) )
@@ -500,8 +500,8 @@ char line[MAX_LINE_LEN];
 			scale = pow( mat_det3( wmem->wm_mat ), 1.0/3.0 );
 			if( debug )
 			{
-				mat_print( brlcad_name, wmem->wm_mat );
-				rt_log( "\tscale = %g, conv_factor = %g\n", scale, conv_factor );
+				bn_mat_print( brlcad_name, wmem->wm_mat );
+				bu_log( "\tscale = %g, conv_factor = %g\n", scale, conv_factor );
 			}
 			if( scale != 1.0 )
 			{
@@ -522,24 +522,24 @@ char line[MAX_LINE_LEN];
 				/* apply re_orient transformation here */
 				if( debug )
 				{
-					rt_log( "Applying re-orient matrix to member %s\n", brlcad_name );
-					mat_print( "re-orient matrix", re_orient );
+					bu_log( "Applying re-orient matrix to member %s\n", brlcad_name );
+					bn_mat_print( "re-orient matrix", re_orient );
 				}
-				mat_mul2( re_orient, wmem->wm_mat );
+				bn_mat_mul2( re_orient, wmem->wm_mat );
 			}
 			if( debug )
-				mat_print( "final matrix", wmem->wm_mat );
+				bn_mat_print( "final matrix", wmem->wm_mat );
 		}
 		else
 		{
-			rt_log( "Unrecognized line in assembly (%s)\n%s\n" , name , line1 );
+			bu_log( "Unrecognized line in assembly (%s)\n%s\n" , name , line1 );
 		}
 	}
 
 	if( rt_g.debug & DEBUG_MEM_FULL )
 	{
-		rt_log( "Barrier check at end of Convet_assy:\n" );
-		if( rt_mem_barriercheck() )
+		bu_log( "Barrier check at end of Convet_assy:\n" );
+		if( bu_mem_barriercheck() )
 			rt_bomb( "Barrier check failed!!!\n" );
 	}
 
@@ -659,7 +659,7 @@ point_t min, max;
 			sprintf( haf_name, "cut.%d", cut_count );
 			ptr = Add_new_name( haf_name, 0, CUT_SOLID_TYPE );
 			if( mk_arb8( fd_out, ptr->solid_name, (fastf_t *)arb_pt ) )
-				rt_log( "Failed to create ARB8 solid for Assembly cut in part %s\n", name );
+				bu_log( "Failed to create ARB8 solid for Assembly cut in part %s\n", name );
 			else
 			{
 				/* Add this cut to the region */
@@ -671,10 +671,10 @@ point_t min, max;
 					/* apply re_orient transformation here */
 					if( debug )
 					{
-						rt_log( "Applying re-orient matrix to solid %s\n", ptr->solid_name );
-						mat_print( "re-orient matrix", re_orient );
+						bu_log( "Applying re-orient matrix to solid %s\n", ptr->solid_name );
+						bn_mat_print( "re-orient matrix", re_orient );
 					}
-					mat_mul2( re_orient, wmem->wm_mat );
+					bn_mat_mul2( re_orient, wmem->wm_mat );
 				}
 				
 			}
@@ -814,17 +814,17 @@ char line[MAX_LINE_LEN];
 	point_t part_max,part_min;	/* Part RPP */
 
 	if( rt_g.debug & DEBUG_MEM_FULL )
-		rt_prmem( "At start of Conv_prt():\n" );
+		bu_prmem( "At start of Conv_prt():\n" );
 
 	if( rt_g.debug & DEBUG_MEM_FULL )
 	{
-		rt_log( "Barrier check at start of Convet_part:\n" );
-		if( rt_mem_barriercheck() )
+		bu_log( "Barrier check at start of Convet_part:\n" );
+		if( bu_mem_barriercheck() )
 			rt_bomb( "Barrier check failed!!!\n" );
 	}
 
 
-	RT_LIST_INIT( &head.l );
+	BU_LIST_INIT( &head.l );
 	VSETALL( part_min, MAX_FASTF );
 	VSETALL( part_max, -MAX_FASTF );
 
@@ -832,7 +832,7 @@ char line[MAX_LINE_LEN];
 	NMG_CK_MODEL( m );
 	r = nmg_mrsv( m );
 	NMG_CK_REGION( r );
-	s = RT_LIST_FIRST( shell , &r->s_hd );
+	s = BU_LIST_FIRST( shell , &r->s_hd );
 	NMG_CK_SHELL( s );
 
 	start = (-1);
@@ -840,7 +840,7 @@ char line[MAX_LINE_LEN];
 	while( isspace( line[++start] ) && line[start] != '\0' );
 	if( strncmp( &line[start] , "solid" , 5 ) && strncmp( &line[start] , "SOLID" , 5 ) )
 	{
-		rt_log( "Convert_part: Called for non-part\n%s\n" , line );
+		bu_log( "Convert_part: Called for non-part\n%s\n" , line );
 		return;
 	}
 
@@ -891,18 +891,18 @@ char line[MAX_LINE_LEN];
 	else
 		strcpy( name, "noname" );
 
-	rt_log( "Converting Part: %s\n" , name );
+	bu_log( "Converting Part: %s\n" , name );
 
 	if( debug )
-		rt_log( "Conv_part %s x%x\n" , name , obj );
+		bu_log( "Conv_part %s x%x\n" , name , obj );
 
 	solid_count++;
 	solid_name = Get_solid_name( name , obj );
 
-	rt_log( "\tUsing solid name: %s\n" , solid_name );
+	bu_log( "\tUsing solid name: %s\n" , solid_name );
 
 	if( rt_g.debug & DEBUG_MEM || rt_g.debug & DEBUG_MEM_FULL )
-		rt_prmem( "At start of Convert_part()" );
+		bu_prmem( "At start of Convert_part()" );
 
 	while( fgets( line1, MAX_LINE_LEN, fd_in ) != NULL )
 	{
@@ -978,11 +978,11 @@ char line[MAX_LINE_LEN];
 					{
 						int n;
 
-						rt_log( "Non-triangular loop:\n" );
+						bu_log( "Non-triangular loop:\n" );
 						for( n=0 ; n<3 ; n++ )
-							rt_log( "\t( %g %g %g )\n", V3ARGS( verts[n].pt ) );
+							bu_log( "\t( %g %g %g )\n", V3ARGS( verts[n].pt ) );
 
-						rt_log( "\t( %g %g %g )\n", x, y, z );
+						bu_log( "\t( %g %g %g )\n", x, y, z );
 					}
 					VSET( verts[vert_no].pt , x , y , z );
 					VMINMAX( part_min, part_max, verts[vert_no].pt );
@@ -990,7 +990,7 @@ char line[MAX_LINE_LEN];
 
 				}
 				else
-					rt_log( "Unrecognized line: %s\n", line1 );
+					bu_log( "Unrecognized line: %s\n", line1 );
 			}
 
 			/* check for degenerate faces */
@@ -1052,9 +1052,9 @@ char line[MAX_LINE_LEN];
 			{
 				int n;
 
-				rt_log( "Making Face:\n" );
+				bu_log( "Making Face:\n" );
 				for( n=0 ; n<3; n++ )
-					rt_log( "\t( %g %g %g )\n" , V3ARGS( verts[n].pt ) );
+					bu_log( "\t( %g %g %g )\n" , V3ARGS( verts[n].pt ) );
 			}
 
 			fu = nmg_cmface( s , vts , 3 );
@@ -1062,7 +1062,7 @@ char line[MAX_LINE_LEN];
 			for( i=0 ; i<3 ; i++ )
 				nmg_vertex_gv( verts[i].v , verts[i].pt );
 
-			lu = RT_LIST_FIRST( loopuse , &fu->lu_hd );
+			lu = BU_LIST_FIRST( loopuse , &fu->lu_hd );
 			for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
 				nmg_edge_g( eu );
 
@@ -1100,10 +1100,10 @@ char line[MAX_LINE_LEN];
 					/* apply re_orient transformation here */
 					if( debug )
 					{
-						rt_log( "Applying re-orient matrix to solid %s\n", solid_name );
-						mat_print( "re-orient matrix", re_orient );
+						bu_log( "Applying re-orient matrix to solid %s\n", solid_name );
+						bn_mat_print( "re-orient matrix", re_orient );
 					}
-					mat_mul2( re_orient, wmem->wm_mat );
+					bn_mat_mul2( re_orient, wmem->wm_mat );
 				}
 				solid_in_region = 1;
 			}
@@ -1116,48 +1116,48 @@ char line[MAX_LINE_LEN];
 	{
 		char *save_name;
 
-		rt_log( "\t%s has no solid parts, ignoring\n" , name );
+		bu_log( "\t%s has no solid parts, ignoring\n" , name );
 		if( degenerate_count )
-			rt_log( "\t%d faces were degenerate\n", degenerate_count );
+			bu_log( "\t%d faces were degenerate\n", degenerate_count );
 		if( small_count )
-			rt_log( "\t%d faces were too small\n", small_count );
-		save_name = (char *)rt_malloc( NAMESIZE*sizeof( char ), "save_name" );
+			bu_log( "\t%d faces were too small\n", small_count );
+		save_name = (char *)bu_malloc( NAMESIZE*sizeof( char ), "save_name" );
 		brlcad_name = Get_unique_name( name , obj , PART_TYPE );
 		strncpy( save_name, brlcad_name, NAMESIZE );
-		nmg_tbl( &null_parts, TBL_INS, (long *)save_name );
+		bu_ptbl_ins( &null_parts, (long *)save_name );
 		nmg_km( m );
 		return;
 	}
 	else
 	{
 		if( degenerate_count )
-			rt_log( "\t%d faces were degenerate\n", degenerate_count );
+			bu_log( "\t%d faces were degenerate\n", degenerate_count );
 		if( small_count )
-			rt_log( "\t%d faces were too small\n", small_count );
+			bu_log( "\t%d faces were too small\n", small_count );
 	}
 
 	if( !polysolid || (do_simplify && face_count < 175) )
 	{
 		/* fuse vertices that are within tolerance of each other */
-		rt_log( "\tFusing vertices for part\n" );
+		bu_log( "\tFusing vertices for part\n" );
 		(void)nmg_model_vertex_fuse( m , &tol );
 
 		/* Break edges on vertices */
 		if( debug )
-			rt_log( "\tBreak edges\n" );
+			bu_log( "\tBreak edges\n" );
 		tmp_count = nmg_model_break_e_on_v( m, &tol );
 		if( debug )
 			bu_log( "\t\t%d edges broken\n", tmp_count );
 
 		/* kill zero length edgeuses */
 		if( debug )
-			rt_log( "\tKill zero length edges\n" );
+			bu_log( "\tKill zero length edges\n" );
 		if( nmg_kill_zero_length_edgeuses( m ) )
 			goto empty_model;
 
 		/* kill cracks */
 		if( debug )
-			rt_log( "\tKill cracks\n" );
+			bu_log( "\tKill cracks\n" );
 		if( nmg_kill_cracks( s ) )
 		{
 			if( nmg_ks( s ) )
@@ -1168,17 +1168,17 @@ char line[MAX_LINE_LEN];
 
 		/* Glue faceuses together (nmg_model_break_e_on_v may have created some edges to fuse). */
 		if( debug )
-			rt_log( "\tEdge fuse\n" );
+			bu_log( "\tEdge fuse\n" );
 		(void)nmg_model_edge_fuse( m, &tol );
 
 		if( debug )
-			rt_log( "\tJoin touching loops\n" );
+			bu_log( "\tJoin touching loops\n" );
 		nmg_s_join_touchingloops( s, &tol );
 
 		/* kill cracks */
 		if( debug )
-			rt_log( "\tKill cracks\n" );
-		r = RT_LIST_FIRST( nmgregion, &m->r_hd );
+			bu_log( "\tKill cracks\n" );
+		r = BU_LIST_FIRST( nmgregion, &m->r_hd );
 		if( nmg_kill_cracks( s ) )
 		{
 			if( nmg_ks( s ) )
@@ -1186,12 +1186,12 @@ char line[MAX_LINE_LEN];
 		}
 
 		if( debug )
-			rt_log( "\tSplit touching loops\n" );
+			bu_log( "\tSplit touching loops\n" );
 		nmg_s_split_touchingloops( s, &tol);
 
 		/* kill cracks */
 		if( debug )
-			rt_log( "\tKill cracks\n" );
+			bu_log( "\tKill cracks\n" );
 			
 		if( nmg_kill_cracks( s ) )
 		{
@@ -1207,7 +1207,7 @@ char line[MAX_LINE_LEN];
 		nmg_simplify_shell( s );
 
 		if( debug )
-			rt_log( "\tMake faces within tolerance\n" );
+			bu_log( "\tMake faces within tolerance\n" );
 		nmg_make_faces_within_tol( s, &tol );
 #endif
 		nmg_rebound( m , &tol );
@@ -1226,33 +1226,33 @@ char line[MAX_LINE_LEN];
 		{
 			if( mk_arb8( fd_out, solid_name, (fastf_t *)arb_int.pt ) )
 			{
-				rt_log( "failed to write ARB8 to database for solid %s\n", solid_name );
+				bu_log( "failed to write ARB8 to database for solid %s\n", solid_name );
 				rt_bomb( "failed to write to database" );
 			}
-			rt_log( "\t%s written as an ARB\n", solid_name );
+			bu_log( "\t%s written as an ARB\n", solid_name );
 		}
 /*		else if( solid_is_written = nmg_to_tgc( m, &tgc_int, &tol ) )
 		{
 			if( mk_tgc( fd_out, solid_name, tgc_int.v, tgc_int.h, tgc_int.a,
 					tgc_int.b, tgc_int.c, tgc_int.d ) )
 			{
-				rt_log( "failed to write TGC to database for solid %s\n", solid_name );
+				bu_log( "failed to write TGC to database for solid %s\n", solid_name );
 				rt_bomb( "failed to write to database" );
 			}
-			rt_log( "\t%s written as a TGC\n", solid_name );
+			bu_log( "\t%s written as a TGC\n", solid_name );
 		} */
 	}
 
 	if( polysolid && !solid_is_written )
 	{
 		Unbreak_shell_edges( s );
-		rt_log( "\tWriting polysolid with %d faces\n", face_count );
+		bu_log( "\tWriting polysolid with %d faces\n", face_count );
 		write_shell_as_polysolid( fd_out , solid_name , s );
 	}
 	else if( !solid_is_written )
 	{
 		Check_edge_uses( m );
-		rt_log( "\tWriting NMG\n" );
+		bu_log( "\tWriting NMG\n" );
 		mk_nmg( fd_out , solid_name , m );
 	}
 
@@ -1266,17 +1266,17 @@ char line[MAX_LINE_LEN];
 			/* apply re_orient transformation here */
 			if( debug )
 			{
-				rt_log( "Applying re-orient matrix to solid %s\n", solid_name );
-				mat_print( "re-orient matrix", re_orient );
+				bu_log( "Applying re-orient matrix to solid %s\n", solid_name );
+				bn_mat_print( "re-orient matrix", re_orient );
 			}
-			mat_mul2( re_orient, wmem->wm_mat );
+			bn_mat_mul2( re_orient, wmem->wm_mat );
 		}
 	}
 	brlcad_name = Get_unique_name( name , obj , PART_TYPE );
 
 	if( do_air )
 	{
-		rt_log( "\tMaking air region (%s)\n" , brlcad_name );
+		bu_log( "\tMaking air region (%s)\n" , brlcad_name );
 
 		mk_lrcomb( fd_out, brlcad_name, &head, 1, (char *)NULL, (char *)NULL,
 		color, 0, air_no, 1, 100, 0 );
@@ -1284,7 +1284,7 @@ char line[MAX_LINE_LEN];
 	}
 	else
 	{
-		rt_log( "\tMaking region (%s)\n" , brlcad_name );
+		bu_log( "\tMaking region (%s)\n" , brlcad_name );
 
 		mk_lrcomb( fd_out, brlcad_name, &head, 1, (char *)NULL, (char *)NULL,
 		color, id_no, 0, 1, 100, 0 );
@@ -1293,8 +1293,8 @@ char line[MAX_LINE_LEN];
 
 	if( rt_g.debug & DEBUG_MEM_FULL )
 	{
-		rt_log( "Barrier check at end of Convert_part:\n" );
-		if( rt_mem_barriercheck() )
+		bu_log( "Barrier check at end of Convert_part:\n" );
+		if( bu_mem_barriercheck() )
 			rt_bomb( "Barrier check failed!!!\n" );
 	}
 
@@ -1306,11 +1306,11 @@ empty_model:
 	{
 		char *save_name;
 
-		rt_log( "\t%s is empty, ignoring\n" , name );
-		save_name = (char *)rt_malloc( NAMESIZE*sizeof( char ), "save_name" );
+		bu_log( "\t%s is empty, ignoring\n" , name );
+		save_name = (char *)bu_malloc( NAMESIZE*sizeof( char ), "save_name" );
 		brlcad_name = Get_unique_name( name , obj , PART_TYPE );
 		strncpy( save_name, brlcad_name, NAMESIZE );
-		nmg_tbl( &null_parts, TBL_INS, (long *)save_name );
+		bu_ptbl_ins( &null_parts, (long *)save_name );
 		nmg_km( m );
 		return;
 	}
@@ -1340,7 +1340,7 @@ Convert_input()
 		else if( !strncmp( line , "solid" , 5 ) || !strncmp( line , "SOLID" , 5 ) )
 			Convert_part( line );
 		else
-			rt_log( "Unrecognized line:\n%s\n" , line );
+			bu_log( "Unrecognized line:\n%s\n" , line );
 	}
 }
 
@@ -1353,20 +1353,20 @@ Rm_nulls()
 	dbip = db_open( brlcad_file, "rw" );
 	if( dbip == DBI_NULL )
 	{
-		rt_log( "Cannot db_open %s\n", brlcad_file );
-		rt_log( "References to NULL parts not removed\n" );
+		bu_log( "Cannot db_open %s\n", brlcad_file );
+		bu_log( "References to NULL parts not removed\n" );
 		return;
 	}
 
-	if( debug || NMG_TBL_END( &null_parts )  )
+	if( debug || BU_PTBL_END( &null_parts )  )
 	{
-		rt_log( "Deleting references to the following null parts:\n" );
-		for( i=0 ; i<NMG_TBL_END( &null_parts ) ; i++ )
+		bu_log( "Deleting references to the following null parts:\n" );
+		for( i=0 ; i<BU_PTBL_END( &null_parts ) ; i++ )
 		{
 			char *save_name;
 
-			save_name = (char *)NMG_TBL_GET( &null_parts, i );
-			rt_log( "\t%s\n" , save_name );
+			save_name = (char *)BU_PTBL_GET( &null_parts, i );
+			bu_log( "\t%s\n" , save_name );
 		}
 	}
 
@@ -1426,11 +1426,11 @@ top:
 				int k;
 				int found=0;
 
-				for( k=0 ; k<NMG_TBL_END( &null_parts ) ; k++ )
+				for( k=0 ; k<BU_PTBL_END( &null_parts ) ; k++ )
 				{
 					char *save_name;
 
-					save_name = (char *)NMG_TBL_GET( &null_parts, k );
+					save_name = (char *)BU_PTBL_GET( &null_parts, k );
 					if( !strncmp( save_name, tree_list[j].tl_tree->tr_l.tl_name, NAMESIZE ) )
 					{
 						found = 1;
@@ -1441,7 +1441,7 @@ top:
 				{
 					/* This is a NULL part, delete the reference */
 /*					if( debug ) */
-						rt_log( "Deleting reference to null part (%s) from combination %s\n",
+						bu_log( "Deleting reference to null part (%s) from combination %s\n",
 							tree_list[j].tl_tree->tr_l.tl_name, dp->d_namep );
 
 					db_free_tree( tree_list[j].tl_tree );
@@ -1506,13 +1506,13 @@ char	*argv[];
 	register int c;
 
         /* XXX These need to be improved */
-        tol.magic = RT_TOL_MAGIC;
+        tol.magic = BN_TOL_MAGIC;
         tol.dist = 0.00001;
         tol.dist_sq = tol.dist * tol.dist;
         tol.perp = 1e-6;
         tol.para = 1 - tol.perp;
 
-	nmg_tbl( &null_parts, TBL_INIT, (long *)NULL );
+	bu_ptbl_init( &null_parts, 64, " &null_parts");
 
 	forced_name[0] = '\0';
 
@@ -1529,7 +1529,7 @@ char	*argv[];
 
 	if( argc < 2 )
 	{
-		rt_log( usage, argv[0]);
+		bu_log( usage, argv[0]);
 		exit(1);
 	}
 
@@ -1564,13 +1564,13 @@ char	*argv[];
 			break;
 		case 'x':
 			sscanf( optarg, "%x", &rt_g.debug );
-			rt_printb( "librt rt_g.debug", rt_g.debug, DEBUG_FORMAT );
-			rt_log("\n");
+			bu_printb( "librt rt_g.debug", rt_g.debug, DEBUG_FORMAT );
+			bu_log("\n");
 			break;
 		case 'X':
 			sscanf( optarg, "%x", &rt_g.NMG_debug );
-			rt_printb( "librt rt_g.NMG_debug", rt_g.NMG_debug, NMG_DEBUG_FORMAT );
-			rt_log("\n");
+			bu_printb( "librt rt_g.NMG_debug", rt_g.NMG_debug, NMG_DEBUG_FORMAT );
+			bu_log("\n");
 			break;
 		case 'n':
 			polysolid = 0;
@@ -1579,8 +1579,8 @@ char	*argv[];
 			do_regex = 1;
 			if( regcomp( &reg_cmp, optarg, REG_BASIC ) )
 			{
-				rt_log( "Bad regular expression (%s)\n", optarg );
-				rt_log( usage, argv[0] );
+				bu_log( "Bad regular expression (%s)\n", optarg );
+				bu_log( usage, argv[0] );
 				exit( 1 );
 			}
 			break;
@@ -1594,7 +1594,7 @@ char	*argv[];
 			do_simplify = 1;
 			break;
 		default:
-			rt_log( usage, argv[0]);
+			bu_log( usage, argv[0]);
 			exit(1);
 			break;
 		}
@@ -1603,7 +1603,7 @@ char	*argv[];
 	input_file = argv[optind];
 	if( (fd_in=fopen( input_file, "r")) == NULL )
 	{
-		rt_log( "Cannot open input file (%s)\n" , input_file );
+		bu_log( "Cannot open input file (%s)\n" , input_file );
 		perror( argv[0] );
 		exit( 1 );
 	}
@@ -1611,7 +1611,7 @@ char	*argv[];
 	brlcad_file = argv[optind];
 	if( (fd_out=fopen( brlcad_file, "w")) == NULL )
 	{
-		rt_log( "Cannot open BRL-CAD file (%s)\n" , brlcad_file );
+		bu_log( "Cannot open BRL-CAD file (%s)\n" , brlcad_file );
 		perror( argv[0] );
 		exit( 1 );
 	}
@@ -1622,7 +1622,7 @@ char	*argv[];
 		mk_id_units( fd_out , "Conversion from Pro/Engineer" , "in" );
 
 	/* Create re-orient matrix */
-	mat_angles( re_orient, 0.0, 90.0, 90.0 );
+	bn_mat_angles( re_orient, 0.0, 90.0, 90.0 );
 
 	Convert_input();
 
