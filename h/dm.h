@@ -44,11 +44,36 @@
 }
 
 /*  Colors */
-#define DM_BLACK	0
-#define DM_RED		1
-#define DM_BLUE		2
-#define DM_YELLOW	3
-#define DM_WHITE	4
+#define DM_COLOR_HI	(short)230
+#define DM_COLOR_LOW	(short)0
+#define DM_BLACK_R	DM_COLOR_LOW
+#define DM_BLACK_G	DM_COLOR_LOW
+#define DM_BLACK_B	DM_COLOR_LOW
+#define DM_RED_R	DM_COLOR_HI
+#define DM_RED_G	DM_COLOR_LOW
+#define DM_RED_B	DM_COLOR_LOW
+#define DM_BLUE_R	DM_COLOR_LOW
+#define DM_BLUE_G	DM_COLOR_LOW
+#define DM_BLUE_B	DM_COLOR_HI
+#define DM_YELLOW_R	DM_COLOR_HI
+#define DM_YELLOW_G	DM_COLOR_HI
+#define DM_YELLOW_B	DM_COLOR_LOW
+#define DM_WHITE_R	DM_COLOR_HI
+#define DM_WHITE_G	DM_COLOR_HI
+#define DM_WHITE_B	DM_COLOR_HI
+#define DM_BLACK	DM_BLACK_R,DM_BLACK_G,DM_BLACK_B
+#define DM_RED		DM_RED_R,DM_RED_G,DM_RED_B
+#define DM_BLUE		DM_BLUE_R,DM_BLUE_G,DM_BLUE_B
+#define DM_YELLOW	DM_YELLOW_R,DM_YELLOW_G,DM_YELLOW_B
+#define DM_WHITE	DM_WHITE_R,DM_WHITE_G,DM_WHITE_B
+#define DM_SET_COLOR(dr,dg,db,sr,sg,sb){\
+	(dr) = (sr);\
+	(dg) = (sg);\
+	(db) = (sb); }
+#define DM_SAME_COLOR(dr,dg,db,sr,sg,sb)(\
+	(dr) == (sr) &&\
+	(dg) == (sg) &&\
+	(db) == (sb))
 
 /* Command parameter to dmr_viewchange() */
 #define DM_CHGV_REDO	0	/* Display has changed substantially */
@@ -67,37 +92,33 @@
 
 /* Interface to a specific Display Manager */
 struct dm {
-  int   (*dmr_init)();         /* Called first */
-  int	(*dmr_open)();
-  void	(*dmr_close)();
-  void	(*dmr_input)();
-  void	(*dmr_prolog)();
-  void	(*dmr_epilog)();
-  void	(*dmr_normal)();
-  void	(*dmr_newrot)();
-  void	(*dmr_update)();
-  void	(*dmr_puts)();
-  void	(*dmr_2d_line)();
-  void	(*dmr_light)();
-  int	(*dmr_object)();	/* Invoke an object subroutine */
-  unsigned (*dmr_cvtvecs)();	/* returns size requirement of subr */
-  unsigned (*dmr_load)();	/* DMA the subr to device */
-  void	(*dmr_statechange)();	/* application provided -- called on editor state change */
-  void	(*dmr_viewchange)();	/* add/drop solids from view */
-  void	(*dmr_colorchange)();	/* called when color table changes */
-  void	(*dmr_window)();	/* Change window boundry */
-  void	(*dmr_debug)();		/* Set DM debug level */
-  int	(*dmr_cmd)();		/* application provided dm-specific command handler */
-  int	(*dmr_eventhandler)();	/* application provided dm-specific event handler */
-  int	dmr_displaylist;	/* !0 means device has displaylist */
-  double	dmr_bound;		/* zoom-in limit */
-  char	*dmr_name;		/* short name of device */
-  char	*dmr_lname;		/* long name of device */
-  struct mem_map *dmr_map;	/* displaylist mem map */
-  genptr_t dmr_vars;		/* pointer to display manager dependant variables */
-  struct bu_vls dmr_pathName;	/* full Tcl/Tk name of drawing window */
-  char	dmr_dname[80];		/* Display name */
-  fastf_t *dmr_vp;              /* XXX--ogl still depends on this--XXX Viewscale pointer */
+  int (*dm_init)();
+  int (*dm_open)();
+  int (*dm_close)();
+  int (*dm_drawBegin)();	/* was dmr_prolog */
+  int (*dm_drawEnd)();		/* was dmr_epilog */
+  int (*dm_normal)();
+  int (*dm_newrot)();
+  int (*dm_drawString2D)();	/* was dmr_puts */
+  int (*dm_drawLine2D)();	/* was dmr_2d_line */
+  int (*dm_drawVertex2D)();
+  int (*dm_drawVList)();	/* was dmr_object */
+  int (*dm_setColor)();
+  int (*dm_setLineAttr)();	/* currently - linewidth, (not-)dashed */
+  unsigned (*dm_cvtvecs)();	/* returns size requirement of subr */
+  unsigned (*dm_load)();	/* DMA the subr to device */
+  int (*dm_setWinBounds)();
+  int (*dm_debug)();		/* Set DM debug level */
+  int (*dm_eventHandler)();	/* application provided dm-specific event handler */
+  int dm_displaylist;		/* !0 means device has displaylist */
+  double dm_bound;		/* zoom-in limit */
+  char *dm_name;		/* short name of device */
+  char *dm_lname;		/* long name of device */
+  struct mem_map *dm_map;	/* displaylist mem map */
+  genptr_t dm_vars;		/* pointer to display manager dependant variables */
+  struct bu_vls dm_pathName;	/* full Tcl/Tk name of drawing window */
+  char dm_dname[80];		/* Display name */
+  fastf_t *dm_vp;		/* XXX--ogl still depends on this--XXX Viewscale pointer */
 };
 
 extern int dm_limit();
@@ -106,5 +127,5 @@ extern fastf_t dm_wrap();
 extern void Nu_void();
 extern int Nu_int0();
 extern unsigned Nu_unsign();
-extern Tcl_Interp *interp;
+extern Tcl_Interp *interp;   /* This must be defined by the application */
 #endif /* SEEN_DM_H */
