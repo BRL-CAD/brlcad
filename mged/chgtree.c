@@ -450,10 +450,8 @@ char	**argv;
 		return TCL_ERROR;
 	}
 
-	if( rt_get_comb( &intern, dp, (mat_t *)NULL, dbip ) < 0 )  {
-		Tcl_AppendResult(interp, "rt_get_comb(", dp->d_namep,
-			") failure", (char *)NULL );
-		return TCL_ERROR;
+	if( rt_db_get_internal( &intern, dp, dbip, (mat_t *)NULL ) < 0 )  {
+		TCL_READ_ERR_return;
 	}
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
 	RT_CK_COMB(comb);
@@ -476,10 +474,8 @@ char	**argv;
 	}
 
 	if( rt_db_put_internal( dp, dbip, &intern ) < 0 )  {
-		Tcl_AppendResult(interp, "ERROR: Unable to write new combination into database.\n", (char *)NULL);
-		return TCL_ERROR;
+		TCL_WRITE_ERR_return;
 	}
-
 	return ret;
 }
 
