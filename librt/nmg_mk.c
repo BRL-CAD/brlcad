@@ -1853,9 +1853,8 @@ struct edgeuse *eu;
  *  create a spline curve in the parameter space of the snurb
  *  which describes the path from the start vertex to the end vertex.
  *
- *  The vertexuses at each end of the curve are given vertexuse attributes
- *  with parameter values of 0.0 and 1.0 automaticly.
- *  If this is not correct, it can be altered with nmg_xxxx()
+ *  The parameters of the end points are taken from the vertexuse attributes
+ *  at either end of the edgeuse.
  */
 void
 nmg_edge_g_cnurb(eu, order, n_knots, kv, n_pts, pt_type, points)
@@ -1899,12 +1898,13 @@ fastf_t		*points;
 	GET_EDGE_G_CNURB(eg, m);
 	RT_LIST_INIT( &eg->eu_hd2 );
 
+	eg->order = order;
 	if( n_knots > 0 && kv )  {
 		eg->k.k_size = n_knots;
 		eg->k.knots = kv;
 	} else {
-		/* Give a default curve of order 4, no interior knots */
-		rt_nurb_kvknot( &eg->k, 4, 0.0, 1.0, 0 );
+		/* Give a default curve, no interior knots */
+		rt_nurb_kvknot( &eg->k, order, 0.0, 1.0, 0 );
 	}
 
 	if( n_pts < 2 )  rt_bomb("nmg_edge_g_cnurb() n_pts < 2\n");
@@ -1962,6 +1962,84 @@ fastf_t		*points;
 		rt_log("nmg_edge_g_cnurb(eu=x%x, order=%d, n_knots=%d, kv=x%x, n_pts=%d, pt_type=x%x, points=x%x) eg=x%x\n",
 			eu, order, n_knots, eg->k.knots,
 			n_pts, pt_type, eg->ctl_points, eg );
+	}
+}
+
+/*
+ *			N M G _ E D G E _ G _ C N U R B _ P L I N E A R
+ *
+ *  For an edgeuse associated with a face_g_snurb surface,
+ *  create a spline "curve" in the parameter space of the snurb
+ *  which describes a STRAIGHT LINE in parameter space
+ *  from the u,v parameters of the start vertex to the end vertex.
+ *
+ *  The parameters of the end points are found in the vertexuse attributes
+ *  at either end of the edgeuse, which should have already been established.
+ *
+ *  This is a special case of nmg_edge_g_cnurb(), and should be used when
+ *  the path through parameter space is known to be a line segment.
+ *  This permits the savings of a lot of memory, both in core and on disk,
+ *  by eliminating a knot vector (typ. 64 bytes or more) and a
+ *  ctl_point[] array (typ. 16 bytes or more).
+ *
+ *  This special condition is indicated by order == 0.  See nmg.h for details.
+ */
+void
+nmg_edge_g_cnurb_plinear(eu)
+struct edgeuse	*eu;
+{
+	struct model	*m;
+	struct edge_g_cnurb *eg;
+	struct edge	*e;
+	struct faceuse	*fu;
+
+	NMG_CK_EDGEUSE(eu);
+	e = eu->e_p;
+	NMG_CK_EDGE(e);
+	NMG_CK_VERTEXUSE(eu->vu_p);
+	NMG_CK_VERTEX(eu->vu_p->v_p);
+	NMG_CK_VERTEX_G(eu->vu_p->v_p->vg_p);
+
+	NMG_CK_EDGEUSE(eu->eumate_p);
+	NMG_CK_VERTEXUSE(eu->eumate_p->vu_p);
+	NMG_CK_VERTEX(eu->eumate_p->vu_p->v_p);
+	NMG_CK_VERTEX_G(eu->eumate_p->vu_p->v_p->vg_p);
+
+	NMG_CK_VERTEXUSE_A_CNURB( eu->vu_p->a.cnurb_p );
+	NMG_CK_VERTEXUSE_A_CNURB( eu->eumate_p->vu_p->a.cnurb_p );
+
+	if(eu->vu_p->v_p == eu->eumate_p->vu_p->v_p )
+		rt_bomb("nmg_edge_g_cnurb_plinear(): edge runs from+to same vertex, 0 len!\n");
+
+	if (eu->g.cnurb_p) {
+		rt_bomb("nmg_edge_g_cnurb_plinear() geometry already assigned\n");
+	}
+	fu = nmg_find_fu_of_eu(eu);
+	NMG_CK_FACEUSE(fu);
+	NMG_CK_FACE_G_SNURB( fu->f_p->g.snurb_p );
+
+	/* Make new edge_g structure */
+	m = nmg_find_model(&eu->l.magic);
+	GET_EDGE_G_CNURB(eg, m);
+	RT_LIST_INIT( &eg->eu_hd2 );
+
+	eg->order = 0;		/* SPECIAL FLAG */
+
+	/* Dequeue edgeuses from their current list (should point to themselves), add to new list */
+	RT_LIST_DEQUEUE( &eu->l2 );
+	RT_LIST_DEQUEUE( &eu->eumate_p->l2 );
+
+	/* Associate edgeuse with this geometry */
+	RT_LIST_INSERT( &eg->eu_hd2, &eu->l2 );
+	RT_LIST_INSERT( &eg->eu_hd2, &eu->eumate_p->l2 );
+	eu->g.cnurb_p = eg;
+	eu->eumate_p->g.cnurb_p = eg;
+
+	eg->magic = NMG_EDGE_G_CNURB_MAGIC;
+
+	if (rt_g.NMG_debug & DEBUG_BASIC)  {
+		rt_log("nmg_edge_g_cnurb_plinear(eu=x%x) order=0, eg=x%x\n",
+			eu, eg );
 	}
 }
 
