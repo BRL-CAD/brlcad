@@ -312,6 +312,7 @@ char	**argv;
 
 	if( argc > 1 )  lvl = atoi(argv[1]);
 
+	printf("ndrawn=%d\n", ndrawn);
 	(void)signal( SIGINT, sig2 );	/* allow interupts */
 	pr_schain( &HeadSolid, lvl );
 }
