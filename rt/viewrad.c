@@ -4,7 +4,7 @@
  *  Ray Tracing program RTRAD bottom half.
  *
  *  This module takes the first hit from rt_shootray(), and produces
- *  a GIFT/SRIM format Radar file.  It tracks principle direction
+ *  a GIFT/SRIM format Radar file.  It tracks specular direction
  *  reflections.
  *
  *  Author -
@@ -60,7 +60,7 @@ static struct rayinfo {
 	int	sight;
 	vect_t	ip;		/* intersection point */
 	vect_t	norm;		/* normal vector */
-	vect_t	prin;		/* principle direction */
+	vect_t	spec;		/* specular direction */
 	struct	curvature curvature;
 	fastf_t	dist;
 	int	reg, sol, surf;
@@ -133,16 +133,20 @@ struct partition *PartHeadp;
 	rayp->reg = pp->pt_regionp->reg_regionid;
 	rayp->sol = pp->pt_inseg->seg_stp->st_id;
 	rayp->surf = 1;	/* XXX no surface numbers in RT */
-	RT_CURVE( &(rayp->curvature), hitp, pp->pt_inseg->seg_stp, &(ap->a_ray) );
+	RT_CURVE( &(rayp->curvature), hitp, pp->pt_inseg->seg_stp );
+	if( VDOT( hitp->hit_normal, ap->a_ray.r_dir ) < 0 ) {
+		rayp->curvature.crv_c1 = - rayp->curvature.crv_c1;
+		rayp->curvature.crv_c2 = - rayp->curvature.crv_c2;
+	}
 	VMOVE( rayp->ip, hitp->hit_point );
 	VMOVE( rayp->norm, hitp->hit_normal );
 
-	/* Compute the principal (specular) direction */
+	/* Compute the specular direction */
 	VREVERSE( to_eye, ap->a_ray.r_dir );
 	f = 2 * VDOT( to_eye, hitp->hit_normal );
 	VSCALE( work, hitp->hit_normal, f );
 	/* I have been told this has unit length */
-	VSUB2( rayp->prin, work, to_eye );
+	VSUB2( rayp->spec, work, to_eye );
 
 	/* Save info for 1st ray */
 	if( ap->a_level == 0 ) {
@@ -154,13 +158,13 @@ struct partition *PartHeadp;
 	}
 
 	/*
-	 * Shoot another ray in the principle direction.
+	 * Shoot another ray in the specular direction.
 	 */
 	if( ap->a_level < MAXREFLECT-1 ) {
 		sub_ap = *ap;	/* struct copy */
 		sub_ap.a_level = ap->a_level+1;
 		VMOVE( sub_ap.a_ray.r_pt, hitp->hit_point );
-		VMOVE( sub_ap.a_ray.r_dir, rayp->prin );
+		VMOVE( sub_ap.a_ray.r_dir, rayp->spec );
 		depth = rt_shootray( &sub_ap );
 	} else {
 		rt_log( "radhit:  max reflections exceeded [%d %d]\n",
@@ -401,9 +405,9 @@ int depth;
 	r.e.head[2] = 'c'; r.e.head[3] = 'p';
 
 	r.e.sight = -3;			/* XXX line of sight for escape? */
-	r.e.dx = rayinfo[depth-1].prin[0];	/* escape direction */
-	r.e.dy = rayinfo[depth-1].prin[1];
-	r.e.dz = rayinfo[depth-1].prin[2];
+	r.e.dx = rayinfo[depth-1].spec[0];	/* escape direction */
+	r.e.dy = rayinfo[depth-1].spec[1];
+	r.e.dz = rayinfo[depth-1].spec[2];
 	writerec( &r, outfp );
 }
 
@@ -416,7 +420,7 @@ struct rayinfo *rp;
 	printf( " visible = %d\n", rp->sight );
 	printf( " i = (%f %f %f)\n", rp->ip[0], rp->ip[1], rp->ip[2] );
 	printf( " n = (%f %f %f)\n", rp->norm[0], rp->norm[1], rp->norm[2] );
-	printf( " p = (%f %f %f)\n", rp->prin[0], rp->prin[1], rp->prin[2] );
+	printf( " p = (%f %f %f)\n", rp->spec[0], rp->spec[1], rp->spec[2] );
 #endif
 
 	/* Reflection record */
