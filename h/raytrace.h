@@ -582,6 +582,7 @@ struct rt_i {
 	vect_t		rti_pmin;	/* for plotting, min RPP */
 	vect_t		rti_pmax;	/* for plotting, max RPP */
 	fastf_t		rti_pconv;	/* scale from rti_pmin */
+	int		rti_nlights;	/* number of light sources */
 };
 #define RTI_NULL	((struct rt_i *)0)
 #define RTI_MAGIC	0x01016580	/* magic # for integrity check */
