@@ -117,9 +117,9 @@ if ![info exists tk_version] {
     loadtk
 }
 
-#if ![info exists mged_default(text_font)] {
-#    mged_font_init
-#}
+if ![info exists mged_default(text_font)] {
+    font_init
+}
 
 ##
 # Set the class bindings for use with help. This requires the
@@ -438,6 +438,11 @@ menu .$id.menubar.file.pref -title "Preferences" -tearoff $mged_default(tearoff_
 hoc_register_menu_data "Preferences" "Color Schemes..." "Color Schemes"\
 	{ { summary "Tool for setting colors." }
           { see_also "rset" } }
+.$id.menubar.file.pref add command -label "Fonts..." -underline 0 \
+	-command "font_gui_init $id"
+hoc_register_menu_data "Preferences" "Fonts..." "Fonts" \
+	{ { summary "Tool for creating/configuring named fonts." }
+          { see_also "font" } }
 
 menu .$id.menubar.file.pref.units -title "Units" -tearoff $mged_default(tearoff_menus)
 .$id.menubar.file.pref.units add radiobutton -value um -variable mged_display(units)\
