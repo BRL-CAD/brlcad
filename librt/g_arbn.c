@@ -78,7 +78,7 @@ CONST struct rt_tol	*tol;
 
 			/* If normals are parallel, no intersection */
 			dot = VDOT( aip->eqn[i], aip->eqn[j] );
-			if( RT_VEC_ARE_PARALLEL(dot, tol) )  continue;
+			if( RT_VECT_ARE_PARALLEL(dot, tol) )  continue;
 
 			/* Have an edge line, isect with higher numbered planes */
 			for( k=j+1; k<aip->neqn; k++ )  {
@@ -348,7 +348,7 @@ struct rt_tol		*tol;
 
 			/* If normals are parallel, no intersection */
 			dot = VDOT( aip->eqn[i], aip->eqn[j] );
-			if( RT_VEC_ARE_PARALLEL(dot, tol) )  continue;
+			if( RT_VECT_ARE_PARALLEL(dot, tol) )  continue;
 
 			/* Have an edge line, isect with all other planes */
 			point_count = 0;
