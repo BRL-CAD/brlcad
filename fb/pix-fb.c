@@ -99,7 +99,7 @@ char **argv;
 			register int i;
 
 			if( fread( (char *)scanline, scanbytes, 1, stdin ) != 1 )
-				exit(0);
+				break;
 
 			in = scanline;
 			out = outline;
@@ -119,7 +119,7 @@ char **argv;
 			register int i;
 
 			if( fread( (char *)scanline, scanbytes, 1, stdin ) != 1 )
-				exit(0);
+				break;
 
 			in = scanline;
 			out = outline;
