@@ -356,6 +356,12 @@ int lvl;			/* recursion level */
 
 		rt_log("REGION ctsp=x%x\n", tp->tr_c.tc_ctsp );
 		bu_log("REGION ctsp=x%x\n", tp->tr_c.tc_ctsp );
+		db_pr_combined_tree_state( tp->tr_c.tc_ctsp );
+		return;
+
+		rt_log("DB_LEAF %s%s\n",
+		bu_log("DB_LEAF %s%s\n",
+			tp->tr_l.tl_name,
 			tp->tr_l.tl_mat ? " (matrix)" : "" );
 		return;
 

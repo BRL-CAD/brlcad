@@ -1065,6 +1065,15 @@ union tree	*tp;
 		}
 		break;
 
+	case OP_DB_LEAF:
+		if( tp->tr_l.tl_mat )  {
+			rt_free( (char *)tp->tr_l.tl_mat, "tl_mat" );
+			tp->tr_l.tl_mat = NULL;
+		}
+		rt_free( tp->tr_l.tl_name, "tl_name" );
+		tp->tr_l.tl_name = NULL;
+		break;
+
 	case OP_NOT:
 	case OP_GUARD:
 	case OP_XNOP:
