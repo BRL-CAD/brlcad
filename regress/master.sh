@@ -277,14 +277,12 @@ LOG=${REGRESS_DIR}/$LOGFILE ; export LOG
 if [ x$CLOBBER_FIRST = x1 ] ; then
     log "Cleaning out $REGRESS_DIR"
     for ENTRY in `ls -A $REGRESS_DIR` ; do
-	if [ ! "x$ENTRY" = "x$LOGFILE" ] ; then
+	if [ ! "x$ENTRY" = "x$LOGFILE" ] && [ ! "x$ENTRY" = "xmaster.lock" ] ; then
 	    if [ ! "x$DEBUG" = "x" ] ; then log "Deleting [${REGRESS_DIR}/${ENTRY}]" ; fi
 	    rm -rf "${REGRESS_DIR}/${ENTRY}"
 	    if [ $? != 0 ] ; then
 		bomb "Failure cleaning out regression directroy $REGRESS_DIR"
 	    fi
-	else
-	    log "Skipping deletion of $LOGFILE in $REGRESS_DIR"
 	fi
     done
 fi
