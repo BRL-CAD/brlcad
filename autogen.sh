@@ -246,6 +246,11 @@ if [ "x$HAVE_AUTORECONF" = "xyes" ] && [ "x$HAVE_LIBTOOLIZE" = "xyes" ] ; then
   $AUTORECONF -i -f > /dev/null 2>&1
   if [ ! $? = 0 ] ; then
     echo "Warning: $AUTORECONF failed"
+
+    if test -f ltmain.sh ; then
+      echo "libtoolize being run by autoreconf is not creating ltmain.sh in the auxillary directory like it should"
+    fi
+
     echo "Attempting to run the configuration steps individually"
     reconfigure_manually=yes
   fi
@@ -253,10 +258,20 @@ else
   reconfigure_manually=yes
 fi
 
+###
+# Steps taken are as follows:
+#  aclocal
+#  libtoolize --automake -c -f
+#  aclocal          
+#  autoconf -f
+#  autoheader
+#  automake -a -c -f
+####
 if [ "x$reconfigure_manually" = "xyes" ] ; then
   echo $ECHO_N "Preparing build ... $ECHO_C"
 
   $ACLOCAL
+
   [ ! $? = 0 ] && echo "ERROR: $ACLOCAL failed" && exit 2
   if [ "x$HAVE_LIBTOOLIZE" = "xyes" ] ; then 
     $LIBTOOLIZE --automake -c -f
@@ -267,6 +282,9 @@ if [ "x$reconfigure_manually" = "xyes" ] ; then
       [ ! $? = 0 ] && echo "ERROR: $LIBTOOLIZE failed" && exit 2
     fi
   fi
+
+  # re-run again as instructed by libtoolize
+  $ACLOCAL
 
   # libtoolize might put ltmain.sh in the wrong place
   if test -f ltmain.sh ; then
