@@ -30,11 +30,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "ged.h"
 #include "dm.h"
 
-static void	center(), cpoint(), dwreg(), ellin(), move(), points(),
-		solin(), solpl(), tgcin(), tplane(),
-		vectors();
-static int	arbn_shot(), cgarbs(), comparvec(), gap(), planeeq(), redoarb(), 
-		region();
+static void	center(), cpoint(), dwreg(), ellin(),
+		solin(), solpl(), tgcin(), tplane();
+static int	arbn_shot(), cgarbs(), gap(), region();
 
 static union record input;		/* Holds an object file record */
 
@@ -76,23 +74,6 @@ int flag, more;
 	type = recordp->s.s_type;
 	cgtype = type;
 
-	if(type == GENARB8) {
-		/* check for arb8, arb7, arb6, arb5, arb4 */
-		points();
-		if( (i = cgarbs(uvec, svec)) == 0 ) {
-			nmemb = param_count = memb_count = 0;
-			return(-1);	/* ERROR */
-		}
-		if(redoarb(uvec, svec, i) == 0) {
-			nmemb = param_count = memb_count = 0;
-			return(-1);	/* ERROR */
-		}
-		vectors();
-		cgtype = input.s.s_cgtype;
-	}
-	if(cgtype == RPP || cgtype == BOX || cgtype == GENARB8)
-		cgtype = ARB8;
-
 	if(flag == ROOT)
 		m_op[memb_count] = '+';
 	else
@@ -110,9 +91,9 @@ int flag, more;
 
 	switch( cgtype )  {
 
-	case ARB8:
+	case GENARB8:
 		length = 8;
-arbcom:		/* common area for arbs */
+		/* common area for arbs */
 		MAT4X3PNT( work, xform, &input.s.s_values[0] );
 		VMOVE( &input.s.s_values[0], work );
 		VMOVE(&m_param[param_count], &input.s.s_values[0]);
@@ -126,24 +107,6 @@ arbcom:		/* common area for arbs */
 			op += 3;
 		}
 		break;
-
-	case ARB7:
-		length = 7;
-		goto arbcom;
-
-	case ARB6:
-		VMOVE(&input.s.s_values[15], &input.s.s_values[18]);
-		length = 6;
-		goto arbcom;
-
-	case ARB5:
-		length = 5;
-		goto arbcom;
-
-	case ARB4:
-		length = 4;
-		VMOVE(&input.s.s_values[9], &input.s.s_values[12]);
-		goto arbcom;
 
 	case GENTGC:
 		op = &recordp->s.s_values[0*3];
@@ -201,353 +164,6 @@ arbcom:		/* common area for arbs */
 	return(1);		/* MORE solids follow */
 }
 
-#define NO	0
-#define YES	1
-
-/* C G A R B S :   determines COMGEOM arb types from GED general arbs
- */
-static int
-cgarbs( uvec, svec )
-register int *uvec;	/* array of unique points */
-register int *svec;	/* array of like points */
-{
-	register int i,j;
-	static int numuvec, unique, done;
-	static int si;
-
-	done = NO;		/* done checking for like vectors */
-
-	svec[0] = svec[1] = 0;
-	si = 2;
-
-	for(i=0; i<7; i++) {
-		unique = YES;
-		if(done == NO)
-			svec[si] = i;
-		for(j=i+1; j<8; j++) {
-			if(comparvec(&input.s.s_values[i*3], &input.s.s_values[j*3]) == YES) {
-				if( done == NO )
-					svec[++si] = j;
-				unique = NO;
-			}
-		}
-		if( unique == NO ) {  	/* point i not unique */
-			if( si > 2 && si < 6 ) {
-				svec[0] = si - 1;
-				if(si == 5 && svec[5] >= 6)
-					done = YES;
-				si = 6;
-			}
-			if( si > 6 ) {
-				svec[1] = si - 5;
-				done = YES;
-			}
-		}
-	}
-	if( si > 2 && si < 6 ) 
-		svec[0] = si - 1;
-	if( si > 6 )
-		svec[1] = si - 5;
-	for(i=1; i<=svec[1]; i++)
-		svec[svec[0]+1+i] = svec[5+i];
-	for(i=svec[0]+svec[1]+2; i<11; i++)
-		svec[i] = -1;
-	/* find the unique points */
-	numuvec = 0;
-	for(j=0; j<8; j++) {
-		unique = YES;
-		for(i=2; i<svec[0]+svec[1]+2; i++) {
-			if( j == svec[i] ) {
-				unique = NO;
-				break;
-			}
-		}
-		if( unique == YES )
-			uvec[numuvec++] = j;
-	}
-
-	/* put comgeom solid typpe into s_cgtype */
-	switch( numuvec ) {
-
-	case 8:
-		input.s.s_cgtype = ARB8;  /* ARB8 */
-		break;
-
-	case 6:
-		input.s.s_cgtype = ARB7;	/* ARB7 */
-		break;
-
-	case 4:
-		if(svec[0] == 2)
-			input.s.s_cgtype = ARB6;	/* ARB6 */
-		else
-			input.s.s_cgtype = ARB5;	/* ARB5 */
-		break;
-
-	case 2:
-		input.s.s_cgtype = ARB4;	/* ARB4 */
-		break;
-
-	default:
-		(void)printf("solid: %s  bad number of unique vectors (%d)\n",
-			input.s.s_name, numuvec);
-		return(0);
-	}
-	return( numuvec );
-}
-
-/*  R E D O A R B :   rearranges arbs to be GIFT compatible
- */
-static int
-redoarb( uvec, svec, numvec )
-register int *uvec, *svec;
-int numvec;
-{
-	register int i, j;
-	static int prod;
-
-	switch( input.s.s_cgtype ) {
-
-	case ARB8:
-		/* do nothing */
-		break;
-
-	case ARB7:
-		/* arb7 vectors: 0 1 2 3 4 5 6 4 */
-		switch( svec[2] ) {
-			case 0:
-				/* 0 = 1, 3, or 4 */
-				if(svec[3] == 1)
-					move(4,7,6,5,1,4,3,1);
-				if(svec[3] == 3)
-					move(4,5,6,7,0,1,2,0);
-				if(svec[3] == 4)
-					move(1,2,6,5,0,3,7,0);
-				break;
-			case 1:
-				/* 1 = 2 or 5 */
-				if(svec[3] == 2)
-					move(0,4,7,3,1,5,6,1);
-				if(svec[3] == 5)
-					move(0,3,7,4,1,2,6,1);
-				break;
-			case 2:
-				/* 2 = 3 or 6 */
-				if(svec[3] == 3)
-					move(6,5,4,7,2,1,0,2);
-				if(svec[3] == 6)
-					move(3,0,4,7,2,1,5,2);
-				break;
-			case 3:
-				/* 3 = 7 */
-				move(2,1,5,6,3,0,4,3);
-				break;
-			case 4:
-				/* 4 = 5 */
-				/* if 4 = 7  do nothing */
-				if(svec[3] == 5)
-					move(1,2,3,0,5,6,7,5);
-				break;
-			case 5:
-				/* 5 = 6 */
-				move(2,3,0,1,6,7,4,6);
-				break;
-			case 6:
-				/* 6 = 7 */
-				move(3,0,1,2,7,4,5,7);
-				break;
-			default:
-				(void)printf("redoarb: %s - bad arb7\n",
-					input.s.s_name);
-				return( 0 );
-			}
-			break;    	/* end of ARB7 case */
-
-		case ARB6:
-			/* arb6 vectors:  0 1 2 3 4 4 6 6 */
-
-			prod = 1;
-			for(i=0; i<numvec; i++)
-				prod = prod * (uvec[i] + 1);
-			switch( prod ) {
-			case 24:
-				/* 0123 unique */
-				/* 4=7 and 5=6  OR  4=5 and 6=7 */
-				if(svec[3] == 7)
-					move(3,0,1,2,4,4,5,5);
-				else
-					move(0,1,2,3,4,4,6,6);
-				break;
-			case 1680:
-				/* 4567 unique */
-				/* 0=3 and 1=2  OR  0=1 and 2=3 */
-				if(svec[3] == 3)
-					move(7,4,5,6,0,0,1,1);
-				else
-					move(4,5,6,7,0,0,2,2);
-				break;
-			case 160:
-				/* 0473 unique */
-				/* 1=2 and 5=6  OR  1=5 and 2=6 */
-				if(svec[3] == 2)
-					move(0,3,7,4,1,1,5,5);
-				else
-					move(4,0,3,7,1,1,2,2);
-				break;
-			case 672:
-				/* 3267 unique */
-				/* 0=1 and 4=5  OR  0=4 and 1=5 */
-				if(svec[3] == 1)
-					move(3,2,6,7,0,0,4,4);
-				else
-					move(7,3,2,6,0,0,1,1);
-				break;
-			case 252:
-				/* 1256 unique */
-				/* 0=3 and 4=7  OR 0=4 and 3=7 */
-				if(svec[3] == 3)
-					move(1,2,6,5,0,0,4,4);
-				else
-					move(5,1,2,6,0,0,3,3);
-				break;
-			case 60:
-				/* 0154 unique */
-				/* 2=3 and 6=7  OR  2=6 and 3=7 */
-				if(svec[3] == 3)
-					move(0,1,5,4,2,2,6,6);
-				else
-					move(5,1,0,4,2,2,3,3);
-				break;
-			default:
-				(void)printf("redoarb: %s: bad arb6\n",
-					input.s.s_name);
-				return( 0 );
-			}
-			break; 		/* end of ARB6 case */
-
-		case ARB5:
-			/* arb5 vectors:  0 1 2 3 4 4 4 4 */
-			prod = 1;
-			for(i=2; i<6; i++)
-				prod = prod * (svec[i] + 1);
-			switch( prod ) {
-			case 24:
-				/* 0=1=2=3 */
-				move(4,5,6,7,0,0,0,0);
-				break;
-			case 1680:
-				/* 4=5=6=7 */
-				/* do nothing */
-				break;
-			case 160:
-				/* 0=3=4=7 */
-				move(1,2,6,5,0,0,0,0);
-				break;
-			case 672:
-				/* 2=3=7=6 */
-				move(0,1,5,4,2,2,2,2);
-				break;
-			case 252:
-				/* 1=2=5=6 */
-				move(0,3,7,4,1,1,1,1);
-				break;
-			case 60:
-				/* 0=1=5=4 */
-				move(3,2,6,7,0,0,0,0);
-				break;
-			default:
-				(void)printf("redoarb: %s: bad arb5\n",
-					input.s.s_name);
-				return( 0 );
-			}
-			break;		/* end of ARB5 case */
-
-		case ARB4:
-			/* arb4 vectors:  0 1 2 0 4 4 4 4 */
-			j = svec[6];
-			if( svec[0] == 2 )
-				j = svec[4];
-			move(uvec[0],uvec[1],svec[2],uvec[0],j,j,j,j);
-			break;
-
-		default:
-			(void)printf("redoarb %s: unknown arb type (%d)\n",
-				input.s.s_name,input.s.s_cgtype);
-			return( 0 );
-	}
-
-	return( 1 );
-}
-
-
-static void
-move( p0, p1, p2, p3, p4, p5, p6, p7 )
-int p0, p1, p2, p3, p4, p5, p6, p7;
-{
-	register int i, j;
-	static int pts[8];
-	static float copy[24];
-
-	pts[0] = p0 * 3;
-	pts[1] = p1 * 3;
-	pts[2] = p2 * 3;
-	pts[3] = p3 * 3;
-	pts[4] = p4 * 3;
-	pts[5] = p5 * 3;
-	pts[6] = p6 * 3;
-	pts[7] = p7 * 3;
-
-	/* copy of the record */
-	for(i=0; i<=21; i+=3) {
-		VMOVE(&copy[i], &input.s.s_values[i]);
-	}
-
-	for(i=0; i<8; i++) {
-		j = pts[i];
-		VMOVE(&input.s.s_values[i*3], &copy[j]);
-	}
-}
-
-
-
-static int
-comparvec( x, y )
-register float *x,*y;
-{
-	register int i;
-
-	for(i=0; i<3; i++) {
-		if( fabs( *x++ - *y++ ) > 0.0001 )
-			return(0);   /* different */
-	}
-	return(1);  /* same */
-}
-
-
-static void
-vectors()
-{
-	register int i;
-
-	for(i=3; i<=21; i+=3) {
-		VSUB2(&input.s.s_values[i],&input.s.s_values[i],&input.s.s_values[0]);
-	}
-}
-
-
-
-static void
-points()
-{
-	register int i;
-
-	for(i=3; i<=21; i+=3) {
-		VADD2(&input.s.s_values[i],&input.s.s_values[i],&input.s.s_values[0]);
-	}
-}
-
-
-
 
 /*
  *      		D W R E G
@@ -571,13 +187,11 @@ points()
  *	  9. ellin()	converts ellg to arbn
  *	 11. solin()	finds enclosing rpp for solids
  *	 12. solpl()	process solids to arbn's
- *	 13. planeeq()	finds normalized plane from 3 points
  *
  *		R E V I S I O N   H I S T O R Y
  *
  *	11/02/83  CMK	Modified to use g3.c module (device independence).
  */
-
 
 #define NPLANES	500
 static float	peq[NPLANES*4];		/* plane equations for EACH region */
@@ -1009,6 +623,7 @@ center()
 }
 
 
+static int arb_npts;
 /*
  *			T P L A N E
  *
@@ -1037,14 +652,14 @@ float *p, *q, *r, *s;
 	/* Do these three points form a valid plane? */
 	/* WARNING!!  Fourth point is never even looked at!! */
 	pp = &peq[lc*4];
-	if(planeeq( pp, p,q,r)==0) return;
+	arb_npts = 0;
+	planept( pp, p );
+	planept( pp, q );
+	planept( pp, r );
+	planept( pp, s );
+	if( arb_npts < 3 )  return;	/* invalid as plane */
 
-	if((pp[3]-VDOT(pp,pcenter)) > 0.)  {
-		VREVERSE( pp, pp );
-		pp[3] = -pp[3];
-	}
-
-	/* See if this plane already exists */
+	/* See if this plane already exists in list */
 	for(pf = &peq[0];pf<pp;pf+=4) {
 		 if(VDOT(pp,pf)>0.9999 && fabs(*(pp+3)-*(pf+3))<tol) 
 			return;
@@ -1058,28 +673,71 @@ float *p, *q, *r, *s;
 	lc++;		/* Save plane eqn */
 }
 
-/*
- *			P L A N E E Q
- *
- * computes normalized plane eq from three points.
- *  Returns 0 if plane is degenerate, 1 if plane is good.
- */
-static int
-planeeq(eqn,p1,p2,p3)
-float *eqn;
-float *p1, *p2, *p3;
+#define NEAR_ZERO(val,epsilon)	( ((val) > -epsilon) && ((val) < epsilon) )
+planept( eqn, point )
+float *eqn, *point;
 {
-	static float vecl;
-	static float va[3],vb[3],vc[3];
+	register int i;
+	static float arb_points[4*3];
+	static float arb_Xbasis[3];
+	static float P_A[3];
+	static double f;
+	static float work[3];
+#define arb_A	arb_points		/* first saved point is A */
+#define arb_N	eqn			/* first 3 # of plane eqn */
 
-	VSUB2( va, p2, p1 );
-	VSUB2( vb, p3, p1 );
-	VCROSS(vc,va,vb);
-	vecl = MAGNITUDE( vc );
-	if(vecl<.0001) return(0);
-	VSCALE(eqn, vc, 1.0/vecl);
-	eqn[3] = VDOT(eqn, p1);
-	return(1);
+	/* Verify that this point is not the same as an earlier point */
+	for( i=0; i < arb_npts; i++ )  {
+		VSUB2( work, point, &arb_points[i*3] );
+		if( MAGSQ( work ) < 0.005 )
+			return(0);			/* BAD */
+	}
+	i = arb_npts++;		/* Current point number */
+	VMOVE( &arb_points[i*3], point );
+
+	/* The first 3 points are treated differently */
+	switch( i )  {
+	case 0:
+		return(1);				/* OK */
+	case 1:
+		VSUB2( arb_Xbasis, point, arb_A );	/* B-A */
+		return(1);				/* OK */
+	case 2:
+		VSUB2( P_A, point, arb_A );	/* C-A */
+		/* Check for co-linear, ie, (B-A)x(C-A) == 0 */
+		VCROSS( arb_N, arb_Xbasis, P_A );
+		f = MAGNITUDE( arb_N );
+		if( NEAR_ZERO(f,0.005) )  {
+			arb_npts--;
+			return(0);			/* BAD */
+		}
+		VUNITIZE( arb_N );
+
+		/*
+		 *  If C-A is clockwise from B-A, then the normal
+		 *  points inwards, so we need to fix it here.
+		 *  WARNING:  Here, INWARD normals is correct, for now.
+		 */
+		VSUB2( work, arb_A, pcenter );
+		f = VDOT( work, arb_N );
+		if( f > 0.0 )  {
+			VREVERSE(arb_N, arb_N);	/* "fix" normal */
+		}
+		eqn[3] = VDOT( arb_N, arb_A );
+		return(1);				/* OK */
+	default:
+		/* Merely validate 4th and subsequent points */
+		VSUB2( P_A, point, arb_A );
+		VUNITIZE( P_A );		/* Checking direction only */
+		f = VDOT( arb_N, P_A );
+		if( ! NEAR_ZERO(f,0.005) )  {
+			/* Non-planar face */
+			printf("arb: face non-planar, dot=%f\n", f );
+			arb_npts--;
+			return(0);				/* BAD */
+		}
+		return(1);			/* OK */
+	}
 }
 
 /* convert tgc to an arbn */
@@ -1316,39 +974,4 @@ solpl(lmemb,umemb)
 
 		mlc[id]=lc-1;
 	}
-}
-
-
-
-/* TYPE_ARB()	returns specific ARB type of record rec.  The record rec
- *		is also rearranged to "standard" form.
- */
-type_arb( rec )
-union record *rec;
-{
-	int i;
-	static int uvec[8], svec[11];
-
-	if( rec->s.s_type != GENARB8 )
-		return( 0 );
-
-	input = *rec;		/* copy */
-
-	/* convert input record to points */
-	points();
-
-	if( (i = cgarbs(uvec, svec)) == 0 )
-		return(0);
-
-	if( redoarb(uvec, svec, i) == 0 )
-		return( 0 );
-
-	/* convert to vectors in the rec record */
-	VMOVE(&rec->s.s_values[0], &input.s.s_values[0]);
-	for(i=3; i<=21; i+=3) {
-		VSUB2(&rec->s.s_values[i], &input.s.s_values[i], &input.s.s_values[0]);
-	}
-
-	return( input.s.s_cgtype );
-
 }
