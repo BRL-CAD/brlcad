@@ -1,59 +1,63 @@
 /*
-	SCCS id:	@(#) fbclear.c	1.6
-	Last edit: 	6/16/86 at 16:53:04	G S M
-	Retrieved: 	8/13/86 at 03:12:23
-	SCCS archive:	/m/cad/fb_utils/RCS/s.fbclear.c
-
-*/
-#if ! defined( lint )
-static
-char	sccsTag[] = "@(#) fbclear.c	1.6	last edit 6/16/86 at 16:53:04";
+ *			F B C L E A R . C
+ *
+ *  This program is intended to be used to clear a frame buffer
+ *  to black, or to the specified color
+ *
+ *  Authors -
+ *	Michael John Muuss
+ *	Gary S. Moss
+ *  
+ *  Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5066
+ *  
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1986 by the United States Army.
+ *	All rights reserved.
+ */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
 #include "fb.h"
 
+FBIO	*fbp;
+int	fbsize = 512;
+
 #define u_char	unsigned char
-/*
-			F B C L E A R . C
 
-	This program is intended to be used to clear a frame buffer, quickly.
-	The special FBC clear-screen command is used, for speed (unless a
-	non-black color is specified).
-
-	Mike Muuss, BRL, 10/27/83.
-
-	Conversion to generic frame buffer utility using libfb(3).
-	In the process, the name has been changed to fbclear from ikclear.
-	Gary S. Moss, BRL. 03/12/85
- */
 main(argc, argv)
 char	**argv;
 int	argc;
 {
 	if( argc > 1 && strcmp (argv[1], "-h") == 0 )
-		{
-		fbsetsize( 1024 );
+	{
+		fbsize = 1024;
 		argv++;
 		argc--;
-		}
+	}
 	if( argc != 4 && argc > 1 )
-		{
+	{
 		(void) fprintf( stderr, "Usage:  fbclear [r g b]\n" );
 		return	1;
-		}
-	if(	fbopen( NULL, APPEND ) == -1
-	    ||	fb_wmap( (ColorMap *) NULL ) == -1
-		)
-		{
+	}
+	if(	(fbp = fb_open( NULL, fbsize, fbsize )) == NULL
+	    ||	fb_wmap( fbp, COLORMAP_NULL ) == -1
+	    )
+	{
 		return	1;
-		}
-	if( argc == 4 )
-		{ static Pixel	pixel;
+	}
+	if( argc == 4 )  { 
+		static Pixel	pixel;
 		pixel.red = (u_char) atoi( argv[1] );
 		pixel.green = (u_char) atoi( argv[2] );
 		pixel.blue = (u_char) atoi( argv[3] );
-		fbsetbackground( &pixel );
-		}
-	return	fbclear() == -1;
+		fb_clear( fbp, &pixel );
+	} else {
+		fb_clear( fbp, PIXEL_NULL );
 	}
+	return	fb_close( fbp ) == -1;
+}
