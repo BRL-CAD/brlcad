@@ -243,14 +243,16 @@ case "${MACHINE}" in
 esac
 
 # If this system has good vendor-provided libtcl and libtk, use them.
-# Needs to be coordinated with setting of LIBTCL in Cakefile.defs
+# Needs to be coordinated with setting of LIBTCL_DIR LIBTK_DIR LIBZ_DIR
+# in architecture-specific entry in Cakefile.defs
 case "${MACHINE}" in
 	li|fbsd)
 		tclsh8.0 << EOF
 exit
 EOF
 		if test $? -eq 0
-		then BDIRS=`echo ${BDIRS} | sed -e  's/libtcl//' -e 's/libtk//' `
+		then BDIRS=`echo ${BDIRS} | \
+			sed -e  's/libtcl//' -e 's/libtk//' -e 's/libz//' `
 		fi
 		;;
 esac

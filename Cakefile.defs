@@ -878,6 +878,9 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	LIBTK_DIR	_use_system_tk_
 #	define	LIBTK		-ltk8.0
 #	define	LIBTK_DEP	/**/
+#	define	LIBZ_DIR	_use_system_z_
+#	define	LIBZ		-lz
+#	define	LIBZ_DEP	/**/
 #endif
 
 #if defined(__CAKE__fbsd)
@@ -926,6 +929,9 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	LIBTK_DIR	_use_system_tk_
 #	define	LIBTK		-L/usr/local/lib -ltk80
 #	define	LIBTK_DEP	/**/
+#	define	LIBZ_DIR	_use_system_z_
+#	define	LIBZ		-lz
+#	define	LIBZ_DEP	/**/
 #endif
 
 #if defined(__CAKE__bsdi)
@@ -1905,9 +1911,11 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 
 #if !NFS
 /*	Local style, binaries in source directories */
+#    if !defined(LIBZ)
 #	define	LIBZ_DIR	../libz
 #	define	LIBZ		-L''LIBZ_DIR -lz
 #	define	LIBZ_DEP	[[LIBVERS ../libz/libz.ARCH_SUF]]
+#    endif
 #	define	LIBPNG_DIR	../libpng
 #	define	LIBPNG		-L''LIBPNG_DIR -lpng
 #	define	LIBPNG_DEP	[[LIBVERS ../libpng/libpng.ARCH_SUF]]
@@ -1990,9 +1998,11 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 
 #else
 /*	NFS style, append machine name */
+#    if !defined(LIBZ)
 #	define	LIBZ_DIR	../.libz.MTYPE
 #	define	LIBZ		-L''LIBZ_DIR -lz
 #	define	LIBZ_DEP	[[LIBVERS ../.libz.MTYPE/libz.ARCH_SUF]]
+#    endif
 #	define	LIBPNG_DIR	../.libpng.MTYPE
 #	define	LIBPNG		-L''LIBPNG_DIR -lpng
 #	define	LIBPNG_DEP	[[LIBVERS ../.libpng.MTYPE/libpng.ARCH_SUF]]
