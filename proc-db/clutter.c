@@ -64,7 +64,6 @@ char	**argv;
 		for( iy=quant-1; iy>=0; iy-- )  {
 			y = base + iy*size;
 			sprintf( name, "x%dy%d", ix, iy );
-fprintf(stderr,"%d %d at %g %g\n", ix, iy, x, y );
 			do_cell( name, x, y, size );
 		}
 	}
@@ -149,83 +148,89 @@ char	*rgb;
 {
 	char	nbuf[64];
 	mat_t	rot;
-	vect_t	work;
+	mat_t	xlate;
+	mat_t	both;
 	vect_t	begin;
 	vect_t	trial;
+	vect_t	from;
+	vect_t	dir;
 
-	if( dir_at )  {
-		VSUB2( work, dir_at, pos );
-		VUNITIZE( work );
-		VMOVE( dir_at, work );
+	if( da_flag )  {
+		VSUB2( dir, dir_at, pos );
+		VUNITIZE( dir );
+	} else {
+		VMOVE( dir, dir_at );
 	}
 
 	sprintf( nbuf, "%s.s", name );
-	mk_sph( stdout, nbuf, pos[X], pos[Y], pos[Z], r );
-
-	mat_idn( rot );
-	/* Here, need to rotate from 0,0,-1 to vect "dir_at" */
-	mat_angles( rot, acos(dir_at[X]), acos(dir_at[Y]), acos(dir_at[Z]) );
-	VSET( begin, 0, 0, -1 );
-	MAT4X3VEC( trial, rot, begin );
-	VPRINT( "wanted", dir_at );
-	VPRINT( "got   ", trial );
-	mat_idn( rot );
-
-	mk_mcomb( stdout, name, 1, 1, "light", "shadow=1", 1, rgb );
-	mk_memb( stdout, UNION, nbuf, rot );
-}
-
-/*
- *			M A T _ A N G L E S
- *
- * This routine builds a Homogeneous rotation matrix, given
- * alpha, beta, and gamma as angles of rotation, in degrees.
- */
-mat_angles( mat, alpha, beta, ggamma )
-register matp_t mat;
-double alpha, beta, ggamma;
-{
-	LOCAL double calpha, cbeta, cgamma;
-	LOCAL double salpha, sbeta, sgamma;
-
-	if( alpha == 0.0 && beta == 0.0 && ggamma == 0.0 )  {
-		mat_idn( mat );
-		return;
-	}
-
-	alpha *= degtorad;
-	beta *= degtorad;
-	ggamma *= degtorad;
-
-	calpha = cos( alpha );
-	cbeta = cos( beta );
-	cgamma = cos( ggamma );
-
-	salpha = sin( alpha );
-	sbeta = sin( beta );
-	sgamma = sin( ggamma );
+	mk_sph( stdout, nbuf, 0.0, 0.0, 0.0, r );
 
 	/*
-	 * compute the new rotation to apply to the previous
-	 * viewing rotation.
-	 * Alpha is angle of rotation about the X axis, and is done third.
-	 * Beta is angle of rotation about the Y axis, and is done second.
-	 * Gamma is angle of rotation about Z axis, and is done first.
+	 * Need to rotate from 0,0,-1 to vect "dir",
+	 * then xlate to final position.
 	 */
-	mat[0] = cbeta * cgamma;
-	mat[1] = -cbeta * sgamma;
-	mat[2] = -sbeta;
-	mat[3] = 0.0;
+	VSET( from, 0, 0, -1 );
+	mat_fromto( rot, from, dir );
+	mat_idn( xlate );
+	MAT_DELTAS( xlate, pos[X], pos[Y], pos[Z] );
+	mat_mul( both, xlate, rot );
 
-	mat[4] = -salpha * sbeta * cgamma + calpha * sgamma;
-	mat[5] = salpha * sbeta * sgamma + calpha * cgamma;
-	mat[6] = -salpha * cbeta;
-	mat[7] = 0.0;
+	mk_mcomb( stdout, name, 1, 1, "light", "shadows=1", 1, rgb );
+	mk_memb( stdout, UNION, nbuf, both );
+}
 
-	mat[8] = calpha * sbeta * cgamma + salpha * sgamma;
-	mat[9] = -calpha * sbeta * sgamma + salpha * cgamma;
-	mat[10] = calpha * cbeta;
-	mat[11] = 0.0;
-	mat[12] = mat[13] = mat[14] = 0.0;
-	mat[15] = 1.0;
+/* wrapper for atan2.  On SGI (and perhaps others), x==0 returns infinity */
+double
+xatan2(y,x)
+double	y,x;
+{
+	if( x > -1.0e-20 && x < 1.0e-20 )  return(0.0);
+	return( atan2( y, x ) );
+}
+/*
+ *			M A T _ F R O M T O
+ *
+ *  Given two vectors, compute a rotation matrix that will transform
+ *  space by the angle between the two.  Since there are many
+ *  candidate matricies, the method used here is to convert the vectors
+ *  to azimuth/elevation form (azimuth is +X, elevation is +Z),
+ *  take the difference, and form the rotation matrix.
+ *  See mat_ae for that algorithm.
+ *
+ *  The input 'from' and 'to' vectors must be unit length.
+ */
+mat_fromto( m, from, to )
+mat_t	m;
+vect_t	from;
+vect_t	to;
+{
+	double	az, el;
+	LOCAL double sin_az, sin_el;
+	LOCAL double cos_az, cos_el;
+
+	az = xatan2( to[Y], to[X] ) - xatan2( from[Y], from[X] );
+	el = asin( to[Z] ) - asin( from[Z] );
+
+	sin_az = sin(az);
+	cos_az = cos(az);
+	sin_el = sin(el);
+	cos_el = cos(el);
+
+	m[0] = cos_el * cos_az;
+	m[1] = -sin_az;
+	m[2] = -sin_el * cos_az;
+	m[3] = 0;
+
+	m[4] = cos_el * sin_az;
+	m[5] = cos_az;
+	m[6] = -sin_el * sin_az;
+	m[7] = 0;
+
+	m[8] = sin_el;
+	m[9] = 0;
+	m[10] = cos_el;
+	m[11] = 0;
+
+	m[12] = m[13] = m[14] = 0;
+	m[15] = 1.0;
 }
