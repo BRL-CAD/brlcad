@@ -635,16 +635,23 @@ char			*buf;
 
 	width = fb_getwidth(fbp);
 	height = fb_getheight(fbp);
+	if( width > height )  width = height; /* prevent stretching due to 1280x1024 */
 
-	argc -= 2;
-	argv += 2;
-
-	VSET( viewcenter_model, atof(argv[1]), atof(argv[2]), atof(argv[3]) );
-	VSET( orient, atof(argv[4]), atof(argv[5]), atof(argv[6]) );
-	orient[3] = atof(argv[7]);
-	viewscale = atof(argv[8]);
-	/* 9...11 for eye_pos_screen[] */
-	rt_perspective = atof(argv[12]);
+	VSET( viewcenter_model, atof(argv[3]), atof(argv[4]), atof(argv[5]) );
+	VSET( orient, atof(argv[6]), atof(argv[7]), atof(argv[8]) );
+	orient[3] = atof(argv[9]);
+	viewscale = atof(argv[10]);
+	/* 11...13 for eye_pos_screen[] */
+	if( argc <= 14 )  {
+		static int first = 1;
+		if(first)  {
+			bu_log("rtnode: old format POV message received, no perspective\n");
+			first = 0;
+		}
+		rt_perspective = 0;
+	} else {
+		rt_perspective = atof(argv[14]);
+	}
 	if( rt_perspective < 0 || rt_perspective > 179 )  rt_perspective = 0;
 
 	viewsize = 2 * viewscale;
