@@ -21,8 +21,11 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
-#include <math.h>
+#include "conf.h"
+
 #include <stdio.h>
+#include <math.h>
+
 #include "machine.h"
 #include "vmath.h"
 #include "./sedit.h"
@@ -823,7 +826,7 @@ struct rt_db_internal	*ip;
  *  Sys-V math-library error catcher.
  *  Some callers of acos trip over DOMAIN errors all the time, so...
  */
-#if !__STDC__ && ( defined(SYSV) || BSD >= 43 )
+#ifdef HAVE_MATHERR
 int
 matherr(x)
 struct exception *x;
