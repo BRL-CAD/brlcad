@@ -368,7 +368,8 @@ char **argv;
 		/* ALERT:  The library wants zoom before window! */
 		fb_zoom( fbp, fb_getwidth(fbp)/width, fb_getheight(fbp)/height );
 		fb_window( fbp, width/2, height/2 );
-	} else if( outputfile == (char *)0 )  {
+	} else if( outputfile == (char *)0 || strcmp( outputfile, "-") == 0 )  {
+		outputfile = (char *)0;
 		if( isatty(fileno(stdout)) )  {
 			fprintf(stderr,"rt:  attempting to send binary output to terminal, aborting\n");
 			exit(14);
