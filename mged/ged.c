@@ -425,8 +425,11 @@ if( cmdline_hook )  {if( (*cmdline_hook)(&str)) pr_prompt();} else
 			need_penup = 0;
 			rt_vls_printf( &dm_values.dv_string, "M 0 %d %d\n",
 				dm_values.dv_xpen, dm_values.dv_ypen);
-		} else if( state == ST_S_PICK || state == ST_O_PICK ||
-		    state == ST_O_PATH )  {
+		} else if( (state == ST_S_PICK || state == ST_O_PICK ||
+		    state == ST_O_PATH) && (
+		    (dm_values.dv_xpen != old_values.dv_xpen) ||
+		    (dm_values.dv_ypen != old_values.dv_ypen) )
+		    )  {
 			rt_vls_printf( &dm_values.dv_string, "M 0 %d %d\n",
 				dm_values.dv_xpen, dm_values.dv_ypen);
 		}
@@ -621,12 +624,13 @@ refresh()
  *  in view (+/-1) coordinates.
  *  The default is to rotate around the view center: v=(0,0,0).
  */
-void
+int
 f_vrot_center( argc, argv )
 int	argc;
 char	**argv;
 {
 	printf("Not ready until tomorrow.\n");
+	return CMD_OK;
 }
 
 /*
@@ -905,7 +909,7 @@ void memcpy(to,from,cnt)
  *	main()
  *	cmdline()		Only one arg is permitted.
  */
-void
+int
 f_opendb( argc, argv )
 int	argc;
 char	**argv;
@@ -971,4 +975,6 @@ char	**argv;
 	if( interactive )
 		(void)printf("%s (units=%s)\n", dbip->dbi_title,
 			units_str[dbip->dbi_localunit] );
+	
+	return CMD_OK;
 }
