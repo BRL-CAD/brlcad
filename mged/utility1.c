@@ -12,13 +12,14 @@
  *
  */
 
-#include <time.h>
 #include <pwd.h>
 #include <signal.h>
 #include <stdio.h>
 #ifdef BSD
+#include <sys/time.h>	/* for struct timeval.  Includes <time.h> */
 #include <strings.h>
 #else
+#include <time.h>
 #include <string.h>
 #endif
 
