@@ -497,7 +497,7 @@ char	**argv;
 	int				region_flag = -1;
 	register struct directory	*dp;
     	struct rt_db_internal		intern;
-	struct rt_comb_internal		*comb;
+	struct rt_comb_internal		*comb = NULL;
 	struct tokens			tok_hd;
 	struct tokens			*tok;
 	short				last_tok;

@@ -692,7 +692,7 @@ arbin(
 	{
 		struct model *m;
 		struct nmgregion *r;
-		struct shell *s;
+		struct shell *s = NULL;
 		struct faceuse *fu;
 		struct rt_tess_tol ttol;
 		struct bu_ptbl vert_tab;
