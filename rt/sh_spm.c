@@ -32,7 +32,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 struct spm_specific {
 	char	sp_file[128];	/* Filename */
-	int	sp_n;		/* number of pixels around equator */
+	int	sp_w;		/* Width: number of pixels around equator */
 	spm_map_t *sp_map;	/* stuff */
 };
 #define SP_NULL	((struct spm_specific *)0)
@@ -43,7 +43,8 @@ struct matparse spm_parse[] = {
 #else
 	"file",		(mp_off_ty)0,			"%s",
 #endif
-	"n",		(mp_off_ty)&(SP_NULL->sp_n),	"%d",
+	"w",		(mp_off_ty)&(SP_NULL->sp_w),	"%d",
+	"n",		(mp_off_ty)&(SP_NULL->sp_w),	"%d",	/*compat*/
 	(char *)0,	(mp_off_ty)0,			(char *)0
 };
 
@@ -104,12 +105,12 @@ char	**dpp;
 	*dpp = (char *)spp;
 
 	spp->sp_file[0] = '\0';
-	spp->sp_n = -1;
+	spp->sp_w = -1;
 	mlib_parse( matparm, spm_parse, (mp_off_ty)spp );
-	if( spp->sp_n < 0 )  spp->sp_n = 512;
+	if( spp->sp_w < 0 )  spp->sp_w = 512;
 	if( spp->sp_file[0] == '\0' )
 		goto fail;
-	if( (spp->sp_map = spm_init( spp->sp_n, sizeof(RGBpixel) )) == SPM_NULL )
+	if( (spp->sp_map = spm_init( spp->sp_w, sizeof(RGBpixel) )) == SPM_NULL )
 		goto fail;
 	if( spm_load( spp->sp_map, spp->sp_file ) < 0 )
 		goto fail;
