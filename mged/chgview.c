@@ -245,8 +245,6 @@ Tcl_Interp *interp;
 int     argc;
 char    **argv;
 {
-	register int i;
-
 	CHECK_DBI_NULL;
 
 	if (argc < 2) {
@@ -265,15 +263,13 @@ char    **argv;
 	return TCL_OK;
 }
 
+int
 f_erase_all(clientData, interp, argc, argv)
 ClientData clientData;
 Tcl_Interp *interp;
 int     argc;
 char    **argv;
 {
-  register struct directory *dp;
-  register int i;
-
   CHECK_DBI_NULL;
 
   if(argc < 2){
@@ -556,8 +552,6 @@ edit_com(argc, argv, kind, catch_sigint)
      int	kind;
      int	catch_sigint;
 {
-	register struct directory *dp;
-	register int	i;
 	register struct dm_list *dmlp;
 	register struct dm_list *save_dmlp;
 	register struct cmd_list *save_cmd_list;
@@ -915,6 +909,9 @@ int	verbose;
 	rt_db_free_internal( &intern );
 }
 
+/*
+ *			C M D _ L I S T _ G U T S
+ */
 static void
 cmd_list_guts(clientData, interp, argc, argv, recurse)
 ClientData clientData;
@@ -965,7 +962,7 @@ int recurse;
       bu_vls_printf( &str, "%s:  ", argv[arg] );
 
       if (intern.idb_meth->ft_describe(&str, &intern, 99, base2local) < 0)
-	Tcl_AppendResult(interp, dp->d_namep, ": describe error\n", (char *)NULL);
+	Tcl_AppendResult(interp, dp->d_namep, ": ft_describe error\n", (char *)NULL);
     	rt_db_free_internal( &intern );
     } else {
       if ((dp = db_lookup(dbip, argv[arg], LOOKUP_NOISY)) == DIR_NULL)
@@ -982,7 +979,7 @@ int recurse;
 /*
  *			C M D _ L I S T
  *
- *  List object information, verbose
+ *  List object information, verbose, in GIFT-compatible format.
  *  Format: l object
  */
 int
@@ -1023,10 +1020,10 @@ char	**argv;
 
   /* 
    * Here we have no usable arguments,
-   * so we better be in and edit state.
+   * so we better be in an edit state.
    */
   if (argc == 1 ||
-      argc == 2 && recurse) {
+      (argc == 2 && recurse)) {
     int ac = 1;
     char *av[2];
 
@@ -1353,6 +1350,7 @@ char	**argv;
   return TCL_ERROR;
 }
 
+int
 f_view(clientData, interp, argc, argv)
 ClientData clientData;
 Tcl_Interp *interp;
@@ -1690,6 +1688,7 @@ char	**argv;
   return TCL_ERROR;
 }
 
+int
 f_refresh(clientData, interp, argc, argv)
 ClientData clientData;
 Tcl_Interp *interp;
@@ -1945,7 +1944,7 @@ int		lvl;			/* debug level */
   FOR_ALL_SOLIDS(sp, &startp->l){
     if (lvl <= -2) {
       /* print only leaves */
-      bu_vls_printf(&vls, "%s ", sp->s_path[sp->s_last]->d_namep);
+      bu_vls_printf(&vls, "%s ", sp->s_path[(int)(sp->s_last)]->d_namep);
       continue;
     }
 
