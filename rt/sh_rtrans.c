@@ -1,6 +1,9 @@
 /*
  *	S H _ R T R A N S . C
  *
+ *	Random transparency shader. A random number from 0 to 1 is drawn
+ * for each pixel rendered. If the random number is less than the threshold
+ * value, the pixel is rendered as 100% transparent
  */
 #include "conf.h"
 
