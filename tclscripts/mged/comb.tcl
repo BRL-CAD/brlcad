@@ -119,8 +119,10 @@ proc init_comb { id } {
 	    -command "comb_shader_gui $id mirror $top.shaderF"
     $top.shaderMB.m add command -label glass\
 	    -command "comb_shader_gui $id glass $top.shaderF"
-    $top.shaderMB.m add command -label texture\
+    $top.shaderMB.m add command -label "texture (color)"\
 	    -command "comb_shader_gui $id texture $top.shaderF"
+    $top.shaderMB.m add command -label "texture (b/w)"\
+	    -command "comb_shader_gui $id bwtexture $top.shaderF"
 
     label $top.combL -text "Boolean Expression:" -anchor w
     text $top.combT -relief sunken -bd 2 -width 40 -height 10\
@@ -330,7 +332,7 @@ proc comb_reset { id } {
     }
 
     if { [llength $comb_control($id,shader)] > 0 } {
-	do_shader comb_control($id,shader) $id $comb_control($id,shader_frame)
+	set comb_control($id,shader_gui) [do_shader comb_control($id,shader) $id $comb_control($id,shader_frame)]
     } else {
 	catch { destroy $comb_control($id,shader_gui) }
     }
@@ -464,7 +466,7 @@ proc comb_shader_gui { id shader_type shader_frame } {
 
     set current_shader_type [lindex $comb_control($id,shader) 0]
 
-    if {$current_shader_type != $shader_type} {
+    if { $current_shader_type != $shader_type } {
 	set comb_control($id,shader) $shader_type
     }
 
