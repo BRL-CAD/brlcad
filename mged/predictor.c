@@ -188,7 +188,10 @@ predictor_kill()
 
 	rt_vls_trunc( &str, 0 );
 
-	rt_vls_strcat( &str, "d _PREDIC_TRAIL_*\n" );
+	rt_vls_strcat( &str, "d _PREDIC_TRAIL_LL_\n" );
+	rt_vls_strcat( &str, "d _PREDIC_TRAIL_LR_\n" );
+	rt_vls_strcat( &str, "d _PREDIC_TRAIL_UR_\n" );
+	rt_vls_strcat( &str, "d _PREDIC_TRAIL_UL_\n" );
 
 #ifdef XMGED
         (void)cmdline( &str, False );
