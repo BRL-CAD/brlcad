@@ -1348,7 +1348,6 @@ rt_db_external5_to_internal5(
 
 	if(( raw.major_type == DB5_MAJORTYPE_BRLCAD )
 	 ||( raw.major_type == DB5_MAJORTYPE_BINARY_UNIF)) {
-		id = raw.minor_type;
 		/* As a convenience to older ft_import routines */
 		if( mat == NULL )  mat = bn_mat_identity;
 	} else {
@@ -1374,8 +1373,22 @@ rt_db_external5_to_internal5(
 		return -4;
 	}
 
+	/*
+	 *	XXX	This is a kludge, but it works for starters
+	 */
+	switch ( raw.major_type ) {
+	    case DB5_MAJORTYPE_BRLCAD:
+		id = raw.minor_type; break;
+	    case DB5_MAJORTYPE_BINARY_UNIF:
+		id = ID_BINUNIF; break;
+	    default:
+		bu_log("rt_db_external5_to_internal5(%s): don't yet handle major_type %d\n", name, raw.major_type);
+		return -1;
+	}
+	bu_log("raw.major=%d, raw.minor=%d, id=%d\n",
+	    raw.major_type, raw.minor_type, id);
 	/* ip has already been initialized, and should not be re-initted */
-	if( rt_functab[id].ft_import5( ip, &raw.body, mat, dbip, resp, id ) < 0 )  {
+	if( rt_functab[id].ft_import5( ip, &raw.body, mat, dbip, resp, raw.minor_type ) < 0 )  {
 		bu_log("rt_db_external5_to_internal5(%s):  import failure\n",
 			name );
 		rt_db_free_internal( ip, resp );
@@ -1384,8 +1397,10 @@ rt_db_external5_to_internal5(
 	/* Don't free &raw.body */
 
 	RT_CK_DB_INTERNAL( ip );
-	ip->idb_type = id;
+	ip->idb_major_type = raw.major_type;
+	ip->idb_minor_type = raw.minor_type;
 	ip->idb_meth = &rt_functab[id];
+
 	return id;			/* OK */
 }
 
