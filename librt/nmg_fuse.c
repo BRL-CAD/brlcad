@@ -1490,7 +1490,7 @@ CONST struct rt_tol	*tol;
 #if 0
 			if( other->fu->f_p == rad->fu->f_p )  {
 #else /* just get edgeuses from the same loopuse */
-			if( other->eu->up.lu_p == rad->eu->up.lu_p )
+			if( other->eu->up.lu_p == rad->eu->up.lu_p || other->eu->up.lu_p->lumate_p == rad->eu->up.lu_p )
 			{
 #endif
 				rad->is_crack = 1;
@@ -1624,6 +1624,7 @@ CONST struct rt_tol	*tol;
 	for( RT_LIST_FOR_CIRC( rad, nmg_radial, orig ) )  {
 		if( rad->s != s )  continue;
 		if( !rad->fu )  continue;	/* skip wires */
+		if( rad->is_crack ) continue;	/* skip cracks */
 		count++;
 		if( expected_ot == (rad->fu->orientation == OT_SAME) )  {
 			expected_ot = !expected_ot;
@@ -1695,6 +1696,7 @@ CONST struct rt_tol	*tol;
 		for( RT_LIST_FOR_CIRC( rad, nmg_radial, orig ) )  {
 			if( rad->s != *sp )  continue;
 			if( !rad->fu )  continue;	/* skip wires */
+			if( rad->is_crack ) continue;	/* skip cracks */
 			if( expected_ot == (rad->fu->orientation == OT_SAME) )  {
 				expected_ot = !expected_ot;
 				continue;
@@ -1961,9 +1963,8 @@ CONST struct rt_tol	*tol;
 	/* Merge the two lists, sorting by angles */
 	nmg_radial_merge_lists( &list1, &list2, tol );
 	nmg_radial_verify_monotone( &list1, tol );
-#if 1
+
 	nmg_radial_mark_cracks( &list1, tol );
-#endif
 
 	for( sp = (struct shell **)NMG_TBL_LASTADDR(&shell_tbl);
  	     sp >= (struct shell **)NMG_TBL_BASEADDR(&shell_tbl); sp-- 
@@ -2148,6 +2149,8 @@ CONST struct rt_tol	*tol;
 
 	/* In bad cases, this routine may rt_bomb() */
 	nmg_radial_build_list( &list, NULL, 1, eu, xvec, yvec, zvec, tol );
+
+	nmg_radial_mark_cracks( &list, tol );
 
 	nflip = nmg_radial_mark_flips( &list, s, tol );
 	if( nflip )  {
