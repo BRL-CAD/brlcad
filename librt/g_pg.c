@@ -140,7 +140,7 @@ float *np;
 	    NEAR_ZERO(m3, 0.0001) || NEAR_ZERO(m4, 0.0001) )  {
 		free( (char *)trip);
 		if( rt_g.debug & DEBUG_ARB8 )
-			(void)rt_log("pg(%s): degenerate facet\n", stp->st_name);
+			rt_log("pg(%s): degenerate facet\n", stp->st_name);
 		return(0);			/* BAD */
 	}		
 
@@ -157,6 +157,9 @@ float *np;
 	} else {
 		VREVERSE( trip->tri_N, trip->tri_wn );
 		VUNITIZE( trip->tri_N );
+	}
+	if( VDOT( trip->tri_wn, trip->tri_N ) > 0 )  {
+		VREVERSE( trip->tri_wn, trip->tri_wn );	/* point in */
 	}
 
 	/* Add this face onto the linked list for this solid */
@@ -221,16 +224,15 @@ struct application	*ap;
 		LOCAL fastf_t	abs_dn;
 		FAST fastf_t	k;
 		LOCAL fastf_t	alpha, beta;
-		LOCAL fastf_t	ds;
 		LOCAL vect_t	wxb;		/* vertex - ray_start */
 		LOCAL vect_t	xp;		/* wxb cross ray_dir */
 
 		/*
 		 *  Ray Direction dot N.  (N is outward-pointing normal)
+		 *  wn points inwards, and is not unit length.
 		 */
 		dn = VDOT( trip->tri_wn, rp->r_dir );
-		if( rt_g.debug & DEBUG_ARB8 )
-			rt_log("Face N.Dir=%f\n", dn );
+
 		/*
 		 *  If ray lies directly along the face, (ie, dot product
 		 *  is zero), drop this face.
@@ -254,8 +256,7 @@ struct application	*ap;
 			continue;
 		if( alpha+beta > abs_dn )
 			continue;
-		ds = VDOT( wxb, trip->tri_wn );
-		k = ds / dn;		/* shot distance */
+		k = VDOT( wxb, trip->tri_wn ) / dn;
 
 		/* For hits other than the first one, might check
 		 *  to see it this is approx. equal to previous one */
@@ -269,7 +270,6 @@ struct application	*ap;
 		/* HIT is within planar face */
 		hp->hit_dist = k;
 		VMOVE( hp->hit_normal, trip->tri_N );
-		if(rt_g.debug&DEBUG_ARB8) rt_log("pg: hit dist=%f, dn=%f, k=%f\n", hp->hit_dist, dn, k );
 		if( nhits++ >= MAXHITS )  {
 			rt_log("pg(%s): too many hits\n", stp->st_name);
 			break;
@@ -284,23 +284,24 @@ struct application	*ap;
 
 	if( nhits&1 )  {
 		register int i;
+		static int nerrors = 0;
 		/*
 		 * If this condition exists, it is almost certainly due to
 		 * the dn==0 check above.  Thus, we will make the last
-		 * surface infinitely thin and just replicate the entry
-		 * point as the exit point.  This at least makes the
+		 * surface rather thin.
+		 * This at least makes the
 		 * presence of this solid known.  There may be something
 		 * better we can do.
 		 */
 		hits[nhits] = hits[nhits-1];	/* struct copy */
 		VREVERSE( hits[nhits].hit_normal, hits[nhits-1].hit_normal );
-		hits[nhits].hit_dist += 0.1;	/* mm thick */
-		rt_log("ERROR: pg(%s): %d hits, false exit\n",
-			stp->st_name, nhits);
-		nhits++;
-		for(i=0; i < nhits; i++ )
-			rt_log("%f, ", hits[i].hit_dist );
-		rt_log("\n");
+		hits[nhits++].hit_dist += 0.1;	/* mm thick */
+		if( nerrors++ < 6 )  {
+			rt_log("pg(%s): %d hits: ", stp->st_name, nhits-1);
+			for(i=0; i < nhits; i++ )
+				rt_log("%f, ", hits[i].hit_dist );
+			rt_log("\n");
+		}
 	}
 
 	/* nhits is even, build segments */
@@ -385,4 +386,3 @@ struct soltab *stp;
 	rt_orthovec( cvp->crv_pdir, hitp->hit_normal );
 	cvp->crv_c1 = cvp->crv_c2 = 0;
 }
-
