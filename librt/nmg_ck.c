@@ -34,6 +34,17 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 /* THis duplicates the extern from nmg_mesh.c */
 RT_EXTERN(double nmg_measure_fu_angle, (CONST struct edgeuse *eu, CONST vect_t xvec, CONST vect_t yvec, CONST vect_t zvec));
 
+/* XXX move into librt/pr.c */
+void
+rt_pr_tol(tol)
+CONST struct rt_tol	*tol;
+{
+	RT_CK_TOL(tol);
+
+	rt_log("%8.8x TOL %e (sq=%e) perp=%e, para=%e\n",
+		tol, tol->dist, tol->dist_sq,
+		tol->perp, tol->para );
+}
 
 /************************************************************************
  *									*
@@ -1067,17 +1078,19 @@ char *s;
  *			N M G _ P R _ F U _ A R O U N D _ E U _ V E C S
  */
 void
-nmg_pr_fu_around_eu_vecs( eu, xvec, yvec, zvec )
+nmg_pr_fu_around_eu_vecs( eu, xvec, yvec, zvec, tol )
 CONST struct edgeuse	*eu;
 CONST vect_t		xvec;
 CONST vect_t		yvec;
 CONST vect_t		zvec;
+CONST struct rt_tol	*tol;
 {
 	CONST struct edgeuse	*eu1;
 	CONST struct loopuse	*lu;
 	CONST struct faceuse	*fu;
 
 	NMG_CK_EDGEUSE(eu);
+	RT_CK_TOL(tol);
 	rt_log("nmg_pr_fu_around_eu_vecs(x%x)\n", eu);
 
 	/* To go correct way around, start with arg's mate,
@@ -1130,8 +1143,9 @@ CONST vect_t		zvec;
  *  and the rest are measured from there.
  */
 void
-nmg_pr_fu_around_eu( eu )
+nmg_pr_fu_around_eu( eu, tol )
 CONST struct edgeuse *eu;
+CONST struct rt_tol	*tol;
 {
 	CONST struct edgeuse	*eu1;
 	CONST struct loopuse	*lu;
@@ -1139,12 +1153,13 @@ CONST struct edgeuse *eu;
 	vect_t			xvec, yvec, zvec;
 
 	NMG_CK_EDGEUSE(eu);
+	RT_CK_TOL(tol);
 	rt_log("nmg_pr_fu_around_eu(x%x)\n", eu);
 
 	/* Erect coordinate system around eu */
-	nmg_eu_2vecs_perp( xvec, yvec, zvec, eu );
+	nmg_eu_2vecs_perp( xvec, yvec, zvec, eu, tol );
 
-	nmg_pr_fu_around_eu_vecs( eu, xvec, yvec, zvec );
+	nmg_pr_fu_around_eu_vecs( eu, xvec, yvec, zvec, tol );
 }
 
 /*
@@ -1159,8 +1174,9 @@ CONST struct edgeuse *eu;
  *	2	unclosed space
  */
 int
-nmg_check_radial(eu)
-CONST struct edgeuse *eu;
+nmg_check_radial(eu, tol)
+CONST struct edgeuse	*eu;
+CONST struct rt_tol	*tol;
 {
 	char curr_orient;
 	CONST struct edgeuse	*eur;
@@ -1170,7 +1186,8 @@ CONST struct edgeuse *eu;
 	pointp_t p, q;
 
 	NMG_CK_EDGEUSE(eu);
-	
+	RT_CK_TOL(tol);
+
 	s = eu->up.lu_p->up.fu_p->s_p;
 	NMG_CK_SHELL(s);
 
@@ -1229,9 +1246,10 @@ CONST struct edgeuse *eu;
 			q = eu1->eumate_p->vu_p->v_p->vg_p->coord;
 			rt_log("Radial orientation problem at edge %g %g %g -> %g %g %g\n",
 				p[0], p[1], p[2], q[0], q[1], q[2]);
+rt_pr_tol(tol);
 			rt_log("Problem Edgeuses: eu1=%8x, eur=%8x\n", eu1, eur);
 			if (rt_g.NMG_debug) {
-				nmg_pr_fu_around_eu(eu1);
+				nmg_pr_fu_around_eu(eu1, tol);
 				nmg_pr_fu(eu1->up.lu_p->up.fu_p, 0);
 				rt_log("Radial loop:\n");
 				nmg_pr_fu(eur->up.lu_p->up.fu_p, 0);
@@ -1244,7 +1262,7 @@ CONST struct edgeuse *eu;
 					eu1->eumate_p->vu_p );
 				nmg_face_lu_plot( eur->up.lu_p, eur->vu_p,
 					eur->eumate_p->vu_p );
-				nmg_pr_fu_around_eu( eu1 );
+				nmg_pr_fu_around_eu( eu1, tol );
 				eur= nmg_findeu( eu1->vu_p->v_p, eu1->eumate_p->vu_p->v_p,
 					(struct shell *)0,  eu1, 0 );
 				if( eur )  {
@@ -1278,8 +1296,9 @@ CONST struct edgeuse *eu;
  *	!0	Problem.
  */
 int
-nmg_ck_closed_surf(s)
-CONST struct shell *s;
+nmg_ck_closed_surf(s, tol)
+CONST struct shell	*s;
+CONST struct rt_tol	*tol;
 {
 	struct faceuse *fu;
 	struct loopuse *lu;
@@ -1288,6 +1307,7 @@ CONST struct shell *s;
 	long		magic1;
 
 	NMG_CK_SHELL(s);
+	RT_CK_TOL(tol);
 	for( RT_LIST_FOR( fu, faceuse, &s->fu_hd ) )  {
 		NMG_CK_FACEUSE(fu);
 		for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
@@ -1296,7 +1316,7 @@ CONST struct shell *s;
 			if (magic1 == NMG_EDGEUSE_MAGIC) {
 				/* Check status on all the edgeuses before quitting */
 				for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
-					if (nmg_check_radial(eu))
+					if (nmg_check_radial(eu, tol))
 						status = 1;
 				}
 				if( status )  {
@@ -1324,15 +1344,17 @@ CONST struct shell *s;
  *	!0	status code from nmg_check_radial()
  */
 int
-nmg_ck_closed_region(r)
+nmg_ck_closed_region(r, tol)
 CONST struct nmgregion	*r;
+CONST struct rt_tol	*tol;
 {
 	CONST struct shell	*s;
 	int		ret;
 
 	NMG_CK_REGION(r);
+	RT_CK_TOL(tol);
 	for( RT_LIST_FOR( s, shell, &r->s_hd ) )  {
-		ret = nmg_ck_closed_surf( s );
+		ret = nmg_ck_closed_surf( s, tol );
 		if( ret != 0 )  return(ret);
 	}
 	return(0);
