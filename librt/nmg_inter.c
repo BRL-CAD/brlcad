@@ -28,9 +28,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "nmg.h"
 #include "raytrace.h"
 
-/* XXX move to vmath.h */
-#define V2ARGS(a)	(a)[X], (a)[Y]
-
 /*
  *			R T _ P T 3 _ P T 3 _ E Q U A L
  *
@@ -1163,7 +1160,10 @@ struct faceuse		*fu2;		/* fu of eu2, for error checks */
 	NMG_CK_VERTEXUSE(vu2b);
 
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)
-		rt_log("nmg_isect_edge2p_edge2p(eu1=x%x, eu2=x%x)\n", eu1, eu2);
+		rt_log("nmg_isect_edge2p_edge2p(eu1=x%x, eu2=x%x)\n\tvu1a=%x vu1b=%x, vu2a=%x vu2b=%x\n\tv1a=%x v1b=%x,   v2a=%x v2b=%x\n",
+			eu1, eu2,
+			vu1a, vu1b, vu2a, vu2b,
+			vu1a->v_p, vu1b->v_p, vu2a->v_p, vu2b->v_p );
 
 	/* First, a topology check. */
 	if( vu1a->v_p == vu2a->v_p || vu1a->v_p == vu2b->v_p || vu2a->v_p == vu1b->v_p || vu2b->v_p == vu1b->v_p )  {
@@ -1378,25 +1378,23 @@ rt_log("ptol = %g, eu2dist=%g, %g\n", ptol, eu2dist[0], eu2dist[1]);
 			}
 			NMG_CK_VERTEXUSE(vu);
 			(void)nmg_tbl(is->l1, TBL_INS_UNIQUE, &vu->l.magic);
-			(void)nmg_tbl(is->l2, TBL_INS_UNIQUE, &vu2a->l.magic);
+			(void)nmg_tbl(is->l2, TBL_INS_UNIQUE, &vu2b->l.magic);
 			return;
 		} else if( dist[1] > 0 && dist[1] < 1 )  {
 			/* Break eu2 somewhere in the middle */
-			struct vertexuse	*new_vu;
+			struct vertexuse	*new_vu2;
 			if (rt_g.NMG_debug & DEBUG_POLYSECT)
 			    	VPRINT("\t\tBreaking eu2 at intersect point", hit_pt);
-			(void)nmg_ebreak( NULL, eu2 );
-			/* Can't use eumate_p here, it's in wrong orientation face */
-			new_vu = RT_LIST_PNEXT_CIRC(edgeuse,eu2)->vu_p;
-			nmg_vertex_gv( new_vu->v_p, hit_pt );	/* 3d geom */
+			new_vu2 = nmg_ebreak( NULL, eu2 )->vu_p;
+			nmg_vertex_gv( new_vu2->v_p, hit_pt );	/* 3d geom */
 
-			plu = nmg_mlv(&fu1->l.magic, new_vu->v_p, OT_UNSPEC);
+			plu = nmg_mlv(&fu1->l.magic, new_vu2->v_p, OT_UNSPEC);
 			nmg_loop_g(plu->l_p);
 			vu = RT_LIST_FIRST( vertexuse, &plu->down_hd );
 			NMG_CK_VERTEXUSE(vu);
 
 			(void)nmg_tbl(is->l1, TBL_INS_UNIQUE, &vu->l.magic);
-			(void)nmg_tbl(is->l2, TBL_INS_UNIQUE, &new_vu->l.magic);
+			(void)nmg_tbl(is->l2, TBL_INS_UNIQUE, &new_vu2->l.magic);
 			nmg_ck_face_worthless_edges( fu1 );
 			nmg_ck_face_worthless_edges( fu2 );
 			return;
@@ -1416,19 +1414,17 @@ rt_log("ptol = %g, eu2dist=%g, %g\n", ptol, eu2dist[0], eu2dist[1]);
 	if( dist[1] == 0 )  {
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
 			rt_log("\t\tintersect point is vu2a\n");
-		vu = vu2a;
-		(void)nmg_tbl(is->l2, TBL_INS_UNIQUE, &vu->l.magic);
-		nmg_ebreak( vu->v_p, eu1 );
+		nmg_ebreak( vu2a->v_p, eu1 );
 		(void)nmg_tbl(is->l1, TBL_INS_UNIQUE, &vu1b->l.magic);
+		(void)nmg_tbl(is->l2, TBL_INS_UNIQUE, &vu2a->l.magic);
 		nmg_ck_face_worthless_edges( fu1 );
 		nmg_ck_face_worthless_edges( fu2 );
 	} else if( dist[1] == 1 )  {
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
 			rt_log("\t\tintersect point is vu2b\n");
-		vu = vu2b;
-		(void)nmg_tbl(is->l2, TBL_INS_UNIQUE, &vu->l.magic);
-		nmg_ebreak( vu->v_p, eu1 );
+		nmg_ebreak( vu2b->v_p, eu1 );
 		(void)nmg_tbl(is->l1, TBL_INS_UNIQUE, &vu1b->l.magic);
+		(void)nmg_tbl(is->l2, TBL_INS_UNIQUE, &vu2b->l.magic);
 		nmg_ck_face_worthless_edges( fu1 );
 		nmg_ck_face_worthless_edges( fu2 );
 	} else {
@@ -1980,12 +1976,14 @@ struct faceuse		*fu1, *fu2;
 	NMG_CK_FACEUSE(fu1);
 	NMG_CK_FACEUSE(fu2);
 
-#if 0
+#if 1
 	/* r71, r23 are useful demonstrations */
 	rt_g.NMG_debug |= DEBUG_POLYSECT;
 	rt_g.NMG_debug |= DEBUG_FCUT;
 	rt_g.NMG_debug |= DEBUG_VU_SORT;
 	rt_g.NMG_debug |= DEBUG_PLOTEM;
+	rt_g.NMG_debug |= DEBUG_INS;
+	rt_g.NMG_debug |= DEBUG_FCUT;
 #endif
 
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)
