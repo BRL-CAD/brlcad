@@ -1016,7 +1016,7 @@ int arg;
 			m = nmg_find_model( &es_eu->l.magic );
 			NMG_CK_MODEL(m);
 
-			if( es_eu->g.magic_p )
+			if( *es_eu->g.magic_p == NMG_EDGE_G_LSEG_MAGIC )
 			{
 				/* get space for list of items processed */
 				tab = (long *)rt_calloc( m->maxindex+1, sizeof(long),
