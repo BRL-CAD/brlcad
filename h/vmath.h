@@ -47,7 +47,7 @@
 #define VMATH_H seen
 
 #ifndef sqrt
-#	ifdef __STDC__
+#	if defined(__STDC__) || (defined(sgi) && defined(mips))
 		extern double sqrt(double x);
 #	else
 		extern double sqrt();
