@@ -21,20 +21,26 @@
 
 case $1 in
 master)
+    echo "RUNNING MASTER"
     if [ ! -x brlcad/regress/master.sh ] ; then
 	cvs -q -d /c/CVS export -D today -N brlcad/regress
+    else 
+	cvs -d /c/CVS update brlcad
     fi
-    cvs update brlcad
     cd brlcad/regress
     ./master.sh -d /c/regress -r /c/CVS
+    echo "DONE RUNNING MASTER"
     ;;
 status)
+    echo "CHECKING STATUS"
     if [ ! -x brlcad/regress/master.sh ] ; then
 	cvs -q -d /c/CVS export -D today -N brlcad/regress
+    else
+	cvs -d /c/CVS update brlcad
     fi
-    cvs update brlcad
     cd brlcad/regress
     ./status.sh -d /c/regress -a lamas@arl.army.mil
+    echo "DONE CHECKING STATUS"
     ;;
 *)
     /bin/echo 'must specify "master" or "status" argument'
