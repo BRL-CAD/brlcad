@@ -19,6 +19,7 @@
  */
 
 typedef	struct	{
+	int	magic;
 	int	ny;		/* Number of "y" bins */
 	int	*nx;		/* Number of "x" bins per "y" bin */
 	int	elsize;		/* Size of each bin element */
@@ -27,6 +28,10 @@ typedef	struct	{
 } spm_map_t;
 
 #define	SPM_NULL (spm_map_t *)0
+
+#define SPM_MAGIC	0x41278678
+
+#define RT_CK_SPM(smp)		RT_CKMAG(smp, SPM_MAGIC, "spm_map_t" )
 
 spm_map_t *spm_init();
 void	spm_free();
