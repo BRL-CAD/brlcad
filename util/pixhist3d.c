@@ -4,6 +4,11 @@
  * Display R x G, R x B, B x G on a framebuffer, where the
  *  intensity is the relative frequency for that plane.
  *
+ *	R		Three ortho views of this cube.
+ *	| B		Front, Top, Right Side.
+ *	|/
+ *	+______G
+ *
  *  Author -
  *	Phillip Dykstra
  *	20 June 1986
@@ -24,21 +29,39 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include "fb.h"
 
+/*
+ * Smallest non-zero value we will plot.
+ * i.e. all non-zero points less than this will be drawn at this
+ * intensity so that they will be visible.
+ */
+#define	THRESH	20
+
 FBIO	*fbp;
+FILE	*fp;
 
 long	rxb[256][256], rxg[256][256], bxg[256][256];
 
 unsigned char ibuf[8*1024*3];
 
-static char *Usage = "usage: pixhist3d < file.pix\n";
+static char *Usage = "usage: pixhist3d [file.pix]\n";
 
-main()
+main(argc, argv)
+int argc; char **argv;
 {
 	int	n;
 	
-	if( isatty(fileno(stdin)) ) {
+	if( argc > 1 ) {
+		if( (fp = fopen(argv[1], "r")) == NULL ) {
+			fprintf( stderr, "pixhist3d: can't open \"%s\"\n", argv[1] );
+			fprintf( stderr, Usage );
+			exit( 1 );
+		}
+	} else
+		fp = stdin;
+
+	if( isatty(fileno(fp)) ) {
 		fprintf( stderr, Usage );
-		exit( 1 );
+		exit( 2 );
 	}
 
 	if( (fbp = fb_open( NULL, 512, 512 )) == NULL )  {
@@ -46,15 +69,15 @@ main()
 		exit(12);
 	}
 
-	while( (n = fread(&ibuf[0], sizeof(*ibuf), sizeof(ibuf), stdin)) > 0 ) {
+	while( (n = fread(&ibuf[0], sizeof(*ibuf), sizeof(ibuf), fp)) > 0 ) {
 		register unsigned char *bp;
 		register int i;
 
 		bp = &ibuf[0];
 		for( i = n/3; i > 0; i--, bp += 3 )  {
-			rxb[ bp[0] ][ bp[2] ]++;
-			rxg[ bp[0] ][ bp[1] ]++;
-			bxg[ bp[2] ][ bp[1] ]++;
+			rxb[ bp[RED] ][ bp[BLU] ]++;
+			rxg[ bp[RED] ][ bp[GRN] ]++;
+			bxg[ bp[BLU] ][ bp[GRN] ]++;
 		}
 	}
 
@@ -93,8 +116,8 @@ int xoff, yoff;
 			register int value;
 
 			value = v[y][x] * scale;
-			if( value < 20 && v[y][x] != 0 )
-				value = 20;
+			if( value < THRESH && v[y][x] != 0 )
+				value = THRESH;
 			obuf[x][RED] = obuf[x][GRN] = obuf[x][BLU] = value;
 		}
 		fb_write( fbp, xoff, yoff+y, obuf, 256 );

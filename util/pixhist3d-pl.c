@@ -26,13 +26,15 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 
+FILE	*fp;
+
 unsigned char bin[128][128][16];
 
 struct	pix_element {
 	unsigned char red, green, blue;
 };
 
-static char *Usage = "usage: pixhist3d-pl < file.pix | tplot\n";
+static char *Usage = "usage: pixhist3d-pl [file.pix] | plot\n";
 
 main( argc, argv )
 int argc;
@@ -42,9 +44,18 @@ char **argv;
 	struct pix_element scan[512];
 	unsigned char bmask;
 	
-	if( argc > 1 || isatty(fileno(stdin)) ) {
+	if( argc > 1 ) {
+		if( (fp = fopen(argv[1], "r")) == NULL ) {
+			fprintf( stderr, "pixhist3d-pl: can't open \"%s\"\n", argv[1] );
+			fprintf( stderr, Usage );
+			exit( 1 );
+		}
+	} else
+		fp = stdin;
+
+	if( argc > 2 || isatty(fileno(fp)) ) {
 		fputs( Usage, stderr );
-		exit( 1 );
+		exit( 2 );
 	}
 
 	/* Initialize plot */
@@ -57,7 +68,7 @@ char **argv;
 	pl_3line( stdout, 0, 0, 0, 0, 0, 127 );
 	pl_color( stdout, 255, 255, 255 );
 
-	while( (n = fread(&scan[0], sizeof(*scan), 512, stdin)) > 0 ) {
+	while( (n = fread(&scan[0], sizeof(*scan), 512, fp)) > 0 ) {
 		for( x = 0; x < n; x++ ) {
 			bmask = 1 << ((scan[x].blue >> 1) & 7);
 			if( (bin[ scan[x].red>>1 ][ scan[x].green>>1 ][ scan[x].blue>>4 ] & bmask) == 0 ) {
