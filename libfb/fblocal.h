@@ -30,20 +30,9 @@ extern long	lseek();
 extern unsigned	sleep();
 extern void	free();
 
-#ifdef IF_DEBUG
-extern FBIO	debug_interface;
-#endif
-#ifdef IF_DISK
-extern FBIO	disk_interface;
-#endif
-#ifdef IF_REMOTE
-extern FBIO	remote_interface;
-#endif
-#ifdef IF_PTTY
-extern FBIO	ptty_interface;
-#endif
-#ifdef IF_ADAGE
-extern FBIO	adage_interface;
+#ifndef _LOCAL_
+/* Useful for ADB when debugging, set to nothing */
+#define _LOCAL_ static
 #endif
 
 #ifdef BSD
