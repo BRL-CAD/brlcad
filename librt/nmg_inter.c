@@ -4350,8 +4350,8 @@ struct shell		*s2;
 		neu2 = nmg_eusplit( eu1->eumate_p->vu_p->v_p, neu1, 0 );
 		NMG_CK_EDGEUSE(eu1);
 		/* Attach new edge in s2 to original edge in s1 */
-		nmg_moveeu( eu1, neu2 );
-		nmg_moveeu( eu1, neu1 );
+		nmg_je( eu1, neu2 );
+		nmg_je( eu1, neu1 );
 	}
 	nmg_loop_g(lu2->l_p, &is->tol);
 	if (rt_g.NMG_debug & DEBUG_POLYSECT) {

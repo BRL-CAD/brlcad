@@ -327,10 +327,10 @@ insert:
 		 *  This should insert eu2 between eu1 and eu1->radial_p
 		 *  (which may be less far around than eur, but thats OK).
 		 */
-		nmg_moveeu(eu1, eu2);
+		nmg_je(eu1, eu2);
 
 		if (rt_g.NMG_debug & DEBUG_MESH_EU)  {
-			rt_log("After nmg_moveeu(), faces around original_eu1 are:\n");
+			rt_log("After nmg_je(), faces around original_eu1 are:\n");
 			nmg_pr_fu_around_eu_vecs( original_eu1, xvec, yvec, zvec, tol );
 		}
 
