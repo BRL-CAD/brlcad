@@ -449,6 +449,11 @@ char *p_eto[] = {
 	"Enter magnitude of elliptical semi-minor axis, d: "
 };
 
+char *p_binunif[] = {
+	"Enter minor type (f,d,c,s,i,L,C,S,I, or L): ",
+	"Enter name of file containing the data: "
+};
+
 /*	F _ I N ( ) :  	decides which solid reader to call
  *			Used for manual entry of solids.
  */
@@ -472,7 +477,8 @@ char **argv;
 				rcc_in(), rhc_in(), rpc_in(), rpp_in(), orpp_in(),
 				sph_in(), tec_in(), tgc_in(), tor_in(), ars_in(),
 				trc_in(), ebm_in(), vol_in(), hf_in(), bot_in(),
-				dsp_in_v4(),dsp_in_v5(), submodel_in(), part_in(), pipe_in();
+				dsp_in_v4(),dsp_in_v5(), submodel_in(), part_in(), pipe_in(),
+				binunif_in();
 
 	CHECK_DBI_NULL;
 
@@ -701,6 +707,12 @@ char **argv;
 		nvals = 2*3 + 2;
 		menu = p_part;
 		fn_in = part_in;
+	} else if( strcmp( argv[2], "binunif" ) == 0 ) {
+		nvals = 2;
+		menu = p_binunif;
+		fn_in = binunif_in;
+		do_solid_edit = 0;
+		dont_draw = 1;
 	} else {
 	  Tcl_AppendResult(interp, "f_in:  ", argv[2], " is not a known primitive\n",
 			   (char *)NULL);
@@ -750,6 +762,67 @@ do_new_update:
 		(void)f_sed( clientData, interp, 2, new_cmd );
 	}
 	return TCL_OK;
+}
+
+int
+binunif_in( cmd_argvs, intern, name )
+char			*cmd_argvs[];
+struct rt_db_internal	*intern;
+const char		*name;
+{
+	unsigned int minor_type;
+
+	CHECK_DBI_NULL;
+
+	if( strlen( cmd_argvs[3] ) != 1 ) {
+		bu_log( "Unrecognized minor type (%s)\n", cmd_argvs[3] );
+		return 1;
+	}
+	
+	switch( *cmd_argvs[3] ) {
+		case 'f':
+			minor_type = DB5_MINORTYPE_BINU_FLOAT;
+			break;
+		case 'd':
+			minor_type = DB5_MINORTYPE_BINU_DOUBLE;
+			break;
+		case 'c':
+			minor_type = DB5_MINORTYPE_BINU_8BITINT;
+			break;
+		case 's':
+			minor_type = DB5_MINORTYPE_BINU_16BITINT;
+			break;
+		case 'i':
+			minor_type = DB5_MINORTYPE_BINU_32BITINT;
+			break;
+		case 'l':
+			minor_type = DB5_MINORTYPE_BINU_64BITINT;
+			break;
+		case 'C':
+			minor_type = DB5_MINORTYPE_BINU_8BITINT_U;
+			break;
+		case 'S':
+			minor_type = DB5_MINORTYPE_BINU_16BITINT_U;
+			break;
+		case 'I':
+			minor_type = DB5_MINORTYPE_BINU_32BITINT_U;
+			break;
+		case 'L':
+			minor_type = DB5_MINORTYPE_BINU_64BITINT_U;
+			break;
+		default:
+			bu_log( "Unrecognized minor type (%c)\n", *cmd_argvs[3] );
+			return 1;
+	}
+	if( mk_binunif( wdbp, name, cmd_argvs[4], minor_type ) ) {
+		bu_log( "Failed to create binary object %s from file %s\n",
+			name, cmd_argvs[4] );
+		return 1;
+	}
+
+	intern->idb_ptr = NULL;
+
+	return 0;
 }
 
 /*			E B M _ I N
