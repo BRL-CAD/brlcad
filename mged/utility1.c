@@ -43,8 +43,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./ged.h"
 #include "./sedit.h"
 
-extern void f_quit();
-
 void		tables(), edcodes(), changes(), prfield();
 
 /* structure to distinguish new solids from existing (old) solids */
