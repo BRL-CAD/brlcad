@@ -14,6 +14,8 @@
 #include <strings.h>
 #endif
 
+#include <stdlib.h>
+#include <unistd.h>
 #include <stdio.h>
 #include <math.h>		/* XXX - temp debug */
 #include "machine.h"
@@ -40,6 +42,8 @@ void	Efill();
 void	Horizon();
 void	Intersect();
 void	Draw();
+int	fhvis();
+int	sign();
 
 void
 fhinit()
@@ -266,6 +270,7 @@ fflush( stdout );
 /*printf("(%3d,%3d)\n", *xi, *yi );*/
 }
 
+int
 sign( i )
 int	i;
 {

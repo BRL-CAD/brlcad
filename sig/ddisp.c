@@ -11,6 +11,8 @@
 #include <strings.h>
 #endif
 
+#include <unistd.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include "machine.h"
 #include "fb.h"
