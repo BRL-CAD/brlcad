@@ -163,12 +163,15 @@ CONST struct rt_external	*ep;
 
 	if( rp->c.c_override == 1 )  {
 		if( tsp->ts_sofar & TS_SOFAR_REGION )  {
-			/* This combination is within a region */
-			char	*sofar = db_path_to_string(pathp);
+			if( (tsp->ts_sofar&(TS_SOFAR_MINUS|TS_SOFAR_INTER)) == 0 )  {
+				/* This combination is within a region */
+				char	*sofar = db_path_to_string(pathp);
 
-			rt_log("db_apply_state_from_comb(): WARNING: color override in combination within region '%s', ignored\n",
-				sofar );
-			rt_free(sofar, "path string");
+				rt_log("db_apply_state_from_comb(): WARNING: color override in combination within region '%s', ignored\n",
+					sofar );
+				rt_free(sofar, "path string");
+			}
+			/* Just quietly ignore it -- it's being subtracted off */
 		} else if( tsp->ts_mater.ma_cinherit == DB_INH_LOWER )  {
 			tsp->ts_mater.ma_override = 1;
 			tsp->ts_mater.ma_color[0] =
@@ -182,12 +185,15 @@ CONST struct rt_external	*ep;
 	}
 	if( rp->c.c_matname[0] != '\0' )  {
 		if( tsp->ts_sofar & TS_SOFAR_REGION )  {
-			/* This combination is within a region */
-			char	*sofar = db_path_to_string(pathp);
+			if( (tsp->ts_sofar&(TS_SOFAR_MINUS|TS_SOFAR_INTER)) == 0 )  {
+				/* This combination is within a region */
+				char	*sofar = db_path_to_string(pathp);
 
-			rt_log("db_apply_state_from_comb(): WARNING: material property spec in combination within region '%s', ignored\n",
-				sofar );
-			rt_free(sofar, "path string");
+				rt_log("db_apply_state_from_comb(): WARNING: material property spec in combination within region '%s', ignored\n",
+					sofar );
+				rt_free(sofar, "path string");
+			}
+			/* Just quietly ignore it -- it's being subtracted off */
 		} else if( tsp->ts_mater.ma_minherit == DB_INH_LOWER )  {
 			strncpy( tsp->ts_mater.ma_matname, rp->c.c_matname, sizeof(rp->c.c_matname) );
 			strncpy( tsp->ts_mater.ma_matparm, rp->c.c_matparm, sizeof(rp->c.c_matparm) );
