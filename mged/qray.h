@@ -25,7 +25,7 @@
 			 qray_effects == 'b')
 #define QRAY_BOTH	(qray_effects == 'b')
 #define QRAY_FORMAT_P "fmt p \"%e %e %e %e\\n\" x_in y_in z_in los"
-#define QRAY_FORMAT_O "fmt p \"\"; fmt o \"%e %e %e %e\\n\" ov_x_in ov_y_in ov_z_in ov_los"
+#define QRAY_FORMAT_O "fmt r \"\\n\" ; fmt p \"\"; fmt o \"%e %e %e %e\\n\" ov_x_in ov_y_in ov_z_in ov_los"
 #define QRAY_FORMAT_NULL "fmt r \"\"; fmt h \"\"; fmt p \"\"; fmt m \"\"; fmt o \"\"; fmt f \"\""
 
 struct qray_color {
