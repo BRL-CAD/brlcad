@@ -1323,8 +1323,8 @@ char	**argv;
 		
       (void)f_adc( clientData, interp, 2, av );
 
-      if(knob_offset_hook)
-	knob_offset_hook();
+      if(knob_hook)
+	knob_hook();
     } else if( strcmp( cmd, "calibrate" ) == 0 ) {
       VSETALL( absolute_slew, 0.0 );
     }else{
@@ -2085,11 +2085,30 @@ char	**argv;
 	  Tcl_AppendResult(interp, "zoom: scale factor out of range\n", (char *)NULL);
 	  return TCL_ERROR;
 	}
+
+#if 1
+	if( Viewscale < SMALL_FASTF ){
+	  if(val > 1.0)
+	    Viewscale = SMALL_FASTF * val;
+	  else
+	    Viewscale = SMALL_FASTF;
+	}else if( Viewscale > INFINITY ){
+	  if(val < 1.0)
+	    Viewscale = val * INFINITY;
+	  else
+	    Viewscale = INFINITY;
+	}
+#else
 	if( Viewscale < SMALL_FASTF || Viewscale > INFINITY )
 	  return TCL_ERROR;
+#endif
 
 	Viewscale /= val;
 	new_mats();
+
+	absolute_zoom = 1.0 - Viewscale / i_Viewscale;
+	if(absolute_zoom < 0.0)
+	  absolute_zoom /= 9.0;
 
 	if(state == ST_S_EDIT || state == ST_O_EDIT){
 	  absolute_slew[X] *= val;
