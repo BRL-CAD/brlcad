@@ -1074,8 +1074,7 @@ struct vertexuse *vu_p;
  *	The primary purpose of this routine is to find the vertexuses
  *	that should be the parameters to nmg_cut_loop() and nmg_join_loop().
  */
-nmg_find_first_and_last_use_of_v_in_fu_on_ray(tbl2d, v, first_vu, last_vu, dir, fu, tol)
-struct rt_list *tbl2d;
+nmg_find_first_and_last_use_of_v_in_fu_on_ray( v, first_vu, last_vu, dir, fu, tol)
 struct vertex *v;
 struct vertexuse **first_vu;
 struct vertexuse **last_vu;
