@@ -1078,6 +1078,9 @@ struct application  {
 	fastf_t		a_diverge;	/* slope of beam divergance/mm */
 	int		a_return;	/* Return of a_hit()/a_miss() */
 	int		a_no_booleans;	/* 1= partitions==segs, no booleans */
+	/* THESE ELEMENTS ARE WRITTEN BY THE LIBRARY, AND MAY BE READ IN a_hit() */
+	struct seg	*a_finished_segs_hdp;
+	struct partition *a_Final_Part_hdp;
 	/* THE FOLLOWING ELEMENTS ARE MAINLINE & APPLICATION SPECIFIC. */
 	/* THEY ARE NEVER EXAMINED BY THE LIBRARY. */
 	int		a_user;		/* application-specific value */
