@@ -3021,3 +3021,107 @@ vect_t view_pos;
 #endif
 }
 
+/*
+ *			F _ E Y E _ P T
+ *
+ *  Perform same function as mged command that 'eye_pt' performs
+ *  in rt animation script -- put eye at specified point.
+ */
+int
+f_eye_pt(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int	argc;
+char	**argv;
+{
+	point_t	eye_model;
+	vect_t	xlate;
+	vect_t	new_cent;
+
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+		return TCL_ERROR;
+
+	VSET(eye_model, atof(argv[1]), atof(argv[2]), atof(argv[3]) );
+
+	/* First step:  put eye at view center (view 0,0,0) */
+	MAT_DELTAS_VEC_NEG( toViewcenter, eye_model );
+	new_mats();
+
+	/*  Second step:  put eye at view 0,0,1.
+	 *  For eye to be at 0,0,1, the old 0,0,-1 needs to become 0,0,0.
+	 */
+	VSET( xlate, 0, 0, -1 );	/* correction factor */
+	MAT4X3PNT( new_cent, view2model, xlate );
+	MAT_DELTAS_VEC_NEG( toViewcenter, new_cent );
+	new_mats();
+
+	return TCL_OK;
+}
+
+/*
+ *			F _ M O D E L 2 V I E W
+ *
+ *  Given a point in model space coordinates (in mm)
+ *  convert it to view (screen) coordinates.
+ */
+int
+f_model2view(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int	argc;
+char	**argv;
+{
+	point_t	model;
+	point_t	view;
+	struct bu_vls	str;
+
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+		return TCL_ERROR;
+
+	VSET(model, atof(argv[1]),
+		atof(argv[2]),
+		atof(argv[3]) );
+
+	MAT4X3PNT( view, model2view, model );
+
+	bu_vls_init(&str);
+	bu_vls_printf(&str, "%.15e %.15e %.15e\n", V3ARGS(view) );
+	Tcl_AppendResult(interp, bu_vls_addr(&str), (char *)NULL);
+	bu_vls_free(&str);
+
+	return TCL_OK;
+}
+
+/*
+ *			F _ V I E W 2 M O D E L
+ *
+ *  Given a point in view (screen) space coordinates,
+ *  convert it to model coordinates (in mm).
+ */
+int
+f_view2model(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int	argc;
+char	**argv;
+{
+	point_t	model;
+	point_t	view;
+	struct bu_vls	str;
+
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+		return TCL_ERROR;
+
+	VSET(view, atof(argv[1]),
+		atof(argv[2]),
+		atof(argv[3]) );
+
+	MAT4X3PNT( model, view2model, view );
+
+	bu_vls_init(&str);
+	bu_vls_printf(&str, "%.15e %.15e %.15e\n", V3ARGS(model) );
+	Tcl_AppendResult(interp, bu_vls_addr(&str), (char *)NULL);
+	bu_vls_free(&str);
+
+	return TCL_OK;
+}
