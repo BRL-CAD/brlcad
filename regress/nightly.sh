@@ -34,10 +34,23 @@ status)
     ;;
 esac
 
+CVS=cvs
+if [ ! -x "`which $CVS`" ] ; then
+    CVS=/usr/gnu/bin/cvs
+    if [ ! -x "`which $CVS`" ] ; then
+	CVS=/usr/bin/cvs
+	if [ ! -x "`which $CVS`" ] ; then
+	    echo "unable to find cvs!"
+	    exit 1
+	fi
+    fi
+fi
+echo CVS=$CVS
+exit
 if [ -d brlcad/regress ] ; then 
     rm -rf brlcad/regress
 fi
-cvs -q -d /c/CVS export -D today -N brlcad/regress
+$CVS -q -d /c/CVS export -D today -N brlcad/regress
 cd brlcad/regress
 cp nightly.sh ../..
 
