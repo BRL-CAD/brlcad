@@ -87,6 +87,7 @@ class Dm {
     protected variable aspect 1.0
     private variable initializing 1
     private variable priv_type X
+    private variable tkwin
 }
 
 body Dm::constructor {args} {
@@ -99,8 +100,13 @@ body Dm::constructor {args} {
 }
 
 body Dm::destructor {} {
-    $itk_component(dm) listen -1
-    $itk_component(dm) close
+#    $itk_component(dm) listen -1
+#    $itk_component(dm) close
+
+# Hack around problem that showed up in Itcl3.2
+# 
+    $tkwin listen -1
+    $tkwin close
 }
 
 configbody Dm::dmsize {
