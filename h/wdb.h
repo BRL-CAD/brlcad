@@ -20,13 +20,13 @@
  *	All rights reserved.
  *
  *  Include Sequencing -
- *	#include <stdio.h>	/* For FILE * *_/
+ *	#include <stdio.h>	/_* For FILE * *_/
  *	#include <math.h>
- *	#include "machine.h"	/* For fastf_t definition on this machine *_/
- *	#include "vmath.h"	/* For vect_t definition *_/
- *	#include "rtlist.h"	/* OPTIONAL, auto-included by wdb.h *_/
- *	#include "nmg.h"	/* OPTIONAL, precedes wdb.h when used *_/
- *	#include "nurb.h"	/* OPTIONAL, precedes wdb.h when used *_/
+ *	#include "machine.h"	/_* For fastf_t definition on this machine *_/
+ *	#include "vmath.h"	/_* For vect_t definition *_/
+ *	#include "rtlist.h"	/_* OPTIONAL, auto-included by wdb.h *_/
+ *	#include "nmg.h"	/_* OPTIONAL, precedes wdb.h when used *_/
+ *	#include "nurb.h"	/_* OPTIONAL, precedes wdb.h when used *_/
  *	#include "wdb.h"
  *
  *  Libraries Used -
