@@ -1822,10 +1822,11 @@ int have;
 				vis_ray = tot_vis_rays;
 				break;
 			case 0:	/* light not visible */
-			    bu_log("light not visible\n");
-			    break;
+				if (rdebug & RDEBUG_LIGHT)
+					bu_log("light not visible\n");
+				break;
 			default:
-			    bu_log("light_vis = %d\n", lv);
+				bu_log("light_vis = %d\n", lv);
 			}
 		}
 		if (visibility) {
