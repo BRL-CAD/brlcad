@@ -536,6 +536,18 @@ set -S2 "/bin/sh"
 #		define	MGED_LIBES	-lsuntool -lsunwindow -lpixrect \
 			-L/usr/X11/lib -lX11
 #	endif
+#	ifdef sun_openwin
+/*		Sun with SunOS 4.1.1 and OpenWindows configuration */
+#		define	LIBFB_OBJS	if_remote if_ab if_sun if_X
+#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_SUN \
+			-I/usr/openwin/include -DIF_X
+#		define	LIBFB_LIBES	LIBPKG -lsuntool -lsunwindow -lpixrect \
+			-L/usr/openwin/lib -lX11
+#		define	MGED_OBJS	dm-sun dm-X
+#		define	MGED_CONFIG	-DDM_SUNPW -DDM_X -I/usr/openwin/include
+#		define	MGED_LIBES	-lsuntool -lsunwindow -lpixrect \
+			-L/usr/openwin/lib -lX11
+#	endif
 #	ifdef sun_x11_gds
 /*		Sun with X11 configuration and TekSource GDS hardware*/
 #		define	LIBFB_OBJS	if_remote if_ab if_sun if_X if_ts
@@ -564,13 +576,27 @@ set -S2 "/bin/sh"
 #	define	HAS_TCP	1
 #	define	OPTIMIZER	-O2
 #	define	LIBMALLOC	/* use vendor library */
-#	define	LIBFB_OBJS	if_remote if_sun
-#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_SUN
-#	define	LIBFB_LIBES	LIBPKG -lsuntool -lsunwindow -lpixrect
-#	define	LIBRT_TIMER	timer42
-#	define	MGED_OBJS	dm-sun
-#	define	MGED_CONFIG	-DDM_SUNPW
-#	define	MGED_LIBES	-lsuntool -lsunwindow -lpixrect
+#	if 1
+/*		Sun with X11 (aka "openwin") */
+#		define	LIBFB_OBJS	if_remote if_ab if_sun if_X
+#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_SUN \
+			-I/usr/openwin/include -DIF_X
+#		define	LIBFB_LIBES	LIBPKG -lsuntool -lsunwindow -lpixrect \
+			-L/usr/openwin/lib -lX11
+#		define	MGED_OBJS	dm-sun dm-X
+#		define	MGED_CONFIG	-DDM_SUNPW -DDM_X -I/usr/openwin/include
+#		define	MGED_LIBES	-lsuntool -lsunwindow -lpixrect \
+			-L/usr/openwin/lib -lX11
+#else
+/*		Bare Sun configuration */
+#		define	LIBFB_OBJS	if_remote if_sun
+#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_SUN
+#		define	LIBFB_LIBES	LIBPKG -lsuntool -lsunwindow -lpixrect
+#		define	LIBRT_TIMER	timer42
+#		define	MGED_OBJS	dm-sun
+#		define	MGED_CONFIG	-DDM_SUNPW
+#		define	MGED_LIBES	-lsuntool -lsunwindow -lpixrect
+#	endif
 #	if 0
 /*		"Unbundled" (i.e. "improved") compilers.  Use if you have them */
 #		define	CC	/usr/lang/cc
