@@ -59,14 +59,14 @@ register FBIO	*ifp;
 		ifp->if_ppixels = PAGE_PIXELS;	/* Pixels/page.	*/
 		if( ifp->if_ppixels > ifp->if_width * ifp->if_height )
 			ifp->if_ppixels = ifp->if_width * ifp->if_height;
-		if( (ifp->if_pbase = (RGBpixel *)malloc( ifp->if_ppixels * sizeof(RGBpixel) ))
+		if( (ifp->if_pbase = (unsigned char *)malloc( ifp->if_ppixels * sizeof(RGBpixel) ))
 			== PIXEL_NULL ) {
 			Malloc_Bomb(ifp->if_ppixels * sizeof(RGBpixel));
 			return	-1;
 		}
 	}
 	ifp->if_pcurp = ifp->if_pbase;	/* Initialize pointer.	*/
-	ifp->if_pendp = ifp->if_pbase+ifp->if_ppixels;
+	ifp->if_pendp = ifp->if_pbase+ifp->if_ppixels*sizeof(RGBpixel);
 	return	0;
 }
 
@@ -99,7 +99,7 @@ int	x, y;
 	ifp->if_pixcur = pixelnum;
 	/* Compute new pixel pointer into page. */
 	ifp->if_pcurp = ifp->if_pbase +
-			(ifp->if_pixcur % ifp->if_ppixels);
+			(ifp->if_pixcur % ifp->if_ppixels)*sizeof(RGBpixel);
 	return	0;
 }
 
@@ -122,7 +122,7 @@ int	*xp, *yp;
 int
 fb_wpixel( ifp, pixelp )
 register FBIO	*ifp;
-RGBpixel 	*pixelp;
+unsigned char 	*pixelp;
 {
 #ifdef NEVER
 	if( ifp->if_debug & FB_DEBUG_BRW ) {
@@ -136,8 +136,8 @@ RGBpixel 	*pixelp;
 		if( _fb_pgin( ifp, ifp->if_pixcur / ifp->if_ppixels ) <= -1 )
 			return	-1;
 
-	COPYRGB( *(ifp->if_pcurp), *pixelp );
-	ifp->if_pcurp++;	/* position in page */
+	COPYRGB( (ifp->if_pcurp), pixelp );
+	ifp->if_pcurp += sizeof(RGBpixel);	/* position in page */
 	ifp->if_pixcur++;	/* position in framebuffer */
 	ifp->if_pdirty = 1;	/* page referenced (dirty) */
 	if( ifp->if_pcurp >= ifp->if_pendp ) {
@@ -151,14 +151,14 @@ RGBpixel 	*pixelp;
 int
 fb_rpixel( ifp, pixelp )
 register FBIO	*ifp;
-RGBpixel	*pixelp;
+unsigned char	*pixelp;
 {
 	if( ifp->if_pno == -1 )
 		if( _fb_pgin( ifp, ifp->if_pixcur / ifp->if_ppixels ) <= -1 )
 			return	-1;
 
-	COPYRGB( *pixelp, *(ifp->if_pcurp) );
-	ifp->if_pcurp++;	/* position in page */
+	COPYRGB( pixelp, (ifp->if_pcurp) );
+	ifp->if_pcurp += sizeof(RGBpixel);	/* position in page */
 	ifp->if_pixcur++;	/* position in framebuffer */
 	if( ifp->if_pcurp >= ifp->if_pendp ) {
 		if( _fb_pgout( ifp ) <= -1 )

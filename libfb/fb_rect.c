@@ -36,15 +36,18 @@ fb_sim_readrect( ifp, xmin, ymin, width, height, pp )
 FBIO	*ifp;
 int	xmin, ymin;
 int	width, height;
-RGBpixel	*pp;
+unsigned char	*pp;
 {
 	register int	y;
 	register int	tot;
+	int		got;
 
 	tot = 0;
 	for( y=ymin; y < ymin+height; y++ )  {
-		tot += fb_read( ifp, xmin, y, pp, width );
-		pp += width;
+		got = fb_read( ifp, xmin, y, pp, width );
+		tot += got;
+		if( got != width )  break;
+		pp += width * sizeof(RGBpixel);
 	}
 	return(tot);
 }
@@ -60,15 +63,18 @@ fb_sim_writerect( ifp, xmin, ymin, width, height, pp )
 FBIO	*ifp;
 int	xmin, ymin;
 int	width, height;
-RGBpixel	*pp;
+CONST unsigned char	*pp;
 {
 	register int	y;
 	register int	tot;
+	int		got;
 
 	tot = 0;
 	for( y=ymin; y < ymin+height; y++ )  {
-		tot += fb_write( ifp, xmin, y, pp, width );
-		pp += width;
+		got = fb_write( ifp, xmin, y, pp, width );
+		tot += got;
+		if( got != width )  break;
+		pp += width * sizeof(RGBpixel);
 	}
 	return(tot);
 }
