@@ -26,29 +26,31 @@ class CadColorEntry {
     constructor {args} {}
     destructor {}
 
+    public method rgbvalid {r g b}
+
     private method chooser {}
-    private method setcolor {rgb}
+    private method setcolor {r g b}
     private method setMBcolor {}
     private method colorok {}
 }
 
 body CadColorEntry::constructor {args} {
     $itk_component(menu) add command -label black \
-	    -command [code $this setcolor {0 0 0}]
+	    -command [code $this setcolor 0 0 0]
     $itk_component(menu) add command -label white \
-	    -command [code $this setcolor {255 255 255}]
+	    -command [code $this setcolor 255 255 255]
     $itk_component(menu) add command -label red \
-	    -command [code $this setcolor {255 0 0}]
+	    -command [code $this setcolor 255 0 0]
     $itk_component(menu) add command -label green \
-	    -command [code $this setcolor {0 255 0}]
+	    -command [code $this setcolor 0 255 0]
     $itk_component(menu) add command -label blue\
-	    -command [code $this setcolor {0 0 255}]
+	    -command [code $this setcolor 0 0 255]
     $itk_component(menu) add command -label yellow \
-	    -command [code $this setcolor {255 255 0}]
+	    -command [code $this setcolor 255 255 0]
     $itk_component(menu) add command -label cyan \
-	    -command [code $this setcolor {0 255 255}]
+	    -command [code $this setcolor 0 255 255]
     $itk_component(menu) add command -label magenta \
-	    -command [code $this setcolor {255 0 255}]
+	    -command [code $this setcolor 255 0 255]
     $itk_component(menu) add separator
     $itk_component(menu) add command -label "Color Tool..." \
 	    -command [code $this chooser]
@@ -65,27 +67,45 @@ body CadColorEntry::chooser {} {
 	    -cancel "cadColorWidget_destroy $itk_interior.color"
 }
 
-body CadColorEntry::setcolor {rgb} {
-    if {$rgb != ""} {
-	set result [regexp "^(\[0-9\]+)\[ \]+(\[0-9\]+)\[ \]+(\[0-9\]+)\[ \]*$" \
-		$rgb cmatch red green blue]
-	if {!$result} {
-	    error "Improper color specification - $rgb"
-	}
-    } else {
-	return
+body CadColorEntry::setcolor {r g b} {
+    if {![rgbvalid $r $g $b]} {
+	error "Improper color specification - $r $g $b"
     }
 
-    entryset $rgb
-    $itk_component(menubutton) configure -bg [format "#%02x%02x%02x" $red $green $blue]
+    settext "$r $g $b"
+    $itk_component(menubutton) configure \
+	    -bg [format "#%02x%02x%02x" $r $g $b]
 }
 
 body CadColorEntry::setMBcolor {} {
-    setcolor [entryget]
+    eval setcolor [gettext]
 }
 
 body CadColorEntry::colorok {} {
     upvar #0 $itk_interior.color data
-    setcolor "$data(red) $data(green) $data(blue)"
+    setcolor $data(red) $data(green) $data(blue)
     cadColorWidget_destroy $itk_interior.color
+}
+
+body CadColorEntry::rgbvalid {r g b} {
+    if {![string is integer $r]} {
+	    return 0
+    }
+    if {![string is integer $g]} {
+	    return 0
+    }
+    if {![string is integer $b]} {
+	    return 0
+    }
+    if {$r < 0 || 255 < $r} {
+	return 0
+    }
+    if {$g < 0 || 255 < $g} {
+	return 0
+    }
+    if {$b < 0 || 255 < $b} {
+	return 0
+    }
+
+    return 1
 }
