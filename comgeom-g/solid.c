@@ -188,9 +188,9 @@ getsolid()
 	double	m1, m2;		/* Magnitude temporaries */
 	char	name[16+2];
 	double	dd[4*6];	/* 4 cards of 6 nums each */
-	double	tmp[3*8];	/* 8 vectors of 3 nums each */
+	point_t	tmp[8];		/* 8 vectors of 3 nums each */
 #define D(_i)	(&(dd[_i*3]))
-#define T(_i)	(&(tmp[_i*3]))
+#define T(_i)	(&(tmp[_i][0]))
 
 	if( (i = getline( scard, sizeof(scard), "solid card" )) == EOF )  {
 		printf("getsolid: unexpected EOF\n");
@@ -384,14 +384,14 @@ getsolid()
 	if( strcmp( solid_type, "arb8" ) == 0 )  {
 		if( getsoldata( dd, 8*3, sol_work ) < 0 )
 			return(-1);
-		return( mk_arb8( outfp, name, dd ) );
+		return( mk_arb8( outfp, name, (point_t *)dd ) );
 	}
 
 	if( strcmp( solid_type, "arb7" ) == 0 )  {
 		if( getsoldata( dd, 7*3, sol_work ) < 0 )
 			return(-1);
 		VMOVE( D(7), D(4) );
-		return( mk_arb8( outfp, name, dd ) );
+		return( mk_arb8( outfp, name, (point_t *)dd ) );
 	}
 
 	if( strcmp( solid_type, "arb6" ) == 0 )  {
@@ -401,7 +401,7 @@ getsolid()
 		VMOVE( D(7), D(5) );
 		VMOVE( D(6), D(5) );
 		VMOVE( D(5), D(4) );
-		return( mk_arb8( outfp, name, dd ) );
+		return( mk_arb8( outfp, name, (point_t *)dd ) );
 	}
 
 	if( strcmp( solid_type, "arb5" ) == 0 )  {
@@ -410,13 +410,13 @@ getsolid()
 		VMOVE( D(5), D(4) );
 		VMOVE( D(6), D(4) );
 		VMOVE( D(7), D(4) );
-		return( mk_arb8( outfp, name, dd ) );
+		return( mk_arb8( outfp, name, (point_t *)dd ) );
 	}
 
 	if( strcmp( solid_type, "arb4" ) == 0 )  {
 		if( getsoldata( dd, 4*3, sol_work ) < 0 )
 			return(-1);
-		return( mk_arb4( outfp, name, dd ) );
+		return( mk_arb4( outfp, name, (point_t *)dd ) );
 	}
 
 	if( strcmp( solid_type, "rcc" ) == 0 )  {
@@ -525,7 +525,10 @@ getsolid()
 		ps->ps_od = rad;
 		RT_LIST_INSERT( &head.l, &ps->l );
 		
-		return( mk_pipe( outfp, name, &head ) );
+		if( mk_pipe( outfp, name, &head ) < 0 )
+			return(-1);
+		mk_pipe_free( &head );
+		return(0);		/* OK */
 	}
 	         		
 			
