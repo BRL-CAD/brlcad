@@ -45,7 +45,13 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./ged.h"
 #include "./sedit.h"
 
+int readcodes(), writecodes();
+int loadcodes(), printcodes();
 void		tables(), edcodes(), changes(), prfield();
+
+#define LINELEN 256
+#define MAX_LEVELS 12
+struct directory *path[MAX_LEVELS];
 
 /* structure to distinguish new solids from existing (old) solids */
 struct identt {
@@ -78,7 +84,9 @@ int flag;	/* which type of table to make */
 FILE	*tabptr;
 
 int
-f_tables( argc, argv )
+f_tables(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
@@ -89,6 +97,9 @@ char	**argv;
 	time_t now;
 	static CONST char sortcmd[] = "sort -n +1 -2 -o /tmp/ord_id ";
 	static CONST char catcmd[] = "cat /tmp/ord_id >> ";
+
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
 
 	(void)signal( SIGINT, sig2 );		/* allow interrupts */
 
@@ -107,8 +118,8 @@ char	**argv;
 	}
 	else {
 		/* should never reach here */
-		rt_log("tables:  input error\n");
-		return CMD_BAD;
+	  Tcl_AppendResult(interp, "tables:  input error\n", (char *)NULL);
+	  return TCL_ERROR;
 	}
 
 	regflag = numreg = lastmemb = numsol = 0;
@@ -116,15 +127,15 @@ char	**argv;
 
 	/* open the file */
 	if( (tabptr=fopen(argv[1], "w+")) == NULL ) {
-		(void)rt_log("Can't open %s\n",argv[1]);
-		return CMD_BAD;
+	  Tcl_AppendResult(interp, "Can't open ", argv[1], "\n", (char *)NULL);
+	  return TCL_ERROR;
 	}
 
 	if( flag == SOL_TABLE || flag == REG_TABLE ) {
 		/* temp file for discrimination of solids */
 		if( (idfd = creat("/tmp/mged_discr", 0600)) < 0 ) {
 			perror( "/tmp/mged_discr" );
-			return CMD_BAD;
+			return TCL_ERROR;
 		}
 		rd_idfd = open( "/tmp/mged_discr", 2 );
 	}
@@ -154,17 +165,26 @@ char	**argv;
 		if( (dp = db_lookup( dbip, argv[i],LOOKUP_NOISY)) != DIR_NULL )
 			tables(dp, 0, identity, flag);
 		else
-			rt_log(" skip this object\n");
+		  Tcl_AppendResult(interp, " skip this object\n", (char *)NULL);
 	}
 
-	rt_log("Summary written in: %s\n",argv[1]);
+	Tcl_AppendResult(interp, "Summary written in: ", argv[1], "\n", (char *)NULL);
 
 	if( flag == SOL_TABLE || flag == REG_TABLE ) {
 		/* remove the temp file */
 		(void)unlink( "/tmp/mged_discr\0" );
 		(void)fprintf(tabptr,"\n\nNumber Solids = %d  Number Regions = %d\n",
 				numsol,numreg);
-		rt_log("Processed %d Solids and %d Regions\n",numsol,numreg);
+		{
+		  struct rt_vls tmp_vls;
+
+		  rt_vls_init(&tmp_vls);
+		  rt_vls_printf(&tmp_vls, "Processed %d Solids and %d Regions\n",
+				numsol,numreg);
+		  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+		  rt_vls_free(&tmp_vls);
+		}
+
 		(void)fclose( tabptr );
 	}
 
@@ -173,26 +193,34 @@ char	**argv;
 
 		(void)fprintf(tabptr,"* 9999999\n* 9999999\n* 9999999\n* 9999999\n* 9999999\n");
 		(void)fclose( tabptr );
-		rt_log("Processed %d Regions\n",numreg);
+
+		{
+		  struct rt_vls tmp_vls;
+
+		  rt_vls_init(&tmp_vls);
+		  rt_vls_printf(&tmp_vls, "Processed %d Regions\n",numreg);
+		  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+		  rt_vls_free(&tmp_vls);
+		}
 
 		/* make ordered idents */
 		rt_vls_init( &cmd );
 		rt_vls_strcpy( &cmd, sortcmd );
 		rt_vls_strcat( &cmd, argv[1] );
-		rt_log("%s\n", rt_vls_addr(&cmd) );
+		Tcl_AppendResult(interp, rt_vls_addr(&cmd), "\n", (char *)NULL);
 		(void)system( rt_vls_addr(&cmd) );
 
 		rt_vls_trunc( &cmd, 0 );
 		rt_vls_strcpy( &cmd, catcmd );
 		rt_vls_strcat( &cmd, argv[1] );
-		rt_log("%s\n", rt_vls_addr(&cmd) );
+		Tcl_AppendResult(interp, rt_vls_addr(&cmd), "\n", (char *)NULL);
 		(void)system( rt_vls_addr(&cmd) );
 		rt_vls_free( &cmd );
 
 		(void)unlink( "/tmp/ord_id\0" );
 	}
 
-	return CMD_OK;
+	return TCL_OK;
 }
 
 
@@ -208,38 +236,275 @@ char ctemp[7];
  *
  */
 int
-f_edcodes( argc, argv )
+f_edcodes(clientData, interp, argc, argv )
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-	register struct directory *dp;
-	register int i;
+  int i;
+  int status;
+  char tmpfil[] = "/tmp/GED.aXXXXX";
 
-	(void)signal( SIGINT, sig2 );		/* allow interrupts */
+  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+    return TCL_ERROR;
 
-	/* need user interaction for this command */
-	if( isatty(0) == 0 ) {
-		rt_log("Need user interaction for the 'edcodes' command\n");
-		return CMD_BAD;
-	}
+  (void)mktemp(tmpfil);
+  i=creat(tmpfil, 0600);
+  if( i < 0 ){
+    perror(tmpfil);
+    return TCL_ERROR;
+  }
 
+  (void)close(i);
+
+  regflag = lastmemb = 0;
+  if( writecodes(tmpfil, argc, argv) == TCL_ERROR ){
+    (void)unlink(tmpfil);
+    return TCL_ERROR;
+  }
+
+  if( editit(tmpfil) ){
+    regflag = lastmemb = 0;
+    status = readcodes(tmpfil, argc, argv);
+  }else
+    status = TCL_ERROR;
+
+  (void)unlink(tmpfil);
+  return status;
+}
+
+
+int
+writecodes(fname, argc, argv)
+char *fname;
+int argc;
+char *argv[];
+{
+  register int i;
+  int status;
+  FILE *fp;
+  register struct directory *dp;
+
+  fp = fopen(fname, "w");
+
+  for(i = 1; i < argc; ++i){
+    if( (dp = db_lookup( dbip, argv[i], LOOKUP_NOISY)) != DIR_NULL ){
+      status = printcodes(fp, dp, 0);
+
+      if(status == TCL_ERROR){
+	(void)fclose(fp);
+	return TCL_ERROR;
+      }
+    }
+  }
+
+  (void)fclose(fp);
+  return TCL_OK;
+}
+
+
+int
+readcodes(fname, argc, argv)
+char *fname;
+int argc;
+char *argv[];
+{
+  register int i;
+  int status;
+  FILE *fp;
+  register struct directory *dp;
+
+  fp = fopen(fname, "r");
+
+  for(i = 1; i < argc; ++i){
+    if( (dp = db_lookup( dbip, argv[i], LOOKUP_NOISY)) != DIR_NULL ){
+      status = loadcodes(fp, dp, 0);
+
+      if(status == TCL_ERROR){
+	(void)fclose(fp);
+	return TCL_ERROR;
+      }
+    }
+  }
+
+  (void)fclose(fp);
+  return TCL_OK;
+}
+
+
+int
+printcodes(fp, dp, pathpos)
+FILE *fp;
+struct directory *dp;
+int pathpos;
+{
+  int i;
+  int status;
+  int nparts;
+  struct directory *nextdp;
+
+  if(pathpos >= MAX_LEVELS){
+    regflag = ABORTED;
+    return TCL_ERROR;
+  }
+
+  if( db_get( dbip, dp, &record, 0, 1) < 0 )
+    return TCL_ERROR;
+
+  if( record.u_id == ID_COMB ){
+    if(regflag > 0){
+      if(record.c.c_flags != 'R'){
+	fprintf(fp, "**WARNING** group= %s is member of region= ",record.c.c_name);
+
+	for(i=0; i < pathpos; i++)
+	  fprintf(fp, "/%s",path[i]->d_namep);
+
+	fprintf(fp, "\n");
+      }
+
+      if(lastmemb)
 	regflag = lastmemb = 0;
 
-	/* put terminal in raw mode  no echo */
-	/* need "nice" way to do this */
-	(void)system( "stty raw -echo" );
+      return TCL_OK;
+    }
 
-	for(i=1; i<argc; i++) {
-		if( (dp = db_lookup( dbip, argv[i], LOOKUP_NOISY)) != DIR_NULL )
-			edcodes(dp, 0);
-		else
-			rt_log(" skip this object\n");
-	}
+    regflag = 0;
+    nparts = dp->d_len-1;
+    if(record.c.c_flags == 'R'){
+      /* first region in this path */
+      regflag = 1;
 
-	/* put terminal back in cooked mode  -  need "nice" way to do this */
-	(void)system( "stty cooked echo" );
+      if( nparts == 0 )	/* dummy region */
+	regflag = 0;
 
-	return CMD_OK;
+      fprintf(fp, "%-6d%-3d%-3d%-4d  ",record.c.c_regionid,record.c.c_aircode,
+	      record.c.c_material,record.c.c_los);
+
+      for(i=0; i < pathpos; i++)
+	fprintf(fp, "/%s",path[i]->d_namep);
+
+      fprintf(fp, "/%s%s\n", record.c.c_name, nparts==0 ? " **DUMMY REGION**" : "");
+    }
+
+    lastmemb = 0;
+    for(i=1; i<=nparts; i++) {
+      if(i == nparts)
+	lastmemb = 1;
+
+      if( db_get( dbip, dp, &record, i, 1) < 0 ){
+	TCL_READ_ERR_return;
+      }
+
+      path[pathpos] = dp;
+      if( (nextdp = db_lookup( dbip, record.M.m_instname, LOOKUP_NOISY)) == DIR_NULL )
+	continue;
+
+      /* Recursive call */
+      status = printcodes(fp, nextdp, pathpos+1);
+      if(status == TCL_ERROR)
+	return TCL_ERROR;
+    }
+
+    return TCL_OK;
+  }      
+
+  /* not a combination  -  should have a solid */
+
+  /* last (bottom) position */
+  path[pathpos] = dp;
+
+  if( lastmemb ){
+    regflag = lastmemb = 0;
+  }
+
+  return TCL_OK;
+}
+
+
+int
+loadcodes(fp, dp, pathpos)
+FILE *fp;
+struct directory *dp;
+int pathpos;
+{
+  int i;
+  int status;
+  int nparts;
+  int item, air, mat, los;
+  char line[LINELEN];
+  struct directory *nextdp;
+
+  if(pathpos >= MAX_LEVELS){
+    regflag = ABORTED;
+    return TCL_ERROR;
+  }
+
+  if( db_get( dbip, dp, &record, 0, 1) < 0 )
+    return TCL_ERROR;
+
+  if( record.u_id == ID_COMB ){
+    if(regflag > 0){
+      if(lastmemb)
+	regflag = lastmemb = 0;
+
+      return TCL_OK;
+    }
+
+    regflag = 0;
+    nparts = dp->d_len-1;
+    if(record.c.c_flags == 'R'){
+      /* first region in this path */
+      regflag = 1;
+
+      if( nparts == 0 )	/* dummy region */
+	regflag = 0;
+
+      if( fgets( line , LINELEN, fp ) == NULL )
+	return TCL_ERROR;
+
+      sscanf(line, "%d%d%d%d", &item, &air, &mat, &los);
+      record.c.c_regionid = item;
+      record.c.c_aircode = air;
+      record.c.c_material = mat;
+      record.c.c_los = los;
+
+      /* write out all changes */
+      if( db_put( dbip, dp, &record, 0, 1 ) < 0 ){
+	Tcl_AppendResult(interp, "Database write error, aborting.\n",
+			 (char *)NULL);
+	TCL_ERROR_RECOVERY_SUGGESTION;
+	return TCL_ERROR;
+      }
+    }
+
+    lastmemb = 0;
+    for(i=1; i<=nparts; i++) {
+      if(i == nparts)
+	lastmemb = 1;
+
+      if( db_get( dbip, dp, &record, i, 1) < 0 ){
+	TCL_READ_ERR_return;
+      }
+
+      if( (nextdp = db_lookup( dbip, record.M.m_instname, LOOKUP_NOISY)) == DIR_NULL )
+	continue;
+
+      /* Recursive call */
+      status = loadcodes(fp, nextdp, pathpos+1);
+      if(status == TCL_ERROR)
+	return TCL_ERROR;
+    }
+
+    return TCL_OK;
+  }      
+
+  /* not a combination  -  should have a solid */
+  if( lastmemb ){
+    regflag = lastmemb = 0;
+  }
+
+  return TCL_OK;
 }
 
 
@@ -262,9 +527,6 @@ extern int ncharadd;
  *
  */
 
-#define MAX_LEVELS 12
-struct directory *path[MAX_LEVELS];
-
 void
 tables( dp, pathpos, old_xlate, flag)
 register struct directory *dp;
@@ -283,11 +545,18 @@ int flag;
 	rt_vls_init( &str );
 
 	if( pathpos >= MAX_LEVELS ) {
-		rt_log("nesting exceeds %d levels\n",MAX_LEVELS);
-		for(i=0; i<MAX_LEVELS; i++)
-			rt_log("/%s", path[i]->d_namep);
-		rt_log("\n");
-		return;
+	  struct rt_vls tmp_vls;
+
+	  rt_vls_init(&tmp_vls);
+	  rt_vls_printf(&tmp_vls, "nesting exceeds %d levels\n",MAX_LEVELS);
+	  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+	  rt_vls_free(&tmp_vls);
+
+	  for(i=0; i<MAX_LEVELS; i++)
+	    Tcl_AppendResult(interp, "/", path[i]->d_namep, (char *)NULL);
+
+	  Tcl_AppendResult(interp, "\n", (char *)NULL);
+	  return;
 	}
 
 	if( db_get( dbip, dp, &record, 0, 1) < 0 )  READ_ERR_return;
@@ -300,10 +569,13 @@ int flag;
 					(void)fprintf(tabptr,"   RG %c %s\n",operate,record.c.c_name);
 			}
 			else {
-				rt_log("**WARNING** group= %s is member of region= ",record.c.c_name);
-				for(k=0;k<pathpos;k++)
-					rt_log("/%s",path[k]->d_namep);
-				rt_log("\n");
+			  Tcl_AppendResult(interp, "**WARNING** group= ", record.c.c_name,
+					   " is member of region= ", (char *)NULL);
+
+			  for(k=0;k<pathpos;k++)
+			    Tcl_AppendResult(interp, "/", path[k]->d_namep, (char *)NULL);
+
+			  Tcl_AppendResult(interp, "\n", (char *)NULL);
 			}
 			if(lastmemb)
 				regflag = lastmemb = 0;
@@ -369,18 +641,24 @@ int flag;
 	path[pathpos] = dp;
 
 	if(regflag == 0) {
-		/* have a solid that's not part of a region */
-		rt_log("**WARNING** following path (solid) has no region:\n");
-		for(k=0;k<=pathpos;k++)
-			rt_log("/%s",path[k]->d_namep);
-		rt_log("\n");
+	  /* have a solid that's not part of a region */
+	  Tcl_AppendResult(interp, "**WARNING** following path (solid) has no region:\n",
+			   (char *)NULL);
+
+	  for(k=0;k<=pathpos;k++)
+	    Tcl_AppendResult(interp, "/", path[k]->d_namep, (char *)NULL);
+
+	  Tcl_AppendResult(interp, "\n", (char *)NULL);
 	}
 
 	if( regflag && lastmemb && oper_ok == 0 ) {
-		rt_log("**WARNING** following region has only '-' oprations:\n");
-		for(k=0; k<pathpos; k++)
-			rt_log("/%s",path[k]->d_namep);
-		rt_log("\n");
+	  Tcl_AppendResult(interp, "**WARNING** following region has only '-' oprations:\n",
+			   (char *)NULL);
+
+	  for(k=0; k<pathpos; k++)
+	    Tcl_AppendResult(interp, "/", path[k]->d_namep, (char *)NULL);
+
+	  Tcl_AppendResult(interp, "\n", (char *)NULL);
 	}
 
 	if(flag == ID_TABLE) {
@@ -434,8 +712,14 @@ int flag;
 	discr[numsol++] = dchar;
 	identt.i_index = numsol;
 	if(numsol > MAXARGS) {
-		rt_log("tables: number of solids > max (%d)\n",MAXARGS);
-		exit(10);
+	  struct rt_vls tmp_vls;
+
+	  rt_vls_init(&tmp_vls);
+	  rt_vls_printf(&tmp_vls, "tables: number of solids > max (%d)\n",MAXARGS);
+	  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+	  rt_vls_free(&tmp_vls);
+
+	  exit(10);
 	}
 	(void)lseek(idfd, (off_t)0L, 2);
 	(void)write(idfd, &identt, sizeof identt);
@@ -462,113 +746,6 @@ int flag;
 	do_list( &str, dp, 1 );		/* verbose */
 	fprintf(tabptr, rt_vls_addr(&str));
 }
-
-
-
-
-
-
-/*
- *
- *		E D C O D E S ( ) :	edit region ident codes
- *
- *
- */
-void
-edcodes( dp, pathpos )
-register struct directory *dp;
-int pathpos;
-{
-
-	struct directory *nextdp;
-	int nparts, i;
-
-	if( regflag == ABORTED )
-		return;
-
-	if( pathpos >= MAX_LEVELS ) {
-		rt_log("nesting exceeds %d levels\n",MAX_LEVELS);
-		for(i=0; i<MAX_LEVELS; i++)
-			rt_log("/%s", path[i]->d_namep);
-		rt_log("\n");
-		regflag = ABORTED;
-		return;
-	}
-
-	if( db_get( dbip, dp, &record, 0, 1) < 0 )  READ_ERR_return;
-	if( record.u_id == ID_COMB ) {
-		if(regflag > 0) {
-			/* this comb record is part of a region */
-			if(record.c.c_flags == 'R') 
-				oper_ok++;
-			else {
-				rt_log("**WARNING** group= %s is member of region= ",record.c.c_name);
-				for(i=0;i<pathpos;i++)
-					rt_log("/%s",path[i]->d_namep);
-				rt_log("\n\r");
-			}
-			if(lastmemb)
-				regflag = lastmemb = 0;
-			return;
-		}
-		regflag = 0;
-		nparts = dp->d_len-1;
-		if(record.c.c_flags == 'R') {
-			/* first region in this path */
-			regflag = 1;
-
-			if( nparts == 0 )	/* dummy region */
-				regflag = 0;
-
-			oper_ok = 0;
-
-			(void)rt_log("%-6d%-3d%-3d%-4d  ",record.c.c_regionid,
-					record.c.c_aircode,record.c.c_material,
-					record.c.c_los);
-			for(i=0;i<pathpos;i++) {
-				(void)rt_log("/%s",path[i]->d_namep);
-			}
-			(void)rt_log("/%s%s\r",record.c.c_name,
-					nparts==0 ? " **DUMMY REGION**" : "");
-			/*edit this line */
-			if( editline(dp) ) {
-				rt_log("aborted\n");
-				regflag = ABORTED;
-				return;
-			}
-		}
-		lastmemb = 0;
-		for(i=1; i<=nparts; i++) {
-			if(i == nparts)
-				lastmemb = 1;
-			if( db_get( dbip, dp, &record, i, 1) < 0 )  READ_ERR_return;
-			operate = record.M.m_relation;
-
-			if(regflag && operate != SUBTRACT)
-				oper_ok++;
-
-			path[pathpos] = dp;
-			if( (nextdp = db_lookup( dbip, record.M.m_instname, LOOKUP_NOISY)) == DIR_NULL )
-				continue;
-			/* Recursive call */
-			edcodes(nextdp, pathpos+1);
-
-		}
-		return;
-	}
-
-	/* not a combination  -  should have a solid */
-
-	/* last (bottom) position */
-	path[pathpos] = dp;
-
-	if( lastmemb )
-		regflag = lastmemb = 0;
-
-	return;
-}
-
-
 
 
 /*    C H E C K      -     compares solids       returns 1 if they match
@@ -639,21 +816,21 @@ struct directory	*dp;
 				if(lpos == 0) 
 					prfield(field);
 				else {
-					for(i=0;i<(maxpos[field] - lpos); i++)
-						rt_log(" ");
+				  for(i=0;i<(maxpos[field] - lpos); i++)
+				    Tcl_AppendResult(interp, " ", (char *)NULL);
 				}
 
 				lpos = 0;
 				if(++field > 3) {
-					rt_log("\r");
-					field = 0;
+				  Tcl_AppendResult(interp, "\r", (char *)NULL);
+				  field = 0;
 				}
 			break;
 
 			case BACKSPACE:
 				if(lpos > 0) {
-					rt_log("\b");
-					lpos--;
+				  Tcl_AppendResult(interp, "\b", (char *)NULL);
+				  lpos--;
 				}
 				else {
 					/* go to beginning of previous field */
@@ -666,45 +843,46 @@ struct directory	*dp;
 						prfield(field);
 						elflag = 0;
 						for(i=0;i<maxpos[field];i++)
-							rt_log("\b");
+						  Tcl_AppendResult(interp, "\b", (char *)NULL);
 					}
 					if(field == 0)
 						break;
 					field--;
 					for(i=0; i<maxpos[field]; i++)
-						rt_log("\b");
+					  Tcl_AppendResult(interp, "\b", (char *)NULL);
 				}
 			break;
 
 			case CRETURN:
-				rt_log("\r\n");
-				if(eflag) {
-					if(elflag) {
-						/* change present field */
-						ctemp[lpos] = ' ';
-						elflag = 0;
-						changes( field );
-					}
-					/* update the record with changes */
-					record.c.c_regionid = item;
-					record.c.c_aircode = air;
-					record.c.c_material = mat;
-					record.c.c_los = los;
-					/* write out all changes */
-					if( db_put( dbip, dp, &record, 0, 1 ) < 0 )  {
-						rt_log("Database write error, aborting.\n");
-						ERROR_RECOVERY_SUGGESTION;
-						return(1);
-					}
-				}
-				/* get out of loop */
-				return(0);
+			  Tcl_AppendResult(interp, "\r\n", (char *)NULL);
+			  if(eflag) {
+			    if(elflag) {
+			      /* change present field */
+			      ctemp[lpos] = ' ';
+			      elflag = 0;
+			      changes( field );
+			    }
+			    /* update the record with changes */
+			    record.c.c_regionid = item;
+			    record.c.c_aircode = air;
+			    record.c.c_material = mat;
+			    record.c.c_los = los;
+			    /* write out all changes */
+			    if( db_put( dbip, dp, &record, 0, 1 ) < 0 )  {
+			      Tcl_AppendResult(interp, "Database write error, aborting.\n",
+					       (char *)NULL);
+			      TCL_ERROR_RECOVERY_SUGGESTION;
+			      return(1);
+			    }
+			  }
+			  /* get out of loop */
+			  return(0);
 
 			case QUIT_q:
 				/* 'q' entered ==> quit the editing */
 			case CONTROLC:
-				rt_log("\r\n");
-				return(1);
+			  Tcl_AppendResult(interp, "\r\n", (char *)NULL);
+			  return(1);
 
 			case 48:
 			case 49:
@@ -716,33 +894,46 @@ struct directory	*dp;
 			case 55:
 			case 56:
 			case 57:
-				/* integer was input */
-				eflag++;
-				if(lpos < maxpos[field]) {
-					elflag++;
-					rt_log( "%c", c );
-					ctemp[lpos++] = c;
-				}
-				else {
-					rt_log("\a\a");	/* bell */
-				}
-			break;
+			  /* integer was input */
+			  eflag++;
+			  if(lpos < maxpos[field]) {
+			    struct rt_vls tmp_vls;
+
+			    elflag++;
+			    rt_vls_init(&tmp_vls);
+			    rt_vls_printf(&tmp_vls, "%c", c );
+			    Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+			    rt_vls_free(&tmp_vls);
+			    ctemp[lpos++] = c;
+			  }
+			  else {
+			    Tcl_AppendResult(interp, "\a\a", (char *)NULL);
+			  }
+			  break;
 
 			case RESTORE:
-				/* 'R' was input - restore the line */
-				item = record.c.c_regionid;
-				air = record.c.c_aircode;
-				mat = record.c.c_material;
-				los = record.c.c_los;
-				lpos = field = eflag = elflag = 0;
+			  /* 'R' was input - restore the line */
+			  item = record.c.c_regionid;
+			  air = record.c.c_aircode;
+			  mat = record.c.c_material;
+			  los = record.c.c_los;
+			  lpos = field = eflag = elflag = 0;
 
-				rt_log("\r%-6d%-3d%-3d%-4d\r",item,air,mat,los);
+			  {
+			    struct rt_vls tmp_vls;
 
-			break;
+			    rt_vls_init(&tmp_vls);
+			    rt_vls_printf(&tmp_vls, "\r%-6d%-3d%-3d%-4d\r",item,air,mat,los);
+			    Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+			    rt_vls_free(&tmp_vls);
+			  }
+
+			  break;
 
 			default:
-				rt_log("\a"); 	/* ring bell */
-			break;
+			  Tcl_AppendResult(interp, "\a", (char *)NULL);
+
+			  break;
 		}	/* end of switch */
 	}	/* end of while loop */
 	return(1);	/* We should never get here */
@@ -785,35 +976,36 @@ void
 prfield( num )
 int num;
 {
+  struct rt_vls tmp_vls;
 
-	switch( num ) {
+  rt_vls_init(&tmp_vls);
+  switch( num ) {
+  case 0:
+    rt_vls_printf(&tmp_vls, "%-6d",item);
+    break;
+  case 1:
+    rt_vls_printf(&tmp_vls, "%-3d",air);
+    break;
+  case 2:
+    rt_vls_printf(&tmp_vls, "%-3d",mat);
+    break;
+  case 3:
+    rt_vls_printf(&tmp_vls, "%-4d",los);
+    break;
+  }
 
-		case 0:
-			(void)rt_log("%-6d",item);
-		break;
-
-		case 1:
-			(void)rt_log("%-3d",air);
-		break;
-
-		case 2:
-			(void)rt_log("%-3d",mat);
-		break;
-
-		case 3:
-			(void)rt_log("%-4d",los);
-		break;
-	}
-
-	return;
-
+  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+  rt_vls_free(&tmp_vls);
+  return;
 }
 
 /*
  *	F _ W H I C H _ I D ( ) :	finds all regions with given idents
  */
 int
-f_which_id( argc, argv )
+f_which_id(clientData, interp, argc, argv )
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
@@ -822,12 +1014,16 @@ char	**argv;
 	register struct directory *dp;
 	int		item;
 
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
+
 	/* allow interupts */
 	(void)signal( SIGINT, sig2 );
 
 	for( j=1; j<argc; j++) {
 		item = atoi( argv[j] );
-		rt_log("Region[s] with ident %d:\n",item);
+		Tcl_AppendResult(interp, "Region[s] with ident ", argv[j],
+				 ":\n", (char *)NULL);
 
 		/* Examine all COMB nodes */
 		for( i = 0; i < RT_DBNHASH; i++ )  {
@@ -836,14 +1032,15 @@ char	**argv;
 				    (DIR_COMB|DIR_REGION) )
 					continue;
 				if( db_get( dbip, dp, &rec, 0, 1 ) < 0 ) {
-					READ_ERR;
-					return CMD_BAD;
+				  TCL_READ_ERR_return;
 				}
 				if( rec.c.c_regionid != item )
 					continue;
-				rt_log("   %s\n",rec.c.c_name);
+
+				Tcl_AppendResult(interp, "   ", rec.c.c_name,
+						 "\n", (char *)NULL);
 			}
 		}
 	}
-	return CMD_OK;
+	return TCL_OK;
 }
