@@ -48,6 +48,11 @@ extern int	opterr;
 #if (__STDC__ && !apollo) || (sgi && mips)
 	/* SGI has this, even though it isn't ANSI */
 #	include <stdlib.h>
+
+#	if defined(__stardent)
+		extern FILE	*popen( const char *, const char * );
+		extern FILE	*fdopen( int, const char * );
+#	endif
 #else
 
 /*
@@ -69,9 +74,6 @@ extern long	lseek();
 extern int	nice();
 extern int	open();
 extern int	pipe();
-#if defined(alliant)
-extern FILE	*popen();	/*alliant doesn't declare this in stdio.h */
-#endif
 extern int	read();
 extern char	*sbrk();
 extern unsigned	sleep();
@@ -102,6 +104,19 @@ extern int	strcmp();
 
 extern long	time();
 
+/*
+ *	STDIO Library Routine supplements
+ */
+#if defined(alliant) ||  defined(__stardent)
+	extern FILE	*popen(); /* Not declared in stdio.h */
+#endif
+#if defined(__stardent)
+	extern FILE	*fdopen();
+#endif
+
+/*
+ *	Math Library Routines
+ */
 extern double	atof();
 
 #endif /* __STDC__ */
