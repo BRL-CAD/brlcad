@@ -8410,7 +8410,7 @@ char **argv;
       for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
 	bu_vls_printf(&vls2, " {{%s} {}}", mip->menu_string);
 
-      bu_vls_printf(&vls, " {{move edges} {%s}}", bu_vls_addr(&vls2));
+      bu_vls_printf(&vls, " {{%s} {%s}}", cntrl_menu[1].menu_string, bu_vls_addr(&vls2));
       bu_vls_trunc(&vls2, 0);
 
       /* build "move face" menu */
@@ -8420,7 +8420,7 @@ char **argv;
       for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
 	bu_vls_printf(&vls2, " {{%s} {}}", mip->menu_string);
 
-      bu_vls_printf(&vls, " {{move faces} {%s}}", bu_vls_addr(&vls2));
+      bu_vls_printf(&vls, " {{%s} {%s}}", cntrl_menu[2].menu_string, bu_vls_addr(&vls2));
       bu_vls_trunc(&vls2, 0);
 
       /* build "rotate face" menu */
@@ -8430,7 +8430,7 @@ char **argv;
       for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
 	bu_vls_printf(&vls2, " {{%s} {}}", mip->menu_string);
 
-      bu_vls_printf(&vls, " {{rotate faces} {%s}}", bu_vls_addr(&vls2));
+      bu_vls_printf(&vls, " {{%s} {%s}}", cntrl_menu[3].menu_string, bu_vls_addr(&vls2));
       bu_vls_free(&vls2);
     }
 

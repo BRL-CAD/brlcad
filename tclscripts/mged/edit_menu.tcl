@@ -56,7 +56,7 @@ proc init_solid_edit_menus { stype menu } {
 
 	set cmds "set mged_gui($id,transform) e; \
 		  set_transform $id
-	          press \"edit menu\"; "
+	          press \"Edit Menu\"; "
 	set i [build_solid_edit_menus .$id.menubar.edit $id 0 $cmds $menu]
 
 	.$id.menubar.edit insert $i separator
@@ -77,7 +77,7 @@ proc init_solid_edit_menus { stype menu } {
 		    set mged_gui($id,transform) e; set_transform $id"
 	    incr i
 	    .$id.menubar.edit insert $i radiobutton -variable edit_type \
-		    -label "none of above" -underline 0 -command "set edit_solid_flag 0; \
+		    -label "None Of Above" -underline 0 -command "set edit_solid_flag 0; \
 		    set mged_gui($id,transform) e; set_transform $id"
 	    incr i
 	    .$id.menubar.edit insert $i separator
@@ -175,15 +175,15 @@ proc init_object_edit_menus {} {
 		set mged_gui($id,transform) e; set_transform $id"
 	incr i
 	.$id.menubar.edit insert $i radiobutton -variable edit_type \
-		-label "X move" -command "press \"X move\"; \
+		-label "X move" -command "press \"X Move\"; \
 		set mged_gui($id,transform) e; set_transform $id"
 	incr i
 	.$id.menubar.edit insert $i radiobutton -variable edit_type \
-		-label "Y move" -command "press \"Y move\"; \
+		-label "Y move" -command "press \"Y Move\"; \
 		set mged_gui($id,transform) e; set_transform $id"
 	incr i
 	.$id.menubar.edit insert $i radiobutton -variable edit_type \
-		-label "XY move" -command "press \"XY move\"; \
+		-label "XY move" -command "press \"XY Move\"; \
 		set mged_gui($id,transform) e; set_transform $id"
 	incr i
 	.$id.menubar.edit insert $i radiobutton -variable edit_type \

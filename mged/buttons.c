@@ -158,7 +158,7 @@ struct menu_item second_menu[] = {
 };
 struct menu_item sed_menu[] = {
 	{ "*SOLID EDIT*", btn_head_menu, 2 },
-	{ "edit menu", btn_item_hit, BE_S_EDIT },
+	{ "Edit Menu", btn_item_hit, BE_S_EDIT },
 	{ "Rotate", btn_item_hit, BE_S_ROTATE },
 	{ "Translate", btn_item_hit, BE_S_TRANS },
 	{ "Scale", btn_item_hit, BE_S_SCALE },
@@ -168,9 +168,9 @@ struct menu_item sed_menu[] = {
 struct menu_item oed_menu[] = {
 	{ "*OBJ EDIT*", btn_head_menu, 2 },
 	{ "Scale", btn_item_hit, BE_O_SCALE },
-	{ "X move", btn_item_hit, BE_O_X },
-	{ "Y move", btn_item_hit, BE_O_Y },
-	{ "XY move", btn_item_hit, BE_O_XY },
+	{ "X Move", btn_item_hit, BE_O_X },
+	{ "Y Move", btn_item_hit, BE_O_Y },
+	{ "XY Move", btn_item_hit, BE_O_XY },
 	{ "Rotate", btn_item_hit, BE_O_ROTATE },
 	{ "Scale X", btn_item_hit, BE_O_XSCALE },
 	{ "Scale Y", btn_item_hit, BE_O_YSCALE },
