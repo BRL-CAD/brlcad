@@ -2223,7 +2223,7 @@ RT_EXTERN(void			nmg_euprint, (CONST char *str, CONST struct edgeuse *eu) );
 
 /* From nmg_misc.c */
 RT_EXTERN(int			nmg_tbl, (struct nmg_ptbl *b, int func, long *p) );
-RT_EXTERN(void			nmg_purge_unwanted_intersection_points, (struct nmg_ptbl *vert_list, CONST struct faceuse *fu, CONST struct rt_tol *tol));
+RT_EXTERN(void			nmg_purge_unwanted_intersection_points, (struct nmg_ptbl *vert_list, fastf_t *mag, CONST struct faceuse *fu, CONST struct rt_tol *tol));
 RT_EXTERN(int			nmg_in_or_ref, (struct vertexuse *vu, struct nmg_ptbl *b) );
 RT_EXTERN(void			nmg_rebound, (struct model *m, CONST struct rt_tol *tol) );
 RT_EXTERN(void			nmg_count_shell_kids, (CONST struct model *m, unsigned long *total_wires, unsigned long *total_faces, unsigned long *total_points));
@@ -2362,6 +2362,7 @@ RT_EXTERN(double		nmg_vu_angle_measure, (struct vertexuse	*vu,
 				int in) );
 RT_EXTERN(struct edge_g_lseg	*nmg_face_cutjoin, (
 				struct nmg_ptbl *b1, struct nmg_ptbl *b2,
+				fastf_t *mag1, fastf_t *mag2,
 				struct faceuse *fu1, struct faceuse *fu2,
 				point_t pt, vect_t dir,
 				struct edge_g_lseg *eg,
