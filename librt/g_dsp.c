@@ -191,6 +191,7 @@ hook_file(
 	struct rt_dsp_internal *dsp_ip = (struct rt_dsp_internal *)base;
 
 	dsp_ip->dsp_datasrc = RT_DSP_SRC_V4_FILE;
+	dsp_ip->dsp_bip = (struct rt_db_internal *)NULL;
 }
 
 
@@ -2905,6 +2906,7 @@ dsp_get_data(struct rt_dsp_internal	*dsp_ip,
 
 	switch (dsp_ip->dsp_datasrc) {
 	case RT_DSP_SRC_FILE:
+	case RT_DSP_SRC_V4_FILE:
 		if (rt_g.debug & DEBUG_HF)
 			bu_log("getting data from file\n");
 		return get_file_data(dsp_ip, ip, ep, mat, dbip);
@@ -2987,7 +2989,6 @@ CONST struct db_i		*dbip;
 	bu_vls_strcpy( &str, rp->ss.ss_args );
 	if (bu_struct_parse( &str, rt_dsp_parse, (char *)dsp_ip ) < 0) {
 		if (BU_VLS_IS_INITIALIZED( &str )) bu_vls_free( &str );
-
 		IMPORT_FAIL("parse error");
 	}
 
