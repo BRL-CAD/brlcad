@@ -53,6 +53,7 @@ struct blade {
 };
 
 #define BLADE_MAX 6
+#define BLADE_LAST (BLADE_MAX-1)
 struct plant {
 	long		magic;
 	point_t		root;		/* location of base of blade */
@@ -95,6 +96,7 @@ struct grass_specific {
 	double	size;		/* size of noise coordinate space */
 	point_t	vscale;		/* size of noise coordinate space */
 	vect_t	delta;
+	point_t brown;
 	struct	plant proto;
 
 	mat_t	m_to_sh;	/* model to shader space matrix */
@@ -118,7 +120,8 @@ struct grass_specific grass_defaults = {
 	4.0,				/* octaves */
 	.31415926535,			/* size */
 	{ 1.0, 1.0, 1.0 },		/* vscale */
-	{ 1000.0, 1000.0, 1000.0 },	/* delta into noise space */
+	{ 1001.6, 1020.5, 1300.4 },	/* delta into noise space */
+	{.7, .6, .3},	
 	{	0.0, 0.0, 0.0, 0.0,	/* m_to_sh */
 		0.0, 0.0, 0.0, 0.0,
 		0.0, 0.0, 0.0, 0.0,
@@ -294,16 +297,16 @@ double w;	/* 0..1, */
 
 	/* decide the number of blades */
 	if (d < .8) {
-		pl->blades -= d * (pl->blades-1) * .5;
-		pl->blades += 1;
-		pl->blades = CLAMP(pl->blades, 1, BLADE_MAX-1);
+		pl->blades -= d * pl->blades * .5;
+		pl->blades = CLAMP(pl->blades, 1, BLADE_LAST);
 	} 
 
 	for (blade=0 ; blade < pl->blades ; blade++) {
 		pl->b[blade].tot_len = 0.0;
-		if (blade != BLADE_MAX-1)
+		if (blade != BLADE_LAST)
 			pl->b[blade].width *= d;
-
+		else
+			d *= d;
 
 		for (seg=0; seg < pl->b[blade].segs ; seg++) {
 			pl->b[blade].leaf[seg].len *= d;
@@ -349,8 +352,8 @@ struct grass_specific *grass_sp;
 
   seg_delta_angle = (87.0 / (double)BLADE_SEGS_MAX);
 
-  for (blade=0 ; blade < BLADE_MAX-1 ; blade++) {
-    val = (double)blade / (double)(BLADE_MAX-1);
+  for (blade=0 ; blade < BLADE_LAST ; blade++) {
+    val = (double)blade / (double)(BLADE_LAST);
 
     grass_sp->proto.b[blade].magic = BLADE_MAGIC;
     grass_sp->proto.b[blade].tot_len = 0.0;
@@ -360,13 +363,13 @@ struct grass_specific *grass_sp;
 
 
     /* pick a start angle for the first segment */
-    start_angle = 65.0 + 20.0 * (1.0-val);
+    start_angle = 55.0 + 30.0 * (1.0-val);
     seg_len = grass_sp->t / grass_sp->proto.b[blade].segs;
 
     for (seg=0 ; seg < grass_sp->proto.b[blade].segs; seg++) {
         grass_sp->proto.b[blade].leaf[seg].magic = LEAF_MAGIC;
 
-    	angle = start_angle - seg * seg_delta_angle;
+    	angle = start_angle - (double)seg * seg_delta_angle;
     	angle *= bn_degtorad;
         VSET(grass_sp->proto.b[blade].leaf[seg].blade,
         	cos(angle), 0.0, sin(angle));
@@ -401,17 +404,17 @@ struct grass_specific *grass_sp;
   /* The central stalk is a bit different.  It's basically a straight tall
    * shaft
    */
-  blade = BLADE_MAX-1;
+  blade = BLADE_LAST;
   grass_sp->proto.b[blade].magic = BLADE_MAGIC;
   grass_sp->proto.b[blade].tot_len = 0.0;
   grass_sp->proto.b[blade].segs = BLADE_SEGS_MAX;
   grass_sp->proto.b[blade].width = grass_sp->blade_width * 0.5;
 
 
-  seg_len = grass_sp->t / grass_sp->proto.b[blade].segs;
+  seg_len = .75 * grass_sp->t / grass_sp->proto.b[blade].segs;
   val = .9;
   for (seg=0 ; seg < grass_sp->proto.b[blade].segs ; seg++) {
-    	tmp = (double)seg / (double)BLADE_SEGS_MAX;
+    tmp = (double)seg / (double)BLADE_SEGS_MAX;
 
     grass_sp->proto.b[blade].leaf[seg].magic = LEAF_MAGIC;
     
@@ -552,6 +555,7 @@ double w;		/* cell specific weght for count, height */
 	VMOVE(pl->root, cell_pos);
 	pl->root[Z] = 0.0;
 
+
 	idx = (int)(c[X] + c[Y]);
 	BN_RANDSEED(idx, idx);
 	pl->root[X] += BN_RANDOM(idx) * grass_sp->cell[X];
@@ -628,16 +632,15 @@ double fract;
 			VMOVE(r->hit.hit_normal, bl->leaf[seg].N);
 		}
 
-		if (blade_num == BLADE_MAX-1) {
+		if (blade_num == BLADE_LAST) {
 			vect_t brown;
 			double d;
 
-			d = (1.0-fract) * .25;
+			d = (1.0-fract) * .4;
 			VSCALE(swp->sw_color, swp->sw_color, d);
 			d = 1.0 - d;
 
-			VSET(brown, .7, .6, .3);
-			VSCALE(brown, brown, d);
+			VSCALE(brown, grass_sp->brown, d);
 
 			VADD2(swp->sw_color, swp->sw_color, brown);
 		}
@@ -738,15 +741,17 @@ int blade_num;
 		 * So we scale the width of the blade based upon the 
 		 * fraction of total blade length to PCA.
 		 */
-		if (blade_num < BLADE_MAX-1) {
-			fract = (accum_len + ldist[1]) / bl->tot_len;
+		fract = (accum_len + ldist[1]) / bl->tot_len;
+		if (blade_num < BLADE_LAST) {
 			blade_width = bl->width * (1.0 - fract);
 		} else {
-			fract = (accum_len + ldist[1]) / bl->tot_len;
+#if 0
 			if (fract > .9)
 				blade_width = bl->width * 1.1;
 			else
 				blade_width = bl->width * .5;
+#endif
+			blade_width = .5 * bl->width * (1.0 - fract);
 		}
 
 		if (dist < (PCA_ray_radius+blade_width)) {
@@ -831,14 +836,19 @@ CONST struct grass_specific *grass_sp;
 
 
 static int
-stat_cell(cell_pos, r, grass_sp, swp, dist_to_cell)
+stat_cell(cell_pos, r, grass_sp, swp, dist_to_cell, radius)
 point_t cell_pos;	/* origin of cell in region coordinates */
 struct grass_ray	*r;
 struct grass_specific	*grass_sp;
 struct shadework	*swp;
 double dist_to_cell;
+double radius;	/* radius of ray */
 {
 	point_t tmp;
+	vect_t color;
+	double h;
+
+	double ratio = grass_sp->blade_width / radius;
 	/* the ray is "large" so just pick something appropriate */
 
 	CK_grass_SP(grass_sp);
@@ -850,7 +860,19 @@ double dist_to_cell;
 	r->hit.hit_dist = dist_to_cell;
 	VJOIN1(r->hit.hit_point, r->r.r_pt, dist_to_cell, r->r.r_dir);
 
-	VSET(swp->sw_color, .7, .6, .3);
+	/* compute color at this point */
+	h = r->hit.hit_point[Z] / 400.0;
+
+	VSCALE(color, swp->sw_basecolor, 1.0 - h);
+	VJOIN1(color, color, h, grass_sp->brown);
+	
+	if (VEQUAL(swp->sw_color, swp->sw_basecolor)) {
+		VSCALE(swp->sw_color, color, ratio);
+		swp->sw_transmit -= ratio;
+	} else {
+		VJOIN1(swp->sw_color, swp->sw_color, ratio, grass_sp->brown);
+		swp->sw_transmit -= ratio;
+	}
 
 #if 0
 	bn_noise_vec(cell_pos, r->hit.hit_normal);
@@ -865,7 +887,10 @@ double dist_to_cell;
 		VREVERSE(r->hit.hit_normal, r->hit.hit_normal);
 	}
 
-	return SHADE_ABORT_GRASS;
+	if (swp->sw_transmit < .05)
+		return SHADE_ABORT_GRASS;
+	else
+		return SHADE_CONT;
 }
 
 
@@ -919,9 +944,9 @@ struct grass_specific	*grass_sp;
 			val, r->radius, r->diverge, dist_to_cell,  val*32.0,
 			V2ARGS(grass_sp->cell));
 
-	if (val > grass_sp->blade_width * 3)
-		return stat_cell(cell_pos, r, grass_sp, swp, dist_to_cell);
-
+	if (val > grass_sp->blade_width * 3) {
+		return stat_cell(cell_pos, r, grass_sp, swp, dist_to_cell, val);
+	}
 
 	/* Figure out how many plants are in this cell */
 	val = plants_this_cell(cell, grass_sp);
@@ -1068,6 +1093,9 @@ char			*dp;	/* ptr to the shader-specific struct */
 		return 0;
 	}
 #endif
+	swp->sw_transmit = 1.0;
+
+
 	/* XXX now how would you transform the tolerance structure
 	 * to the local coordinate space ?
 	 */
@@ -1295,7 +1323,6 @@ char			*dp;	/* ptr to the shader-specific struct */
 	}
 
 
-	swp->sw_transmit = 1.0;
 	(void)rr_render( ap, pp, swp );
 
 	/* Tell stacker to abort shading */
