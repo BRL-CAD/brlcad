@@ -58,6 +58,7 @@
 #define	rb_parent(n, o)		(((n) -> rbn_parent)[o])
 #define	rb_left_child(n, o)	(((n) -> rbn_left)[o])
 #define	rb_right_child(n, o)	(((n) -> rbn_right)[o])
+#define	rb_data(n, o)		(((n) -> rbn_data)[o])
 #define	RB_LEFT			0
 #define	RB_RIGHT		1
 #define	rb_child(n, o, d)	(((d) == RB_LEFT)		? 	\
@@ -82,6 +83,7 @@
 }
 #define	RB_RED			0
 #define	RB_BLACK		1
+#define rb_null(t)		((t) -> rbt_empty_node)
 
 /*
  *	Global variables within LIBREDBLACK
@@ -95,13 +97,30 @@
 /*
  *	Functions internal to LIBREDBLACK
  */
-void left_rotate	(
-			    struct rb_node	*node,
-			    int			order
-			);
-void right_rotate	(
-			    struct rb_node	*node,
-			    int			order
-			);
+struct rb_node *_rb_search	(
+				    struct rb_node	*root,
+				    int			order_nm,
+				    int			(*order)(),
+				    void		*data
+				);
+void left_rotate		(
+				    struct rb_node	*node,
+				    int			order
+				);
+void right_rotate		(
+				    struct rb_node	*node,
+				    int			order
+				);
+#define	rb_rotate(n, o, d)	(((d) == RB_LEFT)		? 	\
+				    left_rotate((n), (o))	:	\
+				    right_rotate((n), (o)))
+#define	rb_other_rotate(n, o, d) (((d) == RB_LEFT)		? 	\
+				    right_rotate((n), (o))	:	\
+				    left_rotate((n), (o)))
+struct rb_node *_rb_neighbor	(
+				    struct rb_node	*node,
+				    int			order,
+				    int			sense
+				);
 
 #endif /* RB_INTERNALS_H */
