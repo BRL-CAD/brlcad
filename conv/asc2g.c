@@ -856,7 +856,7 @@ pipebld()
 	} while( (ret = (strcmp (type , "end"))) != 0);
 
 	mk_pipe(stdout, name, &head);
-	mk_freemembers( &head );
+	mk_pipe_free( &head );
 	free( (char *)sp );
 }
 
