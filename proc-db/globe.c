@@ -16,7 +16,7 @@
 #include "rtgeom.h"
 #include "wdb.h"
 
-char *progname ="(noname)";
+char *progname ="globe";
 
 void usage()
 {
