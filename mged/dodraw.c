@@ -522,11 +522,11 @@ mged_bound_solid( sp )
 register struct solid *sp;
 {
 	register struct rt_vlist	*vp;
-	vect_t				maxvalue;
-	vect_t				minvalue;
+	register double			xmax, ymax, zmax;
+	register double			xmin, ymin, zmin;
 
-	VSETALL( maxvalue, -INFINITY );
-	VSETALL( minvalue,  INFINITY );
+	xmax = ymax = zmax = -INFINITY;
+	xmin = ymin = zmin =  INFINITY;
 	sp->s_vlen = 0;
 	for( RT_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
 		register int	j;
@@ -543,7 +543,12 @@ register struct solid *sp;
 			case RT_VLIST_POLY_MOVE:
 			case RT_VLIST_POLY_DRAW:
 			case RT_VLIST_POLY_END:
-				VMINMAX( minvalue, maxvalue, *pt );
+				V_MIN( xmin, (*pt)[X] );
+				V_MAX( xmax, (*pt)[X] );
+				V_MIN( ymin, (*pt)[Y] );
+				V_MAX( ymax, (*pt)[Y] );
+				V_MIN( zmin, (*pt)[Z] );
+				V_MAX( zmax, (*pt)[Z] );
 				break;
 			default:
 				(void)printf("unknown vlist op %d\n", *cmd);
@@ -552,11 +557,13 @@ register struct solid *sp;
 		sp->s_vlen += nused;
 	}
 
-	VADD2SCALE( sp->s_center, minvalue, maxvalue, 0.5 );
+	sp->s_center[X] = (xmin + xmax) * 0.5;
+	sp->s_center[Y] = (ymin + ymax) * 0.5;
+	sp->s_center[Z] = (zmin + zmax) * 0.5;
 
-	sp->s_size = maxvalue[X] - minvalue[X];
-	MAX( sp->s_size, maxvalue[Y] - minvalue[Y] );
-	MAX( sp->s_size, maxvalue[Z] - minvalue[Z] );
+	sp->s_size = xmax - xmin;
+	MAX( sp->s_size, ymax - ymin );
+	MAX( sp->s_size, zmax - zmin );
 }
 
 /*
