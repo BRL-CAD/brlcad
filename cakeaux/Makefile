@@ -6,10 +6,11 @@
 SHELL=/bin/sh
 
 # Use the following two lines for gnu compiler
-# CC = gcc
-# CFLAGS = -fwritable-strings
-CC = cc
-CFLAGS = 
+#   CC = gcc
+#   CFLAGS = -fwritable-strings
+# Use these for everyone else
+#   CC = cc
+#   CFLAGS = 
 
 # Some systems use "flex" insteda of "lex"
 # LEX = flex
