@@ -66,10 +66,10 @@ libz.a: $(OBJS)
 	$(AR) $@ $(OBJS)
 	-@ ($(RANLIB) $@ || true) >/dev/null 2>&1
 
-$(SHAREDLIB).$(VER): $(OBJS)
+$(SHAREDLIB): $(OBJS)
 	$(LDSHARED) -o $@ $(OBJS)
-	rm -f $(SHAREDLIB) $(SHAREDLIB).1
-	ln -s $@ $(SHAREDLIB)
+	rm -f $(SHAREDLIB).11.1 $(SHAREDLIB).1
+	ln -s $@ $(SHAREDLIB).11.1
 	ln -s $@ $(SHAREDLIB).1
 
 example: example.o $(LIBS)
