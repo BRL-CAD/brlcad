@@ -63,3 +63,9 @@ uninstall:
 	  rm -f $(DESTDIR)$(pkgdatadir)/$$f; \
 	done
 
+clean:
+	@list='${MODELS:asc=g}'; for p in $$list; do \
+	  f="`echo $$p | sed -e 's|^.*/||'`"; \
+	  echo " rm -f $$f"; \
+	  rm -f $$f; \
+	done
