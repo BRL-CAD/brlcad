@@ -172,6 +172,7 @@ struct directory *dp;
 		{
 		  Tcl_AppendResult(interp, "This combination appears to be corrupted\n",
 				   (char *)NULL);
+		  fclose( fp );
 		  return( 1 );
 		}
 
@@ -181,11 +182,18 @@ struct directory *dp;
 				     "` has been object edited\n",
 				     "\tCombination must be `pushed` before editing\n",
 				     (char *)NULL);
+		    fclose( fp );
 		    return( 1 );
 		  }
 		}
 
-		fprintf( fp , " %c %s\n" , record.M.m_relation , record.M.m_instname );
+		if( fprintf( fp , " %c %s\n" , record.M.m_relation , record.M.m_instname ) <= 0 )
+		{
+			Tcl_AppendResult(interp, "Cannot write to temp file (", red_tmpfil,
+				"). Aborting edit\n", (char *)NULL );
+			fclose( fp );
+			return( 1 );
+		}
 	}
 	fclose( fp );
 	return( 0 );
