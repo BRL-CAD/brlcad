@@ -10,6 +10,7 @@ rcs_id[] = "$Header$";
 #include	"std.h"
 
 extern char	*malloc();
+void		usage();
 
 char	var_char = 'X';
 
@@ -114,6 +115,7 @@ nextword:
 **	Tell the unfortunate user how to use sub.
 */
 
+void
 usage()
 {
 	printf("Usage: cakesub [-i] [-vX] [-o#] [-n#] oldpattern newpattern name ...\n");
