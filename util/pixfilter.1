@@ -18,10 +18,14 @@ applies one of several 3x3 kernel filters to a color
 .IR pix (5)
 format file.
 It will take a file name or else read from standard input.
-The input file size will be assumed to have a line length of 512
-pixels unless the
-.B \-w
-flag is used to tell it otherwise.
+The input file size will be assumed to be 512 by 512 pixels
+unless the 
+.B \-w\,
+and/or
+.B \-n\,
+or the
+.B \-s\
+flags are used to tell it otherwise.
 By default a low pass filter is used.  The
 .BI \-f\  type
 flag can be used to specify a different type of filter.
