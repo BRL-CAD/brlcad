@@ -60,7 +60,7 @@ char **argv;
 		if( get_vas_status() < 0 )
 			exit(1);
 		vas_putc(C_INIT);
-		vas_await(R_INIT);
+		vas_await(R_INIT, 5);
 		if( get_vtr_status(0) < 0 )
 			exit_code = 1;
 		goto done;
@@ -306,8 +306,10 @@ int	start_frame;
 	vas_await(R_RECORD, 30);
 
 	/* New scene only records 4 sec matte */
-	fprintf(stderr,"Recording built-in title matte\n");
-	do_record(1);
+	if( new )  {
+		fprintf(stderr,"Recording built-in title matte\n");
+		do_record(1);
+	}
 }
 
 /*
