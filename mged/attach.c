@@ -210,6 +210,7 @@ release()
 	    if(strcmp(name, rt_vls_addr(&p->_pathName)))
 	      continue;
 
+	    /* found it */
 	    save_dm_list = curr_dm_list;
 	    curr_dm_list = p;
 	    break;
@@ -245,6 +246,8 @@ release()
 	  curr_dm_list = save_dm_list;  /* put it back the way it was */
 
 	RT_LIST_DEQUEUE( &p->l );
+	if(!--rc)
+	  rt_free( (char *)p->s_info, "release: s_info" );
 	rt_free( (char *)p, "release: curr_dm_list" );
 
 	/* 
@@ -282,6 +285,7 @@ char *name;
     dmlp = (struct dm_list *)rt_malloc(sizeof(struct dm_list),
 				       "dm_list");
     bzero((void *)dmlp, sizeof(struct dm_list));
+
     RT_LIST_APPEND(&head_dm_list.l, &dmlp->l);
     o_dm_list = curr_dm_list;
     curr_dm_list = dmlp;
@@ -510,13 +514,50 @@ is_dm_null()
 
 
 #ifdef MULTI_ATTACH
+int
+f_tie( argc, argv )
+int     argc;
+char    **argv;
+{
+  struct dm_list *p;
+  struct dm_list *p1 = (struct dm_list *)NULL;
+  struct dm_list *p2 = (struct dm_list *)NULL;
+
+  for( RT_LIST_FOR(p, dm_list, &head_dm_list.l) ){
+    if(p1 == (struct dm_list *)NULL && !strcmp(argv[1], rt_vls_addr(&p->_pathName)))
+	p1 = p;
+    else if(p2 == (struct dm_list *)NULL && !strcmp(argv[2], rt_vls_addr(&p->_pathName)))
+      p2 = p;
+    else if(p1 != (struct dm_list *)NULL && p2 != (struct dm_list *)NULL)
+      break;
+  }
+
+  if(p1 == (struct dm_list *)NULL || p2 == (struct dm_list *)NULL){
+    rt_log("Bad pathname(s)\n\tpathName1: %s\t\tpathName2: %s\n", argv[1], argv[2]);
+    return CMD_BAD;
+  }
+
+  if(!--p1->s_info->_rc)
+    rt_free( (char *)p, "tie: s_info" );
+
+  /* p1 now shares p2's s_info */
+  p1->s_info = p2->s_info;
+
+  /* increment the reference count */
+  ++p2->s_info->_rc;
+
+  return CMD_OK;
+}
+
 void
 dm_var_init(initial_dm_list)
 struct dm_list *initial_dm_list;
 {
-
+  curr_dm_list->s_info = (struct shared_info *)rt_malloc(sizeof(struct shared_info),
+							    "shared_info");
+  bzero((void *)curr_dm_list->s_info, sizeof(struct shared_info));
   mged_variables = default_mged_variables;
-  mat_copy( Viewrot, initial_dm_list->_Viewrot );
+  mat_copy( Viewrot, initial_dm_list->s_info->_Viewrot );
   size_reset();
   new_mats();
 
@@ -524,6 +565,7 @@ struct dm_list *initial_dm_list;
   MAT_DELTAS_GET(orig_pos, toViewcenter);
 #endif
 
+  ++rc;
   dmaflag = 1;
 }
 #endif

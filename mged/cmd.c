@@ -422,8 +422,8 @@ static struct funtab funtab[] = {
 	f_regdef, 2, 5,FALSE,
 "regions", "file object(s)", "make ascii summary of regions",
 	f_tables, 3, MAXARGS,FALSE,
-"release", "", "release current display processor [attach NU]",
-	f_release,1,1,FALSE,
+"release", "[name]", "release display processor",
+	f_release,1,2,FALSE,
 "rfarb", "", "makes arb given point, 2 coord of 3 pts, rot, fb, thickness",
 	f_rfarb, 1, 27,FALSE,
 "rm", "comb <members>", "remove members from comb",
@@ -486,6 +486,10 @@ static struct funtab funtab[] = {
 	f_tabobj, 2, MAXARGS,FALSE,
 "ted", "", "text edit a solid's parameters",
 	f_tedit,1,1,FALSE,
+#ifdef MULTI_ATTACH
+"tie", "pathName1 pathName2", "tie display manager pathName1 to display manager pathName2",
+        f_tie, 3,3,FALSE,
+#endif
 "title", "string", "change the title",
 	f_title,1,MAXARGS,FALSE,
 "tol", "[abs #] [rel #] [norm #] [dist #] [perp #]", "show/set tessellation and calculation tolerances",
@@ -795,20 +799,20 @@ char **argv;
 	"S", (fastf_t *)NULL
     };
 
-    knobs[0].variable = &curr_dm_list->_absolute_rotate[X];
-    knobs[1].variable = &curr_dm_list->_absolute_rotate[Y];
-    knobs[2].variable = &curr_dm_list->_absolute_rotate[Z];
-    knobs[3].variable = &curr_dm_list->_absolute_slew[X];
-    knobs[4].variable = &curr_dm_list->_absolute_slew[Y];
-    knobs[5].variable = &curr_dm_list->_absolute_slew[Z];
-    knobs[6].variable = &curr_dm_list->_absolute_zoom;
-    knobs[7].variable = &curr_dm_list->_rate_rotate[X];
-    knobs[8].variable = &curr_dm_list->_rate_rotate[Y];
-    knobs[9].variable = &curr_dm_list->_rate_rotate[Z];
-    knobs[10].variable = &curr_dm_list->_rate_slew[X];
-    knobs[11].variable = &curr_dm_list->_rate_slew[Y];
-    knobs[12].variable = &curr_dm_list->_rate_slew[Z];
-    knobs[13].variable = &curr_dm_list->_rate_zoom;
+    knobs[0].variable = &absolute_rotate[X];
+    knobs[1].variable = &absolute_rotate[Y];
+    knobs[2].variable = &absolute_rotate[Z];
+    knobs[3].variable = &absolute_slew[X];
+    knobs[4].variable = &absolute_slew[Y];
+    knobs[5].variable = &absolute_slew[Z];
+    knobs[6].variable = &absolute_zoom;
+    knobs[7].variable = &rate_rotate[X];
+    knobs[8].variable = &rate_rotate[Y];
+    knobs[9].variable = &rate_rotate[Z];
+    knobs[10].variable = &rate_slew[X];
+    knobs[11].variable = &rate_slew[Y];
+    knobs[12].variable = &rate_slew[Z];
+    knobs[13].variable = &rate_zoom;
 	
     if( argc < 2 ) {
 	Tcl_SetResult(interp, "getknob: need a knob name", TCL_STATIC);
