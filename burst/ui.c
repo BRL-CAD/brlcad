@@ -3,7 +3,6 @@
 			U. S. Army Ballistic Research Laboratory
 			Aberdeen Proving Ground
 			Maryland 21005-5066
-			(301)278-6651 or AV-298-6651
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
@@ -22,12 +21,11 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <signal.h>
 #include <fcntl.h>
 
-#include <Sc/Sc.h>
-
 #include <machine.h>
 #include <vmath.h>
 #include <raytrace.h>
 
+#include "./Sc.h"
 #include "./Mm.h"
 #include "./burst.h"
 #include "./trie.h"
@@ -38,7 +36,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 static char promptbuf[LNBUFSZ];
 static char *bannerp = "BURST (%s)";
-static char *pgmverp = "2.0";
+static char *pgmverp = "2.1";
 
 #define AddCmd( nm, f )\
 	{	Trie	*p;\
