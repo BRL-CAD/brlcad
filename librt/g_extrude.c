@@ -91,6 +91,15 @@ static struct bn_tol extr_tol={			/* a fake tolerance structure for the intersec
 #define NURB_SEG	5
 #define BEZIER_SEG	6
 
+/* defines for loop classification */
+#define UNKNOWN		0
+#define	A_IN_B		1
+#define	B_IN_A		2
+#define	DISJOINT	3
+
+#define LOOPA		1
+#define LOOPB		2
+
 /*
  *  			R T _ E X T R U D E _ P R E P
  *  
@@ -1297,6 +1306,540 @@ const struct bn_tol	*tol;
 	return(0);
 }
 
+void
+get_indices( genptr_t seg, int *start, int *end )
+{
+	struct carc_seg *csg;
+	struct nurb_seg *nsg;
+	struct bezier_seg *bsg;
+	struct line_seg *lsg=(struct line_seg *)seg;
+
+	switch (lsg->magic) {
+		case CURVE_LSEG_MAGIC:
+			*start = lsg->start;
+			*end = lsg->end;
+			break;
+		case CURVE_CARC_MAGIC:
+			csg = (struct carc_seg *)seg;
+			if( csg->radius < 0.0 ) {
+				*start = csg->start;
+				*end = *start;
+				break;
+			}
+			*start = csg->start;
+			*end = csg->end;
+			break;
+		case CURVE_NURB_MAGIC:
+			nsg = (struct nurb_seg *)seg;
+			*start = nsg->ctl_points[0];
+			*end = nsg->ctl_points[nsg->c_size-1];
+			break;
+		case CURVE_BEZIER_MAGIC:
+			bsg = (struct bezier_seg *)seg;
+			*start = bsg->ctl_points[0];
+			*end = bsg->ctl_points[bsg->degree];
+			break;
+	}
+}
+
+void
+get_seg_midpoint( genptr_t seg, struct rt_sketch_internal *skt, point2d_t pt )
+{
+	struct edge_g_cnurb eg;
+	point_t tmp_pt;
+	struct line_seg *lsg;
+	struct carc_seg *csg;
+	struct nurb_seg *nsg;
+	struct bezier_seg *bsg;
+	long *lng;
+	point2d_t *V;
+	point2d_t pta;
+	int i;
+	int coords;
+
+	lng = (long *)seg;
+
+	switch( *lng )
+		{
+		case CURVE_LSEG_MAGIC:
+			lsg = (struct line_seg *)lng;
+			VADD2_2D( pta, skt->verts[lsg->start], skt->verts[lsg->end] );
+			VSCALE_2D( pt, pta, 0.5 );
+			break;
+		case CURVE_CARC_MAGIC:
+			csg = (struct carc_seg *)lng;
+			if( csg->radius < 0.0 ) {
+				VMOVE_2D( pt, skt->verts[csg->start] );
+			} else {
+				point2d_t start2d, end2d, mid_pt, s2m, dir, center2d;
+				fastf_t tmp_len, len_sq, mid_ang, s2m_len_sq, cross_z;
+				fastf_t start_ang, end_ang;
+
+				/* this is an arc (not a full circle) */
+				V2MOVE( start2d, skt->verts[csg->start] );
+				V2MOVE( end2d, skt->verts[csg->end] );
+				mid_pt[0] = (start2d[0] + end2d[0]) * 0.5;
+				mid_pt[1] = (start2d[1] + end2d[1]) * 0.5;
+				V2SUB2( s2m, mid_pt, start2d );
+				dir[0] = -s2m[1];
+				dir[1] = s2m[0];
+				s2m_len_sq =  s2m[0]*s2m[0] + s2m[1]*s2m[1];
+				if( s2m_len_sq < SMALL_FASTF ) {
+					bu_log( "start and end points are too close together in circular arc of sketch\n" );
+					break;
+				}
+				len_sq = csg->radius*csg->radius - s2m_len_sq;
+				if( len_sq < 0.0 ) {
+					bu_log( "Impossible radius for specified start and end points in circular arc\n");
+					break;
+				}
+				tmp_len = sqrt( dir[0]*dir[0] + dir[1]*dir[1] );
+				dir[0] = dir[0] / tmp_len;
+				dir[1] = dir[1] / tmp_len;
+				tmp_len = sqrt( len_sq );
+				V2JOIN1( center2d, mid_pt, tmp_len, dir );
+
+				/* check center location */
+				cross_z = ( end2d[X] - start2d[X] )*( center2d[Y] - start2d[Y] ) -
+					( end2d[Y] - start2d[Y] )*( center2d[X] - start2d[X] );
+				if( !(cross_z > 0.0 && csg->center_is_left) ) {
+					V2JOIN1( center2d, mid_pt, -tmp_len, dir );
+				}
+				start_ang = atan2( start2d[Y]-center2d[Y], start2d[X]-center2d[X] );
+				end_ang = atan2( end2d[Y]-center2d[Y], end2d[X]-center2d[X] );
+				if( csg->orientation ) { /* clock-wise */
+					while( end_ang > start_ang )
+						end_ang -= 2.0 * M_PI;
+				}	
+				else { /* counter-clock-wise */
+					while( end_ang < start_ang )
+						end_ang += 2.0 * M_PI;
+				}
+
+				/* get mid angle */
+				mid_ang = (start_ang + end_ang ) * 0.5;
+
+				/* calculate mid point */
+				pt[X] = center2d[X] + csg->radius * cos( mid_ang );
+				pt[Y] = center2d[Y] + csg->radius * sin( mid_ang );
+					break;
+				}
+			break;
+		case CURVE_NURB_MAGIC:
+			nsg = (struct nurb_seg *)lng;
+
+			eg.l.magic = NMG_EDGE_G_CNURB_MAGIC;
+			eg.order = nsg->order;
+			eg.k.k_size = nsg->k.k_size;
+			eg.k.knots = nsg->k.knots;
+			eg.c_size = nsg->c_size;
+			coords = 2 + RT_NURB_IS_PT_RATIONAL( nsg->pt_type );
+			eg.pt_type = RT_NURB_MAKE_PT_TYPE( coords, 2, RT_NURB_IS_PT_RATIONAL( nsg->pt_type ) );
+			eg.ctl_points = (fastf_t *)bu_malloc( nsg->c_size * coords * sizeof( fastf_t ), "eg.ctl_points" );
+			if( RT_NURB_IS_PT_RATIONAL( nsg->pt_type ) ) {
+				for( i=0 ; i<nsg->c_size ; i++ ) {
+					VMOVE_2D( &eg.ctl_points[i*coords], skt->verts[nsg->ctl_points[i]] );
+					eg.ctl_points[(i+1)*coords - 1] = nsg->weights[i];
+				}
+			}
+			else {
+				for( i=0 ; i<nsg->c_size ; i++ ) {
+					VMOVE_2D( &eg.ctl_points[i*coords], skt->verts[nsg->ctl_points[i]] );
+				}
+			}
+			rt_nurb_c_eval( &eg, (nsg->k.knots[nsg->k.k_size-1] - nsg->k.knots[0]) * 0.5, tmp_pt );
+			if( RT_NURB_IS_PT_RATIONAL( nsg->pt_type ) ) {
+				int j;
+
+				for( j=0 ; j<coords-1 ; j++ )
+					pt[j] = tmp_pt[j] / tmp_pt[coords-1];
+			} else {
+				V2MOVE( pt, tmp_pt );
+			}
+			bu_free( (char *)eg.ctl_points, "eg.ctl_points" );
+			break;
+		case CURVE_BEZIER_MAGIC:
+			bsg = (struct bezier_seg *)lng;
+			V = (point2d_t *)bu_calloc( bsg->degree+1, sizeof( point2d_t ), "Bezier control points" );
+			for( i=0 ; i<= bsg->degree ; i++ ) {
+				VMOVE_2D( V[i], skt->verts[bsg->ctl_points[i]] );
+			}
+			Bezier( V, bsg->degree, 0.5, NULL, NULL, pt, NULL );
+			bu_free( (char *)V, "Bezier control points" );
+			break;
+		default:
+			bu_bomb( "Unrecognized segment type in sketch\n");
+			break;
+		}
+}
+
+struct loop_inter {
+	int			which_loop;
+	int			vert_index;	/* index of vertex intersected, or -1 if no hit on a vertex */
+	fastf_t			dist;		/* hit distance */
+	struct loop_inter	*next;
+};
+
+void
+isect_2D_loop_ray( point2d_t pta, point2d_t dir, struct bu_ptbl *loop, struct loop_inter **root,
+		   int which_loop, struct rt_sketch_internal *ip, struct bn_tol *tol )
+{
+	int i, j;
+	int code;
+	point2d_t norm;
+	fastf_t dist[2];
+
+	norm[0] = -dir[1];
+	norm[1] = dir[0];
+ 
+	for( i=0 ; i<BU_PTBL_END( loop ) ; i++ ) {
+		long *lng;
+		struct loop_inter *inter;
+		struct line_seg *lsg=NULL;
+		struct carc_seg *csg=NULL;
+		struct bezier_seg *bsg=NULL;
+		point2d_t d1;
+		point2d_t diff;
+		fastf_t radius;
+		point2d_t *verts;
+		point2d_t *intercept;
+		point2d_t *normal;
+
+		lng = BU_PTBL_GET( loop, i );
+		switch( *lng ) {
+			case CURVE_LSEG_MAGIC:
+				lsg = (struct line_seg *)lng;
+				V2SUB2( d1, ip->verts[lsg->end], ip->verts[lsg->start] );
+				code = bn_isect_line2_lseg2( dist, pta, dir, ip->verts[lsg->start], d1, tol );
+				if( code < 0 )
+					break;
+				if( code == 0 ) {
+					/* edge is collinear with ray */
+					/* add two intersections, one at each end vertex */
+					inter = (struct loop_inter *)bu_calloc( sizeof( struct loop_inter ), 1,
+										"loop intersection" );
+					inter->which_loop = which_loop;
+					inter->vert_index = lsg->start;
+					inter->dist = dist[0];
+					inter->next = NULL;
+					if( !(*root) ) {
+						(*root) = inter;
+					} else {
+						inter->next = (*root);
+						(*root) = inter;
+					}
+					inter = (struct loop_inter *)bu_calloc( sizeof( struct loop_inter ), 1,
+										"loop intersection" );
+					inter->which_loop = which_loop;
+					inter->vert_index = lsg->end;
+					inter->dist = dist[1];
+					inter->next = NULL;
+					inter->next = (*root);
+					(*root) = inter;
+				} else if( code == 1 ) {
+					/* hit at start vertex */
+					inter = (struct loop_inter *)bu_calloc( sizeof( struct loop_inter ), 1,
+										"loop intersection" );
+					inter->which_loop = which_loop;
+					inter->vert_index = lsg->start;
+					inter->dist = dist[0];
+					inter->next = NULL;
+					if( !(*root) ) {
+						(*root) = inter;
+					} else {
+						inter->next = (*root);
+						(*root) = inter;
+					}
+				} else if( code == 2 ) {
+					/* hit at end vertex */
+					inter = (struct loop_inter *)bu_calloc( sizeof( struct loop_inter ), 1,
+										"loop intersection" );
+					inter->which_loop = which_loop;
+					inter->vert_index = lsg->end;
+					inter->dist = dist[0];
+					inter->next = NULL;
+					if( !(*root) ) {
+						(*root) = inter;
+					} else {
+						inter->next = (*root);
+						(*root) = inter;
+					}
+				} else {
+					/* hit on edge, not at a vertex */
+					inter = (struct loop_inter *)bu_calloc( sizeof( struct loop_inter ), 1,
+										"loop intersection" );
+					inter->which_loop = which_loop;
+					inter->vert_index = -1;
+					inter->dist = dist[0];
+					inter->next = NULL;
+					if( !(*root) ) {
+						(*root) = inter;
+					} else {
+						inter->next = (*root);
+						(*root) = inter;
+					}
+				}
+				break;
+			case CURVE_CARC_MAGIC:
+				csg = (struct carc_seg *)lng;
+				if( csg->radius <= 0.0 ) {
+					point2d_t ra, rb;
+
+					V2SUB2( diff, ip->verts[csg->start], ip->verts[csg->end] );
+					radius = sqrt( MAG2SQ( diff ) );
+					ra[X] = radius;
+					ra[Y] = 0.0;
+					rb[X] = 0.0;
+					rb[Y] = radius;
+					code = isect_line2_ellipse( dist, pta, dir, ip->verts[csg->end],
+								    ra, rb );
+
+					if( code <= 0 )
+						break;
+					for( j=0 ; j<code ; j++ ) {
+						inter = (struct loop_inter *)bu_calloc( sizeof( struct loop_inter ), 1,
+										"loop intersection" );
+						inter->which_loop = which_loop;
+						inter->vert_index = -1;
+						inter->dist = dist[j];
+						inter->next = NULL;
+						if( !(*root) ) {
+							(*root) = inter;
+						} else {
+							inter->next = (*root);
+							(*root) = inter;
+						}
+					}
+					
+				} else {
+					vect_t s2m, tmp_dir;
+					point2d_t start2d, end2d, mid_pt, center2d;
+					fastf_t s2m_len_sq, len_sq, tmp_len, cross_z;
+
+					V2MOVE( start2d, ip->verts[csg->start] );
+					V2MOVE( end2d, ip->verts[csg->end] );
+					mid_pt[0] = (start2d[0] + end2d[0]) * 0.5;
+					mid_pt[1] = (start2d[1] + end2d[1]) * 0.5;
+					V2SUB2( s2m, mid_pt, start2d )
+						tmp_dir[0] = -s2m[1];
+					tmp_dir[1] = s2m[0];
+					s2m_len_sq =  s2m[0]*s2m[0] + s2m[1]*s2m[1];
+					if( s2m_len_sq < SMALL_FASTF )
+						{
+							bu_log( "start and end points are too close together in circular arc of sketch\n" );
+							break;
+						}
+					len_sq = radius*radius - s2m_len_sq;
+					if( len_sq < 0.0 )
+						{
+							bu_log( "Impossible radius for specified start and end points in circular arc\n");
+							break;
+						}
+					tmp_len = sqrt( tmp_dir[0]*tmp_dir[0] + tmp_dir[1]*tmp_dir[1] );
+					tmp_dir[0] = tmp_dir[0] / tmp_len;
+					tmp_dir[1] = tmp_dir[1] / tmp_len;
+					tmp_len = sqrt( len_sq );
+					V2JOIN1( center2d, mid_pt, tmp_len, tmp_dir )
+
+						/* check center location */
+						cross_z = ( end2d[X] - start2d[X] )*( center2d[Y] - start2d[Y] ) -
+						( end2d[Y] - start2d[Y] )*( center2d[X] - start2d[X] );
+					if( !(cross_z > 0.0 && csg->center_is_left) )
+						V2JOIN1( center2d, mid_pt, -tmp_len, tmp_dir );
+
+					code = isect_line_earc( dist, pta, dir, center2d, csg->radius, csg->radius,
+								norm, ip->verts[csg->start], ip->verts[csg->end],
+								csg->orientation );
+					if( code <= 0 )
+						break;
+					for( j=0 ; j<code ; j++ ) {
+						inter = (struct loop_inter *)bu_calloc( sizeof( struct loop_inter ), 1,
+										"loop intersection" );
+						inter->which_loop = which_loop;
+						inter->vert_index = -1;
+						inter->dist = dist[j];
+						inter->next = NULL;
+						if( !(*root) ) {
+							(*root) = inter;
+						} else {
+							inter->next = (*root);
+							(*root) = inter;
+						}
+					}
+				}
+				break;
+			case CURVE_BEZIER_MAGIC:
+				bsg = (struct bezier_seg *)lng;
+				intercept = NULL;
+				normal = NULL;
+				verts = (point2d_t *)bu_calloc( bsg->degree + 1, sizeof( point2d_t ), "Bezier verts" );
+				for( j=0 ; j<=bsg->degree ; j++ ) {
+					V2MOVE( verts[j], ip->verts[bsg->ctl_points[j]] );
+				}
+				code = FindRoots( verts, bsg->degree, &intercept, &normal, pta, dir, norm, 0, tol->dist );
+				for( j=0 ; j<code ; j++ ) {
+					V2SUB2( diff, intercept[j], pta );
+					dist[0] = sqrt( MAG2SQ( diff ) );
+					inter = (struct loop_inter *)bu_calloc( sizeof( struct loop_inter ), 1,
+										"loop intersection" );
+					inter->which_loop = which_loop;
+					inter->vert_index = -1;
+					inter->dist = dist[0];
+					inter->next = NULL;
+					if( !(*root) ) {
+						(*root) = inter;
+					} else {
+						inter->next = (*root);
+						(*root) = inter;
+					}
+				}
+				if( (*intercept) )
+					bu_free( (char *)intercept, "Bezier Intercepts" );
+				if( (*normal) )
+					bu_free( (char *)normal, "Bezier normals" );
+				bu_free( ( char *)verts, "Bezier Ctl points" );
+				break;
+			default:
+				bu_log( "isect_2D_loop_ray: Unrecognized curve segment type x%x\n", *lng );
+				bu_bomb( "isect_2D_loop_ray: Unrecognized curve segment type\n" );
+				break;
+		}
+	}
+}
+
+static void
+sort_intersections( struct loop_inter **root, struct bn_tol *tol )
+{
+	struct loop_inter *ptr, *prev, *pprev;
+	int done=0;
+	fastf_t diff;
+
+	/* eliminate any duplicates */
+	ptr = (*root);
+	while( ptr->next ) {
+		prev = ptr;
+		ptr = ptr->next;
+		if( ptr->vert_index > -1 && ptr->vert_index == prev->vert_index ) {
+			prev->next = ptr->next;
+			bu_free( (char *)ptr, "struct loop_inter" );
+			ptr = prev;
+		}
+	}
+
+	ptr = (*root);
+	while( ptr->next ) {
+		prev = ptr;
+		ptr = ptr->next;
+		diff = fabs( ptr->dist - prev->dist );
+		if( diff < tol->dist ) {
+			prev->next = ptr->next;
+			bu_free( (char *)ptr, "struct loop_inter" );
+			ptr = prev;
+		}
+	}
+
+	while( !done ) {
+		done = 1;
+		ptr = (*root);
+		prev = NULL;
+		pprev = NULL;
+		while( ptr->next ) {
+			pprev = prev;
+			prev = ptr;
+			ptr = ptr->next;
+			if( ptr->dist < prev->dist ) {
+				done = 0;
+				if( pprev ) {
+					prev->next = ptr->next;
+					pprev->next = ptr;
+					ptr->next = prev;
+				} else {
+					prev->next = ptr->next;
+					ptr->next = prev;
+					(*root) = ptr;
+				}
+			}
+		}
+	}
+}
+
+int
+classify_sketch_loops( struct bu_ptbl *loopa, struct bu_ptbl *loopb, struct rt_sketch_internal *ip )
+{
+	struct loop_inter *inter_root=NULL, *ptr, *tmp;
+	struct bn_tol tol;
+	point2d_t pta, ptb;
+	point2d_t dir;
+	struct curve *crv;
+	genptr_t seg;
+	long *lng;
+	int i;
+	fastf_t inv_len;
+	fastf_t dist[2];
+	int code;
+	int loopa_count=0, loopb_count=0;
+	int ret=UNKNOWN;
+
+	BU_CK_PTBL( loopa );
+	BU_CK_PTBL( loopb );
+	RT_SKETCH_CK_MAGIC( ip );
+
+	crv = &ip->skt_curve;
+
+	tol.magic = BN_TOL_MAGIC;
+	tol.dist = 0.005;
+	tol.dist_sq = tol.dist * tol.dist;
+	tol.perp = 1.0e-5;;
+	tol.para = 1.0 - tol.perp;
+
+	/* find points on a midpoint of a segment for each loop */
+	seg = (genptr_t)BU_PTBL_GET( loopa, 0 );
+	get_seg_midpoint( seg, ip, pta );
+	seg = (genptr_t)BU_PTBL_GET( loopb, 0 );
+	get_seg_midpoint( seg, ip, ptb );
+
+	V2SUB2( dir, ptb, pta );
+	inv_len = 1.0 / sqrt( MAGSQ_2D( dir ) );
+	V2SCALE( dir, dir, inv_len );
+	
+	/* intersect pta<->ptb line with both loops */
+        isect_2D_loop_ray( pta, dir, loopa, &inter_root, LOOPA, ip, &tol );
+	isect_2D_loop_ray( pta, dir, loopb, &inter_root, LOOPB, ip, &tol );
+
+	sort_intersections( &inter_root, &tol );
+
+	/* examine intercepts to determine loop relationship */
+	ptr = inter_root;
+	while( ptr ) {
+		tmp = ptr;
+		if( ret == UNKNOWN ) {
+			if( ptr->which_loop == LOOPA ) {
+				loopa_count++;
+				if( loopa_count && loopb_count ) {
+					if( loopb_count % 2 ) {
+						ret = A_IN_B;
+					} else {
+						ret = DISJOINT;
+					}
+				}
+			} else {
+				loopb_count++;
+				if( loopa_count && loopb_count ) {
+					if( loopa_count % 2 ) {
+						ret = B_IN_A;
+					} else {
+						ret = DISJOINT;
+					}
+				}
+			}
+		}
+		ptr = ptr->next;
+		bu_free( (char *)tmp, "loop intercept" );
+	}
+
+	return( ret );
+}
+
 /*
  *			R T _ E X T R U D E _ T E S S
  *
@@ -1312,7 +1855,308 @@ struct rt_db_internal	*ip;
 const struct rt_tess_tol *ttol;
 const struct bn_tol	*tol;
 {
-	return(-1);
+#if 0
+	return( -1 );
+#else
+	struct bu_list			vhead;
+	struct shell			*s;
+	struct faceuse			*fu;
+	struct vertex			***verts;
+	struct vertex			**vertsa;
+	int				vert_count=0;
+	struct rt_extrude_internal	*extrude_ip;
+	struct rt_sketch_internal	*sketch_ip;
+	struct curve			*crv=(struct curve *)NULL;
+	struct bu_ptbl			*aloop, loops, **containing_loops, *outer_loop;
+	int				i, j, k;
+	int				*used_seg;
+	struct bn_vlist			*vlp;
+	plane_t				pl;
+
+	RT_CK_DB_INTERNAL(ip);
+	extrude_ip = (struct rt_extrude_internal *)ip->idb_ptr;
+	RT_EXTRUDE_CK_MAGIC(extrude_ip);
+
+	if( !extrude_ip->skt )
+	{
+		bu_log( "rt_extrude_tess: ERROR: no sketch for extrusion!!!!\n" );
+		return( -1 );
+	}
+
+	sketch_ip = extrude_ip->skt;
+	RT_SKETCH_CK_MAGIC( sketch_ip );
+
+	crv = &sketch_ip->skt_curve;
+
+	if( crv->seg_count < 1 )
+		return( 0 );
+
+	/* find all the loops */
+	used_seg = (int *)bu_calloc( crv->seg_count, sizeof( int ), "used_seg" );
+	bu_ptbl_init( &loops, 5, "loops" );
+	for( i=0 ; i<crv->seg_count ; i++ ) {
+		genptr_t cur_seg;
+		int loop_start, loop_end;
+		int seg_start, seg_end;
+
+		if( used_seg[i] )
+			continue;
+
+		aloop = (struct bu_ptbl *)bu_calloc( 1, sizeof( struct bu_ptbl ), "aloop" );
+		bu_ptbl_init( aloop, 5, "aloop" );
+
+		bu_ptbl_ins( aloop, (long *)crv->segments[i] );
+		used_seg[i] = 1;
+		cur_seg = crv->segments[i];
+		get_indices( cur_seg, &loop_start, &loop_end );
+
+		while( loop_end != loop_start ) {
+			int j;
+			int added_seg;
+
+			added_seg = 0;
+			for( j=0 ; j<crv->seg_count ; j++ ) {
+				if( used_seg[j] )
+					continue;
+
+				get_indices( crv->segments[j], &seg_start, &seg_end );
+				if( seg_start != seg_end && seg_start == loop_end ) {
+					added_seg++;
+					bu_ptbl_ins( aloop, (long *)crv->segments[j] );
+					used_seg[j] = 1;
+					loop_end = seg_end;
+					if( loop_start == loop_end )
+						break;
+				}
+			}
+			if( !added_seg ) {
+				bu_log( "rt_extrude_tess: A loop is not closed in sketch %s\n",
+					extrude_ip->sketch_name );
+				bu_log( "\ttessellation failed!!\n" );
+				for( j=0 ; j<BU_PTBL_END( &loops ) ; j++ ) {
+					aloop = (struct bu_ptbl *)BU_PTBL_GET( &loops, j );
+					bu_ptbl_free( aloop );
+					bu_free( (char *)aloop, "aloop" );
+				}
+				bu_ptbl_free( &loops );
+				bu_free( ( char *)used_seg, "used_seg" );
+				return( -2 );
+			}
+		}
+		bu_ptbl_ins( &loops, (long *)aloop );
+	}
+	bu_free( ( char *)used_seg, "used_seg" );
+
+	/* sort the loops to find inside/outside relationships */
+	containing_loops = (struct bu_ptbl **)bu_calloc( BU_PTBL_END( &loops ),
+							 sizeof( struct bu_ptbl *), "containing_loops" );
+	for( i=0 ; i<BU_PTBL_END( &loops ) ; i++ ) {
+		containing_loops[i] = (struct bu_ptbl *)bu_calloc( 1, sizeof( struct bu_ptbl ), "containing_loops[i]" );
+		bu_ptbl_init( containing_loops[i], BU_PTBL_END( &loops ), "containing_loops[i]" );
+	}
+
+	for( i=0 ; i<BU_PTBL_END( &loops ) ; i++ ) {
+		struct bu_ptbl *loopa;
+		int j;
+
+		loopa = (struct bu_ptbl *)BU_PTBL_GET( &loops, i );
+		for( j=i+1 ; j<BU_PTBL_END( &loops ) ; j++ ) {
+			struct bu_ptbl *loopb;
+
+			loopb = (struct bu_ptbl *)BU_PTBL_GET( &loops, j );
+			switch( classify_sketch_loops( loopa, loopb, sketch_ip ) ) {
+				case A_IN_B:
+					bu_ptbl_ins( containing_loops[i], (long *)loopb );
+					break;
+				case B_IN_A:
+					bu_ptbl_ins( containing_loops[j], (long *)loopa );
+					break;
+				case DISJOINT:
+					break;
+				default:
+					bu_log( "rt_extrude_tess: Failed to classify loops!!\n" );
+					goto failed;
+			}
+		}
+	}
+
+	/* make loops */
+
+	/* find an outermost loop */
+	outer_loop = (struct bu_ptbl *)NULL;
+	for( i=0 ; i<BU_PTBL_END( &loops ) ; i++ ) {
+		if( BU_PTBL_END( containing_loops[i] ) == 0 ) {
+			outer_loop = (struct bu_ptbl *)BU_PTBL_GET( &loops, i );
+			break;
+		}
+	}
+
+	if( !outer_loop ) {
+		bu_log( "No outer loop in sketch %s\n", extrude_ip->sketch_name );
+		bu_log( "\ttessellation failed\n" );
+		for( i=0 ; i<BU_PTBL_END( &loops ) ; i++ ) { 
+		}
+		for( i=0 ; i<BU_PTBL_END( &loops ) ; i++ ) {
+			aloop = (struct bu_ptbl *)BU_PTBL_GET( &loops, i );
+			bu_ptbl_free( aloop );
+			bu_free( (char *)aloop, "aloop" );
+			bu_ptbl_free( containing_loops[i] );
+			bu_free( (char *)containing_loops[i], "aloop" );
+		}
+		bu_ptbl_free( &loops );
+		bu_free( (char *)containing_loops, "containing_loops" );
+	}
+
+	BU_LIST_INIT( &vhead );
+	if( BU_LIST_UNINITIALIZED( &rt_g.rtg_vlfree ) ) {
+		BU_LIST_INIT( &rt_g.rtg_vlfree );
+	}
+	for( i=0 ; i<BU_PTBL_END( outer_loop ) ; i++ ) {
+		genptr_t seg;
+
+		seg = (genptr_t)BU_PTBL_GET( outer_loop, i );
+		if( seg_to_vlist( &vhead, ttol, extrude_ip->V, extrude_ip->u_vec, extrude_ip->v_vec, sketch_ip, seg ) )
+			goto failed;
+	}
+
+	/* count vertices */
+	vert_count = 0;
+	for( BU_LIST_FOR( vlp, bn_vlist, &vhead ) ) {
+		for( i=0 ; i<vlp->nused ; i++ ) {
+			if( vlp->cmd[i] == BN_VLIST_LINE_DRAW )
+				vert_count++;
+		}
+	}
+
+	*r = nmg_mrsv( m );
+	s = BU_LIST_FIRST( shell, &((*r)->s_hd) );
+
+	/* make initial face from outer_loop */
+	verts = (struct vertex ***)bu_calloc( vert_count, sizeof( struct vertex **), "verts" );
+	for( i=0 ; i<vert_count ; i++ ) {
+		verts[i] = (struct vertex **)bu_calloc( 1, sizeof( struct vertex *), "verts[i]" );
+	}
+
+	fu = nmg_cmface( s, verts, vert_count );
+	j = 0;
+	for( BU_LIST_FOR( vlp, bn_vlist, &vhead ) ) {
+		for( i=0 ; i<vlp->nused ; i++ ) {
+			if( vlp->cmd[i] == BN_VLIST_LINE_DRAW ) {
+				nmg_vertex_gv( *verts[j], vlp->pt[i] );
+				j++;
+			}
+		}
+	}
+	BN_FREE_VLIST( &rt_g.rtg_vlfree, &vhead );
+
+	/* make sure face normal is in correct direction */
+	bu_free( (char *)verts, "verts" );
+	if( nmg_calc_face_plane( fu, pl ) ) {
+		bu_log( "Failed to calculate face plane for extrusion\n" );
+		return( -1 );
+	}
+	nmg_face_g( fu, pl );
+	if( VDOT( pl, extrude_ip->h ) > 0.0 ) {
+		nmg_reverse_face( fu );
+		fu = fu->fumate_p;
+	}
+
+	/* add the rest of the loops */
+	for( i=0 ; i<BU_PTBL_END( &loops ) ; i++ ) {
+		int fdir;
+		vect_t cross;
+		fastf_t pt_count=0.0;
+		fastf_t dot;
+		int rev=0;
+
+		aloop = (struct bu_ptbl *)BU_PTBL_GET( &loops, i );
+		if( aloop == outer_loop )
+			continue;
+
+		if( BU_PTBL_END( containing_loops[i] ) % 2 ) {
+			fdir = OT_OPPOSITE;
+		} else {
+			fdir = OT_SAME;
+		}
+
+		for( j=0 ; j<BU_PTBL_END( aloop ) ; j++ ) {
+			genptr_t seg;
+
+			seg = (genptr_t)BU_PTBL_GET( aloop, j );
+			if( seg_to_vlist( &vhead, ttol, extrude_ip->V,
+					  extrude_ip->u_vec, extrude_ip->v_vec, sketch_ip, seg ) )
+				goto failed;
+		}
+
+		/* calculate plane of this loop */
+		VSETALLN( pl, 0.0, 4 );
+		for( BU_LIST_FOR( vlp, bn_vlist, &vhead ) ) {
+			for( j=1 ; j<vlp->nused ; j++ ) {
+				if( vlp->cmd[j] == BN_VLIST_LINE_DRAW ) {
+					VCROSS( cross, vlp->pt[j-1], vlp->pt[j] );
+					VADD2( pl, pl, cross );
+				}
+			}
+		}
+
+		VUNITIZE( pl );
+
+		for( BU_LIST_FOR( vlp, bn_vlist, &vhead ) ) {
+			for( j=1 ; j<vlp->nused ; j++ ) {
+				if( vlp->cmd[j] == BN_VLIST_LINE_DRAW ) {
+					pl[3] += VDOT( pl, vlp->pt[j] );
+					pt_count++;
+				}
+			}
+		}
+		pl[3] /= pt_count;
+
+		dot = -VDOT( pl, extrude_ip->h );
+		rev = 0;
+		if( fdir == OT_SAME && dot < 0.0 )
+			rev = 1;
+		else if( fdir == OT_OPPOSITE && dot > 0.0 )
+			rev = 1;
+
+		vertsa = (struct vertex **)bu_calloc( pt_count, sizeof( struct vertex *), "verts" );
+
+		fu = nmg_add_loop_to_face( s, fu, vertsa, pt_count, fdir );
+
+		k = 0;
+		for( BU_LIST_FOR( vlp, bn_vlist, &vhead ) ) {
+			for( j=1 ; j<vlp->nused ; j++ ) {
+				if( vlp->cmd[j] == BN_VLIST_LINE_DRAW ) {
+					if( rev ) {
+						nmg_vertex_gv( vertsa[(int)(pt_count) - k - 1], vlp->pt[j] );
+					} else {
+						nmg_vertex_gv( vertsa[k], vlp->pt[j] );
+					}
+					k++;
+				}
+			}
+		}
+	}
+
+	/* extrude this face */
+	if( nmg_extrude_face( fu, extrude_ip->h, tol ) ) {
+		bu_log( "Failed to extrude face sketch\n" );
+		return( -1 );
+	}
+
+	nmg_region_a( *r, tol );
+
+	return( 0 );
+
+ failed:
+	for( i=0 ; i<BU_PTBL_END( &loops ) ; i++ ) {
+		bu_ptbl_free( containing_loops[i] );
+		bu_free( (char *)containing_loops[i], "containing_loops[i]" );
+	}
+	bu_free( (char *)containing_loops, "containing_loops" );
+	bu_ptbl_free( aloop );
+	bu_free( (char *)aloop, "aloop" );
+	return( -1 );
+#endif
 }
 
 /*
