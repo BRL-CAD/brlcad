@@ -974,7 +974,7 @@ again:
 	if( pc->pkc_type != type )  {
 		/* A message of some other type has unexpectedly arrived. */
 		if( pc->pkc_len > 0 )  {
-			if( (pc->pkc_buf = malloc(pc->pkc_len+2)) == NULL )  {
+			if( (pc->pkc_buf = (char *)malloc(pc->pkc_len+2)) == NULL )  {
 				pkg_perror(pc->pkc_errlog, "pkg_waitfor: malloc");
 				return(-1);
 			}
@@ -999,7 +999,7 @@ again:
 			return(-1);
 		}
 		excess = pc->pkc_len - len;	/* size of excess message */
-		if( (bp = malloc(excess)) == NULL )  {
+		if( (bp = (char *)malloc(excess)) == NULL )  {
 			pkg_perror(pc->pkc_errlog, "pkg_waitfor: excess malloc");
 			return(-1);
 		}
@@ -1267,7 +1267,7 @@ char *buf;
 		pc->pkc_buf = buf;
 	} else {
 		/* Prepare to read message into dynamic buffer */
-		if( (pc->pkc_buf = malloc(pc->pkc_len+2)) == NULL )  {
+		if( (pc->pkc_buf = (char *)malloc(pc->pkc_len+2)) == NULL )  {
 			pkg_perror(pc->pkc_errlog, "pkg_gethdr: malloc");
 			return(-1);
 		}
@@ -1482,7 +1482,7 @@ pkg_ck_debug()
 	char	buf[128];
 
 	if( pkg_debug )  return;
-	if( (place = getenv("LIBPKG_DEBUG")) == (char *)0 )  {
+	if( (place = (char *)getenv("LIBPKG_DEBUG")) == (char *)0 )  {
 		sprintf( buf, "/tmp/pkg.log" );
 		place = buf;
 	}
@@ -1540,7 +1540,7 @@ register struct pkg_conn	*pc;
 	/* If no buffer allocated yet, get one */
 	if( pc->pkc_inbuf == (char *)0 || pc->pkc_inlen <= 0 )  {
 		pc->pkc_inlen = PKG_STREAMLEN;
-		if( (pc->pkc_inbuf = malloc(pc->pkc_inlen)) == (char *)0 )  {
+		if( (pc->pkc_inbuf = (char *)malloc(pc->pkc_inlen)) == (char *)0 )  {
 			pc->pkc_errlog("pkg_suckin malloc failure\n");
 			pc->pkc_inlen = 0;
 			return(-1);
@@ -1569,7 +1569,7 @@ register struct pkg_conn	*pc;
 	avail = pc->pkc_inlen - pc->pkc_inend;
 	if( avail < 10 * sizeof(struct pkg_header) )  {
 		pc->pkc_inlen <<= 1;
-		if( (pc->pkc_inbuf = realloc(pc->pkc_inbuf, pc->pkc_inlen)) == (char *)0 )  {
+		if( (pc->pkc_inbuf = (char *)realloc(pc->pkc_inbuf, pc->pkc_inlen)) == (char *)0 )  {
 			pc->pkc_errlog("pkg_suckin realloc failure\n");
 			pc->pkc_inlen = 0;
 			return(-1);
