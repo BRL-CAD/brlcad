@@ -723,6 +723,8 @@ int have;
 		register fastf_t f;
 		struct application sub_ap;
 
+		if( rdebug & RDEBUG_LIGHT ) rt_log("computing Light visibility\n");
+
 		/*
 		 *  Determine light visibility
 		 *
@@ -767,9 +769,21 @@ int have;
 			if( (have & MFI_NORMAL) && (swp->sw_transmit <= 0) )  {
 				if( VDOT(swp->sw_hit.hit_normal,tolight) < 0 ) {
 					/* backfacing, opaque */
+					if (rdebug & RDEBUG_LIGHT)
+						bu_log("backfacing, opaque\n");
 					swp->sw_visible[i] = (char *)0;
 					goto next;
 				}
+			}
+			
+			if (rdebug& RDEBUG_RAYPLOT) {
+				point_t ray_endpt;
+
+				pl_color(stdout, 200, 200, 200);
+				VADD2(ray_endpt, swp->sw_hit.hit_point,
+					tolight);
+				pdv_3line(stdout, swp->sw_hit.hit_point,
+					ray_endpt);
 			}
 			VUNITIZE( tolight );
 
@@ -779,11 +793,16 @@ int have;
 			 */
 			if( -VDOT(tolight, lp->lt_aim) < lp->lt_cosangle )  {
 				/* dark (outside of light beam) */
+				if (rdebug & RDEBUG_LIGHT)
+					bu_log("outside beam\n");
+
 				swp->sw_visible[i] = (char *)0;
 				goto next;
 			}
 			if( !(lp->lt_shadows) )  {
 				/* "fill light" in beam, don't care about shadows */
+				if (rdebug & RDEBUG_LIGHT)
+					bu_log("fill light, no shadow\n");
 				swp->sw_visible[i] = (char *)lp;
 				VSETALL( intensity, 1 );
 				goto next;
@@ -795,6 +814,7 @@ int have;
 			 *  Advance start point slightly off surface.
 			 */
 			sub_ap = *ap;			/* struct copy */
+
 			VMOVE( sub_ap.a_ray.r_dir, tolight );
 			{
 				register fastf_t f;
@@ -803,6 +823,9 @@ int have;
 					swp->sw_hit.hit_point,
 					f, tolight );
 			}
+			sub_ap.a_rbeam = ap->a_rbeam + swp->sw_hit.hit_dist * ap->a_diverge;
+			sub_ap.a_diverge = ap->a_diverge;
+
 			sub_ap.a_hit = light_hit;
 			sub_ap.a_miss = light_miss;
 			sub_ap.a_user = -1;		/* sanity */
@@ -820,10 +843,14 @@ int have;
 
 			if( rt_shootray( &sub_ap ) )  {
 				/* light visible */
+				if (rdebug & RDEBUG_LIGHT)
+					bu_log("light visible\n");
 				swp->sw_visible[i] = (char *)lp;
 				VMOVE( intensity, sub_ap.a_color );
 			} else {
 				/* dark (light obscured) */
+				if (rdebug & RDEBUG_LIGHT)
+					bu_log("light obscured\n");
 				swp->sw_visible[i] = (char *)0;
 			}
 next:
