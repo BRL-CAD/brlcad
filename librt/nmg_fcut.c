@@ -1948,7 +1948,7 @@ CONST struct rt_tol	*tol;
 	struct nmg_ray_state	rs2;
 
 	if(rt_g.NMG_debug&DEBUG_FCUT)  {
-		rt_log("\nnmg_face_cutjoin(fu1=x%x, fu2=x%x)\n", fu1, fu2);
+		rt_log("\nnmg_face_cutjoin(fu1=x%x, fu2=x%x) START\n", fu1, fu2);
 	}
 
 	RT_CK_TOL(tol);
@@ -2064,6 +2064,15 @@ CONST struct rt_tol	*tol;
 	/* Can't do simplifications here,
 	 * because the caller's linked lists & pointers might get disrupted.
 	 */
+
+	/* Merging uses of common edges is OK, though, and quite necessary. */
+	if( i = nmg_mesh_two_faces( fu1, fu2, tol ) )  {
+		if(rt_g.NMG_debug&DEBUG_FCUT)
+			rt_log("nmg_face_cutjoin() meshed %d edges\n", i);
+	}
+	if(rt_g.NMG_debug&DEBUG_FCUT)  {
+		rt_log("nmg_face_cutjoin(fu1=x%x, fu2=x%x) END\n", fu1, fu2);
+	}
 }
 
 /*
@@ -2631,6 +2640,8 @@ rt_log("force next eu to ray\n");
 		/*  We know edge geom is null, make it be the isect line */
 		first_new_eu = RT_LIST_PLAST_CIRC(edgeuse, rs->vu[pos]->up.eu_p);
 		nmg_edge_geom_isect_line( first_new_eu->e_p, rs );
+
+		/* Fusing to this new edge will happen in nmg_face_cutjoin() */
 
 		/* Recompute loop geometry.  Bounding box may have expanded */
 		nmg_loop_g(nmg_lu_of_vu(rs->vu[pos])->l_p, rs->tol);

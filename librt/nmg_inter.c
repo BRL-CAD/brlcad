@@ -2054,6 +2054,8 @@ struct faceuse		*fu1;		/* fu that eu1 is from */
 	if( fu2->orientation != OT_SAME )  rt_bomb("nmg_isect_edge2p_face2p() fu2 not OT_SAME\n");
 	if( fu1 && fu1->orientation != OT_SAME )  rt_bomb("nmg_isect_edge2p_face2p() fu1 not OT_SAME\n");
 
+#if 0
+/* XXX There may be multiple edges, loops to cut/merge, etc. Can't just cop out here. */
 	/*  See if an edge exists in other face that connects these 2 verts */
 	fu2_eu = nmg_find_eu_in_face( eu1->vu_p->v_p, eu1->eumate_p->vu_p->v_p,
 	    fu2, (CONST struct edgeuse *)NULL, 0 );
@@ -2071,6 +2073,7 @@ struct faceuse		*fu1;		/* fu that eu1 is from */
 		ret = 0;
 		goto do_ret;
 	}
+#endif
 
 	/* Zap 2d cache, we could be switching faces now */
 	nmg_isect2d_cleanup(is);
@@ -2226,14 +2229,9 @@ nmg_region_v_unique( is->s1->r_p, &is->tol );
 	/* Invoke the face cutter to snip and join loops along isect line */
 nmg_fu_touchingloops(fu2);
 if(fu1)nmg_fu_touchingloops(fu1);
-nmg_region_v_unique( is->s2->r_p, &is->tol );
-nmg_region_v_unique( is->s1->r_p, &is->tol );
 	nmg_face_cutjoin(&vert_list1, &vert_list2, fu1, fu2, is->pt, is->dir, &is->tol);
 nmg_fu_touchingloops(fu2);		/* XXX r410 dies here */
 nmg_fu_touchingloops(fu1);
-nmg_region_v_unique( is->s2->r_p, &is->tol );
-nmg_region_v_unique( is->s1->r_p, &is->tol );
-	if(fu1) nmg_mesh_faces(fu2, fu1, &is->tol);
 	ret = 1;		/* face cutter was called. */
 
 out:
@@ -2466,12 +2464,6 @@ nmg_region_v_unique( fu1->s_p->r_p, &is->tol );
 nmg_region_v_unique( fu2->s_p->r_p, &is->tol );
 		nmg_vfu( &fu1->s_p->fu_hd, fu1->s_p );
 		nmg_vfu( &fu2->s_p->fu_hd, fu2->s_p );
-	}
-
-	nmg_mesh_faces(fu1, fu2, &is->tol);
-	if( rt_g.NMG_debug & DEBUG_VERIFY )  {
-nmg_fu_touchingloops(fu1);
-nmg_fu_touchingloops(fu2);
 	}
 
 #if 0
