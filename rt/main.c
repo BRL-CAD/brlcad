@@ -64,6 +64,7 @@ int		rt_perspective=0;	/* perspective view -vs- parallel */
 vect_t		dx_model;		/* view delta-X as model-space vect */
 vect_t		dy_model;		/* view delta-Y as model-space vect */
 point_t		eye_model;		/* model-space location of eye */
+fastf_t         eye_backoff = 1.414;	/* dist from eye to center */
 int		width;			/* # of pixels in X */
 int		height;			/* # of lines in Y */
 mat_t		Viewrotscale;
@@ -104,7 +105,7 @@ register char **argv;
 	register int c;
 	register int i;
 
-	while( (c=getopt( argc, argv, "SH:F:D:MA:x:X:s:f:a:e:l:O:o:p:P:Bb:n:w:iI" )) != EOF )  {
+	while( (c=getopt( argc, argv, "E:SH:F:D:MA:x:X:s:f:a:e:l:O:o:p:P:Bb:n:w:iI" )) != EOF )  {
 		switch( c )  {
 		case 'I':
 			interactive = 1;
@@ -192,6 +193,9 @@ register char **argv;
 			rt_perspective = 1;
 			zoomout = atof( optarg );
 			if( zoomout <= 0 )  zoomout = 1;
+			break;
+		case 'E':
+			eye_backoff = atof( optarg );
 			break;
 		case 'P':
 			/* Number of parallel workers */
