@@ -286,9 +286,9 @@ char **argv;
 	if (specify_base) {
 		base = user_base;
 	} else {
-		base = 0;
+		base = 1; /* prints frames in natural order */
 	}
-	if (base == 0) {
+	if (base <= 0) {
 		/*compute base as largest power of 2 less than num of frames*/
 		base = 1;
 		count = 2;
@@ -311,9 +311,10 @@ char **argv;
 			if (left && right) {
 				fprintf(stderr,"scriptsort: base(%d) not power of two.\n",
 				    base);
-fprintf(stderr,"left=0x%x, right=0x%x, mask=0x%x, bits=%d\n",left,right,mask,
-    bits);
-				exit(1);
+				fprintf(stderr,"left=0x%x, right=0x%x, mask=0x%x, bits=%d\n",left,right,mask, bits);
+				base = 1;
+				fprintf(stderr,"setting base to %d.", base);
+				break;
 			}
 			if (left) right = left;
 			bits = bits >> 1;
