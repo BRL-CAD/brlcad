@@ -40,98 +40,11 @@ RT_EXTERN( void nmg_isect_shell_self , ( struct shell *s , CONST struct rt_tol *
 RT_EXTERN( fastf_t nmg_loop_plane_area , ( struct loopuse *lu , plane_t pl ) );
 
 /*
- *	E x t r u d e _ N M G _ F a c e
- *
- *	Duplicate a given NMG face, move it by specified vector,
- *	and create a solid bounded by these faces.
- */
-nmg_extrude_face(fu, Vec, tol)
-struct faceuse	*fu;	/* Face to extrude. */
-vect_t		Vec;	/* Magnitude and direction of extrusion. */
-struct rt_tol	*tol;	/* NMG tolerances. */
-{
-	fastf_t		cosang;
-	int		nfaces;
-	struct faceuse	*fu2, *nmg_dup_face(), **outfaces;
-	int		face_count=2;
-	struct loopuse	*lu, *lu2;
-	plane_t		n;
-
-#define MIKE_TOL 0.0001
-
-	NMG_CK_FACEUSE( fu );
-	RT_CK_TOL( tol );
-
-	/* Duplicate and reverse face. */
-	fu2 = nmg_dup_face(fu, fu->s_p);
-	nmg_reverse_face( fu2 );
-	if( fu2->orientation != OT_OPPOSITE )
-		fu2 = fu2->fumate_p;
-
-	/* Figure out which face to translate. */
-	NMG_GET_FU_PLANE( n, fu );
-	cosang = VDOT(Vec, n);
-	if (NEAR_ZERO(cosang, MIKE_TOL))
-		rt_bomb("extrude_nmg_face: extrusion cannot be parallel to face\n");
-	else if (cosang > 0.)
-		translate_nmg_face(fu, Vec, tol);
-	else if (cosang < 0.)
-		translate_nmg_face(fu2->fumate_p, Vec, tol);
-
-	nfaces = verts_in_nmg_face( fu );
-	outfaces = (struct faceuse **)rt_calloc( nfaces+2 , sizeof( struct faceuse *) ,
-		"nmg_extrude_face: outfaces" );
-
-	outfaces[0] = fu;
-	outfaces[1] = fu2->fumate_p;
-
-	for( RT_LIST_FOR2(lu , lu2 , loopuse , &fu->lu_hd , &fu2->lu_hd ) )
-	{
-		struct edgeuse *eu,*eu2;
-
-		NMG_CK_LOOPUSE( lu );
-		NMG_CK_LOOPUSE( lu2 );
-
-		if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
-			continue;
-		if( RT_LIST_FIRST_MAGIC( &lu2->down_hd ) != NMG_EDGEUSE_MAGIC )
-		{
-			rt_log( "nmg_extrude_face: Original face and dup face don't match up!!\n" );
-			return( -1 );
-		}
-		for( RT_LIST_FOR2( eu , eu2 , edgeuse , &lu->down_hd , &lu2->down_hd ) )
-		{
-			struct vertex	*vertlist[4];
-
-			NMG_CK_EDGEUSE( eu );
-			NMG_CK_EDGEUSE( eu2 );
-
-			vertlist[0] = eu->vu_p->v_p;
-			vertlist[1] = eu2->vu_p->v_p;
-			vertlist[2] = eu2->eumate_p->vu_p->v_p;
-			vertlist[3] = eu->eumate_p->vu_p->v_p;
-			outfaces[face_count] = nmg_cface( fu->s_p , vertlist , 4 );
-			if( nmg_fu_planeeqn( outfaces[face_count] , tol ) < 0 )
-			{
-				rt_log( "nmg_extrude_face: failed to calculate plane eqn\n" );
-				return( -1 );
-			}
-			face_count++;
-		}
-
-	}
-
-	nmg_gluefaces( outfaces , face_count );
-
-	rt_free( (char *)outfaces , "nmg_extrude_face: outfaces" );
-}
-
-/*
  *	V e r t s _ i n _ N M G _ L o o p
  *
  *	Count number of vertices in an NMG loop.
  */
-int
+static int
 verts_in_nmg_loop(lu)
 struct loopuse	*lu;
 {
@@ -164,7 +77,7 @@ struct loopuse	*lu;
  *
  *	Count number of vertices in an NMG face.
  */
-int
+static int
 verts_in_nmg_face(fu)
 struct faceuse	*fu;
 {
@@ -182,7 +95,7 @@ struct faceuse	*fu;
  *
  *	Translate a face using a vector's magnitude and direction.
  */
-translate_nmg_face(fu, Vec, tol)
+nmg_translate_face(fu, Vec, tol)
 struct faceuse	*fu;
 vect_t		Vec;
 struct rt_tol	*tol;
@@ -230,7 +143,7 @@ struct rt_tol	*tol;
 			NMG_CK_VERTEX(v);
 			VADD2(v->vg_p->coord, v->vg_p->coord, Vec);
 		} else
-			rt_bomb("translate_nmg_face: bad loopuse\n");
+			rt_bomb("nmg_translate_face: bad loopuse\n");
 	}
 
 	fu_tmp = fu;
@@ -262,10 +175,97 @@ struct rt_tol	*tol;
 
 	if(nmg_loop_plane_area( RT_LIST_FIRST( loopuse , &fu_tmp->lu_hd ) , pl ) < 0.0 )
 	{
-		rt_bomb( "translate_nmg_face: Cannot calculate plane equation for face\n" );
+		rt_bomb( "nmg_translate_face: Cannot calculate plane equation for face\n" );
 	}
 	nmg_face_g( fu_tmp , pl );
 	rt_free((char *)verts, "verts");
+}
+
+/*
+ *	N M G _ E x t r u d e _ F a c e
+ *
+ *	Duplicate a given NMG face, move it by specified vector,
+ *	and create a solid bounded by these faces.
+ */
+nmg_extrude_face(fu, Vec, tol)
+struct faceuse	*fu;	/* Face to extrude. */
+vect_t		Vec;	/* Magnitude and direction of extrusion. */
+struct rt_tol	*tol;	/* NMG tolerances. */
+{
+	fastf_t		cosang;
+	int		nfaces;
+	struct faceuse	*fu2, *nmg_dup_face(), **outfaces;
+	int		face_count=2;
+	struct loopuse	*lu, *lu2;
+	plane_t		n;
+
+#define MIKE_TOL 0.0001
+
+	NMG_CK_FACEUSE( fu );
+	RT_CK_TOL( tol );
+
+	/* Duplicate and reverse face. */
+	fu2 = nmg_dup_face(fu, fu->s_p);
+	nmg_reverse_face( fu2 );
+	if( fu2->orientation != OT_OPPOSITE )
+		fu2 = fu2->fumate_p;
+
+	/* Figure out which face to translate. */
+	NMG_GET_FU_PLANE( n, fu );
+	cosang = VDOT(Vec, n);
+	if (NEAR_ZERO(cosang, MIKE_TOL))
+		rt_bomb("extrude_nmg_face: extrusion cannot be parallel to face\n");
+	else if (cosang > 0.)
+		nmg_translate_face(fu, Vec, tol);
+	else if (cosang < 0.)
+		nmg_translate_face(fu2->fumate_p, Vec, tol);
+
+	nfaces = verts_in_nmg_face( fu );
+	outfaces = (struct faceuse **)rt_calloc( nfaces+2 , sizeof( struct faceuse *) ,
+		"nmg_extrude_face: outfaces" );
+
+	outfaces[0] = fu;
+	outfaces[1] = fu2->fumate_p;
+
+	for( RT_LIST_FOR2(lu , lu2 , loopuse , &fu->lu_hd , &fu2->lu_hd ) )
+	{
+		struct edgeuse *eu,*eu2;
+
+		NMG_CK_LOOPUSE( lu );
+		NMG_CK_LOOPUSE( lu2 );
+
+		if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+			continue;
+		if( RT_LIST_FIRST_MAGIC( &lu2->down_hd ) != NMG_EDGEUSE_MAGIC )
+		{
+			rt_log( "nmg_extrude_face: Original face and dup face don't match up!!\n" );
+			return( -1 );
+		}
+		for( RT_LIST_FOR2( eu , eu2 , edgeuse , &lu->down_hd , &lu2->down_hd ) )
+		{
+			struct vertex	*vertlist[4];
+
+			NMG_CK_EDGEUSE( eu );
+			NMG_CK_EDGEUSE( eu2 );
+
+			vertlist[0] = eu->vu_p->v_p;
+			vertlist[1] = eu2->vu_p->v_p;
+			vertlist[2] = eu2->eumate_p->vu_p->v_p;
+			vertlist[3] = eu->eumate_p->vu_p->v_p;
+			outfaces[face_count] = nmg_cface( fu->s_p , vertlist , 4 );
+			if( nmg_fu_planeeqn( outfaces[face_count] , tol ) < 0 )
+			{
+				rt_log( "nmg_extrude_face: failed to calculate plane eqn\n" );
+				return( -1 );
+			}
+			face_count++;
+		}
+
+	}
+
+	nmg_gluefaces( outfaces , face_count );
+
+	rt_free( (char *)outfaces , "nmg_extrude_face: outfaces" );
 }
 
 /*	N M G _ F I N D _ V E R T E X _ I N _ L U
