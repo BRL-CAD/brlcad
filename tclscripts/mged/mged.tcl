@@ -26,6 +26,10 @@
 #             Generalized the code to accommodate multiple instances of this
 #             user interface.
 
+if ![info exists mged_players] {
+    set mged_players {}
+}
+
 if {[info exists env(DISPLAY)] == 0} {
     puts "The DISPLAY environment variable was not set."
     puts "Setting the DISPLAY environment variable to :0\n"
@@ -146,10 +150,6 @@ proc tkTextInsert {w s} {
     }
     $w insert insert $s
     $w see insert
-}
-
-if ![info exists mged_players] {
-    set mged_players ""
 }
 
 proc get_player_id_t { w } {
