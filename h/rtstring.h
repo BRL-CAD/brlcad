@@ -68,18 +68,19 @@ struct rt_vls  {
  *  Subroutine declarations
  */
 RT_VLS_EXTERN(void rt_vls_init, (struct rt_vls *vp) );
-RT_VLS_EXTERN(char *rt_vls_addr, (struct rt_vls *vp) );
+RT_VLS_EXTERN(char *rt_vls_addr, (CONST struct rt_vls *vp) );
 RT_VLS_EXTERN(void rt_vls_extend, (struct rt_vls *vp, int extra) );
-RT_VLS_EXTERN(int rt_vls_strlen, (struct rt_vls *vp) );
+RT_VLS_EXTERN(int rt_vls_strlen, (CONST struct rt_vls *vp) );
 RT_VLS_EXTERN(void rt_vls_trunc, (struct rt_vls *vp, int len) );
 RT_VLS_EXTERN(void rt_vls_free, (struct rt_vls *vp) );
-RT_VLS_EXTERN(void rt_vls_strcpy, (struct rt_vls *vp, char *s) );
-RT_VLS_EXTERN(void rt_vls_strncpy, (struct rt_vls *vp, char *s, int n) );
-RT_VLS_EXTERN(void rt_vls_strcat, (struct rt_vls *vp, char *s) );
-RT_VLS_EXTERN(void rt_vls_strncat, (struct rt_vls *vp, char *s, int n) );
-RT_VLS_EXTERN(void rt_vls_vlscat, (struct rt_vls *dest, struct rt_vls *src) );
+RT_VLS_EXTERN(void rt_vls_strcpy, (struct rt_vls *vp, CONST char *s) );
+RT_VLS_EXTERN(void rt_vls_strncpy, (struct rt_vls *vp, CONST char *s, int n) );
+RT_VLS_EXTERN(void rt_vls_strcat, (struct rt_vls *vp, CONST char *s) );
+RT_VLS_EXTERN(void rt_vls_strncat, (struct rt_vls *vp, CONST char *s, int n) );
+RT_VLS_EXTERN(void rt_vls_vlscat, (struct rt_vls *dest, CONST struct rt_vls *src) );
 RT_VLS_EXTERN(void rt_vls_vlscatzap, (struct rt_vls *dest, struct rt_vls *src) );
 RT_VLS_EXTERN(void rt_vls_from_argv, (struct rt_vls *vp, int argc, char **argv) );
-RT_VLS_EXTERN(void rt_vls_bomb, (char *str, struct rt_vls *badp) );
+RT_VLS_EXTERN(void rt_vls_bomb, (CONST char *str, CONST struct rt_vls *badp) );
+RT_VLS_EXTERN(void rt_vls_fwrite, (FILE *fp, CONST struct rt_vls *vp) );
 
 #endif /* SEEN_RTSTRING_H */
