@@ -458,6 +458,7 @@ plane_t	planes[6];
 {
 	struct rt_arb_internal	*arb = (struct rt_arb_internal *)ip->idb_ptr;
 	point_t		center_pt;
+	int		num_pts=8;
 	int		i;
 
 	RT_ARB_CK_MAGIC(arb);
@@ -472,13 +473,83 @@ plane_t	planes[6];
 		planes[i][3] += thick[i];
 	}
 
+	if( cgtype == 5 )
+		num_pts = 4;
+
 	/* find the new vertices by intersecting the new face planes */
-	for(i=0; i<8; i++) {
+	for(i=0; i<num_pts; i++) {
 		if( rt_arb_3face_intersect( arb->pt[i], planes, cgtype, i*3 ) < 0 )  {
 			(void)printf("cannot find inside arb\n");
 			return(1);
 		}
 	}
+
+	if( cgtype == 5 )
+	{
+		point_t pt[4];
+		fastf_t min_dist=MAX_FASTF;
+		int min_pt;
+
+		for( i=0 ; i<4 ; i++ )
+		{
+			int j,k,l;
+
+			j = i+1;
+			if( j > 4 )
+				j -= 4;
+			k = i+2;
+			if( k > 4 )
+				k -= 4;
+			l = i+3;
+			if( l > 4 )
+				l -= 4;
+
+			if( rt_mkpoint_3planes( pt[i] , planes[j] , planes[k] , planes[l] ) )
+			{
+				(void)printf( "Cannot find inside arb5\n" );
+				return( 1 );
+			}
+			
+		}
+		if( rt_pt3_pt3_equal( pt[0] , pt[1] , &mged_tol ) )
+		{
+			for( i=4 ; i<8 ; i++ )
+				VMOVE( arb->pt[i] , pt[0] );
+
+			return( 0 );
+		}
+
+		for( i=0 ; i<4 ; i++ )
+		{
+			fastf_t dist;
+
+			dist = DIST_PT_PLANE( pt[i] , planes[0] );
+			if( dist < 0.0 )
+				dist = (-dist);
+
+			if( dist < min_dist )
+			{
+				min_dist = dist;
+				min_pt = i;
+			}
+		}
+
+		if( min_pt == 0 || min_pt == 2 )
+		{
+			VMOVE( arb->pt[5] , pt[0] );
+			VMOVE( arb->pt[6] , pt[0] );
+			VMOVE( arb->pt[4] , pt[2] );
+			VMOVE( arb->pt[7] , pt[2] );
+		}
+		else
+		{
+			VMOVE( arb->pt[4] , pt[3] );
+			VMOVE( arb->pt[5] , pt[3] );
+			VMOVE( arb->pt[6] , pt[1] );
+			VMOVE( arb->pt[7] , pt[1] );
+		}
+	}
+
 	return(0);
 }
 
