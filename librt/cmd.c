@@ -90,8 +90,10 @@ register FILE	*fp;
 		}
 		buf[curpos++] = c;
 	} while( c != '\0' );
-	if( curpos <= 1 )
+	if( curpos <= 1 )  {
+		rt_free( buf, "rt_read_cmd buffer (EOF)" );
 		return( (char *)0 );		/* EOF */
+	}
 	return( buf );				/* OK */
 }
 
