@@ -20,9 +20,10 @@
 #define strrchr	rindex
 #endif
 
-#define OVERLAPTOL	0.25	/* Thinner overlaps won't be reported.	*/
-#define MAX_COLOR	15
-#define MAX_LGTS	10	/* Maximum number of light sources.	*/
+#define OVERLAPTOL	0.25	/* Thinner overlaps won't be reported. */
+#define MAX_SCANSIZE	2048	/* Longest output scanline. */
+#define MAX_HL_SIZE	1024	/* Maximum size of hidden-line image. */
+#define MAX_LGTS	10	/* Maximum number of light sources. */
 #define MAX_LGT_NM	16
 #define MAX_LN		81
 #ifndef TRUE
