@@ -227,7 +227,7 @@ char	*argv[];
 			}
 		} else {
 			/* Open binary output file */
-			if( (bfd=open( output_file, O_WRONLY|O_CREAT|O_TRUNC, S_IREAD|S_IWRITE|S_IRGRP|S_IROTH)) < 0 )
+			if( (bfd=open( output_file, O_WRONLY|O_CREAT|O_TRUNC, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH)) < 0 )
 			{
 				bu_log( "Cannot open binary output file (%s) for writing\n", output_file );
 				perror( argv[0] );
@@ -359,7 +359,9 @@ int material_id;
 		c = region_name;
 		c++;
 		while( *c != '\0' ) {
-			if( *c == '/' || *c == '.' || isspace( *c ) ) {
+			if( *c == '/' ) {
+				bu_vls_putc( &file_name, '@' );
+			} else if( *c == '.' || isspace( *c ) ) {
 				bu_vls_putc( &file_name, '_' );
 			} else {
 				bu_vls_putc( &file_name, *c );
@@ -379,7 +381,7 @@ int material_id;
 			char buf[81];	/* need exactly 80 char for header */
 
 			/* Open binary output file */
-			if( (bfd=open( bu_vls_addr( &file_name ), O_WRONLY|O_CREAT|O_TRUNC, S_IREAD|S_IWRITE|S_IRGRP|S_IROTH)) < 0 )
+			if( (bfd=open( bu_vls_addr( &file_name ), O_WRONLY|O_CREAT|O_TRUNC, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH)) < 0 )
 			{
 				bu_log( "Cannot open binary output file (%s) for writing\n", bu_vls_addr( &file_name ) );
 				perror( "g-stl" );
