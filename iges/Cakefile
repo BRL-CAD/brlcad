@@ -7,6 +7,9 @@
 #define	SRCSUFF	.c
 #define MANSECTION	1
 
+#define STATIC_PRODUCTS	../SRCDIR/ge6.igs ../SRCDIR/wing128.igs \
+	../SRCDIR/woodie.igs
+
 #define FILES	 main usage readstart recsize readrec readglobal \
 	readstrg readint readflt readtime makedir readcols \
 	findp summary stack readtree showtree convtree \
@@ -24,6 +27,8 @@
 /* Explicit composition of each product */
 
 iges-g:	OBJ
-	CC LDFLAGS -o iges-g OBJ LIB_PRE''LIBWDB LIB_PRE''LIBRT RT_CONFIG LIBRT_LIBES LIBES
+	sh ../newvers.sh version "IGES-to-BRLCAD Translator"
+	CC CFLAGS -c vers.c
+	CC LDFLAGS -o iges-g OBJ vers.o LIB_PRE''LIBWDB LIB_PRE''LIBRT RT_CONFIG LIBRT_LIBES LIBES
 
 #include "../Cakefile.rules"
