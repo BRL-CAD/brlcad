@@ -55,7 +55,7 @@ double		viewsize = 42;
  *	2 - plots with attempted rays in red
  *	3 - lots of printfs too
  */
-int		debug;			/* program debugging (not library) */
+int		rdebug;			/* program debugging (not library) */
 
 int		npsw = 1;		/* Run serially */
 int		parallel = 0;
@@ -116,6 +116,13 @@ char **argv;
 	case 'x':
 		sscanf( argv[1], "%x", &rt_g.debug );
 		fprintf(stderr,"librt rt_g.debug=x%x\n", rt_g.debug);
+		argc -= 2;
+		argv += 2;
+		break;
+
+	case 'X':
+		sscanf( argv[1], "%x", rdebug );
+		fprintf(stderr,"rdebug=x%x\n", rdebug);
 		argc -= 2;
 		argv += 2;
 		break;
@@ -229,7 +236,7 @@ err:
 		 *  the results of the last iteration.
 		 *  The first and last iterations result in no output
 		 */
-		if(debug>=3) {
+		if(rdebug>=3) {
 			VPRINT("pos", ap.a_ray.r_pt);
 		}
 		if( curstep > 0 )  {
@@ -272,7 +279,7 @@ err:
 			int	i;
 
 			/* Shoot Ray */
-			if(debug>=3)fprintf(stderr,"try=%d, maxtogo=%g  ",
+			if(rdebug>=3)fprintf(stderr,"try=%d, maxtogo=%g  ",
 				failed_try, max_dist_togo);
 			ap.a_hit = hit;
 			ap.a_miss = miss;
@@ -298,7 +305,7 @@ err:
 			 * Failed, try another direction
 			 */
 
-			if(debug > 2 )   {
+			if(rdebug > 2 )   {
 				/* Log attempted ray in Red */
 				VJOIN1( out, ap.a_ray.r_pt,
 					incr_dist*4, ap.a_ray.r_dir );
@@ -315,23 +322,23 @@ err:
 				 *  Otherwise, head on tangent plane.
 				 */
 				if( VEQUAL( norm_cur_try, norm_prev_step ) )  {
-					if(debug>=3)fprintf(stderr,
+					if(rdebug>=3)fprintf(stderr,
 						"Try prev dir\n");
 					VMOVE( ap.a_ray.r_dir, dir_prev_step );
 					continue;
 				}
-				if(debug>=3)fprintf(stderr,"Try tangent\n");
+				if(rdebug>=3)fprintf(stderr,"Try tangent\n");
 				proj_goal();
 				continue;
 			} else if( failed_try <= 7 )  {
 				/* Try 7 azimuthal escapes, 1..7 */
 				i = failed_try-1+1;	/*  1..7 */
-				if(debug>=3)fprintf(stderr,"Try az %d\n", i);
+				if(rdebug>=3)fprintf(stderr,"Try az %d\n", i);
 				mat_ae( mat, i*45.0, 0.0 );
 			} else if( failed_try <= 14 ) {
 				/* Try 7 Elevations to escape, 8..14 */
 				i = failed_try-8+1;	/*     1..7 */
-				if(debug>=3)fprintf(stderr,"Try el %d\n", i);
+				if(rdebug>=3)fprintf(stderr,"Try el %d\n", i);
 				mat_ae( mat, 0.0, i*45.0 );
 			} else {
 				fprintf(stderr,"trapped, giving up on escape\n");
