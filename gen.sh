@@ -500,7 +500,7 @@ arch)
 	echo "${ARCHIVE} created"
 
 	# The FTP images:
-	FTP_ARCHIVE=/usr/spool/ftp/brl-cad/Rel${RELEASE}/src/cad${RELEASE}.tar
+	FTP_ARCHIVE=/n/wolf/usr/spool/ftp/brl-cad/Rel${RELEASE}/src/cad${RELEASE}.tar
 	echo "Enter encryption key:"
 	read KEY
 	echo "encryption key is /$KEY/"
