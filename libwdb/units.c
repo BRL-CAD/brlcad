@@ -82,8 +82,8 @@ static struct cvt_tab {
 	1.0e-3,		"micrometer",
 	1.0e-3,		"micrometers",
 	1.0,		"mm",
-	1.0,		"milimeter",
-	1.0,		"milimeters",
+	1.0,		"millimeter",
+	1.0,		"millimeters",
 	10.0,		"cm",
 	10.0,		"centimeter",
 	10.0,		"centimeters",
@@ -119,7 +119,7 @@ static struct cvt_tab {
  *			M K _ C V T _ F A C T O R
  *
  *  Given a string representation of a unit of distance (eg, "feet"),
- *  return the number which will convert that unit into milimeters.
+ *  return the number which will convert that unit into millimeters.
  *
  *  Returns -
  *	0.0	error
