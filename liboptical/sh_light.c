@@ -36,6 +36,11 @@ static char RCSsh_light[] = "@(#)$Header$ (ARL)";
 #include "../rt/rdebug.h"
 #include "../rt/light.h"
 
+#if !defined(M_PI)
+#define M_PI            3.14159265358979323846
+#define	M_PI_2		1.57079632679489661923
+#endif
+
 
 #define LIGHT_O(m)	offsetof(struct light_specific, m)
 #define LIGHT_OA(m)	bu_offsetofarray(struct light_specific, m)
