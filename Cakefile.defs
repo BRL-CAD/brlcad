@@ -801,7 +801,7 @@ set -S2 "/bin/sh"
 #	define	LIBVERS		echo
 #	define	BUILD_LIBRARY	ld -Bdynamic -G -o
 #	define	RANLIB		/**/
-#	define	STANDARD_LIBES	-lm -R /usr/lib:LIBDIR
+#	define	STANDARD_LIBES	-L/usr/ucblib -lucb -lm -R /usr/lib:/usr/ucblib:LIBDIR
 
 #	define	XINCDIR		/usr/openwin/include
 #	define	XLIBDIR		/usr/openwin/lib
