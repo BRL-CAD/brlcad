@@ -41,25 +41,11 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./mged_solid.h"
 #include "./mged_dm.h"
 
-int gui_setup();
-int mged_attach();
-void get_attached();
-void print_valid_dm();
-void dm_var_init();
-
-void mged_slider_init_vls();
-void mged_slider_free_vls();
-void mged_slider_link_vars();
-void mged_slider_unlink_vars();
-
-static int do_2nd_attach_prompt();
-void mged_fb_open();
-void mged_fb_close();
-
-extern struct _color_scheme default_color_scheme;
-extern void set_port();		/* defined in fbserv.c */
-extern void predictor_init();	/* defined in predictor.c */
-extern void view_ring_init(); /* defined in chgview.c */
+#define NEED_GUI(_type) ( \
+	IS_DM_TYPE_OGL(_type) || \
+	IS_DM_TYPE_GLX(_type) || \
+	IS_DM_TYPE_PEX(_type) || \
+	IS_DM_TYPE_X(_type) )
 
 /* All systems can compile these! */
 extern int Plot_dm_init();
@@ -80,13 +66,26 @@ extern int Glx_dm_init();
 extern int Pex_dm_init();
 #endif
 
-#define NEED_GUI(_type) ( \
-	IS_DM_TYPE_OGL(_type) || \
-	IS_DM_TYPE_GLX(_type) || \
-	IS_DM_TYPE_PEX(_type) || \
-	IS_DM_TYPE_X(_type) )
+extern void set_port();		/* defined in fbserv.c */
+extern void predictor_init();	/* defined in predictor.c */
+extern void view_ring_init(); /* defined in chgview.c */
 
 extern Tk_Window tkwin;
+extern struct _color_scheme default_color_scheme;
+
+int gui_setup();
+int mged_attach();
+void get_attached();
+void print_valid_dm();
+void dm_var_init();
+void mged_slider_init_vls();
+void mged_slider_free_vls();
+void mged_slider_link_vars();
+
+static int do_2nd_attach_prompt();
+void mged_fb_open();
+void mged_fb_close();
+
 struct dm_list head_dm_list;  /* list of active display managers */
 struct dm_list *curr_dm_list;
 char tmp_str[1024];
@@ -153,23 +152,13 @@ int need_close;
   }else if(dmp && !strcmp("nu", bu_vls_addr(&pathName)))
       return TCL_OK;  /* Ignore */
 
-  {
-    struct dm_list *sdm;
-
-    sdm = curr_dm_list;
-
-    /*
-     *  This saves the state of the resoures to the "nu" display manager, which
-     *  is beneficial only if closing the last display manager. So when
-     *  another display manager is opened, it looks like the last one
-     *  the user had open.
-     *
-     *  Note: "nu" cannot be released.
-     */
-    curr_dm_list = BU_LIST_LAST(dm_list, &head_dm_list.l);
-    dm_var_init(sdm);
-    curr_dm_list = sdm;
-  }
+  /*
+   *  This saves the state of the resoures to the "nu" display manager, which
+   *  is beneficial only if closing the last display manager. So when
+   *  another display manager is opened, it looks like the last one
+   *  the user had open. This depends on "nu" always being last in the list.
+   */
+  usurp_all_resources(BU_LIST_LAST(dm_list, &head_dm_list.l), curr_dm_list);
 
   if(fbp){
     if(mged_variables->mv_listen){
@@ -205,40 +194,7 @@ int need_close;
 
   RT_FREE_VLIST(&curr_dm_list->dml_p_vlist);
   BU_LIST_DEQUEUE( &curr_dm_list->l );
-
-  if(!--view_state->vs_rc){
-    view_ring_destroy(curr_dm_list);
-
-    bu_vls_free(&view_state->vs_aet_name);
-    bu_vls_free(&view_state->vs_ang_name);
-    bu_vls_free(&view_state->vs_center_name);
-    bu_vls_free(&view_state->vs_size_name);
-    bu_vls_free(&view_state->vs_adc_name);
-
-    bu_free((genptr_t)view_state, "release: view_state");
-  }
-
-  if (!--adc_state->adc_rc)
-    bu_free((genptr_t)adc_state, "release: adc_state");
-
-  if (!--menu_state->ms_rc)
-    bu_free((genptr_t)menu_state, "release: menu_state");
-
-  if (!--rubber_band->rb_rc)
-    bu_free((genptr_t)rubber_band, "release: rubber_band");
-
-  if (!--mged_variables->mv_rc)
-    bu_free((genptr_t)mged_variables, "release: mged_variables");
-
-  if (!--color_scheme->cs_rc)
-    bu_free((genptr_t)color_scheme, "release: color_scheme");
-
-  if (!--grid_state->gr_rc)
-    bu_free((genptr_t)grid_state, "release: grid_state");
-
-  if (!--axes_state->ax_rc)
-    bu_free((genptr_t)axes_state, "release: axes_state");
-
+  mged_slider_free_vls(curr_dm_list);
   bu_free( (genptr_t)curr_dm_list, "release: curr_dm_list" );
 
   if(save_dm_list != DM_LIST_NULL)
@@ -248,7 +204,6 @@ int need_close;
 
   return TCL_OK;
 }
-
 
 int
 f_release(clientData, interp, argc, argv)
@@ -422,14 +377,6 @@ char *argv[];
   if(wp->init(o_dm_list, argc, argv) == TCL_ERROR)
     goto Bad;
 
-  bu_vls_init(&fps_name);
-  bu_vls_printf(&fps_name, "%s(%S,fps)", MGED_DISPLAY_VAR,
-		&curr_dm_list->dml_dmp->dm_pathName);
-
-#if TRY_NEW_MGED_VARS
-  mged_variable_setup(curr_dm_list);
-#endif
-
   mged_slider_link_vars(curr_dm_list);
 
   Tcl_ResetResult(interp);
@@ -453,7 +400,7 @@ Bad:
   Tcl_AppendResult(interp, "attach(", argv[argc - 1], "): BAD\n", (char *)NULL);
 
   if(dmp != (struct dm *)0)
-    release((char *)NULL, 1);  /* relesae() will call dm_close */
+    release((char *)NULL, 1);  /* release() will call dm_close */
   else
     release((char *)NULL, 0);  /* release() will not call dm_close */
 
@@ -630,24 +577,7 @@ struct dm_list *initial_dm_list;
   BU_GETSTRUCT(view_state, _view_state);
   *view_state = *initial_dm_list->dml_view_state;		/* struct copy */
   view_state->vs_rc = 1;
-#if 0
-  view_state->vs_flag = 1;
-#endif
-  view_ring_init(curr_dm_list);
-
-#if 0
-#if 1
-  bn_mat_copy(view_state->vs_Viewrot, initial_dm_list->dml_view_state->vs_Viewrot);
-  bn_mat_copy(view_state->vs_toViewcenter, initial_dm_list->dml_view_state->vs_toViewcenter);
-  bn_mat_copy(view_state->vs_ModelDelta, bn_mat_identity);
-  view_state->vs_Viewscale = initial_dm_list->dml_view_state->vs_Viewscale;
-#else
-  bn_mat_copy(view_state->vs_Viewrot, bn_mat_identity);
-  size_reset();
-#endif
-  MAT_DELTAS_GET_NEG(view_state->vs_orig_pos, view_state->vs_toViewcenter);
-  new_mats();
-#endif
+  view_ring_init(curr_dm_list->dml_view_state, (struct _view_state *)NULL);
 
   dirty = 1;
   mapped = 1;
@@ -661,22 +591,24 @@ void
 mged_slider_init_vls(p)
 struct dm_list *p;
 {
-  bu_vls_init(&p->dml_view_state->vs_aet_name);
-  bu_vls_init(&p->dml_view_state->vs_ang_name);
-  bu_vls_init(&p->dml_view_state->vs_center_name);
-  bu_vls_init(&p->dml_view_state->vs_size_name);
-  bu_vls_init(&p->dml_view_state->vs_adc_name);
+  bu_vls_init(&p->dml_fps_name);
+  bu_vls_init(&p->dml_aet_name);
+  bu_vls_init(&p->dml_ang_name);
+  bu_vls_init(&p->dml_center_name);
+  bu_vls_init(&p->dml_size_name);
+  bu_vls_init(&p->dml_adc_name);
 }
 
 void
 mged_slider_free_vls(p)
 struct dm_list *p;
 {
-  bu_vls_free(&p->dml_view_state->vs_aet_name);
-  bu_vls_free(&p->dml_view_state->vs_ang_name);
-  bu_vls_free(&p->dml_view_state->vs_center_name);
-  bu_vls_free(&p->dml_view_state->vs_size_name);
-  bu_vls_free(&p->dml_view_state->vs_adc_name);
+  bu_vls_free(&p->dml_fps_name);
+  bu_vls_free(&p->dml_aet_name);
+  bu_vls_free(&p->dml_ang_name);
+  bu_vls_free(&p->dml_center_name);
+  bu_vls_free(&p->dml_size_name);
+  bu_vls_free(&p->dml_adc_name);
 }
 
 void
@@ -685,22 +617,18 @@ struct dm_list *p;
 {
   mged_slider_init_vls(p);
 
-  bu_vls_printf(&p->dml_view_state->vs_aet_name, "%s(%S,aet)", MGED_DISPLAY_VAR,
+  bu_vls_printf(&p->dml_fps_name, "%s(%S,fps)", MGED_DISPLAY_VAR,
 		&p->dml_dmp->dm_pathName);
-  bu_vls_printf(&p->dml_view_state->vs_ang_name, "%s(%S,ang)", MGED_DISPLAY_VAR,
+  bu_vls_printf(&p->dml_aet_name, "%s(%S,aet)", MGED_DISPLAY_VAR,
 		&p->dml_dmp->dm_pathName);
-  bu_vls_printf(&p->dml_view_state->vs_center_name, "%s(%S,center)", MGED_DISPLAY_VAR,
+  bu_vls_printf(&p->dml_ang_name, "%s(%S,ang)", MGED_DISPLAY_VAR,
 		&p->dml_dmp->dm_pathName);
-  bu_vls_printf(&p->dml_view_state->vs_size_name, "%s(%S,size)", MGED_DISPLAY_VAR,
+  bu_vls_printf(&p->dml_center_name, "%s(%S,center)", MGED_DISPLAY_VAR,
 		&p->dml_dmp->dm_pathName);
-  bu_vls_printf(&p->dml_view_state->vs_adc_name, "%s(%S,adc)", MGED_DISPLAY_VAR,
+  bu_vls_printf(&p->dml_size_name, "%s(%S,size)", MGED_DISPLAY_VAR,
 		&p->dml_dmp->dm_pathName);
-}
-
-void
-mged_slider_unlink_vars(p)
-struct dm_list *p;
-{
+  bu_vls_printf(&p->dml_adc_name, "%s(%S,adc)", MGED_DISPLAY_VAR,
+		&p->dml_dmp->dm_pathName);
 }
 
 int
