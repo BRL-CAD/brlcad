@@ -548,7 +548,47 @@ getsolid()
 		mk_pipe_free( &head );
 		return(0);		/* OK */
 	}
-	         		
+
+	if( strcmp( solid_type, "rpc" ) == 0 )  {
+		/* V, H, B, r */
+		if( getsoldata( dd, 3*3+1, sol_work ) < 0 )
+			return(-1);
+		return( mk_rpc( outfp, name, D(0), D(1),
+			D(2), dd[9] ) );
+	}
+
+	if( strcmp( solid_type, "rhc" ) == 0 )  {
+		/* V, H, B, r, c */
+		if( getsoldata( dd, 3*3+2, sol_work ) < 0 )
+			return(-1);
+		return( mk_rhc( outfp, name, D(0), D(1),
+			D(2), dd[9], dd[10] ) );
+	}
+
+	if( strcmp( solid_type, "epa" ) == 0 )  {
+		/* V, H, Au, r1, r2 */
+		if( getsoldata( dd, 3*3+2, sol_work ) < 0 )
+			return(-1);
+		return( mk_epa( outfp, name, D(0), D(1),
+			D(2), dd[9], dd[10] ) );
+	}
+
+	if( strcmp( solid_type, "ehy" ) == 0 )  {
+		/* V, H, Au, r1, r2, c */
+		if( getsoldata( dd, 3*3+3, sol_work ) < 0 )
+			return(-1);
+		return( mk_ehy( outfp, name, D(0), D(1),
+			D(2), dd[9], dd[10], dd[11] ) );
+	}
+
+	if( strcmp( solid_type, "eto" ) == 0 )  {
+		/* V, N, C, r, rd */
+		if( getsoldata( dd, 3*3+2, sol_work ) < 0 )
+			return(-1);
+		return( mk_eto( outfp, name, D(0), D(1),
+			D(2), dd[9], dd[10] ) );
+	}
+
 			
 	if( version <= 4 && strcmp( solid_type, "ell" ) == 0 )  {
 		/* Foci F1, F2, major axis length L */

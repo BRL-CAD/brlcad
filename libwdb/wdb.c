@@ -438,3 +438,149 @@ fastf_t		radtop;
 	VSUB2( height, itop, ibase );
 	return( mk_trc_h( fp, name, ibase, height, radbase, radtop ) );
 }
+
+/*
+ *			M K _ R P C
+ *
+ *  Makes a right parabolic cylinder given the origin, or main vertex,
+ *  a height vector, a breadth vector (B . H must be 0), and a scalar
+ *  rectangular half-width (for the top of the rpc).
+ */
+int
+mk_rpc( fp, name, vert, height, breadth, half_w )
+FILE		*fp;
+char		*name;
+CONST point_t	vert;
+CONST vect_t	height, breadth;
+double		half_w;
+{
+	struct rt_rpc_internal	rpc;
+
+	rpc.rpc_magic = RT_RPC_INTERNAL_MAGIC;
+
+	VMOVE( rpc.rpc_V, vert );
+	VMOVE( rpc.rpc_H, height );
+	VMOVE( rpc.rpc_B, breadth );
+	rpc.rpc_r = half_w;
+
+	return mk_export_fwrite( fp, name, (genptr_t)&rpc, ID_RPC );
+}
+
+/*
+ *			M K _ R H C
+ *
+ *  Makes a right hyperbolic cylinder given the origin, or main vertex,
+ *  a height vector, a breadth vector (B . H must be 0), a scalar
+ *  rectangular half-width (for the top of the rpc), and the scalar
+ *  distance from the tip of the hyperbola to the intersection of the
+ *  asymptotes.
+ */
+int
+mk_rhc( fp, name, vert, height, breadth, half_w, asymp )
+FILE		*fp;
+char		*name;
+CONST point_t	vert;
+CONST vect_t	height, breadth;
+fastf_t		half_w;
+fastf_t		asymp;
+{
+	struct rt_rhc_internal	rhc;
+
+	rhc.rhc_magic = RT_RHC_INTERNAL_MAGIC;
+
+	VMOVE( rhc.rhc_V, vert );
+	VMOVE( rhc.rhc_H, height );
+	VMOVE( rhc.rhc_B, breadth );
+	rhc.rhc_r = half_w;
+	rhc.rhc_c = asymp;
+
+	return mk_export_fwrite( fp, name, (genptr_t)&rhc, ID_RHC );
+}
+
+/*
+ *			M K _ E P A
+ *
+ *  Makes an elliptical paraboloid given the origin, a height vector H,
+ *  a unit vector A along the semi-major axis (A . H must equal 0), and
+ *  the scalar lengths, r1 and r2, of the semi-major and -minor axes.
+ */
+int
+mk_epa( fp, name, vert, height, breadth, r1, r2 )
+FILE		*fp;
+char		*name;
+CONST point_t	vert;
+CONST vect_t	height, breadth;
+fastf_t		r1, r2;
+{
+	struct rt_epa_internal	epa;
+
+	epa.epa_magic = RT_EPA_INTERNAL_MAGIC;
+
+	VMOVE( epa.epa_V, vert );
+	VMOVE( epa.epa_H, height );
+	VMOVE( epa.epa_Au, breadth );
+	epa.epa_r1 = r1;
+	epa.epa_r2 = r2;
+
+	return mk_export_fwrite( fp, name, (genptr_t)&epa, ID_EPA );
+}
+
+/*
+ *			M K _ E H Y
+ *
+ *  Makes an elliptical hyperboloid given the origin, a height vector H,
+ *  a unit vector A along the semi-major axis (A . H must equal 0),
+ *  the scalar lengths, r1 and r2, of the semi-major and -minor axes,
+ *  and the distance c between the tip of the hyperboloid and the vertex
+ *  of the asymptotic cone.
+ */
+int
+mk_ehy( fp, name, vert, height, breadth, r1, r2, c )
+FILE		*fp;
+char		*name;
+CONST point_t	vert;
+CONST vect_t	height, breadth;
+fastf_t		r1, r2, c;
+{
+	struct rt_ehy_internal	ehy;
+
+	ehy.ehy_magic = RT_EHY_INTERNAL_MAGIC;
+
+	VMOVE( ehy.ehy_V, vert );
+	VMOVE( ehy.ehy_H, height );
+	VMOVE( ehy.ehy_Au, breadth );
+	ehy.ehy_r1 = r1;
+	ehy.ehy_r2 = r2;
+	ehy.ehy_c = c;
+
+	return mk_export_fwrite( fp, name, (genptr_t)&ehy, ID_EHY );
+}
+
+/*
+ *			M K _ E T O
+ *
+ *  Makes an elliptical torus given the origin, a plane normal vector N,
+ *  a vector C along the semi-major axis of the elliptical cross-section,
+ *  the scalar lengths r and rd, of the radius of revolution and length
+ *  of semi-minor axis of the elliptical cross section.
+ */
+int
+mk_eto( fp, name, vert, norm, smajor, rrot, sminor )
+FILE		*fp;
+char		*name;
+CONST point_t	vert;
+CONST vect_t	norm, smajor;
+fastf_t		rrot, sminor;
+{
+	struct rt_eto_internal	eto;
+
+	eto.eto_magic = RT_ETO_INTERNAL_MAGIC;
+
+	VMOVE( eto.eto_V, vert );
+	VMOVE( eto.eto_N, norm );
+	VMOVE( eto.eto_C, smajor );
+	eto.eto_r = rrot;
+	eto.eto_rd = sminor;
+
+	return mk_export_fwrite( fp, name, (genptr_t)&eto, ID_ETO );
+}
