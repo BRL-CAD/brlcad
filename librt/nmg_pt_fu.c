@@ -872,6 +872,9 @@ struct rt_list *near;
 		ei = RT_LIST_PNEXT( edge_info, &ei->l );
 	}
 
+	if( RT_LIST_IS_EMPTY( &edge_list->l ) )
+		return;
+
 	ei = RT_LIST_FIRST(edge_info, &edge_list->l);
 	NMG_CK_EI(ei);
 	NMG_CK_VED(ei->ved_p);
@@ -895,18 +898,16 @@ struct rt_list *near;
 			rt_log("\t(%g %g %g) -> (%g %g %g)\n",
 				V3ARGS(ei->eu_p->vu_p->v_p->vg_p->coord),
 				V3ARGS(ei->eu_p->eumate_p->vu_p->v_p->vg_p->coord));
-rt_log("\tdist:%g class:%s status:%d pca(%g %g %g)\n\t\tv1(%g %g %g) v2(%g %g %g)\n",
+			rt_log("\tdist:%g class:%s status:%d pca(%g %g %g)\n\t\tv1(%g %g %g) v2(%g %g %g)\n",
 			ei->ved_p->dist, nmg_class_name(ei->class),
 			ei->ved_p->status,
 			V3ARGS(ei->ved_p->pca),
 			V3ARGS(ei->ved_p->v1->vg_p->coord),
 			V3ARGS(ei->ved_p->v2->vg_p->coord));
-rt_log( "\tei->ved_p->magic_p=x%x, ei->eu_p->vu_p=x%x, ei->eu_p->eumate_p->vu_p=x%x\n",
-		ei->ved_p->magic_p, ei->eu_p->vu_p, ei->eu_p->eumate_p->vu_p );	
+			rt_log( "\tei->ved_p->magic_p=x%x, ei->eu_p->vu_p=x%x, ei->eu_p->eumate_p->vu_p=x%x\n",
+				ei->ved_p->magic_p, ei->eu_p->vu_p, ei->eu_p->eumate_p->vu_p );	
 		}
 	}
-
-
 }
 
 
