@@ -37,7 +37,7 @@ static const char RCSview[] = "@(#)$Header";
 #include "rtprivate.h"
 #include "light.h"
 #include "plot3.h"
-
+#include "spectrum.h"
 
 /*
  *			P R _ S H A D E W O R K
