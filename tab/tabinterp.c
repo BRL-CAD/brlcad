@@ -51,6 +51,7 @@ struct chan {
 #define INTERP_STEP	1
 #define	INTERP_LINEAR	2
 #define	INTERP_SPLINE	3
+#define INTERP_RATE	4
 	int	c_periodic;	/* cyclic end conditions? */
 };
 
@@ -72,7 +73,7 @@ struct command_tab cmdtab[] = {
 		cm_file,	3, 999,
 	"times", "start stop fps", "specify time range and fps rate",
 		cm_times,	4, 4,
-	"interp", "{step|linear|spline|cspline} chan_num(s)", "set interpolation type",
+	"interp", "{step|linear|spline|cspline|rate} chan_num(s)", "set interpolation type",
 		cm_interp,	3, 999,
 	"idump", "[chan_num(s)]", "dump input channel values",
 		cm_idump,	1, 999,
@@ -425,6 +426,9 @@ char	**argv;
 	} else if( strcmp( argv[1], "cspline" ) == 0 )  {
 		interp = INTERP_SPLINE;
 		periodic = 1;
+	} else if( strcmp( argv[1], "rate" ) == 0 )  {
+		interp = INTERP_RATE;
+		periodic = 0;
 	} else {
 		fprintf( stderr, "interpolation type '%s' unknown\n", argv[1] );
 		interp = INTERP_LINEAR;
@@ -514,6 +518,9 @@ again:
 				goto again;
 			}
 			break;
+		case INTERP_RATE:
+			rate_interpolate( chp, times );
+			break;
 		}
 	}
 	rt_free( (char *)times, "loc times");
@@ -564,7 +571,7 @@ register fastf_t	*times;
  *			L I N E A R _ I N T E R P O L A T E
  *
  *  This routine takes advantage of (and depends on) the fact that
- *  the input and output is sorted in increasing time values.
+ *  the input and output arrays are sorted in increasing time values.
  */
 linear_interpolate( chp, times )
 register struct chan	*chp;
@@ -602,6 +609,32 @@ register fastf_t	*times;
 			(times[t] - chp->c_itime[i]) *
 			(chp->c_ival[i+1] - chp->c_ival[i]) /
 			(chp->c_itime[i+1] - chp->c_itime[i]);
+	}
+}
+
+/*
+ *			R A T E _ I N T E R P O L A T E
+ *
+ *  The one (and only) input value is interpreted as rate, in
+ *  unspecified units per second.
+ *  This is really just a hack to allow multiplying the time by a constant.
+ */
+rate_interpolate( chp, times )
+register struct chan	*chp;
+register fastf_t	*times;
+{
+	register int	t;		/* output time index */
+	register int	i;		/* input time index */
+	register double	rate;
+
+	if( chp->c_ilen != 1 )  {
+		fprintf(stderr,"rate_interpolate:  only 1 point (the rate) may be specified\n");
+		return;
+	}
+	rate = chp->c_ival[0];
+
+	for( t=0; t < o_len; t++ )  {
+		chp->c_oval[t] = rate * times[t];
 	}
 }
 
