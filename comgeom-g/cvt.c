@@ -209,6 +209,8 @@ char **argv;
 
 	/* Drop leading blanks in title */
 	while( isspace( *title ) )  title++;
+	trim_trail_spaces( title );
+	trim_trail_spaces( units );
 
 	printf("Title: %s\n", title);
 	printf("Units: %s\n", units);
