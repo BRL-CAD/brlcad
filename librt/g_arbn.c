@@ -308,6 +308,8 @@ struct soltab *stp;
 register struct hit *hitp;
 register struct uvcoord *uvp;
 {
+	uvp->uv_u = uvp->uv_v = 0;
+	uvp->uv_du = uvp->uv_dv = 0;
 }
 
 /*
@@ -335,7 +337,7 @@ register struct soltab *stp;
  *  plot without requiring extra bookkeeping.
  *  Note that the vectors will be drawn in no special order.
  */
-void
+int
 rt_arbn_plot( rp, mat, vhead, dp )
 union record		*rp;
 mat_t			mat;
@@ -352,7 +354,7 @@ struct directory	*dp;
 	if( rt_arbn_import( aip, rp, mat ) < 0 )  {
 		rt_log("arbn(%s): db import error\n", dp->d_namep );
 		rt_free( (char *)aip, "arbn_internal" );
-		return;
+		return(-1);
 	}
 
 	for( i=0; i<aip->neqn-1; i++ )  {
@@ -407,6 +409,7 @@ next_k:				;
 			if( point_count == 1 ) rt_log("rt_arbn_plot(%s): warning, point_count=1\n", dp->d_namep);
 		}
 	}
+	return(0);
 }
 
 /*
