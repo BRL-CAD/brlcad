@@ -595,7 +595,9 @@ register struct application *ap;
 			ap->a_x, ap->a_y,
 			ap->a_level,
 			ap->a_purpose != (char *)0 ? ap->a_purpose : "?" );
-		VPRINT("Pnt", ap->a_ray.r_pt);
+		rt_log("Pnt (%g, %g, %g) a_onehit=%d\n",
+			V3ARGS(ap->a_ray.r_pt),
+			ap->a_onehit );
 		VPRINT("Dir", ap->a_ray.r_dir);
 	}
 	if(RT_BADVEC(ap->a_ray.r_pt)||RT_BADVEC(ap->a_ray.r_dir))  {
