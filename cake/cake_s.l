@@ -203,20 +203,20 @@ yyinit()
 	BEGIN edge;
 }
 
-#if (!defined(__bsdi__) && !defined(__GNUC__)) || defined(YY_FLEX_LEX_COMPAT)
-extern int yylineno;
-yywrap()
-{
-	return 1;
-}
+/* GNU lex (flex) does not define yylineno... other lexers that do the same will need
+ * to be added.
+ * May need to a do a check for if __bsdi__ is defined */
+#if (defined(YY_FLEX_MAJOR_VERSION) && !defined(YY_FLEX_LEX_COMPAT)
+int yylineno=1;
 #else
-/* GNU lex (flex) USED to not define yylineno... may need to set yylineno=1 */
 extern int yylineno;
+#endif
+
 yywrap()
 {
 	return 1;
 }
-#endif
+
 yyset(text)
 reg	char	text[];
 {
