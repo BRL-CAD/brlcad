@@ -152,10 +152,11 @@ struct mfuncs gauss_mfuncs[] = {
 
 
 static void
-tree_solids(tp, tb, op)
+tree_solids(tp, tb, op, resp)
 union tree *tp;
 struct tree_bark *tb;
 int op;
+struct resource *resp;
 {
 	RT_CK_TREE(tp);
 
@@ -180,7 +181,7 @@ int op;
 
 		/* Get the internal form of this solid & add it to the list */
 		rt_db_get_internal(&dbint->ip, tp->tr_a.tu_stp->st_dp,
-			tb->dbip, mp);
+			tb->dbip, mp, resp);
 
 		RT_CK_DB_INTERNAL(&dbint->ip);
 		dbint->st_p = tp->tr_a.tu_stp;
@@ -258,18 +259,18 @@ int op;
 		break;
 	}
 	case OP_UNION:
-		tree_solids(tp->tr_b.tb_left, tb, tp->tr_op);
-		tree_solids(tp->tr_b.tb_right, tb, tp->tr_op);
+		tree_solids(tp->tr_b.tb_left, tb, tp->tr_op, resp);
+		tree_solids(tp->tr_b.tb_right, tb, tp->tr_op, resp);
 		break;
 
 	case OP_NOT: bu_log("Warning: 'Not' region operator in %s\n",tb->name);
-		tree_solids(tp->tr_b.tb_left, tb, tp->tr_op);
+		tree_solids(tp->tr_b.tb_left, tb, tp->tr_op, resp);
 		break;
 	case OP_GUARD:bu_log("Warning: 'Guard' region operator in %s\n",tb->name);
-		tree_solids(tp->tr_b.tb_left, tb, tp->tr_op);
+		tree_solids(tp->tr_b.tb_left, tb, tp->tr_op, resp);
 		break;
 	case OP_XNOP:bu_log("Warning: 'XNOP' region operator in %s\n",tb->name);
-		tree_solids(tp->tr_b.tb_left, tb, tp->tr_op);
+		tree_solids(tp->tr_b.tb_left, tb, tp->tr_op, resp);
 		break;
 
 	case OP_INTERSECT:
@@ -278,8 +279,8 @@ int op;
 		/* XXX this can get us in trouble if 1 solid is subtracted
 		 * from less than all the "union" solids of the region.
 		 */
-		tree_solids(tp->tr_b.tb_left, tb, tp->tr_op);
-		tree_solids(tp->tr_b.tb_right, tb, tp->tr_op);
+		tree_solids(tp->tr_b.tb_left, tb, tp->tr_op, resp);
+		tree_solids(tp->tr_b.tb_right, tb, tp->tr_op, resp);
 		return;
 
 	default:
@@ -342,7 +343,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	tb.name = rp->reg_name;
 	tb.gs = gauss_sp;
 
-	tree_solids ( rp->reg_treetop, &tb );
+	tree_solids ( rp->reg_treetop, &tb, OP_UNION, &rt_uniresource );
 
 
 	/* XXX If this puppy isn't axis-aligned, we should come up with a

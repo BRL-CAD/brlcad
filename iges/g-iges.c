@@ -177,7 +177,7 @@ char	*argv[];
 	port_setlinebuf( stderr );
 
 	bu_log( "%s", version+5);
-	bu_log( "Please direct bug reports to <jra@brl.mil>\n\n" );
+	bu_log( "Please direct bug reports to <acst@arl.army.mil>\n\n" );
 
 	bn_mat_idn( identity_mat );
 
@@ -201,6 +201,8 @@ char	*argv[];
 
 	the_model = nmg_mm();
 	BU_LIST_INIT( &rt_g.rtg_vlfree );	/* for vlist macros */
+
+	rt_init_resource( &rt_uniresource, 0, NULL );
 
 	prog_name = argv[0];
 
@@ -481,7 +483,7 @@ genptr_t		client_data;
 		rt_g.NMG_debug = NMG_debug;	/* restore mode */
 
 		/* Release the tree memory & input regions */
-		db_free_tree(curtree);		/* Does an nmg_kr() */
+		db_free_tree(curtree, &rt_uniresource);		/* Does an nmg_kr() */
 
 		/* Get rid of (m)any other intermediate structures */
 		if( (*tsp->ts_m)->magic != -1L )
@@ -494,7 +496,7 @@ genptr_t		client_data;
 	if( verbose )
 		bu_log( "\ndoing boolean tree evaluate...\n" );
 	(void)nmg_model_fuse(*tsp->ts_m, tsp->ts_tol);
-	result = nmg_booltree_evaluate(curtree, tsp->ts_tol);	/* librt/nmg_bool.c */
+	result = nmg_booltree_evaluate(curtree, tsp->ts_tol, &rt_uniresource);	/* librt/nmg_bool.c */
 
 	if( result )
 		r = result->tr_d.td_r;
@@ -640,7 +642,7 @@ genptr_t		client_data;
 	 *  A return of TREE_NULL from this routine signals an error,
 	 *  so we need to cons up an OP_NOP node to return.
 	 */
-	db_free_tree(curtree);		/* Does an nmg_kr() */
+	db_free_tree(curtree, &rt_uniresource);		/* Does an nmg_kr() */
 
 out:
 	BU_GETUNION(curtree, tree);
@@ -744,7 +746,7 @@ genptr_t	ptr;
 		}
 	}
 
-	id = rt_db_get_internal( &intern, dp, dbip, (matp_t)NULL );
+	id = rt_db_get_internal( &intern, dp, dbip, (matp_t)NULL , &rt_uniresource);
 	if( id < 0 )
 		return;
 	if( id != ID_COMBINATION )
@@ -775,7 +777,7 @@ genptr_t	ptr;
 	{
 		bu_log( "Error in combination %s\n", dp->d_namep );
 	        bu_free( (char *)de_pointers , "csg_comb_func de_pointers" );
-		rt_db_free_internal( &intern );
+		rt_db_free_internal( &intern , &rt_uniresource);
 		return;
 	}
 
@@ -800,7 +802,7 @@ genptr_t	ptr;
 		bu_log( "g-iges: combination (%s) not written to iges file\n" , dp->d_namep );
 	}
 
-	rt_db_free_internal( &intern );
+	rt_db_free_internal( &intern , &rt_uniresource);
         bu_free( (char *)de_pointers , "csg_comb_func de_pointers" );
 
 }
@@ -826,7 +828,7 @@ genptr_t ptr;
 
 	id = rt_id_solid( &ep );
 
-	if( rt_functab[id].ft_import( &ip , &ep , identity_mat, dbip ) )
+	if( rt_functab[id].ft_import( &ip , &ep , identity_mat, dbip, &rt_uniresource ) )
 		bu_log( "Error in import" );
 
 	solid_is_brep = 0;
@@ -876,7 +878,7 @@ genptr_t ptr;
 	if( !(dp->d_flags & DIR_COMB) )
 		return;
 
-	id = rt_db_get_internal( &intern, dp, dbip, (matp_t)NULL );
+	id = rt_db_get_internal( &intern, dp, dbip, (matp_t)NULL , &rt_uniresource);
 	if( id < 0 )
 	{
 		bu_log( "Cannot get internal form of %s\n", dp->d_namep );

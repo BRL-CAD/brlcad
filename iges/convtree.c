@@ -119,7 +119,7 @@ Convtree()
 			bu_log( "mk_export_fwrite() failed for combination (%s)\n", dir[i]->name );
 			exit( 1 );
 		}
-		if(comb->tree) db_free_tree( comb->tree );
+		if(comb->tree) db_free_tree( comb->tree , &rt_uniresource);
 		comb->tree = NULL;
 		bu_vls_free( &comb->shader );
 		bu_vls_free( &comb->material );
