@@ -44,7 +44,6 @@ struct ogl_vars {
   int devbuttonpress;
   int devbuttonrelease;
   int knobs[8];
-  int stereo_is_on;
   GLXContext glxc;
   int fontOffset;
   int ovec;		/* Old color map entry number */
