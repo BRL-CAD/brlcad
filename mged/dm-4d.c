@@ -1920,6 +1920,7 @@ static float default_light[] = {
 		    
 
 #if 1
+# if 0
 static float white_inf_light[] = {AMBIENT, 0.0, 0.0, 0.0, 
 			   LCOLOR,   0.70, 0.70, 0.70, 
 			   POSITION, 100.0, -200.0, 100.0, 0.0, 
@@ -1946,7 +1947,34 @@ static float white_local_light[] = {AMBIENT, 0.0, 1.0, 0.0,
 			     LCOLOR,   0.75, 0.75, 0.75, 
 			     POSITION, 0.0, 10.0, 10.0, 5.0, 
 			     LMNULL};
-			   
+# else
+static float white_inf_light[] = {AMBIENT, 0.0, 0.0, 0.0, 
+			   LCOLOR,   0.70, 0.70, 0.70, 
+			   POSITION, 100.0, 200.0, 100.0, 0.0, 
+			   LMNULL};
+
+
+static float red_inf_light[] = {AMBIENT, 0.0, 0.0, 0.0, 
+			   LCOLOR,   0.6, 0.1, 0.1, 
+			   POSITION, 100.0, 30.0, 100.0, 0.0, 
+			   LMNULL};
+
+static float green_inf_light[] = {AMBIENT, 0.0, 0.0, 0.0, 
+			   LCOLOR,   0.1, 0.3, 0.1, 
+			   POSITION, -100.0, 20.0, 20.0, 0.0, 
+			   LMNULL};
+
+
+static float blue_inf_light[] = {AMBIENT, 0.0, 0.0, 0.0, 
+			   LCOLOR,   0.1, 0.1, 0.3, 
+			   POSITION, 0.0, -100.0, -100.0, 0.0, 
+			   LMNULL};
+
+static float white_local_light[] = {AMBIENT, 0.0, 1.0, 0.0, 
+			     LCOLOR,   0.75, 0.75, 0.75, 
+			     POSITION, 0.0, 10.0, 10.0, 5.0, 
+			     LMNULL};
+# endif
 
 #else
 static float white_inf_light[] = {AMBIENT, 0.0, 0.0, 0.0, 
@@ -2038,7 +2066,7 @@ make_materials()
 	lmdef( DEFMATERIAL, 19, 0, material_xdefault );
 	lmdef( DEFMATERIAL, 20, 0, material_rtdefault );
 
-    lmdef (DEFLIGHT, 1, 0, default_light);
+/*    lmdef (DEFLIGHT, 1, 0, default_light); */
     lmdef (DEFLIGHT, 4, 0, green_inf_light);
     lmdef (DEFLIGHT, 2, 0, white_inf_light);
     lmdef (DEFLIGHT, 3, 0, red_inf_light);
