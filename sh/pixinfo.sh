@@ -26,7 +26,10 @@ fi
 
 FILE=$1
 
-eval `basename $FILE|sed -e 's/\\(.*\\)\\.\\(.*\\)/\\1;SUFFIX=\\2;/' -e 's/^/LHS=/' `
+# Change dangerous shell characters to more harmless versions.
+# This primarily affects the returned BASE string.
+eval `basename $FILE| tr '&;$!=' '+,---' | \
+	sed -e 's/\\(.*\\)\\.\\(.*\\)/\\1;SUFFIX=\\2;/' -e 's/^/LHS=/' `
 
 # First, see if size is encoded in the name.
 BASE=
