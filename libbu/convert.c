@@ -30,6 +30,7 @@
 static char RCSid[] = "$Header$ (BRL)";
 #endif
 #include <stdio.h>
+#include <ctype.h>
 #include "machine.h"
 
 /*
