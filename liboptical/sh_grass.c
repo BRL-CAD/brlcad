@@ -318,7 +318,7 @@ double w;	/* 0..1, */
 		if (blade != BLADE_LAST)
 			pl->b[blade].width *= d;
 		else
-			d = d * d * d;
+			d = d * d * d * d;
 
 		for (seg=0; seg < pl->b[blade].segs ; seg++) {
 			pl->b[blade].leaf[seg].len *= d;
@@ -425,7 +425,7 @@ struct grass_specific *grass_sp;
 
 
 /* XXX need to get the height of the stalks to vary more somehow */
-  seg_len = 2. * grass_sp->t / grass_sp->proto.b[blade].segs;
+  seg_len = 1.75 * grass_sp->t / grass_sp->proto.b[blade].segs;
   val = .9;
   for (seg=0 ; seg < grass_sp->proto.b[blade].segs ; seg++) {
     tmp = (double)seg / (double)BLADE_SEGS_MAX;
@@ -888,7 +888,9 @@ double radius;	/* radius of ray */
 	bn_noise_vec(cell_pos, r->hit.hit_normal);
 	r->hit.hit_normal[Z] += 1.0;
 #else
-	VADD2(tmp, r->hit.hit_point, grass_sp->delta);
+/* XXX should use wind vect and frametime here */
+	VSCALE(tmp, r->hit.hit_point, grass_sp->size * .05);
+	VADD2(tmp, tmp, grass_sp->delta);
 	bn_noise_vec(tmp, r->hit.hit_normal);
 	if (r->hit.hit_normal[Z] < 0.0) r->hit.hit_normal[Z] *= -1.0;
 #endif
