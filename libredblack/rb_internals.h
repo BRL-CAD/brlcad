@@ -72,7 +72,6 @@
 (									\
     (((n) -> rbn_color)[(o)/8] & (0x1 << ((o) % 8))) ? 1 : 0		\
 )
-
 #define	rb_set_color(n, o, c)						\
 {									\
     int	_b = (o) / 8;							\
@@ -89,32 +88,32 @@
 #define	rb_print(t,p)		(((t) -> rbt_print)((p) -> rbp_data))
 
 /*
+ *	Interface to _rb_walk()
+ *	(Valid values for the parameter what_to_walk)
+ */
+#define	WALK_NODES		0
+#define	WALK_DATA		1
+
+/*
  *	Functions internal to LIBREDBLACK
  */
+struct rb_node *_rb_neighbor	(
+				    struct rb_node	*node,
+				    int			order,
+				    int			sense
+				);
 struct rb_node *_rb_search	(
 				    struct rb_node	*root,
 				    int			order_nm,
 				    int			(*order)(),
 				    void		*data
 				);
-void left_rotate		(
-				    struct rb_node	*node,
-				    int			order
-				);
-void right_rotate		(
-				    struct rb_node	*node,
-				    int			order
-				);
-#define	rb_rotate(n, o, d)	(((d) == RB_LEFT)		? 	\
-				    left_rotate((n), (o))	:	\
-				    right_rotate((n), (o)))
-#define	rb_other_rotate(n, o, d) (((d) == RB_LEFT)		? 	\
-				    right_rotate((n), (o))	:	\
-				    left_rotate((n), (o)))
-struct rb_node *_rb_neighbor	(
-				    struct rb_node	*node,
+void _rb_walk			(
+				    rb_tree		*tree,
 				    int			order,
-				    int			sense
+				    void		(*visit)(),
+				    int			what_to_visit,
+				    int			trav_type
 				);
 
 #endif /* RB_INTERNALS_H */
