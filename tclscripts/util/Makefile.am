@@ -2,9 +2,8 @@
 
 tcldir = $(prefix)/tclscripts/util
 
-tcl_SCRIPTS = expand_int_ranges.tcl luniq.tcl
+dist_tcl_SCRIPTS = expand_int_ranges.tcl luniq.tcl
 tcl_DATA = tclIndex
-EXTRA_DIST = $(tcl_SCRIPTS) $(tcl_DATA)
 
 .PHONY : tclIndex
 tclIndex:
