@@ -73,6 +73,7 @@ register struct region *rp;
 	}
 	rt_vls_init( &param );
 	material = rp->reg_mater.ma_matname;
+	rt_vls_strncpy( &param, rp->reg_mater.ma_matparm, sizeof(rp->reg_mater.ma_matparm) );
 	if( material[0] == '\0' )  {
 		material = mdefault;
 		rt_vls_trunc( &param, 0 );
@@ -96,15 +97,18 @@ retry:
 found:
 	rp->reg_mfuncs = (char *)mfp;
 	rp->reg_udata = (char *)0;
-	rt_vls_strncpy( &param, rp->reg_mater.ma_matparm, sizeof(rp->reg_mater.ma_matparm) );
 
 	if( (ret = mfp->mf_setup( rp, &param, &rp->reg_udata )) < 0 )  {
-		/* What to do if setup fails? */
+		rt_log("mlib_setup(%s) failure, material='%s', param='%s'\n",
+			rp->reg_name, material, RT_VLS_ADDR(&param) );
 		if( material != mdefault )  {
+			/* If not default material, change to default & retry */
 			material = mdefault;
 			rt_vls_trunc( &param, 0 );
 			goto retry;
 		}
+		/* What to do if default setup fails? */
+		rt_log("mlib_setup(%s) error recovery fails\n", rp->reg_name);
 	}
 	rt_vls_free( &param );
 	return(ret);		/* Good or bad, as mf_setup says */
