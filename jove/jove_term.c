@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 10.2  93/10/26  05:43:27  mike
+ * POSIX and termios
+ * 
  * Revision 10.1  91/10/12  06:54:06  mike
  * Release_4.0
  * 
@@ -326,8 +329,54 @@ settout()
 		150,	/* EXTA	(7200?) */
 		200	/* EXT	(19.2?) */
 	};
+	int	val;
 
-	termout.io_cnt = BufSize = CheckTime = speeds[jove_ospeed] * max(LI / 24, 1);
+#if !defined(HAS_TERMIOS)
+	val = speeds[jove_ospeed & 0xF];
+#else
+	/* In POSIX, this is a vendor-specific code, not a useful number. */
+	switch(jove_ospeed)  {
+	case B0:
+		val = 30;
+		break;
+	case B50:
+	case B75:
+	case B110:
+	case B134:
+	case B150:
+	case B200:
+	case B300:
+	case B600:
+		val = 1;
+		break;
+	case B1200:
+		val = 5;
+		break;
+	case B1800:
+		val = 15;
+		break;
+	case B2400:
+		val = 35;
+		break;
+	case B4800:
+		val = 100;
+		break;
+	default:
+	case B9600:
+		val = 200;
+		break;
+	case B19200:
+		val = 400;
+		break;
+	case B38400:
+		val = 800;
+		break;
+	}
+#endif
+	BufSize = val * max(LI / 24, 1);
+	if( BufSize < 1 )  BufSize = 1;
+	CheckTime = BufSize;
+	termout.io_cnt = BufSize;
 	termout.io_base = termout.io_ptr = emalloc(BufSize);
 	termout.io_flag = 0;
 	termout.io_file = 1;	/* Standard output */
