@@ -387,19 +387,22 @@ CONST struct rt_tol	*tol;
 	NMG_CK_SHELL(s);
 	RT_CK_TOL(tol);
 
+	/* First, handle any splitting */
 	for( RT_LIST_FOR( fu, faceuse, &s->fu_hd ) )  {
-		/* First, handle any splitting */
 		for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
 			nmg_split_touchingloops( lu );
-		}
-		/* Second, reorient any split loop fragments */
-		for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
-			if( lu->orientation != OT_UNSPEC )  continue;
-			nmg_lu_reorient( lu, tol );
 		}
 	}
 	for( RT_LIST_FOR( lu, loopuse, &s->lu_hd ) )  {
 		nmg_split_touchingloops( lu );
+	}
+
+	/* Second, reorient any split loop fragments */
+	for( RT_LIST_FOR( fu, faceuse, &s->fu_hd ) )  {
+		for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
+			if( lu->orientation != OT_UNSPEC )  continue;
+			nmg_lu_reorient( lu, tol );
+		}
 	}
 }
 
