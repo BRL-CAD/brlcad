@@ -215,6 +215,32 @@ char	**argv;
 	return(0);
 }
 
+cm_lookat_pt( argc, argv )
+int	argc;
+char	**argv;
+{
+	point_t	pt;
+	vect_t	dir;
+	int	yflip = 0;
+
+	if( argc < 4 )
+		return(-1);
+	pt[X] = atof(argv[1]);
+	pt[Y] = atof(argv[2]);
+	pt[Z] = atof(argv[3]);
+	if( argc > 4 )
+		yflip = atoi(argv[4]);
+
+	/*
+	 *  eye_pt must have been specified before here (for now)
+	 */
+	VSUB2( dir, pt, eye_model );
+	VUNITIZE( dir );
+	mat_lookat( Viewrotscale, dir, yflip );
+	return(0);
+}
+
+
 cm_vrot( argc, argv )
 int	argc;
 char	**argv;

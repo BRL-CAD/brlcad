@@ -101,6 +101,7 @@ static char	*framebuffer;		/* desired framebuffer */
 extern int	cm_start();
 extern int	cm_vsize();
 extern int	cm_eyept();
+extern int	cm_lookat_pt();
 extern int	cm_vrot();
 extern int	cm_end();
 extern int	cm_multiview();
@@ -116,6 +117,8 @@ static struct command_tab cmdtab[] = {
 		cm_vsize,	2, 2,
 	"eye_pt", "xyz of eye", "set eye point",
 		cm_eyept,	4, 4,
+	"lookat_pt", "x y z [yflip]", "set eye look direction, in X-Y plane",
+		cm_lookat_pt,	4, 5,
 	"viewrot", "4x4 matrix", "set view direction from matrix",
 		cm_vrot,	17,17,
 	"end", 	"", "end of frame setup, begin raytrace",
