@@ -102,8 +102,10 @@ fastf_t		rt_dist_tol = 0;	/* Value for rti_tol.dist */
 fastf_t		rt_perp_tol = 0;	/* Value for rti_tol.perp */
 char		*framebuffer;		/* desired framebuffer */
 
-int		space_partition = 1;	/* space partitioning algorithm
-					   to use. */
+int		space_partition = 	/*space partitioning algorithm to use*/
+			RT_PART_NUGRID;
+double		nu_gfactor = 1.3;	/* constant factor in NUgrid algorithm,
+					   if applicable */
 
 #define MAX_WIDTH	(32*1024)
 
@@ -121,10 +123,13 @@ register char **argv;
 	optind = 1;		/* restart */
 
 #define GETOPT_STR	\
-	",:a:b:c:d:e:f:g:il:n:o:p:rs:w:x:A:BC:D:E:F:G:H:IJ:K:MN:O:P:RST:U:V:X:"
+	".:,:a:b:c:d:e:f:g:il:n:o:p:rs:w:x:A:BC:D:E:F:G:H:IJ:K:MN:O:P:RST:U:V:X:"
 
 	while( (c=getopt( argc, argv, GETOPT_STR )) != EOF )  {
 		switch( c )  {
+		case '.':
+			nu_gfactor = (double)atof( optarg );
+			break;
 		case ',':
 			space_partition = atoi(optarg);
 			break;
