@@ -1535,6 +1535,8 @@ void
 rt_tcl_setup(interp)
      Tcl_Interp *interp;
 {
+	extern int rt_bot_minpieces;	/* from g_bot.c */
+
 	/* initialize database objects */
 	Wdb_Init(interp);
 
@@ -1545,6 +1547,7 @@ rt_tcl_setup(interp)
 	Vo_Init(interp);
 
 	Tcl_SetVar(interp, "rt_version", (char *)rt_version+5, TCL_GLOBAL_ONLY);
+	Tcl_LinkVar(interp, "rt_bot_minpieces", (char *)&rt_bot_minpieces, TCL_LINK_INT);
 }
 
 
