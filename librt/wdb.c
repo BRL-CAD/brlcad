@@ -158,11 +158,7 @@ wdb_export_external(
 
 	/* Stash name into external representation */
 	if( wdbp->dbip->dbi_version <= 4 )  {
-		if( db_wrap_v4_external( ep, name ) < 0 )  {
-			bu_log("wdb_export_external(%s): db_wrap_v4_external error\n",
-				name );
-			return -4;
-		}
+		db_wrap_v4_external( ep, name );
 	} else if( wdbp->dbip->dbi_version == 5 )  {
 		if( db_wrap_v5_external( ep, name ) < 0 )  {
 			bu_log("wdb_export_external(%s): db_wrap_v5_external error\n",

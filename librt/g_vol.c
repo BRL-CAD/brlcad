@@ -28,6 +28,7 @@ static const char RCSvol[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include <ctype.h>
 #include <math.h>
+#include <string.h>
 #include "machine.h"
 #include "vmath.h"
 #include "db.h"

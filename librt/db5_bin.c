@@ -23,6 +23,7 @@ static const char RCSell[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <math.h>
+#include <string.h>
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"

@@ -34,6 +34,7 @@ static const char RCSsubmodel[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <math.h>
+#include <string.h>
 #include "machine.h"
 #include "vmath.h"
 #include "db.h"
@@ -88,8 +89,6 @@ struct rt_i		*rtip;
 	struct submodel_specific	*submodel;
 	struct rt_i			*sub_rtip;
 	struct db_i			*sub_dbip;
-	struct soltab			*sub_stp;
-	struct region			*rp;
 	vect_t	radvec;
 	vect_t	diam;
 	char	*argv[2];
@@ -293,7 +292,6 @@ struct seg		*segHeadp;
 	struct region		*up_reg;
 	struct submodel_gobetween *gp;
 	struct submodel_specific *submodel;
-	fastf_t			delta;
 	int			count = 0;
 
 	RT_AP_CHECK(ap);
@@ -430,8 +428,6 @@ struct seg		*seghead;
 {
 	register struct submodel_specific *submodel =
 		(struct submodel_specific *)stp->st_specific;
-	register struct seg *segp;
-	CONST struct bn_tol	*tol = &ap->a_rt_i->rti_tol;
 	struct application	sub_ap;
 	struct submodel_gobetween	gb;
 	vect_t			vdiff;
@@ -553,9 +549,6 @@ register struct curvature *cvp;
 register struct hit	*hitp;
 struct soltab		*stp;
 {
-	register struct submodel_specific *submodel =
-		(struct submodel_specific *)stp->st_specific;
-
  	cvp->crv_c1 = cvp->crv_c2 = 0;
 
 	/* any tangent direction */
@@ -690,7 +683,6 @@ CONST struct bn_tol	*tol;
 {
 	LOCAL struct rt_submodel_internal	*sip;
 	struct db_tree_state	state;
-	struct db_i		*dbip;
 	int			ret;
 	char			*argv[2];
 	struct goodies		good;

@@ -22,6 +22,7 @@ static const char RCSnmg_index[] = "@(#)$Header$ (BRL)";
 
 #include "conf.h"
 #include <stdio.h>
+#include <string.h>
 #include <math.h>
 #include "externs.h"
 #include "machine.h"
@@ -277,7 +278,7 @@ struct model	*m;
 				MARK_VU(vu);
 			}
 			/* Lone vertex in shell */
-			if( vu = s->vu_p )  {
+			if( (vu = s->vu_p) )  {
 				MARK_VU(vu);
 			}
 		}
@@ -447,7 +448,7 @@ register long	newindex;
 				ASSIGN_VU(vu);
 			}
 			/* Lone vertex in shell */
-			if( vu = s->vu_p )  {
+			if( (vu = s->vu_p) )  {
 				ASSIGN_VU(vu);
 			}
 		}
@@ -713,7 +714,7 @@ CONST struct model			*m;
 				UNIQ_VU(vu);
 			}
 			/* Lone vertex in shell */
-			if( vu = s->vu_p )  {
+			if( (vu = s->vu_p) )  {
 				ctr->shells_of_lone_vert++;
 				UNIQ_VU(vu);
 			}
@@ -932,7 +933,7 @@ CONST struct model *m;
 				CHECK_VU_INDEX(vu);
 			}
 			/* Lone vertex in shell */
-			if( vu = s->vu_p )  {
+			if( (vu = s->vu_p) )  {
 				CHECK_VU_INDEX(vu);
 			}
 		}

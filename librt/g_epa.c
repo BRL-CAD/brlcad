@@ -169,7 +169,8 @@ CONST struct bu_structparse rt_epa_parse[] = {
     { "%f", 3, "A",   offsetof(struct rt_epa_internal, epa_Au[X]), BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 1, "r_1", offsetof(struct rt_epa_internal, epa_r1),    BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 1, "r_2", offsetof(struct rt_epa_internal, epa_r2),    BU_STRUCTPARSE_FUNC_NULL },
-    {0} };
+    { {'\0','\0','\0','\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL }
+};
 
 /*
  *  			R T _ E P A _ P R E P

@@ -25,7 +25,7 @@ static const char RCSid[] = "@(#)$Header$";
 #include "conf.h"
 
 #include <stdio.h>
-
+#include <string.h>
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"

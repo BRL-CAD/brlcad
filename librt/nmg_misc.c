@@ -1192,8 +1192,12 @@ CONST int wires;
 		rt_bomb( "nmg_find_radial_eu: wire edges not specified, but eu is a wire!!\n" );
 
 	ret_eu = eu->eumate_p->radial_p;
-	while( ( !wires & (nmg_find_fu_of_eu( ret_eu ) == (struct faceuse *)NULL)) ||
-		( (s != (struct shell *)NULL) & nmg_find_s_of_eu( ret_eu ) != s  ) )
+	while(
+	      (!wires & (nmg_find_fu_of_eu(ret_eu) == (struct faceuse *)NULL))
+	      ||
+	      ( (s != (struct shell *)NULL) &&
+		nmg_find_s_of_eu(ret_eu) != s  )
+	      )
 			ret_eu = ret_eu->eumate_p->radial_p;
 
 	return( ret_eu );
@@ -5898,7 +5902,12 @@ CONST struct bn_tol *tol;
 			/* find the new edge line at the intersection of these two faces
 			 * the line is defined by start and dir */
 
-			if( ret_val=bn_isect_2planes( start , dir , fu1->f_p->g.plane_p->N , fu2->f_p->g.plane_p->N , new_v->vg_p->coord , &tol_tmp ) )
+			ret_val = bn_isect_2planes( start, dir, 
+						    fu1->f_p->g.plane_p->N,
+						    fu2->f_p->g.plane_p->N,
+						    new_v->vg_p->coord,
+						    &tol_tmp );
+			if( ret_val )
 			{
 				/* Cannot find line for this edge */
 				bu_log( "nmg_inside_vert: Cannot find new edge between two planes\n" );
@@ -8477,6 +8486,7 @@ CONST struct bn_tol *tol;
 	}
 }
 
+#if 0
 static int
 nmg_vert_is_normalward( v, vbase, norm )
 struct vertex *v;
@@ -8494,6 +8504,7 @@ vect_t norm;
 	else
 		return( 0 );
 }
+
 
 /* Join EU's running from v1 to v2 and from v2 to v3 */
 static void
@@ -8557,6 +8568,7 @@ CONST struct bn_tol *tol;
 		}
 	}
 }
+#endif
 
 static int
 nmg_make_connect_faces( dst , vpa , vpb , verts , tol )

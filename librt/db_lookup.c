@@ -52,8 +52,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
  *		which implies that a db_scan() has already been performed.
  */
 int
-db_is_directory_non_empty( dbip )
-CONST struct db_i	*dbip;
+db_is_directory_non_empty(CONST struct db_i	*dbip)
 {
 	register int	i;
 

@@ -343,7 +343,8 @@ CONST struct db_i		*dbip;
 		comb->los = 0;
 	}
 
-	if( comb->rgb_valid = rp[0].c.c_override )  {
+	comb->rgb_valid = rp[0].c.c_override;
+	if ( comb->rgb_valid )  {
 		comb->rgb[0] = rp[0].c.c_rgb[0];
 		comb->rgb[1] = rp[0].c.c_rgb[1];
 		comb->rgb[2] = rp[0].c.c_rgb[2];
@@ -916,8 +917,7 @@ int			no_unions;
  *	 0	OK
  */
 int
-db_ck_v4gift_tree( tp )
-CONST union tree	*tp;
+db_ck_v4gift_tree( CONST union tree	*tp)
 {
 	RT_CK_TREE(tp);
 	switch( tp->tr_op )  {
@@ -1059,7 +1059,6 @@ struct db_tree_state	*tsp;
 		tstart = tnext;
 	}
 
-final:
 	curtree = db_mkbool_tree( trees, subtreecount );
 	if(rt_g.debug&DEBUG_TREEWALK)  {
 		bu_log("db_mkgift_tree() returns:\n");

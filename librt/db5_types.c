@@ -262,7 +262,7 @@ int
 db5_type_codes_from_tag( unsigned char *major, unsigned char *minor,
 			CONST char *tag ) {
     register struct db5_type	*tp;
-    register int		found_minors = 0;
+
 
     for (tp = (struct db5_type *) type_table;
 	    tp -> major_code != DB5_MAJORTYPE_RESERVED;
@@ -280,7 +280,7 @@ int
 db5_type_codes_from_descrip( unsigned char *major, unsigned char *minor,
 			    CONST char *descrip ) {
     register struct db5_type	*tp;
-    register int		found_minors = 0;
+
 
     for (tp = (struct db5_type *) type_table;
 	    tp -> major_code != DB5_MAJORTYPE_RESERVED;

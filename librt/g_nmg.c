@@ -24,6 +24,7 @@ static const char RCSnmg[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <math.h>
+#include <strings.h>
 #include "machine.h"
 #include "externs.h"
 #include "vmath.h"

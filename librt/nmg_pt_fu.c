@@ -27,7 +27,7 @@
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"
-
+#include "plot3.h"
 
 /* vertex/edge distance 
  * Each loop geometry element (edge/vertex) has one of these computed.
@@ -81,9 +81,9 @@ struct fpi {
 
 #ifdef USE_PROTOTYPES
 static int	nmg_class_pt_vu(struct fpi *fpi, struct vertexuse *vu);
-static void	pl_pt_e(struct fpi *fpi, struct edge_info *ei);
+
 static struct edge_info *nmg_class_pt_eu(struct fpi *fpi, struct edgeuse *eu, struct edge_info *edge_list, CONST int in_or_out_only);
-static int	compute_loop_class(struct fpi *fpi,struct loopuse *lu,struct edge_info *edge_list);
+static int	compute_loop_class(struct fpi *fpi, const struct loopuse *lu,struct edge_info *edge_list);
 static int	nmg_class_pt_lu(struct loopuse *lu, struct fpi *fpi, CONST int in_or_out_only);
 int		nmg_class_pt_fu_except(CONST point_t pt, CONST struct faceuse *fu, CONST struct loopuse *ignore_lu, void (*eu_func)(), void (*vu_func)(), CONST char *priv, CONST int call_on_hits, CONST int in_or_out_only, CONST struct bn_tol *tol);
 #endif
@@ -249,6 +249,7 @@ found:
 	return ved->status;
 }
 
+#if 0
 static void
 pl_pt_e(fpi, ei)
 struct fpi *fpi;
@@ -301,7 +302,7 @@ struct edge_info *ei;
 	bu_free((char *)b, "bit vec");
 	fclose(fd);
 }
-
+#endif
 static int
 Quadrant( x, y )
 fastf_t x,y;
@@ -699,7 +700,7 @@ CONST int		in_or_out_only;
 		bu_log( "\tdist = %g\n", ved->dist );
 	}
 
-found:
+
 
 	/* Add a struct for this edgeuse to the loop's list of dist-sorted
 	 * edgeuses.
@@ -995,10 +996,9 @@ struct edge_info *ei;
  */
 
 static int
-compute_loop_class(fpi, lu, edge_list)
-struct fpi *fpi;
-struct loopuse *lu;
-struct edge_info *edge_list;
+compute_loop_class(struct fpi *fpi, 
+		   const struct loopuse *lu,
+		   struct edge_info *edge_list)
 {
 	struct edge_info *ei;
 	struct edge_info *ei_vdot_max;
@@ -1510,9 +1510,9 @@ CONST struct bn_tol     *tol;
 int
 nmg_class_pt_lu_except(pt, lu, e_p, tol)
 point_t		pt;
-struct loopuse	*lu;
-struct edge	*e_p;
-struct bn_tol	*tol;
+const struct loopuse	*lu;
+const struct edge	*e_p;
+const struct bn_tol	*tol;
 {
 	register struct edgeuse	*eu;
 	struct edge_info edge_list;

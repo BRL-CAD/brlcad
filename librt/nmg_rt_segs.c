@@ -21,11 +21,13 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "conf.h"
 
 #include <stdio.h>
+#include <string.h>
 #include <math.h>
 #include "machine.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"
+#include "plot3.h"
 
 /*	EDGE-FACE correlation data
  * 	used in edge_hit() for 3manifold case
@@ -1218,7 +1220,7 @@ struct ray_data	*rd;
 			 *   else
 			 *	This is a real conflict.
 			 */
-			if (long_ptr = common_topo(a_tbl, next_tbl)) {
+			if ( (long_ptr = common_topo(a_tbl, next_tbl)) ) {
 				/* morf the two hit points */
 				a_hit->in_out = (a_hit->in_out & 0x0f0) + 
 					NMG_RAY_STATE_ON;

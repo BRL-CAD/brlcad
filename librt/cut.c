@@ -2016,9 +2016,7 @@ struct rt_i	*rtip;
  *			R T _ P R _ C U T _ I N F O
  */
 void
-rt_pr_cut_info( rtip, str )
-CONST struct rt_i	*rtip;
-CONST char		*str;
+rt_pr_cut_info(const struct rt_i *rtip, const char *str)
 {
 	CONST struct nugridnode	*nugnp;
 	int			i;

@@ -918,6 +918,22 @@ CONST struct db_i		*dbip;
 	return(0);
 }
 
+int
+rt_nurb_bytes( srf )
+struct face_g_snurb * srf;
+{
+	int	total_bytes=0;
+
+	total_bytes = 3 * SIZEOF_NETWORK_LONG		/* num_coords and order */
+		+ 2 * SIZEOF_NETWORK_LONG		/* k_size in both knot vectors */
+		+ srf->u.k_size * SIZEOF_NETWORK_DOUBLE	/* u knot vector knots */
+		+ srf->v.k_size * SIZEOF_NETWORK_DOUBLE	/* v knot vector knots */
+		+ 2 * SIZEOF_NETWORK_LONG		/* mesh size */
+		+ RT_NURB_EXTRACT_COORDS(srf->pt_type) *
+			(srf->s_size[0] * srf->s_size[1]) * SIZEOF_NETWORK_DOUBLE;	/* control point mesh */
+
+	return total_bytes;
+}
 
 /*
  *			R T _ N U R B _ E X P O R T 5
@@ -929,12 +945,8 @@ CONST struct rt_db_internal	* ip;
 double				local2mm;
 CONST struct db_i		*dbip;
 {
-	register int		rec_ptr;
 	struct rt_nurb_internal	* sip;
 	int			s;
-	int			grans;
-	dbfloat_t		* vp;
-	int			n;
 	unsigned char		*cp;
 	int			coords;
 
@@ -1104,22 +1116,6 @@ CONST struct db_i		*dbip;
 	return (0);
 }
 
-int
-rt_nurb_bytes( srf )
-struct face_g_snurb * srf;
-{
-	int	total_bytes=0;
-
-	total_bytes = 3 * SIZEOF_NETWORK_LONG		/* num_coords and order */
-		+ 2 * SIZEOF_NETWORK_LONG		/* k_size in both knot vectors */
-		+ srf->u.k_size * SIZEOF_NETWORK_DOUBLE	/* u knot vector knots */
-		+ srf->v.k_size * SIZEOF_NETWORK_DOUBLE	/* v knot vector knots */
-		+ 2 * SIZEOF_NETWORK_LONG		/* mesh size */
-		+ RT_NURB_EXTRACT_COORDS(srf->pt_type) *
-			(srf->s_size[0] * srf->s_size[1]) * SIZEOF_NETWORK_DOUBLE;	/* control point mesh */
-
-	return total_bytes;
-}
 
 int 
 rt_nurb_grans( srf )

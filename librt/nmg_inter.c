@@ -52,12 +52,14 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "conf.h"
 #include <stdio.h>
 #include <math.h>
+#include <string.h>
 #include "machine.h"
 #include "externs.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"
 #include "./debug.h"
+#include "plot3.h"
 
 #define ISECT_NONE	0
 #define ISECT_SHARED_V	1
@@ -100,7 +102,7 @@ CONST struct bn_tol *tol;
 		bu_log( "nmg_make_dualvu( v=x%x, fu=x%x )\n", v, fu );
 
 	/* check for existing vu */
-	if( dualvu=nmg_find_v_in_face( v, fu ) )
+	if(  (dualvu=nmg_find_v_in_face( v, fu ))  )
 	{
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
 			bu_log( "\tdualvu already exists (x%x)\n", dualvu );
@@ -748,7 +750,10 @@ struct faceuse		*fu2;
 				ret++;
 				continue;
 			}
-			if( new_eu = nmg_break_eu_on_v( eu2, vu1->v_p, fu2, is ) ) {
+
+			new_eu = nmg_break_eu_on_v(eu2, vu1->v_p, fu2, is);
+			if ( new_eu ) 
+			{
 				if( is->l1 ) nmg_enlist_vu( is, vu1, new_eu->vu_p, MAX_FASTF );
 				ret++;
 				continue;
@@ -798,7 +803,8 @@ struct faceuse *fu;
 		bu_log("nmg_isect_3vertex_3face(, vu=x%x, fu=x%x) v=x%x\n", vu, fu, vu->v_p);
 
 	/* check the topology first */	
-	if (vup=nmg_find_v_in_face(vu->v_p, fu)) {
+	vup=nmg_find_v_in_face(vu->v_p, fu);
+	if (vup) {
 		if (rt_g.NMG_debug & DEBUG_POLYSECT) bu_log("\tvu lies in face (topology 1)\n");
 		(void)bu_ptbl_ins_unique(is->l1, &vu->l.magic);
 		(void)bu_ptbl_ins_unique(is->l2, &vup->l.magic);
@@ -1266,7 +1272,8 @@ struct bu_ptbl		*l2;	/* optional: list of new eu2 pieces */
 
 	for( i=0; i < neu; i++ )  {
 		for( j=0; j<4; j++ )  {
-			if( eu[neu] = nmg_break_eu_on_v(eu[i],vu[j]->v_p,fu,is) )  {
+			eu[neu] = nmg_break_eu_on_v(eu[i],vu[j]->v_p,fu,is);
+			if( eu[neu] )  {
 				nmg_enlist_vu( is, eu[neu]->vu_p, vu[j], MAX_FASTF );
 				if( l1 && eu[neu]->e_p == eu1->e_p )
 					bu_ptbl_ins_unique(l1, &eu[neu]->l.magic );
@@ -1822,7 +1829,7 @@ struct faceuse		*fu2;
 		}
 
 		/* See if start vertex is now shared */
-		if (vu2_final=nmg_find_v_in_face(eu1->vu_p->v_p, fu2)) {
+		if ( (vu2_final=nmg_find_v_in_face(eu1->vu_p->v_p, fu2)) ) {
 			if (rt_g.NMG_debug & DEBUG_POLYSECT)
 				bu_log("\tEdge start vertex lies on other face (2d topology).\n");
 			vu1_final = eu1->vu_p;
@@ -1846,7 +1853,7 @@ vu1_final = vu1_final = (struct vertexuse *)NULL;	/* XXX HACK HACK -- shut off e
 	 *  XXX "only ask geom question once" rule, and doing a geom
 	 *  XXX calculation here before the topology check.
 	 */
-	if (vu2_final=nmg_find_v_in_face(v1a, fu2)) {
+	if ( (vu2_final=nmg_find_v_in_face(v1a, fu2)) ) {
 		vu1_final = eu1->vu_p;
 		if (rt_g.NMG_debug & DEBUG_POLYSECT) {
 			bu_log("\tEdge start vertex lies on other face (topology).\n\tAdding vu1_final=x%x (v=x%x), vu2_final=x%x (v=x%x)\n",
@@ -2902,6 +2909,7 @@ struct faceuse		*fu1, *fu2;
  *		nmg_purge_unwanted_intersection_points()
  *		nmg_face_cutjoin()
  */
+#if 0
 static void
 nmg_isect_two_face2p( is, fu1, fu2 )
 struct nmg_inter_struct	*is;
@@ -3021,7 +3029,7 @@ f2_again:
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)
 		bu_log("nmg_isect_two_face2p(fu1=x%x, fu2=x%x) END\n", fu1, fu2);
 }
-
+#endif
 /*
  *			N M G _ I S E C T _ L I N E 2 _ E D G E 2 P
  *
@@ -5541,7 +5549,7 @@ out:
 	if( mag2 )
 		bu_free( (char *)mag2, "nmg_isect_two_face3p: mag2" );
 
-outfast:
+
 	if( rt_g.NMG_debug & DEBUG_VERIFY )  {
 		nmg_vfu( &fu1->s_p->fu_hd, fu1->s_p );
 		nmg_vfu( &fu2->s_p->fu_hd, fu2->s_p );
@@ -6488,6 +6496,7 @@ struct bu_ptbl *eu2_list;
 	}
 }
 
+#if 0
 static void
 jra_save_fu_data( fu1, fu2, pl1, pl2 )
 struct faceuse *fu1,*fu2;
@@ -6503,7 +6512,7 @@ plane_t pl1,pl2;
 	nmg_pr_fu_briefly( fu2, "" );
 	bu_log( "ENDDATA\n" );
 }
-
+#endif
 #define MAX_FACES	200
 void
 nmg_check_radial_angles( str, s, tol )
@@ -7636,7 +7645,7 @@ cplanar:
     	    	static int nshell = 1;
     	    	char	name[32];
     	    	FILE	*fp;
-    	    	struct model	*m = nmg_find_model( &fu1->l.magic );
+
 
     	    	/* Both at once */
     	    	nmg_pl_2fu( "Iface%d.pl", 0, fu2, fu1, 0 );
@@ -7917,7 +7926,7 @@ struct shell		*s2;
 			eu1, s2 );
 	}
 
-	if( eu2 = nmg_find_matching_eu_in_s( eu1, s2 ) )  {
+	if ( (eu2 = nmg_find_matching_eu_in_s( eu1, s2 )) )  {
 		/* XXX Is the fact that s2 has a corresponding edge good enough? */
 		nmg_radial_join_eu( eu1, eu2, &is->tol );
 		return;
@@ -7976,7 +7985,7 @@ struct shell		*s2;
 	 *  whether this is an interior or exterior edge, and
 	 *  perhaps add a loop into s2 connecting those two verts.
 	 */
-	if( eu2 = nmg_find_matching_eu_in_s( eu1, s2 ) )  {
+	if ((eu2 = nmg_find_matching_eu_in_s( eu1, s2 )) )  {
 		/* We can't fuse wire edges */
 		goto out;
 	}
@@ -8249,9 +8258,9 @@ CONST struct faceuse	*fu;
 	CONST struct vertexuse	*vu;
 
 	NMG_CK_FACEUSE(fu);
-	for( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
+	for (BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
 		NMG_CK_LOOPUSE(lu);
-		if( vu = nmg_loop_touches_self( lu ) )  {
+		if ((vu = nmg_loop_touches_self( lu )) )  {
 			NMG_CK_VERTEXUSE(vu);
 #if 0
 			/* Right now, this routine is used for debugging ONLY,

@@ -55,12 +55,10 @@ static const char RCSextrude[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "db.h"
 #include "nmg.h"
-#include "raytrace.h"
 #include "rtgeom.h"
+#include "raytrace.h"
 #include "./debug.h"
 
-/* From g_sketch.c */
-BU_EXTERN( struct rt_sketch_internal *rt_copy_sketch, (CONST struct rt_sketch_internal *sketch_ip ) );
 
 struct extrude_specific {
 	mat_t rot, irot;	/* rotation and translation to get extrsuion vector in +z direction with V at origin */
@@ -117,7 +115,7 @@ struct rt_i		*rtip;
 	struct rt_sketch_internal *skt;
 	LOCAL vect_t tmp, tmp2;
 	fastf_t tmp_f;
-	int i, curve_no;
+	int i;
 	int vert_count;
 	int curr_vert;
 	
@@ -339,6 +337,54 @@ fastf_t *vx, *vy;
 }
 
 int
+isect_line2_ellipse( dist, ray_start, ray_dir, center, ra, rb )
+fastf_t dist[2];
+point_t ray_start, center;
+vect_t ray_dir, ra, rb;
+{
+	fastf_t a, b, c;
+	point2d_t pmc;
+	fastf_t pmcda, pmcdb;
+	fastf_t ra_sq, rb_sq;
+	fastf_t ra_4, rb_4;
+	fastf_t dda, ddb;
+	fastf_t disc;
+
+	V2SUB2( pmc, ray_start, center );
+	pmcda = V2DOT( pmc, ra );
+	pmcdb = V2DOT( pmc, rb );
+	ra_sq = V2DOT( ra, ra );
+	ra_4 = ra_sq * ra_sq;
+	rb_sq = V2DOT( rb, rb );
+	rb_4 = rb_sq * rb_sq;
+	if( ra_4 < SMALL_FASTF || rb_4 < SMALL_FASTF )
+		bu_bomb( "ERROR: isect_line2_ellipse: semi-axis length is too small!!!\n" );
+
+	dda = V2DOT( ray_dir, ra );
+	ddb = V2DOT( ray_dir, rb );
+
+	a = dda*dda/ra_4 + ddb*ddb/rb_4;
+	b = 2.0 * (pmcda*dda/ra_4 + pmcdb*ddb/rb_4);
+	c = pmcda*pmcda/ra_4 + pmcdb*pmcdb/rb_4 - 1.0;
+
+	disc = b*b - 4.0*a*c;
+
+	if( disc < 0.0 )
+		return( 0 );
+
+	if( disc == 0.0 )
+	{
+		dist[0] = -b/(2.0*a);
+		return( 1 );
+	}
+
+	dist[0] = (-b - sqrt( disc )) / (2.0*a);
+	dist[1] = (-b + sqrt( disc )) / (2.0*a);
+	return( 2 );
+}
+
+
+int
 isect_line_earc( dist, ray_start, ray_dir, center, ra, rb, norm, start, end, orientation )
 fastf_t dist[2];
 point_t ray_start;
@@ -495,52 +541,6 @@ int orientation;	/* 0 -> ccw, !0 -> cw */
 	return( dist_count );
 }
 
-int
-isect_line2_ellipse( dist, ray_start, ray_dir, center, ra, rb )
-fastf_t dist[2];
-point_t ray_start, center;
-vect_t ray_dir, ra, rb;
-{
-	fastf_t a, b, c;
-	point2d_t pmc;
-	fastf_t pmcda, pmcdb;
-	fastf_t ra_sq, rb_sq;
-	fastf_t ra_4, rb_4;
-	fastf_t dda, ddb;
-	fastf_t disc;
-
-	V2SUB2( pmc, ray_start, center );
-	pmcda = V2DOT( pmc, ra );
-	pmcdb = V2DOT( pmc, rb );
-	ra_sq = V2DOT( ra, ra );
-	ra_4 = ra_sq * ra_sq;
-	rb_sq = V2DOT( rb, rb );
-	rb_4 = rb_sq * rb_sq;
-	if( ra_4 < SMALL_FASTF || rb_4 < SMALL_FASTF )
-		bu_bomb( "ERROR: isect_line2_ellipse: semi-axis length is too small!!!\n" );
-
-	dda = V2DOT( ray_dir, ra );
-	ddb = V2DOT( ray_dir, rb );
-
-	a = dda*dda/ra_4 + ddb*ddb/rb_4;
-	b = 2.0 * (pmcda*dda/ra_4 + pmcdb*ddb/rb_4);
-	c = pmcda*pmcda/ra_4 + pmcdb*pmcdb/rb_4 - 1.0;
-
-	disc = b*b - 4.0*a*c;
-
-	if( disc < 0.0 )
-		return( 0 );
-
-	if( disc == 0.0 )
-	{
-		dist[0] = -b/(2.0*a);
-		return( 1 );
-	}
-
-	dist[0] = (-b - sqrt( disc )) / (2.0*a);
-	dist[1] = (-b + sqrt( disc )) / (2.0*a);
-	return( 2 );
-}
 
 /*
  *  			R T _ E X T R U D E _ S H O T
@@ -1095,7 +1095,7 @@ register struct soltab *stp;
 
 	if( extrude->verts )
 		bu_free( (char *)extrude->verts, "extrude->verts" );
-	rt_curve_free( extrude->crv );
+	rt_curve_free( &(extrude->crv) );
 	bu_free( (char *)extrude, "extrude_specific" );
 }
 
@@ -1120,7 +1120,6 @@ CONST struct bn_tol	*tol;
 {
 	LOCAL struct rt_extrude_internal	*extrude_ip;
 	struct curve			*crv=(struct curve *)NULL;
-	int				curve_no;
 	struct rt_sketch_internal	*sketch_ip;
 	point_t				end_of_h;
 	int				i1, i2, nused1, nused2;

@@ -128,7 +128,8 @@ CONST struct bu_structparse rt_arb_parse[] = {
     { "%f", 3, "V6", offsetof(struct rt_arb_internal, pt[5][X]), BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 3, "V7", offsetof(struct rt_arb_internal, pt[6][X]), BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 3, "V8", offsetof(struct rt_arb_internal, pt[7][X]), BU_STRUCTPARSE_FUNC_NULL },
-    {0} };
+    { {'\0','\0','\0','\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL }
+};
 
 /*  rt_arb_get_cgtype(), rt_arb_std_type(), and rt_arb_centroid() 
  *  stolen from mged/arbs.c */

@@ -728,7 +728,7 @@ CONST char *str;
 	char *errstr;
 	struct edgeuse *eparent;
 	errstr = bu_calloc(strlen(str)+128, 1, "nmg_ck_e error str");
-	(void)sprintf(errstr, "%sedge %8lx\n", str, e);
+	(void)sprintf(errstr, "%sedge %8lx\n", str, (unsigned long)e);
 	
 	NMG_CK_EDGE(e);
 	NMG_CK_EDGEUSE(eu);
@@ -761,7 +761,7 @@ CONST char *str;
 	char *errstr;
 
 	errstr = bu_calloc(strlen(str)+128, 1, "nmg_ck_vu error str");
-	(void)sprintf(errstr, "%svertexuse %8lx\n", str, vu);
+	(void)sprintf(errstr, "%svertexuse %8lx\n", str, (unsigned long)vu);
 	
 	if (vu->up.magic_p != parent) rt_bomb(
 		strcat(errstr, "nmg_ck_vu() Vertexuse denies parentage\n"));
@@ -782,7 +782,7 @@ CONST char *str;
 	struct edgeuse *eur, *eu_next, *eu_last;	
 
 	errstr = bu_calloc(strlen(str)+128, 1, "nmg_ck_eu error str");
-	(void)sprintf(errstr, "%sedgeuse %8lx\n", str, eu);
+	(void)sprintf(errstr, "%sedgeuse %8lx\n", str, (unsigned long)eu);
 
 	NMG_CK_EDGEUSE(eu);
 
@@ -848,7 +848,7 @@ CONST char *str;
 {
 	char *errstr;
 	errstr = bu_calloc(strlen(str)+128, 1, "nmg_ck_lg error str");
-	(void)sprintf(errstr, "%sloop_g %8lx\n", str, lg);
+	(void)sprintf(errstr, "%sloop_g %8lx\n", str, (unsigned long)lg);
 
 	NMG_CK_LOOP_G(lg);
 	NMG_CK_LOOP(l);
@@ -867,7 +867,7 @@ CONST char *str;
 {
 	char *errstr;
 	errstr = bu_calloc(strlen(str)+128, 1, "nmg_ck_l error str");
-	(void)sprintf(errstr, "%sloop %8lx\n", str, l);
+	(void)sprintf(errstr, "%sloop %8lx\n", str, (unsigned long)l);
 
 	NMG_CK_LOOP(l);
 	NMG_CK_LOOPUSE(lu);
@@ -897,7 +897,7 @@ CONST char *str;
 	long	magic1;
 
 	errstr = bu_calloc(strlen(str)+128, 1, "nmg_ck_lu error str");
-	(void)sprintf(errstr, "%sloopuse %8lx\n", str, lu);
+	(void)sprintf(errstr, "%sloopuse %8lx\n", str, (unsigned long)lu);
 	
 	NMG_CK_LOOPUSE(lu);
 
@@ -933,7 +933,7 @@ CONST char *str;
 		for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
 			NMG_CK_EDGEUSE(eu);
 			(void)sprintf(&errstr[l], "%sedgeuse #%d (%8lx)\n",
-				errstr, edgeuse_num++, eu);
+				errstr, edgeuse_num++, (unsigned long)eu);
 			nmg_ck_eu(&lu->l.magic, eu, errstr);
 		}
 	} else {
@@ -953,7 +953,7 @@ CONST char *str;
 {
 	char *errstr;
 	errstr = bu_calloc(strlen(str)+128, 1, "nmg_ck_fg error str");
-	(void)sprintf(errstr, "%sFace_g %8lx\n", str, f);
+	(void)sprintf(errstr, "%sFace_g %8lx\n", str, (unsigned long)f);
 
 	NMG_CK_FACE_G_PLANE(fg);
 	if (fg->N[X]==0.0 && fg->N[Y]==0.0 && fg->N[Z]==0.0 && fg->N[H]!=0.0){
@@ -977,7 +977,7 @@ CONST char *str;
 {
 	char *errstr;
 	errstr = bu_calloc(strlen(str)+128, 1, "nmg_ck_f error str");
-	(void)sprintf(errstr, "%sFace %8lx\n", str, f);
+	(void)sprintf(errstr, "%sFace %8lx\n", str, (unsigned long)f);
 
 	NMG_CK_FACE(f);
 	NMG_CK_FACEUSE(fu);
@@ -1008,7 +1008,7 @@ CONST char *str;
 	NMG_CK_SHELL(s);
 
 	errstr = bu_calloc(strlen(str)+128, 1, "nmg_ck_fu error str");
-	(void)sprintf(errstr, "%sFaceuse %8lx\n", str, fu);
+	(void)sprintf(errstr, "%sFaceuse %8lx\n", str, (unsigned long)fu);
 
 	if (fu->s_p != s) rt_bomb(
 		strcat(errstr, "nmg_ck_fu() faceuse child denies shell parentage\n") );
@@ -1032,7 +1032,7 @@ CONST char *str;
 	for( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
 		NMG_CK_LOOPUSE(lu);
 		(void)sprintf(&errstr[l] , "%sloopuse #%d (%8lx)\n", 
-			errstr, loop_number++, lu);
+			errstr, loop_number++, (unsigned long)lu);
 		nmg_ck_lu(&fu->l.magic, lu, errstr);
 	}
 	bu_free(errstr, "nmg_ck_fu error str");

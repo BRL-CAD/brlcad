@@ -76,7 +76,8 @@ CONST struct bu_structparse rt_tgc_parse[] = {
     { "%f", 3, "B", offsetof(struct rt_tgc_internal, b[X]), BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 3, "C", offsetof(struct rt_tgc_internal, c[X]), BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 3, "D", offsetof(struct rt_tgc_internal, d[X]), BU_STRUCTPARSE_FUNC_NULL },
-    {0} };
+    { {'\0','\0','\0','\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL }
+};
 
 /*
  *			R T _ T G C _ P R E P
@@ -1346,9 +1347,7 @@ struct application	*ap;
  *  Sorts the values in t[] in descending order.
  */
 void
-rt_pt_sort( t, npts )
-register fastf_t t[];
-int npts;
+rt_pt_sort(register fastf_t t[], int npts)
 {
 	FAST fastf_t	u;
 	register short	lim, n;

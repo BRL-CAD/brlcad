@@ -29,6 +29,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"
+#include "plot3.h"
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -241,7 +242,7 @@ struct bu_list *tbl2d;
 		} else if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC){
 			vu = BU_LIST_FIRST(vertexuse, &lu->down_hd);
 			pdv_3move(fd, vu->v_p->vg_p->coord);
-			if (p=find_pt2d(tbl2d, vu)) {
+			if ( (p=find_pt2d(tbl2d, vu)) ) {
 				sprintf(buf, "%g, %g",
 					p->coord[0], p->coord[1]);
 				pl_label(fd, buf);
@@ -253,7 +254,7 @@ struct bu_list *tbl2d;
 			NMG_CK_EDGEUSE( eu );
 
 			for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
-				if (p=find_pt2d(tbl2d,eu->vu_p)) {
+				if ( (p=find_pt2d(tbl2d,eu->vu_p)) ) {
 					pdv_3move(fd, eu->vu_p->v_p->vg_p->coord);
 
 					sprintf(buf, "%g, %g",
@@ -357,7 +358,7 @@ struct faceuse *fu;
 
 	/* if one of the other vertexuses has been mapped, use that data */
 	for (BU_LIST_FOR(vu_p, vertexuse, &vu->v_p->vu_hd)) {
-		if (p = find_pt2d(tbl2d, vu_p)) {
+		if ( (p = find_pt2d(tbl2d, vu_p)) ) {
 			VMOVE(np->coord, p->coord);
 			return;
 		}
@@ -1147,7 +1148,7 @@ struct vertexuse *vu_p;
 	NMG_CK_VERTEXUSE(vu_p);
 
 	/* if it's already mapped we're outta here! */
-	if (p = find_pt2d(tbl2d, vu_p)) {
+	if ( (p = find_pt2d(tbl2d, vu_p)) ) {
 		if (rt_g.NMG_debug & DEBUG_TRI)
 		    bu_log("%s %d map_new_vertexuse() vertexuse already mapped!\n",
 			__FILE__, __LINE__);

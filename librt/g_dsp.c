@@ -1104,10 +1104,10 @@ point_t curr_pt, next_pt;
 	dist1 = VDOT( PA, N1 ) / NdotD1;
 
 tri2:
-	if (rt_g.debug & DEBUG_HF)
+	if (rt_g.debug & DEBUG_HF) {
 		if (hit1)  bu_log("hit tri1 dist %g\n", dist1);
 		else bu_log("missed tria1 %s\n", reason1);
-
+	}
 	VCROSS(N2, AD, AC);
 	NdotD2 = VDOT( N2, isect->r.r_dir);
 
@@ -1144,10 +1144,10 @@ tri2:
 	dist2 = VDOT( PA, N2 ) / NdotD2;
 
 done:
-	if (rt_g.debug & DEBUG_HF)
+	if (rt_g.debug & DEBUG_HF) {
 		if (hit2)  bu_log("hit tri2 dist %g\n", dist2);
 		else bu_log("missed tri2 %s\n", reason2);
-
+	}
 
 	/* plot some diagnostic overlays */
 	if (rt_g.debug & DEBUG_HF && plot_em)

@@ -102,47 +102,6 @@ register FILE	*fp;
 #define MAXWORDS	4096	/* Max # of args per command */
 
 /*
- *			R T _ D O _ C M D
- *
- *  Slice up input buffer into whitespace separated "words",
- *  look up the first word as a command, and if it has the
- *  correct number of args, call that function.
- *  The input buffer is altered in the process.
- *
- *  Expected to return -1 to halt command processing loop.
- *
- *  Based heavily on mged/cmd.c by Chuck Kennedy.
- */
-int
-rt_do_cmd( rtip, lp, tp )
-struct rt_i		*rtip;			/* FUTURE:  for globbing */
-register char		*lp;
-register struct command_tab	*tp;
-{
-	register int	nwords;			/* number of words seen */
-	char		*cmd_args[MAXWORDS+1];	/* array of ptrs to args */
-
-	nwords = rt_split_cmd( cmd_args, MAXWORDS, lp );
-	if( nwords <= 0 )
-		return(0);	/* No command to process */
-
-	for( ; tp->ct_cmd != (char *)0; tp++ )  {
-		if( cmd_args[0][0] != tp->ct_cmd[0] ||
-		    strcmp( cmd_args[0], tp->ct_cmd ) != 0 )
-			continue;
-		if( (nwords >= tp->ct_min) &&
-		    (nwords <= tp->ct_max) )  {
-			return( tp->ct_func( nwords, cmd_args ) );
-		}
-		bu_log("rt_do_cmd Usage: %s %s\n\t%s\n",
-			tp->ct_cmd, tp->ct_parms, tp->ct_comment );
-		return(-1);		/* ERROR */
-	}
-	bu_log("rt_do_cmd(%s):  command not found\n", cmd_args[0]);
-	return(-1);			/* ERROR */
-}
-
-/*
  *			R T _ S P L I T _ C M D
  *
  *  Build argv[] array from input buffer, by splitting whitespace
@@ -204,3 +163,48 @@ register char	*lp;
 	argv[nwords] = (char *)0;	/* safety */
 	return( nwords );
 }
+
+/*
+ *			R T _ D O _ C M D
+ *
+ *  Slice up input buffer into whitespace separated "words",
+ *  look up the first word as a command, and if it has the
+ *  correct number of args, call that function.
+ *  The input buffer is altered in the process.
+ *
+ *  Expected to return -1 to halt command processing loop.
+ *
+ *  Based heavily on mged/cmd.c by Chuck Kennedy.
+ */
+int
+rt_do_cmd( rtip, lp, tp )
+struct rt_i		*rtip;			/* FUTURE:  for globbing */
+register char		*lp;
+register struct command_tab	*tp;
+{
+	register int	nwords;			/* number of words seen */
+	char		*cmd_args[MAXWORDS+1];	/* array of ptrs to args */
+
+	nwords = rt_split_cmd( cmd_args, MAXWORDS, lp );
+	if( nwords <= 0 )
+		return(0);	/* No command to process */
+
+	for( ; tp->ct_cmd != (char *)0; tp++ )  {
+		if( cmd_args[0][0] != tp->ct_cmd[0] ||
+		    strcmp( cmd_args[0], tp->ct_cmd ) != 0 )
+			continue;
+		if( (nwords >= tp->ct_min) &&
+		    (nwords <= tp->ct_max) )  {
+			return( tp->ct_func( nwords, cmd_args ) );
+		}
+		bu_log("rt_do_cmd Usage: %s %s\n\t%s\n",
+			tp->ct_cmd, tp->ct_parms, tp->ct_comment );
+		return(-1);		/* ERROR */
+	}
+	bu_log("rt_do_cmd(%s):  command not found\n", cmd_args[0]);
+	return(-1);			/* ERROR */
+}
+
+
+
+

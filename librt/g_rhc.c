@@ -183,7 +183,8 @@ CONST struct bu_structparse rt_rhc_parse[] = {
     { "%f", 3, "B", offsetof(struct rt_rhc_internal, rhc_B[X]), BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 1, "r", offsetof(struct rt_rhc_internal, rhc_r),    BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 1, "c", offsetof(struct rt_rhc_internal, rhc_c),    BU_STRUCTPARSE_FUNC_NULL },
-    {0} };
+    { {'\0','\0','\0','\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL }
+ };
 
 /*
  *  			R T _ R H C _ P R E P

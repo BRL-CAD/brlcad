@@ -266,6 +266,91 @@ CONST struct bn_tol	*tol;
 static int	nmg_eval_count = 0;	/* debug -- plot file numbering */
 
 /*
+ *			N M G _ E V A L _ A C T I O N
+ *
+ *  Given a pointer to some NMG data structure,
+ *  search the 4 classification lists to determine it's classification.
+ *  (XXX In the future, this should be done with one big array).
+ *  Then, return the action code for an item of that classification.
+ */
+int
+nmg_eval_action( ptr, bs )
+long				*ptr;
+register struct nmg_bool_state	*bs;
+{
+	register int	ret;
+	register int	class;
+	int		index;
+
+	BN_CK_TOL(bs->bs_tol);
+
+	index = nmg_index_of_struct(ptr);
+	if( bs->bs_isA )  {
+		if( NMG_INDEX_VALUE(bs->bs_classtab[NMG_CLASS_AinB], index) )  {
+			class = NMG_CLASS_AinB;
+			ret = bs->bs_actions[NMG_CLASS_AinB];
+			goto out;
+		}
+		if( NMG_INDEX_VALUE(bs->bs_classtab[NMG_CLASS_AonBshared], index) )  {
+			class = NMG_CLASS_AonBshared;
+			ret = bs->bs_actions[NMG_CLASS_AonBshared];
+			goto out;
+		}
+		if( NMG_INDEX_VALUE(bs->bs_classtab[NMG_CLASS_AonBanti], index) )  {
+			class = NMG_CLASS_AonBanti;
+			ret = bs->bs_actions[NMG_CLASS_AonBanti];
+			goto out;
+		}
+		if( NMG_INDEX_VALUE(bs->bs_classtab[NMG_CLASS_AoutB], index) )  {
+			class = NMG_CLASS_AoutB;
+			ret = bs->bs_actions[NMG_CLASS_AoutB];
+			goto out;
+		}
+		bu_log("nmg_eval_action(ptr=x%x) %s has no A classification, retaining\n",
+			ptr, bu_identify_magic( *((long *)ptr) ) );
+		class = NMG_CLASS_BAD;
+		ret = BACTION_RETAIN;
+		goto out;
+	}
+
+	/* is B */
+	if( NMG_INDEX_VALUE(bs->bs_classtab[NMG_CLASS_BinA], index) )  {
+		class = NMG_CLASS_BinA;
+		ret = bs->bs_actions[NMG_CLASS_BinA];
+		goto out;
+	}
+	if( NMG_INDEX_VALUE(bs->bs_classtab[NMG_CLASS_BonAshared], index) )  {
+		class = NMG_CLASS_BonAshared;
+		ret = bs->bs_actions[NMG_CLASS_BonAshared];
+		goto out;
+	}
+	if( NMG_INDEX_VALUE(bs->bs_classtab[NMG_CLASS_BonAanti], index) )  {
+		class = NMG_CLASS_BonAanti;
+		ret = bs->bs_actions[NMG_CLASS_BonAanti];
+		goto out;
+	}
+	if( NMG_INDEX_VALUE(bs->bs_classtab[NMG_CLASS_BoutA], index) )  {
+		class = NMG_CLASS_BoutA;
+		ret = bs->bs_actions[NMG_CLASS_BoutA];
+		goto out;
+	}
+	bu_log("nmg_eval_action(ptr=x%x) %s has no B classification, retaining\n",
+		ptr, bu_identify_magic( *((long *)ptr) ) );
+	class = NMG_CLASS_BAD;
+	ret = BACTION_RETAIN;
+out:
+	if (rt_g.NMG_debug & DEBUG_BOOLEVAL) {
+		bu_log("nmg_eval_action(ptr=x%x) index=%d %s %s %s %s\n",
+			ptr, index,
+			bs->bs_isA ? "A" : "B",
+			bu_identify_magic( *((long *)ptr) ),
+			nmg_class_name(class),
+			nmg_baction_names[ret] );
+	}
+	return(ret);
+}
+
+/*
  *			N M G _ E V A L _ S H E L L
  *
  *  Make a life-and-death decision on every element of a shell.
@@ -495,7 +580,7 @@ struct nmg_bool_state *bs;
 	/*
 	 * Final case:  shell of a single vertexuse
 	 */
-	if( vu = s->vu_p )  {
+	if( (vu = s->vu_p) )  {
 		NMG_CK_VERTEXUSE( vu );
 		NMG_CK_VERTEX( vu->v_p );
 		switch( nmg_eval_action( (genptr_t)vu->v_p, bs ) )  {
@@ -515,90 +600,6 @@ struct nmg_bool_state *bs;
 	nmg_eval_plot( bs, nmg_eval_count++, 1 );	/* debug */
 }
 
-/*
- *			N M G _ E V A L _ A C T I O N
- *
- *  Given a pointer to some NMG data structure,
- *  search the 4 classification lists to determine it's classification.
- *  (XXX In the future, this should be done with one big array).
- *  Then, return the action code for an item of that classification.
- */
-int
-nmg_eval_action( ptr, bs )
-long				*ptr;
-register struct nmg_bool_state	*bs;
-{
-	register int	ret;
-	register int	class;
-	int		index;
-
-	BN_CK_TOL(bs->bs_tol);
-
-	index = nmg_index_of_struct(ptr);
-	if( bs->bs_isA )  {
-		if( NMG_INDEX_VALUE(bs->bs_classtab[NMG_CLASS_AinB], index) )  {
-			class = NMG_CLASS_AinB;
-			ret = bs->bs_actions[NMG_CLASS_AinB];
-			goto out;
-		}
-		if( NMG_INDEX_VALUE(bs->bs_classtab[NMG_CLASS_AonBshared], index) )  {
-			class = NMG_CLASS_AonBshared;
-			ret = bs->bs_actions[NMG_CLASS_AonBshared];
-			goto out;
-		}
-		if( NMG_INDEX_VALUE(bs->bs_classtab[NMG_CLASS_AonBanti], index) )  {
-			class = NMG_CLASS_AonBanti;
-			ret = bs->bs_actions[NMG_CLASS_AonBanti];
-			goto out;
-		}
-		if( NMG_INDEX_VALUE(bs->bs_classtab[NMG_CLASS_AoutB], index) )  {
-			class = NMG_CLASS_AoutB;
-			ret = bs->bs_actions[NMG_CLASS_AoutB];
-			goto out;
-		}
-		bu_log("nmg_eval_action(ptr=x%x) %s has no A classification, retaining\n",
-			ptr, bu_identify_magic( *((long *)ptr) ) );
-		class = NMG_CLASS_BAD;
-		ret = BACTION_RETAIN;
-		goto out;
-	}
-
-	/* is B */
-	if( NMG_INDEX_VALUE(bs->bs_classtab[NMG_CLASS_BinA], index) )  {
-		class = NMG_CLASS_BinA;
-		ret = bs->bs_actions[NMG_CLASS_BinA];
-		goto out;
-	}
-	if( NMG_INDEX_VALUE(bs->bs_classtab[NMG_CLASS_BonAshared], index) )  {
-		class = NMG_CLASS_BonAshared;
-		ret = bs->bs_actions[NMG_CLASS_BonAshared];
-		goto out;
-	}
-	if( NMG_INDEX_VALUE(bs->bs_classtab[NMG_CLASS_BonAanti], index) )  {
-		class = NMG_CLASS_BonAanti;
-		ret = bs->bs_actions[NMG_CLASS_BonAanti];
-		goto out;
-	}
-	if( NMG_INDEX_VALUE(bs->bs_classtab[NMG_CLASS_BoutA], index) )  {
-		class = NMG_CLASS_BoutA;
-		ret = bs->bs_actions[NMG_CLASS_BoutA];
-		goto out;
-	}
-	bu_log("nmg_eval_action(ptr=x%x) %s has no B classification, retaining\n",
-		ptr, bu_identify_magic( *((long *)ptr) ) );
-	class = NMG_CLASS_BAD;
-	ret = BACTION_RETAIN;
-out:
-	if (rt_g.NMG_debug & DEBUG_BOOLEVAL) {
-		bu_log("nmg_eval_action(ptr=x%x) index=%d %s %s %s %s\n",
-			ptr, index,
-			bs->bs_isA ? "A" : "B",
-			bu_identify_magic( *((long *)ptr) ),
-			nmg_class_name(class),
-			nmg_baction_names[ret] );
-	}
-	return(ret);
-}
 
 /*
  *			N M G _ E V A L _ P L O T

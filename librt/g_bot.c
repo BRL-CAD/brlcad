@@ -27,6 +27,7 @@ static const char RCSbot[] = "@(#)$Header$ (BRL)";
 #include <strings.h>
 #endif
 #include <math.h>
+#include <ctype.h>
 #include "tcl.h"
 #include "machine.h"
 #include "vmath.h"
@@ -50,6 +51,70 @@ struct bot_specific
 
 /* XXX Set this to 32 to enable pieces by default */
 int rt_bot_minpieces = 0;
+
+
+/*
+ *			R T _ B O T F A C E
+ *
+ *  This function is called with pointers to 3 points,
+ *  and is used to prepare BOT faces.
+ *  ap, bp, cp point to vect_t points.
+ *
+ * Return -
+ *	0	if the 3 points didn't form a plane (eg, colinear, etc).
+ *	#pts	(3) if a valid plane resulted.
+ */
+HIDDEN int
+rt_botface( stp, bot, ap, bp, cp, face_no, tol )
+struct soltab *stp;
+struct bot_specific *bot;
+fastf_t		*ap, *bp, *cp;
+int		face_no;
+CONST struct bn_tol	*tol;
+{
+	register struct tri_specific *trip;
+	vect_t work;
+	LOCAL fastf_t m1, m2, m3, m4;
+
+	BU_GETSTRUCT( trip, tri_specific );
+	VMOVE( trip->tri_A, ap );
+	VSUB2( trip->tri_BA, bp, ap );
+	VSUB2( trip->tri_CA, cp, ap );
+	VCROSS( trip->tri_wn, trip->tri_BA, trip->tri_CA );
+	trip->tri_surfno = face_no;
+
+	/* Check to see if this plane is a line or pnt */
+	m1 = MAGNITUDE( trip->tri_BA );
+	m2 = MAGNITUDE( trip->tri_CA );
+	VSUB2( work, bp, cp );
+	m3 = MAGNITUDE( work );
+	m4 = MAGNITUDE( trip->tri_wn );
+	if( m1 < tol->dist || m2 < tol->dist ||
+	    m3 < tol->dist || m4 < tol->dist )  {
+		bu_free( (char *)trip, "getstruct tri_specific");
+	    	{
+			bu_log("bot(%s): degenerate facet #%d\n",
+				stp->st_name, face_no);
+	    		bu_log( "\t(%g %g %g) (%g %g %g) (%g %g %g)\n",
+	    			V3ARGS( ap ), V3ARGS( bp ), V3ARGS( cp ) );
+	    	}
+		return(0);			/* BAD */
+	}		
+
+	/*  wn is a normal of not necessarily unit length.
+	 *  N is an outward pointing unit normal.
+	 *  We depend on the points being given in CCW order here.
+	 */
+	VMOVE( trip->tri_N, trip->tri_wn );
+	VUNITIZE( trip->tri_N );
+	if( bot->bot_mode == RT_BOT_CW )
+		VREVERSE( trip->tri_N, trip->tri_N )
+
+	/* Add this face onto the linked list for this solid */
+	trip->tri_forw = bot->bot_facelist;
+	bot->bot_facelist = trip;
+	return(3);				/* OK */
+}
 
 /*
  *  			R T _ B O T _ P R E P
@@ -231,69 +296,6 @@ struct rt_i		*rtip;
 	return 0;
 }
 
-
-/*
- *			R T _ B O T F A C E
- *
- *  This function is called with pointers to 3 points,
- *  and is used to prepare BOT faces.
- *  ap, bp, cp point to vect_t points.
- *
- * Return -
- *	0	if the 3 points didn't form a plane (eg, colinear, etc).
- *	#pts	(3) if a valid plane resulted.
- */
-HIDDEN int
-rt_botface( stp, bot, ap, bp, cp, face_no, tol )
-struct soltab *stp;
-struct bot_specific *bot;
-fastf_t		*ap, *bp, *cp;
-int		face_no;
-CONST struct bn_tol	*tol;
-{
-	register struct tri_specific *trip;
-	vect_t work;
-	LOCAL fastf_t m1, m2, m3, m4;
-
-	BU_GETSTRUCT( trip, tri_specific );
-	VMOVE( trip->tri_A, ap );
-	VSUB2( trip->tri_BA, bp, ap );
-	VSUB2( trip->tri_CA, cp, ap );
-	VCROSS( trip->tri_wn, trip->tri_BA, trip->tri_CA );
-	trip->tri_surfno = face_no;
-
-	/* Check to see if this plane is a line or pnt */
-	m1 = MAGNITUDE( trip->tri_BA );
-	m2 = MAGNITUDE( trip->tri_CA );
-	VSUB2( work, bp, cp );
-	m3 = MAGNITUDE( work );
-	m4 = MAGNITUDE( trip->tri_wn );
-	if( m1 < tol->dist || m2 < tol->dist ||
-	    m3 < tol->dist || m4 < tol->dist )  {
-		bu_free( (char *)trip, "getstruct tri_specific");
-	    	{
-			bu_log("bot(%s): degenerate facet #%d\n",
-				stp->st_name, face_no);
-	    		bu_log( "\t(%g %g %g) (%g %g %g) (%g %g %g)\n",
-	    			V3ARGS( ap ), V3ARGS( bp ), V3ARGS( cp ) );
-	    	}
-		return(0);			/* BAD */
-	}		
-
-	/*  wn is a normal of not necessarily unit length.
-	 *  N is an outward pointing unit normal.
-	 *  We depend on the points being given in CCW order here.
-	 */
-	VMOVE( trip->tri_N, trip->tri_wn );
-	VUNITIZE( trip->tri_N );
-	if( bot->bot_mode == RT_BOT_CW )
-		VREVERSE( trip->tri_N, trip->tri_N )
-
-	/* Add this face onto the linked list for this solid */
-	trip->tri_forw = bot->bot_facelist;
-	bot->bot_facelist = trip;
-	return(3);				/* OK */
-}
 
 /*
  *			R T _ B O T _ P R I N T
@@ -833,8 +835,6 @@ struct rt_piecestate	*psp;
 struct seg		*seghead;
 struct application	*ap;
 {
-	int ret;
-
 	RT_CK_PIECESTATE(psp);
 	RT_CK_AP(ap);
 	RT_CK_HTBL(&psp->htab);

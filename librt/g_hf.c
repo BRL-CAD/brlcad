@@ -125,7 +125,7 @@ rt_hf_to_dsp(struct rt_db_internal *db_intern)
 {
 	struct rt_hf_internal	*hip = (struct rt_hf_internal *)db_intern;
 	struct rt_dsp_internal	*dsp;
-	mat_t 			tmp, mat, matA, matB, matC;
+	mat_t 			tmp, mat;
 
 	BU_GETSTRUCT( dsp, rt_dsp_internal );
 	dsp->dsp_xcnt = hip->w;
@@ -517,7 +517,7 @@ int			xCell, yCell;
 
 
 
-other_half:
+
 
 	/* XXX This is really hard to read.  Need to fix this like above */
 	dn = VDOT(tri_wn2nd, rp->r_dir);
@@ -945,7 +945,7 @@ bzero(hits,sizeof(hits));
 		VSUB2(tmp, rp->r_pt, hf->hf_V);
 		xCell = tmp[X]/hf->hf_Xlen*hf->hf_w;
 		yCell = tmp[Y]/hf->hf_Ylen*hf->hf_n;
-		if (r=rt_hf_cell_shot(stp, rp, ap, hp, xCell, yCell)) {
+		if (  (r=rt_hf_cell_shot(stp, rp, ap, hp, xCell, yCell)) ) {
 			if ((nhits+=r)>MAXHITS) rt_bomb("g_hf.c: too many hits.\n");
 			hp+=r;
 		}
@@ -1133,7 +1133,7 @@ bu_log("aray[Y]/aray[X]=%g\n", delta);
 			{
 #endif
 				int r;
-				if (r=rt_hf_cell_shot(stp, rp, ap, hp, xCell, yCell)) {
+				if ( (r=rt_hf_cell_shot(stp, rp, ap, hp, xCell, yCell)) ) {
 					if ((nhits+=r)>=MAXHITS) rt_bomb("g_hf.c: too many hits.\n");
 					hp+=r;
 				}
@@ -1202,7 +1202,7 @@ skip_first:
 #endif /* 0 */
 					int r;
 					/* DO HIT */
-					if (r=rt_hf_cell_shot(stp, rp, ap, hp, xCell, yCell)) {
+					if ( (r=rt_hf_cell_shot(stp, rp, ap, hp, xCell, yCell)) ) {
 						if ((nhits+=r)>=MAXHITS) rt_bomb("g_hf.c: too many hits.\n");
 						hp+=r;
 					}
@@ -1393,7 +1393,7 @@ bu_log("aray[X]/aray[Y]=%g\n", delta);
 			{
 #endif
 				int r;
-				if (r=rt_hf_cell_shot(stp, rp, ap, hp, xCell, yCell)) {
+				if ( (r=rt_hf_cell_shot(stp, rp, ap, hp, xCell, yCell)) ) {
 					if ((nhits+=r)>=MAXHITS) rt_bomb("g_hf.c: too many hits.\n");
 					hp+=r;
 				}
@@ -1462,7 +1462,7 @@ skip_2nd:
 #endif
 					int r;
 					/* DO HIT */
-					if (r=rt_hf_cell_shot(stp, rp, ap, hp, xCell, yCell)) {
+					if ( (r=rt_hf_cell_shot(stp, rp, ap, hp, xCell, yCell)) ) {
 						if ((nhits+=r)>=MAXHITS) rt_bomb("g_hf.c: too many hits.\n");
 						hp+=r;
 					}

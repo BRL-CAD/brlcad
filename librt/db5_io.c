@@ -706,7 +706,7 @@ db5_import_attributes( struct bu_attribute_value_set *avs, const struct bu_exter
 	const char	*cp;
 	const char	*ep;
 	int		count = 0;
-	struct bu_attribute_value_pair *app;
+
 
 	BU_CK_EXTERNAL(ap);
 

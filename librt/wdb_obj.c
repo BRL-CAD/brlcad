@@ -27,6 +27,8 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 
 #include "conf.h"
+#include <ctype.h>
+
 #ifdef USE_STRING_H
 #include <string.h>
 #else
@@ -49,6 +51,8 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "wdb.h"
 
 #include "./debug.h"
+
+extern void rt_insert_color( struct mater *newp );
 
 #define WDB_MAX_LEVELS 12
 #define WDB_CPEVAL	0
@@ -3899,8 +3903,9 @@ wdb_node_write(dbip, dp, client_data)
 		return;
 	}
 
-	if( db_fwrite_external( wndp->fp, dp->d_namep, &ext, 1.0 ) < 0 )  {
-		Tcl_AppendResult(wndp->interp, "Output database write error on ",
+	if( db_fwrite_external( wndp->fp, dp->d_namep, &ext) < 0 )  {
+		Tcl_AppendResult(wndp->interp,
+				 "Output database write error on ",
 			dp->d_namep, ", aborting", (char *)NULL);
 	}
 	bu_free_external(&ext);

@@ -122,6 +122,7 @@ db_tree_counter( CONST union tree *tp, struct db_tree_counter_state *tcsp )
 		/* NOTREACHED */
 	}
 	/* NOTREACHED */
+	return 0;
 }
 
 #define DB5COMB_TOKEN_LEAF		1

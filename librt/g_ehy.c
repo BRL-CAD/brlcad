@@ -170,7 +170,8 @@ CONST struct bu_structparse rt_ehy_parse[] = {
     { "%f", 1, "r_1", offsetof(struct rt_ehy_internal, ehy_r1),    BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 1, "r_2", offsetof(struct rt_ehy_internal, ehy_r2),    BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 1, "c",   offsetof(struct rt_ehy_internal, ehy_c),     BU_STRUCTPARSE_FUNC_NULL },
-    {0} };
+    { {'\0','\0','\0','\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL }
+ };
 
 /*
  *  			R T _ E H Y _ P R E P

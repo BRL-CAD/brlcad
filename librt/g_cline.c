@@ -49,7 +49,8 @@ CONST struct bu_structparse rt_cline_parse[] = {
 	{ "%f", 3, "H", RT_CLINE_O( h ),  BU_STRUCTPARSE_FUNC_NULL },
 	{ "%f", 1, "r", RT_CLINE_O( radius ), BU_STRUCTPARSE_FUNC_NULL },
 	{ "%f", 1, "t", RT_CLINE_O( thickness ), BU_STRUCTPARSE_FUNC_NULL },
-	{0} };
+	{ {'\0','\0','\0','\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL }
+	};
 
 /*
  *  			R T _ C L I N E _ P R E P

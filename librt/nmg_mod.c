@@ -22,6 +22,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "conf.h"
 #include <stdio.h>
+#include <string.h>
 #include "machine.h"
 #include "vmath.h"
 #include "nmg.h"
@@ -901,7 +902,7 @@ CONST struct bn_tol	*tol;
 	/*
 	 * Final case:  shell of a single vertexuse
 	 */
-	if( vu = s2->vu_p )  {
+	if( (vu = s2->vu_p) )  {
 		NMG_CK_VERTEXUSE( vu );
 		NMG_CK_VERTEX( vu->v_p );
 		nmg_mv_vu_between_shells( s1, s2, vu );
@@ -1137,7 +1138,7 @@ int		n;
 	}
 
 	if( n > 1 )  {
-		if (eur = nmg_findeu(*verts[0], *verts[1], s, euold, 1))  {
+		if ((eur = nmg_findeu(*verts[0], *verts[1], s, euold, 1)))  {
 			nmg_je(eur, euold);
 		} else  {
 		    if (rt_g.NMG_debug & DEBUG_CMFACE)
@@ -4425,6 +4426,7 @@ int		share_geom;
 
 	rt_bomb("nmg_esplit() unable to find eu starting at new v\n");
 	/* NOTREACHED */
+	return (struct edgeuse *)NULL;
 }
 
 /*

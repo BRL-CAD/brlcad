@@ -267,8 +267,8 @@ long		offset;
  */
 int
 db_put( dbip, dp, where, offset, len )
-CONST struct db_i	*dbip;
-CONST struct directory	*dp;
+struct db_i	*dbip;
+const struct directory	*dp;
 union record	*where;
 int		offset;
 int		len;

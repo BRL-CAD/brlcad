@@ -47,6 +47,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "nmg.h"
 #include "raytrace.h"
 #include "./debug.h"
+#include "plot3.h"
 
 extern int nmg_class_nothing_broken;
 
@@ -2262,10 +2263,9 @@ CONST struct bn_tol	*tol;
  *  XXX DANGER:  Calls nmg_class_pt_l(), which does not work well.
  */
 int
-nmg_classify_pt_loop( pt , lu , tol )
-CONST point_t pt;
-CONST struct loopuse *lu;
-CONST struct bn_tol *tol;
+nmg_classify_pt_loop(const point_t pt,
+		     const struct loopuse *lu,
+		     const struct bn_tol *tol)
 {
 	struct neighbor	closest;
 	struct faceuse *fu;
@@ -2317,8 +2317,8 @@ bu_log("DANGER: nmg_classify_pt_loop() is calling nmg_class_pt_l(), which does n
 int
 nmg_get_interior_pt( pt, lu, tol )
 point_t pt;
-CONST struct loopuse *lu;
-CONST struct bn_tol *tol;
+const struct loopuse *lu;
+const struct bn_tol *tol;
 {
 	struct edgeuse *eu;
 	fastf_t point_count=0.0;
@@ -2357,7 +2357,7 @@ CONST struct bn_tol *tol;
 	VSCALE( average_pt, average_pt, one_over_count );
 	VMOVE( test_pt, average_pt );
 
-	if( nmg_class_pt_lu_except( test_pt, lu, (struct edge *)NULL, tol ) == NMG_CLASS_AinB )
+	if (nmg_class_pt_lu_except( test_pt, lu, (struct edge *)NULL, tol ) == NMG_CLASS_AinB )
 	{
 		VMOVE( pt, test_pt );
 		return( 0 );
@@ -2558,7 +2558,7 @@ CONST struct bn_tol *tol;
 					if( nmg_find_vertex_in_lu( eu->vu_p->v_p, lu2 ) != NULL )
 						continue;
 
-					class = nmg_class_pt_lu_except( vg->coord, lu2, (struct edgeuse *)NULL, tol);
+					class = nmg_class_pt_lu_except( vg->coord, lu2, (struct edge *)NULL, tol);
 					if( class != NMG_CLASS_AonBshared && class != NMG_CLASS_AonBanti )
 					{
 						if( lu2->orientation == OT_SAME )
@@ -2619,7 +2619,7 @@ CONST struct bn_tol *tol;
 				if( nmg_find_vertex_in_lu( eu->vu_p->v_p, lu2 ) != NULL )
 					continue;
 
-				class = nmg_class_pt_lu_except( vg->coord, lu2, (struct edgeuse *)NULL, tol);
+				class = nmg_class_pt_lu_except( vg->coord, lu2, (struct edge *)NULL, tol);
 				if( class != NMG_CLASS_AonBshared && class != NMG_CLASS_AonBanti )
 				{
 					if( lu2->orientation == OT_SAME )
@@ -2661,7 +2661,7 @@ CONST struct bn_tol *tol;
 				VADD2( mid_pt, vg1->coord, vg2->coord );
 				VSCALE( mid_pt, mid_pt, 0.5 );
 
-				class = nmg_class_pt_lu_except( mid_pt, lu2, (struct edgeuse *)NULL, tol);
+				class = nmg_class_pt_lu_except( mid_pt, lu2, (struct edge *)NULL, tol);
 				if( class != NMG_CLASS_AonBshared && class != NMG_CLASS_AonBanti )
 				{
 					if( lu2->orientation == OT_SAME )
@@ -2727,7 +2727,8 @@ CONST struct bn_tol *tol;
 		vg = vu->v_p->vg_p;
 		NMG_CK_VERTEX_G( vg );
 
-		class = nmg_class_pt_lu_except( vg->coord, lu2, (struct edgeuse *)NULL, tol );
+		class = nmg_class_pt_lu_except( vg->coord, lu2,
+						(struct edge *)NULL, tol );
 
 		if( lu2->orientation == OT_OPPOSITE )
 		{
@@ -2766,7 +2767,7 @@ int
 nmg_classify_s_vs_s( s2, s, tol )
 struct shell *s;
 struct shell *s2;
-struct bn_tol *tol;
+const struct bn_tol *tol;
 {
 	int i;
 	int class;

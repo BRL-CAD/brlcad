@@ -27,6 +27,7 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "nurb.h"
+#include "plot3.h"
 
 /*
  *			R T _ N U R B _ P L O T _ S N U R B

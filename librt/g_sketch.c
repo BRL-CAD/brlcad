@@ -45,6 +45,7 @@ static const char RCSsketch[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <math.h>
+#include <ctype.h>
 #include "tcl.h"
 #include "machine.h"
 #include "vmath.h"
@@ -1509,8 +1510,7 @@ double			mm2local;
  *  Free the storage associated with the rt_db_internal version of this solid.
  */
 void
-rt_sketch_ifree( ip )
-struct rt_db_internal	*ip;
+rt_sketch_ifree( struct rt_db_internal	*ip )
 {
 	register struct rt_sketch_internal	*sketch_ip;
 	struct curve				*crv;

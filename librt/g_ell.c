@@ -45,7 +45,8 @@ CONST struct bu_structparse rt_ell_parse[] = {
     { "%f", 3, "A", offsetof(struct rt_ell_internal, a[X]), BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 3, "B", offsetof(struct rt_ell_internal, b[X]), BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 3, "C", offsetof(struct rt_ell_internal, c[X]), BU_STRUCTPARSE_FUNC_NULL },
-    {0,0,0,0,0} };
+    { {'\0','\0','\0','\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL }
+ };
 
 static void  nmg_sphere_face_snurb();
 
@@ -579,10 +580,10 @@ rt_ell_class()
  */
 #define ELLOUT(n)	ov+(n-1)*3
 void
-rt_ell_16pts( ov, V, A, B )
-register fastf_t *ov;
-register fastf_t *V;
-fastf_t *A, *B;
+rt_ell_16pts(register fastf_t *ov,
+	     register fastf_t *V,
+	     fastf_t *A,
+	     fastf_t *B)
 {
 	static fastf_t c, d, e, f,g,h;
 

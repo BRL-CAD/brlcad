@@ -135,7 +135,8 @@ CONST struct bu_structparse rt_eto_parse[] = {
     { "%f", 3, "C",   offsetof(struct rt_eto_internal, eto_C[X]), BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 1, "r",   offsetof(struct rt_eto_internal, eto_r),    BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 1, "r_d", offsetof(struct rt_eto_internal, eto_rd),   BU_STRUCTPARSE_FUNC_NULL },
-    {0} };
+    { {'\0','\0','\0','\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL }
+ };
 
 /*
  *  			R T _ E T O _ P R E P

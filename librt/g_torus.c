@@ -50,7 +50,8 @@ CONST struct bu_structparse rt_tor_parse[] = {
     { "%f", 3, "H",   offsetof(struct rt_tor_internal, h[X]), BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 1, "r_a", offsetof(struct rt_tor_internal, r_a),  BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 1, "r_h", offsetof(struct rt_tor_internal, r_h),  BU_STRUCTPARSE_FUNC_NULL },
-    {0} };
+    { {'\0','\0','\0','\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL }
+    };
 
 /*
  *  Algorithm:
@@ -927,6 +928,62 @@ rt_tor_class()
 	return(0);
 }
 
+/* 
+ *			R T _ N U M _ C I R C U L A R _ S E G M E N T S
+ *
+ *  Given a circle with a specified radius, determine the minimum number
+ *  of straight line segments that the circle can be approximated with,
+ *  while still meeting the given maximum permissible error distance.
+ *  Form a chord (straight line) by
+ *  connecting the start and end points found when
+ *  sweeping a 'radius' arc through angle 'theta'.
+ *
+ *  The error distance is the distance between where a radius line
+ *  at angle theta/2 hits the chord, and where it hits the circle
+ *  (at 'radius' distance).
+ *
+ *	error_distance = radius * ( 1 - cos( theta/2 ) )
+ *
+ *  or
+ *
+ *	theta = 2 * acos( 1 - error_distance / radius )
+ *
+ *  Returns -
+ *	number of segments.  Always at least 6.
+ */
+int
+rt_num_circular_segments(double	maxerr, double	radius)
+{
+	register fastf_t	cos_half_theta;
+	register fastf_t	half_theta;
+	int			n;
+
+	if( radius <= 0.0 || maxerr <= 0.0 || maxerr >= radius )  {
+		/* Return a default number of segments */
+		return(6);
+	}
+	cos_half_theta = 1.0 - maxerr / radius;
+	/* There does not seem to be any reasonable way to express the
+	 * acos in terms of an atan2(), so extra checking is done.
+	 */
+	if( cos_half_theta <= 0.0 || cos_half_theta >= 1.0 )  {
+		/* Return a default number of segments */
+		return(6);
+	}
+	half_theta = acos( cos_half_theta );
+	if( half_theta < SMALL )  {
+		/* A very large number of segments will be needed.
+		 * Impose an upper bound here
+		 */
+		return( 360*10 );
+	}
+	n = bn_pi / half_theta + 0.99;
+
+	/* Impose the limits again */
+	if( n <= 6 )  return(6);
+	if( n >= 360*10 )  return( 360*10 );
+	return(n);
+}
 /*
  *			R T _ T O R _ P L O T
  *
@@ -1233,64 +1290,6 @@ CONST struct bn_tol	*tol;
 	return(0);
 }
 
-/* 
- *			R T _ N U M _ C I R C U L A R _ S E G M E N T S
- *
- *  Given a circle with a specified radius, determine the minimum number
- *  of straight line segments that the circle can be approximated with,
- *  while still meeting the given maximum permissible error distance.
- *  Form a chord (straight line) by
- *  connecting the start and end points found when
- *  sweeping a 'radius' arc through angle 'theta'.
- *
- *  The error distance is the distance between where a radius line
- *  at angle theta/2 hits the chord, and where it hits the circle
- *  (at 'radius' distance).
- *
- *	error_distance = radius * ( 1 - cos( theta/2 ) )
- *
- *  or
- *
- *	theta = 2 * acos( 1 - error_distance / radius )
- *
- *  Returns -
- *	number of segments.  Always at least 6.
- */
-int
-rt_num_circular_segments( maxerr, radius )
-double	maxerr;
-double	radius;
-{
-	register fastf_t	cos_half_theta;
-	register fastf_t	half_theta;
-	int			n;
-
-	if( radius <= 0.0 || maxerr <= 0.0 || maxerr >= radius )  {
-		/* Return a default number of segments */
-		return(6);
-	}
-	cos_half_theta = 1.0 - maxerr / radius;
-	/* There does not seem to be any reasonable way to express the
-	 * acos in terms of an atan2(), so extra checking is done.
-	 */
-	if( cos_half_theta <= 0.0 || cos_half_theta >= 1.0 )  {
-		/* Return a default number of segments */
-		return(6);
-	}
-	half_theta = acos( cos_half_theta );
-	if( half_theta < SMALL )  {
-		/* A very large number of segments will be needed.
-		 * Impose an upper bound here
-		 */
-		return( 360*10 );
-	}
-	n = bn_pi / half_theta + 0.99;
-
-	/* Impose the limits again */
-	if( n <= 6 )  return(6);
-	if( n >= 360*10 )  return( 360*10 );
-	return(n);
-}
 
 /*
  *			R T _ T O R _ I M P O R T

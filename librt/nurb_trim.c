@@ -17,7 +17,7 @@
  * 
  */
 #ifndef lint
-static char	rcs_ident[] = "$Header$";
+static const char rcs_ident[] = "$Header$";
 #endif
 
 #include "conf.h"
@@ -58,39 +58,6 @@ struct _interior_line {
 int quad_table[16]  = {		/* A = 0, B = 2, C = 3 */
 0,0,0,0,0,3,0,3,0,2,3,3,0,3,3,3
 };
-
-
-/* This routine will be called several times, once for each portion of
- * the trimming curve. It returns wheter a line extended from the 
- * the <u,v> point will cross the trimming curve an even or odd number
- * of times. Or the <u,v> point could be on the curve in which case
- * TRIM_ON will be returned. THe algorithm uses the approach taken
- * Tom Sederburge and uses bezier clipping to produce caseA and caseB
- * curves. If the original trimming curve is a CASE C curve then further
- * processing is required.
- */
-int 
-rt_uv_in_trim(trim, u,v)
-struct edge_g_cnurb * trim;
-fastf_t u, v;
-{
-
-	int quad_case;
-
-	quad_case = rt_trim_case( trim, u, v);	/* determine quadrants */
-	
-							/* CASE A */	
-	if( quad_case == CASE_A )
-		return TRIM_OUT;
-	if( quad_case == CASE_B )			/* CASE B */
-		return rt_process_caseb(trim, u, v);
-	if( quad_case == CASE_C )			/* CASE C */
-		return rt_process_casec(trim, u, v);
-
-	bu_log( "rt_uv_in_trim: rt_trim_case() returned illegal value %d\n", quad_case );
-	return( -1 );
-}
-
 
 /* This routine determines what quadrants the trimming curves lies
  * in,  It then uses a table look up to determine the whether its
@@ -198,6 +165,68 @@ fastf_t u, v;
 
 }
 
+/* Only check end points of the curve */
+
+int
+rt_nurb_uv_dist(trim, u, v)
+struct edge_g_cnurb * trim;
+fastf_t u, v;
+{
+
+	fastf_t dist;
+	fastf_t * ptr;
+	int coords;
+	int rat;
+	fastf_t u2, v2;
+
+	ptr = trim->ctl_points;	
+	coords = RT_NURB_EXTRACT_COORDS(trim->pt_type);
+	rat = RT_NURB_IS_PT_RATIONAL(trim->pt_type);
+
+	u2 = 0.0;
+	v2 = 0.0;
+
+	if ( rat )
+	{
+		u2 = ptr[0]/ptr[2] - u; u2 *= u2;
+		v2 = ptr[1]/ptr[2] - v; v2 *= v2;
+	}
+	else
+	{
+		u2 = ptr[0] - u; u2 *= u2;
+		v2 = ptr[1] - v; v2 *= v2;
+	}
+
+	dist = sqrt( u2 + v2);
+	if ( NEAR_ZERO( dist, 1.0e-4) )
+		return TRIM_ON;
+
+	ptr = trim->ctl_points + coords * (trim->c_size -1);
+
+	u2 = 0.0;
+	v2 = 0.0;
+
+	if ( rat )
+	{
+		u2 = ptr[0]/ptr[2] - u; u2 *= u2;
+		v2 = ptr[1]/ptr[2] - v; v2 *= v2;
+	}
+	else
+	{
+		u2 = ptr[0] - u; u2 *= u2;
+		v2 = ptr[1] - v; v2 *= v2;
+	}
+
+	dist = sqrt( u2 + v2);
+	if ( NEAR_ZERO( dist, 1.0e-4) )
+		return TRIM_ON;
+
+	return TRIM_OUT;
+
+}
+
+
+
 /* Process Case C curves;
  * A check is placed here to determin if the u,v is on the curve.
  * Determine how many times the curve will cross the u,v axis. If
@@ -271,6 +300,41 @@ fastf_t u, v;
 }
 
 
+/* This routine will be called several times, once for each portion of
+ * the trimming curve. It returns wheter a line extended from the 
+ * the <u,v> point will cross the trimming curve an even or odd number
+ * of times. Or the <u,v> point could be on the curve in which case
+ * TRIM_ON will be returned. THe algorithm uses the approach taken
+ * Tom Sederburge and uses bezier clipping to produce caseA and caseB
+ * curves. If the original trimming curve is a CASE C curve then further
+ * processing is required.
+ */
+int 
+rt_uv_in_trim(trim, u,v)
+struct edge_g_cnurb * trim;
+fastf_t u, v;
+{
+
+	int quad_case;
+
+	quad_case = rt_trim_case( trim, u, v);	/* determine quadrants */
+	
+							/* CASE A */	
+	if( quad_case == CASE_A )
+		return TRIM_OUT;
+	if( quad_case == CASE_B )			/* CASE B */
+		return rt_process_caseb(trim, u, v);
+	if( quad_case == CASE_C )			/* CASE C */
+		return rt_process_casec(trim, u, v);
+
+	bu_log( "rt_uv_in_trim: rt_trim_case() returned illegal value %d\n", quad_case );
+	return( -1 );
+}
+
+
+
+
+
 /* This routines is used to determine how far a point is 
  * from the u,v quadrant axes.
  *
@@ -303,6 +367,17 @@ int pt_type;
 	return h;
 }
 
+/* Return the SIGN of the value */
+int
+_SIGN(f)
+fastf_t f;
+{
+	if (f < 0.0)
+		return -1;
+	else
+		return 1;
+
+}
 
 /* 
  *  We try and clip a curve so that it can be either Case A, or Case C.
@@ -439,77 +514,7 @@ fastf_t u,v;
 	BU_LIST_APPEND( plist, &c1->l);
 }
 
-/* Return the SIGN of the value */
-int
-_SIGN(f)
-fastf_t f;
-{
-	if (f < 0.0)
-		return -1;
-	else
-		return 1;
 
-}
-
-/* Only check end points of the curve */
-
-int
-rt_nurb_uv_dist(trim, u, v)
-struct edge_g_cnurb * trim;
-fastf_t u, v;
-{
-
-	fastf_t dist;
-	fastf_t * ptr;
-	int coords;
-	int rat;
-	fastf_t u2, v2;
-
-	ptr = trim->ctl_points;	
-	coords = RT_NURB_EXTRACT_COORDS(trim->pt_type);
-	rat = RT_NURB_IS_PT_RATIONAL(trim->pt_type);
-
-	u2 = 0.0;
-	v2 = 0.0;
-
-	if ( rat )
-	{
-		u2 = ptr[0]/ptr[2] - u; u2 *= u2;
-		v2 = ptr[1]/ptr[2] - v; v2 *= v2;
-	}
-	else
-	{
-		u2 = ptr[0] - u; u2 *= u2;
-		v2 = ptr[1] - v; v2 *= v2;
-	}
-
-	dist = sqrt( u2 + v2);
-	if ( NEAR_ZERO( dist, 1.0e-4) )
-		return TRIM_ON;
-
-	ptr = trim->ctl_points + coords * (trim->c_size -1);
-
-	u2 = 0.0;
-	v2 = 0.0;
-
-	if ( rat )
-	{
-		u2 = ptr[0]/ptr[2] - u; u2 *= u2;
-		v2 = ptr[1]/ptr[2] - v; v2 *= v2;
-	}
-	else
-	{
-		u2 = ptr[0] - u; u2 *= u2;
-		v2 = ptr[1] - v; v2 *= v2;
-	}
-
-	dist = sqrt( u2 + v2);
-	if ( NEAR_ZERO( dist, 1.0e-4) )
-		return TRIM_ON;
-
-	return TRIM_OUT;
-
-}
 
 int
 nmg_uv_in_lu( u, v, lu )

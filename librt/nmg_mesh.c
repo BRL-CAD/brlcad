@@ -618,7 +618,7 @@ int
 nmg_mesh_face_shell( fu1, s, tol )
 struct faceuse	*fu1;
 struct shell	*s;
-CONST struct bn_tol	*tol;
+const struct bn_tol	*tol;
 {
 	register struct faceuse	*fu2;
 	int		count = 0;
@@ -627,7 +627,7 @@ CONST struct bn_tol	*tol;
 	NMG_CK_SHELL(s);
 	BN_CK_TOL(tol);
 
-	count += nmg_mesh_two_faces( fu1, fu1 );
+	count += nmg_mesh_two_faces( fu1, fu1, tol );
 	for( BU_LIST_FOR( fu2, faceuse, &s->fu_hd ) )  {
 		NMG_CK_FACEUSE(fu2);
 		count += nmg_mesh_two_faces( fu2, fu2, tol );

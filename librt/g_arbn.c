@@ -974,7 +974,6 @@ double				local2mm;
 CONST struct db_i		*dbip;
 {
 	struct rt_arbn_internal	*aip;
-	int			ngrans;
 	register int		i;
 	fastf_t			*vec;
 	register fastf_t	*sp;
