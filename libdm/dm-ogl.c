@@ -70,8 +70,6 @@ void    ogl_establish_perspective();
 void    ogl_set_perspective();
 void	ogl_establish_lighting();
 void	ogl_establish_zbuffer();
-int     ogl_irisX2ged();
-int     ogl_irisY2ged();
 
 static XVisualInfo *ogl_set_visual();
 
@@ -164,32 +162,6 @@ struct dm *dmp;
 {
   glHint(GL_FOG_HINT,
 	 ((struct ogl_vars *)dmp->dm_vars)->mvars.fastfog ? GL_FASTEST : GL_NICEST);
-}
-
-/*
- *  Mouse coordinates are in absolute screen space, not relative to
- *  the window they came from.  Convert to window-relative,
- *  then to MGED-style +/-2048 range.
- */
-int
-ogl_irisX2ged(dmp, x, use_aspect)
-struct dm *dmp;
-register int x;
-int use_aspect;
-{
-  if(use_aspect)
-    return ((x/(double)dmp->dm_width - 0.5) /
-	    dmp->dm_aspect * 4095);
-  else
-    return ((x/(double)dmp->dm_width - 0.5) * 4095);
-}
-
-int
-ogl_irisY2ged(dmp, y)
-struct dm *dmp;
-register int y;
-{
-  return ((0.5 - y/(double)dmp->dm_height) * 4095);
 }
 
 /*
