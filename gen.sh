@@ -161,7 +161,8 @@ BDIRS="bench \
 	libfb \
 	rfbd \
 	fbserv \
-	libnurb librt \
+	libnurb \
+	librt \
 	conv \
 	db \
 	rt \
@@ -192,7 +193,8 @@ BDIRS="bench \
 	off \
 	halftone \
 	edpix \
-	nirt irprep \
+	nirt \
+	irprep \
 	xmged \
 	anim \
 	jove \
