@@ -380,12 +380,14 @@ int	non_blocking;
 
 	switch( dm_values.dv_penpress )  {
 	case DV_INZOOM:
-		Viewscale *= 0.5;
+		if( Viewscale > SMALL_FASTF )
+			Viewscale *= 0.5;
 		new_mats();
 		break;
 
 	case DV_OUTZOOM:
-		Viewscale *= 2.0;
+		if( Viewscale < INFINITY )
+			Viewscale *= 2.0;
 		new_mats();
 		break;
 
