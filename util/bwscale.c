@@ -42,16 +42,27 @@ int	buf_start = -1000;		/* First line in buffer */
 
 int	bufy;				/* y coordinate in buffer */
 FILE	*buffp;
+int	nflag = 0;
 
-char	*Usage = "usage: bwscale infile.bw inx iny outx outy >out.bw\n";
+static char usage[] = "\
+Usage: bwscale [-n] infile.bw inx iny outx outy >out.bw\n";
 
 main( argc, argv )
 int argc; char **argv;
 {
 	int	inx, iny, outx, outy;
 
+	while( argc > 1 ) {
+		if( strcmp(argv[1],"-n") == 0 ) {
+			nflag++;
+		} else
+			break;
+		argc--;
+		argv++;
+	}
+
 	if( argc != 6 ) {
-		fprintf( stderr, Usage );
+		fprintf( stderr, usage );
 		exit( 1 );
 	}
 	inx = atoi( argv[2] );
@@ -148,8 +159,13 @@ int	ix, iy, ox, oy;
 		return( -1 );
 	}
 	if( pxlen < 1.0 || pylen < 1.0 ) {
-		/* bilinear interpolate */
-		binterp( ofp, ix, iy, ox, oy );
+		if( nflag ) {
+			/* nearest neighbor interpolate */
+			ninterp( ofp, ix, iy, ox, oy );
+		} else {
+			/* bilinear interpolate */
+			binterp( ofp, ix, iy, ox, oy );
+		}
 		return( 0 );
 	}
 
@@ -245,6 +261,48 @@ int	ix, iy, ox, oy;
 			mid1 = lp[0] + dx * ((double)lp[1] - (double)lp[0]);
 			mid2 = up[0] + dx * ((double)up[1] - (double)up[0]);
 			*op++ = mid1 + dy * (mid2 - mid1);
+		}
+
+		(void) fwrite( outbuf, 1, ox, ofp );
+	}
+}
+
+/*
+ * Nearest Neighbor Interpolate a file of pixels.
+ *
+ * This version preserves the outside pixels and interps inside only.
+ */
+ninterp( ofp, ix, iy, ox, oy )
+FILE	*ofp;
+int	ix, iy, ox, oy;
+{
+	int	i, j;
+	double	x, y, dx, dy, mid1, mid2;
+	double	xstep, ystep;
+	unsigned char *op, *up, *lp;
+
+	xstep = (double)(ix - 1) / (double)ox - 1.0e-6;
+	ystep = (double)(iy - 1) / (double)oy - 1.0e-6;
+
+	/* For each output pixel */
+	for( j = 0; j < oy; j++ ) {
+		y = j * ystep;
+		/*
+		 * Make sure we have this row (and the one after it)
+		 * in the buffer
+		 */
+		bufy = (int)y - buf_start;
+		if( bufy < 0 || bufy >= buflines-1 ) {
+			fill_buffer( (int)y );
+			bufy = (int)y - buf_start;
+		}
+
+		op = outbuf;
+
+		for( i = 0; i < ox; i++ ) {
+			x = i * xstep;
+			lp = &buffer[bufy*scanlen+(int)x];
+			*op++ = lp[0];
 		}
 
 		(void) fwrite( outbuf, 1, ox, ofp );
