@@ -103,7 +103,7 @@ set helplib_data(wdb_reopen)		{{[filename]} {open a database}}
 set helplib_data(wdb_rt_gettrees)	{{procname [-i] [-u] treetops...} {create an rt instance object}}
 set helplib_data(wdb_shells)		{{nmg_model}	{breaks model into seperate shells}}
 set helplib_data(wdb_showmats)		{{path}	{show xform matrices along path}}
-set helplib_data(wdb_summary)		{{[s r g]}	{count/list solid/reg/groups}}
+set helplib_data(wdb_summary)		{{[p r g]}	{count/list primitives/regions/groups}}
 set helplib_data(wdb_title)		{{description} {Set/get database title}}
 set helplib_data(wdb_tol)		{{[abs|rel|norm|dist|perp [#]} {Set/get tessellation and calculation tolerances}}
 set helplib_data(wdb_tops)		{{}	{find all top level objects}}
