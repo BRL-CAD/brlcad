@@ -1,33 +1,34 @@
 /*
-	SCCS id:	@(#) char.c	1.13
-	Modified: 	5/6/86 at 15:33:30 Gary S. Moss
-	Retrieved: 	8/6/86 at 13:35:23
+	SCCS id:	@(#) char.c	2.1
+	Modified: 	12/9/86 at 15:54:38
+	Retrieved: 	12/26/86 at 21:53:56
 	SCCS archive:	/vld/moss/src/fbed/s.char.c
+
+	Authors:	Paul R. Stay
+			Gary S. Moss
+			Doug A. Gwyn
+
+			U. S. Army Ballistic Research Laboratory
+			Aberdeen Proving Ground
+			Maryland 21005-5066
+			(301)278-6647 or AV-298-6647
 */
 #if ! defined( lint )
 static
-char	sccsTag[] = "@(#) char.c 1.13, modified 5/6/86 at 15:33:30, archive /vld/moss/src/fbed/s.char.c";
+char	sccsTag[] = "@(#) char.c 2.1, modified 12/9/86 at 15:54:38, archive /vld/moss/src/fbed/s.char.c";
 #endif
 
-/* 
- * char.c - display a character on the ikonas frambuffer
- * 
- * Author:	Paul R. Stay
- * 		Ballistics Research Labratory
- * 		APG, Md.
- * Date:	Tue Jan  8 1985
- */
 #include <stdio.h>
-#include "fb.h"
-#include "./font.h"
-#include "./popup.h"
 #include "./extern.h"
-
+/* 
+	char.c - routines for displaying a string on a frame buffer.
+ */
 extern void	fudge_Pixel();
 extern void	fill_buf(), clear_buf();
 extern void	squash();
 
-void		dochar(), menu_char();
+_LOCAL_ void	do_Char();
+void		menu_char();
 
 void
 do_line( xpos, ypos, line, menu_border )
@@ -37,53 +38,61 @@ RGBpixel		*menu_border; /* Menu outline color, if NULL, do filtering. */
 	{	register int    currx;
 		register int    char_count, char_id;
 		register int	len = strlen( line );
-		int		curry;
 	if( ffdes == NULL )
+		{
+		fb_log( "ERROR: do_line() called before get_Font().\n" );
 		return;
+		}
 	currx = xpos;
-	curry = ypos;
 
 	for( char_count = 0; char_count < len; char_count++ )
 		{
 		char_id = (int) line[char_count] & 0377;
 
 		/* locate the bitmap for the character in the file */
-		(void) fseek( ffdes, (long)(dir[char_id].addr+offset), 0 );
+		if( fseek( ffdes, (long)(SWABV(dir[char_id].addr)+offset), 0 )
+			== EOF
+			)
+			{
+			fb_log( "fseek() to %ld failed.\n",
+				(long)(SWABV(dir[char_id].addr) + offset)
+				);
+			return;
+			}
 
 		/* Read in the dimensions for the character */
-		width = dir[char_id].left + dir[char_id].right;
+		width = dir[char_id].right + dir[char_id].left;
 		height = dir[char_id].up + dir[char_id].down;
 
 		if( currx + width > fb_getwidth(fbp) - 1 )
 			break;		/* won't fit on screen */
 
 		if( menu_border == RGBPIXEL_NULL )
-			dochar( char_id, currx, curry, dir[char_id].down%2 );
+			do_Char( char_id, currx, ypos, dir[char_id].down%2 );
 		else
 			menu_char(	currx,
-					curry,
+					ypos,
 					dir[char_id].down % 2,
 					menu_border
 					);
-		currx += dir[char_id].width;
+		currx += SWABV(dir[char_id].width) + 2;
     		}
 	return;
 	}
 
-/* Shared by dochar() and menu_char().					*/
-static int		filterbuf[BUFFSIZ][BUFFSIZ];
+/* Shared by do_Char() and menu_char().					*/
+static int		filterbuf[FONTBUFSZ][FONTBUFSZ];
 
-void
-dochar( c, xpos, ypos, odd )
+_LOCAL_ void
+do_Char( c, xpos, ypos, odd )
 int c;
 int xpos, ypos, odd;
-	{
-	register int    i, j;
-	int		base;
-	int     	totwid = width;
-	int     	up, down;
-	static float	resbuf[BUFFSIZ];
-	static RGBpixel	fbline[BUFFSIZ];
+	{	register int    i, j;
+		int		base;
+		int     	totwid = width;
+		int     	up, down;
+		static float	resbuf[FONTBUFSZ];
+		static RGBpixel	fbline[FONTBUFSZ];
 
 	/* Read in the character bit map, with two blank lines on each end. */
 	for (i = 0; i < 2; i++)
@@ -168,4 +177,29 @@ RGBpixel	menu_border;
 				}
 		}
 	return;
+	}
+
+/*	b i t x ( )
+	Extract a bit field from a bit string.
+ */
+_LOCAL_ int
+bitx( bitstring, posn )
+register char *bitstring;
+register int posn;
+	{
+#if 0 /* Was #ifdef vax , but doesn't work on 4.3BSD */
+   	register field;
+
+   	asm("extzv	r10,$1,(r11),r8");
+	return field;
+#else
+	for( ; posn >= 8; posn -= 8, bitstring++ )
+		;
+#if defined( CANT_DO_ZERO_SHIFT )
+	if( posn == 0 )
+		return	(int)(*bitstring) & 1;
+	else
+#endif
+	return	(int)(*bitstring) & (1<<posn);
+#endif
 	}

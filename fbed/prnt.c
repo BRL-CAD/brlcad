@@ -1,24 +1,20 @@
 /*
-	SCCS id:	%Z% %M%	%I%
-	Last edit: 	%G% at %U%
-	Retrieved: 	%H% at %T%
-	SCCS archive:	%P%
+	SCCS id:	@(#) prnt.c	2.1
+	Modified: 	12/9/86 at 15:55:34
+	Retrieved: 	12/26/86 at 21:54:38
+	SCCS archive:	/vld/moss/src/fbed/s.prnt.c
 
 	Author:		Gary S. Moss
 			U. S. Army Ballistic Research Laboratory
 			Aberdeen Proving Ground
-			Maryland 21005
-			(301)278-6647 or AV-283-6647
- */
+			Maryland 21005-5066
+			(301)278-6647 or AV-298-6647
+*/
 #if ! defined( lint )
 static
-char	sccsTag[] = "%Z% %M%	%I%	last edit %G% at %U%";
+char	sccsTag[] = "@(#) prnt.c 2.1, modified 12/9/86 at 15:55:34, archive /vld/moss/src/fbed/s.prnt.c";
 #endif
-
 #include <stdio.h>
-#include "fb.h"
-#include "./std.h"
-#include "./popup.h"
 #include "./extern.h"
 
 #define PIXEL_MOVE()		MvCursor( 7, 1 )
@@ -34,7 +30,7 @@ char	sccsTag[] = "%Z% %M%	%I%	last edit %G% at %U%";
 static char	*usage[] =
 	{
 	"",
-	"fbed (%I%)",
+	"fbed (2.1)",
 	"",
 	"Usage: fbed [-hp]",
 	"",
@@ -44,9 +40,10 @@ static char	*usage[] =
 	};
 
 void	init_Status();
-void	prnt_Status(), prnt_Usage(), prnt_Debug(), prnt_Scroll();
+void	prnt_Status(), prnt_Usage(), prnt_Event(), prnt_Scroll();
 void	prnt_Prompt();
 void	prnt_Macro();
+void	prnt_Rectangle();
 /**void	prnt_FBC();**/
 
 /*	p r n t _ S t a t u s ( )					*/
@@ -78,7 +75,7 @@ static char	*screen_template[] = {
 012345678901234567890123456789012345678901234567890123456789012345678901234567890
  */
 "Pixel[           ] Paint[           ] Stride[    ] Brush Size[    ]",
-"-- FBED %I% -------------------------------------------------------------------",
+"-- FBED 2.1 -------------------------------------------------------------------",
 0
 };		
 
@@ -128,17 +125,57 @@ prnt_Pixel( msg, pixelp )
 char	*msg;
 RGBpixel	*pixelp;
 	{
-	prnt_Scroll(	"%s : %03d %03d %03d %03d",
+	prnt_Scroll(	"%s {%03d,%03d,%03d}",
 			msg,
 			(int) pixelp[RED],
 			(int) pixelp[GRN],
-			(int) pixelp[BLU],
-			0
+			(int) pixelp[BLU]
 			);
 	return;
 	}
 
 #include <varargs.h>
+/* VARARGS */
+void
+fb_log( fmt, va_alist )
+char	*fmt;
+va_dcl
+	{	extern char	*DL, *CS;
+		va_list		ap;
+	/* We use the same lock as malloc.  Sys-call or mem lock, really */
+	va_start( ap );
+	if( tty )
+		{
+		if( CS != NULL )
+			{
+			SetScrlReg( TOP_SCROLL_WIN, PROMPT_LINE - 1 );
+			SCROLL_PR_MOVE();
+			ClrEOL();
+			(void) _doprnt( fmt, ap, stdout );
+			ResetScrlReg();
+			}
+		else
+		if( DL != NULL )
+			{
+			SCROLL_DL_MOVE();
+			DeleteLn();
+			SCROLL_PR_MOVE();
+			ClrEOL();
+			(void) _doprnt( fmt, ap, stdout );
+			}
+		else
+			(void) _doprnt( fmt, ap, stdout );
+		}
+	else
+		{
+		(void) _doprnt( fmt, ap, stdout );
+		(void) printf( "\n" );
+		}
+	va_end( ap );
+	(void) fflush( stdout );
+	return;
+	}
+
 /*	p r n t _ S c r o l l ( )					*/
 /* VARARGS */
 void
@@ -183,7 +220,7 @@ va_dcl
 /*	p r n t _ D e b u g ( )						*/
 /* VARARGS */
 void
-prnt_Debug( fmt, va_alist )
+prnt_Event( fmt, va_alist )
 char	*fmt;
 va_dcl
 	{	va_list		ap;
@@ -281,5 +318,20 @@ register char	*bufp;
 		}
 	*p = NUL;
 	prnt_Scroll( "Macro buffer \"%s\".", prnt_buf );
+	return;
+	}
+
+void
+prnt_Rectangle( str, rectp )
+char *str;
+register Rectangle	*rectp;
+	{
+	prnt_Scroll(	"%s {<%d,%d>,<%d,%d>}\n",
+			str,
+			rectp->r_origin.p_x,
+			rectp->r_origin.p_y,
+			rectp->r_corner.p_x,
+			rectp->r_corner.p_y
+			);
 	return;
 	}

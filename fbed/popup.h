@@ -1,14 +1,14 @@
 /*
-	SCCS id:	@(#) popup.h	1.10
-	Last edit: 	4/24/86 at 13:12:05
-	Retrieved: 	8/6/86 at 13:31:51
+	SCCS id:	@(#) popup.h	2.1
+	Modified: 	12/9/86 at 15:55:41
+	Retrieved: 	12/26/86 at 21:53:44
 	SCCS archive:	/vld/moss/src/fbed/s.popup.h
 
 	Author:		Gary S. Moss
 			U. S. Army Ballistic Research Laboratory
 			Aberdeen Proving Ground
 			Maryland 21005-5066
-			(301)278-6647 or AV-283-6647
+			(301)278-6647 or AV-298-6647
 */
 #define INCL_POPUP
 #define MENU_FONT	"/usr/lib/vfont/fix.6"

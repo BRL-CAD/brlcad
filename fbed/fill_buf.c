@@ -1,14 +1,25 @@
+/*
+	SCCS id:	@(#) fill_buf.c	2.1
+	Modified: 	12/9/86 at 15:55:48
+	Retrieved: 	12/26/86 at 21:54:15
+	SCCS archive:	/vld/moss/src/fbed/s.fill_buf.c
+
+	Author:		Paul R. Stay
+			U. S. Army Ballistic Research Laboratory
+			Aberdeen Proving Ground
+			Maryland 21005-5066
+			(301)278-6640 or AV-298-6640
+*/
 /* 
  * fill_buf.c - Two routines for filling the buffers used in the filtering.
- * 
- * Author:	Paul R. Stay
- * 		Ballistics Research Labratory
- * 		APG, Md.
- * Date:	Tue Jan  8 1985
  */
+#if ! defined( lint )
+static
+char	sccsTag[] = "@(#) fill_buf.c 2.1, modified 12/9/86 at 15:55:48, archive /vld/moss/src/fbed/s.fill_buf.c";
+#endif
+
 #include <stdio.h>
-#include "fb.h"
-#include "./font.h"
+#include "./extern.h"
 
 /*	f i l l _ b u f ( )
 	Fills in the buffer by reading a row of a bitmap from the
@@ -20,7 +31,7 @@ fill_buf( wid, buf )
 register int	wid;
 register int	*buf;
 	{
-	char    bitrow[BUFFSIZ];
+	char    bitrow[FONTBUFSZ];
 	register int     j;
 
 	if( ffdes == NULL )
@@ -39,7 +50,7 @@ register int	*buf;
 		j-th bit because the bytes are backwards.
 	 */
 	for (j = 0; j < wid; j++)
-		if (bitx (bitrow, (j & ~7) + (7 - (j & 7)), 1))
+		if (bitx (bitrow, (j & ~7) + (7 - (j & 7))))
 		    buf[j + 2] = 1;
 		else
 		    buf[j + 2] = 0;

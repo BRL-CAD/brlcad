@@ -1,11 +1,22 @@
+/*
+	SCCS id:	@(#) squash.c	2.1
+	Modified: 	12/9/86 at 15:54:49
+	Retrieved: 	12/26/86 at 21:54:46
+	SCCS archive:	/vld/moss/src/fbed/s.squash.c
+
+	Author:		Paul R. Stay
+			U. S. Army Ballistic Research Laboratory
+			Aberdeen Proving Ground
+			Maryland 21005-5066
+			(301)278-6640 or AV-298-6640
+*/
 /* 
  * squash.c - Filter super-sampled image for one scan line
- * 
- * Author:	Paul R. Stay
- * 		Ballistics Research Labratory
- * 		APG, Md.
- * Date:	Fri Jan 11 1985
  */
+#if ! defined( lint )
+static
+char	sccsTag[] = "@(#) squash.c 2.1, modified 12/9/86 at 15:54:49, archive /vld/moss/src/fbed/s.squash.c";
+#endif
 #include <stdio.h>
 /* Cone filtering weights. 
  * #define CNTR_WT 0.23971778

@@ -1,19 +1,19 @@
 /*
-	SCCS id:	%Z% %M%	%I%
-	Last edit: 	%G% at %U%	G S M
-	Retrieved: 	%H% at %T%
-	SCCS archive:	%P%
+	SCCS id:	@(#) execshell.c	2.1
+	Modified: 	12/9/86 at 15:55:07
+	Retrieved: 	12/26/86 at 21:54:03
+	SCCS archive:	/vld/moss/src/fbed/s.execshell.c
 
 	Author:		Gary S. Moss
 			U. S. Army Ballistic Research Laboratory
 			Aberdeen Proving Ground
-			Maryland 21005
-			(301)278-6647 or AV-283-6647
- */
-#ifndef lint
+			Maryland 21005-5066
+			(301)278-6647 or AV-298-6647
+*/
+#if ! defined( lint )
 static
-char	sccsTag[] = "%Z% %M%	%I%	last edit %G% at %U%";
-#endif lint
+char	sccsTag[] = "@(#) execshell.c 2.1, modified 12/9/86 at 15:55:07, archive /vld/moss/src/fbed/s.execshell.c";
+#endif
 
 #include <stdio.h>
 #include <signal.h>
@@ -49,17 +49,19 @@ char	*args[];
 	switch( child_pid = fork() )
 		{
 		case -1 :
-			prnt_Debug( "exec_Shell() could not fork" );
+			fb_log( "\"%s\" (%d) could not fork.\n",
+				__FILE__, __LINE__
+				);
 			return	-1;
 		case  0 : /* Child process - execute.		*/
 			sleep( 2 );
 			(void) execvp( args[0], args );
-			prnt_Debug( "%s : could not execute", args[0] );
+			fb_log( "%s : could not execute.\n", args[0] );
 			exit( errno );
 		default :
 			{	register int	pid;
 				int		stat_loc;
-#if defined( BSD )
+#if defined( BSD ) || defined( sgi )
 #ifndef SIGCLD
 #define SIGCLD	SIGCHLD
 #endif
@@ -79,18 +81,20 @@ char	*args[];
 			(void) signal(SIGCLD, cstat);
 			if( pid == -1 )
 				{
-				prnt_Debug( "wait failed : no children" );
+				fb_log( "\"%s\" (%d) wait failed : no children.\n",
+					__FILE__, __LINE__
+					);
 				return	-1;
 				}
 			switch( stat_loc & 0377 )
 				{
 				case 0177 : /* Child stopped.		*/
-					prnt_Debug( "Child stopped" );
+					fb_log( "Child stopped.\n" );
 					return	(stat_loc >> 8) & 0377;
 				case 0 :    /* Child exited.		*/
 					return	(stat_loc >> 8) & 0377;
 				default :   /* Child terminated.	*/
-					prnt_Debug( "Child terminated" );
+					fb_log( "Child terminated.\n" );
 					return	1;
 				}
 			}

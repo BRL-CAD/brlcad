@@ -1,8 +1,8 @@
 /*
-	SCCS id:	%Z% %M%	%I%
-	Modified: 	%G% at %U% by Gary S. Moss
-	Retrieved: 	%H% at %T%
-	SCCS archive:	%P%
+	SCCS id:	@(#) pos_pad.c	2.1
+	Modified: 	12/9/86 at 15:54:52 by Gary S. Moss
+	Retrieved: 	12/26/86 at 21:54:35
+	SCCS archive:	/vld/moss/src/fbed/s.pos_pad.c
 
 	Author:		Douglas P. Kingston III	
 			Gary S. Moss
@@ -13,15 +13,13 @@
 */
 #if ! defined( lint )
 static
-char	sccsTag[] = "%Z% %M% %I%, modified %G% at %U%, archive %P%";
+char	sccsTag[] = "@(#) pos_pad.c 2.1, modified 12/9/86 at 15:54:52, archive /vld/moss/src/fbed/s.pos_pad.c";
 #endif
 
 #include <stdio.h>
 #ifdef SYS5
 #include <termio.h>
 #endif
-#include "fb.h"
-#include "./popup.h"
 #include "./extern.h"
 
 #define	P_FLAG		0100

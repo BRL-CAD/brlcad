@@ -1,7 +1,7 @@
 /*
-	SCCS id:	@(#) empty.c	1.3
-	Last edit: 	8/5/86 at 10:59:26
-	Retrieved: 	8/6/86 at 13:35:58
+	SCCS id:	@(#) empty.c	2.1
+	Modified: 	12/9/86 at 15:55:14
+	Retrieved: 	12/26/86 at 21:54:00
 	SCCS archive:	/vld/moss/src/fbed/s.empty.c
 
 	Author:		Gary S. Moss
@@ -12,10 +12,11 @@
 */
 #if ! defined( lint )
 static
-char	sccsTag[] = "@(#) empty.c	1.3	last edit 8/5/86 at 10:59:26";
+char	sccsTag[] = "@(#) empty.c 2.1, modified 12/9/86 at 15:55:14, archive /vld/moss/src/fbed/s.empty.c";
 #endif
 
 #ifdef BSD
+#include <sys/types.h>
 #include <sys/time.h>
 #endif
 
@@ -30,7 +31,10 @@ struct timeval
 	};
 #else
 /* Regular SysV */
-xxx?;
+#ifdef sgi
+#include <bsd/sys/types.h>
+#include <bsd/sys/time.h>
+#endif
 #endif
 #endif SYSV
 
@@ -42,9 +46,18 @@ xxx?;
 int
 empty( fd )
 int	fd;
+#ifdef sgi
+	{
+	winattach();
+	return	! qtest();
+	}
+#else	
 	{	static struct timeval	timeout = { 0L, 600L };
-		int		readfds = 1 << fd;
-		register int	nfound =
-			select( fd+1, &readfds, (int *)0, (int *)0, &timeout );
+		fd_set		readfds;
+		register int	nfound;
+	FD_ZERO( &readfds );
+	FD_SET( fd, &readfds );
+	nfound = select( fd+1, &readfds, (fd_set *)0, (fd_set *)0, &timeout );
 	return	nfound == -1 ? 1 : (nfound == 0);
 	}
+#endif

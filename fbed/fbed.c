@@ -1,42 +1,41 @@
 /*
-	SCCS id:	%Z% %M%	%I%
-	Last edit: 	%G% at %U%
-	Retrieved: 	%H% at %T%
-	SCCS archive:	%P%
+	SCCS id:	@(#) fbed.c	2.2
+	Modified: 	12/17/86 at 15:46:35
+	Retrieved: 	12/26/86 at 21:54:07
+	SCCS archive:	/vld/moss/src/fbed/s.fbed.c
 
 	Author:		Gary S. Moss
 			U. S. Army Ballistic Research Laboratory
 			Aberdeen Proving Ground
-			Maryland 21005
-			(301)278-6647 or AV-283-6647
- */
+			Maryland 21005-5066
+			(301)278-6647 or AV-298-6647
+*/
 #if ! defined( lint )
 static
-char	sccsTag[] = "%Z% %M%	%I%	last edit %G% at %U%";
+char	sccsTag[] = "@(#) fbed.c 2.2, modified 12/17/86 at 15:46:35, archive /vld/moss/src/fbed/s.fbed.c";
 #endif
 
 #include <stdio.h>
 #include <ctype.h>
 #include <signal.h>
 #include <fcntl.h>
-#include "fb.h"
-#include "./std.h"
-#include "./try.h"
 #include "./extern.h"
 
 static struct
 	{
 	int	xbits, ybits;
 	int	xorig, yorig;
-	unsigned char bits[32*4];
+	unsigned char bits[16*2];
 	} cursor = {
+		16, 16,
+		8, 8,
 #include "./cursorbits.h"
 	};
 
 #define JUMP		(40/zoom_factor)
 #define CLR_LEN		12
 #define Fgets_Bomb() \
-		prnt_Debug( "\%s\"(%d) EOF encountered prematurely.", \
+		fb_log( "\%s\"(%d) EOF encountered prematurely.\n", \
 				__FILE__, __LINE__ ); \
 		return	0;
 
@@ -57,7 +56,7 @@ _LOCAL_ int	fb_Setup();
 _LOCAL_ int	pars_Argv();
 _LOCAL_ int	in_Menu_Area();
 _LOCAL_ int	push_Macro();
-#if defined( BSD )
+#if defined( BSD ) || defined( sgi )
 _LOCAL_ int	general_Handler();
 #else
 _LOCAL_ void	general_Handler();
@@ -154,7 +153,7 @@ Func_Tab func_tab[] =
 /* ^U  */ ft_Nop,			NULL,	"nop",
 /* ^V  */ ft_Nop,			NULL,	"nop",
 /* ^W  */ ft_Nop,			NULL,	"nop",
-/* ^X  */ ft_Execute_Function,		NULL,	"execute-function",
+/* ^X  */ ft_Execute_Function,		NULL,	"execute-function-or-macro",
 /* ^Y  */ ft_Nop,			NULL,	"nop",
 /* ^Z  */ ft_Stop,			NULL,	"stop-program",
 /* ESC */ ft_Iterations,		NULL,	"argument-count",
@@ -264,7 +263,8 @@ static Func_Tab	*bindings[DEL+1];
 static Func_Tab	*macro_entry = FT_NULL; /* Last keyboard macro defined.	*/
 
 FBIO	*fbp;				/* Current framebuffer */
-int	cur_width = 512;
+static int	cur_width = 512;
+static int	reposition_cursor = 1;
 
 /*	m a i n ( )							*/
 main( argc, argv )
@@ -282,7 +282,6 @@ char	*argv[];
 		(void) fprintf( stderr, "Could not initialize terminal.\n" );
 		return	1;
 		}
-	getfont();
 	init_Status();
 	if( fb_Setup() == -1 )
 		return	1;
@@ -290,6 +289,7 @@ char	*argv[];
 	fb_Wind();
 	init_Tty();
 	init_Try();
+	get_Font( FONTNAME );
 	{	static char	default_macro_file[MAX_LN];
 		char		*home;
 	if( (home = getenv( "HOME" )) != NULL )
@@ -311,6 +311,7 @@ char	*argv[];
 			(void) signal( sig, SIG_IGN );
 	}
 #endif
+	(void) fb_flush( fbp );
 	prnt_Prompt( "" );
 	for( cread_buf[0] = NUL; ; )
 		{	register int	button_press;
@@ -321,23 +322,29 @@ char	*argv[];
 			do_Key_Cmd( (int) *cptr++, 1 );
 			status_change = true;
 			}
-		/*
-		 * This is a golden opportunity for SELECT() here,
-		 * monitoring both the bitpad and the keyboard.
-		 * The current code in empty is a CPU-eater.
-		 */
 		if( cptr > cread_buf )
 			*(cptr = cread_buf) = NUL;
 		else
-			{	char	c;
+			{	int	c;
+			if( reposition_cursor )
+				{
+				(void) fb_cursor(	fbp,
+							1,
+							cursor_pos.p_x,
+							cursor_pos.p_y
+							);
+				reposition_cursor = 0;
+				}
 			if( ! empty( tty_fd ) )
-				if(  read( tty_fd, &c, 1 ) == 1 )
+				{
+				if( (c = get_Char()) != EOF )
 					{
-					do_Key_Cmd( (int) c, 1 );
+					do_Key_Cmd( c, 1 );
 					status_change = true;
 					}
 				else	/* EOF detected.		*/
 					(void) ft_Quit( (char *) NULL );
+				}
 			}
 		if( pad_flag )
 			if( (button_press = do_Bitpad( &cursor_pos )) == 1 )
@@ -360,12 +367,35 @@ char	*argv[];
 			fb_Pick_Menu( menu_press, &pick_one );
 		if( status_change )
 			{
-			(void) fb_cursor( fbp, 1, cursor_pos.p_x, cursor_pos.p_y );
 			(void) fb_flush(fbp);
 			if( report_status )
 				prnt_Status();
 			}
 		}
+	}
+
+void
+fill_Rect( lft, rgt, btm, top, pixelp )
+register int		lft, rgt, top;
+register RGBpixel	*pixelp;
+int			btm;
+	{	register int	y = btm;
+#ifdef sgi /* More efficient on IRIS.					*/
+	for( ; y <= top; y++ )
+		{	register int	x = lft;
+		for( ; x <= rgt; x++ )
+			fb_write( fbp, x, y, pixelp, 1 );
+		}
+#else
+	for( ; y <= top; y++ )
+		{	register int	x = lft;
+		(void) fb_seek( fbp, x, y );
+		for( ; x <= rgt; x++ )
+			FB_WPIXEL( fbp, *pixelp );
+		}
+	(void) fb_flush(fbp);
+#endif
+	return;
 	}
 
 /*	i n i t _ T r y ( )
@@ -398,13 +428,14 @@ push_Macro( buf )
 char	*buf;
 	{	register int	curlen = strlen( cptr );
 		register int	buflen = strlen( buf );
-	if( curlen + buflen > BUFSIZ-1 )
+	if( curlen + buflen > MACROBUFSZ - 1 )
 		{
-		prnt_Debug( "Macro buffer would overflow." );
+		fb_log( "Macro buffer would overflow.\n" );
 		return	0;
 		}
-	(void) strcpy( cread_buf+buflen, cptr );
+	(void) strcpy( macro_buf, cptr );
 	(void) strncpy( cread_buf, buf, buflen ); /* Don't copy NUL.	*/
+	(void) strcpy( cread_buf+buflen, macro_buf );
 	cptr = cread_buf;
 	return	1;
 	}
@@ -419,7 +450,7 @@ register int	n;
 	if( *cptr == NUL )
 		{
 		prnt_Prompt( "" );
-		prnt_Debug( "" );
+		prnt_Event( "" );
 		}
 	if( remembering )
 		{
@@ -453,7 +484,7 @@ _LOCAL_ int
 ft_Nop( buf )
 char	*buf;
 	{
-	prnt_Debug( "Unbound(%s).", char_To_String( last_key ) );
+	fb_log( "Unbound(%s).\n", char_To_String( last_key ) );
 	putchar( BEL );
 	return	-1;
 	}
@@ -464,6 +495,7 @@ ft_Win_Lft( buf ) /* Move window left.					*/
 char	*buf;
 	{
 	windo_center.p_x += gain;
+	reposition_cursor = true;
 	return	fb_window( fbp, windo_center.p_x, windo_center.p_y ) != -1 ? 1 : 0;
 	}
 
@@ -473,6 +505,7 @@ ft_Win_Dwn( buf ) /* Move window down.					*/
 char	*buf;
 	{
 	windo_center.p_y -= gain;
+	reposition_cursor = true;
 	return	fb_window( fbp, windo_center.p_x, windo_center.p_y ) != -1 ? 1 : 0;
 	}
 
@@ -482,6 +515,7 @@ ft_Win_Up( buf ) /* Move window up.					*/
 char	*buf;
 	{
 	windo_center.p_y += gain;
+	reposition_cursor = true;
 	return	fb_window( fbp, windo_center.p_x, windo_center.p_y ) != -1 ? 1 : 0;
 	}
 
@@ -491,6 +525,7 @@ ft_Win_Rgt( buf ) /* Move window right.					*/
 char	*buf;
 	{
 	windo_center.p_x -= gain;
+	reposition_cursor = true;
 	return	fb_window( fbp, windo_center.p_x, windo_center.p_y ) != -1 ? 1 : 0;
 	}
 
@@ -503,6 +538,7 @@ char	*buf;
 	cursor_pos.p_y = image_center.p_y;
 	size_viewport = fb_getwidth(fbp);
 	fb_Wind();
+	reposition_cursor = true;
 	return	1;
 	}
 
@@ -527,16 +563,16 @@ char	*buf;
 #else
 	sig = 17;
 #endif
-	prnt_Debug( "[%d] stopped.", pid );
+	prnt_Event( "[%d] stopped.", pid );
 	restore_Tty();
 	if( kill( pid, sig ) == -1 )
 		{	extern int	errno;
-		perror( "(%M%) kill" );
+		perror( "(fbed.c) kill" );
 		exit( errno );
 		}
 	init_Tty();
 	init_Status();
-	prnt_Debug( "[%d] foreground.", pid );
+	prnt_Event( "[%d] foreground.", pid );
 	prnt_Status();
 	return	1;
 	}
@@ -554,7 +590,7 @@ char	*buf;
 		return	(*ftbl->f_func)( ftbl->f_buff );
 	else
 		{
-		prnt_Debug( "I seem to have lost my bindings." );
+		fb_log( "I seem to have lost my bindings.\n" );
 		return	0;
 		}
 	}
@@ -571,18 +607,20 @@ char	*buf;
 		/* Clobber "ft_Iterations()" key-stroke.		*/
 		*--macro_ptr = NUL;
 	prnt_Prompt( "M-" );
-	for( i = 0; i < MAX_DIGITS && isdigit( c = getchar() & 0xff ); i++ )
+	for( i = 0; i < MAX_DIGITS && isdigit( c = get_Char() ); i++ )
 		{
 		iterate_buf[i] = c;
 		(void) putchar( c );
+		(void) fflush( stdout );
 		}
 	if( i == MAX_DIGITS )
-		c = getchar() & 0xff;
+		c = get_Char();
 	iterate_buf[i] = NUL;
 	(void) putchar( ':' );
+	(void) fflush( stdout );
 	if( sscanf( iterate_buf, "%d", &iterate ) != 1 )
 		{
-		prnt_Debug( "Iterations not set." );
+		fb_log( "Iterations not set.\n" );
 		return	0;
 		}
 	do_Key_Cmd( c, iterate );
@@ -647,7 +685,7 @@ char	*buf;
 			prnt_Prompt( "-- More -- " );
 			ClrStandout();
 			(void) fflush( stdout );
-			switch( *cptr != NUL ? *cptr++ : getchar() )
+			switch( *cptr != NUL ? *cptr++ : get_Char() )
 				{
 			case 'q' :
 			case 'n' :
@@ -708,7 +746,7 @@ char	*buf;
 		if( (macro_fp = fopen( buf, "r" )) == NULL )
 			return	1;
 		else
-			prnt_Debug( "Reading macros from file \"%s\".", buf );
+			prnt_Event( "Reading macros from file \"%s\".", buf );
 		}
 	else
 		{
@@ -716,14 +754,14 @@ char	*buf;
 			return	0;
 		if( (macro_fp = fopen( scratch, "r" )) == NULL )
 			{
-			prnt_Debug( "Can't open \"%s\" for reading.", scratch );
+			fb_log( "Can't open \"%s\" for reading.\n", scratch );
 			return	0;
 			}
 		}
 	/* Read and execute functions from file.			*/
 	for( ; nread > 0 ; )
 		{
-		room = sizeof( cread_buf ) - strlen( cread_buf );
+		room = MACROBUFSZ - strlen( cread_buf );
 		nread = fread( cptr, (int) sizeof(char), room , macro_fp );
 		cread_buf[nread] = NUL;
 		for( cptr = cread_buf; *cptr != NUL; )
@@ -744,7 +782,7 @@ char	*buf;
 		return	0;
 	if( (macro_fp = fopen( macro_file, "w" )) == NULL )
 		{
-		prnt_Debug( "Can't open \"%s\" for writing.", macro_file );
+		fb_log( "Can't open \"%s\" for writing.\n", macro_file );
 		return	0;
 		}
 	for( key = NUL+1; key <= DEL; key++ )
@@ -802,13 +840,13 @@ char	*buf;
 	{
 	if( remembering )
 		{
-		prnt_Debug( "I am already remembering." );
+		fb_log( "I am already remembering.\n" );
 		*--macro_ptr = NUL;
 		return	0;
 		}
 	*(macro_ptr = macro_buf) = NUL;
 	remembering = true;
-	prnt_Debug( "Remembering..." );
+	prnt_Event( "Remembering..." );
 	return	1;
 	}
 
@@ -819,7 +857,7 @@ char	*buf;
 	{	char		key[2];
 	if( macro_entry == FT_NULL )
 		{
-		prnt_Debug( "Define macro first." );
+		fb_log( "Define macro first.\n" );
 		return	0;
 		}
 	if( ! get_Input( key, 2, "Bind macro to key : " ) )
@@ -827,7 +865,7 @@ char	*buf;
 	if( key[0] == Ctrl('X') || key[0] == '@' )
 		{
 		(void) putchar( BEL );
-		prnt_Debug(	"It is not permitted to change '%s' binding.",
+		fb_log(	"It is not permitted to change '%s' binding.\n",
 				char_To_String( (int) key[0] )
 				);
 		return	0;
@@ -843,7 +881,7 @@ char	*buf;
 	{	static char	macro_name[MAX_LN];
 	if( macro_entry == FT_NULL )
 		{
-		prnt_Debug( "Define macro first." );
+		fb_log( "Define macro first.\n" );
 		return	0;
 		}
 	if( ! get_Input( macro_name, MAX_LN, "Name keyboard macro : " ) )
@@ -909,20 +947,13 @@ char	*buf;
 		register int	top, btm, lft, rgt;	
 	lft = current.r_origin.p_x;
 	rgt = current.r_corner.p_x;
-	top = current.r_origin.p_y;
-	btm = current.r_corner.p_y;
+	btm = current.r_origin.p_y;
+	top = current.r_corner.p_y;
 	if( pallet.on_flag )
 		fb_Off_Menu( &pallet );
 	if( pick_one.on_flag )
 		fb_Off_Menu( &pick_one );
-	for( y = top; y <= btm ; y++ )
-		{
-		x = lft;
-		(void) fb_seek( fbp, x, y );
-		for( ; x <= rgt; x++ )
-			FB_WPIXEL( fbp, paint );
-		}
-	(void) fb_flush(fbp);
+	fill_Rect( lft, rgt, btm, top, (RGBpixel *) paint );
 	return	1;
 	}
 
@@ -931,17 +962,17 @@ _LOCAL_ int
 ft_Bind_Key_To_Key( buf ) /* Bind new key to same function as old key.	*/
 char	*buf;
 	{	char	old_key[2], new_key[2];
-	if( ! get_Input( new_key, 2, "Bind key : " ) )
+	if( ! get_Input( new_key, 2, "Bind new key : " ) )
 		return	0;
 	if( new_key[0] == Ctrl('X') || new_key[0] == '@' )
 		{
 		(void) putchar( BEL );
-		prnt_Debug(	"It is not permitted to change '%s' binding.",
+		fb_log(	"It is not permitted to change '%s' binding.\n",
 				char_To_String( (int) new_key[0] )
 				);
 		return	0;
 		}
-	if( ! get_Input( old_key, 2, "To key : " ) )
+	if( ! get_Input( old_key, 2, "To function bound to key : " ) )
 		return	0;
 	bindings[new_key[0]] = bindings[old_key[0]];
 	return	1;
@@ -959,7 +990,7 @@ char	*buf;
 	if( key[0] == Ctrl('X') || key[0] == '@' )
 		{
 		(void) putchar( BEL );
-		prnt_Debug(	"It is not permitted to change '%s' binding.",
+		fb_log(	"It is not permitted to change '%s' binding.\n",
 				char_To_String( (int) key[0] )
 				);
 		return	0;
@@ -976,7 +1007,7 @@ char	*buf;
 		}
 	else
 		{
-		prnt_Debug( "I seem to have lost my bindings." );
+		fb_log( "I seem to have lost my bindings.\n" );
 		return	0;
 		}
 	}
@@ -986,7 +1017,7 @@ _LOCAL_ int
 ft_Dump_FBC( buf ) /* Dump frame buffer controller (FBC) registers.	*/
 char	*buf;
 	{
-	prnt_Debug( "Dump_FBC unimplemented" );
+	fb_log( "Dump_FBC unimplemented.\n" );
 	return	1;
 	}
 
@@ -1001,6 +1032,7 @@ char	*buf;
 		{
 		(void) fb_clear(fbp, RGBPIXEL_NULL);
 		}
+	reposition_cursor = true;
 	return	1;
 	}
 
@@ -1030,6 +1062,7 @@ char	*buf;
 	cur_width = is_hires ? 512 : 1024;
 	if( fb_Setup() == -1 )
 		exit( 1 );
+	reposition_cursor = true;
 	return	1;
 	}
 
@@ -1044,12 +1077,7 @@ char	*buf;
 		fb_Off_Menu( &pick_one );
 	if( panel.n_buf != (RGBpixel *) NULL )
 		free( (char *) panel.n_buf );
-	prnt_Debug(	"Storing rectangle [%d,%d],[%d,%d].",
-			current.r_origin.p_x,
-			current.r_origin.p_y,
-			current.r_corner.p_x,
-			current.r_corner.p_y
-			);
+	prnt_Rectangle(	"Storing rectangle", &current );
 	panel.n_buf = get_Fb_Panel( &current );
 	panel.n_wid  = current.r_corner.p_x - current.r_origin.p_x;
 	panel.n_hgt = current.r_corner.p_y - current.r_origin.p_y;
@@ -1065,6 +1093,7 @@ char	*buf;
 		cursor_pos.p_x -= JUMP;
 	else
 		cursor_pos.p_x = 0;
+	reposition_cursor = true;
 	return	1;
 	}
 
@@ -1073,10 +1102,11 @@ _LOCAL_ int
 ft_Jump_Dwn( buf ) /* Move cursor down.					*/
 char	*buf;
 	{
-	if( cursor_pos.p_y <= fb_getheight(fbp) - JUMP )
-		cursor_pos.p_y += JUMP;
+	if( cursor_pos.p_y >= JUMP )
+		cursor_pos.p_y -= JUMP;
 	else
-		cursor_pos.p_y = fb_getheight(fbp) - 1;
+		cursor_pos.p_y = 0;
+	reposition_cursor = true;
 	return	1;
 	}
 
@@ -1085,10 +1115,11 @@ _LOCAL_ int
 ft_Jump_Up( buf ) /* Move cursor up.					*/
 char	*buf;
 	{
-	if( cursor_pos.p_y >= JUMP )
-		cursor_pos.p_y -= JUMP;
+	if( cursor_pos.p_y < fb_getheight(fbp) - JUMP )
+		cursor_pos.p_y += JUMP;
 	else
-		cursor_pos.p_y = 0;
+		cursor_pos.p_y = fb_getheight(fbp) - 1;
+	reposition_cursor = true;
 	return	1;
 	}
 
@@ -1101,6 +1132,7 @@ char	*buf;
 		cursor_pos.p_x += JUMP;
 	else
 		cursor_pos.p_x = fb_getwidth(fbp) - 1;
+	reposition_cursor = true;
 	return	1;
 	}
 
@@ -1111,16 +1143,16 @@ char	*buf;
 	{
 	if( menu_flag )
 		{
-		prnt_Debug( "Initializing popup menu." );
+		prnt_Event( "Initializing popup menu." );
 		fb_Init_Menu();
 		menu_flag = false;
 		if( fudge_flag )
 			{
-			prnt_Debug( "Correcting image." );
+			prnt_Event( "Correcting image." );
 			fudge_Picture( fbp, RESERVED_CMAP );
 			fudge_flag = false;
 			}
-		prnt_Debug( "Popup menu initialized." );
+		fb_log( "Popup menu initialized.\n" );
 		}
 	else
 		Toggle( pick_one.on_flag );
@@ -1128,6 +1160,7 @@ char	*buf;
 		fb_On_Menu( &pick_one );
 	else
 		fb_Off_Menu( &pick_one );
+	reposition_cursor = true;
 	return	1;
 	}
 
@@ -1161,21 +1194,22 @@ char	*buf;
 		return	0;
 	if( rle_file_nm[0] == NUL )
 		{
-		prnt_Debug( "No default." );
+		fb_log( "No default.\n" );
 		return	0;
 		}
 	else
 	if( (rle_fp = fopen( rle_file_nm, "r" )) == NULL )
 		{
-		prnt_Debug( "Can't open \"%s\".", rle_file_nm );
+		fb_log( "Can't open \"%s\".\n", rle_file_nm );
 		return	0;
 		}
-	prnt_Debug( "Decoding \"%s\".", rle_file_nm );
+	prnt_Event( "Decoding \"%s\".", rle_file_nm );
 	if( pallet.on_flag )
 		fb_Off_Menu( &pallet );
 	if( pick_one.on_flag )
 		fb_Off_Menu( &pick_one );
 	(void) fb_cursor( fbp, 0, 0, 0 );	/* off */
+	reposition_cursor = true;
 	if( fb_close( fbp ) == -1 )
 		{
 		(void) fclose( rle_fp );
@@ -1207,7 +1241,7 @@ char	*buf;
 		return	0;
 	if( rle_file_nm[0] == NUL )
 		{
-		prnt_Debug( "No default." );
+		fb_log( "No default.\n" );
 		return	0;
 		}
 	if( access( rle_file_nm, 0 ) == 0 )
@@ -1223,7 +1257,7 @@ char	*buf;
 			return	0;
 		(void) unlink( rle_file_nm );
 		}
-	prnt_Debug( "Encoding \"%s\".", rle_file_nm );
+	prnt_Event( "Encoding \"%s\".", rle_file_nm );
 	if( pallet.on_flag )
 		fb_Off_Menu( &pallet );
 	if( pick_one.on_flag )
@@ -1231,12 +1265,13 @@ char	*buf;
 	if( fb_close( fbp ) == -1 )
 		return	0;
 	if( exec_Shell( args ) == 0 )
-		prnt_Debug( "Image saved in \"%s\".", rle_file_nm );
+		fb_log( "Image saved in \"%s\".\n", rle_file_nm );
 	else
-		prnt_Debug( "Image not saved." );
+		fb_log( "Image not saved.\n" );
 	if( fb_Setup() == -1 )
 		exit( 1 );
 	fudge_flag = true;
+	reposition_cursor = true;
 	return	1;
 	}
 
@@ -1246,7 +1281,7 @@ ft_Transliterate( buf ) /* Transliterate pixels of color1 to target color2.*/
 char	*buf;
 	{	static char	old_color[CLR_LEN], new_color[CLR_LEN];
 		static int	red, grn, blu;
-		RGBpixel		old, new, cur;
+		RGBpixel	old, new, cur;
 		register int	x, y;
 		register int	lft, rgt, top, btm;
 	lft = current.r_origin.p_x;
@@ -1271,7 +1306,7 @@ char	*buf;
 		}
 	else
 		{
-		prnt_Debug( "You must enter 3 numbers (0..255)." );
+		fb_log( "You must enter 3 numbers (0..255).\n" );
 		return	0;
 		}
 	if( ! get_Input( new_color, CLR_LEN, "Enter new pixel color [r g b] : " ) )
@@ -1288,7 +1323,7 @@ char	*buf;
 		}
 	else
 		{
-		prnt_Debug( "You must enter 3 numbers (0..255)." );
+		fb_log( "You must enter 3 numbers (0..255).\n" );
 		return	0;
 		}
 	for( y = top; y <= btm ; y++ )
@@ -1318,7 +1353,7 @@ char	*buf;
 	{
 	if( ! remembering )
 		{
-		prnt_Debug( "I was not remembering." );
+		fb_log( "I was not remembering.\n" );
 		return	0;
 		}
 	remembering = false;
@@ -1342,7 +1377,7 @@ char	*buf;
 		Malloc_Bomb();
 		}
 	(void) strcpy( macro_entry->f_buff, macro_buf );
-	prnt_Debug( "Keyboard macro defined." );
+	fb_log( "Keyboard macro defined.\n" );
 	return	1;
 	}
 
@@ -1356,7 +1391,7 @@ char	*buf;
 	if( interactive )
 		{
 		prnt_Prompt( "Enter macro definition : " );
-		while( (*macro_ptr++ = getchar()) != 'Z' )
+		while( (*macro_ptr++ = get_Char()) != 'Z' )
 			;
 		}
 	else
@@ -1378,7 +1413,7 @@ char	*buf;
 		}
 	(void) strcpy( macro_entry->f_buff, macro_buf );
 	if( interactive )
-		prnt_Debug( "Keyboard macro defined." );
+		fb_log( "Keyboard macro defined.\n" );
 	return	1;
 	}
 
@@ -1397,6 +1432,7 @@ ft_Center_Window( buf ) /* Center window around cursor.			*/
 char	*buf;
 	{
 	fb_Wind();
+	reposition_cursor = true;
 	return	1;
 	}
 
@@ -1404,10 +1440,10 @@ _LOCAL_ int
 /*ARGSUSED*/
 ft_Read_Font( buf ) /* Set current font.				*/
 char	*buf;
-	{
-	if( ! get_Input( fontname, 128, "Enter font name : " ) )
+	{	static char	fontname[FONTNAMESZ];
+	if( ! get_Input( fontname, FONTNAMESZ, "Enter font name : " ) )
 		return	0;
-	getfont();
+	get_Font( fontname );
 	return	1;
 	}
 
@@ -1429,6 +1465,7 @@ char	*buf;
 		cursor_pos.p_x -= step;
 	else
 		cursor_pos.p_x = 0;
+	reposition_cursor = true;
 	return	1;
 	}
 
@@ -1441,6 +1478,7 @@ char	*buf;
 		{
 		size_viewport /= 2;
 		fb_Wind();
+		reposition_cursor = true;
 		}
 	return	1;
 	}
@@ -1450,10 +1488,11 @@ _LOCAL_ int
 ft_Move_Dwn( buf ) /* Move cursor down.					*/
 char	*buf;
 	{
-	if( cursor_pos.p_y <= fb_getheight(fbp) - step )
-		cursor_pos.p_y += step;
+	if( cursor_pos.p_y >= step )
+		cursor_pos.p_y -= step;
 	else
-		cursor_pos.p_y = fb_getwidth(fbp) - 1;
+		cursor_pos.p_y = 0;
+	reposition_cursor = true;
 	return	1;
 	}
 
@@ -1462,10 +1501,11 @@ _LOCAL_ int
 ft_Move_Up( buf ) /* Move cursor up.					*/
 char	*buf;
 	{
-	if( cursor_pos.p_y >= step )
-		cursor_pos.p_y -= step;
+	if( cursor_pos.p_y <= fb_getheight(fbp) - step )
+		cursor_pos.p_y += step;
 	else
-		cursor_pos.p_y = 0;
+		cursor_pos.p_y = fb_getheight(fbp) - 1;
+	reposition_cursor = true;
 	return	1;
 	}
 
@@ -1478,6 +1518,7 @@ char	*buf;
 		cursor_pos.p_x += step;
 	else
 		cursor_pos.p_x = fb_getwidth(fbp) - 1;
+	reposition_cursor = true;
 	return	1;
 	}
 
@@ -1501,6 +1542,7 @@ char	*buf;
 		{
 		size_viewport *= 2;
 		fb_Wind();
+		reposition_cursor = true;
 		}
 	return	1;
 	}
@@ -1511,7 +1553,7 @@ ft_Key_Set_Pixel( buf ) /* User types in paint color.			*/
 char	*buf;
 	{	static char	color[CLR_LEN];
 		static int	red, grn, blu;
-	if( ! get_Input( color, MAX_LN, "Enter color [r g b] : " ) )
+	if( ! get_Input( color, CLR_LEN, "Enter color [r g b] : " ) )
 		return	0;
 	if(	sscanf( color, "%d %d %d", &red, &grn, &blu ) == 3
 	    &&	red >= 0 && red <= 255
@@ -1525,7 +1567,7 @@ char	*buf;
 		}
 	else
 		{
-		prnt_Debug( "You must enter 3 numbers (0..255)." );
+		fb_log( "You must enter 3 numbers (0..255).\n" );
 		return	0;
 		}
 	return	1;
@@ -1536,7 +1578,7 @@ _LOCAL_ int
 ft_Quit( buf )
 char	*buf;
 	{
-	prnt_Debug( "Bye..." );
+	prnt_Event( "Bye..." );
 	restore_Tty();
 	if( pallet.on_flag )
 		fb_Off_Menu( &pallet );
@@ -1557,30 +1599,47 @@ char	*buf;
 		return	0;
 	if( image[0] == NUL )
 		{
-		prnt_Debug( "No default." );
+		fb_log( "No default.\n" );
 		return	0;
 		}
 	else
 	if( (imp = fb_open( image, 512, 512 )) == FBIO_NULL )	/* XXX */
 		{
-		prnt_Debug(	"Can't open \"%s\" for reading.",
-				image
-				);
+		fb_log(	"Can't open \"%s\" for reading.\n", image );
 		return	0;
 		}
-	prnt_Debug( "Reading \"%s\".", image );
+	prnt_Event( "Reading \"%s\".", image );
 	if( pallet.on_flag )
 		fb_Off_Menu( &pallet );
 	if( pick_one.on_flag )
 		fb_Off_Menu( &pick_one );
 	(void) fb_cursor( fbp, 0, 0, 0 );	/* off */
+	reposition_cursor = true;
+#if 0
 	if( fudge_Picture( imp, RESERVED_CMAP ) == -1 )
 		{
-		prnt_Debug( "Read of \"%s\" failed.", image );
+		fb_log( "Read of \"%s\" failed.\n", image );
 		return	0;
 		}
-	(void) fb_close( imp );
 	fudge_flag = false;
+#else
+	{	register int	y;
+	for( y = 0; y < fb_getheight( imp ); y++ )
+		{	RGBpixel	scanbuf[1024];
+		if( fb_read( imp, 0, y, scanbuf, fb_getwidth( imp ) ) == -1 )
+			{
+			prnt_Scroll( "Read from <0,%d> failed.\n" );
+			return	0;
+			}
+		if( fb_write( fbp, 0, y, scanbuf, fb_getwidth( imp ) ) == -1 )
+			{
+			prnt_Scroll( "Write to <0,%d> failed.\n" );
+			return	0;
+			}
+		}
+	}
+#endif
+	(void) fb_close( imp );
 	return	1;
 	}
 
@@ -1591,7 +1650,7 @@ char	*buf;
 	{	static char	label[MAX_LN];
 	if( ! get_Input( label, MAX_LN, "Enter text string : " ) )
 		return	0;
-	prnt_Debug( "Drawing \"%s\".", label );
+	prnt_Event( "Drawing \"%s\".", label );
 	do_line( cursor_pos.p_x, cursor_pos.p_y, label, (RGBpixel *)NULL );
 	return	1;
 	}
@@ -1601,10 +1660,21 @@ _LOCAL_ int
 ft_Put_Pixel( buf ) /* Put pixel.					*/
 char	*buf;
 	{	register int	rectwid = brush_sz / 2;
-	fb_Paint(	cursor_pos.p_x - rectwid, cursor_pos.p_y - rectwid,
-			cursor_pos.p_x + rectwid, cursor_pos.p_y + rectwid,
-			paint
-			);
+	/* If brush size is 2 or more, fill rectangle.			*/
+	if( rectwid == 0 )
+		{ /* Avoid overhead if only writing one pixel.		*/
+#ifdef sgi
+		(void) fb_write( fbp, cursor_pos.p_x, cursor_pos.p_y, paint, 1 );
+#else
+		(void) fb_seek( fbp, cursor_pos.p_x, cursor_pos.p_y );
+		FB_WPIXEL( fbp, paint );
+#endif
+		}
+	else
+		fb_Paint( cursor_pos.p_x - rectwid, cursor_pos.p_y - rectwid,
+			  cursor_pos.p_x + rectwid, cursor_pos.p_y + rectwid,
+			  (RGBpixel *) paint
+			  );
 	return	1;
 	}
 
@@ -1620,6 +1690,7 @@ char	*buf;
 		cursor_pos.p_x = fb_getwidth(fbp);
 	if( cursor_pos.p_x < 0 )
 		cursor_pos.p_x = 0;
+	reposition_cursor = true;
 	return	1;
 	}
 
@@ -1635,6 +1706,7 @@ char	*buf;
 		cursor_pos.p_y = fb_getheight(fbp);
 	if( cursor_pos.p_y < 0 )
 		cursor_pos.p_y = 0;
+	reposition_cursor = true;
 	return	1;
 	}
 
@@ -1674,32 +1746,31 @@ fb_Setup()
 	{
 	if( fbp != FBIO_NULL )
 		{
-		prnt_Debug( "fb_open:  closing previous FB" );
+		fb_log( "Closing previously opened frame buffer.\n" );
 		(void)fb_close( fbp );
 		}
 	if( (fbp = fb_open( NULL, cur_width, cur_width )) == FBIO_NULL )
 		{
-		prnt_Debug( "fb_open(%d) failed", cur_width );
+		fb_log( "Could not open default frame buffer.\n" );
 		return	-1;
 		}
 	fb_ioinit( fbp );
 	if( fb_rmap( fbp, &cmap ) == -1 )
 		{
-		prnt_Debug( "Can't read color map." );
+		fb_log( "Can't read color map.\n" );
 		return	0;
 		}
 	if( fb_wmap( fbp, &cmap ) == -1 )
 		{
-		prnt_Debug( "Can't write color map." );
+		fb_log( "Can't write color map.\n" );
 		return	0;
 		}
 	if( fb_setcursor( fbp, cursor.bits, cursor.xbits, cursor.ybits,
 	    cursor.xorig, cursor.yorig ) == -1 )
 		{
-		prnt_Debug( "Can't set up cursor." );
+		fb_log( "Can't set up cursor.\n" );
 		return	0;
 		}
-	(void) fb_cursor( fbp, 1, cursor_pos.p_x, cursor_pos.p_y );
 	windo_center.p_x = cursor_pos.p_x = image_center.p_x = fb_getwidth(fbp) / 2;
 	windo_center.p_y = cursor_pos.p_y = image_center.p_y = fb_getheight(fbp) / 2;
 	size_viewport = fb_getwidth(fbp);
@@ -1728,19 +1799,12 @@ RGBpixel		*color;
 	x1 = x1 > fb_getwidth(fbp) ? fb_getwidth(fbp) : x1;
 	y0 = y0 < 1 ? 1 : y0;
 	y1 = y1 > fb_getheight(fbp) ? fb_getheight(fbp) : y1;
-	for( ; y0 <= y1 ; ++y0 )
-		{
-		(void) fb_seek( fbp, x0, y0 );
-		for( x = x0; x <= x1; ++x )
-			{
-			FB_WPIXEL( fbp, *color );
-			}
-		}
+	fill_Rect( x0, x1, y0, y1, color ); 
 	return;
 	}
 
 /*	g e n e r a l _ H a n d l e r ( )				*/
-#if defined( BSD )
+#if defined( BSD ) || defined( sgi )
 _LOCAL_ int
 #else
 _LOCAL_ void
@@ -1751,40 +1815,41 @@ int	sig;
 	switch( sig )
 		{
 	case SIGHUP :
-		prnt_Debug( "Hangup." );
+		prnt_Event( "Hangup." );
 		restore_Tty();
 		exit( sig );
 		/*NOTREACHED*/
 	case SIGINT :
-		prnt_Debug( "Interrupt." );
+		prnt_Event( "Interrupt." );
 		restore_Tty();
 		exit( sig );
 		/*NOTREACHED*/
 	case SIGQUIT :
-		prnt_Debug( "Quit (core dumped)." );
+		prnt_Event( "Quit (core dumped)." );
 		restore_Tty();
 		abort();
 		/*NOTREACHED*/
 	case SIGILL :
-		prnt_Debug( "Illegal instruction (core dumped)." );
+		prnt_Event( "Illegal instruction (core dumped)." );
 		restore_Tty();
 		abort();
 		/*NOTREACHED*/
 	case SIGIOT :
-		prnt_Debug( "IOT trap (core dumped)." );
+		prnt_Event( "IOT trap (core dumped)." );
 		restore_Tty();
 		abort();
 		/*NOTREACHED*/
 	case SIGBUS :
-		prnt_Debug( "Bus error (core dumped)." );
+		prnt_Event( "Bus error (core dumped)." );
 		restore_Tty();
 		abort();
 		/*NOTREACHED*/
 	case SIGSEGV :
-		prnt_Debug( "Segmentation violation (core dumped)." );
+		prnt_Event( "Segmentation violation (core dumped)." );
 		restore_Tty();
 		abort();
 		/*NOTREACHED*/
+#ifndef sgi
 #ifdef BSD
 	case SIGCHLD :
 		break;
@@ -1798,13 +1863,17 @@ int	sig;
 #endif
 		(void) ft_Stop( (char *) NULL );
 		break;
+#else
+	case SIGCHLD :
+		break;
+#endif
 	default :
-		prnt_Debug( "\"%s\", signal(%d).", __FILE__, sig );
+		prnt_Event( "\"%s\", signal(%d).", __FILE__, sig );
 		restore_Tty();
 		break;
 		}
 	(void) signal( sig, general_Handler );
-#if defined( BSD )
+#if defined( BSD ) || defined( sgi )
 	return	sig;
 #else
 	return;
@@ -1825,6 +1894,9 @@ init_Tty()
 	clr_Tabs( tty_fd );
 	clr_Echo( tty_fd );
 	clr_CRNL( tty_fd );
+#ifdef sgi
+	sgi_Init();
+#endif
 	return;
 	}
 
@@ -1883,8 +1955,12 @@ RGBpixel	pixel;
 		}
 	else
 		{
+#ifdef sgi
+		(void) fb_read( fbp, cursor_pos.p_x, cursor_pos.p_y, pixel, 1 );
+#else
 		(void) fb_seek( fbp, cursor_pos.p_x, cursor_pos.p_y );
 		(void) fb_rpixel( fbp, pixel );
+#endif
 		}
 	return;
 	}
@@ -1933,4 +2009,15 @@ int	i;
 	else
 		return	"EOF";
 	return	buf;
+	}
+
+int
+get_Char()
+	{	int	c;
+#ifdef sgi		
+	if( ismex() && tty )
+		return	(c = sgi_Getchar()) == EOF ? EOF : toascii( c );
+#else
+	return	(c = getchar()) == EOF ? EOF : toascii( c );
+#endif
 	}

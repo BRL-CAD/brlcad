@@ -1,15 +1,15 @@
 /*
-	SCCS id:	%Z% %M%	%I%
-	Last edit: 	%G% at %U%
-	Retrieved: 	%H% at %T%
-	SCCS archive:	%P%
+	SCCS id:	@(#) try.h	2.1
+	Modified: 	12/9/86 at 15:56:37
+	Retrieved: 	12/26/86 at 21:53:45
+	SCCS archive:	/vld/moss/src/fbed/s.try.h
 
 	Author:		Gary S. Moss
 			U. S. Army Ballistic Research Laboratory
 			Aberdeen Proving Ground
-			Maryland 21005
-			(301)278-6647 or AV-283-6647
- */
+			Maryland 21005-5066
+			(301)278-6647 or AV-298-6647
+*/
 #define INCL_TRY
 typedef struct
 	{

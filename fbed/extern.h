@@ -1,17 +1,20 @@
 /*
-	SCCS id:	%Z% %M%	%I%
-	Last edit: 	%G% at %U%
-	Retrieved: 	%H% at %T%
-	SCCS archive:	%P%
+	SCCS id:	@(#) extern.h	2.1
+	Modified: 	12/9/86 at 15:55:10
+	Retrieved: 	12/26/86 at 21:53:39
+	SCCS archive:	/vld/moss/src/fbed/s.extern.h
 
 	Author:		Gary S. Moss
 			U. S. Army Ballistic Research Laboratory
 			Aberdeen Proving Ground
 			Maryland 21005-5066
-			(301)278-6647 or AV-283-6647
+			(301)278-6647 or AV-298-6647
 */
 #if ! defined( INCL_FB )
 #include <fb.h>
+#endif
+#if ! defined( _VLD_STD_H_ )
+#include <std.h>
 #endif
 #if ! defined( INCL_POPUP )
 #include "popup.h"
@@ -33,7 +36,7 @@ extern RGBpixel	*menu_addr;
 extern RGBpixel	paint;
 extern Point	cursor_pos;
 extern Try	*try_rootp;
-extern char	cread_buf[BUFSIZ], *cptr;
+extern char	cread_buf[BUFSIZ*10], *cptr;
 extern char	macro_buf[];
 extern char	*macro_ptr;
 extern int	brush_sz;
@@ -62,6 +65,7 @@ extern void	pos_close();
 extern void	init_Status();
 extern void	init_Tty(), restore_Tty();
 extern void	prnt_Status(), prnt_Usage(), prnt_Scroll();
+extern void	prnt_Rectangle();
 extern void	do_Key_Cmd();
 
 #define MAX_LN			81
@@ -70,8 +74,9 @@ extern void	do_Key_Cmd();
 #define BOTTOM_STATUS_AREA	2
 #define TOP_SCROLL_WIN		(BOTTOM_STATUS_AREA-1)
 #define PROMPT_LINE		(LI-2)
+#define MACROBUFSZ		(BUFSIZ*10)
 #define Malloc_Bomb() \
-		prnt_Debug(	"\"%s\"(%d) Malloc() no more space.", \
+		fb_log(	"\"%s\"(%d) Malloc() no more space.\n", \
 				__FILE__, __LINE__ \
 				); \
 		return	0;
