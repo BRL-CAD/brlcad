@@ -344,6 +344,8 @@ BU_EXTERN(int rt_ebm_tcladjust, (Tcl_Interp *interp,
 		struct resource *resp));
 BU_EXTERN(int rt_ebm_tclform, (const struct rt_functab *ftp,
 		Tcl_Interp *interp));
+BU_EXTERN(void rt_ebm_make, (const struct rt_functab *,	struct rt_db_internal *,
+			     double /*diameter*/));
 
 /* ARBN solid */
 BU_EXTERN(int rt_arbn_tclget, (Tcl_Interp *interp,
@@ -639,7 +641,7 @@ const struct rt_functab rt_functab[] = {
 		rt_ebm_describe,rt_ebm_xform,	rt_ebm_parse,
 		sizeof(struct rt_ebm_internal), RT_EBM_INTERNAL_MAGIC,
 		rt_ebm_tclget, rt_ebm_tcladjust, rt_ebm_tclform,
-		NULL,
+		rt_ebm_make,
 	},
 
 	{RT_FUNCTAB_MAGIC, "ID_VOL", "vol",

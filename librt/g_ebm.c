@@ -2100,3 +2100,30 @@ rt_ebm_tclform( const struct rt_functab *ftp, Tcl_Interp *interp )
         return TCL_OK;
 
 }
+
+
+/*
+ *		R T _ E B M _ M A K E
+ *
+ *	Routine to make a new EBM solid. The only purpose of this routine is
+ *	to initialize the matrix and height to legal values.
+ */
+void
+rt_ebm_make( ftp, intern, diameter )
+const struct rt_functab	*ftp;
+struct rt_db_internal	*intern;
+double			diameter;
+{
+	struct rt_ebm_internal *ebm;
+
+	intern->idb_type = ID_EBM;
+	BU_ASSERT(&rt_functab[intern->idb_type] == ftp);
+
+	intern->idb_meth = ftp;
+	ebm = (struct rt_ebm_internal *)bu_calloc( sizeof( struct rt_ebm_internal ), 1,
+				     "rt_ebm_internal");
+	intern->idb_ptr = (genptr_t)ebm;
+	ebm->magic = RT_EBM_INTERNAL_MAGIC;
+	MAT_IDN( ebm->mat );
+	ebm->tallness = 1.0;
+}
