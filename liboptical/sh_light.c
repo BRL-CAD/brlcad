@@ -107,9 +107,7 @@ register struct region *rp;
 		lp->lt_radius = MAGNITUDE( rad );
 	}
 	if( rp->reg_mater.ma_override )  {
-		VSET( lp->lt_color, rp->reg_mater.ma_rgb[0]/255.,
-			rp->reg_mater.ma_rgb[1]/255.,
-			rp->reg_mater.ma_rgb[2]/255. );
+		VMOVE( lp->lt_color, rp->reg_mater.ma_color );
 	} else {
 		VSETALL( lp->lt_color, 1 );
 	}
@@ -224,6 +222,15 @@ mat_t	v2m;
  *
  *  Special routine called by view_2init() to determine the relative
  *  intensities of each light source.
+ *
+ *  Because of the limited dynamic range of RGB space (0..255),
+ *  the strategy used here is a bit risky.  We find the brightest
+ *  single light source in the model, and assume that the energy from
+ *  multiple lights will not shine on a single location in such a way
+ *  as to add up to an overload condition.
+ *  We then account for the effect of ambient light, because it always
+ *  adds it's contribution.  Even here we only expect 50% of the ambient
+ *  intensity, to keep the pictures reasonably bright.
  */
 light_init()
 {
@@ -236,7 +243,8 @@ light_init()
 		if( lp->lt_fraction > 0 )  continue;	/* overridden */
 		if( lp->lt_intensity <= 0 )
 			lp->lt_intensity = 1;		/* keep non-neg */
-		inten += lp->lt_intensity;
+		if( lp->lt_intensity > inten )
+			inten = lp->lt_intensity;
 	}
 
 	/* Compute total emitted energy, including ambient */
