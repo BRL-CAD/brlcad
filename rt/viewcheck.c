@@ -144,10 +144,8 @@ struct region		*reg2;
 	noverlaps++;
 	RES_RELEASE( &rt_g.res_syscall );
 
-	rt_log( "OVERLAP %d\n", noverlaps );
-
 	if( !rpt_overlap ) {
-		rt_log("OVERLAP %d: %s\nOVERLAP %d: %s\nOVERLAP %d: depth %gmm\nOVERLAP %d: in_hit_point (%g,%g,%g) mm\nOVERLAP %d: out_hit_point (%g,%g,%g) mm\n--------------------------------------------------\n",
+		rt_log("OVERLAP %d: %s\nOVERLAP %d: %s\nOVERLAP %d: depth %gmm\nOVERLAP %d: in_hit_point (%g,%g,%g) mm\nOVERLAP %d: out_hit_point (%g,%g,%g) mm\n------------------------------------------------------------\n",
 			noverlaps,reg1->reg_name,
 			noverlaps,reg2->reg_name,
 			noverlaps,depth,
