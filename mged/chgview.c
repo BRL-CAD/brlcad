@@ -30,7 +30,6 @@
  *      cmd_getknob     returns knob/slider value
  *      f_svbase        Set view base references (i.e. i_Viewscale and orig_pos)
  *      mged_svbase     Guts for f_svbase
- *      f_tran          Translate view center
  *      mged_tran       Guts for f_tran
  *      f_qvrot         Set view from direction vector and twist angle
  *      f_orientation   Set current view direction from a quaternion
