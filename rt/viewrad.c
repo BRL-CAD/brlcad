@@ -38,13 +38,13 @@ extern	FILE	*outfp;
 extern	point_t	viewbase_model;		/* lower_left of viewing plane */
 extern	mat_t	view2model;
 extern	fastf_t	viewsize;
-#ifdef never
-extern	point_t	eye_model;		/* ray origin for perspective */
-extern	point_t	dx_model;
-extern	point_t	dy_model;
-#endif never
+
 extern	int	width;
 extern	int	height;
+
+/* Pacify RT */
+mlib_setup() { return(1); }
+mlib_free() {}
 
 char usage[] = "\
 Usage:  rtrad [options] model.g objects... >file.rad\n\
@@ -76,9 +76,87 @@ static int	precindex = 0;
 static int	precnum = 0;	/* number of physical records written */
 static int	recnum = 0;	/* number of (useful) records written */
 
+static int radhit();
+static int radmiss();
+
+/*
+ *  			V I E W _ I N I T
+ *
+ *  Called at the start of a run.
+ *  Returns 1 if framebuffer should be opened, else 0.
+ */
+view_init( ap, file, obj, minus_o )
+register struct application *ap;
+char *file, *obj;
+{
+	ap->a_hit = radhit;
+	ap->a_miss = radmiss;
+	ap->a_onehit = 1;
+
+	return(0);		/* no framebuffer needed */
+}
+
+/* beginning of a frame */
+view_2init( ap )
+struct application *ap;
+{
+	extern double azimuth, elevation;
+	vect_t temp, aimpt;
+	union radrec r;
+
+	rt_log( "Ray Spacing: %f rays/cm\n", 10.0*(width/viewsize) );
+
+	/* Header Record */
+	bzero( &r, sizeof(r) );
+
+	/*XXX*/
+	r.h.head[0] = 'h'; r.h.head[1] = 'e';
+	r.h.head[2] = 'a'; r.h.head[3] = 'd';
+
+	r.h.id = 1;
+	r.h.iview = 1;
+	r.h.miview = - r.h.iview;
+	VSET( temp, 0.0, 0.0, -1.414 );	/* Point we are looking at */
+	MAT4X3PNT( aimpt, view2model, temp );
+	r.h.cx = aimpt[0];		/* aimpoint */
+	r.h.cy = aimpt[1];
+	r.h.cz = aimpt[2];
+	r.h.back = 1.414*viewsize/2.0;	/* backoff */
+	r.h.e = - elevation;		/* RT and GIFT/SRIM are backward XXX */
+	r.h.a = - azimuth;
+	r.h.vert = viewsize;
+	r.h.horz = viewsize;
+	r.h.nvert = height;
+	r.h.nhorz = width;
+	r.h.maxrfl = MAXREFLECT;
+
+	writerec( &r, outfp );
+
+	/* XXX - write extra header records */
+	bzero( &r, sizeof(r) );
+	writerec( &r, outfp );
+	writerec( &r, outfp );
+}
+
+/* end of each pixel */
 view_pixel() {}
 
-int
+/* end of each line */
+view_eol() {}
+
+/* end of a frame */
+view_end()
+{
+	/* flush any partial output record */
+	if( precindex > 0 ) {
+		writephysrec( outfp );
+	}
+
+	rt_log( "view_end: %d physical records, (%d/%d) logical\n",
+		precnum, recnum, precnum*256 );
+}
+
+static int
 radhit( ap, PartHeadp )
 register struct application *ap;
 struct partition *PartHeadp;
@@ -176,85 +254,10 @@ struct partition *PartHeadp;
 	return(depth+1);	/* report hit to main routine */
 }
 
-int
+static int
 radmiss()  {
 	return(0);
 }
-
-view_eol()
-{
-}
-
-/*
- *  Called when the picture is finally done.
- */
-view_end()
-{
-	/* flush any partial output record */
-	if( precindex > 0 ) {
-		writephysrec( outfp );
-	}
-
-	rt_log( "view_end: %d physical records, (%d/%d) logical\n",
-		precnum, recnum, precnum*256 );
-}
-
-/*
- *  			V I E W _ I N I T
- */
-view_init( ap, file, obj, minus_o )
-register struct application *ap;
-char *file, *obj;
-{
-	ap->a_hit = radhit;
-	ap->a_miss = radmiss;
-	ap->a_onehit = 1;
-
-	return(0);		/* no framebuffer needed */
-}
-
-view_2init( ap )
-struct application *ap;
-{
-	extern double azimuth, elevation;
-	vect_t temp, aimpt;
-	union radrec r;
-
-	rt_log( "Ray Spacing: %f rays/cm\n", 10.0*(width/viewsize) );
-
-	/* Header Record */
-	bzero( &r, sizeof(r) );
-
-	/*XXX*/
-	r.h.head[0] = 'h'; r.h.head[1] = 'e';
-	r.h.head[2] = 'a'; r.h.head[3] = 'd';
-
-	r.h.id = 1;
-	r.h.iview = 1;
-	r.h.miview = - r.h.iview;
-	VSET( temp, 0.0, 0.0, -1.414 );	/* Point we are looking at */
-	MAT4X3PNT( aimpt, view2model, temp );
-	r.h.cx = aimpt[0];		/* aimpoint */
-	r.h.cy = aimpt[1];
-	r.h.cz = aimpt[2];
-	r.h.back = 1.414*viewsize/2.0;	/* backoff */
-	r.h.e = - elevation;		/* RT and GIFT/SRIM are backward XXX */
-	r.h.a = - azimuth;
-	r.h.vert = viewsize;
-	r.h.horz = viewsize;
-	r.h.nvert = height;
-	r.h.nhorz = width;
-	r.h.maxrfl = MAXREFLECT;
-
-	writerec( &r, outfp );
-
-	/* XXX - write extra header records */
-	bzero( &r, sizeof(r) );
-	writerec( &r, outfp );
-	writerec( &r, outfp );
-}
-
-mlib_setup() { return(1); }
 
 /*********** Eye Visibility Routines ************/
 /*
@@ -524,5 +527,3 @@ totbuf += buf;
 
 	return( 1 );
 }
-
-mlib_free() { ; }
