@@ -1127,18 +1127,43 @@ set -S2 "/bin/sh"
 #	define	MGED_LIBES	/usr/lib/X11/libX11.a
 #endif
 
-#if defined(hpux)
-/*	HP 9000 Model 730 et.al., running HPUX */
-#	undef hp
-#	define	MTYPE hp
-#	define	HAS_TCP=0
-#	define	LIBRT_TIMER 	timerunix
-#	define	LIBFB_OBJS 	if_X if_X24
-#	define	LIBFB_CONFIG 	-DIF_X -I''XINCDIR
-#	define	LIBFB_LIBES   	-L''XLIBDIR -lX11
-#	define	MGED_OBJS	dm-X
-#	define	MGED_CONFIG	-DDM_X -I''XINCDIR
-#	define	MGED_LIBES	-L''XINCDIR -lX11
+#if defined(hppa)
+/*    HPPA 9000/700 running HPUX 9.0 */
+#	undef   hp
+#	define  MTYPE   hp
+#	define	UNIXTYPE SYSV
+#	define  RANLIB  echo
+#	define  CC      /bin/cc
+/* XXX I really don't think the -I directives should be needed on CC_OPTS -Mike */
+#	define  CC_OPTS -Aa -D_HPUX_SOURCE -I/usr/include/Motif1.2 -I/usr/include/X11R5
+/* XXX I really don't think any of these need to appear of LD_OPTS -Mike */
+#	define  LD_OPTS  -L/usr/lib/Motif1.2 -L/usr/lib/X11R5  -lXm  -lXt -lX11 -lm 
+#	define  OPTIMIZER       -O
+#	define  HAS_TCP 1
+#	define  LIBTERMLIB      -lcurses
+#	define  LIBRT_TIMER     timerunix
+#	define  LIBPKG_CONFIG   -I/usr/include/netinet -DBSD=42 
+#	define	XINCDIR	/usr/include/X11R5
+#	define	XLIBDIR	/usr/lib/X11R5
+#	if 1
+/*		X and remote fb */
+#	        define  LIBFB_OBJS      if_remote if_X
+#	        define  LIBFB_CONFIG    -DIF_REMOTE -DIF_X -I''XINCDIR
+#	        define  LIBFB_LIBES     LIBPKG -L''XLIBDIR -lX11
+#	else
+/*		For when something is wrong with X */
+#	        define  LIBFB_OBJS      if_remote
+#	        define  LIBFB_CONFIG    -DIF_REMOTE -I''XINCDIR
+#	        define  LIBFB_LIBES     LIBPKG
+#	endif
+#	define  MGED_OBJS       dm-X
+#	define  MGED_CONFIG     -DDM_X -I''XINCDIR
+/* XXX MGED_LIBES shouldn't need Motif stuff at all. */
+#	define  MGED_LIBES      -L/usr/lib/Motif1.2 -L''XLIBDIR  -lXm  -lXt -lX11 -lm
+#	define	XMGED_OBJS	dm-X
+#	define	XMGED_CONFIG	-DDM_X /* -DDMX_SIGNALS -I''XINCDIR */
+#	define	XMGED_LIBES	-L/usr/lib/Motif1.2 -L''XLIBDIR  -lXm  -lXt -lX11 -lm
+#	define	XMGED_ALLOC 
 #endif
 
 #if defined(__CAKE__ard)
