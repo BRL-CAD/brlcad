@@ -1175,9 +1175,11 @@ rt_comb_tcladjust(
 		} else if( strcmp(buf, "tree" )==0 ) {
 			union tree	*new;
 
-			if( strcmp( argv[1], "none" ) == 0 )
+			if( *argv[1] == '\0' || strcmp( argv[1], "none" ) == 0 )
 			{
-				db_free_tree( comb->tree, resp );
+				if( comb->tree ) {
+					db_free_tree( comb->tree, resp );
+				}
 				comb->tree = TREE_NULL;
 			}
 			else
