@@ -96,7 +96,7 @@ register char **argv;
 }
 
 static char usage[] = "\
-Usage: pl-sgi [-a -f] [-t #] [file.plot]\n";
+Usage: pl-sgi [-a -f] [-t thickness] [file.plot]\n";
 #endif sgi
 
 main( argc, argv )
