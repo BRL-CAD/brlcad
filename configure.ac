@@ -883,6 +883,7 @@ AC_PATH_X
 AC_HEADER_DIRENT
 AC_HEADER_SYS_WAIT
 AC_CHECK_HEADERS( \
+	X11/Xlib.h \
 	arpa/inet.h \
 	curses.h \
 	errno.h \
