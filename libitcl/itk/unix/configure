@@ -1028,7 +1028,7 @@ if test -z "$CFLAGS" ; then
     CFLAGS="-O"
 fi
 if test "$itcl_cv_prog_gcc" = "yes" ; then
-    CFLAGS="$CFLAGS -Wshadow -Wtraditional -Wall"
+    CFLAGS="$CFLAGS -Wtraditional -Wall"
 fi
 
 echo $ac_n "checking default compiler flags""... $ac_c" 1>&6
