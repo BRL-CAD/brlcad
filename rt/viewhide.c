@@ -31,6 +31,7 @@
  *	All rights reserved.
  */
 
+/* Note, this produced a hide.p of 6660096 when it was aborted! */
 #ifndef lint
 static char RCSrayhide[] = "@(#)$Header$ (BRL)";
 #endif
@@ -48,7 +49,7 @@ static char RCSrayhide[] = "@(#)$Header$ (BRL)";
 #define SEEKING_START_PT 0
 #define FOUND_START_PT 1
 #define CELLNULL ( (struct cell *) 0)
-
+#define MAXANGLE 0.9961947		/* cos 5 */
 
 struct cell {
 	float	c_dist;		/* distance from emanation plane to in_hit */
@@ -249,8 +250,17 @@ register struct partition *PartHeadp;
 	dist = pp->pt_inhit->hit_dist;
 	region_id = pp->pt_regionp->reg_regionid;
 
-	/* Calculate the hit normal and the hit distance */
+	/* Calculate the hit normal and the hit distance.  This is done
+	 * by giving RT_HIT_NORM() the address of the hit partition so it
+	 * can fill this in.  From there the hit point and the hit normal
+	 * can be extracted.
+	 */
+printf("starting RT_HIT_NORM(pp->pt_inhit,....)\n");
+/* pp->pt_inhit doesn't dump core, but does nothing for the picture; &()
+ * dumps core.  hitp, as expected, does not compile.
+ */
 	RT_HIT_NORM(pp->pt_inhit, pp->pt_inseg->seg_stp, &(ap->a_ray));
+printf("done RT_HIT_NORM()\n");
 
 	/* Now store the distance and the region_id in the appropriate
 	 * cell struct: i.e., ap->a_x (the x-coordinate) +1 within the
@@ -338,8 +348,9 @@ struct application *ap;
  *
  *  Pixels on a scanline are compared to see if their region_id codes
  *  are the same.  If these are not identical, a vertical line is
- *  plotted to mark to boundary where the region_id codes change.
- *
+ *  plotted to mark to boundary where the region_id codes change.  Likewise,
+ *  the size of the angle between surface normals is checked: if it exceeds
+ *  MAXANGLE, then a line s drawn.
  */
 
 void
@@ -360,9 +371,23 @@ int		y;
 		 * either distance is zero, select the non-zero
 		 * distance for plotting; otherwise, select the
 		 * lesser of the two distances.
+		 * Check the angle between surface normals to see
+		 * whether a line needs to be drawn.  This is accomplished
+		 * by finding the cosine of the angle between the two
+		 * vectors with VDOT(), the dot product.  The result
+		 * is compared against MAXANGLE, which must be determined
+		 * experimentally.  This scheme will prevent curved surfaces,
+		 * on which practically "every point is a surface", from
+		 * being represented as dark blobs.
+		 * Note that MAXANGLE needs to be greater than the cosine
+		 * of the angle between the two vectors because as the angle
+		 * between the increases, the cosine of said angle decreases.
 		 */
 
-		if (botp->c_id != (botp+1)->c_id)  {
+		if (botp->c_id != (botp+1)->c_id ||
+		   ( botp->c_id != 0 && 
+		   (VDOT(botp->c_normal, (botp + 1)->c_normal) < MAXANGLE)))  {
+							     
 			if( botp->c_dist == 0  )
 				z = (botp+1)->c_dist;
 			else if( (botp+1)->c_dist == 0 )
