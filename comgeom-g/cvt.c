@@ -30,6 +30,7 @@ extern int	optind;
 struct wmember	*wmp;	/* array indexed by region number */
 
 int	version = 5;	/* v4 or v5 ? */
+int	verbose = 1;	/* verbose = print a message on every item read */
 
 char name_it[16];	/* stores argv if it exists and appends it
 			to each name generated.*/
@@ -44,7 +45,7 @@ int	reg_total;
 
 
 static char usage[] = "\
-Usage: comgeom-g [-v version#] [-s name_suffix]\n\
+Usage: comgeom-g [-q] [-v version#] [-s name_suffix]\n\
 	input_file output_file\n";
 
 get_args( argc, argv )
@@ -53,8 +54,11 @@ register char **argv;
 	register int	c;
 	char		*file_name;
 
-	while ( (c = getopt( argc, argv, "v:s:" )) != EOF )  {
+	while ( (c = getopt( argc, argv, "qv:s:" )) != EOF )  {
 		switch( c )  {
+		case 'q':
+			verbose = 0;
+			break;
 		case 's':
 			strncpy( name_it, optarg, sizeof(name_it) );
 			break;
