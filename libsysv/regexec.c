@@ -60,10 +60,10 @@ static char rcsid[] = "$NetBSD: regexec.c,v 1.6 1995/02/27 13:29:48 cgd Exp $";
 #include <string.h>
 #include <limits.h>
 #include <ctype.h>
-#include <regex.h>
 
-#include "utils.h"
-#include "regex2.h"
+#include "regex.h"
+#include "./utils.h"
+#include "./regex2.h"
 
 static int nope = 0;		/* for use in asserts; shuts lint up */
 
@@ -92,7 +92,7 @@ static int nope = 0;		/* for use in asserts; shuts lint up */
 /* function names */
 #define SNAMES			/* engine.c looks after details */
 
-#include "engine.c"
+#include "./engine.c"
 
 /* now undo things */
 #undef	states
@@ -141,7 +141,7 @@ static int nope = 0;		/* for use in asserts; shuts lint up */
 /* function names */
 #define	LNAMES			/* flag */
 
-#include "engine.c"
+#include "./engine.c"
 
 /*
  - regexec - interface for matching
