@@ -537,8 +537,8 @@ register struct rt_i	*rtip;
 
 #ifdef HAVE_SBRK
 	if (rt_verbosity & VERBOSE_STATS)
-		bu_log("Additional dynamic memory used=%d. bytes\n",
-			(char *)sbrk(0)-beginptr );
+		bu_log("Additional dynamic memory used=%ld. bytes\n",
+			(long)((char *)sbrk(0)-beginptr) );
 	beginptr = (char *) sbrk(0);
 #endif
 }
@@ -571,8 +571,8 @@ struct rt_i	*rtip;
 	}
 #ifdef HAVE_SBRK
 	if (rt_verbosity & VERBOSE_STATS)
-		bu_log("Additional dynamic memory used=%d. bytes\n",
-			(char *)sbrk(0)-beginptr );
+		bu_log("Additional dynamic memory used=%ld. bytes\n",
+			(long)((char *)sbrk(0)-beginptr) );
 	beginptr = (char *) sbrk(0);
 #endif
 	if (rt_verbosity & VERBOSE_STATS)  {
@@ -879,9 +879,9 @@ int framenumber;
 	bu_vls_free( &times );
 #ifdef HAVE_SBRK
 	if (rt_verbosity & VERBOSE_STATS)
-		bu_log("Additional dynamic memory used=%d. bytes\n",
-			(char *)sbrk(0)-beginptr );
-			beginptr = (char *) sbrk(0);
+		bu_log("Additional dynamic memory used=%ld. bytes\n",
+			(long)((char *)sbrk(0)-beginptr) );
+	beginptr = (char *) sbrk(0);
 #endif
 	if (rt_verbosity & VERBOSE_STATS) {
 		bu_log("%ld solid/ray intersections: %ld hits + %ld miss\n",
