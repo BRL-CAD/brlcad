@@ -40,7 +40,6 @@ extern char	version[];
 #endif
 
 #include "machine.h"
-#include "db.h"
 #include "externs.h"
 #include "vmath.h"
 #include "rtlist.h"
@@ -640,18 +639,83 @@ out:
 	return(curtree);
 }
 
+static int de_pointer_number;
+
+int
+get_de_pointers( tp, dp, de_len, de_pointers )
+union tree *tp;
+struct directory *dp;
+int de_len;
+int *de_pointers;
+{
+	RT_CK_TREE( tp );
+	RT_CK_DIR( dp );
+
+	switch( tp->tr_op )
+	{
+		case OP_UNION:
+		case OP_SUBTRACT:
+		case OP_INTERSECT:
+			get_de_pointers( tp->tr_b.tb_left, dp, de_len, de_pointers );
+			get_de_pointers( tp->tr_b.tb_right, dp, de_len, de_pointers );
+			break;
+		case OP_DB_LEAF:
+		{
+			struct directory *dp_M;
+
+			dp_M = db_lookup( dbip , tp->tr_l.tl_name , LOOKUP_NOISY );
+			if( dp_M == DIR_NULL )
+				return( 1 );
+
+			if( dp_M->d_uses >= 0 )
+			{
+				rt_log( "g-iges: member (%s) in combination (%s) has not been written to iges file\n" , dp_M->d_namep , dp->d_namep );
+				de_pointers[de_pointer_number++] = 0;
+				return( 1 );
+			}
+
+			if( !bn_mat_is_identity( tp->tr_l.tl_mat ) )
+			{
+				/* write a solid instance entity for this member
+					with a pointer to the new matrix */
+
+				if( !NEAR_ZERO( tp->tr_l.tl_mat[15] - 1.0 , tol.dist ) )
+				{
+					/* scale factor is not 1.0, IGES can't handle it.
+					   go ahead and write the solid instance anyway,
+					   but warn the user twice */
+					rt_log( "g-iges: WARNING!! member (%s) of combination (%s) is scaled, IGES cannot handle this\n" , dp_M->d_namep , dp->d_namep );
+					scale_error++;
+				}
+				de_pointers[de_pointer_number++] = write_solid_instance( -dp_M->d_uses , tp->tr_l.tl_mat , fp_dir , fp_param );
+			}
+			else
+				de_pointers[de_pointer_number++] = (-dp_M->d_uses);
+			if( dp_M->d_nref )
+				comb_form = 1;
+			}
+			break;
+		default:
+			bu_log( "Unrecognized operator in combination!!\n" );
+			return( 1 );
+	}
+	return( 0 );
+}
+
 void
 csg_comb_func( dbip , dp )
 struct db_i *dbip;
 struct directory *dp;
 {
-	union record *rp;
+	struct rt_db_internal intern;
+	struct rt_comb_internal *comb;
 	struct directory *dp_M;
 	struct iges_properties props;
 	int comb_len;
 	int i;
 	int dependent=1;
 	int *de_pointers;
+	int id;
 
 	/* when this is called in facet mode, we only want groups */
 	if( mode == FACET_MODE && (dp->d_flags & DIR_REGION ) )
@@ -670,60 +734,55 @@ struct directory *dp;
 		}
 	}
 
-	if( (rp = db_getmrec( dbip, dp )) == (union record *)0 )
-                return;
+	id = rt_db_get_internal( &intern, dp, dbip, (matp_t)NULL );
+	if( id < 0 )
+		return;
+	if( id != ID_COMBINATION )
+	{
+		bu_log( "Directory/Database mismatch!!!! is %s a combination or not????\n", dp->d_namep );
+		return;
+	}
+
+	comb = (struct rt_comb_internal *)intern.idb_ptr;
+	RT_CK_COMB( comb );
 
 	if( verbose )
 		rt_log( "Combination - %s\n" , dp->d_namep );
 
-	comb_len = dp->d_len - 1;
-	if( comb_len == 0 )
+	if( !comb->tree )
 	{
 		rt_log( "Warning: empty combination (%s)\n" , dp->d_namep );
 		dp->d_uses = 0;
 		return;
 	}
+	comb_len = db_tree_nleaves( comb->tree );
 	de_pointers = (int *)rt_calloc( comb_len , sizeof( int ) , "csg_comb_func" );
 
 	comb_form = 0;
 
-	for( i=1 ; i<dp->d_len ; i++ )
+	de_pointer_number = 0;
+	if( get_de_pointers( comb->tree, dp, comb_len, de_pointers ) )
 	{
-		dp_M = db_lookup( dbip , rp[i].M.m_instname , 1 );
-		if( dp_M == DIR_NULL )
-			continue;
-
-		if( dp_M->d_uses >= 0 )
-		{
-			rt_log( "g-iges: member (%s) in combination (%s) has not been written to iges file\n" , dp_M->d_namep , dp->d_namep );
-			de_pointers[i-1] = 0;
-			continue;
-		}
-
-		if( !matrix_is_identity( rp[i].M.m_mat ) )
-		{
-			/* write a solid instance entity for this member
-				with a pointer to the new matrix */
-
-			if( !NEAR_ZERO( rp[i].M.m_mat[15] - 1.0 , tol.dist ) )
-			{
-				/* scale factor is not 1.0, IGES can't handle it.
-				   go ahead and write the solid instance anyway,
-				   but warn the user twice */
-				rt_log( "g-iges: WARNING!! member (%s) of combination (%s) is scaled, IGES cannot handle this\n" , rp[i].M.m_instname , rp[0].c.c_name );
-				scale_error++;
-			}
-			de_pointers[i-1] = write_solid_instance( -dp_M->d_uses , rp[i].M.m_mat , fp_dir , fp_param );
-		}
-		else
-			de_pointers[i-1] = (-dp_M->d_uses);
-		if( dp_M->d_nref )
-			comb_form = 1;
+		bu_log( "Error in combination %s\n", dp->d_namep );
+	        rt_free( (char *)de_pointers , "csg_comb_func de_pointers" );
+		rt_db_free_internal( &intern );
+		return;
 	}
 
-	get_props( &props , rp );
+	strcpy( props.name, dp->d_namep );
+	props.material_name[0] = '\0';
+	props.material_params[0] = '\0';
+	props.region_flag = ' ';
+	props.ident = 0;
+	props.air_code = 0;
+	props.material_code = 0;
+	props.los_density = 0;
+	props.color[0] = 0;
+	props.color[1] = 0;
+	props.color[2] = 0;
+	get_props( &props , comb );
 
-	dp->d_uses = (-comb_to_iges( rp , comb_len , dependent , &props , de_pointers , fp_dir , fp_param ) );
+	dp->d_uses = (-comb_to_iges( comb , comb_len , dependent , &props , de_pointers , fp_dir , fp_param ) );
 
 	if( !dp->d_uses )
 	{
@@ -731,7 +790,7 @@ struct directory *dp;
 		rt_log( "g-iges: combination (%s) not written to iges file\n" , dp->d_namep );
 	}
 
-        rt_free( (char *)rp , "csg_comb_func record[]" );
+	rt_db_free_internal( &intern );
         rt_free( (char *)de_pointers , "csg_comb_func de_pointers" );
 
 }
@@ -775,20 +834,47 @@ struct directory *dp;
 }
 
 void
+incr_refs( dbip, comb, tp, user_ptr1, user_ptr2, user_ptr3 )
+struct db_i		*dbip;
+struct rt_comb_internal	*comb;
+union tree		*tp;
+genptr_t		user_ptr1,user_ptr2,user_ptr3;
+{
+	struct directory *dp;
+
+	RT_CK_COMB( comb );
+	RT_CK_DBI( dbip );
+	RT_CK_TREE( tp );
+
+	if( (dp=db_lookup( dbip, tp->tr_l.tl_name, LOOKUP_NOISY )) == DIR_NULL )
+		return;
+
+	dp->d_nref++;
+}
+
+void
 count_refs( dbip , dp )
 struct db_i *dbip;
 struct directory *dp;
 {
-	union record *rp;
-	struct directory *dp_M;
-	int comb_len;
-	int i;
+	struct rt_db_internal intern;
+	struct rt_comb_internal *comb;
+	int id;
 
-	if( (rp = db_getmrec( dbip, dp )) == (union record *)0 )
-                return;
+	if( !(dp->d_flags & DIR_COMB) )
+		return;
 
-	comb_len = dp->d_len - 1;
-	if( comb_len == 0 )
+	id = rt_db_get_internal( &intern, dp, dbip, (matp_t)NULL );
+	if( id < 0 )
+	{
+		bu_log( "Cannot get internal form of %s\n", dp->d_namep );
+		return;
+	}
+
+	comb = (struct rt_comb_internal *)intern.idb_ptr;
+	RT_CK_COMB( comb );
+
+	if( !comb->tree )
 	{
 		rt_log( "Warning: empty combination (%s)\n" , dp->d_namep );
 		dp->d_uses = 0;
@@ -797,12 +883,7 @@ struct directory *dp;
 
 	comb_form = 0;
 
-	for( i=1 ; i<dp->d_len ; i++ )
-	{
-		dp_M = db_lookup( dbip , rp[i].M.m_instname , 1 );
-		if( dp_M == DIR_NULL )
-			continue;
+	db_tree_funcleaf( dbip, comb, comb->tree, incr_refs,
+		(genptr_t)NULL, (genptr_t)NULL, (genptr_t)NULL );
 
-		dp_M->d_nref++;
-	}
 }

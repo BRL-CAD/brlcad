@@ -2,6 +2,8 @@
 #define FACET_MODE		2
 #define	TRIMMED_SURF_MODE	3
 
+#define NAMESIZE	16	/* from db.h */
+
 struct iges_properties
 {
 	char			name[NAMESIZE+1];

@@ -65,6 +65,7 @@ Convinst()
 			Readint( &j , "" );
 
 		/* get property entity DE's */
+		att_de = 0;
 		Readint( &no_of_props , "" );
 		for( k=0 ; k<no_of_props ; k++ )
 		{
@@ -77,6 +78,7 @@ Convinst()
 			}
 		}
 
+		bzero( &brl_att, sizeof( struct brlcad_att ) );
 		Read_att( att_de , &brl_att );
 
 		if( att_de )
@@ -114,6 +116,7 @@ Convinst()
 			dir[i]->type = dir[pointer]->type;
 			dir[i]->form = dir[pointer]->form;
 			dir[i]->param = dir[pointer]->param;
+			dir[i]->name = dir[pointer]->name;
 
 			/* increment reference count for pointed to entity */
 			dir[pointer]->referenced++;
@@ -121,21 +124,17 @@ Convinst()
 			/* fix up transformation matrix if needed */
 			if( dir[i]->trans == 0 && dir[pointer]->trans == 0 )
 			{
-				rt_log( "Instance and pointed to object both have no xforms\n" );
 				continue;	/* nothing to do */
 			}
 			else if( dir[i]->trans == 0 )
 			{
 				dir[i]->trans = dir[pointer]->trans;	/* same as instanced */
-				rt_log( "use pointed to object's xform\n" );
 			}
 			else if( dir[i]->trans != 0 )
 			{
 				/* this instance refers to a transformation entity
 				   but the original instanced object does too,
 				   these matrices need to be combined */
-
-				rt_log( "Must do a concatonation\n" );
 
 				rot = (mat_t *)rt_malloc( sizeof( mat_t ), "Convinst: rot" );
 				Matmult( *(dir[i]->rot) , dir[pointer]->rot , rot );

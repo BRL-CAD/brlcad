@@ -45,7 +45,6 @@ static char RCSid[] = "$Header$";
 #include <sys/types.h>
 #include <sys/stat.h>
 #include "machine.h"
-#include "db.h"
 #include "externs.h"
 #include "vmath.h"
 #include "rtlist.h"
@@ -74,6 +73,7 @@ static struct rt_tess_tol ttol;	/* tolerances */
 static struct db_i *dbip=NULL;
 static char	*unknown="Unknown";
 static int	unknown_count=0;
+static int	de_pointer_number;
 extern char	**independent;
 extern int	no_of_indeps;
 extern int	solid_is_brep;
@@ -277,25 +277,39 @@ struct nmgregion *r;
 }
 
 void
-get_props( props , rp )
+get_props( props , comb )
 struct iges_properties *props;
-union record *rp;
+struct rt_comb_internal *comb;
 {
+	char *endp;
 
-	strcpy( props->name , rp->c.c_name );
-	strcpy( props->material_name , rp->c.c_matname );
-	strcpy( props->material_params , rp->c.c_matparm );
-	props->region_flag = rp->c.c_flags;
-	props->ident = rp->c.c_regionid;
-	props->air_code = rp->c.c_aircode;
-	props->material_code = rp->c.c_material;
-	props->los_density = rp->c.c_los;
-	props->color_defined = (rp->c.c_override ? 1 : 0 );
+	RT_CK_COMB( comb );
+
+	endp = strchr( bu_vls_addr(&comb->shader), ' ' );
+	if( endp )  {
+		int	len;
+		len = endp - bu_vls_addr(&comb->shader);
+		if( len > 32 ) len = 32;
+		strncpy( props->material_name, bu_vls_addr(&comb->shader), len );
+		strncpy( props->material_params, endp+1, 60 );
+	} else {
+		strncpy( props->material_name, bu_vls_addr(&comb->shader), 32 );
+		props->material_params[0] = '\0';
+	}
+	if( comb->region_flag )
+	{
+		props->region_flag = 'R';
+		props->ident = comb->region_id;
+		props->air_code = comb->aircode;
+		props->material_code = comb->GIFTmater;
+		props->los_density = comb->los;
+	}
+	props->color_defined = ( comb->rgb_valid ? 1 : 0 );
 	if( props->color_defined )
 	{
-		props->color[0] = rp->c.c_rgb[0];
-		props->color[1] = rp->c.c_rgb[1];
-		props->color[2] = rp->c.c_rgb[2];
+		props->color[0] = comb->rgb[0];
+		props->color[1] = comb->rgb[1];
+		props->color[2] = comb->rgb[2];
 	}
 	else
 	{
@@ -303,7 +317,7 @@ union record *rp;
 		props->color[1] = 0;
 		props->color[2] = 0;
 	}
-	props->inherit = ( rp->c.c_inherit ? 1 : 0 );
+	props->inherit = ( comb->inherit ? 1 : 0 );
 }
 
 int
@@ -311,10 +325,12 @@ lookup_props( props , name )
 struct iges_properties *props;
 char *name;
 {
-	union record rp;
 	struct directory *dp;
+	struct rt_db_internal intern;
+	struct rt_comb_internal *comb;
+	int id;
 
-	props->name[0] = '\0';
+	strcpy( props->name, name );
 	props->material_name[0] = '\0';
 	props->material_params[0] = '\0';
 	props->region_flag = ' ';
@@ -336,13 +352,27 @@ char *name;
 	if( !(dp->d_flags & DIR_COMB) )
 		return( 1 );
 
-	if( db_get( dbip , dp , &rp , 0 , 1 ) )
+	id = rt_db_get_internal( &intern, dp, dbip, (matp_t)NULL );
+
+	if( id < 0 )
 	{
-		rt_log( "Couldn't get record for %s\n" , name );
+		rt_db_free_internal( &intern );
+		bu_log( "Could not get internal form of %s\n", dp->d_namep );
 		return( 1 );
 	}
 
-	get_props( props , &rp );
+	if( id != ID_COMBINATION )
+	{
+		rt_db_free_internal( &intern );
+		bu_log( "Directory/Database mismatch!!!! is %s a combination or not???\n", dp->d_namep );
+		return( 1 );
+	}
+
+	comb = (struct rt_comb_internal *)intern.idb_ptr;
+	RT_CK_COMB( comb );
+
+	get_props( props , comb );
+	rt_db_free_internal( &intern );
 	return( 0 );
 }
 
@@ -2740,30 +2770,8 @@ FILE *fp_dir,*fp_param;
 }
 
 int
-matrix_is_identity( mat )
-dbfloat_t mat[16];
-{
-	int i;
-
-	for( i=0 ; i<ELEMENTS_PER_MAT ; i++ )
-	{
-		if( i == 0 || i == 5 || i == 10 || i == 15 )
-		{
-			if( mat[i] != 1.0 )
-				return( 0 );
-		}
-		else
-		{
-			if( mat[i] != 0.0 )
-				return( 0 );
-		}
-	}
-	return( 1 );
-}
-
-int
 write_xform_entity( mat , fp_dir , fp_param )
-dbfloat_t mat[16];
+mat_t mat;
 FILE *fp_dir,*fp_param;
 {
 	struct rt_vls		str;
@@ -2800,7 +2808,7 @@ FILE *fp_dir,*fp_param;
 int
 write_solid_instance( orig_de , mat , fp_dir , fp_param )
 int orig_de;
-dbfloat_t mat[16];
+mat_t mat;
 FILE *fp_dir,*fp_param;
 {
 	struct rt_vls		str;
@@ -2971,8 +2979,85 @@ FILE *fp_dir,*fp_param;
 }
 
 int
-tree_to_iges( rp , length , dependent , props , de_pointers , fp_dir , fp_param )
-union record rp[];
+count_non_union_ops( tp )
+union tree *tp;
+{
+	int count=0;
+
+	RT_CK_TREE( tp );
+
+	switch( tp->tr_op )
+	{
+		case OP_INTERSECT:
+		case OP_SUBTRACT:
+			count++;
+		case OP_UNION:
+			count += count_non_union_ops( tp->tr_b.tb_left );
+			count += count_non_union_ops( tp->tr_b.tb_right );
+			break;
+		default:
+			break;
+	}
+
+	return( count );
+}
+
+void
+igs_tree( str, tp, length, de_pointers )
+struct bu_vls *str;
+union tree *tp;
+int length;
+int *de_pointers;
+{
+	RT_CK_TREE( tp );
+	BU_CK_VLS( str );
+
+	switch( tp->tr_op )
+	{
+		case OP_UNION:
+			igs_tree( str, tp->tr_b.tb_left, length, de_pointers );
+			igs_tree( str, tp->tr_b.tb_right, length, de_pointers );
+			rt_vls_strcat( str, ",1" );
+			break;
+		case OP_INTERSECT:
+			igs_tree( str, tp->tr_b.tb_left, length, de_pointers );
+			igs_tree( str, tp->tr_b.tb_right, length, de_pointers );
+			rt_vls_strcat( str, ",2" );
+			break;
+		case OP_SUBTRACT:
+			igs_tree( str, tp->tr_b.tb_left, length, de_pointers );
+			igs_tree( str, tp->tr_b.tb_right, length, de_pointers );
+			rt_vls_strcat( str, ",3" );
+			break;
+		case OP_DB_LEAF:
+			rt_vls_printf( str, ",%d", -de_pointers[de_pointer_number] );
+			de_pointer_number++;
+			break;
+		default:
+			bu_log( "Unrecognized operation in combination!!\n" );
+			break;
+	}
+}
+
+void
+write_igs_tree( str, comb, length, de_pointers )
+struct bu_vls *str;
+struct rt_comb_internal *comb;
+int length;
+int *de_pointers;
+{
+	BU_CK_VLS( str );
+	RT_CK_COMB( comb );
+
+	rt_vls_printf( str , "180,%d", 2*length-1 );
+
+	de_pointer_number = 0;
+	igs_tree( str, comb->tree, length, de_pointers );
+}
+
+int
+tree_to_iges( comb , length , dependent , props , de_pointers , fp_dir , fp_param )
+struct rt_comb_internal *comb;
 int length,dependent;
 struct iges_properties *props;
 int de_pointers[];
@@ -2989,6 +3074,8 @@ FILE *fp_dir,*fp_param;
 	int			status=1;
 	int			entity_type;
 	int			i;
+
+	RT_CK_COMB( comb );
 
 	/* if any part of this tree has not been converted, don't try to write the tree */
 	for( i=0 ; i<length ; i++ )
@@ -3020,36 +3107,13 @@ FILE *fp_dir,*fp_param;
 	else
 		color_de = 0;
 
-	for( i=1 ; i<length ; i++ )
-	{
-		if( rp[i+1].M.m_relation != UNION )
-			non_union_count++;
-	}
+	non_union_count = count_non_union_ops( comb->tree );
 
 	if( mode == CSG_MODE || non_union_count )
 	{
 		/* write the combination as a Boolean tree */
 		entity_type = 180;
-
-		rt_vls_printf( &str , "%d,%d,%d" , entity_type , 2*length-1 , -de_pointers[0] );
-		for( i=1 ; i<length ; i++ )
-		{
-			switch( rp[i+1].M.m_relation )
-			{
-			case UNION:
-				rt_vls_printf( &str , ",%d" , -de_pointers[i] );
-				union_count++;
-				break;
-			case INTERSECT:
-				rt_vls_printf( &str , ",%d,2" , -de_pointers[i] );
-				break;
-			case SUBTRACT:
-				rt_vls_printf( &str , ",%d,3" , -de_pointers[i] );
-				break;
-			}
-		}
-		for( i=0 ; i<union_count ; i++ )
-			rt_vls_strcat( &str , ",1" );
+		write_igs_tree( &str, comb, length, de_pointers );
 	}
 	else
 	{
@@ -3093,15 +3157,17 @@ FILE *fp_dir,*fp_param;
 }
 
 int
-comb_to_iges( rp , length , dependent , props , de_pointers , fp_dir , fp_param )
-union record rp[];
+comb_to_iges( comb , length , dependent , props , de_pointers , fp_dir , fp_param )
+struct rt_comb_internal *comb;
 int length,dependent;
 struct iges_properties *props;
 int de_pointers[];
 FILE *fp_dir,*fp_param;
 {
+	RT_CK_COMB( comb );
+
 	if( length == 1 )
 		return( short_comb_to_iges( props , dependent , de_pointers , fp_dir , fp_param ) );
 	else
-		return( tree_to_iges( rp , length , dependent , props , de_pointers , fp_dir , fp_param ) );
+		return( tree_to_iges( comb , length , dependent , props , de_pointers , fp_dir , fp_param ) );
 }

@@ -11,7 +11,6 @@ extern char	version[];
 #endif
 
 #include "machine.h"
-#include "db.h"
 #include "externs.h"
 #include "vmath.h"
 #include "rtlist.h"
@@ -23,6 +22,8 @@ extern char	version[];
 #include "wdb.h"
 
 extern fastf_t brlabs();
+
+#define	NAMESIZE	16	/* from db.h */
 
 #define	TOL		0.0005
 #define EQUAL( a , b )		((brlabs( (a)-(b) ) < TOL) ? 1 : 0 )
