@@ -119,7 +119,8 @@ proc cad_dialog { w screen title text bitmap default args } {
 #   entry box (with possible default value) whose contents are to be returned
 #   in the variable name contained in entryvar.
 #
-proc cad_input_dialog { w screen title text entryvar defaultentry default args } {
+proc cad_input_dialog { w screen title text entryvar defaultentry default entry_hoc_data args } {
+    global hoc_data
     global button$w entry$w
     upvar $entryvar entrylocal
 
@@ -129,7 +130,7 @@ proc cad_input_dialog { w screen title text entryvar defaultentry default args }
     wm title $w $title
     wm iconname $w Dialog
     frame $w.top -relief raised -bd 1
-    pack $w.top -side top -fill both
+    pack $w.top -side top -expand yes -fill both
     frame $w.mid -relief raised -bd 1
     pack $w.mid -side top -fill both
     frame $w.bot -relief raised -bd 1
@@ -139,11 +140,15 @@ proc cad_input_dialog { w screen title text entryvar defaultentry default args }
     pack $w.top.msg -side right -expand yes -fill both -padx 2m -pady 2m
 
     entry $w.mid.ent -relief sunken -width 16 -textvariable entry$w
+    hoc_register_data $w.mid.ent "Entry Widget" $entry_hoc_data
     pack $w.mid.ent -side top -expand yes -fill both -padx 1m -pady 1m
 
     set i 0
     foreach but $args {
 	button $w.bot.button$i -text $but -command "set button$w $i"
+	hoc_register_data $w.bot.button$i "Button Action"\
+		{{summary "Dismiss the dialog box, taking other
+actions as indicated by the button label."}}
 	if { $i == $default } {
 	    frame $w.bot.default -relief sunken -bd 1
 	    raise $w.bot.button$i
