@@ -4,46 +4,35 @@
 
 # Ensure /bin/sh
 export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
+path_to_lgt_sh=`dirname $0`
 
-eval `machinetype.sh -b`	# sets MACHINE, UNIXTYPE, HAS_TCP
-if test -f ../.lgt.$MACHINE/lgt
-then
-	LGT=../.lgt.$MACHINE/lgt
-	DB=../.db.$MACHINE
-	LD_LIBRARY_PATH=../.libcursor.$MACHINE:../.libtermio.$MACHINE:../.libbu.$MACHINE:../.libbn.$MACHINE:../.librt.$MACHINE:../.libfb.$MACHINE:../.libpkg.$MACHINE:../.libsysv.$MACHINE:$LD_LIBRARY_PATH
-else
-	if test -f ../lgt/lgt
-	then
-		echo "Can't find LGT"
-		exit 1
-	fi
-	LGT=../lgt/lgt
-	DB=../db
-	LD_LIBRARY_PATH=../libcursor:../libtermio:../libbu:../libbn:../librt:../libfb:../libpkg:../libsysv:$LD_LIBRARY_PATH
+expected="$path_to_lgt_sh/../src/lgt/lgt"
+if ! test -f "$expected" ; then
+  echo "Can't find LGT"
+  exit 1
 fi
-export LD_LIBRARY_PATH
 
-CMP=./pixcmp
-if test ! -f $CMP
-then
-	cake pixcmp
+LGT="$expected"
+DB="$path_to_lgt_sh/../db"
+
+CMP="$path_to_lgt_sh/pixcmp"
+if test ! -f $CMP ; then
+  cake pixcmp
 fi
 
 # Alliant NFS hack
-if test x${MACHINE} = xfx
-then
-	cp ${LGT} /tmp/lgt
-	cp ${CMP} /tmp/pixcmp
-	LGT=/tmp/lgt
-	CMP=/tmp/pixcmp
+if test x${MACHINE} = xfx ; then
+  cp ${LGT} /tmp/lgt
+  cp ${CMP} /tmp/pixcmp
+  LGT=/tmp/lgt
+  CMP=/tmp/pixcmp
 fi
 
 # This test of LGT assumes a "live" framebuffer here.
-if test x$FB_FILE = x
-then
-	echo "Environment variable FB_FILE must be set to a real framebuffer"
-	echo "for this test of LGT to operate correctly."
-	exit 1
+if test x$FB_FILE = x ; then
+  echo "Environment variable FB_FILE must be set to a real framebuffer"
+  echo "for this test of LGT to operate correctly."
+  exit 1
 fi
 
 # Run the first set of tests
@@ -126,33 +115,46 @@ o
 # bye
 q
 EOF
-if test $? = 0
-then	:;
-else	echo "Abnormal lgt exit"; exit 1
+if test $? = 0 ; then	
+  :
+else
+  echo "Abnormal lgt exit"
+  exit 1
 fi
 
 # Run the second set of tests.  The scripts were created above.
- ./script1 < /dev/null &&
- ./script2 < /dev/null &&
- ./script3 < /dev/null || { echo "Script test failed."; exit 1; }
+./script1 < /dev/null &&
+./script2 < /dev/null &&
+./script3 < /dev/null || { echo "Script test failed."; exit 1; }
 
 FAIL=0
-for i in 1 2 3
-do
-	if ${CMP} ../pix/lgt${i}.pix lgt${i}a.pix
-	then :;
-	else echo "Test $i A failed."; FAIL=1
-	fi
-	if ${CMP} ../pix/lgt${i}.pix lgt${i}b.pix
-	then :;
-	else echo "Test $i B failed."; FAIL=1
-	fi
+for i in 1 2 3 ; do
+  if ${CMP} "$path_to_lgt_sh/../pix/lgt${i}.pix" lgt${i}a.pix ; then 
+    :
+  else 
+    echo "Test $i A failed."
+    FAIL=1
+  fi
+  if ${CMP} "$path_to_lgt_sh/../pix/lgt${i}.pix" lgt${i}b.pix
+    then 
+    :
+  else 
+    echo "Test $i B failed."
+    FAIL=1
+  fi
 done
-if test "$FAIL" -eq 0
-then
-	echo "LGT Tested OK."
-	exit 0
+if test "$FAIL" -eq 0 ; then
+  echo "LGT Tested OK."
+  exit 0
 fi
 echo "*** LGT does NOT work on this platform ***"
 exit 2
 
+# Local Variables: ***
+# mode:sh ***
+# tab-width: 8 ***
+# sh-indentation: 2 ***
+# sh-basic-offset: 2 ***
+# indent-tabs-mode: t ***
+# End: ***
+# ex: shiftwidth=2 tabstop=8
