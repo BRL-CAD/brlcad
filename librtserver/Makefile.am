@@ -10,4 +10,4 @@ librtserver_la_SOURCES = rtserver.c
 
 AM_CFLAGS = -I$(top_srcdir)/h
 librtserver_la_LDFLAGS = -version-info $(VERSION)
- 
+librtserver_la_LIBADD = @RT@
