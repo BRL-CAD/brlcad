@@ -1,27 +1,41 @@
 
 #	Makefile -- for Frame buffer utilities
 
-#	last edit:	86/04/18	Gary S. Moss
+#	last edit:	86/06/16	Gary S. Moss
 
-#	SCCS ID:	@(#)Makefile	1.18
+#	SCCS ID:	@(#)Makefile	1.19
 
 PRODUCTS= pp-fb fbclear fbgrid rle-fb fb-rle fbcmap
 HEADERS =
-CFILES	= pp-fb.c fbclear.c fbgrid.c rle-fb.c fb-rle.c fbcmap.c fbzoom.c\
+S52_CFILES= pp-fb.c fbclear.c fbgrid.c rle-fb.c fb-rle.c fbcmap.c fbzoom.c\
 	termio.c
-OBJS	= pp-fb.o fbclear.o fbgrid.o rle-fb.o fb-rle.o fbcmap.o fbzoom.o\
+BSD_CFILES= pp-fb.c fbclear.c fbgrid.c rle-fb.c fb-rle.c fbcmap.c fbzoom.c\
+	termio.c getopt.c strchr.c
+CFILES	= ${S52_CFILES}
+S52_OBJS= pp-fb.o fbclear.o fbgrid.o rle-fb.o fb-rle.o fbcmap.o fbzoom.o\
 	termio.o
-#/usr/brl/bin eventually
+BSD_OBJS= pp-fb.o fbclear.o fbgrid.o rle-fb.o fb-rle.o fbcmap.o fbzoom.o\
+	termio.o getopt.o strchr.o
+OBJS	= ${S52_OBJS}
 BINDIR	= /vld/bin
 LIBDIR	= /vld/lib
-INCDIR	= /vld/include
+S52_INCDIR=/vld/include
+BSD_INCDIR=/d/mike/cad/dist/h
+INCDIR	= ${S52_INCDIR}
 MANDIR	= /usr/5lib/man/local/man1
+DISTDIR	= /d/mike/cad/dist/fb_utils
 MANUALS	= pp-fb.1 fbclear.1 fbgrid.1 rle-fb.1 fb-rle.1 fbcmap.1 fbzoom.1
 BINPERM	= 775
 MANPERM	= 664
-CFLAGS	= -I${INCDIR} -O
+S52_CFLAGS = -I${INCDIR} -O
+BSD_CFLAGS = -I${INCDIR} -O -DBSD
+CFLAGS	= ${S52_CFLAGS}
 LDFLAGS = -n
-LIBES	= ${LIBDIR}/librle.a ${LIBDIR}/libfb.a -lm
+S52_LIBES= ${LIBDIR}/librle.a ${LIBDIR}/libfb.a -lm
+BSD_LIBES= -lrle -lfb -lm
+LIBES	= ${S52_LIBES}
+SOURCES	= Makefile make_bsd ${CFILES} ${HEADERS}
+COMPAT=
 INS	= cp
 SHELL	= /bin/sh
 
@@ -31,13 +45,13 @@ SHELL	= /bin/sh
 
 all:	fbzoom ${PRODUCTS} ${MANUALS}
 
-${PRODUCTS}:	$$@.o
-	$(CC) -o $@ ${LDFLAGS} $@.o ${LIBES} 
+${PRODUCTS}:	$$@.o ${COMPAT}
+	$(CC) -o $@ ${LDFLAGS} $@.o ${COMPAT} ${LIBES}
 	size $@
 	touch $@
 
-fbzoom: fbzoom.o termio.o
-	$(CC) -o $@ ${LDFLAGS} $@.o termio.o ${LIBES} 
+fbzoom: fbzoom.o termio.o ${COMPAT}
+	$(CC) -o $@ ${LDFLAGS} $@.o ${COMPAT} termio.o ${LIBES} 
 	size $@
 	touch $@
 
@@ -69,7 +83,7 @@ install:	all
 		then	echo $$i unchanged; \
 		else	${INS} $$i ${BINDIR}; \
 			chmod ${BINPERM} ${BINDIR}/$$i ; \
-			echo $$i installed; \
+			echo $$i installed in ${BINDIR}; \
 		fi \
 	done
 	@for i in ${MANUALS} ; \
@@ -77,9 +91,13 @@ install:	all
 		then	echo $$i unchanged; \
 		else	${INS} $$i ${MANDIR}; \
 			chmod ${MANPERM} ${MANDIR}/$$i ; \
-			echo $$i installed; \
+			echo $$i installed in ${MANDIR}; \
 		fi \
 	done
+	-@if vax; \
+	 then ${INS} ${SOURCES} ${DISTDIR} \
+		&& echo sources installed in ${DISTDIR}; \
+	 fi
 
 clean:
 	-if vax; then rm -f ${HEADERS} ${CFILES}; fi
@@ -89,47 +107,13 @@ clobber:	clean
 	-if vax; then rm -f ${MANUALS}; fi
 	-rm -f ${PRODUCTS} fbzoom
 
-# Richard Draves <draves@HARVARD.ARPA> provide this depend implementation.
-BSD_CPP	=	/lib/cpp
-ED	=	/bin/ed
-
-depend	: ${CFILES} ${HEADERS}
-	{ echo '/^# DO NOT DELETE THIS LINE/+1,$$c';	\
-	  for i in $(CFILES); do $(BSD_CPP) -M -I${INCDIR} -I/usr/5include $$i; done;	\
-	  echo '.';							\
-	  echo 'w';							\
-	} | $(ED) - Makefile
-
-# File Relationships
-# DO NOT DELETE THIS LINE -- make depends on it.
 pp-fb.o: pp-fb.c
-pp-fb.o: /usr/5include/stdio.h
-pp-fb.o: /vld/include/fb.h
 fbclear.o: fbclear.c
-fbclear.o: /usr/5include/stdio.h
-fbclear.o: /vld/include/std.h
-fbclear.o: /vld/include/fb.h
 fbgrid.o: fbgrid.c
-fbgrid.o: /usr/5include/stdio.h
-fbgrid.o: /vld/include/fb.h
 rle-fb.o: rle-fb.c
-rle-fb.o: /usr/5include/stdio.h
-rle-fb.o: /usr/5include/string.h
-rle-fb.o: /vld/include/fb.h
 fb-rle.o: fb-rle.c
-fb-rle.o: /usr/5include/stdio.h
-fb-rle.o: /vld/include/fb.h
 fbcmap.o: fbcmap.c
-fbcmap.o: /usr/5include/stdio.h
-fbcmap.o: /vld/include/fb.h
 fbzoom.o: fbzoom.c
-fbzoom.o: /usr/5include/stdio.h
-fbzoom.o: /vld/include/fb.h
 termio.o: termio.c
-termio.o: /usr/5include/stdio.h
-termio.o: /usr/5include/sys/ioctl.h
-termio.o: /usr/5include/fcntl.h
-termio.o: /usr/5include/termio.h
-termio.o: /usr/5include/sys/termio.h
-termio.o: /usr/5include/sys/_ioctl.h
-termio.o: /usr/5include/memory.h
+getopt.o: getopt.c
+strchr.o: strchr.c
