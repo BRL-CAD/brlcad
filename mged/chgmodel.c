@@ -104,6 +104,7 @@ f_mater()
 	register struct directory *dp;
 	char line[80];
 	union record record;
+	int r=0, g=0, b=0;
 
 	if( (dp = lookup( cmd_args[1], LOOKUP_NOISY )) == DIR_NULL )
 		return;
@@ -123,55 +124,61 @@ f_mater()
 		record.c.c_override = 0;
 		goto out;
 	}
+
+	/* Material */
 	(void)printf("Material = %s\nMaterial?  (CR to skip) ", record.c.c_matname);
 	fflush(stdout);
 	(void)gets(line);
-	if( line[0] != '\n' && line[0] != '\0' )
+	if( strcmp(line, "del") == 0 || strcmp(line,"\"\"") == 0 )
+		record.c.c_matname[0] = '\0';
+	else if( line[0] != '\n' && line[0] != '\0' )
 		strncpy( record.c.c_matname, line,
 			sizeof(record.c.c_matname)-1);
 
+	/* Parameters */
 	(void)printf("Param = %s\nParameter string? (CR to skip) ", record.c.c_matparm);
 	fflush(stdout);
 	(void)gets(line);
-	if( line[0] != '\n' && line[0] != '\0' )
+	if( strcmp(line, "del") == 0 || strcmp(line,"\"\"") == 0 )
+		record.c.c_matparm[0] = '\0';
+	else if( line[0] != '\n' && line[0] != '\0' )
 		strncpy( record.c.c_matparm, line, sizeof(record.c.c_matparm)-1 );
 
+	/* Color */
 	if( record.c.c_override )
-		(void)printf("RGB Color = %d %d %d\n", 
+		(void)printf("Color = %d %d %d\n", 
 			record.c.c_rgb[0],
 			record.c.c_rgb[1],
 			record.c.c_rgb[2] );
 	else
-		(void)printf("(No color specified)\n");
-	(void)printf("Override material color (y|n|CR)[CR]? ");
+		(void)printf("Color = (No color specified)\n");
+	(void)printf("Color R G B (0..255)? (CR to skip) ");
 	fflush(stdout);
 	(void)gets(line);
-	if( line[0] == 'y' )  {
-		int r=0, g=0, b=0;
-		(void)printf("R G B (0..255)? ");
-		(void)gets(line);
+	if( strcmp(line, "del") == 0 || strcmp(line,"\"\"") == 0 ) {
+		record.c.c_override = 0;
+	} else {
 		sscanf(line, "%d %d %d", &r, &g, &b);
 		record.c.c_rgb[0] = r;
 		record.c.c_rgb[1] = g;
 		record.c.c_rgb[2] = b;
 		record.c.c_override = 1;
-	} else if( line[0] == 'n' )  {
-		record.c.c_override = 0;
 	}
 
+	/* Inherit */
 	switch( record.c.c_inherit )  {
 	default:
 		/* This is necessary to clean up old databases with grunge here */
 		record.c.c_inherit = DB_INH_LOWER;
 		/* Fall through */
 	case DB_INH_LOWER:
-		(void)printf("inherit=0:  lower nodes (towards leaves) override\n");
+		(void)printf("Inherit = 0:  lower nodes (towards leaves) override\n");
 		break;
 	case DB_INH_HIGHER:
-		(void)printf("inherit=1:  higher nodes (towards root) override\n");
+		(void)printf("Inherit = 1:  higher nodes (towards root) override\n");
 		break;
 	}
-	(void)printf("Inheritance? (0|1|CR)[CR]? ");
+	(void)printf("Inheritance (0|1)? (CR to skip) ");
 	fflush(stdout);
 	(void)gets(line);
 	switch( line[0] )  {
