@@ -236,7 +236,12 @@ register struct partition *PartHeadp;
 	for( pp=PartHeadp->pt_forw; pp!=PartHeadp; pp=pp->pt_forw )
 		comp_count++;
 
-	/* Set up variable length string, to buffer this shotline in */
+	/* Set up variable length string, to buffer this shotline in.
+	 * Note that there is one component per card, and that each card
+	 * (line) is 80 characters long.  Hence the parameters given to
+	 * rt-vls-extend().
+	 */
+
 	rt_vls_init( &str );
 	rt_vls_extend( &str, 80 * (comp_count+1) );
 
@@ -292,20 +297,30 @@ register struct partition *PartHeadp;
 	dfirst = PartHeadp->pt_forw->pt_inhit->hit_dist + dcorrection;
 	dlast = PartHeadp->pt_back->pt_outhit->hit_dist + dcorrection;
 
+/* This code is to note any occurances of negative distances. */
+		if( dfirst < 0)  {
+			rt_log("ERROR: dfirst=%g\n", dfirst);
+			rt_pr_partitions(ap->a_rt_i, PartHeadp, "Defective partion:");
+		}
+/* End of bug trap. */
 	/*
 	 *  Output the ray header.  The GIFT statements that
 	 *  would have generated this are:
 	 *  410	write(1,411) hcen,vcen,h,v,ncomp,dfirst,dlast,a,e
 	 *  411	format(2f7.1,2f9.3,i3,2f8.2,' A',f6.1,' E',f6.1)
 	 */
+
 #define	SHOT_FMT	"%7.1f%7.1f%9.3f%9.3f%3d%8.2f%8.2f A%6.1f E%6.1f\n"
+
 	if( rt_perspective > 0 )  {
 		ae_vec( &azimuth, &elevation, ap->a_ray.r_dir );
 	}
+
 #ifdef SYSV
 	/* On SysV, sprintf() is not parallel! ^%@#&^@^&#% */
 	RES_ACQUIRE( &rt_g.res_syscall );
 #endif
+
 	sprintf(buf, SHOT_FMT,
 		hcen * MM2IN, vcen * MM2IN,
 		h * MM2IN, v * MM2IN,
@@ -411,6 +426,13 @@ register struct partition *PartHeadp;
 		}
 		out_obliq = acos( VDOT( ap->a_ray.r_dir,
 			pp->pt_outhit->hit_normal ) ) * mat_radtodeg;
+
+		/* Check for exit obliquties greater than 90 degrees. */
+
+		if( out_obliq > 90)  {
+			rt_log("ERROR: out_obliquity=%g\n", out_obliq);
+			rt_pr_partitions(ap->a_rt_i, PartHeadp, "Defective partion:");
+		}
 
 		/*
 		 *  Handle 3-components per card output format, with
