@@ -21,9 +21,9 @@
 
 #include <stdio.h>
 #include <math.h>
-#include "machine.h"
-#include "vmath.h"
-#include "anim.h"
+#include <brlcad/machine.h>
+#include <brlcad/vmath.h>
+#include "h/anim.h"
 
 #ifndef	M_PI
 #define M_PI	3.14159265358979323846
@@ -194,9 +194,9 @@ fastf_t angle[3];
         else if ( (sina*cost) != 0.0)
                 angle[1] = atan2( -(viewrot[6]+cosa*sint)/(sina*cost),viewrot[10]/cost);
         else if ( (sina*sint) != 0.0)
-                angle[1] = atan2( -(viewrot[1]-cosa*cost)/(sina*sint),viewrot[4]/sina);
+                angle[1] = atan2( -(viewrot[5]-cosa*cost)/(sina*sint),viewrot[4]/sina);
         else if ( (cosa*cost) != 0.0)
-                angle[1] = atan2( -(viewrot[1]-sina*sint)/(cosa*cost),viewrot[0]/cosa);
+                angle[1] = atan2( -(viewrot[2]-sina*sint)/(cosa*cost),viewrot[0]/cosa);
         else {
                 /* unable to calculate elevation*/
                 return(ERROR2);
@@ -447,7 +447,7 @@ float m[], az, el, tw;
 
 }
 
-/* XYZ2MAT - Make a rotation matrix corresponding to a rotation of 
+/* X_Y_Z2MAT - Make a rotation matrix corresponding to a rotation of 
  * "x" radians about the x-axis, "y" radians about the y-axis, and
  * then "z" radians about the z-axis.
  */
