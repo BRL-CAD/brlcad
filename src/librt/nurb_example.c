@@ -17,8 +17,6 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #include <math.h>
 #include "machine.h"
@@ -26,10 +24,12 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "raytrace.h"
 #include "nurb.h"
 
+
 fastf_t grid[10][10][3];
 fastf_t ngrid[10][10][3];
 
-main()
+
+int main(int argc, char *argv[])
 {
 
 	fastf_t hscale;
