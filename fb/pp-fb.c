@@ -45,6 +45,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
+#include "machine.h"
+#include "externs.h"
 #include "fb.h"
 #ifdef BSD
 #include <strings.h>
@@ -57,12 +59,12 @@ FBIO *fbp;
 
 char ibuf[1024];	/* pp file buffer */
 
-#define FBBUFSIZE 1024	/* Size of frame buffer DMA */
-static RGBpixel	pix_buf[FBBUFSIZE]; /* Pixel buffer.			*/
+#define FBBUFSIZE 4096	/* Size of frame buffer DMA */
+static unsigned char	pix_buf[FBBUFSIZE]; /* Pixel buffer.			*/
 
 #define FBWPIXEL(pix) \
-	{ COPYRGB( *fb_p, pix ); \
-	++fb_p; \
+	{ COPYRGB( fb_p, pix ); \
+	fb_p += sizeof(RGBpixel); \
 	}
 char strg[51];
 char g(),gc();
@@ -103,7 +105,8 @@ int argc;
 char **argv;
 {
 	int	c;
-	char *cp,*fbfile=NULL,*cmap=NULL,cs[4];
+	char *cp,*fbfile=NULL;
+	char cs[4];
 	int i,j,k,lclr,iquit=0,ichg=0,gclr(),cclr();
 	int il,iu,iclr,iskp,jclr,bsp();
 	int scr_w=512,scr_h=512,scr_set=0;
@@ -176,7 +179,7 @@ view:	printf("Title: ");
 		printf("No device opened\n");
 		exit(10);
 	}
-	fb_wmap(fbp,cmap);	/* std map */
+	(void)fb_wmap(fbp,COLORMAP_NULL);	/* std map */
 
 /* compute screen coordinates of min and max */
 	min_w=(scr_w-grid_w)/2;
@@ -241,7 +244,7 @@ view:	printf("Title: ");
 				break;
 			}
 			ichg=1;
-			lseek(ifd,loci,0);
+			lseek(ifd,(off_t)loci,0);
 			loct=loci;
 			ic=0;
 			for(i=0;i<ni;i++){
@@ -279,7 +282,7 @@ view:	printf("Title: ");
 		case 'l':
 			printf("Background color is %s\n",colortab[ibc].name);
 			printf("Transparent color is %s\n\n",colortab[itc].name);
-			lseek(ifd,loci,0);
+			lseek(ifd,(off_t)loci,0);
 			loct=loci;
 			ic=0;
 			for(i=0;i<ni;i++){
@@ -312,22 +315,22 @@ view:	printf("Title: ");
 			if(ichg!=0){
 				for(i=0;i<ni;i++){
 					loci+=6;
-					lseek(ifd,loci,0);
+					lseek(ifd,(off_t)loci,0);
 					ic=0;
 					for(j=0,cp=colortab[itmc[i]].name;j<3;
 							cp++,j++){
 						loci++;
 						write(ifd,cp,1);
 					}
-					lseek(ifd,++loci,0);
+					lseek(ifd,(off_t)++loci,0);
 					while((c=gc())!='\n') loci++;
 					loci++;
 				}
 			ichg=0;
 			}
-			if(iquit!=0) exit();
+			if(iquit!=0) exit(0);
 			loct=loce;
-			lseek(ifd,loce,0);
+			lseek(ifd,(off_t)loce,0);
 			ic=0;
 			fb_close(fbp);
 			goto view;
@@ -344,7 +347,7 @@ view:	printf("Title: ");
 				break;
 }
 			ichg=1;
-			lseek(ifd,loci,0);
+			lseek(ifd,(off_t)loci,0);
 			loct=loci;
 			ic=0;
 			for(i=0;i<ni;i++){
@@ -360,7 +363,7 @@ view:	printf("Title: ");
 		case 's':
 			prtsmu(0);
 			ichg=1;
-			lseek(ifd,loci,0);
+			lseek(ifd,(off_t)loci,0);
 			loct=loci;
 			ic=0;
 			iskp=0;
@@ -422,7 +425,7 @@ paint()
 	int	inten_high;
 	long li,lj,numb();
 	RGBpixel ocl,tcl,pmix,tp,bp;
-	register RGBpixel *fb_p;	/* Current position in buffer.	*/
+	register unsigned char *fb_p;	/* Current position in buffer.	*/
 
 	printf("Picture is being painted\n");
 	bp[RED]=colortab[ibc].c_pixel[RED];
@@ -432,7 +435,7 @@ paint()
 	tp[GRN]=colortab[itc].c_pixel[GRN];
 	tp[BLU]=colortab[itc].c_pixel[BLU];
 	fb_clear(fbp,bp);
-	lseek(ifd,locd,0);
+	lseek(ifd,(off_t)locd,0);
 	loct=locd;
 	ic=0;
 	nc=0;
