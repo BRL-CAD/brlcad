@@ -143,6 +143,7 @@ int n;
 	pl_color(stdout, n * 25 % 255, n * 50 % 255, n * 75 %255);
 }
 
+void
 rt_nurb_closefile()
 {
 }

@@ -86,6 +86,9 @@ fastf_t u, v;
 		return rt_process_caseb(trim, u, v);
 	if( quad_case == CASE_C )			/* CASE C */
 		return rt_process_casec(trim, u, v);
+
+	rt_log( "rt_uv_in_trim: rt_trim_case() returned illegal value %d\n", quad_case );
+	return( -1 );
 }
 
 
@@ -437,7 +440,7 @@ fastf_t f;
 {
 	if (f < 0.0)
 		return -1;
-	if (f >= 0.0)
+	else
 		return 1;
 
 }

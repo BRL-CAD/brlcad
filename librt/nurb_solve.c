@@ -231,6 +231,7 @@ int n;
 
 }
 
+void
 rt_nurb_p_mat(mat, dim)
 CONST fastf_t * mat;
 int dim;
