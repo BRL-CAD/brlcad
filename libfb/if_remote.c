@@ -391,17 +391,19 @@ int	x, y;
 	return( fbgetlong( &buf[0*NET_LONG_LEN] ) );
 }
 
+#define REM_CMAP_BYTES	(256*3*2)
+
 _LOCAL_ int
 rem_cmread( ifp, cmap )
-FBIO			*ifp;
+register FBIO		*ifp;
 register ColorMap	*cmap;
 {
 	register int	i;
 	char	buf[NET_LONG_LEN+1];
-	char	cm[256*2*3];
+	char	cm[REM_CMAP_BYTES+4];
 
 	pkg_send( MSG_FBRMAP, (char *)0, 0, PCP(ifp) );
-	pkg_waitfor( MSG_DATA, cm, sizeof(cm), PCP(ifp) );
+	pkg_waitfor( MSG_DATA, cm, REM_CMAP_BYTES, PCP(ifp) );
 	for( i = 0; i < 256; i++ ) {
 		cmap->cm_red[i] = fbgetshort( cm+2*(0+i) );
 		cmap->cm_green[i] = fbgetshort( cm+2*(256+i) );
@@ -413,12 +415,12 @@ register ColorMap	*cmap;
 
 _LOCAL_ int
 rem_cmwrite( ifp, cmap )
-FBIO	*ifp;
-ColorMap	*cmap;
+register FBIO		*ifp;
+register ColorMap	*cmap;
 {
-	int	i;
+	register int	i;
 	char	buf[NET_LONG_LEN+1];
-	char	cm[256*2*3];
+	char	cm[REM_CMAP_BYTES+4];
 
 	if( cmap == COLORMAP_NULL )
 		pkg_send( MSG_FBWMAP, (char *)0, 0, PCP(ifp) );
@@ -428,7 +430,7 @@ ColorMap	*cmap;
 			(void)fbputshort( cmap->cm_green[i], cm+2*(256+i) );
 			(void)fbputshort( cmap->cm_blue[i], cm+2*(512+i) );
 		}
-		pkg_send( MSG_FBWMAP, cm, sizeof(cm), PCP(ifp) );
+		pkg_send( MSG_FBWMAP, cm, REM_CMAP_BYTES, PCP(ifp) );
 	}
 	pkg_waitfor( MSG_RETURN, buf, NET_LONG_LEN, PCP(ifp) );
 	return( fbgetlong( &buf[0*NET_LONG_LEN] ) );
