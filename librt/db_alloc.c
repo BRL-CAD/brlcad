@@ -7,6 +7,7 @@
  *	db_trunc	Decrease size of existing entry, from it's end
  *	db_delete	Delete storage associated w/entry, zap records
  *	db_zapper	Zap region of file into ID_FREE records
+ *	db_flags_internal	Construct flags word
  *
  *
  *  Authors -
@@ -332,4 +333,30 @@ int		start;
 	i = db_put( dbip, dp, rp, start, todo );
 	bu_free( (char *)rp, "db_zapper buf" );
 	return i;
+}
+
+/*
+ *			D B _ F L A G S _ I N T E R N A L
+ *
+ *  Given the internal form of a database object,
+ *  return the appropriate 'flags' word for stashing in the
+ *  in-memory directory of objects.
+ */
+int
+db_flags_internal( intern )
+CONST struct rt_db_internal	*intern;
+{
+	CONST struct rt_comb_internal	*comb;
+
+	RT_CK_DB_INTERNAL(intern);
+
+	if( intern->idb_type != ID_COMBINATION )
+		return DIR_SOLID;
+
+	comb = (struct rt_comb_internal *)intern->idb_ptr;
+	RT_CK_COMB(comb);
+
+	if( comb->region_flag )
+		return DIR_COMB | DIR_REGION;
+	return DIR_COMB;
 }

@@ -107,33 +107,6 @@ int		mode;
 	return wdbp;
 }
 
-/* XXX move to another module.  db_alloc(), probably. */
-/*
- *			D B _ F L A G S _ I N T E R N A L
- *
- *  Given the internal form of a database object,
- *  return the appropriate 'flags' word for stashing in the
- *  in-memory directory of objects.
- */
-int
-db_flags_internal( intern )
-CONST struct rt_db_internal	*intern;
-{
-	CONST struct rt_comb_internal	*comb;
-
-	RT_CK_DB_INTERNAL(intern);
-
-	if( intern->idb_type != ID_COMBINATION )
-		return DIR_SOLID;
-
-	comb = (struct rt_comb_internal *)intern->idb_ptr;
-	RT_CK_COMB(comb);
-
-	if( comb->region_flag )
-		return DIR_COMB | DIR_REGION;
-	return DIR_COMB;
-}
-
 /* 
  *			W D B _ I M P O R T
  *
