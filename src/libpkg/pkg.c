@@ -126,10 +126,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #if !HAVE_SYS_ERRLIST_DECL
-#ifdef WIN32
-extern int      _sys_nerr;
-extern char     *_sys_errlist[];
-#else
+#ifndef WIN32
 extern int      sys_nerr;
 extern char     *sys_errlist[];
 #endif
