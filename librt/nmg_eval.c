@@ -421,13 +421,19 @@ struct nmg_ptbl class_table[];
 	/* Regardless of what is in it, kill shell B */
 	nmg_ks( sB );
 
+#if 0
 	bzero( (char *)&counter, sizeof(counter) );
 	nmg_m_count( &counter, sA->r_p->m_p );
 	nmg_pr_count( &counter, "near end of nmg_evaluate_boolean()");
+#endif
 
-#if 0
 	/* Remove loops/edges/vertices that appear more than once in result */
 	nmg_rm_redundancies( sA );
+
+#if 1
+	bzero( (char *)&counter, sizeof(counter) );
+	nmg_m_count( &counter, sA->r_p->m_p );
+	nmg_pr_count( &counter, "after nmg_rm_redundancies()" );
 #endif
 }
 
@@ -884,17 +890,21 @@ struct nmg_list	*hd;
 	return(0);
 }
 
-nmg_find_loop_in_facelist( l, hd )
+nmg_find_loop_in_facelist( l, fu_hd )
 struct loop	*l;
-struct nmg_list	*hd;
+struct nmg_list	*fu_hd;
 {
+	register struct faceuse	*fu;
 	register struct loopuse	*lu;
 
 	NMG_CK_LOOP(l);
-	for( NMG_LIST( lu, loopuse, hd ) )  {
-		NMG_CK_LOOPUSE(lu);
-		NMG_CK_LOOP(lu->l_p);
-		if( l == lu->l_p )  return(1);
+	for( NMG_LIST( fu, faceuse, fu_hd ) )  {
+		NMG_CK_FACEUSE(fu);
+		for( NMG_LIST( lu, loopuse, &fu->lu_hd ) )  {
+			NMG_CK_LOOPUSE(lu);
+			NMG_CK_LOOP(lu->l_p);
+			if( l == lu->l_p )  return(1);
+		}
 	}
 	return(0);
 }
@@ -924,9 +934,15 @@ struct shell	*s;
 		lu = NMG_LIST_FIRST( loopuse, &s->lu_hd );
 		while( NMG_LIST_MORE( lu, loopuse, &s->lu_hd ) )  {
 			register struct loopuse	*nextlu;
+			NMG_CK_LOOPUSE(lu);
+			NMG_CK_LOOP(lu->l_p);
 			nextlu = NMG_LIST_PNEXT( loopuse, lu );
 			if( nmg_find_loop_in_facelist( lu->l_p, &s->fu_hd ) )  {
-				/* Dispose of wire loop which matches face loop */
+				/* Dispose of wire loop (and mate)
+				 * which match face loop */
+				if( NMG_LIST_MORE(lu, loopuse, &lu->down_hd) &&
+				    nextlu == lu->lumate_p )
+					nextlu = NMG_LIST_PNEXT(loopuse, nextlu);
 				nmg_klu( lu );
 			}
 			lu = nextlu;
@@ -936,9 +952,14 @@ struct shell	*s;
 		eu = NMG_LIST_FIRST( edgeuse, &s->eu_hd );
 		while( NMG_LIST_MORE( eu, edgeuse, &s->eu_hd ) )  {
 			register struct edgeuse *nexteu;
+			NMG_CK_EDGEUSE(eu);
+			NMG_CK_EDGE(eu->e_p);
 			nexteu = NMG_LIST_PNEXT( edgeuse, eu );
 			if( nmg_find_edge_in_facelist( eu->e_p, &s->fu_hd ) )  {
-				/* Dispose of wire edge */
+				/* Dispose of wire edge (and mate) */
+				if( NMG_LIST_MORE(eu, edgeuse, &s->eu_hd) &&
+				    nexteu == eu->eumate_p )
+					nexteu = NMG_LIST_PNEXT(edgeuse, nexteu);
 				nmg_keu(eu);
 			}
 			eu = nexteu;
@@ -949,9 +970,14 @@ struct shell	*s;
 	eu = NMG_LIST_FIRST( edgeuse, &s->eu_hd );
 	while( NMG_LIST_MORE( eu, edgeuse, &s->eu_hd ) )  {
 		register struct edgeuse *nexteu;
+		NMG_CK_EDGEUSE(eu);
+		NMG_CK_EDGE(eu->e_p);
 		nexteu = NMG_LIST_PNEXT( edgeuse, eu );
-
 		if( nmg_find_edge_in_looplist( eu->e_p, &s->lu_hd ) )  {
+			/* Kill edge use and mate */
+			if( NMG_LIST_MORE(eu, edgeuse, &s->eu_hd) &&
+			    nexteu == eu->eumate_p )
+				nexteu = NMG_LIST_PNEXT(edgeuse, nexteu);
 			nmg_keu(eu);
 		}
 		eu = nexteu;
@@ -962,9 +988,8 @@ struct shell	*s;
 	lu = NMG_LIST_FIRST( loopuse, &s->lu_hd );
 	while( NMG_LIST_MORE( lu, loopuse, &s->lu_hd ) )  {
 		register struct loopuse	*nextlu;
-		nextlu = NMG_LIST_PNEXT( loopuse, lu );
-
 		NMG_CK_LOOPUSE(lu);
+		nextlu = NMG_LIST_PNEXT( loopuse, lu );
 		magic1 = NMG_LIST_FIRST_MAGIC( &lu->down_hd );
 		if( magic1 != NMG_VERTEXUSE_MAGIC )  {
 			lu = nextlu;
@@ -976,6 +1001,10 @@ struct shell	*s;
 		if( nmg_find_vertex_in_facelist( vu->v_p, &s->fu_hd ) ||
 		    nmg_find_vertex_in_looplist( vu->v_p, &s->lu_hd,0 ) ||
 		    nmg_find_vertex_in_edgelist( vu->v_p, &s->eu_hd ) )  {
+		    	/* Kill lu and mate */
+			if( NMG_LIST_MORE(lu, loopuse, &lu->down_hd) &&
+			    nextlu == lu->lumate_p )
+				nextlu = NMG_LIST_PNEXT(loopuse, nextlu);
 			nmg_klu( lu );
 			lu = nextlu;
 			continue;
