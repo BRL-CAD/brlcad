@@ -1061,7 +1061,6 @@ char	**argv;
 	char			*newname;
 	struct rt_external	ext;
 	struct rt_db_internal	intern;
-	union record		*rec;
 	struct directory	*dp;
 	struct nmgregion	*r;
 	int			ngran;
@@ -1149,10 +1148,6 @@ char	**argv;
 		return;				/* FAIL */
 	}
 	rt_functab[ID_NMG].ft_ifree( &intern );
-
-	/* Depends on solid names always being in the same place */
-	rec = (union record *)ext.ext_buf;
-	NAMEMOVE( newname, rec->s.s_name );
 
 	ngran = (ext.ext_nbytes + sizeof(union record)-1)/sizeof(union record);
 	if( (dp=db_diradd( dbip, newname, -1, ngran, DIR_SOLID)) == DIR_NULL ||
