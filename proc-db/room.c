@@ -110,7 +110,7 @@ char	**argv;
 	rgb[1] = 180;
 	rgb[2] = 64;
 	mk_region1( outfp, "plane.r", "plane", NULL, NULL, rgb );
-	(void)mk_addmember( "plane.r", &head.l, WMOP_UNION );
+	(void)mk_addmember( "plane.r", &head.l, NULL, WMOP_UNION );
 
 	/* Create the display pillars */
 	size = 4000;	/* separation between centers */
@@ -165,14 +165,14 @@ struct wmember *headp;
 
 	sprintf( name, "o%s", rname );
 	mk_rpp( outfp, name, omin, omax );
-	(void)mk_addmember( name, &head.l, WMOP_UNION );
+	(void)mk_addmember( name, &head.l, NULL, WMOP_UNION );
 
 	sprintf( name, "i%s", rname );
 	mk_rpp( outfp, name, imin, imax );
-	mk_addmember( name, &head.l, WMOP_SUBTRACT );
+	mk_addmember( name, &head.l, NULL, WMOP_SUBTRACT );
 
 	mk_lfcomb( outfp, rname, &head, 1 );
-	(void)mk_addmember( rname, &(headp->l), WMOP_UNION );
+	(void)mk_addmember( rname, &(headp->l), NULL, WMOP_UNION );
 }
 
 void
@@ -240,11 +240,11 @@ struct wmember *headp;
 			break;
 		}
 		mk_rpp( outfp, name, wmin, wmax );
-		(void)mk_addmember( name, &head.l, WMOP_UNION );
+		(void)mk_addmember( name, &head.l, NULL, WMOP_UNION );
 	}
 
 	mk_lfcomb( outfp, rname, &head, 1 );
-	(void)mk_addmember( rname, &(headp->l), WMOP_UNION );
+	(void)mk_addmember( rname, &(headp->l), NULL, WMOP_UNION );
 }
 
 void
@@ -282,12 +282,12 @@ struct wmember *headp;
 	mk_region1( outfp, rname, sname,
 		mtab[i].mt_name, mtab[i].mt_param, rgb );
 
-	(void)mk_addmember( rname, &head.l, WMOP_UNION );
-	wp = mk_addmember( oname, &head.l, WMOP_UNION );
+	(void)mk_addmember( rname, &head.l, NULL, WMOP_UNION );
+	wp = mk_addmember( oname, &head.l, NULL, WMOP_UNION );
 	MAT_DELTAS( wp->wm_mat, center[X], center[Y], center[Z]+lwh[Z] );
 	mk_lfcomb( outfp, pilname, &head, 0 );
 
-	(void)mk_addmember( pilname, &(headp->l), WMOP_UNION );
+	(void)mk_addmember( pilname, &(headp->l), NULL, WMOP_UNION );
 }
 
 void
@@ -313,5 +313,5 @@ struct wmember *headp;
 		"stack", args,
 		(unsigned char *)0 );
 
-	(void)mk_addmember( rname, &(headp->l), WMOP_UNION );
+	(void)mk_addmember( rname, &(headp->l), NULL, WMOP_UNION );
 }

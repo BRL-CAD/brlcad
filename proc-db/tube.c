@@ -136,7 +136,7 @@ char	**argv;
 	mk_half( outfp, "cut", normal, 0.0 );
 	VSET( normal, 0, 1, 0 );
 	mk_half( outfp, "bg.s", normal, -1000.0 );
-	(void)mk_addmember( "bg.s", &head.l, WMOP_UNION );	/* temp use of "head" */
+	(void)mk_addmember( "bg.s", &head.l, NULL, WMOP_UNION );	/* temp use of "head" */
 	mk_lcomb( outfp, "bg.r", &head, 1,
 		"texture", "file=movie128bw.pix w=128",
 		(unsigned char *)0, 0 );
@@ -182,13 +182,13 @@ char	**argv;
 #define build_spline build_cyl
 		sprintf( name, "tube%do", frame);
 		build_spline( name, nsamples, oradius );
-		(void)mk_addmember( name, &head.l, WMOP_UNION );
+		(void)mk_addmember( name, &head.l, NULL, WMOP_UNION );
 
 		sprintf( name, "tube%di", frame);
 		build_spline( name, nsamples, iradius );
-		mk_addmember( name, &head.l, WMOP_SUBTRACT );
+		mk_addmember( name, &head.l, NULL, WMOP_SUBTRACT );
 
-		mk_addmember( "cut", &head.l, WMOP_SUBTRACT );
+		mk_addmember( "cut", &head.l, NULL, WMOP_SUBTRACT );
 
 		sprintf( name, "tube%d", frame);
 		mk_lcomb( outfp, name, &head, 1,
@@ -199,8 +199,8 @@ char	**argv;
 		 *  The origin of the ammo is expected to be the center
 		 *  of the rearmost plate.
 		 */
-		mk_addmember( name, &ghead.l, WMOP_UNION );
-		matp = mk_addmember( "ke", &ghead.l, WMOP_UNION )->wm_mat;
+		mk_addmember( name, &ghead.l, NULL, WMOP_UNION );
+		matp = mk_addmember( "ke", &ghead.l, NULL, WMOP_UNION )->wm_mat;
 
 		VSET( from, 0, -1, 0 );
 		VSET( to, 1, 0, 0 );		/* to X axis */
@@ -216,8 +216,8 @@ char	**argv;
 		bn_mat_mul( rot3, rot2, rot1 );
 		bn_mat_mul( matp, xlate, rot3 );
 
-		(void)mk_addmember( "light.r", &ghead.l, WMOP_UNION );
-		(void)mk_addmember( "bg.r", &ghead.l, WMOP_UNION );
+		(void)mk_addmember( "light.r", &ghead.l, NULL, WMOP_UNION );
+		(void)mk_addmember( "bg.r", &ghead.l, NULL, WMOP_UNION );
 
 		sprintf( gname, "g%d", frame);
 		mk_lcomb( outfp, gname, &ghead, 0,
@@ -477,7 +477,7 @@ double	radius;
 
 		sprintf( name, "%s%d", cname, i );
 		mk_tgc( outfp, name, v, h, a, b, a, b );
-		(void)mk_addmember( name, &head.l, WMOP_UNION );
+		(void)mk_addmember( name, &head.l, NULL, WMOP_UNION );
 	}
 	mk_lfcomb( outfp, cname, &head, 0 );
 }

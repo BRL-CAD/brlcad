@@ -105,7 +105,7 @@ char	**argv;
 
 	mk_region1( outfp, "plane.r", "plane", NULL, NULL, rgb );
 
-	(void)mk_addmember( "plane.r", &head.l, WMOP_UNION );
+	(void)mk_addmember( "plane.r", &head.l, NULL, WMOP_UNION );
 
 	/* Create the detail cells */
 	size = 1000;	/* mm */
@@ -118,10 +118,10 @@ char	**argv;
 			y = base + iy*size;
 			sprintf( name, "Bx%dy%d", ix, iy );
 			do_plate( name, x, y, size );
-			(void)mk_addmember( name, &head.l, WMOP_UNION );
+			(void)mk_addmember( name, &head.l, NULL, WMOP_UNION );
 
 			sprintf( name, "x%dy%d", ix, iy );
-			(void)mk_addmember( name, &head.l, WMOP_UNION );
+			(void)mk_addmember( name, &head.l, NULL, WMOP_UNION );
 			n = rand() & 03;
 			switch(n)  {
 			case 0:
@@ -142,7 +142,7 @@ char	**argv;
 	minheight = size/2;
 	VSET( pos, 0, 0, size/4 );
 	do_rings( "rings", pos, 2*size*quant/2, size/4, size, 4 );
-	(void)mk_addmember( "rings", &head.l, WMOP_UNION );
+	(void)mk_addmember( "rings", &head.l, NULL, WMOP_UNION );
 
 	if( maxheight < minheight ) maxheight = minheight;
 
@@ -196,7 +196,7 @@ double	size;
 
 	for( i=0; i<3; i++ )  {
 		sprintf( name, "%sL%c", cname, 'a'+i);
-		(void)mk_addmember( name, &head.l, WMOP_UNION );
+		(void)mk_addmember( name, &head.l, NULL, WMOP_UNION );
 		VSET( center, xc, yc, size/2*i );
 		nsolids = 3 + (rand() & 7);
 
@@ -223,8 +223,8 @@ double	size;
 	BU_LIST_INIT( &reg_head.l );
 	get_rgb(rgb);
 	i = PICK_MAT;
-	(void)mk_addmember( crystalname, &reg_head.l, WMOP_UNION );
-	(void)mk_addmember( rppname, &reg_head.l, WMOP_INTERSECT );
+	(void)mk_addmember( crystalname, &reg_head.l, NULL, WMOP_UNION );
+	(void)mk_addmember( rppname, &reg_head.l, NULL, WMOP_INTERSECT );
 	mk_lcomb( outfp, cname, &reg_head, 1,
 		mtab[i].mt_name, mtab[i].mt_param, rgb, 0 );
 	return(height);
@@ -304,7 +304,7 @@ int	nsolids;	/* number of solids for this layer */
 
 		sprintf( name, "%s%d", crname, index++ );
 		mk_arb8( outfp, name, &pt[0][X] );
-		(void)mk_addmember( name, &head.l, WMOP_UNION );
+		(void)mk_addmember( name, &head.l, NULL, WMOP_UNION );
 
 		for( i=0; i<8; i++ )  {
 			if( pt[i][Z] > height )
@@ -365,7 +365,7 @@ double	size;
 		sprintf( name, "%s%c", bname, 'A'+i );
 		VSET( center, xc, yc, size/2+i*size );
 		mk_sph( outfp, name, center, esz/2 );
-		(void)mk_addmember( name, &head.l, WMOP_UNION );
+		(void)mk_addmember( name, &head.l, NULL, WMOP_UNION );
 	}
 
 	/* Build the combination */
@@ -405,7 +405,7 @@ double	size;
 	n = (rand()&7)+1;
 	for( nobj=0; nobj<n; nobj++ )  {
 		sprintf( name, "%s%c", pname, 'A'+nobj );
-		(void)mk_addmember( name, &head.l, WMOP_UNION );
+		(void)mk_addmember( name, &head.l, NULL, WMOP_UNION );
 		height = ((rand()&7)+1)*size/3;
 		i = rand()%5;
 		switch(i)  {
@@ -484,7 +484,7 @@ int	n;
 		/* Build the region that contains each solid */
 		get_rgb(rgb);
 		mk_region1( outfp, rname, sname, NULL, NULL, rgb );
-		(void)mk_addmember( rname, &head.l, WMOP_UNION );
+		(void)mk_addmember( rname, &head.l, NULL, WMOP_UNION );
 	}
 
 	/* Build the group that holds all the regions */

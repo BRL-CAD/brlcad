@@ -480,7 +480,7 @@ struct wmember *wm_hd;
 	(void)sprintf(sol_name, "s.%s.%d", obj_name, sol_num++);
 
 	mk_arb8(fd, sol_name, &pts[0][X]);
-	wm = mk_addmember(sol_name, &(wm_hd->l), WMOP_UNION);
+	wm = mk_addmember(sol_name, &(wm_hd->l), NULL, WMOP_UNION);
 
 	if (trans_matrix)
 		bcopy((char *)trans_matrix, (char *)wm->wm_mat, sizeof(mat_t));
@@ -899,7 +899,7 @@ struct rt_wdb *fd;
 
 	(void)sprintf(sol_name, "s.%s.sr1", obj_name);
 	mk_arb8(fd, sol_name, &pts[0][X]);
-	(void)mk_addmember(sol_name, &wm_hd.l, WMOP_UNION);
+	(void)mk_addmember(sol_name, &wm_hd.l, NULL, WMOP_UNION);
 
 	for (BU_LIST_FOR(op, opening, &ol_hd.l)) {
 		VSET(pts[0], op->sx, -0.01,		op->sz);
@@ -913,7 +913,7 @@ struct rt_wdb *fd;
 
 		(void)sprintf(sol_name, "s.%s.o.%d", obj_name, i++);
 		mk_arb8(fd, sol_name, &pts[0][X]);
-		(void)mk_addmember(sol_name, &wm_hd.l, WMOP_SUBTRACT);
+		(void)mk_addmember(sol_name, &wm_hd.l, NULL, WMOP_SUBTRACT);
 	}
 
 	(void)sprintf(sol_name, "r.%s.sr1", obj_name);
@@ -963,7 +963,7 @@ struct rt_wdb *fd;
 	(void)sprintf(sol_name, "s.%s.b", obj_name);
 	mk_arb8(fd, sol_name, &pts[0][X]);
 
-	(void)mk_addmember(sol_name, &wm_hd.l, WMOP_UNION);
+	(void)mk_addmember(sol_name, &wm_hd.l, NULL, WMOP_UNION);
 	*sol_name = 'r';
 
 	if (rand_brick_color)
@@ -988,7 +988,7 @@ struct rt_wdb *fd;
 	(void)sprintf(sol_name, "s.%s.vm", obj_name);
 	mk_arb8(fd, sol_name, &pts[0][X]);
 
-	(void)mk_addmember(sol_name, &wm_hd.l, WMOP_UNION);
+	(void)mk_addmember(sol_name, &wm_hd.l, NULL, WMOP_UNION);
 	*sol_name = 'r';
 	mk_lcomb(fd, sol_name, &wm_hd, 1, (char *)NULL, (char *)NULL,
 		mortar_color, 0);
@@ -1010,7 +1010,7 @@ struct rt_wdb *fd;
 	(void)sprintf(sol_name, "s.%s.vm", obj_name);
 	mk_arb8(fd, sol_name, &pts[0][X]);
 
-	(void)mk_addmember(sol_name, &wm_hd.l, WMOP_UNION);
+	(void)mk_addmember(sol_name, &wm_hd.l, NULL, WMOP_UNION);
 	*sol_name = 'r';
 	mk_lcomb(fd, sol_name, &wm_hd, 1, (char *)NULL, (char *)NULL,
 		mortar_color, 0);
@@ -1061,7 +1061,7 @@ struct rt_wdb *fd;
 
 	(void)sprintf(proto_brick, "s.%s.b", obj_name);
 	mk_arb8(fd, proto_brick, &pts[0][X]);
-	(void)mk_addmember(proto_brick, &wm_hd.l, WMOP_UNION);
+	(void)mk_addmember(proto_brick, &wm_hd.l, NULL, WMOP_UNION);
 	*proto_brick = 'r';
 
 	mk_lcomb(fd, proto_brick, &wm_hd, 1, (char *)NULL, (char *)NULL,

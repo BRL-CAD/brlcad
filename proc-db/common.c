@@ -110,5 +110,5 @@ struct wmember	*headp;
 	bn_mat_mul( both, xlate, rot );
 
 	mk_region1( outfp, name, nbuf, "light", "shadows=1", rgb );
-	(void)mk_addmember( name, &(headp->l), WMOP_UNION );
+	(void)mk_addmember( name, &(headp->l), NULL, WMOP_UNION );
 }

@@ -124,28 +124,28 @@ int main(int argc, char *argv[])
       
       sprintf(name, "%spost-%ld.s", prefix, j);
       mk_arb8(f, name, s0);
-      mk_addmember(name, &wm, WMOP_UNION);
-      mk_addmember(w1name, &wm, WMOP_SUBTRACT);
-      mk_addmember(w2name, &wm, WMOP_SUBTRACT);
+      mk_addmember(name, &wm, NULL, WMOP_UNION);
+      mk_addmember(w1name, &wm, NULL, WMOP_SUBTRACT);
+      mk_addmember(w2name, &wm, NULL, WMOP_SUBTRACT);
       
       if (round)
 	{
 	  sprintf(name, "%spost_c.s", prefix);
 	  mk_tgc(f, name, c0, c0h, c0a, c0b, c0c, c0d);
-	  mk_addmember(name, &wm, WMOP_UNION);
-	  mk_addmember(w1name, &wm, WMOP_SUBTRACT);
-	  mk_addmember(w2name, &wm, WMOP_SUBTRACT);
+	  mk_addmember(name, &wm, NULL, WMOP_UNION);
+	  mk_addmember(w1name, &wm, NULL, WMOP_SUBTRACT);
+	  mk_addmember(w2name, &wm, NULL, WMOP_SUBTRACT);
 	}
       sprintf(name, "%sls%ld.s", prefix, j);
       mk_arb8(f, name, s1);
-      mk_addmember(name, &swm, WMOP_UNION);
+      mk_addmember(name, &swm, NULL, WMOP_UNION);
       
       for (k = 0; k < 8; k++)
 	s1[(3 * k) + 2] += (height / 3);
       
       sprintf(name, "%shs%ld.s", prefix, j);
       mk_arb8(f, name, s1);
-      mk_addmember(name, &swm, WMOP_UNION);
+      mk_addmember(name, &swm, NULL, WMOP_UNION);
       
       sprintf(pname, "%sp-%ld.c", prefix, j);
       mk_lcomb(f, pname, &wm, 0, "plastic", "", "50 30 10", 0);
@@ -153,9 +153,9 @@ int main(int argc, char *argv[])
       for (i = 0; i < numposts; i++)
 	{
 	  sprintf(name, "%sp%ld-%ld.r", prefix, j, i);
-	  mk_addmember(pname, &wm2, WMOP_UNION);
+	  mk_addmember(pname, &wm2, NULL, WMOP_UNION);
 	  mk_lcomb(f, name, &wm2, 0, "plastic", "", "50 50 20", 0);
-	  nwm = mk_addmember(name, &swm, WMOP_UNION);
+	  nwm = mk_addmember(name, &swm, NULL, WMOP_UNION);
 	  for (k = 0; k < 16; k++)
 	    nwm->wm_mat[k] = 0;
 	  nwm->wm_mat[0] = 1;
@@ -168,7 +168,7 @@ int main(int argc, char *argv[])
       
       sprintf(name, "%ssec%ld.c", prefix, j);
       mk_lcomb(f, name, &swm, 0, "plastic", "", "50 50 20", 0);
-      nwm = mk_addmember(name, &fwm, WMOP_SUBTRACT);
+      nwm = mk_addmember(name, &fwm, NULL, WMOP_SUBTRACT);
       xt = x1 - x0;
       yt = y1 - y0;
       xt /= sqrt((xt * xt) + (yt * yt));
@@ -182,7 +182,7 @@ int main(int argc, char *argv[])
       nwm->wm_mat[10] = 1;
       nwm->wm_mat[11] = z0;
       nwm->wm_mat[15] = 1;
-      nwm = mk_addmember(name, &fwm, WMOP_UNION);
+      nwm = mk_addmember(name, &fwm, NULL, WMOP_UNION);
       xt = x1 - x0;
       yt = y1 - y0;
       xt /= sqrt((xt * xt) + (yt * yt));
@@ -203,7 +203,7 @@ int main(int argc, char *argv[])
 	    first_mat[l] = nwm->wm_mat[l];
 	}
     }
-  nwm = mk_addmember(firstname, &fwm, WMOP_SUBTRACT);
+  nwm = mk_addmember(firstname, &fwm, NULL, WMOP_SUBTRACT);
   for (l = 0; l < 16; l++)
     nwm->wm_mat[l] = first_mat[l];
   sprintf(name, "%sfence.c", prefix);

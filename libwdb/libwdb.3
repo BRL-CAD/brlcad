@@ -120,9 +120,10 @@ char	*name;
 mat_t	mat;
 int	op;
 .sp
-mk_addmember( name, headp, op )
+mk_addmember( name, headp, mat, op )
 char	*name;
 struct	wmember *headp;
+mat_t mat;
 int	op;
 .sp
 mk_lcomb( fp, name, headp, region, matname, matparm, rgb, inherit )

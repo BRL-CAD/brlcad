@@ -165,12 +165,12 @@ int	sph_type;
 
 	/* Create a region nm to contain the solid nm1 */
 	BU_LIST_INIT( &reg_head.l );
-	(void)mk_addmember( nm1, &reg_head.l, WMOP_UNION );
+	(void)mk_addmember( nm1, &reg_head.l, NULL, WMOP_UNION );
 	sprintf(nm, "SPH.%d", id );
 	mk_lcomb( outfp, nm, &reg_head, 1, matname, matparm, rgb, 0 );
 
 	/* Include this region in the larger group */
-	(void)mk_addmember( nm, &head.l, WMOP_UNION );
+	(void)mk_addmember( nm, &head.l, NULL, WMOP_UNION );
 
 	new->next = ( struct sphere *)0;
 	new->s_id = id;
@@ -231,12 +231,12 @@ make_bond( int sp1, int sp2 )
 #endif
 
 	BU_LIST_INIT( &reg_head.l );
-	(void)mk_addmember( nm, &reg_head.l, WMOP_UNION );
-	(void)mk_addmember( s1->s_name, &reg_head.l, WMOP_SUBTRACT );
-	(void)mk_addmember( s2->s_name, &reg_head.l, WMOP_SUBTRACT );
+	(void)mk_addmember( nm, &reg_head.l, NULL, WMOP_UNION );
+	(void)mk_addmember( s1->s_name, &reg_head.l, NULL, WMOP_SUBTRACT );
+	(void)mk_addmember( s2->s_name, &reg_head.l, NULL, WMOP_SUBTRACT );
 	sprintf( nm1, "BOND.%d.%d", sp1, sp2);
 	mk_lcomb( outfp, nm1, &reg_head, 1, matname, matparm, rgb, 0 );
-	(void)mk_addmember( nm1, &head.l, WMOP_UNION );
+	(void)mk_addmember( nm1, &head.l, NULL, WMOP_UNION );
 
 	return(0);		/* OK */
 }

@@ -426,7 +426,7 @@ void createLights(p)
   mk_sph(fp, name, lPos, p->maxRadius*5);
   
   /* now make the light region... */
-  mk_addmember(name, &(wmemberArray[LIGHT0_ID].l), WMOP_UNION);
+  mk_addmember(name, &(wmemberArray[LIGHT0_ID].l), NULL, WMOP_UNION);
   strcat(name, ".r");
   sscanf(LIGHT0_MATCOLOR, "%d %d %d", &r, &g, &b);
   c[0] = (char)r;
@@ -440,7 +440,7 @@ void createLights(p)
   mk_sph(fp, name, lPos, p->maxRadius*5);
   
   /* now make the light region... */
-  mk_addmember(name, &(wmemberArray[LIGHT1_ID].l), WMOP_UNION);
+  mk_addmember(name, &(wmemberArray[LIGHT1_ID].l), NULL, WMOP_UNION);
   strcat(name, ".r");
   sscanf(LIGHT1_MATCOLOR, "%d %d %d", &r, &g, &b);
   c[0] = (char)r;
@@ -464,7 +464,7 @@ void createPlane(p)
   mk_half(fp, name, lPos, -p->maxRadius * 2 * DEFAULT_SCALE);
   
   /* now make the plane region... */
-  mk_addmember(name, &(wmemberArray[PLANE_ID].l), WMOP_UNION);
+  mk_addmember(name, &(wmemberArray[PLANE_ID].l), NULL, WMOP_UNION);
   strcat(name, ".r");
   mk_lcomb(fp, name, &(wmemberArray[PLANE_ID]), 1, PLANE_MAT, PLANE_MATPARAM, (unsigned char *)PLANE_MATCOLOR, 0);
   
@@ -478,7 +478,7 @@ void createEnvironMap(p)
   
   memset(name, 0, MAX_INPUT_LENGTH);
   sprintf(name, "light0");
-  mk_addmember(name, &(wmemberArray[ENVIRON_ID].l), WMOP_UNION);
+  mk_addmember(name, &(wmemberArray[ENVIRON_ID].l), NULL, WMOP_UNION);
   memset(name, 0, MAX_INPUT_LENGTH);
   sprintf(name, "environ.r");
   mk_lcomb(fp, name, &(wmemberArray[ENVIRON_ID]), 1, ENVIRON_MAT, ENVIRON_MATPARAM, (unsigned char *)"0 0 0", 0);
@@ -496,12 +496,12 @@ void createScene(p)
   for (i = 0; i < p->maxDepth+1; i++) {
     memset(name, 0, MAX_INPUT_LENGTH);
     sprintf(name, "depth%d.r", i);
-    mk_addmember(name, &(wmemberArray[SCENE_ID].l), WMOP_UNION);
+    mk_addmember(name, &(wmemberArray[SCENE_ID].l), NULL, WMOP_UNION);
   }
-  mk_addmember("light0.r", &(wmemberArray[SCENE_ID].l), WMOP_UNION);
-  mk_addmember("light1.r", &(wmemberArray[SCENE_ID].l), WMOP_UNION);
-  mk_addmember("plane.r", &(wmemberArray[SCENE_ID].l), WMOP_UNION);
-  mk_addmember("environ.r", &(wmemberArray[SCENE_ID].l), WMOP_UNION);
+  mk_addmember("light0.r", &(wmemberArray[SCENE_ID].l), NULL, WMOP_UNION);
+  mk_addmember("light1.r", &(wmemberArray[SCENE_ID].l), NULL, WMOP_UNION);
+  mk_addmember("plane.r", &(wmemberArray[SCENE_ID].l), NULL, WMOP_UNION);
+  mk_addmember("environ.r", &(wmemberArray[SCENE_ID].l), NULL, WMOP_UNION);
   memset(name, 0, MAX_INPUT_LENGTH);
   sprintf(name, "scene.r");
   mk_lfcomb(fp, name, &(wmemberArray[SCENE_ID]), 0);
@@ -619,7 +619,7 @@ void makeFlake(depth, trans, center, radius, delta, maxDepth)
   newRadius = radius*delta;
   
   /* add the sphere to the correct combination */
-  mk_addmember(name, &(wmemberArray[depth+ADDITIONAL_OBJECTS].l), WMOP_UNION);
+  mk_addmember(name, &(wmemberArray[depth+ADDITIONAL_OBJECTS].l), NULL, WMOP_UNION);
   
   for (i = 0; i < 9; i++) {
     memcpy(temp, trans, sizeof(temp));

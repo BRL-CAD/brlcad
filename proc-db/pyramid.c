@@ -187,19 +187,19 @@ int	level;
 		scale *= 2;
 
 	sprintf(nm, "%sL", name);
-	wp = mk_addmember( leafp, &head.l, WMOP_UNION );
+	wp = mk_addmember( leafp, &head.l, NULL, WMOP_UNION );
 	MAT_IDN( wp->wm_mat );
 
 	sprintf(nm, "%sR", name);
-	wp = mk_addmember( leafp, &head.l, WMOP_UNION );
+	wp = mk_addmember( leafp, &head.l, NULL, WMOP_UNION );
 	MAT_DELTAS( wp->wm_mat, 1*scale, 0, 0 );
 
 	sprintf(nm, "%sB", name);
-	wp = mk_addmember( leafp, &head.l, WMOP_UNION );
+	wp = mk_addmember( leafp, &head.l, NULL, WMOP_UNION );
 	MAT_DELTAS( wp->wm_mat, 0.5*scale, sin60*scale, 0 );
 
 	sprintf(nm, "%sT", name);
-	wp = mk_addmember( leafp, &head.l, WMOP_UNION );
+	wp = mk_addmember( leafp, &head.l, NULL, WMOP_UNION );
 	MAT_DELTAS( wp->wm_mat, 0.5*scale, sin60/3*scale, sin60*scale );
 
 	/* Set region flag on lowest level */

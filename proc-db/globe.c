@@ -74,9 +74,9 @@ main(int ac, char *av[])
 	is_region = 1;
 	/* make a sphere centered at 1.0, 2.0, 3.0 with radius .75 */
 	mk_sph(db_fp, "land.s", p1, initialSize);
-	mk_addmember("land.s", &wm_hd.l, WMOP_UNION);
+	mk_addmember("land.s", &wm_hd.l, NULL, WMOP_UNION);
 	mk_lcomb(db_fp, "land.c", &wm_hd, 0, "", "", rgb, 0);
-	mk_addmember("land.s", &wm_hd.l, WMOP_UNION);
+	mk_addmember("land.s", &wm_hd.l, NULL, WMOP_UNION);
 	mk_lcomb(db_fp, "land.r", &wm_hd, is_region, "plastic", "di=.8 sp=.2", rgb, 0);
 
 	/* 
@@ -89,14 +89,14 @@ main(int ac, char *av[])
 
 	  sprintf(solidName, "air.%d.s", counter);
 	  mk_sph(db_fp, solidName , p1, currentSize);
-	  mk_addmember(solidName, &wm_hd.l, WMOP_UNION);
-	  mk_addmember(prevSolid, &wm_hd.l, WMOP_SUBTRACT);
+	  mk_addmember(solidName, &wm_hd.l, NULL, WMOP_UNION);
+	  mk_addmember(prevSolid, &wm_hd.l, NULL, WMOP_SUBTRACT);
 
 		/* make the spatial combination */
 	  sprintf(name, "air.%d.c", counter);
 		mk_lcomb(db_fp, name, &wm_hd, 0, NULL, NULL, NULL, 0);
 
-	  mk_addmember(name, &wm_hd.l, WMOP_UNION);
+	  mk_addmember(name, &wm_hd.l, NULL, WMOP_UNION);
 
 		/*	  sprintf(shaderparams, "{alpha %f}", (float)1.0 - (((float)finalSize/(float)currentSize)-(float)1.0));  */
 
@@ -113,7 +113,7 @@ main(int ac, char *av[])
 						 0);		/* inherit (override) flag */
 		
 		/* add the region to a master region list */
-	  mk_addmember(name, &bigList.l, WMOP_UNION);
+	  mk_addmember(name, &bigList.l, NULL, WMOP_UNION);
 		
 		/* keep track of the last combination we made for the next iteration */
 	  sprintf(prevSolid, "%s", solidName);
@@ -134,8 +134,8 @@ main(int ac, char *av[])
 	
 	/* add the land to the main globe object that gets created at the end */
 	BU_LIST_INIT(&wm_hd.l);
-	mk_addmember("land.r", &wm_hd.l, WMOP_UNION);
-	mk_addmember("air.c", &wm_hd.l, WMOP_UNION);
+	mk_addmember("land.r", &wm_hd.l, NULL, WMOP_UNION);
+	mk_addmember("air.c", &wm_hd.l, NULL, WMOP_UNION);
 	
 	mk_lcomb(db_fp,
 					 "globe.r",	/* Name of the db element created */

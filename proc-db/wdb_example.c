@@ -79,12 +79,13 @@ main(int ac, char *av[])
 	 * in the combination.  The return from mk_addmember is a pointer
 	 * to the wmember structure 
 	 */
-	(void)mk_addmember( "box.s", &wm_hd.l, WMOP_UNION );
+	(void)mk_addmember( "box.s", &wm_hd.l, NULL, WMOP_UNION );
 
-	/* If we wanted a transformation matrix for this arc, we would
-	 * add the following code:
+	/* If we wanted a transformation matrix for this arc, we could
+	 * have passed the matrix in to mk_addmember as an argument or
+	 * we could add the following code:
 	 *
-	memcpy( wm->wm_mat, trans_matrix, sizeof(mat_t));
+	 memcpy( wm_hd->wm_mat, trans_matrix, sizeof(mat_t));
 	 *
 	 * Remember that values in the database are stored in millimeters.
 	 * so the values in the matrix must take this into account.
@@ -98,7 +99,7 @@ main(int ac, char *av[])
 	 * can be a problem.
 	 */
 
-	(void)mk_addmember( "ball.s", &wm_hd.l, WMOP_UNION );
+	(void)mk_addmember( "ball.s", &wm_hd.l, NULL, WMOP_UNION );
 
 	/* Create the combination
 	 * In this case we are going to make it a region (hence the
