@@ -27,6 +27,15 @@
 
 #include "../libspl/b_spline.h"
 
+struct rt_spl_internal {
+	long		magic;
+	int		nsurf;
+	fastf_t		resolution;
+	struct b_spline	**surfs;
+};
+#define RT_SPL_INTERNAL_MAGIC	0x00911911
+#define RT_SPL_CK_MAGIC(_p)	RT_CKMAG(_p,RT_SPL_INTERNAL_MAGIC,"rt_spl_internal")
+
 struct b_tree {
 	point_t min, max;		/* bounding box info */
 	struct b_spline * root;	        /* B_spline surface */
@@ -88,83 +97,6 @@ struct local_hit	*rt_spl_ray_poly();
 
 #define SPL_NULL	((struct b_spline *)0)
 
-/*
- *			R T _ S P L _ R E A D I N
- *
- *  Take an in-memory array of database records, and produce a
- *  (struct b_spline) object.
- *
- *  Since the record granuals are not in the internal format,
- *  we need to declare some of the variables as dbfloat_t and not
- *  fastf_t.
- */
-HIDDEN struct b_spline *
-rt_spl_readin( drec, mat )
-union record	*drec;
-matp_t		mat;
-{
-	register int		i;
-	struct b_spline		*new_srf;
-	register fastf_t	*mesh_ptr;
-	int			epv;
-	register dbfloat_t	*vp;
-
-	if ( drec[0].u_id != ID_BSURF )  {
-		rt_log("rt_spl_readin:  bad record 0%o\n", drec[0].u_id);
-		return( SPL_NULL );
-	}
-
-	/*
-	 * Allocate memory for a new surface.
- 	 */
-	new_srf = (struct b_spline *) spl_new(
-		drec[0].d.d_order[0], drec[0].d.d_order[1],
-		drec[0].d.d_kv_size[0], drec[0].d.d_kv_size[1],
-		drec[0].d.d_ctl_size[0], drec[0].d.d_ctl_size[1],
-		drec[0].d.d_geom_type );
-
-	/* Read in the knot vectors and convert them to the 
-	 * internal representation.
-	 */
-	vp = ( dbfloat_t *) &drec[1];
-
-	/* U knots */
-	for( i = 0; i < drec[0].d.d_kv_size[0]; i++)
-		new_srf->u_kv->knots[i] = (fastf_t) *vp++;
-	/* V knots */
-	for( i = 0; i < drec[0].d.d_kv_size[1]; i++)
-		new_srf->v_kv->knots[i] =  (fastf_t) *vp++;
-
-	spl_kvnorm( new_srf->u_kv);
-	spl_kvnorm( new_srf->v_kv);
-
-	/*
-	 *  Transform the mesh control points in place,
-	 *  in the b-spline data structure.
-	 */
-	vp = (dbfloat_t *) &drec[drec[0].d.d_nknots+1];
-	mesh_ptr = new_srf->ctl_mesh->mesh;
-	epv = drec[0].d.d_geom_type;
-	i = ( drec[0].d.d_ctl_size[0] * drec[0].d.d_ctl_size[1]);
-	if( epv == P3 )  {
-		for( ; i > 0; i--)  {
-			MAT4X3PNT( mesh_ptr, mat, vp);
-			mesh_ptr += P3;
-			vp += P3;
-		}
-	} else if( epv == P4 )  {
-		for( ; i > 0; i--)  {
-			MAT4X4PNT( mesh_ptr, mat, vp);
-			mesh_ptr += P4;
-			vp += P4;
-		}
-	} else {
-		rt_log("rt_spl_readin:  %d invalid elements-per-vect\n", epv );
-		return( SPL_NULL );	/* BAD */
-	}
-	return( new_srf );
-}
-
 
 /* 
  *			R T _ S P L _ P R E P
@@ -173,34 +105,54 @@ matp_t		mat;
  * determine if this is avalid B_spline solid, and if so prepare the
  * surface so that the subdivision works.
  */
+#if NEW_IF
 int
-rt_spl_prep( stp, rp, rtip )
+rt_spl_prep( stp, ip, rtip )
+struct soltab		*stp;
+struct rt_db_internal	*ip;
+struct rt_i		*rtip;
+{
+#else
+int
+rt_spl_prep( stp, rec, rtip )
 struct soltab	*stp;
-union record	*rp;
+union record	*rec;
 struct rt_i	*rtip;
 {
-	struct b_head  *nlist = (struct b_head *) 0;
-	int		n_srfs;
-	int		currec;
+	struct rt_external	ext, *ep;
+	struct rt_db_internal	intern, *ip;
+#endif
+	struct rt_spl_internal	*sip;
+	struct b_head		*nlist = (struct b_head *) 0;
+	int			i;
 
-	n_srfs = rp[0].B.B_nsurf;
-	currec = 1;		/* rp[0] has header record */
+#if NEW_IF
+	/* All set */
+#else
+	ep = &ext;
+	RT_INIT_EXTERNAL(ep);
+	ep->ext_buf = (genptr_t)rec;
+	ep->ext_nbytes = stp->st_dp->d_len*sizeof(union record);
+	ip = &intern;
+	if( rt_spl_import( ip, ep, stp->st_pathmat ) < 0 )
+		return(-1);		/* BAD */
+	RT_CK_DB_INTERNAL( ip );
+#endif
+	sip = (struct rt_spl_internal *)ip->idb_ptr;
+	RT_SPL_CK_MAGIC(sip);
 
-	while (n_srfs-- > 0) {
+	for( i=0; i < sip->nsurf; i++ )  {
 		struct b_head * s_tree;
 		struct b_spline * new_srf;
 		struct b_spline * s_split;
 
-		if( (new_srf = rt_spl_readin( &rp[currec], stp->st_pathmat )) == SPL_NULL )  {
-			rt_log("rt_spl_prep(%s):  database read error\n",
-				stp->st_name);
-			return( -1 );
-		}
-		currec += 1 + rp[currec].d.d_nknots + rp[currec].d.d_nctls;
+		new_srf = sip->surfs[i];
 
 		GETSTRUCT( s_tree, b_head );
 		GETSTRUCT( s_tree->left, b_tree );
 		GETSTRUCT( s_tree->right, b_tree );
+
+		/* Add to linked list */
 		s_tree->next = nlist;
 		nlist = s_tree;
 
@@ -230,12 +182,9 @@ struct rt_i	*rtip;
 			VPRINT("max", s_tree->max);
 		}
 	}
-
 	stp->st_specific = (genptr_t)nlist;
-	VSET( stp->st_center,
-	    (stp->st_max[0] + stp->st_min[0])/2,
-	    (stp->st_max[1] + stp->st_min[1])/2,
-	    (stp->st_max[2] + stp->st_min[2])/2 );
+
+	VADD2SCALE( stp->st_center, stp->st_max, stp->st_min, 0.5 );
 	{
 		fastf_t f, dx, dy, dz;
 		dx = (stp->st_max[0] - stp->st_min[0])/2;
@@ -295,6 +244,17 @@ rt_spl_class()
 /*
  *			R T _ S P L _ P L O T
  */
+#if NEW_IF
+int
+rt_spl_plot( vhead, mat, ip, abs_tol, rel_tol, norm_tol )
+struct vlhead	*vhead;
+mat_t		mat;
+struct rt_db_internal *ip;
+double		abs_tol;
+double		rel_tol;
+double		norm_tol;
+{
+#else
 int
 rt_spl_plot( rp, mat, vhead, dp )
 union record	*rp;
@@ -302,32 +262,37 @@ mat_t		mat;
 struct vlhead	*vhead;
 struct directory *dp;
 {
+	struct rt_external	ext, *ep;
+	struct rt_db_internal	intern, *ip;
+#endif
+	struct rt_spl_internal	*sip;
 	register int	i;
 	register int	j;
 	register fastf_t *vp;
-	int		cur_gran;
-	int		n_srfs;
+	int		s;
 
-	n_srfs = rp[0].B.B_nsurf;
-	cur_gran = 1;
+#if NEW_IF
+	/* All set */
+#else
+	ep = &ext;
+	RT_INIT_EXTERNAL(ep);
+	ep->ext_buf = (genptr_t)rp;
+	ep->ext_nbytes = dp->d_len*sizeof(union record);
+	i = rt_spl_import( &intern, ep, mat );
+	if( i < 0 )  {
+		rt_log("rt_spl_plot(): db import failure\n");
+		return(-1);		/* BAD */
+	}
+	ip = &intern;
+#endif
+	RT_CK_DB_INTERNAL(ip);
+	sip = (struct rt_spl_internal *)ip->idb_ptr;
+	RT_SPL_CK_MAGIC(sip);
 
-	while( n_srfs-- > 0 )  {
+	for( s=0; s < sip->nsurf; s++ )  {
 		register struct b_spline	*new;
 
-		if( (new = rt_spl_readin( &rp[cur_gran], mat )) == SPL_NULL )  {
-			rt_log("rt_spl_plot(%s):  database read error\n",
-				dp->d_namep);
-			return(-1);
-		}
-		if ( rt_g.debug & DEBUG_SPLINE )  {
-			rt_log("%s surf %d: %d x %d\n",
-				dp->d_namep,
-				n_srfs,
-				new->ctl_mesh->mesh_size[0],
-				new->ctl_mesh->mesh_size[1] );
-		}
-		cur_gran += 1 + rp[cur_gran].d.d_nknots + rp[cur_gran].d.d_nctls;
-
+		new = sip->surfs[s];
 		/* Perhaps some spline refinement here? */
 
 		/* Eliminate any homogenous coordinates */
@@ -367,7 +332,6 @@ struct directory *dp;
 				ADD_VL( vhead, vp, 1 );
 			}
 		}
-		spl_sfree( new );
 	}
 	return(0);
 }
@@ -1147,8 +1111,336 @@ struct spl_poly * p1;
 /*
  *			R T _ S P L _ T E S S
  */
+#if NEW_IF
 int
-rt_spl_tess()
+rt_spl_tess( r, m, ip, mat, abs_tol, rel_tol, norm_tol )
+struct nmgregion	**r;
+struct model		*m;
+struct rt_db_internal	*ip;
+register mat_t		mat;
+double		abs_tol;
+double		rel_tol;
+double		norm_tol;
 {
+#else
+int
+rt_spl_tess( r, m, rp, mat, dp, abs_tol, rel_tol, norm_tol )
+struct nmgregion	**r;
+struct model		*m;
+union record		*rp;
+mat_t			mat;
+struct directory	*dp;
+double			abs_tol;
+double			rel_tol;
+double			norm_tol;
+{
+	struct rt_external	ext, *ep;
+	struct rt_db_internal	intern, *ip;
+#endif
+	struct rt_spl_internal	*sip;
+	int	i;
+
+#if NEW_IF
+	/* All set */
+#else
+	ep = &ext;
+	RT_INIT_EXTERNAL(ep);
+	ep->ext_buf = (genptr_t)rp;
+	ep->ext_nbytes = dp->d_len*sizeof(union record);
+	i = rt_spl_import( &intern, ep, mat );
+	if( i < 0 )  {
+		rt_log("rt_spl_tess(): db import failure\n");
+		return(-1);		/* BAD */
+	}
+	ip = &intern;
+#endif
+	RT_CK_DB_INTERNAL(ip);
+	sip = (struct rt_spl_internal *)ip->idb_ptr;
+	RT_SPL_CK_MAGIC(sip);
+
 	return(-1);
+}
+
+/*
+ *			R T _ S P L _ I M P O R T
+ *
+ *  Read all the curves in as a two dimensional array.
+ *  The caller is responsible for freeing the dynamic memory.
+ *
+ *  Note that in each curve array, the first point is replicated
+ *  as the last point, to make processing the data easier.
+ */
+int
+rt_spl_import( ip, ep, mat )
+struct rt_db_internal	*ip;
+struct rt_external	*ep;
+mat_t			mat;
+{
+	struct rt_spl_internal *sip;
+	union record	*rp;
+	register int	i, j;
+	LOCAL vect_t	base_vect;
+	int		currec;
+	int		s;
+
+	RT_CK_EXTERNAL( ep );
+	rp = (union record *)ep->ext_buf;
+	if( rp->u_id != ID_BSOLID )  {
+		rt_log("rt_spl_import: defective header record\n");
+		return(-1);
+	}
+
+	RT_INIT_DB_INTERNAL( ip );
+	ip->idb_type = ID_BSPLINE;
+	ip->idb_ptr = rt_malloc(sizeof(struct rt_spl_internal), "rt_spl_internal");
+	sip = (struct rt_spl_internal *)ip->idb_ptr;
+	sip->magic = RT_SPL_INTERNAL_MAGIC;
+
+	sip->nsurf = rp->B.B_nsurf;
+	sip->resolution = rp->B.B_resolution;
+
+	sip->surfs = (struct b_spline **)rt_malloc(
+		sip->nsurf * sizeof(struct b_spline *), "spl surfs[]" );
+
+	rp++;
+	for( s = 0; s < sip->nsurf; s++ )  {
+		register fastf_t	*mesh_ptr;
+		int			epv;
+		register dbfloat_t	*vp;
+
+		if( rp->u_id != ID_BSURF )  {
+			rt_log("rt_spl_import: defective surface record\n");
+			return(-1);
+		}
+		/*
+		 * Allocate memory for this surface.
+	 	 */
+		sip->surfs[s] = (struct b_spline *) spl_new(
+			rp->d.d_order[0], rp->d.d_order[1],
+			rp->d.d_kv_size[0], rp->d.d_kv_size[1],
+			rp->d.d_ctl_size[0], rp->d.d_ctl_size[1],
+			rp->d.d_geom_type );
+
+		/* Read in the knot vectors and convert them to the 
+		 * internal representation.
+		 */
+		vp = (dbfloat_t *) &rp[1];
+
+		/* U knots */
+		for( i = 0; i < rp->d.d_kv_size[0]; i++)
+			sip->surfs[s]->u_kv->knots[i] = (fastf_t) *vp++;
+		/* V knots */
+		for( i = 0; i < rp->d.d_kv_size[1]; i++)
+			sip->surfs[s]->v_kv->knots[i] =  (fastf_t) *vp++;
+
+		spl_kvnorm( sip->surfs[s]->u_kv);
+		spl_kvnorm( sip->surfs[s]->v_kv);
+
+		/*
+		 *  Transform the mesh control points in place,
+		 *  in the b-spline data structure.
+		 */
+		vp = (dbfloat_t *) &rp[rp->d.d_nknots+1];
+		mesh_ptr = sip->surfs[s]->ctl_mesh->mesh;
+		epv = rp->d.d_geom_type;
+		i = ( rp->d.d_ctl_size[0] * rp->d.d_ctl_size[1]);
+		if( epv == P3 )  {
+			for( ; i > 0; i--)  {
+				MAT4X3PNT( mesh_ptr, mat, vp);
+				mesh_ptr += P3;
+				vp += P3;
+			}
+		} else if( epv == P4 )  {
+			for( ; i > 0; i--)  {
+				MAT4X4PNT( mesh_ptr, mat, vp);
+				mesh_ptr += P4;
+				vp += P4;
+			}
+		} else {
+			rt_log("rt_spl_import:  %d invalid elements-per-vect\n", epv );
+			return(-1);
+		}
+		rp += 1 + rp->d.d_nknots + rp->d.d_nctls;
+	}
+	return( 0 );
+}
+
+/*
+ *			R T _ S P L _ E X P O R T
+ *
+ *  The name will be added by the caller.
+ *  Generally, only libwdb will set conv2mm != 1.0
+ */
+int
+rt_spl_export( ep, ip, local2mm )
+struct rt_external	*ep;
+struct rt_db_internal	*ip;
+double			local2mm;
+{
+#if 0
+	struct rt_spl_internal	*sip;
+	union record		*rec;
+	point_t		base_pt;
+	int		per_curve_grans;
+	int		cur;		/* current curve number */
+	int		gno;		/* current granule number */
+
+	RT_CK_DB_INTERNAL(ip);
+	if( ip->idb_type != ID_SPL )  return(-1);
+	sip = (struct rt_spl_internal *)ip->idb_ptr;
+	RT_SPL_CK_MAGIC(sip);
+
+	per_curve_grans = (sip->pts_per_curve+7)/8;
+
+	RT_INIT_EXTERNAL(ep);
+	ep->ext_nbytes = (1 + per_curve_grans * sip->ncurves) *
+		sizeof(union record);
+	ep->ext_buf = (genptr_t)rt_calloc( 1, ep->ext_nbytes, "spl external");
+	rec = (union record *)ep->ext_buf;
+
+	rec[0].a.a_id = ID_SPL_A;
+	rec[0].a.a_type = SPL;			/* obsolete? */
+	rec[0].a.a_m = sip->ncurves;
+	rec[0].a.a_n = sip->pts_per_curve;
+	rec[0].a.a_curlen = per_curve_grans;
+	rec[0].a.a_totlen = per_curve_grans * sip->ncurves;
+
+	VMOVE( base_pt, &sip->curves[0][0] );
+	/* The later subtraction will "undo" this, leaving just base_pt */
+	VADD2( &sip->curves[0][0], &sip->curves[0][0], base_pt);
+
+	gno = 1;
+	for( cur=0; cur<sip->ncurves; cur++ )  {
+		register fastf_t	*fp;
+		int			npts;
+		int			left;
+
+		fp = sip->curves[cur];
+		left = sip->pts_per_curve;
+		for( npts=0; npts < sip->pts_per_curve; npts+=8, left -= 8 )  {
+			register int	el;
+			register int	lim;
+			register struct spl_ext	*bp = &rec[gno].b;
+
+			bp->b_id = ID_SPL_B;
+			bp->b_type = SPLCONT;	/* obsolete? */
+			bp->b_n = cur+1;		/* obsolete? */
+			bp->b_ngranule = (npts/8)+1; /* obsolete? */
+
+			lim = (left > 8 ) ? 8 : left;
+			for( el=0; el < lim; el++ )  {
+				vect_t	diff;
+				VSUB2SCALE( diff, fp, base_pt, local2mm );
+				/* NOTE: also type converts to dbfloat_t */
+				VMOVE( &(bp->b_values[el*3]), diff );
+				fp += ELEMENTS_PER_VECT;
+			}
+			gno++;
+		}
+	}
+#endif
+	return(0);
+}
+
+/*
+ *			R T _ S P L _ D E S C R I B E
+ *
+ *  Make human-readable formatted presentation of this solid.
+ *  First line describes type of solid.
+ *  Additional lines are indented one tab, and give parameter values.
+ */
+int
+rt_spl_describe( str, ip, verbose, mm2local )
+struct rt_vls		*str;
+struct rt_db_internal	*ip;
+int			verbose;
+double			mm2local;
+{
+	register int			j;
+	register struct rt_spl_internal	*sip =
+		(struct rt_spl_internal *)ip->idb_ptr;
+	char				buf[256];
+	int				i;
+	int				surf;
+
+	RT_SPL_CK_MAGIC(sip);
+	rt_vls_strcat( str, "arbitrary rectangular solid (SPL)\n");
+
+	sprintf(buf, "\t%d surfaces, resolution=%g\n",
+		sip->nsurf, sip->resolution );
+	rt_vls_strcat( str, buf );
+
+	for( surf=0; surf < sip->nsurf; surf++ )  {
+		register struct b_spline	*sp;
+		register struct b_mesh		*mp;
+
+		sp = sip->surfs[surf];
+		mp = sp->ctl_mesh;
+		sprintf(buf, "\tSurface %d:  order %d * %d, mesh %d * %d\n",
+			surf,
+			sp->order[0],
+			sp->order[1],
+			mp->mesh_size[0],
+			mp->mesh_size[1] );
+		rt_vls_strcat( str, buf );
+
+		sprintf(buf, "\tKnot vector %d + %d\n",
+			sp->u_kv->k_size,
+			sp->u_kv->k_size );
+		rt_vls_strcat( str, buf );
+
+		sprintf(buf, "\tV (%g, %g, %g)\n",
+			mp->mesh[X] * mm2local,
+			mp->mesh[Y] * mm2local,
+			mp->mesh[Z] * mm2local );
+		rt_vls_strcat( str, buf );
+
+		if( !verbose )  continue;
+
+		/* Print out all the points */
+		for( i=0; i < mp->mesh_size[0]; i++ )  {
+			register fastf_t *v = mp->mesh;
+
+			sprintf( buf, "\Row %d:\n", i );
+			rt_vls_strcat( str, buf );
+			for( j=0; j < mp->mesh_size[1]; j++ )  {
+				sprintf(buf, "\t\t(%g, %g, %g)\n",
+					v[X] * mm2local,
+					v[Y] * mm2local,
+					v[Z] * mm2local );
+				rt_vls_strcat( str, buf );
+				v += ELEMENTS_PER_VECT;
+			}
+		}
+	}
+
+	return(0);
+}
+
+/*
+ *			R T _ S P L _ I F R E E
+ *
+ *  Free the storage associated with the rt_db_internal version of this solid.
+ */
+void
+rt_spl_ifree( ip )
+struct rt_db_internal	*ip;
+{
+	register struct rt_spl_internal	*sip;
+	register int			i;
+
+	RT_CK_DB_INTERNAL(ip);
+	sip = (struct rt_spl_internal *)ip->idb_ptr;
+	RT_SPL_CK_MAGIC(sip);
+
+	/*
+	 *  Free storage for faces
+	 */
+	for( i = 0; i < sip->nsurf; i++ )  {
+		spl_sfree( sip->surfs[i] );
+	}
+	sip->magic = 0;		/* sanity */
+	sip->nsurf = 0;
+	rt_free( (char *)sip, "spl ifree" );
+	ip->idb_ptr = GENPTR_NULL;	/* sanity */
 }
