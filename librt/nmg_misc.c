@@ -931,6 +931,29 @@ CONST struct rt_tol *tol;
 	return( outer_shell_count );
 }
 
+/*		M A T _ D E T 3
+ *
+ *	Calculates the determinant of the 3X3 "rotation"
+ *	part of the passed amtrix
+ */
+fastf_t
+mat_det3( m )
+CONST mat_t m;
+{
+	fastf_t sum;
+
+	sum = m[0] * ( m[5]*m[10] - m[6]*m[9] )
+	     -m[1] * ( m[4]*m[10] - m[6]*m[8] )
+	     +m[2] * ( m[4]*m[9] - m[5]*m[8] );
+
+	return( sum );
+}
+
+
+/*		M A T _ D E T E R M I N A N T
+ *
+ *	Calculates the determinant of the 4X4 matrix
+ */
 fastf_t
 mat_determinant( m )
 CONST mat_t m;
