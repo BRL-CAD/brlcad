@@ -291,21 +291,21 @@ do_more:
 		MAT4X3PNT( eye_model, view2model, temp );
 	}  else  {
 		register int i;
-		float d;
+		char number[128];
 
 		/* Visible part is from -1 to +1 in view space */
-		if( scanf( "%f", &d ) != 1 )  goto out;
-		viewsize = d;
-		if( scanf( "%f", &d ) != 1 )  goto out;
-		eye_model[X] = d;
-		if( scanf( "%f", &d ) != 1 )  goto out;
-		eye_model[Y] = d;
-		if( scanf( "%f", &d ) != 1 )  goto out;
-		eye_model[Z] = d;
+		if( scanf( "%s", number ) != 1 )  goto out;
+		viewsize = atof(number);
+		if( scanf( "%s", number ) != 1 )  goto out;
+		eye_model[X] = atof(number);
+		if( scanf( "%s", number ) != 1 )  goto out;
+		eye_model[Y] = atof(number);
+		if( scanf( "%s", number ) != 1 )  goto out;
+		eye_model[Z] = atof(number);
 		for( i=0; i < 16; i++ )  {
-			if( scanf( "%f", &d ) != 1 )
+			if( scanf( "%s", number ) != 1 )
 				goto out;
-			Viewrotscale[i] = d;
+			Viewrotscale[i] = atof(number);
 		}
 	}
 	if( framenumber++ < desiredframe )  goto do_more;
@@ -547,17 +547,3 @@ register struct application *ap;
 #endif
 	}
 }
-
-#ifdef CRAY_COS
-/* Routines that seem to be missing under COS on the XMP. */
-perror(str)
-char *str;
-{
-	fprintf(stderr,"%s:  file access failure\n");
-}
-chmod(str,val)
-char *str;
-{
-	;
-}
-#endif
