@@ -665,6 +665,7 @@ struct bu_mapped_file {
 	long		apbuflen;	/* opt: application-specific buflen */
 	time_t		modtime;	/* date stamp, in case file is modified */
 	int		uses;		/* # ptrs to this struct handed out */
+	int		dont_restat;	/* 1=on subsequent opens, don't re-stat() */
 };
 #define BU_MAPPED_FILE_MAGIC	0x4d617066	/* Mapf */
 #define BU_CK_MAPPED_FILE(_p)	BU_CKMAG(_p, BU_MAPPED_FILE_MAGIC, "bu_mapped_file")
