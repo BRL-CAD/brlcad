@@ -140,8 +140,6 @@ struct rt_i	*rtip;
  *  Returns -
  *	<0	On error
  *	id	On success.
- *
- *  XXX How to handle combinations?
  */
 int
 rt_db_get_internal( ip, dp, dbip, mat )
@@ -160,9 +158,13 @@ CONST mat_t		mat;
 
 	if( mat == NULL )  mat = bn_mat_identity;
 
-	id = rt_id_solid( &ext );
+	if( dp->d_flags & DIR_COMB )
+		id = ID_COMBINATION;
+	else
+		id = rt_id_solid( &ext );
+
 	if( rt_functab[id].ft_import( ip, &ext, mat ) < 0 )  {
-		bu_log("rt_db_get_internal(%s):  solid import failure\n",
+		bu_log("rt_db_get_internal(%s):  import failure\n",
 			dp->d_namep );
 	    	if( ip->idb_ptr )  rt_functab[id].ft_ifree( ip );
 		db_free_external( &ext );
@@ -197,11 +199,7 @@ struct db_i		*dbip;
 	RT_CK_DB_INTERNAL( ip );
 
 	/* Scale change on export is 1.0 -- no change */
-	if( ip->idb_type == ID_COMBINATION )  {
-		ret = rt_comb_v4_export( &ext, ip, 1.0 );
-	} else {
-		ret = rt_functab[ip->idb_type].ft_export( &ext, ip, 1.0 );
-	}
+	ret = rt_functab[ip->idb_type].ft_export( &ext, ip, 1.0 );
 	if( ret < 0 )  {
 		bu_log("rt_db_put_internal(%s):  solid export failure\n",
 			dp->d_namep);
@@ -214,11 +212,8 @@ struct db_i		*dbip;
 		return -1;		/* FAIL */
 	}
 
-	if( ip->idb_type == ID_COMBINATION )  {
-	    	if( ip->idb_ptr )  rt_comb_ifree( ip );
-	} else {
-	    	if( ip->idb_ptr )  rt_functab[ip->idb_type].ft_ifree( ip );
-	}
+    	if( ip->idb_ptr )  rt_functab[ip->idb_type].ft_ifree( ip );
+
 	RT_INIT_DB_INTERNAL(ip);
 	db_free_external( &ext );
 	return 0;			/* OK */
