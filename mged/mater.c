@@ -326,6 +326,7 @@ register struct mater *mp;
 	dir.d_namep = "color_zaprec";
 	dir.d_len = 1;
 	dir.d_addr = mp->mt_daddr;
+	dir.d_flags = 0;
 	if( db_delete( dbip, &dir ) < 0 )  DELETE_ERR_return("color_zaprec");
 	mp->mt_daddr = MATER_NO_ADDR;
 }
