@@ -2275,3 +2275,189 @@ long		*magic_p;
 
 	return( count );
 }
+
+/*	N M G _ M K _ N E W _ F A C E _ F R O M _ L O O P
+ *
+ *  Remove a loopuse from an existing face and construct a new face
+ *  from that loop
+ *
+ *  Returns new faceuse as built by nmg_mf()
+ *
+ */
+struct faceuse *
+nmg_mk_new_face_from_loop( lu )
+struct loopuse *lu;
+{
+	struct shell *s;
+	struct faceuse *fu;
+	struct loopuse *lu1;
+	struct loopuse *lu_mate;
+	int ot_same_loops=0;
+
+	NMG_CK_LOOPUSE( lu );
+
+	if( *lu->up.magic_p != NMG_FACEUSE_MAGIC )
+	{
+		rt_log( "nmg_mk_new_face_from_loop: loopuse is not in a faceuse\n" );
+		return( (struct faceuse *)NULL );
+	}
+
+	fu = lu->up.fu_p;
+	NMG_CK_FACEUSE( fu );
+
+	s = fu->s_p;
+	NMG_CK_SHELL( s );
+
+	/* Count the number of exterior loops in this faceuse */
+	for( RT_LIST_FOR( lu1 , loopuse , &fu->lu_hd ) )
+	{
+		NMG_CK_LOOPUSE( lu1 );
+		if( lu1->orientation == OT_SAME )
+			ot_same_loops++;
+	}
+
+	if( ot_same_loops == 1 && lu->orientation == OT_SAME )
+	{
+		rt_log( "nmg_mk_new_face_from_loop: cannot remove only exterior loop from faceuse\n" );
+		return( (struct faceuse *)NULL );
+	}
+
+	lu_mate = lu->lumate_p;
+
+	/* remove loopuse from faceuse */
+	RT_LIST_DEQUEUE( &lu->l );
+
+	/* remove its mate from faceuse mate */
+	RT_LIST_DEQUEUE( &lu_mate->l );
+
+	/* insert these loops in the shells list of wire loops
+	 * put the original loopuse at the head of the list
+	 * so that it will end up as the returned faceuse from "nmg_mf"
+	 */
+	RT_LIST_INSERT( &s->lu_hd , &lu_mate->l );
+	RT_LIST_INSERT( &s->lu_hd , &lu->l );
+
+	/* set the "up" pointers to the shell */
+	lu->up.s_p = s;
+	lu_mate->up.s_p = s;
+
+	/* Now make the new face */
+	return( nmg_mf( lu ) );
+}
+
+/*
+ *			R T _ D I S T _ P T 3 _ L I N E 3
+ *
+ *  Find the distance from a point P to a line described
+ *  by the endpoint A and direction dir, and the point of closest approach (PCA).
+ *
+ *			P
+ *		       *
+ *		      /.
+ *		     / .
+ *		    /  .
+ *		   /   . (dist)
+ *		  /    .
+ *		 /     .
+ *		*------*-------->
+ *		A      PCA	dir
+ *
+ *  There are three distinct cases, with these return codes -
+ *	0	P is within tolerance of point A.  *dist = 0, pca=A.
+ *	1	P is within tolerance of line.  *dist = 0, pca=computed.
+ *	2	P is "above/below" line.  *dist=|PCA-P|, pca=computed.
+ *
+ *
+ * XXX For efficiency, a version of this routine that provides the
+ * XXX distance squared would be faster.
+ */
+int
+rt_dist_pt3_line3( dist, pca, a, dir, p, tol )
+fastf_t		*dist;
+point_t		pca;
+CONST point_t	a, p;
+CONST vect_t	dir;
+CONST struct rt_tol *tol;
+{
+	vect_t	AtoP;		/* P-A */
+	vect_t	unit_dir;	/* unitized dir vector */
+	fastf_t	A_P_sq;		/* |P-A|**2 */
+	fastf_t	t;		/* distance along ray of projection of P */
+	fastf_t	dsq;		/* sqaure of distance from p to line */
+
+	RT_CK_TOL(tol);
+
+	/* Check proximity to endpoint A */
+	VSUB2(AtoP, p, a);
+	if( (A_P_sq = MAGSQ(AtoP)) < tol->dist_sq )  {
+		/* P is within the tol->dist radius circle around A */
+		VMOVE( pca, a );
+		*dist = 0.0;
+		return( 0 );
+	}
+
+	VMOVE( unit_dir , dir );
+	VUNITIZE( unit_dir );
+
+	/* compute distance (in actual units) along line to PROJECTION of
+	 * point p onto the line: point pca
+	 */
+	t = VDOT(AtoP, unit_dir);
+
+	VJOIN1( pca , a , t , unit_dir );
+	if( (dsq = A_P_sq - t*t) < tol->dist_sq )
+	{
+		/* P is within tolerance of the line */
+		*dist = 0.0;
+		return( 1 );
+	}
+	else
+	{
+		/* P is off line */
+		*dist = sqrt( dsq );
+		return( 2 );
+	}
+}
+
+/*
+ *	N M G _ M V _ S H E L L _ T O _ R E G I O N
+ *
+ *  Move a shell from one nmgregion to another.
+ *  Will bomb if shell and region aren't in the same model.
+ *
+ *  returns:
+ *	0 - all is well
+ *	1 - nmgregion that gave up the shell is now empty!!!!
+ *
+ */
+int
+nmg_mv_shell_to_region( s , r )
+struct shell *s;
+struct nmgregion *r;
+{
+	int ret_val;
+
+	NMG_CK_SHELL( s );
+	NMG_CK_REGION( r );
+
+	if( s->r_p == r )
+	{
+		rt_log( "nmg_mv_shell_to_region: Attempt to move shell to region it is already in\n" );
+		return( 0 );
+	}
+
+	if( nmg_find_model( &s->l.magic ) != nmg_find_model( &r->l.magic ) )
+		rt_bomb( "nmg_mv_shell_to_region: Cannot move shell to a different model\n" );
+
+	RT_LIST_DEQUEUE( &s->l );
+	if( RT_LIST_IS_EMPTY( &s->r_p->s_hd ) )
+		ret_val = 1;
+	else
+		ret_val = 0;
+
+	RT_LIST_APPEND( &r->s_hd , &s->l );
+
+	s->r_p = r;
+
+	return( ret_val );
+}
