@@ -93,11 +93,13 @@ extern int	max_bounces;		/* max reflection/recursion level */
 extern int	max_ireflect;		/* max internal reflection level */
 /***** end variables shared with refract.c *****/
 
+
 /***** variables shared with viewg3.c *****/
 struct bu_vls   ray_data_file;  /* file name for ray data output */
 /***** end variables shared with viewg3.c *****/
 
 /***** variables shared with g_cline.c ******/
+
 extern fastf_t rt_cline_radius;
 /***** end variables shared with g_cline.c ******/
 

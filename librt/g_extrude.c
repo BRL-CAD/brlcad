@@ -118,7 +118,7 @@ struct rt_i		*rtip;
 	int i, j;
 	int vert_count;
 	int curr_vert;
-	
+
 	eip = (struct rt_extrude_internal *)ip->idb_ptr;
 	RT_EXTRUDE_CK_MAGIC( eip );
 	skt = eip->skt;
@@ -173,7 +173,7 @@ struct rt_i		*rtip;
 		vert_count++;
 	}
 
-	/* apply the rotation matrix  to all the vertices */
+	/* apply the rotation matrix to all the vertices, and start bounding box calculation */
 	if( vert_count )
 		extr->verts = (point_t *)bu_calloc( vert_count, sizeof( point_t ), "extr->verts" );
 	VSETALL( stp->st_min, MAX_FASTF );
@@ -391,7 +391,11 @@ vect_t ray_dir, ra, rb;
 	rb_sq = V2DOT( rb, rb );
 	rb_4 = rb_sq * rb_sq;
 	if( ra_4 < SMALL_FASTF || rb_4 < SMALL_FASTF )
+	{
+		bu_log( "ray (%g %g %g) -> (%g %g %g), semi-axes  = (%g %g %g) and (%g %g %g), center = (%g %g %g)\n",
+			V3ARGS( ray_start ), V3ARGS( ray_dir ), V3ARGS( ra ), V3ARGS( rb ), V3ARGS( center ) );
 		bu_bomb( "ERROR: isect_line2_ellipse: semi-axis length is too small!!!\n" );
+	}
 
 	dda = V2DOT( ray_dir, ra );
 	ddb = V2DOT( ray_dir, rb );
@@ -401,11 +405,10 @@ vect_t ray_dir, ra, rb;
 	c = pmcda*pmcda/ra_4 + pmcdb*pmcdb/rb_4 - 1.0;
 
 	disc = b*b - 4.0*a*c;
-
 	if( disc < 0.0 )
 		return( 0 );
 
-	if( disc == 0.0 )
+	if( disc <= SMALL_FASTF )
 	{
 		dist[0] = -b/(2.0*a);
 		return( 1 );
@@ -575,6 +578,7 @@ int orientation;	/* 0 -> ccw, !0 -> cw */
 }
 
 
+
 /*
  *  			R T _ E X T R U D E _ S H O T
  *  
@@ -693,6 +697,7 @@ struct seg		*seghead;
 
 				if( dist[1] > 1.0 || dist[1] < 0.0 )
 					continue;
+
 				dists = dist;
 				dist_count = 1;
 				free_dists = 0;
@@ -750,7 +755,6 @@ struct seg		*seghead;
 				if( NEAR_ZERO( diff, extr_tol.dist ) )
 				{
 					int n;
-
 					for( n=k ; n<dist_count-1 ; n++ )
 						dists[n] = dists[n+1];
 					dist_count--;

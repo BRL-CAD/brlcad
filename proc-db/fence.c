@@ -122,6 +122,7 @@ void argumentHelp(fp, progname, message)
      char *progname;
      char *message;
 {
+
   fflush(stdout);
   if (message) {
     fprintf(fp, "%s\n", message);

@@ -510,7 +510,6 @@ CONST struct bn_tol		*tol;
                                 rel = ttol->abs;
                 }
 
-
 		if( n->order[0] < 3 || n->order[1] < 3 ) {
 			/* cannot use rt_nurb_par_edge() in this case */
 			tess = 0.25; /* hack for now */

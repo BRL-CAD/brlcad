@@ -168,7 +168,7 @@ char	*argv[];
 		  status = TCL_OK;
 	  }
   }else
-    status = TCL_ERROR;
+	  status = TCL_ERROR;
 
   (void)unlink(tmpfil);
   bu_free((genptr_t)av, "f_edcodes: av");

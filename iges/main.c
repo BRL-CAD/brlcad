@@ -58,7 +58,7 @@ extern char	version[];
 static int do_splines=0;
 static int do_drawings=0;
 static int trimmed_surf=0;
-int do_bots=0;
+int do_bots=1;
 
 static char *iges_file;
 
@@ -139,7 +139,7 @@ char *argv[];
 	char *output_file=(char *)NULL;
 
 
-	while( (c=getopt( argc , argv , "3dntbo:x:X:N:" )) != EOF )
+	while( (c=getopt( argc , argv , "3dntpo:x:X:N:" )) != EOF )
 	{
 		switch( c )
 		{
@@ -159,8 +159,8 @@ char *argv[];
 			case 't':
 				trimmed_surf = 1;
 				break;
-			case 'b':
-				do_bots = 1;
+			case 'p':
+				do_bots = 0;
 				break;
 			case 'N':
 				solid_name = optarg;

@@ -8,7 +8,7 @@
 #define SRCDIR	rt
 #define PRODUCTS	rt rtrad rtpp rtray rtshot rtwalk rtcheck \
 			rtg3 rtcell rtxray rthide rtfrac rtrange \
-			rtregis rtscale rtsil rtweight rtedge
+			rtregis rtscale rtsil rtweight 
 #define	SRCSUFF	.c
 #define MANSECTION	1
 
@@ -108,12 +108,7 @@ rthide:	RTHIDE_OBJ LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DEP
 	CC CFLAGS -c vers.c
 	CC LDFLAGS RTHIDE_OBJ vers.o LIBRT LIBBN LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES LIBES -o rthide
 
-#define RTEDGE_OBJ	RTUIF viewedge.o
 
-rtedge:	RTEDGE_OBJ LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DEP
-	newvers.sh version "RT LGT-Style Hidden-Line Renderer"
-	CC CFLAGS -c vers.c
-	CC LDFLAGS RTEDGE_OBJ vers.o LIBRT LIBBN LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES LIBES -o rtedge
 
 #define RTFRAC_OBJ	RTUIF viewfrac.o
 

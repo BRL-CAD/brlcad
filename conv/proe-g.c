@@ -1253,8 +1253,11 @@ char	*argv[];
 {
 	register int c;
 
-        /* XXX These need to be improved */
         tol.magic = BN_TOL_MAGIC;
+
+	/* this value selected as a resaonable compromise between eliminating
+	 * needed faces and keeping degenerate faces
+	 */
         tol.dist = 0.00001;
         tol.dist_sq = tol.dist * tol.dist;
         tol.perp = 1e-6;

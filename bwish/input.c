@@ -32,10 +32,11 @@
  *
  */
 
-#include <stdio.h>
-#include <ctype.h>
-#include <sys/time.h>
 #include <time.h>
+#if defined(IRIX) && IRIX == 5
+#define _BSD_COMPAT
+#endif
+#include <sys/time.h>
 #include "conf.h"
 #include "tcl.h"
 

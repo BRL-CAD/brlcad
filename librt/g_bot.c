@@ -296,7 +296,6 @@ struct rt_i		*rtip;
 	return 0;
 }
 
-
 /*
  *			R T _ B O T _ P R I N T
  */
@@ -2217,7 +2216,6 @@ char			**argv;
 		{
 			if( argv[0][2] == '\0' )
 			{
-				bu_log( "fm=%s\n", argv[1] );
 				if( bot->face_mode )
 					bu_free( (char *)bot->face_mode, "bot->face_mode" );
 				bot->face_mode = bu_hex_to_bitv( argv[1] );
@@ -2301,7 +2299,8 @@ char			**argv;
 			  return( TCL_ERROR );
 			}
 		      v_str = Tcl_GetStringFromObj( list, NULL );
-		       while( isspace( *v_str ) ) v_str++;
+		      while( isspace( *v_str ) ) v_str++;
+
 		      bot->vertices[i*3] = atof( v_str );
 		      v_str = bu_next_token( v_str );
 		      if( *v_str == '\0' )
@@ -2340,7 +2339,8 @@ char			**argv;
 			for( i=0 ; i<len ; i++ )
 			  {
 			    f_str = Tcl_GetStringFromObj( obj_array[i], NULL );
-			     while( isspace( *f_str ) ) f_str++;
+			    while( isspace( *f_str ) ) f_str++;
+
 			    if( *f_str == '\0' )
 			      {
 				Tcl_SetResult( interp, "incomplete list of faces", TCL_STATIC );
@@ -2376,7 +2376,7 @@ char			**argv;
 			    return( TCL_ERROR );
 			  }
 			f_str = Tcl_GetStringFromObj( list, NULL );
-			while( isspace( *f_str ) ) f_str++;
+		      	while( isspace( *f_str ) ) f_str++;
 			bot->faces[i*3] = atoi( f_str );
 			f_str = bu_next_token( f_str );
 			if( *f_str == '\0' )

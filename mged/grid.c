@@ -90,6 +90,7 @@ set_grid_draw()
 	  grid_state->gr_draw = 0;
 	  return;
   }
+
   grid_set_dirty_flag();
 
   /* This gets done at most one time. */

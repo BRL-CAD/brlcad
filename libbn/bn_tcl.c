@@ -184,6 +184,7 @@ CONST vect_t dir;
 	VJOIN1( o, pnt, scale, dir );
 }
 
+
 static void bn_vblend( a, b, c, d, e )
 point_t a;
 fastf_t b;
@@ -191,7 +192,7 @@ point_t c;
 fastf_t d;
 point_t e;
 {
-	VBLEND2( a, b, c, d, e )
+	VBLEND2( a, b, c, d, e );
 }
 
 /*
@@ -288,6 +289,7 @@ char **argv;
 
 		VJOIN1( o, b, c, d );	/* bn_vjoin1( o, b, c, d ) */
 		bn_encode_vect(&result, o);
+
 	} else if ( math_func == bn_vblend) {
 		point_t a, c, e;
 		fastf_t b, d;
@@ -304,6 +306,7 @@ char **argv;
 
 		VBLEND2( a, b, c, d, e )
 		bn_encode_vect( &result, a );
+
 	} else if (math_func == bn_mat_ae) {
 		mat_t o;
 		double az, el;

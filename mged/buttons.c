@@ -45,14 +45,14 @@ extern void set_scroll_private();	/* defined in set.c */
 extern void adc_set_scroll();		/* defined in adc.c */
 
 /*
- * This flag indicates that SOLID editing is in effect.
+ * This flag indicates that Primitive editing is in effect.
  * edobj may not be set at the same time.
  * It is set to the 0 if off, or the value of the button function
  * that is currently in effect (eg, BE_S_SCALE).
  */
 static int	edsol;
 
-/* This flag indicates that OBJECT editing is in effect.
+/* This flag indicates that Matrix editing is in effect.
  * edsol may not be set at the same time.
  * Value is 0 if off, or the value of the button function currently
  * in effect (eg, BE_O_XY).
@@ -145,7 +145,7 @@ struct menu_item second_menu[] = {
 	{ "", (void (*)())NULL, 0 }
 };
 struct menu_item sed_menu[] = {
-	{ "*SOLID EDIT*", btn_head_menu, 2 },
+	{ "*PRIM EDIT*", btn_head_menu, 2 },
 	{ "Edit Menu", btn_item_hit, BE_S_EDIT },
 	{ "Rotate", btn_item_hit, BE_S_ROTATE },
 	{ "Translate", btn_item_hit, BE_S_TRANS },
@@ -154,7 +154,7 @@ struct menu_item sed_menu[] = {
 };
 
 struct menu_item oed_menu[] = {
-	{ "*OBJ EDIT*", btn_head_menu, 2 },
+	{ "*MATRIX EDIT*", btn_head_menu, 2 },
 	{ "Scale", btn_item_hit, BE_O_SCALE },
 	{ "X Move", btn_item_hit, BE_O_X },
 	{ "Y Move", btn_item_hit, BE_O_Y },

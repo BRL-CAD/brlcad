@@ -197,7 +197,7 @@ f_mouse(
 	  ipathpos = illump->s_fullpath.fp_len-1 - (
 	       (ypos+(int)GED_MAX) * (illump->s_fullpath.fp_len) / (int)GED_RANGE);
 	  if( ipathpos != isave )
-	    view_state->vs_flag++;
+	    view_state->vs_flag = 1;
 	  return TCL_OK;
 
 	} else switch( state )  {

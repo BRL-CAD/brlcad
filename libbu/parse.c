@@ -1587,10 +1587,14 @@ struct bu_vls *vls;
 				if( *iptr == '\0' )
 					done = 1;
 				*iptr = '\0';
+
 				bu_vls_putc( vls, '{' );
+
 				if( bu_shader_to_tcl_list( shade1, vls ) )
 					return( 1 );
+
 				bu_vls_strcat( vls, "} " );
+
 				if( !done )
 					iptr++;
 			}
@@ -1850,6 +1854,7 @@ char *params;
 		}
 		else
 			bu_vls_strcat( vls, value );
+
 		bu_free( keyword, "bu_key_val_to_vls() keyword");
 		bu_free( value, "bu_key_val_to_vls() value");
 	}

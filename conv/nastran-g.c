@@ -128,7 +128,7 @@ static long			bulk_data_start_line;	/* line number where BULK DATA begins */
 static struct model		*nmg_model;	/* NMG solid for surfaces */
 static struct shell		*nmg_shell;	/* NMG shell */
 static struct bn_tol		tol;		/* tolerance for NMG's */
-static int			polysolids=0;	/* flag fro outputting polysolids rather than NMG's */
+static int			polysolids=1;	/* flag for outputting NMG's rather than BOT's */
 
 HIDDEN int get_next_record( FILE *fd, int call_input, int write_flag );
 HIDDEN int convert_pt( const point_t pt, struct coord_sys *cs, point_t out_pt );
@@ -1194,7 +1194,7 @@ char *argv[];
 	tol.perp = 1e-6;
 	tol.para = 1 - tol.perp;
 
-	while( (c=getopt( argc, argv, "x:X:t:pi:o:m")) != EOF )
+	while( (c=getopt( argc, argv, "x:X:t:ni:o:m")) != EOF )
 	{
 		switch( c )
 		{
@@ -1211,8 +1211,8 @@ char *argv[];
 			case 't':		/* calculational tolerance */
 				tol.dist = atof( optarg );
 				tol.dist_sq = tol.dist * tol.dist;
-			case 'p':
-				polysolids = 1;
+			case 'n':
+				polysolids = 0;
 				break;
 			case 'm':
 				units = MM;

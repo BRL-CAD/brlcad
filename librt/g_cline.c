@@ -232,6 +232,7 @@ struct seg		*seghead;
 	if( dist[2] > reff*reff )
 		return( 0 );	/* missed */
 
+
 	/* Exactly ==0 and ==1 are hits, not misses */
 	if( dist[0] < 0.0 || dist[0] > 1.0 )
 		return( 0 );	/* missed */

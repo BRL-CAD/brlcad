@@ -250,39 +250,37 @@ set -S2 "/bin/sh"
 /*		Warning 1048 WAS "cast between pointer-to-object and pointer-to-function */
 /*		Warning 1110 is "statement is unreachable" */
 /*		Warning 1048 is "cast between pointer-to-object and pointer-to-function" */
-#		define	OPTIMIZER	-O3 \
-					-OPT:Olimit=4096 \
-					-OPT:const_copy_limit=16000 \
-					-use_readonly_const \
-					-woff 1203
+#		define	OPTIMIZER	-O2 \
+					-Olimit 2000 \
+					-use_readonly_const
 #	else
 /*		This version for debugging with DBX */
 /*		-fullwarn is pretty verbose */
 #		define	OPTIMIZER	-g -use_readonly_const
 #	endif
-#	define	GFLAG	-n32 -mips4 -KPIC -G 7
+#	define	GFLAG	-o32 -KPIC -G 0
 #	define  XINCDIR /usr/include/X11
-#	define	XLIBDIR /usr/lib32
+#	define	XLIBDIR /usr/lib
 #	if 1	/* PRODUCTION=1 */
 /*		Shared library version support */
 #		define	ARCH_SUF	so
 #		define	LIBVERS ../sh/sharedlibvers.sh
-#		define	BUILD_LIBRARY	ld -mips4 -shared -o
+#		define	LDSHARED	ld -o32 -shared
+#		define	BUILD_LIBRARY	LDSHARED -o
 #		define	RANLIB	true
-#		define	STANDARD_LIBES	-lm -lmalloc -lc -rpath LIBDIR:/usr/lib32
+#		define	STANDARD_LIBES	-lm -lmalloc -lc -rpath LIBDIR:/usr/lib
 /*		When debugging libraries, -m and -v are helpful LD_OPTS */
 /*		Warning 84:  library not used for resolving any symbol */
 /*		Warning 85: definition in one library preempts that in another */
 /*		Warning 134: weak definition in one library preempts that in another */
-#		define	LD_OPTS		GFLAG -Wl,-woff,84 -Wl,-woff,85 -Wl,-woff,134
 #	else
 /*		Static linked executables */
 #		define	RANLIB	ranlib5.sh
-#		define	STANDARD_LIBES	-n32 -lm -lmalloc -lc
-#		define	LD_OPTS		-n32 GFLAG -Wl,-woff,84 -Wl,-woff,85 -Wl,-woff,134
+#		define	STANDARD_LIBES	-o32 -lm -lmalloc -lc
 #	endif
+#	define	LD_OPTS		GFLAG 
 /* -ansiposix	ANSI+POSIX mode is used over ANSI, to get fdopen(), etc, defined. */
-#	define  CC_OPTS		GFLAG -xansi -DIRIX=6 -Wl,-woff,1048
+#	define  CC_OPTS		GFLAG -xansi -DIRIX=6 
 #	define	LGT_CONFIG	GFLAG
 #	define	LIBFB_OBJS	if_remote if_ab if_X if_X24 if_ogl
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DBSD=43 -DIF_X -I''XINCDIR -DIF_OGL
@@ -292,7 +290,7 @@ set -S2 "/bin/sh"
 #	define	LIBDM_LIBES	LIBTK LIBTCL LIBTK_LIBES LIBTCL_LIBES
 #	define	MGED_OBJS	dm-X dm-ogl dm-generic
 #	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_X -DDM_OGL -I''XINCDIR
-#	define	MGED_LIBES	LIBDM LIBDM_LIBES LIBFB LIBFB_LIBES -lXi -lXext 
+#	define	MGED_LIBES	LIBDM LIBDM_LIBES LIBFB LIBFB_LIBES -lXi -lXext
 #	define	BWISH_LIBES	MGED_LIBES LIBTCLCAD
 #	define	BWISH_CONFIG	-I''XINCDIR
 #	define	LIBDM_SAMPLE_LIBES \$"(LIBDM)" \$"(LIBTK)" \$"(LIBTCL)" \$"(LIBTK_LIBES)" \$"(LIBTCL_LIBES)" \$"(XLIBDIR)" -lXi -lXext -lX11 -lGL
@@ -366,7 +364,7 @@ set -S2 "/bin/sh"
 #	define	LIBDM_LIBES	LIBTK LIBTCL LIBTK_LIBES LIBTCL_LIBES
 #	define	MGED_OBJS	dm-X dm-ogl dm-generic
 #	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_X -DDM_OGL -I''XINCDIR
-#	define	MGED_LIBES	LIBDM LIBDM_LIBES LIBFB LIBFB_LIBES -lXi -lXext 
+#	define	MGED_LIBES	LIBDM LIBDM_LIBES LIBFB LIBFB_LIBES -lXi -lXext
 #	define	BWISH_LIBES	MGED_LIBES LIBTCLCAD
 #	define	BWISH_CONFIG	-I''XINCDIR
 #	define	LIBDM_SAMPLE_LIBES \$"(LIBDM)" \$"(LIBTK)" \$"(LIBTCL)" \$"(LIBTK_LIBES)" \$"(LIBTCL_LIBES)" \$"(XLIBDIR)" -lXi -lXext -lX11 -lGL
@@ -434,7 +432,7 @@ set -S2 "/bin/sh"
 #	define	LIBDM_LIBES	LIBTK LIBTCL LIBTK_LIBES LIBTCL_LIBES
 #	define	MGED_OBJS	dm-X dm-ogl dm-generic
 #	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_X -DDM_OGL -I''XINCDIR
-#	define	MGED_LIBES	LIBDM LIBDM_LIBES LIBFB LIBFB_LIBES -lXi -lXext 
+#	define	MGED_LIBES	LIBDM LIBDM_LIBES LIBFB LIBFB_LIBES -lXi -lXext
 #	define	BWISH_LIBES	MGED_LIBES LIBTCLCAD
 #	define	BWISH_CONFIG	-I''XINCDIR
 #	define	LIBDM_SAMPLE_LIBES \$"(LIBDM)" \$"(LIBTK)" \$"(LIBTCL)" \$"(LIBTK_LIBES)" \$"(LIBTCL_LIBES)" \$"(XLIBDIR)" -lXi -lXext -lX11 -lGL
@@ -449,7 +447,7 @@ set -S2 "/bin/sh"
 #if defined(__CAKE__m4i64)
 /*	Silicon Graphics 4D, running IRIX64 6.4 (on a MIPS4 machine) */
 #	undef	sgi
-#	if 1 /*	PRODUCTION=1 */
+#	if 1
 #		define M4I64_USE_64_BIT
 #	else
 /*		Old versions of MUVES can't use the 64-bit compiler */
@@ -485,7 +483,7 @@ set -S2 "/bin/sh"
 				-woff 1429,1203,1048,1110,1412,1167,1209 \
 				-Wl,-w
 #			else
-#				define	OPTIMIZER	-O2 \
+#				define	OPTIMIZER	-O2 -Olimit 2000 \
 				-use_readonly_const \
 				-woff 1429,1203,1048,1110,1412,1167,1209 \
 				-Wl,-w
@@ -551,7 +549,7 @@ set -S2 "/bin/sh"
 #	define	LIBDM_LIBES	LIBTK LIBTCL LIBTK_LIBES LIBTCL_LIBES
 #	define	MGED_OBJS	dm-X dm-ogl dm-generic
 #	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_X -DDM_OGL -I''XINCDIR
-#	define	MGED_LIBES	LIBDM LIBDM_LIBES LIBFB LIBFB_LIBES -lXi -lXext 
+#	define	MGED_LIBES	LIBDM LIBDM_LIBES LIBFB LIBFB_LIBES -lXi -lXext
 #	define	BWISH_LIBES	MGED_LIBES LIBTCLCAD
 #	define	BWISH_CONFIG	-I''XINCDIR
 #	define	LIBDM_SAMPLE_LIBES \$"(LIBDM)" \$"(LIBTK)" \$"(LIBTCL)" \$"(LIBTK_LIBES)" \$"(LIBTCL_LIBES)" \$"(XLIBDIR)" -lXi -lXext -lX11 -lGL
@@ -667,7 +665,7 @@ set -S2 "/bin/sh"
 #	define	LIBDM_LIBES	LIBTK LIBTCL LIBTK_LIBES LIBTCL_LIBES
 #	define	MGED_OBJS	dm-X dm-ogl dm-generic
 #	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_X -DDM_OGL -I''XINCDIR
-#	define	MGED_LIBES	LIBDM LIBDM_LIBES LIBFB LIBFB_LIBES -lXi -lXext 
+#	define	MGED_LIBES	LIBDM LIBDM_LIBES LIBFB LIBFB_LIBES -lXi -lXext
 #	define	BWISH_LIBES	MGED_LIBES LIBTCLCAD
 #	define	BWISH_CONFIG	-I''XINCDIR
 #	define	LIBDM_SAMPLE_LIBES \$"(LIBDM)" \$"(LIBTK)" \$"(LIBTCL)" \$"(LIBTK_LIBES)" \$"(LIBTCL_LIBES)" \$"(XLIBDIR)" -lXi -lXext -lX11 -lGL
@@ -1069,17 +1067,6 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	BWISH_LIBES	MGED_LIBES LIBTCLCAD
 #	define	BWISH_CONFIG	-I''XINCDIR
 #	define	LIBDM_SAMPLE_LIBES \$"(LIBDM)" \$"(LIBTK)" \$"(LIBTCL)" \$"(LIBTK_LIBES)" \$"(LIBTCL_LIBES)" \$"(XLIBDIR)" -lXi -lXext -lX11
-/*	Use the system-provided TCL and Tk libraries */
-/*	XXX What about the system-provided itcl library? */
-#	if 0	/* PRODUCTION=1 */
-#		define	LIBTCL_DIR	_use_system_tcl_
-#		define	LIBTCL_USE_SYSTEM 
-#		define	LIBTCL		-L/usr/local/lib -ltcl82
-#		define	LIBTCL_DEP	/**/
-#		define	LIBTK_DIR	_use_system_tk_
-#		define	LIBTK		-L/usr/local/lib -ltk82
-#		define	LIBTK_DEP	/**/
-#	endif
 /*	Use the system-provided libz and libpng */
 #	define	LIBZ_DIR	_use_system_z_
 #	define	LIBZ		-lz

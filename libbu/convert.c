@@ -386,6 +386,209 @@ bu_cv_itemlen(register int cookie)
 	return net_size_table[fmt];
 }
 
+
+/*	bu_cv_ntohss	Network TO Host Signed Short
+ *
+ * It is assumed that this routine will only be called if there is
+ * real work to do.  Ntohs does no checking to see if it is reasonable
+ * to do any conversions.
+ *
+ * Entry:
+ *	in	generic pointer for input.
+ *	count	number of shorts to be generated.
+ *	out	short pointer for output
+ *	size	number of bytes of space reserved for out.
+ *
+ * Exit:
+ *	returns	number of conversions done.
+ *
+ * Calls:
+ *	none.
+ *
+ * Method:
+ *	Straight-forward.
+ */
+int
+bu_cv_ntohss(out, size, in, count)
+register SIGNED short	*out;
+int			size;
+register genptr_t	in;
+int			count;
+{
+	int limit;
+	register int i;
+
+	limit = size / sizeof(SIGNED short);
+	if (limit < count) count = limit;
+
+	for (i=0; i<count; i++) {
+		*out++ = ((SIGNED char *)in)[0] << 8 | ((unsigned char *)in)[1];
+		/* XXX This needs sign extension here for the case of
+		 * XXX a negative 2-byte input on a 4 or 8 byte machine.
+		 * XXX The "signed char" trick isn't enough.
+		 * XXX Use your Cyber trick w/magic numbers or something.
+		 */
+		in = ((char *)in) + 2;
+	}
+	return(count);
+}
+int
+bu_cv_ntohus(out, size, in, count)
+register unsigned short	*out;
+int			size;
+register genptr_t	in;
+int			count;
+{
+	int limit;
+	register int i;
+
+	limit = size / sizeof(unsigned short);
+	if (limit < count) count = limit;
+
+	for (i=0; i<count; i++) {
+		*out++ = ((unsigned char *)in)[0]<<8 |
+		    ((unsigned char *)in)[1];
+		in = ((char *)in) + 2;
+	}
+	return(count);
+}
+int
+bu_cv_ntohsl(out, size, in, count)
+register SIGNED long int	*out;
+int				size;
+register genptr_t		in;
+int				count;
+{
+	int limit;
+	register int i;
+
+	limit = size / sizeof(SIGNED long int);
+	if (limit < count) count = limit;
+
+	for (i=0; i<count; i++) {
+		*out++ = ((SIGNED char *)in)[0] << 24 |
+		    ((unsigned char *)in)[1] << 16 | 
+		    ((unsigned char *)in)[2] << 8  |
+		    ((unsigned char *)in)[3];
+		/* XXX Sign extension here */
+		in = ((char *)in) + 4;
+	}
+	return(count);
+}
+int
+bu_cv_ntohul(out, size, in, count)
+register unsigned long int	*out;
+int				size;
+register genptr_t		in;
+int				count;
+{
+	int limit;
+	register int i;
+
+	limit = size / sizeof(unsigned long int);
+	if (limit < count) count = limit;
+
+	for (i=0; i<count; i++) {
+		*out++ = ((unsigned char *)in)[0] << 24 |
+		    ((unsigned char *)in)[1] << 16 |
+		    ((unsigned char *)in)[2] <<  8 |
+		    ((unsigned char *)in)[3];
+		in = ((char *)in) + 4;
+	}
+	return(count);
+}
+
+/*****/
+int
+bu_cv_htonss(out, size, in, count)
+genptr_t		out;
+int			size;
+register short		*in;
+int			count;
+{
+	int		limit;
+	register int	i;
+	register unsigned char *cp = (unsigned char *)out;
+	register int	val;
+
+	limit = size / 2;
+	if( count > limit )  count = limit;
+
+	for (i=0; i<count; i++) {
+		*cp++ = (val = *in++)>>8;
+		*cp++ = val;
+	}
+	return(count);
+}
+int
+bu_cv_htonus(out, size, in, count)
+genptr_t		out;
+int			size;
+register unsigned short	*in;
+int			count;
+{
+	int		limit;
+	register int	i;
+	register unsigned char *cp = (unsigned char *)out;
+	register int	val;
+
+	limit = size / 2;
+	if( count > limit )  count = limit;
+
+	for (i=0; i<count; i++) {
+		*cp++ = (val = *in++)>>8;
+		*cp++ = val;
+	}
+	return(count);
+}
+int
+bu_cv_htonsl(out, size, in, count)
+genptr_t		out;
+int			size;
+register long		*in;
+int			count;
+{
+	int		limit;
+	register int	i;
+	register unsigned char *cp = (unsigned char *)out;
+	register long	val;
+
+	limit = size / 4;
+	if( count > limit )  count = limit;
+
+	for (i=0; i<count; i++) {
+		*cp++ = (val = *in++)>>24;
+		*cp++ = val>>16;
+		*cp++ = val>> 8;
+		*cp++ = val;
+	}
+	return(count);
+}
+int
+bu_cv_htonul(out, size, in, count)
+genptr_t		out;
+int			size;
+register unsigned long	*in;
+int			count;
+{
+	int		limit;
+	register int	i;
+	register unsigned char *cp = (unsigned char *)out;
+	register long	val;
+
+	limit = size / 4;
+	if( count > limit )  count = limit;
+
+	for (i=0; i<count; i++) {
+		*cp++ = (val = *in++)>>24;
+		*cp++ = val>>16;
+		*cp++ = val>> 8;
+		*cp++ = val;
+	}
+	return(count);
+}
+
+
 /* bu_cv_w_cookie - convert with cookie
  *
  * Entry:
@@ -473,13 +676,8 @@ bu_cv_itemlen(register int cookie)
  *	done
  */
 int
-bu_cv_w_cookie(out, outcookie, size, in, incookie, count)
-genptr_t out;
-int	outcookie;
-int	size;
-genptr_t in;
-int	incookie;
-int	count;
+bu_cv_w_cookie(genptr_t out, int outcookie, int	size,
+	       genptr_t in,  int incookie,  int	count)
 {
 	int	work_count = 4096;
 	int	number_done = 0;
@@ -860,205 +1058,4 @@ int	count;
 	bu_free(t2, "vert.c: t2");
 	bu_free(t3, "vert.c: t3");
 	return(number_done);
-}
-
-/*	bu_cv_ntohss	Network TO Host Signed Short
- *
- * It is assumed that this routine will only be called if there is
- * real work to do.  Ntohs does no checking to see if it is reasonable
- * to do any conversions.
- *
- * Entry:
- *	in	generic pointer for input.
- *	count	number of shorts to be generated.
- *	out	short pointer for output
- *	size	number of bytes of space reserved for out.
- *
- * Exit:
- *	returns	number of conversions done.
- *
- * Calls:
- *	none.
- *
- * Method:
- *	Straight-forward.
- */
-int
-bu_cv_ntohss(out, size, in, count)
-register SIGNED short	*out;
-int			size;
-register genptr_t	in;
-int			count;
-{
-	int limit;
-	register int i;
-
-	limit = size / sizeof(SIGNED short);
-	if (limit < count) count = limit;
-
-	for (i=0; i<count; i++) {
-		*out++ = ((SIGNED char *)in)[0] << 8 | ((unsigned char *)in)[1];
-		/* XXX This needs sign extension here for the case of
-		 * XXX a negative 2-byte input on a 4 or 8 byte machine.
-		 * XXX The "signed char" trick isn't enough.
-		 * XXX Use your Cyber trick w/magic numbers or something.
-		 */
-		in = ((char *)in) + 2;
-	}
-	return(count);
-}
-int
-bu_cv_ntohus(out, size, in, count)
-register unsigned short	*out;
-int			size;
-register genptr_t	in;
-int			count;
-{
-	int limit;
-	register int i;
-
-	limit = size / sizeof(unsigned short);
-	if (limit < count) count = limit;
-
-	for (i=0; i<count; i++) {
-		*out++ = ((unsigned char *)in)[0]<<8 |
-		    ((unsigned char *)in)[1];
-		in = ((char *)in) + 2;
-	}
-	return(count);
-}
-int
-bu_cv_ntohsl(out, size, in, count)
-register SIGNED long int	*out;
-int				size;
-register genptr_t		in;
-int				count;
-{
-	int limit;
-	register int i;
-
-	limit = size / sizeof(SIGNED long int);
-	if (limit < count) count = limit;
-
-	for (i=0; i<count; i++) {
-		*out++ = ((SIGNED char *)in)[0] << 24 |
-		    ((unsigned char *)in)[1] << 16 | 
-		    ((unsigned char *)in)[2] << 8  |
-		    ((unsigned char *)in)[3];
-		/* XXX Sign extension here */
-		in = ((char *)in) + 4;
-	}
-	return(count);
-}
-int
-bu_cv_ntohul(out, size, in, count)
-register unsigned long int	*out;
-int				size;
-register genptr_t		in;
-int				count;
-{
-	int limit;
-	register int i;
-
-	limit = size / sizeof(unsigned long int);
-	if (limit < count) count = limit;
-
-	for (i=0; i<count; i++) {
-		*out++ = ((unsigned char *)in)[0] << 24 |
-		    ((unsigned char *)in)[1] << 16 |
-		    ((unsigned char *)in)[2] <<  8 |
-		    ((unsigned char *)in)[3];
-		in = ((char *)in) + 4;
-	}
-	return(count);
-}
-
-/*****/
-int
-bu_cv_htonss(out, size, in, count)
-genptr_t		out;
-int			size;
-register short		*in;
-int			count;
-{
-	int		limit;
-	register int	i;
-	register unsigned char *cp = (unsigned char *)out;
-	register int	val;
-
-	limit = size / 2;
-	if( count > limit )  count = limit;
-
-	for (i=0; i<count; i++) {
-		*cp++ = (val = *in++)>>8;
-		*cp++ = val;
-	}
-	return(count);
-}
-int
-bu_cv_htonus(out, size, in, count)
-genptr_t		out;
-int			size;
-register unsigned short	*in;
-int			count;
-{
-	int		limit;
-	register int	i;
-	register unsigned char *cp = (unsigned char *)out;
-	register int	val;
-
-	limit = size / 2;
-	if( count > limit )  count = limit;
-
-	for (i=0; i<count; i++) {
-		*cp++ = (val = *in++)>>8;
-		*cp++ = val;
-	}
-	return(count);
-}
-int
-bu_cv_htonsl(out, size, in, count)
-genptr_t		out;
-int			size;
-register long		*in;
-int			count;
-{
-	int		limit;
-	register int	i;
-	register unsigned char *cp = (unsigned char *)out;
-	register long	val;
-
-	limit = size / 4;
-	if( count > limit )  count = limit;
-
-	for (i=0; i<count; i++) {
-		*cp++ = (val = *in++)>>24;
-		*cp++ = val>>16;
-		*cp++ = val>> 8;
-		*cp++ = val;
-	}
-	return(count);
-}
-int
-bu_cv_htonul(out, size, in, count)
-genptr_t		out;
-int			size;
-register unsigned long	*in;
-int			count;
-{
-	int		limit;
-	register int	i;
-	register unsigned char *cp = (unsigned char *)out;
-	register long	val;
-
-	limit = size / 4;
-	if( count > limit )  count = limit;
-
-	for (i=0; i<count; i++) {
-		*cp++ = (val = *in++)>>24;
-		*cp++ = val>>16;
-		*cp++ = val>> 8;
-		*cp++ = val;
-	}
-	return(count);
 }

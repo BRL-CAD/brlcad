@@ -76,6 +76,7 @@ struct bu_structparse view_parse[] = {
 static mat_t	model2hv;		/* model coords to GIFT h,v in inches */
 
 static FILE	*plotfp;		/* optional plotting file */
+static long	line_num;		/* count of lines output to shotline file */
 
 CONST char usage[] = "\
 Usage:  rtg3 [options] model.g objects... >file.ray\n\
@@ -113,6 +114,7 @@ view_init( ap, file, obj, minus_o )
 register struct application *ap;
 char *file, *obj;
 {
+	line_num = 1;
 
 	if( !minus_o )
 		outfp = stdout;
@@ -155,7 +157,6 @@ char *file, *obj;
 			npsw = 1;
 		}
 	}
-
 
 	return(0);		/* No framebuffer needed */
 }
@@ -212,6 +213,8 @@ struct application	*ap;
 	 */
 	bn_mat_copy( model2hv, Viewrotscale );
 	model2hv[15] = 1/MM2IN;
+
+	line_num += 2;
 }
 
 /*
@@ -803,12 +806,11 @@ top:		nextpp = pp->pt_forw;
 		 * into one.  The below lines have been commented out but
 		 * should be retained for debugging purposes.
 		 */
-
-		 /* bu_log("part_comp: collapsing gap of %e mm between id=%d and id=%d\n",
-		  *	gap, pp->pt_regionp->reg_regionid, 
-		  *	nextpp->pt_regionp->reg_regionid);
-		  */
-		
+#if 0
+		  bu_log("part_comp: collapsing gap of %e mm between id=%d and id=%d air=%d and air=%d\n",
+		 	gap, pp->pt_regionp->reg_regionid, 
+		 	nextpp->pt_regionp->reg_regionid, pp->pt_regionp->reg_aircode, nextpp->pt_regionp->reg_aircode);
+#endif
 		  pp->pt_outseg = nextpp->pt_outseg;
 		  pp->pt_outhit = nextpp->pt_outhit;
 		  pp->pt_outflip = nextpp->pt_outflip;

@@ -19,6 +19,8 @@
 #include "../Cakefile.prog"
 
 /* Explicit composition of each product */
+poly-bot: poly-bot.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBWDB_DEP LIBTCL_DEP
+	CC LDFLAGS poly-bot.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBTCL LIBTCL_LIBES LIBES -o poly-bot
 
 nmg-polysolid: nmg-polysolid.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBTCL_DEP LIBWDB_DEP
 	CC LDFLAGS nmg-polysolid.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBTCL LIBTCL_LIBES LIBES -o nmg-polysolid

@@ -1363,7 +1363,6 @@ register struct application *ap;
 	bu_log("ray: (%g %g %g) -> %g %g %g\n", V3ARGS(ap->a_ray.r_pt), V3ARGS(ap->a_ray.r_dir) );
 	bu_log("a_level: %d\n", ap->a_level);
 
-
 	/* Missed light, either via blockage or dither.  Return black */
 	VSETALL( ap->a_color, 0 );
 	if (rdebug & RDEBUG_LIGHT ) bu_log("light_miss vis=0\n");

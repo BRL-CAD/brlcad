@@ -169,6 +169,7 @@ int main(int argc, char **argv)
 	if( npsw > MAX_PSW )  npsw = MAX_PSW;
 
 	/* Before option processing, do application-specific initialization */
+	RT_APPLICATION_INIT( &ap );
 	application_init();
 
 	/* Process command line options */

@@ -649,6 +649,7 @@ struct partition {
 		for( _pp = (_headp)->pt_forw; _pp != (_headp);  )  { \
 			_zap = _pp; \
 			_pp = _pp->pt_forw; \
+			BU_LIST_DEQUEUE( (struct bu_list *)(_zap) ); \
 			FREE_PT(_zap, _res); \
 		} \
 		(_headp)->pt_forw = (_headp)->pt_back = (_headp); \
@@ -1150,6 +1151,17 @@ struct vd_curve {
 #define VD_CURVE_NULL		((struct vd_curve *)NULL)
 
 /*
+ * Used to keep track of forked rt's for possible future aborts.
+ * Currently used in mged/rtif.c and librt/dg_obj.c
+ */
+struct run_rt {
+	struct bu_list		l;
+	int			fd;
+	int			pid;
+	int			aborted;
+};
+
+/*
  *			D G _ O B J
  *
  * A drawable geometry object is associated with a database object
@@ -1168,6 +1180,7 @@ struct dg_obj {
 	char			*dgo_rt_cmd[RT_MAXARGS];
 	int			dgo_rt_cmd_len;
 	struct bu_observer	dgo_observers;
+	struct run_rt		dgo_headRunRt;	/* head of forked rt processes */
 };
 extern struct dg_obj HeadDGObj;		/* head of drawable geometry object list */
 #define RT_DGO_NULL		((struct dg_obj *)NULL)
@@ -1525,6 +1538,7 @@ struct application  {
 	vect_t		a_vvec;		/* application-specific vector */
 	fastf_t		a_refrac_index;	/* current index of refraction */
 	fastf_t		a_cumlen;	/* cumulative length of ray */
+	int		a_flag;		/* application-specific flag */
 	int		a_zero2;	/* must be zero (sanity check) */
 };
 #define RT_AFN_NULL	((int (*)())0)

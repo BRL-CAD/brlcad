@@ -492,7 +492,6 @@ bn_mat_print("perspective_mat", perspective_mat);
 
 		if (dmp->dm_boundFlag) {
 			ratio = sp->s_size * inv_viewsize;
-
 			/*
 			 * Check for this object being bigger than 
 			 * dmp->dm_bound * the window size, or smaller than a speck.

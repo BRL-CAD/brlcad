@@ -48,6 +48,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "db.h"
 #include "mater.h"
 #include "raytrace.h"
+#include "rtgeom.h"
 #include "wdb.h"
 
 #include "./debug.h"
@@ -190,6 +191,7 @@ static struct bu_cmdtab wdb_cmds[] = {
 	{"whichid",	wdb_which_tcl},
 #if 0
 	/* Commands to be added */
+
 	{"units",	wdb_units_tcl},
 	{"comb_color",	wdb_comb_color_tcl},
 	{"copymat",	wdb_copymat_tcl},
@@ -4849,8 +4851,8 @@ static int
 wdb__tcl(clientData, interp, argc, argv)
      ClientData clientData;
      Tcl_Interp *interp;
-     int     argc;
-     char    **argv;
+     int	argc;
+     char	**argv;
 {
 	struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 }

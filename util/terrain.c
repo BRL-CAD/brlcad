@@ -15,6 +15,7 @@
  *	o	offset
  */
 #include <stdio.h>
+#include <unistd.h>
 #include <math.h>
 #include "machine.h"
 #include "bu.h"
@@ -41,11 +42,6 @@ double fbm_offset = 1.0;
 int quiet = 0;
 
 int debug;
-
-void func_ridged(unsigned short *buf);
-
-void (*terrain_func)() = func_ridged;
-
 
 /* transform a point in integer X,Y,Z space to appropriate noise space */
 static void
@@ -389,9 +385,7 @@ land(point_t point, double h, double lacunarity, double octaves, double offset)
 {
 	int i = 0;
 	point_t pt;
-	double weight, signal, freq, result, value;
-	static double lo = 10.0;
-	static double hi = -10.0;
+	double weight, signal, freq, result;
 
 	if (debug) bu_log("land\n");
 
@@ -424,9 +418,7 @@ lee(point_t point, double h, double lacunarity, double octaves, double offset)
 {
 	int i = 0;
 	point_t pt;
-	double weight, signal, freq, result, value;
-	static double lo = 10.0;
-	static double hi = -10.0;
+	double weight, signal, freq, result;
 
 	if (debug) bu_log("lee\n");
 

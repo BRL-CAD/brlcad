@@ -97,6 +97,7 @@ CONST char	*mode;
 		}
 
 		BU_GETSTRUCT( dbip, db_i );
+		dbip->dbi_eof = -1L;
 		dbip->dbi_mf = mfp;
 		dbip->dbi_eof = mfp->buflen;
 		dbip->dbi_inmem = mfp->buf;
@@ -201,14 +202,14 @@ db_create( CONST char *name, int version )
 	default:
 	case 5:
 		/* Create a v5 database */
-		if( db5_fwrite_ident( fp, "Untitled v5 BRL-CAD Database", 1.0 ) < 0 )  {
+		if( db5_fwrite_ident(fp,"Untitled v5 BRL-CAD Database",1.0)<0){
 			(void)fclose(fp);
 			return DBI_NULL;
 		}
 		break;
 	case 4:
 		/* Create a v4 database */
-		if( db_fwrite_ident( fp, "Untitled v4 BRL-CAD Database", 1.0 ) < 0 )  {
+		if(db_fwrite_ident(fp,"Untitled v4 BRL-CAD Database",1.0)<0) {
 			(void)fclose(fp);
 			return DBI_NULL;
 		}
@@ -219,6 +220,7 @@ db_create( CONST char *name, int version )
 
 	if( (dbip = db_open( name, "r+w" ) ) == DBI_NULL )
 		return DBI_NULL;
+
 
 	/* Do a quick scan to determine version, find _GLOBAL, etc. */
 	if( db_dirbuild( dbip ) < 0 )

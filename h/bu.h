@@ -923,7 +923,8 @@ extern int	bu_debug;
 
 #define BU_DEBUG_MEM_CHECK	0x00000002	/* 002 Mem barrier & leak checking */
 #define BU_DEBUG_MEM_LOG	0x00000004	/* 003 Print all dynamic memory operations */
-
+#define BU_DEBUG_DB		0x00000008	/* 004 Database debugging */
+	
 #define BU_DEBUG_PARALLEL	0x00000010	/* 005 parallel support */
 
 #define BU_DEBUG_MATH		0x00000100	/* 011 Fundamental math routines (plane.c, mat.c) */
@@ -1288,6 +1289,12 @@ BU_EXTERN(int		bu_color_of_hsv_floats,	(struct bu_color *cp,
 						    fastf_t *hsv) );
 BU_EXTERN(int		bu_color_to_hsv_floats,	(struct bu_color *cp,
 						    fastf_t *hsv) );
+
+/* convert.c*/
+BU_EXTERN(int bu_cv_cookie, (char *in));
+BU_EXTERN(int bu_cv_optimize, (int cookie));
+BU_EXTERN(int bu_cv_w_cookie, (genptr_t out, int outcookie, int size,
+			     genptr_t in,  int incookie,  int count));
 
 /* file.c */
 BU_EXTERN(struct bu_file	*bu_fopen, (char *fname, char *type) );

@@ -1424,6 +1424,7 @@ char	**argv;
 	  VSET(center_model, -view_state->vs_toViewcenter[MDX],
 	       -view_state->vs_toViewcenter[MDY], -view_state->vs_toViewcenter[MDZ]);
 	}
+
 	if( mged_variables->mv_perspective_mode )
 	{
 		point_t pt, eye;
