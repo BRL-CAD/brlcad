@@ -39,7 +39,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #define HIRES		1024
 #define	SNUG_FIT	1
 #define	LOOSE_FIT	2
-#define MAX_LINE	133
+#define MAX_LINE	1025
 #if !defined(PI)	/* sometimes found in math.h */
 # define PI		3.14159265358979323846264338327950288419716939937511
 #endif
@@ -310,6 +310,7 @@ STATIC long read_Cell_Data()
 	lbp = linebuf;
         fgets(lbp, MAX_LINE, filep);
 	(void) strcpy(format, "%lf %lf");
+	(void) strcpy(format, "%lf %lf");
 	if (color_flag)
 	    (void) strcat(format, " %d %d %d");
 	else
@@ -329,6 +330,12 @@ STATIC long read_Cell_Data()
 	double		x, y;
 	int		r, g, b;
 	cell_val	value;
+
+	if (lbp[strlen(lbp) - 1] != '\n')
+	{
+	    bu_log("Overlong line\n");
+	    exit (1);
+	}
 
 	/* Have we run out of room for the cells?  If so reallocate memory */
 	if (gp - grid >= maxcells)
@@ -381,8 +388,8 @@ STATIC long read_Cell_Data()
 	    MinMax(ymin, ymax, y);
 	    if (debug_flag & CFB_DBG_MINMAX)
 	    {
-		rt_log("xmin=%g, xmax=%g, ymin=%g, ymax=%g\n",
-		    xmin, xmax, ymin, ymax);
+		rt_log("x=%g, y=%g, xmin=%g, xmax=%g, ymin=%g, ymax=%g\n",
+		    x, y, xmin, xmax, ymin, ymax);
 		fflush(stderr);
 	    }
 	    gp->c_x = x;
