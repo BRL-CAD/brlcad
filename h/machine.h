@@ -379,7 +379,11 @@ typedef double	fastf_t;	/* double|float, "Fastest" float type */
 #define LOCAL	auto		/* static|auto, for serial|parallel cpu */
 #define FAST	register	/* LOCAL|register, for fastest floats */
 typedef long	bitv_t;		/* largest integer type */
+#if defined( _MIPS_SZLONG ) && _MIPS_SZLONG == 64
+#define BITV_SHIFT	6	/* log2( bits_wide(bitv_t) ) */
+#else
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
+#endif
 #define CONST	const
 
 #define MAX_PSW		64
