@@ -3,30 +3,18 @@
  *
  *	Library for dealing with polynomials.
  *
- *  Functions -
- *	bn_poly_mul		Multiply two polynomials
- *	bn_poly_scale	Scale a polynomial
- *	bn_poly_add		Add two polynomials
- *	bn_poly_sub		Subtract two polynomials
- *	bn_poly_synthetic_division		Divide 1 poly into another using Synthetic Division
- *	quadratic	Solve quadratic formula
- *	cubic		Solve cubic forumla
- *	bn_pr_poly	Print a polynomial
- *
  *  Author -
  *	Jeff Hanes
  *  
  *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
+ *	The U. S. Army Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *  
- *  Copyright Notice -
- *	This software is Copyright (C) 1985 by the United States Army.
- *	All rights reserved.
+ *  Distribution Status -
+ *	Public Domain, Distribution Unlimited.
  */
 #ifndef lint
-static char RCSpolylib[] = "@(#)$Header$ (BRL)";
+static char RCSpoly[] = "@(#)$Header$ (ARL)";
 #endif
 
 #include "conf.h"
