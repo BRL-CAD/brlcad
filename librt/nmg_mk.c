@@ -2492,9 +2492,12 @@ CONST struct rt_tol	*tol;
 	if (s->vu_p) {
 		NMG_CK_VERTEXUSE(s->vu_p);
 		NMG_CK_VERTEX(s->vu_p->v_p);
-		NMG_CK_VERTEX_G(s->vu_p->v_p->vg_p);
-		vg = s->vu_p->v_p->vg_p;
-		VMINMAX(sa->min_pt, sa->max_pt, vg->coord);
+		if( s->vu_p->v_p->vg_p )
+		{
+			NMG_CK_VERTEX_G(s->vu_p->v_p->vg_p);
+			vg = s->vu_p->v_p->vg_p;
+			VMINMAX(sa->min_pt, sa->max_pt, vg->coord);
+		}
 	}
 
 
