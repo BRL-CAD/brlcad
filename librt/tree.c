@@ -212,6 +212,24 @@ union tree			*curtree;
  *  This unfortunately limits the code to having only 3 CPUs doing list
  *  searching at any one time.  Hopefully, this is enough parallelism
  *  to keep the rest of the CPUs doing I/O and actual solid prepping.
+ *
+ *  Since the algorithm has been reduced from an O((nsolid/128)**2)
+ *  search on the entire rti_solidheads[hash] list to an O(ninstance)
+ *  search on the dp->d_use_head list for this one solid, the critical
+ *  section should be relatively short-lived.  Having the 3-way split
+ *  should provide ample opportunity for parallelism through here,
+ *  while still ensuring that the necessary variables are protected.
+ *
+ *  There are two critical variables which *both* need to be protected:
+ *  the specific rti_solidhead[hash] list head, and the specific
+ *  dp->d_use_hd list head.  Fortunately, since the selection of
+ *  critical section is based upon db_dirhash(dp->d_namep), any other
+ *  processor that wants to search this same 'dp' will get the same
+ *  hash as the current thread, and will thus wait for the appropriate
+ *  semaphore to be released.  Similarly, any other thread that
+ *  wants to search the same rti_solidhead[hash] list as the current
+ *  thread will be using the same hash, and will thus wait for the
+ *  proper semaphore.
  */
 HIDDEN struct soltab *rt_find_identical_solid( mat, dp, rtip )
 register CONST matp_t		mat;
@@ -219,8 +237,6 @@ register struct directory	*dp;
 struct rt_i			*rtip;
 {
 	register struct soltab	*stp = RT_SOLTAB_NULL;
-	register struct rt_list	*head;
-	register int		i;
 	int			have_match;
 	int			hash;
 
@@ -243,26 +259,29 @@ struct rt_i			*rtip;
 		break;
 	}
 
-	head = &(rtip->rti_solidheads[hash]);
-
 	/* If solid has not been referenced yet, the search can be skipped */
-	if( dp->d_uses > 0 )  for( RT_LIST_FOR( stp, soltab, head ) )  {
+	if( dp->d_uses > 0 )  {
+		struct rt_list	*mid;
 
-		/* Leaf solids must be the same before comparing matrices */
-		if( dp != stp->st_dp )  continue;
+		/* Search dp->d_use_hd list for other instances */
+		for( RT_LIST_FOR( mid, rt_list, &dp->d_use_hd ) )  {
 
-		if( mat == (matp_t)0 )  {
-			if( stp->st_matp == (matp_t)0 )  {
+			stp = RT_LIST_MAIN_PTR( soltab, mid, l2 );
+			RT_CK_SOLTAB(stp);
+
+			if( mat == (matp_t)0 )  {
+				if( stp->st_matp == (matp_t)0 )  {
+					have_match = 1;
+					break;
+				}
+				continue;
+			}
+			if( stp->st_matp == (matp_t)0 )  continue;
+
+			if (rt_mat_is_equal(mat, stp->st_matp, &rtip->rti_tol)) {
 				have_match = 1;
 				break;
 			}
-			continue;
-		}
-		if( stp->st_matp == (matp_t)0 )  continue;
-
-		if (rt_mat_is_equal(mat, stp->st_matp, &rtip->rti_tol)) {
-			have_match = 1;
-			break;
 		}
 	}
 
@@ -272,7 +291,7 @@ struct rt_i			*rtip;
 		 */
 		RT_CK_SOLTAB(stp);		/* sanity */
 		stp->st_uses++;
-		/** dp->d_uses++ ? **/
+		/* dp->d_uses is NOT incremented, because number of soltab's using it has not gone up. */
 		if( rt_g.debug & DEBUG_SOLIDS )  {
 			rt_log( mat ?
 			    "rt_find_identical_solid:  %s re-referenced %d\n" :
@@ -286,6 +305,7 @@ struct rt_i			*rtip;
 		 */
 		GETSTRUCT(stp, soltab);
 		stp->l.magic = RT_SOLTAB_MAGIC;
+		stp->l2.magic = RT_SOLTAB2_MAGIC;
 		stp->st_uses = 1;
 		stp->st_dp = dp;
 		dp->d_uses++;
@@ -298,8 +318,13 @@ struct rt_i			*rtip;
 		} else {
 			stp->st_matp = (matp_t)0;
 		}
-		/* Add to the appropriate linked list */
-		RT_LIST_INSERT( head, &(stp->l) );
+		/* Add to the appropriate soltab list head */
+		/* PARALLEL NOTE:  Needs critical section on rt_solidheads element */
+		RT_LIST_INSERT( &(rtip->rti_solidheads[hash]), &(stp->l) );
+
+		/* Also add to the directory structure list head */
+		/* PARALLEL NOTE:  Needs critical section on this 'dp' */
+		RT_LIST_INSERT( &dp->d_use_hd, &(stp->l2) );
 	}
 
 	/* Leave the appropriate critical section */
@@ -452,7 +477,15 @@ found_it:
  *
  *  Decrement use count on soltab structure.  If no longer needed,
  *  release associated storage, and free the structure.
- *  This routine can not be used in PARALLE, hence the st_aradius hack.
+ *
+ *  This routine can not be used in PARALLEL, hence the st_aradius hack.
+ *
+ *  This routine will semaphore protect against other copies of itself
+ *  running in parallel.  However, there is no protection against
+ *  other routines (such as rt_find_identical_solid()) which might
+ *  be modifying the linked list heads while locked on other semaphores
+ *  (resources).  This is the strongest argument I can think of for
+ *  removing the 3-way semaphore stuff in rt_find_identical_solid().
  */
 void
 rt_free_soltab( stp )
@@ -462,12 +495,23 @@ struct soltab	*stp;
 	if( stp->st_id < 0 || stp->st_id >= rt_nfunctab )
 		rt_bomb("rt_free_soltab:  bad st_id");
 
-	if( --(stp->st_uses) > 0 )  return;
+	RES_ACQUIRE( &rt_g.res_model );
+	if( --(stp->st_uses) > 0 )  {
+		RES_RELEASE( &rt_g.res_model );
+		return;
+	}
 
-	if( stp->st_aradius > 0 )
+	/* NON-PARALLEL, on d_use_hd (may be locked on other semaphore) */
+	RT_LIST_DEQUEUE( &(stp->l2) );	/* remove from st_dp->d_use_hd list */
+
+	RT_LIST_DEQUEUE( &(stp->l) );	/* NON-PARALLEL on rti_solidheads[] */
+
+	RES_RELEASE( &rt_g.res_model );
+
+	if( stp->st_aradius > 0 )  {
 		rt_functab[stp->st_id].ft_free( stp );
-
-	RT_LIST_DEQUEUE( &(stp->l) );	/* Non-PARALLEL */
+		stp->st_aradius = 0;
+	}
 	if( stp->st_matp )  rt_free( (char *)stp->st_matp, "st_matp");
 	stp->st_matp = (matp_t)0;	/* Sanity */
 
@@ -476,6 +520,7 @@ struct soltab	*stp;
 
 	stp->st_dp = DIR_NULL;		/* Sanity */
 	rt_free( (char *)stp, "struct soltab" );
+
 }
 
 /*
