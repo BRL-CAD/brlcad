@@ -382,7 +382,7 @@ init_sedit()
 
 
 	/* Save aggregate path matrix */
-	pathHmat( illump, es_mat );
+	pathHmat( illump, es_mat, illump->s_last-1 );
 
 	/* get the inverse matrix */
 	mat_inv( es_invmat, es_mat );
@@ -1198,7 +1198,7 @@ init_objedit()
 
 
 	/* Save aggregate path matrix */
-	pathHmat( illump, es_mat );
+	pathHmat( illump, es_mat, illump->s_last-1 );
 
 	/* get the inverse matrix */
 	mat_inv( es_invmat, es_mat );

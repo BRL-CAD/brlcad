@@ -176,10 +176,11 @@ matp_t old_xlate;
  *  			P A T H h M A T
  *  
  *  Find the transformation matrix obtained when traversing
- *  the arc indicated in sp->s_path[].
+ *  the arc indicated in sp->s_path[] to the indicated depth.
+ *  Be sure to omit s_path[sp->s_last] -- it's a solid.
  */
 void
-pathHmat( sp, matp )
+pathHmat( sp, matp, depth )
 register struct solid *sp;
 matp_t matp;
 {
@@ -190,8 +191,7 @@ matp_t matp;
 	auto union record rec;
 
 	mat_idn( matp );
-	/* Omit s_path[sp->s_last] -- it's a solid */
-	for( i=0; i < sp->s_last; i++ )  {
+	for( i=0; i <= depth; i++ )  {
 		parentp = sp->s_path[i];
 		kidp = sp->s_path[i+1];
 		for( j=1; j < parentp->d_len; j++ )  {
