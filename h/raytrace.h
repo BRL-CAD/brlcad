@@ -1486,6 +1486,8 @@ struct rt_reprep_obj_list {
 	char **topobjs;		/* list of the above object names */
 	int nunprepped;		/* number of objects to be unprepped and re-prepped */
 	char **unprepped;	/* list of the above objects */
+	/* Above here must be filled in by application */
+	/* Below here is used by dynamic geometry routines, should be zeroed by application before use */
 	struct bu_ptbl paths;	/* list of all paths from topobjs to unprepped objects */
 	struct db_tree_state **tsp;	/* tree state used by tree walker in "reprep" routines */
 	struct bu_ptbl unprep_regions;	/* list of region structures that will be "unprepped" */
@@ -1768,6 +1770,9 @@ struct rt_i {
 	int		rti_uses;	/* for rt_submodel */
 	/* Parameters for accelerating "pieces" of solids */
 	int		rti_nsolids_with_pieces; /* #solids using pieces */
+	/* Parameters for dynamic geometry */
+	int		rti_add_to_new_solids_list;
+	struct bu_ptbl	rti_new_solids;
 };
 
 #define RT_NU_GFACTOR_DEFAULT	1.5	 /* see rt_cut_it() for a description
@@ -2525,8 +2530,8 @@ BU_EXTERN(void rt_color_free, () );
 /* cut.c */
 extern void rt_pr_cut_info(const struct rt_i	*rtip,
 			   const char		*str);
-extern void remove_from_bsp( struct soltab *stp, union cutter *cutp );
-extern void insert_in_bsp( struct soltab *stp, union cutter *cutp, struct resource *resp, fastf_t bb[6] );
+extern void remove_from_bsp( struct soltab *stp, union cutter *cutp, struct bn_tol *tol );
+extern void insert_in_bsp( struct soltab *stp, union cutter *cutp );
 extern void fill_out_bsp( struct rt_i *rtip, union cutter *cutp, struct resource *resp, fastf_t bb[6] );
 BU_EXTERN(void rt_cut_extend, (union cutter *cutp, struct soltab *stp,
 	const struct rt_i *rtip) );
@@ -3168,10 +3173,12 @@ extern int rt_find_paths( struct db_i *dbip,
 	       struct directory *end,
 	       struct bu_ptbl *paths,
 	       struct resource *resp );
+extern struct bu_bitv *get_solidbitv( long nbits, struct resource *resp );
 
 /* shoot.c */
 BU_EXTERN(void rt_add_res_stats, (struct rt_i *rtip, struct resource *resp) );
 					/* Tally stats into struct rt_i */
+extern void rt_zero_res_stats( struct resource *resp );
 extern void rt_res_pieces_clean(struct resource *resp,
 			   struct rt_i *rtip);
 extern void rt_res_pieces_init( struct resource *resp, struct rt_i *rtip );
