@@ -43,6 +43,12 @@
 #include <stdio.h>
 #include <sys/types.h>
 
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
+
 #include "machine.h"
 #include "externs.h"			/* For malloc and free */
 #include "rle.h"
@@ -198,6 +204,7 @@ char *argv[];
 	rle_putrow (&outrows[1], (int)tga_head.image_width, &rle_dflt_hdr);
     }
     rle_puteof( &rle_dflt_hdr );
+    return 0;
 }
 
 /*

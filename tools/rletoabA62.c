@@ -41,6 +41,12 @@
 
 #include <stdio.h>
 
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
+
 #include "machine.h"
 #include "externs.h"		/* For getopt */
 #include "rle.h"
@@ -83,6 +89,9 @@ void	filterY();
 void	filterIQ();
 void	dump1();
 void	dump2();
+
+extern void rasterInit();
+extern void rasterRowGet();
 
 /*
  * Main entry...

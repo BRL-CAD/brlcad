@@ -36,6 +36,12 @@
 #include <sys/types.h>
 #include <time.h>
 
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
+
 #include "machine.h"
 #include "externs.h"
 #include "rle.h"
@@ -52,6 +58,7 @@ void	usageExit();
 void	drawText();
 void	areaFlood();
 void	stackPush();
+int	stackPop();
 
 /*
  * Program parameters defaults
@@ -623,6 +630,8 @@ char *argv[];
 	    color->blue = atoi(argv[arg+3]);
 	    arg += 3;
 	    break;
+	default:
+	    break;
 	}
     }
 }
@@ -664,6 +673,8 @@ char *pgm;
 	    case COLOR:
 		fprintf(stderr, " RED GREEN BLUE");
 		break;
+	    default:
+	        break;
 	    }
 	    fprintf(stderr, " ... %s\n", Args[i].description);
 	}

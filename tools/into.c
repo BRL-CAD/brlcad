@@ -51,7 +51,7 @@
 # define MAXPATHLEN BUFSIZ
 #endif
 
-static char temp[] = "intoXXXXXXXX";
+static char temp[] = "intoXXXXXX";
 static char buf[MAXPATHLEN+1];
 short forceflg;				/* overwrite an unwritable file? */
 
@@ -96,9 +96,8 @@ char **argv;
     }
     else
 	strcpy( buf, temp );
-    mktemp( buf );
 
-    if ( (outf = fopen( buf, "w" )) == NULL )
+    if( (outf = fdopen( mkstemp( buf ), "w" ) ) == NULL )
     {
 	perror(buf);
 	exit(1);

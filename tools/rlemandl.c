@@ -10,6 +10,12 @@
 
 #include "conf.h"
 
+#if HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+
+#include <stdlib.h>
+
 #include <stdio.h>
 #include <math.h>
 

@@ -23,6 +23,7 @@
 
 #include <stdio.h>
 #include <math.h>
+#include <time.h>
 
 #include "machine.h"
 #include "externs.h"		/* For malloc and free */

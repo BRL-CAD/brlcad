@@ -46,6 +46,14 @@
 #include <stdio.h>
 #include <math.h>
 
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
+
+#include <stdlib.h>
+
 #include "machine.h"
 #include "rle.h"
 
@@ -62,14 +70,14 @@ unsigned char squishedbits[74]; /* Compressed data */
 int inverse_flag = 0;		/* If true then invert image */
 
 /* Gray scale dither table */
-int dmgray[8][8] = {   0 ,128 , 32 ,160 ,  8 ,136 , 40 ,168 ,
-                 192 , 64 ,224 , 96 ,200 , 72 ,232 ,104 ,
-                  48 ,176 , 16 ,144 , 56 ,184 , 24 ,152 ,
-                 240 ,112 ,208 , 80 ,248 ,120 ,216 , 88 ,
-                  12 ,140 , 44 ,172 ,  4 ,132 , 36 ,164 ,
-                 204 , 76 ,236 ,108 ,196 , 68 ,228 ,100 ,
-                  60 ,188 , 28 ,156 , 52 ,220 , 20 ,148 ,
-                 252 ,124 ,220 , 92 ,244 ,116 ,212 ,84   } ;
+int dmgray[8][8] = {   {0 ,128 , 32 ,160 ,  8 ,136 , 40 ,168 },
+                 {192 , 64 ,224 , 96 ,200 , 72 ,232 ,104 },
+                  {48 ,176 , 16 ,144 , 56 ,184 , 24 ,152 },
+                 {240 ,112 ,208 , 80 ,248 ,120 ,216 , 88 },
+                  {12 ,140 , 44 ,172 ,  4 ,132 , 36 ,164 },
+                 {204 , 76 ,236 ,108 ,196 , 68 ,228 ,100 },
+                  {60 ,188 , 28 ,156 , 52 ,220 , 20 ,148 },
+                 {252 ,124 ,220 , 92 ,244 ,116 ,212 ,84  } } ;
 
 int compress_line();
 void write_paint_line(), bytes_to_bits();
@@ -145,6 +153,7 @@ char *argv[];
 	for (i = rle_dflt_hdr.ymax+1; i < 720; i++)
 	    write_paint_line(databytes, out_fp);
     }
+    return 0;
 }
 	
     
@@ -211,7 +220,7 @@ int y;
 int
 compress_line()
 {
-    int i,j,k,cntpsn,count;
+    int i,j,k=0,cntpsn,count=0;
     int flag;
     unsigned char pixel;
 #define SAME 1
