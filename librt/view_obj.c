@@ -26,8 +26,10 @@
  *	in all countries except the USA.  All rights reserved.
  */
 #include "conf.h"
-#ifdef HAVE_STRING_H
+#ifdef USE_STRING_H
 #include <string.h>
+#else
+#include <strings.h>
 #endif
 #include <math.h>
 #include "tcl.h"
@@ -69,6 +71,9 @@ static int vo_zoom_tcl();
 static int vo_local2base_tcl();
 static int vo_base2local_tcl();
 static int vo_observer_tcl();
+static int vo_coord_tcl();
+static int vo_rotate_about_tcl();
+static int vo_keypoint_tcl();
 
 static int vo_cmd();
 static void vo_update();
@@ -84,9 +89,11 @@ static struct bu_cmdtab vo_cmds[] =
 	{"base2local",		vo_base2local_tcl},
 	{"center",		vo_center_tcl},
 	{"close",		vo_close_tcl},
+	{"coord",		vo_coord_tcl},
 	{"eye",			vo_eye_tcl},
 	{"eye_pos",		vo_eye_pos_tcl},
 	{"invSize",		vo_invSize_tcl},
+	{"keypoint",		vo_keypoint_tcl},
 	{"local2base",		vo_local2base_tcl},
 	{"lookat",		vo_lookat_tcl},
 	{"model2view",		vo_model2view_tcl},
@@ -98,6 +105,7 @@ static struct bu_cmdtab vo_cmds[] =
 	{"pov",			vo_pov_tcl},
 	{"rmat",		vo_rmat_tcl},
 	{"rot",			vo_rot_tcl},
+	{"rotate_about",	vo_rotate_about_tcl},
 #if 0
 	{"scale",		vo_scale_tcl},
 #endif
@@ -216,6 +224,9 @@ int vo_open_tcl(clientData, interp, argc, argv)
 	VSET(vop->vo_eye_pos, 0.0, 0.0, 1.0);
 	bn_mat_idn(vop->vo_rotation);
 	bn_mat_idn(vop->vo_center);
+	VSETALL(vop->vo_keypoint, 0.0);
+	vop->vo_coord = 'v';
+	vop->vo_rotate_about = 'v';
 	vo_update(vop, interp, 0);
 
 	BU_LIST_INIT(&vop->vo_observers.l);
@@ -1247,7 +1258,7 @@ vo_local2base_tcl(clientData, interp, argc, argv)
  * Rotate the view according to xyz.
  *
  * Usage:
- *	procname rot xyz
+ *	procname rot [-v|-m] xyz
  */
 static int
 vo_rot_tcl(clientData, interp, argc, argv)
@@ -1259,8 +1270,10 @@ vo_rot_tcl(clientData, interp, argc, argv)
 	struct view_obj *vop = (struct view_obj *)clientData;
 	vect_t rvec;
 	mat_t rmat;
+	mat_t temp1, temp2;
+	char coord = vop->vo_coord;
 
-	if (argc != 3) {
+	if (argc < 3 || 4 < argc) {
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
@@ -1271,6 +1284,26 @@ vo_rot_tcl(clientData, interp, argc, argv)
 		return TCL_ERROR;
 	}
 
+	/* process coord flag */
+	if (argc == 4) {
+		if (argv[2][0] == '-' &&
+		    (argv[2][1] == 'v' || argv[2][1] == 'm') &&
+		    argv[2][2] == '\0') {
+			coord = argv[2][1];
+			--argc;
+			++argv;
+		} else {
+			struct bu_vls vls;
+
+			bu_vls_init(&vls);
+			bu_vls_printf(&vls, "helplib vo_rot");
+			Tcl_Eval(interp, bu_vls_addr(&vls));
+			bu_vls_free(&vls);
+
+			return TCL_ERROR;
+		}
+	}
+
 	if (bn_decode_vect(rvec, argv[2]) != 3) {
 		Tcl_AppendResult(interp, "vo_rot: bad xyz - ", argv[2], (char *)NULL);
 		return TCL_ERROR;
@@ -1278,7 +1311,63 @@ vo_rot_tcl(clientData, interp, argc, argv)
 
 	VSCALE(rvec, rvec, -1.0);
 	bn_mat_angles(rmat, rvec[X], rvec[Y], rvec[Z]);
-	bn_mat_mul2(rmat, vop->vo_rotation); /* pure rotation */
+
+	switch (coord) {
+	case 'm':
+		/* transform model rotations into view rotations */
+		bn_mat_inv(temp1, vop->vo_rotation);
+		bn_mat_mul(temp2, vop->vo_rotation, rmat);
+		bn_mat_mul(rmat, temp2, temp1);
+		break;
+	case 'v':
+	default:
+		break;
+	}
+
+	/* Calculate new view center */
+	if (vop->vo_rotate_about != 'v') {
+		point_t		rot_pt;
+		point_t		new_origin;
+		mat_t		viewchg, viewchginv;
+		point_t		new_cent_view;
+		point_t		new_cent_model;
+
+		switch (vop->vo_rotate_about) {
+		case 'e':
+			VSET(rot_pt, 0.0, 0.0, 1.0);
+			break;
+		case 'k':
+			MAT4X3PNT(rot_pt, vop->vo_model2view, vop->vo_keypoint);
+			break;
+		case 'm':
+			/* rotate around model center (0,0,0) */
+			VSET(new_origin, 0.0, 0.0, 0.0);
+			MAT4X3PNT(rot_pt, vop->vo_model2view, new_origin);
+			break;
+		default:
+			{
+				struct bu_vls vls;
+
+				bu_vls_init(&vls);
+				bu_vls_printf(&vls, "vo_rot_tcl: bad rotate_about - %c\n", vop->vo_rotate_about);
+				Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)0);
+				bu_vls_free(&vls);
+				return TCL_ERROR;
+			}
+		}
+
+		bn_mat_xform_about_pt(viewchg, rmat, rot_pt);
+		bn_mat_inv(viewchginv, viewchg);
+
+		/* Convert origin in new (viewchg) coords back to old view coords */
+		VSET(new_origin, 0.0, 0.0, 0.0);
+		MAT4X3PNT(new_cent_view, viewchginv, new_origin);
+		MAT4X3PNT(new_cent_model, vop->vo_view2model, new_cent_view);
+		MAT_DELTAS_VEC_NEG(vop->vo_center, new_cent_model);
+	}
+
+	/* pure rotation */
+	bn_mat_mul2(rmat, vop->vo_rotation);
 	vo_update(vop, interp, 1);
 
 	return TCL_OK;
@@ -1302,8 +1391,9 @@ vo_tra_tcl(clientData, interp, argc, argv)
 	point_t delta;
 	point_t work;
 	point_t vc, nvc;
+	char coord = vop->vo_coord;
 
-	if (argc != 3) {
+	if (argc < 3 || 4 < argc) {
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
@@ -1314,15 +1404,44 @@ vo_tra_tcl(clientData, interp, argc, argv)
 		return TCL_ERROR;
 	}
 
+	/* process coord flag */
+	if (argc == 4) {
+		if (argv[2][0] == '-' &&
+		    (argv[2][1] == 'v' || argv[2][1] == 'm') &&
+		    argv[2][2] == '\0') {
+			coord = argv[2][1];
+			--argc;
+			++argv;
+		} else {
+			struct bu_vls vls;
+
+			bu_vls_init(&vls);
+			bu_vls_printf(&vls, "helplib vo_tra");
+			Tcl_Eval(interp, bu_vls_addr(&vls));
+			bu_vls_free(&vls);
+
+			return TCL_ERROR;
+		}
+	}
+
 	if (bn_decode_vect(tvec, argv[2]) != 3) {
 		Tcl_AppendResult(interp, "vo_tra: bad xyz - ", argv[2], (char *)NULL);
 		return TCL_ERROR;
 	}
 
-	VSCALE(tvec, tvec, -2.0*vop->vo_local2base*vop->vo_invSize);
-	MAT4X3PNT(work, vop->vo_view2model, tvec);
-	MAT_DELTAS_GET_NEG(vc, vop->vo_center);
-	VSUB2(delta, work, vc);
+	switch (coord) {
+	case 'm':
+		VSCALE(delta, tvec, vop->vo_local2base);
+		MAT_DELTAS_GET_NEG(vc, vop->vo_center);
+		break;
+	case 'v':
+		VSCALE(tvec, tvec, -2.0*vop->vo_local2base*vop->vo_invSize);
+		MAT4X3PNT(work, vop->vo_view2model, tvec);
+		MAT_DELTAS_GET_NEG(vc, vop->vo_center);
+		VSUB2(delta, work, vc);
+		break;
+	}
+
 	VSUB2(nvc, vc, delta);
 	MAT_DELTAS_VEC_NEG(vop->vo_center, nvc);
 	vo_update(vop, interp, 1);
@@ -1400,4 +1519,141 @@ vo_observer_tcl(clientData, interp, argc, argv)
 
 	return bu_cmd((ClientData)&vop->vo_observers,
 		      interp, argc - 2, argv + 2, bu_observer_cmds, 0);
+}
+
+/*
+ * Get/set the coordinate system.
+ *
+ * Usage:
+ *	  procname coord [v|m]
+ *
+ */
+static int
+vo_coord_tcl(clientData, interp, argc, argv)
+     ClientData clientData;
+     Tcl_Interp *interp;
+     int     argc;
+     char    **argv;
+{
+	struct bu_vls vls;
+	struct view_obj *vop = (struct view_obj *)clientData;
+
+	/* Get coord */
+	if (argc == 2) {
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "%c", vop->vo_coord);
+		Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)0);
+		bu_vls_free(&vls);
+		return TCL_OK;
+	}
+
+	/* Set coord */
+	if (argc == 3) {
+		switch (argv[2][0]) {
+		case 'm':
+		case 'v':
+			vop->vo_coord = argv[2][0];
+			return TCL_OK;
+		}
+	}
+
+	/* return help message */
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "helplib vo_coord");
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+	return TCL_ERROR;
+}
+
+/*
+ * Get/set the rotate about point.
+ *
+ * Usage:
+ *	  procname rotate_about [e|k|m|v]
+ *
+ */
+static int
+vo_rotate_about_tcl(clientData, interp, argc, argv)
+     ClientData clientData;
+     Tcl_Interp *interp;
+     int     argc;
+     char    **argv;
+{
+	struct bu_vls vls;
+	struct view_obj *vop = (struct view_obj *)clientData;
+
+	/* Get rotate_about */
+	if (argc == 2) {
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "%c", vop->vo_rotate_about);
+		Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)0);
+		bu_vls_free(&vls);
+		return TCL_OK;
+	}
+
+	/* Set rotate_about */
+	if (argc == 3 && argv[2][1] == '\0') {
+		switch (argv[2][0]) {
+		case 'e':
+		case 'k':
+		case 'm':
+		case 'v':
+			vop->vo_rotate_about = argv[2][0];
+			return TCL_OK;
+		}
+	}
+
+	/* return help message */
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "helplib vo_rotate_about");
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+	return TCL_ERROR;
+}
+
+/*
+ * Get/set the keypoint.
+ *
+ * Usage:
+ *	  procname keypoint [point]
+ *
+ */
+static int
+vo_keypoint_tcl(clientData, interp, argc, argv)
+     ClientData clientData;
+     Tcl_Interp *interp;
+     int     argc;
+     char    **argv;
+{
+	struct bu_vls vls;
+	vect_t tvec;
+	struct view_obj *vop = (struct view_obj *)clientData;
+
+	/* Get the keypoint */
+	if (argc == 2) {
+		bu_vls_init(&vls);
+		VSCALE(tvec, vop->vo_keypoint, vop->vo_base2local);
+		bn_encode_vect(&vls, tvec);
+		Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)0);
+		bu_vls_free(&vls);
+		return TCL_OK;
+	}
+
+	/* Set the keypoint */
+	if (argc == 3) {
+		if (bn_decode_vect(tvec, argv[2]) != 3) {
+			Tcl_AppendResult(interp, "vo_keypoint: bad xyz - ", argv[2], (char *)0);
+			return TCL_ERROR;
+		}
+
+		VSCALE(vop->vo_keypoint, tvec, vop->vo_local2base)
+		return TCL_OK;
+	}
+
+	/* return help message */
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "helplib vo_keypoint");
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+	return TCL_ERROR;
 }
