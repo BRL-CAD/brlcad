@@ -16,20 +16,23 @@
 
 /*		Display a boolean tree		*/
 
+#include "conf.h"
+
 #include <stdio.h>
+#include <errno.h>
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
+
 #include "machine.h"
 #include "vmath.h"
-#ifdef BSD
-#include <strings.h>
-#else
-#include <string.h>
-#endif
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
 #define	STKBLK	100	/* Allocation block size */
 
-extern int errno;
 static void Initastack(),Apush();
 static void Initsstack(),Spush();
 static struct node *Spop();

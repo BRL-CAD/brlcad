@@ -16,6 +16,10 @@
 
 /* spline function */
 
+#include "conf.h"
+
+#include <stdio.h>
+
 #include "machine.h"
 
 fastf_t

@@ -13,10 +13,13 @@
  *	This software is Copyright (C) 1990 by the United States Army.
  *	All rights reserved.
  */
+#include "conf.h"
+
 #include <stdio.h>
+#include <math.h>
+
 #include "machine.h"
 #include "vmath.h"
-#include <math.h>
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 

@@ -19,8 +19,13 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
+#include <errno.h>
+
 #include "machine.h"
+#include "externs.h"		/* For getopt */
 #include "vmath.h"
 #include "./iges_struct.h"
 #include "./iges_types.h"
@@ -44,10 +49,6 @@ char operator[]={
 	'-' };
 
 mat_t *identity;
-extern int errno;
-extern char *optarg;
-extern int optind,opterr;
-
 extern char	version[];
 
 main( argc , argv )

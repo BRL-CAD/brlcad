@@ -364,8 +364,8 @@ register struct partition *PartHeadp;
 		ae_vec( &azimuth, &elevation, ap->a_ray.r_dir );
 	}
 
-#ifdef SYSV
-	/* On SysV, sprintf() is not parallel! ^%@#&^@^&#% */
+#ifdef SPRINTF_NOT_PARALLEL
+	/* On some systems, sprintf() is not parallel! ^%@#&^@^&#% */
 	RES_ACQUIRE( &rt_g.res_syscall );
 #endif
 
@@ -375,7 +375,7 @@ register struct partition *PartHeadp;
 		comp_count,
 		dfirst * MM2IN, dlast * MM2IN,
 		azimuth, elevation );
-#ifdef SYSV
+#ifdef SPRINTF_NOT_PARALLEL
 	RES_RELEASE( &rt_g.res_syscall );
 #endif
 	rt_vls_strcat( &str, buf );
@@ -516,7 +516,7 @@ register struct partition *PartHeadp;
 			fmt = "%4d%6.1f%5.1f%5.1f%1d%5.0f";
 		else
 			fmt = "%4d%6.2f%5.1f%5.1f%1d%5.1f";
-#ifdef SYSV
+#ifdef SPRINTF_NOT_PARALLEL
 		RES_ACQUIRE( &rt_g.res_syscall );
 #endif
 		sprintf(buf, fmt,
@@ -524,7 +524,7 @@ register struct partition *PartHeadp;
 			comp_thickness,
 			in_obliq, out_obliq,
 			air_id, air_thickness*MM2IN );
-#ifdef SYSV
+#ifdef SPRINTF_NOT_PARALLEL
 		RES_RELEASE( &rt_g.res_syscall );
 #endif
 		rt_vls_strcat( &str, buf );

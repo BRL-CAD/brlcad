@@ -11,13 +11,17 @@
  *	This software is Copyright (C) 1993 by the United States Army.
  *	All rights reserved.
  */
+
+#include "conf.h"
+
 #include <stdio.h>
+
 #include "machine.h"
 #include "vmath.h"
-#ifdef BSD
-#include <strings.h>
-#else
+#ifdef USE_STRING_H
 #include <string.h>
+#else
+#include <strings.h>
 #endif
 #include "rtlist.h"
 #include "rtstring.h"

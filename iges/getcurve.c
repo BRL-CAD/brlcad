@@ -13,19 +13,22 @@
  *	This software is Copyright (C) 1990 by the United States Army.
  *	All rights reserved.
  */
+#include "conf.h"
+
 #include <stdio.h>
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
+#include <math.h>
+
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
-#ifdef BSD
-#include <strings.h>
-#else
-#include <string.h>
-#endif
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 #include "wdb.h"
-#include <math.h>
 
 #define	ARCSEGS	25	/* number of segments to use in representing a circle */
 

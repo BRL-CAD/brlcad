@@ -27,11 +27,18 @@ static char RCSid[] = "$Header$";
 static char RCSrev[] = "$Revision$";
 #endif
 
+#include "conf.h"
+
 extern char	version[];
 
 #include <stdio.h>
 #include <math.h>
+#ifdef USE_STRING_H
 #include <string.h>
+#else
+#include <strings.h>
+#endif
+
 #include "machine.h"
 #include "db.h"
 #include "externs.h"
@@ -149,18 +156,7 @@ char	*argv[];
 	char			copy_buffer[CP_BUF_SIZE];
 	struct directory	*dp;
 
-#ifdef BSD
-	setlinebuf( stderr );
-#else
-#	if defined( SYSV ) && !defined( sgi ) && !defined(CRAY2) && \
-	 !defined(n16)
-		(void) setvbuf( stderr, (char *) NULL, _IOLBF, BUFSIZ );
-#	endif
-#	if defined(sgi) && defined(mips)
-		if( setlinebuf( stderr ) != 0 )
-			perror("setlinebuf(stderr)");
-#	endif
-#endif
+	port_setlinebuf( stderr );
 
 	printf( "%s", version+5);
 	printf( "Please direct bug reports to <jra@brl.mil>\n\n" );

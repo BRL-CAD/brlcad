@@ -18,6 +18,8 @@
 /*	This routine controls the conversion of IGES solid assemblies
 	to BRLCAD groups	*/
 
+#include "conf.h"
+
 #include <stdio.h>
 #include "machine.h"
 #include "vmath.h"

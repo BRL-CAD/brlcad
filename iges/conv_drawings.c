@@ -17,8 +17,12 @@
  *	This software is Copyright (C) 1994 by the United States Army
  *	in all countries except the USA.  All rights reserved.
  */
+
+#include "conf.h"
+
 #include <stdio.h>
 #include <math.h>
+
 #include "machine.h"
 #include "vmath.h"
 #include "./iges_struct.h"

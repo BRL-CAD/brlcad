@@ -12,10 +12,11 @@
  *	All rights reserved.
  */
 
+#include "conf.h"
+
 #include <stdio.h>
-#include "machine.h"
-#include "vmath.h"
 #include <math.h>
+
 #include "machine.h"		/* BRL-CAD specific machine data types */
 #include "vmath.h"		/* BRL-CAD Vector macros */
 #include "nurb.h"

@@ -31,6 +31,7 @@ static char RCSreadfile[] = "@(#)$Header$";
 #include <string.h>
 #else
 #include <strings.h>
+#endif
 #include <math.h>
 #include "machine.h"
 #include "vmath.h"

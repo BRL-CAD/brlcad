@@ -34,9 +34,15 @@
 static char RCSid[] = "$Header$";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
 #include <math.h>
+#ifdef USE_STRING_H
 #include <string.h>
+#else
+#include <strings.h>
+#endif
 #include <time.h>
 #include <sys/types.h>
 #include <sys/stat.h>

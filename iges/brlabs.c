@@ -13,6 +13,11 @@
  *	This software is Copyright (C) 1990 by the United States Army.
  *	All rights reserved.
  */
+
+#include "conf.h"
+
+#include <stdio.h>
+
 #include "machine.h"
 
 fastf_t brlabs( a )

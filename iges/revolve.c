@@ -16,21 +16,28 @@
 /*				SOLID OF REVOLUTION	*/
 
 
+#include "conf.h"
+
 #include <stdio.h>
-#ifdef BSD
-#include <strings.h>
-#else
+#ifdef USE_STRING_H
 #include <string.h>
+#else
+#include <strings.h>
 #endif
 #include <math.h>
+#include <errno.h>
+
 #include "machine.h"
 #include "vmath.h"
 #include "wdb.h"
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
+#ifdef M_PI
+#define PI M_PI
+#else
 #define	PI	3.14159265358979
-extern int errno;
+#endif
 
 struct subtracts
 {

@@ -1,6 +1,12 @@
 /*
  *			L I B F B - D U M M Y . C
  */
+
+#include "conf.h"
+
+#include <stdio.h>
+
+#include "machine.h"
 #include "fb.h"
 
 FBIO *
