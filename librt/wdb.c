@@ -50,11 +50,11 @@ CONST char *filename;
 	FILE		*fp;
 
 	if( (fp = fopen( filename, "wb" )) == NULL )
-		return WDB_NULL;
+		return RT_WDB_NULL;
 
 	GETSTRUCT(wdbp, rt_wdb);
-	wdbp->magic = WDB_MAGIC;
-	wdbp->type = WDB_TYPE_FILE;
+	wdbp->magic = RT_WDB_MAGIC;
+	wdbp->type = RT_WDB_TYPE_FILE;
 	wdbp->fp = fp;
 	return wdbp;
 }
@@ -64,9 +64,9 @@ CONST char *filename;
  *
  *  Create a libwdb output stream destined for an existing BRL-CAD database,
  *  already opened via a db_open() call.
- *	WDB_TYPE_DB_DISK		Add to on-disk database
- *	WDB_TYPE_DB_INMEM		Add to in-memory database only
- *	WDB_TYPE_DB_INMEM_APPEND_ONLY	Ditto, but give errors if name in use.
+ *	RT_WDB_TYPE_DB_DISK		Add to on-disk database
+ *	RT_WDB_TYPE_DB_INMEM		Add to in-memory database only
+ *	RT_WDB_TYPE_DB_INMEM_APPEND_ONLY	Ditto, but give errors if name in use.
  */
 struct rt_wdb *
 wdb_dbopen( dbip, mode )
@@ -77,21 +77,21 @@ int		mode;
 
 	RT_CK_DBI(dbip);
 
-	if( mode != WDB_TYPE_DB_DISK && mode != WDB_TYPE_DB_INMEM && mode != WDB_TYPE_DB_DISK )  {
+	if( mode != RT_WDB_TYPE_DB_DISK && mode != RT_WDB_TYPE_DB_INMEM && mode != RT_WDB_TYPE_DB_DISK )  {
 		bu_log("wdb_dbopen(%s) mode %d unknown\n",
 			dbip->dbi_filename, mode );
-		return WDB_NULL;
+		return RT_WDB_NULL;
 	}
 
-	if( mode == WDB_TYPE_DB_DISK && dbip->dbi_read_only )  {
+	if( mode == RT_WDB_TYPE_DB_DISK && dbip->dbi_read_only )  {
 		/* In-mem updates happen regardless of disk read-only flag */
 		bu_log("wdb_dbopen(%s) database is read-only, aborting\n",
 			dbip->dbi_filename );
-		return WDB_NULL;
+		return RT_WDB_NULL;
 	}
 
 	GETSTRUCT(wdbp, rt_wdb);
-	wdbp->magic = WDB_MAGIC;
+	wdbp->magic = RT_WDB_MAGIC;
 	wdbp->type = mode;
 	wdbp->dbip = dbip;
 	return wdbp;
@@ -166,7 +166,7 @@ double		local2mm;
 
 	switch( wdbp->type )  {
 
-	case WDB_TYPE_FILE:
+	case RT_WDB_TYPE_FILE:
 		{
 			union record	*rec;
 
@@ -183,7 +183,7 @@ double		local2mm;
 		}
 		break;
 
-	case WDB_TYPE_DB_DISK:
+	case RT_WDB_TYPE_DB_DISK:
 		flags = db_flags_internal( &intern );
 		/* If name already exists, temporary name will be generated */
 		if( (dp = db_diradd( wdbp->dbip, name, -1L, 0, flags )) == DIR_NULL )  {
@@ -200,7 +200,7 @@ double		local2mm;
 		}
 		break;
 
-	case WDB_TYPE_DB_INMEM_APPEND_ONLY:
+	case RT_WDB_TYPE_DB_INMEM_APPEND_ONLY:
 		if( (dp = db_lookup( wdbp->dbip, name, 0 )) != DIR_NULL )  {
 			bu_log("wdb_export(%s): ERROR, that name is already in use, and APPEND_ONLY mode has been specified.\n",
 				name );
@@ -226,7 +226,7 @@ double		local2mm;
 		/* ext->buf has been taken; extra free call is harmless */
 		break;
 
-	case WDB_TYPE_DB_INMEM:
+	case RT_WDB_TYPE_DB_INMEM:
 		if( (dp = db_lookup( wdbp->dbip, name, 0 )) == DIR_NULL )  {
 			if( (dp = db_diradd( wdbp->dbip, name, -1L, 0, 0 )) == DIR_NULL )  {
 				bu_log("wdb_export(%s): db_diradd error\n",
