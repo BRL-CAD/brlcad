@@ -1312,6 +1312,14 @@ register struct rt_i *rtip;
 		stp->st_maxreg = 0;
 	}
 
+	/* In case everything is a halfspace, set a minimum space */
+	if( rtip->mdl_min[X] >= INFINITY )  {
+		VSETALL( rtip->mdl_min, -1 );
+	}
+	if( rtip->mdl_max[X] <= -INFINITY )  {
+		VSETALL( rtip->mdl_max, 1 );
+	}
+
 	/*
 	 *  Enlarge the model RPP just slightly, to avoid nasty
 	 *  effects with a solid's face being exactly on the edge
