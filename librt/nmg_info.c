@@ -33,11 +33,6 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "nmg.h"
 #include "raytrace.h"
 
-/* XXX Move to raytrace.h */
-RT_EXTERN( struct edge *nmg_find_e_nearest_pt2, (long *magic_p,
-			CONST point_t pt2, CONST mat_t mat,
-			CONST struct rt_tol *tol) );
-
 
 CONST struct nmg_visit_handlers	nmg_visit_handlers_null;
 
@@ -111,38 +106,6 @@ top:
 	return( (struct model *)NULL );
 }
 
-/*
- *			N M G _ F I N D _ P T _ I N _ M O D E L
- *
- *  Brute force search of the entire model to find a vertex that
- *  matches this point.
- */
-struct vertex *
-nmg_find_pt_in_model( m, pt, tol )
-CONST struct model	*m;
-CONST point_t		pt;
-CONST struct rt_tol	*tol;
-{
-	struct nmgregion	*r;
-	struct shell		*s;
-	struct vertex		*v;
-
-	NMG_CK_MODEL(m);
-	RT_CK_TOL(tol);
-
-	for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )  {
-		NMG_CK_REGION(r);
-		for( RT_LIST_FOR( s, shell, &r->s_hd ) )  {
-			NMG_CK_SHELL(s);
-			if( (v = nmg_find_pt_in_shell( s, pt, tol )) )  {
-				NMG_CK_VERTEX(v);
-				return v;
-			}
-		}
-	}
-	return (struct vertex *)NULL;
-}
-
 /************************************************************************
  *									*
  *				SHELL Routines				*
@@ -181,7 +144,7 @@ register CONST struct shell *s;
  */
 struct shell *
 nmg_find_s_of_lu(lu)
-struct loopuse *lu;
+CONST struct loopuse *lu;
 {
 	if (*lu->up.magic_p == NMG_SHELL_MAGIC) return(lu->up.s_p);
 	else if (*lu->up.magic_p != NMG_FACEUSE_MAGIC) 
@@ -197,7 +160,7 @@ struct loopuse *lu;
  */
 struct shell *
 nmg_find_s_of_eu(eu)
-struct edgeuse *eu;
+CONST struct edgeuse *eu;
 {
 	if (*eu->up.magic_p == NMG_SHELL_MAGIC) return(eu->up.s_p);
 	else if (*eu->up.magic_p != NMG_LOOPUSE_MAGIC)
@@ -213,7 +176,7 @@ struct edgeuse *eu;
  */
 struct shell *
 nmg_find_s_of_vu(vu)
-struct vertexuse *vu;
+CONST struct vertexuse *vu;
 {
 	NMG_CK_VERTEXUSE(vu);
 
@@ -235,7 +198,7 @@ struct vertexuse *vu;
  */
 struct faceuse *
 nmg_find_fu_of_eu(eu)
-struct edgeuse *eu;
+CONST struct edgeuse *eu;
 {
 	NMG_CK_EDGEUSE(eu);
 
@@ -246,14 +209,24 @@ struct edgeuse *eu;
 	return (struct faceuse *)NULL;			
 }
 
-#define FACE_OF_LOOP(lu) { switch (*lu->up.magic_p) { \
-	case NMG_FACEUSE_MAGIC:	return lu->up.fu_p; break; \
-	case NMG_SHELL_MAGIC: return (struct faceuse *)NULL; break; \
-	default: \
-	    rt_log("Error at %s %d:\nInvalid loopuse parent magic (0x%x %d)\n", \
-		__FILE__, __LINE__, *lu->up.magic_p, *lu->up.magic_p); \
-	    rt_bomb("giving up on loopuse"); \
-	} }
+/*
+ *			N M G _ F I N D _ F U _ O F _ L U
+ */
+struct faceuse *
+nmg_find_fu_of_lu(lu)
+CONST struct loopuse *lu;
+{
+	switch (*lu->up.magic_p) {
+	case NMG_FACEUSE_MAGIC:
+		return lu->up.fu_p;
+	case NMG_SHELL_MAGIC:
+		return (struct faceuse *)NULL;
+	default:
+	    rt_log("Error at %s %d:\nInvalid loopuse parent magic (0x%x %d)\n",
+		__FILE__, __LINE__, *lu->up.magic_p, *lu->up.magic_p);
+	    rt_bomb("nmg_find_fu_of_lu() giving up on loopuse");
+	}
+}
 
 
 /*	N M G _ F I N D _ F U _ O F _ V U
@@ -263,14 +236,13 @@ struct edgeuse *eu;
  */
 struct faceuse *
 nmg_find_fu_of_vu(vu)
-struct vertexuse *vu;
+CONST struct vertexuse *vu;
 {
 	NMG_CK_VERTEXUSE(vu);
 
 	switch (*vu->up.magic_p) {
 	case NMG_LOOPUSE_MAGIC:
-		FACE_OF_LOOP( vu->up.lu_p );
-		break;
+		return nmg_find_fu_of_lu( vu->up.lu_p );
 	case NMG_SHELL_MAGIC:
 		rt_log("nmg_find_fu_of_vu() vertexuse is child of shell, can't find faceuse\n");
 		return ((struct faceuse *)NULL);
@@ -278,7 +250,7 @@ struct vertexuse *vu;
 	case NMG_EDGEUSE_MAGIC:
 		switch (*vu->up.eu_p->up.magic_p) {
 		case NMG_LOOPUSE_MAGIC:
-			FACE_OF_LOOP( vu->up.eu_p->up.lu_p );
+			return nmg_find_fu_of_lu( vu->up.eu_p->up.lu_p );
 			break;
 		case NMG_SHELL_MAGIC:
 			rt_log("nmg_find_fu_of_vu() vertexuse is child of shell/edgeuse, can't find faceuse\n");
@@ -357,7 +329,7 @@ CONST struct faceuse	*fu2;
  */
 struct loopuse *
 nmg_find_lu_of_vu( vu )
-struct vertexuse *vu;
+CONST struct vertexuse *vu;
 {
 	NMG_CK_VERTEXUSE( vu );
 	if ( *vu->up.magic_p == NMG_LOOPUSE_MAGIC )
@@ -380,10 +352,11 @@ struct vertexuse *vu;
 /*				N M G _ L U _ O F _ V U 
  *
  *	Given a vertexuse, return the loopuse somewhere above
+ * XXX Shouldn't all uses of this be replaced by nmg_find_lu_of_vu()?
  */
 struct loopuse *
 nmg_lu_of_vu(vu)
-struct vertexuse *vu;
+CONST struct vertexuse *vu;
 {
 	NMG_CK_VERTEXUSE(vu);
 	
@@ -668,7 +641,6 @@ CONST struct loopuse	*lu;
  *	edgeuse*	Edgeuse which matches the criteria
  *	NULL		Unable to find matching edgeuse
  */
-/* XXX should be CONST return */
 struct edgeuse *
 nmg_findeu(v1, v2, s, eup, dangling_only)
 CONST struct vertex	*v1, *v2;
@@ -966,27 +938,25 @@ CONST struct edgeuse *eu;
  *	looking radially around an edge, find another edge which is a part
  *	of a face in the same shell
  */
-struct edgeuse *
+CONST struct edgeuse *
 nmg_radial_face_edge_in_shell(eu)
-struct edgeuse *eu;
+CONST struct edgeuse *eu;
 {
-	struct edgeuse *eur;
-	struct faceuse *fu;
+	CONST struct edgeuse *eur;
+	CONST struct shell	*s;
 
 	NMG_CK_EDGEUSE(eu);
-	NMG_CK_LOOPUSE(eu->up.lu_p);
-	NMG_CK_FACEUSE(eu->up.lu_p->up.fu_p);
+	s = nmg_find_s_of_eu(eu);
 
-	fu = eu->up.lu_p->up.fu_p;
 	eur = eu->radial_p;
 	NMG_CK_EDGEUSE(eur);
 
 	while (eur != eu->eumate_p) {
 		if (*eur->up.magic_p == NMG_LOOPUSE_MAGIC &&
 		    *eur->up.lu_p->up.magic_p == NMG_FACEUSE_MAGIC &&
-		    eur->up.lu_p->up.fu_p->s_p == fu->s_p)
+		    eur->up.lu_p->up.fu_p->s_p == s) {
 			break; /* found another face in shell */
-		else {
+		} else {
 			eur = eur->eumate_p->radial_p;
 			NMG_CK_EDGEUSE(eur);
 		}
@@ -1113,10 +1083,6 @@ CONST struct faceuse	*fu;
 	struct edgeuse *eu;
 	struct loopuse *lu;
 
-#define CKLU_FOR_FU(_lu, _fu, _vu) \
-	if (*_lu->up.magic_p == NMG_FACEUSE_MAGIC && _lu->up.fu_p == _fu) \
-		return(_vu)
-
 	NMG_CK_VERTEX(v);
 
 	for( RT_LIST_FOR( vu, vertexuse, &v->vu_hd ) )  {
@@ -1125,11 +1091,14 @@ CONST struct faceuse	*fu;
 			eu = vu->up.eu_p;
 			if (*eu->up.magic_p == NMG_LOOPUSE_MAGIC) {
 				lu = eu->up.lu_p;
-				CKLU_FOR_FU(lu, fu, vu);
+				if (*lu->up.magic_p == NMG_FACEUSE_MAGIC && lu->up.fu_p == fu)
+					return(vu);
 			}
+
 		} else if (*vu->up.magic_p == NMG_LOOPUSE_MAGIC) {
 			lu = vu->up.lu_p;
-			CKLU_FOR_FU(lu, fu, vu);
+			if (*lu->up.magic_p == NMG_FACEUSE_MAGIC && lu->up.fu_p == fu)
+				return(vu);
 		}
 	}
 	return((struct vertexuse *)NULL);
@@ -1217,6 +1186,127 @@ CONST struct rt_tol	*tol;
 			return vu;
 	}
 	return ((struct vertexuse *)NULL);
+}
+
+/*
+ *			N M G _ F I N D _ P T _ I N _ S H E L L
+ *
+ *  Given a point in 3-space and a shell pointer, try to find a vertex
+ *  anywhere in the shell which is within sqrt(tol_sq) distance of
+ *  the given point.
+ *
+ *  The algorithm is a brute force, and should be used sparingly.
+ *  Mike Gigante's NUgrid technique would work well here, if
+ *  searching was going to be needed for more than a few points.
+ *
+ *  Returns -
+ *	pointer to vertex with matching geometry
+ *	NULL
+ *
+ *  XXX Why does this return a vertex, while it's helpers return a vertexuse?
+ */
+struct vertex *
+nmg_find_pt_in_shell( s, pt, tol )
+CONST struct shell	*s;
+CONST point_t		pt;
+CONST struct rt_tol	*tol;
+{
+	CONST struct faceuse	*fu;
+	CONST struct loopuse	*lu;
+	CONST struct edgeuse	*eu;
+	CONST struct vertexuse	*vu;
+	struct vertex		*v;
+	CONST struct vertex_g	*vg;
+	vect_t		delta;
+
+	NMG_CK_SHELL(s);
+	RT_CK_TOL(tol);
+
+	fu = RT_LIST_FIRST(faceuse, &s->fu_hd);
+	while (RT_LIST_NOT_HEAD(fu, &s->fu_hd) ) {
+		/* Shell has faces */
+		NMG_CK_FACEUSE(fu);
+		if( (vu = nmg_find_pt_in_face( fu, pt, tol )) )
+			return(vu->v_p);
+
+		if (RT_LIST_PNEXT(faceuse, fu) == fu->fumate_p)
+			fu = RT_LIST_PNEXT_PNEXT(faceuse, fu);
+		else
+			fu = RT_LIST_PNEXT(faceuse, fu);
+	}
+
+	/* Wire loopuses */
+	lu = RT_LIST_FIRST(loopuse, &s->lu_hd);
+	while (RT_LIST_NOT_HEAD(lu, &s->lu_hd) ) {
+		NMG_CK_LOOPUSE(lu);
+		if( (vu = nmg_find_pt_in_lu(lu, pt, tol)) )
+			return vu->v_p;
+
+		if (RT_LIST_PNEXT(loopuse, lu) == lu->lumate_p)
+			lu = RT_LIST_PNEXT_PNEXT(loopuse, lu);
+		else
+			lu = RT_LIST_PNEXT(loopuse, lu);
+	}
+
+	/* Wire edgeuses */
+	for (RT_LIST_FOR(eu, edgeuse, &s->eu_hd)) {
+		NMG_CK_EDGEUSE(eu);
+		NMG_CK_VERTEXUSE(eu->vu_p);
+		v = eu->vu_p->v_p;
+		NMG_CK_VERTEX(v);
+		if( (vg = v->vg_p) )  {
+			NMG_CK_VERTEX_G(vg);
+			VSUB2( delta, vg->coord, pt );
+			if( MAGSQ(delta) <= tol->dist_sq )
+				return(v);
+		}
+	}
+
+	/* Lone vertexuse */
+	if (s->vu_p) {
+		NMG_CK_VERTEXUSE(s->vu_p);
+		v = s->vu_p->v_p;
+		NMG_CK_VERTEX(v);
+		if( (vg = v->vg_p) )  {
+			NMG_CK_VERTEX_G( vg );
+			VSUB2( delta, vg->coord, pt );
+			if( MAGSQ(delta) <= tol->dist_sq )
+				return(v);
+		}
+	}
+	return( (struct vertex *)0 );
+}
+
+/*
+ *			N M G _ F I N D _ P T _ I N _ M O D E L
+ *
+ *  Brute force search of the entire model to find a vertex that
+ *  matches this point.
+ */
+struct vertex *
+nmg_find_pt_in_model( m, pt, tol )
+CONST struct model	*m;
+CONST point_t		pt;
+CONST struct rt_tol	*tol;
+{
+	struct nmgregion	*r;
+	struct shell		*s;
+	struct vertex		*v;
+
+	NMG_CK_MODEL(m);
+	RT_CK_TOL(tol);
+
+	for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )  {
+		NMG_CK_REGION(r);
+		for( RT_LIST_FOR( s, shell, &r->s_hd ) )  {
+			NMG_CK_SHELL(s);
+			if( (v = nmg_find_pt_in_shell( s, pt, tol )) )  {
+				NMG_CK_VERTEX(v);
+				return v;
+			}
+		}
+	}
+	return (struct vertex *)NULL;
 }
 
 /*
@@ -1444,95 +1534,6 @@ CONST struct rt_list	*fu_hd;
 	return(0);
 }
 
-/*
- *			N M G _ F I N D _ P T _ I N _ S H E L L
- *
- *  Given a point in 3-space and a shell pointer, try to find a vertex
- *  anywhere in the shell which is within sqrt(tol_sq) distance of
- *  the given point.
- *
- *  The algorithm is a brute force, and should be used sparingly.
- *  Mike Gigante's NUgrid technique would work well here, if
- *  searching was going to be needed for more than a few points.
- *
- *  Returns -
- *	pointer to vertex with matching geometry
- *	NULL
- *
- *  XXX Why does this return a vertex, while it's helpers return a vertexuse?
- */
-struct vertex *
-nmg_find_pt_in_shell( s, pt, tol )
-CONST struct shell	*s;
-CONST point_t		pt;
-CONST struct rt_tol	*tol;
-{
-	CONST struct faceuse	*fu;
-	CONST struct loopuse	*lu;
-	CONST struct edgeuse	*eu;
-	CONST struct vertexuse	*vu;
-	struct vertex		*v;
-	CONST struct vertex_g	*vg;
-	vect_t		delta;
-
-	NMG_CK_SHELL(s);
-	RT_CK_TOL(tol);
-
-	fu = RT_LIST_FIRST(faceuse, &s->fu_hd);
-	while (RT_LIST_NOT_HEAD(fu, &s->fu_hd) ) {
-		/* Shell has faces */
-		NMG_CK_FACEUSE(fu);
-		if( (vu = nmg_find_pt_in_face( fu, pt, tol )) )
-			return(vu->v_p);
-
-		if (RT_LIST_PNEXT(faceuse, fu) == fu->fumate_p)
-			fu = RT_LIST_PNEXT_PNEXT(faceuse, fu);
-		else
-			fu = RT_LIST_PNEXT(faceuse, fu);
-	}
-
-	/* Wire loopuses */
-	lu = RT_LIST_FIRST(loopuse, &s->lu_hd);
-	while (RT_LIST_NOT_HEAD(lu, &s->lu_hd) ) {
-		NMG_CK_LOOPUSE(lu);
-		if( (vu = nmg_find_pt_in_lu(lu, pt, tol)) )
-			return vu->v_p;
-
-		if (RT_LIST_PNEXT(loopuse, lu) == lu->lumate_p)
-			lu = RT_LIST_PNEXT_PNEXT(loopuse, lu);
-		else
-			lu = RT_LIST_PNEXT(loopuse, lu);
-	}
-
-	/* Wire edgeuses */
-	for (RT_LIST_FOR(eu, edgeuse, &s->eu_hd)) {
-		NMG_CK_EDGEUSE(eu);
-		NMG_CK_VERTEXUSE(eu->vu_p);
-		v = eu->vu_p->v_p;
-		NMG_CK_VERTEX(v);
-		if( (vg = v->vg_p) )  {
-			NMG_CK_VERTEX_G(vg);
-			VSUB2( delta, vg->coord, pt );
-			if( MAGSQ(delta) <= tol->dist_sq )
-				return(v);
-		}
-	}
-
-	/* Lone vertexuse */
-	if (s->vu_p) {
-		NMG_CK_VERTEXUSE(s->vu_p);
-		v = s->vu_p->v_p;
-		NMG_CK_VERTEX(v);
-		if( (vg = v->vg_p) )  {
-			NMG_CK_VERTEX_G( vg );
-			VSUB2( delta, vg->coord, pt );
-			if( MAGSQ(delta) <= tol->dist_sq )
-				return(v);
-		}
-	}
-	return( (struct vertex *)0 );
-}
-
 struct vf_state {
 	char		*visited;
 	struct nmg_ptbl	*tabl;
@@ -1588,63 +1589,6 @@ CONST long		*magic_p;
 	handlers = nmg_visit_handlers_null;		/* struct copy */
 	handlers.vis_vertex = nmg_2rvf_handler;
 	nmg_visit( &m->magic, &handlers, (genptr_t)&st );
-
-	rt_free( (char *)st.visited, "visited[]");
-}
-
-/*
- *			N M G _ 2 R E F _ H A N D L E R
- *
- *  A private support routine for nmg_region_edge_list().
- *  Having just visited an edge, if this is the first time,
- *  add it to the nmg_ptbl array.
- */
-static void
-nmg_2ref_handler( ep, state, first )
-long		*ep;
-genptr_t	state;
-int		first;
-{
-	register struct vf_state *sp = (struct vf_state *)state;
-	register struct edge	*e = (struct edge *)ep;
-
-	NMG_CK_EDGE(e);
-	/* If this edge has been processed before, do nothing more */
-	if( !NMG_INDEX_FIRST_TIME(sp->visited, e) )  return;
-
-	nmg_tbl( sp->tabl, TBL_INS, ep );
-}
-
-/*
- *                      N M G _ R E G I O N _ E D G E _ L I S T
- *
- *  Given an nmgregion, build an nmg_ptbl list which has each edge
- *  pointer in the region listed exactly once.
- * XXX How about changing to take magic_p, make name nmg_edge_tabulate() ?
- */
-
-void
-nmg_region_edge_list( tab , r )
-struct nmg_ptbl	*tab;
-struct nmgregion *r;
-{
-	struct model    *m;
-	struct vf_state st;
-	struct nmg_visit_handlers       handlers;
-
-	NMG_CK_REGION(r);
-	m = r->m_p;
-	NMG_CK_MODEL(m);
-
-
-	st.visited = (char *)rt_calloc(m->maxindex+1, sizeof(char), "visited[]");
-	st.tabl = tab;
-
-	(void)nmg_tbl( tab, TBL_INIT, 0 );
-
-	handlers = nmg_visit_handlers_null;             /* struct copy */
-	handlers.vis_edge = nmg_2ref_handler;
-	nmg_visit( &r->l.magic, &handlers, (genptr_t)&st );
 
 	rt_free( (char *)st.visited, "visited[]");
 }
