@@ -151,6 +151,7 @@ BDIRS="bench \
 	librle \
 	libfft \
 	libnurb librt \
+	libredblack \
 	conv \
 	db \
 	rt \
