@@ -63,7 +63,6 @@ fastf_t poly[NCOLS*4] = {
 
 point_t	sample[1024];
 
-double	radius;
 double	length;
 double	spacing;
 
@@ -74,33 +73,56 @@ char	**argv;
 	register int i;
 	int	frame;
 	char	name[128];
+	double	iradius, oradius;
+	vect_t	normal;
+	struct wmember head;
+
+	head.wm_forw = head.wm_back = &head;
 
 	mk_id( stdout, "Spline Tube" );
 
-	radius = 5 * inches2mm / 2;	/* 5" diameter */
+	VSET( normal, 0, -1, 0 );
+	mk_half( stdout, "cut", 0, normal );
+
+	oradius = 5 * inches2mm / 2;		/* 5" outer diameter */
+	iradius = 4.134 * inches2mm / 2;	/* 5" inner (land) diameter */
 	length = 187 * inches2mm;
 	spacing = 100;			/* mm per sample */
 	npts = ceil(length/spacing);
-	fprintf(stderr,"radius=%gmm, length=%gmm, spacing=%gmm\n", radius, length, spacing);
+	fprintf(stderr,"inner radius=%gmm, outer radius=%gmm\n", iradius, oradius);
+	fprintf(stderr,"length=%gmm, spacing=%gmm\n", length, spacing);
 
 	for( frame=0; frame<16; frame++ )  {
 		/* Generate some dummy sample data */
 		for( i=0; i<npts; i++ )  {
 			sample[i][X] = i * spacing;
 			sample[i][Y] = 0;
-			sample[i][Z] = 4 * radius * sin(
+			sample[i][Z] = 4 * oradius * sin(
 				((double)i*i)/npts * 2 * 3.14159265358979323 +
 				frame * 3.141592 * 2 / 8 );
 		}
 
+		sprintf( name, "tube%do", frame);
+		build_spline( name, npts, oradius );
+		(void)mk_addmember( name, &head );
+
+		sprintf( name, "tube%di", frame);
+		build_spline( name, npts, iradius );
+		mk_addmember( name, &head )->wm_op = SUBTRACT;
+
+		mk_addmember( "cut", &head )->wm_op = SUBTRACT;
+
 		sprintf( name, "tube%d", frame);
-		build_spline( name, npts );
+		mk_lcomb( stdout, name, 1,
+			"testmap", "",
+			0, (char *)0, &head );
 	}
 }
 
-build_spline( name, npts )
+build_spline( name, npts, radius )
 char	*name;
 int	npts;
+double	radius;
 {
 	struct b_spline *bp;
 	register int i;
