@@ -844,6 +844,7 @@ char	**argv;
   register struct directory *dp;
   register int arg;
   struct bu_vls str;
+  char *listeval="listeval";
 
   if(dbip == DBI_NULL)
     return TCL_OK;
@@ -868,10 +869,22 @@ char	**argv;
   }
 
   for( arg = 1; arg < argc; arg++ )  {
-    if( (dp = db_lookup( dbip, argv[arg], LOOKUP_NOISY )) == DIR_NULL )
-      continue;
+  	if( strchr( argv[arg], '/' ) )
+  	{
+  		char *tmp_argv[2];
 
-    do_list( &str, dp, 99 );	/* very verbose */
+  		tmp_argv[0] = listeval;
+  		tmp_argv[1] = argv[arg];
+
+  		f_pathsum( clientData, interp, 2, tmp_argv );
+  	}
+  	else
+  	{
+	    if( (dp = db_lookup( dbip, argv[arg], LOOKUP_NOISY )) == DIR_NULL )
+	      continue;
+
+	    do_list( &str, dp, 99 );	/* very verbose */
+  	}
   }
 
   Tcl_AppendResult(interp, bu_vls_addr(&str), (char *)NULL);
