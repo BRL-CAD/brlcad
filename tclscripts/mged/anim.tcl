@@ -663,7 +663,7 @@ proc sketch_rename { name } {
 		if { $ans == 1 } { 
 			return -1
 		} else {
-			vdraw c d $name
+			vdraw v d $name
 			vdraw p n $name
 		}
 	}
@@ -715,7 +715,7 @@ proc sketch_copy { name } {
 		catch {destroy ._sketch_input}
 	} else {
 		sketch_open_curve $basename
-		vdraw c d $name
+		vdraw v d $name
 		sketch_update
 	}
 }
@@ -736,8 +736,8 @@ proc sketch_delete_curve { name } {
 	global mged_sketch_defname
 
 	puts "deleting $name"
-	vdraw c d $name
-	catch {vdraw c d _sketch_hl_}
+	vdraw v d $name
+	catch {vdraw v d _sketch_hl_}
 	if { [vdraw o] } {
 		sketch_open_curve [vdraw r n]
 	} else {
