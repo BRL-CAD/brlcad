@@ -255,7 +255,7 @@ set -S2 "/bin/sh"
 #	define	LIBRT_TIMER	timer42
 #endif
 
-#if defined(__CAKE__nb) || defined(__CAKE__nb68)
+#if defined(__CAKE__nb) || defined(__CAKE__nb86)
 /* system running NetBSD 1.0 from Chris Demetriou <cgd@sun-lamp.cs.berkeley.edu> */
 #	if defined(i386)
 #		define	MTYPE 		nb86
