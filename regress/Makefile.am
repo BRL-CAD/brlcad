@@ -30,7 +30,7 @@ CLEANFILES = \
 	shaders.pix solids solids.g solids.log solids.pix spdi spdi.g spdi_mged.log spdi_ref.pix \
 	spdi.log spdi.pix moss.pix moss_ref.pix solids_ref.pix spdi_diff.pix \
 	shaders_ref.pix moss-diff.log moss.pix.diff shaders.pix.diff \
-	iges.g iges_file.iges iges_new.g iges_stdout.iges iges_stdout_new.g \
+	iges.log iges.g iges_file.iges iges_new.g iges_stdout.iges iges_stdout_new.g \
 	solids-diff.log solids.pix.diff lights.g lights_diff.pix lights_ref.pix lights.pix lights.asc
 
 MOSTLYCLEANFILES = \
