@@ -169,6 +169,24 @@ typedef unsigned char IKONASpixel[4];
 #define	ADAGE_DMA_BYTES	(63*1024)
 #define	ADAGE_DMA_PIXELS (ADAGE_DMA_BYTES/sizeof(IKONASpixel))
 
+/*
+ *			A D A G E _ D E V I C E _ O P E N
+ *
+ *  Compute a fairly interesting mapping.  We are handed a string in
+ *  one of these forms:
+ *	/dev/ik		for ik0 (implicit number)
+ *	/dev/ik3	for ik3
+ *	/dev/ik4n	for ik4, no init
+ *
+ *  Using the BRL-enhanced "lseek interface", we have to open a
+ *  device node using a file name of the form:
+ *	/dev/ik3l	for low-res, or
+ *	/dev/ik4h	for high-res
+ *
+ * The device name MUST BEGIN with a string which matches
+ * the generic name of the device as defined in the FBIO
+ * structure.
+ */
 _LOCAL_ int
 adage_device_open( ifp, file, width, height )
 FBIO	*ifp;
@@ -176,9 +194,11 @@ char	*file;
 int	width, height;
 {
 	register int	i;
-	char	ourfile[20], *cp;
+	register char	*cp;
+	char	ourfile[32];
 	long	xbsval[34];
-	int	oflen;
+	int	unit = 0;
+	int	noinit = 0;
 
 	/* Only 512 and 1024 opens are available */
 	if( width > 512 || height > 512 )
@@ -186,36 +206,16 @@ int	width, height;
 	else
 		width = height = 512;
 
-	/*
-	 * Determine the device name to open:
-	 *   /dev/ik0l		(name)
-	 *   /dev/ik0noinitl	(name for no-init device)
-	 *   01234567890123456	(character offset)
-	 *
-	 * The device name MUST begin with a string which matches
-	 * the generic name of the device as defined in the FBIO
-	 * structure, followed by the unit number of the desired
-	 * interface, followed by other sub-designations.  In this
-	 * case, "/dev/ik" as the generic name, "0" as the unit,
-	 * then "h", "l", "noinith" or "noinitl" as appropriate
-	 * for high or low resolution - with or without device
-	 * initialization.
-	 */
-	(void)strncpy(ourfile,file,20);
-	if((oflen = strlen(ourfile)) > 15)
-		return -1;
-	oflen--;
-	if( width > 512 || height > 512 ){
-		if(ourfile[oflen] != 'h'){
-			ourfile[oflen++] = 'h';
-			ourfile[oflen] = '\0';
-		}
-	}else{
-		if(ourfile[oflen] != 'l'){
-			ourfile[oflen++] = 'l';
-			ourfile[oflen] = '\0';
-		}
-	}
+	/* "/dev/ik###" gives unit */
+	for( cp = file; *cp != '\0' && !isdigit(*cp); cp++ ) ;
+	unit = 0;
+	if( *cp && isdigit(*cp) )
+		(void)sscanf( cp, "%d", &unit );
+	while( *cp != '\0' && isdigit(*cp) )  cp++;	/* skip number */
+	if( *cp != '\0' && *cp == 'n' )
+		noinit = 1;
+
+	(void)sprintf( ourfile, "/dev/ik%d%c", unit, width>512 ? 'h' : 'l');
 
 	if( (ifp->if_fd = open( ourfile, O_RDWR, 0 )) == -1 )
 		return	-1;
@@ -244,56 +244,53 @@ int	width, height;
 	}
 
 
-	/* Don't initialize the Ikonas if opening the 'noinit' device */
-	for(cp=ourfile; !isdigit(*cp); cp++)
-		;
-	cp++;
-	if(strncmp(cp,"noinit",6) != 0){
-		/* No indent to simplify the diff with old driver */
+	/* Don't initialize the Ikonas if opening the 'noinit' device,
+	 * which is needed for the Lyon-Lamb video-tape controller,
+	 * which is unhappy if the frame clock is shut off.
+	 */
+	if( !noinit )  {
+		if( lseek( ifp->if_fd, FBC*4L, 0 ) == -1 ) {
+			fb_log( "adage_device_open : lseek failed.\n" );
+			return	-1;
+		}
+		if( write( ifp->if_fd, (char *)&ikfbc_setup[IKI(ifp)->mode],
+		    sizeof(struct ik_fbc) ) != sizeof(struct ik_fbc) ) {
+			fb_log( "adage_device_open : write failed.\n" );
+			return	-1;
+		}
+		IKI(ifp)->ikfbcmem = ikfbc_setup[IKI(ifp)->mode];/* struct copy */
 
-	if( lseek( ifp->if_fd, FBC*4L, 0 ) == -1 ) {
-		fb_log( "adage_device_open : lseek failed.\n" );
-		return	-1;
-	}
-	if( write( ifp->if_fd, (char *)&ikfbc_setup[IKI(ifp)->mode],
-	    sizeof(struct ik_fbc) ) != sizeof(struct ik_fbc) ) {
-		fb_log( "adage_device_open : write failed.\n" );
-		return	-1;
-	}
-	IKI(ifp)->ikfbcmem = ikfbc_setup[IKI(ifp)->mode];/* struct copy */
+		/* Build an identity for the crossbar switch */
+		for( i=0; i < 34; i++ )
+			xbsval[i] = (long)i;
+		if( lseek( ifp->if_fd, XBS*4L, 0 ) == -1 ) {
+			fb_log( "adage_device_open : lseek failed.\n" );
+			return	-1;
+		}
+		if( write( ifp->if_fd, (char *) xbsval, sizeof(xbsval) )
+		    != sizeof(xbsval) ) {
+			fb_log( "adage_device_open : write failed.\n" );
+			return	-1;
+		}
 
-	/* Build an identity for the crossbar switch */
-	for( i=0; i < 34; i++ )
-		xbsval[i] = (long)i;
-	if( lseek( ifp->if_fd, XBS*4L, 0 ) == -1 ) {
-		fb_log( "adage_device_open : lseek failed.\n" );
-		return	-1;
-	}
-	if( write( ifp->if_fd, (char *) xbsval, sizeof(xbsval) )
-	    != sizeof(xbsval) ) {
-		fb_log( "adage_device_open : write failed.\n" );
-		return	-1;
-	}
+		/* Initialize the LUVO crossbar switch, too */
+		xbsval[0] = 0x24L;		/* 1:1 mapping, magic number */
+		if( lseek( ifp->if_fd, LUVOXBS*4L, 0 ) == -1 ) {
+			fb_log( "adage_device_open : lseek failed.\n" );
+			return	-1;
+		}
+		if( write( ifp->if_fd, (char *) xbsval, sizeof(long) )
+		    != sizeof(long) ) {
+			fb_log( "adage_device_open : write failed.\n" );
+			return	-1;
+		}
 
-	/* Initialize the LUVO crossbar switch, too */
-	xbsval[0] = 0x24L;		/* 1:1 mapping, magic number */
-	if( lseek( ifp->if_fd, LUVOXBS*4L, 0 ) == -1 ) {
-		fb_log( "adage_device_open : lseek failed.\n" );
-		return	-1;
+		/* Dump in default cursor. */
+		if( adage_curs_set( ifp, default_cursor.bits,
+		    default_cursor.xbits, default_cursor.ybits,
+		    default_cursor.xorig, default_cursor.yorig ) == -1 )
+			return	-1;
 	}
-	if( write( ifp->if_fd, (char *) xbsval, sizeof(long) )
-	    != sizeof(long) ) {
-		fb_log( "adage_device_open : write failed.\n" );
-		return	-1;
-	}
-
-	/* Dump in default cursor. */
-	if( adage_curs_set( ifp, default_cursor.bits,
-	    default_cursor.xbits, default_cursor.ybits,
-	    default_cursor.xorig, default_cursor.yorig ) == -1 )
-		return	-1;
-
-	}	/* End of initialization */
 
 	/* seek to start of pixels */
 	if( lseek( ifp->if_fd, 0L, 0 ) == -1 ) {
