@@ -419,7 +419,8 @@ checkin)
 	ci -u ${CI_ARGS} ${TOP_FILES}
 	for dir in ${ADIRS} ${BDIRS}; do
 		echo -------------------------------- $dir;
-		(cd $dir; rm -f vers.c version \
+		(cd $dir; rm -f vers.c version; \
+		co RCS/*; \
 		rcs -l *.[cshf1-9] Cakefile; \
 		ci -u ${CI_ARGS} *.[cshf1-9] Cakefile )
 	done;;
@@ -494,7 +495,7 @@ arch)
 	echo "${ARCHIVE} created"
 
 	# The FTP images:
-	FTP_ARCHIVE=/usr/spool/ftp/brl-cad/Rel4.3/src/cad${RELEASE}.tar
+	FTP_ARCHIVE=/usr/spool/ftp/brl-cad/Rel${RELEASE}/src/cad${RELEASE}.tar
 	echo "Enter encryption key:"
 	read KEY
 	echo "encryption key is /$KEY/"
