@@ -949,7 +949,7 @@ CONST struct bn_tol *tol;
 			(void)nmg_ks( is );
 			is = (struct shell *)NULL;
 		}
-		else if( nmg_shell_is_void( is ) != is_void )
+		else if( is_void != -1 && nmg_shell_is_void( is ) != is_void )
 		{
 			(void)nmg_ks( is );
 			is = (struct shell *)NULL;
@@ -976,7 +976,7 @@ CONST struct bn_tol *tol;
 
 			if( !kill_it )
 			{
-				if( nmg_shell_is_void( s_tmp ) != is_void )
+				if( is_void != -1 && nmg_shell_is_void( s_tmp ) != is_void )
 					kill_it = 1;
 			}
 
@@ -1066,6 +1066,7 @@ CONST struct bn_tol *tol;
 	long **copy_tbl;
 	int shell_no;
 	int is_void;
+	int s_tmp_is_closed;
 
 	if( rt_g.NMG_debug & DEBUG_BASIC )
 		bu_log( "nmg_extrude_shell( s=x%x , thick=%f)\n" , s , thick );
@@ -1189,14 +1190,16 @@ CONST struct bn_tol *tol;
 
 		nmg_vmodel( m );
 
-		is = nmg_extrude_cleanup( is , is_void , tol );
+		s_tmp_is_closed = nmg_check_closed_shell( s_tmp , tol );
+		if( s_tmp_is_closed )
+			is = nmg_extrude_cleanup( is , is_void , tol );
 
 		/* Inside shell is done */
 		if( is )
 		{
-			if( nmg_ck_closed_surf( s_tmp , tol ) )
+			if( s_tmp_is_closed )
 			{
-				if( !nmg_ck_closed_surf( is , tol ) )
+				if( !nmg_check_closed_shell( is , tol ) )
 				{
 					bu_log( "nmg_extrude_shell: inside shell is not closed, calling nmg_close_shell\n" );
 					nmg_close_shell( is );
@@ -1210,7 +1213,7 @@ CONST struct bn_tol *tol;
 			}
 			else
 			{
-				if( nmg_ck_closed_surf( is , tol ) )
+				if( nmg_check_closed_shell( is , tol ) )
 				{
 					bu_log( "nmg_extrude_shell: inside shell is closed, outer isn't!!\n" );
 					nmg_shell_coplanar_face_merge( is , tol , 0 );
