@@ -767,7 +767,8 @@ struct db_tree_state {
 	int		ts_stop_at_regions;	/* else stop at solids */
 	int		(*ts_region_start_func) RT_ARGS((
 				struct db_tree_state * /*tsp*/,
-				struct db_full_path * /*pathp*/
+				struct db_full_path * /*pathp*/,
+				CONST struct rt_comb_internal * /* combp */
 			));
 	union tree *	(*ts_region_end_func) RT_ARGS((
 				struct db_tree_state * /*tsp*/,
