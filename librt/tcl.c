@@ -1517,6 +1517,9 @@ char	      **argv;
 		return TCL_ERROR;
 	}
 
+	/* Establish defaults for this rt_i */
+	rtip->rti_hasty_prep = 1;	/* Tcl isn't going to fire many rays */
+
 	BU_GETSTRUCT( ap, application );
 	ap->a_rt_i = rtip;
 	ap->a_purpose = "Conquest!";
