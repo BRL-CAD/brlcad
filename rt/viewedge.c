@@ -726,6 +726,8 @@ int is_edge(struct application *ap, struct cell *here,
   }
   
   if (could_be && interlay) {
+    bu_log ("is_edge: performing occlusion test.\n");
+
     /*
      * Test the hit distance on the second geometry.
      * If the second geometry is closer, do not
@@ -734,8 +736,10 @@ int is_edge(struct application *ap, struct cell *here,
 
     //    configure ray/ap;
     inter_apps[cpu]->a_resource = ap->a_resource;
+    VMOVE (inter_apps[cpu]->a_ray.r_pt, ap->a_ray.r_pt);
     VMOVE (inter_apps[cpu]->a_ray.r_dir, ap->a_ray.r_dir);
     //    shoot;
+    bu_log ("is_edge: shooting.\n");
     rt_shootray (inter_apps[cpu]);
     //    compare;
     if (inter_apps[cpu]->a_dist <= here->c_dist) {
@@ -886,7 +890,6 @@ handle_main_ray( struct application *ap, register struct partition *PartHeadp,
 
 void application_init () { 
   bu_vls_init(&interlay_objects);
-  RT_G_DEBUG |= DEBUG_DB;
 }
 
 
@@ -944,6 +947,6 @@ static int inter_hit (struct application *ap, struct partition *pt,
 static int inter_miss (struct application *ap)
 {
   ap->a_dist = MAX_FASTF;
-  return(1);		
+  return(0);		
 }
 
