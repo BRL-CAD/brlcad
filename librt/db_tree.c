@@ -832,7 +832,7 @@ region_end:
 
 		/* Get solid ID */
 		if( (id = rt_id_solid( &ext )) == ID_NULL )  {
-			rt_log("db_functree(%s): defective database record, addr=x%x\n",
+			rt_log("db_recurse(%s): defective database record, addr=x%x\n",
 				dp->d_namep,
 				dp->d_addr );
 			curtree = TREE_NULL;		/* FAIL */
@@ -853,7 +853,7 @@ region_end:
 		if( ! NEAR_ZERO(fx, 0.0001) ||
 		    ! NEAR_ZERO(fy, 0.0001) ||
 		    ! NEAR_ZERO(fz, 0.0001) )  {
-			rt_log("db_functree(%s):  matrix does not preserve axis perpendicularity.\n  X.Y=%g, Y.Z=%g, X.Z=%g\n",
+			rt_log("db_recurse(%s):  matrix does not preserve axis perpendicularity.\n  X.Y=%g, Y.Z=%g, X.Z=%g\n",
 				dp->d_namep, fx, fy, fz );
 			mat_print("bad matrix", tsp->ts_mat);
 			curtree = TREE_NULL;		/* FAIL */
@@ -899,7 +899,7 @@ region_end:
 		curtree = tsp->ts_leaf_func( tsp, pathp, &ext, id );
 		if(curtree) RT_CK_TREE(curtree);
 	} else {
-		rt_log("db_functree:  %s is neither COMB nor SOLID?\n",
+		rt_log("db_recurse:  %s is neither COMB nor SOLID?\n",
 			dp->d_namep );
 		curtree = TREE_NULL;
 	}
