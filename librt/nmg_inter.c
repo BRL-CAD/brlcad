@@ -223,46 +223,6 @@ struct nmg_ptbl	*tbl;
 }
 
 /*
- *			N M G _ F I N D _ V E R T E X U S E_ O N _ F A C E
- *
- *	Perform a topological check to
- *	determine if the given vertex can be found in the given faceuse.
- *	If it can, return a pointer to the vertexuse which was found in the
- *	faceuse.
- */
-static struct vertexuse *
-nmg_find_vertexuse_on_face(v, fu)
-CONST struct vertex	*v;
-CONST struct faceuse	*fu;
-{
-	struct vertexuse *vu;
-	struct edgeuse *eu;
-	struct loopuse *lu;
-
-#define CKLU_FOR_FU(_lu, _fu, _vu) \
-	if (*_lu->up.magic_p == NMG_FACEUSE_MAGIC && _lu->up.fu_p == _fu) \
-		return(_vu)
-
-	NMG_CK_VERTEX(v);
-
-	for( RT_LIST_FOR( vu, vertexuse, &v->vu_hd ) )  {
-		NMG_CK_VERTEXUSE(vu);
-		if (*vu->up.magic_p == NMG_EDGEUSE_MAGIC) {
-			eu = vu->up.eu_p;
-			if (*eu->up.magic_p == NMG_LOOPUSE_MAGIC) {
-				lu = eu->up.lu_p;
-				CKLU_FOR_FU(lu, fu, vu);
-			}
-		} else if (*vu->up.magic_p == NMG_LOOPUSE_MAGIC) {
-			lu = vu->up.lu_p;
-			CKLU_FOR_FU(lu, fu, vu);
-		}
-	}
-
-	return((struct vertexuse *)NULL);
-}
-
-/*
  *			N M G _ I S E C T _ E D G E 2 P _ V E R T 2 P
  *
  *  Intersect an edge and a vertex known to lie in the same plane.
@@ -349,7 +309,7 @@ struct faceuse		*fu;
 	NMG_CK_FACEUSE(fu);
 
 	/* check the topology first */	
-	if( nmg_find_vertexuse_on_face(vu->v_p, fu) )  return;
+	if( nmg_find_v_in_face(vu->v_p, fu) )  return;
 
 	/* topology didn't say anything, check with the geometry. */
 	pt = vu->v_p->vg_p->coord;
@@ -410,7 +370,7 @@ struct faceuse *fu;
 		rt_log("nmg_isect_3vertex_3face(, vu=x%x, fu=x%x)\n", vu, fu);
 
 	/* check the topology first */	
-	if (vup=nmg_find_vertexuse_on_face(vu->v_p, fu)) {
+	if (vup=nmg_find_v_in_face(vu->v_p, fu)) {
 		(void)nmg_tbl(bs->l1, TBL_INS_UNIQUE, &vu->l.magic);
 		(void)nmg_tbl(bs->l2, TBL_INS_UNIQUE, &vup->l.magic);
 		return;
@@ -435,7 +395,7 @@ struct faceuse *fu;
 	nmg_isect_vert2p_face2p( bs, vu, fu );
 
 	/* Re-check the topology */
-	if (vup=nmg_find_vertexuse_on_face(vu->v_p, fu)) {
+	if (vup=nmg_find_v_in_face(vu->v_p, fu)) {
 		(void)nmg_tbl(bs->l1, TBL_INS_UNIQUE, &vu->l.magic);
 		(void)nmg_tbl(bs->l2, TBL_INS_UNIQUE, &vup->l.magic);
 		return;
@@ -550,13 +510,14 @@ struct vertex	*v1mate;
 	(void)nmg_tbl(bs->l1, TBL_INS_UNIQUE, &euforw->vu_p->l.magic);
 }
 
+/* XXX move to nmg_ck.c */
 /*
  *			N M G _ C K _ F A C E _ W O R T H L E S S _ E D G E S
  *
  *  For the moment, a quick hack to see if breaking an edge at a given
  *  vertex results in a null edge being created.
  */
-static void
+void
 nmg_ck_face_worthless_edges( fu )
 CONST struct faceuse	*fu;
 {
@@ -925,7 +886,7 @@ rt_log("ptol = %g, eu2dist=%g, %g\n", ptol, eu2dist[0], eu2dist[1]);
 			rt_log("\tIntersect point on eu2 is outside vu1a...vu1b.  Break eu2 anyway.\n");
 #if !PROPER_2D
 		if( dist[1] == 0 )  {
-			if( vu = nmg_find_vertexuse_on_face( vu2a->v_p, fu1 ) )  {
+			if( vu = nmg_find_v_in_face( vu2a->v_p, fu1 ) )  {
 				if (rt_g.NMG_debug & DEBUG_POLYSECT)
 					rt_log("\t\tIntersect point is vu2a\n");
 			} else {
@@ -940,7 +901,7 @@ rt_log("ptol = %g, eu2dist=%g, %g\n", ptol, eu2dist[0], eu2dist[1]);
 			(void)nmg_tbl(is->l2, TBL_INS_UNIQUE, &vu2a->l.magic);
 			return;
 		} else if( dist[1] == 1 )  {
-			if( vu = nmg_find_vertexuse_on_face( vu2b->v_p, fu1 ) )  {
+			if( vu = nmg_find_v_in_face( vu2b->v_p, fu1 ) )  {
 				if (rt_g.NMG_debug & DEBUG_POLYSECT)
 					rt_log("\t\tIntersect point is vu2b\n");
 			} else {
@@ -1046,7 +1007,7 @@ topo:
 		(void)nmg_tbl(is->l2, TBL_INS_UNIQUE, &vu2a->l.magic);
 	} else if( vu1a->v_p == vu2b->v_p )  {
 		(void)nmg_tbl(is->l2, TBL_INS_UNIQUE, &vu2b->l.magic);
-	} else if( vu=nmg_find_vertexuse_on_face(vu1a->v_p, fu2) )  {
+	} else if( vu=nmg_find_v_in_face(vu1a->v_p, fu2) )  {
 		(void)nmg_tbl(is->l2, TBL_INS_UNIQUE, &vu->l.magic);
 	} else {
 		struct loopuse *plu;
@@ -1062,7 +1023,7 @@ topo:
 		(void)nmg_tbl(is->l2, TBL_INS_UNIQUE, &vu2a->l.magic);
 	} else if( vu1b->v_p == vu2b->v_p )  {
 		(void)nmg_tbl(is->l2, TBL_INS_UNIQUE, &vu2b->l.magic);
-	} else if( vu=nmg_find_vertexuse_on_face(vu1b->v_p, fu2) )  {
+	} else if( vu=nmg_find_v_in_face(vu1b->v_p, fu2) )  {
 		(void)nmg_tbl(is->l2, TBL_INS_UNIQUE, &vu->l.magic);
 	} else {
 		struct loopuse *plu;
@@ -1125,7 +1086,7 @@ struct faceuse *fu;
 	 * vertex of this edgeuse is on the other face, enter the
 	 * two vertexuses of it in the list and return.
 	 */
-	if (vu_other=nmg_find_vertexuse_on_face(v1, fu)) {
+	if (vu_other=nmg_find_v_in_face(v1, fu)) {
 		if (rt_g.NMG_debug & DEBUG_POLYSECT) {
 			register pointp_t p1 = v1->vg_p->coord;
 			register pointp_t p2 = v1mate->vg_p->coord;
@@ -1447,8 +1408,8 @@ struct faceuse		*eu_fu;		/* fu that eu is from */
 	 * XXX already registered in the other face that the edge
 	 * XXX has been fully intersected already?
 	 */
-	if( nmg_find_vertexuse_on_face( eu->vu_p->v_p, fu ) &&
-	    nmg_find_vertexuse_on_face( eu->eumate_p->vu_p->v_p, fu ) )  {
+	if( nmg_find_v_in_face( eu->vu_p->v_p, fu ) &&
+	    nmg_find_v_in_face( eu->eumate_p->vu_p->v_p, fu ) )  {
 #if 0
 		rt_log("edge: (%g,%g,%g) (%g,%g,%g)\n", V3ARGS(eu->vu_p->v_p->vg_p->coord), V3ARGS(eu->eumate_p->vu_p->v_p->vg_p->coord) );
 #endif
