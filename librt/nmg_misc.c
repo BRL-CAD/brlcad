@@ -3966,57 +3966,6 @@ int reindex;
 	return( m );
 }
 
-char *
-nmg_magic_to_str( magic_p )
-long *magic_p;
-{
-	switch( *magic_p )
-	{
-		case NMG_MODEL_MAGIC:
-			return( "MODEL" );
-		case NMG_REGION_MAGIC:
-			return( "NMGREGION" );
-		case NMG_REGION_A_MAGIC:
-			return( "NMGREGION_A" );
-		case NMG_SHELL_MAGIC:
-			return( "SHELL" );
-		case NMG_SHELL_A_MAGIC:
-			return( "SHELL_A" );
-		case NMG_FACEUSE_MAGIC:
-			return( "FACEUSE" );
-		case NMG_FACE_MAGIC:
-			return( "FACE" );
-		case NMG_FACE_G_PLANE_MAGIC:
-			return( "FACE_G_PLANE" );
-		case NMG_FACE_G_SNURB_MAGIC:
-			return( "FACE_G_SNURB" );
-		case NMG_LOOPUSE_MAGIC:
-			return( "LOOPUSE" );
-		case NMG_LOOP_G_MAGIC:
-			return( "LOOP_G" );
-		case NMG_LOOP_MAGIC:
-			return( "LOOP" );
-		case NMG_EDGEUSE_MAGIC:
-			return( "EDGEUSE" );
-		case NMG_EDGE_MAGIC:
-			return( "EDGE" );
-		case NMG_EDGE_G_LSEG_MAGIC:
-			return( "EDGE_G_LSEG" );
-		case NMG_EDGE_G_CNURB_MAGIC:
-			return( "EDGE_G_CNURB" );
-		case NMG_VERTEXUSE_MAGIC:
-			return( "VERTEXUSE" );
-		case NMG_VERTEXUSE_A_PLANE_MAGIC:
-			return( "VERTEXUSE_A_PLANE" );
-		case NMG_VERTEXUSE_A_CNURB_MAGIC:
-			return( "VERTEXUSE_A_CNURB" );
-		case NMG_VERTEX_MAGIC:
-			return( "VERTEX" );
-		case NMG_VERTEX_G_MAGIC:
-			return( "VERTEX_G" );
-	}
-}
-
 /*		N M G _ F I X _ N O R M A L S
  *
  *	Routine to set faceuse normlas to correct direction.
