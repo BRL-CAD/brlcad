@@ -85,6 +85,12 @@ char *patchfile;
 char *labelfile=NULL;
 char *matfile;
 
+#define MAX_THICKNESSES		500	/* Maximum number of different thicknesses
+					   for a single plate mode solid */
+fastf_t thicks[MAX_THICKNESSES];	/* array of unique plate thicknesses */
+int nthicks;				/* number of unique plate thicknesses
+					   for a single plate mode solid */
+
 struct patches list[15000];
 fastf_t x[1500],y[1500],z[1500];
 int mirror[1500];

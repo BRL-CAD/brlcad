@@ -57,6 +57,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 RT_EXTERN( struct shell *nmg_dup_shell , ( struct shell *s , long ***trans_tbl ) );
 
+void	proc_plate();
 void	proc_label();
 void	mk_cyladdmember();
 
@@ -794,11 +795,12 @@ int			simplify;
 }
 
 int
-Build_solid( l , name , mirror_name , plate_mode , centroid , tol )
+Build_solid( l, name, mirror_name, plate_mode, centroid, thickness, tol )
 int l;
 char *name,*mirror_name;
 int plate_mode;
 point_t centroid;
+fastf_t thickness;
 struct rt_tol *tol;
 {
 	struct model *m;
@@ -857,6 +859,9 @@ struct rt_tol *tol;
 	vert1 = 1;
 	for (k=1 ; k<l-3 ; k++)
 	{
+		if( plate_mode && thk[k+2] != thickness )
+			continue;
+
 		if( !rt_3pts_distinct ( verts[k].coord , verts[k+1].coord , verts[k+2].coord , tol ) )
 		{
 
@@ -1581,7 +1586,7 @@ int cnt;
 	else
 		mirror_name[0] = '\0';
 
-	if( !Build_solid( l , name , mirror_name , 0 , centroid , &tol ) )
+	if( !Build_solid( l, name, mirror_name, 0, centroid, 0.0, &tol ) )
 	{
 		count++;
 		(void) mk_addmember(name,&head,WMOP_UNION);
@@ -1607,6 +1612,7 @@ int cnt;
 /*
  *	 Process Plate Mode triangular surfaces 
  */
+void
 proc_plate(cnt)
 int cnt;
 {
@@ -1614,9 +1620,11 @@ int cnt;
 	vect_t	out;
 	vect_t	norm;
 	vect_t	ab,bc,ca,ac;
+	int	thick_no;
 	fastf_t ndot,outdot;
 	int k,l;
 	int index;
+	int thick_warn=0;
 	static int count=0;
 	static int mir_count=0;
 	static int last_cc=0;
@@ -1639,19 +1647,69 @@ int cnt;
 	}
 
 	/* include the check for phantom armor */
-	if ((in[0].rsurf_thick > 0)||(aflg > 0)) {
+	if ((in[0].rsurf_thick > 0)||(aflg > 0))
+	{
 
 		for(k=0 ; k < (cnt) ; k++){
 			for(l=0; l<= 7; l++){
 				if(in[k].ept[l] > 0){
 					index = in[k].ept[l];
 
-					/*				rt_log( "index = %d\n",index); */
 					list[index].x = in[k].x;
 					list[index].y = in[k].y;
 					list[index].z = in[k].z;
-					list[index].thick = in[k].rsurf_thick;
+					if( in[k].rsurf_thick < tol.dist )
+					{
+						rt_log( "Warning: thickness of component #%d at sequence #%d is %gmm\n" , in[0].cc , index , in[k].rsurf_thick );
+						rt_log( "\tsetting thickness to %gmm\n", 3.0*tol.dist );
+						list[index].thick = 3.0*tol.dist;
+					}
+					else
+						list[index].thick = in[k].rsurf_thick;
 					list[index].flag = 1;
+				}
+			}
+		}
+
+		/* make list of thicknesses */
+		nthicks = 0;
+		for (k=1; k<10000; k++)
+		{
+			int found_thick;
+
+			if(list[k].flag == 1)
+			{
+				if( !nthicks )
+				{
+					thicks[0] = list[k].thick;
+					nthicks = 1;
+					continue;
+				}
+
+				found_thick = 0;
+				for( thick_no=0 ; thick_no < nthicks ; thick_no++ )
+				{
+					if( NEAR_ZERO( list[k].thick - thicks[thick_no], tol.dist ) )
+					{
+						list[k].thick = thicks[thick_no];
+						found_thick = 1;
+						break;
+					}
+				}
+				if( !found_thick )
+				{
+					if( nthicks >= MAX_THICKNESSES )
+					{
+						rt_log( "Component # has too many different thicknesses\n",
+							in[0].cc );
+						rt_log( "\t skipping component\n" );
+						return;
+					}
+					else
+					{
+						thicks[nthicks] = list[k].thick;
+						nthicks++;
+					}
 				}
 			}
 		}
@@ -1668,8 +1726,8 @@ int cnt;
 				thk[l] = list[k].thick;
 				if( thk[l] < tol.dist )
 				{
-					rt_log( "Thickness of component #%d at vertex #%d is %g\n" , in[0].cc , l , thk[l] );
-					thk[l] = 0.01;
+					rt_log( "Proc_plate: Found a bad thickness, should have been fixed by now!!!\n" );
+					rt_bomb( "Proc_plate: thickness less tahn tolerance.\n" );
 				}
 				l= l+1;
 			}
@@ -1679,6 +1737,9 @@ int cnt;
 		if( debug > 2 ) {
 			for ( k=1;k<l; k++ )
 				rt_log( "Compressed: %f %f %f\n",x[k],y[k],z[k]);
+			rt_log( "%d unique plate thicknesses:\n", nthicks );
+			for( thick_no=0 ; thick_no < nthicks ; thick_no++ )
+				rt_log( "\t%g\n" , thicks[thick_no] );
 		}
 
 		VSET( centroid , 0.0 , 0.0 , 0.0 );
@@ -1699,40 +1760,46 @@ int cnt;
 			    centroid[0], centroid[1], centroid[2] );
 		}
 
-		/* name solids */
-
-		shflg = 't';
-		mrflg = 'n';
-		ctflg = 'n';
-		strcpy( name , proc_sname (shflg,mrflg,count+1,ctflg) );
-
-		if( in[0].mirror != 0 )
+		for( thick_no=0 ; thick_no < nthicks ; thick_no++ )
 		{
-			mrflg = 'y';
-			strcpy( mirror_name , proc_sname (shflg,mrflg,mir_count+1,ctflg) );
-		}
-		else
-			mirror_name[0] = '\0';
 
-		if( !Build_solid( l , name , mirror_name , 1 , centroid , &tol ) )
-		{
-			count++;
-			(void) mk_addmember(name,&head,WMOP_UNION);
-			proc_region( name );
-			if( mirror_name[0] )
+			/* name solids */
+
+			shflg = 't';
+			mrflg = 'n';
+			ctflg = 'n';
+			strcpy( name , proc_sname (shflg,mrflg,count+1,ctflg) );
+
+			if( in[0].mirror != 0 )
 			{
-				(void) mk_addmember(mirror_name,&head,WMOP_UNION);
-				mir_count++;
-				proc_region( mirror_name );
+				mrflg = 'y';
+				strcpy( mirror_name , proc_sname (shflg,mrflg,mir_count+1,ctflg) );
+			}
+			else
+				mirror_name[0] = '\0';
+
+			if( !Build_solid( l, name, mirror_name, 1, centroid, thicks[thick_no], &tol ) )
+			{
+				count++;
+				(void) mk_addmember(name,&head,WMOP_UNION);
+				if( mirror_name[0] )
+				{
+					(void) mk_addmember(mirror_name,&head,WMOP_UNION);
+					mir_count++;
+					proc_region( mirror_name );
+				}
+			}
+
+			if( debug )
+			{
+				rt_log( "\tFinished %s\n" , name );
+					if( mirror_name[0] )
+					rt_log( "\tand %s\n" , mirror_name );
 			}
 		}
-
-		if( debug )
-		{
-			rt_log( "\tFinished %s\n" , name );
-				if( mirror_name[0] )
-				rt_log( "\tand %s\n" , mirror_name );
-		}
+		proc_region( name );
+		if( mirror_name[0] )
+			proc_region( mirror_name );
 	} /* phantom armor check */
 
 	last_cc = in[cnt-1].cc;
