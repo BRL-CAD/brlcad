@@ -61,6 +61,7 @@ void mged_print_result();
 extern void set_scroll();  /* defined in set.c */
 extern void sync();
 extern int gui_setup();
+extern int mged_rotate_view_around_eye;	/* shared with chgview.c */
 
 struct cmd_list head_cmd_list;
 struct cmd_list *curr_cmd_list;
@@ -842,6 +843,8 @@ mged_setup()
   mged_variable_setup(interp);
 
   Tcl_LinkVar(interp, "edit_class", (char *)&es_edclass, TCL_LINK_INT);
+  Tcl_LinkVar(interp, "mged_rotate_view_around_eye",
+		(char *)&mged_rotate_view_around_eye, TCL_LINK_INT);
 
   bu_vls_init(&edit_rate_tran_vls[X]);
   bu_vls_init(&edit_rate_tran_vls[Y]);

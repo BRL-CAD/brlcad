@@ -132,6 +132,8 @@ struct bu_vls edit_absolute_tran_vls[3];
 struct bu_vls edit_absolute_rotate_vls[3];
 struct bu_vls edit_absolute_scale_vls;
 
+int		mged_rotate_view_around_eye = 0; /* shared with cmd.c */
+
 double		mged_abs_tol;
 double		mged_rel_tol = 0.01;		/* 1%, by default */
 double		mged_nrm_tol;			/* normal ang tol, radians */
@@ -195,15 +197,12 @@ double x, y, z;
   mat_t newrot;
   vect_t new_pos;
   mat_t   newinv;
-  char	*var;
 
   bn_mat_idn( newrot );
   buildHrot( newrot, x * degtorad, y * degtorad, z * degtorad);
   bn_mat_inv( newinv, newrot );
 
-  if( (var = Tcl_GetVar(interp, "mged_rotate_view_around_eye", TCL_GLOBAL_ONLY)) == NULL ||
-	atoi(var) == 0 )
-  {
+  if( mged_rotate_view_around_eye == 0 )  {
 	/* Traditional method:  rotate around view center (0,0,0) viewspace */
 	wrt_view( ModelDelta, newinv, ModelDelta );
   } else {
