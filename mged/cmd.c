@@ -1939,6 +1939,9 @@ set_e_axis_pos()
     (*rot_hook)();
 
   rot_x = rot_y = rot_z = 0;
+#else
+  tran_x = tran_y = tran_z = 0;
+  rot_x = rot_y = rot_z = 0;
 #endif
 #ifdef MULTI_ATTACH
   update_views = 1;
@@ -2065,7 +2068,7 @@ char    **argv;
 #endif
 
 #ifdef VIRTUAL_TRACKBALL
-void
+static void
 make_command(line, diff)
 char	*line;
 point_t	diff;
@@ -2153,16 +2156,21 @@ char    *argv[];
     tran_z = z;
   }
 
-  VSET(view_pos, tran_x, tran_y, tran_z);
-  MAT4X3PNT( new_pos, view2model, view_pos );
-  MAT_DELTAS_GET_NEG(old_pos, toViewcenter);
-  VSUB2( diff, new_pos, old_pos );
-
+#if 1
+  if(state == ST_S_EDIT || state == ST_O_EDIT)
+    sprintf(cmd, "M %d %d %d\n", 1, (int)(tran_x*2048), (int)(tran_y*2048));
+#else
   if(state == ST_O_EDIT)
     make_command(cmd, diff);
   else if(state == ST_S_EDIT)
     make_command(cmd, diff);
+#endif
   else{
+    VSET(view_pos, tran_x, tran_y, tran_z);
+    MAT4X3PNT( new_pos, view2model, view_pos );
+    MAT_DELTAS_GET_NEG(old_pos, toViewcenter);
+    VSUB2( diff, new_pos, old_pos );
+
     VADD2(new_pos, orig_pos, diff);
     MAT_DELTAS_VEC( toViewcenter, new_pos);
     MAT_DELTAS_VEC( ModelDelta, new_pos);
@@ -2208,18 +2216,20 @@ char *argv[];
   sscanf(argv[2], "%lf", &y);
   sscanf(argv[3], "%lf", &z);
 
-  rot_x += x;
-  rot_y += y;
-  rot_z += z;
-
   MAT_DELTAS_GET(old_pos, toViewcenter);
 
   if(state == ST_VIEW)
     sprintf(cmd, "vrot %f %f %f\n", x, y, z);
-  else if(state == ST_O_EDIT)
-    sprintf(cmd, "rotobj %f %f %f\n", rot_x, rot_y, rot_z);
-  else if(state == ST_S_EDIT)
-    sprintf(cmd, "p %f %f %f\n", rot_x, rot_y, rot_z);
+  else{
+    rot_x += x;
+    rot_y += y;
+    rot_z += z;
+
+    if(state == ST_O_EDIT)
+      sprintf(cmd, "rotobj %f %f %f\n", rot_x, rot_y, rot_z);
+    else if(state == ST_S_EDIT)
+      sprintf(cmd, "p %f %f %f\n", rot_x, rot_y, rot_z);
+  }
 
   rot_set = 1;
   rt_vls_strcpy( &str, cmd );
