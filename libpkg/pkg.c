@@ -564,6 +564,7 @@ void (*errlog)();
 		pkg_perror(errlog, "pkg_makeconn: malloc failure\n" );
 		return(PKC_ERROR);
 	}
+	bzero( (char *)pc, sizeof(struct pkg_conn) );
 	pc->pkc_magic = PKG_MAGIC;
 	pc->pkc_fd = fd;
 	pc->pkc_switch = switchp;
@@ -1628,6 +1629,11 @@ register struct pkg_conn	*pc;
 			goto out;
 		}
 		pkg_perror(pc->pkc_errlog, "pkg_suckin: read");
+		sprintf(errbuf, "pkg_suckin: read(%d, x%x, %d) ret=%d inbuf=x%x, inend=%d\n",
+			pc->pkc_fd, &pc->pkc_inbuf[pc->pkc_inend], avail,
+			got,
+			pc->pkc_inbuf, pc->pkc_inend );
+		(pc->pkc_errlog)(errbuf);
 		ret = -1;
 		goto out;
 	}
