@@ -1,7 +1,7 @@
 /*
- *			A N I M
+ *			D B _ A N I M . C
  *
- *  Ray Tracing program, routines to apply animation directives.
+ *  Routines to apply animation directives to geometry database.
  *
  *  Author -
  *	Michael John Muuss
@@ -29,7 +29,7 @@ static char RCSanim[] = "@(#)$Header$ (BRL)";
 
 
 /*
- *			R T _ A D D _ A N I M
+ *			D B _ A D D _ A N I M
  *
  *  Add a user-supplied animate structure to the end of the chain of such
  *  structures hanging from the directory structure of the last node of
@@ -38,11 +38,11 @@ static char RCSanim[] = "@(#)$Header$ (BRL)";
  *  stored differently.
  *
  *  In the future, might want to check to make sure that callers directory
- *  references are in the right model (rtip).
+ *  references are in the right database (dbip).
  */
 int
-rt_add_anim( rtip, anp, root )
-struct rt_i *rtip;
+db_add_anim( dbip, anp, root )
+struct db_i *dbip;
 register struct animate *anp;
 int	root;
 {
@@ -58,11 +58,11 @@ int	root;
 	anp->an_forw = ANIM_NULL;
 	if( root )  {
 		if( rt_g.debug&DEBUG_ANIM )
-			rt_log("rt_add_anim(x%x) root\n", anp);
-		headp = &(rtip->rti_anroot);
+			rt_log("db_add_anim(x%x) root\n", anp);
+		headp = &(dbip->dbi_anroot);
 	} else {
 		if( rt_g.debug&DEBUG_ANIM )
-			rt_log("rt_add_anim(x%x) arc %s\n", anp,
+			rt_log("db_add_anim(x%x) arc %s\n", anp,
 				anp->an_path[anp->an_pathlen-1]->d_namep);
 		headp = &(anp->an_path[anp->an_pathlen-1]->d_animate);
 	}
@@ -75,13 +75,13 @@ int	root;
 }
 
 /*
- *			R T _ D O _ A N I M
+ *			D B _ D O _ A N I M
  *
  *  Perform the one animation operation.
  *  Leave results in form that additional operations can be cascaded.
  */
 int
-rt_do_anim( anp, stack, arc, materp )
+db_do_anim( anp, stack, arc, materp )
 register struct animate *anp;
 mat_t	stack;
 mat_t	arc;
@@ -90,7 +90,7 @@ struct mater_info	*materp;
 	mat_t	temp;
 
 	if( rt_g.debug&DEBUG_ANIM )
-		rt_log("rt_do_anim(x%x) ", anp);
+		rt_log("db_do_anim(x%x) ", anp);
 	switch( anp->an_type )  {
 	case AN_MATRIX:
 		if( rt_g.debug&DEBUG_ANIM )  {
@@ -145,31 +145,31 @@ struct mater_info	*materp;
 }
 
 /*
- *			R T _ F R _ A N I M
+ *			D B _ F R E E _ A N I M
  *
  *  Release chain of animation structures
  */
 void
-rt_fr_anim( rtip )
-register struct rt_i *rtip;
+db_free_anim( dbip )
+register struct db_i *dbip;
 {
 	register struct animate *anp;
 	register struct directory *dp;
 	register int		i;
 
 	/* Rooted animations */
-	for( anp = rtip->rti_anroot; anp != ANIM_NULL; )  {
+	for( anp = dbip->dbi_anroot; anp != ANIM_NULL; )  {
 		register struct animate *nextanp = anp->an_forw;
 
 		rt_free( (char *)anp->an_path, "animation path[]");
 		rt_free( (char *)anp, "struct animate");
 		anp = nextanp;
 	}
-	rtip->rti_anroot = ANIM_NULL;
+	dbip->dbi_anroot = ANIM_NULL;
 
 	/* Node animations */
 	for( i=0; i < RT_DBNHASH; i++ )  {
-		dp = rtip->rti_dbip->dbi_Head[i];
+		dp = dbip->dbi_Head[i];
 		for( ; dp != DIR_NULL; dp = dp->d_forw )  {
 			for( anp = dp->d_animate; anp != ANIM_NULL; )  {
 				register struct animate *nextanp = anp->an_forw;
