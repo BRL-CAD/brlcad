@@ -977,7 +977,7 @@ struct nmg_exp_counts	*ecnt;
 	(void)rt_plong(&(o)->elem[0], rt_nmg_reindex((genptr_t)((i)->elem), ecnt))
 #define INDEXL(oo,ii,elem)	{ \
 	register long _f = rt_nmg_reindex((genptr_t)((ii)->elem.forw), ecnt); \
-	if( _f == DISK_INDEX_NULL )  rt_bomb("rt_nmg_edisk: reindex forw to null?\n"); \
+	if( _f == DISK_INDEX_NULL )  rt_log("Warning rt_nmg_edisk: reindex forw to null?\n"); \
 	(void)rt_plong( (oo)->elem.forw, _f ); \
 	(void)rt_plong( (oo)->elem.back, rt_nmg_reindex((genptr_t)((ii)->elem.back), ecnt) ); }
 #define PUTMAGIC(_magic)	(void)rt_plong( &d->magic[0], _magic )
@@ -1621,6 +1621,11 @@ CONST unsigned char	*basep;	/* base of whole import record */
 				/* Note that l2 subscripts will be for edgeuse, not l2 */
 				/* g.lseg_p->eu_hd2 is a pun for g.cnurb_p->eu_hd2 also */
 				INDEXL_HD2( d, eu, l2, eu->g.lseg_p->eu_hd2 );
+			}
+			else
+			{
+				eu->l2.forw = &eu->l2;
+				eu->l2.back = &eu->l2;
 			}
 		}
 		return 0;
