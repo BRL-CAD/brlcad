@@ -42,7 +42,7 @@ struct db_i	*dbip;
 	register struct rt_i	*rtip;
 	register int		i;
 
-	RT_CK_DIR( dbip );
+	RT_CK_DBI( dbip );
 
 	GETSTRUCT( rtip, rt_i );
 	rtip->rti_magic = RTI_MAGIC;
