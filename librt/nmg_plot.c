@@ -476,11 +476,10 @@ point_t		next_base;
 /*
  *			N M G _ P L _ V
  */
-static void nmg_pl_v(fp, v, b, R, G, B)
+static void nmg_pl_v(fp, v, b)
 FILE *fp;
 struct vertex *v;
 struct nmg_ptbl *b;
-unsigned char R, G, B;
 {
 	pointp_t p;
 	static char label[128];
@@ -492,17 +491,14 @@ unsigned char R, G, B;
 	NMG_CK_VERTEX(v);
 	NMG_CK_VERTEX_G(v->vg_p);
 	p = v->vg_p->coord;
-	pl_color(fp, 255, 255, 255);
 
-	pd_3move(fp, p[0], p[1], p[2]);
+	pl_color(fp, 255, 255, 255);
 	if (rt_g.NMG_debug & DEBUG_LABEL_PTS) {
 		(void)sprintf(label, "%g %g %g", p[0], p[1], p[2]);
+		pdv_3move( fp, p );
 		pl_label(fp, label);
 	}
-	pd_3point(fp, p[0], p[1], p[2]);
-
-
-	pl_color(fp, R, G, B);
+	pdv_3point(fp, p);
 }
 
 /*
@@ -544,9 +540,10 @@ unsigned char R, G, B;
 	VADD2(end1, p1, v);
 
 	pl_color(fp, R, G, B);
-	pd_3line(fp, end0[0], end0[1], end0[2], end1[0], end1[1], end1[2]);
-	nmg_pl_v(fp, e->eu_p->vu_p->v_p, b, R, G, B);
-	nmg_pl_v(fp, e->eu_p->eumate_p->vu_p->v_p, b, R, G, B);
+	pdv_3line( fp, end0, end1 );
+
+	nmg_pl_v(fp, e->eu_p->vu_p->v_p, b);
+	nmg_pl_v(fp, e->eu_p->eumate_p->vu_p->v_p, b);
 }
 
 /*
@@ -628,8 +625,7 @@ unsigned char R, G, B;
 	magic1 = NMG_LIST_FIRST_MAGIC( &lu->down_hd );
 	if (magic1 == NMG_VERTEXUSE_MAGIC &&
 	    lu->orientation != OT_BOOLPLACE) {
-	    	nmg_pl_v(fp, NMG_LIST_PNEXT(vertexuse, &lu->down_hd)->v_p,
-	    		b, R, G, B );
+	    	nmg_pl_v(fp, NMG_LIST_PNEXT(vertexuse, &lu->down_hd)->v_p, b);
 	} else if (magic1 == NMG_EDGEUSE_MAGIC) {
 		for( NMG_LIST( eu, edgeuse, &lu->down_hd ) )  {
 			nmg_pl_eu(fp, eu, b, R, G, B);
@@ -640,11 +636,10 @@ unsigned char R, G, B;
 /*
  *			M N G _ P L _ F U
  */
-void nmg_pl_fu(fp, fu, b, R, G, B)
+void nmg_pl_fu(fp, fu, b)
 FILE *fp;
 struct faceuse *fu;
 struct nmg_ptbl *b;
-unsigned char R, G, B;
 {
 	struct loopuse *lu;
 
@@ -653,7 +648,7 @@ unsigned char R, G, B;
 	(void)nmg_tbl(b, TBL_INS, &fu->l.magic);
 
 	for( NMG_LIST( lu, loopuse, &fu->lu_hd ) )  {
-		nmg_pl_lu(fp, lu, b, R, G, B);
+		nmg_pl_lu(fp, lu, b, 80, 100, 170 );
 	}
 }
 
@@ -677,7 +672,7 @@ struct shell *s;
 
 	for( NMG_LIST( fu, faceuse, &s->fu_hd ) )  {
 		NMG_CK_FACEUSE(fu);
-		nmg_pl_fu(fp, fu, &b, 80, 100, 170);
+		nmg_pl_fu(fp, fu, &b );
 	}
 
 	for( NMG_LIST( lu, loopuse, &s->lu_hd ) )  {
@@ -694,7 +689,7 @@ struct shell *s;
 			(unsigned char)0);
 	}
 	if (s->vu_p) {
-		nmg_pl_v(fp, s->vu_p->v_p, &b, 180, 180, 180);
+		nmg_pl_v(fp, s->vu_p->v_p, &b );
 	}
 
 	if( NMG_LIST_IS_EMPTY( &s->fu_hd ) &&
@@ -750,6 +745,7 @@ struct edgeuse *eu;
 {
 	struct edgeuse *eur = eu;
 	do {
+		NMG_CK_EDGEUSE(eur);
 		nmg_pl_eu(fd, eur, b, 180, 180, 180);
 		eur = eur->radial_p->eumate_p;
 	} while (eur != eu);
@@ -796,12 +792,12 @@ struct shell *s;
 	struct loopuse *lu;
 	struct edgeuse *eu;
 	struct nmg_ptbl b;
-	FILE *fd, *fopen();
+	FILE	*fp;
 	long	magic1;
 
 	NMG_CK_SHELL(s);
 
-	if ((fd=fopen(filename, "w")) == (FILE *)NULL) {
+	if ((fp=fopen(filename, "w")) == (FILE *)NULL) {
 		(void)perror(filename);
 		exit(-1);
 	}
@@ -817,7 +813,7 @@ struct shell *s;
 			if (magic1 == NMG_EDGEUSE_MAGIC) {
 				for( NMG_LIST( eu, edgeuse, &lu->down_hd ) )  {
 					NMG_CK_EDGEUSE(eu);
-					nmg_pl_edges_in_2_shells(fd, &b, eu);
+					nmg_pl_edges_in_2_shells(fp, &b, eu);
 				}
 			} else if (magic1 == NMG_VERTEXUSE_MAGIC) {
 				;
@@ -828,5 +824,5 @@ struct shell *s;
 	}
 	(void)nmg_tbl(&b, TBL_FREE, (long *)NULL);
 
-	(void)fclose(fd);
+	(void)fclose(fp);
 }
