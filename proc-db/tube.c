@@ -108,6 +108,7 @@ char	**argv;
 #endif
 		if( read_frame() < 0 )  break;
 
+#define build_spline build_cyl
 		sprintf( name, "tube%do", frame);
 		build_spline( name, nsamples, oradius );
 		(void)mk_addmember( name, &head );
@@ -120,11 +121,12 @@ char	**argv;
 
 		sprintf( name, "tube%d", frame);
 		mk_lcomb( stdout, name, 1,
-			"testmap", "",
+			"plastic", "",
 			0, (char *)0, &head );
 		fprintf( stderr, "%d, ", frame );  fflush(stderr);
 	}
 }
+#undef build_spline
 
 build_spline( name, npts, radius )
 char	*name;
@@ -254,10 +256,30 @@ read_frame()
 	return(0);
 }
 
-build_cyl( name, npts, radius )
-char	*name;
+build_cyl( cname, npts, radius )
+char	*cname;
 int	npts;
 double	radius;
 {
 	register int i;
+	vect_t	v, h, a, b;
+	char	name[32];
+	struct wmember head;
+
+	head.wm_forw = head.wm_back = &head;
+
+	for( i=0; i<npts-1; i++ )  {
+		VMOVE( v, sample[i] );
+		VSUB2( h, sample[i+1], v );
+		VSET( a, 0, radius, 0 );
+		VSET( b, 0, 0, radius );
+
+		sprintf( name, "%s%d", cname, i );
+		mk_tgc( stdout, name, v, h, a, b, a, b );
+		(void)mk_addmember( name, &head );
+	}
+	mk_lcomb( stdout, cname, 0,
+		(char *)0, "",
+		0, (char *)0,
+		&head );
 }
