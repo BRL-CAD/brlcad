@@ -34,12 +34,16 @@ cake \
  db_path.o \
  db_scan.o \
  nmg_ck.o \
+ nmg_pt_fu.o \
  db_walk.o &
 
 cake \
  g_half.o \
+ nmg_fcut.o
  nmg_index.o \
  nmg_inter.o \
+ nmg_extrude.o \
+ nmg_tri.o \
  g_sph.o \
  &
 
@@ -48,11 +52,16 @@ cake \
  g_torus.o \
  g_part.o \
  g_pipe.o \
+ msr.o \
+ vert.o \
  nmg_class.o \
  &
 
 cake \
  nmg_manif.o \
+ nmg_visit.o \
+ nmg_info.o \
+ nmg_pr.o \
  hist.o \
  htond.o \
  global.o \
@@ -60,6 +69,7 @@ cake \
  machine.o \
  mat.o \
  mater.o \
+ magic.o \
  memalloc.o \
  units.o \
  &
@@ -68,7 +78,12 @@ cake \
  pr.o \
  db_tree.o \
  g_vol.o \
- nmg_comb.o \
+ g_rpc.o \
+ g_rhc.o \
+ g_epa.o \
+ g_ehy.o \
+ g_eto.o \
+ g_grip.o \
  nmg_eval.o &
 
 cake \
@@ -100,7 +115,10 @@ cake \
  sphmap.o \
  storage.o \
  table.o \
- timerunix.o \
+ timer42.o \
+ rtstring.o \
+ vlist.o \
+ regionfix.o \
  tree.o &
 
 wait
