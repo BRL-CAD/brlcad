@@ -1527,9 +1527,10 @@ register mat_t		mat;
  *			R T _ T G C _ E X P O R T
  */
 int
-rt_tgc_export( ep, ip )
+rt_tgc_export( ep, ip, local2mm )
 struct rt_external	*ep;
 struct rt_db_internal	*ip;
+double			local2mm;
 {
 	return(-1);
 }
@@ -1542,10 +1543,11 @@ struct rt_db_internal	*ip;
  *  Additional lines are indented one tab, and give parameter values.
  */
 int
-rt_tgc_describe( str, ip, verbose )
+rt_tgc_describe( str, ip, verbose, mm2local )
 struct rt_vls		*str;
 struct rt_db_internal	*ip;
 int			verbose;
+double			mm2local;
 {
 	register struct tgc_internal	*tip =
 		(struct tgc_internal *)ip->idb_ptr;
@@ -1556,12 +1558,18 @@ int			verbose;
 
 	rt_vls_strcat( str, "truncated general cone (TGC)\n");
 
-	sprintf(buf, "\tV (%g, %g, %g)\n", V3ARGS(tip->v) );
+	sprintf(buf, "\tV (%g, %g, %g)\n",
+		tip->v[X] * mm2local,
+		tip->v[Y] * mm2local,
+		tip->v[Z] * mm2local );
 	rt_vls_strcat( str, buf );
 
 	Hmag = MAGNITUDE(tip->h);
 	sprintf(buf, "\tH (%g, %g, %g) mag=%g\n",
-		V3ARGS(tip->h), Hmag );
+		tip->h[X] * mm2local,
+		tip->h[Y] * mm2local,
+		tip->h[Z] * mm2local,
+		Hmag );
 	rt_vls_strcat( str, buf );
 	if( Hmag < VDIVIDE_TOL )  {
 		rt_vls_strcat( str, "H vector is zero!\n");
@@ -1573,19 +1581,31 @@ int			verbose;
 	}
 
 	sprintf(buf, "\tA (%g, %g, %g) mag=%g\n",
-		V3ARGS(tip->a), MAGNITUDE(tip->a) );
+		tip->a[X] * mm2local,
+		tip->a[Y] * mm2local,
+		tip->a[Z] * mm2local,
+		MAGNITUDE(tip->a) );
 	rt_vls_strcat( str, buf );
 
 	sprintf(buf, "\tB (%g, %g, %g) mag=%g\n",
-		V3ARGS(tip->b), MAGNITUDE(tip->b) );
+		tip->b[X] * mm2local,
+		tip->b[Y] * mm2local,
+		tip->b[Z] * mm2local,
+		MAGNITUDE(tip->b) );
 	rt_vls_strcat( str, buf );
 
 	sprintf(buf, "\tC (%g, %g, %g) mag=%g\n",
-		V3ARGS(tip->c), MAGNITUDE(tip->c) );
+		tip->c[X] * mm2local,
+		tip->c[Y] * mm2local,
+		tip->c[Z] * mm2local,
+		MAGNITUDE(tip->c) );
 	rt_vls_strcat( str, buf );
 
 	sprintf(buf, "\tD (%g, %g, %g) mag=%g\n",
-		V3ARGS(tip->d), MAGNITUDE(tip->d) );
+		tip->d[X] * mm2local,
+		tip->d[Y] * mm2local,
+		tip->d[Z] * mm2local,
+		MAGNITUDE(tip->d) );
 	rt_vls_strcat( str, buf );
 
 	VCROSS( unitv, tip->c, tip->d );
@@ -1806,7 +1826,6 @@ struct directory *dp;
 	struct edgeuse		*eu, *eu2;
 	int			face;
 	plane_t			plane;
-
 
 #if NEW_IF
 	/* All set */
