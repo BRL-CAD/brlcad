@@ -202,7 +202,9 @@ char **argv;
 	if( view_init( &ap, title_file, title_obj, outputfile!=(char *)0 ) != 0 )  {
 		/* Framebuffer is desired */
 		register int xx, yy;
-		xx = yy = 512;		/* SGI users may want 768 */
+		int	zoom;
+
+		xx = yy = 512;		/* SGI 3D users may want 768 */
 		while( xx < width )
 			xx <<= 1;
 		while( yy < width )
@@ -214,10 +216,12 @@ char **argv;
 			fprintf(stderr,"rt:  can't open frame buffer\n");
 			exit(12);
 		}
-		/* New way:  center, zoom */
 		RES_ACQUIRE( &rt_g.res_syscall );
-		fb_view( fbp, width/2, height/2,
-			fb_getwidth(fbp)/width, fb_getheight(fbp)/height );
+		zoom = fb_getwidth(fbp)/width;
+		if( fb_getheight(fbp)/height < zoom )
+			zoom = fb_getheight(fbp)/height;
+		(void)fb_view( fbp, width/2, height/2,
+			zoom, zoom );
 		RES_RELEASE( &rt_g.res_syscall );
 	} else if( outputfile == (char *)0 )  {
 		/* If not going to framebuffer, or to a file, then use stdout */
