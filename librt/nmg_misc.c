@@ -178,6 +178,7 @@ long *p;
  *	of nmg_inter.c is that it knows too much about the format and contents
  *	of an nmg_ptbl structure.
  */
+/* XXX Needs tol argument */
 void
 nmg_purge_unwanted_intersection_points(vert_list, fu)
 struct nmg_ptbl *vert_list;
@@ -221,18 +222,34 @@ struct faceuse *fu;
 			NMG_CK_LOOPUSE(fu2lu);
 			NMG_CK_LOOP(fu2lu->l_p);
 
-			/* If this loop is just some drek deposited into the
-			 * other loop as part of an intersection operation,
-			 * it doesn't really count -- skip it.
-			 */
-			if (fu2lu->orientation == OT_BOOLPLACE)  continue;
-
-			/* Everything should be OT_SAME or OT_BOOLPLACE, but...*/
-			if (fu2lu->orientation != OT_SAME)
-				rt_log("nmg_purge_unwanted_intersection_points encountered %s loop in fu2\n", nmg_orientation(fu2lu->orientation));
+			switch(fu2lu->orientation)  {
+			case OT_BOOLPLACE:
+				/*  If this loop is destined for removal
+				 *  by sanitize(), skip it.
+				 */
+				continue;
+			case OT_UNSPEC:
+				/* If this is a loop of a lone vertex,
+				 * it was deposited into the
+				 * other loop as part of an intersection
+				 * operation, and is quite important.
+				 */
+				if( RT_LIST_FIRST_MAGIC(&fu2lu->down_hd) != NMG_VERTEXUSE_MAGIC )
+					rt_log("nmg_purge_unwanted_intersection_points() non self-loop OT_UNSPEC vertexuse in fu2?\n");
+				break;
+			case OT_SAME:
+			case OT_OPPOSITE:
+				break;
+			default:
+				rt_log("nmg_purge_unwanted_intersection_points encountered %s loop in fu2\n",
+					nmg_orientation(fu2lu->orientation));
+				/* Process it anyway */
+				break;
+			}
 
 			fu2lg = fu2lu->l_p->lg_p;
 			NMG_CK_LOOP_G(fu2lg);
+	/* XXX Needs to be changed to V3RPP_OVERLAP_TOL */
 			if (V3RPP_OVERLAP(fu2lg->min_pt, fu2lg->max_pt,
 			    lg->min_pt, lg->max_pt)) {
 				overlap = 1;
@@ -248,8 +265,16 @@ struct faceuse *fu;
 		if (!overlap) {
 			/* why is this vertexuse in the list? */
 			if (rt_g.NMG_debug & DEBUG_POLYSECT) {
-				rt_log("nmg_purge_unwanted_intersection_points This little bugger slipped in somehow.  Deleting it.\n");
+				rt_log("nmg_purge_unwanted_intersection_points This little bugger slipped in somehow.  Deleting it from the list.\n");
 				nmg_pr_vu_briefly(vu, (char *)NULL);
+			}
+			if( RT_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC &&
+			    lu->orientation == OT_UNSPEC )  {
+				/* Drop this loop of a single vertex in sanitize() */
+				if (rt_g.NMG_debug & DEBUG_POLYSECT)
+					rt_log("nmg_purge_unwanted_intersection_points() remarking as OT_BOOLPLACE\n");
+				lu->orientation =
+				  lu->lumate_p->orientation = OT_BOOLPLACE;
 			}
 
 			/* delete the entry from the vertex list */
