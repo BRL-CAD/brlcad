@@ -137,8 +137,8 @@ proc gui_create_default { args } {
     global ia_font
     global ia_illum_label
     global env
-    global edit_info
-    global edit_info_on
+    global edit_info_pos
+    global show_edit_info
     global multi_view
     global buttons_on
     global win_size
@@ -295,6 +295,7 @@ set dm_win($id) $sgw
 set status_bar($id) 1
 set mged_apply_to($id) 0
 set mged_grid_control($id) 0
+set edit_info_pos($id) "+0+0"
 
 if ![dm_validXType $gscreen $dtype] {
     return "gui_create_default: $gscreen does not support $dtype"
@@ -624,7 +625,7 @@ menubutton .$id.m.tools -text "Tools" -menu .$id.m.tools.m
 menu .$id.m.tools.m -tearoff $do_tearoffs
 .$id.m.tools.m add checkbutton -offvalue 0 -onvalue 1 -variable mged_adc_draw($id)\
 	-label "Angle/Dist Cursor" -underline 0 -command "mged_apply $id \"adc draw \$mged_adc_draw($id)\""
-.$id.m.tools.m add checkbutton -offvalue 0 -onvalue 1 -variable edit_info_on($id)\
+.$id.m.tools.m add checkbutton -offvalue 0 -onvalue 1 -variable show_edit_info($id)\
 	-label "Edit Info" -underline 0 -command "toggle_edit_info $id"
 .$id.m.tools.m add checkbutton -offvalue 0 -onvalue 1 -variable status_bar($id)\
 	-label "Status Bar" -underline 0 -command "toggle_status_bar $id"
@@ -801,7 +802,7 @@ proc gui_destroy_default args {
     global multi_view
     global buttons_on
     global edit_info
-    global edit_info_on
+    global show_edit_info
     global mged_top
     global mged_dmc
 
@@ -813,7 +814,7 @@ proc gui_destroy_default args {
 
     set i [lsearch -exact $mged_players $id]
     if { $i == -1 } {
-	return "closecw: bad id - $id"
+	return "gui_destroy_default: bad id - $id"
     }
     set mged_players [lreplace $mged_players $i $i]
 
@@ -830,7 +831,7 @@ proc gui_destroy_default args {
 
     set multi_view($id) 0
     set buttons_on($id) 0
-    set edit_info_on($id) 0
+    set show_edit_info($id) 0
 
     releasemv $id
     catch { cmd_close $id }
@@ -944,23 +945,50 @@ proc toggle_button_menu { id } {
 }
 
 proc toggle_edit_info { id } {
-    global player_screen
-    global edit_info_on
-    global edit_info_on
+    global show_edit_info
+    global mged_display
 
-    if [ winfo exists .sei$id] {
-	destroy .sei$id
-	set edit_info_on($id) 0
+    if {$show_edit_info($id)} {
+	if {$mged_display(state) == "SOL EDIT" || $mged_display(state) == "OBJ EDIT"} {
+	    build_edit_info $id
+	}
+    } else {
+	destroy_edit_info $id
+    }
+}
+
+proc build_edit_info { id } {
+    global player_screen
+    global edit_info
+    global edit_info_pos
+    global show_edit_info
+
+    if [winfo exists .sei$id] {
 	return
     }
 
-    toplevel .sei$id -screen $player_screen($id)
-    label .sei$id.l -bg black -fg yellow -textvar edit_info -font fixed
-    pack .sei$id.l -expand 1 -fill both
+    if {$show_edit_info($id)} {
+	toplevel .sei$id -screen $player_screen($id)
+	label .sei$id.l -bg black -fg yellow -textvar edit_info -font fixed
+	pack .sei$id.l -expand 1 -fill both
 
-    wm title .sei$id "$id\'s Edit Info"
-    wm protocol .sei$id WM_DELETE_WINDOW "toggle_edit_info $id"
-#    wm resizable .sei$id 0 0
+	wm title .sei$id "$id\'s Edit Info"
+	wm protocol .sei$id WM_DELETE_WINDOW "destroy_edit_info $id"
+	wm geometry .sei$id $edit_info_pos($id)
+    }
+}
+
+proc destroy_edit_info { id } {
+    global edit_info_pos
+    global show_edit_info
+
+    if ![winfo exists .sei$id] {
+	return
+    }
+
+    regexp "\[-+\]\[0-9\]+\[-+\]\[0-9\]+" [wm geometry .sei$id] match
+    set edit_info_pos($id) $match
+    destroy .sei$id
 }
 
 # Join Mged Collaborative Session
