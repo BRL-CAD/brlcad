@@ -24,7 +24,7 @@ class Database {
 
     constructor {file} {
 	Db::constructor $file
-	Drawable::constructor [Db::get_name]
+	Drawable::constructor [Db::get_dbname]
     } {}
 
     destructor {
