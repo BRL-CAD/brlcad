@@ -34,6 +34,8 @@ static char RCSrefract[] = "@(#)$Header$ (BRL)";
 
 HIDDEN int	rr_hit(), rr_miss();
 
+extern vect_t	background;
+
 /*
  *			R R _ R E N D E R
  */
@@ -58,9 +60,10 @@ struct shadework	*swp;
 	 *  contributions from mirror reflection & transparency
 	 */
 	f = 1 - (swp->sw_reflect + swp->sw_transmit);
-	if( f > 0 )  {
-		VSCALE( swp->sw_color, swp->sw_color, f );
-	}
+	if( f < 0 )  f = 0;
+	else if( f > 1 )  f = 1;
+	VSCALE( swp->sw_color, swp->sw_color, f );
+
 	if( swp->sw_reflect > 0 )  {
 		LOCAL vect_t	to_eye;
 
@@ -75,7 +78,13 @@ struct shadework	*swp;
 		/* I have been told this has unit length */
 		VSUB2( sub_ap.a_ray.r_dir, work, to_eye );
 		(void)rt_shootray( &sub_ap );
-		VJOIN1(swp->sw_color, swp->sw_color, swp->sw_reflect, sub_ap.a_color);
+
+		/* a_user has hit/miss flag! */
+		if( sub_ap.a_user == 0 )  {
+			VMOVE( sub_ap.a_color, background );
+		}
+		VJOIN1(swp->sw_color, swp->sw_color,
+			swp->sw_reflect, sub_ap.a_color);
 	}
 	if( swp->sw_transmit > 0 )  {
 		LOCAL vect_t incident_dir;
@@ -129,6 +138,10 @@ do_inside:
 			rt_drawvec( stdout, ap->a_rt_i,
 				sub_ap.a_ray.r_pt,
 				sub_ap.a_uvec );
+			if( rdebug&RDEBUG_HITS )  {
+				VPRINT("R", sub_ap.a_ray.r_pt);
+				VPRINT("S", sub_ap.a_uvec);
+			}
 		}
 		VMOVE( sub_ap.a_ray.r_pt, sub_ap.a_uvec );
 
@@ -158,6 +171,11 @@ do_exit:
 		sub_ap.a_miss = ap->a_miss;
 		sub_ap.a_level++;
 		(void) rt_shootray( &sub_ap );
+
+		/* a_user has hit/miss flag! */
+		if( sub_ap.a_user == 0 )  {
+			VMOVE( sub_ap.a_color, background );
+		}
 		VJOIN1( swp->sw_color, swp->sw_color,
 			swp->sw_transmit, sub_ap.a_color );
 	}
