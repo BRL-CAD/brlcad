@@ -344,7 +344,7 @@ extern int get_tree();			/* Get expr tree for object */
 extern void rt_prep();			/* Prepare for raytracing */
 extern int shootray();			/* Shoot a ray */
 extern void prep_timer();		/* Start the timer */
-extern double pr_timer();		/* Stop timer, print, return time */
+extern double read_timer();		/* Read timer, return time + str */
 extern int dir_build();			/* Read named GED db, build toc */
 extern void pr_seg();			/* Print seg struct */
 extern void pr_partitions();		/* Print the partitions */
