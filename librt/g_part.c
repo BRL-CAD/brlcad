@@ -1530,13 +1530,13 @@ const struct db_i		*dbip;
 	if( (part->part_vrad = vrad / mat[15]) < 0 )  {
 	  bu_log("unable to import particle, negative v radius\n");
 	  bu_free( ip->idb_ptr, "rt_part_internal" );
-	  ip->idb->ptr=NULL;
+	  ip->idb_ptr=NULL;
 	  return(-2);
 	}
 	if( (part->part_hrad = hrad / mat[15]) < 0 )  {
 	  bu_log("unable to import particle, negative h radius\n");
 	  bu_free( ip->idb_ptr, "rt_part_internal" );
-	  ip->idb->ptr=NULL;
+	  ip->idb_ptr=NULL;
 	  return(-3);
 	}
 
@@ -1550,7 +1550,7 @@ const struct db_i		*dbip;
 	if( maxrad <= 0 )  {
 	  bu_log("unable to import particle, negative radius\n");
 	  bu_free( ip->idb_ptr, "rt_part_internal" );
-	  ip->idb->ptr=NULL;
+	  ip->idb_ptr=NULL;
 	  return(-4);
 	}
 
@@ -1607,8 +1607,6 @@ const struct db_i		*dbip;
 	hrad = pip->part_hrad * local2mm;
 	/* pip->part_type is not converted -- internal only */
 
-	/* !!! should make sure the values are proper (no negative radius) */
-
 	rec->part.p_id = DBID_PARTICLE;
 	htond( rec->part.p_v, (unsigned char *)vert, 3 );
 	htond( rec->part.p_h, (unsigned char *)hi, 3 );
@@ -1617,6 +1615,7 @@ const struct db_i		*dbip;
 
 	return(0);
 }
+
 
 /*
  *			R T _ P A R T _ I M P O R T 5
