@@ -169,42 +169,42 @@ rt_cut_optimize_parallel()
 	
 HIDDEN int
 rt_projXmin_comp( p1, p2 )
-CONST void *p1, *p2;
+CONST genptr_t p1, p2;
 {
 	return CMP(p1,p2,st_min,X);
 }
 
 HIDDEN int
 rt_projXmax_comp( p1, p2 )
-CONST void *p1, *p2;
+CONST genptr_t p1, p2;
 {
 	return CMP(p1,p2,st_max,X);
 }
 
 HIDDEN int
 rt_projYmin_comp( p1, p2 )
-CONST void *p1, *p2;
+CONST genptr_t p1, p2;
 {
 	return CMP(p1,p2,st_min,Y);
 }
 
 HIDDEN int
 rt_projYmax_comp( p1, p2 )
-CONST void *p1, *p2;
+CONST genptr_t p1, p2;
 {
 	return CMP(p1,p2,st_max,Y);
 }
 
 HIDDEN int
 rt_projZmin_comp( p1, p2 )
-CONST void *p1, *p2;
+CONST genptr_t p1, p2;
 {
 	return CMP(p1,p2,st_min,Z);
 }
 
 HIDDEN int
 rt_projZmax_comp( p1, p2 )
-CONST void *p1, *p2;
+CONST genptr_t p1, p2;
 {
 	return CMP(p1,p2,st_max,Z);
 }
@@ -443,9 +443,9 @@ int				 just_collect_info, depth;
 		bcopy( fromp->bn_list, list_min, len*sizeof(struct soltab *) );
 		bcopy( fromp->bn_list, list_max, len*sizeof(struct soltab *) );
 		for( i=0; i<3; i++ ) {
-			qsort( (void *)list_min, len,
+			qsort( (genptr_t)list_min, len,
 			       sizeof(struct soltab *), pairs[i].cmp_min );
-			qsort( (void *)list_max, len,
+			qsort( (genptr_t)list_max, len,
 			       sizeof(struct soltab *), pairs[i].cmp_max );
 			nstart = nend = axi = 0;
 			l1 = list_min;
