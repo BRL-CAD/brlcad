@@ -373,7 +373,7 @@ char *argv[];
 					status_change = true;
 					}
 				else	/* EOF detected. */
-					(void) f_Quit( (char *) NULL );
+					break;
 				}
 			}
 		if(   !	reposition_cursor
@@ -387,6 +387,7 @@ char *argv[];
 			if( report_status )
 				prnt_Status();
 			}
+		(void) f_Quit( (char *) NULL );
 		}
 	}
 
