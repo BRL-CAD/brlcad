@@ -55,9 +55,9 @@ int		nring;
 	register struct xray	*rayp = rp+1;
 	int	ring;
 	double	fraction = 1.0;
-	double	ct, st;
 	double	theta;
 	double	delta;
+	double	radial_scale;
 	int	count = 0;
 
 	/* Basis vectors for a disc perpendicular to the ray */
@@ -73,10 +73,12 @@ int		nring;
 		delta = bn_twopi / rays_per_ring;
 		fraction = ((double)(ring+1)) / nring;
 		theta = delta * fraction;	/* spiral skew */
+		radial_scale = radius * fraction;
 		for( i=0; i < rays_per_ring; i++ )  {
+			register double	ct, st;
 			/* pt = V + cos(theta) * A + sin(theta) * B */
-			ct = cos(theta) * fraction;
-			st = sin(theta) * fraction;
+			ct = cos(theta) * radial_scale;
+			st = sin(theta) * radial_scale;
 			VJOIN2( rayp->r_pt, rp[0].r_pt, ct, a, st, b );
 			VMOVE( rayp->r_dir, rp[0].r_dir );
 			rayp->index = count++;
@@ -87,9 +89,7 @@ int		nring;
 }
 
 /*
- *  NOTES:
- *	rt_shootray_bundle
- * It should take a flag indicating whether normal, curvature, uv will be needed.
+ *  Test driver.
  */
 
 #if 0
