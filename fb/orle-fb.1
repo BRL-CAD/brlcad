@@ -1,12 +1,10 @@
-.TH RLE-FB 1V VMB
-'\"	last edit:	85/05/29	G. S. Moss
-'\"	SCCS ID:	@(#)rle-fb.1	1.5
+.TH RLE-FB 1 BRL/CAD
 .SH NAME
-rle-fb \- restore run-length encoded image onto a frame buffer
+rle-fb \- decode run-length encoded image onto a frame buffer
 .SH SYNOPSIS
 .B rle-fb
 [
-.B \-Ov
+.B \-Otv
 ] [
 .B \-b
 {
@@ -16,27 +14,33 @@ rle-fb \- restore run-length encoded image onto a frame buffer
 x y ] [ file.rle ]
 .SH DESCRIPTION
 .I Rle-fb\^
-restores an Alpha_1 standard format Run-Length Encoded (RLE) file
+decodes a University of Utah standard Run-Length Encoded (RLE) format file
 (saved with
-.IR fb-rle\^ (1V)
+.IR fb-rle\^ (1)
 or a similar program)
 to a frame buffer device or a file.
 If
 .I file.rle\^
 is not specified, the standard input is read.
-By default, the device
-.B /dev/ik0l
-is used to display the decoded image.
-This may be changed by setting the environment
-variable
-.B
-.SM FB_FILE
-to the name of another device or file
-and exporting it before execution of
-.IR rle-fb\^ .
 .I Rle-fb\^
 determines the type and size of the saved file (color or B&W)
 and acts accordingly.
+The environment
+variable
+.B
+.SM FB_FILE
+is used to select the display device (see
+.IR brlcad(1) ).
+If this variable is not set, the default device for your system will
+be used.
+.TP
+.B \-t
+Alters the normal bottom-up display order to be top-down.
+This option can be useful when the image contains accompaning text.
+Note that the image is inverted in memory, using as large a buffer as
+.I malloc(3)
+will permit.  This means that the entire image will be decoded
+before output will begin appearing.
 .TP
 .B \-v
 Provides a verbose description of the parameters of the saved image
@@ -45,12 +49,12 @@ on the standard error output.
 .B \-O
 Restores the image data in \fIoverlay\fP mode.
 Only areas of the original image which were not the background color are
-restored.  The rest of the image already in the frame buffer is undisturbed.
+decoded.  The rest of the image already in the frame buffer is undisturbed.
 Note that this mode uses twice as many DMAs to the frame buffer as
 the normal mode, as the previous image must be read back into the host.
 .TP
 .BI \-b x\^
-If the image is not being restored in overlay mode, the background is
+If the image is not being decoded in overlay mode, the background is
 normally set to the value recorded in the RLE file.
 This option permits
 the user to specify an alternate background color from a limited
@@ -77,29 +81,34 @@ before restoring the image.
 Warning:
 a saved image should not be
 repositioned so that any saved data wraps around the X borders.  If the
-image was originally saved in
-.B LORES
-(512x512x24) mode, and it is positioned beyond the limits of low resolution
-memory, it will be written to
-.B HIRES
-(1024x1024x24) memory.
+input image is 512x512,
+and it is repositioned, the framebuffer will be opened in
+1024x1024 mode.
 .TP
 .I file.rle\^
-Name of file to restore.
-The file must be in Alpha_1 RLE format.
-.SH EXAMPLE
+Name of file to decode, in RLE format.
+.SH EXAMPLES
 .RS
-$ \fIFB_FILE=/dev/ik1l export FB_FILE\fR
+.ft I
+\|rle-fb \|truck.rle
 .br
-$ \fI\|rle-fb \|\-O \|tank.rle\fR
+\|rle-fb \|\-Ot \|text.rle
+.br
+\|rle-fb \|\-bG \|<car.rle
+.ft R
 .RE
-.SH FILES
-/vld/lib/librle.a
-.br
-/vld/lib/libfb.a
 .SH SEE ALSO
-fb-rle(1V).
+brlcad(1), fb-rle(1), rle-pix(1), pix-rle(1), librle(3).
 .SH AUTHORS
-Gary S. Moss, BRL-VLD
+Gary S. Moss
 .br
-Michael John Muuss, BRL-SECAD
+Michael John Muuss
+.SH SOURCE
+SECAD/VLD Computing Consortium, Bldg 394
+.br
+The U. S. Army Ballistic Research Laboratory
+.br
+Aberdeen Proving Ground, Maryland  21005
+.SH BUG REPORTS
+Reports of bugs or problems should be submitted via electronic
+mail to <CAD@BRL.ARPA>.
