@@ -827,7 +827,7 @@ char *file, *obj;
 		extern struct mfuncs points_mfuncs[];
 		extern struct mfuncs toyota_mfuncs[];
 		extern struct mfuncs wood_mfuncs[];
-		extern struct mfuncs camo_mfuncs[];
+		extern struct mfuncs camo_mfuncs[]; 
 		extern struct mfuncs scloud_mfuncs[];
 		extern struct mfuncs air_mfuncs[];
 		extern struct mfuncs rtrans_mfuncs[];
