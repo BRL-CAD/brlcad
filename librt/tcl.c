@@ -324,7 +324,7 @@ int rt_db_match(), rt_db_get(), rt_db_put(), rt_db_adjust(), rt_db_form();
 struct dbcmdstruct {
     char *cmdname;
     int (*cmdfunc)();
-} db_cmds[] = {
+} rt_db_cmds[] = {
     "match", rt_db_match,
     "get", rt_db_get,
     "put", rt_db_put,
@@ -334,11 +334,11 @@ struct dbcmdstruct {
 };
 
 /*
- * rt_db
+ *			R T _ D B
  *
  * Generic interface for the database manipulation routines.
  * Usage:
- *        db dbCmdName ?args?
+ *        widget_command dbCmdName ?args?
  * Returns: result of cmdName database command.
  */
 
@@ -363,7 +363,7 @@ char **argv;
 
     Tcl_AppendResult( interp, "unknown database command; must be one of:",
 		   (char *)NULL );
-    for( dbcmd = db_cmds; dbcmd->cmdname != NULL; dbcmd++ ) {
+    for( dbcmd = rt_db_cmds; dbcmd->cmdname != NULL; dbcmd++ ) {
 	if( strcmp(dbcmd->cmdname, argv[1]) == 0 ) {
 	    Tcl_ResetResult( interp );	/* hack: dispose of error msg if OK */
 	    return (*dbcmd->cmdfunc)( clientData, interp, argc-1, argv+1 );
@@ -376,7 +376,7 @@ char **argv;
 
 
 /*
- * rt_db_match
+ *			R T _ D B _ M A T C H
  *
  * Returns (in interp->result) a list (possibly empty) of all matches to
  * the (possibly wildcard-containing) arguments given.
@@ -716,7 +716,7 @@ yet been implemented", (char *)NULL);
  */
 
 int
-structparse_argv( interp, argc, argv, desc, base )
+bu_structparse_argv( interp, argc, argv, desc, base )
 Tcl_Interp *interp;
 int argc;
 char **argv;
@@ -729,7 +729,7 @@ char				*base;		/* base addr of users struct */
     struct bu_vls str;
 
     if (desc == (struct bu_structparse *)NULL) {
-	bu_log("structparse_argv: NULL desc pointer\n");
+	bu_log("bu_structparse_argv: NULL desc pointer\n");
 	Tcl_AppendResult(interp, "NULL desc pointer", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -753,7 +753,7 @@ char				*base;		/* base addr of users struct */
 	    loc = (char *)(base + ((int)sdp->sp_offset));
 #endif
 	    if (sdp->sp_fmt[0] != '%') {
-		bu_log("structparse_argv: unknown format\n");
+		bu_log("bu_structparse_argv: unknown format\n");
 		bu_vls_free(&str);
 		Tcl_AppendResult(interp, "unknown format", (char *)NULL);
 		return TCL_ERROR;
@@ -1033,7 +1033,7 @@ char **argv;
     id = intern.idb_type = stlp->id;
     intern.idb_ptr = (genptr_t)bu_malloc(stlp->db_internal_size, "rt_db_put");
     *((long *)intern.idb_ptr) = stlp->magic;
-    if (structparse_argv(interp, argc-3, argv+3, stlp->parsetab,
+    if (bu_structparse_argv(interp, argc-3, argv+3, stlp->parsetab,
 			 (char *)intern.idb_ptr) == TCL_ERROR) {
 	rt_db_free_internal(&intern);
 	return TCL_ERROR;
@@ -1101,7 +1101,7 @@ char **argv;
 	   use the handy parse functions to return the object. */
 
 	if (sp != NULL) {
-	    if (structparse_argv(interp, argc-2, argv+2, sp,
+	    if (bu_structparse_argv(interp, argc-2, argv+2, sp,
 				 (char *)intern.idb_ptr) == TCL_ERROR) {
 		rt_db_free_internal(&intern);
 		return TCL_ERROR;
