@@ -1,6 +1,6 @@
-dnl $Id$
 dnl BRL-CAD
 dnl Copyright (c) 2004 BRL-CAD Developers
+dnl $Id$
 dnl
 dnl This program is free software; you can redistribute it and/or
 dnl modify it under the terms of the appropriate license described in
