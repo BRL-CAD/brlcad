@@ -74,7 +74,8 @@ HIDDEN int      X_drawString2D(struct dm *dmp, register char *str, fastf_t x, fa
 HIDDEN int	X_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2);
 HIDDEN int      X_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y);
 HIDDEN int	X_drawVList(struct dm *dmp, register struct bn_vlist *vp);
-HIDDEN int      X_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict), X_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b);
+HIDDEN int      X_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict);
+HIDDEN int	X_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b);
 HIDDEN int	X_setLineAttr(struct dm *dmp, int width, int style);
 HIDDEN int	X_configureWin_guts(struct dm *dmp, int force);
 HIDDEN int	X_configureWin(struct dm *dmp);

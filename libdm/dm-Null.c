@@ -16,6 +16,8 @@ void	Nu_void(void);
 int	Nu_int0(void);
 struct dm *Nu_open(void);
 unsigned Nu_unsign(void);
+static int     Nu_fg(struct dm *, unsigned char, unsigned char, unsigned char, int strict);
+static int     Nu_bg(struct dm *, unsigned char, unsigned char, unsigned char);
 
 struct dm dm_Null = {
   Nu_int0,
@@ -27,8 +29,8 @@ struct dm dm_Null = {
   Nu_int0,
   Nu_int0,
   Nu_int0,
-  Nu_int0,
-  Nu_int0,
+  Nu_fg,
+  Nu_bg,
   Nu_int0,
   Nu_int0,
   Nu_int0,
@@ -74,3 +76,5 @@ int Nu_int0(void) { return TCL_OK; }
 void Nu_void(void) { ; }
 struct dm *Nu_open(void) { return DM_NULL; }
 unsigned Nu_unsign(void) { return TCL_OK; }
+static int Nu_fg(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict) { return TCL_OK; }
+static int Nu_bg(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b) { return TCL_OK; }
