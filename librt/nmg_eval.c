@@ -132,6 +132,9 @@ register struct faceuse	*fu;
 
 /*
  *			N M G _ M V _ L U _ B E T W E E N _ S H E L L S
+ *
+ *  Move a wire-loopuse from one shell to another.
+ *  Note that this routine can not be used on loops in faces.
  */
 void
 nmg_mv_lu_between_shells( dest, src, lu )
@@ -623,7 +626,6 @@ struct nmg_bool_state *bs;
 	struct vertex	*v;
 	int		loops_retained;
 	int		loops_flipped;
-	int		action;
 
 	NMG_CK_SHELL(s);
 
@@ -631,38 +633,25 @@ struct nmg_bool_state *bs;
 	 *  For each face in the shell, process all the loops in the face,
 	 *  and then handle the face and all loops as a unit.
 	 */
-faces_again:
 	fu = fu_end = s->fu_p;
 	do  {
 		/* Consider this face */
-		if( !fu )  break;
+		if( !s->fu_p )  break;		/* face list became empty */
 		NMG_CK_FACEUSE(fu);
 		NMG_CK_FACE(fu->f_p);
-faceloop_again:
 		loops_retained = loops_flipped = 0;
 		lu = lu_end = fu->lu_p;
 		do {
-			if( !lu )  break;
+			if( !fu->lu_p ) break;	/* loop list became empty */
 			NMG_CK_LOOPUSE(lu);
-			eu = lu->down.eu_p;
-			NMG_CK_EDGEUSE(eu);		/* sanity */
+			NMG_CK_EDGEUSE(lu->down.eu_p);	/* sanity */
+			NMG_CK_LOOP( lu->l_p );
 			switch( nmg_eval_action( (genptr_t)lu->l_p, bs ) )  {
 			case BACTION_KILL:
-			  {
 				/* Kill by demoting loop to edges */
-				register struct loopuse	*nextlu = lu->next;
-				if( lu->lumate_p == nextlu )  rt_log("lumate?\n");
-				NMG_CK_FACEUSE( lu->up.fu_p );
-				NMG_CK_FACEUSE( nextlu->up.fu_p );
-
-				NMG_CK_LOOPUSE(nextlu);
-				(void)nmg_demote_lu( lu );
-				if( lu == lu_end )  goto faceloop_again;
-				if( lu == lu_end )  break;
-				NMG_CK_LOOPUSE(nextlu);
-				lu = nextlu;
+			  	lu = lu->next;
+				(void)nmg_demote_lu( lu->last );
 				continue;
-			  }
 			case BACTION_RETAIN:
 				loops_retained++;
 				break;
@@ -682,24 +671,17 @@ faceloop_again:
 		 *  Decide the fate of the face;  if the face dies,
 		 *  then any remaining loops, edges, etc, will die too.
 		 */
-		if( ((lu = fu->lu_p) == (struct loopuse *)0) )  {
+		if( !fu->lu_p )  {
 			/* faceuse is empty, it dies */
-			register struct faceuse	*nextfu = fu->next;
 			if (rt_g.NMG_debug & DEBUG_BOOLEVAL)
 		    		rt_log("faceuse x%x empty, kill\n", fu);
-		    	NMG_CK_FACEUSE(nextfu);
-		    	if( fu->fumate_p == nextfu ) nextfu = nextfu->next;
-		    	NMG_CK_FACEUSE(nextfu);
-			nmg_kfu( fu );
-			goto faces_again;
-		    	if( fu == fu_end )  break;
-		    	NMG_CK_FACEUSE(nextfu);
-			fu = nextfu;
+		    	if( fu->fumate_p == fu->next )
+				fu = fu->next->next;	/* skip mate too */
+			else
+				fu = fu->next;
+			nmg_kfu( fu->last );		/* kill face & mate */
 		    	continue;
 		}
-
-		if (rt_g.NMG_debug & DEBUG_BOOLEVAL)
-	    		rt_log("faceuse x%x retained\n", fu);
 
 		if( loops_flipped > 0 )  {
 			if( loops_retained > 0 )  {
@@ -710,12 +692,23 @@ faceloop_again:
 			    		rt_log("faceuse x%x flipped\n", fu);
 				nmg_reverse_face( fu );
 			}
+		} else {
+			if( loops_retained > 0 )  {
+				if (rt_g.NMG_debug & DEBUG_BOOLEVAL)
+			    		rt_log("faceuse x%x retained\n", fu);
+			} else {
+				rt_bomb("nmg_eval_shell() retaining face with no loops?\n");
+			}
 		}
 		if( s != bs->bs_dest )  {
 			if (rt_g.NMG_debug & DEBUG_BOOLEVAL)
 		    		rt_log("faceuse x%x moved to A shell\n", fu);
-			nmg_mv_fu_between_shells( bs->bs_dest, s, fu );
-			goto faces_again;
+		    	if( fu->fumate_p == fu->next )
+				fu = fu->next->next;	/* skip mate too */
+			else
+				fu = fu->next;
+			nmg_mv_fu_between_shells( bs->bs_dest, s, fu->last );
+			continue;
 		}
 		fu = fu->next;
 	} while (fu != fu_end);
@@ -725,10 +718,9 @@ faceloop_again:
 	 *  Each loop is either a wire-loop, or a vertex-with-self-loop.
 	 *  Only consider wire loops here.
 	 */
-wire_loops_again:
 	lu = lu_end = s->lu_p;
 	do  {
-		if( !lu )  break;
+		if( !s->lu_p )  break;		/* loop list became empty */
 		NMG_CK_LOOPUSE(lu);
 		if( *(lu->down.magic_p) == NMG_VERTEXUSE_MAGIC )  {
 			/* ignore vertex-with-self-loop */
@@ -739,24 +731,21 @@ wire_loops_again:
 		switch( nmg_eval_action( (genptr_t)lu->l_p, bs ) )  {
 		case BACTION_KILL:
 			/* Demote the loopuse into wire edges */
-			{
-				register struct loopuse	*nextlu = lu->next;
-				NMG_CK_LOOPUSE(nextlu);
-				if( lu->lumate_p == nextlu )  nextlu=nextlu->next;
-				NMG_CK_LOOPUSE(nextlu);
-				(void)nmg_demote_lu( lu );
-				goto wire_loops_again;
-				if( lu == lu_end )  break;
-				NMG_CK_LOOPUSE(nextlu);
-				lu = nextlu;
-				continue;
-			}
+			if( lu->lumate_p == lu->next )
+				lu = lu->next->next;	/* skip mate too */
+			else
+				lu = lu->next;
+			(void)nmg_demote_lu( lu->last );/* kill loop & mate */
+			continue;
 		case BACTION_RETAIN:
 		case BACTION_RETAIN_AND_FLIP:
-			if( s != bs->bs_dest )  {
-				nmg_mv_lu_between_shells( bs->bs_dest, s, lu );
-			}
-			break;
+			if( s == bs->bs_dest )  break;
+			if( lu->lumate_p == lu->next )
+				lu = lu->next->next;	/* skip mate too */
+			else
+				lu = lu->next;
+			nmg_mv_lu_between_shells( bs->bs_dest, s, lu->last );
+			continue;
 		}
 		lu = lu->next;
 	}  while( lu != lu_end );
@@ -764,31 +753,29 @@ wire_loops_again:
 	/*
 	 *  For each wire-edge in the shell, ...
 	 */
-wire_edge_again:
 	eu = eu_end = s->eu_p;
 	do  {
 		/* Consider this edge */
-		if( !eu )  break;
+		if( !s->eu_p )  break;		/* edge list became empty */
 		NMG_CK_EDGE( eu->e_p );
 		switch( nmg_eval_action( (genptr_t)eu->e_p, bs ) )  {
 		case BACTION_KILL:
 			/* Demote the edegeuse into vertices */
-			{
-				register struct edgeuse	*nexteu = eu->next;
-				NMG_CK_EDGEUSE(nexteu);
-				nmg_demote_eu( eu );
-				goto wire_edge_again;
-				if( eu == eu_end )  break;
-				NMG_CK_EDGEUSE(nexteu);
-				eu = nexteu;
-				continue;
-			}
+			if( eu->eumate_p == eu->next )
+				eu = eu->next->next;
+			else
+				eu = eu->next;
+			(void)nmg_demote_eu( eu->last );	/* and mate */
+			continue;
 		case BACTION_RETAIN:
 		case BACTION_RETAIN_AND_FLIP:
-			if( s != bs->bs_dest )  {
-				nmg_mv_eu_between_shells( bs->bs_dest, s, eu );
-			}
-			break;
+			if( s == bs->bs_dest )  break;
+			if( eu->eumate_p == eu->next )
+				eu = eu->next->next;
+			else
+				eu = eu->next;
+			nmg_mv_eu_between_shells( bs->bs_dest, s, eu->last );
+			continue;
 		}
 		eu = eu->next;
 	} while( eu != eu_end );
@@ -805,10 +792,9 @@ wire_edge_again:
 	 *  be demoted into vertex-with-self-loop objects above,
 	 *  which will be processed here.
 	 */
-vertex_self_loop_again:
 	lu = lu_end = s->lu_p;
 	do  {
-		if( !lu )  break;
+		if( !s->lu_p )  break;		/* loop list became empty */
 		NMG_CK_LOOPUSE(lu);
 		if( *(lu->down.magic_p) != NMG_VERTEXUSE_MAGIC )  {
 			/* ignore any remaining wire-loops */
@@ -821,24 +807,21 @@ vertex_self_loop_again:
 		switch( nmg_eval_action( (genptr_t)vu->v_p, bs ) )  {
 		case BACTION_KILL:
 			/* Simply eliminate the loopuse */
-			{
-				register struct loopuse	*nextlu = lu->next;
-				NMG_CK_LOOPUSE(nextlu);
-				if( lu->lumate_p == nextlu )  nextlu=nextlu->next;
-				NMG_CK_LOOPUSE(nextlu);
-				nmg_klu( lu );
-				goto vertex_self_loop_again;
-				if( lu == lu_end )  break;
-				NMG_CK_LOOPUSE(nextlu);
-				lu = nextlu;
-				continue;
-			}
+			if( lu->lumate_p == lu->next )
+				lu = lu->next->next;	/* skip mate too */
+			else
+				lu = lu->next;
+			nmg_klu( lu->last );	/* kill loop & mate */
+			continue;
 		case BACTION_RETAIN:
 		case BACTION_RETAIN_AND_FLIP:
-			if( s != bs->bs_dest )  {
-				nmg_mv_lu_between_shells( bs->bs_dest, s, lu );
-			}
-			break;
+			if( s == bs->bs_dest )  break;
+			if( lu->lumate_p == lu->next )
+				lu = lu->next->next;	/* skip mate too */
+			else
+				lu = lu->next;
+			nmg_mv_lu_between_shells( bs->bs_dest, s, lu->last );
+			continue;
 		}
 		lu = lu->next;
 	}  while( lu != lu_end );
@@ -856,10 +839,9 @@ vertex_self_loop_again:
 			break;
 		case BACTION_RETAIN:
 		case BACTION_RETAIN_AND_FLIP:
-			if( s != bs->bs_dest )  {
-				nmg_mv_vu_between_shells( bs->bs_dest, s, vu );
-				s->vu_p = (struct vertexuse *)0; /* sanity */
-			}
+			if( s == bs->bs_dest )  break;
+			nmg_mv_vu_between_shells( bs->bs_dest, s, vu );
+			s->vu_p = (struct vertexuse *)0;	/* sanity */
 			break;
 		}
 	}
