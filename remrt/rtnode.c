@@ -936,6 +936,11 @@ fp->ff_dist, V3ARGS(fp->ff_hitpt) );
 					*op++ = 200;
 					*op++ = 0;
 					*op++ = 0;
+				} else if( fp->ff_frame < 0 )  {
+					/* Dull red = not valid */
+					*op++ = 0;
+					*op++ = 100;
+					*op++ = 0;
 				} else if( fp->ff_frame != curframe )  {
 					/* Green = reprojected */
 					*op++ = 0;
