@@ -19,6 +19,9 @@ THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 THESE ARE LOWER PRIORITY
 
+* consider providing installation and post configuration support
+  scripts
+
 * fix reference to a "Create Solid" submenu on pdf page 18 (page 6) of
   volume II
 
@@ -44,7 +47,8 @@ THESE ARE LOWER PRIORITY
 
 * add nfs support and ability to safely interrupt benchmark
 
-* investigate why g-iges followed by iges-g on a single box results in permuted vertex lists
+* investigate why g-iges followed by iges-g on a single box results in
+  permuted vertex lists
 
 THESE BREAK PROTOCOL AND ARE BACKWARDS INCOMPATIBLE
 
