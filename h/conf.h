@@ -207,6 +207,7 @@
 #	define _BSD_SOURCE	1	/* for sys/types.h to define caddr_t */
 #       define STDIN_FILENO    0
 #	define HAVE_GETOPT_H	1
+#	define HAVE_STRDUP_DECL	1
 #	define HAVE_XOSDEFS_H	1
 #	define HAVE_SYS_ERRLIST_DECL	1
 #	define HAVE_POSIX_REGEXEC	1
