@@ -824,3 +824,81 @@ point_t pca, a, b, p;
 
 	return(distance);
 }
+
+/*
+ *			R T _ R O T A T E _ B B O X
+ *
+ *  Transform a bounding box (RPP) by the given 4x4 matrix.
+ *  There are 8 corners to the bounding RPP.
+ *  Each one needs to be transformed and min/max'ed.
+ *  This is not minimal, but does fully contain any internal object,
+ *  using an axis-aligned RPP.
+ */
+void
+rt_rotate_bbox( omin, omax, mat, imin, imax )
+point_t		omin;
+point_t		omax;
+mat_t		mat;
+point_t		imin;
+point_t		imax;
+{
+	point_t		rmin, rmax;
+	point_t		pt;
+
+	MAT4X3PNT( rmin, mat, imin );
+	MAT4X3PNT( rmax, mat, imax );
+
+	VSET( omin, rmin[X], rmin[Y], rmin[Z] );
+	VMOVE( omax, omin );
+
+	VSET( pt, rmax[X], rmin[Y], rmin[Z] );
+	VMINMAX( omin, omax, pt );
+
+	VSET( pt, rmin[X], rmax[Y], rmin[Z] );
+	VMINMAX( omin, omax, pt );
+
+	VSET( pt, rmax[X], rmax[Y], rmin[Z] );
+	VMINMAX( omin, omax, pt );
+
+	VSET( pt, rmin[X], rmin[Y], rmax[Z] );
+	VMINMAX( omin, omax, pt );
+
+	VSET( pt, rmax[X], rmin[Y], rmax[Z] );
+	VMINMAX( omin, omax, pt );
+
+	VSET( pt, rmin[X], rmax[Y], rmax[Z] );
+	VMINMAX( omin, omax, pt );
+
+	VSET( pt, rmax[X], rmax[Y], rmax[Z] );
+	VMINMAX( omin, omax, pt );
+}
+
+/*
+ *			R T _ R O T A T E _ P L A N E
+ *
+ *  Transform a plane equation by the given 4x4 matrix.
+ */
+void
+rt_rotate_plane( oplane, mat, iplane )
+plane_t		oplane;
+mat_t		mat;
+plane_t		iplane;
+{
+	point_t		orig_pt;
+	point_t		new_pt;
+
+	/* First, pick a point that lies on the original halfspace */
+	VSCALE( orig_pt, iplane, iplane[3] );
+
+	/* Transform the surface normal */
+	MAT4X3VEC( oplane, mat, iplane );
+
+	/* Transform the point from original to new halfspace */
+	MAT4X3PNT( new_pt, mat, orig_pt );
+
+	/*
+	 *  The transformed normal is all that is required.
+	 *  The new distance is found from the transformed point on the plane.
+	 */
+	oplane[3] = VDOT( new_pt, oplane );
+}
