@@ -5,6 +5,7 @@ if ![info exists mged_players] {
 proc mged_bind_dm { w } {
     global hot_key
     global forwarding_key
+    global tcl_platform
 
     set hot_key 65478
 
@@ -252,8 +253,8 @@ proc forward_key_bindings { w } {
 proc default_mouse_bindings { w } {
     global transform
 
-# default button bindings
-  bind $w <1> "winset $w; focus $w; zoom 0.5; break"
+    # default button bindings
+    bind $w <1> "winset $w; focus $w; zoom 0.5; break"
     bind $w <2> "winset $w; focus $w; set tmpstr \[dm m %x %y\]; print_return_val \$tmpstr; break"
     bind $w <3> "winset $w; focus $w; zoom 2.0; break"
 

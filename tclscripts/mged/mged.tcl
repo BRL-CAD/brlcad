@@ -359,10 +359,8 @@ proc do_LoadScript { id } {
 		} else {
 			cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "Script loaded" "Script successfully loaded!" info 0 OK
 		}
-
 	}
 	# end check if filename was given
-
 }
 
 proc do_Units { id } {
