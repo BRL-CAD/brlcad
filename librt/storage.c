@@ -295,6 +295,8 @@ register struct resource *res;
 	register struct seg *sp;
 	register int bytes;
 
+	RT_RESOURCE_CHECK(res);
+
 	bytes = rt_byte_roundup(64*sizeof(struct seg));
 	if( (cp = rt_malloc(bytes, "rt_get_seg")) == (char *)0 )  {
 		rt_bomb("rt_get_seg: malloc failure\n");
@@ -313,38 +315,65 @@ register struct resource *res;
  *  
  *  This routine is called by the GET_PT macro when the freelist
  *  is exhausted.  Rather than simply getting one additional structure,
- *  we get a whole batch, saving overhead.
+ *  we get a whole batch, saving subroutine call overhead.
  *
  *  Also note that there is a bit of trickery going on here:
  *  the *real* size of pt_solhit[] array is determined at runtime, here.
- *  XXX WARNING:  If multiple models are being used, we need to cope
- *  XXX with their differing size requirements, nworkers * N(rt_i)!
+ *
+ *  Each partition structure is separately allocated with rt_malloc(),
+ *  so that it can be freed later.  Note that if the desired length
+ *  for a new structure does not match the existing length of the first
+ *  free structure on the free queue, this routine is also called.
+ *  In this case, all wrong size structures are released, and then
+ *  some new ones are obtained.
+ *
+ *  At some time in the future, it may be worth considering a more
+ *  intelligent cache algorithm;  for now, let rt_malloc() handle it.
  */
 void
 rt_get_pt(rtip, res)
 struct rt_i		*rtip;
 register struct resource *res;
 {
-	register char *cp;
-	register int bytes;
-	register int size;		/* size of structure to really get */
+	register int			bytes;
+	register struct partition	*pp;
+	register int			i;
 
-	if( rtip->rti_magic != RTI_MAGIC )  rt_bomb("rt_get_pt:  bad rtip\n");
+	RT_CHECK_RTI(rtip);
+	RT_RESOURCE_CHECK(res);
 
-	size = rtip->rti_pt_bytes;
-	size = (size + sizeof(bitv_t)-1) & (~(sizeof(bitv_t)-1));
-	if( size <= 0 )
-		rt_bomb("rt_get_pt: bad size");
-	bytes = rt_byte_roundup(64*size);
-	if( (cp = rt_malloc(bytes, "rt_get_pt")) == (char *)0 )
-		rt_bomb("rt_get_pt: malloc failure\n");
+	if( res->re_parthead.pt_forw == PT_NULL )  {
+		res->re_parthead.pt_forw = res->re_parthead.pt_back =
+			&(res->re_parthead);
+		res->re_partlen = 0;
+	}
 
-	while( bytes >= size )  {
-		((struct partition *)cp)->pt_forw = res->re_part;
-		res->re_part = (struct partition *)cp;
+	bytes = rtip->rti_pt_bytes;
+/* XXX there is a memory leak in partition structures */
+rt_log("rt_get_pt(), %d bytes\n", bytes);
+
+	/* First, march through the free queue, discarding wrong sizes */
+	for( pp = res->re_parthead.pt_forw; pp != &(res->re_parthead); )  {
+		if( pp->pt_len != bytes )  {
+			register struct partition	*nextpp;
+
+			nextpp = pp->pt_forw;
+			DEQUEUE_PT( pp );
+			rt_free( (char *)pp, "wrong size partition struct");
+			res->re_partlen--;
+			pp = nextpp;
+			continue;
+		}
+		pp = pp->pt_forw;
+	}
+
+	/* Obtain a few new structures of the desired size */
+	for( i=10; i>0; i-- )  {
+		pp = (struct partition *)rt_malloc(bytes, "struct partition");
+		pp->pt_len = bytes;
+		pp->pt_magic = PT_MAGIC;
+		FREE_PT(pp, res);
 		res->re_partlen++;
-		cp += size;
-		bytes -= size;
 	}
 }
 
