@@ -26,8 +26,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "db.h"
 #include "./sedit.h"
+#include "raytrace.h"
 #include "./ged.h"
-#include "./objdir.h"
 #include "./solid.h"
 #include "./dm.h"
 
@@ -97,10 +97,10 @@ f_analyze()
 
 	/* use the names that were input */
 	for( i = 1; i < numargs; i++ )  {
-		if( (ndp = lookup( cmd_args[i], LOOKUP_NOISY )) == DIR_NULL )
+		if( (ndp = db_lookup( dbip,  cmd_args[i], LOOKUP_NOISY )) == DIR_NULL )
 			continue;
 
-		db_getrec(ndp, &temp_rec, 0);
+		db_get( dbip, ndp, &temp_rec, 0, 1);
 
 		if(temp_rec.u_id == ID_P_HEAD) {
 			(void)printf("Analyze cannot handle polygons\n");

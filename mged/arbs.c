@@ -35,8 +35,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "vmath.h"
 #include "db.h"
+#include "raytrace.h"
 #include "./ged.h"
-#include "./objdir.h"
 #include "./dm.h"
 
 extern char *strcat(), *strcpy();
@@ -103,7 +103,7 @@ f_3ptarb(  )
 		argcnt = getcmd(args);
 		args += argcnt;
 	}
-	if( lookup(cmd_args[1], LOOKUP_QUIET) != DIR_NULL ) {
+	if( db_lookup( dbip, cmd_args[1], LOOKUP_QUIET) != DIR_NULL ) {
 		(void)printf("%s:  already exists\n",cmd_args[1]);
 		return;
 	}
@@ -295,10 +295,10 @@ thickagain:
 	/* no interuprts */
 	(void)signal( SIGINT, SIG_IGN );
 
-	if( (dp = dir_add(record.s.s_name, -1, DIR_SOLID, 0)) == DIR_NULL )
+	if( (dp = db_diradd( dbip, record.s.s_name, -1, DIR_SOLID, 0)) == DIR_NULL )
 		return;
-	db_alloc( dp, 1 );
-	db_putrec( dp, &record, 0 );
+	db_alloc( dbip, dp, 1 );
+	db_put( dbip,  dp, &record, 0, 1 );
 	drawHobj(dp, ROOT, 0, identity);
 	dmp->dmr_colorchange();
 	dmaflag = 1;
@@ -347,7 +347,7 @@ f_rfarb()
 		argcnt = getcmd(args);
 		args += argcnt;
 	}
-	if( lookup(cmd_args[1], LOOKUP_QUIET) != DIR_NULL ) {
+	if( db_lookup( dbip, cmd_args[1], LOOKUP_QUIET) != DIR_NULL ) {
 		(void)printf("%s:  already exists\n",cmd_args[1]);
 		return;
 	}
@@ -533,10 +533,10 @@ thckagain:
 	/* no interuprts */
 	(void)signal( SIGINT, SIG_IGN );
 
-	if( (dp = dir_add(record.s.s_name, -1, DIR_SOLID, 0)) == DIR_NULL )
+	if( (dp = db_diradd( dbip, record.s.s_name, -1, DIR_SOLID, 0)) == DIR_NULL )
 		return;
-	db_alloc( dp, 1 );
-	db_putrec( dp, &record, 0 );
+	db_alloc( dbip, dp, 1 );
+	db_put( dbip,  dp, &record, 0, 1 );
 	drawHobj(dp, ROOT, 0, identity);
 	dmp->dmr_colorchange();
 	dmaflag = 1;
