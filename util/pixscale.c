@@ -225,8 +225,14 @@ int	ix, iy, ox, oy;
 	double	sumr, sumg, sumb;
 	unsigned char *op;
 
-	pxlen = (double)ix / (double)ox;
-	pylen = (double)iy / (double)oy;
+	if( ix == ox )
+		pxlen = 1.0;
+	else
+		pxlen = (double)ix / (double)ox;
+	if( iy == oy )
+		pylen = 1.0;
+	else
+		pylen = (double)iy / (double)oy;
 	if ( (pxlen < 1.0 && pylen > 1.0) || (pxlen > 1.0 && pylen < 1.0) ) {
 		fprintf( stderr, "pixscale: can't stretch one way and compress another!\n" );
 		return( -1 );
