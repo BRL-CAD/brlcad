@@ -725,9 +725,13 @@ int			ncpu;
 
 	BU_GETUNION( finp, cutter );
 	finp->cut_type = CUT_BOXNODE;
-	VMOVE( finp->bn.bn_min, rtip->rti_pmin );
-	VMOVE( finp->bn.bn_max, rtip->rti_pmax );
-	finp->bn.bn_maxlen = finp->bn.bn_len = 0;
+	VMOVE( finp->bn.bn_min, rtip->mdl_min );
+	VMOVE( finp->bn.bn_max, rtip->mdl_max );
+	finp->bn.bn_len = 0;
+	finp->bn.bn_maxlen = rtip->nsolids+1;
+	finp->bn.bn_list = (struct soltab **)bu_malloc(
+		finp->bn.bn_maxlen * sizeof(struct soltab *),
+		"rt_cut_it: initial list alloc" );
 	RT_VISIT_ALL_SOLTABS_START( stp, rtip ) {
 		/* Ignore "dead" solids in the list.  (They failed prep) */
 		if( stp->st_aradius <= 0 )  continue;
