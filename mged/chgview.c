@@ -413,6 +413,7 @@ int	catch_sigint;
 	      VSETALL( absolute_slew, 0.0 );
 	    }
 
+	    color_soltab();
 	    dmp->dmr_colorchange(dmp);
 	  }
 

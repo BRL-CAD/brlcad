@@ -136,6 +136,7 @@ char	**argv;
 		newp = next_mater;
 	}
 
+	color_soltab();
 	dmp->dmr_colorchange(dmp);
 
 	return TCL_OK;
@@ -229,6 +230,8 @@ char	**argv;
 	}
 	(void)fclose(fp);
 	(void)unlink( tempfile );
+
+	color_soltab();
 	dmp->dmr_colorchange(dmp);
 
 	return TCL_OK;
