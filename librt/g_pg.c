@@ -65,19 +65,28 @@ struct directory *dp;
 				stp->st_name, rp[j].u_id );
 			return(-1);		/* BAD */
 		}
-		if( rp[j].q.q_count != 3 )  {
+		if( rp[j].q.q_count < 3 || rp[j].q.q_count > 5 )  {
 			rt_log("pg_prep(%s):  q_count = %d\n",
 				stp->st_name, rp[j].q.q_count);
 			return(-1);		/* BAD */
 		}
-		for( i=0; i < 3; i++ )  {
-			/* Should worry about importing dbfloat_t here */
-			MAT4X3PNT( work[i], mat, rp[j].q.q_verts[i] );
-			VMINMAX( stp->st_min, stp->st_max, work[i] );
-		}
 		/* Import dbfloat_t normal */
-		VMOVE( norm, &(rp[j].q.q_norms[0][X]) );
-		(void)pgface( stp, work[0], work[1], work[2], norm );
+		MAT4X3PNT( norm, mat, rp[j].q.q_norms[0] );
+		VUNITIZE( norm );
+		/* Should worry about importing dbfloat_t here */
+		MAT4X3PNT( work[0], mat, rp[j].q.q_verts[0] );
+		VMINMAX( stp->st_min, stp->st_max, work[0] );
+		/* Should worry about importing dbfloat_t here */
+		MAT4X3PNT( work[1], mat, rp[j].q.q_verts[1] );
+		VMINMAX( stp->st_min, stp->st_max, work[1] );
+		for( i=2; i < rp[j].q.q_count; i++ )  {
+			/* Should worry about importing dbfloat_t here */
+			MAT4X3PNT( work[2], mat, rp[j].q.q_verts[i] );
+			VMINMAX( stp->st_min, stp->st_max, work[2] );
+			/* output a face */
+			(void)pgface( stp, work[0], work[1], work[2], norm );
+			VMOVE( work[1], work[2] );
+		}
 	}
 	if( stp->st_specific == 0 )  {
 		rt_log("pg(%s):  no faces\n", stp->st_name);
@@ -146,9 +155,8 @@ fastf_t		*np;
 		return(0);			/* BAD */
 	}		
 
-	/*  wn is a GIFT-style
-	 *  normal, needing to point inwards, whereas N is an outward
-	 *  pointing normal.
+	/*  wn is a GIFT-style normal, not necessarily of unit length.
+	 *  N is an outward pointing unit normal.
 	 *  Eventually, N should be computed as a blend of the given normals.
 	 */
 	m3 = MAGNITUDE( np );
@@ -157,11 +165,8 @@ fastf_t		*np;
 		m3 = 1 / m3;
 		VSCALE( trip->tri_N, trip->tri_N, m3 );
 	} else {
-		VREVERSE( trip->tri_N, trip->tri_wn );
+		VMOVE( trip->tri_N, trip->tri_wn );
 		VUNITIZE( trip->tri_N );
-	}
-	if( VDOT( trip->tri_wn, trip->tri_N ) > 0 )  {
-		VREVERSE( trip->tri_wn, trip->tri_wn );	/* point in */
 	}
 
 	/* Add this face onto the linked list for this solid */
@@ -367,6 +372,10 @@ struct soltab *stp;
 register struct xray *rp;
 {
 	/* Normals computed in pg_shot, nothing to do here */
+
+	if( VDOT(rp->r_dir, hitp->hit_normal) > 0 ) {
+		VREVERSE( hitp->hit_normal, hitp->hit_normal );
+	}
 }
 
 void
