@@ -79,6 +79,11 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #	define	NATURAL_IEEE	yes
 #endif
 
+#if defined(n16)
+	/* These systems operate in IEEE format, using little-endian order */
+#	define	REVERSED_IEEE	yes
+#endif
+
 /*
  *			H T O N D
  *
@@ -102,6 +107,23 @@ int			count;
 	bcopy( in, out, count*8 );
 #	endif
 	return;
+#	define	HTOND	yes
+#endif
+
+#if	defined(REVERSED_IEEE)
+	/* This machine uses IEEE, but in little-endian byte order */
+	register int	i;
+	for( i=count-1; i >= 0; i-- )  {
+		*out++ = in[7];
+		*out++ = in[6];
+		*out++ = in[5];
+		*out++ = in[4];
+		*out++ = in[3];
+		*out++ = in[2];
+		*out++ = in[1];
+		*out++ = in[0];
+		in += 8;
+	}
 #	define	HTOND	yes
 #endif
 
@@ -382,7 +404,7 @@ ibm_normalized:
 #endif
 
 #ifndef	HTOND
-# include "htond.c:  Error, no conversion for this machine type"
+# include "htond.c:  ERROR, no HtoND conversion for this machine type"
 #endif
 }
 
@@ -411,6 +433,23 @@ int			count;
 	bcopy( in, out, count*8 );
 #	endif
 	return;
+#	define	NTOHD	yes
+#endif
+
+#if	defined(REVERSED_IEEE)
+	/* This machine uses IEEE, but in little-endian byte order */
+	register int	i;
+	for( i=count-1; i >= 0; i-- )  {
+		*out++ = in[7];
+		*out++ = in[6];
+		*out++ = in[5];
+		*out++ = in[4];
+		*out++ = in[3];
+		*out++ = in[2];
+		*out++ = in[1];
+		*out++ = in[0];
+		in += 8;
+	}
 #	define	NTOHD	yes
 #endif
 
@@ -684,6 +723,6 @@ convex_out:
 #endif
 
 #ifndef	NTOHD
-# include "ntohd.c:  Error, no conversion for this machine type"
+# include "ntohd.c:  ERROR, no NtoHD conversion for this machine type"
 #endif
 }
