@@ -302,7 +302,22 @@ set -S2 "/bin/sh"
 /*		Non-shared binaries, automatic PostScript startoff for rfbd */
 #		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -I/usr/include/bsd -DIF_4D
 #	endif
-#	define	LIBFB_SETUP	(rm -fr /usr/tmp/libfb; \
+#if	1
+/*		The Release 3.2 way */
+#		define	LIBFB_SETUP	(rm -fr /usr/tmp/libfb; \
+			mkdir /usr/tmp/libfb; \
+			cp /usr/lib/libgl''SHARED.a /usr/tmp/libfb/libfb.a; \
+			AR u /usr/tmp/libfb/libfb.a *.o; \
+			( cd /usr/tmp/libfb; \
+			AR x /usr/lib/libbsd.a; \
+			rm -f *EBEB*; \
+			mv in_addr.o net_in_addr.o; \
+			AR u libfb.a * ); \
+			mv /usr/tmp/libfb/libfb.a . ; \
+			rm -fr /usr/tmp/libfb );
+#	else
+/*		The Release 3.1 way, delete select.o */
+#		define	LIBFB_SETUP	(rm -fr /usr/tmp/libfb; \
 			mkdir /usr/tmp/libfb; \
 			cp *.o /usr/tmp/libfb; \
 			( cd /usr/tmp/libfb; \
@@ -310,9 +325,11 @@ set -S2 "/bin/sh"
 			mv in_addr.o sgi_addr.o; \
 			rm -f select.o *EBEB*; \
 			AR x /usr/lib/libbsd.a; \
+			rm -f *EBEB*; \
 			AR u libfb.a * ); \
 			mv /usr/tmp/libfb/libfb.a . ; \
 			rm -fr /usr/tmp/libfb );
+#	endif
 #	define	HAS_TCP	1
 #	define	CC	/usr/bin/cc
 #	define	LD_OPTS		GFLAG
