@@ -857,7 +857,7 @@ pipebld()
 
 	mk_pipe(stdout, name, &head);
 	mk_freemembers( &head );
-	free( sp );
+	free( (char *)sp );
 }
 
 /*			P A R T I C L E B L D
