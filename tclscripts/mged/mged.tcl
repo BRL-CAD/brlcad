@@ -447,10 +447,12 @@ proc ia_invoke { w } {
 		set ia_more_default($id) [get_more_default]
 		return
 	    }
+	    .$id.t tag add oldcmd promptEnd insert
 	    mged_print_tag $w "Error: $ia_msg\n" result
 	} else {
+	    .$id.t tag add oldcmd promptEnd insert
+
 	    if {$ia_msg != ""} {
-		.$id.t tag add oldcmd promptEnd insert
 		mged_print_tag $w $ia_msg\n result
 	    }
 
