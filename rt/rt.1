@@ -75,6 +75,20 @@ For example,
 .B \-c ``set''
 will print the values of all settable variables.
 .TP
+.B \-d#
+turns on the reporting of pixel distances,
+so that each pixel is represented by 3 bytes of color information
+followed by 8 bytes for a double (in IEEE format)
+giving the distance to the ray's first hit.
+The default is 0,
+which causes
+.I rt (1)
+to write only the color information.
+See
+.IR pix (5)
+and
+.IR pixd (5).
+.TP
 .B \-e#
 selects auto-sizing, and gives the view elevation in degrees.  Used with
 .B \-a
