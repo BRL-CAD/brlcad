@@ -85,6 +85,7 @@ register fastf_t *out, *in;
 {
 	register int j, k;
 	FAST fastf_t	f;
+	register int i;
 
 	if( NEAR_ZERO(in[X], 0.0001) && NEAR_ZERO(in[Y], 0.0001) &&
 	    NEAR_ZERO(in[Z], 0.0001) )  {
@@ -95,14 +96,17 @@ register fastf_t *out, *in;
 
 	/* Find component closest to zero */
 	f = fabs(in[X]);
+	i = X;
 	j = Y;
 	k = Z;
 	if( fabs(in[Y]) < f )  {
 		f = fabs(in[Y]);
+		i = Y;
 		j = Z;
 		k = X;
 	}
 	if( fabs(in[Z]) < f )  {
+		i = Z;
 		j = X;
 		k = Y;
 	}
@@ -113,7 +117,9 @@ register fastf_t *out, *in;
 		return;
 	}
 	f = 1.0/f;
-	VSET( out, 0, -in[k]*f, in[j]*f );
+	out[i] = 0.0;
+	out[j] = -in[k]*f;
+	out[k] =  in[j]*f;
 }
 
 /*
