@@ -49,6 +49,10 @@ option add *QuadDisplay.height 400 widgetDefault
     constructor {args} {}
     destructor {}
 
+    public method getDrawLabelsHook {args}
+    public method setDrawLabelsHook {args}
+    public method setDrawLabelsHookAll {args}
+
     public method pane {args}
     public method multi_pane {args}
     public method refresh {}
@@ -133,8 +137,6 @@ option add *QuadDisplay.height 400 widgetDefault
     public method toggle_modelAxesEnableAll {}
     public method toggle_modelAxesTickEnable {args}
     public method toggle_modelAxesTickEnableAll {}
-    public method toggle_autoViewEnable {args}
-    public method toggle_autoViewEnableAll {args}
 
     public method resetAll {}
     public method default_views {}
@@ -254,6 +256,21 @@ option add *QuadDisplay.height 400 widgetDefault
 
 ::itcl::configbody QuadDisplay::multi_pane {
     multi_pane $itk_option(-multi_pane)
+}
+
+::itcl::body QuadDisplay::getDrawLabelsHook {args} {
+    eval $itk_component($itk_option(-pane)) getDrawLabelsHook $args
+}
+
+::itcl::body QuadDisplay::setDrawLabelsHook {args} {
+    eval $itk_component($itk_option(-pane)) setDrawLabelsHook $args
+}
+
+::itcl::body QuadDisplay::setDrawLabelsHookAll {args} {
+    eval $itk_component(ul) setDrawLabelsHook $args
+    eval $itk_component(ur) setDrawLabelsHook $args
+    eval $itk_component(ll) setDrawLabelsHook $args
+    eval $itk_component(lr) setDrawLabelsHook $args
 }
 
 ::itcl::body QuadDisplay::pane {args} {
@@ -678,27 +695,6 @@ option add *QuadDisplay.height 400 widgetDefault
     eval $itk_component(lr) toggle_centerDotEnable
 }
 
-::itcl::body QuadDisplay::toggle_autoViewEnable {args} {
-    switch -- $args {
-	ul -
-	ur -
-	ll -
-	lr {
-	    eval $itk_component($args) toggle_autoViewEnable
-	}
-	default {
-	    eval $itk_component($itk_option(-pane)) toggle_autoViewEnable
-	}
-    }
-}
-
-::itcl::body QuadDisplay::toggle_autoViewEnableAll {} {
-    eval $itk_component(ul) toggle_autoViewEnable
-    eval $itk_component(ur) toggle_autoViewEnable
-    eval $itk_component(ll) toggle_autoViewEnable
-    eval $itk_component(lr) toggle_autoViewEnable
-}
-
 ::itcl::body QuadDisplay::zclipAll {args} {
     eval $itk_component(ul) zclip $args
     eval $itk_component(ur) zclip $args
@@ -1059,7 +1055,6 @@ if {$tcl_platform(os) != "Windows NT"} {
 ::itcl::body QuadDisplay::help {args} {
     return [eval $itk_component(ur) help $args]
 }
-
 
 # Local Variables:
 # mode: Tcl
