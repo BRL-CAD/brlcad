@@ -1399,3 +1399,192 @@ char **argv;
 
 	return CMD_OK;
 }
+
+int
+f_nmg_simplify( argc, argv )
+int argc;
+char *argv[];
+{
+	struct directory *dp;
+	struct rt_db_internal nmg_intern;
+	struct rt_db_internal new_intern;
+	struct rt_external new_extern;
+	struct model *m;
+	struct nmgregion *r;
+	struct shell *s;
+	int do_all=1;
+	int do_arb=0;
+	int do_ell=0;
+	int do_tgc=0;
+	int do_poly=0;
+	char *new_name;
+	char *nmg_name;
+	int success = 0;
+
+	if( argc < 3 || argc > 4 )
+	{
+		rt_log( "Usage: nmg_simplify [arb|ell|tgc|poly] new_solid_name nmg_solid\n" );
+		return CMD_BAD;
+	}
+
+	RT_INIT_DB_INTERNAL( &new_intern );
+
+	if( argc == 4 )
+	{
+		do_all = 0;
+		if( !strncmp( argv[1], "arb", 3 ) )
+			do_arb = 1;
+		else if( !strncmp( argv[1], "ell", 3 ) )
+			do_ell = 1;
+		else if( !strncmp( argv[1], "tgc", 3 ) )
+			do_tgc = 1;
+		else if( !strncmp( argv[1], "poly", 4 ) )
+			do_poly = 1;
+		else
+		{
+			rt_log( "Usage: nmg_simplify [arb|ell|tgc|poly] new_solid_name nmg_solid\n" );
+			return CMD_BAD;
+		}
+
+		new_name = argv[2];
+		nmg_name = argv[3];
+	}
+	else
+	{
+		new_name = argv[1];
+		nmg_name = argv[2];
+	}
+
+	if( db_lookup( dbip, new_name, LOOKUP_QUIET) != DIR_NULL )
+	{
+		rt_log( "%s already exists\n", new_name );
+		return CMD_BAD;
+	}
+
+	if( (dp=db_lookup( dbip, nmg_name, LOOKUP_QUIET)) == DIR_NULL )
+	{
+		rt_log( "%s does not exist\n", nmg_name );
+		return CMD_BAD;
+	}
+
+	if( rt_db_get_internal( &nmg_intern, dp, dbip, rt_identity ) < 0 )
+	{
+		rt_log("rt_db_get_internal() error\n");
+		return CMD_BAD;
+	}
+
+	if( nmg_intern.idb_type != ID_NMG )
+	{
+		rt_log( "%s is not an NMG solid\n", nmg_name );
+		rt_db_free_internal( &nmg_intern );
+		return CMD_BAD;
+	}
+
+	m = (struct model *)nmg_intern.idb_ptr;
+	NMG_CK_MODEL( m );
+
+	if( do_arb || do_all )
+	{
+		struct rt_arb_internal arb_int;
+
+		if( nmg_to_arb( m, &arb_int ) )
+		{
+			new_intern.idb_ptr = (genptr_t)(&arb_int);
+			new_intern.idb_type = ID_ARB8;
+			success = 1;
+		}
+		else if( do_arb )
+		{
+			rt_db_free_internal( &nmg_intern );
+			rt_log( "Failed to construct an ARB equivalent to %s\n", nmg_name );
+			return CMD_OK;
+		}
+	}
+
+	if( (do_tgc || do_all) && !success )
+	{
+		struct rt_tgc_internal tgc_int;
+
+		if( nmg_to_tgc( m, &tgc_int, &mged_tol ) )
+		{
+			new_intern.idb_ptr = (genptr_t)(&tgc_int);
+			new_intern.idb_type = ID_TGC;
+			success = 1;
+		}
+		else if( do_tgc )
+		{
+			rt_db_free_internal( &nmg_intern );
+			rt_log( "Failed to construct a TGC equivalent to %s\n", nmg_name );
+			return CMD_OK;
+		}
+	}
+	if( (do_poly || do_all) && !success )
+	{
+		struct rt_pg_internal *poly_int;
+
+		poly_int = (struct rt_pg_internal *)rt_malloc( sizeof( struct rt_pg_internal ), "f_nmg_simplify: poly_int" );
+
+		if( nmg_to_poly( m, poly_int, &mged_tol ) )
+		{
+			new_intern.idb_ptr = (genptr_t)(poly_int);
+			new_intern.idb_type = ID_POLY;
+			success = 1;
+		}
+		else if( do_poly )
+		{
+			rt_db_free_internal( &nmg_intern );
+			rt_log( "%s is not a closed surface, cannot make a polysolid\n", nmg_name );
+			return CMD_OK;
+		}
+	}
+
+	if( success )
+	{
+		int ngran;
+
+		r = RT_LIST_FIRST( nmgregion, &m->r_hd );
+		s = RT_LIST_FIRST( shell, &r->s_hd );
+
+		if( RT_LIST_NON_EMPTY( &s->lu_hd ) )
+			rt_log( "wire loops in %s have been ignored in conversion\n", nmg_name );
+
+		if( RT_LIST_NON_EMPTY( &s->eu_hd ) )
+			rt_log( "wire edges in %s have been ignored in conversion\n", nmg_name );
+
+		if( s->vu_p )
+			rt_log( "Single vertexuse in shell of %s has been ignored in conversion\n", nmg_name );
+
+		rt_db_free_internal( &nmg_intern );
+
+		if( rt_functab[new_intern.idb_type].ft_export( &new_extern, &new_intern, 1.0 ) < 0 )
+		{
+			rt_log( "f_nmg_simplify: export failure\n" );
+			rt_functab[new_intern.idb_type].ft_ifree( &new_intern );
+			return CMD_BAD;
+		}
+
+		/* only the polysolid mallocs anything */
+		if( new_intern.idb_type == ID_POLY )
+			rt_functab[new_intern.idb_type].ft_ifree( &new_intern );
+
+		ngran = (new_extern.ext_nbytes+sizeof(union record)-1) / sizeof(union record);
+		if( (dp = db_diradd( dbip, new_name, -1L, ngran, DIR_SOLID)) == DIR_NULL ||
+		    db_alloc( dbip, dp, 1 ) < 0 )
+		    {
+			db_free_external( &new_extern );
+		    	ALLOC_ERR;
+			return CMD_BAD;
+		    }
+
+		if (db_put_external( &new_extern, dp, dbip ) < 0 )
+		{
+			db_free_external( &new_extern );
+			WRITE_ERR;
+			return CMD_BAD;
+		}
+		db_free_external( &new_extern );
+		return CMD_OK;
+	}
+	rt_log( "simplification to %s is not yet supported\n", argv[1] );
+	return CMD_BAD;
+}
