@@ -588,6 +588,7 @@ dgo_draw_cmd(struct dg_obj	*dgop,
 	 *  Silently skip any leading options (which start with minus signs).
 	 */
 	dgo_eraseobjpath(dgop, interp, argc, argv, LOOKUP_QUIET, 0);
+
 #if USE_SURVICE_MODS
 	/*
 	 * If asking for wireframe and in shaded_mode,
@@ -3078,13 +3079,13 @@ dgo_eraseobjpath(struct dg_obj	*dgop,
 	Tcl_IncrRefCount(save_result);
 #endif
 
-	bu_vls_init(&vls);
+		bu_vls_init(&vls);
 	for (i = 0; i < argc; i++) {
 		int j;
 		char *list;
 		int ac;
 		char **av, **av_orig;
-		struct directory **dpp;
+		struct directory **dpp = (struct directory **)0;
 
 #if 0
 		bu_vls_trunc(&vls, 0);
@@ -3115,17 +3116,24 @@ dgo_eraseobjpath(struct dg_obj	*dgop,
 		if (Tcl_SplitList(interp, list, &ac, &av_orig) != TCL_OK)
 			continue;
 
+		/* make sure we will not dereference null */
+		if ( ( ac == 0 ) || (av_orig == 0) || ( *av_orig == 0 ) ) {
+			bu_log("WARNING: Asked to look up a null-named database object\n");
+			goto end;
+		}
+
 		/* skip first element if empty */
 		av = av_orig;
+
 		if (*av[0] == '\0') {
 			--ac;
 			++av;
 		}
-
+		
 		/* ignore last element if empty */
 		if (*av[ac-1] == '\0')
 			--ac;
-
+		
 		dpp = bu_calloc(ac+1, sizeof(struct directory *), "eraseobjpath: directory pointers");
 		for (j = 0; j < ac; ++j)
 			if ((dp = db_lookup(dgop->dgo_wdbp->dbip, av[j], noisy)) != DIR_NULL)
