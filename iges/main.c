@@ -38,7 +38,7 @@ struct iges_directory **dir;
 struct reglist *regroot;
 struct iges_edge_list *edge_root;
 struct iges_vertex_list *vertex_root;
-struct rt_tol tol;
+struct bn_tol tol;
 char *solid_name=(char *)NULL;
 struct file_list iges_list;
 struct file_list *curr_file;
@@ -115,16 +115,16 @@ Suggestions()
 	}
 
 	if( (csg || brep) && (do_splines || do_drawings || trimmed_surf ) )
-		rt_log( msg1 , iges_file );
+		bu_log( msg1 , iges_file );
 
 	if( drawing && csg == 0 && brep == 0 && !do_drawings )
-		rt_log( msg2 , iges_file );
+		bu_log( msg2 , iges_file );
 
 	if( splines && csg == 0 && brep == 0 && !do_splines )
-		rt_log( msg3 , iges_file );
+		bu_log( msg3 , iges_file );
 
 	if( tsurfs && csg == 0 && brep == 0 && !trimmed_surf )
-		rt_log( msg4 , iges_file );
+		bu_log( msg4 , iges_file );
 }
 
 main( argc , argv )
@@ -185,10 +185,10 @@ char *argv[];
 	}
 
 	if( rt_g.debug & DEBUG_MEM_FULL )
-		rt_mem_barriercheck();
+		bu_mem_barriercheck();
 
-	rt_log( "%s", version+5);
-	rt_log( "Please direct bug reports to <jra@brl.mil>\n\n" );
+	bu_log( "%s", version+5);
+	bu_log( "Please direct bug reports to <jra@brl.mil>\n\n" );
 
 	/* Initialize some variables */
 	ntypes = NTYPES;
@@ -196,7 +196,7 @@ char *argv[];
 	edge_root = NULL;
 	vertex_root = NULL;
 	name_root = NULL;
-	tol.magic = RT_TOL_MAGIC;
+	tol.magic = BN_TOL_MAGIC;
 	tol.dist = 0.005;
 	tol.dist_sq = tol.dist * tol.dist;
 	tol.perp = 1e-6;
@@ -204,7 +204,7 @@ char *argv[];
 
 	Initstack();	/* Initialize node stack */
 
-	identity = (mat_t *)rt_malloc( sizeof( mat_t ), "main: identity" );
+	identity = (mat_t *)bu_malloc( sizeof( mat_t ), "main: identity" );
 	for( i=0 ; i<16 ; i++ )
 	{
 		if( !(i%5) )
@@ -215,7 +215,7 @@ char *argv[];
 
 	if( (fdout = fopen( output_file , "w" )) == NULL )
 	{
-		rt_log( "Cannot open %s\n" , output_file );
+		bu_log( "Cannot open %s\n" , output_file );
 		perror( "iges-g" );
 		usage();
 		exit( 1 );
@@ -225,40 +225,40 @@ char *argv[];
 	argc -= optind;
 	argv += optind;
 
-	RT_LIST_INIT( &iges_list.l );
-	curr_file = (struct file_list *)rt_malloc( sizeof( struct file_list ), "iges-g: curr_file" );
+	BU_LIST_INIT( &iges_list.l );
+	curr_file = (struct file_list *)bu_malloc( sizeof( struct file_list ), "iges-g: curr_file" );
 	if( solid_name )
 		strcpy( curr_file->obj_name, Make_unique_brl_name( solid_name ) );
 	else
 		strcpy( curr_file->obj_name, Make_unique_brl_name( "all" ) );
 
-	curr_file->file_name = (char *)rt_malloc( strlen( argv[0] ) + 1, "iges-g: curr_file->file_name" );
+	curr_file->file_name = (char *)bu_malloc( strlen( argv[0] ) + 1, "iges-g: curr_file->file_name" );
 	strcpy( curr_file->file_name, argv[0] );
-	RT_LIST_APPEND( &iges_list.l, &curr_file->l );
+	BU_LIST_APPEND( &iges_list.l, &curr_file->l );
 
-	while( RT_LIST_NON_EMPTY( &iges_list.l ) )
+	while( BU_LIST_NON_EMPTY( &iges_list.l ) )
 	{
 		if( rt_g.debug & DEBUG_MEM_FULL )
-			rt_mem_barriercheck();
+			bu_mem_barriercheck();
 
-		curr_file = RT_LIST_FIRST( file_list, &iges_list.l );
+		curr_file = BU_LIST_FIRST( file_list, &iges_list.l );
 		iges_file = curr_file->file_name;
 
 		fd = fopen( iges_file , "r" );	/* open IGES file */
 		if( fd == NULL )
 		{
-			rt_log( "Cannot open %s\n" , iges_file );
+			bu_log( "Cannot open %s\n" , iges_file );
 			perror( "iges-g" );
 			usage();
 			exit( 1 );
 		}
 
-		rt_log( "\n\n\nIGES FILE: %s\n", iges_file );
+		bu_log( "\n\n\nIGES FILE: %s\n", iges_file );
 
 		reclen = Recsize() * sizeof( char ); /* Check length of records */
 		if( reclen == 0 )
 		{
-			rt_log( "File (%s) not in IGES ASCII format\n", iges_file );
+			bu_log( "File (%s) not in IGES ASCII format\n", iges_file );
 			exit(1);
 		}
 
@@ -306,20 +306,20 @@ char *argv[];
 		}
 
 		if( rt_g.debug & DEBUG_MEM_FULL )
-			rt_mem_barriercheck();
+			bu_mem_barriercheck();
 
 		Free_dir();
 
 		if( rt_g.debug & DEBUG_MEM_FULL )
-			rt_mem_barriercheck();
+			bu_mem_barriercheck();
 
-		RT_LIST_DEQUEUE( &curr_file->l );
-		rt_free( (char *)curr_file->file_name, "iges-g: curr_file->file_name" );
-		rt_free( (char *)curr_file, "iges-g: curr_file" );
+		BU_LIST_DEQUEUE( &curr_file->l );
+		bu_free( (char *)curr_file->file_name, "iges-g: curr_file->file_name" );
+		bu_free( (char *)curr_file, "iges-g: curr_file" );
 		file_count++;
 
 		if( rt_g.debug & DEBUG_MEM_FULL )
-			rt_mem_barriercheck();
+			bu_mem_barriercheck();
 
 	}
 

@@ -36,7 +36,7 @@ int entityno;
 
 	if( dir[entityno]->param <= pstart )
 	{
-		rt_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
+		bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 				dir[entityno]->direct , dir[entityno]->name );
 		return(0);
 	}
@@ -58,7 +58,7 @@ int entityno;
 
 	if( length <= 0.0 )
 	{
-		rt_log( "Illegal parameters for entity D%07d (%s)\n" ,
+		bu_log( "Illegal parameters for entity D%07d (%s)\n" ,
 				dir[entityno]->direct , dir[entityno]->name );
 		return(0);
 	}
@@ -118,30 +118,30 @@ int entityno;
 
 			if( nmg_calc_face_g( fu ) )
 			{
-				rt_log( "Extrude: Failed to calculate face geometry\n" );
+				bu_log( "Extrude: Failed to calculate face geometry\n" );
 				nmg_km( m );
-				rt_free( (char *)curv_pts, "curve_pts" );
+				bu_free( (char *)curv_pts, "curve_pts" );
 				return( 0 );
 			}
 
 			if( nmg_extrude_face( fu, evect , &tol ) )
 			{
-				rt_log( "Extrude: extrusion failed\n" );
+				bu_log( "Extrude: extrusion failed\n" );
 				nmg_km( m );
-				rt_free( (char *)curv_pts, "curve_pts" );
+				bu_free( (char *)curv_pts, "curve_pts" );
 				return( 0 );
 			}
 
 			write_shell_as_polysolid( fdout, dir[entityno]->name, s );
 			nmg_km( m );
-			rt_free( (char *)curv_pts, "curve_pts" );
+			bu_free( (char *)curv_pts, "curve_pts" );
 
 			return( 1 );
 		}
 		default:
 			i = (-1);
 			while( dir[curve]->type != typecount[++i].type && i < ntypes );
-			rt_log( "Extrusions of %s are not allowed\n" , typecount[i].name );
+			bu_log( "Extrusions of %s are not allowed\n" , typecount[i].name );
 			break;
 	}
 	return( 0 );

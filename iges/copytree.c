@@ -30,7 +30,7 @@ struct node *root,*parent;
 		return( (struct node *)NULL );
 
 
-	ptr = (struct node *)rt_malloc( sizeof( struct node ), "Copytree: ptr" );
+	ptr = (struct node *)bu_malloc( sizeof( struct node ), "Copytree: ptr" );
 
 	*ptr = (*root);
 	ptr->parent = parent;

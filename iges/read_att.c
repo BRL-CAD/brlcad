@@ -48,7 +48,7 @@ struct brlcad_att *att;
 
 	if( dir[entityno]->param <= pstart )
 	{
-		rt_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
+		bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 				dir[entityno]->direct , dir[entityno]->name );
 		return;
 	}
@@ -57,7 +57,7 @@ struct brlcad_att *att;
 	Readint( &i , "" );
 	if( i != 422 )
 	{
-		rt_log( "Read_att: Expecting attribute instance, found type %d\n" , i );
+		bu_log( "Read_att: Expecting attribute instance, found type %d\n" , i );
 		return;
 	}
 

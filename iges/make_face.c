@@ -43,7 +43,7 @@ int face_orient;
 
 	if( dir[entityno]->param <= pstart )
 	{
-		rt_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
+		bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 				dir[entityno]->direct , dir[entityno]->name );
 		return(0);
 	}
@@ -52,12 +52,12 @@ int face_orient;
 	Readint( &sol_num , "" );
 	if( sol_num != 508 )
 	{
-		rt_log( "Entity #%d is not a loop (it's a %s)\n" , entityno , iges_type(sol_num) );
+		bu_log( "Entity #%d is not a loop (it's a %s)\n" , entityno , iges_type(sol_num) );
 		rt_bomb( "Fatal error\n" );
 	}
 
 	Readint( &no_of_edges , "" );
-	edge_list = (struct iges_edge_use *)rt_calloc( no_of_edges , sizeof( struct iges_edge_use ) ,
+	edge_list = (struct iges_edge_use *)bu_calloc( no_of_edges , sizeof( struct iges_edge_use ) ,
 			"Make_face (edge_list)" );
 	for( i=0 ; i<no_of_edges ; i++ )
 	{
@@ -80,7 +80,7 @@ int face_orient;
 			struct iges_param_curve *crv;
 
 			Readint( &k , "" );	/* ignore iso-parametric flag */
-			new_crv = (struct iges_param_curve *)rt_malloc( sizeof( struct iges_param_curve ),
+			new_crv = (struct iges_param_curve *)bu_malloc( sizeof( struct iges_param_curve ),
 				"Make_planar_face: new_crv" );
 			if( edge_list[i].root == (struct iges_param_curve *)NULL )
 				edge_list[i].root = new_crv;
@@ -96,7 +96,7 @@ int face_orient;
 		}
 	}
 
-	verts = (struct vertex ***)rt_calloc( no_of_edges , sizeof( struct vertex **) ,
+	verts = (struct vertex ***)bu_calloc( no_of_edges , sizeof( struct vertex **) ,
 		"Make_face: vertex_list **" );
 
 	for( i=0 ; i<no_of_edges ; i++ )
@@ -121,7 +121,7 @@ int face_orient;
 
 			if( verts[i] == verts[k] )
 			{
-				rt_log( "Ignoring zero length edge\n" );
+				bu_log( "Ignoring zero length edge\n" );
 				done = 0;
 				vert_count--;
 				for( j=i ; j<vert_count ; j++ )
@@ -156,13 +156,13 @@ int face_orient;
 			v_list = v_list->next;
 		}
 
-		lu = RT_LIST_FIRST( loopuse , &fu->lu_hd );
+		lu = BU_LIST_FIRST( loopuse , &fu->lu_hd );
 		NMG_CK_LOOPUSE( lu );
 
 		area = nmg_loop_plane_area( lu , pl );
 		if( area < 0.0 )
 		{
-			rt_log( "Could not calculate area for face (entityno = %d)\n", entityno );
+			bu_log( "Could not calculate area for face (entityno = %d)\n", entityno );
 			nmg_pr_fu_briefly( fu, "" );
 			nmg_kfu( fu );
 			fu = (struct faceuse *)NULL;
@@ -192,10 +192,10 @@ int face_orient;
 		}
 	}
 	else
-		rt_log( "No edges left!!\n" );
+		bu_log( "No edges left!!\n" );
 
   err:
-	rt_free( (char *)edge_list , "Make_face (edge_list)" );
-	rt_free( (char *)verts , "Make_face (vertexlist)" );
+	bu_free( (char *)edge_list , "Make_face (edge_list)" );
+	bu_free( (char *)verts , "Make_face (vertexlist)" );
 	return( fu );
 }

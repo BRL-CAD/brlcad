@@ -30,7 +30,7 @@ struct iges_edge_use *edge;
 
 	if( dir[entityno]->param <= pstart )
 	{
-		rt_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
+		bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 				dir[entityno]->direct , dir[entityno]->name );
 		return( (struct iges_edge_list *)NULL );
 	}
@@ -40,17 +40,17 @@ struct iges_edge_use *edge;
 	if( sol_num != 504 )
 	{
 		/* this is not an edge list entity */
-		rt_log( "Read_edge_list: entity at DE %d is not an edge list entity\n" , edge->edge_de );
+		bu_log( "Read_edge_list: entity at DE %d is not an edge list entity\n" , edge->edge_de );
 		return( (struct iges_edge_list *)NULL );
 	}
 
-	edge_list = (struct iges_edge_list *)rt_malloc( sizeof( struct iges_edge_list )  ,
+	edge_list = (struct iges_edge_list *)bu_malloc( sizeof( struct iges_edge_list )  ,
 			"Read_edge_list: iges_edge_list" );
 
 	edge_list->edge_de = edge->edge_de;
 	edge_list->next = NULL;
 	Readint( &edge_list->no_of_edges , "" );
-	edge_list->i_edge = (struct iges_edge *)rt_calloc( edge_list->no_of_edges , sizeof( struct iges_edge ) ,
+	edge_list->i_edge = (struct iges_edge *)bu_calloc( edge_list->no_of_edges , sizeof( struct iges_edge ) ,
 			"Read_edge_list: iges_edge" );
 
 	for( i=0 ; i<edge_list->no_of_edges ; i++ )

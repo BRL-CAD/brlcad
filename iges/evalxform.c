@@ -53,12 +53,12 @@ Evalxform()
 			while( xform >= 0 )
 			{
 				if( ptr == NULL )
-					ptr = (struct list *)rt_malloc( sizeof( struct list ),
+					ptr = (struct list *)bu_malloc( sizeof( struct list ),
 							"Evalxform: ptr" );
 				else
 				{
 					ptr1 = ptr;
-					ptr = (struct list *)rt_malloc( sizeof( struct list ),
+					ptr = (struct list *)bu_malloc( sizeof( struct list ),
 							"Evalxform: ptr" );
 				}
 				ptr->prev = ptr1;
@@ -93,7 +93,7 @@ Evalxform()
 			{
 				ptr1 = ptr;
 				ptr = ptr->prev;
-				rt_free( (char *)ptr1, "Evalxform: ptr1" );
+				bu_free( (char *)ptr1, "Evalxform: ptr1" );
 			}
 		}
 	}

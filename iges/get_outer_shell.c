@@ -34,7 +34,7 @@ int shell_orient;
 
 	if( dir[entityno]->param <= pstart )
 	{
-		rt_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
+		bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 				dir[entityno]->direct , dir[entityno]->name );
 		return(0);
 	}
@@ -43,9 +43,9 @@ int shell_orient;
 	Readint( &sol_num , "" );
 	Readint( &no_of_faces , "" );
 
-	face_de = (int *)rt_calloc( no_of_faces , sizeof( int ) , "Get_outer_shell face DE's" );
-	face_orient = (int *)rt_calloc( no_of_faces , sizeof( int ) , "Get_outer_shell orients" );
-	fu = (struct faceuse **)rt_calloc( no_of_faces , sizeof( struct faceuse *) , "Get_outer_shell faceuses " );
+	face_de = (int *)bu_calloc( no_of_faces , sizeof( int ) , "Get_outer_shell face DE's" );
+	face_orient = (int *)bu_calloc( no_of_faces , sizeof( int ) , "Get_outer_shell orients" );
+	fu = (struct faceuse **)bu_calloc( no_of_faces , sizeof( struct faceuse *) , "Get_outer_shell faceuses " );
 
 	for( face=0 ; face<no_of_faces ; face++ )
 	{
@@ -64,8 +64,8 @@ int shell_orient;
 
 	nmg_gluefaces( fu , face_count, &tol );
 
-	rt_free( (char *)fu , "Get_outer_shell: faceuse list" );
-	rt_free( (char *)face_de , "Get_outer_shell: face DE's" );
-	rt_free( (char *)face_orient , "Get_outer_shell: face orients" );
+	bu_free( (char *)fu , "Get_outer_shell: faceuse list" );
+	bu_free( (char *)face_de , "Get_outer_shell: face DE's" );
+	bu_free( (char *)face_orient , "Get_outer_shell: face orients" );
 	return( s );
 }

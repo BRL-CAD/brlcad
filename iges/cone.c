@@ -45,7 +45,7 @@ int entityno;
 	/* Acquiring Data */
 	if( dir[entityno]->param <= pstart )
 	{
-		rt_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
+		bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 				dir[entityno]->direct , dir[entityno]->name );
 		return(0);
 	}
@@ -63,21 +63,21 @@ int entityno;
 
 	if( scale_height <= 0.0 || rad1 < rad2 || rad2 < 0.0 )
 	{
-		rt_log( "Illegal parameters for entity D%07d (%s)\n" ,
+		bu_log( "Illegal parameters for entity D%07d (%s)\n" ,
 				dir[entityno]->direct , dir[entityno]->name );
 		if( scale_height == 0.0 )
 		{
-			rt_log( "\tCone height is zero!!\n" );
+			bu_log( "\tCone height is zero!!\n" );
 			return( 0 );
 		}
 		if( rad1 == 0.0 && rad2 == 0.0 )
 		{
-			rt_log( "\tBoth radii for cone are zero!!!\n" );
+			bu_log( "\tBoth radii for cone are zero!!!\n" );
 			return( 0 );
 		}
 		if( rad1 < 0.0 )
 		{
-			rt_log( "\tUsing absloute value of a negative face radius (%f)\n" , rad1 );
+			bu_log( "\tUsing absloute value of a negative face radius (%f)\n" , rad1 );
 			rad1 = (-rad1);
 		}
 		else if( rad1 == 0.0 )
@@ -85,7 +85,7 @@ int entityno;
 
 		if( rad2 < 0.0 )
 		{
-			rt_log( "\tUsing absloute value of a negative face radius (%f)\n" , rad2 );
+			bu_log( "\tUsing absloute value of a negative face radius (%f)\n" , rad2 );
 			rad2 = (-rad2);
 		}
 		else if( rad2 == 0.0 )
@@ -93,8 +93,8 @@ int entityno;
 
 		if(scale_height < 0.0 )
 		{
-			rt_log( "\tUsing absloute value of a negative height (%f)\n" , scale_height );
-			rt_log( "\t\tand reversing height direction\n" );
+			bu_log( "\tUsing absloute value of a negative height (%f)\n" , scale_height );
+			bu_log( "\t\tand reversing height direction\n" );
 			x2 = (-x2);
 			y2 = (-y2);
 			z2 = (-z2);
@@ -116,7 +116,7 @@ int entityno;
 	VSET(base, x1, y1, z1);		/* the center pt of base plate */
 	VSET(hdir, x2, y2, z2);
 	if( MAGNITUDE(hdir) <= SQRT_SMALL_FASTF )  {
-		rt_log("Illegal height vector %g,%g,%g for entity D%07d (%s)\n",
+		bu_log("Illegal height vector %g,%g,%g for entity D%07d (%s)\n",
 			V3ARGS(hdir),
 			dir[entityno]->direct , dir[entityno]->name );
 		return(0);
@@ -124,7 +124,7 @@ int entityno;
 	VUNITIZE(hdir);
 
 	if( mk_cone( fdout, dir[entityno]->name, base, hdir, scale_height, rad1, rad2 ) < 0 )  {
-		rt_log("Unable to write entity D%07d (%s)\n",
+		bu_log("Unable to write entity D%07d (%s)\n",
 			dir[entityno]->direct , dir[entityno]->name );
 		return(0);
 	}

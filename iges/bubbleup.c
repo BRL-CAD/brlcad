@@ -63,7 +63,7 @@ struct node *root;
 			{
 			/*	(a+(buc)) => (a+b)u(a+c)	*/
 				retval = 0;
-				ptr2 = (struct node *)rt_malloc( sizeof( struct node ), "Bubbleup: ptr2" );
+				ptr2 = (struct node *)bu_malloc( sizeof( struct node ), "Bubbleup: ptr2" );
 				ptr1 = ptr->right;
 				ptra = ptr->left;
 				ptrb = ptr->right->left;
@@ -92,7 +92,7 @@ struct node *root;
 				ptrb = ptr->left->right;
 				ptrc = ptr->right;
 				ptr1 = ptr->left;
-				ptr2 = (struct node *)rt_malloc( sizeof( struct node ), "Bubbleup: ptr2" );
+				ptr2 = (struct node *)bu_malloc( sizeof( struct node ), "Bubbleup: ptr2" );
 				ptr->op = Union;
 				ptr->right = ptr2;
 				ptr2->op = op;

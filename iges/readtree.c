@@ -29,7 +29,7 @@ mat_t *matp;
 	Readint( &i , "" );
 	if( i != 180 )
 	{
-		rt_log( "Expecting a Boolean Tree, found type %d\n" , i );
+		bu_log( "Expecting a Boolean Tree, found type %d\n" , i );
 		return( (union tree *)NULL );
 	}
 
@@ -40,7 +40,7 @@ mat_t *matp;
 		Readint( &op , "" );
 		if( op < 0 )	/* This is an operand */
 		{
-			ptr = (union tree *)rt_malloc( sizeof( union tree ),
+			ptr = (union tree *)bu_malloc( sizeof( union tree ),
 				"Readtree: ptr" );
 			ptr->magic = RT_TREE_MAGIC;
 			ptr->tr_l.tl_op = OP_DB_LEAF;
@@ -58,7 +58,7 @@ mat_t *matp;
 			ptr->tr_l.tl_name = strdup( dir[k]->name );
 			if( matp && dir[k]->rot )
 			{
-				new_mat = (matp_t)rt_malloc( sizeof( mat_t ), "new_mat" );
+				new_mat = (matp_t)bu_malloc( sizeof( mat_t ), "new_mat" );
 				bn_mat_mul( new_mat, *matp, *dir[k]->rot );
 			}
 			else if( dir[k]->rot )
@@ -72,7 +72,7 @@ mat_t *matp;
 		}
 		else	/* This is an operator */
 		{
-			ptr = (union tree *)rt_malloc( sizeof( union tree ),
+			ptr = (union tree *)bu_malloc( sizeof( union tree ),
 				"Readtree: ptr" );
 			ptr->magic = RT_TREE_MAGIC;
 			switch( op )

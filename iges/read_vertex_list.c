@@ -30,7 +30,7 @@ int vert_de;
 
 	if( dir[entityno]->param <= pstart )
 	{
-		rt_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
+		bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 				dir[entityno]->direct , dir[entityno]->name );
 		return( (struct iges_vertex_list *)NULL );
 	}
@@ -40,17 +40,17 @@ int vert_de;
 	if( sol_num != 502 )
 	{
 		/* this is not an vertex list entity */
-		rt_log( "Read_vertex_list: entity at DE %d is not an vertex list entity\n" , vert_de );
+		bu_log( "Read_vertex_list: entity at DE %d is not an vertex list entity\n" , vert_de );
 		return( (struct iges_vertex_list *)NULL );
 	}
 
-	vertex_list = (struct iges_vertex_list *)rt_malloc( sizeof( struct iges_vertex_list )  ,
+	vertex_list = (struct iges_vertex_list *)bu_malloc( sizeof( struct iges_vertex_list )  ,
 			"Read_vertex_list: iges_vertex_list" );
 
 	vertex_list->vert_de = vert_de;
 	vertex_list->next = NULL;
 	Readint( &vertex_list->no_of_verts , "" );
-	vertex_list->i_verts = (struct iges_vertex *)rt_calloc( vertex_list->no_of_verts , sizeof( struct iges_vertex ) ,
+	vertex_list->i_verts = (struct iges_vertex *)bu_calloc( vertex_list->no_of_verts , sizeof( struct iges_vertex ) ,
 			"Read_vertex_list: iges_vertex" );
 
 	for( i=0 ; i<vertex_list->no_of_verts ; i++ )

@@ -52,7 +52,7 @@ char *id;
 		Readrec( ++currec );
 
 	if( *id != '\0' )
-		rt_log( "%s" , id );
+		bu_log( "%s" , id );
 
 	while( !done )
 	{
@@ -70,11 +70,11 @@ char *id;
 		if( counter > lencard )
 			Readrec( ++currec );
 		if( *id != '\0' )
-			rt_log( "%c", card[counter] );
+			bu_log( "%c", card[counter] );
 		counter++;
 	}
 	if( *id != '\0' )
-		rt_log( "%c", '\n' );
+		bu_log( "%c", '\n' );
 
 	while( card[counter] != eof && card[counter] != eor )
 	{

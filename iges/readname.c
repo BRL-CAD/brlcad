@@ -56,7 +56,7 @@ char *id,**ptr;
 		Readrec( ++currec );
 
 	if( *id != '\0' )
-		rt_log( "%s" , id );
+		bu_log( "%s" , id );
 
 	while( !done )
 	{
@@ -69,7 +69,7 @@ char *id,**ptr;
 	}
 	num[++i] = '\0';
 	length = atoi( num );
-	*ptr = (char *)rt_malloc( (length + 1)*sizeof( char ) , "Readname: name" );
+	*ptr = (char *)bu_malloc( (length + 1)*sizeof( char ) , "Readname: name" );
 	ch = *ptr;
 	for( i=0 ; i<length ; i++ )
 	{
@@ -77,11 +77,11 @@ char *id,**ptr;
 			Readrec( ++currec );
 		ch[i] = card[counter++];
 		if( *id != '\0' )
-			rt_log( "%c", ch[i] );
+			bu_log( "%c", ch[i] );
 	}
 	ch[length] = '\0';
 	if( *id != '\0' )
-		rt_log( "%c", '\n' );
+		bu_log( "%c", '\n' );
 
 	done = 0;
 	while( !done )

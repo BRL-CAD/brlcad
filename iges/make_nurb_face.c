@@ -47,14 +47,14 @@ int face_orient;
 
 	if( dir[loop_entityno]->param <= pstart )
 	{
-		rt_log( "Illegal parameter pointer for entity D%07d (%s), loop ignored\n" ,
+		bu_log( "Illegal parameter pointer for entity D%07d (%s), loop ignored\n" ,
 				dir[loop_entityno]->direct , dir[loop_entityno]->name );
 		return( 0 );
 	}
 
 	if( dir[loop_entityno]->type != 508 )
 	{
-		rt_log( "Entity #%d is not a loop (it's a %s)\n" , loop_entityno , iges_type(dir[loop_entityno]->type) );
+		bu_log( "Entity #%d is not a loop (it's a %s)\n" , loop_entityno , iges_type(dir[loop_entityno]->type) );
 		rt_bomb( "Fatal error\n" );
 	}
 
@@ -62,14 +62,14 @@ int face_orient;
 	Readint( &entity_type , "" );
 	if( entity_type != 508 )
 	{
-		rt_log( "Add_nurb_loop_to_face: Entity #%d is not a loop (it's a %s)\n",
+		bu_log( "Add_nurb_loop_to_face: Entity #%d is not a loop (it's a %s)\n",
 				loop_entityno , iges_type(entity_type) );
 		rt_bomb( "Add_nurb_loop_to_face: Fatal error\n" );
 	}
 
 	Readint( &no_of_edges , "" );
 
-	edge_uses = (struct iges_edge_use *)rt_calloc( no_of_edges , sizeof( struct iges_edge_use ) ,
+	edge_uses = (struct iges_edge_use *)bu_calloc( no_of_edges , sizeof( struct iges_edge_use ) ,
 			"Add_nurb_loop_to_face (edge_uses)" );
 	for( i=0 ; i<no_of_edges ; i++ )
 	{
@@ -85,7 +85,7 @@ int face_orient;
 			struct iges_param_curve *crv;
 
 			Readint( &k , "" );	/* ignore iso-parametric flag */
-			new_crv = (struct iges_param_curve *)rt_malloc( sizeof( struct iges_param_curve ),
+			new_crv = (struct iges_param_curve *)bu_malloc( sizeof( struct iges_param_curve ),
 				"Add_nurb_loop_to_face: new_crv" );
 			if( edge_uses[i].root == (struct iges_param_curve *)NULL )
 				edge_uses[i].root = new_crv;
@@ -101,7 +101,7 @@ int face_orient;
 		}
 	}
 
-	verts = (struct vertex **)rt_calloc( no_of_edges , sizeof( struct vertex *) ,
+	verts = (struct vertex **)bu_calloc( no_of_edges , sizeof( struct vertex *) ,
 		"Add_nurb_loop_to_face: vertex_list **" );
 
 	for( i=0 ; i<no_of_edges ; i++ )
@@ -125,16 +125,16 @@ int face_orient;
 		{
 			if( !Put_vertex( verts[i], &edge_uses[i] ) )
 			{
-				rt_log( "Cannot put vertex x%x\n", verts[i] );
+				bu_log( "Cannot put vertex x%x\n", verts[i] );
 				rt_bomb( "Cannot put vertex\n" );
 			}
 		}
 	}
 
-	lu = RT_LIST_LAST( loopuse, &fu_ret->lu_hd );
+	lu = BU_LIST_LAST( loopuse, &fu_ret->lu_hd );
 	NMG_CK_LOOPUSE( lu );
 	i = no_of_edges - 1;
-	for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+	for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
 	{
 		struct vertex **v;
 
@@ -158,7 +158,7 @@ int face_orient;
 		ivert = Get_iges_vertex( verts[vert_no] );
 		if( !ivert )
 		{
-			rt_log( "Vertex x%x not in vertex list\n" , verts[vert_no] );
+			bu_log( "Vertex x%x not in vertex list\n" , verts[vert_no] );
 			rt_bomb( "Can't get geometry for vertex" );
 		}
 		nmg_vertex_gv( ivert->v, ivert->pt );
@@ -166,7 +166,7 @@ int face_orient;
 
 	/* assign geometry to edges */
 	i = no_of_edges - 1;
-	for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+	for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
 	{
 		int next_edge_no;
 		struct iges_param_curve *param;
@@ -185,7 +185,7 @@ int face_orient;
 
 		if( ivert != eu->vu_p->v_p || jvert != eu->eumate_p->vu_p->v_p )
 		{
-			rt_log( "ivert=x%x, jvert=x%x, eu->vu_p->v_p=x%x, eu->eumate_p->vu_p->v_p=x%x\n",
+			bu_log( "ivert=x%x, jvert=x%x, eu->vu_p->v_p=x%x, eu->eumate_p->vu_p->v_p=x%x\n",
 				ivert,jvert,eu->vu_p->v_p,eu->eumate_p->vu_p->v_p );
 			rt_bomb( "Add_nurb_loop_to_face: Edgeuse/vertex mixup!\n" );
 		}
@@ -193,7 +193,7 @@ int face_orient;
 		param = edge_uses[i].root;
 		if( !param )
 		{
-			rt_log( "No parameter curve for eu x%x\n", eu );
+			bu_log( "No parameter curve for eu x%x\n", eu );
 			continue;
 		}
 
@@ -252,12 +252,12 @@ int face_orient;
 			if( eu->vu_p->v_p == eu->eumate_p->vu_p->v_p )
 			{
 				/* this edge runs to/from one vertex, need to split */
-				struct rt_list split_hd;
+				struct bu_list split_hd;
 				struct edge_g_cnurb *crv1,*crv2;
 				point_t start_uv, end_uv;
 				hpoint_t pt_on_srf;
 
-				RT_LIST_INIT( &split_hd );
+				BU_LIST_INIT( &split_hd );
 
 				/* split the edge */
 				v2 = (struct vertex *)NULL;
@@ -265,8 +265,8 @@ int face_orient;
 
 				/* split the curve */
 				rt_nurb_c_split( &split_hd, crv );
-				crv1 = RT_LIST_FIRST( edge_g_cnurb, &split_hd );
-				crv2 = RT_LIST_LAST( edge_g_cnurb, &split_hd );
+				crv1 = BU_LIST_FIRST( edge_g_cnurb, &split_hd );
+				crv2 = BU_LIST_LAST( edge_g_cnurb, &split_hd );
 
 				/* get geometry for new vertex */
 				coords = RT_NURB_EXTRACT_COORDS( crv1->pt_type );
@@ -336,13 +336,13 @@ int face_orient;
 					Assign_cnurb_to_eu( new_eu, crv2 );
 
 				/* free memory */
-				while( RT_LIST_NON_EMPTY( &split_hd ) )
+				while( BU_LIST_NON_EMPTY( &split_hd ) )
 				{
 					struct edge_g_cnurb *tmp_crv;
 
-					tmp_crv = RT_LIST_FIRST( edge_g_cnurb, &split_hd );
-					RT_LIST_DEQUEUE( &tmp_crv->l );
-					rt_free( (char *)tmp_crv, "Add_nurb_loop_to_face: tmp_crv" );
+					tmp_crv = BU_LIST_FIRST( edge_g_cnurb, &split_hd );
+					BU_LIST_DEQUEUE( &tmp_crv->l );
+					bu_free( (char *)tmp_crv, "Add_nurb_loop_to_face: tmp_crv" );
 				}
 			}
 			else
@@ -356,9 +356,9 @@ int face_orient;
 					Assign_cnurb_to_eu( eu, crv );
 			}
 
-			rt_free( (char *)crv->k.knots, "Add_nurb_loop_to_face: crv->k.knots" );
-			rt_free( (char *)crv->ctl_points, "Add_nurb_loop_to_face: crv->ctl_points" );
-			rt_free( (char *)crv, "Add_nurb_loop_to_face: crv" );
+			bu_free( (char *)crv->k.knots, "Add_nurb_loop_to_face: crv->k.knots" );
+			bu_free( (char *)crv->ctl_points, "Add_nurb_loop_to_face: crv->ctl_points" );
+			bu_free( (char *)crv, "Add_nurb_loop_to_face: crv" );
 
 			if( new_eu )
 				eu = new_eu;
@@ -383,11 +383,11 @@ err:
 
 			tmp_crv = crv;
 			crv = crv->next;
-			rt_free( (char *)tmp_crv, "Add_nurb_loop_to_face: tmp_crv" );
+			bu_free( (char *)tmp_crv, "Add_nurb_loop_to_face: tmp_crv" );
 		}
 	}
-	rt_free( (char *)edge_uses, "Add_nurb_loop_to_face: (edge list)" );
-	rt_free( (char *)verts, "Add_nurb_loop_to_face: (vertex list)" );
+	bu_free( (char *)edge_uses, "Add_nurb_loop_to_face: (edge list)" );
+	bu_free( (char *)verts, "Add_nurb_loop_to_face: (vertex list)" );
 
 	return( 0 );
 }
@@ -405,9 +405,9 @@ int surf_entityno;
 
 	if( dir[surf_entityno]->type != 128 )
 	{
-		rt_log( "Make_nurb_face: Called with surface entity (%d) of type %s\n", surf_entityno,
+		bu_log( "Make_nurb_face: Called with surface entity (%d) of type %s\n", surf_entityno,
 			iges_type( dir[surf_entityno]->type ) );
-		rt_log( "Make_nurb_face: Can only handle surfaces of %s, ignoring face\n", iges_type( 128 ) );
+		bu_log( "Make_nurb_face: Can only handle surfaces of %s, ignoring face\n", iges_type( 128 ) );
 		return( (struct faceuse *)NULL );
 	}
 
@@ -415,7 +415,7 @@ int surf_entityno;
 
 	if( (srf = Get_nurb_surf( surf_entityno, m )) == (struct face_g_snurb *)NULL )
 	{
-		rt_log( "Make_nurb_face: Get_nurb_surf failed for surface entity (%d), face ignored\n",	 surf_entityno );
+		bu_log( "Make_nurb_face: Get_nurb_surf failed for surface entity (%d), face ignored\n",	 surf_entityno );
 		return( (struct faceuse *)NULL );
 	}
 
@@ -424,7 +424,7 @@ int surf_entityno;
 	fu = nmg_cface( s, verts, 1 );
 	Assign_surface_to_fu( fu, srf );
 
-	lu = RT_LIST_FIRST( loopuse, &fu->lu_hd );
+	lu = BU_LIST_FIRST( loopuse, &fu->lu_hd );
 	(void)nmg_klu( lu );
 
 	return( fu );

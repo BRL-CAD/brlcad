@@ -28,7 +28,7 @@ Makegroup()
 	struct wmember head,*wmem;
 	fastf_t *flt;
 
-	RT_LIST_INIT( &head.l );
+	BU_LIST_INIT( &head.l );
 
 	/* loop through all entities */
 	for( i=0 ; i<totentities ; i++ )

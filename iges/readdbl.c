@@ -71,6 +71,6 @@ double *inum;
 	num[++i] = '\0';
 	*inum = atof( num );
 	if( *id != '\0' )
-		rt_log( "%s%g\n" , id , *inum );
+		bu_log( "%s%g\n" , id , *inum );
 }
 

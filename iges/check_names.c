@@ -45,7 +45,7 @@ char *name;
 	}
 
 	/* add this name to the list */
-	ptr = (struct name_list *)rt_malloc( sizeof( struct name_list ), "Add_brl_name: ptr" );
+	ptr = (struct name_list *)bu_malloc( sizeof( struct name_list ), "Add_brl_name: ptr" );
 	strcpy( ptr->name, name );
 	ptr->next = name_root;
 	name_root = ptr;
@@ -155,7 +155,7 @@ char *name;
 	if( !found )
 	{
 		/* not likely */
-		rt_log( "Could not make name unique: (%s)\n", name );
+		bu_log( "Could not make name unique: (%s)\n", name );
 		rt_bomb( "Make_unique_brl_name: failed\n" );
 		return( (char *)NULL );		/* make the compilers happy */
 	}
@@ -214,7 +214,7 @@ int skip;
 
 	if( dir[entityno]->param <= pstart )
 	{
-		rt_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
+		bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 				dir[entityno]->direct , dir[entityno]->name );
 		return;
 	}
@@ -252,20 +252,20 @@ int skip;
 	if( sol_num != 406 )
 	{
 		/* this is not a property entity */
-		rt_log( "Check_names: entity at DE %d is not a property entity\n" , name_de );
+		bu_log( "Check_names: entity at DE %d is not a property entity\n" , name_de );
 		return;
 	}
 
 	Readint( &i , "" );
 	if( i != 1 )
 	{
-		rt_log( "Bad property entity, form 15 (name) should have only one value, not %d\n" , i );
+		bu_log( "Bad property entity, form 15 (name) should have only one value, not %d\n" , i );
 		return;
 	}
 
 	Readname( &name , "" );
 	dir[entityno]->name = Make_unique_brl_name( name );
-	rt_free( (char *)name, "Get_name: name" );
+	bu_free( (char *)name, "Get_name: name" );
 
 }
 
@@ -284,7 +284,7 @@ int entityno;
 
 	if( dir[entityno]->param <= pstart )
 	{
-		rt_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
+		bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 				dir[entityno]->direct , dir[entityno]->name );
 		return;
 	}
@@ -293,7 +293,7 @@ int entityno;
 	Readint( &entity_type , "" );
 	if( entity_type != 404 )
 	{
-		rt_log( "Get_drawing_name: entity at P%07d (type %d) is not a drawing entity\n" , dir[entityno]->param , entity_type );
+		bu_log( "Get_drawing_name: entity at P%07d (type %d) is not a drawing entity\n" , dir[entityno]->param , entity_type );
 		return;
 	}
 
@@ -335,20 +335,20 @@ int entityno;
 	if( entity_type != 406 )
 	{
 		/* this is not a property entity */
-		rt_log( "Get_drawing_name: entity at DE %d is not a property entity\n" , name_de );
+		bu_log( "Get_drawing_name: entity at DE %d is not a property entity\n" , name_de );
 		return;
 	}
 
 	Readint( &i , "" );
 	if( i != 1 )
 	{
-		rt_log( "Bad property entity, form 15 (name) should have only one value, not %d\n" , i );
+		bu_log( "Bad property entity, form 15 (name) should have only one value, not %d\n" , i );
 		return;
 	}
 
 	Readname( &name , "" );
 	dir[entityno]->name = Make_unique_brl_name( name );
-	rt_free( (char *)name, "Get_name: name" );
+	bu_free( (char *)name, "Get_name: name" );
 }
 
 void
@@ -366,7 +366,7 @@ int entityno;
 
 	if( dir[entityno]->param <= pstart )
 	{
-		rt_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
+		bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 				dir[entityno]->direct , dir[entityno]->name );
 		return;
 	}
@@ -380,7 +380,7 @@ int entityno;
 		skip = 2*num;
 	else
 	{
-		rt_log( "Get_csg_name: entity (type %d), not a CSG\n" , sol_num );
+		bu_log( "Get_csg_name: entity (type %d), not a CSG\n" , sol_num );
 		return;
 	}
 
@@ -415,20 +415,20 @@ int entityno;
 	if( sol_num != 406 )
 	{
 		/* this is not a property entity */
-		rt_log( "Check_names: entity at DE %d is not a property entity\n" , name_de );
+		bu_log( "Check_names: entity at DE %d is not a property entity\n" , name_de );
 		return;
 	}
 
 	Readint( &i , "" );
 	if( i != 1 )
 	{
-		rt_log( "Bad property entity, form 15 (name) should have only one value, not %d\n" , i );
+		bu_log( "Bad property entity, form 15 (name) should have only one value, not %d\n" , i );
 		return;
 	}
 
 	Readname( &name , "" );
 	dir[entityno]->name = Make_unique_brl_name( name );
-	rt_free( (char *)name, "Get_name: name" );
+	bu_free( (char *)name, "Get_name: name" );
 }
 
 
@@ -447,7 +447,7 @@ int entityno;
 
 	if( dir[entityno]->param <= pstart )
 	{
-		rt_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
+		bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 				dir[entityno]->direct , dir[entityno]->name );
 		return;
 	}
@@ -456,7 +456,7 @@ int entityno;
 	Readint( &sol_num , "" );
 	if( sol_num != 186 )
 	{
-		rt_log( "Get_brep_name: Entity (type %d) is not a BREP\n" , sol_num );
+		bu_log( "Get_brep_name: Entity (type %d) is not a BREP\n" , sol_num );
 		return;
 	}
 	Skip_field();
@@ -495,20 +495,20 @@ int entityno;
 	if( sol_num != 406 )
 	{
 		/* this is not a property entity */
-		rt_log( "Check_names: entity at DE %d is not a property entity\n" , name_de );
+		bu_log( "Check_names: entity at DE %d is not a property entity\n" , name_de );
 		return;
 	}
 
 	Readint( &i , "" );
 	if( i != 1 )
 	{
-		rt_log( "Bad property entity, form 15 (name) should have only one value, not %d\n" , i );
+		bu_log( "Bad property entity, form 15 (name) should have only one value, not %d\n" , i );
 		return;
 	}
 
 	Readname( &name , "" );
 	dir[entityno]->name = Make_unique_brl_name( name );
-	rt_free( (char *)name, "Get_name: name" );
+	bu_free( (char *)name, "Get_name: name" );
 }
 
 void
@@ -524,14 +524,14 @@ int entityno;
 
 	if( dir[entityno]->type != 308 )
 	{
-		rt_log( "Get_subfig_name called with entity type %s, should be Subfigure Definition\n",
+		bu_log( "Get_subfig_name called with entity type %s, should be Subfigure Definition\n",
 			iges_type( dir[entityno]->type  ) );
 		rt_bomb( "Get_subfig_name: bad type\n" );
 	}
 
 	if( dir[entityno]->param <= pstart )
 	{
-		rt_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
+		bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 				dir[entityno]->direct , dir[entityno]->name );
 		rt_bomb( "Get_subfig_name: Bad entity\n" );
 	}
@@ -541,7 +541,7 @@ int entityno;
 	Readint( &entity_type, "" );
 	if( entity_type != 308 )
 	{
-		rt_log( "Get_subfig_name: Read entity type %s, should be Subfigure Definition\n",
+		bu_log( "Get_subfig_name: Read entity type %s, should be Subfigure Definition\n",
 			iges_type( dir[entityno]->type  ) );
 		rt_bomb( "Get_subfig_name: bad type\n" );
 	}
@@ -550,7 +550,7 @@ int entityno;
 	Readname( &name, "" );	/* get subfigure name */
 
 	dir[entityno]->name = Add_brl_name( name );
-	rt_free( (char *)name, "Get_name: name" );
+	bu_free( (char *)name, "Get_name: name" );
 }
 
 void
@@ -559,7 +559,7 @@ Check_names()
 
 	int i;
 
-	rt_log( "Looking for Name Entities...\n" );
+	bu_log( "Looking for Name Entities...\n" );
 	for( i=0 ; i < totentities ; i++ )
 	{
 		switch( dir[i]->type )
@@ -612,7 +612,7 @@ Check_names()
 		}
 	}
 
-	rt_log( "Assigning names to entities without names...\n" );
+	bu_log( "Assigning names to entities without names...\n" );
 	for( i=0 ; i < totentities ; i++ )
 	{
 		char tmp_name[NAMESIZE + 1];

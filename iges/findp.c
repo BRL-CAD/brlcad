@@ -37,7 +37,7 @@ Findp()
 
 	if( fseek( fd , 0L , 2 ) )	/* go to end of file */
 	{
-		rt_log( "Cannot seek to end of file\n" );
+		bu_log( "Cannot seek to end of file\n" );
 		perror( "Findp" );
 		exit( 1 );
 	}
@@ -66,13 +66,13 @@ Findp()
 	totentities = (pstart - dstart)/2;
 	if( totentities > 0 )
 	{
-		dir = (struct iges_directory **)rt_calloc( totentities ,
+		dir = (struct iges_directory **)bu_calloc( totentities ,
 			sizeof( struct iges_directory *),
 			"IGES directory*" );
 
 		for( i=0 ; i<totentities ; i++ )
 		{
-			dir[i] = (struct iges_directory *)rt_malloc( sizeof( struct iges_directory ) , "IGES directory" );
+			dir[i] = (struct iges_directory *)bu_malloc( sizeof( struct iges_directory ) , "IGES directory" );
 			dir[i]->name = (char *)NULL;
 			dir[i]->trans = (-1);
 		}
@@ -93,10 +93,10 @@ Free_dir()
 	for( i=0 ; i<totentities ; i++ )
 	{
 		if( dir[i]->type == 124 || dir[i]->type == 700 )
-			rt_free( (char *)dir[i]->rot, "Free_dir: dir[i]->rot" );
-		rt_free( (char *)dir[i], "Free_dir: dir[i]" );
+			bu_free( (char *)dir[i]->rot, "Free_dir: dir[i]->rot" );
+		bu_free( (char *)dir[i], "Free_dir: dir[i]" );
 	}
 
 	if( totentities > 0 )
-		rt_free( (char *)dir, "Free_dir: dir" );
+		bu_free( (char *)dir, "Free_dir: dir" );
 }

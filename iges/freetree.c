@@ -31,7 +31,7 @@ struct node *root;
 			ptr = ptr->left;
 		}
 		ptr = Pop();
-		rt_free( (char *)ptr, "Freetree: ptr" );
+		bu_free( (char *)ptr, "Freetree: ptr" );
 
 		if( ptr->parent == NULL )
 			return;

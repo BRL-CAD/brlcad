@@ -32,7 +32,7 @@ int *linear;
 	curve = (curve_de - 1)/2;
 	if( curve >= dirarraylen )
 	{
-		rt_log( "Get_cnurb_curve: DE=%d is too large, dirarraylen = %d\n", curve_de, dirarraylen );
+		bu_log( "Get_cnurb_curve: DE=%d is too large, dirarraylen = %d\n", curve_de, dirarraylen );
 		return( (struct edge_g_cnurb *)NULL );
 	}
 
@@ -49,7 +49,7 @@ int *linear;
 			Readint( &type , "" );
 			if( type != dir[curve]->type )
 			{
-				rt_log( "Error in Get_cnurb_curve, looking for curve type %d, found %d\n" ,
+				bu_log( "Error in Get_cnurb_curve, looking for curve type %d, found %d\n" ,
 					dir[curve]->type , type );
 				return( (struct edge_g_cnurb *)NULL );
 
@@ -90,7 +90,7 @@ int *linear;
 				*linear = 1;
 			return( crv );
 		default:
-			rt_log( "Not yet handling curves of type: %s\n", iges_type( dir[curve]->type ) );
+			bu_log( "Not yet handling curves of type: %s\n", iges_type( dir[curve]->type ) );
 			break;
 	}
 

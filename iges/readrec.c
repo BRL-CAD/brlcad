@@ -38,7 +38,7 @@ int recno;
 	offset = (recno - 1) * reclen;
 	if( fseek( fd , offset , 0 ) )
 	{
-		rt_log( "Error in seek\n" );
+		bu_log( "Error in seek\n" );
 		perror( "Readrec" );
 		exit( 1 );
 	}

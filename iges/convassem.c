@@ -44,11 +44,11 @@ Convassem()
 	struct brlcad_att	brl_att;
 	fastf_t			*flt;
 
-	rt_log( "\nConverting solid assembly entities:\n" );
+	bu_log( "\nConverting solid assembly entities:\n" );
 
 	ptr = NULL;
 	root = NULL;
-	RT_LIST_INIT( &head.l );
+	BU_LIST_INIT( &head.l );
 
 	for( i=0 ; i<totentities ; i++ ) /* loop through all entities */
 	{
@@ -60,7 +60,7 @@ Convassem()
 
 		if( dir[i]->param <= pstart )
 		{
-			rt_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
+			bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 					dir[i]->direct , dir[i]->name );
 			continue;
 		}
@@ -69,7 +69,7 @@ Convassem()
 		Readint( &j , "" );	/* read entity type */
 		if( j != 184 )
 		{
-			rt_log( "Incorrect entity type in Parameter section for entity %d\n" , i );
+			bu_log( "Incorrect entity type in Parameter section for entity %d\n" , i );
 			return;
 		}
 
@@ -80,13 +80,13 @@ Convassem()
 		{
 			if( ptr == NULL )
 			{
-				root = (struct solid_list *)rt_malloc( sizeof( struct solid_list ),
+				root = (struct solid_list *)bu_malloc( sizeof( struct solid_list ),
 						"Convassem: root" );
 				ptr = root;
 			}
 			else
 			{
-				ptr->next = (struct solid_list *)rt_malloc( sizeof( struct solid_list ),
+				ptr->next = (struct solid_list *)bu_malloc( sizeof( struct solid_list ),
 						"Convassem: ptr->next" );
 				ptr = ptr->next;
 			}
@@ -197,9 +197,9 @@ Convassem()
 		ptr = root;
 		while( ptr != NULL )
 		{
-			rt_free( (char *)ptr, "convassem: ptr" );
+			bu_free( (char *)ptr, "convassem: ptr" );
 			ptr = ptr->next;
 		}
 	}
-	rt_log( "Converted %d solid assemblies successfully out of %d total assemblies\n" , conv , totass );
+	bu_log( "Converted %d solid assemblies successfully out of %d total assemblies\n" , conv , totass );
 }

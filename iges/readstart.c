@@ -29,7 +29,7 @@ Readstart()
 	{
 		if( Readrec( ++i ) )
 		{
-			rt_log( "End of file encountered\n" );
+			bu_log( "End of file encountered\n" );
 			exit( 1 );
 		}
 
@@ -39,8 +39,8 @@ Readstart()
 			break;
 		}
 		card[72] = '\0';
-		rt_log( "%s\n" , card );
+		bu_log( "%s\n" , card );
 	}
-	rt_log( "%c", '\n' );
+	bu_log( "%c", '\n' );
 }
 

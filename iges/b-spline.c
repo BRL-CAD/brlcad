@@ -22,7 +22,7 @@
 
 #include "machine.h"
 #include "vmath.h"
-#include "raytrace.h"		/* for declaration of rt_calloc() */
+#include "raytrace.h"		/* for declaration of bu_calloc() */
 
 #undef W		/* from vmath.h */
 
@@ -39,14 +39,14 @@ fastf_t values[];	/* knot values */
 
 	if( n < 2 )
 	{
-		rt_log( "Knot: ERROR %d knot values\n" , n );
+		bu_log( "Knot: ERROR %d knot values\n" , n );
 		rt_bomb( "Knot: cannot have less than 2 knot values\n" );
 	}
 
 	if( numknots )
-		rt_free( (char *)knots , "Knot: knots" );
+		bu_free( (char *)knots , "Knot: knots" );
 
-	knots = (fastf_t *)rt_calloc( n , sizeof( fastf_t ) , "Knot: knots" );
+	knots = (fastf_t *)bu_calloc( n , sizeof( fastf_t ) , "Knot: knots" );
 
 	numknots = n;
 
@@ -58,7 +58,7 @@ fastf_t values[];	/* knot values */
 void
 Freeknots()
 {
-	rt_free( (char *)knots , "Freeknots: knots" );
+	bu_free( (char *)knots , "Freeknots: knots" );
 	numknots = 0;
 }
 
@@ -74,8 +74,8 @@ int k;		/* degree of basis function */
 
 	if( (i+1) > (numknots-1) )
 	{
-		rt_log( "Error in evaluation of a B-spline Curve\n" );
-		rt_log( "attempt to access knots out of range: numknots=%d i=%d, k=%d\n" , numknots , i , k );
+		bu_log( "Error in evaluation of a B-spline Curve\n" );
+		bu_log( "attempt to access knots out of range: numknots=%d i=%d, k=%d\n" , numknots , i , k );
 		return( 0.0 );
 	}
 

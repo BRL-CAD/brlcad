@@ -30,7 +30,7 @@ int face_orient;
 		fu = fu->fumate_p;
 	if( fu->orientation != OT_SAME )
 	{
-		rt_log( "fu x%x (%s) and mate x%x (%s) have no OT_SAME use\n" ,
+		bu_log( "fu x%x (%s) and mate x%x (%s) have no OT_SAME use\n" ,
 			fu , nmg_orientation( fu->orientation ) ,
 			fu->fumate_p , nmg_orientation( fu->fumate_p->orientation ) );
 		rt_bomb( "Faceuse and mate have no OT_SAME use\n" );
@@ -47,7 +47,7 @@ int face_orient;
 		fu_tmp = fu_tmp->fumate_p;
 	if( fu_tmp->orientation != OT_SAME )
 	{
-		rt_log( "fu_tmp x%x (%s) nad mate x%x (%s) have no OT_SAME use\n" ,
+		bu_log( "fu_tmp x%x (%s) nad mate x%x (%s) have no OT_SAME use\n" ,
 			fu_tmp , nmg_orientation( fu_tmp->orientation ) ,
 			fu_tmp->fumate_p , nmg_orientation( fu_tmp->fumate_p->orientation ) );
 		rt_bomb( "Faceuse and mate have no OT_SAME use\n" );

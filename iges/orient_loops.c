@@ -22,8 +22,6 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
-RT_EXTERN( int nmg_snurb_calc_lu_uv_orient, (struct loopuse *lu ) );
-
 struct loop_list
 {
 	struct loopuse *lu;
@@ -42,7 +40,7 @@ struct loop_list *lptr;
 	struct loopuse *lu;
 
 	/* find all loops contained in lptr->lu */
-	for( RT_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
+	for( BU_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
 	{
 		if( lu == lptr->lu )
 			continue;
@@ -52,7 +50,7 @@ struct loop_list *lptr;
 
 			if( lptr->inner_loops == (struct loop_list *)NULL )
 			{
-				lptr->inner_loops = (struct loop_list *)rt_malloc( sizeof( struct loop_list ),
+				lptr->inner_loops = (struct loop_list *)bu_malloc( sizeof( struct loop_list ),
 					"Find_inner_loops: lptr->inner_loops" );
 				inner = lptr->inner_loops;
 			}
@@ -61,7 +59,7 @@ struct loop_list *lptr;
 				inner = lptr->inner_loops;
 				while( inner->next != (struct loop_list *)NULL )
 					inner = inner->next;
-				inner->next = (struct loop_list *)rt_malloc( sizeof( struct loop_list ),
+				inner->next = (struct loop_list *)bu_malloc( sizeof( struct loop_list ),
 					"Find_inner_loops: inner->next" );
 				inner = inner->next;
 			}
@@ -99,7 +97,7 @@ struct loop_list *lptr;
 						lptr->inner_loops = inner1->next;
 
 					inner1 = inner1->next;
-					rt_free( (char *)tmp , "Find_inner_loops: tmp" );
+					bu_free( (char *)tmp , "Find_inner_loops: tmp" );
 					deleted = 1;
 				}
 			}
@@ -135,7 +133,7 @@ struct faceuse *fu;
 		fu = fu->fumate_p;
 	if( fu->orientation != OT_SAME )
 	{
-		rt_log( "Orient_face_loops: fu x%x has orient %s and mate (x%x) has orient %s (no OT_SAME)\n",
+		bu_log( "Orient_face_loops: fu x%x has orient %s and mate (x%x) has orient %s (no OT_SAME)\n",
 			fu , nmg_orientation(fu->orientation) , fu->fumate_p , nmg_orientation( fu->fumate_p->orientation ) );
 		rt_bomb( "Face with no OT_SAME use\n" );
 	}
@@ -143,14 +141,14 @@ struct faceuse *fu;
 	loop_root = (struct loop_list *)NULL;
 
 	nmg_face_bb( fu->f_p , &tol );
-	for( RT_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
+	for( BU_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
 	{
 		int outer;
 		struct loopuse *lu1;
 
 		/* check if there are any other loops containing this loop */
 		outer = 1;
-		for( RT_LIST_FOR( lu1 , loopuse , &fu->lu_hd ) )
+		for( BU_LIST_FOR( lu1 , loopuse , &fu->lu_hd ) )
 		{
 			if( lu1 == lu )
 				continue;
@@ -168,7 +166,7 @@ struct faceuse *fu;
 		}
 	}
 
-	loop_root = (struct loop_list *)rt_malloc( sizeof( struct loop_list ) , "Orient_face_loops: loop_root" );
+	loop_root = (struct loop_list *)bu_malloc( sizeof( struct loop_list ) , "Orient_face_loops: loop_root" );
 	loop_root->lu = lu_outer;
 	loop_root->next = (struct loop_list *)NULL;
 	loop_root->inner_loops = (struct loop_list *)NULL;
@@ -192,11 +190,11 @@ struct faceuse *fu;
 			if( lptr1->lu->orientation != orient )
 			{
 				/* exchange lu and lu_mate */
-				RT_LIST_DEQUEUE( &lptr1->lu->l );
-				RT_LIST_DEQUEUE( &lptr1->lu->lumate_p->l );
-				RT_LIST_APPEND( &fu->lu_hd , &lptr1->lu->lumate_p->l );
+				BU_LIST_DEQUEUE( &lptr1->lu->l );
+				BU_LIST_DEQUEUE( &lptr1->lu->lumate_p->l );
+				BU_LIST_APPEND( &fu->lu_hd , &lptr1->lu->lumate_p->l );
 				lptr1->lu->lumate_p->up.fu_p = fu;
-				RT_LIST_APPEND( &fu->fumate_p->lu_hd , &lptr1->lu->l );
+				BU_LIST_APPEND( &fu->fumate_p->lu_hd , &lptr1->lu->l );
 				lptr1->lu->up.fu_p = fu->fumate_p;
 				lptr1->lu->orientation = orient;
 				lptr1->lu->lumate_p->orientation = orient;
@@ -235,11 +233,11 @@ struct faceuse *fu;
 	fg = f->g.snurb_p;
 	NMG_CK_FACE_G_SNURB( fg );
 
-	for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
+	for( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
 	{
 		int loop_uv_orient;
 
-		if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_VERTEXUSE_MAGIC )
+		if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_VERTEXUSE_MAGIC )
 		{
 			lu->orientation = OT_SAME;
 			lu->lumate_p->orientation = OT_SAME;
@@ -278,13 +276,13 @@ struct nmgregion *r;
 
 	NMG_CK_REGION( r );
 
-	for( RT_LIST_FOR( s , shell , &r->s_hd ) )
+	for( BU_LIST_FOR( s , shell , &r->s_hd ) )
 	{
 		struct faceuse *fu;
 
 		NMG_CK_SHELL( s );
 
-		for( RT_LIST_FOR( fu , faceuse , &s->fu_hd ) )
+		for( BU_LIST_FOR( fu , faceuse , &s->fu_hd ) )
 		{
 			struct face *f;
 

@@ -27,10 +27,10 @@ Initstack()
 
 	jtop = (-1);
 	stklen = STKBLK;
-	stk = (union tree **)rt_malloc( stklen*sizeof( union tree * ), "Initstack: stk" );
+	stk = (union tree **)bu_malloc( stklen*sizeof( union tree * ), "Initstack: stk" );
 	if( stk == NULL )
 	{
-		rt_log( "Cannot allocate stack space\n" );
+		bu_log( "Cannot allocate stack space\n" );
 		perror( "Initstack" );
 		exit( 1 );
 	}
@@ -51,7 +51,7 @@ union tree *ptr;
 			"Push: stk" );
 		if( stk == NULL )
 		{
-			rt_log( "Cannot reallocate stack space\n" );
+			bu_log( "Cannot reallocate stack space\n" );
 			perror( "Push" );
 			exit( 1 );
 		}

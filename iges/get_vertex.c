@@ -67,7 +67,7 @@ struct iges_edge_use *edge;
 
 	if( !el )
 	{
-		rt_log( "Cannot find an edge list with edge_de = %d\n" , edge->edge_de );
+		bu_log( "Cannot find an edge list with edge_de = %d\n" , edge->edge_de );
 		rt_bomb( "Cannot find correct edge list\n" );
 	}
 
@@ -88,7 +88,7 @@ struct iges_edge_use *edge;
 
 	if( v_list->i_verts[vert_index].v )
 	{
-		rt_log( "vertex already assigned x%x, trying to assign x%x\n", v_list->i_verts[vert_index].v, v );
+		bu_log( "vertex already assigned x%x, trying to assign x%x\n", v_list->i_verts[vert_index].v, v );
 		rt_bomb( "Multiple vertex assignments\n" );
 	}
 

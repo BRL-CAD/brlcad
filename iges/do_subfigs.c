@@ -29,9 +29,9 @@ Do_subfigs()
 	struct wmember *wmem;
 
 	if( rt_g.debug & DEBUG_MEM_FULL )
-		rt_mem_barriercheck();
+		bu_mem_barriercheck();
 
-	RT_LIST_INIT( &head1.l );
+	BU_LIST_INIT( &head1.l );
 
 	for( i=0 ; i<totentities ; i++ )
 	{
@@ -48,11 +48,11 @@ Do_subfigs()
 			continue;
 
 		if( rt_g.debug & DEBUG_MEM_FULL )
-			rt_mem_barriercheck();
+			bu_mem_barriercheck();
 
 		if( dir[i]->param <= pstart )
 		{
-			rt_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
+			bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 					dir[i]->direct , dir[i]->name );
 			continue;
 		}
@@ -61,7 +61,7 @@ Do_subfigs()
 		Readint( &entity_type , "" );
 		if( entity_type != 408 )
 		{
-			rt_log( "Expected Singular Subfigure Instance Entity, found %s\n",
+			bu_log( "Expected Singular Subfigure Instance Entity, found %s\n",
 				iges_type(entity_type) );
 			continue;
 		}
@@ -70,21 +70,21 @@ Do_subfigs()
 		subfigdef_index = (subfigdef_de - 1)/2;
 		if( subfigdef_index >= totentities )
 		{
-			rt_log( "Singular Subfigure Instance Entity gives Subfigure Definition" );
-			rt_log( "\tEntity DE of %d, largest DE in file is %d\n",
+			bu_log( "Singular Subfigure Instance Entity gives Subfigure Definition" );
+			bu_log( "\tEntity DE of %d, largest DE in file is %d\n",
 				subfigdef_de, (totentities * 2) - 1 );
 			continue;
 		}
 		if( dir[subfigdef_index]->type != 308 )
 		{
-			rt_log( "Expected Subfigure Definition Entity, found %s\n",
+			bu_log( "Expected Subfigure Definition Entity, found %s\n",
 				iges_type(dir[subfigdef_index]->type) );
 			continue;
 		}
 
 		if( dir[subfigdef_index]->param <= pstart )
 		{
-			rt_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
+			bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 					dir[subfigdef_index]->direct , dir[subfigdef_index]->name );
 			continue;
 		}
@@ -92,7 +92,7 @@ Do_subfigs()
 		Readint( &entity_type , "" );
 		if( entity_type != 308 )
 		{
-			rt_log( "Expected Subfigure Definition Entity, found %s\n",
+			bu_log( "Expected Subfigure Definition Entity, found %s\n",
 				iges_type(entity_type) );
 			continue;
 		}
@@ -117,28 +117,28 @@ Do_subfigs()
 
 		if( non_unit )
 		{
-			rt_log( "Illegal transformation matrix in %s for member %s\n",
+			bu_log( "Illegal transformation matrix in %s for member %s\n",
 				curr_file->obj_name, wmem->wm_name );
-			rt_log( " row vector magnitudes are %g, %g, and %g\n", 
+			bu_log( " row vector magnitudes are %g, %g, and %g\n", 
 				1.0/mat_scale[0], 1.0/mat_scale[1], 1.0/mat_scale[2] );
-			mat_print( "", *dir[i]->rot );
+			bn_mat_print( "", *dir[i]->rot );
 			for( j=0 ; j<11 ; j++ )
 			{
 				if( (j+1)%4 == 0 )
 					continue;
 				(*dir[i]->rot)[j] *= mat_scale[0];
 			}
-			mat_print( "After scaling:", *dir[i]->rot );
+			bn_mat_print( "After scaling:", *dir[i]->rot );
 			
 		}
 		bcopy( *dir[i]->rot, wmem->wm_mat, sizeof( mat_t ) );
 
 		Readint( &no_of_members, "" );	/* get number of members */
-		members = (int *)rt_calloc( no_of_members, sizeof( int ), "Do_subfigs: members" );
+		members = (int *)bu_calloc( no_of_members, sizeof( int ), "Do_subfigs: members" );
 		for( j=0 ; j<no_of_members ; j++ )
 			Readint( &members[j], "" );
 
-		RT_LIST_INIT( &head2.l );
+		BU_LIST_INIT( &head2.l );
 		for( j=0 ; j<no_of_members ; j++ )
 		{
 			int index;
@@ -147,14 +147,14 @@ Do_subfigs()
 
 			if( index >= totentities )
 			{
-				rt_log( "Subfigure Definition Entity gives Member Entity" );
-				rt_log( "\tDE of %d, largest DE in file is %d\n",
+				bu_log( "Subfigure Definition Entity gives Member Entity" );
+				bu_log( "\tDE of %d, largest DE in file is %d\n",
 					members[j], (totentities * 2) - 1 );
 				continue;
 			}
 			if( dir[index]->param <= pstart )
 			{
-				rt_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
+				bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 						dir[index]->direct , dir[index]->name );
 				continue;
 			}
@@ -172,23 +172,23 @@ Do_subfigs()
 
 				if( entity_type != 416 )
 				{
-					rt_log( "Expected External reference Entity, found %s\n",
+					bu_log( "Expected External reference Entity, found %s\n",
 						iges_type(entity_type) );
 					continue;
 				}
 
 				if( dir[index]->form != 1 )
 				{
-					rt_log( "External Reference Entity of form #%d found\n",
+					bu_log( "External Reference Entity of form #%d found\n",
 						dir[index]->form );
-					rt_log( "\tOnly form #1 is currnetly handled\n" );
+					bu_log( "\tOnly form #1 is currnetly handled\n" );
 					continue;
 				}
 
 				Readname( &file_name, "" );
 
 				/* Check if this external reference is already on the list */
-				for( RT_LIST_FOR( list_ptr, file_list, &iges_list.l ) )
+				for( BU_LIST_FOR( list_ptr, file_list, &iges_list.l ) )
 				{
 					if( !strcmp( file_name, list_ptr->file_name ) )
 					{
@@ -201,7 +201,7 @@ Do_subfigs()
 				if( !found )
 				{
 					/* Need to add this one to the list */
-					list_ptr = (struct file_list *)rt_malloc( sizeof( struct file_list ),
+					list_ptr = (struct file_list *)bu_malloc( sizeof( struct file_list ),
 							"Do_subfigs: list_ptr" );
 
 					list_ptr->file_name = file_name;
@@ -214,12 +214,12 @@ Do_subfigs()
 					}
 
 
-					RT_LIST_APPEND( &curr_file->l, &list_ptr->l );
+					BU_LIST_APPEND( &curr_file->l, &list_ptr->l );
 
 					name = list_ptr->obj_name;
 				}
 				else
-					rt_free( (char *)file_name, "Do_subfigs: file_name" );
+					bu_free( (char *)file_name, "Do_subfigs: file_name" );
 
 			}
 			else
@@ -238,15 +238,15 @@ Do_subfigs()
 	}
 
 	if( rt_g.debug & DEBUG_MEM_FULL )
-		rt_mem_barriercheck();
+		bu_mem_barriercheck();
 
-	if( RT_LIST_IS_EMPTY( &head1.l ) )
+	if( BU_LIST_IS_EMPTY( &head1.l ) )
 		return;
 
 	(void) mk_lcomb( fdout, curr_file->obj_name, &head1, 0,
 			(char *)NULL, (char *)NULL, (unsigned char *)NULL, 0 );
 
 	if( rt_g.debug & DEBUG_MEM_FULL )
-		rt_mem_barriercheck();
+		bu_mem_barriercheck();
 
 }

@@ -62,7 +62,7 @@ Recsize()
 
 	if( fseek( fd , 0L , 0 ) ) /* rewind file */
 	{
-		rt_log( "Cannot rewind file\n" );
+		bu_log( "Cannot rewind file\n" );
 		perror( "Recsize" );
 		exit( 1 );
 	}

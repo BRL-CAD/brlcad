@@ -60,7 +60,7 @@ struct node *root;
 
 		if( ptr == NULL )
 		{
-			rt_log( "Error in Showtree: Popped a null pointer\n" );
+			bu_log( "Error in Showtree: Popped a null pointer\n" );
 			Afreestack();
 			Sfreestack();
 			return;
@@ -75,7 +75,7 @@ struct node *root;
 			opa = Apop();
 
 			/* construct the character string (opa ptr->op opb) */
-			tmp = (char *)rt_malloc( strlen( opa ) + strlen( opb ) + 6, "Showtree: tmp" );
+			tmp = (char *)bu_malloc( strlen( opa ) + strlen( opb ) + 6, "Showtree: tmp" );
 			if( ptr->parent != NULL )
 				strcpy( tmp , "(" );
 			else
@@ -93,7 +93,7 @@ struct node *root;
 
 		if( ptr == root )	/* done! */
 		{
-			rt_log( "%s\n" , Apop() ); /* print the result */
+			bu_log( "%s\n" , Apop() ); /* print the result */
 
 			/* free some memory */
 			Afreestack();
@@ -117,10 +117,10 @@ Initastack()
 
 	jtop = (-1);
 	stklen = STKBLK;
-	stk = (char **)rt_malloc( stklen*sizeof( char * ), "Initastack: stk" );
+	stk = (char **)bu_malloc( stklen*sizeof( char * ), "Initastack: stk" );
 	if( stk == NULL )
 	{
-		rt_log( "Cannot allocate stack space\n" );
+		bu_log( "Cannot allocate stack space\n" );
 		perror( "Initastack" );
 		exit( 1 );
 	}
@@ -143,7 +143,7 @@ char *ptr;
 		stk = (char **)rt_realloc( (char *)stk , stklen*sizeof( char *), "Apush: stk" );
 		if( stk == NULL )
 		{
-			rt_log( "Cannot reallocate stack space\n" );
+			bu_log( "Cannot reallocate stack space\n" );
 			perror( "Apush" );
 			exit( 1 );
 		}
@@ -180,7 +180,7 @@ Afreestack()
 
 	jtop = (-1);
 	stklen = 0;
-	rt_free( (char *)stk, "Afreestack: stk" );
+	bu_free( (char *)stk, "Afreestack: stk" );
 	return;
 }
 
@@ -192,10 +192,10 @@ Initsstack() /* initialize the stack */
 
 	sjtop = (-1);
 	sstklen = STKBLK;
-	sstk_p = (struct node **)rt_malloc( sstklen*sizeof( struct node * ), "Initsstack: sstk_p" );
+	sstk_p = (struct node **)bu_malloc( sstklen*sizeof( struct node * ), "Initsstack: sstk_p" );
 	if( sstk_p == NULL )
 	{
-		rt_log( "Cannot allocate stack space\n" );
+		bu_log( "Cannot allocate stack space\n" );
 		perror( "Initsstack" );
 		exit( 1 );
 	}
@@ -215,7 +215,7 @@ struct node *ptr;
 		sstk_p = (struct node **)rt_realloc( (char *)sstk_p , sstklen*sizeof( struct node *), "Spush: sstk_p" );
 		if( sstk_p == NULL )
 		{
-			rt_log( "Cannot reallocate stack space\n" );
+			bu_log( "Cannot reallocate stack space\n" );
 			perror( "Spush" );
 			exit( 1 );
 		}
@@ -248,6 +248,6 @@ static void
 Sfreestack()
 {
 	sjtop = (-1);
-	rt_free( (char *)sstk_p, "Sfreestack: sstk_p" );
+	bu_free( (char *)sstk_p, "Sfreestack: sstk_p" );
 	return;
 }

@@ -38,7 +38,7 @@ Get_att()
 			Readint( &j , "" );
 			if( j != 322 )
 			{
-				rt_log( "Parameters at sequence %d are not for entity at DE%d\n" , dir[i]->param , (2*i+1) );
+				bu_log( "Parameters at sequence %d are not for entity at DE%d\n" , dir[i]->param , (2*i+1) );
 				continue;
 			}
 

@@ -50,7 +50,7 @@ char *id;
 		return;
 
 	if( *id != '\0' )
-		rt_log( "%s" , id );
+		bu_log( "%s" , id );
 
 	if( card[72] == 'P' )
 		lencard = PARAMLEN;
@@ -74,8 +74,8 @@ char *id;
 	length = atoi( num );
 	if( length != 13 && length != 15 )
 	{
-		rt_log( "\tError in time stamp\n" );
-		rt_log( "\tlength of string=%s (should be 13 or 15)\n" , num );
+		bu_log( "\tError in time stamp\n" );
+		bu_log( "\tlength of string=%s (should be 13 or 15)\n" , num );
 	}
 
 	for( i=0 ; i<length ; i++ )
@@ -92,10 +92,10 @@ char *id;
 		year_str[2] = '\0';
 		year = atoi( year_str );
 		year += 1900;
-		rt_log( "%c%c/%c%c/%d" , num[2],num[3],num[4],num[5],
+		bu_log( "%c%c/%c%c/%d" , num[2],num[3],num[4],num[5],
 			year );
 		if( length > 12 && length < 16 )
-		rt_log( " at %c%c:%c%c:%c%c\n" , num[7],num[8],num[9],
+		bu_log( " at %c%c:%c%c:%c%c\n" , num[7],num[8],num[9],
 			num[10],num[11],num[12] );
 
 	}
@@ -105,9 +105,9 @@ char *id;
 		year_str[3] = num[3];
 		year_str[4] = '\0';
 		year = atoi( year_str );
-		rt_log( "%c%c/%c%c/%d" , num[4],num[5],num[6],num[7],
+		bu_log( "%c%c/%c%c/%d" , num[4],num[5],num[6],num[7],
 			year );
-		rt_log( " at %c%c:%c%c:%c%c\n" , num[9],num[10],num[11],
+		bu_log( " at %c%c:%c%c:%c%c\n" , num[9],num[10],num[11],
 			num[12],num[13],num[14] );
 	}
 

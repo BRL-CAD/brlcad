@@ -43,7 +43,7 @@ int entityno;
 
 	if( dir[entityno]->param <= pstart )
 	{
-		rt_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
+		bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 				dir[entityno]->direct , dir[entityno]->name );
 		return(0);
 	}
@@ -64,7 +64,7 @@ int entityno;
 
 	if( xscale <= 0.0 || yscale <= 0.0 || zscale <= 0.0 )
 	{
-		rt_log( "Illegal parameters for entity D%07d (%s)\n" ,
+		bu_log( "Illegal parameters for entity D%07d (%s)\n" ,
 				dir[entityno]->direct , dir[entityno]->name );
 		return(0);
 	}

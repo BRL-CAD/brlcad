@@ -35,7 +35,7 @@ int face_orient;
 
 	if( dir[entityno]->param <= pstart )
 	{
-		rt_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
+		bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 				dir[entityno]->direct , dir[entityno]->name );
 		return( (struct faceuse *)NULL );
 	}
@@ -45,7 +45,7 @@ int face_orient;
 	Readint( &surf_de , "" );
 	Readint( &no_of_loops , "" );
 	Readint( &outer_loop_flag , "" );
-	loop_de = (int *)rt_calloc( no_of_loops , sizeof( int ) , "Get_outer_face loop DE's" );
+	loop_de = (int *)bu_calloc( no_of_loops , sizeof( int ) , "Get_outer_face loop DE's" );
 	for( loop=0 ; loop<no_of_loops ; loop++ )
 		Readint( &loop_de[loop] , "" );
 
@@ -103,10 +103,10 @@ NMG_CK_FACE_G_SNURB( fu->f_p->g.snurb_p );
 	else
 	{
 		fu = (struct faceuse *)NULL;
-		rt_log( "Add_face_to_shell: face at DE%d is neither planar nor NURB, ignoring\n", surf_de );
+		bu_log( "Add_face_to_shell: face at DE%d is neither planar nor NURB, ignoring\n", surf_de );
 	}
 
   err :
-	rt_free( (char *)loop_de , "Add_face_to_shell: loop DE's" );
+	bu_free( (char *)loop_de , "Add_face_to_shell: loop DE's" );
 	return( fu );
 }

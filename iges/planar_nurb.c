@@ -27,7 +27,7 @@ int entityno;
 
 	if( dir[entityno]->param <= pstart )
 	{
-		rt_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
+		bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 				dir[entityno]->direct , dir[entityno]->name );
 		return(0);
 	}
@@ -36,7 +36,7 @@ int entityno;
 	Readint( &sol_num , "" );
 	if( sol_num != 128 )
 	{
-		rt_log( "entity at D%07d is not a B-spline surface\n" , entityno*2 + 1 );
+		bu_log( "entity at D%07d is not a B-spline surface\n" , entityno*2 + 1 );
 		return( 0 );
 	}
 	Readint( &k1 , "" );

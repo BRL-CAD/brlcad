@@ -56,8 +56,8 @@ Docolor()
 				Readint( &j , "" );
 				if( j != 314 )
 				{
-					rt_log( "Incorrect color parameters for entity %d\n" , i );
-					rt_log( "\tcolor entity is #%d\n" , -dir[i]->colorp );
+					bu_log( "Incorrect color parameters for entity %d\n" , i );
+					bu_log( "\tcolor entity is #%d\n" , -dir[i]->colorp );
 					continue;
 				}
 				Readflt( &a , "" );

@@ -33,8 +33,8 @@ Makedir()
 	char str[9];
 	
 	str[8] = '\0';
-	rt_log( "Reading Directory Section...\n" );
-	rt_log( "Number of entities checked:\n" );
+	bu_log( "Reading Directory Section...\n" );
+	bu_log( "Number of entities checked:\n" );
 
 	if( totentities < 1 )
 		goto out;
@@ -78,7 +78,7 @@ Makedir()
 		else if( paramptr > 0 )
 			dir[entcount]->param = paramptr + pstart;
 		else
-			rt_log( "Entity number %d does not have a correct parameter pointer\n",
+			bu_log( "Entity number %d does not have a correct parameter pointer\n",
 				entcount );
 
 		if( dir[entcount]->type == 422 )
@@ -150,13 +150,13 @@ Makedir()
 			/* Read and store the matrix */
 			if( dir[entcount]->param <= pstart )
 			{
-				rt_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
+				bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 						dir[entcount]->direct , dir[entcount]->name );
 				dir[entcount]->rot = NULL;
 			}
 			else
 			{
-				dir[entcount]->rot = (mat_t *)rt_malloc( sizeof( mat_t ) , "Makedir:matrix" );
+				dir[entcount]->rot = (mat_t *)bu_malloc( sizeof( mat_t ) , "Makedir:matrix" );
 				Readmatrix( dir[entcount]->param , *dir[entcount]->rot );
 			}
 		}
@@ -167,8 +167,8 @@ Makedir()
 	}
 
 out:
-	rt_log( "\t%d\n\n" ,entcount+1 );
+	bu_log( "\t%d\n\n" ,entcount+1 );
 	if( paramguess )
-		rt_log( "Some entities did not have proper parameter pointers, so a resonable guess was made\n" );
+		bu_log( "Some entities did not have proper parameter pointers, so a resonable guess was made\n" );
 }
 

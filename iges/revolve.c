@@ -69,7 +69,7 @@ int entityno;
 	struct subtracts *subp;
 	int		i;
 
-	RT_LIST_INIT( &head.l );
+	BU_LIST_INIT( &head.l );
 
 	/* Default values */
 	VSET( adir , 0.0 , 0.0 , 1.0 );
@@ -80,7 +80,7 @@ int entityno;
 
 	if( dir[entityno]->param <= pstart )
 	{
-		rt_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
+		bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 				dir[entityno]->direct , dir[entityno]->name );
 		return(0);
 	}
@@ -108,7 +108,7 @@ int entityno;
 
 	if( fract <= 0.0 || fract > 1.0 )
 	{
-		rt_log( "Illegal parameters for entity D%07d (%s)\n" ,
+		bu_log( "Illegal parameters for entity D%07d (%s)\n" ,
 			dir[entityno]->direct , dir[entityno]->name );
 		return( 0 );
 	}
@@ -120,8 +120,8 @@ int entityno;
 	npts = Getcurve( curve , &curv_pts );
 	if( npts == 0 )
 	{
-		rt_log( "Could not get points along curve for revovling\n" );
-		rt_log( "Illegal parameters for entity D%07d (%s)\n" ,
+		bu_log( "Could not get points along curve for revovling\n" );
+		bu_log( "Illegal parameters for entity D%07d (%s)\n" ,
 			dir[entityno]->direct , dir[entityno]->name );
 		return( 0 );
 	}
@@ -148,14 +148,14 @@ int entityno;
 
 		if( trcs == NULL )
 		{
-			trcs = (struct trclist *)rt_malloc( sizeof( struct trclist ),
+			trcs = (struct trclist *)bu_malloc( sizeof( struct trclist ),
 				"Revolve: trcs" );
 			trcptr = trcs;
 			prev = NULL;
 		}
 		else if( trcptr->name[0] != '\0' )
 		{
-			trcptr->next = (struct trclist *)rt_malloc( sizeof( struct trclist ),
+			trcptr->next = (struct trclist *)bu_malloc( sizeof( struct trclist ),
 				"Revolve: trcptr->next" );
 			prev = trcptr;
 			trcptr = trcptr->next;
@@ -209,7 +209,7 @@ int entityno;
 		/* Make the TRC */
 		if( mk_trc_top( fdout, trcptr->name, trcptr->base,
 		    trcptr->top, trcptr->r1, trcptr->r2 ) < 0 )  {
-			rt_log( "Unable to write TRC for entity D%07d (%s)\n" ,
+			bu_log( "Unable to write TRC for entity D%07d (%s)\n" ,
 				dir[entityno]->direct , dir[entityno]->name );
 			return( 0 );
 		}
@@ -223,7 +223,7 @@ int entityno;
 	if( trcptr->name[0] == '\0' )
 	{
 		trcptr->prev->next = NULL;
-		rt_free( (char *)trcptr, "Revolve: trcptr" );
+		bu_free( (char *)trcptr, "Revolve: trcptr" );
 	}
 
 	if( dir[entityno]->form == 1 ) /* curve closed on itself */
@@ -391,7 +391,7 @@ int entityno;
 
 		/* Make the BRLCAD solid */
 		if( mk_arb8( fdout , cutname , &pts[0][X] ) < 0 )  {
-			rt_log( "Unable to write ARB8 for entity D%07d (%s)\n" ,
+			bu_log( "Unable to write ARB8 for entity D%07d (%s)\n" ,
 				dir[entityno]->direct , dir[entityno]->name );
 			return( 0 );
 		}
@@ -426,7 +426,7 @@ int entityno;
 	/* Make the object */
 	if( mk_lcomb( fdout , dir[entityno]->name , &head , 0 ,
 	    (char *)0 , (char *)0 , (unsigned char *)0 , 0 ) < 0 )  {
-		rt_log( "Unable to make combination for entity D%07d (%s)\n" ,
+		bu_log( "Unable to make combination for entity D%07d (%s)\n" ,
 			dir[entityno]->direct , dir[entityno]->name );
 		return( 0 );
 	}
@@ -436,7 +436,7 @@ int entityno;
 	trcptr = trcs;
 	while( trcptr != NULL )
 	{
-		rt_free( (char *)trcptr, "Revolve: trcptr" );
+		bu_free( (char *)trcptr, "Revolve: trcptr" );
 		trcptr = trcptr->next;
 	}
 	return( 1 );
@@ -451,7 +451,7 @@ struct trclist *trc,*ptr;
 
 	if( trc->subtr == NULL )
 	{
-		trc->subtr = (struct subtracts *)rt_malloc( sizeof( struct subtracts ),
+		trc->subtr = (struct subtracts *)bu_malloc( sizeof( struct subtracts ),
 			"Revolve: trc->subtr" );
 		subp = trc->subtr;
 	}
@@ -460,7 +460,7 @@ struct trclist *trc,*ptr;
 		subp = trc->subtr;
 		while( subp->next != NULL )
 			subp = subp->next;
-		subp->next = (struct subtracts *)rt_malloc( sizeof( struct subtracts ),
+		subp->next = (struct subtracts *)bu_malloc( sizeof( struct subtracts ),
 			"Revolve: subp->next" );
 		subp = subp->next;
 	}

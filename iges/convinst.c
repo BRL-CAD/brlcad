@@ -42,7 +42,7 @@ Convinst()
 		/* read parameters */
 		if( dir[i]->param <= pstart )
 		{
-			rt_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
+			bu_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 					dir[i]->direct , dir[i]->name );
 			continue;
 		}
@@ -54,7 +54,7 @@ Convinst()
 		pointer = (pointer - 1)/2;
 		if( pointer < 0 || pointer >= totentities )
 		{
-			rt_log( "Solid instance D%07d (%s) does not point to a legal solid\n",
+			bu_log( "Solid instance D%07d (%s) does not point to a legal solid\n",
 				dir[i]->direct , dir[i]->name );
 			continue;
 		}
@@ -87,7 +87,7 @@ Convinst()
 			unsigned char *rgb;
 			struct wmember head;
 
-			RT_LIST_INIT( &head.l );
+			BU_LIST_INIT( &head.l );
 			(void)mk_addmember( dir[pointer]->name , &head , WMOP_INTERSECT );
 
 			/* Make the object */
@@ -136,7 +136,7 @@ Convinst()
 				   but the original instanced object does too,
 				   these matrices need to be combined */
 
-				rot = (mat_t *)rt_malloc( sizeof( mat_t ), "Convinst: rot" );
+				rot = (mat_t *)bu_malloc( sizeof( mat_t ), "Convinst: rot" );
 				Matmult( *(dir[i]->rot) , dir[pointer]->rot , rot );
 				dir[i]->rot = rot;
 			}
@@ -144,5 +144,5 @@ Convinst()
 		conv++;
 	}
 
-	rt_log( "\nConverted %d solid instances out of %d total instances\n" , conv , totinst );
+	bu_log( "\nConverted %d solid instances out of %d total instances\n" , conv , totinst );
 }

@@ -35,7 +35,7 @@ Convtree()
 	struct brlcad_att	brl_att;
 	int			i,j,k;
 
-	rt_log( "\nConverting boolean tree entities:\n" );
+	bu_log( "\nConverting boolean tree entities:\n" );
 
 	for( i=0 ; i<totentities ; i++ ) /* loop through all entities */
 	{
@@ -48,7 +48,7 @@ Convtree()
 
 		if( dir[i]->param <= pstart )	/* Illegal parameter address */
 		{
-			rt_log( "Entity number %d (Boolean Tree) does not have a legal parameter pointer\n" , i );
+			bu_log( "Entity number %d (Boolean Tree) does not have a legal parameter pointer\n" , i );
 			continue;
 		}
 
@@ -126,5 +126,5 @@ Convtree()
 		bu_free( (genptr_t)comb, "comb ifree" );
 		conv++;
 	}
-	rt_log( "Converted %d trees successfully out of %d total trees\n", conv , tottrees );
+	bu_log( "Converted %d trees successfully out of %d total trees\n", conv , tottrees );
 }

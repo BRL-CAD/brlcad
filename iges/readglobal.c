@@ -57,11 +57,11 @@ int file_count;
 		while( card[++counter] == ' ' );
 		if( card[counter] != '1' || card[counter+1] != 'H' )
 		{
-			rt_log( "Error in new delimiter\n" );
-			rt_log( "%s\n" , card );
+			bu_log( "Error in new delimiter\n" );
+			bu_log( "%s\n" , card );
 			for( i=0 ; i<counter-1 ; i++ )
-				rt_log( "%c", ' ' );
-			rt_log( "^\n" );
+				bu_log( "%c", ' ' );
+			bu_log( "^\n" );
 			exit( 1 );
 		}
 		counter++;
@@ -79,7 +79,7 @@ int file_count;
 		while( card[++counter] == ' ' );
 		if( card[counter] != '1' || card[counter+1] != 'H' )
 		{
-			rt_log( "Error in new record delimiter\n" );
+			bu_log( "Error in new record delimiter\n" );
 			exit( 1 );
 		}
 		counter++;
@@ -108,7 +108,7 @@ int file_count;
 					if( name != NULL )
 					{
 						mk_id( fdout , name );
-						rt_free( name, "Readglobal: name" );
+						bu_free( name, "Readglobal: name" );
 					}
 					else
 						mk_id( fdout , "Un-named Product" );
@@ -140,7 +140,7 @@ int file_count;
 		case 14:	Readint( &units , "Units: " );
 				if( units == 0 || units == 3 || units > 11 )
 				{
-					rt_log( "Unrecognized units, assuming 'mm'\n" );
+					bu_log( "Unrecognized units, assuming 'mm'\n" );
 					conv_factor = 1.0;
 				}
 				else
@@ -167,9 +167,9 @@ int file_count;
 				break;
 		case 23:	Readint( &i , "" );
 				if( i<1 || i>=NO_OF_VERSIONS )
-					rt_log( "Unrecognized IGES version\n" );
+					bu_log( "Unrecognized IGES version\n" );
 				else
-					rt_log( "IGES version: %s\n" , iges_version[i] );
+					bu_log( "IGES version: %s\n" , iges_version[i] );
 				break;
 		case 24:	Readint( &i , "" );
 				break;
