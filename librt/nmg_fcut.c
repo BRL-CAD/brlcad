@@ -693,27 +693,17 @@ double	a,b,c,d;
 	if( NEAR_ZERO( b-d, 0.01 ) )  b_eq_d = 1;
 	if( NEAR_ZERO( c-d, 0.01 ) )  c_eq_d = 1;
 
-	if( a_eq_c )  {
-		if( b_eq_d )  {
-			ret = WEDGE2_IDENTICAL;
-			goto out;
-		}
-		/* We already know that A <= B, from sort above */
-		if( b < d )  ret = WEDGE2_AB_IN_CD;
-		else  ret = WEDGE2_CD_IN_AB;
-		goto out;
-	}
-
-	if( b_eq_d )  {
-		/* a != c, because of previous IF statement */
-		if( a < c )  ret = WEDGE2_CD_IN_AB;
-		else  ret = WEDGE2_AB_IN_CD;
-		goto out;
-	}
-
+	/*
+	 *  Test for TOUCHing wedges must come before INside test,
+	 *  so that zero-angle wedges that touch a non-zero angle wedge,
+	 *  will be properly recognized.  e.g. AB=(0,0) CD=(0,180).
+	 */
 	if( b_eq_c )  {
 		/* Wedges touch along B-C junction */
-		ret = WEDGE2_TOUCH_AT_BC;
+		if( a_eq_d )
+			ret = WEDGE2_IDENTICAL;	/* two zero-angle wedges */
+		else
+			ret = WEDGE2_TOUCH_AT_BC;
 		goto out;
 	}
 
@@ -730,6 +720,24 @@ double	a,b,c,d;
 		} else {
 			ret = WEDGE2_TOUCH_AT_DA;
 		}
+		goto out;
+	}
+
+	if( a_eq_c )  {
+		if( b_eq_d )  {
+			ret = WEDGE2_IDENTICAL;
+			goto out;
+		}
+		/* We already know that A <= B, from sort above */
+		if( b < d )  ret = WEDGE2_AB_IN_CD;
+		else  ret = WEDGE2_CD_IN_AB;
+		goto out;
+	}
+
+	if( b_eq_d )  {
+		/* a != c, because of previous IF statement */
+		if( a < c )  ret = WEDGE2_CD_IN_AB;
+		else  ret = WEDGE2_AB_IN_CD;
 		goto out;
 	}
 
