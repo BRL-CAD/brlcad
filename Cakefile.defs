@@ -488,8 +488,10 @@ set -S2 "/bin/sh"
 #		define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -I''XINCDIR
 #		define	MGED_LIBES	-L''XLIBDIR -lX11''SHARED -lgl''SHARED
 #		define	XMGED_OBJS	dm-4d dm-X Xmgl
-#		define	XMGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -DDMX_SIGNALS -I/usr/include/X11
-#		define	XMGED_LIBES	-lXirisw -lgl_s -lXm -lXt -lX11_s -lsun -lPW
+#		define	XMGED_CONFIG	-Wf,-XNl7000 GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -DDMX_SIGNALS -I/usr/include/X11
+#		define	XMGED_LIBES	-L''XLIBDIR -lXirisw -lgl_s -lXm_s \
+					-lXt_s -lXi -lXext -lX11_s -lsun -lPW \
+					-lxmalloc
 #	else
 /*		Lee Butler experimental version */
 #		define	MGED_OBJS	dm-4d mged_widget dm-X
@@ -504,6 +506,12 @@ set -S2 "/bin/sh"
 #	define	LIBPKG_CONFIG	-I/usr/include/bsd -DBSD=43
 #	define	RFBD_CONFIG	-I/usr/include/bsd -DBSD=43
 #	define	LIBRT_TIMER	timer42
+#	if 1
+/*		Under Irix 4.0.5, the SGI-provided LEX and YACC don't work */
+#		define	LEX	/usr/gnu/bin/flex
+#		define	YACC	/usr/gnu/bin/bison
+#		define	YACC_OPTS	-y -d
+#	endif
 #endif
 
 #if defined(__CAKE__irix5)
@@ -551,14 +559,22 @@ set -S2 "/bin/sh"
 #	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -I''XINCDIR
 #	define	MGED_LIBES	-L''XLIBDIR -lX11''SHARED -lgl''SHARED
 #	define	XMGED_OBJS	dm-4d dm-X Xmgl
-#	define	XMGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -DDMX_SIGNALS -I/usr/include/X11
-#	define	XMGED_LIBES	-lXirisw -lgl_s -lXm -lXt -lX11_s -lsun -lPW
+#	define	XMGED_CONFIG	-Wf,-XNl7000 GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -DDMX_SIGNALS -I/usr/include/X11
+#	define	XMGED_LIBES	-L''XLIBDIR -lXirisw -lgl_s -lXm_s \
+				-lXt_s -lXi -lXext -lX11_s -lsun -lPW \
+				-lxmalloc
 #	define	HAS_TCP	1
 #	define	CC	/usr/bin/cc
 #	define	GETHOST	hostname
 #	define	LIBPKG_CONFIG	-DBSD=43
 #	define	RFBD_CONFIG	-DBSD=43
 #	define	LIBRT_TIMER	timer42
+#	if 1
+/*		Under Irix 5.1, SGI-provided LEX and YACC don't provide yywrap and yyless needed for XMGED */
+#		define	LEX	/usr/gnu/bin/flex
+#		define	YACC	/usr/gnu/bin/bison
+#		define	YACC_OPTS	-y -d
+#	endif
 #endif
 
 #if defined(sun) && !defined(sparc)
@@ -663,6 +679,12 @@ set -S2 "/bin/sh"
 			-L''XLIBDIR -lX11
 #	endif
 #	if 0
+/*		XMGED requires a Motif license and include/X11/Xm/Xm.h */
+#		define	XMGED_OBJS	dm-X
+#		define	XMGED_CONFIG	-DDM_X -DDMX_SIGNALS -I''XINCDIR
+#		define	XMGED_LIBES	-lXm -lXt -L''XLIBDIR -lXi -lX11
+#	endif
+#	if 0
 /*		"Unbundled" (i.e. "improved") compilers.  Use if you have them */
 #		define	CC	/usr/lang/cc
 #		define	FC	/usr/lang/f77
@@ -710,9 +732,6 @@ set -S2 "/bin/sh"
 # endif
 #	define	LIBRT_TIMER	timer42
 
-#	define	XINCDIR		/usr/X11/include
-#	define	XLIBDIR		/usr/X11/lib
-
 #	if 0	/* PRODUCTION=0 */
 /*		Bare Sun configuration */
 #		define	LIBFB_OBJS	if_remote if_sun
@@ -723,13 +742,14 @@ set -S2 "/bin/sh"
 #		define	MGED_CONFIG	-DDM_SUNPW
 #		define	MGED_LIBES	-lsuntool -lsunwindow -lpixrect
 #	else
+#		define	XINCDIR		/usr/openwin/include
+#		define	XLIBDIR		/usr/openwin/lib
 #		if 1	/* PRODUCTION=1 */
-/*			Sun with X11 (aka "openwin") & Suntools.  Default for SunOS 4.1.1 */
+/*			Sun with X11 (aka "openwin") Default for SunOS 4.1.1 */
 #			define	LIBFB_OBJS	if_remote if_ab if_X
 #			define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB \
-				-I/usr/openwin/include -I''XINCDIR -DIF_X
-#			define	LIBFB_LIBES	LIBPKG \
-				-L/usr/openwin/lib -L''XLIBDIR -lX11
+				-I''XINCDIR -DIF_X
+#			define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
 #			if 1	/* PRODUCTION=1 */
 /*				Sun with X11 only */
 #				define	MGED_OBJS	dm-X
@@ -744,19 +764,22 @@ set -S2 "/bin/sh"
 #				define	MGED_LIBES	-lxgl -L/usr/openwin/lib -L''XLIBDIR -lX11
 #			endif
 #		else
-/*			Sun with X11 ("openwin") ONLY. No Suntools support. */
+/*			Sun with MIT X11. No Suntools support. */
+#			define	XINCDIR		/usr/X11/include
+#			define	XLIBDIR		/usr/X11/lib
 #			define	LIBFB_OBJS	if_remote if_ab if_X
 #			define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB \
-				-I/usr/openwin/include -I''XINCDIR -DIF_X
+				-I''XINCDIR -DIF_X
 #			define	LIBFB_LIBES	LIBPKG \
-				-L/usr/openwin/lib -L''XLIBDIR -lX11
+				-L''XLIBDIR -lX11
 #			define	MGED_OBJS	dm-X
 #			define	MGED_CONFIG	-DDM_X -I/usr/openwin/include -I''XINCDIR
 #			define	MGED_LIBES	-L/usr/openwin/lib -L''XLIBDIR -lX11
 #		endif
-#		define	XMGED_OBJS	dm-X Xmgl
+/*		XMGED requires a Motif license and include/X11/Xm/Xm.h */
+#		define	XMGED_OBJS	dm-X
 #		define	XMGED_CONFIG	-DDM_X -DDMX_SIGNALS -I''XINCDIR
-#		define	XMGED_LIBES	-lXm -lXt -L''XLIBDIR -lX11 -lPW
+#		define	XMGED_LIBES	-lXm -lXt -L''XLIBDIR -lXi -lX11
 #	endif
 #	if 0
 /*		"Unbundled" (i.e. "improved") compilers.  Use if you have them */
@@ -1080,6 +1103,22 @@ set -S2 "/bin/sh"
 
 #if !defined(LD_OPTS)
 #	define	LD_OPTS	/**/
+#endif
+
+#if !defined(LEX)
+#	define	LEX	lex
+#endif
+
+#if !defined(LEX_OPTS)
+#	define	LEX_OPTS	/**/
+#endif
+
+#if !defined(YACC)
+#	define	YACC	yacc
+#endif
+
+#if !defined(YACC_OPTS)
+#	define	YACC_OPTS	-d	/* Generate y.tab.h */
 #endif
 
 /* Provide defaults here */
