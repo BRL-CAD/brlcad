@@ -1493,21 +1493,16 @@ CONST struct bn_tol	*tol;
  *
  */
 void
-nmg_gluefaces(fulist, n)
+nmg_gluefaces(fulist, n, tol)
 struct faceuse *fulist[];
 int n;
+CONST struct bn_tol *tol;
 {
 	struct shell	*s;
 	struct loopuse	*lu;
 	struct edgeuse	*eu;
 	int		i;
 	int		f_no;		/* Face number */
-struct rt_tol tol;
-       tol.magic = RT_TOL_MAGIC;
-       tol.dist = 0.005;
-       tol.dist_sq = tol.dist * tol.dist;
-       tol.perp = 1e-6;
-       tol.para = 1 - tol.perp;
 	
 	NMG_CK_FACEUSE(fulist[0]);
 	s = fulist[0]->s_p;
@@ -1544,7 +1539,7 @@ struct rt_tol tol;
 							continue;
 						for( BU_LIST_FOR( eu2, edgeuse, &lu2->down_hd ) )  {
 							if (EDGESADJ(eu, eu2))
-								nmg_radial_join_eu(eu, eu2, &tol);
+								nmg_radial_join_eu(eu, eu2, tol);
 						}
 					}
 				}
