@@ -826,7 +826,7 @@ CONST struct rt_tol	*tol;
 			nmg_pl_lu(fd, lu, b, 255, 255, 255);
 			fclose(fd);
 		}
-
+		nmg_pr_lu(lu, "");
 		rt_bomb("class_lu_vs_s: loop transits plane of shell/face?\n");
 	}
 	if (out > 0) {
