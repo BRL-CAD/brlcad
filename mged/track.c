@@ -485,21 +485,27 @@ char name[];
 
 
 tancir( cir1, cir2 )
-float cir1[], cir2[];
+register float cir1[], cir2[];
 {
-	float work[3], mag;
-	double temp, p, tempp, ang, angc;
+	static fastf_t work[3], mag;
+	FAST fastf_t f;
+	static double temp, tempp, ang, angc;
 
-	p = 3.14159265;
 	work[0] = cir2[0] - cir1[0];
 	work[2] = cir2[1] - cir1[1];
 	work[1] = 0.0;
 	mag = MAGNITUDE( work );
-	VSCALE(work, work, 1.0/mag);
+	if( mag > 1.0e-20 || mag < -1.0e-20 )  {
+		f = 1.0/mag;
+	}  else {
+		fprintf(stderr,"tancir():  0-length vector!\n");
+		return;
+	}
+	VSCALE(work, work, f);
 	temp = acos( work[0] );
 	if( work[2] < 0.0 )
-		temp = p + p - temp;
-	tempp = acos( (cir1[2] - cir2[2]) / mag );
+		temp = 6.28318512717958646 - temp;
+	tempp = acos( (cir1[2] - cir2[2]) * f );
 	ang = temp + tempp;
 	angc = temp - tempp;
 	if( (cir1[1] + cir1[2] * sin(ang)) >

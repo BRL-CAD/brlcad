@@ -1116,18 +1116,19 @@ void
 findang( angles, unitv )
 register float *angles, *unitv;
 {
-	register int i;
+	FAST fastf_t f;
 
 	/* direction cos */
-	for( i=0; i<3; i++ ) 
-		angles[i] = acos( unitv[i] ) * radtodeg;
+	angles[X] = acos( unitv[X] ) * radtodeg;
+	angles[Y] = acos( unitv[Y] ) * radtodeg;
+	angles[Z] = acos( unitv[Z] ) * radtodeg;
 
 	/* fallback angle */
 	angles[4] = asin(unitv[Z]);
 
 	/* rotation angle */
-	if(cos(angles[4]) != 0.0)
-		angles[3] = radtodeg * acos( unitv[X]/cos(angles[4]) );
+	if((f = cos(angles[4])) > 1.0e-20 || f < -1.0e-20 )
+		angles[3] = radtodeg * acos( unitv[X]/f );
 	else
 		angles[3] = 0.0;
 	if( unitv[1] < 0 )
