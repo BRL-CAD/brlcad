@@ -78,7 +78,7 @@ extern Tk_Window tkwin;
 #include "raytrace.h"
 #include "./ged.h"
 #include "./titles.h"
-#include "./solid.h"
+#include "./mged_solid.h"
 #include "./sedit.h"
 #include "./mged_dm.h"
 
@@ -206,9 +206,8 @@ char **argv;
 	}
 
 	/* Set up linked lists */
-	HeadSolid.s_forw = &HeadSolid;
-	HeadSolid.s_back = &HeadSolid;
-	FreeSolid = SOLID_NULL;
+	BU_LIST_INIT(&HeadSolid.l);
+	BU_LIST_INIT(&FreeSolid.l);
 	BU_LIST_INIT( &rt_g.rtg_vlfree );
 
 	bzero((void *)&head_cmd_list, sizeof(struct cmd_list));
