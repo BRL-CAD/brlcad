@@ -65,6 +65,12 @@ top:
 			if( reg_num < 0 ) 
 				return( 0 );		/* Done */
 
+			if( reg_num > reg_total )  {
+				printf("%d regions is more than claimed %d\n",
+					reg_num, reg_total );
+				return(-1);
+			}
+
 			namecvt( reg_num, wmp[reg_num].wm_name, 'r' );
 		} else {
 			if( getline( &rcard, sizeof(rcard), "region card" ) == EOF )  {
