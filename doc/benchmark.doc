@@ -195,6 +195,7 @@ ardec-3	Pyramid 90Mx, Dual-CPU, OSx 2.5, 16 Mbytes
 bob	Cray-2, SN 2009, 4.3ns clock
 cor3	Pyramid MIS-12T/3, OSx 192
 patton	Cray X-MP/48, SN213, UNICOS 5.0, 8.5ns clock
+uy1	Cray Y-MP8/2128, UNICOS 5.1.11
 shpcrc2	IBM RS/6000, AIX 3.1
 slc1	Macintosh II, 68020, 68881, AUX 1.1, GCC 1.39
 spark	Gould PN 9050, no MACC, UTX 2.0, 2x4Mb mem boards
@@ -670,6 +671,9 @@ Abs	walrus	4010.55	2019.34	1767.75	1685.19	2029.78	2302.52	2
 _
 Abs	patton	5235.87	2108.02	1509.85	1507.81	2132.01	2498.71	1
 *vgr	patton	38.21	31.43	26.92	28.25	30.15	30.99
+_
+Abs	uy1	6220.79	2474.97	1742.33	1748.73	2464.90	2930.34	1
+*vgr	uy1	45.40	36.90	31.07	32.77	34.86	36.20
 _
 Abs	walrus	5743.85	2938.73	2513.24	2446.85	2858.84	3300.30	3
 *vgr	walrus	41.92	43.82	44.82	45.85	40.44	43.37
