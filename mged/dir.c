@@ -1053,6 +1053,27 @@ char prefix;
 }
 
 
+HIDDEN void
+Change_name( dbip, comb, comb_leaf, old_ptr, new_ptr )
+struct db_i		*dbip;
+struct rt_comb_internal *comb;
+union tree		*comb_leaf;
+genptr_t		old_ptr, new_ptr;
+{
+	char	*old_name, *new_name;
+
+	RT_CK_DBI( dbip );
+	RT_CK_TREE( comb_leaf );
+
+	old_name = (char *)old_ptr;
+	new_name = (char *)new_ptr;
+
+	if( strncmp( comb_leaf->tr_l.tl_name, old_name, NAMESIZE ) )
+		return;
+
+	strncpy( comb_leaf->tr_l.tl_name, new_name, NAMESIZE );
+}
+
 /*	F _ M V A L L
  *
  *	rename all occurences of an object
@@ -1067,9 +1088,10 @@ int	argc;
 char	**argv;
 {
 	register int	i,j,k;	
-	register union record *rp;
 	register struct directory *dp;
-	union record	record;
+	struct rt_db_internal	intern;
+	struct rt_comb_internal *comb;
+	struct bu_ptbl		stack;
 
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;
@@ -1100,40 +1122,71 @@ char	**argv;
 	}
 
 	/* Change name in the file */
-	if( db_get( dbip,  dp, &record, 0 , 1) < 0 ) {
-	  TCL_READ_ERR_return;
+	if( rt_db_get_internal( &intern, dp, dbip, (mat_t *)NULL ) < 0 )
+		TCL_READ_ERR_return;
+	if( rt_db_put_internal( dp, dbip, &intern ) < 0 ) {
+		TCL_WRITE_ERR_return;
 	}
-	NAMEMOVE( argv[2], record.c.c_name );
-	if( db_put( dbip, dp, &record, 0, 1 ) < 0 ) {
-	  TCL_WRITE_ERR_return;
-	}
+
+	bu_ptbl_init( &stack, 64, "combination stack for f_mvall" );
 
 	/* Examine all COMB nodes */
 	for( i = 0; i < RT_DBNHASH; i++ )  {
 		for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw )  {
+			union tree	*comb_leaf;
+			int		done=0;
+			int		changed=0;
+
 			if( !(dp->d_flags & DIR_COMB) )
 				continue;
-			if( (rp = db_getmrec( dbip, dp )) == (union record *)0 ) {
-			  TCL_READ_ERR_return;
-			}
-			/* [0] is COMB, [1..n] are MEMBERs */
-			for( j=1; j < dp->d_len; j++ )  {
-				if( rp[j].M.m_instname[0] == '\0' )
-					continue;
-				for( k=2; k<argc; k++ )  {
-					if( strncmp( rp[j].M.m_instname,
-					    argv[1], NAMESIZE) != 0 )
-						continue;
-					(void)strncpy(rp[j].M.m_instname,
-						argv[2], NAMESIZE);
-					if( db_put( dbip, dp, rp, 0, dp->d_len ) < 0 ) {
-					  TCL_WRITE_ERR_return;
-					}
+
+			if( rt_db_get_internal( &intern, dp, dbip, (mat_t *)NULL ) < 0 )
+				continue;
+			comb = (struct rt_comb_internal *)intern.idb_ptr;
+
+			bu_ptbl_reset( &stack );
+			/* visit each leaf in the combination */
+			comb_leaf = comb->tree;
+			while( !done )
+			{
+				while( comb_leaf->tr_op != OP_DB_LEAF )
+				{
+					bu_ptbl_ins( &stack, (long *)comb_leaf );
+					comb_leaf = comb_leaf->tr_b.tb_left;
+				}
+				if( !strncmp( comb_leaf->tr_l.tl_name, argv[1], NAMESIZE ) )
+				{
+					strncpy( comb_leaf->tr_l.tl_name, argv[2], NAMESIZE );
+					changed = 1;
+				}
+
+				if( BU_PTBL_END( &stack ) < 1 )
+				{
+					done = 1;
+					break;
+				}
+				comb_leaf = (union tree *)BU_PTBL_GET( &stack, BU_PTBL_END( &stack )-1 );
+				if( comb_leaf->tr_op != OP_DB_LEAF )
+				{
+					bu_ptbl_rm( &stack, (long *)comb_leaf );
+					comb_leaf = comb_leaf->tr_b.tb_right;
 				}
 			}
-			bu_free( (genptr_t)rp, "dir_nref recs" );
+
+			if( changed )
+			{
+				if( rt_db_put_internal( dp, dbip, &intern ) )
+				{
+					bu_ptbl_free( &stack );
+					rt_comb_ifree( &intern );
+					TCL_WRITE_ERR_return;
+				}
+			}
+			else
+				rt_comb_ifree( &intern );
 		}
 	}
+	bu_ptbl_free( &stack );
 	return TCL_OK;
 }
 
