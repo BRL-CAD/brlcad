@@ -707,6 +707,98 @@ choose:
 }
 
 /*
+ *			R T _ D E F A U L T _ M U L T I O V E R L A P
+ *
+ *  Default version of a_multioverlap().
+ *
+ *  Resolve the overlap of multiple regions withing a single partition.
+ *  There are no null pointers in the table (they have been compressed
+ *  out by our caller).  Consider BU_PTBL_LEN(regiontable) overlapping
+ *  regions, and reduce to zero or one "claiming" regions, by
+ *  setting pointers in the bu_ptbl of non-claiming regions to NULL.
+ *
+ *  This default routine reproduces the behavior of BRL-CAD Release 5.0
+ *  by considerign the regions pairwise and calling the old a_overlap().
+ *
+ *  An application which knew how to handle multiple overlapping air
+ *  regions would provide its own very different version of this routine
+ *  as the a_multioverlap() handler.
+ */
+void
+rt_default_multioverlap( ap, pp, regiontable, InputHdp )
+struct application	*ap;
+struct partition	*pp;
+struct bu_ptbl		*regiontable;
+struct partition	*InputHdp;
+{
+	LOCAL struct region *lastregion = (struct region *)NULL;
+	int	code;
+	int	i;
+
+	RT_CK_AP(ap);
+	RT_CK_PARTITION(pp);
+	BU_CK_PTBL(regiontable);
+	RT_CK_PT_HD(InputHdp);
+
+   	if( ap->a_overlap == RT_AFN_NULL )
+   		ap->a_overlap = rt_defoverlap;
+
+	lastregion = (struct region *)BU_PTBL_GET(regiontable, 0);
+	RT_CK_REGION(lastregion);
+
+	for( i=1; i < BU_PTBL_LEN(regiontable); i++ )  {
+		struct region *regp = (struct region *)BU_PTBL_GET(regiontable, i);
+		RT_CK_REGION(regp);
+
+		/*
+		 * Two or more regions claim this partition
+		 */
+		if( lastregion->reg_aircode != 0 && regp->reg_aircode == 0 )  {
+			/* last region is air, replace with solid regp */
+			code = 2;
+		} else if( lastregion->reg_aircode == 0 && regp->reg_aircode != 0 )  {
+			/* last region solid, regp is air, keep last */
+			code = 1;
+		} else if( lastregion->reg_aircode != 0 &&
+		    regp->reg_aircode != 0 &&
+		    regp->reg_aircode == lastregion->reg_aircode )  {
+		    	/* both are same air, keep last */
+		    	code = 1;
+		} else {
+		   	/*
+		   	 *  Hand overlap to old-style application-specific
+		   	 *  overlap handler, or default.
+			 *	0 = destroy partition,
+			 *	1 = keep part, claiming region=lastregion
+			 *	2 = keep part, claiming region=regp
+		   	 */
+			code = ap->a_overlap(ap, pp, lastregion, regp, InputHdp);
+		}
+
+		/* Implement the policy in "code" */
+		if( code == 0 )  {
+			/*
+			 *  Destroy the whole partition.
+			 */
+			if(rt_g.debug&DEBUG_PARTITION)  bu_log("rt_default_multioverlap:  overlap code=0, partition=x%x deleted\n", pp);
+			bu_ptbl_reset(regiontable);
+			return;
+		} else if( code == 1 ) {
+			/* Keep partition, claiming region = lastregion */
+			if(rt_g.debug&DEBUG_PARTITION)  bu_log("rt_default_multioverlap:  overlap code=%d, p retained in region=%s\n",
+				code, lastregion->reg_name );
+			BU_PTBL_CLEAR_I(regiontable, i);
+		} else {
+			/* Keep partition, claiming region = regp */
+			bu_ptbl_zero(regiontable, (long *)lastregion);
+			lastregion = regp;
+			if(rt_g.debug&DEBUG_PARTITION)  bu_log("rt_default_multioverlap:  overlap code=%d, p retained in region=%s\n",
+				code, lastregion->reg_name );
+		}
+	}
+}
+
+/*
  *			R T _ B O O L F I N A L
  *
  *
@@ -806,6 +898,9 @@ CONST struct bu_bitv	*solidbits;
 			startdist, enddist,
 			ap->a_x, ap->a_y, ap->a_level );
 	}
+
+	if( !ap->a_multioverlap )
+		ap->a_multioverlap = rt_default_multioverlap;
 
 	if( enddist <= 0 )  {
 		reason = "not done, behind start point";
@@ -1012,100 +1107,82 @@ CONST struct bu_bitv	*solidbits;
 
 		/* Evaluate the boolean trees of any regions involved */
 		{
-		struct region **regpp;
-		for( BU_PTBL_FOR( regpp, (struct region **), regiontable ) )  {
-			register struct region *regp;
-			int	code;
+			struct region **regpp;
+			for( BU_PTBL_FOR( regpp, (struct region **), regiontable ) )  {
+				register struct region *regp;
 
-			regp = *regpp;
-			RT_CK_REGION(regp);
-			if(rt_g.debug&DEBUG_PARTITION)  {
-				rt_pr_tree_val( regp->reg_treetop, pp, 2, 0 );
-				rt_pr_tree_val( regp->reg_treetop, pp, 1, 0 );
-				rt_pr_tree_val( regp->reg_treetop, pp, 0, 0 );
-				bu_log("%.8x=bit%d, %s: ",
-					regp, regp->reg_bit,
-					regp->reg_name );
-			}
-			if( rt_booleval( regp->reg_treetop, pp, TrueRg,
-			    ap->a_resource ) == FALSE )  {
-				if(rt_g.debug&DEBUG_PARTITION) bu_log("FALSE\n");
-				continue;
-			} else {
+				regp = *regpp;
+				RT_CK_REGION(regp);
+				if(rt_g.debug&DEBUG_PARTITION)  {
+					rt_pr_tree_val( regp->reg_treetop, pp, 2, 0 );
+					rt_pr_tree_val( regp->reg_treetop, pp, 1, 0 );
+					rt_pr_tree_val( regp->reg_treetop, pp, 0, 0 );
+					bu_log("%.8x=bit%d, %s: ",
+						regp, regp->reg_bit,
+						regp->reg_name );
+				}
+				if( rt_booleval( regp->reg_treetop, pp, TrueRg,
+				    ap->a_resource ) == FALSE )  {
+					if(rt_g.debug&DEBUG_PARTITION) bu_log("FALSE\n");
+				    	/* Null out non-claiming region's pointer */
+				    	*regpp = REGION_NULL;
+					continue;
+				}
+				/* This region claims partition */
 				if(rt_g.debug&DEBUG_PARTITION) bu_log("TRUE\n");
-			}
-			/* This region claims partition */
-			if( ++claiming_regions <= 1 )  {
+				claiming_regions++;
 				lastregion = regp;
-				continue;
 			}
-
-			/*
-			 * Two or more regions claim this partition
-			 */
-			if( lastregion->reg_aircode != 0 && regp->reg_aircode == 0 )  {
-				/* last region is air, replace with solid regp */
-				code = 2;
-			} else if( lastregion->reg_aircode == 0 && regp->reg_aircode != 0 )  {
-				/* last region solid, regp is air, keep last */
-				code = 1;
-			} else if( lastregion->reg_aircode != 0 &&
-			    regp->reg_aircode != 0 &&
-			    regp->reg_aircode == lastregion->reg_aircode )  {
-			    	/* both are same air, keep last */
-			    	code = 1;
-			} else {
-			   	/*
-			   	 *  Hand overlap to application-specific
-			   	 *  overlap handler, or default.
-				 *	0 = destroy partition,
-				 *	1 = keep part, reg=lastregion
-				 *	2 = keep part, reg=regp
-			   	 */
-			   	if( ap->a_overlap == RT_AFN_NULL )
-			   		ap->a_overlap = rt_defoverlap;
-				code = ap->a_overlap(ap, pp, lastregion, regp, InputHdp);
-			}
-			/* Implement the policy in "code" */
-			if( code == 0 )  {
-				/* zero => delete the partition.
-				 * The dirty work happens below.
-				 */
-				if(rt_g.debug&DEBUG_PARTITION)  bu_log("rt_boolfinal:  overlap code=0, p deleted\n");
-			} else if( code == 1 ) {
-				/* Keep part, region = lastregion */
-			    	claiming_regions--;	/* now = 1 */
-				if(rt_g.debug&DEBUG_PARTITION)  bu_log("rt_boolfinal:  overlap code=%d, p retained in region=%s\n",
-					code, lastregion->reg_name );
-			} else {
-				/* Keep part, region = regp */
-				lastregion = regp;
-			    	claiming_regions--;	/* now = 1 */
-				if(rt_g.debug&DEBUG_PARTITION)  bu_log("rt_boolfinal:  overlap code=%d, p retained in region=%s\n",
-					code, lastregion->reg_name );
-			}
-		 }
 		}
 		if(rt_g.debug&DEBUG_PARTITION)  bu_log("rt_boolfinal:  claiming_regions=%d\n",
 			claiming_regions);
 		if( claiming_regions == 0 )  {
-			pp=pp->pt_forw;			/* onwards! */
+			if(rt_g.debug&DEBUG_PARTITION)bu_log("rt_boolfinal moving past partition x%x\n", pp);
+			pp = pp->pt_forw;		/* onwards! */
 			continue;
 		}
 
 		if( claiming_regions > 1 )  {
 			/*
-			 *  Discard partition containing overlap.
-			 *  Nothing further along the ray will fix it.
+			 *  There is an overlap between two or more regions,
+			 *  invoke multi-overlap handler.
 			 */
-			register struct partition	*zap_pp;
+			if(rt_g.debug&DEBUG_PARTITION)  bu_log("rt_boolfinal:  invoking a_multioverlap() pp=x%x\n", pp);
+			bu_ptbl_rm( regiontable, (long *)NULL );
+			ap->a_multioverlap( ap, pp, regiontable, InputHdp );
 
-			if(rt_g.debug&DEBUG_PARTITION)bu_log("rt_boolfinal discarding overlap partition x%x\n", pp);
-			zap_pp = pp;
-			pp = pp->pt_forw;		/* onwards! */
-			DEQUEUE_PT( zap_pp );
-			FREE_PT( zap_pp, ap->a_resource );
-			continue;
+			/* Count number of remaining regions, s/b 0 or 1 */
+			claiming_regions = 0;
+			{
+				register struct region **regpp;
+				for( BU_PTBL_FOR( regpp, (struct region **), regiontable ) )  {
+					if( *regpp != REGION_NULL )  {
+						claiming_regions++;
+						lastregion = *regpp;
+					}
+				}
+			}
+
+			/*
+			 *  If claiming_regions == 0, discard partition.
+			 *  If claiming_regions > 1, signal error and discard.
+			 *  There is nothing further we can do to fix it.
+			 */
+			if( claiming_regions > 1)  {
+				bu_log("rt_boolfinal() a_multioverlap() failed to resolve overlap, discarding bad partition:\n");
+				rt_pr_pt( ap->a_rt_i, pp );
+			}
+
+			if( claiming_regions != 1 )  {
+				register struct partition	*zap_pp;
+
+				if(rt_g.debug&DEBUG_PARTITION)bu_log("rt_boolfinal discarding overlap partition x%x\n", pp);
+				zap_pp = pp;
+				pp = pp->pt_forw;		/* onwards! */
+				DEQUEUE_PT( zap_pp );
+				FREE_PT( zap_pp, ap->a_resource );
+				continue;
+			}
 		}
 
 		/*

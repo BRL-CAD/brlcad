@@ -517,6 +517,7 @@ struct partition {
 
 #define RT_CHECK_PT(_p)	RT_CK_PT(_p)	/* compat */
 #define RT_CK_PT(_p)	BU_CKMAG(_p,PT_MAGIC, "struct partition")
+#define RT_CK_PARTITION(_p)	BU_CKMAG(_p,PT_MAGIC, "struct partition")
 #define RT_CK_PT_HD(_p)	BU_CKMAG(_p,PT_HD_MAGIC, "struct partition list head")
 
 /* Macros for copying only the essential "middle" part of a partition struct */
@@ -1069,11 +1070,15 @@ struct pixel_ext {
  *  In addition, these fields are used by the library.  If they are
  *  set to zero, default behavior will be used.
  *	a_resource	Pointer to CPU-specific resources.  Multi-CPU only.
- *	a_overlap()	If non-null, this routine will be called to
+ *	a_overlap()	DEPRECATED, set a_multioverlap() instead.
+ *			If non-null, this routine will be called to
  *			handle overlap conditions.  See librt/bool.c
  *			for calling sequence.
  *			Return of 0 eliminates partition with overlap entirely
- *			Return of !0 retains one (random) partition in output
+ *			Return of !0 retains one partition in output
+ *	a_multioverlap() Called when two or more regions overlap in a partition.
+ *			Default behavior used if pointer not set.
+ *			See librt/bool.c for calling sequence.
  *	a_level		Printed by librt on errors, but otherwise not used.
  *	a_x		Printed by librt on errors, but otherwise not used.
  *	a_y		Printed by librt on errors, but otherwise not used.
@@ -1109,7 +1114,8 @@ struct application  {
 	int		a_zero1;	/* must be zero (sanity check) */
 	/* THESE ELEMENTS ARE USED BY THE LIBRARY, BUT MAY BE LEFT ZERO */
 	struct resource	*a_resource;	/* dynamic memory resources */
-	int		(*a_overlap)();	/* called when overlaps occur */
+	int		(*a_overlap)();	/* DEPRECATED */
+	void		(*a_multioverlap)BU_ARGS( (struct application *, struct partition *, struct bu_ptbl *, struct partition *) );	/* called when overlaps occur */
 	int		a_level;	/* recursion level (for printing) */
 	int		a_x;		/* Screen X of ray, if applicable */
 	int		a_y;		/* Screen Y of ray, if applicable */
@@ -1141,6 +1147,7 @@ struct application  {
 #define RT_AFN_NULL	((int (*)())0)
 #define RT_AP_MAGIC	0x4170706c	/* "Appl" */
 #define RT_CK_AP(_p)	BU_CKMAG(_p,RT_AP_MAGIC,"struct application")
+#define RT_CK_APPLICATION(_p)	BU_CKMAG(_p,RT_AP_MAGIC,"struct application")
 
 #define RT_AP_CHECK(_ap)	\
 	{if((_ap)->a_zero1||(_ap)->a_zero2) \
