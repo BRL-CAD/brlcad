@@ -362,7 +362,7 @@ color_soltab()
 		}
 		/*
 		 *  There is no region-id-based coloring entry in the
-		 *  table, so use the combination-record ("matter"
+		 *  table, so use the combination-record ("mater"
 		 *  command) based color instead.
 		 *  This is the "new way" of coloring things.
 		 */
@@ -371,5 +371,5 @@ color_soltab()
 		sp->s_color[2] = sp->s_basecolor[2];
 done: ;
 	}
-	dmaflag = 1;		/* re-write control list with new colors */
+	update_views = 1;		/* re-write control list with new colors */
 }
