@@ -1,5 +1,5 @@
 /*
- *			J O V E . H 
+ *			J O V E . H
  *
  * $Header$
  *
@@ -11,39 +11,102 @@
 # define SYS5	1
 #endif
 
-#ifdef SYSV
-#	define	USE_STRING_H	1	/* use <string.h>, not <strings.h> */
-#endif
-
 /*
  *  Some very common BSD --> SYSV conversion aids
  */
-#if defined(SYSV) && !defined(bzero)
-#	define bzero(str,n)		memset( str, '\0', n )
+#if defined(SYS5) && !defined(bcopy)
+/* IMPORTANT -- bcopy macro must not be invoked with overlapping source and destination! */
 #	define bcopy(from,to,count)	memcpy( to, from, count )
 #endif
 
-#if defined(BSD) && !defined(SYSV) && (BSD <= 43)
+#if defined(BSD) && !defined(SYS5) && (BSD <= 43)
 #	define strchr(sp,c)	index(sp,c)
 #	define strrchr(sp,c)	rindex(sp,c)
 	extern char *index();
 	extern char *rindex();
 #endif
 
-#if defined(__STDC__) || (BSD >= 44) || defined(_POSIX_SOURCE)
+#ifndef HAS_TERMIOS
+#if (defined(BSD) && BSD >= 44) || defined(_POSIX_SOURCE)
 #	define HAS_TERMIOS	1
+#else
+#	define HAS_TERMIOS	0
+#endif
 #endif
 
 #include <setjmp.h>
 
-#ifdef BSD
+#if defined(BSD) && !defined(SYS5) && (BSD <= 43)
 #include <strings.h>
 #else
 #include <string.h>
 #endif
 
+/*
+ *  DAG's portable support for functions taking variable number of arguments
+ *
+ *  Usage example:
+ *
+ *	extern int Advise(VA_T(const char *) VA_T(int) VA_DOTS);
+ *
+ *	#include <stdio.h>
+ *	int Advise(VA_T(const char *format) VA_T(int verbose) VA_ALIST)
+ *		VA_DCL
+ *	{
+ *		VA_D(char *format)		// note absence of "const"
+ *		VA_D(int verbose)
+ *		VA_LIST(ap)
+ *		int verbosity, status;
+ *		// end of declarations
+ *		VA_START(ap, verbose)
+ *		VA_I(ap, char *, format)	// note absence of "const"
+ *		VA_I(ap, int, verbose)
+ *		verbosity = verbose? VA_ARG(ap, int): 0;
+ *		status = verbosity > 0? vfprintf(stderr, format, ap) > 0: 1;
+ *		VA_END(ap)
+ *		return status;
+ *	}
+ */
+#ifdef __STDC__
+#include <stdarg.h>
+#define	VA_T(t)		t,
+#define	VA_DOTS		...
+#define	VA_ALIST	...
+#define	VA_D(d)         /* nothing */
+#define	VA_DCL		/* nothing */
+#define	VA_LIST(ap)	va_list ap;
+#define	VA_START(ap,A0)	va_start(ap,A0);
+#define	VA_I(ap,T,Ai)	/* nothing */
+#define	VA_ARG(ap,T)	va_arg(ap,T)
+#define	VA_END(ap)	va_end(ap);
+#else
+#include <varargs.h>
+#define	VA_T(t)		/* nothing */
+#define	VA_DOTS		/* nothing */
+#define	VA_ALIST	va_alist
+#define	VA_D(d)		d;
+#define	VA_DCL		va_dcl
+#define	VA_LIST(ap)	va_list ap;
+#define	VA_START(ap,A0)	va_start(ap);
+#define	VA_I(ap,T,Ai)	Ai = va_arg(ap,T);
+#define	VA_ARG(ap,T)	va_arg(ap,T)
+#define	VA_END(ap)	va_end(ap);
+#endif
+
 #ifdef __convex__
-#define tempnam(x, y) tmpnam(x)		/* No tempnam()! */
+#define	HAS_TEMPNAM	0	/* No tempnam()! */
+#endif
+
+#ifndef	HAS_TEMPNAM
+#ifdef	L_tmpnam		/* From modern stdio.h */
+#define	HAS_TEMPNAM	1
+#else
+#define	HAS_TEMPNAM	0
+#endif
+#endif
+
+#if HAS_TEMPNAM
+extern char	*tempnam();
 #endif
 
 /* The following is tailorable */
@@ -87,34 +150,35 @@ typedef	short	disk_line;
 #define	LBSIZE		BSIZ	/* Same as a logical disk block */
 #define	ESIZE		128
 #define	GBSIZE		256
+#define	ALSIZE		(LBSIZE / sizeof(char *))	/* argument list max */
 
 #define RMARGIN		72	/* Default right margin */
 
 #define flusho()	flushout(-1, &termout)
-#define Placur(l, c)	if (l != CapLine || c != CapCol) DoPlacur(l, c) 
+#define Placur(l, c)	if ((l) != CapLine || (c) != CapCol) DoPlacur(l, c)
 
-#define CTL(c)		(   c & 037)
-#define META(c)		(   c | 0200)
+#define CTL(c)		((c) & 037)
+#define META(c)		((c) | 0200)
 
 #define	rbell()		(RingBell++)
 #define	eolp()		(linebuf[curchar] == '\0')
 #define bolp()		(curchar == 0)
-#define	lastp(line)	(line == curbuf->b_dol)
-#define	firstp(line)	(line == curbuf->b_zero)
+#define	lastp(line)	((line) == curbuf->b_dol)
+#define	firstp(line)	((line) == curbuf->b_zero)
 #define eobp()		(lastp(curline) && eolp())
 #define bobp()		(firstp(curline) && bolp())
-#define HALF(wp)	((wp->w_height - 1) / 2)
-#define SIZE(wp)	(wp->w_height - 1)
+#define HALF(wp)	(((wp)->w_height - 1) / 2)
+#define SIZE(wp)	((wp)->w_height - 1)
 #define makedirty(line)	line->l_dline |= DIRTY
-#define IsModified(b)	(b->b_status & B_MODIFIED)
-#define	IsScratch(b)	(b->b_status & B_SCRATCH)
-#define	SetScratch(b)	(b->b_status |= B_SCRATCH)
-#define	ClrScratch(b)	(b->b_status &= ~B_SCRATCH)
-#define	IsReadOnly(b)	(b->b_status & B_READONLY)
-#define	SetReadOnly(b)	(b->b_status |= B_READONLY);
-#define	ClrReadOnly(b)	(b->b_status &= ~B_READONLY);
+#define IsModified(b)	((b)->b_status & B_MODIFIED)
+#define	IsScratch(b)	((b)->b_status & B_SCRATCH)
+#define	SetScratch(b)	((b)->b_status |= B_SCRATCH)
+#define	ClrScratch(b)	((b)->b_status &= ~B_SCRATCH)
+#define	IsReadOnly(b)	((b)->b_status & B_READONLY)
+#define	SetReadOnly(b)	((b)->b_status |= B_READONLY);
+#define	ClrReadOnly(b)	((b)->b_status &= ~B_READONLY);
 
-#define DoTimes(f, n)	exp_p = 1, exp = n, f()
+#define DoTimes(f, n)	exp_p = 1, exp = (n), f()
 
 extern int	BufSize;
 extern int	CheckTime,
@@ -370,7 +434,7 @@ extern int	UpdModLine,	/* Whether we want to update the mode line */
 		UpdMesg;	/* Update the message line */
 
 /* Under BSDI's BSD/OS lseek returns an off_t
- * which is a quad_t or "long long".  
+ * which is a quad_t or "long long".
  * It is also delcared in <sys/types.h>
  */
 #if !defined(__bsdi__) && !defined(__NetBSD__)
@@ -394,7 +458,6 @@ extern char
 	*IOerr(),
 	*bufmod(),
 	*index(),
-	*ask(),
 	*RunEdit(),
 	*getline(),
 	*getblock(),
@@ -408,7 +471,6 @@ extern char
 	*rindex(),
 	*getenv(),
 	*tgoto(),
-	*sprint(),
 	*StrIndex();
 
 extern BUFLOC
@@ -432,6 +494,16 @@ extern BUFFER
 	*file_exists();
 
 extern int	jgetchar();
+
+extern char	*ask(VA_T(char *) VA_T(const char *) VA_DOTS);
+extern void	error(VA_T(const char *) VA_DOTS);
+extern void	complain(VA_T(const char *) VA_DOTS);
+extern void	confirm(VA_T(const char *) VA_DOTS);
+extern char	*sprint(VA_T(const char *) VA_DOTS);
+extern void	s_mess(VA_T(const char *) VA_DOTS);
+extern void	jprintf(VA_T(const char *) VA_DOTS);
+extern int	UnixToBuf(VA_T(char *) VA_T(int) VA_T(int) VA_T(const char *)
+			VA_DOTS);
 
 #define	SAVE_NO		0
 #define	SAVE_ASK	1
