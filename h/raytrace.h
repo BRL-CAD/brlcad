@@ -178,13 +178,15 @@ struct db_full_path {
  * Not called just "ray" to prevent conflicts with VLD stuff.
  */
 struct xray {
+	long		magic;
 	point_t		r_pt;		/* Point at which ray starts */
 	vect_t		r_dir;		/* Direction of ray (UNIT Length) */
 	fastf_t		r_min;		/* entry dist to bounding sphere */
 	fastf_t		r_max;		/* exit dist from bounding sphere */
 };
 #define RAY_NULL	((struct xray *)0)
-
+#define RT_RAY_MAGIC	0x78726179	/* "xray" */
+#define RT_CK_RAY(_p)	BU_CKMAG(_p,RT_RAY_MAGIC,"struct xray");
 
 /*
  *			H I T
@@ -199,6 +201,7 @@ struct xray {
  *	at the hit point from the post-boolean normal at the hit point.
  */
 struct hit {
+	long		hit_magic;
 	fastf_t		hit_dist;	/* dist from r_pt to hit_point */
 	point_t		hit_point;	/* Intersection point */
 	vect_t		hit_normal;	/* Surface Normal at hit_point */
@@ -208,6 +211,8 @@ struct hit {
 	struct xray	*hit_rayp;	/* pointer to defining ray */
 };
 #define HIT_NULL	((struct hit *)0)
+#define RT_HIT_MAGIC	0x20686974	/* " hit" */
+#define RT_CK_HIT(_p)	BU_CKMAG(_p,RT_HIT_MAGIC,"struct hit")
 
 /*
  * Old macro:
@@ -218,6 +223,7 @@ struct hit {
  */
 #define RT_HIT_NORM( _hitp, _stp, _rayp )  { \
 	register int _id = (_stp)->st_id; \
+	RT_CK_HIT(_hitp); \
 	RT_CHECK_SOLTAB(_stp); \
 	if( _id <= 0 || _id > ID_MAXIMUM ) { \
 		bu_log("stp=x%x, id=%d. hitp=x%x, rayp=x%x\n", _stp, _id, _hitp, (_hitp)->hit_rayp); \
@@ -230,6 +236,7 @@ struct hit {
  *  caller-provided point.
  */
 #define RT_HIT_NORMAL( _normal, _hitp, _stp, _rayp, _flipflag )  { \
+	RT_CK_HIT(_hitp); \
 	RT_CHECK_SOLTAB(_stp); \
 	rt_functab[(_stp)->st_id].ft_norm(_hitp, _stp, (_hitp)->hit_rayp); \
 	if( _flipflag )  { \
@@ -267,6 +274,7 @@ struct curvature {
  */
 #define RT_CURVATURE( _curvp, _hitp, _flipflag, _stp )  { \
 	register int _id = (_stp)->st_id; \
+	RT_CK_HIT(_hitp); \
 	RT_CHECK_SOLTAB(_stp); \
 	if( _id <= 0 || _id > ID_MAXIMUM )  { \
 		bu_log("stp=x%x, id=%d.\n", _stp, _id); \
@@ -292,6 +300,7 @@ struct uvcoord {
 };
 #define RT_HIT_UVCOORD( ap, _stp, _hitp, uvp )  { \
 	register int _id = (_stp)->st_id; \
+	RT_CK_HIT(_hitp); \
 	RT_CHECK_SOLTAB(_stp); \
 	if( _id <= 0 || _id > ID_MAXIMUM )  { \
 		bu_log("stp=x%x, id=%d.\n", _stp, _id); \
@@ -327,6 +336,7 @@ struct seg {
 		rt_get_seg(res); \
 	BU_LIST_DEQUEUE( &((p)->l) ); \
 	(p)->l.forw = (p)->l.back = BU_LIST_NULL; \
+	(p)->seg_in.hit_magic = (p)->seg_out.hit_magic = RT_HIT_MAGIC; \
 	res->re_segget++; }
 
 #define RT_FREE_SEG(p,res)  { \
@@ -1043,6 +1053,7 @@ struct pixel_ext {
 	unsigned long	magic;
 	struct xray	corner[CORNER_PTS];
 };
+/* This should have had an RT_ prefix */
 #define PIXEL_EXT_MAGIC 0x50787400	/* "Pxt" */
 #define BU_CK_PIXEL_EXT(_p)	BU_CKMAG(_p, PIXEL_EXT_MAGIC, "struct pixel_ext")
 
@@ -1092,6 +1103,7 @@ struct pixel_ext {
  *  such machines, so this is a moot issue.
  */
 struct application  {
+	long		a_magic;
 	/* THESE ELEMENTS ARE MANDATORY */
 	struct xray	a_ray;		/* Actual ray to be shot */
 	int		(*a_hit)BU_ARGS( (struct application *, struct partition *, struct seg *));	/* called when shot hits model */
@@ -1132,6 +1144,8 @@ struct application  {
 	int		a_zero2;	/* must be zero (sanity check) */
 };
 #define RT_AFN_NULL	((int (*)())0)
+#define RT_AP_MAGIC	0x4170706c	/* "Appl" */
+#define RT_CK_AP(_p)	BU_CKMAG(_p,RT_AP_MAGIC,"struct application")
 
 #define RT_AP_CHECK(_ap)	\
 	{if((_ap)->a_zero1||(_ap)->a_zero2) \
