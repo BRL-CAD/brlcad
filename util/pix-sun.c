@@ -120,8 +120,9 @@ static unsigned char bvec[16] = {  0, 236, 237,  36, 238, 239,  72, 240,
 static unsigned char nvec[16] = {  0, 246, 247,  43, 248, 249,  86, 250, 
 				251, 129, 252, 253, 172, 254, 255, 215};
 
-#define DITHER(_v) { \
-	if ((_v += noise * mag) > 255) _v = 255; else if (_v < 0) _v = 0; }
+#define DITHER(_v) { register int _t;\
+	if ((_v = _t = _v + noise*mag) > 255) _v = 255; \
+	else if (_t < 0) _v = 0; }
 
 #define MAG1	26.0	/* magnitude of dither noise in color cube */
 #define MAG2	9.0	/* magnitude of dither noise along primaries*/
