@@ -30,6 +30,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 int	irfft_adds, irfft_mults;
 
+void
 irfft( x, n )
 double x[];
 int	n;	/* length */

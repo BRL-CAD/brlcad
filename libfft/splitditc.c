@@ -25,6 +25,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 int	rfft_adds, rfft_mults;
 
+void
 splitdit( X, N, M )
 double	X[];
 int	N, M;
@@ -40,6 +41,7 @@ rfft_adds = rfft_mults = 0;
 
 printf("/* Machine Generated Real Split Radix Decimation in Time FFT */\n" );
 printf("#define	INVSQ2	0.70710678118654752440\n" );
+printf("void\n" );
 printf("rfft%d(X)\n", N );
 printf("register double X[];\n\
 {\n\

@@ -11,6 +11,7 @@ int	rfft_adds, rfft_mults;
 #include "./complex.h"	/* for TWOPI */
 #define	INVSQ2	0.70710678118654752440
 
+void
 rfft( X, N )
 double	X[];
 int	N;

@@ -30,6 +30,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 int	irfft_adds, irfft_mults;
 
+void
 ditsplit( x, n, m )
 double x[];
 int	n;	/* length */
@@ -43,6 +44,7 @@ irfft_adds = irfft_mults = 0;
 
 printf("/* Machine Generated Real Split Radix Decimation in Freq Inverse FFT */\n" );
 printf("#define	INVSQ2	0.70710678118654752440\n" );
+printf("void\n" );
 printf("irfft%d(x)\n", n );
 printf("register double x[];\n\
 {\n\

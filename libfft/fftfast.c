@@ -44,6 +44,9 @@ typedef struct {
 	double	im;	/* Imaginary Part */
 } COMPLEX;
 
+void	scramble();
+void	butterflies();
+
 /*
  * Forward Complex Fourier Transform
  */
@@ -171,6 +174,7 @@ int size;
  * Note: Could speed this up with pointers if necessary,
  *   but the butterflies take much longer.
  */
+void
 scramble(numpoints, dat)
 int numpoints;
 COMPLEX dat[];
@@ -197,6 +201,7 @@ COMPLEX dat[];
 	}
 }
 
+void
 butterflies(numpoints, inverse, dat)
 int numpoints, inverse;
 COMPLEX dat[];
@@ -270,6 +275,7 @@ COMPLEX dat[];
 /*
  * CADD - Complex ADDition
  */
+void
 cadd(result, val1, val2)
 COMPLEX *val1, *val2, *result;
 {
@@ -280,6 +286,7 @@ COMPLEX *val1, *val2, *result;
 /*
  * CSUB - Complex SUBtraction
  */
+void
 csub(result, val1, val2)
 COMPLEX *val1, *val2, *result;
 {
@@ -290,6 +297,7 @@ COMPLEX *val1, *val2, *result;
 /*
  * CMULT - Complex MULTiply
  */
+void
 cmult(result, val1, val2)
 COMPLEX *val1, *val2, *result;
 {
@@ -300,6 +308,7 @@ COMPLEX *val1, *val2, *result;
 /*
  * CDIV - Complex DIVide
  */
+void
 cdiv(result, val1, val2)
 COMPLEX *val1, *val2, *result;
 {
