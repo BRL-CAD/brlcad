@@ -818,10 +818,13 @@ int	width, height;
 	}
 	ifp->if_mode = mode;
 
-#ifndef SGI4D_Rel2
+#ifdef IF_4D_AUTO_POSTSCRIPT
 	/*
 	 *  Now that the mode has been determined,
 	 *  ensure that the graphics system is running.
+	 *  XXX Note that ps_open_PostScript is not in the
+	 *  XXX shared libgl, so this can't be done in an
+	 *  XXX SGI processor-independent way.  Sigh.
 	 */
 	if( !(g_status = ps_open_PostScript()) )  {
 		char * grcond = "/etc/gl/grcond";
