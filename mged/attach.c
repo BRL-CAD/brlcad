@@ -118,6 +118,10 @@ extern struct dm dm_ogl;
 extern struct dm dm_glx;
 #endif
 
+#ifdef DM_PEX
+extern struct dm dm_pex;
+#endif
+
 #ifdef MULTI_ATTACH
 extern struct _mged_variables default_mged_variables;
 struct dm_list head_dm_list;  /* list of active display managers */
@@ -143,14 +147,17 @@ static struct dm *which_dm[] = {
 #ifdef DM_XGL
 	&dm_XGL,
 #endif
-#ifdef DM_GLX
-	&dm_glx,
-#endif
 #ifdef DM_GT
 	&dm_gt,
 #endif
 #ifdef DM_SUNPW
 	&dm_SunPw,
+#endif
+#ifdef DM_GLX
+	&dm_glx,
+#endif
+#ifdef DM_PEX
+	&dm_pex,
 #endif
 #ifdef DM_X
 	&dm_X,
