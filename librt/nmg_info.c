@@ -380,6 +380,7 @@ CONST struct rt_tol	*tol;
  *	edgeuse*	Edgeuse which matches the criteria
  *	NULL		Unable to find matching edgeuse
  */
+/* XXX should be CONST return */
 struct edgeuse *
 nmg_findeu(v1, v2, s, eup, dangling_only)
 CONST struct vertex	*v1, *v2;
@@ -492,7 +493,7 @@ out:
 	if (rt_g.NMG_debug & DEBUG_FINDEU)
 	    	rt_log("nmg_findeu() returns x%x\n", eu);
 
-	return eu;
+	return (struct edgeuse *)eu;
 }
 
 /*
