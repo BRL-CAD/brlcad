@@ -1531,10 +1531,10 @@ vect_t		dir;
 		rt_log( "\tLoopuse in fu (x%x):\n" , fu1 );
 		for( RT_LIST_FOR( lu , loopuse , &fu1->lu_hd ) )
 		{
-			rt_log( "\t\tLOOPUSE x%x:\n" , lu );
+			rt_log( "\tLOOPUSE x%x:\n" , lu );
 			if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_VERTEXUSE_MAGIC )
 			{
-				nmg_pr_vu_briefly( vu , "\t\tVertex Loop: " );
+				nmg_pr_vu_briefly( vu , "\tVertex Loop: " );
 			}
 			else
 			{
@@ -1545,7 +1545,7 @@ vect_t		dir;
 					fastf_t eu_len;
 					double inv_len;
 
-					nmg_pr_eu_briefly( eu , "\t\t\t" );
+					nmg_pr_eu_briefly( eu , "\t\t" );
 					eu_next = RT_LIST_PNEXT_CIRC( edgeuse , eu );
 					VSUB2( eu_dir , eu_next->vu_p->v_p->vg_p->coord , eu->vu_p->v_p->vg_p->coord );
 					eu_len = MAGNITUDE( eu_dir );
@@ -1555,7 +1555,7 @@ vect_t		dir;
 						inv_len = 1.0/eu_len;
 					for( i=0 ; i<3 ; i++ )
 						eu_dir[i] = eu_dir[i] * inv_len;
-					rt_log( "\t\t\t\teu_dir = ( %g , %g , %g ), length = %g\n", V3ARGS( eu_dir ) , eu_len );
+					rt_log( "\t\t\teu_dir = ( %g , %g , %g ), length = %g\n", V3ARGS( eu_dir ) , eu_len );
 				}
 			}
 		}
@@ -2072,7 +2072,10 @@ static CONST struct state_transitions nmg_state_is_in[17] = {
 	{ NMG_LONE,		NMG_STATE_IN,		NMG_ACTION_LONE_V_JAUNT }
 };
 
-/*	This code checks if the vertex from a loop of a single vertex lies on
+/*
+ *			N M G _ I N S E R T _ V U _ I F _ O N _ E D G E
+ *
+ *	This code checks if the vertex from a loop of a single vertex lies on
  *	an edge containing vu2. If so, the edge is split, vu1 is inserted,
  *	the loop containing vu1 is killed, and the newly created edgeuse is
  *	returned in "new_eu".
@@ -2516,9 +2519,14 @@ rt_log("force next eu to ray\n");
 			    		rt_log( "\tprev_vu is a vertex loop\n" );
 			    	/* if prev_vu is geometrically on an edge that goes through vu,
 			    	 * then split that edge at prev_vu */
+/* XXX If there is an ON condition, this is bad. */
+#if 0
+			    	if( nmg_insert_vu_if_on_edge( prev_vu , vu , new_eu , rs->tol ) )
+			    		rt_bomb("insert_vu_if_on_edge 1\n");
 			    	if( nmg_insert_vu_if_on_edge( prev_vu , vu , new_eu , rs->tol ) )
 			    		rs->vu[pos-1] = new_eu->vu_p;
 			    	else
+#endif
 				    	rs->vu[pos-1] = nmg_join_singvu_loop( vu, prev_vu );
 			} else if( *vu->up.magic_p == NMG_LOOPUSE_MAGIC &&
 			    *prev_vu->up.magic_p != NMG_LOOPUSE_MAGIC )  {
@@ -2526,9 +2534,14 @@ rt_log("force next eu to ray\n");
 			    		rt_log( "\tvu is a vertex loop\n" );
 			    	/* if vu is geometrically on an edge that goes through prev_vu,
 			    	 * then split that edge at vu */
+/* XXX If there is an ON condition, this is bad. */
+#if 0
+			    	if( nmg_insert_vu_if_on_edge( vu , prev_vu , new_eu , rs->tol ) )
+			    		rt_bomb("insert_vu_if_on_edge 2\n");
 			    	if( nmg_insert_vu_if_on_edge( vu , prev_vu , new_eu , rs->tol ) )
 			    		rs->vu[pos] = new_eu->vu_p;
 			    	else
+#endif
 				    	rs->vu[pos] = nmg_join_singvu_loop( prev_vu, vu );
 			} else {
 				/* Both are loops of single vertex */
