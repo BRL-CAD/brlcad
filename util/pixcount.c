@@ -24,6 +24,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "externs.h"		/* For getopt(), etc. */
 #include "bu.h"
+#include "redblack.h"
 
 struct pixel
 {
@@ -43,7 +44,7 @@ int		pixel_size = 3;		/* Bytes/pixel */
 static char usage[] = "\
 Usage: 'pixcount [-# bytes_per_pixel]\n\
 		 [infile.pix [outfile.pix]]'\n";
-#define OPT_STRING	"c:f:x:?"
+#define OPT_STRING	"#:?"
 
 static void print_usage ()
 {
@@ -59,12 +60,17 @@ struct pixel *mk_pixel (color)
 unsigned char	*color;
 
 {
+    int			i;
     struct pixel	*pp;
 
     pp = (struct pixel *) bu_malloc(sizeof(struct pixel), "pixel");
 
     pp -> p_magic = PIXEL_MAGIC;
-    vp -> p_color = color;
+    pp -> p_color = (unsigned char *)
+		bu_malloc(pixel_size * sizeof(unsigned char),
+			"pixel color");
+    for (i = 0; i < pixel_size; ++i)
+	pp -> p_color[i] = color[i];
     pp -> p_count = 0;
 
     return (pp);
@@ -79,7 +85,7 @@ void free_pixel (pp)
 struct pixel	*pp;
 
 {
-    BU_CKMAG(vp, PIXEL_MAGIC, "pixel");
+    BU_CKMAG(pp, PIXEL_MAGIC, "pixel");
     bu_free((genptr_t) pp, "pixel");
 }
 
@@ -142,10 +148,18 @@ char	*color;
 {
     int			rc;	/* Return code from rb_insert() */
     struct pixel	*qpp;	/* The query */
-    struct vertex	*pp;	/* Value to return */
+    struct pixel	*pp;	/* Value to return */
+    int			i;
+
+#if 0
+    bu_log("lookup_pixel( ");
+    for (i = 0; i < pixel_size; ++i)
+	bu_log("%3d ", color[i]);
+    bu_log(")...");
+#endif
 
     /*
-     *	Prepare the dictionary query
+     *	Prepare the palette query
      */
     qpp = mk_pixel(color);
 
@@ -158,10 +172,16 @@ char	*color;
     switch (rc = rb_insert(palette, (void *) qpp))
     {
 	case -1:
+#if 0
+	    bu_log(" already existed\n");
+#endif
 	    pp = (struct pixel *) rb_curr1(palette);
 	    free_pixel(qpp);
 	    break;
 	case 0:
+#if 0
+	    bu_log(" newly added\n");
+#endif
 	    pp = qpp;
 	    break;
 	default:
@@ -185,6 +205,7 @@ char	*argv[];
     FILE		*infp = NULL;	/* input stream */
     FILE		*outfp = NULL;	/* output   "   */
     int			ch;		/* current char in command line */
+    struct pixel	*pp;
 
     extern int	optind;			/* index from getopt(3C) */
     extern char	*optarg;		/* argument from getopt(3C) */
@@ -254,7 +275,7 @@ char	*argv[];
     {
 	if (isatty(fileno(stdin)))
 	{
-	    bu_log("FATAL: pixclump reads only from file or pipe\n");
+	    bu_log("FATAL: pixcount reads only from file or pipe\n");
 	    print_usage();
 	    exit (1);
 	}
