@@ -930,13 +930,14 @@ rt_tor_class()
  *
  */
 int
-rt_tor_plot( rp, mat, vhead, dp, abs_tol, rel_tol )
+rt_tor_plot( rp, mat, vhead, dp, abs_tol, rel_tol, norm_tol )
 union record		*rp;
 register mat_t		mat;
 struct vlhead		*vhead;
 struct directory	 *dp;
 double			abs_tol;
 double			rel_tol;
+double			norm_tol;
 {
 	fastf_t		alpha;
 	fastf_t		beta;
@@ -987,6 +988,20 @@ double			rel_tol;
 			abs_tol = rel_tol;
 		nlen = rt_num_circular_segments( abs_tol, r1 );
 		nw = rt_num_circular_segments( abs_tol, r2 );
+	}
+
+	/*
+	 *  Implement surface-normal tolerance, if given
+	 *	nseg = (2 * pi) / (2 * tol)
+	 *  For a facet which subtends angle theta, surface normal
+	 *  is exact in the center, and off by theta/2 at the edges.
+	 *  Note:  1 degree tolerance requires 180*180 tessellation!
+	 */
+	if( norm_tol > 0.0 )  {
+		register int	nseg;
+		nseg = (rt_pi / norm_tol) + 0.99;
+		if( nseg > nlen ) nlen = nseg;
+		if( nseg > nw ) nw = nseg;
 	}
 
 	/* Compute the points on the surface of the torus */
@@ -1044,7 +1059,7 @@ double			rel_tol;
  *			R T _ T O R _ T E S S
  */
 int
-rt_tor_tess( r, m, rp, mat, dp, abs_tol, rel_tol )
+rt_tor_tess( r, m, rp, mat, dp, abs_tol, rel_tol, norm_tol )
 struct nmgregion	**r;
 struct model		*m;
 register union record	*rp;
@@ -1052,6 +1067,7 @@ register mat_t		mat;
 struct directory	*dp;
 double			abs_tol;
 double			rel_tol;
+double			norm_tol;
 {
 	fastf_t		alpha;
 	fastf_t		beta;
@@ -1108,6 +1124,20 @@ double			rel_tol;
 			abs_tol = rel_tol;
 		nlen = rt_num_circular_segments( abs_tol, r1 );
 		nw = rt_num_circular_segments( abs_tol, r2 );
+	}
+
+	/*
+	 *  Implement surface-normal tolerance, if given
+	 *	nseg = (2 * pi) / (2 * tol)
+	 *  For a facet which subtends angle theta, surface normal
+	 *  is exact in the center, and off by theta/2 at the edges.
+	 *  Note:  1 degree tolerance requires 180*180 tessellation!
+	 */
+	if( norm_tol > 0.0 )  {
+		register int	nseg;
+		nseg = (rt_pi / norm_tol) + 0.99;
+		if( nseg > nlen ) nlen = nseg;
+		if( nseg > nw ) nw = nseg;
 	}
 
 	/* Compute the points on the surface of the torus */
