@@ -131,7 +131,6 @@ extern char	*realloc();
  *  Macros to check and validate a structure pointer, given that
  *  the first entry in the structure is a magic number.
  */
-#define rt_identify_magic(s)	"(unimplemented)"	/* XXX */
 #define RT_CKMAG(_ptr, _magic, _str)	\
 	if( !(_ptr) )  { \
 		rt_log("ERROR: null %s ptr, file %s, line %d\n", \
@@ -1040,7 +1039,7 @@ struct rt_i {
 	double		rti_radius;	/* radius of model bounding sphere */
 };
 #define RTI_NULL	((struct rt_i *)0)
-#define RTI_MAGIC	0x01016580	/* magic # for integrity check */
+#define RTI_MAGIC	0x99101658	/* magic # for integrity check */
 
 #define RT_CHECK_RTI(_p)	RT_CKMAG(_p, RTI_MAGIC, "struct rt_i")
 #define RT_CK_RTI(_p)		RT_CKMAG(_p, RTI_MAGIC, "struct rt_i")
@@ -1499,6 +1498,9 @@ RT_EXTERN(void rt_find_fallback_angle, (double angles[5], vect_t vec));
 
 /* table.c */
 RT_EXTERN(int rt_id_solid, (struct rt_external *ep));
+
+/* magic.c */
+RT_EXTERN(char *rt_identify_magic, (long magic));
 
 /*
  *  Constants provided and used by the RT library.
