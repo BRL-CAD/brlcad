@@ -84,7 +84,7 @@ double	scale;
 
 	mark_str[0] = (char)c;
 	mark_str[1] = '\0';
-	mat_idn( mat );
+	pl_mat_idn( mat );
 	VSET( p, x - scale*0.5, y - scale*0.5, z );
 	tp_3symbol( fp, mark_str, p, mat, scale );
 }
