@@ -85,8 +85,8 @@ register CONST struct region *rp;
 void
 rt_pr_partitions( rtip, phead, title )
 CONST struct rt_i		*rtip;
-CONST register struct partition *phead;
-CONST char *title;
+register CONST struct partition	*phead;
+CONST char			*title;
 {
 	register CONST struct partition *pp;
 
@@ -106,7 +106,7 @@ CONST char *title;
  */
 void
 rt_pr_pt( rtip, pp )
-CONST register struct partition *pp;
+CONST struct rt_i		*rtip;
 register CONST struct partition *pp;
 
 	RT_CHECK_RTI(rtip);
