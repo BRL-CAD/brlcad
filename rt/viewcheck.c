@@ -141,6 +141,7 @@ struct region		*reg2;
 
 	RES_ACQUIRE( &rt_g.res_syscall );
 	pdv_3line( outfp, ihit, ohit );
+	RES_RELEASE( &rt_g.res_syscall );
 	noverlaps++;
 
 	if( !rpt_overlap ) {
@@ -162,6 +163,7 @@ struct region		*reg2;
 		struct overlap_list	*op;		/* overlap list */
 
 		/* look for it in our list */
+		RES_ACQUIRE( &rt_g.res_syscall );
 		for( op=olist; op; prev_ol=op,op=op->next ) {
 			if( (strcmp(reg1->reg_name,op->reg1) == 0)
 			 && (strcmp(reg2->reg_name,op->reg2) == 0) ) {
@@ -175,22 +177,18 @@ struct region		*reg2;
 
 		/* we have a new overlapping region pair */
 		overlap_count++;
-		if( (op =(struct overlap_list *)rt_malloc(sizeof(struct overlap_list),"overlap list")) != NULL ){
-			if( olist )		/* previous entry exists */
-				prev_ol->next = op;
-			else
-				olist = op;	/* finally initialize root */
-			op->reg1 = reg1->reg_name;
-			op->reg2 = reg2->reg_name;
-			op->maxdepth = depth;
-			op->next = NULL;
-			op->count = 1;
-		} else {
-			rt_log("rtcheck: can't allocate enough space for overlap list!!\n");
-			exit(1);
-		}
+		op =(struct overlap_list *)rt_malloc(sizeof(struct overlap_list),"overlap list");
+		if( olist )		/* previous entry exists */
+			prev_ol->next = op;
+		else
+			olist = op;	/* finally initialize root */
+		op->reg1 = reg1->reg_name;
+		op->reg2 = reg2->reg_name;
+		op->maxdepth = depth;
+		op->next = NULL;
+		op->count = 1;
+		RES_RELEASE( &rt_g.res_syscall );
 	}
-	RES_RELEASE( &rt_g.res_syscall );
 
 	return(0);	/* No further consideration to this partition */
 }
