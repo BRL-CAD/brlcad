@@ -334,12 +334,12 @@ extern int	bu_debug;
  *  because of the limitations placed on compile-time initializers.
  */
 #if __STDC__ && !defined(ipsc860)
-#	define offsetofarray(_t, _m)	offsetof(_t, _m[0])
+#	define bu_offsetofarray(_t, _m)	bu_offsetof(_t, _m[0])
 #else
-#	if !defined(offsetof)
-#		define offsetof(_t, _m)		(int)(&(((_t *)0)->_m))
+#	if !defined(bu_offsetof)
+#		define bu_offsetof(_t, _m)		(int)(&(((_t *)0)->_m))
 #	endif
-#	define offsetofarray(_t, _m)	(int)( (((_t *)0)->_m))
+#	define bu_offsetofarray(_t, _m)	(int)( (((_t *)0)->_m))
 #endif
 
 /* The "bu_structparse" struct describes one element of a structure.
@@ -356,11 +356,11 @@ extern int	bu_debug;
  * };
  *
  * struct bu_structparse data_sp[] ={
- * {"%c", 1,  "char_value", offsetof(data_structure, a_char),	FUNC_NULL}, 
- * {"%s", 32, "char_value", offsetofarray(data_structure, str), FUNC_NULL}, 
- * {"%i", 1,  "char_value", offsetof(data_structure, a_short),	FUNC_NULL}, 
- * {"%d", 1,  "char_value", offsetof(data_structure, a_int), 	FUNC_NULL}, 
- * {"%f", 1,  "char_value", offsetof(data_structure, a_double), FUNC_NULL}, 
+ * {"%c", 1,  "char_value", bu_offsetof(data_structure, a_char),   FUNC_NULL}, 
+ * {"%s", 32, "char_value", bu_offsetofarray(data_structure, str), FUNC_NULL}, 
+ * {"%i", 1,  "char_value", bu_offsetof(data_structure, a_short),  FUNC_NULL}, 
+ * {"%d", 1,  "char_value", bu_offsetof(data_structure, a_int),    FUNC_NULL}, 
+ * {"%f", 1,  "char_value", bu_offsetof(data_structure, a_double), FUNC_NULL}, 
  * };
  */
 struct bu_structparse {
@@ -370,10 +370,12 @@ struct bu_structparse {
 	long		sp_offset;		/* Byte offset in struct */
 	void		(*sp_hook)();		/* Optional hooked function, or indir ptr */
 };
-#define FUNC_NULL	((void (*)())0)
+#define BU_STRUCTPARSE_FUNC_NULL	((void (*)())0)
 
-/* A "bu_external" struct holds the "external binary" representation of a
- * structure.
+/*----------------------------------------------------------------------*/
+/*
+ * A "bu_external" struct holds the "external binary" representation of a
+ * structure or other block of arbitrary data.
  */
 struct bu_external  {
 	long	ext_magic;

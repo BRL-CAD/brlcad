@@ -85,9 +85,14 @@ extern "C" {
 #define rt_vls_name_print_nc	bu_vls_name_print_nc
 #define rt_structprint		bu_structprint
 #define rt_vls_structprint	bu_vls_structprint
+#if !__STDC__ && !defined(offsetof)
+# define offsetof		bu_offsetof
+#endif
+#define offsetofarray		bu_offsetofarray
+#define FUNC_NULL		BU_STRUCTPARSE_FUNC_NULL
 
 /* printb.c */
-#define rt_printb	bu_printb
+#define rt_printb		bu_printb
 
 /* ptbl.c */
 #define nmg_tbl			bu_ptbl		/* main subroutine */
