@@ -516,7 +516,7 @@ rt_bot_unoriented_segs(struct hit		*hits,
     }
     if( nhits&1 ) {
 	if( RT_G_DEBUG & DEBUG_SHOOT ) {
-	    bu_log( "rt_bot_makesegs(%s): WARNING: odd number of hits (%d), last hit ignored\n",
+	    bu_log( "rt_bot_unoriented_segs(%s): WARNING: odd number of hits (%d), last hit ignored\n",
 		    stp->st_name, nhits );
 	    bu_log( "\tray = -p %g %g %g -d %g %g %g\n",
 		    V3ARGS( rp->r_pt ), V3ARGS( rp->r_dir ) );
@@ -535,13 +535,14 @@ rt_bot_unoriented_segs(struct hit		*hits,
  *  Exactly how this is to be done depends on the mode of the BoT.
  */
 HIDDEN int
-rt_bot_makesegs( hits, nhits, stp, rp, ap, seghead )
+rt_bot_makesegs( hits, nhits, stp, rp, ap, seghead, psp )
 struct hit		*hits;
 int			nhits;
 struct soltab		*stp;
 struct xray		*rp;
 struct application	*ap;
 struct seg		*seghead;
+struct rt_piecestate	*psp;
 {
     struct bot_specific *bot = (struct bot_specific *)stp->st_specific;
     register struct seg *segp;
@@ -609,6 +610,9 @@ struct seg		*seghead;
 		    {
 			for( j=i ; j<nhits-1 ; j++ )
 			    hits[j] = hits[j+1];
+			if( psp ) {
+				psp->htab.end--;
+			}
 			nhits--;
 			i--;
 		    }
@@ -625,25 +629,6 @@ struct seg		*seghead;
 	 * presence of this solid known.  There may be something
 	 * better we can do.
 	 */
-#if 0
-	static int nerrors = 0;		/* message counter */
-
-	if( nerrors++ < 6 )  {
-	    bu_log("rt_bot_makesegs(%s): WARNING %d hits:\n", stp->st_name, nhits);
-	    bu_log( "\tray start = (%g %g %g) ray dir = (%g %g %g)\n",
-		    V3ARGS( rp->r_pt ), V3ARGS( rp->r_dir ) );
-	    for(i=0; i < nhits; i++ )
-		{
-		    point_t tmp_pt;
-
-		    VJOIN1( tmp_pt, rp->r_pt, hits[i].hit_dist, rp->r_dir );
-		    if( hits[i].hit_vpriv[X] < 0.0 && bot->bot_orientation == RT_BOT_CCW )
-			bu_log("\tentrance at dist=%f (%g %g %g)\n", hits[i].hit_dist, V3ARGS( tmp_pt ) );
-		    else
-			bu_log("\texit at dist=%f (%g %g %g)\n", hits[i].hit_dist, V3ARGS( tmp_pt ) );
-		}
-	}
-#endif
 	if( nhits > 2 )
 	    {
 		fastf_t dot1,dot2;
@@ -665,6 +650,8 @@ struct seg		*seghead;
 				 * as second exit.
 				 */
 				/* XXX This consumes an extra hit structure in the array */
+				(void)rt_htbl_get(&psp->htab);	/* make sure space exists in the hit array */
+				hits = psp->htab.hits;
 				for( j=nhits ; j>i ; j-- )
 				    hits[j] = hits[j-1];	/* struct copy */
 
@@ -680,6 +667,8 @@ struct seg		*seghead;
 				 */
 				/* XXX This consumes an extra hit structure in the array */
 
+				(void)rt_htbl_get(&psp->htab);	/* make sure space exists in the hit array */
+				hits = psp->htab.hits;
 				for( j=nhits ; j>i ; j-- )
 				    hits[j] = hits[j-1];	/* struct copy */
 
@@ -693,9 +682,12 @@ struct seg		*seghead;
 		    }
 	    }
     }
+
     if( (nhits&1) )  {
 #if 1
 	/* XXX This consumes an extra hit structure in the array */
+	(void)rt_htbl_get(&psp->htab);	/* make sure space exists in the hit array */
+	hits = psp->htab.hits;
 	hits[nhits] = hits[nhits-1];	/* struct copy */
 	hits[nhits].hit_vpriv[X] = -hits[nhits].hit_vpriv[X];
 	nhits++;
@@ -825,7 +817,7 @@ struct seg		*seghead;
 	rt_hitsort( hits, nhits );
 
 	/* build segments */
-	return rt_bot_makesegs( hits, nhits, stp, rp, ap, seghead );
+	return rt_bot_makesegs( hits, nhits, stp, rp, ap, seghead, NULL );
 }
 
 /*
@@ -987,7 +979,7 @@ struct seg		*seghead;
 		 */
 		rt_hitsort( psp->htab.hits, psp->htab.end );
 		return rt_bot_makesegs( psp->htab.hits, psp->htab.end,
-					stp, rp, ap, seghead );
+					stp, rp, ap, seghead, psp );
 	}
 	return psp->htab.end - starting_hits;
 }
@@ -1009,7 +1001,7 @@ struct application	*ap;
 	rt_hitsort( psp->htab.hits, psp->htab.end );
 
 	/* build segments */
-	(void)rt_bot_makesegs( psp->htab.hits, psp->htab.end, psp->stp, &ap->a_ray, ap, seghead );
+	(void)rt_bot_makesegs( psp->htab.hits, psp->htab.end, psp->stp, &ap->a_ray, ap, seghead, psp );
 }
 
 #define RT_BOT_SEG_MISS(SEG)	(SEG).seg_stp=RT_SOLTAB_NULL
@@ -2958,4 +2950,293 @@ rt_bot_condense( struct rt_bot_internal *bot )
 	bot->vertices = (fastf_t *)bu_realloc( bot->vertices, bot->num_vertices*3*sizeof( fastf_t ), "bot verts realloc" );
 
 	return( dead_verts );
+}
+
+int
+find_closest_face( fastf_t **centers, int *piece, int *old_faces, int num_faces, fastf_t *vertices )
+{
+	pointp_t v0, v1, v2;
+	point_t center;
+	int i;
+	fastf_t one_third = 1.0/3.0;
+	fastf_t min_dist;
+	int min_face=-1;
+
+	if( (*centers) == NULL ) {
+		int count_centers=0;
+
+		/* need to build the centers array */
+		(*centers) = (fastf_t *)bu_malloc( num_faces * 3 * sizeof( fastf_t ), "center" );
+		for( i=0 ; i<num_faces ; i++ ) {
+			if( old_faces[i*3] < 0 ) {
+				continue;
+			}
+			count_centers++;
+			v0 = &vertices[old_faces[i*3]*3];
+			v1 = &vertices[old_faces[i*3+1]*3];
+			v2 = &vertices[old_faces[i*3+2]*3];
+			VADD3( center, v0 , v1, v2 );
+			VSCALE( &(*centers)[i*3], center, one_third );
+		}
+	}
+
+	v0 = &vertices[old_faces[piece[0]*3]];
+	v1 = &vertices[old_faces[piece[0]*3]+1];
+	v2 = &vertices[old_faces[piece[0]*3]+2];
+
+	VADD3( center, v0, v1, v2 );
+	VSCALE( center, center, one_third );
+
+	min_dist = MAX_FASTF;
+
+	for( i=0 ; i<num_faces ; i++ ) {
+		vect_t diff;
+		fastf_t dist;
+
+		if( old_faces[i*3] < 0 ) {
+			continue;
+		}
+
+		VSUB2( diff, center, &(*centers)[i*3] );
+		dist = MAGSQ( diff );
+		if( dist < min_dist ) {
+			min_dist = dist;
+			min_face = i;
+		}
+	}
+
+	return( min_face );
+}
+
+void
+Add_unique_verts( int *piece_verts, int *v )
+{
+	int i, j;
+	int *ptr=v;
+
+	for( j=0 ; j<3 ; j++ ) {
+		i = -1;
+		while( piece_verts[++i] > -1 ) {
+			if( piece_verts[i] == (*ptr) ) {
+				break;
+			}
+		}
+		if( piece_verts[i] == -1 ) { 
+			piece_verts[i] = (*ptr);
+		}
+		ptr++;
+	}
+}
+
+int
+rt_bot_sort_faces( struct rt_bot_internal *bot, int tris_per_piece )
+{
+	int *new_faces;		/* the sorted list of faces to be attached to the BOT at teh end of this routine */
+	int new_face_count=0;	/* the current number of faces in the "new_faces" list */
+	int *old_faces;		/* a copy of the original face list from the BOT */
+	int *piece;		/* a smalled face list, for just the faces in the current piece */
+	int *piece_verts;	/* a list of vertices in the current piece (each vertex appears only once) */
+	char *vert_count;	/* an array used to hold the number of piece vertices that appear in each BOT face */
+	int faces_left;		/* the number of faces in the "old_faces" array that have not yet been used */
+	int piece_len;		/* the current number of faces in the piece */
+	int max_verts;		/* the maximum number of piece_verts found in a single unused face */
+	fastf_t	*centers;	/* triangle centers, used when all else fails */
+	int i, j;
+
+	RT_BOT_CK_MAGIC( bot );
+
+	faces_left = bot->num_faces;
+
+	new_faces = (int *)bu_calloc( bot->num_faces * 3, sizeof( int ), "new_faces" );
+	old_faces = (int *)bu_calloc( bot->num_faces * 3, sizeof( int ), "old_faces" );
+	piece = (int *)bu_calloc( tris_per_piece * 3, sizeof( int ), "piece" );
+	vert_count = (char *)bu_malloc( bot->num_faces * sizeof( char ), "vert_count" );
+	piece_verts = (int *)bu_malloc( tris_per_piece * 3 * sizeof( int ), "piece_verts" );
+	centers = (fastf_t *)NULL;
+
+	/* make a copy of the faces list, this list will be modified during the process */
+	for( i=0 ; i<bot->num_faces*3 ; i++) {
+		old_faces[i] = bot->faces[i];
+	}
+
+	faces_left = bot->num_faces;
+	while( faces_left ) {
+		int cur_face;
+		int done_with_piece;
+
+		/* initialize piece_verts */
+		for( i=0 ; i<tris_per_piece*3 ; i++ ) {
+			piece_verts[i] = -1;
+		}
+
+		/* choose first unused face on the list */
+		cur_face = 0;
+		while( cur_face < bot->num_faces && old_faces[cur_face*3] < 0 ) {
+			cur_face++;
+		}
+
+		if( cur_face >= bot->num_faces ) {
+			break;
+		}
+
+		/* copy that face to start the piece */
+		VMOVE( piece, &old_faces[cur_face*3] );
+
+		/* also copy it to the piece vertex list */
+		VMOVE( piece_verts, piece );
+
+		/* mark this face as used */
+		VSETALL( &old_faces[cur_face*3], -1 );
+
+		/* update counts */
+		piece_len = 1;
+		faces_left--;
+
+		if( faces_left == 0 ) {
+			/* handle the case where the first face in a piece is the only face left */
+			for( j=0 ; j<piece_len ; j++ ) {
+				VMOVE( &new_faces[new_face_count*3], &piece[j*3] );
+				new_face_count++;
+			}
+			piece_len = 0;
+			max_verts = 0;
+
+			/* set flag to skip the loop below */
+			done_with_piece = 1;
+		} else {
+			done_with_piece = 0;
+		}
+
+		while( !done_with_piece ) {
+			int max_verts_min;
+
+			/* count the number of times vertices from the current piece appear in the remaining faces */
+			(void)memset( vert_count, '\0', bot->num_faces );
+			max_verts = 0;
+			for( i=0 ; i<bot->num_faces ; i++) {
+				int vert_num;
+				int v0, v1, v2;
+
+				vert_num = i*3;
+				if( old_faces[vert_num] < 0 ) {
+					continue;
+				}
+				v0 = old_faces[vert_num];	
+				v1 = old_faces[vert_num+1];
+				v2 = old_faces[vert_num+2];
+
+				j = -1;
+				while( piece_verts[ ++j ] > -1 ) {
+					if( v0 == piece_verts[j] ||
+					    v1 == piece_verts[j] ||
+					    v2 == piece_verts[j] ) {
+						vert_count[i]++;
+						if( vert_count[i] > max_verts ) {
+							max_verts = vert_count[i];
+						}
+					}
+				}
+			}
+
+			/* set this variable to 2, means look for faces with at least common edges */
+			max_verts_min = 2;
+
+			if( max_verts == 0 ) {
+				/* none of the remaining faces has any vertices in common with the current piece */
+				int face_to_add;
+
+				/* resort to using triangle centers
+				 * find the closest face to the first face in the piece
+				 */
+				face_to_add = find_closest_face( &centers, piece, old_faces, bot->num_faces, bot->vertices );
+
+				/* Add this face to the current piece */
+				VMOVE( &piece[piece_len*3], &old_faces[face_to_add*3] );
+
+				/* Add its vertices to the list of piece vertices */
+				Add_unique_verts( piece_verts, &old_faces[face_to_add*3] );
+
+				/* mark this face as used */
+				VSETALL( &old_faces[face_to_add*3], -1 );
+
+				/* update counts */
+				piece_len++;
+				faces_left--;
+
+				/* check if this piece is done */
+				if( piece_len == tris_per_piece || faces_left == 0 ) {
+					/* copy this piece to the "new_faces" list */
+					for( j=0 ; j<piece_len ; j++ ) {
+						VMOVE( &new_faces[new_face_count*3], &piece[j*3] );
+						new_face_count++;
+					}
+					piece_len = 0;
+					max_verts = 0;
+					done_with_piece = 1;
+				}
+			} else if( max_verts == 1 ) {
+				/* the best we can find is common vertices */
+				max_verts_min = 1;
+			} else {
+				/* there are some common edges, so ignore simple shared vertices */
+				max_verts_min = 2;
+			}
+
+			/* now add the faces with the highest counts to the current piece
+			 * do this in a loop that starts by only accepting the faces with the
+			 * most vertices in common with the current piece
+			 */
+			while( max_verts >= max_verts_min ) {
+				/* check every face */
+				for( i=0 ; i<bot->num_faces ; i++ ) {
+					/* if this face has enough vertices in common with the piece,
+					 * add it to the piece
+					 */
+					if( vert_count[i] == max_verts ) {
+						VMOVE( &piece[piece_len*3], &old_faces[i*3] );
+						Add_unique_verts( piece_verts, &old_faces[i*3] );
+						VSETALL( &old_faces[i*3], -1 );
+
+						piece_len++;
+						faces_left--;
+
+						/* Check if we are done */
+						if( piece_len == tris_per_piece || faces_left == 0 ) {
+							/* copy this piece to the "new_faces" list */
+							for( j=0 ; j<piece_len ; j++ ) {
+								VMOVE( &new_faces[new_face_count*3], &piece[j*3] );
+								new_face_count++;
+							}
+							piece_len = 0;
+							max_verts = 0;
+							done_with_piece = 1;
+							break;
+						}
+					}
+				}
+				max_verts--;
+			}
+		}
+	}
+
+	bu_free( (char *)old_faces, "old_faces" );
+	bu_free( (char *)piece, "piece" );
+	bu_free( (char *)vert_count, "vert_count" );
+	bu_free( (char *)piece_verts, "piece_verts" );
+	if( centers ) {
+		bu_free( (char *)centers, "centers" );
+	}
+
+	/* do some checking on the "new_faces" */
+	if( new_face_count != bot->num_faces ) {
+		bu_log( "new_face_count = %d, should be %d\n", new_face_count, bot->num_faces );
+		bu_free( (char *)new_faces, "new_faces" );
+		return( 1 );
+	}
+
+	bu_free( (char *)bot->faces, "bot->faces" );
+
+	bot->faces = new_faces;
+
+	return( 0 );
 }
