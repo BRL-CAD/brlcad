@@ -17,6 +17,6 @@
 /* Explicit composition of each product */
 
 vdeck:	OBJ
-	CC LDFLAGS -o vdeck OBJ LIBRT LIBRT_LIBES LIBES
+	CC LDFLAGS -o vdeck OBJ LIBRT LIBBU LIBBU_LIBES LIBES
 
 #include "../Cakefile.rules"

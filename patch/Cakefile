@@ -12,7 +12,7 @@
 #include "../Cakefile.prog"
 
 patch-g:	patch-g.o
-	CC LDFLAGS  patch-g.o LIBWDB LIBRT RT_CONFIG LIBRT_LIBES LIBES -o patch-g
+	CC LDFLAGS  patch-g.o LIBWDB LIBRT LIBBU LIBBU_LIBES LIBES -o patch-g
 
 rpatch:		rpatch.o
 	CC LDFLAGS  rpatch.o -o rpatch
