@@ -270,7 +270,7 @@ struct rt_hf_internal {
 	vect_t	y;			/* model vect corresponding to "n" dir (will be unitized) */
 	fastf_t	xlen;			/* model len of HT rpp in "w" dir */
 	fastf_t	ylen;			/* model len of HT rpp in "n" dir */
-	fastf_t	zlen;			/* model len of HT rpp in ''up'' dir */
+	fastf_t	zscale;			/* scale of data in ''up'' dir (after file2mm is applied) */
 	/* END USER SETABLE VARIABLES, BEGIN INTERNAL STUFF */
 	struct rt_mapped_file	*mp;	/* actual data */
 };
@@ -304,7 +304,7 @@ CONST struct structparse rt_hf_parse[] = {
 	{"%f",	3,	"y",		HF_O(y[0]),		FUNC_NULL },
 	{"%f",	1,	"xlen",		HF_O(xlen),		FUNC_NULL },
 	{"%f",	1,	"ylen",		HF_O(ylen),		FUNC_NULL },
-	{"%f",	1,	"zlen",		HF_O(zlen),		FUNC_NULL },
+	{"%f",	1,	"zscale",	HF_O(zscale),		FUNC_NULL },
 	{"",	0,	(char *)0,	0,			FUNC_NULL }
 };
 CONST struct structparse rt_hf_cparse[] = {
@@ -487,6 +487,7 @@ struct rt_tol		*tol;
 	int		y;
 	int		cmd;
 	int		step;
+	int		half_step;
 	int		goal;
 
 	RT_CK_DB_INTERNAL(ip);
@@ -498,10 +499,10 @@ struct rt_tol		*tol;
 	VSCALE( xbasis, xip->x, xip->xlen / (xip->w - 1) );
 	VSCALE( ybasis, xip->y, xip->ylen / (xip->n - 1) );
 	VCROSS( zbasis, xip->x, xip->y );
-	VSCALE( zbasis, zbasis, xip->zlen * xip->file2mm );
+	VSCALE( zbasis, zbasis, xip->zscale * xip->file2mm );
 
 	/* XXX This should be set from the tessellation tolerance */
-	goal = 50000;
+	goal = 20000;
 
 	/* Draw the 4 corners of the base plate */
 	RT_ADD_VLIST( vhead, xip->v, RT_VLIST_LINE_MOVE );
@@ -519,7 +520,9 @@ struct rt_tol		*tol;
 	goal -= 5;
 
 #define HF_GET(_p,_x,_y)	((_p)[(_y)*xip->w+(_x)])
-	/* Draw the four "ridge lines" at full resolution, for edge matching */
+	/*
+	 *  Draw the four "ridge lines" at full resolution, for edge matching.
+	 */
 	/* X direction, Y=0, with edges down to base */
 	RT_ADD_VLIST( vhead, xip->v, RT_VLIST_LINE_MOVE );
 	sp = &HF_GET((unsigned short *)xip->mp->apbuf, 0, 0 );
@@ -534,7 +537,7 @@ struct rt_tol		*tol;
 	/* X direction, Y=n-1, with edges down to base */
 	VJOIN1( start, xip->v, xip->ylen, xip->y );
 	RT_ADD_VLIST( vhead, start, RT_VLIST_LINE_MOVE );
-	sp = &HF_GET((unsigned short *)xip->mp->apbuf, xip->n - 1, 0 );
+	sp = &HF_GET((unsigned short *)xip->mp->apbuf, 0, xip->n - 1 );
 	VJOIN1( start, xip->v, xip->ylen, xip->y );
 	for( x = 0; x < xip->w; x++ )  {
 		VJOIN2( cur, start, x, xbasis, *sp, zbasis );
@@ -556,7 +559,7 @@ struct rt_tol		*tol;
 
 	/* Y direction, X=w-1 */
 	cmd = RT_VLIST_LINE_MOVE;
-	sp = &HF_GET((unsigned short *)xip->mp->apbuf, 0, xip->w - 1 );
+	sp = &HF_GET((unsigned short *)xip->mp->apbuf, xip->w - 1, 0 );
 	VJOIN1( start, xip->v, xip->xlen, xip->x );
 	for( y = 0; y < xip->n; y++ )  {
 		VJOIN2( cur, start, y, ybasis, *sp, zbasis );
@@ -565,38 +568,63 @@ struct rt_tol		*tol;
 		sp += xip->w;
 	}
 	goal -= 4 + 2 * (xip->w + xip->n);
-	if( goal <= 0 )  return 0;		/* no vectors for interior */
 
-	/* Compute data stride based upon producing no more than 'goal' vectors */
-	step = ceil(sqrt( 2*(xip->w-1)*(xip->n-1) / (double)goal ));
+	/* Apply relative tolerance, if specified */
+	if( ttol->rel )  {
+		int	rstep;
+		rstep = xip->w;
+		V_MAX( rstep, xip->n );
+		step = (int)(ttol->rel * rstep);
+	} else {
+		/* No relative tol specified, limit drawing to 'goal' # of vectors */
+		if( goal <= 0 )  return 0;		/* no vectors for interior */
+
+		/* Compute data stride based upon producing no more than 'goal' vectors */
+		step = ceil(sqrt( 2*(xip->w-1)*(xip->n-1) / (double)goal ));
+	}
 	if( step < 1 )  step = 1;
+	if( (half_step = step/2) < 1 )  half_step = 1;
 
-	/* Draw the contour lines in W direction only */
-	for( y = 0; y < xip->n; y += step )  {
-		register int	x;
-		point_t		cur;
-		int		cmd;
-
+	/* Draw the contour lines in W (x) direction.  Don't redo ridges. */
+	for( y = half_step; y < xip->n-half_step; y += step )  {
 		VJOIN1( start, xip->v, y, ybasis );
 		cmd = RT_VLIST_LINE_MOVE;
-		sp = &HF_GET((unsigned short *)xip->mp->apbuf, y, 0 );
+		sp = &HF_GET((unsigned short *)xip->mp->apbuf, 0, y );
 		for( x = 0; x < xip->w; x += step )  {
 			VJOIN2( cur, start, x, xbasis, *sp, zbasis );
 			RT_ADD_VLIST(vhead, cur, cmd );
 			cmd = RT_VLIST_LINE_DRAW;
-			sp++;
+			sp += step;
 			goal--;
 		}
-		if( x < xip->w-1 )  {
-			sp = &HF_GET((unsigned short *)xip->mp->apbuf, y, xip->w-1 );
-			VJOIN2( cur, cur, x, xbasis, *sp, zbasis );
+		if( x != step+xip->w-1 )  {
+			x = xip->w - 1;
+			sp = &HF_GET((unsigned short *)xip->mp->apbuf, x, y );
+			VJOIN2( cur, start, x, xbasis, *sp, zbasis );
 			RT_ADD_VLIST(vhead, cur, RT_VLIST_LINE_DRAW );
 			goal--;
 		}
 	}
 
-
-rt_log("vector count overshoot = %d, negative is good\n", goal);
+	/* Draw the contour lines in the N (y) direction */
+	for( x = half_step; x < xip->w-half_step; x += step )  {
+		VJOIN1( start, xip->v, x, xbasis );
+		cmd = RT_VLIST_LINE_MOVE;
+		for( y = 0; y < xip->n; y += step )  {
+			sp = &HF_GET((unsigned short *)xip->mp->apbuf, x, y );
+			VJOIN2( cur, start, y, ybasis, *sp, zbasis );
+			RT_ADD_VLIST(vhead, cur, cmd );
+			cmd = RT_VLIST_LINE_DRAW;
+			goal--;
+		}
+		if( y != step+xip->n-1 )  {
+			y = xip->n - 1;
+			sp = &HF_GET((unsigned short *)xip->mp->apbuf, x, y );
+			VJOIN2( cur, start, y, ybasis, *sp, zbasis );
+			RT_ADD_VLIST(vhead, cur, RT_VLIST_LINE_DRAW );
+			goal--;
+		}
+	}
 	return 0;
 }
 
@@ -669,7 +697,7 @@ register CONST mat_t		mat;
 	VSET( xip->y, 0, 1, 0 );
 	xip->xlen = 1000;
 	xip->ylen = 1000;
-	xip->zlen = 1000;
+	xip->zscale = 1;
 	strcpy( xip->fmt, "nd" );
 
 	/* Process parameters found in .g file */
@@ -703,7 +731,7 @@ err1:
 		RES_ACQUIRE( &rt_g.res_syscall );
 		fclose(fp);
 		RES_RELEASE( &rt_g.res_syscall );
-		if( rt_structparse( &str, rt_hf_parse, (char *)xip ) < 0 )  {
+		if( rt_structparse( &str, rt_hf_cparse, (char *)xip ) < 0 )  {
 			rt_log("rt_hf_import() parse error in cfile input '%s'\n",
 				rt_vls_addr(&str) );
 			rt_vls_free( &str );
@@ -735,7 +763,7 @@ err1:
 	VMOVE( xip->y, tmp );
 	xip->xlen /= mat[15];
 	xip->ylen /= mat[15];
-	xip->zlen /= mat[15];
+	xip->zscale /= mat[15];
 
 	VUNITIZE(xip->x);
 	VUNITIZE(xip->y);
@@ -783,6 +811,15 @@ err1:
  *			R T _ H F _ E X P O R T
  *
  *  The name is added by the caller, in the usual place.
+ *
+ *  The meaning of the export here is slightly different than that of
+ *  most other solids.  The cfile and dfile are not modified, only
+ *  changes to the string solid parameters are placed back into the .g file.
+ *  Note that any parameters taken from a cfile are included in the new
+ *  string solid.  This isn't a problem, because if the cfile is changed
+ *  (perhaps to substitute a different resolution height field of the same
+ *  location in space), it's new parameters will override those stored
+ *  in the string solid (including the dfile name).
  */
 int
 rt_hf_export( ep, ip, local2mm )
@@ -802,7 +839,7 @@ double				local2mm;
 	/* Apply any scale transformation */
 	xip->xlen /= local2mm;
 	xip->ylen /= local2mm;
-	xip->zlen /= local2mm;
+	xip->zscale /= local2mm;
 
 	RT_INIT_EXTERNAL(ep);
 	ep->ext_nbytes = sizeof(union record) * DB_SS_NGRAN;
