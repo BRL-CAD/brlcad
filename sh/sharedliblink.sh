@@ -20,12 +20,13 @@ fi
 cd `dirname $1`
 
 NONUM=`basename $1 | sed -e 's/\\.so\\..*/.so/`
+TWONUM=$NONUM.1			# Minor version 1
 
 # If the shared library has a version number, link numbered to unnumbered.
 # If no version number, don't do anything.
 if test `basename $1` != "$NONUM"
 then
-	rm -f $NONUM
+	rm -f $NONUM $TWONUM
 	ln -s $1 $NONUM
-	ln -s $1 $1.1		# Minor version 1
+	ln -s $1 $TWONUM
 fi
