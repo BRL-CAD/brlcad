@@ -390,13 +390,18 @@ cm_clean( argc, argv )
 int	argc;
 char	**argv;
 {
-	register struct region *regp;
+	register struct region	*regp;
+	extern struct region	env_region;
 
 	/* The linkage here needs to be much better for things
 	 * like rtrad, etc. XXXX
 	 */
-	for( regp=ap.a_rt_i->HeadRegion; regp != REGION_NULL; regp=regp->reg_forw )
+	for( regp=ap.a_rt_i->HeadRegion; regp != REGION_NULL; regp=regp->reg_forw )  {
 		mlib_free( regp );
+	}
+	if( env_region.reg_mfuncs )  {
+		mlib_free( &env_region );
+	}
 	rt_clean( ap.a_rt_i );
 	if(rdebug&RDEBUG_RTMEM)
 		rt_prmem( "After rt_clean" );
