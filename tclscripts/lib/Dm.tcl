@@ -335,10 +335,8 @@ body Dm::listen {args} {
 	return $itk_option(-listen)
     }
 
-    $itk_component(dm) listen $args
-    set itk_option(-listen) $args
+    set itk_option(-listen) [$itk_component(dm) listen $args]
 }
-
 
 body Dm::refreshfb {} {
     $itk_component(dm) refreshfb
