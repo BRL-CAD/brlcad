@@ -1,4 +1,6 @@
-/*#define DEBUGX 1*/
+#define	DEBUGX	0
+#define	CURSOR	1
+#define	NEWLIBFB 1
 /*
  *			I F _ X . C
  *
@@ -15,7 +17,6 @@
  *  Copyright Notice -
  *	This software is Copyright (C) 1988 by the United States Army.
  *	All rights reserved.
- *
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
@@ -31,51 +32,61 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "fb.h"
 #include "./fblocal.h"
 
+#if !NEWLIBFB
 extern int	fb_sim_readrect(), fb_sim_writerect();
+#endif
 
 static	int	linger();
 static	int	xsetup();
+static	void	print_display_info();	/* debug */
+static	int	x_make_colormap();	/*XXX*/
+static	int	x_make_cursor();	/*XXX*/
+int	repaint();
 
-_LOCAL_ int	X_dopen(),
-		X_dclose(),
-		X_dreset(),
-		X_dclear(),
-		X_bread(),
-		X_bwrite(),
-		X_cmread(),
-		X_cmwrite(),
-		X_viewport_set(),
-		X_window_set(),
-		X_zoom_set(),
-		X_curs_set(),
-		X_cmemory_addr(),
-		X_cscreen_addr(),
+_LOCAL_ int	X_scanwrite();
+
+_LOCAL_ int	X_open(),
+		X_close(),
+		X_reset(),
+		X_clear(),
+		X_read(),
+		X_write(),
+		X_rmap(),
+		X_wmap(),
+		X_viewport(),
+		X_window(),
+		X_zoom(),
+		X_setcursor(),
+		X_cursor(),
+		X_scursor(),
+		X_flush(),
 		X_help();
 
-_LOCAL_ int	X_multiwrite();
-
 /* This is the ONLY thing that we normally "export" */
-FBIO X_interface =  {
-	X_dopen,		/* device_open		*/
-	X_dclose,		/* device_close		*/
-	X_dreset,		/* device_reset		*/
-	X_dclear,		/* device_clear		*/
-	X_bread,		/* buffer_read		*/
-	X_multiwrite,		/* buffer_write		*/
-	X_cmread,		/* colormap_read	*/
-	X_cmwrite,		/* colormap_write	*/
-	X_viewport_set,		/* viewport_set		*/
-	X_window_set,		/* window_set		*/
-	X_zoom_set,		/* zoom_set		*/
-	X_curs_set,		/* curs_set		*/
-	X_cmemory_addr,		/* cursor_move_memory_addr */
-	X_cscreen_addr,		/* cursor_move_screen_addr */
+FBIO X_interface = {
+	X_open,			/* device_open		*/
+	X_close,		/* device_close		*/
+	X_reset,		/* device_reset		*/
+	X_clear,		/* device_clear		*/
+	X_read,			/* buffer_read		*/
+	X_write,		/* buffer_write		*/
+	X_rmap,			/* colormap_read	*/
+	X_wmap,			/* colormap_write	*/
+	X_viewport,		/* viewport_set		*/
+	X_window,		/* window_set		*/
+	X_zoom,			/* zoom_set		*/
+	X_setcursor,		/* define cursor	*/
+	X_cursor,		/* cursor - memory addr */
+	X_scursor,		/* cursor - screen addr */
 	fb_sim_readrect,
 	fb_sim_writerect,
+#if NEWLIBFB
+	X_flush,		/* flush		*/
+#endif
 	X_help,			/* help message		*/
 	"X Window System (X11)",/* device description	*/
-	1024,			/* max width		*/
-	1024,			/* max height		*/
+	2048,			/* max width		*/
+	2048,			/* max height		*/
 	"/dev/X",		/* short device name	*/
 	512,			/* default/current width  */
 	512,			/* default/current height */
@@ -99,21 +110,22 @@ struct	xinfo {
 	int	screen;			/* Our screen selection */
 	Visual	*visual;		/* Our visual selection */
 	GC	gc;			/* current graphics context */
-	Colormap cmap;			/* 8bit colormap */
+	Colormap cmap;			/* 8bit X colormap */
 	XImage	*image;
+	unsigned char *bytebuf;		/* 8bit image buffer */
+	unsigned char *bitbuf;		/* 1bit image buffer */
+	unsigned char *mem;		/* optional 24bit store */
+	int	method;			/* bitmap conversion method */
+	Window	curswin;		/* Cursor Window ID */
 
 	int	depth;			/* 1, 8, or 24bit */
 	int	mode;			/* 0,1,2 */
-	int	x_zoom, y_zoom;
-	int	x_window, y_window;	/**/
-	int	x_corig, y_corig;	/* cursor origin offsets */
-	ColorMap rgb_cmap;		/* User's libfb cmap */
+	int	xzoom, yzoom;		/* fb_zoom() parameters */
+	int	xcenter, ycenter;	/* fb_window() parameters */
+	ColorMap rgb_cmap;		/* User's libfb colormap */
 };
 #define	XI(ptr) ((struct xinfo *)((ptr)->u1.p))
 #define	XIL(ptr) ((ptr)->u1.p)		/* left hand side version */
-
-static unsigned char	*bytebuf = NULL;	/*XXXXXX*/
-static char		*bitbuf = NULL;		/*XXXXXX*/
 
 #define MODE_1MASK	(1<<1)
 #define MODE_1TRANSIENT	(0<<1)
@@ -122,6 +134,18 @@ static char		*bitbuf = NULL;		/*XXXXXX*/
 #define MODE_2MASK	(1<<2)
 #define MODE_2RGB	(0<<2)
 #define MODE_2_8BIT	(1<<2)
+
+#define MODE_3MASK	(1<<3)
+#define MODE_3NORMAL	(0<<3)
+#define MODE_3MONO	(1<<3)
+
+#define MODE_4MASK	(1<<4)
+#define MODE_4NORMAL	(0<<4)
+#define MODE_4MEM	(1<<4)
+
+#define MODE_5MASK	(1<<5)
+#define MODE_5NORMAL	(0<<5)
+#define MODE_5INSTCMAP	(1<<5)
 
 static struct modeflags {
 	char	c;
@@ -132,7 +156,13 @@ static struct modeflags {
 	{ 'l',	MODE_1MASK, MODE_1LINGERING,
 		"Lingering window - else transient" },
 	{ 'b',  MODE_2MASK, MODE_2_8BIT,
-		"8-bit Monochrome from RED channel" },
+		"8-bit Black and White from RED channel" },
+	{ 'M',  MODE_3MASK, MODE_3MONO,
+		"Force Monochrome mode - debugging" },
+	{ 'm',  MODE_4MASK, MODE_4MEM,
+		"24-bit memory buffer" },
+	{ 'I',  MODE_5MASK, MODE_5INSTCMAP,
+		"Install the colormap - debug" },
 	{ '\0', 0, 0, "" }
 };
 
@@ -177,17 +207,20 @@ static unsigned short greyvec[16] = {
 };
 
 static unsigned char convRGB();
-unsigned long 	* x_pixel_table;
-XColor 			*color_defs; 
+unsigned long 	*x_pixel_table;
+XColor 		*color_defs; 
 
 _LOCAL_ int
-X_dopen( ifp, file, width, height )
+X_open( ifp, file, width, height )
 FBIO	*ifp;
 char	*file;
 int	width, height;
 {
 	char	*display_name = NULL;
 	int	mode;
+	int	i;
+	unsigned char *bytebuf;		/* local copy */
+	unsigned char *bitbuf;		/* local copy */
 
 	/*
 	 *  First, attempt to determine operating mode for this open,
@@ -252,10 +285,15 @@ int	width, height;
 	ifp->if_width = width;
 	ifp->if_height = height;
 
+	/* create a struct of state information */
 	if( (XIL(ifp) = (char *)calloc( 1, sizeof(struct xinfo) )) == NULL ) {
-		fb_log("X_dopen: xinfo malloc failed\n");
+		fb_log("X_open: xinfo malloc failed\n");
 		return(-1);
 	}
+	XI(ifp)->xzoom = 1;
+	XI(ifp)->yzoom = 1;
+	XI(ifp)->xcenter = width/2;
+	XI(ifp)->ycenter = height/2;
 	XI(ifp)->mode = mode;
 
 	/* set up an X window, graphics context, etc. */
@@ -263,15 +301,35 @@ int	width, height;
 		return(-1);
 	}
 
+	/* init a linear libfb colormap */
+	for( i = 0; i < 256; i++ ) {
+		XI(ifp)->rgb_cmap.cm_red[i] = i<<8;
+		XI(ifp)->rgb_cmap.cm_green[i] = i<<8;
+		XI(ifp)->rgb_cmap.cm_blue[i] = i<<8;
+	}
+
 	/* an image data buffer */
 	if( (bytebuf = (unsigned char *)calloc( 1, width*height )) == NULL ) {
-		fb_log("X_dopen: bytebuf malloc failed\n");
+		fb_log("X_open: bytebuf malloc failed\n");
 		return(-1);
 	}
-	if( (bitbuf = (char *)calloc( 1, (width*height)/8 )) == NULL ) {
-		fb_log("X_dopen: bitbuf malloc failed\n");
+	if( (bitbuf = (unsigned char *)calloc( 1, (width*height)/8 )) == NULL ) {
+		fb_log("X_open: bitbuf malloc failed\n");
 		return(-1);
 	}
+	XI(ifp)->bytebuf = bytebuf;
+	XI(ifp)->bitbuf = bitbuf;
+
+	if( (XI(ifp)->mode&MODE_4MASK) == MODE_4MEM ) {
+		/* allocate a full 24-bit deep buffer */
+		XI(ifp)->mem = (unsigned char *)calloc( 3, width*height );
+		if( XI(ifp)->mem == NULL ) {
+			fb_log("X_open: 24-bit buffer malloc failed\n");
+		}
+	}
+
+	if( (XI(ifp)->mode&MODE_3MASK) == MODE_3MONO )
+		XI(ifp)->depth = 1;	/* force monochrome behavior */
 
 	/*
 	 *  Create an Image structure.
@@ -279,18 +337,20 @@ int	width, height;
 	 *  can get/put from/to a server resident Pixmap or
 	 *  Window (i.e. a "Drawable").
 	 */
-	if( XI(ifp)->depth == 1 ) {
-		XI(ifp)->image = XCreateImage( XI(ifp)->dpy,
-			XI(ifp)->visual, 1, XYBitmap, 0,
-			(char *)bitbuf, width, height, 8, 0);
-	} else if( XI(ifp)->depth == 8 ) {
+	if( XI(ifp)->depth == 8 ) {
 		XI(ifp)->image = XCreateImage( XI(ifp)->dpy,
 			XI(ifp)->visual, 8, ZPixmap, 0,
 			(char *)bytebuf, width, height, 32, 0);
 	} else {
-		fprintf( stderr, "if_X: can't handle a depth of %d\n",
-			XI(ifp)->depth );
-		return(-1);
+		/* An XYBitmap can be used on any depth display.
+		 * The GC of the XPutImage provides fg and bg
+		 * pixels for each 1 and 0 bit respectively.
+		 * (This may be very slow however for depth != 1)
+		 */
+		XI(ifp)->image = XCreateImage( XI(ifp)->dpy,
+			XI(ifp)->visual, 1, XYBitmap, 0,
+			(char *)bitbuf, width, height, 8, 0);
+		XI(ifp)->depth = 1;
 	}
 
 	if( (XI(ifp)->mode&MODE_2MASK) == MODE_2_8BIT )  {
@@ -300,10 +360,10 @@ int	width, height;
 		if( fd >= 0 )  {
 			read( fd, &(XI(ifp)->rgb_cmap), sizeof(XI(ifp)->rgb_cmap) );
 			close(fd);
-			X_cmwrite( ifp, &(XI(ifp)->rgb_cmap) );
+			X_wmap( ifp, &(XI(ifp)->rgb_cmap) );
 		} else {
 			/* use linear map */
-			X_cmwrite( ifp, (ColorMap *)NULL );
+			X_wmap( ifp, (ColorMap *)NULL );
 		}
 	}
 
@@ -311,7 +371,7 @@ int	width, height;
 }
 
 _LOCAL_ int
-X_dclose( ifp )
+X_close( ifp )
 FBIO	*ifp;
 {
 	XFlush( XI(ifp)->dpy );
@@ -327,42 +387,85 @@ FBIO	*ifp;
 }
 
 _LOCAL_ int
-X_dreset( ifp )
+X_reset( ifp )
 FBIO	*ifp;
 {
-}
-
-_LOCAL_ int
-X_dclear( ifp, pp )
-FBIO	*ifp;
-RGBpixel	*pp;
-{
-	XClearWindow( XI(ifp)->dpy, XI(ifp)->win );
-	bzero( bitbuf, (ifp->if_width * ifp->if_height)/8 );
-	bzero( bytebuf, (ifp->if_width * ifp->if_height) );
 	return(0);
 }
 
 _LOCAL_ int
-X_bread( ifp, x, y, pixelp, count )
+X_clear( ifp, pp )
+FBIO	*ifp;
+RGBpixel	*pp;
+{
+	unsigned char *bitbuf = XI(ifp)->bitbuf;
+	unsigned char *bytebuf = XI(ifp)->bytebuf;
+	RGBpixel v;
+
+	if( pp == RGBPIXEL_NULL ) {
+		v[RED] = v[GRN] = v[BLU] = 0;
+	} else {
+		v[RED] = (*pp)[RED];
+		v[GRN] = (*pp)[GRN];
+		v[BLU] = (*pp)[BLU];
+	}
+#ifdef XXX
+	if( v[RED] == v[GRN] && v[RED] == v[BLU] ) {
+		int	bytes = ifp->if_width*ifp->if_height*3;
+		if( v[RED] == 0 )
+			bzero( cp, bytes );		/* all black */
+		else
+			memset( cp, v[RED], bytes );	/* all grey */
+	} else {
+		for( n = ifp->if_width*ifp->if_height; n; n-- ) {
+			*cp++ = v[RED];
+			*cp++ = v[GRN];
+			*cp++ = v[BLU];
+		}
+	}
+#endif
+	if( pp == (RGBpixel *)NULL
+	 || ((*pp)[RED] == 0 && (*pp)[GRN] == 0 && (*pp)[BLU] == 0) ) {
+		bzero( bitbuf, (ifp->if_width * ifp->if_height)/8 );
+		bzero( bytebuf, (ifp->if_width * ifp->if_height) );
+		XClearWindow( XI(ifp)->dpy, XI(ifp)->win );
+	}
+	/*XXX*/
+	return(0);
+}
+
+_LOCAL_ int
+X_read( ifp, x, y, pixelp, count )
 FBIO	*ifp;
 int	x, y;
 RGBpixel	*pixelp;
 int	count;
 {
+	unsigned char *bytebuf = XI(ifp)->bytebuf;
 	register unsigned char	*cp;
 	register int	i;
+
+	if( x < 0 || x >= ifp->if_width || y < 0 || y >= ifp->if_height )
+		return	-1;
+
+	/* return 24bit store if available */
+	if( XI(ifp)->mem ) {
+		bcopy( &(XI(ifp)->mem[(y*ifp->if_width+x)*sizeof(RGBpixel)]),
+		       pixelp, count*sizeof(RGBpixel) );
+		return	count;
+	}
 
 	/* 1st -> 4th quadrant */
 	y = ifp->if_height - 1 - y;
 
+	/* give then gray scale pixels - XXX - may be pseudo color */
 	cp = &bytebuf[y*ifp->if_width + x];
 	for( i = 0; i < count; i++ ) {
 		(*pixelp)[RED] = *cp;
 		(*pixelp)[GRN] = *cp;
 		(*pixelp++)[BLU] = *cp++;
 	}
-	return( count );
+	return	count;
 }
 
 /*
@@ -473,7 +576,7 @@ register count, line;
  * scanline writes.
  */
 _LOCAL_ int
-X_multiwrite( ifp, x, y, pixelp, count )
+X_write( ifp, x, y, pixelp, count )
 FBIO	*ifp;
 int	x, y;
 RGBpixel	*pixelp;
@@ -482,12 +585,22 @@ int	count;
 	int	todo = count;
 	int	num;
 
+	if( x < 0 || x >= ifp->if_width || y < 0 || y >= ifp->if_height )
+		return	-1;
+
+	/* save it in 24bit store if available */
+	if( XI(ifp)->mem ) {
+		bcopy( pixelp,
+		       &(XI(ifp)->mem[(y*ifp->if_width+x)*sizeof(RGBpixel)]),
+		       count*sizeof(RGBpixel) );
+	}
+
 	while( todo > 0 ) {
 		if( x + todo > ifp->if_width )
 			num = ifp->if_width - x;
 		else
 			num = todo;
-		if( X_bwrite( ifp, x, y, pixelp, num ) == 0 )
+		if( X_scanwrite( ifp, x, y, pixelp, num ) == 0 )
 			return( 0 );
 		x = 0;
 		y++;
@@ -498,37 +611,37 @@ int	count;
 }
 
 _LOCAL_ int
-X_bwrite( ifp, x, y, pixelp, count )
+X_scanwrite( ifp, x, y, pixelp, count )
 FBIO	*ifp;
 int	x, y;
 RGBpixel	*pixelp;
 int	count;
 {
+	unsigned char *bitbuf = XI(ifp)->bitbuf;
+	unsigned char *bytebuf = XI(ifp)->bytebuf;
 	register unsigned char	*cp;
 	register int	i;
+	static unsigned char MSB[8] = { 0x80, 0x40, 0x20, 0x10, 8, 4, 2, 1 };
+	static unsigned char LSB[8] = { 1, 2, 4, 8, 0x10, 0x20, 0x40, 0x80 };
+	register unsigned char *bits = MSB;
 
 	/* 1st -> 4th quadrant */
 	y = ifp->if_height - 1 - y;
+	cp = &bytebuf[y*ifp->if_width + x];
 
 	if( XI(ifp)->depth == 8 ) {
-		cp = &bytebuf[y*ifp->if_width + x];
+		/* Gray Scale Mode */
 		if( (XI(ifp)->mode&MODE_2MASK) == MODE_2_8BIT )  {
 			for( i=0; i<count; i++ )  {
-				cp[i] = x_pixel_table[pixelp[i][RED]];
+				cp[i] = pixelp[i][RED];
 			}
 			goto done;
 		}
+		/* PseudoColor Mode */
 		for( i = 0; i < count; i++ ) {
 			int value;
 			value = convRGB(pixelp[i]);
-#ifdef never
-			printf("Conv value, %d r = %d g = %d b = %d\n\n",value,
-				color_defs[value].red >> 8,
-				color_defs[value].green >> 8,
-				color_defs[value].blue >> 8 );
-#endif
-			cp[i] = (unsigned char) 
-				x_pixel_table[value];
+			cp[i] = (unsigned char) x_pixel_table[value];
 		}
 		goto done;
 	}
@@ -536,7 +649,7 @@ int	count;
 	/* MONOCHROME Follows */
 
 	/* save the 8bit black and white version of it */
-	cp = &bytebuf[y*ifp->if_width + x];
+	/* XXX - note replication of Gray Scale Mode above... */
 	if( (XI(ifp)->mode&MODE_2MASK) == MODE_2_8BIT )  {
 		for( i = 0; i < count; i++ ) {
 			cp[i] = pixelp[i][RED];
@@ -551,19 +664,11 @@ int	count;
 	}
 
 	/* Convert the monochrome data to a bitmap */
-    if (XBitmapBitOrder(XI(ifp)->dpy) == LSBFirst) {
-    	fb_log("if_X: can't do LSBFirst machines yet\n");
-#ifdef LATER
-        for (row=0; row < height; row++)
-            for (col=0; col < width; ) {
-                mvalue = 0x00;
-                for (bit=0; (bit < 8) && (col < width); bit++,col++)
-                    if( dither_bw(*mpbuffer++, col, row) )
-                        mvalue |= (0x01 << bit);    /*  for Vax */
-                *mbuffer++ = mvalue;
-            }
-#endif
-    } else {
+	if (XBitmapBitOrder(XI(ifp)->dpy) == LSBFirst) {
+		bits = LSB;
+	}
+
+	{
 	int	row, col, bit, val;
     	int	byte, rem;
 	unsigned char	mvalue;
@@ -576,32 +681,44 @@ int	count;
 	for( row = y; row < y+1; row++ ) {
 		for( col=x; col < x+count; ) {
 			/*mvalue = 0x00;*/
+			/* pre-read the byte */
 			mvalue = *mbuffer;
+			/* diddle its bit */
 			for( bit=rem; (bit < 8) && (col < x+count); bit++,col++ ) {
 				/*val = (30*(*pixelp)[RED] + 59*(*pixelp)[GRN] + 11*(*pixelp)[BLU] + 200) / 400;*/
 				/*pixelp++;*/
 				/*if( dither_bw(val, col, row) ) {*/
 				if( *cp++ > (dm[((row&7)<<3)+(col&7)]<<2)+1 ) {
-					mvalue |= (0x80 >> bit);    /*  for RT, Sun  */
+					mvalue |= bits[bit];
 				} else {
-					mvalue &= ~(0x80 >> bit);    /*  for RT, Sun  */
+					mvalue &= ~bits[bit];
 				}
 			}
-			rem = 0;
+			/* put the byte back */
 			*mbuffer++ = mvalue;
+			rem = 0;
 		}
 	}
-    }
+	}
 
 done:
+	/* XXX - Determine how much of the scan line is displayed in
+	 * the window (if any) including pan & zoom, and display that
+	 * portion.
+	 */
 	XPutImage(XI(ifp)->dpy, XI(ifp)->win, XI(ifp)->gc, XI(ifp)->image,
 		x, y, x, y,
 		count, 1 );
+
+	/* XXX - until we get something better */
+	if( count > 1 )
+		XFlush(XI(ifp)->dpy);
+
     	return	count;
 }
 
 _LOCAL_ int
-X_cmread( ifp, cmp )
+X_rmap( ifp, cmp )
 FBIO	*ifp;
 ColorMap	*cmp;
 {
@@ -624,7 +741,7 @@ ColorMap *cmp;
 }
 
 _LOCAL_ int
-X_cmwrite( ifp, cmp )
+X_wmap( ifp, cmp )
 FBIO	*ifp;
 ColorMap	*cmp;
 {
@@ -642,16 +759,18 @@ ColorMap	*cmp;
 		XI(ifp)->rgb_cmap = *cmp;	/* struct copy */
 	}
 
-	/* This really only works for MODE_2_8BIT */
-	for( i=0; i<256; i++ )  {
-		/* Both sides expect 16-bit left-justified color maps */
-		color_defs[i].red   = cmp->cm_red[i];
-		color_defs[i].green = cmp->cm_green[i];
-		color_defs[i].blue  = cmp->cm_blue[i];
-	        color_defs[i].flags = DoRed | DoGreen | DoBlue;
+	/* If MODE_2_8BIT, load it in the real window colormap */
+	if( (XI(ifp)->mode&MODE_2MASK) == MODE_2_8BIT ) {
+		for( i = 0; i < 256; i++ ) {
+			/* Both sides expect 16-bit left-justified maps */
+			color_defs[i].pixel = i;
+			color_defs[i].red   = cmp->cm_red[i];
+			color_defs[i].green = cmp->cm_green[i];
+			color_defs[i].blue  = cmp->cm_blue[i];
+		        color_defs[i].flags = DoRed | DoGreen | DoBlue;
+		}
+		XStoreColors( XI(ifp)->dpy, XI(ifp)->cmap, color_defs, 256 );
 	}
-
-	XStoreColors ( XI(ifp)->dpy, XI(ifp)->cmap, color_defs, 256);
 
 	if( is_linear_cmap(cmp) ) {
 		/* no file => linear map */
@@ -667,83 +786,109 @@ ColorMap	*cmp;
 			perror(TMP_FILE);
 		}
 	}
+	return(0);
 }
 
 _LOCAL_ int
-X_viewport_set( ifp, left, top, right, bottom )
+X_viewport( ifp, left, top, right, bottom )
 FBIO	*ifp;
 int	left, top, right, bottom;
 {
 }
 
 _LOCAL_ int
-X_window_set( ifp, x, y )
+X_window( ifp, x, y )
 FBIO	*ifp;
 int	x, y;
 {
+	/* bypass if no change */
+	if( XI(ifp)->xcenter == x && XI(ifp)->ycenter == y )
+		return	0;
+
+	/* check bounds */
+	if( x < 0 || x >= ifp->if_width || y < 0 || y >= ifp->if_height )
+		return	-1;
+
+	XI(ifp)->xcenter = x;
+	XI(ifp)->ycenter = y;
+	/* XXX - repaint */
+	repaint(ifp);
+	return	0;
 }
 
 _LOCAL_ int
-X_zoom_set( ifp, x, y )
+X_zoom( ifp, x, y )
 FBIO	*ifp;
 int	x, y;
 {
+	/* bypass if no change */
+	if( XI(ifp)->xzoom == x && XI(ifp)->yzoom == y )
+		return	0;
+
+	/* check bounds */
+	if( x <= 0 || x >= ifp->if_width/2 || y <= 0 || y >= ifp->if_height/2 )
+		return	-1;
+
+	XI(ifp)->xzoom = x;
+	XI(ifp)->yzoom = y;
+	/* XXX - repaint */
+	repaint(ifp);
+	return	0;
 }
 
 _LOCAL_ int
-X_curs_set( ifp, bits, xbits, ybits, xorig, yorig )
+X_setcursor( ifp, bits, xbits, ybits, xorig, yorig )
 FBIO	*ifp;
 unsigned char *bits;
 int	xbits, ybits;
 int	xorig, yorig;
 {
+	return	0;
 }
 
 _LOCAL_ int
-X_cmemory_addr( ifp, mode, x, y )
+X_cursor( ifp, mode, x, y )
+FBIO	*ifp;
+int	mode;
+int	x, y;
+{
+	if( XI(ifp)->curswin == 0 )
+		x_make_cursor(ifp);
+
+	y = ifp->if_height - 1 - y;	/* 1st -> 4th quadrant */
+	x -= 3;
+	y -= 3;
+	if( mode ) {
+		XMoveWindow( XI(ifp)->dpy, XI(ifp)->curswin, x, y );
+		XMapWindow( XI(ifp)->dpy, XI(ifp)->curswin );
+	} else {
+		XUnmapWindow( XI(ifp)->dpy, XI(ifp)->curswin );
+	}
+	XFlush( XI(ifp)->dpy );
+}
+
+_LOCAL_ int
+X_scursor( ifp, mode, x, y )
 FBIO	*ifp;
 int	mode;
 int	x, y;
 {
 }
-
-_LOCAL_ int
-X_cscreen_addr( ifp, mode, x, y )
-FBIO	*ifp;
-int	mode;
-int	x, y;
-{
-}
-
-static XWMHints xwmh = {
-	(InputHint|StateHint),		/* flags */
-	False,				/* input */
-	NormalState,			/* initial_state */
-	0,				/* icon pixmap */
-	0,				/* icon window */
-	0, 0,				/* icon location */
-	0,				/* icon mask */
-	0				/* Window group */
-};
 
 static
 xsetup( ifp, width, height )
 FBIO	*ifp;
 int	width, height;
 {
-	char	hostname[80];
-	char	display[80];
-	char	*envp;
-	unsigned long	bd, bg, fg, bw;
-	XSizeHints xsh;
-	XEvent	event;
-	XGCValues gcv;
 	Display	*dpy;			/* local copy */
-	Window	win;			/* local copy */
 	int	screen;			/* local copy */
 	Visual	*visual;		/* local copy */
+	Window	win;			/* local copy */
 	GC	gc;			/* local copy */
-	XSetWindowAttributes	xswa;
+	XGCValues gcv;
+	XSizeHints	xsh;		/* part of the "standard" props */
+	XWMHints	xwmh;		/* size guidelines for window mngr */
+	XSetWindowAttributes xswa;
 
 	/* Open the display - use the env variable DISPLAY */
 	if( (dpy = XOpenDisplay(NULL)) == NULL ) {
@@ -751,89 +896,51 @@ int	width, height;
 			XDisplayName(NULL) );
 		return	-1;
 	}
+	/* Use the screen we connected to */
 	screen = DefaultScreen(dpy);
+	/*
+	 *  Note: all Windows, Colormaps and XImages have a Visual
+	 *  attribute which determines how pixel values are mapped
+	 *  to displayed colors.  We should eventually examine which
+	 *  choices (if any) the current screen offers and pick a
+	 *  "best" one.  For now use the default.  Most servers don't
+	 *  offer a choice yet anyway.
+	 */
 	visual = DefaultVisual(dpy,screen);
 
+	/* save values in state struct */
 	XI(ifp)->dpy = dpy;
 	XI(ifp)->screen = screen;
 	XI(ifp)->visual = visual;
 	XI(ifp)->depth = DisplayPlanes(dpy,screen);
 
-#ifdef DEBUGX
-printf("%d DisplayPlanes\n", DisplayPlanes(dpy,screen) );
-printf("%d DisplayCells\n", DisplayCells(dpy,screen) );
-printf("BlackPixel = %d\n", BlackPixel(dpy,screen) );
-printf("WhitePixel = %d\n", WhitePixel(dpy,screen) );
-switch(DefaultVisual(dpy,screen)->class) {
-case DirectColor:
-	printf("DirectColor: Alterable RGB maps, pixel RGB subfield indicies\n");
-	break;
-case TrueColor:
-	printf("TrueColor: Fixed RGB maps, pixel RGB subfield indicies\n");
-	break;
-case PseudoColor:
-	printf("PseudoColor: Alterable RGB maps, single index\n");
-	break;
-case StaticColor:
-	printf("StaticColor: Fixed RGB maps, single index\n");
-	break;
-case GrayScale:
-	printf("GrayScale: Alterable map (R=G=B), single index\n");
-	break;
-case StaticGray:
-	printf("StaticGray: Fixed map (R=G=B), single index\n");
-	break;
-default:
-	printf("Unknown visual class %d\n",
-		DefaultVisual(dpy,screen)->class);
-	break;
-}
-visinfo(ifp);
+#if DEBUGX
+	print_display_info(dpy);
 #endif
-
-	/*
-	 * Select border, background, foreground colors,
-	 * and border width.
-	 */
-	bd = WhitePixel( dpy, screen );
-	bg = BlackPixel( dpy, screen );
-	fg = WhitePixel( dpy, screen );
-	bw = 1;
-
-	/*
-	 * Fill in XSizeHints struct to inform window
-	 * manager about initial size and location.
-	 */
-	xsh.flags = PPosition | PSize | PMinSize | PMaxSize;
-	xsh.width = xsh.max_width = xsh.min_width = width;
-	xsh.height = xsh.max_height = xsh.min_height = height;
-	xsh.x = xsh.y = 0;
 
 	/*
 	 * Fill in XSetWindowAttributes struct for XCreateWindow.
 	 */
 	xswa.event_mask = ExposureMask;
-		/* |ButtonPressMask |LeaveWindowMask | EnterWindowMask; */
+		/* |ButtonPressMask |LeaveWindowMask |EnterWindowMask */
 		/* |ColormapChangeMask */
 	xswa.background_pixel = BlackPixel(dpy, screen);
 	xswa.border_pixel = WhitePixel(dpy, screen);
-#ifdef CURSOR
+	xswa.bit_gravity = SouthWestGravity;
+	xswa.backing_store = Always;
+	/* could set colormap here... */
+#ifdef CURSORFOO
 	xswa.cursor = XCreateFontCursor(dpy, XC_gumby);
 #endif
 
-	/*
-	 *  Note: all Windows, Colormaps and XImages have
-	 *  a Visual attribute which determines how pixel
-	 *  values are mapped to displayed colors.
-	 */
-#ifdef DEBUGX
+#if DEBUGX
 printf("Creating window\n");
 #endif
 	win = XCreateWindow( dpy, DefaultRootWindow(dpy),
-		0, 0, xsh.width, xsh.height,
-		3, XDefaultDepth(dpy, screen),
-		InputOutput, visual,
-		CWBackPixel |CWEventMask |CWBorderPixel,
+		0, 0, width, height, 3,
+		DefaultDepth(dpy, screen), InputOutput, visual,
+		CWEventMask |CWBackPixel |CWBorderPixel
+		|CWBitGravity | CWBackingStore,
 		/* |CWCursor, */
 		&xswa );
 
@@ -847,25 +954,40 @@ printf("Creating window\n");
 	if( XI(ifp)->depth == 8 ) {
 		x_make_colormap(ifp);
 	} else {
-		XI(ifp)->cmap = XDefaultColormap(dpy,screen);
+		XI(ifp)->cmap = DefaultColormap(dpy,screen);
 	}
 
+	/*
+	 * Fill in XSizeHints struct to inform window
+	 * manager about initial size and location.
+	 */
+	xsh.flags = PPosition | PSize | PMinSize | PMaxSize;
+	xsh.width = xsh.max_width = xsh.min_width = width;
+	xsh.height = xsh.max_height = xsh.min_height = height;
+	xsh.x = xsh.y = 0;
+
 	/* Set standard properties for Window Managers */
-#ifdef DEBUGX
-printf("Setting properties\n");
+#if DEBUGX
+printf("Setting Standard Properties\n");
 #endif
-	XSetStandardProperties( dpy, win, "Frame buffer", "Frame buffer",
-		None, NULL, 0, &xsh );
-#ifdef DEBUGX
-printf("Setting Hints\n");
+	XSetStandardProperties( dpy, win,
+		"Frame buffer",		/* window name */
+		"Frame buffer",		/* icon name */
+		None,			/* icon pixmap */
+		NULL, 0,		/* command (argv, argc) */
+		&xsh );			/* size hints */
+#if DEBUGX
+printf("Setting WM Hints\n");
 #endif
+	xwmh.input = False;		/* no terminal input? */
+	xwmh.initial_state = NormalState;
+	xwmh.flags = InputHint |StateHint;
 	XSetWMHints( dpy, win, &xwmh );
 
 	/* Create a Graphics Context for drawing */
-	/*gcv.font = NULL;*/
-	gcv.foreground = fg;
-	gcv.background = bg;
-#ifdef DEBUGX
+	gcv.foreground = WhitePixel( dpy, screen );
+	gcv.background = BlackPixel( dpy, screen );
+#if DEBUGX
 printf("Making graphics context\n");
 #endif
 	gc = XCreateGC( dpy, win, (GCForeground|GCBackground), &gcv );
@@ -876,6 +998,7 @@ printf("Making graphics context\n");
 	XFlush(dpy);
 
 	while( 1 ) {
+		XEvent	event;
 		XNextEvent( dpy, &event );
 		if( event.type == Expose && event.xexpose.count == 0 ) {
 			XWindowAttributes xwa;
@@ -904,6 +1027,11 @@ FBIO	*ifp;
 	XExposeEvent	*expose;
 	XCrossingEvent	*xcrossing;
 	int	alive = 1;
+	unsigned char *bitbuf = XI(ifp)->bitbuf;
+	unsigned char *bytebuf = XI(ifp)->bytebuf;
+#if CURSOR
+	Cursor	watch = XCreateFontCursor(XI(ifp)->dpy, XC_watch);
+#endif
 
 	if( fork() != 0 )
 		return 1;	/* release the parent */
@@ -925,26 +1053,50 @@ FBIO	*ifp;
 		case ButtonPress:
 			switch( (int)event.xbutton.button ) {
 			case Button1:
-				Monochrome(bitbuf,bytebuf,ifp->if_width,ifp->if_height);
+				/* monochrome only for now */
+				if( XI(ifp)->depth != 1 )
+					break;
+				/* bump method */
+				if( ++(XI(ifp)->method) > 3 )
+					XI(ifp)->method = 0;
+#if CURSOR
+				XDefineCursor(XI(ifp)->dpy, XI(ifp)->win, watch);
+				XFlush(XI(ifp)->dpy);
+#endif
+				Monochrome(bitbuf,bytebuf,ifp->if_width,ifp->if_height,XI(ifp)->method);
+#if CURSOR
+				XDefineCursor(XI(ifp)->dpy, XI(ifp)->win, None);
+				XFlush(XI(ifp)->dpy);
+#endif
 				XPutImage(XI(ifp)->dpy, XI(ifp)->win, XI(ifp)->gc, XI(ifp)->image,
 					0, 0, 0, 0,
 					ifp->if_width, ifp->if_height );
 				break;
 			case Button2:
 				{
-				int	x, y;
+				int	x, y, sy;
 				unsigned char	*cp;
 				x = event.xbutton.x;
-				y = event.xbutton.y;
-				/* 8-bit display */
-				cp = &bytebuf[y*ifp->if_width + x];
-				/* quadrant reverse y for output */
-				y = ifp->if_height - 1 - event.xbutton.y;
-				fb_log("(%4d,%4d) index=%3d rgb=(%3d %3d %3d)\n",
-					x, y, *cp,
-					color_defs[*cp].red>>8,
-					color_defs[*cp].green>>8,
-					color_defs[*cp].blue>>8 );
+				sy = event.xbutton.y;
+				/* quadrant reverse y */
+				y = ifp->if_height - 1 - sy;
+				cp = &bytebuf[sy*ifp->if_width + x];
+				fb_log("(%4d,%4d) index=%3d ", x, y, *cp);
+				if( XI(ifp)->depth == 8 ) {
+					/*XXX color_defs may not be allocated here */
+					fb_log("rgb=(%3d %3d %3d) ",
+						color_defs[*cp].red>>8,
+						color_defs[*cp].green>>8,
+						color_defs[*cp].blue>>8 );
+				}
+				if( XI(ifp)->mem ) {
+					/* 24bit buffer */
+					cp = &(XI(ifp)->mem[(y*ifp->if_width + x)*3]);
+					fb_log("Real RGB=(%3d %3d %3d)\n",
+						cp[RED], cp[GRN], cp[BLU] );
+				} else {
+					fb_log("\n");
+				}
 				}
 				break;
 			case Button3:
@@ -961,23 +1113,29 @@ FBIO	*ifp;
 	return 0;
 }
 
-static int method = 0;
-
-/* Monochrome to Bitmap conversion */
-Monochrome(bitbuf,bytebuf,width,height)
-char *bitbuf;
+/*
+ * Monochrome to Bitmap conversion
+ * Convert width x height 8bit grey scale bytes in bytebuf to
+ * a bitmap in bitbuf, using the selected "method"
+ */
+Monochrome(bitbuf,bytebuf,width,height,method)
+unsigned char *bitbuf;
 unsigned char *bytebuf;
 int width, height;
+int method;
 {
 	register unsigned char *mbuffer, mvalue;   /* monochrome bitmap buffer */
 	register unsigned char *mpbuffer;          /* monochrome byte buffer */
 	register row, col, bit;
+	static unsigned char MSB[8] = { 0x80, 0x40, 0x20, 0x10, 8, 4, 2, 1 };
+	static unsigned char LSB[8] = { 1, 2, 4, 8, 0x10, 0x20, 0x40, 0x80 };
+	register unsigned char *bits = MSB;	/*XXX - for RT, Sun, etc.  */
 
 	error1 = (int *)malloc((unsigned)(width+1) * sizeof(int));
 	error2 = (int *)malloc((unsigned)(width+1) * sizeof(int));
 
 	mpbuffer = bytebuf;
-	mbuffer = (unsigned char *)bitbuf;
+	mbuffer = bitbuf;
 
 	for( row = 0; row < height; row++ ) {
 		for( col=0; col < width; ) {
@@ -986,19 +1144,19 @@ int width, height;
 				/*if( dither_bw(val, col, row) ) {*/
 				if( method == 0 ) {
 					if( *mpbuffer > (dm[((row&7)<<3)+(col&7)]<<2)+1 ) {
-						mvalue |= (0x80 >> bit);    /*  for RT, Sun  */
+						mvalue |= bits[bit];
 					}
 				} else if( method == 1 ) {
 					if( fs_bw(*mpbuffer, col, row) ) {
-						mvalue |= (0x80 >> bit);    /*  for RT, Sun  */
+						mvalue |= bits[bit];
 					}
 				} else if( method == 2 ) {
 					if( mfs_bw(*mpbuffer, col, row) ) {
-						mvalue |= (0x80 >> bit);    /*  for RT, Sun  */
+						mvalue |= bits[bit];
 					}
 				} else if( method == 3 ) {
 					if( *mpbuffer > (dm4[(row&3)][(col&3)]<<4)+7 ) {
-						mvalue |= (0x80 >> bit);    /*  for RT, Sun  */
+						mvalue |= bits[bit];
 					}
 				}
 				mpbuffer++;
@@ -1007,17 +1165,16 @@ int width, height;
 		}
 	}
 
-	if( method == 0 )
-		method = 1;
-	else if( method == 1 )
-		method = 2;
-	else if( method == 2 )
-		method = 3;
-	else if( method == 3 )
-		method = 0;
-
 	free((char *)error1);
 	free((char *)error2);
+}
+
+_LOCAL_ int
+X_flush( ifp )
+FBIO	*ifp;
+{
+	XFlush( XI(ifp)->dpy );
+	return(0);
 }
 
 _LOCAL_ int
@@ -1122,17 +1279,19 @@ unsigned char rmap[], gmap[], bmap[];
 	}
 }
 
+static int
 x_make_colormap(ifp)
 FBIO *ifp;
 {
-	int 			tot_levels;
-	int 			i;
-	Colormap		color_map;
+	int 		tot_levels;
+	int 		i;
+	Colormap	color_map;
 	int		tmp;
+	long		b, w;	/* server black and white pixels */
 
 	tot_levels = 256;
 
-#ifdef DEBUGX
+#if DEBUGX
 	printf("make_colormap\n");
 #endif
 #ifdef notes
@@ -1166,13 +1325,16 @@ FBIO *ifp;
 	 * monochrome windows to still be readable while this colormap
 	 * is loaded.
 	 */
+	b = BlackPixel(XI(ifp)->dpy, XI(ifp)->screen);
+	w = WhitePixel(XI(ifp)->dpy, XI(ifp)->screen);
+
 	tmp = x_pixel_table[215];		/* save 215 (our white) */
-	x_pixel_table[215] = x_pixel_table[0];	/* move our White to 0 */
-	x_pixel_table[0] = tmp;			/* and orig 0 to 215 */
+	x_pixel_table[215] = x_pixel_table[w];	/* move our White to w */
+	x_pixel_table[w] = tmp;			/* and orig w to 215 */
 
 	tmp = x_pixel_table[0];			/* save 0 (our black) */
-	x_pixel_table[0] = x_pixel_table[1];	/* move our Black to 1 */
-	x_pixel_table[1] = tmp;			/* and orig 1 to 0 */
+	x_pixel_table[0] = x_pixel_table[b];	/* move our Black to b */
+	x_pixel_table[b] = tmp;			/* and orig b to 0 */
 
 	/* put our colors into those cells */
 	for (i = 0; i < tot_levels; i++) {
@@ -1190,14 +1352,231 @@ FBIO *ifp;
 	/* If you are real anti-social, install it.
 	 * This should be left to the window managers though. */
 	/* XInstallColormap( XI(ifp)->dpy, color_map ); */
+	if( (XI(ifp)->mode&MODE_5MASK) == MODE_5INSTCMAP ) {
+		XInstallColormap( XI(ifp)->dpy, color_map );
+	}
 }
 
-visinfo(ifp)
+static int
+x_make_cursor(ifp)
 FBIO *ifp;
 {
-	XVisualInfo	*vp;
-	int	num;
+	XSetWindowAttributes	xswa;
 
-	vp = XGetVisualInfo(XI(ifp)->dpy, VisualNoMask, NULL, &num );
-	printf("%d Visuals returned\n", num);
+	xswa.save_under = True;
+	XI(ifp)->curswin = XCreateWindow( XI(ifp)->dpy, XI(ifp)->win,
+		XI(ifp)->xcenter, XI(ifp)->ycenter, 1, 1, 3,
+		CopyFromParent, InputOutput, CopyFromParent,
+		CWSaveUnder, &xswa );
+}
+
+/*
+ *  A given Display (i.e. Server) can have any number of Screens.
+ *  Each Screen can support one or more Visual types.
+ *  unix:0.1.2 => host:display.screen.visual
+ *  Typically the screen and visual default to 0 by being omitted.
+ */
+static void
+print_display_info( dpy )
+Display *dpy;
+{
+	int	screen;
+	Visual	*visual;
+	XVisualInfo *vp;
+	int	num;
+	Window	win = DefaultRootWindow(dpy);
+	XStandardColormap cmap;
+
+	printf("Server \"%s\", release %d\n",
+		ServerVendor(dpy), VendorRelease(dpy) );
+
+	/* How many screens? */
+	screen = DefaultScreen(dpy);
+	printf("%d Screen(s), we connected to screen %d\n",
+		ScreenCount(dpy), screen );
+
+	/* How many visuals? */
+	vp = XGetVisualInfo(dpy, VisualNoMask, NULL, &num );
+	XFree( vp );
+	printf("%d Visual(s)\n", num);
+
+	printf("==== Screen %d ====\n", screen );
+	/* Note: DisplayPlanes if Visual dependent */
+	printf("%d DisplayPlanes\n", DisplayPlanes(dpy,screen) );
+	printf("%d DisplayCells\n", DisplayCells(dpy,screen) );
+	printf("BlackPixel = %d\n", BlackPixel(dpy,screen) );
+	printf("WhitePixel = %d\n", WhitePixel(dpy,screen) );
+	printf("Installed Colormaps: min %d, max %d\n",
+		MinCmapsOfScreen(ScreenOfDisplay(dpy,screen)),
+		MaxCmapsOfScreen(ScreenOfDisplay(dpy,screen)) );
+	printf("DefaultColormap: 0x%x\n", DefaultColormap(dpy,screen));
+
+	visual = DefaultVisual(dpy,screen);
+	printf("---- Visual 0x%x ----\n", visual );
+
+	switch(visual->class) {
+	case DirectColor:
+		printf("DirectColor: Alterable RGB maps, pixel RGB subfield indicies\n");
+		break;
+	case TrueColor:
+		printf("TrueColor: Fixed RGB maps, pixel RGB subfield indicies\n");
+		break;
+	case PseudoColor:
+		printf("PseudoColor: Alterable RGB maps, single index\n");
+		break;
+	case StaticColor:
+		printf("StaticColor: Fixed RGB maps, single index\n");
+		break;
+	case GrayScale:
+		printf("GrayScale: Alterable map (R=G=B), single index\n");
+		break;
+	case StaticGray:
+		printf("StaticGray: Fixed map (R=G=B), single index\n");
+		break;
+	default:
+		printf("Unknown visual class %d\n",
+			visual->class);
+		break;
+	}
+
+	printf("==== Standard Colormaps ====\n");
+	if( XGetStandardColormap( dpy, win, &cmap, XA_RGB_BEST_MAP ) == 0 ) {
+		printf( "XA_RGB_BEST_MAP    - Yes (0x%x)\n", cmap.colormap);
+		printf( "R[0..%d] * %d + G[0..%d] * %d  + B[0..%d] * %d + %d\n",
+			cmap.red_max, cmap.red_mult, cmap.green_max, cmap.green_mult,
+			cmap.blue_max, cmap.blue_mult, cmap.base_pixel);
+	} else
+		printf( "XA_RGB_BEST_MAP    - No\n" );
+	if( XGetStandardColormap( dpy, win, &cmap, XA_RGB_DEFAULT_MAP ) == 0 ) {
+		printf( "XA_RGB_DEFAULT_MAP - Yes (0x%x)\n", cmap.colormap );
+		printf( "R[0..%d] * %d + G[0..%d] * %d  + B[0..%d] * %d + %d\n",
+			cmap.red_max, cmap.red_mult, cmap.green_max, cmap.green_mult,
+			cmap.blue_max, cmap.blue_mult, cmap.base_pixel);
+	} else
+		printf( "XA_RGB_DEFAULT_MAP - No\n" );
+	if( XGetStandardColormap( dpy, win, &cmap, XA_RGB_GRAY_MAP ) == 0 ) {
+		printf( "XA_RGB_GRAY_MAP    - Yes (0x%x)\n", cmap.colormap );
+		printf( "R[0..%d] * %d + %d\n",
+			cmap.red_max, cmap.red_mult, cmap.base_pixel);
+	} else
+		printf( "XA_RGB_GRAY_MAP    - No\n" );
+}
+
+/* Repaint.
+ * Zooming an image can also be viewed as shrinking our "window" of
+ * currently displayed data.  We then drop that window down over the
+ * selected "center" position and check to see if it overhangs the
+ * image edges.  We want to clear out any overhanging regions and then
+ * display the (sub)rectangle of image data that falls in the window.
+ *
+ * We do all of our computation here in the first quadrant form and
+ * only switch to fourth for Xlib commands.
+ */
+repaint(ifp)
+FBIO	*ifp;
+{
+	/* 1st and last image pixel coordinates *within* the window */
+	int	xmin, xmax;
+	int	ymin, ymax;
+	/* screen pixel coordinates corresponding to above */
+	int	sleft, sright;
+	int	sbottom, stop;
+	/* screen pixels of padding (i.e. window overlap) around image */
+	int	spad_left, spad_right;
+	int	spad_bottom, spad_top;
+	/* window height, width, and center */
+	struct	{
+		int	width;
+		int	height;
+		int	xcenter;
+		int	ycenter;
+	} w;
+
+	/*
+	 * Eventually the window size shouldn't be bound to
+	 * the image size.  We are thinking ahead here.
+	 */
+	w.width = ifp->if_width;
+	w.height = ifp->if_height;
+	w.xcenter = w.width / 2;
+	w.ycenter = w.height / 2;
+
+	/*
+	 * Compute which image pixels WOULD fall at the left, right,
+	 * bottom, and top of the window if the image were unbounded.
+	 */
+	xmin = XI(ifp)->xcenter - w.width/(2*XI(ifp)->xzoom);
+	xmax = XI(ifp)->xcenter + w.width/(2*XI(ifp)->xzoom) - 1;
+	ymin = XI(ifp)->ycenter - w.height/(2*XI(ifp)->yzoom);
+	ymax = XI(ifp)->ycenter + w.height/(2*XI(ifp)->yzoom) - 1;
+
+	/*
+	 * Clip these against the actual image dimensions.
+	 */
+	if( xmin < 0 )
+		xmin = 0;
+	if( xmax > ifp->if_width-1 )
+		xmax = ifp->if_width-1;
+	if( ymin < 0 )
+		ymin = 0;
+	if( ymax > ifp->if_height-1 )
+		ymax = ifp->if_height-1;
+
+	/*
+	 * Compute the window pixel location corresponding to
+	 * the included image data.
+	 */
+	sleft = (xmin - XI(ifp)->xcenter) * XI(ifp)->xzoom + w.width/2;
+	sright = ((xmax+1) - XI(ifp)->xcenter) * XI(ifp)->xzoom + w.width/2 - 1;
+	sbottom = (ymin - XI(ifp)->ycenter) * XI(ifp)->yzoom + w.height/2;
+	stop = ((ymax+1) - XI(ifp)->ycenter) * XI(ifp)->yzoom + w.height/2 - 1;
+
+	/*
+	 * if(sleft || sbottom || sright != w.width-1 || stop != w.height-1)
+	 *  then the image rectangle does not completely fill the screen
+	 *  window rectangle.  I tried clearing the entire window first
+	 *  and then repainting the image part, but this produced a nasty
+	 *  flashing of the screen.  It is debatable whether we should clear
+	 *  the borders before or after painting.  Ultimately it would be
+	 *  nice if we could optimize with an in server XCopyArea bitblit
+	 *  for the part of the image already displayed (if any).
+	 */
+	/*
+	printf("window(%3d,%3d) zoom(%3d,%3d)\n\r",
+		XI(ifp)->xcenter, XI(ifp)->ycenter,
+		XI(ifp)->xzoom, XI(ifp)->yzoom);
+	printf("Image ([%3d %3d],[%3d %3d]) Screen ([%3d %3d],[%3d %3d])\n\r",
+		xmin, xmax, ymin, ymax, sleft, sright, sbottom, stop);
+	*/
+
+	/* Display our image rectangle.  Note quadrant reversal. */
+	XPutImage(XI(ifp)->dpy, XI(ifp)->win, XI(ifp)->gc, XI(ifp)->image,
+		xmin, w.width-1-ymax,
+		sleft, w.height-1-stop,
+		xmax-xmin+1, ymax-ymin+1 );
+
+	/* Clear any empty borders */
+	if( sleft != 0 )
+		XClearArea( XI(ifp)->dpy, XI(ifp)->win,
+			0, 0,
+			sleft, w.height,
+			False);
+	if( sright != w.width-1 )
+		XClearArea( XI(ifp)->dpy, XI(ifp)->win,
+			sright+1, 0,
+			w.width-1-sright, w.height,
+			False);
+	/* could optimize bottom and top to clip sleft to sright */
+	if( sbottom != 0 )
+		XClearArea( XI(ifp)->dpy, XI(ifp)->win,
+			0, w.height-sbottom,  /* (height-1)-(bottom-1) */
+			w.width, sbottom,
+			False);
+	if( stop != w.height-1 )
+		XClearArea( XI(ifp)->dpy, XI(ifp)->win,
+			0, 0,
+			w.width, w.height-1-stop,
+			False);
+
+	XFlush( XI(ifp)->dpy );
 }
