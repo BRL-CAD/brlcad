@@ -21,14 +21,14 @@ struct camo_specific {
 	double	lacunarity;
 	double	h_val;
 	double	octaves;
-	double	t1;
-	double	t2;
-	point_t	scale;	/* scale coordinate space */
-	point_t c1;
-	point_t c2;
-	point_t c3;
-	vect_t	delta;
-	mat_t	xform;
+	double	t1;	/* color threshold 1 */
+	double	t2;	/* color threshold 2 */
+	point_t	scale;	/* scale of noise coordinate space */
+	point_t c1;	/* color 1 */
+	point_t c2;	/* color 2 */
+	point_t c3;	/* color 3 */
+	vect_t	delta;	/* a delta in noise space to be applied to pts */
+	mat_t	xform;	/* model->region coord sys matrix */
 };
 #define CK_camo_SP(_p) RT_CKMAG(_p, camo_MAGIC, "camo_specific")
 
