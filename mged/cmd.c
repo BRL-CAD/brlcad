@@ -48,7 +48,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "rtgeom.h"
 #include "externs.h"
 #include "./ged.h"
-#include "./solid.h"
+#include "./mged_solid.h"
 #include "./mged_dm.h"
 #include "./sedit.h"
 
@@ -2285,8 +2285,19 @@ set_e_axes_pos()
 
 #if 0
   update_views = 1;
-  VMOVE(e_axes_pos, es_keypoint);
-  MAT4X3PNT( absolute_slew, model2view, es_keypoint );
+
+  if(EDIT_TRAN) {
+    VMOVE(e_axes_pos, es_keypoint);
+    MAT4X3PNT( absolute_slew, model2view, es_keypoint );
+  }else{
+    point_t new_pos;
+
+    VSET(new_pos, -orig_pos[X], -orig_pos[Y], -orig_pos[Z]);
+    MAT4X3PNT(absolute_slew, model2view, new_pos);
+
+    if(EDIT_ROTATE)
+      VSETALL( absolute_rotate, 0.0 );
+  }
 #else
   update_views = 1;
   switch(es_int.idb_type){
