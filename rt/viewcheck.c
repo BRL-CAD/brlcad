@@ -118,6 +118,9 @@ char *file, *obj;
 	ap->a_miss = miss;
 	ap->a_overlap = overlap;
 	ap->a_onehit = 0;
+	if( !minus_o)			/* Needs to be set to  stdout */
+		outfp = stdout;
+
 	return	0;		/* No framebuffer needed */
 }
 
