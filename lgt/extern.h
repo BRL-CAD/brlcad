@@ -33,7 +33,7 @@
 	bogus warning messages. */
 #define SunOS4	1
 #endif
-#if __STDC__ || (defined(SYSV) && ! defined(cray)) || SunOS4
+#if __STDC__ || (defined(SYSV) && ! defined(cray)) || SunOS4 || defined(__convexc__)
 #define STD_SIGNAL_DECLS 1
 #else
 #define STD_SIGNAL_DECLS 0
