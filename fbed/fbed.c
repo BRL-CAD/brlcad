@@ -808,9 +808,14 @@ char *buf;
 	prnt_Event( "[%d] stopped.", pid );
 	restore_Tty();
 	if( kill( pid, sig ) == -1 )
-		{	extern int errno;
+		{
+#ifndef CRAY2
+		extern int errno;
 		perror( "(fbed.c) kill" );
 		exit( errno );
+#else
+		exit( 1 );
+#endif
 		}
 	init_Tty();
 	init_Status();
