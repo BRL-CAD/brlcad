@@ -36,7 +36,7 @@ int argc; char *argv[];
 	char * tea_name = "UtahTeapot";
 	int i;
 
-	rt_uniresource.re_magic = RESOURCE_MAGIC;
+	rt_init_resource( &rt_uniresource, 1 );
 
 	if (isatty(fileno(stdout))) {
 		(void)fprintf(stderr, "%s: %s\n", *argv, Usage);
