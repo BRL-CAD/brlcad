@@ -544,7 +544,7 @@ extern struct loopuse	*nmg_ml(struct shell *s);
 extern struct loopuse	*nmg_mlv(long *magic, struct vertex *v);
 extern struct faceuse	*nmg_mf(struct loopuse *lu1);
 extern struct faceuse	*nmg_cface(struct shell *s, struct vertex **vt,	int n);
-extern struct faceuse	*nmg_cmface(struct shell *s, struct vertex **vt, int n);
+extern struct faceuse	*nmg_cmface(struct shell *s, struct vertex **vt[], int n);
 extern struct edgeuse	*nmg_eusplit(struct vertex *v, struct edgeuse *oldeu);
 extern struct edge	*nmg_esplit(struct vertex *v, struct edge *e);
 extern char		*nmg_identify_magic(long magic);
@@ -599,9 +599,12 @@ extern struct nmgregion	*nmg_do_bool(struct shell *s1, struct shell *s2, int ope
 extern int		nmg_ck_closed_surf(struct shell *s);
 extern void		nmg_m_to_g(FILE *fp, struct model *m);
 extern void		nmg_r_to_g(FILE *fp, struct nmgregion *r);
-extern void		nmg_s_to_g(FILE *fp, struct shell *s, RGBpixel rgb);
+extern void		nmg_s_to_g(FILE *fp, struct shell *s, unsigned char rgb[]);
 extern struct shell	*polytonmg(FILE *fd, struct nmgregion *r, point_t min, point_t max);
 extern void		nmg_pr_orient(char o, char *h);
+extern int		nmg_manifold_face(struct faceuse *fu);
+extern int		nmg_demote_eu(struct edgeuse *eu);
+extern int		nmg_demote_lu(struct loopuse *lu);
 
 #else
 extern struct model	*nmg_mmr();
@@ -670,6 +673,9 @@ extern void		nmg_s_to_g();
 extern struct shell	*polytonmg();
 extern void		nmg_pr_orient();
 extern void		nmg_pl_isect();
+extern int		nmg_manifold_face();
+extern int		nmg_demote_eu();
+extern int		nmg_demote_lu();
 
 #endif
 #define nmg_mev(_v, _u)	nmg_me((_v), (struct vertex *)NULL, (_u))
