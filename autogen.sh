@@ -203,6 +203,7 @@ if [ "x$reconfigure_manually" = "xyes" ] ; then
       echo "file to the appropriate location (misc/).  This has been done for you."
       echo
       cp ltmain.sh misc/ltmain.sh
+      echo "Continuing build preparation ..."
     fi
   fi
 
