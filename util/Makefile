@@ -2,7 +2,7 @@
 
 #	last edit:	85/03/14	Gary S. Moss
 
-#	SCCS ID:	@(#)Makefile	1.8
+#	SCCS ID:	@(#)Makefile	1.9
 
 PRODUCT	= pp-fb fbclear fbgrid rle-fb fb-rle fbcmap
 HEADERS =
@@ -71,7 +71,7 @@ clean:
 
 clobber:	clean
 	-if vax; then rm -f ${MANUAL}; fi
-	-rm -f ${PRODUCT}
+	-rm -f ${PRODUCT} fbzoom
 
 # Richard Draves <draves@HARVARD.ARPA> provide this depend implementation.
 BSD_CPP	=	/lib/cpp
