@@ -70,6 +70,8 @@ struct rt_i	*rtip;
 	struct mfuncs *mfp;
 
 	RT_VLS_CHECK( matparm );
+	RT_CK_RTI(rtip);
+
 	GETSTRUCT( sp, stk_specific );
 	*dpp = (char *)sp;
 
@@ -201,6 +203,8 @@ struct rt_i	*rtip;
 	struct rt_vls	arg;
 	char	matname[32];
 	int	i;
+
+	RT_CK_RTI(rtip);
 
 	if(rdebug&RDEBUG_MATERIAL)
 		rt_log( "...starting \"%s\"\n", cp );
