@@ -11,9 +11,9 @@ extern char *vmalloc();
 
 struct texture txt = {
 	"./text.pix",
-	64,
 	512,
-	64,
+	512,
+	512,
 	0
 };
 /*

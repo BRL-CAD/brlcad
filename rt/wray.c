@@ -31,7 +31,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <math.h>
 #include "../h/machine.h"
 #include "../h/vmath.h"
-#include "raytrace.h"
+#include "../h/raytrace.h"
 
 
 /* /vld/include/ray.h -- ray segment data format (D A Gwyn) */

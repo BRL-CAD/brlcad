@@ -30,7 +30,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "../h/machine.h"
 #include "../h/vmath.h"
 #include "../h/db.h"
-#include "raytrace.h"
+#include "../h/raytrace.h"
 #include "debug.h"
 
 #include "./polyno.h"

@@ -34,7 +34,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include "../h/machine.h"
 #include "../h/vmath.h"
-#include "raytrace.h"
+#include "../h/raytrace.h"
 #include "debug.h"
 
 /* Boolean values.  Not easy to change, but defined symbolicly */

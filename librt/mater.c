@@ -32,7 +32,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "../h/db.h"
 #include "../h/mater.h"
 #include "rtdir.h"
-#include "raytrace.h"
+#include "../h/raytrace.h"
 
 /*
  *  It is expected that entries on this mater list will be sorted

@@ -31,7 +31,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include "../h/machine.h"
 #include "../h/vmath.h"
-#include "raytrace.h"
+#include "../h/raytrace.h"
 
 char usage[] = "\
 Usage:  rtray [options] model.g objects... >file.ray\n\

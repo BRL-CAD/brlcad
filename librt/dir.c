@@ -29,7 +29,7 @@ static char RCSid[] = "@(#)$Header$";
 #include "../h/machine.h"
 #include "../h/vmath.h"
 #include "../h/db.h"
-#include "raytrace.h"
+#include "../h/raytrace.h"
 #include "rtdir.h"
 #include "debug.h"
 

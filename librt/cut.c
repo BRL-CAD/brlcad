@@ -10,7 +10,7 @@
 #include <math.h>
 #include "../h/machine.h"
 #include "../h/vmath.h"
-#include "raytrace.h"
+#include "../h/raytrace.h"
 #include "debug.h"
 #include "cut.h"
 
