@@ -5,7 +5,7 @@
 
 #define SRCDIR	irprep
 #define PRODUCTS	firpass secpass shapefact all_sf \
-			display see pictx
+			display see see2 pictx pictsgi
 #define	SRCSUFF	.c
 #define MANSECTION	1
 
@@ -34,6 +34,12 @@ display:  display.o
 
 see:	see.o
 	CC LDFLAGS see.o -L''XLIBDIR -lX11 -o see
+
+see2:	see2.o
+	CC LDFLAGS see2.o LIBFB_LIBES -o see2
+
+pictsgi:	pictsgi.o
+	CC LDFLAGS pictsgi.o LIBFB_LIBES -o pictsgi
 
 pictx:	pictx.o
 	CC LDFLAGS pictx.o -L''XLIBDIR -lX11 -o pictx
