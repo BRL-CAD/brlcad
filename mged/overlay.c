@@ -42,9 +42,6 @@ extern void	perror();
 extern int	atoi(), execl(), fork(), nice(), wait();
 extern long	time();
 
-extern int	numargs;	/* number of args */
-extern char	*cmd_args[];	/* array of pointers to args */
-
 #define	TBAD	0	/* no such command */
 #define TNONE	1	/* no arguments */
 #define TSHORT	2	/* Vax 16-bit short */
@@ -123,20 +120,22 @@ static int	getshort();
 
 /* Usage:  overlay file.plot [name] */
 void
-f_overlay()
+f_overlay( argc, argv )
+int	argc;
+char	**argv;
 {
 	char	*name;
 	FILE	*fp;
 	struct vlhead	vhead;
 	int	ret;
 
-	if( numargs <= 2 )
+	if( argc <= 2 )
 		name = "_PLOT_OVERLAY_";
 	else
-		name = cmd_args[2];
+		name = argv[2];
 
-	if( (fp = fopen(cmd_args[1], "r")) == NULL )  {
-		perror(cmd_args[1]);
+	if( (fp = fopen(argv[1], "r")) == NULL )  {
+		perror(argv[1]);
 		return;
 	}
 
