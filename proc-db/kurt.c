@@ -128,7 +128,7 @@ double	xc, yc;		/* center coordinates, z=0+ */
 	vp->v_n = 0;
 	vp->v_x = xc;
 	vp->v_y = yc;
-	nroots = polyRoots( &polynom, roots );
+	nroots = rt_poly_roots( &polynom, roots );
 	if( nroots < 0 || (nroots & 1) == 0 )  {
 		fprintf(stderr,"%d roots?\n", nroots);
 		return;
