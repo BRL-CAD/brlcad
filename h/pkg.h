@@ -44,9 +44,9 @@ struct pkg_conn {
 #define PKC_ERROR	((struct pkg_conn *)(-1))
 
 extern struct pkg_conn *pkg_open();
-extern int pkg_initserver();
+extern struct pkg_conn *pkg_transerver();
+extern int pkg_permserver();
 extern struct pkg_conn *pkg_getclient();
-extern struct pkg_conn *pkg_makeconn();
 extern void pkg_close();
 extern int pkg_send();
 extern int pkg_2send();
