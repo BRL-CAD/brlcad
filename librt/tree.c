@@ -56,7 +56,7 @@ struct functab functab[] = {
 /*
  *  Hooks for unimplemented routines
  */
-#define DEF(func)	func() { printf("func unimplemented\n"); }
+#define DEF(func)	func() { fprintf(stderr,"func unimplemented\n"); }
 
 DEF(haf_prep); struct seg * DEF(haf_shot); DEF(haf_print);
 DEF(nul_prep); struct seg * DEF(nul_shot); DEF(nul_print);
@@ -222,7 +222,7 @@ matp_t old_xlate;
 	auto struct region *regionp;
 
 	if( pathpos >= MAXLEVELS )  {
-		(void)printf("%s: nesting exceeds %d levels\n",
+		fprintf(stderr,"%s: nesting exceeds %d levels\n",
 			path_str(MAXLEVELS), MAXLEVELS );
 		return(TREE_NULL);
 	}
@@ -257,7 +257,7 @@ matp_t old_xlate;
 	}
 
 	if( rec.u_id != COMB )  {
-		(void)printf("drawobj:  defective input '%c'\n", rec.u_id );
+		fprintf(stderr,"drawobj:  defective input '%c'\n", rec.u_id );
 		return(TREE_NULL);			/* ERROR */
 	}
 

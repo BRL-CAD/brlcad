@@ -205,7 +205,7 @@ register matp_t output;
 		}
 
 		if( fabs(y) < EPSILON )  {
-			(void)printf("mat_inv:  error!\n");
+			(void)fprintf(stderr, "mat_inv:  error!\n");
 			return;		/* ERROR */
 		}
 		y = 1.0 / y;
@@ -289,7 +289,7 @@ register vectp_t v, h;
 		*v   = *h;
 	}  else  {
 		if( h[3] == 0.0 )  {
-			(void)printf("htov_move: divide by %f!\n", h[3]);
+			(void)fprintf(stderr, "htov_move: divide by %f!\n", h[3]);
 			return;
 		}
 		inv = 1.0 / h[3];
@@ -312,7 +312,7 @@ mat_t m;
 	fprintf(stderr,"MATRIX %s:\n  ", title);
 	for(i=0; i<16; i++)  {
 		fprintf(stderr," %8.3f", m[i]);
-		if( (i&3) == 3 ) printf("\n  ");
+		if( (i&3) == 3 ) fprintf(stderr,"\n  ");
 	}
 }
 
