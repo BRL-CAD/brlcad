@@ -1067,10 +1067,50 @@ register struct frame	*fr;
 	if( stat( fr->fr_filename, &sb ) >= 0 && sb.st_size > 0 )  {
 		/* The file has existing contents, dequeue all non-black
 		 * pixels.
-XXX
 		 */
-		rt_log("...need to scan %s for non-black pixels (deferred)\n",
+		register FILE	*fp;
+		char		pbuf[4];
+		register int	pno;	/* index of next unread pixel */
+
+		rt_log("Scanning %s for non-black pixels\n",
 			fr->fr_filename );
+		if( (fp = fopen( fr->fr_filename, "r" )) == NULL )  {
+			perror( fr->fr_filename );
+			return(-1);
+		}
+
+		pno = 0;
+		while( !feof( fp ) )  {
+			register int	first, last;
+
+			/* Read and skip over any black pixels */
+			if( fread( pbuf, 3, 1, fp ) < 1 )  break;
+			pno++;
+			if( pbuf[0] == 0 && pbuf[1] == 0 && pbuf[2] == 0 )
+				continue;
+
+			/*
+			 *  Found a non-black pixel.
+			 *  See how many more follow,
+			 *  and delete the batch of them from the work queue.
+			 */
+			first = last = pno-1;
+
+			while( !feof( fp ) )  {
+				/* Read and skip over non-black pixels */
+				if( fread( pbuf, 3, 1, fp ) < 1 )  break;
+				pno++;
+				if( pbuf[0] == 0 && pbuf[1] == 0 && pbuf[2] == 0 )
+					break;		/* black pixel */
+				/* non-black */
+				last = pno-1;
+			}
+			rt_log("deleting non-black pixel range %d to %d inclusive\n",
+				first, last );
+			list_remove( &(fr->fr_todo), first, last );
+		}
+
+		rt_log("Scanning complete\n");
 	}
 	return(0);				/* OK */
 }
@@ -1737,6 +1777,7 @@ int		a, b;
 				lp->li_start, a-1,
 				b+1, lp->li_stop);
 			GET_LIST(lp2);
+			*lp2 = *lp;	/* struct copy li_frame, etc */
 			lp2->li_start = b+1;
 			lp2->li_stop = lp->li_stop;
 			lp->li_stop = a-1;
@@ -2015,9 +2056,14 @@ register struct list *lhp;
 	register struct list *lp;
 
 	for( lp = lhp->li_forw; lp != lhp; lp = lp->li_forw  )  {
-		rt_log("\t%d..%d frame %d\n",
-			lp->li_start, lp->li_stop,
-			lp->li_frame->fr_number );
+		if( lp->li_frame == 0 )  {
+			rt_log("\t%d..%d frame *NULL*??\n",
+			lp->li_start, lp->li_stop );
+		} else {
+			rt_log("\t%d..%d frame %d\n",
+				lp->li_start, lp->li_stop,
+				lp->li_frame->fr_number );
+		}
 	}
 }
 
