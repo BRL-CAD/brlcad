@@ -83,6 +83,7 @@ static int _rb_insert (rb_tree *tree, int order, struct rb_node *new_node)
 
 
     RB_CKMAG(tree, RB_TREE_MAGIC, "red-black tree");
+    RB_CKORDER(tree, order);
     RB_CKMAG(new_node, RB_NODE_MAGIC, "red-black node");
 
     /*
@@ -134,8 +135,8 @@ int rb_insert (rb_tree *tree, void *data)
     int			result = 0;
     struct rb_node	*node;
 
-    /* Check data type of the parameter "tree" */
     RB_CKMAG(tree, RB_TREE_MAGIC, "red-black tree");
+
     nm_orders = tree -> rbt_nm_orders;
 
     /* Create a new node */
