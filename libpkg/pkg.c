@@ -58,7 +58,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
  *  and time.h for struct tm.
  *
  *  on BSD (and SGI 4D), sys/time.h includes time.h,
- *  on the XMP (UNICOS 3 & 4), time.h includes sys/time.h,
+ *  on the XMP (UNICOS 3 & 4), time.h includes sys/time.h [non-STDC only],
  *  on the Cray-2, there is no automatic including.
  *
  *  Note that on many SYSV machines, the Cakefile has to set BSD
@@ -66,7 +66,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #if BSD && !SYSV
 #  include <sys/time.h>		/* includes <time.h> */
 #else
-#  if CRAY1
+#  if CRAY1 && !__STDC__
 #	include <time.h>	/* includes <sys/time.h> */
 #  else
 #	include <sys/time.h>
