@@ -168,7 +168,7 @@ char	**argv;
 	  if( bu_vls_strlen( &comb->shader ) == 0 )
 	    bu_vls_printf(&curr_cmd_list->more_default, "del");
 	  else
-	    bu_vls_vlscat(&curr_cmd_list->more_default, &comb->shader);
+	    bu_vls_printf(&curr_cmd_list->more_default, "\"%S\"", &comb->shader);
 
 	  goto fail;
 	}
