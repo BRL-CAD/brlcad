@@ -1,6 +1,10 @@
 # $Id$
 
-bin_PROGRAMS = g_lint g_diff solshoot testfree
+bin_PROGRAMS = \
+	g_lint \
+	g_diff \
+	solshoot \
+	testfree
 
 g_diff_SOURCES = g_diff.c
 g_diff_LDADD = @RT@

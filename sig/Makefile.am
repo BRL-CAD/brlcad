@@ -1,6 +1,42 @@
 # $Id$
 
-bin_PROGRAMS = a-d d-a i-d d-i bw-d d-bw f-d d-f f-i i-f c-d i-a u-a u-d u-f u-bw d-u dwin dauto dmod dfft dconv imod umod ddisp fhor dstat dsel dpeak syn damdf dauto2 ihist istat ustat
+bin_PROGRAMS = \
+	a-d \
+	bw-d \
+	c-d \
+	d-a \
+	d-bw \
+	d-f \
+	d-i \
+	d-u \
+	damdf \
+	dauto \
+	dauto2 \
+	dconv \
+	ddisp \
+	dfft \
+	dmod \
+	dpeak \
+	dsel \
+	dstat \
+	dwin \
+	f-d \
+	f-i \
+	fhor \
+	i-a \
+	i-d \
+	i-f \
+	ihist \
+	imod \
+	istat \
+	syn \
+	u-a \
+	u-bw \
+	u-d \
+	u-f \
+	umod \
+	ustat
+
 noinst_HEADERS = complex.h
 
 a_d_SOURCES = a-d.c
@@ -28,14 +64,17 @@ u_bw_SOURCES = u-bw.c
 
 dwin_SOURCES = dwin.c coswin.c hamwin.c
 dwin_LDADD = -lm
+
 dauto_SOURCES = dauto.c
+
 dmod_SOURCES = dmod.c
 dmod_LDADD = -lm
+
 dfft_SOURCES = dfft.c interp.c butter.c
 dfft_LDADD = @FFT@
+
 dconv_SOURCES = dconv.c
 dconv_LDADD = @FFT@
-
 
 ddisp_SOURCES = ddisp.c 
 ddisp_LDADD = @FB@
@@ -45,6 +84,7 @@ fhor_LDADD = @FB@
 
 imod_SOURCES = imod.c
 imod_LDADD = -lm
+
 umod_SOURCES = umod.c
 umod_LDADD = -lm
 

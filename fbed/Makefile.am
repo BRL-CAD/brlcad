@@ -2,8 +2,32 @@
 
 bin_PROGRAMS = fbed
 
-fbed_SOURCES = char.c empty.c execshell.c fbed.c fill_buf.c getfont.c getinput.c glob.c loadfont.c pos_pad.c prnt.c sgi_dep.c squash.c try.c
-noinst_HEADERS = ascii.h cursorbits.h extern.h fb_ik.h font.h popup.h std.h try.h
+fbed_SOURCES = \
+	char.c \
+	empty.c \
+	execshell.c \
+	fbed.c \
+	fill_buf.c \
+	getfont.c \
+	getinput.c \
+	glob.c \
+	loadfont.c \
+	pos_pad.c \
+	prnt.c \
+	sgi_dep.c \
+	squash.c \
+	try.c
+
+noinst_HEADERS = \
+	ascii.h \
+	cursorbits.h \
+	extern.h \
+	fb_ik.h \
+	font.h \
+	popup.h \
+	std.h \
+	try.h
+
 fbed_LDADD = @FB@ @TERMIO@ @CURSOR@ @CURSES@ @SGIGL@
 
 man_MANS = fbed.1

@@ -3,7 +3,27 @@
 bin_PROGRAMS = jove findcom
 bin_SCRIPTS = teach-jove
 
-jove_SOURCES = jove_buf.c jove_c.c jove_delete.c jove_disp.c jove_draw.c jove_extend.c jove_funcs.c jove_insert.c jove_io.c jove_main.c jove_marks.c jove_misc.c jove_proc.c jove_re.c jove_screen.c jove_term.c jove_wind.c tune.c version.c
+jove_SOURCES = \
+	jove_buf.c \
+	jove_c.c \
+	jove_delete.c \
+	jove_disp.c \
+	jove_draw.c \
+	jove_extend.c \
+	jove_funcs.c \
+	jove_insert.c \
+	jove_io.c \
+	jove_main.c \
+	jove_marks.c \
+	jove_misc.c \
+	jove_proc.c \
+	jove_re.c \
+	jove_screen.c \
+	jove_term.c \
+	jove_wind.c \
+	tune.c \
+	version.c
+
 jove_LDADD = @CURSES@
 findcom_SOURCES = findcom.c tune.c
 
@@ -26,4 +46,8 @@ install-data-local:
 	$(INSTALL_DATA) $(srcdir)/describe.com.1 $(libdir)/describe.com
 	$(INSTALL_DATA) $(srcdir)/teach-jove.1 $(libdir)/teach-jove
 
-EXTRA_DIST = describe.com.1 teach-jove.1 jove_tune.c teach-jove.sh
+EXTRA_DIST = \
+	describe.com.1 \
+	jove_tune.c \
+	teach-jove.1 \
+	teach-jove.sh

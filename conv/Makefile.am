@@ -1,6 +1,42 @@
 # $Id$
 
-bin_PROGRAMS = asc2g g2asc conv-vg2g pix2asc asc2pix euclid-g g-euclid euclid_format euclid_unformat tankill-g g-tankill viewpoint-g dxf-g g-nmg g-euclid1 fast4-g proe-g g-nff asc-nmg nmg-rib g-vrml g-x3d g-acad cy-g nastran-g g-wave g-stl nmg-bot g-shell.rect stl-g poly-bot dbupgrade enf-g bot_shell-vtk g-dxf ply-g
+bin_PROGRAMS = \
+	asc-nmg \
+	asc2g \
+	asc2pix \
+	bot_shell-vtk \
+	conv-vg2g \
+	cy-g \
+	dbupgrade \
+	dxf-g \
+	enf-g \
+	euclid-g \
+	euclid_format \
+	euclid_unformat \
+	fast4-g \
+	g-acad \
+	g-dxf \
+	g-euclid \
+	g-euclid1 \
+	g-nff \
+	g-nmg \
+	g-shell.rect \
+	g-stl \
+	g-tankill \
+	g-vrml \
+	g-wave \
+	g-x3d \
+	g2asc \
+	nastran-g \
+	nmg-bot \
+	nmg-rib \
+	pix2asc \
+	ply-g
+	poly-bot \
+	proe-g \
+	stl-g \
+	tankill-g \
+	viewpoint-g \
 
 asc2g_LDADD = @WDB@ @RT@ 
 asc_nmg_LDADD = @WDB@ @RT@ 
@@ -73,5 +109,39 @@ tankill_g_SOURCES = tankill-g.c
 viewpoint_g_SOURCES = viewpoint-g.c 
 
 
-dist_man_MANS = asc-nmg.1 bot_shell-vtk.1 conv-vg2g.1 cy-g.1 dbclean.1 dxf-g.1 enf-g.1 euclid-g.1 fast4-g.1 g2asc.1 g-acad.1 g-dxf.1 g-euclid.1 g-nff.1 g-nmg.1 g-shell.rect.1 g-stl.1 g-tankill.1 g-vrml.1 g-wave.1 g-x3d.1 nastran-g.1 nmg-bot.1 nmg-rib.1 pix2asc.1 ply-g.1 poly-bot.1 proe-g.1 stl-g.1 tankill-g.1 viewpoint-g.1
-EXTRA_DIST = g-xxx_facets.c g-xxx.c
+dist_man_MANS = \
+	asc-nmg.1 \
+	bot_shell-vtk.1 \
+	conv-vg2g.1 \
+	cy-g.1 \
+	dbclean.1 \
+	dxf-g.1 \
+	enf-g.1 \
+	euclid-g.1 \
+	fast4-g.1 \
+	g-acad.1 \
+	g-dxf.1 \
+	g-euclid.1 \
+	g-nff.1 \
+	g-nmg.1 \
+	g-shell.rect.1 \
+	g-stl.1 \
+	g-tankill.1 \
+	g-vrml.1 \
+	g-wave.1 \
+	g-x3d.1 \
+	g2asc.1 \
+	nastran-g.1 \
+	nmg-bot.1 \
+	nmg-rib.1 \
+	pix2asc.1 \
+	ply-g.1 \
+	poly-bot.1 \
+	proe-g.1 \
+	stl-g.1 \
+	tankill-g.1 \
+	viewpoint-g.1
+
+EXTRA_DIST = \
+	g-xxx_facets.c \
+	g-xxx.c

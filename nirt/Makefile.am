@@ -2,7 +2,17 @@
 
 bin_PROGRAMS = nirt
 
-nirt_srcs = nirt.c command.c conversion.c if.c interact.c bsphere.c read_mat.c str_manip.c parse_fmt.c
+nirt_srcs = \
+	nirt.c \
+	command.c \
+	conversion.c \
+	if.c \
+	interact.c \
+	bsphere.c \
+	read_mat.c \
+	str_manip.c \
+	parse_fmt.c
+
 nirt_SOURCES = $(nirt_srcs) vers.c
 noinst_HEADERS = nirt.h usrfmt.h
 nirt_LDADD = @RT@ @BN@ @FB@

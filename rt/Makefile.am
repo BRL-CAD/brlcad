@@ -1,9 +1,68 @@
 # $Id$
-bin_PROGRAMS = rt rtrad rtpp rtray rtshot rtwalk rtcheck rtg3 rtcell rtxray rthide rtfrac rtrange rtregis rtscale rtsil rtweight rtedge rt_simple rtarea rt_bot_faces
 
-ALLSRCS = do.c libfb-dummy.c main.c opt.c read-rtlog.c rt_simple.c rtexample.c rtregis.c rtscale.c rtshot.c rtwalk.c sh_tcl.c view.c viewarea.c viewcell.c viewcheck.c viewdir.c viewdummy.c viewedge.c viewfrac.c viewg3.c viewhide.c viewpp.c viewrad.c viewrange.c viewray.c viewscat.c viewsil.c viewweight.c viewxray.c worker.c
+bin_PROGRAMS = \
+	rt \
+	rt_bot_faces \
+	rt_simple \
+	rtarea \
+	rtcell \
+	rtcheck \
+	rtedge \
+	rtfrac \
+	rtg3 \
+	rthide \
+	rtpp \
+	rtrad \
+	rtrange \
+	rtray \
+	rtregis \
+	rtscale \
+	rtshot \
+	rtsil \
+	rtwalk \
+	rtweight \
+	rtxray
 
-COMMON = main.c opt.c do.c worker.c vers.c
+ALLSRCS = \
+	do.c \
+	libfb-dummy.c \
+	main.c \
+	opt.c \
+	read-rtlog.c \
+	rt_simple.c \
+	rtexample.c \
+	rtregis.c \
+	rtscale.c \
+	rtshot.c \
+	rtwalk.c \
+	sh_tcl.c \
+	view.c \
+	viewarea.c \
+	viewcell.c \
+	viewcheck.c \
+	viewdir.c \
+	viewdummy.c \
+	viewedge.c \
+	viewfrac.c \
+	viewg3.c \
+	viewhide.c \
+	viewpp.c \
+	viewrad.c \
+	viewrange.c \
+	viewray.c \
+	viewscat.c \
+	viewsil.c \
+	viewweight.c \
+	viewxray.c \
+	worker.c
+
+COMMON = \
+	do.c \
+	main.c \
+	opt.c \
+	vers.c \
+	worker.c
+
 rt_SOURCES = $(COMMON) view.c
 rt_simple_SOURCES = rt_simple.c
 rtarea_SOURCES = $(COMMON) viewarea.c
@@ -24,15 +83,41 @@ rtsil_SOURCES = $(COMMON) viewsil.c
 rtwalk_SOURCES = rtwalk.c
 rtweight_SOURCES = $(COMMON) viewweight.c
 rtxray_SOURCES = $(COMMON) viewxray.c
-rt_bot_faces_SOURCES = rt_bot_faces_vers.c view_bot_faces.c main.c opt.c do.c worker.c
+rt_bot_faces_SOURCES = \
+	rt_bot_faces_vers.c \
+	view_bot_faces.c \
+	main.c \
+	opt.c \
+	do.c \
+	worker.c
 
-noinst_HEADERS = ext.h light.h rad.h scat.h
+noinst_HEADERS = \
+	ext.h \
+	light.h \
+	rad.h \
+	scat.h
 
 AM_CFLAGS = -I$(top_srcdir)/h
 
 LDADD = @RT@ @FB@ @OPTICAL@
 
-man_MANS = rt.1 rt_bot_faces.1 rtcheck.1 rtedge.1 rtg3.1 rthide.1 rtpp.1 rtrange.1 rtray.1 rtregis.1 rtscale.1 rtshot.1 rtwalk.1 rtweight.1 rtxray.1
+man_MANS = \
+	rt.1 \
+	rt_bot_faces.1 \
+	rtcheck.1 \
+	rtedge.1 \
+	rtg3.1 \
+	rthide.1 \
+	rtpp.1 \
+	rtrange.1 \
+	rtray.1 \
+	rtregis.1 \
+	rtscale.1 \
+	rtshot.1 \
+	rtwalk.1 \
+	rtweight.1 \
+	rtxray.1
+
 EXTRA_DIST=$(man_MANS) $(ALLSRCS)
 
 BUILT_SOURCES = vers.c rt_bot_faces_vers.c

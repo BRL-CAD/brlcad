@@ -1,6 +1,14 @@
 # $Id$
 
-bin_PROGRAMS = firpass secpass shapefact all_sf display ir-X ir-sgi irdisp
+bin_PROGRAMS = \
+	all_sf \
+	display \
+	firpass \
+	ir-X \
+	ir-sgi \
+	irdisp \
+	secpass \
+	shapefact
 
 all_sf_LDADD = @RT@ @BN@
 all_sf_SOURCES = all_sf.c
@@ -29,5 +37,18 @@ shapefact_LDADD = @RT@ @BN@
 shapefact_SOURCES = shapefact.c
 
 
-man_MANS = all_sf.1 display.1 firpass.1 irdisp.1 ir-sgi.1 ir-X.1 pictsgi.1 pictx.1 secpass.1 see.1 see2.1 shapefact.1
+man_MANS = \
+	all_sf.1 \
+	display.1 \
+	firpass.1 \
+	irdisp.1 \
+	ir-sgi.1 \
+	ir-X.1 \
+	pictsgi.1 \
+	pictx.1 \
+	secpass.1 \
+	see.1 \
+	see2.1 \
+	shapefact.1
+
 EXTRA_DIST = $(man_MANS)
