@@ -1745,28 +1745,39 @@ int		b;
 
 	size_display(fr);
 
-	x = a % fb_getwidth(fbp);
-	y = (a / fb_getwidth(fbp)) % fb_getheight(fbp);
+	x = a % fr->fr_width;
+	y = (a / fr->fr_width) % fr->fr_height;
 	pixels_todo = b - a;
 
-	/* Simple case */
+	/* Simple case -- use multiple scanline writes */
 	if( fr->fr_width == fb_getwidth(fbp) )  {
 		fb_write( fbp, x, y,
 			pp, pixels_todo );
 		return;
 	}
 
-	/* Hard case -- clip drawn region to the framebuffer */
+	/*
+	 *  Hard case -- clip drawn region to the framebuffer.
+	 *  The image may be larger than the framebuffer, in which
+	 *  case the excess is discarded.
+	 *  The image may be smaller than the actual framebuffer size,
+	 *  in which case libfb is probably providing zooming.
+	 */
 	offset = 0;
 	while( pixels_todo > 0 )  {
-		write_len = fb_getwidth(fbp) - x;
+		if( fr->fr_width < fb_getwidth(fbp) )  {
+			/* zoomed case */
+			write_len = fr->fr_width - x;
+		} else {
+			/* clipping case */
+			write_len = fb_getwidth(fbp) - x;
+		}
 		len_to_eol = fr->fr_width - x;
 		if( write_len > pixels_todo )  write_len = pixels_todo;
 		if( write_len > 0 )
 			fb_write( fbp, x, y, pp+offset, write_len );
 		offset += len_to_eol;
-		a += len_to_eol;
-		y = (y+1) % fb_getheight(fbp);
+		y = (y+1) % fr->fr_height;
 		x = 0;
 		pixels_todo -= len_to_eol;
 	}
@@ -1810,6 +1821,7 @@ register struct frame *fr;
 		fb_write( fbp, 0, y, line, w );
 		if( cnt != 1 )  break;
 	}
+	rt_free( line, "scanline" );
 }
 
 /*
@@ -1819,11 +1831,30 @@ int
 init_fb(name)
 char *name;
 {
+	register int xx, yy;
+
 	if( fbp != FBIO_NULL )  fb_close(fbp);
-	if( (fbp = fb_open( name, width, height )) == FBIO_NULL )  {
+
+#if 1
+	/* Large-screen version, for demonstrations */
+	xx = yy = 1024;
+#else
+	/* one-to-one version */
+	xx = width;
+	yy = height;
+#endif
+	while( xx < width )
+		xx <<= 1;
+	while( yy < width )
+		yy <<= 1;
+	if( (fbp = fb_open( framebuffer, xx, yy )) == FBIO_NULL )  {
 		rt_log("fb_open %d,%d failed\n", width, height);
 		return(-1);
 	}
+	/* ALERT:  The library wants zoom before window! */
+	fb_zoom( fbp, fb_getwidth(fbp)/width, fb_getheight(fbp)/height );
+	fb_window( fbp, width/2, height/2 );
+
 	fb_wmap( fbp, COLORMAP_NULL );	/* Standard map: linear */
 	cur_fbwidth = 0;
 	return(0);
