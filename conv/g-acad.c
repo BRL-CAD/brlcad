@@ -205,8 +205,7 @@ char	*argv[];
 		perror(argv[0]);
 		exit(1);
 	}
-	db_scan(dbip, (int (*)())db_diradd, 1, NULL);
-
+	db_dirbuild( dbip );
 
 	BN_CK_TOL(tree_state.ts_tol);
 	RT_CK_TESS_TOL(tree_state.ts_ttol);

@@ -3325,7 +3325,7 @@ char *output_file;
 	if( debug )
 		bu_log( "Rescanning file\n" );
 
-	db_scan(dbip, (int (*)())db_diradd, 1, NULL);
+	db_dirbuild( dbip );
 
 	if( debug )
 		bu_log( "looking up 'all'\n" );
@@ -3629,7 +3629,7 @@ char *output_file;
 	if( debug )
 		bu_log( "Rescanning file\n" );
 
-	db_scan(dbip, (int (*)())db_diradd, 1, NULL);
+	db_dirbuild( dbip );
 
 	bu_ptbl_reset( &stack );
 

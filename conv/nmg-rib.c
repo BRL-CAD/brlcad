@@ -194,7 +194,7 @@ char *av[];
 
 	if (++arg_index >= ac) usage("No NMG specified\n");
 
-	db_scan(dbip, (int (*)())db_diradd, 1, NULL);
+	db_dirbuild( dbip );
 
 	/* process each remaining argument */
 	for ( ; arg_index < ac ; arg_index++ ) {

@@ -510,7 +510,7 @@ char	*argv[];
 		perror(argv[0]);
 		exit(1);
 	}
-	db_scan(dbip, (int (*)())db_diradd, 1, NULL);
+	db_dirbuild( dbip );
 
 	if ((fp_out = wdb_fopen( out_file )) == NULL)
 	{

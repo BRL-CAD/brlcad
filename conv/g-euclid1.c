@@ -510,7 +510,7 @@ char	*argv[];
 		perror(argv[0]);
 		exit(1);
 	}
-	db_scan(dbip, (int (*)())db_diradd, 1, NULL);
+	db_dirbuild( dbip );
 	optind++;
 
 	/* Walk indicated tree(s).  Each region will be output separately */

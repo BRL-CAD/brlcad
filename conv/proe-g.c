@@ -1153,7 +1153,8 @@ Rm_nulls()
 		}
 	}
 
-	db_scan(dbip, (int (*)())db_diradd, 1, NULL);
+	db_dirbuild( dbip );
+
 	for( i=0 ; i<RT_DBNHASH ; i++ )
 	{
 		struct directory *dp;
