@@ -605,8 +605,9 @@ int flag;
 
 		path[pathpos] = dp;
 		comb = (struct rt_comb_internal *)intern.idb_ptr;
-		db_tree_funcleaf( dbip, comb, comb->tree, Do_trace,
-			(genptr_t)&pathpos, (genptr_t)old_xlate, (genptr_t)&flag );
+		if( comb->tree )
+			db_tree_funcleaf( dbip, comb, comb->tree, Do_trace,
+				(genptr_t)&pathpos, (genptr_t)old_xlate, (genptr_t)&flag );
 		rt_comb_ifree( &intern );
 		return;
 	}
@@ -1611,7 +1612,9 @@ char **argv;
 		count = 0;
 
 		start_catching_output(&tmp_vls);
-		db_tree_funcleaf( dbip, comb, comb->tree, Do_showmats, (genptr_t)acc_matrix, (genptr_t)&count, (genptr_t)child );
+		if( comb->tree )
+			db_tree_funcleaf( dbip, comb, comb->tree, Do_showmats,
+				(genptr_t)acc_matrix, (genptr_t)&count, (genptr_t)child );
 		rt_comb_ifree( &intern );
 		stop_catching_output(&tmp_vls);
 		Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
