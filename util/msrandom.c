@@ -22,10 +22,11 @@
 #include "machine.h"
 #include "externs.h"		/* For atoi */
 #include "vmath.h"
-#include "raytrace.h"
-#include "msr.h"
-struct msr_gauss *gp;
-struct msr_unif *up;
+#include "bu.h"
+#include "bn.h"
+
+struct bn_gauss *gp;
+struct bn_unif *up;
 
 main(argc,argv)
 int argc;
@@ -97,18 +98,18 @@ char **argv;
 		tmp = (double)high - center;
 		if (tmp<0) tmp = -tmp;
 		if (tmp > max) max = tmp;
-		gp = msr_gauss_init(seed);
+		gp = bn_gauss_init(seed, 0);
 
-		tmp = MSR_GAUSS_DOUBLE(gp)/3.0;
+		tmp = BN_GAUSS_DOUBLE(gp)/3.0;
 		tmp = 0.5 + center + max*tmp;
 		if (tmp < low) tmp = low;
 		if (tmp > high) tmp = high;
 		fprintf(stdout,"%d\n", (int)tmp);
 	} else {
 		double tmp;
-		up = msr_unif_init(seed);
+		up = bn_unif_init(seed, 0);
 		tmp = high-low + 1.0;
-		tmp*=MSR_UNIF_DOUBLE(up)+0.5;
+		tmp*=BN_UNIF_DOUBLE(up)+0.5;
 		fprintf(stdout,"%d\n", low +(int)tmp);
 	}
 }
