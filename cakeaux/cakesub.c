@@ -87,7 +87,6 @@ nextword:
 		cp += strlen(argv[1]);
 		argc--; argv++;
 	}
-fprintf(stderr,"old='%s', new='%s'\n", old, new);
 
 	sep = "";
 	while (argc > 1)
