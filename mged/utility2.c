@@ -44,7 +44,7 @@ void		push();
 
 extern struct rt_tol	mged_tol;	/* from ged.c */
 
-BU_EXTERN( struct shell *nmg_dup_shell, ( struct shell *s, long ***trans_tbl ) );
+BU_EXTERN( struct shell *nmg_dup_shell, ( struct shell *s, long ***trans_tbl, struct bn_tol *tol ) );
 BU_EXTERN( struct rt_i *rt_new_rti, (struct db_i *dbip) );
 
 int
@@ -88,7 +88,7 @@ char **argv;
 	{
 		for( BU_LIST_FOR( s, shell, &r->s_hd ) )
 		{
-			s_tmp = nmg_dup_shell( s, &trans_tbl );
+			s_tmp = nmg_dup_shell( s, &trans_tbl, &mged_tol );
 			bu_free( (genptr_t)trans_tbl, "trans_tbl" );
 
 			m_tmp = nmg_mmr();

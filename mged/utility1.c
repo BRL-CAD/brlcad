@@ -1117,6 +1117,12 @@ char	**argv;
 		return TCL_ERROR;
 	}
 
+	if( nmg_intern.idb_type != ID_NMG )
+	{
+		Tcl_AppendResult(interp, nmg_solid_name, " is not an NMG solid!", (char *)NULL );
+		return TCL_ERROR;
+	}
+
 	m = (struct model *)nmg_intern.idb_ptr;
 	NMG_CK_MODEL(m);
 
@@ -1129,6 +1135,9 @@ char	**argv;
 	{
 		struct shell *s;
 
+		if( r == tmp_r )
+			continue;
+
 		for( BU_LIST_FOR( s, shell, &r->s_hd ) )
 		{
 			struct shell *tmp_s;
@@ -1136,7 +1145,7 @@ char	**argv;
 			long *trans_tbl;
 
 			/* duplicate shell */
-			tmp_s = (struct shell *)nmg_dup_shell( s, &trans_tbl );
+			tmp_s = (struct shell *)nmg_dup_shell( s, &trans_tbl, &mged_tol );
 			bu_free( (char *)trans_tbl, "trans_tbl" );
 
 			 /* move duplicate to temp region */
@@ -1150,6 +1159,7 @@ char	**argv;
 			while( BU_LIST_NOT_HEAD( &decomp_s->l, &tmp_r->s_hd ) )
 			{
 				struct shell *next_s;
+				struct shell *new_s;
 				struct rt_db_internal new_intern;
 				struct directory *new_dp;
 				struct nmgregion *decomp_r;
@@ -1162,11 +1172,11 @@ char	**argv;
 				kill_s = BU_LIST_FIRST( shell, &decomp_r->s_hd );
 				(void)nmg_ks( kill_s );
 				nmg_shell_a( decomp_s, &mged_tol );
-				(void)nmg_mv_shell_to_region( decomp_s, decomp_r );
+				new_s = (struct shell *)nmg_dup_shell( decomp_s, &trans_tbl, &mged_tol );
+				(void)nmg_mv_shell_to_region( new_s, decomp_r );
 
 				/* move this region to a different model */
-				new_m = nmg_mm();
-				(void)nmg_mv_region_to_model( decomp_r, new_m );
+				new_m = (struct model *)nmg_mk_model_from_region( decomp_r, 1 );
 				(void)nmg_rebound( new_m, &mged_tol );
 
 				/* create name for this shell */
@@ -1204,10 +1214,13 @@ char	**argv;
 					return TCL_ERROR;
 				}
 
+				(void)nmg_ks( decomp_s );
 				decomp_s = next_s;
 			}
 		}
 	}
+
+	rt_db_free_internal( &nmg_intern );
 
 	(void)signal( SIGINT, SIG_IGN );
 	return TCL_OK;
