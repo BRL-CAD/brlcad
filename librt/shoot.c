@@ -60,7 +60,7 @@ char rt_CopyRight_Notice[] = "@(#) Copyright (C) 1985,1991,2000 by the United St
 
 struct resource rt_uniresource;		/* Resources for uniprocessor */
 
-extern void	rt_plot_cell(const union cutter *cutp, struct rt_shootray_status *ssp, struct bu_list *waiting_segs_hd, struct rt_i *rtip);		/* at end of file */
+extern void	rt_plot_cell(const union cutter *cutp, const struct rt_shootray_status *ssp, struct bu_list *waiting_segs_hd, struct rt_i *rtip);		/* at end of file */
 		
 #define V3PT_DEPARTING_RPP(_step, _lo, _hi, _pt ) \
 		PT_DEPARTING_RPP(_step, _lo, _hi, (_pt)[X], (_pt)[Y], (_pt)[Z] )
@@ -2022,7 +2022,7 @@ rt_3cont_raydist(FILE *fp, struct xray *rayp, double dist)
 		rt_plot_cell( cutp, &ss, &(waiting_segs.l), rtip);
  */
 void
-rt_plot_cell(const union cutter *cutp, struct rt_shootray_status *ssp, struct bu_list *waiting_segs_hd, struct rt_i *rtip)
+rt_plot_cell(const union cutter *cutp, const struct rt_shootray_status *ssp, struct bu_list *waiting_segs_hd, struct rt_i *rtip)
 {
 	char		buf[128];
 	static int	fnum = 0;

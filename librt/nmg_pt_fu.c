@@ -29,10 +29,6 @@
 #include "raytrace.h"
 #include "plot3.h"
 
-/*
-NOTES:
-	Changed near to near1 for win32 compatibility 
-*/
 
 /* vertex/edge distance 
  * Each loop geometry element (edge/vertex) has one of these computed.
@@ -813,7 +809,7 @@ nmg_class_pt_eu(struct fpi *fpi, struct edgeuse *eu, struct edge_info *edge_list
  *
  */
 static void
-make_near_list(struct edge_info *edge_list, struct bu_list *near)
+make_near_list(struct edge_info *edge_list, struct bu_list *near1)
 {
 	struct edge_info *ei;
 	struct edge_info *ei_p;
