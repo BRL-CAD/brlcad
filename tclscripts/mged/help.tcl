@@ -69,7 +69,7 @@ set help_data(eye_pt)		{{mx my mz}	{set eye point to given model coordinates (in
 set help_data(e_muves)		{{MUVES_component_1 MUVES_component2 ...}	{display listed MUVES components/systems}}
 set help_data(facedef)		{{####}	{define new face for an arb}}
 set help_data(facetize)		{{[-tT] [-P#] new_obj old_obj(s)}	{convert objects to faceted NMG objects at current tol}}
-set help_data(find)		{{<objects>}	{find all references to objects}}
+set help_data(find)		{{[-s] <objects>}	{find all references to objects}}
 set help_data(fracture)		{{NMGsolid [prefix]}	{fracture an NMG solid into many NMG solids, each containing one face\n}}
 set help_data(g)		{{groupname <objects>}	{group objects}}
 set help_data(garbage_collect)	{{}	{eliminate unused space in database file}}
@@ -233,7 +233,7 @@ set help_data(vrot_center)	{{v|m x y z}	{set center point of viewpoint rotation,
 set help_data(wcodes)		{{filename object(s)}	{write region ident codes to filename}}
 set help_data(whatid)		{{region_name}	{display ident number for region}}
 set help_data(whichair)		{{air_codes(s)}	{lists all regions with given air code}}
-set help_data(whichid)		{{ident(s)}	{lists all regions with given ident code}}
+set help_data(whichid)		{{[-s] ident(s)}	{lists all regions with given ident code}}
 set help_data(which_shader)	{{Shader(s)}	{lists all combinations using the given shaders}}
 set help_data(who)		{{[r(eal)|p(hony)|b(oth)]}	{list the top-level objects currently being displayed}}
 set help_data(winset)		{{[pathname]}	{sets the current display manager to pathname}}
