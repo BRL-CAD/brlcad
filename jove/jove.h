@@ -376,7 +376,6 @@ extern char
 	*filename(),
 	*getblock(),
 	*sprintf(),
-	*strcpy(),
 	*IOerr(),
 	*bufmod(),
 	*index(),
