@@ -1946,15 +1946,22 @@ char	**argv;
 		VSET( extrude_ip->v_vec, 0.0, 1.0, 0.0 );
 		VSET( extrude_ip->h, 0.0, 0.0, view_state->vs_Viewscale );
 		extrude_ip->keypoint = 0;
-		strcpy( extrude_ip->sketch_name, "sketch_test" );
+		av[0] = "make_name";
+		av[1] = "skt_";
+		Tcl_ResetResult( interp );
+		f_make_name( (ClientData)NULL, interp, 2, av );
+		strcpy( extrude_ip->sketch_name, interp->result );
+		Tcl_ResetResult( interp );
 		strcpy( extrude_ip->curve_name, "curve0" );
 		extrude_ip->skt = (struct rt_sketch_internal *)NULL;
 		av[0] = "make";
-		av[1] = "sketch_test";
+		av[1] = extrude_ip->sketch_name;
 		av[2] = "sketch";
 		f_make( clientData, interp, 3, av );
 	} else if( strcmp( argv[2], "sketch" ) == 0 ) {
 		struct line_seg *lsg;
+		struct carc_seg *csg;
+		struct nurb_seg *nsg;
 
 		internal.idb_type = ID_SKETCH;
 		internal.idb_meth = &rt_functab[ID_SKETCH];
@@ -1964,54 +1971,84 @@ char	**argv;
 		VSET( sketch_ip->V, -view_state->vs_toViewcenter[MDX] , -view_state->vs_toViewcenter[MDY] , -view_state->vs_toViewcenter[MDZ]-view_state->vs_Viewscale*0.5 );
 		VSET( sketch_ip->u_vec, 1.0, 0.0, 0.0 );
 		VSET( sketch_ip->v_vec, 0.0, 1.0, 0.0 );
-		sketch_ip->vert_count = 4;
+#if 1
+		sketch_ip->vert_count = 5;
 		sketch_ip->verts = (point2d_t *)bu_calloc( sketch_ip->vert_count, sizeof( point2d_t ), "sketch_ip->verts" );
 		sketch_ip->verts[0][0] = -view_state->vs_Viewscale;
-		sketch_ip->verts[0][1] = -view_state->vs_Viewscale;
-		sketch_ip->verts[1][0] = view_state->vs_Viewscale;
+		sketch_ip->verts[0][1] = -view_state->vs_Viewscale*0.8;
+		sketch_ip->verts[1][0] = -view_state->vs_Viewscale*0.8;
 		sketch_ip->verts[1][1] = -view_state->vs_Viewscale;
-		sketch_ip->verts[2][0] = -view_state->vs_Viewscale*0.5;
-		sketch_ip->verts[2][1] = -view_state->vs_Viewscale*0.5;
-		sketch_ip->verts[3][0] = -view_state->vs_Viewscale;
-		sketch_ip->verts[3][1] = view_state->vs_Viewscale;
+		sketch_ip->verts[2][0] = view_state->vs_Viewscale;
+		sketch_ip->verts[2][1] = -view_state->vs_Viewscale;
+		sketch_ip->verts[3][0] = -view_state->vs_Viewscale*0.5;
+		sketch_ip->verts[3][1] = -view_state->vs_Viewscale*0.5;
+		sketch_ip->verts[4][0] = -view_state->vs_Viewscale;
+		sketch_ip->verts[4][1] = view_state->vs_Viewscale;
 		sketch_ip->curve_count = 1;
 		sketch_ip->curves = (struct curve *)bu_calloc( sketch_ip->curve_count, sizeof( struct curve ), "sketch_ip->curves" );
 		strcpy( sketch_ip->curves[0].crv_name, "curve0" );
-		sketch_ip->curves[0].seg_count = 4;
+		sketch_ip->curves[0].seg_count = 2;
 		sketch_ip->curves[0].reverse = (int *)bu_calloc( sketch_ip->curves[0].seg_count, sizeof( int ), "sketch_ip->curves[0].reverse" );
 		sketch_ip->curves[0].segments = (genptr_t *)bu_calloc( sketch_ip->curves[0].seg_count, sizeof( genptr_t ), "sketch_ip->curves[0].segments" );
 
-		lsg = (struct line_seg *)bu_calloc( 1, sizeof( struct line_seg ), "segments" );
-		sketch_ip->curves[0].segments[0] = (genptr_t)lsg;
-		lsg->magic = CURVE_LSEG_MAGIC;
-		lsg->start = 0;
-		lsg->end = 1;
-		lsg->curve_count = 1;
-		lsg->curves = &sketch_ip->curves;
+		csg = (struct carc_seg *)bu_calloc( 1, sizeof( struct carc_seg ), "segments" );
+		sketch_ip->curves[0].segments[0] = (genptr_t)csg;
+		csg->magic = CURVE_CARC_MAGIC;
+		csg->start = 0;
+		csg->end = 1;
+		csg->radius = view_state->vs_Viewscale * 0.2;
+		csg->orientation = 0;
+		csg->center_is_left = 1;
+		csg->curve_count = 1;
+		csg->curves = &sketch_ip->curves; 
 
-		lsg = (struct line_seg *)bu_calloc( 1, sizeof( struct line_seg ), "segments" );
-		sketch_ip->curves[0].segments[1] = (genptr_t)lsg;
-		lsg->magic = CURVE_LSEG_MAGIC;
-		lsg->start = 1;
-		lsg->end = 2;
-		lsg->curve_count = 1;
-		lsg->curves = &sketch_ip->curves;
+		nsg = (struct nurb_seg *)bu_calloc( 1, sizeof( struct nurb_seg ), "segments" );
+		sketch_ip->curves[0].segments[1] = (genptr_t)nsg;
+		nsg->magic = CURVE_NURB_MAGIC;
+		nsg->order = 3;
+		nsg->pt_type = RT_NURB_MAKE_PT_TYPE( 2, 1, 0 );
+		nsg->c_size = 5;
+		nsg->ctl_points = (int *)bu_malloc( nsg->c_size * sizeof( int ), "ctl_points" );
+		nsg->ctl_points[0] = 1;
+		nsg->ctl_points[1] = 2;
+		nsg->ctl_points[2] = 3;
+		nsg->ctl_points[3] = 4;
+		nsg->ctl_points[4] = 0;
+		nsg->weights = (fastf_t *)NULL;
+		nsg->k.k_size = nsg->order + nsg->c_size;
+		nsg->k.knots = bu_malloc( nsg->k.k_size*sizeof( fastf_t ), "knots" );
+		for( i=0 ; i<nsg->order ; i++ )
+			nsg->k.knots[i] = 0.0;
+		for( i=nsg->order ; i<=nsg->c_size ; i++ )
+			nsg->k.knots[i] = nsg->k.knots[i-1] + 1.0;
+		for( i=nsg->c_size+1 ; i<nsg->order + nsg->c_size ; i++ )
+			nsg->k.knots[i] = nsg->k.knots[i-1];
+		nsg->curve_count = 1;
+		nsg->curves = &sketch_ip->curves;
+#else
+		sketch_ip->vert_count = 2;
+		sketch_ip->verts = (point2d_t *)bu_calloc( sketch_ip->vert_count, sizeof( point2d_t ), "sketch_ip->verts" );
+		sketch_ip->verts[0][0] = 0.0;
+		sketch_ip->verts[0][1] = 0.0;
+		sketch_ip->verts[1][0] = view_state->vs_Viewscale*0.5;
+		sketch_ip->verts[1][1] = 0.0;
+		sketch_ip->curve_count = 1;
+		sketch_ip->curves = (struct curve *)bu_calloc( sketch_ip->curve_count, sizeof( struct curve ), "sketch_ip->curves" );
+		strcpy( sketch_ip->curves[0].crv_name, "curve0" );
+		sketch_ip->curves[0].seg_count = 1;
+		sketch_ip->curves[0].reverse = (int *)bu_calloc( sketch_ip->curves[0].seg_count, sizeof( int ), "sketch_ip->curves[0].reverse" );
+		sketch_ip->curves[0].segments = (genptr_t *)bu_calloc( sketch_ip->curves[0].seg_count, sizeof( genptr_t ), "sketch_ip->curves[0].segments" );
 
-		lsg = (struct line_seg *)bu_calloc( 1, sizeof( struct line_seg ), "segments" );
-		sketch_ip->curves[0].segments[2] = (genptr_t)lsg;
-		lsg->magic = CURVE_LSEG_MAGIC;
-		lsg->start = 2;
-		lsg->end = 3;
-		lsg->curve_count = 1;
-		lsg->curves = &sketch_ip->curves;
-
-		lsg = (struct line_seg *)bu_calloc( 1, sizeof( struct line_seg ), "segments" );
-		sketch_ip->curves[0].segments[3] = (genptr_t)lsg;
-		lsg->magic = CURVE_LSEG_MAGIC;
-		lsg->start = 3;
-		lsg->end = 0;
-		lsg->curve_count = 1;
-		lsg->curves = &sketch_ip->curves;
+		csg = (struct carc_seg *)bu_calloc( 1, sizeof( struct carc_seg ), "segments" );
+		sketch_ip->curves[0].segments[0] = (genptr_t)csg;
+		csg->magic = CURVE_CARC_MAGIC;
+		csg->start = 1;
+		csg->end = 0;
+		csg->radius = -1.0;
+		csg->orientation = 0;
+		csg->curve_count = 1;
+		csg->curves = &sketch_ip->curves;
+#endif
 	} else if( strcmp( argv[2], "ars" ) == 0 ||
 		   strcmp( argv[2], "poly" ) == 0 ||
 		   strcmp( argv[2], "ebm" ) == 0 ||
