@@ -396,7 +396,7 @@ struct cmd_list {
   struct dm_list *aim;        /* the drawing window being aimed at */
   struct mged_hist *cur_hist;
   struct rt_vls more_default;
-  char name[32];
+  struct rt_vls name;
 };
 
 /* defined in cmd.c */

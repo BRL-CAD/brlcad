@@ -214,7 +214,8 @@ char **argv;
 
 	bzero((void *)&head_cmd_list, sizeof(struct cmd_list));
 	RT_LIST_INIT(&head_cmd_list.l);
-	strcpy((char *)head_cmd_list.name, "mged");
+	rt_vls_init(&head_cmd_list.name);
+	rt_vls_strcpy(&head_cmd_list.name, "mged");
 	curr_cmd_list = &head_cmd_list;
 
 	bzero((void *)&head_dm_list, sizeof(struct dm_list));
@@ -1166,8 +1167,13 @@ vect_t view_pos;
   struct rt_vls cmd;
 
   rt_vls_init(&cmd);
+#if 1
+  rt_vls_printf(&cmd, "iknob aX %f; iknob aY %f\n",
+		-view_pos[X], -view_pos[Y]);
+#else
   rt_vls_printf(&cmd, "iknob aX %f; iknob aY %f; iknob aZ %f\n",
 		-view_pos[X], -view_pos[Y], -view_pos[Z]);
+#endif
   (void)cmdline(&cmd, FALSE);
   rt_vls_free(&cmd);
 #else
