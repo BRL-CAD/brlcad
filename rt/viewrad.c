@@ -51,8 +51,8 @@ int	numreflect = DEFAULTREFLECT;	/* max number of reflections */
 
 /* Viewing module specific "set" variables */
 struct structparse view_parse[] = {
-	"%d",	"maxreflect",	(stroff_t)&numreflect,			FUNC_NULL,
-	(char *)0,(char *)0,	(stroff_t)0,				FUNC_NULL
+	"%d",	"maxreflect",	&numreflect,		FUNC_NULL,
+	(char *)0,(char *)0,	0,			FUNC_NULL
 };
 
 void		dumpray();
