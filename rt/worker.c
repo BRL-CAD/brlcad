@@ -192,8 +192,13 @@ do_run( a, b )
 	}
 
 	/* Tally up the statistics */
-	for( cpu=0; cpu < npsw; cpu++ )
+	for( cpu=0; cpu < npsw; cpu++ )  {
+		if( resource[cpu].re_magic != RESOURCE_MAGIC )  {
+			rt_log("ERROR: CPU %d resources corrupted, statistics bad\n", cpu);
+			continue;
+		}
 		rt_add_res_stats( ap.a_rt_i, &resource[cpu] );
+	}
 	return;
 }
 
