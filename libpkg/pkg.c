@@ -98,7 +98,6 @@ int pkg_permport = 0;	/* TCP port that pkg_permserver() is listening on XXX */
 static struct pkg_conn *pkg_makeconn();
 static void pkg_errlog();
 static void pkg_perror();
-static int pkg_mread();
 static int pkg_dispatch();
 static int pkg_gethdr();
 
@@ -592,6 +591,7 @@ register struct pkg_conn *pc;
 	(void)free( (char *)pc );
 }
 
+#if 0
 /*
  *			P K G _ M R E A D
  *
@@ -630,6 +630,7 @@ int	n;
 
 	return((int)count);
 }
+#endif
 
 /*
  *  			P K G _ S E N D
@@ -784,8 +785,6 @@ register struct pkg_conn *pc;
 	static struct iovec cmdvec[3];
 #endif
 	static struct pkg_header hdr;
-	struct timeval tv;
-	long bits;
 	register int i;
 
 	PKG_CK(pc);
@@ -1582,9 +1581,8 @@ pkg_ck_debug()
 static void
 pkg_timestamp()
 {
-	long		now;
+	time_t		now;
 	struct tm	*tmp;
-	register char	*cp;
 
 	if( !pkg_debug )  return;
 	(void)time( &now );
@@ -1626,7 +1624,6 @@ int
 pkg_suckin(pc)
 register struct pkg_conn	*pc;
 {
-	int	waste;
 	int	avail;
 	int	got;
 	int	ret;
