@@ -211,7 +211,6 @@ static struct cmdtab cmdtab[] = {
 	"facedef", f_facedef,
 	"facetize", f_facetize,
 	"find", f_find,
-	"fix", f_fix,
 	"fracture", f_fracture,
 	"g", f_group,
 	"get_view", f_get_view,
