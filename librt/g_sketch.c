@@ -1385,7 +1385,6 @@ CONST char			*attr;
 		for( i=0 ; i<skt->curve_count ; i++ )
 		{
 			struct curve *crv;
-			int j;
 
 			crv = &skt->curves[i];
 			bu_vls_strcat( &vls, " {" );
@@ -1414,7 +1413,6 @@ CONST char			*attr;
 		for( i=0 ; i<skt->curve_count ; i++ )
 		{
 			struct curve *crv;
-			int j;
 
 			crv = &skt->curves[i];
 			if( curve_to_tcl_list( &vls, crv ) )
