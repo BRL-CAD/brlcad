@@ -47,7 +47,7 @@ register char **argv;
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "hics:w:n:" )) != EOF )  {
+	while ( (c = getopt( argc, argv, "hiF:s:w:n:" )) != EOF )  {
 		switch( c )  {
 		case 'h':
 			/* high-res */
