@@ -24,11 +24,11 @@ check_externs "_mged_attach _mged_tie _mged_view_ring"
 
 set mged_Priv(arb8) {arb8 arb7 arb6 arb5 arb4 rpp}
 set mged_Priv(cones) {rcc rec rhc rpc tec tgc trc}
-set mged_Priv(ellipses) {ehy ell ell1 epa sph}
+set mged_Priv(ellipsoids) {ehy ell ell1 epa sph}
 
 # grip is purposely not a part of the other_prims list or any
 # other prim list because it's not considered geometry
-set mged_Priv(other_prims) {ars dsp epa eto extrude half part pipe sketch tor}
+set mged_Priv(other_prims) {ars dsp eto extrude half part pipe sketch tor}
 
 # weak edit support for these primitives
 set mged_Priv(weak_prims) {bot nmg}
@@ -764,7 +764,7 @@ foreach ptype $mged_Priv(cones) {
 }
 
 # populate Ellipses menu
-foreach ptype $mged_Priv(ellipses) {
+foreach ptype $mged_Priv(ellipsoids) {
     .$id.menubar.create.ell add command -label "$ptype..."\
 	    -command "init_solid_create $id $ptype"
 
