@@ -51,7 +51,9 @@ int	numop = 0;		/* number of operations */
 int	op[256];		/* operations */
 double	val[256];		/* arguments to operations */
 unsigned char ibuf[BUFLEN];	/* input buffer */
-int mapbuf[256];		/* translation buffer/lookup table */
+
+#define MAPBUFLEN 256
+int mapbuf[MAPBUFLEN];		/* translation buffer/lookup table */
 
 
 get_args( argc, argv )
@@ -132,7 +134,7 @@ void mk_trans_tbl()
 	register double d;
 
 	/* create translation map */
-	for (j = 0; j < sizeof(mapbuf) ; ++j) {
+	for (j = 0; j < MAPBUFLEN ; ++j) {
 		d = j;
 		for (i=0 ; i < numop ; i++) {
 			switch (op[i]) {
