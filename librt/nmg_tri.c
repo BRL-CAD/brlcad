@@ -157,8 +157,6 @@ struct rt_list *tbl2d, *tlist;
 }
 
 static int flatten_debug=0;
-int tri_debug = 1;
-
 
 static struct pt2d *
 find_pt2d(tbl2d, vu)
@@ -488,7 +486,7 @@ struct pt2d *a, *b, *c;
 
 	angle = rt_angle_measure( bc, ab, pv );
 
-	if (tri_debug)
+	if (rt_g.NMG_debug tri_debug DEBUG_TRI)
 		rt_log("\tangle == %g\n", angle);
 
 	/* XXX this should be a toleranced comparison */
@@ -614,7 +612,7 @@ struct rt_list *tbl2d, *tlist;
 	struct edgeuse *eu;
 
 	NMG_CK_PT2D(pt);
-	if (tri_debug)
+	if (rt_g.NMG_debug tri_debug DEBUG_TRI)
 		rt_log( "%g %g is polygon start vertex\n",
 				pt->coord[X], pt->coord[Y]);
 
@@ -653,7 +651,7 @@ struct rt_list *tlist;
 	NMG_CK_PT2D(pt);
 	pnext = PT2D_NEXT(tbl2d, pt);
 	plast = PT2D_PREV(tbl2d, pt);
-	if (tri_debug) {
+	if (rt_g.NMG_debug tri_debug DEBUG_TRI) {
 		rt_log( "%g %g is polygon side vertex\n",
 			pt->coord[X], pt->coord[Y]);
 		rt_log( "%g %g -> %g %g -> %g %g\n",
@@ -736,7 +734,7 @@ struct rt_list *tbl2d, *tlist;
 	struct pt2d *pprev;
 
 	NMG_CK_PT2D(pt);
-	if (tri_debug)
+	if (rt_g.NMG_debug tri_debug DEBUG_TRI)
 		rt_log( "%g %g is polygon end vertex\n",
 			pt->coord[X], pt->coord[Y]);
 
@@ -798,7 +796,7 @@ struct rt_list *tlist, *tbl2d;
 	struct pt2d *e_pt, *next_pt;
 
 	NMG_CK_PT2D(pt);
-	if (tri_debug)
+	if (rt_g.NMG_debug tri_debug DEBUG_TRI)
 		rt_log( "%g %g is hole start vertex\n", 
 			pt->coord[X], pt->coord[Y]);
 
@@ -811,7 +809,7 @@ struct rt_list *tlist, *tbl2d;
 		 * the one we want.
 		 */
 		if (tp->bot) {
-			if (tri_debug)
+			if (rt_g.NMG_debug tri_debug DEBUG_TRI)
 				rt_log("Trapezoid completed... Skipping\n");
 			continue;
 		}
@@ -832,7 +830,7 @@ struct rt_list *tlist, *tbl2d;
 		VSUB2(ev, next_pt->coord, e_pt->coord);
 		VCROSS(n, ev, pv);
 		if (n[2] <= 0.0) {
-			if (tri_debug)
+			if (rt_g.NMG_debug tri_debug DEBUG_TRI)
 				rt_log("Continue #1\n");
 			continue;
 		}
@@ -844,7 +842,7 @@ struct rt_list *tlist, *tbl2d;
 		VSUB2(ev, next_pt->coord, e_pt->coord);
 		VCROSS(n, ev, pv);
 		if (n[2] <= 0.0) {
-			if (tri_debug)
+			if (rt_g.NMG_debug tri_debug DEBUG_TRI)
 				rt_log("Continue #2\n");
 			continue;
 		}
@@ -898,7 +896,7 @@ struct rt_list *tlist, *tbl2d;
 	struct trap *tp, *tpnext, *tpprev;
 
 	NMG_CK_PT2D(pt);
-	if (tri_debug)
+	if (rt_g.NMG_debug tri_debug DEBUG_TRI)
 		rt_log( "%g %g is hole end vertex\n",
 			pt->coord[X], pt->coord[Y]);
 
@@ -907,7 +905,7 @@ struct rt_list *tlist, *tbl2d;
 	euprev = RT_LIST_PLAST_CIRC(edgeuse, eunext);
 	tpnext = tpprev = (struct trap *)NULL;
 
-	if (tri_debug) {
+	if (rt_g.NMG_debug tri_debug DEBUG_TRI) {
 		print_2d_eu("eunext", eunext, tbl2d);
 		print_2d_eu("euprev", euprev, tbl2d);
 	}
@@ -918,23 +916,23 @@ struct rt_list *tlist, *tbl2d;
 		 * the one we want.
 		 */
 		NMG_CK_TRAP(tp);
-		if (tri_debug)
+		if (rt_g.NMG_debug tri_debug DEBUG_TRI)
 			print_trap(tp, tbl2d);
 
 		if (tp->bot) {
-			if (tri_debug)
+			if (rt_g.NMG_debug tri_debug DEBUG_TRI)
 				rt_log("Completed... Skipping\n");
 			continue;
 		}
 
 		if (tp->e_left == eunext || tp->e_right == eunext) {
-			if (tri_debug)
+			if (rt_g.NMG_debug tri_debug DEBUG_TRI)
 				rt_log("Found tpnext\n");
 			tpnext = tp;
 		}
 
 		if (tp->e_right == euprev || tp->e_left == euprev) {
-			if (tri_debug)
+			if (rt_g.NMG_debug tri_debug DEBUG_TRI)
 				rt_log("Found tpprev\n");
 			tpprev = tp;
 		}
@@ -1023,7 +1021,7 @@ struct vertexuse *vu_p;
 
 	/* if it's already mapped we're outta here! */
 	if (p = find_pt2d(tbl2d, vu_p)) {
-		if (tri_debug)
+		if (rt_g.NMG_debug tri_debug DEBUG_TRI)
 		    rt_log("%s %d map_new_vertexuse() vertexuse already mapped!\n",
 			__FILE__, __LINE__);
 		return;
@@ -1068,6 +1066,9 @@ vect_t dir;
 	double dot_min = 2.0;
 	double vu_dot;
 	vect_t eu_dir;
+	if (rt_g.NMG_debug tri_debug DEBUG_TRI)
+		rt_log("pick_edges(v:(%g %g %g) dir:(%g %g %g))\n",
+			V3ARGS(v->vg_p->coord), V3ARGS(dir));
 
 	/* Look at all the uses of this vertex, and find the uses
 	 * associated with an edgeuse in this faceuse.  
@@ -1084,8 +1085,15 @@ vect_t dir;
 		NMG_CK_VERTEX(vu->v_p);
 		NMG_CK_VERTEX_G(vu->v_p->vg_p);
 
+		if (vu->v_p != v)
+			rt_bomb("vertexuse does not acknoledge parents\n");
+
 		if (nmg_find_fu_of_vu(vu) != fu ||
-		    *vu->up.magic_p == NMG_LOOPUSE_MAGIC) continue;
+		    *vu->up.magic_p == NMG_LOOPUSE_MAGIC) {
+			if (rt_g.NMG_debug tri_debug DEBUG_TRI)
+				rt_log("skipping irrelevant vertexuse\n");
+			continue;
+		}
 
 		NMG_CK_EDGEUSE(vu->up.eu_p);
 
@@ -1098,10 +1106,11 @@ vect_t dir;
 		NMG_CK_VERTEX_G(vu_next->v_p->vg_p);
 		VSUB2(eu_dir, vu_next->v_p->vg_p->coord, vu->v_p->vg_p->coord);
 		VUNITIZE(eu_dir);
-		
+		if (rt_g.NMG_debug tri_debug DEBUG_TRI)
+			rt_log("checking forward edgeuse\n");
 		if (MAGSQ(eu_dir) >= tol->dist_sq) {
 			if ((vu_dot = VDOT(eu_dir, dir)) > dot_max) {
-				if (tri_debug) {
+				if (rt_g.NMG_debug tri_debug DEBUG_TRI) {
 					rt_log("\teu_dir %g %g %g\n", eu_dir[0], eu_dir[1], eu_dir[2]);
 					rt_log("\tnew_last/max 0x%08x %g %g %g -> %g %g %g vdot %g\n",
 						vu,
@@ -1114,7 +1123,7 @@ vect_t dir;
 				*max_dir = 1;
 			}
 			if (vu_dot < dot_min) {
-				if (tri_debug) {
+				if (rt_g.NMG_debug tri_debug DEBUG_TRI) {
 					rt_log("\teu_dir %g %g %g\n", eu_dir[0], eu_dir[1], eu_dir[2]);
 					rt_log("\tnew_first/min 0x%08x %g %g %g -> %g %g %g vdot %g\n",
 						vu, 
@@ -1128,6 +1137,9 @@ vect_t dir;
 				*min_dir = 1;
 			}
 		}
+
+		if (rt_g.NMG_debug tri_debug DEBUG_TRI)
+			rt_log("checking reverse edgeuse\n");
 
 		/* compute/compare vu/prev_eu vector w/ ray vector */
 		eu_last = RT_LIST_PLAST_CIRC(edgeuse, vu->up.eu_p);
@@ -1143,7 +1155,7 @@ vect_t dir;
 		VUNITIZE(eu_dir);
 		if (MAGSQ(eu_dir) >= tol->dist_sq) {
 			if ((vu_dot = VDOT(eu_dir, dir)) > dot_max) {
-				if (tri_debug) {
+				if (rt_g.NMG_debug tri_debug DEBUG_TRI) {
 					rt_log("\teu_dir %g %g %g\n", eu_dir[0], eu_dir[1], eu_dir[2]);
 					rt_log("\tnew_max 0x%08x %g %g %g <- %g %g %g vdot %g\n",
 						vu, 
@@ -1156,7 +1168,7 @@ vect_t dir;
 				*max_dir = -1;
 			}
 			if (vu_dot < dot_min) {
-				if (tri_debug) {
+				if (rt_g.NMG_debug tri_debug DEBUG_TRI) {
 					rt_log("\teu_dir %g %g %g\n", eu_dir[0], eu_dir[1], eu_dir[2]);
 					rt_log("\tnew_min 0x%08x %g %g %g <- %g %g %g vdot %g\n",
 						vu,
@@ -1188,6 +1200,10 @@ vect_t dir;
 	double dot_limit;
 	double euleft_dot;
 	vect_t left, eu_vect;
+
+	if (rt_g.NMG_debug tri_debug DEBUG_TRI)
+		rt_log("pick_eu(%g %g %g  <-> %g %g %g,   %g %g %g)\n",
+			V3ARGS(eu_p->vu_p->v_p->vg_p
 
 	if (find_max) dot_limit = -2.0;
 	else dot_limit = 2.0;
@@ -1272,6 +1288,8 @@ struct rt_tol	*tol;
 	int max_dir, min_dir;	/* 1: forward -1 reverse */
 	struct edgeuse *eu_max, *eu_min, *eu_p;
 
+	rt_g.debug = 1;
+
 	NMG_CK_VERTEX(v);
 	NMG_CK_FACEUSE(fu);
 	if (first_vu == (struct vertexuse **)(NULL)) {
@@ -1283,10 +1301,14 @@ struct rt_tol	*tol;
 		rt_bomb("terminating\n");
 	}
 
+	if (rt_g.NMG_debug tri_debug DEBUG_TRI)
+		rt_log("nmg_find_first(v:(%g %g %g) dir:(%g %g %g))\n",
+			V3ARGS(v->vg_p->coord), V3ARGS(dir));
+
 	VUNITIZE(dir);
 
 	/* go find the edges which are "closest" to the direction vector */
-	pick_edges(v, &vu_max, &vu_min, fu, &max_dir, &min_dir, dir);
+	pick_edges(v, &vu_max, &vu_min, fu, &max_dir, &min_dir, tol, dir);
 
 
 	/* Now we know which 2 edges are most important to look at.
@@ -1305,20 +1327,41 @@ struct rt_tol	*tol;
 
 
 	/* get an edgeuse of the proper edge */
-	if (max_dir == -1) {
+	NMG_CK_VERTEXUSE(vu_max);
+	switch (max_dir) {
+	case -1:
 		eu_p = RT_LIST_PLAST_CIRC(edgeuse, vu_max->up.eu_p);
 		vu_max = eu_p->vu_p;
-	} else if (max_dir != 1)
+		NMG_CK_VERTEXUSE(vu_max);
+		break;
+	case 1:
+		eu_p = vu_max->up.eu_p;
+		break;
+	default:
 		rt_bomb("bad max_dir\n");
+		break;
+	}
+		
+	NMG_CK_EDGEUSE(eu_p);
 
 	eu_max = pick_eu(eu_p, fu, dir, 1);
 
-	if (min_dir == -1) {
+	NMG_CK_VERTEXUSE(vu_min);
+	switch (min_dir) {
+	case -1:
 		eu_p = RT_LIST_PLAST_CIRC(edgeuse, vu_min->up.eu_p);
 		vu_min = eu_p->vu_p;
-	} else if (min_dir != 1)
+		NMG_CK_VERTEXUSE(vu_min);
+		break;
+	case 1:
+		eu_p = vu_min->up.eu_p;
+		break;
+	default:
 		rt_bomb("bad min_dir\n");
+		break;
+	}
 
+	NMG_CK_EDGEUSE(eu_p);
 	eu_min = pick_eu(eu_p, fu, dir, 0);
 
 }
@@ -1333,7 +1376,7 @@ CONST struct rt_tol *tol;
 	struct faceuse *fu;
 	vect_t dir;
 
-	if (tri_debug)
+	if (rt_g.NMG_debug tri_debug DEBUG_TRI)
 		rt_log("pick_pt2d_for_cutjoin()\n");
 
 	RT_CK_TOL(tol);
@@ -1365,7 +1408,7 @@ CONST struct rt_tol *tol;
 
 	*p1 = find_pt2d(tbl2d, cut_vu1);
 
-	if (tri_debug) {
+	if (rt_g.NMG_debug tri_debug DEBUG_TRI) {
 		struct pt2d *pj, *pj_n, *p1_n;
 
 		pj = find_pt2d(tbl2d, junk_vu);
@@ -1386,7 +1429,7 @@ CONST struct rt_tol *tol;
 
 
 	*p2 = find_pt2d(tbl2d, cut_vu2);
-	if (tri_debug) {
+	if (rt_g.NMG_debug tri_debug DEBUG_TRI) {
 		struct pt2d *pj, *pj_n, *p2_n;
 
 		pj = find_pt2d(tbl2d, junk_vu);
@@ -1436,7 +1479,7 @@ int void_ok;
 	NMG_CK_VERTEXUSE(p1->vu_p);
 	NMG_CK_VERTEXUSE(p2->vu_p);
 
-	if (tri_debug)
+	if (rt_g.NMG_debug tri_debug DEBUG_TRI)
 		rt_log("\tcutting loop @ %g %g -> %g %g\n",
 			p1->coord[X], p1->coord[Y],
 			p2->coord[X], p2->coord[Y]);
@@ -1603,14 +1646,14 @@ CONST struct rt_tol	*tol;
 			continue;
 		}
 
-		if (tri_debug) {
+		if (rt_g.NMG_debug tri_debug DEBUG_TRI) {
 			rt_log("trying to cut ...\n");
 			print_trap(tp, tbl2d);
 		}
 
 /*		pick_pt2d_for_cutjoin(tbl2d, &top, &bot, tol);
 
-		if (tri_debug)
+		if (rt_g.NMG_debug tri_debug DEBUG_TRI)
 			rt_log("....postulated\n"); */
 
 		/* top/bottom points are not on same side of trapezoid. */
@@ -1670,7 +1713,7 @@ CONST struct rt_tol	*tol;
 				botlu->orientation == OT_OPPOSITE)
 					rt_bomb("trying to join 2 interior loops in triangulator?\n");
 
-			if (tri_debug)
+			if (rt_g.NMG_debug tri_debug DEBUG_TRI)
 				rt_log("joining 2 loops @ %g %g -> %g %g\n",
 					tp->top->coord[X],
 					tp->top->coord[Y],
@@ -1681,7 +1724,7 @@ CONST struct rt_tol	*tol;
 			NMG_CK_LOOPUSE(toplu);
 		}
 
-		if (tri_debug)		
+		if (rt_g.NMG_debug tri_debug DEBUG_TRI)		
 			plfu( nmg_find_fu_of_vu(tp->top->vu_p),  tbl2d );
 	}
 
@@ -1707,7 +1750,7 @@ CONST struct rt_tol *tol;
 	RT_CK_TOL(tol);
 	NMG_CK_LOOPUSE(lu);
 
-	if (tri_debug)
+	if (rt_g.NMG_debug tri_debug DEBUG_TRI)
 		rt_log("cutting unimonotone:\n");
 
 	min = max = (struct pt2d *)NULL;
@@ -1717,7 +1760,7 @@ CONST struct rt_tol *tol;
 		new = find_pt2d(tbl2d, eu->vu_p);
 		if (!new) rt_bomb("why can't I find this?\n");
 
-		if (tri_debug)
+		if (rt_g.NMG_debug tri_debug DEBUG_TRI)
 			rt_log("%g %g\n", new->coord[X], new->coord[Y]);
 
 		verts++;
@@ -1737,7 +1780,7 @@ CONST struct rt_tol *tol;
 		rt_bomb("is this a loop of just 2 points?\n");
 	
 	/* */
-	if (tri_debug)
+	if (rt_g.NMG_debug tri_debug DEBUG_TRI)
 		rt_log("%d verts in unimonotone, Min: %g %g  Max: %g %g first:%g %g 0x%08x\n", verts,
 			min->coord[X], min->coord[Y],
 			max->coord[X], max->coord[Y],
@@ -1750,7 +1793,7 @@ CONST struct rt_tol *tol;
 		prev = PT2D_PREV(tbl2d, current);
 		next = PT2D_NEXT(tbl2d, current);
 
-		if (tri_debug)
+		if (rt_g.NMG_debug tri_debug DEBUG_TRI)
 			rt_log("%g %g -> %g %g -> %g %g ...\n",
 				prev->coord[X],
 				prev->coord[Y],
@@ -1769,24 +1812,24 @@ CONST struct rt_tol *tol;
 			verts--;
 			NMG_CK_LOOPUSE(lu);
 
-			if (tri_debug)
+			if (rt_g.NMG_debug tri_debug DEBUG_TRI)
 				plfu( lu->up.fu_p, tbl2d );
 
 			if (current->vu_p->v_p == first->vu_p->v_p) { 
 				t = PT2D_NEXT(tbl2d, first);
-				if (tri_debug)
+				if (rt_g.NMG_debug tri_debug DEBUG_TRI)
 					rt_log("\tfirst(0x%08x -> %g %g\n", first, t->coord[X], t->coord[Y]);
 				t = PT2D_NEXT(tbl2d, current);
 
-				if (tri_debug)
+				if (rt_g.NMG_debug tri_debug DEBUG_TRI)
 					rt_log("\tcurrent(0x%08x) -> %g %g\n", current, t->coord[X], t->coord[Y]);
 
 				current = PT2D_NEXT(tbl2d, current);
-				if (tri_debug)
+				if (rt_g.NMG_debug tri_debug DEBUG_TRI)
 					rt_log("\tcurrent(0x%08x) -> %g %g\n", current, t->coord[X], t->coord[Y]);
 			}
 		} else {
-			if (tri_debug)
+			if (rt_g.NMG_debug tri_debug DEBUG_TRI)
 				rt_log("\tConcave, moving ahead\n");
 			current = next;
 		}
@@ -1826,7 +1869,7 @@ struct rt_list *tbl2d;
 			register struct vertexuse *vu;
 
 			vu = RT_LIST_FIRST( vertexuse, &lu->down_hd );
-			if (tri_debug)
+			if (rt_g.NMG_debug tri_debug DEBUG_TRI)
 				rt_log( "lone vert @ %g %g %g\n",
 					vu->v_p->vg_p->coord[0],
 					vu->v_p->vg_p->coord[1],
@@ -1849,7 +1892,7 @@ struct rt_list *tbl2d;
 			eu_pnext = RT_LIST_PNEXT_CIRC(edgeuse, &eu->l);
 
 #if 0
-			if (tri_debug)
+			if (rt_g.NMG_debug tri_debug DEBUG_TRI)
 				rt_log( "eu vert @ %g %g %g\n",
 					eu->vu_p->v_p->vg_p->coord[0],
 					eu->vu_p->v_p->vg_p->coord[1],
@@ -1899,7 +1942,7 @@ CONST struct rt_tol	*tol;
 	tbl2d = nmg_flatten_face(fu, TformMat);
 
 
-	if (tri_debug) {
+	if (rt_g.NMG_debug tri_debug DEBUG_TRI) {
 		struct pt2d *pt;
 		rt_log( "Face Flattened\n");
 		rt_log( "Vertex list:\n");
@@ -1916,13 +1959,13 @@ CONST struct rt_tol	*tol;
 	RT_LIST_INIT(&tlist);
 	nmg_trap_face(tbl2d, &tlist);
 
-	if (tri_debug){
+	if (rt_g.NMG_debug tri_debug DEBUG_TRI){
 		print_tlist(tbl2d, &tlist);
 
 		rt_log("Cutting diagonals ----------\n");
 	}
 	cut_diagonals(tbl2d, &tlist,tol);
-	if (tri_debug)
+	if (rt_g.NMG_debug tri_debug DEBUG_TRI)
 		rt_log("Diagonals are cut ----------\n");
 
 
@@ -1945,7 +1988,7 @@ CONST struct rt_tol	*tol;
 	}
 
 
-	if (tri_debug)
+	if (rt_g.NMG_debug tri_debug DEBUG_TRI)
 		plfu( fu, tbl2d );
 
 	while (RT_LIST_WHILE(tp, trap, &tlist)) {
