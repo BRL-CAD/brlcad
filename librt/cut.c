@@ -51,51 +51,7 @@ HIDDEN union cutter	*rt_ct_get RT_ARGS((struct rt_i *rtip));
 HIDDEN void		rt_plot_cut RT_ARGS((FILE *fp, struct rt_i *rtip,
 				union cutter *cutp, int lvl));
 
-
 #define AXIS(depth)	((depth)%3)	/* cuts: X, Y, Z, repeat */
-
-/*
- *			R T _ F I N D _ N U G R I D
- *
- *  Along the given axis, find which NUgrid cell this value lies in.
- *  Use method of binary subdivision.
- */
-int
-rt_find_nugrid( rtip, axis, val )
-struct rt_i *rtip;	
-int	axis;
-fastf_t	val;
-{
-	int	min;
-	int	max;
-	int	lim = rtip->rti_nu_cells_per_axis[axis]-1;
-	int	cur;
-
-	if( val < rtip->rti_nu_axis[axis][0].nu_spos ||
-	    val > rtip->rti_nu_axis[axis][lim].nu_epos )
-		return -1;
-
-	min = 0;
-	max = lim;
-again:
-	cur = (min + max) / 2;
-
-	if( cur <= 0 )  return 0;
-	if( cur >= lim )  return lim;
-
-	if( val < rtip->rti_nu_axis[axis][cur].nu_spos )  {
-		max = cur;
-		goto again;
-	}
-	if( val > rtip->rti_nu_axis[axis][cur+1].nu_epos )  {
-		min = cur+1;
-		goto again;
-	}
-	if( val < rtip->rti_nu_axis[axis][cur].nu_epos )
-		return cur;
-	else
-		return cur+1;
-}
 
 /*
  *			R T _ C U T _ O N E _ A X I S
@@ -138,8 +94,8 @@ int		max;
 			"xbox boxnode []" );
 		VMOVE( box->bn.bn_min, rtip->mdl_min );
 		VMOVE( box->bn.bn_max, rtip->mdl_max );
-		box->bn.bn_min[axis] = rtip->rti_nu_axis[axis][slice].nu_spos;
-		box->bn.bn_max[axis] = rtip->rti_nu_axis[axis][slice].nu_epos;
+		box->bn.bn_min[axis] = rtip->rti_sphead.nugn.nu_axis[axis][slice].nu_spos;
+		box->bn.bn_max[axis] = rtip->rti_sphead.nugn.nu_axis[axis][slice].nu_epos;
 		box->bn.bn_len = 0;
 
 		/* Search all solids for those in this slice */
@@ -160,7 +116,7 @@ int		max;
 		"union cutter");
 	box->cn.cn_type = CUT_CUTNODE;
 	box->cn.cn_axis = axis;
-	box->cn.cn_point = rtip->rti_nu_axis[axis][cur].nu_spos;
+	box->cn.cn_point = rtip->rti_sphead.nugn.nu_axis[axis][cur].nu_spos;
 	box->cn.cn_l = rt_cut_one_axis( boxes, rtip, axis, min, cur-1 );
 	box->cn.cn_r = rt_cut_one_axis( boxes, rtip, axis, cur, max );
 	return box;
@@ -197,6 +153,37 @@ rt_cut_optimize_parallel()
 		rt_ct_optim( rtip, cp, Z );
 	}
 }
+
+#if 0
+
+/*
+ *			R T _ N U G R I D _ C U T
+ *
+ *   Makes a NUGrid node (CUT_NUGRIDNODE) and fills in the specified
+ *   list of solids.
+ *
+ *   This may possibly recurse if a particular box is
+ *   assigned more than RT_MAX_NUGRIDCELL_ENTRIES.
+ */
+
+void
+rt_mk_nugrid( rtip, nugnp, st_list, st_len )
+struct rt_i			*rtip;
+register struct nugridnode	*nugnp;
+register struct soltab		*st_list;
+register int			 st_len;
+{
+	struct bu_hist xhist;
+	struct bu_hist yhist;
+	struct bu_hist zhist;
+	struct bu_hist start_hist[3];	/* where solid RPPs start */
+	struct bu_hist end_hist[3];	/* where solid RPPs end */
+	struct bu_hist nu_hist_cellsize;
+	struct boxnode nu_xbox, nu_ybox, nu_zbox;
+	
+
+#endif
+
 
 /*
  *  			R T _ C U T _ I T
@@ -248,6 +235,15 @@ int			ncpu;
 		rtip->rti_pmax[2] = rtip->mdl_max[2] + diff;
 	}
 
+	/* XXX In the process of changing this.
+	       Eventually, cut_type will be whatever the user specified
+	       at the upper level.
+	       Furthermore, recursive partitioning algorithms may be used,
+	       at which point both this and rt_advance_next_cell will have
+	       to be recursive. */
+
+	rtip->rti_sphead.cut_type = CUT_NUGRIDNODE;
+
 	/* Add infinite solids to special box XXXXXXXXX WHERE SHOULD THIS
 	 GO????? */
 	
@@ -275,11 +271,51 @@ int			ncpu;
 	 *  each axis will need to be (nsol / desired_avg)**(1/3).
 	 *  This is increased by two to err on the generous side,
 	 *  resulting in a 3*3*3 grid even for small numbers of solids.
+	 *
+	 *  Presumably the caller will have set rtip->rti_nu_gfactor to
+	 *  RT_NU_GFACTOR_DEFAULT (although it may change it depending on
+	 *  the user's wishes or what it feels will be optimal for this
+	 *  model.)  The default value was computed in the following fashion:
+	 *  Suppose the ratio of the running times of ft_shot and
+	 *  rt_advance_to_next_cell is K, i.e.,
+	 *
+	 *          avg_running_time( ft_shot )
+	 *  K := ---------------------------------  
+	 *         avg_running_time( rt_advance )
+	 *
+	 *  Now suppose we divide each axis into G*n^R segments, yielding
+	 *  G^3 n^(3R) cells.  We expect each cell to contain
+	 *  G^(-3) n^(1-3R) solids, and hence the running time of firing
+	 *  a single ray through the model will be proportional to
+	 *
+	 *  G*n^R * [ 1 + K G^(-3) n^(1-3R) ] = G*n^R + KG^(-2) n^(1-2R).
+	 *
+	 *  Since we wish for the running time of this algorithm to be low,
+	 *  we wish to minimize the degree of this polynomial.  The optimal
+	 *  choice for R is 1/3.  So the above equation becomes
+	 *
+	 *  G*n^(1/3) + KG^(-2) n^(1/3) = [ G + KG^(-2) ] n^(1/3).
+	 *
+	 *  We now wish to find an optimal value of G in terms of K.
+	 *  Using basic calculus we see that
+	 *
+	 *                 G := (2K)^(1/3).
+	 *
+	 *  It has been experimentally observed that K ~ 5/3 when the model
+	 *  is mostly arb8s.   Hence RT_NU_GFACTOR_DEFAULT := 1.5.
+	 *
+	 *  XXX More tests should be done for this.
 	 */
-	nu_ncells = (int)ceil( 2.0 +
-		pow( (double)(rtip->nsolids)/3.0, 1.0/3.0 ) );
+
+	if( rtip->rti_nu_gfactor < 0.01 ) {
+		rtip->rti_nu_gfactor = RT_NU_GFACTOR_DEFAULT;
+		bu_log( "rt_cut_it: rtip->rti_nu_gfactor not set\n" );
+	}
+
+	nu_ncells = (int)ceil( 2.0 + rtip->rti_nu_gfactor *
+			       pow( (double)(rtip->nsolids), 1.0/3.0 ) );
 	nu_sol_per_cell = (rtip->nsolids + nu_ncells - 1) / nu_ncells;
-	nu_max_ncells = 2*nu_ncells + 8;
+	nu_max_ncells = 8*nu_ncells + 64;
 
 if(rt_g.debug&DEBUG_CUT)  bu_log("\nnu_ncells=%d, nu_sol_per_cell=%d, nu_max_ncells=%d\n", nu_ncells, nu_sol_per_cell, nu_max_ncells );
 	for( i=0; i<3; i++ )  {
@@ -329,7 +365,7 @@ if(rt_g.debug&DEBUG_CUT)  bu_log("\nnu_ncells=%d, nu_sol_per_cell=%d, nu_max_nce
 	}
 
 	for( i=0; i<3; i++ )  {
-		rtip->rti_nu_axis[i] =
+		rtip->rti_sphead.nugn.nu_axis[i] =
 			(struct nu_axis *)rt_calloc( nu_max_ncells,
 				   sizeof(struct nu_axis), "NUgrid axis" );
 	}
@@ -354,11 +390,11 @@ if(rt_g.debug&DEBUG_CUT)  bu_log("\nnu_ncells=%d, nu_sol_per_cell=%d, nu_max_nce
 		struct bu_hist	*ehp = &end_hist[i];
 		int	hindex = 0;
 /*		int	epos; */
-		int	axi = 0;	/* rtip->rti_nu_axis index */
+		int	axi = 0;
 
 		if( shp->hg_min != ehp->hg_min )  rt_bomb("cut_it: hg_min error\n");
 		pos = shp->hg_min;
-		rtip->rti_nu_axis[i][axi].nu_spos = pos;
+		rtip->rti_sphead.nugn.nu_axis[i][axi].nu_spos = pos;
 		for( hindex = 0; hindex < shp->hg_nbins; hindex++ )  {
 			if( pos > shp->hg_max )  break;
 			/* Advance interval one more histogram entry */
@@ -366,52 +402,58 @@ if(rt_g.debug&DEBUG_CUT)  bu_log("\nnu_ncells=%d, nu_sol_per_cell=%d, nu_max_nce
 			nstart += shp->hg_bins[hindex];
 			nend += ehp->hg_bins[hindex];
 			pos += shp->hg_clumpsize;
+#if 1		     
 			if( nstart < nu_sol_per_cell &&
 			    nend < nu_sol_per_cell )  continue;
+#else
+			if( nstart + nend < 2 * nu_sol_per_cell )
+				continue;
+#endif
 			/* End current interval, start new one */
-			rtip->rti_nu_axis[i][axi].nu_epos = pos;
-			rtip->rti_nu_axis[i][axi].nu_width = pos - rtip->rti_nu_axis[i][axi].nu_spos;
+			rtip->rti_sphead.nugn.nu_axis[i][axi].nu_epos = pos;
+			rtip->rti_sphead.nugn.nu_axis[i][axi].nu_width = pos - rtip->rti_sphead.nugn.nu_axis[i][axi].nu_spos;
 			if( axi >= nu_max_ncells-1 )  {
 				bu_log("NUgrid ran off end, axis=%d, axi=%d\n",
 					i, axi);
 				pos = shp->hg_max+1;
 				break;
 			}
-			rtip->rti_nu_axis[i][++axi].nu_spos = pos;
+			rtip->rti_sphead.nugn.nu_axis[i][++axi].nu_spos = pos;
 			nstart = 0;
 			nend = 0;
 		}
 		/* End final interval */
-		rtip->rti_nu_axis[i][axi].nu_epos = pos;
-		rtip->rti_nu_axis[i][axi].nu_width = pos - rtip->rti_nu_axis[i][axi].nu_spos;
-		rtip->rti_nu_cells_per_axis[i] = axi+1;
+		rtip->rti_sphead.nugn.nu_axis[i][axi].nu_epos = pos;
+		rtip->rti_sphead.nugn.nu_axis[i][axi].nu_width = pos - rtip->rti_sphead.nugn.nu_axis[i][axi].nu_spos;
+		rtip->rti_sphead.nugn.nu_cells_per_axis[i] = axi+1;
 	}
 
-	rtip->rti_nu_stepsize[X] = 1;
-	rtip->rti_nu_stepsize[Y] = rtip->rti_nu_cells_per_axis[X] *
-		rtip->rti_nu_stepsize[X];
-	rtip->rti_nu_stepsize[Z] = rtip->rti_nu_cells_per_axis[Y] *
-		rtip->rti_nu_stepsize[Y];
+	rtip->rti_sphead.nugn.nu_stepsize[X] = 1;
+	rtip->rti_sphead.nugn.nu_stepsize[Y] = rtip->rti_sphead.nugn.nu_cells_per_axis[X] *
+		rtip->rti_sphead.nugn.nu_stepsize[X];
+	rtip->rti_sphead.nugn.nu_stepsize[Z] = rtip->rti_sphead.nugn.nu_cells_per_axis[Y] *
+		rtip->rti_sphead.nugn.nu_stepsize[Y];
 
 	/* For debugging */
 	if(rt_g.debug&DEBUG_CUT)  for( i=0; i<3; i++ )  {
 		register int j;
 		bu_log("NUgrid %c axis:  %d cells\n",
-			"XYZ*"[i], rtip->rti_nu_cells_per_axis[i] );
-		for( j=0; j<rtip->rti_nu_cells_per_axis[i]; j++ )  {
+			"XYZ*"[i], rtip->rti_sphead.nugn.nu_cells_per_axis[i] );
+		for( j=0; j<rtip->rti_sphead.nugn.nu_cells_per_axis[i]; j++ )  {
 			bu_log("  %g .. %g, w=%g\n",
-				rtip->rti_nu_axis[i][j].nu_spos,
-				rtip->rti_nu_axis[i][j].nu_epos,
-				rtip->rti_nu_axis[i][j].nu_width );
+				rtip->rti_sphead.nugn.nu_axis[i][j].nu_spos,
+				rtip->rti_sphead.nugn.nu_axis[i][j].nu_epos,
+				rtip->rti_sphead.nugn.nu_axis[i][j].nu_width );
 		}
 	}
 
 	if( rtip->rti_space_partition == RT_PART_NUGRID ) {
-		bu_hist_init( &nu_hist_cellsize, 0.0, 400.0, 400 );
+		bu_hist_init( &nu_hist_cellsize, -10.0, 400.0, 410 );
 		/* For the moment, re-use "union cutter" */
-		rtip->rti_nu_grid = (union cutter *)rt_malloc(
-			rtip->rti_nu_cells_per_axis[X] * rtip->rti_nu_cells_per_axis[Y] *
-			rtip->rti_nu_cells_per_axis[Z] * sizeof(union cutter),
+		rtip->rti_sphead.nugn.nu_grid = (union cutter *)rt_malloc(
+			rtip->rti_sphead.nugn.nu_cells_per_axis[X] *
+			rtip->rti_sphead.nugn.nu_cells_per_axis[Y] *
+			rtip->rti_sphead.nugn.nu_cells_per_axis[Z] * sizeof(union cutter),
 			"3-D NUgrid union cutter []" );
 		nu_xbox.bn_len = 0;
 		nu_xbox.bn_maxlen = rtip->nsolids;
@@ -429,11 +471,11 @@ if(rt_g.debug&DEBUG_CUT)  bu_log("\nnu_ncells=%d, nu_sol_per_cell=%d, nu_max_nce
 			nu_zbox.bn_maxlen * sizeof(struct soltab *),
 			"zbox boxnode []" );
 		/* Build each of the X slices */
-		for( xp = 0; xp < rtip->rti_nu_cells_per_axis[X]; xp++ )  {
+		for( xp = 0; xp < rtip->rti_sphead.nugn.nu_cells_per_axis[X]; xp++ )  {
 			VMOVE( xmin, rtip->mdl_min );
 			VMOVE( xmax, rtip->mdl_max );
-			xmin[X] = rtip->rti_nu_axis[X][xp].nu_spos;
-			xmax[X] = rtip->rti_nu_axis[X][xp].nu_epos;
+			xmin[X] = rtip->rti_sphead.nugn.nu_axis[X][xp].nu_spos;
+			xmax[X] = rtip->rti_sphead.nugn.nu_axis[X][xp].nu_epos;
 			VMOVE( nu_xbox.bn_min, xmin );
 			VMOVE( nu_xbox.bn_max, xmax );
 			nu_xbox.bn_len = 0;
@@ -447,11 +489,11 @@ if(rt_g.debug&DEBUG_CUT)  bu_log("\nnu_ncells=%d, nu_sol_per_cell=%d, nu_max_nce
 			} RT_VISIT_ALL_SOLTABS_END
 
 			/* Build each of the Y slices in this X slice */
-			for( yp = 0; yp < rtip->rti_nu_cells_per_axis[Y]; yp++ )  {
+			for( yp = 0; yp < rtip->rti_sphead.nugn.nu_cells_per_axis[Y]; yp++ )  {
 				VMOVE( ymin, xmin );
 				VMOVE( ymax, xmax );
-				ymin[Y] = rtip->rti_nu_axis[Y][yp].nu_spos;
-				ymax[Y] = rtip->rti_nu_axis[Y][yp].nu_epos;
+				ymin[Y] = rtip->rti_sphead.nugn.nu_axis[Y][yp].nu_spos;
+				ymax[Y] = rtip->rti_sphead.nugn.nu_axis[Y][yp].nu_epos;
 				VMOVE( nu_ybox.bn_min, ymin );
 				VMOVE( nu_ybox.bn_max, ymax );
 				nu_ybox.bn_len = 0;
@@ -466,19 +508,19 @@ if(rt_g.debug&DEBUG_CUT)  bu_log("\nnu_ncells=%d, nu_sol_per_cell=%d, nu_max_nce
 				/* Build each of the Z slices in this Y slice*/
 				/* Each of these will be a final cell */
 				for( zp = 0;
-				     zp < rtip->rti_nu_cells_per_axis[Z];
+				     zp < rtip->rti_sphead.nugn.nu_cells_per_axis[Z];
 				     zp++ )  {
 					register union cutter *cutp =
-						&rtip->rti_nu_grid[
-						zp*rtip->rti_nu_stepsize[Z] +
-						yp*rtip->rti_nu_stepsize[Y] +
-						xp*rtip->rti_nu_stepsize[X]];
+						&rtip->rti_sphead.nugn.nu_grid[
+						zp*rtip->rti_sphead.nugn.nu_stepsize[Z] +
+						yp*rtip->rti_sphead.nugn.nu_stepsize[Y] +
+						xp*rtip->rti_sphead.nugn.nu_stepsize[X]];
 						
 
 					VMOVE( zmin, ymin );
 					VMOVE( zmax, ymax );
-					zmin[Z] = rtip->rti_nu_axis[Z][zp].nu_spos;
-					zmax[Z] = rtip->rti_nu_axis[Z][zp].nu_epos;
+					zmin[Z] = rtip->rti_sphead.nugn.nu_axis[Z][zp].nu_spos;
+					zmax[Z] = rtip->rti_sphead.nugn.nu_axis[Z][zp].nu_epos;
 					cutp->cut_type = CUT_BOXNODE;
 					VMOVE( cutp->bn.bn_min, zmin );
 					VMOVE( cutp->bn.bn_max, zmax );
@@ -487,9 +529,20 @@ if(rt_g.debug&DEBUG_CUT)  bu_log("\nnu_ncells=%d, nu_sol_per_cell=%d, nu_max_nce
 					nu_zbox.bn_len = 0;
 				/* Search Y slice for members of this Z slice*/
 					for( i=0; i<nu_ybox.bn_len; i++ )  {
+						int classification;
+						
 						if( !rt_ck_overlap( zmin, zmax,
 						       nu_ybox.bn_list[i] ) )
 							continue;
+
+						classification = 
+          rt_functab[nu_ybox.bn_list[i]->st_id].ft_classify(nu_ybox.bn_list[i],
+							    zmin, zmax );
+
+						if( classification == RT_CLASSIFY_OUTSIDE )
+
+							continue;
+						
 						nu_zbox.bn_list[
 							nu_zbox.bn_len++] =
 							nu_ybox.bn_list[i];
@@ -526,7 +579,7 @@ if(rt_g.debug&DEBUG_CUT)  bu_log("\nnu_ncells=%d, nu_sol_per_cell=%d, nu_max_nce
 			bu_hist_pr( &nu_hist_cellsize,
 			    "cut_tree: Number of solids per NUgrid cell");
 			/* Just for inspection, print out the 0,0,0 cell */
-			rt_pr_cut( rtip->rti_nu_grid, 0 );
+			rt_pr_cut( rtip->rti_sphead.nugn.nu_grid, 0 );
 		}
 
 		/* XXX Make an empty boxnode */
@@ -587,14 +640,14 @@ if(rt_g.debug&DEBUG_CUT) bu_log("Cut: Tree Depth=%d, Leaf Len=%d\n", rt_cutDepth
 			int	i;
 
 			head = rt_cut_one_axis( &rtip->rti_cuts_waiting, rtip,
-						Y, 0, rtip->rti_nu_cells_per_axis[Y]-1 );
+						Y, 0, rtip->rti_sphead.nugn.nu_cells_per_axis[Y]-1 );
 			rtip->rti_CutHead = *head;	/* struct copy */
 			rt_free( (char *)head, "union cutter" );
 
 			if(rt_g.debug&DEBUG_CUTDETAIL)  {
 				for( i=0; i<3; i++ )  {
 					bu_log("\nNUgrid %c axis:  %d cells\n",
-					       "XYZ*"[i], rtip->rti_nu_cells_per_axis[i] );
+					       "XYZ*"[i], rtip->rti_sphead.nugn.nu_cells_per_axis[i] );
 				}
 				rt_pr_cut( &rtip->rti_CutHead, 0 );
 			}
@@ -609,9 +662,9 @@ if(rt_g.debug&DEBUG_CUT) bu_log("Cut: Tree Depth=%d, Leaf Len=%d\n", rt_cutDepth
 #endif
 
 		/* Measure the depth of tree, find max # of RPPs in a cut node */
-		bu_hist_init( &rtip->rti_hist_cellsize, 0.0, 399.0, 400 );
+		bu_hist_init( &rtip->rti_hist_cellsize, 0.0, 400.0, 400 );
 		bu_hist_init( &rtip->rti_hist_cutdepth, 0.0,
-			      (fastf_t)rt_cutDepth+1, 400 );
+			      (fastf_t)rt_cutDepth+1, rt_cutDepth+1 );
 		rt_ct_measure( rtip, &rtip->rti_CutHead, 0 );
 		rt_ct_measure( rtip, &rtip->rti_inf_box, 0 );
 		if(rt_g.debug&DEBUG_CUT)  {
