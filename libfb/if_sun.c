@@ -150,6 +150,8 @@ FBIO            sun_interface = {
 				 0	/* debug */
 };
 
+static int	is_linear_cmap();
+
 /*
  *  Per SUN (window or device) state information
  *  Too much for just the if_u[1-6] area now.
