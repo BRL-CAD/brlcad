@@ -43,6 +43,8 @@ static const char RCSbot[] = "@(#)$Header$ (BRL)";
 int rt_bot_minpieces = RT_DEFAULT_MINPIECES;
 int rt_bot_tri_per_piece = RT_DEFAULT_TRIS_PER_PIECE;
 
+#define MAXHITS 128
+
 /*
  *			R T _ B O T F A C E
  *
@@ -650,8 +652,16 @@ struct rt_piecestate	*psp;
 				 * as second exit.
 				 */
 				/* XXX This consumes an extra hit structure in the array */
-				(void)rt_htbl_get(&psp->htab);	/* make sure space exists in the hit array */
-				hits = psp->htab.hits;
+				if( psp ) {
+					/* using pieces */
+					(void)rt_htbl_get(&psp->htab);	/* make sure space exists in the hit array */
+					hits = psp->htab.hits;
+				} else if( nhits + 1 >= MAXHITS ) {
+					/* not using pieces */
+					bu_log( "rt_bot_makesegs: too many hits on %s\n", stp->st_dp->d_namep );
+					i++;
+					continue;
+				}
 				for( j=nhits ; j>i ; j-- )
 				    hits[j] = hits[j-1];	/* struct copy */
 
@@ -667,8 +677,16 @@ struct rt_piecestate	*psp;
 				 */
 				/* XXX This consumes an extra hit structure in the array */
 
-				(void)rt_htbl_get(&psp->htab);	/* make sure space exists in the hit array */
-				hits = psp->htab.hits;
+				if( psp ) {
+					/* using pieces */
+					(void)rt_htbl_get(&psp->htab);	/* make sure space exists in the hit array */
+					hits = psp->htab.hits;
+				} else if( nhits + 1 >= MAXHITS ) {
+					/* not using pieces */
+					bu_log( "rt_bot_makesegs: too many hits on %s\n", stp->st_dp->d_namep );
+					i++;
+					continue;
+				}
 				for( j=nhits ; j>i ; j-- )
 				    hits[j] = hits[j-1];	/* struct copy */
 
@@ -686,11 +704,17 @@ struct rt_piecestate	*psp;
     if( (nhits&1) )  {
 #if 1
 	/* XXX This consumes an extra hit structure in the array */
-	(void)rt_htbl_get(&psp->htab);	/* make sure space exists in the hit array */
-	hits = psp->htab.hits;
-	hits[nhits] = hits[nhits-1];	/* struct copy */
-	hits[nhits].hit_vpriv[X] = -hits[nhits].hit_vpriv[X];
-	nhits++;
+	if( psp ) {
+		(void)rt_htbl_get(&psp->htab);	/* make sure space exists in the hit array */
+		hits = psp->htab.hits;
+	} else if( nhits + 1 >= MAXHITS ) {
+		bu_log( "rt_bot_makesegs: too many hits on %s\n", stp->st_dp->d_namep );
+		i++;
+	} else {
+		hits[nhits] = hits[nhits-1];	/* struct copy */
+		hits[nhits].hit_vpriv[X] = -hits[nhits].hit_vpriv[X];
+		nhits++;
+	}
 #else
 	nhits--;
 #endif
@@ -727,7 +751,6 @@ struct rt_piecestate	*psp;
  *  	0	MISS
  *	>0	HIT
  */
-#define MAXHITS 128
 int
 rt_bot_shot( stp, rp, ap, seghead )
 struct soltab		*stp;
