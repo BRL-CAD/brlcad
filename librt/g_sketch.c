@@ -464,7 +464,6 @@ genptr_t seg;
 				oldu = newu;
 				oldv = newv;
 			}
-			RT_ADD_VLIST( vhead, end_pt, BN_VLIST_LINE_DRAW );
 			break;
 		}
 		case CURVE_NURB_MAGIC:
