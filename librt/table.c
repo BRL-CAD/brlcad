@@ -115,6 +115,7 @@ RT_DECLARE_INTERFACE(vol)
 RT_DECLARE_INTERFACE(arbn)
 RT_DECLARE_INTERFACE(pipe)
 RT_DECLARE_INTERFACE(part)
+RT_DECLARE_INTERFACE(nmg)
 
 extern void	rt_vstub();	/* XXX vshoot.c */
 
@@ -197,11 +198,11 @@ struct rt_functab rt_functab[ID_MAXIMUM+2] = {
 		rt_ell_describe,
 
 	"ID_NMG",	0,
-		rt_nul_prep,	rt_nul_shot,	rt_nul_print,	rt_nul_norm,
-		rt_nul_uv,	rt_nul_curve,	rt_nul_class,	rt_nul_free,
-		rt_nul_plot,	rt_nul_vshot,	rt_nul_tess,
-		rt_nul_import,	rt_nul_export,	rt_nul_ifree,
-		rt_nul_describe,
+		rt_nmg_prep,	rt_nmg_shot,	rt_nmg_print,	rt_nmg_norm,
+		rt_nmg_uv,	rt_nmg_curve,	rt_nmg_class,	rt_nmg_free,
+		rt_nmg_plot,	rt_nmg_vshot,	rt_nmg_tess,
+		rt_nmg_import,	rt_nmg_export,	rt_nmg_ifree,
+		rt_nmg_describe,
 
 	"ID_EBM",	0,
 		rt_ebm_prep,	rt_ebm_shot,	rt_ebm_print,	rt_ebm_norm,
@@ -382,6 +383,9 @@ struct rt_external	*ep;
 		break;
 	case DBID_PARTICLE:
 		id = ID_PARTICLE;
+		break;
+	case DBID_NMG:
+		id = ID_NMG;
 		break;
 	default:
 		rt_log("rt_id_solid:  u_id=x%x unknown\n", rec->u_id);
