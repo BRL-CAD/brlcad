@@ -1758,7 +1758,8 @@ struct shell * new_s;
 
 		if( NMG_INDEX_TEST_AND_SET( flags , eu ) )
 		{
-			nmg_edge_g( eu );
+			if( !eu->g.magic_p )
+				nmg_edge_g( eu );
 			NMG_INDEX_SET( flags , eu->eumate_p );
 		}
 	}
@@ -2551,6 +2552,7 @@ make_nmg_objects()
 	}
 	else if( mode == PLATE_MODE )
 	{
+		nmg_rebound( m , &tol );
 		if( debug )
 		{
 			char name[NAMESIZE+1];
@@ -3866,6 +3868,7 @@ do_hex1()
 		}
 
 		make_solid_name( name , CHEX1 , element_id , comp_id , group_id , 1 );
+		nmg_rebound( m1 , &tol );
 		mk_nmg( fdout , name , m1 );
 		fflush( fdout );
 
