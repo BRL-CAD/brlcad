@@ -89,9 +89,17 @@ char **argv;
 
 	if( argc >= 3 ) {
 		iname = argv[1];
-		ifp = fopen(iname,"r");
+		if( strcmp(iname, "-") == 0 )  {
+			ifp = stdin;
+		} else {
+			ifp = fopen(iname,"r");
+		}
 		if( !ifp )  perror(iname);
-		ofp = fopen(argv[2],"w");
+		if( strcmp(argv[2], "-") == 0 )  {
+			ofp = stdout;
+		} else {
+			ofp = fopen(argv[2],"w");
+		}
 		if( !ofp )  perror(argv[2]);
 		if (ifp == NULL || ofp == NULL) {
 			(void)fprintf(stderr, "g2asc: can't open files.");
@@ -148,12 +156,12 @@ char **argv;
 		} FOR_ALL_DIRECTORY_END;
 		return 0;
 	} else {
+		/* A record is already in the input buffer */
 		goto top;
 	}
 
 	/* Read database file */
-	while( fread( (char *)&record, sizeof record, 1, ifp ) == 1  &&
-	    !feof(ifp) )  {
+	do {
 top:
 	    	if( argc > 1 )
 			(void)fprintf(stderr,"0%o (%c)\n", record.u_id, record.u_id);
@@ -224,7 +232,8 @@ top:
 				record.u_id, record.u_id);
 	    		continue;
 		}
-	}
+	}  while( fread( (char *)&record, sizeof record, 1, ifp ) == 1  &&
+	    !feof(ifp) );
 	exit(0);
 }
 
