@@ -22,7 +22,7 @@
  *
  *  RT will look in the following locations for DSO shaders:
  *		./
- *		BRLCAD_ROOT/lib/
+ *		$prefix/lib/
  *		$LD_LIBRARY_PATH
  *
  *  If you are adding the shader to "rt" as a permanent shader, then the

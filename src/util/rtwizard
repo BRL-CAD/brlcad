@@ -8,15 +8,12 @@ exec bwish "$0" "$@"
 #
 # Begin Tcl here!
 #
-if { [info exists env(BRLCAD_ROOT)] } {
-    set rootDir $env(BRLCAD_ROOT)
-} else {
-    set rootDir [file join / usr brlcad ]
+foreach i $auto_path {
+    set wizpath [file join $i {..} tclscripts rtwizard rtwizard.tcl ]
+    if {  [file exists $wizpath] } {
+	    source $wizpath
+	    exit
+    }
 }
-set wizard [ file join $rootDir tclscripts rtwizard rtwizard.tcl ]
 
-#
-# start the wizard
-#
-source $wizard
- 
+puts "rtwizard not found in any of $auto_path"

@@ -437,11 +437,6 @@ dsp_add_LDADD = ${BU}
 binfo_SOURCES = binfo.c 
 binfo_LDADD = ${BN} ${FB}
 
-# rtwizard = $(top_srcdir)/rtwizard
-# 	cp $(top_srcdir)/tclscripts/rtwizard rtwizard
-rtwizard:
-	cp $(top_srcdir)/src/tclscripts/rtwizard rtwizard
-
 .PHONY : vers.c
 vers.c:
 	sh $(top_srcdir)/sh/vers.sh version "BRL-CAD info" > $@

@@ -25,14 +25,13 @@
 #
 # Extend Autopath
 #
-if { [info exists ::env(BRLCAD_ROOT)] } {
-    set rootDir $::env(BRLCAD_ROOT)
-} else {
-    set rootDir [file join / usr brlcad ]
-} 
-set geometreeDir [ file join $rootDir tclscripts geometree ]
+foreach i $auto_path {
+    set geometreeDir [file join $i {..} tclscripts geometree ]
+    if {  [file exists $geometreeDir] } {
+	lappend auto_path $geometreeDir
+    }
+}
 
-lappend auto_path $geometreeDir
 
 package require GeometryBrowser
 

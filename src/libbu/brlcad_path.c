@@ -71,6 +71,11 @@ bu_brlcad_path(const char *rhs, int fail_quietly)
 	static char	result[256];
 	char		*lhs;
 
+/* The BRLCAD_ROOT symbol has given us loads of problems.
+ * This replaces it with the (hopefully more reasonable)
+ * directory path specified at compilation time.
+ */
+#if USE_BRLCAD_ROOT
 	/* The environment variable, if set, takes priority */
 	if( (lhs = getenv("BRLCAD_ROOT")) != NULL )  {
 		if( bu_file_exists(lhs) )
@@ -83,15 +88,18 @@ bu_brlcad_path(const char *rhs, int fail_quietly)
 	}
 
 	/* The compiled-in path is used next. */
-#ifdef BRLCAD_ROOT
+# ifdef BRLCAD_ROOT
 	lhs = BRLCAD_ROOT;
-#else
-#ifndef WIN32
+# else
+#   ifndef WIN32
 	lhs = PREFIX;
-#else
+#   else
 	/* XXX nastiness that will need to be made dynamic
 	lhs = "C:\\brlcad";  /* change as needed*/
-#endif
+#   endif
+# endif
+#else
+	lhs = INSTALL_DIRECTORY ;
 #endif
 	if( bu_file_exists(lhs) )
 		goto ok;
@@ -102,12 +110,14 @@ bu_brlcad_path(const char *rhs, int fail_quietly)
 	if (fail_quietly) {
 	  return NULL;
 	}
+#if USE_BRLCAD_ROOT
 	bu_log("\
 Unable to find the directory that BRL-CAD is installed in while seeking: \n\
 	%s\n\
 This version of LIBBU was compiled to expect BRL-CAD in: \n\
 	%s\n\
-but it is no longer there.  After you manually locate BRL-CAD,\n\
+but it is no longer there. \n\
+  After you manually locate BRL-CAD,\n\
 please set your environment variable BRLCAD_ROOT to the correct path,\n\
 and re-run this program.\n\
 \n\
@@ -116,6 +126,15 @@ csh/tcsh users:\n\
 sh/bash users:\n\
 	BRLCAD_ROOT=%s; export BRLCAD_ROOT\n",
 	       rhs, lhs, lhs, lhs);
+#else
+	bu_log("\
+Unable to find the directory that BRL-CAD is installed in while seeking: \n\
+	%s\n\
+This version of LIBBU was compiled to expect BRL-CAD in: \n\
+	%s\n\
+but it is no longer there.\n",
+	       rhs, lhs);
+#endif
 	bu_bomb("bu_brlcad_path()");
 
 ok:

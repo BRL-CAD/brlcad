@@ -587,6 +587,7 @@ else
 	AC_MSG_RESULT([not found])
 fi
 
+AC_DEFINE_UNQUOTED([INSTALL_DIRECTORY], "${prefix}", "Location where BRLCAD is installed")
 AC_DEFINE(DM_X,1,[Display for X])
 AC_DEFINE(USE_MESA_GL,1,[Assume mesagl is always around (fixme)])
 AC_DEFINE(DM_OGL,1,[yeah, GL])
