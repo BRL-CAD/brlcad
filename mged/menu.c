@@ -137,6 +137,8 @@ mmenu_set( index, value )
 int index;
 struct menu_item *value;
 {
+    struct dm_list *dlp;
+
     Tcl_DString ds_menu;
     struct bu_vls menu_string;
 
@@ -145,12 +147,8 @@ struct menu_item *value;
     bu_vls_init(&menu_string);
     Tcl_DStringInit(&ds_menu);
 
-#if 0
-    bu_vls_printf(&menu_string, "mmenu_set %d ", index);
-#else
     bu_vls_printf(&menu_string, "mmenu_set .mmenu%S %S %d ",
 		  &curr_cmd_list->name, &curr_cmd_list->name, index);
-#endif
 
     Tcl_DStringStartSublist(&ds_menu);
     if (value != MENU_NULL)
@@ -164,11 +162,12 @@ struct menu_item *value;
     Tcl_DStringFree(&ds_menu);
     bu_vls_free(&menu_string);
 
-#if 0
-    update_views = 1;
-#else
-    dirty = 1;
-#endif
+    for( BU_LIST_FOR(dlp, dm_list, &head_dm_list.l) ){
+      if(curr_dm_list->menu_vars == dlp->menu_vars &&
+	 dlp->_mged_variables.faceplate &&
+	 dlp->_mged_variables.orig_gui)
+	dlp->_dirty = 1;
+    }
 }
 
 void
@@ -215,36 +214,6 @@ int y;
       dmp->dm_drawString2D( dmp, "Abs", MENUX+5*40, y-15, 0, 0 );
     }
     break;
-  case BV_EDIT_TOGGLE:
-    if(mged_variables.edit){
-      dmp->dm_setColor(dmp, DM_WHITE, 1);
-      dmp->dm_drawString2D( dmp, "Edit", MENUX, y-15, 0, 0 );
-      dmp->dm_setColor(dmp, DM_YELLOW, 1);
-      dmp->dm_drawString2D( dmp, "/View", MENUX+4*40, y-15, 0, 0 );
-    }else{
-      dmp->dm_setColor(dmp, DM_YELLOW, 1);
-      dmp->dm_drawString2D( dmp, "Edit/", MENUX, y-15, 0, 0 );
-      dmp->dm_setColor(dmp, DM_WHITE, 1);
-      dmp->dm_drawString2D( dmp, "View", MENUX+5*40, y-15, 0, 0 );
-    }
-    break;
-  case BV_EYEROT_TOGGLE:
-    if(mged_variables.eyerot)
-      dmp->dm_setColor(dmp, DM_WHITE, 1);
-    else
-      dmp->dm_setColor(dmp, DM_YELLOW, 1);
-
-    dmp->dm_drawString2D( dmp, mptr->menu_string, MENUX, y-15, 0, 0 );
-#if 0
-  case BE_S_CONTEXT:
-    if(mged_variables.context)
-      dmp->dm_setColor(dmp, DM_WHITE, 1);
-    else
-      dmp->dm_setColor(dmp, DM_YELLOW, 1);
-
-    dmp->dm_drawString2D( dmp, mptr->menu_string, MENUX, y-15, 0, 0 );
-    break;
-#endif
   default:
     break;
   }
@@ -377,4 +346,61 @@ mmenu_pntr( menu, item )
 	cur_item = item;
 	if( cur_menu >= 0 )
 		menuflag = 1;
+}
+
+int
+f_share_menu(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
+{
+  struct dm_list *dlp1, *dlp2, *dlp3;
+  struct menu_vars *save_mvp;
+
+  if(argc != 3){
+    return TCL_ERROR;
+  }
+
+  for(BU_LIST_FOR(dlp1, dm_list, &head_dm_list.l))
+    if(!strcmp(argv[1], bu_vls_addr(&dlp1->_dmp->dm_pathName)))
+      break;
+
+  if(dlp1 == &head_dm_list){
+     Tcl_AppendResult(interp, "f_share_menu: unrecognized pathName - ",
+		      argv[1], "\n", (char *)NULL);
+    return TCL_ERROR;
+  }
+
+  for(BU_LIST_FOR(dlp2, dm_list, &head_dm_list.l))
+    if(!strcmp(argv[2], bu_vls_addr(&dlp2->_dmp->dm_pathName)))
+      break;
+
+  if(dlp2 == &head_dm_list){
+     Tcl_AppendResult(interp, "f_share_menu: unrecognized pathName - ",
+		      argv[1], "\n", (char *)NULL);
+    return TCL_ERROR;
+  }
+
+  if(dlp1 == dlp2)
+    return TCL_OK;
+
+  /* already sharing a menu */
+  if(dlp1->menu_vars == dlp2->menu_vars)
+    return TCL_OK;
+
+
+  save_mvp = dlp2->menu_vars;
+  dlp2->menu_vars = dlp1->menu_vars;
+
+  /* check if save_mvp is being used elsewhere */
+  for(BU_LIST_FOR(dlp3, dm_list, &head_dm_list.l))
+    if(save_mvp == dlp3->menu_vars)
+      break;
+
+  /* save_mvp is not being used */
+  if(dlp3 == &head_dm_list)
+    bu_free((genptr_t)save_mvp, "f_share_menu: save_mvp");
+
+  return TCL_OK;
 }
