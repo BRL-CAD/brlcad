@@ -174,13 +174,24 @@ struct rtnode {
 	int		ncpus;		/* Ready when > 0, for now */
 	int		busy;		/* !0 -> still working */
 	int		lump;		/* # of lines in last assignment */
+	int		finish_order;	/* 1st in the race? */
 	struct timeval	time_start;
 	fastf_t		time_delta;
 	fastf_t		i_lps;		/* instantaneous # lines per sec */
 	fastf_t		w_lps;		/* weighted # lines per sec */
+	fastf_t		rt_time;	/* elapsed time for ray-tracing */
+	fastf_t		fb_time;	/* elapsed time for fb_write() */
+	fastf_t		ck_time;	/* elapsed time for fb sync check */
 };
 #define MAX_NODES	32
 struct rtnode	rtnodes[MAX_NODES];
+
+/* Timing data */
+int		finish_position;
+struct timeval	frame_start;
+struct timeval	t_assigned;
+struct timeval	t_1st_done;
+struct timeval	t_all_done;
 
 static fd_set	select_list;			/* master copy */
 static int	max_fd;
@@ -201,7 +212,6 @@ struct bu_vls	treetops;
 
 char		*node_search_path;
 
-struct timeval	frame_start;
 
 BU_EXTERN(void dispatcher, (ClientData clientData));
 void	new_rtnode();
@@ -305,7 +315,7 @@ char **argv;
 	if( i < 0 || i >= MAX_NODES )  {
 		/* Use this as a signal to generate a title. */
 		Tcl_AppendResult(interp,
-			"##: CP i_lps w_lps lump busy state", NULL);
+			"##: CP ord i_lps w_lps lump busy state", NULL);
 		return TCL_OK;
 	}
 	if( rtnodes[i].fd <= 0 )  {
@@ -314,16 +324,21 @@ char **argv;
 		return TCL_ERROR;
 	}
 	bu_vls_init(&str);
-	bu_vls_printf(&str, "%2.2d: %2.2d %5.5g %5.5g %4.4d %s %9s %s",
+	bu_vls_printf(&str, "%2.2d: %2.2d %2.2d %5.5d %5.5d %4.4d %s %9s %s %d/%d/%d",
 		i,
 		rtnodes[i].ncpus,
-		rtnodes[i].i_lps,
-		rtnodes[i].w_lps,
+		rtnodes[i].finish_order,
+		(int)rtnodes[i].i_lps,
+		(int)rtnodes[i].w_lps,
 		rtnodes[i].lump,
 		rtnodes[i].busy ? "BUSY" : "wait",
 		rtnodes[i].state == STATE_PREPPED ? "ok" :
 			states[rtnodes[i].state],
-		rtnodes[i].host->ht_name );
+		rtnodes[i].host->ht_name,
+		(int)rtnodes[i].rt_time,
+		(int)rtnodes[i].fb_time,
+		(int)rtnodes[i].ck_time
+		);
 	Tcl_AppendResult(interp, bu_vls_addr(&str), NULL);
 	bu_vls_free(&str);
 	return TCL_OK;
@@ -412,6 +427,24 @@ char **argv;
 		drop_rtnode(node);
 	}
 	bu_vls_free(&cmd);
+	return TCL_OK;
+}
+
+/*
+ *			V R M G R _ H O S T N A M E
+ *
+ *  Returns name of VRMGR host, or null string if none.
+ */
+int
+vrmgr_hostname( clientData, interp, argc, argv )
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
+{
+	if( vrmgr_pc )  {
+		Tcl_AppendResult(interp, vrmgr_ihost->ht_name, (char *)NULL);
+	}
 	return TCL_OK;
 }
 
@@ -831,6 +864,7 @@ char	*argv[];
 	Tcl_SetVar( interp, "tcl_interactive", "0", TCL_GLOBAL_ONLY );
 
 	Tcl_LinkVar( interp, "database", (char *)&database, TCL_LINK_STRING | TCL_LINK_READ_ONLY );
+	Tcl_LinkVar( interp, "debug", (char *)&debug, TCL_LINK_INT );
 
 	/* This string may be supplemented by the Tcl runtime */
 	Tcl_LinkVar( interp, "node_search_path", (char *)&node_search_path, TCL_LINK_STRING );
@@ -849,6 +883,8 @@ char	*argv[];
 
 	/* Incorporate built-in commands.  BEFORE running script. */
 	(void)Tcl_CreateCommand(interp, "all_send", all_send,
+		(ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
+	(void)Tcl_CreateCommand(interp, "vrmgr_hostname", vrmgr_hostname,
 		(ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
 	(void)Tcl_CreateCommand(interp, "vrmgr_send", vrmgr_send,
 		(ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
@@ -993,6 +1029,7 @@ ClientData clientData;
 
 	/* Record starting time for this frame */
 	(void)gettimeofday( &frame_start, (struct timezone *)NULL );
+	finish_position = 0;
 
 	/* Keep track of the POV used for this assignment.  For refresh. */
 	if( last_pov )  {
@@ -1055,6 +1092,8 @@ ClientData clientData;
 		rtnodes[i].busy = 1;
 		start_line = end_line + 1;
 	}
+	/* Record time that all assignments went out */
+	(void)gettimeofday( &t_assigned, (struct timezone *)NULL );
 }
 
 /*
@@ -1237,6 +1276,9 @@ int	new;
 		return -1;
 	}
 	rtnodes[i].state = new;
+
+	Tcl_Eval( interp, "update_cpu_status" );
+
 	return 0;
 }
 
@@ -1275,6 +1317,9 @@ char			*buf;
 		vrmgr_pc = 0;
 		vrmgr_ihost = 0;
 	}
+
+	Tcl_Eval( interp, "update_cpu_status" );
+
 	if(buf) (void)free(buf);
 }
 
@@ -1479,8 +1524,6 @@ char			*buf;
 		rtnodes[i].lump = 0;
 		rtnodes[i].w_lps = 1;
 
-		Tcl_Eval( interp, "update_cpu_status" );
-
 		/* No more dialog, next pkg will be a POV */
 
 		return;
@@ -1513,6 +1556,10 @@ char			*buf;
 	struct timeval	time_end;
 	double		interval;
 	double		blend1, blend2;
+	int		new_npsw;
+	double		t1, t2, t3;
+	int		nfields;
+	int		sched_update = 0;
 
 	blend1 = 0.8;
 	blend2 = 1 - blend1;
@@ -1529,18 +1576,40 @@ char			*buf;
 				   blend2 * rtnodes[i].i_lps;
 		rtnodes[i].time_delta = interval;
 
-		if( rtnodes[i].ncpus != atoi(buf) )  {
-			bu_log(" %s %s NCPUs changed from %d to %s\n",
-				stamp(), rtnodes[i].host->ht_name,
-				rtnodes[i].ncpus, buf);
-			rtnodes[i].ncpus = atoi(buf);
-			Tcl_Eval( interp, "update_cpu_status" );
+		rtnodes[i].finish_order = ++finish_position;
+		if( finish_position == 1 )  {
+			t_1st_done = time_end;	/* struct copy */
 		}
 
+		new_npsw = -1;
+		t1 = t2 = t3 = -1;
+		nfields = sscanf(buf, "%d %lf %lf %lf",
+			&new_npsw, &t1, &t2, &t3 );
+
+		if( nfields < 1 )  {
+			bu_log(" %s %s reply message had insufficient (%d) fields\n",
+				stamp(), rtnodes[i].host->ht_name,
+				nfields);
+		}
+
+		if( nfields >= 1 && rtnodes[i].ncpus != new_npsw )  {
+			bu_log(" %s %s NCPUs changed from %d to %d\n",
+				stamp(), rtnodes[i].host->ht_name,
+				rtnodes[i].ncpus, new_npsw);
+			rtnodes[i].ncpus = new_npsw;
+			sched_update = 1;
+		}
+
+		rtnodes[i].rt_time = t1;
+		rtnodes[i].fb_time = t2;
+		rtnodes[i].ck_time = t3;
+
 		if( debug )  {
-			bu_log("%s DONE %s (%g ms)\n", stamp(),
+			bu_log("%s DONE %s (%g ms) rt=%g fb=%g ck=%g buf=%s\n",
+				stamp(),
 				rtnodes[i].host->ht_name,
-				interval * 1000.0
+				interval * 1000.0,
+				t1, t2, t3, buf
 				);
 		}
 		rtnodes[i].busy = 0;
@@ -1556,6 +1625,10 @@ check_others:
 		if( rtnodes[i].ncpus <= 0 )  continue;
 		if( rtnodes[i].busy )  return;	/* Still working on last one */
 	}
+	
+	/* Record time that final assignment came back */
+	(void)gettimeofday( &t_all_done, (struct timezone *)NULL );
+
 	/* This frame is now done, flush to screen */
 	fb_flush(fbp);
 
@@ -1568,6 +1641,16 @@ check_others:
 		interval,
 		width * height * 3 * 8 / interval / 1000000.0,
 		1.0/interval );
+	bu_log("\tassignment=%g 1st_done=%g, all_done=%g, flush=%g ms\n",
+		tvdiff( &t_assigned, &frame_start ) * 1000,
+		tvdiff( &t_1st_done, &frame_start ) * 1000,
+		tvdiff( &t_all_done, &frame_start ) * 1000,
+		tvdiff( &time_end, &t_all_done ) * 1000
+		);
+
+	/* Trigger TCL code to auto-update cpu status window on major changes */
+	if( sched_update )
+		Tcl_Eval( interp, "update_cpu_status" );
 }
 
 /*
