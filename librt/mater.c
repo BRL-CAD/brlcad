@@ -32,7 +32,6 @@ static const char RCSmater[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include "machine.h"
 #include "vmath.h"
-#include "db.h"
 #include "mater.h"
 #include "raytrace.h"
 #include "./debug.h"
