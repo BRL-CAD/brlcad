@@ -46,7 +46,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./solid.h"
 #include "./sedit.h"
 #include "./mgedtcl.h"
-#include "./dm.h"
+#include "./mged_dm.h"
 
 int	state;
 char	*state_str[] = {
@@ -169,11 +169,7 @@ register struct bu_vls	*vp;
 
 		}
 #endif
-#ifdef USE_LIBDM
 		dmp->dmr_puts( dmp, start, xbase, y, 0, DM_YELLOW );
-#else
-		dmp->dmr_puts( start, xbase, y, 0, DM_YELLOW );
-#endif
 		start = end+1;
 		y += TEXT0_DY;
 	}
@@ -290,11 +286,7 @@ int call_dm;
 
 		for( i=0; i<8+1; i++ )  {
 			if( pl[i].str[0] == '\0' )  break;
-#ifdef USE_LIBDM
 			dmp->dmr_puts( dmp, pl[i].str,
-#else
-			dmp->dmr_puts( pl[i].str,
-#endif
 				((int)(pl[i].pt[X]*2048))+15,
 				((int)(pl[i].pt[Y]*2048))+15,
 				0, DM_WHITE );
@@ -307,27 +299,15 @@ int call_dm;
 	}
 
 	/* Line across the bottom, above two bottom status lines */
-#ifdef USE_LIBDM
 	dmp->dmr_2d_line( dmp, XMIN, TITLE_YBASE-TEXT1_DY, XMAX,
 			  TITLE_YBASE-TEXT1_DY, 0 );
-#else
-	dmp->dmr_2d_line( XMIN, TITLE_YBASE-TEXT1_DY, XMAX,
-			  TITLE_YBASE-TEXT1_DY, 0 );
-#endif
 
 	if(mged_variables.show_menu){
 	  /* Enclose window in decorative box.  Mostly for alignment. */
-#ifdef USE_LIBDM
 	  dmp->dmr_2d_line( dmp, XMIN, YMIN, XMAX, YMIN, 0 );
 	  dmp->dmr_2d_line( dmp, XMAX, YMIN, XMAX, YMAX, 0 );
 	  dmp->dmr_2d_line( dmp, XMAX, YMAX, XMIN, YMAX, 0 );
 	  dmp->dmr_2d_line( dmp, XMIN, YMAX, XMIN, YMIN, 0 );
-#else
-	  dmp->dmr_2d_line( XMIN, YMIN, XMAX, YMIN, 0 );
-	  dmp->dmr_2d_line( XMAX, YMIN, XMAX, YMAX, 0 );
-	  dmp->dmr_2d_line( XMAX, YMAX, XMIN, YMAX, 0 );
-	  dmp->dmr_2d_line( XMIN, YMAX, XMIN, YMIN, 0 );
-#endif
 
 	  /* Display scroll bars */
 	  scroll_ybot = scroll_display( SCROLLY ); 
@@ -336,13 +316,8 @@ int call_dm;
 
 	  /* Display state and local unit in upper right corner, boxed */
 #define YPOS	(MENUY - MENU_DY - 75 )
-#ifdef USE_LIBDM
 	  dmp->dmr_puts(dmp, state_str[state], MENUX, MENUY - MENU_DY, 1, DM_WHITE );
 	  dmp->dmr_2d_line(dmp, MENUXLIM, YPOS, MENUXLIM, YMAX, 0);	/* vert. */
-#else
-	  dmp->dmr_puts(state_str[state], MENUX, MENUY - MENU_DY, 1, DM_WHITE );
-	  dmp->dmr_2d_line(MENUXLIM, YPOS, MENUXLIM, YMAX, 0);	/* vert. */
-#endif
 #undef YPOS
 	}else{
 	  scroll_ybot = SCROLLY;
@@ -357,22 +332,12 @@ int call_dm;
 	    (state==ST_O_PATH || state==ST_O_PICK || state==ST_S_PICK) )  {
 		for( i=0; i <= illump->s_last; i++ )  {
 			if( i == ipathpos  &&  state == ST_O_PATH )  {
-#ifdef USE_LIBDM
 				dmp->dmr_puts( dmp, "[MATRIX]", x, y, 0,
 					       DM_WHITE );
-#else
-				dmp->dmr_puts( "[MATRIX]", x, y, 0,
-					       DM_WHITE );
-#endif
 				y += MENU_DY;
 			}
-#ifdef USE_LIBDM
 			dmp->dmr_puts( dmp, illump->s_path[i]->d_namep, x, y, 0,
 				       DM_YELLOW );
-#else
-			dmp->dmr_puts( illump->s_path[i]->d_namep, x, y, 0,
-				       DM_YELLOW );
-#endif
 			y += MENU_DY;
 		}
 	}
@@ -389,7 +354,6 @@ int call_dm;
 		MAT4X3PNT(temp, model2objview, es_keypoint);
 		xloc = (int)(temp[X]*2048);
 		yloc = (int)(temp[Y]*2048);
-#ifdef USE_LIBDM
 		dmp->dmr_2d_line(dmp, xloc-TEXT0_DY, yloc+TEXT0_DY, xloc+TEXT0_DY,
 				 yloc-TEXT0_DY, 0);
 		dmp->dmr_2d_line(dmp, xloc-TEXT0_DY, yloc-TEXT0_DY, xloc+TEXT0_DY,
@@ -402,20 +366,6 @@ int call_dm;
 				 yloc-TEXT0_DY, 0);
 		dmp->dmr_2d_line(dmp, xloc-TEXT0_DY, yloc+TEXT0_DY, xloc-TEXT0_DY,
 				 yloc-TEXT0_DY, 0);
-#else
-		dmp->dmr_2d_line(xloc-TEXT0_DY, yloc+TEXT0_DY, xloc+TEXT0_DY,
-				 yloc-TEXT0_DY, 0);
-		dmp->dmr_2d_line(xloc-TEXT0_DY, yloc-TEXT0_DY, xloc+TEXT0_DY,
-				 yloc+TEXT0_DY, 0);
-		dmp->dmr_2d_line(xloc+TEXT0_DY, yloc+TEXT0_DY, xloc-TEXT0_DY,
-				 yloc+TEXT0_DY, 0);
-		dmp->dmr_2d_line(xloc+TEXT0_DY, yloc-TEXT0_DY, xloc-TEXT0_DY,
-				 yloc-TEXT0_DY, 0);
-		dmp->dmr_2d_line(xloc+TEXT0_DY, yloc+TEXT0_DY, xloc+TEXT0_DY,
-				 yloc-TEXT0_DY, 0);
-		dmp->dmr_2d_line(xloc-TEXT0_DY, yloc+TEXT0_DY, xloc-TEXT0_DY,
-				 yloc-TEXT0_DY, 0);
-#endif
 	      }
 	}
 
@@ -440,13 +390,8 @@ int call_dm;
 	bu_vls_printf(&vls,
 		       "az=%s el=%s tw=%s ang=(%s, %s, %s)",
 		      azimuth, elevation, twist, ang_x, ang_y, ang_z);
-#ifdef USE_LIBDM
 	dmp->dmr_puts( dmp, bu_vls_addr(&vls), TITLE_XBASE, TITLE_YBASE, 1,
 		       DM_WHITE );
-#else
-	dmp->dmr_puts( bu_vls_addr(&vls), TITLE_XBASE, TITLE_YBASE, 1,
-		       DM_WHITE );
-#endif
 	bu_vls_trunc(&vls, 0);
 	/*
 	 * Second status line
@@ -480,13 +425,8 @@ int call_dm;
 			pt3[X]*base2local, pt3[Y]*base2local,
 			(curs_x / 2047.0) *Viewscale*base2local,
 			(curs_y / 2047.0) *Viewscale*base2local );
-#ifdef USE_LIBDM
 		dmp->dmr_puts( dmp, bu_vls_addr(&vls), TITLE_XBASE,
 			      TITLE_YBASE + TEXT1_DY, 1, DM_YELLOW );
-#else
-		dmp->dmr_puts( bu_vls_addr(&vls), TITLE_XBASE,
-			      TITLE_YBASE + TEXT1_DY, 1, DM_YELLOW );
-#endif
 		Tcl_SetVar2(interp, MGED_DISPLAY_VAR, "adc",
 			    bu_vls_addr(&vls), TCL_GLOBAL_ONLY);
 	} else if( state == ST_S_EDIT || state == ST_O_EDIT )  {
@@ -497,13 +437,8 @@ int call_dm;
 			es_keypoint[X] * base2local,
 			es_keypoint[Y] * base2local,
 			es_keypoint[Z] * base2local);
-#ifdef USE_LIBDM
 		dmp->dmr_puts( dmp, bu_vls_addr(&vls), TITLE_XBASE,
 			       TITLE_YBASE + TEXT1_DY, 1, DM_YELLOW );
-#else
-		dmp->dmr_puts( bu_vls_addr(&vls), TITLE_XBASE,
-			       TITLE_YBASE + TEXT1_DY, 1, DM_YELLOW );
-#endif
 		Tcl_SetVar2(interp, MGED_DISPLAY_VAR, "keypoint",
 			    bu_vls_addr(&vls), TCL_GLOBAL_ONLY);
 	} else if( illump != SOLID_NULL )  {
@@ -515,22 +450,12 @@ int call_dm;
 				bu_vls_strcat( &vls, "/__MATRIX__" );
 			bu_vls_printf(&vls, "/%s", illump->s_path[i]->d_namep);
 		}
-#ifdef USE_LIBDM
 		dmp->dmr_puts( dmp, bu_vls_addr(&vls), TITLE_XBASE,
 			       TITLE_YBASE + TEXT1_DY, 1, DM_YELLOW );
-#else
-		dmp->dmr_puts( bu_vls_addr(&vls), TITLE_XBASE,
-			       TITLE_YBASE + TEXT1_DY, 1, DM_YELLOW );
-#endif
 	} else {
 		bu_vls_printf(&vls, "%.2f fps", 1/frametime );
-#ifdef USE_LIBDM
 		dmp->dmr_puts( dmp, bu_vls_addr(&vls), TITLE_XBASE,
 			       TITLE_YBASE + TEXT1_DY, 1, DM_YELLOW );
-#else
-		dmp->dmr_puts( bu_vls_addr(&vls), TITLE_XBASE,
-			       TITLE_YBASE + TEXT1_DY, 1, DM_YELLOW );
-#endif
 		Tcl_SetVar2(interp, MGED_DISPLAY_VAR, "fps",
 			    bu_vls_addr(&vls), TCL_GLOBAL_ONLY);
 	}
