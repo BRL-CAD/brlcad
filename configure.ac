@@ -1768,6 +1768,7 @@ AC_SUBST(SAMPLE_APPLICATIONS_DIR)
 AC_CONFIG_FILES([
 	Makefile
 	bench/Makefile
+	regress/Makefile
 	db/Makefile
 	db/include/Makefile
 	doc/Makefile

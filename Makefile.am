@@ -12,6 +12,7 @@ bench_dirs = \
 other_dirs = \
 	doc \
 	misc \
+	regress \
 	sh
 
 if ONLY_BENCHMARK
