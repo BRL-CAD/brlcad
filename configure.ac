@@ -157,12 +157,14 @@ BC_CONFIG_CACHE([config.cache.${host_os}.${ac_hostname}])
 
 dnl be sure to search these directories for components
 BC_SEARCH_DIRECTORY([/usr/X11R6], [X11])
+BC_SEARCH_DIRECTORY([/usr/X11], [X11])
 
 dnl search several additional locations if configure happens to fail
 dnl to find a required component
 BC_RETRY_DIRECTORY([/usr/freeware], [freeware])
 BC_RETRY_DIRECTORY([/usr/local])
 BC_RETRY_DIRECTORY([/opt/X11R6], [X11])
+BC_RETRY_DIRECTORY([/opt/X11], [X11])
 BC_RETRY_DIRECTORY([/opt])
 BC_RETRY_DIRECTORY([/sw], [fink])
 
