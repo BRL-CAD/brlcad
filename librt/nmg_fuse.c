@@ -2151,20 +2151,6 @@ CONST struct bn_tol	*tol;
 
 /* -------------------- RADIAL -------------------- */
 
-struct nmg_radial {
-	struct bu_list	l;
-	struct edgeuse	*eu;
-	struct faceuse	*fu;		/* Derrived from eu */
-	struct shell	*s;		/* Derrived from eu */
-	int		existing_flag;	/* !0 if this eu exists on dest edge */
-	int		is_crack;	/* This eu is part of a crack. */
-	int		is_outie;	/* This crack is an "outie" */
-	int		needs_flip;	/* Insert eumate, not eu */
-	fastf_t		ang;		/* angle, in radians.  0 to 2pi */
-};
-#define NMG_RADIAL_MAGIC	0x52614421	/* RaD! */
-#define NMG_CK_RADIAL(_p)	NMG_CKMAG(_p, NMG_RADIAL_MAGIC, "nmg_radial")
-
 /*
  *			N M G _ R A D I A L _ S O R T E D _ L I S T _ I N S E R T
  *

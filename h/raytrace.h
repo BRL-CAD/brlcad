@@ -1979,6 +1979,19 @@ struct ray_data {
 	(void) nmg_ray_segs(rd); \
 	rt_bomb("Should have bombed before this\n"); }
 
+struct nmg_radial {
+	struct bu_list	l;
+	struct edgeuse	*eu;
+	struct faceuse	*fu;		/* Derrived from eu */
+	struct shell	*s;		/* Derrived from eu */
+	int		existing_flag;	/* !0 if this eu exists on dest edge */
+	int		is_crack;	/* This eu is part of a crack. */
+	int		is_outie;	/* This crack is an "outie" */
+	int		needs_flip;	/* Insert eumate, not eu */
+	fastf_t		ang;		/* angle, in radians.  0 to 2pi */
+};
+#define NMG_RADIAL_MAGIC	0x52614421	/* RaD! */
+#define NMG_CK_RADIAL(_p)	NMG_CKMAG(_p, NMG_RADIAL_MAGIC, "nmg_radial")
 
 /*****************************************************************
  *                                                               *
@@ -2839,13 +2852,20 @@ BU_EXTERN(int rt_bez_check, (CONST struct face_g_snurb * srf));
 BU_EXTERN(int nurb_crv_is_bezier, (CONST struct edge_g_cnurb *crv));
 BU_EXTERN(void nurb_c_to_bezier, (struct bu_list *clist, struct edge_g_cnurb *crv));
 
-
 /* From nurb_copy.c */
 BU_EXTERN(struct face_g_snurb *rt_nurb_scopy, (CONST struct face_g_snurb * srf,
 		struct resource *res));
 BU_EXTERN(struct edge_g_cnurb *rt_nurb_crv_copy, (CONST struct edge_g_cnurb * crv));
 
-
+/* From nmg_fuse.c */
+BU_EXTERN(struct vertexuse 	*nmg_is_vertex_in_face, (CONST struct vertex *v,
+				CONST struct face *f));
+BU_EXTERN(struct edge_g_lseg	*nmg_pick_best_edge_g, (struct edgeuse *eu1,
+				struct edgeuse *eu2, CONST struct bn_tol *tol));
+BU_EXTERN(void			nmg_pr_radial_list, (CONST struct bu_list *hd,
+				CONST struct bn_tol *tol));
+BU_EXTERN(void			nmg_pr_radial, (CONST char *title,
+				CONST struct nmg_radial	*rad));
 #endif
 
 /*
