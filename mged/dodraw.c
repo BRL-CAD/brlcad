@@ -2,7 +2,11 @@
  *			D O D R A W . C
  *
  * Functions -
+ *	drawtree	Call drawHobj to draw a tree
+ *	drawHobj	Call drawsolid for all solids in an object
  *	drawHsolid	Manage the drawing of a COMGEOM solid
+ *	pathHmat	Find matrix across a given path
+ *	redraw		redraw a single solid, given matrix and record.
  *  
  *  Author -
  *	Michael John Muuss
@@ -35,7 +39,208 @@ int	reg_error;	/* error encountered in region processing */
 int	no_memory;	/* flag indicating memory for drawing is used up */
 long	nvectors;	/* number of vectors drawn so far */
 
-extern struct directory	*cur_path[MAX_PATH];	/* from path.c */
+int	regmemb;	/* # of members left to process in a region */
+char	memb_oper;	/* operation for present member of processed region */
+int	reg_pathpos;	/* pathpos of a processed region */
+
+struct directory	*cur_path[MAX_PATH];	/* Record of current path */
+
+static struct mater_info mged_no_mater = {
+	1.0, 0.0, 0.0,		/* color, RGB */
+	0,			/* override */
+	DB_INH_LOWER,		/* color inherit */
+	DB_INH_LOWER		/* mater inherit */
+};
+
+/*
+ *			D R A W T R E E
+ *
+ *  This routine is the analog of rt_gettree().
+ */
+void
+drawtree( dp )
+struct directory	*dp;
+{
+	mat_t		root;
+	struct mater_info	root_mater;
+
+	root_mater = mged_no_mater;	/* struct copy */
+
+	mat_idn( root );
+	/* Could apply root animations here ? */
+
+	drawHobj( dp, ROOT, 0, root, 0, &root_mater );
+}
+
+/*
+ *			D R A W H O B J
+ *
+ * This routine is used to get an object drawn.
+ * The actual drawing of solids is performed by drawsolid(),
+ * but all transformations down the path are done here.
+ */
+void
+drawHobj( dp, flag, pathpos, old_xlate, regionid, materp )
+register struct directory *dp;
+int		flag;
+int		pathpos;
+matp_t		old_xlate;
+int		regionid;
+struct mater_info *materp;
+{
+	union record	*rp;
+	auto mat_t	new_xlate;	/* Accumulated translation matrix */
+	auto int	i;
+	struct mater_info curmater;
+
+	if( pathpos >= MAX_PATH )  {
+		(void)printf("nesting exceeds %d levels\n", MAX_PATH );
+		for(i=0; i<MAX_PATH; i++)
+			(void)printf("/%s", cur_path[i]->d_namep );
+		(void)putchar('\n');
+		return;			/* ERROR */
+	}
+
+	/*
+	 * Load the record into local record buffer
+	 */
+	if( (rp = db_getmrec( dbip, dp )) == (union record *)0 )
+		return;
+
+	if( rp[0].u_id == ID_SOLID ||
+	    rp[0].u_id == ID_ARS_A ||
+	    rp[0].u_id == ID_BSOLID ||
+	    rp[0].u_id == ID_P_HEAD )  {
+		register struct solid *sp;
+		/*
+		 * Enter new solid (or processed region) into displaylist.
+		 */
+		cur_path[pathpos] = dp;
+
+		GET_SOLID( sp );
+		if( sp == SOLID_NULL )
+			return;		/* ERROR */
+		if( drawHsolid( sp, flag, pathpos, old_xlate, rp, regionid, &curmater ) != 1 ) {
+			FREE_SOLID( sp );
+		}
+		goto out;
+	}
+
+	/*
+	 * Process a Combination (directory) node
+	 */
+	if( rp[0].u_id != ID_COMB )  {
+		(void)printf("drawobj:  defective input '%c'\n", rp[0].u_id );
+		goto out;		/* ERROR */
+	}
+	if( dp->d_len <= 1 )  {
+		(void)printf("Warning: combination with zero members \"%s\".\n",
+			dp->d_namep );
+		goto out;			/* non-fatal ERROR */
+	}
+
+	/*
+	 *  Handle inheritance of material property.
+	 *  Color and the material property have separate
+	 *  inheritance interlocks.
+	 */
+	curmater = *materp;	/* struct copy */
+	if( rp->c.c_override == 1 )  {
+		if( regionid != 0 )  {
+			rt_log("rt_drawobj: ERROR: color override in combination within region %s\n",
+				dp->d_namep );
+		} else {
+			if( curmater.ma_cinherit == DB_INH_LOWER )  {
+				curmater.ma_override = 1;
+				curmater.ma_color[0] = (rp->c.c_rgb[0])*rt_inv255;
+				curmater.ma_color[1] = (rp->c.c_rgb[1])*rt_inv255;
+				curmater.ma_color[2] = (rp->c.c_rgb[2])*rt_inv255;
+				curmater.ma_cinherit = rp->c.c_inherit;
+			}
+		}
+	}
+	if( rp->c.c_matname[0] != '\0' )  {
+		if( regionid != 0 )  {
+			rt_log("rt_drawobj: ERROR: material property spec in combination within region %s\n",
+				dp->d_namep );
+		} else {
+			if( curmater.ma_minherit == DB_INH_LOWER )  {
+				strncpy( curmater.ma_matname, rp->c.c_matname, sizeof(rp->c.c_matname) );
+				strncpy( curmater.ma_matparm, rp->c.c_matparm, sizeof(rp->c.c_matparm) );
+				curmater.ma_minherit = rp->c.c_inherit;
+			}
+		}
+	}
+
+	/* Handle combinations which are the top of a "region" */
+	if( rp[0].c.c_flags == 'R' )  {
+		if( regionid != 0 )
+			(void)printf("regionid %d overriden by %d\n",
+				regionid, rp[0].c.c_regionid );
+		regionid = rp[0].c.c_regionid;
+	}
+
+	/*
+	 *  This node is a combination (eg, a directory).
+	 *  Process all the arcs (eg, directory members).
+	 */
+	if( drawreg && rp[0].c.c_flags == 'R' && dp->d_len > 1 ) {
+		if( regmemb >= 0  ) {
+			(void)printf(
+			"ERROR: region (%s) is member of region (%s)\n",
+				dp->d_namep,
+				cur_path[reg_pathpos]->d_namep);
+			goto out;	/* ERROR */
+		}
+		/* Well, we are processing regions and this is a region */
+		/* if region has only 1 member, don't process as a region */
+		if( dp->d_len > 2) {
+			regmemb = dp->d_len-1;
+			reg_pathpos = pathpos;
+		}
+	}
+
+	/* Process all the member records */
+	for( i=1; i < dp->d_len; i++ )  {
+		register struct member	*mp;
+		register struct directory *nextdp;
+		static mat_t		xmat;	/* temporary fastf_t matrix */
+
+		mp = &(rp[i].M);
+		if( mp->m_id != ID_MEMB )  {
+			fprintf(stderr,"drawHobj:  %s bad member rec\n",
+				dp->d_namep);
+			goto out;			/* ERROR */
+		}
+		cur_path[pathpos] = dp;
+		if( regmemb > 0  ) { 
+			regmemb--;
+			memb_oper = mp->m_relation;
+		}
+		if( (nextdp = db_lookup( dbip,  mp->m_instname, LOOKUP_NOISY )) == DIR_NULL )
+			continue;
+
+		/* s' = M3 . M2 . M1 . s
+		 * Here, we start at M3 and descend the tree.
+		 * convert matrix to fastf_t from disk format.
+		 */
+		rt_mat_dbmat( xmat, mp->m_mat );
+		/* Check here for animation to apply */
+		mat_mul(new_xlate, old_xlate, xmat);
+
+		/* Recursive call */
+		drawHobj(
+			nextdp,
+			(mp->m_relation != SUBTRACT) ? ROOT : INNER,
+			pathpos + 1,
+			new_xlate,
+			regionid,
+			&curmater
+		);
+	}
+out:
+	rt_free( (char *)rp, "drawHobj recs");
+}
 
 /*
  *			D R A W H S O L I D
@@ -46,13 +251,14 @@ extern struct directory	*cur_path[MAX_PATH];	/* from path.c */
  *	 1	if solid was drawn
  */
 int
-drawHsolid( sp, flag, pathpos, xform, recordp, regionid )
-register struct solid *sp;		/* solid structure */
-int flag;
-int pathpos;
-matp_t xform;
-union record *recordp;
-int regionid;
+drawHsolid( sp, flag, pathpos, xform, recordp, regionid, materp )
+register struct solid *sp;
+int		flag;
+int		pathpos;
+matp_t		xform;
+union record	*recordp;
+int		regionid;
+struct mater_info *materp;
 {
 	register struct vlist *vp;
 	register int i;
@@ -113,6 +319,13 @@ int regionid;
 
 		rt_functab[id].ft_plot( recordp, xform, &vhead,
 			cur_path[pathpos] );
+	}
+
+	/* Take note of the base color */
+	if( materp )  {
+		sp->s_basecolor[0] = materp->ma_color[0] * 255.;
+		sp->s_basecolor[1] = materp->ma_color[1] * 255.;
+		sp->s_basecolor[2] = materp->ma_color[2] * 255.;
 	}
 
 	/*
@@ -185,4 +398,94 @@ int regionid;
 	}
 
 	return(1);		/* OK */
+}
+
+/*
+ *  			P A T H h M A T
+ *  
+ *  Find the transformation matrix obtained when traversing
+ *  the arc indicated in sp->s_path[] to the indicated depth.
+ *  Be sure to omit s_path[sp->s_last] -- it's a solid.
+ */
+void
+pathHmat( sp, matp, depth )
+register struct solid *sp;
+matp_t matp;
+{
+	register union record	*rp;
+	register struct directory *parentp;
+	register struct directory *kidp;
+	register int		j;
+	auto mat_t		tmat;
+	register int		i;
+
+	mat_idn( matp );
+	for( i=0; i <= depth; i++ )  {
+		parentp = sp->s_path[i];
+		kidp = sp->s_path[i+1];
+		if( !(parentp->d_flags & DIR_COMB) )  {
+			printf("pathHmat:  %s is not a combination\n",
+				parentp->d_namep);
+			return;		/* ERROR */
+		}
+		if( (rp = db_getmrec( dbip, parentp )) == (union record *)0 )
+			return;		/* ERROR */
+		for( j=1; j < parentp->d_len; j++ )  {
+			static mat_t xmat;	/* temporary fastf_t matrix */
+
+			/* Examine Member records */
+			if( strcmp( kidp->d_namep, rp[j].M.m_instname ) != 0 )
+				continue;
+
+			/* convert matrix to fastf_t from disk format */
+			rt_mat_dbmat( xmat, rp[j].M.m_mat );
+			mat_mul( tmat, matp, xmat );
+			mat_copy( matp, tmat );
+			goto next_level;
+		}
+		(void)printf("pathHmat: unable to follow %s/%s path\n",
+			parentp->d_namep, kidp->d_namep );
+		return;			/* ERROR */
+next_level:
+		rt_free( (char *)rp, "pathHmat recs");
+	}
+}
+
+/*
+ *  			R E D R A W
+ *  
+ *  Probably misnamed.
+ */
+struct solid *
+redraw( sp, recp, mat )
+struct solid *sp;
+union record *recp;
+mat_t	mat;
+{
+	int addr, bytes;
+
+	if( sp == SOLID_NULL )
+		return( sp );
+
+	/* Remember displaylist location of previous solid */
+	addr = sp->s_addr;
+	bytes = sp->s_bytes;
+
+	if( drawHsolid(
+		sp,
+		sp->s_soldash,
+		sp->s_last,
+		mat,
+		recp,
+		sp->s_regionid,
+		(struct mater_info *)0
+	) != 1 )  {
+		(void)printf("redraw():  error in drawHsolid()\n");
+		return(sp);
+	}
+
+	/* Release previous chunk of displaylist, and rewrite control list */
+	memfree( &(dmp->dmr_map), (unsigned)bytes, (unsigned long)addr );
+	dmaflag = 1;
+	return( sp );
 }
