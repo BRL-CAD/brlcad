@@ -107,7 +107,7 @@ read_data( )
 		case (2):
 			scanf("%d", &b_1);
 			scanf("%d", &b_2);
-			make_bond( b_1, b_2);
+			(void)make_bond( b_1, b_2);
 			break;
 		case (4):
 			return;
@@ -181,7 +181,7 @@ int sp1, sp2;
 	}
 
 	if( s1 == (struct sphere *) 0 || s2 == (struct sphere *)0 )
-		return -1;
+		return -1;		/* error */
 
 	VMOVE( base, s1->s_center );
 	VSUB2( height, s2->s_center, s1->s_center );
@@ -199,5 +199,5 @@ int sp1, sp2;
 	mk_memb( stdout, nm, m, UNION);
 	mk_memb( stdout, s1->s_name, m, SUBTRACT);
 	mk_memb( stdout, s2->s_name, m, SUBTRACT);
-
+	return(0);		/* OK */
 }
