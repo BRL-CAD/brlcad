@@ -2,7 +2,7 @@
 
 bin_PROGRAMS = \
 	all_sf \
-	display \
+	showtherm \
 	firpass \
 	ir-X \
 	ir-sgi \
@@ -13,8 +13,8 @@ bin_PROGRAMS = \
 all_sf_LDADD = ${LIBRT} ${BN}
 all_sf_SOURCES = all_sf.c
 
-display_LDADD = ${LIBRT} ${BN}
-display_SOURCES = display.c
+showtherm_LDADD = ${LIBRT} ${BN}
+showtherm_SOURCES = showtherm.c
 
 firpass_LDADD = ${LIBRT} ${BN}
 firpass_SOURCES = firpass.c subroutines.c
@@ -38,7 +38,7 @@ shapefact_SOURCES = shapefact.c
 
 man_MANS = \
 	all_sf.1 \
-	display.1 \
+	showtherm.1 \
 	firpass.1 \
 	irdisp.1 \
 	ir-sgi.1 \

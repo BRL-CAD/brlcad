@@ -1,11 +1,11 @@
 .TH PICTX 1 BRL/CAD
 .SH NAME
-pictx \- combines the two programs display and ir-X
+pictx \- combines the two programs showtherm and ir-X
 .SH SYNOPSIS
 pictx
 .SH DESCRIPTIONS
 Pictx is an interactive program that 
-combines the two programs display and ir-X.  Ultimately it can
+combines the two programs showtherm and ir-X.  Ultimately it can
 read a temperature output file and display the image on the screen
 without having the user call two different programs.
 .sp
@@ -21,8 +21,8 @@ The following is an example from an interactive session.
 	display it using X-Windows graphics.  Make
 	your selection.
 		0 - raytrace & store file
-		1 - raytrace, store, and display file
-		2 - display file
+		1 - raytrace, store, and showtherm file
+		2 - showtherm file
 	1
 	Enter .g file to be raytraced (15 char max).
 		test.veh.g
@@ -31,7 +31,7 @@ The following is an example from an interactive session.
 	Enter group 0 (25 char max).
 		vehicle
 
-	The program display is now being run.
+	The program showtherm is now being run.
 	
 	Type of output file to be read 0=>PRISM, 1=>generic.
 		0
@@ -105,7 +105,7 @@ The following is an example from an interactive session.
 	$
 .fi
 .SH SEE ALSO
-firpass(1), secpass(1), shapefact(1), all_sf(1), display(1), ir-X(1), ir-sgi(1),
+firpass(1), secpass(1), shapefact(1), all_sf(1), showtherm(1), ir-X(1), ir-sgi(1),
 pictsgi(1), User's Manual for IRPREP (BRL-SP-96), Computer Programs
 for Generating an Input File for PRISM and Displaying PRISM Results
 (BRL report in progress)

@@ -33,7 +33,7 @@
 /*  the maximum width and height.  Each line after the first  */
 /*  contains one floating point number, this is the value of  */
 /*  that pixel (such as a temperature).  The pixels are read  */
-/*  from left to right, top to bottom.  The program 'display'  */
+/*  from left to right, top to bottom.  The program 'showtherm'  */
 /*  will create a file with the appropriate format.  */
 
 /*	27 May 1992      - Allow pix file to be written if desired.  */

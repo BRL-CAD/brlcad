@@ -1,26 +1,26 @@
-.TH DISPLAY 1 BRL/CAD
+.TH SHOWTHERM 1 BRL/CAD
 .SH NAME
-display \- ray-traces a BRL-CAD geometry file and as a region is
+showtherm \- ray-traces a BRL-CAD geometry file and as a region is
 hit the temperature of that region is looked up in a temperature
 output file
 .SH SYNOPSIS
-display model.g objects...
+showtherm model.g objects...
 .SH DESCRIPTIONS
-Display
+Showtherm
 is an interactive program that ray-traces a BRL-CAD geometry file
 that does not include air and as a region is hit the temperature is
 looked up in a temperature output file.  This file may be either a
 PRISM temperature output file or a generic temperature output file.
 .sp
-Display then creates an output file that is readable by Analyzer2
+Showtherm then creates an output file that is readable by Analyzer2
 (an X-windows program written by Glen Durfee), ir-X, or ir-sgi.
-These programs will graphically display the image with temperatures
+These programs will graphically showtherm the image with temperatures
 being represented by different colors.
 .SH EXAMPLE
 The following is an example from an interactive session.
 .nf
 
-	$ display test.veh.g vehicle
+	$ showtherm test.veh.g vehicle
 	Type of output file to be read 0=>PRISM, 1=>generic.
 		0
 	Enter name of the PRISM output file to be read (26 char max).

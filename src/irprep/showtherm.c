@@ -1,4 +1,4 @@
-/*                       D I S P L A Y . C
+/*                     S H O W T H E R M . C
  * BRL-CAD
  *
  * Copyright (C) 2004-2005 United States Government as represented by
@@ -18,7 +18,7 @@
  * along with this file; see the file named COPYING for more
  * information.
  */
-/** @file display.c
+/** @file showtherm.c
  *
  *  Graphical display of output from PRISM or another infrared model.
  *  This program will read as input two different types of output
@@ -43,7 +43,7 @@
  *  PRISM (or other infrared model) output file.  For example
  *  if 'file.g' with objects 'all' and 'air' were use with firpass
  *  and secpass.  The air objects had to be removed in order for
- *  PRISM to run.  Then when running display use only the object
+ *  PRISM to run.  Then when running showtherm use only the object
  *  'all.'  Make sure the air was at the end so that the numbering 
  *  sceme is not altered.
  *
@@ -144,7 +144,7 @@ int main(int argc, char **argv)
   /*  Check to see if arguments implemented correctly.  */
   if(argv[1]==NULL || argv[2]==NULL)
     {
-      (void)fprintf(stderr,"\nusage:  display file.g objects\n\n");
+      (void)fprintf(stderr,"\nusage:  showtherm file.g objects\n\n");
     }
 
   else
