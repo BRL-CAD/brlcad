@@ -5,7 +5,7 @@
 # @(#)$Header$ (BRL)
 SHELL=/bin/sh
 
-PROGS = base ccincl later need needed cakesub subcmd usrc gsrc
+PROGS = base ccincl later need needed cakesub subcmd usrc gsrc cakeinclude
 
 BINDIR=/usr/brlcad/bin
 
@@ -16,6 +16,9 @@ install:	$(PROGS)
 
 base:		base.o pattern_s.o
 		cc -o base base.o pattern_s.o
+
+cakeinclude:	cakeinclude.o
+		cc -o cakeinclude cakeinclude.o
 
 ccincl:		ccincl.o ccincl_s.o
 		cc -o ccincl ccincl.o ccincl_s.o
