@@ -51,6 +51,20 @@ FBIO *ifp;
 	return	0;
 }
 
+/*
+ *			F B _ N U L L _ S E T C U R S O R
+ *
+ *  Used by if_*.c routines that don't have programmable cursor patterns.
+ */
+int fb_null_setcursor(ifp, bits, xbits, ybits, xorig, yorig )
+FBIO		*ifp;
+CONST unsigned char	*bits;
+int		xbits, ybits;
+int		xorig, yorig;
+{
+	return	0;
+}
+
 #ifdef IF_REMOTE
 extern FBIO remote_interface;	/* not in list[] */
 #endif
