@@ -36,11 +36,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "dm.h"
 #include "dm-ps.h"
+#include "solid.h"
 
 #define EPSILON          0.0001
-
-/*XXX This is just temporary!!! */
-#include "../mged/solid.h"
 
 static void PS_load_startup();
 
@@ -82,6 +80,9 @@ struct dm dm_PS = {
   0,
   0,
   0,
+  0,
+  0,
+  0,
   0
 };
 
@@ -91,9 +92,8 @@ char ps_usage[] = "Usage: ps [-f font] [-t title] [-c creator] [-s size in inche
 struct ps_vars head_ps_vars;
 
 static int
-PS_init(dmp, color_func, argc, argv)
+PS_init(dmp, argc, argv)
 struct dm *dmp;
-void (*color_func)();
 int argc;
 char *argv[];
 {
@@ -105,9 +105,7 @@ char *argv[];
 
   bu_vls_printf(&dmp->dmr_pathName, ".dm_ps%d", count++);
 
-  dmp->dmr_vars = bu_malloc(sizeof(struct ps_vars), "PS_init: ps_vars");
-  bzero((void *)dmp->dmr_vars, sizeof(struct ps_vars));
-  ((struct ps_vars *)dmp->dmr_vars)->color_func = color_func;
+  dmp->dmr_vars = bu_calloc(1, sizeof(struct ps_vars), "PS_init: ps_vars");
   bu_vls_init(&((struct ps_vars *)dmp->dmr_vars)->fname);
   bu_vls_init(&((struct ps_vars *)dmp->dmr_vars)->font);
   bu_vls_init(&((struct ps_vars *)dmp->dmr_vars)->title);
@@ -599,7 +597,7 @@ static void
 PS_colorchange(dmp)
 struct dm *dmp;
 {
-  ((struct ps_vars *)dmp->dmr_vars)->color_func();
+  dmp->dmr_cfunc();
 }
 
 /* ARGSUSED */

@@ -38,9 +38,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "dm.h"
 #include "dm-plot.h"
-
-/*XXX This is just temporary!!! */
-#include "../mged/solid.h"
+#include "solid.h"
 
 static void Plot_load_startup();
 
@@ -82,15 +80,17 @@ struct dm dm_Plot = {
   0,
   0,
   0,
+  0,
+  0,
+  0,
   0
 };
 
 struct plot_vars head_plot_vars;
 
 static int
-Plot_init(dmp, color_func, argc, argv)
+Plot_init(dmp, argc, argv)
 struct dm *dmp;
-void (*color_func)();
 int argc;
 char *argv[];
 {
@@ -102,9 +102,7 @@ char *argv[];
 
   bu_vls_printf(&dmp->dmr_pathName, ".dm_plot%d", count++);
 
-  dmp->dmr_vars = bu_malloc(sizeof(struct plot_vars), "Plot_init: plot_vars");
-  bzero((void *)dmp->dmr_vars, sizeof(struct plot_vars));
-  ((struct plot_vars *)dmp->dmr_vars)->color_func = color_func;
+  dmp->dmr_vars = bu_calloc(1, sizeof(struct plot_vars), "Plot_init: plot_vars");
   bu_vls_init(&((struct plot_vars *)dmp->dmr_vars)->vls);
 
   /* Process any options */
@@ -540,7 +538,7 @@ static void
 Plot_colorchange(dmp)
 struct dm *dmp;
 {
-  ((struct plot_vars *)dmp->dmr_vars)->color_func();
+  dmp->dmr_cfunc();
 }
 
 /* ARGSUSED */
