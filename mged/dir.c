@@ -115,6 +115,11 @@ char	**argv;
 {
   register struct directory *dp;
   register int i;
+  int c;
+  int aflag = 0;		/* print all objects without formatting */
+  int cflag = 0;		/* print combinations */
+  int rflag = 0;		/* print regions */
+  int sflag = 0;		/* print solids */
   struct directory **dirp;
   struct directory **dirp0 = (struct directory **)NULL;
   struct bu_vls vls;
@@ -122,14 +127,38 @@ char	**argv;
   CHECK_DBI_NULL;
 
   if(argc < 1 || MAXARGS < argc){
-    struct bu_vls vls;
-
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "help %s", argv[0]);
     Tcl_Eval(interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
     return TCL_ERROR;
   }
+
+  bu_optind = 1;	/* re-init bu_getopt() */
+  while ((c = bu_getopt(argc, argv, "acgrs")) != EOF) {
+    switch (c) {
+    case 'a':
+      aflag = 1;
+      break;
+    case 'c':
+      cflag = 1;
+      break;
+    case 'r':
+      rflag = 1;
+      break;
+    case 's':
+      sflag = 1;
+      break;
+    default:
+      bu_vls_init(&vls);
+      bu_vls_printf(&vls, "Unrecognized option - %c\n", c);
+      Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+      bu_vls_free(&vls);
+      return TCL_ERROR;
+    }
+  }
+  argc -= (bu_optind - 1);
+  argv += (bu_optind - 1);
 
   bu_vls_init(&vls);
   if( setjmp( jmp_env ) == 0 )
@@ -142,7 +171,7 @@ char	**argv;
     return TCL_OK;
   }
 
-  if( argc > 1) {
+  if (argc > 1) {
     /* Just list specified names */
     dirp = dir_getspace( argc-1 );
     dirp0 = dirp;
@@ -168,7 +197,12 @@ char	**argv;
 	*dirp++ = dp;
   }
 
-  vls_col_pr4v(&vls, dirp0, (int)(dirp - dirp0));
+  if (aflag || cflag || rflag || sflag)
+    vls_line_dpp(&vls, dirp0, (int)(dirp - dirp0),
+		 aflag, cflag, rflag, sflag);
+  else
+    vls_col_pr4v(&vls, dirp0, (int)(dirp - dirp0));
+
   Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
   (void)signal( SIGINT, SIG_IGN );
   bu_vls_free(&vls);
