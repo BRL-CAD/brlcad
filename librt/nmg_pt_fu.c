@@ -89,6 +89,122 @@ static int	compute_loop_class(struct fpi *fpi,struct loopuse *lu,struct edge_inf
 static int	nmg_class_pt_lu(struct loopuse *lu, struct fpi *fpi);
 int		nmg_class_pt_fu_except(CONST point_t pt, CONST struct faceuse *fu, CONST struct loopuse *ignore_lu, void (*eu_func)(), void (*vu_func)(), CONST char *priv, CONST int call_on_hits, CONST struct rt_tol *tol);
 #endif
+
+/*
+ *			R T _ D I S T _ P T 3 _ L S E G 3 _ J R A
+ *
+ *  Find the distance from a point P to a line segment described
+ *  by the two endpoints A and B, and the point of closest approach (PCA).
+ *
+ *			P
+ *		       *
+ *		      /.
+ *		     / .
+ *		    /  .
+ *		   /   . (dist)
+ *		  /    .
+ *		 /     .
+ *		*------*--------*
+ *		A      PCA	B
+ *
+ *  There are six distinct cases, with these return codes -
+ *	0	P is within tolerance of lseg AB.  *dist isn't 0: (SPECIAL!!!)
+ *		  *dist = parametric dist = |PCA-A| / |B-A|.  pca=computed.
+ *	1	P is within tolerance of point A.  *dist = 0, pca=A.
+ *	2	P is within tolerance of point B.  *dist = 0, pca=B.
+ *	3	PCA is within tolerance of A. *dist = |P-A|, pca=A.
+ *	4	PCA is within tolerance of B. *dist = |P-B|, pca=B.
+ *	5	P is "above/below" lseg AB.  *dist=|PCA-P|, pca=computed.
+ *
+ * This routine was formerly called rt_dist_pt_lseg().
+ *
+ * XXX For efficiency, a version of this routine that provides the
+ * XXX distance squared would be faster.
+ */
+int
+rt_dist_pt3_lseg3_jra( dist, pca, a, b, p, tol )
+fastf_t		*dist;
+point_t		pca;
+CONST point_t	a, b, p;
+CONST struct rt_tol *tol;
+{
+	vect_t	PtoA;		/* P-A */
+	vect_t	PtoB;		/* P-B */
+	vect_t	AtoB;		/* B-A */
+	fastf_t	P_A_sq;		/* |P-A|**2 */
+	fastf_t	P_B_sq;		/* |P-B|**2 */
+	fastf_t	B_A;		/* |B-A| */
+	fastf_t	t;		/* distance along ray of projection of P */
+
+	RT_CK_TOL(tol);
+#if 0
+	if( rt_g.debug & DEBUG_MATH )  {
+		rt_log("rt_dist_pt3_lseg3_jra() a=(%g,%g,%g) b=(%g,%g,%g)\n\tp=(%g,%g,%g), tol->dist=%g sq=%g\n",
+			V3ARGS(a),
+			V3ARGS(b),
+			V3ARGS(p),
+			tol->dist, tol->dist_sq );
+	}
+#endif
+
+	/* Check proximity to endpoint A */
+	VSUB2(PtoA, p, a);
+	if( (P_A_sq = MAGSQ(PtoA)) < tol->dist_sq )  {
+		/* P is within the tol->dist radius circle around A */
+		VMOVE( pca, a );
+		*dist = 0.0;
+		return 1;
+	}
+
+	/* Check proximity to endpoint B */
+	VSUB2(PtoB, p, b);
+	if( (P_B_sq = MAGSQ(PtoB)) < tol->dist_sq )  {
+		/* P is within the tol->dist radius circle around B */
+		VMOVE( pca, b );
+		*dist = 0.0;
+		return 2;
+	}
+
+	VSUB2(AtoB, b, a);
+	B_A = sqrt( MAGSQ(AtoB) );
+
+	/* compute distance (in actual units) along line to PROJECTION of
+	 * point p onto the line: point pca
+	 */
+	t = VDOT(PtoA, AtoB) / B_A;
+
+	if( t <= tol->dist )  {
+		/* P is "left" of A */
+		VMOVE( pca, a );
+		*dist = sqrt(P_A_sq);
+		return 3;
+	}
+	if( t < B_A - tol->dist )  {
+		/* PCA falls between A and B */
+		register fastf_t	dsq;
+		fastf_t			param_dist;	/* parametric dist */
+
+		/* Find PCA */
+		param_dist = t / B_A;		/* Range 0..1 */
+		VJOIN1(pca, a, param_dist, AtoB);
+
+		/* Find distance from PCA to line segment (Pythagorus) */
+		if( (dsq = P_A_sq - t * t ) <= tol->dist_sq )  {
+			/* Distance from PCA to lseg is zero, give param instead */
+			*dist = param_dist;	/* special! */
+			return 0;
+		}
+		*dist = sqrt(dsq);
+		return 5;
+	}
+
+	/* P is "right" of B */
+	VMOVE(pca, b);
+	*dist = sqrt(P_B_sq);
+	return 4;
+}
+
+
 /*
  *	N M G _ C L A S S _ P T _ V U 
  *
@@ -185,6 +301,183 @@ struct edge_info *ei;
 	fclose(fd);
 }
 
+static int
+Quadrant( x, y )
+fastf_t x,y;
+{
+	if( x >= 0.0 )
+	{
+		if( y >= 0.0 )
+			return( 1 );
+		else
+			return( 4 );
+	}
+	else
+	{
+		if( y >= 0.0 )
+			return( 2 );
+		else
+			return( 3 );
+	}
+}
+
+/*		N M G _ C L A S S _ P T _ E U V U
+ *
+ *	Classify a point with respect to an EU where the VU is the
+ *	closest to the point. The EU and its left vector form an XY
+ *	coordinate system in the face, with EU along the X-axis and
+ *	its left vector along the Y-axis. Use these to decompose the
+ *	direction of the prev_eu into X and Y coordinates (xo,yo) then
+ *	do the same for the vector to the point to be classed (xpt,ypt).
+ *	If (xpt,ypt) makes a smaller angle with EU than does (xo,yo),
+ *	then PT is in the face, otherwise it is out.
+ *
+ *
+ *	It is assumed that eu is from an OT_SAME faceuse, and that
+ *	the PCA of PT to EU is at eu->vu_p.
+ */
+
+int
+nmg_class_pt_euvu( pt, eu, tol )
+CONST point_t pt;
+CONST struct edgeuse *eu;
+CONST struct rt_tol *tol;
+{
+	struct edgeuse *prev_eu;
+	struct vertex *v0,*v1,*v2;
+	vect_t left;
+	vect_t eu_dir;
+	vect_t other_eudir;
+	vect_t pt_dir;
+	fastf_t xo,yo;
+	fastf_t xpt,ypt;
+	fastf_t len;
+	int quado,quadpt;
+	int class;
+
+	NMG_CK_EDGEUSE( eu );
+	RT_CK_TOL( tol );
+
+	if(rt_g.NMG_debug & DEBUG_PT_FU )
+		rt_log( "nmg_class_pt_euvu( (%g %g %g), eu=x%x )\n", V3ARGS( pt ), eu );
+
+	/* left is the Y-axis of our XY-coordinate system */
+	if( nmg_find_eu_leftvec( left,  eu ) )
+	{
+		rt_log( "nmg_class_pt_euvu: nmg_find_eu_leftvec() for eu=x%x failed!\n",eu );
+		rt_bomb( "nmg_class_pt_euvu: nmg_find_eu_leftvec() failed!" );
+	}
+	prev_eu = RT_LIST_PPREV_CIRC( edgeuse, &eu->l );
+
+	if(rt_g.NMG_debug & DEBUG_PT_FU )
+		rt_log( "\tprev_eu = x%x, left = (%g %g %g)\n", prev_eu, V3ARGS( left ) );
+
+	/* v0 is the origin of the XY-coordinat system */
+	v0 = eu->vu_p->v_p;
+	NMG_CK_VERTEX( v0 );
+
+	/* v1 is on the X-axis */
+	v1 = eu->eumate_p->vu_p->v_p;
+	NMG_CK_VERTEX( v1 );
+
+	/* v2 determines angle prev_eu makes with X-axis */
+	v2 = prev_eu->vu_p->v_p;
+	NMG_CK_VERTEX( v2 );
+
+	if(rt_g.NMG_debug & DEBUG_PT_FU )
+		rt_log( "\tv0=x%x, v1=x%x, v2=x%x\n", v0, v1, v2 );
+
+	/*  eu_dir is our X-direction */
+	VSUB2( eu_dir, v1->vg_p->coord, v0->vg_p->coord );
+
+	/* other_eudir is direction along the previous EU (from origin) */
+	VSUB2( other_eudir, v2->vg_p->coord, v0->vg_p->coord );
+
+	if(rt_g.NMG_debug & DEBUG_PT_FU )
+		rt_log( "\teu_dir=(%g %g %g), other_eudir=(%x %x %x)\n",V3ARGS( eu_dir ), V3ARGS( other_eudir ) );
+
+	/* get X and Y components for other_eu */
+	xo = VDOT( eu_dir, other_eudir );
+	yo = VDOT( left, other_eudir );
+
+	/* which quadrant does this XY point lie in */
+	quado = Quadrant( xo, yo );
+
+	if(rt_g.NMG_debug & DEBUG_PT_FU )
+		rt_log( "\txo=%g, yo=%g, qudarant=%d\n", xo,yo,quado );
+
+	/* get direction to PT from origin */
+	VSUB2( pt_dir, pt, v0->vg_p->coord );
+
+	if(rt_g.NMG_debug & DEBUG_PT_FU )
+		rt_log( "\tpt_dir=( %g %g %g )\n", V3ARGS( pt_dir ) );
+
+	/* get X and Y components for PT */
+	xpt = VDOT( eu_dir, pt_dir );
+	ypt = VDOT( left, pt_dir );
+
+	/* which quadrant does this XY point lie in */
+	quadpt = Quadrant( xpt, ypt );
+
+	if(rt_g.NMG_debug & DEBUG_PT_FU )
+		rt_log( "\txpt=%g, ypt=%g, qudarant=%d\n", xpt,ypt,quadpt );
+
+	/* do a quadrant comparison first (cheap!!!) */
+	if( quadpt < quado )
+		return( NMG_CLASS_AinB );
+
+	if( quadpt > quado )
+		return( NMG_CLASS_AoutB );
+
+	/* both are in the same quadrant, need to normalize the corrdinates */
+	len = sqrt( xo*xo + yo*yo );
+	xo = xo/len;
+	yo = yo/len;
+
+	len = sqrt( xpt*xpt + ypt*ypt );
+	xpt = xpt/len;
+	ypt = ypt/len;
+
+	if(rt_g.NMG_debug & DEBUG_PT_FU )
+		rt_log( "\tNormalized xo,yo=(%g %g), xpt,ypt=( %g %g )\n", xo,yo,xpt,ypt );
+
+	switch( quadpt )
+	{
+		case 1:
+			if( xpt >= xo && ypt <= yo )
+				class = NMG_CLASS_AinB;
+			else
+				class = NMG_CLASS_AoutB;
+			break;
+		case 2:
+			if( xpt >= xo && ypt >= yo )
+				class = NMG_CLASS_AinB;
+			else
+				class = NMG_CLASS_AoutB;
+			break;
+		case 3:
+			if( xpt <= xo && ypt >= yo )
+				class = NMG_CLASS_AinB;
+			else
+				class = NMG_CLASS_AoutB;
+			break;
+		case 4:
+			if( xpt <= xo && ypt <= yo )
+				class = NMG_CLASS_AinB;
+			else
+				class = NMG_CLASS_AoutB;
+			break;
+		default:
+			rt_log( "This can't happen (illegal quadrant %d)\n", quadpt );
+			rt_bomb( "This can't happen (illegal quadrant)\n" );
+			break;
+	}
+	if(rt_g.NMG_debug & DEBUG_PT_FU )
+		rt_log( "returning %s\n", nmg_class_name( class ) );
+
+	return( class );
+}
+
 /*	N M G _ C L A S S _ P T _ E U
  *
  * If there is no ve_dist structure for this edge, compute one and
@@ -198,6 +491,7 @@ struct fpi		*fpi;
 struct edgeuse		*eu;
 struct edge_info	*edge_list;
 {
+	struct edgeuse	*next_eu;
 	struct ve_dist	*ved, *ed;
 	struct edge_info	*ei_p;
 	struct edge_info	*ei;
@@ -215,7 +509,7 @@ struct edge_info	*edge_list;
 			V3ARGS(eu->vu_p->v_p->vg_p->coord),
 			V3ARGS(eu->eumate_p->vu_p->v_p->vg_p->coord));
 	}
-
+#if 0
 	/* try to find this edge in the list of ve_dist's */
 	for (RT_LIST_FOR(ed, ve_dist, &fpi->ve_dh)) {
 		NMG_CK_VED(ed);
@@ -248,13 +542,14 @@ struct edge_info	*edge_list;
 			goto found;
 		}
 	}
+#endif
 
 	/* we didn't find a ve_dist structure for this edge, so we'll
 	 * have to do the calculations.
 	 */
 	ved = (struct ve_dist *)rt_malloc(sizeof(struct ve_dist), "ve_dist structure");
 	ved->magic_p = &eu->e_p->magic;
-	ved->status = rt_dist_pt3_lseg3(&ved->dist, ved->pca,
+	ved->status = rt_dist_pt3_lseg3_jra(&ved->dist, ved->pca,
 					eu->vu_p->v_p->vg_p->coord,
 					eu->eumate_p->vu_p->v_p->vg_p->coord,
 					fpi->pt,
@@ -278,7 +573,7 @@ found:
 
 	switch (ved->status) {
 	case 0: /* pt is on the edge(use) */
-		ved->dist = 0.0; /* rt_dist_pt3_lseg3() doesn't set this to dist in this case */
+		ved->dist = 0.0; /* rt_dist_pt3_lseg3_jra() doesn't set this to dist in this case */
 		ei->class = NMG_CLASS_AonBshared;
 		if (fpi->eu_func &&
 		    (fpi->hits == NMG_FPI_PERUSE ||
@@ -327,10 +622,12 @@ found:
 		}
 		break;
 
-	case 3: /* PCA of pt on line is "before" ved->v1 of segment */
-		/* fallthrough */
-	case 4: /* PCA of pt on line is "before" ved->v2 of segment */
-		ei->class = NMG_CLASS_AoutB;
+	case 3: /* PCA of pt on line is within tolerance of ved->v1 of segment */
+		ei->class = nmg_class_pt_euvu( fpi->pt, eu, fpi->tol );
+		break;
+	case 4: /* PCA of pt on line is within tolerance of ved->v2 of segment */
+		next_eu = RT_LIST_PNEXT_CIRC( edgeuse, &eu->l);
+		ei->class = nmg_class_pt_euvu( fpi->pt, next_eu, fpi->tol );
 		break;
 
 	case 5: /* PCA is along length of edge, but point is NOT on edge. */
@@ -387,10 +684,51 @@ struct rt_list *near;
 {
 	struct edge_info *ei;
 	struct edge_info *ei_p;
+	struct edge_info *tmp;
 	double dist;
 
 	RT_CK_LIST_HEAD(&edge_list->l);
 	RT_CK_LIST_HEAD(near);
+
+	/* toss opposing pairs of uses of the same edge from the list */
+	ei = RT_LIST_FIRST( edge_info, &edge_list->l);
+	while( RT_LIST_NOT_HEAD( &ei->l, &edge_list->l)) {
+		NMG_CK_EI(ei);
+		ei_p = RT_LIST_FIRST( edge_info, &edge_list->l);
+		while( RT_LIST_NOT_HEAD( &ei_p->l, &edge_list->l)) {
+			NMG_CK_EI(ei_p);
+			NMG_CK_VED(ei_p->ved_p);
+
+			/* if we've found an opposing use of the same
+			 *    edge toss the pair of them
+			 */
+			if (ei_p->ved_p->magic_p == ei->ved_p->magic_p &&
+			    ei_p->eu_p->eumate_p->vu_p->v_p == ei->eu_p->vu_p->v_p &&
+			    ei_p->eu_p->vu_p->v_p == ei->eu_p->eumate_p->vu_p->v_p ) {
+				if (rt_g.NMG_debug & DEBUG_PT_FU ) {
+					rt_log("tossing edgeuse pair:\n");
+					rt_log("(%g %g %g) -> (%g %g %g)\n",
+						V3ARGS(ei->eu_p->vu_p->v_p->vg_p->coord),
+						V3ARGS(ei->eu_p->eumate_p->vu_p->v_p->vg_p->coord));
+					rt_log("(%g %g %g) -> (%g %g %g)\n",
+						V3ARGS(ei_p->eu_p->vu_p->v_p->vg_p->coord),
+						V3ARGS(ei_p->eu_p->eumate_p->vu_p->v_p->vg_p->coord));
+				}
+
+			    	tmp = ei_p;
+			    	ei_p = RT_LIST_PLAST(edge_info, &ei_p->l);
+				RT_LIST_DEQUEUE(&tmp->l);
+				rt_free((char *)tmp, "edge info struct");
+			    	tmp = ei;
+			    	ei = RT_LIST_PLAST(edge_info, &ei->l);
+				RT_LIST_DEQUEUE(&tmp->l);
+				rt_free((char *)tmp, "edge info struct");
+			    	break;
+			}
+			ei_p = RT_LIST_PNEXT( edge_info, &ei_p->l );
+		}
+		ei = RT_LIST_PNEXT( edge_info, &ei->l );
+	}
 
 	ei = RT_LIST_FIRST(edge_info, &edge_list->l);
 	NMG_CK_EI(ei);
@@ -421,43 +759,12 @@ rt_log("\tdist:%g class:%s status:%d pca(%g %g %g)\n\t\tv1(%g %g %g) v2(%g %g %g
 			V3ARGS(ei->ved_p->pca),
 			V3ARGS(ei->ved_p->v1->vg_p->coord),
 			V3ARGS(ei->ved_p->v2->vg_p->coord));
+rt_log( "\tei->ved_p->magic_p=x%x, ei->eu_p->vu_p=x%x, ei->eu_p->eumate_p->vu_p=x%x\n",
+		ei->ved_p->magic_p, ei->eu_p->vu_p, ei->eu_p->eumate_p->vu_p );	
 		}
 	}
 
 
-	/* toss opposing pairs of uses of the same edge from the list */
-	for (RT_LIST_FOR(ei, edge_info, near)) {
-		NMG_CK_EI(ei);
-		for (RT_LIST_FOR(ei_p, edge_info, near)) {
-			NMG_CK_EI(ei_p);
-			NMG_CK_VED(ei_p->ved_p);
-
-			/* if we've found an opposing use of the same
-			 *    edge toss the pair of them
-			 */
-			if (ei_p->ved_p->magic_p == ei->ved_p->magic_p &&
-			    ei_p->eu_p->vu_p != ei->eu_p->vu_p &&
-			    ei_p->eu_p->vu_p == ei->eu_p->eumate_p->vu_p ) {
-				if (rt_g.NMG_debug & DEBUG_PT_FU ) {
-					rt_log("tossing edgeuse pair:\n");
-					rt_log("(%g %g %g) -> (%g %g %g)\n",
-						V3ARGS(ei->eu_p->vu_p->v_p->vg_p->coord),
-						V3ARGS(ei->eu_p->eumate_p->vu_p->v_p->vg_p->coord));
-					rt_log("(%g %g %g) -> (%g %g %g)\n",
-						V3ARGS(ei_p->eu_p->vu_p->v_p->vg_p->coord),
-						V3ARGS(ei_p->eu_p->eumate_p->vu_p->v_p->vg_p->coord));
-				}
-
-				RT_LIST_DEQUEUE(&ei_p->l);
-				rt_free((char *)ei_p, "edge info struct");
-				ei_p = RT_LIST_PLAST(edge_info, &ei->l);
-				RT_LIST_DEQUEUE(&ei->l);
-				rt_free((char *)ei, "edge info struct");
-				ei = ei_p;
-			    	break;
-			}
-		}
-	}
 }
 
 
@@ -605,34 +912,8 @@ rt_log("dist:%g class:%s status:%d pca(%g %g %g)\n\tv1(%g %g %g) v2(%g %g %g)\n"
 			goto departure;
 			break;
 		case 3: /* pt pca is v1 */
-			if (ei_vdot_max == (struct edge_info *)NULL) {
-				VSUB2(v_pt, fpi->pt, ei->ved_p->v1->vg_p->coord);
-				ei_vdot_max = ei;
-			}
-			/* fallthrough */
 		case 4: /* pt pca is v2 */
-			if (ei_vdot_max == (struct edge_info *)NULL) {
-				VSUB2(v_pt, fpi->pt, ei->ved_p->v2->vg_p->coord);
-				ei_vdot_max = ei;
-			}
-
-			nmg_find_eu_leftvec( left, ei->eu_p );
-
-			if (fabs(vdot_val=VDOT(v_pt, left)) > fabs(vdot_max)){
-				vdot_max = vdot_val;
-				ei_vdot_max = ei;
-				if (vdot_max > 0.0)
-					lu_class = NMG_CLASS_AinB;
-				else /*  vdot_max < 0.0 */
-					lu_class = NMG_CLASS_AoutB;
-			}
-
-			break;
-		case 5:
-			/* if there is an edge where the PCA is not 
-			 * at a vertex, we can just classify the point with
-			 * this edge.
-			 */
+		case 5: /* pt pca between v1 and v2 */
 			lu_class = ei->class;
 			if (rt_g.NMG_debug & DEBUG_PT_FU ) {
 				rt_log("found status 5 edge, loop class is %s\n", 
@@ -935,7 +1216,7 @@ CONST struct rt_tol     *tol;
 	int		i;
 
 	if (rt_g.NMG_debug & DEBUG_PT_FU )
-		rt_log("nmg_class_pt_fu_except( (%g %g %g) )\n", V3ARGS(pt));
+		rt_log("nmg_class_pt_fu_except( pt=(%g %g %g), fu=x%x )\n", V3ARGS(pt), fu);
 
 	if(fu->orientation != OT_SAME) rt_bomb("nmg_class_pt_fu_except() not OT_SAME\n");
 
@@ -1031,6 +1312,8 @@ CONST struct rt_tol     *tol;
 		rt_log("nmg_class_pt_fu_except(%g %g %g)\nParity error @ %s:%d ot_same_in:%d ot_opposite_out:%d\n",
 			V3ARGS(pt), __FILE__, __LINE__,
 			ot_same_in, ot_opposite_out);
+		rt_log( "fu=x%x\n",  fu );
+		nmg_pr_fu_briefly( fu, "" );
 
 		plot_parity_error(fu, pt);
 
@@ -1161,7 +1444,7 @@ struct rt_tol	*tol;
 		NMG_CK_EI(ei);
 		NMG_CK_VED(ei->ved_p);
 		if (ei->ved_p->dist < tol->dist) {
-			lu_class = NMG_CLASS_AinB;
+			lu_class = NMG_CLASS_AonBshared;
 			break;
 		}
 	}
