@@ -61,7 +61,7 @@ register struct mater *mp;
 
 	(void)sprintf( buf, "%5d..%d", mp->mt_low, mp->mt_high );
 	col_item( buf );
-	(void)sprintf( buf, "%d,%d,%d", mp->mt_r, mp->mt_g, mp->mt_b);
+	(void)sprintf( buf, "%3d,%3d,%3d", mp->mt_r, mp->mt_g, mp->mt_b);
 	col_item( buf );
 	if( mp->mt_handle != NULL )
 		col_item( mp->mt_handle );
@@ -251,11 +251,11 @@ f_edcolor()
 
 	(void)fprintf( fp, hdr );
 	for( mp = MaterHead; mp != MATER_NULL; mp = mp->mt_forw )  {
-		(void)fprintf( fp, "%d\t%d\t%d\t%d\t%d\t%s\n",
+		(void)fprintf( fp, "%d\t%d\t%3d\t%3d\t%3d",
 			mp->mt_low, mp->mt_high,
 			mp->mt_r, mp->mt_g, mp->mt_b );
 		if( mp->mt_handle != NULL )
-			(void)fprintf( fp, "%s", mp->mt_handle );
+			(void)fprintf( fp, "\t%s", mp->mt_handle );
 		(void)fprintf( fp, "\n" );
 	}
 	(void)fclose(fp);
