@@ -119,7 +119,8 @@ proc build_comb_menu { id combs } {
 	set screen [winfo screen $win]
     }
 
-    create_listbox $top $screen Combination $combs
+    create_listbox $top $screen Combination $combs "destroy $top"
+    set mged_edit_menu($id) $top
 
     bind_listbox $top "<ButtonPress-1>" "comb_illum %W %x %y"
     bind_listbox $top "<Double-1>" "set comb_name($id) \[%W get @%x,%y\];\
