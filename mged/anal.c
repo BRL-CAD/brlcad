@@ -46,6 +46,84 @@ static void	ell_anal();
 static void	tor_anal();
 static void	ars_anal();
 
+/****************************************************************/
+/********************************* XXX move to librt ************/
+/*
+ *			R T _ D B _ G E T _ I N T E R N A L
+ *
+ *  Get an object from the database, and convert it into it's internal
+ *  representation.
+ */
+int
+rt_db_get_internal( ip, dp, dbip, mat )
+struct rt_db_internal	*ip;
+struct directory	*dp;
+struct db_i		*dbip;
+mat_t			mat;
+{
+	struct rt_external	ext;
+	register int		id;
+
+	RT_INIT_EXTERNAL(&ext);
+	RT_INIT_DB_INTERNAL(ip);
+	if( db_get_external( &ext, dp, dbip ) < 0 )
+		return -2;		/* FAIL */
+
+	id = rt_id_solid( &ext );
+	if( rt_functab[id].ft_import( ip, &ext, mat ) < 0 )  {
+		rt_log("rt_db_get_internal(%s):  solid import failure\n",
+			dp->d_namep );
+	    	if( ip->idb_ptr )  rt_functab[id].ft_ifree( ip );
+		db_free_external( &ext );
+		return -1;		/* FAIL */
+	}
+	db_free_external( &ext );
+	RT_CK_DB_INTERNAL( ip );
+	return 0;			/* OK */
+}
+
+/*
+ *			R T _ D B _ P U T _ I N T E R N A L
+ *
+ *  Convert the internal representation of a solid to the external one,
+ *  and write it into the database.
+ *  On success only, the internal representation is freed.
+ *
+ *  Returns -
+ *	<0	error
+ *	 0	success
+ */
+int
+rt_db_put_internal( dp, dbip, ip )
+struct rt_db_internal	*ip;
+struct directory	*dp;
+struct db_i		*dbip;
+{
+	struct rt_external	ext;
+	register int		id;
+
+	RT_INIT_EXTERNAL(&ext);
+	RT_CK_DB_INTERNAL( ip );
+
+	/* Scale change on export is 1.0 -- no change */
+	if( rt_functab[ip->idb_type].ft_export( &ext, ip, 1.0 ) < 0 )  {
+		rt_log("rt_db_put_internal(%s):  solid export failure\n",
+			dp->d_namep);
+		db_free_external( &ext );
+		return -2;		/* FAIL */
+	}
+
+	if( db_put_external( &ext, dp, dbip ) < 0 )  {
+		db_free_external( &ext );
+		return -1;		/* FAIL */
+	}
+
+    	if( ip->idb_ptr )  rt_functab[ip->idb_type].ft_ifree( ip );
+	RT_INIT_DB_INTERNAL(ip);
+	db_free_external( &ext );
+	return 0;			/* OK */
+}
+/****************************************************************/
 
 /*	Analyze command - prints loads of info about a solid
  *	Format:	analyze [name]
@@ -68,27 +146,24 @@ f_analyze()
 
 	if( numargs == 1 ) {
 		/* use the solid being edited */
+		if(illump->s_Eflag) {
+			(void)printf("Analyze: cannot analyze evaluated region\n");
+			return;
+		}
 		switch( state ) {
-
 		case ST_S_EDIT:
-			temp_rec = es_rec;
-			/* just to make sure */
-			mat_idn( modelchanges );
+			mat_idn( modelchanges ); /* just to make sure */
 			break;
 
 		case ST_O_EDIT:
-			if(illump->s_Eflag) {
-				(void)printf("Analyze: cannot analyze evaluated region\n");
-				return;
-			}
 			/* use solid at bottom of path */
-			temp_rec = es_rec;
 			break;
 
 		default:
 			state_err( "Default SOLID Analyze" );
 			return;
 		}
+		temp_rec = es_rec;	/* XXX old:  ARB only */
 		mat_mul(new_mat, modelchanges, es_mat);
 		MAT4X3PNT(temp_rec.s.s_values, new_mat, es_rec.s.s_values);
 		for(i=1; i<8; i++) {
@@ -193,6 +268,7 @@ struct rt_vls	*vp;
 
 	tot_area = tot_vol = 0.0;
 
+	/* XXX compute cgtype of ARB */
 	type = temp_rec.s.s_cgtype;
 	if( type < 0 )
 		type *= -1;
