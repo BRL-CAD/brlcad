@@ -18,6 +18,8 @@
 #								#
 #################################################################
 
+echo $0 $*
+
 if [ $# -gt 0 -a X$1 = X-s ] ; then
 	SILENT=-s
 	shift
@@ -253,10 +255,17 @@ case "${MACHINE}" in
 exit
 EOF
 		if test $? -eq 0
-		then BDIRS=`echo ${BDIRS} | \
-		    sed -e  's/libtcl//' -e 's/libtk//' \
-			-e 's/libz//' `
+		then 
+			BDIRS=`echo ${BDIRS} | \
+				sed -e  's/libtcl//' -e 's/libtk//'`
 		fi
+
+		if test -f /usr/lib/libz.a
+		then
+			BDIRS=`echo ${BDIRS} | sed -e  's/libz//'`
+		fi
+
+
 		;;
 	m4i65)
 		# Be sure to look in /usr/lib64, not /usr/lib!
