@@ -277,12 +277,20 @@ db_close(register struct db_i *dbip)
 	if(RT_G_DEBUG&DEBUG_DB) bu_log("db_close(%s) x%x uses=%d\n",
 		dbip->dbi_filename, dbip, dbip->dbi_uses );
 
-	if( (--dbip->dbi_uses) > 0 )  {
-		if(dbip->dbi_mf) bu_close_mapped_file( dbip->dbi_mf );
-		return;
-	}
-	/* Use count is now zero */
+	/* one less paying attention to the mapped file */
+	if(dbip->dbi_mf) bu_close_mapped_file( dbip->dbi_mf );
 
+	bu_semaphore_acquire(BU_SEM_LISTS);
+	if( (--dbip->dbi_uses) > 0 )  {
+	    bu_semaphore_release(BU_SEM_LISTS);
+	    /* others are still using this database */
+	    return;
+	}
+	bu_semaphore_release(BU_SEM_LISTS);
+
+	/* ready to free the database -- use count is now zero */
+
+	/* free up any mapped files */
 	if( dbip->dbi_mf )  {
 		/*
 		 *  We're using an instance of a memory mapped file.
@@ -294,7 +302,6 @@ db_close(register struct db_i *dbip)
 		 *  For speed of re-open, at the price of some address space,
 		 *  the second choice is taken.
 		 */
-		bu_close_mapped_file( dbip->dbi_mf );
 		bu_free_mapped_files( 0 );
 		dbip->dbi_mf = (struct bu_mapped_file *)NULL;
 	}
