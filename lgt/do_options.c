@@ -12,7 +12,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <fcntl.h>
-#include <setjmp.h>
 #include <math.h>
 #include <signal.h>
 #ifdef USE_STRING_H
