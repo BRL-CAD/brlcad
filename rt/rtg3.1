@@ -108,6 +108,14 @@ By default, the shotlines are written to stdout.
 .TP
 .B \-x#
 Set librt debug flags to (hexadecimal) number.
+.TP
+.B \-c """set save_overlaps=1"""
+Tells
+.IR rtg3 (1)
+to act like the
+.IR FASTGEN4
+raytracer. Specifically, overlap handling is changed to agree with that of
+.IR FASTGEN4.
 .LP
 The
 .B rtg3
