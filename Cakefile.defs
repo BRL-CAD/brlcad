@@ -837,19 +837,23 @@ set -S2 "/bin/sh"
 #			define	OPTIMIZER	-O -g
 #			define  PROFILER	-pg
 #		endif
-#		define	CC_DEFS		-Wall -pedantic -D_REENTRANT -DSUNOS=58
-#		define	CC_OPTS		-I''XINCDIR
+#		define	CC_DEFS		-D_REENTRANT -DSUNOS=58
+#		define	CC_OPTS		-I''XINCDIR -Wall -pedantic
 #	else
 /*		For now, we expect /opt/SUNWspro/bin ANSI compiler to be used */
 #		define	CC		/opt/SUNWspro/bin/cc
 #		if BUILD_OPTIMIZED	/* PRODUCTION=1 */
-#			define	OPTIMIZER	-dalign -xcg92 -xO4
+#			define	OPTIMIZER	-dalign -xcg92 -xO4 -Xt
 #		else
-#			define	OPTIMIZER	-g
+#			define	OPTIMIZER	-g -Xt
 #		endif
-#		define	CC_OPTS		-Xc -K PIC -I''XINCDIR
+#		define	CC_OPTS		-K PIC -I''XINCDIR
+/*					-Xc strict ansi conformance */
+/*					-Xa ansi conformance with extensions */
+/*					-Xt k&r but allow ansi */
+/*					-Xs k&r */
 /*		SunPro C 2.0.1 does not define __sparc or sparc.  3.0 on does */
-#		define	CC_DEFS		-D_REENTRANT -D__sparc -DSUNOS=58
+#		define	CC_DEFS		-D_REENTRANT -D__sparc -DSUNOS=58 -D__STDC__
 #	endif
 
 /*	Shared library support */
@@ -915,9 +919,9 @@ set -S2 "/bin/sh"
 #	define	LIBZ_DIR	_use_system_z_
 #	define	LIBZ		-lz
 #	define	LIBZ_DEP	/**/
-#	define	LIBPNG_DIR	_use_system_png_
-#	define	LIBPNG		-lpng
-#	define	LIBPNG_DEP	/**/
+/*#	define	LIBPNG_DIR	_use_system_png_*/
+/*#	define	LIBPNG		-lpng*/
+/*#	define	LIBPNG_DEP	*/
 #endif
 
 #if defined(CRAY1)

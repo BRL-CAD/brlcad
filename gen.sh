@@ -174,7 +174,8 @@ CDIRS="sh cake cakeaux html"
 # db depends on conv, conv depends on libwdb, libwdb depends on librt
 BDIRS="bench \
 	libsysv \
-	libbu libbn \
+	libbu \
+	libbn \
 	libwdb \
 	libpkg \
 	libfb \
@@ -483,7 +484,7 @@ mkdir|relink)
 	then	lnarg="-s"
 	else	lnarg=""
 	fi
-	for dir in ${BDIRS}; do
+	for dir in ${BDIRS} ; do
 		if test -d ${DIRPRE}${dir}${DIRSUF}
 		then
 			rm -f ${DIRPRE}${dir}${DIRSUF}/Cakefile
@@ -547,6 +548,7 @@ command)
 	done;;
 
 rcs-lock)
+	echo "rcs-lock is deprecated"
 	rcs -l ${TOP_FILES}
 	rcs -u ${TOP_FILES}
 	for dir in ${ADIRS} ${BDIRS}; do
@@ -557,6 +559,7 @@ rcs-lock)
 	done;;
 
 checkin)
+	echo "checkin is deprecated"
 	echo " RCS_Revision ${RCS_REVISION}"
 	REL_NODOT=`echo ${RELEASE}|tr . _`
 	CI_ARGS="-f -r${RCS_REVISION} -sRel${REL_NODOT} -mRelease_${RELEASE}"

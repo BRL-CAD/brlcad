@@ -23,6 +23,12 @@ else
 	SILENT=""
 fi
 
+# identify ourself
+if [ x${SILENT} = x ] ; then
+    echo "B R L - C A D   S E T U P"
+    echo "========================="
+fi
+
 ############################################################################
 #
 # Acquire current machine type, BASEDIR, etc.
@@ -36,23 +42,25 @@ eval `sh sh/machinetype.sh -v`
 BRLCAD_ROOT=$BASEDIR
 export BRLCAD_ROOT
 
-BINDIR=$BASEDIR/bin
-MANDIR=$BASEDIR/man/man1
+BRLCAD_BINDIR=$BRLCAD_ROOT/bin
+BRLCAD_MANDIR=$BRLCAD_ROOT/man/man1
 
-if [ X${SILENT} = X ] ; then
-	echo "  BINDIR = ${BINDIR},  BASEDIR = ${BASEDIR}"
+if [ x${SILENT} = x ] ; then
+    echo "BRLCAD_ROOT=${BRLCAD_ROOT}"
+    echo "BRLCAD_BINDIR=${BRLCAD_BINDIR}"
+    echo "BRLCAD_MANDIR=${BRLCAD_MANDIR}"
 fi
 
 ############################################################################
 #
 # Sanity check
-# Make sure that BINDIR is in the current user's search path
+# Make sure that BRLCAD_BINDIR is in the current user's search path
 # For this purpose, specifically exclude "dot" from the check.
 #
 ############################################################################
 if [ X${SILENT} = X ] ; then
 	echo
-	echo Verifying that ${BINDIR} is in your search path.
+	echo Verifying that ${BRLCAD_BINDIR} is in your search path.
 fi
 PATH_ELEMENTS=`echo $PATH | sed 's/^://
 				s/:://g
@@ -63,7 +71,7 @@ PATH_ELEMENTS=`echo $PATH | sed 's/^://
 not_found=1		# Assume cmd not found
 for PREFIX in ${PATH_ELEMENTS}
 do
-	if test ${PREFIX} = ${BINDIR}
+	if test ${PREFIX} = ${BRLCAD_BINDIR}
 	then
 		# This was -x, but older BSD systems don't do -x.
 		if test -d ${PREFIX}
@@ -72,7 +80,7 @@ do
 			not_found=0
 			break
 		else
-			mkdir -p ${BINDIR}
+			mkdir -p ${BRLCAD_BINDIR}
 			if test -d ${PREFIX}
 			then
 				# all is well
@@ -97,9 +105,9 @@ do
 			echo "$0 ERROR: detected presence of ${PREFIX}/$i"
 			echo " "
 			echo " Different version of BRL-CAD detected in ${PREFIX},"
-			echo " which is earlier in your search path than ${BINDIR}."
+			echo " which is earlier in your search path than ${BRLCAD_BINDIR}."
 			echo " "
-			echo " Please place ${BINDIR} earlier in your PATH"
+			echo " Please place ${BRLCAD_BINDIR} earlier in your PATH"
 			echo " at least while you are installing BRL-CAD."
 			exit 2
 		fi
@@ -107,7 +115,7 @@ do
 done
 if test ${not_found} -ne 0
 then
-	echo "$0 ERROR:  ${BINDIR} (BINDIR) is not in your Shell search path!"
+	echo "$0 ERROR:  ${BRLCAD_BINDIR} (BRLCAD_BINDIR) is not in your Shell search path!"
 	echo "$0 ERROR:  Software setup can not proceed until this has been fixed."
 	echo "$0 ERROR:  Consult installation directions for more information,"
 	echo "$0 ERROR:  file: install.doc, section INSTALLATION DIRECTORIES."
@@ -137,17 +145,17 @@ do
 	fi
 done
 
-# Next, make sure they don't have the sources also in BASEDIR.
+# Next, make sure they don't have the sources also in BRLCAD_ROOT.
 set -- `/bin/ls -laid .`
 CWD_INUM=$1
-set -- `/bin/ls -laid ${BASEDIR}`
-BASEDIR_INUM=$1
-if test "${CWD_INUM}" -eq "${BASEDIR_INUM}"
+set -- `/bin/ls -laid ${BRLCAD_ROOT}`
+BRLCAD_ROOT_INUM=$1
+if test "${CWD_INUM}" -eq "${BRLCAD_ROOT_INUM}"
 then
 	echo
-	echo "ERROR: BASEDIR can't point to the directory containing the source code."
+	echo "ERROR: BRLCAD_ROOT can't point to the directory containing the source code."
 	echo "Please make the executable tree either be a proper subdirectory"
-	echo "of the source tree, such as ${BASEDIR}/exec,"
+	echo "of the source tree, such as ${BRLCAD_ROOT}/exec,"
 	echo "or point it at a completely separate tree."
 	exit 1
 fi
@@ -155,7 +163,7 @@ fi
 # Now ask for permission to go blasting.
 if [ X${SILENT} = X ] ; then
 	echo
-	echo "Cleaning out ${BASEDIR}."
+	echo "Cleaning out ${BRLCAD_ROOT}."
 fi
 
 inst_dirs=" bin etc html include itcl3.2 itk3.2 lib man pro-engineer \
@@ -163,7 +171,7 @@ inst_dirs=" bin etc html include itcl3.2 itk3.2 lib man pro-engineer \
 
 echo "Is it OK to delete the following directories:"
 for dir in $inst_dirs ; do
-    echo "   ${BASEDIR}/$dir"
+    echo "   ${BRLCAD_ROOT}/$dir"
 done
 echo "(yes|no)[no]"
 
@@ -176,12 +184,10 @@ fi
 
 for dir in $inst_dirs ; do
     if [ X${SILENT} = X ] ; then
-	echo "rm -fr ${BASEDIR}/$dir"
+	echo "rm -fr ${BRLCAD_ROOT}/$dir"
     fi
-    rm -fr ${BASEDIR}/$dir
+    rm -fr ${BRLCAD_ROOT}/$dir
 done
-
-
 
 if [ X${SILENT} = X ] ; then
 	echo
@@ -202,9 +208,9 @@ for LAST in \
 		pro-engineer/sun4_solaris pro-engineer/text/fullhelp \
 		pro-engineer/text/menus sample_applications
 do
-	if test ! -d $BASEDIR/$LAST
+	if test ! -d $BRLCAD_ROOT/$LAST
 	then
-		mkdir -p $BASEDIR/$LAST
+		mkdir -p $BRLCAD_ROOT/$LAST
 	fi
 done
 
@@ -216,7 +222,7 @@ echo BINPERM=${BINPERM}, MANPERM=${MANPERM}
 
 ############################################################################
 #
-# Install the entire set of shell scripts from "sh/" into BINDIR
+# Install the entire set of shell scripts from "sh/" into BRLCAD_BINDIR
 #
 # Includes machinetype.sh and many others,
 # but does NOT include gen.sh, setup.sh, or newbindir.sh -- those
@@ -226,19 +232,22 @@ echo BINPERM=${BINPERM}, MANPERM=${MANPERM}
 #
 ############################################################################
 if [ X${SILENT} = X ] ; then
-	echo Installing shell scripts
+	echo -n "Installing shell scripts..."
 fi
 cd sh
 for i in *.sh
 do
-	if test -f ${BINDIR}/${i}
+	if test -f ${BRLCAD_BINDIR}/${i}
 	then
-		mv -f ${BINDIR}/${i} ${BINDIR}/`basename ${i} .sh`.bak
+		mv -f ${BRLCAD_BINDIR}/${i} ${BRLCAD_BINDIR}/`basename ${i} .sh`.bak
 	fi
-	sed -e 's,=/usr/brlcad$,='${BASEDIR}, < ${i} > ${BINDIR}/${i}
-	chmod ${BINPERM} ${BINDIR}/${i}
+	sed -e 's,=/usr/brlcad$,='${BRLCAD_ROOT}, < ${i} > ${BRLCAD_BINDIR}/${i}
+	chmod ${BINPERM} ${BRLCAD_BINDIR}/${i}
 done
 cd ..
+if [ X${SILENT} = X ] ; then
+	echo "done"
+fi
 
 ############################################################################
 #
@@ -259,35 +268,40 @@ then
 	cd .cake.$MACHINE
 	make ${SILENT} clobber
 	make ${SILENT} install
-	make ${SILENT} clobber
-	if test ! -f ${BINDIR}/cake
+	/usr/bin/make ${SILENT} clobber
+
+	if test ! -f ${BRLCAD_BINDIR}/cake
 	then
-		echo "***ERROR:  cake not installed"
+	    echo "***ERROR:  cake not installed"
+	else
+	    echo "cake installed"
 	fi
 	cd ../
 
 	if [ ! -d .cakeaux.$MACHINE ] ; then
-		mkdir .cakeaux.$MACHINE
+	    mkdir .cakeaux.$MACHINE
 	fi
 	cp cakeaux/*.[chyl1] cakeaux/Makefile .cakeaux.$MACHINE
 	cd .cakeaux.$MACHINE
+
 	make ${SILENT} clobber
 	for i in cakesub cakeinclude
 	do
 		make ${SILENT} $i			# XXX, should do "install"
-		if test -f ${BINDIR}/$i
+		if test -f ${BRLCAD_BINDIR}/$i
 		then
-			mv -f ${BINDIR}/$i ${BINDIR}/$i.bak
+			mv -f ${BRLCAD_BINDIR}/$i ${BRLCAD_BINDIR}/$i.bak
 		fi
-		cp $i ${BINDIR}/.
-		chmod ${BINPERM} ${BINDIR}/$i
+		cp $i ${BRLCAD_BINDIR}/.
+		chmod ${BINPERM} ${BRLCAD_BINDIR}/$i
 	done
+
 	make ${SILENT} clobber
-	cp cakesub.1 ${MANDIR}/.
-	chmod ${MANPERM} ${MANDIR}/cakesub.1
+	cp cakesub.1 ${BRLCAD_MANDIR}/.
+	chmod ${MANPERM} ${BRLCAD_MANDIR}/cakesub.1
 	cd ..
 fi
-
+echo "Done making cake and cakeaux"
 ############################################################################
 #
 #  Finally, after potentially having edited Cakefile.defs, 
