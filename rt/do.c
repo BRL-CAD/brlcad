@@ -471,52 +471,16 @@ register struct rt_i	*rtip;
 }
 
 /*
- *			D O _ F R A M E
+ *			D O _ P R E P
  *
- *  Do all the actual work to run a frame.
- *
- *  Returns -1 on error, 0 if OK.
+ *  This is a separate function primarily as a service to REMRT.
  */
-do_frame( framenumber )
-int framenumber;
+void
+do_prep( rtip )
+struct rt_i	*rtip;
 {
-	char outbuf[132];
-	char framename[128];		/* File name to hold current frame */
-	struct rt_i *rtip = ap.a_rt_i;
-	static double utime;
 	register struct region *regp;
-	int	npix;			/* # of pixel values to be done */
-	int	lim;
-
-	fprintf(stderr, "\n...................Frame %5d...................\n",
-		framenumber);
-
-	/*
-	 *  Deal with CPU limits and priorities, where appropriate.
-	 *  Because limits exist, they better be adequate.
-	 *  We assume that the Cray can produce MINRATE pixels/sec
-	 *  on images with extreme amounts of glass & mirrors.
-	 */
-#ifdef CRAY2
-#define MINRATE	35
-#else
-#define MINRATE	65
-#endif
-	npix = width*height*(hypersample+1);
-	if( (lim = rt_cpuget()) > 0 )  {
-		rt_cpuset( lim + npix / MINRATE + 100 );
-	}
-
-	/*
-	 *  If this image is unlikely to be for debugging,
-	 *  be gentle to the machine.
-	 */
-	if( !interactive )  {
-		if( npix > 256*256 )
-			rt_pri_set(10);
-		else if( npix > 512*512 )
-			rt_pri_set(14);
-	}
+	char	outbuf[132];
 
 	if( rtip->needprep )  {
 
@@ -579,6 +543,56 @@ int framenumber;
 			sbrk(0)-beginptr );
 		beginptr = sbrk(0);
 	}
+}
+
+/*
+ *			D O _ F R A M E
+ *
+ *  Do all the actual work to run a frame.
+ *
+ *  Returns -1 on error, 0 if OK.
+ */
+do_frame( framenumber )
+int framenumber;
+{
+	char outbuf[132];
+	char framename[128];		/* File name to hold current frame */
+	struct rt_i *rtip = ap.a_rt_i;
+	static double utime;
+	int	npix;			/* # of pixel values to be done */
+	int	lim;
+
+	fprintf(stderr, "\n...................Frame %5d...................\n",
+		framenumber);
+
+	/*
+	 *  Deal with CPU limits and priorities, where appropriate.
+	 *  Because limits exist, they better be adequate.
+	 *  We assume that the Cray can produce MINRATE pixels/sec
+	 *  on images with extreme amounts of glass & mirrors.
+	 */
+#ifdef CRAY2
+#define MINRATE	35
+#else
+#define MINRATE	65
+#endif
+	npix = width*height*(hypersample+1);
+	if( (lim = rt_cpuget()) > 0 )  {
+		rt_cpuset( lim + npix / MINRATE + 100 );
+	}
+
+	/*
+	 *  If this image is unlikely to be for debugging,
+	 *  be gentle to the machine.
+	 */
+	if( !interactive )  {
+		if( npix > 256*256 )
+			rt_pri_set(10);
+		else if( npix > 512*512 )
+			rt_pri_set(14);
+	}
+
+	do_prep( rtip );
 
 	fprintf(stderr,"shooting at %d solids in %d regions\n",
 		rtip->nsolids, rtip->nregions );
