@@ -50,7 +50,7 @@ In terms of geometrical representation of data, BRL-CAD supports:
 	developed by Falcon/Denver
 	Research Institute and used by the Navy and Air Force for
 	vulnerability and signature calculations (> 200 target
-	descriptions, domestic and foreign
+	descriptions, domestic and foreign)
 
 It supports association of material (and other attribute properties)
 with geometry which is critical to subsequent applications codes.
@@ -94,3 +94,26 @@ to provide a uniform geometry/attribute/interface capability
 together with a large library of target descriptions to support
 the ATR and exploitation community.  A super-set of the current
 BRL-CAD environment is the leading candidate for that role.
+
+
+----
+
+To obtain a copy of the BRL CAD Package distribution, you must send
+enough magnetic tape for 20 Mbytes of data. Standard nine-track
+half-inch magtape is the strongly preferred format, and can be written
+at either 1600 or 6250 bpi, in TAR format with 10k byte records. For
+sites with no half-inch tape drives, Silicon Graphics and SUN tape
+cartridges can also be accommodated. With your tape, you must also
+enclose a letter indicating
+
+(a) who you are,
+(b) what the BRL CAD package is to be used for,
+(c) the equipment and operating system(s) you plan on using,
+(d) that you agree to the conditions listed below.
+
+This software is an unpublished work that is not generally available to
+the public, except through the terms of this limited distribution.
+The United States Department of the Army grants a royalty-free,
+nonexclusive, nontransferable license and right to use, free of charge,
+with the following terms and conditions.
+
