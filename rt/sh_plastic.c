@@ -34,6 +34,9 @@ static char RCSplastic[] = "@(#)$Header$ (BRL)";
 #include "./material.h"
 #include "./light.h"
 
+/* Fast approximation to specular term */
+#define PHAST_PHONG 1	/* See Graphics Gems IV pg 387 */
+
 /* from view.c */
 extern double AmbientIntensity;
 
@@ -92,7 +95,9 @@ struct mfuncs phg_mfuncs[] = {
 	0,		0,		0,		0 }
 };
 
+#ifndef PHAST_PHONG
 extern double phg_ipow();
+#endif
 
 #define RI_AIR		1.0    /* Refractive index of air.		*/
 
@@ -375,7 +380,18 @@ char	*dp;
 				cosine = 1;
 			}
 			refl = ps->wgt_specular * lp->lt_fraction *
+#ifdef PHAST_PHONG
+				/* It is unnecessary to compute the actual
+				 * exponential here since phong is just a
+				 * gross hack.  We approximate re:
+				 *  Graphics Gems IV "A Fast Alternative to
+				 *  Phong's Specular Model" Pg 385
+				 */
+				cosine /
+				(ps->shine - ps->shine*cosine + cosine);
+#else
 				phg_ipow(cosine, ps->shine);
+#endif
 			VELMUL( work, lp->lt_color,
 				intensity );
 			VJOIN1( swp->sw_color, swp->sw_color,
@@ -387,6 +403,7 @@ char	*dp;
 	return(1);
 }
 
+#ifndef PHAST_PHONG
 /*
  *  			I P O W
  *  
@@ -409,3 +426,4 @@ register int cnt;
 		result *= input;
 	return( result );
 }
+#endif
