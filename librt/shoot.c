@@ -80,8 +80,8 @@ register struct application *ap;
 	auto struct xray newray;	/* closer ray start */
 	auto fastf_t dist_corr;		/* correction distance */
 	register union cutter *cutp;
-fastf_t old_dist_corr, old_box_start, old_box_end;
-int push_flag = 0;
+	fastf_t odist_corr, obox_start, obox_end;	/* temp */
+	int push_flag = 0;
 
 	if(rt_g.debug&(DEBUG_ALLRAYS|DEBUG_SHOOT|DEBUG_PARTITION)) {
 		rt_log("**********shootray  %d,%d lvl=%d\n",
@@ -190,9 +190,10 @@ int push_flag = 0;
 
 	/*
 	 *  If ray does not enter the model RPP, skip on.
+	 *  If ray ends exactly at the model RPP, trace it.
 	 */
 	if( !rt_in_rpp( &ap->a_ray, inv_dir, ap->a_rt_i->mdl_min, ap->a_rt_i->mdl_max )  ||
-	    ap->a_ray.r_max <= 0.0 )  {
+	    ap->a_ray.r_max < 0.0 )  {
 	    	if( waitsegs != SEG_NULL )  {
 	    		/* Go handle the infinite objects we hit */
 	    		model_end = INFINITY;
@@ -205,15 +206,18 @@ int push_flag = 0;
 	}
 
 	/* Push ray starting point to edge of model RPP */
-	box_start = ap->a_ray.r_min;
+	box_start = ap->a_ray.r_min - 1.0;	/* to compensate for 0.99 below */
 	box_end = model_end = ap->a_ray.r_max;
-	if( box_start < -10.0 )
-		box_start = -10.0;	/* don't look back far */
+	/* If we are very near the edge, step back just a little
+	 * so we don't miss coming out of something.
+	 */
+	if( box_start <= 0.0 )
+		box_start = -10.0;
 	lastcut = CUTTER_NULL;
 	last_bool_start = -10.0;
 	trybool = 0;
 	newray = ap->a_ray;		/* struct copy */
-old_dist_corr = old_box_start = old_box_end = -99;
+odist_corr = obox_start = obox_end = -99;
 
 	/*
 	 *  While the ray remains inside model space,
@@ -231,6 +235,10 @@ old_dist_corr = old_box_start = old_box_end = -99;
 			break;	/* done! */
 		VJOIN1( newray.r_pt, ap->a_ray.r_pt,
 			dist_corr, ap->a_ray.r_dir );
+		if( rt_g.debug&DEBUG_BOXING) {
+			rt_log("dist_corr=%g\n", dist_corr);
+			VPRINT("newray.r_pt", newray.r_pt);
+		}
 
 		cutp = &(ap->a_rt_i->rti_CutHead);
 		while( cutp->cut_type == CUT_CUTNODE )  {
@@ -248,10 +256,10 @@ old_dist_corr = old_box_start = old_box_end = -99;
 		if( cutp==lastcut )  {
 			rt_log("%d,%d box push dist_corr o=%e n=%e model_end=%e\n",
 				ap->a_x, ap->a_y,
-				old_dist_corr, dist_corr, model_end );
+				odist_corr, dist_corr, model_end );
 			rt_log("box_start o=%e n=%e, box_end o=%e n=%e\n",
-				old_box_start, box_start,
-				old_box_end, box_end );
+				obox_start, box_start,
+				obox_end, box_end );
 			VPRINT("a_ray.r_pt", ap->a_ray.r_pt);
 		     	VPRINT("Point", newray.r_pt);
 			VPRINT("Dir", newray.r_dir);
@@ -281,9 +289,9 @@ old_dist_corr = old_box_start = old_box_end = -99;
 			box_end += 1.0;		/* Advance 1mm */
 		     	continue;
 		}
-		old_dist_corr = dist_corr;
-		old_box_start = box_start;
-		old_box_end = box_end;
+		odist_corr = dist_corr;
+		obox_start = box_start;
+		obox_end = box_end;
 		box_start = dist_corr + newray.r_min;
 		box_end = dist_corr + newray.r_max;
 
