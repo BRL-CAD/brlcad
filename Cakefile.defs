@@ -919,7 +919,11 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #		define	LIBVERS ../sh/sharedlibvers.sh
 #		define	BUILD_LIBRARY	gcc -shared -o
 #		define	RANLIB	true
-#		define	STANDARD_LIBES	-lm -lc -Wl,-rpath -Wl,LIBDIR:/usr/lib
+#		if 0
+#			define	STANDARD_LIBES	-lm -lc -Wl,-rpath -Wl,LIBDIR:/usr/lib
+#		else
+#			define	STANDARD_LIBES	-lm -lc -Wl,-rpath -Wl,LIBDIR
+#		endif
 #	else
 /*		Static linked executables */
 #		define	CC	gcc
