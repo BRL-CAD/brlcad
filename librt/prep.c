@@ -321,6 +321,27 @@ int			ncpu;
 
 	/* If region-id expression file exists, process it */
 	rt_regionfix(rtip);
+	
+	/* For plotting, compute a slight enlargement of the model RPP,
+	 * to allow room for rays clipped to the model RPP to be depicted.
+	 * Always do this, because application debugging may use it too.
+	 */
+	{
+		register fastf_t f, diff;
+
+		diff = (rtip->mdl_max[X] - rtip->mdl_min[X]);
+		f = (rtip->mdl_max[Y] - rtip->mdl_min[Y]);
+		if( f > diff )  diff = f;
+		f = (rtip->mdl_max[Z] - rtip->mdl_min[Z]);
+		if( f > diff )  diff = f;
+		diff *= 0.1;	/* 10% expansion of box */
+		rtip->rti_pmin[0] = rtip->mdl_min[0] - diff;
+		rtip->rti_pmin[1] = rtip->mdl_min[1] - diff;
+		rtip->rti_pmin[2] = rtip->mdl_min[2] - diff;
+		rtip->rti_pmax[0] = rtip->mdl_max[0] + diff;
+		rtip->rti_pmax[1] = rtip->mdl_max[1] + diff;
+		rtip->rti_pmax[2] = rtip->mdl_max[2] + diff;
+	}
 
 	/*
 	 *	Partition space
