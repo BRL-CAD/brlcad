@@ -1750,10 +1750,10 @@ int			other_rs_state;
 	int			action;
 	int			e_pos;
 
-#ifdef PARANOID_VERIFY
-	nmg_vfu( &rs->fu1->s_p->fu_hd, rs->fu1->s_p );
-	nmg_vfu( &rs->fu2->s_p->fu_hd, rs->fu2->s_p );
-#endif
+	if( rt_g.NMG_debug & DEBUG_VERIFY )  {
+		nmg_vfu( &rs->fu1->s_p->fu_hd, rs->fu1->s_p );
+		nmg_vfu( &rs->fu2->s_p->fu_hd, rs->fu2->s_p );
+	}
 
 	vu = rs->vu[pos];
 	NMG_CK_VERTEXUSE(vu);
@@ -2089,11 +2089,11 @@ rt_log("force next eu to ray\n");
 
 	rs->state = new_state;
 
-#ifdef PARANOID_VERIFY
-	/* Verify both faces are still OK */
-	nmg_vfu( &rs->fu1->s_p->fu_hd, rs->fu1->s_p );
-	nmg_vfu( &rs->fu2->s_p->fu_hd, rs->fu2->s_p );
-#endif
+	if( rt_g.NMG_debug & DEBUG_VERIFY )  {
+		/* Verify both faces are still OK */
+		nmg_vfu( &rs->fu1->s_p->fu_hd, rs->fu1->s_p );
+		nmg_vfu( &rs->fu2->s_p->fu_hd, rs->fu2->s_p );
+	}
 }
 
 /*
