@@ -477,6 +477,7 @@ int
 db_v4_get_units_code( str )
 CONST char *str;
 {
+	if( !str )  return -1;	/* error */
 
 	if( strcmp(str, "mm") == 0 || strcmp(str, "millimeters") == 0 ) 
 		return ID_MM_UNIT;
