@@ -46,10 +46,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include "fb.h"
-#include <sgtty.h>
 #include <string.h>
-
-struct sgttyb ttyold, ttynew;
 
 FBIO *fbp;
 
@@ -136,9 +133,7 @@ char **argv;
 			}
 		}
 	}
-	gtty(0,&ttyold);
-	ttynew=ttyold;
-	ttynew.sg_flags |= RAW;
+	save_Tty(0);
 	printf("Program set: February 13, 1987\n");
 	printf("Input 3 characters for colors\n");
 	printf("Default colors:  Items       - silver\n");
@@ -357,8 +352,7 @@ view:	printf("Title: ");
 			loct=loci;
 			ic=0;
 			iskp=0;
-		/* set raw mode */
-			stty(0,&ttynew);
+			set_Raw(0);		/* set raw mode */
 			lclr=15;
 			for(i=0;i<ni;i++){
 back:				for(j=0;j<10;j++) gc();
@@ -401,7 +395,7 @@ again:				printf("      %-7s  %s%c%5ld ",
 					color[itmc[i]].name,13);
 				lclr=itmc[i];
 			}
-			stty(0,&ttyold);
+			reset_Tty(0);
 			break;
 		}
 	}
