@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 1.2  83/12/16  00:09:16  dpk
+ * Added distinctive RCS header
+ * 
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$";
@@ -263,13 +266,18 @@ MakeErrors()
 {
 	WINDOW	*old = curwind;
 	int	status;
+	char	*what;
+	char	*null = "";
 
+	what = ask(null, FuncName());
+	if (what == null)
+		what = 0;
 	if (WtOnMk)
 		WtModBuf();
 	if (MakeAll)
-		status = UnixToBuf("make", 1, 1, "/bin/make", "Make", "-k", 0);
+		status = UnixToBuf("make", 1, 1, "make", "Make", "-k", what, 0);
 	else
-		status = UnixToBuf("make", 1, 1, "/bin/make", "Make", 0);
+		status = UnixToBuf("make", 1, 1, "make", "Make", what, 0);
 	com_finish(status, "make");
 	if (errorlist)
 		ErrFree();
@@ -287,9 +295,10 @@ MakeErrors()
 		SetWind(old);
 }
 
-/* Make a buffer name given the command `command', i.e. "fgrep -n foo *.c"
-   will return the buffer name "fgrep".  */
-
+/*
+ *  Make a buffer name given the command `command', i.e. "fgrep -n foo *.c"
+ *  will return the buffer name "fgrep".
+ */
 char *
 MakeName(command)
 char	*command;
@@ -383,7 +392,7 @@ char	*bufname,
 	if (disp)
 		redisplay();		
 	if (clobber)
-		curbuf->b_type = SCRATCHBUF;
+		SetScratch(curbuf);
 	exp = 1;
 
 	ttyset(0);
@@ -399,14 +408,16 @@ char	*bufname,
 #else
 		ignorf(signal(SIGINT, SIG_DFL));
 #endif
-		ignore(close(0));
-		ignore(open("/dev/null", 0));
+/*********
+**		ignore(close(0));
+**		ignore(open("/dev/null", 0));
+**********/
 		ignore(close(1));
 		ignore(close(2));
 		ignore(dup(p[1]));
 		ignore(dup(p[1]));
 		PipeClose(p);
-		execv(func, (char **) &args);
+		execvp(func, (char **) &args);
 		ignore(write(1, "Execl failed", 12));
 		_exit(1);
 	} else {
