@@ -164,27 +164,35 @@ struct rt_i		*rtip;
 			"st_piece_rpps" );
 
 	{
-		struct bound_rpp	*minmax = stp->st_piece_rpps;
+		struct bound_rpp	*minmax;
 		CONST struct tri_specific **fap =
 			(CONST struct tri_specific **)bot->bot_facearray;
 		register CONST struct tri_specific *trip = bot->bot_facelist;
+		int surfno = ntri-1;
 
-		for( ; trip; trip = trip->tri_forw )  {
+		for( ; trip; trip = trip->tri_forw, surfno-- )  {
 			point_t b,c;
 			point_t d,e,f;
 			vect_t offset;
 			fastf_t los;
 
-			*fap = trip;
-			fap++;
+			fap[surfno] = trip;
+			minmax = &stp->st_piece_rpps[surfno];
 
+			/* It is critical that the surfno's used in
+			 * rt error messages (from hit_surfno) match
+			 * the tri_surfno values, so that mged users who
+			 * run "db get name f#" to see that triangle
+			 * get the triangle they're expecting!
+			 */
+			BU_ASSERT_LONG( trip->tri_surfno, ==, surfno );
 			if( bot->bot_mode == RT_BOT_PLATE || bot->bot_mode == RT_BOT_PLATE_NOCOS )  {
-				if( BU_BITTEST( bot->bot_facemode, trip->tri_surfno ) )  {
+				if( BU_BITTEST( bot->bot_facemode, surfno ) )  {
 					/* Append full thickness on both sides */
-					los = bot->bot_thickness[trip->tri_surfno];
+					los = bot->bot_thickness[surfno];
 				} else {
 					/* Center thickness.  Append 1/2 thickness on both sides */
-					los = bot->bot_thickness[trip->tri_surfno] * 0.51;
+					los = bot->bot_thickness[surfno] * 0.51;
 				}
 			} else {
 				/* Prevent the RPP from being 0 thickness */
@@ -216,8 +224,6 @@ struct rt_i		*rtip;
 			VMINMAX( minmax->min, minmax->max, d );
 			VMINMAX( minmax->min, minmax->max, e );
 			VMINMAX( minmax->min, minmax->max, f );
-
-			minmax++;
 		}
 	}
 
