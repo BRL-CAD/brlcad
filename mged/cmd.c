@@ -100,6 +100,7 @@ void	f_orientation();
 void	f_dm();
 void	f_vrot_center();
 void	f_opendb();
+void	f_joint();
 
 struct funtab {
 	char *ft_name;
@@ -213,6 +214,8 @@ static struct funtab funtab[] = {
 	f_inside, 1, MAXARGS,
 "item", "region item [air]", "change item # or air code",
 	f_itemair,3,4,
+"joint", "command [options]", "articualtion/animation commands",
+	f_joint, 1, MAXARGS,
 "keep", "keep_file object(s)", "save named objects in specified file",
 	f_keep, 3, MAXARGS,
 "keypoint", "[x y z | reset]", "set/see center of editing transformations",
