@@ -489,7 +489,7 @@ struct rt_tol		*tol;
 	}
 
 	/* Compute "geometry" for region and shell */
-	nmg_region_a( *r );
+	nmg_region_a( *r, tol );
 
 	rt_free( (char *)verts, "pg_tess verts[]" );
 	rt_free( (char *)vertp, "pg_tess vertp[]" );

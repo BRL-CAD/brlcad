@@ -1339,7 +1339,7 @@ struct rt_tol		*tol;
 	nmg_gluefaces( outfaceuses, face );
 
 	/* Compute "geometry" for region and shell */
-	nmg_region_a( *r );
+	nmg_region_a( *r, tol );
 
 	/* XXX just for testing, to make up for loads of triangles ... */
 	nmg_shell_coplanar_face_merge( s, tol, 1 );

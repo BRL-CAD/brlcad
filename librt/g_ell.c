@@ -1027,7 +1027,7 @@ struct rt_tol		*tol;
 	}
 
 	/* Compute "geometry" for region and shell */
-	nmg_region_a( *r );
+	nmg_region_a( *r, tol );
 
 	/* Release memory */
 	/* All strips have vertices */

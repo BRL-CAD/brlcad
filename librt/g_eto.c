@@ -1146,7 +1146,7 @@ struct rt_tol		*tol;
 	}
 
 	/* Compute "geometry" for region and shell */
-	nmg_region_a( *r );
+	nmg_region_a( *r, tol );
 
 	rt_free( (char *)ell, "rt_mk_ell pts" );
 	rt_free( (char *)eto_ells, "ells[]" );
