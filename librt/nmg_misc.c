@@ -7815,3 +7815,117 @@ struct model *m;
 
 	rt_free( (char *)flags , "nmg_mirror_model: flags " );
 }
+
+int
+nmg_kill_cracks( s )
+struct shell *s;
+{
+	struct faceuse *fu;
+	struct faceuse *fu_next;
+	int empty_shell=0;
+
+	if( rt_g.NMG_debug & DEBUG_BASIC )
+		rt_log( "nmg_kill_cracks( s=%x )\n" , s );
+
+	NMG_CK_SHELL( s );
+
+	fu = RT_LIST_FIRST( faceuse, &s->fu_hd );
+	while( RT_LIST_NOT_HEAD( fu, &s->fu_hd ) )
+	{
+		struct loopuse *lu;
+		struct loopuse *lu_next;
+		int empty_face=0;
+
+		NMG_CK_FACEUSE( fu );
+
+		fu_next = RT_LIST_PNEXT( faceuse, &fu->l );
+		while( RT_LIST_NOT_HEAD( fu_next, &s->fu_hd )
+			&& fu_next == fu->fumate_p
+			&& fu_next->orientation != OT_SAME )
+				fu_next = RT_LIST_PNEXT( faceuse, &fu_next->l );
+
+		if( fu->orientation != OT_SAME )
+		{
+			fu = fu_next;
+			continue;
+		}
+
+		lu = RT_LIST_FIRST( loopuse, &fu->lu_hd );
+		while( RT_LIST_NOT_HEAD( lu, &fu->lu_hd ) )
+		{
+			struct edgeuse *eu;
+			struct edgeuse *eu_next;
+			struct edgeuse *eu_prev;
+			int empty_loop=0;
+
+			NMG_CK_LOOPUSE( lu );
+
+			lu_next = RT_LIST_PNEXT( loopuse, &lu->l );
+			while( lu_next != lu->lumate_p && RT_LIST_NOT_HEAD( lu_next, &fu->lu_hd ) )
+				lu_next = RT_LIST_PNEXT( loopuse, &lu_next->l );
+
+			if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+			{
+				lu = lu_next;
+				continue;
+			}
+
+			eu = RT_LIST_FIRST( edgeuse, &lu->down_hd );
+			while( RT_LIST_NOT_HEAD( eu, &lu->down_hd ) )
+			{
+				NMG_CK_EDGEUSE( eu );
+
+				eu_next = RT_LIST_PNEXT_CIRC( edgeuse, &eu->l );
+				NMG_CK_EDGEUSE( eu_next );
+
+				/* check if eu and eu_next form a jaunt */
+				if( eu->vu_p->v_p != eu_next->eumate_p->vu_p->v_p )
+				{
+					eu = RT_LIST_PNEXT( edgeuse, &eu->l );
+					continue;
+				}
+
+				if( eu != RT_LIST_FIRST( edgeuse, &lu->down_hd ) )
+					eu_prev = RT_LIST_PREV( edgeuse, &eu->l );
+				else
+					eu_prev = (struct edgeuse *)NULL;
+
+				if( nmg_keu( eu ) )
+					empty_loop = 1;
+				else if( nmg_keu( eu_next ) )
+					empty_loop = 1;
+
+				if( empty_loop )
+					break;
+
+				if( eu_prev )
+					eu = eu_prev;
+				else
+					eu = RT_LIST_FIRST( edgeuse, &lu->down_hd );
+			}
+			if( empty_loop )
+			{
+				if( nmg_klu( lu ) )
+				{
+					empty_face = 1;
+					break;
+				}
+			}
+			lu = lu_next;
+		}
+		if( empty_face )
+		{
+			if( nmg_kfu( fu ) )
+			{
+				empty_shell = 1;
+				break;
+			}
+		}
+		fu = fu_next;
+	}
+
+	if( rt_g.NMG_debug & DEBUG_BASIC )
+		rt_log( "nmg_kill_cracks: ret = %d\n" , empty_shell );
+
+	return( empty_shell );
+}
