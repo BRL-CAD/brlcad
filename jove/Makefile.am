@@ -26,4 +26,4 @@ install-data-local:
 	$(INSTALL_DATA) $(srcdir)/describe.com.1 $(libdir)/describe.com
 	$(INSTALL_DATA) $(srcdir)/teach-jove.1 $(libdir)/teach-jove
 
-EXTRA_DIST = $(man_MANS) describe.com.1 teach-jove.1
+EXTRA_DIST = $(man_MANS) describe.com.1 teach-jove.1 jove_tune.c
