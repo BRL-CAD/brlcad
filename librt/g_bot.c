@@ -142,7 +142,7 @@ struct rt_i		*rtip;
 	 *  These array allocations can't be made until the number of
 	 *  triangles are known.
 	 */
-#if 0	/* Set this to '1' to enable BoT pieces */
+#if 1	/* Set this to '1' to enable BoT pieces */
 	stp->st_npieces = ntri;
 #endif
 
@@ -173,6 +173,8 @@ struct rt_i		*rtip;
 			VADD2( c, trip->tri_CA, trip->tri_A );
 			VMINMAX( minmax->min, minmax->max, c );
 			minmax++;
+
+			/* XXX Need to enlarge RPP for bot->bot_mode == RT_BOT_PLATE */
 		}
 
 	}
@@ -343,20 +345,7 @@ struct seg		*seghead;
 		return(0);		/* MISS */
 
 	/* Sort hits, Near to Far */
-	{
-		register int i, j;
-		LOCAL struct hit temp;
-
-		for( i=0; i < nhits-1; i++ )  {
-			for( j=i+1; j < nhits; j++ )  {
-				if( hits[i].hit_dist <= hits[j].hit_dist )
-					continue;
-				temp = hits[j];		/* struct copy */
-				hits[j] = hits[i];	/* struct copy */
-				hits[i] = temp;		/* struct copy */
-			}
-		}
-	}
+	rt_hitsort( hits, nhits );
 
 	/* build segments */
 	if( bot->bot_mode == RT_BOT_PLATE || bot->bot_mode == RT_BOT_PLATE_NOCOS )
@@ -656,6 +645,10 @@ struct seg		*seghead;
  *
  *  Intersect a ray with a list of "pieces" of a BoT.
  *
+ *  This routine may be invoked many times for a single ray,
+ *  as the ray traverses from one space partitioning cell to the next.
+ *  Complete (2 hit) segments will be returned as they're completed,
+ *  with possibly one left-over hit being stashed between invocations.
  */
 int
 rt_bot_piece_shot( psp, plp, rp, ap, seghead, resp )
@@ -671,8 +664,8 @@ struct resource		*resp;
 	struct soltab	*stp;
 	long		piecenum;
 	LOCAL struct hit hits[MAXHITS];
-	register struct hit *hp;
-	LOCAL int	nhits;
+	register struct hit *hp = hits;
+	LOCAL int	nhits = 0;
 	struct bot_specific *bot;
 
 	RT_CK_PIECELIST(plp);
@@ -682,6 +675,14 @@ struct resource		*resp;
 	RT_CK_RESOURCE(resp);
 	bot = (struct bot_specific *)stp->st_specific;
 bu_log("rt_bot_piece_shot %d,%d\n", ap->a_x, ap->a_y);
+
+	/* Restore left-over hit from previous invocation */
+	if( psp->oddhit.hit_dist < INFINITY )  {
+		hits[0] = psp->oddhit;		/* struct copy */
+		psp->oddhit.hit_dist = INFINITY;
+		nhits = 1;
+		hp++;
+	}
 
 	sol_piece_subscr_p = &(plp->pieces[plp->npieces-1]);
 	for( ; sol_piece_subscr_p >= plp->pieces; sol_piece_subscr_p-- )  {
@@ -758,6 +759,7 @@ bu_log("rt_bot_piece_shot %d,%d\n", ap->a_x, ap->a_y);
 
 	/* Now, drop into all that gore to sort hits and build segs */
 
+	bu_log("rt_bot_piece_shot(): nhits = %d\n", nhits );
 	bu_bomb("rt_bot_piece_shot(): got a hit, oops, need more code\n");
 
 	return 0;	/* MISS */
