@@ -59,11 +59,11 @@ FRC:
 	rm -f version.o
 	sed -e \'s;BinDir;BINDIR;\' -e \'s;LibDir;LIBDIR;\' < ../SRCDIR/jove_tune.c > ../SRCDIR/tune.c
 	if test ! -f version.number ; then echo 0 > version.number; fi
-	c=`cat version.number`; \
-	rm -f version.number ../SRCDIR/version.c; \
-	echo $c | \
-		awk '{version = \$1 + 1; };END{printf "\%d\\\\n", version > "version.number"; }'; \
-	c=`cat version.number`; \
+	c=`cat version.number`; \\
+	rm -f version.number ../SRCDIR/version.c; \\
+	echo $c | \\
+		awk '{version = \$1 + 1; };END{printf "\%d\\\\n", version > "version.number"; }'; \\
+	c=`cat version.number`; \\
 	echo "char	version[] = \\\\"2.$c\\\\";" > ../SRCDIR/version.c
 	touch FRC
 
