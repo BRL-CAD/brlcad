@@ -27,7 +27,7 @@ bind Menu <ButtonRelease> {
 
 # cad_MenuInvoke --
 #
-# This procedure is invoked when button 1 is released over a menu.
+# This procedure is invoked when a button is released over a menu.
 # It invokes the appropriate menu action and unposts the menu if
 # it came from a menubutton.
 #
