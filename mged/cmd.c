@@ -96,6 +96,7 @@ void	f_mouse();
 void	f_fracture();
 void	f_orientation();
 void	f_dm();
+void	f_vrot_center();
 
 static struct funtab {
 	char *ft_name;
@@ -343,6 +344,8 @@ static struct funtab {
 	f_vrmgr, 3, MAXARGS,
 "vrot", "xdeg ydeg zdeg", "rotate viewpoint",
 	f_vrot,4,4,
+"vrot_center", "v|m x y z", "set center point of viewpoint rotation, in model or view coords",
+	f_vrot_center, 5, 5,
 "whichid", "ident(s)", "lists all regions with given ident code",
 	f_which_id, 2, MAXARGS,
 "x", "lvl", "print solid table & vector list",
