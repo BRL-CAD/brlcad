@@ -47,12 +47,16 @@ for i in \
 	brlman/awf brlman/brlman \
 	libtcl/Cakefile libtk/Cakefile
 do
-	chmod 775 $i
-	ed - $i << EOF
+	if [ -f $i ] ; then
+
+		chmod 775 $i
+		ed - $i << EOF
 f
 g,$BASEDIR,s,,$NEW,gp
 w
 q
 EOF
-	chmod 555 $i
+		chmod 555 $i
+	fi
+
 done
