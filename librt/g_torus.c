@@ -162,7 +162,6 @@ register mat_t		mat;
 {
 	LOCAL fastf_t	vec[3*4];
 	vect_t		axb;
-	fastf_t		dot;
 
 	/* Check record type */
 	if( rp->u_id != ID_SOLID )  {
@@ -182,13 +181,7 @@ register mat_t		mat;
 	/* If H does not point in the direction of A cross B, reverse H. */
 	/* Somehow, database records have been written with this problem. */
 	VCROSS( axb, tip->a, tip->b );
-	dot = VDOT( axb, tip->h );
-	rt_log("tor: dot=%g, a=(%g,%g,%g),  b=(%g,%g,%g),  h=(%g,%g,%g)\n",
-		dot,
-		tip->a[0], tip->a[1], tip->a[2],
-		tip->b[0], tip->b[1], tip->b[2],
-		tip->h[0], tip->h[1], tip->h[2] );
-	if( dot < 0 )  {
+	if( VDOT( axb, tip->h ) < 0 )  {
 		VREVERSE( tip->h, tip->h );
 	}
 
@@ -467,9 +460,24 @@ struct application	*ap;
 	A.cf[2] = X2_Y2.cf[2] + cor_pprime[Z] * cor_pprime[Z] +
 		  1.0 - tor->tor_alpha * tor->tor_alpha;
 
-	(void) polyMul( &A, &A, &Asqr );
-	(void) polyScal( &X2_Y2, 4.0 );
-	(void) polySub( &Asqr, &X2_Y2, &C );
+	/* Inline expansion of (void) polyMul( &A, &A, &Asqr ) */
+	/* Both polys have degree two */
+	Asqr.dgr = 4;
+	Asqr.cf[0] = A.cf[0] * A.cf[0];
+	Asqr.cf[1] = A.cf[0] * A.cf[1] + A.cf[1] * A.cf[0];
+	Asqr.cf[2] = A.cf[0] * A.cf[2] + A.cf[1] * A.cf[1] + A.cf[2] * A.cf[0];
+	Asqr.cf[3] = A.cf[1] * A.cf[2] + A.cf[2] * A.cf[1];
+	Asqr.cf[4] = A.cf[2] * A.cf[2];
+
+	/* Inline expansion of polyScal( &X2_Y2, 4.0 ) and
+	 * polySub( &Asqr, &X2_Y2, &C ).
+	 */
+	C.dgr   = 4;
+	C.cf[0] = Asqr.cf[0];
+	C.cf[1] = Asqr.cf[1];
+	C.cf[2] = Asqr.cf[2] - X2_Y2.cf[0] * 4.0;
+	C.cf[3] = Asqr.cf[3] - X2_Y2.cf[1] * 4.0;
+	C.cf[4] = Asqr.cf[4] - X2_Y2.cf[2] * 4.0;
 
 	/*  It is known that the equation is 4th order.  Therefore,
 	 *  if the root finder returns other than 4 roots, error.
@@ -498,16 +506,45 @@ struct application	*ap;
 		k[j] -= cor_proj;
 
 	/* Here, 'i' is number of points found */
-	if( i == 0 )
+	switch( i )  {
+	case 0:
 		return(SEG_NULL);		/* No hit */
-	if( i != 2 && i != 4 )  {
+
+	default:
 		rt_log("rt_tor_shot: reduced 4 to %d roots\n",i);
 		rt_pr_roots( 4, val );
 		return(SEG_NULL);		/* No hit */
-	}
 
-	/* Sort most distant to least distant. */
-	rt_pt_sort( k, i );
+	case 2:
+		{
+			/* Sort most distant to least distant. */
+			FAST fastf_t	u;
+			if( (u=k[0]) < k[1] )  {
+				/* bubble larger towards [0] */
+				k[0] = k[1];
+				k[1] = u;
+			}
+		}
+		break;
+	case 4:
+		{
+			register short	n;
+			register short	lim;
+
+			/*  Inline rt_pt_sort().  Sorts k[] into descending order. */
+			for( lim = i-1; lim > 0; lim-- )  {
+				for( n = 0; n < lim; n++ )  {
+					FAST fastf_t	u;
+					if( (u=k[n]) < k[n+1] )  {
+						/* bubble larger towards [0] */
+						k[n] = k[n+1];
+						k[n+1] = u;
+					}
+				}
+			}
+		}
+		break;
+	}
 
 	/* Now, t[0] > t[npts-1] */
 	/* k[1] is entry point, and k[0] is farthest exit point */
