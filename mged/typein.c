@@ -213,7 +213,7 @@ char *p_sph[] = {
 	"Enter radius: "
 };
 
-char *p_ell[] = {
+char *p_ellg[] = {
 	"Enter X, Y, Z of focus point 1: ",
 	"Enter Y: ",
 	"Enter Z: ",
@@ -233,7 +233,7 @@ char *p_ell1[] = {
 	"Enter radius of revolution: "
 };
 
-char *p_ellg[] = {
+char *p_ell[] = {
 	"Enter X, Y, Z of vertex: ",
 	"Enter Y: ",
 	"Enter Z: ",
@@ -608,13 +608,13 @@ char **argv;
 		nvals = 3*1 + 1;
 		menu = p_sph;
 		fn_in = sph_in;
-	} else if( strcmp( argv[2], "ell" ) == 0 )  {
-		nvals = 3*2 + 1;
-		menu = p_ell;
-		fn_in = ell_in;
 	} else if( strcmp( argv[2], "ellg" ) == 0 )  {
-		nvals = 3*4;
+		nvals = 3*2 + 1;
 		menu = p_ellg;
+		fn_in = ell_in;
+	} else if( strcmp( argv[2], "ell" ) == 0 )  {
+		nvals = 3*4;
+		menu = p_ell;
 		fn_in = ell_in;
 	} else if( strcmp( argv[2], "ell1" ) == 0 )  {
 		nvals = 3*2 + 1;
@@ -1396,9 +1396,9 @@ struct rt_db_internal	*intern;
 
 	CHECK_DBI_NULL;
 
-	n = 7;				/* ELL and ELL1 have seven params */
-	if (cmd_argvs[2][3] == 'g')	/* ELLG has twelve */
-		n = 12;
+	n = 12;				/* ELL has twelve params */
+	if (cmd_argvs[2][3] != '\0')	/* ELLG and ELL1 have seven */
+		n = 7;
 
 	intern->idb_type = ID_ELL;
 	intern->idb_meth = &rt_functab[ID_ELL];
@@ -1412,7 +1412,7 @@ struct rt_db_internal	*intern;
 		vals[i] = atof(cmd_argvs[3+i]) * local2base;
 	}
 
-	if (!strcmp("ellg", cmd_argvs[2])) {	/* everything's ok */
+	if (!strcmp("ell", cmd_argvs[2])) {	/* everything's ok */
 		/* V, A, B, C */
 		VMOVE( eip->v, &vals[0] );
 		VMOVE( eip->a, &vals[3] );
@@ -1421,9 +1421,9 @@ struct rt_db_internal	*intern;
 		return(0);
 	}
 	
-	if (!strcmp("ell", cmd_argvs[2])) {
+	if (!strcmp("ellg", cmd_argvs[2])) {
 		/* V, f1, f2, len */
-		/* convert ELL format into ELL1 format */
+		/* convert ELLG format into ELL1 format */
 		len = vals[6];
 		/* V is halfway between the foci */
 		VADD2( eip->v, &vals[0], &vals[3] );
