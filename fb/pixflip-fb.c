@@ -36,8 +36,8 @@ extern int	optind;
 
 extern char	*malloc();
 
-int	file_width = 64;	/* width of input sub-images in pixels (64) */
-int	file_height = 64;	/* height of input sub-images in scanlines (64) */
+int	file_width = 512;	/* width of input sub-images in pixels */
+int	file_height = 512;	/* height of input sub-images in scanlines */
 int	screen_width = 0;	/* number of screen pixels/line */
 int	screen_height = 0;	/* number of screen lines */
 char	*basename;		/* basename of input file(s) */
@@ -47,10 +47,10 @@ int	fps = 8;		/* frames/second */
 void		showframe();
 
 FBIO	*fbp;
-int	sizes_match = 0;
 int	verbose = 0;
 int	rocking = 0;
 int	passes = 100;		/* limit on number of passes */
+int	zoom = 1;
 
 #define MAXFRAMES	1000
 char	*frames[MAXFRAMES];	/* Pointers to pixel arrays */
@@ -60,7 +60,7 @@ char usage[] = "\
 Usage: pixflip-fb [-h]\n\
 	[-s square_file_size] [-w file_width] [-n file_height]\n\
 	[-S square_scr_size] [-W scr_width] [-N scr_height]\n\
-	[-f frames/sec] [-p passes] [-r] [-v]\n\
+	[-f frames/sec] [-p passes] [-r] [-v] [-z]\n\
 	[-o startframe] basename [file2 ... fileN]\n";
 
 get_args( argc, argv )
@@ -68,7 +68,7 @@ register char **argv;
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "hs:w:n:S:W:N:o:f:p:rv" )) != EOF )  {
+	while ( (c = getopt( argc, argv, "hs:w:n:S:W:N:o:f:p:rzv" )) != EOF )  {
 		switch( c )  {
 		case 'h':
 			/* high-res */
@@ -105,6 +105,9 @@ register char **argv;
 			break;
 		case 'r':
 			rocking = 1;
+			break;
+		case 'z':
+			zoom = 0;
 			break;
 		case 'v':
 			verbose = 1;
@@ -157,18 +160,15 @@ char **argv;
 	screen_width = fb_getwidth(fbp);
 	screen_height = fb_getheight(fbp);
 
-	if( file_width == screen_width && file_height == screen_height )  {
-		if(verbose) fprintf(stderr,
-			"pixflip-fb:  screen & file sizes match\n");
-		sizes_match = 1;
-	}  else
-		sizes_match = 0;
-
-	/* Library wants zoom before window */
-	fb_zoom( fbp,
-		screen_width/file_width,
-		screen_height/file_height );
-	fb_window( fbp, file_width/2, file_height/2 );
+	if (zoom) {
+		if (verbose) fprintf(stderr,
+			"pixflip-fb: zoom = %d x %d\n",
+			screen_width/file_width,
+			screen_height/file_height);
+		fb_view(fbp, file_width/2, file_height/2,
+			screen_width/file_width,
+			screen_height/file_height);
+	}
 
 	if( fps <= 1 )  {
 		sec = fps ? 1 : 4;
@@ -259,18 +259,8 @@ register int i;
 		return;
 	}
 
-	if( sizes_match )  {
-		fb_write( fbp, 0, 0, frames[i], file_width * file_height );
-	} else {
-#if 0
-		for( y=0; y < file_height; y++ )
-			fb_write( fbp, 0, y,
-				frames[i] + (y * file_width * 3),
-				file_width );
-#else
-		fb_writerect( fbp, 0, 0, file_width, file_height, frames[i] );
-#endif
-	}
+	fb_writerect( fbp, 0, 0, file_width, file_height, frames[i] );
+
 	if( verbose )  {
 		fprintf(stderr, ",");
 		fflush( stderr );
