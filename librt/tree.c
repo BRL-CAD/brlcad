@@ -563,9 +563,8 @@ again:
 			rt_log("rt_gettree_region_end() %s\n", regp->reg_name );
 			rt_bomb("rt_gettree_region_end(): rt_bound_tree() fail\n");
 		}
-		if( region_max[X] >= INFINITY )  {
-			/* skip infinite region */
-		} else {
+		if( region_max[X] < INFINITY )  {
+			/* infinite regions are exempted from this */
 			VMINMAX( rtip->mdl_min, rtip->mdl_max, region_min );
 			VMINMAX( rtip->mdl_min, rtip->mdl_max, region_max );
 		}
