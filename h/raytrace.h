@@ -1143,7 +1143,9 @@ extern struct rt_g rt_g;
 struct rt_i {
 	long		rti_magic;	/* magic # for integrity check */
 	/* THESE ITEMS ARE AVAILABLE FOR APPLICATIONS TO READ & MODIFY */
-	int		useair;		/* "air" regions are used */
+	int		useair;		/* 1="air" regions are retained while prepping */
+	int		rti_dont_instance; /* 1=Don't compress instances of solids into 1 while prepping */
+	int		rti_hasty_prep;	/* 1=hasty prep, slower ray-trace */
 	int		rti_nlights;	/* number of light sources */
 	char		*rti_region_fix_file; /* rt_regionfix() file or NULL */
 	int		rti_space_partition;  /* space partitioning method */
