@@ -368,6 +368,15 @@ BU_EXTERN(int rt_pipe_tcladjust, (Tcl_Interp *interp,
 		struct rt_db_internal *intern, int argc, char **argv,
 		struct resource *resp));
 
+/* NMG solid */
+BU_EXTERN(int rt_nmg_tclget, (Tcl_Interp *interp,
+		const struct rt_db_internal *intern, const char *attr));
+BU_EXTERN(int rt_nmg_tcladjust, (Tcl_Interp *interp,
+		struct rt_db_internal *intern, int argc, char **argv,
+		struct resource *resp));
+BU_EXTERN(void rt_nmg_make, (const struct rt_functab *,	struct rt_db_internal *,
+			     double /*diameter*/));
+
 /* BOT solid */
 BU_EXTERN(int rt_bot_tclget, (Tcl_Interp *interp,
 		const struct rt_db_internal *intern, const char *attr));
@@ -626,8 +635,8 @@ const struct rt_functab rt_functab[] = {
 		rt_nmg_import,	rt_nmg_export,	rt_nmg_ifree,
 		rt_nmg_describe,rt_nmg_xform,	NULL,
 		sizeof(struct model), NMG_MODEL_MAGIC,
-		rt_parsetab_tclget, rt_parsetab_tcladjust, rt_parsetab_tclform,
-		NULL,
+		rt_nmg_tclget, rt_nmg_tcladjust, rt_parsetab_tclform,
+		rt_nmg_make,
 	},
 
 	{RT_FUNCTAB_MAGIC, "ID_EBM", "ebm",

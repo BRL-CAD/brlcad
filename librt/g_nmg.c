@@ -24,7 +24,13 @@ static const char RCSnmg[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <math.h>
+
+#ifdef USE_STRING_H
+#include <string.h>
+#else
 #include <strings.h>
+#endif
+
 #include "machine.h"
 #include "externs.h"
 #include "vmath.h"
@@ -46,6 +52,11 @@ struct nmg_specific {
 	char			*manifolds; /*  structure 1-3manifold table */
 	vect_t			nmg_invdir;
 	int			nmg_emagic;	/* STRUCT END magic number */
+};
+
+struct tmp_v {
+	point_t pt;
+	struct vertex *v;
 };
 
 
@@ -112,10 +123,6 @@ struct rt_i		*rtip;
 	 * of each sub-element of NMG solid
 	 */
 	nmg_s->manifolds = nmg_manifolds(m);
-
-
-
-
 
 	return(0);
 }
@@ -2814,4 +2821,313 @@ struct rt_db_internal	*ip;
 	}
 
 	ip->idb_ptr = GENPTR_NULL;	/* sanity */
+}
+
+int
+rt_nmg_tclget( interp, intern, attr )
+Tcl_Interp			*interp;
+const struct rt_db_internal	*intern;
+const char			*attr;
+{
+	register struct model *m=(struct model *)intern->idb_ptr;
+	Tcl_DString		ds;
+	struct bu_vls		vls;
+	struct bu_ptbl		verts;
+	struct nmgregion	*r;
+	struct shell		*s;
+	struct faceuse		*fu;
+	struct loopuse		*lu;
+	struct edgeuse		*eu;
+	struct vertexuse	*vu;
+	struct vertex		*v;
+	struct vertex_g		*vg;
+	int			i;
+
+	NMG_CK_MODEL( m );
+
+	Tcl_DStringInit( &ds );
+	bu_vls_init( &vls );
+
+	if( attr == (char *)NULL )
+	{
+		bu_vls_strcpy( &vls, "nmg" );
+		bu_ptbl_init( &verts, 256, "nmg verts" );
+		nmg_vertex_tabulate( &verts, &m->magic );
+
+		/* first list all the vertices */
+		bu_vls_strcat( &vls, " V {" );
+		for( i=0 ; i<BU_PTBL_LEN( &verts ) ; i++ ) {
+			v = (struct vertex *) BU_PTBL_GET( &verts, i );
+			NMG_CK_VERTEX( v );
+			vg = v->vg_p;
+			if( !vg ) {
+				Tcl_SetResult( interp, "Vertex has no geometry\n", TCL_STATIC );
+				bu_ptbl_free( &verts );
+				bu_vls_free( &vls );
+				return( TCL_ERROR );
+			}
+			bu_vls_printf( &vls, " { %.25g %.25g %.25g }", V3ARGS( vg->coord ) );
+		}
+		bu_vls_strcat( &vls, " }" );
+
+		/* now all the nmgregions */
+		for( BU_LIST_FOR( r, nmgregion, &m->r_hd ) ) {
+			/* bu_vls_strcat( &vls, " R {" ); */
+
+			/* and all the shells */
+			for( BU_LIST_FOR( s, shell, &r->s_hd ) ) {
+				/* bu_vls_strcat( &vls, " S {" ); */
+
+				/* all the faces */
+				if( BU_LIST_NON_EMPTY( &s->fu_hd ) ) {
+					for( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) ) {
+						if( fu->orientation != OT_SAME )
+							continue;
+
+						bu_vls_strcat( &vls, " F {" );
+
+						/* all the loops in this face */
+						for( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) ) {
+
+							if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_VERTEXUSE_MAGIC ) {
+								vu = BU_LIST_FIRST( vertexuse, &lu->down_hd );
+								bu_vls_printf( &vls, " %d",
+									bu_ptbl_locate( &verts, (long *)vu->v_p ) );
+							} else {
+								bu_vls_strcat( &vls, " {" );
+								for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) ) {
+									vu = eu->vu_p;
+									bu_vls_printf( &vls, " %d",
+									       bu_ptbl_locate( &verts, (long *)vu->v_p ) );
+								}
+								/* end of this loop */
+								bu_vls_strcat( &vls, " }" );
+							}
+						}
+
+						/* end of this face */
+						bu_vls_strcat( &vls, " }" );
+					}
+				}
+#if 0
+				/* all the wire loopuses */
+				if( BU_LIST_NON_EMPTY( &s->lu_hd ) ) {
+					for( BU_LIST_FOR( lu, loopuse, &s->lu_hd ) ) {
+					}
+				}
+
+				/* all the wire edges */
+				if( BU_LIST_NON_EMPTY( &s->eu_hd ) ) {
+					for( BU_LIST_FOR( eu, edgeuse, &s->eu_hd ) ) {
+					}
+				}
+
+				/* and maybe a single vertexuse */
+				if( s->vu_p ) {
+					bu_vls_printf( &vls, " VU %d", bu_ptbl_locate( &verts, (long *)s->vu_p->v_p ) );
+				}
+
+				/* end if this shell */
+				bu_vls_strcat( &vls, " }" );
+#endif
+			}
+			/* end of this nmgregion */
+			/* bu_vls_strcat( &vls, " }" ); */
+		}
+		bu_ptbl_free( &verts );
+	} else if( !strcmp( attr, "V" ) ) {
+		/* list of vertices */
+
+		bu_ptbl_init( &verts, 256, "nmg verts" );
+		nmg_vertex_tabulate( &verts, &m->magic );
+		for( i=0 ; i<BU_PTBL_LEN( &verts ) ; i++ ) {
+			v = (struct vertex *) BU_PTBL_GET( &verts, i );
+			NMG_CK_VERTEX( v );
+			vg = v->vg_p;
+			if( !vg ) {
+				Tcl_SetResult( interp, "Vertex has no geometry\n", TCL_STATIC );
+				bu_ptbl_free( &verts );
+				bu_vls_free( &vls );
+				return( TCL_ERROR );
+			}
+			bu_vls_printf( &vls, " { %.25g %.25g %.25g }", V3ARGS( vg->coord ) );
+		}
+		bu_ptbl_free( &verts );
+	} else {
+		Tcl_SetResult( interp, "Unrecognized parameter\n", TCL_STATIC );
+		return( TCL_ERROR );
+	}
+
+	Tcl_DStringAppend( &ds, bu_vls_addr( &vls ), -1 );
+	Tcl_DStringResult( interp, &ds );
+	Tcl_DStringFree( &ds );
+	bu_vls_free( &vls );
+
+	return( TCL_OK );
+}
+
+int
+rt_nmg_tcladjust( Tcl_Interp *interp, struct rt_db_internal *intern, int argc, char **argv, struct resource *resp)
+{
+	struct model	*m;
+	struct nmgregion	*r=NULL;
+	struct shell	*s=NULL;
+	struct faceuse *fu=NULL;
+	Tcl_Obj		*obj, **obj_array;
+	int		len;
+	int		num_verts, num_loops;
+	int		*loop;
+	int		loop_len;
+	int		i, j;
+	struct tmp_v	*verts;
+	fastf_t         *tmp;
+	struct bn_tol   tol;
+
+	RT_CK_DB_INTERNAL( intern );
+	m = (struct model *)intern->idb_ptr;
+	NMG_CK_MODEL( m );
+
+	verts = (struct tmp_v *)NULL;
+	for( i=0 ; i<argc ; i += 2 ) {
+		if( !strcmp( argv[i], "V" ) ) { 
+			obj = Tcl_NewStringObj( argv[i+1], -1 );
+			if( Tcl_ListObjGetElements( interp, obj, &num_verts,
+						    &obj_array) != TCL_OK) {
+				Tcl_SetResult( interp,
+				     "ERROR: failed to parse vertex list\n",
+				      TCL_STATIC );
+				Tcl_DecrRefCount( obj );
+				return( TCL_ERROR );
+			}
+			verts = (struct tmp_v *)bu_calloc( num_verts,
+							   sizeof( struct tmp_v ),
+							   "verts" );
+			for( j=0 ; j<num_verts ; j++ ) {
+				len = 3;
+				tmp = &verts[j].pt[0];
+				if( tcl_obj_to_fastf_array( interp, obj_array[j],
+					  &tmp, &len ) != 3 ) {
+					Tcl_SetResult( interp,
+					    "ERROR: incorrect number of coordinates for vertex\n",
+					     TCL_STATIC );
+					return( TCL_ERROR );
+				}
+			}
+			
+		}
+	}
+
+	while( argc >= 2 ) {
+		struct vertex ***face_verts;
+
+		if( !strcmp( argv[0], "V" ) ) {
+			/* vertex list handled above */
+			goto cont;
+		} else if( !strcmp( argv[0], "F" ) ) {
+			if( !verts ) {
+				Tcl_SetResult( interp,
+				    "ERROR: cannot set faces without vertices\n",
+				    TCL_STATIC );
+				return( TCL_ERROR );
+			}
+			if( BU_LIST_IS_EMPTY( &m->r_hd ) ) {
+			  r = nmg_mrsv( m );
+			  s = BU_LIST_FIRST( shell, &r->s_hd );
+			} else {
+			  r = BU_LIST_FIRST( nmgregion, &m->r_hd );
+			  s = BU_LIST_FIRST( shell, &r->s_hd );
+			}
+			obj = Tcl_NewStringObj( argv[1], -1 );
+			if( Tcl_ListObjGetElements( interp, obj, &num_loops,
+						    &obj_array) != TCL_OK) {
+				Tcl_SetResult( interp,
+				     "ERROR: failed to parse face list\n",
+				      TCL_STATIC );
+				Tcl_DecrRefCount( obj );
+				return( TCL_ERROR );
+			}
+			for( i=0 ; i<num_loops ; i++ ) {
+				struct faceuse *fu;
+				struct vertex **loop_verts;
+
+				loop_len = 0;
+				(void)tcl_obj_to_int_array( interp, obj_array[i],
+							    &loop, &loop_len);
+				if( !loop_len ) {
+					Tcl_SetResult( interp,
+					     "ERROR: unable to parse face list\n",
+					     TCL_STATIC );
+					return( TCL_ERROR );
+				}
+				if( i ) {
+					loop_verts = (struct vertex **)bu_calloc(
+						      loop_len,
+						      sizeof( struct vertex * ),
+						      "loop_verts" );
+					for( i=0 ; i<loop_len ; i++ ) {
+						loop_verts[i] = verts[loop[i]].v;
+					}
+					fu = nmg_add_loop_to_face( s, fu,
+						   loop_verts, loop_len,
+						   OT_OPPOSITE );
+					for( i=0 ; i<loop_len ; i++ ) {
+						verts[loop[i]].v = loop_verts[i];
+					}
+				} else {
+					face_verts = (struct vertex ***)bu_calloc(
+						 loop_len,
+						 sizeof( struct vertex **),
+						 "face_verts" );
+					for( j=0 ; j<loop_len ; j++ ) {
+						face_verts[j] = &verts[loop[j]].v;
+					}
+					fu = nmg_cmface( s, face_verts, loop_len );
+					bu_free((char *)face_verts, "face_verts" );
+				}
+			}
+		} else {
+			Tcl_SetResult( interp,
+			      "ERROR: Unrecognized parameter, must be V or F\n",
+			      TCL_STATIC );
+			return( TCL_ERROR );
+		}
+	cont:
+		argc -= 2;
+		argv += 2;
+	}
+
+	/* assign geometry for entire vertex list (if we have one) */
+	for( i=0 ; i<num_verts ; i++ ) {
+		if( verts[i].v )
+			nmg_vertex_gv( verts[i].v, verts[i].pt );
+	}
+
+	/* assign face geometry */
+	for( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) ) {
+		if( fu->orientation != OT_SAME )
+			continue;
+		nmg_calc_face_g( fu );
+	}
+
+	tol.magic = BN_TOL_MAGIC;
+	tol.dist = 0.005;
+	tol.dist_sq = tol.dist * tol.dist;
+	tol.perp = 1e-6;
+	tol.para = 1 - tol.perp;
+
+	nmg_rebound( m, &tol );
+
+	return( TCL_OK );
+}
+
+
+void
+rt_nmg_make( const struct rt_functab *ftp, struct rt_db_internal *intern, double d )
+{
+	struct model *m;
+
+	m = nmg_mm();
+	intern->idb_ptr = (genptr_t )m;
+	intern->idb_type = ID_NMG;
+	intern->idb_meth = ftp;
 }
