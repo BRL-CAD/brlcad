@@ -910,6 +910,7 @@ extern int	bu_debug;
 #define BU_DEBUG_MATH		0x00000100	/* 011 Fundamental math routines (plane.c, mat.c) */
 #define BU_DEBUG_PTBL		0x00000200	/* 012 bu_ptbl_*() logging */
 #define BU_DEBUG_AVS		0x00000400	/* 013 bu_avs_*() logging */
+#define BU_DEBUG_MAPPED_FILE	0x00000800	/* 014 bu_mapped_file logging */
 
 #define BU_DEBUG_TABDATA	0x00010000	/* 025 LIBBN: tabdata */
 

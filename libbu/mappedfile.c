@@ -89,11 +89,11 @@ CONST char	*appl;		/* non-null only when app. will use 'apbuf' */
 	FILE			*fp;	/* stdio file pointer */
 #endif
 
-#ifdef HAVE_UNIX_IO
-	/* Obtain some initial information about the file */
+	if( bu_debug&BU_DEBUG_MAPPED_FILE )
+		bu_log("bu_open_mapped_file(%s, %s) sbrk=x%lx\n",
+			name, appl?appl:"(NIL)", (long)sbrk(0) );
 
-#endif
-
+	/* See if file has already been mapped, and can be shared */
 	bu_semaphore_acquire(BU_SEM_MAPPEDFILE);
 	if( BU_LIST_UNINITIALIZED( &bu_mapped_file_list ) )  {
 		BU_LIST_INIT( &bu_mapped_file_list );
@@ -127,6 +127,8 @@ do_reuse:
 		/* It is safe to reuse mp */
 		mp->uses++;
 		bu_semaphore_release(BU_SEM_MAPPEDFILE);
+		if( bu_debug&BU_DEBUG_MAPPED_FILE )
+			bu_pr_mapped_file("open_reused", mp);
 		return mp;
 dont_reuse:
 		/* mp doesn't reflect the file any longer.  Invalidate. */
@@ -261,6 +263,10 @@ dont_reuse:
 	BU_LIST_APPEND( &bu_mapped_file_list, &mp->l );
 	bu_semaphore_release(BU_SEM_MAPPEDFILE);
 
+	if( bu_debug&BU_DEBUG_MAPPED_FILE )  {
+		bu_pr_mapped_file("1st_open", mp);
+		bu_log("bu_open_mapped_file() sbrk=x%lx\n", (long)sbrk(0) );
+	}
 	return mp;
 
 fail:
@@ -270,7 +276,8 @@ fail:
 		/* Don't free mp->buf here, it might not be bu_malloced but mmaped */
 		bu_free( mp, "mp from bu_open_mapped_file fail");
 	}
-	bu_log("bu_open_mapped_file(%s) can't open file\n", name);
+	bu_log("bu_open_mapped_file(%s, %s) can't open file\n",
+		name, appl?appl:"(NIL)" );
 	return (struct bu_mapped_file *)NULL;
 }
 
@@ -282,6 +289,9 @@ fail:
  *  an animation, don't release the memory even on final close,
  *  so that it's available when next needed.
  *  Call bu_free_mapped_files() after final close to reclaim space.
+ *  But only do that if you're SURE that ALL these files will never again
+ *  need to be mapped by this process.  Such as when running multi-frame
+ *  animations.
  */
 void
 bu_close_mapped_file( mp )
@@ -315,6 +325,9 @@ CONST struct bu_mapped_file	*mp;
  *
  *  Release storage being used by mapped files with no remaining users.
  *  This entire routine runs inside a critical section, for parallel protection.
+ *  Only call this routine if you're SURE that ALL these files will never
+ *  again need to be mapped by this process.  Such as when running multi-frame
+ *  animations.
  */
 void
 bu_free_mapped_files(verbose)
