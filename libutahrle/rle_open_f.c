@@ -10,6 +10,8 @@
 
 #include "rle_config.h"
 #include <stdio.h>
+#include "machine.h"
+#include "externs.h"
 #ifdef USE_STRING_H
 #include <string.h>
 #else
@@ -42,7 +44,6 @@ rle_open_f_noexit( prog_name, file_name, mode )
 char *prog_name, *file_name, *mode;
 {
     FILE *fp;
-    void perror();
     char *err_str;
     register char *cp;
     char *combuf;

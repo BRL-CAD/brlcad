@@ -28,6 +28,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <ctype.h>
 #include "machine.h"
 #include "vmath.h"
+#include "externs.h"
 #include "db.h"
 #include "wdb.h"
 #include "raytrace.h"
@@ -61,8 +62,6 @@ mat_t	id_mat = {
 	0.0, 1.0, 0.0, 0.0,
 	0.0, 0.0, 1.0, 0.0,
 	0.0, 0.0, 0.0, 1.0};	/* identity matrix for pipes */
-
-extern void	exit();
 
 char *name();
 char *strchop();
