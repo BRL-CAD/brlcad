@@ -191,6 +191,7 @@ struct edgeuse *eu1, *eu2;
 {
 	struct edgeuse *nexteu;
 	fastf_t angle1, angle2;
+	int	iteration1, iteration2;
 
 	NMG_CK_EDGEUSE(eu1);
 	NMG_CK_EDGEUSE(eu1->radial_p);
@@ -203,7 +204,7 @@ struct edgeuse *eu1, *eu2;
 		EUPRINT("\tJoining", eu1);
 		EUPRINT("\t     to", eu2);
 	}
-	while (eu2) {
+	for ( iteration1=0; eu2 && iteration1 < 10000; iteration1++ ) {
 
 		/* because faces are always created with counter-clockwise
 		 * exterior loops and clockwise interior loops, radial
@@ -215,19 +216,15 @@ struct edgeuse *eu1, *eu2;
 
 		/* find a place to insert eu2 on eu1's edge */
 
-		if (rt_g.NMG_debug & DEBUG_MESH) {
+		angle1 = get_angle(eu1, eu2);
+		angle2 = get_angle(eu1, eu1->radial_p);
+
+		for ( iteration2=0; (angle1 > angle2) && iteration2 < 10000; iteration2++ ) {
+			eu1 = eu1->radial_p->eumate_p;
 			angle1 = get_angle(eu1, eu2);
 			angle2 = get_angle(eu1, eu1->radial_p);
-
-			while (angle1 > angle2 ) {
-				eu1 = eu1->radial_p->eumate_p;
-				angle1 = get_angle(eu1, eu2);
-				angle2 = get_angle(eu1, eu1->radial_p);
-			}
-		} else
-			while (get_angle(eu1, eu2) >
-			       get_angle(eu1, eu1->radial_p))
-				eu1 = eu1->radial_p->eumate_p;
+		}
+		if(iteration2 >= 10000) rt_bomb("join_eu: infinite loop (2)\n");
 
 		/* find the next use of the edge eu2 is on.  If eu2 and it's
 		 * mate are the last uses of the edge, there will be no next
@@ -248,6 +245,7 @@ struct edgeuse *eu1, *eu2;
 		/* get ready to move the next edgeuse */
 		eu2 = nexteu;
 	}
+	if( iteration1 >= 10000 )  rt_bomb("join_eu:  infinite loop (1)\n");
 }
 
 /*
