@@ -124,8 +124,7 @@ top:
  *			N M G _ M M
  *
  *	Make Model
- *	Create a new model Essentially
- *	this creates a minimal model system.
+ *	Create a new model.
  */
 struct model *
 nmg_mm()
@@ -248,8 +247,9 @@ long *upptr;		/* pointer to parent struct */
 	if (*upptr != NMG_SHELL_MAGIC &&
 	    *upptr != NMG_LOOPUSE_MAGIC &&
 	    *upptr != NMG_EDGEUSE_MAGIC) {
-		rt_log("nmg_mvu() in %s at %d magic not shell, loop, or edge (%d)\n",
-		    __FILE__, __LINE__, *upptr);
+		rt_log("nmg_mvu() in %s at %d magic not shell, loop, or edge.  Was x%x (%s)\n",
+		    __FILE__, __LINE__,
+		    *upptr, rt_identify_magic(*upptr) );
 		rt_bomb("nmg_mvu() Cannot build vertexuse without parent");
 	}
 
@@ -1043,8 +1043,11 @@ void
 nmg_kr(r)
 struct nmgregion *r;
 {
+	struct model	*m;
 
 	NMG_CK_REGION(r);
+	m = r->m_p;
+	NMG_CK_MODEL(m);
 
 	while( RT_LIST_NON_EMPTY( &r->s_hd ) )
 		nmg_ks( RT_LIST_FIRST( shell, &r->s_hd ) );
@@ -1055,6 +1058,9 @@ struct nmgregion *r;
 		FREE_REGION_A(r->ra_p);
 	}
 	FREE_REGION(r);
+
+	if( RT_LIST_IS_EMPTY( &m->r_hd ) )
+		m->maxindex = 1;	/* Reset when last region is killed */
 }
 
 /*			N M G _ K M
