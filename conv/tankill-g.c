@@ -441,12 +441,29 @@ char *argv[];
 
 		/* make the region */
 		if( verbose )
-			rt_log( "Creating region %s\n", name );
-		if (mk_lrcomb( out_fp , name , &reg_head , 1 , (char *)NULL ,
-			(char *)NULL , (unsigned char *)NULL , ptr->ident , 0 ,
-			1 , 100 , 0 ) )
 		{
-			rt_bomb( "tankill: Error in freeing region memory" );
+			if( ptr->ident == 1000 )
+				rt_log( "Creating air region %s\n", name );
+			else
+				rt_log( "Creating region %s\n", name );
+		}
+		if( ptr->ident == 1000 )
+		{
+			if (mk_lrcomb( out_fp , name , &reg_head , 1 , (char *)NULL ,
+				(char *)NULL , (unsigned char *)NULL , 0 , 1 ,
+				0 , 0 , 0 ) )
+			{
+				rt_bomb( "tankill: Error in freeing region memory" );
+			}
+		}
+		else
+		{
+			if (mk_lrcomb( out_fp , name , &reg_head , 1 , (char *)NULL ,
+				(char *)NULL , (unsigned char *)NULL , ptr->ident , 0 ,
+				1 , 100 , 0 ) )
+			{
+				rt_bomb( "tankill: Error in freeing region memory" );
+			}
 		}
 		ptr = ptr->next;
 	}
