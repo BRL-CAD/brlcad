@@ -476,6 +476,10 @@ register struct soltab *stp;
 	register struct fgp_specific *fgp =
 		(struct fgp_specific *)stp->st_specific;
 
+	if( fgp->ref_stp->st_matp )
+		bu_free( (char *)fgp->ref_stp->st_matp, "FGP ref_stp->st_matp" );
+	db_free_full_path( &fgp->ref_stp->st_path );
+
 	fgp->ref_stp->st_meth->ft_free( fgp->ref_stp );
 
 	bu_free( (char *)fgp->ref_stp, "ref_stp" );
