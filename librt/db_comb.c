@@ -693,9 +693,11 @@ CONST struct directory	*dp;
 	BU_CK_EXTERNAL(ip);
 	RT_CK_DIR(dp);
 
-	*op = *ip;		/* struct copy */
-	ip->ext_buf = NULL;
-	ip->ext_nbytes = 0;
+	if( op != ip )  {
+		*op = *ip;		/* struct copy */
+		ip->ext_buf = NULL;
+		ip->ext_nbytes = 0;
+	}
 
 	rec = (union record *)op->ext_buf;
 	NAMEMOVE( dp->d_namep, rec->s.s_name );
