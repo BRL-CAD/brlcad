@@ -35,6 +35,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "vmath.h"
 #include "db.h"
+#include "rtlist.h"
+#include "rtgeom.h"
 #include "raytrace.h"
 #include "externs.h"
 #include "./ged.h"
@@ -924,4 +926,451 @@ points()
 	for(i=3; i<=21; i+=3) {
 		VADD2(&input.s.s_values[i],&input.s.s_values[i],&input.s.s_values[0]);
 	}
+}
+
+/* -------------------------------- */
+
+#define NO	0
+#define YES	1
+	
+/*
+ *			R T _ A R B _ G E T _ C G T Y P E
+ *
+ * C G A R B S :   determines COMGEOM arb types from GED general arbs
+ *
+ *  Inputs -
+ *
+ *  Returns -
+ *	#	Number of distinct edge vectors
+ *		(Number of entries in uvec array)
+ *
+ *  Implicit returns -
+ *	*cgtype		Comgeom type (number range 4..8;  ARB4 .. ARB8).
+ *	uvec[8]
+ *	svec[11]
+ *			Entries [0] and [1] are special
+ */
+static int
+rt_arb_get_cgtype( cgtype, arb, tol, uvec, svec )
+int			*cgtype;
+struct rt_arb_internal	*arb;
+struct rt_tol		*tol;
+register int *uvec;	/* array of unique points */
+register int *svec;	/* array of like points */
+{
+	register int i,j;
+	int	numuvec, unique, done;
+	int	si;
+
+	RT_ARB_CK_MAGIC(arb);
+	RT_CK_TOL(tol);
+
+	done = NO;		/* done checking for like vectors */
+
+	svec[0] = svec[1] = 0;
+	si = 2;
+
+	for(i=0; i<7; i++) {
+		unique = YES;
+		if(done == NO)
+			svec[si] = i;
+		for(j=i+1; j<8; j++) {
+			int tmp;
+			vect_t vtmp;
+
+			VSUB2( vtmp, arb->pt[i], arb->pt[j] );
+
+			if( fabs(vtmp[0]) > tol->dist) tmp = 0;
+			else 	if( fabs(vtmp[1]) > tol->dist) tmp = 0;
+			else 	if( fabs(vtmp[2]) > tol->dist) tmp = 0;
+			else tmp = 1;
+
+			if( tmp ) {
+				if( done == NO )
+					svec[++si] = j;
+				unique = NO;
+			}
+		}
+		if( unique == NO ) {  	/* point i not unique */
+			if( si > 2 && si < 6 ) {
+				svec[0] = si - 1;
+				if(si == 5 && svec[5] >= 6)
+					done = YES;
+				si = 6;
+			}
+			if( si > 6 ) {
+				svec[1] = si - 5;
+				done = YES;
+			}
+		}
+	}
+
+	if( si > 2 && si < 6 ) 
+		svec[0] = si - 1;
+	if( si > 6 )
+		svec[1] = si - 5;
+	for(i=1; i<=svec[1]; i++)
+		svec[svec[0]+1+i] = svec[5+i];
+	for(i=svec[0]+svec[1]+2; i<11; i++)
+		svec[i] = -1;
+
+	/* find the unique points */
+	numuvec = 0;
+	for(j=0; j<8; j++) {
+		unique = YES;
+		for(i=2; i<svec[0]+svec[1]+2; i++) {
+			if( j == svec[i] ) {
+				unique = NO;
+				break;
+			}
+		}
+		if( unique == YES )
+			uvec[numuvec++] = j;
+	}
+
+	/* Figure out what kind of ARB this is */
+	switch( numuvec ) {
+
+	case 8:
+		*cgtype = ARB8;		/* ARB8 */
+		break;
+
+	case 6:
+		*cgtype = ARB7;		/* ARB7 */
+		break;
+
+	case 4:
+		if(svec[0] == 2)
+			*cgtype = ARB6;	/* ARB6 */
+		else
+			*cgtype = ARB5;	/* ARB5 */
+		break;
+
+	case 2:
+		*cgtype = ARB4;		/* ARB4 */
+		break;
+
+	default:
+		rt_log("rt_arb_get_cgtype: bad number of unique vectors (%d)\n",
+			numuvec);
+		return(0);
+	}
+printf("uvec: ");
+for(j=0; j<8; j++) printf("%d, ", uvec[j]);
+printf("\nsvec: ");
+for(j=0; j<11; j++ ) printf("%d, ", svec[j]);
+printf("\n");
+	return( numuvec );
+}
+
+/*
+ *			R T _ A R B _ P T M O V E
+ *
+ *  Note:  arbo and arbi must not point to same structure!
+ */
+static void
+rt_arb_ptmove( arbo, arbi, p0, p1, p2, p3, p4, p5, p6, p7 )
+struct rt_arb_internal	*arbo;
+struct rt_arb_internal	*arbi;
+int			p0, p1, p2, p3, p4, p5, p6, p7;
+{
+
+	RT_ARB_CK_MAGIC( arbo );
+	RT_ARB_CK_MAGIC( arbi );
+
+	VMOVE( arbo->pt[0], arbi->pt[p0] );
+	VMOVE( arbo->pt[1], arbi->pt[p1] );
+	VMOVE( arbo->pt[2], arbi->pt[p2] );
+	VMOVE( arbo->pt[3], arbi->pt[p3] );
+	VMOVE( arbo->pt[4], arbi->pt[p4] );
+	VMOVE( arbo->pt[5], arbi->pt[p5] );
+	VMOVE( arbo->pt[6], arbi->pt[p6] );
+	VMOVE( arbo->pt[7], arbi->pt[p7] );
+}
+
+/*
+ *			R T _ A R B _ R E D O
+ *
+ *  R E D O A R B :   rearranges arbs to be GIFT compatible
+ *
+ *  Note:  arbo and arbi must not point to same structure!
+ *
+ *  Returns -
+ *	0	FAIL
+ *	1	OK
+ *
+ *  Implicit returns -
+ *	arb->pt[] array reorganized.
+ */
+static int
+rt_arb_redo( arbo, arbi, uvec, svec, numvec, cgtype )
+struct rt_arb_internal	*arbo;
+struct rt_arb_internal	*arbi;
+register int		*uvec;
+register int		*svec;
+int			numvec;
+int			cgtype;
+{
+	register int i, j;
+	int	prod;
+
+	RT_ARB_CK_MAGIC( arbo );
+	RT_ARB_CK_MAGIC( arbi );
+
+	/* By default, let output be the input */
+	*arbo = *arbi;		/* struct copy */
+
+	switch( cgtype ) {
+
+	case ARB8:
+		/* do nothing */
+		break;
+
+	case ARB7:
+		/* arb7 vectors: 0 1 2 3 4 5 6 4 */
+		switch( svec[2] ) {
+		case 0:
+			/* 0 = 1, 3, or 4 */
+			if(svec[3] == 1)
+				rt_arb_ptmove( arbo, arbi,4,7,6,5,1,4,3,1);
+			else if(svec[3] == 3)
+				rt_arb_ptmove( arbo, arbi,4,5,6,7,0,1,2,0);
+			else if(svec[3] == 4)
+				rt_arb_ptmove( arbo, arbi,1,2,6,5,0,3,7,0);
+			break;
+		case 1:
+			/* 1 = 2 or 5 */
+			if(svec[3] == 2)
+				rt_arb_ptmove( arbo, arbi,0,4,7,3,1,5,6,1);
+			else if(svec[3] == 5)
+				rt_arb_ptmove( arbo, arbi,0,3,7,4,1,2,6,1);
+			break;
+		case 2:
+			/* 2 = 3 or 6 */
+			if(svec[3] == 3)
+				rt_arb_ptmove( arbo, arbi,6,5,4,7,2,1,0,2);
+			else if(svec[3] == 6)
+				rt_arb_ptmove( arbo, arbi,3,0,4,7,2,1,5,2);
+			break;
+		case 3:
+			/* 3 = 7 */
+			rt_arb_ptmove( arbo, arbi,2,1,5,6,3,0,4,3);
+			break;
+		case 4:
+			/* 4 = 5 */
+			/* if 4 = 7  do nothing */
+			if(svec[3] == 5)
+				rt_arb_ptmove( arbo, arbi,1,2,3,0,5,6,7,5);
+			break;
+		case 5:
+			/* 5 = 6 */
+			rt_arb_ptmove( arbo, arbi,2,3,0,1,6,7,4,6);
+			break;
+		case 6:
+			/* 6 = 7 */
+			rt_arb_ptmove( arbo, arbi,3,0,1,2,7,4,5,7);
+			break;
+		default:
+			rt_log("rt_arb_redo: bad arb7\n");
+			return( 0 );
+		}
+		break;    	/* end of ARB7 case */
+
+	case ARB6:
+		/* arb6 vectors:  0 1 2 3 4 4 6 6 */
+		prod = 1;
+		for(i=0; i<numvec; i++)
+			prod = prod * (uvec[i] + 1);
+
+		switch( prod ) {
+		case 24:
+			/* 0123 unique */
+			/* 4=7 and 5=6  OR  4=5 and 6=7 */
+			if(svec[3] == 7)
+				rt_arb_ptmove( arbo, arbi,3,0,1,2,4,4,5,5);
+			else
+				rt_arb_ptmove( arbo, arbi,0,1,2,3,4,4,6,6);
+			break;
+		case 1680:
+			/* 4567 unique */
+			/* 0=3 and 1=2  OR  0=1 and 2=3 */
+			if(svec[3] == 3)
+				rt_arb_ptmove( arbo, arbi,7,4,5,6,0,0,1,1);
+			else
+				rt_arb_ptmove( arbo, arbi,4,5,6,7,0,0,2,2);
+			break;
+		case 160:
+			/* 0473 unique */
+			/* 1=2 and 5=6  OR  1=5 and 2=6 */
+			if(svec[3] == 2)
+				rt_arb_ptmove( arbo, arbi,0,3,7,4,1,1,5,5);
+			else
+				rt_arb_ptmove( arbo, arbi,4,0,3,7,1,1,2,2);
+			break;
+		case 672:
+			/* 3267 unique */
+			/* 0=1 and 4=5  OR  0=4 and 1=5 */
+			if(svec[3] == 1)
+				rt_arb_ptmove( arbo, arbi,3,2,6,7,0,0,4,4);
+			else
+				rt_arb_ptmove( arbo, arbi,7,3,2,6,0,0,1,1);
+			break;
+		case 252:
+			/* 1256 unique */
+			/* 0=3 and 4=7  OR 0=4 and 3=7 */
+			if(svec[3] == 3)
+				rt_arb_ptmove( arbo, arbi,1,2,6,5,0,0,4,4);
+			else
+				rt_arb_ptmove( arbo, arbi,5,1,2,6,0,0,3,3);
+			break;
+		case 60:
+			/* 0154 unique */
+			/* 2=3 and 6=7  OR  2=6 and 3=7 */
+			if(svec[3] == 3)
+				rt_arb_ptmove( arbo, arbi,0,1,5,4,2,2,6,6);
+			else
+				rt_arb_ptmove( arbo, arbi,5,1,0,4,2,2,3,3);
+			break;
+		default:
+			rt_log("rt_arb_redo: bad arb6\n");
+			return( 0 );
+		}
+		break; 		/* end of ARB6 case */
+
+	case ARB5:
+		/* arb5 vectors:  0 1 2 3 4 4 4 4 */
+		prod = 1;
+		for(i=2; i<6; i++)
+			prod = prod * (svec[i] + 1);
+
+		switch( prod ) {
+		case 24:
+			/* 0=1=2=3 */
+			rt_arb_ptmove( arbo, arbi,4,5,6,7,0,0,0,0);
+			break;
+		case 1680:
+			/* 4=5=6=7 */
+			/* do nothing */
+			break;
+		case 160:
+			/* 0=3=4=7 */
+			rt_arb_ptmove( arbo, arbi,1,2,6,5,0,0,0,0);
+			break;
+		case 672:
+			/* 2=3=7=6 */
+			rt_arb_ptmove( arbo, arbi,0,1,5,4,2,2,2,2);
+			break;
+		case 252:
+			/* 1=2=5=6 */
+			rt_arb_ptmove( arbo, arbi,0,3,7,4,1,1,1,1);
+			break;
+		case 60:
+			/* 0=1=5=4 */
+			rt_arb_ptmove( arbo, arbi,3,2,6,7,0,0,0,0);
+			break;
+		default:
+			rt_log("rt_arb_redo: bad arb5\n");
+			return( 0 );
+		}
+		break;		/* end of ARB5 case */
+
+	case ARB4:
+		/* arb4 vectors:  0 1 2 0 4 4 4 4 */
+		j = svec[6];
+		if( svec[0] == 2 )
+			j = svec[4];
+		rt_arb_ptmove( arbo, arbi,uvec[0],uvec[1],svec[2],uvec[0],j,j,j,j);
+		break;
+
+	default:
+		rt_log("rt_arb_redo: unknown arb type (%d)\n",
+			cgtype);
+		return( 0 );
+	}
+	return( 1 );
+}
+
+/*
+ *			R T _ A R B _ S T D _ T Y P E
+ *
+ *  Given an ARB in internal form, return it's specific ARB type,
+ *  and reorganize the points to be in GIFT "standard" order.
+ *
+ *  Set tol.dist = 0.0001 to obtain past behavior.
+ *
+ *  Returns -
+ *	0	Error in input ARB
+ *	4	ARB4
+ *	5	ARB5
+ *	6	ARB6
+ *	7	ARB7
+ *	8	ARB8
+ *
+ *  Implicit return -
+ *	rt_arb_internal pt[] array reorganized into GIFT "standard" order.
+ */
+int
+rt_arb_std_type( ip, tol )
+struct rt_db_internal	*ip;
+struct rt_tol		*tol;
+{
+	struct rt_arb_internal	*arb;
+	struct rt_arb_internal	arbo;
+	int i;
+	int uvec[8], svec[11];
+	int	nedge;
+	int	cgtype = 0;
+
+	RT_CK_DB_INTERNAL(ip);
+	RT_CK_TOL(tol);
+
+	if( ip->idb_type != ID_ARB8 )  rt_bomb("rt_arb_std_type: not ARB!\n");
+
+	arb = (struct rt_arb_internal *)ip->idb_ptr;
+	RT_ARB_CK_MAGIC(arb);
+	for( i=0; i<8; i++)  {
+		VPRINT("before pt[]", arb->pt[i]);
+	}
+
+	if( (nedge = rt_arb_get_cgtype( &cgtype, arb, tol, uvec, svec )) == 0 )
+		return(0);
+
+	arbo.magic = RT_ARB_INTERNAL_MAGIC;
+	if( rt_arb_redo( &arbo, arb, uvec, svec, nedge, cgtype) == 0 )
+		return( 0 );
+
+	*arb = arbo;		/* struct copy of reorganized arb */
+	for( i=0; i<8; i++)  {
+		VPRINT("after pt[]", arb->pt[i]);
+	}
+	return( cgtype );
+}
+
+
+/* 
+ *			R T _ A R B _ C E N T R O I D
+ *
+ * Find the center point for the arb whose values are in the s array,
+ * with the given number of verticies.  Return the point in center_pt.
+ * WARNING: The s array is dbfloat_t's not fastf_t's.
+ */
+void
+rt_arb_centroid( center_pt, arb, npoints )
+point_t			center_pt;
+struct rt_arb_internal	*arb;
+int			npoints;
+{
+	register int	j;
+	fastf_t		div;
+	point_t		sum;
+
+	RT_ARB_CK_MAGIC(arb);
+
+	VSETALL(sum, 0);
+
+	for( j=0; j < npoints; j++ )  {
+		VADD2( sum, sum, arb->pt[j] );
+	}
+	div = 1.0 / npoints;
+	VSCALE( center_pt, sum, div );
 }
