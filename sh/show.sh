@@ -33,6 +33,8 @@ jpg|jpeg)
 	jpeg-fb $FLAGS $FILE;;
 gif)
 	gif-fb -co $FLAGS $FILE;;
+pr)
+	sun-pix $FILE | pix-fb -i -w$WIDTH -n$HEIGHT;;
 *)
 	echo "$SUFFIX is not supported by this script"
 	exit 1

@@ -68,6 +68,8 @@ rle)
 	ARGS=`rle-pix -H $FILE` ;;
 gif)
 	ARGS=`gif2fb -h $FILE 2>&1 ` ;;
+pr)
+	ARGS=`sun-pix -h $FILE` ;;
 *)
 	ARGS="-w0 -n0"
 	SUFFIX=unknown ;;
