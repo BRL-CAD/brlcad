@@ -24,9 +24,7 @@
 /* data for solid editing */
 extern union record es_rec;		/* current solid record */
 
-#define es_name	es_rec.s.s_name
 #define es_type	es_rec.s.s_cgtype	/* COMGEOM solid type */
-#define es_gentype es_rec.s.s_type	/* GED general solid type. XXX used only in chgmodel.c */
 
 extern int     es_edflag;		/* type of editing for this solid */
 /* These ECMD_ values go in es_edflag.  Some names not changed yet */
@@ -56,6 +54,9 @@ extern int	es_menu;		/* item/edit_mode selected from menu */
 
 extern mat_t	es_mat;			/* accumulated matrix of path */ 
 extern mat_t 	es_invmat;		/* inverse of es_mat   KAA */
+
+extern point_t	es_keypoint;		/* center of editing xforms */
+extern char	*es_keytag;		/* string identifying the keypoint */
 
 extern int arb_faces[5][24];	/* from edarb.c */
 extern int arb_planes[5][24];	/* from edarb.c */
