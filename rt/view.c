@@ -389,12 +389,32 @@ struct partition *PartHeadp;
 		pr_hit( "view", pp->pt_inhit);
 	}
 
+	/* Temporary check to make sure normals are OK */
+	if( hitp->hit_normal[X] < -1.01 || hitp->hit_normal[X] > 1.01 ||
+	    hitp->hit_normal[Y] < -1.01 || hitp->hit_normal[Y] > 1.01 ||
+	    hitp->hit_normal[Z] < -1.01 || hitp->hit_normal[Z] > 1.01 )  {
+		rtlog("colorview: N=(%f,%f,%f)?\n",
+			hitp->hit_normal[X],hitp->hit_normal[Y],hitp->hit_normal[Z]);
+		VSET( ap->a_color, 1, 1, 0 );
+		goto finish;
+	}
+
 	/* Check to see if eye is "inside" the solid */
 	if( hitp->hit_dist < 0.0 )  {
-		VSET( ap->a_color, 1, 0, 0 );
-		rtlog("colorview:  eye inside %s (x=%d, y=%d, lvl=%d)\n",
-			pp->pt_inseg->seg_stp->st_name,
-			ap->a_x, ap->a_y, ap->a_level);
+		if( debug || ap->a_level > MAX_BOUNCE )  {
+			VSET( ap->a_color, 1, 0, 0 );
+			rtlog("colorview:  eye inside %s (x=%d, y=%d, lvl=%d)\n",
+				pp->pt_inseg->seg_stp->st_name,
+				ap->a_x, ap->a_y, ap->a_level);
+			goto finish;
+		}
+		/* Push on to exit point, and trace on from there */
+		sub_ap = *ap;	/* struct copy */
+		sub_ap.a_level = ap->a_level+1;
+		f = pp->pt_outhit->hit_dist+0.0001;
+		VJOIN1(sub_ap.a_ray.r_pt, ap->a_ray.r_pt, f, ap->a_ray.r_dir);
+		(void)shootray( &sub_ap );
+		VSCALE( ap->a_color, sub_ap.a_color, 0.8 );
 		goto finish;
 	}
 
@@ -484,30 +504,43 @@ colorit:
 	VSUB2( to_light, l0pos, hitp->hit_point );
 	VUNITIZE( to_light );
 	Rd1 = 0;
-	if( (cosI1 = VDOT( hitp->hit_normal, to_light )) > 0.0 )
+	if( (cosI1 = VDOT( hitp->hit_normal, to_light )) > 0.0 )  {
+		if( cosI1 > 1 )  {
+			rtlog("cosI1=%f (x%d,y%d,lvl%d)\n", cosI1,
+				ap->a_x, ap->a_y, ap->a_level);
+			cosI1 = 1;
+		}
 		Rd1 = cosI1 * (1 - AmbientIntensity);
+	}
 
 	/* Diffuse reflectance from secondary light source (at eye) */
 	d_a = 0;
-	if( (cosI2 = VDOT( hitp->hit_normal, to_eye )) > 0.0 )
+	if( (cosI2 = VDOT( hitp->hit_normal, to_eye )) > 0.0 )  {
+		if( cosI2 > 1 )  {
+			rtlog("cosI2=%f (x%d,y%d,lvl%d)\n", cosI2,
+				ap->a_x, ap->a_y, ap->a_level);
+			cosI2 = 1;
+		}
 		d_a = cosI2 * AmbientIntensity;
+	}
 
 	/* Apply secondary (ambient) (white) lighting. */
 	VSCALE( ap->a_color, mcolor, d_a );
-
-	/* Fire ray at light source to check for shadowing */
-	/* This SHOULD actually return an energy value */
-	sub_ap.a_hit = light_hit;
-	sub_ap.a_miss = light_miss;
-	sub_ap.a_onehit = 1;
-	sub_ap.a_level = ap->a_level + 1;
-	sub_ap.a_x = ap->a_x;
-	sub_ap.a_y = ap->a_y;
-	VMOVE( sub_ap.a_ray.r_pt, hitp->hit_point );
 	if( l0stp )  {
 		/* An actual light solid exists */
-		/* Dither light pos for penumbra by +/- 0.5 light radius */
 		FAST fastf_t f;
+
+		/* Fire ray at light source to check for shadowing */
+		/* This SHOULD actually return an energy value */
+		sub_ap.a_hit = light_hit;
+		sub_ap.a_miss = light_miss;
+		sub_ap.a_onehit = 1;
+		sub_ap.a_level = ap->a_level + 1;
+		sub_ap.a_x = ap->a_x;
+		sub_ap.a_y = ap->a_y;
+		VMOVE( sub_ap.a_ray.r_pt, hitp->hit_point );
+
+		/* Dither light pos for penumbra by +/- 0.5 light radius */
 		f = l0stp->st_aradius * 0.9;
 		sub_ap.a_ray.r_dir[X] =  l0pos[X] + rand_half()*f - hitp->hit_point[X];
 		sub_ap.a_ray.r_dir[Y] =  l0pos[Y] + rand_half()*f - hitp->hit_point[Y];
@@ -520,8 +553,8 @@ colorit:
 	
 	/* If not shadowed add primary lighting. */
 	if( light_visible )  {
-		register fastf_t specular;
-		register fastf_t cosS;
+		auto fastf_t specular;
+		auto fastf_t cosS;
 
 		/* Diffuse */
 		VJOIN1( ap->a_color, ap->a_color, Rd1, mcolor );
