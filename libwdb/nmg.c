@@ -88,8 +88,6 @@ struct shell *s;
 	tol.perp = 1e-6;
 	tol.para = 1 - tol.perp;
 
-	mk_polysolid( out_fp , name );
-
 	for( RT_LIST_FOR( fu , faceuse , &s->fu_hd ) )
 	{
 		NMG_CK_FACEUSE( fu );
@@ -134,6 +132,16 @@ struct shell *s;
 				rt_log( "write_shell_as_polysolid: triangulating fu x%x\n", fu );
 			nmg_triangulate_fu( fu, (CONST struct rt_tol *)&tol );
 		}
+	}
+
+	 mk_polysolid( out_fp , name );
+
+	for( RT_LIST_FOR( fu , faceuse , &s->fu_hd ) )
+	{
+		/* only do OT_SAME faces */
+		if( fu->orientation != OT_SAME )
+			continue;
+
 		for( RT_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
 		{
 			NMG_CK_LOOPUSE( lu );
