@@ -277,9 +277,6 @@ static void
 illuminate( y )  {
 	register int count;
 	register struct solid *sp;
-	register struct solid *saveillump;
-
-	saveillump = illump;
 
 	/*
 	 * Divide the mouse into 'ndrawn' VERTICAL zones, and use the
@@ -291,11 +288,8 @@ illuminate( y )  {
 	FOR_ALL_SOLIDS(sp, &HeadSolid.l)  {
 		/* Only consider solids which are presently in view */
 		if( sp->s_flag == UP )  {
-			if( count-- == 0 && illump != sp )  {
+		        if( count-- == 0 ) {
 				sp->s_iflag = UP;
-#if 0
-				dmp->dm_viewchange( dmp, DM_CHGV_ILLUM, sp );
-#endif
 				illump = sp;
 			}  else  {
 				/* All other solids have s_iflag set DOWN */
@@ -304,8 +298,7 @@ illuminate( y )  {
 		}
 	}
 
-	if( saveillump != illump )
-	  update_views = 1;
+	update_views = 1;
 }
 
 /*

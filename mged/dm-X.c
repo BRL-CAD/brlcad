@@ -58,8 +58,6 @@ static void	X_statechange();
 static int     X_dm();
 static void     establish_perspective();
 static void     set_perspective();
-static void     set_linewidth();
-static void     set_linestyle();
 static void     set_knob_offset();
 
 #ifdef USE_PROTOTYPES
@@ -73,8 +71,6 @@ extern Tcl_Interp *interp;
 extern Tk_Window tkwin;
 
 struct bu_structparse X_vparse[] = {
-  {"%d",  1, "linewidth",	  X_MV_O(linewidth),	set_linewidth },
-  {"%d",  1, "linestyle",	  X_MV_O(linestyle),	set_linestyle },
   {"%d",  1, "perspective",       X_MV_O(perspective_mode), establish_perspective },
   {"%d",  1, "set_perspective",   X_MV_O(dummy_perspective),set_perspective },
   {"%d",  1, "debug",             X_MV_O(debug),            BU_STRUCTPARSE_FUNC_NULL },
@@ -188,7 +184,7 @@ XEvent *eventPtr;
     my = eventPtr->xmotion.y;
 
     switch(am_mode){
-    case ALT_MOUSE_MODE_IDLE:
+    case AMM_IDLE:
       if(scroll_active && eventPtr->xmotion.state & ((struct x_vars *)dmp->dm_vars)->mb_mask)
 	bu_vls_printf( &cmd, "M 1 %d %d\n", Xx_TO_GED(dmp, mx), Xy_TO_GED(dmp, my));
       else if(XdoMotion)
@@ -201,21 +197,16 @@ XEvent *eventPtr;
 	goto end;
 
       break;
-    case ALT_MOUSE_MODE_ROTATE:
+    case AMM_ROT:
        bu_vls_printf( &cmd, "knob -i ax %f ay %f\n",
 		      (my - ((struct x_vars *)dmp->dm_vars)->omy) * 0.25,
 		      (mx - ((struct x_vars *)dmp->dm_vars)->omx) * 0.25 );
       break;
-    case ALT_MOUSE_MODE_TRANSLATE:
-      if(EDIT_TRAN && mged_variables.edit){
-	vect_t view_pos;
-#if 0
-	view_pos[X] = (mx/(fastf_t)dmp->dm_width
-		       - 0.5) * 2.0;
-#else
+    case AMM_TRAN:
+      if(EDIT_TRAN && mged_variables.transform == 'e'){
+	point_t view_pos;
 	view_pos[X] = (mx/(fastf_t)dmp->dm_width - 0.5) /
 	              dmp->dm_aspect * 2.0;
-#endif
 	view_pos[Y] = (0.5 - my/
 		       (fastf_t)dmp->dm_height) * 2.0;
 	view_pos[Z] = 0.0;
@@ -229,31 +220,53 @@ XEvent *eventPtr;
       }else{
 	fastf_t fx, fy;
 
-#if 0
-	fx = (mx - ((struct x_vars *)dmp->dm_vars)->omx) /
-	  (fastf_t)dmp->dm_width * 2.0;
-#else
 	fx = (mx - ((struct x_vars *)dmp->dm_vars)->omx) /
 	  (fastf_t)dmp->dm_width /
 	  dmp->dm_aspect * 2.0;
-#endif
 	fy = (((struct x_vars *)dmp->dm_vars)->omy - my) /
 	  (fastf_t)dmp->dm_height * 2.0;
 	bu_vls_printf( &cmd, "knob -i aX %f aY %f\n", fx, fy );
       }
 
       break;
-    case ALT_MOUSE_MODE_ZOOM:
+    case AMM_SCALE:
       bu_vls_printf( &cmd, "knob -i aS %f\n",
 		     (((struct x_vars *)dmp->dm_vars)->omy - my)/
 		     (fastf_t)dmp->dm_height);
+      break;
+    case AMM_CON_ROT_X:
+      bu_vls_printf( &cmd, "knob -i ax %f\n",
+		     (mx - ((struct x_vars *)dmp->dm_vars)->omx) * 0.25 );
+      break;
+    case AMM_CON_ROT_Y:
+      bu_vls_printf( &cmd, "knob -i ay %f\n",
+		     (mx - ((struct x_vars *)dmp->dm_vars)->omx) * 0.25 );
+      break;
+    case AMM_CON_ROT_Z:
+      bu_vls_printf( &cmd, "knob -i az %f\n",
+		     (mx - ((struct x_vars *)dmp->dm_vars)->omx) * 0.25 );
+      break;
+    case AMM_CON_TRAN_X:
+      bu_vls_printf( &cmd, "knob -i aX %f\n",
+		     (mx - ((struct x_vars *)dmp->dm_vars)->omx) /
+		     (fastf_t)dmp->dm_width / dmp->dm_aspect * 2.0 );
+      break;
+    case AMM_CON_TRAN_Y:
+      bu_vls_printf( &cmd, "knob -i aY %f\n",
+		     (mx - ((struct x_vars *)dmp->dm_vars)->omx) /
+		     (fastf_t)dmp->dm_width / dmp->dm_aspect * 2.0 );
+      break;
+    case AMM_CON_TRAN_Z:
+      bu_vls_printf( &cmd, "knob -i aZ %f\n",
+		     (mx - ((struct x_vars *)dmp->dm_vars)->omx) /
+		     (fastf_t)dmp->dm_width / dmp->dm_aspect * 2.0 );
       break;
     }
 
     ((struct x_vars *)dmp->dm_vars)->omx = mx;
     ((struct x_vars *)dmp->dm_vars)->omy = my;
   } else {
-    /*XXX Hack to prevent Tk from choking on Ctrl-c */
+    /*XXX Hack to prevent Tk from choking on certain control sequences */
     if(eventPtr->type == KeyPress && eventPtr->xkey.state & ControlMask){
       char buffer[1];
       KeySym keysym;
@@ -261,7 +274,8 @@ XEvent *eventPtr;
       XLookupString(&(eventPtr->xkey), buffer, 1,
 		    &keysym, (XComposeStatus *)NULL);
 
-      if(keysym == XK_c){
+      if(keysym == XK_c || keysym == XK_t || keysym == XK_v ||
+	 keysym == XK_w || keysym == XK_x || keysym == XK_y){
 	curr_dm_list = save_dm_list;
 
 	return TCL_RETURN;
@@ -390,14 +404,14 @@ char *argv[];
     {
       int x;
       int y;
-      int old_show_menu;
+      int old_orig_gui;
 
-      old_show_menu = mged_variables.show_menu;
+      old_orig_gui = mged_variables.orig_gui;
       x = Xx_TO_GED(dmp, atoi(argv[3]));
       y = Xy_TO_GED(dmp, atoi(argv[4]));
 
       if(mged_variables.faceplate &&
-	 mged_variables.show_menu &&
+	 mged_variables.orig_gui &&
 	 *argv[2] == '1'){
 #define        MENUXLIM        (-1250)
 	if(scroll_active)
@@ -411,21 +425,19 @@ char *argv[];
       }
 
       x = (int)(x / dmp->dm_aspect);
-      mged_variables.show_menu = 0;
+      mged_variables.orig_gui = 0;
 end:
       bu_vls_init(&vls);
       bu_vls_printf(&vls, "M %s %d %d", argv[2], x, y);
       status = Tcl_Eval(interp, bu_vls_addr(&vls));
-      mged_variables.show_menu = old_show_menu;
+      mged_variables.orig_gui = old_orig_gui;
       bu_vls_free(&vls);
 
       return status;
     }
   }
 
-  status = TCL_OK;
-
-  if( !strcmp( argv[0], "am" )){
+  if(!strcmp(argv[0], "am")){
     int buttonpress;
 
     scroll_active = 0;
@@ -443,23 +455,16 @@ end:
     if(buttonpress){
       switch(*argv[1]){
       case 'r':
-	am_mode = ALT_MOUSE_MODE_ROTATE;
+	am_mode = AMM_ROT;
 	break;
       case 't':
-	am_mode = ALT_MOUSE_MODE_TRANSLATE;
+	am_mode = AMM_TRAN;
 
-	if(EDIT_TRAN && mged_variables.edit){
-	  vect_t view_pos;
+	if(EDIT_TRAN && mged_variables.transform == 'e'){
+	  point_t view_pos;
 
-#if 0
 	  view_pos[X] = (((struct x_vars *)dmp->dm_vars)->omx /
-			 (fastf_t)dmp->dm_width -
-			 0.5) * 2.0;
-#else
-	  view_pos[X] = (((struct x_vars *)dmp->dm_vars)->omx /
-			(fastf_t)dmp->dm_width - 0.5) /
-	                dmp->dm_aspect * 2.0; 
-#endif
+			(fastf_t)dmp->dm_width - 0.5) / dmp->dm_aspect * 2.0; 
 	  view_pos[Y] = (0.5 - ((struct x_vars *)dmp->dm_vars)->omy /
 			 (fastf_t)dmp->dm_height) * 2.0;
 	  view_pos[Z] = 0.0;
@@ -472,18 +477,83 @@ end:
 
 	break;
       case 'z':
-	am_mode = ALT_MOUSE_MODE_ZOOM;
+	am_mode = AMM_SCALE;
 	break;
       default:
-	Tcl_AppendResult(interp, "dm am: need more parameters\n",
-			 "dm am <r|t|z> 1|0 xpos ypos\n", (char *)NULL);
+	Tcl_AppendResult(interp, "dm am: unrecognized parameter - ", argv[1],
+			 "\ndm am <r|t|z> 1|0 xpos ypos\n", (char *)NULL);
 	return TCL_ERROR;
       }
-    }else{
-      am_mode = ALT_MOUSE_MODE_IDLE;
+
+      return TCL_OK;
     }
 
-    return status;
+    am_mode = AMM_IDLE;
+    return TCL_OK;
+  }
+
+  if(!strcmp(argv[0], "con")){
+    int buttonpress;
+
+    scroll_active = 0;
+
+    if( argc < 6){
+      Tcl_AppendResult(interp, "dm con: need more parameters\n",
+		       "dm con type x|y|z 1|0 xpos ypos\n", (char *)NULL);
+      return TCL_ERROR;
+    }
+
+    buttonpress = atoi(argv[3]);
+    ((struct x_vars *)dmp->dm_vars)->omx = atoi(argv[4]);
+    ((struct x_vars *)dmp->dm_vars)->omy = atoi(argv[5]);
+
+    if(buttonpress){
+      switch(*argv[1]){
+      case 'r':
+	switch(*argv[2]){
+	case 'x':
+	  am_mode = AMM_CON_ROT_X;
+	  break;
+	case 'y':
+	  am_mode = AMM_CON_ROT_Y;
+	  break;
+	case 'z':
+	  am_mode = AMM_CON_ROT_Z;
+	  break;
+	default:
+	  Tcl_AppendResult(interp, "dm con: unrecognized parameter - ", argv[2],
+			 "\ndm con type x|y|z 1|0 xpos ypos\n", (char *)NULL);
+	  return TCL_ERROR;
+	}
+	break;
+      case 't':
+	switch(*argv[2]){
+	case 'x':
+	  am_mode = AMM_CON_TRAN_X;
+	  break;
+	case 'y':
+	  am_mode = AMM_CON_TRAN_Y;
+	  break;
+	case 'z':
+	  am_mode = AMM_CON_TRAN_Z;
+	  break;
+	default:
+	  Tcl_AppendResult(interp, "dm con: unrecognized parameter - ", argv[2],
+			 "\ndm con type x|y|z 1|0 xpos ypos\n", (char *)NULL);
+	  return TCL_ERROR;
+	}
+	break;
+      default:
+	Tcl_AppendResult(interp, "dm con: unrecognized parameter - ", argv[1],
+			 "\ndm con type x|y|z 1|0 xpos ypos\n", (char *)NULL);
+	return TCL_ERROR;
+      }
+
+      return TCL_OK;
+    }
+
+    am_mode = AMM_IDLE;
+    return TCL_OK;
   }
 
   if( !strcmp( argv[0], "size" )){
@@ -517,22 +587,5 @@ static void
 set_perspective()
 {
   X_set_perspective(dmp);
-  ++dmaflag;
-}
-
-static void
-set_linewidth()
-{
-  dmp->dm_setLineAttr(dmp,
-		      ((struct x_vars *)dmp->dm_vars)->mvars.linewidth,
-		      dmp->dm_lineStyle);
-  ++dmaflag;
-}
-
-static void
-set_linestyle()
-{
-  dmp->dm_setLineAttr(dmp, dmp->dm_lineWidth,
-		      ((struct x_vars *)dmp->dm_vars)->mvars.linestyle);
   ++dmaflag;
 }

@@ -259,7 +259,7 @@ predictor_frame()
 	if(dbip == DBI_NULL)
 	  return;
 
-	if( rateflag_rotate == 0 && rateflag_slew == 0 && rateflag_zoom == 0 )  {
+	if( rateflag_rotate == 0 && rateflag_tran == 0 && rateflag_scale == 0 )  {
 		/* If no motion, and predictor is drawn, get rid of it */
 		if( db_lookup( dbip, PREDICTOR_NAME, LOOKUP_QUIET ) != DIR_NULL )  {
 			predictor_kill();
