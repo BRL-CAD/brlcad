@@ -14,13 +14,13 @@
 
 /* Explicit composition of each product */
 
-tabinterp: tabinterp.o LIBRT
-	CC LDFLAGS tabinterp.o LIB_PRE''LIBRT LIBRT_LIBES LIBMALLOC LIBES -o tabinterp
+tabinterp: tabinterp.o
+	CC LDFLAGS tabinterp.o LIBRT LIBRT_LIBES LIBMALLOC LIBES -o tabinterp
 
-tabsub:	tabsub.o LIBRT
-	CC LDFLAGS tabsub.o LIB_PRE''LIBRT LIBRT_LIBES LIBMALLOC LIBES -o tabsub
+tabsub:	tabsub.o
+	CC LDFLAGS tabsub.o LIBRT LIBRT_LIBES LIBMALLOC LIBES -o tabsub
 
-txyz-pl:	txyz-pl.o LIBPLOT
-	CC LDFLAGS txyz-pl.o LIB_PRE''LIBPLOT LIBMALLOC LIBES -o txyz-pl
+txyz-pl:	txyz-pl.o
+	CC LDFLAGS txyz-pl.o LIBPLOT LIBMALLOC LIBES -o txyz-pl
 
 #include "../Cakefile.rules"
