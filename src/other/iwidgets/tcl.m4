@@ -2219,7 +2219,8 @@ AC_DEFUN(SC_PROG_TCLSH, [
 	TCLSH_PROG=$ac_cv_path_tclsh
 	AC_MSG_RESULT($TCLSH_PROG)
     else
-	AC_MSG_ERROR(No tclsh found in PATH:  $search_path)
+	AC_MSG_RESULT([no])
+#	AC_MSG_ERROR([No tclsh found in PATH:  $search_path])
     fi
     AC_SUBST(TCLSH_PROG)
 ])
