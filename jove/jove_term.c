@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.0  84/12/26  16:50:32  dpk
+ * Version as sent to Berkeley 26 December 84
+ * 
  * Revision 1.5  84/11/07  20:57:18  dpk
  * Changed  code that handles initializing of scrolling regions.
  * The implied default of newline for  scroll up is not supported.
@@ -32,7 +35,11 @@ static char RCSid[] = "@(#)$Header$";
    of the basic features on the particular terminal. */
 
 #include "jove.h"
+#ifndef SYS5
 #include <sgtty.h>
+#else
+#include <termio.h>
+#endif SYS5
 
 /* Termcap definitions */
 
@@ -104,17 +111,30 @@ char	*str;
 getTERM()
 {
 	char	*getenv();
+#ifndef SYS5
 	struct sgttyb tty;
+#else
+	struct termio tty;
+#endif SYS5
 	char	termbuf[32],
 		*termname,
 		*termp = tspace,
 		tbuff[1024];
 	int	i;
 
+#ifdef SYS5
+	if (ioctl (0, TCGETA, &tty))
+#else
 	if (gtty(0, &tty))
+#endif SYS5
 		TermError("ioctl fails");
+#ifdef SYS5
+	TABS = !((tty.c_oflag & TAB3) == TAB3);
+	ospeed = tty.c_cflag & CBAUD;
+#else
 	TABS = !(tty.sg_flags & XTABS);
 	ospeed = tty.sg_ospeed;
+#endif SYS5
 
 	termname = getenv("TERM");
 	if (termname == 0 || *termname == 0) {

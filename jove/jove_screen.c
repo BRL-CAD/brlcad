@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.1  85/01/17  23:58:32  dpk
+ * 
+ * 
  * Revision 2.0  84/12/26  16:47:55  dpk
  * System as distributed to Berkeley 26 Dec 84
  * 
@@ -76,13 +79,12 @@ make_scr()
 	nimage = (struct scrimage *) emalloc(LI * sizeof (struct scrimage));
 	oimage = (struct scrimage *) emalloc(LI * sizeof (struct scrimage));
 
-	if (ns)
-		free (ns);
+	if (Screen)
+		free (Screen);
+	/* XXX - We should also clean up the char storage */
 	ns = Screen = (struct screenline *)
 			emalloc(LI * sizeof(struct screenline));
 
-	if (nsp)
-		free (nsp);
 	nsp = (char *) emalloc(CO * LI);
 
 	for (i = 0; i < LI; i++) {

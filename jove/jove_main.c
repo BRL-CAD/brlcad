@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.1  85/01/17  23:58:24  dpk
+ * 
+ * 
  * Revision 2.0  84/12/26  16:46:45  dpk
  * System as distributed to Berkeley 26 Dec 84
  * 
@@ -29,7 +32,11 @@ static char RCSid[] = "@(#)$Header$";
 #include "termcap.h"
 
 #include <signal.h>
+#ifndef SYS5
 #include <sgtty.h>
+#else
+#include <termio.h>
+#endif SYS5
 #include <errno.h>
 
 extern char	*version;
@@ -47,7 +54,9 @@ extern char	*sprint();
 struct ltchars	ls1, ls2;
 #endif TIOCSLTC
 
+#ifndef SYS5
 struct tchars	tc1, tc2;
+#endif SYS5
 
 int	errormsg;
 
@@ -122,10 +131,18 @@ getchar()
 		 */
 		do {
 			nchars = read(Input, smbuf, sizeof smbuf);
+#ifdef SYS5
+		} while (nchars == 0 || (nchars < 0 && errno == EINTR));
+#else
 		} while (nchars < 0 && errno == EINTR);
+#endif SYS5
 #endif JOBCONTROL
 
+#ifndef SYS5
 		if(nchars <= 0) {
+#else
+		if(nchars < 0) {
+#endif SYS5
 			if (Input)
 				return EOF;
 			finish(0);
@@ -157,12 +174,21 @@ charp()
 		long c;
 
 		if (ioctl(0, FIONREAD, (char *) &c) == -1)
+			c = 0;
 #else
+#ifdef SYS5
+		int c;
+
+		c = read(Input, smbuf, sizeof smbuf);
+		if (c > 0)
+			nchars = c;
+#else SYS5
 		int c;
 
 		if (ioctl(0, TIOCEMPTY, (char *) &c) == -1)
-#endif
 			c = 0;
+#endif SYS5
+#endif FIONREAD
 		return (c > 0);
 #endif BRLUNIX
 	}
@@ -257,14 +283,22 @@ register int	prompt;
 int	OKXonXoff = 0;		/* ^S and ^Q initially DON'T work */
 
 #ifndef	BRLUNIX
+#ifdef SYS5
+struct termio	oldtty, newtty;
+#else SYS5
 struct sgttyb	oldtty, newtty;
+#endif SYS5
 #else
 struct sg_brl	oldtty, newtty;
 #endif
 
 ttsetup() {
 #ifndef BRLUNIX
+#ifdef SYS5
+	if (ioctl (0, TCGETA, &oldtty) < 0) {
+#else SYS5
 	if (ioctl(0, TIOCGETP, (char *) &oldtty) == -1) {
+#endif SYS5
 #else
 	if (gtty(0, &oldtty) < 0) {
 #endif BRLUNIX
@@ -275,8 +309,15 @@ ttsetup() {
 	/* One time setup of "raw mode" stty struct */
 	newtty = oldtty;
 #ifndef BRLUNIX
+#ifndef SYS5
 	newtty.sg_flags &= ~(ECHO | CRMOD);
 	newtty.sg_flags |= CBREAK;
+#else SYS5
+	newtty.c_iflag &= ~(INLCR|ICRNL);
+	newtty.c_lflag &= ~(ISIG|ICANON|ECHO);
+	newtty.c_cc[VMIN] = 0;
+	newtty.c_cc[VTIME] = 0;
+#endif SYS5
 #else
 	newtty.sg_flags &= ~(ECHO | CRMOD);
 	newtty.sg_flags |= CBREAK;
@@ -330,6 +371,7 @@ ttinit()
 #endif
 
 	/* Change interupt and quit. */
+#ifdef TIOCGETC
 	ioctl(0, TIOCGETC, (char *) &tc1);
 	tc2 = tc1;
 	tc2.t_intrc = (char) -1;
@@ -338,6 +380,7 @@ ttinit()
 		tc2.t_stopc = (char) -1;
 		tc2.t_startc = (char) -1;
 	}
+#endif TIOCGETC
 	ttyset(1);
 
 	/* Go into cbreak, and -echo and -CRMOD */
@@ -355,19 +398,29 @@ ttinit()
 #ifndef BRLUNIX
 ttyset(n)
 {
+#ifdef SYS5
+	struct termio	tty;
+#else
 	struct sgttyb	tty;
+#endif SYS5
 
 	if (n)
 		tty = newtty;
 	else
 		tty = oldtty;
 
+#ifndef SYS5
 	if (ioctl(0, TIOCSETN, (char *) &tty) == -1)
+#else
+	if (ioctl (0, TCSETAW, (char *) &tty) == -1)
+#endif SYS5
 	{
 		putstr("ioctl error?");
 		byebye(1);
 	}
+#ifdef TIOCSETC
 	ioctl(0, TIOCSETC, n == 0 ? (char *) &tc1 : (char *) &tc2);
+#endif TIOCSETC
 #ifdef TIOCSLTC
 	ioctl(0, TIOCSLTC, n == 0 ? (char *) &ls1 : (char *) &ls2);
 #endif
