@@ -186,6 +186,7 @@ struct sgiinfo {
 	int	mi_pid;			/* for multi-cpu check */
 	int	mi_parent;		/* PID of linger-mode process */
 	struct sgi_pixel mi_scanline[XMAXSCREEN+1];	/* one scanline */
+	int	mi_doublebuffer;	/* 0=singlebuffer 1=doublebuffer */
 };
 #define	SGI(ptr)	((struct sgiinfo *)((ptr)->u1.p))
 #define	SGIL(ptr)	((ptr)->u1.p)		/* left hand side version */
@@ -244,6 +245,10 @@ struct sgiinfo {
 #define MODE_8NORMAL	(0<<7)
 #define MODE_8NOGT	(1<<7)
 
+#define MODE_9MASK	(1<<8)
+#define MODE_9NORMAL	(0<<8)
+#define MODE_9SINGLEBUF	(1<<8)
+
 #define MODE_15MASK	(1<<14)
 #define MODE_15NORMAL	(0<<14)
 #define MODE_15ZAP	(1<<14)
@@ -270,6 +275,8 @@ struct modeflags {
 		"Perform software colormap - else use hardware colormap on whole screen" },
 	{ 'G',	MODE_8MASK, MODE_8NOGT,
 		"Don't use GT & Z-buffer hardware, if present (debug)" },
+	{ 's',	MODE_9MASK, MODE_9SINGLEBUF,
+		"On GT, single buffer, don't double buffer" },
 	{ 'z',	MODE_15MASK, MODE_15ZAP,
 		"Zap (free) shared memory" },
 	{ '\0', 0, 0, "" }
@@ -976,9 +983,16 @@ int	width, height;
 	 *  Set the operating mode for the newly created window.
 	 */
 	if( SGI(ifp)->mi_is_gt )  {
-		doublebuffer();
+		if( (ifp->if_mode & MODE_9MASK) == MODE_9SINGLEBUF )  {
+			singlebuffer();
+			SGI(ifp)->mi_doublebuffer = 0;
+		} else {
+			doublebuffer();
+			SGI(ifp)->mi_doublebuffer = 1;
+		}
 	} else {
 		singlebuffer();
+		SGI(ifp)->mi_doublebuffer = 0;
 	}
 	RGBmode();
 	gconfig();	/* Must be called after singlebuffer() & RGBmode() */
@@ -986,7 +1000,7 @@ int	width, height;
 	/* Clean out images that might remain from windows underneath */
 	RGBcolor( (short)0, (short)0, (short)0 );
 	clear();
-	if( SGI(ifp)->mi_is_gt )  {
+	if( SGI(ifp)->mi_doublebuffer == 1 )  {
 		swapbuffers();
 		clear();
 	}
@@ -1862,21 +1876,30 @@ register FBIO	*ifp;
 	zbuffer(FALSE);
 	readsource(SRC_ZBUFFER);	/* source for rectcopy() */
 	zdraw(FALSE);
-	backbuffer(TRUE);		/* dest for rectcopy() */
-	frontbuffer(FALSE);
+	/* dest for rectcopy() */
+	if( SGI(ifp)->mi_doublebuffer )  {
+ 		backbuffer(TRUE);
+		frontbuffer(FALSE);
+	} else {
+		backbuffer(FALSE);
+		frontbuffer(TRUE);
+	}
 
 	sgi_clipper( ifp, &clip );
 
 	/* rectzoom only works on GT and PI machines */
 	rectzoom( (double) SGI(ifp)->mi_xzoom, (double) SGI(ifp)->mi_yzoom);
 
-	/*
-	 *  This clear could be somewhat of a performance problem,
-	 *  but it prevents having crud on the borders when
-	 *  panning the image.
-	 */
-	cpack(0x00000000);	/* clear to black first */
-	clear();		/* takes ~1 frame time */
+	if( SGI(ifp)->mi_doublebuffer )  {
+		/*
+		 *  This clear could be somewhat of a performance problem,
+		 *  but it prevents having crud on the borders when
+		 *  panning the image.
+		 *  In singlebuffer mode, don't take the performance hit.
+		 */
+		cpack(0x00000000);	/* clear to black first */
+		clear();		/* takes ~1 frame time */
+	}
 
 	/* All coordinates are window-relative, not viewport-relative */
 	rectcopy(
@@ -1887,7 +1910,9 @@ register FBIO	*ifp;
 		clip.xscroff+SGI(ifp)->mi_xoff,
 		clip.yscroff+SGI(ifp)->mi_yoff );
 
- 	swapbuffers();	 
+	if( SGI(ifp)->mi_doublebuffer )  {
+	 	swapbuffers();
+	}
 	rectzoom( 1.0, 1.0 );
 }
 
