@@ -34,6 +34,11 @@ static char RCSrayview[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 
 int		use_air = 1;		/* Handling of air in librt */
+
+int		using_mlib = 0;		/* Material routines NOT used */
+int		max_bounces;		/* stub for "set" cmd */
+int		max_ireflect;		/* stub for "set" cmd */
+
 extern FILE	*outfp;			/* optional output file */
 
 char usage[] = "\
@@ -203,7 +208,3 @@ view_2init()
 	if( outfp == NULL )
 		rt_bomb("outfp is NULL\n");
 }
-
-int	mlib_setup() { return(1); }
-
-void	mlib_free() { ; }

@@ -46,6 +46,10 @@ Options:\n\
 extern int	width;
 extern int	height;
 
+int		using_mlib = 0;		/* Material routines NOT used */
+int		max_bounces;		/* stub for "set" cmd */
+int		max_ireflect;		/* stub for "set" cmd */
+
 /* Stuff for pretty-picture output format */
 static struct soltab *last_solidp;	/* pointer to last solid hit */
 static int last_item;			/* item number of last region hit */
@@ -180,7 +184,3 @@ char *file, *obj;
 }
 
 void	view_2init()  {;}
-
-int	mlib_setup() { return(1); }
-
-void	mlib_free() { ; }

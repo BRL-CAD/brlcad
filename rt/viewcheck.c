@@ -35,6 +35,10 @@ static char RCScheckview[] = "@(#)$Header$ (BRL)";
 
 int		use_air = 0;		/* Handling of air in librt */
 
+int		using_mlib = 0;		/* Material routines NOT used */
+int		max_bounces;		/* stub for "set" cmd */
+int		max_ireflect;		/* stub for "set" cmd */
+
 extern FILE	*outfp;
 
 char usage[] = "Usage:  rtcheck [options] model.g objects...\n";
@@ -147,9 +151,3 @@ view_end() {
 void view_pixel() {}
 
 void view_eol() {}
-
-int mlib_setup() { 
-	return(1); 
-}
-
-void mlib_free() { ; }
