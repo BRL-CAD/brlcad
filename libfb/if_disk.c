@@ -196,7 +196,7 @@ int	count;
 
 	dest = (((long) y * (long) ifp->if_width) + (long) x)
 	     * (long) sizeof(RGBpixel);
-	if( lseek(fd, (off_t)dest, 0) == -1L ) {
+	if( ifp->if_seekpos != dest && lseek(fd, (off_t)dest, 0) == -1L ) {
 		fb_log( "disk_buffer_read : seek to %ld failed.\n", dest );
 		return	-1;
 	}
@@ -210,8 +210,11 @@ int	count;
 				/* early EOF -- indicate what we got */
 				return bytes_read/sizeof(RGBpixel);
 			}
-			fb_log("disk_buffer_read(fd=%d): y=%d read of %d got %d bytes\n",
-				fd, y, todo, got);
+			if( fd != 0 )  {
+				/* This happens all the time reading from pipes */
+				fb_log("disk_buffer_read(fd=%d): y=%d read of %d got %d bytes\n",
+					fd, y, todo, got);
+			}
 		}
 		bytes -= got;
 		pixelp += got;
@@ -264,7 +267,8 @@ ColorMap	*cmap;
 	/* Reads on stdout make no sense.  Take reads from stdin. */
 	if( fd == 1 )  fd = 0;
 
-	if( lseek( fd, (off_t)FILE_CMAP_ADDR, 0 ) == -1 ) {
+	if( ifp->if_seekpos != FILE_CMAP_ADDR &&
+	    lseek( fd, (off_t)FILE_CMAP_ADDR, 0 ) == -1 ) {
 		fb_log(	"disk_colormap_read : seek to %ld failed.\n",
 				FILE_CMAP_ADDR );
 	   	return	-1;
