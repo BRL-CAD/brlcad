@@ -26,6 +26,7 @@ static char RCSid[] = "@(#)$Id$ (BRL)";
 
 #include "machine.h"
 #include "externs.h"
+#include "bu.h"
 #include "fb.h"
 #include "rle.h"
 
@@ -63,29 +64,6 @@ Usage: fb-rle [-c -h -d] [-F framebuffer] [-C r/g/b]\n\
 	[file.rle]\n\
 \n\
 If omitted, the .rle file is written to stdout\n";
-
-#ifndef HAVE_STRDUP
-/*
- *			S T R D U P
- *
- * Given a string, allocate enough memory to hold it using malloc(),
- * duplicate the strings, returns a pointer to the new string.
- */
-char *
-strdup( cp )
-register CONST char *cp;
-{
-	register char	*base;
-	register int	len;
-
-	len = strlen( cp )+2;
-	if( (base = (char *)malloc( len )) == (char *)0 )
-		return( (char *)0 );
-
-	bcopy( cp, base, len );
-	return(base);
-}
-#endif
 
 extern void	cmap_crunch();
 
@@ -278,18 +256,18 @@ char	*argv[];
 	if( framebuffer == (char *)0 )
 		framebuffer = fbp->if_name;
 	sprintf( comment, "encoded_from=%s", framebuffer );
-	rle_putcom( strdup(comment), &outrle );
+	rle_putcom( bu_strdup(comment), &outrle );
 	now = time(0);
 	sprintf( comment, "encoded_date=%24.24s", ctime(&now) );
-	rle_putcom( strdup(comment), &outrle );
+	rle_putcom( bu_strdup(comment), &outrle );
 	if( (who = getenv("USER")) != (char *)0 ) {
 		sprintf( comment, "encoded_by=%s", who);
-		rle_putcom( strdup(comment), &outrle );
+		rle_putcom( bu_strdup(comment), &outrle );
 	}
 #	if HAVE_GETHOSTNAME
 	gethostname( host, sizeof(host) );
 	sprintf( comment, "encoded_host=%s", host);
-	rle_putcom( strdup(comment), &outrle );
+	rle_putcom( bu_strdup(comment), &outrle );
 #	endif
 
 	rle_put_setup( &outrle );
