@@ -141,7 +141,6 @@ union record  {
 #define EHY	29	/* Elliptical Hyperboloid */
 #define ETO	30	/* Elliptical Torus */
 #define GRP	31	/* Grip pseudo solid */
-#define FBM	32	/* fBm space sphere */
 		char	s_name[NAMESIZE];	/* unique name */
 		short	s_cgtype;		/* COMGEOM solid type */
 #define RPP	1	/* axis-aligned rectangular parallelopiped */
