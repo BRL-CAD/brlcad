@@ -108,6 +108,10 @@ do-uninstall-stub&:  [[SUB ../SRCDIR/X.stub X.uninstall-stub ../SRCDIR/''*.stub]
 %.uninstall-stub&:
 	rm -f MANDIR''MANSECTION/% MANDIR''MANSECTION/%.bak
 
+#if !defined(EXTRA_INSTALL_TARGETS)
+#	define EXTRA_INSTALL_TARGETS	/**/
+#endif
+
 #if !defined(DONT_INSTALL)
 install&: install-prod install-man install-stub inst-dist
 
@@ -119,15 +123,15 @@ install-nobak&: inst-dist
 #endif
 
 #if defined(SHARED_PRODUCT)
-install-prod&: [[SUB X X.iprod SHARED_PRODUCT]]
+install-prod&: [[SUB X X.iprod SHARED_PRODUCT]] EXTRA_INSTALL_TARGETS
 
-install-prod-nobak&: [[SUB X X.iprod-nobak SHARED_PRODUCT]]
+install-prod-nobak&: [[SUB X X.iprod-nobak SHARED_PRODUCT]] EXTRA_INSTALL_TARGETS
 
 #else
 #  if defined(PRODUCTS)
-install-prod&: [[SUB X X.iprod PRODUCTS]]
+install-prod&: [[SUB X X.iprod PRODUCTS]] EXTRA_INSTALL_TARGETS
 
-install-prod-nobak&: [[SUB X X.iprod-nobak PRODUCTS]]
+install-prod-nobak&: [[SUB X X.iprod-nobak PRODUCTS]] EXTRA_INSTALL_TARGETS
 #  else
 install-prod&:
 
