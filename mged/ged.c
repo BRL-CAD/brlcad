@@ -127,9 +127,10 @@ extern struct _rubber_band default_rubber_band;
 int pipe_out[2];
 int pipe_err[2];
 struct db_i *dbip = DBI_NULL;	/* database instance pointer */
-int    update_views = 0;
-int		(*cmdline_hook)() = NULL;
+int update_views = 0;
+int (*cmdline_hook)() = NULL;
 jmp_buf	jmp_env;		/* For non-local gotos */
+double frametime;		/* time needed to draw last frame */
 
 int             cmd_stuff_str();
 void		(*cur_sigint)();	/* Current SIGINT status */
@@ -1525,7 +1526,8 @@ refresh()
   struct bu_vls overlay_vls;
   struct bu_vls tmp_vls;
   register int do_overlay = 1;
-  double elapsed_time = -1;
+  double elapsed_time;
+  int do_time = 0;
 
   rt_prep_timer();
 
@@ -1537,6 +1539,7 @@ refresh()
      */
     curr_dm_list = p;
     if(mapped && (update_views || view_state->vs_flag || dirty)) {
+      do_time = 1;
       VMOVE(geometry_default_color,color_scheme->cs_geo_def);
 
       if(dbip != DBI_NULL){
@@ -1553,11 +1556,6 @@ refresh()
 
       if( mged_variables->mv_predictor )
 	predictor_frame();
-
-#if 0
-      rt_prep_timer();
-      elapsed_time = -1;		/* timer running */
-#endif
 
       DM_DRAW_BEGIN(dmp);	/* update displaylist prolog */
 
@@ -1585,8 +1583,7 @@ refresh()
 
 	/* do framebuffer overlay */
 	if(mged_variables->mv_fb && mged_variables->mv_fb_overlay){
-	  if(mged_variables->mv_fb_all)
-	    fb_refresh(fbp, 0, 0, dmp->dm_width, dmp->dm_height);
+	  if(mged_variables->mv_fb_all)	    fb_refresh(fbp, 0, 0, dmp->dm_width, dmp->dm_height);
 	  else if(mged_variables->mv_mouse_behavior != 'z')
 	    paint_rect_area();
 	}
@@ -1630,33 +1627,21 @@ refresh()
       DM_DRAW_END(dmp);
 
       dirty = 0;
-
-#if 0
-      if (elapsed_time < 0)  {
-	(void)rt_get_timer( (struct bu_vls *)0, &elapsed_time );
-	/* Only use reasonable measurements */
-	if( elapsed_time > 1.0e-5 && elapsed_time < 30 )  {
-	  /* Smoothly transition to new speed */
-	  frametime = 0.9 * frametime + 0.1 * elapsed_time;
-	}
-      }
-#endif
     }
   }
 
-#if 1
-  if (elapsed_time < 0)  {
+  /* a frame was drawn */
+  if(do_time){
     (void)rt_get_timer( (struct bu_vls *)0, &elapsed_time );
     /* Only use reasonable measurements */
     if( elapsed_time > 1.0e-5 && elapsed_time < 30 )  {
       /* Smoothly transition to new speed */
       frametime = 0.9 * frametime + 0.1 * elapsed_time;
     }
-  }
-#endif
 
-  FOR_ALL_DISPLAYS(p, &head_dm_list.l)
-    p->dml_view_state->vs_flag = 0;
+    FOR_ALL_DISPLAYS(p, &head_dm_list.l)
+      p->dml_view_state->vs_flag = 0;
+  }
 
   curr_dm_list = save_dm_list;
   update_views = 0;
