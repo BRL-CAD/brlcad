@@ -236,11 +236,12 @@ mat_t	v2m;
  *  adds it's contribution.  Even here we only expect 50% of the ambient
  *  intensity, to keep the pictures reasonably bright.
  */
+int
 light_init()
 {
 	register struct light_specific *lp;
-	int nlights = 0;
-	fastf_t	inten = 0.0;
+	register int	nlights = 0;
+	register fastf_t	inten = 0.0;
 
 	for( lp = LightHeadp; lp; lp = lp->lt_forw )  {
 		nlights++;
@@ -260,4 +261,141 @@ light_init()
 		if( lp->lt_fraction > 0 )  continue;	/* overridden */
 		lp->lt_fraction = lp->lt_intensity / inten;
 	}
+	if( nlights > SW_NLIGHTS )  {
+		rt_log("Number of lights limited to %d\n", SW_NLIGHTS);
+		nlights = SW_NLIGHTS;
+	}
+	return(nlights);
 }
+
+/* 
+ *			L I G H T _ H I T
+ *
+ *  Input -
+ *	a_color[] contains the fraction of a the light that will be
+ *	propagated back along the ray, so far.  If this gets too small,
+ *	recursion through lots of glass ought to stop.
+ *  Output -
+ *	a_color[] contains the fraction of light that can be seen.
+ *	RGB transmissions are separately indicated, to allow simplistic
+ *	colored glass (with apologies to Roy Hall).
+ *
+ *  These shadow functions return a boolean "light_visible".
+ * 
+ *  This is a simplified algorithm, and could be improved.
+ *  Reflected light can't be dealt with at all.
+ *
+ *  Would also be nice to return an actual energy level, rather than
+ *  a boolean, which could account for distance, etc.
+ */
+light_hit(ap, PartHeadp)
+struct application *ap;
+struct partition *PartHeadp;
+{
+	register struct partition *pp;
+	register struct region	*regp;
+	struct application	sub_ap;
+	struct shadework	sw;
+	extern int	light_render();
+	vect_t	filter_color;
+	int	light_visible;
+
+	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
+		if( pp->pt_outhit->hit_dist >= 0.0 )  break;
+	if( pp == PartHeadp )  {
+		rt_log("light_hit:  no hit out front?\n");
+		light_visible = 0;
+		goto out;
+	}
+	regp = pp->pt_regionp;
+
+	/* Check to see if we hit a light source */
+	if( ((struct mfuncs *)(regp->reg_mfuncs))->mf_render == light_render )  {
+		VSETALL( ap->a_color, 1 );
+		light_visible = 1;
+		goto out;
+	}
+
+	/* If we hit an entirely opaque object, this light is invisible */
+	if( pp->pt_outhit->hit_dist >= INFINITY ||
+	    regp->reg_transmit == 0 )  {
+		VSETALL( ap->a_color, 0 );
+		light_visible = 0;
+		goto out;
+	}
+
+	/*  See if any further contributions will mater */
+	if( ap->a_color[0] + ap->a_color[1] + ap->a_color[2] < 0.01 )  {
+	    	/* Any light energy is "fully" attenuated by here */
+		VSETALL( ap->a_color, 0 );
+		light_visible = 0;
+		goto out;
+	}
+
+	/*
+	 *  Determine transparency parameters of this object.
+	 *  All we really need here is the opacity information;
+	 *  full shading is not required.
+	 */
+	sw.sw_transmit = sw.sw_reflect = 0.0;
+	sw.sw_refrac_index = 1.0;
+	sw.sw_xmitonly = 1;		/* only want sw_transmit */
+	VSETALL( sw.sw_color, 1 );
+	VSETALL( sw.sw_basecolor, 1 );
+
+	viewshade( ap, pp, &sw );
+
+	VSCALE( filter_color, sw.sw_color, sw.sw_transmit );
+	if( filter_color[0] + filter_color[1] + filter_color[2] < 0.01 )  {
+	    	/* Any recursion won't be significant */
+		VSETALL( ap->a_color, 0 );
+		light_visible = 0;
+		goto out;
+	}
+
+	/*
+	 * Push on to exit point, and trace on from there.
+	 * Transmission so far is passed along in sub_ap.a_color[];
+	 * Don't even think of trying to refract, or we will miss the light!
+	 */
+	sub_ap = *ap;			/* struct copy */
+	sub_ap.a_level = ap->a_level+1;
+	{
+		FAST fastf_t f;
+		f = pp->pt_outhit->hit_dist+0.0001;
+		VJOIN1(sub_ap.a_ray.r_pt, ap->a_ray.r_pt, f, ap->a_ray.r_dir);
+	}
+	sub_ap.a_purpose = "light transmission after filtering";
+	light_visible = rt_shootray( &sub_ap );
+
+	VELMUL( ap->a_color, sub_ap.a_color, filter_color );
+out:
+	if( rdebug & RDEBUG_LIGHT ) rt_log("light %s vis=%d\n", regp->reg_name, light_visible);
+	return(light_visible);
+}
+
+/*
+ *  			L I G H T _ M I S S
+ *  
+ *  If there is no explicit light solid in the model, we will always "miss"
+ *  the light, so return light_visible = TRUE.
+ */
+/* ARGSUSED */
+light_miss(ap, PartHeadp)
+register struct application *ap;
+struct partition *PartHeadp;
+{
+	extern struct light_specific *LightHeadp;
+
+	if( LightHeadp )  {
+		/* Explicit lights exist, somehow we missed (dither?) */
+		VSETALL( ap->a_color, 0 );
+		return(0);		/* light_visible = 0 */
+	}
+	/* No explicit light -- it's hard to hit */
+	VSETALL( ap->a_color, 1 );
+	return(1);			/* light_visible = 1 */
+}
+
+/* Null function */
+nullf() { return(0); }

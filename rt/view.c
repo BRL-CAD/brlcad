@@ -79,6 +79,7 @@ extern int	incr_mode;		/* !0 for incremental resolution */
 extern int	incr_level;		/* current incremental level */
 extern int	incr_nlevel;		/* number of levels */
 
+extern int light_hit(), light_miss();	/* in light.c */
 extern struct light_specific *LightHeadp;
 vect_t ambient_color = { 1, 1, 1 };	/* Ambient white light */
 extern double AmbientIntensity;
@@ -328,15 +329,6 @@ struct partition *PartHeadp;
 	return(0);
 }
 
-static struct shadework shade_default = {
-	0.0,				/* xmit */
-	0.0,				/* reflect */
-	1.0,				/* refractive index */
-	1.0, 1.0, 1.0,			/* color: white */
-	1.0, 1.0, 1.0,			/* basecolor: white */
-	/* rest are zeros */
-};
-
 /*
  *			C O L O R V I E W
  *
@@ -442,7 +434,11 @@ struct partition *PartHeadp;
 		}
 	}
 
-	sw = shade_default;			/* struct copy */
+	sw.sw_transmit = sw.sw_reflect = 0.0;
+	sw.sw_refrac_index = 1.0;
+	sw.sw_xmitonly = 0;		/* want full data */
+	VSETALL( sw.sw_color, 1 );
+	VSETALL( sw.sw_basecolor, 1 );
 
 	viewshade( ap, pp, &sw );
 
@@ -470,6 +466,8 @@ struct partition *PartHeadp;
  *	0 on failure
  *	1 on success
  */
+static char *light_hack = "light visibility?";
+
 viewshade( ap, pp, swp )
 struct application *ap;
 register struct partition *pp;
@@ -477,6 +475,8 @@ register struct shadework *swp;
 {
 	register struct mfuncs *mfp;
 	register struct region *rp;
+	register struct light_specific *lp;
+	int i;
 
 	swp->sw_hit = *(pp->pt_inhit);		/* struct copy */
 
@@ -558,7 +558,62 @@ register struct shadework *swp;
 			return(1);
 		}
 	}
-	/*** Should determine light visibility here ***/
+	/*
+	 *  Determine light visibility
+	 */
+	for( i=0, lp=LightHeadp; lp; lp = lp->lt_forw, i++ )  {
+		register fastf_t f;
+		register fastf_t *intensity;
+		struct application sub_ap;
+
+		intensity = swp->sw_intensity+3*i;
+
+		if( !(lp->lt_explicit) ||
+		    !(mfp->mf_inputs & MFI_LIGHT) ||
+		    swp->sw_xmitonly
+		  )  {
+			/* IF:
+		  	 *  -- this is an implicit light, or
+		  	 *  -- the shader does not want visibility info, or
+		  	 *  -- this is visibility ray wanting xmit data only
+		  	 * THEN just claim the light is visible
+			 */
+			swp->sw_visible[i] = (char *)lp;
+			VSETALL( intensity, 1 );
+			continue;
+		}
+
+		/*
+		 *  An explicit light source, and the shader desires
+		 *  light visibility information.
+		 *  Fire ray at light source to check for shadowing.
+		 *  This SHOULD actually return an energy value
+		 */
+		sub_ap = *ap;		/* struct copy */
+		sub_ap.a_hit = light_hit;
+		sub_ap.a_miss = light_miss;
+		sub_ap.a_level = 0;
+		VMOVE( sub_ap.a_ray.r_pt, swp->sw_hit.hit_point );
+			
+		/* Dither light pos for penumbra by +/- 0.5 light radius */
+		/* This presently makes a cubical light source distribution */
+		f = lp->lt_radius * 0.9;
+		sub_ap.a_ray.r_dir[X] =  lp->lt_pos[X] + rand_half()*f - swp->sw_hit.hit_point[X];
+		sub_ap.a_ray.r_dir[Y] =  lp->lt_pos[Y] + rand_half()*f - swp->sw_hit.hit_point[Y];
+		sub_ap.a_ray.r_dir[Z] =  lp->lt_pos[Z] + rand_half()*f - swp->sw_hit.hit_point[Z];
+		VUNITIZE( sub_ap.a_ray.r_dir );
+		VSETALL( sub_ap.a_color, 1 );	/* vis intens so far */
+/**		sub_ap.a_purpose = "light visibility?"; **/
+		sub_ap.a_purpose = light_hack;
+		if( rt_shootray( &sub_ap ) )  {
+			/* light visible */
+			swp->sw_visible[i] = (char *)lp;
+			VMOVE( intensity, sub_ap.a_color );
+		} else {
+			/* dark (light obscured) */
+			swp->sw_visible[i] = (char *)0;
+		}
+	}
 
 	/* Invoke the actual shader (may be a tree of them) */
 	(void)mfp->mf_render( ap, pp, swp, rp->reg_udata );
@@ -781,7 +836,7 @@ register struct application *ap;
 	default:
 		rt_bomb("bad lighting model #");
 	}
-	light_init();
+	ap->a_rt_i->rti_nlights = light_init();
 
 	ibackground[0] = background[0] * 255;
 	ibackground[1] = background[1] * 255;
