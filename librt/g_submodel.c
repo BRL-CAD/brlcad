@@ -268,10 +268,17 @@ struct seg		*segHeadp;
 	register struct application	*oap =
 		(struct application *)ap->a_uptr;
 	struct seg		*segp;
+	struct soltab		*up_stp;
+	struct region		*up_reg;
 
 	RT_CK_PT_HD(PartHeadp);
-	RT_AP_CHECK(oap);
+	RT_AP_CHECK(oap);		/* original ap, in containing  */
 	RT_CK_RTI(oap->a_rt_i);
+	up_stp = ap->a_rt_i->rti_up;
+	RT_CK_SOLTAB(up_stp);
+	/* Take the first containing region */
+	up_reg = (struct region *)BU_PTBL_GET(&(up_stp->st_regions), 0);
+	RT_CK_REGION(up_reg);
 
 	/* Steal & xform the segment list */
 	while( BU_LIST_NON_EMPTY( &(segHeadp->l) ) ) {
@@ -286,18 +293,17 @@ struct seg		*segHeadp;
 		segp->seg_out.hit_dist = oap->a_ray.r_min +
 			segp->seg_out.hit_dist * ap->a_dist;
 
-		/* XXX seg_in->seg_rayp needs to be changed! */
-
-		/* Need to set hook to catch norm and curve ops,
-		 * and to revector them here, so that xforms can be done.
-		 */
-
+		segp->seg_in.hit_rayp = &oap->a_ray;
+		segp->seg_out.hit_rayp = &oap->a_ray;
 	}
 
 	/* Steal the partition list */
 	while( (pp=PartHeadp->pt_forw) != PartHeadp )  {
 		RT_CK_PT(pp);
 		DEQUEUE_PT(pp);
+
+		pp->pt_regionp = up_reg;
+
 	/* XXX These need to be sort/merged into the Final list! */
 		INSERT_PT( pp, oap->a_Final_Part_hdp );
 	}
