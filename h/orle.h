@@ -79,7 +79,7 @@ typedef struct /* Old RLE format instruction.				*/
 #define LONGP(inst) (inst.opcode & LONG)
 #define DATUM(inst) (0x00ff & inst.datum)
 
-#if defined( gould ) || defined( sem )
+#if defined( gould ) || defined( sel )
 #define BIGENDIAN
 #endif
 #ifdef BIGENDIAN
