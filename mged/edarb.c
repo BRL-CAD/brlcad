@@ -26,7 +26,7 @@
 extern int	printf();
 
 static void	findsam();
-static int	compar(), planeqn(), special();
+static int	compar(), special();
 
 
 /*
@@ -345,7 +345,7 @@ struct solidrec *sp;
 }
 
 
-static int
+int
 planeqn( a, b, c, sp )
 int a,b,c;
 struct solidrec *sp;
