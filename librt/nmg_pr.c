@@ -774,3 +774,125 @@ CONST struct nmg_ptbl	*tbl;
 		rt_log("\tv=x%x, vu=x%x\n", v , vu);
 	}
 }
+
+/* 
+ *			N M G _ P R _ O N E _ E U _ V E C S
+ *
+ *  Common formatting code for edgeuses and edgeuse mates.
+ *  Does not mind wire edges.
+ */
+nmg_pr_one_eu_vecs( eu, xvec, yvec, zvec, tol )
+CONST struct edgeuse	*eu;
+CONST vect_t		xvec;
+CONST vect_t		yvec;
+CONST vect_t		zvec;
+CONST struct rt_tol	*tol;
+{
+	CONST struct loopuse	*lu;
+	CONST struct faceuse	*fu;
+	CONST struct face	*f;
+	CONST struct shell	*s;
+	char			*lu_orient;
+	char			*fu_orient;
+
+	NMG_CK_EDGEUSE(eu);
+	lu = (struct loopuse *)NULL;
+	lu_orient = "W";
+	fu = (struct faceuse *)NULL;
+	fu_orient = "W";
+	f = (struct face *)NULL;
+	if( *eu->up.magic_p == NMG_LOOPUSE_MAGIC )  {
+		lu = eu->up.lu_p;
+		NMG_CK_LOOPUSE(lu);
+		/* +3 is to skip the "OT_" prefix */
+		lu_orient = nmg_orientation(lu->orientation)+3;
+		if( *lu->up.magic_p == NMG_FACEUSE_MAGIC )  {
+			fu = lu->up.fu_p;
+			NMG_CK_FACEUSE(fu);
+			fu_orient = nmg_orientation(fu->orientation)+3;
+			f = fu->f_p;
+			s = fu->s_p;
+		} else {
+			s = lu->up.s_p;
+		}
+	} else {
+		s = eu->up.s_p;
+	}
+	NMG_CK_SHELL(s);
+	rt_log(" %8.8x, lu=%8.8x=%1.1s, f=%8.8x, fu=%8.8x=%1.1s, s=%8.8x %g deg\n",
+		eu,
+		lu, lu_orient,
+		f,
+		fu, fu_orient,
+		s,
+		nmg_measure_fu_angle(eu, xvec, yvec, zvec) * rt_radtodeg );
+}
+
+/*
+ *			N M G _ P R _ F U _ A R O U N D _ E U _ V E C S
+ */
+void
+nmg_pr_fu_around_eu_vecs( eu, xvec, yvec, zvec, tol )
+CONST struct edgeuse	*eu;
+CONST vect_t		xvec;
+CONST vect_t		yvec;
+CONST vect_t		zvec;
+CONST struct rt_tol	*tol;
+{
+	CONST struct edgeuse	*eu1;
+	CONST struct loopuse	*lu;
+	CONST struct faceuse	*fu;
+	CONST struct face	*f;
+	int			lu_orient;
+	int			fu_orient;
+
+	NMG_CK_EDGEUSE(eu);
+	RT_CK_TOL(tol);
+	rt_log("nmg_pr_fu_around_eu_vecs(eu=x%x) e=x%x\n", eu, eu->e_p);
+
+	/* To go correct way around, start with arg's mate,
+	 * so that arg, then radial, will follow.
+	 */
+	eu = eu->eumate_p;
+
+	eu1 = eu;
+	do {
+		/* First, the edgeuse mate */
+		nmg_pr_one_eu_vecs( eu1, xvec, yvec, zvec, tol );
+
+		/* Second, the edgeuse itself (mate's mate) */
+		eu1 = eu1->eumate_p;
+		nmg_pr_one_eu_vecs( eu1, xvec, yvec, zvec, tol );
+
+		/* Now back around to the radial edgeuse */
+		eu1 = eu1->radial_p;
+	} while( eu1 != eu );
+}
+
+/*
+ *			N M G _ P R _ F U _ A R O U N D _ E U
+ *
+ *  A debugging routine to print all the faceuses around a given edge,
+ *  starting with the given edgeuse.
+ *  The normal of the  first face is considered to be "0 degrees",
+ *  and the rest are measured from there.
+ */
+void
+nmg_pr_fu_around_eu( eu, tol )
+CONST struct edgeuse *eu;
+CONST struct rt_tol	*tol;
+{
+	CONST struct edgeuse	*eu1;
+	CONST struct loopuse	*lu;
+	CONST struct faceuse	*fu;
+	vect_t			xvec, yvec, zvec;
+
+	NMG_CK_EDGEUSE(eu);
+	RT_CK_TOL(tol);
+	rt_log("nmg_pr_fu_around_eu(x%x)\n", eu);
+
+	/* Erect coordinate system around eu */
+	nmg_eu_2vecs_perp( xvec, yvec, zvec, eu, tol );
+
+	nmg_pr_fu_around_eu_vecs( eu, xvec, yvec, zvec, tol );
+}
