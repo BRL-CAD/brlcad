@@ -58,8 +58,12 @@ extern void	getid();
 
 
 static char usage[] = "\
-Usage: comgeom-g [-d debug_lvl] [-v version#] [-s name_suffix]\n\
-	input_file output_file\n";
+Usage: comgeom-g [options] input_file output_file\n\
+Options:\n\
+	-v input_vers#		default is 5 (cg5)\n\
+	-d debug_lvl\n\
+	-s name_suffix\n\
+";
 
 int
 get_args( argc, argv )
