@@ -1213,6 +1213,70 @@ CONST struct rt_tol	*tol;
 	}
 }
 
+/*		N M G _ I N S U R E _ L I S T _ I S _ I N C R E A S I N G
+ *
+ *	Check if the passed rt_list is in increasing order. If not,
+ *	reverse the order of the list.
+ */
+void
+nmg_insure_radial_list_is_increasing( hd, amin, amax )
+struct rt_list	*hd;
+fastf_t amin;
+fastf_t amax;
+{
+	struct nmg_radial *rad;
+	fastf_t cur_value=(-MAX_FASTF);
+	int increasing=1;
+
+	RT_CK_LIST_HEAD( hd );
+
+	/* if we don't have more than 3 entries, it doesn't matter */
+
+	if( rt_list_len( hd ) < 3 )
+		return;
+
+	for( RT_LIST_FOR( rad, nmg_radial, hd ) )
+	{
+		/* skip wire edges */
+		if( rad->fu == (struct faceuse *)NULL )
+			continue;
+
+		/* if increasing, just keep checking */
+		if( rad->ang >= cur_value )
+		{
+			cur_value = rad->ang;
+			continue;
+		}
+
+		/* angle decreases, is it going from max to min?? */
+		if( rad->ang == amin && cur_value == amax )
+		{
+			/* O.K., just went from max to min */
+			cur_value = rad->ang;
+			continue;
+		}
+
+		/* if we get here, this list is not increasing!!! */
+		increasing = 0;
+		break;
+	}
+
+	if( increasing )	/* all is well */
+		return;
+
+	/* reverse order of the list */
+	rt_list_reverse( hd );
+
+	/* Need to exchange eu with eu->eumate_p for each eu on the list */
+	for( RT_LIST_FOR( rad, nmg_radial, hd ) )
+	{
+		struct faceuse *fu;
+
+		rad->eu = rad->eu->eumate_p;
+		rad->fu = nmg_find_fu_of_eu( rad->eu );
+	}
+}
+
 /*
  *			N M G _ R A D I A L _ B U I L D _ L I S T
  *
@@ -1307,6 +1371,8 @@ CONST struct rt_tol	*tol;		/* for printing */
 		if( teu == eu )  break;
 	}
 
+	nmg_insure_radial_list_is_increasing( hd, amin, amax );
+
 	/* Increasing, with min or max value possibly repeated */
 	if( !rmin )  {
 		/* Nothing but wire edgeuses, done. */
@@ -1391,6 +1457,8 @@ CONST struct rt_tol	*tol;
  *  For every edgeuse, if there are other edgeuses around this edge
  *  from the same face, then mark them all as part of a "crack".
  *
+ *  XXX - To be a crack the two edgeuses must be from the same loopuse!!!!!!
+ *
  *  XXX This approach is overly simplistic, as a legal face can have
  *  an even number of crack-pairs, and 0 to 2 non-crack edges, i.e.
  *  edges which border actual surface area.
@@ -1414,12 +1482,22 @@ CONST struct rt_tol	*tol;
 	for( RT_LIST_FOR( rad, nmg_radial, hd ) )  {
 		NMG_CK_RADIAL(rad);
 		if( rad->is_crack )  continue;
+		if( !rad->fu ) continue;		/* skip wire edges */
 
 		other = RT_LIST_PNEXT( nmg_radial, rad );
 		while( RT_LIST_NOT_HEAD( other, hd ) )  {
+			if( !other->fu ) continue;	/* skip wire edges */
+#if 0
 			if( other->fu->f_p == rad->fu->f_p )  {
+#else /* just get edgeuses from the same loopuse */
+			if( other->eu->up.lu_p == rad->eu->up.lu_p )
+			{
+#endif
 				rad->is_crack = 1;
 				other->is_crack = 1;
+				if (rt_g.NMG_debug & DEBUG_MESH_EU )
+					rt_log( "nmg_radial_mark_cracks() Crack discovered at eu's x%x and x%x\n",
+						rad->eu, other->eu );
 				/* And the search continues to end of list */
 			}
 			other = RT_LIST_PNEXT( nmg_radial, other );
@@ -1883,7 +1961,7 @@ CONST struct rt_tol	*tol;
 	/* Merge the two lists, sorting by angles */
 	nmg_radial_merge_lists( &list1, &list2, tol );
 	nmg_radial_verify_monotone( &list1, tol );
-#if 0
+#if 1
 	nmg_radial_mark_cracks( &list1, tol );
 #endif
 
