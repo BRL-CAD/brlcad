@@ -64,6 +64,9 @@ char *str;
 {
 	register char *ptr;
 
+	if( cnt == 0 )  {
+		rt_log("WARNING: rt_malloc count=0 %s\n", str );
+	}
 #ifdef MEMDEBUG
 	cnt = (cnt+2*sizeof(int)-1)&(~(sizeof(int)-1));
 #endif /* MEMDEBUG */
