@@ -288,10 +288,9 @@ rt_tcl_pr_hit( Tcl_Interp *interp, struct hit *hitp, const struct seg *segp, con
  *			R T _ T C L _ A _ H I T
  */
 int
-rt_tcl_a_hit( ap, PartHeadp, segHeadp )
-struct application	*ap;
-const struct partition	*PartHeadp;
-const struct seg		*segHeadp;
+rt_tcl_a_hit( struct application *ap,
+	struct partition *PartHeadp,
+	struct seg *segHeadp )
 {
 	Tcl_Interp *interp = (Tcl_Interp *)ap->a_uptr;
 	register struct partition *pp;
@@ -320,8 +319,7 @@ const struct seg		*segHeadp;
  *			R T _ T C L _ A _ M I S S
  */
 int
-rt_tcl_a_miss( ap )
-const struct application	*ap;
+rt_tcl_a_miss( struct application *ap )
 {
 	return 0;
 }
