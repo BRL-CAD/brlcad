@@ -332,6 +332,9 @@ proc pattern_rect { args } {
 		\[-nx num_x -dx delta_x | -lx list_of_x_values\]\n\t\t \
 		\[-ny num_y -dy delta_y | -ly list_of_y_values\] \[-nz num_z -dz delta_z | -lz list_of_z_values\] \
 		\[-s source_string replacement_string\] \[-i increment\]  object1 \[object2 object3 ...\]"
+
+        init_vmath
+
 	set opt_str ""
 	set group_name ""
 	set group_list {}
@@ -533,7 +536,12 @@ proc pattern_rect { args } {
 	set ylen [llength $list_y]
 	set zlen [llength $list_z]
 	$feed_name configure -steps [expr $xlen * $ylen * $zlen]
-	
+
+	# unitize direction vectors
+	set xdir [vunitize $xdir]
+	set ydir [vunitize $ydir]
+	set zdir [vunitize $zdir]
+
 	set x_index 0
 	foreach x $list_x {
 		incr x_index
@@ -1110,7 +1118,23 @@ proc pattern_cyl { args } {
 		error "No height delta provided!!!\n$usage"
 	}
 
-	if { [vdot $start_az_dir $height_dir] != 0 } {
+	eval set tmp_az [magnitude $start_az_dir]
+	if { [expr abs($tmp_az)] < 0.001 } {
+	    error "azimuth direction vector is too small!!!\n$usage"
+	} else {
+	    set tmp_az [expr 1.0 / $tmp_az]
+	    set start_az_dir [vscale $start_az_dir $tmp_az]
+	}
+
+	eval set tmp_ht [magnitude $height_dir]
+	if { [expr abs($tmp_ht)] < 0.001 } {
+	    error "height direction vector is too small!!!\n$usage"
+	} else {
+	    set tmp_ht [expr 1.0 / $tmp_ht]
+	    set height_dir [vscale $height_dir $tmp_ht]
+	}
+
+	if { [expr abs([vdot $start_az_dir $height_dir])] > 0.001 } {
 		error "azimuth and height direction must be perpendicular!!!\n$usage"
 	} else {
 		set az_dir2 [vcross $height_dir $start_az_dir]
