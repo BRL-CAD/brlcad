@@ -28,6 +28,9 @@ extern int	optind;
 
 static RGBpixel *scanline;		/* 1 scanline pixel buffer */
 static int	scanbytes;		/* # of bytes of scanline */
+static int	scanpix;		/* # of pixels of scanline */
+
+static int	streamline = 0;		/* Streamlined operation */
 
 static char	*framebuffer = NULL;
 static char	*file_name;
@@ -140,7 +143,7 @@ char **argv;
 {
 	register int y;
 	register FBIO *fbp;
-	int	xout, yout, n;
+	int	xout, yout, n, m;
 
 	if ( !get_args( argc, argv ) )  {
 		(void)fputs(usage, stderr);
@@ -167,8 +170,17 @@ char **argv;
 	yout = scr_height - scr_yoff;
 	if( yout < 0 ) yout = 0;
 	if( yout > (file_height-file_yoff) ) yout = (file_height-file_yoff);
+	scanpix = xout;			/* # pixels on scanline */
 
-	scanbytes = xout * sizeof(RGBpixel);
+	/* Only in the simplest case use multi-line writes */
+	if( !inverse && !zoom &&
+	    xout == scr_width &&
+	    file_xoff == 0 )  {
+		streamline = 8;
+	    	scanpix *= streamline;
+	}
+
+	scanbytes = scanpix * sizeof(RGBpixel);
 	if( (scanline = (RGBpixel *)malloc(scanbytes)) == RGBPIXEL_NULL )  {
 		fprintf(stderr,
 			"pix-fb:  malloc(%d) failure for scanline buffer\n",
@@ -190,7 +202,18 @@ char **argv;
 
 	if( file_yoff != 0 ) skipbytes( infd, file_yoff*file_width*sizeof(RGBpixel) );
 
-	if( !inverse )  {
+	if( streamline )  {
+		/* Bottom to top with multi-line reads & writes */
+		for( y = scr_yoff; y < scr_yoff + yout; y += streamline )  {
+			n = mread( infd, (char *)scanline, scanbytes );
+			if( n <= 0 ) break;
+			m = fb_write( fbp, 0, y, scanline, n/sizeof(RGBpixel));
+			if( n/sizeof(RGBpixel) != m )
+				fprintf(stderr,
+					"pix-fb: fb_write failure y=%d %d %d\n",
+					y, n/sizeof(RGBpixel), m );
+		}
+	} else if( !inverse )  {
 		/* Normal way -- bottom to top */
 		for( y = scr_yoff; y < scr_yoff + yout; y++ )  {
 			if( file_xoff != 0 )
