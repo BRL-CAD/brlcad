@@ -44,6 +44,9 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "vmath.h"
 #include "bn.h"
 
+/* defined in libbu/cmdhist_obj.c */
+extern int Cho_Init();
+
 /*
  *			B U _ B A D M A G I C _ T C L
  */
@@ -1034,4 +1037,7 @@ Tcl_Interp *interp;
 	Tcl_SetVar(interp, "bu_version", (char *)bu_version+5, TCL_GLOBAL_ONLY);	/* from vers.c */
 	Tcl_SetVar(interp, "BU_DEBUG_FORMAT", BU_DEBUG_FORMAT, TCL_GLOBAL_ONLY);
 	Tcl_LinkVar(interp, "bu_debug", (char *)&bu_debug, TCL_LINK_INT );
+
+	/* initialize command history objects */
+	Cho_Init(interp);
 }
