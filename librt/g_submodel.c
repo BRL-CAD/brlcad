@@ -266,6 +266,7 @@ struct application	*ap;
 struct submodel_gobetween {
 	struct application	*up_ap;
 	struct seg		*up_seghead;
+	fastf_t			delta;		/* distance offset */
 };
 
 /*
@@ -283,6 +284,8 @@ struct seg		*segHeadp;
 	struct soltab		*up_stp;
 	struct region		*up_reg;
 	struct submodel_gobetween *gp;
+	struct submodel_specific *submodel;
+	fastf_t			delta;
 	int			count = 0;
 
 	RT_AP_CHECK(ap);
@@ -293,9 +296,14 @@ struct seg		*segHeadp;
 	RT_CK_RTI(up_ap->a_rt_i);
 	up_stp = ap->a_rt_i->rti_up;
 	RT_CK_SOLTAB(up_stp);
+	submodel = (struct submodel_specific *)up_stp->st_specific;
+	RT_CK_SUBMODEL_SPECIFIC(submodel);
+
 	/* Take the first containing region */
 	up_reg = (struct region *)BU_PTBL_GET(&(up_stp->st_regions), 0);
 	RT_CK_REGION(up_reg);
+
+	
 
 	/* Steal & xform the segment list */
 	while( BU_LIST_NON_EMPTY( &(segHeadp->l) ) ) {
@@ -303,12 +311,13 @@ struct seg		*segHeadp;
 		RT_CHECK_SEG(segp);
 		BU_LIST_DEQUEUE( &(segp->l) );
 
-		/* Adjust for new start point & matrix scaling */
-		segp->seg_in.hit_dist = up_ap->a_ray.r_min +
-			segp->seg_in.hit_dist * ap->a_dist;
-		segp->seg_out.hit_dist = up_ap->a_ray.r_min +
-			segp->seg_out.hit_dist * ap->a_dist;
+		/* Adjust for scale difference */
+		MAT4XSCALOR( segp->seg_in.hit_dist, submodel->subm2m, segp->seg_in.hit_dist);
+		segp->seg_in.hit_dist -= gp->delta;
+		MAT4XSCALOR( segp->seg_out.hit_dist, submodel->subm2m, segp->seg_out.hit_dist);
+		segp->seg_out.hit_dist -= gp->delta;
 
+		/* Link to ray in upper model, not submodel */
 		segp->seg_in.hit_rayp = &up_ap->a_ray;
 		segp->seg_out.hit_rayp = &up_ap->a_ray;
 
@@ -342,8 +351,8 @@ struct seg		*seghead;
 	register struct seg *segp;
 	CONST struct bn_tol	*tol = &ap->a_rt_i->rti_tol;
 	struct application	nap;
-	point_t			startpt;
 	struct submodel_gobetween	gb;
+	vect_t			vdiff;
 
 	RT_CK_SOLTAB(stp);
 	RT_CK_RTI(ap->a_rt_i);
@@ -366,6 +375,11 @@ struct seg		*seghead;
 	/* Distances differ only by a scale factor of m[15] */
 	MAT4X3PNT( nap.a_ray.r_pt, submodel->m2subm, ap->a_ray.r_pt );
 	MAT4X3VEC( nap.a_ray.r_dir, submodel->m2subm, ap->a_ray.r_dir );
+
+	/* NOTE: ap->a_ray.r_pt is not the same as rp->r_pt! */
+	/* This changes the distances */
+	VSUB2( vdiff, rp->r_pt, ap->a_ray.r_pt );
+	gb.delta = VDOT( vdiff, ap->a_ray.r_dir );
 
 	/* set flag indicating not to bother with boolean computation. */
 /* XXX rt_shootray() doesn't pay attention yet. */
@@ -564,6 +578,11 @@ int			id;
  *			R T _ S U B M O D E L _ P L O T
  *
  *  Not unlike mged/dodraw.c drawtrees()
+ *
+ *  Note:  The submodel will be drawn entirely in one color
+ *  (for mged, typically this is red),
+ *  because we can't return a vlblock, only one vlist,
+ *  which by definition, is all one color.
  */
 int
 rt_submodel_plot( vhead, ip, ttol, tol )
@@ -893,6 +912,7 @@ register struct xray	*rp;
 	struct xray	sub_xray;
 	vect_t		sub_norm;
 	register struct submodel_specific *submodel;
+	struct hit	sub_hit;
 
 	sub_rtip = stp->st_rtip;
 	RT_CK_RTI(sub_rtip);
@@ -905,11 +925,16 @@ register struct xray	*rp;
 	MAT4X3PNT( sub_xray.r_pt, submodel->m2subm, rp->r_pt );
 	MAT4X3VEC( sub_xray.r_dir, submodel->m2subm, rp->r_dir );
 
-	rt_functab[stp->st_id].ft_norm( hitp, stp, &sub_xray );
+	/* Reconstruct the hit in submodel coords */
+	sub_hit = *hitp;		/* struct copy */
+	MAT4XSCALOR( sub_hit.hit_dist, submodel->m2subm, hitp->hit_dist );
+	VJOIN1( hitp->hit_point, sub_xray.r_pt, sub_hit.hit_dist, sub_xray.r_dir );
+	hitp->hit_rayp = &sub_xray;
+
+	rt_functab[stp->st_id].ft_norm( &sub_hit, stp, &sub_xray );
 
 	/* Convert the normal back to model coords */
-	VMOVE( sub_norm, hitp->hit_normal );
-	MAT4X3VEC( hitp->hit_normal, submodel->subm2m, sub_norm );
+	MAT4X3VEC( hitp->hit_normal, submodel->subm2m, sub_hit.hit_normal );
 }
 
 /*
