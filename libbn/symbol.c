@@ -14,7 +14,20 @@
  *  parameter allows this to be changed as desired, although scale
  *  factors less than 10.0 are unlikely to be legible.
  *
+ *  Author -
+ *	Michael John Muuss
+ *  
+ *  Source -
+ *	The U. S. Army Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *  
+ *  Distribution Status -
+ *	Public Domain, Distribution Unlimited.
  */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (ARL)";
+#endif
+
 #include "conf.h"
 
 #include <stdio.h>
