@@ -89,8 +89,8 @@ struct bu_structparse image_print_tab[] = {
 	{"%d",  1, "numscan",	IMG_O(i_height),	FUNC_NULL },
 	{"%d",	1, "perpective",IMG_O(i_persp),		FUNC_NULL },
 	{"%d",	1, "viewsize",	IMG_O(i_viewsize),	FUNC_NULL },
-	{"%d",	3, "orientation",IMG_O(i_orient),	FUNC_NULL },
-	{"%d",	3, "eye_pt",	IMG_O(i_eyept),		FUNC_NULL },
+	{"%d",	3, "orientation",IMG_AO(i_orient),	FUNC_NULL },
+	{"%d",	3, "eye_pt",	IMG_AO(i_eyept),	FUNC_NULL },
 	{"",	0, (char *)0,	0,			FUNC_NULL }
 };
 
@@ -102,8 +102,8 @@ struct bu_structparse image_parse_tab[] = {
 	{"%d",  1,	 "n",	IMG_O(i_height),	FUNC_NULL },
 	{"%d",	1,	 "p",	IMG_O(i_persp),		FUNC_NULL },
 	{"%d",	1,	 "v",	IMG_O(i_viewsize),	FUNC_NULL },
-	{"%d",	3,	 "o",	IMG_O(i_orient),	FUNC_NULL },
-	{"%d",	3, 	 "e",	IMG_O(i_eyept),		FUNC_NULL },
+	{"%d",	3,	 "o",	IMG_AO(i_orient),	FUNC_NULL },
+	{"%d",	3, 	 "e",	IMG_AO(i_eyept),	FUNC_NULL },
 	{"",	0, (char *)0,	0,			FUNC_NULL }
 };
 

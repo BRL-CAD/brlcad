@@ -1065,7 +1065,7 @@ genptr_t	arg;
 			int	ix, iy;
 
 			if( pixelnum > last_pixel )
-				return;
+				goto out;
 
 			ip = &prev_float_frame[pixelnum];
 
@@ -1097,6 +1097,7 @@ genptr_t	arg;
 	}
 
 	/* Deposit the statistics */
+out:
 	bu_semaphore_acquire( RT_SEM_WORKER );
 	reproj_cur += count;
 	bu_semaphore_release( RT_SEM_WORKER );

@@ -330,7 +330,7 @@ char	*dp;
 		my_ap.a_hit = tmist_hit;
 		my_ap.a_miss = tmist_miss;
 		my_ap.a_onehit = 0;
-		my_ap.a_uptr = air_sp;
+		my_ap.a_uptr = (genptr_t)air_sp;
 		rt_shootray( &my_ap );
 
 		/* XXX check my_ap.a_dist for distance to ground */
