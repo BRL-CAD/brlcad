@@ -88,7 +88,7 @@ static struct xray *yz_rays;
 static struct rt_i *rtip;
 static struct bn_tol tol;
 static char *usage="Usage:\n\
-	%s [-d debug_level] [-n] [-c] [-v] [-i initial_ray_dir] [-g cell_size] [-d debug_level] -o brlcad_output_file database.g object1 object2...\n";
+	%s [-d debug_level] [-n] [-v] [-i initial_ray_dir] [-g cell_size] [-d debug_level] -o brlcad_output_file database.g object1 object2...\n";
 static char *_inside="inside";
 static char *_outside="outside";
 static char dir_ch[3]={ 'X', 'Y', 'Z' };
@@ -101,6 +101,7 @@ static int	initial_ray_dir=-1;
 static int	do_extra_rays=1;
 static long	face_count=0;
 static fastf_t	cell_size=50.0;
+static fastf_t	cell_size_sq=2500.0;
 static fastf_t	edge_tol=0.0;
 static FILE	*fd_sgp=NULL, *fd_out=NULL, *fd_plot=NULL;
 static char	*output_file=(char *)NULL;
@@ -617,105 +618,73 @@ struct partition *PartHeadp;
 			hit1_v = (struct vertex *)NULL;
 		}
 	}
-#if 0
-	/* eliminate any vertices that plainly should be moved in a different direction */
+
+	/* Don't allow moving the vertex normalward more than a cell width.
+	 * If the point should have been there, the original rays should have caught it.
+	 */
 	if( hit1_v )
 	{
+		vect_t v1;
 		struct vertexuse *vu;
-		struct faceuse *fu;
-		vect_t norm;
-		fastf_t dot;
-		int ok=0;
+		fastf_t dist_sq;
 
-		for( BU_LIST_FOR( vu, vertexuse, &hit1_v->vu_hd ) )
+		VSUB2( v1, mhit1, hit1_v->vg_p->coord );
+		dist_sq = MAGSQ( v1 );
+
+		if( dist_sq > cell_size_sq )
 		{
-			fu = nmg_find_fu_of_vu( vu );
-			if( fu->orientation != OT_SAME )
-				continue;
-			NMG_GET_FU_NORMAL( norm, fu );
-			dot = VDOT( norm, ap->a_ray.r_dir );
-			if( !NEAR_ZERO( dot, 0.00001 ) )
-			{
-				ok = 1;
-				break;
-			}
-		}
 
-		if( !ok )
-		{
-			if( debug )
+			for( BU_LIST_FOR( vu, vertexuse, &hit1_v->vu_hd ) )
 			{
-				bu_log( "Eliminating hit1_v (%g %g %g) dir=(%g %g %g)\n",
-					V3ARGS( hit1_v->vg_p->coord ),
-					V3ARGS( ap->a_ray.r_dir ) );
-			}
-			hit1_v = (struct vertex *)NULL;
-		}
-	}
+				struct faceuse *fu;
+				vect_t norm;
 
-	if( hit2_v )
-	{
-		struct vertexuse *vu;
-		struct faceuse *fu;
-		vect_t norm;
-		fastf_t dot;
-		int ok=0;
+				fu = nmg_find_fu_of_vu( vu );
+				if( fu->orientation != OT_SAME )
+					continue;
 
-		for( BU_LIST_FOR( vu, vertexuse, &hit2_v->vu_hd ) )
-		{
-			fu = nmg_find_fu_of_vu( vu );
-			if( fu->orientation != OT_SAME )
-				continue;
-			NMG_GET_FU_NORMAL( norm, fu );
-			dot = VDOT( norm, ap->a_ray.r_dir );
-			if( !NEAR_ZERO( dot, 0.00001 ) )
-			{
-				ok = 1;
-				break;
-			}
-		}
+				NMG_GET_FU_NORMAL( norm, fu );
 
-		if( !ok )
-		{
-			if( debug )
-			{
-				bu_log( "Eliminating hit2_v (%g %g %g) dir=(%g %g %g)\n",
-					V3ARGS( hit2_v->vg_p->coord ),
-					V3ARGS( ap->a_ray.r_dir ) );
-			}
-			hit2_v = (struct vertex *)NULL;
-		}
-	}
-
-	if( hit1_v )
-	{
-		/* check if hit1_v is an extreme vertex (raytrace the NMG) */
-		if( extremes )
-		{
-			if( hit1[ap->a_user] > hit1_v->vg_p->coord[ap->a_user] + tol.dist )
-			{
-				hit1_v = (struct vertex *)NULL;
-				if( debug )
+				if( VDOT( norm, v1 ) > 0.0 )
 				{
-					bu_log( "Eliminating hit1_v (%g %g %g) hit1=(%g %g %g)\n",
-						V3ARGS( hit1_v->vg_p->coord ),
-						V3ARGS( hit1 ) );
+					hit1_v = (struct vertex *)NULL;
+					break;
 				}
 			}
 		}
-		else if( debug )
+	}
+	if( hit2_v )
+	{
+		vect_t v2;
+		struct vertexuse *vu;
+		fastf_t dist_sq;
+
+		VSUB2( v2, mhit2, hit2_v->vg_p->coord );
+		dist_sq = MAGSQ( v2 );
+
+		if( dist_sq > cell_size_sq )
 		{
-			bu_log( "No hits for pt=(%g %g %g) dir=(%g %g %g), not adjusting vertex at (%g %g %g)\n",
-				V3ARGS( ap->a_ray.r_pt ), V3ARGS( ap->a_ray.r_dir ), V3ARGS( hit1_v->vg_p->coord ) );
-			hit1_v = (struct vertex *)NULL;
+
+			for( BU_LIST_FOR( vu, vertexuse, &hit2_v->vu_hd ) )
+			{
+				struct faceuse *fu;
+				vect_t norm;
+
+				fu = nmg_find_fu_of_vu( vu );
+				if( fu->orientation != OT_SAME )
+					continue;
+
+				NMG_GET_FU_NORMAL( norm, fu );
+
+				if( VDOT( norm, v2 ) > 0.0 )
+				{
+					hit2_v = (struct vertex *)NULL;
+					break;
+				}
+			}
 		}
 	}
-	else if( debug )
-	{
-		bu_log( "Cannot find NMG vertex for first hit at (%g %g %g), in dir (%g %g %g)\n",
-			V3ARGS( mhit1 ), V3ARGS( ap->a_ray.r_dir ) );
-	}
-#endif
+
 	if( hit1_v )
 	{
 		struct vertexuse *vu;
@@ -761,42 +730,7 @@ struct partition *PartHeadp;
 
 		bu_ptbl_zero( &verts, (long *)hit1_v );
 	}
-#if 0
-	if( hit2_v )
-	{
-		/* check if hit2_v is an extreme vertex (raytrace the NMG) */
-		if( extremes == (-1) )
-			extremes=Get_extremes( s, &ap2, sd->hitmiss, sd->manifolds, hit1, hit2 );
-		if( extremes )
-		{
-			if( hit2[ap->a_user] < hit2_v->vg_p->coord[ap->a_user] - tol.dist )
-			{
-				if( debug )
-				{
-					bu_log( "Eliminating hit2_v (%g %g %g) hit2=(%g %g %g)\n",
-						V3ARGS( hit2_v->vg_p->coord ),
-						V3ARGS( hit2 ) );
-				}
-				hit2_v = (struct vertex *)NULL;
-			}
-		}
-		else
-		{
-			if( debug )
-			{
-				bu_log( "Eliminating hit2_v (%g %g %g) hit2=(%g %g %g)\n",
-					V3ARGS( hit2_v->vg_p->coord ),
-					V3ARGS( hit2 ) );
-			}
-			hit2_v = (struct vertex *)NULL;
-		}
-	}
-	else if( debug )
-	{
-		bu_log( "Cannot find NMG vertex for last hit at (%g %g %g), in dir (%g %g %g)\n",
-			V3ARGS( mhit2 ), V3ARGS( ap->a_ray.r_dir ) );
-	}
-#endif
+
 	if( hit2_v )
 	{
 		struct vertexuse *vu;
@@ -845,7 +779,7 @@ struct partition *PartHeadp;
 
 	return( 1 );
 }
-#if 1
+
 static void
 Split_side_faces( s, tab )
 struct shell *s;
@@ -1097,242 +1031,6 @@ struct bu_ptbl *tab;
 
 	bu_ptbl_free( &faces );
 }
-#else
-static void
-Split_side_faces( s, tab )
-struct shell *s;
-struct bu_ptbl *tab;
-{
-	int i, j;
-	int dir1, dir2;
-	int edge_no;
-	struct bu_ptbl edges;
-	fastf_t cell_diag_sq = 2.0 * cell_size * cell_size;
-
-	nmg_edge_tabulate( &edges, &s->l.magic );
-	bu_ptbl_init( &verts, 128, "verts" );
-
-	dir1 = cur_dir + 1;
-	if( dir1 == 3 )
-		dir1 = 0;
-	dir2 = dir1 + 1;
-	if( dir2 == 3 )
-		dir2 = 0;
-
-
-	for( edge_no=0 ; edge_no<BU_PTBL_END( &edges ) ; edge_no++ )
-	{
-		struct faceuse *fu;
-		struct edge *e;
-		struct vertex_g *vg1, *vg2;
-		struct edgeuse *new_eu;
-		struct vertex *v;
-		fastf_t y_coord;
-		point_t pt;
-		fastf_t d0, d1, d2;
-		fastf_t dist_dir0, dist_dir1, dist_dir2;
-
-		e = (struct edge *)BU_PTBL_GET( &edges, edge_no );
-		NMG_CK_EDGE( e );
-
-		vg1 = e->eu_p->vu_p->v_p->vg_p;
-		vg2 = e->eu_p->eumate_p->vu_p->v_p->vg_p;
-
-		d0 = vg1->coord[cur_dir] - vg2->coord[cur_dir];
-		d1 = vg1->coord[dir1] - vg2->coord[dir1];
-		d2 = vg1->coord[dir2] - vg2->coord[dir2];
-
-		dist_dir0 = ABS( d0 );
-		dist_dir1 = ABS( d1 );
-		dist_dir2 = ABS( d2 );
-
-bu_log( "edge (%g %g %g)<->(%g %g %g)\n", V3ARGS( vg1->coord ), V3ARGS( vg2->coord ) );
-
-		if( (cur_dir == X || vg1->coord[X] == vg2->coord[X]) &&
-		    (cur_dir == Y || vg1->coord[Y] == vg2->coord[Y]) &&
-		    (cur_dir == Z || vg1->coord[Z] == vg2->coord[Z]) )
-		{
-			if( vg1->coord[cur_dir] > vg2->coord[cur_dir] )
-			{
-				struct vertex_g *tmp_vg;
-
-				tmp_vg = vg1;
-				vg1 = vg2;
-				vg2 = tmp_vg;
-				new_eu = e->eu_p->eumate_p;
-			}
-			else
-				new_eu = e->eu_p;
-bu_log( "\tedge is in direction of initial rays\n" );
-
-			switch( cur_dir)
-			{
-				case X:
-					for( j=0 ; j<cell_count[X] ; j++ )
-					{
-						VSET( pt, xy_rays[XY_CELL(j,0)].r_pt[X], vg1->coord[Y], vg1->coord[Z] )
-						if( !IN_SEG( pt[X], vg1->coord[X], vg2->coord[X] ))
-							continue;
-
-						new_eu = nmg_esplit( (struct vertex *)NULL, new_eu, 0 );
-						nmg_vertex_gv( new_eu->vu_p->v_p, pt );
-						bu_ptbl_ins( &verts, (long *)new_eu->vu_p->v_p );
-					}
-					break;
-				case Y:
-					for( j=0 ; j<cell_count[Y] ; j++ )
-					{
-						VSET( pt, vg1->coord[X], xy_rays[XY_CELL(0,j)].r_pt[Y], vg1->coord[Z] )
-						if( !IN_SEG( pt[Y], vg1->coord[Y], vg2->coord[Y] ) )
-							continue;
-
-						new_eu = nmg_esplit( (struct vertex *)NULL, new_eu, 0 );
-						nmg_vertex_gv( new_eu->vu_p->v_p, pt );
-						bu_ptbl_ins( &verts, (long *)new_eu->vu_p->v_p );
-					}
-					break;
-				case Z:
-					for( j=0 ; j<cell_count[Z] ; j++ )
-					{
-						VSET( pt, vg1->coord[X], vg1->coord[Y], xz_rays[XZ_CELL(0,j)].r_pt[Z] );
-						if( !IN_SEG( pt[Z], vg1->coord[Z], vg2->coord[Z] ) )
-							continue;
-
-						new_eu = nmg_esplit( (struct vertex *)NULL, new_eu, 0 );
-						nmg_vertex_gv( new_eu->vu_p->v_p, pt );
-						bu_ptbl_ins( &verts, (long *)new_eu->vu_p->v_p );
-					}
-					break;
-			}
-		}
-		else if( dist_dir0 < dist_dir1 && dist_dir0 < dist_dir2 &&
-			((cur_dir != X && vg1->coord[X] == vg2->coord[X]) ||
-			 (cur_dir != Y && vg1->coord[Y] == vg2->coord[Y]) ||
-			 (cur_dir != Z && vg1->coord[Z] == vg2->coord[Z])) )
-		{
-			int loop_end;
-
-			new_eu = e->eu_p;
-bu_log( "\tedge has at least one other coordinate constant\n" );
-			if( dist_dir1 > dist_dir2 && dist_dir1 > cell_size )
-			{
-				if( d1 > 0.0 )
-					new_eu = new_eu->eumate_p;
-
-				for( j=0 ; j<cell_count[dir1] ; j++ )
-				{
-					switch( dir1 )
-					{
-						case X:
-							pt[dir1] = xy_rays[XY_CELL(j,0)].r_pt[dir1];
-							break;
-						case Y:
-							pt[dir1] = xy_rays[XY_CELL(0,j)].r_pt[dir1];
-							break;
-						case Z:
-							pt[dir1] = yz_rays[YZ_CELL(0,j)].r_pt[dir1];
-							break;
-					}
-					if( !IN_SEG( pt[dir1], vg1->coord[dir1], vg2->coord[dir1] ) )
-						continue;
-					pt[dir2] = vg2->coord[dir2] + d2 * (pt[dir1] - vg2->coord[dir1]) / d1;
-					if( !IN_SEG( pt[dir2], vg1->coord[dir2], vg2->coord[dir2] ))
-						continue;
-
-					pt[cur_dir] = vg1->coord[cur_dir];
-
-					new_eu = nmg_esplit( (struct vertex *)NULL, new_eu, 0 );
-					nmg_vertex_gv( new_eu->vu_p->v_p, pt );
-					bu_ptbl_ins( &verts, (long *)new_eu->vu_p->v_p );
-				}
-			}
-			else if( dist_dir2 > cell_size )
-			{
-				if( d2 > 0.0 )
-					new_eu = new_eu->eumate_p;
-
-				for( j=0 ; j<cell_count[dir2] ; j++ )
-				{
-					switch( dir2 )
-					{
-						case X:
-							pt[dir2] = xy_rays[XY_CELL(j,0)].r_pt[dir2];
-							break;
-						case Y:
-							pt[dir2] = xy_rays[XY_CELL(0,j)].r_pt[dir2];
-							break;
-						case Z:
-							pt[dir2] = yz_rays[YZ_CELL(0,j)].r_pt[dir2];
-							break;
-					}
-					if( !IN_SEG( pt[dir2], vg1->coord[dir2], vg2->coord[dir2] ) )
-						continue;
-					pt[dir1] = vg2->coord[dir1] + d1 * (pt[dir2] - vg2->coord[dir2]) / d2;
-					if( !IN_SEG( pt[dir1], vg1->coord[dir1], vg2->coord[dir1] ))
-						continue;
-
-					pt[cur_dir] = vg1->coord[cur_dir];
-
-					new_eu = nmg_esplit( (struct vertex *)NULL, new_eu, 0 );
-					nmg_vertex_gv( new_eu->vu_p->v_p, pt );
-					bu_ptbl_ins( &verts, (long *)new_eu->vu_p->v_p );
-				}
-			}
-		}
-		else
-		{
-			struct vertex *new_v;
-			fastf_t d[3];
-			fastf_t dist[3];
-			fastf_t len, len_sq;
-			vect_t edge_dir;
-			point_t pt;
-			int splits;
-			fastf_t split_len;
-
-			new_eu = e->eu_p;
-bu_log( "\tlast resort\n" );
-
-			d[X] = vg2->coord[X] - vg1->coord[X];
-			d[Y] = vg2->coord[Y] - vg1->coord[Y];
-			d[Z] = vg2->coord[Z] - vg1->coord[Z];
-
-			len_sq = d[X] * d[X] + d[Y] * d[Y] + d[Z] * d[Z];
-			if( len_sq <= 1.5 * cell_diag_sq )
-				continue;
-
-			len = sqrt( len_sq );
-			splits = len / cell_size;
-			if( splits < 1 )
-				continue;
-
-			split_len = len / (double)(splits + 1);
-
-			dist[X] = ABS( d[X] );
-			dist[Y] = ABS( d[Y] );
-			dist[Z] = ABS( d[Z] );
-
-			VMOVE( edge_dir, d );
-			VUNITIZE( edge_dir );
-
-			for( i=1 ; i<=splits ; i++ )
-			{
-				fastf_t a;
-
-				a = split_len * (double)i;
-				VJOIN1( pt, vg1->coord, a, edge_dir );
-				new_eu = nmg_esplit( (struct vertex *)NULL, new_eu, 0 );
-				new_v = new_eu->vu_p->v_p;
-				bu_ptbl_ins( tab, (long *)new_v );
-				nmg_vertex_gv( new_v, pt );
-				bu_ptbl_ins( &verts, (long *)new_eu->vu_p->v_p );
-			}
-		}
-	}
-
-	bu_ptbl_free( &edges );
-}
-#endif
 
 static void
 shrink_wrap( s )
@@ -2210,6 +1908,7 @@ char *argv[];
 				break;
 			case 'g':	/* cell size */
 				cell_size = atof( optarg );
+				cell_size_sq = cell_size * cell_size;
 				break;
 			case 'o':	/* BRL-CAD output file */
 				output_file = optarg;
