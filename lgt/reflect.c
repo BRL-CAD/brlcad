@@ -280,6 +280,13 @@ int frame;
 	else
 	if( hiddenln_draw )
 		{
+		if( a_gridsz > MAX_HL_SIZE )
+			{
+			rt_log( "%s is %dx%d pixels.\n",
+				"Max. size for hidden-line images",
+				MAX_HL_SIZE, MAX_HL_SIZE );
+			return;
+			}
 		if( (hl_normap = (RGBpixel *)
 		       malloc( (unsigned)(a_gridsz*a_gridsz)*sizeof(RGBpixel) ))
 			== NULL
@@ -1802,12 +1809,6 @@ hl_Postprocess()
 		register int xi, yi; /* bitmap/array space indices */
 		unsigned short maxdist = (cell_sz*ARCTAN_87)+2;
 	prnt_Event( "Making hidden-line drawing..." );
-	if( a_gridsz > MAX_HL_SIZE )
-		{
-		rt_log( "Max. size for hidden-line images is %dx%d pixels.\n",
-			MAX_HL_SIZE );
-		return;
-		}
 	/* Build bitmap from normal, region and distance maps. */
 	for(	yi = 0;
 		yi < a_gridsz && ! user_interrupt;
