@@ -515,9 +515,9 @@ struct soltab {
 #define ID_SUBMODEL	28	/* Instanced submodel */
 #define	ID_CLINE	29	/* FASTGEN4 CLINE solid */
 #define	ID_BOT		30	/* Bag o' triangles */
-#define ID_MAXIMUM	30	/* Maximum defined ID_xxx value */
+#define ID_COMBINATION	31	/* Combination Record (non-geometric) */
 
-#define ID_COMBINATION	(ID_MAXIMUM+1)	/* Combination Record (non-geometric) */
+#define ID_MAXIMUM	31	/* Maximum defined ID_xxx value */
 
 /*
  *			M A T E R _ I N F O
