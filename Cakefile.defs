@@ -517,7 +517,8 @@ set -S2 "/bin/sh"
 #	define	GFLAG		-KPIC
 # if 1
 #	define	ARCH_SUF	so
-#	define	LIBVERS	[[../sharedlibvers.sh]]
+/*	should be [[../sharedlibvers.sh]], but LD doesn't grok the version numbers! */
+#	define	LIBVERS	/**/
 #	define	BUILD_LIBRARY	ld -shared -o
 #	define	RANLIB		/**/
 /*	Note that /usr/lib MUST go first on -rpath, so that -lmalloc is the system one */
@@ -690,6 +691,7 @@ set -S2 "/bin/sh"
 #	endif
 #	define	CC_DEFS	-PIC -DHAVE_UNISTD_H -DHAVE_STDLIB_H	/* Position independent code, for shared libraries, and unistd.h*/
 # if 1
+/*	Shared library support */
 #	define	ARCH_SUF	so
 #	define	LIBVERS		[[../sharedlibvers.sh]]
 #	define	BUILD_LIBRARY	ld -Bdynamic -o
@@ -1131,6 +1133,10 @@ set -S2 "/bin/sh"
 #	define	MGED_LIBES	/**/
 #endif
 
+#ifndef LIBVERS
+#	define	LIBVERS	echo
+#endif
+
 /*
  *  Provide paths for programs, etc.
  *  Don't add comments after a definition, the extra tabs ruin things
@@ -1259,51 +1265,85 @@ set -S2 "/bin/sh"
 #if !NFS
 /*	Local style, binaries in source directories */
 #	define	LIBFB	-L../libfb -lfb
+#	define	LIBFB_DEP	[[LIBVERS ../libfb/libfb.ARCH_SUF]]
 #	define	LIBRT	-L../librt -lrt
+#	define	LIBRT_DEP	[[LIBVERS ../librt/librt.ARCH_SUF]]
 #	define	LIBPLOT	-L../libplot3 -lplot3
+#	define	LIBPLOT_DEP	[[LIBVERS ../libplot3/libplot3.ARCH_SUF]]
 #	define	LIBORLE	-L../liborle -lorle
+#	define	LIBORLE_DEP	[[LIBVERS ../liborle/liborle.ARCH_SUF]]
 #	define	LIBRLE	-L../librle -lrle
+#	define	LIBRLE_DEP	[[LIBVERS ../librle/librle.ARCH_SUF]]
 #	define  LIBFFT	-L../libfft -lfft
+#	define	LIBFFT_DEP	[[LIBVERS ../libfft/libfft.ARCH_SUF]]
 #	define	LIBWDB	-L../libwdb -lwdb
+#	define	LIBWDB_DEP	[[LIBVERS ../libwdb/libwdb.ARCH_SUF]]
 #	define	LIBNURB	-L../libnurb -lnurb
+#	define	LIBNURB_DEP	[[LIBVERS ../libnurb/libnurb.ARCH_SUF]]
 #	define	LIBMSR	-L../libmsr -lmsr
+#	define	LIBMSR_DEP	[[LIBVERS ../libmsr/libmsr.ARCH_SUF]]
 #	define	LIBRAD	-L../librad -lrad
+#	define	LIBRAD_DEP	[[LIBVERS ../librad/librad.ARCH_SUF]]
 #	define	LIBTERMIO	-L../libtermio -ltermio
+#	define	LIBTERMIO_DEP	[[LIBVERS ../libtermio/libtermio.ARCH_SUF]]
 #	define	LIBCURSOR	-L../libcursor -lcursor
+#	define	LIBCURSOR_DEP	[[LIBVERS ../libcursor/libcursor.ARCH_SUF]]
 #	define	LIBFONT	-L../libfont -lfont
+#	define	LIBFONT_DEP	[[LIBVERS ../libfont/libfont.ARCH_SUF]]
 #	define	LIBSYSV	-L../libsysv -lsysv
+#	define	LIBSYSV_DEP	[[LIBVERS ../libsysv/libsysv.ARCH_SUF]]
 #	ifndef	LIBMALLOC
 #		define	LIBMALLOC	-L../libmalloc -lmalloc
+#		define	LIBMALLOC_DEP	[[LIBVERS ../libmalloc/libmalloc.ARCH_SUF]]
 #	endif
 #	if HAS_TCP
 #		define	LIBPKG	-L../libpkg -lpkg
+#		define	LIBPKG_DEP	[[LIBVERS ../libpkg/libpkg.ARCH_SUF]]
 #	else
 #		define	LIBPKG	/**/
+#		define	LIBPKG_DEP	/**/
 #	endif
 
 #else
 /*	NFS style, append machine name */
 #	define	LIBFB	-L../.libfb.MTYPE -lfb
+#	define	LIBFB_DEP	[[LIBVERS ../.libfb.MTYPE/libfb.ARCH_SUF]]
 #	define	LIBRT	-L../.librt.MTYPE -lrt
+#	define	LIBRT_DEP	[[LIBVERS ../.librt.MTYPE/librt.ARCH_SUF]]
 #	define	LIBPLOT	-L../.libplot3.MTYPE -lplot3
+#	define	LIBPLOT_DEP	[[LIBVERS ../.libplot3.MTYPE/libplot3.ARCH_SUF]]
 #	define	LIBORLE	-L../.liborle.MTYPE -lorle
+#	define	LIBORLE_DEP	[[LIBVERS ../.liborle.MTYPE/liborle.ARCH_SUF]]
 #	define	LIBRLE	-L../.librle.MTYPE -lrle
+#	define	LIBRLE_DEP	[[LIBVERS ../.librle.MTYPE/librle.ARCH_SUF]]
 #	define	LIBFFT	-L../.libfft.MTYPE -lfft
+#	define	LIBFFT_DEP	[[LIBVERS ../.libfft.MTYPE/libfft.ARCH_SUF]]
 #	define	LIBWDB	-L../.libwdb.MTYPE -lwdb
+#	define	LIBWDB_DEP	[[LIBVERS ../.libwdb.MTYPE/libwdb.ARCH_SUF]]
 #	define	LIBNURB	-L../.libnurb.MTYPE -lnurb
+#	define	LIBNURB_DEP	[[LIBVERS ../.libnurb.MTYPE/libnurb.ARCH_SUF]]
 #	define	LIBMSR	-L../.libmsr.MTYPE -lmsr
+#	define	LIBMSR_DEP	[[LIBVERS ../.libmsr.MTYPE/libmsr.ARCH_SUF]]
 #	define	LIBRAD	-L../.librad.MTYPE -lrad
+#	define	LIBRAD_DEP	[[LIBVERS ../.librad.MTYPE/librad.ARCH_SUF]]
 #	define	LIBTERMIO	-L../.libtermio.MTYPE -ltermio
+#	define	LIBTERMIO_DEP	[[LIBVERS ../.libtermio.MTYPE/libtermio.ARCH_SUF]]
 #	define	LIBCURSOR	-L../.libcursor.MTYPE -lcursor
+#	define	LIBCURSOR_DEP	[[LIBVERS ../.libcursor.MTYPE/libcursor.ARCH_SUF]]
 #	define	LIBFONT	-L../.libfont.MTYPE -lfont
+#	define	LIBFONT_DEP	[[LIBVERS ../.libfont.MTYPE/libfont.ARCH_SUF]]
 #	define	LIBSYSV	-L../.libsysv.MTYPE -lsysv
+#	define	LIBSYSV_DEP	[[LIBVERS ../.libsysv.MTYPE/libsysv.ARCH_SUF]]
 #	ifndef	LIBMALLOC
 #		define	LIBMALLOC	-L../.libmalloc.MTYPE -lmalloc
+#		define	LIBMALLOC_DEP	[[LIBVERS ../.libmalloc.MTYPE/libmalloc.ARCH_SUF]]
 #	endif
 #	if HAS_TCP
 #		define	LIBPKG	-L../.libpkg.MTYPE -lpkg
+#		define	LIBPKG_DEP	[[LIBVERS ../.libpkg.MTYPE/libpkg.ARCH_SUF]]
 #	else
 #		define	LIBPKG	/**/
+#		define	LIBPKG_DEP	/**/
 #	endif
 #endif
 #endif /* ---- */
