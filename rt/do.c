@@ -206,7 +206,7 @@ char	**argv;
 		while( *cp && !isspace(*cp) )  cp++;	/* skip keyword */
 		while( *cp && isspace(*cp) )  cp++;	/* skip spaces */
 		frame = atoi(cp);
-		rt_free( buf, "cmd buf (skiping frames)" );
+		rt_free( buf, "rt_read_cmd command buffer (skipping frames)" );
 		if( finalframe >= 0 && frame > finalframe )
 			return(-1);			/* "EOF" */
 		if( frame >= desiredframe )  {

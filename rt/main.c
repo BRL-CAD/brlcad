@@ -279,7 +279,7 @@ char **argv;
 			if( rdebug&RDEBUG_PARSE )
 				fprintf(stderr,"cmd: %s\n", buf );
 			ret = rt_do_cmd( rtip, buf, rt_cmdtab );
-			rt_free( buf, "cmd buf" );
+			rt_free( buf, "rt_read_cmd command buffer" );
 			if( ret < 0 )
 				break;
 		}
