@@ -415,10 +415,12 @@ CONST struct rt_tol	*tol;
 	/* First, handle any splitting */
 	for( RT_LIST_FOR( fu, faceuse, &s->fu_hd ) )  {
 		for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
+			(void)nmg_loop_split_at_touching_jaunt( lu, tol );
 			nmg_split_touchingloops( lu, tol );
 		}
 	}
 	for( RT_LIST_FOR( lu, loopuse, &s->lu_hd ) )  {
+		(void)nmg_loop_split_at_touching_jaunt( lu, tol );
 		nmg_split_touchingloops( lu, tol );
 	}
 
@@ -2303,6 +2305,62 @@ out:
 }
 
 /*
+ *			N M G _ F I N D _ R E P E A T E D _ V _ I N _ L U
+ *
+ *  Given a vertexuse of an edgeuse in a loopuse, see if the vertex is
+ *  used by at least one other vertexuse in that same loopuse.
+ *
+ *  Returns -
+ *	vu	If this vertex appears elsewhere in the loopuse.
+ *	NULL	If this is the only occurance of this vertex in the loopuse.
+ *  XXX move to nmg_info.c
+ */
+struct vertexuse *
+nmg_find_repeated_v_in_lu( vu )
+struct vertexuse	*vu;
+{
+	struct vertexuse	*tvu;		/* vu to test */
+	struct loopuse		*lu;
+	struct vertex		*v;
+
+	v = vu->v_p;
+	NMG_CK_VERTEX(v);
+
+	if( *vu->up.magic_p != NMG_EDGEUSE_MAGIC )
+		return (struct vertexuse *)0;
+	if( *vu->up.eu_p->up.magic_p != NMG_LOOPUSE_MAGIC )
+		return (struct vertexuse *)0;
+	lu = vu->up.eu_p->up.lu_p;
+
+	/*
+	 *  For each vertexuse on vertex list,
+	 *  check to see if it points up to the this loop.
+	 *  If so, then there is a duplicated vertex.
+	 *  Ordinarily, the vertex list will be *very* short,
+	 *  so this strategy is likely to be faster than
+	 *  a table-based approach, for most cases.
+	 */
+	for( RT_LIST_FOR( tvu, vertexuse, &v->vu_hd ) )  {
+		struct edgeuse		*teu;
+		struct loopuse		*tlu;
+
+		if( tvu == vu )  continue;
+		if( *tvu->up.magic_p != NMG_EDGEUSE_MAGIC )  continue;
+		teu = tvu->up.eu_p;
+		NMG_CK_EDGEUSE(teu);
+		if( *teu->up.magic_p != NMG_LOOPUSE_MAGIC )  continue;
+		tlu = teu->up.lu_p;
+		NMG_CK_LOOPUSE(tlu);
+		if( tlu != lu )  continue;
+		/*
+		 *  Repeated vertex exists.  Return (one) other use of it.
+		 */
+		return tvu;
+	}
+	return (struct vertexuse *)0;
+}
+
+/*
  *			N M G _ S P L I T _ T O U C H I N G L O O P S
  *
  *  Search through all the vertices in a loop.
@@ -2333,9 +2391,30 @@ top:
 	/* For each edgeuse, get vertexuse and vertex */
 	for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
 		struct vertexuse	*tvu;
+		struct loopuse		*newlu;
 
 		vu = eu->vu_p;
 		NMG_CK_VERTEXUSE(vu);
+
+#if 1
+		if( !nmg_find_repeated_v_in_lu( vu ) )  continue;
+		/*
+		 *  Repeated vertex exists,
+		 *  Split loop into two loops
+		 */
+		newlu = nmg_split_lu_at_vu( lu, vu );
+		NMG_CK_LOOPUSE(newlu);
+		NMG_CK_LOOP(newlu->l_p);
+		nmg_loop_g(newlu->l_p, tol);
+
+		/* Ensure there are no duplications in new loop */
+		nmg_split_touchingloops(newlu, tol);
+
+		/* There is no telling where we will be in the
+		 * remainder of original loop, check 'em all.
+		 */
+		goto top;
+#else
 		v = vu->v_p;
 		NMG_CK_VERTEX(v);
 
@@ -2350,7 +2429,6 @@ top:
 		for( RT_LIST_FOR( tvu, vertexuse, &v->vu_hd ) )  {
 			struct edgeuse		*teu;
 			struct loopuse		*tlu;
-			struct loopuse		*newlu;
 
 			if( tvu == vu )  continue;
 			if( *tvu->up.magic_p != NMG_EDGEUSE_MAGIC )  continue;
@@ -2377,6 +2455,7 @@ top:
 			 */
 			goto top;
 		}
+#endif
 	}
 }
 
@@ -2460,6 +2539,74 @@ rt_log("nmg_join_touchingloops(): lu=x%x, vu=x%x, tvu=x%x\n", lu, vu, tvu);
 			count++;
 			goto top;
 		}
+	}
+	return count;
+}
+
+/*
+ *			N M G _ L O O P _ S P L I T _ A T _ T O U C H I N G _ J A U N T
+ *
+ *  If a loop makes a "jaunt" (edgeuses from verts A->B->A), where the
+ *  tip of the jaunt touches the same loop at a different vertexuse,
+ *  cut the loop into two.
+ *
+ *  This produces a much more reasonable loop split than
+ *  nmg_split_touchingloops(), which tends to peel off 2-edge "cracks"
+ *  as it unravels the loop.
+ *
+ *  Note that any loops so split will be marked OT_UNSPEC.
+ */
+int
+nmg_loop_split_at_touching_jaunt(lu, tol)
+struct loopuse		*lu;
+CONST struct rt_tol	*tol;
+{
+	struct edgeuse		*eu;
+	int			count = 0;
+
+	NMG_CK_LOOPUSE(lu);
+	RT_CK_TOL(tol);
+	if (rt_g.NMG_debug & DEBUG_BASIC)  {
+		rt_log("nmg_loop_split_at_touching_jaunt( lu=x%x ) START\n", lu);
+	}
+top:
+	if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+		goto out;
+
+	for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
+		struct edgeuse	*eu2;
+		struct edgeuse	*eu3;
+		struct vertexuse	*tvu;	/* other touching vu */
+		struct loopuse		*newlu;
+
+		eu2 = RT_LIST_PNEXT_CIRC(edgeuse, &eu->l);
+		eu3 = RT_LIST_PNEXT_CIRC(edgeuse, &eu2->l);
+
+		/* If it's a 2 vertex crack, stop here */
+		if( eu->vu_p == eu3->vu_p )  break;
+
+		/* If not jaunt, move on */
+		if( eu->vu_p->v_p != eu3->vu_p->v_p )  continue;
+
+		/* It's a jaunt, see if tip touches same loop */
+		if( (tvu = nmg_find_repeated_v_in_lu(eu2->vu_p)) == (struct vertexuse *)NULL )
+			continue;
+
+		/* Tip touches loop.  (What about ring and sleeve?) */
+		newlu = nmg_split_lu_at_vu( lu, eu2->vu_p );
+		count++;
+		NMG_CK_LOOPUSE(newlu);
+		NMG_CK_LOOP(newlu->l_p);
+		nmg_loop_g(newlu->l_p, tol);
+
+		/* Recurse on new loop */
+		count += nmg_loop_split_at_touching_jaunt( newlu, tol );
+		goto top;
+	}
+out:
+	if (rt_g.NMG_debug & DEBUG_BASIC)  {
+		rt_log("nmg_loop_split_at_touching_jaunt( lu=x%x ) END count=%d\n",
+			lu, count);
 	}
 	return count;
 }
