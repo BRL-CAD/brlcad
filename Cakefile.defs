@@ -601,7 +601,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 
 #	if defined( __GNUC__ )
 #		define	CC		gcc
-#		if 0	/* PRODUCTION=1 */
+#		if 1	/* PRODUCTION=1 */
 #			define	OPTIMIZER	-O2 -fwritable-strings
 #		else
 #			define	OPTIMIZER	-g -fwritable-strings
@@ -611,7 +611,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	else
 /*		For now, we expect /opt/SUNWspro/bin ANSI compiler to be used */
 #		define	CC		/opt/SUNWspro/bin/cc
-#		if 1	/* PRODUCTION=1 */
+#		if 0	/* PRODUCTION=1 */
 #			define	OPTIMIZER	-dalign -xcg92 -xO4
 #		else
 #			define	OPTIMIZER	-g
@@ -626,10 +626,14 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #		define	ARCH_SUF	so
 #		define	LIBVERS		../sh/sharedlibvers.sh
 #		define	BUILD_LIBRARY	ld -Bdynamic -G -h PRODUCTS[[LIBVERS]] -o
+#		define	RANLIB		true
+#		define	STANDARD_LIBES	-lm -lnsl -lsocket -ldl -R /usr/lib:LIBDIR
+#	else
+#		define  ARCH_SUF	a
+#		define	LIBVERS		../sh/newvers.sh
+#		define	RANLIB		ranlib
+#		define	STANDARD_LIBES	-lm -lnsl -lsocket -ldl
 #	endif
-#	define	RANLIB		true
-
-#	define	STANDARD_LIBES	-lm -lnsl -lsocket -ldl -R /usr/lib:LIBDIR
 
 #	define	LIBPKG_CONFIG	-DBSD=43 -D_KERNEL
 #	define	LIBPKG_LIBES	-lnsl -lsocket
@@ -648,11 +652,15 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #  if 1	/* PRODUCTION=1 */
 #	define	LIBMESA_CONFIG	-DFBIND=2
 #	define	LIBDM_OBJS	dm-X
-#	define	LIBDM_CONFIG	-DDM_x  -I''XINCDIR
+#	define	LIBDM_CONFIG	-DDM_X -I''XINCDIR
 #	define	LIBDM_LIBES	LIBTK LIBTCL LIBTCL_LIBES
 #	define	MGED_OBJS	dm-X dm-generic
-#	define	MGED_CONFIG	-DDM_X -I''XINCDIR
+#	define	MGED_CONFIG	-DDM_X -I''XINCDIR -DBRLCAD_TCL_LIBRARY='"'TCLSCRIPTSDIR'"'
+#if 0
 #	define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -R''XLIBDIR -lX11 -lnsl -lsocket
+#else
+#	define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -lnsl -lsocket
+#endif
 #	define	LIBDM_SAMPLER_LIBES MGED_LIBES
 #  else
 /*	Compiling XGL requires SDK (Solaris Developer's Kit) */
