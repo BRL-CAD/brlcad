@@ -46,8 +46,9 @@ struct chan {
 	fastf_t	*c_oval;	/* output value array */
 	/* FLAGS */
 	int	c_interp;	/* linear or spline? */
-#define	INTERP_LINEAR	1
-#define	INTERP_SPLINE	2
+#define INTERP_STEP	1
+#define	INTERP_LINEAR	2
+#define	INTERP_SPLINE	3
 	int	c_periodic;	/* cyclic end conditions? */
 };
 
@@ -346,7 +347,9 @@ char	**argv;
 	int	ch;
 	struct chan	*chp;
 
-	if( strcmp( argv[1], "linear" ) == 0 )  {
+	if( strcmp( argv[1], "step" ) == 0 )  {
+		interp = INTERP_STEP;
+	} else if( strcmp( argv[1], "linear" ) == 0 )  {
 		interp = INTERP_LINEAR;
 	} else if( strcmp( argv[1], "spline" ) == 0 )  {
 		interp = INTERP_SPLINE;
@@ -461,36 +464,70 @@ register struct chan	*chp;
 spline( chp )
 register struct chan	*chp;
 {
-	float d,s,u,v;
+	double	d,s;
+	double	u,v;
 	double	hi;			/* horiz interval i-1 to i */
 	double	hi1;			/* horiz interval i to i+1 */
-	float h;
-	float D2yi,D2yi1,D2yn1;
-	float a;
-	int end;
-	float corr;
-	register int i,j,m;
-	float konst = 0.0;		/* derriv. at endpts, non-periodic */
-	float *diag, *rrr;
+	double	D2yi;			/* D2 of y[i] */
+	double	D2yi1;			/* D2 of y[i+1] */
+	double	D2yn1;			/* D2 of y[n-1] (last point) */
+	double	a;
+	int	end;
+	double	corr;
+	double	konst = 0.0;		/* derriv. at endpts, non-periodic */
+	double		*diag = (double *)0;
+	double		*rrr = (double *)0;
+	double		*times = (double *)0;
+	register int	i;
 	register int	t;
 
 	/* First, as a quick hack, do linear interpolation to fill in
 	 * values off the endpoints, in non-periodic case
 	 */
-	linear_interpolate( chp );
+	if( chp->c_periodic == 0 )
+		linear_interpolate( chp );
 
 	if(chp->c_ilen<3) {
-		printf("need at least 3 points to spline\n");
+		fprintf(stderr,"spline: need at least 3 points\n");
 		goto bad;
 	}
 
-	i = (chp->c_ilen+1)*sizeof(float);
-	diag = (float *)rt_malloc((unsigned)i, "diag");
-	rrr = (float *)rt_malloc((unsigned)i, "rrr");
-	if( !rrr || !diag )  {
-		printf("malloc failure\n");
+	if( chp->c_periodic && chp->c_ival[0] != chp->c_ival[chp->c_ilen-1] )  {
+		fprintf(stderr,"spline: endpoints don't match, replacing final data value\n");
+		chp->c_ival[chp->c_ilen-1] = chp->c_ival[0];
+	}
+
+	i = (chp->c_ilen+1)*sizeof(double);
+	diag = (double *)rt_malloc((unsigned)i, "diag");
+	rrr = (double *)rt_malloc((unsigned)i, "rrr");
+	times = (double *)rt_malloc( o_len*sizeof(double), "local times");
+	if( !rrr || !diag || !times )  {
+		fprintf(stderr, "spline: malloc failure\n");
 		goto bad;
 	}
+
+	if( chp->c_periodic )  {
+		for( t=0; t < o_len; t++ )  {
+			register double	cur_t;
+
+			cur_t = o_time[t];
+
+			while( cur_t > chp->c_itime[chp->c_ilen-1] )  {
+				cur_t -= (chp->c_itime[chp->c_ilen-1] -
+				    chp->c_itime[0] );
+			}
+			while( cur_t < chp->c_itime[0] )  {
+				cur_t += (chp->c_itime[chp->c_ilen-1] -
+				    chp->c_itime[0] );
+			}
+			times[t] = cur_t;
+		}
+	} else {
+		for( t=0; t < o_len; t++ )  {
+			times[t] = o_time[t];
+		}
+	}
+		
 
 	if(chp->c_periodic) konst = 0;
 	d = 1;
@@ -522,12 +559,13 @@ register struct chan	*chp;
 	/* back substitute */
 	for( i = chp->c_ilen - !chp->c_periodic; --i >= 0; )  {
 		end = i==chp->c_ilen-1;
+		/* hi1 is range of time covered in this interval */
 		hi1 = end ? chp->c_itime[1] - chp->c_itime[0]:
 			chp->c_itime[i+1] - chp->c_itime[i];
 		D2yi1 = D2yi;
 		if(i>0){
 			hi = chp->c_itime[i]-chp->c_itime[i-1];
-			corr = end?2*s+u:0.0;
+			corr = end ? 2*s+u : 0.0;
 			D2yi = (end*v+rrr[i]-hi1*D2yi1-s*D2yn1)/
 				(diag[i]+corr);
 			if(end) D2yn1 = D2yi;
@@ -546,43 +584,14 @@ register struct chan	*chp;
 		}
 		if(end) continue;
 
-		/* hi1 is range of time covered in this interval */
-#if 0
-		/* m will be number of samples in this interval */
-		m = hi1 * fps;
-		if(m<=0) m = 1;
-
-		/* interpolate, high to low */
-		for(j=m;j>0||i==0&&j==0;j--) {
-			register int sub;
-			register double	x0;	/* fraction from [i+0] */
-			register double	x1;	/* fraction from [i+1] */
-			register double	yy;
-
-			x1 = (double)j / (double) m;
-			x0 = 1 - x1;
-			yy = D2yi * (x0 - x0*x0*x0) + D2yi1 * (x1 - x1*x1*x1);
-			yy = chp->c_ival[i] * x0 + chp->c_ival[i+1] * x1 - 
-				hi1 * hi1 * yy / 6;
-			sub = (int)((chp->c_itime[i]+x1*hi1)*fps);
-			chp->c_oval[sub] = yy;
-		}
-#endif
-		/* Sweep o_time[], looking for times in this span */
-		for( t=0; t<o_len; t++ )  {
+		/* Sweep downward in times[], looking for times in this span */
+		for( t=o_len-1; t>=0; t-- )  {
 			register double	x0;	/* fraction from [i+0] */
 			register double	x1;	/* fraction from [i+1] */
 			register double	yy;
 			register double	cur_t;
 
-			cur_t = o_time[t];
-			if( chp->c_periodic )  {
-				/* Should be pre-computed once/sline call XXX */
-				while( cur_t > chp->c_itime[chp->c_ilen-1] )
-					cur_t -= chp->c_itime[0];
-				while( cur_t < chp->c_itime[0] );
-					cur_t += chp->c_itime[chp->c_ilen-1];
-			}
+			cur_t = times[t];
 			if( cur_t > chp->c_itime[i+1] )
 				continue;
 			if( cur_t < chp->c_itime[i] )
@@ -599,9 +608,11 @@ register struct chan	*chp;
 	}
 	rt_free( (char *)diag, "diag");
 	rt_free( (char *)rrr, "rrr" );
+	rt_free( (char *)times, "loc times");
 	return(1);
 bad:
-	rt_free( (char *)diag, "diag");
-	rt_free( (char *)rrr, "rrr" );
+	if(diag) rt_free( (char *)diag, "diag");
+	if(rrr) rt_free( (char *)rrr, "rrr" );
+	if(times) rt_free( (char *)times, "loc times");
 	return(0);
 }
