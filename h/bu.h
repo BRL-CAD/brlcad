@@ -859,6 +859,156 @@ struct bu_color
 #define BU_CK_COLOR(_bp)	BU_CKMAG(_bp, BU_COLOR_MAGIC, "bu_color")
 
 /*----------------------------------------------------------------------*/
+/* red-black tree support */
+/*
+ *	The data structures and constants for red-black trees.
+ *
+ *	Many of these routines are based on the algorithms in chapter 13
+ *	of T. H. Cormen, C. E. Leiserson, and R. L. Rivest,
+ *	_Introduction to algorithms_, MIT Press, Cambridge, MA, 1990.
+ *
+ *	Author:	Paul Tanenbaum
+ *
+ */
+
+/*
+ *			    R B _ L I S T
+ *
+ *		    List of nodes or packages
+ *
+ *	LIBREDBLACK(3) uses this structure to maintain lists of
+ *	all the nodes and all the packages in the tree.  Applications
+ *	should not muck with these things.  They are maintained only
+ *	to facilitate freeing bu_rb_trees.
+ */
+struct bu_rb_list
+{
+    struct bu_list	l;
+    union
+    {
+	struct bu_rb_node    *rbl_n;
+	struct bu_rb_package *rbl_p;
+    }			rbl_u;
+};
+#define	rbl_magic	l.magic
+#define	rbl_node	rbl_u.rbl_n
+#define	rbl_package	rbl_u.rbl_p
+#define	BU_RB_LIST_NULL	((struct bu_rb_list *) 0)
+
+
+/*
+ *			R B _ T R E E
+ *
+ *	This is the only data structure used in LIBREDBLACK
+ *	to which application software need make any explicit
+ *	reference.
+ *
+ *	The members of this structure are grouped into three
+ *	classes:
+ *	    Class I:	Reading is appropriate, when necessary,
+ *			but applications should not modify.
+ *	    Class II:	Reading and modifying are both appropriate,
+ *			when necessary.
+ *	    Class III:	All access should be through routines
+ *			provided in LIBREDBLACK.  Touch these
+ *			at your own risk!
+ */
+typedef struct
+{
+    /* CLASS I - Applications may read directly... */
+    long	 	rbt_magic;	  /* Magic no. for integrity check */
+    int			rbt_nm_nodes;	  /* Number of nodes */
+    /* CLASS II - Applications may read/write directly... */
+    void		(*rbt_print)();	  /* Data pretty-print function */
+    int			rbt_debug;	  /* Debug bits */
+    char		*rbt_description; /* Comment for diagnostics */
+    /* CLASS III - Applications should not manipulate directly... */
+    int		 	rbt_nm_orders;	  /* Number of simultaneous orders */
+    int			(**rbt_order)();  /* Comparison functions */
+    struct bu_rb_node	**rbt_root;	  /* The actual trees */
+    char		*rbt_unique;	  /* Uniqueness flags */
+    struct bu_rb_node	*rbt_current;	  /* Current node */
+    struct bu_rb_list	rbt_nodes;	  /* All nodes */
+    struct bu_rb_list	rbt_packages;	  /* All packages */
+    struct bu_rb_node	*rbt_empty_node;  /* Sentinel representing nil */
+}	bu_rb_tree;
+#define	BU_RB_TREE_NULL	((bu_rb_tree *) 0)
+#define	BU_RB_TREE_MAGIC	0x72627472
+
+/*
+ *	Debug bit flags for member rbt_debug
+ */
+#define BU_RB_DEBUG_INSERT	0x00000001	/* Insertion process */
+#define BU_RB_DEBUG_UNIQ	0x00000002	/* Uniqueness of inserts */
+#define BU_RB_DEBUG_ROTATE	0x00000004	/* Rotation process */
+#define BU_RB_DEBUG_OS	0x00000008	/* Order-statistic operations */
+#define BU_RB_DEBUG_DELETE	0x00000010	/* Deletion process */
+
+/*
+ *			R B _ P A C K A G E
+ *
+ *		    Wrapper for application data
+ *
+ *	This structure provides a level of indirection between
+ *	the application software's data and the red-black nodes
+ *	in which the data is stored.  It is necessary because of
+ *	the algorithm for deletion, which generally shuffles data
+ *	among nodes in the tree.  The package structure allows
+ *	the application data to remember which node "contains" it
+ *	for each order.
+ */
+struct bu_rb_package
+{
+    long		rbp_magic;	/* Magic no. for integrity check */
+    struct bu_rb_node	**rbp_node;	/* Containing nodes */
+    struct bu_rb_list	*rbp_list_pos;	/* Place in the list of all pkgs. */
+    void		*rbp_data;	/* Application data */
+};
+#define	BU_RB_PKG_NULL	((struct bu_rb_package *) 0)
+
+/*
+ *			    R B _ N O D E
+ *
+ *	For the most part, there is a one-to-one correspondence
+ *	between nodes and chunks of application data.  When a
+ *	node is created, all of its package pointers (one per
+ *	order of the tree) point to the same chunk of data.
+ *	However, subsequent deletions usually muddy this tidy
+ *	state of affairs.
+ */
+struct bu_rb_node
+{
+    long		rbn_magic;	/* Magic no. for integrity check */
+    bu_rb_tree		*rbn_tree;	/* Tree containing this node */
+    struct bu_rb_node	**rbn_parent;	/* Parents */
+    struct bu_rb_node	**rbn_left;	/* Left subtrees */
+    struct bu_rb_node	**rbn_right;	/* Right subtrees */
+    char		*rbn_color;	/* Colors of this node */
+    int			*rbn_size;	/* Sizes of subtrees rooted here */
+    struct bu_rb_package **rbn_package;	/* Contents of this node */
+    int			rbn_pkg_refs;	/* How many orders are being used? */
+    struct bu_rb_list	*rbn_list_pos;	/* Place in the list of all nodes */
+};
+#define	BU_RB_NODE_NULL	((struct bu_rb_node *) 0)
+
+/*
+ *	Applications interface to bu_rb_extreme()
+ */
+#define	SENSE_MIN	0
+#define	SENSE_MAX	1
+#define	bu_rb_min(t,o)	bu_rb_extreme((t), (o), SENSE_MIN)
+#define	bu_rb_max(t,o)	bu_rb_extreme((t), (o), SENSE_MAX)
+#define bu_rb_pred(t,o)	bu_rb_neighbor((t), (o), SENSE_MIN)
+#define bu_rb_succ(t,o)	bu_rb_neighbor((t), (o), SENSE_MAX)
+
+/*
+ *	Applications interface to bu_rb_walk()
+ */
+#define	PREORDER	0
+#define	INORDER		1
+#define	POSTORDER	2
+
+/*----------------------------------------------------------------------*/
 /* Miscellaneous macros */
 #define bu_made_it()		bu_log("Made it to %s:%d\n",	\
 					__FILE__, __LINE__)
@@ -886,6 +1036,32 @@ BU_EXTERN(void			bu_pr_bitv, (CONST char *str,
 
 /* bomb.c */
 BU_EXTERN(void			bu_bomb, (CONST char *str) );
+
+/* color.c */
+BU_EXTERN(void		bu_rgb_to_hsv,		(unsigned char *rgb,
+						    fastf_t *hsv) );
+BU_EXTERN(int		bu_hsv_to_rgb,		(fastf_t *hsv,
+						    unsigned char *rgb) );
+BU_EXTERN(int		bu_str_to_rgb,		(char *str,
+						    unsigned char *rgb) );
+BU_EXTERN(void		bu_color_of_rgb_chars,	(struct bu_color *cp,
+						    unsigned char *rgb) );
+BU_EXTERN(int		bu_color_to_rgb_chars,	(struct bu_color *cp,
+						    unsigned char *rgb) );
+BU_EXTERN(int		bu_color_of_rgb_floats,	(struct bu_color *cp,
+						    fastf_t *rgb) );
+BU_EXTERN(int		bu_color_to_rgb_floats,	(struct bu_color *cp,
+						    fastf_t *rgb) );
+BU_EXTERN(int		bu_color_of_hsv_floats,	(struct bu_color *cp,
+						    fastf_t *hsv) );
+BU_EXTERN(int		bu_color_to_hsv_floats,	(struct bu_color *cp,
+						    fastf_t *hsv) );
+
+/* file.c */
+BU_EXTERN(struct bu_file	*bu_fopen, (char *fname, char *type) );
+BU_EXTERN(int			bu_fclose, (struct bu_file *bfp) );
+BU_EXTERN(int			bu_fgetc, (struct bu_file *bfp) );
+BU_EXTERN(void			bu_printfile, (struct bu_file *bfp) );
 
 /* brlcad_path.c */
 BU_EXTERN(int			bu_file_exists, (CONST char *path) );
@@ -1017,11 +1193,6 @@ BU_EXTERN( int                  bu_shader_to_tcl_list, (char *in, struct bu_vls 
 BU_EXTERN( int                  bu_key_val_to_key_eq, (char *in) );
 BU_EXTERN( int                  bu_shader_to_key_eq, (char *in, struct bu_vls *vls) );
 				
-
-
-
-
-
 /* printb.c */
 BU_EXTERN(void			bu_vls_printb, (struct bu_vls *vls,
 				CONST char *s, unsigned long v,
@@ -1045,6 +1216,102 @@ BU_EXTERN(void			bu_ptbl_free, (struct bu_ptbl	*b));
 BU_EXTERN(int			bu_ptbl, (struct bu_ptbl *b, int func, long *p));
 BU_EXTERN(void			bu_pr_ptbl, (CONST char *title,
 				CONST struct bu_ptbl *tbl, int verbose));
+
+/* rb_create.c */
+BU_EXTERN(bu_rb_tree *bu_rb_create,	(char		*description,
+				 int 		nm_orders,
+				 int		(**order_funcs)()
+				));
+BU_EXTERN(bu_rb_tree *bu_rb_create1,	(char		*description,
+				 int		(*order_func)()
+				));
+/* rb_delete.c */
+BU_EXTERN(void bu_rb_delete,	(bu_rb_tree	*tree,
+				 int		order
+				));
+#define		bu_rb_delete1(t)	bu_rb_delete((t), 0)
+
+/* rb_diag.c */
+BU_EXTERN(void bu_rb_diagnose_tree,(bu_rb_tree	*tree,
+				 int		order,
+				 int		trav_type
+				));
+BU_EXTERN(void bu_rb_summarize_tree,(bu_rb_tree	*tree
+				 ));
+/* rb_extreme.c */
+BU_EXTERN(void *bu_rb_curr,	(bu_rb_tree	*tree,
+				 int		order
+				));
+#define		bu_rb_curr1(t)	bu_rb_curr((t), 0)
+BU_EXTERN(void *bu_rb_extreme,	(bu_rb_tree	*tree,
+				 int		order,
+				 int		sense
+				));
+BU_EXTERN(void *bu_rb_neighbor,	(bu_rb_tree	*tree,
+				 int		order,
+				 int		sense
+				));
+/* rb_free.c */
+BU_EXTERN(void bu_rb_free,		(bu_rb_tree	*tree,
+				 void		(*free_data)()
+				));
+#define	BU_RB_RETAIN_DATA	((void (*)()) 0)
+#define		bu_rb_free1(t,f)					\
+		{							\
+		    BU_CKMAG((t), BU_RB_TREE_MAGIC, "red-black tree");	\
+		    rt_free((char *) ((t) -> rbt_order),		\
+				"red-black order function");		\
+		    bu_rb_free(t,f);					\
+		}
+/* rb_insert.c */
+BU_EXTERN(int bu_rb_insert,	(bu_rb_tree	*tree,
+				 void		*data
+				));
+BU_EXTERN(int bu_rb_is_uniq,	(bu_rb_tree	*tree,
+				 int		order
+				));
+#define		bu_rb_is_uniq1(t)	bu_rb_is_uniq((t), 0)
+BU_EXTERN(void bu_rb_set_uniqv,	(bu_rb_tree	*tree,
+				 bitv_t		vec
+				));
+BU_EXTERN(void bu_rb_uniq_all_off,	(bu_rb_tree	*tree
+				));
+BU_EXTERN(void bu_rb_uniq_all_on,	(bu_rb_tree	*tree
+				));
+BU_EXTERN(int bu_rb_uniq_off,	(bu_rb_tree	*tree,
+				 int		order
+				));
+#define		bu_rb_uniq_off1(t)	bu_rb_uniq_off((t), 0)
+BU_EXTERN(int bu_rb_uniq_on,	(bu_rb_tree	*tree,
+				 int		order
+				));
+#define		bu_rb_uniq_on1(t)	bu_rb_uniq_on((t), 0)
+
+/* rb_order_stats.c */
+BU_EXTERN(int bu_rb_rank,	(bu_rb_tree	*tree,
+				 int		order
+				));
+#define		bu_rb_rank1(t)	bu_rb_rank1((t), 0)
+BU_EXTERN(void *bu_rb_select,	(bu_rb_tree	*tree,
+				 int		order,
+				 int		k
+				));
+#define		bu_rb_select1(t,k)	bu_rb_select((t), 0, (k))
+
+/* rb_search.c */
+BU_EXTERN(void *bu_rb_search,	(bu_rb_tree	*tree,
+				 int		order,
+				 void		*data
+				));
+#define		bu_rb_search1(t,d)	bu_rb_search((t), 0, (d))
+
+/* rb_walk.c */
+BU_EXTERN(void bu_rb_walk,		(bu_rb_tree	*tree,
+				 int		order,
+				 void		(*visit)(),
+				 int		trav_type
+				));
+#define		bu_rb_walk1(t,v,d)	bu_rb_walk((t), 0, (v), (d))
 
 /* semaphore.c */
 BU_EXTERN(void			bu_semaphore_init, (unsigned int nsemaphores));
@@ -1085,12 +1352,6 @@ BU_EXTERN(void			bu_vls_printf, (struct bu_vls *vls, char *fmt, ... ) );
 BU_EXTERN(void			bu_vls_blkset, (struct bu_vls *vp, int len, int ch) );
 #endif
 
-/* file.c */
-BU_EXTERN(struct bu_file	*bu_fopen, (char *fname, char *type) );
-BU_EXTERN(int			bu_fclose, (struct bu_file *bfp) );
-BU_EXTERN(int			bu_fgetc, (struct bu_file *bfp) );
-BU_EXTERN(void			bu_printfile, (struct bu_file *bfp) );
-
 /* vers.c (created by the Cakefile) */
 extern CONST char		bu_version[];
 
@@ -1100,29 +1361,6 @@ BU_EXTERN(CONST char *bu_units_string, (CONST double mm) );
 BU_EXTERN(double bu_mm_value, (CONST char *s) );
 BU_EXTERN(void bu_mm_cvt, (register CONST struct bu_structparse	*sdp,
 		register CONST char *name,  char *base, CONST char *value) );
-
-/* color.c */
-BU_EXTERN(void		bu_rgb_to_hsv,		(unsigned char *rgb,
-						    fastf_t *hsv) );
-BU_EXTERN(int		bu_hsv_to_rgb,		(fastf_t *hsv,
-						    unsigned char *rgb) );
-BU_EXTERN(int		bu_str_to_rgb,		(char *str,
-						    unsigned char *rgb) );
-BU_EXTERN(void		bu_color_of_rgb_chars,	(struct bu_color *cp,
-						    unsigned char *rgb) );
-BU_EXTERN(int		bu_color_to_rgb_chars,	(struct bu_color *cp,
-						    unsigned char *rgb) );
-BU_EXTERN(int		bu_color_of_rgb_floats,	(struct bu_color *cp,
-						    fastf_t *rgb) );
-BU_EXTERN(int		bu_color_to_rgb_floats,	(struct bu_color *cp,
-						    fastf_t *rgb) );
-BU_EXTERN(int		bu_color_of_hsv_floats,	(struct bu_color *cp,
-						    fastf_t *hsv) );
-BU_EXTERN(int		bu_color_to_hsv_floats,	(struct bu_color *cp,
-						    fastf_t *hsv) );
-
-
-
 
 #ifdef __cplusplus
 }
