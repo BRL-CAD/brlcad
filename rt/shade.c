@@ -240,12 +240,10 @@ register int	want;
 		i = 0;
 		intensity = swp->sw_intensity;
 		tolight = swp->sw_tolight;
-		for( RT_LIST_FOR( lp, light_specific, &(LightHead.l) ),
-		    i++, intensity += 3, tolight += 3
-		)  {
+		for( RT_LIST_FOR( lp, light_specific, &(LightHead.l) ) )  {
 			/* compute the light direction */
 			if( lp->lt_infinite ) {
-				/* XXX infinte lights need penumbras? */
+				/* Infinite lights are point sources, no fuzzy penumbra */
 				VMOVE( tolight, lp->lt_vec );
 			} else {
 				/*
@@ -271,7 +269,7 @@ register int	want;
 				if( VDOT(swp->sw_hit.hit_normal,tolight) < 0 ) {
 					/* backfacing, opaque */
 					swp->sw_visible[i] = (char *)0;
-					continue;
+					goto next;
 				}
 			}
 			VUNITIZE( tolight );
@@ -283,13 +281,13 @@ register int	want;
 			if( -VDOT(tolight, lp->lt_aim) < lp->lt_cosangle )  {
 				/* dark (outside of light beam) */
 				swp->sw_visible[i] = (char *)0;
-				continue;
+				goto next;
 			}
 			if( !(lp->lt_shadows) )  {
 				/* "fill light" in beam, don't care about shadows */
 				swp->sw_visible[i] = (char *)lp;
 				VSETALL( intensity, 1 );
-				continue;
+				goto next;
 			}
 
 			/*
@@ -323,6 +321,11 @@ register int	want;
 				/* dark (light obscured) */
 				swp->sw_visible[i] = (char *)0;
 			}
+next:
+			/* Advance to next light */
+			i++;
+			intensity += 3;
+			tolight += 3;
 		}
 		have |= MFI_LIGHT;
 	}
