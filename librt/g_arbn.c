@@ -1,4 +1,3 @@
-#define NEW_IF	0
 /*
  *			G _ A R B N . C
  *  
@@ -36,9 +35,12 @@ static char RCSarbn[] = "@(#)$Header$ (BRL)";
 #define DIST_TOL_SQ	(1.0e-10)
 
 struct arbn_internal  {
+	long	magic;
 	int	neqn;
 	plane_t	*eqn;
 };
+#define RT_ARBN_INTERNAL_MAGIC	0x18236461
+#define RT_ARBN_CK_MAGIC(_p)	RT_CKMAG(_p,RT_ARBN_INTERNAL_MAGIC,"arbn_internal")
 
 RT_EXTERN(void rt_arbn_print, (struct soltab *stp) );
 RT_EXTERN(void rt_arbn_ifree, (struct rt_db_internal *ip) );
@@ -67,7 +69,7 @@ struct rt_i	*rtip;
 	struct rt_external	ext, *ep;
 #endif
 	struct arbn_internal	*aip;
-	struct rt_db_internal	intern;
+	struct rt_db_internal	intern, *ip;
 	vect_t		work;
 	fastf_t		f;
 	register int	i;
@@ -82,16 +84,17 @@ struct rt_i	*rtip;
 	RT_INIT_EXTERNAL(ep);
 	ep->ext_buf = (genptr_t)rec;
 	ep->ext_nbytes = stp->st_dp->d_len*sizeof(union record);
-#endif
-
-	if( rt_arbn_import( &intern, ep, stp->st_pathmat ) < 0 )  {
+	ip = &intern;
+	if( rt_arbn_import( ip, ep, stp->st_pathmat ) < 0 )  {
 		rt_log("arbn(%s): db import error\n", stp->st_name );
 		return(-1);		/* BAD */
 	}
-	RT_CK_DB_INTERNAL( &intern );
+#endif
+	RT_CK_DB_INTERNAL( ip );
 	aip = (struct arbn_internal *)intern.idb_ptr;
-	stp->st_specific = (genptr_t)aip;
+	RT_ARBN_CK_MAGIC(aip);
 
+	stp->st_specific = (genptr_t)aip;
 	used = (int *)rt_malloc(aip->neqn*sizeof(int), "arbn used[]");
 
 	/*
@@ -394,6 +397,7 @@ struct directory	*dp;
 #endif
 	RT_CK_DB_INTERNAL(ip);
 	aip = (struct arbn_internal *)ip->idb_ptr;
+	RT_ARBN_CK_MAGIC(aip);
 
 	for( i=0; i<aip->neqn-1; i++ )  {
 		for( j=i+1; j<aip->neqn; j++ )  {
@@ -507,13 +511,13 @@ register mat_t		mat;
 	}
 
 	RT_INIT_DB_INTERNAL( ip );
-	ip->idb_type = ID_PARTICLE;
+	ip->idb_type = ID_ARBN;
 	ip->idb_ptr = rt_malloc( sizeof(struct arbn_internal), "arbn_internal");
 	aip = (struct arbn_internal *)ip->idb_ptr;
-
+	aip->magic = RT_ARBN_INTERNAL_MAGIC;
 	aip->neqn = rp->n.n_neqn;
 	if( aip->neqn <= 0 )  return(-1);
-	aip->eqn = (plane_t *)rt_malloc( aip->neqn*sizeof(plane_t), "rt_arbn_import() planes");
+	aip->eqn = (plane_t *)rt_malloc( aip->neqn*sizeof(plane_t), "arbn plane eqn[]");
 
 	ntohd( (char *)aip->eqn, (char *)(&rp[1]), aip->neqn*4 );
 
@@ -543,11 +547,56 @@ register mat_t		mat;
  *			R T _ A R B N _ E X P O R T
  */
 int
-rt_arbn_export( ep, ip )
+rt_arbn_export( ep, ip, local2mm )
 struct rt_external	*ep;
 struct rt_db_internal	*ip;
+double			local2mm;
 {
-	return(-1);
+	struct arbn_internal	*aip;
+	union record		*rec;
+	int			ngrans;
+	double			*sbuf;		/* scalling buffer */
+	register double		*sp;
+	register int		i;
+
+	RT_CK_DB_INTERNAL(ip);
+	if( ip->idb_type != ID_ARBN )  return(-1);
+	aip = (struct arbn_internal *)ip->idb_ptr;
+	RT_ARBN_CK_MAGIC(aip);
+
+	if( aip->neqn <= 0 )  return(-1);
+
+	/*
+	 * The network format for a double is 8 bytes and there are 4
+	 * doubles per plane equation.
+	 */
+	ngrans = (aip->neqn * 8 * 4 + sizeof(union record)-1 ) /
+		sizeof(union record);
+
+	RT_INIT_EXTERNAL(ep);
+	ep->ext_nbytes = (ngrans + 1) * sizeof(union record);
+	ep->ext_buf = (genptr_t)rt_calloc( 1, ep->ext_nbytes, "arbn external");
+	rec = (union record *)ep->ext_buf;
+
+	rec[0].n.n_id = DBID_ARBN;
+	rec[0].n.n_neqn = aip->neqn;
+	rec[0].n.n_grans = ngrans;
+
+	/* Take the data from the caller, and scale it, into sbuf */
+	sp = sbuf = (double *)rt_malloc(
+		aip->neqn * sizeof(double) * 4, "arbn temp");
+	for( i=0; i<aip->neqn; i++ )  {
+		/* Normal is unscaled, should have unit length; d is scaled */
+		*sp++ = aip->eqn[i][X];
+		*sp++ = aip->eqn[i][Y];
+		*sp++ = aip->eqn[i][Z];
+		*sp++ = aip->eqn[i][3] * local2mm;
+	}
+
+	htond( (char *)&rec[1], (char *)sbuf, aip->neqn * 4 );
+
+	rt_free( (char *)sbuf, "arbn temp" );
+	return(0);			/* OK */
 }
 
 
@@ -559,22 +608,30 @@ struct rt_db_internal	*ip;
  *  Additional lines are indented one tab, and give parameter values.
  */
 int
-rt_arbn_describe( str, ip, verbose )
+rt_arbn_describe( str, ip, verbose, mm2local )
 struct rt_vls		*str;
 struct rt_db_internal	*ip;
 int			verbose;
+double			mm2local;
 {
 	register struct arbn_internal	*aip =
 		(struct arbn_internal *)ip->idb_ptr;
 	char	buf[256];
 	int	i;
 
+	RT_ARBN_CK_MAGIC(aip);
 	sprintf(buf, "arbn bounded by %d planes\n", aip->neqn);
 	rt_vls_strcat( str, buf );
 
+	if( !verbose )  return(0);
+
 	for( i=0; i < aip->neqn; i++ )  {
 		sprintf(buf, "\t%d: (%g, %g, %g) %g\n",
-			i, V4ARGS(aip->eqn[i]) );
+			i,
+			aip->eqn[i][X],		/* should have unit length */
+			aip->eqn[i][Y],
+			aip->eqn[i][Z],
+			aip->eqn[i][3] * mm2local );
 		rt_vls_strcat( str, buf );
 	}
 	return(0);
@@ -582,8 +639,9 @@ int			verbose;
 
 
 /*
+ *			R T _ A R B N _ I F R E E
+ *
  *  Free the storage associated with the rt_db_internal version of this solid.
- *  XXX The suffix of this name is temporary.
  */
 void
 rt_arbn_ifree( ip )
@@ -593,6 +651,7 @@ struct rt_db_internal	*ip;
 
 	RT_CK_DB_INTERNAL(ip);
 	aip = (struct arbn_internal *)ip->idb_ptr;
+	RT_ARBN_CK_MAGIC(aip);
 
 	rt_free( (char *)aip->eqn, "arbn_internal eqn[]");
 	rt_free( (char *)aip, "arbn_internal" );
