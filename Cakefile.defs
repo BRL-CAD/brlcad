@@ -78,7 +78,6 @@ set -S2 "/bin/sh"
  *								*
  ****************************************************************/
 #undef NFS
-#define NFS	1
 /* Place "#define NFS	1" here to enable NFS feature */
 
 /****************************************************************
@@ -166,7 +165,6 @@ set -S2 "/bin/sh"
 /*	Silicon Graphics 4D, running IRIX 4.0 "Cypress" and X-windows */
 #	undef	sgi
 #	define	MTYPE	5d
-/*** WARNING WARNING:  *not* using -O2 on Irix 4.0.4 gives bad code ***/
 #	if 1	/* PRODUCTION=1 */
 /*		This version for production: optimization & shared libraries */
 #		define	OPTIMIZER	-O2
@@ -184,7 +182,6 @@ set -S2 "/bin/sh"
 #	define	STANDARD_LIBES	-lm -lmalloc -lc''SHARED
 #	define	LIBRT_LIBES	-lmpc
 #	define	LGT_CONFIG	GFLAG -lmpc
-/*	X11 Configuration is standard in IRIX 4.0 */
 #	define	XINCDIR	/usr/X11/include
 #	define	XLIBDIR	/usr/X11/lib
 
@@ -329,6 +326,9 @@ set -S2 "/bin/sh"
 #	define	MGED_OBJS	dm-X
 #	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_X -I''XINCDIR
 #	define	MGED_LIBES	-L''XLIBDIR -lX11
+#    if 1	/* PRODUCTION=1 */
+/*		Still some porting issues, XMGED won't compile yet */
+#    else
 #       define  XMGED_ALLOCA    alloca
 #	define	XMGED_OBJS	dm-X
 #	define	XMGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D \
@@ -336,6 +336,7 @@ set -S2 "/bin/sh"
 #	define	XMGED_LIBES	-L''XLIBDIR -lXm_s \
 				-lXt_s -lXi -lXext -lX11_s -lsun -lPW \
 				-lxmalloc -ll
+#    endif
 #	define	HAS_TCP	1
 #	define	CC	cc
 #	define	GETHOST	hostname
