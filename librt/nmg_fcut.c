@@ -536,6 +536,7 @@ CONST genptr_t	b;
 #endif
 
 	/* Between loops, sort by minimum dot product of the loops */
+/* XXX This is wrong.  Test13.r shows how */
 	diff = va->lsp->min_dot - vb->lsp->min_dot;
 	if( NEAR_ZERO( diff, RT_DOT_TOL) )  {
 		/*
@@ -543,17 +544,17 @@ CONST genptr_t	b;
 		 *  Take minimum CCW angle first.
 		 */
 		diff = va->vu_angle - vb->vu_angle;
-		if( diff < 0 )  return -1;
+		if( diff < 0 )  return -1;	/* A ang < B ang */
 		if( diff == 0 )  {
 			/* Gak, this really means trouble! */
 			rt_log("nmg_face_vu_compare(): two loops have same min_dot %g, vu_angle%g?\n",
 				va->lsp->min_dot, va->vu_angle);
 			return 0;
 		}
-		return 1;
+		return 1;			/* A ang > B ang */
 	}
-	if( diff < 0 )  return -1;
-	return 1;
+	if( diff < 0 )  return -1;		/* A dot < B dot */
+	return 1;				/* A dot > B dot */
 }
 
 /*
