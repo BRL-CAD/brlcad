@@ -17,7 +17,7 @@
  *	Aberdeen Proving Ground, Maryland  21005 USA
  *  
  *  Copyright Notice -
- *	This software is Copyright (C) 1993 by the United States Army.
+ *	This software is Copyright (C) 1993-2004 by the United States Army.
  *	All rights reserved.
  *
  *  Include Sequencing -
@@ -2140,7 +2140,7 @@ struct rt_shootray_status {
  *	The BRL-CAD Package" agreement.
  *
  *  Copyright Notice -
- *	This software is Copyright (C) 1994 by the United States Army
+ *	This software is Copyright (C) 1994-2004 by the United States Army
  *	in all countries except the USA.  All rights reserved.
  *
  *  $Header$
