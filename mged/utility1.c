@@ -842,6 +842,7 @@ struct directory	*dp;
 			break;
 		}	/* end of switch */
 	}	/* end of while loop */
+	return(1);	/* We should never get here */
 }
 
 /*
