@@ -4,6 +4,27 @@
  *  Purpose -
  *	Intersect a ray with a 
  *
+ * Adding a new solid type:
+ *	Design disk record
+ *
+ *	define rt_xxx_internal --- parameters for solid
+ *	define xxx_specific --- raytracing form, possibly w/precomuted terms
+ *
+ *	code import/export/describe/print/ifree/plot/prep/shot/curve/uv/tess
+ *
+ *	edit db.h add solidrec s_type define
+ *	edit rtgeom.h to add rt_xxx_internal
+ *	edit table.c:
+ *		RT_DECLARE_INTERFACE()
+ *		struct rt_functab entry
+ *		rt_id_solid()
+ *	edit raytrace.h to make ID_XXX, increment ID_MAXIMUM
+ *	edit Cakefile to add g_xxx.c to compile
+ *
+ *	Then:
+ *	go to /cad/libwdb and create mk_xxx() routine
+ *	go to /cad/mged and create the edit support
+ *
  *  Authors -
  *  
  *  Source -
@@ -28,15 +49,23 @@ static char RCSxxx[] = "@(#)$Header$ (BRL)";
 #include "db.h"
 #include "nmg.h"
 #include "raytrace.h"
+#include "rtgeom.h"
 #include "./debug.h"
 
+#if 0
+/* parameters for solid, internal representation
+ * This goes in rtgeom.h
+ */
+/* parameters for solid, internal representation */
 struct rt_xxx_internal {
 	long	magic;
 	vect_t	v;
 };
 #define RT_XXX_INTERNAL_MAGIC	0xxx
 #define RT_XXX_CK_MAGIC(_p)	RT_CKMAG(_p,RT_XXX_INTERNAL_MAGIC,"rt_xxx_internal")
+#endif
 
+/* ray tracing form of solid, including precomputed terms */
 struct xxx_specific {
 	vect_t	xxx_V;
 };
@@ -62,13 +91,13 @@ struct soltab		*stp;
 struct rt_db_internal	*ip;
 struct rt_i		*rtip;
 {
-	struct rt_xxx_internal		*xip;
+	struct rt_xxx_internal		*xxx_ip;
 	register struct xxx_specific	*xxx;
 	CONST struct rt_tol		*tol = &rtip->rti_tol;
 
 	RT_CK_DB_INTERNAL(ip);
-	xip = (struct rt_xxx_internal *)ip->idb_ptr;
-	RT_XXX_CK_MAGIC(xip);
+	xxx_ip = (struct rt_xxx_internal *)ip->idb_ptr;
+	RT_XXX_CK_MAGIC(xxx_ip);
 }
 
 /*
@@ -103,7 +132,7 @@ struct seg		*seghead;
 	register struct xxx_specific *xxx =
 		(struct xxx_specific *)stp->st_specific;
 	register struct seg *segp;
-	CONST struct rt_tol	*tol = &rtip->rti_tol;
+	CONST struct rt_tol	*tol = &ap->a_rt_i->rti_tol;
 
 	return(0);			/* MISS */
 }
@@ -214,11 +243,11 @@ struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
 struct rt_tol		*tol;
 {
-	LOCAL struct rt_xxx_internal	*xip;
+	LOCAL struct rt_xxx_internal	*xxx_ip;
 
 	RT_CK_DB_INTERNAL(ip);
-	xip = (struct rt_xxx_internal *)ip->idb_ptr;
-	RT_XXX_CK_MAGIC(xip);
+	xxx_ip = (struct rt_xxx_internal *)ip->idb_ptr;
+	RT_XXX_CK_MAGIC(xxx_ip);
 
 	return(-1);
 }
@@ -238,11 +267,11 @@ struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
 struct rt_tol		*tol;
 {
-	LOCAL struct rt_xxx_internal	*xip;
+	LOCAL struct rt_xxx_internal	*xxx_ip;
 
 	RT_CK_DB_INTERNAL(ip);
-	xip = (struct rt_xxx_internal *)ip->idb_ptr;
-	RT_XXX_CK_MAGIC(xip);
+	xxx_ip = (struct rt_xxx_internal *)ip->idb_ptr;
+	RT_XXX_CK_MAGIC(xxx_ip);
 
 	return(-1);
 }
@@ -259,7 +288,7 @@ struct rt_db_internal		*ip;
 CONST struct rt_external	*ep;
 register CONST mat_t		mat;
 {
-	LOCAL struct rt_xxx_internal	*xip;
+	LOCAL struct rt_xxx_internal	*xxx_ip;
 	union record			*rp;
 
 	RT_CK_EXTERNAL( ep );
@@ -273,8 +302,10 @@ register CONST mat_t		mat;
 	RT_INIT_DB_INTERNAL( ip );
 	ip->idb_type = ID_XXX;
 	ip->idb_ptr = rt_malloc( sizeof(struct rt_xxx_internal), "rt_xxx_internal");
-	xip = (struct rt_xxx_internal *)ip->idb_ptr;
-	xip->magic = RT_XXX_INTERNAL_MAGIC;
+	xxx_ip = (struct rt_xxx_internal *)ip->idb_ptr;
+	xxx_ip->magic = RT_XXX_INTERNAL_MAGIC;
+
+	MAT4X3PNT( xxx_ip->xxx_V, mat, &rp->s.s_values[0] );
 
 	return(0);			/* OK */
 }
@@ -290,13 +321,13 @@ struct rt_external		*ep;
 CONST struct rt_db_internal	*ip;
 double				local2mm;
 {
-	struct rt_xxx_internal	*xip;
+	struct rt_xxx_internal	*xxx_ip;
 	union record		*rec;
 
 	RT_CK_DB_INTERNAL(ip);
 	if( ip->idb_type != ID_XXX )  return(-1);
-	xip = (struct rt_xxx_internal *)ip->idb_ptr;
-	RT_XXX_CK_MAGIC(xip);
+	xxx_ip = (struct rt_xxx_internal *)ip->idb_ptr;
+	RT_XXX_CK_MAGIC(xxx_ip);
 
 	RT_INIT_EXTERNAL(ep);
 	ep->ext_nbytes = sizeof(union record);
@@ -304,7 +335,21 @@ double				local2mm;
 	rec = (union record *)ep->ext_buf;
 
 	rec->s.s_id = ID_SOLID;
-	rec->s.s_type = XXX;
+	rec->s.s_type = XXX;	/* GED primitive type from db.h */
+
+	/* Since libwdb users may want to operate in units other
+	 * than mm, we offer the opportunity to scale the solid
+	 * (to get it into mm) on the way out.
+	 */
+
+
+	/* convert from local editing units to mm and export
+	 * to database record format
+	 *
+	 * Warning: type conversion: double to float
+	 */
+	VSCALE( &rec->s.s_values[0], xxx_ip->xxx_V, local2mm );
+	rec->s.s_values[3] = xxx_ip->xxx_radius * local2mm;
 
 	return(0);
 }
@@ -323,17 +368,17 @@ struct rt_db_internal	*ip;
 int			verbose;
 double			mm2local;
 {
-	register struct rt_xxx_internal	*xip =
+	register struct rt_xxx_internal	*xxx_ip =
 		(struct rt_xxx_internal *)ip->idb_ptr;
 	char	buf[256];
 
-	RT_XXX_CK_MAGIC(xip);
+	RT_XXX_CK_MAGIC(xxx_ip);
 	rt_vls_strcat( str, "truncated general xxx (XXX)\n");
 
 	sprintf(buf, "\tV (%g, %g, %g)\n",
-		xip->v[X] * mm2local,
-		xip->v[Y] * mm2local,
-		xip->v[Z] * mm2local );
+		xxx_ip->v[X] * mm2local,
+		xxx_ip->v[Y] * mm2local,
+		xxx_ip->v[Z] * mm2local );
 	rt_vls_strcat( str, buf );
 
 	return(0);
@@ -348,13 +393,13 @@ void
 rt_xxx_ifree( ip )
 struct rt_db_internal	*ip;
 {
-	register struct rt_xxx_internal	*xip;
+	register struct rt_xxx_internal	*xxx_ip;
 
 	RT_CK_DB_INTERNAL(ip);
-	xip = (struct rt_xxx_internal *)ip->idb_ptr;
-	RT_XXX_CK_MAGIC(xip);
-	xip->magic = 0;			/* sanity */
+	xxx_ip = (struct rt_xxx_internal *)ip->idb_ptr;
+	RT_XXX_CK_MAGIC(xxx_ip);
+	xxx_ip->magic = 0;			/* sanity */
 
-	rt_free( (char *)xip, "xxx ifree" );
+	rt_free( (char *)xxx_ip, "xxx ifree" );
 	ip->idb_ptr = GENPTR_NULL;	/* sanity */
 }
