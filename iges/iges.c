@@ -1,4 +1,4 @@
-	/*
+/*
  *			I G E S . C
  *
  *  Code to support the g-iges converter
@@ -17,9 +17,7 @@
 
 /*	Yet to do:
  *
- *		Fix handling of shells (IGES expects an outer shell plus one
- *			or more  void shells)
- *
+
  *		Utilize the IGES Right Angle Wedge entity (may not be worth the effort):
  *			1. arb_is_raw()
  *			2. raw_to_iges()
@@ -83,6 +81,8 @@ static struct db_i *dbip=NULL;
 static char	*unknown="Unknown";
 static int	unknown_count=0;
 static int	brep_count=0;
+extern char	**independent;
+extern int	no_of_indeps;
 extern int	solid_is_brep;
 extern int	comb_form;
 extern int	do_nurbs;
@@ -242,7 +242,6 @@ struct nmgregion *r;
 					/* this edge has more than two radial faces
 					 * find the other face from this shell
 					 */
-rt_log( "nmg_to_winged_edge: Ungluing an edge\n" );
 					eu2 = eu1->radial_p;
 					while( eu2 != eu1 && eu2 != eu1->eumate_p
 						&& nmg_find_s_of_eu( eu2 ) != s )
@@ -299,7 +298,6 @@ CONST struct rt_tol *ttol;
 
 	outer_shell = (struct shell *)NMG_TBL_GET( shells , 0 );
 	NMG_CK_SHELL( outer_shell );
-rt_log( "Looking for voids in shell x%x\n" , outer_shell );
 
 	/* count shells in region */
 	for( RT_LIST_FOR( s , shell , &r->s_hd ) )
@@ -318,7 +316,6 @@ rt_log( "Looking for voids in shell x%x\n" , outer_shell );
 	if( fu->orientation != OT_SAME )
 		fu = fu->fumate_p;
 	NMG_GET_FU_NORMAL( top_faces[0].normal , fu );
-rt_log( "shell x%x, top_face = x%x , normal = ( %g %g %g )\n" , top_faces[0].s , top_faces[0].f , V3ARGS( top_faces[0].normal ) );
 
 	/* fill in top_faces array */
 	i = 0;
@@ -333,7 +330,6 @@ rt_log( "shell x%x, top_face = x%x , normal = ( %g %g %g )\n" , top_faces[0].s ,
 		if( fu->orientation != OT_SAME )
 			fu = fu->fumate_p;
 		NMG_GET_FU_NORMAL( top_faces[i].normal , fu );
-rt_log( "shell x%x, top_face = x%x , normal = ( %g %g %g )\n" , top_faces[i].s , top_faces[i].f , V3ARGS( top_faces[i].normal ) );
 	}
 
 	/* look for voids */
@@ -345,8 +341,6 @@ rt_log( "shell x%x, top_face = x%x , normal = ( %g %g %g )\n" , top_faces[i].s ,
 
 		if( void_s == outer_shell )
 			continue;
-
-rt_log( "\t\tChecking shell x%x as possible void\n" , void_s );
 
 		NMG_CK_SHELL( void_s );
 
@@ -362,7 +356,6 @@ rt_log( "\t\tChecking shell x%x as possible void\n" , void_s );
 		}
 		if( void_f == (struct face *)NULL )
 			rt_bomb( "nmg_assoc_void_shells: no top face for a shell\n" );
-rt_log( "\t\t\tnormal = ( %g %g %g )\n" , V3ARGS( normal ) );
 
 		if( normal[Z] < 0.0  )
 		{
@@ -371,13 +364,11 @@ rt_log( "\t\t\tnormal = ( %g %g %g )\n" , V3ARGS( normal ) );
 			struct shell *test_s;
 			int breakout=0;
 			int not_in_this_shell=0;
-rt_log( "\t\t\tIt is a void shell...\n" );
 
 			/* this is a void shell
 			 * but does it belong with outer_shell */
 			if( !V3RPP1_IN_RPP2( void_s->sa_p->min_pt , void_s->sa_p->max_pt , outer_shell->sa_p->min_pt , outer_shell->sa_p->max_pt ) )
 			{
-rt_log( "\t\t\t\tNot for this external shell (bounding boxes not within one another)\n" );
 				continue;
 			}
 
@@ -395,7 +386,6 @@ rt_log( "\t\t\t\tNot for this external shell (bounding boxes not within one anot
 
 						if( class == NMG_CLASS_AoutB )
 						{
-rt_log( "\t\t\tNot for this external shell (point on void shell is outside external shell)\n" );
 							breakout = 1;
 							not_in_this_shell = 1;
 							break;
@@ -457,14 +447,12 @@ rt_log( "\t\t\tNot for this external shell (point on void shell is outside exter
 			}
 			if( wrong_void )
 			{
-rt_log( "\t\t\t\tWrong void\n" );
 				continue;
 			}
 
 			/* This void shell belongs with shell outer_s 
 			 * add it to the list of shells */
 			nmg_tbl( shells , TBL_INS , (long *)void_s );
-rt_log( "\t\t\t\tMarked this Shell (x%x) as void inside shell x%x\n" , void_s , outer_shell );
 		}
 	}
 	rt_free( (char *)flags , "nmg_assoc_void_shells: flags" );
@@ -528,10 +516,7 @@ CONST struct rt_tol *tol;
 		if( normal[Z] > 0.0 )
 		{
 			nmg_tbl( outer_shells , TBL_INS , (long *)s );	/* outer shell */
-rt_log( "Shell x%x is an outer shell\n" , s );
 		}
-		else
-rt_log( "Shell x%x is a void shell\n" , s );
 	}
 
 	/* outer_shells is now a list of all the outer shells in the region */
@@ -1140,23 +1125,6 @@ FILE *fp_dir,*fp_param;
 	/* Find outer shells and void shells and their associations */
 	outer_shell_count = nmg_find_outer_and_void_shells( r , &shells , &tol );
 
-	/* debugging loop */
-	for( i=0 ; i<outer_shell_count ; i++ )
-	{
-		struct shell *s;
-		int j;
-
-		s = (struct shell *)NMG_TBL_GET( shells[i] , 0 );
-		rt_log( "Outer shell x%x has the following void shells:\n" , s );
-		NMG_CK_SHELL( s );
-		for( j=1 ; j<NMG_TBL_END( shells[i] ) ; j++ )
-		{
-			s = (struct shell *)NMG_TBL_GET( shells[i] , j );
-			rt_log( "\tx%x\n" , s );
-			NMG_CK_SHELL( s );
-		}
-	}
-
 	brep_de = (int *)rt_calloc( outer_shell_count , sizeof( int ) , "nmgregion_to_iges: brep_de" );
 
 	for( i=0 ; i<outer_shell_count ; i++ )
@@ -1168,7 +1136,6 @@ FILE *fp_dir,*fp_param;
 
 		if( outer_shell_count == 1 )
 		{
-rt_log( "only one outer shell, no new region created\n" );
 			new_r = r;
 			s_new = NULL;
 			tmp_name = name;
@@ -1180,12 +1147,10 @@ rt_log( "only one outer shell, no new region created\n" );
 			s_new = RT_LIST_FIRST( shell , &new_r->s_hd );
 			tmp_name = NULL;
 			tmp_dependent = 1;
-rt_log( "For outer shell #%d new_r = x%x\n" , i , new_r );
 
 			for( j=NMG_TBL_END( shells[i] )-1 ; j >= 0  ; j-- )
 			{
 				s = (struct shell *)NMG_TBL_GET( shells[i] , j );
-rt_log( "Moving shell x%x to region x%x\n" , s , new_r );
 				nmg_mv_shell_to_region( s , new_r );
 			}
 			(void)nmg_ks( s_new );
@@ -1193,11 +1158,9 @@ rt_log( "Moving shell x%x to region x%x\n" , s , new_r );
 
 
 		/* Make the vertex list entity */
-rt_log( "writing vertex list for region x%x\n" , new_r );
 		vert_de = write_vertex_list( new_r , &vtab , fp_dir , fp_param );
 
 		/* Make the edge list entity */
-rt_log( "writing edge list for region x%x\n" , new_r );
 		edge_de = write_edge_list( new_r , vert_de , &etab , &vtab , fp_dir , fp_param );
 
 		/* Make the face, loop, shell entities */
@@ -1216,10 +1179,7 @@ rt_log( "writing edge list for region x%x\n" , new_r );
 	(void)nmg_tbl( &etab , TBL_FREE , 0 );
 
 	if( outer_shell_count != 1 )
-{
-rt_log( "Writing solid assembly\n" );
 		return( write_solid_assembly( name, brep_de , outer_shell_count , dependent , fp_dir , fp_param ) );
-}
 	else
 		return( brep_de[0] );
 }
@@ -2671,6 +2631,18 @@ FILE *fp_dir,*fp_param;
 	int region_count;
 	int *region_de;
 	int brep_de;
+	int dependent;
+	int i;
+
+	dependent = 1;
+	for( i=0 ; i<no_of_indeps ; i++ )
+	{
+		if( !strncmp( name , independent[i] , NAMESIZE ) )
+		{
+			dependent = 0;
+			break;
+		}
+	}
 
 	solid_is_brep = 1;
 	comb_form = 1;
@@ -2690,7 +2662,8 @@ FILE *fp_dir,*fp_param;
 		if( region_count == 0 )
 			return( 0 );
 		else if( region_count == 1 )
-			return( nmgregion_to_iges( name , RT_LIST_FIRST( nmgregion , &model->r_hd ) , fp_dir , fp_param ) );
+			return( nmgregion_to_iges( name , RT_LIST_FIRST( nmgregion , &model->r_hd ) ,
+				dependent , fp_dir , fp_param ) );
 		else
 		{
 			/* make a boolean tree unioning all the regions */
@@ -2701,10 +2674,12 @@ FILE *fp_dir,*fp_param;
 			/* loop through all nmgregions in the model */
 			region_count = 0;
 			for( RT_LIST_FOR( r , nmgregion , &model->r_hd ) )
-				region_de[region_count++] = nmgregion_to_iges( (char *)NULL , r , fp_dir , fp_param );
+				region_de[region_count++] = nmgregion_to_iges( (char *)NULL , r , 1 ,
+						fp_dir , fp_param );
 
 			/* now make the boolean tree */
-			brep_de = write_tree_of_unions( name , region_de , region_count , fp_dir , fp_param );
+			brep_de = write_tree_of_unions( name , region_de , region_count ,
+						dependent , fp_dir , fp_param );
 
 			rt_free( (char *)region_de , "nmg_to_iges" );
 			return( brep_de );
@@ -2721,7 +2696,7 @@ FILE *fp_dir,*fp_param;
 		else
 		{
 			solids_to_nmg++;
-			brep_de =  nmgregion_to_iges( name , r , fp_dir , fp_param );
+			brep_de =  nmgregion_to_iges( name , r , dependent , fp_dir , fp_param );
 			nmg_km( model );
 			return( brep_de );
 		}

@@ -16,13 +16,14 @@
 
 #include <stdio.h>
 
-#include "machine.h"
-#include "vmath.h"
 #ifdef USE_STRING_H
 #include <string.h>
 #else
 #include <strings.h>
 #endif
+
+#include "machine.h"
+#include "vmath.h"
 #include "rtlist.h"
 #include "rtstring.h"
 #include "nmg.h"
@@ -50,6 +51,7 @@ int face_orient;
 	int		loop;
 	int		planar=0;
 	struct faceuse	*fu;			/* NMG face use */
+	struct loopuse	*lu;			/* NMG loop use */
 
 	/* Acquiring Data */
 
@@ -57,7 +59,7 @@ int face_orient;
 	{
 		printf( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 				dir[entityno]->direct , dir[entityno]->name );
-		return(0);
+		return( (struct faceuse *)NULL );
 	}
 
 	Readrec( dir[entityno]->param );
@@ -88,7 +90,7 @@ int face_orient;
 	if( !planar )
 	{
 		rt_log( "Face entity at DE=%d is not planar, object not converted\n" , (entityno*2+1) );
-		return( 0 );
+		return( (struct faceuse *)NULL );
 	}
 
 	fu = Make_face( s , (loop_de[0]-1)/2 , face_orient );
@@ -98,8 +100,6 @@ int face_orient;
 			goto err;
 	}
 
-	rt_free( (char *)loop_de , "Add_face_to_shell: loop DE's" );
-	return( fu );
 
   err :
 	rt_free( (char *)loop_de , "Add_face_to_shell: loop DE's" );

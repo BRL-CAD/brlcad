@@ -71,7 +71,13 @@ static char usage[] = "Usage: %s [-f|c] [-v] [-s] [-xX lvl] [-a abs_tol] [-r rel
 		f - convert each region to facetted BREP before output\n\
 		c - produce a CSG file to the maximum extent possible\n\
 		s - produce NURBS for faces of any BREP objects\n\
-		v - verbose\n";
+		v - verbose\n\
+		a - absolute tolerance for tessellation\n\
+		r - relative tolerance for tessellation\n\
+		n - normal tolerance for tessellation\n\
+		x - librt debug flag\n\
+		X - nmg debug flag\n\
+		o - file to receive IGES output\n";
 
 static int	NMG_debug;	/* saved arg of -X, for longjmp handling */
 static int	verbose=0;
