@@ -67,6 +67,9 @@ extern long	lseek();
 extern int	nice();
 extern int	open();
 extern int	pipe();
+#if defined(alliant)
+extern FILE	*popen();	/*alliant doesn't declare this in stdio.h */
+#endif
 extern int	read();
 extern char	*sbrk();
 extern unsigned	sleep();
