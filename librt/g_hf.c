@@ -63,11 +63,12 @@ struct rt_mapped_file {
 	struct rt_list	l;
 	char		name[512];	/* Copy of file name */
 	genptr_t	buf;		/* In-memory copy of file (may be mmapped) */
-	int		buflen;		/* # bytes in 'buf' */
+	long		buflen;		/* # bytes in 'buf' */
 	int		is_mapped;	/* 1=mmap() used, 0=rt_malloc/fread */
 	char		appl[32];	/* Tag for application using 'apbuf' */
 	genptr_t	apbuf;		/* opt: application-specific buffer */
-	char		apbuflen;	/* opt: application-specific buflen */
+	long		apbuflen;	/* opt: application-specific buflen */
+	/* XXX Needs date stamp, in case file is modified */
 	int		uses;		/* # ptrs to this struct handed out */
 };
 #define RT_MAPPED_FILE_MAGIC	0x4d617066	/* Mapf */
@@ -124,6 +125,7 @@ CONST char	*appl;		/* non-null only when app. will use 'apbuf' */
 	if( appl ) strncpy( mp->appl, appl, sizeof(mp->appl) );
 
 #ifdef HAVE_UNIX_IO
+	mp->buflen = sb.st_size;
 #  ifdef HAVE_SYS_MMAN_H
 	/* Attempt to access as memory-mapped file */
 	if( (mp->buf = mmap(
@@ -151,14 +153,27 @@ CONST char	*appl;		/* non-null only when app. will use 'apbuf' */
 		goto fail;
 	}
 	/* Read it once to see how large it is */
+	{
+		char	buf[10240];
+		int	got;
+		mp->buflen = 0;
+		while( (got = fread( buf, 1, sizeof(buf), fp )) > 0 )
+			mp->buflen += got;
+		rewind(fp);
+	}
 	/* Malloc the necessary buffer */
+	mp->buf = rt_malloc( mp->buflen, mp->name );
+
 	/* Read it again into the buffer */
-	XXX_no_UNIX_io;
+	if( fread( mp->buf, mp->buflen, 1, fp ) != 1 )  {
+		perror("fread");
+		rt_log("rt_open_mapped_file() 2nd fread failed? len=%d\n", mp->buflen);
+		rt_free( (char *)mp->buf, "non-unix fread buf" );
+		fclose(fp);
+		goto fail;
+	}
 	fclose(fp);
 #endif
-
-
-
 
 	mp->uses = 1;
 	mp->l.magic = RT_MAPPED_FILE_MAGIC;
@@ -177,11 +192,27 @@ rt_close_mapped_file( mp )
 struct rt_mapped_file	*mp;
 {
 	RT_CK_MAPPED_FILE(mp);
+	if( --mp->uses > 0 )  return;
+#ifdef HAVE_SYS_MMAN_H
+	if( mp->is_mapped )  {
+		if( munmap( mp->buf, mp->buflen ) < 0 )  perror("munmap");
+	} else
+#endif
+	{
+		rt_free( (char *)mp->buf, mp->name );
+	}
+	if( mp->apbuf )  {
+		rt_free( (char *)mp->apbuf, "rt_close_mapped_file() apbuf[]" );
+		mp->apbuf = (genptr_t)NULL;
+	}
+	rt_free( (char *)mp, "struct rt_mapped_file" );
 }
+
 /* ====================================================================== */
 
 struct rt_hf_internal {
 	long	magic;
+	/* BEGIN USER SETABLE VARIABLES */
 	char	cfile[128];		/* name of control file (optional) */
 	char	dfile[128];		/* name of data file */
 	char	fmt[8];			/* CV style file format descriptor */
@@ -194,6 +225,8 @@ struct rt_hf_internal {
 	vect_t	y;			/* model vect corresponding to "n" dir (will be unitized) */
 	fastf_t	xlen;			/* model len of HT in "w" dir */
 	fastf_t	ylen;			/* model len of HT in "n" dir */
+	/* END USER SETABLE VARIABLES, BEGIN INTERNAL STUFF */
+	struct rt_mapped_file	*mp;	/* actual data */
 };
 #define RT_HF_INTERNAL_MAGIC	0x4846494d
 #define RT_HF_CK_MAGIC(_p)	RT_CKMAG(_p,RT_HF_INTERNAL_MAGIC,"rt_hf_internal")
@@ -213,6 +246,9 @@ CONST struct structparse rt_hf_parse[] = {
 	{"%f",	3,	"v",		HF_O(v[0]),		FUNC_NULL },
 	{"%f",	3,	"x",		HF_O(x[0]),		FUNC_NULL },
 	{"%f",	3,	"y",		HF_O(y[0]),		FUNC_NULL },
+	{"%f",	1,	"xlen",		HF_O(xlen),		FUNC_NULL },
+	{"%f",	1,	"ylen",		HF_O(ylen),		FUNC_NULL },
+	{"",	0,	(char *)0,	0,			FUNC_NULL }
 };
 
 struct hf_specific {
@@ -284,24 +320,6 @@ struct seg		*seghead;
 	CONST struct rt_tol	*tol = &ap->a_rt_i->rti_tol;
 
 	return(0);			/* MISS */
-}
-
-#define RT_HF_SEG_MISS(SEG)	(SEG).seg_stp=RT_SOLTAB_NULL
-
-/*
- *			R T _ H F _ V S H O T
- *
- *  Vectorized version.
- */
-void
-rt_hf_vshot( stp, rp, segp, n, ap )
-struct soltab	       *stp[]; /* An array of solid pointers */
-struct xray		*rp[]; /* An array of ray pointers */
-struct  seg            segp[]; /* array of segs (results returned) */
-int		  	    n; /* Number of ray/object pairs */
-struct application	*ap;
-{
-	rt_vstub( stp, rp, segp, n, ap );
 }
 
 /*
@@ -393,12 +411,53 @@ CONST struct rt_tess_tol *ttol;
 struct rt_tol		*tol;
 {
 	LOCAL struct rt_hf_internal	*xip;
+	register unsigned short		*sp;
+	vect_t		xbasis;
+	vect_t		ybasis;
+	vect_t		zbasis;
+	point_t		start;
+	int		y;
+	int		stride;
 
 	RT_CK_DB_INTERNAL(ip);
 	xip = (struct rt_hf_internal *)ip->idb_ptr;
 	RT_HF_CK_MAGIC(xip);
 
-	return(-1);
+	if( !xip->shorts )  rt_bomb("rt_hf_plot() does shorts only, for now\n");
+
+	sp = (unsigned short *)xip->mp->apbuf;
+	VSCALE( xbasis, xip->x, xip->xlen / (xip->w - 1) );
+	VSCALE( ybasis, xip->y, xip->ylen / (xip->n - 1) );
+	VCROSS( zbasis, xip->x, xip->y );
+	VSCALE( zbasis, zbasis, xip->file2mm );
+
+	/* Draw the 4 corners of the base plate */
+	RT_ADD_VLIST( vhead, xip->v, RT_VLIST_LINE_MOVE );
+	VJOIN1( start, xip->v, xip->xlen, xip->x );
+	RT_ADD_VLIST( vhead, start, RT_VLIST_LINE_DRAW );
+	VJOIN2( start, xip->v, xip->xlen, xip->x, xip->ylen, xip->y );
+	RT_ADD_VLIST( vhead, start, RT_VLIST_LINE_DRAW );
+	VJOIN1( start, xip->v, xip->ylen, xip->y );
+	RT_ADD_VLIST( vhead, start, RT_VLIST_LINE_DRAW );
+	RT_ADD_VLIST( vhead, xip->v, RT_VLIST_LINE_DRAW );
+
+	/* Draw the contour lines in W direction only */
+	for( y = 0; y < xip->n; y++ )  {
+		register int	x;
+		point_t		cur;
+		int		cmd;
+
+		VJOIN1( start, xip->v, y, ybasis );
+		cmd = RT_VLIST_LINE_MOVE;
+		for( x = 0; x < xip->w; x++ )  {
+			VJOIN2( cur, start, x, xbasis, *sp, zbasis );
+			RT_ADD_VLIST(vhead, cur, cmd );
+			cmd = RT_VLIST_LINE_DRAW;
+			sp++;
+		}
+	}
+
+	return 0;
 }
 
 /*
@@ -440,9 +499,13 @@ register CONST mat_t		mat;
 	LOCAL struct rt_hf_internal	*xip;
 	union record			*rp;
 	struct rt_vls			str;
+	struct rt_mapped_file		*mp;
 	vect_t				tmp;
-	int				fmt;	/* format cookie */
+	int				in_cookie;	/* format cookie */
 	int				in_len;
+	int				out_cookie;
+	int				count;
+	int				got;
 
 	RT_CK_EXTERNAL( ep );
 	rp = (union record *)ep->ext_buf;
@@ -530,17 +593,46 @@ err1:
 	VMOVE( xip->y, tmp );
 	xip->file2mm /= mat[15];
 
+	VUNITIZE(xip->x);
+	VUNITIZE(xip->y);
+
 	/* Prepare for cracking input file format */
-	if( (fmt = cv_cookie( xip->fmt )) == 0 )  {
+	if( (in_cookie = cv_cookie( xip->fmt )) == 0 )  {
 		rt_log("rt_hf_import() fmt='%s' unknown\n", xip->fmt);
 		goto err1;
 	}
-	in_len = cv_itemlen( fmt );
+	in_len = cv_itemlen( in_cookie );
 
-	/* Load data file, and transform to internal format */
-	if( !(mf = rt_open_mapped_file( xif->dfile, NULL )) )  {
-		/* fail */
+	/*
+	 *  Load data file, and transform to internal format
+	 */
+	if( !(mp = rt_open_mapped_file( xip->dfile, NULL )) )  {
+		rt_log("rt_hf_import() unable to open '%s'\n", xip->dfile);
+		goto err1;
 	}
+	xip->mp = mp;
+	count = mp->buflen / in_len;
+
+	/* If this data has already been mapped, all done */
+	if( mp->apbuf )  return 0;		/* OK */
+
+	/* Transform external data to internal format */
+	if( xip->shorts )  {
+		mp->apbuflen = sizeof(unsigned short) * count;
+		out_cookie = cv_cookie("hus");
+	} else {
+		mp->apbuflen = sizeof(double) * count;
+		out_cookie = cv_cookie("hd");
+	}
+	mp->apbuf = (genptr_t)rt_malloc( mp->apbuflen, "rt_hf_import apbuf[]" );
+	got = cv_w_cookie( mp->apbuf, out_cookie, mp->apbuflen,
+		mp->buf, in_cookie, count );
+	if( got != count )  {
+		rt_log("rt_hf_import(%s) cv_w_cookie count=%d, got=%d\n",
+			xip->dfile, count, got );
+	}
+
+	/* Find min and max? */
 
 	return(0);			/* OK */
 }
@@ -565,6 +657,7 @@ double				local2mm;
 	xip = (struct rt_hf_internal *)ip->idb_ptr;
 	RT_HF_CK_MAGIC(xip);
 
+	/* Apply any scale transformation */
 	xip->file2mm /= local2mm;		/* xform */
 
 	RT_INIT_EXTERNAL(ep);
@@ -603,16 +696,12 @@ double			mm2local;
 {
 	register struct rt_hf_internal	*xip =
 		(struct rt_hf_internal *)ip->idb_ptr;
-	char	buf[256];
 
+	RT_VLS_CHECK(str);
 	RT_HF_CK_MAGIC(xip);
-	rt_vls_strcat( str, "Height Field (HF)\n");
-
-	sprintf(buf, "\tV (%g, %g, %g)\n",
-		xip->v[X] * mm2local,
-		xip->v[Y] * mm2local,
-		xip->v[Z] * mm2local );
-	rt_vls_strcat( str, buf );
+	rt_vls_printf( str, "Height Field (HF)  mm2local=%g\n", mm2local);
+	rt_vls_structprint( str, rt_hf_parse, ip->idb_ptr );
+	rt_vls_strcat( str, "\n" );
 
 	return(0);
 }
@@ -632,6 +721,9 @@ struct rt_db_internal	*ip;
 	xip = (struct rt_hf_internal *)ip->idb_ptr;
 	RT_HF_CK_MAGIC(xip);
 	xip->magic = 0;			/* sanity */
+
+	RT_CK_MAPPED_FILE(xip->mp);
+	rt_close_mapped_file(xip->mp);
 
 	rt_free( (char *)xip, "hf ifree" );
 	ip->idb_ptr = GENPTR_NULL;	/* sanity */
