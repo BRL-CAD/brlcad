@@ -3,21 +3,23 @@
  *
  *  Convert ASCII (hex) pixel files to the binary form.
  *  For portable images.
+ *  Can also be used for .bw files, and random file conversion.
+ *  White space in the file is ignored.
+ *  The input is processed as a byte stream, and need not have a multiple
+ *  of three bytes.
  *  
  *  Author -
  *	Michael John Muuss
  *  
  *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
+ *	The U. S. Army Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *  
- *  Copyright Notice -
- *	This software is Copyright (C) 1985 by the United States Army.
- *	All rights reserved.
+ *  Distribution Status -
+ *	Public Domain, Distribution Unlimited.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 
 #include "conf.h"
@@ -31,37 +33,39 @@ unsigned char line[256];
 
 main()
 {
-	register unsigned char *cp;
-	register int i;
+	register int	a, b;
+	register int	i;
 
 	/* Init map */
+	for(i=0;i<256;i++) rmap[i] = -1;		/* Unused entries */
 	for(i=0; i<10; i++)  rmap['0'+i] = i;
 	for(i=10; i<16; i++)  rmap['A'-10+i] = i;
 	for(i=10; i<16; i++)  rmap['a'-10+i] = i;
-	for(i=0;i<256;i++) lmap[i] = rmap[i]<<4;
+	for(i=0;i<256;i++) {
+		if( rmap[i] >= 0 )
+			lmap[i] = rmap[i]<<4;
+		else
+			lmap[i] = -1;
+	}
 
 	for(;;)  {
-		(void)fgets((char *)line, sizeof(line), stdin);
-		if( feof(stdin) )  break;
-		cp = line;
+		do {
+			if( (a = getchar()) == EOF || a > 255 )  goto out;
+		} while( (i = lmap[a]) < 0 );
 
-		/* R */
-		i = lmap[*cp++];
-		i |= rmap[*cp++];
-		putc( i, stdout );
+		if( (b = getchar()) == EOF || b > 255 )  {
+			fprintf(stderr,"asc2pix: unexpected EOF in middle of hex number\n");
+			return 1;
+		}
 
-		/* G */
-		i = lmap[*cp++];
-		i |= rmap[*cp++];
-		putc( i, stdout );
+		if( (b = rmap[b]) < 0 )  {
+			fprintf(stderr,"asc2pix: illegal hex code in file, aborting\n");
+			return 1;
+		}
 
-		/* B */
-		i = lmap[*cp++];
-		i |= rmap[*cp++];
-		putc( i, stdout );
-
-		/* Ignore rest of line, for now */
+		putc( (i | b), stdout );
 	}
+out:
 	fflush(stdout);
 	exit(0);
 }
