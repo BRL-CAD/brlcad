@@ -946,8 +946,10 @@ int	width, height;
 	 */
 	n = 0;
 	XtSetArg(args[n], XmNtitle, title); n++;	
-	XtSetArg(args[n], XmNx, xpos); n++;
-	XtSetArg(args[n], XmNy, ypos); n++;
+	if (!ogl_nwindows) { /* else let wm decide */
+		XtSetArg(args[n], XmNx, xpos); n++;
+		XtSetArg(args[n], XmNy, ypos); n++;
+	} 
 	OGL(ifp)->toplevel = XtAppCreateShell(NULL,NULL,
 			applicationShellWidgetClass, OGL(ifp)->dispp, args, n);
 
