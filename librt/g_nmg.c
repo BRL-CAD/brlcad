@@ -317,6 +317,331 @@ return(-1);
 #endif
 }
 
+/* ---------------------------------------------------------------------- */
+
+typedef	long		index_t;
+struct disk_rt_list  {
+	index_t		forw;
+	index_t		back;
+};
+
+/* ---------------------------------------------------------------------- */
+
+struct disk_model {
+	index_t			ma_p;
+	struct disk_rt_list	r_hd;
+};
+struct rt_imexport rt_fmt_disk_model[] = {
+	"%d",	offsetof(struct disk_model, ma_p),		1,
+	"%d",	offsetof(struct disk_model, r_hd),		2,
+	"",	0,						0
+};
+
+struct disk_model_a {
+	long			magic;
+};
+struct rt_imexport rt_fmt_disk_model_a[] = {
+	"%d",	offsetof(struct disk_model_a, magic),		1,
+	"",	0,						0
+};
+
+struct disk_nmgregion {
+	struct disk_rt_list	l;
+	index_t   		m_p;
+	index_t			ra_p;
+	struct disk_rt_list	s_hd;
+};
+struct rt_imexport rt_fmt_disk_nmgregion[] = {
+	"%d",	offsetof(struct disk_nmgregion, l),		2,
+	"%d",	offsetof(struct disk_nmgregion, m_p),		1,
+	"%d",	offsetof(struct disk_nmgregion, ra_p),		1,
+	"%d",	offsetof(struct disk_nmgregion, s_hd),		2,
+	"",	0,						0
+};
+
+struct disk_nmgregion_a {
+	fastf_t			min_pt[3];
+	fastf_t			max_pt[3];
+};
+struct rt_imexport rt_fmt_nmgregion_a[] = {
+	"%f",	offsetofarray(struct nmgregion_a, min_pt),	3,
+	"%f",	offsetofarray(struct nmgregion_a, max_pt),	3,
+	"",	0,						0
+};
+
+struct disk_shell {
+	struct disk_rt_list	l;
+	index_t			r_p;
+	index_t			sa_p;
+	struct disk_rt_list	fu_hd;
+	struct disk_rt_list	lu_hd;
+	struct disk_rt_list	eu_hd;
+	index_t			vu_p;
+};
+struct rt_imexport rt_fmt_disk_shell[] = {
+	"%d",	offsetof(struct disk_shell, l),			2,
+	"%d",	offsetof(struct disk_shell, r_p),		1,
+	"%d",	offsetof(struct disk_shell, sa_p),		1,
+	"%d",	offsetof(struct disk_shell, fu_hd),		2,
+	"%d",	offsetof(struct disk_shell, lu_hd),		2,
+	"%d",	offsetof(struct disk_shell, eu_hd),		2,
+	"%d",	offsetof(struct disk_shell, vu_p),		1,
+	"",	0,						0
+};
+
+struct disk_shell_a {
+	fastf_t			min_pt[3];
+	fastf_t			max_pt[3];
+};
+struct rt_imexport rt_fmt_disk_shell_a[] = {
+	"%f",	offsetofarray(struct disk_shell_a, min_pt),	3,
+	"%f",	offsetofarray(struct disk_shell_a, max_pt),	3,
+	"",	0,						0
+};
+
+struct disk_face {
+	index_t			fu_p;
+	index_t			fg_p;
+};
+struct rt_imexport rt_fmt_disk_face[] = {
+	"%d",	offsetof(struct disk_face, fu_p),		1,
+	"%d",	offsetof(struct disk_face, fg_p),		1,
+	"",	0,						0
+};
+
+struct disk_face_g {
+	fastf_t			N[4];
+	fastf_t			min_pt[3];
+	fastf_t			max_pt[3];
+};
+struct rt_imexport rt_fmt_disk_face_g[] = {
+	"%f",	offsetofarray(struct disk_face_g, N),		4,
+	"%f",	offsetofarray(struct disk_face_g, min_pt),	3,
+	"%f",	offsetofarray(struct disk_face_g, max_pt),	3,
+	"",	0,						0
+};
+
+struct disk_faceuse {
+	struct disk_rt_list	l;
+	index_t			s_p;
+	index_t			fumate_p;
+	int			orientation;
+	index_t			f_p;
+	index_t			fua_p;
+	struct disk_rt_list	lu_hd;
+};
+struct rt_imexport rt_fmt_faceuse[] = {
+	"%d",	offsetof(struct faceuse, l),			2,
+	"%d",	offsetof(struct faceuse, s_p),			1,
+	"%d",	offsetof(struct faceuse, fumate_p),		1,
+	"%d",	offsetof(struct faceuse, orientation),		1,
+	"%d",	offsetof(struct faceuse, f_p),			1,
+	"%d",	offsetof(struct faceuse, fua_p),		1,
+	"%d",	offsetof(struct faceuse, lu_hd),		2,
+	"",	0,						0
+};
+
+struct disk_faceuse_a {
+	long			magic;
+};
+struct rt_imexport rt_fmt_faceuse_a[] = {
+	"%d",	offsetof(struct faceuse_a, magic),		1,
+	"",	0,						0
+};
+
+struct disk_loop {
+	index_t			lu_p;
+	index_t			lg_p;
+};
+struct rt_imexport rt_fmt_disk_loop[] = {
+	"%d",	offsetof(struct disk_loop, lu_p),		1,
+	"%d",	offsetof(struct disk_loop, lg_p),		1,
+	"",	0,						0
+};
+
+struct disk_loop_g {
+	fastf_t			min_pt[3];
+	fastf_t			max_pt[3];
+};
+struct rt_imexport rt_fmt_disk_loop_g[] = {
+	"%f",	offsetofarray(struct disk_loop_g, min_pt),	3,
+	"%f",	offsetofarray(struct disk_loop_g, max_pt),	3,
+	"",	0,						0
+};
+
+struct disk_loopuse {
+	struct disk_rt_list	l;
+	index_t			up;
+	index_t			lumate_p;
+	int			orientation;
+	index_t			l_p;
+	index_t			lua_p;
+	struct disk_rt_list	down_hd;
+};
+struct rt_imexport rt_fmt_disk_loopuse[] = {
+	"%d",	offsetof(struct disk_loopuse, l),		2,
+	"%d",	offsetof(struct disk_loopuse, up),		1,
+	"%d",	offsetof(struct disk_loopuse, lumate_p),	1,
+	"%d",	offsetof(struct disk_loopuse, orientation),	1,
+	"%d",	offsetof(struct disk_loopuse, l_p),		1,
+	"%d",	offsetof(struct disk_loopuse, lua_p),		1,
+	"%d",	offsetof(struct disk_loopuse, down_hd),		2,
+	"",	0,						0
+};
+
+struct disk_loopuse_a {
+	long			magic;
+};
+struct rt_imexport rt_fmt_disk_loopuse_a[] = {
+	"%d",	offsetof(struct loopuse_a, magic),		1,
+	"",	0,						0
+};
+
+struct disk_edge {
+	index_t			eu_p;
+	index_t			eg_p;
+};
+struct rt_imexport rt_fmt_disk_edge[] = {
+	"%d",	offsetof(struct disk_edge, eu_p),		1,
+	"%d",	offsetof(struct disk_edge, eg_p),		1,
+	"",	0,						0
+};
+
+struct disk_edge_g {
+	long			magic;
+};
+struct rt_imexport rt_fmt_disk_edge_g[] = {
+	"%d",	offsetof(struct disk_edge_g, magic),		1,
+	"",	0,						0
+};
+
+struct disk_edgeuse {
+	struct disk_rt_list	l;
+	index_t			up;
+	index_t			eumate_p;
+	index_t			radial_p;
+	index_t			e_p;
+	index_t			eua_p;
+	int	  		orientation;
+	index_t			vu_p;
+};
+struct rt_imexport rt_fmt_edgeuse[] = {
+	"%d",	offsetof(struct edgeuse, l),			2,
+	"%d",	offsetof(struct edgeuse, up),			1,
+	"%d",	offsetof(struct edgeuse, eumate_p),		1,
+	"%d",	offsetof(struct edgeuse, radial_p),		1,
+	"%d",	offsetof(struct edgeuse, e_p),			1,
+	"%d",	offsetof(struct edgeuse, eua_p),		1,
+	"%d",	offsetof(struct edgeuse, orientation),		1,
+	"%d",	offsetof(struct edgeuse, vu_p),			1,
+	"",	0,						0
+};
+
+struct disk_edgeuse_a {
+	long			magic;
+};
+struct rt_imexport rt_fmt_edgeuse_a[] = {
+	"%d",	offsetof(struct edgeuse_a, magic),		1,
+	"",	0,						0
+};
+
+struct disk_vertex {
+	struct disk_rt_list	vu_hd;
+	index_t			vg_p;
+};
+struct rt_imexport rt_fmt_disk_vertex[] = {
+	"%d",	offsetof(struct disk_vertex, vu_hd),		2,
+	"%d",	offsetof(struct disk_vertex, vg_p),		1,
+	"",	0,						0
+};
+
+struct disk_vertex_g {
+	fastf_t			coord[3];
+};
+struct rt_imexport rt_fmt_disk_vertex_g[] = {
+	"%f",	offsetofarray(struct disk_vertex_g, coord),	3,
+	"",	0,						0
+};
+
+struct disk_vertexuse {
+	struct disk_rt_list	l;
+	index_t			up;
+	index_t			v_p;
+	index_t			vua_p;
+};
+struct rt_imexport rt_fmt_vertexuse[] = {
+	"%d",	offsetof(struct vertexuse, l),			2,
+	"%d",	offsetof(struct vertexuse, up),			1,
+	"%d",	offsetof(struct vertexuse, v_p),		1,
+	"%d",	offsetof(struct vertexuse, vua_p),		1,
+	"",	0,						0
+};
+
+struct disk_vertexuse_a {
+	fastf_t			N[3];
+};
+struct rt_imexport rt_fmt_vertexuse_a[] = {
+	"%f",	offsetofarray(struct vertexuse_a, N),		3,
+	"",	0,						0
+};
+
+/* ---------------------------------------------------------------------- */
+
+int
+rt_nmg_magic_to_subscript( magic )
+register long	magic;
+{
+	switch(magic)  {
+	default:
+		rt_bomb("rt_nmg_magic_to_subscript: bad magic");
+		return -1;
+	case NMG_MODEL_MAGIC:
+		return 0;
+	case NMG_MODEL_A_MAGIC:
+		return 1;
+	case NMG_REGION_MAGIC:
+		return 2;
+	case NMG_REGION_A_MAGIC:
+		return 3;
+	case NMG_SHELL_MAGIC:
+		return 4;
+	case NMG_SHELL_A_MAGIC:
+		return 5;
+	case NMG_FACEUSE_MAGIC:
+		return 6;
+	case NMG_FACEUSE_A_MAGIC:
+		return 7;
+	case NMG_FACE_MAGIC:
+		return 8;
+	case NMG_FACE_G_MAGIC:
+		return 9;
+	case NMG_LOOPUSE_MAGIC:
+		return 10;
+	case NMG_LOOPUSE_A_MAGIC:
+		return 11;
+	case NMG_LOOP_MAGIC:
+		return 12;
+	case NMG_LOOP_G_MAGIC:
+		return 13;
+	case NMG_EDGEUSE_MAGIC:
+		return 14;
+	case NMG_EDGEUSE_A_MAGIC:
+		return 15;
+	case NMG_EDGE_MAGIC:
+		return 16;
+	case NMG_EDGE_G_MAGIC:
+		return 17;
+	case NMG_VERTEXUSE_MAGIC:
+		return 18;
+	case NMG_VERTEXUSE_A_MAGIC:
+		return 19;
+	case NMG_VERTEX_MAGIC:
+		return 20;
+	case NMG_VERTEX_G_MAGIC:
+		return 21;
+	}
+}
+
 /*
  *			R T _ N M G _ E X P O R T
  *
@@ -333,6 +658,14 @@ double			local2mm;
 	struct nmg_struct_counts	cntbuf;
 	struct rt_external		count_ext;
 	long				**ptrs;
+	struct nmg_exp_counts {
+		long	new_subscript;
+		long	per_struct_index;
+	};
+	struct nmg_exp_counts		*ecnt;
+	int				i;
+	int				subscript;
+	int				indices[22];
 
 	RT_CK_DB_INTERNAL(ip);
 	if( ip->idb_type != ID_NMG )  return(-1);
@@ -342,6 +675,21 @@ double			local2mm;
 	bzero( (char *)&cntbuf, sizeof(cntbuf) );
 	ptrs = nmg_m_struct_count( &cntbuf, m );
 	nmg_pr_struct_counts( &cntbuf, "Counts in rt_nmg_export" );
+
+	/* Collect overall new subscripts, and structure-specific indices */
+	ecnt = (struct nmg_exp_counts *)rt_calloc( m->maxindex,
+		sizeof(struct nmg_exp_counts), "ecnt[]" );
+	for( i = 0; i < 22; i++ )
+		indices[i] = 0;
+	subscript = 1;
+	for( i = m->maxindex-1; i >= 0; i-- )  {
+		if( ptrs[i] == (long *)0 )  continue;
+		ecnt[i].new_subscript = subscript++;
+		ecnt[i].per_struct_index = indices[
+			rt_nmg_magic_to_subscript( (long)(ptrs[i]) )]++;
+	}
+	for( i = 0; i < 22; i++ )
+		rt_log("%d of kind %d\n", indices[i], i);
 
 	RT_INIT_EXTERNAL(ep);
 	ep->ext_nbytes = sizeof(union record);
