@@ -4,6 +4,10 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.5  91/08/30  17:54:40  mike
+ * Changed #include directives to distinguish between local and system header
+ * files.
+ * 
  * Revision 2.4  91/08/30  17:49:16  mike
  * Paul Stay mods for ANSI C
  * 
@@ -97,7 +101,7 @@ int	LI,		/* Number of lines */
 
 int	BG;		/* Are we on a bitgraph? */
 
-int ospeed;
+int jove_ospeed;
 
 char	tspace[256];
 
@@ -143,10 +147,10 @@ getTERM()
 		TermError("ioctl fails");
 #ifdef SYS5
 	TABS = !((tty.c_oflag & TAB3) == TAB3);
-	ospeed = tty.c_cflag & CBAUD;
+	jove_ospeed = tty.c_cflag & CBAUD;
 #else
 	TABS = !(tty.sg_flags & XTABS);
-	ospeed = tty.sg_ospeed;
+	jove_ospeed = tty.sg_ospeed;
 #endif
 
 	termname = getenv("TERM");
@@ -292,7 +296,7 @@ settout()
 		200	/* EXT	(19.2?) */
 	};
 
-	termout.io_cnt = BufSize = CheckTime = speeds[ospeed] * max(LI / 24, 1);
+	termout.io_cnt = BufSize = CheckTime = speeds[jove_ospeed] * max(LI / 24, 1);
 	termout.io_base = termout.io_ptr = emalloc(BufSize);
 	termout.io_flag = 0;
 	termout.io_file = 1;	/* Standard output */
