@@ -1245,6 +1245,10 @@ double		local2mm;
 			PUTMAGIC( DISK_EDGE_G_CNURB_MAGIC );
 			INDEXL( d, eg, eu_hd2 );
 			rt_plong( d->order, eg->order );
+
+			/* If order is zero, everything else is NULL */
+			if( eg->order == 0 )  return;
+
 			rt_plong( d->k_size, eg->k.k_size );
 			rt_plong( d->knots,
 				rt_nmg_export_fastf( eg->k.knots,
@@ -1659,6 +1663,10 @@ CONST unsigned char	*basep;	/* base of whole import record */
 			RT_CK_DISKMAGIC( d->magic, DISK_EDGE_G_CNURB_MAGIC );
 			INDEXL_HD( d, eg, eu_hd2, eg->eu_hd2 );
 			eg->order = rt_glong( d->order );
+
+			/* If order is zero, so is everything else */
+			if( eg->order == 0 )  return 0;
+
 			eg->k.k_size = rt_glong( d->k_size );
 			eg->k.knots = rt_nmg_import_fastf( basep, ecnt,
 				rt_glong( d->knots ), (matp_t)NULL,
@@ -2251,6 +2259,8 @@ int				compact;
 				int			ndouble;
 				eg = (struct edge_g_cnurb *)ptrs[i];
 				ecnt[i].first_fastf_relpos = kind_counts[NMG_KIND_DOUBLE_ARRAY];
+				/* If order is zero, no knots or ctl_points */
+				if( eg->order == 0 )  break;
 				kind_counts[NMG_KIND_DOUBLE_ARRAY] += 2;
 				ndouble = eg->k.k_size + eg->c_size *
 					RT_NURB_EXTRACT_COORDS(eg->pt_type);
