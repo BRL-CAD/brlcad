@@ -1689,7 +1689,7 @@ long *p;
 
 		if (b->blen == 0) (void)nmg_tbl(b, TBL_INIT, p);
 		if (b->end >= b->blen)
-			b->buffer = (long **)rt_realloc(b->buffer,
+			b->buffer = (long **)rt_realloc( (char *)b->buffer,
 			    sizeof(p)*(b->blen += 64),
 			    "pointer table" );
 
@@ -1741,7 +1741,7 @@ long *p;
 
 		if ((b->blen - b->end) < d.t->end) {
 			
-			b->buffer = (long **)rt_realloc(b->buffer,
+			b->buffer = (long **)rt_realloc( (char *)b->buffer,
 				sizeof(p)*(b->blen += d.t->blen),
 				"pointer table (CAT)");
 		}
@@ -2760,17 +2760,12 @@ struct vertexuse_a *vua;
  *
  *  Verify vertexuse
  */
-void nmg_vvu(vu, up)
+void nmg_vvu(vu, up_magic_p)
 struct vertexuse *vu;
-union {
-	struct shell	*s;
-	struct loopuse	*lu;
-	struct edgeuse	*eu;
-	long		*magic_p;
-} up;
+long		*up_magic_p;
 {
 	NMG_CK_VERTEXUSE(vu);
-	if (vu->up.magic_p != up.magic_p)
+	if (vu->up.magic_p != up_magic_p)
 		rt_bomb("nmg_vvu() vertexuse denies parent\n");
 
 	if (!vu->l.forw)
@@ -2855,13 +2850,9 @@ struct edgeuse *eup;
  *
  *  Verify edgeuse
  */
-void nmg_veu(hp, up)
+void nmg_veu(hp, up_magic_p)
 struct nmg_list	*hp;
-union {
-	struct shell	*s;
-	struct loopuse	*lu;
-	long 		*magic_p;
-} up;
+long	*up_magic_p;
 {
 	struct edgeuse	*eu;
 	struct edgeuse	*eunext;
@@ -2869,7 +2860,7 @@ union {
 	for( NMG_LIST( eu, edgeuse, hp ) )  {
 		NMG_CK_EDGEUSE(eu);
 
-		if (eu->up.magic_p != up.magic_p)
+		if (eu->up.magic_p != up_magic_p)
 			rt_bomb("edgeuse denies parentage\n");
 
 		if (!eu->l.forw)
