@@ -3,7 +3,11 @@
 			U. S. Army Ballistic Research Laboratory
 			Aberdeen Proving Ground
 			Maryland 21005-5066
-			(301)278-6647 or AV-298-6647
+			(301)278-6651 or AV-298-6651
+
+	SGI specific routines.  NOTE (XXX) getorigin() doesn't work for
+		remote frame buffers.  This should be changed to use libfb
+		only.
 */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
