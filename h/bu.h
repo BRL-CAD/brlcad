@@ -919,7 +919,8 @@ BU_EXTERN(int			bu_avail_cpus, ());
 BU_EXTERN(fastf_t		bu_get_load_average, ());
 BU_EXTERN(int			bu_get_public_cpus, ());
 BU_EXTERN(int			bu_set_realtime, ());
-BU_EXTERN(void			bu_parallel, (void (*func)(), int ncpu));
+BU_EXTERN(void			bu_parallel, (void (*func)BU_ARGS((int ncpu, genptr_t arg)),
+				int ncpu, genptr_t arg));
 
 /* parse.c */
 BU_EXTERN(int			bu_struct_export, (struct bu_external *ext,
