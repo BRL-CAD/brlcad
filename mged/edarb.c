@@ -1159,8 +1159,22 @@ register struct solidrec *sp;
 	}
 }
 
-/* Permute command - permute the vertex labels of an ARB8
+/* Permute command - permute the vertex labels of an ARB
 /* Format: permute jkl	*/
+
+/*
+ *     --------------------------------------------
+ *		# vertices	# vertices needed
+ *	Solid	in THE face	 to disambiguate
+ *	type	(face_size)	      (mts)
+ *     --------------------------------------------
+ *	ARB4	    3			3
+ *	ARB5	    4			2
+ *	ARB6	    4			2
+ *	ARB7	    4			1
+ *	ARB8	    4			3
+ *     --------------------------------------------
+ */
 void
 f_permute( argc, argv )
 
@@ -1172,52 +1186,123 @@ char	**argv;
      *	1) Why were all vars declared static?
      *	2) Recompute plane equations?
      */
-    register int vertex, i, j, k;
-    int triple;
-    int	modulus;
-    int	*p;
-    struct solidrec lsolid;	/* local copy of solid */
-    struct solidrec tsolid;	/* temporary copy of solid */
-    static int perm_array[8][7] =
+    register int 	vertex, i, k;
+    int			arglen;
+    int 		number;		/* integer argument */
+    int			min_nm;		/* smallest legal value for number */
+    int			mts;
+    int			face_size;	/* # vertices in THE face */
+    char		**p;
+    struct solidrec	lsolid;		/* local copy of solid */
+    struct solidrec	tsolid;		/* temporary copy of solid */
+    static int		min_tuple_size[9] =
+	{0, 0, 0, 0, 3, 2, 2, 1, 3};	/* # vertices needed to disambiguate */
+    static char 	*perm4[4][7] =
     {
-	{12345678, 12654378, 14325876, 14852376, 15624873, 15842673, 0},
-	{21436587, 21563487, 23416785, 23761485, 26513784, 26731584, 0},
-	{32147658, 32674158, 34127856, 34872156, 37624851, 37842651, 0},
-	{41238567, 41583267, 43218765, 43781265, 48513762, 48731562, 0},
-	{51268437, 51486237, 56218734, 56781234, 58416732, 58761432, 0},
-	{62157348, 62375148, 65127843, 65872143, 67325841, 67852341, 0},
-	{73268415, 73486215, 76238514, 76583214, 78436512, 78563412, 0},
-	{84157326, 84375126, 85147623, 85674123, 87345621, 87654321, 0}
+	{"1234", "1243", "1324", "1342", "1423", "1432", 0},
+	{"2134", "2143", "2314", "2341", "2413", "2431", 0},
+	{"3124", "3142", "3214", "3241", "3412", "3421", 0},
+	{"4123", "4132", "4213", "4231", "4312", "4321", 0}
+    };
+    static char 	*perm5[5][3] =
+    {
+	{"12345", "14325", 0},
+	{"21435", "23415", 0},
+	{"32145", "34125", 0},
+	{"41235", "43215", 0},
+	{0, 0, 0}
+    };
+    static char 	*perm6[6][3] =
+    {
+	{"123456", "156423", 0},
+	{"214356", "256314", 0},
+	{"341265", "365241", 0},
+	{"432165", "465132", 0},
+	{"514623", "523614", 0},
+	{"632541", "641532", 0}
+    };
+    static char		*perm7[7][2] =
+    {
+	{"1234567", 0},
+	{0, 0},
+	{0, 0},
+	{"4321576", 0},
+	{0, 0},
+	{"6237514", 0},
+	{"7326541", 0}
+    };
+    static char		*perm8[8][7] =
+    {
+	{"12345678", "12654378", "14325876", "14852376",
+	 "15624873", "15842673", 0},
+	{"21436587", "21563487", "23416785", "23761485",
+	 "26513784", "26731584", 0},
+	{"32147658", "32674158", "34127856", "34872156",
+	 "37624851", "37842651", 0},
+	{"41238567", "41583267", "43218765", "43781265",
+	 "48513762", "48731562", 0},
+	{"51268437", "51486237", "56218734", "56781234",
+	 "58416732", "58761432", 0},
+	{"62157348", "62375148", "65127843", "65872143",
+	 "67325841", "67852341", 0},
+	{"73268415", "73486215", "76238514", "76583214",
+	 "78436512", "78563412", 0},
+	{"84157326", "84375126", "85147623", "85674123",
+	 "87345621", "87654321", 0}
     };
 
     if (not_state(ST_S_EDIT, "Permute"))
 	return;
-    if ((es_rec.s.s_type != GENARB8) || (es_type != ARB8))
+    if (es_rec.s.s_type != GENARB8)
     {
-	(void) printf("Permute: solid type must be ARB8\n");
+	(void) printf("Permute: solid type must be an ARB\n");
 	return;
     }
+    if ((es_type < 4) || (es_type > 8))
+    {
+	(void) printf("Permute: es_type=%d\nThis shouldn't happen\n", es_type);
+	return;
+    }
+    face_size = (es_type == 4) ? 3 : 4;
+    mts = min_tuple_size[es_type];
 
     /*
      *	Find the encoded form of the specified permutation,
      *	if it exists
      */
-    triple = atoi(argv[1]);
-    if ((triple < 123) || (triple > 876))
+    number = atoi(argv[1]);
+    for (i = 0, min_nm = 0; i < mts; ++i)
     {
-	(void) printf("ERROR: bad vertex triple: %d\n", triple);
+	min_nm *= 10;
+	min_nm += i + 1;
+    }
+    if (number < min_nm)
+    {
+	(void) printf("ERROR: bad vertex tuple: %d\n", argv[1]);
 	return;
     }
-    vertex = triple / 100;
-    for (p = perm_array[vertex - 1]; *p > 0; ++p)
+
+    arglen = strlen(argv[1]);
+    if (arglen > face_size)
     {
-	if (*p / 100000 == triple)
+	(void) printf("ERROR: bad vertex tuple: %d\n", argv[1]);
+	return;
+    }
+
+    vertex = argv[1][0] - '1';
+    p = (es_type == 4) ? perm4[vertex] :
+	(es_type == 5) ? perm5[vertex] :
+	(es_type == 6) ? perm6[vertex] :
+	(es_type == 7) ? perm7[vertex] : perm8[vertex];
+    for ( ;; ++p)
+    {
+	if (p == 0)
+	{
+	    (void) printf("ERROR: bad vertex tuple: %d\n", argv[1]);
+	    return;
+	}
+	if (strncmp(*p, argv[1], arglen) == 0)
 	    break;
-    }
-    if (*p == 0)
-    {
-	(void) printf("ERROR: bad vertex triple: %d\n", triple);
-	return;
     }
 
     /* Convert to point notation in temporary buffer */
@@ -1228,7 +1313,6 @@ char	**argv;
 		&es_rec.s.s_values[i], &lsolid.s_values[0]);
     }
 
-#if 0
     for (i = 0; i <= 21; i += 3)
     {
 	char	string[1024];
@@ -1236,24 +1320,92 @@ char	**argv;
 	sprintf(string, "vertex %d", i / 3 + 1);
 	VPRINT(string, &lsolid.s_values[i]);
     }
-#endif
 
     /*
      *	Collect the vertices in the specified order
      */
-    modulus = 100000000;
-    for (j = 0; j <= 21; j += 3)
+    for (i = 0; i < es_type; ++i)
     {
-	k = ((*p % modulus) * 10) / modulus - 1;
-	VMOVE(&tsolid.s_values[j], &lsolid.s_values[3 * k]);
-	modulus /= 10;
+	char	buf[1024];
+
+	sprintf(buf, "%c", (*p)[i]);
+	k = atoi(buf) - 1;
+	printf("vertex %d going to %d\n", i + 1, k + 1);
+	VMOVE(&tsolid.s_values[3 * i], &lsolid.s_values[3 * k]);
     }
+
+    for (i = 0; i <= 21; i += 3)
+    {
+	char	string[1024];
+
+	sprintf(string, "vertex %d", i / 3 + 1);
+	VPRINT(string, &lsolid.s_values[i]);
+    }
+
     /*
      *	Reinstall the permuted vertices back into the temporary buffer
+     *
+     *	------+---------------------------+----------------------------
+     *	      | Array locations in which  |	   Redundant storage
+     *	      | to store the vertices	  |	of some of the vertices
+     *	------+---------------------------+----------------------------
+     *	      | 1 2 3 4 5 6 7 8		  |
+     *	      +---------------------------+
+     *	ARB4  |	0 1 2 4			  |	3=0, 5=6=7=4
+     *	ARB5  |	0 1 2 3 4		  |	5=6=7=4
+     *	ARB6  |	0 1 2 3 4 6		  |	5=4, 7=6
+     *	ARB7  |	0 1 2 3 4 5 6		  |	7=4
+     *	ARB8  |	0 1 2 3 4 5 6 7		  |
+     *	------+---------------------------+----------------------------
      */
-    for (j = 0; j <= 21; j += 3)
+    switch (es_type)
     {
-	VMOVE(&lsolid.s_values[j], &tsolid.s_values[j]);
+	case ARB4:
+	    for (i = 0; i <= 6; i += 3)
+	    {
+		VMOVE(&lsolid.s_values[i], &tsolid.s_values[i]);
+	    }
+	    VMOVE(&lsolid.s_values[9], &lsolid.s_values[0]);
+	    VMOVE(&lsolid.s_values[12], &tsolid.s_values[9]);
+	    for (i = 15; i <= 21; i += 3)
+	    {
+		VMOVE(&lsolid.s_values[i], &lsolid.s_values[12]);
+	    }
+	    break;
+	case ARB5:
+	case ARB6:
+	    for (i = 0; i <= 12; i += 3)
+	    {
+		VMOVE(&lsolid.s_values[i], &tsolid.s_values[i]);
+	    }
+	    VMOVE(&lsolid.s_values[15], &lsolid.s_values[12]);
+	    if (es_type == ARB5)
+	    {
+		VMOVE(&lsolid.s_values[18], &lsolid.s_values[12]);
+	    }
+	    else
+	    {
+		VMOVE(&lsolid.s_values[18], &tsolid.s_values[15]);
+	    }
+	    VMOVE(&lsolid.s_values[21], &lsolid.s_values[18]);
+	    break;
+	case ARB7:
+	    for (i = 0; i <= 18; i += 3)
+	    {
+		VMOVE(&lsolid.s_values[i], &tsolid.s_values[i]);
+	    }
+	    VMOVE(&lsolid.s_values[21], &lsolid.s_values[12]);
+	    break;
+	case ARB8:
+	    for (i = 0; i <= 21; i += 3)
+	    {
+		VMOVE(&lsolid.s_values[i], &tsolid.s_values[i]);
+	    }
+	    break;
+	default:
+	    (void) printf("%s: %d: This shouldn't happen\n",
+		__FILE__, __LINE__);
+	    return;
     }
 
     /* Convert back to point&vector notation */
