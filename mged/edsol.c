@@ -69,7 +69,7 @@ extern short earb7[12][18];
 extern short earb8[12][18];
 
 static void	arb8_edge(), ars_ed(), ell_ed(), tgc_ed(), tor_ed(), spline_ed();
-static void	nmg_ed(), pipe_ed(), vol_ed(), ebm_ed(), dsp_ed(), fgp_ed(), bot_ed();
+static void	nmg_ed(), pipe_ed(), vol_ed(), ebm_ed(), dsp_ed(), fgp_ed(), bot_ed(), extr_ed();
 static void	rpc_ed(), rhc_ed(), part_ed(), epa_ed(), ehy_ed(), eto_ed();
 static void	arb7_edge(), arb6_edge(), arb5_edge(), arb4_point();
 static void	arb8_mv_face(), arb7_mv_face(), arb6_mv_face();
@@ -218,8 +218,21 @@ int	es_menu;		/* item selected from menu */
 #define	MENU_BOT_ORIENT		101
 #define	MENU_BOT_THICK		102
 #define	MENU_BOT_FMODE		103
+#define MENU_EXTR_SCALE_H	104
+#define MENU_EXTR_MOV_H		105
+#define MENU_EXTR_ROT_H		106
+#define MENU_EXTR_SKT_NAME	107
 
 extern int arb_faces[5][24];	/* from edarb.c */
+
+struct  menu_item extr_menu[] = {
+	{ "EXTRUSION MENU",	(void (*)())NULL, 0 },
+	{ "Scale H",		extr_ed, ECMD_EXTR_SCALE_H },
+	{ "Move End H",		extr_ed, ECMD_EXTR_MOV_H },
+	{ "Rotate H",		extr_ed, ECMD_EXTR_ROT_H },
+	{ "Referenced Sketch",	extr_ed, ECMD_EXTR_SKT_NAME },
+	{ "", (void (*)())NULL, 0 }
+};
 
 struct menu_item ars_pick_menu[] = {
 	{ "ARS PICK MENU", (void (*)())NULL, 0 },
@@ -1187,6 +1200,15 @@ int arg;
   sedit();
 }
 
+/*ARGSUSED*/
+static void
+extr_ed( arg )
+int arg;
+{
+  es_edflag = arg;
+  sedit();
+}
+
 
 /*ARGSUSED*/
 static void
@@ -1933,8 +1955,16 @@ mat_t		mat;
 				(struct rt_extrude_internal *)ip->idb_ptr;
 			RT_EXTRUDE_CK_MAGIC( extr );
 
-			VMOVE( mpt, extr->V );
-			*strp = "V";
+			if( extr->skt )
+			{
+				VJOIN2( mpt, extr->V, extr->skt->verts[0][0], extr->u_vec, extr->skt->verts[0][2], extr->v_vec );
+				*strp = "V1";
+			}
+			else
+			{
+				VMOVE( mpt, extr->V );
+				*strp = "V";
+			}
 			break;
 		}
 	case ID_NMG:
@@ -2196,6 +2226,23 @@ int both;    /* if(!both) then set only curr_e_axes_pos, otherwise
       VMOVE(curr_e_axes_pos, es_keypoint)
 
     break;
+  case ID_EXTRUDE:
+  	if( es_edflag == ECMD_EXTR_MOV_H )
+  	{
+  		struct rt_extrude_internal *extr = (struct rt_extrude_internal *)es_int.idb_ptr;
+  		point_t extr_v;
+  		vect_t extr_h;
+
+  		RT_EXTRUDE_CK_MAGIC( extr );
+
+  		MAT4X3PNT(extr_v, es_mat, extr->V);
+  		MAT4X3VEC(extr_h, es_mat, extr->h);
+  		VADD2(curr_e_axes_pos, extr_h, extr_v);
+  	}
+  	else
+  		VMOVE(curr_e_axes_pos, es_keypoint)
+
+    break;
   default:
     VMOVE(curr_e_axes_pos, es_keypoint);
     break;
@@ -2346,6 +2393,7 @@ init_sedit()
 
 #if 1
 	bn_mat_idn(acc_rot_sol);
+	bn_mat_idn( incr_change );
 
 	VSETALL( edit_absolute_model_rotate, 0.0 );
 	VSETALL( edit_absolute_object_rotate, 0.0 );
@@ -2490,6 +2538,9 @@ sedit_menu()  {
 		break;
 	case ID_BOT:
 		mmenu_set_all( MENU_L1, bot_menu );
+		break;
+	case ID_EXTRUDE:
+		mmenu_set_all( MENU_L1, extr_menu );
 		break;
 	}
 	es_edflag = IDLE;	/* Drop out of previous edit mode */
@@ -3275,6 +3326,110 @@ sedit()
 			}
 		}
 		break;
+	case ECMD_EXTR_SKT_NAME:
+		{
+			struct rt_extrude_internal *extr =
+				(struct rt_extrude_internal *)es_int.idb_ptr;
+			char *sketch_name, *curve_name;
+			int ret_tcl;
+			struct directory *dp;
+			struct rt_db_internal tmp_ip;
+
+			RT_EXTRUDE_CK_MAGIC( extr );
+
+			ret_tcl = Tcl_VarEval( interp, "get_sketch_and_curve", " $mged_gui(mged,screen) ",
+				extr->sketch_name, " ", extr->curve_name, (char *)NULL );
+			if( ret_tcl != TCL_OK )
+				break;
+
+			sketch_name = Tcl_GetVar( interp, "final_sketch_name", TCL_GLOBAL_ONLY );
+			NAMEMOVE( sketch_name, extr->sketch_name );
+			curve_name = Tcl_GetVar( interp, "final_curve_name", TCL_GLOBAL_ONLY );
+			NAMEMOVE( curve_name, extr->curve_name );
+
+			if( extr->skt )
+			{
+				/* free the old sketch */
+				RT_INIT_DB_INTERNAL( &tmp_ip );
+				tmp_ip.idb_type = ID_SKETCH;
+				tmp_ip.idb_ptr = (genptr_t)extr->skt;
+				tmp_ip.idb_meth = &rt_functab[ID_SKETCH];
+				rt_sketch_ifree( &tmp_ip );
+			}
+
+			if( (dp=db_lookup( dbip, sketch_name, 0 )) == DIR_NULL )
+			{
+				Tcl_AppendResult(interp, "Warning: ", sketch_name, " does not exist!!!\n",
+					(char *)NULL );
+				extr->skt = (struct rt_sketch_internal *)NULL;
+			}
+			else
+			{
+				/* import the new sketch */
+
+			        if( rt_db_get_internal( &tmp_ip, dp, dbip, bn_mat_identity ) != ID_SKETCH )
+			        {
+			                bu_log( "rt_extrude_import: ERROR: Cannot import sketch (%.16s) for extrusion\n",
+			                        sketch_name );
+			        	extr->skt = (struct rt_sketch_internal *)NULL;
+			        }
+				else
+					extr->skt = (struct rt_sketch_internal *)tmp_ip.idb_ptr;
+			}
+		}
+		break;
+	case ECMD_EXTR_MOV_H:
+		{
+			struct rt_extrude_internal *extr =
+				(struct rt_extrude_internal *)es_int.idb_ptr;
+
+			RT_EXTRUDE_CK_MAGIC( extr );
+			if( inpara ) {
+#ifdef TRY_EDIT_NEW_WAY
+			  if(mged_variables->mv_context){
+			    /* apply es_invmat to convert to real model coordinates */
+			    MAT4X3PNT( work, es_invmat, es_para );
+			    VSUB2(extr->h, work, extr->V);
+			  }else{
+			    VSUB2(extr->h, es_para, extr->V);
+			  }
+#else
+				/* apply es_invmat to convert to real model coordinates */
+				MAT4X3PNT( work, es_invmat, es_para );
+				VSUB2(extr->h, work, extr->V);
+#endif
+			}
+
+			/* check for zero H vector */
+			if( MAGNITUDE( extr->h ) <= SQRT_SMALL_FASTF ) {
+			  Tcl_AppendResult(interp, "Zero H vector not allowed, resetting to +Z\n",
+					   (char *)NULL);
+				mged_print_result( TCL_ERROR );
+			  VSET(extr->h, 0.0, 0.0, 1.0);
+			  break;
+			}
+		}
+		break;
+	case ECMD_EXTR_SCALE_H:
+		{
+			struct rt_extrude_internal *extr =
+				(struct rt_extrude_internal *)es_int.idb_ptr;
+
+			RT_EXTRUDE_CK_MAGIC( extr );
+
+			if( inpara ) {
+				/* take es_mat[15] (path scaling) into account */
+				es_para[0] *= es_mat[15];
+				es_scale = es_para[0] / MAGNITUDE(extr->h);
+				VSCALE(extr->h, extr->h, es_scale);
+			}
+			else if( es_scale > 0.0 )
+			{
+				VSCALE(extr->h, extr->h, es_scale);
+				es_scale = 0.0;
+			}
+		}
+		break;
 	case ECMD_ARB_MAIN_MENU:
 		/* put up control (main) menu for GENARB8s */
 		menu_state->ms_flag = 0;
@@ -3799,6 +3954,63 @@ sedit()
 			bn_mat_xform_about_pt( mat, incr_change, es_keypoint);
 #endif
 			transform_editing_solid(&es_int, mat, &es_int, 1);
+
+			bn_mat_idn( incr_change );
+		}
+		break;
+
+	case ECMD_EXTR_ROT_H:
+		/* rotate height vector */
+		{
+			struct rt_extrude_internal	*extr = 
+				(struct rt_extrude_internal *)es_int.idb_ptr;
+
+			RT_EXTRUDE_CK_MAGIC(extr);
+#ifdef TRY_EDIT_NEW_WAY
+			if(inpara) {
+				static mat_t invsolr;
+				/*
+				 * Keyboard parameters:  absolute x,y,z rotations,
+				 * in degrees.  First, cancel any existing rotations,
+				 * then perform new rotation
+				 */
+				bn_mat_inv( invsolr, acc_rot_sol );
+
+				/* Build completely new rotation change */
+				bn_mat_idn( modelchanges );
+				buildHrot( modelchanges,
+					es_para[0] * degtorad,
+					es_para[1] * degtorad,
+					es_para[2] * degtorad );
+				/* Borrow incr_change matrix here */
+				bn_mat_mul( incr_change, modelchanges, invsolr );
+				bn_mat_copy(acc_rot_sol, modelchanges);
+
+				/* Apply new rotation to solid */
+				/*  Clear out solid rotation */
+				bn_mat_idn( modelchanges );
+			}  else  {
+				/* Apply incremental changes already in incr_change */
+			}
+
+			if(mged_variables->mv_context){
+			  /* calculate rotations about keypoint */
+			  bn_mat_xform_about_pt( edit, incr_change, es_keypoint );
+
+			  /* We want our final matrix (mat) to xform the original solid
+			   * to the position of this instance of the solid, perform the
+			   * current edit operations, then xform back.
+			   *	mat = es_invmat * edit * es_mat
+			   */
+			  bn_mat_mul( mat1, edit, es_mat );
+			  bn_mat_mul( mat, es_invmat, mat1 );
+			  MAT4X3VEC(extr->h, mat, extr->h);
+			}else{
+			  MAT4X3VEC(extr->h, incr_change, extr->h);
+			}
+#else
+			MAT4X3VEC(extr->h, incr_change, extr->h);
+#endif
 
 			bn_mat_idn( incr_change );
 		}
@@ -5319,6 +5531,7 @@ CONST vect_t	mousevec;
   case ECMD_VOL_THRESH_LO:
   case ECMD_VOL_THRESH_HI:
   case ECMD_EBM_HEIGHT:
+  case ECMD_EXTR_SCALE_H:
     /* use mouse to get a scale factor */
     es_scale = 1.0 + 0.25 * ((fastf_t)
 			     (mousevec[Y] > 0 ? mousevec[Y] : -mousevec[Y]));
@@ -5398,6 +5611,23 @@ CONST vect_t	mousevec;
       MAT4X3PNT( temp, view_state->vs_view2model, pos_view );
       MAT4X3PNT( tr_temp, es_invmat, temp );
       VSUB2( tgc->h, tr_temp, tgc->v );
+    }
+
+    break;
+  case ECMD_EXTR_MOV_H:
+    /* Use mouse to change location of point V+H */
+    {
+      struct rt_extrude_internal	*extr = 
+	(struct rt_extrude_internal *)es_int.idb_ptr;
+      RT_EXTRUDE_CK_MAGIC(extr);
+
+      MAT4X3PNT(pos_view, view_state->vs_model2view, curr_e_axes_pos);
+      pos_view[X] = mousevec[X];
+      pos_view[Y] = mousevec[Y];
+      /* Do NOT change pos_view[Z] ! */
+      MAT4X3PNT( temp, view_state->vs_view2model, pos_view );
+      MAT4X3PNT( tr_temp, es_invmat, temp );
+      VSUB2( extr->h, tr_temp, extr->V );
     }
 
     break;
@@ -5725,6 +5955,20 @@ vect_t tvec;
       MAT4X3PNT( temp, view_state->vs_view2model, tvec );
       MAT4X3PNT( tr_temp, es_invmat, temp );
       VSUB2( tgc->h, tr_temp, tgc->v );
+    }
+
+    break;
+  case ECMD_EXTR_MOV_H:
+    /* Use mouse to change location of point V+H */
+    {
+      vect_t tr_temp;
+      struct rt_extrude_internal	*extr = 
+	(struct rt_extrude_internal *)es_int.idb_ptr;
+      RT_EXTRUDE_CK_MAGIC(extr);
+
+      MAT4X3PNT( temp, view_state->vs_view2model, tvec );
+      MAT4X3PNT( tr_temp, es_invmat, temp );
+      VSUB2( extr->h, tr_temp, extr->V );
     }
 
     break;
@@ -7402,6 +7646,13 @@ vect_t argvect;
   case ECMD_DSP_SCALE_Y:
   case ECMD_DSP_SCALE_ALT:
   case ECMD_EBM_HEIGHT:
+  case ECMD_EXTR_SCALE_H:
+  case ECMD_EXTR_MOV_H:
+  case ECMD_BOT_THICK:
+  case ECMD_BOT_MOVET:
+  case ECMD_BOT_MOVEE:
+  case ECMD_BOT_MOVEV:
+  case ECMD_FGP_THICK:
     /* must convert to base units */
     es_para[0] *= local2base;
     es_para[1] *= local2base;
@@ -8515,6 +8766,9 @@ char **argv;
       break;
    case ID_BOT:
       mip = bot_menu;
+      break;
+   case ID_EXTRUDE:
+      mip = extr_menu;
       break;
     }
 

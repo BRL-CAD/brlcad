@@ -115,11 +115,17 @@
 #define	ECMD_BOT_THICK		72	/* set face thickness (one or all) */
 #define	ECMD_BOT_FMODE		73	/* set face mode (one or all) */
 
+#define	ECMD_EXTR_SCALE_H	74	/* scale extrusion vector */
+#define ECMD_EXTR_MOV_H		75	/* move end of extrusion vector */
+#define	ECMD_EXTR_ROT_H		76	/* rotate extrusion vector */
+#define	ECMD_EXTR_SKT_NAME	77	/* set sketch that the extrusion uses */
+
 #define SEDIT_ROTATE (state == ST_S_EDIT && \
 		      (es_edflag == SROT || \
 		       es_edflag == ECMD_TGC_ROT_H || \
 		       es_edflag ==  ECMD_TGC_ROT_AB || \
 		       es_edflag == ECMD_ARB_ROTATE_FACE || \
+		       es_edflag == ECMD_EXTR_ROT_H || \
 		       es_edflag == ECMD_ETO_ROT_C))
 #define OEDIT_ROTATE (state == ST_O_EDIT && \
 		      edobj == BE_O_ROTATE)
@@ -135,7 +141,8 @@
 		      es_edflag == ECMD_DSP_SCALE_Y || \
 		      es_edflag == ECMD_DSP_SCALE_ALT || \
 		      es_edflag == ECMD_EBM_HEIGHT || \
-		      es_edflag == ECMD_FGP_THICK ))
+		      es_edflag == ECMD_FGP_THICK || \
+		      es_edflag == ECMD_EXTR_SCALE_H ))
 #define OEDIT_SCALE (state == ST_O_EDIT && \
 		     (edobj == BE_O_XSCALE || \
 		      edobj == BE_O_YSCALE || \
@@ -163,7 +170,8 @@
 		     es_edflag == ECMD_ARS_MOVE_COL || \
 		     es_edflag == ECMD_BOT_MOVEV || \
 		     es_edflag == ECMD_BOT_MOVEE || \
-		     es_edflag == ECMD_BOT_MOVET)
+		     es_edflag == ECMD_BOT_MOVET || \
+		     es_edflag == ECMD_EXTR_MOV_H )
 #define OEDIT_TRAN (state == ST_O_EDIT && \
 		    (edobj == BE_O_X || \
 		     edobj == BE_O_Y || \
