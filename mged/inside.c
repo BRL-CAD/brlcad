@@ -59,8 +59,6 @@ static fastf_t	thick[6];
 static vect_t	pc;
 static union record newrec;		/* new record to find inside solid */
 
-#define MAXLINE		512	/* Maximum number of chars per line */
-
 static char *p_arb4[] = {
 	"Enter thickness for face 123: ",
 	"Enter thickness for face 124: ",
