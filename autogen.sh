@@ -235,9 +235,6 @@ fi
 ###############################
 if test -f misc/COPYING.backup ; then
   cp -pf misc/COPYING.backup COPYING
-  if test -f COPYING ; then
-    rm -f misc/COPYING.backup
-  fi
 fi
 
 ################
