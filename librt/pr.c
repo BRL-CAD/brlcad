@@ -690,7 +690,7 @@ CONST double	angles[5];
 {
 	BU_CK_VLS(str);
 
-	bu_vls_printf(str, "%s direction cosines=(%.1f, %1.f, %1.f)\n",
+	bu_vls_printf(str, "%s direction cosines=(%1.f, %1.f, %1.f)\n",
 		prefix, angles[0], angles[1], angles[2] );
 
 	bu_vls_printf(str, "%s rotation angle=%1.f, fallback angle=%1.f\n",
