@@ -846,7 +846,7 @@ CONST struct rt_tol	*tol;
 	}
 
 	reason = "of nmg_class_pt_s()";
-	class = nmg_class_pt_s(pt, sB, 1, tol);
+	class = nmg_class_pt_s(pt, sB, 0, tol);
 	
 	if( class == NMG_CLASS_AoutB )  {
 		NMG_INDEX_SET(classlist[NMG_CLASS_AoutB], vu->v_p);
@@ -855,9 +855,8 @@ CONST struct rt_tol	*tol;
 		NMG_INDEX_SET(classlist[NMG_CLASS_AinB], vu->v_p);
 		status = INSIDE;
 	}  else if( class == NMG_CLASS_AonBshared )  {
-		rt_pr_tol(tol);
-		VPRINT("pt", pt);
-		rt_bomb("class_vu_vs_s:  classifier found point ON, vertex topology should have been shared\n");
+		NMG_INDEX_SET(classlist[NMG_CLASS_AonBshared], vu->v_p);
+		status = ON_SURF;
 	}  else  {
 		rt_log("class=%s\n", nmg_class_name(class) );
 		VPRINT("pt", pt);
@@ -892,7 +891,7 @@ CONST struct rt_tol	*tol;
 
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY)
 	{
-		rt_log( "class_eu_vs_s( eu=x%x, s=x%x )\n", eu, s );
+		rt_log( "class_eu_vs_s( eu=x%x (e_p=x%x, lu=x%x), s=x%x )\n", eu, eu->e_p, eu->up.lu_p, s );
 		nmg_euprint("class_eu_vs_s\t", eu);
 	}
 
@@ -1019,7 +1018,7 @@ CONST struct rt_tol	*tol;
 
 			/* look at other EU's in the loop
 			 * counting in/on/out/unknown EU classes
-			 * if we fins an ON, keep it handy
+			 * if we find an ON, keep it handy
 			 */
 			eu_loop = RT_LIST_PNEXT_CIRC( edgeuse, &eu->l );
 			while( eu_loop != eu )
@@ -1052,23 +1051,7 @@ CONST struct rt_tol	*tol;
 				rt_bomb( "loop crosses shell boundary!!!" );
 			}
 
-			if( in )
-			{
-				/* If intersector worked properly, then this entire
-				 * loop must be in
-				 */
-				class_topo = NMG_CLASS_AinB;
-				reason = "of other parts of loop are in";
-			}
-			else if( out )
-			{
-				/* If intersector worked properly, then this entire
-				 * loop must be out
-				 */
-				class_topo = NMG_CLASS_AoutB;
-				reason = "of other parts of loop are out";
-			}
-			else if( on )
+			if( on )
 			{
 				struct edgeuse *eu_rad;
 				struct faceuse *fu_rad;
@@ -1079,30 +1062,27 @@ CONST struct rt_tol	*tol;
 				 */
 
 				eu_rad = eu_on->radial_p;
-				while( nmg_find_s_of_eu( eu_rad ) != s && eu_rad != eu_on )
+				while( nmg_find_s_of_eu( eu_rad ) != s && eu_rad != eu_on && eu_rad != eu_on->eumate_p )
 					eu_rad = eu_rad->eumate_p->radial_p;
 
 				fu_rad = nmg_find_fu_of_eu( eu_rad );
-				if( fu_rad->s_p != s )
+				if( fu_rad->s_p == s )
 				{
-					rt_log( "eu (x%x) is classed on, but isn't!!\n", eu_on );
-					rt_bomb( "eu is classed on, but isn't!!" );
-				}
-
-				if( fu_rad->orientation == OT_SAME )
-				{
-					class_topo = NMG_CLASS_AoutB;
-					reason = "nearest radial face is OT_SAME";
-				}
-				else if( fu_rad->orientation == OT_OPPOSITE )
-				{
-					class_topo = NMG_CLASS_AinB;
-					reason = "nearest radial face is OT_OPPOSITE";
-				}
-				else
-				{
-					rt_log( "FU (x%x) has bad orientation (%s)\n", fu_rad, nmg_orientation( fu_rad->orientation ) );
-					rt_bomb( "FU has bad orientation" );
+					if( fu_rad->orientation == OT_SAME )
+					{
+						class_topo = NMG_CLASS_AoutB;
+						reason = "nearest radial face is OT_SAME";
+					}
+					else if( fu_rad->orientation == OT_OPPOSITE )
+					{
+						class_topo = NMG_CLASS_AinB;
+						reason = "nearest radial face is OT_OPPOSITE";
+					}
+					else
+					{
+						rt_log( "FU (x%x) has bad orientation (%s)\n", fu_rad, nmg_orientation( fu_rad->orientation ) );
+						rt_bomb( "FU has bad orientation" );
+					}
 				}
 			}
 		}
@@ -2055,6 +2035,14 @@ CONST struct rt_tol *tol;
 		NMG_CK_VERTEX_G( vg );
 
 		class = nmg_class_pt_lu_except( vg->coord, lu2, (struct edgeuse *)NULL, tol );
+
+		if( lu2->orientation == OT_OPPOSITE )
+		{
+			if( class == NMG_CLASS_AoutB )
+				class = NMG_CLASS_AinB;
+			else if( class == NMG_CLASS_AinB )
+				class = NMG_CLASS_AoutB;
+		}
 		if( rt_g.NMG_debug & DEBUG_CLASSIFY )
 			rt_log( "nmg_classify_lu_lu returning %s\n", nmg_class_name( class ) );
 		return( class );
