@@ -43,8 +43,6 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "raytrace.h"
 #include "./debug.h"
 
-int rt_pure_boolean_expressions = 0;
-
 RT_EXTERN(void		rt_tree_kill_dead_solid_refs, (union tree *tp));
 RT_EXTERN(CONST char *	rt_basename, (CONST char *str));
 int		rt_bound_tree();	/* used by rt/sh_light.c */

@@ -40,8 +40,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "./debug.h"
 
-extern int	rt_pure_boolean_expressions;		/* from tree.c */
-
 struct tree_list {
 	union tree *tl_tree;
 	int	tl_op;
@@ -615,9 +613,6 @@ struct db_tree_state	*tsp;
 	union tree		*curtree;
 	int	i;
 	int	j;
-
-	/* Build tree representing boolean expression in Member records */
-	if( rt_pure_boolean_expressions )  goto final;
 
 	/*
 	 * This is how GIFT interpreted equations, so it is duplicated here.
