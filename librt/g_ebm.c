@@ -658,6 +658,7 @@ struct rt_db_internal	*ip;
 	eip->mp = (struct rt_mapped_file *)0;
 	rt_free( (char *)eip, "ebm ifree" );
 	ip->idb_ptr = GENPTR_NULL;	/* sanity */
+	ip->idb_type = ID_NULL;		/* sanity */
 }
 
 /*
