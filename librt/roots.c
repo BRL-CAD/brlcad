@@ -22,7 +22,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <math.h>
 #include <stdio.h>
-#include "vmath.h"
+#include "../h/machine.h"
+#include "../h/vmath.h"
 #include "polyno.h"
 #include "complex.h"
 #include "debug.h"

@@ -21,7 +21,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
-#include "vmath.h"
+#include "../h/machine.h"
+#include "../h/vmath.h"
 #include "raytrace.h"
 #include "debug.h"
 
@@ -271,18 +272,21 @@ int n;
 	vect_t top;
 	FAST double f;
 
+#ifdef later
 	/* NEW WAY */
+	/* Need to find all 8 corners of (rotated) model bounding RPP */
 	MAT4X3PNT( base, m2v, mdl_min );
 	MAT4X3PNT( top, m2v, mdl_max );
 
 	deltas = (top[X]-base[X])/n;
 	f = (top[Y]-base[Y])/n;
 	if( f > deltas )  deltas = f;
-	fprintf(stderr,"view  X(%f,%f), Y(%f,%f), Z(%f,%f)\n",
+	fprintf(stderr,"Nview  X(%f,%f), Y(%f,%f), Z(%f,%f)\n",
 		base[X], top[X],
 		base[Y], top[Y],
 		base[Z], top[Z] );
-	fprintf(stderr,"Deltas=%f (units between rays)\n", deltas );
+	fprintf(stderr,"NDeltas=%f (units between rays)\n", deltas );
+#endif
 
 	/* OLD WAY */
 	/* init maxima and minima */
@@ -316,7 +320,7 @@ int n;
 
 	deltas = (xmax-xmin)/n;
 	MAX( deltas, (ymax-ymin)/n );
-	fprintf(stderr,"Oview X(%f,%f), Y(%f,%f), Z(%f,%f)\n",
+	fprintf(stderr,"view X(%f,%f), Y(%f,%f), Z(%f,%f)\n",
 		xmin, xmax, ymin, ymax, zmin, zmax );
-	fprintf(stderr,"ODeltas=%f (units between rays)\n", deltas );
+	fprintf(stderr,"Deltas=%f (units between rays)\n", deltas );
 }
