@@ -83,8 +83,10 @@ class Dm {
 
     protected variable width 512
     protected variable height 512
-    protected variable invWidth ""
+    protected variable invWidth 0.001953125
+    protected variable invHeight 0.001953125
     protected variable aspect 1.0
+    protected variable invAspect 1.0
     private variable initializing 1
     private variable priv_type X
     private variable tkwin
@@ -458,7 +460,9 @@ body Dm::handle_configure {} {
     set width [lindex $itk_option(-dmsize) 0]
     set height [lindex $itk_option(-dmsize) 1]
     set invWidth [expr 1.0 / $width]
+    set invHeight [expr 1.0 / $height]
     set aspect [get_aspect]
+    set invAspect [expr 1.0 / $aspect]
 }
 
 body Dm::changeType {type} {
