@@ -27,6 +27,11 @@ typedef	int	Cast;
 	/* CPP is necessary on the Convex, cc -E needs .c suffix */
 #	define	CPP		"/lib/cpp"
 #endif
+#if defined(NeXT)
+	/* Gnu CPP */
+#	define	CPP		"/lib/cpp"
+#	define	CPP_OPTIONS	"-traditional"
+#endif
 #if !defined(CPP)
 #    if 1
 	/*
