@@ -745,7 +745,7 @@ static struct db_tree_state push_initial_tree_state = {
 
 /*			F _ P U S H
  *
- * The push command is used to move matricies from combinations 
+ * The push command is used to move matrices from combinations 
  * down to the solids. At some point, it is worth while thinking
  * about adding a limit to have the push go only N levels down.
  *
@@ -2333,4 +2333,66 @@ char **argv;
 	  return f_edit( clientData, interp, 2, av );
 	}
 
+}
+
+/*			F _ M A K E _ N A M E
+ *
+ * Generate an identifier that is guaranteed not to be the name
+ * of any object currently in the database.
+ *
+ */
+int
+f_make_name(clientData, interp, argc, argv)
+
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
+
+{
+    struct bu_vls	obj_name;
+    char		*cp, *tp;
+    static int		i = 0;
+    int			len;
+
+    bu_log("make_name %s\n", argv[1]);
+    if (dbip == DBI_NULL)
+	return TCL_OK;
+
+    if ((argc < 2) || (2 < argc))
+    {
+	struct bu_vls vls;
+
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "help make_name");
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+	return TCL_ERROR;
+    }
+
+    bu_vls_init(&obj_name);
+    for (cp = argv[1], len = 0; (*cp != '\0'); ++cp, ++len)
+    {
+	if (*cp == '@')
+	    if (*(cp + 1) == '@')
+		++cp;
+	    else
+		break;
+	bu_vls_putc(&obj_name, *cp);
+    }
+    bu_vls_putc(&obj_name, '\0');
+    tp = (*cp == '\0') ? ""
+		       : cp + 1;
+
+    do
+    {
+	bu_vls_trunc(&obj_name, len);
+	bu_vls_printf(&obj_name, "%d", i++);
+	bu_vls_strcat(&obj_name, tp);
+	bu_log("OK, object_name is '%s'\n", bu_vls_addr(&obj_name));
+    }
+    while (db_lookup(dbip, bu_vls_addr(&obj_name), LOOKUP_QUIET) != DIR_NULL);
+    bu_log("%s\n", bu_vls_addr(&obj_name));
+    Tcl_AppendResult(interp, bu_vls_addr(&obj_name), (char *) NULL);
+    return TCL_OK;
 }

@@ -109,6 +109,7 @@ set help_data(l_muves)		{{MUVES_component1 MUVES_component2 ...} {list the compo
 set help_data(M)		{{1|0 xpos ypos}	{handle a middle mouse event}}
 set help_data(make)		{{name <arb8|sph|ellg|tor|tgc|rpc|rhc|epa|ehy|eto|part|grip|half|nmg|pipe>}	{create a primitive}}
 set help_data(make_bb)		{{new_rpp_name obj1_or_path1 [list of objects or paths ...]}	{make a bounding box solid enclosing specified objects/paths}}
+set help_data(make_name)	{{templ@te}	{make an object name not occuring in database}}
 set help_data(mater)		{{comb [material]}	{assign/delete material to combination}}
 set help_data(matpick)		{{# or a/b}	{select arc which has matrix to be edited, in O_PATH state}}
 set help_data(memprint)		{{}	{print memory maps}}

@@ -252,6 +252,7 @@ static struct cmdtab cmdtab[] = {
 	"mrot", f_mrot,
 	"make", f_make,
 	"make_bb", f_make_bb,
+	"make_name", f_make_name,
 	"mater", f_mater,
 	"matpick", f_matpick,
 	"memprint", f_memprint,
