@@ -662,12 +662,31 @@ double			mm2local;
 {
 	register struct rt_ebm_internal	*eip =
 		(struct rt_ebm_internal *)ip->idb_ptr;
+	int i;
+	struct bu_vls substr;
 
 	RT_EBM_CK_MAGIC(eip);
+
+	bu_vls_init( &substr );
 	bu_vls_strcat( str, "extruded bitmap (EBM)\n\t");
 
-	bu_vls_struct_print( str, rt_ebm_parse, (char *)eip );
-	bu_vls_strcat( str, "\n" );
+/*	bu_vls_struct_print( str, rt_ebm_parse, (char *)eip );
+	bu_vls_strcat( str, "\n" );	*/
+
+	bu_vls_printf( &substr, "  file=\"%s\" w=%d n=%d depth=%g\n   mat=",
+		eip->file, eip->xdim, eip->ydim, eip->tallness*mm2local );
+	bu_vls_vlscat( str, &substr );
+	for( i=0 ; i<15 ; i++ )
+	{
+		bu_vls_trunc2( &substr, 0 );
+		bu_vls_printf( &substr, "%g,", eip->mat[i] );
+		bu_vls_vlscat( str, &substr );
+	}
+	bu_vls_trunc2( &substr, 0 );
+	bu_vls_printf( &substr, "%g\n", eip->mat[15] );
+	bu_vls_vlscat( str, &substr );
+
+	bu_vls_free( &substr );
 
 	return(0);
 }
