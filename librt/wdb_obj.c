@@ -6242,6 +6242,20 @@ wdb_node_write(struct db_i		*dbip,
 		if( (dp2 = db_lookup( dbip, extr->sketch_name, LOOKUP_QUIET )) != DIR_NULL ) {
 			wdb_node_write( dbip, dp2, ptr );
 		}
+	} else if ( dp->d_major_type == DB5_MAJORTYPE_BRLCAD && dp->d_minor_type == DB5_MINORTYPE_BRLCAD_DSP ) {
+		struct rt_dsp_internal *dsp;
+		struct directory *dp2;
+
+		/* this is a DSP, if it uses a binary object, keep it also */
+		dsp = (struct rt_dsp_internal *)intern.idb_ptr;
+		RT_DSP_CK_MAGIC( dsp );
+
+		if( dsp->dsp_datasrc == RT_DSP_SRC_OBJ ) {
+			/* need to keep this object */
+			if( (dp2 = db_lookup( dbip, bu_vls_addr(&dsp->dsp_name),  LOOKUP_QUIET )) != DIR_NULL ) {
+				wdb_node_write( dbip, dp2, ptr );	
+			}
+		}
 	}
 
 	if (wdb_put_internal(keepfp, dp->d_namep, &intern, 1.0) < 0)
