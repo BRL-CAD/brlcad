@@ -378,11 +378,15 @@ char	**argv;
 		signal(SIGILL,  cake_abort);
 		signal(SIGTRAP, cake_abort);
 		signal(SIGIOT,  cake_abort);
+#ifdef SIGEMT
 		signal(SIGEMT,  cake_abort);
+#endif
 		signal(SIGFPE,  cake_abort);
 		signal(SIGBUS,  cake_abort);
 		signal(SIGSEGV, cake_abort);
+#ifdef SIGSYS
 		signal(SIGSYS,  cake_abort);
+#endif
 	}
 	signal(SIGPIPE, cake_abort);
 	signal(SIGALRM, cake_abort);
