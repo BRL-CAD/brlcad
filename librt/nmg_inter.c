@@ -2903,7 +2903,7 @@ out:
  *
  *	Intersect a pair of faces
  */
-static void
+void
 nmg_isect_two_generic_faces(fu1, fu2, tol)
 struct faceuse		*fu1, *fu2;
 CONST struct rt_tol	*tol;
