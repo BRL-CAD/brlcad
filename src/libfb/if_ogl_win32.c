@@ -1533,11 +1533,12 @@ int	count;
  *  the screen separately.
  */
 _LOCAL_ int
-ogl_writerect( ifp, xmin, ymin, width, height, pp )
-FBIO		*ifp;
-int		xmin, ymin;
-int		width, height;
-CONST unsigned char	*pp;
+ogl_writerect(FBIO *ifp,
+	      int xmin,
+	      int ymin,
+	      int width,
+	      int height,
+	      const unsigned char *pp)
 {
 	register int		x;
 	register int		y;
@@ -1606,11 +1607,12 @@ CONST unsigned char	*pp;
  *  the screen separately.
  */
 _LOCAL_ int
-ogl_bwwriterect( ifp, xmin, ymin, width, height, pp )
-FBIO		*ifp;
-int		xmin, ymin;
-int		width, height;
-const unsigned char	*pp;
+ogl_bwwriterect(FBIO *ifp,
+		int xmin,
+		int ymin,
+		int width,
+		int height,
+		const unsigned char *pp)
 {
 	register int		x;
 	register int		y;
@@ -1673,9 +1675,8 @@ const unsigned char	*pp;
 
 
 _LOCAL_ int	
-ogl_rmap( ifp, cmp )
-register FBIO	*ifp;
-register ColorMap	*cmp;
+ogl_rmap(register FBIO *ifp,
+	 register ColorMap *cmp)
 {
 	register int i;
 
@@ -1698,8 +1699,7 @@ register ColorMap	*cmp;
  *  (ie, non-identity map).
  */
 _LOCAL_ int
-is_linear_cmap(ifp)
-register FBIO	*ifp;
+is_linear_cmap(register FBIO *ifp)
 {
 	register int i;
 
@@ -1715,8 +1715,7 @@ register FBIO	*ifp;
  *			O G L _ C M I N I T
  */
 _LOCAL_ void
-ogl_cminit( ifp )
-register FBIO	*ifp;
+ogl_cminit(register FBIO *ifp)
 {
 	register int	i;
 
@@ -1731,9 +1730,8 @@ register FBIO	*ifp;
  *			 O G L _ W M A P
  */
 _LOCAL_ int
-ogl_wmap( ifp, cmp )
-register FBIO	*ifp;
-register const ColorMap	*cmp;
+ogl_wmap(register FBIO *ifp,
+	 register const ColorMap *cmp)
 {
 	register int	i;
 	int		prev;	/* !0 = previous cmap was non-linear */
@@ -1798,8 +1796,7 @@ register const ColorMap	*cmp;
  *			O G L _ H E L P
  */
 _LOCAL_ int
-ogl_help( ifp )
-FBIO	*ifp;
+ogl_help(FBIO *ifp)
 {
 	struct	modeflags *mfp;
 	PIXELFORMATDESCRIPTOR *visual = OGL(ifp)->vip;
@@ -1865,21 +1862,19 @@ FBIO	*ifp;
 
 
 _LOCAL_ int
-ogl_setcursor( ifp, bits, xbits, ybits, xorig, yorig )
-FBIO	*ifp;
-const unsigned char *bits;
-int	xbits, ybits;
-int	xorig, yorig;
+ogl_setcursor(FBIO *ifp,
+	      const unsigned char *bits,
+	      int xbits,
+	      int ybits,
+	      int xorig,
+	      int yorig)
 {
   return 0;
 }
 
 
 _LOCAL_ int
-ogl_cursor( ifp, mode, x, y )	
-FBIO	*ifp;
-int	mode;
-int	x, y;
+ogl_cursor(FBIO *ifp, int mode, int x, int y)
 {
 return 0;
 }
@@ -1887,8 +1882,7 @@ return 0;
 
 
 _LOCAL_ int
-ogl_flush( ifp )
-FBIO	*ifp;
+ogl_flush(FBIO *ifp)
 {
 	if( (ifp->if_mode & MODE_12MASK) == MODE_12DELAY_WRITES_TILL_FLUSH )  {
 		if (multiple_windows) {
@@ -1913,8 +1907,7 @@ FBIO	*ifp;
 
 #if 0
 _LOCAL_ int 
-fb_cnull(ifp)
-FBIO *ifp;
+fb_cnull(FBIO *ifp)
 {
 	return(0);
 }
@@ -1934,8 +1927,7 @@ FBIO *ifp;
  *		(xpixmin,xpixmax,ypixmin,ypixmax)
  */
 void
-ogl_clipper( ifp )
-register FBIO	*ifp;
+ogl_clipper(register FBIO *ifp)
 {
 	register struct ogl_clip *clp;
 	register int	i;
@@ -2001,8 +1993,7 @@ register FBIO	*ifp;
  */
 
 _LOCAL_ void
-do_event(ifp)
-FBIO *ifp;	
+do_event(FBIO *ifp)
 {
 	MSG msg;
 	BOOL bRet;
@@ -2025,9 +2016,8 @@ FBIO *ifp;
 }
 
 _LOCAL_ void
-expose_callback(ifp, eventPtr)
-FBIO *ifp;
-int eventPtr;
+expose_callback(FBIO *ifp,
+		int eventPtr)
 {    
 //	XWindowAttributes xwa;
 	struct ogl_clip *clp;
@@ -2164,9 +2154,9 @@ int eventPtr;
 }  
 
 void
-ogl_configureWindow(ifp, width, height)
-FBIO *ifp;
-int width, height;
+ogl_configureWindow(FBIO *ifp,
+		    int width,
+		    int height)
 {
   if(width == OGL(ifp)->win_width &&
      height == OGL(ifp)->win_height)
@@ -2195,7 +2185,10 @@ int width, height;
  *
  */
 _LOCAL_ void	
-reorder_cursor(char *dst,char *src, int xbits, int ybits)
+reorder_cursor(char *dst,
+	       char *src,
+	       int xbits,
+	       int ybits)
 {
 	int xbytes;
 	int i,j,k;
@@ -2217,9 +2210,8 @@ reorder_cursor(char *dst,char *src, int xbits, int ybits)
  * screen if one_y equals -1.
  */
 _LOCAL_ void
-backbuffer_to_screen(ifp, one_y)
-register FBIO	*ifp;
-int		one_y;
+backbuffer_to_screen(register FBIO *ifp,
+		     int one_y)
 {
 	struct ogl_clip *clp;
 
@@ -2314,8 +2306,7 @@ int		one_y;
  * Return NULL on failure.
  */
 _LOCAL_ PIXELFORMATDESCRIPTOR *
-ogl_choose_visual(ifp)
-FBIO *ifp;
+ogl_choose_visual(FBIO *ifp)
 {
 	int iPixelFormat ;	
     PIXELFORMATDESCRIPTOR pfd, *ppfd; 
@@ -2364,9 +2355,11 @@ FBIO *ifp;
 }
 
 int
-ogl_refresh(ifp, x, y, w, h)
-FBIO *ifp;
-int x, y, w, h;
+ogl_refresh(FBIO *ifp,
+	    int x,
+	    int y,
+	    int w,
+	    int h)
 {
   int mm;
   struct ogl_clip *clp;
