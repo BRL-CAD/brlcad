@@ -275,6 +275,10 @@ WDB_EXTERN(int mk_vol, (struct rt_wdb *fp, const char *name, const char *file,
 WDB_EXTERN(int mk_submodel, (struct rt_wdb *fp, const char *name, const char *file,
 			const char *treetop, int meth));
 
+/* binary_obj.c */
+WDB_EXTERN(int mk_binunif, (struct rt_wdb *wdbp, const char *obj_name,
+		    const char *file_name, unsigned int minor_type));
+
 /*
  *  The polysolid has been replaced by the BoT.
  *  Automatic conversion is provided by rt_pg_to_bot()
