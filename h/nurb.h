@@ -199,7 +199,7 @@ RT_EXTERN(struct rt_nurb_poly *rt_nurb_mk_poly,
 /* nurb_ray.c */
 RT_EXTERN(struct snurb *rt_nurb_project_srf, (struct snurb *srf,
 			plane_t plane1, plane_t plane2));
-RT_EXTERN(struct s_mesh *rt_nurb_clip_srf, (struct snurb *srf,
+RT_EXTERN(void rt_nurb_clip_srf, (struct snurb *srf,
 			int dir, fastf_t *min, fastf_t *max));
 RT_EXTERN(struct snurb *rt_nurb_region_from_srf, (struct snurb *srf,
 			int dir, fastf_t param1, fastf_t param2));
