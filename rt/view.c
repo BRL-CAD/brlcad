@@ -960,6 +960,12 @@ char *file, *obj;
 
 /*
  *			R E P R O J E C T _ S P L A T
+ *
+ *  Called when the reprojected value lies on the current screen.
+ *  Write the reprojected value into the screen,
+ *  checking *screen* Z values if the new location is already occupied.
+ *
+ *  May be run in parallel.
  */
 int
 reproject_splat( ix, iy, ip, new_view_pt )
@@ -1013,6 +1019,76 @@ CONST point_t			new_view_pt;
 	*op = *ip;	/* struct copy */
 
 	return count;
+}
+
+/* Local communication a.la. worker() */
+int		per_processor_chunk = 0;	/* how many pixels to do at once */
+HIDDEN int cur_pixel;		/* current pixel number, 0..last_pixel */
+HIDDEN int last_pixel;		/* last pixel number */
+
+/*
+ *			R E P R O J E C T _ W O R K E R
+ */
+void
+reproject_worker(cpu, arg)
+int		cpu;
+genptr_t	arg;
+{
+	int	pixel_start;
+	int	pixelnum;
+	register struct floatpixel	*ip, *op;
+	int	count = 0;
+
+	/* The more CPUs at work, the bigger the bites we take */
+	if( per_processor_chunk <= 0 )  per_processor_chunk = npsw;
+
+	while(1)  {
+
+		bu_semaphore_acquire( RT_SEM_WORKER );
+		pixel_start = cur_pixel;
+		cur_pixel += per_processor_chunk;
+		bu_semaphore_release( RT_SEM_WORKER );
+
+		for( pixelnum = pixel_start; pixelnum < pixel_start+per_processor_chunk; pixelnum++ )  {
+			point_t	new_view_pt;
+			int	ix, iy;
+
+			if( pixelnum > last_pixel )
+				return;
+
+			ip = &prev_float_frame[pixelnum];
+
+			if( ip->ff_frame < 0 )
+				continue;	/* Not valid */
+			if( ip->ff_dist <= -INFINITY )
+				continue;	/* was a miss */
+			/* new model2view has been computed before here */
+			MAT4X3PNT( new_view_pt, model2view, ip->ff_hitpt );
+			/* Convert from -1..+1 range to pixel subscript */
+			ix = (new_view_pt[X] + 1) * 0.5 * width;
+			iy = (new_view_pt[Y] + 1) * 0.5 * height;
+			/* See if reprojects off of screen */
+			if( ix >= 0 && ix < width && iy >= 0 && iy < height )
+				count += reproject_splat( ix, iy, ip, new_view_pt );
+
+			ix++;
+			if( ix >= 0 && ix < width && iy >= 0 && iy < height )
+				count += reproject_splat( ix, iy, ip, new_view_pt );
+
+			iy++;
+			if( ix >= 0 && ix < width && iy >= 0 && iy < height )
+				count += reproject_splat( ix, iy, ip, new_view_pt );
+
+			ix--;
+			if( ix >= 0 && ix < width && iy >= 0 && iy < height )
+				count += reproject_splat( ix, iy, ip, new_view_pt );
+		}
+	}
+
+	/* Deposit the statistics */
+	bu_semaphore_acquire( RT_SEM_WORKER );
+	reproj_cur += count;
+	bu_semaphore_release( RT_SEM_WORKER );
 }
 
 /*
@@ -1096,41 +1172,15 @@ fp->ff_color[0] = fp->ff_color[1] = 50; fp->ff_color[2] = 0;	/* orange -- sanity
 
 		/* Reproject previous frame */
 		if( prev_float_frame && reproject_mode )  {
-			register struct floatpixel	*ip, *op;
-			int	count = 0;
-			for( ip = &prev_float_frame[width*height-1];
-			     ip >= prev_float_frame; ip--
-			) {
-				point_t	new_view_pt;
-				int	ix, iy;
-
-				if( ip->ff_frame < 0 )
-					continue;	/* Not valid */
-				if( ip->ff_dist <= -INFINITY )
-					continue;	/* was a miss */
-				/* new model2view has been computed before here */
-				MAT4X3PNT( new_view_pt, model2view, ip->ff_hitpt );
-				/* Convert from -1..+1 range to pixel subscript */
-				ix = (new_view_pt[X] + 1) * 0.5 * width;
-				iy = (new_view_pt[Y] + 1) * 0.5 * height;
-				/* See if reprojects off of screen */
-				if( ix >= 0 && ix < width && iy >= 0 && iy < height )
-					count += reproject_splat( ix, iy, ip, new_view_pt );
-
-				ix++;
-				if( ix >= 0 && ix < width && iy >= 0 && iy < height )
-					count += reproject_splat( ix, iy, ip, new_view_pt );
-
-				iy++;
-				if( ix >= 0 && ix < width && iy >= 0 && iy < height )
-					count += reproject_splat( ix, iy, ip, new_view_pt );
-
-				ix--;
-				if( ix >= 0 && ix < width && iy >= 0 && iy < height )
-					count += reproject_splat( ix, iy, ip, new_view_pt );
-			}
-			reproj_cur = count;
+			reproj_cur = 0;	/* incremented by reproject_worker */
 			reproj_max = width*height;
+
+			cur_pixel = 0;
+			last_pixel = width*height-1;
+			if( npsw == 1 )
+				reproject_worker(0,NULL);
+			else
+				bu_parallel( reproject_worker, npsw, NULL );
 		} else {
 			reproj_cur = reproj_max = 0;
 		}
