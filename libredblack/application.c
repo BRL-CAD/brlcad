@@ -76,6 +76,7 @@ main ()
     int			i;
     int			nm_presidents;
     rb_tree		*tree;
+    record		p;
     static record	pres[] = 
 			{
 			    {RECORD_MAGIC, "Roosevelt", "Franklin", DEMOCRAT},
@@ -128,4 +129,17 @@ main ()
 	rb_walk(tree, ORDER_FIRSTNAME, describe_president);
     printf("\n\n\nBy party...\n");
 	rb_walk(tree, ORDER_PARTY, describe_president);
+
+    p.magic = RECORD_MAGIC;
+    strcpy(p.first, "Lyndon");
+    r = (record *) rb_search(tree, ORDER_FIRSTNAME, (void *) (&p));
+    if (r == 0)
+    {
+	printf("It ain't there\n");
+    }
+    else
+    {
+	printf("I found it...\n");
+	describe_president((void *) r);
+    }
 }
