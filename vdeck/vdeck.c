@@ -159,8 +159,6 @@ void			prompt();
 RT_EXTERN(void ewrite, (FILE *fp, CONST char *buf, unsigned bytes) );
 RT_EXTERN(void blank_fill, (FILE *fp, int count) );
 
-static int sortFunc RT_ARGS((CONST genptr_t a, CONST genptr_t b));
-
 /* Head of linked list of solids */
 struct soltab	sol_hd;
 
@@ -345,9 +343,25 @@ int		neg;
 		return;
 
 	case OP_SOLID:
-		rt_vls_strncat( vls, op, 2 );
 		bit = tp->tr_a.tu_stp->st_bit;
-		if(neg) bit = -bit;
+		if( bit < 10000 )  {
+			/* Old way, just use negative number in I5 field */
+			rt_vls_strncat( vls, op, 2 );
+			if(neg) bit = -bit;
+		} else {
+			/* New way, due to Tom Sullivan of Sandia. */
+			/* "or" becomes "nr", "  " becomes "nn" */
+			if(neg)  {
+				if( *op == ' ' )
+					rt_vls_strncat( vls, "nn", 2 );
+				else if( *op == 'o' && op[1] == 'r' )
+					rt_vls_strncat( vls, "nr", 2 );
+				else
+					rt_vls_strncat( vls, "??", 2 );
+			} else {
+				rt_vls_strncat( vls, op, 2 );
+			}
+		}
 		vls_itoa( vls, bit, 5 );
 		/* tp->tr_a.tu_stp->st_name */
 		return;
