@@ -1118,7 +1118,7 @@ double		norm_tol;
 
 	/* Associate face geometry */
 	for( i=0; i < pa.pa_faces; i++ )  {
-#if 0
+#if 1
 		/* We already know the plane equations, this is fast */
 		nmg_face_g( fu[i], pa.pa_face[i].peqn );
 #else
