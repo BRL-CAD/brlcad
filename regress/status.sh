@@ -204,15 +204,17 @@ else
 		    # diff options:
 		    # -w no whitespace difference
 		    # -B no blankline differences (not sun5 supported)
+		    # -b no blank line differences
+		    # -c context output style
 		    # -d optimal set of changes (not sun5 supported)
 		    # -q report only if different (quick) (not sun5 supported)
-		    DIFFERENT=`diff -w ./ref_${ARCH} $REGRESS_DIR/.regress.${ARCH}/MAKE_LOG | wc | awk '{print $1}'`
+		    DIFFERENT=`diff -w -b ./ref_${ARCH} $REGRESS_DIR/.regress.${ARCH}/MAKE_LOG | wc | awk '{print $1}'`
 		    if [ ! "x$DIFFERENT" = x0 ] ; then
 			REGRESS_LOG="${REGRESS_LOG}Architecture [${ARCH}] failed the regression test\n"
 		    fi
 		else
-		    cp $REGRESS_DIR/.regress.${ARCH}/MAKE_LOG ./ref_${ARCH}		
-		    REGRESS_LOG="${REGRESS_LOG}No reference file available for ${ARCH}, installed one (!)\n"
+#		    cp $REGRESS_DIR/.regress.${ARCH}/MAKE_LOG ./ref_${ARCH}		
+		    REGRESS_LOG="${REGRESS_LOG}No reference file available for ${ARCH}, need to install one (!)\n"
 		fi
 	    fi
 	fi
