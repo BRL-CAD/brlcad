@@ -147,7 +147,7 @@ int	inpara;			/* parameter input from keyboard */
 int glob_compat_mode = 1;
 int output_as_return = 0;
 
-extern Tcl_CmdProc cmd_expand, cmd_db, cmd_prev, cmd_next, f_echo, cmd_look;
+extern Tcl_CmdProc cmd_expand, cmd_db, cmd_prev, cmd_next, f_echo;
 extern Tcl_CmdProc cmd_solids_on_ray;
 
 int	mged_cmd();
@@ -369,8 +369,6 @@ static struct funtab funtab[] = {
 "loadtk", "", "Initializes Tk",
         cmd_tk, 1, 1, TRUE,
 #endif
-"look", "eyepoint vector", "Looks along the given ray and returns a list of hit solids",
-        cmd_look, 3, 3, TRUE,
 "ls", "", "table of contents",
 	dir_print,1,MAXARGS, FALSE,
 "M", "1|0 xpos ypos", "handle a mouse event",
@@ -586,8 +584,6 @@ char *str;
 {
     register struct rt_vls *vp = (struct rt_vls *)clientdata;
     register int len;
-
-    /* Temporarily shut off hooks in case the vls routines bomb! */
 
     len = rt_vls_strlen(vp);
     rt_vls_strcat(vp, str);
@@ -1720,175 +1716,81 @@ struct rt_vls *dest, *src;
  */
 
 int
-#ifdef XMGED
 cmdline(vp, record)
-struct rt_vls	*vp;
+struct rt_vls *vp;
 int record;
-#else
-cmdline(vp)
-struct rt_vls	*vp;
-#endif
 {
-    int	done, status;
-    size_t len;
-    struct rt_vls line, line_globbed, str;
+    int	status;
+    struct rt_vls globbed;
     struct timeval start, finish;
-    int	need_prompt = 0;
-    char *argv[MAXARGS+2];
-    register char *cp, *ep, *end;
+    size_t len;
+    extern struct rt_vls mged_prompt;
 
     RT_VLS_CHECK(vp);
 
-    len = rt_vls_strlen(vp);
-    if (len <= 0) return 0;
+    if (rt_vls_strlen(vp) <= 0) return 0;
 		
-    cp = rt_vls_addr(vp);
-    end = cp + len;
+    rt_vls_init(&globbed);
 
-    rt_vls_init(&line);
-    rt_vls_init(&line_globbed);
-    rt_vls_init(&str);
+    if (glob_compat_mode)
+	mged_compat(&globbed, vp);
+    else
+	rt_vls_vlscat(&globbed, vp);
 
-    while (cp < end) {
-	ep = strchr(cp, '\n');
-	if (ep == NULL) break; /* Quit if there are no more complete commands*/
-	/* Copy one cmd, including newline.  Null terminate */
-	rt_vls_strncpy(&line, cp, ep-cp+1);
-
-	/* If the command was not complete, pick up additional fragments
-	   as required. */
-	while (!Tcl_CommandComplete(rt_vls_addr(&line)) && ep+1 < end) {
-	    cp = ep + 1;
-	    ep = strchr(cp, '\n');
-	    if (ep == NULL)
-		break;
-	    rt_vls_strncat(&line, cp, ep-cp+1);
-	}
-
-	while (1) {
-	    done = 0;
-
-	    rt_vls_trunc(&line_globbed, 0);
-	    if (glob_compat_mode)
-		mged_compat(&line_globbed, &line);
-	    else
-		rt_vls_vlscat(&line_globbed, &line);
-
-	    gettimeofday(&start, (struct timezone *)NULL);
-	    status = Tcl_Eval(interp, rt_vls_addr(&line_globbed));
-	    gettimeofday(&finish, (struct timezone *)NULL);
+    gettimeofday(&start, (struct timezone *)NULL);
+    status = Tcl_Eval(interp, rt_vls_addr(&globbed));
+    gettimeofday(&finish, (struct timezone *)NULL);
 
     /* Contemplate the result reported by the Tcl interpreter. */
 
-	    switch (status) {
-	    case TCL_OK:
-		len = strlen(interp->result);
+    switch (status) {
+    case TCL_OK:
+	len = strlen(interp->result);
 
     /* If the command had something to say, print it out. */	     
 
-		if (len > 0) rt_log("%s%s", interp->result,
-				    interp->result[len-1] == '\n' ? "" : "\n");
+	if (len > 0) rt_log("%s%s", interp->result,
+			    interp->result[len-1] == '\n' ? "" : "\n");
 
-    /* Then record it for posterity, and notify that we're done. */
+    /* Then record it in the history, if desired. */
 
-		history_record(&line, &start, &finish, CMD_OK);
-		done = 1;
-		break;
+	if (record) history_record(vp, &start, &finish, CMD_OK);
 
-	    default:
+	rt_vls_free(&globbed);
+#ifdef XMGED
+	addtohist(rt_vls_addr(vp));
+	hcurr = htail;
+#endif
+	rt_vls_strcpy(&mged_prompt, MGED_PROMPT);
+	return CMD_OK;
+
+    case TCL_ERROR:
+    default:
 
     /* First check to see if it's a secret message from cmd_wrapper. */
 
-		if (strstr(interp->result, MORE_ARGS_STR) == interp->result) {
-		    struct rt_vls temp;
-
-		    rt_vls_init(&temp);
-		    rt_vls_strcat(&temp,
-				  interp->result+sizeof(MORE_ARGS_STR)-1);
-		    Tcl_SetResult(interp, rt_vls_addr(&temp), TCL_VOLATILE);
-		    rt_vls_free(&temp);
-		    done = 0;
-		    break;
-		}
+	if (strstr(interp->result, MORE_ARGS_STR) == interp->result) {
+	    rt_vls_strcpy(&mged_prompt,interp->result+sizeof(MORE_ARGS_STR)-1);
+	    Tcl_SetResult(interp, rt_vls_addr(&mged_prompt), TCL_VOLATILE);
+	    rt_vls_free(&globbed);
+	    return CMD_MORE;
+	}
 
     /* Otherwise, it's just a regular old error. */    
 
-		len = strlen(interp->result);
-		if (len > 0) rt_log("%s%s", interp->result,
-				    interp->result[len-1] == '\n' ? "" : "\n");
+	len = strlen(interp->result);
+	if (len > 0) rt_log("%s%s", interp->result,
+			    interp->result[len-1] == '\n' ? "" : "\n");
 
-		history_record(&line, &start, &finish, CMD_BAD);
-		done = 1;
-		break;
-	    }
-
+	if (record) history_record(vp, &start, &finish, CMD_BAD);
+	rt_vls_free(&globbed);
 #ifdef XMGED
-	    if (done && record) {
-		addtohist(rt_vls_addr(&hadd));
-		/* reset hcurr to point to most recent command */
-		hcurr = htail;
-	    }
+	addtohist(rt_vls_addr(vp));
+	hcurr = htail;
 #endif
-	    /* If we get here, it means the command failed due
-	       to insufficient arguments.  In this case, grab some
-	       more from stdin and call the command again. */
-
-	    if (done)
-		break;
-	    
-	    rt_vls_trunc(&str, 0);
-	    rt_log("%s", interp->result);
-	    rt_vls_gets(&str, stdin);  /* Feh. We should continue to respond
-					  to events! */
-
-	    /* Remove newline and append new string */
-	    rt_vls_trunc(&line, rt_vls_strlen(&line)-1);
-	    rt_vls_strcat(&line, " ");
-	    rt_vls_vlscatzap(&line, &str);
-	    rt_vls_strcat(&line, "\n");
-	}
-
-	need_prompt = 1;
-	cp = ep+1;
+	rt_vls_strcpy(&mged_prompt, MGED_PROMPT);
+	return CMD_BAD;
     }
-
-    rt_vls_free( &line );
-    rt_vls_free( &line_globbed );
-    rt_vls_free( &str );
-
-    return need_prompt;
-}
-
-int
-cmd_look(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int argc;
-char **argv;
-{
-    double viewX, viewY;
-
-    if (argc < 3) {
-	Tcl_AppendResult(interp, "wrong # args: should be ", argv[0],
-			 " scrH scrV", (char *)NULL);
-	return TCL_ERROR;
-    }
-
-#if 0
-    if (Tcl_GetDouble(interp, argv[1], &viewX) != TCL_OK) return TCL_ERROR;
-    
-    /* Do stuff. */
-
-    Tcl_SetResult(interp, "foo", TCL_STATIC);
-
-    Tcl_SetResult(interp, rt_vls_addr(&vls), TCL_VOLATILE);
-    rt_vls_free(&vls);
-    
-
-    Tcl_AppendElement(interp, "This { is really \\ fu\"nk}y.");
-#endif
-    
-    return TCL_OK;
 }
 
 /*
@@ -2295,29 +2197,6 @@ char option;
 		rt_log( "Unknown option: %c\n", option);
 		break;
 	}
-}
-#else
-/*
- *			S O U R C E _ F I L E
- *
- */
-
-void
-mged_source_file(fp)
-register FILE	*fp;
-{
-	struct rt_vls	str;
-	int		len;
-
-	rt_vls_init(&str);
-
-	while( (len = rt_vls_gets( &str, fp )) >= 0 )  {
-		rt_vls_strcat( &str, "\n" );
-		if( len > 0 )  (void)cmdline( &str );
-		rt_vls_trunc( &str, 0 );
-	}
-
-	rt_vls_free(&str);
 }
 #endif
 
