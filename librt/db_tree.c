@@ -1263,6 +1263,7 @@ int		lim;
 
 	case OP_SOLID:
 	case OP_REGION:
+	case OP_DB_LEAF:
 		BU_GETUNION( new, tree );
 		*new = *tp;		/* struct copy */
 		tp->tr_op = OP_NOP;	/* Zap original */
