@@ -71,6 +71,148 @@ static struct vertexuse *nmg_mvvu RT_ARGS( (long *upptr, struct model *m) );
  ************************************************************************/
 
 /*
+ *  The nmg_m*() routines are used to create a topology-only object
+ *  which at first has no geometry associated with it at all.
+ *  A topology-only object can be used to answer questions like:
+ *	is this vertex ON this shell?
+ *	is this vertex ON this face?
+ *	is this vertex ON this edge?
+ *	Is this face ON this shell?
+ * and many more.
+ *
+ *  After the topology has been built, most applications will proceed to
+ *  associate geometry with the topology, primarily by supplying
+ *  Cartesian coordinates for each struct vertex, and by supplying
+ *  or computing face normals for the planar faces.  (Linear edge geometry
+ *  is optional, as it is implicit from the vertex geometry).
+ *
+ *  Objects which have been fully populated with geometry can be used to
+ *  answer questions about where things are located and how large they are.
+ *
+ * The abstract objects are:
+ *	model, nmgregion, shell, face, loop, edge and vertex.
+ * The uses of those objects are:
+ * 	faceuse, loopuse, edgeuse and vertexuse.
+ * Geometry can optionally be associated with the abstract objects:
+ *	face_g		(plane equation, bounding box)
+ *	loop_g		(just a bounding box, for planar faces)
+ *	edge_g		(to track edge subdivision heritage, for linear edges)
+ *	vertex_g	(Cartesian coordinates)
+ * The uses of those objects can optionally have attributes:
+ *	model_a		(not used)
+ *	nmgregion_a	(region bounding box)	[nmgregions have no uses]
+ *	shell_a		(shell bounding box)	[shells have no uses]
+ *	faceuse_a	(not used)
+ *	loopuse_a	(not used)
+ *	edgeuse_a	(not used)
+ *	vertexuse_a	(special surface normal, for normal interpolation)
+ *
+ * Consider for example a simple cube.
+ *
+ * As a topology-only object, it would have the following structures:
+ *
+ *	1 model structure
+ *		This is the handle which everything else hangs on.
+ *		The model structure r_hd references 1 region structure.
+ *	1 nmgregion structure.
+ *		The region structure s_hd references 1 shell structure.
+ *		Also, m_p references the model.
+ *	1 shell structure.
+ *		The shell structure fu_hd references 12 faceuse structures.
+ *		One for each side of each of the 6 faces of the cube.
+ *		Also, r_p references the nmgregion.
+ *	12 faceuse structures.
+ *		Each faceuse structure lu_hd references 1 loopuse structure.
+ *		Also, 1 face structure and 1 faceuse structure (its mate),
+ *		plus s_p references the shell.
+ *	6 face structures.
+ *		Each face structure fu_p references a random choice of 1 of
+ *		the two parent faceuse structures sharing this face, and is
+ *		in turn referenced by that faceuse and it's mate.
+ *	12 loopuse structures
+ *		Each loopuse structure down_hd references 4 edgeuse structures.
+ *		Also, 1 loop structure, and 1 loopuse structure (its mate).
+ *		The four edgeuse structures define the perimeter of the
+ *		surface area that comprises this face.
+ *		Because their orientation is OT_SAME, each loopuse "claims"
+ *		all the surface area inside it for the face.
+ *		(OT_OPPOSITE makes a hole, claiming surface area outside).
+ *		Plus, "up" references the parent object (faceuse, here).
+ *	6 loop structures
+ *		Each loop structure references a random choice of 1 of it's
+ *		parent loopuse structures and is in turn referenced by that
+ *		loopuse and it's mate.
+ *	48 edgeuse structures
+ *		Each edgeuse structure references 1 vertexuse structure,
+ *		1 edge structure, and 2 other edgeuse structures (it's mate
+ *		and the next edgeuse radial to this edgeuse).
+ *		(if this edge was NOT used in another face, then the
+ *		radial pointer and mate pointer would point to the SAME
+ *		edgeuse)
+ *		To find all edgeuses around a given edge, follow radial to
+ *		mate to radial to mate until you are back to the original
+ *		edgeuse.
+ *		Plus, "up" references the parent object (loopuse, here).
+ *	12 edge structures
+ *		Each edge structure references a random choice of one of
+ *		it's parent edgeuse structures and is in turn referenced
+ *		by that edgeuse, the mate of that edgeuse, the radial of
+ *		that edgeuse and the mate of the radial. (In this simple
+ *		case of the cube, there are 4 edgeuses per edge).
+ *	48 vertexuse structures.
+ *		Each vertexuse structure references one vertex structure
+ *		and is in turn enroled as a member of the linked list
+ *		headed by that vertex structure.
+ *		Each vertexuse is cited by exactly one edgeuse.
+ *		Also, "up" references the parent object (edgeuse, here).
+ *	8 vertex structures
+ *		Each vertex structure references 6 vertexuse structures
+ *		via it's linked list. (In the case of the cube,
+ *		there are three faces meeting at each vertex, and each of
+ *		those faces has two faceuse structs of one loopuse each. Each
+ *		loopuse will cite the vertex via one edgeuse, so 3*2 = 6).
+ *
+ * As well as each "use" pointing down to what it uses, the "use" points
+ * up to the structure that uses it.  So working up from any abstract object
+ * or it's use, the top of the tree (struct model) can be found.
+ * Working down from the struct model, all elements of the object can be
+ * visited.
+ *
+ * The object just described contains no geometry.  There is no way to tell
+ * where in space the object lies or how big it is.
+ *
+ * To add geometry, the following structures are needed:
+ *	8 vertex_g structures
+ *		each vertex_g structure contains a point in space (point_t)
+ *		and is referenced by 1 vertex structure.
+ *	12 edge_g structures (completely optional)
+ *		each edge_g structure contains the parametric definition of
+ *		the line which contains the line segment which is the edge,
+ *		given as a point in space and a direction vector.  It is
+ *		referenced by 1 edge structure. (In general, it is referenced
+ *		by all edges sharing that line).
+ *		In a simple case the point would be the same as one of
+ *		the vertex_g points and the direction would be the normalized
+ *		(unit) vector of the difference between the two vertex_g points.
+ *	6 loop_g structures
+ *		Each loop_g structure contains a bounding box for the loop.
+ *		It is referenced by 1 loop structure.
+ *	6 face_g structures
+ *		Each face_g structure contains a plane equation and
+ *		a bounding box.  It is referenced by one face structure.
+ *		The plane equation is calculated from the vertex_g data
+ *		by nmg_fu_planeeqn().
+ *		See h/vmath.h for the definition of a plane equation.
+ *	1 shell_a structure
+ *		Each shell_a structure contains the bounding box for the
+ *		shell.  It is referenced by 1 shell structure.
+ *	1 nmgregion_a structure
+ *		Each nmgregion_a structure contains the bounding box for the
+ *		region.  It is referenced by 1 region structure.
+ *
+ */
+
+/*
  *			N M G _ M M
  *
  *	Make Model
