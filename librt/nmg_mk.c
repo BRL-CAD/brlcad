@@ -2117,8 +2117,10 @@ long		*magic_p;
 		if( fabs(deg) > 2 )  {
 			VPRINT( "dir_src ", dir_src );
 			VPRINT( "dir_dest", dir_dest );
-			rt_log("Angle between lines is %g degrees\n", deg );
-			rt_bomb("nmg_use_edge_g() angle between 2 existing lines is excessive\n");
+			rt_log("WARNING Angle between old & new lines is %g degrees\n", deg );
+#if 0
+			rt_bomb("nmg_use_edge_g() angle between old & new lines is excessive\n");
+#endif
 		}
 	}
 
@@ -2721,7 +2723,6 @@ struct vertex *v;
  *	if eusrc does not share the same vertices as eudst, we bomb.
  *
  *	The edgeuse geometry pointers are not changed by this operation.
- *	(For compat, if both are linear, geometries are fused here)
  *
  *	This routine was formerly called nmg_moveeu().
  */
@@ -2792,14 +2793,6 @@ struct edgeuse *eudst, *eusrc;
 
 	eudst->radial_p->radial_p = eusrc_mate;
 	eudst->radial_p = eusrc;
-
-	/* If linear, make eusrc use geometry of eudst */
-	if( eusrc->g.magic_p != eudst->g.magic_p &&
-	    eudst->g.magic_p && *eudst->g.magic_p == NMG_EDGE_G_LSEG_MAGIC &&
-	    eusrc->g.magic_p && *eusrc->g.magic_p == NMG_EDGE_G_LSEG_MAGIC
-	)  {
-		nmg_use_edge_g( eusrc, eudst->g.magic_p );
-	}
 
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
 		rt_log("nmg_je(eudst=x%x, eusrc=x%x)\n", eudst , eusrc);
@@ -3000,6 +2993,10 @@ struct face	*f2;
  *  Join two edge geometries.
  *  For all edges in the model which refer to 'src_eg',
  *  change them to refer to 'dest_eg'.  The source is destroyed.
+ *
+ *  It is the responsibility of the caller to make certain that the
+ *  'dest_eg' is the best one for these edges.
+ *  Outrageously wrong requests will cause this routine to abort.
  *
  *  This algorithm does not make sense if dest_eg is an edge_g_cnurb;
  *  those only make sense in the parameter space of their associated face.
