@@ -35,7 +35,7 @@ int		id;
 		register int		stop;
 		int			lines =	(PROMPT_LINE-TOP_SCROLL_WIN);
 	if( id >= lgt_db_size )
-		return	-1;
+		return	0;
 	else
 	if( id < 0 )
 		{
