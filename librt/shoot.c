@@ -149,11 +149,10 @@ register struct application *ap;
 		box_start = 0.0;	/* don't look back */
 	last_bool_start = box_start;
 
-	ret = nsolids+nregions+2*8*sizeof(bitv_t)-2;	/* # aligned bits */
 	solidbits = (bitv_t *)vmalloc(
-		3*sizeof(bitv_t) + (ret/sizeof(bitv_t)),
+		BITS2BYTES(nsolids) + BITS2BYTES(nregions) + 4*sizeof(bitv_t),
 		"solidbits+regionbits");
-	regionbits = &solidbits[2+(nsolids/sizeof(bitv_t))]; /* safe */
+	regionbits = &solidbits[2+(BITS2BYTES(nsolids)/sizeof(bitv_t))];
 	BITZERO(solidbits,nsolids);
 	BITZERO(regionbits,nregions);
 	HeadSeg = SEG_NULL;
@@ -533,7 +532,7 @@ int nbits;
 {
 	register int words;
 
-	words = (nbits+BITV_MASK)>>BITV_SHIFT;
+	words = (nbits+BITV_MASK)>>BITV_SHIFT;/*BITS2BYTES()/sizeof(bitv_t)*/
 	while( words-- > 0 )
 		*out++ |= *in++;
 }

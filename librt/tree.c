@@ -744,7 +744,7 @@ rt_prep()
 	 */
 	for( stp=HeadSolid; stp != SOLTAB_NULL; stp=stp->st_forw )  {
 		stp->st_regions = (bitv_t *)vmalloc(
-			(nregions/sizeof(bitv_t))+sizeof(bitv_t),
+			BITS2BYTES(nregions)+sizeof(bitv_t),
 			"st_regions bitv" );
 		BITZERO( stp->st_regions, nregions );
 		stp->st_maxreg = 0;
