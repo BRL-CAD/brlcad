@@ -86,8 +86,8 @@ F_Hdr_Ptlist;
 #define RANGE		(HOTTEST-AMBIENT)
 
 /* "ir_mapping" values, if true it's a bit mask.			*/
-#define IR_OFF		0 /* Normal lighting model, no IR data base.	*/
-#define IR_READONLY	(1<<0) /* Read IR data base.			*/
+#define IR_OFF		0      /* Not in IR module.			*/
+#define IR_READONLY	1      /* Read IR data base.			*/
 #define IR_EDIT		(1<<1) /* Edit IR data base.			*/
 #define IR_OCTREE	(1<<2) /* If ON, display octree, else GED model.*/
 

@@ -90,6 +90,7 @@ char *fmt;
 			}
 		else
 			(void) fprintf( stdout, fmt, a,b,c,d,e,f,g,h,i );
+		(void) fflush( stdout );
 		/* End of line detected by existance of a newline.	*/
 		newline = fmt[strlen( fmt )-1] == '\n';
 		}
@@ -140,6 +141,7 @@ va_dcl
 			}
 		else
 			(void) _doprnt( fmt, ap, stdout );
+		(void) fflush( stdout );
 		/* End of line detected by existance of a newline.	*/
 		newline = fmt[strlen( fmt )-1] == '\n';
 		}

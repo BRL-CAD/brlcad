@@ -135,6 +135,7 @@ extern int		grid_x_fin, grid_y_fin;
 extern int		grid_x_cur, grid_y_cur;
 extern int		hiddenln_draw;
 extern int		icon_mapping;
+extern int		ir_aperture;
 extern int		ir_offset;
 extern int		ir_min, ir_max;
 extern int		ir_paint;

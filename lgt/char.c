@@ -54,7 +54,7 @@ register char	*line;
 		 */
 		if( char_id == ' ' )
 			{
-			currx += (SWABV(dir['0'].width) + 2) / aperture_sz;
+			currx += (SWABV(dir['0'].width) + 2) / ir_aperture;
 			continue;
 			}
 
@@ -77,7 +77,7 @@ register char	*line;
 			break;		/* won't fit on screen */
 
 		do_char( char_id, currx, ypos );
-		currx += (SWABV(dir[char_id].width) + 2) / aperture_sz;
+		currx += (SWABV(dir[char_id].width) + 2) / ir_aperture;
     		}
 	return;
 	}
@@ -91,8 +91,8 @@ _LOCAL_ void
 do_char( c, xpos, ypos )
 int		c;
 register int	xpos, ypos;
-	{	int     	up = dir[c].up / aperture_sz;
-		int		left = dir[c].left / aperture_sz;
+	{	int     	up = dir[c].up / ir_aperture;
+		int		left = dir[c].left / ir_aperture;
 		static char	bitbuf[BUFFSIZ][BUFFSIZ];
 		static RGBpixel	pixel;
 		register int    h, i, j;
@@ -109,18 +109,18 @@ register int	xpos, ypos;
 			return;
 			}
 		}
-	for( k = 0; k < height; k += aperture_sz, ypos-- )
+	for( k = 0; k < height; k += ir_aperture, ypos-- )
 		{
 		x = xpos - left;
-		for( j = 0; j < width; j += aperture_sz, x++ )
+		for( j = 0; j < width; j += ir_aperture, x++ )
 			{	register int	sum;
 				fastf_t		weight;
 			/* The bitx routine extracts the bit value.
 				Can't just use the j-th bit because
 				the bytes are backwards. */
 			sum = 0;
-			for( i = 0; i < aperture_sz; i++ )
-				for( h = 0; h < aperture_sz; h++ )
+			for( i = 0; i < ir_aperture; i++ )
+				for( h = 0; h < ir_aperture; h++ )
 					sum += bitx(	bitbuf[k+i],
 							((j+h)&~7) + (7-((j+h)&7))
 							) != 0;

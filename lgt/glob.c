@@ -110,6 +110,7 @@ int	fb_vlen = 512;		/* Height in pixels of fb map.		*/
 int	grid_position = FALSE;	/* Did user set distance yet.		*/
 int	save_view_flag = FALSE;	/* View specified in "model2view".	*/
 int	hiddenln_draw = FALSE;	/* Generate hidden-line drawing.	*/
+int	ir_aperture;		/* Size of window IR data over-sampling.*/
 int	ir_noise = 2;		/* Threshold for subdivision of octree.	*/
 int	ir_min = ABSOLUTE_ZERO;	/* IR input temperature ranges.		*/
 int	ir_max = ABSOLUTE_ZERO;
