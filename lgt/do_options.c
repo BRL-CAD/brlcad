@@ -478,6 +478,9 @@ f_Raytrace( itemp, ar )
 HMitem	*itemp;
 char **ar;
 	{
+	if( rt_g.rtg_parallel )
+		rt_log( "Will use %d processors.\n", npsw );
+
 	user_interrupt = FALSE;	/* Set by interrupt handler. */
 	for(	frame_no = movie.m_curframe;
 		frame_no <= movie.m_endframe
@@ -3884,11 +3887,6 @@ register char	**argv;
 		rt_ip->mdl_max[Y],
 		rt_ip->mdl_max[Z]
 		);
-	if( rt_g.rtg_parallel )
-		{
-		rt_log( "Will use %d processors.\n", npsw );
-		rt_log( "Initial dynamic memory use=%d.\n", sbrk(0)-beginptr );
-		}
 
 	if( ! grid_position )
 		grid_dist = view_size;
@@ -3928,12 +3926,6 @@ key_Frame()
 	{	static char	*local_argv[2];	
 	local_argv[0] = local_argv[1] = NULL;
 	return	f_Key_Frame( (HMitem *) 0, local_argv );
-	}
-
-int
-ray_Trace()
-	{
-	return	f_Raytrace( (HMitem *) 0, (char **) 0 );
 	}
 
 /*	g e t _ I n p u t ( )
