@@ -202,7 +202,7 @@
 #	define HAVE_SBRK_DECL		1
 #endif
 
-#if SOLARIS >= 52
+#if SUNOS >= 52
 #	define HAVE_SBRK_DECL		1
 #endif
 
