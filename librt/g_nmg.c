@@ -382,40 +382,8 @@ struct vertex *v_p;
 char		*tbl;
 struct xray	*rp;
 {
-	char *nbh=(char *)NULL;
-	int hood;
-	int idx;
-	struct model *m;
-	struct vertexuse *vu_p;
-	vect_t left_vect;
-	struct ef_data i_u[8];	/* "important" uses of edge */
 
 	NMG_CK_VERTEX(v_p);
-	
-	m = nmg_find_model((long *)v_p);
-
-	nbh = rt_calloc(m->maxindex, sizeof (char),
-		"get nbh table");
-
-	hood = 1;
-	for (RT_LIST_FOR(vu_p, vertexuse, &v_p->vu_hd)) {
-		switch(*vu_p->up.magic_p) {
-		case NMG_EDGEUSE_MAGIC:
-			NMG_CK_EDGE(vu_p->up.eu_p->e_p);
-			if (NMG_INDEX_TEST(nbh, vu_p->up.eu_p->e_p)) break;
-
-			/* edge hasn't been seen, sort uses wrt seen edges */
-			sort_eus(i_u, vu_p->up.eu_p->e_p, tbl, rp, left_vect);
-			NMG_INDEX_ASSIGN(nbh, vu_p->up.eu_p->e_p, hood++);
-
-			break;
-		case NMG_LOOPUSE_MAGIC:
-			rt_bomb("XXX 3-Mainifold vertex loop hit\n");
-			break;
-		}
-	}
-
-	/* determine last/first faces */
 	
 
 }
@@ -497,8 +465,11 @@ int		filled;
 			filled++;
 		}else {
 
+			/* there are both faces which the ray "enters" and
+			 * faces which it "exits" at this vertex  We have
+			 * to determine what is really happening here.
+			 */
 			v_neighborhood(v_p, tbl, rp);
-
 		}
 
 		RT_LIST_DEQUEUE(&a_hit->l);
@@ -3120,6 +3091,7 @@ double			mm2local;
 
 	/* Should print out # of database granules used */
 	/* If verbose, should print out structure counts */
+	nmg_pr_m(m);
 
 	return(0);
 }
