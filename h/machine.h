@@ -270,11 +270,13 @@ typedef long	bitv_t;		/* largest integer type */
 #if defined(vax) || (defined(sgi) && !defined(mips))
 	/* DEC VAX "D" format, the most restrictive */
 #define MAX_FASTF		1.0e37	/* Very close to the largest number */
+#define SQRT_MAX_FASTF		1.0e18	/* This squared just avoids overflow */
 #define SMALL_FASTF		1.0e-37	/* Anything smaller is zero */
 #define SQRT_SMALL_FASTF	1.0e-18	/* This squared gives zero */
 #else
 	/* IBM format, being the next most restrictive format */
 #define MAX_FASTF		1.0e73	/* Very close to the largest number */
+#define SQRT_MAX_FASTF		1.0e36	/* This squared just avoids overflow */
 #define SMALL_FASTF		1.0e-77	/* Anything smaller is zero */
 #if defined(aux)
 #define SQRT_SMALL_FASTF	1.0e-40 /* _doprnt error in libc */
