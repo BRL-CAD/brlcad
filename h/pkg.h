@@ -27,6 +27,7 @@ struct pkg_header {
 struct pkg_conn {
 	int		pkc_fd;		/* TCP connection fd */
 	struct pkg_switch *pkc_switch;	/* Array of message handlers */
+	void		(*pkc_errlog)(); /* Error message logger */
 	int		pkc_magic;	/* for validating pointers */
 	int		pkc_left;	/* # bytes pkg_get expects */
 		/* neg->read new hdr, 0->all here, >0 ->more to come */
