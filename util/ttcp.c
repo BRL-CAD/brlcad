@@ -13,7 +13,7 @@
  * Minor syntax and parameter fixes, Lee A. Butler 14-Dec-99.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #if __STDC__
@@ -162,6 +162,7 @@ prep_timer()
 double
 read_timer(str,len)
 char *str;
+int len;
 {
 #ifdef SYSV
 	long now;
@@ -396,6 +397,7 @@ unsigned	n;
 /*
  *			N R E A D
  */
+int
 Nread( fd, buf, count )
 int fd;
 char *buf;
@@ -418,6 +420,7 @@ int count;
 /*
  *			N W R I T E
  */
+int
 Nwrite( fd, buf, count )
 int fd;
 char *buf;
@@ -438,6 +441,7 @@ again:
 	return(cnt);
 }
 
+int
 delay(us)
 {
 	struct timeval tv;
@@ -455,7 +459,7 @@ delay(us)
 
 
 
-
+int
 main(argc,argv)
 int argc;
 char **argv;
