@@ -1058,8 +1058,11 @@ f_rot_obj()
 		return;
 
 	if(movedir != ROTARROW) {
-		(void)printf("Not in object rotate mode\n");
-		return;
+		/* NOT in object rotate mode - put it in obj rot */
+		dmp->dmr_light( LIGHT_ON, BE_O_ROTATE );
+		dmp->dmr_light( LIGHT_OFF, BE_O_SCALE );
+		dmp->dmr_light( LIGHT_OFF, BE_O_XY );
+		movedir = ROTARROW;
 	}
 
 	/* find point for rotation to take place wrt */
@@ -1107,9 +1110,17 @@ f_sc_obj()
 	if( not_state( ST_O_EDIT, "Object Scale" ) )
 		return;
 
-	if(movedir != SARROW) {
-		(void)printf("Not in object scale mode\n");
+	if( atof(cmd_args[1]) <= 0.0 ) {
+		(void)printf("ERROR: scale factor <=  0\n");
 		return;
+	}
+
+	if(movedir != SARROW) {
+		/* Put in object scale mode */
+		dmp->dmr_light( LIGHT_ON, BE_O_SCALE );
+		dmp->dmr_light( LIGHT_OFF, BE_O_ROTATE );
+		dmp->dmr_light( LIGHT_OFF, BE_O_XY );
+		movedir = SARROW;
 	}
 
 	mat_idn(incr);
@@ -1137,20 +1148,25 @@ f_tr_obj()
 	mat_idn(incr);
 	mat_idn(old);
 
-	if(movedir & (RARROW|UARROW)) {
-		for(i=0; i<3; i++) {
-			new_vertex[i] = atof(cmd_args[i+1]) * local2base;
-		}
-		MAT4X3PNT(model_sol_pt, es_mat, es_rec.s.s_values);
-		MAT4X3PNT(ed_sol_pt, modelchanges, model_sol_pt);
-		VSUB2(model_incr, new_vertex, ed_sol_pt);
-		MAT_DELTAS(incr, model_incr[0], model_incr[1], model_incr[2]);
-		mat_copy(old,modelchanges);
-		mat_mul(modelchanges, incr, old);
-		new_mats();
-		return;
+	if( (movedir & (RARROW|UARROW)) == 0 ) {
+		/* put in object trans mode */
+		dmp->dmr_light( LIGHT_ON, BE_O_XY );
+		dmp->dmr_light( LIGHT_OFF, BE_O_SCALE );
+		dmp->dmr_light( LIGHT_OFF, BE_O_ROTATE );
+		movedir = UARROW | RARROW;
 	}
-	(void)printf("Not in object translate mode\n");
+
+	for(i=0; i<3; i++) {
+		new_vertex[i] = atof(cmd_args[i+1]) * local2base;
+	}
+	MAT4X3PNT(model_sol_pt, es_mat, es_rec.s.s_values);
+	MAT4X3PNT(ed_sol_pt, modelchanges, model_sol_pt);
+	VSUB2(model_incr, new_vertex, ed_sol_pt);
+	MAT_DELTAS(incr, model_incr[0], model_incr[1], model_incr[2]);
+	mat_copy(old,modelchanges);
+	mat_mul(modelchanges, incr, old);
+	new_mats();
+	return;
 }
 
 /* Change the default region ident codes: item air mat los
@@ -1263,7 +1279,6 @@ register struct solidrec *sp;
 		VMOVE(&sp->s_values[i], &tmp.s_values[i]);
 	}
 }
-
 
 
 
