@@ -34,15 +34,12 @@ static char RCStree[] = "@(#)$Header$ (BRL)";
 
 int rt_pure_boolean_expressions = 0;
 
-extern struct resource	rt_uniresource;		/* from shoot.c */
-
 HIDDEN union tree *rt_drawobj();
 HIDDEN void rt_add_regtree();
 HIDDEN union tree *rt_mkbool_tree();
 HIDDEN int rt_rpp_tree();
 extern char	*rt_basename();
 HIDDEN struct region *rt_getregion();
-HIDDEN void rt_fr_tree();
 extern int rt_id_solid();
 extern void	rt_pr_soltab();
 
@@ -291,6 +288,8 @@ next_one: ;
  *
  *  Given a database record, determine the proper rt_functab subscript.
  *  Used by MGED as well as internally to librt.
+ *
+ *  Returns ID_xxx if successful, or ID_NULL upon failure.
  */
 int
 rt_id_solid( rec )
@@ -310,6 +309,16 @@ register union record *rec;
 		break;
 	case ID_BSOLID:
 		id = ID_BSPLINE;
+		break;
+	case ID_STRSOL:
+		/* XXX This really needs to be some kind of table */
+		if( strncmp( rec->ss.ss_str, "ebm", 3 ) == 0 )  {
+			id = ID_EBM;
+			break;
+		}
+		rt_log("rt_id_solid(%s):  String solid type '%s' unknown\n",
+			rec->ss.ss_name, rec->ss.ss_str );
+		id = ID_NULL;		/* BAD */
 		break;
 	default:
 		rt_log("rt_id_solid:  u_id=x%x unknown\n", rec->u_id);
@@ -368,9 +377,15 @@ struct mater_info *materp;
 	/*
 	 *  Draw a solid
 	 */
-	if( rp->u_id == ID_SOLID || rp->u_id == ID_ARS_A ||
-	    rp->u_id == ID_P_HEAD || rp->u_id == ID_BSOLID )  {
+	if( rp->u_id != ID_COMB )  {
 		register struct soltab *stp;
+
+		if( rt_id_solid( rp ) == ID_NULL )  {
+			rt_log("rt_drawobj(%s): defective database record, type '%c' (0%o), addr=x%x\n",
+				dp->d_namep,
+				rp->u_id, rp->u_id, dp->d_addr );
+			goto null;
+		}
 
 		if( (stp = rt_add_solid( rtip, rp, dp, old_xlate )) ==
 		    SOLTAB_NULL )
@@ -388,14 +403,8 @@ struct mater_info *materp;
 		goto out;
 	}
 
-	if( rp->u_id != ID_COMB )  {
-		rt_log("rt_drawobj:  %s defective database record, type '%c' (0%o), addr=x%x\n",
-			dp->d_namep,
-			rp->u_id, rp->u_id, dp->d_addr );
-		goto null;
-	}
-
 	/*
+	 *  At this point, u_id == ID_COMB.
 	 *  Process a Combination (directory) node
 	 */
 	if( dp->d_len <= 1 )  {
@@ -1163,51 +1172,6 @@ register union tree	*tp;
 }
 
 /*
- *			R T _ D E L _ R E G T R E E
- *
- *  Remove a region from the linked list.  Used to remove a particular
- *  region from the active database, presumably after some useful
- *  information has been extracted (eg, a light being converted to
- *  implicit type), or for special effects.
- *
- *  Returns -
- *	-1	if unable to find indicated region
- *	 0	success
- */
-int
-rt_del_regtree( rtip, delregp )
-struct rt_i *rtip;
-register struct region *delregp;
-{
-	register struct region *regp;
-	register struct region *nextregp;
-
-	regp = rtip->HeadRegion;
-	if( rt_g.debug & DEBUG_REGIONS )
-		rt_log("Del Region %s\n", delregp->reg_name);
-
-	if( regp == delregp )  {
-		rtip->HeadRegion = regp->reg_forw;
-		goto zot;
-	}
-
-	for( ; regp != REGION_NULL; regp=nextregp )  {
-		nextregp=regp->reg_forw;
-		if( nextregp == delregp )  {
-			regp->reg_forw = nextregp->reg_forw;	/* unlink */
-			goto zot;
-		}
-	}
-	rt_log("rt_del_region:  unable to find %s\n", delregp->reg_name);
-	return(-1);
-zot:
-	rt_fr_tree( delregp->reg_treetop );
-	rt_free( delregp->reg_name, "region name str");
-	rt_free( (char *)delregp, "struct region");
-	return(0);
-}
-
-/*
  *			R T _ O P T I M _ T R E E
  */
 HIDDEN void
@@ -1269,35 +1233,6 @@ struct resource		*resp;
 }
 
 /*
- *			R T _ F R  _ T R E E
- *
- *  Free a boolean operation tree.
- *  XXX should iterate, rather than recurse.
- */
-HIDDEN void
-rt_fr_tree( tp )
-register union tree *tp;
-{
-
-	switch( tp->tr_op )  {
-	case OP_SOLID:
-		rt_free( (char *)tp, "leaf tree union");
-		return;
-	case OP_SUBTRACT:
-	case OP_UNION:
-	case OP_INTERSECT:
-	case OP_XOR:
-		rt_fr_tree( tp->tr_b.tb_left );
-		rt_fr_tree( tp->tr_b.tb_right );
-		/*rt_free( (char *)tp, "binary tree union"); XXX*/
-		return;
-	default:
-		rt_log("rt_fr_tree: bad op x%x\n", tp->tr_op);
-		return;
-	}
-}
-
-/*
  *  			S O L I D _ B I T F I N D E R
  *  
  *  Used to walk the boolean tree, setting bits for all the solids in the tree
@@ -1351,224 +1286,6 @@ struct resource		*resp;
 			break;
 		}
 	}
-}
-
-/*
- *  			R T _ P R E P
- *  
- *  This routine should be called just before the first call to rt_shootray().
- *  It should only be called ONCE per execution, unless rt_clean() is
- *  called inbetween.
- */
-void
-rt_prep(rtip)
-register struct rt_i *rtip;
-{
-	register struct region *regp;
-	register struct soltab *stp;
-	register int		i;
-
-	if( rtip->rti_magic != RTI_MAGIC )  rt_bomb("rt_prep:  bad rtip\n");
-
-	if(!rtip->needprep)
-		rt_bomb("rt_prep: re-invocation");
-	rtip->needprep = 0;
-	if( rtip->nsolids <= 0 )
-		rt_bomb("rt_prep:  no solids to prep");
-
-	/* Compute size of model-specific variable-length data structures */
-	/* -sizeof(bitv_t) == sizeof(struct partition.pt_solhit) */
-	rtip->rti_pt_bytes = sizeof(struct partition) + 
-		BITS2BYTES(rtip->nsolids) - sizeof(bitv_t) + 1;
-	rtip->rti_bv_bytes = BITS2BYTES(rtip->nsolids) +
-		BITS2BYTES(rtip->nregions) + 4*sizeof(bitv_t);
-
-	/*
-	 *  Allocate space for a per-solid bit of rtip->nregions length.
-	 */
-	for( stp=rtip->HeadSolid; stp != SOLTAB_NULL; stp=stp->st_forw )  {
-		stp->st_regions = (bitv_t *)rt_malloc(
-			BITS2BYTES(rtip->nregions)+sizeof(bitv_t),
-			"st_regions bitv" );
-		BITZERO( stp->st_regions, rtip->nregions );
-		stp->st_maxreg = 0;
-	}
-
-	/* In case everything is a halfspace, set a minimum space */
-	if( rtip->mdl_min[X] >= INFINITY )  {
-		VSETALL( rtip->mdl_min, -1 );
-	}
-	if( rtip->mdl_max[X] <= -INFINITY )  {
-		VSETALL( rtip->mdl_max, 1 );
-	}
-
-	/*
-	 *  Enlarge the model RPP just slightly, to avoid nasty
-	 *  effects with a solid's face being exactly on the edge
-	 */
-	rtip->mdl_min[X] = floor( rtip->mdl_min[X] );
-	rtip->mdl_min[Y] = floor( rtip->mdl_min[Y] );
-	rtip->mdl_min[Z] = floor( rtip->mdl_min[Z] );
-	rtip->mdl_max[X] = ceil( rtip->mdl_max[X] );
-	rtip->mdl_max[Y] = ceil( rtip->mdl_max[Y] );
-	rtip->mdl_max[Z] = ceil( rtip->mdl_max[Z] );
-
-	/*  Build array of region pointers indexed by reg_bit.
-	 *  Optimize each region's expression tree.
-	 *  Set this region's bit in the bit vector of every solid
-	 *  contained in the subtree.
-	 */
-	rtip->Regions = (struct region **)rt_malloc(
-		rtip->nregions * sizeof(struct region *),
-		"rtip->Regions[]" );
-	for( regp=rtip->HeadRegion; regp != REGION_NULL; regp=regp->reg_forw )  {
-		rtip->Regions[regp->reg_bit] = regp;
-		rt_optim_tree( regp->reg_treetop, &rt_uniresource );
-		rt_solid_bitfinder( regp->reg_treetop, regp->reg_bit,
-			&rt_uniresource );
-		if(rt_g.debug&DEBUG_REGIONS)  {
-			rt_pr_region( regp );
-		}
-	}
-	if(rt_g.debug&DEBUG_REGIONS)  {
-		for( stp=rtip->HeadSolid; stp != SOLTAB_NULL; stp=stp->st_forw )  {
-			rt_log("solid %s ", stp->st_name);
-			rt_pr_bitv( "regions ref", stp->st_regions,
-				stp->st_maxreg);
-		}
-	}
-
-	/*
-	 *  Build array of solid table pointers indexed by solid ID.
-	 *  Last element for each kind will be found in
-	 *	rti_sol_by_type[id][rti_nsol_by_type[id]-1]
-	 */
-	for( stp=rtip->HeadSolid; stp != SOLTAB_NULL; stp = stp->st_forw )  {
-		rtip->rti_nsol_by_type[stp->st_id]++;
-	}
-	/* Find solid type with maximum length (for rt_shootray) */
-	rtip->rti_maxsol_by_type = 0;
-	for( i=0; i <= ID_MAXIMUM; i++ )  {
-		if( rtip->rti_nsol_by_type[i] > rtip->rti_maxsol_by_type )
-			rtip->rti_maxsol_by_type = rtip->rti_nsol_by_type[i];
-	}
-	/* Malloc the storage and zero the counts */
-	for( i=0; i <= ID_MAXIMUM; i++ )  {
-		if( rtip->rti_nsol_by_type[i] <= 0 )  continue;
-		rtip->rti_sol_by_type[i] = (struct soltab **)rt_calloc(
-			rtip->rti_nsol_by_type[i],
-			sizeof(struct soltab *),
-			"rti_sol_by_type[]" );
-		rtip->rti_nsol_by_type[i] = 0;
-	}
-	/* Fill in the array and rebuild the count (aka index) */
-	for( stp=rtip->HeadSolid; stp != SOLTAB_NULL; stp = stp->st_forw )  {
-		register int	id;
-		id = stp->st_id;
-		rtip->rti_sol_by_type[id][rtip->rti_nsol_by_type[id]++] = stp;
-	}
-	if( rt_g.debug & DEBUG_DB )  {
-		for( i=1; i <= ID_MAXIMUM; i++ )  {
-			rt_log("%5d %s (%d)\n",
-				rtip->rti_nsol_by_type[i],
-				rt_functab[i].ft_name,
-				i );
-		}
-	}
-
-	/* Partition space */
-	rt_cut_it(rtip);
-}
-
-/*
- *			R T _ C L E A N
- *
- *  Release all the dynamic storage associated with a particular rt_i
- *  structure, except for the database instance information (dir, etc).
- */
-void
-rt_clean( rtip )
-register struct rt_i *rtip;
-{
-	register struct region *regp;
-	register struct soltab *stp;
-	int	i;
-
-	if( rtip->rti_magic != RTI_MAGIC )  rt_bomb("rt_clean:  bad rtip\n");
-
-	/*
-	 *  Clear out the solid table
-	 */
-	for( stp=rtip->HeadSolid; stp != SOLTAB_NULL; )  {
-		register struct soltab *nextstp = stp->st_forw;
-
-		rt_free( (char *)stp->st_regions, "st_regions bitv" );
-		if( stp->st_id < 0 || stp->st_id >= rt_nfunctab )
-			rt_bomb("rt_clean:  bad st_id");
-		rt_functab[stp->st_id].ft_free( stp );
-		stp->st_name = (char *)0;	/* was ptr to directory */
-		rt_free( (char *)stp, "struct soltab");
-		stp = nextstp;			/* advance to next one */
-	}
-	rtip->HeadSolid = SOLTAB_NULL;
-	rtip->nsolids = 0;
-
-	/*  
-	 *  Clear out the region table
-	 */
-	for( regp=rtip->HeadRegion; regp != REGION_NULL; )  {
-		register struct region *nextregp = regp->reg_forw;
-
-		rt_fr_tree( regp->reg_treetop );
-		rt_free( regp->reg_name, "region name str");
-		rt_free( (char *)regp, "struct region");
-		regp = nextregp;
-	}
-	rtip->HeadRegion = REGION_NULL;
-	rtip->nregions = 0;
-
-	/**** The best thing to do would be to hunt down the
-	 *  bitv and partition structs and release them, because
-	 *  they depend on the number of solids & regions!  XXX
-	 */
-
-	/* Clean out the array of pointers to regions, if any */
-	if( rtip->Regions )  {
-		rt_free( (char *)rtip->Regions, "rtip->Regions[]" );
-		rtip->Regions = (struct region **)0;
-
-		/* Free space partitions */
-		rt_fr_cut( &(rtip->rti_CutHead) );
-		bzero( (char *)&(rtip->rti_CutHead), sizeof(union cutter) );
-		rt_fr_cut( &(rtip->rti_inf_box) );
-		bzero( (char *)&(rtip->rti_inf_box), sizeof(union cutter) );
-	}
-
-	/* Reset instancing counters in database directory */
-	for( i=0; i < RT_DBNHASH; i++ )  {
-		register struct directory	*dp;
-
-		dp = rtip->rti_dbip->dbi_Head[i];
-		for( ; dp != DIR_NULL; dp = dp->d_forw )
-			dp->d_uses = 0;
-	}
-
-	/* Free animation structures */
-	rt_fr_anim(rtip);
-
-	/*
-	 *  Re-initialize everything important.
-	 *  This duplicates the code in rt_dirbuild().
-	 */
-
-	rtip->rti_inf_box.bn.bn_type = CUT_BOXNODE;
-	VMOVE( rtip->rti_inf_box.bn.bn_min, rtip->mdl_min );
-	VMOVE( rtip->rti_inf_box.bn.bn_max, rtip->mdl_max );
-	VSETALL( rtip->mdl_min, -0.1 );
-	VSETALL( rtip->mdl_max,  0.1 );
-
-	rtip->rti_magic = RTI_MAGIC;
-	rtip->needprep = 1;
 }
 
 /*
