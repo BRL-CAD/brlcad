@@ -786,9 +786,9 @@ com_table	*ctp;
 	fprintf(stderr, "Cannot open statefile '%s'\n", sf_name);
 	return;
     }
-    printf("Loading NIRT state from file '%s'...", sf_name);
-    interact(sfPtr);
-    printf("\n");
+    bu_log("Loading NIRT state from file '%s'...", sf_name);
+    interact(READING_FILE, sfPtr);
+    bu_log("\n");
     fclose(sfPtr);
 }
 
