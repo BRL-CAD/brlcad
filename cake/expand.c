@@ -24,7 +24,8 @@ reg	char	*str;
 	reg	char	*rightbr;
 	char		*leftbr_stack[MAXNEST];
 	char		*nextbr_stack[MAXNEST];
-	char		copybuf[MAXSIZE], buf[MAXSIZE];
+	char		copybuf[MAXSIZE];
+	static	char	buf[MAXSIZE];
 	reg	char	*result;
 
 	if (index(str, '[') == NULL)
