@@ -41,7 +41,8 @@ struct matparse cloud_parse[] = {
 	(char *)0,	(mp_off_ty)0,				(char *)0
 };
 
-HIDDEN int cloud_setup(), cloud_render(), cloud_print(), cloud_free();
+HIDDEN int	cloud_setup(), cloud_render();
+HIDDEN void	cloud_print(), cloud_free();
 
 struct mfuncs cloud_mfuncs[] = {
 	"cloud",	0,		0,		MFI_UV,
@@ -127,7 +128,7 @@ char	**dpp;
 /*
  *			C L O U D _ P R I N T
  */
-HIDDEN int
+HIDDEN void
 cloud_print( rp, dp )
 register struct region *rp;
 char	*dp;
@@ -138,7 +139,7 @@ char	*dp;
 /*
  *			C L O U D _ F R E E
  */
-HIDDEN int
+HIDDEN void
 cloud_free( cp )
 char *cp;
 {
@@ -154,6 +155,7 @@ char *cp;
  *   from 0 to 1.
  *  thresh=0.35, range=0.3 for decent clouds.
  */
+int
 cloud_render( ap, pp, swp, dp )
 struct application	*ap;
 struct partition	*pp;
@@ -184,4 +186,5 @@ char	*dp;
 	swp->sw_color[0] = ((1-TR) * intensity + (TR * .31));	/* Red */
 	swp->sw_color[1] = ((1-TR) * intensity + (TR * .31));	/* Green */
 	swp->sw_color[2] = ((1-TR) * intensity + (TR * .78));	/* Blue */
+	return(1);
 }
