@@ -1918,8 +1918,9 @@ RT_EXTERN(void			nmg_mv_vu_between_shells, (struct shell *dest,
 RT_EXTERN(struct model		*nmg_find_model, (CONST long *magic_p) );
 
 RT_EXTERN(int			nmg_shell_is_empty, (CONST struct shell *s) );
-RT_EXTERN(struct shell		*nmg_lups, (struct loopuse *lu) );
-RT_EXTERN(struct shell		*nmg_eups, (struct edgeuse *eu) );
+RT_EXTERN(struct shell		*nmg_find_s_of_lu, (struct loopuse *lu) );
+RT_EXTERN(struct shell		*nmg_find_s_of_eu, (struct edgeuse *eu) );
+RT_EXTERN(struct shell		*nmg_find_s_of_vu, (struct vertexuse *vu) );
 
 RT_EXTERN(struct faceuse	*nmg_find_fu_of_eu, (struct edgeuse *eu));
 RT_EXTERN(struct faceuse	*nmg_find_fu_of_vu, (struct vertexuse *vu) );
@@ -1940,8 +1941,9 @@ RT_EXTERN(struct edgeuse	*nmg_radial_face_edge_in_shell, (struct edgeuse *eu) );
 
 RT_EXTERN(struct vertexuse	*nmg_find_v_in_face, (CONST struct vertex *,
 				CONST struct faceuse *) );
-RT_EXTERN(struct vertexuse	*nmg_find_pt_in_face, (CONST point_t pt,
-				CONST struct faceuse *fu, CONST struct rt_tol *tol) );
+RT_EXTERN(struct vertexuse	*nmg_find_pt_in_face, (CONST struct faceuse *fu,
+				CONST point_t pt,
+				CONST struct rt_tol *tol) );
 RT_EXTERN(int			nmg_is_vertex_in_edgelist, (CONST struct vertex *v,
 				CONST struct rt_list *hd) );
 RT_EXTERN(int			nmg_is_vertex_in_looplist, (CONST struct vertex *v,
@@ -2150,6 +2152,9 @@ RT_EXTERN(void			nmg_ck_lueu, (struct loopuse *lu, char *s) );
 RT_EXTERN(int			nmg_check_radial, (CONST struct edgeuse *eu, CONST struct rt_tol *tol));
 RT_EXTERN(int			nmg_ck_closed_surf, (CONST struct shell *s, CONST struct rt_tol *tol) );
 RT_EXTERN(int			nmg_ck_closed_region, (CONST struct nmgregion *r, CONST struct rt_tol *tol) );
+RT_EXTERN(void			nmg_ck_v_in_2fus, (CONST struct vertex *vp,
+				CONST struct faceuse *fu1, CONST struct faceuse *fu2,
+				CONST struct rt_tol *tol));
 
 /* From nmg_inter.c */
 RT_EXTERN(void			nmg_crackshells, (struct shell *s1, struct shell *s2, CONST struct rt_tol *tol) );
