@@ -232,9 +232,9 @@ char **argv;
 		if (dist_mode==GIVEN){
 			scanf("%*f");/*time*/
 			val = scanf("%lf",&distance);
-			if (val < 1)
+			if (val < 1) {
 				break;
-
+			}
 		}
 		else if (dist_mode==CALCULATED){
 			scanf("%*f");/*time*/
