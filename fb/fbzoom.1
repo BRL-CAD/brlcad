@@ -3,7 +3,7 @@
 fbzoom \(em enlarge a frame buffer image
 .SH SYNOPSIS
 .B fbzoom
-.RB [ \-h ]
+.RB [ \-hT ]
 .RB [ \-F\  framebuffer]
 .RB [ \-{sS}\  squarescrsize]
 .RB [ \-{wW}\  scr_width]
@@ -46,43 +46,62 @@ flags specifies the height of each scanline for the display device.
 and
 .BI \-S\  squarescrsize
 set both the height and width to the size given.
+The
+.B \-T
+flag reverses the sense of the pan commands
+(see the discussion of the
+.RB `` T ''
+command below).
 .PP
 The 
+.IR vi (1)-like
+commands
 .RB `` h '',
 .RB `` j '',
 .RB `` k '',
 and
-.RB `` l '',
-commands step the center of view one pixel left, down, up, or right respectively, and
-the 
+.RB `` l ''
+pan one pixel left, down, up, and right, respectively,
+and the 
 .RB `` H '',
 .RB `` J '',
 .RB `` K '',
 and
-.RB `` L '',
-commands step the center of view in the corresponding direction in big increments.
-The
+.RB `` L ''
+commands pan in the corresponding directions in big steps.
+These commands also have
+.IR jove (1)-like
+counterparts in the
 .RB `` B '',
 .RB `` N  '',
-.RB `` P ''.
+.RB `` P '',
 and
-.RB `` L '',
+.RB `` F '',
 and
 .RB `` ^B '',
 (control-B),
 .RB `` ^N '',
 .RB `` ^P '',
 and
-.RB `` ^F '',
-are also little and big (respectively) center of view movement commands.
+.RB `` ^F ''
+commands.
+The
+.RB `` T ''
+command toggles the sense of all the pan commands.
+Initially (unless the
+.B \-T
+flag is specified)
+the pan commands move the center of view across the image.
+When their sense is reversed,
+they move the image under the center of view.
 .PP
 A
 .RB `` ? ''
 prints a short command summary,
 and typing
-.RB `` q '',
+.RB `` q ''
 or
-.RB `` Q '',
+.RB `` Q ''
 exits the program.
 .SH "SEE ALSO"
 brlcad(1)
