@@ -36,11 +36,14 @@ extern char *optarg;
 #define DIVIDE_TOL	(1.0e-10)
 #define MAXITS		100
 #define DELTA		(1.0e-6)
+#define TIME_NONE	0
+#define TIME_ABSOLUTE	1
+#define TIME_RELATIVE	2
 
 /* command line variables */
 fastf_t inv0,inv1;
-int v0_set =	 0;
-int v1_set =	 0;
+int v0_set =	 TIME_NONE;
+int v1_set =	 TIME_NONE;
 int query =	 0;
 int verbose = 	 0;
 int maxlines = 	 0;
@@ -137,26 +140,56 @@ char **argv;
 	}
 
 	if (time < DIVIDE_TOL){
-		fprintf(stderr,"TIME TOO SMALL! %f\n",time);
+		fprintf(stderr,"anim_time: time too small. Only %f s.\n",time);
 		exit(-1);
 	}
 	if (dist < DIVIDE_TOL){
-		fprintf(stderr,"PATHLENGTH TOO SMALL! %f\n",dist);
+		fprintf(stderr,"anim_time: pathlength too small. Only %f\n",dist);
 		exit(-1);
 	}
 	slope = dist/time;
-	v0 = v1 = slope;
-	if (v0_set){
-		v0 = inv0;
-	}
-	if (v1_set){
-		v1 = inv1;
-	}
-	v0 = (v0<0.0) ? 0.0 : v0;
-	v1 = (v1<0.0) ? 0.0 : v1;
-	v0 = (v0>3*slope) ? 3*slope : v0;
-	v1 = (v1>3*slope) ? 3*slope : v1;
 
+	switch (v0_set) {
+	case TIME_ABSOLUTE:
+		v0 = inv0;
+		break;
+	case TIME_RELATIVE:
+		v0 = slope*inv0;
+		break;
+	default:
+	case TIME_NONE:
+		v0 = slope;
+		break;
+	}
+
+	switch (v1_set) {
+	case TIME_ABSOLUTE:
+		v1 = inv1;
+		break;
+	case TIME_RELATIVE:
+		v1 = slope*inv1;
+		break;
+	default:
+	case TIME_NONE:
+		v1 = slope;
+		break;
+	}
+	if (v0<0.0) {
+		fprintf(stderr,"anim_time: Start velocity must be non-negative.\n");
+		exit(-1);
+	}
+	if (v1<0.0) {
+		fprintf(stderr,"anim_time: End velocity must be non-negative.\n");
+		exit(-1);
+	}
+	if (v0>3*slope) {
+		fprintf(stderr,"anim_time: Start velocity must be not be greater than %f units/s for this path.\n", 3.0*slope);
+		exit (-1);
+	}
+	if (v1>3*slope) {
+		fprintf(stderr,"anim_time: End velocity must not be greater than %f for this path.\n", 3.0*slope);
+		exit(-1);
+	}
 
 	a = ((v1+v0) - 2.0*slope)/(time*time);
 	b = (3*slope - (v1+2.0*v0))/time;
@@ -187,7 +220,7 @@ char **argv;
 }
 
 /* code to read command line arguments*/
-#define OPT_STR "ds:e:qm:v"
+#define OPT_STR "ds:e:i:f:qm:v"
 int get_args(argc,argv)
 int argc;
 char **argv;
@@ -198,11 +231,27 @@ char **argv;
 		switch(c){
 		case 's':
 			sscanf(optarg,"%lf",&inv0);
-			v0_set = 1;
+			v0_set = TIME_ABSOLUTE;
 			break;
 		case 'e':
 			sscanf(optarg,"%lf",&inv1);
-			v1_set = 1;
+			v1_set = TIME_ABSOLUTE;
+			break;
+		case 'i':
+			sscanf(optarg,"%lf",&inv0);
+			v0_set = TIME_RELATIVE;
+			if ((inv0>3.0)||(inv0<0.0)) {
+				fprintf(stderr,"anim_time: -i argument must lie between 0.0 and 3.0\n");
+				exit(-1);
+			}
+			break;
+		case 'f':
+			sscanf(optarg,"%lf",&inv1);
+			v1_set = TIME_RELATIVE;
+			if ((inv1>3.0)||(inv1<0.0)) {
+				fprintf(stderr,"anim_time: -f argument must lie between 0.0 and 3.0\n");
+				exit(-1);
+			}
 			break;
 		case 'q':
 			query = 1;

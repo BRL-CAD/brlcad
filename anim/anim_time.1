@@ -3,8 +3,10 @@
 anim_time - estimate appropriate time parameters for path
 .SH SYNOPSIS
 .B anim_time
-.B [-s start_speed]
-.B [-e end_speed]
+.B [-s start_speed (absolute)]
+.B [-e end_speed (absolute)]
+.B [-i initial_speed (relative)]
+.B [-f final_speed (relative)]
 .B [-m max_len] 
 .B [-v|q]
 .B < in.table 
@@ -40,11 +42,26 @@ points.
 Specify the starting speed of the object. If this option is not
 specified, then the object is assumed to be initially travelling on a
 pace to negotiate the entire path in the given time at a constant rate.
+The argument must be positive and no greater than three times the speed
+needed to traverse the path at a constant rate.
 .TP
 .BR -e #
 Specify the final speed of the object. If this option is not specified,
 then the object is assumed to end up travelling on a pace to negotiate
-the entire path in the given time at a constant rate.
+the entire path in the given time at a constant rate. The argument must
+be positive and no greater than three times the speed needed to traverse
+the path at a constant rate.
+.TP
+.BR -i #
+Specify the initial speed of the object, relative to the speed that
+would negotiate the given path at a constant rate. For example, an
+argument of 2.0 means twice the speed needed to traverse the path at a
+constant rate. Must lie between 0.0 and 3.0.
+.TP
+.BR -f #
+Specify the final speed of the object, relative to the speed that would
+negotiate the given path at a constant rate. Must lie between 0.0 and
+3.0.
 .TP
 .B -v
 Verbose option. The output table will contain a time column and three
