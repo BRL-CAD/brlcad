@@ -7,7 +7,7 @@
  *
  * Functions -
  *	f_itemair	add/modify item and air codes of a region
- *	f_modify	add/modify material code and los percent
+ *	f_mater		modify material information
  *	f_mirror	mirror image
  *	f_extrude	"extrude" command -- project an ARB face
  *	f_arbdef	define ARB8 using rot fb angles to define face
@@ -95,33 +95,49 @@ f_itemair()
 	db_putrec( dp, &record, 0 );
 }
 
-/* Add/modify material code and los percent of a region */
-/* Format: M region mat los	*/
+/* Modify material information */
+/* Usage:  mater name material */
 void
-f_modify()
+f_mater()
 {
 	register struct directory *dp;
-	register int mat, los;
+	char line[80];
 	union record record;
 
 	if( (dp = lookup( cmd_args[1], LOOKUP_NOISY )) == DIR_NULL )
 		return;
 
-	mat = los = 0;
-	mat = atoi( cmd_args[2] );
-	los = atoi( cmd_args[3] );
-	/* Should check that los is in valid range */
 	db_getrec( dp, &record, 0 );
 	if( record.u_id != ID_COMB )  {
 		(void)printf("%s: not a combination\n", dp->d_namep );
 		return;
 	}
-	if( record.c.c_flags != 'R' )  {
-		(void)printf("%s: not a region\n", dp->d_namep );
-		return;
+	if( numargs <= 2 )  {
+		record.c.c_matname[0] = '\0';
+	} else {
+		strncpy( record.c.c_matname, cmd_args[2],
+			sizeof(record.c.c_matname));
+
+		(void)printf("Parameter string? ");
+		fflush(stdout);
+		(void)gets(line);
+		strncpy( record.c.c_matparm, line, sizeof(record.c.c_matparm) );
+
+		(void)printf("Override material color (y|n)[n]? ");
+		fflush(stdout);
+		(void)gets(line);
+		if( line[0] == 'y' )  {
+			int r,g,b;
+			(void)printf("R G B (0..255)? ");
+			scanf("%d %d %d", &r, &g, &b);
+			record.c.c_rgb[0] = r;
+			record.c.c_rgb[1] = g;
+			record.c.c_rgb[2] = b;
+			record.c.c_override = 1;
+		} else {
+			record.c.c_override = 0;
+		}
 	}
-	record.c.c_material = mat;
-	record.c.c_los = los;
 	db_putrec( dp, &record, 0 );
 }
 
@@ -549,22 +565,21 @@ f_arbdef()
 }
 
 /* Modify Combination record information */
-/* Format: edcomb combname flag item air mat los	*/
+/* Format: edcomb combname Regionflag regionid air los GIFTmater */
 void
 f_edcomb()
 {
 	register struct directory *dp;
 	union record record;
-	int ident, air, mat, los;
+	int regionid, air, mat, los;
 
 	if( (dp = lookup( cmd_args[1], LOOKUP_NOISY )) == DIR_NULL )
 		return;
 
-	ident = air = mat = los = 0;
-	ident = atoi( cmd_args[3] );
+	regionid = atoi( cmd_args[3] );
 	air = atoi( cmd_args[4] );
-	mat = atoi( cmd_args[5] );
-	los = atoi( cmd_args[6] );
+	los = atoi( cmd_args[5] );
+	mat = atoi( cmd_args[6] );
 
 	db_getrec( dp, &record, 0 );
 	if( record.u_id != ID_COMB ) {
@@ -576,10 +591,10 @@ f_edcomb()
 		record.c.c_flags = 'R';
 	else
 		record.c.c_flags =' ';
-	record.c.c_regionid = ident;
+	record.c.c_regionid = regionid;
 	record.c.c_aircode = air;
-	record.c.c_material = mat;
 	record.c.c_los = los;
+	record.c.c_material = mat;
 	db_putrec( dp, &record, 0 );
 }
 
@@ -1169,7 +1184,7 @@ f_tr_obj()
 	return;
 }
 
-/* Change the default region ident codes: item air mat los
+/* Change the default region ident codes: item air los mat
  */
 void
 f_regdef()
@@ -1188,12 +1203,12 @@ f_regdef()
 	if(numargs == 3)
 		return;
 
-	mat_default = atoi(cmd_args[3]);
+	los_default = atoi(cmd_args[3]);
 
 	if(numargs == 4)
 		return;
 
-	los_default = atoi(cmd_args[4]);
+	mat_default = atoi(cmd_args[4]);
 }
 
 
