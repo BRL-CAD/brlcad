@@ -25,7 +25,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #ifdef BSD
 # include <sys/time.h>
-# include <sys/file.h>
 # include <sys/ioctl.h>
 struct	sgttyb	tty;
 #define TCSETA	TIOCSETP
