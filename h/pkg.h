@@ -1,5 +1,22 @@
 /*
  *  			P K G . H
+ *
+ *  Data structures and manifest constants for use with the PKG library.
+ *  
+ *  Authors -
+ *	Michael John Muuss
+ *	Charles M. Kennedy
+ *	Phillip Dykstra
+ *
+ *  Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005
+ *  
+ *  Distribution Status -
+ *	Public Domain, Distribution Unlimitied.
+ *
+ *  $Header$
  */
 #ifndef PKG_H_SEENYET
 #define PKG_H_SEENYET
