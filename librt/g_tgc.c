@@ -101,7 +101,7 @@ struct rt_i		*rtip;
 	 *  If it takes it, then there is nothing to do, otherwise
 	 *  the solid is a TGC.
 	 */
-	if( rec_prep( vec, stp, mat ) == 0 )
+	if( rec_prep( vec, stp, mat, rtip ) == 0 )
 		return(0);		/* OK */
 
 #define TGC_V	&vec[0*ELEMENTS_PER_VECT]
