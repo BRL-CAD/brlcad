@@ -56,6 +56,232 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 extern struct rt_tol		mged_tol;	/* from ged.c */
 
 void
+solve_pipe_to_bend( start_pt, start_dir, bend_at_start, radius_at_start, end_bend_center, end_dir,
+	radius_at_end, start_bend_center, line_start_pt, line_end_pt, norm_at_end )
+point_t start_pt;
+vect_t start_dir;
+int bend_at_start;
+fastf_t radius_at_start;
+point_t end_bend_center;
+vect_t end_dir;
+fastf_t radius_at_end;
+point_t start_bend_center;
+point_t line_start_pt;
+point_t line_end_pt;
+vect_t norm_at_end;
+{
+	vect_t pt_to_pt;
+	vect_t norm_at_start;
+	vect_t to_bcenter;
+	vect_t to_tang_start;
+	vect_t to_tang_end;
+	vect_t cent_to_cent;
+	vect_t start1;
+	vect_t end1;
+	fastf_t dist_ctc;
+	fastf_t angle;
+	mat_t mat;
+
+rt_log( "In solve_pipe_to_bend:\n" );
+rt_log( "\tstart_pt=( %g %g %g ), start_dir=( %g %g %g ), bend_at_start=%d\n", V3ARGS( start_pt ), V3ARGS( start_dir ), bend_at_start );
+rt_log( "\tend_bend_center=( %g %g %g ), end_dir=( %g %g %g )\n", V3ARGS( end_bend_center ), V3ARGS( end_dir ) );
+
+	VSUB2( pt_to_pt, end_bend_center, start_pt );
+
+	VCROSS( norm_at_end, pt_to_pt, end_dir );
+	VUNITIZE( norm_at_end );
+rt_log( "\t\tpt_to_pt=( %g %g %g ), norm_at_end=( %g %g %g )\n" , V3ARGS( pt_to_pt ), V3ARGS( norm_at_end ) );
+
+	if( bend_at_start )
+	{
+		vect_t pt_to_pt_dir;
+		vect_t to_line_end;
+		fastf_t mag_pt_to_pt;
+		fastf_t sin_angle;
+		fastf_t one_over_sin;
+		fastf_t angle2;
+#if 0
+		VMOVE( pt_to_pt_dir, pt_to_pt );
+		mag_pt_to_pt = MAGNITUDE( pt_to_pt );
+		VSCALE( pt_to_pt_dir, pt_to_pt_dir, (1.0/mag_pt_to_pt) );
+		VCROSS( norm_at_start, start_dir, pt_to_pt_dir );
+rt_log( "norm_at_start=( %g %g %g )\n" , V3ARGS( norm_at_start ) );
+		sin_angle = MAGNITUDE( norm_at_start );
+		one_over_sin = 1.0/sin_angle;
+		VSCALE( norm_at_start, norm_at_start, one_over_sin );
+		angle2 = asin( radius_at_end/mag_pt_to_pt );
+rt_log( "angle2 = %g, angle1 = %g\n" , angle2, asin( sin_angle ) );
+		if( asin( radius_at_end/mag_pt_to_pt ) > asin( sin_angle ) )
+		{
+			vect_t tmp_norm;
+
+			/* normal calculation may be reversed */
+rt_log( " normal calculation may be reversed \n" );
+			VCROSS( to_line_end, pt_to_pt_dir, norm_at_end );
+			VJOIN1( to_line_end, pt_to_pt, radius_at_end, to_line_end );
+			VCROSS( tmp_norm, start_dir, to_line_end );
+rt_log( "\t\t\ttmp_norm = ( %g %g %g ), to_end_line=( %g %g %g )\n", V3ARGS( tmp_norm ), V3ARGS( to_line_end ) );
+			if( VDOT( tmp_norm, norm_at_start ) < 0.0 )
+			{
+rt_log( "\t\t\treversing normal\n" );
+				VREVERSE( norm_at_start, norm_at_start );
+			}
+		}
+#endif
+		VCROSS( to_line_end, pt_to_pt, norm_at_end );
+		VUNITIZE( to_line_end );
+		VJOIN1( to_line_end, pt_to_pt, radius_at_end, to_line_end );
+		VCROSS( norm_at_start, start_dir, to_line_end );
+		VUNITIZE( norm_at_start );
+
+rt_log( "\t\tnorm_at_start=( %g %g %g )\n" , V3ARGS( norm_at_start ) );
+		VCROSS( to_bcenter, norm_at_start, start_dir );
+rt_log( "\t\tto bend center at start = ( %g %g %g )\n", V3ARGS( to_bcenter ) );
+		VJOIN1( start_bend_center, start_pt, radius_at_start, to_bcenter );
+rt_log( "\t\tstart bend center = ( %g %g %g )\n" , V3ARGS( start_bend_center ) );
+	}
+
+	if( bend_at_start )
+		VSUB2( cent_to_cent, end_bend_center, start_bend_center )
+	else
+		VMOVE( cent_to_cent, pt_to_pt )
+
+	dist_ctc = MAGNITUDE( cent_to_cent );
+rt_log( "\t\tcent_to_cent = ( %g %g %g ), length=%g\n" , V3ARGS( cent_to_cent ), dist_ctc );
+
+	if( bend_at_start )
+	{
+		VCROSS( start1, cent_to_cent, norm_at_start );
+		VUNITIZE( start1 );
+	}
+	else
+		VSETALL( start1, 0.0 )
+
+	VCROSS( end1, cent_to_cent, norm_at_end );
+	VUNITIZE( end1 );
+
+rt_log( "\t\tstart1=( %g %g %g ), end1=( %g %g %g )\n", V3ARGS( start1 ), V3ARGS( end1 ) );
+
+	if( bend_at_start )
+	{
+		angle = asin( (radius_at_start - VDOT( end1, start1 )*radius_at_end)/dist_ctc );
+		mat_arb_rot( mat, start_bend_center, norm_at_start, angle );
+		MAT4X3VEC( to_tang_start, mat, start1 );
+		VUNITIZE( to_tang_start );
+rt_log( "angel at start = %g, to_start_tang=( %g %g %g )\n", angle, V3ARGS( to_tang_start ) );
+		VJOIN1( line_start_pt, start_bend_center, radius_at_start, to_tang_start );
+	}
+	else
+		VMOVE( line_start_pt, start_pt )
+rt_log( "\t\tline_start_pt=( %g %g %g )\n", V3ARGS( line_start_pt ) );
+
+	angle = asin( (radius_at_end - VDOT( end1, start1 )*radius_at_start)/dist_ctc );
+	mat_arb_rot( mat, end_bend_center, norm_at_end, -angle );
+	MAT4X3VEC( to_tang_end, mat, end1 );
+	VUNITIZE( to_tang_end );
+rt_log( "angel at end = %g, to_end_tang=( %g %g %g )\n", angle, V3ARGS( to_tang_end ) );
+	VJOIN1( line_end_pt, end_bend_center, radius_at_end, to_tang_end );
+rt_log( "\t\tline_end_pt=( %g %g %g )\n", V3ARGS( line_end_pt ) );
+}
+
+void
+solve_pipe_from_bend( norm_at_start, start_bend_center, start_dir, radius_at_start, end_pt, end_dir, bend_at_end,
+	radius_at_end, end_bend_center, line_start_pt, line_end_pt )
+vect_t norm_at_start;
+point_t start_bend_center;
+vect_t start_dir;
+fastf_t radius_at_start;
+point_t end_pt;
+vect_t end_dir;
+int bend_at_end;
+fastf_t radius_at_end;
+point_t end_bend_center;
+point_t line_start_pt;
+point_t line_end_pt;
+{
+	vect_t pt_to_pt;
+	vect_t norm_at_end;
+	vect_t to_bcenter;
+	vect_t to_tang_start;
+	vect_t to_tang_end;
+	vect_t cent_to_cent;
+	vect_t start1;
+	vect_t end1;
+	fastf_t dist_ctc;
+	fastf_t angle;
+	mat_t mat;
+
+rt_log( "In solve_pipe_from_bend:\n" );
+rt_log( "\tstart_bend_center=( %g %g %g ), start_dir=( %g %g %g ), bend_at_end=%d\n", V3ARGS( start_bend_center ), V3ARGS( start_dir ), bend_at_end );
+rt_log( "\tend_bend_center=( %g %g %g )\n", V3ARGS( end_bend_center ) );
+
+	VSUB2( pt_to_pt, end_pt, start_bend_center );
+
+	if( norm_at_start[0] == 0.0 && norm_at_start[1] == 0.0 && norm_at_start[2] == 0.0 )
+	{
+		VCROSS( norm_at_start, start_dir, pt_to_pt );
+		VUNITIZE( norm_at_start );
+	}
+
+rt_log( "\t\tpt_to_pt=( %g %g %g ), norm_at_start=( %g %g %g )\n" , V3ARGS( pt_to_pt ), V3ARGS( norm_at_start ) );
+
+	if( bend_at_end )
+	{
+		vect_t to_line_start;
+
+		VCROSS( to_line_start, norm_at_start, pt_to_pt );
+		VUNITIZE( to_line_start );
+		VJOIN1( to_line_start, pt_to_pt, radius_at_start, to_line_start );
+		VCROSS( norm_at_end, to_line_start, end_dir );
+		VUNITIZE( norm_at_end );
+		VCROSS( to_bcenter, norm_at_end, end_dir );
+		VJOIN1( end_bend_center, end_pt, radius_at_end, to_bcenter );
+	}
+
+	if( bend_at_end )
+		VSUB2( cent_to_cent, end_bend_center, start_bend_center )
+	else
+		VMOVE( cent_to_cent, pt_to_pt )
+
+	dist_ctc = MAGNITUDE( cent_to_cent );
+rt_log( "\t\tcent_to_cent = ( %g %g %g ), length=%g\n" , V3ARGS( cent_to_cent ), dist_ctc );
+
+	VCROSS( start1, cent_to_cent, norm_at_start );
+	VUNITIZE( start1 );
+
+	if( bend_at_end )
+	{
+		VCROSS( end1, cent_to_cent, norm_at_end );
+		VUNITIZE( end1 );
+	}
+	else
+		VSETALL( end1, 0.0 )
+
+rt_log( "\t\tstart1=( %g %g %g ), end1=( %g %g %g )\n", V3ARGS( start1 ), V3ARGS( end1 ) );
+
+	angle = asin( (radius_at_start - VDOT( end1, start1 )*radius_at_end)/dist_ctc );
+	mat_arb_rot( mat, start_bend_center, norm_at_start, angle );
+	MAT4X3VEC( to_tang_start, mat, start1 );
+	VUNITIZE( to_tang_start );
+rt_log( "angel at start = %g, to_start_tang=( %g %g %g )\n", angle, V3ARGS( to_tang_start ) );
+	VJOIN1( line_start_pt, start_bend_center, radius_at_start, to_tang_start );
+rt_log( "\t\tline_start_pt=( %g %g %g )\n", V3ARGS( line_start_pt ) );
+
+	if( bend_at_end )
+	{
+		angle = asin( (radius_at_end - VDOT( end1, start1 )*radius_at_start)/dist_ctc );
+		mat_arb_rot( mat, end_bend_center, norm_at_end, -angle );
+		MAT4X3VEC( to_tang_end, mat, end1 );
+		VUNITIZE( to_tang_end );
+	rt_log( "angel at end = %g, to_end_tang=( %g %g %g )\n", angle, V3ARGS( to_tang_end ) );
+		VJOIN1( line_end_pt, end_bend_center, radius_at_end, to_tang_end );
+	}
+	else
+		VMOVE( line_end_pt, end_pt );
+	rt_log( "\t\tline_end_pt=( %g %g %g )\n", V3ARGS( line_end_pt ) );
+}
+
+void
 pipe_scale_od( db_int, scale )
 struct rt_db_internal *db_int;
 fastf_t scale;
@@ -1466,6 +1692,153 @@ struct wdb_pipeseg *ps;
 	return( linear );
 }
 
+#if 1
+void
+move_bend( pipe, ps, new_pt )
+struct rt_pipe_internal *pipe;
+struct wdb_pipeseg *ps;
+point_t new_pt;
+{
+	struct wdb_pipeseg *bend1;
+	struct wdb_pipeseg *linear;
+	struct wdb_pipeseg *bend2;
+	struct wdb_pipeseg *prev;
+	struct wdb_pipeseg *next;
+	struct wdb_pipeseg *first_bend2;
+	point_t start_pt;
+	vect_t start_dir;
+	point_t end_pt;
+	vect_t end_dir;
+	point_t tmp_pt;
+	vect_t ps_dir;
+	fastf_t radius1;
+	fastf_t radius2;
+	fastf_t radius_ps;
+	vect_t translat;
+	vect_t norm_at_bend;
+
+	RT_PIPE_CK_MAGIC( pipe );
+	RT_CKMAG( ps, WDB_PIPESEG_MAGIC, "pipe segment" );
+
+	if( ps->ps_type != WDB_PIPESEG_TYPE_BEND )
+	{
+		rt_log( "move_bend called with non-bend pipe segment\n" );
+		return;
+	}
+
+	VSUB2( translat, new_pt, ps->ps_bendcenter );
+
+	VMOVE( ps->ps_bendcenter, new_pt );
+	VADD2( ps->ps_start, ps->ps_start, translat );
+
+	next = RT_LIST_NEXT( wdb_pipeseg, &ps->l );
+	while( next->ps_type == WDB_PIPESEG_TYPE_BEND )
+	{
+		VADD2( next->ps_bendcenter, next->ps_bendcenter, translat );
+		VADD2( next->ps_start, next->ps_start, translat );
+		next = RT_LIST_NEXT( wdb_pipeseg, &next->l );
+	}
+	VADD2( next->ps_start, next->ps_start, translat );
+
+	prev = RT_LIST_PREV( wdb_pipeseg, &ps->l );
+	while( prev->l.magic != RT_LIST_HEAD_MAGIC && prev->ps_type == WDB_PIPESEG_TYPE_BEND )
+	{
+		VADD2( prev->ps_bendcenter, prev->ps_bendcenter, translat );
+		VADD2( prev->ps_start, prev->ps_start, translat );
+		prev = RT_LIST_PREV( wdb_pipeseg, &prev->l );
+	}
+
+	/* get bend radius */
+	radius_ps = get_bend_radius( ps );
+
+	/* solve section before bend first */
+	bend2 = ps;
+	prev = RT_LIST_PREV( wdb_pipeseg, &bend2->l );
+	while( prev->l.magic != RT_LIST_HEAD_MAGIC && prev->ps_type == WDB_PIPESEG_TYPE_BEND )
+	{
+		bend2 = prev;
+		prev = RT_LIST_PREV( wdb_pipeseg, &prev->l );
+	}
+	first_bend2 = bend2;
+
+	linear = (struct wdb_pipeseg *)NULL;
+	prev = RT_LIST_PREV( wdb_pipeseg, &bend2->l );
+	while( prev->l.magic != RT_LIST_HEAD_MAGIC && prev->ps_type == WDB_PIPESEG_TYPE_LINEAR )
+	{
+		linear = prev;
+		prev = RT_LIST_PREV( wdb_pipeseg, &prev->l );
+	}
+
+	if( linear )
+	{
+		bend1 = RT_LIST_PREV( wdb_pipeseg, &linear->l );
+		if( bend1->l.magic == RT_LIST_HEAD_MAGIC )
+			bend1 = (struct wdb_pipeseg *)NULL;
+		get_bend_end_line( bend2, tmp_pt, end_dir );
+		VREVERSE( end_dir, end_dir );
+
+		if( bend1 )
+		{
+			radius1 = get_bend_radius( bend1 );
+			get_bend_start_line( bend1, start_pt, start_dir );
+			solve_pipe_to_bend( start_pt, start_dir, 1, radius1, new_pt, end_dir, radius_ps,
+				bend1->ps_bendcenter, linear->ps_start, bend2->ps_start, norm_at_bend );
+		}
+		else
+		{
+			solve_pipe_to_bend( linear->ps_start, start_dir, 0, 0.0, new_pt, end_dir, radius_ps,
+				tmp_pt, tmp_pt, bend2->ps_start, norm_at_bend );
+		}
+	}
+
+	/* now solve section after bend */
+	bend1 = ps;
+	next = RT_LIST_NEXT( wdb_pipeseg, &ps->l );
+	while( next->ps_type == WDB_PIPESEG_TYPE_BEND )
+	{
+		bend1 = next;
+		next = RT_LIST_NEXT( wdb_pipeseg, &next->l );
+	}
+
+	linear = (struct wdb_pipeseg *)NULL;
+	while( next->ps_type == WDB_PIPESEG_TYPE_LINEAR )
+	{
+		linear = next;
+		next = RT_LIST_NEXT( wdb_pipeseg, &next->l );
+	}
+
+	bend2 = next;
+	if( bend2->ps_type != WDB_PIPESEG_TYPE_BEND )
+		bend2 = (struct wdb_pipeseg *)NULL;
+
+	if( linear )
+	{
+		if( first_bend2 != bend1 )
+			VSETALL( norm_at_bend, 0.0 )
+
+		get_bend_start_line( bend1, tmp_pt, start_dir );
+		if( bend2 )
+		{
+			radius2 = get_bend_radius( bend2 );
+			get_bend_end_line( bend2, end_pt, end_dir );
+			VREVERSE( end_dir, end_dir );
+			solve_pipe_from_bend( norm_at_bend, new_pt, start_dir, radius_ps, end_pt, end_dir, 1, radius2,
+				bend2->ps_bendcenter, linear->ps_start, bend2->ps_start );
+		}
+		else
+		{
+			struct wdb_pipeseg *next;
+
+			next = RT_LIST_NEXT( wdb_pipeseg, &bend1->l );
+			while( next->ps_type == WDB_PIPESEG_TYPE_LINEAR )
+				next = RT_LIST_NEXT( wdb_pipeseg, &next->l );
+
+			solve_pipe_from_bend( norm_at_bend, new_pt, start_dir, radius_ps, next->ps_start, end_dir, 0, 0.0,
+				tmp_pt, linear->ps_start, tmp_pt );
+		}
+	}
+}
+#else
 void
 move_bend( pipe, ps, new_pt )
 struct rt_pipe_internal *pipe;
@@ -1798,7 +2171,7 @@ point_t new_pt;
 	VUNITIZE( normal2 );
 	make_bend_lt_180( ps, normal2 );
 }
-
+#endif
 void
 move_linear( pipe, ps, new_pt )
 struct rt_pipe_internal *pipe;
