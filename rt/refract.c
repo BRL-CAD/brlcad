@@ -272,16 +272,19 @@ do_inside:
 		}
 do_exit:
 		/*
+		 *  Compute internal spectral transmittance.
+		 *  Bouger's law.  pg 30 of "color science"
+		 *
 		 *  Apply attenuation factor due to thickness of the glass.
-		 *  This is totally arbitrary, for now.
-		 *  Assume 20% attenuation per meter of glass, 2e-4/mm
+		 *  sw_extinction is in terms of fraction of light absorbed
+		 *  per linear meter of glass.  a_cumlen is in mm.
 		 */
-		attenuation = 1;
-#ifdef later
-		attenuation = (1.0 - 2e-4 * sub_ap.a_cumlen);
-		if( attenuation < 0 )  attenuation = 0;
-/*rt_log("len=%g, atten=%g lvl%d\n", sub_ap.a_cumlen, attenuation, sub_ap.a_level);*/
-#endif
+		if( swp->sw_extinction > 0 && sub_ap.a_cumlen > 0 )  {
+			attenuation = pow( 10.0, -1.0e-3 * sub_ap.a_cumlen *
+				swp->sw_extinction );
+		} else {
+			attenuation = 1;
+		}
 
 		/*
 		 *  Process the escaping refracted ray.
