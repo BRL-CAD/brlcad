@@ -394,7 +394,7 @@ struct mater_info *mater;
 		{
 			rt_vls_init( &vls );
 			rt_vls_strcpy( &vls, mater->ma_matparm );
-			(void)bu_structparse( &vls, vrml_mat_parse, (char *)&mat );
+			(void)bu_struct_parse( &vls, vrml_mat_parse, (char *)&mat );
 			rt_vls_free( &vls );
 		}
 		fprintf( fp, "Separator { # start of %s\n", full_path );
@@ -418,7 +418,7 @@ struct mater_info *mater;
 		{
 			rt_vls_init( &vls );
 			rt_vls_strcpy( &vls, mater->ma_matparm );
-			(void)bu_structparse( &vls, vrml_mat_parse, (char *)&mat );
+			(void)bu_struct_parse( &vls, vrml_mat_parse, (char *)&mat );
 			rt_vls_free( &vls );
 		}
 		fprintf( fp, "Separator { # start of %s\n", full_path );
@@ -444,7 +444,7 @@ struct mater_info *mater;
 			rt_vls_init( &vls );
 			rt_vls_strcpy( &vls, mater->ma_matparm );
 			bzero( tex.tx_file, TXT_NAME_LEN );
-			(void)bu_structparse( &vls, vrml_texture_parse, (char *)&tex );
+			(void)bu_struct_parse( &vls, vrml_texture_parse, (char *)&tex );
 			rt_vls_free( &vls );
 		}
 
@@ -694,7 +694,7 @@ struct mater_info *mater;
 		{
 			rt_vls_init( &vls );
 			rt_vls_strcpy( &vls, mater->ma_matparm );
-			(void)bu_structparse( &vls, vrml_light_parse, (char *)&v_light );
+			(void)bu_struct_parse( &vls, vrml_light_parse, (char *)&v_light );
 			rt_vls_free( &vls );
 		}
 
