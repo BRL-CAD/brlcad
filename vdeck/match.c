@@ -25,8 +25,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <setjmp.h>
 
 #include "machine.h"
-#include "vmath.h"
-#include "./vextern.h"
+#include "externs.h"
 
 #define NUL	'\0'
 
