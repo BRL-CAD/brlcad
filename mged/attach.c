@@ -495,7 +495,7 @@ char	**argv;
 {
   if( !cmd_hook ){
     Tcl_AppendResult(interp, "The '", dmp->dm_name,
-		     "' display manager does not support any local commands.\n",
+		     "' display manager does not support local commands.\n",
 		     (char *)NULL);
     return TCL_ERROR;
   }
@@ -634,6 +634,16 @@ int argc;
 char **argv;
 {
   struct dm_list *dlp;
+
+  if(argc != 1){
+    struct bu_vls vls;
+
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "helpdevel get_dm_list");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
+    return TCL_ERROR;
+  }
 
   FOR_ALL_DISPLAYS(dlp, &head_dm_list.l)
     Tcl_AppendElement(interp, bu_vls_addr(&dlp->dml_dmp->dm_pathName));
