@@ -347,7 +347,7 @@ ell1:
 		return( mk_ell( outfp, name, D(0), D(1), D(2), D(3) ) );
 	}
 
-	if( version == 5 && strcmp( solid_type, "ellg" ) == 0 )  {
+	if( strcmp( solid_type, "ellg" ) == 0 )  {
 		/* V, A, B, C */
 		if( getsoldata( dd, 4*3, sol_work ) < 0 )
 			return(-1);
