@@ -195,19 +195,46 @@ reg	char	text[];
 		printf("cake: non-options on parameter line ignored\n");
 }
 
+/*
+ *			Y Y H A S H
+ *
+ *  Process a CPP directive.  On older systems, likely directives were:
+ *	# 1 "Cakefile"
+ *  while on ANSI systems, the format will be:
+ *	# line 2 "Cakefile"
+ *  Accept either.  If the filename changes, then a #include has just
+ *  completed, otherwise, assume a #if was just processed,
+ *  and set a flag to compress out subsequent blank lines.
+ */
 yyhash(text)
 reg	char	text[];
 {
 	reg	char	*oldfile = yyfile;
 	reg	char	*s, *t;
 
-	afterifdef = TRUE;	/* assume so until proven otherwise */
-	if (sscanf(text+1, "%d", &yylineno) != 1)
-		return;
-
 	text[strlen(text)-1] = '\0';	/* clobber the newline */
-	for (s = text; *s != '\0' && *s != '"' && !isalpha(*s); s++)
-		;
+	if(lexdebug)printf("cake: yyhash %s\n", text);
+
+	afterifdef = TRUE;	/* assume so until proven otherwise */
+	s = text+1;
+
+	if (sscanf(s, "%d", &yylineno) != 1)  {
+		/* Skip leading space */
+		while( *s && isascii(*s) && isspace(*s) )  s++;
+		if( strncmp( s, "line ", 5 ) == 0 )  {
+			s += 5;
+			if(sscanf(s, "%d", &yylineno) != 1 )  {
+				printf("cake: Don't grok line in %s\n", text);
+				return;
+			}
+		} else {
+			printf("cake: Don't grok %s\n", text);
+			return;
+		}
+	}
+
+	/* Skip space and numbers, looking for first quote */
+	while(*s != '\0' && *s != '"' && !isalpha(*s)) s++;
 
 	if (*s == '\0')
 		return;
