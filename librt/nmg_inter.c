@@ -140,6 +140,8 @@ struct faceuse *fu;
 	fastf_t		dist_to_plane;	/* distance to hit point, in mm */
 	int		status;
 	struct loopuse	*plu;
+	fastf_t		dist1, dist2;
+	vect_t		start_pt;
 
 	NMG_CK_EDGEUSE(eu);
 	NMG_CK_VERTEXUSE(eu->vu_p);
@@ -173,7 +175,7 @@ struct faceuse *fu;
 				v1mate->vg_p->coord);
 			VPRINT("\t\t (next): ",
 				eunext->vu_p->v_p->vg_p->coord);
-			rt_bomb("isect_edge_face() discontiuous edgeloop\n");
+			rt_bomb("isect_edge_face() discontinuous edgeloop\n");
 		}
 	}
 
@@ -218,15 +220,58 @@ struct faceuse *fu;
 	 *  Form a ray that starts at one vertex of the edgeuse
 	 *  and points to the other vertex.
 	 */
-/* XXX This should use edge geometry, when available. */
 	VSUB2(edge_vect, v1mate->vg_p->coord, v1->vg_p->coord);
+	edge_len = MAGNITUDE(edge_vect);
+#if 0
+	if( eu->e_p->eg_p )
+#else
+	if(0)
+#endif
+	{
+		/* Use ray in edge geometry, for repeatability */
+		register struct edge_g	*eg = eu->e_p->eg_p;
+		fastf_t		dot;
+		NMG_CK_EDGE_G(eg);
+		if( MAGSQ( eg->e_dir ) < SQRT_SMALL_FASTF )  {
+			rt_log("zero length edge_g\n");
+			nmg_pr_eg(eg, "");
+			goto calc;
+		}
+		if( (dot=VDOT( edge_vect, eg->e_dir )) < 0 )  {
+			VREVERSE( edge_vect, eg->e_dir );
+			if( dot > -0.95 )  {
+				rt_log("edge/ray dot=%g!\n", dot);
+				goto calc;
+			}
+		} else {
+			VMOVE( edge_vect, eg->e_dir );
+			if( dot < 0.95 )  {
+				rt_log("edge/ray dot=%g!\n", dot);
+				goto calc;
+			}
+		}
+		VMOVE( start_pt, eg->e_pt );
+#define VSUBDOT(_pt2, _pt, _dir)	( \
+	((_pt2)[X] - (_pt)[X]) * (_dir)[X] + \
+	((_pt2)[Y] - (_pt)[Y]) * (_dir)[Y] + \
+	((_pt2)[Z] - (_pt)[Z]) * (_dir)[Z] )
+		dist1 = VSUBDOT( v1->vg_p->coord, start_pt, edge_vect ) / edge_len;
+		dist2 = VSUBDOT( v1mate->vg_p->coord, start_pt, edge_vect ) / edge_len;
+rt_log("A dist1=%g, dist2=%g\n", dist1, dist2);
+	} else {
+calc:
+		VMOVE( start_pt, v1->vg_p->coord );
+		dist1 = 0;
+		dist2 = edge_len;
+rt_log("B dist1=%g, dist2=%g\n", dist1, dist2);
+	}
 
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
 		rt_log("Testing %g, %g, %g -> %g, %g, %g\n",
 			V3ARGS(v1->vg_p->coord), V3ARGS(v1mate->vg_p->coord) );
 	}
 
-	status = rt_isect_ray_plane(&dist, v1->vg_p->coord, edge_vect, fu->f_p->fg_p->N);
+	status = rt_isect_ray_plane(&dist, start_pt, edge_vect, fu->f_p->fg_p->N);
 
 	if (rt_g.NMG_debug & DEBUG_POLYSECT) {
 		if (status >= 0)
@@ -249,15 +294,14 @@ struct faceuse *fu;
 	 * to other absolute distances like dist_to_plane & edge_len.
 	 * The vertices are "fattened" by +/- bs->tol units.
 	 */
-	VJOIN1( hit_pt, v1->vg_p->coord, dist, edge_vect );
-	edge_len = MAGNITUDE(edge_vect);
+	VJOIN1( hit_pt, start_pt, dist, edge_vect );
 	dist_to_plane = edge_len * dist;
 
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)
 		rt_log("\tedge_len=%g, dist=%g, dist_to_plane=%g\n",
 			edge_len, dist, dist_to_plane);
 
-	if ( dist_to_plane < -(bs->tol.dist) )  {
+	if ( dist_to_plane < dist1-(bs->tol.dist) )  {
 		/* Hit is behind first point */
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
 			rt_log("\tplane behind first point\n");
@@ -270,7 +314,7 @@ struct faceuse *fu;
 	 * and give up on this edge, knowing that we'll pick up the
 	 * intersection of the next edgeuse with the face later.
 	 */
-	if ( dist_to_plane < bs->tol.dist )  {
+	if ( dist_to_plane < dist1+(bs->tol.dist) )  {
 		/* First point is on plane of face, by geometry */
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
 			rt_log("\tedge starts at plane intersect\n");
@@ -299,7 +343,7 @@ struct faceuse *fu;
 		}
 		return;
 	}
-	if ( dist_to_plane < edge_len - bs->tol.dist) {
+	if ( dist_to_plane < dist2 - bs->tol.dist) {
 		struct edgeuse	*euforw;
 
 		/* Intersection is between first and second vertex points.
@@ -427,7 +471,7 @@ struct faceuse *fu;
 		(void)nmg_tbl(bs->l1, TBL_INS_UNIQUE, &euforw->vu_p->l.magic);
 		return;
 	}
-	if ( dist_to_plane < edge_len + bs->tol.dist) {
+	if ( dist_to_plane < dist2 + bs->tol.dist) {
 		/* Second point is on plane of face, by geometry */
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
 			rt_log("\tedge ends at plane intersect\n");
