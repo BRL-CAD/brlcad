@@ -398,6 +398,7 @@ struct cmd_list {
   struct rt_vls more_default;
   struct rt_vls name;
 };
+#define CMD_LIST_NULL ((struct cmd_list *)NULL)
 
 /* defined in cmd.c */
 extern Tcl_Interp *interp;
@@ -408,6 +409,8 @@ extern struct cmd_list *curr_cmd_list;
 struct _mged_variables {
 	int	autosize;
 	int	rateknobs;
+        int     adcflag;
+        int     scroll_enabled;
     	int	sgi_win_size;
 	int	sgi_win_origin[2];
 	int	faceplate;
