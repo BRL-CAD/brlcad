@@ -188,13 +188,13 @@ CONST struct rt_tol	*tol;
 			stp->st_name, f);
 		return(1);		/* BAD */
 	}
-	f = VDOT( tip->b, tip->h )/(tip->r_b*tip->r_h);
+	f = VDOT( tip->b, tip->h )/(tip->r_b);
 	if( ! NEAR_ZERO(f, 0.0001) )  {
 		rt_log("tor(%s):  B not perpendicular to H, f=%f\n",
 			stp->st_name, f);
 		return(1);		/* BAD */
 	}
-	f = VDOT( tip->a, tip->h )/(tip->r_a*tip->r_h);
+	f = VDOT( tip->a, tip->h )/(tip->r_a);
 	if( ! NEAR_ZERO(f, 0.0001) )  {
 		rt_log("tor(%s):  A not perpendicular to H, f=%f\n",
 			stp->st_name, f);
@@ -219,7 +219,7 @@ CONST struct rt_tol	*tol;
 	tor->tor_alpha = tip->r_h/tor->tor_r1;
 
 	/* Compute R and invR matrices */
-	VSCALE( tor->tor_N, tip->h, 1.0/tip->r_h );
+	VMOVE( tor->tor_N, tip->h );
 
 	mat_idn( R );
 	VSCALE( &R[0], tip->a, 1.0/tip->r_a );
@@ -1004,7 +1004,7 @@ struct rt_tol		*tol;
 			alpha = rt_twopi * w / nw;
 			cos_alpha = cos(alpha);
 			sin_alpha = sin(alpha);
-			VCOMB2( edge, cos_alpha, G, sin_alpha, tip->h );
+			VCOMB2( edge, cos_alpha, G, sin_alpha*tip->r_h, tip->h );
 			VADD3( PTA(w,len), tip->v, edge, radius );
 		}
 	}
@@ -1126,7 +1126,7 @@ struct rt_tol		*tol;
 			alpha = rt_twopi * w / nw;
 			cos_alpha = cos(alpha);
 			sin_alpha = sin(alpha);
-			VCOMB2( edge, cos_alpha, G, sin_alpha, tip->h );
+			VCOMB2( edge, cos_alpha, G, sin_alpha*tip->r_h, tip->h );
 			VADD3( PTA(w,len), tip->v, edge, radius );
 		}
 	}
@@ -1286,6 +1286,9 @@ register mat_t		mat;
 		rt_log("rt_tor_import:  zero length A, B, or H vector\n");
 		return(-1);
 	}
+	/* In memory, the H vector is unit length */
+	f = 1.0/tip->r_h;
+	VSCALE( tip->h, tip->h, f );
 
 	/* If H does not point in the direction of A cross B, reverse H. */
 	/* Somehow, database records have been written with this problem. */
@@ -1358,7 +1361,7 @@ double			local2mm;
 	VSCALE( &rec->s.s_values[1*3], norm, r2 ); /* F2: normal radius len */
 
 	/* Create two mutually perpendicular vectors, perpendicular to Norm */
-	vec_ortho( cross1, norm );
+	mat_vec_ortho( cross1, norm );
 	VCROSS( cross2, cross1, norm );
 	VUNITIZE( cross2 );
 
@@ -1408,7 +1411,7 @@ double			mm2local;
 	RT_TOR_CK_MAGIC(tip);
 	rt_vls_strcat( str, "torus (TOR)\n");
 
-	sprintf(buf, "\tV (%g, %g, %g), r1=|A|=%g, r2=|H|=%g\n",
+	sprintf(buf, "\tV (%g, %g, %g), r1=%g (A), r2=%g (H)\n",
 		tip->v[X] * mm2local,
 		tip->v[Y] * mm2local,
 		tip->v[Z] * mm2local,
@@ -1416,9 +1419,9 @@ double			mm2local;
 	rt_vls_strcat( str, buf );
 
 	sprintf(buf, "\tN=(%g, %g, %g)\n",
-		tip->h[X] * mm2local / tip->r_h,
-		tip->h[Y] * mm2local / tip->r_h,
-		tip->h[Z] * mm2local / tip->r_h );
+		tip->h[X] * mm2local,
+		tip->h[Y] * mm2local,
+		tip->h[Z] * mm2local );
 	rt_vls_strcat( str, buf );
 
 	if( !verbose )  return(0);
@@ -1447,12 +1450,6 @@ double			mm2local;
 		tip->a[X] * mm2local / tip->r_a * r4,
 		tip->a[Y] * mm2local / tip->r_a * r4,
 		tip->a[Z] * mm2local / tip->r_a * r4 );
-	rt_vls_strcat( str, buf );
-
-	sprintf(buf, "\tH = (%g, %g, %g)\n",
-		tip->h[X] * mm2local,
-		tip->h[Y] * mm2local,
-		tip->h[Z] * mm2local );
 	rt_vls_strcat( str, buf );
 
 	return(0);
