@@ -513,6 +513,7 @@ struct faceuse *fu;
 			    		v1mate->vg_p->coord);
 
 			plu = nmg_mlv(&fu->l.magic, v1mate, OT_UNSPEC);
+			nmg_loop_g(plu->l_p);
 			vu_other = RT_LIST_FIRST( vertexuse, &plu->down_hd );
 			NMG_CK_VERTEXUSE(vu_other);
 			(void)nmg_tbl(bs->l2, TBL_INS_UNIQUE, &vu_other->l.magic);
@@ -623,14 +624,6 @@ struct faceuse	*fu2;
 
 			NMG_CK_LOOPUSE(fu2lu);
 			NMG_CK_LOOP(fu2lu->l_p);
-
-			/* If this loop is just some drek deposited as part of
-			 * the intersection operation, or it defines a hole
-			 * in the face, it doesn't really count.
-			 */
-			if (fu2lu->orientation != OT_SAME)
-			    	continue;
-
 			fu2lg = fu2lu->l_p->lg_p;
 			NMG_CK_LOOP_G(fu2lg);
 
