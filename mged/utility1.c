@@ -333,9 +333,6 @@ struct directory *dp;
 int pathpos;
 {
 	int i;
-	int status;
-	int nparts;
-	struct directory *nextdp;
 	struct rt_db_internal intern;
 	struct rt_comb_internal *comb;
 	int id;
@@ -429,7 +426,6 @@ char	**argv;
 	register struct directory *dp;
 	struct rt_db_internal intern;
 	struct rt_comb_internal *comb;
-	int		item;
 	register int sflag = 0;
 	struct id_to_names headIdName;
 	struct id_to_names *itnp;
@@ -612,7 +608,6 @@ char	**argv;
 	register struct directory *dp;
 	struct rt_db_internal	intern;
 	struct rt_comb_internal	*comb;
-	int item;
 	int sflag = 0;
 
 	CHECK_DBI_NULL;
@@ -650,7 +645,6 @@ char	**argv;
 	  return TCL_OK;
 
 	for( j=1; j<argc; j++) {
-		item = atoi( argv[j] );
 
 		if(!sflag)
 		  Tcl_AppendResult(interp, "Combination[s] with shader ", argv[j],
@@ -873,7 +867,6 @@ matp_t matrix;
 char *name;
 int *old;
 {
-	int ret_sol_no=0;
 	int i;
 	struct identt idbuf1, idbuf2;
 

@@ -317,9 +317,6 @@ genptr_t		ptr;
 	}
 	else
 	{
-		register int i;
-		char	mref[NAMESIZE+2];
-
 		bu_log("adding  comb '%s'\n", local );
 		bu_free((genptr_t)dp->d_namep, "mged_dir_add: dp->d_namep");
 		dp->d_namep = bu_strdup(local);

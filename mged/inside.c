@@ -819,7 +819,7 @@ fastf_t	thick[6];
 	struct rt_tgc_internal	*tgc = (struct rt_tgc_internal *)ip->idb_ptr;
 	vect_t norm;		/* unit vector normal to base */
 	fastf_t normal_height;	/* height in direction normal to base */
-	vect_t v,h,a,b,c,d;	/* parameters for inside TGC */
+	vect_t v,h;		/* parameters for inside TGC */
 	point_t top;		/* vertex at top of inside TGC */
 	fastf_t mag_a,mag_b,mag_c,mag_d; /* lengths of original semi-radii */
 	fastf_t new_mag_a,new_mag_b,new_mag_c,new_mag_d; /* new lengths */
