@@ -275,7 +275,7 @@ extern vect_t model_max;	/* max corner of model bounding RPP */
 /*
  *  Global routines to interface with the RT library.
  */
-extern struct soltab *get_tree();	/* Get expr tree for object */
+extern int get_tree();			/* Get expr tree for object */
 extern int shootray();			/* Shoot a ray */
 extern void rtbomb();			/* Exit with error message */
 extern void timer_prep();		/* Start the timer */
