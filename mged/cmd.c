@@ -147,7 +147,7 @@ int	inpara;			/* parameter input from keyboard */
 int glob_compat_mode = 1;
 int output_as_return = 0;
 
-extern Tcl_CmdProc cmd_expand, cmd_db, cmd_prev, cmd_next, f_echo;
+extern Tcl_CmdProc cmd_expand, cmd_db, cmd_prev, cmd_next, f_echo, cmd_look;
 
 int	mged_cmd();
 int	cmd_gui(), cmd_tk(), cmd_getknob(), gui_cmdline();
