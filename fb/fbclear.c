@@ -1,4 +1,18 @@
 /*
+	SCCS id:	@(#) fbclear.c	1.2
+	Last edit: 	3/12/85 at 21:55:51	G S M
+	Retrieved: 	8/13/86 at 03:11:57
+	SCCS archive:	/m/cad/fb_utils/RCS/s.fbclear.c
+
+*/
+#if ! defined( lint )
+static
+char	sccsTag[] = "@(#) fbclear.c	1.2	last edit 3/12/85 at 21:55:51";
+#endif
+#include <stdio.h>
+#include <fb.h>
+typedef unsigned char	u_char;
+/*
  *			I K C L E A R . C
  *
  * This program is intended to be used to clear the screen of
@@ -7,67 +21,38 @@
  * The special FBC clear-screen command is used, for speed.
  *
  * Mike Muuss, BRL, 10/27/83.
+ * Gary S. Moss, BRL. 03/12/85	Modified to use libfb(3).
  */
-int ikfd;
-int ikhires = 0;
+static int	hires = 0;
 
 main(argc, argv)
 char	**argv;
 int	argc;
 {
-	int	red, green, blue;
-
-	ikopen();
-
-	ikclear();
-	load_map(1,0,0,0);		/* standard color map */
-
-	if (argc > 1 && strcmp (argv[1], "-h") == 0) {
-		ikhires++;
+	if( argc > 1 && strcmp (argv[1], "-h") == 0 )
+		{
+		hires++;
+		setfbsize( 1024 );
 		argv++;
 		argc--;
-	}
-	if (argc == 4) {
-		red = atoi(argv[1]);
-		blue = atoi(argv[2]);
-		green = atoi(argv[3]);
-
-		if (red < 0 || red > 255
-		  || blue < 0 || blue > 255
-		  || green < 0 || green > 255) {
-		  	printf ("ikclear: bad color value\n");
-		  	exit (99);
 		}
-		fillscreen(red, green, blue);
-	} else if (argc > 1) {
-		printf ("Usage:  ikclear [r g b]\n");
-		exit (9);
-	}
-	exit (0);
-}
-
-fillscreen(r, g, b)
-int	r, g, b;
-{
-	char	buf[1024*4*4];		/* 4 lines hires, 8 lines lores */
-	char	*buflim;
-	register char *cp;
-	register int ycnt;
-
-	cp = buf;
-	buflim = buf + sizeof(buf);
-	while (cp < buflim) {
-		*cp++ = r;
-		*cp++ = b;
-		*cp++ = g;
-		*cp++ = 0;
-	}
-	lseek (ikfd, 0L, 0);
-	ycnt = (ikhires ? (1024/4) : (512/8));
-	for (; ycnt > 0; --ycnt) {
-		if (write (ikfd, buf, sizeof (buf)) < 0) {
-			perror ("ikclear: write");
-			exit (98);
+	if( argc != 4 && argc > 1 )
+		{
+		(void) fprintf( stderr, "Usage:  ikclear [r g b]\n" );
+		return	1;
 		}
+	if(	fbopen( NULL, APPEND ) == -1
+	    ||	fb_wmap( (ColorMap *) NULL ) == -1
+		)
+		{
+		return	1;
+		}
+	if( argc == 4 )
+		{ static Pixel	pixel;
+		pixel.red = (u_char) atoi( argv[1] );
+		pixel.blue = (u_char) atoi( argv[2] );
+		pixel.green = (u_char) atoi( argv[3] );
+		setbackground( &pixel );
+		}
+	return	fbclear() == -1;
 	}
-}
