@@ -18,7 +18,9 @@
  *  Replace this header.
  */
 
+#include "machine.h"
 #include "fb.h"
+#include "externs.h"
 #include "./fblocal.h"
 
 _LOCAL_ int	DEVNAME_open(),
@@ -121,7 +123,7 @@ _LOCAL_ int
 DEVNAME_write( ifp, x, y, pixelp, count )
 FBIO	*ifp;
 int	x, y;
-unsigned char	*pixelp;
+CONST unsigned char	*pixelp;
 int	count;
 {
 	return(count);
@@ -138,7 +140,7 @@ ColorMap	*cmp;
 _LOCAL_ int
 DEVNAME_wmap( ifp, cmp )
 FBIO	*ifp;
-ColorMap	*cmp;
+CONST ColorMap	*cmp;
 {
 	return(0);
 }
@@ -164,7 +166,7 @@ int	*xzoom, *yzoom;
 _LOCAL_ int
 DEVNAME_setcursor( ifp, bits, xbits, ybits, xorig, yorig )
 FBIO	*ifp;
-unsigned char *bits;
+CONST unsigned char *bits;
 int	xbits, ybits;
 int	xorig, yorig;
 {
@@ -204,7 +206,7 @@ DEVNAME_writerect( ifp, xmin, ymin, width, height, pp )
 FBIO	*ifp;
 int	xmin, ymin;
 int	width, height;
-unsinged char	*pp;
+CONST unsinged char	*pp;
 {
 	return( width*height );
 }
