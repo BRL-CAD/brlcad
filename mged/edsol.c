@@ -689,6 +689,9 @@ register float *angles, *unitv;
 		angles[3] = radtodeg * acos( unitv[X]/cos(angles[4]) );
 	else
 		angles[3] = 0.0;
+	if( unitv[1] < 0 )
+		angles[3] = 360.0 - angles[3];
+
 	angles[4] *= radtodeg;
 }
 
@@ -697,15 +700,15 @@ register float *angles, *unitv;
 #define PR_STR(ln,str)	(void)strcpy(&es_display[ln*ES_LINELEN], str);
 
 #define PR_PT(ln,title,base)	(void)sprintf( &es_display[ln*ES_LINELEN],\
-		" %c (%.4f, %.4f, %.4f)%c", \
+		"\t%c (%.4f, %.4f, %.4f)%c", \
 		title, (base)[X], (base)[Y], (base)[Z], '\0' )
 
 #define PR_VECM(ln,title,base,mag)	(void)sprintf( &es_display[ln*ES_LINELEN],\
-		" %c (%.4f, %.4f, %.4f) Mag=%f%c", \
+		"\t%c (%.4f, %.4f, %.4f) Mag=%f%c", \
 		title, (base)[X], (base)[Y], (base)[Z], mag, '\0' )
 
 #define PR_ANG(ln,str,base)	(void)sprintf( &es_display[ln*ES_LINELEN],\
-		" %s dir cos=(%.1f, %.1f, %.1f), rot=%.1f, fb=%.1f%c", \
+		"\t%s dir cos=(%.1f, %.1f, %.1f), rot=%.1f, fb=%.1f%c", \
 		str, (base)[0], (base)[1], (base)[2], \
 		(base)[3], (base)[4], '\0' )
 
@@ -751,7 +754,7 @@ register struct solidrec *sp;
 		PR_PT( 0, 'V', &local.s_tor_V );
 
 		(void)sprintf( &es_display[1*ES_LINELEN],
-			" r1=%f, r2=%f%c", r1, r2, '\0' );
+			"\tr1=%f, r2=%f%c", r1, r2, '\0' );
 
 		if( r2 < EPSILON )  {
 			PR_STR( 2, "N too small");
@@ -776,7 +779,7 @@ register struct solidrec *sp;
 				es_nlines = length = 8;
 /* common area for arbs */
 arbcommon:
-				for(i=3; i<=3*length; i+=3) {
+				for(i=3; i<3*length; i+=3) {
 					VADD2( work, &local.s_values[i], &local.s_values[0] );
 					PR_PT( i/3, '1'+(i/3), work );
 				}
@@ -867,7 +870,7 @@ arbcommon:
 		PR_VECM( 4, 'B', &local.s_tgc_B, ma );
 
 		(void)sprintf( &es_display[5*ES_LINELEN],
-			" c = %f, d = %f%c",
+			"\tc = %f, d = %f%c",
 			MAGNITUDE( &local.s_tgc_C ),
 			MAGNITUDE( &local.s_tgc_D ), '\0' );
 

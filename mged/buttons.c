@@ -51,7 +51,7 @@ static	edsol;
  * Value is 0 if off, or the value of the button function currently
  * in effect (eg, BE_O_XY).
  */
-static	edobj;		/* object editing */
+int	edobj;		/* object editing */
 int	movedir;	/* RARROW | UARROW | SARROW | ROTARROW */
 
 /*
@@ -59,6 +59,7 @@ int	movedir;	/* RARROW | UARROW | SARROW | ROTARROW */
  */
 mat_t	acc_rot_sol;
 float	acc_sc_sol;
+float	acc_sc[3];	/* local object scale factors --- accumulations */
 
 static void bv_top(), bv_bottom(), bv_right();
 static void bv_left(), bv_front(), bv_rear();
@@ -68,6 +69,7 @@ static void be_o_illuminate(), be_s_illuminate();
 static void be_o_scale(), be_o_x(), be_o_y(), be_o_xy(), be_o_rotate();
 static void be_accept(), be_reject(), bv_slicemode();
 static void be_s_edit(), be_s_rotate(), be_s_trans(), be_s_scale();
+static void be_o_xscale(), be_o_yscale(), be_o_zscale();
 
 struct buttons  {
 	int	bu_code;	/* dm_values.dv_button */
@@ -89,6 +91,9 @@ struct buttons  {
 	BE_O_ILLUMINATE,"oill",		be_o_illuminate,
 	BE_S_ILLUMINATE,"sill",		be_s_illuminate,
 	BE_O_SCALE,	"oscale",	be_o_scale,
+	BE_O_XSCALE,	"oxscale",	be_o_xscale,
+	BE_O_YSCALE,	"oyscale",	be_o_yscale,
+	BE_O_ZSCALE,	"ozscale",	be_o_zscale,
 	BE_O_X,		"ox",		be_o_x,
 	BE_O_Y,		"oy",		be_o_y,
 	BE_O_XY,	"oxy",		be_o_xy,
@@ -145,6 +150,9 @@ static struct menu_item oed_menu[] = {
 	{ "Y move", button_hit_menu, BE_O_Y },
 	{ "XY move", button_hit_menu, BE_O_XY },
 	{ "Rotate", button_hit_menu, BE_O_ROTATE },
+	{ "Scale X", button_hit_menu, BE_O_XSCALE },
+	{ "Scale Y", button_hit_menu, BE_O_YSCALE },
+	{ "Scale Z", button_hit_menu, BE_O_ZSCALE },
 	{ "", (void (*)())NULL, 0 }
 };
 
@@ -330,6 +338,8 @@ static void be_o_illuminate()  {
 		(void)chg_state( ST_VIEW, ST_O_PICK, "Object Illuminate" );
 		new_mats();
 	}
+	/* reset accumulation local scale factors */
+	acc_sc[0] = acc_sc[1] = acc_sc[2] = 1.0;
 }
 
 static void be_s_illuminate()  {
@@ -349,6 +359,36 @@ static void be_o_scale()  {
 
 	dmp->dmr_light( LIGHT_OFF, edobj );
 	dmp->dmr_light( LIGHT_ON, edobj = BE_O_SCALE );
+	movedir = SARROW;
+	dmaflag++;
+}
+
+static void be_o_xscale()  {
+	if( not_state( ST_O_EDIT, "Object Local X Scale" ) )
+		return;
+
+	dmp->dmr_light( LIGHT_OFF, edobj );
+	dmp->dmr_light( LIGHT_ON, edobj = BE_O_XSCALE );
+	movedir = SARROW;
+	dmaflag++;
+}
+
+static void be_o_yscale()  {
+	if( not_state( ST_O_EDIT, "Object Local Y Scale" ) )
+		return;
+
+	dmp->dmr_light( LIGHT_OFF, edobj );
+	dmp->dmr_light( LIGHT_ON, edobj = BE_O_YSCALE );
+	movedir = SARROW;
+	dmaflag++;
+}
+
+static void be_o_zscale()  {
+	if( not_state( ST_O_EDIT, "Object Local Z Scale" ) )
+		return;
+
+	dmp->dmr_light( LIGHT_OFF, edobj );
+	dmp->dmr_light( LIGHT_ON, edobj = BE_O_ZSCALE );
 	movedir = SARROW;
 	dmaflag++;
 }

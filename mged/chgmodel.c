@@ -1115,14 +1115,14 @@ f_rot_obj()
 	dmaflag = 1;
 }
 
-/* allow precise changes to object scaling */
+/* allow precise changes to object scaling, both local & global */
 void
 f_sc_obj()
 {
 	mat_t incr;
 	vect_t point, temp;
 
-	if( not_state( ST_O_EDIT, "Object Scale" ) )
+	if( not_state( ST_O_EDIT, "Object Scaling" ) )
 		return;
 
 	if( atof(cmd_args[1]) <= 0.0 ) {
@@ -1131,15 +1131,44 @@ f_sc_obj()
 	}
 
 	if(movedir != SARROW) {
-		/* Put in object scale mode */
-		dmp->dmr_light( LIGHT_ON, BE_O_SCALE );
+		/* Put in global object scale mode */
 		dmp->dmr_light( LIGHT_OFF, BE_O_ROTATE );
 		dmp->dmr_light( LIGHT_OFF, BE_O_XY );
+		if( edobj == 0 )
+			edobj = BE_O_SCALE;	/* default is global scaling */
+		dmp->dmr_light( LIGHT_ON, edobj );
 		movedir = SARROW;
 	}
 
 	mat_idn(incr);
-	incr[15] = 1.0 / (atof(cmd_args[1]) * modelchanges[15]);
+
+	/* switch depending on type of scaling to do */
+	switch( edobj ) {
+
+		case BE_O_SCALE:
+			/* global scaling */
+			incr[15] = 1.0 / (atof(cmd_args[1]) * modelchanges[15]);
+		break;
+
+		case BE_O_XSCALE:
+			/* local scaling ... X-axis */
+			incr[0] = atof(cmd_args[1]) / acc_sc[0];
+			acc_sc[0] = atof(cmd_args[1]);
+		break;
+
+		case BE_O_YSCALE:
+			/* local scaling ... Y-axis */
+			incr[5] = atof(cmd_args[1]) / acc_sc[1];
+			acc_sc[1] = atof(cmd_args[1]);
+		break;
+
+		case BE_O_ZSCALE:
+			/* local scaling ... Z-axis */
+			incr[10] = atof(cmd_args[1]) / acc_sc[2];
+			acc_sc[2] = atof(cmd_args[1]);
+		break;
+
+	}
 
 	/* find point the scaling is to take place wrt */
 	MAT4X3PNT(temp, es_mat, es_rec.s.s_values);

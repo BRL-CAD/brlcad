@@ -64,10 +64,11 @@ void	f_mirface(), f_units(), f_title();
 void	f_rot_obj(), f_tr_obj(), f_sc_obj();
 void	f_analyze(), f_sed();
 void	f_ill(), f_knob(), f_tops(), f_summary();
-void	f_prcolor(), f_color(), f_edcolor();
+void	f_prcolor(), f_color(), f_edcolor(), f_3ptarb(), f_rfarb(), f_which_id();
 void	f_plot(), f_area(), f_find(), f_edgedir();
-void	f_regdef(), f_aeview(), f_in();
-void	f_rmats(),f_prefix(), f_keep(), f_tree(), f_inside(), f_mvall();
+void	f_regdef(), f_aeview(), f_in(), f_tables(), f_edcodes(), f_dup(), f_cat();
+void	f_rmats(),f_prefix(), f_keep(), f_tree(), f_inside(), f_mvall(), f_amtrack();
+void	f_tabobj(), f_pathsum(), f_copyeval(), f_push();
 
 static struct funtab {
 	char *ft_name;
@@ -200,10 +201,22 @@ static struct funtab {
 	f_aeview, 3, 3,
 "regdef", "item [air] [los] [GIFTmaterial]", "change next region default codes",
 	f_regdef, 2, 5,
-"edgedir", "edgedir delta_x delta_y delta_z", "define direction of ARB edge being moved",
+"edgedir", "[delta_x delta_y delta_z]|[rot fb]", "define direction of ARB edge being moved",
 	f_edgedir, 3, 4,
 "in", "", "keyboard entry of solids",
 	f_in, 1, 27,
+"solids", "file object(s)", "make ascii summary of solid parameters",
+	f_tables, 3, MAXARGS,
+"regions", "file object(s)", "make ascii summary of regions",
+	f_tables, 3, MAXARGS,
+"idents", "file object(s)", "make ascii summary of region idents",
+	f_tables, 3, MAXARGS,
+"edcodes", "object(s)", "edit region ident codes",
+	f_edcodes, 2, MAXARGS,
+"dup", "file {prefix}", "check for dup names in 'file'",
+	f_dup, 1, 27,
+"cat", "file {prefix}", "cat 'file' onto end of present data file",
+	f_cat, 1, 27,
 "prefix", "new_prefix object(s)", "prefix each occurence of object name(s)",
 	f_prefix, 3, MAXARGS,
 "keep", "keep_file object(s)", "save named objects in specified file",
@@ -214,6 +227,24 @@ static struct funtab {
 	f_inside, 1, MAXARGS,
 "mvall", "oldname newname", "rename object everywhere",
 	f_mvall, 3, 3,
+"track", "<parameters>", "adds tracks to data file",
+	f_amtrack, 1, 27,
+"3ptarb", "", "makes arb given 3 pts, 2 coord of 4th pt, and thickness",
+	f_3ptarb, 1, 27,
+"rfarb", "", "makes arb given point, 2 coord of 3 pts, rot, fb, thickness",
+	f_rfarb, 1, 27,
+"whichid", "ident(s)", "lists all regions with given ident code",
+	f_which_id, 1, 27,
+"paths", "", "lists all paths matching input path",
+	f_pathsum, 1, 27,
+"listeval", "", "lists 'evaluated' path solids",
+	f_pathsum, 1, 27,
+"copyeval", "", "copys an 'evaluated' path solid",
+	f_copyeval, 1, 27,
+"tab", "object[s]", "tabs objects as stored in data file",
+	f_tabobj, 2, MAXARGS,
+"push", "object[s]", "pushes object's path transformations to solids",
+	f_push, 2, MAXARGS,
 "memprint", "", "print memory maps",
 	f_memprint, 1, 1
 };

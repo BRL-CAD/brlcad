@@ -232,11 +232,11 @@ f_inside()
 	/* get the inside solid name */
 	(void)printf("Enter name of the inside solid: ");
 	argcnt = getcmd(args);
-	if( lookup( cmd_args[2], LOOKUP_QUIET ) != DIR_NULL ) {
-		(void)aexists( cmd_args[2] );
+	if( lookup( cmd_args[args], LOOKUP_QUIET ) != DIR_NULL ) {
+		(void)aexists( cmd_args[args] );
 		return;
 	}
-	if( strlen(cmd_args[2]) >= NAMESIZE )  {
+	if( strlen(cmd_args[args]) >= NAMESIZE )  {
 		(void)printf("Names are limited to %d characters\n", NAMESIZE-1);
 		return;
 	}

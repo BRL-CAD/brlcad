@@ -278,19 +278,42 @@ usepen()
 		mat_idn( incr_change );
 		scale = 1;
 		if( movedir & SARROW )  {
+			/* scaling option is in effect */
 			scale = 1.0 + (float)(dm_values.dv_ypen > 0 ?
 				dm_values.dv_ypen :
 				-dm_values.dv_ypen) / (2047);
 			if ( dm_values.dv_ypen <= 0 )
 				scale = 1.0 / scale;
 
-			/*  To take effect relative to the view center,
-			 *	p' = ( (p - center) * scale ) + center
-			 */
-			incr_change[15] = 1.0 / scale;
-/*
-			wrt_view( modelchanges, incr_change, modelchanges );
-*/
+			/* switch depending on scaling option selected */
+			switch( edobj ) {
+
+				case BE_O_SCALE:
+					/* global scaling */
+					incr_change[15] = 1.0 / scale;
+				break;
+
+				case BE_O_XSCALE:
+					/* local scaling ... X-axis */
+					incr_change[0] = scale;
+					/* accumulate the scale factor */
+					acc_sc[0] *= scale;
+				break;
+
+				case BE_O_YSCALE:
+					/* local scaling ... Y-axis */
+					incr_change[5] = scale;
+					/* accumulate the scale factor */
+					acc_sc[1] *= scale;
+				break;
+
+				case BE_O_ZSCALE:
+					/* local scaling ... Z-axis */
+					incr_change[10] = scale;
+					/* accumulate the scale factor */
+					acc_sc[2] *= scale;
+				break;
+			}
 
 			/* Have scaling take place with respect to a point,
 			 * NOT the view center.
