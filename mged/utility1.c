@@ -931,8 +931,12 @@ int flag;
 				}
 				else
 				{
-					bn_mat_mul( temp_mat, old_mat,
-						tree_list[i].tl_tree->tr_l.tl_mat );
+					if( tree_list[i].tl_tree->tr_l.tl_mat )  {
+						bn_mat_mul( temp_mat, old_mat,
+							tree_list[i].tl_tree->tr_l.tl_mat );
+					} else {
+						bn_mat_copy( temp_mat, old_mat );
+					}
 					if( rt_db_get_internal( &sol_intern, sol_dp, dbip, temp_mat ) < 0 )
 					{
 						bu_log( "Could not import %s\n", tree_list[i].tl_tree->tr_l.tl_name );
@@ -993,7 +997,11 @@ int flag;
 			}
 
 			/* recurse */
-			bn_mat_mul( new_mat, old_mat, tree_list[i].tl_tree->tr_l.tl_mat );
+			if( tree_list[i].tl_tree->tr_l.tl_mat )  {
+				bn_mat_mul( new_mat, old_mat, tree_list[i].tl_tree->tr_l.tl_mat );
+			} else {
+				bn_mat_copy( new_mat, old_mat );
+			}
 			new_tables( nextdp, cur_path, new_mat, flag );
 			bu_ptbl_trunc( cur_path, cur_length );
 		}
