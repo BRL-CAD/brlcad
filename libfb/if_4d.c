@@ -1,11 +1,10 @@
 /*
  *			I F _ 4 D . C
- *			I F _ G T . C
  *
  *  BRL Frame Buffer Library interface for SGI Iris-4D, and
  *  SGI Iris-4D with Graphics Turbo.
  *  Support for the 3030/2400 series ("Iris-3D") is in if_sgi.c
- *  However, both are called /dev/sgi
+ *  However, all are called /dev/sgi
  *
  *  In order to use a large chunck of memory with the shared memory 
  *  system it is necessary to increase the shmmax and shmall paramaters
@@ -15,7 +14,9 @@
  * 	#define SHMMAX	5131072
  *	#define SHMALL	4000
  *
- *  refer to the Users Manuals to reconfigure your kernel..
+ *  and rebooting your system twice.
+ *
+ *  Refer to the SGI Users Manuals when reconfiguring your kernel.
  *
  *  There are several different Frame Buffer modes supported.
  *  Set your environment FB_FILE to the appropriate type.
@@ -33,7 +34,7 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *  
  *  Copyright Notice -
- *	This software is Copyright (C) 1986 by the United States Army.
+ *	This software is Copyright (C) 1989 by the United States Army.
  *	All rights reserved.
  *
  */
@@ -91,12 +92,7 @@ _LOCAL_ int	sgi_dopen(),
 		sgi_help();
 
 /* This is the ONLY thing that we "export" */
-#if 1
-#define sgi_interface	gt_interface
-FBIO gt_interface =
-#else
 FBIO sgi_interface =
-#endif
 		{
 		sgi_dopen,
 		sgi_dclose,
