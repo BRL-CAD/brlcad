@@ -60,13 +60,12 @@ register struct directory *dp;
 matp_t xlate;
 {
 	struct rt_db_internal	intern;
-	int			id;
 
 	if(dbip == DBI_NULL)
 	  return;
 
     	RT_INIT_DB_INTERNAL(&intern);
-	if( (id=rt_db_get_internal( &intern, dp, dbip, xlate )) < 0 )
+	if( rt_db_get_internal( &intern, dp, dbip, xlate ) < 0 )
 	{
 		Tcl_AppendResult(interp, "rt_db_get_internal() failed for ", dp->d_namep,
 			(char *)NULL );
