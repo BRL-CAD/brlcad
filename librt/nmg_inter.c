@@ -31,14 +31,14 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 RT_EXTERN( struct vertex *nmg_e2break, (struct edge *e1, struct edge *e2) );
 
 /*
- *			R T _ T W O _ P T S _ E Q U A L
+ *			R T _ P T 3 _ P T 3 _ E Q U A L
  *
  *  Returns -
  *	1	if the two points are equal, within the tolerance
  *	0	if the two points are not "the same"
  */
 int
-rt_two_pts_equal( a, b, tol )
+rt_pt3_pt3_equal( a, b, tol )
 CONST point_t		a;
 CONST point_t		b;
 CONST struct rt_tol	*tol;
@@ -53,7 +53,7 @@ CONST struct rt_tol	*tol;
 
 /* XXX move to plane.c */
 /*
- *			R T _ I S E C T _ 2 D L S E G  _ 2 D L S E G 
+ *			R T _ I S E C T _ L S E G 2  _ L S E G 2
  *
  *  Intersect two 2D line segments, defined by two points and two vectors.
  *  The vectors are unlikely to be unit length.
@@ -79,7 +79,7 @@ CONST struct rt_tol	*tol;
  *  And either may be -10 if the point is outside the span.
  */
 int
-rt_isect_2dlseg_2dlseg( dist, p, pdir, q, qdir, tol )
+rt_isect_lseg2_lseg2( dist, p, pdir, q, qdir, tol )
 fastf_t		*dist;
 CONST point_t	p;
 CONST vect_t	pdir;
@@ -94,7 +94,7 @@ struct rt_tol	*tol;
 	fastf_t	hx, hy;		/* H = Q - P */
 	fastf_t	ptol, qtol;	/* length in parameter space == tol->dist */
 
-rt_log("rt_isect_2dlseg_2dlseg() p=(%g,%g,%g), pdir=(%g,%g,%g)\n\t\tq=(%g,%g,%g), qdir=(%g,%g,%g)\n",
+rt_log("rt_isect_lseg2_lseg2() p=(%g,%g,%g), pdir=(%g,%g,%g)\n\t\tq=(%g,%g,%g), qdir=(%g,%g,%g)\n",
 V3ARGS(p), V3ARGS(pdir), V3ARGS(q), V3ARGS(qdir) );
 
 	RT_CK_TOL(tol);
@@ -550,7 +550,7 @@ struct faceuse		*fu;
 			vu2 = RT_LIST_FIRST( vertexuse, &lu->down_hd );
 			if( vu->v_p == vu2->v_p )  return;
 			/* Perhaps a 2d routine here? */
-			if( rt_two_pts_equal( pt, vu2->v_p->vg_p->coord, &is->tol ) )  {
+			if( rt_pt3_pt3_equal( pt, vu2->v_p->vg_p->coord, &is->tol ) )  {
 				/* Fuse the two verts together */
 				nmg_jv( vu->v_p, vu2->v_p );
 				return;
@@ -894,8 +894,17 @@ struct faceuse		*fu2;		/* fu of eu2, for error checks */
 	nmg_get_2d_vertex( other_end, vu2b->v_p, is, fu2 );
 	VSUB2( other_dir, other_end, other_start );
 
-	status = rt_isect_2dlseg_2dlseg(&dist[0], is->pt, is->dir,
+#if 1
+	/* The "proper" thing to do is intersect two line segments.
+	 * However, this means that none of the intersections of edge "line"
+	 * with the exterior of the loop are computed, and that
+	 * violates the strategy assumptions of the face-cutter.
+	 */
+	status = rt_isect_lseg2_lseg2(&dist[0], is->pt, is->dir,
 			other_start, other_dir, &is->tol );
+#else
+	/* To pick up ALL intersection points, the source edge is a line */
+#endif
 
 	if (rt_g.NMG_debug & DEBUG_POLYSECT) {
 	    if (status >= 0)
