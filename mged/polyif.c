@@ -42,17 +42,17 @@ struct polygon_header  {
 };
 #define POLYGON_HEADER_MAGIC	0x8623bad2
 struct rt_imexport  polygon_desc[] = {
-	"%d",	offsetof(struct polygon_header, magic),		1,
-	"%d",	offsetof(struct polygon_header, ident),		1,
-	"%d",	offsetof(struct polygon_header, interior),	1,
-	"%f",	offsetofarray(struct polygon_header, normal),	3,
-	"%s",	offsetofarray(struct polygon_header, color),	3,
-	"%d",	offsetof(struct polygon_header, npts),		1,
-	"",	0,						0
+	{"%d",	offsetof(struct polygon_header, magic),		1 },
+	{"%d",	offsetof(struct polygon_header, ident),		1 },
+	{"%d",	offsetof(struct polygon_header, interior),	1 },
+	{"%f",	offsetofarray(struct polygon_header, normal),	3 },
+	{"%s",	offsetofarray(struct polygon_header, color),	3 },
+	{"%d",	offsetof(struct polygon_header, npts),		1 },
+	{"",	0,						0 }
 };
 struct rt_imexport vertex_desc[] = {
-	"%f",	0,	99,	/* im_count will be filled in at runtime */
-	"",	0,	0
+	{"%f",	0,	99 },	/* im_count will be filled in at runtime */
+	{"",	0,	0 }
 };
 
 /*
