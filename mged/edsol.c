@@ -80,8 +80,8 @@ static void	init_sedit_vars(), init_oedit_vars(), init_oedit_guts();
 void pscale();
 void update_edit_absolute_tran();
 void set_e_axes_pos();
-vect_t e_axes_pos;
-vect_t curr_e_axes_pos;
+point_t e_axes_pos;
+point_t curr_e_axes_pos;
 short int fixv;		/* used in ECMD_ARB_ROTATE_FACE,f_eqn(): fixed vertex */
 
 MGED_EXTERN( struct wdb_pipept *find_pipept_nearest_pt, (CONST struct bu_list *pipe_hd, CONST point_t pt ) );
