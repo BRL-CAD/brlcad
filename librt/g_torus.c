@@ -1417,7 +1417,7 @@ double			mm2local;
 		tip->h[Z] * mm2local / tip->r_h );
 	rt_vls_strcat( str, buf );
 
-	if( !verbose )  return;
+	if( !verbose )  return(0);
 
 	r3 = tip->r_a - tip->r_h;
 	sprintf(buf, "\tvector to inner edge = (%g, %g, %g)\n",

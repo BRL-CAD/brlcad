@@ -226,7 +226,7 @@ double			mm2local;
 		arip->curves[0][Z] * mm2local );
 	rt_vls_strcat( str, buf );
 
-	if( !verbose )  return;
+	if( !verbose )  return(0);
 
 	/* Print out all the points */
 	for( i=0; i < arip->ncurves; i++ )  {
