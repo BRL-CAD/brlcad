@@ -404,6 +404,15 @@ char **argv;
 			return CMD_MORE;
 		}
 		goto do_extern_update;
+	} else if( strcmp( argv[2], "hf" ) == 0 )  {
+		switch( strsol_in( &external, "hf", argc, argv ) )  {
+		case CMD_BAD:
+			(void)printf("ERROR, HF solid not made!\n");
+			return CMD_BAD;
+		case CMD_MORE:
+			return CMD_MORE;
+		}
+		goto do_extern_update;
 	} else if( strcmp( argv[2], "ars" ) == 0 )  {
 		switch( ars_in(argc, argv, &internal, &p_ars[0]) ) {
 		case CMD_BAD:
