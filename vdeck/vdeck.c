@@ -1,7 +1,7 @@
 /*
- *	SCCS id:	@(#) vdeck.c	1.15
- *	Last edit: 	6/1/84 at 14:00:14
- *	Retrieved: 	8/13/86 at 08:08:48
+ *	SCCS id:	@(#) vdeck.c	2.1
+ *	Last edit: 	6/1/84 at 14:04:56
+ *	Retrieved: 	8/13/86 at 08:09:17
  *	SCCS archive:	/m/cad/vdeck/RCS/s.vdeck.c
  *
  *	Author:		Gary S. Moss
@@ -11,7 +11,7 @@
  *			(301)278-6647 or AV-283-6647
  */
 static
-char	sccsTag[] = "@(#) vdeck.c	1.15	last edit 6/1/84 at 14:00:14";
+char	sccsTag[] = "@(#) vdeck.c	2.1	last edit 6/1/84 at 14:04:56";
 
 /*
  *	Derived from KARDS, written by Keith Applin.
