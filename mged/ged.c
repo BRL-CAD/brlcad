@@ -194,7 +194,6 @@ char **argv;
 {
 	extern char *bu_optarg;
 	extern int bu_optind, bu_opterr, bu_optopt;
-	int	force_interactive = 0;
 	int	rateflag = 0;
 	int	c;
 	int	read_only_flag=0;
@@ -205,9 +204,6 @@ char **argv;
 		{
 			case 'd':
 				dpy_string = bu_optarg;
-				break;
-			case 'i':
-				force_interactive = 1;
 				break;
 			case 'r':
 				read_only_flag = 1;
@@ -226,7 +222,7 @@ char **argv;
 				fprintf( stdout, "Unrecognized option (%c)\n", c );
 				/* Fall through to help */
 			case 'h':
-				fprintf(stdout, "Usage:  %s [-c] [-h] [-i] [-r] [-x#] -X#] [database [command]]\n", argv[0]);
+				fprintf(stdout, "Usage:  %s [-c] [-d display] [-h] [-r] [-x#] [-X#] [database [command]]\n", argv[0]);
 				fflush(stdout);
 				return(1);
 		}
@@ -235,22 +231,12 @@ char **argv;
 	argc -= (bu_optind - 1);
 	argv += (bu_optind - 1);
 
-#if 0
-	/* Check again for proper invocation */
-	if( argc < 2 )  {
-	  argv -= (bu_optind - 1);
-	  fprintf(stdout, "Usage:  %s [-n] [-r] [database [command]]\n", argv[0]);
-	  fflush(stdout);
-	  return(1);		/* NOT finish() */
-	}
-#endif
-
 	/* Identify ourselves if interactive */
 	if( argc <= 2 )  {
-	  if( isatty(fileno(stdin)) )
+	  if( isatty(fileno(stdin)) && isatty(fileno(stdout)) )
 	    interactive = 1;
 
-	  if(classic_mged){
+	  if(interactive && classic_mged){
 	    fprintf(stdout, "%s\n", version+5);	/* skip @(#) */
 	    fflush(stdout);
 		
@@ -265,8 +251,8 @@ char **argv;
 	  }
 	}
 
-	if( force_interactive )
-		interactive = 1;
+	if(!interactive)
+	  classic_mged = 0;
 
 	(void)signal( SIGPIPE, SIG_IGN );
 
@@ -404,10 +390,8 @@ char **argv;
 	/* Initialize libdm */
 	(void)dm_tclInit(interp);
 
-#if 1
 	/* Initialize libfb */
 	(void)fb_tclInit(interp);
-#endif
 
 	setview( 0.0, 0.0, 0.0 );
 
@@ -476,6 +460,9 @@ char **argv;
 	      (void)dup(pipe_err[1]);
 	      (void)close(pipe_err[1]);
 
+	      /* close stdin */
+	      (void)close(0);
+
 	      bu_vls_init(&vls);
 	      bu_vls_strcpy(&vls, "gui");
 	      (void)Tcl_Eval(interp, bu_vls_addr(&vls));
@@ -509,12 +496,9 @@ char **argv;
 	  /* NOTREACHED */
 	}
 
-	refresh();			/* Put up faceplate */
-
-	if(classic_mged){
+	if(classic_mged || !interactive){
 	  Tcl_CreateFileHandler(STDIN_FILENO, TCL_READABLE,
 				stdin_input, (ClientData)STDIN_FILENO);
-
 	  (void)signal( SIGINT, SIG_IGN );
 
 	  bu_vls_strcpy(&mged_prompt, MGED_PROMPT);
