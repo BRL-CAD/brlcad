@@ -1,5 +1,4 @@
-/*
- *                        P I X C M P . C
+/*                        P I X C M P . C
  * BRL-CAD
  *
  * Copyright (c) 2004 United States Government as represented by the

@@ -347,7 +347,6 @@ linetwo="`cat ${FILE}.backup | head -2 | tail -1`"
 case "$lineone" in 
     "/*")
         echo "Found C comment start"
-	echo "$lineone" >> $FILE
 	skip=2
 	case "$linetwo" in
 	    " *"*${title})
@@ -359,12 +358,18 @@ case "$lineone" in
     "/*"*${title})
         echo "Found C comment start with file header"
 	skip=2
-	echo "/*" >> $FILE
 	;;
     "#!/bin/"*)
         echo "Found script exec line"
 	echo "$lineone" >> $FILE
 	skip=2
+	case "$linetwo" in
+	    "# "*${title})
+	        echo "Found old file header"
+		skip=3
+		;;
+	esac
+	;;
 	;;
     *)
         echo "ERROR: Found unknown line one: $lineone"
@@ -374,13 +379,12 @@ case "$lineone" in
 esac
 
 if [ "x$wrap" = "x1" ] ; then
-    echo "${block}/** @file $basefilename" >> $FILE
+    echo "/${block}/** @file $basefilename" >> $FILE
 else
     echo "${block}" >> $FILE
 fi
 
 tail +${skip} ${FILE}.backup >> $FILE
-
 
 
 exit 0
