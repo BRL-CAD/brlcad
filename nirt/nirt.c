@@ -21,17 +21,20 @@ static char RCSid[] = "$Header$";
 #endif
 
 /*	INCLUDES	*/
-#include <ctype.h>
-#if BSD
-# include <strings.h>
-#else
-# include <string.h>
-#endif
+#include "conf.h"
+
 #include <stdio.h>
+#include <ctype.h>
+#if USE_STRING_H
+# include <string.h>
+#else
+# include <strings.h>
+#endif
 #include <math.h>
-#include <machine.h>
-#include <vmath.h>
-#include <raytrace.h>
+
+#include "machine.h"
+#include "vmath.h"
+#include "raytrace.h"
 #include "./nirt.h"
 #include "./usrfmt.h"
 
