@@ -319,15 +319,10 @@ register struct partition *pp;
 
 		/* Fire ray at light source to check for shadowing */
 		/* This SHOULD actually return an energy value */
+		sub_ap = *ap;		/* struct copy */
 		sub_ap.a_hit = light_hit;
 		sub_ap.a_miss = light_miss;
-		sub_ap.a_onehit = 1;
-		sub_ap.a_level = ap->a_level + 1;
-		sub_ap.a_x = ap->a_x;
-		sub_ap.a_y = ap->a_y;
-		sub_ap.a_rt_i = ap->a_rt_i;
-		sub_ap.a_rbeam = ap->a_rbeam;
-		sub_ap.a_diverge = ap->a_diverge;
+		sub_ap.a_level++;
 		VMOVE( sub_ap.a_ray.r_pt, hitp->hit_point );
 
 		/* Dither light pos for penumbra by +/- 0.5 light radius */
@@ -475,9 +470,6 @@ do_inside:
 do_exit:
 		sub_ap.a_hit =  colorview;
 		sub_ap.a_miss = hit_nothing;
-		sub_ap.a_rt_i = ap->a_rt_i;
-		sub_ap.a_rbeam = ap->a_rbeam;
-		sub_ap.a_diverge = ap->a_diverge;
 		sub_ap.a_level++;
 		(void) rt_shootray( &sub_ap );
 		VJOIN1( ap->a_color, ap->a_color,
