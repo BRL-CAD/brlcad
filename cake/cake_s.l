@@ -180,13 +180,14 @@ yyinit()
 	BEGIN edge;
 }
 
-#if !defined(__bsdi__)
+#if !defined(__bsdi__) && !defined(__GNUC__)
 extern int yylineno;
 yywrap()
 {
 	return 1;
 }
 #else
+/* GNU lex (flex) does not define yylineno */
 int yylineno=1;
 yywrap()
 {
