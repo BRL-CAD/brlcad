@@ -265,9 +265,9 @@ matp_t old_xlate;
 		{
 			register int i;
 			for( i=0; i<4*4; i++ )
-				xmat[i] = rec.M.m_mat[i];	/* cvt */
+				xmat[i] = rec.M.m_mat[i];/* cvt to fastf_t */
 		}
-		mat_mul(new_xlate, xmat, old_xlate);
+		mat_mul(new_xlate, old_xlate, xmat);
 
 		/* Recursive call */
 		subtree = drawHobj( nextdp, regionp, pathpos+1, new_xlate );
