@@ -37,7 +37,7 @@ extern int	arb_prep(), arb_class();
 extern int	hlf_prep(), hlf_class();
 extern int	ars_prep(), ars_class();
 extern int	rec_prep(), rec_class();
-extern int	pg_prep(), pg_class();
+extern int	rt_pg_prep(), rt_pg_class();
 extern int	spl_prep(), spl_class();
 extern int	sph_prep(), sph_class();
 extern int	ebm_prep(), ebm_class();
@@ -52,7 +52,7 @@ extern void	arb_print(), arb_norm(), arb_uv();
 extern void	hlf_print(), hlf_norm(), hlf_uv();
 extern void	ars_print(), ars_norm(), ars_uv();
 extern void	rec_print(), rec_norm(), rec_uv();
-extern void	pg_print(),  pg_norm(),  pg_uv();
+extern void	rt_pg_print(),  rt_pg_norm(),  rt_pg_uv();
 extern void	spl_print(), spl_norm(), spl_uv();
 extern void	sph_print(), sph_norm(), sph_uv();
 extern void	ebm_print(), ebm_norm(), ebm_uv();
@@ -67,7 +67,7 @@ extern void	arb_curve(), arb_free();
 extern void	hlf_curve(), hlf_free();
 extern void	ars_curve(), ars_free();
 extern void	rec_curve(), rec_free();
-extern void	pg_curve(),  pg_free();
+extern void	rt_pg_curve(),  rt_pg_free();
 extern void	spl_curve(), spl_free();
 extern void	sph_curve(), sph_free();
 extern void	ebm_curve(), ebm_free();
@@ -82,7 +82,7 @@ extern int	arb_plot();
 extern int	hlf_plot();
 extern int	ars_plot();
 extern int	rec_plot();
-extern int	pg_plot();
+extern int	rt_pg_plot();
 extern int	spl_plot();
 extern int	sph_plot();
 extern int	ebm_plot();
@@ -97,7 +97,7 @@ extern struct seg *arb_shot();
 extern struct seg *ars_shot();
 extern struct seg *hlf_shot();
 extern struct seg *rec_shot();
-extern struct seg *pg_shot();
+extern struct seg *rt_pg_shot();
 extern struct seg *spl_shot();
 extern struct seg *sph_shot();
 extern struct seg *ebm_shot();
@@ -118,14 +118,13 @@ extern void	rt_vstub();	/* XXX vshoot.c */
 extern int	rt_nul_tess();
 extern int	ell_tess();
 extern int	sph_tess();
-#if 0
-extern int	hlf_tess();
-extern int	rec_tess();
-#endif
 extern int	arb_tess();
 extern int	tgc_tess();
 extern int	rt_tor_tess();
+extern int	rt_pg_tess();
 #if 0
+extern int	hlf_tess();
+extern int	rec_tess();
 extern int	ebm_tess();
 extern int	vol_tess();
 #endif
@@ -173,9 +172,9 @@ struct rt_functab rt_functab[ID_MAXIMUM+2] = {
 		tgc_plot,	rec_vshot,	rt_nul_tess,
 
 	"ID_POLY",	1,
-		pg_prep,	pg_shot,	pg_print,	pg_norm,
-		pg_uv,		pg_curve,	pg_class,	pg_free,
-		pg_plot,	rt_vstub,	rt_nul_tess,
+		rt_pg_prep,	rt_pg_shot,	rt_pg_print,	rt_pg_norm,
+		rt_pg_uv,	rt_pg_curve,	rt_pg_class,	rt_pg_free,
+		rt_pg_plot,	rt_vstub,	rt_pg_tess,
 
 	"ID_BSPLINE",	1,
 		spl_prep,	spl_shot,	spl_print,	spl_norm,
