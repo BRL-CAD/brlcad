@@ -35,6 +35,10 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "./debug.h"
 
+#if 0
+BU_EXTERN(CONST unsigned char *db5_get_raw_internal_ptr, (struct db5_raw_internal *rip, CONST unsigned char *ip));
+#endif
+
 /*
  *			D B 5 _ H E A D E R _ I S _ V A L I D
  *
@@ -115,6 +119,8 @@ int			format;
 }
 
 /*
+ *			D B 5 _ C R A C K _ D I S K _ H E A D E R
+ *
  *  Returns -
  *	0 on success
  *	-1 on error
@@ -145,14 +151,16 @@ CONST unsigned char		*cp;
 }
 
 /*
+ *			D B 5 _ G E T _ R A W _ I N T E R N A L _ P T R
+ *
  *  Returns -
  *	on success, pointer to first unused byte
  *	NULL, on error
  */
-CONST unsigned char *
+unsigned char * CONST
 db5_get_raw_internal_ptr( rip, ip )
 struct db5_raw_internal		*rip;
-CONST unsigned char		*ip;
+unsigned char		* CONST ip;
 {
 	CONST unsigned char	*cp = ip;
 
@@ -189,10 +197,14 @@ CONST unsigned char		*ip;
 		rip->interior = NULL;
 	}
 
+	rip->buf = NULL;	/* no buffer needs freeing */
+
 	return ip + rip->object_length;
 }
 
 /*
+ *			D B 5 _ G E T _ R A W _ I N T E R N A L _ F P
+ *
  *  Returns -
  *	0 on success
  *	-1 on EOF
@@ -309,31 +321,54 @@ genptr_t		client_data;	/* argument for handler */
 	RT_CK_DBI(dbip);
 	if(rt_g.debug&DEBUG_DB) bu_log("db5_scan( x%x, x%x )\n", dbip, handler);
 
-	/* In a portable way, read the header (even if not rewound) */
-	rewind( dbip->dbi_fp );
-	if( fread( header, sizeof header, 1, dbip->dbi_fp ) != 1  ||
-	    db5_header_is_valid( header ) == 0 )  {
-		bu_log("db_scan ERROR:  %s is lacking a proper BRL-CAD v5 database header\n", dbip->dbi_filename);
-	    	return(-1);
-	}
-	rewind( dbip->dbi_fp );
-
-	addr = 0L;
-	nrec = 0L;
 	raw.magic = DB5_RAW_INTERNAL_MAGIC;
-	while(1)  {
-		addr = ftell( dbip->dbi_fp );
-		if( (got = db5_get_raw_internal_fp( &raw, dbip->dbi_fp )) < 0 )  {
-			if( got == -1 )  break;		/* EOF */
-			return -1;			/* fatal error */
+	nrec = 0L;
+
+	/* Fast-path when file is already memory-mapped */
+	if( dbip->dbi_inmem )  {
+		unsigned char	*cp = (unsigned char *)dbip->dbi_inmem;
+
+		if( db5_header_is_valid( cp ) == 0 )  {
+			bu_log("db5_scan ERROR:  %s is lacking a proper BRL-CAD v5 database header\n", dbip->dbi_filename);
+		    	return -1;
 		}
-		(*handler)(dbip, &raw, addr, client_data);
-		nrec++;
+		cp += sizeof(header);
+		addr = sizeof(header);
+		for(;;)  {
+			if( (cp = db5_get_raw_internal_ptr( &raw, cp )) == NULL )  {
+				return -1;			/* fatal error */
+			}
+			(*handler)(dbip, &raw, addr, client_data);
+			nrec++;
+			addr += raw.object_length;
+		}
+		dbip->dbi_eof = addr;
+	}  else  {
+		/* In a totally portable way, read the database with stdio */
+		rewind( dbip->dbi_fp );
+		if( fread( header, sizeof header, 1, dbip->dbi_fp ) != 1  ||
+		    db5_header_is_valid( header ) == 0 )  {
+			bu_log("db5_scan ERROR:  %s is lacking a proper BRL-CAD v5 database header\n", dbip->dbi_filename);
+		    	return -1;
+		}
+		for(;;)  {
+			addr = ftell( dbip->dbi_fp );
+			if( (got = db5_get_raw_internal_fp( &raw, dbip->dbi_fp )) < 0 )  {
+				if( got == -1 )  break;		/* EOF */
+				return -1;			/* fatal error */
+			}
+			(*handler)(dbip, &raw, addr, client_data);
+			nrec++;
+			if(raw.buf)  {
+				bu_free(raw.buf, "raw v5 object");
+				raw.buf = NULL;
+			}
+		}
+		dbip->dbi_eof = ftell( dbip->dbi_fp );
+		rewind( dbip->dbi_fp );
 	}
 
-	dbip->dbi_nrec = nrec;			/* # obj in db, including header */
-	dbip->dbi_eof = ftell( dbip->dbi_fp );
-	rewind( dbip->dbi_fp );
+	dbip->dbi_nrec = nrec;		/* # obj in db, not inc. header */
 
-	return 0;				/* success */
+	return 0;			/* success */
 }
