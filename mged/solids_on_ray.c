@@ -38,6 +38,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "vmath.h"
 #include "db.h"
 #include "rtstring.h"
+#include "rtlist.h"
 #include "redblack.h"
 #include "raytrace.h"
 #include "externs.h"
@@ -172,7 +173,7 @@ struct partition	*ph;
  *	Grabs the first partition it sees, extracting thence
  *	the segment list.  Rpt_solids() sorts the solids along
  *	the ray by first encounter.  As a side-effect, rpt_solids()
- *	fills the rt_list structure pointed to by ap.a_uptr with
+ *	fills the rt_list structure pointed to by ap->a_uptr with
  *	the names of the solids.  It returns 1.
  */
 
@@ -182,10 +183,12 @@ struct application	*ap;
 struct partition	*ph;
 
 {
+    char			**result;
+    int				i;
     struct partition		*pp;
+    rb_tree			*solids;
     struct seg			*sh;
     struct seg			*sp;
-    rb_tree			*solids;
     struct sol_name_dist	*old_sol;
     struct sol_name_dist	*sol;
     static int			(*orders[])() =
@@ -247,6 +250,18 @@ struct partition	*ph;
     }
     rt_log("\n- - - Solids along the ray - - -\n");
     rb_walk(solids, ORDER_BY_DISTANCE, print_solid, INORDER);
+
+    result = (char **)
+		rt_malloc(solids -> rbt_nm_nodes * sizeof(char *),
+			  "names of solids on ray");
+    for (sol = (struct sol_name_dist *) rb_min(solids, ORDER_BY_DISTANCE), i=0;
+	 sol != NULL;
+	 sol = (struct sol_name_dist *) rb_succ(solids, ORDER_BY_DISTANCE), ++i)
+    {
+	result[i] = sol -> name;
+	free_solid(sol);
+    }
+    ap -> a_uptr = result;
     return (1);
 }
 
@@ -258,7 +273,7 @@ struct partition	*ph;
  *
  *	N.B. - It is the caller's responsibility to free the list.
  */
-struct rt_list *skewer_solids (argc, argv, ray_orig, ray_dir)
+char **skewer_solids (argc, argv, ray_orig, ray_dir)
 
 int		argc;
 CONST char	**argv;
@@ -268,13 +283,14 @@ vect_t		ray_dir;
 {
     struct application	ap;
     struct rt_i		*rtip;
-    struct rt_list	*sol_list;
+    struct rt_list	sol_list;
+    struct sol_name_dist	*sol;
 	
     if ((rtip = rt_dirbuild(dbip -> dbi_filename, (char *) 0, 0)) == RTI_NULL)
     {
 	rt_log("Cannot build directory for file '%s'\n",
 	    dbip -> dbi_filename);
-	return ((struct rt_list *) 0);
+	return ((char **) 0);
     }
     rtip -> useair = 1;
     /*
@@ -282,15 +298,10 @@ vect_t		ray_dir;
      *		Should that be rt_avail_cpus()?
      */
     if (rt_gettrees(rtip, argc, argv, 1) == -1)
-	return ((struct rt_list *) 0);
+	return ((char **) 0);
     rt_prep(rtip);
 
-    /*
-     *	Allocate and initialize the solid list
-     */
-    sol_list = (struct rt_list *)
-		    rt_malloc(sizeof(struct rt_list), "solid list");
-    RT_LIST_INIT(sol_list);
+    RT_LIST_INIT(&sol_list);
 
     /*
      *	Initialize the application
@@ -300,7 +311,7 @@ vect_t		ray_dir;
     ap.a_resource = RESOURCE_NULL;
     ap.a_overlap = no_op;
     ap.a_onehit = 0;
-    ap.a_uptr = (genptr_t) sol_list;
+    ap.a_uptr = (genptr_t) &sol_list;
     ap.a_rt_i = rtip;
     ap.a_zero1 = ap.a_zero2 = 0;
     ap.a_purpose = "skewer_solids()";
@@ -308,5 +319,6 @@ vect_t		ray_dir;
     VMOVE(ap.a_ray.r_dir, ray_dir);
 
     (void) rt_shootray(&ap);
-    return (sol_list);
+
+    return ((char **) ap.a_uptr);
 }
