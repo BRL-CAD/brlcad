@@ -22,6 +22,10 @@
 #	class.
 #
 
+itk::usual RtControl {
+    keep -tearoff
+}
+
 #XXX This should work.
 option add *RtControl*tearoff 0 widgetDefault
 
@@ -34,7 +38,7 @@ class RtControl {
     itk_option define -hsample hsample Hsample 0
     itk_option define -jitter jitter Jitter 0
     itk_option define -lmodel lmodel Lmodel 0
-    itk_option define -other other Other {}
+    itk_option define -other other Other "-A 0.9"
     itk_option define -size size Size 512
     itk_option define -color color Color {0 0 0}
     itk_option define -dest dest Dest ""
@@ -44,8 +48,9 @@ class RtControl {
     public method activate_adv {}
     public method deactivate {}
     public method deactivate_adv {}
-    public method center {}
+    public method center {w gs {cw ""}}
 
+    private method build_adv {}
     private method set_src {pane}
     private method set_dest {pane}
     private method set_size {size}
@@ -61,7 +66,9 @@ class RtControl {
     private method get_size {}
     private method get_cooked_dest {}
     private method update_control_panel {}
-    private method build_adv {}
+    private method menuStatusCB {w}
+    private method leaveCB {}
+    private method enterRaytraceCB {}
 
     private variable fb_mode 0
     private variable raw_src ""
@@ -76,25 +83,25 @@ body RtControl::constructor {args} {
     #itk_option add hull.screen
 
     itk_component add gridF1 {
-	frame $itk_interior.gridF1
+	::frame $itk_interior.gridF1
     } {
 	usual
     }
 
     itk_component add gridF2 {
-	frame $itk_interior.gridF2 -relief groove -bd 2
+	::frame $itk_interior.gridF2 -relief groove -bd 2
     } {
 	usual
     }
 
     itk_component add gridF3 {
-	frame $itk_interior.gridF3
+	::frame $itk_interior.gridF3
     } {
 	usual
     }
 
     itk_component add menubar {
-	menu $itk_interior.menubar
+	::menu $itk_interior.menubar
     } {
 	usual
     }
@@ -103,13 +110,13 @@ body RtControl::constructor {args} {
     $this component hull configure -menu $itk_component(menubar)
 
     itk_component add fbM {
-	menu $itk_component(menubar).fb -title "Framebuffer"
+	::menu $itk_component(menubar).fb -title "Framebuffer"
     } {
 	usual
     }
 
     itk_component add objM {
-	menu $itk_component(menubar).obj -title "Objects"
+	::menu $itk_component(menubar).obj -title "Objects"
     } {
 	usual
     }
@@ -130,12 +137,15 @@ body RtControl::constructor {args} {
 	    -command [code $this fb_mode]
 
     itk_component add srcL {
-	label $itk_interior.srcL -text "Source" -anchor e
-    } {}
+	::label $itk_interior.srcL -text "Source" -anchor e
+    } {
+	usual
+    }
 
     itk_component add srcCB {
 	cadwidgets::ComboBox $itk_interior.srcCB
     } {
+	usual
 	rename -state -sourceState sourceState SourceState
     }
 
@@ -153,12 +163,15 @@ body RtControl::constructor {args} {
 	    -command [code $this set_src lr]
 
     itk_component add destL {
-	label $itk_interior.destL -text "Destination" -anchor e
-    } {}
+	::label $itk_interior.destL -text "Destination" -anchor e
+    } {
+	usual
+    }
 
     itk_component add destCB {
 	cadwidgets::ComboBox $itk_interior.destCB
     } {
+	usual
     }
 
     # populate destination's combobox menu
@@ -177,12 +190,15 @@ body RtControl::constructor {args} {
 #    bind [$itk_component(destCB) component entry] <KeyRelease> [code $this cook_dest]
 
     itk_component add sizeL {
-	label $itk_interior.sizeL -text "Size" -anchor e
-    } {}
+	::label $itk_interior.sizeL -text "Size" -anchor e
+    } {
+	usual
+    }
 
     itk_component add sizeCB {
 	cadwidgets::ComboBox $itk_interior.sizeCB
     } {
+	usual
     }
 
     # populate size's combobox
@@ -202,52 +218,63 @@ body RtControl::constructor {args} {
 	    -command [code $this set_size 1024]
 
     itk_component add bgcolorL {
-	label $itk_interior.bgcolorL -text "Background Color" -anchor e
-    } {}
+	::label $itk_interior.bgcolorL -text "Background Color" -anchor e
+    } {
+	usual
+    }
 
     itk_component add bgcolorCB {
 	cadwidgets::ColorEntry $itk_interior.bgcolorCB
     } {
+	usual
     }
 
     itk_component add advB {
-	button $itk_interior.advB -relief raised -text "Advanced Settings..." \
+	::button $itk_interior.advB -relief raised -text "Advanced Settings..." \
 		-command [code $this activate_adv]
     } {
 	usual
     }
 
     itk_component add okB {
-	button $itk_interior.okB  -relief raised -text "Ok" \
+	::button $itk_interior.okB  -relief raised -text "Ok" \
 		-command [code $this ok]
     } {
 	usual
     }
 
     itk_component add raytraceB {
-	button $itk_interior.raytraceB  -relief raised -text "Raytrace" \
+	::button $itk_interior.raytraceB  -relief raised -text "Raytrace" \
 		-command [code $this raytrace]
     } {
 	usual
     }
+    bind $itk_component(raytraceB) <Enter> [code $this enterRaytraceCB]
+    bind $itk_component(raytraceB) <Leave> [code $this leaveCB]
 
     itk_component add abortB {
-	button $itk_interior.abortB  -relief raised -text "Abort" \
+	::button $itk_interior.abortB  -relief raised -text "Abort" \
 		-command [code $this abort]
     } {
 	usual
     }
 
     itk_component add clearB {
-	button $itk_interior.clearB  -relief raised -text "Clear" \
+	::button $itk_interior.clearB  -relief raised -text "Clear" \
 		-command [code $this clear]
     } {
 	usual
     }
 
     itk_component add dismissB {
-	button $itk_interior.dismissB  -relief raised -text "Dismiss" \
+	::button $itk_interior.dismissB  -relief raised -text "Dismiss" \
 		-command [code $this deactivate]
+    } {
+	usual
+    }
+
+    itk_component add statusL {
+	::label $itk_interior.statusL -anchor w -relief sunken -bd 2
     } {
 	usual
     }
@@ -276,6 +303,7 @@ body RtControl::constructor {args} {
 
     grid $itk_component(gridF2) -padx 4 -pady 4 -sticky nsew
     grid $itk_component(gridF3) -padx 4 -pady 4 -sticky nsew
+    grid $itk_component(statusL) -padx 2 -pady 2 -sticky nsew
     grid columnconfigure $itk_component(hull) 0 -weight 1
     grid rowconfigure $itk_component(hull) 0 -weight 1
 
@@ -294,7 +322,153 @@ body RtControl::constructor {args} {
     $itk_component(destCB) configure -entryvariable [scope itk_option(-dest)]
 
     wm withdraw $itk_component(hull)
-    center
+}
+
+itcl::body RtControl::build_adv {} {
+    itk_component add adv {
+	toplevel $itk_interior.adv
+    }
+
+    itk_component add adv_gridF1 {
+	::frame $itk_component(adv).gridF1
+    } {
+	usual
+    }
+
+    itk_component add adv_gridF2 {
+	::frame $itk_component(adv).gridF2 -relief groove -bd 2
+    } {
+	usual
+    }
+
+    itk_component add adv_nprocL {
+	::label $itk_component(adv).nprocL -text "# of Processors" -anchor e
+    } {
+	usual
+    }
+
+    itk_component add adv_nprocE {
+	::entry $itk_component(adv).nprocE -relief sunken -bd 2 -width 2 \
+		-textvar [scope itk_option(-nproc)]
+    } {
+	usual
+    }
+
+    itk_component add adv_hsampleL {
+	::label $itk_component(adv).hsampleL -text "Hypersample" -anchor e
+    } {
+	usual
+    }
+
+    itk_component add adv_hsampleE {
+	::entry $itk_component(adv).hsampleE -relief sunken -bd 2 -width 2 \
+		-textvar [scope itk_option(-hsample)]
+    } {
+	usual
+    }
+
+    itk_component add adv_jitterL {
+	::label $itk_component(adv).jitterL -text "Jitter" -anchor e
+    } {
+	usual
+    }
+
+    itk_component add adv_jitterCB {
+	cadwidgets::ComboBox $itk_component(adv).jitterCB
+    } {
+	usual
+	rename -state -jitterState jitterState JitterState
+    }
+
+    # populate jitter's combobox menu
+    $itk_component(adv_jitterCB) add command -label "None" \
+	    -command [code $this set_jitter 0]
+    $itk_component(adv_jitterCB) add command -label "Cell" \
+	    -command [code $this set_jitter 1]
+    $itk_component(adv_jitterCB) add command -label "Frame" \
+	    -command [code $this set_jitter 2]
+    $itk_component(adv_jitterCB) add command -label "Both" \
+	    -command [code $this set_jitter 3]
+
+    itk_component add adv_lmodelL {
+	::label $itk_component(adv).lightL -text "Light Model" -anchor e
+    } {
+	usual
+    }
+
+    itk_component add adv_lmodelCB {
+	cadwidgets::ComboBox $itk_component(adv).lightCB
+    } {
+	usual
+	rename -state -lmodelState lmodelState LmodelState
+    }
+
+    # populate lmodel's combobox menu
+    $itk_component(adv_lmodelCB) add command -label "Full" \
+	    -command [code $this set_lmodel 0]
+    $itk_component(adv_lmodelCB) add command -label "Diffuse" \
+	    -command [code $this set_lmodel 1]
+    $itk_component(adv_lmodelCB) add command -label "Surface Normals" \
+	    -command [code $this set_lmodel 2]
+    $itk_component(adv_lmodelCB) add command -label "Diffuse - 3 light" \
+	    -command [code $this set_lmodel 3]
+    $itk_component(adv_lmodelCB) add command -label "Curvature - inverse radius" \
+	    -command [code $this set_lmodel 4]
+    $itk_component(adv_lmodelCB) add command -label "Curvature - direction vector" \
+	    -command [code $this set_lmodel 5]
+
+    itk_component add adv_otherL {
+	::label $itk_component(adv).otherL -text "Other Options" -anchor e
+    } {
+	usual
+    }
+
+    itk_component add adv_otherE {
+	::entry $itk_component(adv).otherE -relief sunken -bd 2 -width 2 \
+		-textvar [scope itk_option(-other)]
+    } {
+	usual
+    }
+
+    itk_component add adv_dismissB {
+	::button $itk_component(adv).buttonB -relief raised -text "Dismiss" \
+		-command [code $this deactivate_adv]
+    } {
+	usual
+    }
+
+    # remove labels from the ComboBox
+    grid forget [$itk_component(adv_jitterCB) component label]
+    grid forget [$itk_component(adv_lmodelCB) component label]
+
+    grid $itk_component(adv_nprocL) $itk_component(adv_nprocE) \
+	    -sticky nsew -pady 1 -in $itk_component(adv_gridF1)
+    grid $itk_component(adv_hsampleL) $itk_component(adv_hsampleE) \
+	    -sticky nsew -pady 1 -in $itk_component(adv_gridF1)
+    grid $itk_component(adv_jitterL) $itk_component(adv_jitterCB) \
+	    -sticky nsew -pady 1 -in $itk_component(adv_gridF1)
+    grid $itk_component(adv_lmodelL) $itk_component(adv_lmodelCB) \
+	    -sticky nsew -pady 1 -in $itk_component(adv_gridF1)
+    grid $itk_component(adv_otherL) $itk_component(adv_otherE) \
+	    -sticky nsew -pady 1 -in $itk_component(adv_gridF1)
+    grid columnconfigure $itk_component(adv_gridF1) 1 -weight 1
+    grid rowconfigure $itk_component(adv_gridF1) 0 -weight 1
+    grid rowconfigure $itk_component(adv_gridF1) 1 -weight 1
+    grid rowconfigure $itk_component(adv_gridF1) 2 -weight 1
+    grid rowconfigure $itk_component(adv_gridF1) 3 -weight 1
+    grid rowconfigure $itk_component(adv_gridF1) 4 -weight 1
+
+    grid $itk_component(adv_gridF1) -sticky nsew -padx 8 -pady 8 -in $itk_component(adv_gridF2)
+    grid columnconfigure $itk_component(adv_gridF2) 0 -weight 1
+    grid rowconfigure $itk_component(adv_gridF2) 0 -weight 1
+
+    grid $itk_component(adv_gridF2) -sticky nsew -padx 2 -pady 2
+    grid $itk_component(adv_dismissB) -sticky s -padx 2 -pady 2
+    grid columnconfigure $itk_component(adv) 0 -weight 1
+    grid rowconfigure $itk_component(adv) 0 -weight 1
+
+    wm withdraw $itk_component(adv)
+    wm title $itk_component(adv) "Advanced Settings ($itk_component(adv))"
 }
 
 configbody RtControl::nproc {
@@ -335,12 +509,22 @@ configbody RtControl::mged {
 
 itcl::body RtControl::activate {} {
     raise $itk_component(hull)
+
+    # center on screen
+    if {$win_geom == ""} {
+	center $itk_component(hull) win_geom
+    }
     wm geometry $itk_component(hull) $win_geom
     wm deiconify $itk_component(hull)
 }
 
 itcl::body RtControl::activate_adv {} {
     raise $itk_component(adv)
+
+    # center over control panel
+    if {$win_geom_adv == ""} {
+	center $itk_component(adv) win_geom_adv $itk_component(hull)
+    }
     wm geometry $itk_component(adv) $win_geom_adv
     wm deiconify $itk_component(adv)
 }
@@ -356,17 +540,21 @@ itcl::body RtControl::deactivate_adv {} {
     wm withdraw $itk_component(adv)
 }
 
-itcl::body RtControl::center {} {
-    update idletasks
-    set width [winfo reqwidth $itk_component(hull)]
-    set height [winfo reqheight $itk_component(hull)]
-    set screenwidth [winfo screenwidth $itk_component(hull)]
-    set screenheight [winfo screenheight $itk_component(hull)]
+itcl::body RtControl::center {w gs {cw ""}} {
+    upvar $gs geom
 
-    set x [expr {int($screenwidth * 0.5 - $width * 0.5)}]
-    set y [expr {int($screenheight * 0.5 - $height * 0.5)}]
-    wm geometry $itk_component(hull) +$x+$y
-    set win_geom +$x+$y
+    update idletasks
+
+    if {$cw != "" && [winfo exists $cw]} {
+	set x [expr {int([winfo reqwidth $cw] * 0.5 + [winfo x $cw] - [winfo reqwidth $w] * 0.5)}]
+	set y [expr {int([winfo reqheight $cw] * 0.5 + [winfo y $cw] - [winfo reqheight $w] * 0.5)}]
+    } else {
+	set x [expr {int([winfo screenwidth $w] * 0.5 - [winfo reqwidth $w] * 0.5)}]
+	set y [expr {int([winfo screenheight $w] * 0.5 - [winfo reqheight $w] * 0.5)}]
+    }
+
+    wm geometry $w +$x+$y
+    set geom +$x+$y
 }
 
 itcl::body RtControl::set_src {pane} {
@@ -706,147 +894,31 @@ itcl::body RtControl::update_control_panel {} {
     eval $itk_component(bgcolorCB) setColor [$itk_option(-mged) bg]
 }
 
-itcl::body RtControl::build_adv {} {
-    itk_component add adv {
-	toplevel $itk_interior.adv
+itcl::body RtControl::menuStatusCB {w} {
+    set op [$w entrycget active -label]
+    switch -- $op {
+	default {
+	    set msg ""
+	}
     }
+}
 
-    itk_component add adv_gridF1 {
-	frame $itk_component(adv).gridF1
-    } {
-	usual
+itcl::body RtControl::leaveCB {} {
+    $itk_component(statusL) configure -text ""
+}
+
+itcl::body RtControl::enterOkCB {} {
+    if {[catch {$itk_option(-mged) isa Mged} result]} {
+	$itk_component(statusL) configure -text "Not associated with an Mged object"
+    } else {
+	$itk_component(statusL) configure -text "Raytrace [$itk_component(srcCB) getText]'s view into $itk_option(-dest)"
     }
+}
 
-    itk_component add adv_gridF2 {
-	frame $itk_component(adv).gridF2 -relief groove -bd 2
-    } {
-	usual
+itcl::body RtControl::enterRaytraceCB {} {
+    if {[catch {$itk_option(-mged) isa Mged} result]} {
+	$itk_component(statusL) configure -text "Not associated with an Mged object"
+    } else {
+	$itk_component(statusL) configure -text "Raytrace [$itk_component(srcCB) getText]'s view into $itk_option(-dest)"
     }
-
-    itk_component add adv_nprocL {
-	label $itk_component(adv).nprocL -text "# of Processors" -anchor e
-    } {
-	usual
-    }
-
-    itk_component add adv_nprocE {
-	entry $itk_component(adv).nprocE -relief sunken -bd 2 -width 2 \
-		-textvar [scope itk_option(-nproc)]
-    } {
-	usual
-    }
-
-    itk_component add adv_hsampleL {
-	label $itk_component(adv).hsampleL -text "Hypersample" -anchor e
-    } {
-	usual
-    }
-
-    itk_component add adv_hsampleE {
-	entry $itk_component(adv).hsampleE -relief sunken -bd 2 -width 2 \
-		-textvar [scope itk_option(-hsample)]
-    } {
-	usual
-    }
-
-    itk_component add adv_jitterL {
-	label $itk_component(adv).jitterL -text "Jitter" -anchor e
-    } {
-	usual
-    }
-
-    itk_component add adv_jitterCB {
-	cadwidgets::ComboBox $itk_component(adv).jitterCB
-    } {
-	rename -state -jitterState jitterState JitterState
-    }
-
-    # populate jitter's combobox menu
-    $itk_component(adv_jitterCB) add command -label "None" \
-	    -command [code $this set_jitter 0]
-    $itk_component(adv_jitterCB) add command -label "Cell" \
-	    -command [code $this set_jitter 1]
-    $itk_component(adv_jitterCB) add command -label "Frame" \
-	    -command [code $this set_jitter 2]
-    $itk_component(adv_jitterCB) add command -label "Both" \
-	    -command [code $this set_jitter 3]
-
-    itk_component add adv_lmodelL {
-	label $itk_component(adv).lightL -text "Light Model" -anchor e
-    } {
-	usual
-    }
-
-    itk_component add adv_lmodelCB {
-	cadwidgets::ComboBox $itk_component(adv).lightCB
-    } {
-	rename -state -lmodelState lmodelState LmodelState
-    }
-
-    # populate lmodel's combobox menu
-    $itk_component(adv_lmodelCB) add command -label "Full" \
-	    -command [code $this set_lmodel 0]
-    $itk_component(adv_lmodelCB) add command -label "Diffuse" \
-	    -command [code $this set_lmodel 1]
-    $itk_component(adv_lmodelCB) add command -label "Surface Normals" \
-	    -command [code $this set_lmodel 2]
-    $itk_component(adv_lmodelCB) add command -label "Diffuse - 3 light" \
-	    -command [code $this set_lmodel 3]
-    $itk_component(adv_lmodelCB) add command -label "Curvature - inverse radius" \
-	    -command [code $this set_lmodel 4]
-    $itk_component(adv_lmodelCB) add command -label "Curvature - direction vector" \
-	    -command [code $this set_lmodel 5]
-
-    itk_component add adv_otherL {
-	label $itk_component(adv).otherL -text "Other Options" -anchor e
-    } {
-	usual
-    }
-
-    itk_component add adv_otherE {
-	entry $itk_component(adv).otherE -relief sunken -bd 2 -width 2 \
-		-textvar [scope itk_option(-other)]
-    } {
-	usual
-    }
-
-    itk_component add adv_dismissB {
-	button $itk_component(adv).buttonB -relief raised -text "Dismiss" \
-		-command [code $this deactivate_adv]
-    } {
-	usual
-    }
-
-    # remove labels from the ComboBox
-    grid forget [$itk_component(adv_jitterCB) component label]
-    grid forget [$itk_component(adv_lmodelCB) component label]
-
-    grid $itk_component(adv_nprocL) $itk_component(adv_nprocE) \
-	    -sticky nsew -pady 1 -in $itk_component(adv_gridF1)
-    grid $itk_component(adv_hsampleL) $itk_component(adv_hsampleE) \
-	    -sticky nsew -pady 1 -in $itk_component(adv_gridF1)
-    grid $itk_component(adv_jitterL) $itk_component(adv_jitterCB) \
-	    -sticky nsew -pady 1 -in $itk_component(adv_gridF1)
-    grid $itk_component(adv_lmodelL) $itk_component(adv_lmodelCB) \
-	    -sticky nsew -pady 1 -in $itk_component(adv_gridF1)
-    grid $itk_component(adv_otherL) $itk_component(adv_otherE) \
-	    -sticky nsew -pady 1 -in $itk_component(adv_gridF1)
-    grid columnconfigure $itk_component(adv_gridF1) 1 -weight 1
-    grid rowconfigure $itk_component(adv_gridF1) 0 -weight 1
-    grid rowconfigure $itk_component(adv_gridF1) 1 -weight 1
-    grid rowconfigure $itk_component(adv_gridF1) 2 -weight 1
-    grid rowconfigure $itk_component(adv_gridF1) 3 -weight 1
-    grid rowconfigure $itk_component(adv_gridF1) 4 -weight 1
-
-    grid $itk_component(adv_gridF1) -sticky nsew -padx 8 -pady 8 -in $itk_component(adv_gridF2)
-    grid columnconfigure $itk_component(adv_gridF2) 0 -weight 1
-    grid rowconfigure $itk_component(adv_gridF2) 0 -weight 1
-
-    grid $itk_component(adv_gridF2) -sticky nsew -padx 2 -pady 2
-    grid $itk_component(adv_dismissB) -sticky s -padx 2 -pady 2
-    grid columnconfigure $itk_component(adv) 0 -weight 1
-    grid rowconfigure $itk_component(adv) 0 -weight 1
-
-    wm withdraw $itk_component(adv)
-    wm title $itk_component(adv) "Advanced Settings ($itk_component(adv))"
 }
