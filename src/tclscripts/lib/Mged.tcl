@@ -41,7 +41,7 @@ option add *Mged.height 400 widgetDefault
     inherit QuadDisplay
 
     itk_option define -unitsCallback unitsCallback UnitsCallback ""
-    itk_option define -autoViewEnable autoViewEnable AllowAutoView 1
+    itk_option define -autoViewEnable autoViewEnable AutoViewEnable 1
 
     constructor {file args} {
 	eval QuadDisplay::constructor
@@ -74,6 +74,7 @@ option add *Mged.height 400 widgetDefault
 	method erase_all {args}
 	method ev {args}
 	method expand {args}
+	method facetize {args}
 	method find {args}
 	method form {args}
 	method g {args}
@@ -84,6 +85,7 @@ option add *Mged.height 400 widgetDefault
 	method how {args}
 	method i {args}
 	method illum {obj}
+	method importFg4Section {args}
 	method keep {args}
 	method kill {args}
 	method killall {args}
@@ -134,6 +136,9 @@ option add *Mged.height 400 widgetDefault
 	method who {args}
 	method xpush {args}
 	method zap {args}
+
+	method attachObservers {}
+	method detachObservers {}
 	
 	method ? {}
 	method apropos {key}
@@ -159,7 +164,7 @@ option add *Mged.height 400 widgetDefault
 }
 
 ::itcl::body Mged::destructor {} {
-    ::::itcl::delete object $db
+    ::itcl::delete object $db
 }
 
 #----------------------------------#
@@ -167,7 +172,12 @@ option add *Mged.height 400 widgetDefault
 #----------------------------------#
 #
 ::itcl::body Mged::opendb {args} {
-    eval $db open $args
+    set rval [eval $db open $args]
+
+    # sync up the units between the Database and QuadDisplay
+    QuadDisplay::units [$db units -s]
+
+    return $rval
 }
 
 ::itcl::body Mged::match {args} {
@@ -260,6 +270,10 @@ option add *Mged.height 400 widgetDefault
 
 ::itcl::body Mged::expand {args} {
     eval $db expand $args
+}
+
+::itcl::body Mged::facetize {args} {
+    eval $db facetize $args
 }
 
 ::itcl::body Mged::kill {args} {
@@ -406,6 +420,10 @@ option add *Mged.height 400 widgetDefault
     eval $db i $args
 }
 
+::itcl::body Mged::importFg4Section {args} {
+    eval $db importFg4Section $args
+}
+
 ::itcl::body Mged::make_bb {name args} {
     eval $db make_bb $name $args
 }
@@ -449,7 +467,9 @@ option add *Mged.height 400 widgetDefault
     if {$blank && $itk_option(-autoViewEnable)} {
 	# stop observing the Drawable
 	detach_drawableAll $dg
-	set result [eval $db draw $args]
+
+	catch {eval $db draw $args} result
+
 	# resume observing the Drawable
 	attach_drawableAll $dg
 
@@ -464,7 +484,7 @@ option add *Mged.height 400 widgetDefault
 	# was done in order to prevent multiple refreshes.
 	refreshAll
     } else {
-	set result [eval $db draw $args]
+	catch {eval $db draw $args} result
     }
 
     return $result
@@ -488,7 +508,7 @@ option add *Mged.height 400 widgetDefault
 
 	# stop observing the View
 	detach_viewAll
-	autoviewall
+	autoviewAll
 	# resume observing the View
 	attach_viewAll
 
@@ -565,6 +585,16 @@ option add *Mged.height 400 widgetDefault
 
 ::itcl::body Mged::report {args} {
     eval $db report $args
+}
+
+::itcl::body Mged::attachObservers {} {
+    attach_drawableAll $dg
+    attach_viewAll
+}
+
+::itcl::body Mged::detachObservers {} {
+    detach_drawableAll $dg
+    detach_viewAll
 }
 
 ::itcl::body Mged::? {} {
