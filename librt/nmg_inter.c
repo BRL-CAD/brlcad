@@ -920,7 +920,8 @@ CONST char		*str;
  *
  *  Actual 2d edge/edge intersector
  *
- *  One or both of the edges may be wire edges.
+ *  One or both of the edges may be wire edges, i.e.
+ *  either or both of the fu1 and fu2 args may be null.
  *  If so, the vert_list's are unimportant.
  *
  *  Returns a bit vector -
@@ -955,12 +956,17 @@ struct faceuse		*fu2;		/* fu of eu2, for error checks */
 	struct vertexuse	*vu;
 	struct vertexuse	*vu1a, *vu1b;
 	struct vertexuse	*vu2a, *vu2b;
+	struct model		*m;
 	int		ret = 0;
 	int		wire = 1;	/* at least one arg is a wire */
+	long		*magic1;
+	long		*magic2;
 
 	NMG_CK_INTER_STRUCT(is);
 	NMG_CK_EDGEUSE(eu1);
 	NMG_CK_EDGEUSE(eu2);
+	m = nmg_find_model(&eu1->l.magic);
+	NMG_CK_MODEL(m);
 	/*
 	 * Important note:  don't use eu1->eumate_p->vu_p here,
 	 * because that vu is in the opposite orientation faceuse.
@@ -976,6 +982,16 @@ struct faceuse		*fu2;		/* fu of eu2, for error checks */
 	NMG_CK_VERTEXUSE(vu2b);
 
 	if( fu1 && fu2 )  wire = 0;	/* No wire edges */
+
+	/* Note what parent to make self-loops in:  faceuse, or shell */
+	if( fu1 )
+		magic1 = &fu1->l.magic;
+	else
+		magic1 = &nmg_find_s_of_eu(eu1)->l.magic;
+	if( fu2 )
+		magic2 = &fu2->l.magic;
+	else
+		magic2 = &nmg_find_s_of_eu(eu2)->l.magic;
 
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)
 		rt_log("nmg_isect_edge2p_edge2p(eu1=x%x, eu2=x%x, fu1=x%x, fu2=x%x)\n\tvu1a=%x vu1b=%x, vu2a=%x vu2b=%x\n\tv1a=%x v1b=%x,   v2a=%x v2b=%x\n",
@@ -1134,7 +1150,7 @@ struct faceuse		*fu2;		/* fu of eu2, for error checks */
 				rt_log("\tvu2a matches vu1a\n");
 			(void)nmg_tbl(is->l2, TBL_INS_UNIQUE, &vu2a->l.magic);
 			nmg_jv(vu1a->v_p, vu2a->v_p);
-			nmg_ck_v_in_2fus(vu1a->v_p, fu1, fu2, &is->tol);
+			if(!wire)nmg_ck_v_in_2fus(vu1a->v_p, fu1, fu2, &is->tol);
 			ret = ISECT_SHARED_V;
 			goto out;
 		}
@@ -1143,7 +1159,7 @@ struct faceuse		*fu2;		/* fu of eu2, for error checks */
 				rt_log("\tsecond point of eu2 matches vu1a\n");
 			(void)nmg_tbl(is->l2, TBL_INS_UNIQUE, &vu2b->l.magic);
 			nmg_jv(vu1a->v_p, vu2b->v_p);
-			nmg_ck_v_in_2fus(vu1a->v_p, fu1, fu2, &is->tol);
+			if(!wire)nmg_ck_v_in_2fus(vu1a->v_p, fu1, fu2, &is->tol);
 			ret = ISECT_SHARED_V;
 			goto out;
 		}
@@ -1151,8 +1167,8 @@ struct faceuse		*fu2;		/* fu of eu2, for error checks */
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
 			rt_log("\tbreaking eu2 on vu1a\n");
 		(void)nmg_ebreak( vu1a->v_p, eu2 );
-		nmg_ck_face_worthless_edges( fu1 );
-		nmg_ck_face_worthless_edges( fu2 );
+		if(fu1)nmg_ck_face_worthless_edges( fu1 );
+		if(fu2)nmg_ck_face_worthless_edges( fu2 );
 		(void)nmg_tbl(is->l2, TBL_INS_UNIQUE, &vu2b->l.magic);
 		ret = ISECT_SPLIT2;	/* eu1 not broken, just touched */
 		goto out;
@@ -1178,7 +1194,7 @@ struct faceuse		*fu2;		/* fu of eu2, for error checks */
 				rt_log("\tvu2a matches vu1b\n");
 			(void)nmg_tbl(is->l2, TBL_INS_UNIQUE, &vu2a->l.magic);
 			nmg_jv(vu1b->v_p, vu2a->v_p);
-			nmg_ck_v_in_2fus(vu1a->v_p, fu1, fu2, &is->tol);
+			if(!wire)nmg_ck_v_in_2fus(vu1a->v_p, fu1, fu2, &is->tol);
 			ret = ISECT_SHARED_V;
 			goto out;
 		}
@@ -1187,7 +1203,7 @@ struct faceuse		*fu2;		/* fu of eu2, for error checks */
 				rt_log("\tsecond point of eu2 matches vu1b\n");
 			(void)nmg_tbl(is->l2, TBL_INS_UNIQUE, &vu2b->l.magic);
 			nmg_jv(vu1b->v_p, vu2b->v_p);
-			nmg_ck_v_in_2fus(vu1b->v_p, fu1, fu2, &is->tol);
+			if(!wire)nmg_ck_v_in_2fus(vu1b->v_p, fu1, fu2, &is->tol);
 			ret = ISECT_SHARED_V;
 			goto out;
 		}
@@ -1196,8 +1212,8 @@ struct faceuse		*fu2;		/* fu of eu2, for error checks */
 			rt_log("\tbreaking eu2 on vu1b\n");
 		(void)nmg_ebreak( vu1b->v_p, eu2 );
 		(void)nmg_tbl(is->l2, TBL_INS_UNIQUE, &vu2b->l.magic);
-		nmg_ck_face_worthless_edges( fu1 );
-		nmg_ck_face_worthless_edges( fu2 );
+		if(fu1)nmg_ck_face_worthless_edges( fu1 );
+		if(fu2)nmg_ck_face_worthless_edges( fu2 );
 		ret = ISECT_SPLIT2;	/* eu1 not broken, just touched */
 		goto out;
 	}
@@ -1215,7 +1231,7 @@ struct faceuse		*fu2;		/* fu of eu2, for error checks */
 			} else {
 				if (rt_g.NMG_debug & DEBUG_POLYSECT)
 					rt_log("\t\tIntersect point is vu2a, make self-loop in fu1\n");
-				plu = nmg_mlv(&fu1->l.magic, vu2a->v_p, OT_UNSPEC);
+				plu = nmg_mlv(magic1, vu2a->v_p, OT_UNSPEC);
 				nmg_loop_g(plu->l_p, &is->tol);
 				vu = RT_LIST_FIRST( vertexuse, &plu->down_hd );
 			}
@@ -1231,7 +1247,7 @@ struct faceuse		*fu2;		/* fu of eu2, for error checks */
 			} else {
 				if (rt_g.NMG_debug & DEBUG_POLYSECT)
 					rt_log("\t\tIntersect point is vu2b, make self-loop in fu1\n");
-				plu = nmg_mlv(&fu1->l.magic, vu2b->v_p, OT_UNSPEC);
+				plu = nmg_mlv(magic1, vu2b->v_p, OT_UNSPEC);
 				nmg_loop_g(plu->l_p, &is->tol);
 				vu = RT_LIST_FIRST( vertexuse, &plu->down_hd );
 			}
@@ -1246,7 +1262,7 @@ struct faceuse		*fu2;		/* fu of eu2, for error checks */
 			struct vertex		*new_v2;
 			if (rt_g.NMG_debug & DEBUG_POLYSECT)
 			    	VPRINT("\t\tBreaking eu2 at intersect point", hit_pt);
-			new_v2 = nmg_find_pt_in_model(fu2->s_p->r_p->m_p, hit_pt, &(is->tol) );
+			new_v2 = nmg_find_pt_in_model(m, hit_pt, &(is->tol) );
 			new_vu2 = nmg_ebreak( new_v2, eu2 )->vu_p;
 			if( !new_v2 )  {
 				/* A new vertex was created, assign geom */
@@ -1352,7 +1368,7 @@ topo:
 		(void)nmg_tbl(is->l2, TBL_INS_UNIQUE, &vu->l.magic);
 	} else {
 		struct loopuse *plu;
-		plu = nmg_mlv(&fu2->l.magic, vu1a->v_p, OT_UNSPEC);
+		plu = nmg_mlv(magic2, vu1a->v_p, OT_UNSPEC);
 		nmg_loop_g(plu->l_p, &is->tol);
 		vu = RT_LIST_FIRST( vertexuse, &plu->down_hd );
 		NMG_CK_VERTEXUSE(vu);
@@ -1368,7 +1384,7 @@ topo:
 		(void)nmg_tbl(is->l2, TBL_INS_UNIQUE, &vu->l.magic);
 	} else {
 		struct loopuse *plu;
-		plu = nmg_mlv(&fu2->l.magic, vu1b->v_p, OT_UNSPEC);
+		plu = nmg_mlv(magic2, vu1b->v_p, OT_UNSPEC);
 		nmg_loop_g(plu->l_p, &is->tol);
 		vu = RT_LIST_FIRST( vertexuse, &plu->down_hd );
 		NMG_CK_VERTEXUSE(vu);
