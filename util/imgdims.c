@@ -160,7 +160,7 @@ char *argv[];
      *	If the user specified a file,
      *	determine its size
      */
-    if (nm_bytes == -1)
+    if (nm_bytes == -1) {
 	if ((how == BELIEVE_NAME)
 	 && bn_common_name_size(&width, &height, argument))
 	    goto done;
@@ -170,6 +170,7 @@ char *argv[];
 	    if (bytes_per_pixel == -1)
 		bytes_per_pixel = pixel_size(argument);
 	}
+    }
     if (bytes_per_pixel == -1)
 	bytes_per_pixel = DFLT_PIXEL_SIZE;
 
