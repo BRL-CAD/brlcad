@@ -1,5 +1,3 @@
-#undef _LOCAL_
-#define _LOCAL_ /**/
 /*
  *			I F _ 4 D . C
  *
@@ -17,12 +15,10 @@
  *
  *  refer to the Users Manuals to reconfigure your kernel..
  *
- *  There are 4 different Frame Buffer types supported on the 4D/60T or 4D/70
- *  set your environment FB_FILE to the appropriate Frame buffer type
- *	/dev/sgi0 	Transient window private memory
- *	/dev/sgi1	Transient window shared memory ( default )
- *	/dev/sgi2	Lingering window private memory
- *	/dev/sgi3	Lingering window shared memory
+ *  There are several different Frame Buffer modes supported on the
+ *  4D/60T or 4D/70.  Set your environment FB_FILE to the appropriate
+ *  type (see the modeflag definitions below).
+ *	/dev/sgi[options]
  *
  *  Authors -
  *	Paul R. Stay
@@ -86,7 +82,8 @@ _LOCAL_ int	mips_dopen(),
 		mips_zoom_set(),
 		mips_curs_set(),
 		mips_cmemory_addr(),
-		mips_cscreen_addr();
+		mips_cscreen_addr(),
+		mips_help();
 
 /* This is the ONLY thing that we "export" */
 FBIO mips_interface =
@@ -105,6 +102,7 @@ FBIO mips_interface =
 		mips_curs_set,
 		mips_cmemory_addr,
 		fb_null,		/* cscreen_addr */
+		mips_help,
 		"Silicon Graphics Iris-4D (non-GT)",
 		XMAXSCREEN+1,		/* max width */
 		YMAXSCREEN+1,		/* max height */
@@ -173,13 +171,13 @@ static int map_size;			/* # of color map slots available */
  *  The mode has several independent bits:
  *	SHARED -vs- MALLOC'ed memory for the image
  *	TRANSIENT -vs- LINGERING windows
- *	Windowed -vs- Full screen
+ *	Windowed -vs- Centered Full screen
  *	Default Hz -vs- 30hz monitor mode
  *	Genlock NTSC -vs- normal monitor mode
  */
 #define MODE_1MASK	(1<<0)
-#define MODE_1MALLOC	(0<<0)		/* Use malloc memory */
-#define MODE_1SHARED	(1<<0)		/* Use Shared memory */
+#define MODE_1SHARED	(0<<0)		/* Use Shared memory */
+#define MODE_1MALLOC	(1<<0)		/* Use malloc memory */
 
 #define MODE_2MASK	(1<<1)
 #define MODE_2TRANSIENT	(0<<1)
@@ -200,6 +198,33 @@ static int map_size;			/* # of color map slots available */
 #define MODE_6MASK	(1<<5)
 #define MODE_6NORMAL	(0<<5)
 #define MODE_6EXTSYNC	(1<<5)
+
+#define MODE_15MASK	(1<<14)
+#define MODE_15NORMAL	(0<<14)
+#define MODE_15ZAP	(1<<14)
+
+struct modeflags {
+	char	c;
+	long	mask;
+	long	value;
+	char	*help;
+} modeflags[] = {
+	{ 'p',	MODE_1MASK, MODE_1MALLOC,
+		"Private memory - else shared" },
+	{ 'l',	MODE_2MASK, MODE_2LINGERING,
+		"Lingering window - else transient" },
+	{ 'f',	MODE_3MASK, MODE_3FULLSCR,
+		"Full centered screen - else windowed" },
+	{ 't',	MODE_4MASK, MODE_4HZ30,
+		"Thirty Hz (e.g. Dunn) - else 60 Hz" },
+	{ 'n',	MODE_5MASK, MODE_5GENLOCK,
+		"NTSC+GENLOCK - else normal video" },
+	{ 'e',	MODE_6MASK, MODE_6EXTSYNC,
+		"External sync - else internal" },
+	{ 'z',	MODE_15MASK, MODE_15ZAP,
+		"Zap (free) shared memory" },
+	{ '\0', 0, 0, "" }
+};
 
 static RGBpixel	rgb_table[4096];
 
@@ -557,36 +582,58 @@ int	width, height;
 {
 	int x_pos, y_pos;	/* Lower corner of viewport */
 	register int i;
-	int f;
+	int	f;
 	int	status;
 	static char	title[128];
 	int	mode;
 
 	/*
 	 *  First, attempt to determine operating mode for this open,
-	 *  based upon the "unit number".  For the SGI, this unit number
-	 *  is used as the operating mode.
-	 *  The default mode is set here, and it isn't mode 0, but mode 1.
+	 *  based upon the "unit number" or flags.
+	 *  file = "/dev/sgi###"
+	 *  The default mode is zero.
 	 */
-	mode =  
-		MODE_6NORMAL |		/* 0 */
-		MODE_5NORMAL |		/* 0 */
-		MODE_4HZDEF |		/* 0 */
-		MODE_3WINDOW |		/* 0 */
-		MODE_2TRANSIENT |	/* 0 */
-		MODE_1SHARED;		/* 1 */
+	mode = 0;
 
 	if( file != NULL )  {
 		register char *cp;
+		char	modebuf[80];
+		char	*mp;
+		int	alpha;
+		struct	modeflags *mfp;
 
-		/* Locate the (optional) number */
-		for( cp = file; *cp != '\0' && !isdigit(*cp); cp++ ) ;
+		if( strncmp(file, "/dev/sgi", 8) ) {
+			/* How did this happen?? */
+			mode = 0;
+		} else {
+			/* Parse the options */
+			alpha = 0;
+			mp = &modebuf[0];
+			cp = &file[8];
+			while( *cp != '\0' && !isspace(*cp) ) {
+				*mp++ = *cp;	/* copy it to buffer */
+				if( isdigit(*cp) ) {
+					cp++;
+					continue;
+				}
+				alpha++;
+				for( mfp = modeflags; mfp->c != '\0'; mfp++ ) {
+					if( mfp->c == *cp ) {
+						mode = (mode&~mfp->mask)|mfp->value;
+						break;
+					}
+				}
+				if( mfp->c == '\0' && *cp != '-' ) {
+					fb_log( "if_4d: unknown option '%c' ignored\n", *cp );
+				}
+				cp++;
+			}
+			*mp = '\0';
+			if( !alpha )
+				mode = atoi( modebuf );
+		}
 
-		if( *cp && isdigit(*cp) )
-			(void)sscanf( cp, "%d", &mode );
-
-		/* This needs to become a bit! */
-		if( mode >= 99 )  {
+		if( (mode & MODE_15MASK) == MODE_15ZAP ) {
 			/* Only task: Attempt to release shared memory segment */
 			mips_zapmem();
 			return(-1);
@@ -1483,4 +1530,26 @@ RGBpixel	*pixelp;
 	im_rectfs( l, b, r, t ); 
 
 	return;
+}
+
+_LOCAL_ int
+mips_help( ifp )
+FBIO	*ifp;
+{
+	struct	modeflags *mfp;
+
+	fb_log( "Description: %s\n", mips_interface.if_type );
+	fb_log( "Device: %s\n", ifp->if_name );
+	fb_log( "Max width height: %d %d\n",
+		mips_interface.if_max_width,
+		mips_interface.if_max_height );
+	fb_log( "Default width height: %d %d\n",
+		mips_interface.if_width,
+		mips_interface.if_height );
+	fb_log( "Usage: /dev/sgi[options]\n" );
+	for( mfp = modeflags; mfp->c != '\0'; mfp++ ) {
+		fb_log( "   %c   %s\n", mfp->c, mfp->help );
+	}
+
+	return(0);
 }
