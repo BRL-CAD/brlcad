@@ -23,7 +23,7 @@ struct air_specific {
 	double	delta;
 	char	*name;	/* name of "ground" object for emist_terrain_render */
 };
-#define CK_air_SP(_p) RT_CKMAG(_p, air_MAGIC, "air_specific")
+#define CK_air_SP(_p) BU_CKMAG(_p, air_MAGIC, "air_specific")
 
 static struct air_specific air_defaults = {
 	air_MAGIC,
@@ -34,7 +34,7 @@ static struct air_specific air_defaults = {
 
 #define SHDR_NULL	((struct air_specific *)0)
 #define SHDR_O(m)	offsetof(struct air_specific, m)
-#define SHDR_AO(m)	offsetofarray(struct air_specific, m)
+#define SHDR_AO(m)	bu_offsetofarray(struct air_specific, m)
 
 static void dpm_hook();
 
@@ -90,7 +90,7 @@ CONST char				*value;	/* string containing value */
 HIDDEN int
 air_setup( rp, matparm, dpp, mfp, rtip)
 register struct region	*rp;
-struct rt_vls		*matparm;
+struct bu_vls		*matparm;
 char			**dpp;	/* pointer to reg_udata in *rp */
 struct mfuncs		*mfp;
 struct rt_i		*rtip;	/* New since 4.4 release */
@@ -98,12 +98,12 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	register struct air_specific	*air_sp;
 	mat_t	tmp;
 
-	if( rdebug&RDEBUG_SHADE) rt_log("air_setup\n");
+	if( rdebug&RDEBUG_SHADE) bu_log("air_setup\n");
 
 	RT_CHECK_RTI(rtip);
-	RT_VLS_CHECK( matparm );
+	BU_CK_VLS( matparm );
 	RT_CK_REGION(rp);
-	GETSTRUCT( air_sp, air_specific );
+	BU_GETSTRUCT( air_sp, air_specific );
 	*dpp = (char *)air_sp;
 
 	memcpy(air_sp, &air_defaults, sizeof(struct air_specific) );
@@ -116,7 +116,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 		bu_bomb("");
 	}
 
-	if (rdebug&RDEBUG_SHADE) rt_log("\"%s\"\n", RT_VLS_ADDR(matparm) );
+	if (rdebug&RDEBUG_SHADE) bu_log("\"%s\"\n", bu_vls_addr(matparm) );
 	if( bu_struct_parse( matparm, air_parse, (char *)air_sp ) < 0 )
 		return(-1);
 
@@ -142,8 +142,8 @@ air_free( cp )
 char *cp;
 {
 	if( rdebug&RDEBUG_SHADE)
-		rt_log("air_free(%s:%d)\n", __FILE__, __LINE__);
-	rt_free( cp, "air_specific" );
+		bu_log("air_free(%s:%d)\n", __FILE__, __LINE__);
+	bu_free( cp, "air_specific" );
 }
 
 /*
@@ -242,7 +242,7 @@ char	*dp;
 		(void)rr_render( ap, pp, swp );
 
 	if( rdebug&RDEBUG_SHADE)
-		rt_log("air o dist:%gmm tau:%g transmit:%g\n",
+		bu_log("air o dist:%gmm tau:%g transmit:%g\n",
 			dist, tau, swp->sw_transmit);
 
 	return(1);
@@ -351,7 +351,7 @@ char	*dp;
 	else if (swp->sw_transmit < 0.0) swp->sw_transmit = 0.0;
 
 	if( rdebug&RDEBUG_SHADE)
-		rt_log("tmist transmit = %g\n", swp->sw_transmit);
+		bu_log("tmist transmit = %g\n", swp->sw_transmit);
 
 	return(1);
 }
@@ -417,7 +417,7 @@ char	*dp;
 		tau = (( air_sp->d_p_mm * te) /  Zd) * ( exp(-Zo) - exp(-Ze) );
 
 /*	XXX future
-	tau *= noise_fbm(pt);
+	tau *= bn_noise_fbm(pt);
 */
 
 	swp->sw_transmit = exp(-tau);
@@ -426,7 +426,7 @@ char	*dp;
 	else if (swp->sw_transmit < 0.0) swp->sw_transmit = 0.0;
 
 	if( rdebug&RDEBUG_SHADE)
-		rt_log("emist transmit = %g\n", swp->sw_transmit);
+		bu_log("emist transmit = %g\n", swp->sw_transmit);
 
 	return(1);
 }

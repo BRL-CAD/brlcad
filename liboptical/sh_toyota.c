@@ -80,8 +80,8 @@ struct bu_structparse toyota_parse[] = {
 	{"%f", 1, "sun_sang",	CL_O(sun_sang),		FUNC_NULL },
 	{"%f", 1, "index_refrac",CL_O(index_refrac),	FUNC_NULL },
 	{"%f", 1, "atmos_trans",CL_O(atmos_trans),	FUNC_NULL },
-	{"%f", 3, "Zenith",	offsetofarray(struct toyota_specific, Zenith),		FUNC_NULL },
-	{"%s", 1, "material",	offsetofarray(struct toyota_specific, material),		FUNC_NULL },
+	{"%f", 3, "Zenith",	bu_offsetofarray(struct toyota_specific, Zenith),		FUNC_NULL },
+	{"%s", 1, "material",	bu_offsetofarray(struct toyota_specific, material),		FUNC_NULL },
 	{"%d", 1, "glass",	CL_O(glass),		FUNC_NULL },
 	{"",   0, (char *)0,	0,			FUNC_NULL }
 };
@@ -141,7 +141,7 @@ struct mfuncs toyota_mfuncs[] = {
 HIDDEN int
 toyota_setup(rp, matparm, dtp, mfp, rtip)
 register struct region *rp;
-struct rt_vls	*matparm;
+struct bu_vls	*matparm;
 char	**dtp;
 struct mfuncs           *mfp;
 struct rt_i             *rtip;  /* New since 4.4 release */
@@ -152,8 +152,8 @@ struct rt_i             *rtip;  /* New since 4.4 release */
 	int	i, lines;
 	register struct toyota_specific *tp;
 
-	RT_VLS_CHECK(matparm);
-	GETSTRUCT(tp, toyota_specific);
+	BU_CK_VLS(matparm);
+	BU_GETSTRUCT(tp, toyota_specific);
 	*dtp = (char *)tp;
 
 	/* Sun was at 44.35 degrees above horizon. */
@@ -188,7 +188,7 @@ struct rt_i             *rtip;  /* New since 4.4 release */
 	VSET(tp->Zenith, 0., 0., 1.);
 
 	if (bu_struct_parse(matparm, toyota_parse, (char *)tp) < 0)  {
-		rt_free((char *)tp, "toyota_specific");
+		bu_free((char *)tp, "toyota_specific");
 		return(-1);
 	}
 
@@ -204,15 +204,15 @@ struct rt_i             *rtip;  /* New since 4.4 release */
 	}
 	if ((fp = fopen(mfile, "r")) == NULL) {
 		perror(mfile);
-		rt_log("reflectance: cannot open %s for reading.", mfile);
+		bu_log("reflectance: cannot open %s for reading.", mfile);
 		rt_bomb("");
 	}
 	if (fscanf(fp, "%d", &lines) != 1) {
-		rt_log("toyota_setup: no data in %s\n", mfile);
+		bu_log("toyota_setup: no data in %s\n", mfile);
 		rt_bomb("");
 	}
 	tp->refl_lines = lines;
-	tp->refl = (fastf_t *)rt_malloc(sizeof(fastf_t)*lines*3, "refl[]");
+	tp->refl = (fastf_t *)bu_malloc(sizeof(fastf_t)*lines*3, "refl[]");
 	i = 0;
 	while (fscanf(fp, "%lf %lf %lf", &l, &a, &b) == 3 && i < lines*3) {
 		tp->refl[i] = l;
@@ -240,15 +240,15 @@ struct rt_i             *rtip;  /* New since 4.4 release */
 HIDDEN int
 tmirror_setup(rp, matparm, dpp, mfp, rtip)
 register struct region *rp;
-struct rt_vls	*matparm;
+struct bu_vls	*matparm;
 char	**dpp;
 struct mfuncs           *mfp;
 struct rt_i             *rtip;  /* New since 4.4 release */
 {
 	register struct toyota_specific *pp;
 
-	RT_VLS_CHECK(matparm);
-	GETSTRUCT(pp, toyota_specific);
+	BU_CK_VLS(matparm);
+	BU_GETSTRUCT(pp, toyota_specific);
 	*dpp = (char *)pp;
 
 	/* use function, fn(lambda), describing spectral */
@@ -263,15 +263,15 @@ struct rt_i             *rtip;  /* New since 4.4 release */
 HIDDEN int
 tglass_setup(rp, matparm, dpp, mfp, rtip)
 register struct region *rp;
-struct rt_vls	*matparm;
+struct bu_vls	*matparm;
 char	**dpp;
 struct mfuncs           *mfp;
 struct rt_i             *rtip;  /* New since 4.4 release */
 {
 	register struct toyota_specific *pp;
 
-	RT_VLS_CHECK(matparm);
-	GETSTRUCT(pp, toyota_specific);
+	BU_CK_VLS(matparm);
+	BU_GETSTRUCT(pp, toyota_specific);
 	*dpp = (char *)pp;
 
 	/* use function, fn(lambda), describing spectral */
@@ -299,7 +299,7 @@ toyota_free(cp)
 char *cp;
 {
 	/* need to free cp->refl */
-	rt_free(cp, "toyota_specific");
+	bu_free(cp, "toyota_specific");
 }
 
 /*
@@ -319,7 +319,7 @@ fastf_t	gamma;	/* Solar altitude off horizon (degrees). */
 	fastf_t	m;
 
 	if (gamma <= 0.) {
-		rt_log("air_mass: sun altitude of %g degrees ignored.\n");
+		bu_log("air_mass: sun altitude of %g degrees ignored.\n");
 		m = 0.;
 	} else
 		m = 1./(sin(gamma*PI/180.)
@@ -417,7 +417,7 @@ vect_t	Zenith;		/* vector to zenith */
 		* (1. - exp(-0.32/cos_theta))
 		/ 0.27385*(0.91 + 10.*exp(-3.*z0) + 0.45*cos_z0*cos_z0);
 #if 0
-rt_log("clear_sky_lum(lz=%g, ...) = %g\n", lz, lum );
+bu_log("clear_sky_lum(lz=%g, ...) = %g\n", lz, lum );
 #endif
 
 	return(lum);
@@ -1683,7 +1683,7 @@ fastf_t	t_vl;		/* Turbidity factor. */
 		break;
 	}
 /* XXX hack */
-if (lum <= 0.) {/*rt_log("lum = %g\n", lum);*/ return(0.);}
+if (lum <= 0.) {/*bu_log("lum = %g\n", lum);*/ return(0.);}
 
 	/* Convert to color temperature.  Expression based on careful */
 	/* measurements by Toyota. */
@@ -1708,7 +1708,7 @@ if (lum <= 0.) {/*rt_log("lum = %g\n", lum);*/ return(0.);}
 			+ 0.24748e3/t_cp
 			+ 0.237040;
 	} else {
-		rt_log("skylight_spectral_dist: color temperature %lf out of range, lum=%lf.\n", t_cp, lum);
+		bu_log("skylight_spectral_dist: color temperature %lf out of range, lum=%lf.\n", t_cp, lum);
 		t_cp = 25000;
 		x =
 			-2.0064e9/(t_cp*t_cp*t_cp)
@@ -1772,8 +1772,8 @@ fastf_t	lambda,		/* Wavelength of light (nm). */
 	em = e0 * exp(-(cr + cm + coz)*air_mass(sun_alt));
 	ls = em/sun_sang;
 #if 0
-rt_log("e0 = %g\ncr = %g\ncm = %g\ncoz = %g\nem = %g\n", e0,cr,cm,coz,em);
-rt_log("sun radiance = %g\n", ls);
+bu_log("e0 = %g\ncr = %g\ncm = %g\ncoz = %g\nem = %g\n", e0,cr,cm,coz,em);
+bu_log("sun radiance = %g\n", ls);
 #endif
 	return(ls);
 }
@@ -1980,7 +1980,7 @@ int	lines;		/* How many lines of data in refl[]. */
 	
 out:
 #if 0
-rt_log("reflectance(lambda=%g, alpha=%g)=%g\n", lambda, alpha, beta );
+bu_log("reflectance(lambda=%g, alpha=%g)=%g\n", lambda, alpha, beta );
 #endif
 	return(beta);
 }
@@ -2120,7 +2120,7 @@ fastf_t	*rgb;	/* Output, RGB approximation of input. */
 
 	/* Interpolate values of x, y, z. */
 	if (lambda < 380. || lambda > 825.) {
-		rt_log("lambda_to_rgb: bad wavelength, %g nm.", lambda);
+		bu_log("lambda_to_rgb: bad wavelength, %g nm.", lambda);
 		rt_bomb("");
 	} else {
 		/* Find index of lower lambda in table. */
@@ -2151,7 +2151,7 @@ fastf_t	*rgb;	/* Output, RGB approximation of input. */
 	rgb[0] += r/(r+g+b) * irrad/1e4;
 	rgb[1] += g/(r+g+b) * irrad/1e4;
 	rgb[2] += b/(r+g+b) * irrad/1e4;
-rt_log("rgb = (%g %g %g), irrad = %g\n",r,g,b,irrad);
+bu_log("rgb = (%g %g %g), irrad = %g\n",r,g,b,irrad);
 }
 
 /*
@@ -2282,16 +2282,16 @@ if (i_dot_n >= 1.) i_dot_n = .9999;
 #endif
 /* XXX hack */		if (i_dot_n > 0.) {
 			irradiance +=
-				reflectance(lambda, acos(i_dot_n)*rt_radtodeg,
+				reflectance(lambda, acos(i_dot_n)*bn_radtodeg,
 					ts->refl, ts->refl_lines)
 				* bg_radiance
 				* i_dot_n
 				* del_omega;
 #if 0
-rt_log("bg radiance = %g\n", bg_radiance);
-rt_log("I . N = %g\n", i_dot_n);
-rt_log("del_omega = %g\n", del_omega);
-rt_log("irradiance = %g\n", irradiance);
+bu_log("bg radiance = %g\n", bg_radiance);
+bu_log("I . N = %g\n", i_dot_n);
+bu_log("del_omega = %g\n", del_omega);
+bu_log("irradiance = %g\n", irradiance);
 #endif
 }
 		}
@@ -2318,13 +2318,13 @@ rt_log("irradiance = %g\n", irradiance);
 		pdv_3line( stdout, swp->sw_hit.hit_point, work);
 	}
 	irradiance +=
-		reflectance(lambda, acos(i_dot_n)*rt_radtodeg, ts->refl, ts->refl_lines)
+		reflectance(lambda, acos(i_dot_n)*bn_radtodeg, ts->refl, ts->refl_lines)
 		* bg_radiance
 		* VDOT(Sky_elmnt, swp->sw_hit.hit_normal)
 		* del_omega;
 	irradiance /= PI;
 #if 0
-rt_log("irradiance = %g\n\n", irradiance);
+bu_log("irradiance = %g\n\n", irradiance);
 #endif
 
 	return(irradiance);
@@ -2417,20 +2417,20 @@ char	*dp;
 		/* Direct sunlight contribution. */
 		direct_sunlight =
 			1./PI
-			* reflectance(ts->lambda, acos(i_dot_n)*rt_radtodeg,
+			* reflectance(ts->lambda, acos(i_dot_n)*bn_radtodeg,
 				ts->refl, ts->refl_lines)
 			* sun_radiance(ts->lambda, ts->alpha, ts->beta,
 				sun_alt, ts->sun_sang)
 			* sun_dot_n
 			* ts->sun_sang;
 #if 0
-rt_log("1/PI = %g\n", 1/PI);
-rt_log("beta = %g\n", reflectance(ts->lambda, acos(i_dot_n)*rt_radtodeg,
+bu_log("1/PI = %g\n", 1/PI);
+bu_log("beta = %g\n", reflectance(ts->lambda, acos(i_dot_n)*bn_radtodeg,
 ts->refl, ts->refl_lines));
-rt_log("sun radiance = %g\n",  sun_radiance(ts->lambda, ts->alpha, ts->beta,
+bu_log("sun radiance = %g\n",  sun_radiance(ts->lambda, ts->alpha, ts->beta,
 sun_alt, ts->sun_sang));
-rt_log("direct_sunlight = %g\n", direct_sunlight);
-rt_log("S . N = %g\n", sun_dot_n);
+bu_log("direct_sunlight = %g\n", direct_sunlight);
+bu_log("S . N = %g\n", sun_dot_n);
 #endif
 
 #if 0
@@ -2521,14 +2521,14 @@ rt_log("S . N = %g\n", sun_dot_n);
 
 		i_refl *= lp->lt_fraction;
 #if 0
-rt_log("i_refl = %g\n", i_refl);
+bu_log("i_refl = %g\n", i_refl);
 #endif
 
 /* WHERE DOES THIS GO??  NOT HERE.  SO WHERE DOES i_refl GO THEN. */
 		/* Convert wavelength and radiance into RGB triple. */
 		lambda_to_rgb(ts->lambda, i_refl, swp->sw_color);
 #if 0
-rt_log("rgb = (%g  %g  %g)\n",swp->sw_color[0], swp->sw_color[1], swp->sw_color[2]);
+bu_log("rgb = (%g  %g  %g)\n",swp->sw_color[0], swp->sw_color[1], swp->sw_color[2]);
 #endif
 	}
 

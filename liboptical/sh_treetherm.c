@@ -18,7 +18,7 @@
 #include "rtgeom.h"
 
 #define tthrm_MAGIC 0x7468726d	/* 'thrm' */
-#define CK_tthrm_SP(_p) RT_CKMAG(_p, tthrm_MAGIC, "tthrm_specific")
+#define CK_tthrm_SP(_p) BU_CKMAG(_p, tthrm_MAGIC, "tthrm_specific")
 
 
 /*
@@ -81,7 +81,7 @@ struct branch_seg {
 
 #define NUM_NODES 8
 #define THRM_SEG_MAGIC 246127
-#define CK_THRM_SEG(_p) RT_CKMAG(_p, THRM_SEG_MAGIC, "thrm_seg")
+#define CK_THRM_SEG(_p) BU_CKMAG(_p, THRM_SEG_MAGIC, "thrm_seg")
 struct thrm_seg {
 	long	magic;
 	float	pt[3];			/* center point of nodes */
@@ -112,7 +112,7 @@ struct tthrm_specific {
 /* The default values for the variables in the shader specific structure */
 #define SHDR_NULL	((struct tthrm_specific *)0)
 #define SHDR_O(m)	offsetof(struct tthrm_specific, m)
-#define SHDR_AO(m)	offsetofarray(struct tthrm_specific, m)
+#define SHDR_AO(m)	bu_offsetofarray(struct tthrm_specific, m)
 
 
 /* description of how to parse/print the arguments to the shader
@@ -210,7 +210,7 @@ struct region *rp;
 HIDDEN int
 tthrm_setup( rp, matparm, dpp, mfp, rtip)
 register struct region	*rp;
-struct rt_vls		*matparm;
+struct bu_vls		*matparm;
 char			**dpp;	/* pointer to reg_udata in *rp */
 struct mfuncs		*mfp;
 struct rt_i		*rtip;	/* New since 4.4 release */
@@ -236,7 +236,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 
 	/* check the arguments */
 	RT_CHECK_RTI(rtip);
-	RT_VLS_CHECK( matparm );
+	BU_CK_VLS( matparm );
 	RT_CK_REGION(rp);
 
 	if( rdebug&RDEBUG_SHADE)
@@ -244,7 +244,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 			rp->reg_name, bu_vls_addr(matparm));
 
 	/* Get memory for the shader parameters and shader-specific data */
-	GETSTRUCT( tthrm_sp, tthrm_specific );
+	BU_GETSTRUCT( tthrm_sp, tthrm_specific );
 	*dpp = (char *)tthrm_sp;
 	tthrm_sp->magic = tthrm_MAGIC;
 
@@ -414,7 +414,7 @@ char	*dp;
 	struct tthrm_specific *tthrm_sp = (struct tthrm_specific *)dp;
 
 	bu_log("%s\n", tthrm_sp->tt_name);
-	mat_print( "m_to_sh", tthrm_sp->tthrm_m_to_sh );
+	bn_mat_print( "m_to_sh", tthrm_sp->tthrm_m_to_sh );
 #if 0
 	bu_struct_print( rp->reg_name, tthrm_print_tab, (char *)dp );
 #endif
@@ -436,7 +436,7 @@ char *cp;
 	tthrm_sp->tt_name[0] = '\0';
 	tthrm_sp->magic = 0;
 
-	rt_free( cp, "tthrm_specific" );
+	bu_free( cp, "tthrm_specific" );
 }
 
 /*

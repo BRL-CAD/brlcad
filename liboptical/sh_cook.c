@@ -106,15 +106,15 @@ struct mfuncs cook_mfuncs[] = {
 HIDDEN int
 cook_setup( rp, matparm, dpp, mfp, rtip )
 register struct region *rp;
-struct rt_vls	*matparm;
+struct bu_vls	*matparm;
 char	**dpp;
 struct mfuncs	*mfp;
 struct rt_i	*rtip;
 {
 	register struct cook_specific *pp;
 
-	RT_VLS_CHECK( matparm );
-	GETSTRUCT( pp, cook_specific );
+	BU_CK_VLS( matparm );
+	BU_GETSTRUCT( pp, cook_specific );
 	*dpp = (char *)pp;
 
 	pp->m = 0.2;
@@ -133,12 +133,12 @@ struct rt_i	*rtip;
 		   / (1.0 - sqrt(rp->reg_mater.ma_color[1]*.99));
 	pp->n[2] = (1.0 + sqrt(rp->reg_mater.ma_color[2]*.99))
 		   / (1.0 - sqrt(rp->reg_mater.ma_color[2]*.99));
-	pp->rd[0] = fresnel( 0.0, pp->n[0] ) / rt_pi;
-	pp->rd[1] = fresnel( 0.0, pp->n[1] ) / rt_pi;
-	pp->rd[2] = fresnel( 0.0, pp->n[2] ) / rt_pi;
+	pp->rd[0] = fresnel( 0.0, pp->n[0] ) / bn_pi;
+	pp->rd[1] = fresnel( 0.0, pp->n[1] ) / bn_pi;
+	pp->rd[2] = fresnel( 0.0, pp->n[2] ) / bn_pi;
 
 	if( bu_struct_parse( matparm, cook_parse, (char *)pp ) < 0 )  {
-		rt_free( (char *)pp, "cook_specific" );
+		bu_free( (char *)pp, "cook_specific" );
 		return(-1);
 	}
 
@@ -154,15 +154,15 @@ struct rt_i	*rtip;
 HIDDEN int
 cmirror_setup( rp, matparm, dpp, mfp, rtip )
 register struct region *rp;
-struct rt_vls	*matparm;
+struct bu_vls	*matparm;
 char	**dpp;
 struct mfuncs           *mfp;
 struct rt_i             *rtip;  /* New since 4.4 release */
 {
 	register struct cook_specific *pp;
 
-	RT_VLS_CHECK( matparm );
-	GETSTRUCT( pp, cook_specific );
+	BU_CK_VLS( matparm );
+	BU_GETSTRUCT( pp, cook_specific );
 	*dpp = (char *)pp;
 
 	pp->m = 0.2;
@@ -177,9 +177,9 @@ struct rt_i             *rtip;  /* New since 4.4 release */
 	pp->n[0] = (1.0 + sqrt(pp->reflect*.99))
 		   / (1.0 - sqrt(pp->reflect*.99));
 	pp->n[1] = pp->n[2] = pp->n[0];
-	pp->rd[0] = fresnel( 0.0, pp->n[0] ) / rt_pi;
-	pp->rd[1] = fresnel( 0.0, pp->n[1] ) / rt_pi;
-	pp->rd[2] = fresnel( 0.0, pp->n[2] ) / rt_pi;
+	pp->rd[0] = fresnel( 0.0, pp->n[0] ) / bn_pi;
+	pp->rd[1] = fresnel( 0.0, pp->n[1] ) / bn_pi;
+	pp->rd[2] = fresnel( 0.0, pp->n[2] ) / bn_pi;
 
 	if( bu_struct_parse( matparm, cook_parse, (char *)pp ) < 0 )
 		return(-1);
@@ -196,15 +196,15 @@ struct rt_i             *rtip;  /* New since 4.4 release */
 HIDDEN int
 cglass_setup( rp, matparm, dpp, mfp, rtip )
 register struct region *rp;
-struct rt_vls	*matparm;
+struct bu_vls	*matparm;
 char	**dpp;
 struct mfuncs           *mfp;
 struct rt_i             *rtip;  /* New since 4.4 release */
 {
 	register struct cook_specific *pp;
 
-	RT_VLS_CHECK( matparm );
-	GETSTRUCT( pp, cook_specific );
+	BU_CK_VLS( matparm );
+	BU_GETSTRUCT( pp, cook_specific );
 	*dpp = (char *)pp;
 
 	pp->m = 0.2;
@@ -219,9 +219,9 @@ struct rt_i             *rtip;  /* New since 4.4 release */
 
 	pp->n[0] = pp->refrac_index;
 	pp->n[1] = pp->n[2] = pp->n[0];
-	pp->rd[0] = fresnel( 0.0, pp->n[0] ) / rt_pi;
-	pp->rd[1] = fresnel( 0.0, pp->n[1] ) / rt_pi;
-	pp->rd[2] = fresnel( 0.0, pp->n[2] ) / rt_pi;
+	pp->rd[0] = fresnel( 0.0, pp->n[0] ) / bn_pi;
+	pp->rd[1] = fresnel( 0.0, pp->n[1] ) / bn_pi;
+	pp->rd[2] = fresnel( 0.0, pp->n[2] ) / bn_pi;
 
 	if( bu_struct_parse( matparm, cook_parse, (char *)pp ) < 0 )
 		return(-1);
@@ -250,7 +250,7 @@ HIDDEN void
 cook_free( cp )
 char *cp;
 {
-	rt_free( cp, "cook_specific" );
+	bu_free( cp, "cook_specific" );
 }
 
 
@@ -317,7 +317,7 @@ char	*dp;
 	n_dot_e = -VDOT( swp->sw_hit.hit_normal, ap->a_ray.r_dir );
 	if( n_dot_e < 0 ) {
 		/* Yow, we can't see this point, how did we hit it? */
-		rt_log( "cook: N.E < 0\n" );
+		bu_log( "cook: N.E < 0\n" );
 	}
 
 	/* Consider effects of each light source */

@@ -62,8 +62,8 @@ struct	bu_structparse stxt_parse[] = {
 	{"%d",	1, "transp",		0,		stxt_transp_hook },
 	{"%s",	STX_NAME_LEN, "file",	1,			FUNC_NULL },
 #else
-	{"%d",	1, "transp",	offsetofarray(struct stxt_specific, stx_transp),	stxt_transp_hook },
-	{"%s",	STX_NAME_LEN, "file",	offsetofarray(struct stxt_specific, stx_file),	FUNC_NULL },
+	{"%d",	1, "transp",	bu_offsetofarray(struct stxt_specific, stx_transp),	stxt_transp_hook },
+	{"%s",	STX_NAME_LEN, "file",	bu_offsetofarray(struct stxt_specific, stx_file),	FUNC_NULL },
 #endif
 	{"%d",	1, "w",			SOL_O(stx_w),		FUNC_NULL },
 	{"%d",	1, "n",			SOL_O(stx_n),		FUNC_NULL },
@@ -105,7 +105,7 @@ char	*value;
 	if (!strcmp(name, stxt_parse[0].sp_name) && ptab == stxt_parse) {
 		stp->trans_valid = 1;
 	} else {
-		rt_log("file:%s, line:%d stxt_transp_hook name:(%s) instead of (%s)\n",
+		bu_log("file:%s, line:%d stxt_transp_hook name:(%s) instead of (%s)\n",
 			__FILE__, __LINE__, name, stxt_parse[0].sp_name);
 	}
 }
@@ -128,7 +128,7 @@ register struct stxt_specific *stp;
 	int rd, rdd;
 
 	/*** MEMORY HOG ***/
-	stp->stx_pixels = rt_malloc(
+	stp->stx_pixels = bu_malloc(
 		stp->stx_w * stp->stx_n * stp->stx_d * 3,
 		stp->stx_file );
 
@@ -142,18 +142,18 @@ register struct stxt_specific *stp;
 		sprintf(name, "%s.%d", stp->stx_file, frame);
 
 		if( (fp = fopen(name, "r")) == NULL )  {
-			rt_log("stxt_read(%s):  can't open\n", name);
+			bu_log("stxt_read(%s):  can't open\n", name);
 			stp->stx_file[0] = '\0';
 			return(0);
 		}
-		linebuf = rt_malloc(stp->stx_fw*3,"texture file line");
+		linebuf = bu_malloc(stp->stx_fw*3,"texture file line");
 
 		for( i = 0; i < stp->stx_n; i++ )  {
 			if( (rd = fread(linebuf,1,stp->stx_fw*3,fp)) != stp->stx_fw*3 ) {
-				rt_log("stxt_read: read error on %s\n", name);
+				bu_log("stxt_read: read error on %s\n", name);
 				stp->stx_file[0] = '\0';
 				(void)fclose(fp);
-				rt_free(linebuf,"file line, error");
+				bu_free(linebuf,"file line, error");
 				return(0);
 			}
 			bcopy( linebuf, stp->stx_pixels + ln*stp->stx_w*3, stp->stx_w*3 );
@@ -161,7 +161,7 @@ register struct stxt_specific *stp;
 			rdd += rd;
 		}
 		(void)fclose(fp);
-		rt_free(linebuf,"texture file line");
+		bu_free(linebuf,"texture file line");
 	}
 	return(1);	/* OK */
 }
@@ -173,14 +173,14 @@ register struct stxt_specific *stp;
 HIDDEN int
 stxt_setup( rp, matparm, dpp, mfp, rtip )
 register struct region	*rp;
-struct rt_vls		*matparm;
+struct bu_vls		*matparm;
 char			**dpp;
 struct mfuncs           *mfp;
 struct rt_i             *rtip;  /* New since 4.4 release */
 {
 	register struct stxt_specific *stp;
 
-	GETSTRUCT( stp, stxt_specific );
+	BU_GETSTRUCT( stp, stxt_specific );
 	*dpp = (char *)stp;
 
 	/**  Set up defaults  **/
@@ -193,7 +193,7 @@ struct rt_i             *rtip;  /* New since 4.4 release */
 
 	/**	Get input values  **/
 	if( bu_struct_parse( matparm, stxt_parse, (char *)stp ) < 0 )  {
-		rt_free( (char *)stp, "stxt_specific" );
+		bu_free( (char *)stp, "stxt_specific" );
 		return(-1);
 	}
 	/*** DEFAULT SIZE OF STXT FILES ***/
@@ -222,11 +222,11 @@ char	*cp;
 	register struct stxt_specific *stp =
 		(struct stxt_specific *)cp;
 
-	if( stp->stx_magic != STXT_MAGIC )  rt_log("stxt_free(): bad magic\n");
+	if( stp->stx_magic != STXT_MAGIC )  bu_log("stxt_free(): bad magic\n");
 
 	if( stp->stx_pixels )
-		rt_free( stp->stx_pixels, "solid texture pixel array" );
-	rt_free( cp, "stx_specific" );
+		bu_free( stp->stx_pixels, "solid texture pixel array" );
+	bu_free( cp, "stx_specific" );
 }
 
 /*
@@ -259,7 +259,7 @@ char	*dp;
 	int u1, u2, u3;
 	register unsigned char *cp;
 
-	if( stp->stx_magic != STXT_MAGIC )  rt_log("brick_render(): bad magic\n");
+	if( stp->stx_magic != STXT_MAGIC )  bu_log("brick_render(): bad magic\n");
 
 	/*
 	 * If no texture file present, or if
@@ -309,7 +309,7 @@ char	*dp;
 *		sz = 2 * ( 1 - f );
 **********************************/
 
-/*rt_log("sx = %f\tsy = %f\tsz = %f\n",sx,sy,sz);*/
+/*bu_log("sx = %f\tsy = %f\tsz = %f\n",sx,sy,sz);*/
 
 	/* Index into TEXTURE SPACE */
 	tx = sx * (stp->stx_w-1);
@@ -327,9 +327,9 @@ char	*dp;
 	b = *cp++;
 
 	VSET( swp->sw_color,
-		(r+0.5) * rt_inv255,
-		(g+0.5) * rt_inv255,
-		(b+0.5) * rt_inv255 );
+		(r+0.5) * bn_inv255,
+		(g+0.5) * bn_inv255,
+		(b+0.5) * bn_inv255 );
 
 	return(1);
 }
@@ -355,7 +355,7 @@ char	*dp;
 	int u1, u2, u3;
 	register unsigned char *cp;
 
-	if( stp->stx_magic != STXT_MAGIC )  rt_log("rbound_render(): bad magic\n");
+	if( stp->stx_magic != STXT_MAGIC )  bu_log("rbound_render(): bad magic\n");
 
 	/*
 	 * If no texture file present, or if
@@ -401,9 +401,9 @@ char	*dp;
 	b = *cp++;
 
 	VSET( swp->sw_color,
-		(r+0.5) * rt_inv255,
-		(g+0.5) * rt_inv255,
-		(b+0.5) * rt_inv255 );
+		(r+0.5) * bn_inv255,
+		(g+0.5) * bn_inv255,
+		(b+0.5) * bn_inv255 );
 
 	return(1);
 }
@@ -429,7 +429,7 @@ char	*dp;
 	int u1, u2, u3;
 	register unsigned char *cp;
 
-	if( stp->stx_magic != STXT_MAGIC )  rt_log("mbound_render(): bad magic\n");
+	if( stp->stx_magic != STXT_MAGIC )  bu_log("mbound_render(): bad magic\n");
 
 	/*
 	 * If no texture file present, or if
@@ -465,9 +465,9 @@ char	*dp;
 	b = *cp++;
 
 	VSET( swp->sw_color,
-		(r+0.5) * rt_inv255,
-		(g+0.5) * rt_inv255,
-		(b+0.5) * rt_inv255 );
+		(r+0.5) * bn_inv255,
+		(g+0.5) * bn_inv255,
+		(b+0.5) * bn_inv255 );
 
 	return(1);
 }

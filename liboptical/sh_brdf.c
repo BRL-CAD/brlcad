@@ -104,15 +104,15 @@ struct mfuncs brdf_mfuncs[] = {
 HIDDEN int
 brdf_setup( rp, matparm, dpp, mfp, rtip )
 register struct region *rp;
-struct rt_vls	*matparm;
+struct bu_vls	*matparm;
 char	**dpp;
 struct mfuncs	*mfp;
 struct rt_i	*rtip;
 {
 	register struct brdf_specific *pp;
 
-	RT_VLS_CHECK( matparm );
-	GETSTRUCT( pp, brdf_specific );
+	BU_CK_VLS( matparm );
+	BU_GETSTRUCT( pp, brdf_specific );
 	*dpp = (char *)pp;
 
 	pp->magic = BRDF_MAGIC;
@@ -125,12 +125,12 @@ struct rt_i	*rtip;
 	pp->rms_slope = 0.05;
 
 	if( bu_struct_parse( matparm, brdf_parse, (char *)pp ) < 0 )  {
-		rt_free( (char *)pp, "brdf_specific" );
+		bu_free( (char *)pp, "brdf_specific" );
 		return(-1);
 	}
 
 	pp->rms_sq = pp->rms_slope * pp->rms_slope;
-	pp->denom = 4.0 * rt_pi * pp->rms_sq;
+	pp->denom = 4.0 * bn_pi * pp->rms_sq;
 
 	return(1);
 }
@@ -152,7 +152,7 @@ HIDDEN void
 brdf_free( cp )
 char *cp;
 {
-	rt_free( cp, "brdf_specific" );
+	bu_free( cp, "brdf_specific" );
 }
 
 
@@ -220,7 +220,7 @@ char	*dp;
 	struct brdf_specific *ps =
 		(struct brdf_specific *)dp;
 
-	if( ps->magic != BRDF_MAGIC )  rt_log("brdf_render: bad magic\n");
+	if( ps->magic != BRDF_MAGIC )  bu_log("brdf_render: bad magic\n");
 
 	if( rdebug&RDEBUG_SHADE)
 		bu_struct_print( "brdf_render", brdf_parse, (char *)ps );
@@ -240,7 +240,7 @@ char	*dp;
 	/* Diffuse reflectance from "Ambient" light source (at eye) */
 	if( (cosr = -VDOT( swp->sw_hit.hit_normal, ap->a_ray.r_dir )) > 0.0 )  {
 		if( cosr > 1.00001 )  {
-			rt_log("cosAmb=1+%g (x%d,y%d,lvl%d)\n", cosr-1,
+			bu_log("cosAmb=1+%g (x%d,y%d,lvl%d)\n", cosr-1,
 				ap->a_x, ap->a_y, ap->a_level);
 			cosr = 1;
 		}
@@ -267,7 +267,7 @@ char	*dp;
 
 		if( (cosi = VDOT( swp->sw_hit.hit_normal, to_light )) > 0.0 )  {
 			if( cosi > 1.00001 )  {
-				rt_log("cosI=1+%g (x%d,y%d,lvl%d)\n", cosi-1,
+				bu_log("cosI=1+%g (x%d,y%d,lvl%d)\n", cosi-1,
 					ap->a_x, ap->a_y, ap->a_level);
 				cosi = 1;
 			}

@@ -85,14 +85,14 @@ struct txt_specific {
 	int	tx_w;		/* Width of texture in pixels */
 	int	tx_n;		/* Number of scanlines */
 	int	tx_trans_valid;	/* boolean: is tx_transp valid ? */
-	struct rt_mapped_file	*mp;
+	struct bu_mapped_file	*mp;
 };
 #define TX_NULL	((struct txt_specific *)0)
 #define TX_O(m)	offsetof(struct txt_specific, m)
 
 struct bu_structparse txt_parse[] = {
-	{"%d",	1, "transp",	offsetofarray(struct txt_specific, tx_transp),	txt_transp_hook },
-	{"%s",	TXT_NAME_LEN, "file", offsetofarray(struct txt_specific, tx_file),		FUNC_NULL },
+	{"%d",	1, "transp",	bu_offsetofarray(struct txt_specific, tx_transp),	txt_transp_hook },
+	{"%s",	TXT_NAME_LEN, "file", bu_offsetofarray(struct txt_specific, tx_file),		FUNC_NULL },
 	{"%d",	1, "w",		TX_O(tx_w),		FUNC_NULL },
 	{"%d",	1, "n",		TX_O(tx_n),		FUNC_NULL },
 	{"%d",	1, "l",		TX_O(tx_n),		FUNC_NULL }, /*compat*/
@@ -118,7 +118,7 @@ char	*value;
 	if (!strcmp(name, txt_parse[0].sp_name) && ptab == txt_parse) {
 		tp->tx_trans_valid = 1;
 	} else {
-		rt_log("file:%s, line:%d txt_transp_hook name:(%s) instead of (%s)\n",
+		bu_log("file:%s, line:%d txt_transp_hook name:(%s) instead of (%s)\n",
 			__FILE__, __LINE__, name, txt_parse[0].sp_name);
 	}
 }
@@ -166,7 +166,7 @@ char	*dp;
 	if( swp->sw_uv.uv_dv > 0.125 )  swp->sw_uv.uv_dv = 0.125;
 
 	if( swp->sw_uv.uv_du < 0 || swp->sw_uv.uv_dv < 0 )  {
-		rt_log("txt_render uv=%g,%g, du dv=%g %g seg=%s\n",
+		bu_log("txt_render uv=%g,%g, du dv=%g %g seg=%s\n",
 			swp->sw_uv.uv_u, swp->sw_uv.uv_v, swp->sw_uv.uv_du, swp->sw_uv.uv_dv,
 			pp->pt_inseg->seg_stp->st_name );
 		swp->sw_uv.uv_du = swp->sw_uv.uv_dv = 0;
@@ -318,9 +318,9 @@ char	*dp;
 	if (!tp->tx_trans_valid) {
 opaque:
 		VSET( swp->sw_color,
-			r * rt_inv255,
-			g * rt_inv255,
-			b * rt_inv255 );
+			r * bn_inv255,
+			g * bn_inv255,
+			b * bn_inv255 );
 		if( swp->sw_reflect > 0 || swp->sw_transmit > 0 )
 			(void)rr_render( ap, pp, swp );
 		return(1);
@@ -384,7 +384,7 @@ char	*dp;
 	if( swp->sw_uv.uv_dv > 0.125 )  swp->sw_uv.uv_dv = 0.125;
 
 	if( swp->sw_uv.uv_du < 0 || swp->sw_uv.uv_dv < 0 )  {
-		rt_log("bwtxt_render uv=%g,%g, du dv=%g %g seg=%s\n",
+		bu_log("bwtxt_render uv=%g,%g, du dv=%g %g seg=%s\n",
 			swp->sw_uv.uv_u, swp->sw_uv.uv_v, swp->sw_uv.uv_du, swp->sw_uv.uv_dv,
 			pp->pt_inseg->seg_stp->st_name );
 		swp->sw_uv.uv_du = swp->sw_uv.uv_dv = 0;
@@ -418,7 +418,7 @@ char	*dp;
 	if (!tp->tx_trans_valid) {
 opaque:
 		VSETALL( swp->sw_color,
-			bw * rt_inv255 / (dx*dy) );
+			bw * bn_inv255 / (dx*dy) );
 		if( swp->sw_reflect > 0 || swp->sw_transmit > 0 )
 			(void)rr_render( ap, pp, swp );
 		return(1);
@@ -445,7 +445,7 @@ opaque:
 HIDDEN int
 txt_setup( rp, matparm, dpp, mfp, rtip )
 register struct region	*rp;
-struct rt_vls		*matparm;
+struct bu_vls		*matparm;
 char			**dpp;
 CONST struct mfuncs	*mfp;
 struct rt_i             *rtip;  /* New since 4.4 release */
@@ -453,15 +453,15 @@ struct rt_i             *rtip;  /* New since 4.4 release */
 	register struct txt_specific *tp;
 	int		pixelbytes = 3;
 
-	RT_VLS_CHECK( matparm );
-	GETSTRUCT( tp, txt_specific );
+	BU_CK_VLS( matparm );
+	BU_GETSTRUCT( tp, txt_specific );
 	*dpp = (char *)tp;
 
 	tp->tx_file[0] = '\0';
 	tp->tx_w = tp->tx_n = -1;
 	tp->tx_trans_valid = 0;
 	if( bu_struct_parse( matparm, txt_parse, (char *)tp ) < 0 )  {
-		rt_free( (char *)tp, "txt_specific" );
+		bu_free( (char *)tp, "txt_specific" );
 		return(-1);
 	}
 	if( tp->tx_w < 0 )  tp->tx_w = 512;
@@ -471,14 +471,14 @@ struct rt_i             *rtip;  /* New since 4.4 release */
 		rp->reg_transmit = 1;
 
 	if( tp->tx_file[0] == '\0' )  return -1;	/* FAIL, no file */
-	if( !(tp->mp = rt_open_mapped_file( tp->tx_file, NULL )) )
+	if( !(tp->mp = bu_open_mapped_file( tp->tx_file, NULL )) )
 		return -1;				/* FAIL */
 
 	/* Ensure file is large enough */
 	if( strcmp( mfp->mf_name, "bwtexture" ) == 0 )
 		pixelbytes = 1;
 	if( tp->mp->buflen < tp->tx_w * tp->tx_n * pixelbytes )  {
-		rt_log("\ntxt_setup() ERROR %s %s needs %d bytes, '%s' only has %d\n",
+		bu_log("\ntxt_setup() ERROR %s %s needs %d bytes, '%s' only has %d\n",
 			rp->reg_name,
 			mfp->mf_name,
 			tp->tx_w * tp->tx_n * pixelbytes,
@@ -510,8 +510,8 @@ char *cp;
 	struct txt_specific *tp =
 		(struct txt_specific *)cp;
 
-	if( tp->mp )  rt_close_mapped_file( tp->mp );
-	rt_free( cp, "txt_specific" );
+	if( tp->mp )  bu_close_mapped_file( tp->mp );
+	bu_free( cp, "txt_specific" );
 }
 
 struct ckr_specific  {
@@ -523,9 +523,9 @@ struct ckr_specific  {
 #define CKR_O(m)	offsetof(struct ckr_specific, m)
 
 struct bu_structparse ckr_parse[] = {
-	{"%d",	3, "a",	offsetofarray(struct ckr_specific, ckr_a), FUNC_NULL },
-	{"%d",	3, "b",	offsetofarray(struct ckr_specific, ckr_b), FUNC_NULL },
-	{"%f",	1, "s", offsetof(struct ckr_specific, ckr_scale), FUNC_NULL },
+	{"%d",	3, "a",	bu_offsetofarray(struct ckr_specific, ckr_a), BU_STRUCTPARSE_FUNC_NULL },
+	{"%d",	3, "b",	bu_offsetofarray(struct ckr_specific, ckr_b), BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",	1, "s", offsetof(struct ckr_specific, ckr_scale), BU_STRUCTPARSE_FUNC_NULL },
 	{"",	0, (char *)0,	0,			FUNC_NULL }
 };
 
@@ -563,9 +563,9 @@ char	*dp;
 #endif
 
 	VSET( swp->sw_color,
-		(unsigned char)cp[0] * rt_inv255,
-		(unsigned char)cp[1] * rt_inv255,
-		(unsigned char)cp[2] * rt_inv255 );
+		(unsigned char)cp[0] * bn_inv255,
+		(unsigned char)cp[1] * bn_inv255,
+		(unsigned char)cp[2] * bn_inv255 );
 
 	if( swp->sw_reflect > 0 || swp->sw_transmit > 0 )
 		(void)rr_render( ap, pp, swp );
@@ -579,7 +579,7 @@ char	*dp;
 HIDDEN int
 ckr_setup( rp, matparm, dpp, mfp, rtip )
 register struct region	 *rp;
-struct rt_vls		*matparm;
+struct bu_vls		*matparm;
 char			**dpp;
 struct mfuncs           *mfp;
 struct rt_i             *rtip;  /* New since 4.4 release */
@@ -587,13 +587,13 @@ struct rt_i             *rtip;  /* New since 4.4 release */
 	register struct ckr_specific *ckp;
 
 	/* Default will be white and black checkers */
-	GETSTRUCT( ckp, ckr_specific );
+	BU_GETSTRUCT( ckp, ckr_specific );
 	*dpp = (char *)ckp;
 	ckp->ckr_a[0] = ckp->ckr_a[1] = ckp->ckr_a[2] = 255;
 	ckp->ckr_b[0] = ckp->ckr_b[1] = ckp->ckr_b[2] = 0;
 	ckp->ckr_scale = 2.0;
 	if( bu_struct_parse( matparm, ckr_parse, (char *)ckp ) < 0 )  {
-		rt_free( (char *)ckp, "ckr_specific" );
+		bu_free( (char *)ckp, "ckr_specific" );
 		return(-1);
 	}
 	ckp->ckr_a[0] &= 0x0ff;
@@ -622,7 +622,7 @@ HIDDEN void
 ckr_free( cp )
 char *cp;
 {
-	rt_free( cp, "ckr_specific" );
+	bu_free( cp, "ckr_specific" );
 }
 
 /*
@@ -736,7 +736,7 @@ char	*dp;
 	}
 	/* u is left->right index, v is line number bottom->top */
 	if( swp->sw_uv.uv_u < 0 || swp->sw_uv.uv_u > 1 || swp->sw_uv.uv_v < 0 || swp->sw_uv.uv_v > 1 )  {
-		rt_log("bmp_render:  bad u,v=%g,%g du,dv=%g,%g seg=%s\n",
+		bu_log("bmp_render:  bad u,v=%g,%g du,dv=%g,%g seg=%s\n",
 			swp->sw_uv.uv_u, swp->sw_uv.uv_v,
 			swp->sw_uv.uv_du, swp->sw_uv.uv_dv,
 			pp->pt_inseg->seg_stp->st_name );
@@ -764,8 +764,8 @@ char	*dp;
 		VPRINT("normal", swp->sw_hit.hit_normal);
 		VPRINT("u", u );
 		VPRINT("v", v );
-		rt_log("cu = %d, cv = %d\n", *cp, *(cp+2));
-		rt_log("pertU = %g, pertV = %g\n", pertU, pertV);
+		bu_log("cu = %d, cv = %d\n", *cp, *(cp+2));
+		bu_log("pertU = %g, pertV = %g\n", pertU, pertV);
 	}
 	VJOIN2( swp->sw_hit.hit_normal, swp->sw_hit.hit_normal, pertU, u, pertV, v );
 	VUNITIZE( swp->sw_hit.hit_normal );
@@ -785,24 +785,24 @@ char	*dp;
 HIDDEN int
 envmap_setup( rp, matparm, dpp, mfp, rtip, headp )
 register struct region *rp;
-struct rt_vls *matparm;
+struct bu_vls *matparm;
 char	**dpp;
 CONST struct mfuncs	*mfp;
 struct rt_i	*rtip;
 struct mfuncs	**headp;
 {
 	register char	*cp;
-	struct rt_vls	material;
+	struct bu_vls	material;
 
-	RT_VLS_CHECK( matparm );
+	BU_CK_VLS( matparm );
 	RT_CK_RTI(rtip);
 	if( env_region.reg_mfuncs )  {
-		rt_log("envmap_setup:  second environment map ignored\n");
+		bu_log("envmap_setup:  second environment map ignored\n");
 		return(0);		/* drop region */
 	}
 	env_region = *rp;		/* struct copy */
 	/* Get copies of, or eliminate, references to dynamic structures */
-	env_region.reg_name = rt_strdup( rp->reg_name );
+	env_region.reg_name = bu_strdup( rp->reg_name );
 	env_region.reg_treetop = TREE_NULL;
 	env_region.reg_forw = REGION_NULL;
 	env_region.reg_mfuncs = (char *)0;
@@ -810,7 +810,7 @@ struct mfuncs	**headp;
 	env_region.reg_mater.ma_shader = bu_vls_strdup( matparm );
 
 	if( mlib_setup( headp, &env_region, rtip ) < 0 )
-		rt_log("envmap_setup() material '%s' failed\n", env_region.reg_mater );
+		bu_log("envmap_setup() material '%s' failed\n", env_region.reg_mater );
 
 	return(0);		/* This region should be dropped */
 }

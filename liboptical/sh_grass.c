@@ -47,7 +47,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #define CLAMP(_x,_a,_b)     (_x < _a ? _a : (_x > _b ? _b : _x))
 
 #define grass_MAGIC 0x1834    /* make this a unique number for each shader */
-#define CK_grass_SP(_p) RT_CKMAG(_p, grass_MAGIC, "grass_specific")
+#define CK_grass_SP(_p) BU_CKMAG(_p, grass_MAGIC, "grass_specific")
 
 /* compute the Region coordinates of the origin of a cell */
 #define CELL_POS(cell_pos, grass_sp, cell_num) \
@@ -104,7 +104,7 @@ struct grass_ray {
 	struct application *ap;
 };
 #define grass_ray_MAGIC 0x2461
-#define CK_grass_r(_p) RT_CKMAG(_p, grass_ray_MAGIC, "grass_ray")
+#define CK_grass_r(_p) BU_CKMAG(_p, grass_ray_MAGIC, "grass_ray")
 
 /*
  * the shader specific structure contains all variables which are unique
@@ -162,7 +162,7 @@ struct grass_specific grass_defaults = {
 
 #define SHDR_NULL	((struct grass_specific *)0)
 #define SHDR_O(m)	offsetof(struct grass_specific, m)
-#define SHDR_AO(m)	offsetofarray(struct grass_specific, m)
+#define SHDR_AO(m)	bu_offsetofarray(struct grass_specific, m)
 
 /* description of how to parse/print the arguments to the shader
  * There is at least one line here for each variable in the shader specific
@@ -184,7 +184,7 @@ struct bu_structparse grass_print_tab[] = {
 
 };
 struct bu_structparse grass_parse_tab[] = {
-	{"i",	bu_byteoffset(grass_print_tab[0]), "grass_print_tab", 0, FUNC_NULL },
+	{"i",	bu_byteoffset(grass_print_tab[0]), "grass_print_tab", 0, BU_STRUCTPARSE_FUNC_NULL },
 	{"%f",  2, "c",			SHDR_AO(cell),		FUNC_NULL },
 	{"%f",	1, "p",			SHDR_O(ppc),		FUNC_NULL },
 	{"%f",	1, "pd",		SHDR_O(ppcd),		FUNC_NULL },
@@ -429,7 +429,7 @@ struct grass_specific *grass_sp;
         VUNITIZE(grass_sp->proto.b[blade].leaf[seg].N);
     }
     blade_rot(&grass_sp->proto.b[blade], &grass_sp->proto.b[blade], m, grass_sp->proto.root);
-    bn_mat_mul2(r, m);
+    bn_bn_mat_mul2(r, m);
   }
 
 
@@ -483,7 +483,7 @@ struct grass_specific *grass_sp;
 HIDDEN int
 grass_setup( rp, matparm, dpp, mfp, rtip)
 register struct region	*rp;
-struct rt_vls		*matparm;
+struct bu_vls		*matparm;
 char			**dpp;	/* pointer to reg_udata in *rp */
 struct mfuncs		*mfp;
 struct rt_i		*rtip;	/* New since 4.4 release */
@@ -492,15 +492,15 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 
 	/* check the arguments */
 	RT_CHECK_RTI(rtip);
-	RT_VLS_CHECK( matparm );
+	BU_CK_VLS( matparm );
 	RT_CK_REGION(rp);
 
 
 	if( rdebug&RDEBUG_SHADE)
-		rt_log("grass_setup(%s)\n", rp->reg_name);
+		bu_log("grass_setup(%s)\n", rp->reg_name);
 
 	/* Get memory for the shader parameters and shader-specific data */
-	GETSTRUCT( grass_sp, grass_specific );
+	BU_GETSTRUCT( grass_sp, grass_specific );
 	*dpp = (char *)grass_sp;
 
 	/* initialize the default values for the shader */
@@ -523,13 +523,13 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	 */
 	db_region_mat(grass_sp->m_to_sh, rtip->rti_dbip, rp->reg_name);
 
-	mat_inv(grass_sp->sh_to_m, grass_sp->m_to_sh);
+	bn_mat_inv(grass_sp->sh_to_m, grass_sp->m_to_sh);
 
 	if( rdebug&RDEBUG_SHADE) {
 
 		bu_struct_print( " Parameters:", grass_print_tab, (char *)grass_sp );
-		mat_print( "m_to_sh", grass_sp->m_to_sh );
-		mat_print( "sh_to_m", grass_sp->sh_to_m );
+		bn_mat_print( "m_to_sh", grass_sp->m_to_sh );
+		bn_mat_print( "sh_to_m", grass_sp->sh_to_m );
 	}
 
 	if (grass_sp->proto.magic != PLANT_MAGIC) {
@@ -558,7 +558,7 @@ HIDDEN void
 grass_free( cp )
 char *cp;
 {
-	rt_free( cp, "grass_specific" );
+	bu_free( cp, "grass_specific" );
 }
 
 static void

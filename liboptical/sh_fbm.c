@@ -58,9 +58,9 @@ static struct fbm_specific fbm_defaults = {
 
 #define FBM_NULL	((struct fbm_specific *)0)
 #define FBM_O(m)	offsetof(struct fbm_specific, m)
-#define FBM_AO(m)	offsetofarray(struct fbm_specific, m)
+#define FBM_AO(m)	bu_offsetofarray(struct fbm_specific, m)
 
-struct structparse fbm_parse[] = {
+struct bu_structparse fbm_parse[] = {
 	{"%f",	1, "lacunarity",	FBM_O(lacunarity),	FUNC_NULL },
 	{"%f",	1, "H", 		FBM_O(h_val),		FUNC_NULL },
 	{"%f",	1, "octaves", 		FBM_O(octaves),		FUNC_NULL },
@@ -93,24 +93,24 @@ struct mfuncs fbm_mfuncs[] = {
 HIDDEN int
 fbm_setup( rp, matparm, dpp )
 register struct region *rp;
-struct rt_vls	*matparm;
+struct bu_vls	*matparm;
 char	**dpp;
 {
 	register struct fbm_specific *fbm;
 
-	RT_VLS_CHECK( matparm );
-	GETSTRUCT( fbm, fbm_specific );
+	BU_CK_VLS( matparm );
+	BU_GETSTRUCT( fbm, fbm_specific );
 	*dpp = (char *)fbm;
 
 	memcpy(fbm, &fbm_defaults, sizeof(struct fbm_specific) );
 	if( rdebug&RDEBUG_SHADE)
-		rt_log("fbm_setup\n");
+		bu_log("fbm_setup\n");
 
-	if( rt_structparse( matparm, fbm_parse, (char *)fbm ) < 0 )
+	if( bu_struct_parse( matparm, fbm_parse, (char *)fbm ) < 0 )
 		return(-1);
 
 	if( rdebug&RDEBUG_SHADE)
-		rt_structprint( rp->reg_name, fbm_parse, (char *)fbm );
+		bu_struct_print( rp->reg_name, fbm_parse, (char *)fbm );
 
 	return(1);
 }
@@ -123,7 +123,7 @@ fbm_print( rp, dp )
 register struct region *rp;
 char	*dp;
 {
-	rt_structprint( rp->reg_name, fbm_parse, (char *)dp );
+	bu_struct_print( rp->reg_name, fbm_parse, (char *)dp );
 }
 
 /*
@@ -133,7 +133,7 @@ HIDDEN void
 fbm_free( cp )
 char *cp;
 {
-	rt_free( cp, "fbm_specific" );
+	bu_free( cp, "fbm_specific" );
 }
 
 /*
@@ -152,18 +152,18 @@ char	*dp;
 	point_t pt;
 
 	if( rdebug&RDEBUG_SHADE)
-		rt_structprint( "foo", fbm_parse, (char *)fbm_sp );
+		bu_struct_print( "foo", fbm_parse, (char *)fbm_sp );
 
 	pt[0] = swp->sw_hit.hit_point[0] * fbm_sp->scale[0];
 	pt[1] = swp->sw_hit.hit_point[1] * fbm_sp->scale[1];
 	pt[2] = swp->sw_hit.hit_point[2] * fbm_sp->scale[2];
 
-	noise_vec(pt, v_noise);
+	bn_noise_vec(pt, v_noise);
 
 	VSCALE(v_noise, v_noise, fbm_sp->distortion);
 
 	if( rdebug&RDEBUG_SHADE)
-		rt_log("fbm_render: point (%g %g %g) becomes (%g %g %g)\n\tv_noise (%g %g %g)\n",
+		bu_log("fbm_render: point (%g %g %g) becomes (%g %g %g)\n\tv_noise (%g %g %g)\n",
 			V3ARGS(swp->sw_hit.hit_point),
 			V3ARGS(pt),
 			V3ARGS(v_noise));

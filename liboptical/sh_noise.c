@@ -43,7 +43,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "../rt/rdebug.h"
 
 #define noise_MAGIC 0x1847
-#define CK_noise_SP(_p) RT_CKMAG(_p, noise_MAGIC, "noise_specific")
+#define CK_noise_SP(_p) BU_CKMAG(_p, noise_MAGIC, "noise_specific")
 
 /* This allows us to specify the "size" parameter as values like ".5m"
  * or "27in" rather than using mm all the time.
@@ -58,12 +58,12 @@ CONST char				*value;	/* string containing value */
 	double *p = (double *)(base+sdp->sp_offset);
 
 	if( rdebug&RDEBUG_SHADE)
-		rt_log("%s value %s ", name, value);
+		bu_log("%s value %s ", name, value);
 	/* reconvert with optional units */
 	*p = rt_mm_value(value);
 
 	if( rdebug&RDEBUG_SHADE)
-		rt_log(" %g\n", *p);
+		bu_log(" %g\n", *p);
 
 }
 
@@ -128,7 +128,7 @@ struct noise_specific noise_defaults = {
 
 #define SHDR_NULL	((struct noise_specific *)0)
 #define SHDR_O(m)	offsetof(struct noise_specific, m)
-#define SHDR_AO(m)	offsetofarray(struct noise_specific, m)
+#define SHDR_AO(m)	bu_offsetofarray(struct noise_specific, m)
 
 
 /* description of how to parse/print the arguments to the shader
@@ -148,7 +148,7 @@ struct bu_structparse noise_print_tab[] = {
 
 };
 struct bu_structparse noise_parse_tab[] = {
-	{"i",	bu_byteoffset(noise_print_tab[0]), "noise_print_tab", 0, FUNC_NULL },
+	{"i",	bu_byteoffset(noise_print_tab[0]), "noise_print_tab", 0, BU_STRUCTPARSE_FUNC_NULL },
 	{"%f",	1, "lacunarity",	SHDR_O(lacunarity),	FUNC_NULL },
 	{"%f",	1, "l",			SHDR_O(lacunarity),	FUNC_NULL },
 	{"%f",	1, "H", 		SHDR_O(h_val),		FUNC_NULL },
@@ -223,7 +223,7 @@ struct mfuncs noise_mfuncs[] = {
 HIDDEN int
 noise_setup( rp, matparm, dpp, mfp, rtip)
 register struct region	*rp;
-struct rt_vls		*matparm;
+struct bu_vls		*matparm;
 char			**dpp;	/* pointer to reg_udata in *rp */
 struct mfuncs		*mfp;
 struct rt_i		*rtip;	/* New since 4.4 release */
@@ -236,17 +236,17 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 
 	/* check the arguments */
 	RT_CHECK_RTI(rtip);
-	RT_VLS_CHECK( matparm );
+	BU_CK_VLS( matparm );
 	RT_CK_REGION(rp);
 
 
 	if( rdebug&RDEBUG_SHADE)
-		rt_log("noise_setup(%s, %s) (%s)\n",
+		bu_log("noise_setup(%s, %s) (%s)\n",
 			rp->reg_name, bu_vls_addr(matparm),
 			rp->reg_mater.ma_shader);
 
 	/* Get memory for the shader parameters and shader-specific data */
-	GETSTRUCT( noise_sp, noise_specific );
+	BU_GETSTRUCT( noise_sp, noise_specific );
 	*dpp = (char *)noise_sp;
 
 	/* initialize the default values for the shader */
@@ -261,7 +261,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 		if (!strcmp(noise_mfuncs[i].mf_name, mfp->mf_name))
 			goto found;
 	}
-	rt_log("shader name \"%s\" not recognized, assuming \"%s\"\n",
+	bu_log("shader name \"%s\" not recognized, assuming \"%s\"\n",
 		mfp->mf_name, noise_mfuncs[0].mf_name);
 	i = 0;
 found:
@@ -269,7 +269,7 @@ found:
 
 	db_region_mat(model_to_region, rtip->rti_dbip, rp->reg_name);
 
-	mat_idn(tmp);
+	bn_mat_idn(tmp);
 	if (noise_sp->size != 1.0) {
 		/* the user sets "size" to the size of the biggest
 		 * noise-space blob in model coordinates
@@ -281,23 +281,23 @@ found:
 		tmp[10] = 1.0/noise_sp->vscale[2];
 	}
 
-	mat_mul(noise_sp->m_to_sh, tmp, model_to_region);
+	bn_mat_mul(noise_sp->m_to_sh, tmp, model_to_region);
 
 	/* Add any translation within shader/region space */
-	mat_idn(tmp);
+	bn_mat_idn(tmp);
 	tmp[MDX] = noise_sp->delta[0];
 	tmp[MDY] = noise_sp->delta[1];
 	tmp[MDZ] = noise_sp->delta[2];
-	mat_mul2(tmp, noise_sp->m_to_sh);
+	bn_mat_mul2(tmp, noise_sp->m_to_sh);
 
-	mat_inv(noise_sp->sh_to_m, noise_sp->m_to_sh);
+	bn_mat_inv(noise_sp->sh_to_m, noise_sp->m_to_sh);
 
 	noise_sp->nsd = 1.0 / 
 		pow(noise_sp->lacunarity, noise_sp->octaves);
 
 	if( rdebug&RDEBUG_SHADE) {
 		bu_struct_print( " Parameters:", noise_print_tab, (char *)noise_sp );
-		mat_print( "m_to_sh", noise_sp->m_to_sh );
+		bn_mat_print( "m_to_sh", noise_sp->m_to_sh );
 	}
 
 	return(1);
@@ -324,7 +324,7 @@ char *cp;
 	register struct noise_specific *noise_sp =
 		(struct noise_specific *)cp;
 
-	rt_free( cp, "noise_specific" );
+	bu_free( cp, "noise_specific" );
 }
 #define RESCALE_NOISE(n) n = n+1.0
 
@@ -436,7 +436,7 @@ char			*dp;	/* ptr to the shader-specific struct */
 	MAT4X3PNT(pt, noise_sp->m_to_sh, swp->sw_hit.hit_point);
 
 	if( rdebug&RDEBUG_SHADE) {
-		rt_log("%s:%d noise_render(%s)  model:(%g %g %g) shader:(%g %g %g)\n", 
+		bu_log("%s:%d noise_render(%s)  model:(%g %g %g) shader:(%g %g %g)\n", 
 		__FILE__, __LINE__,
 		noise_mfuncs[noise_sp->shader_number].mf_name,
 		V3ARGS(swp->sw_hit.hit_point),

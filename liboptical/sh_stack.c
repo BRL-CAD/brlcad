@@ -65,7 +65,7 @@ struct bu_structparse stk_parse[] = {
 HIDDEN int
 ext_setup( rp, matparm, dpp, mf_p, rtip, headp )
 register struct region *rp;
-struct rt_vls	*matparm;	/* parameter string */
+struct bu_vls	*matparm;	/* parameter string */
 char		**dpp;		/* pointer to user data pointer */
 struct mfuncs	*mf_p;
 struct rt_i	*rtip;
@@ -77,7 +77,7 @@ struct mfuncs	**headp;
 	int			status;
 
 	RT_CHECK_RTI(rtip);
-	RT_VLS_CHECK( matparm );
+	BU_CK_VLS( matparm );
 	RT_CK_REGION(rp);
 	
 	filename = bu_vls_addr(matparm);
@@ -114,7 +114,7 @@ struct mfuncs	**headp;
 HIDDEN int
 stk_setup( rp, matparm, dpp, mf_p, rtip, headp )
 register struct region *rp;
-struct rt_vls	*matparm;	/* parameter string */
+struct bu_vls	*matparm;	/* parameter string */
 char		**dpp;		/* pointer to user data pointer */
 struct mfuncs	*mf_p;
 struct rt_i	*rtip;
@@ -126,24 +126,24 @@ struct mfuncs	**headp;
 	int	inputs = 0;
 	struct mfuncs *mfp;
 
-	RT_VLS_CHECK( matparm );
+	BU_CK_VLS( matparm );
 	RT_CK_RTI(rtip);
 
-	GETSTRUCT( sp, stk_specific );
+	BU_GETSTRUCT( sp, stk_specific );
 	*dpp = (char *)sp;
 
 	/*bu_struct_parse( matparm, stk_parse, (char *)sp );*/
 
 	if(rdebug&RDEBUG_MATERIAL || rdebug&RDEBUG_SHADE)
-		rt_log( "stk_setup called with \"%s\"\n", RT_VLS_ADDR(matparm) );
+		bu_log( "stk_setup called with \"%s\"\n", bu_vls_addr(matparm) );
 
 	i = 0;
-	start = cp = RT_VLS_ADDR(matparm);
+	start = cp = bu_vls_addr(matparm);
 	while( *cp != '\0' ) {
 		if( *cp == ';' ) {
 			*cp = '\0';
 			if( i >= 16 ) {
-				rt_log( "stk_setup: max levels exceeded\n" );
+				bu_log( "stk_setup: max levels exceeded\n" );
 				return( 0 );
 			}
 			/* add one */
@@ -153,7 +153,7 @@ struct mfuncs	**headp;
 					i++;
 			} else {
 				/* XXX else clear entry? */
-				rt_log("stk_setup problem\n");
+				bu_log("stk_setup problem\n");
 			}
 			start = ++cp;
 		} else {
@@ -162,7 +162,7 @@ struct mfuncs	**headp;
 	}
 	if( start != cp ) {
 		if( i >= 16 ) {
-			rt_log( "stk_setup: max levels exceeded\n" );
+			bu_log( "stk_setup: max levels exceeded\n" );
 			return( 0 );
 		}
 		/* add one */
@@ -176,7 +176,7 @@ struct mfuncs	**headp;
 	}
 
 	/* Request only those input bits needed by subordinate shaders */
-	GETSTRUCT( mfp, mfuncs );
+	BU_GETSTRUCT( mfp, mfuncs );
 	bcopy( (char *)rp->reg_mfuncs, (char *)mfp, sizeof(*mfp) );
 	mfp->mf_inputs = inputs;
 	rp->reg_mfuncs = (genptr_t)mfp;
@@ -233,14 +233,14 @@ char	*dp;
 		(struct stk_specific *)dp;
 	int	i;
 
-	rt_log("~~~~starting stack print\n");
+	bu_log("~~~~starting stack print\n");
 
 	for( i = 0; i < 16 && sp->mfuncs[i] != NULL; i++ ) {
-		rt_log("~~~~stack entry %d:\n", i);
+		bu_log("~~~~stack entry %d:\n", i);
 		sp->mfuncs[i]->mf_print( rp, sp->udata[i] );
 	}
 
-	rt_log("~~~~ending stack print\n");
+	bu_log("~~~~ending stack print\n");
 }
 
 /*
@@ -258,7 +258,7 @@ char *cp;
 		sp->mfuncs[i]->mf_free( sp->udata[i] );
 	}
 
-	rt_free( cp, "stk_specific" );
+	bu_free( cp, "stk_specific" );
 }
 
 /*
@@ -273,14 +273,14 @@ struct rt_i	*rtip;
 struct mfuncs	**headp;
 {
 	register struct mfuncs *mfp;
-	struct rt_vls	arg;
+	struct bu_vls	arg;
 	char	matname[32];
 	int	i;
 
 	RT_CK_RTI(rtip);
 
 	if(rdebug&RDEBUG_MATERIAL)
-		rt_log( "...starting \"%s\"\n", cp );
+		bu_log( "...starting \"%s\"\n", cp );
 
 	/* skip leading white space */
 	while( *cp == ' ' || *cp == '\t' )
@@ -301,22 +301,22 @@ struct mfuncs	**headp;
 			continue;
 		goto found;
 	}
-	rt_log("stack_setup(%s):  material not known\n",
+	bu_log("stack_setup(%s):  material not known\n",
 		matname );
 	return(-1);
 
 found:
 	*mpp = (char *)mfp;
 	*dpp = (char *)0;
-	RT_VLS_INIT( &arg );
+	bu_vls_init( &arg );
 	if (*cp != '\0' )
-		rt_vls_strcat( &arg, ++cp );
+		bu_vls_strcat( &arg, ++cp );
 	if( rdebug&RDEBUG_SHADE)
 		bu_log("calling %s with %s\n", mfp->mf_name, bu_vls_addr(&arg));
 	if( mfp->mf_setup( rp, &arg, dpp, mfp, rtip, headp ) < 0 )  {
 		/* What to do if setup fails? */
 		return(-1);		/* BAD */
 	}
-	rt_vls_free( &arg );
+	bu_vls_free( &arg );
 	return(0);			/* OK */
 }

@@ -43,7 +43,7 @@ struct spm_specific {
 #define SP_O(m)	offsetof(struct spm_specific, m)
 
 struct bu_structparse spm_parse[] = {
-	{"%s",	SPM_NAME_LEN, "file",		offsetofarray(struct spm_specific, sp_file),	FUNC_NULL },
+	{"%s",	SPM_NAME_LEN, "file",		bu_offsetofarray(struct spm_specific, sp_file),	FUNC_NULL },
 	{"%d",	1, "w",		SP_O(sp_w),	FUNC_NULL },
 	{"%d",	1, "n",		SP_O(sp_w),	FUNC_NULL },	/*compat*/
 	{"",	0, (char *)0,	0,		FUNC_NULL }
@@ -100,21 +100,21 @@ char	*dp;
 HIDDEN int
 spm_setup( rp, matparm, dpp, mfp, rtip )
 register struct region *rp;
-struct rt_vls	*matparm;
+struct bu_vls	*matparm;
 char	**dpp;
 struct mfuncs           *mfp;
 struct rt_i             *rtip;  /* New since 4.4 release */
 {
 	register struct spm_specific *spp;
 
-	RT_VLS_CHECK( matparm );
-	GETSTRUCT( spp, spm_specific );
+	BU_CK_VLS( matparm );
+	BU_GETSTRUCT( spp, spm_specific );
 	*dpp = (char *)spp;
 
 	spp->sp_file[0] = '\0';
 	spp->sp_w = -1;
 	if( bu_struct_parse( matparm, spm_parse, (char *)spp ) < 0 )  {
-		rt_free( (char *)spp, "spm_specific" );
+		bu_free( (char *)spp, "spm_specific" );
 		return(-1);
 	}
 	if( spp->sp_w < 0 )  spp->sp_w = 512;
@@ -142,7 +142,7 @@ char	*dp;
 
 	spm = (struct spm_specific *)dp;
 
-	rt_log("spm_print(rp=x%x, dp=x%x)\n", rp, dp);
+	bu_log("spm_print(rp=x%x, dp=x%x)\n", rp, dp);
 	(void)bu_struct_print("spm_print", spm_parse, (char *)dp);
 	if( spm->sp_map )  spm_dump( spm->sp_map, 0 );
 }
@@ -157,5 +157,5 @@ char *cp;
 
 	if( spm->sp_map )  spm_free( spm->sp_map );
 	spm->sp_map = NULL;
-	rt_free( cp, "spm_specific" );
+	bu_free( cp, "spm_specific" );
 }

@@ -50,7 +50,7 @@ struct points_specific {
 #define POINTS_O(m)	offsetof(struct points_specific, m)
 
 struct bu_structparse points_parse[] = {
-	{"%s",	PT_NAME_LEN, "file", offsetofarray(struct points_specific, pt_file),	FUNC_NULL },
+	{"%s",	PT_NAME_LEN, "file", bu_offsetofarray(struct points_specific, pt_file),	FUNC_NULL },
 	{"%d",	1, "size",		POINTS_O(pt_size),	FUNC_NULL },
 	{"%d",	1, "w",			POINTS_O(pt_size),	FUNC_NULL },
 	{"",	0, (char *)0,		0,			FUNC_NULL }
@@ -85,7 +85,7 @@ struct points {
 HIDDEN int
 points_setup( rp, matparm, dpp, mfp, rtip )
 register struct region *rp;
-struct rt_vls	*matparm;
+struct bu_vls	*matparm;
 char	**dpp;
 struct mfuncs           *mfp;
 struct rt_i             *rtip;  /* New since 4.4 release */
@@ -94,15 +94,15 @@ struct rt_i             *rtip;  /* New since 4.4 release */
 	char	buf[513];
 	FILE	*fp;
 
-	RT_VLS_CHECK( matparm );
-	GETSTRUCT( ptp, points_specific );
+	BU_CK_VLS( matparm );
+	BU_GETSTRUCT( ptp, points_specific );
 	*dpp = (char *)ptp;
 
 	/* get or default shader parameters */
 	ptp->pt_file[0] = '\0';
 	ptp->pt_size = -1;
 	if( bu_struct_parse( matparm, points_parse, (char *)ptp ) < 0 )  {
-		rt_free( (char *)ptp, "points_specific" );
+		bu_free( (char *)ptp, "points_specific" );
 		return(-1);
 	}
 	if( ptp->pt_size < 0 )
@@ -116,7 +116,7 @@ struct rt_i             *rtip;  /* New since 4.4 release */
 
 	/* read in the data */
 	if( (fp = fopen(ptp->pt_file, "r")) == NULL ) {
-		rt_log("points_setup: can't open \"%s\"\n", ptp->pt_file);
+		bu_log("points_setup: can't open \"%s\"\n", ptp->pt_file);
 		goto fail;
 	}
 	while( fgets(buf,512,fp) != NULL ) {
@@ -126,7 +126,7 @@ struct rt_i             *rtip;  /* New since 4.4 release */
 		if( buf[0] == '#' )
 			continue;		/* comment */
 
-		pp = (struct points *)rt_calloc(1, sizeof(struct points), "point");
+		pp = (struct points *)bu_calloc(1, sizeof(struct points), "point");
 		sscanf( buf, "%lf%lf%lf", &u, &v, &mag );
 		pp->u = u;
 		pp->v = v;
@@ -143,7 +143,7 @@ struct rt_i             *rtip;  /* New since 4.4 release */
 
 	return(1);
 fail:
-	rt_free( (char *)ptp, "points_specific" );
+	bu_free( (char *)ptp, "points_specific" );
 	return(-1);
 }
 
@@ -172,7 +172,7 @@ char	*dp;
 
 swp->sw_uv.uv_du = ap->a_diverge;
 swp->sw_uv.uv_dv = ap->a_diverge;
-	/*rt_log( "du,dv = %g %g\n", swp->sw_uv.uv_du, swp->sw_uv.uv_dv);*/
+	/*bu_log( "du,dv = %g %g\n", swp->sw_uv.uv_du, swp->sw_uv.uv_dv);*/
 
 	/* compute and clip bounds in u,v space */
 	umin = swp->sw_uv.uv_u - swp->sw_uv.uv_du;
@@ -207,7 +207,7 @@ swp->sw_uv.uv_dv = ap->a_diverge;
 		}
 	}
 
-	/*rt_log( "points_render ([%g %g][%g %g]) = %g\n",
+	/*bu_log( "points_render ([%g %g][%g %g]) = %g\n",
 		umin, umax, vmin, vmax, mag );*/
 
 	if( mag == 0 ) {

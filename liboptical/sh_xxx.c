@@ -35,7 +35,7 @@
 #include "../rt/rdebug.h"
 
 #define xxx_MAGIC 0x1834    /* make this a unique number for each shader */
-#define CK_xxx_SP(_p) RT_CKMAG(_p, xxx_MAGIC, "xxx_specific")
+#define CK_xxx_SP(_p) BU_CKMAG(_p, xxx_MAGIC, "xxx_specific")
 
 /*
  * the shader specific structure contains all variables which are unique
@@ -73,7 +73,7 @@ struct xxx_specific xxx_defaults = {
 
 #define SHDR_NULL	((struct xxx_specific *)0)
 #define SHDR_O(m)	offsetof(struct xxx_specific, m)
-#define SHDR_AO(m)	offsetofarray(struct xxx_specific, m)
+#define SHDR_AO(m)	bu_offsetofarray(struct xxx_specific, m)
 
 
 /* description of how to parse/print the arguments to the shader
@@ -90,7 +90,7 @@ struct bu_structparse xxx_print_tab[] = {
 
 };
 struct bu_structparse xxx_parse_tab[] = {
-	{"i",	bu_byteoffset(xxx_print_tab[0]), "xxx_print_tab", 0, FUNC_NULL },
+	{"i",	bu_byteoffset(xxx_print_tab[0]), "xxx_print_tab", 0, BU_STRUCTPARSE_FUNC_NULL },
 	{"%f",  1, "v",		SHDR_O(xxx_val),	FUNC_NULL },
 	{"%f",  1, "dist",	SHDR_O(xxx_dist),	bu_mm_cvt },
 	{"%f",  3, "d",		SHDR_AO(xxx_delta),	FUNC_NULL },
@@ -126,7 +126,7 @@ struct mfuncs xxx_mfuncs[] = {
 HIDDEN int
 xxx_setup( rp, matparm, dpp, mfp, rtip)
 register struct region	*rp;
-struct rt_vls		*matparm;
+struct bu_vls		*matparm;
 char			**dpp;	/* pointer to reg_udata in *rp */
 struct mfuncs		*mfp;
 struct rt_i		*rtip;	/* New since 4.4 release */
@@ -137,15 +137,15 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 
 	/* check the arguments */
 	RT_CHECK_RTI(rtip);
-	RT_VLS_CHECK( matparm );
+	BU_CK_VLS( matparm );
 	RT_CK_REGION(rp);
 
 
 	if( rdebug&RDEBUG_SHADE)
-		rt_log("xxx_setup(%s)\n", rp->reg_name);
+		bu_log("xxx_setup(%s)\n", rp->reg_name);
 
 	/* Get memory for the shader parameters and shader-specific data */
-	GETSTRUCT( xxx_sp, xxx_specific );
+	BU_GETSTRUCT( xxx_sp, xxx_specific );
 	*dpp = (char *)xxx_sp;
 
 	/* initialize the default values for the shader */
@@ -179,7 +179,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 
 	if( rdebug&RDEBUG_SHADE) {
 		bu_struct_print( " Parameters:", xxx_print_tab, (char *)xxx_sp );
-		mat_print( "m_to_sh", xxx_sp->xxx_m_to_sh );
+		bn_mat_print( "m_to_sh", xxx_sp->xxx_m_to_sh );
 	}
 
 	return(1);
@@ -203,7 +203,7 @@ HIDDEN void
 xxx_free( cp )
 char *cp;
 {
-	rt_free( cp, "xxx_specific" );
+	bu_free( cp, "xxx_specific" );
 }
 
 /*
@@ -240,7 +240,7 @@ char			*dp;	/* ptr to the shader-specific struct */
 	 */
 
 	if( rdebug&RDEBUG_SHADE) {
-		rt_log("xxx_render()  model:(%g %g %g) shader:(%g %g %g)\n", 
+		bu_log("xxx_render()  model:(%g %g %g) shader:(%g %g %g)\n", 
 		V3ARGS(swp->sw_hit.hit_point),
 		V3ARGS(pt) );
 	}

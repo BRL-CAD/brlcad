@@ -78,10 +78,10 @@ fastf_t Contrast, initFx, initFy;
 	 * Compute initial Phases and Frequencies
 	 * Freq "1" goes through 2Pi as x or y go thru 0.0 -> 1.0
 	 */
-	Fx = rt_twopi * initFx;
-	Fy = rt_twopi * initFy;
-	Px = rt_halfpi * tab_sin( 0.5 * Fy * y );
-	Py = rt_halfpi * tab_sin( 0.5 * Fx * x );
+	Fx = bn_twopi * initFx;
+	Fy = bn_twopi * initFy;
+	Px = bn_halfpi * tab_sin( 0.5 * Fy * y );
+	Py = bn_halfpi * tab_sin( 0.5 * Fx * x );
 	C = 1.0;	/* ??? */
 
 	for( i = 0; i < NUMSINES; i++ ) {
@@ -95,8 +95,8 @@ fastf_t Contrast, initFx, initFy;
 		 * Compute the new phases and frequencies.
 		 * N.B. The phases shouldn't vary the same way!
 		 */
-		Px = rt_halfpi * tab_sin( Fy * y );
-		Py = rt_halfpi * tab_sin( Fx * x );
+		Px = bn_halfpi * tab_sin( Fy * y );
+		Py = bn_halfpi * tab_sin( Fx * x );
 		Fx *= 2.0;
 		Fy *= 2.0;
 		C  *= 0.707;
@@ -115,15 +115,15 @@ fastf_t Contrast, initFx, initFy;
 HIDDEN int
 cloud_setup( rp, matparm, dpp, mfp, rtip )
 register struct region *rp;
-struct rt_vls	*matparm;
+struct bu_vls	*matparm;
 char	**dpp;
 struct mfuncs	*mfp;
 struct rt_i	*rtip;
 {
 	register struct cloud_specific *cp;
 
-	RT_VLS_CHECK( matparm );
-	GETSTRUCT( cp, cloud_specific );
+	BU_CK_VLS( matparm );
+	BU_GETSTRUCT( cp, cloud_specific );
 	*dpp = (char *)cp;
 
 	cp->cl_thresh = 0.35;
@@ -152,7 +152,7 @@ HIDDEN void
 cloud_free( cp )
 char *cp;
 {
-	rt_free( cp, "cloud_specific" );
+	bu_free( cp, "cloud_specific" );
 }
 
 /*

@@ -119,15 +119,15 @@ extern double phg_ipow();
 HIDDEN int
 phong_setup( rp, matparm, dpp, mfp, rtip )
 register struct region *rp;
-struct rt_vls	*matparm;
+struct bu_vls	*matparm;
 char	**dpp;
 struct mfuncs           *mfp;
 struct rt_i             *rtip;  /* New since 4.4 release */
 {
 	register struct phong_specific *pp;
 
-	RT_VLS_CHECK( matparm );
-	GETSTRUCT( pp, phong_specific );
+	BU_CK_VLS( matparm );
+	BU_GETSTRUCT( pp, phong_specific );
 	*dpp = (char *)pp;
 
 	pp->magic = PL_MAGIC;
@@ -141,7 +141,7 @@ struct rt_i             *rtip;  /* New since 4.4 release */
 	pp->mfp = mfp;
 
 	if( bu_struct_parse( matparm, phong_parse, (char *)pp ) < 0 )  {
-		rt_free( (char *)pp, "phong_specific" );
+		bu_free( (char *)pp, "phong_specific" );
 		return(-1);
 	}
 
@@ -156,15 +156,15 @@ struct rt_i             *rtip;  /* New since 4.4 release */
 HIDDEN int
 mirror_setup( rp, matparm, dpp, mfp, rtip )
 register struct region *rp;
-struct rt_vls	*matparm;
+struct bu_vls	*matparm;
 char	**dpp;
 struct mfuncs           *mfp;
 struct rt_i             *rtip;  /* New since 4.4 release */
 {
 	register struct phong_specific *pp;
 
-	RT_VLS_CHECK( matparm );
-	GETSTRUCT( pp, phong_specific );
+	BU_CK_VLS( matparm );
+	BU_GETSTRUCT( pp, phong_specific );
 	*dpp = (char *)pp;
 
 	pp->magic = PL_MAGIC;
@@ -178,7 +178,7 @@ struct rt_i             *rtip;  /* New since 4.4 release */
 	pp->mfp = mfp;
 
 	if( bu_struct_parse( matparm, phong_parse, (char *)pp ) < 0 )  {
-		rt_free( (char *)pp, "phong_specific" );
+		bu_free( (char *)pp, "phong_specific" );
 		return(-1);
 	}
 
@@ -193,15 +193,15 @@ struct rt_i             *rtip;  /* New since 4.4 release */
 HIDDEN int
 glass_setup( rp, matparm, dpp, mfp, rtip )
 register struct region *rp;
-struct rt_vls	*matparm;
+struct bu_vls	*matparm;
 char	**dpp;
 struct mfuncs           *mfp;
 struct rt_i             *rtip;  /* New since 4.4 release */
 {
 	register struct phong_specific *pp;
 
-	RT_VLS_CHECK( matparm );
-	GETSTRUCT( pp, phong_specific );
+	BU_CK_VLS( matparm );
+	BU_GETSTRUCT( pp, phong_specific );
 	*dpp = (char *)pp;
 
 	pp->magic = PL_MAGIC;
@@ -216,7 +216,7 @@ struct rt_i             *rtip;  /* New since 4.4 release */
 	pp->mfp = mfp;
 
 	if( bu_struct_parse( matparm, phong_parse, (char *)pp ) < 0 )  {
-		rt_free( (char *)pp, "phong_specific" );
+		bu_free( (char *)pp, "phong_specific" );
 		return(-1);
 	}
 
@@ -243,7 +243,7 @@ HIDDEN void
 phong_free( cp )
 char *cp;
 {
-	rt_free( cp, "phong_specific" );
+	bu_free( cp, "phong_specific" );
 }
 
 
@@ -339,7 +339,7 @@ char	*dp;
 	struct phong_specific *ps =
 		(struct phong_specific *)dp;
 
-	if( ps->magic != PL_MAGIC )  rt_log("phong_render: bad magic\n");
+	if( ps->magic != PL_MAGIC )  bu_log("phong_render: bad magic\n");
 
 	if( rdebug&RDEBUG_SHADE)
 		bu_struct_print( "phong_render", phong_parse, (char *)ps );
@@ -366,7 +366,7 @@ char	*dp;
 	/* Diffuse reflectance from "Ambient" light source (at eye) */
 	if( (cosine = -VDOT( swp->sw_hit.hit_normal, ap->a_ray.r_dir )) > 0.0 )  {
 		if( cosine > 1.00001 )  {
-			rt_log("cosAmb=1+%g (x%d,y%d,lvl%d)\n", cosine-1,
+			bu_log("cosAmb=1+%g (x%d,y%d,lvl%d)\n", cosine-1,
 				ap->a_x, ap->a_y, ap->a_level);
 			cosine = 1;
 		}
@@ -406,7 +406,7 @@ char	*dp;
 		/* Diffuse reflectance from this light source. */
 		if( (cosine = VDOT( swp->sw_hit.hit_normal, to_light )) > 0.0 )  {
 			if( cosine > 1.00001 )  {
-				rt_log("cosI=1+%g (x%d,y%d,lvl%d)\n", cosine-1,
+				bu_log("cosI=1+%g (x%d,y%d,lvl%d)\n", cosine-1,
 					ap->a_x, ap->a_y, ap->a_level);
 				cosine = 1;
 			}
@@ -433,7 +433,7 @@ char	*dp;
 		VSUB2( reflected, work, to_light );
 		if( (cosine = -VDOT( reflected, ap->a_ray.r_dir )) > 0 )  {
 			if( cosine > 1.00001 )  {
-				rt_log("cosS=1+%g (x%d,y%d,lvl%d)\n", cosine-1,
+				bu_log("cosS=1+%g (x%d,y%d,lvl%d)\n", cosine-1,
 					ap->a_x, ap->a_y, ap->a_level);
 				cosine = 1;
 			}
@@ -488,7 +488,7 @@ register int cnt;
 
 	if( (input=d) < 1e-8 )  return(0.0);
 	if( cnt < 0 || cnt > 200 )  {
-		rt_log("phg_ipow(%g,%d) bad\n", d, cnt);
+		bu_log("phg_ipow(%g,%d) bad\n", d, cnt);
 		return(d);
 	}
 	result = 1;

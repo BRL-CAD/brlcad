@@ -61,7 +61,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
  */
 #define DBINT_MAGIC 0xDECCA
 struct reg_db_internals {
-	struct rt_list	l;
+	struct bu_list	l;
 	struct rt_db_internal ip;	/* internal rep from rtgeom.h */
 	struct soltab	*st_p;
 	vect_t one_sigma;
@@ -69,18 +69,18 @@ struct reg_db_internals {
 	mat_t	model2ell;	/* maps model coord to ellipse coord */
 };
 #define DBINT_MAGIC 0xDECCA
-#define CK_DBINT(_p) RT_CKMAG( _p, DBINT_MAGIC, "struct reg_db_internals" )
+#define CK_DBINT(_p) BU_CKMAG( _p, DBINT_MAGIC, "struct reg_db_internals" )
 
 struct tree_bark {
 	struct db_i	*dbip;
-	struct rt_list	*l;	/* lists solids in region (built in setup) */
+	struct bu_list	*l;	/* lists solids in region (built in setup) */
 	CONST char	*name;
 	struct gauss_specific *gs;
 };
 
 
 #define gauss_MAGIC 0x6a05    /* make this a unique number for each shader */
-#define CK_gauss_SP(_p) RT_CKMAG(_p, gauss_MAGIC, "gauss_specific")
+#define CK_gauss_SP(_p) BU_CKMAG(_p, gauss_MAGIC, "gauss_specific")
 
 /*
  * the shader specific structure contains all variables which are unique
@@ -111,7 +111,7 @@ struct gauss_specific gauss_defaults = {
 
 #define SHDR_NULL	((struct gauss_specific *)0)
 #define SHDR_O(m)	offsetof(struct gauss_specific, m)
-#define SHDR_AO(m)	offsetofarray(struct gauss_specific, m)
+#define SHDR_AO(m)	bu_offsetofarray(struct gauss_specific, m)
 
 
 /* description of how to parse/print the arguments to the shader
@@ -124,7 +124,7 @@ struct bu_structparse gauss_print_tab[] = {
 
 };
 struct bu_structparse gauss_parse_tab[] = {
-	{"i",	bu_byteoffset(gauss_print_tab[0]), "gauss_print_tab", 0, FUNC_NULL },
+	{"i",	bu_byteoffset(gauss_print_tab[0]), "gauss_print_tab", 0, BU_STRUCTPARSE_FUNC_NULL },
 	{"%f",  1, "s",			SHDR_O(gauss_sigma),	FUNC_NULL },
 	{"",	0, (char *)0,		0,			FUNC_NULL }
 };
@@ -168,13 +168,13 @@ int op;
 		struct rt_ell_internal *ell_p;
 		vect_t v;
 
-		GETSTRUCT( dbint, reg_db_internals );
-		RT_LIST_MAGIC_SET( &(dbint->l), DBINT_MAGIC);
+		BU_GETSTRUCT( dbint, reg_db_internals );
+		BU_LIST_MAGIC_SET( &(dbint->l), DBINT_MAGIC);
 
 		if (tp->tr_a.tu_stp->st_matp)
 			mp = tp->tr_a.tu_stp->st_matp;
 		else
-			mp = (matp_t)rt_identity;
+			mp = (matp_t)bn_mat_identity;
 
 		/* Get the internal form of this solid & add it to the list */
 		rt_db_get_internal(&dbint->ip, tp->tr_a.tu_stp->st_dp,
@@ -186,7 +186,7 @@ int op;
 		sol_id = dbint->ip.idb_type;
 
 		if (sol_id < 0 || sol_id > rt_nfunctab ) {
-			rt_log("Solid ID %ld out of bounds\n", sol_id);
+			bu_log("Solid ID %ld out of bounds\n", sol_id);
 			rt_bomb("");
 		}
 
@@ -194,11 +194,11 @@ int op;
 		if (sol_id != ID_ELL) {
 
 			if (op == OP_UNION)
-				rt_log( "Non-ellipse \"union\" solid of \"%s\" being ignored\n",
+				bu_log( "Non-ellipse \"union\" solid of \"%s\" being ignored\n",
 					tb->name);
 
 			if( rdebug&RDEBUG_SHADE)
-				rt_log(" got a solid type %d \"%s\".  This solid ain't no ellipse bucko!\n",
+				bu_log(" got a solid type %d \"%s\".  This solid ain't no ellipse bucko!\n",
 					sol_id, rt_functab[sol_id].ft_name);
 
 			break;
@@ -208,7 +208,7 @@ int op;
 		ell_p = (struct rt_ell_internal *)dbint->ip.idb_ptr;
 
 		if( rdebug&RDEBUG_SHADE)
-			rt_log(" got a solid type %d \"%s\"\n",
+			bu_log(" got a solid type %d \"%s\"\n",
 				sol_id,
 				rt_functab[sol_id].ft_name);
 
@@ -225,7 +225,7 @@ int op;
 		 * by the ellipse into model space, and get inverse for use
 		 * in the _render() proc
 		 */
-		mat_idn(mp);
+		bn_mat_idn(mp);
 		VMOVE(v, ell_p->a);	VUNITIZE(v);
 		mp[0] = v[0];	mp[4] = v[1];	mp[8] = v[2];
 
@@ -237,8 +237,8 @@ int op;
 
 		MAT_DELTAS_VEC(mp, ell_p->v);
 
-		mat_copy(dbint->ell2model, mp);
-		mat_inv(dbint->model2ell, mp);
+		bn_mat_copy(dbint->ell2model, mp);
+		bn_mat_inv(dbint->model2ell, mp);
 
 
 		/* find scaling of gaussian puff in ellipsoid space */
@@ -251,7 +251,7 @@ int op;
 		if( rdebug&RDEBUG_SHADE) {
 			VPRINT("sigma", dbint->one_sigma);
 		}
-		RT_LIST_APPEND(tb->l, &(dbint->l) );
+		BU_LIST_APPEND(tb->l, &(dbint->l) );
 
 		break;
 	}
@@ -260,13 +260,13 @@ int op;
 		tree_solids(tp->tr_b.tb_right, tb, tp->tr_op);
 		break;
 
-	case OP_NOT: rt_log("Warning: 'Not' region operator in %s\n",tb->name);
+	case OP_NOT: bu_log("Warning: 'Not' region operator in %s\n",tb->name);
 		tree_solids(tp->tr_b.tb_left, tb, tp->tr_op);
 		break;
-	case OP_GUARD:rt_log("Warning: 'Guard' region operator in %s\n",tb->name);
+	case OP_GUARD:bu_log("Warning: 'Guard' region operator in %s\n",tb->name);
 		tree_solids(tp->tr_b.tb_left, tb, tp->tr_op);
 		break;
-	case OP_XNOP:rt_log("Warning: 'XNOP' region operator in %s\n",tb->name);
+	case OP_XNOP:bu_log("Warning: 'XNOP' region operator in %s\n",tb->name);
 		tree_solids(tp->tr_b.tb_left, tb, tp->tr_op);
 		break;
 
@@ -294,7 +294,7 @@ int op;
 HIDDEN int
 gauss_setup( rp, matparm, dpp, mfp, rtip)
 register struct region	*rp;
-struct rt_vls		*matparm;
+struct bu_vls		*matparm;
 char			**dpp;	/* pointer to reg_udata in *rp */
 struct mfuncs		*mfp;
 struct rt_i		*rtip;	/* New since 4.4 release */
@@ -304,19 +304,19 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 
 	/* check the arguments */
 	RT_CHECK_RTI(rtip);
-	RT_VLS_CHECK( matparm );
+	BU_CK_VLS( matparm );
 	RT_CK_REGION(rp);
 
 
 	if( rdebug&RDEBUG_SHADE)
-		rt_log("gauss_setup(%s)\n", rp->reg_name);
+		bu_log("gauss_setup(%s)\n", rp->reg_name);
 
 	if (! rtip->useair)
 		rt_bomb("gauss shader used and useair not set\n");
 
 
 	/* Get memory for the shader parameters and shader-specific data */
-	GETSTRUCT( gauss_sp, gauss_specific );
+	BU_GETSTRUCT( gauss_sp, gauss_specific );
 	*dpp = (char *)gauss_sp;
 
 	/* initialize the default values for the shader */
@@ -333,7 +333,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	 * that definition/parameters.
 	 */
 
-	RT_LIST_INIT( &gauss_sp->dbil );
+	BU_LIST_INIT( &gauss_sp->dbil );
 	tb.l = &gauss_sp->dbil;
 
 	tb.dbip = rtip->rti_dbip;
@@ -354,7 +354,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 
 	if( rdebug&RDEBUG_SHADE) {
 		bu_struct_print( " Parameters:", gauss_print_tab, (char *)gauss_sp );
-		mat_print( "m_to_sh", gauss_sp->gauss_m_to_sh );
+		bn_mat_print( "m_to_sh", gauss_sp->gauss_m_to_sh );
 	}
 
 	return(1);
@@ -382,13 +382,13 @@ char *cp;
 		(struct gauss_specific *)cp;
 	struct reg_db_internals *p;
 
-	while (RT_LIST_WHILE(p, reg_db_internals, &gauss_sp->dbil) ) {
-		RT_LIST_DEQUEUE( &(p->l) );
-		rt_free( p->ip.idb_ptr, "internal ptr" );
-		rt_free( (char *)p, "gauss reg_db_internals" );
+	while (BU_LIST_WHILE(p, reg_db_internals, &gauss_sp->dbil) ) {
+		BU_LIST_DEQUEUE( &(p->l) );
+		bu_free( p->ip.idb_ptr, "internal ptr" );
+		bu_free( (char *)p, "gauss reg_db_internals" );
 	}
 
-	rt_free( cp, "gauss_specific" );
+	bu_free( cp, "gauss_specific" );
 }
 
 
@@ -423,7 +423,7 @@ vect_t sigma;
 	val = exp( -0.5 * term2 );
 
 	if( rdebug&RDEBUG_SHADE)
-		rt_log("pt(%g %g %g) term2:%g val:%g\n",
+		bu_log("pt(%g %g %g) term2:%g val:%g\n",
 			V3ARGS(pt), term2, val);
 
 	return val;
@@ -463,8 +463,8 @@ struct seg *seg_p;
 
 
 	if( rdebug&RDEBUG_SHADE) {
-		rt_log("Evaluating Segment:\n");
-		rt_log("dist_in:%g dist_out:%g span:%g step_dist:%g steps:%d\n",
+		bu_log("Evaluating Segment:\n");
+		bu_log("dist_in:%g dist_out:%g span:%g step_dist:%g steps:%d\n",
 			seg_p->seg_in.hit_dist,
 			seg_p->seg_out.hit_dist,
 			span, step_dist, steps);
@@ -519,15 +519,15 @@ char			*dp;	/* ptr to the shader-specific struct */
 			V3ARGS(ap->a_ray.r_dir) );
 	}
 
-	RT_CK_LIST_HEAD(&swp->sw_segs->l);
-	RT_CK_LIST_HEAD(&gauss_sp->dbil);
+	BU_CK_LIST_HEAD(&swp->sw_segs->l);
+	BU_CK_LIST_HEAD(&gauss_sp->dbil);
 
 
 	/* look at each segment that participated in the ray partition(s) */
-	for (RT_LIST_FOR(seg_p, seg, &swp->sw_segs->l) ) {
+	for (BU_LIST_FOR(seg_p, seg, &swp->sw_segs->l) ) {
 
 		if( rdebug&RDEBUG_SHADE) {
-			rt_log("seg %g -> %g\n",
+			bu_log("seg %g -> %g\n",
 				seg_p->seg_in.hit_dist,
 				seg_p->seg_out.hit_dist);
 		}
@@ -539,7 +539,7 @@ char			*dp;	/* ptr to the shader-specific struct */
 
 			/* XXX You might use a bu_ptbl list of the solid pointers... */
 			/* check to see if the solid is from this region */
-			for (RT_LIST_FOR(dbint_p, reg_db_internals,
+			for (BU_LIST_FOR(dbint_p, reg_db_internals,
 			    &gauss_sp->dbil)){
 
 				CK_DBINT(dbint_p);
@@ -556,13 +556,13 @@ char			*dp;	/* ptr to the shader-specific struct */
 			}
 		} else {
 				if( rdebug&RDEBUG_SHADE)
-					rt_log("gauss_render() bittest failed\n");
+					bu_log("gauss_render() bittest failed\n");
 		}
 	}
 
 
 	if( rdebug&RDEBUG_SHADE)
-		rt_log("Optical Density %g\n", optical_density);
+		bu_log("Optical Density %g\n", optical_density);
 
 	/* get the path length right */
 	if (pp->pt_inhit->hit_dist < 0.0)

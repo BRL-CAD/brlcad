@@ -28,7 +28,7 @@
 #include "../rt/rdebug.h"
 
 #define prj_MAGIC 0x70726a00	/* "prj" */
-#define CK_prj_SP(_p) RT_CKMAG(_p, prj_MAGIC, "prj_specific")
+#define CK_prj_SP(_p) BU_CKMAG(_p, prj_MAGIC, "prj_specific")
 
 struct img_specific {
 	struct bu_list	l;
@@ -42,7 +42,7 @@ struct img_specific {
 	point_t		i_eye_pt;
 	quat_t		i_orient;
 	mat_t		i_mat;		/* computed from i_orient */
-	mat_t		i_mat_inv;	/* computed (for debug) */
+	mat_t		i_bn_mat_inv;	/* computed (for debug) */
 	plane_t		i_plane;	/* dir/plane of projection */
 	mat_t		i_sh_to_img;	/* transform used in prj_render() */
 	char		i_through;	/* ignore surface normal */
@@ -172,7 +172,7 @@ CONST char				*value;	/* string containing value */
 	 * copy the parameters from the "head" into the new
 	 * img_specific struct
 	 */
-	GETSTRUCT(img_new, img_specific);
+	BU_GETSTRUCT(img_new, img_specific);
 	memcpy(img_new, img_sp, sizeof(struct img_specific));
 	BU_CK_VLS(&img_sp->i_file);
 
@@ -196,15 +196,15 @@ CONST char				*value;	/* string containing value */
 	bn_mat_idn(scale);
 	MAT_SCALE_ALL(scale, img_new->i_viewsize);
 
-	mat_mul(tmp, img_new->i_mat, trans);
-	mat_mul(img_new->i_sh_to_img, scale, tmp);
+	bn_mat_mul(tmp, img_new->i_mat, trans);
+	bn_mat_mul(img_new->i_sh_to_img, scale, tmp);
 
 
 	VSET(v_tmp, 0.0, 0.0, 1.0);
 
 	/* compute inverse */
-	mat_inv(img_new->i_mat_inv, img_new->i_mat);
-	mat_inv(xform, img_new->i_sh_to_img);
+	bn_mat_inv(img_new->i_bn_mat_inv, img_new->i_mat);
+	bn_mat_inv(xform, img_new->i_sh_to_img);
 
 	MAT4X3VEC(img_new->i_plane, xform, v_tmp);
 	VUNITIZE(img_new->i_plane);
@@ -266,7 +266,7 @@ CONST char				*value;	/* string containing value */
 }
 
 #define IMG_O(m)	offsetof(struct img_specific, m)
-#define IMG_AO(m)	offsetofarray(struct img_specific, m)
+#define IMG_AO(m)	bu_offsetofarray(struct img_specific, m)
 
 
 /* description of how to parse/print the arguments to the shader
@@ -287,7 +287,7 @@ struct bu_structparse img_parse_tab[] = {
 	{"",	0, (char *)0,		0,			FUNC_NULL}
 };
 struct bu_structparse img_print_tab[] = {
-	{"i",	bu_byteoffset(img_parse_tab[0]), "img_parse_tab", 0, FUNC_NULL },
+	{"i",	bu_byteoffset(img_parse_tab[0]), "img_parse_tab", 0, BU_STRUCTPARSE_FUNC_NULL },
 	{"%f",	4, "i_plane",		IMG_AO(i_plane),	FUNC_NULL},
 	{"",	0, (char *)0,		0,			FUNC_NULL}
 };
@@ -323,7 +323,7 @@ struct mfuncs prj_mfuncs[] = {
 HIDDEN int
 prj_setup( rp, matparm, dpp, mfp, rtip)
 register struct region	*rp;
-struct rt_vls		*matparm;
+struct bu_vls		*matparm;
 char			**dpp;	/* pointer to reg_udata in *rp */
 struct mfuncs		*mfp;
 struct rt_i		*rtip;	/* New since 4.4 release */
@@ -336,15 +336,15 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 
 	/* check the arguments */
 	RT_CHECK_RTI(rtip);
-	RT_VLS_CHECK( matparm );
+	BU_CK_VLS( matparm );
 	RT_CK_REGION(rp);
 
 	if( rdebug&RDEBUG_SHADE)
-		rt_log("prj_setup(%s) matparm:\"%s\"\n",
+		bu_log("prj_setup(%s) matparm:\"%s\"\n",
 			rp->reg_name, bu_vls_addr(matparm));
 
 	/* Get memory for the shader parameters and shader-specific data */
-	GETSTRUCT( prj_sp, prj_specific );
+	BU_GETSTRUCT( prj_sp, prj_specific );
 	*dpp = (char *)prj_sp;
 
 	prj_sp->magic = prj_MAGIC;
@@ -609,7 +609,7 @@ char			*dp;	/* ptr to the shader-specific struct */
 
 
 	if( rdebug&RDEBUG_SHADE) {
-		rt_log("prj_render()  model:(%g %g %g) shader:(%g %g %g)\n", 
+		bu_log("prj_render()  model:(%g %g %g) shader:(%g %g %g)\n", 
 		V3ARGS(swp->sw_hit.hit_point),
 		V3ARGS(r_pt) );
 	}

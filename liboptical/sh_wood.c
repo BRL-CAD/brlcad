@@ -166,7 +166,7 @@ HIDDEN void	wood_setup_2 RT_ARGS((struct wood_specific *));
 
 #define WOOD_NULL	((struct wood_specific *)0)
 #define WOOD_O(m)	offsetof(struct wood_specific, m)
-#define WOOD_OA(m)	offsetofarray(struct wood_specific, m)
+#define WOOD_OA(m)	bu_offsetofarray(struct wood_specific, m)
 
 #define	EXPLICIT_VERTEX		1
 #define EXPLICIT_DIRECTION	2
@@ -286,7 +286,7 @@ char *value;
  */
 HIDDEN int wood_setup( rp, matparm, dpp, mfp, rtip )
 register struct region	*rp;
-struct rt_vls		*matparm;
+struct bu_vls		*matparm;
 char			**dpp;
 struct mfuncs           *mfp;
 struct rt_i             *rtip;  /* New since 4.4 release */
@@ -313,8 +313,8 @@ struct rt_i             *rtip;  /* New since 4.4 release */
 	 *	Get the impure storage for the control block
 	 */
 
-	RT_VLS_CHECK( matparm );
-	GETSTRUCT( wd, wood_specific );
+	BU_CK_VLS( matparm );
+	BU_GETSTRUCT( wd, wood_specific );
 	*dpp = (char *)wd;
 
 	/*
@@ -364,7 +364,7 @@ struct rt_i             *rtip;  /* New since 4.4 release */
 	 */
 
 	if( bu_struct_parse( matparm, wood_parse, (char *)wd ) < 0 )  {
-		rt_free( (char *)wd, "wood_specific" );
+		bu_free( (char *)wd, "wood_specific" );
 		return(-1);
 		}
 
@@ -374,19 +374,19 @@ struct rt_i             *rtip;  /* New since 4.4 release */
 
 	for (i=0; i<3; i++) {
 		if (wd->dither[i] < 0 || wd->dither[i] > 1.0) {
-			rt_log ("wood_setup(%s):  dither is out of range.\n",
+			bu_log ("wood_setup(%s):  dither is out of range.\n",
 				rp->reg_name);
 			return (-1);
 			}
 		}
 
 	if (wd->flags == EXPLICIT_VERTEX) {
-		rt_log ("wood_setup(%s):  Explicit vertex specfied without direction\n", rp->reg_name);
+		bu_log ("wood_setup(%s):  Explicit vertex specfied without direction\n", rp->reg_name);
 		return (-1);
 		}
 
 	if (wd->flags == EXPLICIT_DIRECTION) {
-		rt_log ("wood_setup(%s):  Explicit direction specfied without vertex\n", rp->reg_name);
+		bu_log ("wood_setup(%s):  Explicit direction specfied without vertex\n", rp->reg_name);
 		return (-1);
 		}
 
@@ -454,8 +454,8 @@ struct rt_i             *rtip;  /* New since 4.4 release */
 	 */
 
 	for (i = 0; i < 3; i++) {
-		wd->lt_rgb[i] *= rt_inv255;
-		wd->dk_rgb[i] *= rt_inv255;
+		wd->lt_rgb[i] *= bn_inv255;
+		wd->dk_rgb[i] *= bn_inv255;
 		}
 
 	/*
@@ -484,7 +484,7 @@ struct wood_specific *wd;
 	 *	direction.  If so, use those instead of the RPP.
 	 */
 
-	mat_angles (xlate, V3ARGS (wd->rot));
+	bn_mat_angles (xlate, V3ARGS (wd->rot));
 
 	if (wd->flags & EXPLICIT_VERTEX) {
 		MAT4X3PNT (wd->vertex, xlate, wd->V);
@@ -543,22 +543,22 @@ char *cp;
 	register struct wood_specific *wc;
 
 	if (Wood_Chain == wd) {
-/*		rt_log ("wood_free(%s):  Releasing region (at head).\n", wd->rp->reg_name); */
+/*		bu_log ("wood_free(%s):  Releasing region (at head).\n", wd->rp->reg_name); */
 		Wood_Chain = wd->forw;
-		rt_free ((char *)wd, "wood_specific");
+		bu_free ((char *)wd, "wood_specific");
 		return;
 		}
 
 	for (wc = Wood_Chain; wc != WOOD_NULL; wc = wc->forw) {
 		if (wc->forw == wd) {
-/*			rt_log ("wood_free(%s):  Releasing region.\n", wd->rp->reg_name); */
+/*			bu_log ("wood_free(%s):  Releasing region.\n", wd->rp->reg_name); */
 			wc->forw = wd->forw;
-			rt_free ((char *)wd, "wood_specific");
+			bu_free ((char *)wd, "wood_specific");
 			return;
 			}
 		}
 
-	rt_free ((char *)wd, "wood_specific");
+	bu_free ((char *)wd, "wood_specific");
 }
 
 /*
@@ -691,14 +691,14 @@ char			*dp;
 	 *	compute the sine from that product.
 	 */
 
-	c = fabs (sin ((C / wd->spacing) * rt_pi));
+	c = fabs (sin ((C / wd->spacing) * bn_pi));
 
 	/*
 	 *	Dither the "q" control
 	 */
 
-	pq = cos (((wd->qd * wt) + wd->qp + wd->phase) * rt_degtorad);
-	pp = cos (wd->phase * rt_degtorad);
+	pq = cos (((wd->qd * wt) + wd->qp + wd->phase) * bn_degtorad);
+	pp = cos (wd->phase * bn_degtorad);
 
 	/*
 	 *	Color the hit point based on the phase of the ring

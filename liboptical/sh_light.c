@@ -38,7 +38,7 @@ static char RCSsh_light[] = "@(#)$Header$ (ARL)";
 #include "../rt/light.h"
 
 #define LIGHT_O(m)	offsetof(struct light_specific, m)
-#define LIGHT_OA(m)	offsetofarray(struct light_specific, m)
+#define LIGHT_OA(m)	bu_offsetofarray(struct light_specific, m)
 
 RT_EXTERN(HIDDEN void	aim_set, (CONST struct bu_structparse *sdp, CONST char *name,
 			CONST char *base, char *value));
@@ -145,7 +145,7 @@ char	*dp;
 HIDDEN int
 light_setup( rp, matparm, dpp, mfp, rtip )
 register struct region *rp;
-struct rt_vls	*matparm;
+struct bu_vls	*matparm;
 genptr_t	*dpp;
 struct mfuncs           *mfp;
 struct rt_i             *rtip;  /* New since 4.4 release */
@@ -155,10 +155,10 @@ struct rt_i             *rtip;  /* New since 4.4 release */
 	vect_t	work;
 	fastf_t	f;
 
-	RT_VLS_CHECK( matparm );
-	GETSTRUCT( lp, light_specific );
+	BU_CK_VLS( matparm );
+	BU_GETSTRUCT( lp, light_specific );
 
-	RT_LIST_MAGIC_SET( &(lp->l), LIGHT_MAGIC );
+	BU_LIST_MAGIC_SET( &(lp->l), LIGHT_MAGIC );
 	lp->lt_intensity = 1000.0;	/* Lumens */
 	lp->lt_fraction = -1.0;		/* Recomputed later */
 	lp->lt_invisible = 0;		/* explicitly modeled */
@@ -167,9 +167,9 @@ struct rt_i             *rtip;  /* New since 4.4 release */
 	lp->lt_exaim = 0;		/* use default aiming mechanism */
 	lp->lt_infinite = 0;
 	lp->lt_rp = rp;
-	lp->lt_name = rt_strdup( rp->reg_name );
+	lp->lt_name = bu_strdup( rp->reg_name );
 	if( bu_struct_parse( matparm, light_parse, (char *)lp ) < 0 )  {
-		rt_free( (char *)lp, "light_specific" );
+		bu_free( (char *)lp, "light_specific" );
 		return(-1);
 	}
 
@@ -191,7 +191,7 @@ struct rt_i             *rtip;  /* New since 4.4 release */
 			return(-1);
 
 		if( max_rpp[X] >= INFINITY )  {
-			rt_log("light_setup(%s) Infinitely large light sources not supported\n",
+			bu_log("light_setup(%s) Infinitely large light sources not supported\n",
 				lp->lt_name );
 			return(-1);
 		}
@@ -217,7 +217,7 @@ struct rt_i             *rtip;  /* New since 4.4 release */
 	{
 		register matp_t	matp;
 		if( (matp = stp->st_matp) == (matp_t)0 )
-			matp = (matp_t)rt_identity;
+			matp = (matp_t)bn_mat_identity;
 		if (lp->lt_exaim) {
 			VSUB2 (work, lp->lt_dir, lp->lt_pos);
 			VUNITIZE (work);
@@ -255,10 +255,10 @@ struct rt_i             *rtip;  /* New since 4.4 release */
 	}
 
 	/* Add to linked list of lights */
-	if( RT_LIST_UNINITIALIZED( &(LightHead.l ) ) )  {
-		RT_LIST_INIT( &(LightHead.l) );
+	if( BU_LIST_UNINITIALIZED( &(LightHead.l ) ) )  {
+		BU_LIST_INIT( &(LightHead.l) );
 	}
-	RT_LIST_INSERT( &(LightHead.l), &(lp->l) );
+	BU_LIST_INSERT( &(LightHead.l), &(lp->l) );
 
 	if( lp->lt_invisible )  {
 		lp->lt_rp = REGION_NULL;
@@ -292,13 +292,13 @@ char *cp;
 		(struct light_specific *)cp;
 
 	RT_CK_LIGHT(light);
-	RT_LIST_DEQUEUE( &(light->l) );
+	BU_LIST_DEQUEUE( &(light->l) );
 	if( light->lt_name )  {
-		rt_free( light->lt_name, "light name" );
+		bu_free( light->lt_name, "light name" );
 		light->lt_name = (char *)0;
 	}
 	light->l.magic = 0;	/* sanity */
-	rt_free( (char *)light, "light_specific" );
+	bu_free( (char *)light, "light_specific" );
 }
 
 /*
@@ -341,7 +341,7 @@ mat_t	v2m;
 		default:
 			return;
 		}
-		GETSTRUCT( lp, light_specific );
+		BU_GETSTRUCT( lp, light_specific );
 		lp->l.magic = LIGHT_MAGIC;
 #if RT_MULTISPECTRAL
 		BN_GET_TABDATA(lp->lt_spectrum, spectrum);
@@ -355,7 +355,7 @@ mat_t	v2m;
 		VUNITIZE( lp->lt_vec );
 
 		sprintf(name, "Implicit light %d", i);
-		lp->lt_name = rt_strdup(name);
+		lp->lt_name = bu_strdup(name);
 
 		VSET( lp->lt_aim, 0, 0, -1 );	/* any direction: spherical */
 		lp->lt_intensity = 1000.0;
@@ -366,10 +366,10 @@ mat_t	v2m;
 		lp->lt_cosangle = -1;		/* cos(180) */
 		lp->lt_infinite = 0;
 		lp->lt_rp = REGION_NULL;
-		if( RT_LIST_UNINITIALIZED( &(LightHead.l ) ) )  {
-			RT_LIST_INIT( &(LightHead.l) );
+		if( BU_LIST_UNINITIALIZED( &(LightHead.l ) ) )  {
+			BU_LIST_INIT( &(LightHead.l) );
 		}
-		RT_LIST_INSERT( &(LightHead.l), &(lp->l) );
+		BU_LIST_INSERT( &(LightHead.l), &(lp->l) );
 	}
 }
 
@@ -395,10 +395,10 @@ light_init()
 	register int		nlights = 0;
 	register fastf_t	inten = 0.0;
 
-	if( RT_LIST_UNINITIALIZED( &(LightHead.l ) ) )  {
-		RT_LIST_INIT( &(LightHead.l) );
+	if( BU_LIST_UNINITIALIZED( &(LightHead.l ) ) )  {
+		BU_LIST_INIT( &(LightHead.l) );
 	}
-	for( RT_LIST_FOR( lp, light_specific, &(LightHead.l) ) )  {
+	for( BU_LIST_FOR( lp, light_specific, &(LightHead.l) ) )  {
 		nlights++;
 		if( lp->lt_fraction > 0 )  continue;	/* overridden */
 		if( lp->lt_intensity <= 0 )
@@ -412,19 +412,19 @@ light_init()
 	/* This is non-physical and risky, but gives nicer pictures for now */
 	inten *= (1 + AmbientIntensity*0.5);
 
-	for( RT_LIST_FOR( lp, light_specific, &(LightHead.l) ) )  {
+	for( BU_LIST_FOR( lp, light_specific, &(LightHead.l) ) )  {
 		RT_CK_LIGHT(lp);
 		if( lp->lt_fraction > 0 )  continue;	/* overridden */
 		lp->lt_fraction = lp->lt_intensity / inten;
 	}
-	rt_log("Lighting: Ambient = %d%%\n", (int)(AmbientIntensity*100));
-	for( RT_LIST_FOR( lp, light_specific, &(LightHead.l) ) )  {
+	bu_log("Lighting: Ambient = %d%%\n", (int)(AmbientIntensity*100));
+	for( BU_LIST_FOR( lp, light_specific, &(LightHead.l) ) )  {
 		RT_CK_LIGHT(lp);
-		rt_log( "  %s: (%g, %g, %g), aimed at (%g, %g, %g)\n",
+		bu_log( "  %s: (%g, %g, %g), aimed at (%g, %g, %g)\n",
 			lp->lt_name,
 			lp->lt_pos[X], lp->lt_pos[Y], lp->lt_pos[Z],
 			lp->lt_aim[X], lp->lt_aim[Y], lp->lt_aim[Z] );
-		rt_log( "  %s: %s, %s, %g lumens (%d%%), halfang=%g\n",
+		bu_log( "  %s: %s, %s, %g lumens (%d%%), halfang=%g\n",
 			lp->lt_name,
 			lp->lt_invisible ? "invisible":"visible",
 			lp->lt_shadows ? "casts shadows":"no shadows",
@@ -433,7 +433,7 @@ light_init()
 			lp->lt_angle );
 	}
 	if( nlights > SW_NLIGHTS )  {
-		rt_log("Number of lights limited to %d\n", SW_NLIGHTS);
+		bu_log("Number of lights limited to %d\n", SW_NLIGHTS);
 		nlights = SW_NLIGHTS;
 	}
 	return(nlights);
@@ -454,18 +454,18 @@ light_cleanup()
 {
 	register struct light_specific *lp, *zaplp;
 
-	if( RT_LIST_UNINITIALIZED( &(LightHead.l ) ) )  {
-		RT_LIST_INIT( &(LightHead.l) );
+	if( BU_LIST_UNINITIALIZED( &(LightHead.l ) ) )  {
+		BU_LIST_INIT( &(LightHead.l) );
 		return;
 	}
-	for( RT_LIST_FOR( lp, light_specific, &(LightHead.l) ) )  {
+	for( BU_LIST_FOR( lp, light_specific, &(LightHead.l) ) )  {
 		RT_CK_LIGHT(lp);
 		if( lp->lt_rp != REGION_NULL && lp->lt_invisible == 0 )  {
 			/* Will be cleaned up by mlib_free() */
 			continue;
 		}
 		zaplp = lp;
-		lp = RT_LIST_PREV( light_specific, &(lp->l) );
+		lp = BU_LIST_PREV( light_specific, &(lp->l) );
 		light_free( (genptr_t)zaplp );
 	}
 }
@@ -521,7 +521,7 @@ struct seg *finished_segs;
 	BN_CK_TABDATA(ap->a_spectrum);
 #endif
 
-	RT_CK_LIST_HEAD(&finished_segs->l);
+	BU_CK_LIST_HEAD(&finished_segs->l);
 
 	lp = (struct light_specific *)(ap->a_uptr);
 	RT_CK_LIGHT(lp);
@@ -653,7 +653,7 @@ struct seg *finished_segs;
 		}
 
 
-		rt_log("light_hit:  ERROR, nothing hit, sxy=%d,%d, dtol=%e\n",
+		bu_log("light_hit:  ERROR, nothing hit, sxy=%d,%d, dtol=%e\n",
 			ap->a_x, ap->a_y,
 			ap->a_rt_i->rti_tol.dist);
 		rt_pr_partitions(ap->a_rt_i, PartHeadp, "light_hit pt list");
@@ -816,12 +816,12 @@ register struct application *ap;
 	RT_CK_LIGHT(lp);
 	if( lp->lt_invisible || lp->lt_infinite ) {
 		VSETALL( ap->a_color, 1 );
-		if( rdebug & RDEBUG_LIGHT ) rt_log("light_miss vis=1\n");
+		if( rdebug & RDEBUG_LIGHT ) bu_log("light_miss vis=1\n");
 		return(1);		/* light_visible = 1 */
 	}
 	/* Missed light, either via blockage or dither.  Return black */
 	VSETALL( ap->a_color, 0 );
-	if( rdebug & RDEBUG_LIGHT ) rt_log("light_miss vis=0\n");
+	if( rdebug & RDEBUG_LIGHT ) bu_log("light_miss vis=0\n");
 	return(0);			/* light_visible = 0 */
 }
 
@@ -846,7 +846,7 @@ int have;
 		register fastf_t f;
 		struct application sub_ap;
 
-		if( rdebug & RDEBUG_LIGHT ) rt_log("computing Light visibility: start\n");
+		if( rdebug & RDEBUG_LIGHT ) bu_log("computing Light visibility: start\n");
 
 		/*
 		 *  Determine light visibility
@@ -860,7 +860,7 @@ int have;
 		intensity = swp->sw_intensity;
 #endif
 		tolight = swp->sw_tolight;
-		for( RT_LIST_FOR( lp, light_specific, &(LightHead.l) ) )  {
+		for( BU_LIST_FOR( lp, light_specific, &(LightHead.l) ) )  {
 			RT_CK_LIGHT(lp);
 			/* compute the light direction */
 			if( lp->lt_infinite ) {
@@ -1000,5 +1000,5 @@ next:
 			tolight += 3;
 		}
 
-		if( rdebug & RDEBUG_LIGHT ) rt_log("computing Light visibility: end\n");
+		if( rdebug & RDEBUG_LIGHT ) bu_log("computing Light visibility: end\n");
 }

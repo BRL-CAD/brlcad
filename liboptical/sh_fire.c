@@ -72,7 +72,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "../rt/rdebug.h"
 
 #define fire_MAGIC 0x46697265   /* ``Fire'' */
-#define CK_fire_SP(_p) RT_CKMAG(_p, fire_MAGIC, "fire_specific")
+#define CK_fire_SP(_p) BU_CKMAG(_p, fire_MAGIC, "fire_specific")
 
 /*
  * the shader specific structure contains all variables which are unique
@@ -132,7 +132,7 @@ struct fire_specific fire_defaults = {
 
 #define SHDR_NULL	((struct fire_specific *)0)
 #define SHDR_O(m)	offsetof(struct fire_specific, m)
-#define SHDR_AO(m)	offsetofarray(struct fire_specific, m)
+#define SHDR_AO(m)	bu_offsetofarray(struct fire_specific, m)
 
 
 
@@ -156,7 +156,7 @@ struct bu_structparse fire_print_tab[] = {
 
 };
 struct bu_structparse fire_parse_tab[] = {
-	{"i",	bu_byteoffset(fire_print_tab[0]), "fire_print_tab", 0, FUNC_NULL },
+	{"i",	bu_byteoffset(fire_print_tab[0]), "fire_print_tab", 0, BU_STRUCTPARSE_FUNC_NULL },
 	{"%f",  1, "f",		SHDR_O(fire_flicker),		FUNC_NULL },
 	{"%f",  1, "st",	SHDR_O(fire_stretch),		FUNC_NULL },
 	{"%f",	1, "l",		SHDR_O(noise_lacunarity),	FUNC_NULL },
@@ -218,7 +218,7 @@ CONST double flame_colors[18][3] = {
 HIDDEN int
 fire_setup( rp, matparm, dpp, mfp, rtip)
 register struct region	*rp;
-struct rt_vls		*matparm;
+struct bu_vls		*matparm;
 char			**dpp;	/* pointer to reg_udata in *rp */
 struct mfuncs		*mfp;
 struct rt_i		*rtip;	/* New since 4.4 release */
@@ -229,15 +229,15 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 
 	/* check the arguments */
 	RT_CHECK_RTI(rtip);
-	RT_VLS_CHECK( matparm );
+	BU_CK_VLS( matparm );
 	RT_CK_REGION(rp);
 
 
 	if( rdebug&RDEBUG_SHADE)
-		rt_log("fire_setup(%s)\n", rp->reg_name);
+		bu_log("fire_setup(%s)\n", rp->reg_name);
 
 	/* Get memory for the shader parameters and shader-specific data */
-	GETSTRUCT( fire_sp, fire_specific );
+	BU_GETSTRUCT( fire_sp, fire_specific );
 	*dpp = (char *)fire_sp;
 
 	/* initialize the default values for the shader */
@@ -265,7 +265,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	 * we could factor the flicker of flames into this matrix 
 	 * rather than having to recompute it on a pixel-by-pixel basis.
 	 */
-	mat_idn(fire_sp->fire_sh_to_noise);
+	bn_mat_idn(fire_sp->fire_sh_to_noise);
 	MAT_DELTAS_VEC(fire_sp->fire_sh_to_noise, fire_sp->noise_delta);
 	MAT_SCALE_VEC(fire_sp->fire_sh_to_noise, fire_sp->noise_vscale);
 
@@ -276,9 +276,9 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 
 	if( rdebug&RDEBUG_SHADE || fire_sp->fire_debug ) {
 		bu_struct_print( " FIRE Parameters:", fire_print_tab, (char *)fire_sp );
-		mat_print( "m_to_sh", fire_sp->fire_m_to_sh );
-		mat_print( "sh_to_noise", fire_sp->fire_sh_to_noise );
-		mat_print( "colorspline", fire_sp->fire_colorspline_mat );
+		bn_mat_print( "m_to_sh", fire_sp->fire_m_to_sh );
+		bn_mat_print( "sh_to_noise", fire_sp->fire_sh_to_noise );
+		bn_mat_print( "colorspline", fire_sp->fire_colorspline_mat );
 	}
 
 	return(1);
@@ -302,7 +302,7 @@ HIDDEN void
 fire_free( cp )
 char *cp;
 {
-	rt_free( cp, "fire_specific" );
+	bu_free( cp, "fire_specific" );
 }
 
 /*
@@ -321,9 +321,9 @@ char			*dp;	/* ptr to the shader-specific struct */
 {
 #define DEBUG_SPACE_PRINT(str, i_pt, o_pt) \
 	if( rdebug&RDEBUG_SHADE || fire_sp->fire_debug ) { \
-		rt_log("fire_render() %s space \n", str); \
-		rt_log("fire_render() i_pt(%g %g %g)\n", V3ARGS(i_pt) ); \
-		rt_log("fire_render() o_pt(%g %g %g)\n", V3ARGS(o_pt) ); \
+		bu_log("fire_render() %s space \n", str); \
+		bu_log("fire_render() i_pt(%g %g %g)\n", V3ARGS(i_pt) ); \
+		bu_log("fire_render() o_pt(%g %g %g)\n", V3ARGS(o_pt) ); \
 	}
 
 #define	SHADER_TO_NOISE(n_pt, sh_pt, fire_sp, zdelta) { \
@@ -399,15 +399,15 @@ char			*dp;	/* ptr to the shader-specific struct */
 	noise_r_thick = MAGNITUDE(noise_r_dir);
 
 	if( rdebug&RDEBUG_SHADE || fire_sp->fire_debug ) {
-		rt_log("fire_render() noise_r_dir (%g %g %g)\n",
+		bu_log("fire_render() noise_r_dir (%g %g %g)\n",
 			V3ARGS(noise_r_dir) );
-		rt_log("fire_render() noise_r_thick %g\n", noise_r_thick);
+		bu_log("fire_render() noise_r_thick %g\n", noise_r_thick);
 	}
 
 
 	/* compute number of samples per unit length in noise space.
 	 *
-	 * The noise field used by the noise_turb and noise_fbm routines
+	 * The noise field used by the bn_noise_turb and bn_noise_fbm routines
 	 * has a maximum frequency of about 1 cycle per integer step in
 	 * noise space.  Each octave increases this frequency by the
 	 * "lacunarity" factor.  To sample this space adequately, nyquist
@@ -425,9 +425,9 @@ char			*dp;	/* ptr to the shader-specific struct */
 	if (samples < 1) samples = 1;
 
 	if( rdebug&RDEBUG_SHADE || fire_sp->fire_debug ) {
-		rt_log("samples:%d\n", samples);
-		rt_log("samples_per_unit_noise %g\n", samples_per_unit_noise);
-		rt_log("noise_dist_per_sample %g\n", noise_dist_per_sample);
+		bu_log("samples:%d\n", samples);
+		bu_log("samples_per_unit_noise %g\n", samples_per_unit_noise);
+		bu_log("noise_dist_per_sample %g\n", noise_dist_per_sample);
 	}
 
 	/* To do the exponential stretch and decay properly we need to 
@@ -448,11 +448,11 @@ char			*dp;	/* ptr to the shader-specific struct */
 
 		SHADER_TO_NOISE(noise_pt, shader_pt, fire_sp, noise_zdelta);
 
-		noise_val = noise_turb(noise_pt, fire_sp->noise_h_val,
+		noise_val = bn_noise_turb(noise_pt, fire_sp->noise_h_val,
 			fire_sp->noise_lacunarity, fire_sp->noise_octaves);
 
 		if( rdebug&RDEBUG_SHADE || fire_sp->fire_debug )
-			rt_log("noise_turb(%g %g %g) = %g\n",
+			bu_log("bn_noise_turb(%g %g %g) = %g\n",
 				V3ARGS(noise_pt),
 				noise_val);
 
@@ -468,7 +468,7 @@ char			*dp;	/* ptr to the shader-specific struct */
 			t = lumens;
 			lumens += noise_val * 0.025 *  (1.0 -shader_pt[Z]);
 			if( rdebug&RDEBUG_SHADE || fire_sp->fire_debug )
-				rt_log("lumens:%g = %g + %g * %g\n",
+				bu_log("lumens:%g = %g + %g * %g\n",
 					lumens, t, noise_val,
 					0.025 * (1.0 - shader_pt[Z]) );
 
@@ -476,14 +476,14 @@ char			*dp;	/* ptr to the shader-specific struct */
 		if (lumens >= 1.0) {
 			lumens = 1.0;
 			if( rdebug&RDEBUG_SHADE || fire_sp->fire_debug )
-				rt_log("early exit from lumens loop\n");
+				bu_log("early exit from lumens loop\n");
 			break;
 		}
 
 	}
 	
 	if( rdebug&RDEBUG_SHADE || fire_sp->fire_debug )
-		rt_log("lumens = %g\n", lumens);
+		bu_log("lumens = %g\n", lumens);
 
 	if (lumens < 0.0) lumens = 0.0;
 	else if (lumens > 1.0) lumens = 1.0;

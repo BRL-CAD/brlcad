@@ -67,7 +67,7 @@ static struct scloud_specific scloud_defaults = {
 
 #define SHDR_NULL	((struct scloud_specific *)0)
 #define SHDR_O(m)	offsetof(struct scloud_specific, m)
-#define SHDR_AO(m)	offsetofarray(struct scloud_specific, m)
+#define SHDR_AO(m)	bu_offsetofarray(struct scloud_specific, m)
 
 struct bu_structparse scloud_pr[] = {
 	{"%f",	1, "lacunarity",	SHDR_O(lacunarity),	FUNC_NULL },
@@ -115,7 +115,7 @@ struct mfuncs scloud_mfuncs[] = {
 HIDDEN int
 scloud_setup( rp, matparm, dpp, mfp, rtip )
 register struct region *rp;
-struct rt_vls	*matparm;
+struct bu_vls	*matparm;
 char	**dpp;	/* pointer to reg_udata in *rp */
 struct mfuncs		*mfp;
 struct rt_i		*rtip;
@@ -126,8 +126,8 @@ struct rt_i		*rtip;
 	mat_t	model_to_region;
 	mat_t	tmp;
 
-	RT_VLS_CHECK( matparm );
-	GETSTRUCT( scloud, scloud_specific );
+	BU_CK_VLS( matparm );
+	BU_GETSTRUCT( scloud, scloud_specific );
 	*dpp = (char *)scloud;
 
 	if (rp->reg_aircode == 0) {
@@ -140,7 +140,7 @@ struct rt_i		*rtip;
 
 	memcpy(scloud, &scloud_defaults, sizeof(struct scloud_specific) );
 	if( rdebug&RDEBUG_SHADE)
-		rt_log("scloud_setup\n");
+		bu_log("scloud_setup\n");
 
 	if( bu_struct_parse( matparm, scloud_parse, (char *)scloud ) < 0 )
 		return(-1);
@@ -161,11 +161,11 @@ struct rt_i		*rtip;
 	/* get matrix to map points from model (world) space
 	 * to "region" space
 	 */
-	mat_inv(model_to_region, region_to_model);
+	bn_mat_inv(model_to_region, region_to_model);
 
 
 	/* add the noise-space scaling */
-	mat_idn(tmp);
+	bn_mat_idn(tmp);
 	if (scloud->scale != 1.0) {
 		tmp[0] = tmp[5] = tmp[10] = 1.0 / scloud->scale;
 	} else {
@@ -174,14 +174,14 @@ struct rt_i		*rtip;
 		tmp[10] = 1.0 / (scloud->vscale[2]);
 	}
 
-	mat_mul(scloud->xform, tmp, model_to_region);
+	bn_mat_mul(scloud->xform, tmp, model_to_region);
 
 	/* add the translation within noise space */
-	mat_idn(tmp);
+	bn_mat_idn(tmp);
 	tmp[MDX] = scloud->delta[0];
 	tmp[MDY] = scloud->delta[1];
 	tmp[MDZ] = scloud->delta[2];
-	mat_mul2(tmp, scloud->xform);
+	bn_mat_mul2(tmp, scloud->xform);
 
 	return(1);
 }
@@ -204,7 +204,7 @@ HIDDEN void
 scloud_free( cp )
 char *cp;
 {
-	rt_free( cp, "scloud_specific" );
+	bu_free( cp, "scloud_specific" );
 }
 
 
@@ -234,7 +234,7 @@ char	*dp;
 
 	/* just shade the surface with a transparency */
 	MAT4X3PNT(in_pt, scloud_sp->xform, swp->sw_hit.hit_point);
-	val = noise_fbm(in_pt, scloud_sp->h_val,
+	val = bn_noise_fbm(in_pt, scloud_sp->h_val,
 			scloud_sp->lacunarity, scloud_sp->octaves );
 	swp->sw_transmit = 1.0 - CLAMP(val, 0.0, 1.0);
 
@@ -293,7 +293,7 @@ char	*dp;
 	VSUB2(v_cloud, out_pt, in_pt);
 	thickness = MAGNITUDE(v_cloud);
 
-	/* The noise field used by the noise_turb and noise_fbm routines
+	/* The noise field used by the bn_noise_turb and bn_noise_fbm routines
 	 * has a maximum frequency of about 1 cycle per integer step in
 	 * noise space.  Each octave increases this frequency by the
 	 * "lacunarity" factor.  To sample this space adequately we need 
@@ -313,7 +313,7 @@ char	*dp;
 		(double)steps;
 
 	if( rdebug&RDEBUG_SHADE)
-		rt_log("steps=%d  delta=%g  thickness=%g\n",
+		bu_log("steps=%d  delta=%g  thickness=%g\n",
 			steps, step_delta, thickness);
 
 	VUNITIZE(v_cloud);
@@ -323,7 +323,7 @@ char	*dp;
 		/* compute the next point in the cloud space */
 		VJOIN1(pt, in_pt, i*step_delta, v_cloud);
 
-		val = noise_turb(pt, scloud_sp->h_val, 
+		val = bn_noise_turb(pt, scloud_sp->h_val, 
 			scloud_sp->lacunarity, scloud_sp->octaves );
 
 		val -= .5;

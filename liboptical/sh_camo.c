@@ -49,7 +49,7 @@ struct camo_specific {
 	point_t c3;	/* color 3 */
 	mat_t	xform;	/* model->region coord sys matrix */
 };
-#define CK_camo_SP(_p) RT_CKMAG(_p, camo_MAGIC, "camo_specific")
+#define CK_camo_SP(_p) BU_CKMAG(_p, camo_MAGIC, "camo_specific")
 
 /* This allows us to specify the "size" parameter as values like ".5m"
  * or "27in" rather than using mm all the time.
@@ -101,7 +101,7 @@ static struct camo_specific marble_defaults = {
 
 #define SHDR_NULL	((struct camo_specific *)0)
 #define SHDR_O(m)	offsetof(struct camo_specific, m)
-#define SHDR_AO(m)	offsetofarray(struct camo_specific, m)
+#define SHDR_AO(m)	bu_offsetofarray(struct camo_specific, m)
 
 void color_fix();
 
@@ -198,7 +198,7 @@ CONST char				*value;	/* string containing value */
 HIDDEN int
 camo_setup( rp, matparm, dpp, mfp, rtip)
 register struct region	*rp;
-struct rt_vls		*matparm;
+struct bu_vls		*matparm;
 char			**dpp;	/* pointer to reg_udata in *rp */
 struct mfuncs		*mfp;
 struct rt_i		*rtip;	/* New since 4.4 release */
@@ -208,13 +208,13 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	mat_t	tmp;
 
 	RT_CHECK_RTI(rtip);
-	RT_VLS_CHECK( matparm );
+	BU_CK_VLS( matparm );
 	RT_CK_REGION(rp);
-	GETSTRUCT( camo_sp, camo_specific );
+	BU_GETSTRUCT( camo_sp, camo_specific );
 	*dpp = (char *)camo_sp;
 
 	if( rdebug&RDEBUG_SHADE) {
-		rt_log("camouflage parameters = '%s'\n", bu_vls_addr(matparm));
+		bu_log("camouflage parameters = '%s'\n", bu_vls_addr(matparm));
 	}
 	memcpy(camo_sp, &camo_defaults, sizeof(struct camo_specific) );
 
@@ -227,7 +227,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	db_region_mat(model_to_region, rtip->rti_dbip, rp->reg_name);
 
 	/* add the noise-space scaling */
-	mat_idn(tmp);
+	bn_mat_idn(tmp);
 	if (camo_sp->noise_size != 1.0) {
 		/* the user sets "noise_size" to the size of the biggest
 		 * noise-space blob in model coordinates
@@ -239,19 +239,19 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 		tmp[10] = 1.0/camo_sp->noise_vscale[2];
 	}
 
-	mat_mul(camo_sp->xform, tmp, model_to_region);
+	bn_mat_mul(camo_sp->xform, tmp, model_to_region);
 
 	/* Add any translation within shader/region space */
-	mat_idn(tmp);
+	bn_mat_idn(tmp);
 	tmp[MDX] = camo_sp->noise_delta[0];
 	tmp[MDY] = camo_sp->noise_delta[1];
 	tmp[MDZ] = camo_sp->noise_delta[2];
-	mat_mul2(tmp, camo_sp->xform);
+	bn_mat_mul2(tmp, camo_sp->xform);
 
 	if( rdebug&RDEBUG_SHADE) {
 		bu_struct_print( rp->reg_name, camo_print_tab,
 			(char *)camo_sp );
-		mat_print( "xform", camo_sp->xform );
+		bn_mat_print( "xform", camo_sp->xform );
 	}
 
 	return(1);
@@ -275,7 +275,7 @@ HIDDEN void
 camo_free( cp )
 char *cp;
 {
-	rt_free( cp, "camo_specific" );
+	bu_free( cp, "camo_specific" );
 }
 
 /*
@@ -307,10 +307,10 @@ char	*dp;
 	MAT4X3PNT(pt, camo_sp->xform, swp->sw_hit.hit_point);
 
 
-	/* noise_fbm returns a value in the approximate range of
-	 *	-1.0 ~<= noise_fbm() ~<= 1.0
+	/* bn_noise_fbm returns a value in the approximate range of
+	 *	-1.0 ~<= bn_noise_fbm() ~<= 1.0
 	 */
-	val = noise_fbm(pt, camo_sp->noise_h_val,
+	val = bn_noise_fbm(pt, camo_sp->noise_h_val,
 		camo_sp->noise_lacunarity, camo_sp->noise_octaves );
 
 	if (val < camo_sp->t1) {
@@ -332,7 +332,7 @@ char	*dp;
 HIDDEN int
 marble_setup( rp, matparm, dpp, mfp, rtip)
 register struct region	*rp;
-struct rt_vls		*matparm;
+struct bu_vls		*matparm;
 char			**dpp;	/* pointer to reg_udata in *rp */
 struct mfuncs		*mfp;
 struct rt_i		*rtip;	/* New since 4.4 release */
@@ -342,13 +342,13 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	mat_t	tmp;
 
 	RT_CHECK_RTI(rtip);
-	RT_VLS_CHECK( matparm );
+	BU_CK_VLS( matparm );
 	RT_CK_REGION(rp);
-	GETSTRUCT( camo_sp, camo_specific );
+	BU_GETSTRUCT( camo_sp, camo_specific );
 	*dpp = (char *)camo_sp;
 
 	if( rdebug&RDEBUG_SHADE) {
-		rt_log("marble parameters = '%s'\n", bu_vls_addr(matparm));
+		bu_log("marble parameters = '%s'\n", bu_vls_addr(matparm));
 	}
 	memcpy(camo_sp, &marble_defaults, sizeof(struct camo_specific) );
 
@@ -361,7 +361,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	db_region_mat(model_to_region, rtip->rti_dbip, rp->reg_name);
 
 	/* add the noise-space scaling */
-	mat_idn(tmp);
+	bn_mat_idn(tmp);
 	if (camo_sp->noise_size != 1.0) {
 		/* the user sets "noise_size" to the size of the biggest
 		 * noise-space blob in model coordinates
@@ -373,19 +373,19 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 		tmp[10] = 1.0/camo_sp->noise_vscale[2];
 	}
 
-	mat_mul(camo_sp->xform, tmp, model_to_region);
+	bn_mat_mul(camo_sp->xform, tmp, model_to_region);
 
 	/* Add any translation within shader/region space */
-	mat_idn(tmp);
+	bn_mat_idn(tmp);
 	tmp[MDX] = camo_sp->noise_delta[0];
 	tmp[MDY] = camo_sp->noise_delta[1];
 	tmp[MDZ] = camo_sp->noise_delta[2];
-	mat_mul2(tmp, camo_sp->xform);
+	bn_mat_mul2(tmp, camo_sp->xform);
 
 	if( rdebug&RDEBUG_SHADE) {
 		bu_struct_print( rp->reg_name, camo_print_tab,
 			(char *)camo_sp );
-		mat_print( "xform", camo_sp->xform );
+		bn_mat_print( "xform", camo_sp->xform );
 	}
 
 	return(1);
@@ -422,10 +422,10 @@ char	*dp;
 	MAT4X3PNT(pt, camo_sp->xform, swp->sw_hit.hit_point);
 
 
-	/* noise_turb returns a value in the approximate range of
-	 *	0.0 ~<= noise_turb() ~<= 1.0
+	/* bn_noise_turb returns a value in the approximate range of
+	 *	0.0 ~<= bn_noise_turb() ~<= 1.0
 	 */
-	val = noise_turb(pt, camo_sp->noise_h_val,
+	val = bn_noise_turb(pt, camo_sp->noise_h_val,
 		camo_sp->noise_lacunarity, camo_sp->noise_octaves );
 
 #if 0

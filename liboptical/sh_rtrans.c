@@ -43,7 +43,7 @@ struct rtrans_specific {
 	double	threshold;
 	int	next_rand;
 };
-#define CK_RTRANS_SP(_p) RT_CKMAG(_p, RTRANS_MAGIC, "rtrans_specific")
+#define CK_RTRANS_SP(_p) BU_CKMAG(_p, RTRANS_MAGIC, "rtrans_specific")
 
 static struct rtrans_specific rtrans_defaults = {
 	RTRANS_MAGIC,
@@ -52,7 +52,7 @@ static struct rtrans_specific rtrans_defaults = {
 
 #define SHDR_NULL	((struct rtrans_specific *)0)
 #define SHDR_O(m)	offsetof(struct rtrans_specific, m)
-#define SHDR_AO(m)	offsetofarray(struct rtrans_specific, m)
+#define SHDR_AO(m)	bu_offsetofarray(struct rtrans_specific, m)
 
 struct bu_structparse rtrans_parse[] = {
 	{"%f",  1, "threshold",		SHDR_O(threshold),		FUNC_NULL },
@@ -81,7 +81,7 @@ struct mfuncs rtrans_mfuncs[] = {
 HIDDEN int
 rtrans_setup( rp, matparm, dpp, mfp, rtip)
 register struct region	*rp;
-struct rt_vls		*matparm;
+struct bu_vls		*matparm;
 char			**dpp;	/* pointer to reg_udata in *rp */
 struct mfuncs		*mfp;
 struct rt_i		*rtip;	/* New since 4.4 release */
@@ -90,9 +90,9 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	mat_t	tmp;
 
 	RT_CHECK_RTI(rtip);
-	RT_VLS_CHECK( matparm );
+	BU_CK_VLS( matparm );
 	RT_CK_REGION(rp);
-	GETSTRUCT( rtrans_sp, rtrans_specific );
+	BU_GETSTRUCT( rtrans_sp, rtrans_specific );
 	*dpp = (char *)rtrans_sp;
 
 	memcpy(rtrans_sp, &rtrans_defaults, sizeof(struct rtrans_specific) );
@@ -126,7 +126,7 @@ HIDDEN void
 rtrans_free( cp )
 char *cp;
 {
-	rt_free( cp, "rtrans_specific" );
+	bu_free( cp, "rtrans_specific" );
 }
 
 /*
