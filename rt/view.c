@@ -13,6 +13,8 @@
  *	3	(removed)
  *	4	curvature debugging display (inv radius of curvature)
  *	5	curvature debugging (principal direction)
+ *	6	UV Coord
+ *	7	Photon Mapping
  *
  *  Notes -
  *	The normals on all surfaces point OUT of the solid.
@@ -58,6 +60,7 @@ static const char RCSview[] = "@(#)$Header$ (BRL)";
 #include "rtprivate.h"
 #include "light.h"
 #include "plot3.h"
+#include "photonmap.h"
 
 int		use_air = 0;		/* Handling of air in librt */
 
@@ -936,6 +939,8 @@ out:
 	return(1);
 }
 
+
+
 /*
  *			V I E W I T
  *
@@ -1030,6 +1035,10 @@ int viewit(register struct application *ap,
 			BU_ASSERT( uv.uv_v <= 1 );
 
 			VSET( ap->a_color, uv.uv_u, 0, uv.uv_v );
+		}
+		break;
+	case 7:
+		{
 		}
 		break;
 	}
@@ -1460,6 +1469,9 @@ bu_log("mallocing curr_float_frame\n");
 		rt_bomb("bad buf_mode");
 	}
 
+	/* This is where we do Preperations for each Lighting Model if it needs it.
+	   Set Photon Mapping Off by default */
+	PM_Activated= 0;
 	switch( lightmodel )  {
 	case 0:
 		ap->a_hit = colorview;
@@ -1483,10 +1495,47 @@ bu_log("mallocing curr_float_frame\n");
 		ap->a_hit = viewit;
 		light_maker(3, view2model);
 		break;
+	case 7:
+		{
+		point_t	m1,m2;
+
+                m1[0]= ap -> a_ray.r_pt[0];
+                m1[1]= ap -> a_ray.r_pt[1];
+                m1[2]= ap -> a_ray.r_pt[2];
+
+                m2[0]= ap -> a_ray.r_dir[0];
+                m2[1]= ap -> a_ray.r_dir[1];
+                m2[2]= ap -> a_ray.r_dir[2];
+
+		/* If user did not specify any light sources then create one */
+		if (BU_LIST_IS_EMPTY(&(LightHead.l)) || BU_LIST_UNINITIALIZED(&(LightHead.l))) {
+			if (rdebug&RDEBUG_SHOWERR)
+				bu_log("No explicit light\n");
+			light_maker(1, view2model);
+		}
+
+                /* Build Photon Map */
+		PM_Activated= 1;
+		BuildPhotonMap(ap,npsw,width,height,hypersample,(int)pmargs[0],pmargs[1],(int)pmargs[2],pmargs[3],(int)pmargs[4],(int)pmargs[5]);
+
+                ap -> a_ray.r_pt[0]= m1[0];
+                ap -> a_ray.r_pt[1]= m1[1];
+                ap -> a_ray.r_pt[2]= m1[2];
+
+                ap -> a_ray.r_dir[0]= m2[0];
+                ap -> a_ray.r_dir[1]= m2[1];
+                ap -> a_ray.r_dir[2]= m2[2];
+
+		/* Set callback for ray hit */
+		ap -> a_hit = colorview;
+
+		}
+		break;
 	default:
 		rt_bomb("bad lighting model #");
 	}
 	ap->a_rt_i->rti_nlights = light_init(ap);
+
 
 	/* Now OK to delete invisible light regions.
 	 * Actually we just remove the references to these regions
