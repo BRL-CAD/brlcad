@@ -731,7 +731,10 @@ FILE *fp;
 	}
 	if( strcmp( cmd_args[0], "print" ) == 0 )  {
 		register struct servers *sp;
-		print_on = atoi(cmd_args[1]);
+		if( numargs > 1 )
+			print_on = atoi(cmd_args[1]);
+		else
+			print_on = !print_on;	/* toggle */
 		for( sp = &servers[0]; sp < &servers[NFD]; sp++ )  {
 			if( sp->sr_pc == PKC_NULL )  continue;
 			send_loglvl( sp );
