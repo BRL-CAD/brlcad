@@ -5,6 +5,18 @@
  *  Some routines are essential to the MGED interface, some are
  *  more for diagnostic and visualization purposes.
  *
+ *  There are several distinct families -
+ *	nmg_ENTITY_to_vlist	Wireframes & polgyons.  For MGED "ev".
+ *	nmg_pl_ENTITY		Fancy edgeuse drawing, to plot file.
+ *	nmg_vlblock_ENTITY	Fancy edgeuse drawing, into vlblocks.
+ *	show_broken_ENTITY	Graphical display of classifier results.
+ *	...as well as assorted wrappers for debugging use.
+ *
+ *  In the interest of having only a single way of creating the fancy
+ *  drawings, the code is migrating to creating everything first as
+ *  VLBLOCKS, and converting that to UNIX-plot files or other formats
+ *  as appropriate.
+ *
  *  Authors -
  *	Lee A. Butler
  *	Michael John Muuss
@@ -155,7 +167,7 @@ CONST struct rt_vlblock	*vbp;
 
 /************************************************************************
  *									*
- *		NMG to VLIST routines, for MGED interface		*
+ *		NMG to VLIST routines, for MGED "ev" command.		*
  * XXX should take a flags array, to ensure each item done only once!   *
  *									*
  ************************************************************************/
@@ -417,7 +429,7 @@ int		poly_markers;
 }
 /************************************************************************
  *									*
- *		NMG to UNIX-Plot routines, for visualization		*
+ *		Routines to lay out the fancy edgeuse drawings		*
  *									*
  ************************************************************************/
 
@@ -627,6 +639,13 @@ point_t		next_base;
 
 	nmg_eu_coords(nexteu, next_base, t2);
 }
+
+/************************************************************************
+ *									*
+ *		NMG to UNIX-Plot routines, for visualization		*
+ *  XXX These should get replaced with calls to the vlblock routines	*
+ *									*
+ ************************************************************************/
 
 /*
  *			N M G _ P L _ V
@@ -929,7 +948,9 @@ CONST struct model	*m;
 
 /************************************************************************
  *									*
- *		Visualization as VLIST routines				*
+ *		Visualization of fancy edgeuses into VLBLOCKs		*
+ *									*
+ *  This is the preferred method of obtaining fancy NMG displays.	*
  *									*
  ************************************************************************/
 
@@ -1265,23 +1286,6 @@ int			fancy;
  ************************************************************************/
 
 /*
- *  Plot all edgeuses around an edge
- */
-void
-nmg_pl_around_edge(fd, b, eu)
-FILE			*fd;
-long			*b;
-CONST struct edgeuse	*eu;
-{
-	CONST struct edgeuse *eur = eu;
-	do {
-		NMG_CK_EDGEUSE(eur);
-		nmg_pl_eu(fd, eur, b, 180, 180, 180);
-		eur = eur->radial_p->eumate_p;
-	} while (eur != eu);
-}
-
-/*
  *  If another use of this edge is in another shell, plot all the
  *  uses around this edge.
  */
@@ -1307,11 +1311,7 @@ CONST struct edgeuse	*eu;
 		if (*eur->up.magic_p == NMG_LOOPUSE_MAGIC &&
 		    *eur->up.lu_p->up.magic_p == NMG_FACEUSE_MAGIC &&
 		    eur->up.lu_p->up.fu_p->s_p != s) {
-#if 0
-			nmg_pl_around_edge(fd, b, eu);
-#else
 		    	nmg_vlblock_around_eu(vbp, eu, b);
-#endif
 		    	break;
 		    }
 
@@ -1504,6 +1504,11 @@ int			show_mates;
 	rt_free( (char *)tab, "nmg_pl_2fu tab[]" );
 }
 
+/************************************************************************
+ *									*
+ *			Graphical display of classifier results		*
+ *									*
+ ************************************************************************/
 
 int		nmg_class_nothing_broken=1;
 static long	**global_classlist;
@@ -1853,6 +1858,12 @@ int i;
 	stepalong=1;
 }
 
+/*
+ *			S H O W _ B R O K E N _ S T U F F
+ *
+ * XXX Needs new name, with nmg_ prefix, and a stronger indication
+ * that this is a graphical display of classifier operation.
+ */
 void
 show_broken_stuff(p, classlist, all_new, fancy, a_string)
 long	*classlist[4];
