@@ -5,7 +5,7 @@
  */
 #define PRODUCTS	libwdb.ARCH_SUF
 #define SRCDIR	libwdb
-#define FILES	wdb reg spl ars arbn units pipe export nmg poly id strsol cline bot skt extr
+#define FILES	wdb reg spl ars arbn units pipe export nmg poly id strsol cline bot skt extr mater
 #define	SRCSUFF	.c
 #define MANSECTION	3
 
