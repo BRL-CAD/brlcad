@@ -65,12 +65,11 @@ register struct rt_i *rtip;
 		rtip->rti_CutHead.bn.bn_maxlen * sizeof(struct soltab *),
 		"rt_cut_it: root list" );
 	for(stp=rtip->HeadSolid; stp != SOLTAB_NULL; stp=stp->st_forw)  {
-		if( stp->st_aradius >= INFINITY )
-			continue;
-		rtip->rti_CutHead.bn.bn_list[rtip->rti_CutHead.bn.bn_len++] = stp;
-		if( rtip->rti_CutHead.bn.bn_len > rtip->rti_CutHead.bn.bn_maxlen )  {
-			rt_log("rt_cut_it:  rtip->nsolids wrong, dropping solids\n");
-			break;
+		if( stp->st_aradius >= INFINITY )  {
+			/* Add to infinite solids list for special handling */
+			rt_cut_extend( &rtip->rti_inf_box, stp );
+		} else {
+			rt_cut_extend( &rtip->rti_CutHead, stp );
 		}
 	}
 	/*  Dynamic decisions on tree limits.
@@ -209,18 +208,18 @@ struct soltab *stp;
 				cutp->bn.bn_maxlen = 6;
 			cutp->bn.bn_list = (struct soltab **)rt_malloc(
 				cutp->bn.bn_maxlen * sizeof(struct soltab *),
-				"rt_ct_add: initial list alloc" );
+				"rt_cut_extend: initial list alloc" );
 		} else {
 			register char *newlist;
 
 			newlist = rt_malloc(
 				sizeof(struct soltab *) * cutp->bn.bn_maxlen * 2,
-				"rt_ct_add: list extend" );
+				"rt_cut_extend: list extend" );
 			bcopy( cutp->bn.bn_list, newlist,
 				cutp->bn.bn_maxlen * sizeof(struct soltab *));
 			cutp->bn.bn_maxlen *= 2;
 			rt_free( (char *)cutp->bn.bn_list,
-				"rt_ct_add: list extend (old list)");
+				"rt_cut_extend: list extend (old list)");
 			cutp->bn.bn_list = (struct soltab **)newlist;
 		}
 	}
