@@ -2805,6 +2805,7 @@ wdb_dir_add5(struct db_i			*dbip,		/* db_i to add this object to */
 		} else {
 			in.idb_avs.magic = BU_AVS_MAGIC;
 			in.idb_avs.count = 0;
+			in.idb_avs.max = 0;
 		}
 
 		if( rt_comb_import5( &in, &rip->body, NULL, dasp->main_dbip, dasp->wdbp->wdb_resp, 0 ) ) {
