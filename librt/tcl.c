@@ -73,6 +73,174 @@ struct dbcmdstruct {
 };
 
 /*
+ *			R T _ T C L _ P A R S E _ R A Y
+ *
+ *  Allow specification of a ray to trace, in two convenient formats.
+ *
+ *  Examples -
+ *	{0 0 0} dir {0 0 -1}
+ *	{20 -13.5 20} at {10 .5 3}
+ */
+int
+rt_tcl_parse_ray( interp, rp, argv )
+Tcl_Interp *interp;
+struct xray *rp;
+CONST char *CONST*argv;
+{
+	if( bn_decode_vect( rp->r_pt,  argv[0] ) != 3 )  {
+		Tcl_AppendResult( interp,
+			"badly formatted point: ", argv[0], (char *)NULL );
+		return TCL_ERROR;
+	}
+	if( bn_decode_vect( rp->r_dir, argv[2] ) != 3 )  {
+		Tcl_AppendResult( interp,
+			"badly formatted vector: ", argv[2], (char *)NULL );
+		return TCL_ERROR;
+	}
+	switch( argv[1][0] )  {
+	case 'd':
+		/* [2] is direction vector */
+		break;
+	case 'a':
+		/* [2] is target point, build a vector from start pt */
+		VSUB2( rp->r_dir, rp->r_dir, rp->r_pt );
+		break;
+	default:
+		Tcl_AppendResult( interp,
+				"wrong ray keyword: '", argv[1],
+				"', should be one of 'dir' or 'at'",
+				(char *)NULL );
+		return TCL_ERROR;
+	}
+	VUNITIZE( rp->r_dir );
+	return TCL_OK;
+}
+
+/*
+ *			R T _ T C L _ P R _ C U T T E R
+ *
+ *  Format a "union cutter" structure in a TCL-friendly format.
+ *  Useful for debugging space partitioning
+ *
+ *  Examples -
+ *	type cutnode
+ *	type boxnode
+ *	type nugridnode
+ */
+void
+rt_tcl_pr_cutter( interp, cutp )
+Tcl_Interp		*interp;
+CONST union cutter	*cutp;
+{
+	static CONST char xyz[4] = "XYZ";
+	struct bu_vls	str;
+	int i;
+
+	bu_vls_init(&str);
+
+	switch( cutp->cut_type )  {
+	case CUT_CUTNODE:
+		bu_vls_printf( &str,
+			"type cutnode axis %c point %.25G",
+			xyz[cutp->cn.cn_axis], cutp->cn.cn_point );
+		break;
+	case CUT_BOXNODE:
+		bu_vls_printf( &str,
+			"type boxnode min {%.25G %.25G %.25G}",
+			V3ARGS(cutp->bn.bn_min) );
+		bu_vls_printf( &str,
+			" max {%.25G %.25G %.25G}",
+			V3ARGS(cutp->bn.bn_max) );
+		bu_vls_printf( &str, " solids {");
+		for( i=0; i < cutp->bn.bn_len; i++ )  {
+			bu_vls_strcat( &str, cutp->bn.bn_list[i]->st_name );
+			bu_vls_putc( &str, ' ' );
+		}
+		bu_vls_printf( &str, "} pieces {");
+		for( i = 0; i < cutp->bn.bn_piecelen; i++ )  {
+			struct rt_piecelist *plp = &cutp->bn.bn_piecelist[i];
+			int j;
+			RT_CK_PIECELIST(plp);
+			/* These can be taken by user positionally */
+			bu_vls_printf( &str, "{%s {", plp->stp->st_name );
+			for( j=0; j < plp->npieces; j++ )  {
+				bu_vls_printf( &str, "%ld ", plp->pieces[j] );
+			}
+			bu_vls_strcat( &str, "} } " );
+		}
+		bu_vls_strcat( &str, "}" );
+		break;
+	case CUT_NUGRIDNODE:
+		bu_vls_printf( &str,
+			"type nugridnode", (char *)NULL );
+		for( i = 0; i < 3; i++ )  {
+			bu_vls_printf( &str, " %c {", xyz[i] );
+			bu_vls_printf( &str, "spos %.25G epos %.25G width %.25g",
+				cutp->nugn.nu_axis[i]->nu_spos,
+				cutp->nugn.nu_axis[i]->nu_epos,
+				cutp->nugn.nu_axis[i]->nu_width );
+			bu_vls_printf( &str, " cells_per_axis %d",
+				cutp->nugn.nu_cells_per_axis );	
+			bu_vls_printf( &str, " stepsize %d}",
+				cutp->nugn.nu_stepsize );
+		}
+		break;
+	default:
+		bu_vls_printf( &str, "rt_tcl_pr_cutter() bad pointer cutp=x%x",
+			cutp);
+		break;
+	}
+	Tcl_AppendResult( interp, bu_vls_addr(&str), (char *)NULL );
+	bu_vls_free( &str );
+}
+
+/*
+ *			R T _ T C L _ C U T T E R
+ *
+ *  Obtain the 'n'th space partitioning cell along the given ray,
+ *  and return that to the user.
+ *
+ *  Example -
+ *	.rt cutter 7 {0 0 0} dir {0 0 -1}
+ */
+int
+rt_tcl_cutter( clientData, interp, argc, argv )
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
+{
+	struct application	*ap = (struct application *)clientData;
+	struct rt_i		*rtip;
+	CONST union cutter	*cutp;
+	int			n;
+
+	if( argc != 6 )  {
+		Tcl_AppendResult( interp,
+				"wrong # args: should be \"",
+				argv[0], " ", argv[1], "cutnum {P} dir|at {V}\"",
+				(char *)NULL );
+		return TCL_ERROR;
+	}
+
+	RT_CK_AP_TCL(interp, ap);
+	rtip = ap->a_rt_i;
+	RT_CK_RTI_TCL(interp,rtip);
+
+	n = atoi(argv[2]);
+	if( rt_tcl_parse_ray( interp, &ap->a_ray, &argv[3] ) == TCL_ERROR )
+		return TCL_ERROR;
+
+	cutp = rt_cell_n_on_ray( ap, n );
+	if( cutp == CUTTER_NULL )  {
+		Tcl_AppendResult( interp, "rt_cell_n_on_ray() failed to find cell ", argv[2], (char *)NULL );
+		return TCL_ERROR;
+	}
+	rt_tcl_pr_cutter( interp, cutp );
+	return TCL_OK;
+}
+
+/*
  *			R T _ T C L _ P R _ H I T
  *
  *  Format a hit in a TCL-friendly format.
@@ -171,7 +339,6 @@ struct application	*ap;
 	return 0;
 }
 
-
 /*
  *			R T _ T C L _ S H O O T R A Y
  *
@@ -213,33 +380,12 @@ char **argv;
 		return TCL_ERROR;
 	}
 
-	/* Could core dump */
-	RT_AP_CHECK(ap);
+	RT_CK_AP_TCL(interp, ap);
 	rtip = ap->a_rt_i;
 	RT_CK_RTI_TCL(interp,rtip);
 
-	if( bn_decode_vect( ap->a_ray.r_pt,  argv[2] ) != 3 ||
-	    bn_decode_vect( ap->a_ray.r_dir, argv[4] ) != 3 )  {
-		Tcl_AppendResult( interp,
-			"badly formatted vector", (char *)NULL );
+	if( rt_tcl_parse_ray( interp, &ap->a_ray, &argv[2] ) == TCL_ERROR )
 		return TCL_ERROR;
-	}
-	switch( argv[3][0] )  {
-	case 'd':
-		/* [4] is direction vector */
-		break;
-	case 'a':
-		/* [4] is target point, build a vector from start pt */
-		VSUB2( ap->a_ray.r_dir, ap->a_ray.r_dir, ap->a_ray.r_pt );
-		break;
-	default:
-		Tcl_AppendResult( interp,
-				"wrong keyword: '", argv[4],
-				"', should be one of 'dir' or 'at'",
-				(char *)NULL );
-		return TCL_ERROR;
-	}
-	VUNITIZE( ap->a_ray.r_dir );	/* sanity */
 	ap->a_hit = rt_tcl_a_hit;
 	ap->a_miss = rt_tcl_a_miss;
 	ap->a_uptr = (genptr_t)interp;
@@ -274,8 +420,7 @@ char **argv;
 		return TCL_ERROR;
 	}
 
-	/* Could core dump */
-	RT_AP_CHECK(ap);
+	RT_CK_AP_TCL(interp, ap);
 	rtip = ap->a_rt_i;
 	RT_CK_RTI_TCL(interp,rtip);
 
@@ -312,8 +457,7 @@ char **argv;
 		return TCL_ERROR;
 	}
 
-	/* Could core dump */
-	RT_AP_CHECK(ap);
+	RT_CK_AP_TCL(interp, ap);
 	rtip = ap->a_rt_i;
 	RT_CK_RTI_TCL(interp,rtip);
 
@@ -351,8 +495,7 @@ char **argv;
 		return TCL_ERROR;
 	}
 
-	/* Could core dump */
-	RT_AP_CHECK(ap);
+	RT_CK_AP_TCL(interp, ap);
 	rtip = ap->a_rt_i;
 	RT_CK_RTI_TCL(interp,rtip);
 
@@ -390,8 +533,7 @@ char **argv;
 		return TCL_ERROR;
 	}
 
-	/* Could core dump */
-	RT_AP_CHECK(ap);
+	RT_CK_AP_TCL(interp, ap);
 	rtip = ap->a_rt_i;
 	RT_CK_RTI_TCL(interp,rtip);
 
@@ -428,6 +570,7 @@ static struct dbcmdstruct rt_tcl_rt_cmds[] = {
 	"no_bool",	rt_tcl_rt_no_bool,
 	"check",	rt_tcl_rt_check,
 	"prep",		rt_tcl_rt_prep,
+	"cutter",	rt_tcl_cutter,
 	(char *)0,	(int (*)())0
 };
 
@@ -471,8 +614,9 @@ char **argv;
 	}
 
 
-	Tcl_AppendResult( interp, "unknown LIBRT command; must be one of:",
-			  (char *)NULL );
+	Tcl_AppendResult( interp, "unknown LIBRT command '",
+			argv[1], "'; must be one of:",
+			(char *)NULL );
 	for( dbcmd = rt_tcl_rt_cmds; dbcmd->cmdname != NULL; dbcmd++ ) {
 		Tcl_AppendResult( interp, " ", dbcmd->cmdname, (char *)NULL );
 	}
