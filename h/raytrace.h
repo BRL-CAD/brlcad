@@ -1983,6 +1983,8 @@ RT_EXTERN(void			nmg_mv_vu_between_shells, (struct shell *dest,
 /* From nmg_info.c */
 	/* Model routines */
 RT_EXTERN(struct model		*nmg_find_model, (CONST long *magic_p) );
+RT_EXTERN(void			nmg_model_bb, (point_t min_pt, point_t max_pt, CONST struct model *m) );
+
 
 	/* Shell routines */
 RT_EXTERN(int			nmg_shell_is_empty, (CONST struct shell *s) );
