@@ -1,4 +1,5 @@
-/*			N M G . H
+/*
+ *			N M G . H
  *
  *  Author -
  *	Lee A. Butler
@@ -698,6 +699,42 @@ struct nmg_boolstruct {
 	(_bs)->vertlist[(_vu)->index] = NEWEXIST; }
 
 
+struct nmg_struct_counts {
+	/* Actual structure counts */
+	long	model;
+	long	model_a;
+	long	region;
+	long	region_a;
+	long	shell;
+	long	shell_a;
+	long	face;
+	long	face_g;
+	long	faceuse;
+	long	faceuse_a;
+	long	loopuse;
+	long	loopuse_a;
+	long	loop;
+	long	loop_g;
+	long	edgeuse;
+	long	edgeuse_a;
+	long	edge;
+	long	edge_g;
+	long	vertexuse;
+	long	vertexuse_a;
+	long	vertex;
+	long	vertex_g;
+	/* Abstractions */
+	long	max_structs;
+	long	face_loops;
+	long	face_edges;
+	long	face_lone_verts;
+	long	wire_loops;
+	long	wire_loop_edges;
+	long	wire_edges;
+	long	wire_lone_verts;
+	long	shells_of_lone_vert;
+};
+
 
 /************************************************************************
  *									*
@@ -815,5 +852,12 @@ NMG_EXTERN(void		nmg_ck_lueu, (struct loopuse *cklu, char *s) );
 NMG_EXTERN(void		nmg_evu, (struct edgeuse *eu) );
 
 #define nmg_mev(_v, _u)	nmg_me((_v), (struct vertex *)NULL, (_u))
+
+/* From nmg_index.c */
+NMG_EXTERN(void		nmg_m_reindex, (struct model *m));
+NMG_EXTERN(void		nmg_pr_struct_counts, (struct nmg_struct_counts	*ctr,
+			char *str));
+NMG_EXTERN(void		nmg_m_struct_count, (struct nmg_struct_counts *ctr,
+			struct model *m));
 
 #endif
