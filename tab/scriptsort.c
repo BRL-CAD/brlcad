@@ -54,6 +54,8 @@ struct  frame {
 struct bu_list head = {MAGIC, &head, &head};
 struct frame globals;
 
+extern int yylex();
+
 extern int optind;
 extern char *optarg;
 int get_args();
