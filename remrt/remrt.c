@@ -195,7 +195,8 @@ struct list *FreeList;
 struct frame {
 	struct frame	*fr_forw;
 	struct frame	*fr_back;
-	int		fr_number;	/* frame number */
+	int		fr_magic;	/* magic number */
+	long		fr_number;	/* frame number */
 	char		*fr_filename;	/* name of output file */
 	/* options */
 	int		fr_width;	/* frame width (pixels) */
@@ -213,6 +214,20 @@ struct frame {
 struct frame FrameHead;
 struct frame *FreeFrame;
 #define FRAME_NULL	((struct frame *)0)
+#define FRAME_MAGIC	0xbafe12ce
+
+#define CHECK_FRAME(_p)	CHECK_IT(_p, fr_magic, FRAME_MAGIC, "frame pointer")
+
+#define CHECK_IT(_q,_el,_magic,_str)	\
+	if( !(_q) )  { \
+		rt_log("NULL %s in %s line %d\n", _str, __FILE__, __LINE__ ); \
+		abort(); \
+	} else if( (_q)->_el != _magic )  { \
+		rt_log("ERROR %s=x%x magic was=x%x s/b=x%x in %s line %d\n", \
+			_str, (_q), (_q)->_el, _magic, __FILE__, __LINE__ ); \
+		abort(); \
+	}
+
 
 struct servers {
 	struct pkg_conn	*sr_pc;		/* PKC_NULL means slot not in use */
@@ -352,6 +367,7 @@ char	**argv;
 	for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
 		sp->sr_work.li_forw = sp->sr_work.li_back = &sp->sr_work;
 		sp->sr_pc = PKC_NULL;
+		sp->sr_curframe = FRAME_NULL;
 	}
 
 	/* Listen for our PKG connections */
@@ -526,37 +542,67 @@ int waittime;
 {
 	static long	ibits;
 	register int	i;
+	register struct pkg_conn *pc;
 	static struct timeval tv;
+	register int	val;
 
+	/* First, handle any packages waiting in internal buffers */
+	for( i=0; i<NFD; i++ )  {
+		pc = servers[i].sr_pc;
+		if( pc == PKC_NULL )  continue;
+		if( (val = pkg_process(pc)) < 0 )
+			drop_server( &servers[i], "pkg_process() error" );
+	}
+
+	/* Second, hang in select() waiting for something to happen */
 	tv.tv_sec = waittime;
 	tv.tv_usec = 0;
 
 	ibits = clients|(1<<tcp_listen_fd);
-	i=select(32, (char *)&ibits, (char *)0, (char *)0, &tv);
-	if( i < 0 )  {
+	val = select(32, (char *)&ibits, (char *)0, (char *)0, &tv);
+	if( val < 0 )  {
 		perror("select");
 		return;
 	}
-	/* First, accept any pending connections */
+	if( val==0 )  {
+		/* At this point, ibits==0 */
+		if(debug) rt_log("select timed out after %d seconds\n", waittime);
+		return;
+	}
+
+	/* Third, accept any pending connections */
 	if( ibits & (1<<tcp_listen_fd) )  {
-		register struct pkg_conn *pc;
 		pc = pkg_getclient(tcp_listen_fd, pkgswitch, rt_log, 1);
 		if( pc != PKC_NULL && pc != PKC_ERROR )
 			addclient(pc);
 		ibits &= ~(1<<tcp_listen_fd);
 	}
-	/* Second, give priority to getting traffic off the network */
+
+	/* Fourth, get any new traffic off the network into libpkg buffers */
 	for( i=0; i<NFD; i++ )  {
 		register struct pkg_conn *pc;
 
 		if( !feof(stdin) && i == fileno(stdin) )  continue;
-		if( i == tcp_listen_fd )  continue;
 		if( !(ibits&(1<<i)) )  continue;
 		pc = servers[i].sr_pc;
-		if( pkg_get(pc) < 0 )
-			drop_server( &servers[i] );
+		if( pc == PKC_NULL )  continue;
+		val = pkg_suckin(pc);
+		if( val < 0 ) {
+			drop_server( &servers[i], "pkg_suckin() error" );
+		} else if( val == 0 )  {
+			drop_server( &servers[i], "EOF" );
+		}
 		ibits &= ~(1<<i);
 	}
+
+	/* Fifth, handle any new packages now waiting in internal buffers */
+	for( i=0; i<NFD; i++ )  {
+		pc = servers[i].sr_pc;
+		if( pc == PKC_NULL )  continue;
+		if( pkg_process(pc) < 0 )
+			drop_server( &servers[i], "pkg_process() error" );
+	}
+
 	/* Finally, handle any command input (This can recurse via "read") */
 	if( waittime>0 &&
 	    !feof(stdin) &&
@@ -599,6 +645,7 @@ struct pkg_conn *pc;
 		/* Maybe free the pkg struct? */
 		return;
 	}
+	if( debug )  rt_log("addclient(%s)\n", ihp->ht_name);
 
 	clients |= 1<<fd;
 
@@ -614,6 +661,7 @@ struct pkg_conn *pc;
 
 	/* Clear any frame state that may remain from an earlier server */
 	for( fr = FrameHead.fr_forw; fr != &FrameHead; fr = fr->fr_forw)  {
+		CHECK_FRAME(fr);
 		fr->fr_servinit[sp->sr_index] = 0;
 	}
 }
@@ -622,8 +670,9 @@ struct pkg_conn *pc;
  *			D R O P _ S E R V E R
  */
 void
-drop_server(sp)
+drop_server(sp, why)
 register struct servers	*sp;
+char	*why;
 {
 	register struct list	*lhp, *lp;
 	register struct pkg_conn *pc;
@@ -636,7 +685,7 @@ register struct servers	*sp;
 		return;
 	}
 	oldstate = sp->sr_state;
-	rt_log("dropping %s\n", sp->sr_host->ht_name);
+	rt_log("dropping %s (%s)\n", sp->sr_host->ht_name, why);
 
 	pc = sp->sr_pc;
 	if( pc == PKC_NULL )  {
@@ -664,6 +713,7 @@ register struct servers	*sp;
 	lhp = &(sp->sr_work);
 	while( (lp = lhp->li_forw) != lhp )  {
 		fr = lp->li_frame;
+		CHECK_FRAME(fr);
 		DEQUEUE_LIST( lp );
 		rt_log("requeueing fr%d %d..%d\n",
 			fr->fr_number,
@@ -725,7 +775,7 @@ struct timeval	*nowp;
 				/* Drop this host -- out of time range */
 				rt_log("auto dropping %s:  out of time range\n",
 					ihp->ht_name );
-				drop_server( sp );
+				drop_server( sp, "outside time-of-day limits for this server" );
 			} else {
 				/* Host already serving, do nothing more */
 			}
@@ -929,7 +979,7 @@ FILE *fp;
 		for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
 			if( sp->sr_pc == PKC_NULL )  continue;
 			if( !running )
-				drop_server(sp);
+				drop_server(sp, "EOF on Stdin" );
 			else
 				send_restart(sp);
 		}
@@ -948,6 +998,7 @@ FILE *fp;
  *			P R E P _ F R A M E
  *
  * Fill in frame structure after reading MAT
+ *  fr_number must have been set by caller.
  */
 void
 prep_frame(fr)
@@ -955,6 +1006,8 @@ register struct frame *fr;
 {
 	register struct list *lp;
 	char buf[BUFSIZ];
+
+	CHECK_FRAME(fr);
 
 	/* Get local buffer for image */
 	fr->fr_width = width;
@@ -1010,6 +1063,7 @@ do_a_frame()
 		rt_log("No frames to do!\n");
 		return;
 	}
+	CHECK_FRAME(fr);
 	running = 1;
 }
 
@@ -1030,6 +1084,8 @@ register struct frame	*fr;
 	char	name[512];
 	struct stat	sb;
 	int		fd;
+
+	CHECK_FRAME(fr);
 
 	/* Always create a file name to write into */
 	if( outputfile )  {
@@ -1124,6 +1180,8 @@ register struct frame *fr;
 {
 	double	delta;
 
+	CHECK_FRAME(fr);
+
 	(void)gettimeofday( &fr->fr_end, (struct timezone *)0 );
 	delta = tvdiff( &fr->fr_end, &fr->fr_start);
 	if( delta < 0.0001 )  delta=0.0001;
@@ -1151,6 +1209,8 @@ destroy_frame( fr )
 register struct frame	*fr;
 {
 	register struct list	*lp;
+
+	CHECK_FRAME(fr);
 
 	/*
 	 *  Need to remove any pending work.
@@ -1181,6 +1241,8 @@ register struct frame	*fr;
 {
 	register struct servers	*sp;
 	register struct list	*lhp, *lp;
+
+	CHECK_FRAME(fr);
 
 	if( fr->fr_todo.li_forw != &(fr->fr_todo) )
 		return(1);		/* more work still to be sent */
@@ -1213,6 +1275,7 @@ all_done()
 	register struct frame	*fr;
 
 	for( fr = FrameHead.fr_forw; fr != &FrameHead; fr = fr->fr_forw)  {
+		CHECK_FRAME(fr);
 		if( fr->fr_todo.li_forw == &(fr->fr_todo) )
 			continue;
 		return(0);		/* nope, still more work */
@@ -1280,6 +1343,7 @@ struct timeval	*nowp;
 	/* Look for finished frames */
 	fr = FrameHead.fr_forw;
 	while( fr && fr != &FrameHead )  {
+		CHECK_FRAME(fr);
 		if( fr->fr_todo.li_forw != &(fr->fr_todo) )
 			goto next_frame;	/* unassigned work remains */
 
@@ -1305,6 +1369,7 @@ next_frame: ;
 	/* Keep assigning work until all servers are fully loaded */
 top:
 	for( fr = FrameHead.fr_forw; fr != &FrameHead; fr = fr->fr_forw)  {
+		CHECK_FRAME(fr);
 		do {
 			another_pass = 0;
 			if( fr->fr_todo.li_forw == &(fr->fr_todo) )
@@ -1365,6 +1430,8 @@ struct timeval		*nowp;
 	if( sp->sr_state != SRST_READY )
 		return(0);	/* not running yet */
 
+	CHECK_FRAME(fr);
+
 	/* Sanity check */
 	if( fr->fr_filename == (char *)0 ||
 	    fr->fr_filename[0] == '\0' )  {
@@ -1388,7 +1455,7 @@ struct timeval		*nowp;
 	    sp->sr_sendtime.tv_sec > 0 && 
 	    tvdiff( nowp, &sp->sr_sendtime ) > TARDY_SERVER_INTERVAL )  {
 		rt_log("%s: *TARDY*\n", sp->sr_host->ht_name);
-		drop_server( sp );
+		drop_server( sp, "tardy" );
 		return(0);	/* not worth giving another assignment */
 	}
 
@@ -1486,6 +1553,8 @@ register struct frame *fr;
 	char number[128];
 	char	cmd[128];
 
+	CHECK_FRAME(fr);
+
 	/* Visible part is from -1 to +1 in view space */
 	if( fscanf( fp, "%s", number ) != 1 )  goto out;
 	sprintf( cmd, "viewsize %s; eye_pt ", number );
@@ -1554,7 +1623,7 @@ char *buf;
 			sp->sr_host->ht_name);
 		rt_log(" local='%s'\n", PROTOCOL_VERSION );
 		rt_log("remote='%s'\n", buf );
-		drop_server( sp );
+		drop_server( sp, "protocol mis-match" );
 		if(buf) (void)free(buf);
 		return;
 	}
@@ -1565,7 +1634,7 @@ char *buf;
 	}
 	if( sp->sr_state != SRST_LOADING )  {
 		rt_log("MSG_START in state %d?\n", sp->sr_state);
-		drop_server( sp );
+		drop_server( sp, "wrong state" );
 		return;
 	}
 	sp->sr_state = SRST_READY;
@@ -1600,7 +1669,7 @@ char	*buf;
 			sp->sr_host->ht_name);
 		rt_log("  local='%s'\n", PROTOCOL_VERSION );
 		rt_log(" remote='%s'\n", buf );
-		drop_server( sp );
+		drop_server( sp, "version mismatch" );
 	} else {
 		if( sp->sr_state != SRST_NEW )  {
 			rt_log("NOTE %s:  VERSION message unexpected\n",
@@ -1625,7 +1694,7 @@ char	*buf;
 	rt_log("%s: cmd '%s'\n", sp->sr_host->ht_name, buf );
 	(void)rt_do_cmd( (struct rt_i *)0, buf, cmd_tab );
 	if(buf) (void)free(buf);
-	drop_server( sp );
+	drop_server( sp, "one-shot command" );
 }
 
 /*
@@ -1671,18 +1740,19 @@ char *buf;
 		rt_log("%s: no current frame, discarding\n");
 		goto out;
 	}
+	CHECK_FRAME(fr);
 
 	/* Don't be so trusting... */
 	if( info.li_frame != fr->fr_number )  {
 		rt_log("frame number mismatch, claimed=%d, actual=%d\n",
 			info.li_frame, fr->fr_number );
-		drop_server( sp );
+		drop_server( sp, "frame number mismatch" );
 		goto out;
 	}
 	if( info.li_startpix < 0 ||
 	    info.li_endpix >= fr->fr_width*fr->fr_height )  {
 		rt_log("pixel numbers out of range\n");
-		drop_server( sp );
+		drop_server( sp, "pixel out of range" );
 		goto out;
 	}
 
@@ -1693,7 +1763,7 @@ char *buf;
 		rt_log("short scanline, s/b=%d, was=%d\n",
 			i, pc->pkc_len - info.li_len );
 		i = pc->pkc_len - info.li_len;
-		drop_server( sp );
+		drop_server( sp, "short scanline" );
 		goto out;
 	}
 	/* Write pixels into file */
@@ -1806,6 +1876,8 @@ int		b;
 	int	write_len;	/* # of pixels to write on this scanline */
 	int	len_to_eol;	/* # of pixels from 'a' to end of scanline */
 
+	CHECK_FRAME(fr);
+
 	size_display(fr);
 
 	x = a % fr->fr_width;
@@ -1864,6 +1936,7 @@ register struct frame *fr;
 	int		cnt;
 
 	if( fbp == FBIO_NULL ) return;
+	CHECK_FRAME(fr);
 	size_display(fr);
 
 	if( fr->fr_filename == (char *)0 )  return;
@@ -1926,24 +1999,25 @@ char *name;
  *			S I Z E _ D I S P L A Y
  */
 void
-size_display(fp)
-register struct frame	*fp;
+size_display(fr)
+register struct frame	*fr;
 {
-	if( cur_fbwidth == fp->fr_width )
+	CHECK_FRAME(fr);
+	if( cur_fbwidth == fr->fr_width )
 		return;
 	if( fbp == FBIO_NULL )
 		return;
-	if( fp->fr_width > fb_getwidth(fbp) )  {
-		rt_log("Warning:  fb not big enough for %d pixels, display truncated\n", fp->fr_width );
-		cur_fbwidth = fp->fr_width;
+	if( fr->fr_width > fb_getwidth(fbp) )  {
+		rt_log("Warning:  fb not big enough for %d pixels, display truncated\n", fr->fr_width );
+		cur_fbwidth = fr->fr_width;
 		return;
 	}
-	cur_fbwidth = fp->fr_width;
+	cur_fbwidth = fr->fr_width;
 
-	fb_zoom( fbp, fb_getwidth(fbp)/fp->fr_width,
-		fb_getheight(fbp)/fp->fr_height );
+	fb_zoom( fbp, fb_getwidth(fbp)/fr->fr_width,
+		fb_getheight(fbp)/fr->fr_height );
 	/* center the view */
-	fb_window( fbp, fp->fr_width/2, fp->fr_height/2 );
+	fb_window( fbp, fr->fr_width/2, fr->fr_height/2 );
 }
 
 /*
@@ -1963,7 +2037,7 @@ register struct servers *sp;
 	switch( ihp->ht_where )  {
 	case HT_CD:
 		if( pkg_send( MSG_CD, ihp->ht_path, strlen(ihp->ht_path)+1, sp->sr_pc ) < 0 )
-			drop_server(sp);
+			drop_server(sp, "MSG_CD send error");
 		sprintf( cmd, "%s %s", file_basename, object_list );
 		break;
 	case HT_CONVERT:
@@ -1972,12 +2046,12 @@ register struct servers *sp;
 		break;
 	default:
 		rt_log("send_start: ht_where=%d unimplemented\n", ihp->ht_where);
-		drop_server(sp);
+		drop_server(sp, "bad ht_where");
 		return;
 	}
 
 	if( pkg_send( MSG_START, cmd, strlen(cmd)+1, sp->sr_pc ) < 0 )
-		drop_server(sp);
+		drop_server(sp, "MSG_START pkg_send error");
 	sp->sr_state = SRST_LOADING;
 }
 
@@ -1991,7 +2065,7 @@ register struct servers *sp;
 	if( sp->sr_pc == PKC_NULL )  return;
 
 	if( pkg_send( MSG_RESTART, "", 0, sp->sr_pc ) < 0 )
-		drop_server(sp);
+		drop_server(sp, "MSG_RESTART pkg_send error");
 	sp->sr_state = SRST_RESTART;
 }
 
@@ -2005,7 +2079,7 @@ register struct servers *sp;
 	if( sp->sr_pc == PKC_NULL )  return;
 
 	if( pkg_send( MSG_LOGLVL, print_on?"1":"0", 2, sp->sr_pc ) < 0 )
-		drop_server(sp);
+		drop_server(sp, "MSG_LOGLVL pkg_send error");
 }
 
 /*
@@ -2018,30 +2092,31 @@ send_matrix(sp, fr)
 struct servers *sp;
 register struct frame *fr;
 {
+	CHECK_FRAME(fr);
 	if( sp->sr_pc == PKC_NULL )  return;
 	if( pkg_send( MSG_MATRIX,
 	    fr->fr_cmd.vls_str, fr->fr_cmd.vls_cur+1, sp->sr_pc
 	    ) < 0 )
-		drop_server(sp);
+		drop_server(sp, "MSG_MATRIX pkg_send error");
 }
 
 /*
  *			S E N D _ D O _ L I N E S
  */
 void
-send_do_lines( sp, start, stop, fr )
+send_do_lines( sp, start, stop, framenum )
 register struct servers *sp;
 int		start;
 int		stop;
-int		fr;
+int		framenum;
 {
 	char obuf[128];
 
 	if( sp->sr_pc == PKC_NULL )  return;
 
-	sprintf( obuf, "%d %d %d", start, stop, fr );
+	sprintf( obuf, "%d %d %d", start, stop, framenum );
 	if( pkg_send( MSG_LINES, obuf, strlen(obuf)+1, sp->sr_pc ) < 0 )
-		drop_server(sp);
+		drop_server(sp, "MSG_LINES pkg_send error");
 
 	(void)gettimeofday( &sp->sr_sendtime, (struct timezone *)0 );
 }
@@ -2488,7 +2563,7 @@ char	**argv;
 	for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
 		if( sp->sr_pc == PKC_NULL )  continue;
 		if( pkg_send( MSG_OPTIONS, argv[1], len, sp->sr_pc) < 0 )
-			drop_server(sp);
+			drop_server(sp, "MSG_OPTIONS pkg_send error");
 	}
 }
 
@@ -2599,13 +2674,13 @@ char	**argv;
 	int	i;
 
 	GET_FRAME(fr);
-	prep_frame(fr);
-
 	if( argc >= 3 )  {
 		fr->fr_number = atoi(argv[2]);
 	} else {
 		fr->fr_number = 0;
 	}
+	prep_frame(fr);
+
 	if( (fp = fopen(argv[1], "r")) == NULL )  {
 		perror(argv[1]);
 		return;
@@ -2655,8 +2730,8 @@ char	**argv;
 	}
 	for( i=a; i<b; i++ )  {
 		GET_FRAME(fr);
-		prep_frame(fr);
 		fr->fr_number = i;
+		prep_frame(fr);
 		if(read_matrix( fp, fr ) < 0 ) break;
 		if( create_outputfilename( fr ) < 0 )  {
 			FREE_FRAME(fr);
@@ -2690,7 +2765,7 @@ char	**argv;
 
 	sp = get_server_by_name( argv[1] );
 	if( sp == SERVERS_NULL || sp->sr_pc == PKC_NULL )  return;
-	drop_server(sp);
+	drop_server(sp, "drop command issued");
 }
 
 cd_restart( argc, argv )
@@ -2733,6 +2808,7 @@ char	**argv;
 		return;
 	}
 	do {
+		CHECK_FRAME(fr);
 		fr = FrameHead.fr_forw;
 		destroy_frame( fr );
 	} while( FrameHead.fr_forw != &FrameHead );
@@ -2753,6 +2829,7 @@ char	**argv;
 	if( init_fb(name) < 0 )  return;
 	if( fbp == FBIO_NULL ) return;
 	if( (fr = FrameHead.fr_forw) == &FrameHead )  return;
+	CHECK_FRAME(fr);
 
 	repaint_fb( fr );
 }
@@ -2775,6 +2852,7 @@ char	**argv;
 	/* Sumarize frames waiting */
 	rt_log("Frames waiting:\n");
 	for(fr=FrameHead.fr_forw; fr != &FrameHead; fr=fr->fr_forw) {
+		CHECK_FRAME(fr);
 		rt_log("%5d\t", fr->fr_number);
 		rt_log("width=%d, height=%d\n",
 			fr->fr_width, fr->fr_height );
@@ -2834,6 +2912,7 @@ char	**argv;
 			rt_log("Unknown"); break;
 		}
 		if( sp->sr_curframe != FRAME_NULL )  {
+			CHECK_FRAME(sp->sr_curframe);
 			rt_log(" frame %d, assignments=%d\n",
 				sp->sr_curframe->fr_number,
 				server_q_len(sp) );
