@@ -515,6 +515,7 @@ if(mged_variables.faceplate){
 		  dmp->dm_drawString2D( dmp, bu_vls_addr(&vls), TITLE_XBASE,
 					TITLE_YBASE + TEXT1_DY, 1, 0 );
 		  bu_vls_trunc(&vls, 0);
+		  ss_line_not_drawn = 0;
 		}
 	}
 
