@@ -23,6 +23,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>	
 #include "fb.h"
 
+double	atof();
+
 ColorMap old_map;
 ColorMap cm;
 
@@ -31,7 +33,7 @@ ColorMap cm;
 #endif
 
 int size = 512;
-int wtime = 0;		/* micro-seconds between updates */
+double fps = 0.0;	/* frames per second */
 
 FBIO *fbp;
 
@@ -39,6 +41,7 @@ main(argc, argv )
 char **argv;
 {
 	register int i;
+	int sec, usec;
 
 	if( argc > 1 && argv[1][0] == '-' && argv[1][1] == 'h' )  {
 		argc--;
@@ -46,8 +49,11 @@ char **argv;
 		size = 1024;
 	}
 	if( argc > 1 )  {
-		wtime = atoi( argv[1] ) * 1000;	/* ms as arg */
-		printf("%d us delay\n", wtime );
+		fps = atof( argv[1] );
+		if( fps != 0 ) {
+			sec = 1.0 / fps;
+			usec = ((1.0 / fps) - sec) * 1000000;
+		}
 	}
 
 	if( (fbp = fb_open( NULL, size, size)) == FBIO_NULL )  {
@@ -77,7 +83,7 @@ char **argv;
 
 		fb_wmap( fbp, &cm );
 
-		if(wtime) delay( 0, wtime );
+		if( fps ) delay( sec, usec );
 	}
 }
 
