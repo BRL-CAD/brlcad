@@ -1,18 +1,15 @@
 /*
  *			fbed/Cakefile
  */
-#define CONFIGDEFS	-D_LOCAL_=static
+/* #define CONFIGDEFS	-DSTATIC= */	/* debugging only */
 
 #define SRCDIR	fbed
 #define PRODUCTS	fbed
 #define	SRCSUFF	.c
 #define MANSECTION	1
 
-#define FILES	fbed char sgi_dep \
-		empty execshell getfont \
-		getinput glob fill_buf \
-		pos_pad prnt \
-		squash try
+#define FILES	fbed char sgi_dep empty execshell getfont getinput glob \
+		fill_buf pos_pad prnt squash try
 
 #include "../Cakefile.defs"
 #include "../Cakefile.prog"
