@@ -123,45 +123,66 @@ struct hf_specific {
 int
 rt_hf_to_dsp(struct rt_db_internal *db_intern, struct resource *resp)
 {
-	struct rt_hf_internal	*hip = (struct rt_hf_internal *)db_intern;
+	struct rt_hf_internal	*hip = (struct rt_hf_internal *)db_intern->idb_ptr;
 	struct rt_dsp_internal	*dsp;
-	mat_t 			tmp, mat;
+	vect_t			tmp;
 
 	RT_CK_DB_INTERNAL(db_intern);
 	RT_CK_RESOURCE(resp);
-
-	BU_GETSTRUCT( dsp, rt_dsp_internal );
-	dsp->dsp_xcnt = hip->w;
-	dsp->dsp_ycnt = hip->n;
+	RT_HF_CK_MAGIC( hip );
 
 	if (! hip->shorts) {
 		bu_log("cannot convert float HF to DSP\n");
 		return -1;
 	}
-	bn_mat_idn(mat);
-	MAT_DELTAS_VEC(mat,  hip->v);	/* translate */
+
+	BU_GETSTRUCT( dsp, rt_dsp_internal );
+	bu_vls_init( &dsp->dsp_file );
+	bu_vls_strcat( &dsp->dsp_file, hip->dfile );
+	dsp->dsp_xcnt = hip->w;
+	dsp->dsp_ycnt = hip->n;
+	dsp->dsp_smooth = 0;
+
+	bn_mat_idn(dsp->dsp_stom);
+	MAT_DELTAS_VEC(dsp->dsp_stom, hip->v);	/* translate */
 
 	/* Apply modeling transformations */
-	MAT4X3PNT( tmp, mat, hip->v );
-	VMOVE( hip->v, tmp );
-	MAT4X3VEC( tmp, mat, hip->x );
-	VMOVE( hip->x, tmp );
-	MAT4X3VEC( tmp, mat, hip->y );
-	VMOVE( hip->y, tmp );
-	hip->xlen /= mat[15];
-	hip->ylen /= mat[15];
-	hip->zscale /= mat[15];
+	VUNITIZE( hip->x );
+	VSCALE( tmp, hip->x, hip->xlen/(fastf_t)(hip->w - 1) );
+	dsp->dsp_stom[0] = tmp[0];
+	dsp->dsp_stom[4] = tmp[1];
+	dsp->dsp_stom[8] = tmp[2];
+	VUNITIZE( hip->y );
+	VSCALE( tmp, hip->y, hip->ylen/(fastf_t)(hip->n - 1) );
+	dsp->dsp_stom[1] = tmp[0];
+	dsp->dsp_stom[5] = tmp[1];
+	dsp->dsp_stom[9] = tmp[2];
+	VCROSS( tmp, hip->x, hip->y );
+	VUNITIZE( tmp );
 
-	/* XXX There is more logic needed here */
+	/* The next line should be:
+	 * VSCALE( tmp, tmp, hip->zscale * hip->file2mm );
+	 * This will make the converted DSP plot in MGED agree with what he HF looks like,
+	 * but the HF ignores 'zscale' in the shot routine.
+	 * So we choose to duplicate the raytrace behavior (ignore zscale)
+	 */
+	VSCALE( tmp, tmp, hip->file2mm );
 
+	dsp->dsp_stom[2] = tmp[0];
+	dsp->dsp_stom[6] = tmp[1];
+	dsp->dsp_stom[10] = tmp[2];
+
+	bn_mat_inv( dsp->dsp_mtos, dsp->dsp_stom );
+
+	dsp->magic = RT_DSP_INTERNAL_MAGIC;
+
+	rt_db_free_internal( db_intern, resp );
 
 	db_intern->idb_ptr = (genptr_t)dsp;
 	db_intern->idb_type = ID_DSP;
 	db_intern->idb_meth = &rt_functab[ID_DSP];
 
-	rt_db_free_internal( db_intern, resp );
-
-	return -1;
+	return 0;
 
 }
 
