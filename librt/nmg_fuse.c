@@ -75,6 +75,8 @@ CONST struct face	*f;
  *
  *  Do two faces share by topology at least one loop of 3 or more vertices?
  *
+ *  Require that at least three distinct edge geometries be involved.
+ *
  * XXX Won't catch sharing of faces with only self-loops and no edge loops.
  */
 int
@@ -85,8 +87,11 @@ CONST struct face	*f2;
 	CONST struct faceuse	*fu1;
 	CONST struct loopuse	*lu1;
 	CONST struct edgeuse	*eu1;
+	CONST long		*magic1 = (long *)NULL;
+	CONST long		*magic2 = (long *)NULL;
 	int	nverts;
 	int	nbadv;
+	int	got_three;
 
 	NMG_CK_FACE(f1);
 	NMG_CK_FACE(f2);
@@ -100,14 +105,28 @@ CONST struct face	*f2;
 			continue;
 		nverts = 0;
 		nbadv = 0;
+		magic1 = (long *)NULL;
+		magic2 = (long *)NULL;
+		got_three = 0;
 		for( RT_LIST_FOR( eu1, edgeuse, &lu1->down_hd ) )  {
 			nverts++;
+			if( !magic1 )  {
+				magic1 = eu1->g.magic_p;
+			} else if( !magic2 )  {
+				if( eu1->g.magic_p != magic1 )  {
+					magic2 = eu1->g.magic_p;
+				}
+			} else {
+				if( eu1->g.magic_p != magic1 && eu1->g.magic_p != magic2 )  {
+					got_three = 1;
+				}
+			}
 			if( nmg_is_vertex_in_face( eu1->vu_p->v_p, f2 ) )
 				continue;
 			nbadv++;
 			break;
 		}
-		if( nbadv <= 0 && nverts >= 3 )  return 1;
+		if( nbadv <= 0 && nverts >= 3 && got_three )  return 1;
 	}
 	return 0;
 }
