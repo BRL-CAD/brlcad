@@ -4,7 +4,7 @@ if BUILD_REGEX
 REGEX=libregex
 else !BUILD_REGEX
 REGEX=
-fi
+endif
 
 if BUILD_ZLIB
 LIBZ=libz
