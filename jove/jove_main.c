@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 10.7  93/12/10  05:35:40  mike
+ * Additional POSIX support
+ * 
  * Revision 10.6  93/10/26  06:32:59  mike
  * Changed printf() to jprintf() so that all modules could safely
  * use stdio.h
@@ -137,8 +140,8 @@ void		DoKeys();
 struct ltchars	ls1, ls2;
 #endif 
 
-#if !defined(SYS5)
-struct tchars	tc1, tc2;
+#if !defined(SYS5) && !defined(HAS_TERMIOS)
+struct tchars	tc1, tc2;	/* only on old-style BSD */
 #endif
 
 int	errormsg;
