@@ -1539,10 +1539,10 @@ RT_EXTERN(void rt_vls_item_print, (struct rt_vls *vp,
 RT_EXTERN(void rt_vls_item_print_nc, (struct rt_vls *vp,
 	CONST struct structparse *sp, CONST char *base ) );
           /* Print single element from data structure, without commas */
-RT_EXTERN(void rt_vls_name_print, (struct rt_vls *vp,
+RT_EXTERN(int rt_vls_name_print, (struct rt_vls *vp,
 	CONST struct structparse *parsetab, CONST char *name,
 				    CONST char *base ) );
-RT_EXTERN(void rt_vls_name_print_nc, (struct rt_vls *vp,
+RT_EXTERN(int rt_vls_name_print_nc, (struct rt_vls *vp,
 	CONST struct structparse *parsetab, CONST char *name,
 				    CONST char *base ) );
           /* Print single element from data structure, chosen by name */
@@ -1894,6 +1894,8 @@ RT_EXTERN(struct rt_mapped_file *rt_open_mapped_file, (CONST char *name,
 				CONST char *appl));
 RT_EXTERN(void			rt_close_mapped_file, (struct rt_mapped_file *mp));
 
+/* rtassoc.c */
+RT_EXTERN(struct rt_vls *rt_assoc, (char *fname, char *value, char field_sep));
 
 /* pr.c */
 RT_EXTERN(void rt_pr_tree_vls, (struct rt_vls *vls, CONST union tree *tp));
