@@ -184,7 +184,7 @@ genptr_t		client_data;	/* unused client_data from db_scan() */
 	}
 	dp->d_un.file_offset = laddr;
 	switch( rip->major_type )  {
-	case DB5HDR_MAJORTYPE_BRLCAD:
+	case DB5_MAJORTYPE_BRLCAD:
 		if( rip->minor_type == ID_COMBINATION )  {
 			struct bu_attribute_value_set	avs;
 
@@ -206,11 +206,13 @@ genptr_t		client_data;	/* unused client_data from db_scan() */
 			dp->d_flags = DIR_SOLID;
 		}
 		break;
-	case DB5HDR_MAJORTYPE_OPAQUE_BINARY:
+	case DB5_MAJORTYPE_BINARY_EXPM:
+	case DB5_MAJORTYPE_BINARY_UNIF:
+	case DB5_MAJORTYPE_BINARY_MIME:
 		/* XXX Do we want to define extra flags for this? */
 		dp->d_flags = 0;
 		break;
-	case DB5HDR_MAJORTYPE_ATTRIBUTE_ONLY:
+	case DB5_MAJORTYPE_ATTRIBUTE_ONLY:
 		dp->d_flags = 0;
 	}
 	dp->d_len = rip->object_length;		/* in bytes */
