@@ -171,14 +171,8 @@ char	*dp;
 	tmp = uvc.uv_v;
 	uvc.uv_v -= tmp;
 
-	uvc.uv_du *= tp->tx_scale[X];
-	tmp = uvc.uv_du;
-	uvc.uv_du -= tmp;
-
-	uvc.uv_dv *= tp->tx_scale[X];
-	tmp = uvc.uv_dv;
-	uvc.uv_dv -= tmp;
-
+	uvc.uv_du /= tp->tx_scale[X];
+	uvc.uv_dv /= tp->tx_scale[X];
 
 	/*
 	 * If no texture file present, or if
@@ -395,33 +389,52 @@ char	*dp;
 	int dx, dy;
 	int x,y;
 	register long bw;
+	struct uvcoord uvc;
+	long tmp;
 
+	uvc = swp->sw_uv;
+ 
 	/*
 	 * If no texture file present, or if
 	 * texture isn't and can't be read, give debug colors
 	 */
 	if (tp->tx_file[0] == '\0' || !tp->mp )  {
-		VSET( swp->sw_color, swp->sw_uv.uv_u, 0, swp->sw_uv.uv_v );
+		VSET( swp->sw_color, uvc.uv_u, 0, uvc.uv_v );
 		if (swp->sw_reflect > 0 || swp->sw_transmit > 0 )
 			(void)rr_render( ap, pp, swp );
 		return(1);
 	}
 
+	/* take care of scaling U,V coordinates to get the desired amount
+	 * of replication of the texture
+	 */
+	uvc.uv_u *= tp->tx_scale[X];
+	tmp = uvc.uv_u;
+	uvc.uv_u -= tmp;
+
+	uvc.uv_v *= tp->tx_scale[Y];
+	tmp = uvc.uv_v;
+	uvc.uv_v -= tmp;
+
+	uvc.uv_du /= tp->tx_scale[X];
+	uvc.uv_dv /= tp->tx_scale[X];
+
+
 	/* u is left->right index, v is line number bottom->top */
 	/* Don't filter more than 1/8 of the texture for 1 pixel! */
-	if (swp->sw_uv.uv_du > 0.125 )  swp->sw_uv.uv_du = 0.125;
-	if (swp->sw_uv.uv_dv > 0.125 )  swp->sw_uv.uv_dv = 0.125;
+	if (uvc.uv_du > 0.125 )  uvc.uv_du = 0.125;
+	if (uvc.uv_dv > 0.125 )  uvc.uv_dv = 0.125;
 
-	if (swp->sw_uv.uv_du < 0 || swp->sw_uv.uv_dv < 0 )  {
+	if (uvc.uv_du < 0 || uvc.uv_dv < 0 )  {
 		bu_log("bwtxt_render uv=%g,%g, du dv=%g %g seg=%s\n",
-			swp->sw_uv.uv_u, swp->sw_uv.uv_v, swp->sw_uv.uv_du, swp->sw_uv.uv_dv,
+			uvc.uv_u, uvc.uv_v, uvc.uv_du, uvc.uv_dv,
 			pp->pt_inseg->seg_stp->st_name );
-		swp->sw_uv.uv_du = swp->sw_uv.uv_dv = 0;
+		uvc.uv_du = uvc.uv_dv = 0;
 	}
-	xmin = swp->sw_uv.uv_u - swp->sw_uv.uv_du;
-	xmax = swp->sw_uv.uv_u + swp->sw_uv.uv_du;
-	ymin = swp->sw_uv.uv_v - swp->sw_uv.uv_dv;
-	ymax = swp->sw_uv.uv_v + swp->sw_uv.uv_dv;
+	xmin = uvc.uv_u - uvc.uv_du;
+	xmax = uvc.uv_u + uvc.uv_du;
+	ymin = uvc.uv_v - uvc.uv_dv;
+	ymax = uvc.uv_v + uvc.uv_dv;
 	if (xmin < 0 )  xmin = 0;
 	if (ymin < 0 )  ymin = 0;
 	if (xmax > 1 )  xmax = 1;
