@@ -30,12 +30,9 @@ if ![info exists mged_players] {
     set mged_players {}
 }
 
-if {[info exists env(DISPLAY)] == 0} {
-    puts "The DISPLAY environment variable was not set."
-    puts "Setting the DISPLAY environment variable to :0\n"
+if ![info exists env(DISPLAY)] {
     set env(DISPLAY) ":0"
 }
-
 
 #==============================================================================
 # Ensure that tk.tcl has been loaded already via mged command 'loadtk'.
@@ -49,16 +46,17 @@ if { [info exists tk_strictMotif] == 0 } {
 #------------------------------------------------------------------------------
 #        vmath.tcl  :  The vector math library
 #         menu.tcl  :  The Tk menu replacement
-#      sliders.tcl  :  The Tk sliders replacement
 # html_library.tcl  :  Stephen Uhler's routines for processing HTML
 #==============================================================================
-if [info exists env(MGED_HTML_DIR)] {
-    set mged_html_dir $env(MGED_HTML_DIR)
-} else {
-    set mged_html_dir [lindex $auto_path 0]/../../html/mged
+if ![info exists mged_default(html_dir)] {
+    set mged_default(html_dir) /usr/brlcad/html/manuals/mged
 }
 
-#catch { source [lindex $auto_path 0]/sliders.tcl }
+if [info exists env(MGED_HTML_DIR)] {
+        set mged_html_dir $env(MGED_HTML_DIR)
+} else {
+        set mged_html_dir $mged_default(html_dir)
+}
 
 proc ia_help { parent screen cmds } {
     set w $parent.help
@@ -361,7 +359,7 @@ proc man_goto { w screen } {
 
 proc ia_man { parent screen } {
     global mged_html_dir ia_url message
-    
+
     set w $parent.man
     catch { destroy $w }
     toplevel $w -screen $screen
@@ -387,21 +385,13 @@ proc ia_man { parent screen } {
     pack $w.text -side top -fill both -expand yes
     pack $w.scrollx -side bottom -fill x
 
-#    if { [info exists ia_url]==0 } {
-#	while { [file exists $mged_html_dir/index.html]==0 } {
-#	    cad_input_dialog .mgedhtmldir $screen "Need path to MGED .html files"
-#		    "Please enter the full path to the MGED .html files:" \
-#		    mged_html_dir $mged_html_dir 0 OK
-#	}
-#    }
-
     set w $w.text
 
     HMinit_win $w
     set ia_url(current)   $mged_html_dir/
     set ia_url(last)      ""
     set ia_url(backtrack) ""
-    HMlink_callback $w index.html
+    HMlink_callback $w contents.html
 }
 
 proc HMlink_callback { w href } {
