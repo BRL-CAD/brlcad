@@ -198,16 +198,28 @@ struct faceuse *fu;
 	struct vertexuse *vu;
 	struct loopuse *lu;
 	struct loopuse *fu2lu;
+	struct loop_g	*lg;
+	struct loop_g	*fu2lg;
 	int overlap;
 
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)
-		rt_log(" purge here (0x%08x, 0x%08x)\n", vert_list, fu);
+		rt_log("nmg_purge_unwanted_intersection_points(0x%08x, 0x%08x)\n", vert_list, fu);
 
 	for (i=0 ; i < vert_list->end ; i++) {
 		vu = (struct vertexuse *)vert_list->buffer[i];
 		NMG_CK_VERTEXUSE(vu);
 		lu = nmg_lu_of_vu( vu );
+		NMG_CK_LOOPUSE(lu);
+		lg = lu->l_p->lg_p;
+		NMG_CK_LOOP_G(lg);
 
+		if (rt_g.NMG_debug & DEBUG_POLYSECT) {
+			rt_log("vu[%d]: 0x%08x (%g %g %g) lu: 0x%08x %s\n",
+				i, vu, V3ARGS(vu->v_p->vg_p->coord),
+				lu, nmg_orientation(lu->orientation) );
+			rt_log("\tlu BBox: (%g %g %g) (%g %g %g)\n",
+				V3ARGS(lg->min_pt), V3ARGS(lg->max_pt) );
+		}
 		if (lu->up.fu_p->f_p == fu->f_p)
 			rt_log("I'm checking against my own face?\n");
 
@@ -219,21 +231,30 @@ struct faceuse *fu;
 		for (RT_LIST_FOR(fu2lu, loopuse, &fu->lu_hd )){
 			NMG_CK_LOOPUSE(fu2lu);
 			NMG_CK_LOOP(fu2lu->l_p);
-			NMG_CK_LOOP_G(fu2lu->l_p->lg_p);
+			fu2lg = fu2lu->l_p->lg_p;
+			NMG_CK_LOOP_G(fu2lg);
 
 			/* If this loop is just some drek deposited as part of
 			 * the intersection operation, it doesn't really
 			 * count
 			 */
-			if (fu2lu->orientation != OT_SAME)
-			    	continue;
+			if (fu2lu->orientation == OT_BOOLPLACE)  continue;
 
-			if (NMG_EXTENT_OVERLAP(
-			   fu2lu->l_p->lg_p->min_pt, fu2lu->l_p->lg_p->max_pt,
-			    lu->l_p->lg_p->min_pt,   lu->l_p->lg_p->max_pt)) {
+			/* Everything should be OT_SAME or OT_BOOLPLACE, but...*/
+			if (fu2lu->orientation != OT_SAME)
+				rt_log("purge encountered %s in vertex list\n", nmg_orientation(fu2lu->orientation));
+
+			if (NMG_EXTENT_OVERLAP(fu2lg->min_pt, fu2lg->max_pt,
+			    lg->min_pt, lg->max_pt)) {
 				overlap = 1;
 				break;
 			}
+		}
+		if (rt_g.NMG_debug & DEBUG_POLYSECT) {
+			rt_log("%s\tfu2lu BBox: (%g %g %g)  (%g %g %g) %s\n",
+				overlap ? "keep" : "KILL",
+				V3ARGS(fu2lg->min_pt), V3ARGS(fu2lg->max_pt),
+				nmg_orientation(fu2lu->orientation) );
 		}
 		if (!overlap) {
 			/* why is this vertexuse in the list? */
@@ -249,27 +270,6 @@ struct faceuse *fu;
 			--(vert_list->end);
 			vert_list->buffer[vert_list->end] = (long *)NULL;
 			--i;
-		} else if (rt_g.NMG_debug & DEBUG_POLYSECT) {
-			rt_log("keep vu: 0x%08x (%g %g %g) lu: 0x%08x\n",
-				vu,
-				vu->v_p->vg_p->coord[0],
-				vu->v_p->vg_p->coord[1],
-				vu->v_p->vg_p->coord[2],
-				lu);
-			rt_log("\tlu BBox: %g %g %g  %g %g %g\n",
-				lu->l_p->lg_p->min_pt[0],
-				lu->l_p->lg_p->min_pt[1],
-				lu->l_p->lg_p->min_pt[2],
-				lu->l_p->lg_p->max_pt[0],
-				lu->l_p->lg_p->max_pt[1],
-				lu->l_p->lg_p->max_pt[2]);
-			rt_log("\tfu2lu BBox: %g %g %g  %g %g %g\n",
-				fu2lu->l_p->lg_p->min_pt[0],
-				fu2lu->l_p->lg_p->min_pt[1],
-				fu2lu->l_p->lg_p->min_pt[2],
-				fu2lu->l_p->lg_p->max_pt[0],
-				fu2lu->l_p->lg_p->max_pt[1],
-				fu2lu->l_p->lg_p->max_pt[2]);
 		}
 	}
 }
