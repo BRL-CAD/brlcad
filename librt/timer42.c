@@ -18,6 +18,7 @@ static char RCStimer[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
+#define _BSD_TYPES		/* Needed for IRIX 5.0.1 */
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/resource.h>
