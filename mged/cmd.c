@@ -150,6 +150,7 @@ int output_as_return = 0;
 extern Tcl_CmdProc cmd_expand, cmd_db, cmd_prev, cmd_next, f_echo;
 extern Tcl_CmdProc cmd_solids_on_ray;
 extern Tcl_CmdProc cmd_pathlist;
+extern Tcl_CmdProc cmd_oed;
 
 int	mged_cmd();
 int	cmd_gui(), cmd_tk(), cmd_getknob();
@@ -392,6 +393,8 @@ static struct funtab funtab[] = {
 	f_mvall, 3, 3,FALSE,
 "nirt", "", "trace a single ray from current view",
 	f_nirt,1,MAXARGS,FALSE,
+"oed", "path_lhs path_rhs", "Go from view to object_edit of path_lhs/path_rhs",
+	cmd_oed, 3, 3, TRUE,
 "opendb", "database.g", "Close current .g file, and open new .g file",
 	f_opendb, 2, 2,FALSE,
 #ifdef XMGED

@@ -642,9 +642,149 @@ CONST char	**argv;
 	mged_initial_tree_state.ts_tol = &mged_tol;
 
 	if( db_walk_tree( dbip, argc-1, argv+1, 1, &mged_initial_tree_state,
-	    0, 0, pathlist_leaf_func ) < 0 )
+	    0, 0, pathlist_leaf_func ) < 0 )  {
+	    	Tcl_SetResult(interp, "db_walk_tree() error", TCL_STATIC);
 		return TCL_ERROR;
+	}
 
 	return TCL_OK;
 }
 
+/*
+ *			F I N D _ S O L I D _ W I T H _ P A T H
+ */
+struct solid *
+find_solid_with_path( pathp )
+register struct db_full_path	*pathp;
+{
+	register struct solid	*sp;
+	int			count = 0;
+	struct solid		*ret = (struct solid *)NULL;
+
+	RT_CK_FULL_PATH(pathp);
+
+	FOR_ALL_SOLIDS(sp)  {
+		if( pathp->fp_len != sp->s_last+1 )
+			continue;
+
+		if( bcmp( (char *)&pathp->fp_names[0],
+			  (char *)&sp->s_path[0],
+			  pathp->fp_len * sizeof(struct directory *)
+		        ) != 0 )  continue;
+		/* Paths are the same */
+		ret = sp;
+		count++;
+	}
+	if( count > 1 )  rt_log("find_solid_with_path() found %d matches\n", count);
+	return ret;
+}
+
+/*
+ *			C M D _ O E D
+ *
+ *  Transition from VIEW state to OBJECT EDIT state in a single command,
+ *  rather than requiring "press oill", "ill leaf", "matpick a/b".
+ *
+ *  Takes two parameters which when combined represent the full path to
+ *  the reference solid of the object to be edited.
+ *  The conceptual slash between the two strings signifies which
+ *  matrix is to be edited.
+ */
+int
+cmd_oed(clientData, interp, argc, argv)
+ClientData	clientData;
+Tcl_Interp	*interp;
+int		argc;
+CONST char	**argv;
+{
+	struct db_full_path	lhs;
+	struct db_full_path	rhs;
+	struct db_full_path	both;
+	char			*new_argv[4];
+	char			number[32];
+
+	if( argc != 3 )  {
+		Tcl_SetResult(interp, "Usage: oed path_lhs path_rhs", TCL_STATIC);
+		return TCL_ERROR;
+	}
+	if( not_state( ST_VIEW, "Object Illuminate" ) )  {
+		Tcl_SetResult(interp, "MGED state is not VIEW", TCL_STATIC);
+		return TCL_ERROR;
+	}
+	if( HeadSolid.s_forw == &HeadSolid )  {
+		Tcl_SetResult(interp, "no solids in view", TCL_STATIC);
+		return TCL_ERROR;
+	}
+
+	if( db_string_to_path( &lhs, dbip, argv[1] ) < 0 )  {
+		Tcl_SetResult(interp, "bad lhs path", TCL_STATIC);
+		return TCL_ERROR;
+	}
+	if( db_string_to_path( &rhs, dbip, argv[2] ) < 0 )  {
+		db_free_full_path( &lhs );
+		Tcl_SetResult(interp, "bad rhs path", TCL_STATIC);
+		return TCL_ERROR;
+	}
+	if( rhs.fp_len <= 0 )  {
+		db_free_full_path( &lhs );
+		db_free_full_path( &rhs );
+		Tcl_SetResult(interp, "rhs must not be null", TCL_STATIC);
+		return TCL_ERROR;
+	}
+
+	db_full_path_init( &both );
+	db_dup_full_path( &both, &lhs );
+	db_append_full_path( &both, &rhs );
+#if 0
+	db_pr_full_path( "lhs ", &lhs );
+	db_pr_full_path( "rhs ", &rhs );
+	db_pr_full_path( "both", &both);
+#endif
+
+	/* Patterned after  ill_common() ... */
+	illump = HeadSolid.s_forw;/* any valid solid would do */
+	edobj = 0;		/* sanity */
+	movedir = 0;		/* No edit modes set */
+	mat_idn( modelchanges );	/* No changes yet */
+	(void)chg_state( ST_VIEW, ST_O_PICK, "internal change of state");
+
+	/* Find the one solid, set s_iflag UP, point illump at it */
+	illump = find_solid_with_path( &both );
+	if( !illump )  {
+		db_free_full_path( &lhs );
+		db_free_full_path( &rhs );
+		db_free_full_path( &both );
+		Tcl_SetResult(interp, "Unable to find solid matching path", TCL_STATIC);
+		illump = 0;
+		(void)chg_state( ST_O_PICK, ST_VIEW, "error recovery");
+		return TCL_ERROR;
+	}
+	(void)chg_state( ST_O_PICK, ST_O_PATH, "internal change of state");
+
+	/* Select the matrix */
+#if 0
+	rt_log("matpick %d\n", lhs.fp_len);
+#endif
+	sprintf( number, "%d", lhs.fp_len );
+	new_argv[0] = "matpick";
+	new_argv[1] = number;
+	new_argv[2] = NULL;
+	if( f_matpick( 2, new_argv ) != CMD_OK )  {
+		db_free_full_path( &lhs );
+		db_free_full_path( &rhs );
+		db_free_full_path( &both );
+		Tcl_SetResult(interp, "error detected inside f_matpick", TCL_STATIC);
+		return TCL_ERROR;
+	}
+	if( not_state( ST_O_EDIT, "Object EDIT" ) )  {
+		db_free_full_path( &lhs );
+		db_free_full_path( &rhs );
+		db_free_full_path( &both );
+		Tcl_SetResult(interp, "MGED state did not advance to Object EDIT", TCL_STATIC);
+		return TCL_ERROR;
+	}
+	db_free_full_path( &lhs );
+	db_free_full_path( &rhs );
+	db_free_full_path( &both );
+	return TCL_OK;
+}
