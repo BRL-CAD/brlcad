@@ -26,7 +26,7 @@ echo "  BINDIR = ${BINDIR},  BASEDIR = ${BASEDIR}"
 
 # Create all the necessary directories
 
-for LAST in bin include lib vfont man man/man1 man/man3 man/man5
+for LAST in bin include lib vfont man man/man1 man/man3 man/man5 etc
 do
 	if test ! -d $BASEDIR/$LAST
 	then
