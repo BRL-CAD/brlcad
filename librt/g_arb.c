@@ -46,15 +46,12 @@ static char RCSarb[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "nmg.h"
 #include "db.h"
+#include "rtstring.h"
 #include "raytrace.h"
+#include "rtgeom.h"
 #include "./debug.h"
 
 #define RT_SLOPPY_DOT_TOL	0.0087	/* inspired by RT_DOT_TOL, but less tight (.5 deg) */
-
-/* The internal (in memory) form of an ARB8 -- 8 points in space */
-struct arb_internal {
-	fastf_t	arbi_pt[3*8];
-};
 
 /* Optionally, one of these for each face.  (Lazy evaluation) */
 struct oface {
@@ -110,6 +107,8 @@ static struct arb_info {
 	{ "1562", 1, 5, 4, 0 },
 	{ "4378", 7, 6, 2, 3 }
 };
+
+RT_EXTERN(void rt_arb_ifree, (struct rt_db_internal *) );
 
 /*
  *			R T _ A R B _ A D D _ P T
@@ -252,7 +251,7 @@ int		ptno;	/* current point # on face */
 /*
  *			R T _ A R B _ M K _ P L A N E S
  *
- *  Given an arb_internal structure with 8 points in it,
+ *  Given an rt_arb_internal structure with 8 points in it,
  *  compute the face information.
  *
  *  Returns -
@@ -262,9 +261,8 @@ int		ptno;	/* current point # on face */
 HIDDEN int
 rt_arb_mk_planes( pap, aip )
 register struct prep_arb	*pap;
-struct arb_internal		*aip;
+struct rt_arb_internal		*aip;
 {
-	register fastf_t *op;		/* Used for scanning vectors */
 	LOCAL vect_t	sum;		/* Sum of all endpoints */
 	register int	i;
 	register int	j;
@@ -281,11 +279,9 @@ struct arb_internal		*aip;
 	 *  so this dual-strategy is required.  (What a bug hunt!).
 	 */
 	VSETALL( sum, 0 );
-	op = &aip->arbi_pt[0*ELEMENTS_PER_VECT];
 #	include "noalias.h"
 	for( i=0; i<8; i++ )  {
-		VADD2( sum, sum, op );
-		op += ELEMENTS_PER_VECT;
+		VADD2( sum, sum, aip->pt[i] );
 	}
 	VSCALE( pap->pa_center, sum, 0.125 );	/* sum/8 */
 
@@ -297,13 +293,11 @@ struct arb_internal		*aip;
 	 */
 	equiv_pts[0] = 0;
 	for( i=1; i<8; i++ )  {
-		register pointp_t	point;
-		point = &aip->arbi_pt[i*ELEMENTS_PER_VECT];
 		for( j = i-1; j >= 0; j-- )  {
 			/* Compare vertices I and J */
 			LOCAL vect_t		work;
 
-			VSUB2( work, point, &aip->arbi_pt[j*ELEMENTS_PER_VECT] );
+			VSUB2( work, aip->pt[i], aip->pt[j] );
 			if( MAGSQ( work ) < pap->pa_tol_sq )  {
 				/* Points I and J are the same, J is lower */
 				equiv_pts[i] = equiv_pts[j];
@@ -346,8 +340,7 @@ struct arb_internal		*aip;
 					goto skip_pt;
 				}
 			}
-			if( rt_arb_add_pt(
-			    &aip->arbi_pt[pt_index*ELEMENTS_PER_VECT],
+			if( rt_arb_add_pt( aip->pt[pt_index],
 			    rt_arb_info[i].ai_title, pap, npts ) == 0 )  {
 				/* Point was accepted */
 				pap->pa_pindex[npts][pap->pa_faces] = pt_index;
@@ -397,33 +390,22 @@ skip_pt:		;
  *	!0	failure
  */
 HIDDEN int
-rt_arb_setup( stp, rec, rtip, uv_wanted )
-struct soltab	*stp;
-union record	*rec;
-struct rt_i	*rtip;
-int		uv_wanted;
+rt_arb_setup( stp, aip, rtip, uv_wanted )
+struct soltab		*stp;
+struct rt_arb_internal	*aip;
+struct rt_i		*rtip;
+int			uv_wanted;
 {
 	register int		i;
-	struct arb_internal	ai;
 	struct prep_arb		pa;
 
-	if( rec == (union record *)0 )  {
-		rec = db_getmrec( rtip->rti_dbip, stp->st_dp );
-		i = rt_arb_import( &ai, rec, stp->st_pathmat );
-		rt_free( (char *)rec, "arb record" );
-	} else {
-		i = rt_arb_import( &ai, rec, stp->st_pathmat );
-	}
-	if( i < 0 )  {
-		rt_log("rt_arb_setup(%s): db import failure\n", stp->st_name);
-		return(-1);		/* BAD */
-	}
+	RT_ARB_CK_MAGIC(aip);
 
 	pa.pa_doopt = uv_wanted;
 	pa.pa_name = stp->st_name;
 	pa.pa_tol_sq = 0.005;
 
-	if( rt_arb_mk_planes( &pa, &ai ) < 0 )  {
+	if( rt_arb_mk_planes( &pa, aip ) < 0 )  {
 		return(-2);		/* Error */
 	}
 
@@ -471,15 +453,12 @@ int		uv_wanted;
 	 * to be contained within the solid!
 	 */
 	{
-		register fastf_t	*op;
 		LOCAL vect_t		work;
 		register fastf_t	f;
 
-		op = &ai.arbi_pt[0];
 #		include "noalias.h"
 		for( i=0; i< 8; i++ ) {
-			VMINMAX( stp->st_min, stp->st_max, op );
-			op += ELEMENTS_PER_VECT;
+			VMINMAX( stp->st_min, stp->st_max, aip->pt[i] );
 		}
 		VADD2SCALE( stp->st_center, stp->st_min, stp->st_max, 0.5 );
 		VSUB2SCALE( work, stp->st_max, stp->st_min, 0.5 );
@@ -502,13 +481,41 @@ int		uv_wanted;
  *	 0	OK
  *	!0	failure
  */
+#if NEW_IF
+int
+rt_arb_prep( stp, ip, rtip )
+struct soltab		*stp;
+struct rt_db_internal	*ip;
+struct rt_i		*rtip;
+{
+#else
 int
 rt_arb_prep( stp, rec, rtip )
 struct soltab	*stp;
 union record	*rec;
 struct rt_i	*rtip;
 {
-	return( rt_arb_setup( stp, rec, rtip, 0 ) );
+	struct rt_external	ext, *ep;
+	struct rt_db_internal	intern, *ip;
+#endif
+	struct rt_arb_internal	*aip;
+
+#if NEW_IF
+	/* All set */
+#else
+	ep = &ext;
+	RT_INIT_EXTERNAL(ep);
+	ep->ext_buf = (genptr_t)rec;
+	ep->ext_nbytes = stp->st_dp->d_len*sizeof(union record);
+	ip = &intern;
+	if( rt_arb_import( ip, ep, stp->st_pathmat ) < 0 )
+		return(-1);		/* BAD */
+	RT_CK_DB_INTERNAL( ip );
+#endif
+	aip = (struct rt_arb_internal *)ip->idb_ptr;
+	RT_ARB_CK_MAGIC(aip);
+
+	return( rt_arb_setup( stp, aip, rtip, 0 ) );
 }
 
 /*
@@ -783,7 +790,27 @@ register struct uvcoord *uvp;
 	LOCAL fastf_t	r;
 
 	if( arbp->arb_opt == (struct oface *)0 )  {
-		register int	ret = 0;
+		register int		ret = 0;
+		struct rt_external	ext;
+		struct rt_db_internal	intern;
+		struct rt_arb_internal	*aip;
+
+		RT_INIT_EXTERNAL(&ext);
+		if( db_get_external( &ext, stp->st_dp, ap->a_rt_i->rti_dbip ) < 0 )  {
+			rt_log("rt_arb_uv(%s) db_get_external failure\n",
+				stp->st_name);
+			return;
+		}
+		if( rt_arb_import( &intern, &ext, stp->st_pathmat ) < 0 )  {
+			rt_log("rt_arb_uv(%s) database import error\n",
+				stp->st_name);
+			db_free_external( &ext );
+			return;
+		}
+		db_free_external( &ext );
+		RT_CK_DB_INTERNAL( &intern );
+		aip = (struct rt_arb_internal *)intern.idb_ptr;
+		RT_ARB_CK_MAGIC(aip);
 
 		/*
 		 *  The double check of arb_opt is to avoid the case
@@ -792,9 +819,11 @@ register struct uvcoord *uvp;
 		 */
 		RES_ACQUIRE( &rt_g.res_model );
 		if( arbp->arb_opt == (struct oface *)0 )  {
-			ret = rt_arb_setup(stp, (union record *)0, ap->a_rt_i, 1);
+			ret = rt_arb_setup(stp, aip, ap->a_rt_i, 1);
 		}
 		RES_RELEASE( &rt_g.res_model );
+
+		rt_arb_ifree( &intern );
 
 		if( ret != 0 || arbp->arb_opt == (struct oface *)0 )  {
 			rt_log("rt_arb_uv(%s) dyanmic setup failure st_specific=x%x, optp=x%x\n",
@@ -838,10 +867,10 @@ register struct soltab *stp;
 }
 
 #define ARB_FACE( valp, a, b, c, d ) \
-	ADD_VL( vhead, &valp[a*3], 0 ); \
-	ADD_VL( vhead, &valp[b*3], 1 ); \
-	ADD_VL( vhead, &valp[c*3], 1 ); \
-	ADD_VL( vhead, &valp[d*3], 1 );
+	ADD_VL( vhead, valp[a], 0 ); \
+	ADD_VL( vhead, valp[b], 1 ); \
+	ADD_VL( vhead, valp[c], 1 ); \
+	ADD_VL( vhead, valp[d], 1 );
 
 /*
  *  			R T _ A R B _ P L O T
@@ -850,24 +879,52 @@ register struct soltab *stp;
  *  This draws each edge only once.
  *  XXX No checking for degenerate faces is done, but probably should be.
  */
+#if NEW_IF
 int
-rt_arb_plot( rp, matp, vhead, dp )
+rt_arb_plot( vhead, mat, ip, abs_tol, rel_tol, norm_tol )
+struct vlhead	*vhead;
+mat_t		mat;
+struct rt_db_internal *ip;
+double		abs_tol;
+double		rel_tol;
+double		norm_tol;
+{
+#else
+int
+rt_arb_plot( rp, mat, vhead, dp )
 register union record	*rp;
-register matp_t		matp;
+register mat_t		mat;
 struct vlhead		*vhead;
 struct directory	*dp;
 {
-	struct arb_internal	ai;
+	struct rt_external	ext, *ep;
+	struct rt_db_internal	intern, *ip;
+#endif
+	struct rt_arb_internal	*aip;
+	int			i;
 
-	if( rt_arb_import( &ai, rp, matp ) < 0 )  {
-		rt_log("rt_arb_plot(%s): db import failure\n", dp->d_namep);
-		return(-1);
+#if NEW_IF
+	/* All set */
+#else
+	ep = &ext;
+	RT_INIT_EXTERNAL(ep);
+	ep->ext_buf = (genptr_t)rp;
+	ep->ext_nbytes = dp->d_len*sizeof(union record);
+	i = rt_arb_import( &intern, ep, mat );
+	if( i < 0 )  {
+		rt_log("rt_arb_plot(): db import failure\n");
+		return(-1);		/* BAD */
 	}
+	ip = &intern;
+#endif
+	RT_CK_DB_INTERNAL(ip);
+	aip = (struct rt_arb_internal *)ip->idb_ptr;
+	RT_ARB_CK_MAGIC(aip);
 
-	ARB_FACE( ai.arbi_pt, 0, 1, 2, 3 );
-	ARB_FACE( ai.arbi_pt, 4, 0, 3, 7 );
-	ARB_FACE( ai.arbi_pt, 5, 4, 7, 6 );
-	ARB_FACE( ai.arbi_pt, 1, 5, 6, 2 );
+	ARB_FACE( aip->pt, 0, 1, 2, 3 );
+	ARB_FACE( aip->pt, 4, 0, 3, 7 );
+	ARB_FACE( aip->pt, 5, 4, 7, 6 );
+	ARB_FACE( aip->pt, 1, 5, 6, 2 );
 	return(0);
 }
 
@@ -895,41 +952,137 @@ rt_arb_class()
  *  by rotating each vector and adding in the base vector.
  */
 int
-rt_arb_import( aip, rp, matp )
-struct arb_internal	*aip;
-union record		*rp;
-register matp_t		matp;
+rt_arb_import( ip, ep, mat )
+struct rt_db_internal	*ip;
+struct rt_external	*ep;
+register mat_t		mat;
 {
+	struct rt_arb_internal	*aip;
+	union record		*rp;
 	register int		i;
-	register fastf_t	*ip;
-	register fastf_t	*op;
 	LOCAL vect_t		work;
 	LOCAL fastf_t		vec[3*8];
 	
+	RT_CK_EXTERNAL( ep );
+	rp = (union record *)ep->ext_buf;
 	/* Check record type */
 	if( rp->u_id != ID_SOLID )  {
 		rt_log("rt_arb_import: defective record, id=x%x\n", rp->u_id);
 		return(-1);
 	}
 
+	RT_INIT_DB_INTERNAL( ip );
+	ip->idb_type = ID_ARB8;
+	ip->idb_ptr = rt_malloc( sizeof(struct rt_arb_internal), "rt_arb_internal");
+	aip = (struct rt_arb_internal *)ip->idb_ptr;
+	aip->magic = RT_ARB_INTERNAL_MAGIC;
+
 	/* Convert from database to internal format */
 	rt_fastf_float( vec, rp->s.s_values, 8 );
 
 	/*
-	 * Convert from vector to point notation for drawing.
+	 * Convert from vector notation (in database) to point notation.
 	 */
-	MAT4X3PNT( &aip->arbi_pt[0], matp, &vec[0] );
+	MAT4X3PNT( aip->pt[0], mat, &vec[0] );
 
-	ip = &vec[1*3];
-	op = &aip->arbi_pt[1*3];
 #	include "noalias.h"
 	for( i=1; i<8; i++ )  {
-		VADD2( work, &vec[0], ip );
-		MAT4X3PNT( op, matp, work );
-		ip += 3;
-		op += ELEMENTS_PER_VECT;
+		VADD2( work, &vec[0*3], &vec[i*3] );
+		MAT4X3PNT( aip->pt[i], mat, work );
 	}
 	return(0);			/* OK */
+}
+
+/*
+ *			R T _ A R B _ E X P O R T
+ */
+int
+rt_arb_export( ep, ip, local2mm )
+struct rt_external	*ep;
+struct rt_db_internal	*ip;
+double			local2mm;
+{
+	struct rt_arb_internal	*aip;
+	union record		*rec;
+	register int		i;
+
+	RT_CK_DB_INTERNAL(ip);
+	if( ip->idb_type != ID_ARB8 )  return(-1);
+	aip = (struct rt_arb_internal *)ip->idb_ptr;
+	RT_ARB_CK_MAGIC(aip);
+
+	RT_INIT_EXTERNAL(ep);
+	ep->ext_nbytes = sizeof(union record);
+	ep->ext_buf = (genptr_t)rt_calloc( 1, ep->ext_nbytes, "arb external");
+	rec = (union record *)ep->ext_buf;
+
+	rec->s.s_id = ID_SOLID;
+	rec->s.s_type = GENARB8;
+
+	/* NOTE: This also converts to dbfloat_t */
+	VSCALE( &rec->s.s_values[3*0], aip->pt[0], local2mm );
+	for( i=1; i < 8; i++ )  {
+		VSUB2SCALE( &rec->s.s_values[3*i],
+			aip->pt[i], aip->pt[0], local2mm );
+	}
+	return(0);
+}
+
+/*
+ *			R T _ A R B _ D E S C R I B E
+ *
+ *  Make human-readable formatted presentation of this solid.
+ *  First line describes type of solid.
+ *  Additional lines are indented one tab, and give parameter values.
+ */
+int
+rt_arb_describe( str, ip, verbose, mm2local )
+struct rt_vls		*str;
+struct rt_db_internal	*ip;
+int			verbose;
+double			mm2local;
+{
+	register struct rt_arb_internal	*aip =
+		(struct rt_arb_internal *)ip->idb_ptr;
+	char	buf[256];
+	int	i;
+
+	RT_ARB_CK_MAGIC(aip);
+
+	rt_vls_strcat( str, "ARB8\n");
+	/* XXX For the future, might want to comment on what sub-type
+	 * XXX of ARB this is (e.g., ARB4).
+	 */
+
+	sprintf(buf, "\t0 (%g, %g, %g)\n",
+		aip->pt[0][X] * mm2local,
+		aip->pt[0][Y] * mm2local,
+		aip->pt[0][Z] * mm2local );
+	rt_vls_strcat( str, buf );
+
+	if( !verbose )  return(0);
+
+	for( i=1; i < 8; i++ )  {
+		sprintf(buf, "\t%d (%g, %g, %g)\n", i,
+			aip->pt[i][X] * mm2local,
+			aip->pt[i][Y] * mm2local,
+			aip->pt[i][Z] * mm2local );
+		rt_vls_strcat( str, buf );
+	}
+	return(0);
+}
+
+/*
+ *			R T _ A R B _ I F R E E
+ *
+ *  Free the storage associated with the rt_db_internal version of this solid.
+ */
+void
+rt_arb_ifree( ip )
+struct rt_db_internal	*ip;
+{
+	RT_CK_DB_INTERNAL(ip);
+	rt_free( ip->idb_ptr, "arb ifree" );
 }
 
 /*
@@ -943,6 +1096,18 @@ register matp_t		matp;
  *	-1	failure
  *	 0	OK.  *r points to nmgregion that holds this tessellation.
  */
+#if NEW_IF
+int
+rt_arb_tess( r, m, ip, mat, abs_tol, rel_tol, norm_tol )
+struct nmgregion	**r;
+struct model		*m;
+struct rt_db_internal	*ip;
+register mat_t		mat;
+double		abs_tol;
+double		rel_tol;
+double		norm_tol;
+{
+#else
 int
 rt_arb_tess( r, m, rp, mat, dp, abs_tol, rel_tol, norm_tol )
 struct nmgregion	**r;
@@ -954,23 +1119,40 @@ double			abs_tol;
 double			rel_tol;
 double			norm_tol;
 {
+	struct rt_external	ext, *ep;
+	struct rt_db_internal	intern, *ip;
+#endif
+	LOCAL struct rt_arb_internal	*aip;
 	struct shell		*s;
-	struct arb_internal	ai;
 	struct prep_arb		pa;
 	register int		i;
 	struct faceuse		*fu[6];
 	struct vertex		*verts[8];
 	struct vertex		**vertp[4];
 
-	if( rt_arb_import( &ai, rp, mat ) < 0 )  {
-		rt_log("rt_arb_tess(%s): import failure\n", dp->d_namep);
-		return(-1);
+#if NEW_IF
+	/* All set */
+#else
+	ep = &ext;
+	RT_INIT_EXTERNAL(ep);
+	ep->ext_buf = (genptr_t)rp;
+	ep->ext_nbytes = dp->d_len*sizeof(union record);
+	i = rt_arb_import( &intern, ep, mat );
+	if( i < 0 )  {
+		rt_log("rt_arb_tess(): db import failure\n");
+		return(-1);		/* BAD */
 	}
+	ip = &intern;
+#endif
+	RT_CK_DB_INTERNAL(ip);
+	aip = (struct rt_arb_internal *)ip->idb_ptr;
+	RT_ARB_CK_MAGIC(aip);
+
 	bzero( (char *)&pa, sizeof(pa) );
 	pa.pa_doopt = 0;		/* no UV stuff */
 	pa.pa_name = dp->d_namep;
 	pa.pa_tol_sq = 0.005;	/* XXX need real tolerance here! XXX */
-	if( rt_arb_mk_planes( &pa, &ai ) < 0 )  return(-2);
+	if( rt_arb_mk_planes( &pa, aip ) < 0 )  return(-2);
 
 	for( i=0; i<8; i++ )  verts[i] = (struct vertex *)0;
 
@@ -1010,7 +1192,7 @@ double			norm_tol;
 
 	/* Associate vertex geometry */
 	for( i=0; i<8; i++ )
-		if(verts[i]) nmg_vertex_gv(verts[i], &ai.arbi_pt[3*i]);
+		if(verts[i]) nmg_vertex_gv(verts[i], aip->pt[i]);
 
 	/* Associate face geometry */
 	for( i=0; i < pa.pa_faces; i++ )  {
