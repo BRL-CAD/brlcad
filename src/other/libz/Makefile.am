@@ -9,12 +9,9 @@ libz_la_SOURCES = \
 	deflate.c \
 	example.c \
 	gzio.c \
-	infblock.c \
-	infcodes.c \
 	inffast.c \
 	inflate.c \
 	inftrees.c \
-	infutil.c \
 	trees.c \
 	uncompr.c \
 	zutil.c
@@ -23,12 +20,9 @@ libz_la_LDFLAGS = -version-info 2:4:1
 
 include_HEADERS = \
 	deflate.h \
-	infblock.h \
-	infcodes.h \
 	inffast.h \
 	inffixed.h \
 	inftrees.h \
-	infutil.h \
 	trees.h \
 	zconf.h \
 	zlib.h \
@@ -40,18 +34,10 @@ EXTRA_DIST = \
 	$(man_MANS) \
 	FAQ \
 	INDEX \
-	Make_vms.com \
-	Makefile.riscos \
-	afile \
 	algorithm.txt \
 	amiga \
 	contrib \
-	descrip.mms \
-	maketree.c \
 	minigzip.c \
-	msdos \
-	nt \
-	sfile \
-	zlib.html	
+	msdos
 
 MAINTAINERCLEANFILES = Makefile.in
