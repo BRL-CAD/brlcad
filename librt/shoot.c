@@ -226,11 +226,16 @@ top:
 		if( !rt_in_rpp(&ap->a_ray, inv_dir,
 		     cutp->bn.bn_min, cutp->bn.bn_max) )  {
 			rt_log("\nrt_shootray:  ray misses box? (%g,%g) (%g,%g) \n",ap->a_ray.r_min, ap->a_ray.r_max, box_start, box_end);
-			VPRINT("r_pt", ap->a_ray.r_pt);
-		     	VPRINT("Point", point);
-			VPRINT("Dir", ap->a_ray.r_dir);
-		     	rt_pr_cut( cutp, 0 );
-			break;
+		     	if(rt_g.debug&DEBUG_SHOOT)  {
+				VPRINT("r_pt", ap->a_ray.r_pt);
+			     	VPRINT("Point", point);
+				VPRINT("Dir", ap->a_ray.r_dir);
+			     	rt_pr_cut( cutp, 0 );
+		     	}
+		     	if( box_end >= INFINITY )  break;
+			box_end += 1.0;		/* Advance 1mm */
+			box_start = box_end;
+		     	continue;
 		}
 middle:
 		box_end = ap->a_ray.r_max;	
@@ -277,18 +282,6 @@ middle:
 				continue;	/* MISS */
 			}
 			if(rt_g.debug&DEBUG_SHOOT)  rt_pr_seg(newseg);
-
-			/* Discard seg entirely behind start point of ray */
-			while( newseg != SEG_NULL && 
-				newseg->seg_out.hit_dist < -10.0 )  {
-				register struct seg *seg2 = newseg->seg_next;
-				FREE_SEG( newseg );
-				newseg = seg2;
-			}
-			if( newseg == SEG_NULL )  {
-				ap->a_rt_i->nmiss++;
-				continue;	/* MISS */
-			}
 			trybool++;	/* flag to rerun bool, below */
 
 			/* Add seg chain to list awaiting rt_boolweave() */
@@ -306,11 +299,10 @@ middle:
 			ap->a_rt_i->nhits++;
 		}
 
-		/*
-		 *  Weave these segments into the partition list.
-		 *  Done once per box.
-		 */
-		if( waitsegs != SEG_NULL )  {
+		/* Special case for efficiency -- first hit only */
+		/* Only run this every three hits, to balance cost/benefit */
+		if( trybool>=3 && ap->a_onehit && waitsegs != SEG_NULL )  {
+			/* Weave these segments into partition list */
 			rt_boolweave( waitsegs, &InitialPart );
 
 			/* Add segment chain to list of used segments */
@@ -322,11 +314,6 @@ middle:
 				HeadSeg = waitsegs;
 				waitsegs = SEG_NULL;
 			}
-		}
-
-		/* Special case for efficiency -- first hit only */
-		/* Only run this every three hits, to balance cost/benefit */
-		if( trybool>=3 && ap->a_onehit )  {
 			/* Evaluate regions upto box_end */
 			rt_boolfinal( &InitialPart, &FinalPart,
 				last_bool_start, box_end, regionbits, ap );
@@ -342,7 +329,23 @@ middle:
 		/* Push ray onwards to next box */
 		box_start = box_end;
 	}
-	/* Ray has finally left known space -- do final computations */
+	/*
+	 *  Ray has finally left known space --
+	 *  Weave any remaining segments into the partition list.
+	 */
+	if( waitsegs != SEG_NULL )  {
+		rt_boolweave( waitsegs, &InitialPart );
+
+		/* Add segment chain to list of used segments */
+		{
+			register struct seg *seg2 = waitsegs;
+			while( seg2->seg_next != SEG_NULL )
+				seg2 = seg2->seg_next;
+			seg2->seg_next = HeadSeg;
+			HeadSeg = waitsegs;
+			waitsegs = SEG_NULL;
+		}
+	}
 
 	/* HeadSeg chain now has all segments hit by this ray */
 	if( HeadSeg == SEG_NULL )  {
