@@ -230,7 +230,10 @@ struct rt_i	*rtip;
 		}
 		rt_functab[stp->st_id].ft_plot(
 			recp, stp->st_pathmat, &vhead,
-			stp->st_dp );
+			stp->st_dp,
+			0.0,		/* absolute tolerance */
+			0.01		/* relative tolerance */
+		);
 		rt_free( (char *)recp, "db record" );
 
 		/* Take color from one region */
