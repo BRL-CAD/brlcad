@@ -52,6 +52,9 @@ char	*prototype;		/* Contains full text of prototype document */
 void	get_proto();
 void	do_lines();
 void	out_mat();
+int	str2chan_index( char *s );
+int	multi_words( char *words[], int	nwords );
+
 
 /*
  *			M A I N
@@ -250,9 +253,7 @@ FILE	*fp;
  *	 0	OK
  */
 int
-multi_words( words, nwords )
-char	*words[];
-int	nwords;
+multi_words( char *words[], int	nwords )
 {
 
 	if( strcmp( words[0], "rot" ) == 0 )  {
@@ -475,8 +476,7 @@ int	nwords;
  *  To signal an error, 0 is returned;  this will index the time column.
  */
 int
-str2chan_index( s )
-char	*s;
+str2chan_index( char *s )
 {
 	int	chan;
 
