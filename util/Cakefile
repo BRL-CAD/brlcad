@@ -31,7 +31,7 @@
 	plcolor pldebug plgetframe plline2 plrot plstat \
 	query rle-pix sgi-pix sun-pix xyz-pl msrandom pixblend pixmorph \
 	pixborder mst texturescale pixclump pixcount imgdims remapid \
-	wavelet pixsubst terrain
+	wavelet pixsubst terrain ttcp
 
 /* SGI specific goodies: pix-ci */
 /* X11 specific program:  pl-X */
@@ -80,6 +80,9 @@ mac-pix:	mac-pix.o
 
 sun-pix:	sun-pix.o
 	CC LDFLAGS -o sun-pix sun-pix.o LIBES
+
+ttcp:	ttcp.o
+	CC LDFLAGS -o ttcp ttcp.o LIBES
 
 pixmerge:	pixmerge.o
 	CC LDFLAGS -o pixmerge pixmerge.o LIBES
