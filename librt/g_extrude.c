@@ -2344,7 +2344,8 @@ rt_extrude_import5(
 	const struct bu_external	*ep,
 	register const mat_t		mat,
 	const struct db_i		*dbip,
-	struct resource			*resp)
+	struct resource			*resp,
+	const int			minor_type )
 {
 	LOCAL struct rt_extrude_internal	*extrude_ip;
 	struct rt_db_internal			tmp_ip;
