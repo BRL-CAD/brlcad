@@ -98,6 +98,19 @@ CONST struct structparse rt_hf_cparse[] = {
 
 struct hf_specific {
 	vect_t	hf_V;
+	vect_t	hf_VO;
+	vect_t	hf_X;
+	fastf_t	hf_Xlen;
+	vect_t	hf_Y;
+	fastf_t	hf_Ylen;
+	vect_t	hf_N;
+	fastf_t	hf_min;
+	fastf_t	hf_max;
+	fastf_t	hf_file2mm;
+	int	hf_w;
+	int	hf_n;
+	int	hf_shorts;
+	struct rt_mapped_file *hf_mp;
 };
 
 /*
@@ -121,15 +134,139 @@ struct soltab		*stp;
 struct rt_db_internal	*ip;
 struct rt_i		*rtip;
 {
-	struct rt_hf_internal		*xip;
+	struct rt_hf_internal		*hip;
 	register struct hf_specific	*hf;
 	CONST struct rt_tol		*tol = &rtip->rti_tol;
+	double	dot;
+	vect_t	height, work;
+	static first_time=1;
 
+	if (first_time) {
+		rt_log("%s\n",RCSid);
+		first_time=0;
+	}
 	RT_CK_DB_INTERNAL(ip);
-	xip = (struct rt_hf_internal *)ip->idb_ptr;
-	RT_HF_CK_MAGIC(xip);
+	hip = (struct rt_hf_internal *)ip->idb_ptr;
+	RT_HF_CK_MAGIC(hip);
 
-	return -1;	/* FAIL */
+	GETSTRUCT(hf, hf_specific);
+	stp->st_specific = (genptr_t) hf;
+	/*
+	 * The stuff that is given to us.
+	 */
+	VMOVE(hf->hf_V, hip->v);
+	VMOVE(hf->hf_X, hip->x);
+	VUNITIZE(hf->hf_X);
+	hf->hf_Xlen = hip->xlen;
+	VMOVE(hf->hf_Y, hip->y);
+	VUNITIZE(hf->hf_Y);
+	hf->hf_Ylen = hip->ylen;
+	hf->hf_file2mm = hip->file2mm;
+	hf->hf_w = hip->w;
+	hf->hf_n = hip->n;
+	hf->hf_mp = hip->mp;
+	RES_ACQUIRE( &rt_g.res_model);
+	++hf->hf_mp->uses;
+	RES_RELEASE( &rt_g.res_model);
+	hf->hf_shorts = hip->shorts;
+	/*
+	 * From here down, we are calculating new values on a one time
+	 * basis.
+	 */
+
+	/*
+	 * Start finding the location of the oposite vertex to V
+	 */
+	VJOIN2(hf->hf_VO, hip->v, hip->xlen, hip->x, hip->ylen, hip->y);
+
+	/*
+	 * get the normal.
+	 */
+	dot = VDOT(hf->hf_X, hf->hf_Y);
+	if (fabs(dot) >tol->perp) {	/* not perpendicular, bad hf */
+		rt_log("Hf(%s): X not perpendicular to Y.\n", stp->st_name);
+		rt_free((genptr_t)hf, "struct hf");
+		stp->st_specific = (genptr_t) 0;
+		return 1;	/* BAD */
+	}
+	VCROSS(hf->hf_N, hf->hf_X, hf->hf_Y);
+	VUNITIZE(hf->hf_N);		/* Not needed (?) */
+
+	/*
+	 * Locate the min-max of the HF for use in determining VO and
+	 * bounding boxes et so forth.
+	 */
+	if (hf->hf_shorts) {
+		register int max, min;
+		register int len;
+		register unsigned short *sp;
+		register int i;
+
+		sp = (unsigned short *)hf->hf_mp->apbuf;
+		min = max = *sp++;
+		len = hf->hf_w * hf->hf_n;
+		for (i=1; i< len; i++, sp++) {
+			if (*sp > max) max=*sp;
+			if (*sp < min) min=*sp;
+		}
+		hf->hf_min = min * hf->hf_file2mm;
+		hf->hf_max = max * hf->hf_file2mm;
+	} else {
+		fastf_t max, min;
+		register int len;
+		register int i;
+		fastf_t *fp;
+
+		fp = (fastf_t *) hf->hf_mp->apbuf;
+		min = max = *fp++;
+		len = hf->hf_w * hf->hf_n;
+		for (i=1; i < len; i++, fp++) {
+			if (*fp > max) max = *fp;
+			if (*fp < min) min = *fp;
+		}
+		hf->hf_min = min * hf->hf_file2mm;
+		hf->hf_max = max * hf->hf_file2mm;
+	}
+
+	VSCALE(height, hf->hf_N, hf->hf_max);
+	VADD2(hf->hf_VO, hf->hf_VO, height);
+
+	/*
+	 * Now we compute the bounding box and sphere.
+	 */
+	VMOVE(stp->st_min, hf->hf_V);
+	VMOVE(stp->st_max, hf->hf_V);
+	VADD2(work, hf->hf_V, height);
+	VMINMAX(stp->st_min, stp->st_max, work);
+	VJOIN1(work, hf->hf_V, hf->hf_Xlen, hf->hf_X);
+	VMINMAX(stp->st_min, stp->st_max, work);
+	VADD2(work, work, height);
+	VMINMAX(stp->st_min, stp->st_max, work);
+	VJOIN1(work, hf->hf_V, hf->hf_Ylen, hf->hf_Y);
+	VMINMAX(stp->st_min, stp->st_max, work);
+	VADD2(work, work, height);
+	VMINMAX(stp->st_min, stp->st_max, work);
+	VJOIN2(work, hf->hf_V, hf->hf_Xlen, hf->hf_X, hf->hf_Ylen, hf->hf_Y);
+	VMINMAX(stp->st_min, stp->st_max, work);
+	VADD2(work, work, height);
+	VMINMAX(stp->st_min, stp->st_max, work);
+	/* Now find the center and radius for a bounding sphere. */
+	{
+		LOCAL fastf_t	dx,dy,dz;
+		LOCAL fastf_t	f;
+
+		VADD2SCALE( stp->st_center, stp->st_max, stp->st_min, 0.5);
+
+		dx = (stp->st_max[X] - stp->st_min[X])/2;
+		dy = (stp->st_max[Y] - stp->st_min[Y])/2;
+		dz = (stp->st_max[Z] - stp->st_min[Z])/2;
+		f = dx;
+		if (dy > f) f = dy;
+		if (dz > f) f = dz;
+		stp->st_aradius = f;
+		stp->st_bradius = sqrt(dx*dx + dy*dy + dz*dz);
+	}
+	return 0;
 }
 
 /*
@@ -141,12 +278,185 @@ register CONST struct soltab *stp;
 {
 	register CONST struct hf_specific *hf =
 		(struct hf_specific *)stp->st_specific;
+	VPRINT("V", hf->hf_V);
+	VPRINT("X", hf->hf_X);
+	VPRINT("Y", hf->hf_Y);
+	VPRINT("N", hf->hf_N);
+	rt_log("XL %g\n", hf->hf_Xlen);
+	rt_log("YL %g\n", hf->hf_Ylen);
+}
+
+static int
+rt_hf_cell_shot(stp, rp, ap, hitp, xCell, yCell)
+struct soltab		*stp;
+register struct xray	*rp;
+struct application	*ap;
+struct hit		*hitp;
+int			xCell, yCell;
+{
+	register struct hf_specific *hfp =
+		(struct hf_specific *)stp->st_specific;
+
+	fastf_t dn, abs_dn, k1st, k2nd , alpha, beta, dn1st;
+	vect_t wxb, xp;
+	vect_t tri_wn1st, tri_wn2nd, tri_BA1st, tri_BA2nd;
+	vect_t tri_CA1st, tri_CA2nd;
+	vect_t xvect, yvect, tri_A, tri_B, tri_C;
+	int fnd1, fnd2;
+	register double hf2mm = hfp->hf_file2mm;
+
+#if 1
+	if (rt_g.debug & DEBUG_HF) {
+#else
+	{
+#endif
+		rt_log("rt_hf_cell_shot(%s): %d, %d\n", stp->st_name,
+		    xCell, yCell);
+	}
+	{
+		register fastf_t scale;
+		scale = hfp->hf_Xlen/((double)hfp->hf_w-1);
+		VSCALE(xvect, hfp->hf_X, scale);
+		scale = hfp->hf_Ylen/((double)hfp->hf_n-1);
+		VSCALE(yvect, hfp->hf_Y, scale);
+	}
+	if (hfp->hf_shorts) {
+		register unsigned short *sp;
+		sp = (unsigned short *)hfp->hf_mp->apbuf + yCell*hfp->hf_w+xCell;
+		/* 0,0 -> A */
+		VJOIN3(tri_A, hfp->hf_V, *sp*hf2mm, hfp->hf_N, xCell+0, xvect,
+		    yCell+0, yvect);
+		sp++;
+		/* 1, 0 */
+		VJOIN3(tri_B, hfp->hf_V, *sp*hf2mm, hfp->hf_N, xCell+1, xvect,
+		    yCell+0, yvect);
+		sp += hfp->hf_w;
+		/* 1, 1 */
+		VJOIN3(tri_C, hfp->hf_V, *sp*hf2mm, hfp->hf_N, xCell+1, xvect,
+		    yCell+1, yvect);
+		VSUB2(tri_CA1st, tri_C, tri_A);
+		VSUB2(tri_BA1st, tri_B, tri_A);
+		VCROSS(tri_wn1st, tri_BA1st, tri_CA1st);
+		VMOVE(tri_B, tri_C);		/* This can optimize down. */
+		--sp;
+		/* 0, 1 */
+		VJOIN3(tri_C, hfp->hf_V, *sp*hf2mm, hfp->hf_N, xCell+0, xvect,
+		    yCell+1, yvect);
+		VSUB2(tri_CA2nd, tri_C, tri_A);	
+/*		VMOVE(tri_CA2nd, tri_BA1st); */
+		VSUB2(tri_BA2nd, tri_B, tri_A);
+		VCROSS(tri_wn2nd, tri_BA2nd, tri_CA2nd);
+	} else {
+		register float *fp;
+		fp = (float *)hfp->hf_mp->apbuf + yCell*hfp->hf_w+xCell;
+		/* 0,0 -> A */
+		VJOIN3(tri_A, hfp->hf_V, *fp*hf2mm, hfp->hf_N, xCell+0, xvect,
+		    yCell+0, yvect);
+		fp++;
+		/* 1, 0 */
+		VJOIN3(tri_B, hfp->hf_V, *fp*hf2mm, hfp->hf_N, xCell+1, xvect,
+		    yCell+0, yvect);
+		fp += hfp->hf_w;
+		/* 1, 1 */
+		VJOIN3(tri_C, hfp->hf_V, *fp*hf2mm, hfp->hf_N, xCell+1, xvect,
+		    yCell+1, yvect);
+		VSUB2(tri_CA1st, tri_C, tri_A);
+		VSUB2(tri_BA1st, tri_B, tri_A);
+		VCROSS(tri_wn1st, tri_BA1st, tri_CA1st);
+		VMOVE(tri_B, tri_C);		/* This can optimize down. */
+		--fp;
+		/* 0, 1 */
+		VJOIN3(tri_C, hfp->hf_V, *fp*hf2mm, hfp->hf_N, xCell+0, xvect,
+		    yCell+1, yvect);
+		VSUB2(tri_CA2nd, tri_C, tri_A);	
+/*		VMOVE(tri_CA2nd, tri_BA1st); */
+		VSUB2(tri_BA2nd, tri_B, tri_A);
+		VCROSS(tri_wn2nd, tri_BA2nd, tri_CA2nd);
+	}
+
+	/*
+	 * Ray Direction dot N of this triangle.  N is outward pointing.
+	 * wn points inwards and is not unit length.
+	 */
+	fnd1 = fnd2 = 0;
+
+	dn = VDOT(tri_wn1st, rp->r_dir);
+	abs_dn = (dn >= 0.0) ? dn : (-dn);
+	if (abs_dn <SQRT_SMALL_FASTF) goto other_half;
+	VSUB2( wxb, tri_A, rp->r_pt);
+	VCROSS( xp, wxb, rp->r_dir);
+	alpha = VDOT(tri_CA1st, xp);
+	if (dn < 0.0) alpha = -alpha;
+	if (alpha < 0.0 || alpha > abs_dn) goto other_half;
+	beta = VDOT(tri_BA1st, xp);
+	if (dn > 0.0) beta = -beta;
+	if (beta < 0.0 || beta > abs_dn) goto other_half;
+	if (alpha + beta > abs_dn) goto other_half;
+	k1st = VDOT(wxb, tri_wn1st) / dn;
+	dn1st = dn;
+	fnd1 = 1;
+other_half:
+	dn = VDOT(tri_wn2nd, rp->r_dir);
+	abs_dn = ( dn >= 0.0) ? dn : (-dn);
+	if (abs_dn < SQRT_SMALL_FASTF) goto leave;
+	VSUB2(wxb, tri_A, rp->r_pt);
+	VCROSS(xp, wxb, rp->r_dir);
+	alpha = VDOT(tri_CA2nd, xp);
+	if (dn <0.0) alpha = -alpha;
+	if (alpha < 0.0 || alpha > abs_dn) goto leave;
+	beta = VDOT(tri_BA2nd, xp);
+	if (dn > 0.0) beta = -beta;
+	if (beta < 0.0 || beta > abs_dn) goto leave;
+	if (alpha+beta > abs_dn) goto leave;
+	k2nd = VDOT(wxb, tri_wn2nd)/ dn;
+	fnd2 = 1;
+leave:
+	if (!fnd1 && !fnd2) return 0;
+	/*
+	 * We have now done the ray-triangle intersection.  dn1st
+	 * and dn tell us the direction of the normal, <0 is in
+	 * and >0 is out.  k1st and k2nd tell us the distence from
+	 * the start point.
+	 *
+	 * We are only interested in the closest hit. and that will
+	 * replace the out if dn>0 or the in if dn<0.
+	 */
+
+/* rt_log("cell: k1st=%g, k2nd=%g\n", k1st,k2nd); */
+
+	if (!fnd2 ) {
+		hitp->hit_dist = k1st;
+		VMOVE(hitp->hit_normal, tri_wn1st);
+		VUNITIZE(hitp->hit_normal);
+		hitp->hit_surfno = yCell*hfp->hf_w+xCell;
+		return 1;
+	}
+	if (!fnd1) {
+		hitp->hit_dist = k2nd;
+		VMOVE(hitp->hit_normal, tri_wn2nd);
+		VUNITIZE(hitp->hit_normal);
+		hitp->hit_surfno = yCell*hfp->hf_w+xCell;
+		return 1;
+	}
+	if (abs(k1st) < abs(k2nd)) {
+		hitp->hit_dist = k1st;
+		VMOVE(hitp->hit_normal, tri_wn1st);
+		VUNITIZE(hitp->hit_normal);
+		hitp->hit_surfno = yCell*hfp->hf_w+xCell;
+		return 1;
+	} else {
+		hitp->hit_dist = k2nd;
+		VMOVE(hitp->hit_normal, tri_wn2nd);
+		VUNITIZE(hitp->hit_normal);
+		hitp->hit_surfno = yCell*hfp->hf_w+xCell;
+		return 1;
+	}
 }
 
 /*
- *  			R T _ H F _ S H O T
+ *  			R T _ H T F _ S H O T
  *  
- *  Intersect a ray with a hf.
+ *  Intersect a ray with a height field.
  *  If an intersection occurs, a struct seg will be acquired
  *  and filled in.
  *  
@@ -164,14 +474,812 @@ struct seg		*seghead;
 	register struct hf_specific *hf =
 		(struct hf_specific *)stp->st_specific;
 	register struct seg *segp;
+#define	MAXHITS	128		/* # of surfaces hit, must be even */
+	LOCAL	struct hit	hits[MAXHITS];
+	register struct hit *hp;
+	LOCAL	int		nhits;
+	double	xWidth, yWidth;
+
 	CONST struct rt_tol	*tol = &ap->a_rt_i->rti_tol;
 
-	RT_CK_RTI(ap->a_rt_i);
-	RT_CK_TOL(tol);
+	vect_t  peqn;
+	fastf_t pdist;
+	fastf_t allDist[6];	/* The hit point for all rays. */
+	fastf_t cosine;
 
-	return(0);			/* MISS */
+	LOCAL int	iplane, oplane, j;
+	LOCAL fastf_t	in, out;
+	vect_t aray, curloc;
+
+	in = -INFINITY;
+	out = INFINITY;
+	iplane = oplane = 0;
+
+	nhits=0;
+	hp = &hits[0];
+
+
+	/*
+	 * First step in raytracing the HF is to find the intersection
+	 * of the ray with the bounding box.  Since the ray might not
+	 * even hit the box.
+	 *
+	 * The results of this intercept can be used to find which
+	 * cell of the dda is the start cell.
+	 */
+	for (j=-1; j>-7; j--) {
+		FAST fastf_t	dn;	/* Direction dot Normal */
+		FAST fastf_t	dxbdn;	/* distence beteen d and b * dn */
+		FAST fastf_t	s;	/* actual distence in mm */
+		int allIndex;
+
+		switch (j) {
+		case -1:
+			VREVERSE(peqn, hf->hf_X);
+			pdist = VDOT(peqn, hf->hf_V);
+			break;
+		case -2:
+			VREVERSE(peqn, hf->hf_Y);
+			pdist = VDOT(peqn, hf->hf_V);
+			break;
+		case -3:
+			VREVERSE(peqn, hf->hf_N);
+			pdist = VDOT(peqn, hf->hf_V);
+			break;
+		case -4:
+			VMOVE(peqn, hf->hf_X);
+			pdist = VDOT(peqn, hf->hf_VO);
+			break;
+		case -5:
+			VMOVE(peqn, hf->hf_Y);
+			pdist = VDOT(peqn, hf->hf_VO);
+			break;
+		case -6:
+			VMOVE(peqn, hf->hf_N);
+			pdist = VDOT(peqn, hf->hf_VO);
+			break;
+		}
+		allIndex = abs(j)-1;
+
+		dxbdn = VDOT( peqn, rp->r_pt) - pdist;
+		dn = -VDOT( peqn, rp->r_dir);
+		allDist[allIndex] = s = dxbdn/dn;
+		if (rt_g.debug & DEBUG_HF) {
+			VPRINT("hf: Plane Equation", peqn);
+			rt_log("hf: dn=%g, dxbdn=%g, s=%g\n", dn, dxbdn, dxbdn/dn);
+		}
+
+		if (dn < -SQRT_SMALL_FASTF) {		/* Leaving */
+			if ( out > s ) {
+				out = s;
+				oplane = j;
+			}
+		} else if (dn > SQRT_SMALL_FASTF) {	/* entering */
+			if ( in < s ) {
+				in = s; 
+				iplane = j;
+			}
+		} else {				/* Parallel */
+			/*
+			 * if the ray is outside the solid, then this
+			 * is a miss.
+			 */
+			if ( dxbdn > SQRT_SMALL_FASTF) {
+				return 0; /* MISS */
+			}
+		}
+		if ( in > out ) {
+			if (rt_g.debug & DEBUG_HF) {
+				rt_log("rt_hf_shoot(%s): in(%g) > out(%g)\n",
+				    stp->st_name, in, out);
+			}
+			return 0;	/* MISS */
+		}
+	}
+
+	if ( iplane >= 0 || oplane >= 0 ) {
+		rt_log("rt_hf_shoot(%s): 1 hit => MISS\n",
+		    stp->st_name);
+		return 0;	/* MISS */
+	}
+
+	if ( in >= out || out >= INFINITY ) {
+		if (rt_g.debug & DEBUG_HF) {
+			rt_log("rt_hf_shoot(%s): in(%g) >= out(%g) || out >= INFINITY\n",
+			    stp->st_name, in, out);
+		}
+		return 0;
+	}
+
+	/*
+	 * Once that translation is done, we start a DDA to walk across
+	 * the field.  Checking each "cell" and when changing cells in
+	 * the off direction, the 2 cells filling the corner are also
+	 * checked.
+	 */
+
+	xWidth = hf->hf_Xlen/((double)(hf->hf_w-1));
+	yWidth = hf->hf_Ylen/((double)(hf->hf_n-1));
+
+
+	/*
+	 * add the sides, and bottom to the hit list.
+	 */
+	if (iplane == -3) { 
+		hp->hit_dist = in;
+		hp->hit_surfno = iplane;
+		hp++;
+		if (nhits++>=MAXHITS) rt_bomb("g_hf.c: too many hits.\n");
+	} else if (iplane != -6) {
+		double left, right, xx, xright,answer;
+		vect_t loc;
+		int CellX, CellY;
+		VJOIN1(loc, rp->r_pt, in, rp->r_dir);
+		VSUB2(loc,loc,hf->hf_V);
+
+		/* find the left, right and xx */
+		switch (iplane) {
+		case -1:
+			CellY = loc[Y]/yWidth;
+			CellX = 0;
+			xright = yWidth;
+			xx = loc[Y] - (CellY*yWidth);
+			break;
+		case -2:
+			CellY = 0;
+			CellX = loc[X]/xWidth;
+			xright = xWidth;
+			xx = loc[X] - CellX*xWidth;
+			break;
+		case -4:
+			CellY = loc[Y]/yWidth;
+			CellX = hf->hf_n-1;
+			xright = yWidth;
+			xx = loc[Y] - (CellY*yWidth);
+			break;
+		case -5:
+			CellY = hf->hf_w-1;
+			CellX = loc[X]/xWidth;
+			xright = xWidth;
+			xx = loc[X] - CellX*xWidth;
+			break;
+		}
+		if (hf->hf_shorts) {
+			register unsigned short *sp;
+			sp = (unsigned short *)hf->hf_mp->apbuf +
+			    CellY * hf->hf_w + CellX;
+			left = *sp;
+			if (iplane == -2 || iplane == -5) {
+				sp++;
+			} else {
+				sp += hf->hf_w;
+			}
+			right = *sp;
+		} else {
+			register float *fp;
+			fp = (float *) hf->hf_mp->apbuf +
+			    CellY * hf->hf_w + CellX;
+			left = *fp;
+			if (iplane == -2 || iplane == -5) {
+				fp++;
+			} else {
+				fp += hf->hf_w;
+			}
+			right = *fp;
+		}
+		left *= hf->hf_file2mm;
+		right *= hf->hf_file2mm;
+		answer = (right-left)/xright*xx+left;
+#if 0
+rt_log("in: loc[Z]=%g, answer=%g, left=%g, right=%g, xright=%g, xx=%g\n",
+    loc[Z], answer, left, right, xright, xx);
+#endif
+		if (loc[Z]-SQRT_SMALL_FASTF < answer) {
+			hp->hit_dist = in;
+			hp->hit_surfno = iplane;
+			hp++;
+			if (nhits++>=MAXHITS) rt_bomb("g_hf.c: too many hits.\n");
+		}
+	}
+	if (oplane == -3) { 
+		hp->hit_dist = out;
+		hp->hit_surfno = oplane;
+		hp++;
+		if (nhits++>=MAXHITS) rt_bomb("g_hf.c: too many hits.\n");
+	} else if (oplane != -6) {
+		double left, right, xx, xright, answer;
+		vect_t loc;
+		int CellX, CellY;
+		VJOIN1(loc, rp->r_pt, out, rp->r_dir);
+		VSUB2(loc,loc,hf->hf_V);
+
+		/* find the left, right and xx */
+		switch (oplane) {
+		case -1:
+			CellY = loc[Y]/yWidth;
+			CellX = 0;
+			xright = yWidth;
+			xx = loc[Y] - (CellY*yWidth);
+			break;
+		case -2:
+			CellY = 0;
+			CellX = loc[X]/xWidth;
+			xright = xWidth;
+			xx = loc[X] - CellX*xWidth;
+			break;
+		case -4:
+			CellY = loc[Y]/yWidth;
+			CellX = hf->hf_n-1;
+			xright = yWidth;
+			xx = loc[Y] - (CellY*yWidth);
+			break;
+		case -5:
+			CellY = hf->hf_w-1;
+			CellX = loc[X]/xWidth;
+			xright = xWidth;
+			xx = loc[X] - CellX*xWidth;
+			break;
+		}
+		if (hf->hf_shorts) {
+			register unsigned short *sp;
+			sp = (unsigned short *)hf->hf_mp->apbuf +
+			    CellY * hf->hf_w + CellX;
+			left = *sp;
+			if (oplane == -2 || oplane == -5) {
+				sp++;
+			} else {
+				sp += hf->hf_w;
+			}
+			right = *sp;
+		} else {
+			register float *fp;
+			fp = (float *) hf->hf_mp->apbuf +
+			    CellY * hf->hf_w + CellX;
+			left = *fp;
+			if (oplane == -2 || oplane == -5) {
+				fp++;
+			} else {
+				fp += hf->hf_w;
+			}
+			right = *fp;
+		}
+		left *= hf->hf_file2mm;
+		right *= hf->hf_file2mm;
+		answer = (right-left)/xright*xx+left;
+#if 0
+rt_log("out: loc[Z]=%g, answer=%g, left=%g, right=%g, xright=%g, xx=%g\n",
+    loc[Z], answer, left, right, xright, xx);
+#endif
+		if (loc[Z]-SQRT_SMALL_FASTF < (right-left)/xright*xx+left) {
+			hp->hit_dist = out;
+			hp->hit_surfno = oplane;
+			hp++;
+			if (nhits++>=MAXHITS) rt_bomb("g_hf.c: too many hits.\n");
+		}
+	}
+	/*
+	 * Gee, we've gotten much closer, we know that we hit the
+	 * the solid. Now it's time to see which cell we hit.  The
+	 * Key here is to use a fast DDA to check ONLY the cells we
+	 * are interested in.  The basic idea and some of the pseudo
+	 * code comes from:
+	 *	Grid Tracing: Fast Ray Tracing for Height Fields
+	 *	By: F. Kenton Musgrave.
+	 */
+
+	/*
+	 * Now we figure out which direction we are going to be moving,
+	 * X or Y.
+	 */
+	{
+		vect_t tmp;
+		VMOVE(tmp,rp->r_dir);
+		tmp[Z] = 0.0;
+		VUNITIZE(tmp);
+		cosine = VDOT(tmp, hf->hf_X);
+	}
+	if (cosine*cosine > 0.5) {
+		double tmp;
+		register double farZ, minZ, maxZ;
+		int	xCell, yCell, signX, signY;
+		double	highest,lowest, error,delta;
+
+		vect_t	goesIN, goesOUT;
+
+		VJOIN1(goesIN, rp->r_pt, allDist[3], rp->r_dir);
+		VJOIN1(goesOUT,rp->r_pt, allDist[0], rp->r_dir);
+		VSUB2(aray, goesOUT, goesIN);
+		VSUB2(curloc, goesIN, hf->hf_V);
+
+
+		/*
+		 * We will be stepping one "cell width" in the X direction
+		 * each time through the loop.  In simple case we have???
+		 * cell_width = htfp->htf_Xlen/(htfp->htf_i-1);
+		 * deltaX = (Xdist*cell_width)/Xdist
+		 * deltaY = (Ydist*cell_width)/Xdist;
+		 */
+		tmp = xWidth/abs(aray[X]);
+		VSCALE(aray, aray, tmp);
+		farZ = curloc[Z]+aray[Z];
+		/*
+		 * Some fudges here.  First, the size of the array of
+		 * samples is iXj, but the size of the array of CELLS
+		 * is (i-1)X(j-1), therefore number of CELLS is one less
+		 * than number of samples and the scaling factor is used.
+		 * Second, the math is nice to us.  IF we are entering at
+		 * the far end (curloc[X] == Xlen || curloc[Y] == Ylen)
+		 * then the result we will get back is of the cell
+		 * following this (out of bounds)  So we add a check for
+		 * that problem.
+		 */
+		xCell = curloc[X]/xWidth;
+		tmp = curloc[Y];
+		if (tmp < 0) {
+			yCell = tmp/yWidth - 1;
+		} else {
+			yCell = tmp/yWidth;
+		}
+
+		signX = (aray[X] < 0.0) ? -1 : 1;
+		signY = (aray[Y] < 0.0) ? -1 : 1;
+
+		if (rt_g.debug & DEBUG_HF ) {
+			rt_log("hf: curloc=(%g, %g, %g) aray=(%g,%g,%g)\n", curloc[X], curloc[Y],
+			    curloc[Z], aray[X], aray[Y], aray[Z]);
+			rt_log("hf: from=(%g, %g) to=(%g, %g)\n",
+			    goesIN[X]/xWidth,
+			    goesIN[Y]/yWidth,
+			    goesOUT[X]/xWidth,
+			    goesOUT[Y]/yWidth);
+		}
+		error = curloc[Y]-yCell*yWidth;
+		error /= yWidth;
+
+		delta = aray[Y]/yWidth;
+		if (delta < 0.0) {
+			delta = -delta;
+			error = -error;
+		} else {
+			error -= 1.0;
+		}
+
+		/*
+		 * if at the far end (Xlen) then we need to move one
+		 * step forward along aray.
+		 */
+		if (xCell >= hf->hf_w-1) {
+			xCell+=signX;
+			error += delta;
+		}
+		if (rt_g.debug & DEBUG_HF) {
+			rt_log("hf: delta=%g, error=%g, %d, %d\n", 
+			   delta, error, xCell, yCell);
+		}
+
+
+		do {
+			farZ = curloc[Z] + aray[Z];
+			maxZ = (curloc[Z] > farZ) ? curloc[Z] : farZ;
+			minZ = (curloc[Z] < farZ) ? curloc[Z] : farZ;
+			if (rt_g.debug & DEBUG_HF) {
+				rt_log("hf: cell %d,%d [%g -- %g]\n",
+				xCell, yCell, minZ, maxZ);
+			}
+			if (yCell < 0 || yCell > hf->hf_n-2) {
+				if (error > -SQRT_SMALL_FASTF) {
+					if (yCell >= -1) goto skip_first;
+					yCell += signY;
+					error -= 1.0;
+				}
+				xCell += signX;
+				error += delta;
+				VADD2(curloc, curloc, aray);
+				continue;
+			}
+					
+			if (hf->hf_shorts) {
+				register unsigned short *sp;
+				sp = (unsigned short *)hf->hf_mp->apbuf +
+				    yCell * hf->hf_w + xCell;
+				/* 0,0 */
+				highest = lowest = *sp++;
+				/* 1,0 */
+				if (lowest > *sp) lowest=*sp;
+				if (highest < *sp) highest=*sp;
+				sp+=hf->hf_w;
+				/* 1,1 */
+				if (lowest > *sp) lowest=*sp;
+				if (highest < *sp) highest=*sp;
+				sp--;
+				/* 0,1 */
+				if (lowest > *sp) lowest = *sp;
+				if (highest < *sp) highest = *sp;
+				lowest *= hf->hf_file2mm;
+				highest *= hf->hf_file2mm;
+			} else {
+				register float *fp;
+				fp = (float *)hf->hf_mp->apbuf +
+				    yCell * hf->hf_w + xCell;
+				/* 0,0 */
+				highest = lowest = *fp++;
+				/* 1,0 */
+				if (lowest > *fp) lowest=*fp;
+				if (highest < *fp) highest=*fp;
+				fp+=hf->hf_w;
+				/* 1,1 */
+				if (lowest > *fp) lowest=*fp;
+				if (highest < *fp) highest=*fp;
+				fp--;
+				/* 0,1 */
+				if (lowest > *fp) lowest = *fp;
+				if (highest < *fp) highest = *fp;
+				lowest *= hf->hf_file2mm;
+				highest *= hf->hf_file2mm;
+			}
+
+/*
+ * This is the primary test.  It is designed to get all cells that the
+ * ray passes through.
+ */
+			if (maxZ+SQRT_SMALL_FASTF > lowest &&
+			    minZ-SQRT_SMALL_FASTF < highest ) {
+				int r;
+				if (r=rt_hf_cell_shot(stp, rp, ap, hp, xCell, yCell)) {
+					if (nhits++>=MAXHITS) rt_bomb("g_hf.c: too many hits.\n");
+					++hp;
+				}
+			}
+/*
+ * This is the DDA trying to fill in the corners as it walks the
+ * path.
+ */
+skip_first:
+			if (error > SQRT_SMALL_FASTF) {
+				yCell += signY;
+				if (rt_g.debug & DEBUG_HF) {
+					rt_log("hf: cell %d,%d\n", xCell, yCell);
+				}
+				if ((yCell < 0) || yCell > hf->hf_n-2) {
+					error -= 1.0;
+					xCell += signX;
+					error += delta;
+					VADD2(curloc, curloc, aray);
+					continue;
+				}
+				if (hf->hf_shorts) {
+					register unsigned short *sp;
+					sp = (unsigned short *)hf->hf_mp->apbuf +
+					    yCell * hf->hf_w + xCell;
+					/* 0,0 */
+					highest = lowest = *sp++;
+					/* 1,0 */
+					if (lowest > *sp) lowest=*sp;
+					if (highest < *sp) highest=*sp;
+					sp+=hf->hf_w;
+					/* 1,1 */
+					if (lowest > *sp) lowest=*sp;
+					if (highest < *sp) highest=*sp;
+					sp--;
+					/* 0,1 */
+					if (lowest > *sp) lowest = *sp;
+					if (highest < *sp) highest = *sp;
+					lowest *= hf->hf_file2mm;
+					highest *= hf->hf_file2mm;
+				} else {
+					register float *fp;
+					fp = (float *)hf->hf_mp->apbuf +
+					    yCell * hf->hf_w + xCell;
+					/* 0,0 */
+					highest = lowest = *fp++;
+					/* 1,0 */
+					if (lowest > *fp) lowest=*fp;
+					if (highest < *fp) highest=*fp;
+					fp+=hf->hf_w;
+					/* 1,1 */
+					if (lowest > *fp) lowest=*fp;
+					if (highest < *fp) highest=*fp;
+					fp--;
+					/* 0,1 */
+					if (lowest > *fp) lowest = *fp;
+					if (highest < *fp) highest = *fp;
+					lowest *= hf->hf_file2mm;
+					highest *= hf->hf_file2mm;
+				}
+				if (maxZ+SQRT_SMALL_FASTF > lowest &&
+				    minZ-SQRT_SMALL_FASTF < highest) {
+					int r;
+					/* DO HIT */
+					if (r=rt_hf_cell_shot(stp, rp, ap, hp, xCell, yCell)) {
+						if (nhits++>=MAXHITS) rt_bomb("g_hf.c: too many hits.\n");
+						++hp;
+					}
+				}
+				error -= 1.0;
+			} else if (error > -SQRT_SMALL_FASTF) {
+				yCell += signY;
+				error -= 1.0;
+			}
+			xCell += signX;
+			error += delta;
+			VADD2(curloc, curloc, aray);
+		} while (xCell >= 0 && xCell < hf->hf_w-1 );
+		if (rt_g.debug & DEBUG_HF) {
+			rt_log("htf: leaving loop, %d, %d, %g vs. 0--%d, 0--%d, 0.0--%g\n",
+			   xCell, yCell, curloc[Z], hf->hf_w-1, hf->hf_n-1, hf->hf_max);
+		}
+	} else {
+		double tmp;
+		register double farZ, minZ, maxZ;
+		int	xCell, yCell, signX, signY;
+		double	highest,lowest, error,delta;
+
+		vect_t	goesIN, goesOUT;
+
+		VJOIN1(goesIN, rp->r_pt, allDist[4], rp->r_dir);
+		VJOIN1(goesOUT,rp->r_pt, allDist[1], rp->r_dir);
+		VSUB2(aray, goesOUT, goesIN);
+		VSUB2(curloc, goesIN, hf->hf_V);
+
+
+		/*
+		 * We will be stepping one "cell width" in the X direction
+		 * each time through the loop.  In simple case we have???
+		 * cell_width = htfp->htf_Xlen/(htfp->htf_i-1);
+		 * deltaX = (Xdist*cell_width)/Xdist
+		 * deltaY = (Ydist*cell_width)/Xdist;
+		 */
+		tmp = yWidth/abs(aray[Y]);
+		VSCALE(aray, aray, tmp);
+		farZ = curloc[Z]+aray[Z];
+		/*
+		 * Some fudges here.  First, the size of the array of
+		 * samples is iXj, but the size of the array of CELLS
+		 * is (i-1)X(j-1), therefore number of CELLS is one less
+		 * than number of samples and the scaling factor is used.
+		 * Second, the math is nice to us.  IF we are entering at
+		 * the far end (curloc[X] == Xlen || curloc[Y] == Ylen)
+		 * then the result we will get back is of the cell
+		 * following this (out of bounds)  So we add a check for
+		 * that problem.
+		 */
+		yCell = curloc[Y]/yWidth;
+		tmp = curloc[X];
+		if (tmp < 0) {
+			xCell = tmp/xWidth - 1;
+		} else {
+			xCell = tmp/xWidth;
+		}
+
+		signX = (aray[X] < 0.0) ? -1 : 1;
+		signY = (aray[Y] < 0.0) ? -1 : 1;
+
+		if (rt_g.debug & DEBUG_HF ) {
+			rt_log("hf: curloc=(%g, %g, %g) aray=(%g,%g,%g)\n", curloc[X], curloc[Y],
+			    curloc[Z], aray[X], aray[Y], aray[Z]);
+			rt_log("hf: from=(%g, %g) to=(%g, %g)\n",
+			    goesIN[X]/xWidth,
+			    goesIN[Y]/yWidth,
+			    goesOUT[X]/xWidth,
+			    goesOUT[Y]/yWidth);
+		}
+		error = curloc[X]-xCell*xWidth;
+		error /= xWidth;
+
+		delta = aray[X]/xWidth;
+		if (delta < 0.0) {
+			delta = -delta;
+			error = -error;
+		} else {
+			error -= 1.0;
+		}
+
+		/*
+		 * if at the far end (Ylen) then we need to move one
+		 * step forward along aray.
+		 */
+		if (yCell >= hf->hf_n-1) {
+			yCell+=signY;
+			error += delta;
+		}
+		if (rt_g.debug & DEBUG_HF) {
+			rt_log("hf: delta=%g, error=%g, %d, %d\n", 
+			   delta, error, xCell, yCell);
+		}
+
+
+		do {
+			farZ = curloc[Z] + aray[Z];
+			maxZ = (curloc[Z] > farZ) ? curloc[Z] : farZ;
+			minZ = (curloc[Z] < farZ) ? curloc[Z] : farZ;
+			if (rt_g.debug & DEBUG_HF) {
+				rt_log("hf: cell %d,%d [%g -- %g]\n",
+				xCell, yCell, minZ, maxZ);
+			}
+			if (xCell < 0 || xCell > hf->hf_w-2) {
+				if (error > -SQRT_SMALL_FASTF) {
+					if (xCell >= -1) goto skip_2nd;
+					xCell += signX;
+					error -= 1.0;
+				}
+				yCell += signY;
+				error += delta;
+				VADD2(curloc, curloc, aray);
+				continue;
+			}
+					
+			if (hf->hf_shorts) {
+				register unsigned short *sp;
+				sp = (unsigned short *)hf->hf_mp->apbuf +
+				    yCell * hf->hf_w + xCell;
+				/* 0,0 */
+				highest = lowest = *sp++;
+				/* 1,0 */
+				if (lowest > *sp) lowest=*sp;
+				if (highest < *sp) highest=*sp;
+				sp+=hf->hf_w;
+				/* 1,1 */
+				if (lowest > *sp) lowest=*sp;
+				if (highest < *sp) highest=*sp;
+				sp--;
+				/* 0,1 */
+				if (lowest > *sp) lowest = *sp;
+				if (highest < *sp) highest = *sp;
+				lowest *= hf->hf_file2mm;
+				highest *= hf->hf_file2mm;
+			} else {
+				register float *fp;
+				fp = (float *)hf->hf_mp->apbuf +
+				    yCell * hf->hf_w + xCell;
+				/* 0,0 */
+				highest = lowest = *fp++;
+				/* 1,0 */
+				if (lowest > *fp) lowest=*fp;
+				if (highest < *fp) highest=*fp;
+				fp+=hf->hf_w;
+				/* 1,1 */
+				if (lowest > *fp) lowest=*fp;
+				if (highest < *fp) highest=*fp;
+				fp--;
+				/* 0,1 */
+				if (lowest > *fp) lowest = *fp;
+				if (highest < *fp) highest = *fp;
+				lowest *= hf->hf_file2mm;
+				highest *= hf->hf_file2mm;
+			}
+
+/*
+ * This is the primary test.  It is designed to get all cells that the
+ * ray passes through.
+ */
+			if (maxZ+SQRT_SMALL_FASTF > lowest &&
+			    minZ-SQRT_SMALL_FASTF < highest ) {
+				int r;
+				if (r=rt_hf_cell_shot(stp, rp, ap, hp, xCell, yCell)) {
+					if (nhits++>=MAXHITS) rt_bomb("g_hf.c: too many hits.\n");
+					hp++;
+				}
+			}
+/*
+ * This is the DDA trying to fill in the corners as it walks the
+ * path.
+ */
+skip_2nd:
+			if (error > SQRT_SMALL_FASTF) {
+				xCell += signX;
+				if (rt_g.debug & DEBUG_HF) {
+					rt_log("hf: cell %d,%d\n", xCell, yCell);
+				}
+				if ((xCell < 0) || xCell > hf->hf_w-2) {
+					error -= 1.0;
+					yCell += signY;
+					error += delta;
+					VADD2(curloc, curloc, aray);
+					continue;
+				}
+				if (hf->hf_shorts) {
+					register unsigned short *sp;
+					sp = (unsigned short *)hf->hf_mp->apbuf +
+					    yCell * hf->hf_w + xCell;
+					/* 0,0 */
+					highest = lowest = *sp++;
+					/* 1,0 */
+					if (lowest > *sp) lowest=*sp;
+					if (highest < *sp) highest=*sp;
+					sp+=hf->hf_w;
+					/* 1,1 */
+					if (lowest > *sp) lowest=*sp;
+					if (highest < *sp) highest=*sp;
+					sp--;
+					/* 0,1 */
+					if (lowest > *sp) lowest = *sp;
+					if (highest < *sp) highest = *sp;
+					lowest *= hf->hf_file2mm;
+					highest *= hf->hf_file2mm;
+				} else {
+					register float *fp;
+					fp = (float *)hf->hf_mp->apbuf +
+					    yCell * hf->hf_w + xCell;
+					/* 0,0 */
+					highest = lowest = *fp++;
+					/* 1,0 */
+					if (lowest > *fp) lowest=*fp;
+					if (highest < *fp) highest=*fp;
+					fp+=hf->hf_w;
+					/* 1,1 */
+					if (lowest > *fp) lowest=*fp;
+					if (highest < *fp) highest=*fp;
+					fp--;
+					/* 0,1 */
+					if (lowest > *fp) lowest = *fp;
+					if (highest < *fp) highest = *fp;
+					lowest *= hf->hf_file2mm;
+					highest *= hf->hf_file2mm;
+				}
+				if (maxZ+SQRT_SMALL_FASTF > lowest &&
+				    minZ-SQRT_SMALL_FASTF < highest) {
+					int r;
+					/* DO HIT */
+					if (r=rt_hf_cell_shot(stp, rp, ap, hp, xCell, yCell)) {
+						if (nhits++>=MAXHITS) rt_bomb("g_hf.c: too many hits.\n");
+						hp++;
+					}
+				}
+				error -= 1.0;
+			} else if (error > -SQRT_SMALL_FASTF) {
+				xCell += signX;
+				error -= 1.0;
+			}
+			yCell += signY;
+			error += delta;
+			VADD2(curloc, curloc, aray);
+		} while (yCell >= 0 && yCell < hf->hf_n-1 );
+		if (rt_g.debug & DEBUG_HF) {
+			rt_log("htf: leaving loop, %d, %d, %g vs. 0--%d, 0--%d, 0.0--%g\n",
+			   xCell, yCell, curloc[Z], hf->hf_w-1, hf->hf_n-1, hf->hf_max);
+		}
+	}
+	/* Sort hits, near to Far */
+	{
+		register int i,j;
+		LOCAL struct hit tmp;
+		for ( i=0; i< nhits-1; i++) {
+			for (j=i+1; j<nhits; j++) {
+				if (hits[i].hit_dist <= hits[j].hit_dist) continue;
+				tmp = hits[j];
+				hits[j]=hits[i];
+				hits[i]=tmp;
+			}
+		}
+	}
+	if ( nhits & 1) {
+		register int i;
+		static int nerrors = 0;
+		hits[nhits] = hits[nhits-1];	/* struct copy*/
+		VREVERSE(hits[nhits].hit_normal, hits[nhits-1].hit_normal);
+		nhits++;
+		if (nerrors++ < 6 ) {
+			rt_log("rt_hf_shot(%s): %d hits: ", stp->st_name, nhits-1);
+			for(i=0; i< nhits; i++) {
+				rt_log("%f(%d), ",hits[i].hit_dist,hits[i].hit_surfno);
+			}
+			rt_log("\n");
+		}
+	}
+	/* nhits is even, build segments */
+	{
+		register struct seg *segp;
+		register int i;
+		for (i=0; i< nhits; i+=2) {
+			RT_GET_SEG(segp, ap->a_resource);
+			segp->seg_stp = stp;
+			segp->seg_in = hits[i];
+			segp->seg_out= hits[i+1];
+			RT_LIST_INSERT( &(seghead->l), &(segp->l));
+		}
+	}
+	return nhits;	/* hits or misses */
 }
-
 /*
  *  			R T _ H F _ N O R M
  *  
@@ -185,8 +1293,38 @@ register struct xray	*rp;
 {
 	register struct hf_specific *hf =
 		(struct hf_specific *)stp->st_specific;
+	register int j;
+
+	j = hitp->hit_surfno;
 
 	VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
+	if (j >= 0) {
+		/* Normals computed in rt_htf_shot, nothing to do here. */
+		return;
+	}
+
+	switch (j) {
+	case -1:
+		VREVERSE(hitp->hit_normal, hf->hf_X);
+		break;
+	case -2:
+		VREVERSE(hitp->hit_normal, hf->hf_Y);
+		break;
+	case -3:
+		VREVERSE(hitp->hit_normal, hf->hf_N);
+		break;
+	case -4:
+		VMOVE(hitp->hit_normal, hf->hf_X);
+		break;
+	case -5:
+		VMOVE(hitp->hit_normal, hf->hf_Y);
+		break;
+	case -6:
+		VMOVE(hitp->hit_normal, hf->hf_N);
+		break;
+	}
+	VUNITIZE(hitp->hit_normal);
+
 }
 
 /*
@@ -226,6 +1364,26 @@ register struct uvcoord	*uvp;
 {
 	register struct hf_specific *hf =
 		(struct hf_specific *)stp->st_specific;
+	vect_t delta;
+	fastf_t r;
+
+	VSUB2(delta, hitp->hit_point, hf->hf_V);
+#if 0
+	VUNITIZE(delta);
+	uvp->uv_u = VDOT(delta, hf->hf_X);
+	uvp->uv_v = VDOT(delta, hf->hf_Y);
+	r = ap->a_rbeam + ap->a_diverge * hitp->hit_dist;
+#else
+	uvp->uv_u = delta[X] / hf->hf_Xlen;
+	uvp->uv_v = delta[Y] / hf->hf_Ylen;
+	r = 0.0;
+#endif
+	if (uvp->uv_u < 0.0) uvp->uv_u=0.0;
+	if (uvp->uv_u > 1.0) uvp->uv_u=1.0;
+	if (uvp->uv_v < 0.0) uvp->uv_v=0.0;
+	if (uvp->uv_v > 1.0) uvp->uv_v=1.0;
+	uvp->uv_du = r;
+	uvp->uv_dv = r;
 }
 
 /*
@@ -238,6 +1396,10 @@ register struct soltab *stp;
 	register struct hf_specific *hf =
 		(struct hf_specific *)stp->st_specific;
 
+	if (hf->hf_mp) {
+		rt_close_mapped_file(hf->hf_mp);
+		hf->hf_mp = (struct rt_mapped_file *)0;
+	}
 	rt_free( (char *)hf, "hf_specific" );
 }
 
