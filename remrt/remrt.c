@@ -759,6 +759,7 @@ FILE *fp;
 			printf("Output file: %s.###\n", out_file );
 		printf("Printing of remote messages is %s\n",
 			print_on?"ON":"Off" );
+	    	printf("Listening at %s, port %d\n", ourname, pkg_permport);
 
 		/* Print work assignments */
 		printf("Servers:\n");
@@ -1179,6 +1180,7 @@ char *buf;
 		fprintf(stderr,"struct_inport error, %d, %d\n", i, info.li_len);
 		return;
 	}
+fprintf(stderr,"PIXELS y=%d, rays=%d, cpu=%g\n", info.li_y, info.li_nrays, info.li_cpusec );
 
 	/* Stash pixels in memory in bottom-to-top .pix order */
 	if( fr->fr_picture == (char *)0 )  {
@@ -1194,15 +1196,21 @@ char *buf;
 		bzero( fr->fr_picture, i );
 	}
 	i = fr->fr_width*3;
-	if( pc->pkc_len-info.li_len < i )  i = pc->pkc_len-info.li_len;
+	if( pc->pkc_len - info.li_len < i )  {
+		fprintf(stderr,"short scanline, s/b=%d, was=%d\n",
+			i, pc->pkc_len - info.li_len );
+		i = pc->pkc_len - info.li_len;
+	}
 	bcopy( buf+info.li_len, fr->fr_picture + info.li_y*fr->fr_width*3, i );
 
 	/* If display attached, also draw it */
 	if( fbp != FBIO_NULL )  {
 		int maxx;
 		maxx = i/3;
-		if( maxx > fb_getwidth(fbp) )
+		if( maxx > fb_getwidth(fbp) )  {
 			maxx = fb_getwidth(fbp);
+			fprintf(stderr,"clipping fb scanline to %d\n", maxx);
+		}
 		size_display(fr);
 		fb_write( fbp, 0, info.li_y%fb_getheight(fbp),
 			buf+info.li_len, maxx );
