@@ -33,28 +33,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "wdb.h"
 #include "raytrace.h"
 #include "rtlist.h"
-
-#define RT_PARTICLE_TYPE_SPHERE		1
-#define RT_PARTICLE_TYPE_CYLINDER	2
-#define RT_PARTICLE_TYPE_CONE		3
-
-struct	pipe_internal {
-	int			pipe_count;
-	struct wdb_pipeseg	pipe_segs;
-};
-
-struct	part_internal {
-	point_t		part_V;
-	vect_t		part_H;
-	fastf_t		part_vrad;
-	fastf_t		part_hrad;
-	int		part_type;
-};
-
-struct	arbn_internal {
-	int		neqn;
-	plane_t		*eqn;
-};
+#include "rtgeom.h"
 
 
 mat_t	id_mat = {
@@ -67,7 +46,6 @@ char *name();
 char *strchop();
 #define CH(x)	strchop(x,sizeof(x))
 
-int	_rt_pipe_import(), _rt_part_import(), _rt_arbn_import();
 void	combdump();
 void	idendump(), polyhead(), polydata();
 void	soldump();
@@ -140,6 +118,39 @@ char **argv;
 	exit(0);
 }
 
+/*
+ *			G E T _ E X T
+ *
+ *  Take "ngran" granueles, and put them in memory.
+ *  The first granule comes from the global extern "record",
+ *  the remainder are read from stdin.
+ */
+void
+get_ext( ep, ngran )
+struct rt_external	*ep;
+int			ngran;
+{
+	int	count;
+
+	RT_INIT_EXTERNAL(ep);
+
+	ep->ext_nbytes = ngran * sizeof(union record);
+	ep->ext_buf = (genptr_t)rt_malloc( ep->ext_nbytes, "get_ext ext_buf" );
+
+	/* Copy the freebie (first) record into the array of records.  */
+	bcopy( (char *)&record, (char *)ep->ext_buf, sizeof(union record) );
+	if( ngran <= 1 )  return;
+
+	count = fread( ((char *)ep->ext_buf)+sizeof(union record),
+		sizeof(union record), ngran-1, stdin);
+	if( count != ngran-1 )  {
+		fprintf(stderr,
+			"g2asc: get_ext:  wanted to read %d granules, got %d\n",
+			ngran-1, count);
+		exit(1);
+	}
+}
+
 void
 idendump()	/* Print out Ident record information */
 {
@@ -210,60 +221,44 @@ pipe_dump()	/* Print out Pipe record information */
 	int			count;
 	int			ret;
 	char			*name;
-	char			id;
-	union record		*rp;		/* pointer to an array of granules */
-	struct pipe_internal	pipe;		/* want a struct for the head, not a ptr. */
+	struct rt_pipe_internal	*pipe;		/* want a struct for the head, not a ptr. */
 	struct wdb_pipeseg	head;		/* actual head, not a ptr. */
+	struct rt_external	ext;
+	struct rt_db_internal	intern;
 
 	ngranules = rt_glong(record.pw.pw_count)+1;
 	name = record.pw.pw_name;
-	id = record.pw.pw_id;
 
-	/* malloc enough space for ngranules */
-	if( (rp = (union record *)malloc(ngranules * sizeof(union record)) ) == 0)  {
-		fprintf(stderr, "g2asc: malloc failure\n");
+	get_ext( &ext, ngranules );
+
+	/* Hand off to librt's import() routine */
+	if( (ret = rt_pipe_import( &intern, &ext, id_mat )) != 0 )  {
+		fprintf(stderr, "g2asc: pipe import failure\n");
 		exit(-1);
 	}
 
-	/* copy the freebee record into the array */
-	bcopy( (char *)&record, (char *)rp, sizeof(union record) );
-
-	/* copy ngranules-1 more records into the array */
-
-	if( (count = fread( (char *)&rp[1], sizeof(union record), ngranules - 1, stdin) ) != ngranules - 1)  {
-		fprintf(stderr, "g2asc: pipe read failure\n");
-		exit(-1);
-	}
-
-	/* Send this off to _rt_pipe_import() for conversion into machine
-	 * dependent format and making of a doubly linked list.  rt_pipe_internal()
-	 * fills in the "pipe_internal" structure.
-	 */
-
-	if( (ret = (_rt_pipe_import(&pipe, rp, id_mat) ) !=0 ) )   {
-		fprintf(stderr, "g2asc: pipe_import failure\n" );
-		exit(-1);
-	}
+	pipe = (struct rt_pipe_internal *)intern.idb_ptr;
+	RT_PIPE_CK_MAGIC(pipe);
 
 	/* send the doubly linked list off to dump_pipe_segs(), which
 	 * will print all the information.
 	 */
 
-	dump_pipe_segs(id, name, &pipe.pipe_segs);
-	mk_pipe_free( &pipe.pipe_segs );	/* give back memory */
-	free( (char *)rp );
+	dump_pipe_segs(name, &pipe->pipe_segs_head);
+
+	rt_pipe_ifree( &intern );
+	db_free_external( &ext );
 }
 
 void
-dump_pipe_segs(id, name, headp)
-char			id;
+dump_pipe_segs(name, headp)
 char			*name;
 struct wdb_pipeseg	*headp;
 {
 
 	struct wdb_pipeseg	*sp;
 
-	printf("%c %.16s\n", id, name);
+	printf("%c %.16s\n", DBID_PIPE, name);
 
 	/* print parameters for each segment: one segment per line */
 
@@ -301,26 +296,35 @@ struct wdb_pipeseg	*headp;
 	}
 }
 
+/*
+ * Print out Particle record information.
+ * Note that particles fit into one granule only.
+ */
 void
-particle_dump()	/* Print out Particle record information */
+particle_dump()
 {
-
-	/* Note that particles fit into one granule only. */
-
 	int			ret;
 	char			*type;
-	struct part_internal 	part;	/* head for the structure */
-	
-	if( (ret = (_rt_part_import(&part, &record, id_mat)) ) != 0)  {
+	struct rt_part_internal 	*part;	/* head for the structure */
+	struct rt_external	ext;
+	struct rt_db_internal	intern;
+
+	get_ext( &ext, 1 );
+
+	/* Hand off to librt's import() routine */
+	if( (ret = rt_part_import( &intern, &ext, id_mat )) != 0 )  {
 		fprintf(stderr, "g2asc: particle import failure\n");
 		exit(-1);
 	}
 
+	part = (struct rt_part_internal *)intern.idb_ptr;
+	RT_PART_CK_MAGIC(part);
+	
 	/* Particle type is picked up on here merely to ensure receiving
 	 * valid data.  The type is not used any further.
 	 */
 
-	switch( part.part_type )  {
+	switch( part->part_type )  {
 	case RT_PARTICLE_TYPE_SPHERE:
 		type = "sphere";
 		break;
@@ -337,13 +341,13 @@ particle_dump()	/* Print out Particle record information */
 
 	printf("%c %.16s %26.20e %26.20e %26.20e %26.20e %26.20e %26.20e %26.20e %26.20e\n",
 		record.part.p_id, record.part.p_name,
-		part.part_V[X],
-		part.part_V[Y],
-		part.part_V[Z],
-		part.part_H[X],
-		part.part_H[Y],
-		part.part_H[Z],
-		part.part_vrad, part.part_hrad);
+		part->part_V[X],
+		part->part_V[Y],
+		part->part_V[Z],
+		part->part_H[X],
+		part->part_H[Y],
+		part->part_H[Z],
+		part->part_vrad, part->part_hrad);
 }
 
 
@@ -355,47 +359,37 @@ particle_dump()	/* Print out Particle record information */
 void
 arbn_dump()
 {
-
 	int		ngranules;	/* number of granules to be read */
-	int		count;
 	int		ret;		/* return code catcher */
 	int		i;		/* a counter */
 	char		*name;
-	char		id;
-	union record	*rp;
-	struct arbn_internal	arbn;
+	struct rt_arbn_internal	*arbn;
+	struct rt_external	ext;
+	struct rt_db_internal	intern;
 
 	ngranules = rt_glong(record.n.n_grans)+1;
 	name = record.n.n_name;
-	id = record.n.n_id;
 
-	/* malloc space for ngranules */
-	if( (rp = (union record *) malloc( ngranules * sizeof(union record)) ) == 0)  {
-		fprintf( stderr, "g2asc: malloc failure\n");
-		exit(-1);
-	}
+	get_ext( &ext, ngranules );
 
-	/* Copy the freebie (first) record into the array of records.  Then
-	 * copy ngranules more. 
-	 */
-	bcopy( (char *)&record, (char *)rp, sizeof(union record) );
-	if( (count = fread( (char *)&rp[1], sizeof(union record), ngranules, stdin) ) != ngranules )  {
-		fprintf(stderr, "g2asc: arbn read failure\n");
-	}
-
-	/* Hand off the rt's arbn_import() routine */
-	if( ret = (_rt_arbn_import(&arbn, rp, id_mat) ) != 0)  {
+	/* Hand off to librt's import() routine */
+	if( (ret = rt_arbn_import( &intern, &ext, id_mat )) != 0 )  {
 		fprintf(stderr, "g2asc: arbn import failure\n");
 		exit(-1);
 	}
 
-	fprintf(stdout, "%c %.16s %d\n", id, name, arbn.neqn);
-	for( i = 0; i < arbn.neqn; i++ )  {
-		printf("n %26.20e %20.26e %26.20e %26.20e\n", arbn.eqn[i][X], arbn.eqn[i][Y],
-			arbn.eqn[i][Z], arbn.eqn[i][3]);
+	arbn = (struct rt_arbn_internal *)intern.idb_ptr;
+	RT_ARBN_CK_MAGIC(arbn);
+
+	fprintf(stdout, "%c %.16s %d\n", 'n', name, arbn->neqn);
+	for( i = 0; i < arbn->neqn; i++ )  {
+		printf("n %26.20e %20.26e %26.20e %26.20e\n",
+			arbn->eqn[i][X], arbn->eqn[i][Y],
+			arbn->eqn[i][Z], arbn->eqn[i][3]);
 	}
 
-	free( (char *)rp );
+	rt_arbn_ifree( &intern );
+	db_free_external( &ext );
 }
 
 	
@@ -697,190 +691,4 @@ char *str;
 		return("-=STRING=-");
 	}
 	return(buf);
-}
-
-/*** XXX temporary copy, until formal import library exists ***/
-/*
- *			R T _ P I P E _ I M P O R T
- */
-int
-_rt_pipe_import( pipe, rp, mat )
-struct pipe_internal	*pipe;
-union record		*rp;
-register mat_t		mat;
-{
-	register struct exported_pipeseg *ep;
-	register struct wdb_pipeseg	*psp;
-	struct wdb_pipeseg		tmp;
-
-	/* Check record type */
-	if( rp->u_id != DBID_PIPE )  {
-		fprintf(stderr,"_rt_pipe_import: defective record\n");
-		return(-1);
-	}
-
-	/* Count number of segments */
-	pipe->pipe_count = 0;
-	for( ep = &rp->pw.pw_data[0]; ; ep++ )  {
-		pipe->pipe_count++;
-		switch( (int)(ep->eps_type[0]) )  {
-		case WDB_PIPESEG_TYPE_END:
-			goto done;
-		case WDB_PIPESEG_TYPE_LINEAR:
-		case WDB_PIPESEG_TYPE_BEND:
-			break;
-		default:
-			return(-2);	/* unknown segment type */
-		}
-	}
-done:	;
-	if( pipe->pipe_count <= 1 )
-		return(-3);		/* Not enough for 1 pipe! */
-
-	/*
-	 *  Walk the array of segments in reverse order,
-	 *  allocating a linked list of segments in internal format,
-	 *  using exactly the same structures as libwdb.
-	 */
-	RT_LIST_INIT( &pipe->pipe_segs.l );
-	for( ep = &rp->pw.pw_data[pipe->pipe_count-1]; ep >= &rp->pw.pw_data[0]; ep-- )  {
-		tmp.ps_type = (int)ep->eps_type[0];
-		ntohd( tmp.ps_start, ep->eps_start, 3 );
-		ntohd( &tmp.ps_id, ep->eps_id, 1 );
-		ntohd( &tmp.ps_od, ep->eps_od, 1 );
-
-		/* Apply modeling transformations */
-		psp = (struct wdb_pipeseg *)calloc( 1, sizeof(struct wdb_pipeseg) );
-		psp->ps_type = tmp.ps_type;
-		MAT4X3PNT( psp->ps_start, mat, tmp.ps_start );
-		if( psp->ps_type == WDB_PIPESEG_TYPE_BEND )  {
-			ntohd( tmp.ps_bendcenter, ep->eps_bendcenter, 3 );
-			MAT4X3PNT( psp->ps_bendcenter, mat, tmp.ps_bendcenter );
-		} else {
-			VSETALL( psp->ps_bendcenter, 0 );
-		}
-		psp->ps_id = tmp.ps_id / mat[15];
-		psp->ps_od = tmp.ps_od / mat[15];
-		RT_LIST_APPEND( &pipe->pipe_segs.l, &psp->l );
-	}
-
-	return(0);			/* OK */
-}
-
-/*		R T _ P A R T_ I M P O R T
- *
- */
-int
-_rt_part_import( part, rp, mat )
-struct part_internal	  *part;
-union record		  *rp;
-register mat_t		  mat;
-{
-	point_t		  v;
-	vect_t		  h;
-	double		  vrad;
-	double		  hrad;
-	fastf_t		  maxrad, minrad;
-
-	/* Check record type */
-	if( rp->u_id != DBID_PARTICLE )  {
-		fprintf(stderr,"_rt_part_import: defective record\n");
-		return(-1);
-	}
-
-	/* Convert from database to internal format */
-	ntohd( v, rp->part.p_v, 3 );
-	ntohd( h, rp->part.p_h, 3 );
-	ntohd( &vrad, rp->part.p_vrad, 1 );
-	ntohd( &hrad, rp->part.p_hrad, 1 );
-
-	/* Apply modeling transformations */
-	MAT4X3PNT( part->part_V, mat, v );
-	MAT4X3PNT( part->part_H, mat, h );
-	if( (part->part_vrad = vrad / mat[15]) < 0 )
-		return(-2);
-	if( (part->part_hrad = hrad / mat[15]) < 0 )
-		return(-2);
-
-	if( part->part_vrad > part->part_hrad )  {
-		maxrad = part->part_vrad;
-		minrad = part->part_hrad;
-	} else {
-		maxrad = part->part_hrad;
-		minrad = part->part_vrad;
-	}
-	if( maxrad <= 0 )
-		return(-4);
-
-	if( MAGSQ( part->part_H ) * 1000000 < maxrad * maxrad)  {
-		/* Height vector is insignificant, particle is a sphere */
-		part->part_vrad = part->part_hrad = maxrad;
-		VSETALL( part->part_H, 0 );		 /* sanity */
-		part->part_type = RT_PARTICLE_TYPE_SPHERE;
-		return(0);		 /* OK */
-	}
-
-	if( (maxrad - minrad) / maxrad < 0.001 )  {
-		/* radii are nearly equal, particle is a cylinder (lozenge) */
-		part->part_vrad = part->part_hrad = maxrad;
-		part->part_type = RT_PARTICLE_TYPE_CYLINDER;
-		return(0);		 /* OK */
-	}
-
-	part->part_type = RT_PARTICLE_TYPE_CONE;
-	return(0);		 /* OK */
-
-}
-
-/*		R T _ A R B N _ I M P O R T
- *
- * Cannabalized from the rt library.  For temporary use only, pending
- * the arrival of a formal import library.
- *
- */
-
-int
-_rt_arbn_import( aip, rp, mat )
-struct arbn_internal	*aip;
-union record		*rp;
-register mat_t		mat;
-{
-
-	register int	i;
-
-	if( rp->u_id != DBID_ARBN )  {
-		rt_log("_rt_arbn_import: defective record, id=x%x\n", rp->u_id);
-		return(-1);
-	}
-
-	aip->neqn = rt_glong(rp->n.n_neqn);
-	if( aip->neqn <= 0 )
-		return( -1 );
-	aip->eqn = (plane_t *)rt_malloc( aip->neqn * sizeof(plane_t), "_rt_arbn_import() planes");
-	
-
-	ntohd( (char *)aip->eqn, (char *)(&rp[1]), aip->neqn*4 );
-
-	/* Transform by the matrix */
-#	include "noalias.h"
-	for( i = 0; i < aip->neqn; i++ )  {
-		point_t	orig_pt;
-		point_t	pt;
-		vect_t	norm;
-
-
-		/* Pick a point on the original halfspace */
-		VSCALE( orig_pt, aip->eqn[i], aip->eqn[i][3] );
-
-		/* Transform the point and the normal */
-		MAT4X3VEC( norm, mat, aip->eqn[i] );
-		MAT4X3PNT( pt, mat, orig_pt );
-
-		/* Measure new distance from origin to new point */
-		VMOVE( aip->eqn[i], norm );
-		aip->eqn[i][3] = VDOT( pt, norm );
-
-	}
-
-	return(0);
 }
