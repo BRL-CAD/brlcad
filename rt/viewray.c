@@ -126,9 +126,9 @@ register struct partition *PartHeadp;
 			 *  If both are air, or both are solid, then don't
 			 *  output any paint.
 			 */
-			if( pp->pt_regionp->reg_regionid >= 0 )  {
+			if( pp->pt_regionp->reg_regionid > 0 )  {
 				/* Exiting a solid */
-				if( np->pt_regionp->reg_regionid >= 0 )
+				if( np->pt_regionp->reg_regionid > 0 )
 					continue;	/* both are solid */
 				/* output "internal exit" paint */
 				wraypaint( pp->pt_outhit->hit_point,
@@ -136,7 +136,7 @@ register struct partition *PartHeadp;
 					PAINT_INTERN_EXIT, ap, outfp );
 			} else {
 				/* Exiting air */
-				if( np->pt_regionp->reg_regionid < 0 )
+				if( np->pt_regionp->reg_regionid <= 0 )
 					continue;	/* both are air */
 				/* output "internal entry" paint */
 				wraypaint( np->pt_inhit->hit_point,

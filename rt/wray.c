@@ -107,8 +107,13 @@ FILE *fp;
 
 	vldray.pa = vldray.pe = vldray.pc = vldray.sc = 0;	/* no curv */
 
-	/* Air is marked by negative region IDs */
-	vldray.ob = pp->pt_regionp->reg_regionid;
+	/*  Air is marked by zero or negative region ID codes.
+	 *  When air is encountered, the air code is taken from reg_aircode.
+	 *  The negative of the air code is used for the "ob" field, to
+	 *  distinguish air from other regions.
+	 */
+	if( (vldray.ob = pp->pt_regionp->reg_regionid) <= 0 )
+		vldray.ob = -(pp->pt_regionp->reg_aircode);
 
 	WRAY_TAG( vldray, ap );
 
