@@ -59,14 +59,8 @@ extern FBIO adage_interface;
 #ifdef IF_SUN
 extern FBIO sun_interface;
 #endif
-#ifdef IF_SGI
+#if defined(IF_SGI) || defined(IF_4D)
 extern FBIO sgi_interface;
-#endif
-#ifdef IF_4D
-extern FBIO mips_interface;
-#endif
-#ifdef IF_GT
-extern FBIO gt_interface;
 #endif
 #ifdef IF_RAT
 extern FBIO rat_interface;
