@@ -287,6 +287,7 @@ char	**argv;
      * then the display processor will not mind when we start
      * writing new subroutines out there...
      */
+    update_views = 1;
     refresh();
   }
 
