@@ -714,11 +714,13 @@ struct rt_wdb  {
 };
 
 #define	RT_WDB_MAGIC			0x5f576462
+#define RT_CK_WDB(_p)		BU_CKMAG( _p , RT_WDB_MAGIC , "rt_wdb" )
 #define RT_WDB_NULL		((struct rt_wdb *)NULL)
 #define RT_WDB_TYPE_FILE			1
 #define RT_WDB_TYPE_DB_DISK			2
-#define RT_WDB_TYPE_DB_INMEM			3
-#define RT_WDB_TYPE_DB_INMEM_APPEND_ONLY	4
+#define RT_WDB_TYPE_DB_DISK_APPEND_ONLY		3
+#define RT_WDB_TYPE_DB_INMEM			4
+#define RT_WDB_TYPE_DB_INMEM_APPEND_ONLY	5
 
 /*
  *			D B _ T R E E _ S T A T E
@@ -2060,6 +2062,10 @@ RT_EXTERN(struct edgeuse	*nmg_findeu, (CONST struct vertex *v1, CONST struct ver
 RT_EXTERN(struct edgeuse	*nmg_find_eu_in_face, (CONST struct vertex *v1,
 				CONST struct vertex *v2, CONST struct faceuse *fu,
 				CONST struct edgeuse *eup, int dangling_only));
+RT_EXTERN(struct edgeuse	*nmg_find_e, (CONST struct vertex *v1,
+				CONST struct vertex *v2,
+				CONST struct shell *s,
+				CONST struct edge *ep));
 RT_EXTERN(struct edgeuse	*nmg_find_eu_of_vu, (CONST struct vertexuse *vu) );
 RT_EXTERN(struct edgeuse	*nmg_find_eu_with_vu_in_lu, (CONST struct loopuse *lu,
 				CONST struct vertexuse *vu) );
