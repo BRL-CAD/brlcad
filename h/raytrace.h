@@ -179,6 +179,8 @@ struct soltab {
 #define ID_POLY		8	/* Polygonal facted object */
 #define ID_BSPLINE	9	/* B-spline object */
 #define ID_SPH		10	/* Sphere */
+#define	ID_STRSOL	11	/* String-defined solid */
+#define ID_EBM		12	/* Extruded bitmap solid */
 
 /*
  *			F U N C T A B
@@ -412,6 +414,58 @@ union cutter  {
 };
 #define CUTTER_NULL	((union cutter *)0)
 
+
+/*
+ *			M E M _ M A P
+ *
+ *  These structures are used to manage internal resource maps.
+ *  Typically these maps describe some kind of memory or file space.
+ */
+struct mem_map {
+	struct mem_map	*m_nxtp;	/* Linking pointer to next element */
+	unsigned	 m_size;	/* Size of this free element */
+	unsigned long	 m_addr;	/* Address of start of this element */
+};
+#define MAP_NULL	((struct mem_map *) 0)
+
+
+/*
+ *  The directory is organized as forward linked lists hanging off of
+ *  one of RT_DBNHASH headers in the db_i structure.
+ */
+#define	RT_DBNHASH		128	/* size of hash table */
+
+#if	((RT_DBNHASH)&((RT_DBNHASH)-1)) != 0
+#define	RT_DBHASH(sum)	((unsigned)(sum) % (RT_DBNHASH))
+#else
+#define	RT_DBHASH(sum)	((unsigned)(sum) & ((RT_DBNHASH)-1))
+#endif
+
+/*
+ *			D B _ I
+ *
+ *  One of these structures is used to describe each separate instance
+ *  of a model database file.
+ */
+struct db_i  {
+	int			dbi_magic;	/* magic number */
+	struct directory	*dbi_Head[RT_DBNHASH];
+	int			dbi_fd;		/* UNIX file descriptor */
+	FILE			*dbi_fp;	/* STDIO file descriptor */
+	long			dbi_eof;	/* End+1 pos after db_scan() */
+	long			dbi_nrec;	/* # records after db_scan() */
+	int			dbi_localunit;	/* unit currently in effect */
+	double			dbi_local2base;
+	double			dbi_base2local;	/* unit conversion factors */
+	char			*dbi_title;	/* title from IDENT rec */
+	char			*dbi_filename;	/* file name */
+	int			dbi_read_only;	/* !0 => read only file */
+	struct mem_map		*dbi_freep;	/* map of free granules */
+	
+};
+#define DBI_NULL	((struct db_i *)0)
+#define DBI_MAGIC	0x57204381
+
 /*
  *			D I R E C T O R Y
  */
@@ -430,9 +484,8 @@ struct directory  {
 #define DIR_SOLID	0x1		/* this name is a solid */
 #define DIR_COMB	0x2		/* combination */
 #define DIR_REGION	0x4		/* region */
-#define DIR_BRANCH	0x8		/* branch name */
 
-/* Args to rt_dir_lookup() */
+/* Args to db_lookup() */
 #define LOOKUP_NOISY	1
 #define LOOKUP_QUIET	0
 
@@ -580,8 +633,8 @@ struct rt_i {
 	struct region	**Regions;	/* ptrs to regions [reg_bit] */
 	struct soltab	*HeadSolid;	/* ptr to list of solids in model */
 	struct region	*HeadRegion;	/* ptr of list of regions in model */
+	struct db_i	*rti_dbip;	/* prt to Database instance struct */
 	char		*file;		/* name of file */
-	FILE		*fp;		/* file handle of database */
 	vect_t		mdl_min;	/* min corner of model bounding RPP */
 	vect_t		mdl_max;	/* max corner of model bounding RPP */
 	long		nregions;	/* total # of regions participating */
@@ -598,7 +651,6 @@ struct rt_i {
 	union cutter	rti_CutHead;	/* Head of cut tree */
 	union cutter	rti_inf_box;	/* List of infinite solids */
 	struct directory *rti_DirHead;	/* directory for this DB */
-	union record	*rti_db;	/* in-core database, when needed */
 	struct animate	*rti_anroot;	/* heads list of anim at root lvl */
 	int		rti_pt_bytes;	/* length of partition struct */
 	int		rti_bv_bytes;	/* length of BITV array */
@@ -729,7 +781,10 @@ extern double mat_atan2();
 
 /*****************************************************************
  *                                                               *
- *  Internal routines in the RT library.  Not for Applications   *
+ *  Internal routines in the RT library.			 *
+ *  These routines are not intended for Applications to use.	 *
+ *  The interface to these routines may change significantly	 *
+ *  from release to release of this software.			 *
  *                                                               *
  *****************************************************************/
 
@@ -743,11 +798,6 @@ extern char *rt_realloc(char *ptr, unsigned int cnt, char *str);
 					/* Duplicate str w/malloc */
 extern char *rt_strdup(char *cp);
 
-					/* Look up name in toc */
-extern struct directory *rt_dir_lookup(struct rt_i *rtip, char *str, int noisy);
-					/* Add name to toc */
-extern struct directory *rt_dir_add(struct rt_i *rtip, char *name,
-	long laddr, int len, int flags);
 					/* Weave segs into partitions */
 extern void rt_boolweave(struct seg *segp_in, struct partition *PartHeadp,
 	struct application *ap);
@@ -802,6 +852,48 @@ extern void rt_cut_extend(union cutter *cutp, struct soltab *stp);
 extern int rt_rpp_region(struct rt_i *rtip, char *reg_name,
 	fastf_t *min_rpp, fastf_t *max_rpp);
 
+/* The database library */
+/* open.c */
+					/* open an existing model database */
+extern struct db_i *db_open( char *name, char *mode );
+					/* create a new model database */
+extern struct db_i *db_create( char *name );
+					/* close a model database */
+extern void db_close( struct db_i *dbip );
+/* io.c */
+					/* malloc & read records */
+extern union record *db_getmrec( struct db_i *, struct directory *dp );
+					/* get several records from db */
+extern int db_get( struct db_i *, struct directory *dp, union record *where,
+	int offset, int len );
+					/* put several records into db */
+extern int db_put( struct db_i *, struct directory *dp, union record *where,
+	int offset, int len );
+/* scan.c */
+					/* read db (to build directory) */
+extern int db_scan( struct db_i *, int (*handler)() );
+/* lookup.c */
+					/* convert name to directory ptr */
+extern struct directory *db_lookup( struct db_i *, char *name, int noisy );
+					/* add entry to directory */
+extern struct directory *db_diradd( struct db_i *, char *name, long laddr,
+	int len, int flags );
+					/* delete entry from directory */
+extern int db_dirdelete( struct db_i *, struct directory *dp );
+/* alloc.c */
+					/* allocate "count" granules */
+extern int db_alloc( struct db_i *, struct directory *dp, int count );
+					/* grow by "count" granules */
+extern int db_grow( struct db_i *, struct directory *dp, int count );
+					/* truncate by "count" */
+extern int db_trunc( struct db_i *, struct directory *dp, int count );
+					/* delete "recnum" from entry */
+extern int db_delrec( struct db_i *, struct directory *dp, int recnum );
+					/* delete all granules assigned dp */
+extern int db_delete( struct db_i *, struct directory *dp );
+					/* write FREE records from 'start' */
+extern int db_zapper( struct db_i *, struct directory *dp, int start );
+
 #else
 
 extern char *rt_malloc();		/* visible malloc() */
@@ -809,8 +901,6 @@ extern void rt_free();			/* visible free() */
 extern char *rt_realloc();		/* visible realloc() */
 extern char *rt_strdup();		/* Duplicate str w/malloc */
 
-extern struct directory *rt_dir_lookup();/* Look up name in toc */
-extern struct directory *rt_dir_add();	/* Add name to toc */
 extern void rt_boolweave();		/* Weave segs into partitions */
 extern void rt_boolfinal();		/* Eval booleans over partitions */
 extern int rt_booleval();		/* Eval bool tree node */
@@ -835,6 +925,47 @@ extern void rt_region_color_map();	/* regionid-driven color override */
 extern void rt_color_addrec();		/* process ID_MATERIAL record */
 extern void rt_cut_extend();		/* extend a cut box */
 extern int rt_rpp_region();		/* find RPP of one region */
+
+/* The database library */
+#ifndef mips
+extern struct db_i *db_open();		/* open an existing model database */
+extern struct db_i *db_create();	/* create a new model database */
+extern void db_close();			/* close a model database */
+extern union record *db_getmrec();	/* malloc & read records */
+extern int db_get();			/* get several records from db */
+extern int db_put();			/* put several records into db */
+extern int db_scan();			/* read db (to build directory) */
+extern struct directory *db_lookup();	/* convert name to directory ptr */
+extern struct directory *db_diradd();	/* add entry to directory */
+extern int db_dirdelete();		/* delete entry from directory */
+extern int db_alloc();			/* allocate "count" granules */
+extern int db_grow();			/* grow by "count" granules */
+extern int db_trunc();			/* truncate by "count" */
+extern int db_delrec();			/* delete "recnum" from entry */
+extern int db_delete();			/* delete all granules assigned dp */
+extern int db_zapper();			/* write FREE records from 'start' */
+#else
+extern struct db_i *db_open( char *, char * );
+extern struct db_i *db_create( char * );
+extern void db_close( struct db_i * );
+extern union record *db_getmrec( struct db_i *, struct directory * );
+extern int db_get( struct db_i *, struct directory *, union record *,
+	int , int  );
+extern int db_put( struct db_i *, struct directory *, union record *,
+	int , int  );
+extern int db_scan( struct db_i *, int (*)() );
+extern struct directory *db_lookup( struct db_i *, char *, int );
+extern struct directory *db_diradd( struct db_i *, char *, long ,
+	int , int  );
+extern int db_dirdelete( struct db_i *, struct directory * );
+extern int db_alloc( struct db_i *, struct directory *, int  );
+extern int db_grow( struct db_i *, struct directory *, int );
+extern int db_trunc( struct db_i *, struct directory *, int );
+extern int db_delrec( struct db_i *, struct directory *, int );
+extern int db_delete( struct db_i *, struct directory * );
+extern int db_zapper( struct db_i *, struct directory *, int );
+#endif
+
 #endif
 
 /* CxDiv, CxSqrt */
