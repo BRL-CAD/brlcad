@@ -1,3 +1,6 @@
+dnl **************************
+dnl ** BRL-CAD configure.ac **
+dnl **************************
 dnl $Id$
 
 AC_INIT(librt/bool.c)
@@ -24,9 +27,11 @@ CFLAGS="$CFLAGS "'-I$(top_srcdir)/h -fno-strict-aliasing'
 case "$target" in
 	*-*-linux*)
 		PTHREAD_LIBS="-lpthread"
+		AC_SUBST(PTHREAD_LIBS)
 		;;
 	*-*-*BSD*)
 		PTHREAD_LIBS="-pthread"
+		AC_SUBST(PTHREAD_LIBS)
 		;;
 esac
 
@@ -38,20 +43,29 @@ AC_ARG_WITH(jdk,
         have_java=yes
         ])
 AM_CONDITIONAL(JAVA, test x$have_java = xyes)
+AC_SUBST(JAVA_CFLAGS)
+AC_SUBST(JAVARTSERVER)
 
 AC_DEFINE(DM_X,1,[Display for X])
 AC_DEFINE(USE_MESA_GL,1,[Assume mesagl is always around (fixme)])
 AC_DEFINE(DM_OGL,1,[yeah, GL])
 GL_CFLAGS="-I/usr/X11R6/include"
 GL_LIBS="-L/usr/X11R6/lib -lGL"
+AC_SUBST(GL_CFLAGS)
+AC_SUBST(GL_LIBS)
 
 LEX_CFLAGS="-Dyylex=cmd_nop"
+AC_SUBST(LEX_CFLAGS)
 
 AC_C_BIGENDIAN(AC_DEFINE(NATURAL_IEEE,,64b floating point storage technique), AC_DEFINE(REVERSED_IEEE,,64b floating point storage technique), AC_ERROR("Don't know the endian of this machine!"))
 
 AC_DEFINE(USE_PROTOTYPES,1,heh)
 AC_DEFINE(USE_REGCOMP,1,new regex stuff)
 
+# doxygen
+AC_ARG_ENABLE(doxygen, AC_HELP_STRING(--enable-doxygen,
+		       [enable documentation generation with doxygen (auto)]))
+ 
 
 dnl **************************
 dnl *** Check for programs ***
@@ -69,6 +83,17 @@ AC_DEFINE(HAS_POSIX_THREADS,1,[Posix Threading API])
 
 AC_DEFINE(EXTERN_STDOUT,,[Stdout is extern])
 
+if ! test "x$enable_doxygen" = "xno" ; then
+	AC_PATH_PROG(DOXYGEN, doxygen, , $PATH)
+	if test "x$DOXYGEN" = "x" ; then
+		if test "x$enable_doxygen" = "xyes" ; then
+			AC_MSG_ERROR([cound not find doxygen])
+		fi
+		enable_doxygen=no
+	fi
+fi
+AM_CONDITIONAL(DOC, test "x$enable_doxygen" = "xyes")
+
 
 dnl ***************************
 dnl *** Check for libraries ***
@@ -84,17 +109,22 @@ CURSES="${LIBS}"
 LIBS=
 AC_SEARCH_LIBS(getvideo, gl, AC_DEFINE(HAS_SGIGL,1, Irix GL is present.))
 SGIGL="${LIBS}"
+AC_SUBST(SGIGL)
 
 LIBS="${SAVELIBS}"
 
 AC_SEARCH_LIBS(mallopt, malloc)
 AC_SEARCH_LIBS(matherr, mx)
 AC_SEARCH_LIBS(dlopen, [dl ldl], AC_DEFINE(HAVE_DLOPEN,1,dlopen is available))
+AC_SUBST(DL)
 
 dnl X
 X_PREFIX=/usr/X11R6
 X_CFLAGS="-I${X_PREFIX}/include"
 X_LIBS="-L${X_PREFIX}/lib -lX11 -lXi"
+AC_SUBST(X_CFLAGS)
+AC_SUBST(X_LIBS)
+AC_SUBST(X_PREFIX)
 
 dnl tcl
 TCLVER=8.4
@@ -115,18 +145,30 @@ if test "$FRAMEWORK_BUILD" = "1" ; then
 else
     TCL_BUILD_CFLAGS="-DTCL_PACKAGE_PATH=\\\"$libdir\\\" -DTCL_LIBRARY=\\\"$TCL_LIBRARY\\\""
 fi
+AC_SUBST(TCL)
+AC_SUBST(TCLVER)
+AC_SUBST(TCL_BUILD_CFLAGS)
+AC_SUBST(TCL_LIBRARY)
+AC_SUBST(TCL_LIBS)
 
 dnl tk
 TKVER="8.4"
 TK_LIBS='-L${top_builddir}/libtk${TKVER}/build -ltk${TKVER} ${TCL_LIBS} ${X_LIBS}'
 TK_LIBRARY="$prefix/tk${TKVER}"
+AC_SUBST(TKVER)
+AC_SUBST(TK_LIBRARY)
+AC_SUBST(TK_LIBS)
 
 dnl itcl
 ITCL_VERSION="3.3"
 ITCL_LIBS='${top_builddir}/libitcl/itcl/libitcl.la'
 ITK_LIBS='${top_builddir}/libitcl/itk/libitk.la'
+AC_SUBST(ITCL_LIBS)
+AC_SUBST(ITCL_VERSION)
+AC_SUBST(ITK_LIBS)
 
 PNG_LIBS='${top_builddir}/libpng/libpng.la ${top_builddir}/libz/libz.la'
+AC_SUBST(PNG_LIBS)
 
 
 dnl *************************
@@ -156,7 +198,7 @@ AC_CHECK_HEADERS( \
 	time.h \
 	unistd.h \
 	varargs.h \
-	xosdefs.h
+	xosdefs.h \
 )
 AC_CHECK_HEADER(sys/stat.h, AC_DEFINE(HAVE_UNIX_IO,, Fix this, sys/types.h and sys/stat.h ...))
 AC_CHECK_HEADER(sys/time.h, AC_DEFINE(TIME_WITH_SYS_TIME,1,sys/time.h))
@@ -199,9 +241,14 @@ AC_CHECK_FUNC(fstatfs, , [AC_DEFINE(NO_FSTATFS,, Lacking fstatfs)])
 AC_CHECK_FUNC(getopt, AC_DEFINE(HAVE_GETOPT_DECL,1,getopt))
 AC_CHECK_FUNC(popen, AC_DEFINE(HAVE_POPEN_DECL,1,popen))
 AC_CHECK_FUNC(strdup, AC_DEFINE(HAVE_STRDUP_DECL,1,strdup))
+
 AC_CHECK_FUNCS(drand gethostname vprintf sbrk vfork dlopen bzero strdup strcasecmp strchr getopt writev regex strdup)
+
 AC_CHECK_FUNCS(socket, SOCKET="" ,[AC_CHECK_LIB(socket, socket, SOCKET="-lsocket", AC_MSG_ERROR([No internet socket found]))])
+AC_SUBST(SOCKET)
+
 dnl AC_CHECK_FUNCS(re_comp, REGEX_LIB="", [AC_CHECK_LIB(compat, re_comp, REGEX_LIB="-lcompat",)])
+AC_SUBST(REGEX_LIB)
 
 
 dnl ***************************
@@ -235,62 +282,51 @@ dnl REGEX
 dnl BSDGETTIMEOFDAY
 
 BN='${top_builddir}/libbn/libbn.la ${BU}'
-BU='${top_builddir}/libbu/libbu.la ${TCL_LIBS} ${PTHREAD_LIBS}'
-CURSOR='${top_builddir}/libcursor/libcursor.la ${CURSES}'
-DM='${top_builddir}/libdm/libdm.la ${TK_LIBS} ${RT}'
-FB='${top_builddir}/libfb/libfb.la ${X_LIBS} ${PKG} ${BU} ${GL_LIBS}'
-FFT='${top_builddir}/libfft/libfft.la -lm'
-OPTICAL='${top_builddir}/liboptical/liboptical.la'
-ORLE='${top_builddir}/liborle/liborle.la'
-PKG='${top_builddir}/libpkg/libpkg.la'
-RLE='${top_builddir}/libutahrle/libutahrle.la -lm'
-RT='${top_builddir}/librt/librt.la ${BN} ${REGEX_LIB}'
-SYSV='${top_builddir}/libsysv/libsysv.la'
-TCLCAD='${top_builddir}/libtclcad/libtclcad.la'
-TERMIO='${top_builddir}/libtermio/libtermio.la'
-WDB='${top_builddir}/libwdb/libwdb.la'
-
 AC_SUBST(BN)
+
+BU='${top_builddir}/libbu/libbu.la ${TCL_LIBS} ${PTHREAD_LIBS}'
 AC_SUBST(BU)
+
+CURSOR='${top_builddir}/libcursor/libcursor.la ${CURSES}'
 AC_SUBST(CURSES)
 AC_SUBST(CURSOR)
-AC_SUBST(DL)
+
+DM='${top_builddir}/libdm/libdm.la ${TK_LIBS} ${RT}'
 AC_SUBST(DM)
+
+FB='${top_builddir}/libfb/libfb.la ${X_LIBS} ${PKG} ${BU} ${GL_LIBS}'
 AC_SUBST(FB)
+
+FFT='${top_builddir}/libfft/libfft.la -lm'
 AC_SUBST(FFT)
-AC_SUBST(GL_CFLAGS)
-AC_SUBST(GL_LIBS)
-AC_SUBST(ITCL_LIBS)
-AC_SUBST(ITCL_VERSION)
-AC_SUBST(ITK_LIBS)
-AC_SUBST(JAVARTSERVER)
-AC_SUBST(JAVA_CFLAGS)
-AC_SUBST(LEX_CFLAGS)
+
+OPTICAL='${top_builddir}/liboptical/liboptical.la'
 AC_SUBST(OPTICAL)
+
+ORLE='${top_builddir}/liborle/liborle.la'
 AC_SUBST(ORLE)
+
+PKG='${top_builddir}/libpkg/libpkg.la'
 AC_SUBST(PKG)
-AC_SUBST(PNG_LIBS)
-AC_SUBST(PTHREAD_LIBS)
-AC_SUBST(REGEX_LIB)
+
+RLE='${top_builddir}/libutahrle/libutahrle.la -lm'
 AC_SUBST(RLE)
+
+RT='${top_builddir}/librt/librt.la ${BN} ${REGEX_LIB}'
 AC_SUBST(RT)
-AC_SUBST(SGIGL)
-AC_SUBST(SOCKET)
+
+SYSV='${top_builddir}/libsysv/libsysv.la'
 AC_SUBST(SYSV)
-AC_SUBST(TCL)
+
+TCLCAD='${top_builddir}/libtclcad/libtclcad.la'
 AC_SUBST(TCLCAD)
-AC_SUBST(TCLVER)
-AC_SUBST(TCL_BUILD_CFLAGS)
-AC_SUBST(TCL_LIBRARY)
-AC_SUBST(TCL_LIBS)
+
+TERMIO='${top_builddir}/libtermio/libtermio.la'
 AC_SUBST(TERMIO)
-AC_SUBST(TKVER)
-AC_SUBST(TK_LIBRARY)
-AC_SUBST(TK_LIBS)
+
+WDB='${top_builddir}/libwdb/libwdb.la'
 AC_SUBST(WDB)
-AC_SUBST(X_CFLAGS)
-AC_SUBST(X_LIBS)
-AC_SUBST(X_PREFIX)
+
 
 AC_CONFIG_FILES([
 	Makefile
