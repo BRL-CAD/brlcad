@@ -61,7 +61,7 @@ char **argv;
 	 * This next call gets the database ready for ray tracing.
 	 * (it precomputes some values, sets up space partitioning, etc.)
 	 */
-	rt_prep(rtip);
+	rt_prep_parallel(rtip,1);
 
 	/*
 	 * Set the ray start point and direction
