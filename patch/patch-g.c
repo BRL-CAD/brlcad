@@ -62,6 +62,13 @@ RT_EXTERN( fastf_t mat_determinant, ( CONST mat_t m ) );
 
 void	proc_plate();
 void	proc_label();
+void	proc_triangle();
+void	proc_wedge();
+void	proc_sphere();
+void	proc_box();
+void	proc_cylin();
+void	proc_rod();
+void	set_color();
 void	mk_cyladdmember();
 
 static char usage[] = "\
@@ -1530,6 +1537,7 @@ char *name1;
 /*
  *	 Process Volume Mode triangular facetted solids  
  */
+void
 proc_triangle(cnt)
 int cnt;
 {
@@ -1544,6 +1552,7 @@ int cnt;
 	static int last_cc=0;
 	char 	name[17],mirror_name[17];
 	plane_t pl;
+	point_t last;
 	struct rt_tol tol;
 
         /* XXX These need to be improved */
@@ -1600,9 +1609,10 @@ int cnt;
 			rt_log( "%d %f %f %f\n",k,x[k],y[k],z[k]);
 	}
 
+	VSET( last, MAX_FASTF, MAX_FASTF, MAX_FASTF );
 	VSET( centroid , 0.0 , 0.0 , 0.0 );
 	for ( cpts=0, k=1; k<l; k++ ) {
-		point_t last, tmp;
+		point_t tmp;
 
 		VSET( tmp, x[k], y[k], z[k] );
 		if( VEQUAL( tmp, last ) )
@@ -1830,6 +1840,7 @@ int cnt;
 	char	shflg,mrflg,ctflg;
 	char	name[17],mirror_name[17];
 	plane_t pl;
+	point_t last;
 	struct rt_tol tol;
 
         /* XXX These need to be improved */
@@ -1943,9 +1954,10 @@ int cnt;
 
 		Get_ave_plane( pl, l, x,y,z );
 
+		VSET( last, MAX_FASTF, MAX_FASTF, MAX_FASTF );
 		VSET( centroid , 0.0 , 0.0 , 0.0 );
 		for ( cpts=0, k=1; k<l; k++ ) {
-			point_t last, tmp;
+			point_t tmp;
 
 			VSET( tmp, x[k], y[k], z[k] );
 			if( VEQUAL( tmp, last ) )
@@ -2009,6 +2021,7 @@ int cnt;
 /* 
  *	Process fastgen wedge shape - this does not process hollows
  */
+void
 proc_wedge(cnt)
 int cnt;
 {
@@ -2111,6 +2124,7 @@ int cnt;
  *
  *	 Process fastgen spheres - can handle hollowness 
  */
+void
 proc_sphere(cnt)
 int cnt;
 {
@@ -2237,6 +2251,7 @@ int cnt;
 /*
  *	Process fastgen box code
  */
+void
 proc_box(cnt)
 int cnt;
 {
@@ -2454,6 +2469,7 @@ int cnt;
  *		will be subtracted from cylinder1.
  *
  */
+void
 proc_cylin(cnt)
 int cnt;
 {
@@ -2837,6 +2853,7 @@ int cnt;
 /*
  *	Process fastgen rod mode
  */
+void
 proc_rod(cnt)
 int cnt;
 {
@@ -3003,6 +3020,7 @@ int cnt;
  *  Find the single outward pointing normal for a polygon.
  *  Assumes all points are coplanar (they better be!).
  */
+void
 pnorms( norms, verts, centroid, npts, inv )
 fastf_t	norms[5][3];
 fastf_t	verts[5][3];
@@ -3105,6 +3123,7 @@ char *labelfile;
  * Given a color_map entry (for the thousand series) for the combination being
  * made, set the rgb color array for the upcoming call to make combinations.
  */
+void
 set_color( color )
 int color;
 {
