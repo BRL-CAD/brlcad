@@ -57,7 +57,7 @@ struct structparse rt_ebm_parse[] = {
 	{"%d",	1, "w",		RT_EBM_O(xdim),		FUNC_NULL },
 	{"%d",	1, "n",		RT_EBM_O(ydim),		FUNC_NULL },
 	{"%f",	1, "d",		RT_EBM_O(tallness),	FUNC_NULL },
-	{"%f",	16, "mat", offsetofarray(struct rt_ebm_internal,mat), FUNC_NULL },
+	{"%f",	16, "mat", offsetofarray(struct rt_ebm_internal, mat), FUNC_NULL },
 	{"",	0, (char *)0, 0,			FUNC_NULL }
 };
 
@@ -570,7 +570,6 @@ double				local2mm;
 	struct rt_ebm_internal	*eip;
 	struct rt_ebm_internal	ebm;	/* scaled version */
 	union record		*rec;
-	register int		i;
 	struct rt_vls		str;
 
 	RT_CK_DB_INTERNAL(ip);
@@ -612,11 +611,8 @@ struct rt_db_internal	*ip;
 int			verbose;
 double			mm2local;
 {
-	register int			j;
 	register struct rt_ebm_internal	*eip =
 		(struct rt_ebm_internal *)ip->idb_ptr;
-	char				buf[256];
-	int				i;
 
 	RT_EBM_CK_MAGIC(eip);
 	rt_vls_strcat( str, "extruded bitmap (EBM)\n\t");
@@ -637,7 +633,6 @@ rt_ebm_ifree( ip )
 struct rt_db_internal	*ip;
 {
 	register struct rt_ebm_internal	*eip;
-	register int			i;
 
 	RT_CK_DB_INTERNAL(ip);
 	eip = (struct rt_ebm_internal *)ip->idb_ptr;
@@ -849,8 +844,8 @@ register struct curvature	*cvp;
 register struct hit		*hitp;
 struct soltab			*stp;
 {
-	register struct rt_ebm_specific *ebmp =
-		(struct rt_ebm_specific *)stp->st_specific;
+/*	register struct rt_ebm_specific *ebmp =
+		(struct rt_ebm_specific *)stp->st_specific; */
 
 	vec_ortho( cvp->crv_pdir, hitp->hit_normal );
 	cvp->crv_c1 = cvp->crv_c2 = 0;
@@ -869,8 +864,8 @@ struct soltab		*stp;
 register struct hit	*hitp;
 register struct uvcoord	*uvp;
 {
-	register struct rt_ebm_specific *ebmp =
-		(struct rt_ebm_specific *)stp->st_specific;
+/*	register struct rt_ebm_specific *ebmp =
+		(struct rt_ebm_specific *)stp->st_specific; */
 
 	/* XXX uv should be xy in ideal space */
 }
@@ -909,7 +904,7 @@ struct rt_tol		*tol;
 	register int	x,y;
 	register int	following;
 	register int	base;
-	int		i;
+/*	int		i; */
 
 	RT_CK_DB_INTERNAL(ip);
 	eip = (struct rt_ebm_internal *)ip->idb_ptr;
@@ -998,11 +993,11 @@ CONST struct rt_tess_tol *ttol;
 struct rt_tol		*tol;
 {
 	struct rt_ebm_internal	*eip;
-	register int	i;
-	struct shell	*s;
-	struct vertex	**verts;	/* dynamic array of pointers */
-	struct vertex	***vertp;	/* dynam array of ptrs to pointers */
-	struct faceuse	*fu;
+/*	register int	i; 		*/
+/*	struct shell	*s;		*/
+/*	struct vertex	**verts;	/* dynamic array of pointers */
+/*	struct vertex	***vertp;	/* dynam array of ptrs to pointers */
+/*	struct faceuse	*fu;		*/
 
 	RT_CK_DB_INTERNAL(ip);
 	eip = (struct rt_ebm_internal *)ip->idb_ptr;

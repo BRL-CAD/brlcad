@@ -172,7 +172,6 @@ struct rt_i		*rtip;
 	LOCAL vect_t	Au, Bu, Cu;	/* A,B,C with unit length */
 	LOCAL vect_t	w1, w2, P;	/* used for bounding RPP */
 	LOCAL fastf_t	f;
-	int		i;
 
 	eip = (struct rt_ell_internal *)ip->idb_ptr;
 	RT_ELL_CK_MAGIC(eip);
@@ -618,7 +617,6 @@ struct rt_tol		*tol;
 	fastf_t top[16*3];
 	fastf_t middle[16*3];
 	fastf_t bottom[16*3];
-	fastf_t	points[3*8];
 
 	RT_CK_DB_INTERNAL(ip);
 	eip = (struct rt_ell_internal *)ip->idb_ptr;
@@ -645,14 +643,15 @@ struct rt_tol		*tol;
 	return(0);
 }
 
-static point_t	octa_verts[6] = {
-	{ 1, 0, 0 },	/* XPLUS */
-	{-1, 0, 0 },	/* XMINUS */
-	{ 0, 1, 0 },	/* YPLUS */
-	{ 0,-1, 0 },	/* YMINUS */
-	{ 0, 0, 1 },	/* ZPLUS */
-	{ 0, 0,-1 }	/* ZMINUS */
-};
+/* static point_t	octa_verts[6] = {
+/* 	{ 1, 0, 0 },	/* XPLUS */
+/* 	{-1, 0, 0 },	/* XMINUS */
+/* 	{ 0, 1, 0 },	/* YPLUS */
+/* 	{ 0,-1, 0 },	/* YMINUS */
+/* 	{ 0, 0, 1 },	/* ZPLUS */
+/* 	{ 0, 0,-1 }	/* ZMINUS */
+/* };
+ */
 #define XPLUS 0
 #define XMIN  1
 #define YPLUS 2
@@ -662,21 +661,21 @@ static point_t	octa_verts[6] = {
 
 /* Vertices of a unit octahedron */
 /* These need to be organized properly to give reasonable normals */
-static struct usvert {
-	int	a;
-	int	b;
-	int	c;
-} octahedron[8] = {
-    { XPLUS, ZPLUS, YPLUS },
-    { YPLUS, ZPLUS, XMIN  },
-    { XMIN , ZPLUS, YMIN  },
-    { YMIN , ZPLUS, XPLUS },
-    { XPLUS, YPLUS, ZMIN  },
-    { YPLUS, XMIN , ZMIN  },
-    { XMIN , YMIN , ZMIN  },
-    { YMIN , XPLUS, ZMIN  }
-};
-
+/* static struct usvert {
+ * 	int	a;
+ * 	int	b;
+ * 	int	c;
+ * } octahedron[8] = {
+ *     { XPLUS, ZPLUS, YPLUS },
+ *     { YPLUS, ZPLUS, XMIN  },
+ *     { XMIN , ZPLUS, YMIN  },
+ *     { YMIN , ZPLUS, XPLUS },
+ *     { XPLUS, YPLUS, ZMIN  },
+ *     { YPLUS, XMIN , ZMIN  },
+ *     { XMIN , YMIN , ZMIN  },
+ *     { YMIN , XPLUS, ZMIN  }
+ * };
+ */
 struct ell_state {
 	struct shell	*s;
 	struct rt_ell_internal	*eip;
