@@ -63,6 +63,7 @@ struct scroll_item sl_menu[] = {
 	{ "xrot",	sl_rrtol,	4,	"x" },
 	{ "yrot",	sl_rrtol,	5,	"y" },
 	{ "zrot",	sl_rrtol,	6,	"z" },
+	{ "azim",	sl_rrtol,	7,	"azim" },
 	{ "",		(void (*)())NULL, 0,	"" }
 };
 
@@ -74,6 +75,7 @@ struct scroll_item sl_abs_menu[] = {
 	{ "Xrot",	sl_artol,	4,	"ax" },
 	{ "Yrot",	sl_artol,	5,	"ay" },
 	{ "Zrot",	sl_artol,	6,	"az" },
+	{ "Azim",	sl_artol,	7,	"aazim" },
 	{ "",		(void (*)())NULL, 0,	"" }
 };
 
@@ -115,7 +117,7 @@ sl_halt_scroll()
 void
 sl_toggle_scroll()
 {
-  mged_variables.scroll_enabled = mged_variables.scroll_enabled ? 0 : 1;
+  mged_variables.slidersflag = mged_variables.slidersflag ? 0 : 1;
   set_scroll();
 }
 
@@ -148,14 +150,14 @@ char **argv;
   }
 
   if (argc == 1) {
-    Tcl_AppendResult(interp, mged_variables.scroll_enabled ? "1" : "0", (char *)NULL);
+    Tcl_AppendResult(interp, mged_variables.slidersflag ? "1" : "0", (char *)NULL);
     return TCL_OK;
   }
 
-  if (Tcl_GetBoolean(interp, argv[1], &mged_variables.scroll_enabled) == TCL_ERROR)
+  if (Tcl_GetBoolean(interp, argv[1], &mged_variables.slidersflag) == TCL_ERROR)
     return TCL_ERROR;
 
-  if (mged_variables.scroll_enabled) {
+  if (mged_variables.slidersflag) {
     if(mged_variables.rateknobs)
       scroll_array[0] = sl_menu;
     else
@@ -316,7 +318,7 @@ int y_top;
   fastf_t f;
 
   /* XXX this should be driven by the button event */
-  if( mged_variables.adcflag && mged_variables.scroll_enabled )
+  if( mged_variables.adcflag && mged_variables.slidersflag )
     scroll_array[1] = sl_adc_menu;
   else
     scroll_array[1] = SCROLL_NULL;
@@ -481,6 +483,38 @@ int y_top;
 	  }
 	}
 	break;
+      case 7:
+	if(second_menu)
+	  Tcl_AppendResult(interp, "scroll_display: 2nd scroll menu is hosed\n",
+			   (char *)NULL);
+	else {
+	  if(mged_variables.rateknobs)
+	    f = rate_azimuth / RATE_ROT_FACTOR;
+	  else{
+#if 0
+	    if(NEAR_ZERO(curr_dm_list->s_info->elevation - 90.0,(fastf_t)0.005) ||
+	       NEAR_ZERO(curr_dm_list->s_info->elevation + 90.0,(fastf_t)0.005))
+	      f = curr_dm_list->s_info->azimuth / ABS_ROT_FACTOR;
+	    else if(0.0 <= curr_dm_list->s_info->azimuth &&
+		    curr_dm_list->s_info->azimuth <= 180.0)
+	      f = curr_dm_list->s_info->azimuth / ABS_ROT_FACTOR;
+	    else
+	      f = (curr_dm_list->s_info->azimuth - 360.0) / ABS_ROT_FACTOR;
+#else
+#if 1
+	    if(0.0 <= curr_dm_list->s_info->azimuth &&
+	       curr_dm_list->s_info->azimuth <= 180.0)
+	      f = curr_dm_list->s_info->azimuth / ABS_ROT_FACTOR;
+	    else
+	      f = (curr_dm_list->s_info->azimuth - 360.0) / ABS_ROT_FACTOR;
+#else
+	    f = curr_dm_list->s_info->azimuth / ABS_ROT_FACTOR;
+#endif
+#endif
+	  }
+
+	  dmp->dm_setColor(dmp, DM_RED, 1);
+	}
       default:
 	if(second_menu)
 	  Tcl_AppendResult(interp, "scroll_display: 2nd scroll menu is hosed\n",
@@ -532,7 +566,7 @@ int do_func;
 	struct scroll_item	**m;
 	register struct scroll_item     *mptr;
 
-	if( !mged_variables.scroll_enabled )  return(0);	/* not enabled */
+	if( !mged_variables.slidersflag )  return(0);	/* not enabled */
 
 	if( pen_y > scroll_top )
 		return(-1);	/* pen above menu area */
