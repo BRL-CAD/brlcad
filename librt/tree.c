@@ -168,7 +168,7 @@ union tree			*curtree;
 	if( rp->reg_mater.ma_override == 0 )
 		rt_region_color_map(rp);
 
-	RES_ACQUIRE( &rt_g.res_results );	/* enter critical section */
+	bu_semaphore_acquire( RT_SEM_RESULTS );	/* enter critical section */
 
 	rp->reg_instnum = dp->d_uses++;
 
@@ -180,7 +180,7 @@ union tree			*curtree;
 	rt_tree_rtip->HeadRegion = rp;
 
 	rp->reg_bit = rt_tree_rtip->nregions++;	/* Assign bit vector pos. */
-	RES_RELEASE( &rt_g.res_results );	/* leave critical section */
+	bu_semaphore_release( RT_SEM_RESULTS );	/* leave critical section */
 
 	if( rt_g.debug & DEBUG_REGIONS )  {
 		bu_log("Add Region %s instnum %d\n",
@@ -267,13 +267,13 @@ struct rt_i			*rtip;
 	/* Enter the appropriate critical section */
 	switch( hash%3 )  {
 	case 0:
-		RES_ACQUIRE( &rt_g.res_model );
+		bu_semaphore_acquire( RT_SEM_MODEL );
 		break;
 	case 1:
-		RES_ACQUIRE( &rt_g.res_results );
+		bu_semaphore_acquire( RT_SEM_RESULTS );
 		break;
 	default:
-		RES_ACQUIRE( &rt_g.res_stats );
+		bu_semaphore_acquire( RT_SEM_STATS );
 		break;
 	}
 
@@ -355,13 +355,13 @@ struct rt_i			*rtip;
 	/* Leave the appropriate critical section */
 	switch( hash%3 )  {
 	case 0:
-		RES_RELEASE( &rt_g.res_model );
+		bu_semaphore_release( RT_SEM_MODEL );
 		break;
 	case 1:
-		RES_RELEASE( &rt_g.res_results );
+		bu_semaphore_release( RT_SEM_RESULTS );
 		break;
 	default:
-		RES_RELEASE( &rt_g.res_stats );
+		bu_semaphore_release( RT_SEM_STATS );
 		break;
 	}
 	return stp;
@@ -540,9 +540,9 @@ struct soltab	*stp;
 	if( stp->st_id < 0 || stp->st_id >= rt_nfunctab )
 		rt_bomb("rt_free_soltab:  bad st_id");
 
-	RES_ACQUIRE( &rt_g.res_model );
+	bu_semaphore_acquire( RT_SEM_MODEL );
 	if( --(stp->st_uses) > 0 )  {
-		RES_RELEASE( &rt_g.res_model );
+		bu_semaphore_release( RT_SEM_MODEL );
 		return;
 	}
 
@@ -551,7 +551,7 @@ struct soltab	*stp;
 
 	BU_LIST_DEQUEUE( &(stp->l) );	/* NON-PARALLEL on rti_solidheads[] */
 
-	RES_RELEASE( &rt_g.res_model );
+	bu_semaphore_release( RT_SEM_MODEL );
 
 	if( stp->st_aradius > 0 )  {
 		rt_functab[stp->st_id].ft_free( stp );
@@ -599,8 +599,8 @@ CONST char	*node;
  *  because db_walk_tree() isn't multiply re-entrant.
  *
  *  Semaphores used for critical sections in parallel mode:
- *	res_model	protects rti_solidheads[] lists
- *	res_results	protects HeadRegion, mdl_min/max, d_uses, nregions
+ *	RT_SEM_MODEL	protects rti_solidheads[] lists
+ *	RT_SEM_RESULTS	protects HeadRegion, mdl_min/max, d_uses, nregions
  *	res_worker	(db_walk_dispatcher, from db_walk_tree)
  *  
  *  Returns -
