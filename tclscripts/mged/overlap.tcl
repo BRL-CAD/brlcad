@@ -140,25 +140,43 @@ proc next_overlap { id } {
 		set over_cont($id,r2_name) $obj2
 	}
 
-	set b1_disabled 0
-	set b2_disabled 0
-	if { [check_cycle $over_cont($id,r1_name) $over_cont($id,r2_name)] } {
+	set type1 [lindex [db get $over_cont($id,r1_name)] 0]
+	set type2 [lindex [db get $over_cont($id,r2_name)] 0]
+
+	if { $type1 != "comb" || $type2 != "comb" } {
+	    tk_messageBox -icon error -type ok -title "Primitive Overlap" -message \
+	    "This overlap involves primitives, not regions. This tool does not handle such overlaps"
+	    $over_cont($id,work_frame).b1 configure -state disabled
+	    set b1_disabled 1
+	    $over_cont($id,work_frame).b2 configure -state disabled
+	    set b2_disabled 1
+	    $over_cont($id,work_frame).b3 configure -state disabled
+	    $over_cont($id,work_frame).b4 configure -state disabled
+
+	} else {
+
+	    set b1_disabled 0
+	    set b2_disabled 0
+	    $over_cont($id,work_frame).b3 configure -state normal
+	    $over_cont($id,work_frame).b4 configure -state normal
+	    if { [check_cycle $over_cont($id,r1_name) $over_cont($id,r2_name)] } {
 		$over_cont($id,work_frame).b1 configure -state disabled
 		set b1_disabled 1
-	} else {
+	    } else {
 		$over_cont($id,work_frame).b1 configure -state normal
-	}
+	    }
 
-	if { [check_cycle $over_cont($id,r2_name) $over_cont($id,r1_name)] } {
+	    if { [check_cycle $over_cont($id,r2_name) $over_cont($id,r1_name)] } {
 		$over_cont($id,work_frame).b2 configure -state disabled
 		set b2_disabled 1
-	} else {
+	    } else {
 		$over_cont($id,work_frame).b2 configure -state normal
-	}
+	    }
 
-	if { $b1_disabled && $b2_disabled } {
+	    if { $b1_disabled && $b2_disabled } {
 		tk_messageBox -message "Cannot simply subtract one region from another here\n\
-		 without creating a reference cycle" -icon warning -type ok
+			without creating a reference cycle" -icon warning -type ok
+	    }
 	}
 	set over_cont($id,cur_ovr_index) [expr $over_cont($id,cur_ovr_index) + 7]
 	if { $over_cont($id,cur_ovr_index) >= $over_cont($id,length) } {
@@ -183,7 +201,6 @@ proc read_output { id } {
 		catch "exec rm /tmp/g_lint_error"
 		$over_cont($id,top).status configure -text "Processing output..."
 		update
-
 		set over_cont($id,length) [llength $over_cont($id,glint_ret)]
 		set over_cont($id,cur_ovr_index) 0
 		set over_cont($id,start) 0
