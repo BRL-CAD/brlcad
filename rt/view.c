@@ -320,8 +320,7 @@ struct partition *PartHeadp;
 		VJOIN1( out, ap->a_ray.r_pt,
 			10000, ap->a_ray.r_dir );	/* to imply direction */
 		pl_color( stdout, 190, 0, 0 );
-		rt_drawvec( stdout, ap->a_rt_i,
-			ap->a_ray.r_pt, out );
+		pdv_3line( stdout, ap->a_ray.r_pt, out );
 	}
 	ap->a_user = 0;		/* Signal view_pixel:  MISS */
 	VMOVE( ap->a_color, background );	/* In case someone looks */
@@ -419,8 +418,7 @@ struct partition *PartHeadp;
 			VJOIN1( inhit, ap->a_ray.r_pt,
 				hitp->hit_dist, ap->a_ray.r_dir );
 			pl_color( stdout, i, 0, i );
-			rt_drawvec( stdout, ap->a_rt_i,
-				ap->a_ray.r_pt, inhit );
+			pdv_3line( stdout, ap->a_ray.r_pt, inhit );
 
 			if( (out = pp->pt_outhit->hit_dist) >= INFINITY )
 				out = 10000;	/* to imply the direction */
@@ -428,8 +426,7 @@ struct partition *PartHeadp;
 				ap->a_ray.r_pt, out,
 				ap->a_ray.r_dir );
 			pl_color( stdout, i, i, i );
-			rt_drawvec( stdout, ap->a_rt_i,
-				inhit, outhit );
+			pdv_3line( stdout, inhit, outhit );
 		}
 	}
 

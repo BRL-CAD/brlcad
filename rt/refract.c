@@ -208,7 +208,7 @@ do_inside:
 		}
 		if( rdebug&RDEBUG_RAYPLOT )  {
 			pl_color( stdout, 0, 255, 0 );
-			rt_drawvec( stdout, ap->a_rt_i,
+			pdv_3line( stdout,
 				sub_ap.a_ray.r_pt,
 				sub_ap.a_uvec );
 		}

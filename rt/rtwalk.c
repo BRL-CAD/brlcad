@@ -205,13 +205,13 @@ char **argv;
 	if( rdebug > 0 )  {
 		register struct soltab *stp;
 
-		pl_3space( plotfp, 0,0,0, 4096, 4096, 4096);
+		pdv_3space( plotfp, rtip->rti_pmin, rtip->rti_pmax );
 		pl_color( plotfp, 150, 150, 150 );
 
 		for(stp=rtip->HeadSolid; stp != SOLTAB_NULL; stp=stp->st_forw)  {
 			if( stp->st_aradius >= INFINITY )
 				continue;
-			rt_draw_box( plotfp, rtip, stp->st_min, stp->st_max );
+			pdv_3box( plotfp, stp->st_min, stp->st_max );
 		}
 	}
 
@@ -235,7 +235,7 @@ char **argv;
 					pl_color( plotfp, 0, 255, 0 );
 				else
 					pl_color( plotfp, 0, 0, 255 );
-				rt_drawvec( plotfp, ap.a_rt_i,
+				pdv_3line( plotfp,
 					pt_prev_step, ap.a_ray.r_pt );
 			}
 			write_matrix(curstep);
@@ -302,7 +302,7 @@ char **argv;
 				VJOIN1( out, ap.a_ray.r_pt,
 					incr_dist*4, ap.a_ray.r_dir );
 				pl_color( plotfp, 255, 0, 0 );
-				rt_drawvec( plotfp, ap.a_rt_i,
+				pdv_3line( plotfp,
 					pt_prev_step, out );
 			}
 
