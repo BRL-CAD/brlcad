@@ -780,43 +780,56 @@ correct_Lgt( ap, pp, lgt_entry )
 register struct application	*ap;
 register struct partition	*pp;
 register Lgt_Source		*lgt_entry;
-	{	struct application	ap_hit;
-	/* Set up application struct for 'rt_shootray()' to light source.	*/
-	ap_hit = *ap;
-	ap_hit.a_onehit = FALSE;  /* Go all the way to the light.	*/
-	ap_hit.a_hit = f_Shadow; /* Handle shadowed pixels.		*/
-	ap_hit.a_miss = f_Lit;   /* Handle illuminated pixels.		*/
-	ap_hit.a_overlap = ap->a_overlap;
-	ap_hit.a_level++;	  /* Increment recursion level.		*/
-
-	if( rt_g.debug & DEBUG_SHADOW )
+	{	fastf_t	energy_attenuation;
+		fastf_t	lgt_dir[3];
+	if( ! shadowing )
 		{
-		rt_log( "\tcorrect_Lgt()\n" );
-		V_Print( "\t\tlgt source location", lgt_entry->loc, rt_log );
+		energy_attenuation = 1.0;
+		if( ! lgt_entry->beam )
+			return	lgt_entry->energy;
 		}
-	/* Vector to light src from surface contact pt.	 		*/
-	Diff2Vec(	lgt_entry->loc,
-			pp->pt_inhit->hit_point,
-			ap_hit.a_ray.r_dir
-			);
-	VUNITIZE( ap_hit.a_ray.r_dir );
+	/* Vector to light src from surface contact pt. */
+	Diff2Vec( lgt_entry->loc, pp->pt_inhit->hit_point, lgt_dir );
+	VUNITIZE( lgt_dir );
+	if( shadowing )
+		{	struct application	ap_hit;
+		/* Set up appl. struct for 'rt_shootray()' to light src. */
+		ap_hit = *ap;
+		ap_hit.a_onehit = FALSE; /* Go all the way to the light. */
+		ap_hit.a_hit = f_Shadow; /* Handle shadowed pixels. */
+		ap_hit.a_miss = f_Lit;   /* Handle illuminated pixels. */
+		ap_hit.a_overlap = ap->a_overlap;
+		ap_hit.a_level++;	 /* Increment recursion level. */
+	
+		if( rt_g.debug & DEBUG_SHADOW )
+			{
+			rt_log( "\tcorrect_Lgt()\n" );
+			V_Print( "\t\tlgt source location",
+				lgt_entry->loc, rt_log );
+			}
+		/* Set up ray direction to light source. */
+		VMOVE( ap_hit.a_ray.r_dir, lgt_dir );
 
-	/* Set up ray origin at surface contact point.			*/
-	VMOVE( ap_hit.a_ray.r_pt, pp->pt_inhit->hit_point );
-
-	if( rt_g.debug & DEBUG_SHADOW )
-		{
-		V_Print( "\t\tdir. of ray to light", ap_hit.a_ray.r_dir, rt_log );
-		V_Print( "\t\torigin of ray to lgt", ap_hit.a_ray.r_pt, rt_log );
+		/* Set up ray origin at surface contact point. */
+		VMOVE( ap_hit.a_ray.r_pt, pp->pt_inhit->hit_point );
+	
+		if( rt_g.debug & DEBUG_SHADOW )
+			{
+			V_Print( "\t\tdir. of ray to light",
+				ap_hit.a_ray.r_dir, rt_log );
+			V_Print( "\t\torigin of ray to lgt",
+				ap_hit.a_ray.r_pt, rt_log );
+			}
+		/* Fetch attenuated lgt intensity into "ap_hit.a_diverge". */
+		(void) rt_shootray( &ap_hit );
+		energy_attenuation = ap_hit.a_diverge;
+		if( energy_attenuation == 0.0 )
+			/* Shadowed by opaque object(s). */
+			return	energy_attenuation;
 		}
-	/* Fetch attenuated light intensity into "ap_hit.a_diverge".	*/
-	(void) rt_shootray( &ap_hit );
-	if( ap_hit.a_diverge == 0.0 )
-		/* Shadowed by opaque object(s).			*/
-		return	0.0;
+
 	/* Light is either full intensity or attenuated by transparent
-		object(s).
-	 */
+		object(s). */
 	if( lgt_entry->beam )
 		/* Apply gaussian intensity distribution.		*/
 		{	fastf_t lgt_cntr[3];
@@ -830,7 +843,7 @@ register Lgt_Source		*lgt_entry;
 			Diff2Vec( lgt_entry->loc, modl_cntr, lgt_cntr );
 			VUNITIZE( lgt_cntr );
 			}
-		cos_angl = Dot( lgt_cntr, ap_hit.a_ray.r_dir );
+		cos_angl = Dot( lgt_cntr, lgt_dir );
 		if( NEAR_ZERO( cos_angl, EPSILON ) )
 			/* Negligable intensity.			*/
 			return	0.0;
@@ -845,10 +858,10 @@ register Lgt_Source		*lgt_entry;
 			}
 		/* Return weighted and attenuated light intensity.	*/
 		return	gauss_Wgt_Func( ang_dist/rel_radius ) *
-			lgt_entry->energy * ap_hit.a_diverge;
+			lgt_entry->energy * energy_attenuation;
 		}
 	else	/* Return attenuated light intensity.			*/
-		return	lgt_entry->energy * ap_hit.a_diverge;
+		return	lgt_entry->energy * energy_attenuation;
 	}
 
 /*	m i r r o r _ R e f l e c t ( )					*/
@@ -1369,9 +1382,6 @@ fastf_t				*view_dir;
 		}
 	else
 		{	
-		if( ! shadowing ) /* No shadows. */
-			lgt_energy = lgt_entry->energy;
-		else
 		/* Compute attenuated light intensity due to shadowing.	*/
 		if( (lgt_energy = correct_Lgt( ap, pp, lgt_entry )) == 0.0 )
 			{
