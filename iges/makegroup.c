@@ -17,6 +17,8 @@
 /*	This routine creates a group called "all" consisting of
 	all unreferenced entities	*/
 
+#include "conf.h"
+
 #include <stdio.h>
 #include "machine.h"
 #include "vmath.h"
