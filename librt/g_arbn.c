@@ -1,5 +1,5 @@
 /*
- *  			A R B N . C
+ *			G _ A R B N . C
  *  
  *  Function -
  *  	Intersect a ray with an Arbitrary Regular Polyhedron with
@@ -30,7 +30,7 @@ static char RCSarbn[] = "@(#)$Header$ (BRL)";
 #include "db.h"
 #include "./debug.h"
 
-void	arbn_print();
+void	rt_arbn_print();
 
 #define DIST_TOL	(1.0e-8)
 #define DIST_TOL_SQ	(1.0e-10)
@@ -41,14 +41,14 @@ struct arbn_internal  {
 };
 
 /*
- *  			A R B N _ P R E P
+ *  			R T _ A R B N _ P R E P
  *
  *  Returns -
  *	 0	OK
  *	!0	failure
  */
 int
-arbn_prep( stp, rec, rtip )
+rt_arbn_prep( stp, rec, rtip )
 struct soltab	*stp;
 union record	*rec;
 struct rt_i	*rtip;
@@ -64,7 +64,7 @@ struct rt_i	*rtip;
 	GETSTRUCT( aip, arbn_internal );
 	stp->st_specific = (genptr_t)aip;
 
-	if( arbn_import( aip, rec, stp->st_pathmat ) < 0 )  {
+	if( rt_arbn_import( aip, rec, stp->st_pathmat ) < 0 )  {
 		rt_log("arbn(%s): db import error\n", stp->st_name );
 		rt_free( (char *)aip, "arbn_internal" );
 		return(1);		/* BAD */
@@ -145,16 +145,16 @@ next_k:				;
 }
 
 /*
- *  			A R B N _ P R I N T
+ *  			R T _ A R B N _ P R I N T
  */
 void
-arbn_print( stp )
+rt_arbn_print( stp )
 register struct soltab *stp;
 {
 }
 
 /*
- *			A R B N _ S H O T
+ *			R T _ A R B N _ S H O T
  *
  *  Intersect a ray with an ARBN.
  *  Find the largest "in" distance and the smallest "out" distance.
@@ -165,7 +165,7 @@ register struct soltab *stp;
  *	segp		HIT
  */
 struct seg *
-arbn_shot( stp, rp, ap )
+rt_arbn_shot( stp, rp, ap )
 struct soltab *stp;
 register struct xray *rp;
 struct application	*ap;
@@ -213,7 +213,7 @@ struct application	*ap;
 
 	/* Validate */
 	if( iplane == -1 || oplane == -1 )  {
-		rt_log("arbn_shoot(%s): 1 hit => MISS\n",
+		rt_log("rt_arbn_shoot(%s): 1 hit => MISS\n",
 			stp->st_name);
 		return( SEG_NULL );	/* MISS */
 	}
@@ -236,10 +236,10 @@ struct application	*ap;
 }
 
 /*
- *			A R B N _ V S H O T
+ *			R T _ A R B N _ V S H O T
  */
 void
-arbn_vshot( stp, rp, segp, n, resp)
+rt_arbn_vshot( stp, rp, segp, n, resp)
 struct soltab	       *stp[]; /* An array of solid pointers */
 struct xray		*rp[]; /* An array of ray pointers */
 struct  seg            segp[]; /* array of segs (results returned) */
@@ -249,12 +249,12 @@ struct resource         *resp; /* pointer to a list of free segs */
 }
 
 /*
- *  			A R B N _ N O R M
+ *  			R T _ A R B N _ N O R M
  *
  *  Given ONE ray distance, return the normal and entry/exit point.
  */
 void
-arbn_norm( hitp, stp, rp )
+rt_arbn_norm( hitp, stp, rp )
 register struct hit *hitp;
 struct soltab *stp;
 register struct xray *rp;
@@ -266,7 +266,7 @@ register struct xray *rp;
 	VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
 	h = (int)hitp->hit_private;
 	if( h < 0 || h > aip->neqn )  {
-		rt_log("arbn_norm(%s): hit_private=x%x?\n", h );
+		rt_log("rt_arbn_norm(%s): hit_private=x%x?\n", h );
 		VSETALL( hitp->hit_normal, 0 );
 		return;
 	}
@@ -274,14 +274,14 @@ register struct xray *rp;
 }
 
 /*
- *			A R B N _ C U R V E
+ *			R T _ A R B N _ C U R V E
  *
  *  Return the "curvature" of the ARB face.
  *  Pick a principle direction orthogonal to normal, and 
  *  indicate no curvature.
  */
 void
-arbn_curve( cvp, hitp, stp )
+rt_arbn_curve( cvp, hitp, stp )
 register struct curvature *cvp;
 register struct hit *hitp;
 struct soltab *stp;
@@ -292,7 +292,7 @@ struct soltab *stp;
 }
 
 /*
- *  			A R B N _ U V
+ *  			R T _ A R B N _ U V
  *  
  *  For a hit on a face of an ARB, return the (u,v) coordinates
  *  of the hit point.  0 <= u,v <= 1.
@@ -300,7 +300,7 @@ struct soltab *stp;
  *  v extends along the arb_V direction defined by Nx(B-A).
  */
 void
-arbn_uv( ap, stp, hitp, uvp )
+rt_arbn_uv( ap, stp, hitp, uvp )
 struct application *ap;
 struct soltab *stp;
 register struct hit *hitp;
@@ -309,10 +309,10 @@ register struct uvcoord *uvp;
 }
 
 /*
- *			A R B N _ F R E E
+ *			R T _ A R B N _ F R E E
  */
 void
-arbn_free( stp )
+rt_arbn_free( stp )
 register struct soltab *stp;
 {
 	register struct arbn_internal *aip =
@@ -323,7 +323,7 @@ register struct soltab *stp;
 }
 
 /*
- *  			A R B N _ P L O T
+ *  			R T _ A R B N _ P L O T
  *
  *  Brute force through all possible plane intersections.
  *  Generate all edge lines, then intersect the line with all
@@ -334,7 +334,7 @@ register struct soltab *stp;
  *  Note that the vectors will be drawn in no special order.
  */
 void
-arbn_plot( rp, mat, vhead, dp )
+rt_arbn_plot( rp, mat, vhead, dp )
 union record		*rp;
 mat_t			mat;
 struct vlhead		*vhead;
@@ -347,7 +347,7 @@ struct directory	*dp;
 
 	GETSTRUCT( aip, arbn_internal );
 
-	if( arbn_import( aip, rp, mat ) < 0 )  {
+	if( rt_arbn_import( aip, rp, mat ) < 0 )  {
 		rt_log("arbn(%s): db import error\n", dp->d_namep );
 		rt_free( (char *)aip, "arbn_internal" );
 		return;
@@ -393,7 +393,7 @@ struct directory	*dp;
 					if( MAGSQ(dist) < DIST_TOL_SQ )  continue;
 					VSUB2( dist, pt, b );
 					if( MAGSQ(dist) < DIST_TOL_SQ )  continue;
-					rt_log("arbn_plot(%s): warning, point_count on line=%d (is >2)\n",
+					rt_log("rt_arbn_plot(%s): warning, point_count on line=%d (is >2)\n",
 						dp->d_namep, point_count+1);
 					VPRINT(" a", a);
 					VPRINT(" b", b);
@@ -402,28 +402,28 @@ struct directory	*dp;
 				point_count++;
 next_k:				;
 			}
-			if( point_count == 1 ) rt_log("arbn_plot(%s): warning, point_count=1\n", dp->d_namep);
+			if( point_count == 1 ) rt_log("rt_arbn_plot(%s): warning, point_count=1\n", dp->d_namep);
 		}
 	}
 }
 
 /*
- *			A R B N _ C L A S S
+ *			R T _ A R B N _ C L A S S
  */
 int
-arbn_class()
+rt_arbn_class()
 {
 	return(0);
 }
 
 /*
- *			A R B N _ I M P O R T
+ *			R T _ A R B N _ I M P O R T
  *
  *  Convert from "network" doubles to machine specific.
  *  Transform
  */
 int
-arbn_import( aip, rp, mat )
+rt_arbn_import( aip, rp, mat )
 struct arbn_internal	*aip;
 union record		*rp;
 register mat_t		mat;
@@ -431,13 +431,13 @@ register mat_t		mat;
 	register int	i;
 
 	if( rp->u_id != DBID_ARBN )  {
-		rt_log("arbn_import: defective record, id=x%x\n", rp->u_id );
+		rt_log("rt_arbn_import: defective record, id=x%x\n", rp->u_id );
 		return(-1);
 	}
 
 	aip->neqn = rp->n.n_neqn;
 	if( aip->neqn <= 0 )  return(-1);
-	aip->eqn = (plane_t *)rt_malloc( aip->neqn*sizeof(plane_t), "arbn_import planes");
+	aip->eqn = (plane_t *)rt_malloc( aip->neqn*sizeof(plane_t), "rt_arbn_import() planes");
 
 	ntohd( (char *)aip->eqn, (char *)(&rp[1]), aip->neqn*4 );
 
@@ -464,18 +464,18 @@ register mat_t		mat;
 }
 
 /*
- *			A R B N _ T E S S
+ *			R T _ A R B N _ T E S S
  *
  *  "Tessellate" an ARB into an NMG data structure.
  *  Purely a mechanical transformation of one faceted object
  *  into another.
  */
 void
-arbn_tess( s, rp, mat, dp )
+rt_arbn_tess( s, rp, mat, dp )
 struct shell		*s;
 register union record	*rp;
 register mat_t		mat;
 struct directory	*dp;
 {
-	nul_tess( s, rp, mat, dp );
+	rt_nul_tess( s, rp, mat, dp );
 }
