@@ -199,7 +199,8 @@ BDIRS="bench \
 	irprep \
 	jove \
 	canon \
-	burst
+	burst \
+"			# This ends the list.
 
 TDIRS="libtk libtkGLX"
 
