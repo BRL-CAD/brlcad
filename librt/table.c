@@ -172,6 +172,7 @@ RT_DECLARE_INTERFACE(extrude)
 #define rt_submodel_xform rt_generic_xform
 RT_DECLARE_INTERFACE(submodel)
 RT_DECLARE_INTERFACE(fgp)
+RT_DECLARE_INTERFACE(bot)
 
 /* from db_comb.c */
 RT_EXTERN(int rt_comb_import, (struct rt_db_internal *ip,
@@ -395,12 +396,19 @@ struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 		rt_submodel_import,	rt_submodel_export,	rt_submodel_ifree,
 		rt_submodel_describe,	rt_submodel_xform,
 
-	"ID_FGP",	0,		/* 19 */
+	"ID_FGP",	0,		/* 29 Fastgen plate mode solid */
 		rt_fgp_prep,	rt_fgp_shot,	rt_fgp_print,	rt_fgp_norm,
 		rt_fgp_uv,	rt_fgp_curve,	rt_fgp_class,	rt_fgp_free,
 		rt_fgp_plot,	rt_fgp_vshot,	rt_fgp_tess,	rt_fgp_tnurb,
 		rt_fgp_import,	rt_fgp_export,	rt_fgp_ifree,
 		rt_fgp_describe,rt_fgp_xform,
+
+	"ID_BOT",	0,		/* 30  Bag o' Triangles */
+		rt_bot_prep,	rt_bot_shot,	rt_bot_print,	rt_bot_norm,
+		rt_bot_uv,	rt_bot_curve,	rt_bot_class,	rt_bot_free,
+		rt_bot_plot,	rt_bot_vshot,	rt_bot_tess,	rt_bot_tnurb,
+		rt_bot_import,	rt_bot_export,	rt_bot_ifree,
+		rt_bot_describe,rt_bot_xform,
 
 	/* ID_MAXIMUM.  Add new solids _above_ this point */
 
@@ -601,6 +609,9 @@ struct bu_external	*ep;
 		break;
 	case DBID_FGP:
 		id = ID_FGP;
+		break;
+	case DBID_BOT:
+		id = ID_BOT;
 		break;
 	default:
 		bu_log("rt_id_solid:  u_id=x%x unknown\n", rec->u_id);

@@ -283,6 +283,15 @@ int			do_old_matter;
 			handler( dbip, record.s.s_name, addr, nrec,
 				DIR_SOLID );
 			break;
+		case DBID_BOT:
+			j = bu_glong( record.bot.bot_nrec );
+			nrec += j;
+			while( j-- > 0 )
+				(void)fread( (char *)&rec2, sizeof(rec2), 1, dbip->dbi_fp );
+			next = ftell(dbip->dbi_fp);
+			handler( dbip, record.s.s_name, addr, nrec,
+				DIR_SOLID );
+			break;
 		case ID_MEMB:
 			bu_log("db_scan ERROR: Unattached combination MEMBER record\n");
 			break;
