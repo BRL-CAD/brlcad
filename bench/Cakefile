@@ -21,6 +21,7 @@ all&:	PRODUCTS STATIC_PRODUCTS
 
 /* Pick up any shell scripts needed */
 %.sh:					if exist ../SRCDIR/%.sh
+	rm -f %.sh
 	ln ../SRCDIR/%.sh %.sh
 #endif
 
