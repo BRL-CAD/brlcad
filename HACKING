@@ -84,6 +84,14 @@ Patches in the universal diff format (diff -u) are preferred.
 HOW TO CONTRIBUTE
 -----------------
 
+BRL-CAD's open source developer management structure is best described
+as a meritocracy.  Roughly stated, this basically means that the power
+to make decisions lies directly with the individuals that have ability
+or merit with respect to BRL-CAD.  An individual's ability and merit
+is basically a function of their past and present contributions to the
+project.  Those who constructively contribute and are involved have
+more say than those who don't.
+
 As BRL-CAD is comprised of a rather large code base, there are many
 many places where one may begin to get involved.  More than likely,
 there is some new goal you already have in mind, be it a new geometry
@@ -479,6 +487,10 @@ To perform a run of the benchmark suite to validate raytrace behavior:
 
 make benchmark
 
+To perform a run of the test suite:
+
+make test
+
 
 PATCH SUBMISSION GUIDELINES
 ---------------------------
@@ -586,8 +598,18 @@ patch version.  Every development version modification that is
 backwards incompatible in some manner should increment the patch
 version number.
 
+
 MAKING A RELEASE
 ----------------
+
+BRL-CAD uses a monthly iteration development cycle.  If there have
+been significant changes since the previous iteration, the developers
+are expected to "settle down" around the last couple days of the month
+so that the source code may be verified, tested, and released.  Major
+changes to the source code should not occur during these last couple
+days of the iteration, only minor bug and build fixes.  A release
+should then be made within the first couple days of the next month's
+iteration.  Repeat, rinse, recycle.
 
 When making a release, certain public repositories, mailing lists, and
 news outlets require updating and notification.  Especially when the
