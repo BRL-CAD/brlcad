@@ -36,7 +36,7 @@ struct matparse light_parse[] = {
 	"fract",	(mp_off_ty)&(LIGHT_NULL->lt_fraction),	"%f",
 	"shadows",	(mp_off_ty)&(LIGHT_NULL->lt_shadows),	"%d",
 	"infinite",	(mp_off_ty)&(LIGHT_NULL->lt_infinite),	"%d",
-	"implicit",	(mp_off_ty)&(LIGHT_NULL->lt_implicit),	"%d",
+	"invisible",	(mp_off_ty)&(LIGHT_NULL->lt_invisible),	"%d",
 	(char *)0,	(mp_off_ty)0,				(char *)0
 };
 
@@ -115,7 +115,7 @@ char	**dpp;
 
 	lp->lt_intensity = 1000.0;	/* Lumens */
 	lp->lt_fraction = -1.0;		/* Recomputed later */
-	lp->lt_implicit = 0;		/* explicitly modeled */
+	lp->lt_invisible = 0;		/* explicitly modeled */
 	lp->lt_shadows = 1;		/* by default, casts shadows */
 	lp->lt_angle = 180;		/* spherical emission by default */
 	lp->lt_infinite = 0;
@@ -181,7 +181,7 @@ char	**dpp;
 	lp->lt_forw = LightHeadp;
 	LightHeadp = lp;
 
-	if( lp->lt_implicit )
+	if( lp->lt_invisible )
 		return(0);	/* don't show it */
 
 	return(1);
@@ -286,7 +286,7 @@ mat_t	v2m;
 		VSET( lp->lt_aim, 0, 0, -1 );	/* any direction: spherical */
 		lp->lt_intensity = 1000.0;
 		lp->lt_radius = 0.1;		/* mm, "point" source */
-		lp->lt_implicit = 1;		/* NOT explicitly modeled */
+		lp->lt_invisible = 1;		/* NOT explicitly modeled */
 		lp->lt_shadows = 1;		/* casts shadows */
 		lp->lt_angle = 180;		/* spherical emission */
 		lp->lt_cosangle = -1;		/* cos(180) */
@@ -394,8 +394,8 @@ struct partition *PartHeadp;
 		goto out;
 	}
 
-	/* or something futher away than a finite implicit light */
-	if( lp->lt_implicit && !(lp->lt_infinite) ) {
+	/* or something futher away than a finite invisible light */
+	if( lp->lt_invisible && !(lp->lt_infinite) ) {
 		vect_t	tolight;
 		VSUB2( tolight, lp->lt_pos, ap->a_ray.r_pt );
 		if( pp->pt_inhit->hit_dist >= MAGNITUDE(tolight) ) {
@@ -477,7 +477,7 @@ struct partition *PartHeadp;
 	extern struct light_specific *LightHeadp;
 	struct light_specific *lp = (struct light_specific *)(ap->a_user);
 
-	if( lp->lt_implicit || lp->lt_infinite ) {
+	if( lp->lt_invisible || lp->lt_infinite ) {
 		VSETALL( ap->a_color, 1 );
 		return( 1 );
 	}
@@ -487,7 +487,7 @@ struct partition *PartHeadp;
 		return(0);		/* light_visible = 0 */
 	}
 	/* No explicit light -- it's hard to hit */
-	rt_log( "light: warning - implicit light not on list?!\n" );
+	rt_log( "light: warning - invisible light not on list?!\n" );
 	VSETALL( ap->a_color, 1 );
 	return(1);			/* light_visible = 1 */
 }

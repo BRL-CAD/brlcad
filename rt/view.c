@@ -297,10 +297,10 @@ struct application *ap;
 		}
 	}
 
-	/* Eliminate implicit lights */
+	/* Eliminate invisible lights (typ. implicit lights) */
 	lp=LightHeadp;
 	while( lp != LIGHT_NULL )  {
-		if( lp->lt_implicit )  {
+		if( lp->lt_invisible )  {
 			nlp = lp->lt_forw;
 			light_free( (char *)lp );
 			lp = nlp;

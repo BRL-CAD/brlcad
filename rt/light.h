@@ -8,7 +8,7 @@ struct light_specific {
 	fastf_t	lt_fraction;	/* fraction of total light */
 	int	lt_shadows;	/* !0 if this light casts shadows */
 	int	lt_infinite;	/* !0 if infinitely distant */
-	int	lt_implicit;	/* !0 if implicitly modeled or invisible */
+	int	lt_invisible;	/* !0 if implicitly modeled or invisible */
 	/* Internal fields */
 	vect_t	lt_color;	/* RGB, as 0..1 */
 	fastf_t	lt_radius;	/* approximate radius of spherical light */
