@@ -79,7 +79,7 @@ set -S2 "/bin/sh"
  ****************************************************************/
 
 /* #undef NFS */
-#define NFS	1
+#define NFS	0
 
 /* This is the version of Tcl/Tk distributed with BRL-CAD */
 #define	TCLTK_VERS	8.2
@@ -901,7 +901,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	BSD	44
 #	define	HAS_TCP 1
 #	define	HAS_SYMLINKS 1
-#	if 0	/* PRODUCTION=1 */
+#	if 1	/* PRODUCTION=1 */
 #		define	OPTIMIZER	-O2
 #	else
 #		define	OPTIMIZER	-g
