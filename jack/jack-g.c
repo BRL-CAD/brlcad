@@ -36,6 +36,8 @@ struct vlist {
 
 static char	usage[] = "Usage: %s [-r region] [-g group] [jack_db] [brlcad_db]\n";
 
+RT_EXTERN( fastf_t nmg_loop_plane_area, (CONST struct loopuse *lu, plane_t pl ) );
+
 main(argc, argv)
 int	argc;
 char	*argv[];
@@ -247,8 +249,16 @@ char		*jfile;	/* Name of Jack data base file. */
 
 	/* Associate the face geometry. */
 	for (i = 0, fail = 0; i < face; i++)
-		if (nmg_fu_planeeqn(outfaceuses[i], &tol) < 0)
+	{
+		struct loopuse *lu;
+		plane_t pl;
+
+		lu = RT_LIST_FIRST( loopuse , &outfaceuses[i]->lu_hd );
+		if( nmg_loop_plane_area( lu , pl ) < 0.0 )
 			fail = 1;
+		else
+			nmg_face_g( outfaceuses[i] , pl );
+	}
 	if (fail)
 		return(-1);
 
