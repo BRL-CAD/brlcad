@@ -89,9 +89,6 @@ body QuadDisplay::constructor {{type X} args} {
     iwidgets::Panedwindow::add upper
     iwidgets::Panedwindow::add lower
 
-    itk_option add upper.margin
-    itk_option add lower.margin
-
     # create two more panedwindows
     itk_component add upw {
 	::iwidgets::Panedwindow [childsite upper].pw -orient vertical
@@ -109,51 +106,32 @@ body QuadDisplay::constructor {{type X} args} {
 	keep -sashindent -thickness
     }
 
-    itk_component add ulp {
-	$itk_component(upw) add ulp
-    } {
-	keep -margin
-    }
-
-    itk_component add urp {
-	$itk_component(upw) add urp
-    } {
-	keep -margin
-    }
-
-    itk_component add llp {
-	$itk_component(lpw) add llp
-    } {
-	keep -margin
-    }
-
-    itk_component add lrp {
-	$itk_component(lpw) add lrp
-    } {
-	keep -margin
-    }
+    $itk_component(upw) add ulp
+    $itk_component(upw) add urp
+    $itk_component(lpw) add llp
+    $itk_component(lpw) add lrp
 
     # create four instances of Display
     itk_component add ul {
-	Display [$itk_component(ulp) childSite].display $type
+	Display [$itk_component(upw) childsite ulp].display $type
     } {
 	usual
     }
 
     itk_component add ur {
-	Display [$itk_component(urp) childSite].display $type
+	Display [$itk_component(upw) childsite urp].display $type
     } {
 	usual
     }
 
     itk_component add ll {
-	Display [$itk_component(llp) childSite].display $type
+	Display [$itk_component(lpw) childsite llp].display $type
     } {
 	usual
     }
 
     itk_component add lr {
-	Display [$itk_component(lrp) childSite].display $type
+	Display [$itk_component(lpw) childsite lrp].display $type
     } {
 	usual
     }
@@ -170,16 +148,6 @@ body QuadDisplay::constructor {{type X} args} {
     pack $itk_component(lpw) -fill both -expand yes
 
     catch {eval itk_initialize $args}
-}
-
-body QuadDisplay::destructor {} {
-    ::delete object $itk_component(ul)
-    ::delete object $itk_component(ur)
-    ::delete object $itk_component(ll)
-    ::delete object $itk_component(lr)
-
-    ::delete object $itk_component(upw)
-    ::delete object $itk_component(lpw)
 }
 
 configbody QuadDisplay::pane {
