@@ -727,6 +727,7 @@ CONST struct bu_attribute_value_pair	*attr;
 	RT_CK_DB_INTERNAL(ip);
 	RT_CK_FUNCTAB( ip->idb_meth );
 
+	BU_INIT_EXTERNAL( &body );
 	if( ip->idb_meth->ft_export5( &body, ip, conv2mm, NULL /*dbip*/ ) < 0 )  {
 		bu_log("rt_fwrite_internal5(%s): solid export failure\n",
 			name );
@@ -745,6 +746,7 @@ CONST struct bu_attribute_value_pair	*attr;
 		DB5HDR_ZZZ_UNCOMPRESSED);
 	db_free_external( &body );
 
+	BU_INIT_EXTERNAL( &ext );
 	if( bu_fwrite_external( fp, &ext ) < 0 )  {
 		bu_log("rt_fwrite_internal5(%s): bu_fwrite_external() error\n",
 			name );
