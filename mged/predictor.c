@@ -43,6 +43,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "bn.h"
 #include "raytrace.h"
 #include "./ged.h"
+#include "./cmd.h"
 #include "./mged_dm.h"
 
 extern mat_t	ModelDelta;		/* Changed to Viewrot this frame */
@@ -183,19 +184,19 @@ predictor_kill()
   av[2] = NULL;
 
   av[1] = PREDICTOR_NAME;
-  (void)f_delobj((ClientData)NULL, interp, 2, av);
+  (void)f_erase_all((ClientData)NULL, interp, 2, av);
 
   av[1] = "d _PREDIC_TRAIL_LL_";
-  (void)f_delobj((ClientData)NULL, interp, 2, av);
+  (void)f_erase_all((ClientData)NULL, interp, 2, av);
 
   av[1] = "d _PREDIC_TRAIL_LR_";
-  (void)f_delobj((ClientData)NULL, interp, 2, av);
+  (void)f_erase_all((ClientData)NULL, interp, 2, av);
 
   av[1] = "d _PREDIC_TRAIL_UR_";
-  (void)f_delobj((ClientData)NULL, interp, 2, av);
+  (void)f_erase_all((ClientData)NULL, interp, 2, av);
 
   av[1] = "d _PREDIC_TRAIL_UL_";
-  (void)f_delobj((ClientData)NULL, interp, 2, av);
+  (void)f_erase_all((ClientData)NULL, interp, 2, av);
 
   init_trail( &tA );
   init_trail( &tB );
