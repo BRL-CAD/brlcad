@@ -223,35 +223,35 @@ register poly	*dvdend, *dvsor, *quo, *rem;
  *	of any quadratic equation with real coefficients.
  */
 void
-quadratic( quad, root )
-register poly		*quad;
+quadratic( quadrat, root )
+register poly		*quadrat;
 register complex	root[];
 {
 	LOCAL fastf_t	discrim, denom, rad;
 
-	if( NEAR_ZERO( quad->cf[0], SMALL ) )  {
+	if( NEAR_ZERO( quadrat->cf[0], SMALL ) )  {
 		/* root = -cf[2] / cf[1] */
-		if( NEAR_ZERO( quad->cf[1], SMALL ) )  {
+		if( NEAR_ZERO( quadrat->cf[1], SMALL ) )  {
 			/* No solution.  Now what? */
 			rt_log("quadratic(): ERROR, no solution\n");
 			return;
 		}
 		/* Fake it as a repeated root. */
-		root[0].re = root[1].re = -quad->cf[2]/quad->cf[1];
+		root[0].re = root[1].re = -quadrat->cf[2]/quadrat->cf[1];
 		root[0].im = root[1].im = 0.0;
 		return;
 	}
 	/* What to do if cf[1] > SQRT_MAX_FASTF ? */
 
-	discrim = quad->cf[1]*quad->cf[1] - 4.0* quad->cf[0]*quad->cf[2];
-	denom = 0.5 / quad->cf[0];
+	discrim = quadrat->cf[1]*quadrat->cf[1] - 4.0* quadrat->cf[0]*quadrat->cf[2];
+	denom = 0.5 / quadrat->cf[0];
 	if ( discrim >= 0.0 ){
 		rad = sqrt( discrim );
-		root[0].re = ( -quad->cf[1] + rad ) * denom;
-		root[1].re = ( -quad->cf[1] - rad ) * denom;
+		root[0].re = ( -quadrat->cf[1] + rad ) * denom;
+		root[1].re = ( -quadrat->cf[1] - rad ) * denom;
 		root[1].im = root[0].im = 0.0;
 	} else {
-		root[1].re = root[0].re = -quad->cf[1] * denom;
+		root[1].re = root[0].re = -quadrat->cf[1] * denom;
 		root[1].im = -(root[0].im = sqrt( -discrim ) * denom);
 	}
 }
