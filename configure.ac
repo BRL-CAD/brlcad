@@ -453,8 +453,8 @@ AC_SUBST(TK_LIBS)
 
 dnl itcl
 ITCL_VERSION="3.3"
-ITCL_LIBS='${top_builddir}/src/other/incrTcl/itcl/libitcl.la'
-ITK_LIBS='${top_builddir}/src/other/incrTcl/itk/libitk.la'
+ITCL_LIBS='-L${top_builddir}/src/other/incrTcl/itcl -litcl3.3'
+ITK_LIBS='-L${top_builddir}/src/other/incrTcl/itk -litk3.3'
 AC_SUBST(ITCL_LIBS)
 AC_SUBST(ITCL_VERSION)
 AC_SUBST(ITK_LIBS)
@@ -620,7 +620,7 @@ dnl *** Check for compiler characteristics ***
 dnl ******************************************
 
 # XXX some of these flags are presently GCC-specific
-CPPFLAGS="$CPPFLAGS -I\$(top_srcdir)/h"
+CPPFLAGS="$CPPFLAGS -I\$(top_srcdir)/include"
 CFLAGS="$CFLAGS -fno-strict-aliasing"
 
 if ! test "x$use_optimized" = "xno" ; then
