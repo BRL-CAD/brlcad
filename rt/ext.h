@@ -29,6 +29,7 @@ extern double		azimuth, elevation;
 extern int		lightmodel;		/* Select lighting model */
 extern int		rpt_overlap;		/* Warn about overlaps? */
 extern int		rpt_dist;		/* Output depth along w/ RGB? */
+extern int		space_partition;		/* Space partitioning algorithm to use */
 
 /***** variables declared in rt.c *****/
 extern struct application	ap;
