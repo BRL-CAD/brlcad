@@ -688,12 +688,20 @@ dnl ***************************
 AC_MSG_CHECKING([... l i b r a r i e s ])
 AC_MSG_RESULT([])
 
-dnl check if pthread library link works
+dnl check if there is a threading library that links
 thread_link_works=no
 LIBTHREAD=""
-AC_CHECK_LIB(pthread, pthread_create, thread_link_works=yes ; LIBTHREAD="-lpthread",
-    dnl check if the BSD c_r threading library link works
-    [AC_CHECK_LIB(c_r, pthread_create, thread_link_works=yes ; LIBTHREAD="-pthread")]
+dnl try sgi sproc first
+AC_CHECK_LIB(c, sproc, thread_link_works=yes ; LIBTHREAD="-lc",
+    dnl check for pthreading as next best option
+    dnl XXX need to test HPUX -- may require -lcma with pthreads
+    [AC_CHECK_LIB(pthread, pthread_create, thread_link_works=yes ; LIBTHREAD="-lpthread",
+    	dnl check if the BSD c_r threading library link works
+	[AC_CHECK_LIB(c_r, pthread_create, thread_link_works=yes ; LIBTHREAD="-pthread",
+	    dnl try solaris threading
+	    [AC_CHECK_LIB(thread, thr_create, thread_link_works=yes ; LIBTHREAD="-lthread")]
+	)]
+    )]
 )
 
 dnl need curses, would prefer ncurses
@@ -1309,6 +1317,7 @@ AC_MSG_RESULT([])
 
 AC_TYPE_SIGNAL
 AC_CHECK_FUNCS(\
+	XQueryExtension \
 	access \
 	alarm \
 	atexit \
@@ -1612,7 +1621,10 @@ dnl *** sgigl ***
 AC_MSG_CHECKING(whether to link with the SGI graphics library)
 AC_MSG_RESULT($sgigl_link_works)
 AC_SUBST(LIBSGIGL)
-dnl AC_DEFINE(HAS_SGIGL, 1, Irix GL is present.)
+dnl XXX the HAS_SGIGL define should go away eventually
+if test "x$sgigl_link_works" = "xyes" ; then
+	AC_DEFINE(HAS_SGIGL, 1, Irix GL is present.)
+fi
 
 dnl *** curses ***
 AC_MSG_CHECKING(whether to link with the curses library)
