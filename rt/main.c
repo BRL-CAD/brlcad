@@ -75,6 +75,9 @@ char **argv;
 	static int outfd;		/* fd of optional pixel output file */
 	register int x,y;
 	char outbuf[132];
+	mat_t Viewrotscale;
+	mat_t toEye;
+	fastf_t viewsize;
 
 	npts = 512;
 	azimuth = -35.0;			/* GIFT defaults */
@@ -218,46 +221,53 @@ do_more:
 	if( !matflag )  {
 		vect_t view_min;		/* view position of mdl_min */
 		vect_t view_max;		/* view position of mdl_max */
-		mat_t Viewrot, toViewcenter;
 		fastf_t f;
-		fastf_t viewsize;
 
-		/*
-		 * Unrotated view is TOP.
-		 * Rotation of 270,0,270 takes us to a front view.
-		 * Standard GIFT view is -35 azimuth, -25 elevation off front.
-		 */
-		mat_idn( Viewrot );
-		mat_angles( Viewrot, 270.0-elevation, 0.0, 270.0+azimuth );
+		mat_idn( Viewrotscale );
+		mat_angles( Viewrotscale, 270.0-elevation, 0.0, 270.0+azimuth );
 		fprintf(stderr,"Viewing %f azimuth, %f elevation off of front view\n",
 			azimuth, elevation);
 
-		viewbounds( view_min, view_max, Viewrot );
+		viewbounds( view_min, view_max, Viewrotscale );
 		viewsize = (view_max[X]-view_min[X]);
 		f = (view_max[Y]-view_min[Y]);
 		if( f > viewsize )  viewsize = f;
 		f = (view_max[Z]-view_min[Z]);
 		if( f > viewsize )  viewsize = f;
 
-		mat_idn( toViewcenter );
-		toViewcenter[MDX] = -(view_max[X]+view_min[X])/2;
-		toViewcenter[MDY] = -(view_max[Y]+view_min[Y])/2;
-		toViewcenter[MDZ] = -(view_max[Z]+view_min[Z])/2;
-
-		mat_mul( model2view, Viewrot, toViewcenter );
-		model2view[15] = 0.5*viewsize;	/* Viewscale */
+		/* First, go to view center, then back off for eye pos */
+		mat_idn( toEye );
+		toEye[MDX] = -(view_max[X]+view_min[X])/2;
+		toEye[MDY] = -(view_max[Y]+view_min[Y])/2;
+		toEye[MDZ] = -(view_max[Z]+view_min[Z])/2;
+		Viewrotscale[15] = 0.5*viewsize;	/* Viewscale */
+		mat_mul( model2view, Viewrotscale, toEye );
+		mat_inv( view2model, model2view );
+		VSET( temp, 0, 0, 1.414 );
+		MAT4X3PNT( eye_model, view2model, temp );
 	}  else  {
 		register int i;
 
 		/* Visible part is from -1 to +1 in view space */
+		if( scanf( "%f", &viewsize ) != 1 )  goto out;
+		if( scanf( "%f", &eye_model[X] ) != 1 )  goto out;
+		if( scanf( "%f", &eye_model[Y] ) != 1 )  goto out;
+		if( scanf( "%f", &eye_model[Z] ) != 1 )  goto out;
 		for( i=0; i < 16; i++ )
-			if( scanf( "%f", &model2view[i] ) != 1 )
+			if( scanf( "%f", &Viewrotscale[i] ) != 1 )
 				goto out;
 	}
+	/* model2view takes us to eye_model location & orientation */
+	mat_idn( toEye );
+	toEye[MDX] = -eye_model[X];
+	toEye[MDY] = -eye_model[Y];
+	toEye[MDZ] = -eye_model[Z];
+	Viewrotscale[15] = 0.5*viewsize;	/* Viewscale */
+	mat_mul( model2view, Viewrotscale, toEye );
 	mat_inv( view2model, model2view );
 
 	fprintf(stderr,"Deltas=%f (model units between rays)\n",
-		model2view[15]*2/npts );
+		viewsize/npts );
 
 	/* Chop -1.0..+1.0 range into npts parts */
 	VSET( temp, 2.0/npts, 0, 0 );
@@ -265,18 +275,15 @@ do_more:
 	VSET( temp, 0, 2.0/npts, 0 );
 	MAT4X3VEC( dy_model, view2model, temp );
 
-	VSET( temp, 0, 0, zoomout );
-	MAT4X3PNT( eye_model, view2model, temp );	/* perspective only */
-
 	/* "Upper left" corner of viewing plane */
 	if( perspective )  {
-		VSET( temp, -1, -1, 0 );	/* viewing plane */
+		VSET( temp, -1, -1, -zoomout );	/* viewing plane */
 	}  else  {
 		VSET( temp, 0, 0, -1 );
 		MAT4X3VEC( ap.a_ray.r_dir, view2model, temp );
 		VUNITIZE( ap.a_ray.r_dir );
 
-		VSET( temp, -1, -1, 1.1 );	/* eye plane */
+		VSET( temp, -1, -1, 0 );	/* eye plane */
 	}
 	MAT4X3PNT( viewbase_model, view2model, temp );
 
@@ -313,7 +320,7 @@ do_more:
 	fprintf(stderr,"%ld solid/ray intersections: %ld hits + %ld miss\n",
 		nshots, nhits, nmiss );
 	fprintf(stderr,"pruned %.1f%%:  %ld model RPP, %ld dups skipped, %ld solid RPP\n",
-		((double)nhits*100.0)/nshots,
+		nshots>0?((double)nhits*100.0)/nshots:100.0,
 		nmiss_model, nmiss_tree, nmiss_solid );
 	fprintf(stderr,"%d output rays in %f sec = %f rays/sec\n",
 		npts*npts, utime, (double)(npts*npts/utime) );
@@ -362,7 +369,6 @@ register struct application *ap;
 		a.a_y = (com&0xFFFF);
 		a.a_hit = ap->a_hit;
 		a.a_miss = ap->a_miss;
-	 	VMOVE( a.a_ray.r_dir, ap->a_ray.r_dir );
 		VJOIN2( a.a_ray.r_pt, viewbase_model,
 			a.a_x, dx_model, 
 			(npts-a.a_y-1), dy_model );
@@ -371,6 +377,8 @@ register struct application *ap;
 				a.a_ray.r_pt, eye_model );
 			VUNITIZE( a.a_ray.r_dir );
 			VMOVE( a.a_ray.r_pt, eye_model );
+		} else {
+		 	VMOVE( a.a_ray.r_dir, ap->a_ray.r_dir );
 		}
 
 		a.a_level = 0;		/* recursion level */
