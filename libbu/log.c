@@ -297,15 +297,17 @@ char *fmt;
 #endif
     
     if ( RT_LIST_IS_EMPTY( &(bu_log_hook_list.l) )  || bu_log_hooks_called) {
+    	int ret;
 	if (bu_log_first_time) {
-	    port_setlinebuf(stderr);
+	    bu_setlinebuf(stderr);
 	    bu_log_first_time = 0;
 	}
 
     	bu_semaphore_acquire(BU_SEM_SYSCALL);
-	(void)fputs(bu_vls_addr(&output), stderr);
+    	ret = fwrite( bu_vls_addr(&output), bu_vls_strlen(&output)-1, 1, stderr );
 	(void)fflush(stderr);
     	bu_semaphore_release(BU_SEM_SYSCALL);
+    	if( ret != 1 )  bu_bomb("bu_log: write error");
 
     } else {
 	bu_call_hooks(bu_vls_addr(&output));
@@ -321,7 +323,7 @@ char *fmt;
 /*
  *  			B U _ F L O G
  *  
- *  Log a library event in the Standard way.
+ *  Log a library event in the Standard way, to a specified file.
  */
 void
 #if defined(HAVE_STDARG_H)
@@ -390,15 +392,11 @@ char *fmt;
 #endif
     
     if ( RT_LIST_IS_EMPTY( &(bu_log_hook_list.l) ) || bu_log_hooks_called) {
-	if (bu_log_first_time) {
-	    port_setlinebuf(fp);
-	    bu_log_first_time = 0;
-	}
-
+    	int ret;
     	bu_semaphore_acquire(BU_SEM_SYSCALL);
-	(void)fputs(bu_vls_addr(&output), fp);
-	(void)fflush(fp);
+    	ret = fwrite( bu_vls_addr(&output), bu_vls_strlen(&output)-1, 1, fp );
     	bu_semaphore_release(BU_SEM_SYSCALL);
+    	if( ret != 1 )  bu_bomb("bu_flog: write error");
 
     } else {
 	bu_call_hooks(bu_vls_addr(&output));
