@@ -86,7 +86,9 @@ long		*novote;
 	    	return;
 	}
 
-	rt_bomb("joint_hitmiss2:  Dangerous stuff\n");
+	rt_log("nmg intersection: assuming miss\n");
+	return;
+/*	rt_bomb("joint_hitmiss2:  Dangerous stuff\n"); */
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY)
 		EUPRINT("Hard question time", eu);
 
@@ -101,13 +103,15 @@ long		*novote;
 		/* get a pair of edges whose face enclose space */
 		eu_r = p->radial_p;
 		while ((*eu_r->up.magic_p != NMG_LOOPUSE_MAGIC ||
-		    *eu_r->up.lu_p->up.magic_p != NMG_FACEUSE_MAGIC ||
-		    eu_r->up.lu_p->up.fu_p->orientation != OT_OPPOSITE ||
-		    eu_r->up.lu_p->up.fu_p->s_p != eu->up.lu_p->up.fu_p->s_p ||
+		   *eu_r->up.lu_p->up.magic_p != NMG_FACEUSE_MAGIC ||
+		   eu_r->up.lu_p->up.fu_p->orientation != OT_OPPOSITE ||
+		   eu_r->up.lu_p->up.fu_p->s_p != eu->up.lu_p->up.fu_p->s_p ||
+
 /* XXX this was		nmg_tbl(novote, TBL_LOC, (long *)&eu_r) >= 0 ***/
 /* XXX was this right, or should it have been  eu_r->up.lu_p->up.fu_p->f_p ***/
-		    NMG_INDEX_TEST(novote, eu_r)
-		    ) && eu_r != eu->eumate_p)
+
+		   NMG_INDEX_TEST(novote, eu_r)
+		   ) && eu_r != eu->eumate_p)
 			eu_r = eu_r->eumate_p->radial_p;
 
 		if (eu_r == eu->eumate_p) {
@@ -137,7 +141,7 @@ long		*novote;
 /*	} while (0);*/
 }
 
-/*	P T _ I N O U T _ E
+/*	P T _ H I T M I S _ E
  *
  *	Given a point and an edgeuse, determine if the point is
  *	closer to this edgeuse than anything it's been compared with
@@ -209,7 +213,10 @@ long		*novote;
 		    	}
 
 			/* calculate in/out */
-			VMOVE(N, eu->up.lu_p->up.fu_p->f_p->fg_p->N);	
+			VMOVE(N, eu->up.lu_p->up.fu_p->f_p->fg_p->N);
+		    	if (eu->up.lu_p->up.fu_p->orientation != OT_SAME) {
+				VREVERSE(N,N);
+		    	}
 			VSUB2(euvect, matept, eupt);
 
 			mag = MAGSQ(euvect);
@@ -261,7 +268,7 @@ long		*novote;
 }
 
 
-/*	P T _ I N O U T _ L
+/*	P T _ H I T M I S _ L
  *
  *	Given a point on the plane of the loopuse, determine if the point
  *	is in, or out of the area of the loop
@@ -329,7 +336,7 @@ long		*novote;
 	}
 }
 
-/*	P T _ I N O U T _ F
+/*	P T _ H I T M I S _ F
  *
  *	Given a face and a point on the plane of the face, determine if
  *	the point is in or out of the area bounded by the face.
@@ -338,7 +345,8 @@ long		*novote;
  *		1	point is ON or IN the area of the face
  *		0	point is outside the area of the face
  */
-static int pt_hitmis_f(pt, fu, tol, novote)
+int
+nmg_pt_hitmis_f(pt, fu, tol, novote)
 point_t		pt;
 struct faceuse	*fu;
 fastf_t		tol;
@@ -352,12 +360,7 @@ long		*novote;
 	 */
 
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
-		VPRINT("pt_hitmis_f\tProjected Pt:", pt);
-	}
-	if (!nmg_manifold_face(fu)) {
-		if (rt_g.NMG_debug & DEBUG_CLASSIFY)
-			rt_log("\tnon-manifold face\n");
-		return(0);
+		VPRINT("nmg_pt_hitmis_f\tProjected Pt:", pt);
 	}
 
 
@@ -374,7 +377,7 @@ long		*novote;
 }
 
 
-/*	P T _ I N O U T _ S
+/*	P T _ H I T M I S _ S
  *
  *	returns status (inside/outside/on_surface) of pt WRT shell.
  */
@@ -459,8 +462,17 @@ fastf_t tol;
 			    	 * determine hit.
 			    	 */
 			    	VJOIN1(plane_pt, pt, dist,projection_dir);
-				hitcount += pt_hitmis_f(plane_pt, fu, tol,
-						novote);
+
+				if (nmg_manifold_face(fu)) {
+					hitcount += nmg_pt_hitmis_f(plane_pt,
+						fu, tol, novote);
+				} else {
+					if (rt_g.NMG_debug & DEBUG_CLASSIFY)
+						rt_log("\tnon-manifold face\n");
+					return(0);
+				}
+
+
 			}
 
 		}
@@ -993,3 +1005,7 @@ long		*classlist[4];
 		(void)class_vu_vs_s(sA->vu_p, sB, classlist);
 	}
 }
+
+
+
+

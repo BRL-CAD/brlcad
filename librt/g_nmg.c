@@ -33,9 +33,21 @@ static char RCSnmg[] = "@(#)$Header$ (BRL)";
 
 /* rt_nmg_internal is just "model", from nmg.h */
 
-struct nmg_specific {
-	vect_t	nmg_V;
+struct hitlist {
+	struct rt_list	l;
+	struct hit	hit;
 };
+
+struct nmg_specific {
+	int		nmg_smagic;
+	vect_t		nmg_V;	/* */
+	struct model	*nmg_model;
+	vect_t		nmg_invdir;
+	int		nmg_emagic;
+};
+#define	G_NMG_START_MAGIC	6014061
+#define	G_NMG_END_MAGIC		7013061
+
 
 /*
  *  			R T _ N M G _ P R E P
@@ -60,10 +72,40 @@ struct rt_i		*rtip;
 {
 	struct model		*m;
 	register struct nmg_specific	*nmg;
+	struct nmgregion *rp;
+	vect_t work;	
 
 	RT_CK_DB_INTERNAL(ip);
 	m = (struct model *)ip->idb_ptr;
 	NMG_CK_MODEL(m);
+
+	GETSTRUCT( nmg, nmg_specific );
+	stp->st_specific = (genptr_t)nmg;
+	nmg->nmg_model = m;
+	ip->idb_ptr = (genptr_t)NULL;
+	nmg->nmg_smagic = G_NMG_START_MAGIC;
+	nmg->nmg_emagic = G_NMG_END_MAGIC;
+
+	/* Get Bounding box of solid */
+	VSETALL(stp->st_min, MAX_FASTF);
+	VSETALL(stp->st_max, -MAX_FASTF);
+
+	/* the model bounding box is an amalgam of the 
+	 * nmgregion bounding boxes.
+	 */
+	for (RT_LIST_FOR(rp, nmgregion, &m->r_hd )) {
+		NMG_CK_REGION(rp);
+		NMG_CK_REGION_A(rp->ra_p);
+
+		VMINMAX(stp->st_min, stp->st_max, rp->ra_p->min_pt);
+		VMINMAX(stp->st_min, stp->st_max, rp->ra_p->max_pt);
+	}
+
+	VADD2SCALE( stp->st_center, stp->st_min, stp->st_max, 0.5 );
+	VSUB2SCALE( work, stp->st_max, stp->st_min, 0.5 );
+	stp->st_aradius = stp->st_bradius = MAGNITUDE(work);
+
+	return(0);
 }
 
 /*
@@ -76,6 +118,130 @@ register struct soltab *stp;
 	register struct nmg_specific *nmg =
 		(struct nmg_specific *)stp->st_specific;
 }
+
+/*
+ *			P L O T _ R A Y _ F A C E
+ */
+static void
+plot_ray_face(pt, dir, fu)
+point_t pt;
+vect_t dir;
+struct faceuse *fu;
+{
+	FILE *fd;
+	long *b;
+	point_t pp;
+	static int i=0;
+	char name[32];
+
+	if ( ! (rt_g.NMG_debug & DEBUG_NMGRT) )
+		return;
+
+	sprintf(name, "lee%0d.pl", i++);
+	if ((fd = fopen(name, "w")) == (FILE *)NULL) {
+		rt_log("plot_ray_face cannot open %s", name);
+		rt_bomb("aborting");
+	}
+
+
+	b = (long *)rt_calloc( fu->s_p->r_p->m_p->maxindex, sizeof(long), "bit vec");
+
+	nmg_pl_fu(fd, fu, b, 200, 200, 200);
+
+	rt_free((char *)b, "bit vec");
+
+	VSCALE(pp, dir, 1000.0);
+	VADD2(pp, pt, pp);
+	pdv_3line( fd, pt, pp );
+}
+
+
+
+ 
+/*	I S E C T _ R A Y _ F A C E U S E
+ *
+ *	intersect a ray with a faceuse.
+ *
+ *	Returns:
+ *		1	hit
+ */
+struct hitlist *
+nmg_isect_ray_faceuse(stp, rp, fu_p, novote)
+struct soltab		*stp;
+register struct xray	*rp;	/* info about the ray */
+struct faceuse		*fu_p;
+long 			*novote;
+{
+	register struct nmg_specific *nmg =
+		(struct nmg_specific *)stp->st_specific;
+	point_t	pt_in_plane;
+	int status;
+	fastf_t dist=0.0;
+
+	NMG_CK_FACEUSE(fu_p);
+	NMG_CK_FACE(fu_p->f_p);
+	NMG_CK_FACE_G(fu_p->f_p->fg_p);
+
+	if (rt_g.NMG_debug & DEBUG_NMGRT)
+		rt_log("doing faceuse %0x (fumate %0x)\n", fu_p, fu_p->fumate_p);
+
+	if (!rt_in_rpp(rp, nmg->nmg_invdir,
+	    fu_p->f_p->fg_p->min_pt,fu_p->f_p->fg_p->max_pt) )
+		return((struct hitlist *)0);	/* MISS */
+	    
+	status = rt_isect_ray_plane(&dist, rp->r_pt, rp->r_dir,
+			fu_p->f_p->fg_p->N);
+
+/*	rt_g.NMG_debug |= DEBUG_NMGRT|DEBUG_CLASSIFY; */
+
+	if (rt_g.NMG_debug & DEBUG_NMGRT) {
+		plot_ray_face(rp->r_pt, rp->r_dir, fu_p);
+
+		rt_log("Ray (%g %g %g) -> %g %g %g\nNMG f:(%g %g %g %g) dist:%g\n",
+			rp->r_pt[0], rp->r_pt[1], rp->r_pt[2],
+			rp->r_dir[0], rp->r_dir[1], rp->r_dir[2],
+			fu_p->f_p->fg_p->N[0], fu_p->f_p->fg_p->N[1],
+			fu_p->f_p->fg_p->N[2], fu_p->f_p->fg_p->N[3],
+			dist);
+	}
+
+	/* translate ray start point into plane of faceuse
+	 * to determine ray/plane intercept location
+	 */
+	VJOIN1(pt_in_plane, rp->r_pt, dist, rp->r_dir);
+
+	/* we need to find the closest edge in the face to the intersection
+	 * point so that we can decide whether the ray actually hits the face
+	 * or not.
+	 *
+	 * XXX alas, we have to "invent" a tolerance to call pt_hitmis_f
+	 */
+	status = nmg_pt_hitmis_f(pt_in_plane, fu_p, SQRT_SMALL_FASTF, novote);
+
+
+	if (status) {
+		/* we hit the face, fill in a hit structure */
+		struct hitlist *hit;
+
+		hit = (struct hitlist *)rt_calloc(1, sizeof(struct hitlist), "face hit structure");
+		hit->hit.hit_dist = dist;
+		VMOVE(hit->hit.hit_point, pt_in_plane);
+		VMOVEN(hit->hit.hit_normal, fu_p->f_p->fg_p->N, 4);
+		hit->hit.hit_private = (genptr_t)fu_p;
+		hit->hit.hit_surfno = fu_p->f_p->index;
+
+		if (rt_g.NMG_debug & DEBUG_NMGRT)
+			rt_log("NMG/ray hit\n");
+		return(hit);
+	}
+
+	if (rt_g.NMG_debug & DEBUG_NMGRT)
+		rt_log("NMG/ray miss\n");
+
+	return((struct hitlist *)0); /* MISS */
+
+}
+
 
 /*
  *  			R T _ N M G _ S H O T
@@ -91,15 +257,226 @@ register struct soltab *stp;
 int
 rt_nmg_shot( stp, rp, ap, seghead )
 struct soltab		*stp;
-register struct xray	*rp;
-struct application	*ap;
-struct seg		*seghead;
+register struct xray	*rp;	/* info about the ray */
+struct application	*ap;	
+struct seg		*seghead;	/* intersection w/ ray */
 {
 	register struct nmg_specific *nmg =
 		(struct nmg_specific *)stp->st_specific;
 	register struct seg *segp;
+	struct nmgregion *r_p;
+	struct shell *s_p;
+	struct faceuse *fu_p;
+	int status;
+	int state;
+	int seg_count=0;
+	struct hitlist hl, *a_hit, *b_hit;
+	long *novote;	/* faces that can't vode in hit/miss/list */
 
-	return(2);			/* HIT */
+
+	bzero(&hl, sizeof(struct hitlist));
+	RT_LIST_INIT(&hl.l);
+
+	/* check validity of nmg specific structure */
+ 	if (nmg->nmg_smagic != G_NMG_START_MAGIC)
+		rt_bomb("start of NMG st_specific structure corrupted\n");
+
+ 	if (nmg->nmg_emagic != G_NMG_END_MAGIC)
+		rt_bomb("end of NMG st_specific structure corrupted\n");
+
+	/* Compute the inverse of the direction cosines */
+	if( !NEAR_ZERO( rp->r_dir[X], SQRT_SMALL_FASTF ) )  {
+		nmg->nmg_invdir[X]=1.0/rp->r_dir[X];
+	} else {
+		nmg->nmg_invdir[X] = INFINITY;
+		rp->r_dir[X] = 0.0;
+	}
+	if( !NEAR_ZERO( rp->r_dir[Y], SQRT_SMALL_FASTF ) )  {
+		nmg->nmg_invdir[Y]=1.0/rp->r_dir[Y];
+	} else {
+		nmg->nmg_invdir[Y] = INFINITY;
+		rp->r_dir[Y] = 0.0;
+	}
+	if( !NEAR_ZERO( rp->r_dir[Z], SQRT_SMALL_FASTF ) )  {
+		nmg->nmg_invdir[Z]=1.0/rp->r_dir[Z];
+	} else {
+		nmg->nmg_invdir[Z] = INFINITY;
+		rp->r_dir[Z] = 0.0;
+	}
+
+	NMG_CK_MODEL(nmg->nmg_model);
+
+	novote = (long *)rt_calloc( nmg->nmg_model->maxindex,
+		sizeof(long), "pt_inout_s novote[]" );
+
+	/* at this point, we know the ray intersects the nmg model RPP */
+	for (RT_LIST_FOR(r_p, nmgregion, &nmg->nmg_model->r_hd) ) {
+		NMG_CK_REGION(r_p);
+		NMG_CK_REGION_A(r_p->ra_p);
+
+		if ( !rt_in_rpp(rp, nmg->nmg_invdir,
+		    r_p->ra_p->min_pt, r_p->ra_p->max_pt) )
+			continue;
+
+		/* we now know the ray intersects the nmgregion RPP */
+		for (RT_LIST_FOR(s_p, shell, &r_p->s_hd)) {
+			NMG_CK_SHELL(s_p);
+			NMG_CK_SHELL_A(s_p->sa_p);
+			if (!rt_in_rpp(rp, nmg->nmg_invdir,
+			    s_p->sa_p->min_pt, s_p->sa_p->max_pt) )
+				continue;
+			
+			/* we now know that the ray intersects the
+			 * nmg shell RPP
+			 */
+			for (RT_LIST_FOR(fu_p, faceuse, &s_p->fu_hd) ) {
+
+				if ( NMG_INDEX_TEST( novote, fu_p ) ) {
+					if (rt_g.NMG_debug & DEBUG_NMGRT)
+						rt_log("skipping faceuse %0x (fumate %0x)\n", fu_p, fu_p->fumate_p);
+					continue;
+				}
+
+				a_hit = nmg_isect_ray_faceuse(stp, rp,
+						fu_p, novote);
+
+				NMG_INDEX_SET(novote, fu_p->f_p);
+				NMG_INDEX_SET(novote, fu_p);
+				NMG_INDEX_SET(novote, fu_p->fumate_p);
+
+				/* if we found a hit, add it to the list
+				 * of hit locations.  Keep the list sorted
+				 * in ascending hit distance.
+				 */
+				if (a_hit) {
+				    for(RT_LIST_FOR(b_hit, hitlist, &hl.l))
+					if (b_hit->hit.hit_dist >
+					    a_hit->hit.hit_dist )
+					    	break;
+
+				    RT_LIST_INSERT(&b_hit->l, &(a_hit->l));
+				}
+			}
+		}
+	}
+
+	rt_free( (char *)novote, "pt_inout_s novote[]" );
+
+	if (RT_LIST_IS_EMPTY(&hl.l)) {
+		if (rt_g.NMG_debug & DEBUG_NMGRT)
+			rt_log("ray missed NMG\n");
+		return(0);			/* MISS */
+	}
+
+	if (rt_g.NMG_debug & DEBUG_NMGRT) {
+		rt_log("sorted nmg/ray hit list\n");
+		for (RT_LIST_FOR(a_hit, hitlist, &hl.l))
+			rt_log("hit_distance %g\n", a_hit->hit.hit_dist);
+	}
+
+	/* build up the list of segments based upon the hit points.
+	 * state	face	action			New state
+	 *  0 pt	MF	new, in = pt		1 pt
+	 *  0 pt	NMF	new, in = out = pt	0 pt
+	 *  0 pt	none	done
+	 *  1 pt	MF	out = pt		0 pt
+	 *  1 pt	NMF	out=pt, new, in=pt	1 pt
+	 *  1 pt	none	error?
+	 */
+	state = 0;
+	for (RT_LIST_FOR(a_hit, hitlist, &hl.l)) {
+		if (state == 0) {
+			RT_GET_SEG(segp, ap->a_resource );
+
+			if (rt_g.NMG_debug & DEBUG_NMGRT)
+				rt_log("first hit in seg %g", a_hit->hit.hit_dist);
+
+			bcopy(&a_hit->hit, &segp->seg_in, sizeof(struct hit));
+
+			if (rt_g.NMG_debug & DEBUG_NMGRT)
+				rt_log(" (%g) \n", segp->seg_in.hit_dist);
+
+			if (!nmg_manifold_face(
+			    (struct faceuse *)a_hit->hit.hit_private) ) {
+
+
+				if (rt_g.NMG_debug & DEBUG_NMGRT)
+					rt_log("secod hit in seg %g", a_hit->hit.hit_dist);
+
+				bcopy(a_hit->hit, &segp->seg_out,
+					sizeof(struct hit));
+
+				if (rt_g.NMG_debug & DEBUG_NMGRT)
+					rt_log(" (%g) \n",
+						segp->seg_out.hit_dist);
+
+
+			    	segp->seg_stp = stp;
+
+			    	if (rt_g.NMG_debug & DEBUG_NMGRT)
+			    		rt_log("new seg (prior ins) %g <-> %g\n",
+			    			segp->seg_in.hit_dist,
+			    			segp->seg_out.hit_dist);
+
+				RT_LIST_INSERT( &(seghead->l), &(segp->l) );
+			    	seg_count++;
+
+			    	if (rt_g.NMG_debug & DEBUG_NMGRT)
+			    		rt_log("new seg (post ins) %g <-> %g\n",
+			    			segp->seg_in.hit_dist,
+			    			segp->seg_out.hit_dist);
+			} else 
+				state = 1;
+		} else {
+			if (rt_g.NMG_debug & DEBUG_NMGRT)
+				rt_log("fisrt and secod hit in seg %g -> %g", a_hit->hit.hit_dist);
+
+			bcopy(&a_hit->hit, &segp->seg_out, sizeof(struct hit));
+
+			if (rt_g.NMG_debug & DEBUG_NMGRT)
+				rt_log(" (%g) \n", segp->seg_out.hit_dist);
+
+
+		    	segp->seg_stp = stp;
+
+		    	if (rt_g.NMG_debug & DEBUG_NMGRT)
+		    		rt_log("new seg (pr ins) %g <-> %g\n",
+		    			segp->seg_in.hit_dist,
+		    			segp->seg_out.hit_dist);
+
+			RT_LIST_INSERT( &(seghead->l), &(segp->l) );
+
+		    	seg_count++;
+		    	if (rt_g.NMG_debug & DEBUG_NMGRT)
+		    		rt_log("new seg %g <-> %g\n",
+		    			segp->seg_in.hit_dist,
+		    			segp->seg_out.hit_dist);
+
+			if (!nmg_manifold_face(
+			    (struct faceuse *)a_hit->hit.hit_private) ) {
+				RT_GET_SEG(segp, ap->a_resource );
+				if (rt_g.NMG_debug & DEBUG_NMGRT)
+					rt_log("first hit in seg %g", a_hit->hit.hit_dist);
+
+				bcopy(&a_hit->hit, &segp->seg_in,
+					sizeof(struct hit));
+
+				if (rt_g.NMG_debug & DEBUG_NMGRT)
+					rt_log(" (%g) \n",
+						segp->seg_in.hit_dist);
+			} else
+				state = 0;
+		}
+	}
+	if (state != 0) {
+		rt_bomb("I've got an extra hit-point on an NMG!\n");
+	}
+
+
+	for (RT_LIST_FOR(a_hit, hitlist, &hl.l))
+		rt_free((char *)a_hit, "free a hit");
+
+	return(seg_count);			/* MISS */
 }
 
 #define RT_NMG_SEG_MISS(SEG)	(SEG).seg_stp=RT_SOLTAB_NULL
@@ -131,10 +508,10 @@ register struct hit	*hitp;
 struct soltab		*stp;
 register struct xray	*rp;
 {
-	register struct nmg_specific *nmg =
+/*	register struct nmg_specific *nmg =
 		(struct nmg_specific *)stp->st_specific;
 
-	VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
+	VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir ); */
 }
 
 /*
@@ -186,6 +563,7 @@ register struct soltab *stp;
 	register struct nmg_specific *nmg =
 		(struct nmg_specific *)stp->st_specific;
 
+	nmg_km( nmg->nmg_model );
 	rt_free( (char *)nmg, "nmg_specific" );
 }
 
