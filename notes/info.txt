@@ -52,10 +52,10 @@ a-d
 alias-pix
   status: ok
   desc: an Alias (Wavefront?) pix datafile to raw datafile converter
-all_sf sean
-  status:
+all_sf
+  status: ok
   desc: obtain shape factors for objects from a geometry database
-anim_cascade
+anim_cascade sean
 anim_fly
 anim_hardtrack
 anim_keyread
@@ -68,7 +68,7 @@ anim_time
 anim_track
 anim_turn
 any-png.sh
-ap-pix sean
+ap-pix
 applymap
 asc-nmg
 asc-pl
@@ -86,11 +86,11 @@ bw-a
 bw-d
 bw-fb
 bw-imp
-bw-pix sean
+bw-pix
 bw-png
 bw-ps
 bw-rle
-bw3-pix sean
+bw3-pix
 bwcrop
 bwdiff
 bwfilter
@@ -143,7 +143,7 @@ display
 dmod
 double-asc
 dpeak
-dpix-pix sean
+dpix-pix
 dsel
 dsp_add
 dstat
@@ -163,7 +163,7 @@ fb-bw
 fb-cmap
 fb-fb
 fb-orle
-fb-pix sean
+fb-pix
 fb-png 
 fb-rle
 fbanim
@@ -234,7 +234,7 @@ jack-g
 jove
 lgt
 loop
-mac-pix sean
+mac-pix
 machinetype.sh
 mcut
 mergechan
@@ -256,26 +256,26 @@ nmg-rib
 off-g
 op-bw
 orle-fb
-orle-pix sean
+orle-pix
 painttorle
 patch-g
-pcd-pix sean
+pcd-pix
 pix-alias
   status: ok
   desc: raw image datafile to Alias (Wavefront?) pix datafile
-pix-bw sean
-pix-bw3 sean
-pix-fb sean
+pix-bw
+pix-bw3
+pix-fb
   status: ok
   desc: raw image datafile to framebuffer
-pix-orle sean
-pix-png sean
-pix-ppm sean
-pix-ps sean
-pix-rle sean
-pix-spm sean
-pix-sun sean
-pix-yuv sean
+pix-orle
+pix-png
+pix-ppm
+pix-ps
+pix-rle
+pix-spm
+pix-sun
+pix-yuv
 pix2asc
 pix3filter
 pixautosize
@@ -331,13 +331,16 @@ plgetframe
 plline2
 plrot
 plstat
-png-bw sean
+png-bw
 png-fb
   status: ok
-png-pix sean
+  desc: png image datafile to framebuffer display tool
+png-pix
   status: bad
+  desc: png image datafile to raw image datafile converter
 png_info
   status: ok
+  desc: gives information about png files including size
 polar-fb
 poly-bot
 pp-fb
