@@ -1702,6 +1702,20 @@ struct rt_tol *tol;
 #endif
 	if( nmg_calc_face_g( fu ) )
 		rt_bomb( "tesselate_pipe_start: nmg_calc_face_g failed\n" );
+
+	for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
+	{
+		NMG_CK_LOOPUSE( lu );
+
+		if( RT_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC )
+			continue;
+
+		for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+		{
+			NMG_CK_EDGEUSE( eu );
+			eu->e_p->is_real = 1;
+		}
+	}
 }
 
 void
@@ -1721,6 +1735,8 @@ struct rt_tol *tol;
 	struct vertex **new_inner_loop;
 	struct vertex **verts[3];
 	struct faceuse *fu;
+	vect_t norm;
+	vect_t reverse_norm;
 	fastf_t or;
 	fastf_t next_or;
 	fastf_t ir;
@@ -2356,6 +2372,7 @@ struct rt_tol *tol;
 {
 	struct wdb_pipeseg *prev;
 	struct faceuse *fu;
+	struct loopuse *lu;
 	int i;
 
 	NMG_CK_SHELL( s );
@@ -2408,6 +2425,21 @@ struct rt_tol *tol;
 		nmg_vertex_gv( vu->v_p, pipe->ps_start );
 	}
 #endif
+	for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
+	{
+		struct edgeuse *eu;
+
+		NMG_CK_LOOPUSE( lu );
+
+		if( RT_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC )
+			continue;
+
+		for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+		{
+			NMG_CK_EDGEUSE( eu );
+			eu->e_p->is_real = 1;
+		}
+	}
 }
 
 /*
@@ -2609,6 +2641,7 @@ done:	;
 		/* Apply modeling transformations */
 		GETSTRUCT( psp, wdb_pipeseg );
 		psp->ps_type = tmp.ps_type;
+		psp->l.magic = WDB_PIPESEG_MAGIC;
 		MAT4X3PNT( psp->ps_start, mat, tmp.ps_start );
 		if( psp->ps_type == WDB_PIPESEG_TYPE_BEND )  {
 			ntohd( tmp.ps_bendcenter, exp->eps_bendcenter, 3 );
