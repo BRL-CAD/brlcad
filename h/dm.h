@@ -173,6 +173,7 @@ struct dm {
   int dm_light;			/* !0 means lighting on */
   int dm_zbuffer;		/* !0 means zbuffer on */
   int dm_zclip;			/* !0 means zclipping */
+  Tcl_Interp *dm_interp;	/* Tcl interpreter */
 };
 
 /*
@@ -188,7 +189,6 @@ struct dm_obj {
   struct fbserv_obj	dmo_fbs;		/* fbserv object */
 #endif
   struct bu_observer	dmo_observers;		/* fbserv observers */
-  Tcl_Interp		*dmo_interp;		/* Tcl interpreter */
 };
 
 #define DM_OPEN(_type,_argc,_argv) dm_open(_type,_argc,_argv)
@@ -232,8 +232,15 @@ extern unsigned Nu_unsign();
 extern void dm_configureWindowShape();
 extern void dm_zbuffer();
 extern void dm_lighting();
+#if 0
 extern Tcl_Interp *interp;   /* This must be defined by the application */
+#endif
 
 /* vers.c (created by libdm/Cakefile) */
 extern char dm_version[];
+
+/* clip.c */
+extern int clip(vect_t, vect_t, vect_t, vect_t);
+extern int vclip(vect_t, vect_t, register fastf_t *, register fastf_t *);
+
 #endif /* SEEN_DM_H */
