@@ -3162,15 +3162,9 @@ int	enter;
 	unsigned long	addr_tmp;
 	char		name[64];
 
-#if CRAY && OLDTCP
-	addr_tmp = from->sin_addr;
-	addr = gethostbyaddr(&addr_tmp, sizeof (struct in_addr),
-		from->sin_family);
-#else
 	addr_tmp = from->sin_addr.s_addr;
 	addr = gethostbyaddr( (char *)&from->sin_addr, sizeof (struct in_addr),
 		from->sin_family);
-#endif
 	if( addr != NULL )
 		return( host_lookup_by_hostent( addr, enter ) );
 
@@ -3211,11 +3205,7 @@ int	enter;
 	if( isdigit( *name ) )  {
 		/* Numeric */
 		sockhim.sin_family = AF_INET;
-#if CRAY && OLDTCP
-		sockhim.sin_addr = inet_addr(name);
-#else
 		sockhim.sin_addr.s_addr = inet_addr(name);
-#endif
 		return( host_lookup_by_addr( &sockhim, enter ) );
 	} else {
 		addr = gethostbyname(name);
