@@ -2944,9 +2944,8 @@ wdb_title_tcl(clientData, interp, argc, argv)
 	struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 	struct bu_vls	title;
 	int bad = 0;
-	int code;
 
-	/* Caution: Not all wdb's have a dbip, some have only an fp */
+	RT_CK_WDB(wdbp);
 	RT_CK_DBI(wdbp->dbip);
 	if (wdbp->dbip->dbi_read_only) {
 		Tcl_AppendResult(interp, "Database is read-only!", (char *)NULL);
@@ -2971,8 +2970,7 @@ wdb_title_tcl(clientData, interp, argc, argv)
 	bu_vls_init(&title);
 	bu_vls_from_argv(&title, argc-2, argv+2);
 
-	code = db_v4_get_units_code(bu_units_string(wdbp->dbip->dbi_base2local));
-	if (db_ident(wdbp->dbip, bu_vls_addr(&title), code) < 0) {
+	if (db_update_ident(wdbp->dbip, bu_vls_addr(&title), wdbp->dbip->dbi_base2local) < 0) {
 		Tcl_AppendResult(interp, "Error: unable to change database title");
 		bad = 1;
 	}
