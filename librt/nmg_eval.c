@@ -273,7 +273,7 @@ CONST struct rt_tol	*tol;
 	}
 
 	/* Remove loops/edges/vertices that appear more than once in result */
-	nmg_rm_redundancies( sA );
+	nmg_rm_redundancies( sA, tol );
 
 	if (rt_g.NMG_debug & DEBUG_BOOLEVAL) {
 		rt_log("nmg_evaluate_boolean(sA=x%x, sB=x%x, op=%d) END\n",
