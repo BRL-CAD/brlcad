@@ -85,6 +85,8 @@ echo; echo "Current Release = ${RELEASE}.  Making ${TARGET}"
 case ${TARGET} in
 
 benchmark)
+	sh $0 depend
+	sh $0 relink
 	cd libsysv.${MTYPE}; make depend; make -k
 	cd libmalloc.${MTYPE}; make depend; make -k
 	cd conv.${MTYPE}; make -k
@@ -101,45 +103,72 @@ benchmark)
 #  These directives operate in the machine-specific directories
 #
 #  all		Build all products
-#  depend	Re-build Makefile.loc dependencies
 #  clean	Remove all .o files, leave products
 #  noprod	Remove all products, leave .o files
 #  clobber	clean + noprod
 #  lint
-all|depend|clean|noprod|clobber|lint)
+all|clean|noprod|clobber|lint)
 	for dir in ${BDIRS}; do
 		echo ---------- ${dir}.${MTYPE};
-		(cd ${dir}.${MTYPE}; make -k ${TARGET})
+		( cd ${dir}.${MTYPE}; make -k \
+			-f ../Makefile.${MTYPE} \
+			-f Makefile.loc \
+			-f ../Makefile.rules ${TARGET} )
 	done
 	for dir in ${PDIRS}; do
 		echo ---------- ${dir};
-		(cd ${dir}; make -k ${TARGET})
+		(cd ${dir}; make -k \
+			-f ../Makefile.${MTYPE} \
+			-f Makefile.loc \
+			-f ../Makefile.rules ${TARGET} )
 	done;;
 
 # These operate in a mixture of places, treating both source and binary
 install|uninstall)
 	for dir in ${ADIRS} ${PDIRS}; do
 		echo ---------- ${dir};
-		(cd ${dir}; make -k ${TARGET})
+		(cd ${dir}; make -k \
+			-f ../Makefile.${MTYPE} \
+			-f Makefile.loc \
+			-f ../Makefile.rules ${TARGET} )
 	done
 	for dir in ${BDIRS}; do
 		echo ---------- ${dir}.${MTYPE};
-		(cd ${dir}.${MTYPE}; make -k ${TARGET})
+		(cd ${dir}.${MTYPE}; make -k \
+			-f ../Makefile.${MTYPE} \
+			-f Makefile.loc \
+			-f ../Makefile.rules ${TARGET} )
 	done;;
 
 #  These directives operate in the source directory
+#  depend	Re-build Makefile.loc dependencies (WILL need "make relink")
 #  inst-man
 #  inst-dist	BRL-only:  inst sources in dist tree without inst products
-inst-man|inst-dist|print|typeset)
+depend|inst-man|inst-dist|print|typeset)
 	for dir in ${ADIRS} ${PDIRS} ${BDIRS}; do
 		echo ---------- ${dir};
-		(cd $dir; make -k ${TARGET})
+		(cd $dir; make -k \
+			-f ../Makefile.${MTYPE} \
+			-f Makefile.loc \
+			-f ../Makefile.rules ${TARGET} )
+
 	done;;
 
 mkdir)
 	for dir in ${BDIRS}; do
 		for mach in ${MACHINES}; do
 			mkdir ${dir}.${mach}
+			ln Makefile-subd ${dir}.${mach}/Makefile
+			ln ${dir}/Makefile.loc ${dir}.${mach}
+		done
+	done;;
+
+relink)
+	for dir in ${BDIRS}; do
+		for mach in ${MACHINES}; do
+			rm -f ${dir}.${mach}/Makefile ${dir}.${mach}/Makefile.loc
+			ln Makefile-subd ${dir}.${mach}/Makefile
+			ln ${dir}/Makefile.loc ${dir}.${mach}
 		done
 	done;;
 
@@ -149,6 +178,11 @@ rmdir)
 		for mach in ${MACHINES}; do
 			rm -r ${dir}.${mach}
 		done
+	done;;
+
+shell)
+	for dir in ${BDIRS}; do
+		( cd ${dir}; echo ${dir}; /bin/sh )
 	done;;
 
 checkin)
