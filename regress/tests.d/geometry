@@ -71,7 +71,7 @@ for PRIM in $PRIMITIVES ; do
     set arg_DB_ARGS ""
 
     #
-    # () Arguments
+    # (bot) Arguments
     # 
     # in args =>
     # db args =>
@@ -80,7 +80,7 @@ for PRIM in $PRIMITIVES ; do
     set bot_DB_ARGS ""
 
     #
-    # () Arguments
+    # (cline) Arguments
     # 
     # in args =>
     # db args =>
@@ -89,7 +89,7 @@ for PRIM in $PRIMITIVES ; do
     set cline_DB_ARGS ""
 
     #
-    # () Arguments
+    # (dsp) Arguments
     # 
     # in args =>
     # db args =>
@@ -98,7 +98,7 @@ for PRIM in $PRIMITIVES ; do
     set dsp_DB_ARGS ""
 
     #
-    # () Arguments
+    # (ebm) Arguments
     # 
     # in args =>
     # db args =>
@@ -107,7 +107,7 @@ for PRIM in $PRIMITIVES ; do
     set ebm_DB_ARGS ""
 
     #
-    # () Arguments
+    # (ehy) Arguments
     # 
     # in args =>
     # db args =>
@@ -116,7 +116,7 @@ for PRIM in $PRIMITIVES ; do
     set ehy_DB_ARGS ""
 
     #
-    # () Arguments
+    # (epa) Arguments
     # 
     # in args =>
     # db args =>
@@ -125,7 +125,7 @@ for PRIM in $PRIMITIVES ; do
     set epa_DB_ARGS ""
 
     #
-    # () Arguments
+    # (eto) Arguments
     # 
     # in args =>
     # db args =>
@@ -134,7 +134,7 @@ for PRIM in $PRIMITIVES ; do
     set eto_DB_ARGS ""
 
     #
-    # () Arguments
+    # (extrude) Arguments
     # 
     # in args =>
     # db args =>
