@@ -359,12 +359,21 @@ CONST struct db_i		*dbip;
  *
  *			D B _ P U T _ E X T E R N A L
  *
- *  Add name from dp->d_namep to external representation of solid,
- *  and write it into the database, obtaining different storage if
- *  the size has changed since last write.
+ *  Given that caller already has an external representation of
+ *  the database object,  update it to have a new name
+ *  (taken from dp->d_namep) in that external representation,
+ *  and write the new object into the database, obtaining different storage if
+ *  the size has changed.
  *
  *  Caller is responsible for freeing memory of external representation,
  *  using bu_free_external().
+ *
+ *  This routine is used to efficiently support MGED's "cp" and "keep"
+ *  commands, which don't need to import objects just to rename and copy them.
+ *
+ *  Returns -
+ *	-1	error
+ *	 0	success
  */
 int
 db_put_external( ep, dp, dbip )
@@ -375,16 +384,19 @@ struct db_i		*dbip;
 
 	RT_CK_DBI(dbip);
 	RT_CK_DIR(dp);
+	BU_CK_EXTERNAL(ep);
 	if(rt_g.debug&DEBUG_DB) bu_log("db_put_external(%s) ep=x%x, dbip=x%x, dp=x%x\n",
 		dp->d_namep, ep, dbip, dp );
 
-	BU_CK_EXTERNAL(ep);
 
 	if( dbip->dbi_read_only )  {
 		bu_log("db_put_external(%s):  READ-ONLY file\n",
 			dbip->dbi_filename);
 		return(-1);
 	}
+
+	if( dbip->dbi_version == 5 )
+		return db_put_external5( ep, dp, dbip );
 
 	if( dbip->dbi_version <= 4 )  {
 		union record		*rec;
@@ -412,14 +424,6 @@ struct db_i		*dbip;
 		/* Add name.  Depends on solid names always being in the same place */
 		rec = (union record *)ep->ext_buf;
 		NAMEMOVE( dp->d_namep, rec->s.s_name );
-	} else if( dbip->dbi_version == 5 )  {
-		if( ep->ext_nbytes != dp->d_len || dp->d_addr == -1L )  {
-			if( db5_realloc( dbip, dp, ep ) < 0 )  {
-				bu_log("db_put_external(%s) db_realloc5() failed\n", dp->d_namep);
-				return -5;
-			}
-		}
-		BU_ASSERT_LONG( ep->ext_nbytes, ==, dp->d_len );
 	} else
 		bu_bomb("db_put_external(): unknown dbi_version\n");
 
