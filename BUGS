@@ -12,6 +12,10 @@ on-going issues.
 Recent Bugs
 -----------
 
+* mged help seems to be busted
+
+* you can't run a make benchmark unless you're compiling in place
+
 * reflected light energy seems to be accumulating too much
 
 * benchmark may report environment garbage into the summary file if
