@@ -25,20 +25,25 @@ frame .status ; pack .status -side top
 # Menu bar, acros very top
 menubutton .mbar.file -text "File" -menu .mbar.file.menu
 menubutton .mbar.debug -text "Debug" -menu .mbar.debug.menu
+menubutton .mbar.reproject -text "Reproject" -menu .mbar.reproject.menu
 menubutton .mbar.spacepart -text "SpacePart" -menu .mbar.spacepart.menu
 menubutton .mbar.help -text "Help" -menu .mbar.help.menu
 pack .mbar.file -side left -in .mbar -expand 1 -fill x
 pack .mbar.debug -side left -in .mbar -expand 1 -fill x
+pack .mbar.reproject -side left -in .mbar -expand 1 -fill x
 pack .mbar.spacepart -side left -in .mbar -expand 1 -fill x
-pack .mbar.help -side right -in .mbar -expand 1 -fill x
+pack .mbar.help -side right -in .mbar
 menu .mbar.file.menu
 .mbar.file.menu add command -label "Exit" -command "exit"
 menu .mbar.help.menu
 .mbar.help.menu add command -label "Exit" -command "exit"
+menu .mbar.reproject.menu
+.mbar.reproject.menu add command -label "Reproject ON" -command "do_reproject_mode 1"
+.mbar.reproject.menu add command -label "Reproject HOLD" -command "do_reproject_mode 2"
+.mbar.reproject.menu add command -label "Reproject OFF" -command "do_reproject_mode 0"
 menu .mbar.debug.menu
-.mbar.debug.menu add command -label "Reproject ON" -command "do_reproject_mode 1"
-.mbar.debug.menu add command -label "Reproject HOLD" -command "do_reproject_mode 2"
-.mbar.debug.menu add command -label "Reproject OFF" -command "do_reproject_mode 0"
+.mbar.debug.menu add command -label "DebugImage ON" -command "do_debugimage 1"
+.mbar.debug.menu add command -label "DebugImage OFF" -command "do_debugimage 0"
 .mbar.debug.menu add command -label "Net Speed Test ON" -command "net_speed_test 1"
 .mbar.debug.menu add command -label "Net Speed Test OFF" -command "net_speed_test 0"
 .mbar.debug.menu add command -label "Remote bu_log ON" -command "node_send set print_on 1"
@@ -148,6 +153,11 @@ proc do_reproject_mode {val} {
 		set fullfloat_mode $val ";" \
 		set reproject_mode $val ";" \
 		set curframe 0
+}
+
+proc do_debugimage {val} {
+	node_send \
+		set debugimage $val
 }
 
 # Aids for memory debugging
