@@ -248,6 +248,7 @@ AC_ARG_WITH(libs, AC_HELP_STRING(--with-libs,
 
 # use the jdk
 JAVA_CFLAGS=
+JAVA_LDFLAGS=
 with_java=no
 AC_ARG_WITH(jdk, AC_HELP_STRING(--with-jdk=path,
 		[Specify location of Java Development Kit]),
@@ -256,6 +257,7 @@ AC_ARG_WITH(jdk, AC_HELP_STRING(--with-jdk=path,
 		with_java=yes
         ]
 )
+
 case "$target" in
 	*-*-darwin*)
 		JAVA_CFLAGS="-framework JavaVM"
@@ -263,8 +265,15 @@ case "$target" in
 		with_java=yes
 		;;
 esac
+
+if test "x$with_java" != "xno" ; then
+	CPPFLAGS="$JAVA_CFLAGS $CPPFLAGS"
+	LDFLAGS="$JAVA_LDFLAGS $LDFLAGS"
+fi
+
 AC_SUBST(JAVA_CFLAGS)
 AC_SUBST(JAVA_LDFLAGS)
+AC_SUBST(CPPFLAGS)
 
 # only build benchmark
 AC_MSG_CHECKING(whether to only build benchmark)
@@ -881,10 +890,10 @@ AC_CHECK_HEADER(regex.h,
 
 found_jni_h=no
 AC_CHECK_HEADER(JavaVM/jni.h, 
-		AC_DEFINE(HAVE_JAVAVM_JNI_H,1,[Define to 1 if you have the `<JavaVM/jni.h>' header file])
+		AC_DEFINE(HAVE_JAVAVM_JNI_H,1,[Define to 1 if you have the '<JavaVM/jni.h>' header file])
 		found_jni_h=yes	)
 AC_CHECK_HEADER(jni.h,
-		AC_DEFINE(HAVE_JNI_H,1,[Define to 1 if you have the `<jni.h>' header file])
+		AC_DEFINE(HAVE_JNI_H,1,[Define to 1 if you have the '<jni.h>' header file])
 		found_jni_h=yes )
 search_for_jni_h_more=no
 if test "x$found_jni_h" = "xno" ; then
@@ -920,7 +929,7 @@ if test "x$search_for_jni_h_more" != "xno" ; then
 	AC_CHECK_HEADER(jni.h,
 			AC_DEFINE(HAVE_JNI_H,
 				  1,
-				  [Define to 1 if you have the `<jni.h>' header file])
+				  [Define to 1 if you have the '<jni.h>' header file])
 			found_jni_h=yes )
 
 	if test "x$found_jni_h" != "xno" ; then
@@ -1408,6 +1417,8 @@ if test "x$only_rts" != "xno" ; then
 		AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
 		AC_MSG_NOTICE([Try adding --with-jdk=/path/to/jdk to find jni.h])
 		AC_MSG_ERROR([*** Cannot locate jni.h for building librtserver ***])
+	else 
+		AC_MSG_NOTICE([with-jdk: $with_java])
 	fi
 	AC_MSG_RESULT(yes)
 fi
