@@ -9,7 +9,7 @@
 			g-euclid euclid_format euclid_unformat tankill-g g-tankill \
 			viewpoint-g dxf-g g-nmg g-euclid1 fast4-g proe-g \
 			asc-nmg nmg-rib g-vrml g-acad cy-g nastran-g g-wave \
-			nmg-polysolid g-shell.rect stl-g g-xxx
+			nmg-polysolid g-shell.rect stl-g
 #define	SRCSUFF	.c
 #define MANSECTION	1
 
