@@ -21,7 +21,7 @@ extern char	*malloc();
 /*
  *	Solids structure definition
  */
-#define MAX_PATH	8	/* Maximum depth of path */
+#define MAX_PATH	16	/* Maximum depth of path */
 struct solid  {
 	float	s_size;		/* Distance across solid, in model space */
 	float	s_csize;	/* Dist across clipped solid (model space) */

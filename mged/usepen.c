@@ -120,12 +120,9 @@ usepen()
 	case ST_O_PATH:
 		/*
 		 * Convert DT position to path element select
-		 *
-		 * The following formula depends heavily on
-		 * the fact that s_count will never exceed 7.
 		 */
-		ipathpos = (dm_values.dv_ypen + 2048) * (illump->s_last+1) / 4096;
-		ipathpos = illump->s_last - ipathpos;
+		ipathpos = illump->s_last - (
+			(dm_values.dv_ypen+2048L) * (illump->s_last+1) / 4096);
 		dmaflag++;
 		return;
 
