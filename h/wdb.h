@@ -23,7 +23,7 @@
 
 struct wmember  {
 	int	wm_magic;
-	char	wm_name[16];
+	char	wm_name[16+3];	/* NAMESIZE */
 	char	wm_op;		/* Boolean operation */
 	mat_t	wm_mat;
 	struct wmember *wm_forw;
@@ -41,6 +41,16 @@ struct wmember  {
 #define mk_lfcomb(fp,name,headp,region)		mk_lcomb( fp, name, headp, \
 	region, (char *)0, (char *)0, (char *)0, 0 );
 
-extern struct wmember *mk_addmember();
+extern struct wmember	*mk_addmember();
+
+/*
+ * This internal variable should not be directly modified;
+ * call mk_conversion() or mk_set_conversion() instead.
+ */
+extern double	mk_conv2mm;		/* Conversion factor to mm */
+
+extern int		mk_conversion();
+extern double		mk_cvt_factor();
+extern int		mk_set_conversion();
 
 #endif /* WDB_H */
