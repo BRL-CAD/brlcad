@@ -36,7 +36,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "zlib.h"
 
 static png_color_16 def_backgrd={ 0,0,0,0,0 };
-static double def_gamma=1.0;
 static int verbose=0;
 
 static char *usage="Usage:\n\t%s [-v] [-ntsc -crt -R[#] -G[#] -B[#]] [png_input_file] > bw_output_file\n";
@@ -46,7 +45,6 @@ int argc;
 char *argv[];
 {
 	int i;
-	int c;
 	int convert_to_bw=0;
 	FILE *fp_in;
 	png_structp png_p;

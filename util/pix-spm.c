@@ -19,7 +19,6 @@ static	char *Usage = "usage: pix-spm file.pix size > file.spm\n";
 main( argc, argv )
 int argc; char **argv;
 {
-	int	i, j;
 	int	size;
 	spm_map_t *mp;
 

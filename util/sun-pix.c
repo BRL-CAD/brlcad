@@ -170,7 +170,6 @@ char **argv;
 	register int	on = 255;
 	register int	width;			/* line width in bits */
 	register int	scanbytes;		/* bytes/line (padded to 16 bits) */
-	register int	n;
 	unsigned char	buf[4096];
 
 	fp = stdin;
@@ -260,7 +259,7 @@ char **argv;
 		}
 
 		scanbytes = ((width + 15) & ~15L) / 8;
-		while( n = (header.ras_type == RT_BYTE_ENCODED) ?
+		while( (header.ras_type == RT_BYTE_ENCODED) ?
 		    decoderead(buf, sizeof(*buf), scanbytes, fp) :
 		    fread(buf, sizeof(*buf), scanbytes, fp) ) {
 			for( x = 0; x < width; x++ ) {
@@ -312,7 +311,7 @@ char **argv;
 			break;
 		}
 
-		while (n = (header.ras_type == RT_BYTE_ENCODED) ?
+		while ((header.ras_type == RT_BYTE_ENCODED) ?
 		    decoderead(buf, sizeof(*buf), scanbytes, fp):
 		    fread(buf, sizeof(*buf), scanbytes, fp) ) {
 			for (x=0; x < width; x++ ) {

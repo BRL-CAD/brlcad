@@ -38,7 +38,6 @@ static char RCSid[] = "$Header$";
 #include "externs.h"			/* For getopt */
 
 static int	file_width = 512;
-static int	file_height= 512;
 static int	autosize = 0;
 static char	*file_name;
 static FILE	*infp;
@@ -60,11 +59,10 @@ char **argv;
 			autosize = 1;
 			break;
 		case 's':
-			file_height = file_width = atoi(optarg);
+			file_width = atoi(optarg);
 			autosize = 0;
 			break;
 		case 'n':
-			file_height = atoi(optarg);
 			autosize = 0;
 			break;
 		case 'w':
@@ -114,7 +112,6 @@ char **argv;
 		int	w, h;
 		if ( bn_common_file_size(&w, &h, file_name, 1) ) {
 			file_width = w;
-			file_height = h;
 		} else {
 			fprintf(stderr, "bw-a: unable to autosize\n");
 		}

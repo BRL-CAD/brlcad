@@ -37,7 +37,6 @@ int argc; char **argv;
 {
 	FILE	*ifp, *ofp;
 	int	row;
-	int	error;
 	long	offset;
 
 	if (argc < 3) {
@@ -66,8 +65,8 @@ int argc; char **argv;
 	/* Move all points */
 	for (row = 0+yorig; row < ynum+yorig; row++) {
 		offset = row * linelen + xorig;
-		error = fseek(ifp, offset, 0);
-		error = fread(buf, sizeof(*buf), xnum, ifp);
-		error = fwrite(buf, sizeof(*buf), xnum, ofp);
+		fseek(ifp, offset, 0);
+		fread(buf, sizeof(*buf), xnum, ifp);
+		fwrite(buf, sizeof(*buf), xnum, ofp);
 	}
 }

@@ -2022,8 +2022,7 @@ STATIC void
 fb_Paint( x0, y0, x1, y1, color )
 register int x0, y0, x1, y1;
 RGBpixel *color;
-	{	register int x;
-		Rectangle clipped_rect;
+	{	Rectangle clipped_rect;
 	clipped_rect.r_origin.p_x = x0;
 	clipped_rect.r_corner.p_x = x1;
 	clipped_rect.r_origin.p_y = y0;
@@ -2248,7 +2247,6 @@ get_Point( msg, pointp )
 char *msg;
 register Point *pointp;
 	{	register int tag_point = -1;
-		register int status_change;
 		register int c = NUL;
 	prnt_Prompt( msg );
 	pointpicked = false;

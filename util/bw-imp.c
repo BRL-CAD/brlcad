@@ -158,7 +158,6 @@ int		argc;
 char		*argv[];
 {
 	register int 	y;
-	int		flags;
 
 	height = width = 512;		/* Defaults */
 

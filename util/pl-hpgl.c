@@ -31,7 +31,7 @@ main(argc,argv)
 int argc;
 char **argv;
 {
-	char colors[8][3],s[1024];
+	char colors[8][3];
 	int	numcolors = 0;
 	int	c,i,x,y,x1,x2,y1,y2,r,g,b;
 
@@ -61,9 +61,8 @@ char **argv;
 			printf("PA %d %d;\n",x2,y2);
 			break;
 		case 'f':		/* line style */
-			for (i = 0; (s[i] = getchar()) != '\n'; i++);
-			s[i] = '\0';
-			/* set line style */
+			while( getchar() != '\n');
+			/* set line style ignored */
 			break;
 		case 'm':		/* move */
 			geti(x);
@@ -78,9 +77,8 @@ char **argv;
 			printf("PA %d %d;\n",x,y);
 			break;
 		case 't':		/* text */
-			for (i = 0; (s[i] = getchar()) != '\n'; i++);
-			s[i] = '\0';
-			/* draw text */
+			while( getchar() != '\n' );
+			/* draw text ignored */
 			break;
 		case 's':		/* space */
 			geti(x1);

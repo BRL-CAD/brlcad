@@ -196,7 +196,6 @@ char	**argv;
 {
 	register int	c;
 	struct	uplot *up;
-	int	i;
 
 	outwidth = outheight = DEFAULT_SIZE;
 

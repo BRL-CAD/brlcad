@@ -124,7 +124,6 @@ char	**argv;
 	char	*inbuf;
 	char	*outbuf;
 	int	y;
-	int	eof_seen;
 
 	if ( !get_args( argc, argv ) )  {
 		(void)fputs(usage, stderr);

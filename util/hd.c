@@ -26,7 +26,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 /* declarations to support use of getopt() system call */
 static char	*options = "o:";
-static char	 optflags[sizeof(options)];
 static char	*progname = "(noname)";
 
 static long offset=0;	 /* offset from begining of file from which to start */
@@ -119,7 +118,7 @@ char *av[];
 	/* Get # of options & turn all the option flags off */
 	optlen = strlen(options);
 
-	for (c=0 ; c < optlen ; optflags[c++] = '\0')  /* NIL */;
+	for (c=0 ; c < optlen ; c++)  /* NIL */;
 
 	/* Turn off getopt's error messages */
 	opterr = 0;

@@ -36,7 +36,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "zlib.h"
 
 static png_color_16 def_backgrd={ 0,0,0,0,0 };
-static double def_gamma=1.0;
 static int verbose=0;
 
 static char *usage="Usage:\n\t%s [-v] [png_input_file] > pix_output_file\n";

@@ -186,7 +186,6 @@ char **argv;
 		 * Collect together one swath
 		 */
 		for( rel = 0; rel<im_line; rel++, image++, framenumber++ )  {
-			register char *out;
 			int fd;
 
 			if(image >= maximage )  {

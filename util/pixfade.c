@@ -113,7 +113,6 @@ main( argc, argv )
 int argc;
 char *argv[];
 {
-	int	i;
 	register float	*randp;
 	struct color_rec {
 		unsigned char red,green,blue;

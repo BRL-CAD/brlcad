@@ -118,7 +118,6 @@ char	*argv[];
 	}
 
 	{	
-		register int	by = fb_size;
 		for( scan_ln = fb_size-1; scan_ln >= 0; scan_ln-- )  {	
 			static int	touched = 1;
 			register int	pix;

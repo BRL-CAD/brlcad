@@ -39,9 +39,7 @@ main(argc, argv)
 int argc;
 char **argv;
 {
-	static int x,y;
 	int image_offset;
-	int first_number;
 	int framenumber;
 	char *basename;
 	char name[128];

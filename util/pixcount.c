@@ -149,7 +149,6 @@ char	*color;
     int			rc;	/* Return code from bu_rb_insert() */
     struct pixel	*qpp;	/* The query */
     struct pixel	*pp;	/* Value to return */
-    int			i;
 
 #if 0
     bu_log("lookup_pixel( ");

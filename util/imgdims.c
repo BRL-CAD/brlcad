@@ -67,7 +67,6 @@ static int pixel_size (buf)
 char	*buf;
 
 {
-    char		*bp;
     char		*ep;
     struct assoc
     {

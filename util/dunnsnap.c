@@ -91,7 +91,6 @@ int argc;
 char **argv;
 {
 	register FBIO *fbp;
-	int	retcode = 0;
 
 	if ( !get_args( argc, argv ) )  {
 		(void)fputs(usage, stderr);

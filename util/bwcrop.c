@@ -61,9 +61,8 @@ main(argc, argv)
 int argc; char **argv;
 {
 	float	row, col, x1, y1, x2, y2, x, y;
-	int	error, yindex;
+	int	yindex;
 	char	value;
-	long	offset;
 
 	if (argc < 3) {
 		fprintf( stderr, usage );
@@ -143,7 +142,7 @@ int argc; char **argv;
 			}
 
 			value = buffer[ yindex * scanlen + round(x) ];
-			error = fwrite(&value, sizeof(value), 1, ofp);
+			fwrite(&value, sizeof(value), 1, ofp);
 		}
 	}
 	return (0);
@@ -182,8 +181,6 @@ void
 fill_buffer( y )
 int y;
 {
-	int	i;
-
 	buf_start = y - buflines/2;
 	if( buf_start < 0 ) buf_start = 0;
 

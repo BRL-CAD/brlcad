@@ -377,9 +377,9 @@ FILE	*ofp;
 int	ix, iy, ox, oy;
 {
 	int	i, j;
-	double	x, y, dx, dy, mid1, mid2;
+	double	x, y;
 	double	xstep, ystep;
-	unsigned char *op, *up, *lp;
+	unsigned char *op, *lp;
 
 	xstep = (double)(ix - 1) / (double)ox - 1.0e-6;
 	ystep = (double)(iy - 1) / (double)oy - 1.0e-6;

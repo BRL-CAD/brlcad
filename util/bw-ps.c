@@ -32,7 +32,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #define	MAX_BYTES	(64*128)	/* max bytes per image chunk */
 
 static int	encapsulated = 0;	/* encapsulated postscript */
-static int	inverse = 0;		/* inverse video (RFU) */
 static int	center = 0;		/* center output on 8.5 x 11 page */
 static int	landscape = 0;		/* landscape mode */
 
@@ -61,7 +60,7 @@ register char **argv;
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "ehicLs:w:n:S:W:N:" )) != EOF )  {
+	while ( (c = getopt( argc, argv, "ehcLs:w:n:S:W:N:" )) != EOF )  {
 		switch( c )  {
 		case 'e':
 			/* Encapsulated PostScript */
@@ -70,9 +69,6 @@ register char **argv;
 		case 'h':
 			/* high-res */
 			height = width = 1024;
-			break;
-		case 'i':
-			inverse = 1;
 			break;
 		case 'c':
 			center = 1;

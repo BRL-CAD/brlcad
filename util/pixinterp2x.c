@@ -116,8 +116,6 @@ char **argv;
 
 	outy = -2;
 	for( iny = 0; iny < file_height; iny++ )  {
-		register char *in;
-
 		if( fread( (char *)inbuf, 1, inbytes, infp ) != inbytes )  {
 			fprintf(stderr,"pixinterp2x fread error\n");
 			break;

@@ -92,7 +92,6 @@ char **argv;
 	if (gauss) {
 		double tmp;
 		double max;
-		int bins[21];
 		max = center-(double)low;
 		if (max < 0) max = -max;
 		tmp = (double)high - center;

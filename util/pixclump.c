@@ -98,7 +98,6 @@ char	*f_name;
     FILE		*fp;
     int			line_nm;
     unsigned char	rgb[3];
-    int			len;
     struct bu_vls	v;
 
     if ((fp = fopen(f_name, "r")) == NULL)
@@ -174,7 +173,7 @@ char	*argv[];
     FILE		*infp = NULL;	/* input stream */
     FILE		*outfp = NULL;	/* output   "   */
     int			ch;		/* current char in command line */
-    int			i, j;		/* dummy loop indices */
+    int			i;		/* dummy loop indices */
     unsigned char	rgb[3];		/* Specified color */
     int			best_color;	/* index of best match to pixbuf */
     int			best_diff;	/* error in best match */

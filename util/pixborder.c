@@ -92,7 +92,6 @@ char	*buf;
 
 {
     double	tmp[3];
-    int		i;
 
     if (sscanf(buf, "%lf %lf %lf", tmp, tmp + 1, tmp + 2) != 3)
 	return (0);
@@ -351,7 +350,6 @@ int		col_nm;		/* Current column */
 
 {
     unsigned char	pix_rgb[3];
-    fastf_t		pix_hsv[3];
 
     VMOVE(pix_rgb, trp + (col_nm + 1) * 3);
 

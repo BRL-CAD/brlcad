@@ -38,7 +38,6 @@ FILE		*ifp, *ofp;		/* input and output file pointers */
 static char	*file_name;
 
 static int 	linelen;		/* input width input file */ 
-static int 	idummy;          	/* for storage of superfluous args  */
 static int 	xorig = 0;     		/* Bottom left corner to extract from */
 static int 	yorig = 0;		/* Default at (0,0) pixels     */
 static int 	xnum  = 0;
@@ -70,7 +69,6 @@ register int 	argc;
 			inputmode = COMMAND_LINE;
 			break;
 		case 'n':
-			idummy    = atoi(optarg);
 			inputmode = COMMAND_LINE;
 			break;
 		case 'x':
@@ -82,11 +80,9 @@ register int 	argc;
 			inputmode = COMMAND_LINE;
 			break;
 		case 'X':
-			idummy    = atoi(optarg);
 			inputmode = COMMAND_LINE;
 			break;
 		case 'Y':
-			idummy    = atoi(optarg);
 			inputmode = COMMAND_LINE;
 			break;
 		case 'S':
@@ -189,7 +185,6 @@ register char **argv;
 register int 	argc;
 {
 	int	row;
-	int	error;
 	long	offset;
 
 	if (!get_args(argc,argv)) {
@@ -207,9 +202,9 @@ register int 	argc;
 	/* Move all points */
 	for (row = 0 + yorig; row < ynum + yorig; row++) {
 		offset = (row * linelen + xorig) * bytes_per_pixel;
-		error = fseek(ifp, offset, 0);
-		error = fread(buf, sizeof(*buf), outbytes, ifp);
-		error = fwrite(buf, sizeof(*buf), outbytes, ofp);
+		fseek(ifp, offset, 0);
+		fread(buf, sizeof(*buf), outbytes, ifp);
+		fwrite(buf, sizeof(*buf), outbytes, ofp);
 	}
 
 	exit(0);

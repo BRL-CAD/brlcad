@@ -42,7 +42,6 @@ static int	fileinput = 0;		/* file or pipe on input? */
 static int	autosize = 0;		/* !0 to autosize input */
 
 static int	file_width = 512;	/* default input width */
-static int	file_height = 512;	/* default input height */
 
 static char usage[] = "\
 Usage: pixhalve [-h] [-a]\n\
@@ -62,12 +61,12 @@ register char **argv;
 			break;
 		case 'h':
 			/* high-res */
-			file_height = file_width = 1024;
+			file_width = 1024;
 			autosize = 0;
 			break;
 		case 's':
 			/* square file size */
-			file_height = file_width = atoi(optarg);
+			file_width = atoi(optarg);
 			autosize = 0;
 			break;
 		case 'w':
@@ -75,7 +74,6 @@ register char **argv;
 			autosize = 0;
 			break;
 		case 'n':
-			file_height = atoi(optarg);
 			autosize = 0;
 			break;
 
@@ -135,7 +133,6 @@ char	**argv;
 		int	w, h;
 		if( bn_common_file_size(&w, &h, file_name, 3) ) {
 			file_width = w;
-			file_height = h;
 		} else {
 			fprintf(stderr, "pixhalve: unable to autosize\n");
 		}
@@ -351,7 +348,6 @@ int	*lines[];
 int	num;
 {
 	register int	i;
-	register int	j;
 	register int	*a, *b, *c, *d, *e;
 
 	a = lines[0];
@@ -409,7 +405,6 @@ int	*lines[];
 int	num;
 {
 	register int	i;
-	register int	j;
 	register int	*b, *c, *d;
 
 	b = lines[1];

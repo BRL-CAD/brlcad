@@ -185,10 +185,10 @@ void
 outchar( n )
 int	n;
 {
-	int	i, c;
+	int	i;
 
 	for( i = 0; i < n; i++ ) {
-		c = getc(fp);
+		(void)getc(fp);
 		/*printf("%3d", c );*/
 	}
 }
@@ -209,11 +209,9 @@ outshort( n )
 int	n;
 {
 	int	i;
-	short	s;
 
 	for( i = 0; i < n; i++ ) {
-		s = getshort();
-		/*printf("%d", s );*/
+		(void)getshort();
 	}
 }
 

@@ -73,7 +73,6 @@ char	*buf;
 
 {
     double	tmp[2];
-    int		i;
 
     if (sscanf(buf, "%lf %lf", tmp, tmp + 1) != 2)
 	return (0);

@@ -1011,7 +1011,6 @@ char	*argv[];
     char		*sf_name;	/* Name of spec file */
     BU_FILE		*sfp = NULL;	/* Spec file */
     int			ch;		/* Command-line character */
-    int			i;
     int			tankill = 0;	/* TANKILL format (vs. BRL-CAD)? */
 
     extern int	optind;			/* index from getopt(3C) */

@@ -112,7 +112,7 @@ int xpos, ypos, odd;
 	{	register int    i, j;
 		int base;
 		int     	totwid = width;
-		int     	up, down;
+		int     	down;
 		static float	resbuf[FONTBUFSZ];
 		static RGBpixel fbline[FONTBUFSZ];
 #if DEBUG_STRINGS
@@ -128,7 +128,7 @@ int xpos, ypos, odd;
 	for (i = height + 2; i < height + 4; i++)
 		clear_buf (totwid, filterbuf[i]);
 
-	up = SignedChar( dir[c].up );
+	(void)SignedChar( dir[c].up );
 	down = SignedChar( dir[c].down );
 
 	/* Initial base line for filtering depends on odd flag. */

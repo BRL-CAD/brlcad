@@ -415,7 +415,7 @@ char **argv;
     double a, b, p;
     int numlines;
     struct lineseg *lines;
-    register int i, j;
+    register int i;
     int autosize;
 #if 0
     npsw = bu_avail_cpus();
