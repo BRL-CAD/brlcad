@@ -2962,7 +2962,7 @@ init_objedit()
 
 	id = rt_id_solid( &es_ext );
 	if( rt_functab[id].ft_import( &es_int, &es_ext, rt_identity ) < 0 )  {
-		rt_log("init_sedit(%s):  solid import failure\n",
+		rt_log("init_objedit(%s):  solid import failure\n",
 			illump->s_path[illump->s_last]->d_namep );
 	    	if( es_int.idb_ptr )  rt_functab[id].ft_ifree( &es_int );
 		db_free_external( &es_ext );
