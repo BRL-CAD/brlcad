@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 10.1  91/10/12  06:54:01  mike
+ * Release_4.0
+ * 
  * Revision 2.1  91/08/30  17:54:36  mike
  * Changed #include directives to distinguish between local and system header
  * files.
@@ -28,6 +31,10 @@ static char RCSid[] = "@(#)$Header$";
    or deletion.  */
 
 #include "./jove.h"
+
+void	PopMark();
+void	ToMark();
+void	DFixMarks();
 
 MARK *
 DoMakeMark(buf, line, column)
@@ -91,6 +98,7 @@ LINE	*line;
 	m->m_char = column;
 }
 
+void
 PopMark()
 {
 	int	pmark;
@@ -133,6 +141,7 @@ SetMark()
 
 /* Move point to mark */
 
+void
 ToMark(m)
 MARK	*m;
 {
@@ -163,7 +172,7 @@ PtToMark()
 }
 
 /* Fix marks for after a deletion */
-
+void
 DFixMarks(line1, char1, line2, char2)
 register LINE	*line1,
 		*line2;

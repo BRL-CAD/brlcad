@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 10.2  93/10/26  06:01:52  mike
+ * Changed getchar() to jgetchar() to prevent stdio.h conflict
+ * 
  * Revision 10.1  91/10/12  06:54:02  mike
  * Release_4.0
  * 
@@ -49,6 +52,21 @@ static char RCSid[] = "@(#)$Header$";
 
 #include <ctype.h>
 #include <signal.h>
+
+void	EscPrefix();
+void	CopyRegion();
+void	GoLine();
+void	CtlxPrefix();
+void	DelBlnkLines();
+
+void	Eos();
+void	to_word();
+void	ForWord();
+void	BackWord();
+void	Eow();
+void	Bow();
+void	DOTsave();
+void	CapChar();
 
 PrefAbort(str)
 char	*str;
@@ -107,6 +125,7 @@ char	*str;
 	return c;
 }
 
+void
 EscPrefix()
 {
 	register int	c, i, sign;
@@ -158,7 +177,7 @@ EscPrefix()
 /*
  * Save a region.  A pretend kill.
  */
-
+void
 CopyRegion()
 {
 	LINE	*nl;
@@ -233,6 +252,7 @@ ToIndent()
 	curchar = cp - linebuf;
 }
 
+void
 GoLine()
 {
 	if (exp_p == 0)
@@ -513,6 +533,7 @@ KillEOL()
 	reg_kill(curline, curchar, line2, char2, 0);
 }
 
+void
 CtlxPrefix()
 {
 	struct function	*fp;
@@ -870,6 +891,7 @@ register char	*buf;
 	return c == 0;	/* It's zero if we got to the end of the line */
 }
 
+void
 DelBlnkLines()
 {
 	exp = 1;
@@ -1093,6 +1115,7 @@ onceagain:
 	}
 }
 
+void
 Eos()
 {
 	int	num = exp;
@@ -1107,6 +1130,7 @@ Eos()
 		to_word(1);
 }
 
+int
 length(line)
 register LINE	*line;
 {
@@ -1120,12 +1144,14 @@ register LINE	*line;
 	return cp - base - 1;
 }
 
+int
 isword(c)
 register char	c;
 {
 	return isalpha(c) || isdigit(c);
 }
 
+void
 to_word(dir)
 {
 	register char	c;
@@ -1153,6 +1179,7 @@ to_word(dir)
 	}
 }
 
+void
 ForWord()
 {
 	register char	c;
@@ -1169,6 +1196,7 @@ ForWord()
 	this_cmd = 0;	/* Semi kludge to stop some unfavorable behavior */
 }
 
+void
 BackWord()
 {
 	register int	num = exp;
@@ -1187,6 +1215,7 @@ BackWord()
 
 /* End of window */
 
+void
 Eow()
 {
 	SetLine(next_line(curwind->w_top, SIZE(curwind) - 1 -
@@ -1197,6 +1226,7 @@ Eow()
 
 /* Beginning of window */
 
+void
 Bow()
 {
 	SetLine(next_line(curwind->w_top, min(SIZE(curwind) - 1, exp - 1)));
@@ -1209,6 +1239,7 @@ Bow()
 
    contains case case-region and case-word functions.  */
 
+void
 DOTsave(buf)
 BUFLOC *buf;
 {
@@ -1216,6 +1247,7 @@ BUFLOC *buf;
 	buf->p_char = curchar;
 }
 
+void
 CapChar()
 {
 	register int	num = exp;
