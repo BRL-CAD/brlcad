@@ -89,10 +89,10 @@ proc init_solid_edit_menus { stype menu } {
 		-command "press accept"
 	incr i
 	.$id.menubar.edit insert $i command -label "Apply" -underline 1 \
-		-command "apply_edit_solid"
+		-command "sed_apply"
 	incr i
 	.$id.menubar.edit insert $i command -label "Reset" -underline 1 \
-		-command "reset_edit_solid"
+		-command "sed_reset"
 	incr i
 	.$id.menubar.edit insert $i separator
     }
@@ -168,7 +168,7 @@ proc init_object_edit_menus {} {
 	.$id.menubar.edit entryconfigure 0 -state disabled
 	.$id.menubar.edit entryconfigure 1 -state disabled
 
-	set reset_cmd "reset_edit_matrix"
+	set reset_cmd "oed_reset"
 
 	set i 0
 	.$id.menubar.edit insert $i radiobutton -variable edit_type \
@@ -210,13 +210,16 @@ proc init_object_edit_menus {} {
 	.$id.menubar.edit insert $i separator
 	incr i
 
-	.$id.menubar.edit insert $i command -label "Reject" -underline 0 \
+	.$id.menubar.edit insert $i command -label "Reject" -underline 2 \
 		-command "press reject"
 	incr i
 	.$id.menubar.edit insert $i command -label "Accept" -underline 0 \
 		-command "press accept"
 	incr i
-	.$id.menubar.edit insert $i command -label "Reset" -underline 0 \
+	.$id.menubar.edit insert $i command -label "Apply" -underline 1 \
+		-command "oed_apply"
+	incr i
+	.$id.menubar.edit insert $i command -label "Reset" -underline 1 \
 		-command $reset_cmd
 
 	incr i
