@@ -38,6 +38,12 @@ extern int	verbose;
 
 char	rcard[128];
 
+void	region_register();
+void	group_init();
+void	group_register();
+void	group_add();
+void	group_write();
+
 /*
  *			G E T R E G I O N
  *
@@ -226,6 +232,10 @@ getid()
 	}
 }
 
+/*
+ *			R E G I O N _ R E G I S T E R
+ */
+void
 region_register( reg_num, id, air, mat, los )
 {
 	register struct wmember	*wp;
@@ -262,6 +272,7 @@ struct groups {
 } groups[NGROUPS];
 int	ngroups;
 
+void
 group_init()
 {
 	group_register( "g00", 0, 0 );
@@ -288,6 +299,7 @@ group_init()
 
 }
 
+void
 group_register( name, lo, hi )
 char	*name;
 {
@@ -310,6 +322,7 @@ char	*name;
 	ngroups++;
 }
 
+void
 group_add( val, name )
 register int	val;
 char		*name;
@@ -328,6 +341,7 @@ add:
 	(void)mk_addmember( name, &groups[i].grp_wm, WMOP_UNION );
 }
 
+void
 group_write()
 {
 	register struct wmember	*wp;
