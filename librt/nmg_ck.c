@@ -1476,7 +1476,6 @@ CONST struct rt_tol *tol;
  *
  */
 
-static CONST struct nmg_visit_handlers  nmg_visit_handlers_null;
 struct v_ck_state {
         char            *visited;
         struct nmg_ptbl *tabl;
