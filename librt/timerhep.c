@@ -17,15 +17,6 @@ int	res_seg;
 int	res_malloc;
 int	res_printf;
 
-/* Memory clearing routine */
-bzero( str, n )
-register char *str;
-register int n;
-{
-	while( n-- > 0 )
-		*str++ = 0;
-}
-
 /* Standard System V stuff */
 extern long time();
 static long time0;
@@ -43,24 +34,36 @@ prep_timer()
 
 
 /*
- *			P R _ T I M E R
+ *			R E A D _ T I M E R
  * 
  */
 double
-pr_timer(str)
+read_timer(str,len)
 char *str;
 {
 	long now;
 	double usert;
 	long htime[6];
+	char line[132];
 
 	(void)stats_(htime);
 	(void)time(&now);
 	usert = ((double)htime[0]) / 10000000.0;
-	fprintf(stderr,"%s: %f secs, ", str, usert);
-	fprintf(stderr,"%ld waves, %ld fp, %ld dm, %ld other\n",
+	if( usert < 0.00001 )  usert = 0.00001;
+	sprintf(line,"%f secs: %ld wave, %ld fp, %ld dmem, %ld other\n",
+		usert,
 		htime[0], htime[1], htime[2], htime[3], htime[4] );
+	(void)strncpy( str, line, len );
 	return( usert );
+}
+
+/* Memory clearing routine */
+bzero( str, n )
+register char *str;
+register int n;
+{
+	while( n-- > 0 )
+		*str++ = 0;
 }
 
 bcopy(from, to, count)		/* not efficient */

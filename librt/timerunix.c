@@ -46,19 +46,22 @@ prep_timer()
 
 
 /*
- *			P R _ T I M E R
+ *			R E A D _ T I M E R
  * 
  */
 double
-pr_timer(str)
+read_timer(str,len)
 char *str;
 {
 	long now;
 	double usert;
+	char line[132];
 
 	(void)time(&now);
-	fprintf(stderr,"%s: %ld secs\n", str, (long)now-time0);
+	sprintf(line,"%ld clock seconds\n", (long)now-time0);
 	usert = now-time0;
+	if( usert < 0.00001 )  usert = 0.00001;
+	(void)strncpy( str, line, len );
 	return( usert );
 }
 

@@ -1,5 +1,5 @@
 /*
- *			T I M E R 5 2 B R L. C
+ *			T I M E R 5 2 B R L . C
  *
  * Function -
  *	To provide timing information for RT.
@@ -22,11 +22,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include <memory.h>
 
-bzero( str, n )
-{
-	memset( str, '\0', n );
-}
-
 /* BRL's System V - under 4.2 BSD version */
 
 #include "/sys/h/types.h"
@@ -37,11 +32,9 @@ static struct	timeval time0;	/* Time at which timeing started */
 static struct	rusage ru0;	/* Resource utilization at the start */
 
 static void prusage();
-static void pdeltat();
 static void tvadd();
 static void tvsub();
 static void psecs();
-static void p2dig();
 
 /*
  *			P R E P _ T I M E R
@@ -54,32 +47,36 @@ prep_timer()
 }
 
 /*
- *			P R _ T I M E R
+ *			R E A D _ T I M E R
  * 
  */
 double
-pr_timer(str)
+read_timer(str,len)
 char *str;
 {
 	struct timeval timedol;
 	struct rusage ru1;
 	struct timeval td;
 	double usert;
+	char line[132];
 
 	_getrusage(RUSAGE_SELF, &ru1);
 	_gettimeofday(&timedol, (struct timezone *)0);
-	fprintf(stderr,"%s: ", str);
-	prusage(&ru0, &ru1, &timedol, &time0);
+	prusage(&ru0, &ru1, &timedol, &time0, line);
+	(void)strncpy( str, line, len );
 	tvsub( &td, &ru1.ru_utime, &ru0.ru_utime );
 	usert = td.tv_sec + ((double)td.tv_usec) / 1000000;
+	if( usert < 0.00001 )  usert = 0.00001;
 	return( usert );
 }
 
 static void
-prusage(r0, r1, e, b)
+prusage(r0, r1, e, b, outp)
 	register struct rusage *r0, *r1;
 	struct timeval *e, *b;
+	char *outp;
 {
+	struct timeval tdiff;
 	register time_t t;
 	register char *cp;
 	register int i;
@@ -91,84 +88,91 @@ prusage(r0, r1, e, b)
 	    (r1->ru_stime.tv_usec-r0->ru_stime.tv_usec)/10000;
 	ms =  (e->tv_sec-b->tv_sec)*100 + (e->tv_usec-b->tv_usec)/10000;
 
-	cp = "%Uuser %Ssys %Ereal %P %Xi+%Dd[%M]rss %F+%Rpf %Ccsw %Wswap";
+#define END(x)	{while(*x) x++;}
+	cp = "%Uuser %Ssys %Ereal %P %Xi+%Dd %Mmaxrss %F+%Rpf %Ccsw";
 	for (; *cp; cp++)  {
 		if (*cp != '%')
-			putc(*cp, stderr);
+			*outp++ = *cp;
 		else if (cp[1]) switch(*++cp) {
 
 		case 'U':
-			pdeltat(&r1->ru_utime, &r0->ru_utime);
+			tvsub(&tdiff, &r1->ru_utime, &r0->ru_utime);
+			sprintf(outp,"%d.%01d", tdiff.tv_sec, tdiff.tv_usec/100000);
+			END(outp);
 			break;
 
 		case 'S':
-			pdeltat(&r1->ru_stime, &r0->ru_stime);
+			tvsub(&tdiff, &r1->ru_stime, &r0->ru_stime);
+			sprintf(outp,"%d.%01d", tdiff.tv_sec, tdiff.tv_usec/100000);
+			END(outp);
 			break;
 
 		case 'E':
-			psecs(ms / 100);
+			psecs(ms / 100, outp);
+			END(outp);
 			break;
 
 		case 'P':
-			fprintf(stderr,"%d%%", (int) (t*100 / ((ms ? ms : 1))));
+			sprintf(outp,"%d%%", (int) (t*100 / ((ms ? ms : 1))));
+			END(outp);
 			break;
 
 		case 'W':
 			i = r1->ru_nswap - r0->ru_nswap;
-			fprintf(stderr,"%d", i);
+			sprintf(outp,"%d", i);
+			END(outp);
 			break;
 
 		case 'X':
-			fprintf(stderr,"%d", t == 0 ? 0 : (r1->ru_ixrss-r0->ru_ixrss)/t);
+			sprintf(outp,"%d", t == 0 ? 0 : (r1->ru_ixrss-r0->ru_ixrss)/t);
+			END(outp);
 			break;
 
 		case 'D':
-			fprintf(stderr,"%d", t == 0 ? 0 :
+			sprintf(outp,"%d", t == 0 ? 0 :
 			    (r1->ru_idrss+r1->ru_isrss-(r0->ru_idrss+r0->ru_isrss))/t);
+			END(outp);
 			break;
 
 		case 'K':
-			fprintf(stderr,"%d", t == 0 ? 0 :
+			sprintf(outp,"%d", t == 0 ? 0 :
 			    ((r1->ru_ixrss+r1->ru_isrss+r1->ru_idrss) -
 			    (r0->ru_ixrss+r0->ru_idrss+r0->ru_isrss))/t);
+			END(outp);
 			break;
 
 		case 'M':
-			fprintf(stderr,"%d", r1->ru_maxrss/2);
+			sprintf(outp,"%d", r1->ru_maxrss/2);
+			END(outp);
 			break;
 
 		case 'F':
-			fprintf(stderr,"%d", r1->ru_majflt-r0->ru_majflt);
+			sprintf(outp,"%d", r1->ru_majflt-r0->ru_majflt);
+			END(outp);
 			break;
 
 		case 'R':
-			fprintf(stderr,"%d", r1->ru_minflt-r0->ru_minflt);
+			sprintf(outp,"%d", r1->ru_minflt-r0->ru_minflt);
+			END(outp);
 			break;
 
 		case 'I':
-			fprintf(stderr,"%d", r1->ru_inblock-r0->ru_inblock);
+			sprintf(outp,"%d", r1->ru_inblock-r0->ru_inblock);
+			END(outp);
 			break;
 
 		case 'O':
-			fprintf(stderr,"%d", r1->ru_oublock-r0->ru_oublock);
+			sprintf(outp,"%d", r1->ru_oublock-r0->ru_oublock);
+			END(outp);
 			break;
 		case 'C':
-			fprintf(stderr,"%d+%d", r1->ru_nvcsw-r0->ru_nvcsw,
+			sprintf(outp,"%d+%d", r1->ru_nvcsw-r0->ru_nvcsw,
 				r1->ru_nivcsw-r0->ru_nivcsw );
+			END(outp);
 			break;
 		}
 	}
-	putc('\n',stderr);
-}
-
-static void
-pdeltat(t1, t0)
-	struct timeval *t1, *t0;
-{
-	struct timeval td;
-
-	tvsub(&td, t1, t0);
-	fprintf(stderr,"%d.%01d", td.tv_sec, td.tv_usec/100000);
+	*outp = '\0';
 }
 
 static void
@@ -194,34 +198,30 @@ tvsub(tdiff, t1, t0)
 }
 
 static void
-psecs(l)
-	long l;
+psecs(l,cp)
+long l;
+register char *cp;
 {
 	register int i;
 
 	i = l / 3600;
 	if (i) {
-		fprintf(stderr,"%d:", i);
+		sprintf(cp,"%d:", i);
+		END(cp);
 		i = l % 3600;
-		p2dig(i / 60);
-		goto minsec;
+		sprintf(cp,"%d%d", (i/60) / 10, (i/60) % 10);
+		END(cp);
+	} else {
+		i = l;
+		sprintf(cp,"%d", i / 60);
+		END(cp);
 	}
-	i = l;
-	fprintf(stderr,"%d", i / 60);
-minsec:
 	i %= 60;
-	fprintf(stderr,":");
-	p2dig(i);
+	*cp++ = ':';
+	sprintf(cp,"%d%d", i / 10, i % 10);
 }
 
-static void
-p2dig(i)
-	register int i;
+bzero( str, n )
 {
-
-	fprintf(stderr,"%d%d", i / 10, i % 10);
-}
-
-bcopy(from, to, count)  {
-	memcpy( to, from, count );
+	memset( str, '\0', n );
 }
