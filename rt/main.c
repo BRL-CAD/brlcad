@@ -118,7 +118,6 @@ char **argv;
 	static double azimuth, elevation;
 
 	npts = 512;
-	view_only = 1;
 	azimuth = -35.0;			/* GIFT defaults */
 	elevation = -25.0;
 
@@ -177,9 +176,17 @@ char **argv;
 		exit(2);
 	}
 
-	if( lightmodel == 3  &&  outfd > 0 )  {
-		outfp = fdopen( outfd, "w" );
-		fprintf(outfp, "%s: %s - rt\n", argv[0], argv[1] );
+	if( lightmodel != 4 )
+		view_only = 1;
+
+	if( lightmodel == 3 || lightmodel == 4 )
+		if( outfd > 0 )
+			outfp = fdopen( outfd, "w" );
+		else
+			bomb("No output file specified");
+
+	if( lightmodel == 3 )  {
+		fprintf(outfp, "%s: %s (RT)\n", argv[0], argv[1] );
 		fprintf(outfp, "%10d%10d", (int)azimuth, (int)elevation );
 		fprintf(outfp, "%10d%10d\n", npts, npts );
 	}

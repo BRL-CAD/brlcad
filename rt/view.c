@@ -24,6 +24,25 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "ray.h"
 #include "debug.h"
 
+/* /vld/include/ray.h -- ray segment data format (D A Gwyn) */
+/* binary ray segment data record; see ray(4V) */
+struct vldray  {
+	float	ox;			/* origin coordinates */
+	float	oy;
+	float	oz;
+	float	rx;			/* ray vector */
+	float	ry;
+	float	rz;
+	float	na;			/* origin surface normal */
+	float	ne;
+	/* the following are in 2 pieces for binary file portability: */
+	short	ob_lo;			/* object code low 16 bits */
+	short	ob_hi;			/* object code high 16 bits */
+	short	rt_lo;			/* ray tag low 16 bits */
+	short	rt_hi;			/* ray tag high 16 bits */
+};
+static struct vldray vldray;
+
 extern int ikfd;		/* defined in iklib.o */
 extern int ikhires;		/* defined in iklib.o */
 
@@ -73,6 +92,25 @@ int xscreen, yscreen;
 		return;
 	}
 	hitp = pp->pt_inhit;
+
+	/* Support for Gwyn's ray files */
+	if( lightmodel == 4 )  {
+		register int i;	/* XXX */
+		for( ; pp != PartHeadp; pp = pp->pt_forw )  {
+			/* TODO: Not all may have both in & out points! */
+			VMOVE( &(vldray.ox), pp->pt_inhit->hit_point );
+			VSUB2( &(vldray.rx), pp->pt_outhit->hit_point,
+				pp->pt_inhit->hit_point );
+			vldray.na = vldray.ne = 0.0;	/* need angle/azim */
+			i = pp->pt_regionp->reg_regionid;
+			vldray.ob_lo = i & 0xFFFF;
+			vldray.ob_hi = (i>>16) & 0xFFFF;
+			vldray.rt_lo = xscreen;
+			vldray.rt_hi = yscreen;
+			fwrite( &vldray, sizeof(struct vldray), 1, outfp );
+		}
+		return;
+	}
 
 	/* Support for pretty-picture files */
 	if( lightmodel == 3 )  {
@@ -195,6 +233,8 @@ int x, y;
 {
 	register int bg;
 
+	if( lightmodel == 4 )
+		return;
 	if( lightmodel == 3 )  {
 		last_solidp = SOLTAB_NULL;
 		ntomiss++;
@@ -273,6 +313,8 @@ int npts;
 dev_eol( y )
 int y;
 {
+	if( lightmodel == 4 )
+		return;
 	if( lightmodel == 3 )  {
 		pchar( '.' );		/* End of scanline */
 		last_solidp = SOLTAB_NULL;
