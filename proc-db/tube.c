@@ -115,6 +115,7 @@ char	**argv;
 
 	RT_LIST_INIT( &head.l );
 	RT_LIST_INIT( &ghead.l );
+	rt_uniresource.re_magic = RESOURCE_MAGIC;
 
 	if( (pos_fp = fopen( "pos.dat", "r" )) == NULL )
 		perror( "pos.dat" );	/* Just warn */
@@ -247,7 +248,8 @@ double	radius;
 	bp = rt_nurb_new_snurb( 3,	4,		/* u,v order */
 		N_CIRCLE_KNOTS,	npts+6,		/* u,v knot vector size */
 		npts+2,		NCOLS,		/* nrows, ncols */
-		RT_NURB_MAKE_PT_TYPE(4,2,1));
+		RT_NURB_MAKE_PT_TYPE(4,2,1),
+		&rt_uniresource);
 
 	/*  Build the U knots */
 	for( i=0; i<N_CIRCLE_KNOTS; i++ )
@@ -307,7 +309,7 @@ double	radius;
 		
 	mk_bsolid( stdout, name, 1, 0.1 );
 	mk_bsurf( stdout, bp );
-	rt_nurb_free_snurb( bp );
+	rt_nurb_free_snurb( bp, &rt_uniresource );
 }
 
 /* Returns -1 if done, 0 if something to draw */
