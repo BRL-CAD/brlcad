@@ -4,11 +4,14 @@
 #define MAX_PATH	8	/* Maximum depth of path */
 struct solid  {
 	float	s_size;		/* Distance across solid, in model space */
+	float	s_csize;	/* Dist across clipped solid (model space) */
 	vect_t	s_center;	/* Center point of solid, in model space */
 	unsigned s_addr;	/* Display processor's core address */
 	unsigned s_bytes;	/* Display processor's core length */
-	struct veclist *s_vlist;/* Pointer to vector list */
-	int	s_vlen;		/* Length of vector list (structs) */
+	struct veclist *s_vlist;/* Pointer to unclipped vector list */
+	int	s_vlen;		/* Len of unclipped vector list (structs) */
+	struct veclist *s_clipv;/* Pointer to clipped vector list */
+	int	s_clen;		/* Len of clipped vector list (structs) */
 	struct directory *s_path[MAX_PATH];	/* Full `path' name */
 	char	s_last;		/* index of last path element */
 	char	s_flag;		/* UP = object visible, DOWN = obj invis */
