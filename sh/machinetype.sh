@@ -52,7 +52,8 @@ if test "$BRLCAD_ROOT" != ""
 then
 	BASEDIR=$BRLCAD_ROOT
 else
-	#  Modified by newbindir.sh as part of the installation process, if needed.
+	#  This next line may be / may have been modified by
+	#  newbindir.sh or setup.sh as part of the installation process.
 	BASEDIR=/usr/brlcad
 fi
 
