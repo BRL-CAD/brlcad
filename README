@@ -16,8 +16,6 @@ data-compression utilities.  Also included is an implementation of
 Weiler's n-Manifold Geometry (NMG) data structures for surface-based
 solid models and photon mapping.
 
-BRL-CAD is a constructive solid geometry (CSG) software package 
-
 CONTENTS
 
 This README file exists only to provide you a brief roadmap to the
@@ -41,11 +39,10 @@ contact one of the BRL-CAD developers.
 
 INSTALLATION
 
-To install BRL-CAD, see the instructions in doc/install.doc. This file
-includes directions on the best way to get started with the
-distribution, as well as details on how to configure and install the
-software.  This file also includes directions on how to compile and
-run the benchmark tests.
+./autogen.sh
+./configure
+make
+make install
 
 BENCHMARK
 
@@ -62,17 +59,6 @@ software, read the paper "Understanding the Preparation and Analysis
 of Solid Models".
 
 DISTRIBUTION DETAILS
-
-This software is provided under the terms of several license
-agreements including the GNU General Public License (GPL), the GNU
-Library General Public License (LGPL), the Berkely Software
-Distribution License (BSD, revised), and the Free Documentation
-License (FDL).  There are also certain portions that are in the public
-domain.
-
-This software was previously governed by a limited distribution
-agreement.  The previous agreement continues to apply to the
-previously released versions of the BRL-CAD package.
 
 Full service distribution: The Survivability/Vulnerability Information
 Analysis Center (SURVIAC) administers the supported BRL-CAD
