@@ -1,0 +1,249 @@
+<html>
+<title>AnimMate: Track Animation documentation</title>
+<body>
+
+<h1><a name="top">Creating Articulated Track Animation Scripts</a></h1>
+The 
+<a href="./tscript.gif">track animation window</a>
+ is used to create animation scripts for an
+articulated track on a vehicle such as a tank or bulldozer. Among the
+inputs required for this window are a curve representing the movement of the 
+vehicle and a curve indicating the position of each of the wheels. 
+The script which is produced rotates the wheels and moves the track
+pads around the wheels 
+in a realistic way.
+The amount of
+rotation can be specified directly by the user, or AnimMate can
+calculate appropriate rotations based on the movement of the vehicle.
+When the track animation scripts are combined with a script 
+controlling the vehicle, the tracks appear to move the vehicle along its path.
+<p>
+The functions of the track animation window are implemented through a call to 
+<a href="./anim_track.html">anim_track</a>; advanced users may want to
+refer to anim_track's manual page, which describes
+some capabilities
+not accessed by the AnimMate interface.
+<h2><a name="Preparation">Preparation</a></h2>
+Before the track animation window can be used, some preparation is
+needed to ensure that the modeled vehicle can be animated correctly.
+For AnimMate, an articulated track consists of a number of
+identical track pads which AnimMate wraps around 
+two or more wheels in a circular chain. 
+All of the pads should have a common base
+name, with integer indexes starting at zero. For example, a track might
+have 80 track pads named pad.0, pad.1, ... pad.79. 
+The pads should all be instances of a prototype pad which is modeled
+with the inner, wheel-contacting
+surface centered on the model origin. The outer, ground-contacting surface of
+the pad should face the positive z direction. The forward end of the pad
+should face the positive x-axis.
+<p>
+The <var>n</var> wheels defining the track should have a common base name
+with integer indexes 0 to <var>n</var>-1. The wheels should be numbered
+in the direction a pad would move around them when the vehicle is moving
+forward (clockwise, when looking from the right). 
+Moreover, the zero-th wheel should be at the front and top, and the
+(<var>n</var>-1)th wheel should be at the back and top of the vehicle.
+The wheel centers
+should all lie in a plane perpendicular to the vehicle's left-right
+axis, and the axis of rotation of each wheel should be parallel to the
+vehicle's left-right axis. 
+<p>
+The purpose of each entry box in the track animation window
+is described below:
+<h2><a name="OFile">Output File</a></h2>
+The first entry box in the track animation window is labeled
+<b>Output file</b>. This box specifies the filename to be used
+when the animation script is created. If the file already exists, the
+user will be notified and given the option of overwriting the existing
+file or choosing a different filename.
+<h2><a name="VPFTable">Vehicle path from table</a></h2>
+The track animation window needs an animation table which specifies in some
+way how many output frames are desired and how far the track should roll
+in each frame. This information must be specified directly or indirectly
+in one of three different ways. If the <b>Distance</b> button is
+enabled, then the vehicle path table should contain two columns,
+representing time and the total distance the track should have 
+rolled in each frame.
+If <b>Pos. and
+ypr</b> is specified, the table should contain seven columns
+representing time and the  position, yaw, pitch, and roll of the
+vehicle to which 
+the track attached.
+AnimMate will calculate the distance the
+track should roll as the vehicle moves through the given positions and
+orientations. 
+If <b>Position</b> is enabled, the table should contain four columns
+representing time and the position of the vehicle in each frame.
+AnimMate assumes that the vehicle is always oriented to face the
+direction of motion, and calculates the distance the track should roll
+as the vehicle moves along its path.
+<p>
+Regardless of which format is used, the vehicle path table must be stored in a
+table editor, and the integer identifier of the table editor should be
+entered in the <b>Vehicle path from table</b> entry box.
+<h2><a name="WSFTable">Wheel specs from table</a></h2>
+The user must enter in this box the identifier of a table editor
+containing the wheel specifications for the track being animated.
+AnimMate uses this information to rotate the wheels and to define the
+shape of the track. The
+wheel spec table should have one row for each wheel.
+The first three columns of the table specify the center point of each
+wheel, and the fourth column specifies the radius of each wheel.
+The wheels should be specified in order, going from wheel zero up to
+wheel <var>n</var>-1.
+<h2><a name="WBName">Wheel base name</a></h2>
+The common base name of the wheels should be specified in the <b>Wheel
+base name</b> entry box. (See the 
+<a href="#Preparation">Preparation</a> subsection, above, for
+more information.)The base name includes the name of the group or
+region to which the wheels belong and the common base name of the
+wheels,
+but doesn't include the integer index.
+For example, if <var>wheel_0</var> through <var>wheel_3</var> are
+members of
+the group <var>rwheels</var>, then the base name is
+<var>rwheels/wheel_</var>.
+<p>
+If the <b>Wheel base name</b> entry box is left empty, then the output
+animation script won't 
+contain any animation commands for the wheels.
+The user should still supply the wheel spec table in order to define
+the shape of the track.
+<h2><a name="PBNANOPads">Pad base name and Number of pads</a></h2>
+The common base name of the pads should be specified in the <b>Pad base
+name</b> entry box. The base name includes the name of a group or region
+to which the wheels belong and the common base name of the pads, but
+doesn't include the integer index.
+For example, if
+<var>pad0</var> through <var>pad79</var> are members of the group
+<var>rtrack</var> then the base name is
+<var>rtrack/pad</var>. 
+If the pad base name is omitted, then the output scripts won't contain
+any animation commands for the pads. Either the pad base name, the wheel
+base name, or both, must be specified, or there will be no output.
+<p>
+The number of pads should be specified in the <b>Number of pads</b>
+entry box. 
+<h2><a name="TLength">Track length</a></h2>
+Three different track length options can be selected from the <b>track
+length</b> option menu. The default option is <b>Minimize track
+length</b>. In this case, the length of the track is assumed to be the
+minimum length needed to fit around the wheels defining the track. Any
+value specified in the track length entry box is ignored in this case.
+If the <b>Elastic track length</b> option is selected, then the desired
+length of the track should be entered in the track length entry box. If
+this length is longer than what is needed to fit around the wheels, then
+any excess length is taken up in a caternary arc which hangs between
+wheel zero and wheel (<var>n</var>-1). If the track length isn't long
+enough, the track is stretched just far enough to meet the need. The 
+<b>Rigid track length</b> is similar to the elastic option, with the
+following exeption:
+if in any frame of the
+animation the wheels are spread to widely for the track to fit around
+them, AnimMate generates an error message instead of stretching the
+track.
+<p>
+The minimum track length for a given set of wheel specifications can be
+obtained by pressing the <b>Get track length from wheel specs</b>
+button. The <b>Wheel specs from table</b> entry must be filled in before
+that button can function.
+<h2><a name="VCAOrientation">Vehicle Center and Orientation</a></h2>
+As explained in the section on 
+<b><a href="./oscript_doc.html#OCAOrientation">Object Center and Orientation</a></b>,
+when animating objects the user must provide a center point and an
+initial orientation. The center point is the point on or near the object
+which is moved to the positions in the animation table, and about which
+rotations occur. The initial orientation defines which direction the
+object considers to be forward, left, up, and so on. 
+<p>
+The same center point and orientation used in creating the object
+animation script for the vehicle should be entered into the appropriate
+entry boxes of the track animation window. 
+<P>
+The vehicle center and yaw, pitch, and roll can be keyboard edited after 
+clicking on the
+entry box with the mouse. As an alternative to keyboard entry, the user
+can click on the <b>Vehicle center</b> label to enter the current center
+point of the MGED display window, or click on the <b>Vehicle
+orientation</b> label to enter the current yaw, pitch, and roll of the
+display.
+<p>
+The center point and orientation are important parameters because they
+are used in defining the plane that the track will lie in 
+(perpendicular to the vehicle's left-right axis) and in determining the
+distance forward or backward that the track should roll in each frame.
+<h2><a name="FFrame">First Frame</a></h2>
+An animation script is made of a series of numbered frames. Each
+frame gives animation commands needed for one image in the final
+product. By default, the frames numbers for a given script begin at
+zero. If a different initial frame number is desired, it may be entered
+in the <b>First Frame</b> entry box. For example, the first frame number
+might be set to 300 when creating a script which will be appended onto
+the end of another script which is 300 frames long.
+<h2><a name="CGFFFrame">Create geometry file from frame</a></h2>
+Besides making an animation scripts for an articulated track, the track
+animation window can also help to create the original model of the
+track. When the <b>Create geometry file</b> button is enabled,
+MGED modeling commmands, rather than animation commands,
+are written to the output file. 
+The modeling commands operate on the
+matrices between the pads and their common parent. The commands can be
+applied to the model using MGED's "source" command, and 
+the vehicle must be redisplayed with the "e" command to view the
+results. 
+<p>
+The entry box
+corresponding to the <b>Create geometry file</b> button should contain
+the frame number of the 
+animation frame which is to be emulated. 
+For example, specifying frame 1
+means that the modeling commands will put the pads in the
+positions they would have in frame 1 of the animation script, if an
+animation script were to be created. 
+<h2><a name="EAStrobing">Enable Anti-Strobing</a></h2>
+In track animations, a strobing effect can sometimes cause the track to
+appear to stop, slow down, or move backwards. When the track is moving
+forward 
+at slow speeds, the position of a pad in a given frame is slightly
+forward of its position in the previous frame. However, when the track
+is moving faster, a pad might move far enough forward between frames so
+that it's position in a given frame is just behind the position its
+neighbor held during the previous frame. Since all the pads are
+identical, the eye assumes that it was actually the neighboring pad that
+moved slightly backward between frames. This creates the illusion of a
+backward-moving track.
+<p>
+The <b>Enable Anti-Strobing</b> option takes steps to avoid
+this strobing effect. When the track is moving at slow speeds which are
+not subject to strobing effects, this
+option has no effect.
+However, when the track speed exceeds a threshold (0.5 pad
+lengths per frame), AnimMate adds random jitter to
+the track movements. The effect on the eye is to replace the strobing
+problem with motion blur.
+<h2><a name="OButtons">Other Buttons</a></h2>
+<dl>
+<dt><b>OK</b>
+<dd>Create the animation script, leaving the track animation window in
+place for further work.
+<p>
+<dt><b>Show Script</b>
+<dd>Display a 
+<a href="./show_doc.html">window</a> 
+which can be used to run the animation script in
+the MGED display window. 
+<p><dt><b>Up</b>
+<dd> Raise the track animation window's parent to the top of the
+stacking order.
+<p><dt><b>Cancel</b>
+<dd>Close the track animation window.
+</dl>
+<hr>
+<a href="./combine_doc.html">Next Section: Combine Scripts</a>
+<p>
+<a href="./vscript_doc.html">Previous Section: Create View Script</a>
+<p>
+<a href="./anim_doc.html#index">Index</a>
+</body>
+</html>
