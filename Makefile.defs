@@ -46,6 +46,8 @@
 #  Either "BSD" or "SYSV" *MUST* be defined			#
 #								#
 #  Oddball compiler/loader directives should also go here	#
+#  On parallel machines, if h/machine.h does not define		#
+#  the PARALLEL flag, it should be done here.			#
 #								#
 #################################################################
 
@@ -58,6 +60,7 @@ SYSTEM		= -DBSD
 #ALLIANT#SYSTEM	= -DBSD -ce
 #GOULD#SYSTEM	= -DBSD -m 8
 #XMP#SYSTEM	= -DSYSV -DPARALLEL
+#XMP2.1#SYSTEM	= -DSYSV -DPARALLEL -holevel_0
 #CRAY2#SYSTEM	= -DSYSV -DPARALLEL -Dcray
 # Sun3, select correct floating point flag, or -fswitch if unsure (slower)
 #SUN3#SYSTEM	= -DBSD -f68881
@@ -133,7 +136,9 @@ SYSTEM		= -DBSD
 #	if_adage	Adage RDS-3000 ("Ikonas")		#
 #	if_sgi		SGI IRIS display			#
 #	if_ptty		AT&T 5620 w/special Moss layer		#
-#	if_sun		SUNView interface
+#	if_sun		SUNView interface			#
+#	if_ug		Ultra Graphics device			#
+#	if_rat		Raster Technology One/80 (24-bit RGB)	#
 #								#
 #  Edit all three LIBFB_* lines below similarly.		#
 #  NOTES:							#
@@ -190,8 +195,6 @@ LIBRT_TIMER	= timer42
 #								#
 #	Mostly useful for specification of multi-processing	#
 #	versions of libc, etc.					#
-#	On parallel machines, if h/machine.h does not define	#
-#	the PARALLEL flag, it should be done here.		#
 #								#
 #XMP#RT_CONFIG	= -L/lib/multi -lu
 #CRAY2#RT_CONFIG	= -lmt
@@ -215,7 +218,8 @@ LIBRT_TIMER	= timer42
 #	dm-mg		Megatek 7250				#
 #	dm-ir		SGI IRIS 2400,3030  (uses lib -lgl2)	#
 #	dm-sun		SUN 3.2 Pixwin				#
-#	dm-rat		Raster Tech One/80			#
+#	dm-rat		Raster Tech One/180,380			#
+#	dm-rat80	Raster Tech One/80			#
 #	dm-ps		E&S Picture System 300			#
 #	dm-mer		Megatek Merlin 9200	[ Marginal ]	#
 #	dm-sab		Saber w/GOPS		[ Marginal ]	#
@@ -298,15 +302,27 @@ LIBRT		= ../librt/librt.${ARCH_SUF}
 LIBPLOT		= ../libplot3/libplot3.${ARCH_SUF}
 LIBRLE		= ../librle/librle.${ARCH_SUF}
 LIBPKG		= ../libpkg/libpkg.${ARCH_SUF}
+LIBWDB		= ../libwdb/libwdb.${ARCH_SUF}
 LIBSPL		= ../libspl/libspl.${ARCH_SUF}
 LIBTERMLIB	= -ltermlib
 #XMP#LIBTERMLIB	= -lcurses
 LIBTERMIO	= ../libtermio/libtermio.${ARCH_SUF}
 LIBCURSOR	= ../libcursor/libcursor.${ARCH_SUF}
-LIBMALLOC	= ../libmalloc/libmalloc.${ARCH_SUF}
-#SUN#LIBMALLOC	=	# Forced to use SUN and Alliant malloc
 LIBSYSV		= ../libsysv/libsysv.${ARCH_SUF}
 #SYSV#LIBSYSV	=
+
+# For strictly serial machines, the Princeton malloc() in libmalloc
+# uses address space and physical memory more efficiently than the
+# Berkeley/CalTech malloc(), but with the same performance advantage.
+# It works well on VAXen and Goulds and SGIs.  Sadly, it does not work
+# on the SUNs.
+# For parallel machines, the vendor's malloc() typically needs to be
+# used, to handle parallel stack frame expansion, etc.  This is
+# significant on the Cray and HEP, and perhaps others.
+LIBMALLOC	= ../libmalloc/libmalloc.${ARCH_SUF}
+#SUN#LIBMALLOC	=	# Forced to use vendor malloc
+#XMP#LIBMALLOC	=	# Forced to use vendor malloc
+#CRAY2#LIBMALLOC	=	# Forced to use vendor malloc
 
 # Directory within CAD Package for header files
 INCDIR		= ../h
@@ -357,7 +373,7 @@ INS		= cp
 # im117-raw is Chuck's office
 TYPESET_MAN1	= tbl /usr/lib/tmac/tmac.an
 TYPESET_MAN2	= | /usr/5lib/troff -Ti300 | /usr/5bin/dimp -t | \
-		    qpr -q im217-raw
+		    qpr -q im217
 #TYPESET_MAN1	= tbl /usr/lib/tmac/tmac.an 
 #TYPESET_MAN2	= | /usr/5lib/troff -Ti10 | /usr/5bin/di10 -t | \
 		    qpr -q im328-raw
