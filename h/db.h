@@ -290,8 +290,10 @@ union record  {
 		char	ss_id;			/* ID_STRSOL */
 		char	ss_pad;
 		char	ss_name[NAMESIZE];	/* solid name */
-#define DB_SS_LEN	(DB_MINREC-NAMESIZE-2)
-		char	ss_str[DB_SS_LEN];	/* string keyword & values */
+#define DB_SS_NGRAN	8			/* All STRSOL's have this many granules */
+#define DB_SS_LEN	(DB_SS_NGRAN*DB_MINREC-2*NAMESIZE-2)
+		char	ss_keyword[NAMESIZE];	/* solid keyword */
+		char	ss_args[4];		/* DB_SS_LEN bytes of str args */
 	}  ss;
 	struct arbn_rec  {
 		char	n_id;			/* DBID_ARBN */
