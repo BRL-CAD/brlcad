@@ -198,7 +198,8 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	VSCALE( &R[8], C, f );
 	mat_trn( Rinv, R );			/* inv of rot mat is trn */
 
-	/* Compute SoS.  Uses 3x3 of the 4x4 matrix */
+	/* Compute SoS (Affine transformation) */
+	mat_idn( SS );
 	SS[ 0] = invsq[0];
 	SS[ 5] = invsq[1];
 	SS[10] = invsq[2];
