@@ -700,24 +700,9 @@ Ir_epilog()
 
 /*
  *  			I R _ N E W R O T
- *  Stub.
- */
-void
-Ir_newrot(mat)
-mat_t mat;
-{
-}
-
-/*
- *  			I R _ O B J E C T
- *  
- *  Set up for an object, transformed as indicated, and with an
- *  object center as specified.  The ratio of object to screen size
- *  is passed in as a convienience.  Mat is model2view.
  *
- *  Returns -
- *	 0 if object could be drawn
- *	!0 if object was omitted.
+ *  Load a new rotation matrix.  This will be followed by
+ *  many calls to Ir_object().
  *
  *  IMPORTANT COORDINATE SYSTEM NOTE:
  *
@@ -739,22 +724,14 @@ mat_t mat;
  *  the direction of the shade ramps.  Now, with the Z-buffer being used,
  *  the correct solution is important.
  */
-int
-Ir_object( sp, m, ratio, white )
-register struct solid *sp;
-register fastf_t *m;
-double ratio;
-int white;
+void
+Ir_newrot(mat)
+mat_t	mat;
 {
-	register struct rt_vlist	*vp;
-	register int nvec;
-	register float	*gtvec;
-	char	gtbuf[16+3*sizeof(double)];
 	register fastf_t *mptr;
-	Matrix gtmat;
-	int first;
-	int i,j;	
-	mat_t	mtmp, newm;
+	Matrix	gtmat;
+	mat_t	newm;
+	int	i,j;	
 
 	/* It seems that this needs to be done before the loadmatrix() */
 	if( ir_is_gt && lighting_on )  {
@@ -766,32 +743,23 @@ int white;
 		lmbind(MATERIAL, 20);
 	}
 
-
-	/*
-	 *  It is claimed that the "dancing vector disease" of the
-	 *  4D GT processors is due to the array being passed to v3f()
-	 *  not being quad-word aligned (16-byte boundary).
-	 *  This hack ensures that the buffer has this alignment.
-	 *  Note that this requires gtbuf to be 16 bytes longer than needed.
-	 */
-	gtvec = (float *)((((int)gtbuf)+15) & (~0xF));
-
 	/* This section has the potential of being speed up since a new
 	 * matrix is loaded for each object. Even though its the same
 	 * matrix.
 	 */
 	if( perspective_mode ) {
-		mat_mul( newm, perspect_mat, m );
-		m = newm;
+		mat_mul( newm, perspect_mat, mat );
+		mptr = newm;
 	} else if( ! zclipping_on ) {
-		mat_mul( newm, nozclip_mat, m );
-		m = newm;
+		mat_mul( newm, nozclip_mat, mat );
+		mptr = newm;
+	} else {
+		mptr = mat;
 	}
-
-	mptr = m;
-	for(i= 0; i < 4; i++)
-	for(j= 0; j < 4; j++)
-		gtmat[j][i] = *(mptr++);
+	for(i= 0; i < 4; i++) {
+		for(j= 0; j < 4; j++)
+			gtmat[j][i] = *(mptr++);
+	}
 
 	/*
 	 *  Convert between MGED's right handed coordinate system
@@ -804,7 +772,51 @@ int white;
 	gtmat[3][2] = -gtmat[3][2];
 
 	loadmatrix( gtmat );
+}
 
+/*
+ *  			I R _ O B J E C T
+ *  
+ *  Set up for an object, transformed as indicated, and with an
+ *  object center as specified.  The ratio of object to screen size
+ *  is passed in as a convienience.  Mat is model2view.
+ *
+ *  Returns -
+ *	 0 if object could be drawn
+ *	!0 if object was omitted.
+ */
+int
+Ir_object( sp, m, ratio, white )
+register struct solid *sp;
+register fastf_t *m;
+double ratio;
+int white;
+{
+	register struct rt_vlist	*vp;
+	register int nvec;
+	register float	*gtvec;
+	char	gtbuf[16+3*sizeof(double)];
+	int first;
+	int i,j;	
+
+	/* It seems that this needs to be done before the loadmatrix() */
+	if( ir_is_gt && lighting_on )  {
+		/* Separate projection matrix from
+		 * modeling and viewing xforms.
+		 */
+		mmode(MVIEWING);
+		/* Select the material */
+		lmbind(MATERIAL, 20);
+	}
+
+	/*
+	 *  It is claimed that the "dancing vector disease" of the
+	 *  4D GT processors is due to the array being passed to v3f()
+	 *  not being quad-word aligned (16-byte boundary).
+	 *  This hack ensures that the buffer has this alignment.
+	 *  Note that this requires gtbuf to be 16 bytes longer than needed.
+	 */
+	gtvec = (float *)((((int)gtbuf)+15) & (~0xF));
 
 	/*
 	 * IMPORTANT DEPTHCUEING NOTE

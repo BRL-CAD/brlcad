@@ -58,18 +58,21 @@ dozoom()
 {
 	register struct solid *sp;
 	FAST fastf_t ratio;
+	fastf_t		inv_viewsize;
 
 	ndrawn = 0;
+	inv_viewsize = 1 / VIEWSIZE;
 
 	/*
-	 * Compute translation vector & scale factor for all solids
+	 * Draw all solids not involved in an edit.
 	 */
+	dmp->dmr_newrot( model2view );
 	FOR_ALL_SOLIDS( sp )  {
 		/* If part of object rotation, will be drawn below */
 		if( sp->s_iflag == UP )
 			continue;
 
-		ratio = sp->s_size / VIEWSIZE;
+		ratio = sp->s_size * inv_viewsize;
 		sp->s_flag = DOWN;		/* Not drawn yet */
 
 		/*
@@ -86,13 +89,12 @@ dozoom()
 	}
 
 	/*
-	 * Compute translation vector & scale factor for solids involved in
-	 * Object edits.
+	 *  Draw all solids involved in editing.
+	 *  They may be getting transformed away from the other solids.
 	 */
 	if( state == ST_VIEW )
 		return;
 
-	/* Output special Rotation matrix, when needed */
 	dmp->dmr_newrot( model2objview );
 
 	FOR_ALL_SOLIDS( sp )  {
@@ -100,7 +102,7 @@ dozoom()
 		if( sp->s_iflag != UP )
 			continue;
 
-		ratio = (sp->s_size / modelchanges[15]) / VIEWSIZE;
+		ratio = (sp->s_size / modelchanges[15]) * inv_viewsize;
 		sp->s_flag = DOWN;		/* Not drawn yet */
 
 		/*
