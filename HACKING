@@ -15,6 +15,15 @@ encouraged to follow these guidelines.  There are simply too many
 religious wars over what usually come down to personal preferences and
 familiarity that are distractions from making productive progress.
 
+Although BRL-CAD was originally developed and supported primarily by
+the U.S. Army Research Laboratory and it's affiliates, it is now a
+true Open Source project with source code contributions coming from
+around the world.  The U.S. Army Research Laboratory continues to
+support and contribute to BRL-CAD, but now the source code is
+primarily driven by a team of core developers and the BRL-CAD open
+source community.  Contact the BRL-CAD developers for more
+information.
+
 
 TABLE OF CONTENTS
 -----------------
@@ -38,6 +47,40 @@ TABLE OF CONTENTS
 GETTING STARTED
 ---------------
 
+As there are many ways to get started with BRL-CAD, one of the most
+important steps for new developers to do is get involved in the
+discussions and communicate with the BRL-CAD developers.  There are
+mailing lists, on-line forums, and an IRC channel dedicated to BRL-CAD
+developer communication.  Developers are encouraged to participate in
+all of them.
+
+* E-mail Mailing Lists
+
+  Go to http://sourceforge.net/mail/?group_id=105292 and join the
+  "brlcad-devel" mailing list.  More involved developers will also
+  want to join the "brlcad-commits" and "brlcad-tracker" lists.
+
+* On-line Forums
+
+  Discussion forums are available on the project site at
+  http://sourceforge.net/forum/?group_id=105292 for both developers
+  and users.  Of particular interest to developers is, of course, the
+  "Developers" forum.
+
+* Internet Relay Chat
+
+  The primary and generally preferred mechanism for interactive
+  developer discussions is via IRC.  Several of the core developers
+  and users of BRL-CAD hang out in #brlcad on the Freenode network.
+  With most any IRC client you should be able to join #brlcad on
+  irc.freenode.net, port 6667.  See http://freenode.net and
+  http://irchelp.org for more information
+
+To contribute source code to BRL-CAD, begin by submiting source code
+patches to the patches section at http://sf.net/projects/brlcad/.
+Patches in the universal diff format (diff -u) are preferred.
+
+
 HOW TO CONTRIBUTE
 -----------------
 
@@ -47,14 +90,20 @@ there is some new goal you already have in mind, be it a new geometry
 converter, support for a different image type, a fix to some bug, or
 something else entirely.  Regardless of the goal or contribution, it's
 highly encouraged that you interact with the developers and discuss
-your intentions.  When in doubt, working on resolving existing bugs,
-improving performance, documentation, and writing tests are perfect
-places to begin.
+your intentions if you would like to see your modification added to
+BRL-CAD.  When in doubt, working on resolving existing bugs, improving
+performance, documentation, and writing tests are perfect places to
+begin.
 
 For many, at first, it can be overwhelming at just how much there is.
 To a certain extent, you will need to familiarize yourself with the
-basic existing facilities before adding a completely new feature.  It
-is not uncommmon that some particular piece of code that you are
+basic existing facilities before adding a completely new feature.
+There is documentation available at in the source distribution's doc/
+directory, throughout the source heirarchy in manpages, and at
+http://sourceforge.net/docman/?group_id=105292 covering a variety of
+topics.  
+
+It is not uncommmon that some particular piece of code that you are
 either working on or thinking about writing is in fact already
 written.  Again, working with the other developers and reading the
 source code itself is a great place to begin.
@@ -63,12 +112,12 @@ source code itself is a great place to begin.
 SYSTEM ARCHITECTURE
 -------------------
 
-At a glance, BRL-CAD consists of about a dozen libraries and about 400
+At a glance, BRL-CAD consists of about a dozen libraries and over 400
 executable binaries.  The package has been designed from the ground up
-adopting a UNIX methodology, providing many tools that may be used in
-harmony in order to complete a task at hand.  These tools include
-geometry and image converters, image and signal processing tools,
-various raytrace applications, and geometry manipulators.
+adopting a UNIX methodology, providing many tools that may often be
+used in harmony in order to complete a task at hand.  These tools
+include geometry and image converters, image and signal processing
+tools, various raytrace applications, and geometry manipulators.
 
 One of the firm designs of the architecture is to be as cross-platform
 as is realistically possible.  As such, BRL-CAD maintains support for
@@ -143,7 +192,8 @@ models, as well as various visual effects such as texturing, marble,
 wood graining, air, gravel, grass, clouds, fire, and more.
 
 liborle: The "old" run-length encoding library that will decode and
-encode University of Utah Raster Toolkit format Run-Length Encoded data.
+encode University of Utah Raster Toolkit format Run-Length Encoded
+data.
 
 libpkg: The "Package" library is a network communications library that
 supports multiplexing and demultiplexing syncronous and asynchronous
@@ -239,8 +289,8 @@ CODING STYLE
 ------------
 
 For anyone who plans on contributing code, the following conventions
-should be followed.  Contributions that do not conform will be
-rediculed and rejected until they do.
+should be followed.  Contributions that do not conform are likely to
+be rediculed and rejected until they do.
 
 Code Organization:
 
@@ -276,9 +326,9 @@ are generally the baseline for strict language conformance.
 Particulars of the usage of the language calls special attention to
 the following:
 
-globals are discouraged - globals are often the easy way around a hard
-coding problem, try to find another solution unless there is a good
-reason.
+Globals variables, structures, and other data types are discouraged -
+globals are often the easy way around a hard coding problem, try to
+find another solution unless there is a good reason.
 
 "//" style comments are not allowed.  This is mainly to cause less
 grief when porting to the older systems where such support is
@@ -345,7 +395,7 @@ Variable names should start with a lowercase letter.
   double _localVar;     /* bad (looks like member variable)      */
 
 Variables are not to be "decorated" to show their type (i.e. do not
-use Hungarian notation or variations thereof) with a slight exception
+use Hungarian notation or variations thereof) with aq slight exception
 for pointers on occasion.  The name should use a concise, meaningful
 name that is not cryptic (you typing a descriptive name is preferred
 over someone else hunting down what it meant).
@@ -398,7 +448,7 @@ functions:
 /** Computes the answer to the meaning of life, the universe, and
  *  everything.
  */
-int everything() { return 42; };
+int the_answer() { return 42; };
 
 
 TESTING
@@ -453,10 +503,10 @@ Patches that are difficult to apply are difficult to accept.
 BUGS
 ----
 
-When a bug or unexpected behavior is encountered, it needs to be
-documented.  If you are a BRL-CAD developer, this means either making
-a comment in the BUGS file or by making a formal report to the
-SourceForge bug tracker at:
+When a bug or unexpected behavior is encountered that cannot be
+quickly fixed, it needs to be documented.  If you are already a
+BRL-CAD developer, this means either making a comment in the BUGS file
+or by making a formal report to the SourceForge bug tracker at:
 
 http://sourceforge.net/tracker/?atid=640802&group_id=105292&func=browse
 
@@ -464,8 +514,8 @@ If the bug is complicated, will require discussion, cannot be fixed
 any time soon, or if you do not have CVS commit access, the issue
 should be reported to the SourceForge bug tracker.  The issues listed
 in BUGS are not necessarily listed in bug tracker, and vice-versa.
-The BUGS files is merely maintained as a convenience notepad of long
-and short term issues for the developers.
+The BUGS file is merely maintained as a convenience notepad of long
+and short term issues for the developers only.
 
 
 COMMIT ACCESS
@@ -474,7 +524,7 @@ COMMIT ACCESS
 Details on the particulars of how to interact with CVS are described
 in the doc/cvspolicy.txt document.  In brief, BRL-CAD has a STABLE
 branch in CVS that should always compile and run with expected
-behavior on all supported platforms.  On the contrary, while the CVS 
+behavior on all supported platforms.  On the contrary, while the CVS
 HEAD is generally always expected to compile, more flexibility is
 allowed for resolution of cross-platform build issues.  Read the CVS
 policy document for more details.
@@ -536,3 +586,82 @@ patch version.  Every development version modification that is
 backwards incompatible in some manner should increment the patch
 version number.
 
+MAKING A RELEASE
+----------------
+
+When making a release, certain public repositories, mailing lists, and
+news outlets require updating and notification.  Especially when the
+major or minor version of BRL-CAD is going to be updated, it is very
+important to follow and ensure that the following steps have been
+successfully performed:
+
+0) All code is commited to CVS.
+
+1) Changelog and NEWS include a comment for all relevant and
+significant items added since the previous release.
+
+2) All existing manpages are updated with the latest changes.
+
+3) Version numbers (minimally in configure.ac and README) are updated
+appropriately (see VERSION NUMBERS & COMPATIBILITY section).
+
+4) A "./configure && make" completes successfully on all platforms.
+
+5) Perform a "make distcheck" successfully.  This will ensure that a
+proper source distribution tarball may be generated and that a build
+should compile properly regardless of the existence of the GNU Build
+System tools (autoconf, automake, etc).
+
+6) Tag the release using the format "rel-MAJOR-MINOR-PATCH".  See the
+doc/cvspolicy.txt document for details.  e.g. cvs tag rel-7-2-4
+
+7) Export the tagged release "cvs export -r rel-MAJOR-MINOR-PATCH" to
+obtain exactly the tagged version of the sources.
+
+8) Perform a "make dist" on the exported sources to generate a
+distributable source tarball.
+
+9) Verify that the source tarball may be expanded; and that it builds,
+runs, and that the file permissions are correct.
+
+10) Use the source tarball to generate platform-specific builds.  Test
+the build.
+
+11) Post the source and platform-specific binaries to the SourceForge
+file tracker (i.e. upload the archives via ftp to http://cvs.sf.net).
+
+12) Increment and commit the BRL-CAD release number in CVS in the
+configure.ac file immediately to a developer version (odd number).
+
+13) Notify and/or update the following:
+
+      BRL-CAD News mailing list
+      brlcad-news@lists.sourceforge.net
+
+      BRL-CAD Users mailing list
+      brlcad-users@lists.sourceforge.net
+
+      News on the BRL-CAD website
+      http://brlcad.org/
+
+      SourceForge Project News
+      http://sf.net/projects/brlcad/
+
+      Freshmeat
+      http://freshmeat.net/projects/brl-cad/
+
+      Slashdot
+      http://slashdot.org
+
+      CAD on Linux mailing list
+      cad-linux@freelists.org
+
+14) Sit back and enjoy a beverage for a job well done.
+
+
+GETTING HELP
+------------
+
+See the GETTING STARTED section above.  Basically communicate with the
+existing developers.  There is an IRC channel, e-mail mailing lists,
+and on-line forums.
