@@ -263,7 +263,7 @@ int	which_eye;
 	FAST fastf_t		ratio;
 	fastf_t			inv_viewsize;
 	mat_t			new;
-	matp_t			mat;
+	matp_t			mat = new;
 	int 			linestyle = -1;  /* not dashed */
 	short 			r = -1;
 	short 			g = -1;
