@@ -28,6 +28,9 @@
 #include <stdio.h>
 #include <errno.h>
 #include <sys/types.h>
+#if defined(vax) && defined(BSD) && BSD < 44
+#undef BSD	/* /usr/include/sys/param.h redefines this */
+#endif
 #include <sys/param.h>			/* for MAXPATHLEN */
 #include <sys/stat.h>
 
