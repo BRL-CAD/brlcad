@@ -43,8 +43,9 @@ static void describe_node (struct rb_node *node, int depth)
     rt_log("%*s  left:   <%x>\n", depth * 2, "", rb_left_child(node, d_order));
     rt_log("%*s  right:  <%x>\n", depth * 2, "", rb_right_child(node, d_order));
     rt_log("%*s  color:  %s\n",
-	    depth * 2, "", (rb_get_color(node, d_order) == RB_RED) ? "RED"
-								   : "BLACK");
+	    depth * 2, "",
+	    (rb_get_color(node, d_order) == RB_RED) ? "RED" :
+	    (rb_get_color(node, d_order) == RB_BLACK) ? "BLACK" : "Huhh?");
     rt_log("%*s  package: <%x> ", depth * 2, "", package);
 #else
     rt_log("%*s", depth * 8, "");
