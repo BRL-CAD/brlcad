@@ -72,14 +72,12 @@ extern void ogl_configureWindow();
 extern int ogl_refresh();
 #endif
 
-#ifdef IF_X
-#ifndef WIN32
+#if defined(IF_X) && !defined(WIN32)
 extern void X24_configureWindow();
 extern int X24_refresh();
 extern int X24_open_existing();
 extern int X24_close_existing();
 extern FBIO X24_interface;
-#endif
 #endif
 
 int fb_tcl_open_existing();
@@ -140,7 +138,12 @@ fb_tcl_open_existing(clientData, interp, argc, argv)
 	}
 
 #ifndef WIN32
-	if(stricmp(argv[1], X_name) == 0){
+#  if defined(HAVE_STRCASECMP)
+	if(strcasecmp(argv[1], X_name) == 0)
+#  else
+	if(stricmp(argv[1], X_name) == 0)
+#  endif
+	  {
 		*ifp = X24_interface; /* struct copy */
 
 		ifp->if_name = malloc((unsigned)strlen(X_name) + 1);
@@ -165,7 +168,12 @@ fb_tcl_open_existing(clientData, interp, argc, argv)
 #ifndef WIN32
 	else 
 #endif
-		if(stricmp(argv[1], ogl_name) == 0){
+#if defined(HAVE_STRCASECMP)
+		if(strcasecmp(argv[1], ogl_name) == 0)
+#else
+		if(stricmp(argv[1], ogl_name) == 0)
+#endif
+		  {
 		*ifp = ogl_interface; /* struct copy */
 
 		ifp->if_name = malloc((unsigned)strlen(ogl_name) + 1);
@@ -243,7 +251,12 @@ fb_tcl_close_existing(clientData, interp, argc, argv)
 	FB_TCL_CK_FBIO(ifp);
 	_fb_pgflush(ifp);
 #ifndef WIN32
-	if(stricmp(ifp->if_name, X_name) == 0){
+#if defined(HAVE_STRCASECMP)
+	if(strcasecmp(ifp->if_name, X_name) == 0)
+#else
+	if(stricmp(ifp->if_name, X_name) == 0)
+#endif
+	  {
 		if((status = X24_close_existing(ifp)) <= -1){
 			bu_vls_init(&vls);
 			bu_vls_printf(&vls, "fb_close_existing: can not close device \"%s\", ret=%d.\n",
@@ -261,7 +274,12 @@ fb_tcl_close_existing(clientData, interp, argc, argv)
 #ifndef WIN32
 	else
 #endif
-		if(stricmp(ifp->if_name, ogl_name) == 0){
+#if defined(HAVE_STRCASECMP)
+		if(strcasecmp(ifp->if_name, ogl_name) == 0)
+#else
+		if(stricmp(ifp->if_name, ogl_name) == 0)
+#endif
+		  {
 		if((status = ogl_close_existing(ifp)) <= -1){
 			bu_vls_init(&vls);
 			bu_vls_printf(&vls, "fb_close_existing: can not close device \"%s\", ret=%d.\n",
