@@ -263,6 +263,9 @@ RT_DECLARE_INTERFACE(cline)
 
 RT_DECLARE_INTERFACE(bot)
 
+#define rt_superell_xform rt_generic_xform
+RT_DECLARE_INTERFACE(superell)
+
 /* from db5_comb.c */
 int rt_comb_export5(
 	struct bu_external		*ep,
@@ -1004,6 +1007,20 @@ const struct rt_functab rt_functab[] = {
 		rt_nul_make,
 	},
 
+	{RT_FUNCTAB_MAGIC, "ID_SUPERELL", "superell",
+		1,		/* 35 but "should" be 31 Superquadratic Ellipsoid  */
+		rt_superell_prep,	rt_superell_shot,	rt_superell_print,	rt_superell_norm,
+		rt_nul_piece_shot, rt_nul_piece_hitsegs,
+		rt_superell_uv,	rt_superell_curve,	rt_superell_class,	rt_superell_free,
+		rt_superell_plot,	rt_superell_vshot,	rt_superell_tess,	rt_superell_tnurb,
+		rt_superell_import5, rt_superell_export5,
+		rt_superell_import,	rt_superell_export,	rt_superell_ifree,
+		rt_superell_describe,rt_superell_xform,	rt_superell_parse,
+		sizeof(struct rt_superell_internal), RT_SUPERELL_INTERNAL_MAGIC,
+		rt_parsetab_tclget, rt_parsetab_tcladjust, rt_parsetab_tclform,
+		NULL,
+	},
+
 	{0L, ">ID_MAXIMUM", ">id_max",
 		0,		/* this entry for sanity only */
 		rt_nul_prep,	rt_nul_shot,	rt_nul_print,	rt_nul_norm,
@@ -1158,8 +1175,7 @@ static char idmap[] = {
  *  Returns ID_xxx if successful, or ID_NULL upon failure.
  */
 int
-rt_id_solid( ep )
-struct bu_external	*ep;
+rt_id_solid(struct bu_external *ep)
 {
 	register union record *rec;
 	register int id;
@@ -1245,8 +1261,7 @@ struct bu_external	*ep;
  *  find the appropriate entry in rt_functab[].
  */
 const struct rt_functab *
-rt_get_functab_by_label( label )
-const char *label;
+rt_get_functab_by_label(const char *label)
 {
 	register const struct rt_functab	*ftp;
 

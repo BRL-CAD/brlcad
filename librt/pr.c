@@ -40,8 +40,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
  *			R T _ P R _ S O L T A B
  */
 void
-rt_pr_soltab( stp )
-register const struct soltab	*stp;
+rt_pr_soltab(register const struct soltab *stp)
 {
 	register int	id = stp->st_id;
 
@@ -65,8 +64,7 @@ register const struct soltab	*stp;
  *			R T _ P R _ R E G I O N
  */
 void
-rt_pr_region( rp )
-register const struct region *rp;
+rt_pr_region(register const struct region *rp)
 {
 	struct bu_vls	v;
 
@@ -104,10 +102,7 @@ register const struct region *rp;
  *
  */
 void
-rt_pr_partitions( rtip, phead, title )
-const struct rt_i		*rtip;
-register const struct partition	*phead;
-const char			*title;
+rt_pr_partitions(const struct rt_i *rtip, register const struct partition *phead, const char *title)
 {
 	register const struct partition *pp;
 	struct bu_vls		v;
@@ -137,10 +132,7 @@ const char			*title;
  *			R T _ P R _ P T _ V L S
  */
 void
-rt_pr_pt_vls( v, rtip, pp )
-struct bu_vls			*v;
-const struct rt_i		*rtip;
-register const struct partition *pp;
+rt_pr_pt_vls(struct bu_vls *v, const struct rt_i *rtip, register const struct partition *pp)
 {
 	register const struct soltab	*stp;
 	register struct seg		**segpp;
@@ -202,9 +194,7 @@ register const struct partition *pp;
  *			R T _ P R _ P T
  */
 void
-rt_pr_pt( rtip, pp )
-const struct rt_i		*rtip;
-register const struct partition *pp;
+rt_pr_pt(const struct rt_i *rtip, register const struct partition *pp)
 {
 	struct bu_vls	v;
 
@@ -220,9 +210,7 @@ register const struct partition *pp;
  *			R T _ P R _ S E G _ V L S
  */
 void
-rt_pr_seg_vls( v, segp )
-struct bu_vls			*v;
-register const struct seg	*segp;
+rt_pr_seg_vls(struct bu_vls *v, register const struct seg *segp)
 {
 	BU_CK_VLS(v);
 	RT_CK_SEG(segp);
@@ -242,8 +230,7 @@ register const struct seg	*segp;
  *			R T _ P R _ S E G
  */
 void
-rt_pr_seg(segp)
-register const struct seg *segp;
+rt_pr_seg(register const struct seg *segp)
 {
 	struct bu_vls		v;
 
@@ -259,9 +246,7 @@ register const struct seg *segp;
  *			R T _ P R _ H I T
  */
 void
-rt_pr_hit( str, hitp )
-const char			*str;
-register const struct hit	*hitp;
+rt_pr_hit(const char *str, register const struct hit *hitp)
 {
 	struct bu_vls		v;
 
@@ -277,10 +262,7 @@ register const struct hit	*hitp;
  *			R T _ P R _ H I T _ V L S
  */
 void
-rt_pr_hit_vls( v, str, hitp )
-struct bu_vls			*v;
-const char			*str;
-register const struct hit	*hitp;
+rt_pr_hit_vls(struct bu_vls *v, const char *str, register const struct hit *hitp)
 {
 	BU_CK_VLS( v );
 	RT_CK_HIT(hitp);
@@ -296,11 +278,7 @@ register const struct hit	*hitp;
  *			R T _ P R _ H I T A R R A Y _ V L S
  */
 void
-rt_pr_hitarray_vls( v, str, hitp, count )
-struct bu_vls			*v;
-const char			*str;
-register const struct hit	*hitp;
-int				count;
+rt_pr_hitarray_vls(struct bu_vls *v, const char *str, register const struct hit *hitp, int count)
 {
 	int	i;
 
@@ -325,9 +303,9 @@ int				count;
  *  this subroutine may overwhelm the stack on complex expressions.
  */
 void
-rt_pr_tree( tp, lvl )
-register const union tree *tp;
-int lvl;			/* recursion level */
+rt_pr_tree(register const union tree *tp, int lvl)
+                              
+        			/* recursion level */
 {
 	register int i;
 
@@ -413,9 +391,7 @@ int lvl;			/* recursion level */
  *  Operations are responsible for generating white space.
  */
 void
-rt_pr_tree_vls( vls, tp )
-struct bu_vls		*vls;
-register const union tree *tp;
+rt_pr_tree_vls(struct bu_vls *vls, register const union tree *tp)
 {
 	char		*str;
 
@@ -509,8 +485,7 @@ register const union tree *tp;
  *  Uses recursion and lots of malloc/free activity.
  */
 char *
-rt_pr_tree_str( tree )
-const union tree *tree;
+rt_pr_tree_str(const union tree *tree)
 {
 	char *left,*right;
 	char *return_str;
@@ -582,11 +557,11 @@ const union tree *tree;
  *	2	bit number
  */
 void
-rt_pr_tree_val( tp, partp, pr_name, lvl )
-register const union tree *tp;		/* Tree to print */
-const struct partition	*partp;		/* Partition to evaluate */
-int			pr_name;	/* 1=print name, 0=print value */
-int			lvl;		/* Recursion level */
+rt_pr_tree_val(register const union tree *tp, const struct partition *partp, int pr_name, int lvl)
+                              		/* Tree to print */
+                      	       		/* Partition to evaluate */
+   			        	/* 1=print name, 0=print value */
+   			    		/* Recursion level */
 {
 
 	if( lvl == 0 )  {
@@ -685,10 +660,7 @@ out:
  *			R T _ P R _ F A L L B A C K _ A N G L E
  */
 void
-rt_pr_fallback_angle( str, prefix, angles )
-struct bu_vls	*str;
-const char	*prefix;
-const double	angles[5];
+rt_pr_fallback_angle(struct bu_vls *str, const char *prefix, const double *angles)
 {
 	BU_CK_VLS(str);
 
@@ -705,9 +677,7 @@ const double	angles[5];
  *  In degrees.
  */
 void
-rt_find_fallback_angle( angles, vec )
-double		angles[5];
-const vect_t	vec;
+rt_find_fallback_angle(double *angles, const fastf_t *vec)
 {
 	register double	f;
 	double		asinZ;
@@ -777,8 +747,7 @@ const vect_t	vec;
  *  Print a tolerance structure.
  */
 void
-rt_pr_tol(tol)
-const struct bn_tol	*tol;
+rt_pr_tol(const struct bn_tol *tol)
 {
 	BN_CK_TOL(tol);
 
@@ -791,8 +760,7 @@ const struct bn_tol	*tol;
  *			R T _ P R _ U V C O O R D
  */
 void
-rt_pr_uvcoord( uvp )
-const struct uvcoord *uvp;
+rt_pr_uvcoord(const struct uvcoord *uvp)
 {
 	bu_log("%8.8x u,v=(%g, %g), du,dv=(%g, %g)\n",
 		uvp->uv_u, uvp->uv_v,

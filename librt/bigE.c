@@ -56,7 +56,7 @@ struct dg_client_data {
 	int			num_halfs;
 };
 
-union E_tree *build_etree();
+union E_tree *build_etree(union tree *tp, struct dg_client_data *dgcdp);
 
 /* segment types (stored in the "seg_stp" field of the (struct seg) */
 #define	ON_SURF	(struct soltab *)0x1
@@ -113,7 +113,7 @@ union E_tree
 #define	CK_ETREE(_p)		BU_CKMAG( _p, E_TREE_MAGIC, "struct E_tree" )
 
 void
-Edrawtree( dp )
+Edrawtree(int dp)
 {
 	return;
 }
@@ -326,8 +326,7 @@ build_etree(union tree			*tp,
 
 /* a handy routine (for debugging) that prints asegment list */
 void
-show_seg( seg, str )
-struct bu_list *seg;
+show_seg(struct bu_list *seg, int str)
 {
 	struct seg *ptr;
 

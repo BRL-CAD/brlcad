@@ -116,16 +116,7 @@ RT_EXTERN( void rt_pipe_ifree, (struct rt_db_internal *ip) );
 
 
 HIDDEN int
-rt_bend_pipe_prep( stp, head, bend_center, bend_start, bend_end, bend_radius, bend_angle, v1, v2, od, id )
-struct soltab		*stp;
-struct bu_list	*head;
-point_t bend_center;
-point_t bend_start;
-point_t bend_end;
-fastf_t bend_radius;
-fastf_t bend_angle;
-vect_t v1,v2;
-fastf_t od, id;
+rt_bend_pipe_prep(struct soltab *stp, struct bu_list *head, fastf_t *bend_center, fastf_t *bend_start, fastf_t *bend_end, fastf_t bend_radius, fastf_t bend_angle, fastf_t *v1, fastf_t *v2, fastf_t od, fastf_t id)
 {
 	register struct bend_pipe *pipe;
 	LOCAL vect_t	to_start,to_end;
@@ -206,15 +197,7 @@ fastf_t od, id;
 }
 
 HIDDEN void
-rt_linear_pipe_prep( stp, head, pt1, id1, od1, pt2, id2, od2 )
-struct soltab *stp;
-struct bu_list *head;
-point_t pt1;
-fastf_t id1;
-fastf_t od1;
-point_t pt2;
-fastf_t id2;
-fastf_t od2;
+rt_linear_pipe_prep(struct soltab *stp, struct bu_list *head, fastf_t *pt1, fastf_t id1, fastf_t od1, fastf_t *pt2, fastf_t id2, fastf_t od2)
 {
 	register struct lin_pipe *pipe;
 	LOCAL mat_t	R;
@@ -306,10 +289,7 @@ fastf_t od2;
  *  	stp->st_specific for use by pipe_shot().
  */
 int
-rt_pipe_prep( stp, ip, rtip )
-struct soltab		*stp;
-struct rt_db_internal	*ip;
-struct rt_i		*rtip;
+rt_pipe_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
 	register struct bu_list *head;
 	struct rt_pipe_internal	*pip;
@@ -427,8 +407,7 @@ next_pt:
  *			R T _ P I P E _ P R I N T
  */
 void
-rt_pipe_print( stp )
-register const struct soltab *stp;
+rt_pipe_print(register const struct soltab *stp)
 {
 /*	register struct bu_list *pipe =
 		(struct bu_list *)stp->st_specific; */
@@ -495,15 +474,7 @@ rt_vls_pipept(
 }
 
 HIDDEN void
-bend_pipe_shot( stp, rp, ap, seghead, pipe, hit_headp, hit_count, seg_no )
-struct soltab           *stp;
-register struct xray    *rp;
-struct application      *ap;
-struct seg              *seghead;
-struct bend_pipe	*pipe;
-struct hit_list		*hit_headp;
-int			*hit_count;
-int			seg_no;
+bend_pipe_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead, struct bend_pipe *pipe, struct hit_list *hit_headp, int *hit_count, int seg_no)
 {
 	LOCAL vect_t	dprime;		/* D' */
 	LOCAL vect_t	pprime;		/* P' */
@@ -723,15 +694,7 @@ int			seg_no;
 }
 
 HIDDEN void
-linear_pipe_shot( stp, rp, ap, seghead, pipe, hit_headp, hit_count, seg_no )
-struct soltab           *stp;
-register struct xray    *rp;
-struct application      *ap;
-struct seg              *seghead;
-struct lin_pipe		*pipe;
-struct hit_list		*hit_headp;
-int			*hit_count;
-int			seg_no;
+linear_pipe_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead, struct lin_pipe *pipe, struct hit_list *hit_headp, int *hit_count, int seg_no)
 {
 	LOCAL struct hit_list	*hitp;
 	LOCAL point_t	work_pt;
@@ -875,15 +838,7 @@ int			seg_no;
 }
 
 HIDDEN void
-pipe_start_shot( stp, rp, ap, seghead, pipe, hit_headp, hit_count, seg_no )
-struct soltab           *stp;
-register struct xray    *rp;
-struct application      *ap;
-struct seg              *seghead;
-struct id_pipe		*pipe;
-struct hit_list		*hit_headp;
-int			*hit_count;
-int			seg_no;
+pipe_start_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead, struct id_pipe *pipe, struct hit_list *hit_headp, int *hit_count, int seg_no)
 {
 	point_t hit_pt;
 	fastf_t t_tmp;
@@ -956,15 +911,7 @@ int			seg_no;
 }
 
 HIDDEN void
-pipe_end_shot( stp, rp, ap, seghead, pipe, hit_headp, hit_count, seg_no )
-struct soltab           *stp;
-register struct xray    *rp;
-struct application      *ap;
-struct seg              *seghead;
-struct id_pipe		*pipe;
-struct hit_list		*hit_headp;
-int			*hit_count;
-int			seg_no;
+pipe_end_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead, struct id_pipe *pipe, struct hit_list *hit_headp, int *hit_count, int seg_no)
 {
 	point_t hit_pt;
 	fastf_t t_tmp;
@@ -1045,11 +992,7 @@ int			seg_no;
 }
 
 HIDDEN void
-rt_pipe_hitsort( h, nh, rp, stp )
-struct hit_list		*h;
-int			*nh;
-struct soltab		*stp;
-register struct xray	*rp;
+rt_pipe_hitsort(struct hit_list *h, int *nh, register struct xray *rp, struct soltab *stp)
 {
 	struct hit_list *hitp;
 	struct hit_list *first;
@@ -1194,10 +1137,7 @@ register struct xray	*rp;
  *  Given ONE ray distance, return the normal and entry/exit point.
  */
 void
-rt_pipe_norm( hitp, stp, rp )
-register struct hit	*hitp;
-struct soltab		*stp;
-register struct xray	*rp;
+rt_pipe_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
 {
 	register struct bu_list		*pipe =
 		(struct bu_list *)stp->st_specific;
@@ -1288,11 +1228,7 @@ register struct xray	*rp;
  *	>0	HIT
  */
 int
-rt_pipe_shot( stp, rp, ap, seghead )
-struct soltab		*stp;
-register struct xray	*rp;
-struct application	*ap;
-struct seg		*seghead;
+rt_pipe_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
 	register struct bu_list		*head =
 		(struct bu_list *)stp->st_specific;
@@ -1410,12 +1346,12 @@ struct seg		*seghead;
  *  Vectorized version.
  */
 void
-rt_pipe_vshot( stp, rp, segp, n, ap )
-struct soltab	       *stp[]; /* An array of solid pointers */
-struct xray		*rp[]; /* An array of ray pointers */
-struct  seg            segp[]; /* array of segs (results returned) */
-int		  	    n; /* Number of ray/object pairs */
-struct application	*ap;
+rt_pipe_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
+             	               /* An array of solid pointers */
+           		       /* An array of ray pointers */
+                               /* array of segs (results returned) */
+   		  	       /* Number of ray/object pairs */
+                  	    
 {
 	rt_vstub( stp, rp, segp, n, ap );
 }
@@ -1426,10 +1362,7 @@ struct application	*ap;
  *  Return the curvature of the pipe.
  */
 void
-rt_pipe_curve( cvp, hitp, stp )
-register struct curvature *cvp;
-register struct hit	*hitp;
-struct soltab		*stp;
+rt_pipe_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
 {
 /*	register struct bu_list *pipe =
 		(struct bu_list *)stp->st_specific; */
@@ -1449,11 +1382,7 @@ struct soltab		*stp;
  *  v = elevation
  */
 void
-rt_pipe_uv( ap, stp, hitp, uvp )
-struct application	*ap;
-struct soltab		*stp;
-register struct hit	*hitp;
-register struct uvcoord	*uvp;
+rt_pipe_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
 {
 /*	register struct bu_list *pipe =
 		(struct bu_list *)stp->st_specific; */
@@ -1463,8 +1392,7 @@ register struct uvcoord	*uvp;
  *		R T _ P I P E _ F R E E
  */
 void
-rt_pipe_free( stp )
-register struct soltab *stp;
+rt_pipe_free(register struct soltab *stp)
 {
 #if 0
 	register struct bu_list *pipe =
@@ -1488,7 +1416,7 @@ register struct soltab *stp;
  *			R T _ P I P E _ C L A S S
  */
 int
-rt_pipe_class()
+rt_pipe_class(void)
 {
 	return(0);
 }
@@ -1503,14 +1431,7 @@ rt_pipe_class()
  */
 
 HIDDEN void
-draw_pipe_arc( vhead, radius, center, v1, v2, end, seg_count, full_circle )
-struct bu_list		*vhead;
-fastf_t			radius;
-point_t			center;
-vect_t			v1,v2;
-point_t			end;
-int			seg_count;
-int			full_circle;
+draw_pipe_arc(struct bu_list *vhead, fastf_t radius, fastf_t *center, const fastf_t *v1, const fastf_t *v2, fastf_t *end, int seg_count, int full_circle)
 {
 	fastf_t		arc_angle;
 	fastf_t		delta_ang;
@@ -1548,12 +1469,7 @@ int			full_circle;
 }
 
 HIDDEN void
-draw_linear_seg( vhead, p1, or1, ir1, p2, or2, ir2, v1, v2 )
-struct bu_list			*vhead;
-const point_t			p1,p2;
-const fastf_t			or1,ir1,or2,ir2;
-const vect_t			v1;
-const vect_t			v2;
+draw_linear_seg(struct bu_list *vhead, const fastf_t *p1, const fastf_t or1, const fastf_t ir1, const fastf_t *p2, const fastf_t or2, const fastf_t ir2, const fastf_t *v1, const fastf_t *v2)
 {
 	point_t pt;
 
@@ -1596,16 +1512,7 @@ const vect_t			v2;
 }
 
 HIDDEN void
-draw_pipe_bend( vhead, center, end, radius, angle, v1, v2, norm, or, ir, f1, f2, seg_count )
-struct bu_list			*vhead;
-const point_t			center;
-const point_t			end;
-const fastf_t			radius;
-const fastf_t			angle;
-const vect_t			v1,v2,norm;
-const fastf_t			or,ir;
-vect_t				f1,f2;
-const int			seg_count;
+draw_pipe_bend(struct bu_list *vhead, const fastf_t *center, const fastf_t *end, const fastf_t radius, const fastf_t angle, const fastf_t *v1, const fastf_t *v2, const fastf_t *norm, const fastf_t or, const fastf_t ir, fastf_t *f1, fastf_t *f2, const int seg_count)
 {
 
 	point_t	tmp_center, tmp_start, tmp_end;
@@ -1692,11 +1599,7 @@ const int			seg_count;
  *			R T _ P I P E _ P L O T
  */
 int
-rt_pipe_plot( vhead, ip, ttol, tol )
-struct bu_list		*vhead;
-struct rt_db_internal	*ip;
-const struct rt_tess_tol *ttol;
-const struct bn_tol		*tol;
+rt_pipe_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
 	register struct wdb_pipept		*prevp;
 	register struct wdb_pipept		*curp;
@@ -1803,16 +1706,7 @@ next_pt:
 }
 
 HIDDEN void
-tesselate_pipe_start( pipe, arc_segs, sin_del, cos_del, outer_loop, inner_loop, r1, r2, s, tol )
-struct wdb_pipept *pipe;
-int arc_segs;
-double sin_del;
-double cos_del;
-struct vertex ***outer_loop;
-struct vertex ***inner_loop;
-vect_t r1,r2;
-struct shell *s;
-struct bn_tol *tol;
+tesselate_pipe_start(struct wdb_pipept *pipe, int arc_segs, double sin_del, double cos_del, struct vertex ***outer_loop, struct vertex ***inner_loop, fastf_t *r1, fastf_t *r2, struct shell *s, const struct bn_tol *tol)
 {
 	struct faceuse *fu;
 	struct loopuse *lu;
@@ -1928,19 +1822,7 @@ struct bn_tol *tol;
 }
 
 HIDDEN void
-tesselate_pipe_linear( start_pt, or, ir, end_pt, end_or, end_ir, arc_segs, sin_del, cos_del, outer_loop, inner_loop, r1, r2, s, tol )
-point_t start_pt;
-fastf_t or,ir;
-point_t end_pt;
-fastf_t end_or,end_ir;
-int arc_segs;
-double sin_del;
-double cos_del;
-struct vertex **outer_loop[];
-struct vertex **inner_loop[];
-vect_t r1, r2;
-struct shell *s;
-struct bn_tol *tol;
+tesselate_pipe_linear(fastf_t *start_pt, fastf_t or, fastf_t ir, fastf_t *end_pt, fastf_t end_or, fastf_t end_ir, int arc_segs, double sin_del, double cos_del, struct vertex ***outer_loop, struct vertex ***inner_loop, fastf_t *r1, fastf_t *r2, struct shell *s, const struct bn_tol *tol)
 {
 	struct vertex **new_outer_loop;
 	struct vertex **new_inner_loop;
@@ -2719,20 +2601,7 @@ struct bn_tol *tol;
 }
 
 HIDDEN void
-tesselate_pipe_bend( bend_start, bend_end, bend_center, or, ir, arc_segs, sin_del, cos_del, outer_loop, inner_loop, start_r1, start_r2, s, tol, ttol )
-point_t bend_start;
-point_t bend_end;
-point_t bend_center;
-fastf_t or,ir;
-int arc_segs;
-double sin_del;
-double cos_del;
-struct vertex **outer_loop[];
-struct vertex **inner_loop[];
-vect_t start_r1, start_r2;
-struct shell *s;
-struct bn_tol *tol;
-struct rt_tess_tol *ttol;
+tesselate_pipe_bend(fastf_t *bend_start, fastf_t *bend_end, fastf_t *bend_center, fastf_t or, fastf_t ir, int arc_segs, double sin_del, double cos_del, struct vertex ***outer_loop, struct vertex ***inner_loop, fastf_t *start_r1, fastf_t *start_r2, struct shell *s, const struct bn_tol *tol, const struct rt_tess_tol *ttol)
 {
 	struct vertex **new_outer_loop;
 	struct vertex **new_inner_loop;
@@ -3161,15 +3030,7 @@ struct rt_tess_tol *ttol;
 }
 
 HIDDEN void
-tesselate_pipe_end( pipe, arc_segs, sin_del, cos_del, outer_loop, inner_loop, s, tol )
-struct wdb_pipept *pipe;
-int arc_segs;
-double sin_del;
-double cos_del;
-struct vertex ***outer_loop;
-struct vertex ***inner_loop;
-struct shell *s;
-struct bn_tol *tol;
+tesselate_pipe_end(struct wdb_pipept *pipe, int arc_segs, double sin_del, double cos_del, struct vertex ***outer_loop, struct vertex ***inner_loop, struct shell *s, const struct bn_tol *tol)
 {
 	struct wdb_pipept *prev;
 	struct faceuse *fu;
@@ -3248,12 +3109,7 @@ struct bn_tol *tol;
  *	XXXX Still needs vertexuse normals!
  */
 int
-rt_pipe_tess( r, m, ip, ttol, tol )
-struct nmgregion	**r;
-struct model		*m;
-struct rt_db_internal	*ip;
-const struct rt_tess_tol *ttol;
-const struct bn_tol		*tol;
+rt_pipe_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
 	struct wdb_pipept	*pp1;
 	struct wdb_pipept	*pp2;
@@ -3440,11 +3296,7 @@ next_pt:
  *			R T _ P I P E _ I M P O R T
  */
 int
-rt_pipe_import( ip, ep, mat, dbip )
-struct rt_db_internal		*ip;
-const struct bu_external	*ep;
-register const mat_t		mat;
-const struct db_i		*dbip;
+rt_pipe_import(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
 	register struct exported_pipept *exp;
 	register struct wdb_pipept	*ptp;
@@ -3498,11 +3350,7 @@ const struct db_i		*dbip;
  *			R T _ P I P E _ E X P O R T
  */
 int
-rt_pipe_export( ep, ip, local2mm, dbip )
-struct bu_external		*ep;
-const struct rt_db_internal	*ip;
-double				local2mm;
-const struct db_i		*dbip;
+rt_pipe_export(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
 	struct rt_pipe_internal	*pip;
 	struct bu_list		*headp;
@@ -3564,11 +3412,7 @@ const struct db_i		*dbip;
  *			R T _ P I P E _ I M P O R T 5
  */
 int
-rt_pipe_import5( ip, ep, mat, dbip )
-struct rt_db_internal		*ip;
-const struct bu_external	*ep;
-register const mat_t		mat;
-const struct db_i		*dbip;
+rt_pipe_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
 	register struct wdb_pipept	*ptp;
 	struct rt_pipe_internal		*pipe;
@@ -3626,11 +3470,7 @@ const struct db_i		*dbip;
  *			R T _ P I P E _ E X P O R T 5
  */
 int
-rt_pipe_export5( ep, ip, local2mm, dbip )
-struct bu_external		*ep;
-const struct rt_db_internal	*ip;
-double				local2mm;
-const struct db_i		*dbip;
+rt_pipe_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
 	struct rt_pipe_internal	*pip;
 	struct bu_list		*headp;
@@ -3692,11 +3532,7 @@ const struct db_i		*dbip;
  *  Additional lines are indented one tab, and give parameter values.
  */
 int
-rt_pipe_describe( str, ip, verbose, mm2local )
-struct bu_vls		*str;
-const struct rt_db_internal	*ip;
-int			verbose;
-double			mm2local;
+rt_pipe_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
 	register struct rt_pipe_internal	*pip;
 	register struct wdb_pipept	*ptp;
@@ -3744,8 +3580,7 @@ double			mm2local;
  *  Free the storage associated with the rt_db_internal version of this solid.
  */
 void
-rt_pipe_ifree( ip )
-struct rt_db_internal	*ip;
+rt_pipe_ifree(struct rt_db_internal *ip)
 {
 	register struct rt_pipe_internal	*pipe;
 	register struct wdb_pipept	*ptp;
@@ -3876,10 +3711,7 @@ next_pt:
  */
 
 int
-rt_pipe_tclget( interp, intern, attr )
-Tcl_Interp			*interp;
-const struct rt_db_internal	*intern;
-const char			*attr;
+rt_pipe_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const char *attr)
 {
 	register struct rt_pipe_internal *pipe=(struct rt_pipe_internal *)intern->idb_ptr;
 	struct wdb_pipept *ptp;
@@ -3972,12 +3804,7 @@ out:
 }
 
 int
-rt_pipe_tcladjust( interp, intern, argc, argv, resp)
-Tcl_Interp		*interp;
-struct rt_db_internal	*intern;
-int			argc;
-char			**argv;
-struct resource		*resp;
+rt_pipe_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, char **argv, struct resource *resp)
 {
 	struct rt_pipe_internal		*pipe;
 	struct wdb_pipept		*ptp;

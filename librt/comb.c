@@ -41,8 +41,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 /* --- Begin John's pretty-printer --- */
 
 void
-Print_tree( tree )
-union tree *tree;
+Print_tree(union tree *tree)
 {
 	char *str;
 
@@ -57,7 +56,8 @@ union tree *tree;
 }
 
 int
-main( int argc , char *argv[] ) {
+main(int argc, char *argv[])
+{
 	struct db_i		*dbip;
 	struct directory	*dp;
 	struct rt_db_internal	ip;
@@ -65,7 +65,7 @@ main( int argc , char *argv[] ) {
 	mat_t			identity_mat;
 	int			i;
 	struct bu_vls		file;
-        
+
 	bu_debug = BU_DEBUG_MEM_CHECK | BU_DEBUG_COREDUMP;
 
 	if( argc < 3 )

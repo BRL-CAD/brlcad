@@ -35,12 +35,12 @@
  *  The original surface is unmodified.
  */
 struct face_g_snurb *
-rt_nurb_s_refine( srf, dir, kv, res )
-const struct face_g_snurb * srf;		/* Old surface to be refined */
-int dir;				/* Direction to refine */
+rt_nurb_s_refine(const struct face_g_snurb *srf, int dir, struct knot_vector *kv, struct resource *res)
+                                		/* Old surface to be refined */
+        				/* Direction to refine */
 					/* Row = 0, Col = 1 */
-struct knot_vector *kv;			/* New knot vector */
-struct resource *res;
+                       			/* New knot vector */
+                     
 {
 	register struct face_g_snurb * nurb_srf;
 	struct oslo_mat *oslo;	/* oslo refinement matrix */
@@ -134,9 +134,7 @@ struct resource *res;
 }
 
 struct edge_g_cnurb *
-rt_nurb_c_refine( crv, kv )
-const struct edge_g_cnurb * crv;
-struct knot_vector * kv;
+rt_nurb_c_refine(const struct edge_g_cnurb *crv, struct knot_vector *kv)
 {
 	struct oslo_mat * oslo;
 	struct edge_g_cnurb * new_crv;

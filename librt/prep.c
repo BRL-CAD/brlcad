@@ -41,7 +41,7 @@ static const char RCSprep[] = "@(#)$Header$ (BRL)";
 
 BU_EXTERN(void		rt_ck, (struct rt_i	*rtip));
 
-HIDDEN void	rt_solid_bitfinder();
+HIDDEN void	rt_solid_bitfinder(register union tree *treep, struct region *regp, struct resource *resp);
 
 extern struct resource	rt_uniresource;		/* from shoot.c */
 
@@ -55,8 +55,7 @@ extern struct resource	rt_uniresource;		/* from shoot.c */
  *  because we have cloned our own instance of the db_i.
  */
 struct rt_i *
-rt_new_rti( dbip )
-struct db_i	*dbip;
+rt_new_rti(struct db_i *dbip)
 {
 	register struct rt_i	*rtip;
 	register int		i;
@@ -149,8 +148,7 @@ struct db_i	*dbip;
  *  Note that the rt_g structure needs to be cleaned separately.
  */
 void
-rt_free_rti( rtip )
-struct rt_i	*rtip;
+rt_free_rti(struct rt_i *rtip)
 {
 	RT_CK_RTI(rtip);
 
@@ -195,9 +193,7 @@ struct rt_i	*rtip;
  *  called ncpu times, hence the critical section.
  */
 void
-rt_prep_parallel(rtip, ncpu)
-register struct rt_i	*rtip;
-int			ncpu;
+rt_prep_parallel(register struct rt_i *rtip, int ncpu)
 {
 	register struct region *regp;
 	register struct soltab *stp;
@@ -424,8 +420,7 @@ int			ncpu;
  *  Compatability stub.  Only uses 1 CPU.
  */
 void
-rt_prep(rtip)
-register struct rt_i *rtip;
+rt_prep(register struct rt_i *rtip)
 {
 	RT_CK_RTI(rtip);
 	rt_prep_parallel(rtip, 1);
@@ -438,9 +433,7 @@ register struct rt_i *rtip;
  *  Color may be set in advance by the caller.
  */
 void
-rt_plot_all_bboxes( fp, rtip )
-FILE		*fp;
-struct rt_i	*rtip;
+rt_plot_all_bboxes(FILE *fp, struct rt_i *rtip)
 {
 	register struct soltab	*stp;
 
@@ -682,9 +675,7 @@ rt_init_resource(
  *  part of the db_i) continue to be in use.
  */
 void
-rt_clean_resource( rtip, resp )
-struct rt_i	*rtip;
-struct resource	*resp;
+rt_clean_resource(struct rt_i *rtip, struct resource *resp)
 {
 	RT_CK_RTI(rtip);
 	RT_CK_RESOURCE(resp);
@@ -817,8 +808,7 @@ get_solidbitv( long nbits, struct resource *resp )
  *  anything has been prepped.
  */
 void
-rt_clean( rtip )
-register struct rt_i *rtip;
+rt_clean(register struct rt_i *rtip)
 {
 	register struct region *regp;
 	register struct bu_list	*head;
@@ -1022,10 +1012,7 @@ rt_del_regtree( struct rt_i *rtip, register struct region *delregp, struct resou
  *  have been assigned.
  */
 HIDDEN void
-rt_solid_bitfinder( treep, regp, resp )
-register union tree	*treep;
-struct region		*regp;
-struct resource		*resp;
+rt_solid_bitfinder(register union tree *treep, struct region *regp, struct resource *resp)
 {
 	register union tree	**sp;
 	register struct soltab	*stp;
@@ -1079,8 +1066,7 @@ struct resource		*resp;
  *  between different LIBRT instances.
  */
 void
-rt_ck( rtip )
-register struct rt_i	*rtip;
+rt_ck(register struct rt_i *rtip)
 {
 	struct region		*regp;
 	struct soltab		*stp;

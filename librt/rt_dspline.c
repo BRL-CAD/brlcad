@@ -52,9 +52,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "raytrace.h"
 
 static void
-GetBeta(m, bias, tension)
-mat_t m;
-const double bias, tension;
+GetBeta(fastf_t *m, const double bias, const double tension)
 {
 	register int i;
 	double d, b2, b3;
@@ -93,9 +91,7 @@ const double bias, tension;
 }
 
 static void
-GetCardinal(m, tension)
-mat_t m;
-const double tension;
+GetCardinal(fastf_t *m, const double tension)
 {
 	m[ 1] = 2.0 - tension;
 	m[ 2] = tension - 2.0;
@@ -114,11 +110,11 @@ const double tension;
  *
  */
 void
-rt_dspline_matrix(m, type, tension, bias)
-      mat_t	m;
-const char	*type;		/* "Cardinal", "Catmull", "Beta" */
-const double	tension;	/* Cardinal tension of .5 is Catmull spline */
-const double	bias;		/* only for B spline */
+rt_dspline_matrix(fastf_t *m, const char *type, const double tension, const double bias)
+           	  
+          	      		/* "Cardinal", "Catmull", "Beta" */
+            	        	/* Cardinal tension of .5 is Catmull spline */
+            	     		/* only for B spline */
 {
 	if (!strncmp(type, "Cardinal", 8))	GetCardinal(m, tension);
 	else if (!strncmp(type, "Catmull", 7))	GetCardinal(m, 0.5);
@@ -140,10 +136,10 @@ const double	bias;		/* only for B spline */
  *	a, b, c, d.
  */
 double
-rt_dspline4(m, a, b, c, d, alpha)
-mat_t	m;		/* spline matrix */
-double a, b, c, d;	/* control pts */
-double alpha;		/* point to interpolate at */
+rt_dspline4(fastf_t *m, double a, double b, double c, double d, double alpha)
+     	  		/* spline matrix */
+                  	/* control pts */
+             		/* point to interpolate at */
 {
 	double p0, p1, p2, p3;
 
@@ -167,15 +163,15 @@ double alpha;		/* point to interpolate at */
  *
  */
 void
-rt_dspline4v(pt, m, a, b, c, d, depth, alpha)
-double *pt;	/* result */
-const mat_t	m;	/* spline matrix obtained with spline_matrix() */
-const double *a;	/* knots */
-const double *b;
-const double *c;
-const double *d;
-const int depth;	/* number of values per knot */
-const double alpha;	/* 0 <= alpha <= 1 */
+rt_dspline4v(double *pt, const fastf_t *m, const double *a, const double *b, const double *c, const double *d, const int depth, const double alpha)
+           	/* result */
+           	  	/* spline matrix obtained with spline_matrix() */
+                	/* knots */
+                
+                
+                
+                	/* number of values per knot */
+                   	/* 0 <= alpha <= 1 */
 {
 	int i;
 	double p0, p1, p2, p3;
@@ -217,13 +213,13 @@ const double alpha;	/* 0 <= alpha <= 1 */
  *
  */
 void
-rt_dspline_n(r, m, knots, nknots, depth, alpha)
-      double	*r;	/* result */
-const mat_t	m;	/* spline matrix */
-const double	*knots;	/* knot values */
-const int	nknots;	/* number of knots */
-const int	depth;	/* number of values per knot */
-const double	alpha;	/* point on surface (0..1) to evaluate */
+rt_dspline_n(double *r, const fastf_t *m, const double *knots, const int nknots, const int depth, const double alpha)
+            	   	/* result */
+           	  	/* spline matrix */
+            	       	/* knot values */
+         	       	/* number of knots */
+         	      	/* number of values per knot */
+            	      	/* point on surface (0..1) to evaluate */
 {
 	double *a, *b, *c, *d, x;
 	int nspans = nknots - 3;

@@ -169,10 +169,7 @@ struct tor_specific {
  *  	stp->st_specific for use by rt_tor_shot().
  */
 int
-rt_tor_prep( stp, ip, rtip )
-struct soltab		*stp;
-struct rt_db_internal	*ip;
-struct rt_i		*rtip;
+rt_tor_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
 	register struct tor_specific *tor;
 	LOCAL mat_t	R;
@@ -193,19 +190,19 @@ struct rt_i		*rtip;
 	/* Validate that A.B == 0, B.H == 0, A.H == 0 */
 	f = VDOT( tip->a, tip->b )/(tip->r_a*tip->r_b);
 
-	if( ! NEAR_ZERO(f, 0.0001) )  {
+	if( ! NEAR_ZERO(f, rtip->rti_tol.dist) )  {
 		bu_log("tor(%s):  A not perpendicular to B, f=%f\n",
 			stp->st_name, f);
 		return(1);		/* BAD */
 	}
 	f = VDOT( tip->b, tip->h )/(tip->r_b);
-	if( ! NEAR_ZERO(f, 0.0001) )  {
+	if( ! NEAR_ZERO(f, rtip->rti_tol.dist) )  {
 		bu_log("tor(%s):  B not perpendicular to H, f=%f\n",
 			stp->st_name, f);
 		return(1);		/* BAD */
 	}
 	f = VDOT( tip->a, tip->h )/(tip->r_a);
-	if( ! NEAR_ZERO(f, 0.0001) )  {
+	if( ! NEAR_ZERO(f, rtip->rti_tol.dist) )  {
 		bu_log("tor(%s):  A not perpendicular to H, f=%f\n",
 			stp->st_name, f);
 		return(1);		/* BAD */
@@ -286,8 +283,7 @@ struct rt_i		*rtip;
  *			R T _ T O R _ P R I N T
  */
 void
-rt_tor_print( stp )
-register const struct soltab *stp;
+rt_tor_print(register const struct soltab *stp)
 {
 	register const struct tor_specific *tor =
 		(struct tor_specific *)stp->st_specific;
@@ -334,11 +330,7 @@ register const struct soltab *stp;
  *	>0	HIT
  */
 int
-rt_tor_shot( stp, rp, ap, seghead )
-struct soltab		*stp;
-register struct xray	*rp;
-struct application	*ap;
-struct seg		*seghead;
+rt_tor_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
 	register struct tor_specific *tor =
 		(struct tor_specific *)stp->st_specific;
@@ -441,7 +433,7 @@ struct seg		*seghead;
 	 *  of 't' for the intersections
 	 */
 	for ( j=0, i=0; j < 4; j++ ){
-		if( NEAR_ZERO( val[j].im, 0.0001 ) )
+		if( NEAR_ZERO( val[j].im, ap->a_rt_i->rti_tol.dist ) )
 			k[i++] = val[j].re;
 	}
 
@@ -525,12 +517,12 @@ struct seg		*seghead;
  *  This is the Becker vector version
  */
 void
-rt_tor_vshot( stp, rp, segp, n, ap )
-struct soltab	       *stp[]; /* An array of solid pointers */
-struct xray		*rp[]; /* An array of ray pointers */
-struct  seg            segp[]; /* array of segs (results returned) */
-int		  	    n; /* Number of ray/object pairs */
-struct application	*ap;
+rt_tor_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
+             	               /* An array of solid pointers */
+           		       /* An array of ray pointers */
+                               /* array of segs (results returned) */
+   		  	       /* Number of ray/object pairs */
+                  	    
 {
 	register int    i;
 	register struct tor_specific *tor;
@@ -674,15 +666,15 @@ struct application	*ap;
 	        /* Also reverse translation by adding distance to all 'k' values. */
 		/* Reuse C to hold k values */
 		num_zero = 0;
-		if( NEAR_ZERO( val[i][0].im, 0.0001 ) )
+		if( NEAR_ZERO( val[i][0].im, ap->a_rt_i->rti_tol.dist ) )
 			C[i].cf[num_zero++] = val[i][0].re - cor_proj[i];
-		if( NEAR_ZERO( val[i][1].im, 0.0001 ) ) {
+		if( NEAR_ZERO( val[i][1].im, ap->a_rt_i->rti_tol.dist ) ) {
 			C[i].cf[num_zero++] = val[i][1].re - cor_proj[i];
 		}
-		if( NEAR_ZERO( val[i][2].im, 0.0001 ) ) {
+		if( NEAR_ZERO( val[i][2].im, ap->a_rt_i->rti_tol.dist ) ) {
 			C[i].cf[num_zero++] = val[i][2].re - cor_proj[i];
 		}
-		if( NEAR_ZERO( val[i][3].im, 0.0001 ) ) {
+		if( NEAR_ZERO( val[i][3].im, ap->a_rt_i->rti_tol.dist ) ) {
 			C[i].cf[num_zero++] = val[i][3].re - cor_proj[i];
 		}
 		C[i].dgr   = num_zero;
@@ -807,10 +799,7 @@ struct application	*ap;
  *  above equations by four here.
  */
 void
-rt_tor_norm( hitp, stp, rp)
-register struct hit *hitp;
-struct soltab *stp;
-register struct xray *rp;
+rt_tor_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
 {
 	register struct tor_specific *tor =
 		(struct tor_specific *)stp->st_specific;
@@ -827,6 +816,7 @@ register struct xray *rp;
 		( w - 2.0 ) * hitp->hit_vpriv[Y],
 		  w * hitp->hit_vpriv[Z] );
 	VUNITIZE( work );
+
 	MAT3X3VEC( hitp->hit_normal, tor->tor_invR, work );
 }
 
@@ -836,10 +826,7 @@ register struct xray *rp;
  *  Return the curvature of the torus.
  */
 void
-rt_tor_curve( cvp, hitp, stp )
-register struct curvature *cvp;
-register struct hit *hitp;
-struct soltab *stp;
+rt_tor_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
 {
 	register struct tor_specific *tor =
 		(struct tor_specific *)stp->st_specific;
@@ -854,11 +841,11 @@ struct soltab *stp;
 	/* vector from V to hit point */
 	VSUB2( w4, hitp->hit_point, tor->tor_V );
 
-	if( !NEAR_ZERO(nz, 0.0001) ) {
+	if( !NEAR_ZERO(nz, 0.00001) ) {
 		z1 = w4[Z]*nx*nx + w4[Z]*ny*ny - w4[X]*nx*nz - w4[Y]*ny*nz;
 		x1 = (nx*(z1-w4[Z])/nz) + w4[X];
 		y1 = (ny*(z1-w4[Z])/nz) + w4[Y];
-	} else if( !NEAR_ZERO(ny, 0.0001) ) {
+	} else if( !NEAR_ZERO(ny, 0.00001) ) {
 		y1 = w4[Y]*nx*nx + w4[Y]*nz*nz - w4[X]*nx*ny - w4[Z]*ny*nz;
 		x1 = (nx*(y1-w4[Y])/ny) + w4[X];
 		z1 = (nz*(y1-w4[Y])/ny) + w4[Z];
@@ -884,11 +871,7 @@ struct soltab *stp;
  *			R T _ T O R _ U V
  */
 void
-rt_tor_uv( ap, stp, hitp, uvp )
-struct application	*ap;
-struct soltab		*stp;
-register struct hit	*hitp;
-register struct uvcoord	*uvp;
+rt_tor_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
 {
 	register struct tor_specific	*tor =
 			(struct tor_specific *) stp -> st_specific;
@@ -916,8 +899,7 @@ register struct uvcoord	*uvp;
  *			R T _ T O R _ F R E E
  */
 void
-rt_tor_free( stp )
-struct soltab *stp;
+rt_tor_free(struct soltab *stp)
 {
 	register struct tor_specific *tor =
 		(struct tor_specific *)stp->st_specific;
@@ -926,7 +908,7 @@ struct soltab *stp;
 }
 
 int
-rt_tor_class()
+rt_tor_class(void)
 {
 	return(0);
 }
@@ -997,11 +979,7 @@ rt_num_circular_segments(double	maxerr, double	radius)
  *
  */
 int
-rt_tor_plot( vhead, ip, ttol, tol )
-struct bu_list		*vhead;
-struct rt_db_internal	*ip;
-const struct rt_tess_tol *ttol;
-const struct bn_tol	*tol;
+rt_tor_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
 	fastf_t		alpha;
 	fastf_t		beta;
@@ -1116,12 +1094,7 @@ const struct bn_tol	*tol;
  *			R T _ T O R _ T E S S
  */
 int
-rt_tor_tess( r, m, ip, ttol, tol )
-struct nmgregion	**r;
-struct model		*m;
-struct rt_db_internal	*ip;
-const struct rt_tess_tol *ttol;
-const struct bn_tol	*tol;
+rt_tor_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
 	fastf_t		alpha;
 	fastf_t		beta;
@@ -1301,11 +1274,7 @@ const struct bn_tol	*tol;
  *  Apply modeling transformations at the same time.
  */
 int
-rt_tor_import( ip, ep, mat, dbip )
-struct rt_db_internal		*ip;
-const struct bu_external	*ep;
-register const mat_t		mat;
-const struct db_i		*dbip;
+rt_tor_import(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
 	struct rt_tor_internal	*tip;
 	union record		*rp;
@@ -1364,11 +1333,7 @@ const struct db_i		*dbip;
  *			R T _ T O R _ E X P O R T 5
  */
 int
-rt_tor_export5( ep , ip, local2mm, dbip )
-struct bu_external		*ep;
-const struct rt_db_internal	*ip;
-double				local2mm;
-const struct db_i		*dbip;
+rt_tor_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
 	double			vec[2*3+2];
 	struct rt_tor_internal	*tip;
@@ -1399,11 +1364,7 @@ const struct db_i		*dbip;
  *  The name will be added by the caller.
  */
 int
-rt_tor_export( ep, ip, local2mm, dbip )
-struct bu_external		*ep;
-const struct rt_db_internal	*ip;
-double				local2mm;
-const struct db_i		*dbip;
+rt_tor_export(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
 	struct rt_tor_internal	*tip;
 	union record		*rec;
@@ -1497,11 +1458,7 @@ const struct db_i		*dbip;
  *		ring unit vector 2
  */
 int
-rt_tor_import5( ip, ep, mat, dbip )
-struct rt_db_internal		*ip;
-const struct bu_external	*ep;
-register const mat_t		mat;
-const struct db_i		*dbip;
+rt_tor_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
 	struct rt_tor_internal	*tip;
 	LOCAL struct rec {
@@ -1559,11 +1516,7 @@ const struct db_i		*dbip;
  *  Additional lines are indented one tab, and give parameter values.
  */
 int
-rt_tor_describe( str, ip, verbose, mm2local )
-struct bu_vls		*str;
-const struct rt_db_internal	*ip;
-int			verbose;
-double			mm2local;
+rt_tor_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
 	register struct rt_tor_internal	*tip =
 		(struct rt_tor_internal *)ip->idb_ptr;
@@ -1616,8 +1569,7 @@ double			mm2local;
  *  Free the storage associated with the rt_db_internal version of this solid.
  */
 void
-rt_tor_ifree( ip )
-struct rt_db_internal	*ip;
+rt_tor_ifree(struct rt_db_internal *ip)
 {
 	register struct rt_tor_internal	*tip;
 

@@ -47,7 +47,7 @@ static const char RCScmd[] = "@(#)$Header$ (BRL)";
  *	char *	On good read
  */
 char *
-rt_read_cmd( register FILE *fp )
+rt_read_cmd(register FILE *fp)
 {
 	register int	c;
 	register char	*buf;
@@ -112,10 +112,7 @@ rt_read_cmd( register FILE *fp )
  *	nwords	number of words of input, now in argv[]
  */
 int
-rt_split_cmd( argv, lim, lp )
-char		**argv;
-int		lim;
-register char	*lp;
+rt_split_cmd(char **argv, int lim, register char *lp)
 {
 	register int	nwords;			/* number of words seen */
 	register char	*lp1;
@@ -176,10 +173,10 @@ register char	*lp;
  *  Based heavily on mged/cmd.c by Chuck Kennedy.
  */
 int
-rt_do_cmd( rtip, lp, tp )
-struct rt_i		*rtip;			/* FUTURE:  for globbing */
-register char		*lp;
-register const struct command_tab	*tp;
+rt_do_cmd(struct rt_i *rtip, register char *lp, register const struct command_tab *tp)
+           		      			/* FUTURE:  for globbing */
+             		    
+                                 	    
 {
 	register int	nwords;			/* number of words seen */
 	char		*cmd_args[MAXWORDS+1];	/* array of ptrs to args */

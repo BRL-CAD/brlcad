@@ -144,12 +144,12 @@ rt_shoot_many_rays_worker(int cpu, genptr_t arg)
  *  This is not a limitation, as you usually can't construct more CPUs.
  */
 void
-rt_shoot_many_rays( proto_ap, callback, ncpus, nrays, resources )
-const struct application *proto_ap;
-int			callback BU_ARGS((struct application *, int index));
-int			ncpus;
-long			nrays;
-struct resource		*resources;	/* resources[ncpus] */
+rt_shoot_many_rays(const struct application *proto_ap, int (*callback) (struct application *, int), int ncpus, long int nrays, struct resource *resources)
+                                   
+   			                                                    
+   			      
+    			      
+               		           	/* resources[ncpus] */
 {
 	struct rt_many_internal	rmi;
 	int	i;

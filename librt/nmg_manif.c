@@ -61,9 +61,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
  *	0	face does not have a dangling edge
  */
 int 
-nmg_dangling_face(fu, manifolds)
-const struct faceuse	*fu;
-register const char	*manifolds;
+nmg_dangling_face(const struct faceuse *fu, register const char *manifolds)
 {
 	struct loopuse *lu;
 	struct edgeuse *eu;
@@ -135,10 +133,7 @@ out:
  *	"Paint" the elements of a face with a meaning.  For example
  *	mark everything in a face as being part of a 2-manifold
  */
-static void paint_face(fu, paint_table, paint_color, paint_meaning, tbl)
-struct faceuse *fu;
-char *paint_table, *paint_meaning, *tbl;
-int paint_color;
+static void paint_face(struct faceuse *fu, char *paint_table, int paint_color, char *paint_meaning, char *tbl)
 {
 	struct faceuse *newfu;
 	struct loopuse *lu;
@@ -207,10 +202,7 @@ int paint_color;
 	}
 }
 
-static void set_edge_sub_manifold(tbl, eu_p, manifold)
-char *tbl;
-struct edgeuse *eu_p;
-char manifold;
+static void set_edge_sub_manifold(char *tbl, struct edgeuse *eu_p, char manifold)
 {
 	
 	NMG_CK_EDGEUSE(eu_p);
@@ -226,10 +218,7 @@ char manifold;
 }
 
 
-static void set_loop_sub_manifold(tbl, lu_p, manifold)
-char *tbl;
-struct loopuse *lu_p;
-char manifold;
+static void set_loop_sub_manifold(char *tbl, struct loopuse *lu_p, char manifold)
 {
 	struct edgeuse *eu_p;
 	struct vertexuse *vu_p;
@@ -253,10 +242,7 @@ char manifold;
 	} else
 		rt_bomb("bad child of loopuse\n");
 }
-static void set_face_sub_manifold(tbl, fu_p, manifold)
-char *tbl;
-struct faceuse *fu_p;
-char manifold;
+static void set_face_sub_manifold(char *tbl, struct faceuse *fu_p, char manifold)
 {
 	struct loopuse *lu_p;
 	
@@ -274,9 +260,7 @@ char manifold;
 
 
 char *
-nmg_shell_manifolds(sp, tbl)
-struct shell *sp;
-char *tbl;
+nmg_shell_manifolds(struct shell *sp, char *tbl)
 {
 	struct edgeuse *eu_p;
 	struct loopuse *lu_p;
@@ -425,8 +409,7 @@ char *tbl;
 
 
 char *
-nmg_manifolds(m)
-struct model *m;
+nmg_manifolds(struct model *m)
 {
 	struct nmgregion *rp;
 	struct shell *sp;

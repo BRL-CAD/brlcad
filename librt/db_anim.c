@@ -46,10 +46,7 @@ static const char RCSanim[] = "@(#)$Header$ (BRL)";
  *  references are in the right database (dbip).
  */
 int
-db_add_anim( dbip, anp, root )
-struct db_i *dbip;
-register struct animate *anp;
-int	root;
+db_add_anim(struct db_i *dbip, register struct animate *anp, int root)
 {
 	register struct animate **headp;
 	struct directory	*dp;
@@ -99,11 +96,7 @@ static char	*db_anim_matrix_strings[] = {
  *  the region has already been finalized above this point in the tree.
  */
 int
-db_do_anim( anp, stack, arc, materp )
-register struct animate *anp;
-mat_t	stack;
-mat_t	arc;
-struct mater_info	*materp;
+db_do_anim(register struct animate *anp, mat_t stack, mat_t arc, struct mater_info *materp)
 {
 	mat_t	temp;
 
@@ -250,8 +243,7 @@ db_free_1anim( struct animate *anp )
  *  An unfortunate choice of name.
  */
 void
-db_free_anim( dbip )
-register struct db_i *dbip;
+db_free_anim(register struct db_i *dbip)
 {
 	register struct animate *anp;
 	register struct directory *dp;
@@ -293,10 +285,7 @@ register struct db_i *dbip;
  *  argv[2] indicates what is to be animated on that arc.
  */
 struct animate	*
-db_parse_1anim( dbip, argc, argv )
-struct db_i	*dbip;
-int		argc;
-const char	**argv;
+db_parse_1anim(struct db_i *dbip, int argc, const char **argv)
 {
 	struct db_tree_state	ts;
 	struct animate		*anp;
@@ -457,9 +446,7 @@ int db_parse_anim(struct db_i	*dbip,
 	return 0;		/* OK */
 }
 void
-db_write_anim(fop, anp)
-FILE *fop;
-struct animate *anp;
+db_write_anim(FILE *fop, struct animate *anp)
 {
 	char *thepath;
 	int i;

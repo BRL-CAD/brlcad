@@ -80,10 +80,7 @@ struct sph_specific {
  *	If the ELL is really a SPH, stp->st_id is modified to ID_SPH.
  */
 int
-rt_sph_prep( stp, ip, rtip )
-struct soltab		*stp;
-struct rt_db_internal	*ip;
-struct rt_i		*rtip;
+rt_sph_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
 	register struct sph_specific *sph;
 	LOCAL fastf_t	magsq_a, magsq_b, magsq_c;
@@ -98,7 +95,7 @@ struct rt_i		*rtip;
 	magsq_a = MAGSQ( eip->a );
 	magsq_b = MAGSQ( eip->b );
 	magsq_c = MAGSQ( eip->c );
-	if( magsq_a < 0.005 || magsq_b < 0.005 || magsq_c < 0.005 ) {
+	if( magsq_a < rtip->rti_tol.dist || magsq_b < rtip->rti_tol.dist || magsq_c < rtip->rti_tol.dist ) {
 		bu_log("sph(%s):  zero length A(%g), B(%g), or C(%g) vector\n",
 			stp->st_name, magsq_a, magsq_b, magsq_c );
 		return(1);		/* BAD */
@@ -125,17 +122,17 @@ struct rt_i		*rtip;
 
 	/* Validate that A.B == 0, B.C == 0, A.C == 0 (check dir only) */
 	f = VDOT( Au, Bu );
-	if( ! NEAR_ZERO(f, 0.005) )  {
+	if( ! NEAR_ZERO(f, rtip->rti_tol.dist) )  {
 		bu_log("sph(%s):  A not perpendicular to B, f=%f\n",stp->st_name, f);
 		return(1);		/* BAD */
 	}
 	f = VDOT( Bu, Cu );
-	if( ! NEAR_ZERO(f, 0.005) )  {
+	if( ! NEAR_ZERO(f, rtip->rti_tol.dist) )  {
 		bu_log("sph(%s):  B not perpendicular to C, f=%f\n",stp->st_name, f);
 		return(1);		/* BAD */
 	}
 	f = VDOT( Au, Cu );
-	if( ! NEAR_ZERO(f, 0.005) )  {
+	if( ! NEAR_ZERO(f, rtip->rti_tol.dist) )  {
 		bu_log("sph(%s):  A not perpendicular to C, f=%f\n",stp->st_name, f);
 		return(1);		/* BAD */
 	}
@@ -186,8 +183,7 @@ struct rt_i		*rtip;
  *			R T _ S P H _ P R I N T
  */
 void
-rt_sph_print( stp )
-register const struct soltab *stp;
+rt_sph_print(register const struct soltab *stp)
 {
 	register const struct sph_specific *sph =
 		(struct sph_specific *)stp->st_specific;
@@ -220,11 +216,7 @@ register const struct soltab *stp;
  *	>0	HIT
  */
 int
-rt_sph_shot( stp, rp, ap, seghead )
-struct soltab		*stp;
-register struct xray	*rp;
-struct application	*ap;
-struct seg		*seghead;
+rt_sph_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
 	register struct sph_specific *sph =
 		(struct sph_specific *)stp->st_specific;
@@ -271,12 +263,12 @@ struct seg		*seghead;
  *  This is the Becker vectorized version
  */
 void
-rt_sph_vshot( stp, rp, segp, n, ap )
-struct soltab	       *stp[]; /* An array of solid pointers */
-struct xray		*rp[]; /* An array of ray pointers */
-struct  seg            segp[]; /* array of segs (results returned) */
-int		  	    n; /* Number of ray/object pairs */
-struct application	*ap;
+rt_sph_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
+             	               /* An array of solid pointers */
+           		       /* An array of ray pointers */
+                               /* array of segs (results returned) */
+   		  	       /* Number of ray/object pairs */
+                  	    
 {
 	register struct sph_specific *sph;
 	LOCAL vect_t	ov;		/* ray orgin to center (V - P) */
@@ -329,10 +321,7 @@ struct application	*ap;
  *  Given ONE ray distance, return the normal and entry/exit point.
  */
 void
-rt_sph_norm( hitp, stp, rp )
-register struct hit *hitp;
-struct soltab *stp;
-register struct xray *rp;
+rt_sph_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
 {
 	register struct sph_specific *sph =
 		(struct sph_specific *)stp->st_specific;
@@ -348,10 +337,7 @@ register struct xray *rp;
  *  Return the curvature of the sphere.
  */
 void
-rt_sph_curve( cvp, hitp, stp )
-register struct curvature *cvp;
-register struct hit *hitp;
-struct soltab *stp;
+rt_sph_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
 {
 	register struct sph_specific *sph =
 		(struct sph_specific *)stp->st_specific;
@@ -371,11 +357,7 @@ struct soltab *stp;
  *  v = elevation
  */
 void
-rt_sph_uv( ap, stp, hitp, uvp )
-struct application *ap;
-struct soltab *stp;
-register struct hit *hitp;
-register struct uvcoord *uvp;
+rt_sph_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
 {
 	register struct sph_specific *sph =
 		(struct sph_specific *)stp->st_specific;
@@ -413,8 +395,7 @@ register struct uvcoord *uvp;
  *		R T _ S P H _ F R E E
  */
 void
-rt_sph_free( stp )
-register struct soltab *stp;
+rt_sph_free(register struct soltab *stp)
 {
 	register struct sph_specific *sph =
 		(struct sph_specific *)stp->st_specific;
@@ -423,7 +404,7 @@ register struct soltab *stp;
 }
 
 int
-rt_sph_class()
+rt_sph_class(void)
 {
 	return(0);
 }

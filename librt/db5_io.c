@@ -55,8 +55,7 @@ const int db5_enc_len[4] = {
  *	1	Valid v5 header
  */
 int
-db5_header_is_valid( hp )
-const unsigned char *hp;
+db5_header_is_valid(const unsigned char *hp)
 {
 	const struct db5_ondisk_header *odp = (const struct db5_ondisk_header *)hp;
 
@@ -99,8 +98,7 @@ const unsigned char *hp;
  *  which will contain it.
  */
 int
-db5_select_length_encoding( len )
-long len;
+db5_select_length_encoding(long int len)
 {
 	if( len <= 255 )  return DB5HDR_WIDTHCODE_8BIT;
 	if( len <= 65535 )  return DB5HDR_WIDTHCODE_16BIT;
@@ -120,10 +118,7 @@ long len;
  *	The number of bytes of input that were decoded.
  */
 int
-db5_decode_length( lenp, cp, format )
-long			*lenp;
-const unsigned char	*cp;
-int			format;
+db5_decode_length(long int *lenp, const unsigned char *cp, int format)
 {
 	switch( format )  {
 	case DB5HDR_WIDTHCODE_8BIT:
@@ -160,10 +155,7 @@ int			format;
  *	The number of bytes of input that were decoded.
  */
 int
-db5_decode_signed( lenp, cp, format )
-long			*lenp;
-const unsigned char	*cp;
-int			format;
+db5_decode_signed(long int *lenp, const unsigned char *cp, int format)
 {
 	switch( format )  {
 	case DB5HDR_WIDTHCODE_8BIT:
@@ -229,9 +221,7 @@ db5_encode_length(
  *	-1 on error
  */
 int
-db5_crack_disk_header( rip, cp )
-struct db5_raw_internal		*rip;
-const unsigned char		*cp;
+db5_crack_disk_header(struct db5_raw_internal *rip, const unsigned char *cp)
 {
 	if( cp[0] != DB5HDR_MAGIC1 )  {
 		bu_log("db5_crack_disk_header() bad magic1 -- database has become corrupted\n expected x%x, got x%x\n",
@@ -360,9 +350,7 @@ db5_get_raw_internal_ptr( struct db5_raw_internal *rip, const unsigned char *ip)
  *	-2 on error
  */
 int
-db5_get_raw_internal_fp( rip, fp )
-struct db5_raw_internal	*rip;
-FILE			*fp;
+db5_get_raw_internal_fp(struct db5_raw_internal *rip, FILE *fp)
 {
 	struct db5_ondisk_header	header;
 	unsigned char			lenbuf[8];
@@ -1105,10 +1093,7 @@ int db5_update_ident( struct db_i *dbip, const char *title, double local2mm )
  *	-1	Fatal Error
  */
 int
-db5_fwrite_ident( fp, title, local2mm )
-FILE		*fp;
-const char	*title;
-double		local2mm;
+db5_fwrite_ident(FILE *fp, const char *title, double local2mm)
 {
 	struct bu_attribute_value_set avs;
 	struct bu_vls		units;

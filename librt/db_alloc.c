@@ -51,10 +51,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
  *	-1	failure
  */
 int
-db_alloc( dbip, dp, count )
-register struct db_i	*dbip;
-register struct directory *dp;
-int		count;
+db_alloc(register struct db_i *dbip, register struct directory *dp, int count)
 {
 	unsigned long	addr;
 	union record	rec;
@@ -117,10 +114,7 @@ int		count;
  *  No longer supported.
  */
 int
-db_delrec( dbip, dp, recnum )
-struct db_i		*dbip;
-register struct directory *dp;
-int			recnum;
+db_delrec(struct db_i *dbip, register struct directory *dp, int recnum)
 {
 
 	RT_CK_DBI(dbip);
@@ -140,9 +134,7 @@ int			recnum;
  *  positively erasing what had been there before.
  */
 int
-db_delete( dbip, dp )
-struct db_i	*dbip;
-struct directory *dp;
+db_delete(struct db_i *dbip, struct directory *dp)
 {
 	register int i = -1;
 
@@ -187,10 +179,7 @@ struct directory *dp;
  *	0	on success (from db_put())
  */
 int
-db_zapper( dbip, dp, start )
-struct db_i	*dbip;
-struct directory *dp;
-int		start;
+db_zapper(struct db_i *dbip, struct directory *dp, int start)
 {
 	register union record	*rp;
 	register int		i;
@@ -230,8 +219,7 @@ int		start;
  *  in-memory directory of objects.
  */
 int
-db_flags_internal( intern )
-const struct rt_db_internal	*intern;
+db_flags_internal(const struct rt_db_internal *intern)
 {
 	const struct rt_comb_internal	*comb;
 

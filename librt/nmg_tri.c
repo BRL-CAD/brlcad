@@ -114,14 +114,11 @@ int PvsV(struct trap *p, struct trap *v)
 }
 
 
-static struct pt2d *find_pt2d();	
+static struct pt2d *find_pt2d(struct bu_list *tbl2d, struct vertexuse *vu);	
 static FILE *plot_fd;
 
 static void
-print_2d_eu(s, eu, tbl2d)
-char *s;
-struct edgeuse *eu;
-struct bu_list *tbl2d;
+print_2d_eu(char *s, struct edgeuse *eu, struct bu_list *tbl2d)
 {
 	struct pt2d *pt, *pt_next;
 	NMG_CK_TBL2D(tbl2d);
@@ -136,9 +133,7 @@ struct bu_list *tbl2d;
 
 
 static void
-print_trap(tp, tbl2d)
-struct trap *tp;
-struct bu_list *tbl2d;
+print_trap(struct trap *tp, struct bu_list *tbl2d)
 {
 	NMG_CK_TBL2D(tbl2d);
 	NMG_CK_TRAP(tp);
@@ -163,8 +158,7 @@ struct bu_list *tbl2d;
 		print_2d_eu("\t\t e_right", tp->e_right, tbl2d);
 }
 static void
-print_tlist(tbl2d, tlist)
-struct bu_list *tbl2d, *tlist;
+print_tlist(struct bu_list *tbl2d, struct bu_list *tlist)
 {
 	struct trap *tp;
 	NMG_CK_TBL2D(tbl2d);
@@ -180,9 +174,7 @@ struct bu_list *tbl2d, *tlist;
 static int flatten_debug=1;
 
 static struct pt2d *
-find_pt2d(tbl2d, vu)
-struct bu_list *tbl2d;
-struct vertexuse *vu;
+find_pt2d(struct bu_list *tbl2d, struct vertexuse *vu)
 {
 	struct pt2d *p;
 	NMG_CK_TBL2D(tbl2d);
@@ -197,9 +189,7 @@ struct vertexuse *vu;
 }
 
 static void
-nmg_tri_plfu( fu, tbl2d )
-struct faceuse *fu;
-struct bu_list *tbl2d;
+nmg_tri_plfu(struct faceuse *fu, struct bu_list *tbl2d)
 {
 	static int file_number=0;
 	FILE *fd;
@@ -279,10 +269,7 @@ struct bu_list *tbl2d;
  *	if vertex is child of loopuse, return parameter 2D pt.
  */
 static struct pt2d *
-pt2d_pn(tbl, pt, dir)
-struct bu_list *tbl;
-struct pt2d *pt;
-int dir;
+pt2d_pn(struct bu_list *tbl, struct pt2d *pt, int dir)
 {
 	struct edgeuse *eu, *eu_other;
 	struct pt2d *new_pt;
@@ -332,11 +319,7 @@ int dir;
  *	Add a vertex to the 2D table if it isn't already there.
  */
 static void
-map_vu_to_2d(vu, tbl2d, mat, fu)
-struct vertexuse *vu;
-struct bu_list *tbl2d;
-mat_t mat;
-struct faceuse *fu;
+map_vu_to_2d(struct vertexuse *vu, struct bu_list *tbl2d, fastf_t *mat, struct faceuse *fu)
 {
 	struct vertex_g *vg;
 	struct vertexuse *vu_p;
@@ -442,9 +425,7 @@ struct faceuse *fu;
  *	of the map
  */
 struct bu_list *
-nmg_flatten_face(fu, TformMat)
-struct faceuse *fu;
-mat_t		TformMat;
+nmg_flatten_face(struct faceuse *fu, fastf_t *TformMat)
 {
 	static const vect_t twoDspace = { 0.0, 0.0, 1.0 };
 	struct bu_list *tbl2d;
@@ -512,9 +493,7 @@ mat_t		TformMat;
 
 
 static int
-is_convex(a, b, c, tol)
-struct pt2d *a, *b, *c;
-const struct bn_tol *tol;
+is_convex(struct pt2d *a, struct pt2d *b, struct pt2d *c, const struct bn_tol *tol)
 {
 	vect_t ab, bc, pv, N;
 	double angle;
@@ -570,10 +549,7 @@ const struct bn_tol *tol;
  *	         Hole Start    		Hole end   
  */
 static int
-vtype2d(v, tbl2d, tol)
-struct pt2d *v;
-struct bu_list *tbl2d;
-const struct bn_tol *tol;
+vtype2d(struct pt2d *v, struct bu_list *tbl2d, const struct bn_tol *tol)
 {
 	struct pt2d *p, *n;	/* previous/this edge endpoints */
 	struct loopuse *lu;
@@ -682,9 +658,7 @@ const struct bn_tol *tol;
  *	start new trapezoid
  */
 static void
-poly_start_vertex(pt, tbl2d, tlist)
-struct pt2d *pt;
-struct bu_list *tbl2d, *tlist;
+poly_start_vertex(struct pt2d *pt, struct bu_list *tbl2d, struct bu_list *tlist)
 {
 	struct trap *new_trap;
 
@@ -718,9 +692,7 @@ struct bu_list *tbl2d, *tlist;
  *	finish trapezoid from vertex, start new trapezoid from vertex
  */
 static void
-poly_side_vertex(pt, tbl2d, tlist)
-struct pt2d *pt, *tbl2d;
-struct bu_list *tlist;
+poly_side_vertex(struct pt2d *pt, struct pt2d *tbl2d, struct bu_list *tlist)
 {
 	struct trap *new_trap, *tp;
 	struct edgeuse *upper_edge=NULL, *lower_edge=NULL;
@@ -804,9 +776,7 @@ struct bu_list *tlist;
  *	complete trapezoid
  */
 static void
-poly_end_vertex(pt, tbl2d, tlist)
-struct pt2d *pt;
-struct bu_list *tbl2d, *tlist;
+poly_end_vertex(struct pt2d *pt, struct bu_list *tbl2d, struct bu_list *tlist)
 {
 	struct trap *tp;
 	struct edgeuse *e_left, *e_right;
@@ -867,9 +837,7 @@ trap_found:
  *	Finish existing trapezoid, start 2 new ones
  */
 static void
-hole_start_vertex(pt, tbl2d, tlist)
-struct pt2d *pt;
-struct bu_list *tlist, *tbl2d;
+hole_start_vertex(struct pt2d *pt, struct bu_list *tbl2d, struct bu_list *tlist)
 {
 	struct trap *tp, *new_trap;
 	vect_t pv, ev, n;
@@ -1006,9 +974,7 @@ gotit:
  *
  */
 static void
-hole_end_vertex(pt, tbl2d, tlist)
-struct pt2d *pt; 
-struct bu_list *tlist, *tbl2d;
+hole_end_vertex(struct pt2d *pt, struct bu_list *tbl2d, struct bu_list *tlist)
 {
 	struct edgeuse *eunext, *euprev;
 	struct trap *tp, *tpnext, *tpprev;
@@ -1099,9 +1065,7 @@ gotem:
  *	2D points.
  */
 static void
-nmg_trap_face(tbl2d, tlist, tol)
-struct bu_list *tbl2d, *tlist;
-const struct bn_tol *tol;
+nmg_trap_face(struct bu_list *tbl2d, struct bu_list *tlist, const struct bn_tol *tol)
 {
 	struct pt2d *pt;
 
@@ -1137,9 +1101,7 @@ const struct bn_tol *tol;
 
 
 static void
-map_new_vertexuse(tbl2d, vu_p)
-struct bu_list *tbl2d;
-struct vertexuse *vu_p;
+map_new_vertexuse(struct bu_list *tbl2d, struct vertexuse *vu_p)
 {
 	struct vertexuse *vu;
 	struct pt2d *p, *new_pt2d;
@@ -1183,13 +1145,13 @@ struct vertexuse *vu_p;
  *
  */
 static void
-pick_edges(v, vu_first, min_dir, vu_last, max_dir, fu, tol, dir)
-struct vertex *v;
-struct vertexuse **vu_last, **vu_first;
-struct faceuse *fu;
-int *max_dir, *min_dir;	/* 1: forward -1 reverse */
-const struct bn_tol	*tol;
-vect_t dir;
+pick_edges(struct vertex *v, struct vertexuse **vu_first, int *min_dir, struct vertexuse **vu_last, int *max_dir, struct faceuse *fu, const struct bn_tol *tol, fastf_t *dir)
+                 
+                                       
+                   
+                       	/* 1: forward -1 reverse */
+                   	     
+           
 {
 	struct vertexuse *vu;
 	struct edgeuse *eu_next, *eu_last;
@@ -1342,11 +1304,7 @@ vect_t dir;
  *	(find_max == 0) left-dot-product.
  */
 struct edgeuse *
-pick_eu(eu_p, fu, dir, find_max)
-struct edgeuse *eu_p;
-struct faceuse *fu;
-vect_t dir;
-int find_max;
+pick_eu(struct edgeuse *eu_p, struct faceuse *fu, fastf_t *dir, int find_max)
 {
 	struct edgeuse *eu, *keep_eu=NULL, *eu_next;
 	int go_radial_not_mate = 0;
@@ -1454,13 +1412,7 @@ int find_max;
  *	that should be the parameters to nmg_cut_loop() and nmg_join_loop().
  */
 void
-nmg_find_first_last_use_of_v_in_fu(v, first_vu, last_vu, dir, fu, tol)
-struct vertex *v;
-struct vertexuse **first_vu;
-struct vertexuse **last_vu;
-vect_t 		dir;
-struct faceuse	*fu;
-const struct bn_tol	*tol;
+nmg_find_first_last_use_of_v_in_fu(struct vertex *v, struct vertexuse **first_vu, struct vertexuse **last_vu, fastf_t *dir, struct faceuse *fu, const struct bn_tol *tol)
 {
 	struct vertexuse *vu_first, *vu_last;
 	int max_dir, min_dir;	/* 1: forward -1 reverse */
@@ -1621,10 +1573,7 @@ const struct bn_tol	*tol;
 }
 
 static void
-pick_pt2d_for_cutjoin(tbl2d, p1, p2, tol)
-struct bu_list *tbl2d;
-struct pt2d **p1, **p2;
-const struct bn_tol *tol;
+pick_pt2d_for_cutjoin(struct bu_list *tbl2d, struct pt2d **p1, struct pt2d **p2, const struct bn_tol *tol)
 {
 	struct vertexuse *cut_vu1, *cut_vu2, *junk_vu;
 	struct faceuse *fu;
@@ -1716,14 +1665,9 @@ const struct bn_tol *tol;
  *
  *
  */
-static void join_mapped_loops();
+static void join_mapped_loops(struct bu_list *tbl2d, struct pt2d *p1, struct pt2d *p2, const int *color, const struct bn_tol *tol);
 static struct pt2d *
-cut_mapped_loop(tbl2d, p1, p2, color, tol, void_ok)
-struct bu_list *tbl2d;
-struct pt2d *p1, *p2;
-const int color[3];
-const struct bn_tol	*tol;
-int void_ok;
+cut_mapped_loop(struct bu_list *tbl2d, struct pt2d *p1, struct pt2d *p2, const int *color, const struct bn_tol *tol, int void_ok)
 {
 	struct loopuse *new_lu;
 	struct loopuse *old_lu;
@@ -1908,11 +1852,7 @@ int void_ok;
  *
  */
 static void
-join_mapped_loops(tbl2d, p1, p2, color, tol)
-struct bu_list *tbl2d;
-struct pt2d *p1, *p2;
-const int color[3];
-const struct bn_tol	*tol;
+join_mapped_loops(struct bu_list *tbl2d, struct pt2d *p1, struct pt2d *p2, const int *color, const struct bn_tol *tol)
 {
 	struct vertexuse *vu1, *vu2;
 	struct vertexuse *vu;
@@ -2038,9 +1978,7 @@ const struct bn_tol	*tol;
  * already exists.
  */
 static int
-skip_cut(tbl2d, top, bot)
-struct bu_list *tbl2d;
-struct pt2d *top, *bot;
+skip_cut(struct bu_list *tbl2d, struct pt2d *top, struct pt2d *bot)
 {
 	struct vertexuse *vu_top;
 	struct vertexuse *vu_bot;
@@ -2119,10 +2057,7 @@ struct pt2d *top, *bot;
 }
 
 static void
-cut_diagonals(tbl2d, tlist, fu, tol)
-struct bu_list *tbl2d, *tlist;
-const struct faceuse	*fu;
-const struct bn_tol	*tol;
+cut_diagonals(struct bu_list *tbl2d, struct bu_list *tlist, const struct faceuse *fu, const struct bn_tol *tol)
 {
 	struct trap *tp;
 	int cut_count=0;
@@ -2130,7 +2065,7 @@ const struct bn_tol	*tol;
 	static const int cut_color[3] = {255, 80, 80};
 	static const int join_color[3] = {80, 80, 255};
 
-	extern struct loopuse *nmg_find_lu_of_vu();
+	extern struct loopuse *nmg_find_lu_of_vu(const struct vertexuse *vu);
 	struct loopuse *toplu, *botlu;
 	struct loopuse *lu;
 
@@ -2341,10 +2276,7 @@ const struct bn_tol	*tol;
  *	Given a unimonotone loopuse, triangulate it into multiple loopuses
  */
 static void
-cut_unimonotone( tbl2d, tlist, lu, tol )
-struct bu_list *tbl2d, *tlist;
-struct loopuse *lu;
-const struct bn_tol *tol;
+cut_unimonotone(struct bu_list *tbl2d, struct bu_list *tlist, struct loopuse *lu, const struct bn_tol *tol)
 {
 	struct pt2d *min, *max, *new, *first=NULL, *prev, *next, *current;
 	struct edgeuse *eu;
@@ -2475,9 +2407,7 @@ const struct bn_tol *tol;
 
 
 static void
-nmg_plot_flat_face(fu, tbl2d)
-struct faceuse *fu;
-struct bu_list *tbl2d;
+nmg_plot_flat_face(struct faceuse *fu, struct bu_list *tbl2d)
 {
 	struct loopuse *lu;
 	struct edgeuse *eu;
@@ -2557,9 +2487,7 @@ struct bu_list *tbl2d;
 
 
 void
-nmg_triangulate_fu(fu, tol)
-struct faceuse *fu;
-const struct bn_tol	*tol;
+nmg_triangulate_fu(struct faceuse *fu, const struct bn_tol *tol)
 {
 	mat_t TformMat;
 	struct bu_list *tbl2d;
@@ -2750,9 +2678,7 @@ triangulate:
 }
 
 void
-nmg_triangulate_shell(s, tol)
-struct shell *s;
-const struct bn_tol   *tol;
+nmg_triangulate_shell(struct shell *s, const struct bn_tol *tol)
 {
 	struct faceuse *fu;
 
@@ -2767,9 +2693,7 @@ const struct bn_tol   *tol;
 }
 
 void
-nmg_triangulate_model(m, tol)
-struct model *m;
-const struct bn_tol   *tol;
+nmg_triangulate_model(struct model *m, const struct bn_tol *tol)
 {
 	struct nmgregion *r;
 	struct shell *s;

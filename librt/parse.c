@@ -42,6 +42,186 @@ static const char RCSparse[] = "@(#)$Header$ (BRL)";
 #include "bu.h"
 #include "raytrace.h"
 
+
+
+/*
+ *			B U _ M A T P R I N T
+ *
+ *	XXX Should this be here, or could it be with the matrix support?
+ *	pretty-print a matrix
+ */
+HIDDEN void
+bu_matprint(const char *name, register const matp_t mat)
+{
+	int	delta = strlen(name)+2;
+
+	/* indent the body of the matrix */
+	bu_log_indent_delta(delta);
+
+	bu_log(" %s=%.-12E %.-12E %.-12E %.-12E\n",
+		name, mat[0], mat[1], mat[2], mat[3]);
+					
+	bu_log("%.-12E %.-12E %.-12E %.-12E\n",
+		mat[4], mat[5], mat[6], mat[7]);
+
+	bu_log("%.-12E %.-12E %.-12E %.-12E\n",
+		mat[8], mat[9], mat[10], mat[11]);
+
+	bu_log_indent_delta(-delta);
+
+	bu_log("%.-12E %.-12E %.-12E %.-12E\n",
+		mat[12], mat[13], mat[14], mat[15]);
+}
+
+
+/*
+ *			B U _ S T R U C T P R I N T
+ */
+void
+bu_structprint(const char *title, const struct bu_structparse *parsetab, const char *base)
+          			       
+                           	          /* structure description */
+          			      	  /* base address of users structure */
+{
+	register const struct bu_structparse	*sdp;
+	register char			*loc;
+	register int			lastoff = -1;
+	struct bu_vls vls;
+
+	bu_vls_init( &vls );
+	bu_log( "%s\n", title );
+	if (parsetab == (struct bu_structparse *)NULL) {
+		bu_log( "Null \"struct bu_structparse\" pointer\n");
+		return;
+	}
+	for( sdp = parsetab; sdp->sp_name != (char *)0; sdp++ )  {
+
+		/* Skip alternate keywords for same value */
+		if( lastoff == sdp->sp_offset )
+			continue;
+		lastoff = sdp->sp_offset;
+
+#if CRAY && !__STDC__
+		loc = (char *)(base + ((int)sdp->sp_offset*sizeof(int)));
+#else
+		loc = (char *)(base + ((int)sdp->sp_offset));
+#endif
+
+		if (sdp->sp_fmt[0] == 'i' )  {
+			bu_structprint( sdp->sp_name,
+				(struct bu_structparse *)sdp->sp_count,
+				base );
+			continue;
+		}
+
+		if ( sdp->sp_fmt[0] != '%')  {
+			bu_log("bu_structprint:  %s: unknown format '%s'\n",
+				sdp->sp_name, sdp->sp_fmt );
+			continue;
+		}
+#if 0
+		bu_vls_trunc( &vls, 0 );
+		bu_vls_item_print( &vls, sdp, base );
+		bu_log( " %s=%s\n", sdp->sp_name, bu_vls_addr(&vls) );
+#else
+		switch( sdp->sp_fmt[1] )  {
+		case 'c':
+		case 's':
+			if (sdp->sp_count < 1)
+				break;
+			if (sdp->sp_count == 1)
+				bu_log( " %s='%c'\n", sdp->sp_name, *loc);
+			else
+				bu_log( " %s=\"%s\"\n", sdp->sp_name,
+					(char *)loc );
+			break;
+		case 'S':
+			{
+				int delta = strlen(sdp->sp_name)+2;
+				register struct bu_vls *vls =
+					(struct bu_vls *)loc;
+
+				bu_log_indent_delta(delta);
+				bu_log(" %s=(vls_magic)%d (vls_offset)%d (vls_len)%d (vls_max)%d\n",
+					sdp->sp_name, vls->vls_magic,
+					vls->vls_offset,
+					vls->vls_len, vls->vls_max);
+				bu_log_indent_delta(-delta);
+				bu_log("\"%s\"\n", vls->vls_str+vls->vls_offset);
+			}
+			break;
+		case 'i':
+			{	register int i = sdp->sp_count;
+				register short *sp = (short *)loc;
+
+				bu_log( " %s=%hd", sdp->sp_name, *sp++ );
+
+				while (--i > 0) bu_log( ",%d", *sp++ );
+
+				bu_log("\n");
+			}
+			break;
+		case 'd':
+			{	register int i = sdp->sp_count;
+				register int *dp = (int *)loc;
+
+				bu_log( " %s=%d", sdp->sp_name, *dp++ );
+
+				while (--i > 0) bu_log( ",%d", *dp++ );
+
+				bu_log("\n");
+			}
+			break;
+		case 'f':
+			{	register int i = sdp->sp_count;
+				register double *dp = (double *)loc;
+
+				if (sdp->sp_count == ELEMENTS_PER_MAT) {
+					bu_matprint(sdp->sp_name, (matp_t)dp);
+				} else if (sdp->sp_count <= ELEMENTS_PER_VECT){
+					bu_log( " %s=%.25G", sdp->sp_name, *dp++ );
+
+					while (--i > 0)
+						bu_log( ",%.25G", *dp++ );
+
+					bu_log("\n");
+				}else  {
+					int delta = strlen(sdp->sp_name)+2;
+
+					bu_log_indent_delta(delta);
+
+					bu_log( " %s=%.25G\n", sdp->sp_name, *dp++ );
+
+					while (--i > 1)
+						bu_log( "%.25G\n", *dp++ );
+
+					bu_log_indent_delta(-delta);
+					bu_log( "%.25G\n", *dp );
+				}
+			}
+			break;
+		case 'x':
+			{	register int i = sdp->sp_count;
+				register int *dp = (int *)loc;
+
+				bu_log( " %s=%08x", sdp->sp_name, *dp++ );
+
+				while (--i > 0) bu_log( ",%08x", *dp++ );
+
+				bu_log("\n");
+			}
+			break;
+		default:
+			bu_log( " bu_structprint: Unknown format: %s=%s??\n",
+				sdp->sp_name, sdp->sp_fmt );
+			break;
+		}
+#endif
+	}
+	bu_vls_free(&vls);
+}
+
+
 /*
  *			B U _ P A R S E _ D O U B L E
  *
@@ -50,10 +230,7 @@ static const char RCSparse[] = "@(#)$Header$ (BRL)";
  *               <0 upon failure
  */
 HIDDEN int
-bu_parse_double(str, count, loc)
-const char	*str;
-long		count;
-double		*loc;
+bu_parse_double(const char *str, long int count, double *loc)
 {
 	long	i;
 	int	dot_seen;
@@ -119,11 +296,11 @@ double		*loc;
  *	 0	entry found and processed
  */
 HIDDEN int
-bu_struct_lookup( sdp, name, base, value )
-register const struct bu_structparse	*sdp;	/* structure description */
-register const char			*name;	/* struct member name */
-char					*base;	/* begining of structure */
-const char				*value;	/* string containing value */
+bu_struct_lookup(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value)
+                                    	     	/* structure description */
+                   			      	/* struct member name */
+    					      	/* begining of structure */
+          				       	/* string containing value */
 {
 	register char *loc;
 	int i, retval = 0;
@@ -283,10 +460,10 @@ const char				*value;	/* string containing value */
  *	 0	OK
  */
 int
-bu_structparse( in_vls, desc, base )
-const struct bu_vls		*in_vls;	/* string to parse through */
-const struct bu_structparse	*desc;		/* structure description */
-char				*base;		/* base addr of users struct */
+bu_structparse(const struct bu_vls *in_vls, const struct bu_structparse *desc, char *base)
+                   		        	/* string to parse through */
+                           	      		/* structure description */
+    				      		/* base addr of users struct */
 {
 	struct bu_vls	vls;
 	register char *cp;
@@ -373,44 +550,12 @@ char				*base;		/* base addr of users struct */
 }
 
 
-/*
- *			B U _ M A T P R I N T
- *
- *	XXX Should this be here, or could it be with the matrix support?
- *	pretty-print a matrix
- */
 HIDDEN void
-bu_matprint(name, mat)
-const char		*name;
-register const matp_t	mat;
-{
-	int	delta = strlen(name)+2;
-
-	/* indent the body of the matrix */
-	bu_log_indent_delta(delta);
-
-	bu_log(" %s=%.-12E %.-12E %.-12E %.-12E\n",
-		name, mat[0], mat[1], mat[2], mat[3]);
-					
-	bu_log("%.-12E %.-12E %.-12E %.-12E\n",
-		mat[4], mat[5], mat[6], mat[7]);
-
-	bu_log("%.-12E %.-12E %.-12E %.-12E\n",
-		mat[8], mat[9], mat[10], mat[11]);
-
-	bu_log_indent_delta(-delta);
-
-	bu_log("%.-12E %.-12E %.-12E %.-12E\n",
-		mat[12], mat[13], mat[14], mat[15]);
-}
-
-
-HIDDEN void
-bu_vls_item_print_core( vp, sdp, base, sep_char )
-struct bu_vls *vp;
-const struct bu_structparse *sdp;    /* item description */
-const char *base;                 /* base address of users structure */
-char sep_char;                    /* value separator */
+bu_vls_item_print_core(struct bu_vls *vp, const struct bu_structparse *sdp, const char *base, char sep_char)
+                  
+                                     /* item description */
+                                  /* base address of users structure */
+                                  /* value separator */
 {
     register char *loc;
 
@@ -494,10 +639,10 @@ char sep_char;                    /* value separator */
  */
 
 void
-bu_vls_item_print( vp, sdp, base )
-struct bu_vls *vp;
-const struct bu_structparse *sdp;     /* item description */
-const char *base;                 /* base address of users structure */
+bu_vls_item_print(struct bu_vls *vp, const struct bu_structparse *sdp, const char *base)
+                  
+                                      /* item description */
+                                  /* base address of users structure */
 {
     bu_vls_item_print_core( vp, sdp, base, ',' );
 }
@@ -509,10 +654,10 @@ const char *base;                 /* base address of users structure */
  */
 
 void
-bu_vls_item_print_nc( vp, sdp, base )
-struct bu_vls *vp;
-const struct bu_structparse *sdp;     /* item description */
-const char *base;                 /* base address of users structure */
+bu_vls_item_print_nc(struct bu_vls *vp, const struct bu_structparse *sdp, const char *base)
+                  
+                                      /* item description */
+                                  /* base address of users structure */
 {
     bu_vls_item_print_core( vp, sdp, base, ' ' );
 }
@@ -523,11 +668,7 @@ const char *base;                 /* base address of users structure */
  */
 
 int
-bu_vls_name_print( vp, parsetab, name, base )
-struct bu_vls *vp;
-const struct bu_structparse *parsetab;
-const char *name;
-const char *base;
+bu_vls_name_print(struct bu_vls *vp, const struct bu_structparse *parsetab, const char *name, const char *base)
 {
     register const struct bu_structparse *sdp;
 
@@ -546,11 +687,7 @@ const char *base;
  */
 
 int
-bu_vls_name_print_nc( vp, parsetab, name, base )
-struct bu_vls *vp;
-const struct bu_structparse *parsetab;
-const char *name;
-const char *base;
+bu_vls_name_print_nc(struct bu_vls *vp, const struct bu_structparse *parsetab, const char *name, const char *base)
 {
     register const struct bu_structparse *sdp;
 
@@ -564,164 +701,11 @@ const char *base;
 }
 
 
-
-
-/*
- *			B U _ S T R U C T P R I N T
- */
-void
-bu_structprint( title, parsetab, base )
-const char			*title;
-const struct bu_structparse	*parsetab;/* structure description */
-const char			*base;	  /* base address of users structure */
-{
-	register const struct bu_structparse	*sdp;
-	register char			*loc;
-	register int			lastoff = -1;
-	struct bu_vls vls;
-
-	bu_vls_init( &vls );
-	bu_log( "%s\n", title );
-	if (parsetab == (struct bu_structparse *)NULL) {
-		bu_log( "Null \"struct bu_structparse\" pointer\n");
-		return;
-	}
-	for( sdp = parsetab; sdp->sp_name != (char *)0; sdp++ )  {
-
-		/* Skip alternate keywords for same value */
-		if( lastoff == sdp->sp_offset )
-			continue;
-		lastoff = sdp->sp_offset;
-
-#if CRAY && !__STDC__
-		loc = (char *)(base + ((int)sdp->sp_offset*sizeof(int)));
-#else
-		loc = (char *)(base + ((int)sdp->sp_offset));
-#endif
-
-		if (sdp->sp_fmt[0] == 'i' )  {
-			bu_structprint( sdp->sp_name,
-				(struct bu_structparse *)sdp->sp_count,
-				base );
-			continue;
-		}
-
-		if ( sdp->sp_fmt[0] != '%')  {
-			bu_log("bu_structprint:  %s: unknown format '%s'\n",
-				sdp->sp_name, sdp->sp_fmt );
-			continue;
-		}
-#if 0
-		bu_vls_trunc( &vls, 0 );
-		bu_vls_item_print( &vls, sdp, base );
-		bu_log( " %s=%s\n", sdp->sp_name, bu_vls_addr(&vls) );
-#else
-		switch( sdp->sp_fmt[1] )  {
-		case 'c':
-		case 's':
-			if (sdp->sp_count < 1)
-				break;
-			if (sdp->sp_count == 1)
-				bu_log( " %s='%c'\n", sdp->sp_name, *loc);
-			else
-				bu_log( " %s=\"%s\"\n", sdp->sp_name,
-					(char *)loc );
-			break;
-		case 'S':
-			{
-				int delta = strlen(sdp->sp_name)+2;
-				register struct bu_vls *vls =
-					(struct bu_vls *)loc;
-
-				bu_log_indent_delta(delta);
-				bu_log(" %s=(vls_magic)%d (vls_offset)%d (vls_len)%d (vls_max)%d\n",
-					sdp->sp_name, vls->vls_magic,
-					vls->vls_offset,
-					vls->vls_len, vls->vls_max);
-				bu_log_indent_delta(-delta);
-				bu_log("\"%s\"\n", vls->vls_str+vls->vls_offset);
-			}
-			break;
-		case 'i':
-			{	register int i = sdp->sp_count;
-				register short *sp = (short *)loc;
-
-				bu_log( " %s=%hd", sdp->sp_name, *sp++ );
-
-				while (--i > 0) bu_log( ",%d", *sp++ );
-
-				bu_log("\n");
-			}
-			break;
-		case 'd':
-			{	register int i = sdp->sp_count;
-				register int *dp = (int *)loc;
-
-				bu_log( " %s=%d", sdp->sp_name, *dp++ );
-
-				while (--i > 0) bu_log( ",%d", *dp++ );
-
-				bu_log("\n");
-			}
-			break;
-		case 'f':
-			{	register int i = sdp->sp_count;
-				register double *dp = (double *)loc;
-
-				if (sdp->sp_count == ELEMENTS_PER_MAT) {
-					bu_matprint(sdp->sp_name, (matp_t)dp);
-				} else if (sdp->sp_count <= ELEMENTS_PER_VECT){
-					bu_log( " %s=%.25G", sdp->sp_name, *dp++ );
-
-					while (--i > 0)
-						bu_log( ",%.25G", *dp++ );
-
-					bu_log("\n");
-				}else  {
-					int delta = strlen(sdp->sp_name)+2;
-
-					bu_log_indent_delta(delta);
-
-					bu_log( " %s=%.25G\n", sdp->sp_name, *dp++ );
-
-					while (--i > 1)
-						bu_log( "%.25G\n", *dp++ );
-
-					bu_log_indent_delta(-delta);
-					bu_log( "%.25G\n", *dp );
-				}
-			}
-			break;
-		case 'x':
-			{	register int i = sdp->sp_count;
-				register int *dp = (int *)loc;
-
-				bu_log( " %s=%08x", sdp->sp_name, *dp++ );
-
-				while (--i > 0) bu_log( ",%08x", *dp++ );
-
-				bu_log("\n");
-			}
-			break;
-		default:
-			bu_log( " bu_structprint: Unknown format: %s=%s??\n",
-				sdp->sp_name, sdp->sp_fmt );
-			break;
-		}
-#endif
-	}
-	bu_vls_free(&vls);
-}
-
 /*
  *			B U _ V L S _ P R I N T _ D O U B L E
  */
 HIDDEN void
-bu_vls_print_double(vls, name, count, dp)
-struct bu_vls		*vls;
-const char		*name;
-register long		count;
-register const double	*dp;
+bu_vls_print_double(struct bu_vls *vls, const char *name, register long int count, register const double *dp)
 {
 	register int tmpi;
 	register char *cp;
@@ -748,10 +732,10 @@ register const double	*dp;
  *	by humans, but easier to parse with the computer.
  */
 void
-bu_vls_structprint( vls, sdp, base)
-struct	bu_vls				*vls;	/* vls to print into */
-register const struct bu_structparse	*sdp;	/* structure description */
-const char				*base;	/* structure ponter */
+bu_vls_structprint(struct bu_vls *vls, register const struct bu_structparse *sdp, const char *base)
+      	      				     	/* vls to print into */
+                                    	     	/* structure description */
+          				      	/* structure ponter */
 {
 	register char			*loc;
 	register int			lastoff = -1;

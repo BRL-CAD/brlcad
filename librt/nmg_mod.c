@@ -33,10 +33,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
  *			N M G _ M E R G E _ R E G I O N S
  */
 void
-nmg_merge_regions( r1, r2, tol )
-struct nmgregion *r1;
-struct nmgregion *r2;
-const struct bn_tol *tol;
+nmg_merge_regions(struct nmgregion *r1, struct nmgregion *r2, const struct bn_tol *tol)
 {
 	struct model *m;
 
@@ -88,10 +85,7 @@ const struct bn_tol *tol;
  *  XXX all the geometric calculations to the code in nmg_fuse.c ?
  */
 void
-nmg_shell_coplanar_face_merge( s, tol, simplify )
-struct shell		*s;
-const struct bn_tol	*tol;
-const int		simplify;
+nmg_shell_coplanar_face_merge(struct shell *s, const struct bn_tol *tol, const int simplify)
 {
 	struct model	*m;
 	int		len;
@@ -219,8 +213,7 @@ const int		simplify;
  *	1	If shell is now empty
  */
 int
-nmg_simplify_shell(s)
-struct shell *s;
+nmg_simplify_shell(struct shell *s)
 {
 	struct faceuse *fu;
 	int ret_val;
@@ -254,9 +247,7 @@ struct shell *s;
  *  match vertices in a face loop, wire loop, or wire edge.
  */
 void
-nmg_rm_redundancies(s, tol)
-struct shell	*s;
-const struct bn_tol *tol;
+nmg_rm_redundancies(struct shell *s, const struct bn_tol *tol)
 {
 	struct faceuse	*fu;
 	struct loopuse	*lu;
@@ -608,9 +599,7 @@ const struct bn_tol *tol;
  *	process of doing intersections for the boolean operations.
  */
 void
-nmg_sanitize_s_lv(s, orient)
-struct shell	*s;
-int		orient;
+nmg_sanitize_s_lv(struct shell *s, int orient)
 {
 	struct faceuse *fu;
 	struct loopuse *lu;
@@ -693,9 +682,7 @@ int		orient;
  *  separately.
  */
 void
-nmg_s_split_touchingloops(s, tol)
-struct shell		*s;
-const struct bn_tol	*tol;
+nmg_s_split_touchingloops(struct shell *s, const struct bn_tol *tol)
 {
 	struct faceuse	*fu;
 	struct loopuse	*lu;
@@ -738,9 +725,7 @@ const struct bn_tol	*tol;
  *  For every loop in a shell, invoke nmg_join_touchingloops() on it.
  */
 void
-nmg_s_join_touchingloops(s, tol)
-struct shell		*s;
-const struct bn_tol	*tol;
+nmg_s_join_touchingloops(struct shell *s, const struct bn_tol *tol)
 {
 	struct faceuse	*fu;
 	struct loopuse	*lu;
@@ -787,10 +772,10 @@ const struct bn_tol	*tol;
  *  The 'tol' arg is used strictly for printing purposes.
  */
 void
-nmg_js( s1, s2, tol )
-register struct shell	*s1;		/* destination */
-register struct shell	*s2;		/* source */
-const struct bn_tol	*tol;
+nmg_js(register struct shell *s1, register struct shell *s2, const struct bn_tol *tol)
+                     	    		/* destination */
+                     	    		/* source */
+                   	     
 {
 	struct faceuse	*fu2;
 	struct faceuse	*nextfu;
@@ -952,9 +937,7 @@ const struct bn_tol	*tol;
  *  The 'tol' argument is used strictly for printing.
  */
 void
-nmg_invert_shell( s, tol )
-struct shell		*s;
-const struct bn_tol	*tol;
+nmg_invert_shell(struct shell *s, const struct bn_tol *tol)
 {
 	struct model	*m;
 	struct faceuse	*fu;
@@ -1045,10 +1028,7 @@ const struct bn_tol	*tol;
  *  verts[] array in order specified by the caller.  Imagine that.
  */
 struct faceuse *
-nmg_cmface(s, verts, n)
-struct shell	*s;
-struct vertex	**verts[];
-int		n;
+nmg_cmface(struct shell *s, struct vertex ***verts, int n)
 {
 	struct faceuse *fu;
 	struct edgeuse *eu, *eur, *euold = NULL;
@@ -1198,10 +1178,7 @@ int		n;
  *	to effect the proper vertex order in the final face loop.
  */
 struct faceuse *
-nmg_cface(s, verts, n)
-struct shell *s;
-struct vertex *verts[];
-int n;
+nmg_cface(struct shell *s, struct vertex **verts, int n)
 {
 	struct faceuse *fu;
 	struct edgeuse *eu;
@@ -1281,11 +1258,7 @@ int n;
  *	loop.
  */
 struct faceuse *
-nmg_add_loop_to_face(s, fu, verts, n, dir)
-struct shell *s;
-struct faceuse *fu;
-struct vertex *verts[];
-int n, dir;
+nmg_add_loop_to_face(struct shell *s, struct faceuse *fu, struct vertex **verts, int n, int dir)
 {
 	int i;
 	struct edgeuse *eu;
@@ -1386,9 +1359,7 @@ int n, dir;
  *	-1	failure
  */
 int
-nmg_fu_planeeqn( fu, tol )
-struct faceuse		*fu;
-const struct bn_tol	*tol;
+nmg_fu_planeeqn(struct faceuse *fu, const struct bn_tol *tol)
 {
 	struct edgeuse		*eu, *eu_final, *eu_next;
 	struct loopuse		*lu;
@@ -1490,10 +1461,7 @@ const struct bn_tol	*tol;
  *
  */
 void
-nmg_gluefaces(fulist, n, tol)
-struct faceuse *fulist[];
-int n;
-const struct bn_tol *tol;
+nmg_gluefaces(struct faceuse **fulist, int n, const struct bn_tol *tol)
 {
 	struct shell	*s;
 	struct loopuse	*lu;
@@ -1561,8 +1529,7 @@ const struct bn_tol *tol;
  *	1	If faceuse is now empty
  */
 int
-nmg_simplify_face(fu)
-struct faceuse *fu;
+nmg_simplify_face(struct faceuse *fu)
 {
 	struct loopuse *lu;
 	int ret_val;
@@ -1629,8 +1596,7 @@ struct faceuse *fu;
  *  This routine is for internal use only.
  */
 void
-nmg_reverse_face( fu )
-register struct faceuse	*fu;
+nmg_reverse_face(register struct faceuse *fu)
 {
 	register struct faceuse	*fumate;
 
@@ -1838,10 +1804,7 @@ nmg_pr_fu_around_eu(eu, tol );
  *  Move faceuse from 'src' shell to 'dest' shell.
  */
 void
-nmg_mv_fu_between_shells( dest, src, fu )
-struct shell		*dest;
-register struct shell	*src;
-register struct faceuse	*fu;
+nmg_mv_fu_between_shells(struct shell *dest, register struct shell *src, register struct faceuse *fu)
 {
 	register struct faceuse	*fumate;
 
@@ -1899,9 +1862,7 @@ register struct faceuse	*fu;
  *  Exists as a support routine for nmg_jf() only.
  */
 static void
-nmg_move_fu_fu( dest_fu, src_fu )
-register struct faceuse	*dest_fu;
-register struct faceuse	*src_fu;
+nmg_move_fu_fu(register struct faceuse *dest_fu, register struct faceuse *src_fu)
 {
 	register struct loopuse	*lu;
 
@@ -1933,9 +1894,7 @@ register struct faceuse	*src_fu;
  *  The source face is destroyed by this operation.
  */
 void
-nmg_jf(dest_fu, src_fu)
-register struct faceuse	*dest_fu;
-register struct faceuse	*src_fu;
+nmg_jf(register struct faceuse *dest_fu, register struct faceuse *src_fu)
 {
 	NMG_CK_FACEUSE(dest_fu);
 	NMG_CK_FACEUSE(src_fu);
@@ -1972,9 +1931,7 @@ register struct faceuse	*src_fu;
  *  making any modifications.
  */
 struct faceuse *
-nmg_dup_face(fu, s)
-struct faceuse *fu;
-struct shell *s;
+nmg_dup_face(struct faceuse *fu, struct shell *s)
 {
 	struct loopuse *new_lu, *lu;
 	struct faceuse *new_fu = (struct faceuse *)NULL;
@@ -2094,9 +2051,7 @@ struct shell *s;
  *  Since "lu" must survive, it must be the OT_SAME one.
  */
 void
-nmg_jl(lu, eu)
-struct loopuse *lu;
-struct edgeuse *eu;
+nmg_jl(struct loopuse *lu, struct edgeuse *eu)
 {
 	struct loopuse	*lu2;
 	struct edgeuse	*eu_r;		/* use of shared edge in lu2 */
@@ -2195,9 +2150,7 @@ struct edgeuse *eu;
  *  Returns the replacement for vu2.
  */
 struct vertexuse *
-nmg_join_2loops( vu1, vu2 )
-struct vertexuse	*vu1;
-struct vertexuse	*vu2;
+nmg_join_2loops(struct vertexuse *vu1, struct vertexuse *vu2)
 {
 	struct edgeuse	*eu1, *eu2;
 	struct edgeuse	*first_new_eu;
@@ -2291,8 +2244,7 @@ struct vertexuse	*vu2;
  *  Return is the new vu that replaces vu2.
  */
 struct vertexuse *
-nmg_join_singvu_loop( vu1, vu2 )
-struct vertexuse	*vu1, *vu2;
+nmg_join_singvu_loop(struct vertexuse *vu1, struct vertexuse *vu2)
 {
     	struct edgeuse	*eu1;
 	struct edgeuse	*first_new_eu, *second_new_eu;
@@ -2342,8 +2294,7 @@ struct vertexuse	*vu1, *vu2;
  *  Does not change the orientation.
  */
 struct vertexuse *
-nmg_join_2singvu_loops( vu1, vu2 )
-struct vertexuse	*vu1, *vu2;
+nmg_join_2singvu_loops(struct vertexuse *vu1, struct vertexuse *vu2)
 {
 	struct edgeuse	*first_new_eu, *second_new_eu;
 	struct loopuse	*lu1, *lu2;
@@ -2442,8 +2393,7 @@ struct vertexuse	*vu1, *vu2;
  *	lu	Loopuse of new loop, on success.
  */
 struct loopuse *
-nmg_cut_loop(vu1, vu2)
-struct vertexuse *vu1, *vu2;
+nmg_cut_loop(struct vertexuse *vu1, struct vertexuse *vu2)
 {
 	struct loopuse *lu, *oldlu;
 	struct edgeuse *eu1, *eu2, *eunext, *neweu, *eu;
@@ -2611,9 +2561,7 @@ out:
  *	lu	Loopuse of new loop, on success.
  */
 struct loopuse *
-nmg_split_lu_at_vu( lu, split_vu )
-struct loopuse		*lu;
-struct vertexuse	*split_vu;
+nmg_split_lu_at_vu(struct loopuse *lu, struct vertexuse *split_vu)
 {
 	struct edgeuse		*eu;
 	struct vertexuse	*vu;
@@ -2689,8 +2637,7 @@ out:
  *  XXX move to nmg_info.c
  */
 struct vertexuse *
-nmg_find_repeated_v_in_lu( vu )
-struct vertexuse	*vu;
+nmg_find_repeated_v_in_lu(struct vertexuse *vu)
 {
 	struct vertexuse	*tvu;		/* vu to test */
 	struct loopuse		*lu;
@@ -2744,9 +2691,7 @@ struct vertexuse	*vu;
  *  loopuses to be marked OT_UNSPEC.
  */
 void
-nmg_split_touchingloops( lu, tol )
-struct loopuse		*lu;
-const struct bn_tol	*tol;
+nmg_split_touchingloops(struct loopuse *lu, const struct bn_tol *tol)
 {
 	struct edgeuse		*eu;
 	struct vertexuse	*vu;
@@ -2888,8 +2833,7 @@ top:
  *	count of loops joined (eliminated)
  */
 int
-nmg_join_touchingloops( lu )
-struct loopuse	*lu;
+nmg_join_touchingloops(struct loopuse *lu)
 {
 	struct faceuse		*fu;
 	struct edgeuse		*eu;
@@ -2987,10 +2931,7 @@ top:
  */
 
 int
-nmg_get_touching_jaunts( lu, tbl, need_init )
-const struct loopuse *lu;
-struct bu_ptbl *tbl;
-int *need_init;
+nmg_get_touching_jaunts(const struct loopuse *lu, struct bu_ptbl *tbl, int *need_init)
 {
 	struct edgeuse *eu;
 	int count=0;
@@ -3058,14 +2999,7 @@ int *need_init;
  */
 
 static void
-nmg_check_proposed_loop( start_eu, next_start_eu, visit_count, jaunt_status, jaunt_tbl, jaunt_no, which_loop )
-struct edgeuse *start_eu;
-struct edgeuse **next_start_eu;
-int visit_count[];
-int jaunt_status[];
-const struct bu_ptbl *jaunt_tbl;
-const int jaunt_no;
-const int which_loop;
+nmg_check_proposed_loop(struct edgeuse *start_eu, struct edgeuse **next_start_eu, int *visit_count, int *jaunt_status, const struct bu_ptbl *jaunt_tbl, const int jaunt_no, const int which_loop)
 {
 	struct edgeuse *loop_eu;
 	struct edgeuse *last_eu;
@@ -3148,8 +3082,7 @@ const int which_loop;
 }
 
 void
-nmg_kill_accordions( lu )
-struct loopuse *lu;
+nmg_kill_accordions(struct loopuse *lu)
 {
 	struct edgeuse *eu;
 	struct edgeuse *jaunt_eu1;
@@ -3230,9 +3163,7 @@ top:
  *  Note that any loops so split will be marked OT_UNSPEC.
  */
 int
-nmg_loop_split_at_touching_jaunt(lu, tol)
-struct loopuse		*lu;
-const struct bn_tol	*tol;
+nmg_loop_split_at_touching_jaunt(struct loopuse *lu, const struct bn_tol *tol)
 {
 	struct bu_ptbl		jaunt_tbl;
 	struct loopuse		*new_lu;
@@ -3476,8 +3407,7 @@ top:
  *	a common edge into a single loop, with the edge eliminated.
  */
 void
-nmg_simplify_loop(lu)
-struct loopuse *lu;
+nmg_simplify_loop(struct loopuse *lu)
 {
 	struct edgeuse *eu, *eu_r, *tmpeu;
 
@@ -3558,8 +3488,7 @@ struct loopuse *lu;
  *	1	If the loopuse is now empty and needs to be killed.
  */
 int
-nmg_kill_snakes(lu)
-struct loopuse *lu;
+nmg_kill_snakes(struct loopuse *lu)
 {
 	struct edgeuse *eu, *eu_r;
 	struct vertexuse *vu;
@@ -3634,10 +3563,7 @@ struct loopuse *lu;
  *  Note that this routine can not be used on loops in faces.
  */
 void
-nmg_mv_lu_between_shells( dest, src, lu )
-struct shell		*dest;
-register struct shell	*src;
-register struct loopuse	*lu;
+nmg_mv_lu_between_shells(struct shell *dest, register struct shell *src, register struct loopuse *lu)
 {
 	register struct loopuse	*lumate;
 
@@ -3688,9 +3614,7 @@ register struct loopuse	*lu;
  *	in an existing face.
  * XXX This routine is not used anywhere, and may not work.
  */
-void nmg_moveltof(fu, s)
-struct faceuse *fu;
-struct shell *s;
+void nmg_moveltof(struct faceuse *fu, struct shell *s)
 {
 	struct loopuse	*lu1, *lu2;
 
@@ -3726,10 +3650,10 @@ struct shell *s;
  *  trans_tbl may be NULL.
  */
 struct loopuse *
-nmg_dup_loop(lu, parent, trans_tbl)
-struct loopuse *lu;
-long	*parent;		/* fu or shell ptr */
-long	**trans_tbl;
+nmg_dup_loop(struct loopuse *lu, long int *parent, long int **trans_tbl)
+                   
+    	        		/* fu or shell ptr */
+    	            
 {
 	struct loopuse *new_lu = (struct loopuse *)NULL;
 	struct vertexuse *new_vu = (struct vertexuse *)NULL;
@@ -3906,9 +3830,7 @@ long	**trans_tbl;
  *  from the orientation of the faceuse they each reside in.
  */
 void
-nmg_set_lu_orientation( lu, is_opposite )
-struct loopuse	*lu;
-int		is_opposite;
+nmg_set_lu_orientation(struct loopuse *lu, int is_opposite)
 {
 	NMG_CK_LOOPUSE(lu);
 	NMG_CK_LOOPUSE(lu->lumate_p);
@@ -3938,8 +3860,7 @@ int		is_opposite;
  *  The loopuses either both agree with their faceuse, or both differ.
  */
 void
-nmg_lu_reorient( lu )
-struct loopuse		*lu;
+nmg_lu_reorient(struct loopuse *lu)
 {
 	struct faceuse	*fu;
 	int	geom_orient;
@@ -4044,10 +3965,7 @@ struct loopuse		*lu;
  *		       mate	 mate
  */
 struct edgeuse *
-nmg_eusplit(v, oldeu, share_geom)
-struct vertex	*v;
-struct edgeuse	*oldeu;
-int		share_geom;
+nmg_eusplit(struct vertex *v, struct edgeuse *oldeu, int share_geom)
 {
 	struct edgeuse	*eu1,
 			*eu2,
@@ -4322,10 +4240,10 @@ out:
  *  call with share_geom=0.
  */
 struct edgeuse *
-nmg_esplit(v, eu, share_geom)
-struct vertex	*v;		/* New vertex, to go in middle */
-struct edgeuse	*eu;
-int		share_geom;
+nmg_esplit(struct vertex *v, struct edgeuse *eu, int share_geom)
+             	   		/* New vertex, to go in middle */
+              	    
+   		           
 {
 	struct edge	*e;	/* eu->e_p */
 	struct edgeuse	*teuX,	/* radial edgeuse of eu */
@@ -4440,9 +4358,9 @@ int		share_geom;
  *  The return is the return of nmg_esplit().
  */
 struct edgeuse *
-nmg_ebreak(v, eu)
-struct vertex	*v;			/* May be NULL */
-struct edgeuse	*eu;
+nmg_ebreak(struct vertex *v, struct edgeuse *eu)
+             	   			/* May be NULL */
+              	    
 {
 	struct edgeuse	*new_eu;
 
@@ -4476,10 +4394,10 @@ struct edgeuse	*eu;
  *  with an existing edgeuse that shared the same vertices.
  */
 struct edgeuse *
-nmg_ebreaker(v, eu, tol)
-struct vertex		*v;			/* May be NULL */
-struct edgeuse		*eu;
-const struct bn_tol	*tol;
+nmg_ebreaker(struct vertex *v, struct edgeuse *eu, const struct bn_tol *tol)
+             		   			/* May be NULL */
+              		    
+                   	     
 {
 	struct edgeuse	*new_eu;
 	struct edgeuse	*oeu;
@@ -4539,9 +4457,7 @@ if( nmg_check_radial( new_eu, tol ) ) bu_log("ERROR ebreaker new_eu=x%x bad\n", 
  *  Return a pointer to the new vertex.
  */
 struct vertex *
-nmg_e2break( eu1, eu2 )
-struct edgeuse	*eu1;
-struct edgeuse	*eu2;
+nmg_e2break(struct edgeuse *eu1, struct edgeuse *eu2)
 {
 	struct vertex		*v;
 	struct edgeuse		*new_eu;
@@ -4600,8 +4516,7 @@ struct edgeuse	*eu2;
  *	<0	failure, nothing changed
  */
 int
-nmg_unbreak_edge( eu1_first )
-struct edgeuse	*eu1_first;
+nmg_unbreak_edge(struct edgeuse *eu1_first)
 {
 	struct edgeuse	*eu1;
 	struct edgeuse	*eu2;
@@ -4820,8 +4735,7 @@ out:
  *	<0	failure, nothing changed
  */
 int
-nmg_unbreak_shell_edge_unsafe( eu1_first )
-struct edgeuse	*eu1_first;
+nmg_unbreak_shell_edge_unsafe(struct edgeuse *eu1_first)
 {
 	struct edgeuse	*eu1;
 	struct edgeuse	*eu2;
@@ -5021,8 +4935,7 @@ out:
  *	          eu2     eumate
  */
 struct edgeuse *
-nmg_eins(eu)
-struct edgeuse *eu;
+nmg_eins(struct edgeuse *eu)
 {
 	struct edgeuse	*eumate;
 	struct edgeuse	*eu1, *eu2;
@@ -5081,10 +4994,7 @@ struct edgeuse *eu;
  *  Move a wire edgeuse and it's mate from one shell to another.
  */
 void
-nmg_mv_eu_between_shells( dest, src, eu )
-struct shell		*dest;
-register struct shell	*src;
-register struct edgeuse	*eu;
+nmg_mv_eu_between_shells(struct shell *dest, register struct shell *src, register struct edgeuse *eu)
 {
 	register struct edgeuse	*eumate;
 
@@ -5141,10 +5051,7 @@ register struct edgeuse	*eu;
  *  shell, but "promote" it to a "loop of a single vertex" along the way.
  */
 void
-nmg_mv_vu_between_shells( dest, src, vu )
-struct shell		*dest;
-register struct shell	*src;
-register struct vertexuse	*vu;
+nmg_mv_vu_between_shells(struct shell *dest, register struct shell *src, register struct vertexuse *vu)
 {
 	NMG_CK_VERTEXUSE( vu );
 	NMG_CK_VERTEX( vu->v_p );

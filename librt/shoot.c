@@ -60,7 +60,7 @@ char rt_CopyRight_Notice[] = "@(#) Copyright (C) 1985,1991,2000 by the United St
 
 struct resource rt_uniresource;		/* Resources for uniprocessor */
 
-extern void	rt_plot_cell();		/* at end of file */
+extern void	rt_plot_cell(const union cutter *cutp, const struct rt_shootray_status *ssp, struct bu_list *waiting_segs_hd, struct rt_i *rtip);		/* at end of file */
 		
 #define V3PT_DEPARTING_RPP(_step, _lo, _hi, _pt ) \
 		PT_DEPARTING_RPP(_step, _lo, _hi, (_pt)[X], (_pt)[Y], (_pt)[Z] )
@@ -79,9 +79,7 @@ extern void	rt_plot_cell();		/* at end of file */
  *  to support rt_shootray()'s use of 'solid pieces'.
  */
 void
-rt_res_pieces_init( resp, rtip )
-struct resource	*resp;
-struct rt_i	*rtip;
+rt_res_pieces_init(struct resource *resp, struct rt_i *rtip)
 {
 	struct rt_piecestate	*psptab;
 	struct rt_piecestate	*psp;
@@ -110,9 +108,7 @@ struct rt_i	*rtip;
  *			R T _ R E S _ P I E C E S _ C L E A N
  */
 void
-rt_res_pieces_clean( resp, rtip )
-struct resource	*resp;
-struct rt_i	*rtip;
+rt_res_pieces_clean(struct resource *resp, struct rt_i *rtip)
 {
 	struct rt_piecestate	*psp;
 	int			i;
@@ -147,10 +143,7 @@ struct rt_i	*rtip;
  *  Use method of binary subdivision.
  */
 int
-rt_find_nugrid( nugnp, axis, val )
-struct nugridnode	*nugnp;
-int			 axis;
-fastf_t			 val;
+rt_find_nugrid(const struct nugridnode *nugnp, int axis, fastf_t val)
 {
 	int	min;
 	int	max;
@@ -189,8 +182,7 @@ again:
  */
 
 const union cutter *
-rt_advance_to_next_cell( ssp )
-register struct rt_shootray_status	*ssp;
+rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
 {
 	register const union cutter		*cutp, *curcut = ssp->curcut;
 	register const struct application	*ap = ssp->ap;
@@ -787,8 +779,7 @@ rt_find_backing_dist( struct rt_shootray_status *ss, struct bu_bitv *backbits ) 
  */
 
 int
-rt_shootray( ap )
-register struct application *ap;
+rt_shootray(register struct application *ap)
 {
 	struct rt_shootray_status	ss;
 	struct seg		new_segs;	/* from solid intersections */
@@ -1455,9 +1446,9 @@ out:
  *  The first cell is 0.
  */
 const union cutter *
-rt_cell_n_on_ray( ap, n )
-register struct application *ap;
-int	n;		/* First cell is #0 */
+rt_cell_n_on_ray(register struct application *ap, int n)
+                                
+   	  		/* First cell is #0 */
 {
 	struct rt_shootray_status	ss;
 	register const union cutter *cutp;
@@ -1778,11 +1769,11 @@ rt_in_rpp(struct xray		*rp,
 
 /* For debugging */
 int
-rt_DB_rpp( rp, invdir, min, max )
-register struct xray *rp;
-register const fastf_t *invdir;	/* inverses of rp->r_dir[] */
-register const fastf_t *min;
-register const fastf_t *max;
+rt_DB_rpp(register struct xray *rp, register const fastf_t *invdir, register const fastf_t *min, register const fastf_t *max)
+                         
+                               	/* inverses of rp->r_dir[] */
+                            
+                            
 {
 	register const fastf_t *pt = &rp->r_pt[0];
 	FAST fastf_t sv;
@@ -1909,12 +1900,12 @@ miss:
 
 /* Stub function which will "similate" a call to a vector shot routine */
 void
-rt_vstub( stp, rp, segp, n, ap )
-struct soltab	       *stp[]; /* An array of solid pointers */
-struct xray		*rp[]; /* An array of ray pointers */
-struct  seg            segp[]; /* array of segs (results returned) */
-int		  	    n; /* Number of ray/object pairs */
-struct application	*ap; /* pointer to an application */
+rt_vstub(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
+             	               /* An array of solid pointers */
+           		       /* An array of ray pointers */
+                               /* array of segs (results returned) */
+   		  	       /* Number of ray/object pairs */
+                  	     /* pointer to an application */
 {
 	register int    i;
 	register struct seg *tmp_seg;
@@ -1944,7 +1935,7 @@ struct application	*ap; /* pointer to an application */
  *  In case anyone actually cares, print out library's compilation version.
  */
 void
-rt_pr_library_version()
+rt_pr_library_version(void)
 {
 	bu_log("%s", rt_version);
 }
@@ -1983,9 +1974,7 @@ rt_zero_res_stats( struct resource *resp )
  *  to have the default resource results tallied in.
  */
 void
-rt_add_res_stats( rtip, resp )
-register struct rt_i		*rtip;
-register struct resource	*resp;
+rt_add_res_stats(register struct rt_i *rtip, register struct resource *resp)
 {
 	RT_CK_RTI( rtip );
 
@@ -2012,10 +2001,7 @@ register struct resource	*resp;
  *  Routines for plotting the progress of one ray through the model.  -Mike
  */
 void
-rt_3move_raydist( fp, rayp, dist )
-FILE		*fp;
-struct xray	*rayp;
-double		dist;
+rt_3move_raydist(FILE *fp, struct xray *rayp, double dist)
 {
 	point_t	p;
 
@@ -2024,10 +2010,7 @@ double		dist;
 }
 
 void
-rt_3cont_raydist( fp, rayp, dist )
-FILE		*fp;
-struct xray	*rayp;
-double		dist;
+rt_3cont_raydist(FILE *fp, struct xray *rayp, double dist)
 {
 	point_t	p;
 
@@ -2039,11 +2022,7 @@ double		dist;
 		rt_plot_cell( cutp, &ss, &(waiting_segs.l), rtip);
  */
 void
-rt_plot_cell( cutp, ssp, waiting_segs_hd, rtip )
-union cutter		*cutp;
-struct rt_shootray_status	*ssp;
-struct bu_list		*waiting_segs_hd;
-struct rt_i		*rtip;
+rt_plot_cell(const union cutter *cutp, const struct rt_shootray_status *ssp, struct bu_list *waiting_segs_hd, struct rt_i *rtip)
 {
 	char		buf[128];
 	static int	fnum = 0;

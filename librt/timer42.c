@@ -35,19 +35,20 @@ static struct	timeval time0;	/* Time at which timeing started */
 static struct	rusage ru0;	/* Resource utilization at the start */
 static struct	rusage ru0c;	/* Resource utilization at the start */
 
-static void prusage();
+static void prusage(register struct rusage *r0, register struct rusage *r1, struct timeval *e, struct timeval *b, struct bu_vls *vp);
 #if 0
 static void tvadd();
 #endif
-static void tvsub();
-static void psecs();
+static void tvsub(struct timeval *tdiff, struct timeval *t1, struct timeval *t0);
+static void psecs(long int l, struct bu_vls *vp);
+
 
 
 /*
  *			R T _ P R E P _ T I M E R
  */
 void
-rt_prep_timer()
+rt_prep_timer(void)
 {
 	gettimeofday(&time0, (struct timezone *)0);
 	getrusage(RUSAGE_SELF, &ru0);
@@ -64,9 +65,7 @@ rt_prep_timer()
  *  Times returned will never be zero.
  */
 double
-rt_get_timer( vp, elapsed )
-struct bu_vls	*vp;
-double		*elapsed;
+rt_get_timer(struct bu_vls *vp, double *elapsed)
 {
 	struct timeval timedol;
 	struct rusage ru1;
@@ -107,10 +106,7 @@ double		*elapsed;
 }
 
 static void
-prusage(r0, r1, e, b, vp)
-register struct rusage *r0, *r1;
-struct timeval *e, *b;
-struct bu_vls	*vp;	
+prusage(register struct rusage *r0, register struct rusage *r1, struct timeval *e, struct timeval *b, struct bu_vls *vp)
 {
 	struct timeval tdiff;
 	register time_t t;
@@ -211,8 +207,7 @@ tvadd(tsum, t0)
 #endif
 
 static void
-tvsub(tdiff, t1, t0)
-	struct timeval *tdiff, *t1, *t0;
+tvsub(struct timeval *tdiff, struct timeval *t1, struct timeval *t0)
 {
 
 	tdiff->tv_sec = t1->tv_sec - t0->tv_sec;
@@ -222,9 +217,7 @@ tvsub(tdiff, t1, t0)
 }
 
 static void
-psecs(l, vp)
-long		l;
-struct bu_vls	*vp;
+psecs(long int l, struct bu_vls *vp)
 {
 	register int i;
 
@@ -249,8 +242,7 @@ struct bu_vls	*vp;
  *  Compatability routine
  */
 double
-rt_read_timer(str,len)
-char *str;
+rt_read_timer(char *str, int len)
 {
 	struct bu_vls	vls;
 	double		cpu;

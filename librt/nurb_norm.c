@@ -30,10 +30,7 @@
  */
 
 void
-rt_nurb_s_norm(srf, u, v, norm)
-struct face_g_snurb * srf;
-fastf_t u, v;
-fastf_t * norm;
+rt_nurb_s_norm(struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t *norm)
 {
 	struct face_g_snurb *usrf, *vsrf;
 	point_t uvec, vvec;

@@ -71,8 +71,7 @@ db_is_directory_non_empty(const struct db_i	*dbip)
  *  Return the number of "struct directory" nodes in the given database.
  */
 int
-db_get_directory_size( dbip )
-const struct db_i	*dbip;
+db_get_directory_size(const struct db_i *dbip)
 {
 	register struct directory *dp;
 	register int	count = 0;
@@ -114,8 +113,7 @@ db_ck_directory(const struct db_i *dbip)
  *  corresponding to the given string.
  */
 int
-db_dirhash(str)
-const char *str;
+db_dirhash(const char *str)
 {
 	register const unsigned char *s = (unsigned char *)str;
 	register long sum;
@@ -216,10 +214,7 @@ db_dircheck(struct db_i		*dbip,
  *	DIR_NULL		on failure
  */
 struct directory *
-db_lookup( dbip, name, noisy )
-const struct db_i	*dbip;
-register const char	*name;
-int			noisy;
+db_lookup(const struct db_i *dbip, register const char *name, int noisy)
 {
 	register struct directory *dp;
 	register char	n0;
@@ -260,13 +255,13 @@ int			noisy;
  * to speed up building the table of contents.
  */
 struct directory *
-db_diradd( dbip, name, laddr, len, flags, ptr )
-register struct db_i	*dbip;
-register const char	*name;
-long			laddr;
-int			len;
-int			flags;
-genptr_t		ptr;		/* for db version 5, this is a pointer to an unsigned char (minor_type) */
+db_diradd(register struct db_i *dbip, register const char *name, long int laddr, int len, int flags, genptr_t ptr)
+                    	      
+                   	      
+    			      
+   			    
+   			      
+        		    		/* for db version 5, this is a pointer to an unsigned char (minor_type) */
 {
 	struct directory **headp;
 	register struct directory *dp;
@@ -329,11 +324,7 @@ genptr_t		ptr;		/* for db version 5, this is a pointer to an unsigned char (mino
  *  one, stealing the external representation from 'ext'.
  */
 void
-db_inmem( dp, ext, flags, dbip )
-struct directory	*dp;
-struct bu_external	*ext;
-int			flags;
-struct db_i		*dbip;
+db_inmem(struct directory *dp, struct bu_external *ext, int flags, struct db_i *dbip)
 {
 	BU_CK_EXTERNAL(ext);
 	RT_CK_DIR(dp);
@@ -367,9 +358,7 @@ struct db_i		*dbip;
  *	-1	on failure
  */
 int
-db_dirdelete( dbip, dp )
-register struct db_i		*dbip;
-register struct directory	*dp;
+db_dirdelete(register struct db_i *dbip, register struct directory *dp)
 {
 	register struct directory *findp;
 	register struct directory **headp;
@@ -419,10 +408,7 @@ register struct directory	*dp;
  *	-1	on failure
  */
 int
-db_rename( dbip, dp, newname )
-register struct db_i		*dbip;
-register struct directory	*dp;
-const char			*newname;
+db_rename(register struct db_i *dbip, register struct directory *dp, const char *newname)
 {
 	register struct directory *findp;
 	register struct directory **headp;
@@ -464,8 +450,7 @@ out:
  *  For debugging, print the entire contents of the database directory.
  */
 void
-db_pr_dir( dbip )
-register const struct db_i	*dbip;
+db_pr_dir(register const struct db_i *dbip)
 {
 	register const struct directory *dp;
 	register char		*flags;
@@ -559,11 +544,11 @@ db_get_directory(register struct resource *resp)
  *		a NULL return means something went wrong
  */
 struct bu_ptbl *
-db_lookup_by_attr( dbip, dir_flags, avs, op )
-struct db_i *dbip;
-int dir_flags;			/* flags of the form used in struct directory (d_flags) */
-struct bu_attribute_value_set *avs;
-int op;	/* 1 -> all attribute name/value pairs must be present and match */
+db_lookup_by_attr(struct db_i *dbip, int dir_flags, struct bu_attribute_value_set *avs, int op)
+                  
+              			/* flags of the form used in struct directory (d_flags) */
+                                   
+       	/* 1 -> all attribute name/value pairs must be present and match */
         /* 2 -> at least one of the name/value pairs must be present and match */
 {
 	struct bu_attribute_value_set obj_avs;

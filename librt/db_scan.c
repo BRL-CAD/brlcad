@@ -75,11 +75,11 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
  *	-1	Fatal Error
  */
 int
-db_scan( dbip, handler, do_old_matter, client_data )
-register struct db_i	*dbip;
-int			(*handler)BU_ARGS((struct db_i *, const char *name, long addr, int nrec, int flags, genptr_t client_data));
-int			do_old_matter;
-genptr_t		client_data;	/* argument for handler */
+db_scan(register struct db_i *dbip, int (*handler) (struct db_i *, const char *, long int, int, int, genptr_t), int do_old_matter, genptr_t client_data)
+                    	      
+   			                                                                                                           
+   			              
+        		            	/* argument for handler */
 {
 	union record	record;		/* Initial record, holds name */
 	union record	rec2;		/* additional record(s) */
@@ -450,9 +450,9 @@ db_fwrite_ident( FILE *fp, const char *title, double local2mm )
  *	Initialize conversion factors given the v4 database unit
  */
 void
-db_conversions( dbip, local )
-struct db_i	*dbip;
-int local;					/* one of ID_??_UNIT */
+db_conversions(struct db_i *dbip, int local)
+           	      
+          					/* one of ID_??_UNIT */
 {
 	RT_CK_DBI(dbip);
 

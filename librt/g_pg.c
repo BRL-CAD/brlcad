@@ -37,7 +37,7 @@ static const char RCSpg[] = "@(#)$Header$ (BRL)";
 
 #define TRI_NULL	((struct tri_specific *)0)
 
-HIDDEN int rt_pgface();
+HIDDEN int rt_pgface(struct soltab *stp, fastf_t *ap, fastf_t *bp, fastf_t *cp, const struct bn_tol *tol);
 
 /* Describe algorithm here */
 
@@ -54,10 +54,7 @@ HIDDEN int rt_pgface();
  *  
  */
 int
-rt_pg_prep( stp, ip, rtip )
-struct soltab		*stp;
-struct rt_db_internal	*ip;
-struct rt_i		*rtip;
+rt_pg_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
 	struct rt_pg_internal	*pgp;
 	register int	i;
@@ -122,10 +119,7 @@ struct rt_i		*rtip;
  *	#pts	(3) if a valid plane resulted.
  */
 HIDDEN int
-rt_pgface( stp, ap, bp, cp, tol )
-struct soltab	*stp;
-fastf_t		*ap, *bp, *cp;
-const struct bn_tol	*tol;
+rt_pgface(struct soltab *stp, fastf_t *ap, fastf_t *bp, fastf_t *cp, const struct bn_tol *tol)
 {
 	register struct tri_specific *trip;
 	vect_t work;
@@ -168,8 +162,7 @@ const struct bn_tol	*tol;
  *  			R T _ P G _ P R I N T
  */
 void
-rt_pg_print( stp )
-register const struct soltab *stp;
+rt_pg_print(register const struct soltab *stp)
 {
 	register const struct tri_specific *trip =
 		(struct tri_specific *)stp->st_specific;
@@ -199,11 +192,7 @@ register const struct soltab *stp;
  *	>0	HIT
  */
 int
-rt_pg_shot( stp, rp, ap, seghead )
-struct soltab		*stp;
-register struct xray	*rp;
-struct application	*ap;
-struct seg		*seghead;
+rt_pg_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
 	register struct tri_specific *trip =
 		(struct tri_specific *)stp->st_specific;
@@ -430,8 +419,7 @@ struct seg		*seghead;
  *			R T _ P G _ F R E E
  */
 void
-rt_pg_free( stp )
-struct soltab *stp;
+rt_pg_free(struct soltab *stp)
 {
 	register struct tri_specific *trip =
 		(struct tri_specific *)stp->st_specific;
@@ -448,10 +436,7 @@ struct soltab *stp;
  *			R T _ P G _ N O R M
  */
 void
-rt_pg_norm( hitp, stp, rp )
-register struct hit *hitp;
-struct soltab *stp;
-register struct xray *rp;
+rt_pg_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
 {
 	/* Normals computed in rt_pg_shot, nothing to do here */
 }
@@ -460,11 +445,7 @@ register struct xray *rp;
  *			R T _ P G _ U V
  */
 void
-rt_pg_uv( ap, stp, hitp, uvp )
-struct application	*ap;
-struct soltab		*stp;
-register struct hit	*hitp;
-register struct uvcoord	*uvp;
+rt_pg_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
 {
 	/* Do nothing.  Really, should do what ARB does. */
 	uvp->uv_u = uvp->uv_v = 0;
@@ -475,7 +456,7 @@ register struct uvcoord	*uvp;
  *			R T _ P G _ C L A S S
  */
 int
-rt_pg_class()
+rt_pg_class(void)
 {
 	return(0);
 }
@@ -484,11 +465,7 @@ rt_pg_class()
  *			R T _ P G _ P L O T
  */
 int
-rt_pg_plot( vhead, ip, ttol, tol )
-struct bu_list		*vhead;
-struct rt_db_internal	*ip;
-const struct rt_tess_tol *ttol;
-const struct bn_tol		*tol;
+rt_pg_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
 	register int	i;
 	register int	p;	/* current polygon number */
@@ -518,11 +495,7 @@ const struct bn_tol		*tol;
  *  Convert to vlist, draw as polygons.
  */
 int
-rt_pg_plot_poly( vhead, ip, ttol, tol )
-struct bu_list		*vhead;
-struct rt_db_internal	*ip;
-const struct rt_tess_tol *ttol;
-const struct bn_tol		*tol;
+rt_pg_plot_poly(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
 	register int	i;
 	register int	p;	/* current polygon number */
@@ -558,10 +531,7 @@ const struct bn_tol		*tol;
  *			R T _ P G _ C U R V E
  */
 void
-rt_pg_curve( cvp, hitp, stp )
-register struct curvature *cvp;
-register struct hit *hitp;
-struct soltab *stp;
+rt_pg_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
 {
 	bn_vec_ortho( cvp->crv_pdir, hitp->hit_normal );
 	cvp->crv_c1 = cvp->crv_c2 = 0;
@@ -571,12 +541,7 @@ struct soltab *stp;
  *			R T _ P G _ T E S S
  */
 int
-rt_pg_tess( r, m, ip, ttol, tol )
-struct nmgregion	**r;
-struct model		*m;
-struct rt_db_internal	*ip;
-const struct rt_tess_tol *ttol;
-const struct bn_tol		*tol;
+rt_pg_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
 	register int	i;
 	struct shell	*s;
@@ -658,11 +623,7 @@ const struct bn_tol		*tol;
  *  (vid rt_pg_ifree).
  */
 int
-rt_pg_import( ip, ep, mat, dbip )
-struct rt_db_internal		*ip;
-const struct bu_external	*ep;
-const mat_t			mat;
-const struct db_i		*dbip;
+rt_pg_import(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
 	struct rt_pg_internal	*pgp;
 	union record		*rp;
@@ -735,11 +696,7 @@ const struct db_i		*dbip;
  *  Generally, only libwdb will set conv2mm != 1.0
  */
 int
-rt_pg_export( ep, ip, local2mm, dbip )
-struct bu_external		*ep;
-const struct rt_db_internal	*ip;
-double				local2mm;
-const struct db_i		*dbip;
+rt_pg_export(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
 	struct rt_pg_internal	*pgp;
 	union record		*rec;
@@ -784,11 +741,7 @@ const struct db_i		*dbip;
 }
 
 int
-rt_pg_import5( ip, ep, mat, dbip )
-struct rt_db_internal		*ip;
-const struct bu_external	*ep;
-const mat_t			mat;
-const struct db_i		*dbip;
+rt_pg_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
 	bu_log( "As of release 6.0 the polysolid is superceded by the BOT primitive.\n" );
 	bu_log( "\tTo convert polysolids to BOT primitives, use 'dbupgrade'.\n");
@@ -797,11 +750,7 @@ const struct db_i		*dbip;
 }
 
 int
-rt_pg_export5( ep, ip, local2mm, dbip )
-struct bu_external		*ep;
-const struct rt_db_internal	*ip;
-double				local2mm;
-const struct db_i		*dbip;
+rt_pg_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
 	bu_log( "As of release 6.0 the polysolid is superceded by the BOT primitive.\n" );
 	bu_log( "\tTo convert polysolids to BOT primitives, use 'dbupgrade'.\n" );
@@ -817,11 +766,7 @@ const struct db_i		*dbip;
  *  Additional lines are indented one tab, and give parameter values.
  */
 int
-rt_pg_describe( str, ip, verbose, mm2local )
-struct bu_vls		*str;
-const struct rt_db_internal	*ip;
-int			verbose;
-double			mm2local;
+rt_pg_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
 	register int			j;
 	register struct rt_pg_internal	*pgp =
@@ -882,8 +827,7 @@ double			mm2local;
  *  Free the storage associated with the rt_db_internal version of this solid.
  */
 void
-rt_pg_ifree( ip )
-struct rt_db_internal	*ip;
+rt_pg_ifree(struct rt_db_internal *ip)
 {
 	register struct rt_pg_internal	*pgp;
 	register int			i;

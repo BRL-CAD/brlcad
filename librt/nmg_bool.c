@@ -50,10 +50,7 @@ struct dangling_faceuse_state {
 int debug_file_count=0;
 
 static void
-nmg_dangling_handler( longp, state, first )
-long		*longp;
-genptr_t	state;
-int		first;
+nmg_dangling_handler(long int *longp, genptr_t state, int first)
 {
 	register struct faceuse	*fu = (struct faceuse *)longp;
 	register struct dangling_faceuse_state *sp =
@@ -79,9 +76,7 @@ int		first;
  *	!0	Has dangling faces
  */
 int
-nmg_has_dangling_faces( magic_p, manifolds )
-long		*magic_p;
-const char	*manifolds;
+nmg_has_dangling_faces(long int *magic_p, const char *manifolds)
 {
 	struct model			*m;
 	struct nmg_visit_handlers	handlers;
@@ -110,11 +105,11 @@ const char	*manifolds;
  *  Note that in "non-fancy" mode, show_broken_eu() draws just the edge.
  */
 void
-nmg_show_each_loop(s, classlist, new, fancy, str)
-struct shell	*s;
-long		*classlist[4];
-int		new;		/* non-zero means flush previous vlist */
-const char	*str;		/* non-zero means pause after the display */
+nmg_show_each_loop(struct shell *s, long int **classlist, int new, int fancy, const char *str)
+            	   
+    		              
+   		    		/* non-zero means flush previous vlist */
+          	     		/* non-zero means pause after the display */
 {
 	struct faceuse	*fu;
 	struct loopuse	*lu;
@@ -145,11 +140,7 @@ const char	*str;		/* non-zero means pause after the display */
 }
 
 void
-stash_shell( s, file_name, title, tol )
-struct shell *s;
-char *file_name;
-char *title;
-struct bn_tol *tol;
+stash_shell(struct shell *s, char *file_name, char *title, const struct bn_tol *tol)
 {
 	struct model *m;
 	struct nmgregion *r;
@@ -176,9 +167,7 @@ struct bn_tol *tol;
 }
 
 void
-nmg_kill_non_common_cracks( sA, sB )
-struct shell *sA;
-struct shell *sB;
+nmg_kill_non_common_cracks(struct shell *sA, struct shell *sB)
 {
 	struct faceuse *fu;
 	struct faceuse *fu_next;
@@ -353,10 +342,7 @@ crack_top:
  */
 
 static void
-nmg_classify_shared_edges_verts( sA, sB, classlist )
-struct shell *sA;
-struct shell *sB;
-long *classlist[8];
+nmg_classify_shared_edges_verts(struct shell *sA, struct shell *sB, long int **classlist)
 {
 	struct bu_ptbl verts;
 	struct bu_ptbl edges;
@@ -438,9 +424,7 @@ long *classlist[8];
  */
 
 void
-nmg_kill_anti_loops( s, tol )
-struct shell *s;
-const struct bn_tol *tol;
+nmg_kill_anti_loops(struct shell *s, const struct bn_tol *tol)
 {
 	struct bu_ptbl loops;
 	struct faceuse *fu;
@@ -549,8 +533,7 @@ out:
 }
 
 void
-nmg_kill_wire_edges( s )
-struct shell *s;
+nmg_kill_wire_edges(struct shell *s)
 {
 	struct loopuse *lu;
 	struct edgeuse *eu;
@@ -578,10 +561,7 @@ struct shell *s;
  *
  *  XXX this probably should operate on regions, not shells.
  */
-static struct shell * nmg_bool(sA, sB, oper, tol)
-struct shell *sA, *sB;
-const int		oper;
-const struct bn_tol	*tol;
+static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int oper, const struct bn_tol *tol)
 {
 	int	i;
 	int	nelem;
@@ -1087,10 +1067,7 @@ nmg_s_radial_check( sA, tol );
  *	BUG: we assume only one shell per region
  */
 struct nmgregion *
-nmg_do_bool(rA, rB, oper, tol)
-struct nmgregion *rA, *rB;
-const int		oper;
-const struct bn_tol	*tol;
+nmg_do_bool(struct nmgregion *rA, struct nmgregion *rB, const int oper, const struct bn_tol *tol)
 {
 	struct shell		*s;
 	struct nmgregion	*r;
@@ -1151,11 +1128,7 @@ nmg_region_v_unique( rB, tol );
  *  This routine must be prepared to run in parallel.
  */
 union tree *
-nmg_booltree_leaf_tess(tsp, pathp, ip, client_data)
-struct db_tree_state	*tsp;
-struct db_full_path	*pathp;
-struct rt_db_internal	*ip;
-genptr_t		client_data;
+nmg_booltree_leaf_tess(struct db_tree_state *tsp, struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data)
 {
 	struct model		*m;
 	struct nmgregion	*r1;
@@ -1216,11 +1189,7 @@ genptr_t		client_data;
  *  This routine must be prepared to run in parallel.
  */
 union tree *
-nmg_booltree_leaf_tnurb(tsp, pathp, ip, client_data)
-struct db_tree_state	*tsp;
-struct db_full_path	*pathp;
-struct rt_db_internal	*ip;
-genptr_t		client_data;
+nmg_booltree_leaf_tnurb(struct db_tree_state *tsp, struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data)
 {
 	struct nmgregion	*r1;
 	union tree		*curtree;
@@ -1285,10 +1254,7 @@ genptr_t		client_data;
  *	curtree = nmg_booltree_evaluate( curtree, tol );
  */
 union tree *
-nmg_booltree_evaluate(tp, tol, resp)
-register union tree		*tp;
-const struct bn_tol		*tol;
-struct resource			*resp;
+nmg_booltree_evaluate(register union tree *tp, const struct bn_tol *tol, struct resource *resp)
 {
 	union tree		*tl;
 	union tree		*tr;

@@ -28,11 +28,7 @@
 #include "nurb.h"
 
 void
-rt_nurb_curvature(cvp, srf, u, v)
-struct curvature *cvp;
-const struct face_g_snurb * srf;
-fastf_t	u;
-fastf_t v;
+rt_nurb_curvature(struct curvature *cvp, const struct face_g_snurb *srf, fastf_t u, fastf_t v)
 {
 	struct face_g_snurb * us, *vs, * uus, * vvs, *uvs;
 	fastf_t ue[4], ve[4], uue[4], vve[4], uve[4], se[4];

@@ -622,10 +622,7 @@ rt_retrieve_binunif(struct rt_db_internal *intern,
 }
 
 void
-rt_binunif_make( ftp, intern, diameter )
-const struct rt_functab	*ftp;
-struct rt_db_internal	*intern;
-double			diameter;
+rt_binunif_make(const struct rt_functab *ftp, struct rt_db_internal *intern, double diameter)
 {
 	struct rt_binunif_internal *bip;
 

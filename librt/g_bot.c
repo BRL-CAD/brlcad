@@ -193,10 +193,7 @@ rt_bot_prep_pieces(struct bot_specific	*bot,
  *  	stp->st_specific for use by bot_shot().
  */
 int
-rt_bot_prep( stp, ip, rtip )
-struct soltab		*stp;
-struct rt_db_internal	*ip;
-struct rt_i		*rtip;
+rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
 	struct rt_bot_internal		*bot_ip;
 
@@ -216,8 +213,7 @@ struct rt_i		*rtip;
  *			R T _ B O T _ P R I N T
  */
 void
-rt_bot_print( stp )
-register const struct soltab *stp;
+rt_bot_print(register const struct soltab *stp)
 {
 }
 
@@ -262,14 +258,7 @@ rt_bot_unoriented_segs(struct hit		*hits,
  *  Exactly how this is to be done depends on the mode of the BoT.
  */
 HIDDEN int
-rt_bot_makesegs( hits, nhits, stp, rp, ap, seghead, psp )
-struct hit		*hits;
-int			nhits;
-struct soltab		*stp;
-struct xray		*rp;
-struct application	*ap;
-struct seg		*seghead;
-struct rt_piecestate	*psp;
+rt_bot_makesegs(struct hit *hits, int nhits, struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead, struct rt_piecestate *psp)
 {
     struct bot_specific *bot = (struct bot_specific *)stp->st_specific;
 
@@ -301,11 +290,7 @@ struct rt_piecestate	*psp;
  *	>0	HIT
  */
 int
-rt_bot_shot( stp, rp, ap, seghead )
-struct soltab		*stp;
-register struct xray	*rp;
-struct application	*ap;
-struct seg		*seghead;
+rt_bot_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
 	struct bot_specific *bot = (struct bot_specific *)stp->st_specific;
 
@@ -329,13 +314,7 @@ struct seg		*seghead;
  *  Generally the hits are stashed between invocations in psp.
  */
 int
-rt_bot_piece_shot( psp, plp, dist_corr, rp, ap, seghead )
-struct rt_piecestate	*psp;
-struct rt_piecelist	*plp;
-double			dist_corr;
-register struct xray	*rp;
-struct application	*ap;
-struct seg		*seghead;
+rt_bot_piece_shot(struct rt_piecestate *psp, struct rt_piecelist *plp, double dist_corr, register struct xray *rp, struct application *ap, struct seg *seghead)
 {
 	struct soltab	*stp;
 	struct bot_specific *bot;
@@ -356,10 +335,7 @@ struct seg		*seghead;
  *			R T _ B O T _ P I E C E _ H I T S E G S
  */
 void
-rt_bot_piece_hitsegs( psp, seghead, ap )
-struct rt_piecestate	*psp;
-struct seg		*seghead;
-struct application	*ap;
+rt_bot_piece_hitsegs(struct rt_piecestate *psp, struct seg *seghead, struct application *ap)
 {
 	RT_CK_PIECESTATE(psp);
 	RT_CK_AP(ap);
@@ -380,12 +356,12 @@ struct application	*ap;
  *  Vectorized version.
  */
 void
-rt_bot_vshot( stp, rp, segp, n, ap )
-struct soltab	       *stp[]; /* An array of solid pointers */
-struct xray		*rp[]; /* An array of ray pointers */
-struct  seg            segp[]; /* array of segs (results returned) */
-int		  	    n; /* Number of ray/object pairs */
-struct application	*ap;
+rt_bot_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
+             	               /* An array of solid pointers */
+           		       /* An array of ray pointers */
+                               /* array of segs (results returned) */
+   		  	       /* Number of ray/object pairs */
+                  	    
 {
 	rt_vstub( stp, rp, segp, n, ap );
 }
@@ -396,10 +372,7 @@ struct application	*ap;
  *  Given ONE ray distance, return the normal and entry/exit point.
  */
 void
-rt_bot_norm( hitp, stp, rp )
-register struct hit	*hitp;
-struct soltab		*stp;
-register struct xray	*rp;
+rt_bot_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
 {
 	struct bot_specific *bot=(struct bot_specific *)stp->st_specific;
 
@@ -416,10 +389,7 @@ register struct xray	*rp;
  *  Return the curvature of the bot.
  */
 void
-rt_bot_curve( cvp, hitp, stp )
-register struct curvature *cvp;
-register struct hit	*hitp;
-struct soltab		*stp;
+rt_bot_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
 {
  	cvp->crv_c1 = cvp->crv_c2 = 0;
 
@@ -437,11 +407,7 @@ struct soltab		*stp;
  *  v = elevation
  */
 void
-rt_bot_uv( ap, stp, hitp, uvp )
-struct application	*ap;
-struct soltab		*stp;
-register struct hit	*hitp;
-register struct uvcoord	*uvp;
+rt_bot_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
 {
 }
 
@@ -449,8 +415,7 @@ register struct uvcoord	*uvp;
  *		R T _ B O T _ F R E E
  */
 void
-rt_bot_free( stp )
-register struct soltab *stp;
+rt_bot_free(register struct soltab *stp)
 {
 	register struct bot_specific *bot =
 		(struct bot_specific *)stp->st_specific;
@@ -466,10 +431,7 @@ register struct soltab *stp;
  *			R T _ B O T _ C L A S S
  */
 int
-rt_bot_class( stp, min, max, tol )
-const struct soltab    *stp;
-const vect_t		min, max;
-const struct bn_tol    *tol;
+rt_bot_class(const struct soltab *stp, const fastf_t *min, const fastf_t *max, const struct bn_tol *tol)
 {
 	return RT_CLASSIFY_UNIMPLEMENTED;
 }
@@ -478,11 +440,7 @@ const struct bn_tol    *tol;
  *			R T _ B O T _ P L O T
  */
 int
-rt_bot_plot( vhead, ip, ttol, tol )
-struct bu_list		*vhead;
-struct rt_db_internal	*ip;
-const struct rt_tess_tol *ttol;
-const struct bn_tol	*tol;
+rt_bot_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
 	LOCAL struct rt_bot_internal	*bot_ip;
 	int i;
@@ -506,11 +464,7 @@ const struct bn_tol	*tol;
  *			R T _ B O T _ P L O T _ P O L Y
  */
 int
-rt_bot_plot_poly( vhead, ip, ttol, tol )
-struct bu_list		*vhead;
-struct rt_db_internal	*ip;
-const struct rt_tess_tol *ttol;
-const struct bn_tol	*tol;
+rt_bot_plot_poly(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
 	LOCAL struct rt_bot_internal	*bot_ip;
 	int i;
@@ -569,12 +523,7 @@ const struct bn_tol	*tol;
  *	 0	OK.  *r points to nmgregion that holds this tessellation.
  */
 int
-rt_bot_tess( r, m, ip, ttol, tol )
-struct nmgregion	**r;
-struct model		*m;
-struct rt_db_internal	*ip;
-const struct rt_tess_tol *ttol;
-const struct bn_tol	*tol;
+rt_bot_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
 	LOCAL struct rt_bot_internal	*bot_ip;
 	struct shell *s;
@@ -671,11 +620,7 @@ const struct bn_tol	*tol;
  *  Apply modeling transformations as well.
  */
 int
-rt_bot_import( ip, ep, mat, dbip )
-struct rt_db_internal		*ip;
-const struct bu_external	*ep;
-register const mat_t		mat;
-const struct db_i		*dbip;
+rt_bot_import(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
 	LOCAL struct rt_bot_internal	*bot_ip;
 	union record			*rp;
@@ -751,11 +696,7 @@ const struct db_i		*dbip;
  *  The name is added by the caller, in the usual place.
  */
 int
-rt_bot_export( ep, ip, local2mm, dbip )
-struct bu_external		*ep;
-const struct rt_db_internal	*ip;
-double				local2mm;
-const struct db_i		*dbip;
+rt_bot_export(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
 	struct rt_bot_internal	*bot_ip;
 	union record		*rec;
@@ -861,11 +802,7 @@ const struct db_i		*dbip;
  *			R T _ B O T _ I M P O R T 5
  */
 int
-rt_bot_import5( ip, ep, mat, dbip )
-struct rt_db_internal           *ip;
-const struct bu_external        *ep;
-register const mat_t            mat;
-const struct db_i               *dbip;
+rt_bot_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
 	struct rt_bot_internal		*bip;
 	register unsigned char		*cp;
@@ -978,11 +915,7 @@ const struct db_i               *dbip;
  *			R T _ B O T _ E X P O R T 5
  */
 int
-rt_bot_export5( ep, ip, local2mm, dbip )
-struct bu_external              *ep;
-const struct rt_db_internal     *ip;
-double                          local2mm;
-const struct db_i               *dbip;
+rt_bot_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
 	struct rt_bot_internal		*bip;
 	struct bu_vls			vls;
@@ -1108,11 +1041,7 @@ static char *plate="\tThis is a FASTGEN plate mode solid\n";
 static char *nocos="\tThis is a plate mode solid with no obliquity angle effect\n";
 static char *unknown_mode="\tunknown mode\n";
 int
-rt_bot_describe( str, ip, verbose, mm2local )
-struct bu_vls		*str;
-const struct rt_db_internal	*ip;
-int			verbose;
-double			mm2local;
+rt_bot_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
 	register struct rt_bot_internal	*bot_ip =
 		(struct rt_bot_internal *)ip->idb_ptr;
@@ -1228,8 +1157,7 @@ double			mm2local;
  *  Free the storage associated with the rt_db_internal version of this solid.
  */
 void
-rt_bot_ifree( ip )
-struct rt_db_internal	*ip;
+rt_bot_ifree(struct rt_db_internal *ip)
 {
 	register struct rt_bot_internal	*bot_ip;
 
@@ -1252,21 +1180,13 @@ struct rt_db_internal	*ip;
 }
 
 int
-rt_bot_tnurb( r, m, ip, tol )
-struct nmgregion        **r;
-struct model            *m;
-struct rt_db_internal   *ip;
-const struct bn_tol           *tol;
+rt_bot_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bn_tol *tol)
 {
 	return( 1 );
 }
 
 int
-rt_bot_xform( op, mat, ip, free, dbip )
-struct rt_db_internal *op, *ip;
-const mat_t	mat;
-const int free;
-struct db_i	*dbip;
+rt_bot_xform(struct rt_db_internal *op, const fastf_t *mat, struct rt_db_internal *ip, const int free, struct db_i *dbip)
 {
 	struct rt_bot_internal *botip, *botop;
 	register int		i;
@@ -1575,10 +1495,7 @@ static char *los[]={
  *	db get name flags	get BOT flags
  */
 int
-rt_bot_tclget( interp, intern, attr )
-Tcl_Interp			*interp;
-const struct rt_db_internal	*intern;
-const char			*attr;
+rt_bot_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const char *attr)
 {
 	register struct rt_bot_internal *bot=(struct rt_bot_internal *)intern->idb_ptr;
 	Tcl_DString	ds;
@@ -1935,11 +1852,7 @@ const char			*attr;
  *	db adjust name flags		set flags
  */
 int
-rt_bot_tcladjust( interp, intern, argc, argv )
-Tcl_Interp		*interp;
-struct rt_db_internal	*intern;
-int			argc;
-char			**argv;
+rt_bot_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, char **argv)
 {
 	struct rt_bot_internal *bot;
 	Tcl_Obj *obj, *list, **obj_array;

@@ -56,7 +56,7 @@ static const char RCSid[] = "@(#)$Header$";
 
 extern struct resource rt_uniresource;	/* From librt/shoot.c */
 
-int			fr_hit(), fr_miss();
+int			fr_hit(struct application *ap, struct partition *headp, struct seg *segp), fr_miss(struct application *ap);
 struct partition	fr_global_head;
 
 /*
@@ -66,10 +66,7 @@ struct partition	fr_global_head;
  *  on the right into a FORTRAN string of given length.
  */
 void
-fr_string_c2f( fstr, cstr, flen )
-register char	*fstr;
-register char	*cstr;
-register int	flen;
+fr_string_c2f(register char *fstr, register char *cstr, register int flen)
 {
 	register int	i;
 	
@@ -87,9 +84,7 @@ register int	flen;
  *  null terminated copy of that string in a STATIC buffer.
  */
 static char *
-fr_string_f2c( str, maxlen )
-char	*str;
-int	maxlen;
+fr_string_f2c(char *str, int maxlen)
 {
 	static char	buf[512];
 	int	len;
@@ -254,9 +249,7 @@ double		*dir;
 }
 
 int
-fr_hit( ap, headp )
-struct application	*ap;
-struct partition	*headp;
+fr_hit(struct application *ap, struct partition *headp, struct seg *segp)
 {
 	if( headp->pt_forw == headp )  return(0);
 
@@ -271,8 +264,7 @@ struct partition	*headp;
 }
 
 int
-fr_miss( ap )
-struct application	*ap;
+fr_miss(struct application *ap)
 {
 	fr_global_head.pt_forw = fr_global_head.pt_back = &fr_global_head;
 	return(0);

@@ -72,10 +72,7 @@ int rt_booleval(register union tree*,
  *  or hitting an NMG wire edge or NMG lone vertex.
  */
 void
-rt_weave0seg( segp, PartHdp, ap )
-struct seg		*segp;
-struct partition	*PartHdp;
-struct application	*ap;
+rt_weave0seg(struct seg *segp, struct partition *PartHdp, struct application *ap)
 {
 	register struct partition *pp;
 	struct resource		*res = ap->a_resource;
@@ -181,11 +178,7 @@ struct application	*ap;
  *	as well as the partition list that we return.
  */
 void
-rt_boolweave( out_hd, in_hd, PartHdp, ap )
-struct seg		*out_hd;
-struct seg		*in_hd;
-struct partition	*PartHdp;
-struct application	*ap;
+rt_boolweave(struct seg *out_hd, struct seg *in_hd, struct partition *PartHdp, struct application *ap)
 {
 	register struct seg *segp;
 	register struct partition *pp;
@@ -646,13 +639,7 @@ done_weave:	; /* Sorry about the goto's, but they give clarity */
  *	 2	to retain partition in output list, claimed by reg2
  */
 HIDDEN int
-_rt_defoverlap( ap, pp, reg1, reg2, pheadp, verbose )
-register struct application	*ap;
-register struct partition	*pp;
-struct region			*reg1;
-struct region			*reg2;
-struct partition		*pheadp;
-register int			verbose;
+_rt_defoverlap(register struct application *ap, register struct partition *pp, struct region *reg1, struct region *reg2, struct partition *pheadp, register int verbose)
 {
 	RT_CK_AP(ap);
 	RT_CK_PT(pp);
@@ -692,14 +679,7 @@ register int			verbose;
  *  requesting verbosity.
  */
 int
-rt_defoverlap (ap, pp, reg1, reg2, pheadp)
-
-register struct application	*ap;
-register struct partition	*pp;
-struct region			*reg1;
-struct region			*reg2;
-struct partition		*pheadp;
-
+rt_defoverlap (register struct application *ap, register struct partition *pp, struct region *reg1, struct region *reg2, struct partition *pheadp)
 {
     return (_rt_defoverlap(ap, pp, reg1, reg2, pheadp, 1));
 }
@@ -715,14 +695,7 @@ struct partition		*pheadp;
  *
  */
 int
-rt_overlap_quietly (ap, pp, reg1, reg2, pheadp)
-
-register struct application	*ap;
-register struct partition	*pp;
-struct region			*reg1;
-struct region			*reg2;
-struct partition		*pheadp;
-
+rt_overlap_quietly (register struct application *ap, register struct partition *pp, struct region *reg1, struct region *reg2, struct partition *pheadp)
 {
     return (_rt_defoverlap(ap, pp, reg1, reg2, pheadp, 0));
 }
@@ -740,10 +713,7 @@ struct partition		*pheadp;
  *  It will contain a pointer to at least one segment.
  */
 void
-rt_get_region_seglist_for_partition( sl, pp, regp )
-struct bu_ptbl	*sl;
-const struct partition *pp;
-const struct region *regp;
+rt_get_region_seglist_for_partition(struct bu_ptbl *sl, const struct partition *pp, const struct region *regp)
 {
 	const struct seg **segpp;
 
@@ -778,10 +748,7 @@ const struct region *regp;
  *  Required to null out one of the two regions.
  */
 void
-rt_fastgen_vol_vol_overlap( fr1, fr2, pp )
-struct region **fr1;
-struct region **fr2;
-const struct partition *pp;
+rt_fastgen_vol_vol_overlap(struct region **fr1, struct region **fr2, const struct partition *pp)
 {
 	struct bu_ptbl	sl1, sl2;
 	const struct seg *s1 = (const struct seg *)NULL;
@@ -863,11 +830,7 @@ const struct partition *pp;
  *  Required to null out one of the two regions.
  */
 void
-rt_fastgen_plate_vol_overlap( fr1, fr2, pp, ap )
-struct region **fr1;
-struct region **fr2;
-struct partition *pp;
-struct application *ap;
+rt_fastgen_plate_vol_overlap(struct region **fr1, struct region **fr2, struct partition *pp, struct application *ap)
 {
 	struct partition *prev;
 	fastf_t depth;
@@ -947,10 +910,7 @@ struct application *ap;
  *
  */
 void
-rt_default_multioverlap(struct application	*ap,
-			struct partition	*pp,
-			struct bu_ptbl		*regiontable,
-			struct partition	*InputHdp)
+rt_default_multioverlap(struct application *ap, struct partition *pp, struct bu_ptbl *regiontable, struct partition *InputHdp)
 {
 	LOCAL struct region *lastregion = (struct region *)NULL;
 	int	n_regions;
@@ -1159,11 +1119,7 @@ code2:
  *  just set ap->a_logoverlap = rt_silent_logoverlap.
  */
 void
-rt_silent_logoverlap( ap, pp, regiontable, InputHdp )
-struct application	*ap;
-const struct partition	*pp;
-const struct bu_ptbl	*regiontable;
-const struct partition	*InputHdp;
+rt_silent_logoverlap(struct application *ap, const struct partition *pp, const struct bu_ptbl *regiontable, const struct partition *InputHdp)
 {
 	RT_CK_AP(ap);
 	RT_CK_PT(pp);
@@ -1181,11 +1137,7 @@ const struct partition	*InputHdp;
  *  This function can be replaced by an application setting a_logoverlap().
  */
 void
-rt_default_logoverlap( ap, pp, regiontable, InputHdp )
-struct application	*ap;
-const struct partition	*pp;
-const struct bu_ptbl	*regiontable;
-const struct partition	*InputHdp;
+rt_default_logoverlap(struct application *ap, const struct partition *pp, const struct bu_ptbl *regiontable, const struct partition *InputHdp)
 {
 	point_t	pt;
 	static long count = 0;		/* Not PARALLEL, shouldn't hurt */
@@ -1354,13 +1306,7 @@ b_ok:		;
  *	are ready to be evaluated.
  */
 int
-rt_boolfinal( InputHdp, FinalHdp, startdist, enddist, regiontable, ap, solidbits )
-struct partition *InputHdp;
-struct partition *FinalHdp;
-fastf_t startdist, enddist;
-struct bu_ptbl	*regiontable;
-struct application *ap;
-const struct bu_bitv	*solidbits;
+rt_boolfinal(struct partition *InputHdp, struct partition *FinalHdp, fastf_t startdist, fastf_t enddist, struct bu_ptbl *regiontable, struct application *ap, const struct bu_bitv *solidbits)
 {
 	LOCAL struct region *lastregion = (struct region *)NULL;
 	LOCAL struct region *TrueRg[2];
@@ -1804,11 +1750,11 @@ out:
  *	-1	tree is in error (GUARD)
  */
 int
-rt_booleval( treep, partp, trueregp, resp )
-register union tree *treep;	/* Tree to evaluate */
-struct partition *partp;	/* Partition to evaluate */
-struct region	**trueregp;	/* XOR true (and overlap) return */
-struct resource	*resp;		/* resource pointer for this CPU */
+rt_booleval(register union tree *treep, struct partition *partp, struct region **trueregp, struct resource *resp)
+                           	/* Tree to evaluate */
+                        	/* Partition to evaluate */
+             	           	/* XOR true (and overlap) return */
+               	      		/* resource pointer for this CPU */
 {
 	static union tree tree_not[MAX_PSW];	/* for OP_NOT nodes */
 	static union tree tree_guard[MAX_PSW];	/* for OP_GUARD nodes */
@@ -1976,8 +1922,7 @@ pop:
  *  	+1	if a > b
  */
 int
-rt_fdiff( a, b )
-double a, b;
+rt_fdiff(double a, double b)
 {
 	FAST double diff;
 	FAST double d;
@@ -2035,8 +1980,7 @@ out:
  *	ratio of difference, relative to the larger of the two (range 0.0-1.0)
  */
 double
-rt_reldiff( a, b )
-double	a, b;
+rt_reldiff(double a, double b)
 {
 	FAST fastf_t	d;
 	FAST fastf_t	diff;
@@ -2063,8 +2007,7 @@ double	a, b;
  *  Return the new pointer for what was previously the last element.
  */
 void
-rt_grow_boolstack( resp )
-register struct resource	*resp;
+rt_grow_boolstack(register struct resource *resp)
 {
 	if( resp->re_boolstack == (union tree **)0 || resp->re_boolslen <= 0 )  {
 		resp->re_boolslen = 128;	/* default len */
@@ -2116,11 +2059,7 @@ rt_partition_len( const struct partition *partheadp )
  *	0	Region is not ready
  */
 int
-rt_tree_test_ready( tp, solidbits, regionp, pp )
-register const union tree	*tp;
-register const struct bu_bitv	*solidbits;
-register const struct region	*regionp;
-register const struct partition	*pp;
+rt_tree_test_ready(register const union tree *tp, register const struct bu_bitv *solidbits, register const struct region *regionp, register const struct partition *pp)
 {
 	RT_CK_TREE(tp);
 	BU_CK_BITV(solidbits);
@@ -2168,10 +2107,7 @@ register const struct partition	*pp;
  *	0	Partition is not ready
  */
 int
-rt_bool_partition_eligible(regiontable, solidbits, pp)
-register const struct bu_ptbl	*regiontable;
-register const struct bu_bitv	*solidbits;
-register const struct partition	*pp;
+rt_bool_partition_eligible(register const struct bu_ptbl *regiontable, register const struct bu_bitv *solidbits, register const struct partition *pp)
 {
 	struct region **regpp;
 
@@ -2205,9 +2141,7 @@ register const struct partition	*pp;
  *	-1	If no rays are contributing segs for this region.
  */
 int
-rt_tree_max_raynum( tp, pp )
-register const union tree	*tp;
-register const struct partition	*pp;
+rt_tree_max_raynum(register const union tree *tp, register const struct partition *pp)
 {
 	RT_CK_TREE(tp);
 	RT_CK_PARTITION(pp);
@@ -2252,10 +2186,7 @@ register const struct partition	*pp;
  * For a temporary measure, don't free things.
  */
 void
-rt_rebuild_overlaps( PartHdp, ap, rebuild_fastgen_plates_only )
-struct partition	*PartHdp;
-struct application	*ap;
-int			rebuild_fastgen_plates_only;
+rt_rebuild_overlaps(struct partition *PartHdp, struct application *ap, int rebuild_fastgen_plates_only)
 {
 	struct partition	*pp, *next, *curr;
 	struct region		*pp_reg;
