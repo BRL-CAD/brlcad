@@ -813,7 +813,7 @@ int		dangling_only;
 		NMG_CK_EDGEUSE(eup_mate);
 		if (*eup->up.magic_p != NMG_LOOPUSE_MAGIC ||
 		    *eup->up.lu_p->up.magic_p != NMG_FACEUSE_MAGIC )
-			rt_bomb("nmg_findeu(): eup not part of a face\n");
+			rt_bomb("nmg_find_eu_in_face(): eup not part of a face\n");
 		eup_orientation = eup->up.lu_p->up.fu_p->orientation;
 	} else {
 		eup_mate = eup;			/* NULL */
