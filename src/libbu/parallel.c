@@ -37,6 +37,8 @@ static const char RCSparallel[] = "@(#)$Header$ (ARL)";
 
 #include "common.h"
 
+/* XXX header mess needs cleaned up */
+
 #include <stdio.h>
 #include <ctype.h>
 #include <math.h>
@@ -115,27 +117,33 @@ static const char RCSparallel[] = "@(#)$Header$ (ARL)";
 #endif
 
 #if (defined(sgi) && defined(mips)) || (defined(__sgi) && defined(__mips))
+/* XXX hack that should eventually go away when it can be verified */
 #  define SGI_4D	1
 #  define _SGI_SOURCE	1	/* IRIX 5.0.1 needs this to def M_BLKSZ */
 #  define _BSD_TYPES	1	/* IRIX 5.0.1 botch in sys/prctl.h */
+#endif
+
+#ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
+#endif
+#ifdef HAVE_ULOCKS_H
 #  include <ulocks.h>
+#endif
+#ifdef HAVE_SYS_SYSMP_H
 #  include <sys/sysmp.h> /* for sysmp() */
-/* ulocks.h #include's <limits.h> and <malloc.h> */
-/* ulocks.h #include's <task.h> for getpid stuff */
-/* task.h #include's <sys/prctl.h> */
+#endif
+#ifdef HAVE_MALLOC_H
 #  include <malloc.h>
-/* <malloc.h> #include's <stddef.h> */
+#endif
 
+#ifdef HAVE_SYS_WAIT_H
 #  include <sys/wait.h>
-#  if IRIX64 >= 64
-#    include <sys/sched.h>
+#endif
+
+#ifdef HAVE_SYS_SCHED_H
+#  include <sys/sched.h>
 static struct sched_param bu_param;
-#  endif
-
-#endif /* SGI_4D */
-
-/* XXX Probably need to set _SGI_MP_SOURCE in machine.h */
+#endif
 
 #ifdef ardent
 #  include <thread.h>
@@ -336,10 +344,10 @@ bu_avail_cpus(void)
 	 * configured processors.  This will have to suffice until SGI
 	 * comes up with a fix.
 	 */
-#  if 0
-	ncpu = (int)prctl(PR_MAXPPROCS);
-#  else
+#  ifdef HAVE_SYSMP
 	ncpu = sysmp(MP_NPROCS);
+#  elif defined(HAVE_PRCTL)
+	ncpu = (int)prctl(PR_MAXPPROCS);
 #  endif
 	goto DONE_NCPU;
 #endif /* SGI_4D */
@@ -712,7 +720,7 @@ bu_parallel_interface(void)
 
 #	if defined(SGI_4D) || defined(IRIX)
 	/*
-	 *  On an SGI, a process/thread created with the "sproc" syscall has
+	 *  On an SGI
 	 *  all of it's file descriptors closed when it "returns" to sproc.
 	 *  Since this trashes file descriptors which may still be in use by
 	 *  other processes, we avoid ever returning to sproc.
