@@ -39,7 +39,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #define MAXF			4	/* Max fonts mounted in C/A/T -- a constant */
 
 #define LOCAL_RAILMAG		".railmag"
-#define GLOBAL_RAILMAG		"/usr/lib/vfont/railmag"
+#define GLOBAL_RAILMAG		"/usr/brlcad/vfont/railmag"
 
 /* The vfonts are scaled for 200 dpi */
 #define CONVERT(n)		((n)*(200./432.))
