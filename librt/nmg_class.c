@@ -73,28 +73,36 @@ static vect_t projection_dir = { 1.0, 0.0, 0.0 };
 #define FACE_HIT 256
 #define FACE_MISS 512
 
+/*
+ *			N M G _ C L A S S _ S T A T U S
+ *
+ *  Convert classification status to string.
+ */
+CONST char *
+nmg_class_status(status)
+int	status;
+{
+	switch(status)  {
+	case INSIDE:
+		return "INSIDE";
+	case OUTSIDE:
+		return "OUTSIDE";
+	case ON_SURF:
+		return "ON_SURF";
+	}
+	return "BOGUS_CLASS_STATUS";
+}
+
+/*
+ *			N M G _ P R _ C L A S S _ S T A T U S
+ */
 void
 nmg_pr_class_status( prefix, status )
 char	*prefix;
 int	status;
 {
-	char	*str;
-
-	switch(status)  {
-	case INSIDE:
-		str = "INSIDE";
-		break;
-	case OUTSIDE:
-		str = "OUTSIDE";
-		break;
-	case ON_SURF:
-		str = "ON_SURF";
-		break;
-	default:
-		str = "??unknown_code??";
-		break;
-	}
-	rt_log("%s has classification status %s\n", prefix, str);
+	rt_log("%s has classification status %s\n",
+		prefix, nmg_class_status(status) );
 }
 
 /*
@@ -532,7 +540,8 @@ CONST struct rt_tol	*tol;
 {
 	struct vertexuse *vup;
 	pointp_t pt;
-	int status;
+	char	*reason;
+	int	status;
 
 	NMG_CK_VERTEXUSE(vu);
 	NMG_CK_SHELL(sB);
@@ -541,17 +550,26 @@ CONST struct rt_tol	*tol;
 	pt = vu->v_p->vg_p->coord;
 
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY)
-		VPRINT("class_vu_vs_s ", pt);
+		rt_log("class_vu_vs_s(vu=x%x) pt=(%g,%g,%g)\n", vu, V3ARGS(pt) );
 
-	/* check for vertex presence in class list */
-	if( NMG_INDEX_TEST(classlist[NMG_CLASS_AinB], vu->v_p) )
-		return(INSIDE);
+    if( !(rt_g.NMG_debug & DEBUG_CLASSIFY) )  {
+	/* As an efficiency & consistency measure, check for vertex in class list */
+	reason = "of classlist";
+	if( NMG_INDEX_TEST(classlist[NMG_CLASS_AinB], vu->v_p) )  {
+		status = INSIDE;
+		goto out;
+	}
 
-	if( NMG_INDEX_TEST(classlist[NMG_CLASS_AonBshared], vu->v_p) )
-		return(ON_SURF);
+	if( NMG_INDEX_TEST(classlist[NMG_CLASS_AonBshared], vu->v_p) )  {
+		status = ON_SURF;
+		goto out;
+	}
 
-	if( NMG_INDEX_TEST(classlist[NMG_CLASS_AinB], vu->v_p) )
-		return(OUTSIDE);
+	if( NMG_INDEX_TEST(classlist[NMG_CLASS_AoutB], vu->v_p) )  {
+		status = OUTSIDE;
+		goto out;
+	}
+    }
 
 	/* we use topology to determing if the vertex is "ON" the
 	 * other shell.
@@ -560,24 +578,19 @@ CONST struct rt_tol	*tol;
 
 		if (*vup->up.magic_p == NMG_LOOPUSE_MAGIC &&
 		    nmg_lups(vup->up.lu_p) == sB) {
-
-		    	/* it's ON_SURF */
 		    	NMG_INDEX_SET(classlist[NMG_CLASS_AonBshared], 
 		    		vu->v_p );
-			if (rt_g.NMG_debug & DEBUG_CLASSIFY)
-		    		VPRINT("\tVertex is ON_SURF", pt);
-
-			return(ON_SURF);
+		    	reason = "other loopuse of vertex is on shell";
+		    	status = ON_SURF;
+			goto out;
 		}
 		else if (*vup->up.magic_p == NMG_EDGEUSE_MAGIC &&
 		    nmg_eups(vup->up.eu_p) == sB) {
-
 		    	NMG_INDEX_SET(classlist[NMG_CLASS_AonBshared],
 		    		vu->v_p );
-			if (rt_g.NMG_debug & DEBUG_CLASSIFY)
-		    		VPRINT("\tVertex is ON_SURF", pt);
-
-			return(ON_SURF);
+		    	reason = "other edgeuse of vertex is on shell";
+		    	status = ON_SURF;
+			goto out;
 		}
 	}
 
@@ -586,13 +599,13 @@ CONST struct rt_tol	*tol;
 
 	/* The topology doesn't tell us about the vertex being "on" the shell
 	 * so now it's time to look at the geometry to determine the vertex
-	 * relationsship to the shell.
+	 * relationship to the shell.
 	 *
 	 *  We know that the vertex doesn't lie ON any of the faces or
 	 * edges, since the intersection algorithm would have combined the
 	 * topology if that had been the case.
 	 */
-
+	reason = "of pt_inout_s()";
 	status = pt_inout_s(pt, sB, tol);
 	
 	if (status == OUTSIDE)  {
@@ -602,16 +615,14 @@ CONST struct rt_tol	*tol;
 	}  else  {
 		rt_log("status=%d\n", status);
 		VPRINT("pt", pt);
-		rt_bomb("class_vu_vs_s: Why wasn't this point in or out?\n");
+		rt_bomb("class_vu_vs_s: pt_inout_s() failure. Point neither IN or OUT?\n");
 	}
 
+out:
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
-		if (status == OUTSIDE)
-			VPRINT("Vertex is OUTSIDE ", pt);
-		else if (status == INSIDE)
-			VPRINT("Vertex is INSIDE ", pt);
+		rt_log("  vertex class=%s because '%s'\n",
+			nmg_class_status(status), reason );
 	}
-
 	return(status);
 }
 
@@ -651,6 +662,19 @@ CONST struct rt_tol	*tol;
 	/* sanity check */
 	if ((euv_cl == INSIDE && matev_cl == OUTSIDE) ||
 	    (euv_cl == OUTSIDE && matev_cl == INSIDE)) {
+	    	static int	num=0;
+	    	char	buf[128];
+	    	FILE	*fp;
+
+	    	sprintf(buf, "class%d.pl", num++ );
+	    	if( (fp = fopen(buf, "w")) == NULL ) rt_bomb(buf);
+	    	nmg_pl_s( fp, s );
+		/* A yellow line for the angry edge */
+		pl_color(fp, 255, 255, 0);
+		pdv_3line(fp, eu->vu_p->v_p->vg_p->coord,
+			eu->eumate_p->vu_p->v_p->vg_p->coord );
+		fclose(fp);
+
 	    	nmg_pr_class_status("eu vu", euv_cl);
 	    	nmg_pr_class_status("eumate vu", matev_cl);
 	    	if( rt_g.debug || rt_g.NMG_debug )  {
@@ -662,6 +686,7 @@ CONST struct rt_tol	*tol;
 		    	nmg_pr_eu(eu, "  ");
 	    	}
 
+		rt_log("wrote %s\n", buf);
 		rt_bomb("class_eu_vs_s:  edge didn't get cut\n");
 	}
 
