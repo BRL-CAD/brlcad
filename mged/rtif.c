@@ -1530,7 +1530,8 @@ char		**argv;
 
     if (snames == 0)
     {
-	Tcl_SetResult(interp, rt_vls_addr(&vls), TCL_VOLATILE);
+	Tcl_SetResult(interp, "Error executing skewer_solids: ", TCL_STATIC);
+	Tcl_AppendResult(interp, rt_vls_addr(&vls), (char *)NULL);
 	rt_vls_free(&vls);
 	return (TCL_ERROR);
     }
