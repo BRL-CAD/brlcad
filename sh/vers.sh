@@ -28,12 +28,6 @@ else
 	TITLE="Graphics Editor (MGED)"
 fi
 
-if test -x $path_to_vers_sh/machinetype.sh ; then
-	eval `$path_to_vers_sh/machinetype.sh -b`	# sets MACHINE, UNIXTYPE, etc
-else
-	eval `machinetype.sh -b`	# sets MACHINE, UNIXTYPE, etc
-fi
-
 # Obtain RELEASE number
 if test -r $path_to_vers_sh/../configure.ac ; then
 	version_script=`grep VERSION $path_to_vers_sh/../configure.ac | grep -v SUBST | head -4`
@@ -60,17 +54,31 @@ VERSION=`cat version`
 DATE=`date`
 PATH=$PATH:/usr/ucb:/usr/bsd
 export PATH
-if test x$UNIXTYPE = xBSD -o -f /usr/ucb/hostname -o -f /usr/bsd/hostname ; then
-	HOST=`hostname`
-else
-	HOST=`uname -n`
+
+# figure out what machine this is
+HOST=$HOSTNAME
+if test "x$HOST" = "x" ; then
+    HOST="`hostname`"
+fi
+if test "x$HOST" = "x" ; then
+    HOST="`uname -n`"
+fi
+if test "x$HOST" = "x" ; then
+    HOST="//unknown//"
 fi
 
+# figure out who this is
 if test "x$USER" = "x" ; then
 	USER="$LOGNAME"
 fi
 if test "x$USER" = "x" ; then
-	USER=unknown
+	USER="$LOGIN"
+fi
+if test "x$USER" = "x" ; then
+	USER="`whoami`"
+fi
+if test "x$USER" = "x" ; then
+	USER="//unknown//"
 fi
 
 cat << EOF
