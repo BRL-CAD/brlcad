@@ -136,7 +136,7 @@ int flags;
     /* Ask the libbu structparser for the value of the variable */
 
     bu_vls_init( &str );
-    rt_vls_item_print( &str, sp, (CONST char *)&mged_variables );
+    bu_vls_item_print( &str, sp, (CONST char *)&mged_variables );
 
     /* Next, set the Tcl variable to this value */
 

@@ -2850,10 +2850,10 @@ char	**argv;
 
 	if( argc < 2 )  {
 		/* Bare set command, print out current settings */
-	  rt_structprint( "dm_4d internal variables", Ir_vparse, (char *)&mvars );
+	  bu_structprint( "dm_4d internal variables", Ir_vparse, (char *)&mvars );
 		bu_log("%s", bu_vls_addr(&vls) );
 	} else if( argc == 2 ) {
-	  rt_vls_name_print( &vls, Ir_vparse, argv[1], (char *)&mvars );
+	  bu_vls_name_print( &vls, Ir_vparse, argv[1], (char *)&mvars );
 		bu_log( "%s\n", bu_vls_addr(&vls) );
   	} else {
 	        bu_vls_printf( &vls, "%s=\"", argv[1] );

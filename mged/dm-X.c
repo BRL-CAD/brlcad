@@ -1140,7 +1140,7 @@ char *argv[];
       bu_structprint("dm_X internal variables", X_vparse,
 		     (CONST char *)&((struct x_vars *)dm_vars)->mvars );
     } else if( argc == 2 ) {
-      rt_vls_name_print( &vls, X_vparse, argv[1],
+      bu_vls_name_print( &vls, X_vparse, argv[1],
 			 (CONST char *)&((struct x_vars *)dm_vars)->mvars);
       bu_log( "%s\n", bu_vls_addr(&vls) );
     } else {

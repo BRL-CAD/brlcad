@@ -392,11 +392,11 @@ char	**argv;
 }
 
 /* viewing module specific variables */
-extern struct structparse view_parse[];
+extern struct bu_structparse view_parse[];
 
 /*
  *  Generic settable parameters.
- *  By setting the "base address" to zero in the rt_structparse call,
+ *  By setting the "base address" to zero in the bu_structparse call,
  *  the actual memory address is given here as the structure offset.
  *
  *  Strictly speaking, the C language only permits initializers of the
@@ -419,7 +419,7 @@ extern struct structparse view_parse[];
 #    endif
 #  endif
 #endif
-struct structparse set_parse[] = {
+struct bu_structparse set_parse[] = {
 #if !defined(__alpha)	/* XXX Alpha does not support this initialization! */
 	{"%d",	1, "width",	byteoffset(width),		FUNC_NULL },
 	{"%d",	1, "height",	byteoffset(height),		FUNC_NULL },
@@ -442,13 +442,13 @@ char	**argv;
 	struct rt_vls	str;
 
 	if( argc <= 1 ) {
-		rt_structprint( "Generic and Application-Specific Parameter Values",
+		bu_structprint( "Generic and Application-Specific Parameter Values",
 			set_parse, (char *)0 );
 		return(0);
 	}
 	rt_vls_init( &str );
 	rt_vls_from_argv( &str, argc-1, argv+1 );
-	if( rt_structparse( &str, set_parse, (char *)0 ) < 0 )  {
+	if( bu_structparse( &str, set_parse, (char *)0 ) < 0 )  {
 		rt_vls_free( &str );
 		return(-1);
 	}
