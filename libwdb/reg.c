@@ -276,11 +276,10 @@ int	inherit;
  *  Convenience interface to make a combination with a single member.
  */
 int
-mk_comb1( fp, combname, membname, regflag )
-FILE	*fp;
-CONST char	*combname;
-CONST char	*membname;
-int	regflag;
+mk_comb1( FILE *fp,
+	CONST char *combname,
+	CONST char *membname,
+	int regflag )
 {
 	struct wmember	head;
 
@@ -288,7 +287,29 @@ int	regflag;
 	if( mk_addmember( membname, &head, WMOP_UNION ) == WMEMBER_NULL )
 		return -2;
 	return mk_lcomb( fp, combname, &head, regflag,
-		(char *)NULL, (char *)NULL, (unsigned char *)NULL, 1 );
+		(char *)NULL, (char *)NULL, (unsigned char *)NULL, 0 );
+}
+
+/*
+ *			M K _ R E G I O N 1
+ *
+ *  Convenience routine to make a region with shader and rgb possibly set.
+ */
+int
+mk_region1(
+	FILE *fp,
+	const char *combname,
+	const char *membname,
+	const char *matname,
+	const char *matparm,
+	const unsigned char *rgb )
+{
+	struct wmember	head;
+
+	BU_LIST_INIT( &head.l );
+	if( mk_addmember( membname, &head, WMOP_UNION ) == WMEMBER_NULL )
+		return -2;
+	return mk_lcomb( fp, combname, &head, 1, matname, matparm, rgb, 0 );
 }
 
 /*

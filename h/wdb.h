@@ -188,6 +188,20 @@ WDB_EXTERN(int mk_lrcomb, (FILE *fp, CONST char *name, struct wmember *headp,
 			int id, int air, int material, int los,
 			int inherit_flag) );
 
+int mk_comb1( FILE *fp,
+	CONST char *combname,
+	CONST char *membname,
+	int regflag );
+int
+mk_region1(
+	FILE *fp,
+	const char *combname,
+	const char *membname,
+	const char *matname,
+	const char *matparm,
+	const unsigned char *rgb );
+
+
 /* Values for wm_op.  These must track db.h */
 #define WMOP_INTERSECT	'+'
 #define WMOP_SUBTRACT	'-'
