@@ -53,7 +53,7 @@ extern int	cmd_glob();
 static void	f_help(), f_fhelp(), f_param(), f_comm();
 void	mged_cmd();
 void	f_center(), f_press(), f_view(), f_blast();
-void	f_edit(), f_evedit(), f_delobj();
+void	f_edit(), f_evedit(), f_delobj(), f_hideline();
 void	f_debug(), f_regdebug(), f_debuglib();
 void	f_name(), f_copy(), f_instance();
 void	f_copy_inv(), f_killall(), f_killtree();
@@ -150,6 +150,10 @@ static struct funtab {
 	f_fix,1,1,
 "g", "groupname <objects>", "group objects",
 	f_group,3,MAXARGS,
+#ifdef HIDELINE
+"H", "plotfile [step_size %epsilon]", "produce hidden-line unix-plot",
+	f_hideline,2,4,
+#endif
 "help", "[commands]", "give usage message for given commands",
 	f_help,0,MAXARGS,
 "i", "obj combination [operation]", "add instance of obj to comb",
