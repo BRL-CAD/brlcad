@@ -264,7 +264,7 @@ char	*argv[];
 
   (void)close(i);
 
-  av = (char **)rt_malloc(sizeof(char *)*argc + 2, "f_edcodes: av");
+  av = (char **)rt_malloc(sizeof(char *)*(argc + 2), "f_edcodes: av");
   av[0] = "wcodes";
   av[1] = tmpfil;
   for(i = 2; i < argc + 1; ++i)
