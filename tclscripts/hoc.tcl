@@ -8,6 +8,10 @@
 #		Paul Tanenbaum
 #
 
+if {![info exists tkPriv(cad_dialog)]} {
+    set tkPriv(cad_dialog) .cad_dialog
+}
+
 # hoc_build_string --
 #
 # Generic procedure for building uniform "Help On Context" strings.
@@ -146,13 +150,14 @@ proc hoc_register_menu_data { title label subject ksl } {
 #
 proc hoc_dialog { w index } {
     global hoc_data
+    global tkPriv
 
     set screen [winfo screen $w]
 
-    if [info exists hoc_data($index)] {
+    if {[info exists hoc_data($index)]} {
 	set subject [lindex $hoc_data($index) 0]
 	set description [lindex $hoc_data($index) 1]
-	cad_dialog $w.hocDialog $screen $subject $description info 0 Dismiss
+	cad_dialog $tkPriv(cad_dialog) $screen $subject $description info 0 Dismiss
     }
 }
 
