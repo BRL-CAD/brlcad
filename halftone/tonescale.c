@@ -1,7 +1,14 @@
 #ifndef lint
 static char rcsid[] = "$Header$";
 #endif
+
+#include "conf.h"
+
 #include <stdio.h>
+
+#include "machine.h"
+#include "externs.h"		/* For alloc */
+
 #define	DLEVEL	1
 extern int Debug;
 typedef struct Cubic {
@@ -42,6 +49,9 @@ int eq_cubic();
  *	tone scale.  If eqptr is null then Set EqCubic to evaluate to a line.
  *
  * $Log$
+ * Revision 10.1  1991/10/12  06:53:23  mike
+ * Release_4.0
+ *
  * Revision 2.2  91/07/19  01:51:34  mike
  * Can't declare something static and extern both
  * 
