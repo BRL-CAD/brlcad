@@ -112,7 +112,7 @@ top:
 
 	default:
 		rt_log("can't get model for magic=x%x (%s)\n",
-			*magic_p, nmg_identify_magic( *magic_p ) );
+			*magic_p, rt_identify_magic( *magic_p ) );
 		rt_bomb("nmg_find_model() failure\n");
 	}
 	return( (struct model *)NULL );
@@ -797,7 +797,7 @@ struct loopuse *lu1;
 			}
 		}
 		else {
-			rt_log("nmg_klu(x%x) magic=%s\n", lu1, nmg_identify_magic(magic1) );
+			rt_log("nmg_klu(x%x) magic=%s\n", lu1, rt_identify_magic(magic1) );
 			rt_bomb("nmg_klu: unknown type for loopuse child\n");
 		}
 	}

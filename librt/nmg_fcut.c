@@ -277,7 +277,7 @@ struct nmg_ptbl *b;
 	if( *vu->up.magic_p != NMG_EDGEUSE_MAGIC )  {
 		/* This is sometimes a loop of a single vertex */
 		rt_log("justgrazing() vu->up is not edgeuse, (%s) skipping\n",
-			nmg_identify_magic(*vu->up.magic_p));
+			rt_identify_magic(*vu->up.magic_p));
 		return(1);
 	}
 	NMG_CK_EDGEUSE(vu->up.eu_p);
