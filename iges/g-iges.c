@@ -475,8 +475,14 @@ genptr_t		client_data;
 	regions_tried++;
 	/* Begin rt_bomb() protection */
 	if( BU_SETJUMP )  {
+		char	*sofar;
+
 		/* Error, bail out */
 		BU_UNSETJUMP;		/* Relinquish the protection */
+
+		sofar = db_path_to_string(pathp);
+		bu_log( "FAILED: Cannot convert %s!!!\n", sofar );
+		bu_free( sofar, "path string" );
 
 		/* Sometimes the NMG library adds debugging bits when
 		 * it detects an internal error, before rt_bomb().
