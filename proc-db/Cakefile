@@ -8,7 +8,7 @@
 #define PRODUCTS	pyramid molecule clutter kurt room tube teapot \
 			pipetest nmgmodel brickwall wall tea_nmg \
 			pipe terrain sphflake fence bottest sketch \
-			globe wdb_example
+			globe pix2geometry wdb_example
 
 /* pickett_fence */
 
@@ -93,6 +93,9 @@ fence:	fence.o LIBRT_DEP LIBBN_DEP LIBBU_DEP
 
 globe:	globe.o LIBRT_DEP LIBBN_DEP LIBBU_DEP
 	CC LDFLAGS globe.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o globe
+
+pix2geometry:	pix2geometry.o LIBRT_DEP LIBBN_DEP LIBBU_DEP
+	CC LDFLAGS pix2geometry.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o pix2geometry
 
 pickett_fence: pickett_fence.o LIBRT_DEP LIBBN_DEP LIBBU_DEP
 	CC LDFLAGS pickett_fence.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o pickett_fence
