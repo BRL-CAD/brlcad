@@ -62,6 +62,7 @@ mat_t	acc_rot_sol;
 fastf_t	acc_sc_sol;
 fastf_t	acc_sc[3];	/* local object scale factors --- accumulations */
 
+static void bv_zoomin(), bv_zoomout(), bv_rate_toggle();
 static void bv_top(), bv_bottom(), bv_right();
 static void bv_left(), bv_front(), bv_rear();
 static void bv_vrestore(), bv_vsave(), bv_adcursor(), bv_reset();
@@ -106,6 +107,9 @@ struct buttons  {
 	BE_S_SCALE,	"sscale",	be_s_scale,
 	BE_S_TRANS,	"sxy",		be_s_trans,
 	BV_TOP,		"top",		bv_top,
+	BV_ZOOM_IN,	"zoomin",	bv_zoomin,
+	BV_ZOOM_OUT,	"zoomout",	bv_zoomout,
+	BV_RATE_TOGGLE, "rate",		bv_rate_toggle,
 	-1,		"-end-",	be_reject
 };
 
@@ -138,6 +142,9 @@ static struct menu_item second_menu[] = {
 	{ "Reset Viewsize", btn_item_hit, BV_RESET },
 	{ "Zero Sliders", sl_halt_scroll, 0 },
 	{ "Sliders", sl_toggle_scroll, 0 },
+	{ "Rate/Abs", btn_item_hit, BV_RATE_TOGGLE },
+	{ "Zoom In 2X", btn_item_hit, BV_ZOOM_IN },
+	{ "Zoom Out 2X", btn_item_hit, BV_ZOOM_OUT },
 	{ "Solid Illum", btn_item_hit, BE_S_ILLUMINATE },
 	{ "Object Illum", btn_item_hit, BE_O_ILLUMINATE },
 	{ "", (void (*)())NULL, 0 }
@@ -233,6 +240,26 @@ label_button(bnum)
 	}
 	(void)rt_log("label_button(%d):  Not a defined operation\n", bnum);
 	return("");
+}
+
+static void bv_zoomin()
+{
+	Viewscale *= 0.5;
+	new_mats();
+	dmaflag = 1;
+}
+
+static void bv_zoomout()
+{
+	Viewscale *= 2;
+	new_mats();
+	dmaflag = 1;
+}
+
+static void bv_rate_toggle()
+{
+	mged_variables.rateknobs = !mged_variables.rateknobs;
+	dmaflag = 1;
 }
 
 static void bv_top()  {
