@@ -16,7 +16,7 @@
  *	The BRL-CAD Pacakge" agreement.
  *
  *  Copyright Notice -
- *	This software is Copyright (C) 1993 by the United States Army
+ *	This software is Copyright (C) 1994 by the United States Army
  *	in all countries except the USA.  All rights reserved.
  */
 
@@ -61,19 +61,30 @@ static int	pass;			/* Pass number (0 -> only make names, 1-> do geometry ) */
 static int	nmgs=0;			/* Flag: >0 -> There are NMG's in current component */
 static int	warnings=0;		/* Flag: >0 -> Print warning messages */
 static int	debug=0;		/* Debug flag */
+static int	rt_debug=0;		/* rt_g.debug */
+static int	nmg_debug=0;		/* rt_g.NMG_debug */
+static int	polysolids=0;		/* Flag: >0 -> Build polysolids, not NMG's */
+static int	comp_count=0;		/* Count of components in FASTGEN4 file */
+static int	conv_count=0;		/* Count of components successfully converted to BRLCAD */
 static struct cline    *cline_last_ptr; /* Pointer to last element in linked list of clines */
 static struct wmember  group_head[11];	/* Lists of regions for groups */
 static struct nmg_ptbl stack;		/* Stack for traversing name_tree */
 static struct model	*m;		/* NMG model for surface elements */
 static struct nmgregion	*r;		/* NMGregion */
 static struct shell	*s;		/* NMG shell */
-static struct shell	*s2;		/* NMG shell extruded from 's' for plate mode */
 static struct rt_tol	tol;		/* Tolerance struct for NMG's */
-static char	*usage="Usage:\n\tfast4-g [-d] [-w] fastgen4_bulk_data_file output.g\n";
+static char	*usage="Usage:\n\tfast4-g [-dwp] [-x RT_DEBUG_FLAG] [-X NMG_DEBUG_FLAG] [-D distance] [-P cosine] fastgen4_bulk_data_file output.g\n\
+	d - print debugging info\n\
+	w - print warnings about creating default names\n\
+	p - make polysolids rather than NMG solids\n\
+	x - set RT debug flag\n\
+	X - set NMG debug flag\n\
+	D - set tolerance distance (mm)\n\
+	P - set tolerance for parallel test (cosine of angle)\n";
 
 RT_EXTERN( fastf_t nmg_loop_plane_area , ( struct loopuse *lu , plane_t pl ) );
 RT_EXTERN( struct shell *nmg_dup_shell , ( struct shell *s , long ***copy_tbl ) );
-RT_EXTERN( struct shell *nmg_extrude_shell , ( struct shell *s1 , fastf_t thick , int normal_ward , struct rt_tol *tol ) );
+RT_EXTERN( struct shell *nmg_extrude_shell , ( struct shell *s1 , fastf_t thick , int normal_ward , int approximate , struct rt_tol *tol ) );
 RT_EXTERN( struct edgeuse *nmg_next_radial_eu , ( CONST struct edgeuse *eu , CONST struct shell *s , int wires ) );
 RT_EXTERN( struct faceuse *nmg_mk_new_face_from_loop , ( struct loopuse *lu ) );
 
@@ -186,245 +197,257 @@ struct fast_verts
 
 struct fast_fus
 {
-	struct faceuse *fu,*fu2;
+	struct faceuse *fu;
 	fastf_t thick;
 	int pos;
 	struct fast_fus *next;
 } *fus_root;
 
-void
-nmg_fix_parallel_faces( s1 , tol )
-struct shell *s1;
-CONST struct rt_tol *tol;
+struct shell_list
 {
-	int edge_no;
-	struct nmg_ptbl tab;
-	struct nmg_ptbl edges;
-	char shell_name[NAMESIZE+1];
+	struct shell *s;
+	fastf_t thick;
+	int pos;
+	struct shell_list *next;
+} *shell_root;
 
-	rt_log( "nmg_fix_parallel_faces\n" );
+struct adjacent_faces
+{
+	struct faceuse *fu1,*fu2;
+	struct edgeuse *eu1,*eu2;
+	struct adjacent_faces *next;
+} *adj_root;
 
-	NMG_CK_SHELL( s1 );
-	RT_CK_TOL( tol );
+void
+tmp_shell_coplanar_face_merge( s, tmp_tol, simplify )
+struct shell		*s;
+CONST struct rt_tol	*tmp_tol;
+CONST int		simplify;
+{
+	struct model	*m;
+	int		len;
+	char		*flags1;
+	char		*flags2;
+	struct faceuse	*fu1;
+	struct faceuse	*fu2;
+	struct face	*f1;
+	struct face	*f2;
+	struct face_g	*fg1;
+	struct face_g	*fg2;
 
-	/* get list of edges in this shell */
-	nmg_edge_tabulate( &tab, &s1->l.magic );
+	NMG_CK_SHELL(s);
+	m = nmg_find_model( &s->l.magic );
+	len = sizeof(char) * m->maxindex * 2;
+	flags1 = (char *)rt_calloc( sizeof(char), m->maxindex * 2,
+		"tmp_shell_coplanar_face_mergetmp flags1[]" );
+	flags2 = (char *)rt_calloc( sizeof(char), m->maxindex * 2,
+		"tmp_shell_coplanar_face_merge flags2[]" );
 
-	nmg_tbl( &edges , TBL_INIT , (long *)NULL );
+	/* Visit each face in the shell */
+	for( RT_LIST_FOR( fu1, faceuse, &s->fu_hd ) )  {
+		plane_t		n1;
 
-	sprintf( shell_name , "shell.%d.%d" , group_id , comp_id );
-	mk_nmg( fdout , shell_name , m );
+		if( RT_LIST_NEXT_IS_HEAD(fu1, &s->fu_hd) )  break;
+		f1 = fu1->f_p;
+		NMG_CK_FACE(f1);
+		if( NMG_INDEX_TEST(flags1, f1) )  continue;
+		NMG_INDEX_SET(flags1, f1);
 
-	/* look at each edge */
-	for( edge_no = 0 ; edge_no < NMG_TBL_END( &tab ) ; edge_no++ )
-	{
-		struct edge *e;
-		struct edgeuse *eu;
-		struct faceuse *fu1,*fu2;
-		plane_t pl1,pl2;
+		fg1 = f1->fg_p;
+		NMG_CK_FACE_G(fg1);
+		NMG_GET_FU_PLANE( n1, fu1 );
 
-		e = (struct edge *)NMG_TBL_GET( &tab , edge_no );
+		/* For this face, visit all remaining faces in the shell. */
+		/* Don't revisit any faces already considered. */
+		bcopy( flags1, flags2, len );
+		for( fu2 = RT_LIST_NEXT(faceuse, &fu1->l);
+		     RT_LIST_NOT_HEAD(fu2, &s->fu_hd);
+		     fu2 = RT_LIST_NEXT(faceuse,&fu2->l)
+		)  {
+			register fastf_t	dist;
+			plane_t			n2;
 
-		/* does this edge border two parallel but distinct planes ?? */
-		eu = e->eu_p;
-		NMG_CK_EDGEUSE( eu );
+			f2 = fu2->f_p;
+			NMG_CK_FACE(f2);
+			if( NMG_INDEX_TEST(flags2, f2) )  continue;
+			NMG_INDEX_SET(flags2, f2);
 
-		fu1 = nmg_find_fu_of_eu( eu );
-		if( fu1->orientation != OT_SAME )
-			fu1 = fu1->fumate_p;
-		if( fu1->orientation != OT_SAME )
-		{
-			rt_log( "nmg_fix_parallel_faces: fu x%x has no OT_SAME side\n" , fu1 );
-			nmg_tbl( &tab , TBL_FREE , (long *)NULL );
-			nmg_tbl( &edges , TBL_FREE , (long *)NULL );
-			return;
-		}
+			fg2 = f2->fg_p;
+			NMG_CK_FACE_G(fg2);
 
-		/* get radial face */
-		eu = nmg_next_radial_eu( eu , s1 , 0 );
-		NMG_CK_EDGEUSE( eu );
-		fu2 = nmg_find_fu_of_eu( eu );
-		if( fu2->orientation != OT_SAME )
-			fu2 = fu2->fumate_p;
-		if( fu2->orientation != OT_SAME )
-		{
-			rt_log( "nmg_fix_parallel_faces: fu x%x has no OT_SAME side\n" , fu2 );
-			nmg_tbl( &tab , TBL_FREE , (long *)NULL );
-			nmg_tbl( &edges , TBL_FREE , (long *)NULL );
-			return;
-		}
+			if( fu2->fumate_p == fu1 || fu1->fumate_p == fu2 )
+				rt_bomb("tmp_shell_coplanar_face_merge() mate confusion\n");
 
-		/* if faces are the same, no problem */
-		if( fu2->f_p == fu1->f_p )
-			continue;
+			/* See if face geometry is shared & same direction */
+			if( fg1 != fg2 || f1->flip != f2->flip )  {
+				/* If plane equations are different, done */
+				NMG_GET_FU_PLANE( n2, fu2 );
 
-		/* check planes of these two faces */
-		NMG_GET_FU_PLANE( pl1 , fu1 );
-		NMG_GET_FU_PLANE( pl2 , fu2 );
+				/* Compare distances from origin */
+				dist = n1[3] - n2[3];
+				if( !NEAR_ZERO(dist, tmp_tol->dist) )  continue;
 
-		/* if planes intersect, no problem */
-		if( rt_coplanar( pl1 , pl2 , tol ) != ( -1) )
-			continue;
+				/*
+				 *  Compare angle between normals.
+				 *  Can't just use RT_VECT_ARE_PARALLEL here,
+				 *  because they must point in the same direction.
+				 */
+				dist = VDOT( n1, n2 );
+				if( !(dist >= tmp_tol->para) )  continue;
+			}
 
-		/* if we get here, then the planes of the two faces
-		 * adjoining this edge are parallel, but distinct
-		 * i.e., there is no intersection.
-		 * Add this edge to the list of problem edges
-		 */
-		rt_log( "( %f %f %f ) to ( %f %f %f )\n" , V3ARGS( eu->vu_p->v_p->vg_p->coord ),
-							   V3ARGS( eu->eumate_p->vu_p->v_p->vg_p->coord ) );
-		rt_log( "\t( %f %f %f %f ) and ( %f %f %f %f)\n" , V4ARGS( pl1 ) , V4ARGS( pl2 ) );
-		nmg_tbl( &edges , TBL_INS , (long *)e );
-	}
-
-	/* The original list of all edges in the shell is no longer needed */
-	nmg_tbl( &tab , TBL_FREE , (long *)NULL );
-
-	/* The edge list (edges) now has only edges
-	 * between faces that are parallel, but distinct (they don't intersect )
-	 */
-	if( NMG_TBL_END( &edges ) == 0 )
-	{
-		/* nothing to do */
-		nmg_tbl( &edges , TBL_FREE , (long *)NULL );
-		return;
-	}
-
-	/* Now build faces to connect non_intersecting faces that
-	 * are supposed to share an edge
-	 */
-
-	for( edge_no=0 ; edge_no < NMG_TBL_END( &edges ) ; edge_no++ )
-	{
-		struct edge *e;
-		struct edgeuse *eu1,*eu2;
-		struct faceuse *fu1,*fu2,*new_fu;
-		struct loopuse *new_lu,*lu;
-		struct edgeuse *eu_prev,*eu_next;
-		struct edgeuse *new_eu;
-		struct vertexuse *vu1,*vu2;
-		struct vertex *v;
-		plane_t pl1,pl2,new_pl;
-		point_t pt;
-		vect_t eu_dir;
-		fastf_t dist_to_plane;
-
-		e = (struct edge *)NMG_TBL_GET( &edges , edge_no );
-		NMG_CK_EDGE( e );
-
-		eu1 = e->eu_p;
-		NMG_CK_EDGEUSE( eu1 );
-
-
-#if 0
-
-		fu1 = nmg_find_fu_of_eu( eu1 );
-		NMG_CK_FACEUSE( fu1 );
-
-		NMG_GET_FU_PLANE( pl1 , fu1 );
-
-		eu2 = nmg_next_radial_eu( eu1 , s1 , 0 );
-		NMG_CK_EDGEUSE( eu2 );
-
-		fu2 = nmg_find_fu_of_eu( eu2 );
-		NMG_CK_FACEUSE( fu2 );
-
-		NMG_GET_FU_PLANE( pl2 , fu2 );
-
-		if( rt_coplanar( pl1 , pl2 , tol ) != ( -1) )
-		{
-			/* something went very wrong!!!! */
-			rt_log( "nmg_fix_parallel_faces: non-intersecting planes intersect!!!\n" );
-			rt_bomb( "nmg_fix_parallel_faces\n" );
-		}
-
-		/* split the edges before and after eu1 */
-		eu_prev = RT_LIST_PPREV_CIRC( edgeuse , &eu1->l );
-		NMG_CK_EDGEUSE( eu_prev );
-
-		/* get the mate for the next edgeuse after "eu" so that
-		 * both eu_prev and eu_next are edgeuses terminating
-		 * at the endpoints of eu
-		 */
-		eu_next = RT_LIST_PNEXT_CIRC( edgeuse , &eu1->l );
-		NMG_CK_EDGEUSE( eu_next );
-		eu_next = eu_next->eumate_p;
-
-		/* first, split eu_prev */
-		new_eu = nmg_esplit( (struct vertex *)NULL , eu_prev );
-		vu1 = new_eu->vu_p;
-
-		/* for safety, go ahead and assign some geometry */
-		dist_to_plane = DIST_PT_PLANE( eu1->vu_p->v_p->vg_p->coord , pl1 );
-		VJOIN1( pt , eu1->vu_p->v_p->vg_p->coord , -dist_to_plane , pl1 );
-		nmg_vertex_gv( vu1->v_p , pt );
-
-		/* now split eu_next */
-		new_eu = nmg_esplit( (struct vertex *)NULL , eu_next );
-		vu2 = new_eu->vu_p;
-
-		/* again, assign some geometry */
-		dist_to_plane = DIST_PT_PLANE( eu1->eumate_p->vu_p->v_p->vg_p->coord , pl1 );
-		VJOIN1( pt , eu1->eumate_p->vu_p->v_p->vg_p->coord , -dist_to_plane , pl1 );
-		nmg_vertex_gv( vu2->v_p , pt );
-
-		/* cut the loop in fu1 at the two new vertices */
-		new_lu = nmg_cut_loop( vu1 , vu2 );
-
-		/* find the loop with eu1 in it, that's the new loop */
-		new_lu = eu1->up.lu_p;
-		NMG_CK_LOOPUSE( new_lu );
-		new_lu->orientation = OT_SAME;
-		new_lu->lumate_p->orientation = OT_SAME;
-
-		/* re-orient the OT_UNSPEC loops created by nmg_cut_loop
-		 * first move all the vertices to the plane of fu1
-		 */
-		for( RT_LIST_FOR( lu , loopuse , &fu1->lu_hd ) )
-		{
-			struct edgeuse *eu_tmp;
-
-			if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
-				continue;
-
-			for( RT_LIST_FOR( eu_tmp , edgeuse , &lu->down_hd ) )
+			/*
+			 * Plane equations are the same, within tolerance,
+			 * or by shared fg topology.
+			 * Move everything into fu1, and
+			 * kill now empty faceuse, fumate, and face
+			 */
 			{
-				struct vertex *v_tmp;
+				struct faceuse	*prev_fu;
 
-				v_tmp = eu_tmp->vu_p->v_p;
-				dist_to_plane = DIST_PT_PLANE( v_tmp->vg_p->coord , pl1 );
-				if( NEAR_ZERO( dist_to_plane , tol->dist ) )
-					continue;
+				prev_fu = RT_LIST_PREV(faceuse, &fu2->l);
+				/* The prev_fu can never be the head */
+				if( RT_LIST_IS_HEAD(prev_fu, &s->fu_hd) )
+					rt_bomb("prev is head?\n");
+				if( nmg_ck_fu_verts( fu1 , fu1->f_p , tmp_tol ) )
+					rt_bomb( "tmp_shell_coplanar_face_merge: verts not on face\n" );
 
-				VJOIN1( v_tmp->vg_p->coord , v_tmp->vg_p->coord , -dist_to_plane , pl1 );
+				if( !nmg_ck_fg_verts( fu2 , fu1->f_p , tmp_tol ) )
+				{
+					if( debug )
+					{
+						rt_log( "Merging coplanar faces:\n" );
+						rt_log( "plane = ( %f %f %f %f )\n" , V4ARGS( fu1->f_p->fg_p->N ) );
+						nmg_pr_fu_briefly( fu1 , (char *)NULL );
+						rt_log( "plane = ( %f %f %f %f )\n" , V4ARGS( fu2->f_p->fg_p->N ) );
+						nmg_pr_fu_briefly( fu2 , (char *)NULL );
+					}
+					nmg_jf( fu1, fu2 );
+					if( nmg_ck_fg_verts( fu1 , fu1->f_p , tmp_tol ) )
+						rt_bomb( "tmp_coplanar_face_merge: joined faces made bad face\n" );
+				}
+
+				fu2 = prev_fu;
+			}
+
+			/* There is now the option of simplifying the face,
+			 * by removing unnecessary edges.
+			 */
+			if( simplify )  {
+				struct loopuse *lu;
+
+				for (RT_LIST_FOR(lu, loopuse, &fu1->lu_hd))
+					nmg_simplify_loop(lu);
 			}
 		}
+	}
+	rt_free( (char *)flags1, "tmp_shell_coplanar_face_merge flags1[]" );
+	rt_free( (char *)flags2, "tmp_shell_coplanar_face_merge flags2[]" );
 
-		/* now re-orient the loops */
-		for( RT_LIST_FOR( lu , loopuse , &fu1->lu_hd ) )
+	if (rt_g.NMG_debug & DEBUG_BASIC)  {
+		rt_log("tmp_shell_coplanar_face_merge(s=x%x, tol=x%x, simplify=%d)\n",
+			s, tmp_tol, simplify);
+	}
+}
+
+#if 0
+void
+Rm_doubly_defined_faces( new_s )
+struct shell *new_s;
+{
+	struct faceuse *fu1;
+
+	NMG_CK_SHELL( new_s );
+
+	fu1 = RT_LIST_FIRST( faceuse , &new_s->fu_hd ) );
+	while( RT_LIST_NOT_HEAD( fu1 , &new_s->fu_hd ) )
+	{
+		plane_t pl1;
+		struct faceuse *next_fu1;
+		struct faceuse *fu2;
+
+		NMG_CK_FACEUSE( fu1 );
+
+		if( fu1->orientation != OT_SAME )
 		{
-			if( lu->orientation != OT_UNSPEC )
-				continue;
-
-			nmg_lu_reorient( lu , tol );
+			fu1 = RT_LIST_PNEXT( faceuse , fu1 );
+			continue;
 		}
 
-		/* break this new loop into a face of its own */
-		new_fu = nmg_mk_new_face_from_loop( new_lu );
+		next_fu1 = RT_LIST_PNEXT( faceuse , fu1 );
 
-		/* calculate a plane perpendicular to pl1 through vu1 */
-		VSUB2( eu_dir , vu2->v_p->vg_p->coord , vu1->v_p->vg_p->coord );
-		VCROSS( new_pl , pl1 , eu_dir );
-		VUNITIZE( new_pl );
-		new_pl[H] = VDOT( new_pl , vu1->v_p->vg_p->coord );
+		NMG_GET_FU_PLANE( pl1 , fu1 );
+		fu2 = next_fu1;
+		while(  RT_LIST_NOT_HEAD( fu2 , &new_s->fu_hd ) )
+		{
+			plane_t pl2;
+			struct faceuse *next_fu2;
+			fastf_t dot;
 
-		/* assign this plane to the new face */
-		nmg_face_g( new_fu , new_pl );
-#endif
+			NMG_CK_FACEUSE( fu2 );
+
+			if( fu2->orientation != OT_SAME )
+			{
+				fu2 = RT_LIST_PNEXT( faceuse , fu2 );
+				continue;
+			}
+
+			next_fu2 = RT_LIST_PNEXT( fu2 );
+
+			NMG_GET_FU_PLANE( pl2 , fu2 );
+
+			dot = VDOT( pl1 , pl2 );
+			if( !RT_VECT_ARE_PARALLEL( dot , &tol )
+			{
+				fu2 = next_fu2;
+				continue;
+			}
+
+			if( dot > 0.0 && !NEAR_ZERO( pl1[3] - pl2[3] , tol.dist ) ||
+			    dot < 0.0 && !NEAR_ZERO( pl1[3] + pl2[3] , tol.dist ) )
+			{
+				fu2 = next_fu2;
+				continue;
+			}
+
+			/* fu1 and fu2 are coplanar
+			 * now check if any loops are doubly defined
+			 */
+
+			for( RT_LIST_FOR( lu , loopuse , &fu2->lu_hd ) )
+			{
+				struct fu_pt_info *pt_info;
+				int in_fu1=1;
+
+				if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+					continue;
+
+				for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
+				{
+					if( nmg_class_pt_f( eu->vu_p->v_p->vg_p->coord , fu1 , &tol == NMG_CLASS_AoutB )
+					{
+						in_fu1 = 0;
+						break;
+					}
+				}
+
+				if( in_fu1 )
+				{
+					/* This loop in fu2 is also in fu1
+					 * this occurs where two solid objects have
+					 * been described adjacent to each other, with
+					 * the intervening face described twice
+					 */
+				}
+			}
+
+			fu2 = next_fu2;
+		}
+
+		fu1 = next_fu1;
 	}
-
-	nmg_tbl( &edges , TBL_FREE , (long *)NULL );
 }
+#endif
 
 void
 Subtract_holes( head , comp_id , group_id )
@@ -1007,6 +1030,56 @@ int el_id;
 }
 
 void
+make_unique_name( name )
+char *name;
+{
+	struct name_tree *ptr;
+	char append[10];
+	int append_len;
+	int len;
+	int found;
+
+	/* make a unique name from what we got off the $NAME card */
+
+	len = strlen( name );
+
+	ptr = Search_names( name_root , name , &found );
+	while( found )
+	{
+		sprintf( append , "_%d" , name_count );
+		name_count++;
+		append_len = strlen( append );
+
+		if( len + append_len <= NAMESIZE )
+			strcat( name , append );
+		else
+			strcpy( &name[NAMESIZE-append_len] , append );
+
+		ptr = Search_names( name_root , name , &found );
+	}
+}
+
+void
+add_to_series( name , reg_id )
+char *name;
+int reg_id;
+{
+	int group_no;
+
+	group_no = reg_id / 1000;
+
+	if( group_id < 0 || group_id > 10 )
+	{
+		rt_log( "add_to_series: region (%s) not added, illegal group number %d, region_id=$d\n" ,
+			name , group_id , reg_id );
+		return;
+	}
+
+	if( mk_addmember( name , &group_head[group_id] , WMOP_UNION ) == (struct wmember *)NULL )
+		rt_log( "add_to_series: mk_addmember failed for region %s\n" , name );
+}
+
+void
 make_comp_group()
 {
 	struct wmember g_head;
@@ -1091,26 +1164,6 @@ do_groups()
 }
 
 void
-add_to_series( name , reg_id )
-char *name;
-int reg_id;
-{
-	int group_no;
-
-	group_no = reg_id / 1000;
-
-	if( group_id < 0 || group_id > 10 )
-	{
-		rt_log( "add_to_series: region (%s) not added, illegal group number %d, region_id=$d\n" ,
-			name , group_id , reg_id );
-		return;
-	}
-
-	if( mk_addmember( name , &group_head[group_id] , WMOP_UNION ) == (struct wmember *)NULL )
-		rt_log( "add_to_series: mk_addmember failed for region %s\n" , name );
-}
-
-void
 do_name()
 {
 	int i,j;
@@ -1184,36 +1237,6 @@ do_name()
 }
 
 void
-make_unique_name( name )
-char *name;
-{
-	struct name_tree *ptr;
-	char append[10];
-	int append_len;
-	int len;
-	int found;
-
-	/* make a unique name from what we got off the $NAME card */
-
-	len = strlen( name );
-
-	ptr = Search_names( name_root , name , &found );
-	while( found )
-	{
-		sprintf( append , "_%d" , name_count );
-		name_count++;
-		append_len = strlen( append );
-
-		if( len + append_len <= NAMESIZE )
-			strcat( name , append );
-		else
-			strcpy( &name[NAMESIZE-append_len] , append );
-
-		ptr = Search_names( name_root , name , &found );
-	}
-}
-
-void
 make_region_name( name , g_id , c_id , element_id , type )
 char *name;
 int g_id;
@@ -1255,20 +1278,6 @@ char type;
 }
 
 void
-make_solid_name( name , type , element_id , c_id , g_id , inner )
-char *name;
-char type;
-int element_id;
-int c_id;
-int g_id;
-int inner;
-{
-	get_solid_name( name , type , element_id , c_id , g_id , inner );
-
-	Insert_name( &name_root , name );
-}
-
-void
 get_solid_name( name , type , element_id , c_id , g_id , inner )
 char *name;
 char type;
@@ -1282,6 +1291,20 @@ int inner;
 	reg_id = g_id * 1000 + c_id;
 
 	sprintf( name , "%d.%d.%c%d" , reg_id , element_id , type , inner );
+}
+
+void
+make_solid_name( name , type , element_id , c_id , g_id , inner )
+char *name;
+char type;
+int element_id;
+int c_id;
+int g_id;
+int inner;
+{
+	get_solid_name( name , type , element_id , c_id , g_id , inner );
+
+	Insert_name( &name_root , name );
 }
 
 void
@@ -1715,202 +1738,836 @@ Check_normals()
 
 	nmg_tbl( &verts , TBL_FREE , (long *)NULL );
 }
-void
-Extrude_faces()
+
+int
+Sort_fus_by_thickness()
 {
-	struct fast_fus *fus;
-	struct nmg_ptbl verts;
-	int i;
-	int centers=0;
-	long **trans_tbl;
+	struct fast_fus *fus,*tmp,*prev;
+	fastf_t thick;
+	int done;
+	int num_thicks=0;
 
-	if( debug )
-		rt_log( "Extrude_faces:\n" );
-
-	Check_normals();
-
-	nmg_tbl( &verts , TBL_INIT , (long *)NULL );
+	done=0;
+	while( !done )
+	{
+		done = 1;
+		prev = NULL;
+		fus = fus_root;
+		while( fus->next )
+		{
+			if( fus->thick > fus->next->thick )
+			{
+				done = 0;
+				tmp = fus->next->next;
+				if( fus == fus_root )
+				{
+					fus_root = fus->next;
+					fus_root->next = fus;
+					fus->next = tmp;
+					prev = fus_root;
+				}
+				else
+				{
+					prev->next = fus->next;
+					prev->next->next = fus;
+					fus->next = tmp;
+					prev = prev->next;
+				}
+			}
+			else
+			{
+				prev = fus;
+				fus = fus->next;
+			}
+		}
+	}
 
 	fus = fus_root;
+	thick = fus->thick;
+	num_thicks = 1;
 	while( fus )
 	{
-		if( fus->pos == POS_CENTER )
+		if( thick != fus->thick )
 		{
-			centers = 1;
-			break;
+			thick = fus->thick;
+			num_thicks++;
 		}
 		fus = fus->next;
 	}
 
-	if( centers )
+	return( num_thicks );
+}
+
+void
+Recalc_edge_g( new_s )
+struct shell * new_s;
+{
+	int i;
+	struct nmg_ptbl edges;
+	int *flags;
+
+	nmg_tbl( &edges , TBL_INIT , (long *)NULL );
+
+	flags = (int *)rt_calloc( m->maxindex , sizeof( int ) , "Recalc_edge_g: flags" );
+
+	nmg_edge_tabulate( &edges , &new_s->l.magic );
+
+	for( i=0 ; i<NMG_TBL_END( &edges ) ; i++ )
 	{
-		/* must extrude twice
-		 * first extrude normalward
-		 */
+		struct edge *e;
+		struct edge_g *eg;
 
-		if( debug )
-			rt_log( "\tCenter postion:\n" );
+		e = (struct edge *)NMG_TBL_GET( &edges , i );
+		NMG_CK_EDGE( e );
 
-		/* rebound the region */
-		nmg_rebound( m , &tol );
+		eg = e->eg_p;
+		NMG_CK_EDGE_G( eg );
 
-		fus = fus_root;
-		while( fus )
-		{
-			struct faceuse *fu;
-			struct face_g *fg;
-
-			if( fus->pos == POS_CENTER )
-			{
-				fu = fus->fu;
-				NMG_CK_FACEUSE( fu );
-				fg = fu->f_p->fg_p;
-				NMG_CK_FACE_G( fg );
-
-				if( fu->f_p->flip )
-					fg->N[3] -= fus->thick/2.0;
-				else
-					fg->N[3] += fus->thick/2.0;
-			}
-
-			fus = fus->next;
-		}
-
-		nmg_fix_parallel_faces( s , &tol );
-
-		if( debug )
-			rt_log( "\t\ttabulate vertices\n" );
-
-		/* adjust all vertices */
-		nmg_vertex_tabulate( &verts , &s->l.magic );
-
-		if( debug )
-			rt_log( "\t\tadjust vertex geometry\n" );
-		for( i=0 ; i<NMG_TBL_END( &verts ) ; i++ )
-		{
-			struct vertex *v;
-
-			v = (struct vertex *)NMG_TBL_GET( &verts , i );
-			if( nmg_in_vert( v , &tol ) )
-			{
-				rt_log( "Extrude_faces: Could not find new vertex for extruded face\n" );
-			}
-		}
-		nmg_tbl( &verts , TBL_RST , (long *)NULL );
+		if( NMG_INDEX_TEST_AND_SET( flags , eg ) )
+			nmg_edge_g( e );
 	}
 
-	/* extrude faces anti-normalward */
+	rt_free( (char *)flags , "Recalc_edge_g: flags" );
 
-	if( debug )
-		rt_log( "\tDuplicate shell\n" );
-	/* first duplicate the plate mode faceuses */
-	s2 = nmg_dup_shell( s , &trans_tbl );
+	nmg_tbl( &edges , TBL_FREE , (long *)NULL );
+}
 
-	if( debug )
-		rt_log( "\t\told shell was x%x duplicate is x%x\n" , s , s2 );
+void
+Recalc_face_g( new_s )
+struct shell *new_s;
+{
+	struct faceuse *fu;
+	int *flags;
 
-	/* now move the face planes */
+	flags = (int *)rt_calloc( m->maxindex , sizeof( int ) , "Recalc_face_g: flags " );
+
+	for( RT_LIST_FOR( fu , faceuse , &new_s->fu_hd ) )
+	{
+		struct face *f;
+		struct face_g *fg;
+		struct loopuse *lu;
+		plane_t pl;
+		vect_t norm;
+		fastf_t dist=0.0;
+		int pl_count=0;
+
+		NMG_CK_FACEUSE( fu );
+
+		if( fu->orientation != OT_SAME )
+			continue;
+
+		f = fu->f_p;
+		NMG_CK_FACE( f );
+		fg = f->fg_p;
+		NMG_CK_FACE_G( fg );
+
+		if( NMG_INDEX_TEST_AND_SET( flags , fg ) )
+		{
+			struct faceuse *fu1;
+			struct face *f1;
+			int first=1;
+
+			VSET( norm , 0.0 , 0.0 , 0.0 );
+
+			for( RT_LIST_FOR( f1 , face , &fg->f_hd ) )
+			{
+				fu1 = f1->fu_p;
+				if( fu1->orientation != OT_SAME )
+					fu1 = fu1->fumate_p;
+				if( fu1->orientation != OT_SAME )
+					rt_bomb( "Recalc_face_g: face has no OT_SAME use\n" );
+
+				for( RT_LIST_FOR( lu , loopuse , &fu1->lu_hd ) )
+				{
+					fastf_t area;
+
+					if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+						continue;
+
+					area = nmg_loop_plane_area( lu , pl );
+
+					if( area > 0.0 )
+					{
+						if( lu->orientation != OT_SAME )
+							HREVERSE( pl , pl );
+
+						if( first )
+							first = 0;
+						else
+						{
+							if( VDOT( norm , pl ) < 0.0 )
+								HREVERSE( pl , pl );
+						}
+
+						VADD2( norm , norm , pl );
+						dist += pl[3];
+						pl_count++;
+					}
+				}
+			}
+			if( !pl_count )
+			{
+				rt_log( "Recalc_face_g: Cannot recalculate plane for faceuse (x%x):\n" , fu );
+				nmg_pr_fu_briefly( fu , (char *)NULL );
+				continue;
+			}
+			else if( pl_count == 1 )
+			{
+				VMOVE( pl , norm );
+				pl[3] = dist;
+			}
+			else if( pl_count > 1 )
+			{
+				VUNITIZE( norm );
+				VMOVE( pl , norm );
+				pl[3] = dist/(fastf_t)pl_count;
+			}
+
+			if( debug )
+				rt_log( "Recalc_face_g: fu x%x fg x%x was ( %f %f %f %f )\n\tnow ( %f %f %f %f )\n",
+					fu , fg , V4ARGS( fu->f_p->fg_p->N ) , V4ARGS( pl ) );
+
+			nmg_face_g( fu , pl );
+
+			if( nmg_ck_fg_verts( fu , fu->f_p , &tol ) )
+			{
+				for( RT_LIST_FOR( f1 , face , &fg->f_hd ) )
+				{
+					fu1 = f1->fu_p;
+					if( fu1->orientation != OT_SAME )
+						fu1 = fu1->fumate_p;
+
+					rt_log( "fu x%x, mate=x%x\n" , fu1 , fu1->fumate_p );
+					nmg_pr_fu_briefly( fu1 , (char *)NULL );
+				}
+				rt_bomb( "Recalc_face_g: made a bad face\n" );
+			}
+
+		}
+	}
+}
+
+int
+Adjust_vertices( new_s , thick )
+struct shell *new_s;
+CONST fastf_t thick;
+{
+	struct faceuse *fu;
+	struct nmg_ptbl verts;
+	long *flags;
+	int vert_no;
+	int failures=0;
+
+	flags = (long *)rt_calloc( m->maxindex , sizeof( long ) , "Adjust_vertices: flags" );
+
+	/* now adjust all the planes, first move them by distance "thick" */
+	for( RT_LIST_FOR( fu , faceuse , &new_s->fu_hd ) )
+	{
+		struct face_g *fg_p;
+
+		NMG_CK_FACEUSE( fu );
+		NMG_CK_FACE( fu->f_p );
+		fg_p = fu->f_p->fg_p;
+		NMG_CK_FACE_G( fg_p );
+
+		/* move the faces by the distance "thick" */
+		if( NMG_INDEX_TEST_AND_SET( flags , fg_p ) )
+		{
+			if( debug )
+			{
+				rt_log( "Moving face_g x%x ( %f %f %f %f ) from face x%x\n" ,
+					fu->f_p->fg_p, V4ARGS( fu->f_p->fg_p->N ) , fu->f_p );
+				rt_log( "\tflip = %d\n" , fu->f_p->flip );
+			}
+			if( fu->f_p->flip )
+				fg_p->N[3] -= thick;
+			else
+				fg_p->N[3] += thick;
+		}
+	}
+
+	rt_free( (char *)flags , "Adjust_vertices: flags" );
+
+	/* get table of vertices in this shell */
+	nmg_vertex_tabulate( &verts , &new_s->l.magic );
+
+	/* now move all the vertices */
+	for( vert_no = 0 ; vert_no < NMG_TBL_END( &verts ) ; vert_no++ )
+	{
+		struct vertex *new_v;
+
+		new_v = (struct vertex *)NMG_TBL_GET( &verts , vert_no );
+		NMG_CK_VERTEX( new_v );
+
+		if( nmg_in_vert( new_v , 1 , &tol ) )
+		{
+			rt_log( "Adjust_vertices: Failed to calculate new vertex at v=x%x was ( %f %f %f )\n",
+				new_v , V3ARGS( new_v->vg_p->coord ) );
+			rt_log( "\tgroup id %d, component id %d\n" , group_id , comp_id );
+			failures++;
+		}
+	}
+
+	nmg_tbl( &verts , TBL_FREE , (long *)NULL );
+
+	/* since we used approximate mode in nmg_in_vert, recalculate planes */
+	Recalc_face_g( new_s );
+
+	/* and recalculate edge geometry */
+	Recalc_edge_g( new_s );
+
+	return( failures );
+}
+
+struct edgeuse *
+Use_of_eu_outside_shell( eu )
+CONST struct edgeuse *eu;
+{
+	struct edgeuse *eu_radial;
+	struct shell *s_eu;
+
+	NMG_CK_EDGEUSE( eu );
+
+	s_eu = nmg_find_s_of_eu( eu );
+
+	eu_radial = nmg_next_radial_eu( eu , (struct shell *)NULL , 0 );
+	while( eu_radial != eu )
+	{
+		if( nmg_find_s_of_eu( eu_radial ) != s_eu )
+			return( eu_radial );
+		eu_radial = nmg_next_radial_eu( eu_radial , (struct shell *)NULL , 0 );
+	}
+
+	return( (struct edgeuse *)NULL );
+}
+
+int
+vu_used_outside_shell( vu )
+CONST struct vertexuse *vu;
+{
+	struct vertexuse *vu1;
+	struct shell *s_vu;
+
+	NMG_CK_VERTEXUSE( vu );
+
+	s_vu = nmg_find_s_of_vu( vu );
+
+	for( RT_LIST_FOR( vu1 , vertexuse , &vu->v_p->vu_hd ) )
+	{
+		if( nmg_find_s_of_vu( vu1 ) != s_vu )
+			return( 1 );
+	}
+
+	return( 0 );
+}
+
+void
+Move_vus_in_s_to_newv( vu , new_s , new_v )
+struct vertexuse *vu;
+CONST struct shell *new_s;
+struct vertex *new_v;
+{
+	struct vertex *old_v;
+	struct vertexuse *tmp_vu;
+
+	NMG_CK_VERTEXUSE( vu );
+	NMG_CK_SHELL( new_s );
+	NMG_CK_VERTEX( new_v );
+
+	old_v = vu->v_p;
+	tmp_vu = RT_LIST_FIRST( vertexuse , &old_v->vu_hd );
+	while( RT_LIST_NOT_HEAD( tmp_vu , &old_v->vu_hd ) )
+	{
+		struct vertexuse *next_vu;
+
+		next_vu = RT_LIST_PNEXT( vertexuse , tmp_vu );
+		if( nmg_find_s_of_vu( tmp_vu ) != new_s )
+			nmg_movevu( tmp_vu , new_v );
+
+		tmp_vu = next_vu;
+	}
+}
+
+void
+Glue_shell_faces( new_s )
+struct shell *new_s;
+{
+	struct nmg_ptbl faces;
+	struct faceuse *fu;
+
+	NMG_CK_SHELL( new_s );
+
+	nmg_tbl( &faces , TBL_INIT , (long *)NULL );
+
+	for( RT_LIST_FOR( fu , faceuse , &new_s->fu_hd ) )
+	{
+		NMG_CK_FACEUSE( fu );
+
+		if( fu->orientation != OT_SAME )
+			continue;
+
+		nmg_tbl( &faces , TBL_INS , (long *)fu );
+	}
+	nmg_gluefaces( (struct faceuse **)NMG_TBL_BASEADDR( &faces) , NMG_TBL_END( &faces ) );
+
+	nmg_tbl( &faces , TBL_FREE , (long *)NULL );
+}
+
+struct shell *
+Get_shell( thick , center )
+CONST fastf_t thick;
+CONST int center;
+{
+	struct fast_fus *fus;
+	struct shell *new_s;
+	struct faceuse *fu;
+
+	new_s = nmg_msv( r );
+
 	fus = fus_root;
 	while( fus )
 	{
-		struct faceuse *fu;
-		struct face_g *fg;
-
 		NMG_CK_FACEUSE( fus->fu );
+		if( fus->thick == thick && fus->pos == center )
+			nmg_mv_fu_between_shells( new_s , s , fus->fu );
 
-		fu = NMG_INDEX_GETP( faceuse , trans_tbl , fus->fu );
+		fus = fus->next;
+	}
 
-		if( debug )
+	if( RT_LIST_IS_EMPTY( &new_s->fu_hd ) )
+	{
+		nmg_ks( new_s );
+		new_s = (struct shell *)NULL;
+	}
+	else
+	{
+		nmg_kvu( new_s->vu_p );
+
+		/* disconnect faceuses from those not in this shell */
+		for( RT_LIST_FOR( fu , faceuse , &new_s->fu_hd ) )
 		{
-			rt_log( "fu x%x in s translates to fu x%x in s2\n" , fus->fu , fu );
-			rt_log( "\tfu2 = x%x\n\tthick = %f\n\tpos = %d\n", fus->fu2, fus->thick, fus->pos );
-		}
+			struct loopuse *lu;
 
-		if( !fu )
-		{
-			fus = fus_root;
-			while( fus )
+			if( fu->orientation != OT_SAME )
+				continue;
+
+			for( RT_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
 			{
-				struct shell *tmp_s1,*tmp_s2;
+				struct edgeuse *eu;
 
-				tmp_s1 = fus->fu->s_p;
-				if( fu )
-					tmp_s2 = fu->s_p;
-				else
-					tmp_s2 = (struct shell *)NULL;
+				if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+					continue;
 
-				fu = NMG_INDEX_GETP( faceuse , trans_tbl , fus->fu );
-				rt_log( "fus_fu=x%x, orientation = %d, shell=x%x, fu2 = x%x, pos= %d, thick = %f, fu = x%x, shell = x%x\n" ,
-					fus->fu , fus->fu->orientation , tmp_s1 , fus->fu2 , fus->pos , fus->thick , fu , tmp_s2 );
-				fus = fus->next;
+				for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
+				{
+					struct edgeuse *eu_radial;
+					struct vertex *v1,*v2;
+					struct edgeuse *new_eu;
+					struct adjacent_faces *adj;
+					struct faceuse *fu2;
+
+					/* Check if this edge has a use outside this shell */
+					if( (eu_radial = Use_of_eu_outside_shell( eu )) ==
+							(struct edgeuse *)NULL )
+								continue;
+
+					/* Two adjacent faces here will be seperated
+					 * put them on the list to be reunited later
+					 */
+					if( adj_root == (struct adjacent_faces *)NULL )
+					{
+						adj_root = (struct adjacent_faces *)rt_malloc(
+							sizeof( struct adjacent_faces ),
+							"Get_shell: adj_root" );
+						adj = adj_root;
+					}
+					else
+					{
+						adj = adj_root;
+						while( adj->next )
+							adj = adj->next;
+						adj->next = (struct adjacent_faces *)rt_malloc(
+							sizeof( struct adjacent_faces ),
+							"Get_shell: adj_root" );
+						adj = adj->next;
+					}
+					adj->next = (struct adjacent_faces *)NULL;
+					adj->fu1 = fu;
+					adj->eu1 = eu;
+
+					fu2 = nmg_find_fu_of_eu( eu_radial );
+					if( fu2->orientation != OT_SAME )
+					{
+						fu2 = fu2->fumate_p;
+						eu_radial = eu_radial->eumate_p;
+					}
+					adj->fu2 = fu2;
+					adj->eu2 = eu_radial;
+
+					/* unglue the edge */
+					nmg_unglueedge( eu );
+
+					/* make a new edge */
+					v1 = (struct vertex *)NULL;
+					v2 = (struct vertex *)NULL;
+					new_eu = nmg_me( v1 , v2 , new_s );
+
+					/* assign same geometry to this new edge */
+					nmg_vertex_gv( new_eu->vu_p->v_p ,
+						eu->vu_p->v_p->vg_p->coord );
+					nmg_vertex_gv( new_eu->eumate_p->vu_p->v_p ,
+						eu->eumate_p->vu_p->v_p->vg_p->coord );
+
+					/* move the original edge vu's to the new vertices */
+					/* Also move any other vu's of these
+					 * vertices in new_s to the new shell
+					 */
+					if( vu_used_outside_shell( eu->vu_p ) )
+						Move_vus_in_s_to_newv( eu->vu_p , new_s , new_eu->vu_p->v_p );
+
+					if( vu_used_outside_shell( eu->eumate_p->vu_p ) )
+						Move_vus_in_s_to_newv( eu->eumate_p->vu_p , new_s ,
+								new_eu->eumate_p->vu_p->v_p );
+
+					/* kill the new edge,
+					 * I only wanted it for its vertices.
+					 */
+					nmg_keu( new_eu );
+					break;
+				}
 			}
-			rt_bomb( "NULL FU\n" );
+		}
+		Glue_shell_faces( new_s );
+	}
+
+	return( new_s );
+}
+
+void
+Build_connecting_face( eu1 , eu2 , s1 )
+struct edgeuse *eu1,*eu2;
+struct shell *s1;
+{
+	struct vertex *verts[3];
+
+	NMG_CK_EDGEUSE( eu1 );
+	NMG_CK_EDGEUSE( eu2 );
+	NMG_CK_SHELL( s1 );
+
+	/* need to build a connecting face between these two */
+	if( eu1->vu_p->v_p != eu2->eumate_p->vu_p->v_p &&
+		eu1->eumate_p->vu_p->v_p != eu2->eumate_p->vu_p->v_p )
+	{
+		struct faceuse *new_fu;
+		struct loopuse *lu;
+		fastf_t area;
+		plane_t pl;
+
+		verts[0] = eu1->eumate_p->vu_p->v_p;
+		verts[1] = eu1->vu_p->v_p;
+		verts[2] = eu2->eumate_p->vu_p->v_p;
+
+		new_fu = nmg_cface( s1 , verts , 3 );
+		lu = RT_LIST_FIRST( loopuse , &new_fu->lu_hd );
+		area = nmg_loop_plane_area( lu , pl );
+		if( area < 0.0 )
+		{
+			rt_log( "Cannot calculate plane equation for new face: \n" );
+			rt_log( "\t( %f %f %f ), ( %f %f %f ), ( %f %f %f )\n",
+				V3ARGS( verts[0]->vg_p->coord ),
+				V3ARGS( verts[1]->vg_p->coord ),
+				V3ARGS( verts[2]->vg_p->coord ) );
+			nmg_kfu( new_fu );
+		}
+		else
+		{
+			nmg_face_g( new_fu , pl );
+			nmg_loop_g( lu->l_p , &tol );
+		}
+	}
+
+	if( eu1->eumate_p->vu_p->v_p != eu2->vu_p->v_p &&
+		eu1->eumate_p->vu_p->v_p != eu2->eumate_p->vu_p->v_p )
+	{
+		struct faceuse *new_fu;
+		struct loopuse *lu;
+		fastf_t area;
+		plane_t pl;
+
+		verts[0] = eu1->eumate_p->vu_p->v_p;
+		verts[1] = eu2->eumate_p->vu_p->v_p;
+		verts[2] = eu2->vu_p->v_p;
+
+		new_fu = nmg_cface( s1 , verts , 3 );
+		lu = RT_LIST_FIRST( loopuse , &new_fu->lu_hd );
+		area = nmg_loop_plane_area( lu , pl );
+		if( area < 0.0 )
+		{
+			rt_log( "Cannot calculate plane equation for new face: \n" );
+			rt_log( "\t( %f %f %f ), ( %f %f %f ), ( %f %f %f )\n",
+				V3ARGS( verts[0]->vg_p->coord ),
+				V3ARGS( verts[1]->vg_p->coord ),
+				V3ARGS( verts[2]->vg_p->coord ) );
+			nmg_kfu( new_fu );
+		}
+		else
+		{
+			nmg_face_g( new_fu , pl );
+			nmg_loop_g( lu->l_p , &tol );
+		}
+	}
+
+}
+
+void
+Reunite_faces( tbl )
+CONST long **tbl;
+{
+	struct adjacent_faces *adj;
+	struct vertex *verts[3];
+	struct shell *s_eu1;
+
+	/* maybe ther's nothing to do */
+	if( adj_root == (struct adjacent_faces *)NULL )
+		return;
+
+	/* rebound the model again */
+	nmg_rebound( m , &tol );
+
+	nmg_model_fuse( m , &tol );
+
+	adj = adj_root;
+	while( adj )
+	{
+		struct edgeuse *eu1,*eu2;
+		struct faceuse *fu1,*fu2;
+
+		/* if the two faceuses are radial, nothing to do */
+		if( !nmg_faces_are_radial( adj->fu1 , adj->fu2 ) )
+		{
+
+			eu1 = adj->eu1;
+			eu2 = adj->eu2;
+			NMG_CK_EDGEUSE( eu1 );
+			NMG_CK_EDGEUSE( eu2 );
+
+			s_eu1 = nmg_find_s_of_eu( eu1 );
+
+			Build_connecting_face( eu1 , eu2 , s_eu1 );
 		}
 
-		NMG_CK_FACEUSE( fu );
-		fg = fu->f_p->fg_p;
-		NMG_CK_FACE_G( fg );
+		fu1 = NMG_INDEX_GETP( faceuse , tbl , adj->fu1 );
+		fu2 = NMG_INDEX_GETP( faceuse , tbl , adj->fu2 );
+		if( !nmg_faces_are_radial( fu1 , fu2 ) )
+		{
+			NMG_CK_FACEUSE( fu1 );
+			NMG_CK_FACEUSE( fu2 );
 
-		if( fu->f_p->flip )
-			fg->N[3] += fus->thick;
-		else
-			fg->N[3] -= fus->thick;
+			eu1 = NMG_INDEX_GETP( edgeuse , tbl , adj->eu1 );
+			eu2 = NMG_INDEX_GETP( edgeuse , tbl , adj->eu2 );
+			NMG_CK_EDGEUSE( eu1 );
+			NMG_CK_EDGEUSE( eu2 );
 
+			s_eu1 = nmg_find_s_of_eu( eu1 );
+
+			Build_connecting_face( eu1 , eu2 , s_eu1 );
+		}
+
+		adj = adj->next;
+	}
+}
+
+int
+Extrude_faces()
+{
+	struct shell *s1,*s2;
+	struct shell **shells,**dup_shells;
+	struct fast_fus *fus;
+	fastf_t *thicks;
+	int i;
+	int num_thicks=0;
+	int thick_no;
+	int center;
+	int table_size;
+	long **dup_tbl;
+
+	if( debug )
+		rt_log( "Extrude_faces:\n" );
+
+/*	Check_normals();	*/
+
+	num_thicks = Sort_fus_by_thickness();
+
+	thicks = (fastf_t *)rt_calloc( num_thicks , sizeof( fastf_t ) , "Extrude_faces: thicks" );
+	i = 0;
+	fus = fus_root;
+	thicks[i] = fus->thick;
+	while( fus )
+	{
+		if( fus->thick != thicks[i] )
+		{
+			if( ++i >= num_thicks )
+				rt_bomb( "Extrude_faces: Wrong number of shell thicknesses\n" );
+			thicks[i] = fus->thick;
+		}
 		fus = fus->next;
 	}
 
 	/* rebound the region */
 	nmg_rebound( m , &tol );
 
-	nmg_shell_coplanar_face_merge( s2 , &tol , 0 );
+	/* make array of shells, each with unique combination of "center postion" and thickness */
+	shells = (struct shell **)rt_calloc( num_thicks*2 , sizeof( struct shell *) , "Extrude_faces: shells" );
 
-	/* now reverse normals for entire shell */
-	nmg_invert_shell( s2 , &tol );
+	/* and another for the opposite (extruded) side */
+	dup_shells = (struct shell **)rt_calloc( num_thicks*2 , sizeof( struct shell *) , "Extrude_faces: dup_shells" );
 
-	nmg_fix_parallel_faces( s2 , &tol );
-
-	/* adjust all vertices */
-	nmg_vertex_tabulate( &verts , &s2->l.magic );
-
-	for( i=0 ; i<NMG_TBL_END( &verts ) ; i++ )
+	/* Now get the first set of shells */
+	for( thick_no=0 ; thick_no<num_thicks ; thick_no++ )
 	{
-		struct vertex *v;
-
-		v = (struct vertex *)NMG_TBL_GET( &verts , i );
-		if( nmg_in_vert( v , &tol ) )
-		{
-			rt_log( "Extrude_faces: Could not find new vertex for extruded face\n" );
-		}
+		for( center=1 ; center<3 ; center++ )
+			shells[ thick_no*2 + center - 1 ] = Get_shell( thicks[thick_no] , center );
 	}
-	nmg_tbl( &verts , TBL_FREE , (long *)NULL );
 
-	if( nmg_ck_closed_surf( s , &tol ) )
+	/* Extrude faces with POS_CENTER first (these faces were defined as the center
+	 * of the actual object, so must be extruded in both directions)
+	 */
+	center = POS_CENTER;
+	for( thick_no=0 ; thick_no<num_thicks ; thick_no++ )
 	{
-		if( !nmg_ck_closed_surf( s2 , &tol ) )
-		{
-			rt_log( "Extrude_faces: shell is not closed, calling nmg_close_shell\n" );
+		struct shell *s2;
 
-			nmg_close_shell( s2 );
-		}
+		if( shells[ thick_no*2 + center - 1 ] == (struct shell *)NULL )
+			continue;
 
-		/* now merge the inside and outside shells */
-		nmg_js( s , s2 , &tol );
-	}
-	else
-	{
-		if( nmg_ck_closed_surf( s2 , &tol ) )
+		/* Extrude distance is one-half the thickness */
+		if( Adjust_vertices( shells[ thick_no*2 + center - 1 ] , (fastf_t)(thicks[thick_no]/2.0) ) )
 		{
-			rt_log( "Extrude_faces: one shell is closed, other isn't!!\n" );
-			nmg_js( s , s2 , &tol );
-		}
-		else
-		{
-			/* connect the boundaries of the two open shells */
-			nmg_open_shells_connect( s , s2 , trans_tbl , &tol );
+			/* debugging: write an NMG of the outer shell named "name.BAD" */
+			char bad[NAMESIZE+1];
+
+			sprintf( bad , "BAD.%d.%d" , group_id , comp_id );
+			mk_nmg( fdout , bad , m );
+			fflush( fdout );
+			rt_log( "Extrude_faces: Could not extrude shell x%x.\n\tBAD shell written as %s\n" , shells[ thick_no*2 + center - 1 ] , bad );
+			nmg_km( m );
+			m = (struct model *)NULL;
+			r = (struct nmgregion*)NULL;
+			s = (struct shell *)NULL;
+			rt_free( (char *)dup_tbl , "Extrude_faces: copy_tbl" );
+			return( 1 );
 		}
 	}
 
-	rt_free( (char *)trans_tbl , "Extrude_faces: trans_tbl" );
+	/* make a translation table to store correspondence between original and dups */
+	table_size = m->maxindex;
+	dup_tbl = (long **)rt_calloc( m->maxindex , sizeof( long *) , "Extrude_faces: dup_tbl" );
+
+	/* Now extrude all the faces by the entire thickness */
+	for( thick_no=0 ; thick_no<num_thicks ; thick_no++ )
+	{
+		for( center=1 ; center<3 ; center++ )
+		{
+			struct faceuse *fu;
+			long **trans_tbl;
+
+			if( shells[ thick_no*2 + center - 1 ] == (struct shell *)NULL )
+				continue;
+
+			dup_shells[ thick_no*2 + center - 1 ] = nmg_dup_shell( shells[thick_no*2+center-1],
+									&trans_tbl );
+
+			/* move trans_tbl info to dup_tbl */
+			for( i=0 ; i<table_size ; i++ )
+			{
+				if( trans_tbl[i] )
+					dup_tbl[i] = trans_tbl[i];
+			}
+
+			rt_free( (char *)trans_tbl , "Extrude_faces: trans_tbl" );
+
+			Glue_shell_faces( dup_shells[ thick_no*2 + center - 1 ] );
+
+			nmg_invert_shell( dup_shells[ thick_no*2 + center - 1 ] , &tol );
+
+			if( Adjust_vertices( dup_shells[ thick_no*2 + center - 1 ] , thicks[thick_no] ) )
+			{
+				/* debugging: write an NMG of the outer shell named "name.BAD" */
+				char bad[NAMESIZE+1];
+
+				sprintf( bad , "BAD.%d.%d" , group_id , comp_id );
+				mk_nmg( fdout , bad , m );
+				fflush( fdout );
+				rt_log( "Extrude_faces: Could not extrude shell x%x.\n\tBAD shell written as %s\n" , shells[ thick_no*2 + center - 1 ] , bad );
+				nmg_km( m );
+				m = (struct model *)NULL;
+				r = (struct nmgregion*)NULL;
+				s = (struct shell *)NULL;
+				rt_free( (char *)dup_tbl , "Extrude_faces: copy_tbl" );
+				return( 1 );
+			}
+		}
+	}
+
+	/* And kill the original shell */
+	if( RT_LIST_NON_EMPTY( &s->fu_hd ) )
+		rt_log( "Original shell should be empty, but it is not!!!\n" );
+
+	nmg_ks( s );
+	s = (struct shell *)NULL;
+
+	/* Now reunite adjacent faces that were seperated in "Get_shell" */
+	Reunite_faces( dup_tbl );
+
+	/* Merge all shells into just two */
+	s1 = (struct shell *)NULL;
+	s2 = (struct shell *)NULL;
+	for( thick_no=0 ; thick_no<num_thicks ; thick_no++ )
+	{
+		for( center=1 ; center<3 ; center++ )
+		{
+			if( shells[ thick_no*2 + center - 1 ] == (struct shell *)NULL )
+				continue;
+
+			if( s1 == (struct shell *)NULL )
+			{
+				s1 = shells[ thick_no*2 + center - 1 ];
+				s2 = dup_shells[ thick_no*2 + center - 1 ];
+			}
+			else
+			{
+				nmg_js( s1 , shells[ thick_no*2 + center - 1 ] , &tol );
+				nmg_js( s2 , dup_shells[ thick_no*2 + center - 1 ] , &tol );
+			}
+		}
+	}
+	Glue_shell_faces( s1 );
+	Glue_shell_faces( s2 );
+
+	/* Now combine the final two */
+	if( debug )
+		rt_log( "Close shell\n" );
+	if( nmg_open_shells_connect( s1 , s2 , dup_tbl , &tol ) )
+	{
+		/* debugging: write an NMG of the outer shell named "name.BAD" */
+		char bad[NAMESIZE+1];
+
+		sprintf( bad , "BAD.%d.%d" , group_id , comp_id );
+		mk_nmg( fdout , bad , m );
+		fflush( fdout );
+		rt_log( "Extrude_faces: Could not connect plate mode shells.\n\tBAD shell written as %s\n" , bad );
+		nmg_km( m );
+		m = (struct model *)NULL;
+		rt_free( (char *)dup_tbl , "Extrude_faces: copy_tbl" );
+		return( 1 );
+	}
+
+	rt_free( (char *)thicks , "Extrude_faces: thicks" );
+	rt_free( (char *)shells , "Extrude_faces: shells" );
+	rt_free( (char *)dup_shells , "Extrude_faces: dup_shells" );
+	rt_free( (char *)dup_tbl , "Extrude_faces: dup_tbl" );
+	s = s1;
+	Glue_shell_faces( s );
 }
 
 void
@@ -1919,15 +2576,23 @@ make_nmg_objects()
 	struct faceuse *fu;
 	struct nmg_ptbl faces;
 	struct fast_fus *fus;
+	struct adjacent_faces *adj;
 	struct wmember head;
+	int failed=0;
 	char name[NAMESIZE+1];
 
 	if( !m )
 		return;
 
-	rt_log( "make_nmg_objects:\n\tfuse vertices\n" );
+	/* FASTGEN modellers don't always put vertices in the middle of edges where
+	 * another edge ends
+	 */
+	(void)nmg_break_long_edges( s , &tol );
 
-	/* first fuse vertices in model */
+	/* Fuse vertices.
+	 * Don't want to do an overall model fuse here,
+	 * shared face geometry will cause problems during extrusion
+	 */
 	(void)nmg_model_vertex_fuse( m , &tol );
 
 	nmg_tbl( &faces , TBL_INIT , (long *)NULL );
@@ -1942,67 +2607,103 @@ make_nmg_objects()
 		nmg_tbl( &faces , TBL_INS , (long *)fu );
 	}
 
-	rt_log( "\tglue faces\n" );
-
 	nmg_gluefaces( (struct faceuse **)NMG_TBL_BASEADDR( &faces) , NMG_TBL_END( &faces ) );
-
-	rt_log( "\tfix normals\n" );
 
 	nmg_fix_normals( s , &tol );
 
 	if( mode == PLATE_MODE )
 	{
 		if( debug )
+		{
+			char name[NAMESIZE+1];
+
 			rt_log( "\tExtrude faces\n" );
-		Extrude_faces();
+			sprintf( name , "shell.%d.%d" , group_id , comp_id );
+			mk_nmg( fdout , name , m );
+			fflush( fdout );
+		}
+		/* make all faces triangular
+		 * nmg_break_long_edges may have made non-triangular faces
+		 */
+		nmg_triangulate_model( m , &tol );
+
+		if( debug )
+			rt_log( "extrude faces\n" );
+
+		if( Extrude_faces() )
+		{
+			rt_log( "Failed to Extrude group_id = %d, component_id = %d\n" , group_id , comp_id );
+			nmg_tbl( &faces , TBL_FREE , (long *)NULL );
+			failed = 1;
+			goto out;
+		}
+
+		nmg_tbl( &faces , TBL_RST , (long *)NULL );
+
+		for( RT_LIST_FOR( fu , faceuse , &s->fu_hd ) )
+		{
+			NMG_CK_FACEUSE( fu );
+
+			if( fu->orientation != OT_SAME )
+				continue;
+
+			nmg_tbl( &faces , TBL_INS , (long *)fu );
+		}
+
+		nmg_gluefaces( (struct faceuse **)NMG_TBL_BASEADDR( &faces) , NMG_TBL_END( &faces ) );
+
+		if( debug )
+			rt_log( "Fix normals\n" );
+
+		nmg_fix_normals( s , &tol );
 	}
-
-	/* fuse vertices in model again */
-	if( debug )
-		rt_log( "\tfuse vertices again\n" );
-	(void)nmg_model_vertex_fuse( m , &tol );
-
-	nmg_tbl( &faces , TBL_RST , (long *)NULL );
-
-	for( RT_LIST_FOR( fu , faceuse , &s->fu_hd ) )
-	{
-		NMG_CK_FACEUSE( fu );
-
-		if( fu->orientation != OT_SAME )
-			continue;
-
-		nmg_tbl( &faces , TBL_INS , (long *)fu );
-	}
-
-	if( debug )
-		rt_log( "\tglue faces again\n" );
-	nmg_gluefaces( (struct faceuse **)NMG_TBL_BASEADDR( &faces) , NMG_TBL_END( &faces ) );
-
 	nmg_tbl( &faces , TBL_FREE , (long *)NULL );
 
-	if( debug )
-		rt_log( "\tcoplanr face merge\n" );
-	nmg_shell_coplanar_face_merge( s , &tol , 0 );
-
-	if( debug )
-		rt_log( "\tsimplify shell\n" );
-	nmg_simplify_shell( s );
-
 	/* recompute the bounding boxes */
-	if( debug )
-		rt_log( "\tcaclulate bounding box\n" );
-	nmg_region_a( s->r_p , &tol );
+	nmg_rebound( m , &tol );
+
+	if( debug && mode != PLATE_MODE )
+	{
+		char name[NAMESIZE+1];
+
+		sprintf( name , "shell.%d.%d" , group_id , comp_id );
+		mk_nmg( fdout , name , m );
+		fflush( fdout );
+	}
 
 	if( debug )
-		nmg_pr_s_briefly( s , (char *)NULL );
+		rt_log( "Coplanar face merge\n" );
+
+	tmp_shell_coplanar_face_merge( s , &tol , 0 );
+	Recalc_face_g( s , &tol );
+
+	if( debug )
+		rt_log( "model fuse\n" );
+
+	nmg_model_fuse( m , &tol );
 
 	make_nmg_name( name , region_id );
 
-	mk_nmg( fdout , name , m );
+	if( polysolids )
+	{
+		/* XXXX Need a decompose shell, write out each shell as a polysolid
+		 * and combine them into one object as "name"
+		 */
+		write_shell_as_polysolid( fdout , name , s );
+	}
+	else
+	{
+		nmg_simplify_shell( s );
 
-	nmg_km( m );
+		mk_nmg( fdout , name , m );
+		fflush( fdout );
+	}
+
+out:	nmg_km( m );
 
 	m = (struct model *)NULL;
+	r = (struct nmgregion *)NULL;
+	s = (struct shell *)NULL;
 
 	fus = fus_root;
 	while( fus )
@@ -2013,8 +2714,21 @@ make_nmg_objects()
 		fus = fus->next;
 		rt_free( (char *)tmp , "make_nmg_objects: fus" );
 	}
-
 	fus_root = (struct fast_fus *)NULL;
+
+	adj = adj_root;
+	while( adj )
+	{
+		struct adjacent_faces *tmp;
+
+		tmp = adj;
+		adj = adj->next;
+		rt_free( (char *)tmp , "make_nmg_objects: adj" );
+	}
+	adj_root = (struct adjacent_faces *)NULL;
+
+	if( failed )
+		return;
 
 	/* make region containing nmg object */
 	RT_LIST_INIT( &head.l );
@@ -2029,12 +2743,13 @@ make_nmg_objects()
 	Subtract_holes( &head , comp_id , group_id );
 
 	MK_REGION( fdout , &head , group_id , comp_id , nmgs , NMG )
+
 }
 
 void
 do_vehicle()
 {
-	if( !pass )
+	if( pass )
 		return;
 
 	strncpy( vehicle , &line[8] , 16 );
@@ -2600,6 +3315,90 @@ getline()
 }
 
 void
+make_fast_fu( pt1 , pt2 , pt3 , element_id , thick , pos )
+int pt1,pt2,pt3;
+int element_id;
+fastf_t thick;
+int pos;
+{
+	struct vertex **verts[3];
+	struct faceuse *fu;
+	struct loopuse *lu;
+	struct fast_fus *fus;
+	fastf_t area;
+	plane_t pl;
+
+	if( debug )
+		rt_log( "make_fast_fu: ( %f %f %f )\n\t( %f %f %f )\n\t( %f %f %f )\n" ,
+			V3ARGS( grid_pts[pt1].pt ), V3ARGS( grid_pts[pt2].pt ), V3ARGS( grid_pts[pt3].pt ) );
+
+	verts[0] = &grid_pts[pt1].v;
+	verts[1] = &grid_pts[pt2].v;
+	verts[2] = &grid_pts[pt3].v;
+
+	if( !m )
+	{
+		m = nmg_mm();
+		r = nmg_mrsv( m );
+		s = RT_LIST_FIRST( shell , &r->s_hd );
+	}
+
+	if( debug )
+		rt_log( "\tm = x%x\n" , m );
+
+	fu = nmg_cmface( s , verts , 3 );
+	if( !fu )
+	{
+		rt_log( "do_tri: nmg_cmface failed\n" );
+		rt_log( "\telement %d, component %d, group %d\n" , element_id , comp_id , group_id );
+		return;
+	}
+
+	if( debug )
+		rt_log( "\tfu = x%x\n" , fu );
+
+	lu = RT_LIST_FIRST( loopuse , &fu->lu_hd );
+	nmg_vertex_gv( grid_pts[pt1].v , grid_pts[pt1].pt );
+	nmg_vertex_gv( grid_pts[pt2].v , grid_pts[pt2].pt );
+	nmg_vertex_gv( grid_pts[pt3].v , grid_pts[pt3].pt );
+
+	area = nmg_loop_plane_area( lu , pl );
+	if( area <= 0.0 )
+	{
+		(void)nmg_kfu( fu );
+		rt_log( "do_tri: ignoring degenerate CTRI element\n" );
+		rt_log( "\telement %d, component %d, group %d\n" , element_id , comp_id , group_id );
+		return;
+	}
+
+	nmg_face_g( fu , pl );
+	nmg_loop_g( lu->l_p , &tol );
+
+	/* save faceuse and thickness info for plate mode */
+	if( mode == PLATE_MODE )
+	{
+		if( !fus_root )
+		{
+			fus_root = (struct fast_fus *)rt_malloc( sizeof( struct fast_fus ) , "Do_tri: fus_root" );
+			fus = fus_root;
+		}
+		else
+		{
+			fus = fus_root;
+			while( fus->next )
+				fus = fus->next;
+			fus->next = (struct fast_fus *)rt_malloc( sizeof( struct fast_fus ) , "Do_tri: fus" );
+			fus = fus->next;
+		}
+
+		fus->next = (struct fast_fus *)NULL;
+		fus->fu = fu;
+		fus->thick = thick;
+		fus->pos = pos;
+	}
+}
+
+void
 do_tri()
 {
 	int element_id;
@@ -2666,89 +3465,6 @@ do_tri()
 }
 
 void
-make_fast_fu( pt1 , pt2 , pt3 , element_id , thick , pos )
-int pt1,pt2,pt3;
-int element_id;
-fastf_t thick;
-int pos;
-{
-	struct vertex **verts[3];
-	struct faceuse *fu;
-	struct loopuse *lu;
-	struct fast_fus *fus;
-	fastf_t area;
-	plane_t pl;
-
-	if( debug )
-		rt_log( "make_fast_fu: ( %f %f %f ) - ( %f %f %f ) - ( %f %f %f )\n" ,
-			V3ARGS( grid_pts[pt1].pt ), V3ARGS( grid_pts[pt2].pt ), V3ARGS( grid_pts[pt3].pt ) );
-
-	verts[0] = &grid_pts[pt1].v;
-	verts[1] = &grid_pts[pt2].v;
-	verts[2] = &grid_pts[pt3].v;
-
-	if( !m )
-	{
-		m = nmg_mm();
-		r = nmg_mrsv( m );
-		s = RT_LIST_FIRST( shell , &r->s_hd );
-	}
-
-	if( debug )
-		rt_log( "\tm = x%x\n" , m );
-
-	fu = nmg_cmface( s , verts , 3 );
-	if( !fu )
-	{
-		rt_log( "do_tri: nmg_cmface failed\n" );
-		rt_log( "\telement %d, component %d, group %d\n" , element_id , comp_id , group_id );
-		return;
-	}
-
-	if( debug )
-		rt_log( "\tfu = x%x\n" , fu );
-
-	lu = RT_LIST_FIRST( loopuse , &fu->lu_hd );
-	nmg_vertex_gv( grid_pts[pt1].v , grid_pts[pt1].pt );
-	nmg_vertex_gv( grid_pts[pt2].v , grid_pts[pt2].pt );
-	nmg_vertex_gv( grid_pts[pt3].v , grid_pts[pt3].pt );
-
-	area = nmg_loop_plane_area( lu , pl );
-	if( area <= 0.0 )
-	{
-		(void)nmg_kfu( fu );
-		rt_log( "do_tri: ignoring degenerate CTRI element\n" );
-		rt_log( "\telement %d, component %d, group %d\n" , element_id , comp_id , group_id );
-		return;
-	}
-
-	nmg_face_g( fu , pl );
-
-	/* save faceuse and thickness info for plate mode */
-	if( mode == PLATE_MODE )
-	{
-		if( !fus_root )
-		{
-			fus_root = (struct fast_fus *)rt_malloc( sizeof( struct fast_fus ) , "Do_tri: fus_root" );
-			fus = fus_root;
-		}
-		else
-		{
-			fus = fus_root;
-			while( fus->next )
-				fus = fus->next;
-			fus->next = (struct fast_fus *)rt_malloc( sizeof( struct fast_fus ) , "Do_tri: fus" );
-			fus = fus->next;
-		}
-
-		fus->next = (struct fast_fus *)NULL;
-		fus->fu = fu;
-		fus->thick = thick;
-		fus->pos = pos;
-	}
-}
-
-void
 do_quad()
 {
 	int element_id;
@@ -2758,6 +3474,9 @@ do_quad()
 
 	strncpy( field , &line[8] , 8 );
 	element_id = atoi( field );
+
+	if( debug )
+		rt_log( "do_quad: %s\n" , line );
 
 	if( !nmgs )
 		nmgs = element_id;
@@ -2781,7 +3500,7 @@ do_quad()
 	{
 		strncpy( field , &line[56] , 8 );
 		thick = atof( field ) * 25.4;
-		if( thick < 0.0 )
+		if( thick <= 0.0 )
 		{
 			rt_log( "do_quad: illegal thickness (%f), skipping CQUAD element\n" , thick );
 			rt_log( "\telement %d, component %d, group %d\n" , element_id , comp_id , group_id );
@@ -2828,11 +3547,84 @@ int final;
 	{
 		if( region_id )
 		{
+			comp_count++;
 			rt_log( "Making component %s, group #%d, component #%d\n",
 					name_name, group_id , comp_id );
-			make_nmg_objects();
-			make_cline_regions();
-			make_comp_group();
+			if( RT_SETJUMP )
+			{
+				struct fast_fus *fus;
+				struct cline *cline_ptr;
+				struct shell_list *shell_ptr;
+				struct adjacent_faces *adj;
+
+				RT_UNSETJUMP;
+				rt_log( "***********component %s, group #%d, component #%d failed\n",
+					name_name, group_id , comp_id );
+				if( m )
+				{
+					nmg_km( m );
+					m = (struct model *)NULL;
+					r = (struct nmgregion *)NULL;
+					s = (struct shell *)NULL;
+				}
+
+				/* reset debug flags to what the user requested */
+				rt_g.NMG_debug = nmg_debug;
+				rt_g.debug = rt_debug;
+
+				/* clear lists */
+				fus = fus_root;
+				while( fus )
+				{
+					struct fast_fus *tmp;
+
+					tmp = fus;
+					fus = fus->next;
+					rt_free( (char *)tmp , "Do_section: fus" );
+				}
+				fus_root = (struct fast_fus *)NULL;
+
+				cline_ptr = cline_root;
+				while( cline_ptr )
+				{
+					struct cline *tmp;
+
+					tmp = cline_ptr;
+					cline_ptr = cline_ptr->next;
+					rt_free( (char *)tmp , "Do_section: cline_ptr" );
+				}
+				cline_root = (struct cline *)NULL;
+
+				shell_ptr = shell_root;
+				while( shell_ptr )
+				{
+					struct shell_list *tmp;
+
+					tmp = shell_ptr;
+					shell_ptr = shell_ptr->next;
+					rt_free( (char *)tmp , "Do_section: shell_ptr" );
+				}
+				shell_root = (struct shell_list *)NULL;
+
+				adj = adj_root;
+				while( adj )
+				{
+					struct adjacent_faces *tmp;
+
+					tmp = adj;
+					adj = adj->next;
+					rt_free( (char *)tmp , "Do_section: adj" );
+				}
+				adj_root = (struct adjacent_faces *)NULL;
+			}
+			else
+			{
+				make_nmg_objects();
+				make_cline_regions();
+				make_comp_group();
+				conv_count++;
+				RT_UNSETJUMP;
+			}
 		}
 		if( final && debug ) /* The ENDATA card has been found */
 			List_names();
@@ -2979,7 +3771,7 @@ fastf_t thick;
 
 	nmg_fix_normals( s1 , &tol );
 
-	if( nmg_extrude_shell( s1 , thick , 0 , &tol ) == (struct shell *)NULL )
+	if( nmg_extrude_shell( s1 , thick , 0 , 0 , &tol ) == (struct shell *)NULL )
 	{
 		nmg_km( m1 );
 		m1 = (struct model *)NULL;
@@ -3101,6 +3893,7 @@ do_hex1()
 
 		make_solid_name( name , CHEX1 , element_id , comp_id , group_id , 1 );
 		mk_nmg( fdout , name , m1 );
+		fflush( fdout );
 
 		if( mk_addmember( name , &head , WMOP_SUBTRACT ) == (struct wmember *)NULL )
 			rt_bomb( "CHEX1: mk_addmember failed\n" );
@@ -3193,8 +3986,9 @@ Process_input( pass_number )
 int pass_number;
 {
 
-	if( debug )
-		rt_log( "\n\nProcess_inmput( pass = %d )\n" , pass_number );
+/*	if( debug ) */
+		rt_log( "\n\nProcess_input( pass = %d )\n" , pass_number );
+/*	rt_prmem( "At start of Process_input:" );	*/
 
 	if( pass_number != 0 && pass_number != 1 )
 	{
@@ -3260,7 +4054,14 @@ char *argv[];
 	int i;
 	int c;
 
-	while( (c=getopt( argc , argv , "dw" ) ) != EOF )
+	/* Initialze tolerance struct */
+        tol.magic = RT_TOL_MAGIC;
+        tol.dist = 0.005;
+        tol.dist_sq = tol.dist * tol.dist;
+        tol.perp = 1e-6;
+        tol.para = 1 - tol.perp;
+
+	while( (c=getopt( argc , argv , "dwpx:X:D:P:" ) ) != EOF )
 	{
 		switch( c )
 		{
@@ -3269,6 +4070,27 @@ char *argv[];
 				break;
 			case 'w':	/* print warnings */
 				warnings = 1;
+				break;
+			case 'p':	/* polysolids */
+				polysolids = 1;
+				break;
+			case 'x':
+				sscanf( optarg, "%x", &rt_debug );
+				rt_g.debug = rt_debug;
+				break;
+			case 'X':
+				sscanf( optarg, "%x", &nmg_debug );
+				rt_g.NMG_debug = nmg_debug;
+				break;
+			case 'D':
+				tol.dist = atof( optarg );
+				rt_log( "tolerance distance set to %f\n" , tol.dist );
+				break;
+			case 'P':
+				tol.perp = atof( optarg );
+				rt_log( "tolerance perpendicular set to %f\n" , tol.perp );
+				tol.para = 1.0 - tol.perp;
+				rt_log( "tolerance parallel set to %f\n" , tol.para );
 				break;
 			default:
 				rt_log( "Unrecognized option (%c)\n" , c );
@@ -3306,15 +4128,12 @@ char *argv[];
 
 	fus_root = (struct fast_fus *)NULL;
 
+	adj_root = (struct adjacent_faces *)NULL;
+
 	name_name[0] = '\0';
 	name_count = 0;
 
-	/* Initialze tolerance struct */
-        tol.magic = RT_TOL_MAGIC;
-        tol.dist = 0.005;
-        tol.dist_sq = tol.dist * tol.dist;
-        tol.perp = 1e-6;
-        tol.para = 1 - tol.perp;
+	vehicle[0] = '\0';
 
 	m = (struct model *)NULL;
 	r = (struct nmgregion *)NULL;
@@ -3329,6 +4148,10 @@ char *argv[];
 
 	rewind( fdin );
 
+	/* Make an ID record if no vehicle card was found */
+	if( !vehicle[0] )
+		mk_id_units( fdout , argv[optind] , "in" );
+
 	Process_input( 1 );
 
 	/* make groups */
@@ -3336,4 +4159,6 @@ char *argv[];
 
 	if( debug )
 		List_holes();
+
+	rt_log( "%d components converted out of %d attempted\n" , conv_count , comp_count );
 }
