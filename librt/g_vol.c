@@ -66,7 +66,7 @@ struct structparse rt_vol_parse[] = {
 	"%d",	1, "hi",	VOL_O(vol_hi),		FUNC_NULL,
 	"%f",	ELEMENTS_PER_VECT, "size",offsetofarray(struct vol_specific, vol_cellsize), FUNC_NULL,
 	/* XXX might have option for vol_origin */
-	(char *)0, 0, (char *)0,	0,		FUNC_NULL
+	"",	0, (char *)0,	0,			FUNC_NULL
 };
 
 RT_EXTERN(void rt_vol_plate,(point_t a, point_t b, point_t c, point_t d,

@@ -36,7 +36,7 @@ struct	marble_specific  {
 #define MARB_O(m)	offsetof(struct marble_specific, m)
 
 struct	structparse marble_parse[] = {
-	(char *)0, 0, (char *)0,	0,		FUNC_NULL
+	"",	0,	(char *)0,	0,		FUNC_NULL
 };
 
 

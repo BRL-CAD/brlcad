@@ -38,7 +38,7 @@ struct structparse light_parse[] = {
 	"%d",	1, "shadows",	LIGHT_O(lt_shadows),	FUNC_NULL,
 	"%d",	1, "infinite",	LIGHT_O(lt_infinite),	FUNC_NULL,
 	"%d",	1, "invisible",	LIGHT_O(lt_invisible),	FUNC_NULL,
-	(char *)0, 0,(char *)0,	0,			FUNC_NULL
+	"",	0, (char *)0,	0,			FUNC_NULL
 };
 
 struct light_specific	LightHead;	/* Heads linked list of lights */

@@ -91,9 +91,9 @@ struct structparse txt_parse[] = {
 	"%d",	1, "w",		TX_O(tx_w),		FUNC_NULL,
 	"%d",	1, "n",		TX_O(tx_n),		FUNC_NULL,
 	"%d",	1, "l",		TX_O(tx_n),		FUNC_NULL, /*compat*/
-	"%d",	1, "fw",		TX_O(tx_fw),	FUNC_NULL,
+	"%d",	1, "fw",	TX_O(tx_fw),		FUNC_NULL,
 	"%d",	1, "trans_valid",	TX_O(tx_trans_valid),	FUNC_NULL,
-	(char *)0, 0,(char *)0,	0,			FUNC_NULL
+	"",	0, (char *)0,	0,			FUNC_NULL
 };
 
 /*
@@ -335,7 +335,7 @@ struct structparse ckr_parse[] = {
 	"%d",	1, "a",	offsetofarray(struct ckr_specific, ckr_a), FUNC_NULL,
 	"%d",	1, "b",	offsetofarray(struct ckr_specific, ckr_b), FUNC_NULL,
 #endif
-	(char *)0, 0, (char *)0,	0,		FUNC_NULL
+	"",	0, (char *)0,	0,			FUNC_NULL
 };
 
 /*

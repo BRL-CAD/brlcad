@@ -69,7 +69,7 @@ struct	structparse stxt_parse[] = {
 	"%d",	1, "d",			SOL_O(stx_d),		FUNC_NULL,
 	"%d",	1, "fw",		SOL_O(stx_fw),		FUNC_NULL,
 	"%d",	1, "trans_valid",	SOL_O(trans_valid),	FUNC_NULL,
-	(char *)0, 0, (char *)0,	0,			FUNC_NULL
+	"",	0, (char *)0,		0,			FUNC_NULL
 };
 
 struct	mfuncs stxt_mfuncs[] = {

@@ -416,8 +416,8 @@ struct structparse set_parse[] = {
 	"%d",	1, "width",	byteoffset(width),		FUNC_NULL,
 	"%d",	1, "height",	byteoffset(height),		FUNC_NULL,
 	"%f",	1, "angle",	byteoffset(rt_perspective),	FUNC_NULL,
-	"indir",(int)view_parse,"View_Module-Specific Parameters", 0, FUNC_NULL,
-	(char *)0,0,(char *)0,	0,				FUNC_NULL
+	"i", (int)view_parse,"View_Module-Specific Parameters", 0, FUNC_NULL,
+	"",	0, (char *)0,	0,				FUNC_NULL
 };
 
 /*

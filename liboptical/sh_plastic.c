@@ -64,7 +64,7 @@ struct structparse phong_parse[] = {
 	"%f",	1, "ri",		PL_O(refrac_index),	FUNC_NULL,
 	"%f",	1, "extinction",	PL_O(extinction),	FUNC_NULL,
 	"%f",	1, "ex",		PL_O(extinction),	FUNC_NULL,
-	(char *)0, 0, (char *)0,	0,			FUNC_NULL
+	"",	0, (char *)0,		0,			FUNC_NULL
 };
 
 HIDDEN int phong_setup(), mirror_setup(), glass_setup();

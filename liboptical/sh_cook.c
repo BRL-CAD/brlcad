@@ -65,7 +65,7 @@ struct structparse cook_parse[] = {
 	"%f", 1, "ri",		CL_O(refrac_index),	FUNC_NULL,
 	"%f", 1, "extinction",	CL_O(extinction),	FUNC_NULL,
 	"%f", 1, "ex",		CL_O(extinction),	FUNC_NULL,
-	(char *)0, 0, (char *)0, 0,			FUNC_NULL
+	"",   0, (char *)0,	0,			FUNC_NULL
 };
 
 HIDDEN int	cook_setup(), cmirror_setup(), cglass_setup();

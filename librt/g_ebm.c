@@ -59,7 +59,7 @@ struct structparse rt_ebm_parse[] = {
 	"%d",	1, "n",		EBM_O(ebm_ydim),	FUNC_NULL,
 	"%f",	1, "d",		EBM_O(ebm_tallness),	FUNC_NULL,
 	/* XXX might have option for ebm_origin */
-	(char *)0, 0, (char *)0, 0,			FUNC_NULL
+	"",	0, (char *)0, 0,			FUNC_NULL
 };
 
 struct ebm_specific	*rt_ebm_import();

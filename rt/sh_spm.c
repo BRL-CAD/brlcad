@@ -42,7 +42,7 @@ struct structparse spm_parse[] = {
 	"%s",	SPM_NAME_LEN, "file",		offsetofarray(struct spm_specific, sp_file),	FUNC_NULL,
 	"%d",	1, "w",		SP_O(sp_w),	FUNC_NULL,
 	"%d",	1, "n",		SP_O(sp_w),	FUNC_NULL,	/*compat*/
-	(char *)0, 0,(char *)0,	0,		FUNC_NULL
+	"",	0, (char *)0,	0,		FUNC_NULL
 };
 
 HIDDEN int	spm_setup(), spm_render();

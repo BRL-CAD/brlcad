@@ -110,7 +110,7 @@ struct structparse view_parse[] = {
 	"%d",	1, "bounces",	(int)&max_bounces,		FUNC_NULL,
 	"%d",	1, "ireflect",	(int)&max_ireflect,		FUNC_NULL,
 	"%f", ELEMENTS_PER_VECT, "background",(int)background,	FUNC_NULL,
-	(char *)0, 0, (char *)0,	0,			FUNC_NULL
+	"",	0, (char *)0,	0,				FUNC_NULL
 };
 
 /*

@@ -39,7 +39,7 @@ struct cloud_specific {
 struct structparse cloud_parse[] = {
 	"%f",	1, "thresh",	CL_O(cl_thresh),	FUNC_NULL,
 	"%f",	1, "range",	CL_O(cl_range),		FUNC_NULL,
-	(char *)0, 0, (char *)0,0,			FUNC_NULL
+	"",	0, (char *)0,	0,			FUNC_NULL
 };
 
 HIDDEN int	cloud_setup(), cloud_render();
