@@ -737,7 +737,7 @@ cmd_setup()
 	/* Provide Tcl interfaces to the fundamental BRL-CAD libraries */
 	bu_tcl_setup( interp );
 	bn_tcl_setup( interp );
-	rt_tcl_setup( interp );
+	Rt_Init(interp);
 
 	tkwin = NULL;
 
