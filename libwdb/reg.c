@@ -56,14 +56,14 @@ static fastf_t ident_mat[16] = {
  */
 int
 mk_comb( fp, name, len, region, matname, matparm, rgb, inherit )
-FILE	*fp;
-char	*name;
-int	len;
-int	region;
-char	*matname;
-char	*matparm;
-char	*rgb;
-int	inherit;
+FILE			*fp;
+CONST char		*name;
+int			len;
+int			region;
+CONST char		*matname;
+CONST char		*matparm;
+CONST unsigned char	*rgb;
+int			inherit;
 {
 	union record rec;
 
@@ -105,18 +105,18 @@ int	inherit;
  */
 int
 mk_rcomb( fp, name, len, region, matname, matparm, rgb, id, air, material, los, inherit )
-FILE	*fp;
-char	*name;
-int	len;
-int	region;
-char	*matname;
-char	*matparm;
-char	*rgb;
-int	id;
-int	air;
-int	material;
-int	los;
-int	inherit;
+FILE		*fp;
+CONST char	*name;
+int		len;
+int		region;
+CONST char	*matname;
+CONST char	*matparm;
+CONST char	*rgb;
+int		id;
+int		air;
+int		material;
+int		los;
+int		inherit;
 {
 	union record rec;
 
@@ -163,10 +163,10 @@ int	inherit;
  */
 int
 mk_fcomb( fp, name, len, region )
-FILE	*fp;
-char	*name;
-int	len;
-int	region;
+FILE		*fp;
+CONST char	*name;
+int		len;
+int		region;
 {
 	union record rec;
 
@@ -192,10 +192,10 @@ int	region;
  */
 int
 mk_memb( fp, name, mat, bool_op )
-FILE	*fp;
-char	*name;
-mat_t	mat;
-int	bool_op;
+FILE		*fp;
+CONST char	*name;
+CONST mat_t	mat;
+int		bool_op;
 {
 	union record rec;
 	register int i;
@@ -235,7 +235,7 @@ int	bool_op;
  */
 struct wmember *
 mk_addmember( name, headp, op )
-char	*name;
+CONST char	*name;
 register struct wmember *headp;
 int	op;
 {
@@ -281,14 +281,14 @@ int	op;
  */
 int
 mk_lcomb( fp, name, headp, region, matname, matparm, rgb, inherit )
-FILE	*fp;
-char	*name;
+FILE		*fp;
+CONST char	*name;
 register struct wmember *headp;
-int	region;
-char	*matname;
-char	*matparm;
-char	*rgb;
-int	inherit;
+int		region;
+CONST char	*matname;
+CONST char	*matparm;
+CONST unsigned char	*rgb;
+int		inherit;
 {
 	register struct wmember *wp;
 	register int len = 0;
@@ -356,13 +356,13 @@ register struct wmember *headp;
  */
 int
 mk_lrcomb( fp, name, headp, region, matname, matparm, rgb, id, air, material, los, inherit )
-FILE	*fp;
-char	*name;
+FILE		*fp;
+CONST char	*name;
 register struct wmember *headp;
-int	region;
-char	*matname;
-char	*matparm;
-char	*rgb;
+int		region;
+CONST char	*matname;
+CONST char	*matparm;
+CONST unsigned char	*rgb;
 int	id;
 int	air;
 int	material;
@@ -406,8 +406,8 @@ int	inherit;
 int
 mk_comb1( fp, combname, membname, regflag )
 FILE	*fp;
-char	*combname;
-char	*membname;
+CONST char	*combname;
+CONST char	*membname;
 int	regflag;
 {
 	struct wmember	head;
@@ -416,5 +416,5 @@ int	regflag;
 	if( mk_addmember( membname, &head, WMOP_UNION ) == WMEMBER_NULL )
 		return -2;
 	return mk_lcomb( fp, combname, &head, regflag,
-		(char *)NULL, (char *)NULL, (char *)NULL, 1 );
+		(char *)NULL, (char *)NULL, (unsigned char *)NULL, 1 );
 }
