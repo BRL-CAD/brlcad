@@ -44,7 +44,7 @@ log "Regression Tests Completed" >> $REGRESS_DIR/.regress.${ARCH}/MAKE_LOG
 if [ -f $REGRESS_DIR/brlcad/regress/ref_${ARCH} ] ; then
 
 	# not all diffs are the same :) no -B or -d 
-	diff -c	-w $REGRESS_DIR/brlcad/regress/ref_${ARCH} \
+	diff -c	-w -b $REGRESS_DIR/brlcad/regress/ref_${ARCH} \
 		$REGRESS_DIR/.regress.${ARCH}/MAKE_LOG \
 		> $REGRESS_DIR/.regress.${ARCH}/DIFFS
 else
