@@ -32,14 +32,11 @@ struct sizes {
 	int	height;		/* image height in pixels */
 };
 struct sizes fb_common_sizes[] = {
-	{   50,	  50 },
-	{   64,	  64 },
-	{  128,	 128 },
 	{  160,  120 },		/* quarter 640x480 */
-	{  256,	 256 },
+	{  192,  128 },		/* Kodak Photo-CD, level 1, Base/16 */
 	{  320,  200 },		/* PC screen format */
 	{  320,  240 },		/* half 640x480 */
-	{  512,	 512 },
+	{  384,  256 },		/* Kodak Photo-CD, level 2, Base/4 */
 	{  640,  512 },		/* half 1280x1024 */
 	{  640,  400 },		/* PC screen format */
 	{  640,	 480 },		/* Common video format */
@@ -47,19 +44,16 @@ struct sizes fb_common_sizes[] = {
 	{  640,	 486 },		/* Common video format */
 	{  720,	 485 },		/* Abekas video format, most correct */
 	{  720,	 486 },		/* Abekas video format */
+	{  768,  512 },		/* Kodak Photo-CD, level 3, Base */
 	{ 1024,	 768 },		/* SGI-3D screen size */
 	{ 1152,  900 },		/* Sun screen size */
-	{ 1024,	1024 },
 	{ 1280,  960 },		/* twice 640x480 */
 	{ 1280,	1024 },		/* SGI-4D screen size */
 	{ 1440,  972 },		/* double Abekas video format */
-	{ 2048, 2048 },
+	{ 1536, 1024 },		/* Kodak Photo-CD, level 4, 4*Base */
+	{ 3072, 2048 },		/* Kodak Photo-CD, level 5, 16*Base */
 	{ 3200, 4000 },		/* 8x10 inches, 400 dpi */
 	{ 3400, 4400 },		/* 8.5x11 inches, 400 dpi */
-	{ 4096, 4096 },
-	{ 8192, 8192 },
-	{16386,16384 },
-	{32768,32768 },
 	{    0,	   0 }
 };
 
