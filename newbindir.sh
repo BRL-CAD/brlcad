@@ -38,7 +38,8 @@ echo
 for i in \
 	Cakefile.defs setup.sh cray.sh \
 	cake/Makefile cakeaux/Makefile \
-	libfont/vfont.c \
+	remrt/remrt.c libfont/vfont.c \
+	fb/cat-fb.c canon/canonserver.c \
 	brlman/awf brlman/brlman
 do
 	chmod 775 $i
