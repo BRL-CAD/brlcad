@@ -1203,6 +1203,9 @@ CONST struct rt_tol	*tol;
  *	check to see if all radial uses of an edge (within a shell) are
  *	properly oriented with respect to each other.
  *
+ *  XXX Note that this routine will not work properly if there are
+ *  XXX dangling faces present.  It will report an erroneous error.
+ *
  *	Return
  *	0	OK
  *	1	bad edgeuse mate
@@ -1223,6 +1226,8 @@ CONST struct rt_tol	*tol;
 	NMG_CK_EDGEUSE(eu);
 	RT_CK_TOL(tol);
 
+	NMG_CK_LOOPUSE(eu->up.lu_p);
+	NMG_CK_FACEUSE(eu->up.lu_p->up.fu_p);
 	s = eu->up.lu_p->up.fu_p->s_p;
 	NMG_CK_SHELL(s);
 
@@ -1239,15 +1244,13 @@ CONST struct rt_tol	*tol;
 	eu1 = eu;
 	NMG_CK_EDGEUSE(eur);
 	do {
-
-		NMG_CK_LOOPUSE(eu1->up.lu_p);
-		NMG_CK_FACEUSE(eu1->up.lu_p->up.fu_p);
-
-		NMG_CK_LOOPUSE(eur->up.lu_p);
-		NMG_CK_FACEUSE(eur->up.lu_p->up.fu_p);
-		/* go find a radial edgeuse of the same shell
+		/*
+		 *  Search until another edgeuse in this shell is found.
+		 *  Continue search if it is a wire edge.
 		 */
-		while (eur->up.lu_p->up.fu_p->s_p != s) {
+		while( nmg_find_s_of_eu((struct edgeuse *)eur) != s  ||
+			*eur->up.magic_p == NMG_SHELL_MAGIC
+		)  {
 			NMG_CK_EDGEUSE(eur->eumate_p);
 			if (eur->eumate_p->eumate_p != eur) {
 				p = eur->vu_p->v_p->vg_p->coord;
@@ -1261,8 +1264,6 @@ CONST struct rt_tol	*tol;
 			}
 			eur = eur->eumate_p->radial_p;
 			NMG_CK_EDGEUSE(eur);
-			NMG_CK_LOOPUSE(eur->up.lu_p);
-			NMG_CK_FACEUSE(eur->up.lu_p->up.fu_p);
 
 			/* Can't check faceuse orientation parity for
 			 * things from another shell;  parity is conserved
@@ -1275,11 +1276,13 @@ CONST struct rt_tol	*tol;
 		 * If radial (eur) is my (virtual, this-shell) mate (eu1),
 		 * then it's ok, a mis-match is to be expected.
 		 */
+		NMG_CK_LOOPUSE(eur->up.lu_p);
+		NMG_CK_FACEUSE(eur->up.lu_p->up.fu_p);
 		if (eur->up.lu_p->up.fu_p->orientation != curr_orient &&
 		    eur != eu1->eumate_p ) {
 			p = eu1->vu_p->v_p->vg_p->coord;
 			q = eu1->eumate_p->vu_p->v_p->vg_p->coord;
-			rt_log("Radial orientation problem at edge %g %g %g -> %g %g %g\n",
+			rt_log("nmg_check_radial(): Radial orientation problem at edge %g %g %g -> %g %g %g\n",
 				p[0], p[1], p[2], q[0], q[1], q[2]);
 			rt_log("Problem Edgeuses: eu1=%8x, eur=%8x\n", eu1, eur);
 
@@ -1292,16 +1295,13 @@ CONST struct rt_tol	*tol;
 
 			nmg_pr_fu_around_eu( eu1, tol );
 
-			eur= nmg_findeu( eu1->vu_p->v_p, eu1->eumate_p->vu_p->v_p,
-				(struct shell *)0,  eu1, 0 );
-			if( eur )  {
-				rt_log("nmg_findeu found another eu=x%x\n", eur);
-			}
 			rt_log("nmg_check_radial: unclosed space\n");
 			return(2);
 		}
 
 		eu1 = eur->eumate_p;
+		NMG_CK_LOOPUSE(eu1->up.lu_p);
+		NMG_CK_FACEUSE(eu1->up.lu_p->up.fu_p);
 		curr_orient = eu1->up.lu_p->up.fu_p->orientation;
 		eur = eu1->radial_p;
 		while (*eur->up.magic_p == NMG_SHELL_MAGIC) {
