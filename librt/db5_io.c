@@ -798,7 +798,7 @@ double		local2mm;
 		NULL, NULL, NULL,
 		DB5_MAJORTYPE_RESERVED, 0,
 		DB5_ZZZ_UNCOMPRESSED, DB5_ZZZ_UNCOMPRESSED );
-	bu_fwrite_external( fp, &out );
+	if( bu_fwrite_external( fp, &out ) < 0 )  return -1;
 	bu_free_external( &out );
 
 	/* Second, create the attribute-only object */
@@ -814,7 +814,7 @@ double		local2mm;
 		DB5_GLOBAL_OBJECT_NAME, &attr, NULL,
 		DB5_MAJORTYPE_ATTRIBUTE_ONLY, 0,
 		DB5_ZZZ_UNCOMPRESSED, DB5_ZZZ_UNCOMPRESSED );
-	bu_fwrite_external( fp, &out );
+	if( bu_fwrite_external( fp, &out ) < 0 )  return -1;
 	bu_free_external( &out );
 	bu_free_external( &attr );
 	bu_avs_free( &avs );
