@@ -33,20 +33,15 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
-
 #include <stdio.h>
 #include <math.h>
 #include "machine.h"
 #include "db.h"
 #include "vmath.h"
+#include "rtlist.h"
+#include "rtgeom.h"
+#include "raytrace.h"
 #include "wdb.h"
-
-#define PI	3.14159265358979323
-
-#ifdef SYSV
-#define bzero(str,n)		memset( str, '\0', n )
-#define bcopy(from,to,count)	memcpy( to, from, count )
-#endif
 
 /*
  * Input Vector Fields
@@ -60,57 +55,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #define F6	(rec.s.s_values+(6-1)*3)
 #define F7	(rec.s.s_values+(7-1)*3)
 #define F8	(rec.s.s_values+(8-1)*3)
-/*
- *			V E C _ O R T H O
- *
- *  Lifted from librt/mat.c
- *
- *  Given a vector, create another vector which is perpendicular to it,
- *  and with unit length.  This algorithm taken from Gift's arvec.f;
- *  a faster algorithm may be possible.
- */
-static void
-vec_ortho( out, in )
-register fastf_t *out, *in;
-{
-	register int j, k;
-	FAST fastf_t	f;
-	register int i;
-
-	if( NEAR_ZERO(in[X], 0.0001) && NEAR_ZERO(in[Y], 0.0001) &&
-	    NEAR_ZERO(in[Z], 0.0001) )  {
-		VSETALL( out, 0 );
-		VPRINT("vec_ortho: zero-length input", in);
-		return;
-	}
-
-	/* Find component closest to zero */
-	f = fabs(in[X]);
-	i = X;
-	j = Y;
-	k = Z;
-	if( fabs(in[Y]) < f )  {
-		f = fabs(in[Y]);
-		i = Y;
-		j = Z;
-		k = X;
-	}
-	if( fabs(in[Z]) < f )  {
-		i = Z;
-		j = X;
-		k = Y;
-	}
-	f = hypot( in[j], in[k] );
-	if( NEAR_ZERO( f, SMALL ) ) {
-		VPRINT("vec_ortho: zero hypot on", in);
-		VSETALL( out, 0 );
-		return;
-	}
-	f = 1.0/f;
-	out[i] = 0.0;
-	out[j] = -in[k]*f;
-	out[k] =  in[j]*f;
-}
 
 /*
  *			M K _ I D
@@ -147,17 +91,13 @@ char	*name;
 vect_t	norm;
 double	d;
 {
-	union record rec;
+	struct rt_half_internal		half;
 
-	bzero( (char *)&rec, sizeof(rec) );
-	rec.s.s_id = ID_SOLID;
-	rec.s.s_type = HALFSPACE;
-	NAMEMOVE( name, rec.s.s_name );
-	VMOVE( rec.s.s_values, norm );
-	rec.s.s_values[3] = d * mk_conv2mm;
-	if( fwrite( (char *)&rec, sizeof(rec), 1, fp ) != 1 )
-		return(-1);
-	return(0);
+	half.magic = RT_HALF_INTERNAL_MAGIC;
+	VMOVE( half.eqn, norm );
+	half.eqn[3] = d;
+
+	return mk_export_fwrite( fp, name, (genptr_t)&half, ID_HALF );
 }
 
 /*
@@ -290,19 +230,15 @@ char	*name;
 point_t	pts[];
 {
 	register int i;
-	union record rec;
+	struct rt_arb_internal	arb;
 
-	bzero( (char *)&rec, sizeof(rec) );
-	rec.s.s_id = ID_SOLID;
-	rec.s.s_type = GENARB8;
-	NAMEMOVE( name, rec.s.s_name );
-	VSCALE( &rec.s.s_values[3*0], pts[0], mk_conv2mm );
-	for( i=1; i<8; i++ )  {
-		VSUB2SCALE( &rec.s.s_values[3*i], pts[i], pts[0], mk_conv2mm );
+	arb.magic = RT_ARB_INTERNAL_MAGIC;
+#	include "noalias.h"
+	for( i=0; i < 8; i++ )  {
+		VMOVE( arb.pt[i], pts[i] );
 	}
-	if( fwrite( (char *)&rec, sizeof(rec), 1, fp ) != 1 )
-		return(-1);		/* fail */
-	return(0);
+
+	return mk_export_fwrite( fp, name, (genptr_t)&arb, ID_ARB8 );
 }
 
 /*

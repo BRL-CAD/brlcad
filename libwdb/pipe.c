@@ -32,9 +32,10 @@ static char part_RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include <math.h>
 #include "machine.h"
-#include "db.h"
 #include "vmath.h"
 #include "rtlist.h"
+#include "rtgeom.h"
+#include "raytrace.h"
 #include "wdb.h"
 
 /*
@@ -54,30 +55,16 @@ vect_t	height;
 double	vradius;
 double	hradius;
 {
-	union record	rec;
-	point_t		vert;
-	vect_t		hi;
-	fastf_t		vrad;
-	fastf_t		hrad;
+	struct rt_part_internal	part;
 
-	/* Convert from user units to mm */
-	VSCALE( vert, vertex, mk_conv2mm );
-	VSCALE( hi, height, mk_conv2mm );
-	vrad = vradius * mk_conv2mm;
-	hrad = hradius * mk_conv2mm;
+	part.part_magic = RT_PART_INTERNAL_MAGIC;
+	VMOVE( part.part_V, vertex );
+	VMOVE( part.part_H, height );
+	part.part_vrad = vradius;
+	part.part_hrad = hradius;
+	part.part_type = 0;		/* sanity, unused */
 
-	bzero( (char *)&rec, sizeof(rec) );
-	rec.part.p_id = DBID_PARTICLE;
-	NAMEMOVE(name,rec.part.p_name);
-
-	htond( rec.part.p_v, vert, 3 );
-	htond( rec.part.p_h, hi, 3 );
-	htond( rec.part.p_vrad, &vrad, 1 );
-	htond( rec.part.p_hrad, &hrad, 1 );
-
-	if( fwrite( (char *) &rec, sizeof(rec), 1, fp) != 1 )
-		return(-1);
-	return(0);
+	return mk_export_fwrite( fp, name, (genptr_t)&part, ID_PARTICLE );
 }
 
 
@@ -97,71 +84,19 @@ FILE			*fp;
 char			*name;
 struct wdb_pipeseg	*headp;
 {
-	register struct exported_pipeseg *ep;
-	register struct wdb_pipeseg	*psp;
-	struct wdb_pipeseg		tmp;
-	int		count;
-	int		ngran;
-	int		nbytes;
-	union record	*rec;
+	struct rt_pipe_internal		pipe;
+	int				ret;
 
-	/* Count number of segments, verify that last seg is an END seg */
-	count = 0;
-	for( RT_LIST( psp, wdb_pipeseg, &headp->l ) )  {
-		count++;
-		switch( psp->ps_type )  {
-		case WDB_PIPESEG_TYPE_END:
-			if( RT_LIST_NEXT_NOT_HEAD( psp, &headp->l ) )
-				return(-1);	/* Inconsistency in list */
-			break;
-		case WDB_PIPESEG_TYPE_LINEAR:
-		case WDB_PIPESEG_TYPE_BEND:
-			if( RT_LIST_NEXT_IS_HEAD( psp, &headp->l ) )
-				return(-2);	/* List ends w/o TYPE_END */
-			break;
-		default:
-			return(-3);		/* unknown segment type */
-		}
-	}
-	if( count <= 1 )
-		return(-4);			/* Not enough for 1 pipe! */
+	pipe.pipe_magic = RT_PIPE_INTERNAL_MAGIC;
+	RT_LIST_INIT( &pipe.pipe_segs_head );
+	/* "borrow" linked list from caller */
+	RT_LIST_APPEND_LIST( &pipe.pipe_segs_head, &headp->l );
 
-	/* Determine how many whole granules will be required */
-	nbytes = sizeof(struct pipe_wire_rec) -
-		sizeof(struct exported_pipeseg) +
-		count * sizeof(struct exported_pipeseg);
-	ngran = (nbytes + sizeof(union record) - 1) / sizeof(union record);
-	nbytes = ngran * sizeof(union record);
-	if( (rec = (union record *)malloc( nbytes )) == (union record *)0 )
-		return(-5);
-	bzero( (char *)rec, nbytes );
+	ret = mk_export_fwrite( fp, name, (genptr_t)&pipe, ID_PIPE );
 
-	rec->pw.pw_id = DBID_PIPE;
-	NAMEMOVE( name, rec->pw.pw_name );
-	rec->pw.pw_count = ngran;
-
-	/* Convert the pipe segments to external form */
-	ep = &rec->pw.pw_data[0];
-	for( RT_LIST( psp, wdb_pipeseg, &headp->l ), ep++ )  {
-		/* Avoid need for htonl() here */
-		ep->eps_type[0] = (char)psp->ps_type;
-		/* Convert from user units to mm */
-		VSCALE( tmp.ps_start, psp->ps_start, mk_conv2mm );
-		VSCALE( tmp.ps_bendcenter, psp->ps_bendcenter, mk_conv2mm );
-		tmp.ps_id = psp->ps_id * mk_conv2mm;
-		tmp.ps_od = psp->ps_od * mk_conv2mm;
-		htond( ep->eps_start, tmp.ps_start, 3 );
-		htond( ep->eps_bendcenter, tmp.ps_bendcenter, 3 );
-		htond( ep->eps_id, &tmp.ps_id, 1 );
-		htond( ep->eps_od, &tmp.ps_od, 1 );
-	}
-
-	if( fwrite( (char *) rec, nbytes, 1, fp) != 1 )  {
-		free( (char *)rec );
-		return(-10);
-	}
-	free( (char *)rec );
-	return(0);
+	/* "return" linked list to caller */
+	RT_LIST_APPEND_LIST( &headp->l, &pipe.pipe_segs_head );
+	return ret;
 }
 
 /*
@@ -178,6 +113,6 @@ register struct wdb_pipeseg	*headp;
 
 	while( RT_LIST_LOOP( wp, wdb_pipeseg, &headp->l ) )  {
 		RT_LIST_DEQUEUE( &wp->l );
-		free( (char *)wp );
+		rt_free( (char *)wp, "mk_pipe_free" );
 	}
 }
