@@ -123,7 +123,6 @@ int	width, height;
 #ifdef IF_REMOTE
 	if( (cp = strchr( file, ':' )) != NULL ) {
 		/* We have a remote file name of the form <host>:<file>.*/
-		file = cp+1;
 		*ifp = remote_interface;
 		goto found_interface;
 	}
