@@ -667,7 +667,7 @@ register int	want;
 			/*
 			 * See if ray from hit point to light lies within light beam
 			 */
-			if( -VDOT(sub_ap.a_ray.r_dir, lp->lt_aim) < lp->lt_cosangle )  {
+			if( -VDOT(to_light, lp->lt_aim) < lp->lt_cosangle )  {
 				/* dark (outside of light beam) */
 				swp->sw_visible[i] = (char *)0;
 				continue;
