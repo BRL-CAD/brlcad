@@ -41,9 +41,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./solid.h"
 #include "./dm.h"
 
-extern int	numargs;	/* number of args */
-extern char	*cmd_args[];	/* array of pointers to args */
-
 void		setup_rt();
 
 /*
@@ -166,7 +163,7 @@ mat_t	mat;
  *  Set up command line for one of the RT family of programs,
  *  with all objects in view enumerated.
  */
-#define LEN	10240
+#define LEN	2000
 static char	*rt_cmd_vec[LEN];
 
 void
@@ -269,7 +266,9 @@ run_rt()
  *			F _ R T
  */
 void
-f_rt()
+f_rt( argc, argv )
+int	argc;
+char	**argv;
 {
 	register char **vp;
 	register int i;
@@ -292,8 +291,8 @@ f_rt()
 	*vp++ = "rt";
 	*vp++ = "-s50";
 	*vp++ = "-M";
-	for( i=1; i < numargs; i++ )
-		*vp++ = cmd_args[i];
+	for( i=1; i < argc; i++ )
+		*vp++ = argv[i];
 	*vp++ = dbip->dbi_filename;
 
 	setup_rt( vp );
@@ -316,7 +315,9 @@ f_rt()
  *  Typically used to invoke a remote RT (hence the name).
  */
 void
-f_rrt()
+f_rrt( argc, argv )
+int	argc;
+char	**argv;
 {
 	register char **vp;
 	register int i;
@@ -336,8 +337,8 @@ f_rrt()
 		release();		/* changes dmp */
 
 	vp = &rt_cmd_vec[0];
-	for( i=1; i < numargs; i++ )
-		*vp++ = cmd_args[i];
+	for( i=1; i < argc; i++ )
+		*vp++ = argv[i];
 	*vp++ = dbip->dbi_filename;
 
 	setup_rt( vp );
@@ -358,7 +359,9 @@ f_rrt()
  *  Invoke "rtcheck" to find overlaps, and display them as a vector overlay.
  */
 void
-f_rtcheck()
+f_rtcheck( argc, argv )
+int	argc;
+char	**argv;
 {
 	register char **vp;
 	register int i;
@@ -377,8 +380,8 @@ f_rtcheck()
 	*vp++ = "rtcheck";
 	*vp++ = "-s50";
 	*vp++ = "-M";
-	for( i=1; i < numargs; i++ )
-		*vp++ = cmd_args[i];
+	for( i=1; i < argc; i++ )
+		*vp++ = argv[i];
 	*vp++ = dbip->dbi_filename;
 
 	setup_rt( vp );
@@ -469,23 +472,25 @@ register char *p1, *suff;
  *			F _ S A V E V I E W
  */
 void
-f_saveview()
+f_saveview( argc, argv )
+int	argc;
+char	**argv;
 {
 	register struct solid *sp;
 	register int i;
 	register FILE *fp;
 	char *base;
 
-	if( (fp = fopen( cmd_args[1], "a")) == NULL )  {
-		perror(cmd_args[1]);
+	if( (fp = fopen( argv[1], "a")) == NULL )  {
+		perror(argv[1]);
 		return;
 	}
-	base = basename( cmd_args[1], ".sh" );
-	(void)chmod( cmd_args[1], 0755 );	/* executable */
+	base = basename( argv[1], ".sh" );
+	(void)chmod( argv[1], 0755 );	/* executable */
 	(void)fprintf(fp, "#!/bin/sh\nrt -M ");
-	for( i=2; i < numargs; i++ )
-		(void)fprintf(fp,"%s ", cmd_args[i]);
-	(void)fprintf(fp,"$*\\\n -o %s.pix\\\n", base);
+	for( i=2; i < argc; i++ )
+		(void)fprintf(fp,"%s ", argv[i]);
+	(void)fprintf(fp,"\\\n $*\\\n -o %s.pix\\\n", base);
 	(void)fprintf(fp," %s\\\n ", dbip->dbi_filename);
 
 	/* Find all unique top-level entrys.
@@ -505,7 +510,7 @@ f_saveview()
 				forw->s_iflag = UP;
 		}
 	}
-	(void)fprintf(fp,"\\\n 2> %s.log\\\n", base);
+	(void)fprintf(fp,"\\\n 2>> %s.log\\\n", base);
 	(void)fprintf(fp," <<EOF\n");
 	{
 		vect_t temp;
@@ -533,7 +538,9 @@ f_saveview()
  *	1	leave view alone, animate solid named "EYE"
  */
 void
-f_rmats()
+f_rmats( argc, argv )
+int	argc;
+char	**argv;
 {
 	register FILE *fp;
 	register struct directory *dp;
@@ -551,13 +558,13 @@ f_rmats()
 	if( not_state( ST_VIEW, "animate from matrix file") )
 		return;
 
-	if( (fp = fopen(cmd_args[1], "r")) == NULL )  {
-		perror(cmd_args[1]);
+	if( (fp = fopen(argv[1], "r")) == NULL )  {
+		perror(argv[1]);
 		return;
 	}
 	mode = -1;
-	if( numargs > 2 )
-		mode = atoi(cmd_args[2]);
+	if( argc > 2 )
+		mode = atoi(argv[2]);
 	switch(mode)  {
 	case 1:
 		if( (dp = db_lookup(dbip, "EYE", LOOKUP_NOISY)) == DIR_NULL )  {
@@ -646,7 +653,9 @@ work:
 
 /* Save a keyframe to a file */
 void
-f_savekey()
+f_savekey( argc, argv )
+int	argc;
+char	**argv;
 {
 	register int i;
 	register FILE *fp;
@@ -654,12 +663,12 @@ f_savekey()
 	vect_t	eye_model;
 	vect_t temp;
 
-	if( (fp = fopen( cmd_args[1], "a")) == NULL )  {
-		perror(cmd_args[1]);
+	if( (fp = fopen( argv[1], "a")) == NULL )  {
+		perror(argv[1]);
 		return;
 	}
-	if( numargs > 2 ) {
-		time = atof( cmd_args[2] );
+	if( argc > 2 ) {
+		time = atof( argv[2] );
 		(void)fprintf(fp,"%f\n", time);
 	}
 	/*
@@ -728,7 +737,9 @@ static mat_t	rtif_viewrot;
 static struct vlhead rtif_vhead;
 
 void
-f_preview()
+f_preview( argc, argv )
+int	argc;
+char	**argv;
 {
 	register FILE	*fp;
 	char		*cmd;
@@ -736,8 +747,8 @@ f_preview()
 	if( not_state( ST_VIEW, "animate viewpoint from new RT file") )
 		return;
 
-	if( (fp = fopen(cmd_args[1], "r")) == NULL )  {
-		perror(cmd_args[1]);
+	if( (fp = fopen(argv[1], "r")) == NULL )  {
+		perror(argv[1]);
 		return;
 	}
 	printf("eyepoint at (0,0,1) viewspace\n");
