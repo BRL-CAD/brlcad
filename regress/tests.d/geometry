@@ -197,8 +197,8 @@ for PRIM in $PRIMITIVES ; do
     # 
     # in args =>
     #
-    set rpc_IN_ARGS ""
-    set rpc_DB_ARGS ""
+    set rpc_IN_ARGS "0 0 0  10 0 0 0 0 10 2"
+    set rpc_DB_ARGS "rpc V {0 0 0} H {10 0 0} B {0 0 10} r 2"
 
     #
     # (sketch) Arguments
