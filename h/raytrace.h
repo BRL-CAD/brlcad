@@ -1902,7 +1902,7 @@ RT_EXTERN(int			nmg_is_edge_in_facelist, (CONST struct edge *e,
 				CONST struct rt_list *hd) );
 RT_EXTERN(int			nmg_is_loop_in_facelist, (CONST struct loop *l,
 				CONST struct rt_list *fu_hd) );
-RT_EXTERN(struct edgeuse	*nmg_eu_with_vu_in_lu, (CONST struct loopuse *lu,
+RT_EXTERN(struct edgeuse	*nmg_find_eu_with_vu_in_lu, (CONST struct loopuse *lu,
 				CONST struct vertexuse *vu) );
 RT_EXTERN(int			nmg_loop_is_a_crack, (CONST struct loopuse *lu) );
 RT_EXTERN(int			nmg_loop_is_ccw, (CONST struct loopuse *lu,
