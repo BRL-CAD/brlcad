@@ -80,15 +80,6 @@ extern int		incr_level;		/* current incremental level */
 extern int		incr_nlevel;		/* number of levels */
 extern int		npsw;			/* number of worker PSWs to run */
 extern struct resource	resource[];		/* memory resources */
-struct floatpixel {
-	double	ff_dist;		/* range to ff_hitpt[], <-INFINITY for miss */
-	float	ff_hitpt[3];
-	struct region *ff_regp;
-	int	ff_frame;		/* >= 0 means pixel was reprojected */
-	short	ff_x;			/* screen x,y coords of first location */
-	short	ff_y;
-	char	ff_color[3];
-};
 extern int		fullfloat_mode;
 extern int		reproject_mode;
 extern int		reproj_cur;	/* number of pixels reprojected this frame */
