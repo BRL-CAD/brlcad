@@ -3991,6 +3991,8 @@ register struct edgeuse	*eu;
  *  For all edges in the model which refer to 'old_eg',
  *  change them to refer to 'new_eg'.
  *
+ *  XXX In keeping with other names, this should probably be called nmg_jeg().
+ *
  *  XXX The algorithm needs to be changed when edge_g get linked lists of edges.
  */
 void
@@ -4016,7 +4018,6 @@ struct shell	*s;
 			old_eg, new_eg, s );
 	}
 
-#if 1
 	/* XXX Replace with walk of eg eu list */
 	nmg_edgeuse_with_eg_tabulate( &eutab, nmg_find_model(&s->l.magic), old_eg );
 
@@ -4032,59 +4033,6 @@ struct shell	*s;
 		nmg_use_edge_g( e, new_eg );
 	}
 	nmg_tbl( &eutab, TBL_FREE, (long *)0 );
-#else
-	/* Faces in shell */
-	for( RT_LIST_FOR( fu, faceuse, &s->fu_hd ) )  {
-		NMG_CK_FACEUSE(fu);
-		f = fu->f_p;
-		NMG_CK_FACE(f);
-		/* Loops in face */
-		for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
-			NMG_CK_LOOPUSE(lu);
-			l = lu->l_p;
-			NMG_CK_LOOP(l);
-			if( RT_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC )  {
-				/* Loop of Lone vertex */
-				continue;
-			}
-			for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
-				NMG_CK_EDGEUSE(eu);
-				e = eu->e_p;
-				NMG_CK_EDGE(e);
-				if(e->eg_p == old_eg)  {
-					nmg_use_edge_g( e, new_eg );
-				}
-			}
-		}
-	}
-	/* Wire loops in shell */
-	for( RT_LIST_FOR( lu, loopuse, &s->lu_hd ) )  {
-		NMG_CK_LOOPUSE(lu);
-		l = lu->l_p;
-		NMG_CK_LOOP(l);
-		if( RT_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC )  {
-			/* Wire loop of Lone vertex */
-			continue;
-		}
-		for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
-			NMG_CK_EDGEUSE(eu);
-			e = eu->e_p;
-			NMG_CK_EDGE(e);
-			if(e->eg_p == old_eg)  {
-				nmg_use_edge_g( e, new_eg );
-			}
-		}
-	}
-	/* Wire edges in shell */
-	for( RT_LIST_FOR( eu, edgeuse, &s->eu_hd ) )  {
-		NMG_CK_EDGEUSE(eu);
-		e = eu->e_p;
-		NMG_CK_EDGE(e);
-		if(e->eg_p == old_eg)  {
-			nmg_use_edge_g( e, new_eg );
-		}
-	}
-#endif
 }
 
 /************************************************************************
