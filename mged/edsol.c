@@ -3028,7 +3028,7 @@ sedit()
 		{
 			struct rt_bot_internal *bot =
 				(struct rt_bot_internal *)es_int.idb_ptr;
-			char *radio_result;
+			const char *radio_result;
 			char mode[10];
 			int ret_tcl;
 			int old_mode;
@@ -3075,7 +3075,7 @@ sedit()
 		{
 			struct rt_bot_internal *bot =
 				(struct rt_bot_internal *)es_int.idb_ptr;
-			char *radio_result;
+			const char *radio_result;
 			char orient[10];
 			int ret_tcl;
 
@@ -3163,7 +3163,7 @@ sedit()
 			struct rt_bot_internal *bot =
 				(struct rt_bot_internal *)es_int.idb_ptr;
 			char fmode[10];
-			char *radio_result;
+			const char *radio_result;
 			int face_no;
 			int ret_tcl;
 
@@ -3319,7 +3319,7 @@ sedit()
 		{
 			struct rt_extrude_internal *extr =
 				(struct rt_extrude_internal *)es_int.idb_ptr;
-			char *sketch_name;
+			const char *sketch_name;
 			int ret_tcl;
 			struct directory *dp;
 			struct rt_db_internal tmp_ip;
