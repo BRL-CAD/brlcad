@@ -40,11 +40,14 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
+#include "nmg.h"
 #include "db.h"
 #include "raytrace.h"
 #include "externs.h"
 #include "./ged.h"
 #include "./sedit.h"
+
+extern struct rt_tol    mged_tol;       /* from ged.c */
 
 int readcodes(), writecodes();
 int loadcodes(), printcodes();
@@ -1055,6 +1058,153 @@ char	**argv;
 
 				Tcl_AppendResult(interp, "   ", rec.c.c_name,
 						 "\n", (char *)NULL);
+			}
+		}
+	}
+
+	(void)signal( SIGINT, SIG_IGN );
+	return TCL_OK;
+}
+
+int
+f_decompose(clientData, interp, argc, argv )
+ClientData clientData;
+Tcl_Interp *interp;
+int	argc;
+char	**argv;
+{
+	int count=0;
+	char solid_name[NAMESIZE];
+	char *nmg_solid_name;
+	char *prefix;
+	char *def_prefix="sh";
+	struct model *m;
+	struct nmgregion *r;
+	struct model *new_m;
+	struct nmgregion *tmp_r;
+	struct shell *kill_s;
+	struct directory *dp;
+	struct rt_db_internal nmg_intern;
+
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
+
+	if( setjmp( jmp_env ) == 0 )
+	  (void)signal( SIGINT, sig3);  /* allow interupts */
+        else
+	  return TCL_OK;
+
+	nmg_solid_name = argv[1];
+
+	if( argc > 2 )
+	{
+		prefix = argv[2];
+		if( strlen( prefix ) >= (NAMESIZE-3) )
+		{
+			Tcl_AppendResult(interp, "Prefix ", prefix, " is too long", (char *)NULL );
+			return TCL_ERROR;
+		}
+	}
+	else
+		prefix = def_prefix;;
+
+	if( (dp=db_lookup( dbip, nmg_solid_name, LOOKUP_NOISY ) ) == DIR_NULL )
+		return TCL_ERROR;
+
+	if( rt_db_get_internal( &nmg_intern, dp, dbip, rt_identity ) < 0 )
+	{
+		Tcl_AppendResult(interp, "rt_db_get_internal() error\n", (char *)NULL);
+		return TCL_ERROR;
+	}
+
+	m = (struct model *)nmg_intern.idb_ptr;
+	NMG_CK_MODEL(m);
+
+	/* create temp region to hold duplicate shell */
+	tmp_r = nmg_mrsv( m );	/* temp nmgregion to hold dup shells */
+	kill_s = BU_LIST_FIRST( shell, &tmp_r->s_hd );
+	(void)nmg_ks( kill_s );
+
+	for( BU_LIST_FOR( r, nmgregion, &m->r_hd ) )
+	{
+		struct shell *s;
+
+		for( BU_LIST_FOR( s, shell, &r->s_hd ) )
+		{
+			struct shell *tmp_s;
+			struct shell *decomp_s;
+			long *trans_tbl;
+
+			/* duplicate shell */
+			tmp_s = (struct shell *)nmg_dup_shell( s, &trans_tbl );
+			rt_free( (char *)trans_tbl, "trans_tbl" );
+
+			 /* move duplicate to temp region */
+			(void) nmg_mv_shell_to_region( tmp_s, tmp_r );
+
+			/* decompose this shell */
+			(void) nmg_decompose_shell( tmp_s, &mged_tol );
+
+			/* move each decomposed shell to yet another region */
+			decomp_s = BU_LIST_FIRST( shell, &tmp_r->s_hd );
+			while( BU_LIST_NOT_HEAD( &decomp_s->l, &tmp_r->s_hd ) )
+			{
+				struct shell *next_s;
+				struct rt_db_internal new_intern;
+				struct directory *new_dp;
+				struct nmgregion *decomp_r;
+				char shell_no[32];
+				int end_prefix;
+
+				next_s = BU_LIST_NEXT( shell, &decomp_s->l );
+
+				decomp_r = nmg_mrsv( m );
+				kill_s = BU_LIST_FIRST( shell, &decomp_r->s_hd );
+				(void)nmg_ks( kill_s );
+				nmg_shell_a( decomp_s, &mged_tol );
+				(void)nmg_mv_shell_to_region( decomp_s, decomp_r );
+
+				/* move this region to a different model */
+				new_m = nmg_mm();
+				(void)nmg_mv_region_to_model( decomp_r, new_m );
+				(void)nmg_rebound( new_m, &mged_tol );
+
+				/* create name for this shell */
+				count++;
+				strcpy( solid_name, prefix );
+				sprintf( shell_no, "_%d", count );
+				end_prefix = strlen( prefix );
+				if( end_prefix + strlen( shell_no ) >= NAMESIZE )
+					end_prefix = NAMESIZE - strlen( shell_no );
+				solid_name[end_prefix] = '\0';
+				strncat( solid_name, shell_no, NAMESIZE-strlen(solid_name)-1 );
+
+				if( db_lookup( dbip, solid_name, LOOKUP_QUIET ) != DIR_NULL )
+				{
+					Tcl_AppendResult(interp, "decompose: cannot create unique solid name (", solid_name, ")", (char *)NULL );
+					Tcl_AppendResult(interp, "decompose: failed" );
+					return TCL_ERROR;
+				}
+
+				/* write this model as a seperate nmg solid */
+				if( (new_dp=db_diradd( dbip, solid_name, -1, 0, DIR_SOLID)) == DIR_NULL )
+				{
+					TCL_ALLOC_ERR;
+					return TCL_ERROR;;
+				}
+
+				RT_INIT_DB_INTERNAL( &new_intern );
+				new_intern.idb_type = ID_NMG;
+				new_intern.idb_ptr = (genptr_t)new_m;
+
+				if( rt_db_put_internal( new_dp, dbip, &new_intern ) < 0 )
+				{
+					(void)nmg_km( new_m );
+					Tcl_AppendResult(interp, "rt_db_put_internal() failure\n", (char *)NULL);
+					return TCL_ERROR;
+				}
+
+				decomp_s = next_s;
 			}
 		}
 	}
