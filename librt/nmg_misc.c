@@ -2,15 +2,10 @@
  *			N M G _ M I S C . C
  *
  *	As the name implies, these are miscelaneous routines that work with
- *	the NMG structures.  Ordinarily, applications will not need these
- *	routines once they have been debugged.  As a result, these routines
- *	are in a separate file so that they may be omitted from linked
- *	executables that do not need them.  Someday, all machines may have
- *	shared library support.  Then this will be irrelevant.
+ *	the NMG structures.
  *
  *	Packages included:
  *		_pr_ routines call rt_log to print the contents of NMG structs
- *		_ck_ routines to check consistency
  *
  *  Authors -
  *	Lee A. Butler
@@ -42,6 +37,193 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 
 /* #define DEBUG_PLEU */
+
+
+/*
+ *			N M G _ I D E N T I F Y _ M A G I C
+ *
+ *  Given a number which has been found in the magic number field of
+ *  a structure (which is typically the first entry),
+ *  determine what kind of structure this magic number pertains to.
+ *  This is called by the macro NMG_CK_MAGIC() to provide a "hint"
+ *  as to what sort of pointer error might have been made.
+ */
+char *nmg_identify_magic( magic )
+long	magic;
+{
+	switch(magic)  {
+	default:
+		return("Unknown");
+	case NMG_MODEL_MAGIC:
+		return("model");
+	case NMG_MODEL_A_MAGIC:
+		return("model_a");
+	case NMG_REGION_MAGIC:
+		return("region");
+	case NMG_REGION_A_MAGIC:
+		return("region_a");
+	case NMG_SHELL_MAGIC:
+		return("shell");
+	case NMG_SHELL_A_MAGIC:
+		return("shell_a");
+	case NMG_FACE_MAGIC:
+		return("face");
+	case NMG_FACE_G_MAGIC:
+		return("face_g");
+	case NMG_FACEUSE_MAGIC:
+		return("faceuse");
+	case NMG_FACEUSE_A_MAGIC:
+		return("faceuse_a");
+	case NMG_LOOP_MAGIC:
+		return("loop");
+	case NMG_LOOP_G_MAGIC:
+		return("loop_g");
+	case NMG_LOOPUSE_MAGIC:
+		return("loopuse");
+	case NMG_LOOPUSE_A_MAGIC:
+		return("loopuse_a");
+	case NMG_EDGE_MAGIC:
+		return("edge");
+	case NMG_EDGE_G_MAGIC:
+		return("edge_g");
+	case NMG_EDGEUSE_MAGIC:
+		return("edgeuse");
+	case NMG_EDGEUSE_A_MAGIC:
+		return("edgeuse_a");
+	case NMG_VERTEX_MAGIC:
+		return("vertex");
+	case NMG_VERTEX_G_MAGIC:
+		return("vertex_g");
+	case NMG_VERTEXUSE_MAGIC:
+		return("vertexuse");
+	case NMG_VERTEXUSE_A_MAGIC:
+		return("vertexuse_a");
+	case NMG_LIST_MAGIC:
+		return("nmg_list");
+	}
+}
+
+/*	N M G _ T B L
+ *	maintain a table of pointers (to magic numbers/structs)
+ */
+int nmg_tbl(b, func, p)
+struct nmg_ptbl *b;
+int func;
+long *p;
+{
+	if (func == TBL_INIT) {
+		b->buffer = (long **)rt_calloc(b->blen=64,
+						sizeof(p), "pointer table");
+		b->end = 0;
+		return(0);
+	} else if (func == TBL_RST) {
+		b->end = 0;
+		return(0);
+	} else if (func == TBL_INS) {
+		register int i;
+		union {
+			struct loopuse *lu;
+			struct edgeuse *eu;
+			struct vertexuse *vu;
+			long *l;
+		} pp;
+
+		if (rt_g.NMG_debug & DEBUG_INS)
+			rt_log("nmg_tbl Inserting %8x\n", p);
+
+		pp.l = p;
+
+		if (b->blen == 0) (void)nmg_tbl(b, TBL_INIT, p);
+		if (b->end >= b->blen)
+			b->buffer = (long **)rt_realloc( (char *)b->buffer,
+			    sizeof(p)*(b->blen *= 4),
+			    "pointer table" );
+
+		b->buffer[i=b->end++] = p;
+		return(i);
+	} else if (func == TBL_LOC) {
+		/* we do this a great deal, so make it go as fast as possible.
+		 * this is the biggest argument I can make for changing to an
+		 * ordered list.  Someday....
+		 */
+		register int	k;
+		register long	**pp = b->buffer;
+
+#		include "noalias.h"
+		for( k = b->end-1; k >= 0; k-- )
+			if (pp[k] == p) return(k);
+
+		return(-1);
+	} else if (func == TBL_INS_UNIQUE) {
+		/* we do this a great deal, so make it go as fast as possible.
+		 * this is the biggest argument I can make for changing to an
+		 * ordered list.  Someday....
+		 */
+		register int	k;
+		register long	**pp = b->buffer;
+
+#		include "noalias.h"
+		for( k = b->end-1; k >= 0; k-- )
+			if (pp[k] == p) return(k);
+
+		if (b->blen <= 0 || b->end >= b->blen)  {
+			/* Table needs to grow */
+			return( nmg_tbl( b, TBL_INS, p ) );
+		}
+		b->buffer[k=b->end++] = p;
+		return(-1);		/* To signal that it was added */
+	} else if (func == TBL_RM) {
+		/* we go backwards down the list looking for occurrences
+		 * of p to delete.  We do it backwards to reduce the amount
+		 * of data moved when there is more than one occurrence of p
+		 * in the list.  A pittance savings, unless you're doing a
+		 * lot of it.
+		 */
+		register int end = b->end, j, k, l;
+		register long **pp = b->buffer;
+
+		for (l = b->end-1 ; l >= 0 ; --l)
+			if (pp[l] == p){
+				/* delete occurrence(s) of p */
+
+				j=l+1;
+				while (pp[l-1] == p) --l;
+
+				end -= j - l;
+#				include "noalias.h"
+				for(k=l ; j < end ;)
+					b->buffer[k++] = b->buffer[j++];
+			}
+
+		b->end = end;
+		return(0);
+	} else if (func == TBL_CAT) {
+		union {
+			long *l;
+			struct nmg_ptbl *t;
+		} d;
+
+		d.l = p;
+
+		if ((b->blen - b->end) < d.t->end) {
+			
+			b->buffer = (long **)rt_realloc( (char *)b->buffer,
+				sizeof(p)*(b->blen += d.t->blen),
+				"pointer table (CAT)");
+		}
+		bcopy(d.t->buffer, &b->buffer[b->end], d.t->end*sizeof(p));
+		return(0);
+	} else if (func == TBL_FREE) {
+		bzero((char *)b->buffer, b->blen * sizeof(p));
+		rt_free((char *)b->buffer, "pointer table");
+		bzero(b, sizeof(struct nmg_ptbl));
+		return (0);
+	} else {
+		rt_log("Unknown table function %d\n", func);
+		rt_bomb("nmg_tbl");
+	}
+	return(-1);/* this is here to keep lint happy */
+}
 
 
 
@@ -449,7 +631,9 @@ char *h;
 	Return;
 }
 
-/*	C H E C K _ R A D I A L
+/*
+ *			N M G _ C H E C K _ R A D I A L
+ *
  *	check to see if all radial uses of an edge (within a shell) are
  *	properly oriented with respect to each other.
  *
@@ -458,7 +642,7 @@ char *h;
  *	1	bad edgeuse mate
  *	2	unclosed space
  */
-static int check_radial(eu)
+static int nmg_check_radial(eu)
 struct edgeuse *eu;
 {
 	char curr_orient;
@@ -548,7 +732,7 @@ struct edgeuse *eu;
  *
  *  Returns -
  *	 0	OK
- *	!0	status code from check_radial()
+ *	!0	status code from nmg_check_radial()
  */
 int nmg_ck_closed_surf(s)
 struct shell *s;
@@ -567,7 +751,7 @@ struct shell *s;
 			magic1 = NMG_LIST_FIRST_MAGIC( &lu->down_hd );
 			if (magic1 == NMG_EDGEUSE_MAGIC) {
 				for( NMG_LIST( eu, edgeuse, &lu->down_hd ) )  {
-					if (status=check_radial(eu))
+					if (status=nmg_check_radial(eu))
 						return(status);
 				}
 			} else if (magic1 == NMG_VERTEXUSE_MAGIC) {
@@ -588,7 +772,7 @@ struct shell *s;
  *
  *  Returns -
  *	 0	OK
- *	!0	status code from check_radial()
+ *	!0	status code from nmg_check_radial()
  */
 int
 nmg_ck_closed_region(r)
@@ -716,298 +900,4 @@ struct nmgregion *r;
 	}
 	rt_free( (char *)v, "vertex array");
 	return(s);
-}
-
-
-/************************************************************************
- *									*
- *			Checking Routines				*
- *									*
- ************************************************************************/
-
-
-nmg_ck_e(eu, e, str)
-struct edgeuse *eu;
-struct edge *e;
-char *str;
-{
-	char *errstr;
-	struct edgeuse *eparent;
-	errstr = rt_calloc(strlen(str)+128, 1, "nmg_ck_e error str");
-	(void)sprintf(errstr, "%sedge %8x\n", str, e);
-	
-	NMG_CK_EDGE(e);
-	NMG_CK_EDGEUSE(eu);
-
-	eparent = e->eu_p;
-
-	NMG_CK_EDGEUSE(eparent);
-	NMG_CK_EDGEUSE(eparent->eumate_p);
-	do {
-		if (eparent == eu || eparent->eumate_p == eu) break;
-
-		eparent = eparent->radial_p->eumate_p;
-	} while (eparent != e->eu_p);
-
-	if (eparent != eu && eparent->eumate_p != eu) rt_bomb(
-		strcat(errstr, "Edge denies edgeuse parentage\n"));
-
-	rt_free(errstr, "nmg_ck_e error str");
-}
-
-nmg_ck_vu(parent, vu, str)
-long *parent;
-struct vertexuse *vu;
-char *str;
-{
-	char *errstr;
-
-	errstr = rt_calloc(strlen(str)+128, 1, "nmg_ck_vu error str");
-	(void)sprintf(errstr, "%svertexuse %8x\n", str, vu);
-	
-	if (vu->up.magic_p != parent) rt_bomb(
-		strcat(errstr, "Vertexuse denies parentage\n"));
-
-	rt_free(errstr, "nmg_ck_vu error str");
-}
-
-nmg_ck_eu(parent, eu, str)
-long *parent;
-struct edgeuse *eu;
-char *str;
-{
-	char *errstr;
-	struct edgeuse *eur, *eu_next, *eu_last;	
-
-	errstr = rt_calloc(strlen(str)+128, 1, "nmg_ck_eu error str");
-	(void)sprintf(errstr, "%sedgeuse %8x\n", str, eu);
-
-	NMG_CK_EDGEUSE(eu);
-
-	if (eu->up.magic_p != parent) rt_bomb(
-		strcat(errstr, "Edgeuse child denies parentage\n"));
-
-	if (*eu->eumate_p->up.magic_p != *eu->up.magic_p) rt_bomb(
-		strcat(errstr, "eumate has differnt kind of parent\n"));
-	if (*eu->up.magic_p == NMG_SHELL_MAGIC) {
-		if (eu->eumate_p->up.s_p != eu->up.s_p) rt_bomb(
-			strcat(errstr, "eumate in different shell\n"));
-
-		eur = eu->radial_p;
-		while (eur && eur != eu && eur != eu->eumate_p)
-			eur = eur->eumate_p->radial_p;
-
-		if (!eur) rt_bomb(strcat(errstr,
-			"Radial trip from eu ended in null pointer\n"));
-
-
-	} else if (*eu->up.magic_p == NMG_LOOPUSE_MAGIC) {
-		if (eu->eumate_p->up.lu_p != eu->up.lu_p->lumate_p) rt_bomb(
-			strcat(errstr, "eumate not in same loop\n"));
-
-		eur = eu->radial_p;
-		while (eur && eur != eu->eumate_p && eur != eu)
-			eur = eur->eumate_p->radial_p;
-
-		if (!eur) rt_bomb(
-			strcat(errstr, "radial path leads to null ptr\n"));
-		else if (eur == eu) rt_bomb(
-			strcat(errstr, "Never saw eumate\n"));
-
-		eu_next = NMG_LIST_PNEXT_CIRC(edgeuse, eu);
-		if (eu_next->vu_p->v_p != eu->eumate_p->vu_p->v_p)
-			rt_bomb("nmg_ck_eu: next and mate don't share vertex\n");
-
-		eu_last = NMG_LIST_PLAST_CIRC(edgeuse, eu);
-		if (eu_last->eumate_p->vu_p->v_p != eu->vu_p->v_p)
-			rt_bomb("nmg_ck_eu: edge and last-mate don't share vertex\n");
-
-	} else {
-		rt_bomb(strcat(errstr, "Bad edgeuse parent\n"));
-	}
-
-	NMG_CK_EDGE(eu->e_p);
-	nmg_ck_e(eu, eu->e_p, errstr);
-
-	NMG_CK_VERTEXUSE(eu->vu_p);
-	nmg_ck_vu(&eu->l.magic, eu->vu_p, errstr);
-
-	rt_free(errstr, "nmg_ck_eu error str");
-}
-
-nmg_ck_lg(l, lg, str)
-struct loop *l;
-struct loop_g *lg;
-char *str;
-{
-	char *errstr;
-	errstr = rt_calloc(strlen(str)+128, 1, "nmg_ck_lg error str");
-	(void)sprintf(errstr, "%sloop_g %8x\n", str, lg);
-
-	NMG_CK_LOOP_G(lg);
-	NMG_CK_LOOP(l);
-
-	rt_free(errstr, "nmg_ck_lg error str");
-}
-
-nmg_ck_l(lu, l, str)
-struct loopuse *lu;
-struct loop *l;
-char *str;
-{
-	char *errstr;
-	errstr = rt_calloc(strlen(str)+128, 1, "nmg_ck_l error str");
-	(void)sprintf(errstr, "%sloop %8x\n", str, l);
-
-	NMG_CK_LOOP(l);
-	NMG_CK_LOOPUSE(lu);
-
-	if (l->lu_p != lu && l->lu_p->lumate_p != lu) rt_bomb(
-		strcat(errstr, "Cannot get from loop to loopuse\n"));
-
-	if (l->lg_p) nmg_ck_lg(l, l->lg_p, errstr);
-
-	rt_free(errstr, "");
-}
-
-nmg_ck_lu(parent, lu, str)
-long *parent;
-struct loopuse *lu;
-char *str;
-{
-	struct edgeuse *eu;
-	struct vertexuse *vu;
-	char *errstr;
-	int l;
-	int edgeuse_num=0;
-	long	magic1;
-
-	errstr = rt_calloc(strlen(str)+128, 1, "nmg_ck_lu error str");
-	(void)sprintf(errstr, "%sloopuse %8x\n", str, lu);
-	
-	NMG_CK_LOOPUSE(lu);
-
-	if (lu->up.magic_p != parent) rt_bomb(
-		strcat(errstr, "loopuse child denies parentage\n") );
-
-	/* check the parent of lu and lumate WRT each other */
-	NMG_CK_LOOPUSE(lu->lumate_p);
-	if (*lu->lumate_p->up.magic_p != *lu->up.magic_p) rt_bomb(
-		strcat(errstr,"loopuse mate has different kind of parent\n"));
-
-	if (*lu->up.magic_p == NMG_SHELL_MAGIC) {
-		if (lu->lumate_p->up.s_p != lu->up.s_p) rt_bomb(
-			strcat(errstr, "Lumate not in same shell\n") );
-	} else if (*lu->up.magic_p == NMG_FACEUSE_MAGIC) {
-		if (lu->lumate_p->up.fu_p != lu->up.fu_p->fumate_p) rt_bomb(
-			strcat(errstr, "lumate part of different face\n"));
-	} else {
-		rt_bomb(strcat(errstr, "Bad loopuse parent type\n"));
-	}
-
-	NMG_CK_LOOP(lu->l_p);
-	nmg_ck_l(lu, lu->l_p, errstr);
-
-	/* check the children of the loopuse */
-	magic1 = NMG_LIST_FIRST_MAGIC( &lu->down_hd );
-	if (magic1 == NMG_VERTEXUSE_MAGIC) {
-		vu = NMG_LIST_FIRST( vertexuse, &lu->down_hd );
-		NMG_CK_VERTEXUSE(vu);
-		nmg_ck_vu(&lu->l.magic, vu, errstr);
-	} else if (magic1 == NMG_EDGEUSE_MAGIC) {
-		l = strlen(errstr);
-		for( NMG_LIST( eu, edgeuse, &lu->down_hd ) )  {
-			NMG_CK_EDGEUSE(eu);
-			(void)sprintf(&errstr[l], "%sedgeuse #%d (%8x)\n",
-				errstr, edgeuse_num++, eu);
-			nmg_ck_eu(&lu->l.magic, eu, errstr);
-		}
-	} else {
-		rt_bomb(strcat(errstr, "Bad loopuse down pointer\n") );
-	}
-	rt_free(errstr, "nmg_ck_lu error str");
-}
-
-nmg_ck_fg(f, fg, str)
-struct face *f;
-struct face_g *fg;
-char *str;
-{
-	char *errstr;
-	errstr = rt_calloc(strlen(str)+128, 1, "nmg_ck_fg error str");
-	(void)sprintf(errstr, "%sFace_g %8x\n", str, f);
-
-	NMG_CK_FACE_G(fg);
-	if (fg->N[X]==0.0 && fg->N[Y]==0.0 && fg->N[Z]==0.0 && fg->N[H]!=0.0){
-		(void)sprintf(&errstr[strlen(errstr)],
-			"bad NMG plane equation %fX + %fY + %fZ = %f\n",
-			fg->N[X], fg->N[Y], fg->N[Z], fg->N[H]);
-	        rt_bomb(errstr);
-	}
-
-	rt_free(errstr, "nmg_ck_fg error str");
-}
-
-nmg_ck_f(fu, f, str)
-struct faceuse *fu;
-struct face *f;
-char *str;
-{
-	char *errstr;
-	errstr = rt_calloc(strlen(str)+128, 1, "nmg_ck_f error str");
-	(void)sprintf(errstr, "%sFace %8x\n", str, f);
-
-	NMG_CK_FACE(f);
-	NMG_CK_FACEUSE(fu);
-	NMG_CK_FACE_G(f->fg_p);
-	if (f->fu_p != fu && f->fu_p->fumate_p != fu) rt_bomb(
-		strcat(errstr,"Cannot get from face to \"parent faceuse\"\n"));
-
-	if (f->fg_p) nmg_ck_fg(f, f->fg_p, errstr);
-
-	rt_free(errstr, "nmg_ck_f error str");
-}
-
-nmg_ck_fu(s, fu, str)
-struct shell *s;
-struct faceuse *fu;
-char *str;
-{
-	char *errstr;
-	int l;
-	int loop_number = 0;
-	struct loopuse *lu;
-
-	NMG_CK_FACEUSE(fu);
-	NMG_CK_SHELL(s);
-
-	errstr = rt_calloc(strlen(str)+128, 1, "nmg_ck_fu error str");
-	(void)sprintf(errstr, "%sFaceuse %8x\n", str, fu);
-
-	if (fu->s_p != s) rt_bomb(
-		strcat(errstr, "faceuse child denies shell parentage\n") );
-
-	if( NMG_LIST_PNEXT_PLAST( faceuse, fu ) )
-		rt_bomb( strcat(errstr, "Faceuse not lastward of next faceuse\n") );
-
-	if( NMG_LIST_PLAST_PNEXT( faceuse, fu ) )
-		rt_bomb( strcat(errstr, "Faceuse not nextward from last faceuse\n") );
-
-	NMG_CK_FACEUSE(fu->fumate_p);
-	if (fu->fumate_p->fumate_p != fu) rt_bomb(
-		strcat(errstr, "Faceuse not fumate of fumate\n") );
-
-	if (fu->fumate_p->s_p != s) rt_bomb(
-		strcat(errstr, "faceuse mates not in same shell\n") );
-
-	nmg_ck_f(fu, fu->f_p, errstr);
-
-	l = strlen(errstr);
-	for( NMG_LIST( lu, loopuse, &fu->lu_hd ) )  {
-		NMG_CK_LOOPUSE(lu);
-		(void)sprintf(&errstr[l] , "%sloopuse #%d (%8x)\n", 
-			errstr, loop_number++, lu);
-		nmg_ck_lu(&fu->l.magic, lu, errstr);
-	}
-	rt_free(errstr, "nmg_ck_fu error str");
 }
