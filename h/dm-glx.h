@@ -26,9 +26,8 @@ struct glx_vars {
   struct bu_list l;
   Display *dpy;
   Window win;
+  Tk_Window top;
   Tk_Window xtkwin;
-  int width;
-  int height;
   int omx, omy;
   unsigned int mb_mask;
   Colormap cmap;
@@ -41,10 +40,10 @@ struct glx_vars {
   int knobs[8];
   int stereo_is_on;
   int is_gt;
-  fastf_t aspect;
   struct modifiable_glx_vars mvars;
 };
 
+extern struct dm *Glx_open();
 extern void Glx_viewchange();
 extern void Glx_configure_window_shape();
 extern void Glx_establish_perspective();
