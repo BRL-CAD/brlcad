@@ -516,6 +516,7 @@ struct bu_structparse rt_eto_parse[] = {
     {0} };
 
 extern struct bu_structparse rt_ebm_parse[];
+extern struct bu_structparse rt_dsp_parse[];
 extern struct bu_structparse rt_hf_parse[];
 extern struct bu_structparse rt_vol_parse[];
 
@@ -555,6 +556,13 @@ int s_id;
 	solid_type.magic = RT_EBM_INTERNAL_MAGIC;
 	solid_type.label = "ebm";
 	solid_type.parsetab = rt_ebm_parse;
+	return &solid_type;
+    } else if (s_id == ID_DSP) {
+	solid_type.id = ID_DSP;
+	solid_type.db_internal_size = sizeof(struct rt_dsp_internal);
+	solid_type.magic = RT_DSP_INTERNAL_MAGIC;
+	solid_type.label = "dsp";
+	solid_type.parsetab = rt_dsp_parse;
 	return &solid_type;
     } else if (s_id == ID_VOL) {
 	solid_type.id = ID_VOL;
@@ -601,6 +609,9 @@ char *s_type;
     if (strcmp(type, "ebm") == 0) {
 	bu_free((genptr_t)type, "lowercase solid type");
 	return rt_get_parsetab_by_id(ID_EBM);
+    } else if (strcmp(type, "dsp") == 0) {
+	bu_free((genptr_t)type, "lowercase solid type");
+	return rt_get_parsetab_by_id(ID_DSP);
     } else if (strcmp(type, "vol") == 0) {
 	bu_free((genptr_t)type, "lowercase solid type");
 	return rt_get_parsetab_by_id(ID_VOL);

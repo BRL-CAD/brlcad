@@ -164,8 +164,8 @@ RT_DECLARE_INTERFACE(eto)
 RT_DECLARE_INTERFACE(grp)
 #define rt_hf_xform rt_generic_xform
 RT_DECLARE_INTERFACE(hf)
-#define rt_fbm_xform rt_generic_xform
-RT_DECLARE_INTERFACE(fbm)
+#define rt_dsp_xform rt_generic_xform
+RT_DECLARE_INTERFACE(dsp)
 
 /* from db_comb.c */
 RT_EXTERN(int rt_comb_import, (struct rt_db_internal *ip,
@@ -361,6 +361,12 @@ struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 		rt_hf_import,	rt_hf_export,	rt_hf_ifree,
 		rt_hf_describe,rt_hf_xform,
 
+	"ID_DSP",	0,		/* 25 In development */
+		rt_dsp_prep,	rt_dsp_shot,	rt_dsp_print,	rt_dsp_norm,
+		rt_dsp_uv,	rt_dsp_curve,	rt_dsp_class,	rt_dsp_free,
+		rt_dsp_plot,	rt_vstub,	rt_nul_tess,	rt_nul_tnurb,
+		rt_dsp_import,	rt_dsp_export,	rt_dsp_ifree,
+		rt_dsp_describe,rt_dsp_xform,
 
 	/* ID_MAXIMUM.  Add new solids _above_ this point */
 
@@ -529,6 +535,9 @@ struct rt_external	*ep;
 			break;
 		} else if( strcmp( rec->ss.ss_keyword, "hf" ) == 0 )  {
 			id = ID_HF;
+			break;
+		} else if( strcmp( rec->ss.ss_keyword, "dsp" ) == 0 )  {
+			id = ID_DSP;
 			break;
 		}
 		rt_log("rt_id_solid(%s):  String solid type '%s' unknown\n",
