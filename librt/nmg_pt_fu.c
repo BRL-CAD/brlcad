@@ -752,9 +752,11 @@ struct fpi	*fpi;
 		register struct vertexuse *vu;
 		int v_class;
 
+		vu = RT_LIST_FIRST(vertexuse, &lu->down_hd);
 		v_class = nmg_class_pt_vu(fpi, vu);
 
 		switch (lu->orientation) {
+		case OT_BOOLPLACE:
 		case OT_SAME:
 			if (v_class == NMG_FPI_TOUCHED)
 				lu_class = NMG_CLASS_AinB;
@@ -762,20 +764,23 @@ struct fpi	*fpi;
 				lu_class = NMG_CLASS_AoutB;
 			break;
 		case OT_OPPOSITE:
+			/* Why even call nmg_class_pt_vu() here, if return isn't used? */
 				lu_class = NMG_CLASS_AinB;
 			break;
 		default:
-			rt_bomb("Loop orientation error\n");
+			rt_log("nmg_class_pt_lu() hit %s loop at vu=x%x\n",
+				nmg_orientation(lu->orientation), vu);
+			rt_bomb("nmg_class_pt_lu() Loop orientation error\n");
 			break;
 		}
 	} else {
 		rt_log("%s:%d bad child of loopuse\n", __FILE__, __LINE__);
-		rt_bomb("crash and burn\n");
+		rt_bomb("nmg_class_pt_lu() crash and burn\n");
 	}
 
 
 	if (rt_g.NMG_debug & DEBUG_PT_FU )
-		rt_log("pt classed %s vs loop\n", nmg_class_name(lu_class));
+		rt_log("nmg_class_pt_lu() pt classed %s vs loop\n", nmg_class_name(lu_class));
 
 	return lu_class;
 }
