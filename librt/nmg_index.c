@@ -29,6 +29,74 @@ static char RCSnmg_index[] = "@(#)$Header$ (BRL)";
 #include "nmg.h"
 #include "raytrace.h"
 
+/*
+ *			N M G _ I N D E X _ O F _ S T R U C T
+ *
+ *  Return the structure index number of an arbitrary NMG structure.
+ *
+ *  Returns -
+ *	>=0	index number
+ *	 -1	pointed at struct rt_list embedded within NMG structure.
+ *	 -2	error:  unknown magic number
+ */
+int
+nmg_index_of_struct( p )
+register long	*p;
+{
+	switch(*p)  {
+	case NMG_MODEL_MAGIC:
+		return ((struct model *)p)->index;
+	case NMG_MODEL_A_MAGIC:
+		return ((struct model_a *)p)->index;
+	case NMG_REGION_MAGIC:
+		return ((struct nmgregion *)p)->index;
+	case NMG_REGION_A_MAGIC:
+		return ((struct nmgregion_a *)p)->index;
+	case NMG_SHELL_MAGIC:
+		return ((struct shell *)p)->index;
+	case NMG_SHELL_A_MAGIC:
+		return ((struct shell_a *)p)->index;
+	case NMG_FACEUSE_MAGIC:
+		return ((struct faceuse *)p)->index;
+	case NMG_FACEUSE_A_MAGIC:
+		return ((struct faceuse_a *)p)->index;
+	case NMG_FACE_MAGIC:
+		return ((struct face *)p)->index;
+	case NMG_FACE_G_MAGIC:
+		return ((struct face_g *)p)->index;
+	case NMG_LOOPUSE_MAGIC:
+		return ((struct loopuse *)p)->index;
+	case NMG_LOOPUSE_A_MAGIC:
+		return ((struct loopuse_a *)p)->index;
+	case NMG_LOOP_MAGIC:
+		return ((struct loop *)p)->index;
+	case NMG_LOOP_G_MAGIC:
+		return ((struct loop_g *)p)->index;
+	case NMG_EDGEUSE_MAGIC:
+		return ((struct edgeuse *)p)->index;
+	case NMG_EDGEUSE_A_MAGIC:
+		return ((struct edgeuse_a *)p)->index;
+	case NMG_EDGE_MAGIC:
+		return ((struct edge *)p)->index;
+	case NMG_EDGE_G_MAGIC:
+		return ((struct edge_g *)p)->index;
+	case NMG_VERTEXUSE_MAGIC:
+		return ((struct vertexuse *)p)->index;
+	case NMG_VERTEXUSE_A_MAGIC:
+		return ((struct vertexuse_a *)p)->index;
+	case NMG_VERTEX_MAGIC:
+		return ((struct vertex *)p)->index;
+	case NMG_VERTEX_G_MAGIC:
+		return ((struct vertex_g *)p)->index;
+	case RT_LIST_HEAD_MAGIC:
+		/* indicate special list head encountered */
+		return -1;
+	}
+	/* default */
+	rt_log("nmg_index_of_struct: magicp = x%x, magic = x%x\n", p, *p);
+	return -2;	/* indicate error */
+}
+
 #define NMG_HIGH_BIT	0x80000000
 
 #define NMG_MARK_INDEX(_p)	((_p)->index |= NMG_HIGH_BIT)
@@ -463,6 +531,8 @@ struct model				*m;
 	register long		**ptrs;
 
 #define NMG_UNIQ_INDEX(_p,_type)	\
+	if( (_p)->index > m->maxindex )  \
+		rt_bomb("nmg_m_struct_count index overflow\n"); \
 	if( ptrs[(_p)->index] == (long *)0 )  { \
 		ptrs[(_p)->index] = (long *)(_p); \
 		ctr->_type++; \
