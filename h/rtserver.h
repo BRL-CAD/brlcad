@@ -32,6 +32,7 @@
 
 struct rtserver_job {
 	struct bu_list l;		/* for linking */
+	int exit_flag;			/* flag, non-zero means the running thread should exit */
 	int sessionid;			/* index into sessions (rts_geometry array) */
 	int rtjob_id;			/* identifying number, assigned by the rt server */
 	struct bu_ptbl rtjob_rays;	/* list of pointers to rays to be fired */
