@@ -2837,6 +2837,11 @@ nmg_fu_touchingloops(fu1);
 nmg_fu_touchingloops(fu2);
 	}
 
+	if( f1->fg_p == f2->fg_p )  {
+		rt_log("co-planar faces (shared fg)\n");
+		goto coplanar;
+	}
+
 	if ( !V3RPP_OVERLAP_TOL(f2->fg_p->min_pt, f2->fg_p->max_pt,
 	    f1->fg_p->min_pt, f1->fg_p->max_pt, &bs.tol) )  return;
 
@@ -2889,7 +2894,8 @@ nmg_fu_touchingloops(fu2);
 		break;
 	case -1:
 		/* co-planar faces */
-rt_log("co-planar faces.\n");
+rt_log("co-planar faces (rt_isect_2planes).\n");
+coplanar:
 		bs.coplanar = 1;
 		nmg_isect_two_face2p( &bs, fu1, fu2 );
 		break;
