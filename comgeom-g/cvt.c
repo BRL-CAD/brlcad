@@ -23,9 +23,13 @@ March 81  CAS	Added processing for ARS
 #include "vmath.h"
 #include "wdb.h"
 
+extern int	getopt();
+extern char	*optarg;
+extern int	optind;
+
 struct wmember	*wmp;	/* array indexed by region number */
 
-int	version;	/* v4 or v5 ? */
+int	version = 5;	/* v4 or v5 ? */
 
 char name_it[16];	/* stores argv if it exists and appends it
 			to each name generated.*/
@@ -38,6 +42,69 @@ FILE	*outfp;		/* Output file descriptor */
 int	sol_total, sol_work;	/* total num solids, num solids processed */
 int	reg_total;
 
+
+static char usage[] = "\
+Usage: comgeom-g [-v version#] [-s name_suffix]\n\
+	input_file output_file\n";
+
+get_args( argc, argv )
+register char **argv;
+{
+	register int	c;
+	char		*file_name;
+
+	while ( (c = getopt( argc, argv, "v:s:" )) != EOF )  {
+		switch( c )  {
+		case 's':
+			strncpy( name_it, optarg, sizeof(name_it) );
+			break;
+		case 'v':
+			version = atoi(optarg);
+			break;
+
+		default:		/* '?' */
+			return(0);
+		}
+	}
+
+	if( optind+2 > argc )
+		return(0);		/* FAIL */
+
+	/* Input File */
+	if( optind >= argc )  {
+		if( isatty(fileno(stdin)) )
+			return(0);
+		infp = stdin;
+		optind++;
+	} else {
+		file_name = argv[optind++];
+		if( (infp = fopen(file_name, "r")) == NULL )  {
+			perror(file_name);
+			return(0);
+		}
+	}
+
+	/* Output File */
+	if( optind >= argc )  {
+		if( isatty(fileno(stdout)) )
+			return(0);
+		outfp = stdout;
+		optind++;
+	} else {
+		file_name = argv[optind++];
+		if( (outfp = fopen(file_name, "w")) == NULL )  {
+			perror(file_name);
+			return(0);
+		}
+	}
+
+	if ( argc > ++optind )
+		(void)fprintf( stderr, "comgeom-g: excess argument(s) ignored\n" );
+
+	return(1);		/* OK */
+}
+
+
 /*
  *			M A I N
  */
@@ -46,28 +113,17 @@ char **argv;
 {
 	register int i;
 	register float *op;
-	char ctitle[80];
+	char ctitle[132];
 
-	if( ! (argc == 3 || argc == 4) )
-	{
-		printf(	"Usage:  comg-g [opts] input_file output_file [name_suffix]\n" );
-		exit(10);
+	if ( !get_args( argc, argv ) )  {
+		(void)fputs(usage, stderr);
+		exit( 1 );
 	}
 
-	version = 5;	/* XXX should be -v option */
-
-		/* get postfix, else use it as a null string.*/
-	if( argc == 4 )		strncpy( name_it, argv[3], 16 );
-	else			strncpy( name_it, "", 16 );
-	
-
-	if( (infp = fopen( argv[1], "r" )) == NULL )  {
-		perror( argv[1] );
-		exit(10);
-	}
-	if( (outfp = fopen( argv[2], "w" )) == NULL )  {
-		perror( argv[2] );
-		exit( 10 );
+	if( version != 4 && version != 5 )  {
+		fprintf(stderr,"version %d not supported\n", version );
+		(void)fputs(usage, stderr);
+		exit( 1 );
 	}
 
 	if( version == 5 )
@@ -90,7 +146,7 @@ char **argv;
 	/*
 	 *  Read title
 	 */
-	if( getline( ctitle ) == EOF ) {
+	if( getline( ctitle, sizeof(ctitle), "title card" ) == EOF ) {
 		printf("Empty input file:  no title record\n");
 		exit(10);
 	}
@@ -106,7 +162,7 @@ char **argv;
 	 */
 	sol_total = 0;
 
-	if( getline( ctitle ) == EOF ) {
+	if( getline( ctitle, sizeof(ctitle), "control card" ) == EOF ) {
 		printf("No control card .... STOP\n");
 		exit(10);
 	}
@@ -150,7 +206,7 @@ char **argv;
 	if( version == 4 )  {
 		char	dummy[88];
 		/* read the blank card (line) */
-		getline( dummy );
+		getline( dummy, sizeof(dummy), "blank card" );
 	}
 
 	printf("\nProcessing region ident table\n");
