@@ -64,11 +64,20 @@ struct vls  {
 	int	vls_max;
 };
 
+void
+vls_init( vp )
+register struct vls	*vp;
+{
+	vp->vls_cur = vp->vls_max = 0;
+	vp->vls_str = (char *)0;
+}
+
+void
 vls_cat( vp, s )
-struct vls	*vp;
+register struct vls	*vp;
 char		*s;
 {
-	int	len;
+	register int	len;
 
 	len = strlen(s);
 	if( vp->vls_cur <= 0 )  {
@@ -81,6 +90,15 @@ char		*s;
 	}
 	bcopy( s, vp->vls_str + vp->vls_cur, len+1 );
 	vp->vls_cur += len;
+}
+
+void
+vls_2cat( op, ip )
+register struct vls	*op, *ip;
+{
+	vls_cat( op, ip->vls_str );
+	rt_free( ip->vls_str, "vls_2cat input vls_str" );
+	vls_init( ip );
 }
 
 FBIO *fbp = FBIO_NULL;		/* Current framebuffer ptr */
@@ -191,6 +209,7 @@ int		use_air = 0;
 char		*outputfile;		/* output file name */
 char		*framebuffer;
 extern double	azimuth, elevation;
+int		desiredframe;
 
 struct rt_g	rt_g;
 
@@ -304,6 +323,10 @@ char	**argv;
 		}
 
 		/* take note of database name and treetops */
+		if( optind+2 > argc )  {
+			fprintf(stderr,"remrt:  insufficient args\n");
+			exit(2);
+		}
 		build_start_cmd( argc, argv, optind );
 
 		/* Read .remrtrc file to acquire servers */
@@ -323,7 +346,9 @@ char	**argv;
 
 		/* Collect up results of arg parsing */
 		/* automatic: outputfile, width, height */
-		if( framebuffer )  init_fb(framebuffer);
+		if( framebuffer || outputfile == (char *)0 )  {
+			init_fb(framebuffer);
+		}
 
 		/* Build queue of work to be done */
 		if( !matflag )  {
@@ -336,8 +361,11 @@ char	**argv;
 			vls_cat( &fr->fr_cmd, buf);
 			APPEND_FRAME( fr, FrameHead.fr_back );
 		} else {
-			/* if -M, start reading RT script */
+			/* if -M, read RT script from stdin */
+			clients = 0;
+			eat_script( stdin );
 		}
+		cd_frames( 0, (char **)0 );
 
 		/* Compute until no work remains */
 		running = 1;
@@ -379,15 +407,22 @@ int waittime;
 		ibits &= ~(1<<tcp_listen_fd);
 	}
 	/* Second, give priority to getting traffic off the network */
-	for( i=3; i<NFD; i++ )  {
+	for( i=0; i<NFD; i++ )  {
 		register struct pkg_conn *pc;
+
+		if( i == fileno(stdin) )  continue;
+		if( i == tcp_listen_fd )  continue;
 		if( !(ibits&(1<<i)) )  continue;
 		pc = servers[i].sr_pc;
 		if( pkg_get(pc) < 0 )
 			dropclient(pc);
+		ibits &= ~(1<<i);
 	}
 	/* Finally, handle any command input (This can recurse via "read") */
-	if( waittime>0 && (ibits & (1<<(fileno(stdin)))) )  {
+	if( waittime>0 &&
+	    !feof(stdin) &&
+	    fileno(stdin) >= 0 &&
+	    (ibits & (1<<(fileno(stdin)))) )  {
 		interactive_cmd(stdin);
 	}
 }
@@ -551,6 +586,73 @@ struct timeval	*tv;
 	if( tp->tm_wday == 0 || tp->tm_wday == 6 )  return(1);
 	if( tp->tm_hour < 8 || tp->tm_hour >= 18 )  return(1);
 	return(0);
+}
+
+/*
+ *			E A T _ S C R I P T
+ */
+eat_script( fp )
+FILE	*fp;
+{
+	char	*buf;
+	char	*ebuf;
+	int	argc;
+	char	*argv[64];
+	struct vls	body;
+	struct vls	prelude;
+	int	frame;
+	struct frame	*fr;
+
+	vls_init( &prelude );
+	while( (buf = rt_read_cmd( fp )) != (char *)0 )  {
+		if( strncmp( buf, "start", 5 ) != 0 )  {
+			vls_cat( &prelude, buf );
+			vls_cat( &prelude, ";" );
+			rt_free( buf, "prelude line" );
+			continue;
+		}
+
+		/* Gobble until "end" keyword seen */
+		vls_init( &body );
+		while( (ebuf = rt_read_cmd( fp )) != (char *)0 )  {
+			if( strncmp( ebuf, "end", 3 ) == 0 )  {
+				rt_free( ebuf, "end line" );
+				break;
+			}
+			vls_cat( &body, ebuf );
+			vls_cat( &body, ";" );
+			rt_free( ebuf, "script line" );
+		}
+
+		/* buf has saved "start" line in it */
+		argc = rt_split_cmd( argv, 64, buf );
+		if( argc < 2 )  {
+			printf("bad 'start' line\n");
+			rt_free( buf, "bad start line" );
+			goto out;
+		}
+		frame = atoi( argv[1] );
+		if( frame < desiredframe )  {
+			rt_free( body.vls_str, "script" );
+			goto bad;
+		}
+		/* Might see if frame file exists 444 mode, then skip also */
+		GET_FRAME(fr);
+		fr->fr_number = frame;
+		prep_frame(fr);
+		if( prelude.vls_cur > 0 )  {
+			vls_2cat( &fr->fr_cmd, &prelude );
+		}
+		if( body.vls_cur > 0 )  {
+			vls_2cat( &fr->fr_cmd, &body );
+		}
+		APPEND_FRAME( fr, FrameHead.fr_back );
+bad:
+		rt_free( buf, "command line" );
+	}
+out:	;
+	/* Doing an fclose here can result in a server showing up on fd 0 */
+	/* fclose(fp); */
 }
 
 /*
