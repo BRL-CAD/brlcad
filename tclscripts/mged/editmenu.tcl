@@ -90,7 +90,7 @@ proc ray_build_edit_menu { type x y } {
 		_mged_press sill
 		_mged_ill -i 1 [lindex $paths 0]
 	    } elseif {[llength $paths] > 1} {
-		build_solid_menu s $id $paths
+		build_solid_menu s1 $id $paths
 	    }
 	}
 	o {
@@ -145,7 +145,7 @@ proc build_solid_menu { type id paths } {
 	    "set item \[get_listbox_entry %W %x %y\];\
 	    solid_illum \$item"
     bind_listbox $top "<ButtonPress-1>" \
-	    "doubleClickHack %W %x %y %t $id $type junkpath"
+	    "lbdcHack %W %x %y %t $id $type junkpath"
     bind_listbox $top "<ButtonRelease-1>" \
 	    "%W selection clear 0 end; _mged_press reject"
 }
@@ -179,7 +179,7 @@ proc build_matrix_menu { id path } {
 	    "set path_pos \[%W index @%x,%y\];\
 	    matrix_illum $path \$path_pos"
     bind_listbox $top "<ButtonPress-1>" \
-	    "doubleClickHack %W %x %y %t $id m $path"
+	    "lbdcHack %W %x %y %t $id m1 $path"
     bind_listbox $top "<ButtonRelease-1>" \
 	    "%W selection clear 0 end; _mged_press reject"
 }

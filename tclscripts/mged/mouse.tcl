@@ -76,7 +76,7 @@ if 0 {
 	    destroy $top"
 } else {
     bind_listbox $top "<ButtonPress-1>" \
-	    "lbdcHack %W %x %y %t $id s junkpath"
+	    "lbdcHack %W %x %y %t $id s2 junkpath"
 }
     bind_listbox $top "<ButtonRelease-1>" \
 	    "%W selection clear 0 end; _mged_press reject"
@@ -142,7 +142,7 @@ if 0 {
 	    destroy $top"
 } else {
     bind_listbox $top "<ButtonPress-1>" \
-	    "lbdcHack %W %x %y %t $id m \$mged_gui($id,mgs_path)"
+	    "lbdcHack %W %x %y %t $id m2 \$mged_gui($id,mgs_path)"
 }
     bind_listbox $top "<ButtonRelease-1>" \
 	    "%W selection clear 0 end; _mged_press reject"
@@ -227,7 +227,7 @@ if 0 {
 	    destroy $top"
 } else {
     bind_listbox $top "<ButtonPress-1>" \
-	    "lbdcHack %W %x %y %t $id c junkpath"
+	    "lbdcHack %W %x %y %t $id c1 junkpath"
 }
     bind_listbox $top "<ButtonRelease-1>"\
 	    "%W selection clear 0 end;\
