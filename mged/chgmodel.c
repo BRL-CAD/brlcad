@@ -50,12 +50,13 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "vmath.h"
 #include "db.h"
-#include "./sedit.h"
+#include "rtstring.h"
 #include "raytrace.h"
 #include "./ged.h"
 #include "externs.h"
 #include "./solid.h"
 #include "./dm.h"
+#include "./sedit.h"
 
 void	aexists();
 void	ext4to6();
@@ -953,17 +954,20 @@ f_title( argc, argv )
 int	argc;
 char	**argv;
 {
-	register int i;
-	char	title[256];
+	struct rt_vls	title;
 
-	title[0] = '\0';
-	for(i=1; i<argc; i++) {
-		(void)strcat(title, argv[i]);
-		(void)strcat(title, " ");
+	if( argc < 2 )  {
+		(void)printf("%s\n", dbip->dbi_title);
+		return;
 	}
 
-	if( db_ident( dbip, title, dbip->dbi_localunit ) < 0 )
+	rt_vls_init( &title );
+	rt_vls_from_argv( &title, argc-1, argv+1 );
+
+	if( db_ident( dbip, rt_vls_addr(&title), dbip->dbi_localunit ) < 0 )
 		printf("Error: unable to change database title\n");
+
+	rt_vls_free( &title );
 	dmaflag = 1;
 }
 
