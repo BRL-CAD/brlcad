@@ -559,6 +559,20 @@ char **argv;
 		rtip->needprep
 	);
 
+	bu_vls_printf( &str, " space_partition_type %s n_nugridnode %d n_cutnode %d n_boxnode %d n_empty %d",
+		rtip->rti_space_partition == RT_PART_NUGRID ?
+			"NUGrid" : "NUBSP",
+		rtip->rti_ncut_by_type[CUT_NUGRIDNODE],
+		rtip->rti_ncut_by_type[CUT_CUTNODE],
+		rtip->rti_ncut_by_type[CUT_BOXNODE],
+		rtip->nempty_cells );
+	bu_vls_printf( &str, " maxdepth %d maxlen %d",
+		rtip->rti_cut_maxdepth,
+		rtip->rti_cut_maxlen );
+	if( rtip->rti_ncut_by_type[CUT_BOXNODE] )  bu_vls_printf( &str, " avglen %g",
+		((double)rtip->rti_cut_totobj) /
+		rtip->rti_ncut_by_type[CUT_BOXNODE] );
+
 	Tcl_AppendResult( interp, bu_vls_addr(&str), (char *)NULL );
 	bu_vls_free( &str );
 	return TCL_OK;
