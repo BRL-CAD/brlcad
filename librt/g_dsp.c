@@ -3510,6 +3510,8 @@ rt_dsp_import5( ip, ep, mat, dbip )
     dsp_ip->dsp_datasrc = *cp;
     cp++;
 
+    dsp_ip->dsp_cuttype = *cp;
+
     /* convert name of data location */
     bu_vls_init( &dsp_ip->dsp_name );
     bu_vls_strcpy( &dsp_ip->dsp_name, (char *)cp );
@@ -3575,6 +3577,9 @@ rt_dsp_export5( ep, ip, local2mm, dbip )
     cp += SIZEOF_NETWORK_SHORT;
 
     *cp = dsp_ip->dsp_datasrc;
+    cp++;
+
+    *cp = dsp_ip->dsp_cuttype;
     cp++;
 
     strncpy((char *)cp, bu_vls_addr(&dsp_ip->dsp_name), name_len);
