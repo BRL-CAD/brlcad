@@ -477,6 +477,19 @@ rt_binunif_describe( struct bu_vls		*str,
 }
 
 /*
+ *		R T _ B I N U N I F _ F R E E 
+ *
+ *	Free the storage associated with a binunif_internal object
+ */
+void
+rt_binunif_free( struct rt_binunif_internal *bip) {
+	RT_CK_BINUNIF(bip);
+	bu_free( (genptr_t) bip->u.uint8, "binunif free uint8" );
+	bu_free( bip, "binunif free");
+	bip = GENPTR_NULL; /* sanity */
+}
+
+/*
  *			R T _ B I N U N I F _ I F R E E
  *
  *  Free the storage associated with the rt_db_internal version of this thing.
