@@ -1641,7 +1641,27 @@ extern struct bu_cmdtab bu_observer_cmds[];
 extern void bu_observer_free(struct bu_observer *);
 
 /* bu_tcl.c */
+/* The presence of Tcl_Interp as an arg prevents giving arg list */
 extern void bu_badmagic_tcl();
+extern void bu_structparse_get_terse_form();
+extern int bu_structparse_argv();
+extern int bu_tcl_mem_barriercheck();
+extern int bu_tcl_ck_malloc_ptr();
+extern int bu_tcl_malloc_len_roundup();
+extern int bu_tcl_prmem();
+extern int bu_tcl_printb();
+extern int bu_get_value_by_keyword();
+extern int bu_get_all_keyword_values();
+extern int bu_tcl_rgb_to_hsv();
+extern int bu_tcl_hsv_to_rgb();
+extern int bu_tcl_key_eq_to_key_val();
+extern int bu_tcl_shader_to_key_val();
+extern int bu_tcl_key_val_to_key_eq();
+extern int bu_tcl_shader_to_key_eq();
+extern int bu_tcl_brlcad_path();
+extern int bu_tcl_units_conversion();
+extern void bu_tcl_setup();
+extern int Bu_Init();
 
 
 #ifdef __cplusplus
