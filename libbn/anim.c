@@ -41,6 +41,7 @@
  *	anim_dz_y_x2mat()
  *	anim_quat2mat()
  *	anim_dir2mat()
+ *	anim_dirn2mat()		
  *
  *	anim_add_trans()	add pre- and post- translation to matrix
  *	anim_rotatez()		rotate vector about z-axis
@@ -682,9 +683,10 @@ quat_t q;
 
 
 /* ANIM_DIR2MAT - make a matrix which turns a vehicle from the x-axis to 
- * point in the desired direction. A second direction vector, representing
- * the vehicle's previous direction, is consulted when the given direction
- * is vertical.
+ * point in the desired direction, staying "right-side up" (ie the y-axis
+ * never has a z-component). A second direction vector is consulted when 
+ * the given direction is vertical. This is intended to represent the
+ * the direction from a previous frame.
  */
 void anim_dir2mat(m,d,d2)
 mat_t m;
@@ -726,9 +728,16 @@ vect_t d, d2;
 
 }
 
-void anim_dirz2mat(m,dx,dz)
+/* ANIM_DIRN2MAT - make a matrix which turns a vehicle from the x-axis to 
+ * point in the desired direction, staying "right-side up". In cases where
+ * the direction is vertical, the second vector is consulted. The second
+ * vector defines a normal to the the vertical plane into which the vehicle's 
+ * x and z axes should be put. A good choice to put here is the direction 
+ * of the vehicle's y-axis in the previous frame.
+ */
+void anim_dirn2mat(m,dx,dn)
 mat_t m;
-vect_t dx,dz;
+vect_t dx,dn;
 {
 	vect_t temp;
 	fastf_t hyp, sign,inv,mag;
@@ -737,7 +746,7 @@ vect_t dx,dz;
 	sign = 1.0;
 	mag = MAGNITUDE(dx);
 	if (mag < VDIVIDE_TOL) {
-		fprintf(stderr,"anim_dirz2mat: Need non-zero vector");
+		fprintf(stderr,"anim_dirn2mat: Need non-zero vector");
 		return;
 	}
 	inv = 1.0/mag;
@@ -747,11 +756,11 @@ vect_t dx,dz;
 	hyp = sqrt(dx[0]*dx[0]+dx[1]*dx[1]);
 	if (hyp < VDIVIDE_TOL) { /* vertical - special handling */
 		sign = (dx[2] < 0) ? -1.0 : 1.0;
-		VSET(temp, dz[0], dz[1], 0.0);
+		VSET(temp, dn[0], dn[1], 0.0);
 		mag = MAGNITUDE(temp);
 		if (mag < VDIVIDE_TOL) {
 			/* use default */
-			VSET(temp, -sign, 0.0, 0.0);
+			VSET(temp, 0.0, 1.0, 0.0);
 			mag = 1.0;
 		} else {
 			inv = 1.0/mag;
@@ -761,11 +770,11 @@ vect_t dx,dz;
 		m[0] = 0.0;
 		m[4] = 0.0;
 		m[8] = sign;
-		m[1] = temp[1]*sign;
-		m[5] = temp[0]*sign;
+		m[1] = temp[0];
+		m[5] = temp[1];
 		m[9] = 0.0;
-		m[2] = temp[0];
-		m[6] = temp[1];
+		m[2] = -sign*temp[1];
+		m[6] = sign*temp[0];
 		m[10] = 0.0;
 	        m[3]=m[7]=m[11]=0.0;
 	        m[12]=m[13]=m[14]=0.0;
