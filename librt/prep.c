@@ -392,22 +392,22 @@ int		cpu_num;
 
 	/* XXX resp->re_randptr is an "application" (rt) level field. For now. */
 
-	if( !BU_LIST_UNINITIALIZED( &resp->re_seg ) )
+	if( BU_LIST_UNINITIALIZED( &resp->re_seg ) )
 		BU_LIST_INIT( &resp->re_seg )
 
-	if( !BU_PTBL_TEST( &resp->re_seg_blocks ) )
+	if( BU_LIST_UNINITIALIZED( &resp->re_seg_blocks.l ) )
 		bu_ptbl_init( &resp->re_seg_blocks, 64, "re_seg_blocks ptbl" );
 
-	if( !BU_LIST_UNINITIALIZED( &resp->re_parthead ) )
+	if( BU_LIST_UNINITIALIZED( &resp->re_parthead ) )
 		BU_LIST_INIT( &resp->re_parthead )
 
-	if( !BU_LIST_UNINITIALIZED( &resp->re_solid_bitv ) )
+	if( BU_LIST_UNINITIALIZED( &resp->re_solid_bitv ) )
 		BU_LIST_INIT( &resp->re_solid_bitv )
 
-	if( !BU_LIST_UNINITIALIZED( &resp->re_region_ptbl ) )
+	if( BU_LIST_UNINITIALIZED( &resp->re_region_ptbl ) )
 		BU_LIST_INIT( &resp->re_region_ptbl )
 
-	if( !BU_LIST_UNINITIALIZED( &resp->re_nmgfree ) )
+	if( BU_LIST_UNINITIALIZED( &resp->re_nmgfree ) )
 		BU_LIST_INIT( &resp->re_nmgfree )
 
 	if( !resp->re_pmem.buckets[0].q_forw )
@@ -455,7 +455,7 @@ struct resource	*resp;
 	 *  so they're kept track of two different ways.
 	 */
 	BU_LIST_INIT( &resp->re_seg );	/* abandon the list of individuals */
-	if( !BU_LIST_UNINITIALIZED( &resp->re_seg_blocks.l ) )  {
+	if( BU_LIST_IS_INITIALIZED( &resp->re_seg_blocks.l ) )  {
 		struct seg **spp;
 		BU_CK_PTBL( &resp->re_seg_blocks );
 		for( BU_PTBL_FOR( spp, (struct seg **), &resp->re_seg_blocks ) )  {
@@ -466,7 +466,7 @@ struct resource	*resp;
 	}
 
 	/* The "struct hitmiss' guys are individually malloc()ed */
-	if( !BU_LIST_UNINITIALIZED( &resp->re_nmgfree ) )  {
+	if( BU_LIST_IS_INITIALIZED( &resp->re_nmgfree ) )  {
 		struct hitmiss *hitp;
 		while( BU_LIST_WHILE( hitp, hitmiss, &resp->re_nmgfree ) )  {
 			NMG_CK_HITMISS(hitp);
@@ -476,7 +476,7 @@ struct resource	*resp;
 	}
 
 	/* The 'struct partition' guys are individually malloc()ed */
-	if( !BU_LIST_UNINITIALIZED( &resp->re_parthead ) )  {
+	if( BU_LIST_IS_INITIALIZED( &resp->re_parthead ) )  {
 		struct partition *pp;
 		while( BU_LIST_WHILE( pp, partition, &resp->re_parthead ) )  {
 			RT_CK_PT(pp);
@@ -487,7 +487,7 @@ struct resource	*resp;
 	}
 
 	/* The 'struct bu_bitv' guys on re_solid_bitv are individually malloc()ed */
-	if( !BU_LIST_UNINITIALIZED( &resp->re_solid_bitv ) )  {
+	if( BU_LIST_IS_INITIALIZED( &resp->re_solid_bitv ) )  {
 		struct bu_bitv	*bvp;
 		while( BU_LIST_WHILE( bvp, bu_bitv, &resp->re_solid_bitv ) )  {
 			BU_CK_BITV( bvp );
@@ -497,7 +497,7 @@ struct resource	*resp;
 	}
 
 	/* The 'struct bu_ptbl' guys on re_region_ptbl are individually malloc()ed */
-	if( !BU_LIST_UNINITIALIZED( &resp->re_region_ptbl ) )  {
+	if( BU_LIST_IS_INITIALIZED( &resp->re_region_ptbl ) )  {
 		struct bu_ptbl	*tabp;
 		while( BU_LIST_WHILE( tabp, bu_ptbl, &resp->re_region_ptbl ) )  {
 			BU_CK_PTBL(tabp);
@@ -618,7 +618,7 @@ register struct rt_i *rtip;
 	 *  rt_shootray() saved a table of them for us to use here.
 	 *  rt_uniresource may or may not be in this table.
  	 */
-	if( !BU_LIST_UNINITIALIZED( &rtip->rti_resources.l ) )  {
+	if( BU_LIST_IS_INITIALIZED( &rtip->rti_resources.l ) )  {
 		struct resource	**rpp;
 		BU_CK_PTBL( &rtip->rti_resources );
 		for( BU_PTBL_FOR( rpp, (struct resource **), &rtip->rti_resources ) )  {
