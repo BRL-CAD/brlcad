@@ -1760,8 +1760,14 @@ int	exitcode;
 
 	/* Be certain to close the database cleanly before exiting */
 	Tcl_Eval(interp, "db close; .inmem close");
-	if( wdbp )  wdb_close(wdbp);
-	if( dbip )  db_close(dbip);
+
+#if 0
+	if (wdbp)
+		wdb_close(wdbp);
+
+	if (dbip)
+		db_close(dbip);
+#endif
 
 	if (cbreak_mode > 0)
 	    reset_Tty(fileno(stdin)); 
@@ -2169,10 +2175,13 @@ f_opendb(
 
 		/* Close the Tcl database objects */
 		Tcl_Eval(interp, "db close; .inmem close");
+
+#if 0
 		wdb_close(wdbp);
 
 		/* Close current database.  Releases MaterHead, etc. too. */
 		db_close(dbip);
+#endif
 		dbip = new_dbip;
 		rt_material_head = new_materp;
 
@@ -2190,6 +2199,7 @@ f_opendb(
 		Tcl_AppendResult(interp, "wdb_dbopen() failed?\n", (char *)NULL);
 		return TCL_ERROR;
 	}
+#if 0
 	/* Establish LIBWDB TCL access to both disk and in-memory databases */
 	/* This creates "db" and ".inmem" Tcl objects */
 	bu_vls_trunc(&vls, 0);
@@ -2205,6 +2215,30 @@ f_opendb(
 		bu_vls_free(&msg);
 		return TCL_ERROR;
 	}
+#else
+	/* Establish LIBWDB TCL access to both disk and in-memory databases */
+	/* This creates "db" and ".inmem" Tcl objects */
+	if (wdb_init_obj(interp, wdbp, MGED_DB_NAME) != TCL_OK) {
+		bu_vls_printf(&msg, "%s\n%s\n",
+			      interp->result,
+			      Tcl_GetVar(interp,"errorInfo", TCL_GLOBAL_ONLY) );
+		Tcl_AppendResult(interp, bu_vls_addr(&msg), (char *)NULL);
+		bu_vls_free(&vls);
+		bu_vls_free(&msg);
+		return TCL_ERROR;
+	}
+	bu_vls_trunc(&vls, 0);
+	bu_vls_printf(&vls, "wdb_open %s inmem [get_dbip]", MGED_INMEM_NAME);
+	if (Tcl_Eval( interp, bu_vls_addr(&vls) ) != TCL_OK) {
+		bu_vls_printf(&msg, "%s\n%s\n",
+			      interp->result,
+			      Tcl_GetVar(interp,"errorInfo", TCL_GLOBAL_ONLY) );
+		Tcl_AppendResult(interp, bu_vls_addr(&msg), (char *)NULL);
+		bu_vls_free(&vls);
+		bu_vls_free(&msg);
+		return TCL_ERROR;
+	}
+#endif
 
 	/* Perhaps do something special with the GUI */
 	bu_vls_trunc(&vls, 0);
@@ -2254,4 +2288,3 @@ mged_bomb_hook(clientData, str)
 	
 	return TCL_OK;
 }
-	     
