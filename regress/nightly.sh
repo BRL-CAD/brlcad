@@ -38,11 +38,11 @@ CVS=cvs
 if [ ! -x "`which $CVS`" ] ; then
     CVS=/usr/gnu/bin/cvs
     if [ ! -x "`which $CVS`" ] ; then
-	CVS=/usr/bin/cvs
-	if [ ! -x "`which $CVS`" ] ; then
-	    echo "unable to find cvs!"
-	    exit 1
-	fi
+        CVS=/usr/bin/cvs
+        if [ ! -x "`which $CVS`" ] ; then
+            echo "unable to find cvs!"
+            exit 1
+        fi
     fi
 fi
 echo CVS=$CVS
