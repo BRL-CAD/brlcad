@@ -83,7 +83,7 @@ eval `sh machinetype.sh -b`
 #
 ############################################################################
 SCRIPTS="machinetype.sh cakeinclude.sh cray.sh ranlib5.sh \
-	pixinfo.sh sgisnap.sh cadbug.sh"
+	pixinfo.sh sgisnap.sh cadbug.sh show.sh"
 
 for i in ${SCRIPTS}
 do
