@@ -1,19 +1,24 @@
 /*
  * convert BRL .pix files to ppm
- * zcat file.Z | pixtoppm
  * sahayman 1991 01 18
- *
- * From: Steve Hayman <sahayman@iuvax.cs.indiana.edu>
- *
- * brl says this:
- *
- * These compressed images are in BRL-CAD .pix file format.
- * They are 24-bits/pixel, 720 by 486 pixels.
  *
  * Pixels run left-to-right, from the bottom of the screen to the top.
  *
- *	Mike @ BRL.MIL
+ *  Authors -
+ *	Steve Hayman <sahayman@iuvax.cs.indiana.edu>
+ *	Michael John Muuss
+ *  
+ *  Source -
+ *	The U. S. Army Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *  
+ *  Distribution Status -
+ *	Public Domain, Distribution Unlimitied.
  */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (ARL)";
+#endif
+
 #include <stdio.h>
 #include "machine.h"
 #include "externs.h"
