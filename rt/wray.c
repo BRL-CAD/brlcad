@@ -24,7 +24,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static char RCSwray[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
