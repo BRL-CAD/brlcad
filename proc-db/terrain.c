@@ -20,7 +20,9 @@
 
 /* Header files which are used for this example */
 
-#include <stdio.h>		/* Direct the output to stdout */
+#include "conf.h"		/* BRLCAD configuration header */
+
+#include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include "machine.h"		/* BRLCAD specific machine data types */
