@@ -4,6 +4,10 @@ fbcolor \- interactively pick colors
 .SH SYNOPSIS
 .B fbcolor
 .RB [ \-h ]
+.RB [ \-S\  screen\ squaresize]
+.RB [ \-W\  screen\ width]
+.RB [ \-N\  screen\ height]
+
 .SH DESCRIPTION
 .I Fbcolor
 is an interactive color picking facility.
@@ -18,6 +22,15 @@ is used to select the display device (see
 .IR brlcad (1)).
 If this variable is not set, the default device for your system will
 be used.
+If the
+.B \-h
+option is used,
+1024x1024 resolution is used.
+Alternatively, the 
+.B \-SWN
+options can all be used in the normal way to specify the size of
+the screen (see
+.IR brlcad (1)).
 .PP
 .I Fbcolor
 draws a set of color bars in the lower left corner of the display,
@@ -79,10 +92,6 @@ and typing
 or
 .RB `` <LF> ''
 exits the program.
-.PP
-There is also a
-.B \-h
-flag, which uses the frame buffer in high resolution mode.
 .SH "SEE ALSO"
 brlcad(1), fbclear(1), fbcmap(1)
 .SH AUTHOR
