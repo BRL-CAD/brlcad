@@ -40,9 +40,14 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
  *  Create a v5 database "free" object of the specified size,
  *  and place it at the indicated location in the database.
  *
+ *  There are two interesting cases:
+ *	1)  The free object is "small".  Just write it all at once.
+ *	2)  The free object is "large".  Write header and trailer
+ *	    separately
+ *
  *  Returns -
  *	0	OK
- *	-1	Fail
+ *	-1	Fail.  This is a horrible error.
  */
 int
 db5_write_free( struct db_i *dbip, struct directory *dp, long length )
@@ -52,22 +57,51 @@ db5_write_free( struct db_i *dbip, struct directory *dp, long length )
 	RT_CK_DBI(dbip);
 	RT_CK_DIR(dp);
 
-	BU_INIT_EXTERNAL( &ext );
-	db5_make_free_object( &ext, length );
+ 	if( length <= 8192 )  {
 
-	if( dp->d_flags & RT_DIR_INMEM )  {
-		bcopy( (char *)ext.ext_buf, dp->d_un.ptr, ext.ext_nbytes );
+		BU_INIT_EXTERNAL( &ext );
+		db5_make_free_object( &ext, length );
+
+		if( dp->d_flags & RT_DIR_INMEM )  {
+			bcopy( (char *)ext.ext_buf, dp->d_un.ptr, ext.ext_nbytes );
+			bu_free_external( &ext );
+			return 0;
+		}
+
+		if( db_write( dbip, (char *)ext.ext_buf, ext.ext_nbytes, dp->d_addr ) < 0 )  {
+			bu_free_external( &ext );
+			return -1;
+		}
 		bu_free_external( &ext );
 		return 0;
 	}
 
+	/* Free object is "large", only write the header and trailer bytes. */
+
+	BU_INIT_EXTERNAL( &ext );
+	db5_make_free_object_hdr( &ext, length );
+
+	if( dp->d_flags & RT_DIR_INMEM )  {
+		bcopy( (char *)ext.ext_buf, dp->d_un.ptr, ext.ext_nbytes );
+		((char *)ext.ext_buf)[length-1] = DB5HDR_MAGIC2;
+		bu_free_external( &ext );
+		return 0;
+	}
+
+	/* Write header */
 	if( db_write( dbip, (char *)ext.ext_buf, ext.ext_nbytes, dp->d_addr ) < 0 )  {
+		bu_free_external( &ext );
+		return -1;
+	}
+
+	/* Write trailer byte */
+	*((char *)ext.ext_buf) = DB5HDR_MAGIC2;
+	if( db_write( dbip, (char *)ext.ext_buf, 1, dp->d_addr+length-1 ) < 0 )  {
 		bu_free_external( &ext );
 		return -1;
 	}
 	bu_free_external( &ext );
 	return 0;
-
 }
 
 /*
@@ -165,7 +199,10 @@ db5_realloc( struct db_i *dbip, struct directory *dp, struct bu_external *ep )
 		baseaddr = dp->d_addr = -1L;	/* sanity */
 	}
 
-	/* Can we obtain a free block somewhere else? */
+	/*
+	 *  Can we obtain a free block somewhere else?
+	 *  Keep in mind that free blocks may be very large (e.g. 50 MBytes).
+	 */
 	{
 		struct mem_map	*mmp;
 		long		newaddr;
@@ -203,6 +240,13 @@ db5_realloc( struct db_i *dbip, struct directory *dp, struct bu_external *ep )
 	dbip->dbi_eof += ep->ext_nbytes;
 	dp->d_len = ep->ext_nbytes;
 	if(rt_g.debug&DEBUG_DB) bu_log("db5_realloc(%s) extending database addr=x%x, len=%d\n", dp->d_namep, dp->d_addr, dp->d_len);
+#if 0
+	/* Extending db with free record isn't necessary even to
+	 * provide "stable-store" capability.
+	 * If program or system aborts before caller write new object,
+	 * there is no problem.
+	 */
 	if( db5_write_free( dbip, dp, dp->d_len ) < 0 )  return -1;
+#endif
 	return 0;
 }
