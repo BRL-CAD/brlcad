@@ -74,6 +74,8 @@ ${OUT_FILE}:
     echo \PL_DM_LIBES = \$"(LIBWDB)" \$"(LIBRT)" \$"(LIBBN)" \$"(LIBBU)" \$"(LIBTK)" \$"(LIBTCL)" \$"(LIBDM_LIBES)" \$"(LIBES)" >> ${OUT_FILE}
     echo \PL_DM_DEP_LIBES = \$"(LIBRT_DEP)" \$"(LIBBN_DEP)" \$"(LIBBU_DEP)" \$"(LIBWDB_DEP)" \$"(LIBTCL_DEP)" \$"(LIBTK_DEP)" \$"(LIBDM_DEP)" >> ${OUT_FILE}
     echo "" >> ${OUT_FILE}
+    echo all: g-xxx rtexample pl-dm >> ${OUT_FILE}
+    echo "" >> ${OUT_FILE}
     echo g-xxx:	g-xxx.o \$"(G_XXX_DEP_LIBES)" >> ${OUT_FILE}
     echo "	" \$"(CC)" \$"(LDFLAGS)" g-xxx.o \$"(G_XXX_LIBES)" -o g-xxx >> ${OUT_FILE}
     echo "" >> ${OUT_FILE}
