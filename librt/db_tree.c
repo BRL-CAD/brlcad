@@ -444,7 +444,7 @@ int			noisy;
 	struct directory	*dp;		/* element's dp */
 
 	if( tsp->ts_dbip->dbi_magic != DBI_MAGIC )  rt_bomb("db_follow_path_for_state:  bad dbip\n");
-	if(rt_g.debug&DEBUG_DB)  {
+	if(rt_g.debug&DEBUG_TREEWALK)  {
 		char	*sofar = db_path_to_string(pathp);
 		rt_log("db_follow_path_for_state() pathp='%s', tsp=x%x, orig_str='%s', noisy=%d\n",
 			sofar, tsp, orig_str, noisy );
@@ -577,7 +577,7 @@ found_it:
 out:
 	if( rp )  rt_free( (char *)rp, dp->d_namep );
 	rt_free( str, "dupped path" );
-	if(rt_g.debug&DEBUG_DB)  {
+	if(rt_g.debug&DEBUG_TREEWALK)  {
 		char	*sofar = db_path_to_string(pathp);
 		rt_log("db_follow_path_for_state() returns pathp='%s'\n",
 			sofar);
@@ -615,7 +615,7 @@ struct tree_state	*tsp;
 	/* Build tree representing boolean expression in Member records */
 	if( rt_pure_boolean_expressions )  {
 		curtree = rt_mkbool_tree( trees, subtreecount, regionp );
-		if(rt_g.debug&DEBUG_REGIONS)  {
+		if(rt_g.debug&DEBUG_TREEWALK)  {
 			rt_log("rt_mkgift_tree returns pure tree:\n");
 			rt_pr_tree(curtree, 0);
 		}
@@ -647,7 +647,7 @@ struct tree_state	*tsp;
 		tstart->tl_op = OP_UNION;
 		tstart->tl_tree = curtree;
 
-		if(rt_g.debug&DEBUG_REGIONS) {
+		if(rt_g.debug&DEBUG_TREEWALK)  {
 			rt_log("rt_mkgift_tree() intermediate term:\n");
 			rt_pr_tree(tstart->tl_tree, 0);
 		}
@@ -657,7 +657,7 @@ struct tree_state	*tsp;
 	}
 
 	curtree = rt_mkbool_tree( trees, subtreecount, regionp );
-	if(rt_g.debug&DEBUG_REGIONS)  {
+	if(rt_g.debug&DEBUG_TREEWALK)  {
 		rt_log("rt_mkgift_tree() returns:\n");
 		rt_pr_tree(curtree, 0);
 	}
@@ -696,7 +696,7 @@ struct combined_tree_state	**region_start_statepp;
 		return(TREE_NULL);
 	}
 	dp = DB_FULL_PATH_CUR_DIR(pathp);
-	if(rt_g.debug&DEBUG_DB)  {
+	if(rt_g.debug&DEBUG_TREEWALK)  {
 		char	*sofar = db_path_to_string(pathp);
 		rt_log("db_recurse() pathp='%s', tsp=x%x, *statepp=x%x\n",
 			sofar, tsp,
@@ -751,8 +751,10 @@ struct combined_tree_state	**region_start_statepp;
 			ctsp->cts_s = nts;	/* struct copy */
 			db_dup_full_path( &(ctsp->cts_p), pathp );
 			*region_start_statepp = ctsp;
-rt_log("setting *region_start_statepp to x%x\n", ctsp );
-			db_pr_combined_tree_state(ctsp);
+			if(rt_g.debug&DEBUG_TREEWALK)  {
+				rt_log("setting *region_start_statepp to x%x\n", ctsp );
+				db_pr_combined_tree_state(ctsp);
+			}
 		}
 
 		tlp = trees = (struct tree_list *)rt_malloc(
@@ -859,7 +861,7 @@ region_end:
 	}
 out:
 	if( rp )  rt_free( (char *)rp, dp->d_namep );
-	if(rt_g.debug&DEBUG_DB)  {
+	if(rt_g.debug&DEBUG_TREEWALK)  {
 		char	*sofar = db_path_to_string(pathp);
 		rt_log("db_recurse() return curtree=x%x, pathp='%s', *statepp=x%x\n",
 			curtree, sofar,
@@ -869,7 +871,7 @@ out:
 	return(curtree);		/* SUCCESS */
 fail:
 	if( rp )  rt_free( (char *)rp, dp->d_namep );
-	if(rt_g.debug&DEBUG_DB)  {
+	if(rt_g.debug&DEBUG_TREEWALK)  {
 		char	*sofar = db_path_to_string(pathp);
 		rt_log("db_recurse() return curtree=NULL, pathp='%s', *statepp=x%x\n",
 			sofar,
@@ -1099,41 +1101,14 @@ int		cur;
 
 /* ============================== */
 
-static struct tree_state	rt_initial_tree_state = {
-	0,			/* ts_dbip */
-	0,			/* ts_sofar */
-	0, 0, 0,		/* region, air, gmater */
-	1.0, 1.0, 1.0,		/* color, RGB */
-	0,			/* override */
-	DB_INH_LOWER,		/* color inherit */
-	DB_INH_LOWER,		/* mater inherit */
-	"",			/* material name */
-	"",			/* material params */
-	1.0, 0.0, 0.0, 0.0,
-	0.0, 1.0, 0.0, 0.0,
-	0.0, 0.0, 1.0, 0.0,
-	0.0, 0.0, 0.0, 1.0,
-};
-
 static struct rt_i	*db_rtip;
 static union tree	**db_reg_trees;
 static int		db_reg_count;
 static int		db_reg_current;		/* semaphored when parallel */
+static union tree *	(*db_reg_end_func)();
+static union tree *	(*db_reg_leaf_func)();
 
-HIDDEN int rt_gettree_p1_region_start( tsp, pathp )
-struct tree_state	*tsp;
-struct full_path	*pathp;
-{
-
-	/* Ignore "air" regions unless wanted */
-	if( db_rtip->useair == 0 &&  tsp->ts_aircode != 0 )  {
-		db_rtip->rti_air_discards++;
-		return(-1);	/* drop this region */
-	}
-	return(0);
-}
-
-HIDDEN union tree *rt_gettree_p1_region_end( tsp, pathp, curtree )
+HIDDEN union tree *db_gettree_region_end( tsp, pathp, curtree )
 register struct tree_state	*tsp;
 struct full_path	*pathp;
 union tree		*curtree;
@@ -1154,7 +1129,7 @@ union tree		*curtree;
 	return(curtree);
 }
 
-HIDDEN union tree *rt_gettree_p1_leaf( tsp, pathp, rp, id )
+HIDDEN union tree *db_gettree_leaf( tsp, pathp, rp, id )
 struct tree_state	*tsp;
 struct full_path	*pathp;
 union record		*rp;
@@ -1173,65 +1148,6 @@ int			id;
 	curtree->tr_a.tu_stp = (struct soltab *)cts;
 	curtree->tr_a.tu_name = (char *)0;
 	curtree->tr_regionp = (struct region *)0;
-
-	return(curtree);
-}
-
-HIDDEN union tree *rt_gettree_p2_region_end( tsp, pathp, curtree )
-register struct tree_state	*tsp;
-struct full_path	*pathp;
-union tree		*curtree;
-{
-	register struct combined_tree_state	*cts;
-	struct region		*rp;
-	struct directory	*dp;
-
-	GETSTRUCT( rp, region );
-	rp->reg_forw = REGION_NULL;
-	rp->reg_regionid = tsp->ts_regionid;
-	rp->reg_aircode = tsp->ts_aircode;
-	rp->reg_gmater = tsp->ts_gmater;
-	rp->reg_mater = tsp->ts_mater;		/* struct copy */
-	rp->reg_name = db_path_to_string( pathp );
-
-	dp = DB_FULL_PATH_CUR_DIR(pathp);
-	/* XXX This should be semaphore protected! */
-	rp->reg_instnum = dp->d_uses++;
-
-rt_log("rt_gettree_p2_region_end() %s\n", rp->reg_name );
-	rt_pr_tree( curtree, 0 );
-
-	/* Mark all solids & nodes as belonging to this region */
-	rt_tree_region_assign( curtree, rp );
-
-	rt_add_regtree( db_rtip, rp, curtree );
-	return(curtree);
-}
-
-HIDDEN union tree *rt_gettree_p2_leaf( tsp, pathp, rp, id )
-struct tree_state	*tsp;
-struct full_path	*pathp;
-union record		*rp;
-int			id;
-{
-	struct soltab	*stp;
-	union tree	*curtree;
-	struct directory	*dp;
-
-	/* Note:  solid may not be contained by a region (yet) */
-
-	dp = DB_FULL_PATH_CUR_DIR(pathp);
-	if( (stp = rt_add_solid( db_rtip, rp, dp, tsp->ts_mat )) == SOLTAB_NULL )
-		return(TREE_NULL);
-
-	curtree=(union tree *)rt_malloc(sizeof(union tree), "solid tree");
-	curtree->tr_op = OP_SOLID;
-	curtree->tr_a.tu_stp = stp;
-	curtree->tr_a.tu_name = db_path_to_string( pathp );
-	/* regionp will be filled in later by rt_tree_region_assign() */
-	curtree->tr_a.tu_regionp = (struct region *)0;
-
-rt_log("rt_gettree_p2_leaf() %s\n", curtree->tr_a.tu_name );
 
 	return(curtree);
 }
@@ -1255,7 +1171,8 @@ struct combined_tree_state	**region_start_statepp;
 		ctsp->cts_s.ts_region_start_func = 0;
 		/* ts_region_end_func() will be called in db_walk_dispatcher() */
 		ctsp->cts_s.ts_region_end_func = 0;
-		ctsp->cts_s.ts_leaf_func = rt_gettree_p2_leaf;
+		/* Use user's leaf function. Import via static global */
+		ctsp->cts_s.ts_leaf_func = db_reg_leaf_func;
 
 		/* If region already seen, force flag */
 		if( *region_start_statepp )
@@ -1264,7 +1181,7 @@ struct combined_tree_state	**region_start_statepp;
 			ctsp->cts_s.ts_sofar &= ~TS_SOFAR_REGION;
 
 		curtree = db_recurse( &ctsp->cts_s, &ctsp->cts_p, region_start_statepp );
-		if( curtree == (union tree *)0 )  {
+		if( curtree == TREE_NULL )  {
 			rt_log("db_walk_subtree()/db_recurse() FAIL\n");
 			db_free_combined_tree_state( ctsp );
 			tp->tr_op = OP_NOP;
@@ -1311,7 +1228,8 @@ db_walk_dispatcher()
 		if( mine >= db_reg_count )
 			break;
 
-rt_log("\n\n***** db_walk_dispatcher() on item %d\n\n", mine );
+		if( rt_g.debug&DEBUG_TREEWALK )
+			rt_log("\n\n***** db_walk_dispatcher() on item %d\n\n", mine );
 
 		/* Walk the full subtree now */
 		region_start_statep = (struct combined_tree_state *)0;
@@ -1329,8 +1247,11 @@ rt_log("\n\n***** db_walk_dispatcher() on item %d\n\n", mine );
 			rt_bomb("db_walk_dispatcher() region started with no state?\n");
 
 		/* This is a new region */
-		db_pr_combined_tree_state(region_start_statep);
-		rt_gettree_p2_region_end( &(region_start_statep->cts_s),
+		if( rt_g.debug&DEBUG_TREEWALK )
+			db_pr_combined_tree_state(region_start_statep);
+
+		/* XXX use return code? */
+		(*db_reg_end_func)( &(region_start_statep->cts_s),
 			&(region_start_statep->cts_p),
 			curtree );
 
@@ -1338,9 +1259,223 @@ rt_log("\n\n***** db_walk_dispatcher() on item %d\n\n", mine );
 	}
 }
 
+db_walk_tree( rtip, argc, argv, ncpu, init_state, reg_start_func, reg_end_func, leaf_func )
+struct rt_i	*rtip;
+int		argc;
+char		**argv;
+int		ncpu;
+struct tree_state *init_state;
+int		(*reg_start_func)();
+union tree *	(*reg_end_func)();
+union tree *	(*leaf_func)();
+{
+	union tree		*whole_tree = TREE_NULL;
+	int			new_reg_count;
+	int			i;
+	union tree		**reg_trees;	/* (*reg_trees)[] */
+
+	RT_CHECK_RTI(rtip);
+
+	db_rtip = rtip;			/* make global to this module */
+
+	/* Walk each of the given path strings */
+	for( i=0; i < argc; i++ )  {
+		register union tree	*curtree;
+		struct tree_state	ts;
+		struct full_path	path;
+		struct combined_tree_state	*region_start_statep;
+
+		ts = *init_state;	/* struct copy */
+		ts.ts_dbip = rtip->rti_dbip;
+		path.fp_len = path.fp_maxlen = 0;
+
+		/* First, establish context from given path */
+		if( db_follow_path_for_state( &ts, &path, argv[i], LOOKUP_NOISY ) < 0 )
+			continue;	/* ERROR */
+
+		/*
+		 *  Second, walk tree from root to start of all regions.
+		 *  Build a boolean tree of all regions.
+		 *  Use user function to accept/reject each region here.
+		 *  Use internal functions to process regions & leaves.
+		 */
+		ts.ts_stop_at_regions = 1;
+		ts.ts_region_start_func = reg_start_func;
+		ts.ts_region_end_func = db_gettree_region_end;
+		ts.ts_leaf_func = db_gettree_leaf;
+
+		region_start_statep = (struct combined_tree_state *)0;
+		curtree = db_recurse( &ts, &path, &region_start_statep );
+		if( region_start_statep )
+			db_free_combined_tree_state( region_start_statep );
+		if( curtree == (union tree *)0 )
+			continue;	/* ERROR */
+
+		if( rt_g.debug&DEBUG_TREEWALK )  {
+			rt_log("tree after db_recurse():\n");
+			rt_pr_tree( curtree, 0 );
+		}
+
+		if( whole_tree == TREE_NULL )  {
+			whole_tree = curtree;
+		} else {
+			union tree	*new;
+
+			new = (union tree *)rt_malloc( sizeof(union tree), "new tree top");
+			new->tr_op = OP_UNION;
+			new->tr_b.tb_left = whole_tree;
+			new->tr_b.tb_right = curtree;
+			whole_tree = new;
+		}
+	}
+
+	if( whole_tree == TREE_NULL )
+		return(-1);	/* ERROR, nothing worked */
+
+	/*
+	 *  Third, push all non-union booleans down.
+	 */
+	db_non_union_push( whole_tree );
+	if( rt_g.debug&DEBUG_TREEWALK )  {
+		rt_log("tree after db_non_union_push():\n");
+		rt_pr_tree( whole_tree, 0 );
+	}
+
+	/*
+	 *  Build array of sub-tree pointers, one per region,
+	 *  for parallel processing below.
+	 */
+	new_reg_count = db_count_subtree_regions( whole_tree );
+	reg_trees = (union tree **)rt_malloc( sizeof(union tree *) * new_reg_count,
+		"*reg_trees[]" );
+	(void)db_tally_subtree_regions( whole_tree, reg_trees, 0 );
+
+	if( rt_g.debug&DEBUG_TREEWALK )  {
+		rt_log("new region count=%d\n", new_reg_count);
+		for( i=0; i<new_reg_count; i++ )  {
+			rt_log("tree %d =\n", i);
+			rt_pr_tree( reg_trees[i], 0 );
+		}
+	}
+
+	/*
+	 *  Fourth, in parallel, for each region, walk the tree to the leaves.
+	 */
+	/* Export some state to read-only static variables */
+	db_reg_trees = reg_trees;
+	db_reg_count = new_reg_count;
+	db_reg_current = 0;
+	db_reg_end_func = reg_end_func;
+	db_reg_leaf_func = leaf_func;
+
+	if( ncpu <= 1 )  {
+		db_walk_dispatcher();
+	} else {
+		/* XXX Need to ensure that rt_g.rtg_parallel is set! */
+		/* XXX Should actually be done by rt_parallel. */
+		rt_g.rtg_parallel = 1;
+		/* XXX Need to check that RES_INIT()s have been done too! */
+		rt_parallel( db_walk_dispatcher, ncpu );
+	}
+	return(0);	/* OK */
+}
+
+/* ============================== */
+
+static struct tree_state	rt_initial_tree_state = {
+	0,			/* ts_dbip */
+	0,			/* ts_sofar */
+	0, 0, 0,		/* region, air, gmater */
+	1.0, 1.0, 1.0,		/* color, RGB */
+	0,			/* override */
+	DB_INH_LOWER,		/* color inherit */
+	DB_INH_LOWER,		/* mater inherit */
+	"",			/* material name */
+	"",			/* material params */
+	1.0, 0.0, 0.0, 0.0,
+	0.0, 1.0, 0.0, 0.0,
+	0.0, 0.0, 1.0, 0.0,
+	0.0, 0.0, 0.0, 1.0,
+};
+
+HIDDEN int rt_gettree_region_start( tsp, pathp )
+struct tree_state	*tsp;
+struct full_path	*pathp;
+{
+
+	/* Ignore "air" regions unless wanted */
+	if( db_rtip->useair == 0 &&  tsp->ts_aircode != 0 )  {
+		db_rtip->rti_air_discards++;
+		return(-1);	/* drop this region */
+	}
+	return(0);
+}
+
+HIDDEN union tree *rt_gettree_region_end( tsp, pathp, curtree )
+register struct tree_state	*tsp;
+struct full_path	*pathp;
+union tree		*curtree;
+{
+	register struct combined_tree_state	*cts;
+	struct region		*rp;
+	struct directory	*dp;
+
+	GETSTRUCT( rp, region );
+	rp->reg_forw = REGION_NULL;
+	rp->reg_regionid = tsp->ts_regionid;
+	rp->reg_aircode = tsp->ts_aircode;
+	rp->reg_gmater = tsp->ts_gmater;
+	rp->reg_mater = tsp->ts_mater;		/* struct copy */
+	rp->reg_name = db_path_to_string( pathp );
+
+	dp = DB_FULL_PATH_CUR_DIR(pathp);
+	/* XXX This should be semaphore protected! */
+	rp->reg_instnum = dp->d_uses++;
+
+	if(rt_g.debug&DEBUG_TREEWALK)  {
+		rt_log("rt_gettree_region_end() %s\n", rp->reg_name );
+		rt_pr_tree( curtree, 0 );
+	}
+
+	/* Mark all solids & nodes as belonging to this region */
+	rt_tree_region_assign( curtree, rp );
+
+	rt_add_regtree( db_rtip, rp, curtree );
+	return(curtree);
+}
+
+HIDDEN union tree *rt_gettree_leaf( tsp, pathp, rp, id )
+struct tree_state	*tsp;
+struct full_path	*pathp;
+union record		*rp;
+int			id;
+{
+	struct soltab	*stp;
+	union tree	*curtree;
+	struct directory	*dp;
+
+	/* Note:  solid may not be contained by a region (yet) */
+
+	dp = DB_FULL_PATH_CUR_DIR(pathp);
+	if( (stp = rt_add_solid( db_rtip, rp, dp, tsp->ts_mat )) == SOLTAB_NULL )
+		return(TREE_NULL);
+
+	curtree=(union tree *)rt_malloc(sizeof(union tree), "solid tree");
+	curtree->tr_op = OP_SOLID;
+	curtree->tr_a.tu_stp = stp;
+	curtree->tr_a.tu_name = db_path_to_string( pathp );
+	/* regionp will be filled in later by rt_tree_region_assign() */
+	curtree->tr_a.tu_regionp = (struct region *)0;
+
+	if(rt_g.debug&DEBUG_TREEWALK)
+		rt_log("rt_gettree_leaf() %s\n", curtree->tr_a.tu_name );
+
+	return(curtree);
+}
+
 /*
  * XXX  NEW NEW NEW
- *  			R T _ G E T _ T R E E
+ *  			R T _ G E T T R E E
  *
  *  User-called function to add a tree hierarchy to the displayed set.
  *  
@@ -1353,85 +1488,65 @@ NEW_rt_gettree( rtip, node)
 struct rt_i	*rtip;
 char		*node;
 {
-	register union tree	*curtree;
-	struct tree_state	ts;
-	struct full_path	path;
 	int			prev_sol_count;
-	int			new_reg_count;
 	int			i;
-	union tree		**reg_trees;	/* (*reg_trees)[] */
-	struct combined_tree_state	*region_start_statep;
 
 	RT_CHECK_RTI(rtip);
 
 	if(!rtip->needprep)
 		rt_bomb("rt_gettree called again after rt_prep!\n");
 
-	db_rtip = rtip;			/* make global to this module */
-	ts = rt_initial_tree_state;	/* struct copy */
-	ts.ts_dbip = rtip->rti_dbip;
-
-	path.fp_len = path.fp_maxlen = 0;
-
 	prev_sol_count = rtip->nsolids;
 
-	/* First, establish context from given path */
-	if( db_follow_path_for_state( &ts, &path, node, LOOKUP_NOISY ) < 0 )
-		return(-1);		/* ERROR */
+	i = db_walk_tree( rtip, 1, &node, 1,
+		&rt_initial_tree_state,
+		rt_gettree_region_start,
+		rt_gettree_region_end,
+		rt_gettree_leaf );
 
-	/*
-	 *  Second, walk tree from root to start of all regions.
-	 *  Build a boolean tree of all regions.
-	 */
-	ts.ts_stop_at_regions = 1;
-	ts.ts_region_start_func = rt_gettree_p1_region_start;
-	ts.ts_region_end_func = rt_gettree_p1_region_end;
-	ts.ts_leaf_func = rt_gettree_p1_leaf;
-	region_start_statep = (struct combined_tree_state *)0;
-	curtree = db_recurse( &ts, &path, &region_start_statep );
-	if( region_start_statep )
-		db_free_combined_tree_state( region_start_statep );
-	if( curtree == (union tree *)0 )  return(-1);
-
-	rt_log("tree after db_recurse():\n");
-	rt_pr_tree( curtree, 0 );
-
-	/*
-	 *  Third, push all non-union booleans down.
-	 */
-	db_non_union_push( curtree );
-	rt_log("tree after db_non_union_push():\n");
-	rt_pr_tree( curtree, 0 );
-
-	/*
-	 *  Build array of sub-tree pointers, one per region,
-	 *  for parallel processing below.
-	 */
-	new_reg_count = db_count_subtree_regions( curtree );
-rt_log("new region count=%d\n", new_reg_count);
-	reg_trees = (union tree **)rt_malloc( sizeof(union tree *) * new_reg_count,
-		"*reg_trees[]" );
-	i = db_tally_subtree_regions( curtree, reg_trees, 0 );
-	rt_log(" count1=%d, count2=%d\n", new_reg_count, i );
-	for( i=0; i<new_reg_count; i++ )  {
-		rt_log("tree %d =\n", i);
-		rt_pr_tree( reg_trees[i], 0 );
-	}
-
-	/*
-	 *  Fourth, in parallel, for each region, walk the tree to the leaves.
-	 */
-	/* do equivalant of rt_drawobj() && rt_add_solid */
-	db_reg_trees = reg_trees;
-	db_reg_count = new_reg_count;
-	db_reg_current = 0;
-	if( 1 /* !rt_g.rtg_parallel */ )  {
-		db_walk_dispatcher();
-	} else {
-		rt_parallel( db_walk_dispatcher, rt_avail_cpus() );
-	}
+	if( i < 0 )  return(-1);
 
 	if( rtip->nsolids <= prev_sol_count )
 		rt_log("rt_gettree(%s) warning:  no solids found\n", node);
+	return(0);	/* OK */
+}
+
+/*
+ *  			R T _ G E T T R E E S
+ *
+ *  User-called function to add a set of tree hierarchies to the active set.
+ *  
+ *  Returns -
+ *  	0	Ordinarily
+ *	-1	On major error
+ */
+int
+rt_gettrees( rtip, argc, argv )
+struct rt_i	*rtip;
+int		argc;
+char		**argv;
+{
+	int			prev_sol_count;
+	int			i;
+
+	RT_CHECK_RTI(rtip);
+
+	if(!rtip->needprep)
+		rt_bomb("rt_gettree called again after rt_prep!\n");
+
+	if( argc <= 0 )  return(-1);	/* FAIL */
+
+	prev_sol_count = rtip->nsolids;
+
+	i = db_walk_tree( rtip, argc, argv, 1,	/* # cpus */
+		&rt_initial_tree_state,
+		rt_gettree_region_start,
+		rt_gettree_region_end,
+		rt_gettree_leaf );
+
+	if( i < 0 )  return(-1);
+
+	if( rtip->nsolids <= prev_sol_count )
+		rt_log("rt_gettrees(%s) warning:  no solids found\n", argv[0]);
 	return(0);	/* OK */
 }
