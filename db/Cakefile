@@ -44,10 +44,20 @@
 /* Default rule */
 everything&::	PRODUCTS
 
+/*
+ *  Because it may be necessary to run this command long before
+ *  a "cake install" could be done, on an SGI the "rld" loader has
+ *  no idea where to find the shared libraries necessary.
+ *  So we tell it.  Ugh.  Stupid SGI software.  Sun got it right.
+ */
 #if defined(NFS)
-#	define	CONV	../.conv.MTYPE/asc2g
+#	define	CONV	\
+		LD_LIBRARY_PATH=LIBWDB_DIR:LIBRT_DIR:LIBSYSV_DIR:$LD_LIBRARY_PATH \
+		../.conv.MTYPE/asc2g
 #else
-#	define	CONV	../conv/asc2g
+#	define	CONV	\
+		LD_LIBRARY_PATH=LIBWDB_DIR:LIBRT_DIR:LIBSYSV_DIR:$LD_LIBRARY_PATH \
+		../conv/asc2g
 #endif
 
 %.g:	../SRCDIR/%.asc				if exist ../SRCDIR/%.asc
