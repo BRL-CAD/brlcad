@@ -616,7 +616,7 @@ union bitv_elem {
 	register int		_b;	/* Current bit-in-word number */  \
 	register bitv_t		_val;	/* Current word value */  \
 	register int		_wd;	/* Current word number */  \
-	for( _wd=RT_BITV_BITS2WORDS(_lim); _wd>=0; _wd-- )  {  \
+	for( _wd=RT_BITV_BITS2WORDS(_lim)-1; _wd>=0; _wd-- )  {  \
 		_val = (_bitv)[_wd];  \
 		for(_b=0; _val!=0 && _b < BITV_MASK+1; _b++, _val >>= 1 ) { \
 			if( !(_val & 1) )  continue;
