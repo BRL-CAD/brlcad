@@ -806,7 +806,7 @@ struct solid	*sp;
 	}
 	RT_CK_DB_INTERNAL( &intern );
 
-	if( replot_modified_solid( sp, &intern, mat ) < 0 )  {
+	if( replot_modified_solid( sp, &intern, rt_identity ) < 0 )  {
 	    	if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );
 		db_free_external( &ext );
 		return(-1);
@@ -834,6 +834,7 @@ struct solid			*sp;
 struct rt_db_internal		*ip;
 CONST mat_t			mat;
 {
+	struct rt_db_internal	intern;
 	unsigned		addr, bytes;
 	struct rt_list		vhead;
 	struct rt_tess_tol	ttol;
@@ -868,11 +869,14 @@ CONST mat_t			mat;
 	tol.perp = 1e-6;
 	tol.para = 1 - tol.perp;
 
-	if( rt_functab[ip->idb_type].ft_plot( &vhead, ip, &ttol, &tol ) < 0 )  {
+	transform_editing_solid( &intern, mat, ip, 0 );
+
+	if( rt_functab[ip->idb_type].ft_plot( &vhead, &intern, &ttol, &tol ) < 0 )  {
 		(void)printf("%s: re-plot failure\n",
 			sp->s_path[sp->s_last]->d_namep );
 	    	return(-1);
 	}
+    	if( intern.idb_ptr )  rt_functab[ip->idb_type].ft_ifree( &intern );
 
 	/* Write new displaylist */
 	drawH_part2( sp->s_soldash, &vhead,
