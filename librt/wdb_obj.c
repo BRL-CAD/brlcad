@@ -6838,7 +6838,7 @@ wdb_unhide_tcl(ClientData	clientData,
  *
  *	argv[2] is the name of the object
  *
- *	for "get", remaining args are attribute names (or none for all)
+ *	for "get" or "show", remaining args are attribute names (or none for all)
  *
  *	for "set", remaining args are attribute name, attribute value..
  *
@@ -6909,7 +6909,7 @@ wdb_attr_cmd(struct rt_wdb	*wdbp,
 			}
 		} else {
 			const char *val;
-			int do_separators=argc-4;
+			int do_separators=argc-4; /* if more than one attribute */
 
 			for( i=3 ; i<argc ; i++ ) {
 				val = bu_avs_get( &avs, argv[i] );
@@ -7049,40 +7049,88 @@ wdb_attr_cmd(struct rt_wdb	*wdbp,
 				break;	
 			}
 		}
-		avpp = avs.avp;
-		for( i=0 ; i < avs.count ; i++, avpp++ ) {
-			int len;
+		if( argc == 3 ) {
+			/* just display all attributes */
+			avpp = avs.avp;
+			for( i=0 ; i < avs.count ; i++, avpp++ ) {
+				int len;
 
-			len = strlen( avpp->name );
-			if( len > max_attr_name_len ) {
-				max_attr_name_len = len;
-			}
-		}
-		tabs1 = 2 + max_attr_name_len/8;
-		avpp = avs.avp;
-		for( i=0 ; i < avs.count ; i++, avpp++ ) {
-			const char *c;
-			int tabs2;
-			int k;
-			int len;
-
-			bu_vls_printf( &vls, "\t%s", avpp->name );
-			len = strlen( avpp->name );
-			tabs2 = tabs1 - 1 - len/8;
-			for( k=0 ; k<tabs2 ; k++ ) {
-				bu_vls_putc( &vls, '\t' );
-			}
-			c = avpp->value;
-			while( *c ) {
-				bu_vls_putc( &vls, *c );
-				if( *c == '\n' ) {
-					for( k=0 ; k<tabs1 ; k++ ) {
-						bu_vls_putc( &vls, '\t' );
-					}
+				len = strlen( avpp->name );
+				if( len > max_attr_name_len ) {
+					max_attr_name_len = len;
 				}
-				c++;
 			}
-			bu_vls_putc( &vls, '\n' );
+			tabs1 = 2 + max_attr_name_len/8;
+			avpp = avs.avp;
+			for( i=0 ; i < avs.count ; i++, avpp++ ) {
+				const char *c;
+				int tabs2;
+				int k;
+				int len;
+
+				bu_vls_printf( &vls, "\t%s", avpp->name );
+				len = strlen( avpp->name );
+				tabs2 = tabs1 - 1 - len/8;
+				for( k=0 ; k<tabs2 ; k++ ) {
+					bu_vls_putc( &vls, '\t' );
+				}
+				c = avpp->value;
+				while( *c ) {
+					bu_vls_putc( &vls, *c );
+					if( *c == '\n' ) {
+						for( k=0 ; k<tabs1 ; k++ ) {
+							bu_vls_putc( &vls, '\t' );
+						}
+					}
+					c++;
+				}
+				bu_vls_putc( &vls, '\n' );
+			}
+		} else {
+			const char *val;
+			int len;
+
+			/* show just the specified attributes */
+			for( i=0 ; i<argc ; i++ ) {
+				len = strlen( argv[i] );
+				if( len > max_attr_name_len ) {
+					max_attr_name_len = len;
+				}
+			}
+			tabs1 = 2 + max_attr_name_len/8;
+			for( i=3 ; i<argc ; i++ ) {
+				int tabs2;
+				int k;
+				const char *c;
+
+				val = bu_avs_get( &avs, argv[i] );
+				if( !val ) {
+					Tcl_ResetResult( interp );
+					Tcl_AppendResult(interp, "Object ",
+					      dp->d_namep, " does not have a ",
+					      argv[i], " attribute\n",
+					      (char *)NULL );
+					bu_avs_free( &avs );
+					return TCL_ERROR;
+				}
+				bu_vls_printf( &vls, "\t%s", argv[i] );
+				len = strlen( val );
+				tabs2 = tabs1 - 1 - len/8;
+				for( k=0 ; k<tabs2 ; k++ ) {
+					bu_vls_putc( &vls, '\t' );
+				}
+				c = val;
+				while( *c ) {
+					bu_vls_putc( &vls, *c );
+					if( *c == '\n' ) {
+						for( k=0 ; k<tabs1 ; k++ ) {
+							bu_vls_putc( &vls, '\t' );
+						}
+					}
+					c++;
+				}
+				bu_vls_putc( &vls, '\n' );
+			}
 		}
 		Tcl_AppendResult(interp, bu_vls_addr( &vls ), (char *)NULL );
 		bu_vls_free( &vls );
