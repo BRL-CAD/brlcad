@@ -148,9 +148,9 @@ register struct application *ap;
 		 *  that integer valued colors (eg, from texture maps)
 		 *  retain their original values.
 		 */
-		r = ap->a_color[0]*255.+rand0to1();
-		g = ap->a_color[1]*255.+rand0to1();
-		b = ap->a_color[2]*255.+rand0to1();
+		r = ap->a_color[0]*255.+rand0to1(ap->a_resource->re_randptr);
+		g = ap->a_color[1]*255.+rand0to1(ap->a_resource->re_randptr);
+		b = ap->a_color[2]*255.+rand0to1(ap->a_resource->re_randptr);
 		if( r > 255 ) r = 255;
 		else if( r < 0 )  r = 0;
 		if( g > 255 ) g = 255;
@@ -784,9 +784,15 @@ register int	want;
 				 *  this presently makes a cubical light source distribution.
 				 */
 				f = lp->lt_radius * 0.9;
-				tolight[X] = lp->lt_pos[X] + rand_half()*f - swp->sw_hit.hit_point[X];
-				tolight[Y] = lp->lt_pos[Y] + rand_half()*f - swp->sw_hit.hit_point[Y];
-				tolight[Z] = lp->lt_pos[Z] + rand_half()*f - swp->sw_hit.hit_point[Z];
+				tolight[X] = lp->lt_pos[X] +
+					rand_half(ap->a_resource->re_randptr)*f -
+					swp->sw_hit.hit_point[X];
+				tolight[Y] = lp->lt_pos[Y] +
+					rand_half(ap->a_resource->re_randptr)*f -
+					swp->sw_hit.hit_point[Y];
+				tolight[Z] = lp->lt_pos[Z] +
+					rand_half(ap->a_resource->re_randptr)*f -
+					swp->sw_hit.hit_point[Z];
 			}
 
 			/*

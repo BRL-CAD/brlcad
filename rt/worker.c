@@ -165,6 +165,7 @@ worker()
 
 	resource[cpu].re_cpu = cpu;
 	resource[cpu].re_magic = RESOURCE_MAGIC;
+	rand_init( resource[cpu].re_randptr, cpu );
 
 	while(1)  {
 		RES_ACQUIRE( &rt_g.res_worker );
@@ -198,8 +199,8 @@ worker()
 		for( com=0; com<=hypersample; com++ )  {
 			if( jitter )  {
 				FAST fastf_t dx, dy;
-				dx = a.a_x + rand_half();
-				dy = a.a_y + rand_half();
+				dx = a.a_x + rand_half(a.a_resource->re_randptr);
+				dy = a.a_y + rand_half(a.a_resource->re_randptr);
 				VJOIN2( point, viewbase_model,
 					dx, dx_model, dy, dy_model );
 			}  else  {

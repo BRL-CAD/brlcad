@@ -26,23 +26,6 @@ static char RCSmathtab[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "./mathtab.h"
 
-float *rand_ptr = rand_tab-1;
-
-/*
- *			M A T H T A B _ C O N S T A N T
- *
- *  For benchmarking purposes, make the random number table predictable.
- *  Setting to all zeros keeps dithered values at their original values.
- */
-void
-mathtab_constant()
-{
-	register int i;
-
-	for( i=0; i<RANDTABSIZE; i++ )
-		rand_tab[i] = 0.0;
-}
-
 double sin_scale = 325.949323452232;	/* SINTABSIZE / TWOPI */
 float sin_table[SINTABSIZE] = {
 0,		0.00306796,	0.00613588,	0.00920375,
@@ -561,16 +544,8 @@ float sin_table[SINTABSIZE] = {
 
 /*
  *  The actual table of random numbers, range -0.5 to +0.5
- *
- *  The table is padded with zeros for the PARALLEL processing case.
- *  Because access to rand_ptr is not semaphore protected, processors
- *  may sometimes index slightly beyond RANDTABSIZE.
- *  The rational for 3*MAX_PSW padding comes from the fact that most
- *  callers of rand_half() get the random numbers three at a time,
- *  and optimizing compilers may eximinate the intermediate stores of
- *  the updated rand_ptr variable...
  */
-float rand_tab[RANDTABSIZE+(3*MAX_PSW)] = {
+float rand_tab[RANDTABSIZE] = {
 0.468071,	-0.433269,	-0.021719,	0.409534,
 -0.148308,	0.432534,	0.154436,	-0.478930,
 0.012205,	-0.297981,	0.439977,	-0.295918,
@@ -1082,7 +1057,7 @@ float rand_tab[RANDTABSIZE+(3*MAX_PSW)] = {
 0.104454,	-0.144227,	0.367316,	-0.273989,
 -0.224147,	-0.255786,	0.017735,	-0.435868,
 0.451515,	-0.349258,	0.085542,	0.461822,
--0.342399,	0.248190,	0.032834,	0.111105
+-0.342399,	0.248190,	0.032834 /*,	0.111105 */
 };
 /*
  * Immediately after the random number table,
@@ -1095,3 +1070,18 @@ float	rand_poison_[] = {
 	9e20, 9e20, 9e20, 9e20, 9e20, 9e20, 9e20, 9e20, 9e20, 9e20,
 	9e20, 9e20, 9e20, 9e20, 9e20, 9e20, 9e20, 9e20, 9e20, 9e20
 };
+
+/*
+ *			M A T H T A B _ C O N S T A N T
+ *
+ *  For benchmarking purposes, make the random number table predictable.
+ *  Setting to all zeros keeps dithered values at their original values.
+ */
+void
+mathtab_constant()
+{
+	register int i;
+
+	for( i = (sizeof(rand_tab)/sizeof(rand_tab[0]))-1; i >= 0; i-- )
+		rand_tab[i] = 0.0;
+}

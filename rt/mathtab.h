@@ -23,18 +23,21 @@
 #define RANDTABSIZE	2047	/* Powers of two give streaking */
 #define	SINTABSIZE	2048
 
-extern float *rand_ptr;
 extern float rand_tab[];
 
 extern double sin_scale;
 extern float sin_table[];
 
-#define rand_half()	\
-	(++rand_ptr >= &rand_tab[RANDTABSIZE] ? \
-		*(rand_ptr = rand_tab) : *rand_ptr)
+#define rand_half(_p)	\
+	( (++(_p) >= &rand_tab[RANDTABSIZE] || (_p) < rand_tab) ? \
+		*((_p) = rand_tab) : *(_p))
 
-#define rand0to1()	(rand_half()+0.5)
+#define rand_init(_p, _seed)	\
+	(_p) = &rand_tab[(int)((rand_tab[(_seed)%RANDTABSIZE] + \
+		0.5)*(RANDTABSIZE-1))]
 
-#define tab_sin(a)	(((a) > 0) ? \
-	( sin_table[(int)((0.5 + (a) * sin_scale))&(SINTABSIZE-1)] ) :\
-	(-sin_table[(int)((0.5 - (a) * sin_scale))&(SINTABSIZE-1)] ) )
+#define rand0to1(_q)	(rand_half(_q)+0.5)
+
+#define tab_sin(_a)	(((_a) > 0) ? \
+	( sin_table[(int)((0.5 + (_a) * sin_scale))&(SINTABSIZE-1)] ) :\
+	(-sin_table[(int)((0.5 - (_a) * sin_scale))&(SINTABSIZE-1)] ) )

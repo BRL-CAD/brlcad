@@ -69,6 +69,7 @@ char	**dpp;
 {
 	int	i, j, k;
 	register struct marble_specific *mp;
+	register float	*randp;
 
 	GETSTRUCT( mp, marble_specific );
 	*dpp = (char *)mp;
@@ -80,7 +81,7 @@ char	**dpp;
 	for( i = 0; i < IPOINTS+1; i++ )
 		for( j = 0; j < IPOINTS+1; j++ )
 			for( k = 0; k < IPOINTS+1; k++ )
-				n[i][j][k] = rand0to1();
+				n[i][j][k] = rand0to1(randp);
 
 	/*
 	 * Duplicate the three initial faces
