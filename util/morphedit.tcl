@@ -1,4 +1,5 @@
-#!/m/cad/.tk.6d/bwish -f
+#!/bin/sh
+
 #
 # Author -
 #	Glenn Durfee
@@ -21,13 +22,19 @@
 #       Utility for creating lines files for the pixmorph utility.
 #
 # Note: this utility needs to be run under BRL-CAD's "bwish" environment, as
-# it needs the PIX image type and the pix_common_file_size functions.
+# it needs the PIX image type and the bn_common_file_size functions.
 
-# Note: In production version, these should probably be
-#    /usr/brlcad/bin/pixmorph and /usr/brlcad/bin/pix-fb
+# Use the bwish that's in the same bin directory as morphedit.tcl
+# this is a comment \
+CADPATH=`dirname $0`
+# this is a comment \
+BWISH=$CADPATH/bwish
+# the next line restarts using bwish \
+exec $BWISH "$0" "$@"
 
-set PIXFB /m/cad/.fb.6d/pix-fb
-set PIXMORPH /m/cad/.util.6d/pixmorph
+set brlcad_path [bu_brlcad_path bin]
+set PIXFB [file join $brlcad_path pix-fb]
+set PIXMORPH [file join $brlcad_path pixmorph]
 
 set colors(normal) red
 set colors(highlighted) orange
@@ -50,8 +57,10 @@ proc usage {} {
     puts "     separate     : images are placed in separate windows"
     exit
 }
-    
-if { $argc < 3 } then usage
+
+if {$argc < 3} {
+    usage
+}
 
 set width 0
 set height 0
@@ -60,11 +69,11 @@ set align ""
 while { $argc > 3 } {
     switch -glob -- [lindex $argv 0] {
 	-w { set width [lindex $argv 1];
-   	     decr argc; set argv [lrange $argv 1 end] }
+   	     incr argc -1; set argv [lrange $argv 1 end] }
         -n { set height [lindex $argv 1];
-	     decr argc; set argv [lrange $argv 1 end] }
+	     incr argc -1; set argv [lrange $argv 1 end] }
         -a { set align [lindex $argv 1];
-	     decr argc; set argv [lrange $argv 1 end] }
+	     incr argc -1; set argv [lrange $argv 1 end] }
         -w* { scan [lindex $argv 0] -w%d width }
   	-n* { scan [lindex $argv 0] -n%d height }
 	-a* { scan [lindex $argv 0] -a%s align }
@@ -88,9 +97,9 @@ if { $width<=0 && $height>0 } then {
 }
 
 if { $width<=0 && $height<=0 } then {
-    set result [pix_common_file_size $file0name]
+    set result [bn_common_file_size $file0name]
     if { $result=="0 0" } then {
-	set result [pix_common_file_size $file1name]
+	set result [bn_common_file_size $file1name]
 	if { $result=="0 0" } then {
 	    puts "Cannot determine dimensions of images.  Use -w or -n."
 	    exit
