@@ -714,7 +714,7 @@ set -S2 "/bin/sh"
 #	define	CC		cc
 
 #	define	OPTIMIZER	-fast -Xc
-#	define	CC_DEFS		-D_REENTRANT -Dsparc -D_POSIX_SOURCE
+#	define	CC_DEFS		-D_REENTRANT -Dsparc
 #	define	STANDARD_LIBES	-lm  -lsocket -lnsl -lthread
 #   else
 #	define	BSD	43
