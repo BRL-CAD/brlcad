@@ -824,17 +824,26 @@ static unsigned int	rt_nmg_cur_fastf_subscript;
  *	subscript number of this array, in the external form.
  */
 int
-rt_nmg_export_fastf( fp, count, scale )
+rt_nmg_export_fastf( fp, count, pt_type, scale )
 CONST fastf_t	*fp;
 int		count;
+int		pt_type;	/* If zero, means literal array of values */
 double		scale;
 {
 	register unsigned char	*cp;
 
+	if( pt_type )
+		count *= RT_NURB_EXTRACT_COORDS(pt_type);
+
 	cp = rt_nmg_fastf_p;
 	(void)rt_plong( cp + 0, DISK_DOUBLE_ARRAY_MAGIC );
 	(void)rt_plong( cp + 4, count );
+#if 0
 	if( scale == 1.0 )  {
+#else
+	/* XXX */
+	if(1) {
+#endif
 		htond( cp + (4+4), (unsigned char *)fp, count );
 	} else {
 		fastf_t		*new;
@@ -855,13 +864,13 @@ double		scale;
  *			R T _ N M G _ I M P O R T _ F A S T F
  */
 fastf_t *
-rt_nmg_import_fastf( base, ecnt, subscript, mat, len, stride )
+rt_nmg_import_fastf( base, ecnt, subscript, mat, len, pt_type )
 CONST unsigned char	*base;
 struct nmg_exp_counts	*ecnt;
 int			subscript;
 CONST matp_t		mat;
 int			len;		/* expected size */
-int			stride;
+int			pt_type;
 {
 	CONST unsigned char	*cp;
 	register int		count;
@@ -884,6 +893,10 @@ int			stride;
 			 subscript, ecnt[subscript].byte_offset);
 		rt_bomb("rt_nmg_import_fastf() bad magic\n");
 	}
+
+	if( pt_type )
+		len *= RT_NURB_EXTRACT_COORDS(pt_type);
+
 	count = rt_glong( cp + 4 );
 	if( count != len )  {
 		rt_log("rt_nmg_import_fastf() subscript=%d, expected len=%d, got=%d\n",
@@ -891,7 +904,12 @@ int			stride;
 		rt_bomb("rt_nmg_import_fastf()\n");
 	}
 	ret = (fastf_t *)rt_malloc( count * sizeof(fastf_t), "rt_nmg_import_fastf[]" );
+/* Bypass matrix stuff for now. */
+#if 0
 	if( !mat )  {
+#else
+	{
+#endif
 		ntohd( (unsigned char *)ret, cp + (4+4), count );
 		return ret;
 	}
@@ -903,7 +921,8 @@ int			stride;
 	 */
 	tmp = (fastf_t *)rt_malloc( count * sizeof(fastf_t), "rt_nmg_import_fastf tmp[]" );
 	ntohd( (unsigned char *)tmp, cp + (4+4), count );
-	switch( stride )  {
+	/* XXX This isn't quite right */
+	switch( RT_NURB_EXTRACT_COORDS(pt_type) )  {
 	case 3:
 		for( count -= 3 ; count >= 0; count -= 3 )  {
 			MAT4X3PNT( &ret[count], mat, &tmp[count] );
@@ -1123,9 +1142,11 @@ double		local2mm;
 			rt_plong( d->u_size, fg->u.k_size );
 			rt_plong( d->v_size, fg->v.k_size );
 			rt_plong( d->u_knots,
-				rt_nmg_export_fastf( fg->u.knots, fg->u.k_size, 1.0 ) );
+				rt_nmg_export_fastf( fg->u.knots,
+					fg->u.k_size, 0, 1.0 ) );
 			rt_plong( d->v_knots,
-				rt_nmg_export_fastf( fg->v.knots, fg->v.k_size, 1.0 ) );
+				rt_nmg_export_fastf( fg->v.knots,
+					fg->v.k_size, 0, 1.0 ) );
 			rt_plong( d->us_size, fg->s_size[0] );
 			rt_plong( d->vs_size, fg->s_size[1] );
 			rt_plong( d->pt_type, fg->pt_type );
@@ -1133,6 +1154,7 @@ double		local2mm;
 			rt_plong( d->ctl_points,
 				rt_nmg_export_fastf( fg->ctl_points,
 					fg->s_size[0] * fg->s_size[1],
+					fg->pt_type,
 					local2mm ) );
 		}
 		return;
@@ -1234,7 +1256,8 @@ double		local2mm;
 			rt_plong( d->order, eg->order );
 			rt_plong( d->k_size, eg->k.k_size );
 			rt_plong( d->knots,
-				rt_nmg_export_fastf( eg->k.knots, eg->k.k_size, 1.0 ) );
+				rt_nmg_export_fastf( eg->k.knots,
+					eg->k.k_size, 0, 1.0 ) );
 			rt_plong( d->c_size, eg->c_size );
 			rt_plong( d->pt_type, eg->pt_type );
 			/*
@@ -1243,7 +1266,9 @@ double		local2mm;
 			 */
 			rt_plong( d->ctl_points,
 				rt_nmg_export_fastf( eg->ctl_points,
-					eg->c_size, 1.0 ) );
+					eg->c_size,
+					eg->pt_type,
+					1.0 ) );
 		}
 		return;
 	case NMG_KIND_VERTEXUSE:
@@ -1487,11 +1512,11 @@ CONST unsigned char	*basep;	/* base of whole import record */
 			fg->u.k_size = rt_glong( d->u_size );
 			fg->u.knots = rt_nmg_import_fastf( basep, ecnt,
 				rt_glong( d->u_knots ), (matp_t)NULL,
-				fg->u.k_size, 1 );
+				fg->u.k_size, 0 );
 			fg->v.k_size = rt_glong( d->v_size );
 			fg->v.knots = rt_nmg_import_fastf( basep, ecnt,
-				rt_glong( d->v_knots ), (matp_t)NULL, fg->v.k_size,
-				1 );
+				rt_glong( d->v_knots ), (matp_t)NULL,
+				fg->v.k_size, 0 );
 			fg->s_size[0] = rt_glong( d->us_size );
 			fg->s_size[1] = rt_glong( d->vs_size );
 			fg->pt_type = rt_glong( d->pt_type );
@@ -1499,7 +1524,7 @@ CONST unsigned char	*basep;	/* base of whole import record */
 			fg->ctl_points = rt_nmg_import_fastf( basep, ecnt,
 				rt_glong( d->ctl_points ), mat,
 				fg->s_size[0] * fg->s_size[1],
-				RT_NURB_EXTRACT_COORDS(fg->pt_type) );
+				fg->pt_type );
 		}
 		return 0;
 	case NMG_KIND_LOOPUSE:
@@ -1646,7 +1671,7 @@ CONST unsigned char	*basep;	/* base of whole import record */
 			eg->k.k_size = rt_glong( d->k_size );
 			eg->k.knots = rt_nmg_import_fastf( basep, ecnt,
 				rt_glong( d->knots ), (matp_t)NULL,
-				eg->k.k_size, 1 );
+				eg->k.k_size, 0 );
 			eg->c_size = rt_glong( d->c_size );
 			eg->pt_type = rt_glong( d->pt_type );
 			/*
@@ -1655,7 +1680,7 @@ CONST unsigned char	*basep;	/* base of whole import record */
 			 */
 			eg->ctl_points = rt_nmg_import_fastf( basep, ecnt,
 				rt_glong( d->ctl_points ), (matp_t)NULL,
-				eg->c_size, 1 );
+				eg->c_size, eg->pt_type );
 		}
 		return 0;
 	case NMG_KIND_VERTEXUSE:
@@ -2222,7 +2247,8 @@ int				compact;
 				kind_counts[NMG_KIND_DOUBLE_ARRAY] += 3;
 				ndouble =  fg->u.k_size +
 					   fg->v.k_size +
-					   fg->s_size[0] * fg->s_size[1];
+					   fg->s_size[0] * fg->s_size[1] *
+					   RT_NURB_EXTRACT_COORDS(fg->pt_type);
 				double_count += ndouble;
 				ecnt[i].byte_offset = fastf_byte_count;
 				fastf_byte_count += 3*(4+4) + 8*ndouble;
@@ -2235,7 +2261,8 @@ int				compact;
 				eg = (struct edge_g_cnurb *)ptrs[i];
 				ecnt[i].first_fastf_relpos = kind_counts[NMG_KIND_DOUBLE_ARRAY];
 				kind_counts[NMG_KIND_DOUBLE_ARRAY] += 2;
-				ndouble = eg->k.k_size + eg->c_size;
+				ndouble = eg->k.k_size + eg->c_size *
+					RT_NURB_EXTRACT_COORDS(eg->pt_type);
 				double_count += ndouble;
 				ecnt[i].byte_offset = fastf_byte_count;
 				fastf_byte_count += 2*(4+4) + 8*ndouble;
