@@ -96,7 +96,7 @@ int argc; char **argv;
 
 	size = ( argc > 1 ) ? atoi( argv[1] ) : default_size;
 	initx = ( argc > 2 ) ? atoi( argv[2] ) : 0;
-	inity = ( argc > 3 ) ? (default_size-1 - atoi( argv[3] )) : default_size-1;
+	inity = ( argc > 3 ) ? (atoi( argv[3] )) : 0;
 
 	outsize = (size > default_size) ? default_size : size;
 
@@ -115,7 +115,7 @@ int argc; char **argv;
 	if( clear ) fb_clear(fbp, PIXEL_NULL);
 
 	if( offy != 0 ) fseek( stdin, offy*size, 1 );
-	for( y = inity; y > (inity-outsize); y-- ) {
+	for( y = inity; y < outsize; y++ )  {
 		if( offx != 0 ) fseek( stdin, offx, 1 );
 		n = fread( &ibuf[0], sizeof( char ), size-offx, stdin );
 		if( n <= 0 ) exit( 0 );
@@ -125,7 +125,7 @@ int argc; char **argv;
 		 */
 		if( redflag == 0 || greenflag == 0 || blueflag == 0 ) {
 			if( inverted )
-				fb_read( fbp, initx, 511-y, &obuf[0], outsize );
+				fb_read( fbp, initx, default_size-1-y, &obuf[0], outsize );
 			else
 				fb_read( fbp, initx, y, &obuf[0], outsize );
 		}

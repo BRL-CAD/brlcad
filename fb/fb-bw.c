@@ -63,7 +63,7 @@ int argc; char **argv;
 
 	size = ( argc > 1 ) ? atoi( argv[1] ) : default_size;
 	initx = ( argc > 2 ) ? atoi( argv[2] ) : 0;
-	inity = ( argc > 3 ) ? (default_size-1 - atoi( argv[3] )) : default_size-1;
+	inity = ( argc > 3 ) ? (atoi( argv[3] )) : 0;
 
 	/* Open Display Device */
 	if ((fbp = fb_open( NULL, default_size, default_size )) == NULL ) {
@@ -71,24 +71,16 @@ int argc; char **argv;
 		exit( 1 );
 	}
 
-	if( !inverted ) {
-		for( y = inity; y > (inity-size); y-- ) {
+	for( y = 0; y < size; y++ )  {
+		if( inverted )
+			fb_read( fbp, initx, default_size-1-y, &inbuf[0], size );
+		else
 			fb_read( fbp, initx, y, &inbuf[0], size );
-			for( x = 0; x < size; x++ ) {
-				obuf[x] = (inbuf[x].red + inbuf[x].green
-					+ inbuf[x].blue) / 3;
-			}
-			fwrite( &obuf[0], sizeof( char ), size, stdout );
+		for( x = 0; x < size; x++ ) {
+			obuf[x] = (inbuf[x].red + inbuf[x].green
+				+ inbuf[x].blue) / 3;
 		}
-	} else {
-		for( y = (inity-size-1); y <= inity; y++ ) {
-			fb_read( fbp, initx, y, &inbuf[0], size );
-			for( x = 0; x < size; x++ ) {
-				obuf[x] = (inbuf[x].red + inbuf[x].green
-					+ inbuf[x].blue) / 3;
-			}
-			fwrite( &obuf[0], sizeof( char ), size, stdout );
-		}
+		fwrite( &obuf[0], sizeof( char ), size, stdout );
 	}
 
 	fb_close( fbp );

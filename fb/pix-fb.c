@@ -93,7 +93,7 @@ char **argv;
 
 	if( !inverse )  {
 		/* Normal way -- bottom to top */
-		for( y = nlines-1; y >= 0; y-- )  {
+		for( y=0; y < nlines; y++ )  {
 			register char *in;
 			register Pixel *out;
 			register int i;
@@ -113,7 +113,7 @@ char **argv;
 		}
 	}  else  {
 		/* Inverse -- top to bottom */
-		for( y=0; y < nlines; y++ )  {
+		for( y = nlines-1; y >= 0; y-- )  {
 			register char *in;
 			register Pixel *out;
 			register int i;

@@ -35,10 +35,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 typedef unsigned char	u_char;
 static char	*usage[] =
 	{
-"",
-"rle-fb (1.9)",
-"",
-"Usage: rle-fb [-Odv][-b (rgbBG)][-p X Y][file.rle]",
+"Usage: rle-fb [-Odv] [-b (rgbBG)] [-p X Y] [file.rle]",
 "",
 "If no rle file is specifed, rle-fb will read its standard input.",
 "If the environment variable FB_FILE is set, its value will be used",
@@ -125,6 +122,9 @@ char	*argv[];
 			{
 			/* User-supplied map */
 			if( rle_verbose )
+"",
+"rle-fb (1.9)",
+"",
 				(void) fprintf( stderr,
 					"Writing color map to framebuffer\n"
 						);
@@ -142,7 +142,7 @@ char	*argv[];
 		if( fb_wmap( fbp, COLORMAP_NULL ) == -1 )
 			return	1;
 		}
-	/* Fill buffer with background.					*/
+	/* Fill a DMA buffer buffer with background */
 	if( ! olflag && (get_flags & NO_BOX_SAVE) )
 		{	register int	i;
 			register Pixel	*to;
@@ -155,7 +155,7 @@ char	*argv[];
 
 	{	register int	page_fault = 1;
 		register int	dirty_flag = 1;
-		register int	by = width - dma_scans;
+		register int	by = dma_scans-1;
 		int		btm = ypos + (ylen-1);
 		int		top = ypos;
 	for( scan_ln = width-1; scan_ln >= 0; scan_ln-- )
@@ -189,10 +189,14 @@ char	*argv[];
 			{
 			if( fb_write( fbp, 0, by, scans, dma_pixels ) == -1 )
 				return	1;
-			by -= dma_scans;
+			by += dma_scans;
 			}
 		} /* end for */
 	} /* end block */
+
+	/* Write background pixel in agreed-upon place */
+	(void)fb_write( fbp, 1, 1, &bgpixel, 1 );
+
 	fb_close( fbp );
 	return	0;
 	}

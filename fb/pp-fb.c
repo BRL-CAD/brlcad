@@ -41,7 +41,7 @@ static Pixel	pix_buf[FBBUFSIZE]; /* Pixel buffer.			*/
 	if( fb_p >= end_p ) \
 		{ \
 		fb_write( fbp, 0, fb_y, pix_buf, FBBUFSIZE ); \
-		fb_y += scans_per_buffer; \
+		fb_y -= scans_per_buffer; \
 		fb_p = pix_buf; \
 		} \
 	}
@@ -209,7 +209,7 @@ line1:
 	inten_high = 0;
 	horiz_pos = 0;
 	fb_p = pix_buf;
-	fb_y = 0;
+	fb_y = 511;
 
 	/* paint background on upper part of screen */
 	backgroundp= &ctab[ibc-1].c_pixel;

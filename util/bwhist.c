@@ -34,8 +34,10 @@ main( argc, argv )
 int argc;
 char **argv;
 {
-	int	n, i;
-	int	max;
+	register int i;
+	int	n;
+	register long	max;
+	static double scale;
 	unsigned char buf[512];
 	register unsigned char *bp;
 	Pixel white[512];
@@ -68,7 +70,7 @@ char **argv;
 	for( i = 0; i < 512; i++ )
 		white[i].red = white[i].green = white[i].blue = 255;
 
-	while( (n = fread(buf, sizeof(*buf), 512, fp)) > 0 ) {
+	while( (n = fread(buf, sizeof(*buf), sizeof(buf), fp)) > 0 ) {
 		bp = &buf[0];
 		for( i = 0; i < n; i++ )
 			bin[ *bp++ ]++;
@@ -78,6 +80,7 @@ char **argv;
 	max = 1;
 	for( i = 0; i < 256; i++ )
 		if( bin[i] > max ) max = bin[i];
+	scale = 511.0 / (double)max;
 
 	/* Display the max? */
 	printf( "Full screen = %d pixels\n", max );
@@ -89,8 +92,8 @@ char **argv;
 
 	/* Display them */
 	for( i = 0; i < 256; i++ ) {
-		int	value;
-		value = (float)bin[i]/(float)max * 511;
+		register int	value;
+		value = bin[i]*scale;
 		if( value == 0 && bin[i] != 0 ) value = 1;
 		fb_write( fbp, 0, 2*i, &white[0], value );
 		fb_write( fbp, 0, 2*i+1, &white[0], value );

@@ -36,6 +36,7 @@ char	**argv;
 	register int	middle;
 	static Pixel	black, white, red;
 	static int	val;
+	static int	mask;
 
 	if( ! pars_Argv( argc, argv ) )
 		{
@@ -52,26 +53,12 @@ char	**argv;
 	red.red = 255;
 	middle = fb_sz/2;
 	fb_ioinit(fbp);
-	if( fb_sz == 512 )
-	for( y = 0; y < fb_sz; y++ )
-		{
-		for( x = 0; x < fb_sz; x++ )
-			{
-			if( x == y || x == fb_sz - y )
-				(void) fb_wpixel( fbp, &white );
-			else
-			if( x == middle || y == middle )
-				(void) fb_wpixel( fbp, &red );
-			else
-			if( (x & 0x7) && (y & 0x7) )
-				(void) fb_wpixel( fbp, &black );
-			else
-				(void) fb_wpixel( fbp, &white );
-			}
-		}
+	if( fb_sz <= 512 )
+		mask = 0x7;
 	else
-	for( y = 0; y < fb_sz; y++ )
-		{
+		mask = 0xf;
+
+	for( y = fb_sz-1; y >= 0; y-- )  {
 		for( x = 0; x < fb_sz; x++ )
 			{
 			if( x == y || x == fb_sz - y )
@@ -80,7 +67,7 @@ char	**argv;
 			if( x == middle || y == middle )
 				(void) fb_wpixel( fbp, &red );
 			else
-			if( (x & 0xf) && (y & 0xf) )
+			if( (x & mask) && (y & mask) )
 				(void) fb_wpixel( fbp, &black );
 			else
 				(void) fb_wpixel( fbp, &white );

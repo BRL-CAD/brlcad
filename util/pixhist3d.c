@@ -97,6 +97,6 @@ int xoff, yoff;
 				value = 20;
 			obuf[x].red = obuf[x].green = obuf[x].blue = value;
 		}
-		fb_write( fbp, xoff, 511-(yoff+y), &obuf[0], 256 );
+		fb_write( fbp, xoff, yoff+y, &obuf[0], 256 );
 	}
 }

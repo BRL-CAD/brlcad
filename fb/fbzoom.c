@@ -151,23 +151,23 @@ doKeyPad()
 		break;
 	case 'N' :
 	case 'k' :				/* move DOWN.	*/
-		if( ++yPan > MaxPan )
-			yPan = MaxPan;
-		break;
-	case ctl(n) :
-	case 'K' :
-		if( (yPan += PanFactor) > MaxPan )
-			yPan = MaxPan;
-		break;
-	case 'P' :
-	case 'j' :				/* move UP.	*/
 		if( --yPan < MinPan )
 			yPan = MinPan;
 		break;
-	case ctl(p) :
-	case 'J' :
+	case ctl(n) :
+	case 'K' :
 		if( (yPan -= PanFactor) < MinPan )
 			yPan = MinPan;
+		break;
+	case 'P' :
+	case 'j' :				/* move UP.	*/
+		if( ++yPan > MaxPan )
+			yPan = MaxPan;
+		break;
+	case ctl(p) :
+	case 'J' :
+		if( (yPan += PanFactor) > MaxPan )
+			yPan = MaxPan;
 		break;
 	case 'B' :
 	case 'h' :				/* move RIGHT.	*/
