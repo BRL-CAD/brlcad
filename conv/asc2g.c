@@ -855,8 +855,8 @@ pipebld()
 		RT_LIST_INSERT( &head.l, &sp->l);
 	} while( (ret = (strcmp (type , "end"))) != 0);
 
-	mk_pipe(stdout, name, &head.l);
-	mk_freemembers( &head.l );
+	mk_pipe(stdout, name, &head);
+	mk_freemembers( &head );
 	free( sp );
 }
 
