@@ -1386,16 +1386,16 @@ RT_EXTERN(int rt_struct_get, (struct rt_external *ext, FILE *fp) );
 RT_EXTERN(double mat_atan2, (double y, double x) );
 RT_EXTERN(void mat_zero, (mat_t m) );
 RT_EXTERN(void mat_idn, (mat_t m) );
-RT_EXTERN(void mat_copy, (mat_t dest, mat_t src) );
-RT_EXTERN(void mat_mul, (mat_t dest, mat_t a, mat_t b) );
-RT_EXTERN(void matXvec, (vect_t dest, mat_t m, vect_t src) );
-RT_EXTERN(void mat_inv, (mat_t dest, mat_t src) );
+RT_EXTERN(void mat_copy, (mat_t dest, CONST mat_t src) );
+RT_EXTERN(void mat_mul, (mat_t dest, CONST mat_t a, CONST mat_t b) );
+RT_EXTERN(void matXvec, (vect_t dest, CONST mat_t m, CONST vect_t src) );
+RT_EXTERN(void mat_inv, (mat_t dest, CONST mat_t src) );
 RT_EXTERN(void mat_vtoh_move, (hvect_t dest, CONST vect_t src) );
 RT_EXTERN(void mat_htov_move, (vect_t dest, CONST hvect_t src) );
 #define vtoh_move(_d,_s)	mat_vtoh_move(_d,_s)	/* compat */
 #define htov_move(_d,_s)	mat_htov_move(_d,_s)
-RT_EXTERN(void mat_print, (char *title, mat_t m) );
-RT_EXTERN(void mat_trn, (mat_t dest, mat_t src) );
+RT_EXTERN(void mat_print, (CONST char *title, CONST mat_t m) );
+RT_EXTERN(void mat_trn, (mat_t dest, CONST mat_t src) );
 RT_EXTERN(void mat_ae, (mat_t dest, double azimuth, double elev) );
 RT_EXTERN(void mat_ae_vec, (fastf_t *azp, fastf_t *elp, vect_t src) );
 #define ae_vec(_az,_el,_vec)	mat_ae_vec(_az,_el,_vec)	/* compat */
@@ -1404,11 +1404,11 @@ RT_EXTERN(void eigen2x2, (fastf_t *val1, fastf_t *val2,
 	vect_t vec1, vect_t vec2, double a, double b, double c) );
 #define eigen2x2(_val1,_val2,_vec1,_vec2,_a,_b,_c)	\
 	mat_eigen2x2(_val1,_val2,_vec1,_vec2,_a,_b,_c)	/* compat */
-RT_EXTERN(void mat_fromto, (mat_t dest, vect_t from, vect_t to) );
+RT_EXTERN(void mat_fromto, (mat_t dest, CONST vect_t from, CONST vect_t to) );
 RT_EXTERN(void mat_xrot, (mat_t dest, double sinx, double cosx) );
 RT_EXTERN(void mat_yrot, (mat_t dest, double siny, double cosy) );
 RT_EXTERN(void mat_zrot, (mat_t dest, double sinz, double cosz) );
-RT_EXTERN(void mat_lookat, (mat_t dest, vect_t dir, int yflip) );
+RT_EXTERN(void mat_lookat, (mat_t dest, CONST vect_t dir, int yflip) );
 RT_EXTERN(void mat_vec_ortho, (vect_t dest, CONST vect_t src) );
 RT_EXTERN(void mat_vec_perp, (vect_t dest, CONST vect_t src) );
 #define vec_ortho(_d,_s)	mat_vec_ortho(_d,_s)	/* compat */
