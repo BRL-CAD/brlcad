@@ -422,7 +422,7 @@ char	**argv;
 }
 
 /* Delete members of a combination */
-/* Format: D comb memb1 memb2 .... membn	*/
+/* Format: rm comb memb1 memb2 .... membn	*/
 int
 f_rm(clientData, interp, argc, argv)
 ClientData clientData;
@@ -431,8 +431,12 @@ int	argc;
 char	**argv;
 {
 	register struct directory *dp;
-	register int i, rec, num_deleted;
-	union record record;
+	register int	i;
+	int		num_deleted;
+	struct rt_db_internal	intern;
+	struct rt_comb_internal	*comb;
+	union tree		*tp;
+	int			ret;
 
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;
@@ -440,31 +444,41 @@ char	**argv;
 	if( (dp = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
 	  return TCL_ERROR;
 
-	/* Examine all the Member records, one at a time */
-	num_deleted = 0;
-top:
-	for( rec = 1; rec < dp->d_len; rec++ )  {
-		if( db_get( dbip,  dp, &record, rec , 1) < 0 ) {
-		  TCL_READ_ERR_return;
-		}
-		/* Compare this member to each command arg */
-		for( i = 2; i < argc; i++ )  {
-		  if( strcmp( argv[i], record.M.m_instname ) != 0 )
-		    continue;
+	if( (dp->d_flags & DIR_COMB) == 0 )  {
+		Tcl_AppendResult(interp, "rm: ", dp->d_namep,
+			" is not a combination\n", (char *)NULL );
+		return TCL_ERROR;
+	}
 
-		  Tcl_AppendResult(interp, "deleting member ", argv[i],
+	if( rt_get_comb( &intern, dp, (mat_t *)NULL, dbip ) < 0 )  {
+		Tcl_AppendResult(interp, "rt_get_comb(", dp->d_namep,
+			") failure", (char *)NULL );
+		return TCL_ERROR;
+	}
+	comb = (struct rt_comb_internal *)intern.idb_ptr;
+	RT_CK_COMB(comb);
+
+	/* Process each argument */
+	num_deleted = 0;
+	ret = TCL_OK;
+	for( i = 2; i < argc; i++ )  {
+		Tcl_AppendResult(interp, "deleting member ", argv[i],
 				   "\n", (char *)NULL);
-		  if( db_delrec( dbip, dp, rec ) < 0 )  {
-		    Tcl_AppendResult(interp, "Error in deleting member.\n", (char *)NULL);
-		    TCL_ERROR_RECOVERY_SUGGESTION;
-		    return TCL_ERROR;
-		  }
-		  num_deleted++;
-		  goto top;
+		if( db_tree_del_dbleaf( comb->tree, argv[i] ) < 0 )  {
+			Tcl_AppendResult(interp, "  ERROR in deleting member ",
+				argv[1], "\n", (char *)NULL);
+			ret = TCL_ERROR;
+		} else {
+			num_deleted++;
 		}
 	}
 
-	return TCL_OK;
+	if( rt_db_put_internal( dp, dbip, &intern ) < 0 )  {
+		Tcl_AppendResult(interp, "ERROR: Unable to write new combination into database.\n", (char *)NULL);
+		return TCL_ERROR;
+	}
+
+	return ret;
 }
 
 /* Copy a cylinder and position at end of original cylinder
