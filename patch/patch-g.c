@@ -22,6 +22,8 @@
  *  Revisions -
  *	Robert L. Strausser, The SURVICE Engineering Co.; Jul. '93
  *
+ *	John R. Anderson (Jan '94)
+ *		Converted proc_tri and proc_plate to produce NMG's
  *  
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
@@ -42,9 +44,14 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "externs.h"
 #include "db.h"
 #include "vmath.h"
+#include "nmg.h"
+#include "rtgeom.h"
+#include "raytrace.h"
 #include "wdb.h"
 #include "./patch-g.h"
 #include "../rt/mathtab.h"
+
+RT_EXTERN( struct shell *nmg_dup_shell , ( struct shell *s , long ***trans_tbl ) );
 
 #if defined(sgi) && !defined(mips)
 /* Horrible bug in 3.3.1 and 3.4 and 3.5 -- hypot ruins stack! */
@@ -70,6 +77,7 @@ Usage: patch-g [options] > model.g\n\
 	-c \"x y z\"	center of object (for some surface normal calculations)\n\
 	-t title	optional title (default \"Untitled MGED database\")\n\
 	-o object_name	optional top-level name (no spaces)(default \"all\")\n\
+	-p		write volume and plate mode components as polysolids\n\
 	-i group.file	specify group labels source file\n\
 	-m mat.file	specify materials information source file\n\
 	-r		reverse normals for plate mode triangles\n\
@@ -82,7 +90,6 @@ char	*argv[];
 {
 
 	fastf_t  x1, y1, z1;
-
 	int numf = 3;
 	int fd,fl,nread;
 	FILE	*gfp,*mfp;
@@ -91,11 +98,11 @@ char	*argv[];
 	int i;
 	int done;
 	int stop,num;
-
 	char *next, *ptr;
 	char *matname = "plastic";
 	char *matparm = "sh=100.0,sp=.9,di=.1";
 	char hold = 0;
+	char	name[17];
 
 	RT_LIST_INIT( &head.l);
 	RT_LIST_INIT( &heada.l);
@@ -119,6 +126,11 @@ char	*argv[];
 
 	while (argc > 0 && argv[0][0] == '-') {
 		switch (argv[0][1]) {
+
+		case 'p':  /* polysolid output */
+
+			polysolid = 1;
+			break;
 
 		case 'f':  /* fastgen source file data */
 
@@ -362,6 +374,9 @@ char	*argv[];
                     ((in[i].surf_type > 3 || in[i-1].surf_type > 3) &&
                     (in[i].surf_type != in[i-1].surf_type)) ) {
 
+                    	if( debug )
+                    		fprintf( stderr , "component code #%d\n" , in[i-1].cc );
+
 			if( debug > 2 ) {
 				for( j=0; j<i; j++ )
 					fprintf(stderr,"IN: %f %f %f\n",in[j].x,in[j].y,in[j].z);
@@ -374,10 +389,16 @@ char	*argv[];
 			case 2:  	/* triangle approximation (thickness + 2") */
 			case 3:  	/* triangle approximation (thickness + 3") */
 
-				if ((nflg > 0)&&(in[i-1].surf_mode== '+')){
+				if ((nflg > 0)&&(in[i-1].surf_mode== '+'))
+				{
 					proc_triangle(i);
 				}
-				else{
+				else if( (in[i-1].surf_mode == '-') && (in[i-1].surf_thick == 0) )
+				{
+					proc_triangle(i);
+				}
+				else
+				{
 					proc_plate(i);
 				}
 				break;
@@ -422,7 +443,7 @@ char	*argv[];
 			   the subroutine for making groups from regions.   */
 
 			if( (in[i].cc != in[i-1].cc) && (in[i].cc != 0) ) {
-				proc_label(name,labelfile);
+				proc_label( labelfile );
 			}
 
 			if( done ) {
@@ -443,16 +464,94 @@ char	*argv[];
 	sprintf(name,"%s",top_level);
 	mk_lcomb(stdout,name,&heade,0,"","",0,0);
 
-	/*	if( headf.forw != &headf.l ) {
-		sprintf(name,"check.group");
-		mk_lcomb(stdout,name,&headf,0,"","",0,0);
-	}
-*/
-	if( RT_LIST_NEXT_NOT_HEAD(&headf, &headf.l )) {
+	if( RT_LIST_NON_EMPTY( &headf.l )) {
 		sprintf(name,"check.group");
 		mk_lcomb(stdout,name,&headf,0,"","",0,0);
 	}
 
+	/* check for non-empty lists */
+	if( RT_LIST_NON_EMPTY( &head.l ) )
+	{
+		struct wmember *wp;
+
+		rt_log( "list head not empty: \n" );
+		for( RT_LIST_FOR( wp , wmember , &head.l ) )
+		{
+			rt_log( "\t%c %s\n" , wp->wm_op , wp->wm_name );
+		}
+	}
+
+	/* check for non-empty lists */
+	if( RT_LIST_NON_EMPTY( &heada.l ) )
+	{
+		struct wmember *wp;
+
+		rt_log( "list heada not empty: \n" );
+		for( RT_LIST_FOR( wp , wmember , &heada.l ) )
+		{
+			rt_log( "\t%c %s\n" , wp->wm_op , wp->wm_name );
+		}
+	}
+
+	/* check for non-empty lists */
+	if( RT_LIST_NON_EMPTY( &headb.l ) )
+	{
+		struct wmember *wp;
+
+		rt_log( "list headb not empty: \n" );
+		for( RT_LIST_FOR( wp , wmember , &headb.l ) )
+		{
+			rt_log( "\t%c %s\n" , wp->wm_op , wp->wm_name );
+		}
+	}
+
+	/* check for non-empty lists */
+	if( RT_LIST_NON_EMPTY( &headc.l ) )
+	{
+		struct wmember *wp;
+
+		rt_log( "list headc not empty: \n" );
+		for( RT_LIST_FOR( wp , wmember , &headc.l ) )
+		{
+			rt_log( "\t%c %s\n" , wp->wm_op , wp->wm_name );
+		}
+	}
+
+	/* check for non-empty lists */
+	if( RT_LIST_NON_EMPTY( &headd.l ) )
+	{
+		struct wmember *wp;
+
+		rt_log( "list headd not empty: \n" );
+		for( RT_LIST_FOR( wp , wmember , &headd.l ) )
+		{
+			rt_log( "\t%c %s\n" , wp->wm_op , wp->wm_name );
+		}
+	}
+
+	/* check for non-empty lists */
+	if( RT_LIST_NON_EMPTY( &heade.l ) )
+	{
+		struct wmember *wp;
+
+		rt_log( "list heade not empty: \n" );
+		for( RT_LIST_FOR( wp , wmember , &heade.l ) )
+		{
+			rt_log( "\t%c %s\n" , wp->wm_op , wp->wm_name );
+		}
+	}
+
+	/* check for non-empty lists */
+	if( RT_LIST_NON_EMPTY( &headf.l ) )
+	{
+		struct wmember *wp;
+
+		rt_log( "list headf not empty: \n" );
+		for( RT_LIST_FOR( wp , wmember , &headf.l ) )
+		{
+			rt_log( "\t%c %s\n" , wp->wm_op , wp->wm_name );
+		}
+	}
 
 }	/* END MAIN PROGRAM  */
 
@@ -465,6 +564,810 @@ char	*argv[];
  *   For groups:		text nomenclature identification from labelfile
  */
 
+/*
+ *     This subroutine generates solid names with annotations for sidedness as
+ *      required.
+ */
+char *
+proc_sname(shflg,mrflg,cnt,ctflg)
+char shflg,mrflg,ctflg;
+int  cnt;
+{
+	char side;
+	static char new_name[17];
+
+	/* shflg == identifies shape process which called this function
+	 * mrflg == indicates called by "as-modeled" pass or mirrored pass
+	 * cnt   == suffix indentifier for the name
+	 * ctflg == isolates internal cutting solids from regular solids
+	 * new_name == solid name
+	 * side  == left or right sidedness
+	 */
+
+	if (((mrflg == 'n') && (in[0].y >= 0)) ||
+	    ((mrflg == 'y') && (in[0].y < 0))) {
+	  side = 'l';
+	}
+	else {
+	  side = 'r';
+	}
+
+	if (in[0].mirror >= 0) {
+	  if ((mrflg == 'n') && (ctflg == 'n')) {
+	    sprintf(new_name,"%c.%.4d.s%.2d",shflg,in[0].cc,cnt);
+	  }
+	  else if ((mrflg == 'n') && (ctflg == 'y')) {
+	    sprintf(new_name,"%c.%.4d.c%.2d",shflg,in[0].cc,cnt);
+	  }
+	  else if ((mrflg == 'y') && (ctflg == 'n')) {
+	    sprintf(new_name,"%c.%.4d.s%.2d",shflg,(in[0].cc+in[0].mirror),cnt);
+	  }
+	  else {
+	    sprintf(new_name,"%c.%.4d.c%.2d",shflg,(in[0].cc+in[0].mirror),cnt);
+	  }
+	}
+	else if (ctflg == 'n') {
+	  sprintf(new_name,"%c%c.%.4d.s%.2d",side,shflg,in[0].cc,cnt);
+	}
+	else {
+	  sprintf(new_name,"%c%c.%.4d.c%.2d",side,shflg,in[0].cc,cnt);
+	}
+
+	return( new_name );
+}
+
+
+/*
+ *			N M G _ P A T C H _ C O P L A N A R _ F A C E _ M E R G E
+ *
+ *  A geometric routine to
+ *  find all pairs of faces in a shell that have the same plane equation
+ *  (to within the given tolerance), and combine them into a single face.
+ *
+ *  Note that this may result in some of the verticies being very slightly
+ *  off the plane equation, but the geometry routines need to be prepared
+ *  for this in any case.
+ *  If the "simplify" flag is set, pairs of loops in the face that touch
+ *  will be combined into a single loop where possible.
+ *
+ *  XXX Perhaps should be recast as "nmg_shell_shared_face_merge()", leaving
+ *  XXX all the geometric calculations to the code in nmg_fuse.c ?
+ */
+
+static void
+nmg_patch_coplanar_face_merge( s , face_count , p_faces , tol , simplify )
+struct shell		*s;
+int			*face_count;
+struct patch_faces	*p_faces;
+struct rt_tol		*tol;
+int			simplify;
+{
+	struct model	*m;
+	int		len;
+	int		*flags1;
+	int		*flags2;
+	int		face1_no;
+	int		face2_no;
+	struct faceuse	*fu1;
+	struct faceuse	*fu2;
+	struct face	*f1;
+	struct face	*f2;
+	struct face_g	*fg1;
+	struct face_g	*fg2;
+
+	NMG_CK_SHELL(s);
+	RT_CK_TOL( tol );
+
+	m = nmg_find_model( &s->l.magic );
+	len = sizeof(int) * m->maxindex;
+	flags1 = (int *)rt_calloc( sizeof(int), m->maxindex,
+		"nmg_shell_coplanar_face_merge flags1[]" );
+	flags2 = (int *)rt_calloc( sizeof(int), m->maxindex,
+		"nmg_shell_coplanar_face_merge flags2[]" );
+
+	/* Visit each face in the shell */
+	for( RT_LIST_FOR( fu1, faceuse, &s->fu_hd ) )  {
+		plane_t		n1;
+
+		if( RT_LIST_NEXT_IS_HEAD(fu1, &s->fu_hd) )  break;
+		f1 = fu1->f_p;
+		NMG_CK_FACE(f1);
+		if( NMG_INDEX_TEST(flags1, f1) )  continue;
+		NMG_INDEX_SET(flags1, f1);
+
+		fg1 = f1->fg_p;
+		NMG_CK_FACE_G(fg1);
+		NMG_GET_FU_PLANE( n1, fu1 );
+
+		/* find the entry in p_faces for this faceuse */
+		face1_no = (-1);
+		while( p_faces[++face1_no].fu != fu1
+			&& p_faces[face1_no].fu != fu1->fumate_p
+			&& face1_no < *face_count );
+		if( p_faces[face1_no].fu != fu1 &&
+			p_faces[face1_no].fu != fu1 )
+		{
+			rt_log( "nmg_patch_coplanar_face_merge: Can't find entry for faceuse x%x in p_faces\n" , fu1 );
+			continue;
+		}
+
+		/* For this face, visit all remaining faces in the shell. */
+		/* Don't revisit any faces already considered. */
+		bcopy( flags1, flags2, len );
+		for( fu2 = RT_LIST_NEXT(faceuse, &fu1->l);
+		     RT_LIST_NOT_HEAD(fu2, &s->fu_hd);
+		     fu2 = RT_LIST_NEXT(faceuse,&fu2->l)
+		)  {
+			register fastf_t	dist;
+			plane_t			n2;
+
+			f2 = fu2->f_p;
+			NMG_CK_FACE(f2);
+			if( NMG_INDEX_TEST(flags2, f2) )  continue;
+			NMG_INDEX_SET(flags2, f2);
+
+			fg2 = f2->fg_p;
+			NMG_CK_FACE_G(fg2);
+
+			/* See if face geometry is shared & same direction */
+			if( fg1 != fg2 || f1->flip != f2->flip )  {
+				/* If plane equations are different, done */
+				NMG_GET_FU_PLANE( n2, fu2 );
+
+				/* Compare distances from origin */
+				dist = n1[3] - n2[3];
+				if( !NEAR_ZERO(dist, tol->dist) )  continue;
+
+				/*
+				 *  Compare angle between normals.
+				 *  Can't just use RT_VECT_ARE_PARALLEL here,
+				 *  because they must point in the same direction.
+				 */
+				dist = VDOT( n1, n2 );
+				if( !(dist >= tol->para) )  continue;
+			}
+
+			/* Find the entry for fu2 in p_faces */
+			face2_no = (-1);
+			while( p_faces[++face2_no].fu != fu2
+				&& p_faces[face2_no].fu != fu2->fumate_p
+				&& face2_no < *face_count );
+			if( p_faces[face2_no].fu != fu2 &&
+				p_faces[face2_no].fu != fu2 )
+			{
+				rt_log( "nmg_patch_coplanar_face_merge: Couldn`t find entry for faceuse x%x in p_faces\n" , fu2 );
+				continue;
+			}
+
+			/* If the two faces don't get extruded the same distance, can't merge them */
+			if( p_faces[face1_no].thick != p_faces[face2_no].thick )
+				continue;
+
+			/*
+			 * Plane equations are the same, within tolerance,
+			 * or by shared fg topology.
+			 * Move everything into fu1, and
+			 * kill now empty faceuse, fumate, and face
+			 */
+			{
+				struct faceuse	*prev_fu;
+				int		face_no;
+
+				prev_fu = RT_LIST_PREV(faceuse, &fu2->l);
+				/* The prev_fu can never be the head */
+				if( RT_LIST_IS_HEAD(prev_fu, &s->fu_hd) )
+					rt_bomb("prev is head?\n");
+
+				nmg_jf( fu1, fu2 );
+
+				fu2 = prev_fu;
+
+				/* fix p_faces array */
+				(*face_count)--;
+				for( face_no=face2_no ; face_no<(*face_count) ; face_no++ )
+				{
+					p_faces[face_no].fu = p_faces[face_no+1].fu;
+					p_faces[face_no].thick = p_faces[face_no+1].thick;
+				}
+			}
+
+			/* There is now the option of simplifying the face,
+			 * by removing unnecessary edges.
+			 */
+			if( simplify )  {
+				struct loopuse *lu;
+
+				for (RT_LIST_FOR(lu, loopuse, &fu1->lu_hd))
+					nmg_simplify_loop(lu);
+			}
+		}
+	}
+	rt_free( (char *)flags1, "nmg_shell_coplanar_face_merge flags1[]" );
+	rt_free( (char *)flags2, "nmg_shell_coplanar_face_merge flags2[]" );
+
+	if (rt_g.NMG_debug & DEBUG_BASIC)  {
+		rt_log("nmg_shell_coplanar_face_merge(s=x%x, tol=x%x, simplify=%d)\n",
+			s, tol, simplify);
+	}
+}
+
+int
+Build_solid( l , name , mirror_name , plate_mode , centroid , tol )
+int l;
+char *name,*mirror_name;
+int plate_mode;
+point_t centroid;
+struct rt_tol *tol;
+{
+	struct model *m;
+	struct nmgregion *r;
+	struct shell *s,*is,*os;
+	struct faceuse *fu;
+	struct loopuse *lu;
+	struct edgeuse *eu;
+	struct nmg_ptbl faces;
+	struct nmg_ptbl verts_to_move;
+	struct patch_faces *p_faces;
+	struct patch_verts *verts;
+	struct rt_tol tol_tmp;
+	vect_t out;
+	int face_count;
+	int missed_faces;
+	int i,k;
+	int vert1,vert2;
+	fastf_t outdot;
+	long *flags;
+	long **copy_tbl;
+
+	/* A local tolerance structure for times when I don't want tolerancing */
+	tol_tmp.magic = RT_TOL_MAGIC;
+	tol_tmp.dist = SQRT_SMALL_FASTF;
+	tol_tmp.dist_sq = SMALL_FASTF;
+	tol_tmp.perp = 0.0;
+	tol_tmp.para = 1.0;
+
+	rt_g.NMG_debug = 0;
+
+	if( debug )
+		rt_log( "%s\n" , name );
+
+	/* Make an array of patch_verts to hold the vertices and coordinates */
+	verts = (struct patch_verts *)rt_calloc( l , sizeof( struct patch_verts ) , "patch-g: verts array" );
+	for( k=1 ; k<l ; k++ )
+	{
+		verts[k].vp = (struct vertex *)NULL;
+		VSET( verts[k].coord , x[k] , y[k] , z[k] );
+	}
+
+
+	/* make a model, region and shell to hold the component */
+	m = nmg_mm();
+	r = nmg_mrsv( m );
+	s = RT_LIST_FIRST( shell , &r->s_hd );
+	os = s;
+
+	/* initialize the list of faces, for later use by nmg_gluefaces */
+	nmg_tbl( &faces , TBL_INIT , NULL );
+
+	/* make an array of patch_faces to hold faceuses and the desired thickness of each face */
+	p_faces = (struct patch_faces *)rt_calloc( 2*l , sizeof( struct patch_faces ) , "build_solid: patch_faces" );
+
+	/* loop through all the vertices, making faces as we go */
+	face_count = 0;
+	vert1 = 1;
+	for (k=1 ; k<l-3 ; k++)
+	{
+		if( !rt_3pts_distinct ( verts[k].coord , verts[k+1].coord , verts[k+2].coord , tol ) )
+		{
+
+			;	/* do nothing */
+			/* fprintf(stderr,"Repeated Vertice, no face made\n"); */
+		}
+		else if( rt_3pts_collinear( verts[k].coord , verts[k+1].coord , verts[k+2].coord , tol ) )
+		{
+
+			;	/* do nothing */
+			/* fprintf(stderr,"%s: collinear points, face not made.\n", name); */
+
+		}
+		else
+		{
+			struct vertex **vert_p[3];
+			int found_verts;
+
+			/* Check if this face was already made */
+			for( i=0 ; i<NMG_TBL_END( &faces ) ; i++ )
+			{
+				int j;
+
+				found_verts = 0;
+				fu = (struct faceuse *)NMG_TBL_GET( &faces , i );
+				NMG_CK_FACEUSE( fu );
+				lu = RT_LIST_FIRST( loopuse , &fu->lu_hd );
+				NMG_CK_LOOPUSE( lu );
+				for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
+				{
+					NMG_CK_EDGEUSE( eu );
+					for( j=0 ; j<3 ; j++ )
+						if( rt_pt3_pt3_equal( eu->vu_p->v_p->vg_p->coord,
+								      verts[k+j].coord, tol ) )
+							found_verts++;
+				}
+				if( found_verts == 3 ) /* this face already exists */
+					break;
+			}
+
+			if( found_verts == 3 )
+			{
+				rt_log( "Component #%d:\n\tduplicate faces:\n" , in[0].cc );
+				rt_log( "\t\t (%g , %g , %g) (%g , %g , %g) (%g , %g , %g)\n",
+					V3ARGS( verts[k].coord ),
+					V3ARGS( verts[k+1].coord ),
+					V3ARGS( verts[k+2].coord ));
+
+				continue;
+			}
+
+			if( debug > 2 )
+				rt_log( "Make face: (%g , %g , %g) (%g , %g , %g) (%g , %g , %g)\n",
+					V3ARGS( verts[k].coord ),
+					V3ARGS( verts[k+1].coord ),
+					V3ARGS( verts[k+2].coord ));
+
+			/* Assign the three vertices for this face */
+			for( i=0 ; i<3 ; i++ )
+				vert_p[i] = &verts[k+i].vp;
+
+			/* Insure that same coordinates correspond to one vertex pointer */
+			for( ; vert1 < k+3 ; vert1++ )
+			{
+				if( verts[vert1].vp )
+					continue;
+				for( vert2=1 ; vert2 < vert1 ; vert2++ )
+				{
+					if( !verts[vert2].vp )
+						continue;
+					if( VEQUAL( verts[vert1].coord , verts[vert2].coord ) )
+						verts[vert1].vp = verts[vert2].vp;
+				}
+			}
+
+			/* make a face */
+			fu = nmg_cmface( os , vert_p , 3 );
+			NMG_CK_FACEUSE( fu );
+
+			if( debug > 2 )
+				rt_log( "\tMade faceuse x%x\n" , fu );
+
+			/* add it to the list */
+			nmg_tbl( &faces , TBL_INS , (long *)fu );
+
+			/* remember this face and its thickness */
+			p_faces[face_count].fu = fu;
+			p_faces[face_count].thick = thk[k+2];
+
+			/* Make sure we don't overrun our p_faces array */
+			face_count++;
+			if( face_count >= 2*l )
+			{
+				rt_log( "Face count = %d, only allowed for %d\n" , face_count , 2*l );
+				rt_bomb( "Build_solid\n" );
+			}
+
+			/* Assign geometry */
+			for( i=0 ; i<3 ; i++ )
+			{
+				if( verts[k+i].vp != NULL && verts[k+i].vp->vg_p == NULL )
+					nmg_vertex_gv( verts[k+i].vp , verts[k+i].coord );
+			}
+
+			/* phantom armor */
+			if (aflg > 0) {
+				if (in[0].rsurf_thick == 0) {
+					in[0].rsurf_thick = 1;
+				}
+			}
+		}
+	}
+
+	/* calculate plane equations for all the faces */
+        for (RT_LIST_FOR(s, shell, &r->s_hd))
+        {
+            NMG_CK_SHELL( s );
+            for (RT_LIST_FOR(fu, faceuse, &s->fu_hd))
+            {
+                NMG_CK_FACEUSE( fu );
+                if( fu->orientation == OT_SAME )
+                {
+                        if( nmg_fu_planeeqn( fu , &tol_tmp ) )
+                	{
+                                rt_log( "Build_solid: Failed to calculate plane eqn for outside fu x%x:\n" , fu );
+                		nmg_pr_fu_briefly( fu , (char *)NULL );
+                	}
+                }
+            }
+        }
+
+	/* don't need the verts array any more */
+	rt_free( (char *)verts , "build_solid: verts" );
+
+	/* glue all the faces together */
+	nmg_gluefaces( (struct faceuse **)NMG_TBL_BASEADDR( &faces) , NMG_TBL_END( &faces ) );
+
+	if( !plate_mode )
+	{
+		for( RT_LIST_FOR( s , shell , &r->s_hd ) )
+			nmg_fix_normals( s );
+
+		/* free the memory for the face list */
+		nmg_tbl( &faces , TBL_FREE , NULL );
+
+		/* don't need the p_faces array any more */
+		rt_free( (char *)p_faces , "build_solid: p_faces" );
+
+		/* Calculate bounding boxes */
+		nmg_region_a( r , tol );
+
+		/* Write solid to BRLCAD DB */
+		s = RT_LIST_FIRST( shell , &r->s_hd );
+
+		if( polysolid )
+			write_shell_as_polysolid( stdout , name , s );
+		else
+		{
+			nmg_shell_coplanar_face_merge( s , tol , 0 );
+			if( !nmg_simplify_shell( s ) )
+				mk_nmg( stdout , name , m );
+		}
+
+		/* if this solid is mirrored, don't go through the entire process again */
+		if( mirror_name[0] )
+		{
+			nmg_mirror_model( m );
+		
+			if( polysolid )
+				write_shell_as_polysolid( stdout , mirror_name , s );
+			else
+				mk_nmg( stdout , mirror_name , m );
+		}
+
+		/* Kill the model */
+		nmg_km( m );
+
+		return( 0 );
+	}
+
+	/* Next section is to fix the normals of the shell
+	 * Can't use nmg_fix_normals, because shell may not be closed */
+
+	/* get the shell and the first face from our list */
+	s = RT_LIST_FIRST( shell , &r->s_hd );
+	fu = (struct faceuse *)NMG_TBL_GET( &faces , 0 );
+	NMG_CK_FACEUSE( fu );
+
+	/* free the memory for the face list */
+	nmg_tbl( &faces , TBL_RST , NULL );
+
+	/* Create a flags array for the model to make sure each face gets its orientation set */
+	flags = (long *)rt_calloc( m->maxindex , sizeof( long ) , "patch-g: flags" );
+
+	/* loop to catch all faces */
+	missed_faces = 1;
+	while( missed_faces )
+	{
+		struct faceuse *fu1;
+		vect_t normal;
+
+		/* get the normal direction for the first face */
+		if( fu->orientation != OT_SAME )
+			fu = fu->fumate_p;
+		if( fu->orientation != OT_SAME )
+			rt_bomb( "Neither faceuse nor mate have an OT_SAME side\n" );
+		NMG_GET_FU_NORMAL( normal , fu );
+
+		/* calculate "out" direction, from centroid to face */
+		lu = RT_LIST_FIRST( loopuse , &fu->lu_hd );
+		eu = RT_LIST_FIRST( edgeuse , &lu->down_hd );
+		VSUB2( out , eu->vu_p->v_p->vg_p->coord , centroid );
+		VUNITIZE( out );
+
+		/* if "normal" and "out" disagree, reverse normal */
+		outdot = VDOT( out , normal );
+		if( outdot <= 0.001 &&  outdot >= -0.001 )
+		{
+			/* try model centroid */
+			VSUB2( out , eu->vu_p->v_p->vg_p->coord , Centroid );
+			VUNITIZE( out );
+			outdot = VDOT( out , normal );
+		}
+		if( outdot < 0.0 )
+			nmg_reverse_face_and_radials( fu , tol );
+
+		if( fu->orientation != OT_SAME )
+			fu = fu->fumate_p;
+
+		/* propagate this normal direction throughout the shell */
+		nmg_propagate_normals( fu , flags , tol );
+
+		/* check if all the faces have been processed */
+		missed_faces = 0;
+		for( RT_LIST_FOR( fu1 , faceuse , &s->fu_hd ) )
+		{
+			NMG_CK_FACEUSE( fu1 );
+			if( fu1->orientation == OT_SAME )
+			{
+				if( !NMG_INDEX_TEST( flags , fu1->f_p ) )
+				{
+					fu = fu1;
+					missed_faces++;
+					break;
+				}
+			}
+		}
+	}
+
+	nmg_patch_coplanar_face_merge( s , &face_count , p_faces , tol , 0 );
+
+	if( nmg_simplify_shell( s ) )
+		return( 1 );
+
+	/* Duplicate shell */
+	is = nmg_dup_shell( s , &copy_tbl );
+
+	/* make a new flags array */
+	rt_free( (char *)flags , "build_solid: flags" );
+	flags = (long *)rt_calloc( m->maxindex , sizeof( long ) , "patch-g: flags" );
+
+	/* Move faces planes */
+	for( i=0 ; i<face_count ; i++ )
+	{
+		struct face_g *fg_p;
+		plane_t plane;
+
+		fu = NMG_INDEX_GETP( faceuse , copy_tbl , p_faces[i].fu );
+		if( !fu )
+		{
+			rt_log( "No fu in duplicate shell corresponding to fu #%d (x%x) in original\n" , i , p_faces[i].fu );
+			rt_bomb( "patch-g\n" );
+		}
+
+		NMG_CK_FACEUSE( fu );
+		if( fu->orientation != OT_SAME )
+		{
+			fu = fu->fumate_p;
+			NMG_CK_FACEUSE( fu );
+		}
+		if( fu->orientation != OT_SAME )
+			rt_bomb( "patch-g: neither faceuse nor mate has orientation of OT_SAME\n" );
+
+		fg_p = fu->f_p->fg_p;
+		NMG_CK_FACE_G( fg_p );
+
+		/* move the faces by the distance "thick" */
+		if( NMG_INDEX_TEST_AND_SET( flags , fg_p ) )
+		{
+			if( fu->f_p->flip )
+				fg_p->N[3] += p_faces[i].thick;
+			else
+				fg_p->N[3] -= p_faces[i].thick;
+		}
+	}
+
+	/* don't need the p_faces array any more */
+	rt_free( (char *)p_faces , "build_solid: p_faces" );
+
+	/* Reverse the normals of all the new faces */
+	for( RT_LIST_FOR( fu , faceuse , &is->fu_hd ) )
+	{
+		if( NMG_INDEX_TEST_AND_SET( flags , fu->f_p ) )
+			nmg_reverse_face( fu );
+	}
+
+	/* glue all the faces of the new shell together */
+	for( RT_LIST_FOR( fu , faceuse , &is->fu_hd ) )
+	{
+		if( fu->orientation == OT_SAME )
+			nmg_tbl( &faces , TBL_INS , (long *)fu );
+	}
+	nmg_gluefaces( (struct faceuse **)NMG_TBL_BASEADDR( &faces) , NMG_TBL_END( &faces ) );
+	nmg_tbl( &faces , TBL_RST , NULL );
+
+	nmg_shell_coplanar_face_merge( is , tol , 0 );
+	nmg_shell_a( is , tol );
+
+	/* make yet another version of the flags array */
+	rt_free( (char *)flags , "build_solid: flags" );		
+	flags = (long *)rt_calloc( m->maxindex , sizeof( long ) , "patch-g: flags" );
+
+	/* make a list of the vertices to be moved */
+	nmg_tbl( &verts_to_move , TBL_INIT , (long *)NULL );
+	for( RT_LIST_FOR( fu , faceuse , &is->fu_hd ) )
+	{
+		if( fu->orientation != OT_SAME )
+			continue;
+
+		for( RT_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
+		{
+			NMG_CK_LOOPUSE( lu );
+			if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_VERTEXUSE_MAGIC )
+			{
+				/* the vertex in a loop of one vertex
+				 * must show up in an edgeuse somewhere,
+				 * so don't mess with it here */
+				continue;
+			}
+
+			for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
+			{
+				struct vertexuse *vu;
+
+				NMG_CK_EDGEUSE( eu );
+				vu = eu->vu_p;
+				NMG_CK_VERTEXUSE( vu );
+				NMG_CK_VERTEX( vu->v_p )
+				if( NMG_INDEX_TEST_AND_SET( flags , vu->v_p ) )
+				{
+					/* move this vertex */
+					nmg_tbl( &verts_to_move , TBL_INS , (long *)vu->v_p );
+				}
+			}
+		}
+	}
+
+	/* now start the actual moving of the vertex coordinates */
+	for( i=0 ; i<NMG_TBL_END( &verts_to_move ) ; i++ )
+	{
+		struct vertex *new_v;
+
+		/* get the vertexuse from the table */
+		new_v = (struct vertex *)NMG_TBL_GET( &verts_to_move , i );
+		NMG_CK_VERTEX( new_v );
+
+		/* Adjust the vertices of new_v */
+		if( debug > 2 )
+			rt_log( "Moving ( %f %f %f )" , V3ARGS( new_v->vg_p->coord ) );
+		if( nmg_in_vert( new_v , tol ) )
+		{
+			/* FAILURE, kill the model and shell and return a failure notification */
+			rt_log( "nmg_in_vert failed on %s!\n" , name );
+			if( !nmg_ks( is ) )
+			{
+				/* debugging: write an NMG of the outer shell named "name.BAD" */
+				char *bad;
+
+				bad = (char *)rt_malloc( strlen( name ) + 5 , "build_solid: Name for Bad solid" );
+				strcpy( bad , name );
+				strcat( bad , ".BAD" );
+				mk_nmg( stdout , bad , m );
+				rt_log( "BAD shell written as %s\n" , bad );
+				rt_free( (char *)bad , "build_solid: Name for Bad solid" );
+			}
+			nmg_km( m );
+			rt_free( (char *)flags , "build_solid: flags" );
+			rt_free( (char *)copy_tbl , "build_solid: copy_tbl" );
+			nmg_tbl( &verts_to_move , TBL_FREE , (long *)NULL );
+			return( 1 );
+		}
+		if( debug > 2 )
+			rt_log( " to ( %f %f %f )\n" , V3ARGS( new_v->vg_p->coord ) );
+	}
+
+	/* done moving, get rid of table */
+	nmg_tbl( &verts_to_move , TBL_FREE , (long *)NULL );
+
+	/* check for faces with less than three edges
+	 * could have been created by killing of eu's
+	 */
+	if( nmg_kill_short_lus( r ) )
+	{
+		/* It's all gone!!! */
+		nmg_km( m );
+		rt_free( (char *)flags , "build_solid: flags" );
+		rt_free( (char *)copy_tbl , "build_solid: copy_tbl" );
+		nmg_tbl( &verts_to_move , TBL_FREE , (long *)NULL );
+		rt_log( "Build_solid: %s is empty\n" , name );
+		return( 1 );
+	}
+
+	/* Close shell */
+	if( debug )
+		rt_log( "Close shell\n" );
+	if( nmg_open_shells_connect( s , is , copy_tbl , tol ) )
+	{
+		/* debugging: write an NMG of the outer shell named "name.BAD" */
+		char *bad;
+
+		bad = (char *)rt_malloc( strlen( name ) + 5 , "build_solid: Name for Bad solid" );
+		strcpy( bad , name );
+		strcat( bad , ".BAD" );
+		mk_nmg( stdout , bad , m );
+		rt_log( "BAD shell written as %s\n" , bad );
+		rt_free( (char *)bad , "build_solid: Name for Bad solid" );
+		nmg_km( m );
+		rt_free( (char *)flags , "Build_solid: flags" );
+		rt_free( (char *)copy_tbl , "Build_solid: copy_tbl" );
+		return( 1 );
+	}
+
+	rt_free( (char *)flags , "Build_solid: flags" );
+	rt_free( (char *)copy_tbl , "Build_solid: copy_tbl" );
+
+	/* recalculate plane equations, since some of the vertices we calculated
+	 * may not be exactly on the plane */
+	for( RT_LIST_FOR( s , shell , &r->s_hd ) )
+	{
+		for( RT_LIST_FOR( fu , faceuse , &s->fu_hd ) )
+		{
+			if( fu->orientation == OT_SAME )
+			{
+	                        if( nmg_fu_planeeqn( fu , &tol_tmp ) )
+	                	{
+	                                rt_log( "Build_solid: Failed to calculate plane eqn for fu x%x:\n" , fu );
+	                		nmg_pr_fu_briefly( fu , (char *)NULL );
+	                	}
+			}
+		}
+	}
+
+	nmg_tbl( &faces , TBL_RST , NULL );
+
+	/* glue all the faces of the new shell together */
+	s = RT_LIST_FIRST( shell , &r->s_hd );
+	for( RT_LIST_FOR( fu , faceuse , &s->fu_hd ) )
+	{
+		if( !fu )
+			continue;
+		NMG_CK_FACEUSE( fu );
+		if( fu->orientation == OT_SAME )
+			nmg_tbl( &faces , TBL_INS , (long *)fu );
+	}
+	nmg_gluefaces( (struct faceuse **)NMG_TBL_BASEADDR( &faces) , NMG_TBL_END( &faces ) );
+	nmg_tbl( &faces , TBL_FREE , NULL );
+
+	/* Calculate bounding boxes */
+	nmg_region_a( r , tol );
+
+	nmg_vmodel( m );
+
+	if( debug )
+		rt_log( "writing %s to BRLCAD DB\n" , name );
+
+	/* Write solid to BRLCAD DB */
+	s = RT_LIST_FIRST( shell , &r->s_hd );
+
+	if( polysolid )
+		write_shell_as_polysolid( stdout , name , s );
+	else
+	{
+		nmg_shell_coplanar_face_merge( s , tol , 0 );
+		if( !nmg_simplify_shell( s ) )
+		{
+			nmg_m_reindex( m );
+			mk_nmg( stdout , name , m );
+		}
+	}
+
+	/* if this solid is mirrored, don't go through the entire process again */
+	if( mirror_name[0] )
+	{
+		nmg_mirror_model( m );
+
+		if( debug )
+			rt_log( "writing  %s (nirrored) to BRLCAD DB\n" , mirror_name );
+		
+		if( polysolid )
+			write_shell_as_polysolid( stdout , mirror_name , s );
+		else
+		{
+			mk_nmg( stdout , mirror_name , m );
+		}
+	}
+
+	/* Kill the model */
+	nmg_km( m );
+
+	return( 0 );
+}
 
 /*
  *	 Process Volume Mode triangular facetted solids  
@@ -481,27 +1384,22 @@ int cnt;
 	static int count=0;
 	static int mir_count=0;
 	static int last_cc=0;
+	char 	name[17],mirror_name[17];
+	struct rt_tol tol;
+
+        /* XXX These need to be improved */
+        tol.magic = RT_TOL_MAGIC;
+        tol.dist = 0.005;
+        tol.dist_sq = tol.dist * tol.dist;
+        tol.perp = 1e-6;
+        tol.para = 1 - tol.perp;
+
 
 	if( in[cnt-1].cc != last_cc )
 	{
 		count = 0;
 		mir_count=0;
 	}
-
-	/* assign solid's name */
-
-	shflg = 'f';
-	mrflg = 'n';
-	ctflg = 'n';
-	proc_sname (shflg,mrflg,count+1,ctflg);
-
-	/* make solid */
-
-	mk_polysolid(stdout,name);
-	count++;
-
-	(void) mk_addmember(name,&head,WMOP_UNION);
-
 
 	for(k=0 ; k < (cnt) ; k++){
 		for(l=0; l<= 7; l++){
@@ -543,16 +1441,7 @@ int cnt;
 			fprintf(stderr,"%d %f %f %f\n",k,x[k],y[k],z[k]);
 	}
 
-	for(k=2; k<=4; k++){
-		VSET(pt[k-2],x[k],y[k],z[k]);
-	}
-
-	VMOVE(vertice[0],pt[0]);
-	VMOVE(vertice[1],pt[1]);
-	VMOVE(vertice[2],pt[2]);
-
-	for ( k=0; k<3; k++ )
-		centroid[k] = 0.0;
+	VSET( centroid , 0.0 , 0.0 , 0.0 );
 	for ( cpts=0, k=1; k<l; k++ ) {
 		point_t last, tmp;
 
@@ -570,183 +1459,44 @@ int cnt;
 		    centroid[0], centroid[1], centroid[2] );
 	}
 
+	/* assign solid's name */
 
-	for (k=5;(k<l); k++){
-		if(   VEQUAL(vertice[0],vertice[1])
-		    ||VEQUAL(vertice[0],vertice[2])
-		    ||VEQUAL(vertice[1],vertice[2])){
+	shflg = 'f';
+	mrflg = 'n';
+	ctflg = 'n';
+	strcpy( name , proc_sname (shflg,mrflg,count+1,ctflg) );
+	count++;
 
-			if ((k % 2)== 0){
+	if(in[0].mirror != 0)
+	{
 
-				VMOVE(vertice[1],vertice[2]);
-				VSET(pt[0],x[k],y[k],z[k]);
-				VMOVE(vertice[2],pt[0]);
-			}
-			else{
+		mrflg = 'y';
+		strcpy( mirror_name , proc_sname (shflg,mrflg,mir_count+1,ctflg) );
+		mir_count++;
+	}
+	else
+		mirror_name[0] = '\0';
 
-				VMOVE(vertice[0],vertice[2]);
-				VSET(pt[0],x[k],y[k],z[k]);
-				VMOVE(vertice[2],pt[0]);
-
-			}
-
-			/* fprintf(stderr,"Repeated Vertice, PUNTING\n"); */
-		}
-		else{
-
-			/* VADD3(centroid,vertice[0],vertice[1],vertice[2]);
-			 * VSCALE(centroid,centroid, third);
-			 * 
-			 * pnorms(normal,vertice,centroid,3,k);
-			 */
-
-			VSUB2(ab,vertice[1],vertice[0]);
-			VSUB2(bc,vertice[2],vertice[1]);
-			VCROSS(norm,ab,bc);
-			VUNITIZE(norm);
-			VSUB2( out, vertice[0], centroid );
-			if( VDOT( out, norm ) < 0.0 ) {
-				VREVERSE( norm, norm );
-			}
-
-/* Use same normal for all vertices (flat shading) */  
-			VMOVE(normal[0],norm);
-			VMOVE(normal[1],norm);
-			VMOVE(normal[2],norm);
-			mk_poly(stdout,3,vertice,normal);
-			
-
-			if ((k % 2)== 0){
-
-				VMOVE(vertice[1],vertice[2]);
-				VSET(pt[0],x[k],y[k],z[k]);
-				VMOVE(vertice[2],pt[0]);
-			}
-			else{
-
-				VMOVE(vertice[0],vertice[2]);
-				VSET(pt[0],x[k],y[k],z[k]);
-				VMOVE(vertice[2],pt[0]);
-
-			}
+	if( !Build_solid( l , name , mirror_name , 0 , centroid , &tol ) )
+	{
+		count++;
+		(void) mk_addmember(name,&head,WMOP_UNION);
+		proc_region( name );
+		if( mirror_name[0] )
+		{
+			(void) mk_addmember(mirror_name,&head,WMOP_UNION);
+			mir_count++;
+			proc_region( mirror_name );
 		}
 	}
 
-	/* Write out as region */
+	if( debug )
+	{
+		rt_log( "\tFinished %s\n" , name );
+		if( mirror_name[0] )
+			rt_log( "\tand %s\n" , mirror_name );
+	}
 
-	proc_region(name);
-
-	/* Process the mirrored surface ! (duplicates previous code) */
-
-	if(in[0].mirror != 0){
-
-	  mrflg = 'y';
-	  ctflg = 'n';
-	  proc_sname (shflg,mrflg,mir_count+1,ctflg);
-
-		mk_polysolid(stdout,name);
-		mir_count++;
-
-		(void) mk_addmember(name,&head,WMOP_UNION);
-
-
-		for(k=2; k<=4; k++){
-
-			VSET(pt[k-2],x[k],-y[k],z[k]);
-		}
-
-		VMOVE(vertice[0],pt[0]);
-		VMOVE(vertice[1],pt[1]);
-		VMOVE(vertice[2],pt[2]);
-
-		for ( k=0; k<3; k++ )
-			centroid[k] = 0.0;
-		for ( cpts=0, k=1; k<l; k++ ) {
-			point_t last, tmp;
-
-			VSET( tmp, x[k], -y[k], z[k] );
-			if( VEQUAL( tmp, last ) )
-				continue;
-			VADD2( centroid, centroid, tmp );
-			VMOVE( last, tmp );
-			cpts++;
-		}
-		VSCALE( centroid, centroid, 1.0/cpts );
-		if( debug > 2 ) {
-			fprintf(stderr,"%d: cpts=%d centroid %f %f %f\n",
-			    in[0].cc+in[0].mirror, cpts, 
-			    centroid[0], centroid[1], centroid[2] );
-		}
-
-		for (k=5; k<(l); k++){
-
-			if(VEQUAL(vertice[0],vertice[1])
-			    ||VEQUAL(vertice[0],vertice[2])
-			    ||VEQUAL(vertice[1],vertice[2])){
-
-				if ((k % 2)== 0){
-
-					VMOVE(vertice[1],vertice[2]);
-					VSET(pt[0],x[k],-y[k],z[k]);
-					VMOVE(vertice[2],pt[0]);
-
-
-				}
-				else{
-
-					VMOVE(vertice[0],vertice[2]);
-					VSET(pt[0],x[k],-y[k],z[k]);
-					VMOVE(vertice[2],pt[0]);
-
-
-				}
-
-				/* fprintf(stderr,"Repeated Vertice, PUNTING\n");*/
-			}
-			else{
-
-				/* VADD3(centroid,vertice[0],vertice[1],vertice[2]);
-				 * VSCALE(centroid,centroid, third);
-				 *
-				 * pnorms(normal,vertice,centroid,3,k);
-				 */
-
-				VSUB2(ab,vertice[1],vertice[0]);
-				VSUB2(bc,vertice[2],vertice[1]);
-				VCROSS(norm,ab,bc);
-				VUNITIZE(norm);
-				VSUB2( out, vertice[0], centroid );
-				if( VDOT( out, norm ) < 0.0 ) {
-					VREVERSE( norm, norm );
-				}
-
-/* Use same normal for all vertices (flat shading) */  
-				VMOVE(normal[0],norm);
-				VMOVE(normal[1],norm);
-				VMOVE(normal[2],norm);
-				mk_poly(stdout,3,vertice,normal);
-
-
-				if ((k % 2)== 0){
-
-					VMOVE(vertice[1],vertice[2]);
-					VSET(pt[0],x[k],-y[k],z[k]);
-					VMOVE(vertice[2],pt[0]);
-
-				}
-				else{
-					VMOVE(vertice[0],vertice[2]);
-					VSET(pt[0],x[k],-y[k],z[k]);
-					VMOVE(vertice[2],pt[0]);
-
-
-				}
-			}
-
-		}
-		proc_region(name);
-
-	}/* if */
 	last_cc = in[cnt-1].cc;
 }
 
@@ -768,6 +1518,15 @@ int cnt;
 	static int last_cc=0;
 	int cpts;
 	char	shflg,mrflg,ctflg;
+	char	name[17],mirror_name[17];
+	struct rt_tol tol;
+
+        /* XXX These need to be improved */
+        tol.magic = RT_TOL_MAGIC;
+        tol.dist = 0.005;
+        tol.dist_sq = tol.dist * tol.dist;
+        tol.perp = 1e-6;
+        tol.para = 1 - tol.perp;
 
 	if( in[cnt-1].cc != last_cc )
 	{
@@ -803,27 +1562,22 @@ int cnt;
 				y[l] = list[k].y;
 				z[l] = list[k].z;
 				thk[l] = list[k].thick;
-
+				if( thk[l] < tol.dist )
+				{
+					fprintf( stderr , "Thickness of component #%d at vertex #%d is %g\n" , in[0].cc , l , thk[l] );
+					thk[l] = 0.01;
+				}
 				l= l+1;
 			}
 		}
 
-		for(k=1; k<=3; k++){
-			VSET(pt[k-1],x[k],y[k],z[k]);
-		}
-
-		VMOVE(vertice[0],pt[0]);
-		VMOVE(vertice[1],pt[1]);
-		VMOVE(vertice[2],pt[2]);
 
 		if( debug > 2 ) {
 			for ( k=1;k<l; k++ )
 				fprintf(stderr,"Compressed: %f %f %f\n",x[k],y[k],z[k]);
 		}
 
-
-		for ( k=0; k<3; k++ )
-			centroid[k] = 0.0;
+		VSET( centroid , 0.0 , 0.0 , 0.0 );
 		for ( cpts=0, k=1; k<l; k++ ) {
 			point_t last, tmp;
 
@@ -841,244 +1595,40 @@ int cnt;
 			    centroid[0], centroid[1], centroid[2] );
 		}
 
+		/* name solids */
 
-		for (k=4;(k<l); k++){
+		shflg = 't';
+		mrflg = 'n';
+		ctflg = 'n';
+		strcpy( name , proc_sname (shflg,mrflg,count+1,ctflg) );
 
-			VSUB2(ab,vertice[1],vertice[0]);
-			VSUB2(bc,vertice[2],vertice[1]);
-			ndot = VDOT( ab, bc )/(MAGNITUDE(ab) * MAGNITUDE(bc));
-
-			if(VEQUAL(vertice[0],vertice[1])
-			    ||VEQUAL(vertice[0],vertice[2])
-			    ||VEQUAL(vertice[1],vertice[2])){
-
-				;	/* do nothing */
-				/* fprintf(stderr,"Repeated Vertice, PUNT\n"); */
-			}
-			else if( ndot >= 0.999999 || ndot <= -0.999999 ) {
-
-				;	/* do nothing */
-				/* fprintf(stderr,"%s: collinear points, not made.\n", name); */
-
-			}
-			else {
-
-				VSUB2(ab,vertice[1],vertice[0]);
-				VSUB2(bc,vertice[2],vertice[1]);
-				VSUB2(ca,vertice[0],vertice[2]);
-				VSUB2(ac,vertice[0],vertice[2]);
-
-				/* Plate Mode */
-
-				VMOVE(arb6pt[0],vertice[0]);
-				VMOVE(arb6pt[1],vertice[1]);
-				VMOVE(arb6pt[2],vertice[2]);
-				VMOVE(arb6pt[3],vertice[2]);
-
-				VCROSS(norm,ab,ac);
-				VUNITIZE(norm);
-
-				VSUB2( out, vertice[0], centroid );
-				VUNITIZE( out );
-				outdot = VDOT( out, norm );
-				if( debug > 2 )
-					fprintf(stderr,
-					    "%d: solid %d, unitized outward normal dot product is %f\n",
-					    in[0].cc, count+1, outdot );
-
-				/* flat plate, use center of description */
-				if( outdot <= 0.001 &&  outdot >= -0.001 ) {
-					if( debug > 0 )
-						fprintf(stderr,
-						    "%d: solid %d, using optional Centroid\n", 
-						    in[0].cc, count+1 );
-					VSUB2( out, vertice[0], Centroid );
-					VUNITIZE( out );
-					outdot = VDOT( out, norm );
-				}
-
-				if( outdot > 0.0 ) {
-					VREVERSE( norm, norm );
-				}
-
-				if( rev_norms ){
-					VREVERSE( norm, norm );
-				}
-
-				if (aflg > 0) {
-					if (in[0].rsurf_thick == 0) {
-						in[0].rsurf_thick = 1;
-					}
-				}
-
-				VSCALE(norm,norm,thk[k-1]);
-
-				VADD2(arb6pt[4],norm,arb6pt[0]);
-				VADD2(arb6pt[5],norm,arb6pt[1]);
-				VADD2(arb6pt[6],norm,arb6pt[2]);
-				VMOVE(arb6pt[7],arb6pt[6]);
-
-				/* name solids */
-
-				shflg = 't';
-				mrflg = 'n';
-				ctflg = 'n';
-				proc_sname (shflg,mrflg,count+1,ctflg);
-
-				/* make solids */
-
-				mk_arb8(stdout,name,arb6pt);
-				count++;
-
-				(void) mk_addmember(name,&head,WMOP_UNION);
-
-				/* For every num_unions triangles, make a separate region */
-
-				if ((count % num_unions) == 0)
-					proc_region(name);
-
-
-			}
-
-			VMOVE(vertice[0],vertice[1]);
-			VMOVE(vertice[1],vertice[2]);
-			VSET(pt[0],x[k],y[k],z[k]);
-			VMOVE(vertice[2],pt[0]);
-
+		if( in[0].mirror != 0 )
+		{
+			mrflg = 'y';
+			strcpy( mirror_name , proc_sname (shflg,mrflg,mir_count+1,ctflg) );
 		}
-		/* Make a region for leftover triangles (<num_unions) */
+		else
+			mirror_name[0] = '\0';
 
-		if ((count % num_unions) != 0)
-			proc_region(name);
-
-
-		if(in[0].mirror != 0){			/* Mirror Processing! */
-
-			for(k=1; k<=3; k++){
-				VSET(pt[k-1],x[k],-y[k],z[k]);
+		if( !Build_solid( l , name , mirror_name , 1 , centroid , &tol ) )
+		{
+			count++;
+			(void) mk_addmember(name,&head,WMOP_UNION);
+			proc_region( name );
+			if( mirror_name[0] )
+			{
+				(void) mk_addmember(mirror_name,&head,WMOP_UNION);
+				mir_count++;
+				proc_region( mirror_name );
 			}
+		}
 
-			VMOVE(vertice[0],pt[0]);
-			VMOVE(vertice[1],pt[1]);
-			VMOVE(vertice[2],pt[2]);
-
-			for ( k=0; k<3; k++ )
-				centroid[k] = 0.0;
-			for ( cpts=0, k=1; k<l; k++ ) {
-				point_t last, tmp;
-
-				VSET( tmp, x[k], -y[k], z[k] );
-				if( VEQUAL( tmp, last ) )
-					continue;
-				VADD2( centroid, centroid, tmp );
-				VMOVE( last,tmp );
-				cpts++;
-			}
-			VSCALE( centroid, centroid, 1.0/cpts );
-			if( debug > 2 ) {
-				fprintf(stderr,"%d: cpts=%d centroid %f %f %f\n",
-				    in[0].cc + in[0].mirror, cpts, 
-				    centroid[0], centroid[1], centroid[2] );
-			}
-
-
-			for (k=4; k<(l); k++){
-
-				VSUB2(ab,vertice[1],vertice[0]);
-				VSUB2(bc,vertice[2],vertice[1]);
-				ndot = VDOT( ab, bc )/(MAGNITUDE(ab) * MAGNITUDE(bc));
-
-				if(VEQUAL(vertice[0],vertice[1])
-				    ||VEQUAL(vertice[0],vertice[2])
-				    ||VEQUAL(vertice[1],vertice[2])){
-
-					;	/* do nothing */
-					/* fprintf(stderr,"Repeated Vertice, PUNT\n");*/
-				}
-				else if( ndot >= 0.999999 || ndot <= -0.999999 ) {
-
-					;	/* do nothing */
-					/* fprintf(stderr,"%s: collinear points, not made.\n", name); */
-
-				}
-				else {
-
-					VSUB2(ab,vertice[1],vertice[0]);
-					VSUB2(bc,vertice[2],vertice[1]);
-					VSUB2(ca,vertice[0],vertice[2]);
-					VSUB2(ac,vertice[0],vertice[2]);
-
-					VMOVE(arb6pt[0],vertice[0]);
-					VMOVE(arb6pt[1],vertice[1]);
-					VMOVE(arb6pt[2],vertice[2]);
-					VMOVE(arb6pt[3],vertice[2]);
-
-					VCROSS(norm,ac,ab);    /* Reversed normals */
-					/* in mirror case */
-					VUNITIZE(norm);
-
-					VSUB2( out, vertice[0], centroid );
-					VUNITIZE( out );
-					outdot = VDOT( out, norm );
-					if( debug > 2 )
-						fprintf(stderr,
-						    "%d: solid %d, unitized outward normal dot product is %f\n",
-						    in[0].cc+in[0].mirror, mir_count+1, outdot );
-
-					/* flat plate, use center of description */
-					if( outdot <= 0.001 &&  outdot >= -0.001 ) {
-						if( debug > 0 )
-							fprintf(stderr,
-							    "%d: solid %d, using optional Centroid\n", 
-							    in[0].cc+in[0].mirror, mir_count+1 );
-						VSUB2( out, vertice[0], Centroid );
-						VUNITIZE( out );
-						outdot = VDOT( out, norm );
-					}
-
-					if( outdot > 0.0 ) {
-						VREVERSE( norm, norm );
-					}
-
-					if( rev_norms ){
-						VREVERSE( norm, norm );
-					}
-
-					VSCALE(norm,norm,thk[k-1]);
-
-					VADD2(arb6pt[4],norm,arb6pt[0]);
-					VADD2(arb6pt[5],norm,arb6pt[1]);
-					VADD2(arb6pt[6],norm,arb6pt[2]);
-					VMOVE(arb6pt[7],arb6pt[6]);
-
-
-					mrflg = 'y';
-					ctflg = 'n';
-					proc_sname (shflg,mrflg,mir_count+1,ctflg);
-
-					mk_arb8(stdout,name,arb6pt);
-					mir_count++;
-
-					(void) mk_addmember(name,&head,WMOP_UNION);
-
-
-
-					if ((mir_count % num_unions) == 0)
-						proc_region(name);
-
-
-				}
-
-				VMOVE(vertice[0],vertice[1]);
-				VMOVE(vertice[1],vertice[2]);
-				VSET(pt[0],x[k],-y[k],z[k]);
-				VMOVE(vertice[2],pt[0]);
-
-			}
-			if ((mir_count % num_unions) != 0)
-				proc_region(name);
-
-		}/* if mirror */
+		if( debug )
+		{
+			rt_log( "\tFinished %s\n" , name );
+				if( mirror_name[0] )
+				rt_log( "\tand %s\n" , mirror_name );
+		}
 	} /* phantom armor check */
 
 	last_cc = in[cnt-1].cc;
@@ -1099,6 +1649,7 @@ int cnt;
 	static int mir_count=0;
 	static int last_cc=0;
 	char	shflg,mrflg,ctflg;
+	char	name[17];
 
 	if( in[cnt-1].cc != last_cc )
 	{
@@ -1127,7 +1678,7 @@ int cnt;
 		shflg = 'w';
 		mrflg = 'n';
 		ctflg = 'n';
-		proc_sname (shflg,mrflg,count+1,ctflg);
+		strcpy( name , proc_sname (shflg,mrflg,count+1,ctflg) );
 
 		/* make solids */
 
@@ -1168,7 +1719,7 @@ int cnt;
 
 		mrflg = 'y';
 		ctflg = 'n';
-		proc_sname (shflg,mrflg,mir_count+1,ctflg);
+		strcpy( name , proc_sname (shflg,mrflg,mir_count+1,ctflg) );
 
 		mk_arb8( stdout, name, pt8 );
 		mir_count++;
@@ -1198,6 +1749,7 @@ int cnt;
 	static int count=0;
 	static int mir_count=0;
 	static int last_cc=0;
+	char 	name[17];
 
 	if( in[cnt-1].cc != last_cc )
 	{
@@ -1212,7 +1764,7 @@ int cnt;
 		shflg = 's';
 		mrflg = 'n';
 		ctflg = 'n';
-		proc_sname (shflg,mrflg,count+1,ctflg);
+		strcpy( name , proc_sname (shflg,mrflg,count+1,ctflg) );
 		count++;
 
 		VSET(center,in[i].x,in[i].y,in[i].z);
@@ -1233,7 +1785,7 @@ int cnt;
 				/* name inside solid */
 
 				ctflg = 'y';
-				proc_sname (shflg,mrflg,count,ctflg);
+				strcpy( name , proc_sname (shflg,mrflg,count,ctflg) );
 
 				/* make inside solid */
 
@@ -1267,7 +1819,7 @@ int cnt;
 
 		mrflg = 'y';
 		ctflg = 'n';
-		proc_sname (shflg,mrflg,mir_count+1,ctflg);
+		strcpy( name , proc_sname (shflg,mrflg,mir_count+1,ctflg) );
 
 		VSET(center,in[i].x,-in[i].y,in[i].z);
 
@@ -1283,7 +1835,7 @@ int cnt;
 			if (in[i].surf_mode== '-'){
 
 				ctflg = 'y';
-				proc_sname (shflg,mrflg,mir_count,ctflg);
+				strcpy( name , proc_sname (shflg,mrflg,mir_count,ctflg) );
 
 				if( (rad = in[i+1].x - in[i].rsurf_thick) > 0.0 ) {
 					mk_sph(stdout,name,center,rad);
@@ -1327,6 +1879,7 @@ int cnt;
 	static int count=0;
 	static int mir_count=0;
 	static int last_cc=0;
+	char	name[17];
 
 	if( in[cnt-1].cc != last_cc )
 	{
@@ -1355,7 +1908,7 @@ int cnt;
 		shflg = 'b';
 		mrflg = 'n';
 		ctflg = 'n';
-		proc_sname (shflg,mrflg,count+1,ctflg);
+		strcpy( name , proc_sname (shflg,mrflg,count+1,ctflg) );
 
 		/* make solid */
 
@@ -1367,7 +1920,7 @@ int cnt;
 		if( in[k].surf_mode == '-' ){
 
 			ctflg = 'y';
-			proc_sname (shflg,mrflg,count,ctflg);
+			strcpy( name , proc_sname (shflg,mrflg,count,ctflg) );
 
 			valid = 1;
 			len = MAGNITUDE( ab );
@@ -1448,7 +2001,7 @@ int cnt;
 
 		mrflg = 'y';
 		ctflg = 'n';
-		proc_sname (shflg,mrflg,mir_count+1,ctflg);
+		strcpy( name , proc_sname (shflg,mrflg,mir_count+1,ctflg) );
 
 		mk_arb8( stdout, name, pt8 );
 		mir_count++;
@@ -1458,7 +2011,7 @@ int cnt;
 		if( in[k].surf_mode == '-' ){
 
 			ctflg = 'y';
-			proc_sname (shflg,mrflg,mir_count+1,ctflg);
+			strcpy( name , proc_sname (shflg,mrflg,mir_count+1,ctflg) );
 
 			valid = 1;
 			len = MAGNITUDE( ab );
@@ -1546,6 +2099,7 @@ int cnt;
 	static int count=0;
 	static int mir_count=0;
 	static int last_cc=0;
+	char	name[17];
 
 	if( in[cnt-1].cc != last_cc )
 	{
@@ -1570,7 +2124,7 @@ int cnt;
 		shflg = 'c';
 		mrflg = 'n';
 		ctflg = 'n';
-		proc_sname (shflg,mrflg,count+1,ctflg);
+		strcpy( name , proc_sname (shflg,mrflg,count+1,ctflg) );
 
 		count++;
 
@@ -1606,7 +2160,7 @@ int cnt;
 
 			if (in[k].surf_mode== '-'){     /* Plate mode */
 				ctflg = 'y';
-				proc_sname (shflg,mrflg,count,ctflg);
+				strcpy( name , proc_sname (shflg,mrflg,count,ctflg) );
 
 				switch(j){
 
@@ -1748,7 +2302,7 @@ int cnt;
 
 		mrflg = 'y';
 		ctflg = 'n';
-		proc_sname (shflg,mrflg,mir_count+1,ctflg);
+		strcpy( name , proc_sname (shflg,mrflg,mir_count+1,ctflg) );
 		mir_count++;
 
 		if(!((in[k].x==in[k+1].x)&&(in[k].y==in[k+1].y)&&(in[k].z==in[k+1].z))){
@@ -1776,7 +2330,7 @@ int cnt;
 
 			if (in[k].surf_mode== '-'){ 	/* Plate mode */
 				ctflg = 'y';
-				proc_sname (shflg,mrflg,mir_count,ctflg);
+				strcpy( name , proc_sname (shflg,mrflg,mir_count,ctflg) );
 
 				switch(j){
 
@@ -1924,6 +2478,7 @@ int cnt;
 	static int count=0;
 	static int mir_count=0;
 	static int last_cc=0;
+	char	name[17];
 
 	if( in[cnt-1].cc != last_cc )
 	{
@@ -1991,7 +2546,7 @@ int cnt;
 		shflg = 'r';
 		mrflg = 'n';
 		ctflg = 'n';
-		proc_sname (shflg,mrflg,count+1,ctflg);
+		strcpy( name , proc_sname (shflg,mrflg,count+1,ctflg) );
 
 		/* make solids */
 		count++;
@@ -2037,7 +2592,7 @@ int cnt;
 
 		mrflg = 'y';
 		ctflg = 'n';
-		proc_sname (shflg,mrflg,mir_count+1,ctflg);
+		strcpy( name , proc_sname (shflg,mrflg,mir_count+1,ctflg) );
 
 		/* make solids */
 		mir_count++;
@@ -2113,54 +2668,6 @@ int	npts;
 
 	for( i=0; i<npts; i++ )  {
 		VMOVE( norms[i], n );
-	}
-}
-
-/*
- *     This subroutine generates solid names with annotations for sidedness as
- *      required.
- */
-proc_sname(shflg,mrflg,cnt,ctflg)
-char shflg,mrflg,ctflg;
-int  cnt;
-{
-	char side;
-
-	/* shflg == identifies shape process which called this function
-	 * mrflg == indicates called by "as-modeled" pass or mirrored pass
-	 * cnt   == suffix indentifier for the name
-	 * ctflg == isolates internal cutting solids from regular solids
-	 * name == solid name
-	 * side  == left or right sidedness
-	 */
-
-	if (((mrflg == 'n') && (in[0].y >= 0)) ||
-	    ((mrflg == 'y') && (in[0].y < 0))) {
-	  side = 'l';
-	}
-	else {
-	  side = 'r';
-	}
-
-	if (in[0].mirror >= 0) {
-	  if ((mrflg == 'n') && (ctflg == 'n')) {
-	    sprintf(name,"%c.%.4d.s%.2d",shflg,in[0].cc,cnt);
-	  }
-	  else if ((mrflg == 'n') && (ctflg == 'y')) {
-	    sprintf(name,"%c.%.4d.c%.2d",shflg,in[0].cc,cnt);
-	  }
-	  else if ((mrflg == 'y') && (ctflg == 'n')) {
-	    sprintf(name,"%c.%.4d.s%.2d",shflg,(in[0].cc+in[0].mirror),cnt);
-	  }
-	  else {
-	    sprintf(name,"%c.%.4d.c%.2d",shflg,(in[0].cc+in[0].mirror),cnt);
-	  }
-	}
-	else if (ctflg == 'n') {
-	  sprintf(name,"%c%c.%.4d.s%.2d",side,shflg,in[0].cc,cnt);
-	}
-	else {
-	  sprintf(name,"%c%c.%.4d.c%.2d",side,shflg,in[0].cc,cnt);
 	}
 }
 
@@ -2245,8 +2752,7 @@ char *name1;
  *	heade == linked list of over-all group
  */
 void
-proc_label(name1,labelfile)
-char *name1;
+proc_label(labelfile)
 char *labelfile;
 {
 	char gname[16+1], mgname[16+1];	/* group, mirrored group names */
@@ -2256,41 +2762,28 @@ char *labelfile;
 	if( cur_series == -1 ) {		/* first time */
 		cur_series = in[0].cc / 1000;
 		set_color( cur_series );
-		proc_label(name1,labelfile);
+		proc_label(labelfile);
 		return;
 	}
 
-	if( cur_series == (in[0].cc / 1000)){
-
-		while( *name1++ != '.' )
-			;
-		cc = name1;
-
-		if ((atoi(cc)) == in[0].cc){
-
-			/* no mirror components */
-
-			if( labelfile != NULL )
-				sprintf(gname,"%s", nm[in[0].cc].ug );
-			else
-				sprintf(gname,"#%.4d",in[0].cc);
+	if( cur_series == (in[0].cc / 1000))
+	{
+		if( labelfile != NULL ) {
+			sprintf(gname,"%s", nm[in[0].cc].ug );
+			sprintf(mgname,"%s", nm[in[0].cc + in[0].mirror].ug );
+		}
+		else {
+			sprintf(gname,"#%.4d",in[0].cc);
+			sprintf(mgname,"#%.4d",(in[0].cc + in[0].mirror));
+		}
+		if( RT_LIST_NON_EMPTY( &heada.l ) )
+		{
 			mk_lcomb(stdout,gname,&heada,0,"","",0,0);
 			(void) mk_addmember(gname,&headd,WMOP_UNION);
 		}
-		else{
-			/* mirrored components */
-
-			if( labelfile != NULL ) {
-				sprintf(gname,"%s", nm[in[0].cc].ug );
-				sprintf(mgname,"%s", nm[in[0].cc + in[0].mirror].ug );
-			}
-			else {
-				sprintf(gname,"#%.4d",in[0].cc);
-				sprintf(mgname,"#%.4d",(in[0].cc + in[0].mirror));
-			}
-			mk_lcomb(stdout,gname,&heada,0,"","",0,0);
+		if( RT_LIST_NON_EMPTY( &headb.l ) )
+		{
 			mk_lcomb(stdout,mgname,&headb,0,"","",0,0);
-			(void) mk_addmember(gname,&headd,WMOP_UNION);
 			(void) mk_addmember(mgname,&headd,WMOP_UNION);
 		}
 	}
@@ -2301,7 +2794,7 @@ char *labelfile;
 
 		cur_series = in[0].cc/1000 ;
 		set_color( cur_series );
-		proc_label(name1,labelfile);
+		proc_label(labelfile);
 	}
 
 }
@@ -2564,7 +3057,7 @@ int cnt;
 	for( next=slist ; next; ){
 		slist = next;
 		next = slist->next;
-		free( (char *)slist );
+		rt_free( (char *)slist , "get_subtract: slist" );
 	}
 
 	slist = (struct subtract_list *)NULL;
@@ -2591,7 +3084,7 @@ int outsolid,insolid,inmirror;
 {
 
 	if( slist == NULL ){
-		slist = (struct subtract_list *)malloc(sizeof(struct subtract_list));
+		slist = (struct subtract_list *)rt_malloc(sizeof(struct subtract_list) , "add_to_list: slist" );
 		slist->outsolid = outsolid;
 		slist->insolid = insolid;
 		slist->inmirror = inmirror;
