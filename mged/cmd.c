@@ -1748,6 +1748,17 @@ int record;
 		
     rt_vls_init(&globbed);
 
+
+    /* MUST MAKE A BACKUP OF THE INPUT STRING AND USE THAT IN THE CALL TO
+       Tcl_Eval!!!
+       
+       You never know who might change the string (append to it...)
+       (f_mouse is notorious for adding things to the input string)
+       If it were to change while it was still being evaluated, Horrible Things
+       would happen.
+    */
+
+    
     if (glob_compat_mode)
 	mged_compat(&globbed, vp);
     else
