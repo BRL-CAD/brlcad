@@ -66,9 +66,6 @@ typedef char *pointer;		/* generic pointer (void *) */
 #define	Sgn( x )	((x) == 0 ? 0 : (x) > 0 ? 1 : -1)
 
 /* integer (or character) arguments and value: */
-#ifndef	unix
-#define	toascii( c )	((c) & 0177)	/* map host char set to ASCII */
-#endif
 #define tohostc( c )	(c)		/* map ASCII to host char set */
 #define tonumber( c )	((c) - '0')	/* convt digit char to number */
 #define todigit( n )	((n) + '0')	/* convt digit number to char */
