@@ -303,10 +303,12 @@ dotitles()
 		MAT4X3VEC(pt2, Viewrot, center_model);
 		VADD2(pt3, pt1, pt2);
 		(void)sprintf( &linebuf[0],
-" curs:  a1=%.1f,  a2=%.1f,  dst=%.3f,  cent=(%.3f, %.3f)",
+" curs:  a1=%.1f,  a2=%.1f,  dst=%.3f,  cent=(%.3f, %.3f),  delta=(%.3f, %.3f)",
 			angle1 * radtodeg, angle2 * radtodeg,
 			(c_tdist / 2047.0) *Viewscale*base2local,
-			pt3[X]*base2local, pt3[Y]*base2local);
+			pt3[X]*base2local, pt3[Y]*base2local,
+			(curs_x / 2047.0) *Viewscale*base2local,
+			(curs_y / 2047.0) *Viewscale*base2local );
 		dmp->dmr_puts( &linebuf[0], TITLE_XBASE, TITLE_YBASE + TEXT1_DY, 1, DM_YELLOW );
 	}
 	else if( illump != SOLID_NULL )  {
