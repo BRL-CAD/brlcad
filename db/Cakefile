@@ -45,7 +45,7 @@ everything&::	PRODUCTS
 #	define	CONV	../conv/asc2g
 #endif
 
-%.g:	../SRCDIR/%.asc	/tmp/asc2g		if exist ../SRCDIR/%.asc
+%.g:	../SRCDIR/%.asc				if exist ../SRCDIR/%.asc
 	CONV < ../SRCDIR/%.asc > %.g
 
 #include "../Cakefile.rules"
