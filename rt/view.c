@@ -1211,10 +1211,11 @@ char	*framename;
 	ap->a_refrac_index = 1.0;	/* RI_AIR -- might be water? */
 	ap->a_cumlen = 0.0;
 	ap->a_miss = hit_nothing;
+	bu_log( "rpt_overlap = %d\n", rpt_overlap );
 	if (rpt_overlap)
 		ap->a_logoverlap = ((void (*)())0);
 	else
-		ap->a_overlap = rt_overlap_quietly;
+		ap->a_logoverlap = rt_silent_logoverlap;
 	ap->a_onehit = a_onehit;
 
 	if (rpt_dist)
@@ -1456,5 +1457,5 @@ bu_log("mallocing curr_float_frame\n");
  */
 void application_init ()
 {
-    rpt_overlap = 1;
+  /*    rpt_overlap = 1; */
 }

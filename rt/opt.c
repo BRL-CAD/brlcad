@@ -47,7 +47,7 @@ int		doubles_out = 0;	/* u_char or double .pix output file */
 double		AmbientIntensity = 0.4;	/* Ambient light intensity */
 double		azimuth, elevation;
 int		lightmodel = 0;		/* Select lighting model */
-int		rpt_overlap = 0;	/* report overlapping region names */
+int		rpt_overlap = 1;	/* report overlapping region names */
 int		rpt_dist = 0;		/* report distance to each pixel */
 /***** end of sharing with viewing model *****/
 
