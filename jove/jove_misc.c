@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 10.1  91/10/12  06:54:02  mike
+ * Release_4.0
+ * 
  * Revision 2.6  91/08/30  18:59:49  mike
  * Modifications for clean compilation on the XMP
  * 
@@ -725,7 +728,7 @@ NoMacGetc()
 	int	c;
 
 	redisplay();
-	if ((c = getchar()) == EOF)
+	if ((c = jgetchar()) == EOF)
 		finish(SIGHUP);
 	return c & 0177;
 }

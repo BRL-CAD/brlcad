@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 10.2  93/10/26  03:44:16  mike
+ * ANSI C
+ * 
  * Revision 10.1  91/10/12  06:53:57  mike
  * Release_4.0
  * 
@@ -353,7 +356,7 @@ char	*string;
 		LineNo = StartNo;
 		message("--more--");
 		UpdateMesg();
-		switch (c = getchar()) {
+		switch (c = jgetchar()) {
 		case ' ':
 			break;
 
@@ -390,7 +393,7 @@ StopTelling()
 		int	c;
 
 		ignore(DoTell("----------"));
-		c = getchar();
+		c = jgetchar();
 		if (c != ' ' && Gobble == 0)
 			ignore(Ungetc(c));
 	}

@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 10.4  93/10/26  05:42:22  mike
+ * POSIX
+ * 
  * Revision 10.3  93/10/26  03:38:55  mike
  * termios stuff
  * 
@@ -233,7 +236,7 @@ register int	c;
 	return c;
 }
 
-getchar()
+jgetchar()
 {
 	if (nchars <= 0) {
 		/*
@@ -365,7 +368,7 @@ SubShell()
 		RunShell( DOCOMMAND );
 		putstr("Continue? ");
 		flusho();
-		yorn = getchar();
+		yorn = jgetchar();
 	} while (yorn != '\r' && yorn != '\n' && yorn != ' '
 		 && yorn != 'y' && yorn != 'Y');
 	ClAndRedraw();
@@ -445,7 +448,7 @@ ttsetup() {
 	newtty.c_iflag &= ~(INLCR|ICRNL);
 	newtty.c_lflag &= ~(ISIG|ICANON|ECHO);
 	newtty.c_oflag &= ~(OLCUC|ONLCR|OCRNL|ONOCR|ONLRET|OFILL);	/* DAG -- bug fix (was missing) */
-	/* VMIN = 0 causes us to loop in getchar() */
+	/* VMIN = 0 causes us to loop in jgetchar() */
 	newtty.c_cc[VMIN] = 1;
 	newtty.c_cc[VTIME] = 0;
 #endif
@@ -629,7 +632,7 @@ getch()
 		c = MacGetc();
 	else {
 		redisplay();
-		if ((c = getchar()) == EOF)  {
+		if ((c = jgetchar()) == EOF)  {
 			finish(SIGHUP);
 		}
 		c &= 0177;
