@@ -66,14 +66,16 @@ struct bbd_specific {
     plane_t p_B;
 
 };
-#define MAX_IMAGES 64
+#define IMAGE_DIMENSION_DEFAULT 512
+
+#define MAX_IMAGES 48
 /* The default values for the variables in the shader specific structure */
 const static
 struct bbd_specific bbd_defaults = {
     bbd_MAGIC,
-    10,		/* img_threshold */
-    512,	/* img_width */
-    512,	/* img_height */
+    5,		/* img_threshold */
+    IMAGE_DIMENSION_DEFAULT,	/* img_width */
+    IMAGE_DIMENSION_DEFAULT,	/* img_height */
     100.0	/* img_scale */
 };
 
@@ -124,6 +126,14 @@ struct mfuncs bbd_mfuncs[] = {
 };
 
 
+/*	n e w _ i m a g e
+ *
+ *	Called each time a file is specified in the shader parameters
+ *	If you are going to specify width and height for the image outside
+ *	the file name, it must be done BEFORE the name of the image in the
+ *	shader string so that the values are availabel here.
+ *
+ */
 void new_image(register const struct bu_structparse	*sdp,	/*struct desc*/
 	       register const char			*name,	/*member name*/
 	       char					*base,	/*struct base*/
@@ -134,6 +144,8 @@ void new_image(register const struct bu_structparse	*sdp,	/*struct desc*/
 
     BU_GETSTRUCT(bbdi, bbd_img);
 
+
+    /* map the image file into memory */
     bbdi->img_mf = bu_open_mapped_file_with_path(
 						 bbd_sp->rtip->rti_dbip->dbi_filepath,
 						 bu_vls_addr(&bbd_sp->img_filename),
@@ -145,15 +157,24 @@ void new_image(register const struct bu_structparse	*sdp,	/*struct desc*/
     }
     BU_CK_MAPPED_FILE(bbdi->img_mf);
 
+    /* get the dimensions of the image, either from the parameter list
+     * or from the image name.
+     */
     bbdi->img_width = bbd_sp->img_width;
-    bbdi->img_width = bbd_sp->img_height;
+    bbdi->img_height = bbd_sp->img_height;
 
-    if (!bn_common_name_size(&(bbdi->img_width), &(bbdi->img_height),
-			     bu_vls_addr(&bbd_sp->img_filename))) {
-	bu_log("---- Warning:  Assuming %dx%d dimension for \"%s\" ----\n",
-	       bbdi->img_width,
-	       bbdi->img_height,
-	       bu_vls_addr(&bbd_sp->img_filename));
+    /* if the user has specified dimensions, we believe them regardless */
+    if (bbdi->img_width == IMAGE_DIMENSION_DEFAULT &&
+	bbdi->img_height == IMAGE_DIMENSION_DEFAULT ) {
+
+	/* try to extract image dimensions from the file name */
+	if (!bn_common_name_size(&(bbdi->img_width), &(bbdi->img_height),
+				 bu_vls_addr(&bbd_sp->img_filename))) {
+	    bu_log("---- Warning:  Assuming %dx%d dimension for \"%s\" ----\n",
+		   bbdi->img_width,
+		   bbdi->img_height,
+		   bu_vls_addr(&bbd_sp->img_filename));
+	}
     }
 
     BU_LIST_APPEND(&bbd_sp->imgs, &(bbdi->l));
@@ -233,6 +254,12 @@ bbd_setup( rp, matparm, dpp, mfp, rtip)
 	return(-1);
 
     if (bbd_sp->img_count > MAX_IMAGES) {
+	/* because we don't  want to do malloc/free in the render routine,
+	 * we allocate an array of imgdist structs on the stack.  That array
+	 * has fixed size (for compatability with older C compilers that don't
+	 * do dynamically dimensioned arrays).
+	 * This check assures we don't exceed the size of that array
+	 */
 	bu_log("too many images (%d) in shader for %s sb < %d\n",
 	       bbd_sp->img_count, rp->reg_name, MAX_IMAGES);
 	bu_bomb("excessive image count\n");
@@ -241,12 +268,16 @@ bbd_setup( rp, matparm, dpp, mfp, rtip)
 
     mat_idn(mat);
     RT_INIT_DB_INTERNAL(&intern);
+    /* retrieve the RCC from the database so that we can use it's parameters
+     * XXX we should NOT be using rt_uniresource here.
+     */
     s = rt_db_get_internal(&intern, rp->reg_treetop->tr_a.tu_stp->st_dp, rtip->rti_dbip,
 			   mat, &rt_uniresource);
 
     if (intern.idb_minor_type != ID_TGC &&
 	intern.idb_minor_type != ID_REC) {
 	bu_log("What did I get? %d\n", intern.idb_minor_type);
+	bu_bomb("");
     }
 
     if (s < 0) {
@@ -256,6 +287,7 @@ bbd_setup( rp, matparm, dpp, mfp, rtip)
     tgc = (struct rt_tgc_internal *)intern.idb_ptr;
     RT_TGC_CK_MAGIC(tgc);
 
+    /* now we need to compute a coordinate system for each image plane */
     angle = M_PI / (double)bbd_sp->img_count;
     img_num = 0;
     VMOVE(vv, tgc->h);
@@ -271,12 +303,15 @@ bbd_setup( rp, matparm, dpp, mfp, rtip)
 
 	MAT4X3VEC(vtmp, mat, tgc->b);
 	VADD2(bi->img_origin, tgc->v, vtmp); /* image origin in 3d space */
-	/* calculate image u vector */
+
+
+	/* calculate XYZ vector along the U axis of the image */
 	VREVERSE(bi->img_x, vtmp);
 	VUNITIZE(bi->img_x);
 	bi->img_xlen = MAGNITUDE(vtmp) * 2;
 
-	/* calculate image v vector */
+
+	/* calculate XYZ vector along the V axis of the image */
 	VMOVE(bi->img_y, tgc->h);
 	VUNITIZE(bi->img_y);
 	bi->img_ylen = MAGNITUDE(tgc->h);
@@ -294,6 +329,7 @@ bbd_setup( rp, matparm, dpp, mfp, rtip)
 	img_num++;
     }
 
+    /* we no longer need the RCC data, so loose it */
     rt_db_free_internal(&intern, &rt_uniresource);
 
     if (rdebug&RDEBUG_SHADE) {
@@ -321,9 +357,15 @@ HIDDEN void
 bbd_free( cp )
      char *cp;
 {
+    /* XXX this needs to be written to free all the image structures */
     bu_free( cp, "bbd_specific" );
 }
 
+/*
+ *	p l o t _ r a y _ i m g
+ *
+ *	A debugging routine
+ */
 static void
 plot_ray_img(struct application	*ap,
 	     struct partition	*pp,
@@ -403,12 +445,14 @@ do_ray_image(struct application	*ap,
     }
 
     VJOIN1(pt, ap->a_ray.r_pt, dist, ap->a_ray.r_dir); /* point on plane */
-    VSUB2(vpt, pt, bi->img_origin);	/* vect: origin to pt */
-    x = VDOT(vpt, bi->img_x);
-    y = VDOT(vpt, bi->img_y);
+    VSUB2(vpt, pt, bi->img_origin);	/* vect: image origin to pt */
+    x = VDOT(vpt, bi->img_x);	/* offset from img origin along img X vector */
+    y = VDOT(vpt, bi->img_y);	/* offset from img origin along img Y vector */
 
-    if (x < 0.0 || x > bi->img_xlen ||
-	y < 0.0 || y > bi->img_ylen) {
+    /* if our hit point is outside the bounds of the image,
+     * we don't shade this point
+     */
+    if (x < 0.0 || x > bi->img_xlen || y < 0.0 || y > bi->img_ylen) {
 	if (rdebug&RDEBUG_SHADE) {
 	    bu_log("hit outside bounds, leaving color %g %g %g\n",
 		   V3ARGS(swp->sw_color));
@@ -420,12 +464,13 @@ do_ray_image(struct application	*ap,
     /* get the radius of the beam at the image plane */
     radius = ap->a_rbeam + dist * ap->a_diverge;
 
-    //    dx = radius * VDOT(ap->a_ray.r_dir, bi->img_x);
-    //    dy = radius * VDOT(ap->a_ray.r_dir, bi->img_y);
-    dx = radius;
-    dy = radius;
+    if (radius > (bi->img_xlen * 0.125)) dx = bi->img_xlen * 0.125;
+    else dx = radius;
 
+    if (radius > (bi->img_ylen * 0.125)) dy = bi->img_ylen * 0.125;
+    else dy = radius;
 
+    /* compute the limits of the ray footprint */
     xlo = x - dx;
     xhi = x + dx;
 
@@ -453,6 +498,7 @@ do_ray_image(struct application	*ap,
 	bu_log("u:%d..%d  v:%d..%d\n", ulo, uhi, vlo, vhi);
     }
 
+    /* sum up all the pixels in the image under the ray footprint */
     tot = (uhi - ulo + 1) * (vhi - vlo + 1); /* total # of pixels */
     color_count = 0; /* */
     VSETALL(cum_color, 0.0);
@@ -460,7 +506,9 @@ do_ray_image(struct application	*ap,
 	for (u = ulo ; u <= uhi ; u++) {
 	    color = &pixels[v*bi->img_width*3 + u*3];
 	    val = color[0]+color[1]+color[2];
-	    if (val > bbd_sp->img_threshold) {
+	    if (color[0] > bbd_sp->img_threshold ||
+		color[1] > bbd_sp->img_threshold ||
+		color[2] > bbd_sp->img_threshold) {
 		color_count++;
 		VJOIN1(cum_color, cum_color, rgb255, color);
 		if (rdebug&RDEBUG_SHADE) {
@@ -479,6 +527,7 @@ do_ray_image(struct application	*ap,
 		   V3ARGS(swp->sw_color));
 	return;
     }
+
     /* get average color: scale color by the # of contributions */
     t = 1.0 / (double)color_count;
     VSCALE(cum_color, cum_color, t);
@@ -491,6 +540,13 @@ do_ray_image(struct application	*ap,
 
     /* compute residual transmission */
     opacity = ((double)color_count / tot); /* opacity */
+    
+    /* scale opacity based opon obliquity */
+#define SMOOTHSTEP(x)  ((x)*(x)*(3 - 2*(x)))
+    t = fabs(VDOT(bi->img_plane, ap->a_ray.r_dir));
+    t = SMOOTHSTEP(t);
+    t = SMOOTHSTEP(t);
+    opacity *= t;
 
     t = swp->sw_transmit*opacity;
     VJOIN1(swp->sw_color, swp->sw_color, t, cum_color);
@@ -576,6 +632,11 @@ bbd_render( ap, pp, swp, dp )
     if (rdebug&RDEBUG_SHADE) {
 	bu_log("color %g %g %g\n", V3ARGS(swp->sw_color));
     }
+
+    if (swp->sw_color[0] == 0.0 && swp->sw_color[1] == 0.0 && swp->sw_color[2] == 0.0) {
+	VSETALL(swp->sw_color, 1.0);
+    }
+
     /* shader must perform transmission/reflection calculations
      *
      * 0 < swp->sw_transmit <= 1 causes transmission computations
