@@ -80,7 +80,9 @@ extern struct mater *rt_material_head;	/* now defined in librt/mater.c */
 extern struct bu_cmdtab vdraw_cmds[];
 
 static int dgo_open_tcl();
+#if 0
 static int dgo_close_tcl();
+#endif
 static int dgo_cmd();
 static int dgo_headSolid_tcl();
 static int dgo_illum_tcl();
@@ -132,7 +134,9 @@ static struct bu_cmdtab dgo_cmds[] = {
 	{"assoc",		dgo_assoc_tcl},
 	{"blast",		dgo_blast_tcl},
 	{"clear",		dgo_zap_tcl},
+#if 0
 	{"close",		dgo_close_tcl},
+#endif
 	{"draw",		dgo_draw_tcl},
 	{"erase",		dgo_erase_tcl},
 	{"erase_all",		dgo_erase_all_tcl},
@@ -213,6 +217,7 @@ dgo_deleteProc(clientData)
 	bu_free((genptr_t)dgop, "dgo_deleteProc: dgop");
 }
 
+#if 0
 /*
  * Close a drawable geometry object.
  *
@@ -242,6 +247,7 @@ dgo_close_tcl(clientData, interp, argc, argv)
 
 	return TCL_OK;
 }
+#endif
 
 /*
  * Create an command/object named "oname" in "interp".
