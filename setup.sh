@@ -25,7 +25,7 @@ echo "  BINDIR = ${BINDIR},  BASEDIR = ${BASEDIR}"
 
 for LAST in \
 	bin include include/brlcad lib vfont \
-	man man/man1 man/man3 man/man5 etc
+	man man/man1 man/man3 man/man5 etc tcl tk
 do
 	if test ! -d $BASEDIR/$LAST
 	then
