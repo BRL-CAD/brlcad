@@ -112,7 +112,7 @@ dotitles()
 	/*
 	 * The top of the menu (if any) begins at the Y value specified.
 	 */
-	menu_display( y );
+	mmenu_display( y );
 
 	/* print parameter locations on screen */
 	if( state == ST_O_EDIT && illump->s_Eflag ) {

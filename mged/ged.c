@@ -189,7 +189,7 @@ char **argv;
 	dir_build();
 
 	/* Initialize the menu mechanism to be off, but ready. */
-	menu_init();
+	mmenu_init();
 	btn_head_menu(0,0,0);		/* unlabeled menu */
 
 	refresh();			/* Put up faceplate */

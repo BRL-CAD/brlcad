@@ -93,7 +93,7 @@ usepen()
 		dm_values.dv_penpress
 	)  {
 		register int i;
-		if( (i = menu_select( dm_values.dv_ypen )) < 0 )  {
+		if( (i = mmenu_select( dm_values.dv_ypen )) < 0 )  {
 			(void)printf("pen press outside valid menu\n");
 			return;
 		}
