@@ -193,6 +193,7 @@ BDIRS="bench \
 	libbu \
 	libbn \
 	librt \
+	librtserver \
 	liboptical \
 	libfb \
 	libwdb \
