@@ -1416,25 +1416,31 @@ struct vertexuse	*vu1, *vu2;
 
 /*			N M G _ C U T _ L O O P
  *
- *	Divide a loop of edges between two vertexuses
+ *	Divide a loop of edges between two vertexuses.
  *
  *	Make a new loop between the two vertexes, and split it and
  *	the loop of the vertexuses at the same time.
  *
- *	Old Loop      New loop	Resulting loops
  *
- *	    v1		v1	    v1
- *	    |	        |	    |\
- *	    V	        V	    V V
- *	*---*---*	*	*---* *---*
- *	|	|	|	|   | |   |
- *	|	|	|	|   | |   |
- *	*---*---*	*	*---* *---*
- *	    ^		^	    ^ ^
- *	    |	        |	    |/
- *	   v2		v2	    v2
+ *		BEFORE					AFTER
  *
- *  Returns the new loopuse pointer.
+ *
+ *     Va    eu1  vu1		Vb	       Va   eu1  vu1             Vb
+ *	* <---------* <---------*		* <--------*  * <--------*
+ *	|					|	      |		 
+ *	|			^		|	   ^  |		 ^
+ *	|	 Original	|		| Original |  |	   New   |
+ *	|	   Loopuse	|		| Loopuse  |  |	 Loopuse |
+ *	V			|		V          |  V	/	 |
+ *				|		           |   /	 |
+ *	*----------> *--------> *		*--------> *  *--------> *
+ *     Vd	     vu2 eu2	Vc	       Vd             vu2  eu2   Vc
+ *
+ *  Returns the new loopuse pointer.  The new loopuse will contain "vu2"
+ *  and the edgeuse associated with "vu2" as the FIRST edgeuse on the
+ *  list of edgeuses.  The edgeuse for the new edge  (connecting
+ *  the verticies indicated by vu1 and vu2) will be the LAST edgeuse on the
+ *  new loopuse's list of edgeuses.
  */
 struct loopuse *
 nmg_cut_loop(vu1, vu2)
