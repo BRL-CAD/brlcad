@@ -48,15 +48,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #ifndef FLIPPED_NORMALS_BUG
 #define FLIPPED_NORMALS_BUG	0 /* Keep an eye out for dark spots. */
 #endif
-#define Fix_Iflip( _pp, _normal, _rdir, _stp )\
-	{\
-	if( _pp->pt_inflip )\
-		{\
-		VREVERSE( _normal, _normal );\
-		_pp->pt_inflip = 0;\
-		}\
-	Check_Iflip( _pp, _normal, _rdir, _stp );\
-	}
 
 #if FLIPPED_NORMALS_BUG
 #define Check_Iflip( _pp, _normal, _rdir, _stp )\
@@ -75,16 +66,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #else
 #define Check_Iflip( _pp, _normal, _rdir, _stp )	;
 #endif
-
-#define Fix_Oflip( _pp, _normal, _rdir, _stp )\
-	{\
-	if( _pp->pt_outflip )\
-		{\
-		VREVERSE( _normal, _normal );\
-		_pp->pt_outflip = 0;\
-		}\
-	Check_Oflip( _pp, _normal, _rdir, _stp );\
-	}
 
 #if FLIPPED_NORMALS_BUG
 #define Check_Oflip( _pp, _normal, _rdir, _stp )\
@@ -562,6 +543,7 @@ struct partition *pt_headp;
 		register struct soltab *stp;
 		register struct xray *rp;
 		register struct hit *ihitp;
+		point_t	normal;
 	Get_Partition( ap, pp, pt_headp, "f_Region" );
 	regp = pp->pt_regionp;
 	stp = pp->pt_inseg->seg_stp;
@@ -571,12 +553,11 @@ struct partition *pt_headp;
 		{ /* We are inside a solid, so slice it. */
 		VJOIN1( ihitp->hit_point, rp->r_pt, ihitp->hit_dist,
 			rp->r_dir );
-		VSCALE( ihitp->hit_normal, rp->r_dir, -1.0 );
+		VSCALE( normal, rp->r_dir, -1.0 );
 		}
 	else
 		{
-		RT_HIT_NORM( ihitp, stp, rp );
-		Fix_Iflip( pp, ihitp->hit_normal, ap->a_ray.r_dir, stp );
+		RT_HIT_NORMAL( normal, ihitp, stp, rp, pp->pt_inflip );
 		}
 	prnt_Scroll(	"Hit region \"%s\"\n", regp->reg_name );
 	prnt_Scroll(	"\timpact point: <%8.2f,%8.2f,%8.2f>\n",
@@ -585,9 +566,9 @@ struct partition *pt_headp;
 			ihitp->hit_point[Z]
 			);
 	prnt_Scroll(	"\tsurface normal: <%8.2f,%8.2f,%8.2f>\n",
-			ihitp->hit_normal[X],
-			ihitp->hit_normal[Y],
-			ihitp->hit_normal[Z]
+			normal[X],
+			normal[Y],
+			normal[Z]
 			);
 	prnt_Scroll(	"\tid: %d, aircode: %d, material: %d, LOS: %d\n",
 			regp->reg_regionid,
@@ -635,17 +616,17 @@ struct partition *pt_headp;
 	{	register struct partition *pp;
 		register struct soltab *stp;
 		register struct hit *ihitp;
+		point_t normal;
 	Get_Partition( ap, pp, pt_headp, "f_HL_Hit" );
 	stp = pp->pt_inseg->seg_stp;
 	ihitp = pp->pt_inhit;
-	RT_HIT_NORM( ihitp, stp, &(ap->a_ray) );
-	Fix_Iflip( pp, ihitp->hit_normal, ap->a_ray.r_dir, stp );
-	ap->a_color[RED] = (ihitp->hit_normal[X] + 1.0) / 2.0;
-	ap->a_color[GRN] = (ihitp->hit_normal[Y] + 1.0) / 2.0;
-	ap->a_color[BLU] = (ihitp->hit_normal[Z] + 1.0) / 2.0;
+	RT_HIT_NORMAL( normal, ihitp, stp, &(ap->a_ray), pp->pt_inflip );
+	ap->a_color[RED] = (normal[X] + 1.0) / 2.0;
+	ap->a_color[GRN] = (normal[Y] + 1.0) / 2.0;
+	ap->a_color[BLU] = (normal[Z] + 1.0) / 2.0;
 	if( rt_g.debug )
 		{
-		V_Print( "normal", ihitp->hit_normal, rt_log );
+		V_Print( "normal", normal, rt_log );
 		V_Print( "acolor", ap->a_color, rt_log );
 		}
 	if( hl_normap != NULL )
@@ -771,6 +752,7 @@ struct partition *pt_headp;
 		register struct xray *rp = &ap->a_ray;
 		int material_id;
 		fastf_t rgb_coefs[3];
+		vect_t normal;
 	Get_Partition( ap, pp, pt_headp, "f_Model" );
 	stp = pp->pt_inseg->seg_stp;
 	ihitp = pp->pt_inhit;
@@ -778,12 +760,11 @@ struct partition *pt_headp;
 		{ /* We are inside a solid, so slice it. */
 		VJOIN1( ihitp->hit_point, rp->r_pt, ihitp->hit_dist,
 			rp->r_dir );
-		VSCALE( ihitp->hit_normal, rp->r_dir, -1.0 );
+		VSCALE( normal, rp->r_dir, -1.0 );
 		}
 	else
 		{
-		RT_HIT_NORM( ihitp, stp, rp );
-		Fix_Iflip( pp, ihitp->hit_normal, ap->a_ray.r_dir, stp );
+		RT_HIT_NORMAL( normal, ihitp, stp, rp, pp->pt_inflip );
 		}
 
 	/* See if we hit a light source. */
@@ -926,7 +907,8 @@ struct partition *pt_headp;
 				{
 				ap->a_user = i;
 				model_Reflectance( ap, pp, entry, &lgts[i],
-							view_dir
+							view_dir,
+							normal
 							);
 				VJOIN1(	rgb_coefs, rgb_coefs, f, ap->a_color );
 				if( rt_g.debug & DEBUG_SHADOW )
@@ -949,7 +931,7 @@ struct partition *pt_headp;
 		ap->a_user = material_id;
 		if( entry->reflectivity > 0.0 )
 			{	fastf_t mirror_coefs[3];
-			mirror_Reflect( ap, pp, mirror_coefs );
+			mirror_Reflect( ap, pp, mirror_coefs, normal );
 
 			/* Compute mirror reflection. */
 			VJOIN1(	rgb_coefs,
@@ -965,7 +947,7 @@ struct partition *pt_headp;
 			}
 		if( entry->transparency > 0.0 )
 			{
-			glass_Refract( ap, pp, entry );
+			glass_Refract( ap, pp, entry, normal );
 			/* Compute transmission through glass. */
 			VJOIN1( rgb_coefs,
 				rgb_coefs,
@@ -1093,10 +1075,11 @@ register Lgt_Source *lgt_entry;
 			     register fastf_t *mirror_coefs )	
  */
 STATIC void
-mirror_Reflect( ap, pp, mirror_coefs )
+mirror_Reflect( ap, pp, mirror_coefs, normal )
 register struct application *ap;
 register struct partition *pp;
 register fastf_t *mirror_coefs;
+vect_t normal;
 	{	fastf_t r_dir[3];
 		struct application ap_hit;
 	ap_hit = *ap;		/* Same as initial application. */
@@ -1114,9 +1097,9 @@ register fastf_t *mirror_coefs;
 	/* Calculate reflected incident ray. */
 	VREVERSE( r_dir, ap->a_ray.r_dir );
 
-	{	fastf_t	f = 2.0	* Dot( r_dir, pp->pt_inhit->hit_normal );
+	{	fastf_t	f = 2.0	* Dot( r_dir, normal );
 		fastf_t tmp_dir[3];
-	Scale2Vec( pp->pt_inhit->hit_normal, f, tmp_dir );
+	Scale2Vec( normal, f, tmp_dir );
 	Diff2Vec( tmp_dir, r_dir, ap_hit.a_ray.r_dir );
 	}
 	/* Set up ray origin at surface contact point. */
@@ -1133,10 +1116,11 @@ register fastf_t *mirror_coefs;
 				register Mat_Db_Entry *entry )
  */
 STATIC void
-glass_Refract( ap, pp, entry )
+glass_Refract( ap, pp, entry, normal )
 register struct application *ap;
 register struct partition *pp;
 register Mat_Db_Entry *entry;
+vect_t normal;
 	{	struct application ap_hit;	/* To shoot ray beyond. */
 		struct application ap_ref;	/* For getting thru. */
 	/* Application structure for refracted ray. */
@@ -1222,7 +1206,7 @@ register Mat_Db_Entry *entry;
 			goto	inside_ray;
 			}
 		if( ! refract(	ap->a_ray.r_dir,   /* Incident ray. */
-				pp->pt_inhit->hit_normal,
+				normal,
 				RI_AIR,		   /* Air ref. index. */
 				entry->refrac_index,
 				ap_ref.a_ray.r_dir /* Refracted ray. */
@@ -1414,14 +1398,8 @@ struct partition *pt_headp;
 	Get_Partition( ap, pp, pt_headp, "f_Probe" );
 	stp = pp->pt_outseg->seg_stp;
 	hitp = pp->pt_outhit;
-	RT_HIT_NORM( hitp, stp, &(ap->a_ray) );
-	Fix_Oflip( pp, hitp->hit_normal, ap->a_ray.r_dir, stp );
-	VMOVE( ap->a_uvec, hitp->hit_normal );
+	RT_HIT_NORMAL( ap->a_uvec, hitp, stp, &(ap->a_ray), pp->pt_outflip );
 	VMOVE( ap->a_color, hitp->hit_point );
-	if( ! pp->pt_outflip )
-		{ /* For refraction, want exit normal to point inward. */
-		VREVERSE( ap->a_uvec, ap->a_uvec );
-		}
 	return	1;
 	}
 
@@ -1522,16 +1500,14 @@ struct partition *pt_headp;
 	if( rt_g.debug & DEBUG_SHADOW )
 		{	register struct hit *ihitp, *ohitp;
 			register struct soltab *istp, *ostp;
+			point_t inormal;
 		rt_log( "Shadowed by :\n" );
 		istp = pp->pt_inseg->seg_stp;
 		ihitp = pp->pt_inhit;
 		ostp = pp->pt_outseg->seg_stp;
 		ohitp = pp->pt_outhit;
-		RT_HIT_NORM( ihitp, istp, &(ap->a_ray) );
-		Fix_Iflip( pp, ihitp->hit_normal, ap->a_ray.r_dir, istp );
-		RT_HIT_NORM( ohitp, ostp, &(ap->a_ray) );
-		Fix_Oflip( pp, ohitp->hit_normal, ap->a_ray.r_dir, ostp );
-		V_Print( "entry normal", ihitp->hit_normal, rt_log );
+		RT_HIT_NORMAL( inormal, ihitp, istp, &(ap->a_ray), pp->pt_inflip );
+		V_Print( "entry normal", inormal, rt_log );
 		V_Print( "entry point", ihitp->hit_point, rt_log );
 		rt_log( "partition[start %g end %g]\n",
 			ihitp->hit_dist, ohitp->hit_dist
@@ -1619,14 +1595,14 @@ struct partition *pt_headp;
 	The RGB result is returned implicitly in "ap->a_color".
  */
 STATIC void
-model_Reflectance( ap, pp, mdb_entry, lgt_entry, view_dir )
+model_Reflectance( ap, pp, mdb_entry, lgt_entry, view_dir, norml )
 register struct application *ap;
 struct partition *pp;
 Mat_Db_Entry *mdb_entry;
 register Lgt_Source *lgt_entry;
 fastf_t *view_dir;
+register fastf_t *norml;
 	{	/* Compute attenuation of light source intensity. */
-		register fastf_t *norml = pp->pt_inhit->hit_normal;
 		register fastf_t ff;		/* temporary */
 		fastf_t lgt_energy;
 		fastf_t cos_il; 	/* cosine incident angle */
