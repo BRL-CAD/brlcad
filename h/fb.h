@@ -86,6 +86,10 @@ typedef struct  {
 	long	if_pixcur;	/* Current pixel number in framebuffer. */
 	long	if_pbytes;	/* Sizeof page buffer (bytes).		*/
 	long	if_ppixels;	/* Sizeof page buffer (pixels).		*/
+	union	{		/* State variables for interface modules */
+		char	*p;
+		long	l;
+	} u1, u2;
 } FBIO;
 
 #ifdef NULL
@@ -114,7 +118,6 @@ typedef struct  {
 #define fb_setcursor(_ifp,_bitmap)	(*_ifp->if_cinit_bitmap)(_ifp,_bitmap)
 #define fb_cursor(_ifp,_mode,_x,_y)	(*_ifp->if_cmemory_addr)(_ifp,_mode,_x,_y)
 #define fb_scursor(_ifp,_mode,_x,_y)	(*_ifp->if_cscreen_addr)(_ifp,_mode,_x,_y)
-#define fb_animate(_ifp,_n,_sz,_fps)	(*_ifp->if_animate)(_ifp,_n,_sz,_fps)
 
 /* Library entry points which are true functions.			*/
 extern FBIO	*fb_open();
