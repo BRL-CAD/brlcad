@@ -22,8 +22,13 @@ char *progname = "(noname)";
 #define PIXELS 1024
 unsigned char pixbuf[BUFSIZ*3];
 
-/* This grotesque array provides 1 bit for every possible pixel value */
+/* This grotesque array provides 1 bit for every possible pixel value.
+ * the "NOBASE" comment below allows compilation on the Gould 9000 series
+ * of computers.
+ */
+/*NOBASE*/
 unsigned char vals[2097152L];
+
 #define TEST(p)    (vals[(p)/8] & 1 << (p)%8)
 
 /*
@@ -43,11 +48,11 @@ void doit()
 	    }
 	}
     }
-    printf("%u\n", count);
-    if (optflags[offset(options, 'v')])
+    (void) printf("%u\n", count);
+    if (verbose)
 	for (i=0 ; i < sizeof(vals) ; ++i)
 	    if (TEST(i))
-		printf("%3d %3d %3d\n", i & 0x0ff,
+		(void) printf("%3d %3d %3d\n", i & 0x0ff,
 		    (i >> 8) & 0x0ff,
 		    (i >> 16) & 0x0ff);
 }
@@ -68,17 +73,14 @@ main(ac,av)
 int ac;
 char *av[];
 {
-    int  c, optlen;
+    int  c;
 
     progname = *av;
     if (isatty(fileno(stdin))) usage();
     
     /* Get # of options & turn all the option flags off
      */
-    optlen = strlen(options);
 
-    for (c=0 ; c < optlen ; optflags[c++] = '\0');
-    
     /* Turn off getopt's error messages */
     opterr = 0;
 

@@ -2,8 +2,7 @@
  *
  *	Program to take a BRLCAD PIX format image file and convert the
  *	image to a Sun Microsystems 8-bit deep color "rasterfile" format
- *	image.  No color dithering is performed currently.  That will come
- *	later.
+ *	image.
  *
  *   Author(s)
  *   Lee A. Butler
@@ -16,7 +15,6 @@
  *  Copyright Notice -
  *      This software is Copyright (C) 1986 by the United States Army.
  *      All rights reserved.
- *
  */
 #include <stdio.h>
 
@@ -132,13 +130,13 @@ static unsigned char nvec[16] = {  0, 246, 247,  43, 248, 249,  86, 250,
 #define REMAPIXEL(red, green, blue, i) { \
 	MAP(r, red); MAP(g, green); MAP(b, blue); \
 	if (r == g) { \
-		if (r == b) i = nvec[((red+green+blue)/3)/16]; /* grey */ \
-		else if (r == 0)  i = bvec[blue/16];	/* all blue */ \
-		else i = (unsigned char)(r + g * 6 + b * 36); /* color cube # */ \
+	    if (r == b) i = nvec[((red+green+blue)/3)/16]; /* grey */ \
+	    else if (r == 0)  i = bvec[blue/16];	   /* all blue */ \
+	    else i = (unsigned char)(r + g * 6 + b * 36);  /* color cube # */ \
 	} \
-	else if (g == b && g == 0) i = rvec[red/16];	/* all red */ \
-	else if (r == b && r == 0) i = gvec[green/16]; 	/* all green */ \
-	else i = (unsigned char)(r + g * 6 + b * 36);	/* color cube # */ }
+	else if (g == b && g == 0) i = rvec[red/16];	   /* all red */ \
+	else if (r == b && r == 0) i = gvec[green/16]; 	   /* all green */ \
+	else i = (unsigned char)(r + g * 6 + b * 36);	   /* color cube # */ }
 	
 
 /*
@@ -230,21 +228,9 @@ void doit()
     free(rast);
 }
 
-/*   O F F S E T
- *
- *   return offset of character c in string s, or strlen(s) if c not in s
- */
-int offset(s, c)
-char s[], c;
-{
-    register unsigned int i=0;
-    while (s[i] != '\0' && s[i] != c) i++;
-    return(i);
-}
-
 void usage()
 {
-    (void)fprintf(stderr, "Usage: %s [-s squaresize] [-w width] [-n height] < pixfile > rasterfile\n", progname, options);
+    (void)fprintf(stderr, "Usage: %s [-s squaresize] [-w width] [-n height] < BRLpixfile > rasterfile\n", progname, options);
     exit(1);
 }
 
@@ -276,17 +262,10 @@ char *av[];
     */
     while ((c=getopt(ac,av,options)) != EOF)
 	switch (c) {
-	case '?'    :
-	case 'h'    : usage(); break;
 	case 'w'    : ras.ras_width = atoi(optarg); break;
 	case 'n'    : ras.ras_height = atoi(optarg); break;
-	case 's'    : ras.ras_width = ras.ras_height = 
-				atoi(optarg); break;
-	default     : if (offset(options, c) != strlen(options))
-			    optflags[offset(options, c)]++;
-			else
-			    usage();
-			break;
+	case 's'    : ras.ras_width = ras.ras_height = atoi(optarg); break;
+	default     : usage(); break;
 	}
 
 

@@ -64,22 +64,22 @@ char *av[];
 	hdr.bitplanes += (getchar() & 0x0ff);
 	
 	if (hdr.bitplanes != 24) {
-		fprintf(stderr, "Weird image file:\n");
-		fprintf(stderr,
+		(void) fprintf(stderr, "Weird image file:\n");
+		(void) fprintf(stderr,
 			"X: %d Y: %d xoff: %d yoff: %d bits/pixel: %d\n", 
 			hdr.x, hdr.y, hdr.xoff, hdr.yoff, hdr.bitplanes);
 		exit(-1);
 	}
 
 	if (verbose) {
-		fprintf(stderr,
+		(void) fprintf(stderr,
 			"X: %d Y: %d xoff: %d yoff: %d bits/pixel: %d\n", 
 			hdr.x, hdr.y, hdr.xoff, hdr.yoff, hdr.bitplanes);
 	}
 
 
 	if ( (image=malloc(hdr.x*hdr.y*3)) == (char *)NULL) {
-		fprintf(stderr, "%s: insufficient memor for %d x %d image\n",
+		(void) fprintf(stderr, "%s: insufficient memor for %d x %d image\n",
 			hdr.x, hdr.y);
 		exit(-1);
 	}
@@ -99,7 +99,7 @@ char *av[];
 	
 	for(i=hdr.y-1 ; i >= 0 ; --i)
 		if (fwrite(&image[i*hdr.x*3], hdr.x*3, 1, stdout) != 1) {
-			fprintf(stderr, "%s: Error writing image\n", *av);
+			(void) fprintf(stderr, "%s: Error writing image\n", *av);
 			exit(-1);
 		}
 

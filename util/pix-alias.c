@@ -47,8 +47,7 @@ struct aliashead {
 /*
  *	D O I T --- Main function of program
  */
-void doit(fd)
-FILE *fd;
+void doit()
 {
 	struct aliashead ah;
 	char *image, *malloc();
@@ -59,13 +58,13 @@ FILE *fd;
 
 	/* allocate a buffer for the image */
 	if ((image = malloc(bufsize)) == (char *)NULL) {
-		fprintf(stderr, "Error: Insufficient memory for image buffer\n");
+		(void) fprintf(stderr, "Error: Insufficient memory for image buffer\n");
 		exit(-2);
 	}
 	/* read in the image (reverse the order of the scanlines) */
 	for (n=y-1 ; n >= 0 ; --n)
 		if (fread(&image[n*x*3], x*3, 1, stdin) != 1) {
-			fprintf(stderr, "Error reading image at scanline %u\n", n);
+			(void) fprintf(stderr, "Error reading image at scanline %u\n", n);
 			exit(-2);
 		}
 
@@ -80,16 +79,16 @@ FILE *fd;
 	 * machine architectures
 	 */
 	
-	putchar( (x & 0x0ff00) >> 8);
-	putchar( (x & 0x0ff));
-	putchar( (y & 0x0ff00) >> 8);
-	putchar( (y & 0x0ff));
-	putchar(0);
-	putchar(0);
-	putchar( (ah.yoff & 0x0ff00) >> 8);
-	putchar( (ah.yoff & 0x0ff));
-	putchar(0);
-	putchar(24);
+	(void) putchar( (x & 0x0ff00) >> 8);
+	(void) putchar( (x & 0x0ff));
+	(void) putchar( (y & 0x0ff00) >> 8);
+	(void) putchar( (y & 0x0ff));
+	(void) putchar(0);
+	(void) putchar(0);
+	(void) putchar( (ah.yoff & 0x0ff00) >> 8);
+	(void) putchar( (ah.yoff & 0x0ff));
+	(void) putchar(0);
+	(void) putchar(24);
 
 	for (idx=0 ; idx < bufsize ; ) {
 		cpix = idx; cnt=0;
@@ -101,30 +100,17 @@ FILE *fd;
 			idx += 3; ++cnt;
 		}
 		/* Alias files are count, B, G, R */
-		putchar((char) cnt);
-		putchar(image[cpix+2]);
-		putchar(image[cpix+1]);
-		putchar(image[cpix]);
+		(void) putchar((char) cnt);
+		(void) putchar(image[cpix+2]);
+		(void) putchar(image[cpix+1]);
+		(void) putchar(image[cpix]);
 	}
 }
 
-/*	O F F S E T
- *
- *	return offset of character c in string s, or strlen(s) if c not in s
- */
-int offset(s, c)
-char s[], c;
+void usage()
 {
-	register unsigned int i=0;
-	while (s[i] != '\0' && s[i] != c) i++;
-	return(i);
-}
-
-void usage(s)
-char *s;
-{
-	fprintf(stderr,"Usage: %s [ -s squaresize ] [-w file_width ] [-n file_height ]\n", progname);
-	fprintf(stderr,"\t< BRLpixfile > ALIASpixfile\n");
+	(void)fprintf(stderr,"Usage: %s [ -s squaresize ] [-w file_width ] [-n file_height ]\n", progname);
+	(void)fprintf(stderr,"\t< BRLpixfile > ALIASpixfile\n");
 	exit(1);
 }
 
@@ -134,10 +120,9 @@ int ac;
 char *av[];
 {
 	int  c, optlen;
-	FILE *fd, *fopen();
 
 	progname = *av;
-	if (isatty(fileno(stdin))) usage(*av);
+	if (isatty(fileno(stdin))) usage();
 	
 	/* Get # of options & turn all the option flags off
 	 */
@@ -152,17 +137,12 @@ char *av[];
 	 */
 	while ((c=getopt(ac,av,options)) != EOF)
 		switch (c) {
-		case '?' : usage(*av); break;
 		case 'w' : x = atoi(optarg); break;
 		case 'n' : y = atoi(optarg); break;
 		case 's' : x = atoi(optarg); y = atoi(optarg); break;
-		default	: usage(*av); break;
+		default	: usage(); break;
 		}
 
-	/* If someone called for help, give it to them! */
-	if (optflags[ offset(options, 'h') ]) usage(*av);
-
-	if (optind >= ac)
-		doit(stdin);
-	else usage(*av);
+	if (optind >= ac) doit();
+	else usage();
 }
