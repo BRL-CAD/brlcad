@@ -38,22 +38,13 @@ int n;
 {
 	int				i;
 	struct faceuse			*fu;	
-	register struct shell		*s;
-	register struct nmgregion	*r;
-
 
 	for (i=0 ; i < n ; ++i) {
 		fu = lu[i]->up.fu_p;
 		nmg_klu(lu[i]);
-		lu[i] = (struct loopuse *)NULL;
+		lu[i] = (struct loopuse *)NULL;	/* sanity */
 		if (!fu->lu_p) {
-			s = fu->s_p;
 			nmg_kfu(fu);
-			if (!s->fu_p && !s->lu_p && !s->eu_p && !s->vu_p) {
-				r = s->r_p;
-				nmg_ks(s);
-				if (!r->s_p && r->next != r) nmg_kr(r);
-			}
 		}
 	}
 }
@@ -161,6 +152,98 @@ register struct faceuse	*fu;
 	fumate->s_p = dest;
 }
 
+#define BACTION_KILL			1
+#define BACTION_RETAIN			2
+#define BACTION_RETAIN_AND_FLIP		3
+
+static struct nmg_ptbl	*classified_shell_loops[6];
+
+/* Actions are listed: onAinB, onAonB, onAoutB, inAonB, onAonB, outAonB */
+static int		subtraction_actions[6] = {
+	BACTION_KILL,
+	BACTION_RETAIN,		/* _IF_OPPOSITE */
+	BACTION_RETAIN,
+	BACTION_RETAIN_AND_FLIP,
+	BACTION_KILL,
+	BACTION_KILL
+};
+
+static int		union_actions[6] = {
+	BACTION_KILL,
+	BACTION_RETAIN,		/* _IF_SAME */
+	BACTION_RETAIN,
+	BACTION_KILL,
+	BACTION_KILL,
+	BACTION_RETAIN
+};
+
+static int		intersect_actions[6] = {
+	BACTION_RETAIN,
+	BACTION_RETAIN,		/* If opposite, ==> non-manifold */
+	BACTION_KILL,
+	BACTION_RETAIN,
+	BACTION_KILL,
+	BACTION_KILL
+};
+
+/*
+ *			N M G _ A C T _ O N _ L O O P
+ */
+void
+nmg_act_on_loop( ltbl, action, dest, src )
+struct nmg_ptbl	*ltbl;
+int		action;
+struct shell	*dest;
+struct shell	*src;
+{
+	struct loopuse	**lup;
+	struct loopuse	*lu;
+	struct faceuse	*fu;
+	int		i;
+
+	NMG_CK_SHELL( dest );
+	NMG_CK_SHELL( src );
+
+	switch( action )  {
+	default:
+		rt_bomb("nmg_act_on_loop: bad action\n");
+		/* NOTREACHED */
+
+	case BACTION_KILL:
+		nmg_toss_loops( (struct loopuse **)(ltbl->buffer), ltbl->end );
+		return;
+
+	case BACTION_RETAIN:
+		i = ltbl->end-1;
+		lup = &((struct loopuse **)(ltbl->buffer))[i];
+		for( ; i >= 0; i--, lup-- ) {
+			lu = *lup;
+			*lup = 0;			/* sanity */
+			NMG_CK_LOOPUSE(lu);
+			fu = lu->up.fu_p;
+			NMG_CK_FACEUSE(fu);
+			if( fu->s_p == dest )  continue;
+			nmg_mv_fu_between_shells( dest, src, fu );
+		}
+		return;
+
+	case BACTION_RETAIN_AND_FLIP:
+		i = ltbl->end-1;
+		lup = &((struct loopuse **)(ltbl->buffer))[i];
+		for( ; i >= 0; i--, lup-- ) {
+			lu = *lup;
+			*lup = 0;			/* sanity */
+			NMG_CK_LOOPUSE(lu);
+			fu = lu->up.fu_p;
+			NMG_CK_FACEUSE(fu);
+			nmg_reverse_face( fu );		/* flip */
+			if( fu->s_p == dest )  continue;
+			nmg_mv_fu_between_shells( dest, src, fu );
+		}
+		return;
+	}
+}
+
 /*	S U B T R A C T I O N
  *
  *	reshuffle the faces of two shells to perform a subtraction of
@@ -182,8 +265,24 @@ struct nmg_ptbl *AinB, *AonB, *AoutB, *BinA, *BonA, *BoutA;
 	} p;
 	int i;
 
+#if 0
+	classified_shell_loops[0] = AinB;
+	classified_shell_loops[1] = AonB;
+	classified_shell_loops[2] = AoutB;
+	classified_shell_loops[3] = BinA;
+	classified_shell_loops[4] = BonA;
+	classified_shell_loops[5] = BoutA;
+
+	for( i=0; i<6; i++ )  {
+		nmg_act_on_loop( classified_shell_loops[i],
+			subtraction_actions[i],
+			sA, sB );
+	}
+#endif
+
 	(void)nmg_tbl(&faces, TBL_INIT, (long *)NULL);
 
+#if 0
 	/* first we toss out the unwanted faces from both shells */
 	p.l = AinB->buffer;
 	nmg_toss_loops(p.lu, AinB->end);
@@ -206,7 +305,14 @@ struct nmg_ptbl *AinB, *AonB, *AoutB, *BinA, *BonA, *BoutA;
 			nmg_reverse_face( fu );
 		}
 	}
-
+#else
+	nmg_act_on_loop( AinB, BACTION_KILL, sA, sB );
+	nmg_act_on_loop( AonB, BACTION_RETAIN, sA, sB );	/* if opposite */
+	nmg_act_on_loop( AoutB, BACTION_RETAIN, sA, sB );
+	nmg_act_on_loop( BinA, BACTION_RETAIN_AND_FLIP, sA, sB );
+	nmg_act_on_loop( BonA, BACTION_KILL, sA, sB );
+	nmg_act_on_loop( BoutA, BACTION_KILL, sA, sB );
+#endif
 
 	if (rt_g.NMG_debug & DEBUG_SUBTRACT) {
 		FILE *fd, *fopen();
@@ -239,7 +345,11 @@ struct nmg_ptbl *AinB, *AonB, *AoutB, *BinA, *BonA, *BoutA;
 	if (sB->fu_p) {
 		rt_log("Why does shell B still have faces?\n");
 	} else if (!sB->lu_p && !sB->eu_p && !sB->vu_p) {
+		struct nmgregion	*r;
+
+		r = sB->r_p;
 		nmg_ks(sB);
+		if (!r->s_p && r->next != r) nmg_kr(r);
 	}
 
 
