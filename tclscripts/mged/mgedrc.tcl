@@ -204,10 +204,18 @@ proc dump_mged_state {fd} {
     puts $fd "set mged_default(zclip) $mged_gui($id,zclip)"
     puts $fd ""
     puts $fd "# zbuffer"
-    puts $fd "set mged_default(zbuffer) $mged_gui($id,zbuffer)"
+    if { $mged_gui($id,dtype) == "ogl" } {
+	puts $fd "set mged_default(zbuffer) $mged_gui($id,zbuffer)"
+    } else {
+	puts $fd "set mged_default(zbuffer) $mged_default(zbuffer)"
+    }
     puts $fd ""
     puts $fd "# lighting"
-    puts $fd "set mged_default(lighting) $mged_gui($id,lighting)"
+    if { $mged_gui($id,dtype) == "ogl" } {
+	puts $fd "set mged_default(lighting) $mged_gui($id,lighting)"
+    } else {
+	puts $fd "set mged_default(lighting) $mged_default(lighting)"
+    }
     puts $fd ""
     puts $fd "# Activate/deactivate perspective mode, F3"
     puts $fd "set mged_default(perspective_mode) $mged_gui($id,perspective_mode)"
