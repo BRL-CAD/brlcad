@@ -31,7 +31,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <sys/types.h>
 #include <sys/uio.h>		/* for struct iovec */
 #include <netinet/in.h>		/* for htons(), etc */
-#include <netdb.h>		/* for gethostbyname() stuff */
 #endif
 
 #ifdef BSD
@@ -47,7 +46,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #define MAX_PIXELS_NET	1024
 #define MAX_HOSTNAME	32
-#define	PCP(p)	((struct pkg_conn *)p->if_pbase)
+#define	PCP(ptr)	((struct pkg_conn *)((ptr)->u1.p))
+#define	PCPL(ptr)	((ptr)->u1.p)	/* left hand side version */
 
 /* Package Handlers. */
 static int pkgerror();	/* error message handler */
@@ -115,14 +115,11 @@ register char	*devicename;
 int	width, height;
 {
 	register int	i;
-	char		buf[24];
-	char		*file;
-	char		hostname[MAX_HOSTNAME];
-	char		official_hostname[MAX_HOSTNAME];
-	long		*lp;
-	int		ret;
-	struct hostent	*hostentry;
-	extern struct hostent	*gethostbyname();
+	char	buf[24];
+	char	*file;
+	char	hostname[MAX_HOSTNAME];
+	long	*lp;
+	int	ret;
 
 	if( devicename == NULL || (file = strchr( devicename, ':' )) == NULL ) {
 		fb_log( "remote_dopen : bad device name \"%s\"\n",
@@ -132,15 +129,9 @@ int	width, height;
 	for( i = 0; devicename[i] != ':' && i < MAX_HOSTNAME; i++ )
 		hostname[i] = devicename[i];
 	hostname[i] = '\0';
-	if( (hostentry = gethostbyname( hostname )) == NULL ) {
-		fb_log(	"remote_dopen : host not found \"%s\".\n",
-			hostname );
-		return	-1;
-	}
-	(void) strncpy( official_hostname, hostentry->h_name, MAX_HOSTNAME );
-	if( (PCP(ifp) = pkg_open( official_hostname, "mossfb", pkgswitch, fb_log )) < 0 ) {
+	if( (PCPL(ifp) = (char *)pkg_open( hostname, "mfb", pkgswitch, fb_log )) < 0 ) {
 		fb_log(	"remote_dopen : can't connect to host \"%s\".\n",
-			official_hostname );
+			hostname );
 		return	-1;
 	}
 	ifp->if_fd = PCP(ifp)->pkc_fd;
@@ -220,9 +211,9 @@ int	num;
 _LOCAL_ int
 rem_bwrite( ifp, x, y, pixelp, num )
 FBIO	*ifp;
-int		x, y;
-Pixel		*pixelp;
-int		num;
+int	x, y;
+Pixel	*pixelp;
+int	num;
 {
 	int	ret;
 	struct	{
@@ -235,10 +226,10 @@ int		num;
 	cmd.x = htonl( x );
 	cmd.y = htonl( y );
 	cmd.num = htonl( num );
-	pkg_queue( ifp,	MSG_FBWRITE+MSG_NORETURN, &cmd,	sizeof(cmd), PCP(ifp) );
+	pkg_send( MSG_FBWRITE+MSG_NORETURN, &cmd, sizeof(cmd), PCP(ifp) );
 
 	/* Send DATA */
-	pkg_queue( ifp,	MSG_DATA, (char *) pixelp, num*4, PCP(ifp) );
+	pkg_send( MSG_DATA, (char *)pixelp, num*4, PCP(ifp) );
 #ifdef NEVER
 	pkg_waitfor( MSG_RETURN, &ret, 4, PCP(ifp) );
 	return	ntohl( ret );
@@ -347,7 +338,7 @@ char *buf;
 	(void)free(buf);
 	return	0;	/* Declared as integer function in pkg_switch. */
 }
-
+#ifdef NEVER
 /***** Experimental Queueing routines *****/
 
 /*
@@ -477,3 +468,4 @@ register struct pkg_conn *pc;
 	}
 	return(len);
 }
+#endif NEVER
