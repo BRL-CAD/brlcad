@@ -249,7 +249,7 @@ proc undo_edit_menus {} {
 	    }
 
 	    if {[.$id.menubar.edit entrycget 0 -label] != \
-		    "Solid Selection..."} {
+		    "Prim Selection..."} {
 		.$id.menubar.edit delete 0
 	    } else {
 		break
