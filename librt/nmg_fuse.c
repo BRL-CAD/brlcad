@@ -320,13 +320,11 @@ CONST struct rt_tol	*tol;
 
 	if( eg1 == eg2 )  return 1;
 
-#if 0
 	/* Ensure direction vectors are generally parallel */
 	/* These are not unit vectors */
 	/* tol->para and RT_DOT_TOL are too tight a tolerance.  0.1 is 5 degrees */
 	if( fabs(VDOT(eg1->e_dir, eg2->e_dir)) <
 	    0.9 * MAGNITUDE(eg1->e_dir) * MAGNITUDE(eg2->e_dir)  )  return 0;
-#endif
 
 	/* Ensure that vertices of both edges are within tol of other eg */
 	if( rt_distsq_line3_pt3( eg1->e_pt, eg1->e_dir,
@@ -339,18 +337,9 @@ CONST struct rt_tol	*tol;
 	if( rt_distsq_line3_pt3( eg2->e_pt, eg2->e_dir,
 	    e1->eu_p->eumate_p->vu_p->v_p->vg_p->coord ) > tol->dist_sq )  return 0;
 
-	/* Ensure that lines are colinear */
-	if( rt_isect_line3_line3( &t, &u, eg1->e_pt, eg1->e_dir,
-	    eg2->e_pt, eg2->e_dir, tol) != 0 )  {
-#if 0
-	    	VPRINT("eg1->e_pt ", eg1->e_pt);
-	    	VPRINT("eg1->e_dir", eg1->e_dir);
-	    	VPRINT("eg2->e_pt ", eg2->e_pt);
-	    	VPRINT("eg2->e_dir", eg2->e_dir);
-rt_log("nmg_2edge_g_coincident() rejecting on rt_isect_line3_line3()\n");
-#endif
-		return 0;
-	}
+	/* Perhaps check for ultra-short edges (< 10*tol->dist)? */
+
+	/* Do not use rt_isect_line3_line3() -- it's MUCH too strict */
 
 	return 1;
 }
