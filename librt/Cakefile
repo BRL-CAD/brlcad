@@ -9,20 +9,20 @@
 #include "../Cakefile.defs"
 
 /* Separate into orderly groupings:
- *	headers
- *	Geometry routines
- *	Database handling
- *	Utility routines
  *	Raytrace logic
+ *	Database handling
+ *	Geometry routines
+ *	Utility routines
  */
 /* 	complex debug plane polyno */
 #define FILES	\
+	shoot cut bool \
+	dir tree \
 	arb ars ell half rec sph spline tgc \
 	torus pg \
-	dir tree \
 	anim complex mat mater polylib roots \
 	machine LIBRT_TIMER error storage  \
-	cut bool shoot spm
+	sphmap
 
 #define SPL_OBJ	\
 	bound_spl.o calc_oslo.o diff_spl.o knot.o map_oslo.o new_spl.o \
@@ -44,7 +44,12 @@
  */
 %.o&:	libplot3,,%,o			if exist ../libplot3/%.c
 
-%.o:	../libspl/%.c			if exist ../libspl.MTYPE/%.o
-	cp ../libspl.MTYPE/%.o %.o
+#if defined(NFS)
+%.o:	../libspl/%.c			if exist ../.libspl.MTYPE/%.o
+	cp ../.libspl.MTYPE/%.o %.o
+#else
+%.o:	../libspl/%.c			if exist ../libspl/%.o
+	cp ../libspl/%.o %.o
+#endif
 
 #include "../Cakefile.rules"
