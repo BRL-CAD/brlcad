@@ -77,6 +77,8 @@ static int ars_curve=0;
 static int ars_pt=0;
 static char *ars_name;
 static fastf_t **ars_curves=NULL;
+static char *slave_name = "safe_interp";
+static char *db_name = "db";
 
 static char usage[] = "\
 Usage: asc2g file.asc file.g\n\
@@ -135,23 +137,37 @@ char **argv;
 		bu_bomb( "Unexpected EOF!!!\n" );
 	}
 
-	if( !strncmp( c1, "db", 2 ) ) {
+	if( !strncmp( c1, db_name, 2 ) ) {
 		Tcl_Interp     *interp;
+		Tcl_Interp     *safe_interp;
 
 		/* this is a Tcl script */
 
 		rewind( ifp );
 		BU_LIST_INIT(&rt_g.rtg_headwdb.l);
 		interp = Tcl_CreateInterp();
-		if( wdb_init_obj( interp, ofp, "db" ) != TCL_OK ) {
+		if( wdb_init_obj( interp, ofp, db_name ) != TCL_OK ) {
 			bu_bomb( "Failed to initialize wdb_obj!!\n" );
 		}
 
-		if( Tcl_EvalFile( interp, argv[1] ) != TCL_OK ) {
+		/* Create the safe interpreter */
+		safe_interp = Tcl_CreateSlave(interp, slave_name, 1);
+
+		/* Create aliases */
+		{
+			int	ac = 0;
+			char	*av[1];
+
+			argv[0] = (char *)0;
+			Tcl_CreateAlias(safe_interp, db_name, interp, db_name, ac, av);
+		}
+
+		if( Tcl_EvalFile( safe_interp, argv[1] ) != TCL_OK ) {
 			bu_log( "Failed to process input file (%s)!!\n", argv[1] );
 			bu_log( "%s\n", Tcl_GetStringResult(interp) );
 			exit( 1 );
 		}
+
 		exit( 0 );
 	} else {
 		rewind( ifp );
