@@ -117,13 +117,7 @@ top:
 			{
 				struct rt_db_internal intern;
 				struct bu_external ext;
-				struct rt_bot_internal *bot;
-				struct soltab st;
-				struct rt_i rti;
-				struct tri_specific *tri;
-				int i;
-
-				rti.rti_tol = tol;
+				struct bu_external ext2;
 
 				polys++;
 				curr_poly = 0;
@@ -143,66 +137,30 @@ top:
 				BU_INIT_EXTERNAL( &ext );
 				ext.ext_nbytes = curr_poly * sizeof( union record );
 				ext.ext_buf = (char *)poly;
-				if( rt_pg_import( &intern, &ext, bn_mat_identity, (struct db_i *)NULL ) )
+				if( rt_functab[ID_POLY].ft_import( &intern, &ext, bn_mat_identity, (struct db_i *)NULL, &rt_uniresource ) )
 				{
 					bu_log( "Import failed for polysolid %s\n", poly[0].p.p_name );
 					bu_bomb( "Import failed for polysolid\n" );
 				}
-				st.st_specific = (genptr_t)NULL;
-				if( rt_pg_prep( &st, &intern, &rti ) )
-				{
+				/* Don't free this ext buffer! */
+
+				if( rt_pg_to_bot( &intern, &tol, &rt_uniresource ) < 0 )  {
 					bu_log( "Unable to convert polysolid %s\n", poly[0].p.p_name );
 					bu_bomb( "Unable to convert!!!\n" );
 				}
 
-				tri = (struct tri_specific *)st.st_specific;
-				bot = (struct rt_bot_internal *)bu_calloc( 1, sizeof( struct rt_bot_internal), "bot" );
-				bot->magic = RT_BOT_INTERNAL_MAGIC;
-				bot->mode = RT_BOT_SOLID;
-				bot->orientation = RT_BOT_CCW;
-				bot->num_vertices = 0;
-				bot->num_faces = 0;
-
-				while( tri )
-				{
-					bot->num_faces++;
-					tri = tri->tri_forw;
+				BU_INIT_EXTERNAL( &ext2 );
+				if( rt_functab[ID_POLY].ft_export( &ext2, &intern, 1.0, (struct db_i *)NULL, &rt_uniresource ) < 0 )  {
+					bu_log( "Unable to export v4 BoT %s\n", poly[0].p.p_name );
+					bu_bomb( "Unable to convert!!!\n" );
 				}
-
-				bot->faces = (int *)bu_calloc( bot->num_faces * 3, sizeof( int ), "bot->faces" );
-				bot->num_vertices = bot->num_faces * 3;
-				bot->vertices = (fastf_t *)bu_calloc( bot->num_vertices * 3, sizeof( fastf_t ), "bot->vertices" );
-
-				i = 0;
-				tri = (struct tri_specific *)st.st_specific;
-				while( tri )
-				{
-					bot->faces[i] = i;
-					bot->faces[i + 1] = i + 1;
-					bot->faces[i + 2] = i + 2;
-					VMOVE( &bot->vertices[i*3], tri->tri_A );
-					VADD2( &bot->vertices[(i+1)*3], tri->tri_A, tri->tri_BA );
-					VADD2( &bot->vertices[(i+2)*3], tri->tri_A, tri->tri_CA );
-					tri = tri->tri_forw;
-					i += 3;
+				rt_db_free_internal( &intern, &rt_uniresource );
+				if( db_fwrite_external( ofp, poly[0].p.p_name, &ext2 ) < 0 )  {
+					bu_log( "Unable to fwrite v4 BoT %s\n", poly[0].p.p_name );
+					bu_bomb( "Unable to convert!!!\n" );
 				}
+				db_free_external( &ext2 );
 
-				(void)rt_bot_vertex_fuse( bot );
-
-				mk_export_fwrite( ofp, poly[0].p.p_name, (genptr_t)bot, ID_BOT );
-
-				tri = (struct tri_specific *)st.st_specific;
-				while( tri )
-				{
-					struct tri_specific *tmp;
-
-					tmp = tri;
-					tri = tri->tri_forw;
-					bu_free( (char *)tmp, "tri_specific" );
-				}
-				bu_free( (char *)bot->faces, "bot->faces" );
-				bu_free( (char *)bot->vertices, "bot->vertices" );
-				bu_free( (char *)bot, "bot" );
 				if( feof( ifp ) )
 					break;
 				goto top;
@@ -215,7 +173,7 @@ top:
 				if( first )
 				{
 					if( record.u_id != ID_IDENT ) {
-						bu_log( "This is not a 'v4' database!!!\n" );
+						bu_log( "This is not a BRL-CAD 'v4' database, aborting.\n" );
 						exit( 1 );
 					}
 					first = 0;
