@@ -1139,12 +1139,6 @@ BU_EXTERN(int			bu_struct_put, (FILE *fp,
 				CONST struct bu_external *ext));
 BU_EXTERN(int			bu_struct_get, (struct bu_external *ext,
 				FILE *fp));
-BU_EXTERN(unsigned short	bu_gshort, (CONST unsigned char *msgp));
-BU_EXTERN(unsigned long		bu_glong, (CONST unsigned char *msgp));
-BU_EXTERN(unsigned char *	bu_pshort, (register unsigned char *msgp,
-				register int s));
-BU_EXTERN(unsigned char *	bu_plong, (register unsigned char *msgp,
-				register unsigned long l));
 BU_EXTERN(void			bu_struct_wrap_buf,
 				(struct bu_external *ext, genptr_t buf));
 BU_EXTERN(int			bu_struct_parse, (CONST struct bu_vls *in_vls,
@@ -1342,6 +1336,25 @@ BU_EXTERN(CONST char *bu_units_string, (CONST double mm) );
 BU_EXTERN(double bu_mm_value, (CONST char *s) );
 BU_EXTERN(void bu_mm_cvt, (register CONST struct bu_structparse	*sdp,
 		register CONST char *name,  char *base, CONST char *value) );
+
+/* xdr.c */
+/* Macro version of library routine bu_glong() */
+#define BU_GLONG(_cp)	\
+	    (((_cp)[0] << 24) |	\
+             ((_cp)[1] << 16) |	\
+             ((_cp)[2] <<  8) |	\
+              (_cp)[3] )
+#define BU_GSHORT(_cp)	\
+             ((_cp)[0] <<  8) |	\
+              (_cp)[1] )
+
+BU_EXTERN(unsigned short	bu_gshort, (CONST unsigned char *msgp));
+BU_EXTERN(unsigned long		bu_glong, (CONST unsigned char *msgp));
+BU_EXTERN(unsigned char *	bu_pshort, (register unsigned char *msgp,
+				register int s));
+BU_EXTERN(unsigned char *	bu_plong, (register unsigned char *msgp,
+				register unsigned long l));
+
 
 #ifdef __cplusplus
 }
