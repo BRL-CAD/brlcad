@@ -22,7 +22,7 @@ proc init_comb { id } {
     global comb_inherit
     global comb_comb
 
-    set top .comb$id
+    set top .$id.comb
 
     if [winfo exists $top] {
 	raise $top
@@ -238,12 +238,12 @@ proc comb_apply { id } {
     global comb_inherit
     global comb_comb
 
-    set top .comb$id
+    set top .$id.comb
     set comb_comb($id) [$top.combT get 0.0 end]
 
     if {$comb_isRegion($id)} {
 	if {$comb_id($id) < 0} {
-	    mged_dialog .$id.combDialog $player_screen($id)\
+	    cad_dialog .$id.combDialog $player_screen($id)\
 		    "Bad region id!"\
 		    "Region id must be >= 0"\
 		    "" 0 OK
@@ -251,7 +251,7 @@ proc comb_apply { id } {
 	}
 
 	if {$comb_air($id) < 0} {
-	    mged_dialog .$id.combDialog $player_screen($id)\
+	    cad_dialog .$id.combDialog $player_screen($id)\
 		    "Bad air code!"\
 		    "Air code must be >= 0"\
 		    "" 0 OK
@@ -259,7 +259,7 @@ proc comb_apply { id } {
 	}
 
 	if {$comb_id($id) == 0 && $comb_air($id) == 0} {
-	    mged_dialog .$id.combDialog $player_screen($id)\
+	    cad_dialog .$id.combDialog $player_screen($id)\
 		    "Warning: both region id and air code are 0"\
 		    "Warning: both region id and air code are 0"\
 		    "" 0 OK
@@ -299,10 +299,10 @@ proc comb_load_defaults { id } {
     global comb_inherit
     global comb_comb
 
-    set top .comb$id
+    set top .$id.comb
 
     if {$comb_name($id) == ""} {
-	mged_dialog .$id.combDialog $player_screen($id)\
+	cad_dialog .$id.combDialog $player_screen($id)\
 		"You must specify a region/combination name!"\
 		"You must specify a region/combination name!"\
 		"" 0 OK
@@ -312,7 +312,7 @@ proc comb_load_defaults { id } {
     set save_isRegion $comb_isRegion($id)
     set result [catch {get_comb $comb_name($id)} comb_defs]
     if {$result == 1} {
-	mged_dialog .$id.combDialog $player_screen($id)\
+	cad_dialog .$id.combDialog $player_screen($id)\
 		"comb_load_defaults: Error"\
 		$comb_defs\
 		"" 0 OK
@@ -349,7 +349,7 @@ proc comb_load_defaults { id } {
 proc comb_toggle_isRegion { id } {
     global comb_isRegion
 
-    set top .comb$id
+    set top .$id.comb
     grid remove $top.gridF
 
     if {$comb_isRegion($id) == "Yes"} {
@@ -435,29 +435,38 @@ proc comb_choose_color { id } {
     global player_screen
     global comb_color
 
-    set top .comb$id
-    set colors [chooseColor $top]
+    set top .$id.comb
 
-    if {[llength $colors] == 0} {
-	return
-    }
+    cadColorWidget dialog $top -title "Combination Color"\
+	    -initialcolor [$top.colorMB cget -background]\
+	    -ok "comb_color_ok $id $top.colorWidget"\
+	    -cancel "comb_color_cancel $id $top.colorWidget"
+}
 
-    if {[llength $colors] != 2} {
-	mged_dialog .$id.combDialog $player_screen($id)\
-		"Error choosing a color!"\
-		"Error choosing a color!"\
-		"" 0 OK
-	return
-    }
+proc comb_color_ok { id w } {
+    global comb_color
 
-    $top.colorMB configure -bg [lindex $colors 0]
-    set comb_color($id) [lindex $colors 1]
+    upvar #0 $w data
+
+    set top .$id.comb
+    $top.colorMB configure -bg $data(finalColor)
+    set comb_color($id) "$data(red) $data(green) $data(blue)"
+
+    destroy $w
+    unset data
+}
+
+proc comb_color_cancel { id w } {
+    upvar #0 $w data
+
+    destroy $w
+    unset data
 }
 
 proc comb_set_colorMB { id } {
     global comb_color
 
-    set top .comb$id
+    set top .$id.comb
     set_WidgetRGBColor $top.colorMB $comb_color($id)
 }
 
