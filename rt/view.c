@@ -402,6 +402,8 @@ struct partition *PartHeadp;
 	if( rdebug&RDEBUG_RAYWRITE )  {
 		/* Record the approach path */
 		if( hitp->hit_dist > 0.0001 )  {
+			VJOIN1( hitp->hit_point, ap->a_ray.r_pt,
+				hitp->hit_dist, ap->a_ray.r_dir );
 			wraypts( ap->a_ray.r_pt,
 				hitp->hit_point,
 				ap, stdout );
