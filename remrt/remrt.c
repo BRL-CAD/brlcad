@@ -22,14 +22,15 @@
  */
 static char RCSid[] = "@(#)$Header$ (BRL)";
 
+#include "conf.h"
+
 #include <stdio.h>
-#define _BSD_TYPES		/* Needed for IRIX 5.0.1 */
 #include <ctype.h>
 #include <signal.h>
 #include <errno.h>
 #include <netdb.h>
 #include <math.h>
-#ifdef SYSV
+#ifdef USE_STRING_H
 # include <string.h>
 #else
 # include <strings.h>
@@ -75,7 +76,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./list.h"
 #include "./protocol.h"
 
-#ifdef SYSV
+#ifndef HAVE_VFORK
 # define vfork	fork
 #endif
 
@@ -146,12 +147,16 @@ struct pkg_switch pkgswitch[] = {
 	{ 0,		0,		(char *)0 }
 };
 
-int clients;
+fd_set clients;
 int print_on = 1;
 char *frame_script = NULL;
 
 #define NFD 32
+#ifdef FD_SETSIZE
+#define MAXSERVERS	FD_SETSIZE
+#else
 #define MAXSERVERS	NFD		/* No relay function yet */
+#endif
 
 struct list *FreeList;
 
@@ -484,6 +489,7 @@ int	argc;
 char	**argv;
 {
 	register struct servers *sp;
+	register int i, done;
 
 	/* Random inits */
 	/*
@@ -540,13 +546,19 @@ char	**argv;
 		(void)signal( SIGINT, SIG_IGN );
 		rt_log("%s Interactive REMRT on %s\n", stamp(), ourname );
 		rt_log("%s Listening at port %d\n", stamp(), pkg_permport);
-		clients = (1<<fileno(stdin));
+		FD_ZERO(&clients);
+		FD_SET(fileno(stdin), &clients);
 
 		/* Read .remrtrc file to acquire server info */
 		read_rc_file();
 
 		/* Go until no more clients */
-		while( clients )  {
+/* Aargh.  We really need a FD_ISZERO macro. */
+		for( i = 0, done = 1; i < FD_SETSIZE; i++)
+			if (FD_ISSET(i, &clients)) { done = 0; break; }
+		while( !done ) {
+			for( i = 0, done = 1; i < FD_SETSIZE; i++)
+				if (FD_ISSET(i, &clients)) { done = 0; break; }
 			do_work(0);	/* no auto starting of servers */
 		}
 		/*
@@ -558,7 +570,7 @@ char	**argv;
 		rt_log("%s Automatic REMRT on %s\n", stamp(), ourname );
 		rt_log("%s Listening at port %d, reading script on stdin\n",
 			stamp(), pkg_permport);
-		clients = 0;
+		FD_ZERO(&clients);
 
 		/* parse command line args for sizes, etc */
 		finalframe=-1;
@@ -600,7 +612,7 @@ char	**argv;
 			}
 		} else {
 			/* if -M, read RT script from stdin */
-			clients = 0;
+			FD_ZERO(&clients);
 			eat_script( stdin );
 		}
 		if(rem_debug>1) cd_frames( 0, (char **)0 );
@@ -636,7 +648,11 @@ int	auto_start;
 			(void)gettimeofday( &now, (struct timezone *)0 );
 			start_servers( &now );
 		} else {
-			if( clients == 0 )  break;
+/* Aargh.  We really need a FD_ISZERO macro. */
+			int done, i;
+			for( i = 0, done = 1; i < FD_SETSIZE; i++)
+				if (FD_ISSET(i, &clients)) { done = 0; break; }
+			if (done) break;
 		}
 
 		check_input( 30 );	/* delay up to 30 secs */
@@ -701,14 +717,14 @@ void
 check_input(waittime)
 int waittime;
 {
-	static long	ibits;
+	static fd_set	ifdset;
 	register int	i;
 	register struct pkg_conn *pc;
 	static struct timeval tv;
 	register int	val;
 
 	/* First, handle any packages waiting in internal buffers */
-	for( i=0; i<NFD; i++ )  {
+	for( i=0; i<MAXSERVERS; i++ )  {
 		pc = servers[i].sr_pc;
 		if( pc == PKC_NULL )  continue;
 		if( (val = pkg_process(pc)) < 0 )
@@ -719,8 +735,9 @@ int waittime;
 	tv.tv_sec = waittime;
 	tv.tv_usec = 0;
 
-	ibits = clients|(1<<tcp_listen_fd);
-	val = select(32, (char *)&ibits, (char *)0, (char *)0, &tv);
+	FD_MOVE(&ifdset, &clients);	/* ibits = clients */
+	FD_SET(tcp_listen_fd, &ifdset);	/* ibits |= tcp_listen_fd */
+	val = select(32, &ifdset, (fd_set *)0, (fd_set *)0, &tv);
 	if( val < 0 )  {
 		perror("select");
 		return;
@@ -732,19 +749,19 @@ int waittime;
 	}
 
 	/* Third, accept any pending connections */
-	if( ibits & (1<<tcp_listen_fd) )  {
+	if( FD_ISSET(tcp_listen_fd, &ifdset) )  {
 		pc = pkg_getclient(tcp_listen_fd, pkgswitch, rt_log, 1);
 		if( pc != PKC_NULL && pc != PKC_ERROR )
 			addclient(pc);
-		ibits &= ~(1<<tcp_listen_fd);
+		FD_CLR( tcp_listen_fd, &ifdset );
 	}
 
 	/* Fourth, get any new traffic off the network into libpkg buffers */
-	for( i=0; i<NFD; i++ )  {
+	for( i=0; i<MAXSERVERS; i++ )  {
 		register struct pkg_conn *pc;
 
 		if( !feof(stdin) && i == fileno(stdin) )  continue;
-		if( !(ibits&(1<<i)) )  continue;
+		if( !FD_ISSET(i, &ifdset) )  continue;
 		pc = servers[i].sr_pc;
 		if( pc == PKC_NULL )  continue;
 		val = pkg_suckin(pc);
@@ -753,11 +770,11 @@ int waittime;
 		} else if( val == 0 )  {
 			drop_server( &servers[i], "EOF" );
 		}
-		ibits &= ~(1<<i);
+		FD_CLR( i, &ifdset );
 	}
 
 	/* Fifth, handle any new packages now waiting in internal buffers */
-	for( i=0; i<NFD; i++ )  {
+	for( i=0; i<MAXSERVERS; i++ )  {
 		pc = servers[i].sr_pc;
 		if( pc == PKC_NULL )  continue;
 		if( pkg_process(pc) < 0 )
@@ -768,7 +785,7 @@ int waittime;
 	if( waittime>0 &&
 	    !feof(stdin) &&
 	    fileno(stdin) >= 0 &&
-	    (ibits & (1<<(fileno(stdin)))) )  {
+	    FD_ISSET( fileno(stdin), &ifdset ) )  {
 		interactive_cmd(stdin);
 	}
 }
@@ -808,7 +825,7 @@ struct pkg_conn *pc;
 	}
 	if( rem_debug )  rt_log("%s addclient(%s)\n", stamp(), ihp->ht_name);
 
-	clients |= 1<<fd;
+	FD_SET( fd, &clients );
 
 	sp = &servers[fd];
 	bzero( (char *)sp, sizeof(*sp) );
@@ -866,11 +883,11 @@ char	*why;
 
 	/* Clear the bits from "clients" now, to prevent further select()s */
 	fd = pc->pkc_fd;
-	if( fd <= 3 || fd >= NFD )  {
+	if( fd <= 3 || fd >= MAXSERVERS )  {
 		rt_log("drop_server: fd=%d is unreasonable, forget it!\n", fd);
 		return;
 	}
-	clients &= ~(1<<sp->sr_pc->pkc_fd);
+	FD_CLR(sp->sr_pc->pkc_fd, &clients);
 
 	if( oldstate != SRST_READY )  return;
 
@@ -1234,7 +1251,7 @@ FILE *fp;
 		if( fp != stdin )  return;
 
 		/* Eof on stdin */
-		clients &= ~(1<<fileno(fp));
+		FD_CLR( fileno(fp), &clients );
 
 		/* We might want to wait if something is running? */
 		for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
@@ -1668,7 +1685,7 @@ struct timeval	*nowp;
 		case SRST_CLOSING:
 			/* Handle final closing */
 			if(rem_debug>1) rt_log("%s Final close on %s\n", stamp(), sp->sr_host->ht_name);
-			clients &= ~(1<<sp->sr_pc->pkc_fd);
+			FD_CLR( sp->sr_pc->pkc_fd, &clients );
 			pkg_close(sp->sr_pc);
 
 			sp->sr_pc = PKC_NULL;
@@ -3318,7 +3335,7 @@ int	argc;
 char	**argv;
 {
 	detached = 1;
-	clients &= ~(1<<0);	/* drop stdin */
+	FD_CLR( fileno(stdin), &clients);	/* drop stdin */
 	close(0);
 	return 0;
 }
@@ -3802,13 +3819,17 @@ char	**argv;
 {
 	struct timeval	now;
 
-	clients &= ~(1<<fileno(stdin));
+	FD_CLR( fileno(stdin), &clients );
 	if( running )  {
 		/*
 		 *  When running, WAIT command waits for all
 		 *  outstanding frames to be completed.
 		 */
-		while( clients && FrameHead.fr_forw != &FrameHead )  {
+/* Aargh.  We really need a FD_ISZERO macro. */
+		int done = 0, i;
+		while( !done && FrameHead.fr_forw != &FrameHead )  {
+			for (i = 0, done = 1; i < FD_SETSIZE; i++)
+				if (FD_ISSET(i, &clients)) { done = 0; break; }
 			check_input( 30 );	/* delay up to 30 secs */
 
 			(void)gettimeofday( &now, (struct timezone *)0 );
@@ -3825,7 +3846,7 @@ char	**argv;
 		}
 		rt_log("%s All servers idle\n", stamp() );
 	}
-	clients |= 1<<fileno(stdin);
+	FD_SET( fileno(stdin), &clients );
 	return 0;
 }
 
