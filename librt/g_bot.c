@@ -1791,6 +1791,7 @@ CONST char			*attr;
 		}
 		else if( attr[0] == 'F' )
 		{
+			/* Retrieve one face, as vertex indices */
 			if( attr[1] == '\0' )
 			{
 				for( i=0 ; i<bot->num_faces ; i++ )
@@ -1810,6 +1811,40 @@ CONST char			*attr;
 				{
 					bu_vls_printf( &vls, "%d %d %d",
 						V3ARGS( &bot->faces[i*3] ) );
+					status = TCL_OK;
+				}
+			}
+		}
+		else if( attr[0] == 'f' )
+		{
+			int indx;
+			/* Retrieve one face, as coordinates */
+			if( attr[1] == '\0' )
+			{
+				for( i=0 ; i<bot->num_faces ; i++ )  {
+					indx = bot->faces[i*3];
+					bu_vls_printf( &vls, " { %.25G %.25G %.25G }",
+						bot->vertices[indx*3],
+						bot->vertices[indx*3+1],
+						bot->vertices[indx*3+2] );
+				}
+				status = TCL_OK;
+			}
+			else
+			{
+				i = atoi( &attr[1] ) - 1;
+				if( i < 0 || i >=bot->num_faces )
+				{
+					bu_vls_printf( &vls, "face number %d out of range", i );
+					status = TCL_ERROR;
+				}
+				else
+				{
+					indx = bot->faces[i*3];
+					bu_vls_printf( &vls, " { %.25G %.25G %.25G }",
+						bot->vertices[indx*3],
+						bot->vertices[indx*3+1],
+						bot->vertices[indx*3+2] );
 					status = TCL_OK;
 				}
 			}
