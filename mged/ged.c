@@ -30,14 +30,14 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *  
  *  Copyright Notice -
- *	This software is Copyright (C) 1985 by the United States Army.
+ *	This software is Copyright (C) 1985,1987 by the United States Army.
  *	All rights reserved.
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
-char CopyRight_Notice[] = "@(#) Copyright (C) 1985 by the United States Army";
+char CopyRight_Notice[] = "@(#) Copyright (C) 1985,1987 by the United States Army";
 
 #include <stdio.h>
 #include <fcntl.h>
@@ -93,6 +93,9 @@ void		usejoy();
 static void	log_event();
 extern char	version[];		/* from vers.c */
 
+extern int	numargs;	/* number of args */
+extern char	*cmd_args[];	/* array of pointers to args */
+
 void
 pr_prompt()  {
 	(void)printf("mged> ");
@@ -110,13 +113,14 @@ char **argv;
 	register int i;
 
 	/* Check for proper invocation */
-	if( argc != 2 )  {
-		(void)printf("Usage:  %s database\n", argv[0]);
+	if( argc < 2 )  {
+		(void)printf("Usage:  %s database [command]\n", argv[0]);
 		return(1);		/* NOT finish() */
 	}
 
-	/* Identify ourselves */
-	(void)printf("%s\n", version+5);	/* skip @(#) */
+	/* Identify ourselves if interactive */
+	if( argc == 2 )
+		(void)printf("%s\n", version+5);	/* skip @(#) */
 
 	/* Get input file */
 	if( db_open( argv[1] ) < 0 )  {
@@ -172,7 +176,8 @@ char **argv;
 	dmaflag = 1;
 
 	/* Fire up the display manager, and the display processor */
-	get_attached();
+	if( argc == 2 )
+		get_attached();		/* interactive */
 
 	/* Here we should print out a "message of the day" file */
 
@@ -184,6 +189,21 @@ char **argv;
 	btn_head_menu(0,0,0);		/* unlabeled menu */
 
 	refresh();			/* Put up faceplate */
+
+	/* If this is an argv[] invocation, do it now */
+	if( argc > 2 )  {
+		argc -= 2;
+		argv += 2;
+		numargs = 0;
+		while( argc > 0 )  {
+			cmd_args[numargs++] = argv[0];
+			argc--; argv++;
+		}
+		cmd_args[numargs] = (char *)0;
+		do_cmd();
+		f_quit();
+		/* NOTREACHED */
+	}
 
 	/* Caught interrupts take us here */
 	if( setjmp( jmp_env ) == 0 )  {
@@ -329,6 +349,7 @@ char **argv;
 		 */	 
 		refresh();
 	}
+	/* NOTREACHED */
 }
 
 /*			R E F R E S H
