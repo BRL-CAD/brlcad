@@ -17,9 +17,11 @@
 static
 char	sccsTag[] = "@(#) librle.c	1.15	last edit 6/18/86 at 10:05:45";
 #endif
+
 #include <stdio.h>
-#include <fb.h>
-#include <rle.h>
+#include "fb.h"
+#include "rle.h"
+
 typedef unsigned char	u_char;
 
 #define PRNT_A1_DEBUG(_op,_n) \
@@ -526,14 +528,14 @@ Pixel	*scan_buf;
 				 * STDIO internals (sorry) to improve speed.
 				 */
 				if( fp->_cnt >= n )
-					{ register u_char *cp = fp->_ptr;
+					{ register u_char *cp = (u_char *)fp->_ptr;
 					fp->_cnt -= n;
 					while( n-- > 0 )
 						{
 						*pp = *cp++;
 						pp += STRIDE;
 						}
-					fp->_ptr = cp;
+					fp->_ptr = (char *)cp;
 					}
 				else
 				while( n-- > 0 )
@@ -822,14 +824,14 @@ int		n;
 
 	/* More STDIO optimization, watch out...			*/
 	if( fp->_cnt >= count )
-		{ register u_char *op = fp->_ptr;
+		{ register u_char *op = (u_char *)fp->_ptr;
 		fp->_cnt -= count;
 		while( count-- > 0 )
 			{
 			*op++ = *cp;
 			cp += STRIDE;
 			}
-		fp->_ptr = op;
+		fp->_ptr = (char *)op;
 		}
 	else
 	while( count-- > 0 )
