@@ -102,7 +102,12 @@ cat << EOF > ${IN_FILE}
 #if defined(sgi) && defined(mips)
 /*	Silicon Graphics 4D, which uses the MIPS chip */
 #	undef	sgi
-	MACHINE=4d;
+#	if defined(__sgi)
+/*		Experimental IRIX 4.0, "cypress" */
+		MACHINE=5d;
+#	else
+		MACHINE=4d;
+#	endif
 	UNIXTYPE=SYSV;
 	HAS_TCP=1;
 	HAS_SYMLINKS=1;
