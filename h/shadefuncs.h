@@ -34,8 +34,8 @@ struct mfuncs {
 	int		mf_inputs;	/* shadework inputs needed */
 	int		(*mf_setup)();	/* Routine for preparing */
 	int		(*mf_render)();	/* Routine for rendering */
-	int		(*mf_print)();	/* Routine for printing */
-	int		(*mf_free)();	/* Routine for releasing storage */
+	void		(*mf_print)();	/* Routine for printing */
+	void		(*mf_free)();	/* Routine for releasing storage */
 };
 #define MF_MAGIC	0x55968058
 #define MF_NULL		((struct mfuncs *)0)
