@@ -1021,6 +1021,49 @@ CONST struct bn_tol	*tol;
 }
 
 /*
+ *			R T _ B O T _ P L O T _ P O L Y
+ */
+int
+rt_bot_plot_poly( vhead, ip, ttol, tol )
+struct bu_list		*vhead;
+struct rt_db_internal	*ip;
+CONST struct rt_tess_tol *ttol;
+CONST struct bn_tol	*tol;
+{
+	LOCAL struct rt_bot_internal	*bot_ip;
+	int i;
+
+	RT_CK_DB_INTERNAL(ip);
+	bot_ip = (struct rt_bot_internal *)ip->idb_ptr;
+	RT_BOT_CK_MAGIC(bot_ip);
+
+	/* XXX Should consider orientation here, flip if necessary. */
+	for( i=0 ; i<bot_ip->num_faces ; i++ )
+	{
+		point_t aa, bb, cc;
+		vect_t  ab, ac;
+		vect_t norm;
+
+		VMOVE( aa, &bot_ip->vertices[bot_ip->faces[i*3+0]*3] );
+		VMOVE( bb, &bot_ip->vertices[bot_ip->faces[i*3+1]*3] );
+		VMOVE( cc, &bot_ip->vertices[bot_ip->faces[i*3+2]*3] );
+
+		VSUB2( ab, aa, bb );
+		VSUB2( ac, aa, cc );
+		VCROSS( norm, ab, ac );
+		VUNITIZE(norm);
+		RT_ADD_VLIST(vhead, norm, BN_VLIST_POLY_START);
+
+		RT_ADD_VLIST( vhead, aa, BN_VLIST_POLY_MOVE );
+		RT_ADD_VLIST( vhead, bb, BN_VLIST_POLY_DRAW );
+		RT_ADD_VLIST( vhead, cc, BN_VLIST_POLY_DRAW );
+		RT_ADD_VLIST( vhead, aa, BN_VLIST_POLY_END );
+	}
+
+	return(0);
+}
+
+/*
  *			R T _ B O T _ T E S S
  *
  *  Returns -

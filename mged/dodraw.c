@@ -382,51 +382,25 @@ genptr_t client_data;
 	switch( intern.idb_type )  {
 	case ID_POLY:
 		{
-			struct rt_pg_internal	*pgp;
-			register int	i;
-			int		p;
-
 			if(rt_g.debug&DEBUG_TREEWALK)  {
-				bu_log("fastpath draw ID_POLY\n", dp->d_namep);
+				bu_log("fastpath draw ID_POLY %s\n", dp->d_namep);
 			}
-			pgp = (struct rt_pg_internal *)intern.idb_ptr;
-			RT_PG_CK_MAGIC(pgp);
-
 			if( mged_draw_wireframes )  {
-				for( p = 0; p < pgp->npoly; p++ )  {
-					register struct rt_pg_face_internal	*pp;
-
-					pp = &pgp->poly[p];
-					RT_ADD_VLIST( &vhead, &pp->verts[3*(pp->npts-1)],
-						BN_VLIST_LINE_MOVE );
-					for( i=0; i < pp->npts; i++ )  {
-						RT_ADD_VLIST( &vhead, &pp->verts[3*i],
-							BN_VLIST_LINE_DRAW );
-					}
-				}
+				(void)rt_pg_plot( &vhead, &intern, tsp->ts_ttol, tsp->ts_tol );
 			} else {
-				for( p = 0; p < pgp->npoly; p++ )  {
-					register struct rt_pg_face_internal	*pp;
-					vect_t aa, bb, norm;
-
-					pp = &pgp->poly[p];
-					if( pp->npts < 3 )  continue;
-					VSUB2( aa, &pp->verts[3*(0)], &pp->verts[3*(1)] );
-					VSUB2( bb, &pp->verts[3*(0)], &pp->verts[3*(2)] );
-					VCROSS( norm, aa, bb );
-					VUNITIZE(norm);
-					RT_ADD_VLIST( &vhead, norm,
-						BN_VLIST_POLY_START );
-
-					RT_ADD_VLIST( &vhead, &pp->verts[3*(pp->npts-1)],
-						BN_VLIST_POLY_MOVE );
-					for( i=0; i < pp->npts-1; i++ )  {
-						RT_ADD_VLIST( &vhead, &pp->verts[3*i],
-							BN_VLIST_POLY_DRAW );
-					}
-					RT_ADD_VLIST( &vhead, &pp->verts[3*(pp->npts-1)],
-						BN_VLIST_POLY_END );
-				}
+				(void)rt_pg_plot_poly( &vhead, &intern, tsp->ts_ttol, tsp->ts_tol );
+			}
+		}
+		goto out;
+	case ID_BOT:
+		{
+			if (rt_g.debug&DEBUG_TREEWALK) {
+				bu_log("fastpath draw ID_BOT %s\n", dp->d_namep);
+			}
+			if( mged_draw_wireframes )  {
+				(void)rt_bot_plot( &vhead, &intern, tsp->ts_ttol, tsp->ts_tol );
+			} else {
+				(void)rt_bot_plot_poly( &vhead, &intern, tsp->ts_ttol, tsp->ts_tol );
 			}
 		}
 		goto out;

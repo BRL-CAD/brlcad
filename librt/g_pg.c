@@ -513,6 +513,48 @@ CONST struct bn_tol		*tol;
 }
 
 /*
+ *			R T _ P G _ P L O T _ P O L Y
+ *
+ *  Convert to vlist, draw as polygons.
+ */
+int
+rt_pg_plot_poly( vhead, ip, ttol, tol )
+struct bu_list		*vhead;
+struct rt_db_internal	*ip;
+CONST struct rt_tess_tol *ttol;
+CONST struct bn_tol		*tol;
+{
+	register int	i;
+	register int	p;	/* current polygon number */
+	struct rt_pg_internal	*pgp;
+
+	RT_CK_DB_INTERNAL(ip);
+	pgp = (struct rt_pg_internal *)ip->idb_ptr;
+	RT_PG_CK_MAGIC(pgp);
+
+	for( p = 0; p < pgp->npoly; p++ )  {
+		register struct rt_pg_face_internal	*pp;
+		vect_t aa, bb, norm;
+
+		pp = &pgp->poly[p];
+		if (pp->npts < 3)
+			continue;
+		VSUB2( aa, &pp->verts[3*(0)], &pp->verts[3*(1)] );
+		VSUB2( bb, &pp->verts[3*(0)], &pp->verts[3*(2)] );
+		VCROSS( norm, aa, bb );
+		VUNITIZE(norm);
+		RT_ADD_VLIST(vhead, norm, BN_VLIST_POLY_START);
+
+		RT_ADD_VLIST(vhead, &pp->verts[3*(pp->npts-1)], BN_VLIST_POLY_MOVE);
+		for (i=0; i < pp->npts-1; i++) {
+			RT_ADD_VLIST(vhead, &pp->verts[3*i], BN_VLIST_POLY_DRAW);
+		}
+		RT_ADD_VLIST(vhead, &pp->verts[3*(pp->npts-1)], BN_VLIST_POLY_END);
+	}
+	return(0);		/* OK */
+}
+
+/*
  *			R T _ P G _ C U R V E
  */
 void
