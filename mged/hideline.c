@@ -66,12 +66,6 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 extern struct db_i *dbip;	/* current database instance */
 
-#ifndef MULTI_ATTACH
-extern mat_t view2model;
-extern mat_t model2view;
-#endif
-
-
 fastf_t epsilon;
 vect_t aim_point;
 struct solid *sp;
