@@ -49,10 +49,12 @@ a-d
   status: ok
   desc: an ascii to double datafile conversion tool
   notes: truncates ascii double input to float
-alias-pix sean
+alias-pix
   status: ok
   desc: an Alias (Wavefront?) pix datafile to raw datafile converter
-all_sf
+all_sf sean
+  status:
+  desc: obtain shape factors for objects from a geometry database
 anim_cascade
 anim_fly
 anim_hardtrack
