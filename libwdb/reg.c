@@ -400,3 +400,24 @@ int	inherit;
 	/* Release the member structure dynamic storage */
 	return( mk_freemembers( headp ) );
 }
+
+/*
+ *			M K _ C O M B 1
+ *
+ *  Convenience interface to make a combination with a single member.
+ */
+int
+mk_comb1( fp, combname, membname, regflag )
+FILE	*fp;
+char	*combname;
+char	*membname;
+int	regflag;
+{
+	struct wmember	head;
+
+	RT_LIST_INIT( &head.l );
+	if( mk_addmember( membname, &head, WMOP_UNION ) == WMEMBER_NULL )
+		return -2;
+	return mk_lcomb( fp, combname, &head, regflag,
+		(char *)NULL, (char *)NULL, (char *)NULL, 1 );
+}
