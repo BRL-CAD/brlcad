@@ -1007,7 +1007,8 @@ double			mm2local;
 	 * XXX of ARB this is (e.g., ARB4).
 	 */
 
-	sprintf(buf, "\t0 (%g, %g, %g)\n",
+	/* Use 1-based numbering, to match vertex labels in MGED */
+	sprintf(buf, "\t1 (%g, %g, %g)\n",
 		aip->pt[0][X] * mm2local,
 		aip->pt[0][Y] * mm2local,
 		aip->pt[0][Z] * mm2local );
@@ -1016,7 +1017,7 @@ double			mm2local;
 	if( !verbose )  return(0);
 
 	for( i=1; i < 8; i++ )  {
-		sprintf(buf, "\t%d (%g, %g, %g)\n", i,
+		sprintf(buf, "\t%d (%g, %g, %g)\n", i+1,
 			aip->pt[i][X] * mm2local,
 			aip->pt[i][Y] * mm2local,
 			aip->pt[i][Z] * mm2local );
