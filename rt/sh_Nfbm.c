@@ -217,11 +217,11 @@ char	*dp;
 #if 0
 		noise_vec(pt, freq_v);
 #else
-		freq_v[X] = noise_g(pt);
+		freq_v[X] = noise_perlin(pt);
 		VSCALE(p, pt, Nfbm_sp->lacunarity);
-		freq_v[Y] = noise_g(p);
+		freq_v[Y] = noise_perlin(p);
 		VSCALE(p, pt, Nfbm_sp->lacunarity*Nfbm_sp->lacunarity);
-		freq_v[Z] = noise_g(p);
+		freq_v[Z] = noise_perlin(p);
 #endif
 		VJOIN1(v_noise, v_noise, 1.0/freq, freq_v);
 		VSCALE(pt, pt, Nfbm_sp->lacunarity);
