@@ -13,7 +13,7 @@
 			usepen dir columns mover tedit \
 			cmd chgview chgmodel chgtree \
 			rtif anal typein predictor \
-			buttons clip menu adc edsol edarb \
+			buttons clip menu adc edsol edarb edpipe \
 			proc_reg hideline polyif red \
 			mater plot overlay inside \
 			concat utility1 utility2 track arbs \
