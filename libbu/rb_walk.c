@@ -16,8 +16,8 @@
  *	to be visited (nodes themselves, or merely the data stored
  *	in them).  Each of these last six functions has four parameters:
  *	the root of the tree to traverse, the order on which to do the
- *	walking, the function to apply at each visit, and a block of
- *	data to pass to the visit function.
+ *	walking, the function to apply at each visit, and the current
+ *	depth in the tree.
  */
 #ifndef lint
 static char RCSid[] = "@(#) $Header$";
@@ -141,11 +141,11 @@ static void postwalkdata
  *
  *		    Traverse a red-black tree
  *
- *	This function has six parameters: the tree to traverse,
+ *	This function has five parameters: the tree to traverse,
  *	the order on which to do the walking, the function to apply
  *	to each node, whether to apply the function to the entire node
- *	(or just to its data), the type of traversal, and a data block
- *	to pass to the visit function.
+ *	(or just to its data), and the type of traversal (preorder,
+ *	inorder, or postorder).
  */
 void _rb_walk
     (rb_tree *tree, int order, void (*visit)(),
@@ -172,15 +172,14 @@ void _rb_walk
 			(rb_root(tree, order), order, visit, 0);
 		    break;
 		default:
-		    fprintf(stderr,
-			" _rb_walk(): Illegal visitation object: %d\n",
+		    rt_log("FATAL: _rb_walk(): Illegal visitation object: %d\n",
 			what_to_visit);
 		    exit (1);
 	    }
 	    break;
 	default:
-	    fprintf(stderr,
-		" _rb_walk(): Illegal traversal type: %d\n", trav_type);
+	    rt_log("FATAL: _rb_walk(): Illegal traversal type: %d\n",
+		trav_type);
 	    exit (1);
     }
 }
@@ -189,10 +188,10 @@ void _rb_walk
  *
  *		Applications interface to _rb_walk()
  *
- *	This function has five parameters: the tree to traverse,
+ *	This function has four parameters: the tree to traverse,
  *	the order on which to do the walking, the function to apply
- *	to each node, the type of traversal, and a block of data to
- *	pass to the visit function.
+ *	to each node, and the type of traversal (preorder, inorder,
+ *	or postorder).
  */
 void rb_walk
 	(rb_tree *tree, int order, void (*visit)(),

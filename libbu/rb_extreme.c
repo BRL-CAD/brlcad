@@ -1,6 +1,7 @@
 /*			R B _ E X T R E M E . C
  *
- *	Written by:	Paul Tanenbaum
+ *	Routines to extract mins, maxes, and adjacent nodes
+ *			from a red-black tree
  *
  */
 #ifndef lint
@@ -14,7 +15,7 @@ static char RCSid[] = "@(#) $Header$";
 
 /*		        _ R B _ E X T R E M E ( )
  *
- *	    Return the minimum or maximum node in a red-black tree
+ *	Find the minimum or maximum node in one order of a red-black tree
  *
  *	This function has four parameters: the root of the tree, the
  *	order, the sense (min or max), and the address to be understood
@@ -53,7 +54,7 @@ static struct rb_node *_rb_extreme (struct rb_node *root, int order,
  *	This function has three parameters: the tree in which to find an
  *	extreme node, the order on which to do the search, and the sense
  *	(min or max).  On success, rb_extreme() returns a pointer to the
- *	data in the extreme node.
+ *	data in the extreme node.  Otherwise it returns NULL.
  */
 void *rb_extreme (rb_tree *tree, int order, int sense)
 {
@@ -64,8 +65,7 @@ void *rb_extreme (rb_tree *tree, int order, int sense)
 
     if ((sense != SENSE_MIN) && (sense != SENSE_MAX))
     {
-	fprintf(stderr,
-	    "Error: rb_extreme(): invalid sense %d, file %s, line %s\n",
+	rt_log("FATAL: rb_extreme(): invalid sense %d, file %s, line %s\n",
 	    sense, __FILE__, __LINE__);
 	exit (0);
     }
@@ -86,10 +86,8 @@ void *rb_extreme (rb_tree *tree, int order, int sense)
  *	This function has three parameters: the node of interest, the
  *	order on which to do the search, and the sense (min or max,
  *	which is to say predecessor or successor).  _rb_neighbor()
- *	returns a pointer to the adjacent node.  The bulk of this code
- *	is from T. H. Cormen, C. E. Leiserson, and R. L. Rivest.
- *	_Introduction to Algorithms_.  Cambridge, MA: MIT Press, 1990.
- *	p. 249.
+ *	returns a pointer to the adjacent node.  This function is
+ *	modeled after the routine TREE-SUCCESSOR on p. 249 of Cormen et al.
  */
 struct rb_node *_rb_neighbor (struct rb_node *node, int order, int sense)
 {
@@ -104,8 +102,6 @@ struct rb_node *_rb_neighbor (struct rb_node *node, int order, int sense)
 
     empty_node = rb_null(tree);
 
-    fprintf(stderr,
-	"_rb_neighbor(<%x>, %d, %d)...\n", (int) node, order, sense);
     child = (sense == SENSE_MIN) ? rb_left_child(node, order) :
 				   rb_right_child(node, order);
     if (child != empty_node)
@@ -128,10 +124,12 @@ struct rb_node *_rb_neighbor (struct rb_node *node, int order, int sense)
  *
  *	    Return a node adjacent to the current red-black node
  *
- *	This function has two parameters: the order on which to do the
- *	search and the sense (min or max, which is to say predecessor or
- *	successor).  Rb_neighbor() returns a pointer to the data in the
- *	adjacent node, if that node exists.  Otherwise, it returns NULL.
+ *	This function has three parameters: the tree and order on which
+ *	to do the search and the sense (min or max, which is to say
+ *	predecessor or successor) of the search.  Rb_neighbor() returns
+ *	a pointer to the data in the node adjacent to the current node
+ *	in the specified direction, if that node exists.  Otherwise,
+ *	it returns NULL.
  */
 void *rb_neighbor (rb_tree *tree, int order, int sense)
 {
@@ -142,8 +140,7 @@ void *rb_neighbor (rb_tree *tree, int order, int sense)
 
     if ((sense != SENSE_MIN) && (sense != SENSE_MAX))
     {
-	fprintf(stderr,
-	    "Error: rb_neighbor(): invalid sense %d, file %s, line %s\n",
+	rt_log("FATAL: rb_neighbor(): invalid sense %d, file %s, line %s\n",
 	    sense, __FILE__, __LINE__);
 	exit (0);
     }

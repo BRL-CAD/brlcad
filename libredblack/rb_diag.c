@@ -1,6 +1,6 @@
 /*		R B _ D I A G N O S T I C S . C
  *
- *	Written by:	Paul Tanenbaum
+ *	Diagnostic routines for red-black tree maintenance
  *
  */
 #ifndef lint
@@ -19,8 +19,9 @@ static int d_order;	/* Used by describe_node() */
  *
  *		Print out the contents of a red-black node
  *
- *	This function has one parameter:  the node to describe.
- *	Describe_node() is intended to be called by rb_diagnose_tree().
+ *	This function has two parameters:  the node to describe and
+ *	its depth in the tree.  Describe_node() is intended to be
+ *	called by rb_diagnose_tree().
  */
 static void describe_node (struct rb_node *node, int depth)
 {
@@ -35,30 +36,23 @@ static void describe_node (struct rb_node *node, int depth)
     package = (node -> rbn_package)[d_order];
     pp = tree -> rbt_print;
 
-#if 0
-    fprintf(stderr, "%*snode <%x>...\n",
-			depth * 2, "", node);
-    fprintf(stderr, "%*s  tree:   <%x>\n",
-			depth * 2, "", node -> rbn_tree);
-    fprintf(stderr, "%*s  parent: <%x>\n",
-			depth * 2, "", rb_parent(node, d_order));
-    fprintf(stderr, "%*s  left:   <%x>\n",
-			depth * 2, "", rb_left_child(node, d_order));
-    fprintf(stderr, "%*s  right:  <%x>\n",
-			depth * 2, "", rb_right_child(node, d_order));
-    fprintf(stderr, "%*s  color:  %s\n",
-			depth * 2, "",
-			(rb_get_color(node, d_order) == RB_RED) ? "RED"
-							      : "BLACK");
-    fprintf(stderr, "%*s  package: <%x> ",
-			depth * 2, "", package);
+#if 1
+    rt_log("%*snode <%x>...\n", depth * 2, "", node);
+    rt_log("%*s  tree:   <%x>\n", depth * 2, "", node -> rbn_tree);
+    rt_log("%*s  parent: <%x>\n", depth * 2, "", rb_parent(node, d_order));
+    rt_log("%*s  left:   <%x>\n", depth * 2, "", rb_left_child(node, d_order));
+    rt_log("%*s  right:  <%x>\n", depth * 2, "", rb_right_child(node, d_order));
+    rt_log("%*s  color:  %s\n",
+	    depth * 2, "", (rb_get_color(node, d_order) == RB_RED) ? "RED"
+								   : "BLACK");
+    rt_log("%*s  package: <%x> ", depth * 2, "", package);
 #else
-    fprintf(stderr, "%*s", depth * 8, "");
+    rt_log("%*s", depth * 8, "");
 #endif
     if ((pp != 0) && (package != RB_PKG_NULL))
 	(*pp)(package -> rbp_data);
     else
-	fprintf(stderr, "\n");
+	rt_log("\n");
 }
 
 /*		    R B _ D I A G N O S E _ T R E E ( )
@@ -73,17 +67,14 @@ void rb_diagnose_tree (rb_tree *tree, int order)
     RB_CKMAG(tree, RB_TREE_MAGIC, "red-black tree");
     RB_CKORDER(tree, order);
 
-    fprintf(stderr, "-------- Red-black tree <%x> contents --------\n", tree);
-    fprintf(stderr, "Description: '%s'\n", tree -> rbt_description);
-    fprintf(stderr, "Order:       %d of %d\n", order, tree -> rbt_nm_orders);
-    fprintf(stderr, "Current:     <%x>\n", tree -> rbt_current);
-    fprintf(stderr, "Empty node:  <%x>\n", tree -> rbt_empty_node);
-    if (rb_root(tree, order) == rb_null(tree))
-	fprintf(stderr, "Empty tree!  %x %x\n",
-	    rb_root(tree, order), rb_null(tree));
+    rt_log("-------- Red-black tree <%x> contents --------\n", tree);
+    rt_log("Description: '%s'\n", tree -> rbt_description);
+    rt_log("Order:       %d of %d\n", order, tree -> rbt_nm_orders);
+    rt_log("Current:     <%x>\n", tree -> rbt_current);
+    rt_log("Empty node:  <%x>\n", tree -> rbt_empty_node);
     d_order = order;
     _rb_walk(tree, order, describe_node, WALK_NODES, INORDER);
-    fprintf(stderr, "--------------------------------------------------\n");
+    rt_log("--------------------------------------------------\n");
 }
 
 /*		R B _ S U M M A R I Z E _ T R E E ( )
@@ -100,19 +91,18 @@ void rb_summarize_tree (rb_tree *tree)
 
     RB_CKMAG(tree, RB_TREE_MAGIC, "red-black tree");
 
-    fprintf(stderr, "-------- Red-black tree <%x> summary --------\n", tree);
-    fprintf(stderr, "Description: '%s'\n", tree -> rbt_description);
-    fprintf(stderr, "Current:     <%x>\n", tree -> rbt_current);
-    fprintf(stderr, "Empty node:  <%x>\n", tree -> rbt_empty_node);
+    rt_log("-------- Red-black tree <%x> summary --------\n", tree);
+    rt_log("Description: '%s'\n", tree -> rbt_description);
+    rt_log("Current:     <%x>\n", tree -> rbt_current);
+    rt_log("Empty node:  <%x>\n", tree -> rbt_empty_node);
     if (tree -> rbt_nm_orders <= 0)
 	fputs("No orders\n", stderr);
     else
     {
-	fprintf(stderr,
-	    "i    Order[i]     Root[i]       Package[i]    Data[i]\n");
+	rt_log("i    Order[i]     Root[i]       Package[i]    Data[i]\n");
 	for (i = 0; i < tree -> rbt_nm_orders; ++i)
 	{
-	    fprintf(stderr, "%-3d  <%x>    <%x>    <%x>    <%x>\n",
+	    rt_log("%-3d  <%x>    <%x>    <%x>    <%x>\n",
 		    i,
 		    rb_order_func(tree, i),
 		    rb_root(tree, i),
@@ -122,5 +112,5 @@ void rb_summarize_tree (rb_tree *tree)
 			rb_data(rb_root(tree, i), i));
 	}
     }
-    fprintf(stderr, "-------------------------------------------------\n");
+    rt_log("-------------------------------------------------\n");
 }
