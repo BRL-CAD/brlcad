@@ -27,20 +27,16 @@ extern char	*optarg;
 extern int	optind;
 
 #define MAX_LINE	2048		/* Max pixels/line */
-static char scanline[MAX_LINE*3];	/* 1 scanline pixel buffer */
+RGBpixel scanline[MAX_LINE];		/* 1 scanline pixel buffer */
 static int scanbytes;			/* # of bytes of scanline */
 
 char *file_name;
 FILE *infp;
 
-Pixel outline[MAX_LINE];
-
 int inverse = 0;			/* Draw upside-down */
 int clear = 0;
 int height;				/* input height */
 int width;				/* input width */
-
-FBIO *fbp;
 
 char usage[] = "\
 Usage: pix-fb [-h -i -c] [-s squaresize] [-W width] [-H height] [file.pix]\n";
@@ -103,7 +99,8 @@ main(argc, argv)
 int argc;
 char **argv;
 {
-	static int y;
+	register int y;
+	register FBIO *fbp;
 
 	height = width = 512;		/* Defaults */
 
@@ -112,12 +109,11 @@ char **argv;
 		return 1;
 	}
 
-	scanbytes = width * 3;
+	scanbytes = width * sizeof(RGBpixel);
 
-	if( (fbp = fb_open( NULL, width, height )) == NULL )  {
-		fprintf(stderr,"fb_open failed\n");
+	if( (fbp = fb_open( NULL, width, height )) == NULL )
 		exit(12);
-	}
+
 	if( clear )  {
 		fb_clear( fbp, PIXEL_NULL );
 		fb_wmap( fbp, COLORMAP_NULL );
@@ -129,42 +125,16 @@ char **argv;
 	if( !inverse )  {
 		/* Normal way -- bottom to top */
 		for( y=0; y < height; y++ )  {
-			register char *in;
-			register Pixel *out;
-			register int i;
-
 			if( fread( (char *)scanline, scanbytes, 1, infp ) != 1 )
 				break;
-
-			in = scanline;
-			out = outline;
-			for( i=0; i<width; i++ )  {
-				out->red = *in++;
-				out->green = *in++;
-				out->blue = *in++;
-				out++;
-			}
-			fb_write( fbp, 0, y, outline, width );
+			fb_write( fbp, 0, y, scanline, width );
 		}
 	}  else  {
 		/* Inverse -- top to bottom */
 		for( y = height-1; y >= 0; y-- )  {
-			register char *in;
-			register Pixel *out;
-			register int i;
-
 			if( fread( (char *)scanline, scanbytes, 1, infp ) != 1 )
 				break;
-
-			in = scanline;
-			out = outline;
-			for( i=0; i<width; i++ )  {
-				out->red = *in++;
-				out->green = *in++;
-				out->blue = *in++;
-				(out++)->spare = 0;
-			}
-			fb_write( fbp, 0, y, outline, width );
+			fb_write( fbp, 0, y, scanline, width );
 		}
 	}
 	fb_close( fbp );

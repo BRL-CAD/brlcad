@@ -17,6 +17,7 @@
 #ifndef INCL_FB
 #define INCL_FB
 
+#ifdef OLD
 /*
  *			P i x e l
  *
@@ -31,6 +32,19 @@ typedef struct  {
 	unsigned char	blue;
 	unsigned char	spare;
 } Pixel;
+#endif OLD
+
+/*
+ *			R G B p i x e l
+ *
+ *  Format of disk pixels in .pix files.
+ *  Also used as arguments to many of the library routines.
+ */
+typedef unsigned char RGBpixel[3];
+
+#define	RED	0
+#define	GRN	1
+#define	BLU	2
 
 /*
  *			C o l o r M a p
@@ -78,9 +92,9 @@ typedef struct  {
 	int	if_height;
 	/* Internal information: needed by the library.	*/
 	int	if_fd;
-	Pixel	*if_pbase;	/* Address of malloc()ed page buffer.	*/
-	Pixel	*if_pcurp;	/* Current pointer into page buffer.	*/
-	Pixel	*if_pendp;	/* End of page buffer.			*/
+	RGBpixel *if_pbase;	/* Address of malloc()ed page buffer.	*/
+	RGBpixel *if_pcurp;	/* Current pointer into page buffer.	*/
+	RGBpixel *if_pendp;	/* End of page buffer.			*/
 	int	if_pno;		/* Current "page" in memory.		*/
 	int	if_pref;	/* Page "referenced" flag.		*/
 	long	if_pixcur;	/* Current pixel number in framebuffer. */
@@ -93,11 +107,13 @@ typedef struct  {
 } FBIO;
 
 #ifdef NULL
-#define PIXEL_NULL	(Pixel *) NULL
+#define PIXEL_NULL	(RGBpixel *) NULL
+#define RGBPIXEL_NULL	(RGBpixel *) NULL
 #define COLORMAP_NULL	(ColorMap *) NULL
 #define FBIO_NULL	(FBIO *) NULL
 #else
-#define PIXEL_NULL	(Pixel *) 0
+#define PIXEL_NULL	(RGBpixel *) 0
+#define RGBPIXEL_NULL	(RGBpixel *) 0
 #define COLORMAP_NULL	(ColorMap *) 0
 #define FBIO_NULL	(FBIO *) 0
 #endif
@@ -124,5 +140,9 @@ extern FBIO	*fb_open();
 extern int	fb_close();
 extern void	fb_log();
 extern int	fb_null();
+
+#define	COPYRGB(to,from) { (to)[RED]=(from)[RED];\
+			   (to)[GRN]=(from)[GRN];\
+			   (to)[BLU]=(from)[BLU]; }
 
 #endif INCL_FB

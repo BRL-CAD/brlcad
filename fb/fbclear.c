@@ -51,11 +51,11 @@ int	argc;
 		return	1;
 	}
 	if( argc == 4 )  { 
-		static Pixel	pixel;
-		pixel.red = (u_char) atoi( argv[1] );
-		pixel.green = (u_char) atoi( argv[2] );
-		pixel.blue = (u_char) atoi( argv[3] );
-		fb_clear( fbp, &pixel );
+		static RGBpixel	pixel;
+		pixel[RED] = (u_char) atoi( argv[1] );
+		pixel[GRN] = (u_char) atoi( argv[2] );
+		pixel[BLU] = (u_char) atoi( argv[3] );
+		fb_clear( fbp, pixel );
 	} else {
 		fb_clear( fbp, PIXEL_NULL );
 	}
