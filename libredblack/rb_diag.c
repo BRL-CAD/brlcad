@@ -96,7 +96,7 @@ int	trav_type;
  *		    Describe a red-black tree
  *
  *	This function has one parameter: a pointer to a red-black
- *	tree.  Rb_summarize_tree() prints out the header information
+ *	tree.  rb_summarize_tree() prints out the header information
  *	for the tree.  It is intended for diagnostic purposes.
  */
 void rb_summarize_tree (tree)

@@ -147,7 +147,7 @@ int		sense;
  *
  *	This function has three parameters: the tree and order on which
  *	to do the search and the sense (min or max, which is to say
- *	predecessor or successor) of the search.  Rb_neighbor() returns
+ *	predecessor or successor) of the search.  rb_neighbor() returns
  *	a pointer to the data in the node adjacent to the current node
  *	in the specified direction, if that node exists.  Otherwise,
  *	it returns NULL.
@@ -189,7 +189,7 @@ int	sense;
  *	    Return the current red-black node
  *
  *	This function has two parameters: the tree and order in which
- *	to find the current node.  Rb_curr() returns a pointer to
+ *	to find the current node.  rb_curr() returns a pointer to
  *	the data in the current node, if it exists.  Otherwise,
  *	it returns NULL.
  */

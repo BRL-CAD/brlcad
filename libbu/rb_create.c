@@ -109,7 +109,7 @@ int	(**order_funcs)();
  *		Create a single-order red-black tree
  *
  *	This function has two parameters: a comment describing the
- *	tree to create and a comparison function.  Rb_create1() builds
+ *	tree to create and a comparison function.  rb_create1() builds
  *	an array of one function pointer and passes it to rb_create().
  *	rb_create1() returns a pointer to the red-black tree header
  *	record.

@@ -24,7 +24,7 @@ static char RCSid[] = "@(#) $Header$";
  *		      Free a red-black tree
  *
  *	This function has two parameters: the tree to free and a function
- *	to handle the application data.  Rb_free() traverses tree's lists
+ *	to handle the application data.  rb_free() traverses tree's lists
  *	of nodes and packages, freeing each one in turn, and then frees tree
  *	itself.  If free_data is non-NULL, then rb_free() calls it just
  *	before freeing each package , passing it the package's rbp_data member.
