@@ -28,6 +28,12 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "nmg.h"
 #include "raytrace.h"
 
+/************************************************************************
+ *									*
+ *				MODEL Routines				*
+ *									*
+ ************************************************************************/
+
 /*
  *			N M G _ F I N D _ M O D E L
  *
@@ -91,6 +97,260 @@ top:
 	}
 	return( (struct model *)NULL );
 }
+
+/************************************************************************
+ *									*
+ *				SHELL Routines				*
+ *									*
+ ************************************************************************/
+
+/*
+ *			N M G _ S H E L L _ I S _ E M P T Y
+ *
+ *  See if this is an invalid shell
+ *  i.e., one that has absolutely nothing in it,
+ *  not even a lone vertexuse.
+ *
+ *  Returns -
+ *	1	yes, it is completely empty
+ *	0	no, not empty
+ */
+int
+nmg_shell_is_empty(s)
+register CONST struct shell *s;
+{
+
+	NMG_CK_SHELL(s);
+
+	if( RT_LIST_NON_EMPTY( &s->fu_hd ) )  return 0;
+	if( RT_LIST_NON_EMPTY( &s->lu_hd ) )  return 0;
+	if( RT_LIST_NON_EMPTY( &s->eu_hd ) )  return 0;
+	if( s->vu_p )  return 0;
+	return 1;
+}
+
+/*				N M G _ L U P S
+ *
+ *	return parent shell for loopuse
+ */
+struct shell *
+nmg_lups(lu)
+struct loopuse *lu;
+{
+	if (*lu->up.magic_p == NMG_SHELL_MAGIC) return(lu->up.s_p);
+	else if (*lu->up.magic_p != NMG_FACEUSE_MAGIC) 
+		rt_bomb("bad parent for loopuse\n");
+
+	return(lu->up.fu_p->s_p);
+}
+
+/*				N M G _ E U P S 
+ *
+ *	return parent shell of edgeuse
+ */
+struct shell *
+nmg_eups(eu)
+struct edgeuse *eu;
+{
+	if (*eu->up.magic_p == NMG_SHELL_MAGIC) return(eu->up.s_p);
+	else if (*eu->up.magic_p != NMG_LOOPUSE_MAGIC)
+		rt_bomb("bad parent for edgeuse\n");
+
+	return(nmg_lups(eu->up.lu_p));
+}
+
+/************************************************************************
+ *									*
+ *				FACE Routines				*
+ *									*
+ ************************************************************************/
+
+/************************************************************************
+ *									*
+ *				LOOP Routines				*
+ *									*
+ ************************************************************************/
+
+/*				N M G _ L U _ O F _ V U 
+ *
+ *	Given a vertexuse, return the loopuse somewhere above
+ */
+struct loopuse *
+nmg_lu_of_vu(vu)
+struct vertexuse *vu;
+{
+	NMG_CK_VERTEXUSE(vu);
+	
+	if (*vu->up.magic_p == NMG_EDGEUSE_MAGIC &&
+		*vu->up.eu_p->up.magic_p == NMG_LOOPUSE_MAGIC)
+			return(vu->up.eu_p->up.lu_p);
+	else if (*vu->up.magic_p != NMG_LOOPUSE_MAGIC)
+		rt_bomb("NMG vertexuse has no loopuse ancestor\n");
+
+	return(vu->up.lu_p);		
+}
+
+/*
+ *			N M G _ L O O P _ I S _ A _ C R A C K
+ *
+ *  Returns -
+ *	 0	Loop is not a "crack"
+ *	!0	Loop *is* a "crack"
+ */
+int
+nmg_loop_is_a_crack( lu )
+CONST struct loopuse	*lu;
+{
+	struct edgeuse	*cur_eu;
+	struct edgeuse	*cur_eumate;
+	struct vertexuse *cur_vu;
+	struct vertex	*cur_v;
+	struct vertexuse *next_vu;
+	struct vertex	*next_v;
+	struct faceuse	*fu;
+	struct vertexuse *test_vu;
+	struct edgeuse	*test_eu;
+	struct loopuse	*test_lu;
+
+	NMG_CK_LOOPUSE(lu);
+	if( *lu->up.magic_p != NMG_FACEUSE_MAGIC )  return 0;
+	fu = lu->up.fu_p;
+	NMG_CK_FACEUSE(fu);
+
+	if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )  return 0;
+
+	for( RT_LIST_FOR( cur_eu, edgeuse, &lu->down_hd ) )  {
+		NMG_CK_EDGEUSE(cur_eu);
+		cur_eumate = cur_eu->eumate_p;
+		NMG_CK_EDGEUSE(cur_eumate);
+		cur_vu = cur_eu->vu_p;
+		NMG_CK_VERTEXUSE(cur_vu);
+		cur_v = cur_vu->v_p;
+		NMG_CK_VERTEX(cur_v);
+
+		next_vu = cur_eumate->vu_p;
+		NMG_CK_VERTEXUSE(next_vu);
+		next_v = next_vu->v_p;
+		NMG_CK_VERTEX(next_v);
+		/* XXX It might be more efficient to walk the radial list */
+		/* See if the next vertex has an edge pointing back to cur_v */
+		for( RT_LIST_FOR( test_vu, vertexuse, &next_v->vu_hd ) )  {
+			if( *test_vu->up.magic_p != NMG_EDGEUSE_MAGIC )  continue;
+			test_eu = test_vu->up.eu_p;
+			NMG_CK_EDGEUSE(test_eu);
+			if( test_eu == cur_eu )  continue;	/* skip self */
+			if( test_eu == cur_eumate )  continue;	/* skip mates */
+			if( *test_eu->up.magic_p != NMG_LOOPUSE_MAGIC )  continue;
+			test_lu = test_eu->up.lu_p;
+			if( test_lu != lu )  continue;
+			/* Check departing edgeuse's NEXT vertex */
+			if( test_eu->eumate_p->vu_p->v_p == cur_v )  goto match;
+		}
+		/* No path back, this can't be a crack, abort */
+		return 0;
+		
+		/* One edgeuse matched, all the others have to as well */
+match:		;
+	}
+	return 1;
+}
+
+/*
+ *			N M G _ L O O P _ I S _ C C W
+ *
+ *  Returns -
+ *	+1	Loop is CCW, should be exterior loop.
+ *	-1	Loop is CW, should be interior loop.
+ *	 0	Unable to tell, error.
+ */
+int
+nmg_loop_is_ccw( lu, norm, tol )
+CONST struct loopuse	*lu;
+CONST plane_t		norm;
+CONST struct rt_tol	*tol;
+{
+	vect_t		edge1, edge2;
+	vect_t		left;
+	struct edgeuse	*eu;
+	struct edgeuse	*next_eu;
+	struct vertexuse *this_vu, *next_vu, *third_vu;
+	fastf_t		theta = 0;
+	fastf_t		x,y;
+	fastf_t		rad;
+
+	NMG_CK_LOOPUSE(lu);
+	RT_CK_TOL(tol);
+	if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )  return 0;
+
+	for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
+		next_eu = RT_LIST_PNEXT_CIRC( edgeuse, eu );
+		this_vu = eu->vu_p;
+		next_vu = eu->eumate_p->vu_p;
+		third_vu = next_eu->eumate_p->vu_p;
+
+		/* Skip topological 0-length edges */
+		if( this_vu->v_p == next_vu->v_p )  continue;
+		if( next_vu->v_p == third_vu->v_p )  continue;
+
+		/* Skip edges with calculated edge lengths near 0 */
+		VSUB2( edge1, next_vu->v_p->vg_p->coord, this_vu->v_p->vg_p->coord );
+		if( MAGSQ(edge1) < tol->dist_sq )  continue;
+		VSUB2( edge2, third_vu->v_p->vg_p->coord, next_vu->v_p->vg_p->coord );
+		if( MAGSQ(edge2) < tol->dist_sq )  continue;
+		VUNITIZE(edge1);
+		VUNITIZE(edge2);
+
+		/* Compute (loop)inward pointing "left" vector */
+		VCROSS( left, norm, edge1 );
+		y = VDOT( edge2, left );
+		x = VDOT( edge2, edge1 );
+		rad = atan2( y, x );
+#if 0
+		nmg_pr_eu_briefly(eu,NULL);
+		VPRINT("vu1", this_vu->v_p->vg_p->coord);
+		VPRINT("vu2", next_vu->v_p->vg_p->coord);
+		VPRINT("edge1", edge1);
+		VPRINT("edge2", edge2);
+		VPRINT("left", left);
+		rt_log(" e1=%g, e2=%g, n=%g, l=%g\n", MAGNITUDE(edge1),
+			MAGNITUDE(edge2), MAGNITUDE(norm), MAGNITUDE(left));
+		rt_log("atan2(%g,%g) = %g\n", y, x, rad);
+#endif
+		theta += rad;
+	}
+#if 0
+	rt_log(" theta = %g (%g)\n", theta, theta / rt_twopi );
+	nmg_face_lu_plot( lu, this_vu, this_vu );
+	nmg_face_lu_plot( lu->lumate_p, this_vu, this_vu );
+#endif
+
+	rad = theta * rt_inv2pi;
+	x = rad-1;
+	/* "rad" value is normalized -1..+1, tolerance here is 1% */
+	if( NEAR_ZERO( x, 0.05 ) )  {
+		/* theta = two pi, loop is CCW */
+		return 1;
+	}
+	x = rad + 1;
+	if( NEAR_ZERO( x, 0.05 ) )  {
+		/* theta = -two pi, loop is CW */
+		return -1;
+	}
+	rt_log("nmg_loop_is_ccw(x%x):  unable to determine CW/CCW, theta=%g (%g)\n",
+		theta, rad );
+	nmg_pr_lu_briefly(lu, NULL);
+	rt_log(" theta = %g (%g)\n", theta, theta / rt_twopi );
+	nmg_face_lu_plot( lu, this_vu, this_vu );
+	nmg_face_lu_plot( lu->lumate_p, this_vu, this_vu );
+	rt_bomb("nmg_loop_is_ccw()\n");
+	return 0;
+}
+
+/************************************************************************
+ *									*
+ *				EDGE Routines				*
+ *									*
+ ************************************************************************/
 
 /*
  *			N M G _ F I N D E U
@@ -225,6 +485,99 @@ out:
 
 	return eu;
 }
+
+/*
+ *			N M G _ F I N D _ E U _ W I T H _ V U _ I N _ L U
+ *
+ *  Find an edgeuse starting at a given vertexuse within a loop(use).
+ */
+struct edgeuse *
+nmg_find_eu_with_vu_in_lu( lu, vu )
+CONST struct loopuse		*lu;
+CONST struct vertexuse	*vu;
+{
+	register struct edgeuse	*eu;
+
+	NMG_CK_LOOPUSE(lu);
+	NMG_CK_VERTEXUSE(vu);
+	if( RT_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC )
+		rt_bomb("nmg_find_eu_with_vu_in_lu: loop has no edges!\n");
+	for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
+		NMG_CK_EDGEUSE(eu);
+		if( eu->vu_p == vu )  return eu;
+	}
+	rt_bomb("nmg_find_eu_with_vu_in_lu:  Unable to find vu!\n");
+	/* NOTREACHED */
+	return((struct edgeuse *)NULL);
+}
+
+/*				N M G _ F A C E R A D I A L
+ *
+ *	Looking radially around an edge, find another edge in the same
+ *	face as the current edge. (this could be the mate to the current edge)
+ */
+CONST struct edgeuse *
+nmg_faceradial(eu)
+CONST struct edgeuse *eu;
+{
+	CONST struct faceuse *fu;
+	CONST struct edgeuse *eur;
+
+	NMG_CK_EDGEUSE(eu);
+	NMG_CK_LOOPUSE(eu->up.lu_p);
+	fu = eu->up.lu_p->up.fu_p;
+	NMG_CK_FACEUSE(fu);
+
+	eur = eu->radial_p;
+
+	while (*eur->up.magic_p != NMG_LOOPUSE_MAGIC ||
+	    *eur->up.lu_p->up.magic_p != NMG_FACEUSE_MAGIC ||
+	    eur->up.lu_p->up.fu_p->f_p != fu->f_p)
+	    	eur = eur->eumate_p->radial_p;
+
+	return(eur);
+}
+
+
+/*
+ *			N M G _ R A D I A L _ F A C E _ E D G E _ I N _ S H E L L
+ *
+ *	looking radially around an edge, find another edge which is a part
+ *	of a face in the same shell
+ */
+struct edgeuse *
+nmg_radial_face_edge_in_shell(eu)
+struct edgeuse *eu;
+{
+	struct edgeuse *eur;
+	struct faceuse *fu;
+
+	NMG_CK_EDGEUSE(eu);
+	NMG_CK_LOOPUSE(eu->up.lu_p);
+	NMG_CK_FACEUSE(eu->up.lu_p->up.fu_p);
+
+	fu = eu->up.lu_p->up.fu_p;
+	eur = eu->radial_p;
+	NMG_CK_EDGEUSE(eur);
+
+	while (eur != eu->eumate_p) {
+		if (*eur->up.magic_p == NMG_LOOPUSE_MAGIC &&
+		    *eur->up.lu_p->up.magic_p == NMG_FACEUSE_MAGIC &&
+		    eur->up.lu_p->up.fu_p->s_p == fu->s_p)
+			break; /* found another face in shell */
+		else {
+			eur = eur->eumate_p->radial_p;
+			NMG_CK_EDGEUSE(eur);
+		}
+	}
+	return(eur);
+}
+
+/************************************************************************
+ *									*
+ *				VERTEX Routines				*
+ *									*
+ ************************************************************************/
 
 /*
  *			N M G _ F I N D _ V _ I N _ F A C E
@@ -549,187 +902,6 @@ CONST struct rt_list	*fu_hd;
 }
 
 /*
- *			N M G _ F I N D _ E U _ W I T H _ V U _ I N _ L U
- *
- *  Find an edgeuse starting at a given vertexuse within a loop(use).
- */
-struct edgeuse *
-nmg_find_eu_with_vu_in_lu( lu, vu )
-CONST struct loopuse		*lu;
-CONST struct vertexuse	*vu;
-{
-	register struct edgeuse	*eu;
-
-	NMG_CK_LOOPUSE(lu);
-	NMG_CK_VERTEXUSE(vu);
-	if( RT_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC )
-		rt_bomb("nmg_find_eu_with_vu_in_lu: loop has no edges!\n");
-	for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
-		NMG_CK_EDGEUSE(eu);
-		if( eu->vu_p == vu )  return eu;
-	}
-	rt_bomb("nmg_find_eu_with_vu_in_lu:  Unable to find vu!\n");
-	/* NOTREACHED */
-	return((struct edgeuse *)NULL);
-}
-
-/*
- *			N M G _ L O O P _ I S _ A _ C R A C K
- *
- *  Returns -
- *	 0	Loop is not a "crack"
- *	!0	Loop *is* a "crack"
- */
-int
-nmg_loop_is_a_crack( lu )
-CONST struct loopuse	*lu;
-{
-	struct edgeuse	*cur_eu;
-	struct edgeuse	*cur_eumate;
-	struct vertexuse *cur_vu;
-	struct vertex	*cur_v;
-	struct vertexuse *next_vu;
-	struct vertex	*next_v;
-	struct faceuse	*fu;
-	struct vertexuse *test_vu;
-	struct edgeuse	*test_eu;
-	struct loopuse	*test_lu;
-
-	NMG_CK_LOOPUSE(lu);
-	if( *lu->up.magic_p != NMG_FACEUSE_MAGIC )  return 0;
-	fu = lu->up.fu_p;
-	NMG_CK_FACEUSE(fu);
-
-	if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )  return 0;
-
-	for( RT_LIST_FOR( cur_eu, edgeuse, &lu->down_hd ) )  {
-		NMG_CK_EDGEUSE(cur_eu);
-		cur_eumate = cur_eu->eumate_p;
-		NMG_CK_EDGEUSE(cur_eumate);
-		cur_vu = cur_eu->vu_p;
-		NMG_CK_VERTEXUSE(cur_vu);
-		cur_v = cur_vu->v_p;
-		NMG_CK_VERTEX(cur_v);
-
-		next_vu = cur_eumate->vu_p;
-		NMG_CK_VERTEXUSE(next_vu);
-		next_v = next_vu->v_p;
-		NMG_CK_VERTEX(next_v);
-		/* XXX It might be more efficient to walk the radial list */
-		/* See if the next vertex has an edge pointing back to cur_v */
-		for( RT_LIST_FOR( test_vu, vertexuse, &next_v->vu_hd ) )  {
-			if( *test_vu->up.magic_p != NMG_EDGEUSE_MAGIC )  continue;
-			test_eu = test_vu->up.eu_p;
-			NMG_CK_EDGEUSE(test_eu);
-			if( test_eu == cur_eu )  continue;	/* skip self */
-			if( test_eu == cur_eumate )  continue;	/* skip mates */
-			if( *test_eu->up.magic_p != NMG_LOOPUSE_MAGIC )  continue;
-			test_lu = test_eu->up.lu_p;
-			if( test_lu != lu )  continue;
-			/* Check departing edgeuse's NEXT vertex */
-			if( test_eu->eumate_p->vu_p->v_p == cur_v )  goto match;
-		}
-		/* No path back, this can't be a crack, abort */
-		return 0;
-		
-		/* One edgeuse matched, all the others have to as well */
-match:		;
-	}
-	return 1;
-}
-
-/*
- *			N M G _ L O O P _ I S _ C C W
- *
- *  Returns -
- *	+1	Loop is CCW, should be exterior loop.
- *	-1	Loop is CW, should be interior loop.
- *	 0	Unable to tell, error.
- */
-int
-nmg_loop_is_ccw( lu, norm, tol )
-CONST struct loopuse	*lu;
-CONST plane_t		norm;
-CONST struct rt_tol	*tol;
-{
-	vect_t		edge1, edge2;
-	vect_t		left;
-	struct edgeuse	*eu;
-	struct edgeuse	*next_eu;
-	struct vertexuse *this_vu, *next_vu, *third_vu;
-	fastf_t		theta = 0;
-	fastf_t		x,y;
-	fastf_t		rad;
-
-	NMG_CK_LOOPUSE(lu);
-	RT_CK_TOL(tol);
-	if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )  return 0;
-
-	for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
-		next_eu = RT_LIST_PNEXT_CIRC( edgeuse, eu );
-		this_vu = eu->vu_p;
-		next_vu = eu->eumate_p->vu_p;
-		third_vu = next_eu->eumate_p->vu_p;
-
-		/* Skip topological 0-length edges */
-		if( this_vu->v_p == next_vu->v_p )  continue;
-		if( next_vu->v_p == third_vu->v_p )  continue;
-
-		/* Skip edges with calculated edge lengths near 0 */
-		VSUB2( edge1, next_vu->v_p->vg_p->coord, this_vu->v_p->vg_p->coord );
-		if( MAGSQ(edge1) < tol->dist_sq )  continue;
-		VSUB2( edge2, third_vu->v_p->vg_p->coord, next_vu->v_p->vg_p->coord );
-		if( MAGSQ(edge2) < tol->dist_sq )  continue;
-		VUNITIZE(edge1);
-		VUNITIZE(edge2);
-
-		/* Compute (loop)inward pointing "left" vector */
-		VCROSS( left, norm, edge1 );
-		y = VDOT( edge2, left );
-		x = VDOT( edge2, edge1 );
-		rad = atan2( y, x );
-#if 0
-		nmg_pr_eu_briefly(eu,NULL);
-		VPRINT("vu1", this_vu->v_p->vg_p->coord);
-		VPRINT("vu2", next_vu->v_p->vg_p->coord);
-		VPRINT("edge1", edge1);
-		VPRINT("edge2", edge2);
-		VPRINT("left", left);
-		rt_log(" e1=%g, e2=%g, n=%g, l=%g\n", MAGNITUDE(edge1),
-			MAGNITUDE(edge2), MAGNITUDE(norm), MAGNITUDE(left));
-		rt_log("atan2(%g,%g) = %g\n", y, x, rad);
-#endif
-		theta += rad;
-	}
-#if 0
-	rt_log(" theta = %g (%g)\n", theta, theta / rt_twopi );
-	nmg_face_lu_plot( lu, this_vu, this_vu );
-	nmg_face_lu_plot( lu->lumate_p, this_vu, this_vu );
-#endif
-
-	rad = theta * rt_inv2pi;
-	x = rad-1;
-	/* "rad" value is normalized -1..+1, tolerance here is 1% */
-	if( NEAR_ZERO( x, 0.05 ) )  {
-		/* theta = two pi, loop is CCW */
-		return 1;
-	}
-	x = rad + 1;
-	if( NEAR_ZERO( x, 0.05 ) )  {
-		/* theta = -two pi, loop is CW */
-		return -1;
-	}
-	rt_log("nmg_loop_is_ccw(x%x):  unable to determine CW/CCW, theta=%g (%g)\n",
-		theta, rad );
-	nmg_pr_lu_briefly(lu, NULL);
-	rt_log(" theta = %g (%g)\n", theta, theta / rt_twopi );
-	nmg_face_lu_plot( lu, this_vu, this_vu );
-	nmg_face_lu_plot( lu->lumate_p, this_vu, this_vu );
-	rt_bomb("nmg_loop_is_ccw()\n");
-	return 0;
-}
-
-/*
  *			N M G _ F I N D _ P T _ I N _ S H E L L
  *
  *  Given a point in 3-space and a shell pointer, try to find a vertex
@@ -845,142 +1017,6 @@ CONST struct rt_tol	*tol;
 		}
 	}
 	return( (struct vertex *)0 );
-}
-
-/*
- *			N M G _ S H E L L _ I S _ E M P T Y
- *
- *  See if this is an invalid shell
- *  i.e., one that has absolutely nothing in it,
- *  not even a lone vertexuse.
- *
- *  Returns -
- *	1	yes, it is completely empty
- *	0	no, not empty
- */
-int
-nmg_shell_is_empty(s)
-register CONST struct shell *s;
-{
-
-	NMG_CK_SHELL(s);
-
-	if( RT_LIST_NON_EMPTY( &s->fu_hd ) )  return 0;
-	if( RT_LIST_NON_EMPTY( &s->lu_hd ) )  return 0;
-	if( RT_LIST_NON_EMPTY( &s->eu_hd ) )  return 0;
-	if( s->vu_p )  return 0;
-	return 1;
-}
-
-/*				N M G _ L U _ O F _ V U 
- *
- *	Given a vertexuse, return the loopuse somewhere above
- */
-struct loopuse *
-nmg_lu_of_vu(vu)
-struct vertexuse *vu;
-{
-	NMG_CK_VERTEXUSE(vu);
-	
-	if (*vu->up.magic_p == NMG_EDGEUSE_MAGIC &&
-		*vu->up.eu_p->up.magic_p == NMG_LOOPUSE_MAGIC)
-			return(vu->up.eu_p->up.lu_p);
-	else if (*vu->up.magic_p != NMG_LOOPUSE_MAGIC)
-		rt_bomb("NMG vertexuse has no loopuse ancestor\n");
-
-	return(vu->up.lu_p);		
-}
-
-/*				N M G _ L U P S
- *
- *	return parent shell for loopuse
- */
-struct shell *
-nmg_lups(lu)
-struct loopuse *lu;
-{
-	if (*lu->up.magic_p == NMG_SHELL_MAGIC) return(lu->up.s_p);
-	else if (*lu->up.magic_p != NMG_FACEUSE_MAGIC) 
-		rt_bomb("bad parent for loopuse\n");
-
-	return(lu->up.fu_p->s_p);
-}
-
-/*				N M G _ E U P S 
- *
- *	return parent shell of edgeuse
- */
-struct shell *
-nmg_eups(eu)
-struct edgeuse *eu;
-{
-	if (*eu->up.magic_p == NMG_SHELL_MAGIC) return(eu->up.s_p);
-	else if (*eu->up.magic_p != NMG_LOOPUSE_MAGIC)
-		rt_bomb("bad parent for edgeuse\n");
-
-	return(nmg_lups(eu->up.lu_p));
-}
-
-/*				N M G _ F A C E R A D I A L
- *
- *	Looking radially around an edge, find another edge in the same
- *	face as the current edge. (this could be the mate to the current edge)
- */
-CONST struct edgeuse *
-nmg_faceradial(eu)
-CONST struct edgeuse *eu;
-{
-	CONST struct faceuse *fu;
-	CONST struct edgeuse *eur;
-
-	NMG_CK_EDGEUSE(eu);
-	NMG_CK_LOOPUSE(eu->up.lu_p);
-	fu = eu->up.lu_p->up.fu_p;
-	NMG_CK_FACEUSE(fu);
-
-	eur = eu->radial_p;
-
-	while (*eur->up.magic_p != NMG_LOOPUSE_MAGIC ||
-	    *eur->up.lu_p->up.magic_p != NMG_FACEUSE_MAGIC ||
-	    eur->up.lu_p->up.fu_p->f_p != fu->f_p)
-	    	eur = eur->eumate_p->radial_p;
-
-	return(eur);
-}
-
-
-/*
- *			N M G _ R A D I A L _ F A C E _ E D G E _ I N _ S H E L L
- *
- *	looking radially around an edge, find another edge which is a part
- *	of a face in the same shell
- */
-struct edgeuse *
-nmg_radial_face_edge_in_shell(eu)
-struct edgeuse *eu;
-{
-	struct edgeuse *eur;
-	struct faceuse *fu;
-
-	NMG_CK_EDGEUSE(eu);
-	NMG_CK_LOOPUSE(eu->up.lu_p);
-	NMG_CK_FACEUSE(eu->up.lu_p->up.fu_p);
-
-	fu = eu->up.lu_p->up.fu_p;
-	eur = eu->radial_p;
-	NMG_CK_EDGEUSE(eur);
-
-	while (eur != eu->eumate_p) {
-		if (*eur->up.magic_p == NMG_LOOPUSE_MAGIC &&
-		    *eur->up.lu_p->up.magic_p == NMG_FACEUSE_MAGIC &&
-		    eur->up.lu_p->up.fu_p->s_p == fu->s_p)
-			break; /* found another face in shell */
-		else {
-			eur = eur->eumate_p->radial_p;
-			NMG_CK_EDGEUSE(eur);
-		}
-	}
-	return(eur);
 }
 
 static CONST struct nmg_visit_handlers	nmg_visit_handlers_null;
