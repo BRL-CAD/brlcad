@@ -156,10 +156,10 @@ typedef struct descr
 
 STATIC struct
 	{
-	short		left;		/* window edges */
-	short		bottom;
-	short		right;
-	short		top;
+	int		left;		/* window edges */
+	int		bottom;
+	int		right;
+	int		top;
 	}	space;	 		/* plot scale data */
 
 struct	relvect {
@@ -278,6 +278,24 @@ STATIC bool	BuildStr(), GetCoords(),
 STATIC void	Catch(), FreeUp(), InitDesc(), Queue(),
 		Requeue(),
 		Raster(), SetSigs();
+
+/*
+ *			S X T 1 6
+ *
+ *  Take a value which is currently considered "unsigned" with 16 bits
+ *  of significance, and sign-extend it in a reasonably portable way.
+ *  We assume the machine is twos-compliment.
+ */
+long
+sxt16( v )
+register long v;
+{
+	register long w;
+	if( v <= 0x7FFF )  return(v);
+	w = -1;
+	w &= ~0x7FFF;
+	return( w | v );
+}
 
 char usage[] = "Usage: plot-fb [-h] [-d] [-o] [-i] [file.plot]\n";
 
@@ -534,11 +552,11 @@ DoFile( )	/* returns vpl status code */
 				  )
 				  	return Foo( -11 );
 				/* Only need X and Y, ignore Z */
-				space.left  = (buf[1]<<8) | buf[0]; /* x1 */
-				space.bottom= (buf[3]<<8) | buf[2]; /* y1 */
+				space.left  = sxt16((buf[1]<<8) | buf[0]); /* x1 */
+				space.bottom= sxt16((buf[3]<<8) | buf[2]); /* y1 */
 				/* z1 */
-				space.right = (buf[7]<<8) | buf[6]; /* x2 */
-				space.top   = (buf[9]<<8) | buf[8]; /* y2 */
+				space.right = sxt16((buf[7]<<8) | buf[6]); /* x2 */
+				space.top   = sxt16((buf[9]<<8) | buf[8]); /* y2 */
 				/* z2 */
 				goto spacend;
 				}
@@ -553,10 +571,10 @@ DoFile( )	/* returns vpl status code */
 					  ) != 1
 				   )
 					return Foo( -11 );
-				space.left  = (buf[1]<<8) | buf[0]; /* x1 */
-				space.bottom= (buf[3]<<8) | buf[2]; /* y1 */
-				space.right = (buf[5]<<8) | buf[4]; /* x2 */
-				space.top   = (buf[7]<<8) | buf[6]; /* y2 */
+				space.left  = sxt16((buf[1]<<8) | buf[0]); /* x1 */
+				space.bottom= sxt16((buf[3]<<8) | buf[2]); /* y1 */
+				space.right = sxt16((buf[5]<<8) | buf[4]); /* x2 */
+				space.top   = sxt16((buf[7]<<8) | buf[6]); /* y2 */
 				}
 
 spacend:
@@ -694,17 +712,15 @@ GetCoords( coop )
 	register coords	*coop;		/* -> input coordinates */
 	{
 	unsigned char buf[4];
-	register short s;
 	register long x,y;
 
 	/* read coordinates */
 	if ( fread( (char *)buf, (int)sizeof (buf), 1, pfin ) != 1 )
 		return false;
 
-	s = (buf[1]<<8) | buf[0];
-	x = s;				/* sign extend */
-	s = (buf[3]<<8) | buf[2];
-	y = s;				/* sign extend */
+
+	x = sxt16((buf[1]<<8) | buf[0]);
+	y = sxt16((buf[3]<<8) | buf[2]);
 	if( debug )  fprintf(stderr,"Coord: (%d,%d) ", x, y);
 
 	/* limit left, bottom */
@@ -916,6 +932,7 @@ OutBuild()				/* returns true if successful */
 	      hp < bandEnd;
 	      hp = np++, ystart += lines_per_band
 	    )	{
+	    	if(debug) fprintf(stderr,"OutBuild:  band y=%d\n", ystart);
 	    	if( overlay )  {
 	    		/* Read in current band */
 		    	if( fb_read( fbp, 0, ystart, buffer, buffersize/sizeof(RGBpixel) ) <= 0 )
@@ -931,6 +948,7 @@ OutBuild()				/* returns true if successful */
 		/* Raster() either re-queued the descriptor onto the
 		   next band list or else it freed the descriptor */
 
+	    	if(debug) fprintf(stderr,"OutBuild:  fbwrite y=%d\n", ystart);
 	    	if( fb_write( fbp, 0, ystart, buffer, buffersize/sizeof(RGBpixel) ) <= 0 )
 			return false;	/* can't write image file */
 	}
