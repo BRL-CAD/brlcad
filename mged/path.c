@@ -26,7 +26,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "db.h"
 #include "./solid.h"
-#include "./objdir.h"
+#include "raytrace.h"
 #include "./ged.h"
 #include "./dm.h"
 
@@ -48,10 +48,9 @@ drawHobj( dp, flag, pathpos, old_xlate, regionid )
 register struct directory *dp;
 matp_t old_xlate;
 {
-	static union record rec;	/* local record buffer */
-	auto mat_t new_xlate;		/* Accumulated xlation matrix */
-	auto int i;
-	union record *members;		/* ptr to array of member recs */
+	union record	*rp;
+	auto mat_t	new_xlate;	/* Accumulated translation matrix */
+	auto int	i;
 
 	if( pathpos >= MAX_PATH )  {
 		(void)printf("nesting exceeds %d levels\n", MAX_PATH );
@@ -64,12 +63,13 @@ matp_t old_xlate;
 	/*
 	 * Load the record into local record buffer
 	 */
-	db_getrec( dp, &rec, 0 );
+	if( (rp = db_getmrec( dbip, dp )) == (union record *)0 )
+		return;
 
-	if( rec.u_id == ID_SOLID ||
-	    rec.u_id == ID_ARS_A ||
-	    rec.u_id == ID_BSOLID ||
-	    rec.u_id == ID_P_HEAD )  {
+	if( rp[0].u_id == ID_SOLID ||
+	    rp[0].u_id == ID_ARS_A ||
+	    rp[0].u_id == ID_BSOLID ||
+	    rp[0].u_id == ID_P_HEAD )  {
 		register struct solid *sp;
 		/*
 		 * Enter new solid (or processed region) into displaylist.
@@ -79,39 +79,39 @@ matp_t old_xlate;
 		GET_SOLID( sp );
 		if( sp == SOLID_NULL )
 			return;		/* ERROR */
-		if( drawHsolid( sp, flag, pathpos, old_xlate, &rec, regionid ) != 1 ) {
+		if( drawHsolid( sp, flag, pathpos, old_xlate, rp, regionid ) != 1 ) {
 			FREE_SOLID( sp );
 		}
-		return;
+		goto out;
 	}
 
-	if( rec.u_id != ID_COMB )  {
-		(void)printf("drawobj:  defective input '%c'\n", rec.u_id );
-		return;			/* ERROR */
+	if( rp[0].u_id != ID_COMB )  {
+		(void)printf("drawobj:  defective input '%c'\n", rp[0].u_id );
+		goto out;		/* ERROR */
 	}
-	if( rec.c.c_length <= 0 )  {
-		(void)printf("Warning: combination with zero members \"%.16s\".\n",
-			rec.c.c_name );
-		return;			/* non-fatal ERROR */
+	if( dp->d_len <= 1 )  {
+		(void)printf("Warning: combination with zero members \"%s\".\n",
+			dp->d_namep );
+		goto out;			/* non-fatal ERROR */
 	}
-	if( rec.c.c_flags == 'R' )  {
+	if( rp[0].c.c_flags == 'R' )  {
 		if( regionid != 0 )
 			(void)printf("regionid %d overriden by %d\n",
-				regionid, rec.c.c_regionid );
-		regionid = rec.c.c_regionid;
+				regionid, rp[0].c.c_regionid );
+		regionid = rp[0].c.c_regionid;
 	}
 
 	/*
 	 *  This node is a combination (eg, a directory).
 	 *  Process all the arcs (eg, directory members).
 	 */
-	if( drawreg && rec.c.c_flags == 'R' && dp->d_len > 1 ) {
+	if( drawreg && rp[0].c.c_flags == 'R' && dp->d_len > 1 ) {
 		if( regmemb >= 0  ) {
 			(void)printf(
 			"ERROR: region (%s) is member of region (%s)\n",
-				rec.c.c_name,
+				dp->d_namep,
 				cur_path[reg_pathpos]->d_namep);
-			return;	/* ERROR */
+			goto out;	/* ERROR */
 		}
 		/* Well, we are processing regions and this is a region */
 		/* if region has only 1 member, don't process as a region */
@@ -119,36 +119,26 @@ matp_t old_xlate;
 			regmemb = dp->d_len-1;
 			reg_pathpos = pathpos;
 		}
-
 	}
 
-	/* Read all the member records */
-	i = sizeof(union record) * (dp->d_len-1);
-	if( i <= 0 )  return;				/* OK */
-	if( (members = (union record *)malloc(i)) == (union record *)0  )  {
-		fprintf(stderr,"drawHobj:  %s malloc failure\n", dp->d_namep);
-	    	return;					/* ERROR */
-	}
-	db_getmany( dp, members, 1, dp->d_len-1 );
+	/* Process all the member records */
+	for( i=1; i < dp->d_len; i++ )  {
+		register struct member	*mp;
+		register struct directory *nextdp;
+		static mat_t		xmat;	/* temporary fastf_t matrix */
 
-	for( i=0; i < dp->d_len-1; i++ )  {
-		register struct member *mp;		/* XXX */
-		register struct directory *nextdp;	/* temporary */
-		static mat_t xmat;		/* temporary fastf_t matrix */
-
-		mp = &(members[i].M);
+		mp = &(rp[i].M);
 		if( mp->m_id != ID_MEMB )  {
 			fprintf(stderr,"drawHobj:  %s bad member rec\n",
 				dp->d_namep);
-			free( (char *)members );
-			return;				/* ERROR */
+			goto out;			/* ERROR */
 		}
 		cur_path[pathpos] = dp;
 		if( regmemb > 0  ) { 
 			regmemb--;
 			memb_oper = mp->m_relation;
 		}
-		if( (nextdp = lookup( mp->m_instname, LOOKUP_NOISY )) == DIR_NULL )
+		if( (nextdp = db_lookup( dbip,  mp->m_instname, LOOKUP_NOISY )) == DIR_NULL )
 			continue;
 
 		/* s' = M3 . M2 . M1 . s
@@ -167,7 +157,8 @@ matp_t old_xlate;
 			regionid
 		);
 	}
-	free( (char *)members );
+out:
+	rt_free( (char *)rp, "drawHobj recs");
 }
 
 /*
@@ -182,34 +173,41 @@ pathHmat( sp, matp, depth )
 register struct solid *sp;
 matp_t matp;
 {
+	register union record	*rp;
 	register struct directory *parentp;
 	register struct directory *kidp;
-	register int i, j;
-	auto mat_t tmat;
-	auto union record rec;
+	register int		j;
+	auto mat_t		tmat;
+	register int		i;
 
 	mat_idn( matp );
 	for( i=0; i <= depth; i++ )  {
 		parentp = sp->s_path[i];
 		kidp = sp->s_path[i+1];
+		if( !(parentp->d_flags & DIR_COMB) )  {
+			printf("pathHmat:  %s is not a combination\n",
+				parentp->d_namep);
+			return;		/* ERROR */
+		}
+		if( (rp = db_getmrec( dbip, parentp )) == (union record *)0 )
+			return;		/* ERROR */
 		for( j=1; j < parentp->d_len; j++ )  {
 			static mat_t xmat;	/* temporary fastf_t matrix */
 
 			/* Examine Member records */
-			db_getrec( parentp, &rec, j );
-			if( strcmp( kidp->d_namep, rec.M.m_instname ) != 0 )
+			if( strcmp( kidp->d_namep, rp[j].M.m_instname ) != 0 )
 				continue;
 
 			/* convert matrix to fastf_t from disk format */
-			rt_mat_dbmat( xmat, rec.M.m_mat );
+			rt_mat_dbmat( xmat, rp[j].M.m_mat );
 			mat_mul( tmat, matp, xmat );
 			mat_copy( matp, tmat );
 			goto next_level;
 		}
 		(void)printf("pathHmat: unable to follow %s/%s path\n",
 			parentp->d_namep, kidp->d_namep );
-		return;
+		return;			/* ERROR */
 next_level:
-		;
+		rt_free( (char *)rp, "pathHmat recs");
 	}
 }

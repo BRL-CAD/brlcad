@@ -32,8 +32,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "vmath.h"
 #include "db.h"
+#include "raytrace.h"
 #include "./ged.h"
-#include "./objdir.h"
 #include "./solid.h"
 
 extern int	printf();
@@ -65,13 +65,13 @@ matp_t xlate;
 	static dbfloat_t *area_end;	/* End of area to be processed */
 	union record record;
 
-	db_getrec( dp, &record, 0 );
+	db_get( dbip,  dp, &record, 0 , 1);
 
 	switch( record.u_id )  {
 
 	case ID_ARS_A:
 		/* 1st B type record is special:  Vertex point */
-		db_getrec( dp, &record, 1 );
+		db_get( dbip,  dp, &record, 1 , 1);
 
 		/* displace the base vector */
 		MAT4X3PNT( work, xlate, &record.b.b_values[0] );
@@ -83,18 +83,18 @@ matp_t xlate;
 			MAT4X3VEC( work, xlate, p );
 			VMOVE( p, work );
 		}
-		db_putrec( dp, &record, 1 );
+		db_put( dbip,  dp, &record, 1, 1 );
 
 		/* Process all the remaining B records */
 		for( i = 2; i < dp->d_len; i++ )  {
-			db_getrec( dp, &record, i );
+			db_get( dbip,  dp, &record, i , 1);
 			/* Transform remaining vectors */
 			for( p = &record.b.b_values[0*3];
 			     p < &record.b.b_values[8*3]; p += 3) {
 				MAT4X3VEC( work, xlate, p );
 				VMOVE( p, work );
 			}
-			db_putrec( dp, &record, i );
+			db_put( dbip,  dp, &record, i, 1 );
 		}
 		break;
 
@@ -141,7 +141,7 @@ matp_t xlate;
 				record.s.s_type );
 			return;		/* ERROR */
 		}
-		db_putrec( dp, &record, 0 );
+		db_put( dbip,  dp, &record, 0, 1 );
 		break;
 
 	default:
@@ -155,13 +155,13 @@ matp_t xlate;
 		for( i=1; i < dp->d_len; i++ )  {
 			static mat_t temp, xmat;
 
-			db_getrec( dp, &record, i );
+			db_get( dbip,  dp, &record, i , 1);
 			rt_mat_dbmat( xmat, record.M.m_mat );
 
 			mat_mul( temp, xlate, xmat );
 
 			rt_dbmat_mat( record.M.m_mat, temp );
-			db_putrec( dp, &record, i );
+			db_put( dbip,  dp, &record, i, 1 );
 		}
 	}
 	return;
@@ -186,7 +186,7 @@ matp_t xlate;
 	mat_t temp, xmat;		/* Temporary for mat_mul */
 
 	for( i=1; i < cdp->d_len; i++ )  {
-		db_getrec( cdp, &record, i );
+		db_get( dbip,  cdp, &record, i , 1);
 
 		/* Check for match */
 		if( strcmp( dp->d_namep, record.M.m_instname ) != 0 )
@@ -196,7 +196,7 @@ matp_t xlate;
 		mat_mul(temp, xlate, xmat);
 
 		rt_dbmat_mat( record.M.m_mat, temp );
-		db_putrec( cdp, &record, i );
+		db_put( dbip,  cdp, &record, i, 1 );
 		return;
 	}
 	(void)printf( "moveinst:  couldn't find %s/%s\n",
@@ -227,13 +227,13 @@ int air;				/* Air code */
 	/*
 	 * Check to see if we have to create a new combination
 	 */
-	if( (dp = lookup( combname, LOOKUP_QUIET )) == DIR_NULL )  {
+	if( (dp = db_lookup( dbip,  combname, LOOKUP_QUIET )) == DIR_NULL )  {
 
 		/* Update the in-core directory */
-		dp = dir_add( combname, -1, DIR_COMB, 2 );
+		dp = db_diradd( dbip, combname, -1, DIR_COMB, 2 );
 		if( dp == DIR_NULL )
 			return DIR_NULL;
-		db_alloc( dp, 2 );
+		db_alloc( dbip, dp, 2 );
 
 		/* Generate the disk record */
 		record.c.c_id = ID_COMB;
@@ -257,17 +257,17 @@ int air;				/* Air code */
 		}
 
 		/* finished with combination record - write it out */
-		db_putrec( dp, &record, 0 );
+		db_put( dbip,  dp, &record, 0, 1 );
 
 		/* create first member record */
-		db_getrec( dp, &record, 1);
+		db_get( dbip,  dp, &record, 1, 1);
 		(void)strcpy( record.M.m_instname, objp->d_namep );
 
 		record.M.m_id = ID_MEMB;
 		record.M.m_relation = relation;
 		mat_idn( identity );
 		rt_dbmat_mat( record.M.m_mat, identity );
-		db_putrec( dp, &record, 1 );
+		db_put( dbip,  dp, &record, 1, 1 );
 		return( dp );
 	}
 
@@ -275,7 +275,7 @@ int air;				/* Air code */
 	 * The named combination already exists.  Fetch the header record,
 	 * and verify that this is a combination.
 	 */
-	db_getrec( dp, &record, 0 );
+	db_get( dbip,  dp, &record, 0 , 1);
 	if( record.u_id != ID_COMB )  {
 		(void)printf("%s:  not a combination\n", combname );
 		return DIR_NULL;
@@ -288,17 +288,17 @@ int air;				/* Air code */
 		}
 	}
 	record.c.c_length++;
-	db_putrec( dp, &record, 0 );
-	db_grow( dp, 1 );
+	db_put( dbip, dp, &record, 0, 1 );
+	db_grow( dbip, dp, 1 );
 
 	/* Fill in new Member record */
-	db_getrec( dp, &record, dp->d_len-1);
+	db_get( dbip,  dp, &record, dp->d_len-1, 1);
 	record.M.m_id = ID_MEMB;
 	record.M.m_relation = relation;
 	(void)strcpy( record.M.m_instname, objp->d_namep );
 
 	mat_idn( identity );
 	rt_dbmat_mat( record.M.m_mat, identity );
-	db_putrec( dp, &record, dp->d_len-1 );
+	db_put( dbip,  dp, &record, dp->d_len-1, 1 );
 	return( dp );
 }

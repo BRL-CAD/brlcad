@@ -32,8 +32,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "mater.h"
 
 #include "./sedit.h"
+#include "raytrace.h"
 #include "./ged.h"
-#include "./objdir.h"
 #include "./solid.h"
 #include "./dm.h"
 
@@ -176,7 +176,7 @@ struct vlhead	*vhead;
 	vect_t		max, min;
 
 #define PHONY_ADDR	(-1L)
-	if( (dp = lookup( name, LOOKUP_QUIET )) != DIR_NULL )  {
+	if( (dp = db_lookup( dbip,  name, LOOKUP_QUIET )) != DIR_NULL )  {
 		if( dp->d_addr != PHONY_ADDR )  {
 			printf("invent_solid(%s) would clobber existing database entry, ignored\n");
 			return(-1);
@@ -187,13 +187,12 @@ struct vlhead	*vhead;
 		eraseobj(dp);
 	} else {
 		/* Need to enter phony name in directory structure */
-		dp = dir_add( name, PHONY_ADDR, DIR_SOLID, 0 );
+		dp = db_diradd( dbip,  name, PHONY_ADDR, DIR_SOLID, 0 );
 	}
 
 	/* Obtain a fresh solid structure, and fill it in */
 	GET_SOLID(sp);
 
-#define INFINITY	1.0e20
 	VSETALL( max, -INFINITY );
 	VSETALL( min,  INFINITY );
 	sp->s_vlist = vhead->vh_first;
@@ -236,13 +235,7 @@ struct vlhead	*vhead;
 		}
 	}
 
-	/* Solid is successfully drawn.  Compute maximum. */
-	/* This should be done with an RPP instead! XXX */
-	MAX( maxview, sp->s_center[X] + sp->s_size );
-	MAX( maxview, sp->s_center[Y] + sp->s_size );
-	MAX( maxview, sp->s_center[Z] + sp->s_size );
-
-	/* Add to linked list of solid structs */
+	/* Solid successfully drawn, add to linked list of solid structs */
 	APPEND_SOLID( sp, HeadSolid.s_back );
 	dmp->dmr_viewchange( DM_CHGV_ADD, sp );
 	return(0);		/* OK */
