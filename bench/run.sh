@@ -39,8 +39,8 @@ fi
 # Run the tests
 
 echo +++++ moss
-mv -f moss.pix moss.pix.$$
-mv -f moss.log moss.log.$$
+if test -f moss.pix; then mv -f moss.pix moss.pix.$$; fi
+if test -f moss.log; then mv -f moss.log moss.log.$$; fi
 time $RT -B -M -s512 $* \
 	-o moss.pix \
 	$DB/moss.g all.g \
@@ -59,14 +59,14 @@ EOF
 ${CMP} ../pix/moss.pix moss.pix
 if test $? = 0
 then
-	echo moss.pix:  RIGHT answers
+	echo moss.pix:  answers are RIGHT
 else
-	echo moss.pix:  WRONG WRONG WRONG
+	echo moss.pix:  WRONG WRONG WRONG WRONG WRONG WRONG
 fi
 
 echo +++++ world
-mv -f world.pix world.pix.$$
-mv -f world.log world.log.$$
+if test -f world.pix; then mv -f world.pix world.pix.$$; fi
+if test -f world.log; then mv -f world.log world.log.$$; fi
 time $RT -B -M -s512 $* \
 	-o world.pix \
 	$DB/world.g all.g \
@@ -85,14 +85,14 @@ EOF
 ${CMP} ../pix/world.pix world.pix
 if test $? = 0
 then
-	echo world.pix:  RIGHT answers
+	echo world.pix:  answers are RIGHT
 else
-	echo world.pix:  WRONG WRONG WRONG
+	echo world.pix:  WRONG WRONG WRONG WRONG WRONG WRONG
 fi
 
 echo +++++ star
-mv -f star.pix star.pix.$$
-mv -f star.log star.log.$$
+if test -f star.pix; then mv -f star.pix star.pix.$$; fi
+if test -f star.log; then mv -f star.log star.log.$$; fi
 time $RT -B -M -s512 $* \
 	-o star.pix \
 	$DB/star.g all \
@@ -110,14 +110,14 @@ EOF
 ${CMP} ../pix/star.pix star.pix
 if test $? = 0
 then
-	echo star.pix:  RIGHT answers
+	echo star.pix:  answers are RIGHT
 else
-	echo star.pix:  WRONG WRONG WRONG
+	echo star.pix:  WRONG WRONG WRONG WRONG WRONG WRONG
 fi
 
 echo +++++ bldg391
-mv -f bldg391.pix bldg391.pix.$$
-mv -f bldg391.log bldg391.log.$$
+if test -f bldg391.pix; then mv -f bldg391.pix bldg391.pix.$$; fi
+if test -f bldg391.log; then mv -f bldg391.log bldg391.log.$$; fi
 time $RT -B -M -s512 $* \
 	-o bldg391.pix \
 	$DB/bldg391.g all.g \
@@ -136,14 +136,14 @@ EOF
 ${CMP} ../pix/bldg391.pix bldg391.pix
 if test $? = 0
 then
-	echo bldg391.pix:  RIGHT answers
+	echo bldg391.pix:  answers are RIGHT
 else
-	echo bldg391.pix:  WRONG WRONG WRONG
+	echo bldg391.pix:  WRONG WRONG WRONG WRONG WRONG WRONG
 fi
 
 echo +++++ m35
-mv -f m35.pix m35.pix.$$
-mv -f m35.log m35.log.$$
+if test -f m35.pix; then mv -f m35.pix m35.pix.$$; fi
+if test -f m35.log; then mv -f m35.log m35.log.$$; fi
 time $RT -B -M -s512 $* \
 	-o m35.pix \
 	$DB/m35.g all.g \
@@ -161,9 +161,9 @@ EOF
 ${CMP} ../pix/m35.pix m35.pix
 if test $? = 0
 then
-	echo m35.pix:  RIGHT answers
+	echo m35.pix:  answers are RIGHT
 else
-	echo m35.pix:  WRONG WRONG WRONG
+	echo m35.pix:  WRONG WRONG WRONG WRONG WRONG WRONG
 fi
 
 echo
