@@ -178,23 +178,6 @@ drawing an object" } }
 	    "color_entry_chooser $id $top color \"Combination Color\"\
 	    comb_control $id,color"\
 	    12 $comb_control($id,color)
-    hoc_register_data $top.colorE "Color"\
-	    { { summary "Enter a color specification. The color
-is specified using three integers (i.e. r g b)
-in the range 0 to 255. For example:
-
-\tblack\t\t0 0 0
-\twhite\t\t255 255 255
-\tred\t\t255 0 0
-\tgreen\t\t0 255 0
-\tblue\t\t0 0 255
-\tyellow\t\t255 255 0
-\tcyan\t\t0 255 255
-\tmagenta\t\t255 0 255
-
-Note - when entering colors directly,
-pressing \"Enter\" will update the color
-of the menubutton." } }
 
     label $top.shaderL -text "Shader" -anchor w
     hoc_register_data $top.shaderL "Shader"\
@@ -367,9 +350,6 @@ from the combination." } }
     grid $top.gridF4 -sticky "ew" -padx $comb_control($id,padx) -pady $comb_control($id,pady)
     grid rowconfigure $top 2 -weight 1
     grid columnconfigure $top 0 -weight 1
-
-    bind $top.colorE <Return> "comb_set_colorMB $id; break"
-    comb_set_colorMB $id
 
     bind $top.nameE <Return> "comb_reset $id; break"
 
@@ -576,37 +556,6 @@ proc comb_toggle_isRegion { id } {
     }
 
     grid $top.gridF
-}
-
-proc comb_choose_color { id parent } {
-    global player_screen
-
-    set child color
-
-    cadColorWidget dialog $parent $child\
-	    -title "Combination Color"\
-	    -initialcolor [$parent.colorMB cget -background]\
-	    -ok "comb_color_ok $id $parent $parent.$child"\
-	    -cancel "cadColorWidget_destroy $parent.$child"
-}
-
-proc comb_color_ok { id parent w } {
-    global comb_control
-
-    upvar #0 $w data
-
-    $parent.colorMB configure -bg $data(finalColor)
-    set comb_control($id,color) "$data(red) $data(green) $data(blue)"
-
-    destroy $w
-    unset data
-}
-
-proc comb_set_colorMB { id } {
-    global comb_control
-
-    set top .$id.comb
-    set_WidgetRGBColor $top.colorMB $comb_control($id,color)
 }
 
 proc comb_shader_gui { id shader_type shader_frame } {
