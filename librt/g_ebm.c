@@ -530,10 +530,8 @@ CONST struct db_i		*dbip;
 	register struct rt_ebm_internal *eip;
 	struct bu_vls	str;
 	int		nbytes;
-	register int	y;
 	mat_t		tmat;
 	struct bu_mapped_file	*mp;
-	unsigned char	*cp;
 
 	BU_CK_EXTERNAL( ep );
 	rp = (union record *)ep->ext_buf;
@@ -596,19 +594,32 @@ fail:
 	}
 
 	nbytes = (eip->xdim+BIT_XWIDEN*2)*(eip->ydim+BIT_YWIDEN*2);
-	if( !mp->apbuf )
-	{
+
+	/* If first use of this file, prepare in-memory buffer */
+	if( !mp->apbuf )  {
+		register int	y;
+		unsigned char	*cp;
+
+		/* Prevent a multi-processor race */
+		bu_semaphore_acquire(RT_SEM_MODEL);
+		if( mp->apbuf )  {
+			/* someone else beat us, nothing more to do */
+			bu_semaphore_release(RT_SEM_MODEL);
+			return 0;
+		}
 		mp->apbuf = (genptr_t)bu_calloc(
 			1, nbytes, "rt_ebm_import bitmap" );
 		mp->apbuflen = nbytes;
-	}
 
-	/* Because of in-memory padding, read each scanline separately */
-	cp = (unsigned char *)mp->buf;
-	for( y=0; y < eip->ydim; y++ )  {
-		/* BIT() addresses into mp->apbuf */
-		bcopy( cp, &BIT( eip, 0, y), eip->xdim );
-		cp += eip->xdim;
+		bu_semaphore_release(RT_SEM_MODEL);
+
+		/* Because of in-memory padding, read each scanline separately */
+		cp = (unsigned char *)mp->buf;
+		for( y=0; y < eip->ydim; y++ )  {
+			/* BIT() addresses into mp->apbuf */
+			bcopy( cp, &BIT( eip, 0, y), eip->xdim );
+			cp += eip->xdim;
+		}
 	}
 	return( 0 );
 }
