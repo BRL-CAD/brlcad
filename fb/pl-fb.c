@@ -248,7 +248,7 @@ STATIC RGBpixel	*buffer;		/* ptr to active band buffer */
 STATIC long	buffersize;		/* active band buffer bytes */
 STATIC short	ystart = 0;		/* active band starting scan */
 STATIC short	debug  = 0;
-STATIC short	overlay = 0;		/* !0 to overlay on existing image */
+STATIC short	over = 0;		/* !0 to overlay on existing image */
 STATIC short	immediate = 0;		/* !0 to plot immediately */
 STATIC short	lines_per_band = 16;	/* scan lines per band */
 
@@ -333,7 +333,7 @@ char **argv;
 
 			case 'O':
 			case 'o':
-				overlay = 1;
+				over = 1;
 				break;
 
 			case 'h':
@@ -373,7 +373,7 @@ char **argv;
 	Nscanlines = fb_getheight(fbp);
 	if( immediate )  {
 		lines_per_band = Nscanlines;
-		if( !overlay )
+		if( !over )
 			fb_clear( fbp, RGBPIXEL_NULL );
 	}
 
@@ -381,9 +381,8 @@ char **argv;
 	 * Handle image-size specific initializations
 	 */
 	if( (Nscanlines % lines_per_band) != 0 )  {
-		fprintf(stderr, "Nscanlines(%d) %% lines_per_band(%d) != 0\n",
-			Nscanlines, lines_per_band);
-		exit(1);
+		/* round it down - only necessary if buffered? */
+		Nscanlines = (Nscanlines / lines_per_band) * lines_per_band;
 	}
 	space.left = space.right = 0;
 	space.right = Npixels;
@@ -421,7 +420,7 @@ char **argv;
 	and controls the entry of the strokes into the descriptor lists.
 	Strokes are limited (not clipped) to fit the frame.
 
-	Upon end of file or erase, plot data is copied to the device.
+	Upon end of file, erase, or flush, plot data is copied to the device.
 	Returns status code:
 		   < 0	=> catastrophe
 		   = 0	=> complete success
@@ -436,6 +435,7 @@ DoFile( )	/* returns vpl status code */
 	coords		virpos; 	/* virtual pen position */
 	static unsigned char buf3[6*2];
 	static unsigned char buf2[4*2];
+	static	bool	firsterase = true;
 
 	/* process each frame into a raster image file */
 
@@ -463,12 +463,31 @@ DoFile( )	/* returns vpl status code */
 
 			case 'e':	/* erase */
 				if( debug )  fprintf( stderr,"Erase\n");
-					
+
 				if ( plotted )  {
 					/* flush strokes */
 					if( debug ) fprintf( stderr,"flushing\n");
 					if ( !OutBuild() )
 						return Foo( -6 );
+				}
+				if( !firsterase ) {
+					if( immediate )
+						fb_clear( fbp, RGBPIXEL_NULL );
+					over = 0;
+				}
+				firsterase = false;
+				break;	/* next frame */
+
+			case 'F':	/* flush */
+				if( debug )  fprintf( stderr,"Flush\n");
+
+				if ( plotted )  {
+					/* flush strokes */
+					if( debug ) fprintf( stderr,"flushing\n");
+					if ( !OutBuild() )
+						return Foo( -6 );
+					if( !immediate )
+						over = 1;
 				}
 				break;	/* next frame */
 
@@ -1120,7 +1139,7 @@ OutBuild()				/* returns true if successful */
 	      hp = np++, ystart += lines_per_band
 	    )	{
 	    	if(debug) fprintf(stderr,"OutBuild:  band y=%d\n", ystart);
-	    	if( overlay )  {
+	    	if( over )  {
 	    		/* Read in current band */
 		    	if( fb_read( fbp, 0, ystart, buffer, buffersize/sizeof(RGBpixel) ) <= 0 )
 	    			fprintf(stderr,"pl-fb:  band read error\n");
