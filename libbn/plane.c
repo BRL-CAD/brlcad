@@ -1823,7 +1823,7 @@ CONST struct rt_tol	*tol;
 	distsq = MAGSQ_2D(AtoP) - APprABunit * APprABunit;
 	if (distsq > tol->dist_sq) {
 		if( rt_g.debug & DEBUG_MATH )  {
-			VPRINT("ABunit", ABunit);
+			V2PRINT("ABunit", ABunit);
 			rt_log("distsq B=%g\n", distsq);
 		}
 		return(-1);	/* dist pt to line too large */
@@ -1993,7 +1993,7 @@ CONST struct rt_tol *tol;
 int
 rt_dist_pt2_lseg2( dist_sq, pca, a, b, p, tol )
 fastf_t		*dist_sq;
-point_t		pca;
+fastf_t		pca[2];
 CONST point_t	a, b, p;
 CONST struct rt_tol *tol;
 {
@@ -2021,7 +2021,7 @@ CONST struct rt_tol *tol;
 	VSUB2_2D(PtoA, p, a);
 	if( (P_A_sq = MAGSQ_2D(PtoA)) < tol->dist_sq )  {
 		/* P is within the tol->dist radius circle around A */
-		VMOVE( pca, a );
+		V2MOVE( pca, a );
 		if( rt_g.debug & DEBUG_MATH )  rt_log("  at A\n");
 		*dist_sq = 0.0;
 		return 1;
@@ -2031,7 +2031,7 @@ CONST struct rt_tol *tol;
 	VSUB2_2D(PtoB, p, b);
 	if( (P_B_sq = MAGSQ_2D(PtoB)) < tol->dist_sq )  {
 		/* P is within the tol->dist radius circle around B */
-		VMOVE( pca, b );
+		V2MOVE( pca, b );
 		if( rt_g.debug & DEBUG_MATH )  rt_log("  at B\n");
 		*dist_sq = 0.0;
 		return 2;
@@ -2052,7 +2052,7 @@ CONST struct rt_tol *tol;
 	if( t <= 0 )  {
 		/* P is "left" of A */
 		if( rt_g.debug & DEBUG_MATH )  rt_log("  left of A\n");
-		VMOVE( pca, a );
+		V2MOVE( pca, a );
 		*dist_sq = P_A_sq;
 		return 3;
 	}
@@ -2063,7 +2063,7 @@ CONST struct rt_tol *tol;
 
 		/* Find PCA */
 		param_dist = t / B_A;		/* Range 0..1 */
-		VJOIN1(pca, a, param_dist, AtoB);
+		V2JOIN1(pca, a, param_dist, AtoB);
 
 		/* Find distance from PCA to line segment (Pythagorus) */
 		if( (dsq = P_A_sq - t * t ) <= tol->dist_sq )  {
@@ -2078,7 +2078,7 @@ CONST struct rt_tol *tol;
 	}
 	/* P is "right" of B */
 	if( rt_g.debug & DEBUG_MATH )  rt_log("  right of B\n");
-	VMOVE(pca, b);
+	V2MOVE(pca, b);
 	*dist_sq = P_B_sq;
 	return 4;
 }
