@@ -43,8 +43,6 @@
 #include "externs.h"		/* For malloc() and free() */
 #include "rle.h"
 
-#endif /* USE_STDLIB_H */
-
 #define VERT_FLAG  0x01		/* Command line flags */
 #define HORIZ_FLAG 0x02		/* must match appearance in scanargs */
 #define LEFT_FLAG  0x04
