@@ -1197,6 +1197,7 @@ vect_t dir;
 	double dot_max = -2.0;
 	double dot_min = 2.0;
 	double vu_dot;
+	double eu_length_sq;
 	vect_t eu_dir;
 	if (rt_g.NMG_debug & DEBUG_TRI)
 		rt_log("\t    pick_edges(v:(%g %g %g) dir:(%g %g %g))\n",
@@ -1237,6 +1238,7 @@ vect_t dir;
 		NMG_CK_VERTEX(vu_next->v_p);
 		NMG_CK_VERTEX_G(vu_next->v_p->vg_p);
 		VSUB2(eu_dir, vu_next->v_p->vg_p->coord, vu->v_p->vg_p->coord);
+		eu_length_sq = MAGSQ(eu_dir);
 		VUNITIZE(eu_dir);
 
 		if (rt_g.NMG_debug & DEBUG_TRI)
@@ -1245,7 +1247,7 @@ vect_t dir;
 				vu_next->v_p->vg_p->coord[1],
 				vu_next->v_p->vg_p->coord[2]);
 
-		if (MAGSQ(eu_dir) >= tol->dist_sq) {
+		if (eu_length_sq >= tol->dist_sq) {
 			if ((vu_dot = VDOT(eu_dir, dir)) > dot_max) {
 				if (rt_g.NMG_debug & DEBUG_TRI) {
 					rt_log("\t\t\teu_dir %g %g %g\n", eu_dir[0], eu_dir[1], eu_dir[2]);
@@ -1290,6 +1292,7 @@ vect_t dir;
 		 * "point out" from the vertex in question.
 		 */
 		VSUB2(eu_dir, vu_prev->v_p->vg_p->coord, vu->v_p->vg_p->coord);
+		eu_length_sq = MAGSQ(eu_dir);
 		VUNITIZE(eu_dir);
 
 		if (rt_g.NMG_debug & DEBUG_TRI)
@@ -1298,7 +1301,7 @@ vect_t dir;
 				vu_prev->v_p->vg_p->coord[1],
 				vu_prev->v_p->vg_p->coord[2]);
 
-		if (MAGSQ(eu_dir) >= tol->dist_sq) {
+		if (eu_length_sq >= tol->dist_sq) {
 			if ((vu_dot = VDOT(eu_dir, dir)) > dot_max) {
 				if (rt_g.NMG_debug & DEBUG_TRI) {
 					rt_log("\t\t\t-eu_dir %g %g %g\n", eu_dir[0], eu_dir[1], eu_dir[2]);
