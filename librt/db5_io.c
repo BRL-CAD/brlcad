@@ -33,6 +33,8 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "db5.h"
 #include "raytrace.h"
 
+#include "mater.h"
+
 #include "./debug.h"
 
 /* Number of bytes used for each value of DB5HDR_WIDTHCODE_* */
@@ -1367,4 +1369,59 @@ CONST mat_t		mat;
 	ip->idb_type = id;
 	ip->idb_meth = &rt_functab[id];
 	return id;			/* OK */
+}
+
+/*
+ *  XXX The material head should be attached to the db_i, not global.
+ */
+void
+db5_export_color_table( struct bu_vls *ostr, struct db_i *dbip )
+{
+	struct mater *mp;
+
+	BU_CK_VLS(ostr);
+	RT_CK_DBI(dbip);
+
+	for( mp = rt_material_head; mp != MATER_NULL; mp = mp->mt_forw )  {
+		bu_vls_printf(ostr,
+			"{%d %d %d %d %d} ",
+			mp->mt_low,
+			mp->mt_high,
+			mp->mt_r,
+			mp->mt_g,
+			mp->mt_b );
+	}
+}
+
+void
+db5_import_color_table( struct bu_vls *istr )
+{
+}
+
+/*
+ *			D B 5 _ P U T _ C O L O R _ T A B L E
+ *
+ *  Put the old region-id-color-table into the global object.
+ *  A null attribute is set if the material table is empty.
+ *
+ *  Returns -
+ *	<0	error
+ *	0	OK
+ */
+int
+db5_put_color_table( struct db_i *dbip )
+{
+	struct bu_vls	str;
+	int	ret;
+
+	RT_CK_DBI(dbip);
+
+	bu_vls_init(&str);
+	db5_export_color_table( &str, dbip );
+
+	ret = db5_update_attribute( DB5_GLOBAL_OBJECT_NAME,
+		"material", bu_vls_addr(&str), dbip );
+
+	bu_vls_free( &str );
+	return ret;
 }

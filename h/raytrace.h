@@ -3236,6 +3236,7 @@ BU_EXTERN(int			nmg_edge_collapse, (struct model *m,
 				CONST struct bn_tol *tol,
 				CONST fastf_t tol_coll,
 				CONST fastf_t min_angle));
+struct rt_bot_internal		*nmg_bot( struct shell *s, const struct bn_tol *tol );
 
 /* From nmg_tri.c */
 BU_EXTERN(void			nmg_triangulate_model, (struct model *m, CONST struct bn_tol   *tol) );

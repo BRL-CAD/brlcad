@@ -41,7 +41,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
  *  Given that the color table has been built up by successive calls
  *  to rt_color_addrec(),  write it into the database.
  */
-void
+int
 mk_write_color_table( struct rt_wdb *ofp )
 {
 #if 0
@@ -67,6 +67,7 @@ mk_write_color_table( struct rt_wdb *ofp )
 		(void)fwrite( (char *)&record, sizeof record, 1, ofpxx );
 	}
 #else
-	bu_log("mk_write_color_tale() not yet implemented\n");
+	RT_CK_WDB(ofp);
+	return db5_put_color_table( ofp->dbip );
 #endif
 }

@@ -205,6 +205,7 @@ after_read:
 	/* Now, at the end of the database, dump out the entire
 	 * region-id-based color table.
 	 */
+if(rt_material_head) rt_pr_mater(rt_material_head);
 	mk_write_color_table( ofp );
 	wdb_close(ofp);
 

@@ -49,127 +49,20 @@ mk_nmg( struct rt_wdb *filep, const char *name, struct model *m )
 	return wdb_export( filep, name, (genptr_t)m, ID_NMG, mk_conv2mm );
 }
 
-/*	W R I T E _ S H E L L _ A S _ P O L Y S O L I D
+/*
+ *			M K _ B O T _ F R O M _ N M G
  *
- *	This routine take an NMG shell and writes it out to the file
- *	out_fp as a polysolid with the indicated name.  Obviously,
- *	the shell should be a 3-manifold (winged edge).
- *	since polysolids may only have up to 5 vertices per face,
- *	any face with a loop of more than 5 vertices is triangulated
- *	using "nmg_triangulate_fu" prior to output.
- *
- *	XXX Since the nmg_triangulate_fu needs a tolerance structure, we
- *		have to invent one for the moment.  This is bogus.
- *
- *	XXX This should really write the shell as a BoT solid.
+ *  For ray-tracing speed, many database conversion routines like to
+ *  offer the option of converting NMG objects to bags of triangles (BoT).
+ *  Here is a convenience routine to replace the old
+ *  (now obsolete in BRL-CAD 6.0) routine write_shell_as_polysolid.
  */
-void
-write_shell_as_polysolid( out_fp, name, s)
-FILE *out_fp;
-char *name;
-struct shell *s;
+int
+mk_bot_from_nmg( struct rt_wdb *ofp, const char *name, struct shell *s )
 {
-#if 1
-bu_bomb("write_shell_as_polysolid -- use nmg_to_bot converter routine\n");
+	struct rt_bot_internal *botp;
 
-#else
-	struct faceuse *fu;
-	struct loopuse *lu;
-	struct edgeuse *eu;
-	point_t verts[5];
-	int count_npts;
-	int max_count;
-	int i;
-	struct bn_tol tol;
-	NMG_CK_SHELL( s );
+	botp = nmg_bot( s, &ofp->wdb_tol );
 
-	/* XXX Need support for v5 here */
-	BU_ASSERT_LONG( mk_version, <=, 4 );
-
-	/* XXX Yet another tol structure is "faked" */
-	tol.magic = BN_TOL_MAGIC;
-	tol.dist = 0.005;
-	tol.dist_sq = tol.dist * tol.dist;
-	tol.perp = 1e-6;
-	tol.para = 1 - tol.perp;
-
-	for( BU_LIST_FOR( fu , faceuse , &s->fu_hd ) )
-	{
-		NMG_CK_FACEUSE( fu );
-
-		/* only do OT_SAME faces */
-		if( fu->orientation != OT_SAME )
-			continue;
-
-		/* count vertices in loops */
-		max_count = 0;
-		for( BU_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
-		{
-			NMG_CK_LOOPUSE( lu );
-			if( BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC )
-				continue;
-
-			if( lu->orientation != OT_SAME )
-			{
-				/* must triangulate if there is a hole */
-				max_count = 6;
-				break;
-			}
-
-			count_npts = 0;
-			for( BU_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
-				count_npts++;
-
-			if( count_npts > max_count )
-				max_count = count_npts;
-
-			if( !nmg_lu_is_convex( lu, &tol ) )
-			{
-				/* must triangulate non-convex faces */
-				max_count = 6;
-				break;
-			}
-		}
-
-		/* if any loop has more than 5 vertices, triangulate the face */
-		if( max_count > 5 ) {
-			if( rt_g.NMG_debug & DEBUG_BASIC )
-				bu_log( "write_shell_as_polysolid: triangulating fu x%x\n", fu );
-			nmg_triangulate_fu( fu, (CONST struct bn_tol *)&tol );
-		}
-	}
-
-	 mk_polysolid( out_fp , name );
-
-	for( BU_LIST_FOR( fu , faceuse , &s->fu_hd ) )
-	{
-		/* only do OT_SAME faces */
-		if( fu->orientation != OT_SAME )
-			continue;
-
-		for( BU_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
-		{
-			NMG_CK_LOOPUSE( lu );
-			if( BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC )
-				continue;
-
-			count_npts = 0;
-			for( BU_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
-			{
-				for( i=0 ; i<3 ; i++ )
-					verts[count_npts][i] = eu->vu_p->v_p->vg_p->coord[i];
-				count_npts++;
-			}
-
-			if( count_npts < 3 )
-				continue;
-
-			if( mk_fpoly( out_fp , count_npts , verts ) )
-			{
-				bu_log( "write_shell_as_polysolid: mk_fpoly failed for object %s\n" , name );
-				bu_bomb( "write_shell_as_polysolid: mk_fpoly failed\n" );
-			}
-		}
-	}
-#endif
+	return wdb_export( ofp, name, (genptr_t)botp, ID_BOT, mk_conv2mm );
 }

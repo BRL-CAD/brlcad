@@ -142,7 +142,7 @@ WDB_EXTERN(int mk_tgc, (struct rt_wdb *fp, const char *name, const point_t base,
 WDB_EXTERN(int mk_cone, (struct rt_wdb *fp, const char *name, const point_t base,
 			const vect_t dirv, fastf_t height, fastf_t rad1,
 			fastf_t rad2) );
-#define mk_trc(wrong)	+++error+++	/* This routine no longer exists */
+#define mk_trc(wrong)	+++error_obsolete_libwdb_routine+++	/* This routine no longer exists */
 WDB_EXTERN(int mk_trc_h, (struct rt_wdb *fp, const char *name, const point_t base,
 			const vect_t height, fastf_t radbase, fastf_t radtop) );
 WDB_EXTERN(int mk_trc_top, (struct rt_wdb *fp, const char *name, const point_t ibase,
@@ -192,8 +192,8 @@ WDB_EXTERN(int mk_arbn, (struct rt_wdb *fp, const char *name, int neqn, plane_t 
 WDB_EXTERN(int mk_ars, (struct rt_wdb *fp, const char *name, int ncurves, int pts_per_curve,
 			fastf_t	*curves[]) );
 
-#define mk_bsolid(fp,name,nsurf,res)	+++error+++
-#define mk_bsurf(fp,srf)		+++error+++
+#define mk_bsolid(fp,name,nsurf,res)	+++error_obsolete_libwdb_routine+++
+#define mk_bsurf(fp,srf)		+++error_obsolete_libwdb_routine+++
 
 /* bot.c */
 int
@@ -218,6 +218,9 @@ int mk_bspline( struct rt_wdb *wdbp, const char *name, struct face_g_snurb **sur
 
 /* nmg.c */
 int mk_nmg( struct rt_wdb *filep, const char *name, struct model *m );
+int mk_bot_from_nmg( struct rt_wdb *ofp, const char *name, struct shell *s );
+
+#define write_shell_as_polysolid(ofp,name,s)	mk_bot_from_nmg(ofp,name,s)
 
 /* skt.c */
 int mk_sketch(
@@ -266,7 +269,7 @@ WDB_EXTERN(int mk_ebm, (struct rt_wdb *fp, const char *name, const char *file,
 WDB_EXTERN(int mk_vol, (struct rt_wdb *fp, const char *name, const char *file,
 			int xdim, int ydim, int zdim, int lo, int hi,
 			const vect_t cellsize, const matp_t mat));
-#define mk_strsol(fp,name,solid,arg)	+++error+++
+#define mk_strsol(fp,name,solid,arg)	+++error_obsolete_libwdb_routine+++
 WDB_EXTERN(int mk_submodel, (struct rt_wdb *fp, const char *name, const char *file,
 			const char *treetop, int meth));
 
@@ -274,15 +277,19 @@ WDB_EXTERN(int mk_submodel, (struct rt_wdb *fp, const char *name, const char *fi
  *  The polysolid has been replaced by the BoT.
  *  Automatic conversion is provided by rt_pg_bot()
  */
-#define mk_polysolid(fp,name)	+++error+++
-#define mk_poly(fp,npts,verts,norms)	+++error+++
-#define mk_fpoly(fp,npts,verts)	+++error+++
+#define mk_polysolid(fp,name)	+++error_obsolete_libwdb_routine+++
+#define mk_poly(fp,npts,verts,norms)	+++error_obsolete_libwdb_routine+++
+#define mk_fpoly(fp,npts,verts)	+++error_obsolete_libwdb_routine+++
+
+/* mater.c */
+int mk_write_color_table( struct rt_wdb *ofp );
+
 
 /* These routines have been replaced by the construction routines below */
-#define mk_comb(fp,name,len,reg,matname,mparam,rgb,flag)	+++error+++
-#define mk_rcomb(fp,name,len,reg,matname,mparam,rgb,id,air,mater,los,flag)	+++error+++
-#define mk_fcomb(fp,name,len,reg)				+++error+++
-#define mk_memb(fp,name,map,op)					+++error+++
+#define mk_comb(fp,name,len,reg,matname,mparam,rgb,flag)	+++error_obsolete_libwdb_routine+++
+#define mk_rcomb(fp,name,len,reg,matname,mparam,rgb,id,air,mater,los,flag)	+++error_obsolete_libwdb_routine+++
+#define mk_fcomb(fp,name,len,reg)				+++error_obsolete_libwdb_routine+++
+#define mk_memb(fp,name,map,op)					+++error_obsolete_libwdb_routine+++
 
 /*
  *  Combination (region&group) construction routines
@@ -364,7 +371,7 @@ extern int	mk_version;		/* Which version database to write */
  *  Internal routines
  */
 WDB_EXTERN(int mk_freemembers, (struct wmember *headp) );
-#define mk_fwrite_internal(fp,name,ip)		+++error+++
+#define mk_fwrite_internal(fp,name,ip)		+++error_obsolete_libwdb_routine+++
 #define mk_export_fwrite(wdbp,name,gp,id)	wdb_export(wdbp,name,gp,id,mk_conv2mm)
 
 #ifdef __cplusplus
