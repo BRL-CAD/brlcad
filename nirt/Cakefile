@@ -15,7 +15,7 @@
 
 #define	NIRT_OBJ	\
 	nirt.o command.o conversion.o if.o interact.o dist_def.o \
-	str_manip.o parse_fmt.o
+	read_mat.o str_manip.o parse_fmt.o
 
 nirt:	NIRT_OBJ LIBRT
 	sh ../newvers.sh version "Natalie's Interactive Ray Tracer"
