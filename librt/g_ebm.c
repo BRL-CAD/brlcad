@@ -558,7 +558,7 @@ fail:
 	mp->apbuflen = nbytes;
 
 	/* Because of in-memory padding, read each scanline separately */
-	cp = mp->buf;
+	cp = (unsigned char *)mp->buf;
 	for( y=0; y < eip->ydim; y++ )  {
 		/* BIT() addresses into mp->apbuf */
 		bcopy( cp, &BIT( eip, 0, y), eip->xdim );
