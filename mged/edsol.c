@@ -3211,9 +3211,9 @@ sedit()
 			}
 
 			if( face_no > -1 )
-				sprintf( fmode, " %d", BU_BITTEST( bot->face_mode, face_no ) );
+				sprintf( fmode, " %d", BU_BITTEST( bot->face_mode, face_no )?1:0 );
 			else
-				sprintf( fmode, " %d", BU_BITTEST( bot->face_mode, 0 ) );
+				sprintf( fmode, " %d", BU_BITTEST( bot->face_mode, 0 )?1:0 );
 
 			ret_tcl = Tcl_VarEval( interp, "cad_radio", " .bot_fmode_radio ", bu_vls_addr( &pathName ),
 					       " _bot_fmode_result ", "\"BOT Face Mode\"",
