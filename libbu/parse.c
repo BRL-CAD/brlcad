@@ -1963,6 +1963,8 @@ CONST char		*str;
 	BU_CK_EXTERNAL(ep);
 
 	fprintf(fp, "%s:\n", str);
+	if( ep->ext_nbytes <= 0 )  fprintf(fp, "\tWarning: 0 length external buffer\n");
+
 	cp = ep->ext_buf;
 	for( i=0; i < ep->ext_nbytes; i += 16 )  {
 		for( j=0; j < 4; j++ )  {
