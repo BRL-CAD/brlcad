@@ -71,10 +71,10 @@
 ###############################################################################
 
 # have to init LOG here so functions will output properly
+# common log defaults include /dev/tty, stdout, or stderr
 if [ x$LOG = x ] ; then 
-    LOG="/dev/tty" ; export LOG
+    LOG="stdout" ; export LOG
 fi
-if [ ! "x$DEBUG" = "x" ]  ; then echo "LOG=$LOG" ; fi
 #
 # log [messageToWrite] [fileToWriteTo]
 #
@@ -98,7 +98,7 @@ log ( ) {
     # to properly handle a "std???" set LOG var
     if [ x$_TEMP_DEBUG_OFF = x ] ; then
 	# for gratuitous logging...
-	if [ ! "x$DEBUG" = x ] ; then echo "log( \$1=[$1] \$2=[$2] )" ; fi
+	if [ ! "x$DEBUG" = x ] ; then echo "log( \$1=[$1] \$2=[$2] )" $FILE ; fi
     fi
 
 
@@ -135,6 +135,8 @@ log ( ) {
 #    eval "$ECHO \"$MESSAGE\" >> $FILE"
     eval "$ECHO \"$MESSAGE\" $FILE"
 }
+# log the LOG var
+if [ ! "x$DEBUG" = "x" ]  ; then log "LOG=$LOG" ; fi
 
 
 #
@@ -144,11 +146,15 @@ log ( ) {
 # value. if the global _ACQUIRED_LOCKS or _ACQUIRED_SEMAPHORES variables are
 # set (done by acquireLock() and acquireSemaphore()), then they are released
 # prior to exiting.
+#
+# by default we write bomb output to stderr instead of stdout
 # 
 bomb ( ) {
     if [ x$_TEMP_DEBUG_OFF = x ] ; then
         if [ ! "x$DEBUG" = x ] ; then log "bomb( \$1=[$1] \$2=[$2] \$3=[$3] )" ; fi
     fi
+
+    if [ "x$2" = "x" ] ; then BOMBLOG="$2" ; else BOMBLOG="$2" ; fi
 
     # need a check if dollar three is a number...
     if [ "x$3" = "x" ] ; then CODE=1 ; else CODE="$3" ; fi
@@ -156,12 +162,15 @@ bomb ( ) {
     # turn off log debugging
     if [ ! "x$DEBUG" = x ] ; then export _TEMP_DEBUG_OFF=1 ; fi
 
-    log "ERROR: $1" "$2"
+    log "ERROR: $1" "$BOMBLOG"
     # explicitly display the error message to terminal if logging elsewhere
-    if [ ! "x$2" = "x/dev/tty" ] ; then 
-	if [ "x$2" = "x" ] ; then 
-	    if [ ! "x$LOG" = "x/dev/tty" ] ; then
-		log "ERROR: $1" "/dev/tty"
+    # !!! may consider switching default behaviour to be stdout instead of terminal
+    if [ ! "x$BOMBLOG" = "x/dev/tty" ] ; then 
+	if [ "x$BOMBLOG" = "x" ] ; then
+	    if [ ! "x$LOG" = "x/def/tty" ] ; then
+		if [ -w /dev/tty ] ; then
+		    log "ERROR: $1" "/dev/tty"
+		fi
 	    fi
 	fi
     fi
@@ -183,10 +192,14 @@ bomb ( ) {
 # simply warn if NO_WARNINGS is set or specified, noWarnings arg overrides 
 # (any non-zero value is true)
 # 
+# by default we write warn output to stderr instead of stdout
+#
 warn ( ) {
     if [ x$_TEMP_DEBUG_OFF = x ] ; then
         if [ ! "x$DEBUG" = x ] ; then log "warn( \$1=[$1] \$2=[$2] \$3=[$3] )" ; fi
     fi
+
+    if [ "x$2" = "x" ] ; then WARNLOG="$2" ; else WARNLOG="$2" ; fi
 
     # should check if dollar three is a number...
     BOMB=0
@@ -196,9 +209,9 @@ warn ( ) {
     # turn off log debugging
     if [ ! "x$DEBUG" = x ] ; then export _TEMP_DEBUG_OFF=1 ; fi
 
-    log "WARNING: $1" "$2"
+    log "WARNING: $1" "$WARN"
     if [ ! "x$BOMB" = "x0" ] ; then
-	bomb "fail on warnings is set"
+	bomb "fail on warnings is set so exiting now"
     fi
 
     # turn log debugging back on if it was
@@ -254,25 +267,25 @@ setHostName ( ) {
     if [ "x$1" = x ] ; then 
 	VAR="HOSTNAME"
     else 
-	VAR=$1
+	VAR="$1"
 	# do not forget to check system
 	initializeVariable $VAR "$HOST"
 	if [ x$VAR = x ] ; then export $VAR=$HOSTNAME ; fi
     fi
     if [ "x$2" = x ] ; then DEFVAL="unknown" ; else DEFVAL=$2 ; fi
 
-    # multiple inits work (without the ifthen mess) since the set should
-    # not clobber a variable that already has a non-empty value set
-    if [ x$VAR = x ] ; then initializeVariable $VAR `hostname` ; fi
-    if [ x$VAR = x ] ; then initializeVariable $VAR $HOST ; fi
-    if [ x$VAR = x ] ; then initializeVariable $VAR `uname -n` ; fi
-    if [ x$VAR = x ] ; then initializeVariable $VAR $DEFVAL ; fi
-
     VARVAL="echo \$$VAR"
     if [ ! "x$DEBUG" = x ] ; then log "setHostName: ${VAR}=[`eval $VARVAL`]" ; fi
 
+    # multiple inits work (without the ifthen mess) since the set should
+    # not clobber a variable that already has a non-empty value set
+    if [ x`eval $VARVAL` = x ] ; then initializeVariable $VAR `hostname` ; fi
+    if [ x`eval $VARVAL` = x ] ; then initializeVariable $VAR $HOST ; fi
+    if [ x`eval $VARVAL` = x ] ; then initializeVariable $VAR `uname -n` ; fi
+    if [ x`eval $VARVAL` = x ] ; then initializeVariable $VAR $DEFVAL ; fi
+
     # return value is only useful if DEBUG is off (since echo'd values are return values)
-    # return `eval $VARVAL`
+    if [ "x$DEBUG" = "x" ] ; then return "$VARVAL" ; fi
 }
 
 #
@@ -282,6 +295,9 @@ setHostName ( ) {
 # file lock is released.  a ".lock" extension is appended automatically to 
 # distinguish between file locks and file semaphores.
 # locks acquired are listed in the ACQUIRED_LOCKS global var
+#
+# if file exists then wait/fail
+# else create lock file and log
 #
 acquireLock ( ) {
     if [ ! "x$DEBUG" = x ] ; then log "acquireLock( \$1=[$1] \$2=[$2] \$3=[$3] \$4=[$4] )" ; fi
@@ -303,13 +319,16 @@ acquireLock ( ) {
     while [ -f ${PREFIX}$LOCK ] ; do
 	RETRY=`expr $RETRY - 1`
 	if [ $RETRY -lt 1 ] ; then
-	    log "ERROR: Unable to obtain $LOCK in $PREFIX"
+	    warn "Unable to obtain $LOCK in $PREFIX"
 	    return 1
 	fi
-	log "Waiting for $LOCK... $RETRY attempts remain"
+	log "Waiting for $LOCK ($WAIT seconds)... $RETRY attempts remain"
 	sleep $WAIT
     done
     touch ${PREFIX}$LOCK
+    if [ ! -w ${PREFIX}$LOCK ] ; then
+        warn "Unable to write to lock file $LOCK in ${PREFIX}?"
+    fi
     # save the PID of the acquiring process to the lock file
     log "PID: $$" "${PREFIX}$LOCK"
     # keep a list of the acquired locks up to date
@@ -322,6 +341,9 @@ acquireLock ( ) {
 
 #
 # releaseLock [lockName] [location]
+#
+# if file exists then remove and try unlog
+# else warn and try unlog
 #
 releaseLock ( ) {
     if [ ! "x$DEBUG" = x ] ; then log "releaseLock( \$1=[$1] \$2=[$2] )" ; fi
@@ -368,11 +390,11 @@ releaseLock ( ) {
 	    fi
 	done
 	if [ x$FOUND_LOCK = x0 ] ; then
-	    bomb "bad bookkeeping -- _ACQUIRED_LOCKS is missing entry $NAME"
+	    warn "bad bookkeeping -- _ACQUIRED_LOCKS is missing entry $NAME"
 	fi
 	export _ACQUIRED_LOCKS="$NEW_AL"
     else
-	bomb "bad bookkeeping -- _ACQUIRED_LOCKS is empty prior to a release"
+	warn "bad bookkeeping -- _ACQUIRED_LOCKS is empty prior to a release of $NAME"
     fi
     log "Released $LOCK"
     return 0
@@ -394,6 +416,9 @@ releaseAllLocks ( ) {
 #
 # acquireSemaphore [semaphoreName] [retryCount] [waitLength] [location]
 #
+# if file exists then remove file and log
+# else wait/fail
+#
 acquireSemaphore ( ) {
     if [ ! "x$DEBUG" = x ] ; then log "acquireSemaphore( \$1=[$1] \$2=[$2] \$3=[$3] \$4=[$4] )" ; fi
 
@@ -414,14 +439,17 @@ acquireSemaphore ( ) {
     while [ ! -f ${PREFIX}$SEMAPHORE ] ; do
 	RETRY=`expr $RETRY - 1`
 	if [ $RETRY -lt 1 ] ; then
-	    log "Unable to obtain $SEMAPHORE in $PREFIX"
+	    warn "Unable to obtain $SEMAPHORE in $PREFIX"
 	    return 1
 	fi
-	log "Waiting for $SEMAPHORE... $RETRY attempts remain"
+	log "Waiting for $SEMAPHORE ($WAIT seconds)... $RETRY attempts remain"
 	sleep $WAIT
     done
     # we move instead of delete so that we can tell who has acquired the semaphore
     cp -f "${PREFIX}${SEMAPHORE}" "${PREFIX}${SEMAPHORE}.acquired"
+    if [ ! -w ${PREFIX}${SEMAPHORE} ] ; then
+        warn "Unable to write to semaphore file $SEMAPHORE in ${PREFIX}?"
+    fi    
     log "HOLDING PID: $$" "${PREFIX}${SEMAPHORE}.acquired"
     export _ACQUIRED_SEMAPHORES="$_ACQUIRED_SEMAPHORES ${PREFIX}$NAME"
     log "Acquired $SEMAPHORE"
@@ -432,6 +460,9 @@ acquireSemaphore ( ) {
 
 #
 # releaseSemaphore [semaphoreName]
+#
+# if file exists then warn and try unlog
+# else create file and try unlog
 #
 releaseSemaphore ( ) {
     if [ ! "x$DEBUG" = x ] ; then log "releaseSemaphore( \$1=[$1] \$2=[$2] )" ; fi
@@ -450,21 +481,16 @@ releaseSemaphore ( ) {
 
     if [ -f ${PREFIX}$SEMAPHORE ] ; then
 	warn "Semaphore [$SEMAPHORE] is already released"
-	# make sure the semaphore is not registered 
-	if [ ! "x$_ACQUIRED_SEMAPHORES" = "x" ] ; then
-	    NEW_AS=""
-	    for SEM in $_ACQUIRED_SEMAPHORES ; do
-		if [ ! "x$SEM" = "x${PREFIX}$NAME" ] ; then
-		    NEW_AS="$NEW_AS $SEM"
-		fi
-	    done
-	    export _ACQUIRED_SEMAPHORES="$NEW_AS"
-	fi
-	return 1
     fi
+
+    # recreate the semaphore and remove the .acquired copy
     touch ${PREFIX}$SEMAPHORE
+
+    if [ ! -w ${PREFIX}$SEMAPHORE ] ; then
+        warn "Unable to write to semaphore file $SEMAPHORE in ${PREFIX}?"
+    fi
     # save the PID of the process that last released this semaphore
-    log "CREATOR PID: $$" "${PREFIX}${SEMAPHORE}"
+    log "RELEASEOR PID: $$" "${PREFIX}${SEMAPHORE}"
     # unregister the semaphore with the _ACQUIRED_SEMAPHORES var
     if [ ! "x$_ACQUIRED_SEMAPHORES" = "x" ] ; then
 	NEW_AS=""
@@ -476,14 +502,23 @@ releaseSemaphore ( ) {
 		NEW_AS="$NEW_AS $SEM"
 	    fi
 	done
-	if [ x$FOUND_SEM = x0 ] ; then
-	    bomb "bad bookkeeping -- _ACQUIRED_SEMAPHORES is missing entry $NAME"
-	fi
 	export _ACQUIRED_SEMAPHORES="$NEW_AS"
+
+	if [ x$FOUND_SEM = x0 ] ; then
+	    warn "bad bookkeeping -- _ACQUIRED_SEMAPHORES is missing entry $NAME"
+	else
+	    # if the file was properly registered, it should have a backup copy
+	    if [ ! -f ${PREFIX}${SEMAPHORE}.acquired ] ; then
+		warn "Acquired semaphore ${SEMAPHORE}'s backup copy disappeared in $PREFIX"
+	    fi
+	fi
+	if [ ! -f ${PREFIX}${SEMAPHORE}.acquired ] ; then
+	    rm ${PREFIX}${SEMAPHORE}.acquired
+	fi
+	log "Released $SEMAPHORE"
     else
-	bomb "bad bookkeeping -- _ACQUIRED_SEMAPHORES is empty prior to release"
+	log "Created $SEMAPHORE"
     fi
-    log "Released $SEMAPHORE"
     return 0
 }
 
