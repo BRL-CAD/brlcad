@@ -134,6 +134,14 @@ char **argv;
 			bu_version+5
 		      );	/* +5 to skip @(#) */
 	}
+	/* Identify what host we're running on */
+	if (rt_verbosity & VERBOSE_LIBVERSIONS) {
+		char	hostname[512];
+		hostname[0] = '\0';
+		if( gethostname( hostname, sizeof(hostname) ) >= 0 &&
+		    hostname[0] != '\0' )
+			(void)fprintf(stderr, "Running on %s\n", hostname);
+	}
 
 	if( bu_optind >= argc )  {
 		fprintf(stderr,"rt:  MGED database not specified\n");
@@ -205,7 +213,7 @@ char **argv;
 	objtab = &(argv[bu_optind+1]);
 
 	if( nobjs <= 0 )  {
-		bu_log("rt: no objects specified\n");
+		bu_log("%s: no objects specified\n", argv[0]);
 		exit(1);
 	}
 
