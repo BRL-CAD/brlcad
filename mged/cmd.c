@@ -290,6 +290,7 @@ static struct cmdtab cmdtab[] = {
 	"R", cmd_right_mouse,
 	"rcodes", f_rcodes,
 	"red", f_red,
+	"redraw_vlist", cmd_redraw_vlist,
 	"refresh", f_refresh,
 	"regdebug", f_regdebug,
 	"regdef", f_regdef,
