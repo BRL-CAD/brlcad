@@ -487,7 +487,7 @@ char	**argv;
 	BU_CK_VLS(vp);
 	for( ; argc > 0; argc--, argv++ )  {
 		bu_vls_strcat( vp, *argv );
-		bu_vls_strcat( vp, " " );
+		if( argc > 1 )  bu_vls_strcat( vp, " " );
 	}
 }
 
