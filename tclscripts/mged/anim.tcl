@@ -1360,7 +1360,7 @@ proc sketch_vupdate {} {
 			puts "sketch_vupdate: expected $i columns, got $len"
 			return
 		} 
-		eval viewset $str
+		eval view $str
 	}
 
 	#highlight the current line
