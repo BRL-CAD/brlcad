@@ -52,6 +52,15 @@ file is expected to be output from the
 menu option of the Pro/Engineer
 .I EXPORT
 menu. This menu option is a Pro/Develop application produced by the USARL.
+.PP
+Note that the routine documented here is obsolete, and only maintained for compatability with
+older versions of Pro/Engineer. The current method of converting from Pro/Engineer to BRL-CAD
+is still a two step process, but a newer Pro/Toolkit application must be installed (see ``install.doc''
+in the ``pro-engineer'' directory of the BRL-CAD distribution). From within Pro/Engineer, the ``proe-brl''
+option must be selected from the ``File'' menu, and the user will be prompted for an output file name,
+a starting ident number, a maximum tessellation error, and an additional curvature correction.
+The output from this new routine, is a Tcl script that may be converted to a BRL-CAD model using ``asc2g''
+or by sourcing the file during an MGED session.
 .SH EXAMPLE
 .RS
 $ \|\fIproe-g \|sample.brl \|sample.g\fP
