@@ -4,11 +4,11 @@ CMD_VDRAW - edit vector lists and display them as pseudosolids
 
 OPEN COMMAND
 vdraw	open			- with no argument, asks if there is
-	  			  an open curve (1 yes, 0 no)
+	  			  an open vlist (1 yes, 0 no)
 
-		name		- opens the specified curve
-				  returns 1 if creating new curve
-				          0 if opening an existing curve
+		name		- opens the specified vlist
+				  returns 1 if creating new vlist
+				          0 if opening an existing vlist
 	
 EDITING COMMANDS - no return value
 
@@ -24,22 +24,22 @@ vdraw	delete 	i		- delete i-th vector
 PARAMETER SETTING COMMAND - no return value
 vdraw	params	color		- set the current color with 6 hex digits
 				  representing rrggbb
-		name		- change the name of the current curve
+		name		- change the name of the current vlist
 
 QUERY COMMAND
 vdraw	read	i		- returns contents of i-th vector "c x y z"
 		color		- return the current color in hex
 		length		- return number of vectors in list
-		name		- return name of current curve
-
-CURVE COMMANDS
-vdraw	curve	list		- return list of all existing curves
-		delete	name	- delete the named curve
+		name		- return name of current vlist
 
 DISPLAY COMMAND - 
-vdraw	send			- send the current curve to the display
+vdraw	send			- send the current vlist to the display
 				  returns 0 on success, -1 if the name
 				  conflicts with an existing true solid
+
+CURVE COMMANDS
+vdraw	vlist	list		- return list of all existing vlists
+		delete	name	- delete the named vlist
 
 All textual arguments can be replaced by their first letter.
 (e.g. "vdraw d a" instead of "vdraw delete all"
@@ -162,7 +162,7 @@ char **argv;
 	switch ( argv[1][0] ) {
 	case 'w': /*write*/
 		if (!curhead) {
-			Tcl_AppendResult(interp, "vdraw: no curve is currently open.", (char *)NULL);
+			Tcl_AppendResult(interp, "vdraw: no vlist is currently open.", (char *)NULL);
 			return TCL_ERROR;
 		}
 		if (argc < 7){
@@ -241,7 +241,7 @@ char **argv;
 		break;
 	case 'i': /*insert*/
 		if (!curhead) {
-			Tcl_AppendResult(interp, "vdraw: no curve is currently open.", (char *)NULL);
+			Tcl_AppendResult(interp, "vdraw: no vlist is currently open.", (char *)NULL);
 			return TCL_ERROR;
 		}
 		if (argc < 7){
@@ -311,7 +311,7 @@ char **argv;
 		break;
 	case 'd': /*delete*/
 		if (!curhead) {
-			Tcl_AppendResult(interp, "vdraw: no curve is currently open.", (char *)NULL);
+			Tcl_AppendResult(interp, "vdraw: no vlist is currently open.", (char *)NULL);
 			return TCL_ERROR;
 		}
 		if (argc < 3){
@@ -390,7 +390,7 @@ char **argv;
 		break;
 	case 'r': /*read*/
 		if (!curhead) {
-			Tcl_AppendResult(interp, "vdraw: no curve is currently open.", (char *)NULL);
+			Tcl_AppendResult(interp, "vdraw: no vlist is currently open.", (char *)NULL);
 			return TCL_ERROR;
 		}
 		if (argc < 3) {
@@ -399,13 +399,13 @@ char **argv;
 		}
 		if (argv[2][0] == 'c') {
 			/* read color of current solid */
-			sprintf(result_string, "%lx", curhead->rgb);
+			sprintf(result_string, "%.6lx", curhead->rgb);
 			Tcl_AppendResult(interp, result_string, (char *)NULL);
 			return TCL_OK;
 		}
 		if (argv[2][0] == 'n') {
 			/*read name of currently open solid*/
-			sprintf(result_string, "%s", curhead->name);
+			sprintf(result_string, "%.89s", curhead->name);
 			Tcl_AppendResult(interp, result_string, (char *)NULL);
 			return TCL_OK;
 		}
@@ -451,7 +451,7 @@ char **argv;
 		break;
 	case 's': /*send*/
 		if (!curhead) {
-			Tcl_AppendResult(interp, "vdraw: no curve is currently open.", (char *)NULL);
+			Tcl_AppendResult(interp, "vdraw: no vlist is currently open.", (char *)NULL);
 			return TCL_ERROR;
 		}
 		sprintf(solid_name, VDRW_PREFIX);
@@ -479,7 +479,7 @@ char **argv;
 		break;
 	case 'p':  /* params */
 		if (!curhead) {
-			Tcl_AppendResult(interp, "vdraw: no curve is currently open.", (char *)NULL);
+			Tcl_AppendResult(interp, "vdraw: no vlist is currently open.", (char *)NULL);
 			return TCL_ERROR;
 		}
 		if (argc < 4) {
@@ -492,11 +492,12 @@ char **argv;
 			return TCL_OK;
 		}
 		if (argv[2][0] == 'n'){
-			/* check for conflicts with existing curves*/
+			/* check for conflicts with existing vlists*/
 			for ( RT_LIST_FOR( rcp, rt_curve, &vdraw_head) ) {
 				if (!strncmp( rcp->name, argv[3], VDRW_MAXNAME)) {
-					Tcl_AppendResult(interp,"-1",(char *)NULL);
-					return TCL_OK;
+					sprintf(result_string,"vdraw: name %.40s is already in use\n", argv[3]);
+					Tcl_AppendResult(interp,result_string,(char *)NULL);
+					return TCL_ERROR;
 				}
 			}
 			/* otherwise name not yet used */
@@ -544,12 +545,12 @@ char **argv;
 				RT_LIST_APPEND( &(curhead->vhd), &(vp->l) );
 			}
 			curhead->name[VDRW_MAXNAME] = (char) NULL; /*safety*/
-			/* 0 means new entry */
+			/* 0 means entry already existed*/
 			Tcl_AppendResult(interp, "0", (char *)NULL);
 			return TCL_OK;
 		}
 		break;
-	case 'c':
+	case 'v':
 		if (argc<3) {
 			Tcl_AppendResult(interp,"vdraw: need more args",(char *)NULL);
 			return TCL_ERROR;
@@ -568,7 +569,7 @@ char **argv;
 			break;
 		case 'd':
 			if (argc<4) {
-				Tcl_AppendResult(interp,"vdraw: need name of curve to delete", (char *)NULL);
+				Tcl_AppendResult(interp,"vdraw: need name of vlist to delete", (char *)NULL);
 				return TCL_ERROR;
 			}
 			rcp2 = (struct rt_curve *)NULL;
@@ -579,7 +580,7 @@ char **argv;
 				}
 			}
 			if (!rcp2) {
-				sprintf(result_string,"vdraw: curve %s not found", argv[3]);
+				sprintf(result_string,"vdraw: vlist %.40s not found", argv[3]);
 				Tcl_AppendResult(interp, result_string, (char *)NULL);
 				return TCL_ERROR;
 			}
@@ -596,7 +597,7 @@ char **argv;
 			return TCL_OK;
 			break;
 		default:
-			Tcl_AppendResult(interp,"vdraw: unknown option to vdraw curve", (char *)NULL);
+			Tcl_AppendResult(interp,"vdraw: unknown option to vdraw vlist", (char *)NULL);
 			return TCL_ERROR;
 		}
 		break;
@@ -650,7 +651,7 @@ char **argv;
 }
 
 int 
-cmd_vget(clientData, interp, argc, argv)
+cmd_viewget(clientData, interp, argc, argv)
 ClientData clientData;
 Tcl_Interp *interp;
 int argc;
@@ -719,7 +720,7 @@ char **argv;
 		return TCL_OK;
 	default:				
 		Tcl_AppendResult(interp, 
-			"cmd_vget: invalid argument. Must be one of center,size,eye,ypr.",
+			"cmd_viewget: invalid argument. Must be one of center,size,eye,ypr.",
 			(char *)NULL);
 		return TCL_ERROR;
 			
@@ -840,7 +841,7 @@ char **argv;
 			i += 2;
 			break;
 		default:
-			sprintf(result_string,"viewset: Unknown option %s.", argv[i]);
+			sprintf(result_string,"viewset: Unknown option %.40s.", argv[i]);
 			Tcl_AppendResult(interp, result_string, (char *)NULL);
 			return TCL_ERROR;
 		}
