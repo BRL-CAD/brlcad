@@ -221,6 +221,7 @@ char	**argv;
 
 {	
     static long	ncells;
+    int	r;
 
     if (! pars_Argv(argc, argv))
     {
@@ -230,31 +231,29 @@ char	**argv;
     grid = (Cell *) rt_malloc(sizeof(Cell) * maxcells, "grid");
     if (debug_flag & CFB_DBG_MEM)
     {
-	fb_log("grid = 0x%x... %ld cells @ %d bytes/cell\n",
+	rt_log("grid = 0x%x... %ld cells @ %d bytes/cell\n",
 	    grid, maxcells, sizeof(Cell));
 	fflush(stderr);
     }
     do
     {
+
 	init_Globs();
 	if ((ncells = read_Cell_Data()) == 0)
 	{
-	    fb_log("cell-fb: failed to read view\n");
+	    rt_log("cell-fb: failed to read view\n");
 	    exit (1);
 	}
-	fb_log("Displaying %ld cells\n", ncells);
+	rt_log("Displaying %ld cells\n", ncells);
 	if (! display_Cells(ncells))
 	{
-	    fb_log("cell-fb: failed to display %ld cells\n", ncells);
+	    rt_log("cell-fb: failed to display %ld cells\n", ncells);
 	    exit (1);
 	}
 	if (log_flag)
 	    log_Run();
-	/*
-	fb_log("view_flag = %d, feof(filep) = %d, get_OK() = %d\n",
-	    view_flag, feof(filep), get_OK());
-	 */
-    } while ((view_flag == 0) && ! feof(filep) && get_OK());
+	r = get_OK();
+    } while ((view_flag == 0) && ! feof(filep) && r);
 }
 
 STATIC long read_Cell_Data()
@@ -299,7 +298,7 @@ STATIC long read_Cell_Data()
 					sizeof(Cell) * maxcells, "grid");
 	    if (debug_flag & CFB_DBG_MEM)
 	    {
-		fb_log("maxcells increased to %ld\n", maxcells);
+		rt_log("maxcells increased to %ld\n", maxcells);
 		fflush(stderr);
 	    }
 	    gp = grid + ncells;
@@ -338,7 +337,7 @@ STATIC long read_Cell_Data()
 	    MinMax(ymin, ymax, y);
 	    if (debug_flag & CFB_DBG_MINMAX)
 	    {
-		fb_log("xmin=%g, xmax=%g, ymin=%g, ymax=%g\n",
+		rt_log("xmin=%g, xmax=%g, ymin=%g, ymax=%g\n",
 		    xmin, xmax, ymin, ymax);
 		fflush(stderr);
 	    }
@@ -363,10 +362,10 @@ STATIC bool get_OK()
 
     if ((infp = fopen("/dev/tty", "r")) == NULL)
     {
-	fb_log("Cannot open /dev/tty for reading\n");
+	rt_log("Cannot open /dev/tty for reading\n");
 	return (false);
     }
-    fb_log("Another view follows.  Display ? [y/n](y) ");
+    rt_log("Another view follows.  Display ? [y/n](y) ");
     (void) fflush(stderr);
     switch ((c = getc(infp)))
     {
@@ -430,23 +429,23 @@ long	ncells;
 	== FBIO_NULL)
 	return (false);
     if (compute_fb_height || compute_fb_width)  {
-	fb_log("fb_size requested: %d %d\n", fb_width, fb_height);
+	rt_log("fb_size requested: %d %d\n", fb_width, fb_height);
     	fb_width = fb_getwidth(fbiop);
     	fb_height = fb_getheight(fbiop);
-	fb_log("fb_size  obtained: %d %d\n", fb_width, fb_height);
+	rt_log("fb_size obtained: %d %d\n", fb_width, fb_height);
     }
     if (fb_wmap(fbiop, COLORMAP_NULL) == -1)
-	fb_log("Cannot initialize color map\n");
+	rt_log("Cannot initialize color map\n");
     if (fb_zoom(fbiop, zoom, zoom) == -1)
-	fb_log("Cannot set zoom <%d,%d>\n", zoom, zoom);
+	rt_log("Cannot set zoom <%d,%d>\n", zoom, zoom);
     if (erase_flag && fb_clear(fbiop, BACKGROUND) == -1)
-	fb_log("Cannot clear frame buffer\n");
+	rt_log("Cannot clear frame buffer\n");
 
     buf = (unsigned char *) rt_malloc(sizeof(RGBpixel) * fb_width,
 						"line of frame buffer");
     if (debug_flag & CFB_DBG_MEM)
     {
-	fb_log("buf = 0x%x... %d pixels @ %d bytes/pixel\n",
+	rt_log("buf = 0x%x... %d pixels @ %d bytes/pixel\n",
 	    buf, fb_width, sizeof(RGBpixel));
 	fflush(stderr);
     }
@@ -463,7 +462,7 @@ long	ncells;
 	    {
 		if (debug_flag & CFB_DBG_GRID)
 		{
-		    fb_log("%d = V2SCRY(%g)\n", V2SCRY(lasty), lasty);
+		    rt_log("%d = V2SCRY(%g)\n", V2SCRY(lasty), lasty);
 		    fflush(stderr);
 		}
 		y0 = V2SCRY(lasty);
@@ -471,7 +470,7 @@ long	ncells;
 			for(y1 = y0 + hgt; y0 < y1; y0++)
 			    if (fb_write(fbiop, 0, y0, buf, fb_width) == -1)
 			    {
-				fb_log("Couldn't write to <%d,%d>\n", 0, y0);
+				rt_log("Couldn't write to <%d,%d>\n", 0, y0);
 				(void) fb_close(fbiop);
 				return (false);
 			    }
@@ -488,13 +487,13 @@ long	ncells;
 	    {
 		if (fb_write(fbiop, 0, y0, buf, fb_width) == -1)
 		{
-		    fb_log("Couldn't write to <%d,%d>\n", 0, y0);
+		    rt_log("Couldn't write to <%d,%d>\n", 0, y0);
 		    (void) fb_close(fbiop);
 		    return (false);
 		}
 		if (debug_flag & CFB_DBG_GRID)
 		{
-		    fb_log("Writing grid row at %d\n", y0);
+		    rt_log("Writing grid row at %d\n", y0);
 		    fflush(stderr);
 		}
 	    }
@@ -515,13 +514,13 @@ long	ncells;
     for (y0 = V2SCRY(lasty), y1 = y0 + hgt; y0 < y1;  y0++)
 	if (fb_write(fbiop, 0, y0, buf, fb_width) == -1)
 	{
-	    fb_log("Couldn't write to <%d,%d>\n", 0, y0);
+	    rt_log("Couldn't write to <%d,%d>\n", 0, y0);
 	    (void) fb_close(fbiop);
 	    return (false);
 	}
     /* Draw color key. */
     if (key_flag && (fb_width < (10 + 1) * wid))
-	fb_log("Width of key (%d) would exceed frame-buffer width (%d)\n",
+	rt_log("Width of key (%d) would exceed frame-buffer width (%d)\n",
 		(10 + 1) * wid, fb_width);
     else if (key_flag)
     {	
@@ -568,7 +567,7 @@ long	ncells;
 	for (i = yorigin; i < yorigin+hgt; i++)
 	    if (fb_write(fbiop, 0, i, buf, fb_width) == -1)
 	    {
-		fb_log("Couldn't write to <%d,%d>\n", 0, i);
+		rt_log("Couldn't write to <%d,%d>\n", 0, i);
 		(void) fb_close(fbiop);
 		return (false);
 	    }
@@ -577,7 +576,7 @@ long	ncells;
     rt_free((char *) buf, "line of frame buffer");
     if (debug_flag & CFB_DBG_MEM)
     {
-	fb_log("freed buf, which is now 0x%x\n", buf);
+	rt_log("freed buf, which is now 0x%x\n", buf);
 	fflush(stderr);
     }
     return (true);
@@ -657,36 +656,36 @@ register char	**argv;
 	    case 'N':
 		if (sscanf(optarg, "%d", &fb_height) < 1)
 		{
-		    fb_log("Invalid frame-buffer height: '%s'\n", optarg);
+		    rt_log("Invalid frame-buffer height: '%s'\n", optarg);
 		    return (false);
 		}
 		if (fb_height < -1)
 		{
-		    fb_log("Frame-buffer height out of range: %d\n", fb_height);
+		    rt_log("Frame-buffer height out of range: %d\n", fb_height);
 		    return (false);
 		}
 		break;
 	    case 'W':
 		if (sscanf(optarg, "%d", &fb_width) < 1)
 		{
-		    fb_log("Invalid frame-buffer width: '%s'\n", optarg);
+		    rt_log("Invalid frame-buffer width: '%s'\n", optarg);
 		    return (false);
 		}
 		if (fb_width < -1)
 		{
-		    fb_log("Frame-buffer width out of range: %d\n", fb_width);
+		    rt_log("Frame-buffer width out of range: %d\n", fb_width);
 		    return (false);
 		}
 		break;
 	    case 'S':
 		if (sscanf(optarg, "%d", &fb_height) < 1)
 		{
-		    fb_log("Invalid frame-buffer dimension: '%s'\n", optarg);
+		    rt_log("Invalid frame-buffer dimension: '%s'\n", optarg);
 		    return (false);
 		}
 		if (fb_height < -1)
 		{
-		    fb_log("Frame-buffer dimensions out of range: %d\n",
+		    rt_log("Frame-buffer dimensions out of range: %d\n",
 			fb_height);
 		    return (false);
 		}
@@ -695,14 +694,14 @@ register char	**argv;
 	    case 'X':
 		if (sscanf(optarg, "%x", &debug_flag) < 1)
 		{
-		    fb_log("Invalid debug flag: '%s'\n", optarg);
+		    rt_log("Invalid debug flag: '%s'\n", optarg);
 		    return (false);
 		}
 		break;
 	    case 'b':
 		if (sscanf(optarg, "%lf", &bool_val) != 1)
 		{
-		    fb_log("Invalid boolean value: '%s'\n", optarg);
+		    rt_log("Invalid boolean value: '%s'\n", optarg);
 		    return (false);
 		}
 		boolean_flag = true;
@@ -710,24 +709,24 @@ register char	**argv;
 	    case 'c':
 		if (sscanf(optarg, "%lf", &cell_size) != 1)
 		{
-		    fb_log("Invalid cell size: '%s'\n", optarg);
+		    rt_log("Invalid cell size: '%s'\n", optarg);
 		    return (false);
 		}
 		if (cell_size <= 0)
 		{
-		    fb_log("Cell size out of range: %d\n", cell_size);
+		    rt_log("Cell size out of range: %d\n", cell_size);
 		    return (false);
 		}
 		break;
 	    case 'd':
 		if (sscanf(optarg, "%lf %lf", &dom_min, &dom_max) < 2)
 		{
-		    fb_log("Invalid domain for input: '%s'\n", optarg);
+		    rt_log("Invalid domain for input: '%s'\n", optarg);
 		    return (false);
 		}
 		if (dom_min >= dom_max)
 		{
-		    fb_log("Bad domain for input: [%lf, %lf]\n",
+		    rt_log("Bad domain for input: [%lf, %lf]\n",
 			dom_min, dom_max);
 		    return (false);
 		}
@@ -739,7 +738,7 @@ register char	**argv;
 	    case 'f':
 		if (sscanf(optarg, "%d", &field) != 1)
 		{
-		    fb_log("Invalid field: '%s'\n", optarg);
+		    rt_log("Invalid field: '%s'\n", optarg);
 		    return (false);
 		}
 		break;
@@ -759,7 +758,7 @@ register char	**argv;
 	    case 'l':
 		if (sscanf(optarg, "%lf%lf", &az, &el) != 2)
 		{
-		    fb_log("Invalid view: '%s'\n", optarg);
+		    rt_log("Invalid view: '%s'\n", optarg);
 		    return (false);
 		}
 		log_flag = true;
@@ -776,7 +775,7 @@ register char	**argv;
 		    if (sscanf(optarg, "%lf %d %d %d", &value, &red, &grn, &blu)
 			< 4)
 		    {
-			fb_log("Invalid color-mapping: '%s'\n",
+			rt_log("Invalid color-mapping: '%s'\n",
 			    optarg);
 			return (false);
 		    }
@@ -784,7 +783,7 @@ register char	**argv;
 		    index = value + 0.01;
 		    if (index < 0 || index > MAX_COLORTBL)
 		    {
-			fb_log("Value out of range (%s)\n", optarg);
+			rt_log("Value out of range (%s)\n", optarg);
 			return (false);
 		    }
 		    rgb[RED] = red;
@@ -799,7 +798,7 @@ register char	**argv;
 		    case 2: break;
 		    case 1: yorigin = xorigin; break;
 		    default:
-			fb_log("Invalid offset: '%s'\n", optarg);
+			rt_log("Invalid offset: '%s'\n", optarg);
 			return (false);
 		}
 		break;
@@ -809,14 +808,14 @@ register char	**argv;
 		    case 2: break;
 		    case 1: hgt = wid; break;
 		    default:
-			fb_log("Invalid cell scale: '%s'\n", optarg);
+			rt_log("Invalid cell scale: '%s'\n", optarg);
 			return (false);
 		}
 		break;
 	    case 'v':
 		if (sscanf(optarg, "%d", &view_flag) < 1)
 		{
-		    fb_log("Invalid view number: '%s'\n", optarg);
+		    rt_log("Invalid view number: '%s'\n", optarg);
 		    return (false);
 		}
 		if (view_flag == 0)
@@ -825,7 +824,7 @@ register char	**argv;
             case 'x':
 		if (sscanf(optarg, "%x", &rt_g.debug) < 1)
 		{
-		    fb_log("Invalid debug flag: '%s'\n", optarg);
+		    rt_log("Invalid debug flag: '%s'\n", optarg);
 		    return (false);
 		}
 		break;
@@ -838,13 +837,13 @@ register char	**argv;
     {
 	if ((filep = fopen(argv[optind], "r")) == NULL)
 	{
-	    fb_log("Cannot open file '%s'\n", argv[optind]);
+	    rt_log("Cannot open file '%s'\n", argv[optind]);
 	    return (false);
 	}
     }
     else if (argc != optind)
     {
-	fb_log("Too many arguments!\n");
+	rt_log("Too many arguments!\n");
 	return (false);
     }
     else
@@ -866,7 +865,7 @@ STATIC void prnt_Usage()
     register char	**p = usage;
 
     while (*p)
-	fb_log("%s\n", *p++);
+	rt_log("%s\n", *p++);
     return;
 }
 
