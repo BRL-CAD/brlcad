@@ -209,12 +209,13 @@
  *	Posix and XOpen terminal-handling features.
  *
  *	HAVE_XOPEN
- *	HAVE_TERMIOS_H
- *	HAVE_MEMORY_H
+ *	HAVE_TERMIOS_H		Has <termios.h>, tcgetattr(), tcsetattr()
+ *	HAVE_MEMORY_H		Has <memory.h> for memset(), memcpy(), etc.
  *	_XOPEN_SOURCE
  */
 
-#if (defined(__bsdi__) || defined(_POSIX_SOURCE) ) && !defined(__convex__)	/* XXX */
+#if ( defined(_POSIX_SOURCE) || defined(__bsdi__) || defined(linux) ) \
+    && !defined(__convex__)
 #	define HAVE_XOPEN	1
 #	define HAVE_TERMIOS_H	1
 #	define HAVE_MEMORY_H	1				/* XXX */
