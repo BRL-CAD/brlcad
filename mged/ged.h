@@ -104,6 +104,10 @@ extern mat_t	identity;
 /* defined in e8.c */
 extern int	drawreg;	/* if > 0, process and draw regions */
 
+/* defined in buttons.c */
+extern float	acc_sc_sol;	/* accumulate solid scale factor */
+extern mat_t	acc_rot_sol;	/* accumulate solid rotations */
+
 /* defined in e6.c */
 extern struct directory	*path[];/* 'path' name of this solid */
 extern int	regmemb;	/* # of members left to process in a region */
