@@ -1,0 +1,157 @@
+The Hacker's Guide to BRL-CAD 
+=============================
+
+Please read this document if you are contributing code to BRL-CAD.
+
+BRL-CAD is a relatively large package with a long heritage and
+history.  Many people have contributed over the years, and there
+continues to be room for involvement and improvement in just about
+every aspect of the code.
+
+Although BRL-CAD was originally developed and supported almost
+entirely by the U.S. Army Research Laboratory and it's affiliates, it
+is now a true Open Source project with contributors around the world.
+The U.S. Army Research Laboratory does continue to support and
+contribute to BRL-CAD, but now the source code is primarily driven by
+a team or core developers and the BRL-CAD open source community.
+
+Table of Contents
+-----------------
+  Introduction
+  Getting Started
+  What to Contribute
+  Source Code Languages
+  Filesystem Organization
+  Coding Style
+  Documentation
+  Testing
+  Patch Submissino Guidelines
+  Bugs
+  Commit Access
+  Make a Release
+  Version Numbers & Compatibility
+
+
+Getting Started
+---------------
+
+As there are many ways to get started with BRL-CAD, one of the most
+important steps for new developers to do is get involved in the
+discussions and communicate with the BRL-CAD developers.  There are
+mailing lists, on-line forums, and an irc channel dedicated to BRL-CAD
+developer discussions.  Developers are encouraged to participate in
+all of them.
+
+* E-mail Mailing Lists
+
+  Go to http://sf.net/projects/brlcad/ and join the "brlcad-devel"
+  mailing list.  More involved developers will also want to join the
+  "brlcad-commits" and "brlcad-tracker" lists.
+
+* On-line Forum
+
+  Discussion forums are available at http://sf.net/projects/brlcad/
+  under the forums section.  Of particular interest to developers is,
+  of course, the Developers forum.
+
+* Internet Relay Chat
+
+  The primary and generally preferred mechanism for interactive
+  developer discussions is via IRC.  Several of the core developers
+  and users of BRL-CAD hang out in #brlcad on the Freenode network.
+  With most any irc client you should be able to join #bzflag on
+  irc.freenode.net, port 6667.  See http://brlcad.org/irc/ for more
+  information.
+
+To contribute source code to BRL-CAD, begin by submiting source code
+patches to the patches section at http://sf.net/projects/brlcad/.
+Patches in the universal diff format (diff -u) are preferred.
+
+
+What to Contribute
+------------------
+
+As BRL-CAD is a rather large code base, there are many many places
+where one may begin.  When in doubt, working on resolving existing
+bugs, improving performance, documentation, and writing tests are
+perfect places to begin.
+
+Bugs are listed in BUGS as well as on http://sf.net/projects/brlcad.
+Running the benchmark suite (see README) and working out ways to
+improve the core performance in a maintainable manner is a good
+direction for working on performance.  There is much documentation in
+the form of manpages, source code comments, and larger documents
+located in doc/.  Unit tests are needed for just about everything.
+
+For many, at first, it can be overwhelming at just how much there is.
+To a certain extent, you will need to familiarize yourself with the
+basic existing facilities before adding a completely new feature.  It
+is not uncommmon that some particular piece of code that you are
+either working on or thinking about writing is in fact already
+written.
+
+
+System Architecture
+-------------------
+
+At a glance, BRL-CAD consists of about a dozen libraries and about 200
+executables.  The package has been designed from the ground up
+adopting a UNIX methodology, providing many tools that may be used in
+harmony in order to complete the task at hand.
+
+At the heart of BRL-CAD is a Constructive Solid Geometry (CSG)
+raytrace library.  BRL-CAD has its own database format for storing
+geometry to disk, which includes both a binary and textual
+representations.
+
+
+Source Code Languages
+---------------------
+
+C, Tcl/Tk, Shell, PHP
+
+
+Filesystem Organization
+-----------------------
+h/
+	Where all the headers are
+
+
+Coding Style
+------------
+Much to say.
+
+
+Documentation
+-------------
+doxygen
+
+
+Testing
+-------
+Corredor
+
+
+Patch Submission Guidelines
+---------------------------
+diff -u
+
+
+Bugs
+----
+fix em
+
+
+Commit Access
+-------------
+
+
+Make a Relase
+-------------
+
+
+Version Numbers & Compatibility
+-------------------------------
+
+
+
