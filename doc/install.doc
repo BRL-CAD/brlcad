@@ -120,11 +120,14 @@ center box;
 l l.
 remote	Network access to remote display
 adage	Adage RDS-3000 ("Ikonas")
-sgi	SGI Iris display
+sgi	SGI Iris 3-D display
+4d	SGI 4-D display
+gt	SGI 4-D/GT display
 sun	SunView interface
 ptty	AT&T 5620 w/special Moss layer
 ug	Ultra Graphics
 rat	Raster Technology One/80
+X	MIT X-window X11R2
 .TE
 .PP
 At present, all versions of \fBmged\fR have support for these types of
@@ -137,6 +140,7 @@ tek	Tektronix 4014 and family
 tek4109	Tektronix 4109
 ps	PostScript
 .TE
+.PP
 These optional display devices are also supported,
 when specifically configured:
 .TS
@@ -570,6 +574,52 @@ are, the world.pix and bldg391.pix images will have a single byte in the
 blue channel off by 1, out in the cloud background.  This is not to be
 considered an error.
 .NH 1
+GENERAL STRUCTURE OF THE SOFTWARE
+.PP
+In the top level directory (\fBcad\fR),
+a dummy Makefile and Cakefile exist, both of which simply invoke the
+Shell script \fBgen.sh\fR with their argument.
+\fBgen.sh\fR is used to control the processing of all commonly used
+operations, to see that operations are performed on the proper set of
+directories.
+.PP
+The operations supported by \fBgen.sh\fR are:
+.TS
+center box;
+l l.
+Keyword	Description
+_
+benchmark	Special:  Make only benchmark
+all	Makes all software
+clean	rm *.o, leave products
+noprod	rm products, leave *.o
+clobber	rm products and *.o
+lint	run lint
+install	install all products
+uninstall	remove all products
+print	print all sources to stdout
+typeset	troff all manual pages
+nroff	nroff all manual pages
+mkdir	NFS: create binary dirs
+relink	NFS: relink Cakefile
+rmdir	NFS: remove binary dirs
+.TE
+.PP
+Within each directory is a \fBCakefile\fR that includes
+\fB../Cakefile.defs\fR, either
+\fB../Cakefile.lib\fR (if the directory makes a library) or
+\fB../Cakefile.prog\fR (if the directory makes programs),
+and finally \fB../Cakefile.rules\fR.
+This structure allows all configuration of this package to be
+concentrated in the single file \fBCakefile.defs\fR,
+with per-product structural information in the individual
+\fBCakefile\fRs located in each sub-directory.
+\fBCakefile.rules\fR contains all the rules which are used to
+implement the ancilliary operations (such as "typeset", "install", etc),
+and these rules then apply uniformly in all product directories.
+While this complex structure may seem overwhelming at first,
+once established, it makes the task of configuration very simple.
+.NH 1
 COMPILING THE FULL PACKAGE
 .PP
 To compile the full BRL-CAD Package on a supported configuration,
@@ -604,6 +654,16 @@ Also, be certain to add this line to /etc/services:
 .sp
 remotefb        5558/tcp                        # Remote Frame Buffer
 .fi
+.NH 2
+Special Considerations on an SGI 3-D
+.PP
+When using the framebuffer library on an SGI 3-D system,
+it is necessary to modify
+certain kernel limits in the binary image of your kernel to be able to
+use a large block of shared memory.  Follow the directions in
+libfb/if_sgi.c, and then reboot your workstation to allow the changes to
+take effect.  There are claims that on some SGI machines, this may
+cause unreliable operation, so be certain to keep a backup kernel.
 .NH 1
 SUPPORTING A NEW MACHINE
 .PP
@@ -852,23 +912,7 @@ If the symbol LIBFB_SETUP is defined, then libfb/Cakefile will
 run that string as a Shell command before creating the \fBlibfb\fR archive.
 This is used to add object modules from vendor-specific libraries.
 For an example of how this is used, see the SGI or Cray configurations.
-.sp
-.TS
-center box;
-l l.
-_
-remote	Network access to remote display
-adage	Adage RDS-3000 ("Ikonas")
-sgi	SGI Iris 3-D display
-4d	SGI 4-D display
-gt	SGI 4-D/GT display
-sun	SunView interface
-ptty	AT&T 5620 w/special Moss layer
-ug	Ultra Graphics
-rat	Raster Technology One/80
-X	MIT X-window X11R2
-.TE
-.sp
+.PP
 For example, to configure a system to support the Raster Technology
 display attached to a parallel port,
 these lines would be added to the system-specific configuration:
@@ -911,26 +955,7 @@ from \fBlibpkg\fR).
 The second important thing to note is the definition of LIBFB_SETUP,
 which includes the entire contents of three SUN-specific libraries
 in \fBlibfb\fR, so that \fBlibfb\fR is completely self-contained.
-
-.sp
-When using the framebuffer library on the SGI, it is necessary to modify
-certain kernel limits in the binary image of your kernel to be able to
-use a large block of shared memory.  Follow the directions in
-libfb/if_sgi.c, and then reboot your workstation to allow the changes to
-take effect.  There are claims that on some SGI machines, this may
-cause unreliable operation, so be certain to keep a backup kernel.
-.sp
-Note that systems with multiple display devices, or for systems that
-have a display and also wish to use the remote capability, multiple
-entries should be made.  For example, on
-a TCP-capable SGI system of release 3.5, the typical configuration is:
-.sp
-.nf
-	LIBFB_CFILES	= if_sgi.c if_remote.c
-	LIBFB_OBJS	= if_sgi.o if_remote.o ../libpkg/pkg.o
-	LIBFB_CONFIG	= -DIF_SGI -DIF_REMOTE
-.fi
-.sp
+.PP
 If you change the configuration of libfb
 partway through building the system, be certain to run
 .sp .5
@@ -947,59 +972,29 @@ external symbols compiled into the binaries
 change based on the configuration options in
 \fBCakefile.defs\fR.
 .NH 2
-Mged configuration
+mged Configuration
 .PP
-The \fBmged\fR (multi-device model editor) needs to be configured.
-At present, all versions of \fBmged\fR have support for
+All versions of \fBmged\fR have support for
 the four display devices listed at the beginning of this document.
+If the symbols MGED_CONFIG, MGED_OBJS, and MGED_LIBES are not
+defined, then a version of \fBmged\fR will be built that contains
+only the standard display handlers.
 In addition, a variety of optional display devices are also supported;
-this list also appears at the beginning of this document.
+the list also appears at the beginning of this document.
 .PP
-Necessary vendor-supplied libraries must be listed on the MGED_LIBES line.
-.sp
-To configure just the default set of displays, specify:
-.sp
+For example, to configure an SGI Iris 3-D ("ir")
+running version 3.5 of the software, with XNS networking, specify:
+.sp .5
 .nf
-.ta 0.5i 2i 3i 4i 5i 6i
-	MGED_CFILES	=
-	MGED_OBJS	=
-	MGED_CONFIG	=
-	MGED_LIBES	=
-.sp
-To configure an SGI Iris ("ir") running 3.5 with TCP networking, specify:
-.sp
-	MGED_CFILES	= dm-ir.c
-	MGED_OBJS	= dm-ir.o
-	MGED_CONFIG	= -DDM_IR
-	MGED_LIBES	= -lbsd -lgl2
-.sp
-To configure an SGI Iris ("ir") running 3.5 with XNS networking, specify:
-.sp
-	MGED_CFILES	= dm-ir.c
-	MGED_OBJS	= dm-ir.o
-	MGED_CONFIG	= -DDM_IR -DNONBLOCK
-	MGED_LIBES	= -lbsd -lgl2
-.sp
-To configure an SGI Iris ("ir") running 3.4, specify:
-.sp
-	MGED_CFILES	= dm-ir.c
-	MGED_OBJS	= dm-ir.o
-	MGED_CONFIG	= -DDM_IR
-	MGED_LIBES	= ../libfb/sgiselect.o -lgl2
-.sp
-To configure a SUN, specify:
-.sp
-	MGED_CFILES	= dm-sunpw.c
-	MGED_OBJS	= dm-sunpw.o
-	MGED_CONFIG	= -DDM_SUNPW
-	MGED_LIBES	= -lsuntool -lsunwindow -lpixrect
+.ft B
+#	define	MGED_CONFIG	-DDM_IR -DNOBLOCK
+#	define	MGED_OBJS	dm-ir
+#	define	MGED_LIBES	-lbsd -lgl2
+.ft R
 .fi
-and remember always to run MGED under a gfxtool window.
-Also note that SUN support is still rudamentary, and there are problems
-with (a) running RT from within MGED, and (b) using MGED on a color SUN.
-.sp
-In all cases,
-be certain to properly define the MGED_VERS variable.
+.sp .5
+Note the
+necessary vendor-supplied libraries must be listed on the MGED_LIBES line.
 .NH 2
 h/machine.h
 .PP
@@ -1024,18 +1019,54 @@ or IBM style floating point, not enough accuracy is carried to correctly
 process large models. See the "Silicon Graphics Warnings" section for
 more information.
 .NH 2
-h/rle.h
+h/rle.h and h/svfb_global.h
 .PP
-The file h/rle.h has a #\fBif\fR statement that will need modification if
+The files h/rle.h and h/svfb_global.h
+have #\fBif\fR statements that will need modification if
 your machine is a "Little-Endian" machine and your machine is not
 a VAX.  "Big-Endian" machines will work without modification.
 A Big-Endian machine has byte [0] on the left of the word, like IBM,
 while a Little-Endian machine has byte [0] on the right side of the word,
 like DEC.  Some of the RLE code needs to know.
+.PP
+Worse still, some of the code in the Utah Raster Toolkit
+software (especially in \fBliburt\fR, soon to be \fBlibrle\fR)
+also needs to know about this, including:
+Runsv.c, rle_getrow.c, and sv_putrow.c.
 .NH 2
 libplot3/htond.c
 .PP
-XXX
+This routine converts between the native machine floating point format,
+and IEEE double precision floating point.
+This is especially important for generating binary portable plot
+metafiles.
+If the machine that you are porting to implements one of the
+already supported native types, all you need to do is adjust
+two of the \fB#if\fR directives to include your machine type.
+(Please notify BRL when you do this, so that we can update the
+master copy).
+.PP
+If it seems that your machine uses a novel internal floating point
+format, you may have to write some code to perform the conversion.
+Before undertaking such an effort, please read the file
+"papers/dist-graphics", \fIWorkstations, Networking, Distributed
+Graphics, and Parallel Processing\fR, where this whole issue
+is discussed in great detail.
+You may also wish to contact BRL via E-mail to see
+whether support for your machine has already been accomplished by others.
+.NH 2
+Adding Support For New Displays
+.PP
+If you desire to add support for a new display, there are only two
+modules that you will have to create.  The first will be for the
+framebuffer library (see \fBlibfb\fR(3) for more details).  A template for
+creating interfaces to new devices is provided as libfb/if_TEMPLATE.c.
+The second module needed is an \fBmged\fR display manager, like mged/dm-XX.c.
+Here, the task is somewhat harder, as two major modes of behavior are
+supported:  displaylist and refresh.  You should examine display
+managers for devices similar to yours, and proceed from there.
+BRL would be most interested in obtaining any additional display modules
+that you might develop, should you wish to share them.
 .NH 2
 Potential Optimizations
 .PP
@@ -1065,6 +1096,23 @@ editing \fBCakefile.defs\fR to become familiar with
 the various important symbols in this file.
 .NH 2
 SGI 3-D, Version 3.4
+.PP
+Support for the Silicon Graphics Iris 3-D product running SGI software
+release 3.4 has not been tested at BRL with Release 3.0 of BRL-CAD.
+However, the necessary definitions are still carried in
+\fBCakefile.defs\fR, and if you are still using SGI release 3.4,
+things will probably work.
+In the SGI 3-D section, define the symbol "Version3_4"
+right before where it it checked, eg:
+.sp .5
+.nf
+.ft B
+#	define	Version3_4	yes
+#	ifdef	Version3_4
+.ft R
+.fi
+.sp .5
+With a little luck, this should result in working software.
 .NH 2
 DEC VAX, 4.1 BSD and DEC Ultrix
 .PP
@@ -1157,152 +1205,6 @@ after each major change of a configuration file,
 it would be wise to run \fBcake clobber\fR in the top directory,
 and then recompiling.
 .NH 1
-GENERAL STRUCTURE OF THE SOFTWARE
-.PP
-In the top level directory (\fBcad\fR),
-a dummy Makefile and Cakefile exist, both of which simply invoke the
-Shell script \fBgen.sh\fR with their argument.
-\fBgen.sh\fR is used to control the processing of all commonly used
-operations, to see that operations are performed on the proper set of
-directories.
-.PP
-The operations supported by \fBgen.sh\fR are:
-.TS
-center box;
-l l.
-Keyword	Description
-_
-benchmark	Special:  Make only benchmark
-all	Makes all software
-clean	rm *.o, leave products
-noprod	rm products, leave *.o
-clobber	rm products and *.o
-lint	run lint
-install	install all products
-uninstall	remove all products
-print	print all sources to stdout
-typeset	troff all manual pages
-nroff	nroff all manual pages
-mkdir	NFS: create binary dirs
-relink	NFS: relink Cakefile
-rmdir	NFS: remove binary dirs
-.TE
-.PP
-Within each directory is a \fBCakefile\fR that includes
-\fB../Cakefile.defs\fR, either
-\fB../Cakefile.lib\fR (if the directory makes a library) or
-\fB../Cakefile.prog\fR (if the directory makes programs),
-and finally \fB../Cakefile.rules\fR.
-This structure allows all configuration of this package to be
-concentrated in the single file \fBCakefile.defs\fR,
-with per-product structural information in the individual
-\fBCakefile\fRs located in each sub-directory.
-\fBCakefile.rules\fR contains all the rules which are used to
-implement the ancilliary operations (such as "typeset", "install", etc),
-and these rules then apply uniformly in all product directories.
-While this complex structure may seem overwhelming at first,
-once established, it makes the task of configuration very simple.
-.NH 1
-ENHANCEMENTS
-.PP
-If you develop additional software for the BRL CAD environment that
-you would be willing to share, please send it to us for inclusion
-in the next release.
-The first such inclusion is the Utah Raster Toolkit, included "as is"
-in the directory utah-raster.  Note that the current BRL CAD
-distribution uses Edition-2 of the Utah RLE file format, while the
-Utah Raster Toolkit uses Edition-3.  In a subsequent release, all
-the BRL CAD tools will have been converted to use the Edition-3
-format and library interface.  Image conversion aids exist in the
-programs utah-raster/get/getfb.c to display Edition-3 RLE images
-on libfb supported displays, and utah-raster/tools/jwp/pixtorle.c
-to convert pix(5) images into Edition-3 RLE images.
-Note that BRL considers the RLE format a long-term image storage format,
-with pix(5) format used for image manipulation, while Utah uses RLE
-format for all manipulation stages as well.
-.NH 1
-ADDING SUPPORT FOR NEW DISPLAYS
-.PP
-If you desire to add support for a new display, there are only two
-modules that you will have to create.  The first will be for the
-framebuffer library (see libfb(3) for more details).  A template for
-creating interfaces to new devices is provided as libfb/if_TEMPLATE.c.
-The second module needed is an MGED display manager, like mged/dm-XX.c.
-Here, the task is somewhat harder, as two major modes of behavior are
-supported:  displaylist and refresh.  You should examine display
-managers for devices similar to yours, and proceed from there.
-We would be most interested in obtaining any additional display modules
-that you might develop.
-.NH 1
-UPGRADING FROM RELEASE 1.20 to 2.0
-.PP
-This release contains only minor external changes from Release 1.20,
-but for complete safety, you should save the old binary to "conv/g2asc"
-someplace safe, so that if you find the binary format of the database
-incompatable you can convert your old databases from binary to ASCII
-form. Having to do this is system dependent (only Sun, SGI, and Alliant
-users are likely to be affected), but it difficult to recover from
-without having saved the old converter (or your old distribution tape).
-.NH 1
-UPGRADING FROM RELEASE 2.0 to 2.3
-.PP
-Primarily, this release is a maintenance release, with lots of little
-nits resolved, along with a few new features.  The major weak area is
-still Sun display support.  In particular, using RT from within MGED
-fails miserably.
-.PP
-This release contains different and better support for multiple lights
-in RT, along with a standardized shader interface, and stackable
-shaders. Support for polygonal objects is now correct, but slow. The
-spline code has been significantly improved. Some contributed code for
-the Raster Technologies One/80 has been included, but is untested.  The
-library for procedurally generating databases ``libwdb'' is now
-included, along with some example uses in the directory ``proc-db''.
-The program ``rtwalk'' generates a viewpoint animation control script
-that takes the eye between given start and end points, without walking
-through any geometry.  This is especially interesting when used on
-complex scenes like those made by proc-db/clutter.c.
-.NH 1
-UPGRADING FROM RELEASE 2.3 to 3.0
-.PP
-Well?
-.NH 1
-WORK IN PROGRES
-.PP
-We are hard at work on a variety of new features, the most significant are:
-.IP (*)
-a substantial package for animation specification and preview,
-.IP (*)
-code to replace the "big-E" command, to convert the CSG model into
-a polygonal approximation, for certain analysis codes, and to drive
-display hardware with fast polygon rendering,
-.IP (*)
-additional primitive types,
-.IP (*)
-MGED improvements, including merging common database-handling code
-with librt, and a consolidation of the MGED and LIBRT geometry modules.
-.NH 1
-COMMUNICATION
-.PP
-You are invited to participate in the DARPA InterNet (aka "ARPANET")
-electronic mailing list on the BRL-CAD software, which is called
-.sp .5
-.ti +1i
-<CAD @ BRL.MIL>.
-.sp .5
-Bug reports and discussions of new features
-are the main topics;  volume of messages has been light (so far).
-Direct your bug reports to this address.  Request a subscription by
-sending to
-.sp .5
-.ti +1i
-<CAD-REQUEST @ BRL.MIL>.
-.sp .5
-If you find bugs, please report your experiences by E-mail.
-While BRL makes no
-offer of support, we are most interested in hearing about your
-experiences.
-.NH 1
 KNOWN PROBLEMS
 .NH 2
 C to FORTRAN Linkage
@@ -1355,3 +1257,99 @@ typing "gclear", whether or not you are logged in.  Add this line
 to /etc/passwd:
 .sp
 gclear::4:5::/tmp:/usr/bin/gclear
+.NH 1
+ENHANCEMENTS
+.PP
+If you develop additional software for the BRL CAD environment that
+you would be willing to share, please send it to us for inclusion
+in the next release.
+The first such inclusion is the Utah Raster Toolkit, included "as is"
+in the directory utah-raster.  Note that the current BRL CAD
+distribution uses Edition-2 of the Utah RLE file format, while the
+Utah Raster Toolkit uses Edition-3.  In a subsequent release, all
+the BRL CAD tools will have been converted to use the Edition-3
+format and library interface.  Image conversion aids exist in the
+programs utah-raster/get/getfb.c to display Edition-3 RLE images
+on libfb supported displays, and utah-raster/tools/jwp/pixtorle.c
+to convert pix(5) images into Edition-3 RLE images.
+Note that BRL considers the RLE format a long-term image storage format,
+with pix(5) format used for image manipulation, while Utah uses RLE
+format for all manipulation stages as well.
+.NH 1
+UPGRADING FROM RELEASE 1.20 to 2.0
+.PP
+Release 2.0
+contains only minor external changes from Release 1.20,
+but for complete safety, you should save the old binary to "conv/g2asc"
+someplace safe, so that if you find the binary format of the database
+incompatable you can convert your old databases from binary to ASCII
+form. Having to do this is system dependent (only Sun, SGI, and Alliant
+users are likely to be affected), but it difficult to recover from
+without having saved the old converter (or your old distribution tape).
+.NH 1
+UPGRADING FROM RELEASE 2.0 to 2.3
+.PP
+Primarily, Release 2.3 is a maintenance release, with lots of little
+nits resolved, along with a few new features being added.
+The major weak area is
+still Sun display support.  In particular, using RT from within MGED
+fails miserably.
+.PP
+This release contains different and better support for multiple lights
+in RT, along with a standardized shader interface, and stackable
+shaders. Support for polygonal objects is now correct, but slow. The
+spline code has been significantly improved. Some contributed code for
+the Raster Technologies One/80 has been included, but is untested.  The
+library for procedurally generating databases ``libwdb'' is now
+included, along with some example uses in the directory ``proc-db''.
+The program ``rtwalk'' generates a viewpoint animation control script
+that takes the eye between given start and end points, without walking
+through any geometry.  This is especially interesting when used on
+complex scenes like those made by proc-db/clutter.c.
+.NH 1
+UPGRADING FROM RELEASE 2.3 to 3.0
+.PP
+Release 3.0 introduces a great many new features;  too many to itemize here.
+In general there should be no difficulty upgrading from Release 2.3
+to Release 3.0, with one exception.
+All earlier editions of the BRL-CAD package used Version 2 of the Utah
+``RLE'' (Run-Lenght Encoded) image format.
+The Utah Raster Toolkit uses Version 3, which is incompatible.
+In BRL-CAD Release 3.0, this latest Utah RLE format is adopted,
+to permit complete interoperability with all the Utah Toolkit software.
+.NH 1
+WORK IN PROGRES
+.PP
+We are hard at work on a variety of new features, the most significant are:
+.IP (*)
+a substantial package for animation specification and preview,
+.IP (*)
+code to replace the "big-E" command, to convert the CSG model into
+a polygonal approximation, for certain analysis codes, and to drive
+display hardware with fast polygon rendering,
+.IP (*)
+additional primitive types,
+.IP (*)
+MGED improvements, including merging common database-handling code
+with librt, and a consolidation of the MGED and LIBRT geometry modules.
+.NH 1
+COMMUNICATION
+.PP
+You are invited to participate in the DARPA InterNet (aka "ARPANET")
+electronic mailing list on the BRL-CAD software, which is called
+.sp .5
+.ti +1i
+<CAD @ BRL.MIL>.
+.sp .5
+Bug reports and discussions of new features
+are the main topics;  volume of messages has been light (so far).
+Direct your bug reports to this address.  Request a subscription by
+sending to
+.sp .5
+.ti +1i
+<CAD-REQUEST @ BRL.MIL>.
+.sp .5
+If you find bugs, please report your experiences by E-mail.
+While BRL makes no
+offer of support, we are most interested in hearing about your
+experiences.
