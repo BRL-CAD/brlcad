@@ -646,7 +646,7 @@ set -S2 "/bin/sh"
 #	define	RFBD_CONFIG	-DBSD=43
 #	define	MGED_OBJS	dm-X
 #	define	MGED_CONFIG	-DDM_X -I''XINCDIR
-#	define	MGED_LIBES	-lX11 -lnet
+#	define	MGED_LIBES	-lX11
 #endif
 
 #if defined(CRAY2)
