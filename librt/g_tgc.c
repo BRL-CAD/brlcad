@@ -74,12 +74,12 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 #define SP_C	&vec[4*ELEMENTS_PER_VECT]
 #define SP_D	&vec[5*ELEMENTS_PER_VECT]
 
-	/* Apply 3x3 rotation portion of mat to Hv, A,B,C,D		*/
-	MAT3XVEC( Hv, mat, SP_H );
-	MAT3XVEC( A, mat, SP_A );
-	MAT3XVEC( B, mat, SP_B );
-	MAT3XVEC( C, mat, SP_C );
-	MAT3XVEC( D, mat, SP_D );
+	/* Apply rotation to Hv, A,B,C,D */
+	MAT4X3VEC( Hv, mat, SP_H );
+	MAT4X3VEC( A, mat, SP_A );
+	MAT4X3VEC( B, mat, SP_B );
+	MAT4X3VEC( C, mat, SP_C );
+	MAT4X3VEC( D, mat, SP_D );
 
 	/* Validate that |H| > 0, compute |A| |B| |C| |D|		*/
 	mag_h = sqrt( magsq_h = MAGSQ( Hv ) );
@@ -154,7 +154,7 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	tgc->tgc_D = NEAR_ZERO( mag_d ) ? 10*SMALL : mag_d;
 
 	rotate( A, B, Hv, Rot, iRot, tgc );
-	MAT3XVEC( nH, Rot, Hv );
+	MAT4X3VEC( nH, Rot, Hv );
 	tgc->tgc_sH = nH[Z];
 
 	shear( nH, Z, Shr, tShr );
@@ -363,11 +363,11 @@ register struct xray	*rp;
 	LOCAL int		npts, n, intersect;
 
 	/* find rotated point and direction				*/
-	MAT3XVEC( dprime, tgc->tgc_ShoR, rp->r_dir );
+	MAT4X3VEC( dprime, tgc->tgc_ShoR, rp->r_dir );
 	VUNITIZE( dprime );
 
 	VSUB2( work, rp->r_pt, tgc->tgc_V );
-	MAT3XVEC( pprime, tgc->tgc_ShoR, work );
+	MAT4X3VEC( pprime, tgc->tgc_ShoR, work );
 
 	npts = stdCone( pprime, dprime, tgc, k );
 
@@ -751,6 +751,6 @@ register struct tgc_specific	*tgc;
 	stdnorm[Z] =  parQ*hit[X]*hit[X] + parR*hit[Y]*hit[Y]
 			- R*R*parQ - parR*Q*Q;
 
-	MAT3XVEC( norm, tgc->tgc_invRoSh, stdnorm );
+	MAT4X3VEC( norm, tgc->tgc_invRoSh, stdnorm );
 	VUNITIZE( norm );
 }
