@@ -8,6 +8,7 @@
  *	Edwin O. Davisson	(Analysis)
  *	Jeff Hanes		(Programming)
  *	Michael John Muuss	(RT adaptation)
+ *	Gary S. Moss		(Improvement)
  *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
@@ -23,9 +24,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
+#include "../h/db.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "../h/db.h"
 #include "debug.h"
 
 #include "./polyno.h"
@@ -64,11 +65,12 @@ static void	TorPtSort();
  *  where R(X) =  ( A/(|A|) )
  *  		 (  B/(|B|)  ) . X
  *  		  ( H/(|H|) )
- *  
- *  and S(X) =	 (  1/|H|   0     0   )
- *  		(    0    1/|H|   0    ) . X
- *  		 (   0      0   1/|H| )
- *  
+ *
+ *  and S(X) =	 (  1/|A|   0     0   )
+ *  		(    0    1/|A|   0    ) . X
+ *  		 (   0      0   1/|A| )
+ *  where |A| = R1
+ *
  *  To find the intersection of a line with the torus, consider
  *  the parametric line L:
  *  
@@ -131,6 +133,7 @@ static void	TorPtSort();
 
 struct tor_specific {
 	fastf_t	tor_alpha;	/* 0 < (R2/R1) <= 1 */
+	fastf_t	tor_r1;		/* for inverse scaling of k values. */
 	vect_t	tor_V;		/* Vector to center of torus */
 	mat_t	tor_SoR;	/* Scale(Rot(vect)) */
 	mat_t	tor_invR;	/* invRot(vect') */
@@ -226,8 +229,10 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	GETSTRUCT( tor, tor_specific );
 	stp->st_specific = (int *)tor;
 
+	tor->tor_r1 = r1;
+
 	MAT4X3PNT( tor->tor_V, mat, SP_V );
-	tor->tor_alpha = r2/r1;
+	tor->tor_alpha = r2/tor->tor_r1;
 
 	/* Compute R and invR matrices */
 	VUNITIZE( Hv );
@@ -242,11 +247,11 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 
 	/* Compute SoR.  Here, S = I / r1 */
 	mat_copy( tor->tor_SoR, R );
-	tor->tor_SoR[15] *= r1;
+	tor->tor_SoR[15] *= tor->tor_r1;
 
 	/* Compute bounding sphere */
 	VMOVE( stp->st_center, tor->tor_V );
-	f = r1 + r2;
+	f = tor->tor_r1 + r2;
 	stp->st_radsq = f * f;
 
 	/* Compute bounding RPP */
@@ -259,7 +264,7 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 		MINMAX( stp->st_min[Z], stp->st_max[Z], v[Z] )
 
 	/* Exterior radius is r1+r2;  rescale A and B here */
-	f = r1+r2;
+	f = tor->tor_r1+r2;
 	VUNITIZE( A );
 	VSCALE( A, A, f );
 	VUNITIZE( B );
@@ -295,6 +300,7 @@ register struct soltab *stp;
 		(struct tor_specific *)stp->st_specific;
 
 	fprintf(stderr,"r2/r1 (alpha) = %f\n", tor->tor_alpha);
+	fprintf(stderr,"r1 = %f\n", tor->tor_r1);
 	VPRINT("V", tor->tor_V);
 	mat_print("S o R", tor->tor_SoR );
 	mat_print("invR", tor->tor_invR );
@@ -350,11 +356,26 @@ register struct xray *rp;
 	LOCAL int	j;
 	LOCAL poly	A, Asqr;
 	LOCAL poly	X2_Y2;		/* X**2 + Y**2 */
+	LOCAL vect_t	cor_pprime;	/* new ray origin */
+	LOCAL fastf_t	cor_proj;
 
 	/* Convert vector into the space of the unit torus */
 	MAT4X3VEC( dprime, tor->tor_SoR, rp->r_dir );
+	VUNITIZE( dprime );
+
 	VSUB2( work, rp->r_pt, tor->tor_V );
 	MAT4X3VEC( pprime, tor->tor_SoR, work );
+
+	/* normalize distance from torus.  substitute
+	 * corrected pprime which contains a translation along ray
+	 * direction to closest approach to vertex of torus.
+	 * Translating ray origin along direction of ray to closest pt. to
+	 * origin of solid's coordinate system, new ray origin is
+	 * 'cor_pprime'.
+	 */
+	cor_proj = VDOT( pprime, dprime );
+	VSCALE( cor_pprime, dprime, cor_proj );
+	VSUB2( cor_pprime, pprime, cor_pprime );
 
 	/*
 	 *  Given a line and a ratio, alpha, finds the equation of the
@@ -374,14 +395,16 @@ register struct xray *rp;
 	 */
 	X2_Y2.dgr = 2;
 	X2_Y2.cf[0] = dprime[X] * dprime[X] + dprime[Y] * dprime[Y];
-	X2_Y2.cf[1] = 2.0 * (dprime[X] * pprime[X] + dprime[Y] * pprime[Y]);
-	X2_Y2.cf[2] = pprime[X] * pprime[X] + pprime[Y] * pprime[Y];
+	X2_Y2.cf[1] = 2.0 * (dprime[X] * cor_pprime[X] +
+			     dprime[Y] * cor_pprime[Y]);
+	X2_Y2.cf[2] = cor_pprime[X] * cor_pprime[X] +
+		      cor_pprime[Y] * cor_pprime[Y];
 
 	/* A = X2_Y2 + Z2 */
 	A.dgr = 2;
 	A.cf[0] = X2_Y2.cf[0] + dprime[Z] * dprime[Z];
-	A.cf[1] = X2_Y2.cf[1] + 2.0 * dprime[Z] * pprime[Z];
-	A.cf[2] = X2_Y2.cf[2] + pprime[Z] * pprime[Z] +
+	A.cf[1] = X2_Y2.cf[1] + 2.0 * dprime[Z] * cor_pprime[Z];
+	A.cf[2] = X2_Y2.cf[2] + cor_pprime[Z] * cor_pprime[Z] +
 		  1.0 - tor->tor_alpha * tor->tor_alpha;
 
 	(void) polyMul( &A, &A, &Asqr );
@@ -407,6 +430,11 @@ register struct xray *rp;
 		if( NEAR_ZERO( val[j].im ) )
 			k[i++] = val[j].re;
 	}
+
+	/* reverse above translation by adding distance to all 'k' values. */
+	for( j = 0; j < i; ++j )
+		k[j] -= cor_proj;
+
 	/* Here, 'i' is number of points found */
 	if( i == 0 )
 		return(SEG_NULL);		/* No hit */
@@ -427,17 +455,17 @@ register struct xray *rp;
 	GET_SEG(segp);
 	segp->seg_stp = stp;
 
-	segp->seg_in.hit_dist = k[1];
-	segp->seg_out.hit_dist = k[0];
+	segp->seg_in.hit_dist = k[1]*tor->tor_r1;
+	segp->seg_out.hit_dist = k[0]*tor->tor_r1;
 	segp->seg_flag = SEG_IN | SEG_OUT;
 
 	/* Intersection point, entering */
-	VJOIN1( segp->seg_in.hit_point, rp->r_pt, k[1], rp->r_dir );
+	VJOIN1( segp->seg_in.hit_point, rp->r_pt, k[1]*tor->tor_r1, rp->r_dir );
 	VJOIN1( work, pprime, k[1], dprime );
 	tornormal( segp->seg_in.hit_normal, work, tor );
 
 	/* Intersection point, exiting */
-	VJOIN1( segp->seg_out.hit_point, rp->r_pt, k[0], rp->r_dir );
+	VJOIN1( segp->seg_out.hit_point, rp->r_pt, k[0]*tor->tor_r1, rp->r_dir );
 	VJOIN1( work, pprime, k[0], dprime );
 	tornormal( segp->seg_out.hit_normal, work, tor );
 
@@ -454,17 +482,17 @@ register struct xray *rp;
 		segp = seg2p;
 	}
 	segp->seg_stp = stp;
-	segp->seg_in.hit_dist = k[3];
-	segp->seg_out.hit_dist = k[2];
+	segp->seg_in.hit_dist = k[3]*tor->tor_r1;
+	segp->seg_out.hit_dist = k[2]*tor->tor_r1;
 	segp->seg_flag = SEG_IN | SEG_OUT;
 
 	/* Intersection point, entering */
-	VJOIN1( segp->seg_in.hit_point, rp->r_pt, k[3], rp->r_dir );
+	VJOIN1( segp->seg_in.hit_point, rp->r_pt, k[3]*tor->tor_r1, rp->r_dir );
 	VJOIN1( work, pprime, k[3], dprime );
 	tornormal( segp->seg_in.hit_normal, work, tor );
 
 	/* Intersection point, exiting */
-	VJOIN1( segp->seg_out.hit_point, rp->r_pt, k[2], rp->r_dir );
+	VJOIN1( segp->seg_out.hit_point, rp->r_pt, k[2]*tor->tor_r1, rp->r_dir );
 	VJOIN1( work, pprime, k[2], dprime );
 	tornormal( segp->seg_out.hit_normal, work, tor );
 
