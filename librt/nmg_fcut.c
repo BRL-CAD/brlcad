@@ -1350,8 +1350,17 @@ fastf_t			*mag2;
 			nxt1 = cur1;
 			nxt2 = nmg_face_next_vu_interval( rs2, cur2, mag2, old_rs1_state );
 		} else {
-			if( rs1->vu[cur1]->v_p != rs2->vu[cur2]->v_p )
+			struct vertexuse	*vu1;
+			struct vertexuse	*vu2;
+			vu1 = rs1->vu[cur1];
+			vu2 = rs2->vu[cur2];
+			NMG_CK_VERTEXUSE(vu1);
+			NMG_CK_VERTEXUSE(vu2);
+			if( vu1->v_p != vu2->v_p )  {
+				rt_log("cur1=%d, cur2=%d, v1=x%x, v2=x%x\n",
+					cur1, cur2, vu1->v_p, vu2->v_p);
 				rt_bomb("nmg_face_combineX: vertex lists scrambled");
+			}
 			nxt1 = nmg_face_next_vu_interval( rs1, cur1, mag1, rs2->state );
 			nxt2 = nmg_face_next_vu_interval( rs2, cur2, mag2, old_rs1_state );
 		}
