@@ -5,6 +5,7 @@
  *  $Header$
  */
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 #include "redblack.h"
@@ -68,7 +69,7 @@ int rb_insert (rb_tree *tree, void *data)
 	((node -> rbn_right = (struct rb_node **)
 		    malloc(nm_orders * sizeof(struct rb_node))) == 0)	||
 	((node -> rbn_color =
-	    malloc((unsigned) ceil((double) (nm_orders / 8.0)))) == 0))
+	    malloc((size_t) ceil((double) (nm_orders / 8.0)))) == 0))
     {
 	fputs("rb_insert(): Ran out of memory\n", stderr);
 	return (0);
@@ -117,8 +118,6 @@ int _rb_insert (rb_tree *tree, int order, struct rb_node *new_node)
     int			(*compare)();
 
 
-    fprintf(stderr, "_rb_insert(<%x>, %d, <%x> (<%x>))...\n",
-	    tree, order, new_node);fflush(stderr);
     RB_CKMAG(tree, RB_TREE_MAGIC, "red-black tree");
     RB_CKMAG(new_node, RB_NODE_MAGIC, "red-black node");
 
@@ -136,32 +135,17 @@ int _rb_insert (rb_tree *tree, int order, struct rb_node *new_node)
     {
 	parent = node;
 	if ((*compare)(new_node -> rbn_data, node -> rbn_data) < 0)
-	{
-	    fputs("...looking left\n", stderr);fflush(stderr);
 	    node = rb_left_child(node, order);
-	}
 	else
-	{
-	    fputs("...looking right\n", stderr);fflush(stderr);
 	    node = rb_right_child(node, order);
-	}
     }
     rb_parent(new_node, order) = parent;
     if (parent == RB_NODE_NULL)
-    {
 	tree -> rbt_root = new_node;
-	fputs("...installing as new root\n", stderr);fflush(stderr);
-    }
     else if ((*compare)(new_node -> rbn_data, parent -> rbn_data) < 0)
-    {
 	rb_left_child(parent, order) = new_node;
-	fputs("...installing on left\n", stderr);fflush(stderr);
-    }
     else
-    {
 	rb_right_child(parent, order) = new_node;
-	fputs("...installing on right\n", stderr);fflush(stderr);
-    }
 
     return (1);
 }
