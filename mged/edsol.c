@@ -7808,7 +7808,6 @@ struct rt_db_internal	*ip;
 
 				VSCALE( mid_pt, mid_pt, one_third );
 				
-/*				POINT_LABEL_STR( mid_pt, "face" ); */
 				*num_lines = 3;
 				VMOVE( lines[0], mid_pt );
 				VMOVE( lines[1], p1 );
