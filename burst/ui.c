@@ -1407,7 +1407,7 @@ HmItem *itemp;
 		warning( scrbuf );
 		return;
 		}
-	(void) sprintf( scrbuf, "%s\t%s",
+	(void) sprintf( scrbuf, "%s\t\t%s",
 			itemp != NULL ? itemp->text : cmdname,
 			burstfile );
 	logCmd( scrbuf );

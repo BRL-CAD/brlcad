@@ -234,6 +234,63 @@ prntAspectInit()
 	}
 
 /*
+	void prntBurstHdr( fastf_t *bpt, fastf_t *vdir )
+
+	This routine must be called before bursting when doing either a
+	ground plane burst or bursting at user-specified coordinates.  The
+	purpose is to output fake PB_CELL_IDENT and PB_RAY_INTERSECT records
+	to the Burst Point Library so that the coordinates of the burst point
+	can be made available.
+
+ */
+void
+prntBurstHdr( bpt, vdir )
+fastf_t *bpt;	/* burst point in model coords */
+fastf_t *vdir;	/* direction of view (unit vector) */
+	{	fastf_t vec[3];
+	/* Transform burst point (model coordinate system) into the shotline
+	   coordinate system. */
+	vec[Y] = Dot( gridhor, bpt );	/* Y' */
+	vec[Z] = Dot( gridver, bpt );	/* Z' */
+	vec[X] = Dot( vdir, bpt );	/* X' */
+
+	if(	outfile[0] != NUL
+	    &&	fprintf(outfp,
+			"%c % 8.3f % 8.3f\n",
+			PB_CELL_IDENT,
+			vec[Y]*unitconv,
+			 	/* horizontal coordinate of burst point (Y') */
+			vec[Z]*unitconv
+			 	/* vertical coordinate of burst point (Z') */
+			) < 0
+		)
+		{
+		rt_log( "Write failed to file (%s)!\n", outfile );
+		locPerror( "fprintf" );
+		exitCleanly( 1 );
+		}
+	if(	outfile[0] != NUL
+	    &&	fprintf( outfp,
+			"%c % 8.2f % 8.2f %4d %2d % 7.3f % 7.2f % 7.3f %c\n",
+			PB_RAY_INTERSECT,
+			vec[X]*unitconv, /* X' coordinate of burst point */
+			0.0,		/* LOS thickness of component */
+			9999,		/* dummy component code number */
+			9,		/* dummy space code */
+			0.0,		/* N/A */
+			0.0,		/* N/A */
+			0.0,		/* N/A */
+			'1'		/* burst was generated */
+			) < 0
+		)
+		{
+		rt_log( "Write failed to file (%s)!\n", outfile );
+		locPerror( "fprintf" );
+		exitCleanly( 1 );
+		}
+	}
+
+/*
 	void prntCellIdent( struct application *ap )
 
 	Burst Point Library and Shotline file: information about shotline.

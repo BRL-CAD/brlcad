@@ -150,6 +150,8 @@ doBursts()
 			break;
 		ag.a_level = 0;	 /* initialize recursion level */
 		plotGrid( burstpoint );
+
+		prntBurstHdr( burstpoint, viewdir );
 		if( ! burstPoint( &ag, zaxis, burstpoint ) )
 			{
 			/* fatal error in application routine */
@@ -918,7 +920,10 @@ register struct application *ap;
 			/* else bdist == 0.0, no adjustment necessary */
 			/* only burst if nspallrays greater than zero */
 			if( nspallrays > 0 )
+				{
+				prntBurstHdr( hitpoint, viewdir );
 				return	burstPoint( ap, zaxis, hitpoint );
+				}
 			else
 				return	true;
 			}
@@ -1642,8 +1647,6 @@ register fastf_t *bpt; /* burst point coordinates */
 		V_Length( a_burst.a_ray.r_dir, 1.0 );
 		}
 	CopyVec( a_burst.a_ray.r_pt, bpt );
-
-	/* prntBurstHdr( bpt ); XXX print something about burst point? */
 
 	comphi = 0.0; /* Initialize global for concurrent access. */
 		
