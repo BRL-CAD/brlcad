@@ -1,5 +1,5 @@
 /*
- *			T G C . C
+ *			G _ T G C . C
  *
  * Purpose -
  *	Intersect a ray with a Truncated General Cone.
@@ -1579,6 +1579,7 @@ struct directory *dp;
 	struct vertex		*vtop[16+1];
 	LOCAL fastf_t		bottom[16*3];
 	struct vertex		*vbottom[16+1];
+	struct vertex		*vtemp[16+1];
 	LOCAL vect_t		work;		/* Vec addition work area */
 	LOCAL fastf_t		points[3*8];
 	LOCAL struct tgc_internal	ti;
@@ -1596,22 +1597,17 @@ struct directory *dp;
 	ell_16pts( top, work, ti.c, ti.d );
 
 	for( i=0; i<16; i++ )  {
-		vbottom[i] = (struct vertex *)0;
+		vtop[i] = vtemp[i] = (struct vertex *)0;
 	}
 
 	/* Create the top face topology.  Verts must go clockwise */
-	outfaceuses[0] = nmg_cface(s, (struct vertex **)NULL, 16);
-	for (eu = outfaceuses[0]->lu_p->down.eu_p->next, i = 0 ;
-	    i < 16 ; ++i, eu = eu->next)
-		vtop[i] = eu->vu_p->v_p;
+	outfaceuses[0] = nmg_cface(s, vtop, 16);
 
 	/* Create the bottom face topology.  Verts must go ccw */
-	outfaceuses[1] = nmg_cface(s, (struct vertex **)NULL, 16);
-	for (eu = outfaceuses[1]->lu_p->down.eu_p->next, i = 16-1 ;
-	    i >= 0 ; --i, eu = eu->next)
-		vbottom[i] = eu->vu_p->v_p;
+	outfaceuses[1] = nmg_cface(s, vtemp, 16);
+	for( i=0; i<16; i++ )  vbottom[i] = vtemp[16-1-i];
 
-	/* Duplicate [0] as [16] to handle end condition, below */
+	/* Duplicate [0] as [16] to handle loop end condition, below */
 	vtop[16] = vtop[0];
 	vbottom[16] = vbottom[0];
 
