@@ -20,6 +20,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
+#include <math.h>
 #include "../h/machine.h"
 #include "../h/vmath.h"
 #include "../h/db.h"
@@ -807,10 +808,10 @@ register vect_t min, max;
 	}
 
 	/* Provide a slight border */
-	min[X] -= min[X] * 0.03;
-	min[Y] -= min[Y] * 0.03;
-	min[Z] -= min[Z] * 0.03;
-	max[X] *= 1.03;
-	max[Y] *= 1.03;
-	max[Z] *= 1.03;
+	min[X] -= fabs(min[X]) * 0.03;
+	min[Y] -= fabs(min[Y]) * 0.03;
+	min[Z] -= fabs(min[Z]) * 0.03;
+	max[X] += fabs(max[X]) * 0.03;
+	max[Y] += fabs(max[Y]) * 0.03;
+	max[Z] += fabs(max[Z]) * 0.03;
 }
