@@ -189,9 +189,11 @@ register const struct command_tab	*tp;
 	if( nwords <= 0 )
 		return(0);	/* No command to process */
 
+
 	for( ; tp->ct_cmd != (char *)0; tp++ )  {
 		if( cmd_args[0][0] != tp->ct_cmd[0] ||
-		    strcmp( cmd_args[0], tp->ct_cmd ) != 0 )
+				/* the length of "n" is not significant, just needs to be big enough */
+		    strncmp( cmd_args[0], tp->ct_cmd, MAXWORDS ) != 0 )
 			continue;
 		if( (nwords >= tp->ct_min) &&
 		    (nwords <= tp->ct_max) )  {
