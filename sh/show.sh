@@ -21,7 +21,6 @@ fi
 
 eval `pixinfo.sh $FILE`	# sets BASE, SUFFIX, WIDTH, HEIGHT
 
-set -x
 case $SUFFIX in
 pix)
 	if test $WIDTH -gt 1280 -o $HEIGHT -gt 1024
