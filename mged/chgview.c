@@ -5431,8 +5431,11 @@ point_t pt;
 
   switch(mged_variables->mv_coords){
   case 'm':
-  case 'o':
     VSCALE(delta, pt, local2base);
+    break;
+  case 'o':
+    VSCALE(pt, pt, local2base);
+    MAT4X3PNT(delta, acc_rot_sol, pt);
     break;
   case 'v':
   default:
