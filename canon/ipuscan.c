@@ -94,7 +94,7 @@ char *av[];
 	ipu_remote(dsp);
 	ipu_delete_file(dsp, 1);
 	/* Don't bother clearing memory, it takes too long */
-	ipu_create_file(dsp, 1, IPU_RGB_FILE, width, height, 0);
+	ipu_create_file(dsp, 1, ipu_filetype, width, height, 0);
 	ipu_scan_config(dsp,units,divisor,conv,0,0);
 
 	if (conv == IPU_AUTOSCALE)
@@ -121,34 +121,48 @@ char *av[];
 		int	todo;	/* # scanlines to do */
 		int	buflen;
 
-		todo = 255*1024 / (3*width);	/* Limit 255 Kbytes */
+		todo = 255*1024 / (ipu_bytes_per_pixel*width);	/* Limit 255 Kbytes */
 		if( height - pix_y < todo )  todo = height - pix_y;
-		buflen = todo * 3 * width;
+		buflen = todo * ipu_bytes_per_pixel * width;
 
 		canon_y = height - (pix_y+todo);
 
 		red = ipu_get_image(dsp, 1, 0, canon_y, width, todo);
-
-		green = &red[width*todo];
-		blue = &red[width*todo*2];
-
 		cp = obuf;
 
-		for( buf_y = todo-1; buf_y >= 0; buf_y-- )  {
-			int	offset;
-			register unsigned char	*rp, *gp, *bp;
-			register int		x;
+		if( ipu_bytes_per_pixel == 3 )  {
+			green = &red[width*todo];
+			blue = &red[width*todo*2];
 
-			offset = buf_y * width;
-			rp = &red[offset];
-			gp = &green[offset];
-			bp = &blue[offset];
-			for( x = width-1; x >= 0; x-- )  {
-				*cp++ = *rp++;
-				*cp++ = *gp++;
-				*cp++ = *bp++;
+			for( buf_y = todo-1; buf_y >= 0; buf_y-- )  {
+				int	offset;
+				register unsigned char	*rp, *gp, *bp;
+				register int		x;
+
+				offset = buf_y * width;
+				rp = &red[offset];
+				gp = &green[offset];
+				bp = &blue[offset];
+				for( x = width-1; x >= 0; x-- )  {
+					*cp++ = *rp++;
+					*cp++ = *gp++;
+					*cp++ = *bp++;
+				}
+				pix_y++;	/* Record our progress */
 			}
-			pix_y++;	/* Record our progress */
+		} else {
+			/* Monochrome */
+			for( buf_y = todo-1; buf_y >= 0; buf_y-- )  {
+				int	offset;
+				register unsigned char	*rp;
+				register int		x;
+
+				offset = buf_y * width;
+				rp = &red[offset];
+				bcopy( rp, cp, width );
+				cp += width;
+				pix_y++;	/* Record our progress */
+			}
 		}
 		if( write( fd, obuf, buflen ) != buflen )  {
 			perror("ipuscan write");

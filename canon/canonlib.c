@@ -1,4 +1,6 @@
 /*
+ *			C A N O N L I B . C
+ *
  *  Author -
  *	Lee A. Butler
  *  
@@ -39,7 +41,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 int ipu_debug = 0;
 
-int dsdebug = 0;
+extern int dsdebug;		/* from libds.a */
 
 static void
 toshort(dest, src)
@@ -273,7 +275,7 @@ ipu_create_file(struct dsreq *dsp,
 		DSRQ_WRITE|DSRQ_SENSE);
 
 	if ( i=doscsireq(getfd(dsp), dsp) )  {
-		fprintf(stderr, "create_file(%d, %d by %d) failed",
+		fprintf(stderr, "create_file(%d, %d by %d) failed\n",
 			(int)id, width, height);
 		scsi_perror(i, dsp);
 		exit(-1);
@@ -1049,13 +1051,15 @@ ipu_get_conf_long(struct dsreq *dsp)
 
 #endif /* __sgi__ */
 
-char *options = "P:p:Q:q:acd:g:hmn:s:t:vw:zAC:M:R:D:N:S:W:X:Y:U:V";
+char *options = "P:p:Q:q:acd:g:hmn:s:t:vw:zAC:M:R:D:N:S:W:X:Y:U:V#:";
 extern char *optarg;
 extern int optind, opterr, getopt();
 
 char *progname = "(noname)";
 char scsi_device[1024] = "/dev/scsi/sc0d6l3";
 char ipu_gamma = IPU_GAMMA_CG;
+int  ipu_filetype = IPU_RGB_FILE;
+int  ipu_bytes_per_pixel = 3;
 char tray = IPU_UPPER_CASSETTE;
 char conv = IPU_AUTOSCALE;
 char clear = 0;
@@ -1092,7 +1096,7 @@ char *s;
 	(void) fprintf(stderr, "Usage: %s [options] [pixfile]\nOptions:\n%s", progname, 
 "	[-h] [-n scanlines] [-w width] [-s squareimagesize]\n\
 	[-N outputheight] [-W outputwidth] [-S outputsquaresize]\n\
-	[-X PageXOffset] [-Y PageYOffset]\n\
+	[-X PageXOffset] [-Y PageYOffset] [-# bytes_pixel]\n\
 	[-a(utosize_input)] [-g(amma) { s | r | c }]\n\
 	[-z(oom)] [-t { u | l | m }] [-C(opies) {1-99}] [-m(osaic)]\n\
 	[ -A(utoscale_output) | -M xmag:ymag | -R dpi ]\n\
@@ -1272,6 +1276,21 @@ char *av[];
 				break;
 		case 'V'	: dsdebug = ! dsdebug;
 		case 'v'	: ipu_debug = !ipu_debug; break;
+		case '#'	: c = atoi(optarg);
+				switch(c)  {
+				case 3:
+					ipu_filetype = IPU_RGB_FILE;
+					ipu_bytes_per_pixel = 3;
+					break;
+				case 1:
+					ipu_filetype = IPU_PALETTE_FILE;
+					ipu_bytes_per_pixel = 1;
+					break;
+				default:
+					fprintf(stderr, "Bad value %d for bytes_per_pixel\n", c);
+					break;
+				}
+				break;
 		case '?'	:
 		default		: fprintf(stderr, "Bad or help flag specified '%c'\n", c); break;
 		}

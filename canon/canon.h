@@ -1,3 +1,19 @@
+/*
+ *			C A N O N . H
+ *
+ *  Author -
+ *	Lee A. Butler
+ *  
+ *  Source -
+ *	The U. S. Army Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *  
+ *  Distribution Status -
+ *	Public Domain, Distribution Unlimited.
+ *
+ *  $Header$
+ */
+
 #define	IPU_LUN_SCANNER		0x0
 #define	IPU_LUN_FILM_SCANNER	0x1
 #define	IPU_LUN_ANALOG_INPUT	0x2
@@ -68,6 +84,8 @@ FUNC_EXTERN(void usage, (char *s));
 extern char *progname;
 extern char scsi_device[];
 extern char ipu_gamma;
+extern int  ipu_filetype;
+extern int  ipu_bytes_per_pixel;
 extern char tray;
 extern char conv;
 extern char clear;
