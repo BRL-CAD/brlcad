@@ -559,11 +559,16 @@ struct application *ap;
 		 *  set (OR) that solid's region bit vector into "regionbits".
 		 */
 		RT_BITV_LOOP_START( pp->pt_solhit, ap->a_rt_i->nsolids )  {
-			struct soltab	*stp =
-				ap->a_rt_i->rti_Solids[RT_BITV_LOOP_INDEX];
-			register int words=RT_BITV_BITS2WORDS(stp->st_maxreg);
-			register bitv_t *in = stp->st_regions;
-			register bitv_t *out = regionbits;
+			struct soltab	*stp;
+			register int	words;
+			register bitv_t *in;
+			register bitv_t *out;
+
+			stp = ap->a_rt_i->rti_Solids[RT_BITV_LOOP_INDEX];
+			/* It would be nice to validate stp here */
+			words = RT_BITV_BITS2WORDS(stp->st_maxreg);
+			in = stp->st_regions;
+			out = regionbits;
 
 #			include "noalias.h"
 			while( words-- > 0 )

@@ -133,9 +133,12 @@ register struct rt_i *rtip;
 		}
 	}
 
-	/* Space for array of soltab pointers indexed by solid bit number */
-	rtip->rti_Solids = (struct soltab **)rt_malloc(
-		rtip->nsolids * sizeof(struct soltab *),
+	/*  Space for array of soltab pointers indexed by solid bit number.
+	 *  Include enough extra space for an extra bitv_t's worth of bits,
+	 *  to handle round-up.
+	 */
+	rtip->rti_Solids = (struct soltab **)rt_calloc(
+		rtip->nsolids + (1<<BITV_SHIFT), sizeof(struct soltab *),
 		"rtip->rti_Solids[]" );
 	/*
 	 *  Build array of solid table pointers indexed by solid ID.
