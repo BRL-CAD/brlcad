@@ -28,8 +28,6 @@ static struct faceuse *bl_fu;	/* back left */
 static struct faceuse *ul_fu;	/* underside, left */
 static struct faceuse *fr_fu;	/* front right */
 static struct loopuse *lu;
-static struct edgeuse *eu;
-static struct vertexuse *vu;
 static struct vertex *vertl[256];
 static struct vertex **f_vertl[256];
 
@@ -498,7 +496,9 @@ void
 make_0manifold_bits(tol)
 struct rt_tol *tol;
 {
+#if 0
 	struct nmgregion *lrp;
+#endif
 	struct shell *sp;
 
 	/* make a shell of a single vertex in the same region

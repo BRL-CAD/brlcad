@@ -43,6 +43,7 @@ static char RCSid[] = "$Header$";
 #endif
 
 #include "machine.h"
+#include "externs.h"
 #include "vmath.h"
 #include "db.h"
 #include "wdb.h"

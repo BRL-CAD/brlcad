@@ -80,7 +80,6 @@ int argc; char *argv[];
 			(void)fprintf(stderr,
 				"Usage: %s [-d] > database.g\n", *argv);
 			return(-1);
-			break;
 		}
 	}
 
@@ -236,11 +235,9 @@ pt patch;
 	NMG_CK_LOOPUSE( lu );
 	for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
 	{
-		fastf_t *kv=NULL;
-		fastf_t *points=NULL;
-
 #if 0
-		nmg_edge_g_cnurb( eu , 2 , 0 , kv , 2 , pt_type , points );
+		nmg_edge_g_cnurb( eu , 2 , 0 , (fastf_t *)NULL , 2 ,
+			pt_type , (fastf_t *)NULL );
 #else
 		nmg_edge_g_cnurb_plinear( eu );
 #endif

@@ -62,8 +62,8 @@ char *argv[];
    struct wmember comb;		/*  Used to make regions.  */
    struct wmember comb1;	/*  Used to make groups.  */
 
-   int i,j,k;			/*  Loop counters.  */
-   double r,s,t;		/*  Temporary variables.  */
+   int i;			/*  Loop counters.  */
+   double r;			/*  Temporary variables.  */
    char temp[10];		/*  Temporary char string.  */
    char temp1[10];		/*  Temporary char string.  */
 

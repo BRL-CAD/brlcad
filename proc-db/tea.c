@@ -46,7 +46,6 @@ int argc; char *argv[];
 			(void)fprintf(stderr,
 				"Usage: %s [-d] > database.g\n", *argv);
 			return(-1);
-			break;
 		}
 	}
 
