@@ -131,8 +131,8 @@ struct rt_list *vhead;
 		int str_len=0;
 		fastf_t width=0.0,height=0.0;
 		int font_code=1;
-		float slant_ang;
-		float rot_ang=0.0;
+		fastf_t slant_ang;
+		fastf_t rot_ang=0.0;
 		int mirror=0;
 		int internal_rot=0;
 		fastf_t x=0.0,y=0.0,z=0.0;
@@ -164,7 +164,34 @@ struct rt_list *vhead;
 		if( scale*str_len < width )
 			x += (width - (scale*str_len))/2.0;
 
-		rt_vlist_2string( vhead , str , (double)x , (double)y , scale , (double)(rot_ang*180.0*rt_invpi) );
+		if( internal_rot )	/* vertical text */
+		{
+			/* handle vertical text, one character at a time */
+			int j;
+			double tmp_x,tmp_y;
+			double xdel,ydel;
+
+			xdel = scale * sin( rot_angle );
+			ydel = sclae * cos( rot_angle );
+
+			tmp_y = y;
+			tmp_x = x;
+			one_char[1] = '\0';
+
+			for( j=0 ; i<str_len ; j++ )
+			{
+				double tmp_x,tmp_y;
+
+				tmp_x += xdel;
+				tmp_y -= ydel;
+				one_char[0] = str[j];
+				rt_vlist_2string( vhead , one_char , tmp_x , tmp_y , scale,
+					(double)(rot_ang*180.0*rt_invpi) );
+			}
+		}
+		else
+			rt_vlist_2string( vhead , str , (double)x , (double)y , scale,
+				(double)(rot_ang*180.0*rt_invpi) );
 
 		free( str );
 	}
