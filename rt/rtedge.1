@@ -17,7 +17,9 @@ operates on the indicated
 in the input
 .I model.g
 and produces a BRL-CAD .pix file that indicates the 'edges' in the model
-file.  \fBRtedge\fR produces images by drawing a
+file.  
+.I Rtedge 
+produces images by drawing a
 boundary whenever a change in region_id is detected.  It also recognizes
 and portrays abrupt changes in surface curvature and changes in surface
 height.  This permits the recognition of pits, protrusions, and changes in
@@ -203,10 +205,10 @@ are 1 (on) and 0 (off). The default is on.
 
 and
 .TP
-.B \-c"set om=#"
+.B \-c"set ov=#"
 configure the overlay mode to be either on (1) or off (0). 
 Overlay mode allows 
--I rtedge
+.I rtedge
 to write into an existing framebuffer. The framebuffer is
 specified with the \-F option.
 
@@ -341,7 +343,7 @@ end;
 
 EOF
 
-rtedge -M -w1280 -n1024 -Fnew.pix \\
+rtedge -M -s1280 -Fnew.pix \\
  -c"set dr=1 dn=1 ov=1"\\
  -c"set fg=255,200,0" \\
  $*\\
@@ -367,7 +369,7 @@ objects, the delimiting quotes must be escaped.
 .nf
 #!/bin/sh
 
-rt -M -w1280 -n1024 -Fnew.pix -C255/255/255 \\
+rt -M -s1280 -Fnew.pix -C255/255/255 \\
  $*\\
  havoc.g\\
  weapons\\
@@ -381,7 +383,7 @@ end;
 
 EOF
 
-rtedge -M -w1280 -n1024 -Fnew.pix \\
+rtedge -M -s1280 -Fnew.pix \\
  -c"set dr=1 dn=1 om=3"\\
  -c"set fg=0,0,0 bg=200,200,200"\\
  -c"set oo=\\"weapons\\" "\\
@@ -434,3 +436,10 @@ package instead.
 .SH "BUG REPORTS"
 Reports of bugs or problems should be submitted via electronic
 mail to <CAD@ARL.MIL>.
+
+
+
+
+
+
+
