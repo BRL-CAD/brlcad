@@ -63,6 +63,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "dm.h"
 #include "dm-glx.h"
+#include "solid.h"
 
 #define YSTEREO		491	/* subfield height, in scanlines */
 #define YOFFSET_LEFT	532	/* YSTEREO + YBLANK ? */
@@ -98,7 +99,6 @@ static void Glx_var_init();
 static void Glx_make_materials();
 static void Glx_clear_to_black();
 
-static int      Glx_init();
 static int	Glx_open();
 static int	Glx_close();
 static int	Glx_drawBegin(), Glx_drawEnd();
@@ -124,7 +124,6 @@ static double	xlim_view = 1.0;	/* args for ortho() */
 static double	ylim_view = 1.0;
 
 struct dm dm_glx = {
-  Glx_init,
   Glx_open,
   Glx_close,
   Glx_drawBegin,
@@ -146,6 +145,7 @@ struct dm dm_glx = {
   IRBOUND,
   "glx", "SGI - mixed mode",
   0,			/* mem map */
+  0,
   0,
   0,
   0,
@@ -173,19 +173,47 @@ register int y;
   return ((0.5 - y/(double)((struct glx_vars *)dmp->dm_vars)->height) * 4095);
 }
 
+/*
+ *			I R _ O P E N
+ *
+ *  Fire up the display manager, and the display processor. Note that
+ *  this brain-damaged version of the MEX display manager gets terribly
+ *  confused if you try to close your last window.  Tough. We go ahead
+ *  and close the window.  Ignore the "ERR_CLOSEDLASTWINDOW" error
+ *  message. It doesn't hurt anything.  Silly MEX.
+ */
 static int
-Glx_init(dmp, argc, argv)
+Glx_open(dmp, argc, argv)
 struct dm *dmp;
 int argc;
 char *argv[];
 {
   static int count = 0;
+  register int	i;
+  Matrix		m;
+  inventory_t	*inv;
+  struct bu_vls str;
+  int j, k;
+  int ndevices;
+  int nclass = 0;
+  XDeviceInfoPtr olist, list;
+  XDevice *dev;
+  XEventClass e_class[15];
+  XInputClassInfo *cip;
+  GLXconfig *p, *glx_config;
+  XVisualInfo *visual_info;
 
   /* Only need to do this once for this display manager */
   if(!count)
     (void)Glx_load_startup(dmp);
 
-  bu_vls_printf(&dmp->dm_pathName, ".dm_glx%d", count++);
+  bu_vls_init_if_uninit(&dmp->dm_pathName);
+  bu_vls_init_if_uninit(&dmp->dm_initWinProc);
+  i = dm_process_options(dmp, argc, argv);
+  if(bu_vls_strlen(&dmp->dm_pathName) == 0)
+     bu_vls_printf(&dmp->dm_pathName, ".dm_glx%d", count++);
+  if(bu_vls_strlen(&dmp->dm_initWinProc) == 0)
+    bu_vls_strcpy(&dmp->dm_initWinProc, "bind_dm_win");
 
   dmp->dm_vars = bu_calloc(1, sizeof(struct glx_vars), "Glx_init: struct glx_vars");
   ((struct glx_vars *)dmp->dm_vars)->devmotionnotify = LASTEvent;
@@ -218,41 +246,8 @@ char *argv[];
   ogl_sgi_used = 1;
 #endif /* DM_OGL */
 
-  if(dmp->dm_vars)
-    return TCL_OK;
-
-  return TCL_ERROR;
-}
-
-
-/*
- *			I R _ O P E N
- *
- *  Fire up the display manager, and the display processor. Note that
- *  this brain-damaged version of the MEX display manager gets terribly
- *  confused if you try to close your last window.  Tough. We go ahead
- *  and close the window.  Ignore the "ERR_CLOSEDLASTWINDOW" error
- *  message. It doesn't hurt anything.  Silly MEX.
- */
-static int
-Glx_open(dmp)
-struct dm *dmp;
-{
-  register int	i;
-  Matrix		m;
-  inventory_t	*inv;
-  struct bu_vls str;
-  int j, k;
-  int ndevices;
-  int nclass = 0;
-  XDeviceInfoPtr olist, list;
-  XDevice *dev;
-  XEventClass e_class[15];
-  XInputClassInfo *cip;
-  GLXconfig *p, *glx_config;
-  XVisualInfo *visual_info;
-
-  bu_vls_init(&str);
+  if(!dmp->dm_vars)
+    return TCL_ERROR;
 
   ((struct glx_vars *)dmp->dm_vars)->xtkwin =
     Tk_CreateWindowFromPath(interp, tkwin, bu_vls_addr(&dmp->dm_pathName), dmp->dm_dname);
@@ -260,8 +255,10 @@ struct dm *dmp;
    * Create the X drawing window by calling init_glx which
    * is defined in glxinit.tcl
    */
-  bu_vls_strcpy(&str, "init_glx ");
-  bu_vls_printf(&str, "%s\n", bu_vls_addr(&dmp->dm_pathName));
+  bu_vls_init(&str);
+  bu_vls_printf(&str, "init_dm_win %s %s\n",
+		bu_vls_addr(&dmp->dm_initWinProc),
+		bu_vls_addr(&dmp->dm_pathName));
 
   if(Tcl_Eval(interp, bu_vls_addr(&str)) == TCL_ERROR){
         bu_vls_free(&str);
@@ -272,6 +269,11 @@ struct dm *dmp;
 
   ((struct glx_vars *)dmp->dm_vars)->dpy =
     Tk_Display(((struct glx_vars *)dmp->dm_vars)->xtkwin);
+
+#if 0
+  XSynchronize(((struct glx_vars *)dmp->dm_vars)->dpy, True);
+#endif
+
   ((struct glx_vars *)dmp->dm_vars)->width =
     DisplayWidth(((struct glx_vars *)dmp->dm_vars)->dpy,
 		 DefaultScreen(((struct glx_vars *)dmp->dm_vars)->dpy)) - 20;
@@ -521,35 +523,37 @@ static int
 Glx_close(dmp)
 struct dm *dmp;
 {
-  if(((struct glx_vars *)dmp->dm_vars)->xtkwin != NULL){
-    if(((struct glx_vars *)dmp->dm_vars)->mvars.cueing_on)
-      depthcue(0);
+  if(((struct glx_vars *)dmp->dm_vars)->dpy){
+    if(((struct glx_vars *)dmp->dm_vars)->xtkwin != NULL){
+      if(((struct glx_vars *)dmp->dm_vars)->mvars.cueing_on)
+	depthcue(0);
 
-    lampoff( 0xf );
+      lampoff( 0xf );
 
-    /* avoids error messages when reattaching */
-    mmode(MVIEWING);	
-    lmbind(LIGHT2,0);
-    lmbind(LIGHT3,0);
-    lmbind(LIGHT4,0);
-    lmbind(LIGHT5,0);
+      /* avoids error messages when reattaching */
+      mmode(MVIEWING);	
+      lmbind(LIGHT2,0);
+      lmbind(LIGHT3,0);
+      lmbind(LIGHT4,0);
+      lmbind(LIGHT5,0);
 
-    frontbuffer(1);
-    Glx_clear_to_black(dmp);
-    frontbuffer(0);
+      frontbuffer(1);
+      Glx_clear_to_black(dmp);
+      frontbuffer(0);
 
-    GLXunlink(((struct glx_vars *)dmp->dm_vars)->dpy,
-	      ((struct glx_vars *)dmp->dm_vars)->win);
-    Tk_DestroyWindow(((struct glx_vars *)dmp->dm_vars)->xtkwin);
+      GLXunlink(((struct glx_vars *)dmp->dm_vars)->dpy,
+		((struct glx_vars *)dmp->dm_vars)->win);
+      Tk_DestroyWindow(((struct glx_vars *)dmp->dm_vars)->xtkwin);
+    }
+
+    if(BU_LIST_IS_EMPTY(&head_glx_vars.l))
+      Tk_DeleteGenericHandler(dmp->dm_eventHandler, (ClientData)DM_TYPE_GLX);
   }
 
   if(((struct glx_vars *)dmp->dm_vars)->l.forw != BU_LIST_NULL)
     BU_LIST_DEQUEUE(&((struct glx_vars *)dmp->dm_vars)->l);
 
   bu_free(dmp->dm_vars, "Glx_close: glx_vars");
-
-  if(BU_LIST_IS_EMPTY(&head_glx_vars.l))
-    Tk_DeleteGenericHandler(dmp->dm_eventHandler, (ClientData)DM_TYPE_GLX);
 
   return TCL_OK;
 }
