@@ -31,12 +31,12 @@ bin_PROGRAMS = \
 	nmg-bot \
 	nmg-rib \
 	pix2asc \
-	ply-g
+	ply-g \
 	poly-bot \
 	proe-g \
 	stl-g \
 	tankill-g \
-	viewpoint-g \
+	viewpoint-g
 
 asc2g_LDADD = @WDB@ @RT@ 
 asc_nmg_LDADD = @WDB@ @RT@ 
