@@ -732,12 +732,12 @@ mged_setup()
 	filename = bu_brlcad_path( "" );
 #ifdef WIN32
 	{
-		/* XXXXXXXXXXXXXXX UGLY XXXXXXXXXXXXXXXXXX*/
-	int i;
-	strcat(filename,"/");
-	for (i=0;i<strlen(filename);i++) {
-		if(filename[i]=='\\') 
-			filename[i]='/'; }
+	  /* XXX - nasty little hack to convert paths */
+	  int i;
+	  strcat(filename,"/");
+	  for (i=0;i<strlen(filename);i++) {
+	    if(filename[i]=='\\') 
+	      filename[i]='/'; }
 	}
 #endif
 

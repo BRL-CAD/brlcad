@@ -87,7 +87,8 @@ struct bu_structparse Ogl_vparse[] = {
 	{"",	0,  (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 
-#ifdef WIN32  /* ???????????????????*/
+#ifdef WIN32  
+/* ??? not sure why this is needed? */
 extern FBIO ogl_interface;
 #endif
 

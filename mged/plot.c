@@ -283,8 +283,8 @@ char	**argv;
 	char tol_str[32];
 	char *tol_ptr;
 
-// XXXXXXXXXXXXXXXXXXXX FIX LATER XXXXXXXXXXXXXXXXXXXXXXXXXx
 #ifndef WIN32
+	/* XXX needs fixing */
 
 	CHECK_DBI_NULL;
 
