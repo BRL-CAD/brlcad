@@ -890,8 +890,32 @@ struct faceuse *fu;
 /*
  *			N M G _ R E V E R S E _ F A C E
  *
- *  Reverse the orientation of a face.
- *  Manipulate both the topological and geometric aspects of the face.
+ *
+ *  This routine reverses the direction of the Normal vector which defines
+ *  the plane of the face.  
+ *
+ *  The OT_SAME faceuse becomes the OT_OPPOSITE faceuse, and vice versa.  
+ *  This preserves the convention that OT_SAME loopuses in the
+ *  OT_SAME faceuse are counter-clockwise rotating about the surface normal.
+ *
+ *
+ *	     Before			After
+ *
+ * 
+ * N	  OT_SAME		  OT_OPPOSITE
+ *  \	.<---------.		.<---------.
+ *   \	|fu        ^		|fu        ^
+ *    \	|  .------ | ->.	|  .------ | ->.
+ *     \|  ^fumate |   |	|  ^fumate |   |
+ *	|  |       |   |	|  |       |   |
+ *	|  |       |   |	|  |       |   |
+ *	V  |       |   |	V  |       |   |\
+ *	.--------->.   |	.--------->.   | \
+ *	   |           V	   |           V  \
+ *	   .<----------.	   .<----------.   \
+ *	    OT_OPPOSITE		     OT_SAME        \
+ *						     N
+ *
  */
 void
 nmg_reverse_face( fu )
