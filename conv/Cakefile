@@ -9,7 +9,7 @@
 			g-euclid euclid_format euclid_unformat tankill-g g-tankill \
 			viewpoint-g dxf-g g-nmg g-euclid1 fast4-g proe-g \
 			asc-nmg nmg-rib g-vrml g-acad cy-g nastran-g g-wave \
-			nmg-polysolid g-shell.rect
+			nmg-polysolid g-shell.rect stl-g
 #define	SRCSUFF	.c
 #define MANSECTION	1
 
@@ -43,6 +43,10 @@ g-shell.rect: g-shell.rect.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBWDB_DEP
 
 proe-g: proe-g.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBWDB_DEP LIBSYSV_DEP
 	CC LDFLAGS proe-g.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES LIBSYSV -o proe-g
+
+stl-g:	proe-g
+	rm stl-g
+	ln -s proe-g stl-g
 
 fast4-g: fast4-g.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBWDB_DEP
 	CC LDFLAGS fast4-g.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o fast4-g
