@@ -111,12 +111,12 @@ struct wdb_pipeseg	*headp;
 		count++;
 		switch( psp->ps_type )  {
 		case WDB_PIPESEG_TYPE_END:
-			if( RT_LIST_MORE( psp, wdb_pipeseg, &headp->l ) )
+			if( RT_LIST_NEXT_NOT_HEAD( psp, &headp->l ) )
 				return(-1);	/* Inconsistency in list */
 			break;
 		case WDB_PIPESEG_TYPE_LINEAR:
 		case WDB_PIPESEG_TYPE_BEND:
-			if( !RT_LIST_MORE( psp, wdb_pipeseg, &headp->l ) )
+			if( RT_LIST_NEXT_IS_HEAD( psp, &headp->l ) )
 				return(-2);	/* List ends w/o TYPE_END */
 			break;
 		default:
