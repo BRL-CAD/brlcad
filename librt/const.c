@@ -30,3 +30,6 @@ CONST double rt_inv2pi	= 0.159154943091895335769;	/* 1/(pi*2) */
 CONST double rt_inv4pi	= 0.07957747154594766788;	/* 1/(pi*4) */
 
 CONST double rt_inv255 = 1.0/255.0;
+
+CONST double rt_degtorad =  0.0174532925199433;		/* (pi*2)/360 */
+CONST double rt_radtodeg = 57.29577951308230698802;	/* 360/(pi*2) */
