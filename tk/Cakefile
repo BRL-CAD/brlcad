@@ -14,7 +14,7 @@
 /* Eliminate the normal BRL-CAD defines */
 #undef CFLAGS
 /* Keep the -64 flag, etc */
-#define CFLAGS TK_DEFS  GFLAG -I''INCDIR -I''XINCDIR
+#define CFLAGS GFLAG -I''INCDIR -I''XINCDIR
 
 #define HEADER_FILES ../libtk/generic/tkInt.h ../libtk/generic/tkPort.h \
 	../libtk/unix/tkUnixPort.h \
