@@ -800,13 +800,13 @@ light_maker(int num, mat_t v2m)
 
 		case 1:
 			/* 1: At right edge, 1/2 high */
-			VSET( color,  1, .1, .1 );	/* Red-ish */
+			VSET( color,  1, 1, 1 );
 			VSET( temp, 1, 0, 1 );
 			break;
 
 		case 2:
 			/* 2:  Behind, and overhead */
-			VSET( color, .1, .1,  1 );	/* Blue-ish */
+			VSET( color, 1, 1,  1 );
 			VSET( temp, 0, 1, -0.5 );
 			break;
 
