@@ -230,7 +230,11 @@ do_run( a, b )
 /*
  *  			W O R K E R
  *  
- *  Compute one pixel, and store it.
+ *  Compute some pixels, and store them.
+ *  A "self-dispatching" parallel algorithm.
+ *
+ *  In order to reduce the traffic through the res_worker critical section,
+ *  a multiple pixel block may be removed from the work queue at once.
  */
 void
 worker()
@@ -261,10 +265,10 @@ worker()
 		cur_pixel += per_processor_chunk;
 		RES_RELEASE( &rt_g.res_worker );
 
-		if( pixel_start > last_pixel )
-			break;
-
 		for( pixelnum = pixel_start; pixelnum < pixel_start+per_processor_chunk; pixelnum++ )  {
+
+			if( pixelnum > last_pixel )
+				break;
 
 			/* Obtain fresh copy of application struct */
 			a = ap;				/* struct copy */
