@@ -447,8 +447,11 @@ struct application	*ap;
 			}
 		}  else  {
 			/* ray is parallel to plane when dir.N == 0.
-			 * If it is outside the solid, stop now */
-			if( dxbdn > 0.0 )
+			 * If it is outside the solid, stop now.
+			 * Allow very small amount of slop, to catch
+			 * rays that lie very nearly in the plane of a face.
+			 */
+			if( dxbdn > SQRT_SMALL_FASTF )
 				return( SEG_NULL );	/* MISS */
 		}
 		if( in > out )
@@ -539,7 +542,7 @@ struct resource         *resp; /* pointer to a list of free segs */
 		        }  else  {
 			   /* ray is parallel to plane when dir.N == 0.
 			    * If it is outside the solid, stop now */
-			   if( dxbdn > 0.0 ) {
+			   if( dxbdn > SQRT_SMALL_FASTF ) {
 				SEG_MISS(segp[i]);		/* MISS */
 			   }
 			}
