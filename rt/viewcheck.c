@@ -77,8 +77,8 @@ static int	rays;
  */
 struct overlap_list {
 	struct overlap_list *next;	/* next one */
-	char 	*reg1;			/* overlapping region 1 */
-	char	*reg2;			/* overlapping region 2 */
+	CONST char 	*reg1;		/* overlapping region 1 */
+	CONST char	*reg2;		/* overlapping region 2 */
 	long	count;			/* number of time reported */
 	double	maxdepth;		/* maximum overlap depth */
 };
