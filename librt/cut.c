@@ -54,7 +54,7 @@ struct nu_axis {
 };
 struct nu_axis	*rt_nu_axis[3];
 int		rt_nu_cells_per_axis[3];
-union cutter	*nu_grid;
+union cutter	*rt_nu_grid;
 /* XXX end NUgrid hack */
 
 /*
@@ -263,7 +263,7 @@ if(rt_g.debug&DEBUG_CUT)  rt_log("\nnu_ncells=%d, nu_sol_per_cell=%d, nu_max_nce
 #if NUgrid
 	rt_hist_init( &nu_hist_cellsize, 0.0, 399.0, 400 );
 	/* For the moment, re-use "union cutter" */
-	nu_grid = (union cutter *)rt_malloc(
+	rt_nu_grid = (union cutter *)rt_malloc(
 		rt_nu_cells_per_axis[X] * rt_nu_cells_per_axis[Y] *
 		rt_nu_cells_per_axis[Z] * sizeof(union cutter),
 		 "3-D NUgrid union cutter []" );
@@ -321,7 +321,7 @@ if(rt_g.debug&DEBUG_CUT)  rt_log("\nnu_ncells=%d, nu_sol_per_cell=%d, nu_max_nce
 			/* Each of these will be a final cell */
 			for( zp = 0; zp < rt_nu_cells_per_axis[Z]; zp++ )  {
 				register union cutter *cutp =
-					RT_NUGRID_CELL(nu_grid, xp, yp, zp);
+					RT_NUGRID_CELL(rt_nu_grid, xp, yp, zp);
 				VMOVE( zmin, ymin );
 				VMOVE( zmax, ymax );
 				zmin[Z] = rt_nu_axis[Z][zp].nu_spos;
@@ -366,7 +366,7 @@ if(rt_g.debug&DEBUG_CUT)  rt_log("\nnu_ncells=%d, nu_sol_per_cell=%d, nu_max_nce
 	if(rt_g.debug&DEBUG_CUT)  {
 		rt_hist_pr( &nu_hist_cellsize, "cut_tree: Number of solids per NUgrid cell");
 		/* Just for inspection, print out the 0,0,0 cell */
-		rt_pr_cut( nu_grid, 0 );
+		rt_pr_cut( rt_nu_grid, 0 );
 	}
 
 	rt_free( (char *)nu_xbox.bn_list, "nu_xbox bn_list[]" );

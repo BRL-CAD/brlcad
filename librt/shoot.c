@@ -66,7 +66,7 @@ struct rt_nu_axis {
 };
 extern struct nu_axis	*rt_nu_axis[3];
 extern int		rt_nu_cells_per_axis[3];
-extern union cutter	*nu_grid;
+extern union cutter	*rt_nu_grid;
 
 #define NUGRID_T_SETUP(_ax,_cno)	\
 	if( ap->a_ray.r_dir[_ax] == 0.0 )  { \
@@ -181,7 +181,7 @@ register struct shootray_status	*ssp;
 					break;
 			}
 			if( z >= rt_nu_cells_per_axis[Z] )  break;
-			cutp = RT_NUGRID_CELL( nu_grid, x, y, z );
+			cutp = RT_NUGRID_CELL( rt_nu_grid, x, y, z );
 
 			/*
 			 *  Prepare for efficient advancing from
@@ -269,7 +269,7 @@ if(rt_g.debug&DEBUG_ADVANCE) VPRINT("Exit tv[]", ssp->tv);
 			}
 if(rt_g.debug&DEBUG_ADVANCE)rt_log("igrid=(%d, %d, %d)\n", ssp->igrid[X], ssp->igrid[Y], ssp->igrid[Z]);
 			/* XXX This too can be optimized */
-			cutp = RT_NUGRID_CELL( nu_grid,
+			cutp = RT_NUGRID_CELL( rt_nu_grid,
 				ssp->igrid[X], ssp->igrid[Y], ssp->igrid[Z] );
 		}
 		/* find minimum exit t value */
