@@ -30,6 +30,8 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 /*
  *			R T _ V L I S T _ 3 S T R I N G
+ *
+ *  'scale' is the width, in mm, of one character.
  */
 void
 rt_vlist_3string( vhead, string, origin, rot, scale )
