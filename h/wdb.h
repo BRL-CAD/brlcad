@@ -140,10 +140,10 @@ WDB_EXTERN(int mk_poly, (FILE *fp, int npts,
 			fastf_t verts[][3], fastf_t norms[][3]) );
 WDB_EXTERN(int mk_fpoly, (FILE *fp, int npts, fastf_t verts[][3]) );
 WDB_EXTERN(int mk_comb, (FILE *fp, char *name, int len, int region_flag,
-			char *matname, char *matparm, char *rgb,
+			char *matname, char *matparm, unsigned char *rgb,
 			int inherit_flag) );
 WDB_EXTERN(int mk_rcomb, (FILE *fp, char *name, int len, int region_flag,
-			char *matname, char *matparm, char *rgb,
+			char *matname, char *matparm, unsigned char *rgb,
 			int id, int air, int material, int los,
 			int inherit_flag) );
 WDB_EXTERN(int mk_fcomb, (FILE *fp, char *name, int len, int region_flag) );
@@ -155,11 +155,11 @@ WDB_EXTERN(int mk_memb, (FILE *fp, char *name, mat_t mat, int bool_op) );
 WDB_EXTERN(struct wmember *mk_addmember, (char *name, struct wmember *headp, int op) );
 WDB_EXTERN(int mk_lcomb, (FILE *fp, char *name, struct wmember *headp,
 			int region_flag,
-			char *matname, char *matparm, char *rgb,
+			char *matname, char *matparm, unsigned char *rgb,
 			int inherit_flag) );
 WDB_EXTERN(int mk_lrcomb, (FILE *fp, char *name, struct wmember *headp,
 			int region_flag,
-			char *matname, char *matparm, char *rgb,
+			char *matname, char *matparm, unsigned char *rgb,
 			int id, int air, int material, int los,
 			int inherit_flag) );
 
@@ -170,7 +170,7 @@ WDB_EXTERN(int mk_lrcomb, (FILE *fp, char *name, struct wmember *headp,
 
 /* Convienient definitions */
 #define mk_lfcomb(fp,name,headp,region)		mk_lcomb( fp, name, headp, \
-	region, (char *)0, (char *)0, (char *)0, 0 );
+	region, (char *)0, (char *)0, (unsigned char *)0, 0 );
 
 /*
  *  Routines to establish conversion factors
