@@ -701,7 +701,7 @@ char **argv;
 			rt_vls_trunc( &argstr, 0 );
 			pr_prompt();
 			interp->result = tmp;
-			interp->freeProc = (void (*)(char *))free;
+			interp->freeProc = (void (*)())free;
 			return TCL_ERROR;
 		}
 	default:
