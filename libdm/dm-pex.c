@@ -29,9 +29,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 	(c).rgb.blue = (b);}
 
 #include "conf.h"
+#include "tk.h"
 
-#include <sys/time.h>		/* for struct timeval */
-#include <X11/X.h>
 #ifdef HAVE_XOSDEFS_H
 #include <X11/Xfuncproto.h>
 #include <X11/Xosdefs.h>
@@ -41,21 +40,23 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #	undef   X_NOT_POSIX
 #endif
 #define XLIB_ILLEGAL_ACCESS	/* necessary on facist SGI 5.0.1 */
-#include "tk.h"
+
 #include <X11/PEX5/PEXlib.h>
-#include <X11/Xatom.h>
 #include <X11/Xutil.h>
-#include <X11/extensions/multibuf.h>
 
 #include "machine.h"
 #include "externs.h"
 #include "bu.h"
 #include "vmath.h"
+#if 0
 #include "mater.h"
+#endif
 #include "raytrace.h"
 #include "dm.h"
 #include "dm-pex.h"
+#if 0
 #include "solid.h"
+#endif
 
 #define IMMED_MODE_SPT(info) (((info)->subset_info & 0xffff) ==\
 			      PEXCompleteImplementation ||\
@@ -532,14 +533,12 @@ mat_t mat;
 
 /* ARGSUSED */
 static int
-Pex_object( dmp, vp, m, illum, linestyle, r, g, b, index )
+Pex_object( dmp, vp, m, linestyle, r, g, b )
 struct dm *dmp;
 register struct rt_vlist *vp;
 fastf_t *m;
-int illum;
 int linestyle;
 register short r, g, b;
-short index;
 {
   register struct rt_vlist    *tvp;
   PEXCoord coord_buf[1024];
@@ -556,12 +555,16 @@ short index;
 #endif
 		    ((struct pex_vars *)dmp->dmr_vars)->renderer);
   {
+#if 0
     if( illum ){
       SET_COLOR( 0.9, 0.9, 0.9, color );
     }else{
       SET_COLOR( r / 255.0, g / 255.0,
 		 b / 255.0, color );
     }
+#else
+    SET_COLOR( r / 255.0, g / 255.0, b / 255.0, color );
+#endif
 
     PEXSetLineColor(((struct pex_vars *)dmp->dmr_vars)->dpy,
 		    ((struct pex_vars *)dmp->dmr_vars)->renderer,
@@ -686,11 +689,15 @@ struct dm *dmp;
  */
 /* ARGSUSED */
 static void
-Pex_puts( dmp, str, x, y, size, color )
+Pex_puts( dmp, str, x, y, size, r, g, b )
 struct dm *dmp;
 register char *str;
+int x, y;
+int size;
+register short r, g, b;
 {
 	XGCValues gcv;
+#if 0
 	unsigned long fg;
 
 	switch( color )  {
@@ -712,7 +719,15 @@ register char *str;
 		break;
 	}
 	gcv.foreground = fg;
-	XChangeGC( ((struct pex_vars *)dmp->dmr_vars)->dpy, ((struct pex_vars *)dmp->dmr_vars)->gc, GCForeground, &gcv );
+	XChangeGC( ((struct pex_vars *)dmp->dmr_vars)->dpy,
+		   ((struct pex_vars *)dmp->dmr_vars)->gc, GCForeground, &gcv );
+#else
+	PEXColor color;
+
+	PEXSetTextColor(((struct pex_vars *)dmp->dmr_vars)->dpy,
+			((struct pex_vars *)dmp->dmr_vars)->renderer,
+			PEXOCRender, PEXColorTypeRGB, &color);
+#endif
 	label( dmp, (double)x, (double)y, str );
 }
 
@@ -721,11 +736,12 @@ register char *str;
  *
  */
 static void
-Pex_2d_line( dmp, x1, y1, x2, y2, dashed )
+Pex_2d_line( dmp, x1, y1, x2, y2, dashed, r, g, b )
 struct dm *dmp;
 int x1, y1;
 int x2, y2;
 int dashed;
+register short r, g, b;
 {
 #if 0
   PEXCoord2D coord_buf_2D[2];

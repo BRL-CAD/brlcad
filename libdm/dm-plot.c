@@ -40,42 +40,47 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "dm-plot.h"
 #include "solid.h"
 
-static void Plot_load_startup();
+static int Plot_load_startup();
 
 /* Display Manager package interface */
 
 #define PLOTBOUND	1000.0	/* Max magnification in Rot matrix */
 static int	Plot_init();
 static int	Plot_open();
-static void	Plot_close();
-static void	Plot_input();
-static void	Plot_prolog(), Plot_epilog();
-static void	Plot_normal(), Plot_newrot();
-static void	Plot_update();
-static void	Plot_puts(), Plot_2d_line(), Plot_light();
-static int	Plot_object();
+static int	Plot_close();
+static int	Plot_drawBegin(), Plot_drawEnd();
+static int	Plot_normal(), Plot_newrot();
+static int	Plot_drawString2D(), Plot_drawLine2D();
+static int      Plot_drawVertex2D();
+static int	Plot_drawVList();
+static int      Plot_setColor();
+static int      Plot_setLineAttr();
 static unsigned Plot_cvtvecs(), Plot_load();
-static void	Plot_viewchange(), Plot_colorchange();
-static void	Plot_window(), Plot_debug();
+static int	Plot_setWinBounds(), Plot_debug();
 
 struct dm dm_Plot = {
   Plot_init,
-  Plot_open, Plot_close,
-  Plot_input,
-  Plot_prolog, Plot_epilog,
-  Plot_normal, Plot_newrot,
-  Plot_update,
-  Plot_puts, Plot_2d_line,
-  Plot_light,
-  Plot_object,
-  Plot_cvtvecs, Plot_load,
-  Nu_void,
-  Plot_viewchange,
-  Plot_colorchange,
-  Plot_window, Plot_debug, Nu_int0, Nu_int0,
+  Plot_open,
+  Plot_close,
+  Plot_drawBegin,
+  Plot_drawEnd,
+  Plot_normal,
+  Plot_newrot,
+  Plot_drawString2D,
+  Plot_drawLine2D,
+  Plot_drawVertex2D,
+  Plot_drawVList,
+  Plot_setColor,
+  Plot_setLineAttr,
+  Plot_cvtvecs,
+  Plot_load,
+  Plot_setWinBounds,
+  Plot_debug,
+  Nu_int0,
   0,			/* no displaylist */
   PLOTBOUND,
-  "plot", "Screen to UNIX-Plot",
+  "plot",
+  "Screen to UNIX-Plot",
   0,
   0,
   0,
@@ -95,34 +100,34 @@ char *argv[];
 
   /* Only need to do this once for this display manager */
   if(!count)
-    Plot_load_startup(dmp);
+    (void)Plot_load_startup(dmp);
 
-  bu_vls_printf(&dmp->dmr_pathName, ".dm_plot%d", count++);
+  bu_vls_printf(&dmp->dm_pathName, ".dm_plot%d", count++);
 
-  dmp->dmr_vars = bu_calloc(1, sizeof(struct plot_vars), "Plot_init: plot_vars");
-  bu_vls_init(&((struct plot_vars *)dmp->dmr_vars)->vls);
+  dmp->dm_vars = bu_calloc(1, sizeof(struct plot_vars), "Plot_init: plot_vars");
+  bu_vls_init(&((struct plot_vars *)dmp->dm_vars)->vls);
 
   /* Process any options */
-  ((struct plot_vars *)dmp->dmr_vars)->is_3D = 1;          /* 3-D w/color, by default */
+  ((struct plot_vars *)dmp->dm_vars)->is_3D = 1;          /* 3-D w/color, by default */
   while( argv[1] != (char *)0 && argv[1][0] == '-' )  {
     switch( argv[1][1] )  {
     case '3':
       break;
     case '2':
-      ((struct plot_vars *)dmp->dmr_vars)->is_3D = 0;		/* 2-D, for portability */
+      ((struct plot_vars *)dmp->dm_vars)->is_3D = 0;		/* 2-D, for portability */
       break;
     case 'g':
-      ((struct plot_vars *)dmp->dmr_vars)->grid = 1;
+      ((struct plot_vars *)dmp->dm_vars)->grid = 1;
       break;
 #if 0
     case 'f':
-      ((struct plot_vars *)dmp->dmr_vars)->floating = 1;
+      ((struct plot_vars *)dmp->dm_vars)->floating = 1;
       break;
     case 'z':
     case 'Z':
       /* Enable Z clipping */
       Tcl_AppendResult(interp, "Clipped in Z to viewing cube\n", (char *)NULL);
-      ((struct plot_vars *)dmp->dmr_vars)->zclip = 1;
+      ((struct plot_vars *)dmp->dm_vars)->zclip = 1;
       break;
 #endif
     default:
@@ -137,18 +142,18 @@ char *argv[];
   }
 
   if( argv[1][0] == '|' )  {
-    bu_vls_strcpy(&((struct plot_vars *)dmp->dmr_vars)->vls, &argv[1][1]);
+    bu_vls_strcpy(&((struct plot_vars *)dmp->dm_vars)->vls, &argv[1][1]);
     while( (++argv)[1] != (char *)0 ) {
-      bu_vls_strcat( &((struct plot_vars *)dmp->dmr_vars)->vls, " " );
-      bu_vls_strcat( &((struct plot_vars *)dmp->dmr_vars)->vls, argv[1] );
+      bu_vls_strcat( &((struct plot_vars *)dmp->dm_vars)->vls, " " );
+      bu_vls_strcat( &((struct plot_vars *)dmp->dm_vars)->vls, argv[1] );
     }
 
-    ((struct plot_vars *)dmp->dmr_vars)->is_pipe = 1;
+    ((struct plot_vars *)dmp->dm_vars)->is_pipe = 1;
   }else{
-    bu_vls_strcpy(&((struct plot_vars *)dmp->dmr_vars)->vls, argv[1]);
+    bu_vls_strcpy(&((struct plot_vars *)dmp->dm_vars)->vls, argv[1]);
   }
 
-  if(dmp->dmr_vars)
+  if(dmp->dm_vars)
     return TCL_OK;
 
   return TCL_ERROR;
@@ -164,36 +169,36 @@ static int
 Plot_open(dmp)
 struct dm *dmp;
 {
-  if(((struct plot_vars *)dmp->dmr_vars)->is_pipe){
-    if((((struct plot_vars *)dmp->dmr_vars)->up_fp =
-	popen( bu_vls_addr(&((struct plot_vars *)dmp->dmr_vars)->vls), "w")) == NULL){
-      perror( bu_vls_addr(&((struct plot_vars *)dmp->dmr_vars)->vls));
+  if(((struct plot_vars *)dmp->dm_vars)->is_pipe){
+    if((((struct plot_vars *)dmp->dm_vars)->up_fp =
+	popen( bu_vls_addr(&((struct plot_vars *)dmp->dm_vars)->vls), "w")) == NULL){
+      perror( bu_vls_addr(&((struct plot_vars *)dmp->dm_vars)->vls));
       return TCL_ERROR;
     }
     
     Tcl_AppendResult(interp, "piped to ",
-		     bu_vls_addr(&((struct plot_vars *)dmp->dmr_vars)->vls),
+		     bu_vls_addr(&((struct plot_vars *)dmp->dm_vars)->vls),
 		     "\n", (char *)NULL);
   }else{
-    if((((struct plot_vars *)dmp->dmr_vars)->up_fp =
-	fopen( bu_vls_addr(&((struct plot_vars *)dmp->dmr_vars)->vls), "w" )) == NULL){
-      perror(bu_vls_addr(&((struct plot_vars *)dmp->dmr_vars)->vls));
+    if((((struct plot_vars *)dmp->dm_vars)->up_fp =
+	fopen( bu_vls_addr(&((struct plot_vars *)dmp->dm_vars)->vls), "w" )) == NULL){
+      perror(bu_vls_addr(&((struct plot_vars *)dmp->dm_vars)->vls));
       return TCL_ERROR;
     }
 
     Tcl_AppendResult(interp, "plot stored in ",
-		     bu_vls_addr(&((struct plot_vars *)dmp->dmr_vars)->vls),
+		     bu_vls_addr(&((struct plot_vars *)dmp->dm_vars)->vls),
 		     "\n", (char *)NULL);
   }
 
-  setbuf(((struct plot_vars *)dmp->dmr_vars)->up_fp,
-	  ((struct plot_vars *)dmp->dmr_vars)->ttybuf);
+  setbuf(((struct plot_vars *)dmp->dm_vars)->up_fp,
+	  ((struct plot_vars *)dmp->dm_vars)->ttybuf);
 
-  if(((struct plot_vars *)dmp->dmr_vars)->is_3D)
-    pl_3space( ((struct plot_vars *)dmp->dmr_vars)->up_fp,
+  if(((struct plot_vars *)dmp->dm_vars)->is_3D)
+    pl_3space( ((struct plot_vars *)dmp->dm_vars)->up_fp,
 	       -2048, -2048, -2048, 2048, 2048, 2048 );
   else
-    pl_space( ((struct plot_vars *)dmp->dmr_vars)->up_fp,
+    pl_space( ((struct plot_vars *)dmp->dm_vars)->up_fp,
 	      -2048, -2048, 2048, 2048 );
 
   return TCL_OK;
@@ -204,21 +209,22 @@ struct dm *dmp;
  *  
  *  Gracefully release the display.
  */
-static void
+static int
 Plot_close(dmp)
 struct dm *dmp;
 {
-  (void)fflush(((struct plot_vars *)dmp->dmr_vars)->up_fp);
+  (void)fflush(((struct plot_vars *)dmp->dm_vars)->up_fp);
 
-  if(((struct plot_vars *)dmp->dmr_vars)->is_pipe)
-    pclose(((struct plot_vars *)dmp->dmr_vars)->up_fp); /* close pipe, eat dead children */
+  if(((struct plot_vars *)dmp->dm_vars)->is_pipe)
+    pclose(((struct plot_vars *)dmp->dm_vars)->up_fp); /* close pipe, eat dead children */
   else
-    fclose(((struct plot_vars *)dmp->dmr_vars)->up_fp);
+    fclose(((struct plot_vars *)dmp->dm_vars)->up_fp);
 
-  if(((struct plot_vars *)dmp->dmr_vars)->l.forw != BU_LIST_NULL)
-    BU_LIST_DEQUEUE(&((struct plot_vars *)dmp->dmr_vars)->l);
+  if(((struct plot_vars *)dmp->dm_vars)->l.forw != BU_LIST_NULL)
+    BU_LIST_DEQUEUE(&((struct plot_vars *)dmp->dm_vars)->l);
 
-  bu_free(dmp->dmr_vars, "Plot_close: plot_vars");
+  bu_free(dmp->dm_vars, "Plot_close: plot_vars");
+  return TCL_OK;
 }
 
 /*
@@ -226,27 +232,27 @@ struct dm *dmp;
  *
  * There are global variables which are parameters to this routine.
  */
-static void
-Plot_prolog(dmp)
+static int
+Plot_drawBegin(dmp)
 struct dm *dmp;
 {
   /* We expect the screen to be blank so far, from last frame flush */
 
-  /* Put the center point up */
-  pl_move( ((struct plot_vars *)dmp->dmr_vars)->up_fp,  0, 0 );
-  pl_cont( ((struct plot_vars *)dmp->dmr_vars)->up_fp,  0, 0 );
+  return TCL_OK;
 }
 
 /*
  *			P L O T _ E P I L O G
  */
-static void
-Plot_epilog(dmp)
+static int
+Plot_drawEnd(dmp)
 struct dm *dmp;
 {
-  pl_flush( ((struct plot_vars *)dmp->dmr_vars)->up_fp ); /* BRL-specific command */
-  pl_erase( ((struct plot_vars *)dmp->dmr_vars)->up_fp ); /* forces drawing */
-  (void)fflush( ((struct plot_vars *)dmp->dmr_vars)->up_fp );
+  pl_flush( ((struct plot_vars *)dmp->dm_vars)->up_fp ); /* BRL-specific command */
+  pl_erase( ((struct plot_vars *)dmp->dm_vars)->up_fp ); /* forces drawing */
+  (void)fflush( ((struct plot_vars *)dmp->dm_vars)->up_fp );
+
+  return TCL_OK;
 }
 
 /*
@@ -254,12 +260,12 @@ struct dm *dmp;
  *  Stub.
  */
 /* ARGSUSED */
-static void
+static int
 Plot_newrot(dmp, mat)
 struct dm *dmp;
 mat_t mat;
 {
-  return;
+  return TCL_OK;
 }
 
 /*
@@ -273,27 +279,20 @@ mat_t mat;
  */
 /* ARGSUSED */
 static int
-Plot_object( dmp, vp, mat, illum, linestyle, r, g, b, index )
+Plot_drawVList( dmp, vp, mat )
 struct dm *dmp;
 register struct rt_vlist *vp;
 mat_t mat;
-int illum;
-int linestyle;
-register short r, g, b;
-short index;
 {
   static vect_t			last;
   register struct rt_vlist	*tvp;
   int useful = 0;
 
+#if 0
   if( illum )  {
-    pl_linmod( ((struct plot_vars *)dmp->dmr_vars)->up_fp, "longdashed" );
-  } else {
-    if( linestyle )
-      pl_linmod( ((struct plot_vars *)dmp->dmr_vars)->up_fp, "dotdashed");
-    else
-      pl_linmod( ((struct plot_vars *)dmp->dmr_vars)->up_fp, "solid");
-  }
+    pl_linmod( ((struct plot_vars *)dmp->dm_vars)->up_fp, "longdashed" );
+  } else
+#endif
 
   for( BU_LIST_FOR( tvp, rt_vlist, &vp->l ) )  {
     register int	i;
@@ -320,14 +319,14 @@ short index;
 	VMOVE( last, fin );
 	break;
       }
-      if(vclip(start, fin, ((struct plot_vars *)dmp->dmr_vars)->clipmin,
-		((struct plot_vars *)dmp->dmr_vars)->clipmax) == 0)
+      if(vclip(start, fin, ((struct plot_vars *)dmp->dm_vars)->clipmin,
+		((struct plot_vars *)dmp->dm_vars)->clipmax) == 0)
 	continue;
-      
-      pl_color( ((struct plot_vars *)dmp->dmr_vars)->up_fp, r, g, b );
-
-      if(((struct plot_vars *)dmp->dmr_vars)->is_3D)
-	pl_3line( ((struct plot_vars *)dmp->dmr_vars)->up_fp, 
+#if 0      
+      pl_color( ((struct plot_vars *)dmp->dm_vars)->up_fp, r, g, b );
+#endif
+      if(((struct plot_vars *)dmp->dm_vars)->is_3D)
+	pl_3line( ((struct plot_vars *)dmp->dm_vars)->up_fp, 
 		  (int)( start[X] * 2047 ),
 		  (int)( start[Y] * 2047 ),
 		  (int)( start[Z] * 2047 ),
@@ -335,7 +334,7 @@ short index;
 		  (int)( fin[Y] * 2047 ),
 		  (int)( fin[Z] * 2047 ) );
       else
-	pl_line( ((struct plot_vars *)dmp->dmr_vars)->up_fp, 
+	pl_line( ((struct plot_vars *)dmp->dm_vars)->up_fp, 
 		 (int)( start[X] * 2047 ),
 		 (int)( start[Y] * 2047 ),
 		 (int)( fin[X] * 2047 ),
@@ -355,24 +354,13 @@ short index;
  * (ie, not scaled, rotated, displaced, etc).
  * Turns off windowing.
  */
-static void
+static int
 Plot_normal(dmp)
 struct dm *dmp;
 {
-  return;
+  return TCL_OK;
 }
 
-/*
- *			P L O T _ U P D A T E
- *
- * Transmit accumulated displaylist to the display processor.
- */
-static void
-Plot_update(dmp)
-struct dm *dmp;
-{
-  (void)fflush(((struct plot_vars *)dmp->dmr_vars)->up_fp);
-}
 
 /*
  *			P L O T _ P U T S
@@ -381,117 +369,70 @@ struct dm *dmp;
  * The starting position of the beam is as specified.
  */
 /* ARGSUSED */
-static void
-Plot_puts( dmp, str, x, y, size, color )
+static int
+Plot_drawString2D( dmp, str, x, y, size )
 struct dm *dmp;
 register char *str;
+int x, y;
+int size;
 {
-  switch( color )  {
-  case DM_BLACK:
-    pl_color( ((struct plot_vars *)dmp->dmr_vars)->up_fp,  0, 0, 0 );
-    break;
-  case DM_RED:
-    pl_color( ((struct plot_vars *)dmp->dmr_vars)->up_fp,  255, 0, 0 );
-    break;
-  case DM_BLUE:
-    pl_color( ((struct plot_vars *)dmp->dmr_vars)->up_fp,  0, 255, 0 );
-    break;
-  case DM_YELLOW:
-    pl_color( ((struct plot_vars *)dmp->dmr_vars)->up_fp,  255, 255, 0 );
-    break;
-  case DM_WHITE:
-    pl_color( ((struct plot_vars *)dmp->dmr_vars)->up_fp,  255, 255, 255 );
-    break;
-  }
+  pl_move( ((struct plot_vars *)dmp->dm_vars)->up_fp, x,y);
+  pl_label( ((struct plot_vars *)dmp->dm_vars)->up_fp, str);
 
-  pl_move( ((struct plot_vars *)dmp->dmr_vars)->up_fp, x,y);
-  pl_label( ((struct plot_vars *)dmp->dmr_vars)->up_fp, str);
+  return TCL_OK;
 }
 
 /*
  *			P L O T _ 2 D _ G O T O
  *
  */
-static void
-Plot_2d_line( dmp, x1, y1, x2, y2, dashed )
+static int
+Plot_drawLine2D( dmp, x1, y1, x2, y2 )
 struct dm *dmp;
 int x1, y1;
 int x2, y2;
+{
+  pl_move( ((struct plot_vars *)dmp->dm_vars)->up_fp, x1,y1);
+  pl_cont( ((struct plot_vars *)dmp->dm_vars)->up_fp, x2,y2);
+
+  return TCL_OK;
+}
+
+
+static int
+Plot_drawVertex2D(dmp, x, y)
+struct dm *dmp;
+int x, y;
+{
+  return Plot_drawLine2D( dmp, x, y, x, y );
+}
+
+
+static int
+Plot_setColor(dmp, r, g, b, strict)
+struct dm *dmp;
+register short r, g, b;
+int strict;
+{
+  pl_color( ((struct plot_vars *)dmp->dm_vars)->up_fp,  (int)r, (int)g, (int)b );
+  return TCL_OK;
+}
+
+
+static int
+Plot_setLineAttr(dmp, width, dashed)
+struct dm *dmp;
+int width;
 int dashed;
 {
-  pl_color( ((struct plot_vars *)dmp->dmr_vars)->up_fp,  255, 255, 0 );	/* Yellow */
-
-  if( dashed )
-    pl_linmod( ((struct plot_vars *)dmp->dmr_vars)->up_fp, "dotdashed");
+  if(dashed)
+    pl_linmod( ((struct plot_vars *)dmp->dm_vars)->up_fp, "dotdashed");
   else
-    pl_linmod( ((struct plot_vars *)dmp->dmr_vars)->up_fp, "solid");
+    pl_linmod( ((struct plot_vars *)dmp->dm_vars)->up_fp, "solid");
 
-  pl_move( ((struct plot_vars *)dmp->dmr_vars)->up_fp, x1,y1);
-  pl_cont( ((struct plot_vars *)dmp->dmr_vars)->up_fp, x2,y2);
+  return TCL_OK;
 }
 
-/*
- *			P L O T _ I N P U T
- *
- * Execution must suspend in this routine until a significant event
- * has occured on either the command stream,
- * unless "noblock" is set.
- *
- * Implicit Return -
- *	If any files are ready for input, their bits will be set in 'input'.
- *	Otherwise, 'input' will be all zeros.
- */
-static void
-Plot_input( dmp, input, noblock )
-struct dm *dmp;
-fd_set		*input;
-int		noblock;
-{
-	struct timeval	tv;
-	int		width;
-	int		cnt;
-
-#if defined(_SC_OPEN_MAX)
-	if( (width = sysconf(_SC_OPEN_MAX)) <= 0 )
-#endif
-		width = 32;
-
-	/*
-	 * Check for input on the keyboard
-	 *
-	 * Suspend execution until either
-	 *  1)  User types a full line
-	 *  2)  The timelimit on SELECT has expired
-	 *
-	 * If a RATE operation is in progress (zoom, rotate, slew)
-	 * in which we still have to update the display,
-	 * do not suspend execution.
-	 */
-	tv.tv_sec = 0;
-	if( noblock )  {
-		tv.tv_usec = 0;
-	}  else  {
-		/* 1/20th second */
-		tv.tv_usec = 50000;
-	}
-	cnt = select( width, input, (fd_set *)0,  (fd_set *)0, &tv );
-	if( cnt < 0 )  {
-		perror("dm/select");
-	}
-}
-
-/* 
- *			P L O T _ L I G H T
- */
-/* ARGSUSED */
-static void
-Plot_light( dmp, cmd, func )
-struct dm *dmp;
-int cmd;
-int func;			/* BE_ or BV_ function */
-{
-  return;
-}
 
 /* ARGSUSED */
 static unsigned
@@ -519,42 +460,34 @@ unsigned addr, count;
   return( 0 );
 }
 
-static void
-Plot_viewchange(dmp)
-struct dm *dmp;
-{
-}
-
-static void
-Plot_colorchange(dmp)
-struct dm *dmp;
-{
-}
-
 /* ARGSUSED */
-static void
+static int
 Plot_debug(dmp, lvl)
 struct dm *dmp;
 {
-  (void)fflush(((struct plot_vars *)dmp->dmr_vars)->up_fp);
+  (void)fflush(((struct plot_vars *)dmp->dm_vars)->up_fp);
   Tcl_AppendResult(interp, "flushed\n", (char *)NULL);
+
+  return TCL_OK;
 }
 
-static void
-Plot_window(dmp, w)
+static int
+Plot_setWinBounds(dmp, w)
 struct dm *dmp;
 register int w[];
 {
   /* Compute the clipping bounds */
-  ((struct plot_vars *)dmp->dmr_vars)->clipmin[0] = w[1] / 2048.;
-  ((struct plot_vars *)dmp->dmr_vars)->clipmin[1] = w[3] / 2048.;
-  ((struct plot_vars *)dmp->dmr_vars)->clipmin[2] = w[5] / 2048.;
-  ((struct plot_vars *)dmp->dmr_vars)->clipmax[0] = w[0] / 2047.;
-  ((struct plot_vars *)dmp->dmr_vars)->clipmax[1] = w[2] / 2047.;
-  ((struct plot_vars *)dmp->dmr_vars)->clipmax[2] = w[4] / 2047.;
+  ((struct plot_vars *)dmp->dm_vars)->clipmin[0] = w[1] / 2048.;
+  ((struct plot_vars *)dmp->dm_vars)->clipmin[1] = w[3] / 2048.;
+  ((struct plot_vars *)dmp->dm_vars)->clipmin[2] = w[5] / 2048.;
+  ((struct plot_vars *)dmp->dm_vars)->clipmax[0] = w[0] / 2047.;
+  ((struct plot_vars *)dmp->dm_vars)->clipmax[1] = w[2] / 2047.;
+  ((struct plot_vars *)dmp->dm_vars)->clipmax[2] = w[4] / 2047.;
+
+  return TCL_OK;
 }
 
-static void
+static int
 Plot_load_startup(dmp)
 struct dm *dmp;
 {
@@ -564,5 +497,7 @@ struct dm *dmp;
   BU_LIST_INIT( &head_plot_vars.l );
 
   if((filename = getenv("DM_PLOT_RCFILE")) != (char *)NULL )
-    Tcl_EvalFile(interp, filename);
+    return Tcl_EvalFile(interp, filename);
+
+  return TCL_OK;
 }
