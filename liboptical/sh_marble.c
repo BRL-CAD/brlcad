@@ -170,12 +170,13 @@ static int			Marble_Prepped = 0;
  */
 
 HIDDEN int	marble_setup(), marble_render(), marble_prep();
-HIDDEN void	marble_free( char * );
 extern int	mlib_zero(), mlib_one();
 extern void	mlib_void();
 
 HIDDEN void	marble_check_flags RT_ARGS((CONST struct structparse *sdp,
 			CONST char *name, CONST char *base, char *value));
+
+HIDDEN void	marble_free RT_ARGS(( char * ));
 
 /*
  *	Marble-specific user data
