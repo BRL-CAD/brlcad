@@ -232,4 +232,18 @@ extern struct dm_list *curr_dm_list;
 #define BV_RATE_TOGGLE	1+32
 
 #define BV_MAXFUNC	64	/* largest code used */
+
+#define GET_DM_LIST(p,structure,w) { \
+	register struct dm_list *tp; \
+	for(BU_LIST_FOR(tp, dm_list, &head_dm_list.l)) { \
+		if(w == ((struct structure *)tp->_dmp->dmr_vars)->win) { \
+			(p) = tp; \
+			break; \
+		} \
+	} \
+\
+	if(BU_LIST_IS_HEAD(tp, &head_dm_list.l))\
+		p = DM_LIST_NULL;\
+	}
+
 #endif /* SEEN_MGED_DM_H */
