@@ -7,10 +7,9 @@ cad_parea_SOURCES = cad_parea.c
 
 noinst_HEADERS = cmd.h comb_bool.h editobjGui.h fbserv.h ged.h htmlLibraryUi.h icreateGui.h joints.h menu.h mgdev.h mged_dm.h mged_solid.h mgedtcl.h objdir.h qray.h scroll.h sedit.h sunicon.h titles.h vgdev.h vld_std.h vmathUi.h
 
-INCLUDES = @X_CFLAGS@ -I$(top_srcdir)/h
+INCLUDES = @GL_CFLAGS@ @X_CFLAGS@ -I$(top_srcdir)/h
 
-
-mged_LDADD = @DM@ @FB@ @ITCL_LIBS@ @ITK_LIBS@ @SYSV@ @TERMIO@ @TK_LIBS@ @WDB@
+mged_LDADD = @DM@ @FB@ @ITCL_LIBS@ @ITK_LIBS@ @SYSV@ @TERMIO@ @TK_LIBS@ @WDB@ @GL_LIBS@
 
 cad_parea_LDADD = @BU@
 cad_boundp_LDADD = @BU@
