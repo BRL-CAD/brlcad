@@ -416,14 +416,15 @@ namespace eval RtWizard {
 #	grid $itk_component(prev) -row 2 -column 0
 #	grid $itk_component(next) -row 2 -column 1
 
-	pack $itk_component(hier)
-	pack $itk_component(conFrame) -expand 1 -fill both
+	pack $itk_component(hier) -expand 1 -fill both -anchor w
+	pack $itk_component(conFrame) -anchor s
 	
-	pack $itk_component(hierFrame) -side left -anchor w -expand 1 -fill y
-	pack $itk_component(mgedFrame) -padx 10 -pady 23 
+	pack $itk_component(hierFrame) -side left -anchor w -fill both -expand 1
+	pack $itk_component(mgedFrame) -padx 10 -pady 23 \
+	    -expand 1 -fill both -anchor e -side right
 	
-	pack $itk_component(helpPanel)
-	pack $itk_component(midFrame)
+	pack $itk_component(helpPanel) -anchor s
+	pack $itk_component(midFrame) -expand 1 -fill both
 
 	eval itk_initialize $args
 	
@@ -465,7 +466,7 @@ namespace eval RtWizard {
 	pack $::mgedObj \
 		-in $itk_component(mgedFrame) \
 		 -anchor e \
-		 -expand 0 
+		 -expand 1 -fill both 
 	#
 	# Create menus - use the singleton
 	#

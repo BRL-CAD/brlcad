@@ -145,7 +145,7 @@ namespace eval RtWizard {
 	#
 	# Pack the wizard
 	#
-	pack $w
+	pack $w -expand 1 -fill both
 	$fb inform "Megawidgets packed." 5
 
 	#

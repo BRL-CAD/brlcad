@@ -194,9 +194,9 @@ namespace eval RtWizard {
 	#
 	# Pack em!
 	#
-	pack $itk_component(menubar) -fill x -expand 1
+	pack $itk_component(menubar) -fill x
 	pack $itk_component(notebook) -fill both -expand 1 
-	pack $itk_component(helpThing) -fill x -expand 1
+	pack $itk_component(helpThing) -fill x
 	
 	set wizardInstance $this
     }
@@ -337,7 +337,7 @@ namespace eval RtWizard {
 	# Pack it!
 	#
 	pack $pageName \
-		-fill both
+		-fill both -expand 1
 	pack propagate $pageName
 	
 	set currentPageToken $token	
