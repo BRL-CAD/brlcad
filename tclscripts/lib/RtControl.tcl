@@ -68,12 +68,24 @@ class RtControl {
     private method update_control_panel {}
     private method menuStatusCB {w}
     private method leaveCB {}
+    private method enterAdvCB {}
+    private method enterOkCB {}
     private method enterRaytraceCB {}
+    private method enterAbortCB {}
+    private method enterClearCB {}
+    private method enterDismissCB {}
+    private method getPane {}
+    private method getPaneStr {}
+    private method getSize {}
 
     private variable fb_mode 0
     private variable raw_src ""
     private variable win_geom ""
     private variable win_geom_adv ""
+    private variable msg ""
+    private variable srcM
+    private variable destM
+    private variable sizeM
 
     constructor {args} {}
 }
@@ -114,15 +126,17 @@ body RtControl::constructor {args} {
     } {
 	usual
     }
-
-    itk_component add objM {
-	::menu $itk_component(menubar).obj -title "Objects"
-    } {
-	usual
-    }
+    bind $itk_component(fbM) <<MenuSelect>> [code $this menuStatusCB %W]
 
     $itk_component(menubar) add cascade -label "Framebuffer" -underline 0 -menu $itk_component(fbM)
+
     if {0} {
+	itk_component add objM {
+	    ::menu $itk_component(menubar).obj -title "Objects"
+	} {
+	    usual
+	}
+
 	$itk_component(menubar) add cascade -label "Objects" -underline 0 -menu $itk_component(objM)
     }
 
@@ -148,6 +162,8 @@ body RtControl::constructor {args} {
 	usual
 	rename -state -sourceState sourceState SourceState
     }
+    set srcM [$itk_component(srcCB) component menu]
+    bind $srcM <<MenuSelect>> [code $this menuStatusCB %W]
 
     # populate source's combobox menu
     $itk_component(srcCB) add command -label "Active Pane" \
@@ -173,6 +189,8 @@ body RtControl::constructor {args} {
     } {
 	usual
     }
+    set destM [$itk_component(destCB) component menu]
+    bind $destM <<MenuSelect>> [code $this menuStatusCB %W]
 
     # populate destination's combobox menu
     $itk_component(destCB) add command -label "Active Pane" \
@@ -200,6 +218,8 @@ body RtControl::constructor {args} {
     } {
 	usual
     }
+    set sizeM [$itk_component(sizeCB) component menu]
+    bind $sizeM <<MenuSelect>> [code $this menuStatusCB %W]
 
     # populate size's combobox
     $itk_component(sizeCB) add command -label "Size of Pane" \
@@ -235,6 +255,8 @@ body RtControl::constructor {args} {
     } {
 	usual
     }
+    bind $itk_component(advB) <Enter> [code $this enterAdvCB]
+    bind $itk_component(advB) <Leave> [code $this leaveCB]
 
     itk_component add okB {
 	::button $itk_interior.okB  -relief raised -text "Ok" \
@@ -242,6 +264,8 @@ body RtControl::constructor {args} {
     } {
 	usual
     }
+    bind $itk_component(okB) <Enter> [code $this enterOkCB]
+    bind $itk_component(okB) <Leave> [code $this leaveCB]
 
     itk_component add raytraceB {
 	::button $itk_interior.raytraceB  -relief raised -text "Raytrace" \
@@ -258,6 +282,8 @@ body RtControl::constructor {args} {
     } {
 	usual
     }
+    bind $itk_component(abortB) <Enter> [code $this enterAbortCB]
+    bind $itk_component(abortB) <Leave> [code $this leaveCB]
 
     itk_component add clearB {
 	::button $itk_interior.clearB  -relief raised -text "Clear" \
@@ -265,6 +291,8 @@ body RtControl::constructor {args} {
     } {
 	usual
     }
+    bind $itk_component(clearB) <Enter> [code $this enterClearCB]
+    bind $itk_component(clearB) <Leave> [code $this leaveCB]
 
     itk_component add dismissB {
 	::button $itk_interior.dismissB  -relief raised -text "Dismiss" \
@@ -272,9 +300,11 @@ body RtControl::constructor {args} {
     } {
 	usual
     }
+    bind $itk_component(dismissB) <Enter> [code $this enterDismissCB]
+    bind $itk_component(dismissB) <Leave> [code $this leaveCB]
 
     itk_component add statusL {
-	::label $itk_interior.statusL -anchor w -relief sunken -bd 2
+	::label $itk_interior.statusL -anchor w -relief sunken -bd 2 -textvar [scope msg]
     } {
 	usual
     }
@@ -713,22 +743,8 @@ itcl::body RtControl::cook_dest {dest} {
 }
 
 itcl::body RtControl::fb_mode {} {
-    if {[catch {$itk_option(-mged) isa Mged} result]} {
-	error "Raytrace Control Panel($this) is not associated with an Mged object"
-    }
-
-    switch -- $itk_option(-dest) {
-	ul -
-	ur -
-	ll -
-	lr {
-	    $itk_option(-mged) component $itk_option(-dest) fb_active $fb_mode
-	}
-	default {
-	    # Use the active pane
-	    $itk_option(-mged) fb_active $fb_mode
-	}
-    }
+    set pane [getPane]
+    $itk_option(-mged) component $pane fb_active $fb_mode
 }
 
 itcl::body RtControl::ok {} {
@@ -895,8 +911,91 @@ itcl::body RtControl::update_control_panel {} {
 }
 
 itcl::body RtControl::menuStatusCB {w} {
-    set op [$w entrycget active -label]
+    global myjunk
+
+    if {[catch {$w entrycget active -label} op]} {
+	# probably a tearoff entry
+	set op ""
+    }
+
     switch -- $op {
+	"Inactive" {
+	    if {[catch {getPaneStr} result]} {
+		set msg $result
+	    } else {
+		set msg "Make the $result framebuffer inactive"
+	    }
+	}
+	"Underlay" {
+	    if {[catch {getPaneStr} result]} {
+		set msg $result
+	    } else {
+		set msg "Put the $result framebuffer in underlay mode"
+	    }
+	}
+	"Overlay" {
+	    if {[catch {getPaneStr} result]} {
+		set msg $result
+	    } else {
+		set msg "Put the $result framebuffer in overlay mode"
+	    }
+	}
+	"Active Pane" {
+	    if {[catch {getPaneStr} result]} {
+		set msg $result
+	    } else {
+		if {$srcM == $w} {
+		    set msg "Make the $result pane the source"
+		} else {
+		    set msg "Make the $result pane the destination"
+		}
+	    }
+	}
+	"Upper Left" {
+	    if {$srcM == $w} {
+		set msg "Make the upper left pane the source"
+	    } else {
+		set msg "Make the upper left pane the destination"
+	    }
+	}
+	"Upper Right" {
+	    if {$srcM == $w} {
+		set msg "Make the upper right pane the source"
+	    } else {
+		set msg "Make the upper right pane the destination"
+	    }
+	}
+	"Lower Left" {
+	    if {$srcM == $w} {
+		set msg "Make the lower left pane the source"
+	    } else {
+		set msg "Make the lower left pane the destination"
+	    }
+	}
+	"Lower Right" {
+	    if {$srcM == $w} {
+		set msg "Make the lower right pane the source"
+	    } else {
+		set msg "Make the lower right pane the destination"
+	    }
+	}
+	"Size of Pane" {
+	    if {[catch {getSize} result]} {
+		set msg $result
+	    } else {
+		set msg "Make the image size $result"
+	    }
+	}
+	"128" -
+	"256" -
+	"512" -
+	"1024" {
+	    set msg "Make the image size ${op}x${op}"
+	}
+	"640x480" -
+	"720x486" {
+	    set msg "Make the image size $op"
+	}
 	default {
 	    set msg ""
 	}
@@ -904,21 +1003,134 @@ itcl::body RtControl::menuStatusCB {w} {
 }
 
 itcl::body RtControl::leaveCB {} {
-    $itk_component(statusL) configure -text ""
+    set msg ""
+}
+
+itcl::body RtControl::enterAdvCB {} {
+    set msg "Activate the advanced settings dialog"
 }
 
 itcl::body RtControl::enterOkCB {} {
     if {[catch {$itk_option(-mged) isa Mged} result]} {
-	$itk_component(statusL) configure -text "Not associated with an Mged object"
+	set msg "Not associated with an Mged object"
     } else {
-	$itk_component(statusL) configure -text "Raytrace [$itk_component(srcCB) getText]'s view into $itk_option(-dest)"
+	set msg "Raytrace [$itk_component(srcCB) getText]'s view into $itk_option(-dest) and dismiss"
     }
 }
 
 itcl::body RtControl::enterRaytraceCB {} {
     if {[catch {$itk_option(-mged) isa Mged} result]} {
-	$itk_component(statusL) configure -text "Not associated with an Mged object"
+	set msg "Not associated with an Mged object"
     } else {
-	$itk_component(statusL) configure -text "Raytrace [$itk_component(srcCB) getText]'s view into $itk_option(-dest)"
+	set msg "Raytrace [$itk_component(srcCB) getText]'s view into $itk_option(-dest)"
     }
+}
+
+itcl::body RtControl::enterAbortCB {} {
+    if {[catch {$itk_option(-mged) isa Mged} result]} {
+	set msg "Not associated with an Mged object"
+    } else {
+	set msg "Abort all raytraces started from [$itk_component(srcCB) getText]"
+    }
+}
+
+itcl::body RtControl::enterClearCB {} {
+    if {[catch {$itk_option(-mged) isa Mged} result]} {
+	set msg "Not associated with an Mged object"
+    } else {
+	set msg "Clear $itk_option(-dest) with the following color - $itk_option(-color)"
+    }
+}
+
+itcl::body RtControl::enterDismissCB {} {
+    set msg "Dismiss the raytrace control panel"
+}
+
+## - getPane
+#
+# Return a pane associated with $itk_option(-mged)
+# according to $itk_option(-dest).
+#
+# Note - if $itk_option(-dest) is not a pane (i.e. it's a
+#        file or some other framebuffer) then the active
+#        pane is returned.
+#
+itcl::body RtControl::getPane {} {
+    if {[catch {$itk_option(-mged) isa Mged}]} {
+	error "Not associated with an Mged object"
+    }
+
+    switch -- $itk_option(-dest) {
+	ul -
+	ur -
+	ll -
+	lr {
+	    return $itk_option(-dest)
+	}
+	default {
+	    # Use the active pane
+	    return [$itk_option(-mged) pane]
+	}
+    }
+}
+
+itcl::body RtControl::getPaneStr {} {
+    if {[catch {getPane} result]} {
+	return $result
+    }
+
+    switch -- $result {
+	ul {
+	    return "upper left"
+	}
+	ur {
+	    return "upper right"
+	}
+	ll {
+	    return "lower left"
+	}
+	lr {
+	    return "lower right"
+	}
+    }
+}
+
+## - getSize
+#
+#
+#
+itcl::body RtControl::getSize {} {
+    if {[catch {$itk_option(-mged) isa Mged} result]} {
+	error "Not associated with an Mged object"
+    }
+
+    # Try using the destination for obtaining the size.
+    switch -- $itk_option(-dest) {
+	ul -
+	ur -
+	ll -
+	lr {
+	    set size [$itk_option(-mged) component $itk_option(-dest) cget -dmsize]
+	    return "[lindex $size 0]x[lindex $size 1]"
+	}
+    }
+
+    # The destination could be a file or a framebuffer.
+    # We don't know what its size is so try to use the
+    # source pane for obtaining the size.
+    set pane [$itk_component(srcCB) getText]
+    switch -- $pane {
+	ul -
+	ur -
+	ll -
+	lr {
+	    set size [$itk_option(-mged) component $pane cget -dmsize]
+	    return "[lindex $size 0]x[lindex $size 1]"
+	}
+    }
+
+    # We failed to get the size using the destination and source panes.
+    # So, we use the active pane for obtaining the size.
+    set size [$itk_option(-mged) component [$itk_option(-mged) pane] cget -dmsize]
+    return "[lindex $size 0]x[lindex $size 1]"
 }
