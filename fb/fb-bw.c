@@ -42,18 +42,18 @@ int	scr_xoff, scr_yoff;
 char *file_name;
 FILE *outfp;
 
-/* XXX -r -g -b */
+/* XXX -R -G -B */
 char	usage[] = "\
 Usage: fb-bw [-h -i]\n\
-	[-x scr_xoff] [-y scr_yoff]\n\
-	[-s squaresize] [-W width] [-H height] [file.bw]\n";
+	[-X scr_xoff] [-Y scr_yoff]\n\
+	[-s squaresize] [-w width] [-n height] [file.bw]\n";
 
 get_args( argc, argv )
 register char **argv;
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "hix:y:s:W:H:" )) != EOF )  {
+	while ( (c = getopt( argc, argv, "hiX:Y:s:w:n:" )) != EOF )  {
 		switch( c )  {
 		case 'h':
 			/* high-res */
@@ -62,20 +62,20 @@ register char **argv;
 		case 'i':
 			inverse = 1;
 			break;
-		case 'x':
+		case 'X':
 			scr_xoff = atoi(optarg);
 			break;
-		case 'y':
+		case 'Y':
 			scr_yoff = atoi(optarg);
 			break;
 		case 's':
 			/* square size */
 			height = width = atoi(optarg);
 			break;
-		case 'W':
+		case 'w':
 			width = atoi(optarg);
 			break;
-		case 'H':
+		case 'n':
 			height = atoi(optarg);
 			break;
 

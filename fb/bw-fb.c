@@ -58,16 +58,16 @@ FBIO	*fbp;
 
 char	usage[] = "\
 Usage: bw-fb [-h -i -c -z -R -G -B]\n\
-	[-s squarefilesize] [-w file_width]\n\
+	[-s squarefilesize] [-w file_width] [-n file_height]\n\
 	[-x file_xoff] [-y file_yoff] [-X scr_xoff] [-Y scr_yoff]\n\
-	[-S squarescrsize] [-W scr_width] [-H scr_height] [file.bw]\n";
+	[-S squarescrsize] [-W scr_width] [-N scr_height] [file.bw]\n";
 
 get_args( argc, argv )
 register char **argv;
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "hiczRGBs:w:x:y:X:Y:S:W:H:" )) != EOF )  {
+	while ( (c = getopt( argc, argv, "hiczRGBs:w:n:x:y:X:Y:S:W:N:" )) != EOF )  {
 		switch( c )  {
 		case 'h':
 			/* high-res */
@@ -98,6 +98,9 @@ register char **argv;
 		case 'w':
 			file_width = atoi(optarg);
 			break;
+		case 'n':
+			file_height = atoi(optarg);
+			break;
 		case 'x':
 			file_xoff = atoi(optarg);
 			break;
@@ -116,7 +119,7 @@ register char **argv;
 		case 'W':
 			scr_width = atoi(optarg);
 			break;
-		case 'H':
+		case 'N':
 			scr_height = atoi(optarg);
 			break;
 
@@ -195,17 +198,25 @@ int argc; char **argv;
 		fb_wmap( fbp, COLORMAP_NULL );
 	}
 	/*
-	 * XXX - we use Xout in the Y values since we currently always
+	 * We use Xout in the Y values if file_height == INFIN since we
 	 * assume files have infinite height! (thus yout is always
 	 * scr_height-scr_yoff)
 	 */
 	if( zoom ) {
 		/* Zoom in, in the center of view */
-		fb_zoom( fbp, scr_width/xout, scr_height/xout );
-		if( inverse )
-			fb_window( fbp, scr_xoff+xout/2, scr_height-1-(scr_yoff+xout/2) );
-		else
-			fb_window( fbp, scr_xoff+xout/2, scr_yoff+xout/2 );
+		if( file_height == INFIN ) {
+			fb_zoom( fbp, scr_width/xout, scr_height/xout );
+			if( inverse )
+				fb_window( fbp, scr_xoff+xout/2, scr_height-1-(scr_yoff+xout/2) );
+			else
+				fb_window( fbp, scr_xoff+xout/2, scr_yoff+xout/2 );
+		} else {
+			fb_zoom( fbp, scr_width/xout, scr_height/yout );
+			if( inverse )
+				fb_window( fbp, scr_xoff+xout/2, scr_height-1-(scr_yoff+yout/2) );
+			else
+				fb_window( fbp, scr_xoff+xout/2, scr_yoff+yout/2 );
+		}
 	}
 
 	if( file_yoff != 0 ) skipbytes( infd, file_yoff*file_width );

@@ -69,7 +69,7 @@ char *file_name;
 FILE *infp;
 
 char	usage[] = "\
-Usage: bwfilter [-f<type>] [-v] [-d#] [-o#] [-W width]\n\
+Usage: bwfilter [-f<type>] [-v] [-d#] [-o#] [-w width]\n\
                 [file.bw] > file.bw\n";
 
 get_args( argc, argv )
@@ -77,7 +77,7 @@ register char **argv;
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "vf:d:o:W:" )) != EOF )  {
+	while ( (c = getopt( argc, argv, "vf:d:o:w:" )) != EOF )  {
 		switch( c )  {
 		case 'v':
 			verbose++;
@@ -93,7 +93,7 @@ register char **argv;
 			oflag++;
 			kernoffset = atoi(optarg);
 			break;
-		case 'W':
+		case 'w':
 			width = atoi(optarg);
 			break;
 
