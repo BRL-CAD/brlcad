@@ -56,6 +56,7 @@
 
 #ifndef lint
 static char sccsid[] = "@(#)if_X24.c version 1.19 (03 Nov 1994)";
+static char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 
 #include <stdio.h>
@@ -255,11 +256,11 @@ static struct modeflags {
 
 #define BS_NAME	"/tmp/X24_fb"
 
-double dtime()
+static double dtime()
 {
 	struct timeval tv;
 
-	gettimeofday(&tv);
+	gettimeofday(&tv, NULL);
 
 	return ((double) tv.tv_sec + (double) tv.tv_usec / 1000000.0);
 }
