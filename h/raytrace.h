@@ -134,13 +134,15 @@ union tree {
 	int	tr_op;		/* Operation */
 	struct tree_binary {
 		int		tb_op;		/* | OP_BINARY */
-		union tree	*tb_left;
-		union tree	*tb_right;
 		vect_t		tb_min;		/* subtree min pt of RPP */
 		vect_t		tb_max;		/* subtree max pt of RPP */
+		union tree	*tb_left;
+		union tree	*tb_right;
 	} tr_b;
 	struct tree_unary {
 		int		tu_op;		/* leaf, OP_SOLID */
+		vect_t		tu_min;		/* subtree min pt of RPP */
+		vect_t		tu_max;		/* subtree max pt of RPP */
 		struct soltab	*tu_stp;
 	} tr_a;
 };
@@ -167,8 +169,6 @@ struct region  {
 	short		reg_los;	/* equivalent LOS estimate ?? */
 	struct region	*reg_forw;	/* linked list of all regions */
 	struct region	*reg_active;	/* linked list of hit regions */
-	vect_t		reg_min;	/* min point, region RPP */
-	vect_t		reg_max;	/* max point, region RPP */
 };
 #define REGION_NULL	((struct region *)0)
 
@@ -183,9 +183,9 @@ struct region  {
 
 struct partition {
 	unsigned char	pt_solhit[NBINS];	/* marks for solids hit */
-	struct soltab	*pt_instp;		/* IN solid pointer */
+	struct seg	*pt_inseg;		/* IN seg ptr (gives stp) */
 	struct hit	*pt_inhit;		/* IN hit pointer */
-	struct soltab	*pt_outstp;		/* OUT solid pointer */
+	struct seg	*pt_outseg;		/* OUT seg pointer */
 	struct hit	*pt_outhit;		/* OUT hit ptr */
 	struct region	*pt_regionp;		/* ptr to containing region */
 	struct partition *pt_forw;		/* forwards link */
@@ -231,15 +231,23 @@ extern struct partition *FreePart;		 /* Head of freelist */
 
 /*
  *		A P P L I C A T I O N
+ *
+ * Note:  When calling shootray(), these fields are mandatory:
+ *	a_ray.r_pt	Starting point of ray to be fired
+ *	a_ray.r_dir	UNIT VECTOR with direction to fire in (dir cosines)
+ *	a_hit		Routine to call when something is hit
+ *	a_miss		Routine to call when ray misses everything
+ *
+ * Also note that shootray() returns the return of a_hit/a_miss().
  */
 struct application  {
 	/* THESE ELEMENTS ARE MANDATORY */
 	struct xray a_ray;	/* Actual ray to be shot */
 	int	(*a_hit)();	/* routine to call when shot hits model */
 	int	(*a_miss)();	/* routine to call when shot misses */
+	/* THE FOLLOWING ROUTINES ARE MAINLINE & APPLICATION SPECIFIC */
 	int	a_x;		/* Screen X of ray, where applicable */
 	int	a_y;		/* Screen Y of ray, where applicable */
-	/* THE FOLLOWING ROUTINES ARE MAINLINE & APPLICATION SPECIFIC */
 	int	a_user;		/* application-specific value */
 	int	(*a_init)();	/* routine to init application */
 	int	(*a_eol)();	/* routine for end of scan-line */
@@ -257,17 +265,20 @@ extern long nregions;		/* total # of regions participating */
 extern long nshots;		/* # of ray-meets-solid "shots" */
 extern long nmiss;		/* # of ray-misses-solid's-sphere "shots" */
 extern struct soltab *HeadSolid;/* pointer to list of solids in model */
+extern vect_t model_min;	/* min corner of model bounding RPP */
+extern vect_t model_max;	/* max corner of model bounding RPP */
 
 /*
  *  Global routines to interface with the RT library.
  */
 extern void get_tree();			/* Get expr tree for object */
-extern void shootray();			/* Shoot a ray */
+extern int shootray();			/* Shoot a ray */
 extern void rtbomb();			/* Exit with error message */
 extern void timer_prep();		/* Start the timer */
 extern double timer_print();		/* Stop timer, print, return time */
 extern void dir_build();		/* Read named GED db, build toc */
-extern void pr_seg();				/* Print seg struct */
+extern void pr_seg();			/* Print seg struct */
+extern void pr_partitions();		/* Print the partitions */
 
 /* The matrix math routines */
 extern void mat_zero(), mat_idn(), mat_copy(), mat_mul(), matXvec();
