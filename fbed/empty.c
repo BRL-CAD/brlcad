@@ -1,7 +1,7 @@
 /*
-	SCCS id:	@(#) empty.c	2.2
-	Modified: 	12/29/86 at 11:20:00
-	Retrieved: 	12/30/86 at 17:01:32
+	SCCS id:	@(#) empty.c	2.3
+	Modified: 	1/5/87 at 16:52:54
+	Retrieved: 	1/5/87 at 16:58:01
 	SCCS archive:	/vld/moss/src/fbed/s.empty.c
 
 	Author:		Gary S. Moss
@@ -12,7 +12,7 @@
 */
 #if ! defined( lint )
 static
-char	sccsTag[] = "@(#) empty.c 2.2, modified 12/29/86 at 11:20:00, archive /vld/moss/src/fbed/s.empty.c";
+char	sccsTag[] = "@(#) empty.c 2.3, modified 1/5/87 at 16:52:54, archive /vld/moss/src/fbed/s.empty.c";
 #endif
 #ifdef BSD
 #include <sys/types.h>
@@ -36,7 +36,6 @@ struct timeval
 #include "fb.h"
 #endif sgi
 #endif VLDSYSV
-/* Not a chance */
 #endif SYSV
 
 #ifndef FD_ZERO
@@ -58,10 +57,7 @@ int	fd;
 #ifdef sgi
 		extern FBIO	*fbp;
 	if( fbp != FBIO_NULL && strncmp( fbp->if_name, "/dev/sgi", 8 ) == 0 )
-		{	
-		winattach();
-		return	! qtest();
-		}
+		return	sgi_Empty();
 	else
 #endif
 		{	static struct timeval	timeout = { 0L, 600L };
