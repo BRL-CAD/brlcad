@@ -26,7 +26,7 @@
 typedef	fastf_t	mat_t[4*4];
 typedef	fastf_t	*matp_t;
 
-#define ELEMENTS_PER_VECT	4	/* # of fastf_t's per [xyz] */
+#define ELEMENTS_PER_VECT	4	/* # of fastf_t's per [xyzw] */
 #define ELEMENTS_PER_PT         4
 
 typedef	fastf_t	vect_t[ELEMENTS_PER_VECT];
@@ -53,6 +53,9 @@ typedef fastf_t	*pointp_t;
 #define VSET(a,b,c,d)	(a)[0] = (b);\
 			(a)[1] = (c);\
 			(a)[2] = (d)
+
+/* Set all elements of vector to same scalar value */
+#define VSETALL(a,s)	(a)[0] = (a)[1] = (a)[2] = (s);
 
 /* Transfer vector at `b' to vector at `a' */
 #define VMOVE(a,b)	(a)[0] = (b)[0];\
@@ -125,8 +128,8 @@ extern double sqrt();
 #define VDOT(a,b)	( (a)[0]*(b)[0] + (a)[1]*(b)[1] + (a)[2]*(b)[2] )
 
 /* Print vector name and components on stdout */
-#define VPRINT(a,b)	(void)fprintf(stderr,"%s (%f, %f, %f)\n", a, (b)[0], (b)[1], (b)[2])
-#define HPRINT(a,b)	(void)fprintf(stderr,"%s (%f, %f, %f, %f)\n", a, (b)[0], (b)[1], (b)[2], (b)[3])
+#define VPRINT(a,b)	(void)fprintf(stderr,"%s (%g, %g, %g)\n", a, (b)[0], (b)[1], (b)[2])
+#define HPRINT(a,b)	(void)fprintf(stderr,"%s (%g, %g, %g, %g)\n", a, (b)[0], (b)[1], (b)[2], (b)[3])
 
 /* Vector element multiplication.  Really: diagonal matrix X vect */
 #define VELMUL(a,b,c) \
@@ -203,5 +206,12 @@ extern double sqrt();
 
 /* Compare two vectors for EXACT equality.  Use carefully. */
 #define VEQUAL(a,b)	((a)[X]==(b)[X] && (a)[Y]==(b)[Y] && (a)[Z]==(b)[Z])
+
+/* Macros to update min and max X,Y,Z values to contain a point */
+#define V_MIN(r,s)	if( (r) > (s) ) r = (s)
+#define V_MAX(r,s)	if( (r) < (s) ) r = (s)
+#define VMIN(r,s)	{ V_MIN(r[X],s[X]); V_MIN(r[Y],s[Y]); V_MIN(r[Z],s[Z]); }
+#define VMAX(r,s)	{ V_MAX(r[X],s[X]); V_MAX(r[Y],s[Y]); V_MAX(r[Z],s[Z]); }
+#define VMINMAX( min, max, pt )	{ VMIN( min, pt ); VMAX( max, pt ); }
 
 #endif VMATH_H
