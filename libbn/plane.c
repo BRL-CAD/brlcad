@@ -1393,8 +1393,8 @@ CONST struct rt_tol	*tol;
 		VJOIN1( hit1, p, *t, d );
 		VJOIN1( hit2, a, *u, c );
 		if( !rt_pt3_pt3_equal( hit1, hit2, tol ) )  {
-			rt_log("rt_isect_line3_line3(): BOGUS RESULT, hit1=(%g,%g,%g), hit2=(%g,%g,%g)\n",
-				hit1[X], hit1[Y], hit1[Z], hit2[X], hit2[Y], hit2[Z]);
+/*			rt_log("rt_isect_line3_line3(): BOGUS RESULT, hit1=(%g,%g,%g), hit2=(%g,%g,%g)\n",
+				hit1[X], hit1[Y], hit1[Z], hit2[X], hit2[Y], hit2[Z]); */
 			return -1;
 		}
 	}
