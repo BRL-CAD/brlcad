@@ -20,10 +20,16 @@
  * The following is necessary because SGI's <sys/dsreq.h> won't pass the
  * -ansiposix flag on their own compiler under Irix 4.0.1 or 5.  Sigh.
  */
-#if defined(__CAKE__irix4) || defined(__CAKE__irix5)
+#if defined(__CAKE__irix4)
 # undef CFLAGS
-# define CFLAGS -O -I../h
+# define CFLAGS -O -DIRIX=4 -I../h
 #endif
+
+#if defined(__CAKE__irix5)
+# undef CFLAGS
+# define CFLAGS -O -I../h -DIRIX=5
+#endif
+
 
 #include "../Cakefile.prog"
 /* Explicit composition of each product */
