@@ -45,7 +45,8 @@ int _fb_disk_enable = 1;
  *
  *  Filler for FBIO function slots not used by a particular device
  */
-int fb_null()
+int fb_null(ifp)
+FBIO *ifp;
 {
 	return	0;
 }
