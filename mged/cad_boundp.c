@@ -28,7 +28,7 @@
  *	This should cut Chop() from order N ^ 2 to N * log( N ).
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static const char RCSid[] = "@(#)$Header$ (BRL)";
 static char	sccsid[] = "@(#)cad_boundp.c	1.13";
 #endif
 

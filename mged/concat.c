@@ -19,7 +19,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSconcat[] = "@(#)$Header$ (BRL)";
+static const char RCSconcat[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"

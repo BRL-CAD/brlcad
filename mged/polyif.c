@@ -15,7 +15,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSpolyif[] = "@(#)$Header$ (BRL)";
+static const char RCSpolyif[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"
