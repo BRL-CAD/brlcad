@@ -139,9 +139,19 @@ struct iges_functab iges_write[ID_MAXIMUM+1]={
 	nmg_to_iges,	/* ID_PIPE */
 	null_to_iges,	/* ID_PARTICLE */
 	null_to_iges,	/* ID_RPC */
+	null_to_iges,	/* ID_RHC */
 	null_to_iges,	/* ID_EPA */
 	null_to_iges,	/* ID_EHY */
 	null_to_iges,	/* ID_ETO */
+	null_to_iges,	/* ID_GRIP */
+	null_to_iges,	/* ID_JOINT */
+	nmg_to_iges,	/* ID_HF */
+	nmg_to_iges,	/* ID_DSP */
+	null_to_iges,	/* ID_SKETCH */
+	nmg_to_iges,	/* ID_EXTRUDE */
+	null_to_iges,	/* ID_SUBMODEL */
+	nmg_to_iges,	/* ID_CLINE */
+	nmg_to_iges	/* ID_BOT */
 };
 
 static int	regions_tried = 0;
