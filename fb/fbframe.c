@@ -45,7 +45,8 @@ char **argv;
 		xsize = ysize = 1024;
 	else
 		xsize = ysize = 512;
-	fbp = fb_open( NULL, xsize, ysize );
+	if( (fbp = fb_open( NULL, xsize, ysize )) == FBIO_NULL )
+		exit( 1 );
 
 	/*
 	 * Red:		(   0 -> 510,   0	 )
