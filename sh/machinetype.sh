@@ -21,8 +21,7 @@
 #	-s	Print only system type, BRL style: (BSD, SYSV)
 #	-a	Print only system type, ATT style: (BSD, ATT)
 #	-n	Print only HAS_TCP variable
-#	-v	Print all, in verbose human form
-#	-b	Print all, in Bourne-Shell legible form
+#	-b -v	Print all, in Bourne-Shell legible form
 #
 # Info note:  On a VAX-11/780, this script takes about 1.3 CPU seconds to run
 #
@@ -41,6 +40,7 @@ trap '/bin/rm -f ${FILE}; exit 1' 1 2 3 15	# Clean up temp file
 	MACHINE=vax;
 	UNIXTYPE=BSD;
 	HAS_TCP=1;
+	HAS_SYMLINKS=1;
 #endif
 
 #ifdef alliant
@@ -48,6 +48,7 @@ trap '/bin/rm -f ${FILE}; exit 1' 1 2 3 15	# Clean up temp file
 	MACHINE=fx;
 	UNIXTYPE=BSD;
 	HAS_TCP=1;
+	HAS_SYMLINKS=1;
 #endif
 
 #ifdef gould
@@ -55,6 +56,7 @@ trap '/bin/rm -f ${FILE}; exit 1' 1 2 3 15	# Clean up temp file
 	MACHINE=sel;
 	UNIXTYPE=BSD;
 	HAS_TCP=1;
+	HAS_SYMLINKS=1;
 #endif
 
 #if defined(sgi) && !defined(mips)
@@ -63,21 +65,16 @@ trap '/bin/rm -f ${FILE}; exit 1' 1 2 3 15	# Clean up temp file
 	MACHINE=3d;
 	UNIXTYPE=SYSV;
 	HAS_TCP=1;
+	HAS_SYMLINKS=1;
 #endif
 
 #if defined(sgi) && defined(mips)
 /*	Silicon Graphics 4D, which uses the MIPS chip */
-/*	There are three configurations which are supported:
- *	1)  [4d] non-GT hw on SGI sw Release 2
- *	2)  [4d] non-GT hw on SGI sw Release 3.1
- *	3)  [4gt] 4D-GT hw on SGI sw Release 3.1
- *	determining the difference is done partly at compile time,
- *	and partly now.
- */
 #	undef	sgi
 	MACHINE=4d;
 	UNIXTYPE=SYSV;
 	HAS_TCP=1;
+	HAS_SYMLINKS=1;
 #endif
 
 #if defined(sun) && !defined(sparc)
@@ -86,6 +83,7 @@ trap '/bin/rm -f ${FILE}; exit 1' 1 2 3 15	# Clean up temp file
 	MACHINE=sun3;
 	UNIXTYPE=BSD;
 	HAS_TCP=1;
+	HAS_SYMLINKS=1;
 #endif
 
 #if defined(sparc)
@@ -94,6 +92,7 @@ trap '/bin/rm -f ${FILE}; exit 1' 1 2 3 15	# Clean up temp file
 	MACHINE=sun4;
 	UNIXTYPE=BSD;
 	HAS_TCP=1;
+	HAS_SYMLINKS=1;
 #endif
 
 #if defined(CRAY1)
@@ -102,6 +101,7 @@ trap '/bin/rm -f ${FILE}; exit 1' 1 2 3 15	# Clean up temp file
 	MACHINE=xmp;
 	UNIXTYPE=SYSV;
 	HAS_TCP=1;
+	HAS_SYMLINKS=0;
 #endif
 
 #if defined(CRAY2)
@@ -109,6 +109,7 @@ trap '/bin/rm -f ${FILE}; exit 1' 1 2 3 15	# Clean up temp file
 	MACHINE=cr2;
 	UNIXTYPE=SYSV;
 	HAS_TCP=1;
+	HAS_SYMLINKS=0;
 #endif
 
 #ifdef convex
@@ -116,6 +117,7 @@ trap '/bin/rm -f ${FILE}; exit 1' 1 2 3 15	# Clean up temp file
 	MACHINE=c1;
 	UNIXTYPE=BSD;
 	HAS_TCP=1;
+	HAS_SYMLINKS=1;
 #endif
 
 #ifdef ardent
@@ -124,6 +126,7 @@ trap '/bin/rm -f ${FILE}; exit 1' 1 2 3 15	# Clean up temp file
 	MACHINE=ard;
 	UNIXTYPE=SYSV;
 	HAS_TCP=0;
+	HAS_SYMLINKS=1;
 #endif
 
 #ifdef stellar
@@ -132,6 +135,7 @@ trap '/bin/rm -f ${FILE}; exit 1' 1 2 3 15	# Clean up temp file
 	MACHINE=stl;
 	UNIXTYPE=SYSV;
 	HAS_TCP=0;
+	HAS_SYMLINKS=0;
 #endif
 
 #ifdef eta10
@@ -141,13 +145,15 @@ trap '/bin/rm -f ${FILE}; exit 1' 1 2 3 15	# Clean up temp file
 	MACHINE=eta;
 	UNIXTYPE=SYSV;
 	HAS_TCP=0;
+	HAS_SYMLINKS=0;
 #endif
 
 #ifdef pyramid
 #	undef	pyr
 	MACHINE=pyr;
 	UNIXTYPE=BSD;	# Pyramid can be dual-environment, assume BSD
-	HAS_TCP=1;
+	HAS_TCP=0;
+	HAS_SYMLINKS=1;
 #endif
 
 EOF
@@ -214,11 +220,8 @@ x-a)
 	else	echo ATT
 	fi
 	exit 0;;
-x-v)
-	echo MACHINE = ${MACHINE}, UNIXTYPE = ${UNIXTYPE}, HAS_TCP = ${HAS_TCP}
-	exit 0;;
-x-b)
-	echo "MACHINE=${MACHINE}; UNIXTYPE=${UNIXTYPE}; HAS_TCP=${HAS_TCP}"
+x-v|x-b)
+	echo "MACHINE=${MACHINE}; UNIXTYPE=${UNIXTYPE}; HAS_TCP=${HAS_TCP}; HAS_SYMLINKS=${HAS_SYMLINKS}"
 	exit 0;;
 *)
 	echo "$0:  Unknown argument $1" 1>&2; break;;
