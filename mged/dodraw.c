@@ -1339,6 +1339,8 @@ char	**argv;
 	/* New region remains part of this nmg "model" */
 	NMG_CK_REGION( r );
 
+	nmg_vmodel( mged_nmg_model );
+
 	/* Free boolean tree */
 	db_free_tree( tmp_tree );
 
