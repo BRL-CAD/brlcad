@@ -80,12 +80,35 @@ register int sz;
 }
 
 /*
+ *  Macro 'F' is used to take the 'C' function name,
+ *  and convert it to the convention used for a particular system.
+ *  Both lower-case and upper-case alternatives have to be provided
+ *  because there is no way to get the C preprocessor to change the
+ *  case of a token.
+ */
+#if CRAY
+#	define	F(lc,uc)	uc
+#endif
+#if apollo
+	/* Lower case, with a trailing underscore */
+#	define	F(lc,uc)	lc/**/_
+#endif
+#if !defined(F)
+#	define	F(lc,uc)	lc
+#endif
+
+/*
  *  These interfaces provide necessary access to C library routines
  *  from the FORTRAN environment
  */
 
+/*
+ *			I F D O P E
+ *
+ *  Open a file descriptor for plotting.
+ */
 void
-IFDOPN( plotfp, fd )
+F(ifdopn,IFDOPN)( plotfp, fd )
 FILE	**plotfp;
 int	*fd;
 {
@@ -93,8 +116,13 @@ int	*fd;
 		perror("IFDOPN/fdopen");
 }
 
+/*
+ *			I F O P E N
+ *
+ *  Open a file (by name) for plotting.
+ */
 void
-IFOPEN( plotfp, name )
+F(ifopen,IFOPEN)( plotfp, name )
 FILE	**plotfp;
 char	*name;
 {
@@ -110,7 +138,7 @@ char	*name;
  */
 
 void
-I2PNT( plotfp, x, y )
+F(i2pnt,I2PNT)( plotfp, x, y )
 FILE	**plotfp;
 int	*x, *y;
 {
@@ -118,7 +146,7 @@ int	*x, *y;
 }
 
 void
-I2LINE( plotfp, x1, y1, x2, y2 )
+F(i2line,I2LINE)( plotfp, x1, y1, x2, y2 )
 FILE	**plotfp;
 int	*x1, *y1, *x2, *y2;
 {
@@ -126,7 +154,7 @@ int	*x1, *y1, *x2, *y2;
 }
 
 void
-ILINMD( plotfp, s )
+F(ilinmd,ILINMD)( plotfp, s )
 FILE	**plotfp;
 char *s;
 {
@@ -136,7 +164,7 @@ char *s;
 }
 
 void
-I2MOVE( plotfp, x, y )
+F(i2move,I2MOVE)( plotfp, x, y )
 FILE	**plotfp;
 int	*x, *y;
 {
@@ -144,7 +172,7 @@ int	*x, *y;
 }
 
 void
-I2CONT( plotfp, x, y )
+F(i2cont,I2CONT)( plotfp, x, y )
 FILE	**plotfp;
 int	*x, *y;
 {
@@ -152,7 +180,7 @@ int	*x, *y;
 }
 
 void
-I2LABL( plotfp, s )
+F(i2labl,I2LABL)( plotfp, s )
 FILE	**plotfp;
 char *s;
 {
@@ -162,7 +190,7 @@ char *s;
 }
 
 void
-I2SPAC( plotfp, x1, y1, x2, y2 )
+F(i2spac,I2SPAC)( plotfp, x1, y1, x2, y2 )
 FILE	**plotfp;
 int	*x1, *y1, *x2, *y2;
 {
@@ -170,14 +198,14 @@ int	*x1, *y1, *x2, *y2;
 }
 
 void
-IERASE( plotfp )
+F(ierase,IERASE)( plotfp )
 FILE	**plotfp;
 {
 	pl_erase( *plotfp );
 }
 
 void
-I2CIRC( plotfp, x, y, r )
+F(i2circ,I2CIRC)( plotfp, x, y, r )
 FILE	**plotfp;
 int	*x, *y, *r;
 {
@@ -185,7 +213,7 @@ int	*x, *y, *r;
 }
 
 void
-I2ARC( plotfp, xc, yc, x1, y1, x2, y2 )
+F(i2arc,I2ARC)( plotfp, xc, yc, x1, y1, x2, y2 )
 FILE	**plotfp;
 int	*xc, *yc, *x1, *y1, *x2, *y2;
 {
@@ -193,7 +221,7 @@ int	*xc, *yc, *x1, *y1, *x2, *y2;
 }
 
 void
-I2BOX( plotfp, x1, y1, x2, y2 )
+F(i2box,I2BOX)( plotfp, x1, y1, x2, y2 )
 FILE	**plotfp;
 int	*x1, *y1, *x2, *y2;
 {
@@ -206,7 +234,7 @@ int	*x1, *y1, *x2, *y2;
 
 /* Warning: r, g, b are ints.  The output is chars. */
 void
-ICOLOR( plotfp, r, g, b )
+F(icolor,ICOLOR)( plotfp, r, g, b )
 FILE	**plotfp;
 int	*r, *g, *b;
 {
@@ -214,14 +242,14 @@ int	*r, *g, *b;
 }
 
 void
-IFLUSH( plotfp )
+F(iflush,IFLUSH)( plotfp )
 FILE	**plotfp;
 {
 	pl_flush( *plotfp );
 }
 
 void
-I3SPAC( plotfp, x1, y1, z1, x2, y2, z2 )
+F(i3spac,I3SPAC)( plotfp, x1, y1, z1, x2, y2, z2 )
 FILE	**plotfp;
 int	*x1, *y1, *z1, *x2, *y2, *z2;
 {
@@ -229,7 +257,7 @@ int	*x1, *y1, *z1, *x2, *y2, *z2;
 }
 
 void
-I3PNT( plotfp, x, y, z )
+F(i3pnt,I3PNT)( plotfp, x, y, z )
 FILE	**plotfp;
 int	*x, *y, *z;
 {
@@ -238,7 +266,7 @@ int	*x, *y, *z;
 }
 
 void
-I3MOVE( plotfp, x, y, z )
+F(i3move,I3MOVE)( plotfp, x, y, z )
 FILE	**plotfp;
 int	*x, *y, *z;
 {
@@ -246,7 +274,7 @@ int	*x, *y, *z;
 }
 
 void
-I3CONT( plotfp, x, y, z )
+F(i3cont,I3CONT)( plotfp, x, y, z )
 FILE	**plotfp;
 int	*x, *y, *z;
 {
@@ -254,7 +282,7 @@ int	*x, *y, *z;
 }
 
 void
-I3LINE( plotfp, x1, y1, z1, x2, y2, z2 )
+F(i3line,I3LINE)( plotfp, x1, y1, z1, x2, y2, z2 )
 FILE	**plotfp;
 int	*x1, *y1, *z1, *x2, *y2, *z2;
 {
@@ -262,7 +290,7 @@ int	*x1, *y1, *z1, *x2, *y2, *z2;
 }
 
 void
-I3BOX( plotfp, x1, y1, z1, x2, y2, z2 )
+F(i3box,I3BOX)( plotfp, x1, y1, z1, x2, y2, z2 )
 FILE	**plotfp;
 int	*x1, *y1, *z1, *x2, *y2, *z2;
 {
@@ -276,7 +304,7 @@ int	*x1, *y1, *z1, *x2, *y2, *z2;
  */
 
 void
-F2PNT( plotfp, x, y )
+F(f2pnt,F2PNT)( plotfp, x, y )
 FILE	**plotfp;
 float	*x, *y;
 {
@@ -284,7 +312,7 @@ float	*x, *y;
 }
 
 void
-F2LINE( plotfp, x1, y1, x2, y2 )
+F(f2line,F2LINE)( plotfp, x1, y1, x2, y2 )
 FILE	**plotfp;
 float	*x1, *y1, *x2, *y2;
 {
@@ -292,7 +320,7 @@ float	*x1, *y1, *x2, *y2;
 }
 
 void
-F2MOVE( plotfp, x, y )
+F(f2move,F2MOVE)( plotfp, x, y )
 FILE	**plotfp;
 float	*x, *y;
 {
@@ -300,7 +328,7 @@ float	*x, *y;
 }
 
 void
-F2CONT( plotfp, x, y )
+F(f2cont,F2CONT)( plotfp, x, y )
 FILE	**plotfp;
 float	*x, *y;
 {
@@ -308,7 +336,7 @@ float	*x, *y;
 }
 
 void
-F2SPAC( plotfp, x1, y1, x2, y2 )
+F(f2spac,F2SPAC)( plotfp, x1, y1, x2, y2 )
 FILE	**plotfp;
 float	*x1, *y1, *x2, *y2;
 {
@@ -316,7 +344,7 @@ float	*x1, *y1, *x2, *y2;
 }
 
 void
-F2CIRC( plotfp, x, y, r )
+F(f2circ,F2CIRC)( plotfp, x, y, r )
 FILE	**plotfp;
 float	*x, *y, *r;
 {
@@ -324,7 +352,7 @@ float	*x, *y, *r;
 }
 
 void
-F2ARC( plotfp, xc, yc, x1, y1, x2, y2 )
+F(f2arc,F2ARC)( plotfp, xc, yc, x1, y1, x2, y2 )
 FILE	**plotfp;
 float	*xc, *yc, *x1, *y1, *x2, *y2;
 {
@@ -332,7 +360,7 @@ float	*xc, *yc, *x1, *y1, *x2, *y2;
 }
 
 void
-F2BOX( plotfp, x1, y1, x2, y2 )
+F(f2box,F2BOX)( plotfp, x1, y1, x2, y2 )
 FILE	**plotfp;
 float	*x1, *y1, *x2, *y2;
 {
@@ -345,7 +373,7 @@ float	*x1, *y1, *x2, *y2;
  */
 
 void
-A3SPAC( plotfp, min, max )
+F(a2spac,A3SPAC)( plotfp, min, max )
 FILE	**plotfp;
 float	min[3];
 float	max[3];
@@ -354,7 +382,7 @@ float	max[3];
 }
 
 void
-F3SPAC( plotfp, x1, y1, z1, x2, y2, z2 )
+F(f3spac,F3SPAC)( plotfp, x1, y1, z1, x2, y2, z2 )
 FILE	**plotfp;
 float	*x1, *y1, *z1, *x2, *y2, *z2;
 {
@@ -362,7 +390,7 @@ float	*x1, *y1, *z1, *x2, *y2, *z2;
 }
 
 void
-A3PNT( plotfp, pt )
+F(a3pnt,A3PNT)( plotfp, pt )
 FILE	**plotfp;
 float	pt[3];
 {
@@ -370,7 +398,7 @@ float	pt[3];
 }
 
 void
-F3PNT( plotfp, x, y, z )
+F(f3pnt,F3PNT)( plotfp, x, y, z )
 FILE	**plotfp;
 float	*x, *y, *z;
 {
@@ -378,7 +406,7 @@ float	*x, *y, *z;
 }
 
 void
-A3MOVE( plotfp, pt )
+F(a3move,A3MOVE)( plotfp, pt )
 FILE	**plotfp;
 float	pt[3];
 {
@@ -386,7 +414,7 @@ float	pt[3];
 }
 
 void
-F3MOVE( plotfp, x, y, z )
+F(f3move,F3MOVE)( plotfp, x, y, z )
 FILE	**plotfp;
 float	*x, *y, *z;
 {
@@ -394,7 +422,7 @@ float	*x, *y, *z;
 }
 
 void
-A3CONT( plotfp, pt )
+F(a3cont,A3CONT)( plotfp, pt )
 FILE	**plotfp;
 float	pt[3];
 {
@@ -402,7 +430,7 @@ float	pt[3];
 }
 
 void
-F3CONT( plotfp, x, y, z )
+F(f3cont,F3CONT)( plotfp, x, y, z )
 FILE	**plotfp;
 float	*x, *y, *z;
 {
@@ -410,7 +438,7 @@ float	*x, *y, *z;
 }
 
 void
-A3LINE( plotfp, a, b )
+F(a3line,A3LINE)( plotfp, a, b )
 FILE	**plotfp;
 float	a[3], b[3];
 {
@@ -418,7 +446,7 @@ float	a[3], b[3];
 }
 
 void
-F3LINE( plotfp, x1, y1, z1, x2, y2, z2 )
+F(f3line,F3LINE)( plotfp, x1, y1, z1, x2, y2, z2 )
 FILE	**plotfp;
 float	*x1, *y1, *z1, *x2, *y2, *z2;
 {
@@ -426,7 +454,7 @@ float	*x1, *y1, *z1, *x2, *y2, *z2;
 }
 
 void
-A3BOX( plotfp, a, b )
+F(a3box,A3BOX)( plotfp, a, b )
 FILE	**plotfp;
 float	a[3], b[3];
 {
@@ -434,7 +462,7 @@ float	a[3], b[3];
 }
 
 void
-F3BOX( plotfp, x1, y1, z1, x2, y2, z2 )
+F(f3box,F3BOX)( plotfp, x1, y1, z1, x2, y2, z2 )
 FILE	**plotfp;
 float	*x1, *y1, *z1, *x2, *y2, *z2;
 {
