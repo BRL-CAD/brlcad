@@ -32,6 +32,8 @@ struct sgttyb user, vtty;
 #define VAS_PORT	"/dev/vas"
 #define BAUD		B300
 
+void	vas_response();
+
 int vas_fd;
 extern int debug;
 
@@ -40,7 +42,7 @@ extern int debug;
  *
  *	return a file descriptor of NULL on error
  */
-
+void
 vas_open()
 {
 
@@ -65,6 +67,7 @@ vas_open()
  *  vas_putc() routine.  Useful mostly for the 'V' (get_vtr_status)
  *  command, and the 'A' (send current activity) commands.
  */
+int
 vas_rawputc(c)
 char c;
 {
@@ -77,7 +80,7 @@ char c;
 		/* Error recovery?? */
 	}
 	if(debug) fprintf(stderr,"vas_rawputc 0%o '%c'\n",c,c);
-
+	return(got);
 }
 
 /*
@@ -88,6 +91,7 @@ char c;
  *  or for an "activity state" character,
  *  else retransmit.
  */
+int
 vas_putc(c)
 char c;
 {
@@ -130,6 +134,7 @@ reread:
  *
  *  Output a null terminated string to the VAS.
  */
+void
 vas_puts(s)
 char *s;
 {
@@ -143,6 +148,7 @@ char *s;
  *
  *  Output a number in decimal to the VAS.
  */
+void
 vas_putnum(n)
 int	n;
 {
@@ -158,6 +164,7 @@ int	n;
  *
  * Read a single character from the VAS, return EOF on error
  */
+int
 vas_getc()
 {
 	char c;
@@ -172,6 +179,7 @@ vas_getc()
 /*
  *			V A S _ C L O S E
  */
+void
 vas_close()
 {
 	close(vas_fd);
@@ -189,6 +197,7 @@ vas_close()
  *	0	all is well
  *	-1	failure
  */
+int
 vas_await(c, sec)
 int	c;
 int	sec;
@@ -212,6 +221,7 @@ int	sec;
  *  This may not work in all cases (such as a multi-character response),
  *  but certainly beats looking at single-character codes.
  */
+void
 vas_response(c)
 char	c;
 {

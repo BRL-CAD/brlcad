@@ -29,7 +29,7 @@
 #define CBARS_TIME	10		/* Normal */
 /*#define CBARS_TIME	2		/* Testing mode */
 
-
+void
 record_seq(number_of_images, number_of_frames, start_seq_number)
 int number_of_images, number_of_frames;
 int start_seq_number;

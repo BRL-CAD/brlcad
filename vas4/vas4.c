@@ -27,6 +27,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 int	debug;
 
+void	usage(), usage_new(), usage_record(), usage_seq();
+void	program_recording(), record_add_to_scene(), do_record();
+void	get_tape_position();
+
 /*
  *			M A I N
  */
@@ -69,7 +73,7 @@ char **argv;
 		vas_open();
 		(void)get_vas_status();
 		(void)get_vtr_status(1);
-		(void)get_tape_position();
+		get_tape_position();
 		(void)get_frame_code();
 		goto done;
 	}
@@ -216,6 +220,7 @@ done:
 	exit(exit_code);
 }
 
+void
 usage()
 {
 	fprintf(stderr,"Usage: vas4 [-d] keyword [options]\n");
@@ -235,6 +240,7 @@ usage()
 	exit(1);
 }
 
+void
 usage_new()
 {
 	fprintf(stderr,"Usage: vas4 new [sn]\n");
@@ -242,6 +248,7 @@ usage_new()
 	exit(1);
 }
 
+void
 usage_record()
 {
 	fprintf(stderr,"Usage: vas4 record [nf]\n");
@@ -249,6 +256,7 @@ usage_record()
 	exit(1);
 }
 
+void
 usage_seq()
 {
 	fprintf(stderr,"Usage: vas4 sequence [n nf] [start]\n");
@@ -263,6 +271,7 @@ usage_seq()
 /*
  *			P R O G R A M _ R E C O R D I N G
  */
+void
 program_recording(new, scene_number, start_frame)
 int	new;
 int	scene_number;
@@ -315,6 +324,7 @@ int	start_frame;
 /*
  *			R E C O R D _ A D D _ T O _ S C E N E
  */
+void
 record_add_to_scene(number_of_frames)
 int number_of_frames;
 {
@@ -347,6 +357,7 @@ int number_of_frames;
  *  experience so far has been with frame-load time much greater than
  *  the tape backspace time.
  */
+void
 do_record(wait)
 {
 	register int c;
@@ -392,6 +403,7 @@ do_record(wait)
  *
  *  It is unclear what modes this is safe in
  */
+int
 search_frame(frame)
 int	frame;
 {
@@ -415,6 +427,7 @@ int	frame;
  *
  *  This is only safe when the tape is playing or not moving.
  */
+int
 reset_tape_time()
 {
 	int	reply;
@@ -431,6 +444,7 @@ reset_tape_time()
  *
  *  It is unclear what modes this is safe in
  */
+int
 time0()
 {
 	int	reply;
@@ -451,6 +465,7 @@ time0()
  *	-1	VAS is unwell
  *	>0	VAS is ready, value is return code
  */
+int
 get_vas_status()
 {
 	int	reply;
@@ -473,6 +488,7 @@ get_vas_status()
  *	0	all is well
  *	-1	problems (with description)
  */
+int
 get_vtr_status(chatter)
 int	chatter;
 {
@@ -510,6 +526,7 @@ int	chatter;
 	 *   L for shuttle var speed, W for slow speed */
 }
 
+int
 get_frame_code()
 {
 	int	status;
@@ -538,6 +555,7 @@ get_frame_code()
 	return(0);
 }
 
+void
 get_tape_position()
 {
 	char	buf[9];
