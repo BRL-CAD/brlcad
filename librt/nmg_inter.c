@@ -1263,7 +1263,7 @@ struct faceuse *fu;
 		 *  and any cut/joins, then resume with the previous work.
 		 */
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
-			rt_log("nmg_isect_3edge_3face: edge lies ON face, using 2D code\n");
+			rt_log("nmg_isect_3edge_3face: edge lies ON face, using 2D code\n@ @ @ @ @ @ @ @ @ @ 2D CODE, START\n");
 
 		is = *bs;	/* make private copy */
 		is.vert2d = 0;	/* Don't use previously initialized stuff */
@@ -1271,6 +1271,13 @@ struct faceuse *fu;
 		nmg_isect_edge2p_face2p( &is, eu, fu, nmg_find_fu_of_eu(eu) );
 
 		if( is.vert2d )  rt_free( (char *)is.vert2d, "vert2d");
+
+		if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
+			rt_log("nmg_isect_3edge_3face: @ @ @ @ @ @ @ @ @ @ 2D CODE, END, resume 3d problem.\n");
+			rt_log("  The status of the face/face intersect line, so far:\n");
+			nmg_pr_ptbl_vert_list( "l1", bs->l1 );
+			nmg_pr_ptbl_vert_list( "l2", bs->l2 );
+		}
 
 		/* See if start vertex is now shared */
 		if (vu_other=nmg_find_v_in_face(eu->vu_p->v_p, fu)) {
