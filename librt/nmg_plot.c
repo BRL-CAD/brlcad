@@ -25,8 +25,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include "machine.h"
 #include "vmath.h"
-#include "raytrace.h"
 #include "nmg.h"
+#include "raytrace.h"
 #include "plot3.h"
 
 #define US_DELAY	10	/* Additional delay between frames */
