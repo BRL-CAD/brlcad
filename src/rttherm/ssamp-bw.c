@@ -57,10 +57,10 @@ int	width = 64;
 int	height = 64;
 int	nwave = 2;
 
-char	*basename = "mtherm";
+char	*datafile_basename = "mtherm";
 char	spectrum_name[100];
 
-struct bn_table		*spectrum;
+extern struct bn_table		*spectrum;	/* spectrum table from liboptical */
 
 struct bn_tabdata	*data;		/* a big array */
 
@@ -167,21 +167,21 @@ main(int argc, char **argv)
 
 	if(verbose)	bu_debug = BU_DEBUG_COREDUMP;
 
-	basename = argv[optind];
+	datafile_basename = argv[optind];
 
 	/* Read spectrum definition */
-	sprintf( spectrum_name, "%s.spect", basename );
+	sprintf( spectrum_name, "%s.spect", datafile_basename );
 	spectrum = (struct bn_table *)bn_table_read( spectrum_name );
 	if( spectrum == NULL )  {
 		bu_bomb("ssamp-bw: Unable to read spectrum\n");
 	}
 	BN_CK_TABLE(spectrum);
-	if(verbose) bu_log("%s defines %d spectral samples\n", basename, spectrum->nx);
+	if(verbose) bu_log("%s defines %d spectral samples\n", datafile_basename, spectrum->nx);
 	nwave = spectrum->nx;	/* shared with Tcl */
 
 	/* Allocate and read 2-D spectral samples array */
-	data = bn_tabdata_binary_read( basename, width*height, spectrum );
-	if( !data )  bu_bomb("bn_tabdata_binary_read() of basename failed\n");
+	data = bn_tabdata_binary_read( datafile_basename, width*height, spectrum );
+	if( !data )  bu_bomb("bn_tabdata_binary_read() of datafile_basename failed\n");
 
 	if( lower_wavelen <= 0 )  lower_wavelen = spectrum->x[0];
 	if( upper_wavelen <= 0 )  upper_wavelen = spectrum->x[spectrum->nx];
