@@ -7,6 +7,7 @@
  *	pathHmat	Find matrix across a given path
  *	replot_original_solid	Replot vector list for a solid
  *	replot_modified_solid	Replot solid, given matrix and db record.
+ *	invent_solid		Turn list of vectors into phony solid
  *  
  *  Author -
  *	Michael John Muuss
@@ -87,6 +88,32 @@ static int		mged_draw_normals;
 static struct model	*mged_nmg_model;
 
 /*
+ *		R T _ C O P Y _ V L I S T
+ *
+ *  Duplicate the contents of a vlist.  Note that the copy may be more
+ *  densely packed than the source.
+ *
+ *  XXX Move this support routine to librt.
+ */
+void
+rt_copy_vlist( dest, src )
+struct rt_list	*dest;
+CONST struct rt_list	*src;
+{
+	struct rt_vlist	*vp;
+
+	for( RT_LIST_FOR( vp, rt_vlist, src ) )  {
+		register int	i;
+		register int	nused = vp->nused;
+		register int	*cmd = vp->cmd;
+		register point_t *pt = vp->pt;
+		for( i = 0; i < nused; i++,cmd++,pt++ )  {
+			RT_ADD_VLIST( dest, *pt, *cmd );
+		}
+	}
+}
+
+/*
  *		M G E D _ P L O T _ A N I M _ U P C A L L _ H A N D L E R
  *
  *  Used via upcall by routines deep inside LIBRT, to have a UNIX-plot
@@ -135,12 +162,13 @@ long	us;		/* microseconds of extra delay */
  *  Alas, no wextern keyword to make this a little less indirect.
  */
 void
-mged_vlblock_anim_upcall_handler( vbp, us )
+mged_vlblock_anim_upcall_handler( vbp, us, copy )
 struct rt_vlblock	*vbp;
 long		us;		/* microseconds of extra delay */
+int		copy;
 {
 
-	cvt_vlblock_to_solids( vbp, "_PLOT_OVERLAY_" );
+	cvt_vlblock_to_solids( vbp, "_PLOT_OVERLAY_", copy );
 
 	event_check( 1 );	/* Take any device events */
 
@@ -241,6 +269,7 @@ int			id;
 
 	return( curtree );
 }
+
 
 /*
  *			M G E D _ N M G _ L E A F
@@ -895,9 +924,10 @@ CONST mat_t			mat;
 /*
  *			C V T _ V L B L O C K _ T O _ S O L I D S
  */
-cvt_vlblock_to_solids( vbp, name )
+cvt_vlblock_to_solids( vbp, name, copy )
 struct rt_vlblock	*vbp;
 char			*name;
+int			copy;
 {
 	int		i;
 	char		shortname[32];
@@ -916,12 +946,12 @@ char			*name;
 		if( vbp->rgb[i] == 0 )  continue;
 		if( RT_LIST_IS_EMPTY( &(vbp->head[i]) ) )  continue;
 		if( i== 0 )  {
-			invent_solid( name, &vbp->head[0], vbp->rgb[0] );
+			invent_solid( name, &vbp->head[0], vbp->rgb[0], copy );
 			continue;
 		}
 		sprintf( namebuf, "%s%x",
 			shortname, vbp->rgb[i] );
-		invent_solid( namebuf, &vbp->head[i], vbp->rgb[i] );
+		invent_solid( namebuf, &vbp->head[i], vbp->rgb[i], copy );
 	}
 }
 
@@ -935,10 +965,11 @@ char			*name;
  *  This parallels much of the code in dodraw.c
  */
 int
-invent_solid( name, vhead, rgb )
+invent_solid( name, vhead, rgb, copy )
 char		*name;
 struct rt_list	*vhead;
 long		rgb;
+int		copy;
 {
 	register struct directory	*dp;
 	register struct solid		*sp;
@@ -970,7 +1001,14 @@ long		rgb;
 	/* Obtain a fresh solid structure, and fill it in */
 	GET_SOLID(sp);
 
-	RT_LIST_APPEND_LIST( &(sp->s_vlist), vhead );
+	if( copy )  {
+		RT_LIST_INIT( &(sp->s_vlist) );
+		rt_copy_vlist( &(sp->s_vlist), vhead );
+	} else {
+		/* For efficiency, just swipe the vlist */
+		RT_LIST_APPEND_LIST( &(sp->s_vlist), vhead );
+		RT_LIST_INIT(vhead);
+	}
 	mged_bound_solid( sp );
 	nvectors += sp->s_vlen;
 
