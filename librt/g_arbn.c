@@ -86,6 +86,9 @@ struct rt_i		*rtip;
 			for( k=j+1; k<aip->neqn; k++ )  {
 				register int	m;
 				point_t		pt;
+				int		next_k;
+
+				next_k = 0;
 
 				if( rt_mkpoint_3planes( pt, aip->eqn[i], aip->eqn[j], aip->eqn[k] ) < 0 )  continue;
 
@@ -93,15 +96,19 @@ struct rt_i		*rtip;
 				for( m=0; m<aip->neqn; m++ )  {
 					if( i==m || j==m || k==m )  continue;
 					if( VDOT(pt, aip->eqn[m])-aip->eqn[m][3] > tol->dist )
-						goto next_k;
+					{
+						next_k = 1;
+						break;
+					}
 				}
+				if( next_k != 0)  continue;
+
 				VMINMAX( stp->st_min, stp->st_max, pt );
 
 				/* Increment "face used" counts */
 				used[i]++;
 				used[j]++;
 				used[k]++;
-next_k:				;
 			}
 		}
 	}
@@ -355,6 +362,9 @@ struct rt_tol		*tol;
 			for( k=0; k<aip->neqn; k++ )  {
 				register int	m;
 				point_t		pt;
+				int		next_k;
+
+				next_k = 0;
 
 				if( k==i || k==j )  continue;
 				if( rt_mkpoint_3planes( pt, aip->eqn[i], aip->eqn[j], aip->eqn[k] ) < 0 )  continue;
@@ -363,8 +373,13 @@ struct rt_tol		*tol;
 				for( m=0; m<aip->neqn; m++ )  {
 					if( i==m || j==m || k==m )  continue;
 					if( VDOT(pt, aip->eqn[m])-aip->eqn[m][3] > tol->dist )
-						goto next_k;
+					{
+						next_k = 1;
+						break;
+					}
 				}
+
+				if( next_k != 0)  continue;
 
 				if( point_count <= 0 )  {
 					RT_ADD_VLIST( vhead, pt, RT_VLIST_LINE_MOVE );
@@ -388,7 +403,6 @@ struct rt_tol		*tol;
 					RT_ADD_VLIST( vhead, pt, RT_VLIST_LINE_DRAW );	/* draw it */
 				}
 				point_count++;
-next_k:				;
 			}
 			/* Point counts of 1 are (generally) not harmful,
 			 * occuring on pyramid peaks and the like.
