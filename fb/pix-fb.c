@@ -48,9 +48,10 @@ static int	scr_xoff, scr_yoff;
 static int	clear = 0;
 static int	zoom = 0;
 static int	inverse = 0;		/* Draw upside-down */
+static int	one_line_only = 0;	/* insist on 1-line writes */
 
 static char usage[] = "\
-Usage: pix-fb [-a -h -i -c -z] [-F framebuffer]\n\
+Usage: pix-fb [-a -h -i -c -z -1] [-F framebuffer]\n\
 	[-s squarefilesize] [-w file_width] [-n file_height]\n\
 	[-x file_xoff] [-y file_yoff] [-X scr_xoff] [-Y scr_yoff]\n\
 	[-S squarescrsize] [-W scr_width] [-N scr_height] [file.pix]\n";
@@ -60,8 +61,11 @@ register char **argv;
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "ahiczF:s:w:n:x:y:X:Y:S:W:N:" )) != EOF )  {
+	while ( (c = getopt( argc, argv, "1ahiczF:s:w:n:x:y:X:Y:S:W:N:" )) != EOF )  {
 		switch( c )  {
+		case '1':
+			one_line_only = 1;
+			break;
 		case 'a':
 			autosize = 1;
 			break;
@@ -198,7 +202,7 @@ char **argv;
 		yout = (file_height-file_yoff);
 
 	/* Only in the simplest case use multi-line writes */
-	if( !inverse && !zoom &&
+	if( !one_line_only && !inverse && !zoom &&
 	    xout == file_width &&
 	    file_width <= scr_width )  {
 		streamline = 16;
