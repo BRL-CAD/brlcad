@@ -3,32 +3,26 @@
  */
 
 #define SRCDIR	util
-#define PRODUCTS	fbanim loop pix-fb fb-pix fb-fb \
-		pixbustup pixdiff pixinterp2x pixtile pixuntile \
-		pixflip-fb pixfade pixfields \
-		pp-fb fbclear fbgrid \
-		cell-fb \
-		orle-fb fb-orle orle-pix pix-orle \
-		rle-fb fb-rle rle-pix pix-rle \
-		fbcmap fb-cmap cmap-fb fbgamma \
-		fbscanplot fbzoom fbpoint fblabel fbline\
-		pl-fb fbcolor fbcmrot pixbackgnd fbframe ap-pix \
-		bw-fb bw-pix bw3-pix bwcrop bwdiff bwfilter bw-imp bw-ps \
-		bwhist bwhisteq bwmod bwrect bwrot bwscale bwstat fb-bw \
-		bw-a gencolor pix-bw pix-bw3 pixfilter pixhist \
-		pixhist3d pixhist3d-pl \
-		pixrect pixrot pixscale pixstat fbcbars \
-		sun-pix mac-pix pixmerge pixmatte op-bw \
-		pl-sgi pldebug plgetframe plrot \
-		dunncolor dunnsnap cat-fb polar-fb \
-		buffer files-tape \
-		plcolor plline2 pl-pl pl-ps pl-hpgl \
-		spm-fb pix-spm \
-		fbfree fbhelp gif2fb pix3filter \
-		fbfade fbstretch gif-fb \
-		pix-sun pix-alias alias-pix pixcolors hd sgi-pix \
-		pixsaturate query pixshrink bwshrink pixhalve \
-		pix-ps plstat pl-asc asc-pl xyz-pl azel bwthresh
+#define PRODUCTS	\
+	alias-pix ap-pix asc-pl azel buffer \
+	bw-a bw-imp bw-pix bw-ps bw3-pix \
+	bwcrop bwdiff bwfilter bwhist bwhisteq \
+	bwmod bwrect bwrot bwscale bwshrink \
+	bwstat bwthresh \
+	dpix-pix dunncolor dunnsnap \
+	files-tape gencolor hd loop mac-pix \
+	op-bw orle-pix \
+	pix-alias pix-bw pix-bw3 pix-ci pix-orle \
+	pix-ps pix-rle pix-spm pix-sun \
+	pix3filter pixbackgnd pixbustup pixcolors pixdiff \
+	pixfade pixfields pixfilter pixhalve pixhist \
+	pixhist3d-pl pixhist3d pixinterp2x pixmatte pixmerge \
+	pixrect pixrot pixsaturate pixscale pixshrink pixstat \
+	pixtile pixuntile \
+	pl-X pl-X10 pl-asc pl-hpgl \
+	pl-pl pl-ps pl-sgi pl-starbase \
+	plcolor pldebug plgetframe plline2 plrot plstat \
+	query rle-pix sgi-pix sun-pix xyz-pl
 
 #define	SRCSUFF	.c
 #define MANSECTION	1
@@ -44,12 +38,6 @@ dunncolor:	dunncolor.o dunncomm.o
 dunnsnap:	dunnsnap.o dunncomm.o LIBFB
 	CC LDFLAGS -o dunnsnap dunnsnap.o dunncomm.o LIB_PRE''LIBFB LIBFB_LIBES LIBES
 
-fbanim:		fbanim.o LIBFB
-	CC LDFLAGS -o fbanim fbanim.o LIB_PRE''LIBFB LIBFB_LIBES LIBES
-
-pl-fb:		pl-fb.o LIBFB
-	CC LDFLAGS -o pl-fb pl-fb.o LIB_PRE''LIBFB LIBFB_LIBES LIB_PRE''LIBPLOT LIBES
-
 loop:		loop.o
 	CC LDFLAGS -o loop loop.o LIBES
 
@@ -64,18 +52,6 @@ pixmerge:	pixmerge.o
 
 pixmatte:	pixmatte.o
 	CC LDFLAGS -o pixmatte pixmatte.o LIBES
-
-fbcbars:	fbcbars.o LIBFB
-	CC LDFLAGS -o fbcbars fbcbars.o LIB_PRE''LIBFB LIBFB_LIBES LIBES
-
-pix-fb:		pix-fb.o LIBFB
-	CC LDFLAGS -o pix-fb pix-fb.o LIB_PRE''LIBFB LIBFB_LIBES LIBES
-
-fb-pix:		fb-pix.o cmap-crunch.o LIBFB
-	CC LDFLAGS -o fb-pix fb-pix.o cmap-crunch.o LIB_PRE''LIBFB LIBFB_LIBES LIBES
-
-fb-fb:		fb-fb.o LIBFB
-	CC LDFLAGS -o fb-fb fb-fb.o LIB_PRE''LIBFB LIBFB_LIBES LIBES
 
 pixbustup:	pixbustup.o
 	CC LDFLAGS -o pixbustup pixbustup.o LIBES
@@ -96,34 +72,10 @@ pixinterp2x:	pixinterp2x.o
 pixtile:	pixtile.o
 	CC LDFLAGS -o pixtile pixtile.o LIBES
 
-pixflip-fb:	pixflip-fb.o LIBFB
-	CC LDFLAGS -o pixflip-fb pixflip-fb.o LIB_PRE''LIBFB LIBFB_LIBES LIBES
-
 pixuntile:	pixuntile.o
 	CC LDFLAGS -o pixuntile pixuntile.o LIBES
 
-pp-fb:		pp-fb.o LIBFB LIBTERMIO
-	CC LDFLAGS -o pp-fb pp-fb.o LIB_PRE''LIBFB LIBFB_LIBES LIBTERMIO LIBES
-
-fbclear:	fbclear.o LIBFB
-	CC LDFLAGS -o fbclear fbclear.o LIB_PRE''LIBFB LIBFB_LIBES LIBES
-
-fbfree:	fbfree.o LIBFB
-	CC LDFLAGS -o fbfree fbfree.o LIB_PRE''LIBFB LIBFB_LIBES LIBES
-
-fbhelp:	fbhelp.o LIBFB
-	CC LDFLAGS -o fbhelp fbhelp.o LIB_PRE''LIBFB LIBFB_LIBES LIBES
-
-fbgrid:		fbgrid.o LIBFB
-	CC LDFLAGS -o fbgrid fbgrid.o LIB_PRE''LIBFB LIBFB_LIBES LIBES
-
 /* Old RLE Programs (Utah format Edition 2) */
-
-orle-fb:	orle-fb.o LIBFB LIBORLE
-	CC LDFLAGS -o orle-fb orle-fb.o LIB_PRE''LIBFB LIBFB_LIBES LIBORLE LIBES
-
-fb-orle:	fb-orle.o cmap-crunch.o LIBFB LIBORLE
-	CC LDFLAGS -o fb-orle fb-orle.o cmap-crunch.o LIB_PRE''LIBFB LIBFB_LIBES LIB_PRE''LIBORLE LIBES
 
 orle-pix:	orle-pix.o LIBORLE LIBFB
 	CC LDFLAGS -o orle-pix orle-pix.o LIB_PRE''LIBORLE LIB_PRE''LIBFB LIBFB_LIBES LIBES
@@ -135,65 +87,20 @@ pix-orle:	pix-orle.o LIBORLE
 
 /*** oldtonewrle.c ? */
 
-rle-fb:		rle-fb.o LIBFB LIBRLE
-	CC LDFLAGS -o rle-fb rle-fb.o LIB_PRE''LIBFB LIBFB_LIBES LIB_PRE''LIBRLE LIBES
-
-fb-rle:		fb-rle.o strdup.o cmap-crunch.o LIBFB LIBRLE
-	CC LDFLAGS -o fb-rle fb-rle.o strdup.o cmap-crunch.o LIB_PRE''LIBFB LIBFB_LIBES LIB_PRE''LIBRLE LIBES
-
 rle-pix:	rle-pix.o strdup.o LIBRLE
 	CC LDFLAGS -o rle-pix rle-pix.o strdup.o LIB_PRE''LIBRLE LIBES
 
 pix-rle:	pix-rle.o strdup.o LIBRLE
 	CC LDFLAGS -o pix-rle pix-rle.o strdup.o LIB_PRE''LIBRLE LIBES
 
-fbcmap:		fbcmap.o LIBFB
-	CC LDFLAGS -o fbcmap fbcmap.o LIB_PRE''LIBFB LIBFB_LIBES LIBES
-
-fb-cmap:	fb-cmap.o LIBFB
-	CC LDFLAGS -o fb-cmap fb-cmap.o LIB_PRE''LIBFB LIBFB_LIBES LIBES
-
-cmap-fb:	cmap-fb.o LIBFB
-	CC LDFLAGS -o cmap-fb cmap-fb.o LIB_PRE''LIBFB LIBFB_LIBES LIBES
-
-fbgamma:	fbgamma.o LIBFB
-	CC LDFLAGS -o fbgamma fbgamma.o LIB_PRE''LIBFB LIBFB_LIBES LIBES
-
-fbscanplot:	fbscanplot.o LIBFB
-	CC LDFLAGS -o fbscanplot fbscanplot.o LIB_PRE''LIBFB LIBFB_LIBES LIBES
-
-fbzoom:		fbzoom.o LIBFB LIBTERMIO
-	CC LDFLAGS -o fbzoom fbzoom.o LIB_PRE''LIBFB LIBFB_LIBES LIBTERMIO LIBES 
-
-fbpoint:	fbpoint.o LIBFB LIBTERMIO
-	CC LDFLAGS -o fbpoint fbpoint.o LIB_PRE''LIBFB LIBFB_LIBES LIBTERMIO LIBES 
-
-fblabel:	fblabel.o LIBFB LIBFONT
-	CC LDFLAGS -o fblabel fblabel.o LIB_PRE''LIBFONT LIB_PRE''LIBFB LIBFB_LIBES LIBES 
-
-fbline:		fbline.o LIBFB
-	CC LDFLAGS -o fbline fbline.o LIB_PRE''LIBFB LIBFB_LIBES LIBES 
-
-fbcolor:	fbcolor.o LIBFB LIBTERMIO
-	CC LDFLAGS -o fbcolor fbcolor.o LIB_PRE''LIBFB LIBFB_LIBES LIBTERMIO LIBES 
-
 ap-pix:		ap-pix.o
 	CC LDFLAGS -o ap-pix ap-pix.o LIBES
-
-fbcmrot:	fbcmrot.o LIBFB
-	CC LDFLAGS -o fbcmrot fbcmrot.o LIB_PRE''LIBFB LIBFB_LIBES LIBES
 
 pixbackgnd:	pixbackgnd.o
 	CC LDFLAGS -o pixbackgnd pixbackgnd.o LIBES
 
-fbframe:	fbframe.o LIBFB
-	CC LDFLAGS -o fbframe fbframe.o LIB_PRE''LIBFB LIBFB_LIBES LIBES
-
 bw-a:		bw-a.o LIBFB
 	CC LDFLAGS -o bw-a bw-a.o LIB_PRE''LIBFB LIBFB_LIBES LIBES
-
-bw-fb:		bw-fb.o LIBFB
-	CC LDFLAGS -o bw-fb bw-fb.o LIB_PRE''LIBFB LIBFB_LIBES LIBES
 
 bw-imp:	bw-imp.o
 	CC LDFLAGS -o bw-imp bw-imp.o LIBES
@@ -236,9 +143,6 @@ bwscale:	bwscale.o
 
 bwstat:		bwstat.o
 	CC LDFLAGS -o bwstat bwstat.o LIBES
-
-fb-bw:		fb-bw.o LIBFB
-	CC LDFLAGS -o fb-bw fb-bw.o LIB_PRE''LIBFB LIBFB_LIBES LIBES
 
 gencolor:	gencolor.o
 	CC LDFLAGS -o gencolor gencolor.o LIBES
@@ -292,9 +196,6 @@ plrot:		plrot.o LIBRT
 op-bw:		op-bw.o
 	CC LDFLAGS -o op-bw op-bw.o LIBES
 
-cat-fb:		cat-fb.o LIBFONT LIBFB
-	CC LDFLAGS -o cat-fb cat-fb.o LIB_PRE''LIBFONT LIB_PRE''LIBFB LIBFB_LIBES LIBES
-
 plcolor:	plcolor.o LIBPLOT
 	CC LDFLAGS -o plcolor plcolor.o LIB_PRE''LIBPLOT LIBES
 
@@ -310,25 +211,8 @@ buffer:		buffer.o
 files-tape:	files-tape.o
 	CC LDFLAGS -o files-tape files-tape.o LIBES
 
-/* "gif2fb" is an alternative implementation of "gif-fb"; use either or both */
-
-gif2fb:		gif2fb.o LIBFB
-	CC LDFLAGS -o gif2fb gif2fb.o LIB_PRE''LIBFB LIBFB_LIBES LIBES
-
 pix3filter:	pix3filter.o
 	CC LDFLAGS -o pix3filter pix3filter.o LIBES
-
-fbfade:		fbfade.o LIBFB
-	CC LDFLAGS -o fbfade fbfade.o LIB_PRE''LIBFB LIBFB_LIBES LIBES
-
-fbstretch:	fbstretch.o LIBFB
-	CC LDFLAGS -o fbstretch fbstretch.o LIB_PRE''LIBFB LIBFB_LIBES LIBES
-
-gif-fb:		gif-fb.o LIBFB
-	CC LDFLAGS -o gif-fb gif-fb.o LIB_PRE''LIBFB LIBFB_LIBES LIBES
-
-spm-fb:		spm-fb.o LIBRT LIBFB
-	CC LDFLAGS -o spm-fb spm-fb.o LIB_PRE''LIBRT LIB_PRE''LIBFB LIBFB_LIBES LIBRT_LIBES LIBES
 
 pix-spm:	pix-spm.o LIBRT
 	CC LDFLAGS -o pix-spm pix-spm.o LIB_PRE''LIBRT LIBRT_LIBES LIBES
@@ -383,12 +267,6 @@ pl-hpgl: pl-hpgl.o
 
 xyz-pl: xyz-pl.o
 	CC LDFLAGS -o xyz-pl xyz-pl.o LIB_PRE''LIBPLOT LIBES
-
-polar-fb:		polar-fb.o LIBFB
-	CC LDFLAGS -o polar-fb polar-fb.o LIB_PRE''LIBFB LIBFB_LIBES LIBES
-
-cell-fb:		cell-fb.o LIBFB
-	CC LDFLAGS -o cell-fb cell-fb.o LIB_PRE''LIBFB LIBFB_LIBES LIB_PRE''LIBRT LIBRT_LIBES LIBES
 
 azel:	azel.o
 	CC LDFLAGS -o azel azel.o LIBES
