@@ -124,7 +124,7 @@ extern char	*realloc();
 #if defined(CRAY)
 #	define	BU_FORTRAN(lc,uc)	uc
 #endif
-#if defined(apollo) || defined(mips) || defined(aux)
+#if defined(apollo) || defined(mips) || defined(aux) || defined(linux)
 	/* Lower case, with a trailing underscore */
 #ifdef __STDC__
 #	define	BU_FORTRAN(lc,uc)	lc ## _
