@@ -33,6 +33,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 /* THis duplicates the extern from nmg_mesh.c */
 RT_EXTERN(double nmg_measure_2fu_angle, (CONST struct edgeuse *eu1, CONST struct edgeuse *eu2));
+RT_EXTERN(double nmg_measure_fu_angle, (CONST struct edgeuse *eu, CONST vect_t xvec, CONST vect_t yvec, CONST vect_t zvec));
+
 
 /************************************************************************
  *									*
@@ -1063,27 +1065,21 @@ char *s;
 }
 
 /*
- *			N M G _ P R _ F U _ A R O U N D _ E U
- *
- *  A debugging routine to print all the faceuses around a given edge,
- *  starting with the given edgeuse.
- *  The normal of the  first face is considered to be "0 degrees",
- *  and the rest are measured from there.
- *
- *  Note that the proper ordering of the edgeuses' faceuses is:
- *  SAME, OPPOSITE, OPPOSITE, SAME, ....
- *  This can be verified by calling nmg_check_radial(eu);
+ *			N M G _ P R _ F U _ A R O U N D _ E U _ V E C S
  */
 void
-nmg_pr_fu_around_eu( eu )
-CONST struct edgeuse *eu;
+nmg_pr_fu_around_eu_vecs( eu, xvec, yvec, zvec )
+CONST struct edgeuse	*eu;
+CONST vect_t		xvec;
+CONST vect_t		yvec;
+CONST vect_t		zvec;
 {
 	CONST struct edgeuse	*eu1;
 	CONST struct loopuse	*lu;
 	CONST struct faceuse	*fu;
 
 	NMG_CK_EDGEUSE(eu);
-	rt_log("nmg_pr_fu_around_eu(x%x)\n", eu);
+	rt_log("nmg_pr_fu_around_eu_vecs(x%x)\n", eu);
 
 	eu1 = eu;
 	do {
@@ -1099,7 +1095,7 @@ CONST struct edgeuse *eu;
 			fu, fu->f_p,
 			fu->orientation == OT_SAME ? "SAME" : "OPP.",
 			fu->s_p,
-			nmg_measure_2fu_angle(eu, eu1) * rt_radtodeg );
+			nmg_measure_fu_angle(eu1, xvec, yvec, zvec) * rt_radtodeg );
 
 		/* Second, the edgeuse mate */
 		eu1 = eu1->eumate_p;
@@ -1114,11 +1110,37 @@ CONST struct edgeuse *eu;
 			fu, fu->f_p,
 			fu->orientation == OT_SAME ? "SAME" : "OPP.",
 			fu->s_p,
-			nmg_measure_2fu_angle(eu, eu1) * rt_radtodeg );
+			nmg_measure_fu_angle(eu1, xvec, yvec, zvec) * rt_radtodeg );
 
 		/* Now back around to the radial edgeuse */
 		eu1 = eu1->radial_p;
 	} while( eu1 != eu );
+}
+
+/*
+ *			N M G _ P R _ F U _ A R O U N D _ E U
+ *
+ *  A debugging routine to print all the faceuses around a given edge,
+ *  starting with the given edgeuse.
+ *  The normal of the  first face is considered to be "0 degrees",
+ *  and the rest are measured from there.
+ */
+void
+nmg_pr_fu_around_eu( eu )
+CONST struct edgeuse *eu;
+{
+	CONST struct edgeuse	*eu1;
+	CONST struct loopuse	*lu;
+	CONST struct faceuse	*fu;
+	vect_t			xvec, yvec, zvec;
+
+	NMG_CK_EDGEUSE(eu);
+	rt_log("nmg_pr_fu_around_eu(x%x)\n", eu);
+
+	/* Erect coordinate system around eu */
+	nmg_eu_2vecs_perp( xvec, yvec, zvec, eu );
+
+	nmg_pr_fu_around_eu_vecs( eu, xvec, yvec, zvec );
 }
 
 /*
