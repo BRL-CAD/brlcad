@@ -28,13 +28,11 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <signal.h>
 #include "machine.h"
 #include "vmath.h"
+#include "externs.h"
 #include "db.h"
 #include "raytrace.h"
 #include "./ged.h"
 #include "./sedit.h"
-
-extern void	exit(), perror();
-extern char	*mktemp();
 
 #define	DEFEDITOR	"/bin/ed"
 
@@ -42,7 +40,6 @@ extern int	numargs;	/* number of args */
 extern char	*cmd_args[];	/* array of pointers to args */
 
 static char	tmpfil[] = "/tmp/GED.aXXXXX";
-extern char	*getenv();
 
 void writesolid(), readsolid();
 int editit();

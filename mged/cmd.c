@@ -31,16 +31,13 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "vmath.h"
 #include "db.h"
-#include "./sedit.h"
 #include "raytrace.h"
-#include "./ged.h"
 #include "externs.h"
+#include "./sedit.h"
+#include "./ged.h"
 #include "./solid.h"
 #include "./dm.h"
 
-extern void	perror();
-extern int	atoi(), execl(), fork(), nice(), wait();
-extern long	time();
 extern void	sync();
 
 #define	MAXARGS		2000	/* Maximum number of args per line */
