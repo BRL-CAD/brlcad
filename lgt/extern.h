@@ -6,7 +6,21 @@
 			Aberdeen Proving Ground
 			Maryland 21005-5066
 			(301)278-6651 or AV-298-6651
+
+
+	Note: preceeding #include "./extern.h" must be the following:
+
+	#include <assert.h>
+
+	#include "machine.h"
+	#include "externs.h"
+	#include "vmath.h"
+	#include "raytrace.h"
+	#include "fb.h"
+	#include "./hmenu.h"
+	#include "./lgt.h"
 */
+
 #ifndef DEBUG
 #define NDEBUG
 #endif
