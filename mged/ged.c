@@ -2073,6 +2073,7 @@ char	**argv;
   Tcl_ResetResult( interp );
 
   /* Perhaps do something special with the GUI */
+  bu_vls_trunc(&vls, 0);
   bu_vls_printf(&vls, "new_db_callback %s", dbip->dbi_filename);
   (void)Tcl_Eval(interp, bu_vls_addr(&vls));
 
