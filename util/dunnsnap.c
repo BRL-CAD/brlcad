@@ -47,8 +47,8 @@ char **argv;
 	else
 		nframes = 1;
 
-	if (!ready(1)) {
-		printf("camera not ready\n");
+	if (!ready(2)) {
+		printf("dunnsnap:  camera not ready at startup\n");
 		exit(30);
 	}
 		
@@ -57,7 +57,7 @@ char **argv;
 	while (nframes) {
 
 		while (!ready(20)) {
-			printf("camera not ready\n");
+			printf("dunnsnap: camera not ready at frame start\n");
 			exit(40);
 		}
 
@@ -72,7 +72,7 @@ char **argv;
 			write(fd, &cmd, 1);
 			hangten();
 			if (!ready(20)) {
-				printf("camera not ready\n");
+				printf("dunnsnap: camera not ready after expose cmd\n");
 				exit(60);
 			}
 		--nframes;

@@ -22,6 +22,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <fcntl.h>
+#include <signal.h>
 
 #ifdef BSD
 # include <sys/time.h>
@@ -50,6 +51,12 @@ unsigned char	values[21];
 int	readfds;
 int	polaroid = 0;		/* 0 = aux camera, 1 = Polaroid 8x10 */
 
+unsnooze()
+{
+	printf("\007dunnsnap: request timed out, aborting\n");
+	exit(1);
+}
+
 /*
  *			D U N N O P E N
  */
@@ -67,30 +74,45 @@ dunnopen()
 	}
 	
 	/* set up the camera device */
-
+	
 #ifdef BSD
 	tty.sg_ispeed = tty.sg_ospeed = B9600;
 	tty.sg_flags = RAW | EVENP | ODDP | XTABS;
 #endif
 #ifdef SYSV
-	tty.c_cflag = B9600 | CS7 | TAB3;
-	tty.c_lflag &= ~ICANON;		/* Raw mode */
-	tty.c_lflag &= ~ISIG;		/* Signals OFF */
+	tty.c_cflag = B9600 | CS8;	/* Character size = 8 bits */
+	tty.c_cflag &= ~CSTOPB;		/* One stop bit */
+	tty.c_cflag |= CREAD;		/* Enable the reader */
+	tty.c_cflag &= ~PARENB;		/* Parity disable */
+	tty.c_cflag &= ~HUPCL;		/* No hangup on close */
+	tty.c_cflag |= CLOCAL;		/* Line has no modem control */
+
+	tty.c_iflag &= ~(BRKINT|ICRNL|INLCR|IXON|IXANY|IXOFF);
+	tty.c_iflag |= IGNBRK|IGNPAR;
+
+	tty.c_oflag &= ~(OPOST|ONLCR|OCRNL);	/* Turn off all post-processing */
+	tty.c_oflag |= TAB3;		/* output tab expansion ON */
 	tty.c_cc[VMIN] = 1;
 	tty.c_cc[VTIME] = 0;
+
+	tty.c_lflag &= ~ICANON;		/* Raw mode */
+	tty.c_lflag &= ~ISIG;		/* Signals OFF */
+	tty.c_lflag &= ~(ECHO|ECHOE|ECHOK);	/* Echo mode OFF */
 #endif
 	if( ioctl(fd, TCSETA, &tty) < 0 ) {
-		printf("\007dunnopen: error on /dev/camera setup\n");
+		perror("/dev/camera");
 		exit(20);
 	}
-}
 
-#ifdef SYSV
-select()
-{
-	sleep(1);
+	/* Be certain the FNDELAY is off */
+	if( fcntl(fd, F_SETFL, 0) < 0 )  {
+		perror("/dev/camera");
+		exit(21);
+	}
+
+	/* Set up alarm clock catcher */
+	(void)signal( SIGALRM, unsnooze );
 }
-#endif SYSV
 
 /*
  *			M R E A D
@@ -141,27 +163,38 @@ goodstatus()
 	
 	cmd = ';';	/* status request cmd */
 	write(fd, &cmd, 1);	
+#ifdef BSD
 	readfds = 1<<fd;
 	select(fd+1, &readfds, (int *)0, (int *)0, timeout);
-	if( (readfds & (1<<fd)) !=0) {
-		mread(fd, status, 4);
-		if (status[0]&0x1)  printf("No vertical sync\n");
-		if (status[0]&0x2)  printf("8x10 not ready\n");
-		if (status[0]&0x4)  printf("Expose in wrong mode\n");
-		if (status[0]&0x8)  printf("Aux camera out of film\n");
-		if (status[1]&0x1)  printf("B/W mode\n");
-		if (status[1]&0x2)  printf("Separate mode\n");
-		if (status[2]&0x1)  printf("Y-smoothing off\n");
-
-		if ((status[0]&0xf) == 0x0 &&
-		    (status[1]&0x3) == 0x0 )
-			return 1;	/* status is ok */
-		printf("\007dunnsnap: status error from camera\n");
-		printf("status[0]= 0x%x [1]= 0x%x [2]= 0x%x [3]= 0x%x\n",
-			status[0]&0xf,status[1]&0xf,
-			status[2]&0x3,status[3]&0x7f);
-	} else
+	if( (readfds & (1<<fd)) ==0 ) {
 		printf("\007dunnsnap: status request timed out\n");
+		return(0);
+	}
+#else
+	/* Set an alarm, and then just hang a read */
+	alarm(timeout->tv_sec);
+#endif
+
+	mread(fd, status, 4);
+	alarm(0);
+
+	if (status[0]&0x1)  printf("No vertical sync\n");
+	if (status[0]&0x2)  printf("8x10 not ready\n");
+	if (status[0]&0x4)  printf("Expose in wrong mode\n");
+	if (status[0]&0x8)  printf("Aux camera out of film\n");
+	if (status[1]&0x1)  printf("B/W mode\n");
+	if (status[1]&0x2)  printf("Separate mode\n");
+	if (status[2]&0x1)  printf("Y-smoothing off\n");
+
+	if ((status[0]&0xf) == 0x0 &&
+	    (status[1]&0x3) == 0x0 &&
+	    (status[3]&0x7f)== '\r')
+		return 1;	/* status is ok */
+
+	printf("\007dunnsnap: status error from camera\n");
+	printf("status[0]= 0x%x [1]= 0x%x [2]= 0x%x [3]= 0x%x\n",
+		status[0]&0x7f,status[1]&0x7f,
+		status[2]&0x7f,status[3]&0x7f);
 	return 0;	/* status is bad or request timed out */
 }
 
@@ -176,7 +209,11 @@ hangten()
 {
 	static struct timeval delaytime = { 0, 10000}; /* set timeout to 10mS*/
 
+#ifdef BSD
 	select(0, (int *)0, (int *)0, (int *)0, &delaytime);
+#else
+	sleep(1);
+#endif
 }
 
 /*
@@ -191,20 +228,40 @@ ready(nsecs)
 int nsecs;
 {
 	struct timeval waittime, *timeout;
+	register int i;
 	timeout = &waittime;
 	timeout->tv_sec = nsecs;
 	timeout->tv_usec = 0;
 	
 	cmd = ':';	/* ready test command */
 	write(fd, &cmd, 1);
+#ifdef BSD
 	readfds = 1<<fd;
 	select(fd+1, &readfds, (int *)0, (int *)0, timeout);
 	if ((readfds & (1<<fd)) != 0) {
-		mread(fd, status, 2);
-		if((status[0]&0x7f) == 'R')
-			return 1;	/* camera is ready */
+		return 0;	/* timeout after n secs */
 	}
-	return 0;	/* camera is not ready or timeout after n secs */
+#else
+	alarm(nsecs);
+#endif
+	status[0] = status[1] = '\0';
+	/* This loop is needed to skip leading nulls in input stream */
+	do {
+		i = read(fd, &status[0], 1);
+		if( i != 1 )  {
+			printf("dunnsnap:  unexpected EOF %d\n", i);
+			return(0);
+		}
+	} while( status[0] == '\0' );
+	(void)read(fd, &status[1], 1);
+	alarm(0);
+
+	if((status[0]&0x7f) == 'R' && (status[1]&0x7f) == '\r')
+		return 1;	/* camera is ready */
+
+	printf("dunnsnap/ready():  unexpected camera status 0%o 0%o\n",
+		status[0]&0x7f, status[1]&0x7f);
+	return 0;	/* camera is not ready */
 }
 
 /*
@@ -231,16 +288,21 @@ char *title;
 	else
 		cmd = '=';	/* request AUX exposure values */
 	write(fd, &cmd, 1);
+#ifdef BSD
 	readfds = 1<<fd;
 	select(fd+1, &readfds, (int *)0, (int *)0, &waittime);
-	if( (readfds&(1<<fd)) != 0) {
-		mread(fd, values, 20);
-		values[20] = '\0';
-		printf("dunncolor: %s = %s\n", title, values);
-	} else {
+	if( (readfds&(1<<fd)) == 0) {
 		printf("dunncolor:\007 %s request exposure value cmd: timed out\n", title);
 		exit(40);
 	}
+#else
+	alarm(waittime.tv_sec);
+#endif
+	mread(fd, values, 20);
+	alarm(0);
+
+	values[20] = '\0';
+	printf("dunncolor: %s = %s\n", title, values);
 }
 
 /*
