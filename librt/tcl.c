@@ -752,7 +752,7 @@ db_tcl_tree_parse( Tcl_Interp *interp, const char *str, struct resource *resp )
 	/* Skip over leading spaces in input */
 	while( *str && isspace(*str) ) str++;
 
-	if( Tcl_SplitList( interp, str, &argc, &argv ) != TCL_OK )
+	if( Tcl_SplitList( interp, str, &argc, (const char ***)&argv ) != TCL_OK )
 		return TREE_NULL;
 
 	if( argc <= 0 || argc > 3 )  {
@@ -1578,7 +1578,7 @@ rt_tcl_setup(Tcl_Interp *interp)
 int
 Rt_Init(Tcl_Interp *interp)
 {
-	char *version_number;
+	const char *version_number;
 
 	/*XXX how much will this break? */
 	if (BU_LIST_UNINITIALIZED(&rt_g.rtg_vlfree)) {
