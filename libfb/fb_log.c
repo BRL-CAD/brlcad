@@ -19,7 +19,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include <varargs.h>
 
-#ifdef cray
+#ifdef CRAY1
 void
 fb_log( fmt, a,b,c,d,e,f,g,h,i )
 char	*fmt;
