@@ -39,8 +39,8 @@ extern int	verbose;
 extern double	getdouble();
 extern int	sol_total, sol_work;
 
-#define PI	3.14159265358979323846264	/* Approx */
-#define	DEG2RAD	0.0174532925199433
+#define PI		3.14159265358979323846264	/* Approx */
+#define	DEG2RAD		0.0174532925199433
 
 char	scard[132];			/* Solid card buffer area */
 
@@ -192,16 +192,29 @@ getsolid()
 		return( 1 );
 	}
 
-	if( version == 5 )  {
+	switch( version )  {
+	case 5:
 		strncpy( given_solid_num, scard+0, 5 );
 		given_solid_num[5] = '\0';
 		strncpy( solid_type, scard+5, 5 );
 		solid_type[5] = '\0';
-	} else {
+		break;
+	case 4:
 		strncpy( given_solid_num, scard+0, 3 );
 		given_solid_num[3] = '\0';
 		strncpy( solid_type, scard+3, 7 );
 		solid_type[7] = '\0';
+		break;
+	case 1:
+		/* DoE/MORSE version, believed to be original MAGIC format */
+		strncpy( given_solid_num, scard+5, 4 );
+		given_solid_num[4] = '\0';
+		strncpy( solid_type, scard+2, 3 );
+		break;
+	default:
+		fprintf(stderr,"getsolid() version %d unimplemented\n", version);
+		exit(1);
+		break;
 	}
 	/* Trim trailing spaces */
 	trim_trail_spaces( given_solid_num );
@@ -239,6 +252,11 @@ getsolid()
 
 	namecvt( sol_work, name, 's' );
 	if(verbose) col_pr( name );
+
+	if( strcmp( solid_type, "end" ) == 0 )  {
+		/* DoE/MORSE version 1 format */
+		return(1);		/* END */
+	}
 
 	if( strcmp( solid_type, "ars" ) == 0 )  {
 		int		ncurves;
@@ -307,7 +325,9 @@ getsolid()
 		return( mk_arb8( outfp, name, tmp ) );
 	}
 
-	if( strcmp( solid_type, "raw" ) == 0 )  {
+	if( strcmp( solid_type, "raw" ) == 0 ||
+	    strcmp( solid_type, "wed" ) == 0		/* DoE name */
+	)  {
 		if( getsoldata( dd, 4*3, sol_work ) < 0 )
 			return(-1);
 		VMOVE( T(0), D(0) );
@@ -319,6 +339,40 @@ getsolid()
 		VADD3( T(5), D(0), D(3), D(2) );
 		VMOVE( T(6), T(5) );
 		VADD3( T(7), D(0), D(3), D(1) );
+		return( mk_arb8( outfp, name, tmp ) );
+	}
+
+	if( strcmp( solid_type, "rvw" ) == 0 )  {
+		/* Right Vertical Wedge (Origin: DoE/MORSE) */
+		double	a2, theta, phi, h2;
+		double	a2theta;
+		double	angle1, angle2;
+		vect_t	a, b, c;
+
+		if( getsoldata( dd, 1*3+4, sol_work ) < 0 )
+			return(-1);
+		a2 = dd[3];		/* XY side length */
+		theta = dd[4];
+		phi = dd[5];
+		h2 = dd[6];		/* height in +Z */
+
+		angle1 = (phi+theta-90) * DEG2RAD;
+		angle2 = (phi+theta) * DEG2RAD;
+		a2theta = a2 * tan(theta * DEG2RAD);
+
+		VSET( a, a2theta*cos(angle1), a2theta*sin(angle1), 0 );
+		VSET( b, -a2*cos(angle2), -a2*sin(angle2), 0 );
+		VSET( c, 0, 0, h2 );
+		
+		VSUB2( T(0), D(0), b );
+		VMOVE( T(1), D(0) );
+		VMOVE( T(2), D(0) );
+		VADD2( T(3), T(0), a );
+
+		VADD2( T(4), T(0), c );
+		VADD2( T(5), T(1), c );
+		VMOVE( T(6), T(5) );
+		VADD2( T(7), T(3), c );
 		return( mk_arb8( outfp, name, tmp ) );
 	}
 
