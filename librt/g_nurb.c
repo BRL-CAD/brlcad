@@ -416,7 +416,7 @@ struct soltab		*stp;
         vect_t          norm;
 	int 		i;
 
-	if( srf->order[1] <= 2 && srf->order[1] <= 2)
+	if( srf->order[0] <= 2 && srf->order[1] <= 2)
 	{
 
 	 	cvp->crv_c1 = cvp->crv_c2 = 0;
