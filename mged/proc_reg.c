@@ -48,16 +48,19 @@ static time_t			start_time, etime;
 static struct bu_ptbl		leaf_list;
 static long			nvectors;
 static struct rt_i		*rtip;
+static int			num_halfs;
 static int			do_polysolids; /* if this is non-zero, convert all the solids to polysolids
 						* for the raytracing (otherwise just raytrace the solids
 						* themselves). Raytracing polysolids is slower, but produces
 						* a better plot, since the polysolids exactly match the NMGs
 						* that provide the starting edges.
 						*/
+union E_tree *build_etree();
 
 /* segment types (stored in the "seg_stp" field of the (struct seg) */
 #define	ON_SURF	(struct soltab *)0x1
 #define IN_SOL  (struct soltab *)0x2
+#define ON_INT	(struct soltab *)0x3
 
 #define NOT_SEG_OVERLAP( _a, _b )	((_a->seg_out.hit_dist <= _b->seg_in.hit_dist) || (_b->seg_out.hit_dist <= _a->seg_in.hit_dist))
 
@@ -68,6 +71,14 @@ static int			do_polysolids; /* if this is non-zero, convert all the solids to po
 		BU_LIST_DEQUEUE( &(_a->l) ); \
 		RT_FREE_SEG( _a, _res ); \
 	} }
+
+/* stolen from g_half.c */
+struct half_specific  {
+        plane_t half_eqn;               /* Plane equation, outward normal */
+        vect_t  half_Xbase;             /* "X" basis direction */
+        vect_t  half_Ybase;             /* "Y" basis direction */
+};
+#define HALF_NULL       ((struct half_specific *)0)
 
 
 /*
@@ -140,119 +151,154 @@ Edrawtree( dp )
 	return;
 }
 
+HIDDEN union E_tree *
+add_solid( dp, mat )
+struct directory *dp;
+matp_t mat;
+{
+	union E_tree *eptr;
+	struct nmgregion *r;
+	struct rt_db_internal intern;
+	int id;
+
+	BU_GETUNION( eptr, E_tree );
+	eptr->magic = E_TREE_MAGIC;
+
+	id = rt_db_get_internal( &intern, dp, dbip, mat );
+	if( id < 0 )
+	{
+		Tcl_AppendResult(interp, "Failed to get internal form of ",
+			dp->d_namep, "\n", (char *)NULL );
+		eptr->l.m = (struct model *)NULL;
+		return( eptr );
+	}
+	if( id == ID_COMBINATION )
+	{
+		/* do explicit expansion of referenced combinations */
+
+		struct rt_comb_internal *comb;
+
+		bu_free( (char *)eptr, "eptr" );
+
+		comb = (struct rt_comb_internal *)intern.idb_ptr;
+		RT_CK_COMB( comb );
+
+		eptr = build_etree( comb->tree );
+		rt_db_free_internal( &intern );
+		return( eptr );
+	}
+
+	if( id == ID_HALF )
+	{
+		eptr->l.m = NULL;
+		num_halfs++;
+	}
+	else
+	{
+		/* create the NMG version of this solid */
+		eptr->l.m = nmg_mm();
+		if (rt_functab[id].ft_tessellate( &r, eptr->l.m, &intern,
+			&mged_ttol, &mged_tol) < 0)
+		{
+			nmg_km( eptr->l.m );
+			eptr->l.m = NULL;
+		}
+	}
+
+	/* get the soltab stuff */
+	BU_GETSTRUCT( eptr->l.stp, soltab );
+	eptr->l.stp->st_dp = dp;
+	eptr->l.stp->st_matp = mat;
+
+	{
+		struct rt_pg_internal *pg;
+		struct rt_db_internal intern2;
+
+		if( do_polysolids )
+		{
+			/* create and prep a polysolid version of this solid */
+
+			BU_GETSTRUCT( pg, rt_pg_internal );
+
+			if( ! eptr->l.m || !nmg_to_poly( eptr->l.m, pg, &mged_tol ) )
+			{
+				bu_free( (char *)pg, "rt_pg_internal" );
+				eptr->l.stp->st_id = id;
+				if( rt_functab[id].ft_prep( eptr->l.stp, &intern, rtip ) < 0 )
+					Tcl_AppendResult(interp, "Prep failure for solid '", dp->d_namep,
+						"'\n", (char *)NULL );
+			}
+			else
+			{
+				RT_INIT_DB_INTERNAL( &intern2 );
+				intern2.idb_type = ID_POLY;
+				intern2.idb_ptr = (genptr_t)pg;
+				eptr->l.stp->st_id = ID_POLY;
+				if (rt_functab[ID_POLY].ft_prep( eptr->l.stp, &intern2, rtip ) < 0 )
+				{
+					Tcl_AppendResult(interp, "Prep failure for solid '", dp->d_namep,
+						"'\n", (char *)NULL );
+				}
+
+				rt_db_free_internal( &intern2 );
+			}
+		}
+		else
+		{
+			/* prep this solid */
+
+			eptr->l.stp->st_id = id;
+			if( rt_functab[id].ft_prep( eptr->l.stp, &intern, rtip ) < 0 )
+				Tcl_AppendResult(interp, "Prep failure for solid '", dp->d_namep,
+					"'\n", (char *)NULL );
+		}
+	}
+
+	rt_db_free_internal( &intern );
+
+	/* add this leaf to the leaf list */
+	bu_ptbl_ins( &leaf_list, (long *)eptr );
+
+	return( eptr );
+}
+
 /* build an E_tree corresponding to the region tree (tp) */
 union E_tree *
 build_etree( tp )
 union tree *tp;
 {
 	union E_tree *eptr;
-	struct nmgregion *r;
+	struct soltab *stp;
 	struct directory *dp;
-	struct rt_db_internal intern;
-	int id;
 
 	RT_CK_TREE( tp );
-
-	BU_GETUNION( eptr, E_tree );
-	eptr->magic = E_TREE_MAGIC;
 
 	switch( tp->tr_op )
 	{
 		case OP_UNION:
 		case OP_SUBTRACT:
 		case OP_INTERSECT:
+			BU_GETUNION( eptr, E_tree );
+			eptr->magic = E_TREE_MAGIC;
 			eptr->n.op = tp->tr_op;
 			eptr->n.left = build_etree( tp->tr_b.tb_left );
 			eptr->n.right = build_etree( tp->tr_b.tb_right );
 			break;
-		case OP_DB_LEAF:
+		case OP_SOLID:
+			stp = tp->tr_a.tu_stp;
+			eptr = add_solid( stp->st_dp, stp->st_matp );
 			eptr->l.op = tp->tr_op;
 			BU_LIST_INIT( &eptr->l.seghead );
+			break;
+		case OP_DB_LEAF:
 			if( (dp=db_lookup( dbip, tp->tr_l.tl_name, LOOKUP_NOISY )) == DIR_NULL )
 			{
 				eptr->l.m = (struct model *)NULL;
 				break;
 			}
-			id = rt_db_get_internal( &intern, dp, dbip, tp->tr_l.tl_mat );
-			if( id < 0 )
-			{
-				Tcl_AppendResult(interp, "Failed to get internal form of ",
-					dp->d_namep, "\n", (char *)NULL );
-				eptr->l.m = (struct model *)NULL;
-				break;
-			}
-			if( id == ID_COMBINATION )
-			{
-				/* do explicit expansion of referenced combinations */
-
-				struct rt_comb_internal *comb;
-
-				bu_free( (char *)eptr, "eptr" );
-
-				comb = (struct rt_comb_internal *)intern.idb_ptr;
-				RT_CK_COMB( comb );
-
-				eptr = build_etree( comb->tree );
-				rt_db_free_internal( &intern );
-				break;
-			}
-
-			/* create the NMG version of this solid */
-			eptr->l.m = nmg_mm();
-			if (rt_functab[id].ft_tessellate( &r, eptr->l.m, &intern,
-				&mged_ttol, &mged_tol) < 0)
-			{
-				Tcl_AppendResult(interp, "Tessellation failed for ", dp->d_namep,
-					"\n", (char *)NULL );
-			}
-
-			/* get the soltab stuff */
-			BU_GETSTRUCT( eptr->l.stp, soltab );
-			eptr->l.stp->st_dp = dp;
-			eptr->l.stp->st_matp = tp->tr_l.tl_mat;
-
-			{
-				struct rt_pg_internal *pg;
-				struct rt_db_internal intern2;
-
-				if( do_polysolids )
-				{
-					/* create and prep a polysolid version of this solid */
-
-					eptr->l.stp->st_id = ID_POLY;
-					BU_GETSTRUCT( pg, rt_pg_internal );
-
-					if( !nmg_to_poly( eptr->l.m, pg, &mged_tol ) )
-					{
-						Tcl_AppendResult(interp, "Failed to convert '",
-							dp->d_namep, "' to a polysolid\n", (char *)NULL );
-					}
-					RT_INIT_DB_INTERNAL( &intern2 );
-					intern2.idb_type = ID_POLY;
-					intern2.idb_ptr = (genptr_t)pg;
-					if (rt_functab[ID_POLY].ft_prep( eptr->l.stp, &intern2, rtip ) < 0 )
-					{
-						Tcl_AppendResult(interp, "Prep failure for solid '", dp->d_namep,
-							"'\n", (char *)NULL );
-					}
-
-					rt_db_free_internal( &intern2 );
-				}
-				else
-				{
-					/* prep this solid */
-
-					eptr->l.stp->st_id = id;
-					if( rt_functab[id].ft_prep( eptr->l.stp, &intern, rtip ) < 0 )
-						Tcl_AppendResult(interp, "Prep failure for solid '", dp->d_namep,
-							"'\n", (char *)NULL );
-				}
-			}
-
-			rt_db_free_internal( &intern );
-
-			/* add this leaf to the leaf list */
-			bu_ptbl_ins( &leaf_list, (long *)eptr );
+			eptr = add_solid( dp, tp->tr_l.tl_mat );
+			eptr->l.op = tp->tr_op;
+			BU_LIST_INIT( &eptr->l.seghead );
 			break;
 	}
 	return( eptr );
@@ -277,7 +323,9 @@ struct bu_list *seg;
 			for( BU_LIST_FOR( ptr, seg, seg ) )
 			{
 				if( ptr->seg_stp == ON_SURF )
-					bu_log( "\t %g to %g (ON)\n", ptr->seg_in.hit_dist, ptr->seg_out.hit_dist );
+					bu_log( "\t %g to %g (ON_SURF)\n", ptr->seg_in.hit_dist, ptr->seg_out.hit_dist );
+				else if( ptr->seg_stp == ON_INT )
+					bu_log( "\t %g to %g (ON_INT)\n", ptr->seg_in.hit_dist, ptr->seg_out.hit_dist );
 				else if( ptr->seg_stp == IN_SOL )
 					bu_log( "\t %g to %g (IN)\n", ptr->seg_in.hit_dist, ptr->seg_out.hit_dist );
 				else
@@ -309,7 +357,9 @@ struct bu_list *seghead;
 
 			if( b->seg_in.hit_dist < a->seg_out.hit_dist )
 			{
-				a->seg_out.hit_dist = b->seg_out.hit_dist;
+				if( b->seg_out.hit_dist > a->seg_out.hit_dist )
+					a->seg_out.hit_dist = b->seg_out.hit_dist;
+
 				BU_LIST_DEQUEUE( &b->l );
 				RT_FREE_SEG( b, ap->a_resource );
 				b = nextb;
@@ -324,13 +374,14 @@ struct bu_list *seghead;
 }
 
 /* perform the intersection of two segments
- * the result is assigned the type from segment A
+ * the result is assigned the provided type
  */
 HIDDEN void
-do_intersect( A, B, seghead )
+do_intersect( A, B, seghead, type )
 struct seg *A;
 struct seg *B;
 struct bu_list *seghead;
+struct soltab *type;
 {
 	struct seg *tmp=(struct seg *)NULL;
 
@@ -343,13 +394,13 @@ struct bu_list *seghead;
 		if( B->seg_out.hit_dist <= A->seg_out.hit_dist )
 		{
 			*tmp = *B;
-			tmp->seg_stp = A->seg_stp;
+			tmp->seg_stp = type;
 		}
 		else
 		{
 			tmp->seg_in.hit_dist = B->seg_in.hit_dist;
 			tmp->seg_out.hit_dist = A->seg_out.hit_dist;
-			tmp->seg_stp = A->seg_stp;
+			tmp->seg_stp = type;
 		}
 	}
 	else
@@ -357,12 +408,13 @@ struct bu_list *seghead;
 		if( B->seg_out.hit_dist >= A->seg_out.hit_dist )
 		{
 			*tmp = *A;
+			tmp->seg_stp = type;
 		}
 		else
 		{
 			tmp->seg_in.hit_dist = A->seg_in.hit_dist;
 			tmp->seg_out.hit_dist = B->seg_out.hit_dist;
-			tmp->seg_stp = A->seg_stp;
+			tmp->seg_stp = type;
 		}
 	}
 	if( tmp )
@@ -480,6 +532,238 @@ struct bu_list *seghead;
 	BU_LIST_INSERT( seghead, &tmp->l )
 }
 
+HIDDEN void
+promote_ints( head )
+struct bu_list *head;
+{
+	struct seg *a, *b, *tmp;
+
+	#ifdef debug
+	bu_log( "In promote_ints():\n" );
+	show_seg( head, "SEGS" );
+	for( BU_LIST_FOR( a, seg, head ) )
+	{
+		b = BU_LIST_PNEXT( seg, &a->l );
+		if( BU_LIST_IS_HEAD( &b->l, head ) )
+			break;
+
+		if( b->seg_in.hit_dist < a->seg_in.hit_dist )
+			bu_log( "\tsegments out of order:\n" );
+	}
+	#endif
+
+	a = BU_LIST_FIRST( seg, head );
+	while( BU_LIST_NOT_HEAD( &a->l, head ) )
+	{
+		b = BU_LIST_PNEXT( seg, &a->l );
+		while( BU_LIST_NOT_HEAD( &b->l, head ) )
+		{
+			if( a->seg_stp == ON_INT && b->seg_stp == ON_SURF )
+			{
+				if( NOT_SEG_OVERLAP( a, b ) )
+				{
+					b = BU_LIST_PNEXT( seg, &b->l );
+					continue;
+				}
+
+				if( a->seg_in.hit_dist == b->seg_in.hit_dist &&
+				    a->seg_out.hit_dist == b->seg_out.hit_dist )
+				{
+					a->seg_stp = ON_SURF;
+					tmp = b;
+					b = BU_LIST_PNEXT( seg, &b->l );
+					BU_LIST_DEQUEUE( &tmp->l )
+					RT_FREE_SEG( tmp, ap->a_resource )
+					continue;;
+				}
+
+				if( a->seg_out.hit_dist == b->seg_out.hit_dist )
+					a->seg_out.hit_dist = b->seg_in.hit_dist;
+				else if( a->seg_out.hit_dist < b->seg_out.hit_dist )
+				{
+					if( b->seg_in.hit_dist > a->seg_in.hit_dist )
+						a->seg_out.hit_dist = b->seg_in.hit_dist;
+					else
+					{
+						tmp = a;
+						a  = BU_LIST_PLAST( seg, &a->l );
+						BU_LIST_DEQUEUE( &tmp->l )
+						RT_FREE_SEG( tmp, ap->a_resource )
+						break;
+					}
+				}
+				else if( a->seg_in.hit_dist == b->seg_in.hit_dist )
+				{
+					fastf_t tmp_dist;
+
+					tmp_dist = a->seg_out.hit_dist;
+					a->seg_out.hit_dist = b->seg_out.hit_dist;
+					b->seg_in.hit_dist = a->seg_out.hit_dist;
+					b->seg_out.hit_dist = tmp_dist;
+					a->seg_stp = ON_SURF;
+					b->seg_stp = ON_INT;
+				}
+				else
+				{
+					RT_GET_SEG( tmp, ap->a_resource )
+					*tmp = *a;
+					tmp->seg_in.hit_dist = b->seg_out.hit_dist;
+					a->seg_out.hit_dist = b->seg_in.hit_dist;
+					BU_LIST_APPEND( &b->l, &tmp->l )
+				}
+			}
+			else if( b->seg_stp == ON_INT && a->seg_stp == ON_SURF )
+			{
+				if( NOT_SEG_OVERLAP( b, a ) )
+				{
+					b = BU_LIST_PNEXT( seg, &b->l );
+					continue;
+				}
+
+				if( b->seg_in.hit_dist == a->seg_in.hit_dist &&
+				    b->seg_out.hit_dist == a->seg_out.hit_dist )
+				{
+					b->seg_stp = ON_SURF;
+					tmp = a;
+					a = BU_LIST_PLAST( seg, &a->l );
+					BU_LIST_DEQUEUE( &tmp->l )
+					RT_FREE_SEG( tmp, ap->a_resource )
+					break;
+				}
+
+				if( b->seg_out.hit_dist == a->seg_out.hit_dist )
+				{
+					tmp = b;
+					b = BU_LIST_PNEXT( seg, &b->l );
+					BU_LIST_DEQUEUE( &tmp->l )
+					RT_FREE_SEG( tmp, ap->a_resource )
+				}
+				else if( b->seg_out.hit_dist < a->seg_out.hit_dist )
+				{
+					if( a->seg_in.hit_dist > b->seg_in.hit_dist )
+						b->seg_out.hit_dist = a->seg_in.hit_dist;
+					else
+					{
+						tmp = b;
+						b = BU_LIST_PNEXT( seg, &b->l );
+						BU_LIST_DEQUEUE( &tmp->l )
+						RT_FREE_SEG( tmp, ap->a_resource )
+						continue;
+					}
+				}
+				else if( b->seg_in.hit_dist == a->seg_in.hit_dist )
+					b->seg_in.hit_dist = a->seg_out.hit_dist;
+				else
+				{
+					RT_GET_SEG( tmp, ap->a_resource )
+					*tmp = *b;
+					tmp->seg_in.hit_dist = a->seg_out.hit_dist;
+					b->seg_out.hit_dist = a->seg_in.hit_dist;
+					BU_LIST_APPEND( &a->l, &tmp->l )
+				}
+			}
+			
+			if( (a->seg_stp != ON_INT) || (b->seg_stp != ON_INT) )
+			{
+				b = BU_LIST_PNEXT( seg, &b->l );
+				continue;
+			}
+
+			if( NOT_SEG_OVERLAP( a, b ) )
+			{
+				b = BU_LIST_PNEXT( seg, &b->l );
+				continue;
+			}
+
+			#ifdef debug
+			bu_log( "\tfound overlapping ON_INT segs:\n" );
+			#endif
+
+			if( a->seg_in.hit_dist == b->seg_in.hit_dist &&
+			    a->seg_out.hit_dist == b->seg_out.hit_dist )
+			{
+				#ifdef debug
+				bu_log( "Promoting A, eliminating B\n" );
+				#endif
+
+				a->seg_stp = ON_SURF;
+				BU_LIST_DEQUEUE( &b->l )
+				RT_FREE_SEG( b, ap->a_resource )
+				break;
+			}
+
+			if( a->seg_out.hit_dist == b->seg_out.hit_dist )
+			{
+				b->seg_stp = ON_SURF;
+				a->seg_out.hit_dist = b->seg_in.hit_dist;
+
+				#ifdef debug
+				bu_log( "Promoting B, reducing A:\n" );
+				#endif
+			}
+			else if( a->seg_out.hit_dist < b->seg_out.hit_dist )
+			{
+				if( b->seg_in.hit_dist > a->seg_in.hit_dist )
+				{
+					RT_GET_SEG( tmp, ap->a_resource )
+					tmp->seg_stp = ON_SURF;
+					tmp->seg_in.hit_dist = b->seg_in.hit_dist;
+					tmp->seg_out.hit_dist = a->seg_out.hit_dist;
+					b->seg_in.hit_dist = a->seg_out.hit_dist;
+					a->seg_out.hit_dist = tmp->seg_in.hit_dist;
+					BU_LIST_INSERT( &b->l, &tmp->l )
+
+					#ifdef debug
+					bu_log( "--==__ overlap\n" );
+					#endif
+				}
+				else
+				{
+					b->seg_in.hit_dist = a->seg_out.hit_dist;
+					a->seg_stp = ON_SURF;
+
+					#ifdef debug
+					bu_log( "A within B\n" );
+					#endif
+				}
+			}
+			else
+			{
+				if( a->seg_in.hit_dist == b->seg_in.hit_dist )
+				{
+					fastf_t tmp_dist;
+
+					tmp_dist = a->seg_out.hit_dist;
+					a->seg_out.hit_dist = b->seg_out.hit_dist;
+					a->seg_stp = ON_SURF;
+					b->seg_in.hit_dist = a->seg_out.hit_dist;
+					b->seg_out.hit_dist = tmp_dist;					
+				}
+				else
+				{
+					RT_GET_SEG( tmp, ap->a_resource )
+					*tmp = *a;
+					tmp->seg_in.hit_dist = b->seg_out.hit_dist;
+					a->seg_out.hit_dist = b->seg_in.hit_dist;
+					b->seg_stp = ON_SURF;
+					BU_LIST_APPEND( &b->l, &tmp->l )
+
+					#ifdef debug
+					bu_log( "B within A:\n" );
+					#endif
+				}
+			}
+			b = BU_LIST_PNEXT( seg, &b->l );
+		}
+		a = BU_LIST_PNEXT( seg, &a->l );
+	}
+
+	#ifdef debug
+	bu_log( "Results of promote_ints()\n" );
+	show_seg( head, "SEGS" );
+	#endif
+}
+
 /* Evaluate an operation on the operands (segment lists) */
 HIDDEN struct bu_list *
 eval_op( A, op, B )
@@ -540,15 +824,17 @@ int op;
 			{
 				for( BU_LIST_FOR( segb, seg, B ) )
 				{
-					if( sega->seg_stp == ON_SURF )
+					if( sega->seg_stp == ON_INT && segb->seg_stp == ON_INT )
+						do_intersect( sega, segb, &ret, ON_SURF );
+					else if( sega->seg_stp == ON_SURF || sega->seg_stp == ON_INT )
 					{
 						if( segb->seg_stp == IN_SOL )
 							do_subtract( sega, segb, &ret );
 						else
-							do_intersect( sega, segb, &ret );
+							do_intersect( sega, segb, &ret, sega->seg_stp );
 					}
-					else if( segb->seg_stp == ON_SURF )
-						do_intersect( segb, sega, &ret );
+					else if( segb->seg_stp == ON_SURF ||  segb->seg_stp == ON_INT )
+						do_intersect( segb, sega, &ret, segb->seg_stp );
 					else
 						do_subtract( sega, segb, &ret );
 				}
@@ -590,10 +876,12 @@ int op;
 			{
 				for( BU_LIST_FOR( segb, seg, B ) )
 				{
-					if( sega->seg_stp == ON_SURF )
-						do_intersect( sega, segb, &ret );
+					if( sega->seg_stp == ON_INT && segb->seg_stp == ON_INT )
+						do_intersect( sega, segb, &ret, ON_SURF );
+					else if( sega->seg_stp == ON_SURF || sega->seg_stp == ON_INT )
+						do_intersect( sega, segb, &ret, sega->seg_stp );
 					else
-						do_intersect( segb, sega, &ret );
+						do_intersect( segb, sega, &ret, segb->seg_stp );
 				}
 			}
 			MY_FREE_SEG_LIST( B, ap->a_resource );
@@ -653,7 +941,7 @@ int op;
 			{
 				BU_LIST_DEQUEUE( &sega->l )
 
-				if( sega->seg_stp == ON_SURF )
+				if( sega->seg_stp == ON_SURF || sega->seg_stp == ON_INT )
 					BU_LIST_INSERT( &ons, &sega->l )
 				else
 					BU_LIST_INSERT( &ins, &sega->l )
@@ -698,6 +986,9 @@ int op;
 						BU_LIST_INSERT( &ons, &segb->l )
 				}
 			}
+
+			/* promote intersecting ON_INT's to ON_SURF */
+			promote_ints( &ons );
 
 			/* make sure the segments are unique */
 			eliminate_overlaps( &ins );
@@ -846,6 +1137,7 @@ union E_tree *eptr;
 	switch( eptr->l.op )
 	{
 		case OP_DB_LEAF:
+		case OP_SOLID:
 			A = (struct bu_list *)bu_malloc( sizeof( struct bu_list ), "bu_list" );
 			BU_LIST_INIT( A );
 			BU_LIST_INSERT_LIST( A, &eptr->l.seghead )
@@ -876,13 +1168,14 @@ union E_tree *eptr;
  * Call eval_etree() and plot the results
  */
 HIDDEN void
-shoot_and_plot( start_pt, dir, vhead, edge_len, skip_leaf1, skip_leaf2, eptr )
+shoot_and_plot( start_pt, dir, vhead, edge_len, skip_leaf1, skip_leaf2, eptr, type )
 point_t start_pt;
 vect_t dir;
 struct bu_list *vhead;
 fastf_t edge_len;
 int skip_leaf1, skip_leaf2;
 union E_tree *eptr;
+struct soltab *type;
 {
 	struct xray rp;
 	struct ray_data rd;
@@ -986,7 +1279,7 @@ union E_tree *eptr;
 			seg->l.magic = RT_SEG_MAGIC;
 			seg->seg_in.hit_dist = 0.0;
 			seg->seg_out.hit_dist = edge_len;
-			seg->seg_stp = ON_SURF;
+			seg->seg_stp = type;
 			BU_LIST_INSERT( &shoot->l.seghead, &seg->l );
 			continue;
 		}
@@ -1101,7 +1394,7 @@ struct bu_list *vhead;
 	{
 		leaf_ptr = (union E_tree *)BU_PTBL_GET( &leaf_list, leaf_no );
 		CK_ETREE( leaf_ptr );
-		if( leaf_ptr->l.op != OP_DB_LEAF )
+		if( leaf_ptr->l.op != OP_DB_LEAF && leaf_ptr->l.op != OP_SOLID )
 		{
 			Tcl_AppendResult(interp, "Eplot: Bad leaf node!!!\n", (char *)NULL );
 			return;
@@ -1151,7 +1444,7 @@ struct bu_list *vhead;
 				continue;
 			inv_len = 1.0/edge_len;
 			VSCALE( dir, dir, inv_len );
-			shoot_and_plot( vg->coord, dir, vhead, edge_len, leaf_no, -1, eptr );
+			shoot_and_plot( vg->coord, dir, vhead, edge_len, leaf_no, -1, eptr, ON_SURF );
 
 		}
 	}
@@ -1337,7 +1630,7 @@ struct bu_list *vhead;
 					if( lenb < len )
 						len = lenb;
 
-					shoot_and_plot( start_pt, dir, vhead, len-start_len, leaf_no, leaf2, eptr );
+					shoot_and_plot( start_pt, dir, vhead, len-start_len, leaf_no, leaf2, eptr, ON_INT );
 				}
 			}
 		}
@@ -1364,6 +1657,7 @@ union E_tree *eptr;
 			bu_free( (char *)eptr, "node pointer" );
 			break;
 		case OP_DB_LEAF:
+		case OP_SOLID:
 			if( eptr->l.m )
 			{
 				nmg_km( eptr->l.m );
@@ -1388,114 +1682,300 @@ union E_tree *eptr;
 	}
 }
 
-HIDDEN union tree *
-E_region_end( tsp, pathp, curtree )
-register struct db_tree_state *tsp;
-struct db_full_path     *pathp;
-union tree              *curtree;
+/* convert all "half" solids to polysolids */
+HIDDEN void
+fix_halfs()
 {
-	struct directory *dp;
-	struct bu_vls vls;
-	struct rt_db_internal intern;
-	struct rt_comb_internal *comb;
-	union E_tree *etree;
-	union tree *ret_tree;
-	struct bu_list vhead;
-	int id;
-	int simple_solid=0;
+	point_t max, min;
+	int i, count=0;
 
-	if( bu_debug&BU_DEBUG_MEM_CHECK && bu_mem_barriercheck() )
-		bu_log( "Error at start of E_region_end()\n" );
+	VSETALL( max, -MAX_FASTF )
+	VSETALL( min, MAX_FASTF )
 
-	RT_CK_TESS_TOL(tsp->ts_ttol);
-	BN_CK_TOL(tsp->ts_tol);
-	RT_CK_FULL_PATH(pathp)
-
-	bu_vls_init( &vls );
-
-	dp = DB_FULL_PATH_CUR_DIR( pathp );
-	RT_CK_DIR( dp );
-
-	BU_LIST_INIT( &vhead );
-
-	if( dp->d_flags & DIR_SOLID )
-		simple_solid = 1;
-
-	id = rt_db_get_internal( &intern, dp, dbip, tsp->ts_mat );
-	if( id < 0 )
+	for( i=0 ; i<BU_PTBL_END( &leaf_list ) ; i++ )
 	{
-		Tcl_AppendResult(interp, "Unable to get internal form of ", dp->d_namep,
-			"\n", (char *)NULL );
-		return( curtree );
+		union E_tree *tp;
+
+		tp = (union E_tree *)BU_PTBL_GET( &leaf_list, i );
+
+		if( tp->l.stp->st_id == ID_HALF )
+			continue;
+
+		VMINMAX( min, max, tp->l.stp->st_min )
+		VMINMAX( min, max, tp->l.stp->st_max )
+		count++;
 	}
 
-	if( simple_solid )
+	if( !count )
 	{
-		struct model *m;
+		Tcl_AppendResult(interp, "A 'half' solid is the only solid in a region (ignored)\n", (char *)NULL );
+		return;
+	}
+
+	for( i=0 ; i<BU_PTBL_END( &leaf_list ) ; i++ )
+	{
+		union E_tree *tp;
+		struct vertex *v[8];
+		struct vertex **vp[4];
 		struct nmgregion *r;
+		struct shell *s;
+		struct rt_pg_internal *pg;
+		struct faceuse *fu;
+		plane_t haf_pl;
+		struct half_specific *hp;
+		int j;
 
-		m = nmg_mm();
-		if (rt_functab[id].ft_tessellate( &r, m, &intern,
-			&mged_ttol, &mged_tol) < 0)
+		tp = (union E_tree *)BU_PTBL_GET( &leaf_list, i );
+
+		if( tp->l.stp->st_id != ID_HALF )
+			continue;
+
+		hp = (struct half_specific *)tp->l.stp->st_specific;
+
+		HMOVE( haf_pl, hp->half_eqn )
+
+		if( DIST_PT_PLANE( max, haf_pl ) >= -mged_tol.dist && DIST_PT_PLANE( min, haf_pl ) >= -mged_tol.dist )
+			continue;
+
+		/* make an NMG the size of our model bounding box */
+		tp->l.m = nmg_mm();
+		r = nmg_mrsv( tp->l.m );
+		s = BU_LIST_FIRST( shell, &r->s_hd );
+
+		for( j=0 ; j<8 ; j++ )
+			v[j] = (struct vertex *)NULL;
+
+		vp[0] = &v[0];
+		vp[1] = &v[1];
+		vp[2] = &v[2];
+		vp[3] = &v[3];
+		fu = nmg_cmface( s, vp, 4 );
+		nmg_vertex_g( v[0], max[X], min[Y], min[Z] );
+		nmg_vertex_g( v[1], max[X], max[Y], min[Z] );
+		nmg_vertex_g( v[2], max[X], max[Y], max[Z] );
+		nmg_vertex_g( v[3], max[X], min[Y], max[Z] );
+		nmg_calc_face_g( fu );
+
+		vp[0] = &v[4];
+		vp[1] = &v[5];
+		vp[2] = &v[6];
+		vp[3] = &v[7];
+		fu = nmg_cmface( s, vp, 4 );
+		nmg_vertex_g( v[4], min[X], min[Y], min[Z] );
+		nmg_vertex_g( v[5], min[X], min[Y], max[Z] );
+		nmg_vertex_g( v[6], min[X], max[Y], max[Z] );
+		nmg_vertex_g( v[7], min[X], max[Y], min[Z] );
+		nmg_calc_face_g( fu );
+
+		vp[0] = &v[0];
+		vp[1] = &v[3];
+		vp[2] = &v[5];
+		vp[3] = &v[4];
+		fu = nmg_cmface( s, vp, 4 );
+		nmg_calc_face_g( fu );
+
+		vp[0] = &v[1];
+		vp[1] = &v[7];
+		vp[2] = &v[6];
+		vp[3] = &v[2];
+		fu = nmg_cmface( s, vp, 4 );
+		nmg_calc_face_g( fu );
+
+		vp[0] = &v[3];
+		vp[1] = &v[2];
+		vp[2] = &v[6];
+		vp[3] = &v[5];
+		fu = nmg_cmface( s, vp, 4 );
+		nmg_calc_face_g( fu );
+
+		vp[0] = &v[1];
+		vp[1] = &v[0];
+		vp[2] = &v[4];
+		vp[3] = &v[7];
+		fu = nmg_cmface( s, vp, 4 );
+		nmg_calc_face_g( fu );
+
+		nmg_region_a( r, &mged_tol );
+
+		for( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )
 		{
-			Tcl_AppendResult(interp, "Tessellation failed for ", dp->d_namep,
-				"\n", (char *)NULL );
+			struct edgeuse *eu, *new_eu;
+			struct loopuse *lu, *new_lu;
+			struct vertexuse *vu;
+			plane_t pl;
+			int count;
+			struct vertexuse *vcut[2];
+			point_t pt[2];
+			struct edgeuse *eu_split[2];
+
+			if( fu->orientation != OT_SAME )
+				continue;
+
+			NMG_GET_FU_PLANE( pl, fu );
+
+			if( bn_coplanar( pl, haf_pl, &mged_tol ) > 0 )
+				continue;
+
+			lu = BU_LIST_FIRST( loopuse, &fu->lu_hd );
+
+			count = 0;
+			for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+			{
+				vect_t dir;
+				struct vertex_g *v1g, *v2g;
+				fastf_t dist;
+				struct edgeuse *new_eu;
+
+				v1g = eu->vu_p->v_p->vg_p;
+				v2g = eu->eumate_p->vu_p->v_p->vg_p;
+
+				VSUB2( dir, v2g->coord, v1g->coord )
+
+				if( bn_isect_line3_plane( &dist, v1g->coord, dir, haf_pl, &mged_tol ) < 1 )
+					continue;
+
+				if( dist < 0.0 || dist >=1.0 )
+					continue;
+
+				VJOIN1( pt[count], v1g->coord, dist, dir )
+				eu_split[count] = eu;
+
+				count++;
+				if( count == 2 )
+					break;
+			}
+
+			if( count != 2 )
+				continue;
+
+			new_eu = nmg_eusplit( (struct vertex *)NULL, eu_split[0], 1 );
+			vcut[0] = new_eu->vu_p;
+			nmg_vertex_gv( vcut[0]->v_p, pt[0] );
+
+			new_eu = nmg_eusplit( (struct vertex *)NULL, eu_split[1], 1 );
+			vcut[1] = new_eu->vu_p;
+			nmg_vertex_gv( vcut[1]->v_p, pt[1] );
+
+			new_lu = nmg_cut_loop( vcut[0], vcut[1] );
+			nmg_lu_reorient( lu );
+			nmg_lu_reorient( new_lu );
+
+			for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+			{
+				if( eu->vu_p->v_p == vcut[0]->v_p || eu->vu_p->v_p == vcut[1]->v_p )
+					continue;
+
+				if( DIST_PT_PLANE( eu->vu_p->v_p->vg_p->coord, haf_pl ) > mged_tol.dist )
+				{
+					nmg_klu( lu );
+					break;
+				}
+				else
+				{
+					nmg_klu( new_lu );
+					break;
+				}
+			}
 		}
 
-		nmg_m_to_vlist( &vhead, m, 0 );
-		rt_db_free_internal( &intern );
-
-		db_free_tree( curtree );
-		ret_tree =  (union tree *)NULL;
-	}
-	else
-	{
-		comb = (struct rt_comb_internal *)intern.idb_ptr;
-		RT_CK_COMB( comb );
-
-		if( !comb->tree )
+		/* kill any faces outside the half */
+		fu = BU_LIST_FIRST( faceuse, &s->fu_hd );
+		if( fu->orientation != OT_SAME )
+			fu = BU_LIST_PNEXT( faceuse, &fu->l );
+		while( BU_LIST_NOT_HEAD( &fu->l, &s->fu_hd ) )
 		{
-			rt_db_free_internal( &intern );
-			return( curtree );
+			struct faceuse *next_fu;
+			struct loopuse *lu;
+			int killfu=0;
+
+			next_fu = BU_LIST_PNEXT( faceuse, &fu->l );
+			if( fu->fumate_p == next_fu )
+				next_fu = BU_LIST_PNEXT( faceuse, &next_fu->l );
+
+			if( fu->orientation != OT_SAME )
+			{
+				fu = next_fu;
+				continue;
+			}
+
+			lu = BU_LIST_FIRST( loopuse, &fu->lu_hd );
+			while( BU_LIST_NOT_HEAD( &lu->l, &fu->lu_hd ) )
+			{
+				struct loopuse *next_lu;
+				struct edgeuse *eu;
+				int killit;
+
+				next_lu = BU_LIST_PNEXT( loopuse, &lu->l );
+
+				killit = 0;
+				for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+				{
+					struct vertex_g *vg;
+					fastf_t dist;
+
+					vg = eu->vu_p->v_p->vg_p;
+
+					dist = DIST_PT_PLANE( vg->coord, haf_pl );
+					if( DIST_PT_PLANE( vg->coord, haf_pl ) > mged_tol.dist )
+					{
+						killit = 1;
+						break;
+					}
+				}
+
+				if( killit )
+				{
+					if( nmg_klu( lu ) )
+					{
+						killfu = 1;
+						break;
+					}
+				}
+				lu = next_lu;
+			}
+
+			if( killfu )
+				nmg_kfu( fu );
+
+			fu = next_fu;
 		}
 
-		etree = build_etree( comb->tree );
+		nmg_rebound( tp->l.m, &mged_tol );
+		nmg_model_fuse( tp->l.m, &mged_tol );
+		nmg_close_shell( s, &mged_tol );
+		nmg_rebound( tp->l.m, &mged_tol );
 
-		Eplot( etree, &vhead );
-		rt_db_free_internal( &intern );
+		BU_GETSTRUCT( pg, rt_pg_internal );
 
-		/* Free etree */
-		free_etree( etree );
+		if( !nmg_to_poly( tp->l.m, pg, &mged_tol ) )
+		{
+			bu_free( (char *)pg, "rt_pg_internal" );
+			Tcl_AppendResult(interp, "Prep failure for solid '", tp->l.stp->st_dp->d_namep,
+				"'\n", (char *)NULL );
+		}
+		else
+		{
+			struct rt_db_internal intern2;
 
-		/* reset leaf_list */
-		bu_ptbl_reset( &leaf_list );
+			RT_INIT_DB_INTERNAL( &intern2 );
+			intern2.idb_type = ID_POLY;
+			intern2.idb_ptr = (genptr_t)pg;
+			rt_functab[tp->l.stp->st_id].ft_free( tp->l.stp );
+			tp->l.stp->st_specific = NULL;
+			tp->l.stp->st_id = ID_POLY;
+			VSETALL( tp->l.stp->st_max, -INFINITY );
+			VSETALL( tp->l.stp->st_min,  INFINITY );
+			if (rt_functab[ID_POLY].ft_prep( tp->l.stp, &intern2, rtip ) < 0 )
+			{
+				Tcl_AppendResult(interp, "Prep failure for polysolid version of solid '", tp->l.stp->st_dp->d_namep,
+					"'\n", (char *)NULL );
+			}
 
-		ret_tree = curtree;
+			rt_db_free_internal( &intern2 );
+		}
 	}
-
-	drawH_part2( 0, &vhead, pathp, tsp, SOLID_NULL );
-
-	if( bu_debug&BU_DEBUG_MEM_CHECK && bu_mem_barriercheck() )
-		bu_log( "Error at end of E_region_end()\n" );
-
-	return( ret_tree );
 }
 
-HIDDEN union tree *
-E_solid_end( tsp, pathp, ep, id )
-struct db_tree_state    *tsp;
-struct db_full_path     *pathp;
-struct bu_external      *ep;
-int                     id;
-{
-	union tree *curtree;
-
-	db_free_external( ep );
-	BU_GETUNION( curtree, tree );
-	curtree->magic = RT_TREE_MAGIC;
-	curtree->tr_op = OP_NOP;
-	return( curtree );
-}
 /*
  *			F _ E V E D I T
  *
@@ -1628,8 +2108,42 @@ char	**argv;
 	nvectors = 0;
 	(void)time( &start_time );
 
-	(void)db_walk_tree( dbip, argc, (CONST char **)argv, 1, &E_initial_tree_state, 0,
-		E_region_end, E_solid_end );
+	if( rt_gettrees( rtip, argc, (const char **)argv, 1 ) )
+		bu_bomb( "rt_gettrees failed!!\n" );
+
+	{
+		struct region *rp;
+		union E_tree *eptr;
+		struct bu_list vhead;
+		struct db_tree_state ts;
+		struct db_full_path path;
+
+		BU_LIST_INIT( &vhead );
+
+		rp = rtip->HeadRegion;
+		while( rp )
+		{
+			num_halfs = 0;
+			eptr = build_etree( rp->reg_treetop );
+
+			if( num_halfs )
+				fix_halfs();
+
+			Eplot( eptr, &vhead );
+			free_etree( eptr );
+			bu_ptbl_reset( &leaf_list );
+			ts.ts_mater = rp->reg_mater;
+			db_string_to_path( &path, dbip, rp->reg_name );
+			drawH_part2( 0, &vhead, &path, &ts, SOLID_NULL );
+			db_free_full_path( &path );
+
+			rp = rp->reg_forw;
+		}
+		/* do not do an rt_free_rti() (closes the database!!!!) */
+		rt_clean( rtip );
+
+		bu_free( (char *)rtip, "rt_i structure for 'E'" );
+	}
 
 	(void)time( &etime );
 
