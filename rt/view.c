@@ -527,9 +527,14 @@ struct partition *PartHeadp;
 		goto out;
 	}
 
-	/* Check to see if eye is "inside" the solid */
-	/* It might only be worthwhile doing all this in perspective mode */
-	/* XXX Note that hit_dist can be faintly negative, e.g. -1e-13 */
+	/* Check to see if eye is "inside" the solid
+	 * It might only be worthwhile doing all this in perspective mode
+	 * XXX Note that hit_dist can be faintly negative, e.g. -1e-13
+	 *
+	 * XXX we should certainly only do this if the eye starts out inside
+	 *  an opaque solid.  If it starts out inside glass or air we don't
+	 *  really want to do this
+	 */
 
 	if( hitp->hit_dist < 0.0 && pp->pt_regionp->reg_aircode == 0 ) {
 		struct application sub_ap;
@@ -555,7 +560,12 @@ struct partition *PartHeadp;
 		VJOIN1(sub_ap.a_ray.r_pt, ap->a_ray.r_pt, f, ap->a_ray.r_dir);
 		sub_ap.a_purpose = "pushed eye position";
 		(void)rt_shootray( &sub_ap );
+#if 0
 		VSCALE( ap->a_color, sub_ap.a_color, 0.80 );
+#else
+		VMOVE( ap->a_color, sub_ap.a_color);
+#endif
+
 		ap->a_user = 1;		/* Signal view_pixel: HIT */
 		goto out;
 	}
