@@ -112,6 +112,7 @@ f_mater()
 		(void)printf("%s: not a combination\n", dp->d_namep );
 		return;
 	}
+	(void)printf("Was %s %s\n", record.c.c_matname, record.c.c_matparm);
 	if( numargs <= 2 )  {
 		record.c.c_matname[0] = '\0';
 	} else {
