@@ -468,8 +468,8 @@ AC_SUBST(TK_LIBS)
 
 dnl itcl
 ITCL_VERSION="3.3"
-ITCL_LIBS='-L${top_builddir}/src/other/incrTcl/itcl -litcl${ITCL_VERSION} -Wl,-rpath,${libdir}/itcl${ITCL_VERSION}'
-ITK_LIBS='-L${top_builddir}/src/other/incrTcl/itk -litk${ITCL_VERSION} -Wl,-rpath,${libdir}/itk${ITCL_VERSION}'
+ITCL_LIBS='${top_builddir}/src/other/incrTcl/itcl/libitcl${ITCL_VERSION}.la'
+ITK_LIBS='${top_builddir}/src/other/incrTcl/itk/libitk${ITCL_VERSION}.la'
 AC_SUBST(ITCL_LIBS)
 AC_SUBST(ITCL_VERSION)
 AC_SUBST(ITK_LIBS)
@@ -956,7 +956,6 @@ AC_SUBST(WDB)
 AC_CONFIG_SUBDIRS([ \
 	src/other/libtcl/unix \
 	src/other/libtk/unix \
-	src/other/incrTcl \
 ])
 
 AC_CONFIG_FILES([
@@ -1040,6 +1039,9 @@ AC_CONFIG_FILES([
 	src/off/Makefile
 	src/other/Makefile
 	src/other/awf/Makefile
+	src/other/incrTcl/Makefile
+	src/other/incrTcl/itcl/Makefile
+	src/other/incrTcl/itk/Makefile
 	src/other/iwidgets/Makefile
 	src/other/iwidgets/doc/Makefile
 	src/other/iwidgets/generic/Makefile
