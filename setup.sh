@@ -70,7 +70,7 @@ eval `sh machinetype.sh -b`
 # Install the necessary shell scripts in BINDIR
 #
 ############################################################################
-SCRIPTS="machinetype.sh cakeinclude.sh cray.sh"
+SCRIPTS="machinetype.sh cakeinclude.sh cray.sh ranlib5.sh sgisnap.sh"
 
 for i in ${SCRIPTS}
 do
