@@ -223,6 +223,14 @@ Ir_open()
 			ir_has_zbuf = 1;
 			ir_has_rgb = 1;
 			break;
+		case INV_GR1BOARD:	/* Persoanl Iris */
+			if ( inv->state & INV_GR1RE2 )
+				ir_is_gt = 1;
+			if(inv->state & INV_GR1ZBUF24 )
+				ir_has_zbuf = 1;
+			if(inv->state & INV_GR1BIT24 )
+				ir_has_rgb = 1;
+			break;
 		}
 	}
 	endinvent();		/* frees internal inventory memory */
