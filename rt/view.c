@@ -35,6 +35,8 @@
 static char RCSview[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "machine.h"	/* comes before looking at __unix */
+
 #include <stdio.h>
 #include <math.h>
 
@@ -43,7 +45,6 @@ static char RCSview[] = "@(#)$Header$ (BRL)";
 # include <sys/stat.h>
 #endif
 
-#include "machine.h"
 #include "vmath.h"
 #include "mater.h"
 #include "rtlist.h"

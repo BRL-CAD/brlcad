@@ -20,6 +20,8 @@
 static char RCSrt[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "machine.h"	/* comes before looking at __unix */
+
 #if defined(unix) || defined(__unix)
 # include <sys/types.h>
 # include <sys/stat.h>
@@ -35,7 +37,6 @@ static char RCSrt[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include <ctype.h>
 #include <math.h>
-#include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "fb.h"
