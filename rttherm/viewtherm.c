@@ -157,9 +157,12 @@ register struct application *ap;
 		slp->sl_buf = (char *)rt_tabdata_malloc_array( spectrum, width );
 	}
 	bu_semaphore_release( RT_SEM_RESULTS );
+	RT_CK_TABDATA( slp->sl_buf );	/* pun for first struct in array (sanity) */
 
-	ap->a_spectrum = (struct rt_tabdata *)(slp->sl_buf+(ap->a_x*RT_SIZEOF_TABDATA(spectrum)));
+	ap->a_spectrum = (struct rt_tabdata *)
+		(slp->sl_buf+(ap->a_x*RT_SIZEOF_TABDATA(spectrum)));
 	RT_CK_TABDATA( ap->a_spectrum );
+	BU_ASSERT( ap->a_spectrum->table == spectrum );
 }
 
 /*
@@ -518,6 +521,7 @@ struct seg *finished_segs;
 	}
 
 #if NO_MATER
+	if( !ap->a_spectrum )  curve_attach(ap);
 /* XXX This is the right way to do this, but isn't quite ready yet. */
 	bzero( (char *)&sw, sizeof(sw) );
 	sw.sw_transmit = sw.sw_reflect = 0.0;
