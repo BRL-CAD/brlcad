@@ -1009,12 +1009,14 @@ struct directory *dp;
  *			R T _ T O R _ T E S S
  */
 int
-rt_tor_tess( r, m, rp, mat, dp )
+rt_tor_tess( r, m, rp, mat, dp, abs_tol, rel_tol )
 struct nmgregion	**r;
 struct model		*m;
 register union record	*rp;
 register mat_t		mat;
 struct directory	*dp;
+double			abs_tol;
+double			rel_tol;
 {
 	fastf_t		alpha;
 	fastf_t		beta;
@@ -1023,9 +1025,9 @@ struct directory	*dp;
 	fastf_t		dist_to_rim;
 	struct tor_internal	ti;
 	int		w;
-	int		nw = 16;
+	int		nw = 6;
 	int		len;
-	int		nlen = 32;
+	int		nlen = 6;
 	fastf_t		*pts;
 	vect_t		G;
 	vect_t		radius;
@@ -1036,12 +1038,48 @@ struct directory	*dp;
 	struct vertex	**vertp[4];
 	int		nfaces;
 	int		i;
+	fastf_t		r1;		/* |A| */
+	fastf_t		r2;		/* |H| */
 
 	if( rt_tor_import( &ti, rp, mat ) < 0 )
 		return(-1);		/* BAD */
 
+	r1 = MAGNITUDE(ti.a);
+	r2 = MAGNITUDE(ti.h);
+
+rt_log("tor abs=%g, rel=%g\n", abs_tol, rel_tol );
+	if( rel_tol <= 0.0 || rel_tol >= 1.0 )  {
+		rel_tol = 0.0;		/* none */
+	} else {
+		/* Convert relative tolerance to absolute tolerance
+		 * by scaling w.r.t. the torus diameter.
+		 */
+		rel_tol *= 2*(r1+r2);
+	}
+	/* Take tighter of two (absolute) tolerances */
+	if( abs_tol <= 0.0 )  {
+		/* No absolute tolerance given */
+		if( rel_tol <= 0.0 )  {
+			/* User has no tolerance for this kind of drink! */
+			nw = 8;
+			nlen = 16;
+		} else {
+			/* Use the absolute-ized relative tolerance */
+			nlen = rt_num_circular_segments( rel_tol, r1 );
+			nw = rt_num_circular_segments( rel_tol, r2 );
+		}
+	} else {
+		/* Absolute tolerance was given */
+		if( rel_tol > 0.0 && rel_tol < abs_tol )
+			abs_tol = rel_tol;
+		nlen = rt_num_circular_segments( abs_tol, r1 );
+		nw = rt_num_circular_segments( abs_tol, r2 );
+	}
+rt_log("tor abs=%g, abs_rel=%g\n", abs_tol, rel_tol );
+rt_log("tor nlen=%d, nw=%d\n", nlen, nw);
+
 	/* Compute the points on the surface of the torus */
-	dist_to_rim = MAGNITUDE(ti.h)/MAGNITUDE(ti.a);
+	dist_to_rim = r2/r1;
 	pts = (fastf_t *)rt_malloc( nw * nlen * sizeof(point_t),
 		"rt_tor_tess pts[]" );
 
@@ -1069,15 +1107,19 @@ struct directory	*dp;
 	faces = (struct faceuse **)rt_calloc( nw*nlen, sizeof(struct faceuse *),
 		"rt_tor_tess *faces[]" );
 
-	/* Construct the faces and vertices */
-	/* Increasing indices go ccw */
+	/* Build the topology of the torus */
+	nfaces = 0;
 	for( w = 0; w < nw; w++ )  {
 		for( len = 0; len < nlen; len++ )  {
 			vertp[0] = &verts[ PT(w+0,len+0) ];
 			vertp[1] = &verts[ PT(w+0,len+1) ];
 			vertp[2] = &verts[ PT(w+1,len+1) ];
 			vertp[3] = &verts[ PT(w+1,len+0) ];
-			faces[nfaces++] = nmg_cmface( s, vertp, 4 );
+			if( (faces[nfaces++] = nmg_cmface( s, vertp, 4 )) == (struct faceuse *)0 )  {
+				rt_log("rt_tor_tess() nmg_cmface failed, w=%d/%d, len=%d/%d\n",
+					w, nw, len, nlen );
+				nfaces--;
+			}
 		}
 	}
 
@@ -1100,4 +1142,63 @@ struct directory	*dp;
 	rt_free( (char *)verts, "rt_tor_tess *verts[]" );
 	rt_free( (char *)faces, "rt_tor_tess *faces[]" );
 	return(0);
+}
+
+/* 
+ *			R T _ N U M _ C I R C U L A R _ S E G M E N T S
+ *
+ *  Given a circle with a specified radius, determine the minimum number
+ *  of straight line segments that the circle can be approximated with,
+ *  while still meeting the given maximum permissible error distance.
+ *  Form a chord (straight line) by
+ *  connecting the start and end points found when
+ *  sweeping a 'radius' arc through angle 'theta'.
+ *
+ *  The error distance is the distance between where a radius line
+ *  at angle theta/2 hits the chord, and where it hits the circle
+ *  (at 'radius' distance).
+ *
+ *	error_distance = radius * ( 1 - cos( theta/2 ) )
+ *
+ *  or
+ *
+ *	theta = 2 * acos( 1 - error_distance / radius )
+ *
+ *  Returns -
+ *	number of segments.  Always at least 6.
+ */
+int
+rt_num_circular_segments( maxerr, radius )
+double	maxerr;
+double	radius;
+{
+	register fastf_t	cos_half_theta;
+	register fastf_t	half_theta;
+	int			n;
+
+	if( radius <= 0.0 || maxerr <= 0.0 || maxerr >= radius )  {
+		/* Return a default number of segments */
+		return(6);
+	}
+	cos_half_theta = 1.0 - maxerr / radius;
+	/* There does not seem to be any reasonable way to express the
+	 * acos in terms of an atan2(), so extra checking is done.
+	 */
+	if( cos_half_theta <= 0.0 || cos_half_theta >= 1.0 )  {
+		/* Return a default number of segments */
+		return(6);
+	}
+	half_theta = acos( cos_half_theta );
+	if( half_theta < SMALL )  {
+		/* A very large number of segments will be needed.
+		 * Impose an upper bound here
+		 */
+		return( 360*10 );
+	}
+	n = rt_pi / half_theta;
+
+	/* Impose the limits again */
+	if( n <= 6 )  return(6);
+	if( n >= 360*10 )  return( 360*10 );
+	return(n);
 }
