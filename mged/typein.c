@@ -345,12 +345,33 @@ char **argv;
 	char			*new_cmd[3], **menu;
 	int			ngran;		/* number of db granules */
 	int			id;
+	int			c;
+	int			do_solid_edit = 0;
+	int			dont_draw = 0;
 	int			nvals, (*fn_in)();
 	int			arb_in(), box_in(), ehy_in(), ell_in(),
 				epa_in(), eto_in(), half_in(), rec_in(),
 				rcc_in(), rhc_in(), rpc_in(), rpp_in(),
 				sph_in(), tec_in(), tgc_in(), tor_in(),
 				trc_in();
+
+	/* Parse options. */
+	optind = 1;		/* re-init getopt() */
+	while( (c=getopt(argc,argv,"sf")) != EOF )  {
+		switch(c)  {
+		case 's':
+			do_solid_edit = 1;
+			break;
+		case 'f':
+			dont_draw = 1;
+			break;
+		default:
+			printf("in: option '%c' unknown\n", c);
+			break;
+		}
+	}
+	argc -= optind-1;
+	argv += optind-1;
 
 	(void)signal( SIGINT, sig2);	/* allow interrupts */
 
@@ -546,11 +567,22 @@ do_extern_update:
 	}
 	db_free_external( &external );
 
-	/* draw the "made" solid */
+	if( dont_draw )  return CMD_OK;
+
+	/* draw the newly "made" solid */
 	new_cmd[0] = "e";
 	new_cmd[1] = name;
 	new_cmd[2] = (char *)NULL;
-	return f_edit( 2, new_cmd );
+	(void)f_edit( 2, new_cmd );
+
+	if( do_solid_edit )  {
+		/* Also kick off solid edit mode */
+		new_cmd[0] = "sed";
+		new_cmd[1] = name;
+		new_cmd[2] = (char *)NULL;
+		(void)f_sed( 2, new_cmd );
+	}
+	return CMD_OK;
 }
 
 /*
