@@ -12,14 +12,12 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
 
-#if defined(SYSV) || defined(CRAY)
-#define index(s, c)	strchr(s, c)
-extern char	*strchr();
-#else
-extern char	*index();
-#endif
+#include "machine.h"
+#include "externs.h"
 
 /*
  * get option letter from argument vector
@@ -30,8 +28,8 @@ extern char	*index();
  * and initialized in their library, despite the fact that we don't even use
  * that module of their library!
  */
-extern int opterr;		/* set to zero to suppress errors */
-extern int optind;		/* index into parent argv vector */
+extern int opterr;            /* set to zero to suppress errors */
+extern int optind;            /* index into parent argv vector */
 #else
 int	opterr = 1;		/* set to zero to suppress errors */
 int	optind = 1;		/* index into parent argv vector */
