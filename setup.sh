@@ -181,7 +181,12 @@ if [ X${SILENT} = X ] ; then
 fi
 if test x$1 != x-f
 then
-	cd cake
+	if [ ! -d .cake.$MACHINE ] ; then
+		mkdir .cake.$MACHINE
+		cp cake/*.[chyl1] cake/Makefile .cake.$MACHINE
+	fi
+
+	cd .cake.$MACHINE
 	make ${SILENT} clobber
 	make ${SILENT} install
 	make ${SILENT} clobber
@@ -189,8 +194,13 @@ then
 	then
 		echo "***ERROR:  cake not installed"
 	fi
+	cd ../
 
-	cd ../cakeaux
+	if [ ! -d .cakeaux.$MACHINE ] ; then
+		mkdir .cakeaux.$MACHINE
+		cp cakeaux/*.[chyl1] cakeaux/Makefile .cakeaux.$MACHINE
+	fi
+	cd .cakeaux.$MACHINE
 	make ${SILENT} clobber
 	for i in cakesub cakeinclude
 	do
