@@ -491,6 +491,17 @@ char			*base;		/* base address of users structure */
 				}
 			}
 			break;
+		case 'x':
+			{	register int i = sdp->sp_count;
+				register int *dp = (int *)loc;
+
+				rt_log( " %s=%08x", sdp->sp_name, *dp++ );
+
+				while (--i > 0) rt_log( ",%08x", *dp++ );
+
+				rt_log("\n");
+			}
+			break;
 		default:
 			rt_log( " rt_structprint: Unknown format: %s=%s??\n",
 				sdp->sp_name, sdp->sp_fmt );
