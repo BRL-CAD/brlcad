@@ -2,7 +2,7 @@
  *			F I R P A S S . C
  *
  *  Author -
- *	S.Coates - 10 March 1992
+ *	S.Coates - 10 February 1993
  *  
  *  Source -
  *	The U. S. Army Ballistic Research Laboratory
@@ -45,6 +45,8 @@
 /*			   are no exterior polygons FRED sums the area over  */
 /*			   the interior polygons.)  */
 /*	10 March 1992    - Print out PRISM release being used.  */
+/*	10 February 1992 - Fire rays from 3 orthogonal directions, if  */
+/*			   desired.  */
 
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
@@ -93,7 +95,7 @@ struct table
 	double cumvol[3];	/*  cummulative volume sums for each  */
 				/*  direction fired  */
 	double centroid[3];	/*  centroid calculation  */
-	double cumfs[7];	/*  cummulative surface area for */
+	double cumfs[7][3];	/*  cummulative surface area for */
 				/*  each air type, 0-exterior air,  */
 				/*  1-crew compartment air, 2-engine  */
 				/*  compartment air, 3-closed compartment  */
@@ -120,6 +122,7 @@ double area;			/*  area of "ray"  */
 double leavept[3];		/*  leave point for previous region hit  */
 double lnormal[3];		/*  normal for leaving ray  */
 int whichview;			/*  flag for direction rays are fired  */
+				/*  (0=>x, 1=>y, 2=>z)  */
 
 struct structovr		/*  structure for recording overlaps  */
 {
@@ -238,6 +241,10 @@ char *argv[];
 	int numint;		/*  Number of interior surfaces.  */
 	int numsol;		/*  Number of solar loaded surfaces.  */
 	int prmrel;		/*  PRISM release number 2=>2.0 & 3=>3.0.  */
+	int ifire;		/*  Number of sets of rays to be fired,  */
+				/*  0=>fire from 3 orthogonal postions,  */
+				/*  1=>fire from 1 postion.  */
+	double diff;		/*  Difference, used in finding variance.  */
 
    /*  Check to see if arguments implimented correctly.  */
    if(argv[1]==NULL || argv[2]==NULL)
@@ -342,6 +349,24 @@ char *argv[];
  *	(void)printf("typeout = %d\n",typeout);
  *	(void)fflush(stdout);
  */
+
+	/*  Determine whether to fire one set of rays or to fire  */
+	/*  three sets of orthogonal rays.  */
+	(void)printf("Should there be 3 sets of orthogonal rays fired ");
+	(void)printf("(0) or 1 set\n");
+	(void)printf("of rays fired (1)?\n\t");
+	(void)fflush(stdout);
+	(void)scanf("%d",&ifire);
+	if(ifire != 0) ifire = 1;
+	if(ifire == 0)
+	{
+	   (void)printf("3 sets of orthogonal rays will be fired.\n");
+	}
+	if(ifire == 1)
+	{
+	   (void)printf("1 set of rays will be fired.\n");
+	}
+	(void)fflush(stdout);
 
 	/*  Open & read material id file.  */
 	fp4=fopen(fileden,"r");
@@ -473,7 +498,9 @@ char *argv[];
 		region[i].centroid[2]=0.;
 		for(k=0; k<7; k++)
 		{
-		   region[i].cumfs[k] = 0.;
+		   region[i].cumfs[k][0] = 0.;
+		   region[i].cumfs[k][1] = 0.;
+		   region[i].cumfs[k][2] = 0.;
 		}
 		region[i].surarea[0]=0.;
 		region[i].surarea[1]=0.;
@@ -597,10 +624,10 @@ char *argv[];
 	ap.a_resource=0;	/*  address of resource structure:  */
 				/*  NULL  */
 
-	/*  Set up for shooting rays down the x axis (positive to  */
-	/*  negative).  */
+	/*  Set up for 1st set of fired rays, positive to negative  */
+	/*  (shooting down the x-axis).  */
 
-	(void)printf("\nSHOOTING DOWN X-AXIS\n");
+	(void)printf("\nSHOOTING DOWN THE 1st AXIS\n");
 	(void)fflush(stdout);
 
 	whichview=0;
@@ -642,8 +669,8 @@ char *argv[];
 		/*  Set to show no previous shots.  */
 		iprev=(-99);
 		r[X]=xmax - center[X] + 5.;
-		r[Y]=ymax - center[X] + 5.;
-		r[Z]=zmax - center[X] + 5.;
+		r[Y]=ymax - center[Y] + 5.;
+		r[Z]=zmax - center[Z] + 5.;
 
 
 		(void)rotate(r,angle,t);
@@ -688,6 +715,156 @@ char *argv[];
 		ap.a_ray.r_pt[Z] = center[Z] + r[Z];
 	}
 
+	/*  Set up to fire 2nd & 3rd set of rays if appropriate.  */
+	if(ifire == 0)
+	{						/*  START # 1000  */
+	   /*  Set up & fire 2nd set of arrays.  */
+	   (void)printf("\nSHOOTING DOWN THE 2nd AXIS\n");
+	   (void)fflush(stdout);
+
+	   whichview = 1;
+
+	   strtpt[X] = xmin + gridspace / 2.;
+	   strtpt[Y] = ymax;
+	   strtpt[Z] = xmin + gridspace / 2.;
+	   strtdir[X] = 0.;
+	   strtdir[Y] = (-1.);
+	   strtdir[Z] = 0.;
+
+	   /*  Angle already in radians.  */
+
+	   /*  Rotate starting point (new pt = C + R[P - C]).  */
+	   t[X] = strtpt[X] - center[X];
+	   t[Y] = strtpt[Y] - center[Y];
+	   t[Z] = strtpt[Z] - center[Z];
+
+	   (void)rotate(t,angle,r);
+
+	   ap.a_ray.r_pt[X] = center[X] + r[X];
+	   ap.a_ray.r_pt[Y] = center[Y] + r[Y];
+	   ap.a_ray.r_pt[Z] = center[Z] + r[Z];
+
+	   /*  Rotate firing direction (new dir = R[D]).  */
+	   (void)rotate(strtdir,angle,r);
+	   ap.a_ray.r_dir[X] = r[X];
+	   ap.a_ray.r_dir[Y] = r[Y];
+	   ap.a_ray.r_dir[Z] = r[Z];
+
+	   while(strtpt[Z] <= zmax)
+	   {
+		/*  Set to show no previous shots.  */
+		iprev = (-99);
+		r[X] = xmax - center[X] + 5.;
+		r[Y] = ymax - center[Y] + 5.;
+		r[Z] = zmax - center[Z] + 5.;
+
+		(void)rotate(r,angle,t);
+
+		leavept[X] = center[X] + t[X];
+		leavept[Y] = center[Y] + t[Y];
+		leavept[Z] = center[Z] + t[Z];
+
+		lnormal[X] = 0.;
+		lnormal[Y] = 0.;
+		lnormal[Z] = 0.;
+
+		/*  Call rt_shootray.  */
+		(void)rt_shootray(&ap);
+
+		strtpt[X] += gridspace;
+
+		if(strtpt[X] > xmax)
+		{
+		   strtpt[X] = xmin + gridspace / 2.;
+		   strtpt[Z] += gridspace;
+		}
+
+		t[X] = strtpt[X] - center[X];
+		t[Y] = strtpt[Y] - center[Y];
+		t[Z] = strtpt[Z] - center[Z];
+
+		(void)rotate(t,angle,r);
+
+		ap.a_ray.r_pt[X] = center[X] + r[X];
+		ap.a_ray.r_pt[Y] = center[Y] + r[Y];
+		ap.a_ray.r_pt[Z] = center[Z] + r[Z];
+	   }
+
+	   /*  Set up & fire 3rd set of rays.  */
+	   (void)printf("\nSHOOTING DOWN THE 3rd AXIS.\n");
+	   (void)fflush(stdout);
+
+	   whichview = 2;
+
+	   strtpt[X] = xmin + gridspace / 2.;
+	   strtpt[Y] = ymin + gridspace / 2.;
+	   strtpt[Z] = zmax;
+	   strtdir[X] = 0.;
+	   strtdir[Y] = 0.;
+	   strtdir[Z] = (-1.);
+
+	   /*  Angle already in radians.  */
+
+	   /*  Rotate starting point (new pt = C + R[P - C]).  */
+	   t[X] = strtpt[X] - center[X];
+	   t[Y] = strtpt[Y] - center[Y];
+	   t[Z] = strtpt[Z] - center[Z];
+
+	   (void)rotate(t,angle,r);
+
+	   ap.a_ray.r_pt[X] = center[X] + r[X];
+	   ap.a_ray.r_pt[Y] = center[Y] + r[Y];
+	   ap.a_ray.r_pt[Z] = center[Z] + r[Z];
+
+	   /*  Rotate firing direction (new dir = R[D]).  */
+	   (void)rotate(strtdir,angle,r);
+
+	   ap.a_ray.r_dir[X] = r[X];
+	   ap.a_ray.r_dir[Y] = r[Y];
+	   ap.a_ray.r_dir[Z] = r[Z];
+
+	   while(strtpt[Y] <= ymax)
+	   {
+		/*  Set to show no previous shots.  */
+		iprev = (-99);
+		r[X] = xmax - center[X] + 5.;
+		r[Y] = xmax - center[Y] + 5.;
+		r[Z] = xmax - center[Z] + 5.;
+
+		(void)rotate(r,angle,t);
+
+		leavept[X] = center[X] + t[X];
+		leavept[Y] = center[Y] + t[Y];
+		leavept[Z] = center[Z] + t[Z];
+
+		lnormal[X] = 0.;
+		lnormal[Y] = 0.;
+		lnormal[Z] = 0.;
+
+		/*  Call rt_shootray.  */
+		(void)rt_shootray(&ap);
+
+		strtpt[X] += gridspace;
+
+		if(strtpt[X] > xmax)
+		{
+		   strtpt[X] = xmin + gridspace / 2.;
+		   strtpt[Y] += gridspace;
+		}
+
+		t[X] = strtpt[X] - center[X];
+		t[Y] = strtpt[Y] - center[Y];
+		t[Z] = strtpt[Z] - center[Z];
+
+		(void)rotate(t,angle,r);
+
+		ap.a_ray.r_pt[X] = center[X] + r[X];
+		ap.a_ray.r_pt[Y] = center[Y] + r[Y];
+		ap.a_ray.r_pt[Z] = center[Z] + r[Z];
+	   }
+
+	}						/*  END # 1000  */
+
 	if(iwrite == 0)
 	{
 	  (void)printf("\nNumber of regions:  %d\n\n",num);
@@ -714,6 +891,7 @@ char *argv[];
  */
 		total = region[i].cumvol[0] + region[i].cumvol[1] +
 		   region[i].cumvol[2];
+
 /*
  *		(void)printf("\tcummulative volume:  %f",total);
  *		(void)fflush(stdout);
@@ -731,15 +909,128 @@ char *argv[];
  *		   region[i].surarea[1],region[i].surarea[2]);
  */
 
-		/*  Check for variance of volume.  */
+		/*  Check for variance of volume & find volume.  */
 		flag=0;
-		region[i].cumvol[1]=flag;
+		if(ifire == 0)
+		{					/*  START # 1040  */
+		   if( (region[i].cumvol[0] != 0.) &&
+		     (region[i].cumvol[1] != 0.) &&
+		     (region[i].cumvol[2] != 0.) )
+		   {					/*  START # 1045  */
+		   diff = region[i].cumvol[0] - region[i].cumvol[1];
+		   if(diff < 0.) diff = (-diff);
+		   if( (diff / region[i].cumvol[0]) > VOLVAR) flag = 1;
+		   if( (diff / region[i].cumvol[1]) > VOLVAR) flag = 1;
 
-		/*  Check for variance of surface area.  */
+		   diff = region[i].cumvol[0] - region[i].cumvol[2];
+		   if(diff < 0.) diff = (-diff);
+		   if( (diff / region[i].cumvol[0]) > VOLVAR) flag = 1;
+		   if( (diff / region[i].cumvol[2]) > VOLVAR) flag = 1;
+
+		   diff = region[i].cumvol[1] - region[i].cumvol[2];
+		   if(diff < 0.) diff = (-diff);
+		   if( (diff / region[i].cumvol[1]) > VOLVAR) flag = 1;
+		   if( (diff / region[i].cumvol[2]) > VOLVAR) flag = 1;
+		   }					/*  END # 1045  */
+
+		   else if( (region[i].cumvol[0] == 0.) ||
+		            (region[i].cumvol[1] == 0.) ||
+		            (region[i].cumvol[2] == 0.) )
+		   {
+			flag = 2;
+		   }
+
+		   /*  Put in check.  */
+/*
+ *		   if(flag == 1)
+ *		   {
+ *			(void)printf("** Vol Var exceeded for region %d:  ",
+ *				i);
+ *			(void)printf("%f, %f, %f **\n",region[i].cumvol[0],
+ *				region[i].cumvol[1],region[i].cumvol[2]);
+ *			(void)fflush(stdout);
+ *		   }
+ *		   else
+ *		   {
+ *			(void)printf("** Vol Var NOT exceeded for region %d:  ",
+ *				i);
+ *			(void)printf("%f, %f, %f **\n",region[i].cumvol[0],
+ *				region[i].cumvol[1],region[i].cumvol[2]);
+ *			(void)fflush(stdout);
+ *		   }
+ */
+		}					/*  END # 1040  */
+
+		if(ifire == 0)
+		{
+		   region[i].cumvol[0] = region[i].cumvol[0]
+		   	+ region[i].cumvol[1] + region[i].cumvol[2];
+		   region[i].cumvol[0] /= 3.;
+		}
+		region[i].cumvol[1]=(double)flag;
+
+		/*  Check for variance of surface area & find  */
+		/*  surface area.  */
 		flag=0;
-		region[i].surarea[1]=flag;
+		if(ifire == 0)
+		{					/*  START # 1050  */
+		   if( (region[i].surarea[0] != 0.) &&
+		       (region[i].surarea[1] != 0.) &&
+		       (region[i].surarea[2] != 0.) )
+		   {					/*  START # 1055  */
+		   diff = region[i].surarea[0] - region[i].surarea[1];
+		   if(diff < 0.) diff = (-diff);
+		   if( (diff / region[i].surarea[0]) > VOLVAR) flag = 1;
+		   if( (diff / region[i].surarea[1]) > VOLVAR) flag = 1;
 
-		/*  Check for variance of shared surface area.  */
+		   diff = region[i].surarea[0] - region[i].surarea[2];
+		   if(diff < 0.) diff = (-diff);
+		   if( (diff / region[i].surarea[0]) > VOLVAR) flag = 1;
+		   if( (diff / region[i].surarea[2]) > VOLVAR) flag = 1;
+
+		   diff = region[i].surarea[1] - region[i].surarea[2];
+		   if(diff < 0.) diff = (-diff);
+		   if( (diff / region[i].surarea[1]) > VOLVAR) flag = 1;
+		   if( (diff / region[i].surarea[2]) > VOLVAR) flag = 1;
+		   }					/*  END # 1055  */
+
+		   else if( (region[i].surarea[0] == 0.) ||
+		            (region[i].surarea[1] == 0.) ||
+		            (region[i].surarea[2] == 0.) )
+		   {
+			flag = 2;
+		   }
+
+		   /*  Put in check.  */
+/*
+ *		   if(flag == 1)
+ *		   {
+ *			(void)printf("** Sur Area Var exceeded for ");
+ *			(void)printf("region %d:  ",i);
+ *			(void)printf("%f, %f, %f **\n",region[i].surarea[0],
+ *				region[i].surarea[1],region[i].surarea[2]);
+ *			(void)fflush(stdout);
+ *		   }
+ *		   else
+ *		   {
+ *			(void)printf("** Sur Area Var NOT exceeded for ");
+ *			(void)printf("region %d:  ",i);
+ *			(void)printf("%f, %f, %f **\n",region[i].surarea[0],
+ *				region[i].surarea[1],region[i].surarea[2]);
+ *			(void)fflush(stdout);
+ *		   }
+ */
+		}					/*  END # 1050  */
+		if(ifire == 0)
+		{
+		   region[i].surarea[0] = region[i].surarea[0]
+		   	+ region[i].surarea[1] + region[i].surarea[2];
+		   region[i].surarea[0] /= 3.;
+		}
+		region[i].surarea[1]=(double)flag;
+
+		/*  Check for variance of shared surface area &  */
+		/*  find shared surface area.  */
 		for(j=0; j<num; j++)
 		{
 		   if(region[i].adjreg[j] == 1)
@@ -754,9 +1045,134 @@ char *argv[];
  *			(void)fflush(stdout);
  */
 			flag = 0;
-			region[i].ssurarea[1][j] = flag;
+			if(ifire == 0)
+			{				/*  START # 1060  */
+			   if( (region[i].ssurarea[0][j] != 0.) &&
+			       (region[i].ssurarea[1][j] != 0.) &&
+			       (region[i].ssurarea[2][j] != 0.) )
+			   {				/*  START # 1065  */
+			   diff = region[i].ssurarea[0][j]
+				- region[i].ssurarea[1][j];
+			   if(diff < 0.) diff = (-diff);
+			   if( (diff / region[i].ssurarea[0][j]) > VOLVAR)
+				flag = 1;
+			   if( (diff / region[i].ssurarea[1][j]) > VOLVAR)
+				flag = 1;
+
+			   diff = region[i].ssurarea[0][j]
+				- region[i].ssurarea[2][j];
+			   if(diff < 0.) diff = (-diff);
+			   if( (diff / region[i].ssurarea[0][j]) > VOLVAR)
+				flag = 1;
+			   if( (diff / region[i].ssurarea[2][j]) > VOLVAR)
+				flag = 1;
+
+			   diff = region[i].ssurarea[1][j]
+				- region[i].ssurarea[2][j];
+			   if(diff < 0.) diff = (-diff);
+			   if( (diff / region[i].ssurarea[1][j]) > VOLVAR)
+				flag = 1;
+			   if( (diff / region[i].ssurarea[2][j]) > VOLVAR)
+				flag = 1;
+			   }				/*  END # 1065  */
+
+			   else if( (region[i].ssurarea[0][j] == 0.) ||
+			            (region[i].ssurarea[1][j] == 0.) ||
+			            (region[i].ssurarea[2][j] == 0.) )
+			   {
+				flag = 2;
+			   }
+
+			   /*  Put in check.  */
+/*
+ *			   if(flag == 1)
+ *			   {
+ *				(void)printf("** Shar Sur Area Var exceeded ");
+ *				(void)printf("for region %d, %d:  ",i,j);
+ *				(void)printf("%f, %f, %f **\n",
+ *					region[i].ssurarea[0][j],
+ *					region[i].ssurarea[1][j],
+ *					region[i].ssurarea[2][j]);
+ *				(void)fflush(stdout);
+ *			   }
+ *			   else
+ *			   {
+ *				(void)printf("** Shar Sur Area Var NOT exceed");
+ *				(void)printf("ed for region %d,%d:  ",i,j);
+ *				(void)printf("%f, %f, %f **\n",
+ *					region[i].ssurarea[0][j],
+ *					region[i].ssurarea[1][j],
+ *					region[i].ssurarea[2][j]);
+ *				(void)fflush(stdout);
+ *			   }
+ */
+			}				/*  END # 1060  */
+			if(ifire == 0)
+			{
+			   region[i].ssurarea[0][j] = region[i].ssurarea[0][j]
+			   	+ region[i].ssurarea[1][j]
+				+ region[i].ssurarea[2][j];
+			   region[i].ssurarea[0][j] /= 3.;
+			}
+			region[i].ssurarea[1][j] = (double)flag;
 		   }
 		}
+
+		/*  Check for variance of all air areas (exterior,  */
+		/*  crew, engine, closed compartment, exhaust, generic  */
+		/*  1 & generic 2) & find area.  */
+		for(k=0; k<7; k++)
+		{					/*  START # 1070  */
+		   flag = 0;
+		   if(ifire == 0)
+		   {					/*  START # 1080  */
+			if( (region[i].cumfs[k][0] != 0.) &&
+			    (region[i].cumfs[k][1] != 0.) &&
+			    (region[i].cumfs[k][2] != 0.) )
+			{				/*  START # 1090  */
+			   diff = region[i].cumfs[k][0]
+			        - region[i].cumfs[k][1];
+			   if(diff < 0.) diff = (-diff);
+			   if( (diff / region[i].cumfs[k][0]) > VOLVAR)
+				flag = 1;
+			   if( (diff / region[i].cumfs[k][1]) > VOLVAR)
+				flag = 1;
+
+			   diff = region[i].cumfs[k][0]
+			        - region[i].cumfs[k][2];
+			   if(diff < 0.) diff = (-diff);
+			   if( (diff / region[i].cumfs[k][0]) > VOLVAR)
+				flag = 1;
+			   if( (diff / region[i].cumfs[k][2]) > VOLVAR)
+				flag = 1;
+
+			   diff = region[i].cumfs[k][1]
+			        - region[i].cumfs[k][2];
+			   if(diff < 0.) diff = (-diff);
+			   if( (diff / region[i].cumfs[k][1]) > VOLVAR)
+				flag = 1;
+			   if( (diff / region[i].cumfs[k][2]) > VOLVAR)
+				flag = 1;
+			}				/*  END # 1090  */
+
+			else if( (region[i].cumfs[k][0] == 0.) ||
+			         (region[i].cumfs[k][1] == 0.) ||
+			         (region[i].cumfs[k][2] == 0.) )
+			{
+			   flag = 2;
+			}
+		   }					/*  END # 1080  */
+
+		   if(ifire == 0)
+		   {
+			region[i].cumfs[k][0] = region[i].cumfs[k][0] + 
+			                        region[i].cumfs[k][1] + 
+			                        region[i].cumfs[k][2];
+			region[i].cumfs[k][0] /= 3.;
+		   }
+
+		   region[i].cumfs[k][1] = (double)flag;
+		}					/*  END # 1070  */
 
 		/*  Finish finding cummulative normal of exterior  */
 		/*  free surface.  */
@@ -814,7 +1230,7 @@ char *argv[];
 		(void)printf("\tmaterial code:  %d\n",region[i].mat);
 		(void)fflush(stdout);
 
-		if(region[i].cumvol[1] == 1)
+		if(region[i].cumvol[1] == 1.)
 		{
 		   (void)printf("\tvolume:  %f - difference is above",
 			region[i].cumvol[0]);
@@ -828,7 +1244,7 @@ char *argv[];
 		   (void)fflush(stdout);
 		}
 			
-		if(region[i].surarea[1] == 1)
+		if(region[i].surarea[1] == 1.)
 		{
 		   (void)printf("\tarea:  %f - difference is above",
 			region[i].surarea[0]);
@@ -850,20 +1266,34 @@ char *argv[];
 			region[i].cumnorm[X],region[i].cumnorm[Y],
 			region[i].cumnorm[Z]);
 		(void)fflush(stdout);
-		(void)printf("\texterior surface air:  %f\n",
-			region[i].cumfs[0]);
-		(void)printf("\tcrew compartment air:  %f\n",
-			region[i].cumfs[1]);
-		(void)printf("\tengine compartment air:  %f\n",
-			region[i].cumfs[2]);
-		(void)printf("\tclosed compartment air:  %f\n",
-			region[i].cumfs[3]);
-		(void)printf("\texhaust air:  %f\n",
-			region[i].cumfs[4]);
-		(void)printf("\tgeneric air 1:  %f\n",
-			region[i].cumfs[5]);
-		(void)printf("\tgeneric air 2:  %f\n",
-			region[i].cumfs[6]);
+		(void)printf("\text sur air:  %f",region[i].cumfs[0][0]);
+		if(region[i].cumfs[0][1] == 0.) (void)printf(" - ok\n");
+		if(region[i].cumfs[0][1] == 1.) (void)printf(" - not ok\n");
+		if(region[i].cumfs[0][1] == 2.) (void)printf(" - none\n");
+		(void)printf("\tcrew comp air:  %f",region[i].cumfs[1][0]);
+		if(region[i].cumfs[1][1] == 0.) (void)printf(" - ok\n");
+		if(region[i].cumfs[1][1] == 1.) (void)printf(" - not ok\n");
+		if(region[i].cumfs[1][1] == 2.) (void)printf(" - none\n");
+		(void)printf("\teng comp air:  %f",region[i].cumfs[2][0]);
+		if(region[i].cumfs[2][1] == 0.) (void)printf(" - ok\n");
+		if(region[i].cumfs[2][1] == 1.) (void)printf(" - not ok\n");
+		if(region[i].cumfs[2][1] == 2.) (void)printf(" - none\n");
+		(void)printf("\tclosed comp air:  %f",region[i].cumfs[3][0]);
+		if(region[i].cumfs[3][1] == 0.) (void)printf(" - ok\n");
+		if(region[i].cumfs[3][1] == 1.) (void)printf(" - not ok\n");
+		if(region[i].cumfs[3][1] == 2.) (void)printf(" - none\n");
+		(void)printf("\texhaust air:  %f",region[i].cumfs[4][0]);
+		if(region[i].cumfs[4][1] == 0.) (void)printf(" - ok\n");
+		if(region[i].cumfs[4][1] == 1.) (void)printf(" - not ok\n");
+		if(region[i].cumfs[4][1] == 2.) (void)printf(" - none\n");
+		(void)printf("\tgen air 1:  %f",region[i].cumfs[5][0]);
+		if(region[i].cumfs[5][1] == 0.) (void)printf(" - ok\n");
+		if(region[i].cumfs[5][1] == 1.) (void)printf(" - not ok\n");
+		if(region[i].cumfs[5][1] == 2.) (void)printf(" - none\n");
+		(void)printf("\tgen air 2:  %f",region[i].cumfs[6][0]);
+		if(region[i].cumfs[6][1] == 0.) (void)printf(" - ok\n");
+		if(region[i].cumfs[6][1] == 1.) (void)printf(" - not ok\n");
+		if(region[i].cumfs[6][1] == 2.) (void)printf(" - none\n");
 		(void)fflush(stdout);
 		for(j=0; j<num; j++)
 		{
@@ -874,7 +1304,7 @@ char *argv[];
 			(void)printf("shared surface area:  %f\n",
 			   region[i].ssurarea[0][j]);
 			(void)fflush(stdout);
-			if(region[i].ssurarea[1][j] == 1)
+			if(region[i].ssurarea[1][j] == 1.)
 			{
 			   (void)printf("\tdifference is above %f variance\n",
 				VOLVAR);
@@ -897,7 +1327,7 @@ char *argv[];
 		   (i+1),region[i].regname);
 		(void)fprintf(fp,"\tmaterial code:  %d\n",region[i].mat);
 
-		if(region[i].cumvol[1] == 1)
+		if(region[i].cumvol[1] == 1.)
 		{
 		   (void)fprintf(fp,"\tvolume:  %f - difference is above",
 			region[i].cumvol[0]);
@@ -911,7 +1341,7 @@ char *argv[];
 		   (void)fflush(fp);
 		}
 			
-		if(region[i].surarea[1] == 1)
+		if(region[i].surarea[1] == 1.)
 		{
 		   (void)fprintf(fp,"\tarea:  %f - difference is above",
 			region[i].surarea[0]);
@@ -934,20 +1364,34 @@ char *argv[];
 			region[i].cumnorm[X],region[i].cumnorm[Y],
 			region[i].cumnorm[Z]);
 		(void)fflush(fp);
-		(void)fprintf(fp,"\texterior surface air:  %f\n",
-			region[i].cumfs[0]);
-		(void)fprintf(fp,"\tcrew compartment air:  %f\n",
-			region[i].cumfs[1]);
-		(void)fprintf(fp,"\tengine compartment air:  %f\n",
-			region[i].cumfs[2]);
-		(void)fprintf(fp,"\tclosed compartment air:  %f\n",
-			region[i].cumfs[3]);
-		(void)fprintf(fp,"\texhaust air:  %f\n",
-			region[i].cumfs[4]);
-		(void)fprintf(fp,"\tgeneric air 1:  %f\n",
-			region[i].cumfs[5]);
-		(void)fprintf(fp,"\tgeneric air 2:  %f\n",
-			region[i].cumfs[6]);
+		(void)fprintf(fp,"\text sur air:  %f",region[i].cumfs[0][0]);
+		if(region[i].cumfs[0][1] == 0.) (void)fprintf(fp," - ok\n");
+		if(region[i].cumfs[0][1] == 1.) (void)fprintf(fp," - not ok\n");
+		if(region[i].cumfs[0][1] == 2.) (void)fprintf(fp," - none\n");
+		(void)fprintf(fp,"\tcrew comp air:  %f",region[i].cumfs[1][0]);
+		if(region[i].cumfs[1][1] == 0.) (void)fprintf(fp," - ok\n");
+		if(region[i].cumfs[1][1] == 1.) (void)fprintf(fp," - not ok\n");
+		if(region[i].cumfs[1][1] == 2.) (void)fprintf(fp," - none\n");
+		(void)fprintf(fp,"\teng comp air:  %f",region[i].cumfs[2][0]);
+		if(region[i].cumfs[2][1] == 0.) (void)fprintf(fp," - ok\n");
+		if(region[i].cumfs[2][1] == 1.) (void)fprintf(fp," - not ok\n");
+		if(region[i].cumfs[2][1] == 2.) (void)fprintf(fp," - none\n");
+		(void)fprintf(fp,"\tclsd comp air:  %f",region[i].cumfs[3][0]);
+		if(region[i].cumfs[3][1] == 0.) (void)fprintf(fp," - ok\n");
+		if(region[i].cumfs[3][1] == 1.) (void)fprintf(fp," - not ok\n");
+		if(region[i].cumfs[3][1] == 2.) (void)fprintf(fp," - none\n");
+		(void)fprintf(fp,"\texhaust air:  %f",region[i].cumfs[4][0]);
+		if(region[i].cumfs[4][1] == 0.) (void)fprintf(fp," - ok\n");
+		if(region[i].cumfs[4][1] == 1.) (void)fprintf(fp," - not ok\n");
+		if(region[i].cumfs[4][1] == 2.) (void)fprintf(fp," - none\n");
+		(void)fprintf(fp,"\tgen air 1:  %f",region[i].cumfs[5][0]);
+		if(region[i].cumfs[5][1] == 0.) (void)fprintf(fp," - ok\n");
+		if(region[i].cumfs[5][1] == 1.) (void)fprintf(fp," - not ok\n");
+		if(region[i].cumfs[5][1] == 2.) (void)fprintf(fp," - none\n");
+		(void)fprintf(fp,"\tgen air 2:  %f",region[i].cumfs[6][0]);
+		if(region[i].cumfs[6][1] == 0.) (void)fprintf(fp," - ok\n");
+		if(region[i].cumfs[6][1] == 1.) (void)fprintf(fp," - not ok\n");
+		if(region[i].cumfs[6][1] == 2.) (void)fprintf(fp," - none\n");
 		(void)fflush(fp);
 		for(j=0; j<num; j++)
 		{
@@ -958,7 +1402,7 @@ char *argv[];
 			(void)fprintf(fp,"shared surface area:  %f;\n",
 			   region[i].ssurarea[0][j]);
 			(void)fflush(fp);
-			if(region[i].ssurarea[1][j] == 1)
+			if(region[i].ssurarea[1][j] == 1.)
 			{
 			   (void)fprintf(fp,"\tdifference is above ");
 			   (void)fprintf(fp,"%f variance\n",
@@ -1087,7 +1531,7 @@ char *argv[];
 
 		/*  Find area of facet or as it has been called  */
 		/*  exterior surface area (sq meters).  */
-		facarea = region[i].cumfs[0] * (1.e-6);
+		facarea = region[i].cumfs[0][0] * (1.e-6);
 
 		/*  If there is no exterior surface area, i.e. the  */
 		/*  surface normal is (0,0,0) set the area of the  */
@@ -1179,8 +1623,8 @@ char *argv[];
 		/*  air area exist then print engine air area in square  */
 		/*  meters.  */
 		facradius = 0.;
-		if(region[i].cumfs[2] > ZEROTOL)
-			facradius = region[i].cumfs[2] * (1.e-6);
+		if(region[i].cumfs[2][0] > ZEROTOL)
+			facradius = region[i].cumfs[2][0] * (1.e-6);
 
 		/*  Bearing friction constant (J) for wheels.  */
 		/*  Currently set to 0.  */
@@ -1285,16 +1729,16 @@ char *argv[];
 	   {
 		/*  Any exterior surfaces?  */
 		numext = 0;
-		if(region[i].cumfs[0] > ZEROTOL) numext = 1;
+		if(region[i].cumfs[0][0] > ZEROTOL) numext = 1;
 
 		/*  Any interior surfaces?  */
 		numint = 0;
-		if(region[i].cumfs[1] > ZEROTOL) numint += 1;
-		if(region[i].cumfs[2] > ZEROTOL) numint += 1;
-		if(region[i].cumfs[3] > ZEROTOL) numint += 1;
-		if(region[i].cumfs[4] > ZEROTOL) numint += 1;
-		if(region[i].cumfs[5] > ZEROTOL) numint += 1;
-		if(region[i].cumfs[6] > ZEROTOL) numint += 1;
+		if(region[i].cumfs[1][0] > ZEROTOL) numint += 1;
+		if(region[i].cumfs[2][0] > ZEROTOL) numint += 1;
+		if(region[i].cumfs[3][0] > ZEROTOL) numint += 1;
+		if(region[i].cumfs[4][0] > ZEROTOL) numint += 1;
+		if(region[i].cumfs[5][0] > ZEROTOL) numint += 1;
+		if(region[i].cumfs[6][0] > ZEROTOL) numint += 1;
 
 		(void)fprintf(fp5,"2 %6d   %3d          %3d\n",
 			(i+1),numext,numint);
@@ -1302,34 +1746,40 @@ char *argv[];
 
 		if(numext == 1)
 		{
-		   (void)fprintf(fp5,"  %.3e\n",(region[i].cumfs[0]*1.e-6));
+		   (void)fprintf(fp5,"  %.3e\n",(region[i].cumfs[0][0]*1.e-6));
 		   (void)fflush(fp5);
 		}
 		if(numint > 0)
 		{
-		   if(region[i].cumfs[1] > ZEROTOL)
+		   if(region[i].cumfs[1][0] > ZEROTOL)
 		   {
-			(void)fprintf(fp5,"  %.3e",(region[i].cumfs[1]*1.e-6));
+			(void)fprintf(fp5,"  %.3e",
+				(region[i].cumfs[1][0]*1.e-6));
 		   }
-		   if(region[i].cumfs[2] > ZEROTOL)
+		   if(region[i].cumfs[2][0] > ZEROTOL)
 		   {
-			(void)fprintf(fp5," %.3e",(region[i].cumfs[2]*1.e-6));
+			(void)fprintf(fp5," %.3e",
+				(region[i].cumfs[2][0]*1.e-6));
 		   }
-		   if(region[i].cumfs[3] > ZEROTOL)
+		   if(region[i].cumfs[3][0] > ZEROTOL)
 		   {
-			(void)fprintf(fp5," %.3e",(region[i].cumfs[3]*1.e-6));
+			(void)fprintf(fp5," %.3e",
+				(region[i].cumfs[3][0]*1.e-6));
 		   }
-		   if(region[i].cumfs[4] > ZEROTOL)
+		   if(region[i].cumfs[4][0] > ZEROTOL)
 		   {
-			(void)fprintf(fp5," %.3e",(region[i].cumfs[4]*1.e-6));
+			(void)fprintf(fp5," %.3e",
+				(region[i].cumfs[4][0]*1.e-6));
 		   }
-		   if(region[i].cumfs[5] > ZEROTOL)
+		   if(region[i].cumfs[5][0] > ZEROTOL)
 		   {
-			(void)fprintf(fp5," %.3e",(region[i].cumfs[5]*1.e-6));
+			(void)fprintf(fp5," %.3e",
+				(region[i].cumfs[5][0]*1.e-6));
 		   }
-		   if(region[i].cumfs[6] > ZEROTOL)
+		   if(region[i].cumfs[6][0] > ZEROTOL)
 		   {
-			(void)fprintf(fp5," %.3e",(region[i].cumfs[6]*1.e-6));
+			(void)fprintf(fp5," %.3e",
+				(region[i].cumfs[6][0]*1.e-6));
 		   }
 		   (void)fprintf(fp5,"\n");
 		   (void)fflush(stdout);
@@ -1340,7 +1790,7 @@ char *argv[];
 	   for(i=0; i<num; i++)
 	   {
 		numsol = 0;
-		if(region[1].cumfs[0] > ZEROTOL) numsol = 1;
+		if(region[1].cumfs[0][0] > ZEROTOL) numsol = 1;
 		(void)fprintf(fp5,"3 %6d %3d\n",(i+1),numsol);
 		(void)fflush(fp5);
 		if(numsol > 0)
@@ -1349,7 +1799,7 @@ char *argv[];
 		   else ia = 0;
 
 		   (void)fprintf(fp5,"  %.3e %+.3e %+.3e %+.3e %.3e\n",
-			(region[i].cumfs[0]*1.e-6),region[i].cumnorm[X],
+			(region[i].cumfs[0][0]*1.e-6),region[i].cumnorm[X],
 			region[i].cumnorm[Y],region[i].cumnorm[Z],
 			matprop[ia].a);
 		   (void)fflush(fp5);
@@ -1465,14 +1915,14 @@ char *argv[];
 	   for(i=0; i<num; i++)
 	   {
 		(void)fprintf(fp6,"%6d   %.3e      %.3e     %.3e    ",
-			(i+1),(region[i].cumfs[0]*1.e-6),
-			(region[i].cumfs[2]*1.e-6),
-			(region[i].cumfs[1]*1.e-6));
+			(i+1),(region[i].cumfs[0][0]*1.e-6),
+			(region[i].cumfs[2][0]*1.e-6),
+			(region[i].cumfs[1][0]*1.e-6));
 		(void)fprintf(fp6," %.3e            %.3e     %.3e       %.3e\n",
-			(region[i].cumfs[3]*1.e-6),
-			(region[i].cumfs[4]*1.e-6),
-			(region[i].cumfs[5]*1.e-6),
-			(region[i].cumfs[6]*1.e-6));
+			(region[i].cumfs[3][0]*1.e-6),
+			(region[i].cumfs[4][0]*1.e-6),
+			(region[i].cumfs[5][0]*1.e-6),
+			(region[i].cumfs[6][0]*1.e-6));
 		(void)fflush(fp6);
 	   }
 
@@ -1566,13 +2016,14 @@ char *argv[];
 
 		(void)fprintf(fp6,"%.3e,%.3e,%.3e,%.3e,%.3e,",
 			(region[i].cumvol[X]*1.e-9),facmass,
-			(region[i].cumfs[0]*1.e-6),(region[i].cumfs[1]*1.e-6),
-			(region[i].cumfs[2]*1.e-6));
+			(region[i].cumfs[0][0]*1.e-6),
+			(region[i].cumfs[1][0]*1.e-6),
+			(region[i].cumfs[2][0]*1.e-6));
 		(void)fprintf(fp6,"%.3e,%.3e,%.3e,%.3e,",
-			(region[i].cumfs[3]*1.e-6),
-			(region[i].cumfs[4]*1.e-6),
-			(region[i].cumfs[5]*1.e-6),
-			(region[i].cumfs[6]*1.e-6));
+			(region[i].cumfs[3][0]*1.e-6),
+			(region[i].cumfs[4][0]*1.e-6),
+			(region[i].cumfs[5][0]*1.e-6),
+			(region[i].cumfs[6][0]*1.e-6));
 		(void)fflush(fp6);
 
 		(void)fprintf(fp6,"%d,%.3e,%.3e,%.3e,%.3e,%.3e,",
@@ -1665,7 +2116,7 @@ char *argv[];
 	{
 	   if(region[i].cumvol[1] == 1)
 	   {
-		(void)fprintf(fp3,"region %d:  ",i);
+		(void)fprintf(fp3,"region %d:  ",(i + 1));
 		(void)fprintf(fp3,"large variance on volume:  %f\n",
 		   region[i].cumvol[0]);
 		(void)fflush(fp3);
@@ -1673,7 +2124,7 @@ char *argv[];
 
 	   if(region[i].surarea[1] == 1)
 	   {
-		(void)fprintf(fp3,"region %d:  large variance ",i);
+		(void)fprintf(fp3,"region %d:  large variance ",(i + 1));
 		(void)fprintf(fp3,"on surface area:  %f\n",
 		   region[i].surarea[0]);
 		(void)fflush(fp3);
@@ -1684,12 +2135,55 @@ char *argv[];
 		if(region[i].ssurarea[1][j] == 1)
 		{
 		   (void)fprintf(fp3,"region %d:  adjacent region %d:\n",
-			i,j);
+			(i + 1),(j + 1));
 		   (void)fprintf(fp3,"\tlarge variance on shared surface ");
 		   (void)fprintf(fp3,"area:  %f\n",region[i].ssurarea[0][j]);
 		   (void)fflush(fp3);
 		}
 	   }
+
+	   for(j=0; j<7; j++)
+	   {						/*  START # 2000  */
+		if(region[i].cumfs[j][1] == 1.)
+		{					/*  START # 2010  */
+		   if(j == 0)
+		   {
+			(void)fprintf(fp3,"\treg %d - large variance ",i);
+			(void)fprintf(fp3,"of exterior air\n");
+		   }
+		   if(j == 1)
+		   {
+			(void)fprintf(fp3,"\treg %d - large variance ",i);
+			(void)fprintf(fp3,"of crew comp air\n");
+		   }
+		   if(j == 2)
+		   {
+			(void)fprintf(fp3,"\treg %d - large variance ",i);
+			(void)fprintf(fp3,"of engine comp air\n");
+		   }
+		   if(j == 3)
+		   {
+			(void)fprintf(fp3,"\treg %d - large variance ",i);
+			(void)fprintf(fp3,"of closed comp air\n");
+		   }
+		   if(j == 4)
+		   {
+			(void)fprintf(fp3,"\treg %d - large variance ",i);
+			(void)fprintf(fp3,"of exhaust air\n");
+		   }
+		   if(j == 5)
+		   {
+			(void)fprintf(fp3,"\treg %d - large variance ",i);
+			(void)fprintf(fp3,"of generic air 1\n");
+		   }
+		   if(j == 6)
+		   {
+			(void)fprintf(fp3,"\treg %d - large variance ",i);
+			(void)fprintf(fp3,"of generic air 2\n");
+		   }
+		   (void)fflush(fp3);
+		}					/*  END # 2010  */
+	   }						/*  END # 2000  */
 	}
 
 	/*  Write overlaps to error file.  */
@@ -1961,38 +2455,45 @@ struct partition *PartHeadp;
 					/ costheta2;
 			   	region[icur].cumnorm[Z] += hitp->hit_normal[Z]
 					/ costheta2;
-				region[icur].cumfs[0] += (area/costheta2);
+				region[icur].cumfs[0][whichview]
+					+= (area/costheta2);
 			   }
 			}
 			else if(prevair == 2)
 			{
 			   if(costheta2 > COSTOL)
-				region[icur].cumfs[1] += (area/costheta2);
+				region[icur].cumfs[1][whichview]
+				 += (area/costheta2);
 			}
 			else if(prevair == 5)
 			{
 			   if(costheta2 > COSTOL)
-				region[icur].cumfs[2] += (area/costheta2);
+				region[icur].cumfs[2][whichview]
+				 += (area/costheta2);
 			}
 			else if(prevair == 6)	/*  Closed compartment.  */
 			{
 			   if(costheta2 > COSTOL)
-				region[icur].cumfs[3] += (area/costheta2);
+				region[icur].cumfs[3][whichview]
+				 += (area/costheta2);
 			}
 			else if(prevair == 7)	/*  Exhaust air.  */
 			{
 			   if(costheta2 > COSTOL)
-				region[icur].cumfs[4] += (area/costheta2);
+				region[icur].cumfs[4][whichview]
+				 += (area/costheta2);
 			}
 			else if(prevair == 8)	/*  Generic air 1.  */
 			{
 			   if(costheta2 > COSTOL)
-				region[icur].cumfs[5] += (area/costheta2);
+				region[icur].cumfs[5][whichview]
+				 += (area/costheta2);
 			}
 			else if(prevair == 9)	/*  Generic air 2.  */
 			{
 			   if(costheta2 > COSTOL)
-				region[icur].cumfs[6] += (area/costheta2);
+				region[icur].cumfs[6][whichview]
+				 += (area/costheta2);
 			}
 		   }
 		}
@@ -2013,7 +2514,8 @@ struct partition *PartHeadp;
 			   region[iprev].cumnorm[X] += lnormal[X] / costheta2;
 			   region[iprev].cumnorm[Y] += lnormal[Y] / costheta2;
 			   region[iprev].cumnorm[Z] += lnormal[Z] / costheta2;
-			   region[iprev].cumfs[0] += (area/costheta2);
+			   region[iprev].cumfs[0][whichview]
+				 += (area/costheta2);
 			}
 		   }
 
@@ -2029,7 +2531,7 @@ struct partition *PartHeadp;
 				/ costheta2;
 		   	region[icur].cumnorm[Z] += hitp-> hit_normal[Z]
 				/ costheta2;
-			region[icur].cumfs[0] += (area/costheta2);
+			region[icur].cumfs[0][whichview] += (area/costheta2);
 		   }
 		}
 		/*  A ray entering  a region from air.  */
@@ -2046,38 +2548,45 @@ struct partition *PartHeadp;
 			   region[iprev].cumnorm[X] += lnormal[X] / costheta2;
 			   region[iprev].cumnorm[Y] += lnormal[Y] / costheta2;
 			   region[iprev].cumnorm[Z] += lnormal[Z] / costheta2;
-			   region[iprev].cumfs[0] += (area/costheta2);
+			   region[iprev].cumfs[0][whichview]
+				 += (area/costheta2);
 			}
 		   }
 		   else if(pp->pt_regionp->reg_aircode == 2)
 		   {
 			if(costheta2 > COSTOL)
-			   region[iprev].cumfs[1] += (area/costheta2);
+			   region[iprev].cumfs[1][whichview]
+				 += (area/costheta2);
 		   }
 		   else if(pp->pt_regionp->reg_aircode == 5)
 		   {
 			if(costheta2 > COSTOL)
-			   region[iprev].cumfs[2] += (area/costheta2);
+			   region[iprev].cumfs[2][whichview]
+				 += (area/costheta2);
 		   }
 		   else if(pp->pt_regionp->reg_aircode == 6)
 		   {
 			if(costheta2 > COSTOL)
-			   region[iprev].cumfs[3] += (area/costheta2);
+			   region[iprev].cumfs[3][whichview]
+				 += (area/costheta2);
 		   }
 		   else if(pp->pt_regionp->reg_aircode == 7)
 		   {
 			if(costheta2 > COSTOL)
-			   region[iprev].cumfs[4] += (area/costheta2);
+			   region[iprev].cumfs[4][whichview]
+				 += (area/costheta2);
 		   }
 		   else if(pp->pt_regionp->reg_aircode == 8)
 		   {
 			if(costheta2 > COSTOL)
-			   region[iprev].cumfs[5] += (area/costheta2);
+			   region[iprev].cumfs[5][whichview]
+				 += (area/costheta2);
 		   }
 		   else if(pp->pt_regionp->reg_aircode == 9)
 		   {
 			if(costheta2 > COSTOL)
-			   region[iprev].cumfs[6] += (area/costheta2);
+			   region[iprev].cumfs[6][whichview]
+				 += (area/costheta2);
 		   }
 		}
 
@@ -2178,7 +2687,7 @@ struct partition *PartHeadp;
 				/ costheta2;
 		   	region[icur].cumnorm[Z] += hitp->hit_normal[Z]
 				/ costheta2;
-			region[icur].cumfs[0] += (area/costheta2);
+			region[icur].cumfs[0][whichview] += (area/costheta2);
 		   }
 		}
 
