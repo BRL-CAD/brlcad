@@ -132,8 +132,15 @@
 #	define HAVE_MATHERR	1
 #endif
 
-#if defined(BSD)
+#if defined(BSD) && !defined(__bsdi__)
 #	define HAVE_REGEX	1
+#endif
+
+/* For those systems without regex, pick the alternative */
+#if defined(__bsdi__)
+#	define USE_REGCOMP 1
+#else
+#	define USE_SYSV_RE 1
 #endif
 
 #if defined(__NetBSD__)
