@@ -240,9 +240,9 @@ char	*argv[];
 	    z += sp -> s_z * coeff[i];
 	    ++i;
 	}
-	rt_log("%g %g %g", x, y, z);
+	rt_flog(stdout, "%g %g %g", x, y, z);
 	if (tail_buf)
-	    rt_log("%s", rt_vls_addr(tail_buf));
-	rt_log("\n");
+	    rt_flog(stdout, "%s", rt_vls_addr(tail_buf));
+	rt_flog(stdout, "\n");
     }
 }
