@@ -51,7 +51,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./qray.h"
 
 extern int mged_svbase();
-void		setup_rt();
+static void setup_rt();
 
 static int tree_walk_needed;
 
