@@ -1518,7 +1518,14 @@ char	      **argv;
 	if( rt_gettrees( rtip, argc-3, (CONST char **)&argv[3], 1 ) < 0 )  {
 		Tcl_AppendResult( interp,
 			"rt_gettrees() returned error\n", (char *)NULL );
+#if 0
+		/* Warning!  This calls db_close()!  Clobber city. */
 		rt_free_rti( rtip );
+#else
+		rt_clean( rtip );
+		rtip->rti_dbip = (struct db_i *)NULL;
+		bu_free( (genptr_t)rtip, "struct rt_i" );
+#endif
 		return TCL_ERROR;
 	}
 
