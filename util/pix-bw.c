@@ -148,7 +148,8 @@ int argc; char **argv;
 		} else {
 			/* uniform weight */
 			for( in = out = 0; out < num/3; out++, in += 3 )
-				obuf[out] = (ibuf[in] + ibuf[in+1] + ibuf[in+2]) / 3;
+				obuf[out] = ((int)ibuf[in] + (int)ibuf[in+1] +
+					(int)ibuf[in+2]) / 3;
 		}
 		fwrite( obuf, sizeof( char ), num/3, foutp );
 	}

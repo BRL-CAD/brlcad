@@ -172,9 +172,9 @@ double *end_table = &table[10];
 
 #define REMAPIXEL(red, green, blue, i) {\
 	register unsigned char _r, _g, _b; \
-	_r = (red+26)/51; _g = (green+26)/51; _b = (blue+26)/51; \
+	_r = ((int)red+26)/51; _g = ((int)green+26)/51; _b = ((int)blue+26)/51; \
 	if (_r == _g) { \
-	    if (_r == _b) i = nvec[ ( (red+green+blue) /3) >> 4]; /* grey */ \
+	    if (_r == _b) i = nvec[ ( ((int)red+(int)green+(int)blue) /3) >> 4]; /* grey */ \
 	    else if (_r == 0)  i = bvec[blue/16];	   /* all blue */ \
 	    else i = (unsigned char)(_r + _g * 6 + _b * 36);  /* cube # */ \
 	} \
