@@ -71,6 +71,7 @@ register struct db_tree_state	*tsp;
 	rt_log(" ts_regionid=%d\n", tsp->ts_regionid);
 	rt_log(" ts_aircode=%d\n", tsp->ts_aircode);
 	rt_log(" ts_gmater=%d\n", tsp->ts_gmater);
+	rt_log(" ts_los=%d\n", tsp->ts_los);
 	rt_log(" ts_mater.ma_color=%g,%g,%g\n",
 		tsp->ts_mater.ma_color[0],
 		tsp->ts_mater.ma_color[1],
@@ -171,6 +172,7 @@ struct rt_external	*ep;
 			tsp->ts_regionid = rp->c.c_regionid;
 			tsp->ts_aircode = rp->c.c_aircode;
 			tsp->ts_gmater = rp->c.c_material;
+			tsp->ts_los = rp->c.c_los;
 			return(1);	/* Success, this starts new region */
 		}
 	}
