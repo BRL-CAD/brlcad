@@ -37,6 +37,9 @@ struct mfuncs {
 #define MFI_LIGHT	0x04		/* Need light visibility */
 #define MFI_HIT		0x08		/* Need just hit point */
 
+/* for bu_printb() */
+#define MFI_FORMAT	"\020\4HIT\3LIGHT\2UV\1NORMAL"
+
 
 /* mf_flags lists important details about individual shaders */
 #define MFF_PROC	0x01		/* shader is procedural, computes tr/re/hits */
