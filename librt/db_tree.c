@@ -2125,7 +2125,7 @@ int depth;			/* number of arcs */
 	if( !mat ) rt_bomb("db_path_to_mat() NULL matrix pointer\n");
 
 	db_full_path_init( &null_path );
-	db_init_db_tree_state( &ts );
+	db_init_db_tree_state( &ts, dbip );
 	bn_mat_copy( ts.ts_mat, mat );
 
 	ret = db_follow_path( &ts, &null_path, pathp, LOOKUP_NOISY, depth );
