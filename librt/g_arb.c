@@ -566,6 +566,12 @@ struct seg		*seghead;
 	out = INFINITY;
 	iplane = oplane = -1;
 
+	if (rt_g.debug & DEBUG_ARB8) {
+		rt_log("\n\n------------\n arb: ray point %g %g %g -> %g %g %g\n",
+			V3ARGS(rp->r_pt),
+			V3ARGS(rp->r_dir));
+	}
+
 	/* consider each face */
 	for( afp = &arbp->arb_face[j=arbp->arb_nmfaces-1]; j >= 0; j--, afp-- )  {
 		FAST fastf_t	dn;		/* Direction dot Normal */
@@ -573,7 +579,14 @@ struct seg		*seghead;
 		FAST fastf_t	s;
 
 		dxbdn = VDOT( afp->peqn, rp->r_pt ) - afp->peqn[3];
-		if( (dn = -VDOT( afp->peqn, rp->r_dir )) < -SQRT_SMALL_FASTF )  {
+		dn = -VDOT( afp->peqn, rp->r_dir );
+
+	        if (rt_g.debug & DEBUG_ARB8) {
+	        	HPRINT("arb: Plane Equation", afp->peqn);
+			rt_log("arb: dn=%g dxbdn=%g s=%g\n", dn, dxbdn, dxbdn/dn);
+	        }
+
+		if( dn < -SQRT_SMALL_FASTF )  {
 			/* exit point, when dir.N < 0.  out = min(out,s) */
 			if( out > (s = dxbdn/dn) )  {
 				out = s;
