@@ -51,7 +51,8 @@ NMG_EXTERN(void			nmg_pr_vu_briefly, (struct vertexuse *vu,
 /*	N M G _ T B L
  *	maintain a table of pointers (to magic numbers/structs)
  */
-int nmg_tbl(b, func, p)
+int
+nmg_tbl(b, func, p)
 struct nmg_ptbl *b;
 int func;
 long *p;
@@ -176,7 +177,8 @@ long *p;
  *	references a vertex which is refernced by a vertexuse in the table,
  *	then we return 1.  Otherwise, we return 0.
  */
-int nmg_in_or_ref(vu, b)
+int 
+nmg_in_or_ref(vu, b)
 struct vertexuse *vu;
 struct nmg_ptbl *b;
 {
@@ -195,7 +197,8 @@ struct nmg_ptbl *b;
 	return(0);
 }
 
-char *nmg_orientation(orientation)
+char *
+nmg_orientation(orientation)
 int	orientation;
 {
 	switch (orientation) {
@@ -215,7 +218,8 @@ int	orientation;
 
 /*	Print the orientation in a nice, english form
  */
-void nmg_pr_orient(orientation, h)
+void 
+nmg_pr_orient(orientation, h)
 int	orientation;
 char	*h;
 {
@@ -230,7 +234,8 @@ char	*h;
 }
 
 
-void nmg_pr_m(m)
+void 
+nmg_pr_m(m)
 struct model *m;
 {
 	struct nmgregion *r;
@@ -254,7 +259,8 @@ static char padstr[32];
 
 #define Return	{ h[strlen(h)-3] = '\0'; return; }
 
-void nmg_pr_r(r, h)
+void 
+nmg_pr_r(r, h)
 struct nmgregion *r;
 char *h;
 {
@@ -280,7 +286,8 @@ char *h;
 	Return;
 }
 
-void nmg_pr_sa(sa, h)
+void 
+nmg_pr_sa(sa, h)
 struct shell_a *sa;
 char *h;
 {
@@ -300,7 +307,8 @@ char *h;
 	Return;
 }
 
-void nmg_pr_lg(lg, h)
+void 
+nmg_pr_lg(lg, h)
 struct loop_g *lg;
 char *h;
 {
@@ -316,7 +324,8 @@ char *h;
 	Return;
 }
 
-void nmg_pr_fg(fg, h)
+void 
+nmg_pr_fg(fg, h)
 struct face_g *fg;
 char *h;
 {
@@ -336,7 +345,8 @@ char *h;
 	Return;
 }
 
-void nmg_pr_s(s, h)
+void 
+nmg_pr_s(s, h)
 struct shell *s;
 char *h;
 {
@@ -376,7 +386,8 @@ char *h;
 	Return;
 }
 
-void nmg_pr_f(f, h)
+void 
+nmg_pr_f(f, h)
 struct face *f;
 char *h;
 {
@@ -392,7 +403,8 @@ char *h;
 	Return;
 }
 
-void nmg_pr_fu(fu, h)
+void 
+nmg_pr_fu(fu, h)
 struct faceuse *fu;
 char *h;
 {
@@ -422,7 +434,8 @@ char *h;
 	Return;
 }
 
-void nmg_pr_fu_briefly(fu, h)
+void 
+nmg_pr_fu_briefly(fu, h)
 struct faceuse *fu;
 char *h;
 {
@@ -439,7 +452,8 @@ char *h;
 	Return;
 }
 
-void nmg_pr_l(l, h)
+void 
+nmg_pr_l(l, h)
 struct loop *l;
 char *h;
 {
@@ -458,7 +472,8 @@ char *h;
 
 	Return;
 }
-void nmg_pr_lu(lu, h)
+void 
+nmg_pr_lu(lu, h)
 struct loopuse *lu;
 char *h;
 {
@@ -511,7 +526,8 @@ char *h;
 	Return;
 }
 
-void nmg_pr_lu_briefly(lu, h)
+void 
+nmg_pr_lu_briefly(lu, h)
 struct loopuse *lu;
 char *h;
 {
@@ -542,7 +558,8 @@ char *h;
 	Return;
 }
 
-void nmg_pr_e(e, h)
+void 
+nmg_pr_e(e, h)
 struct edge *e;
 char *h;
 {
@@ -560,7 +577,8 @@ char *h;
 	Return;
 }
 
-void nmg_pr_eu(eu, h)
+void 
+nmg_pr_eu(eu, h)
 struct edgeuse *eu;
 char *h;
 {
@@ -591,7 +609,8 @@ char *h;
 	Return;
 }
 
-void nmg_pr_eu_briefly(eu, h)
+void 
+nmg_pr_eu_briefly(eu, h)
 struct edgeuse *eu;
 char *h;
 {
@@ -604,7 +623,8 @@ char *h;
 	Return;
 }
 
-void nmg_pr_vg(vg, h)
+void 
+nmg_pr_vg(vg, h)
 struct vertex_g *vg;
 char *h;
 {
@@ -621,7 +641,8 @@ char *h;
 	Return;
 }
 
-void nmg_pr_v(v, h)
+void 
+nmg_pr_v(v, h)
 struct vertex *v;
 char *h;
 {
@@ -641,7 +662,8 @@ char *h;
 	Return;
 }
 
-void nmg_pr_vu(vu, h)
+void 
+nmg_pr_vu(vu, h)
 struct vertexuse *vu;
 char *h;
 {
@@ -670,7 +692,8 @@ char *h;
 	Return;
 }
 
-void nmg_pr_vu_briefly(vu, h)
+void 
+nmg_pr_vu_briefly(vu, h)
 struct vertexuse *vu;
 char *h;
 {
@@ -794,7 +817,8 @@ struct edgeuse *eu;
  *	 0	OK
  *	!0	status code from nmg_check_radial()
  */
-int nmg_ck_closed_surf(s)
+int
+nmg_ck_closed_surf(s)
 struct shell *s;
 {
 	struct faceuse *fu;
@@ -869,7 +893,8 @@ struct nmgregion	*r;
  *		r->s_p	A new shell containing all the faces from the
  *			polygon file
  */
-struct shell *nmg_polytonmg(fp, r, tol)
+struct shell *
+nmg_polytonmg(fp, r, tol)
 FILE *fp;
 struct nmgregion	*r;
 CONST struct rt_tol	*tol;
@@ -971,7 +996,8 @@ CONST struct rt_tol	*tol;
  *
  *	Given a vertexuse, return the loopuse somewhere above
  */
-struct loopuse *nmg_lu_of_vu(vu)
+struct loopuse *
+nmg_lu_of_vu(vu)
 struct vertexuse *vu;
 {
 	NMG_CK_VERTEXUSE(vu);
@@ -989,7 +1015,8 @@ struct vertexuse *vu;
  *
  *	return parent shell for loopuse
  */
-struct shell *nmg_lups(lu)
+struct shell *
+nmg_lups(lu)
 struct loopuse *lu;
 {
 	if (*lu->up.magic_p == NMG_SHELL_MAGIC) return(lu->up.s_p);
@@ -1003,7 +1030,8 @@ struct loopuse *lu;
  *
  *	return parent shell of edgeuse
  */
-struct shell *nmg_eups(eu)
+struct shell *
+nmg_eups(eu)
 struct edgeuse *eu;
 {
 	if (*eu->up.magic_p == NMG_SHELL_MAGIC) return(eu->up.s_p);
@@ -1018,7 +1046,8 @@ struct edgeuse *eu;
  *	Looking radially around an edge, find another edge in the same
  *	face as the current edge. (this could be the mate to the current edge)
  */
-struct edgeuse *nmg_faceradial(eu)
+struct edgeuse *
+nmg_faceradial(eu)
 struct edgeuse *eu;
 {
 	struct faceuse *fu;
@@ -1040,58 +1069,44 @@ struct edgeuse *eu;
 }
 
 
-/*	N M G _ M A N I F O L D _ F A C E
- *
- *	Determine if a face is a manifold or non-manifold
- *
- *	Return
- *	1	face is manifold
- *	0	face is non-manifold (has dangling edge)
+/*
+ *	looking radially around an edge, find another edge which is a part
+ *	of a face in the same shell
  */
-int nmg_manifold_face(fu)
-struct faceuse *fu;
+struct edgeuse *
+nmg_radial_face_edge_in_shell(eu)
+struct edgeuse *eu;
 {
-	struct loopuse *lu;
-	struct edgeuse *eu, *eur;
+	struct edgeuse *eur;
+	struct faceuse *fu;
 
-	for(RT_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
-	    NMG_CK_LOOPUSE(lu);
+	NMG_CK_EDGEUSE(eu);
+	NMG_CK_LOOPUSE(eu->up.lu_p);
+	NMG_CK_FACEUSE(eu->up.lu_p->up.fu_p);
 
-	    if (RT_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_EDGEUSE_MAGIC) {
-	        /* go looking around each edge for a face of the same
-	         * shell which isn't us and isn't our mate.  If we
-	         * find us or our mate before another face of this
-	         * shell, we are non-manifold.
-	         */
+	fu = eu->up.lu_p->up.fu_p;
+	eur = eu->radial_p;
+	NMG_CK_EDGEUSE(eur);
 
-	    	for (RT_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
-
-	            eur = eu->radial_p;
-	            if ( eur == eu->eumate_p) return(0);
-
-	            do {
-
-		    	if (eur == eu->eumate_p)
-		    		return(0);
-
-	                if (*eur->up.magic_p == NMG_LOOPUSE_MAGIC &&
-			    *eur->up.lu_p->up.magic_p == NMG_FACEUSE_MAGIC &&
-			    eur->up.lu_p->up.fu_p->s_p == fu->s_p)
-	            		break;
-
-	                eur = eur->eumate_p->radial_p;
-	            } while (eur != eu->radial_p);
+	while (eur != eu->eumate_p) {
+		if (*eur->up.magic_p == NMG_LOOPUSE_MAGIC &&
+		    *eur->up.lu_p->up.magic_p == NMG_FACEUSE_MAGIC &&
+		    eur->up.lu_p->up.fu_p->s_p == fu->s_p)
+			break; /* found another face in shell */
+		else {
+			eur = eur->eumate_p->radial_p;
+			NMG_CK_EDGEUSE(eur);
 		}
-	    }
 	}
-
-	return(1);
+	return(eur);
 }
+
 
 /*
  *			N M G _ E U P R I N T
  */
-void nmg_euprint(str, eu)
+void 
+nmg_euprint(str, eu)
 char *str;
 struct edgeuse *eu;
 {
@@ -1193,3 +1208,4 @@ struct model	*m;
 
 	rt_free( (char *)flags, "rebound flags[]" );
 }
+

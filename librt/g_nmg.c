@@ -35,7 +35,7 @@ static char RCSnmg[] = "@(#)$Header$ (BRL)";
 
 struct hitlist {
 	struct rt_list	l;
-	struct hit	*hit;
+	struct hit	hit;
 };
 
 struct nmg_specific {
@@ -76,6 +76,8 @@ CONST struct rt_tol	*tol;
 	struct nmgregion *rp;
 	vect_t work;	
 
+	rt_g.NMG_debug |= DEBUG_NMGRT;
+
 	RT_CK_DB_INTERNAL(ip);
 	m = (struct model *)ip->idb_ptr;
 	NMG_CK_MODEL(m);
@@ -105,6 +107,8 @@ CONST struct rt_tol	*tol;
 	VADD2SCALE( stp->st_center, stp->st_min, stp->st_max, 0.5 );
 	VSUB2SCALE( work, stp->st_max, stp->st_min, 0.5 );
 	stp->st_aradius = stp->st_bradius = MAGNITUDE(work);
+
+	nmg_manifolds(m);
 
 	return(0);
 }
@@ -157,6 +161,255 @@ struct faceuse *fu;
 }
 
 
+static void
+vertex_hit(v_p, tbl, N, discard)
+struct vertex *v_p;
+char *tbl;
+fastf_t	N[];
+int *discard;
+{
+	char manifolds = NMG_MANIFOLDS(tbl, v_p);
+	if (manifolds == 0) {
+		/* normal is reversed ray */
+		
+	}
+
+}
+
+static void
+edge_hit(e_p, tbl, N, discard, rp, inout)
+struct edge *e_p;
+char *tbl;
+fastf_t	N[];
+int *discard;
+register struct xray	*rp;	/* info about the ray */
+int inout;			/* 0 entering segment, 1 leaving segment */
+{
+	vect_t eray;
+	struct edgeuse *eu_p;
+	struct faceuse *fu_p, *best_fu;
+	char manifolds = NMG_MANIFOLDS(tbl, e_p);
+	fastf_t best_dot=0.0;
+	fastf_t tmp_dot;
+	int leaventer=0;
+
+	/* if it's a 2 or 3 manifold element, we have to get the normal from
+	 * the face(s) to which the edge contributes
+	 */
+
+	if (manifolds & NMG_3MANIFOLD) {
+		/* go looking around the edge for a face normal to use
+		 *	if we're inbound on the solid, we want the face whose
+		 *	normal is closest to perpendicular to the ray while
+		 *	still maintaining a component in the direction 
+		 *	opposite the ray.
+		 *
+		 *	if we're outbound, we want the face whose normal is
+		 *	closest to perpendicular to the ray, yet maintains
+		 *	a component in the same direction as the ray.
+		 */
+
+		eu_p = e_p->eu_p;
+		best_dot=0.0;
+		best_fu = (struct faceuse *)NULL;
+		do {
+
+			if (NMG_MANIFOLDS(tbl, eu_p) == NMG_3MANIFOLD) {
+				fu_p = eu_p->up.lu_p->up.fu_p;
+
+				if (fu_p->orientation != OT_SAME)
+					fu_p = fu_p->fumate_p;
+
+				tmp_dot = VDOT(fu_p->f_p->fg_p->N, rp->r_dir);
+
+				if (inout == 0) {
+					/* inbound */
+					if (tmp_dot > 0.0 && 
+					    tmp_dot < best_dot) {
+						/* new inbound best */
+						best_fu = fu_p;
+						best_dot = tmp_dot;
+					}
+					if (tmp_dot > 0.0)
+						leaventer++;
+					else if (tmp_dot < 0.0)
+						leaventer--;
+
+				} else if (inout == 1) {
+					/* outbound */
+					if(tmp_dot < 0.0 && 
+					    tmp_dot > best_dot) {
+						/* new outbound best */
+						best_fu = fu_p;
+						best_dot = tmp_dot;
+					}
+
+					if (tmp_dot > 0.0)
+						leaventer++;
+					else if (tmp_dot < 0.0)
+						leaventer--;
+				}
+			}
+			eu_p = eu_p->radial_p->eumate_p;
+		} while (eu_p != e_p->eu_p);
+
+		/* we now have the face/normal we're looking for */
+		bcopy(best_fu->f_p->fg_p->N, N, sizeof(vect_t));
+
+		if (inout == 0) {
+			/* entering (seg_in) */
+			if (leaventer == 0) {
+				/* grazing, hit this edge twice 
+				 * (in & out again)
+				 */
+				*discard = ! *discard;
+			} else if (leaventer > 0) {
+				/* really entering, hit this edge once */
+				*discard = 1;
+			} else {
+				rt_bomb("ray screams \"aiiieee\" they're all against me!\n");
+			}
+		} else {
+			/* leaving segment (seg_out) */
+			if (leaventer == 0) {
+				/* leaving, but entering again immediately.
+				 * hit edge twice
+				 */
+				*discard = ! *discard;
+			} else if (leaventer < 0) {
+				/* really leaving.  hit this edge once */
+				*discard = 1;
+			} else {
+				rt_bomb("ray screams \"aiiieee\" they're all pushing me along!\n");
+			}
+		}
+		return;
+	}
+
+	/* edge not used in 3-manifold */
+	if (manifolds & NMG_2MANIFOLD) {
+		/* find 2manifold face with normal most perpendicular to
+		 * ray while maintaining a component opposite the ray.
+		 * Hit that face twice.
+		 */
+
+	}
+
+	/* if it's a 1 manifold, 
+	 * 	generate a normal for the edge
+	 *	the edge gets used twice in the segment list
+	 */
+
+	/* make ray of edge */
+	VSUB2(eray, e_p->eu_p->vu_p->v_p->vg_p->coord,
+		e_p->eu_p->eumate_p->vu_p->v_p->vg_p->coord);
+		
+	/* make N perpendicular to ray and edge */
+	VCROSS(N, rp->r_dir, eray);
+		
+	/* make N point toward ray origin in plane of ray and edge */
+	VCROSS(N, eray, N);
+
+	if (*discard == 0)
+		*discard = 1;
+	else
+		*discard = 0;
+	return;
+}
+
+static void
+face_hit(f_p, tbl, N, discard)
+struct face *f_p;
+char *tbl;
+fastf_t	N[];
+int *discard;
+{
+	char manifolds = NMG_MANIFOLDS(tbl, f_p);
+
+	bcopy(f_p->fg_p->N, N, sizeof(vect_t));
+	
+	if (manifolds & NMG_3MANIFOLD) *discard = 1;
+	else if (manifolds & (NMG_2MANIFOLD) && *discard == 1) {
+		/* this isn't the last hit we'll record on this object */
+		*discard = 0;
+	} else
+		*discard = 1;
+}
+
+static void
+build_segs(hl, ap, nmg_spec, seghead, rp)
+struct hitlist *hl;
+struct application *ap;
+struct nmg_specific *nmg_spec;
+struct seg		*seghead;	/* intersection w/ ray */
+register struct xray	*rp;	/* info about the ray */
+{
+	struct seg *seg_p;
+	int seg_count=0;
+	struct hitlist *a_hit;
+	struct edge *e_p;
+	struct vertex *v_p;
+	struct face *f_p;
+	char *tbl;
+	int discard=1;
+
+	tbl = nmg_spec->nmg_model->manifolds;
+
+	/* build up the list of segments based upon the hit points.
+	 */
+
+	while (RT_LIST_NON_EMPTY(&hl->l) ) {
+		RT_GET_SEG(seg_p, ap->a_resource);
+
+
+		a_hit = RT_LIST_FIRST(hitlist, &hl->l);
+		switch (*(int *)a_hit->hit.hit_private) {
+		case NMG_VERTEX_MAGIC:  vertex_hit((struct vertex *)a_hit->hit.hit_private, tbl, a_hit->hit.hit_normal, &discard);
+					break;
+		case NMG_EDGE_MAGIC:	edge_hit((struct edge *)a_hit->hit.hit_private, tbl, a_hit->hit.hit_normal, &discard, rp, 0);
+					break;
+		case NMG_FACE_MAGIC:	face_hit((struct face *)a_hit->hit.hit_private, tbl, a_hit->hit.hit_normal, &discard);
+					break;
+		default: rt_log("bogus topology hit?\n"); abort(); break;
+		}
+
+		bcopy(&a_hit->hit, &seg_p->seg_in, sizeof(struct hit));
+
+		if (discard == 0) {
+			RT_LIST_DEQUEUE(&a_hit->l);
+			rt_free((char *)a_hit, "freeing hitpoint");
+		}
+
+
+
+
+		if (RT_LIST_IS_EMPTY(&hl->l) ) {
+			rt_bomb("why does this happen to me?\n");
+		}
+		a_hit = RT_LIST_FIRST(hitlist, &hl->l);
+		switch (*(int *)a_hit->hit.hit_private) {
+		case NMG_VERTEX_MAGIC:  vertex_hit((struct vertex *)a_hit->hit.hit_private, tbl, a_hit->hit.hit_normal, &discard);
+					break;
+		case NMG_EDGE_MAGIC:	edge_hit((struct edge *)a_hit->hit.hit_private, tbl, a_hit->hit.hit_normal, &discard, 1);
+					break;
+		case NMG_FACE_MAGIC:	face_hit((struct face *)a_hit->hit.hit_private, tbl, a_hit->hit.hit_normal, &discard);
+					break;
+		default: rt_log("bogus topology hit?\n"); abort(); break;
+		}
+
+		bcopy(&a_hit->hit, &seg_p->seg_out, sizeof(struct hit));
+
+		if (discard == 0) {
+			RT_LIST_DEQUEUE(&a_hit->l);
+			rt_free((char *)a_hit, "freeing hitpoint");
+		}
+
+
+		RT_LIST_APPEND(&seghead->l, &seg_p->l);
+		++seg_count;
+
+	}
+}
 
 
 /*
@@ -180,15 +433,11 @@ CONST struct rt_tol	*tol;
 {
 	register struct nmg_specific *nmg =
 		(struct nmg_specific *)stp->st_specific;
-	register struct seg *segp;
-	struct nmgregion *r_p;
-	struct shell *s_p;
-	struct faceuse *fu_p;
-	int status;
-	int state;
+	struct hitlist *hl, *a_hit, *isect_ray_nmg();
 	int seg_count=0;
-	struct hitlist *hl, *a_hit, *b_hit, *isect_ray_nmg();
-	long *novote;	/* faces that can't vode in hit/miss/list */
+
+	if(rt_g.NMG_debug & DEBUG_NMGRT)
+		rt_log("rt_nmg_shot\n");
 
 	/* check validity of nmg specific structure */
  	if (nmg->nmg_smagic != G_NMG_START_MAGIC)
@@ -217,7 +466,6 @@ CONST struct rt_tol	*tol;
 		rp->r_dir[Z] = 0.0;
 	}
 
-	rt_g.NMG_debug |= DEBUG_NMGRT;
 	hl = isect_ray_nmg(rp, nmg->nmg_invdir, nmg->nmg_model, &tol);
 
 	if (! hl || RT_LIST_IS_EMPTY(&hl->l)) {
@@ -227,121 +475,47 @@ CONST struct rt_tol	*tol;
 	}
 
 	if (rt_g.NMG_debug & DEBUG_NMGRT) {
-		rt_log("sorted nmg/ray hit list\n");
-		for (RT_LIST_FOR(a_hit, hitlist, &hl->l))
-			rt_log("hit_distance %g (%g %g %g)\n",
-				a_hit->hit->hit_dist,
-				a_hit->hit->hit_point[0],
-				a_hit->hit->hit_point[1],
-				a_hit->hit->hit_point[2]);
-	}
+		rt_log("\nsorted nmg/ray hit list\n");
+		for (RT_LIST_FOR(a_hit, hitlist, &hl->l)) {
+			rt_log("ray_hit_distance %g (%g %g %g)",
+				a_hit->hit.hit_dist,
+				a_hit->hit.hit_point[0],
+				a_hit->hit.hit_point[1],
+				a_hit->hit.hit_point[2]);
 
-return(0);	/* XXX */
-
-
-	/* build up the list of segments based upon the hit points.
-	 * state	face	action			New state
-	 *  0 pt	MF	new, in = pt		1 pt
-	 *  0 pt	NMF	new, in = out = pt	0 pt
-	 *  0 pt	none	done
-	 *  1 pt	MF	out = pt		0 pt
-	 *  1 pt	NMF	out=pt, new, in=pt	1 pt
-	 *  1 pt	none	error?
-	 */
-	state = 0;
-	for (RT_LIST_FOR(a_hit, hitlist, &hl->l)) {
-		if (state == 0) {
-			RT_GET_SEG(segp, ap->a_resource );
-
-			if (rt_g.NMG_debug & DEBUG_NMGRT)
-				rt_log("first hit in seg %g", a_hit->hit->hit_dist);
-
-			bcopy(&a_hit->hit, &segp->seg_in, sizeof(struct hit));
-
-			if (rt_g.NMG_debug & DEBUG_NMGRT)
-				rt_log(" (%g) \n", segp->seg_in.hit_dist);
-
-			if (!nmg_manifold_face(
-			    (struct faceuse *)a_hit->hit->hit_private) ) {
-
-
-				if (rt_g.NMG_debug & DEBUG_NMGRT)
-					rt_log("secod hit in seg %g", a_hit->hit->hit_dist);
-
-				bcopy(a_hit->hit, &segp->seg_out,
-					sizeof(struct hit));
-
-				if (rt_g.NMG_debug & DEBUG_NMGRT)
-					rt_log(" (%g) \n",
-						segp->seg_out.hit_dist);
-
-
-			    	segp->seg_stp = stp;
-
-			    	if (rt_g.NMG_debug & DEBUG_NMGRT)
-			    		rt_log("new seg (prior ins) %g <-> %g\n",
-			    			segp->seg_in.hit_dist,
-			    			segp->seg_out.hit_dist);
-
-				RT_LIST_INSERT( &(seghead->l), &(segp->l) );
-			    	seg_count++;
-
-			    	if (rt_g.NMG_debug & DEBUG_NMGRT)
-			    		rt_log("new seg (post ins) %g <-> %g\n",
-			    			segp->seg_in.hit_dist,
-			    			segp->seg_out.hit_dist);
-			} else 
-				state = 1;
-		} else {
-			if (rt_g.NMG_debug & DEBUG_NMGRT)
-				rt_log("fisrt and secod hit in seg %g -> %g", a_hit->hit->hit_dist);
-
-			bcopy(&a_hit->hit, &segp->seg_out, sizeof(struct hit));
-
-			if (rt_g.NMG_debug & DEBUG_NMGRT)
-				rt_log(" (%g) \n", segp->seg_out.hit_dist);
-
-
-		    	segp->seg_stp = stp;
-
-		    	if (rt_g.NMG_debug & DEBUG_NMGRT)
-		    		rt_log("new seg (pr ins) %g <-> %g\n",
-		    			segp->seg_in.hit_dist,
-		    			segp->seg_out.hit_dist);
-
-			RT_LIST_INSERT( &(seghead->l), &(segp->l) );
-
-		    	seg_count++;
-		    	if (rt_g.NMG_debug & DEBUG_NMGRT)
-		    		rt_log("new seg %g <-> %g\n",
-		    			segp->seg_in.hit_dist,
-		    			segp->seg_out.hit_dist);
-
-			if (!nmg_manifold_face(
-			    (struct faceuse *)a_hit->hit->hit_private) ) {
-				RT_GET_SEG(segp, ap->a_resource );
-				if (rt_g.NMG_debug & DEBUG_NMGRT)
-					rt_log("first hit in seg %g", a_hit->hit->hit_dist);
-
-				bcopy(&a_hit->hit, &segp->seg_in,
-					sizeof(struct hit));
-
-				if (rt_g.NMG_debug & DEBUG_NMGRT)
-					rt_log(" (%g) \n",
-						segp->seg_in.hit_dist);
-			} else
-				state = 0;
+			switch ( *(int*)a_hit->hit.hit_private) {
+			case NMG_FACE_MAGIC: rt_log("\tface\n"); break;
+			case NMG_EDGE_MAGIC: rt_log("\tedge\n"); break;
+			case NMG_VERTEX_MAGIC: rt_log("\tvertex\n"); break;
+			default : rt_log(" hit unknown magic (%d)\n", 
+				*(int*)a_hit->hit.hit_private); break;
+			}
 		}
 	}
-	if (state != 0) {
-		rt_bomb("I've got an extra hit-point on an NMG!\n");
+
+
+	return(0);
+	build_segs(hl, ap, nmg, seghead, rp);
+#if 0	
+
+	if (!(rt_g.NMG_debug & DEBUG_NMGRT))
+		return(seg_count);			/* MISS */
+
+	rt_log("segment list\n");
+	for (RT_LIST_FOR(seg_p, seg, &seghead->l) ) {
+		rt_log("dist %g  pt(%g,%g,%g)  Norm(%g,%g,%g)\n",
+		seg_p->seg_in.hit_dist,
+		seg_p->seg_in.hit_point[0],
+		seg_p->seg_in.hit_point[1],
+		seg_p->seg_in.hit_point[2],
+		seg_p->seg_in.hit_normal[0],
+		seg_p->seg_in.hit_normal[1],
+		seg_p->seg_in.hit_normal[2]);
 	}
 
-
-	for (RT_LIST_FOR(a_hit, hitlist, &hl->l))
-		rt_free((char *)a_hit, "free a hit");
-
+	rt_log("returning\n");
 	return(seg_count);			/* MISS */
+#endif
 }
 
 #define RT_NMG_SEG_MISS(SEG)	(SEG).seg_stp=RT_SOLTAB_NULL
