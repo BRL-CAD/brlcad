@@ -1736,7 +1736,8 @@ RT_EXTERN(void rt_boolweave, (struct seg *out_hd, struct seg *in_hd,
 RT_EXTERN(int rt_boolfinal, (struct partition *InputHdp,
 	struct partition *FinalHdp,
 	fastf_t startdist, fastf_t enddist,
-	struct bu_ptbl *regionbits, struct application *ap) );
+	struct bu_ptbl *regionbits, struct application *ap,
+	CONST struct bu_bitv *solidbits) );
 
 RT_EXTERN(void rt_grow_boolstack, (struct resource *res) );
 					/* Approx Floating compare */
