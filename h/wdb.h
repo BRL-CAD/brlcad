@@ -38,4 +38,4 @@ struct wmember  {
 
 extern struct wmember *mk_addmember();
 
-#endif WDB_H
+#endif /* WDB_H */

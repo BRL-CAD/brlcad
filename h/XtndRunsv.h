@@ -71,4 +71,4 @@ struct XtndRsetup
 
 #define	    XtndRMAGIC	((short)0xcc52)	/* RLE file magic number */
 
-#endif XTNDRUNSV
+#endif /* XTNDRUNSV */

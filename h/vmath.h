@@ -128,7 +128,7 @@ typedef fastf_t hpoint_t[HPT_LEN];
 #define VADD2(a,b,c)	(a)[X] = (b)[X] + (c)[X];\
 			(a)[Y] = (b)[Y] + (c)[Y];\
 			(a)[Z] = (b)[Z] + (c)[Z]
-#endif VECTORIZE
+#endif /* VECTORIZE */
 
 /* Add vectors of length `n' at `b' and `c', store result at `a' */
 #define VADD2N(a,b,c,n) \
@@ -144,7 +144,7 @@ typedef fastf_t hpoint_t[HPT_LEN];
 #define VSUB2(a,b,c)	(a)[X] = (b)[X] - (c)[X];\
 			(a)[Y] = (b)[Y] - (c)[Y];\
 			(a)[Z] = (b)[Z] - (c)[Z]
-#endif VECTORIZE
+#endif /* VECTORIZE */
 
 /* Subtract `n' length vector at `c' from vector at `b', store result at `a' */
 #define VSUB2N(a,b,c,n) \
@@ -160,7 +160,7 @@ typedef fastf_t hpoint_t[HPT_LEN];
 #define VSUB3(a,b,c,d)	(a)[X] = (b)[X] - (c)[X] - (d)[X];\
 			(a)[Y] = (b)[Y] - (c)[Y] - (d)[Y];\
 			(a)[Z] = (b)[Z] - (c)[Z] - (d)[Z]
-#endif VECTORIZE
+#endif /* VECTORIZE */
 
 /* Vectors:  A = B - C - D for vectors of length `n' */
 #define VSUB3N(a,b,c,d,n) \
@@ -176,7 +176,7 @@ typedef fastf_t hpoint_t[HPT_LEN];
 #define VADD3(a,b,c,d)	(a)[X] = (b)[X] + (c)[X] + (d)[X];\
 			(a)[Y] = (b)[Y] + (c)[Y] + (d)[Y];\
 			(a)[Z] = (b)[Z] + (c)[Z] + (d)[Z]
-#endif VECTORIZE
+#endif /* VECTORIZE */
 
 /* Add 3 vectors of length `n' at `b', `c', and `d', store result at `a' */
 #define VADD3N(a,b,c,d,n) \
@@ -192,7 +192,7 @@ typedef fastf_t hpoint_t[HPT_LEN];
 #define VADD4(a,b,c,d,e) (a)[X] = (b)[X] + (c)[X] + (d)[X] + (e)[X];\
 			(a)[Y] = (b)[Y] + (c)[Y] + (d)[Y] + (e)[Y];\
 			(a)[Z] = (b)[Z] + (c)[Z] + (d)[Z] + (e)[Z]
-#endif VECTORIZE
+#endif /* VECTORIZE */
 
 /* Add 4 `n' length vectors at `b', `c', `d', and `e', store result at `a' */
 #define VADD4N(a,b,c,d,e,n) \
@@ -208,7 +208,7 @@ typedef fastf_t hpoint_t[HPT_LEN];
 #define VSCALE(a,b,c)	(a)[X] = (b)[X] * (c);\
 			(a)[Y] = (b)[Y] * (c);\
 			(a)[Z] = (b)[Z] * (c)
-#endif VECTORIZE
+#endif /* VECTORIZE */
 
 /* Scale vector of length `n' at `b' by scalar `c', store result at `a' */
 #define VSCALEN(a,b,c,n) \
@@ -230,7 +230,7 @@ typedef fastf_t hpoint_t[HPT_LEN];
 #define VUNITIZE(a)	{ register double _f; _f = MAGNITUDE(a); \
 			if( _f < 1.0e-10 ) _f = 0.0; else _f = 1.0/_f; \
 			(a)[X] *= _f; (a)[Y] *= _f; (a)[Z] *= _f; }
-#endif VECTORIZE
+#endif /* VECTORIZE */
 
 /*
  *  Find the sum of two points, and scale the result.
@@ -279,7 +279,7 @@ typedef fastf_t hpoint_t[HPT_LEN];
 	(o)[X] = (a) * (b)[X] + (c) * (d)[X] + (e) * (f)[X];\
 	(o)[Y] = (a) * (b)[Y] + (c) * (d)[Y] + (e) * (f)[Y];\
 	(o)[Z] = (a) * (b)[Z] + (c) * (d)[Z] + (e) * (f)[Z];}
-#endif VECTORIZE
+#endif /* VECTORIZE */
 
 #define VCOMB3N(o, a,b, c,d, e,f, n)	{\
 	{ register int _vcomb3; \
@@ -294,7 +294,7 @@ typedef fastf_t hpoint_t[HPT_LEN];
 	(o)[X] = (a) * (b)[X] + (c) * (d)[X];\
 	(o)[Y] = (a) * (b)[Y] + (c) * (d)[Y];\
 	(o)[Z] = (a) * (b)[Z] + (c) * (d)[Z];}
-#endif VECTORIZE
+#endif /* VECTORIZE */
 
 #define VCOMB2N(o, a,b, c,d, n)	{\
 	{ register int _vcomb2; \
@@ -314,7 +314,7 @@ typedef fastf_t hpoint_t[HPT_LEN];
 	(a)[X] = (b)[X] + (c) * (d)[X] + (e) * (f)[X];\
 	(a)[Y] = (b)[Y] + (c) * (d)[Y] + (e) * (f)[Y];\
 	(a)[Z] = (b)[Z] + (c) * (d)[Z] + (e) * (f)[Z]
-#endif VECTORIZE
+#endif /* VECTORIZE */
 
 #define VJOIN2N(a,b,c,d,e,f,n)	\
 	{ register int _vjoin2; \
@@ -329,7 +329,7 @@ typedef fastf_t hpoint_t[HPT_LEN];
 	(a)[X] = (b)[X] + (c) * (d)[X];\
 	(a)[Y] = (b)[Y] + (c) * (d)[Y];\
 	(a)[Z] = (b)[Z] + (c) * (d)[Z];
-#endif VECTORIZE
+#endif /* VECTORIZE */
 
 #define VJOIN1N(a,b,c,d,n) \
 	{ register int _vjoin1; \
@@ -367,7 +367,7 @@ typedef fastf_t hpoint_t[HPT_LEN];
 	(a)[X] = (b)[X] * (c)[X];\
 	(a)[Y] = (b)[Y] * (c)[Y];\
 	(a)[Z] = (b)[Z] * (c)[Z];
-#endif VECTORIZE
+#endif /* VECTORIZE */
 
 /* Apply the 3x3 part of a mat_t to a 3-tuple. */
 #ifdef VECTORIZE
@@ -383,7 +383,7 @@ typedef fastf_t hpoint_t[HPT_LEN];
 	(o)[X] = (mat)[X]*(vec)[X]+(mat)[Y]*(vec)[Y] + (mat)[ 2]*(vec)[Z]; \
 	(o)[Y] = (mat)[4]*(vec)[X]+(mat)[5]*(vec)[Y] + (mat)[ 6]*(vec)[Z]; \
 	(o)[Z] = (mat)[8]*(vec)[X]+(mat)[9]*(vec)[Y] + (mat)[10]*(vec)[Z];
-#endif VECTORIZE
+#endif /* VECTORIZE */
 
 /* Multiply a 3-tuple by the 3x3 part of a mat_t. */
 #ifdef VECTORIZE
@@ -399,7 +399,7 @@ typedef fastf_t hpoint_t[HPT_LEN];
 	(o)[X] = (i)[X]*(m)[X] + (i)[Y]*(m)[4] + (i)[Z]*(m)[8]; \
 	(o)[Y] = (i)[X]*(m)[1] + (i)[Y]*(m)[5] + (i)[Z]*(m)[9]; \
 	(o)[Z] = (i)[X]*(m)[2] + (i)[Y]*(m)[6] + (i)[Z]*(m)[10];
-#endif VECTORIZE
+#endif /* VECTORIZE */
 
 /* Apply the 3x3 part of a mat_t to a 2-tuple (Z part=0). */
 #ifdef VECTORIZE
@@ -414,7 +414,7 @@ typedef fastf_t hpoint_t[HPT_LEN];
 	(o)[X] = (mat)[0]*(vec)[X] + (mat)[Y]*(vec)[Y]; \
 	(o)[Y] = (mat)[4]*(vec)[X] + (mat)[5]*(vec)[Y]; \
 	(o)[Z] = (mat)[8]*(vec)[X] + (mat)[9]*(vec)[Y];
-#endif VECTORIZE
+#endif /* VECTORIZE */
 
 /* Multiply a 2-tuple (Z=0) by the 3x3 part of a mat_t. */
 #ifdef VECTORIZE
@@ -428,7 +428,7 @@ typedef fastf_t hpoint_t[HPT_LEN];
 	(o)[X] = (i)[X]*(m)[0] + (i)[Y]*(m)[4]; \
 	(o)[Y] = (i)[X]*(m)[1] + (i)[Y]*(m)[5]; \
 	(o)[Z] = (i)[X]*(m)[2] + (i)[Y]*(m)[6];
-#endif VECTORIZE
+#endif /* VECTORIZE */
 
 /* Apply a 4x4 matrix to a 3-tuple which is an absolute Point in space */
 #ifdef VECTORIZE
@@ -455,7 +455,7 @@ typedef fastf_t hpoint_t[HPT_LEN];
 	(o)[X]=((m)[0]*(i)[X] + (m)[1]*(i)[Y] + (m)[ 2]*(i)[Z] + (m)[3]) * f;\
 	(o)[Y]=((m)[4]*(i)[X] + (m)[5]*(i)[Y] + (m)[ 6]*(i)[Z] + (m)[7]) * f;\
 	(o)[Z]=((m)[8]*(i)[X] + (m)[9]*(i)[Y] + (m)[10]*(i)[Z] + (m)[11])* f;}
-#endif VECTORIZE
+#endif /* VECTORIZE */
 
 /* Multiply an Absolute 3-Point by a full 4x4 matrix. */
 #define PNT3X4MAT(o,i,m) \
@@ -481,7 +481,7 @@ typedef fastf_t hpoint_t[HPT_LEN];
 	(o)[Y]=(m)[ 4]*(i)[X] + (m)[ 5]*(i)[Y] + (m)[ 6]*(i)[Z] + (m)[ 7]*(i)[H];\
 	(o)[Z]=(m)[ 8]*(i)[X] + (m)[ 9]*(i)[Y] + (m)[10]*(i)[Z] + (m)[11]*(i)[H];\
 	(o)[H]=(m)[12]*(i)[X] + (m)[13]*(i)[Y] + (m)[14]*(i)[Z] + (m)[15]*(i)[H];
-#endif VECTORIZE
+#endif /* VECTORIZE */
 
 /* Apply a 4x4 matrix to a 3-tuple which is a relative Vector in space */
 #ifdef VECTORIZE
@@ -504,7 +504,7 @@ typedef fastf_t hpoint_t[HPT_LEN];
 	(o)[X] = ((m)[0]*(i)[X] + (m)[1]*(i)[Y] + (m)[ 2]*(i)[Z]) * f; \
 	(o)[Y] = ((m)[4]*(i)[X] + (m)[5]*(i)[Y] + (m)[ 6]*(i)[Z]) * f; \
 	(o)[Z] = ((m)[8]*(i)[X] + (m)[9]*(i)[Y] + (m)[10]*(i)[Z]) * f; }
-#endif VECTORIZE
+#endif /* VECTORIZE */
 
 /* Multiply a Relative 3-Vector by most of a 4x4 matrix */
 #define VEC3X4MAT(o,i,m) \
@@ -542,6 +542,6 @@ typedef fastf_t hpoint_t[HPT_LEN];
 	(a)[X] = (b)[X] / (b)[H];\
 	(a)[Y] = (b)[Y] / (b)[H];\
 	(a)[Z] = (b)[Z] / (b)[H];
-#endif VECTORIZE
+#endif /* VECTORIZE */
 
-#endif VMATH_H
+#endif /* VMATH_H */

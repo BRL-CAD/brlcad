@@ -17,23 +17,6 @@
 #ifndef INCL_FB
 #define INCL_FB
 
-#ifdef OLD
-/*
- *			P i x e l
- *
- *  Format of disk pixels in .fb files.
- *  Also used as arguments to many of the library routines.
- *  The similarity to Ikonas pixels is historical.
- *  The spare byte is unfortunate, but the struct would pad anyways.
- */
-typedef struct  {
-	unsigned char	red;
-	unsigned char	green;
-	unsigned char	blue;
-	unsigned char	spare;
-} Pixel;
-#endif OLD
-
 /*
  *			R G B p i x e l
  *
@@ -182,4 +165,4 @@ extern int	_disk_enable;
 #define	FB_DEBUG_RW	4	/* Contents of reads and writes */
 #define	FB_DEBUG_BRW	8	/* Buffered IO rpixel and wpixel */
 
-#endif INCL_FB
+#endif /* INCL_FB */

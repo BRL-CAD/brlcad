@@ -1086,4 +1086,4 @@ extern double	rt_inv255;
 extern char	*malloc();
 /**extern void	free(); **/
 
-#endif RAYTRACE_H
+#endif /* RAYTRACE_H */

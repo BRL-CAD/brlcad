@@ -79,4 +79,4 @@ extern unsigned short pkg_gshort();
 extern unsigned long pkg_glong();
 extern char *pkg_pshort(), *pkg_plong();
 
-#endif PKG_H_SEENYET
+#endif /* PKG_H_SEENYET */
