@@ -5354,12 +5354,6 @@ do_ccone2()
 	if( ro2 < SQRT_SMALL_FASTF )
 		ro2 = SQRT_SMALL_FASTF;
 
-	if( ri1 < SQRT_SMALL_FASTF )
-		ri1 = SQRT_SMALL_FASTF;
-
-	if( ri2 < SQRT_SMALL_FASTF )
-		ri2 = SQRT_SMALL_FASTF;
-
 	RT_LIST_INIT( &r_head.l );
 
 	VSUB2( height , grid_pts[pt2].pt , grid_pts[pt1].pt );
@@ -5370,11 +5364,20 @@ do_ccone2()
 	if( mk_addmember( name , &r_head , WMOP_UNION ) == (struct wmember *)NULL )
 		rt_bomb( "mk_addmember failed!\n" );
 
-	make_solid_name( name , CCONE2 , element_id , comp_id , group_id , 1 );
-	mk_trc_h( fdout , name , grid_pts[pt1].pt , height , ri1 , ri2 );
+	if( ri1 > 0.0 || ri2 > 0.0 )
+	{
+		if( ri1 < SQRT_SMALL_FASTF )
+			ri1 = SQRT_SMALL_FASTF;
 
-	if( mk_addmember( name , &r_head , WMOP_SUBTRACT ) == (struct wmember *)NULL )
-		rt_bomb( "mk_addmember failed!\n" );
+		if( ri2 < SQRT_SMALL_FASTF )
+			ri2 = SQRT_SMALL_FASTF;
+
+		make_solid_name( name , CCONE2 , element_id , comp_id , group_id , 1 );
+		mk_trc_h( fdout , name , grid_pts[pt1].pt , height , ri1 , ri2 );
+
+		if( mk_addmember( name , &r_head , WMOP_SUBTRACT ) == (struct wmember *)NULL )
+			rt_bomb( "mk_addmember failed!\n" );
+	}
 
 	/* subtract any holes for this component */
 	Subtract_holes( &r_head , comp_id , group_id );
