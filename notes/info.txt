@@ -16,6 +16,7 @@ newbindir.sh
 setup.sh
 
 README
+	extremely dated readme about the entire package last updated 1995; would recommend using gnu convention of having a README|INSTALL|LICENSE|... set of files
 
 anim
 awf
