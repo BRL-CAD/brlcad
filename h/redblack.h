@@ -55,7 +55,7 @@ void rb_diagnose_tree	(
 			);
 void *rb_extreme	(
 			    rb_tree	*tree,
-			    int		order_nm,
+			    int		order,
 			    int		sense
 			);
 int rb_insert		(
@@ -65,7 +65,7 @@ int rb_insert		(
 void *rb_search		(
 			    rb_tree	*tree,
 			    int		order,
-			    void	*datum
+			    void	*data
 			);
 void rb_summarize_tree	(   rb_tree	*tree	);
 void rb_walk		(
