@@ -1081,6 +1081,7 @@ struct nmg_radial {
 	struct shell	*s;		/* Derrived from eu */
 	int		existing_flag;	/* !0 if this eu exists on dest edge */
 	int		is_crack;	/* This eu is part of a crack. */
+	int		is_outie;	/* This crack is an "outie" */
 	int		needs_flip;	/* Insert eumate, not eu */
 	fastf_t		ang;		/* angle, in radians.  0 to 2pi */
 };
@@ -1217,6 +1218,7 @@ CONST struct rt_tol	*tol;
  *
  *	Check if the passed rt_list is in increasing order. If not,
  *	reverse the order of the list.
+ * XXX Isn't the word "ensure"?
  */
 void
 nmg_insure_radial_list_is_increasing( hd, amin, amax )
@@ -1359,6 +1361,7 @@ CONST struct rt_tol	*tol;		/* for printing */
 		rad->existing_flag = existing;
 		rad->needs_flip = 0;	/* not yet determined */
 		rad->is_crack = 0;	/* not yet determined */
+		rad->is_outie = 0;	/* not yet determined */
 
 		/* Just append.  Should already be properly sorted. */
 		RT_LIST_INSERT( hd, &(rad->l) );
@@ -1452,21 +1455,180 @@ CONST struct rt_tol	*tol;
 }
 
 /*
+ *			N M G _ I S _ C R A C K _ O U T I E
+ *
+ *  If there is more than one edgeuse of a loopuse along an edge, then
+ *  it is a "topological crack".  There are two kinds, an "innie",
+ *  where the crack is a null-area incursion into the interior of the loop,
+ *  and an "outie", where the crack is a null-area protrusion outside
+ *  of the interior of the loop.
+ *
+ *			 "Outie"		 "Innie"
+ *			*-------*		*-------*
+ *			|       ^		|       ^
+ *			v       |		v       |
+ *		*<------*       |		*--->*  |
+ *		*---M-->*       |		*<-M-*  |
+ *			|       |		|       |
+ *			v       |		v       |
+ *			*------>*		*------>*
+ *
+ *  The algorithm used is to compute the geometric midpoint of the crack
+ *  edge, "delete" that edge from the loop, and then classify the midpoint
+ *  ("M") against the remainder of the loop.  If the edge midpoint
+ *  is inside the remains of the loop, then the crack is an "innie",
+ *  otherwise it is an "outie".
+ *
+ *  When there are an odd number of edgeuses along the crack, then the
+ *  situation is "nasty":
+ *
+ *			 "Nasty"
+ *			*-------*
+ *			|       ^
+ *			v       |
+ *		*<------*       |
+ *		*------>*       |
+ *		*<------*       |
+ *		*------>*       |
+ *		*<------*       |
+ *		|		|
+ *		|		|
+ *		v		|
+ *		*------------->*
+ *
+ *  The caller is responsible for making sure that the edgeuse is not
+ *  a wire edgeuse (i.e. that the edgeuse is part of a loop).
+ *
+ *  In the "Nasty" case, all the edgeuse pairs are "outies" except for
+ *  the last lone edgeuse, which should be handled as a "non-crack".
+ *  Walk the loopuse's edgeuses list in edgeuse order to see which one
+ *  is the last (non-crack) repeated edgeuse.
+ *  For efficiency, detecting and dealing with this condition is left
+ *  up to the caller, and is not checked for here.
+ */
+int
+nmg_is_crack_outie( eu, tol )
+CONST struct edgeuse	*eu;
+CONST struct rt_tol	*tol;
+{
+	CONST struct loopuse	*lu;
+	CONST struct edge	*e;
+	point_t			midpt;
+	vect_t			diff;
+	CONST fastf_t		*a, *b;
+	int			class;
+
+	NMG_CK_EDGEUSE(eu);
+	RT_CK_TOL(tol);
+
+	lu = eu->up.lu_p;
+	NMG_CK_LOOPUSE(lu);
+	e = eu->e_p;
+	NMG_CK_EDGE(e);
+
+	/* If ENTIRE loop is a crack, there is no surface area, it's an outie */
+	if( nmg_loop_is_a_crack( lu ) )  return 1;
+
+	a = eu->vu_p->v_p->vg_p->coord;
+	b = eu->eumate_p->vu_p->v_p->vg_p->coord;
+	VADD2SCALE( midpt, a, b, 0.5 );
+
+	/* Ensure edge is long enough so midpoint is not within tol of verts */
+	VSUB2( diff, a, b );
+	if( MAGNITUDE(diff) < 3 * tol->dist )  {
+		rt_log(" eu=x%x, len=%g\n", eu, MAGNITUDE(diff) );
+		rt_bomb("nmg_is_crack_outie() edge is too short to bisect\n");
+	}
+	
+	class = nmg_class_pt_lu_except( midpt, lu, e, tol );
+
+	if( rt_g.NMG_debug & DEBUG_BASIC )  {
+		rt_log("nmg_is_crack_outie(eu=x%x) lu=x%x, e=x%x, class=%s\n",
+			eu, lu, e, nmg_class_name(class) );
+	}
+
+	if( lu->orientation == OT_SAME )  {
+		if( class == NMG_CLASS_AinB )
+			return 0;		/* an "innie" */
+		if( class == NMG_CLASS_AoutB )
+			return 1;		/* an "outie" */
+	} else {
+		/* It's a hole loop, things work backwards. */
+		if( class == NMG_CLASS_AinB )
+			return 1;		/* an "outie" */
+		if( class == NMG_CLASS_AoutB )
+			return 0;		/* an "innie" */
+	}
+
+	/* Other classifications "shouldn't happen". */
+	rt_log("nmg_is_crack_outie(eu=x%x), lu=x%x(%s)\n  midpt_class=%s, midpt=(%g, %g, %g)\n",
+		eu,
+		lu, nmg_orientation(lu->orientation),
+		nmg_class_name(class),
+		V3ARGS(midpt) );
+	nmg_pr_lu_briefly( lu, 0 );
+	rt_bomb("nmg_is_crack_outie() got unexpected midpt classification from nmg_class_pt_lu_except()\n");
+}
+
+/*
+ *			N M G _ F I N D _ R A D I A L _ E U
+ */
+struct nmg_radial *
+nmg_find_radial_eu( hd, eu )
+CONST struct rt_list	*hd;
+CONST struct edgeuse	*eu;
+{
+	register struct nmg_radial	*rad;
+
+	RT_CK_LIST_HEAD(hd);
+	NMG_CK_EDGEUSE(eu);
+
+	for( RT_LIST_FOR( rad, nmg_radial, hd ) )  {
+		if( rad->eu == eu )  return rad;
+		if( rad->eu->eumate_p == eu )  return rad;
+	}
+	rt_log("nmg_find_radial_eu() eu=x%x\n", eu);
+	rt_bomb("nmg_find_radial_eu() given edgeuse not found on list\n");
+}
+
+/*
+ *			N M G _ F I N D _ N E X T _ U S E _ O F _ E _ I N _ L U
+ */
+CONST struct edgeuse *
+nmg_find_next_use_of_e_in_lu( eu )
+CONST struct edgeuse	*eu;
+{
+	CONST register struct edgeuse	*neu;
+	CONST register struct edge	*e;
+
+	NMG_CK_EDGEUSE(eu);
+	NMG_CK_LOOPUSE(eu->up.lu_p);	/* sanity */
+	e = eu->e_p;
+	NMG_CK_EDGE(e);
+
+	neu = eu;
+	do  {
+		neu = RT_LIST_PNEXT_CIRC( edgeuse, &neu->l );
+	} while( neu->e_p != e );
+	return neu;
+
+}
+
+/*
  *			N M G _ R A D I A L _ M A R K _ C R A C K S
  *
  *  For every edgeuse, if there are other edgeuses around this edge
  *  from the same face, then mark them all as part of a "crack".
  *
- *  XXX - To be a crack the two edgeuses must be from the same loopuse!!!!!!
+ *  To be a crack the two edgeuses must be from the same loopuse.
  *
- *  XXX This approach is overly simplistic, as a legal face can have
- *  an even number of crack-pairs, and 0 to 2 non-crack edges, i.e.
- *  edges which border actual surface area.
- *  Telling the difference takes real work.
- *
- *  XXX Worse still, this approach does not distinguish between
- *  an edge cutting across a face, -vs- a pair of crack edges. :-(
- *  Good thing this flag bit isn't used for anything yet!
+ *  If the count of repeated ("crack") edgeuses is even, then
+ *  classify the entire crack as an "innie" or an "outie".
+ *  If the count is odd, this is a "Nasty" --
+ *  all but one edgeuse are marked as "outies",
+ *  and the remaining one is marked as a non-crack.
+ *  The "outie" edgeuses are marked off in pairs,
+ *  in the loopuses's edgeuse order.
  */
 void
 nmg_radial_mark_cracks( hd, tol )
@@ -1475,6 +1637,10 @@ CONST struct rt_tol	*tol;
 {
 	struct nmg_radial	*rad;
 	struct nmg_radial	*other;
+	CONST struct loopuse	*lu;
+	CONST struct edgeuse	*eu;
+	register int		uses;
+	int			outie;
 
 	RT_CK_LIST_HEAD(hd);
 	RT_CK_TOL(tol);
@@ -1483,28 +1649,85 @@ CONST struct rt_tol	*tol;
 		NMG_CK_RADIAL(rad);
 		if( rad->is_crack )  continue;
 		if( !rad->fu ) continue;		/* skip wire edges */
+		lu = rad->eu->up.lu_p;
+		uses = 0;
 
-		other = RT_LIST_PNEXT( nmg_radial, rad );
-		while( RT_LIST_NOT_HEAD( other, hd ) )  {
+		/* Search the remainder of the list for other uses */
+		for( other = RT_LIST_PNEXT( nmg_radial, rad );
+		     RT_LIST_NOT_HEAD( other, hd );
+		     other = RT_LIST_PNEXT( nmg_radial, other )
+		)  {
 			if( !other->fu ) continue;	/* skip wire edges */
-#if 0
-			if( other->fu->f_p == rad->fu->f_p )  {
-#else /* just get edgeuses from the same loopuse */
-			if( other->eu->up.lu_p == rad->eu->up.lu_p || other->eu->up.lu_p->lumate_p == rad->eu->up.lu_p )
-			{
-#endif
-				rad->is_crack = 1;
-				other->is_crack = 1;
-				if (rt_g.NMG_debug & DEBUG_MESH_EU )
-					rt_log( "nmg_radial_mark_cracks() Crack discovered at eu's x%x and x%x\n",
-						rad->eu, other->eu );
-				/* And the search continues to end of list */
-			}
-			other = RT_LIST_PNEXT( nmg_radial, other );
+			/* Only consider edgeuses from the same loopuse */
+			if( other->eu->up.lu_p != lu &&
+			    other->eu->eumate_p->up.lu_p != lu )
+				continue;
+			uses++;
 		}
-	}
+		if( uses <= 0 )  {
+			/* The main search continues to end of list */
+			continue;		/* not a crack */
+		}
+		uses++;		/* account for first use too */
 
-	/* XXX Go back and un-mark any edgeuses which acutally border surface area */
+		/* OK, we have a crack. Which kind? */
+		if( (uses & 1) == 0 )  {
+			/* Even number of edgeuses. */
+			outie = nmg_is_crack_outie( rad->eu, tol );
+			rad->is_crack = 1;
+			rad->is_outie = outie;
+			if (rt_g.NMG_debug & DEBUG_MESH_EU )  {
+				rt_log( "nmg_radial_mark_cracks() EVEN crack eu=x%x, uses=%d, outie=%d\n",
+					rad->eu, uses, outie );
+			}
+			/* Mark all the rest of them the same way */
+			for( other = RT_LIST_PNEXT( nmg_radial, rad );
+			     RT_LIST_NOT_HEAD( other, hd );
+			     other = RT_LIST_PNEXT( nmg_radial, other )
+			)  {
+				if( !other->fu ) continue;	/* skip wire edges */
+				/* Only consider edgeuses from the same loopuse */
+				if( other->eu->up.lu_p != lu &&
+				    other->eu->eumate_p->up.lu_p != lu )
+					continue;
+				other->is_crack = 1;
+				other->is_outie = outie;
+			}
+			if (rt_g.NMG_debug & DEBUG_MESH_EU )  {
+				rt_log("Printing loopuse and resulting radial list:\n");
+				nmg_pr_lu_briefly( lu, 0 );
+				nmg_pr_radial_list( hd, tol );
+			}
+			continue;
+		}
+		/*
+		 *  Odd number of edgeuses.  Traverse in loopuse order.
+		 *  All but the last one are "outies", last one is "innie"
+		 */
+		if (rt_g.NMG_debug & DEBUG_MESH_EU )  {
+			rt_log( "nmg_radial_mark_cracks() ODD crack eu=x%x, uses=%d, outie=%d\n",
+				rad->eu, uses, outie );
+		}
+		/* Mark off pairs of edgeuses, one per trip through loop. */
+		eu = rad->eu;
+		for( ; uses >= 2; uses-- )  {
+			eu = nmg_find_next_use_of_e_in_lu( eu );
+			if( eu == rad->eu )
+				rt_bomb("nmg_radial_mark_cracks() loop too short!\n");
+
+			other = nmg_find_radial_eu( hd, eu );
+			/* Mark 'em as "outies" */
+			other->is_crack = 1;
+			other->is_outie = 1;
+		}
+		/* Should only be one left, this one is an "innie":  it borders surface area */
+		eu = nmg_find_next_use_of_e_in_lu( eu );
+		if( eu != rad->eu )
+			rt_bomb("nmg_radial_mark_cracks() loop didn't return to start\n");
+
+		rad->is_crack = 1;
+		rad->is_outie = 0;		/* "innie" */
+	}
 }
 
 /*
@@ -1528,22 +1751,29 @@ CONST struct rt_tol	*tol;
 	RT_CK_LIST_HEAD(hd);
 	NMG_CK_SHELL(s);
 
+	/* First choice:  find an original, non-crack, non-wire */
 	for( RT_LIST_FOR( rad, nmg_radial, hd ) )  {
 		NMG_CK_RADIAL(rad);
 		if( rad->s != s )  continue;
 		seen_shell++;
-		if( rad->is_crack )  continue;	/* skip cracks */
+		if( rad->is_outie )  {
+			fallback = rad;
+			continue;	/* skip "outie" cracks */
+		}
 		if( !rad->fu )  continue;	/* skip wires */
 		if( rad->existing_flag )  return rad;
 	}
 	if( !seen_shell )  return (struct nmg_radial *)NULL;	/* No edgeuses from that shell, at all! */
 
+	/* Next, an original crack would be OK */
+	if(fallback) return fallback;
+
 	/* If there were no originals, find first newbie */
 	for( RT_LIST_FOR( rad, nmg_radial, hd ) )  {
 		if( rad->s != s )  continue;
-		if( rad->is_crack )  {
+		if( rad->is_outie )  {
 			fallback = rad;
-			continue;	/* skip cracks */
+			continue;	/* skip "outie" cracks */
 		}
 		if( !rad->fu )  {
 			continue;	/* skip wires */
@@ -1556,8 +1786,8 @@ CONST struct rt_tol	*tol;
 	/* No ordinary newbiew or newbie cracks, any wires? */
 	for( RT_LIST_FOR( rad, nmg_radial, hd ) )  {
 		if( rad->s != s )  continue;
-		if( rad->is_crack )  {
-			continue;	/* skip cracks */
+		if( rad->is_outie )  {
+			continue;	/* skip "outie" cracks */
 		}
 		if( !rad->fu )  {
 			fallback = rad;
@@ -1587,7 +1817,7 @@ CONST struct rt_tol	*tol;
 	struct nmg_radial	*rad;
 	struct nmg_radial	*orig;
 	register int		expected_ot;
-	int			count = 1;
+	int			count = 0;
 	int			nflip = 0;
 
 	RT_CK_LIST_HEAD(hd);
@@ -1596,6 +1826,10 @@ CONST struct rt_tol	*tol;
 
 	orig = nmg_radial_find_an_original( hd, s, tol );
 	NMG_CK_RADIAL(orig);
+	if( orig->is_outie )  {
+		/* Only originals were "outie" cracks.  No flipping */
+		return 0;
+	}
 	if( !orig->existing_flag )  {
 		/* There were no originals.  Do something sensible to check the newbies */
 		if( !orig->fu )  {
@@ -1620,11 +1854,12 @@ CONST struct rt_tol	*tol;
 #endif
 	}
 	expected_ot = !(orig->fu->orientation == OT_SAME);
+	if( !orig->is_outie ) count++;	/* Don't count orig if "outie" crack */
 
 	for( RT_LIST_FOR_CIRC( rad, nmg_radial, orig ) )  {
 		if( rad->s != s )  continue;
 		if( !rad->fu )  continue;	/* skip wires */
-		if( rad->is_crack ) continue;	/* skip cracks */
+		if( rad->is_outie ) continue;	/* skip "outie" cracks */
 		count++;
 		if( expected_ot == (rad->fu->orientation == OT_SAME) )  {
 			expected_ot = !expected_ot;
@@ -1642,12 +1877,13 @@ CONST struct rt_tol	*tol;
 	if( expected_ot == (orig->fu->orientation == OT_SAME) )
 		return nflip;
 
-	if( count == 1 )  {
+	if( count & 1 )  {
 		rt_log("nmg_radial_mark_flips() NOTICE dangling fu=x%x detected at eu=x%x in shell=x%x, proceeding.\n  %g %g %g --- %g %g %g\n",
 			orig->fu, orig->eu, s,
 			V3ARGS(orig->eu->vu_p->v_p->vg_p->coord),
 			V3ARGS(orig->eu->eumate_p->vu_p->v_p->vg_p->coord)
 		);
+		nmg_pr_radial_list( hd, tol );
 		return 0;
 	}
 
@@ -1691,12 +1927,13 @@ CONST struct rt_tol	*tol;
 			/* There were no originals.  Do something sensible to check the newbies */
 			if( !orig->fu )  continue;	/* Nothing but wires */
 		}
+		if( orig->is_outie )  continue;	/* Loop was nothing but outies */
 		expected_ot = !(orig->fu->orientation == OT_SAME);
 
 		for( RT_LIST_FOR_CIRC( rad, nmg_radial, orig ) )  {
 			if( rad->s != *sp )  continue;
 			if( !rad->fu )  continue;	/* skip wires */
-			if( rad->is_crack ) continue;	/* skip cracks */
+			if( rad->is_outie ) continue;	/* skip "outie" cracks */
 			if( expected_ot == (rad->fu->orientation == OT_SAME) )  {
 				expected_ot = !expected_ot;
 				continue;
@@ -1814,14 +2051,15 @@ CONST struct nmg_radial	*rad;
 		title,
 		rad->eu->eumate_p
 	);
-	rt_log("%s%8.8x, f=%8.8x, fu=%8.8x=%c, s=%8.8x %s %c%c %g deg\n",
+	rt_log("%s%8.8x, f=%8.8x, fu=%8.8x=%c, s=%8.8x %s %c%c%c %g deg\n",
 		title,
 		rad->eu,
 		f, rad->fu, orient,
 		rad->s,
 		rad->existing_flag ? "old" : "new",
-		rad->is_crack ? 'C' : '/',
 		rad->needs_flip ? 'F' : '/',
+		rad->is_crack ? 'C' : '/',
+		rad->is_outie ? 'O' : (rad->is_crack ? 'I' : '/'),
 		rad->ang * rt_radtodeg
 	);
 }
