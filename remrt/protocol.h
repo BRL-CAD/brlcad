@@ -46,14 +46,15 @@ struct line_info  {
 	/* A scanline is attached after here */
 };
 
-#define LINE_INFO(x)	(stroff_t)&(((struct line_info *)0)->x)
+#define LINE_O(x)	offsetof(struct  line_info, x)
+
 struct imexport desc_line_info[] =  {
-	"len",		(stroff_t)0,		1,
-	"%d",		LINE_INFO(li_startpix),	1,
-	"%d",		LINE_INFO(li_endpix),	1,
-	"%d",		LINE_INFO(li_frame),	1,
-	"%d",		LINE_INFO(li_nrays),	1,
-	"%f",		LINE_INFO(li_cpusec),	1,
-	"%f",		LINE_INFO(li_percent),	1,
-	"",		(stroff_t)0,		0
+	"len",		LINE_O(li_len),		1,
+	"%d",		LINE_O(li_startpix),	1,
+	"%d",		LINE_O(li_endpix),	1,
+	"%d",		LINE_O(li_frame),	1,
+	"%d",		LINE_O(li_nrays),	1,
+	"%f",		LINE_O(li_cpusec),	1,
+	"%f",		LINE_O(li_percent),	1,
+	"",		0,			0
 };
