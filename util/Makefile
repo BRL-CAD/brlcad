@@ -2,7 +2,7 @@
 
 #	last edit:	85/03/28	Gary S. Moss
 
-#	SCCS ID:	@(#)Makefile	1.11
+#	SCCS ID:	@(#)Makefile	1.12
 
 PRODUCTS= pp-fb fbclear fbgrid rle-fb fb-rle fbcmap
 HEADERS =
@@ -66,10 +66,10 @@ install:	all
 	for i in ${PRODUCTS} fbzoom ; \
 	do	chmod ${BINPERM} ${BINDIR}/$$i ; \
 	done
-#	for i in ${MANUALS} ; \
-#	do	${INS} $$i ${MANDIR}/$$i ; \
-#		chmod ${MANPERM} ${MANDIR}/$$i ; \
-#	done
+	for i in ${MANUALS} ; \
+	do	${INS} $$i ${MANDIR}/$$i ; \
+		chmod ${MANPERM} ${MANDIR}/$$i ; \
+	done
 
 clean:
 	-if vax; then rm -f ${HEADERS} ${CFILES}; fi
