@@ -191,7 +191,7 @@ if [info exists env(MGED_HTML_DIR)] {
     set mged_html_dir [lindex $auto_path 0]/../../html/mged
 }
 
-catch { source [lindex $auto_path 0]/sliders.tcl }
+#catch { source [lindex $auto_path 0]/sliders.tcl }
 
 proc ia_help { parent screen cmds } {
     set w $parent.help
@@ -326,34 +326,6 @@ proc get_player_id_t { w } {
     return ":"
 }
 
-proc distribute_text { w cmd str} {
-    global mged_players
-
-    set src_id [get_player_id_t $w]
-    foreach id $mged_players {
-	set _w .$id.t
-	if [winfo exists $_w] {
-	    if {$w != $_w} {
-		set _promptBegin [$_w index {end - 1 l}]
-		$_w mark set curr insert
-		$_w mark set insert $_promptBegin
-
-		if {$cmd != ""} {
-		    ia_rtlog_bold $_w "mged:$src_id> "
-		    ia_rtlog_bold $_w $cmd\n
-		}
-
-		if {$str != ""} {
-		    ia_rtlog_bold $_w $str\n
-		}
-
-		$_w mark set insert curr
-		$_w see insert
-	    }
-	}
-    }
-}
-
 proc do_Open { id } {
     global player_screen
 
@@ -446,28 +418,42 @@ proc on_context_help { id } {
 proc ia_invoke { w } {
     global ia_cmd_prefix
     global ia_more_default
+    global dm_insert_char_flag
+    global mged_apply_to
 
     set id [get_player_id_t $w]
 
     if {([string length [$w get promptEnd insert]] == 1) &&\
 	    ([string length $ia_more_default($id)] > 0)} {
 	#If no input and a default is supplied then use it
-	set cmd [concat $ia_cmd_prefix($id) $ia_more_default($id)]
+	set hcmd [concat $ia_cmd_prefix($id) $ia_more_default($id)]
     } else {
-	set cmd [concat $ia_cmd_prefix($id) [$w get promptEnd insert]]
+	set hcmd [concat $ia_cmd_prefix($id) [$w get promptEnd insert]]
+    }
+
+    if {$mged_apply_to($id) == 1} {
+	set cmd "doit_local $id \"$hcmd\""
+    } elseif {$mged_apply_to($id) == 2} {
+	set cmd "doit_using_list $id \"$hcmd\""
+    } elseif {$mged_apply_to($id) == 3} {
+	set cmd "doit_all \"$hcmd\""
+    } else {
+	set cmd $hcmd
     }
 
     set ia_more_default($id) ""
 
     if [info complete $cmd] {
-	cmd_set $id
+	if {!$dm_insert_char_flag} {
+	    cmd_set $id
+	}
 	catch [list db_glob $cmd] globbed_cmd
 	set result [catch [list uplevel #0 $globbed_cmd] ia_msg]
 
 	if { ![winfo exists $w] } {
-	    distribute_text $w $cmd $ia_msg
-	    stuff_str "\nmged:$id> $cmd\n$ia_msg"
-	    hist_add $cmd
+	    distribute_text $w $hcmd $ia_msg
+	    stuff_str "\nmged:$id> $hcmd\n$ia_msg"
+	    hist_add $hcmd
 	    return 
 	}
 
@@ -480,7 +466,7 @@ proc ia_invoke { w } {
 		
 		set ia_prompt [string range $ia_msg [expr $i + 23] end]
 		ia_print_prompt $w $ia_prompt
-		set ia_cmd_prefix($id) $cmd
+		set ia_cmd_prefix($id) $hcmd
 		$w see insert
 		set ia_more_default($id) [get_more_default]
 		return
@@ -491,11 +477,11 @@ proc ia_invoke { w } {
 		ia_rtlog $w $ia_msg\n
 	    }
 
-	    distribute_text $w $cmd $ia_msg
-	    stuff_str "\nmged:$id> $cmd\n$ia_msg"
+	    distribute_text $w $hcmd $ia_msg
+	    stuff_str "\nmged:$id> $hcmd\n$ia_msg"
 	}
 
-	hist_add $cmd
+	hist_add $hcmd
 	set ia_cmd_prefix($id) ""
 	ia_print_prompt $w "mged> "
     }
