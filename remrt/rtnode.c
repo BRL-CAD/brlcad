@@ -128,7 +128,9 @@ static int	max_cpus = 0;		/* max # cpus for use, <= avail_cpus */
 
 Tcl_Interp	*interp = NULL;
 
-int print_on = 1;
+char		*node_search_path = NULL; /* Filled in by Tcl command */
+
+int		print_on = 1;
 
 /*
  *  Package handlers for the RTSYNC protocol.
@@ -397,6 +399,7 @@ bu_log("after Tcl_Init\n");
 	Tcl_LinkVar(interp, "curframe", (char *)&curframe, TCL_LINK_INT);
 	Tcl_LinkVar(interp, "print_on", (char *)&print_on, TCL_LINK_INT);
 	Tcl_LinkVar(interp, "npsw", (char *)&npsw, TCL_LINK_INT);
+	Tcl_LinkVar(interp, "node_search_path", (char *)&node_search_path, TCL_LINK_STRING );
 
 	/* Send our version string */
 #define PROTOCOL_VERSION	"Version1.0"
@@ -544,24 +547,33 @@ char			*buf;
 /*
  *			R T S Y N C _ P H _ D I R B U I L D
  *
- *  The only argument is the name of the database file.
+ *  The only formal argument is the name of the database file,
+ *  which may be a full or partial path specification.
+ *
+ *	path_dir / arg_dir / arg_file.
+ *
+ *  Implicit argument:  The Tcl list variable named "node_search_path",
+ *  which will have been set by an earlier RTSYNCMSG_CMD transaction.
+ *
+ *  Make the current directory be the directory of the actual database
+ *  before opening it.
  */
 void
 rtsync_ph_dirbuild(pc, buf)
 register struct pkg_conn *pc;
 char *buf;
 {
-#define MAXARGS 1024
-	char	*argv[MAXARGS+1];
 	struct rt_i *rtip;
+	char		*arg_dir;
+	char		*arg_file;
+	char		*slash;
+	char		**path_argv;
+	int		path_argc;
+	struct bu_vls	path;
+	Tcl_DString	str;
+	int		i;
 
 	if( debug )  fprintf(stderr, "rtsync_ph_dirbuild: %s\n", buf );
-
-	if( (rt_split_cmd( argv, MAXARGS, buf )) <= 0 )  {
-		/* No words in input */
-		(void)free(buf);
-		return;
-	}
 
 	if( seen_dirbuild )  {
 		bu_log("rtsync_ph_dirbuild:  MSG_DIRBUILD already seen, ignored\n");
@@ -569,9 +581,60 @@ char *buf;
 		return;
 	}
 
-	title_file = bu_strdup(argv[0]);
+	if( (slash = strrchr( buf, '/' )) != NULL )  {
+		*slash = '\0';
+		arg_dir = buf;
+		arg_file = slash+1;
+	} else {
+		arg_dir = "";
+		arg_file = buf;
+	}
 
-	/* Build directory of GED database */
+	/* Process each path possibility, in turn */
+	if( Tcl_SplitList( interp, node_search_path, &path_argc, &path_argv) != TCL_OK )
+		rt_bomb("Tcl_SplitList failure on node_search_path\n");
+
+	Tcl_DStringInit( &str );
+	bu_vls_init( &path );
+	for( i=0; i<path_argc; i++ )  {
+		char *elem;
+
+		bu_vls_trunc( &path, 0 );		
+		elem = Tcl_TildeSubst( interp, path_argv[i], &str );
+		if( elem == NULL )  {
+			bu_log("Tcl_TildeSubst() failed on %s\n", path_argv[i]);
+			continue;
+		}
+		bu_vls_printf( &path, "%s/%s", elem, arg_dir );
+		Tcl_DStringFree(&str);		/* done with 'elem' */
+
+		if( chdir(bu_vls_addr(&path)) < 0 )  {
+			if(debug)  perror(bu_vls_addr(&path));
+			continue;
+		}
+
+		/* Got to the directory, see if file is there.  (Full path) */
+		bu_vls_printf( &path, "/%s", arg_file );
+
+		if( access( bu_vls_addr(&path), R_OK ) )  {
+			if(debug)  perror(bu_vls_addr(&path));
+			continue;
+		}
+
+		/* Success */
+		goto ok;
+
+	}
+	rt_bomb("Unable to locate geometry database\n");
+ok:
+	free( (char *)path_argv);
+
+	title_file = bu_vls_strgrab(&path);
+	bu_log("%s\n", title_file);
+
+	/*
+	 *  Build in-memory directory (table of contents) of GED database.
+	 */
 	if( (rtip=rt_dirbuild( title_file, NULL, 0 )) == RTI_NULL )  {
 		bu_log("rtsync_ph_dirbuild:  rt_dirbuild(%s) failure\n", title_file);
 		exit(2);
@@ -600,6 +663,7 @@ char *buf;
 		}
 		bu_vls_free(&cmd);
 	}
+	free( (char *)buf);
 }
 
 /*
