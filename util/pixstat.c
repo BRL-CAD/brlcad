@@ -181,8 +181,7 @@ char **argv;
 	printf( "Min     %14d%14d%14d\n", r.min, g.min, b.min );
 	printf( "Max     %14d%14d%14d\n", r.max, g.max, b.max );
 	printf( "Mode    %14d%14d%14d\n", r.mode, g.mode, b.mode );
-	if( verbose )
-		printf( "Num@mode%14d%14d%14d\n", r.bin[r.mode], g.bin[g.mode], b.bin[b.mode] );
+	printf( "Num@mode%14d%14d%14d\n", r.bin[r.mode], g.bin[g.mode], b.bin[b.mode] );
 	printf( "Median  %14d%14d%14d\n", r.median, g.median, b.median );
 	printf( "Mean    %14.3f%14.3f%14.3f\n", r.mean, g.mean, b.mean );
 	printf( "s.d.    %14.3f%14.3f%14.3f\n", sqrt(r.var), sqrt(g.var), sqrt(b.var) );
