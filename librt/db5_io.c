@@ -600,7 +600,6 @@ BU_ASSERT_PTR( attrib->ext_nbytes, >=, 5 );
 
 	out->ext_nbytes = togo;
 	BU_ASSERT_LONG( out->ext_nbytes, >=, 8 );
-if(getuid()==53) bu_hexdump_external(stderr, out, "v5 ext");
 }
 
 /*
@@ -1153,7 +1152,6 @@ CONST mat_t		mat;
 				dp->d_namep );
 			return -8;
 		}
-if(getuid()==53) bu_avs_print( &ip->idb_avs, "rt_db_get_internal5: attributes.ext_buf");
 	}
 
 	if( !raw.body.ext_buf )  {
