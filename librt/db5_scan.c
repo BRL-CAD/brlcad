@@ -77,6 +77,23 @@ CONST unsigned char *hp;
 	/* Ensure pad is zero */
 	if( hp[6] != 0 )  return 0;
 
+	return 1;		/* valid */
+}
+
+/*
+ *			D B 5 _ S E L E C T _ L E N G T H _ E N C O D I N G
+ *
+ *  Given a number to encode, decide which is the smallest encoding format
+ *  which will contain it.
+ */
+int
+db5_select_length_encoding( len )
+long len;
+{
+	if( len <= 255 )  return DB5HDR_WIDTHCODE_8BIT;
+	if( len <= 65535 )  return DB5HDR_WIDTHCODE_16BIT;
+	if( len < 0x7ffffffe )  return DB5HDR_WIDTHCODE_32BIT;
+	return DB5HDR_WIDTHCODE_64BIT;
 }
 
 /*
@@ -108,13 +125,45 @@ int			format;
 		*lenp = BU_GLONG(cp);
 		return 4;
 	case DB5HDR_WIDTHCODE_64BIT:
+#if 0
 		if( sizeof(long) >= 8 )  {
 			*lenp = BU_GLONGLONG(cp);
 			return 8;
 		}
+#endif
 		bu_bomb("db5_decode_length(): encountered 64-bit length on 32-bit machine\n");
 	}
 	bu_bomb("db5_decode_length(): unknown width code\n");
+	/* NOTREACHED */
+}
+
+/*
+ *			D B 5 _ E N C O D E _ L E N G T H
+ *
+ *  Given a value and a variable-width format spec,
+ *  store it in network order (XDR).
+ *
+ *  Returns -
+ *	pointer to next available byte.
+ */
+unsigned char *
+db5_encode_length( cp, val, format )
+unsigned char	*cp;
+long		val;
+int		format;
+{
+	switch( format )  {
+	case DB5HDR_WIDTHCODE_8BIT:
+		*cp = val & 0xFF;
+		return cp+1;
+	case DB5HDR_WIDTHCODE_16BIT:
+		return bu_pshort( cp, (short)val );
+	case DB5HDR_WIDTHCODE_32BIT:
+		return bu_plong( cp, val );
+	case DB5HDR_WIDTHCODE_64BIT:
+		bu_bomb("db5_encode_length(): encountered 64-bit length\n");
+	}
+	bu_bomb("db5_encode_length(): unknown width code\n");
 	/* NOTREACHED */
 }
 
@@ -157,7 +206,7 @@ CONST unsigned char		*cp;
  *	on success, pointer to first unused byte
  *	NULL, on error
  */
-unsigned char * CONST
+CONST unsigned char *
 db5_get_raw_internal_ptr( rip, ip )
 struct db5_raw_internal		*rip;
 unsigned char		* CONST ip;
@@ -179,7 +228,7 @@ unsigned char		* CONST ip;
 	/* Grab name, if present */
 	if( rip->h_name_present )  {
 		cp += db5_decode_length( &rip->name_length, cp, rip->i_object_width );
-		rip->name = (unsigned char *)cp;	/* discard CONST */
+		rip->name = (char *)cp;		/* discard CONST */
 		cp += rip->name_length;
 	} else {
 		rip->name_length = 0;
@@ -191,7 +240,7 @@ unsigned char		* CONST ip;
 		/* interior_length will include any pad bytes but not magic2 */
 		/* Because it may be compressed, we don't know exact len yet */
 		rip->interior_length = cp - rip->buf - 1;
-		rip->interior = (unsigned char *)cp;	/* discart CONST */
+		rip->interior = (unsigned char *)cp;	/* discard CONST */
 	} else {
 		rip->interior_length = 0;
 		rip->interior = NULL;
@@ -275,7 +324,7 @@ FILE			*fp;
 	/* Grab name, if present */
 	if( rip->h_name_present )  {
 		cp += db5_decode_length( &rip->name_length, cp, rip->i_object_width );
-		rip->name = cp;
+		rip->name = (char *)cp;
 		cp += rip->name_length;
 	} else {
 		rip->name_length = 0;
@@ -326,7 +375,7 @@ genptr_t		client_data;	/* argument for handler */
 
 	/* Fast-path when file is already memory-mapped */
 	if( dbip->dbi_inmem )  {
-		unsigned char	*cp = (unsigned char *)dbip->dbi_inmem;
+		CONST unsigned char	*cp = (CONST unsigned char *)dbip->dbi_inmem;
 
 		if( db5_header_is_valid( cp ) == 0 )  {
 			bu_log("db5_scan ERROR:  %s is lacking a proper BRL-CAD v5 database header\n", dbip->dbi_filename);
@@ -496,6 +545,7 @@ struct db_i	*dbip;
 
 	if( db5_header_is_valid( header ) )  {
 		/* File is v5 format */
+bu_log("WARNING:  %s is BRL-CAD v5 format, you need a newer version of this program to read it.\n", dbip->dbi_filename);
 		dbip->dbi_version = 5;
 		return db5_scan( dbip, db5_diradd_handler, NULL );
 	}
@@ -513,4 +563,251 @@ struct db_i	*dbip;
 	bu_log("db_dirbuild(%s) ERROR, file is not in BRL-CAD geometry database format\n",
 		dbip->dbi_filename);
 	return -1;
+}
+
+/*
+ *			D B 5 _ E X P O R T _ O B J E C T 3
+ *
+ *  An experimental routine for merging together the three optional
+ *  parts of an object into the final on-disk format.
+ *  Results in extra data copies, but serves as a starting point for testing.
+ *  Any of name, attrib, and body may be null.
+ */
+void
+db5_export_object3( out, name, attrib, body, major, minor, zzz )
+struct bu_external		*out;			/* output */
+CONST char			*name;
+CONST struct bu_external	*attrib;
+CONST struct bu_external	*body;
+int				major;
+int				minor;
+int				zzz;		/* compression, someday */
+{
+	struct db5_ondisk_header *odp;
+	register unsigned char	*cp;
+	long	namelen = 0;
+	long	need;
+	long	ineed = 0;	/* sizes of internal parts */
+	int	h_width, i_width;	
+	long	togo;
+
+	/*
+	 *  First, compute an upper bound on the size buffer needed.
+	 *  Over-estimate on the length fields just to keep it simple.
+	 */
+	need = sizeof(struct db5_ondisk_header);
+	need += 8;	/* for object_length */
+	if( name )  {
+		namelen = strlen(name) + 1;	/* includes null */
+		need += namelen + 8;
+		ineed = namelen;
+	}
+	if( attrib )  {
+		BU_CK_EXTERNAL(attrib);
+		need += attrib->ext_nbytes + 8;
+		ineed |= attrib->ext_nbytes;
+	}
+	if( body )  {
+		BU_CK_EXTERNAL(body);
+		need += body->ext_nbytes + 8;
+		ineed |= body->ext_nbytes;
+	}
+	need += 8;	/* pad and magic2 */
+
+	/* Allocate the buffer for the combined external representation */
+	out->ext_magic = BU_EXTERNAL_MAGIC;
+	out->ext_nbytes = 0;
+	out->ext_buf = bu_malloc( need, "external object3" );
+
+	/* Determine encoding for the two kinds of length fields */
+	h_width = db5_select_length_encoding( (need+7)>>3 );
+	i_width = db5_select_length_encoding( ineed );
+
+	/* prepare combined external object */
+	odp = (struct db5_ondisk_header *)out->ext_buf;
+	odp->db5h_magic1 = DB5HDR_MAGIC1;
+
+	/* hflags */
+	odp->db5h_hflags = h_width << DB5HDR_HFLAGS_OBJECT_WIDTH_SHIFT;
+	if( name )  odp->db5h_hflags |= DB5HDR_HFLAGS_NAME_PRESENT;
+
+	/* iflags */
+	odp->db5h_iflags = i_width << DB5HDR_IFLAGS_INTERIOR_WIDTH_SHIFT;
+	if( attrib )  odp->db5h_iflags |= DB5HDR_IFLAGS_ATTRIBUTES_PRESENT;
+	if( body )  odp->db5h_iflags |= DB5HDR_IFLAGS_BODY_PRESENT;
+	odp->db5h_iflags |= zzz & DB5HDR_IFLAGS_ZZZ_MASK;
+
+	if( zzz )  bu_bomb("db5_export_object3: compression not supported yet\n");
+
+	/* Object_Type */
+	odp->db5h_major_type = major;
+	odp->db5h_minor_type = minor;
+
+	/* Build up the rest of the record */
+	cp = ((unsigned char *)out->ext_buf) + sizeof(struct db5_ondisk_header);
+	cp = db5_encode_length( cp, 0L, h_width );	/* will be replaced below */
+
+	if( name )  {
+		cp = db5_encode_length( cp, namelen, i_width );
+		bcopy( name, cp, namelen );	/* includes null */
+		cp += namelen;
+	}
+
+	if( attrib )  {
+		cp = db5_encode_length( cp, attrib->ext_nbytes, i_width );
+		bcopy( attrib->ext_buf, cp, attrib->ext_nbytes );
+		cp += attrib->ext_nbytes;
+	}
+
+	if( body )  {
+		cp = db5_encode_length( cp, body->ext_nbytes, i_width );
+		bcopy( body->ext_buf, cp, body->ext_nbytes );
+		cp += body->ext_nbytes;
+	}
+
+	togo = cp - ((unsigned char *)out->ext_buf) + 1;
+	togo &= 7;
+	if( togo != 0 )  {
+		togo = 8 - togo;
+		while( togo-- > 0 )  *cp++ = '\0';
+	}
+	*cp++ = DB5HDR_MAGIC2;
+
+	/* Verify multiple of 8 */
+	togo = cp - ((unsigned char *)out->ext_buf);
+	BU_ASSERT_LONG( togo&7, ==, 0 );
+
+	/* Finally, go back to the header and write the actual object length */
+	cp = ((unsigned char *)out->ext_buf) + sizeof(struct db5_ondisk_header);
+	cp = db5_encode_length( cp, togo>>3, h_width );
+
+}
+
+/*
+ *			D B 5 _ E X P O R T _ A T T R I B U T E S
+ *
+ *  One attempt at encoding attribute-value information in the external
+ *  format.
+ *  This may not be the best or only way to do it, but it gets things
+ *  started, for testing.
+ *
+ *  The on-disk encoding is:
+ *
+ *	aname1 NULL value1 NULL ... anameN NULL valueN NULL NULL
+ */
+void
+db5_export_attributes( ext, avp )
+struct bu_external		*ext;
+CONST struct attribute_value_pair	*avp;
+{
+	int	need = 0;
+	CONST struct attribute_value_pair	*avpp;
+	char	*cp;
+
+	/* First pass -- determine how much space is required */
+	for( avpp = avp; avpp->name != NULL; avpp++ )  {
+		need += strlen( avpp->name ) + strlen( avpp->value ) + 2;
+	}
+	need += 1;		/* for final null */
+
+	ext->ext_magic = BU_EXTERNAL_MAGIC;
+	ext->ext_nbytes = need;
+	ext->ext_buf = bu_malloc( need, "external attributes" );
+
+	/* Second pass -- store in external form */
+	cp = (char *)ext->ext_buf;
+	for( avpp = avp; avpp->name != NULL; avpp++ )  {
+		need = strlen( avpp->name ) + 1;
+		bcopy( avpp->name, cp, need );
+		cp += need;
+
+		need = strlen( avpp->value ) + 1;
+		bcopy( avpp->value, cp, need );
+		cp += need;
+	}
+	*cp++ = '\0';
+	need = cp - ((char *)ext->ext_buf);
+	BU_ASSERT_LONG( need, ==, ext->ext_nbytes );
+}
+
+/*
+ *			D B 5 _ F W R I T E _ I D E N T
+ *
+ *  Create a header for a v5 database.
+ *  This routine has the same calling sequence as db_fwrite_ident()
+ *  which makes a v4 database header.
+ *
+ *  In the v5 database, two database objects must be created to
+ *  match the semantics of what was in the v4 header:
+ *
+ *  First, a database header object.
+ *
+ *  Second, an attribute-only object named "_GLOBAL" which
+ *  contains the attributes "title=" and "units=".
+ *
+ * Returns -
+ *	 0	Success
+ *	-1	Fatal Error
+ */
+int
+db5_fwrite_ident( fp, title, local2mm )
+FILE		*fp;
+CONST char	*title;
+double		local2mm;
+{
+	unsigned char	header[8];
+	struct attribute_value_pair avp[3];
+	struct bu_vls		units;
+	struct bu_external	out;
+	struct bu_external	attr;
+
+	header[0] = DB5HDR_MAGIC1;
+
+	/* hflags */
+	header[1] = DB5HDR_WIDTHCODE_8BIT << DB5HDR_HFLAGS_OBJECT_WIDTH_SHIFT;
+
+	/* iflags */
+	header[2] = DB5HDR_IFLAGS_ZZZ_UNCOMPRESSED |
+		(DB5HDR_WIDTHCODE_8BIT << DB5HDR_IFLAGS_INTERIOR_WIDTH_SHIFT);
+
+	/* major and minor type */
+	header[3] = DB5HDR_MAJORTYPE_DLI;
+	header[4] = DB5HDR_MINORTYPE_DLI_HEADER;
+
+	header[5] = 1;		/* One 8-byte chunk, encoded as WIDTHCODE_8BIT */
+
+	header[6] = 0;		/* pad */
+	header[7] = DB5HDR_MAGIC2;
+
+	if( fwrite( header, sizeof(header), 1, fp ) != 0 )  {
+		bu_log("db5_write_ident() write error\n");
+		return -1;
+	}
+
+	/* We should get the same result if we do this */
+	/* No harm in writing two headers, for testing */
+	db5_export_object3( &out, NULL, NULL, NULL, DB5HDR_MAJORTYPE_DLI, DB5HDR_MINORTYPE_DLI_HEADER, DB5HDR_IFLAGS_ZZZ_UNCOMPRESSED );
+	bu_fwrite_external( fp, &out );
+	bu_free_external( &out );
+
+	/* Second, create the attribute-only object */
+	bu_vls_init( &units );
+	bu_vls_printf( &units, "%.25f", local2mm );
+
+	avp[0].name = "title";
+	avp[0].value = (char *)title;		/* un-CONST */
+	avp[1].name = "units";
+	avp[1].value = bu_vls_addr(&units);
+	avp[2].name = NULL;
+	avp[2].value = NULL;
+
+	db5_export_attributes( &attr, avp );
+	db5_export_object3( &out, "_GLOBAL", &attr, NULL, DB5HDR_MAJORTYPE_ATTRIBUTE_ONLY, 0, DB5HDR_IFLAGS_ZZZ_UNCOMPRESSED);
+	bu_fwrite_external( fp, &out );
+	bu_free_external( &out );
+	bu_free_external( &attr );
+
+	bu_vls_free( &units );
+
+	return 0;
 }
