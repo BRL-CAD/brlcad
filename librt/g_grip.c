@@ -379,7 +379,8 @@ double			mm2local;
 	rt_vls_strcat( str, buf );
 
 	sprintf(buf, "\tC (%g %g %g) mag=%g\n",
-		V3ARGS(gip->center), gip->mag*mm2local);
+		gip->center[0]*mm2local, gip->center[1]*mm2local,
+		gip->center[2]*mm2local, gip->mag*mm2local);
 
 	rt_vls_strcat( str, buf);
 	return(0);
