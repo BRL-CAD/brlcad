@@ -83,8 +83,11 @@ extern struct region	env_region;	/* from text.c */
 
 vect_t ambient_color = { 1, 1, 1 };	/* Ambient white light */
 
-/*vect_t	background = { 0.25, 0, 0.5 };	/* Dark Blue Background */
+#if 0
+vect_t	background = { 0.25, 0, 0.5 };	/* Dark Blue Background */
+#else
 vect_t	background = { 0, 0, 1.0/255 };	/* Nearly Black */
+#endif
 int	ibackground[3];			/* integer 0..255 version */
 int	inonbackground[3];		/* integer non-background */
 
