@@ -312,9 +312,12 @@ int cpu;
 				g = 0xFF;
 				b = 0x80;
 			}
+			/* Don't depend on interlocked hardware byte-splice */
+			RES_ACQUIRE( &rt_g.res_worker );
 			*pixelp++ = r ;
 			*pixelp++ = g ;
 			*pixelp++ = b ;
+			RES_RELEASE( &rt_g.res_worker );
 		}
 #endif
 	}
