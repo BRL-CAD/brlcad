@@ -69,7 +69,7 @@ register struct rt_i *rtip;
 	if( rt_cutLen < 3 )  rt_cutLen = 3;
 	if( rt_cutDepth < 9 )  rt_cutDepth = 9;
 	if( rt_cutDepth > 24 )  rt_cutDepth = 24;		/* !! */
-rt_log("Cut: Tree Depth=%d, Leaf Len=%d\n", rt_cutDepth, rt_cutLen );
+	if(rt_g.debug&DEBUG_CUT) rt_log("Cut: Tree Depth=%d, Leaf Len=%d\n", rt_cutDepth, rt_cutLen );
 	rt_ct_optim( &rtip->rti_CutHead, 0 );
 
 	if(rt_g.debug&DEBUG_CUT) rt_pr_cut( &rtip->rti_CutHead, 0 );
@@ -95,10 +95,13 @@ rt_log("Cut: Tree Depth=%d, Leaf Len=%d\n", rt_cutDepth, rt_cutLen );
 		rtip->rti_pmax[1] = rtip->mdl_max[1] + diff;
 		rtip->rti_pmax[2] = rtip->mdl_max[2] + diff;
 
-		diff = 4095.0 / (rtip->rti_pmax[X] - rtip->rti_pmin[X]);
-		f = 4095.0 / (rtip->rti_pmax[Y] - rtip->rti_pmin[Y]);
+#define PL_MIN	(-32767L)
+#define PL_MAX	 (32767L)
+#define PL_DIFF	(PL_MAX-PL_MIN)
+		diff = PL_DIFF / (rtip->rti_pmax[X] - rtip->rti_pmin[X]);
+		f = PL_DIFF / (rtip->rti_pmax[Y] - rtip->rti_pmin[Y]);
 		if( f < diff )  diff = f;
-		f = 4095.0 / (rtip->rti_pmax[Z] - rtip->rti_pmin[Z]);
+		f = PL_DIFF / (rtip->rti_pmax[Z] - rtip->rti_pmin[Z]);
 		if( f < diff )  diff = f;
 		rtip->rti_pconv = diff;
 	}
@@ -107,14 +110,18 @@ rt_log("Cut: Tree Depth=%d, Leaf Len=%d\n", rt_cutDepth, rt_cutLen );
 
 	/* Debugging code to plot cuts, solid RRPs */
 	if( (plotfp=fopen("rtcut.plot", "w"))!=NULL) {
-		pl_3space( plotfp, 0,0,0, 4096, 4096, 4096);
+		pl_3space( plotfp,
+			PL_MIN, PL_MIN, PL_MIN,
+			PL_MAX, PL_MAX, PL_MAX);
 		/* First, all the cutting boxes */
 		rt_plot_cut( plotfp, rtip, &rtip->rti_CutHead, 0 );
 		(void)fclose(plotfp);
 	}
 	if( (plotfp=fopen("rtrpp.plot", "w"))!=NULL) {
 		/* Then, all the solid bounding boxes, in white */
-		pl_3space( plotfp, 0,0,0, 4096, 4096, 4096);
+		pl_3space( plotfp,
+			PL_MIN, PL_MIN, PL_MIN,
+			PL_MAX, PL_MAX, PL_MAX);
 		pl_color( plotfp, 255, 255, 255 );
 		for(stp=rtip->HeadSolid; stp != SOLTAB_NULL; stp=stp->st_forw)  {
 			if( stp->st_aradius >= INFINITY )
@@ -584,8 +591,8 @@ FILE			*fp;
 register struct rt_i	*rtip;
 register vect_t		a, b;
 {
-	int ax, ay, az;
-	int bx, by, bz;
+	long ax, ay, az;
+	long bx, by, bz;
 
 	ax =	(a[X] - rtip->rti_pmin[X])*rtip->rti_pconv;
 	ay =	(a[Y] - rtip->rti_pmin[Y])*rtip->rti_pconv;
@@ -594,7 +601,9 @@ register vect_t		a, b;
 	by =	(b[Y] - rtip->rti_pmin[Y])*rtip->rti_pconv;
 	bz =	(b[Z] - rtip->rti_pmin[Z])*rtip->rti_pconv;
 
-	pl_3box( fp, ax, ay, az, bx, by, bz );
+	pl_3box( fp,
+		(int)(ax+PL_MIN), (int)(ay+PL_MIN), (int)(az+PL_MIN),
+		(int)(bx+PL_MIN), (int)(by+PL_MIN), (int)(bz+PL_MIN) );
 }
 
 
@@ -687,8 +696,8 @@ FILE	*fp;
 register struct rt_i	*rtip;
 register vect_t		aa, bb;
 {
-	int ax, ay, az;
-	int bx, by, bz;
+	long ax, ay, az;
+	long bx, by, bz;
 	vect_t	a, b;
 
 	VMOVE( a, aa );		/* Make local copys, for vclip to change */
@@ -703,5 +712,7 @@ register vect_t		aa, bb;
 	by =	(b[Y] - rtip->rti_pmin[Y])*rtip->rti_pconv;
 	bz =	(b[Z] - rtip->rti_pmin[Z])*rtip->rti_pconv;
 
-	pl_3line( fp, ax, ay, az, bx, by, bz );
+	pl_3line( fp,
+		(int)(ax+PL_MIN), (int)(ay+PL_MIN), (int)(az+PL_MIN),
+		(int)(bx+PL_MIN), (int)(by+PL_MIN), (int)(bz+PL_MIN) );
 }
