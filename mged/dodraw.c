@@ -40,6 +40,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "../librt/debug.h"	/* XXX */
 
+void		cvt_vlblock_to_solids();
 void		drawH_part2();
 extern void	(*nmg_plot_anim_upcall)();
 extern void	(*nmg_vlblock_anim_upcall)();
@@ -583,6 +584,7 @@ A production implementation will exist in the maintenance release.\n", (char *)N
  *  Also finds s_vlen;
  * XXX Should split out a separate rt_vlist_rpp() routine, for librt/vlist.c
  */
+void
 mged_bound_solid( sp )
 register struct solid *sp;
 {
@@ -914,6 +916,7 @@ CONST mat_t			mat;
 /*
  *			C V T _ V L B L O C K _ T O _ S O L I D S
  */
+void
 cvt_vlblock_to_solids( vbp, name, copy )
 struct rt_vlblock	*vbp;
 char			*name;

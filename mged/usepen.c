@@ -305,7 +305,7 @@ int argc;
 char *argv[];
 {
   register struct solid *sp;
-  static count = -1;
+  static int count = -1;
   int i;
 
   if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
