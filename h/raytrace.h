@@ -2056,9 +2056,9 @@ BU_EXTERN(void db_dup_full_path, (struct db_full_path *newp,
 	CONST struct db_full_path *oldp) );
 BU_EXTERN(char *db_path_to_string, (CONST struct db_full_path *pp) );
 BU_EXTERN(void db_free_full_path, (struct db_full_path *pp) );
-BU_EXTERN(void db_region_mat, (mat_t m, CONST struct db_i *dbip,
+BU_EXTERN(int db_region_mat, (mat_t m, CONST struct db_i *dbip,
 				CONST char *name) );
-BU_EXTERN(void db_shader_mat, (mat_t model_to_shader, CONST struct rt_i *rtip,
+BU_EXTERN(int db_shader_mat, (mat_t model_to_shader, CONST struct rt_i *rtip,
 				CONST struct region *rp, point_t p_min,
 				point_t p_max) );
 /* db_open.c */
