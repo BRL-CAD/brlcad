@@ -409,6 +409,7 @@ struct faceuse *fu;
 			rt_log("transform 0x%x... ", vu_p);
 
 		fu_of_vu = nmg_find_fu_of_vu(vu_p);
+		if( !fu_of_vu )  continue;	/* skip vu's of wire edges */
 		NMG_CK_FACEUSE(fu_of_vu);
 		if (fu_of_vu != fu) {
 			if (flatten_debug)
