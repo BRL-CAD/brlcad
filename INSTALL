@@ -23,14 +23,14 @@ Compile:
 	The next step can take a considerable amount of time on some systems:
 	
 	sh:
-		% make > make.log 2>&1
+		% cake > cake.log 2>&1
 	csh:
-		% make >& make.log
+		% cake >& cake.log
 
 Install:
 	Review the log of compilation, then type:
 
-		% make install
+		% cake install
 
 This process should proceed without problems on the following systems:
 
