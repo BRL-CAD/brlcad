@@ -49,7 +49,7 @@ void	aexists();
 
 /* Rename an object */
 /* Format: n oldname newname	*/
-void
+int
 f_name( argc, argv )
 int	argc;
 char	**argv;
@@ -58,11 +58,11 @@ char	**argv;
 	union record record;
 
 	if( (dp = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
-		return;
+		return CMD_BAD;
 
 	if( db_lookup( dbip,  argv[2], LOOKUP_QUIET ) != DIR_NULL )  {
 		aexists( argv[2] );
-		return;
+		return CMD_BAD;
 	}
 
 	/*  Change object name in the directory. */
@@ -70,17 +70,19 @@ char	**argv;
 	    db_get( dbip,  dp, &record, 0 , 1) < 0 )  {
 		printf("error in rename to %s, aborting\n", argv[2] );
 	    	ERROR_RECOVERY_SUGGESTION;
-	    	return;
+	    	return CMD_BAD;
 	}
 
 	/* Change name in the file */
 	NAMEMOVE( argv[2], record.c.c_name );
-	if( db_put( dbip, dp, &record, 0, 1 ) < 0 )  WRITE_ERR_return;
+	if( db_put( dbip, dp, &record, 0, 1 ) < 0 ) { WRITE_ERR; return CMD_BAD; }
+
+	return CMD_OK;
 }
 
 /* Copy an object */
 /* Format: cp oldname newname	*/
-void
+int
 f_copy( argc, argv )
 int	argc;
 char	**argv;
@@ -90,38 +92,42 @@ char	**argv;
 	struct rt_external external;
 
 	if( (proto = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
-		return;
+		return CMD_BAD;
 
 	if( db_lookup( dbip,  argv[2], LOOKUP_QUIET ) != DIR_NULL )  {
 		aexists( argv[2] );
-		return;
+		return CMD_BAD;
 	}
 
-	if( db_get_external( &external , proto , dbip ) )
-		READ_ERR_return;
+	if( db_get_external( &external , proto , dbip ) ) {
+		READ_ERR;
+		return CMD_BAD;
+	}
 
 	/* no interuprts */
 	(void)signal( SIGINT, SIG_IGN );
 
 	if( (dp=db_diradd( dbip, argv[2], -1, proto->d_len, proto->d_flags)) == DIR_NULL ||
 	    db_alloc( dbip, dp, proto->d_len ) < 0 )  {
-	    	ALLOC_ERR_return;
+	    	ALLOC_ERR;
+		return CMD_BAD;
 	}
 
 	if (db_put_external( &external, dp, dbip ) < 0 )
 	{
 		db_free_external( &external );
-		WRITE_ERR_return;
+		WRITE_ERR;
+		return CMD_BAD;
 	}
 	db_free_external( &external );
 
 	/* draw the new object */
-	f_edit( 2, argv+1 );	/* depends on name being in argv[2] ! */
+	return f_edit( 2, argv+1 );	/* depends on name being in argv[2] ! */
 }
 
 /* Create an instance of something */
 /* Format: i object combname [op]	*/
-void
+int
 f_instance( argc, argv )
 int	argc;
 char	**argv;
@@ -130,23 +136,25 @@ char	**argv;
 	char oper;
 
 	if( (dp = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
-		return;
+		return CMD_BAD;
 
 	oper = UNION;
 	if( argc == 4 )
 		oper = argv[3][0];
 	if(oper != UNION && oper != SUBTRACT &&	oper != INTERSECT) {
 		(void)printf("bad operation: %c\n", oper );
-		return;
+		return CMD_BAD;
 	}
 	if( combadd( dp, argv[2], 0, oper, 0, 0 ) == DIR_NULL )
-		return;
+		return CMD_BAD;
+
+	return CMD_OK;
 }
 
 /* add solids to a region or create the region */
 /* and then add solids */
 /* Format: r regionname opr1 sol1 opr2 sol2 ... oprn soln */
-void
+int
 f_region( argc, argv )
 int	argc;
 char	**argv;
@@ -163,7 +171,7 @@ char	**argv;
 	/* Check for even number of arguments */
 	if( argc & 01 )  {
 		(void)printf("error in number of args!\n");
-		return;
+		return CMD_BAD;
 	}
 
 	if( db_lookup( dbip, argv[1], LOOKUP_QUIET) == DIR_NULL ) {
@@ -193,7 +201,11 @@ char	**argv;
 			continue;
 		}
 
-		if( db_get( dbip,  dp, &record, 0 , 1) < 0 )  READ_ERR_return;
+		if( db_get( dbip,  dp, &record, 0 , 1) < 0 ) {
+			READ_ERR;
+			return CMD_BAD;
+		}
+		
 		if( record.u_id == ID_COMB ) {
 			if( record.c.c_flags == 'R' ) {
 				(void)printf(
@@ -204,7 +216,7 @@ char	**argv;
 
 		if( combadd( dp, argv[1], 1, oper, ident, air ) == DIR_NULL )  {
 			(void)printf("error in combadd\n");
-			return;
+			return CMD_BAD;
 		}
 	}
 
@@ -212,7 +224,10 @@ char	**argv;
 		/* failed to create region */
 		if(item_default > 1)
 			item_default--;
+		return CMD_BAD;
 	}
+
+	return CMD_OK;
 }
 
 /*
@@ -223,7 +238,7 @@ char	**argv;
  *
  *  Format: comb comb_name sol1 opr2 sol2 ... oprN solN
  */
-void
+int
 f_comb( argc, argv )
 int	argc;
 char	**argv;
@@ -236,7 +251,7 @@ char	**argv;
 	/* Check for odd number of arguments */
 	if( argc & 01 )  {
 		(void)printf("error in number of args!\n");
-		return;
+		return CMD_BAD;
 	}
 
 	/* Save combination name, for use inside loop */
@@ -263,17 +278,21 @@ char	**argv;
 
 		if( combadd( dp, comb_name, 0, oper, 0, 0 ) == DIR_NULL )  {
 			(void)printf("error in combadd\n");
-			return;
+			return CMD_BAD;
 		}
 	}
 
-	if( db_lookup( dbip, comb_name, LOOKUP_QUIET) == DIR_NULL )
+	if( db_lookup( dbip, comb_name, LOOKUP_QUIET) == DIR_NULL ) {
 		(void)printf("Error:  %s not created\n", comb_name );
+		return CMD_BAD;
+	}
+
+	return CMD_OK;
 }
 
 /* Remove an object or several from the description */
 /* Format: k object1 object2 .... objectn	*/
-void
+int
 f_kill( argc, argv )
 int	argc;
 char	**argv;
@@ -286,15 +305,18 @@ char	**argv;
 			eraseobj( dp );
 			if( db_delete( dbip, dp ) < 0 ||
 			    db_dirdelete( dbip, dp ) < 0 )  {
-			    	DELETE_ERR_return(argv[i]);
+			    	DELETE_ERR(argv[i]);
+				return CMD_BAD;
 			}
 		}
 	}
+
+	return CMD_OK;
 }
 
 /* Grouping command */
 /* Format: g groupname object1 object2 .... objectn	*/
-void
+int
 f_group( argc, argv )
 int	argc;
 char	**argv;
@@ -307,15 +329,16 @@ char	**argv;
 		if( (dp = db_lookup( dbip,  argv[i], LOOKUP_NOISY)) != DIR_NULL )  {
 			if( combadd( dp, argv[1], 0,
 				UNION, 0, 0) == DIR_NULL )
-				return;
+				return CMD_BAD;
 		}  else
 			(void)printf("skip member %s\n", argv[i]);
 	}
+	return CMD_OK;
 }
 
 /* Delete members of a combination */
 /* Format: D comb memb1 memb2 .... membn	*/
-void
+int
 f_rm( argc, argv )
 int	argc;
 char	**argv;
@@ -325,13 +348,16 @@ char	**argv;
 	union record record;
 
 	if( (dp = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
-		return;
+		return CMD_BAD;
 
 	/* Examine all the Member records, one at a time */
 	num_deleted = 0;
 top:
 	for( rec = 1; rec < dp->d_len; rec++ )  {
-		if( db_get( dbip,  dp, &record, rec , 1) < 0 )  READ_ERR_return;
+		if( db_get( dbip,  dp, &record, rec , 1) < 0 ) {
+			READ_ERR;
+			return CMD_BAD;
+		}
 		/* Compare this member to each command arg */
 		for( i = 2; i < argc; i++ )  {
 			if( strcmp( argv[i], record.M.m_instname ) != 0 )
@@ -340,20 +366,23 @@ top:
 			if( db_delrec( dbip, dp, rec ) < 0 )  {
 				(void)printf("Error in deleting member.\n");
 				ERROR_RECOVERY_SUGGESTION;
-				return;
+				return CMD_BAD;
 			}
 			num_deleted++;
 			goto top;
 		}
 	}
+
+	return CMD_OK;
 }
 
 /* Copy a cylinder and position at end of original cylinder
+
  *	Used in making "wires"
  *
  * Format: cpi old new
  */
-void
+int
 f_copy_inv( argc, argv )
 int	argc;
 char	**argv;
@@ -368,16 +397,18 @@ char	**argv;
 	int ngran;
 
 	if( (proto = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
-		return;
+		return CMD_BAD;
 
 	if( db_lookup( dbip,  argv[2], LOOKUP_QUIET ) != DIR_NULL )  {
 		aexists( argv[2] );
-		return;
+		return CMD_BAD;
 	}
 
 	/* get external representation of slid to be copied */
-	if( db_get_external( &external, proto, dbip ))
-		READ_ERR_return;
+	if( db_get_external( &external, proto, dbip )) {
+		READ_ERR;
+		return CMD_BAD;
+	}
 
 	/* make sure it is a TGC */
 	id = rt_id_solid( &external );
@@ -385,14 +416,14 @@ char	**argv;
 	{
 		rt_log( "f_copy_inv: %d is not a cylinder\n" , argv[1] );
 		db_free_external( &external );
-		return;
+		return CMD_BAD;
 	}
 
 	/* import the TGC */
 	if( rt_functab[id].ft_import( &internal , &external , rt_identity ) < 0 )
 	{
 		rt_log( "f_copy_inv: import failure for %s\n" , argv[1] );
-		return;
+		return CMD_BAD;
 	}
 	db_free_external( &external );
 
@@ -406,7 +437,7 @@ char	**argv;
 	{
 		rt_log( "f_copy_inv: export failure\n" );
 		rt_functab[internal.idb_type].ft_ifree( &internal );
-		return;
+		return CMD_BAD;
 	}
 	rt_functab[internal.idb_type].ft_ifree( &internal );   /* free internal rep */
 
@@ -422,13 +453,15 @@ char	**argv;
 	    db_alloc( dbip, dp, 1 ) < 0 )
 	    {
 	    	db_free_external( &external );
-	    	ALLOC_ERR_return;
+	    	ALLOC_ERR;
+		return CMD_BAD;
 	    }
 
 	if (db_put_external( &external, dp, dbip ) < 0 )
 	{
 		db_free_external( &external );
-		WRITE_ERR_return;
+		WRITE_ERR;
+		return CMD_BAD;
 	}
 	db_free_external( &external );
 
@@ -439,4 +472,6 @@ char	**argv;
 		/* solid edit this new cylinder */
 		f_sed( 2, argv+1 );	/* new name in argv[2] */
 	}
+
+	return CMD_OK;
 }
