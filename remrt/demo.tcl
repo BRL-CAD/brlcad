@@ -302,9 +302,9 @@ register "wax" "wax-uni0.arl.mil"
 register wilson "wilson-uni0.arl.mil"
 register jewel "jewel-atm.arl.mil"
 register cosm0 "cosm0-atm.arl.hpc.mil"
-#register cosm1 "cosm1-atm.arl.hpc.mil"
-#register cosm2 "cosm2-atm.arl.hpc.mil"
-#register cosm3 "cosm3-atm.arl.hpc.mil"
+register cosm1 "cosm1-atm.arl.hpc.mil"
+register cosm2 "cosm2-atm.arl.hpc.mil"
+register cosm3 "cosm3-atm.arl.hpc.mil"
 #register cosm4 "cosm4-atm.arl.hpc.mil"
 #register cosm5 "cosm5-atm.arl.hpc.mil"
 #register cosm6 "cosm6-atm.arl.hpc.mil"
@@ -314,6 +314,7 @@ register cosm0 "cosm0-atm.arl.hpc.mil"
 #register olmec "olmec.nvl.army.mil"		# Only 1 200Mhz cpu
 #register octopus "octopus.nvl.army.mil"
 #register vdemo3 "vdemo3.arl.mil"
+register bfm9000 "bfm9000-lane.nvl.army.mil"
 
 frame .button1_fr
 frame .button2_fr
