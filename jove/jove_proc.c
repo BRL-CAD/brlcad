@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.1  86/04/06  06:20:27  gwyn
+ * SpellCom was using sprintf return value, non-portable.
+ * 
  * Revision 2.0  84/12/26  16:47:33  dpk
  * System as distributed to Berkeley 26 Dec 84
  * 
@@ -387,7 +390,11 @@ int	p[];
 
 /* VARARGS3 */
 
+#if defined(CRAY)
+UnixToBuf(bufname, disp, clobber, func, a1, a2, a3, a4, a5, a6)
+#else
 UnixToBuf(bufname, disp, clobber, func, args)
+#endif
 char	*bufname,
 	*func;
 {
@@ -422,7 +429,11 @@ char	*bufname,
 		ignore(dup(p[1]));
 		ignore(dup(p[1]));
 		PipeClose(p);
+#if defined(CRAY)
+		execlp(func, a1, a2, a3, a4, a5, a6, (char *)0);
+#else
 		execvp(func, (char **) &args);
+#endif
 		ignore(write(1, "Execl failed", 12));
 		exit(1);
 	} else {
