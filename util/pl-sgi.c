@@ -262,7 +262,7 @@ char	**argv;
 #endif
 }
 
-#if SGI_GL
+#if HAS_SGIGL
 /* 
  *	V I E W _ L O O P
  */
