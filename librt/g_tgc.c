@@ -26,7 +26,8 @@
 #include <math.h>
 
 HIDDEN int	stdCone();
-static void	rotate(), shear(), TgcPtSort(), tgcnormal();
+HIDDEN void	tgcnormal();
+static void	rotate(), shear(), TgcPtSort();
 
 struct  tgc_specific {
 	vect_t	tgc_V;		/*  Vector to center of base of TGC	*/
@@ -748,7 +749,7 @@ register double	t[];
  *		dQ/dz = (c - a)/|H'|
  *		dR/dz = (d - b)/|H'|
  */
-LOCAL void
+HIDDEN void
 tgcnormal( norm, hit, tgc )
 register vectp_t		norm, hit;
 register struct tgc_specific	*tgc;
