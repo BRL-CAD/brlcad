@@ -2003,12 +2003,7 @@ f_opendb(
 	struct bu_vls		msg;	/* use this to hold returned message */
 	int			create_new_db = 0;
 
-	bu_vls_init(&vls);
-	bu_vls_init(&msg);
-
 	if( argc <= 1 )  {
-		bu_vls_free(&vls);
-		bu_vls_free(&msg);
 
 		/* Invoked without args, return name of current database */
 		if( dbip != DBI_NULL )  {
@@ -2023,10 +2018,11 @@ f_opendb(
 	if(3 < argc || (strlen(argv[1]) == 0)){
 		bu_vls_printf(&vls, "help opendb");
 		Tcl_Eval(interp, bu_vls_addr(&vls));
-		bu_vls_free(&vls);
-		bu_vls_free(&msg);
 		return TCL_ERROR;
 	}
+
+	bu_vls_init(&vls);
+	bu_vls_init(&msg);
 
 	if(argc == 3 &&
 	    strcmp("y", argv[2]) && strcmp("Y", argv[2]) &&
@@ -2275,6 +2271,65 @@ f_opendb(
 	bu_vls_free(&msg);
 	return TCL_OK;
 }
+
+
+/*
+ *			F _ C L O S E D B
+ *
+ *  Close the current database, if open.
+ *
+ */
+int
+f_closedb(
+	ClientData clientData,
+	Tcl_Interp *interp,
+	int	argc,
+	char	**argv)
+{
+	char *av[2];
+
+	if( argc != 1 )  {
+		Tcl_Eval(interp, "help closedb");
+		return TCL_ERROR;
+	}
+
+	if (dbip == DBI_NULL) {
+		Tcl_AppendResult(interp, "No database is open\n", (char *)NULL);
+		return TCL_OK;
+	}
+
+	/* Clear out anything in the display */
+	av[0] = "zap";
+	av[1] = NULL;
+	cmd_zap(clientData, interp, 1, av);
+
+	/* Close the Tcl database objects */
+#if 0
+	Tcl_Eval(interp, "db close; .inmem close");
+#else
+	Tcl_Eval(interp, "rename db \"\"; rename .inmem \"\"");
+#endif
+	
+	log_event( "CEASE", "(close)" );
+
+	/* update any and all other displays */
+	{
+		register struct dm_list *dmlp;
+		
+		/* update local2base and base2local variables for all view objects */
+		FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l) {
+			dmlp->dml_view_state->vs_vop->vo_local2base = dbip->dbi_local2base;
+			dmlp->dml_view_state->vs_vop->vo_base2local = dbip->dbi_base2local;
+		}
+	}
+	
+	/* wipe out the global pointers */
+	dbip = DBI_NULL;
+	rt_material_head = MATER_NULL;
+
+	return TCL_OK;
+}
+
 
 int
 mged_bomb_hook(clientData, str)

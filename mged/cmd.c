@@ -179,6 +179,7 @@ static struct cmdtab cmdtab[] = {
 	{"c", cmd_comb_std},
 	{"cat", cmd_cat},
 	{"center", cmd_center},
+	{"closedb", f_closedb},
 	{"cmd_win", cmd_cmd_win},
 	{"color", cmd_color},
 	{"comb", cmd_comb},

@@ -405,7 +405,7 @@ you should exit MGED now, and resolve the I/O problem, before continuing.\n")
 #define CHECK_DBI_NULL \
 	if( dbip == DBI_NULL ) \
 	{ \
-		Tcl_AppendResult(interp, "No database has been opened!\n", (char *)NULL); \
+		Tcl_AppendResult(interp, "A database is not open!\n", (char *)NULL); \
 		return TCL_ERROR; \
 	}	
 
@@ -715,6 +715,11 @@ void find_nearest_ars_pt();
 /* ged.c */
 int event_check( int non_blocking );
 int f_opendb(
+	ClientData clientData,
+	Tcl_Interp *interp,
+	int	argc,
+	char	**argv);
+int f_closedb(
 	ClientData clientData,
 	Tcl_Interp *interp,
 	int	argc,

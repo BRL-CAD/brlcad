@@ -19,6 +19,7 @@ MGED_EXTERN(int f_bev, (ClientData clientData, Tcl_Interp *interp, int argc, cha
 MGED_EXTERN(int cmd_blast, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int cmd_cat, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int cmd_center, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
+MGED_EXTERN(int f_closedb, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int cmd_color, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int cmd_comb, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_comb_color, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
