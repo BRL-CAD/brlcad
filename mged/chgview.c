@@ -165,6 +165,72 @@ double		mged_nrm_tol;			/* normal ang tol, radians */
 
 BU_EXTERN(int	edit_com, (int argc, char **argv, int kind, int catch_sigint));
 
+void
+eraseobjpath(interp, argc, argv, noisy, all)
+     Tcl_Interp	*interp;
+     int	argc;
+     char	**argv;
+     int	noisy;	
+     int	all;
+{
+	register struct directory *dp;
+	register int i;
+	struct bu_vls vls;
+	Tcl_Obj *save_result;
+
+	save_result = Tcl_GetObjResult(interp);
+	Tcl_IncrRefCount(save_result);
+
+	bu_vls_init(&vls);
+	for (i = 0; i < argc; i++) {
+		int j;
+		char *list;
+		int ac;
+		char **av, **av_orig;
+		struct directory **dpp;
+
+		bu_vls_trunc(&vls, 0);
+		bu_vls_printf(&vls, "split %s /", argv[i]);
+		if (Tcl_Eval(interp, bu_vls_addr(&vls)) != TCL_OK) {
+			continue;
+		}
+		list = Tcl_GetStringResult(interp);
+		Tcl_SplitList(interp, list, &ac, &av_orig);
+
+		/* skip first element if empty */
+		av = av_orig;
+		if (*av[0] == '\0') {
+			--ac;
+			++av;
+		}
+
+		/* ignore last element if empty */
+		if (*av[ac-1] == '\0')
+			--ac;
+
+		dpp = bu_calloc(ac+1, sizeof(struct directory *), "eraseobjpath: directory pointers");
+		for (j = 0; j < ac; ++j)
+			if ((dp = db_lookup(dbip, av[j], noisy)) != DIR_NULL)
+				dpp[j] = dp;
+			else
+				goto end;
+
+		dpp[j] = DIR_NULL;
+
+		if (all)
+			eraseobjall(dpp);
+		else
+			eraseobj(dpp);
+
+	end:
+		bu_free((genptr_t)dpp, "eraseobjpath: directory pointers");
+		Tcl_Free((char *)av_orig);
+	}
+	bu_vls_free(&vls);
+	Tcl_SetObjResult(interp, save_result);
+	Tcl_DecrRefCount(save_result);
+}
+
 /* Delete an object or several objects from the display */
 /* Format: d object1 object2 .... objectn */
 int
@@ -174,29 +240,24 @@ Tcl_Interp *interp;
 int     argc;
 char    **argv;
 {
-  register struct directory *dp;
-  register int i;
+	register int i;
 
-  CHECK_DBI_NULL;
+	CHECK_DBI_NULL;
 
-  if(argc < 2 || MAXARGS < argc){
-    struct bu_vls vls;
+	if (argc < 2 || MAXARGS < argc) {
+		struct bu_vls vls;
 
-    bu_vls_init(&vls);
-    bu_vls_printf(&vls, "help %s", argv[0]);
-    Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-    return TCL_ERROR;
-  }
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "help %s", argv[0]);
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
 
-  for( i = 1; i < argc; i++ )  {
-    if( (dp = db_lookup( dbip,  argv[i], LOOKUP_NOISY )) != DIR_NULL )
-      eraseobj(dp);
-  }
+	eraseobjpath(interp, argc-1, argv+1, LOOKUP_NOISY, 0);
+	solid_list_callback();
 
-  solid_list_callback();
-
-  return TCL_OK;
+	return TCL_OK;
 }
 
 f_erase_all(clientData, interp, argc, argv)
@@ -220,11 +281,7 @@ char    **argv;
     return TCL_ERROR;
   }
 
-  for( i = 1; i < argc; i++ )  {
-    if( (dp = db_lookup( dbip,  argv[i], LOOKUP_NOISY )) != DIR_NULL )
-      eraseobjall(dp);
-  }
-
+  eraseobjpath(interp, argc-1, argv+1, LOOKUP_NOISY, 1);
   solid_list_callback();
 
   return TCL_OK;
@@ -489,82 +546,78 @@ size_reset()
  */
 int
 edit_com(argc, argv, kind, catch_sigint)
-int	argc;
-char	**argv;
-int	kind;
-int	catch_sigint;
+     int	argc;
+     char	**argv;
+     int	kind;
+     int	catch_sigint;
 {
-  register struct directory *dp;
-  register int	i;
-  register struct dm_list *dmlp;
-  register struct dm_list *save_dmlp;
-  register struct cmd_list *save_cmd_list;
-  double		elapsed_time;
-  int		initial_blank_screen;
-  struct bu_vls vls;
+	register struct directory *dp;
+	register int	i;
+	register struct dm_list *dmlp;
+	register struct dm_list *save_dmlp;
+	register struct cmd_list *save_cmd_list;
+	double		elapsed_time;
+	int		initial_blank_screen;
+	struct bu_vls vls;
 
-  CHECK_DBI_NULL;
+	CHECK_DBI_NULL;
 
-  bu_vls_init(&vls);
-  initial_blank_screen = BU_LIST_IS_EMPTY(&HeadSolid.l);
+	bu_vls_init(&vls);
+	initial_blank_screen = BU_LIST_IS_EMPTY(&HeadSolid.l);
 
-  /*  First, delete any mention of these objects.
-   *  Silently skip any leading options (which start with minus signs).
-   */
-  for( i = 1; i < argc; i++ )  {
-    if( (dp = db_lookup( dbip,  argv[i], LOOKUP_QUIET )) != DIR_NULL )  {
-      eraseobj( dp );
-    }
-  }
+	/*  First, delete any mention of these objects.
+	 *  Silently skip any leading options (which start with minus signs).
+	 */
+	eraseobjpath(interp, argc-1, argv+1, LOOKUP_QUIET, 0);
 
-  update_views = 1;
+	update_views = 1;
 
-  if( setjmp( jmp_env ) == 0 )
-    (void)signal( SIGINT, sig3);	/* allow interupts */
-  else {
-    bu_vls_free(&vls);
-    return TCL_OK;
-  }
+	if (setjmp(jmp_env) == 0)
+		(void)signal(SIGINT, sig3);	/* allow interupts */
+	else {
+		bu_vls_free(&vls);
+		return TCL_OK;
+	}
 
-  nvectors = 0;
-  rt_prep_timer();
-  drawtrees( argc, argv, kind );
-  (void)rt_get_timer( (struct bu_vls *)0, &elapsed_time );
+	nvectors = 0;
+	rt_prep_timer();
+	drawtrees(argc, argv, kind);
+	(void)rt_get_timer((struct bu_vls *)0, &elapsed_time);
 
-  save_dmlp = curr_dm_list;
-  save_cmd_list = curr_cmd_list;
-  FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l){
-    curr_dm_list = dmlp;
-    if(curr_dm_list->dml_tie)
-      curr_cmd_list = curr_dm_list->dml_tie;
-    else
-      curr_cmd_list = &head_cmd_list;
+	save_dmlp = curr_dm_list;
+	save_cmd_list = curr_cmd_list;
+	FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l) {
+		curr_dm_list = dmlp;
+		if (curr_dm_list->dml_tie)
+			curr_cmd_list = curr_dm_list->dml_tie;
+		else
+			curr_cmd_list = &head_cmd_list;
 
-    /* If we went from blank screen to non-blank, resize */
-    if (mged_variables->mv_autosize  && initial_blank_screen &&
-	BU_LIST_NON_EMPTY(&HeadSolid.l)) {
-      struct view_ring *vrp;
+		/* If we went from blank screen to non-blank, resize */
+		if (mged_variables->mv_autosize  && initial_blank_screen &&
+		    BU_LIST_NON_EMPTY(&HeadSolid.l)) {
+			struct view_ring *vrp;
 
-      size_reset();
-      new_mats();
-      (void)mged_svbase();
+			size_reset();
+			new_mats();
+			(void)mged_svbase();
 
-      for(BU_LIST_FOR(vrp, view_ring, &view_state->vs_headView.l))
-	vrp->vr_scale = view_state->vs_Viewscale;
-    }
-  }
+			for (BU_LIST_FOR(vrp, view_ring, &view_state->vs_headView.l))
+				vrp->vr_scale = view_state->vs_Viewscale;
+		}
+	}
 
-  color_soltab();
-  curr_dm_list = save_dmlp;
-  curr_cmd_list = save_cmd_list;
+	color_soltab();
+	curr_dm_list = save_dmlp;
+	curr_cmd_list = save_cmd_list;
 
-  bu_vls_printf(&vls, "%ld vectors in %g sec\n", nvectors, elapsed_time);
-  Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+	bu_vls_printf(&vls, "%ld vectors in %g sec\n", nvectors, elapsed_time);
+	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 
-  bu_vls_free(&vls);
-  (void)signal( SIGINT, SIG_IGN );
-  solid_list_callback();
-  return TCL_OK;
+	bu_vls_free(&vls);
+	(void)signal(SIGINT, SIG_IGN);
+	solid_list_callback();
+	return TCL_OK;
 }
 
 void
@@ -1732,94 +1785,126 @@ char	**argv;
 /*
  *			E R A S E O B J A L L
  *
- * This routine goes through the solid table and deletes all displays
- * which contain the specified object in their 'path'
+ * This routine goes through the solid table and deletes all solids
+ * from the solid list which contain the specified object anywhere in their 'path'
  */
 void
-eraseobjall( dp )
-register struct directory *dp;
+eraseobjall(dpp)
+     register struct directory **dpp;
 {
-  register struct solid *sp;
-  static struct solid *nsp;
-  register int i;
+	register struct directory **tmp_dpp;
+	register struct solid *sp;
+	register struct solid *nsp;
+	register int i;
 
-  if(dbip == DBI_NULL)
-    return;
+	if (dbip == DBI_NULL)
+		return;
 
-  update_views = 1;
+	update_views = 1;
 
-  RT_CK_DIR(dp);
-  sp = BU_LIST_NEXT(solid, &HeadSolid.l);
-  while(BU_LIST_NOT_HEAD(sp, &HeadSolid.l)){
-    nsp = BU_LIST_PNEXT(solid, sp);
-    for( i=0; i<=sp->s_last; i++ )  {
-      if( sp->s_path[i] != dp )  continue;
+	for (tmp_dpp = dpp; *tmp_dpp != (struct directory *)NULL; ++tmp_dpp)
+		RT_CK_DIR(*tmp_dpp);
+
+	sp = BU_LIST_NEXT(solid, &HeadSolid.l);
+	while (BU_LIST_NOT_HEAD(sp, &HeadSolid.l)) {
+		nsp = BU_LIST_PNEXT(solid, sp);
+		for (i=0; i <= sp->s_last; i++) {
+			/* look for first path element */
+			if (sp->s_path[i] != *dpp)
+				continue;
+
+			/* look for rest of path */
+			for (++i, tmp_dpp = dpp+1;
+			     i <= sp->s_last && *tmp_dpp != DIR_NULL;
+			     ++i, ++tmp_dpp)
+				if (sp->s_path[i] != *tmp_dpp)
+					goto end;
+
+			if (*tmp_dpp != DIR_NULL)
+				goto end;
 
 #ifdef DO_DISPLAY_LISTS
-      freeDListsAll(sp->s_dlist, 1);
+			freeDListsAll(sp->s_dlist, 1);
 #endif
 
-      if( state != ST_VIEW && illump == sp )
-	button( BE_REJECT );
-      BU_LIST_DEQUEUE(&sp->l);
-      FREE_SOLID(sp, &FreeSolid.l);
+			if (state != ST_VIEW && illump == sp)
+				button(BE_REJECT);
 
-      break;
-    }
-    sp = nsp;
-  }
+			BU_LIST_DEQUEUE(&sp->l);
+			FREE_SOLID(sp, &FreeSolid.l);
 
-  if( dp->d_addr == RT_DIR_PHONY_ADDR )  {
-    if( db_dirdelete( dbip, dp ) < 0 )  {
-      Tcl_AppendResult(interp, "eraseobjall: db_dirdelete failed\n", (char *)NULL);
-    }
-  }
+			break;
+		}
+	end:
+		sp = nsp;
+	}
+
+	if ((*dpp)->d_addr == RT_DIR_PHONY_ADDR) {
+		if (db_dirdelete(dbip, *dpp) < 0) {
+			Tcl_AppendResult(interp, "eraseobjall: db_dirdelete failed\n", (char *)NULL);
+		}
+	}
 }
 
 
 /*
  *			E R A S E O B J
  *
- * This routine removes only the specified object from the solid list
+ * This routine goes through the solid table and deletes all solids
+ * from the solid list which contain the specified object at the
+ * beginning of their 'path'
  */
 void
-eraseobj( dp )
-register struct directory *dp;
+eraseobj(dpp)
+     register struct directory **dpp;
 {
-  register struct solid *sp;
-  register struct solid *nsp;
+	register struct directory **tmp_dpp;
+	register struct solid *sp;
+	register struct solid *nsp;
+	register int i;
 
-  if(dbip == DBI_NULL)
-    return;
+	if (dbip == DBI_NULL)
+		return;
 
-  update_views = 1;
-  RT_CK_DIR(dp);
+	if (*dpp == DIR_NULL)
+		return;
 
-  sp = BU_LIST_FIRST(solid, &HeadSolid.l);
-  while(BU_LIST_NOT_HEAD(sp, &HeadSolid.l)){
-    nsp = BU_LIST_PNEXT(solid, sp);
-    if(*sp->s_path != dp){
-      sp = nsp;
-      continue;
-    }
+	update_views = 1;
+
+	for (tmp_dpp = dpp; *tmp_dpp != (struct directory *)NULL; ++tmp_dpp)
+		RT_CK_DIR(*tmp_dpp);
+
+	sp = BU_LIST_FIRST(solid, &HeadSolid.l);
+	while (BU_LIST_NOT_HEAD(sp, &HeadSolid.l)) {
+		nsp = BU_LIST_PNEXT(solid, sp);
+		for (i = 0, tmp_dpp = dpp;
+		     i <= sp->s_last && *tmp_dpp != DIR_NULL;
+		     ++i, ++tmp_dpp)
+			if (sp->s_path[i] != *tmp_dpp)
+				goto end;
+
+
+		if (*tmp_dpp != DIR_NULL)
+			goto end;
 
 #ifdef DO_DISPLAY_LISTS
-    freeDListsAll(sp->s_dlist, 1);
+		freeDListsAll(sp->s_dlist, 1);
 #endif
 
-    if(state != ST_VIEW && illump == sp)
-      button( BE_REJECT );
+		if (state != ST_VIEW && illump == sp)
+			button( BE_REJECT );
 
-    BU_LIST_DEQUEUE(&sp->l);
-    FREE_SOLID(sp, &FreeSolid.l);
-    sp = nsp;
-  }
+		BU_LIST_DEQUEUE(&sp->l);
+		FREE_SOLID(sp, &FreeSolid.l);
+	end:
+		sp = nsp;
+	}
 
-  if( dp->d_addr == RT_DIR_PHONY_ADDR ){
-    if( db_dirdelete( dbip, dp ) < 0 ){
-      Tcl_AppendResult(interp, "eraseobj: db_dirdelete failed\n", (char *)NULL);
-    }
-  }
+	if ((*dpp)->d_addr == RT_DIR_PHONY_ADDR ) {
+		if (db_dirdelete(dbip, *dpp) < 0) {
+			Tcl_AppendResult(interp, "eraseobj: db_dirdelete failed\n", (char *)NULL);
+		}
+	}
 }
 
 
