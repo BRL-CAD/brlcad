@@ -31,7 +31,7 @@
  *	All rights reserved.
  */
 
-/* Note, this produced a hide.p of 6660096 when it was aborted! */
+
 #ifndef lint
 static char RCSrayhide[] = "@(#)$Header$ (BRL)";
 #endif
@@ -56,6 +56,7 @@ struct cell {
 	int	c_id;		/* region_id of component hit */
 	point_t	c_hit;		/* 3-space hit point of ray */
 	vect_t	c_normal;	/* surface normal at the hit point */
+	vect_t	c_rdir;		/* ray direction, permits perspective */
 };
 
 static FILE	*plotfp;
@@ -65,7 +66,7 @@ void		swapbuff();
 void		cleanline();
 void		horiz_cmp();
 void		vert_cmp();
-double		find_z();
+struct cell	*find_cell();
 struct cell	*botp;			/* pointer to bottom line   */
 struct cell	*topp;			/* pointer to top line	    */
 
@@ -205,7 +206,7 @@ register struct application	*ap;
 	posp->c_dist = 0;
 	VSET(posp->c_hit, 0, 0, 0);
 	VSET(posp->c_normal, 0, 0, 0);
-
+	VSET(posp->c_rdir, 0, 0, 0);
 
 	return(0);
 }
@@ -279,6 +280,7 @@ register struct partition *PartHeadp;
 	posp->c_dist = dist;
 	VMOVE(posp->c_hit, pp->pt_inhit->hit_point);
 	VMOVE(posp->c_normal, pp->pt_inhit->hit_normal);
+	VMOVE(posp->c_rdir, ap->a_ray.r_dir);
 	return(0);
 }
 
@@ -364,8 +366,11 @@ int		y;
 
 {
 	int		x;
-	double		z;
-
+	struct	cell	*cellp;
+	point_t		beg;		/* beginning point of line */
+	point_t		end;		/* end point of line */
+	vect_t		start;		/* start of vector */
+	vect_t		stop;		/* end of vector */
 
 	for (x=0; x < (mem_width-1); x++, botp++)  {
 
@@ -389,33 +394,36 @@ int		y;
 		 * are not the same OR if either id is not 0 AND the cosine
 		 * of the angle between the normals is less than MAXANGLE. 
 		 * This test prevents the background from being shaded in.
+		 * Furthermore, it is necessary to select the hit_point
 		 */
 
 		if (botp->c_id != (botp+1)->c_id ||
 		   ( botp->c_id != 0 && 
 		   (VDOT(botp->c_normal, (botp + 1)->c_normal) < MAXANGLE)))  {
 							     
-			if( botp->c_dist == 0  )
-				z = (botp+1)->c_dist;
-			else if( (botp+1)->c_dist == 0 )
-				z = botp->c_dist;
-			else if( botp->c_dist < (botp+1)->c_dist )
-				z = botp->c_dist;
-			else
-				z = (botp+1)->c_dist;
+		   	cellp = find_cell(botp, (botp+1)); 
 
-			/* Note that x and y must be converted back
-			 * to file coordinates so that the file
-			 * picture gets plotted.  The 0.5 factors
-			 * are for centering.  The x and y variables
-			 * represent screen coordinates.
+			/* Note that the coordinates must be expressed
+		   	 * as MODEL coordinates.  This can be done by
+		   	 * adding offsets to the hit_point.  Thus, 0.5*
+		   	 * dx_model means moving 0.5 of a cell in model
+		   	 * space, and replaces (x -1 +0.5) representing
+		   	 * backing up one whole cell and then moving to
+		   	 * the center of the new cell in file coordinates.
+		   	 * In that case, the x represented the screen coords.
+		   	 * Now, make the beginning point and the ending point.
 			 */
 
-			pd_3line(plotfp,
-				(x -1 +0.5), (y -1 -0.5), z,
-				(x -1 +0.5), (y -1 +0.5), z);
-printf("horiz_cmp: height %d; pixelpos %d; mem_width %d; id=%d; z=%g\n",
-				y, x, mem_width, botp->c_id, z);
+
+		   	VJOIN2(beg, cellp->c_hit, 0.5, dx_model, -0.5, dy_model);
+		   	VJOIN2(end, cellp->c_hit, 0.5, dx_model, 0.5, dy_model);
+
+		   	/* Now fashion the starting and stopping vectors. */
+
+		   	VJOIN1(start, beg, cellp->c_dist, cellp->c_rdir);
+		   	VJOIN1(stop, end, cellp->c_dist, cellp->c_rdir);
+
+			pdv_3line(plotfp, start, stop);
 				
 		}
 	}
@@ -444,15 +452,16 @@ int		y;
 
 {
 
-	int		state;
 	register int	x;
-	double		start_x;
-	double		start_y;
-	double		start_z;
+	struct	 cell	*cellp;
+	struct	 cell	*start_cellp;
+	int		state;
+	vect_t		start;
+	vect_t		stop;
+	point_t		beg;
+	point_t		end;
 	
-	start_x = 0;
-	start_y = 0;
-	start_z = 0;
+	VSET(beg, 0, 0, 0);
 
 
 	state = SEEKING_START_PT;
@@ -470,13 +479,12 @@ int		y;
 			if( state == FOUND_START_PT ) {
 				continue;
 			} else {
-		
-				/* move to and remember left point */
-				start_x = (x -1 - 0.5);
-				start_y = (y -1 + 0.5);
-				start_z = find_z(
-					botp->c_dist,
-					topp->c_dist );
+				/* find the correct cell. */
+				start_cellp = find_cell(botp, topp);		
+
+				/* Move to and remember left point */
+				VJOIN2(beg, start_cellp->c_hit, -0.5, dx_model, 0.5, dy_model);
+				VJOIN1(start, beg, start_cellp->c_dist, start_cellp->c_rdir);
 				state = FOUND_START_PT;
 			}
 		} else {
@@ -484,21 +492,21 @@ int		y;
 
 			if (state == FOUND_START_PT) {
 
-				/* draw to current left edge */
-
+				/* Draw to current left edge 
 				/* Note that x and y must be converted back
 				 * to file coordinates so that the file
 				 * picture gets plotted.  The 0.5 factors
-				 * are for centering.
+				 * are for centering. This is for (x-1-0.5),
+				 * y-1+0.5).  These file coordinate must then
+				 * be expressed in model space.  That is done
+				 * by starting at the hit_pt and adding or
+				 * subtracting 0.5 cell for centering.
 				 */
-printf("vert_cmp: plotting pixpos %d, height %d, start_z %g\n", x, y, start_z);
 
-				pd_3line(plotfp,
-					start_x, start_y, start_z,
-					(x -1 -0.5), (y -1 +0.5),
-					find_z( start_z, 
-						find_z( (botp-1)->c_dist,
-						(topp-1)->c_dist ) ) );
+				cellp = find_cell( start_cellp, find_cell( (botp-1), (topp-1) ) );
+				VJOIN2(end, cellp->c_hit, -0.5, dx_model, 0.5, dy_model);
+				VJOIN1(stop, end, cellp->c_dist, cellp->c_rdir);
+				pdv_3line(plotfp, start, stop);
 					state = SEEKING_START_PT;
 			} else {
 				continue;
@@ -510,16 +518,20 @@ printf("vert_cmp: plotting pixpos %d, height %d, start_z %g\n", x, y, start_z);
 	if (state == FOUND_START_PT) {
 
 			/* Note that x and y must be converted back
-v			 * to file coordinates so that the file
+			 * to file coordinates so that the file
 			 * picture gets plotted.  The 0.5 factors
-			 * are for centering.
+			 * are for centering.  This is for (x-1-0.5), (y-1+0.5).
+			 * These file coordinates must then be expressed in
+			 * model space.  That is done by starting at the
+			 * hit_pt and adding or subtracting 0.5 cell for
+			 * centering.
 			 */
-printf("vert_cmp: eos: pixpos %d, height %d, start_z %g\n", x, y, start_z);
 
-		pd_3line(start_x, start_y, start_z,
-			(x -1 -0.5), (y -1 +0.5),
-			find_z( (botp-1)->c_dist,
-				(topp-1)->c_dist) );
+		cellp = find_cell( (botp-1), (topp-1) );
+		VJOIN2(end, cellp->c_hit, -0.5, dx_model, 0.5, dy_model);
+		VJOIN1(stop, end, cellp->c_dist, cellp->c_rdir);
+
+		pdv_3line(plotfp, start, stop);
 		state = SEEKING_START_PT;
 	}
 }
@@ -527,32 +539,37 @@ printf("vert_cmp: eos: pixpos %d, height %d, start_z %g\n", x, y, start_z);
 
 
 /*
- *	           F I N D_ Z 
+ *	           F I N D_ C E L L
  *
+ *  This routine takes pointers to two cells.  This is more efficient (takes
+ *  less space) than sending the hit_distances.  Furthermore, by selecting
+ *  a cell, rather than just a distance, more information becomes available
+ *  to the calling routine.
  *  If the region_ids of neighboring pixels do not match, compare their
  *  respective hit_distances.  If either distance is zero, select the
  *  non-zero distance for plotting; otherwise, select the lesser of the
- *  two distances.
+ *  two distances.  Return a pointer to the cell with the smaller hit_distance.
+ *  Using this hit_distance will be more esthetically pleasing for the bas-
+ *  relief.
  */
 
-double
-find_z ( cur_z, next_z)
-double cur_z;
-double next_z;
+struct	cell	*
+find_cell ( cur_cellp, next_cellp)
+struct	cell	*cur_cellp;
+struct	cell	*next_cellp;
 {
-	double z;
+	struct cell	*cellp;
 
-	if (cur_z == 0)
-		z = next_z;
-	else if (next_z == 0)
-		z = cur_z;
-	else if (cur_z < next_z )
-		z = cur_z;
+	if (cur_cellp->c_dist == 0)
+		cellp = next_cellp;
+	else if (next_cellp->c_dist == 0)
+		cellp = cur_cellp;
+	else if (cur_cellp->c_dist < next_cellp->c_dist )
+		cellp = cur_cellp;
 	else
-		z = next_z;
+		cellp = next_cellp;
 
-printf("find_z(%g,%g)=%g\n", cur_z, next_z, z);
-	return (z);
+	return (cellp);
 }
 
 
@@ -609,5 +626,6 @@ int		file_width;
 		inbuffp->c_dist = '\0';
 		VSET(inbuffp->c_hit, 0, 0, 0);
 		VSET(inbuffp->c_normal, 0, 0, 0);
+		VSET(inbuffp->c_rdir, 0, 0, 0);
 	}
 }
