@@ -34,47 +34,32 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "bu.h"
 #include "redblack.h"
 
+rb_tree		*assignment;	/* Relabeling assignment */
+
 /************************************************************************
  *									*
  *			The data structures				*
  *									*
  ************************************************************************/
-struct vertex
-{
-    long		v_magic;
-    long		v_index;
-    char		*v_label;
-    int			v_civilized;
-    struct bu_list	v_neighbors;
-    struct bridge	*v_bridge;
-};
-#define	VERTEX_NULL	((struct vertex *) 0)
-#define	VERTEX_MAGIC	0x6d737476
-
-struct bridge
-{
-    long		b_magic;
-    unsigned long	b_index;	/* automatically generated (unique) */
-    double		b_weight;
-    struct vertex	*b_vert_civ;
-    struct vertex	*b_vert_unciv;
-};
-#define	BRIDGE_NULL	((struct bridge *) 0)
-#define	BRIDGE_MAGIC	0x6d737462
-
-static rb_tree		*prioq;		/* Priority queue of bridges */
-#define	PRIOQ_INDEX	0
-#define	PRIOQ_WEIGHT	1
-
-struct neighbor
+struct curr_id
 {
     struct bu_list	l;
-    struct vertex	*n_vertex;
-    double		n_weight;
+    int			ci_id;
+    struct bu_list	ci_regions;
+    int			ci_newid;
 };
-#define	n_magic		l.magic
-#define	NEIGHBOR_NULL	((struct neighbor *) 0)
-#define	NEIGHBOR_MAGIC	0x6d73746e
+#define	ci_magic	l.magic
+#define	CURR_ID_NULL	((struct curr_id *) 0)
+#define	CURR_ID_MAGIC	0x63726964
+
+struct remap_reg
+{
+    struct bu_list	l;
+    char		*rr_name;
+};
+#define	rr_magic	l.magic
+#define	REMAP_REG_NULL	((struct remap_reg *) 0)
+#define	REMAP_REG_MAGIC	0x726d7267
 
 static int		debug = 1;
 
@@ -85,421 +70,169 @@ static int		debug = 1;
  ************************************************************************/
 
 /*
- *			     M K _ B R I D G E ( )
+ *			     M K _ C U R R _ I D ( )
  *
  */
-struct bridge *mk_bridge (vcp, vup, weight)
+struct curr_id *mk_curr_id (region_id)
 
-struct vertex	*vcp;
-struct vertex	*vup;
-double		weight;
+int	region_id;
 
 {
-    static unsigned long	next_index = 0;
-    struct bridge		*bp;
+    struct curr_id	*cip;
 
-    /*
-     *	XXX Hope that unsigned long is sufficient to ensure
-     *	uniqueness of bridge indices.
-     */
+    cip = (struct curr_id *) bu_malloc(sizeof(struct curr_id), "curr_id");
 
-    BU_CKMAG(vup, VERTEX_MAGIC, "vertex");
+    cip -> ci_magic = CURR_ID_MAGIC;
+    cip -> ci_id = region_id;
+    BU_LIST_INIT(&(cip -> ci_regions));
+    cip -> ci_newid = region_id;
 
-    bp = (struct bridge *) bu_malloc(sizeof(struct bridge), "bridge");
-
-    bp -> b_magic = BRIDGE_MAGIC;
-    bp -> b_index = ++next_index;
-    bp -> b_weight = weight;
-    bp -> b_vert_civ = vcp;
-    bp -> b_vert_unciv = vup;
-
-    return (bp);
-}
-#define	mk_init_bridge(vp)	(mk_bridge(VERTEX_NULL, (vp), 0.0))
-#define	is_finite_bridge(bp)	((bp) -> b_vert_civ != VERTEX_NULL)
-#define	is_infinite_bridge(bp)	((bp) -> b_vert_civ == VERTEX_NULL)
-
-/*
- *			   F R E E _ B R I D G E ( )
- *
- *	N.B. - It is up to the calling routine to free
- *		the b_vert_civ and b_vert_unciv members of bp.
- */
-void free_bridge (bp)
-
-struct bridge	*bp;
-
-{
-    BU_CKMAG(bp, BRIDGE_MAGIC, "bridge");
-    bu_free((genptr_t) bp, "bridge");
+    return (cip);
 }
 
 /*
- *			  P R I N T _ B R I D G E ( )
+ *			  P R I N T _ C U R R _ I D ( )
  *
  */
-void print_bridge (bp)
-
-struct bridge	*bp;
-
-{
-    BU_CKMAG(bp, BRIDGE_MAGIC, "bridge");
-
-    bu_log(" bridge <x%x> %d... <x%x> and <x%x>, weight = %g\n",
-	bp, bp -> b_index,
-	bp -> b_vert_civ, bp -> b_vert_unciv, bp -> b_weight);
-}
-
-/*
- *			   P R I N T _ P R I O Q ( )
- */
-#define	print_prioq()						\
-{								\
-    bu_log("----- The priority queue -----\n");			\
-    rb_walk(prioq, PRIOQ_WEIGHT, print_bridge, INORDER);	\
-    bu_log("------------------------------\n\n");		\
-}
-
-/*
- *			     M K _ V E R T E X ( )
- *
- */
-struct vertex *mk_vertex (index, label)
-
-long	index;
-char	*label;
-
-{
-    struct vertex	*vp;
-
-    vp = (struct vertex *) bu_malloc(sizeof(struct vertex), "vertex");
-
-    vp -> v_magic = VERTEX_MAGIC;
-    vp -> v_index = index;
-    vp -> v_label = label;
-    vp -> v_civilized = 0;
-    BU_LIST_INIT(&(vp -> v_neighbors));
-    vp -> v_bridge = mk_init_bridge(vp);
-
-    return (vp);
-}
-
-/*
- *			  P R I N T _ V E R T E X ( )
- *
- */
-void print_vertex (v, depth)
+void print_curr_id (v, depth)
 
 void	*v;
 int	depth;
 
 {
-    struct vertex	*vp = (struct vertex *) v;
-    struct neighbor	*np;
+    struct curr_id	*cip = (struct curr_id *) v;
+    struct remap_reg	*rp;
 
-    BU_CKMAG(vp, VERTEX_MAGIC, "vertex");
+    BU_CKMAG(cip, CURR_ID_MAGIC, "curr_id");
 
-    bu_log(" vertex <x%x> %d '%s' %s...\n",
-	vp, vp -> v_index, vp -> v_label,
-	vp -> v_civilized ? "civilized" : "uncivilized");
-    for (BU_LIST_FOR(np, neighbor, &(vp -> v_neighbors)))
+    bu_log(" curr_id <x%x> %d %d...\n",
+	cip, cip -> ci_id, cip -> ci_newid);
+    for (BU_LIST_FOR(rp, remap_reg, &(cip -> ci_regions)))
     {
-	BU_CKMAG(np, NEIGHBOR_MAGIC, "neighbor");
-	BU_CKMAG(np -> n_vertex, VERTEX_MAGIC, "vertex");
+	BU_CKMAG(rp, REMAP_REG_MAGIC, "remap_reg");
 
-	bu_log("  is a neighbor <x%x> of vertex <x%x> %d '%s' at cost %g\n",
-	    np, np -> n_vertex,
-	    np -> n_vertex -> v_index, np -> n_vertex -> v_label,
-	    np -> n_weight);
+	bu_log("  %s\n", rp -> rr_name);
     }
 }
 
 /*
- *			   F R E E _ V E R T E X ( )
- *
- *	N.B. - This routine frees the v_bridge member of vp.
- */
-void free_vertex (vp)
-
-struct vertex	*vp;
-
-{
-    BU_CKMAG(vp, VERTEX_MAGIC, "vertex");
-    free_bridge(vp -> v_bridge);
-    bu_free((genptr_t) vp, "vertex");
-}
-
-/*
- *			   M K _ N E I G H B O R ( )
+ *		F R E E _ C U R R _ I D ( )
  *
  */
-struct neighbor *mk_neighbor (vp, weight)
+void free_curr_id (cip)
 
-struct vertex	*vp;
-double		weight;
+struct curr_id	*cip;
 
 {
-    struct neighbor	*np;
+    BU_CKMAG(cip, CURR_ID_MAGIC, "curr_id");
+    bu_free((genptr_t) cip, "curr_id");
+}
 
-    np = (struct neighbor *) bu_malloc(sizeof(struct neighbor), "neighbor");
+/*
+ *		M K _ R E M A P _ R E G ( )
+ *
+ */
+struct remap_reg *mk_remap_reg (region_name)
 
-    np -> n_magic = NEIGHBOR_MAGIC;
-    np -> n_vertex = vp;
-    np -> n_weight = weight;
+char	*region_name;
 
-    return (np);
+{
+    struct remap_reg	*rp;
+
+    rp = (struct remap_reg *) bu_malloc(sizeof(struct remap_reg), "remap_reg");
+
+    rp -> rr_magic = REMAP_REG_MAGIC;
+
+    rp -> rr_name = (char *) bu_malloc(strlen(region_name), "region name");
+    strcpy(rp -> rr_name, region_name);
+
+    return (rp);
+}
+
+/*
+ *		F R E E _ R E M A P _ R E G ( )
+ *
+ */
+void free_remap_reg (rp)
+
+struct remap_reg	*rp;
+
+{
+    BU_CKMAG(rp, REMAP_REG_MAGIC, "remap_reg");
+    bu_free((genptr_t) rp -> rr_name, "region name");
+    bu_free((genptr_t) rp, "remap_reg");
+}
+
+/*
+ *		C O M P A R E _ C U R R _ I D S ( )
+ *
+ *	    The comparison callback for libredblack(3)
+ */
+int compare_curr_ids (v1, v2)
+
+void	*v1;
+void	*v2;
+
+{
+    struct curr_id	*id1 = (struct curr_id *) v1;
+    struct curr_id	*id2 = (struct curr_id *) v2;
+
+    BU_CKMAG(id1, CURR_ID_MAGIC, "curr_id");
+    BU_CKMAG(id2, CURR_ID_MAGIC, "curr_id");
+
+    return (id1 -> ci_id  -  id2 -> ci_id);
 }
 
 /************************************************************************
  *									*
- *	    The comparison callbacks for libredblack(3)			*
+ *	  	Routines for manipulating the assignment		*
  *									*
  ************************************************************************/
 
 /*
- *		C O M P A R E _ V E R T E X _ I N D I C E S ( )
+ *		L O O K U P _ C U R R _ I D ( )
  */
-int compare_vertex_indices (v1, v2)
+struct curr_id *lookup_curr_id(region_id)
 
-void	*v1;
-void	*v2;
-
-{
-    struct vertex	*vert1 = (struct vertex *) v1;
-    struct vertex	*vert2 = (struct vertex *) v2;
-
-    BU_CKMAG(vert1, VERTEX_MAGIC, "vertex");
-    BU_CKMAG(vert2, VERTEX_MAGIC, "vertex");
-
-    return (vert1 -> v_index  -  vert2 -> v_index);
-}
-
-/*
- *		 C O M P A R E _ V E R T E X _ L A B E L S ( )
- */
-int compare_vertex_labels (v1, v2)
-
-void	*v1;
-void	*v2;
-
-{
-    struct vertex	*vert1 = (struct vertex *) v1;
-    struct vertex	*vert2 = (struct vertex *) v2;
-
-    BU_CKMAG(vert1, VERTEX_MAGIC, "vertex");
-    BU_CKMAG(vert2, VERTEX_MAGIC, "vertex");
-    if (vert1 -> v_label == '\0')
-    {
-	bu_log("compare_vertex_labels: null label in vertex <x%x> %d\n",
-	    vert1, vert1 -> v_index);
-	exit (1);
-    }
-    if (vert2 -> v_label == '\0')
-    {
-	bu_log("compare_vertex_labels: null label in vertex <x%x> %d\n",
-	    vert2, vert2 -> v_index);
-	exit (1);
-    }
-
-    if (*(vert1 -> v_label) < *(vert2 -> v_label))
-	return -1;
-    else if (*(vert1 -> v_label) > *(vert2 -> v_label))
-	return 1;
-    else
-	return (strcmp(vert1 -> v_label, vert2 -> v_label));
-}
-
-/*
- *		C O M P A R E _ B R I D G E _ W E I G H T S ( )
- */
-int compare_bridge_weights (v1, v2)
-
-void	*v1;
-void	*v2;
-
-{
-    double		delta;
-    struct bridge	*b1 = (struct bridge *) v1;
-    struct bridge	*b2 = (struct bridge *) v2;
-
-    BU_CKMAG(b1, BRIDGE_MAGIC, "bridge");
-    BU_CKMAG(b2, BRIDGE_MAGIC, "bridge");
-
-    if (is_infinite_bridge(b1))
-	if (is_infinite_bridge(b2))
-	    return 0;
-	else
-	    return 1;
-    else if (is_infinite_bridge(b2))
-	return -1;
-
-    delta = b1 -> b_weight  -  b2 -> b_weight;
-    return ((delta <  0.0) ? -1 :
-	    (delta == 0.0) ?  0 :
-			      1);
-}
-
-/*
- *		C O M P A R E _ B R I D G E _ I N D I C E S ( )
- */
-int compare_bridge_indices (v1, v2)
-
-void	*v1;
-void	*v2;
-
-{
-    struct bridge	*b1 = (struct bridge *) v1;
-    struct bridge	*b2 = (struct bridge *) v2;
-
-    BU_CKMAG(b1, BRIDGE_MAGIC, "bridge");
-    BU_CKMAG(b2, BRIDGE_MAGIC, "bridge");
-
-    if (b1 -> b_index < b2 -> b_index)
-	return -1;
-    else if (b1 -> b_index == b2 -> b_index)
-	return 0;
-    else
-	return 1;
-}
-
-/************************************************************************
- *									*
- *	    A similar comparison function				*
- *									*
- ************************************************************************/
-
-/*
- *		       C O M P A R E _ W E I G H T S ( )
- */
-#define	compare_weights(w1, w2)					\
-(								\
-    ((w1) <= 0.0) ?						\
-    (								\
-	((w2) <= 0.0) ?						\
-	    0 :							\
-	    1							\
-    ) :								\
-    (								\
-	((w2) <= 0.0) ?						\
-	    -1 :						\
-	    ((w1) < (w2)) ?					\
-		-1 :						\
-		((w1) == (w2)) ?				\
-		    0 :						\
-		    1						\
-    )								\
-)
-
-/************************************************************************
- *									*
- *	  Routines for manipulating the dictionary and priority queue	*
- *									*
- ************************************************************************/
-
-/*
- *			 L O O K U P _ V E R T E X ( )
- */
-struct vertex *lookup_vertex(dict, index, label)
-
-rb_tree	*dict;
-long	index;
-char	*label;
+int	region_id;
 
 {
     int			rc;	/* Return code from rb_insert() */
-    struct vertex	*qvp;	/* The query */
-    struct vertex	*vp;	/* Value to return */
+    struct curr_id	*qcip;	/* The query */
+    struct curr_id	*cip;	/* Value to return */
 
+    bu_log("Looking up %d\n", region_id);
     /*
-     *	Prepare the dictionary query
+     *	Prepare the query
      */
-    qvp = mk_vertex(index, label);
+    qcip = mk_curr_id(region_id);
 
     /*
      *	Perform the query by attempting an insertion...
      *	If the query succeeds (i.e., the insertion fails!),
-     *	then we have our vertex.
-     *	Otherwise, we must create a new vertex.
+     *	then we have our curr_id.
+     *	Otherwise, we must create a new curr_id.
      */
-    switch (rc = rb_insert(dict, (void *) qvp))
+    switch (rc = rb_insert(assignment, (void *) qcip))
     {
 	case -1:
-	    vp = (struct vertex *) rb_curr1(dict);
-	    free_vertex(qvp);
+	    cip = (struct curr_id *) rb_curr1(assignment);
+	    free_curr_id(qcip);
 	    break;
 	case 0:
-	    vp = qvp;
+	    cip = qcip;
 	    break;
 	default:
 	    bu_log("rb_insert() returns %d:  This should not happen\n", rc);
 	    exit (1);
     }
 
-    return (vp);
-}
-
-/*
- *			  A D D _ T O _ P R I O Q ( )
- *
- */
-void add_to_prioq (v, depth)
-
-void	*v;
-int	depth;
-
-{
-    struct vertex	*vp = (struct vertex *) v;
-
-    BU_CKMAG(vp, VERTEX_MAGIC, "vertex");
-    BU_CKMAG(vp -> v_bridge, BRIDGE_MAGIC, "bridge");
-
-    rb_insert(prioq, (void *) (vp -> v_bridge));
-}
-
-/*
- *			D E L _ F R O M _ P R I O Q ( )
- *
- */
-void del_from_prioq (vp)
-
-struct vertex	*vp;
-
-{
-    BU_CKMAG(vp, VERTEX_MAGIC, "vertex");
-    BU_CKMAG(vp -> v_bridge, BRIDGE_MAGIC, "bridge");
-
-    if (debug)
-	bu_log("del_from_prioq(<x%x>... bridge <x%x> %d)\n",
-	    vp, vp -> v_bridge, vp -> v_bridge -> b_index);
-    if (rb_search(prioq, PRIOQ_INDEX, (void *) (vp -> v_bridge)) == NULL)
-    {
-	bu_log("del_from_prioq: Cannot find bridge <x%x>.", vp -> v_bridge);
-	bu_log("  This should not happen\n");
-	exit (1);
-    }
-    rb_delete(prioq, PRIOQ_INDEX);
-}
-
-/*
- *			   E X T R A C T _ M I N ( )
- *
- */
-struct bridge *extract_min ()
-{
-    struct bridge	*bp;
-
-    bp = (struct bridge *) rb_min(prioq, PRIOQ_WEIGHT);
-    if (bp != BRIDGE_NULL)
-    {
-	BU_CKMAG(bp, BRIDGE_MAGIC, "bridge");
-	rb_delete(prioq, PRIOQ_WEIGHT);
-    }
-    return (bp);
+    return (cip);
 }
 
 /************************************************************************
  *									*
- *	  More or less vanilla-flavored stuff for MST			*
+ *	  More or less vanilla-flavored stuff				*
  *									*
  ************************************************************************/
 
@@ -588,8 +321,12 @@ BU_FILE	*sfp;
 char	*sf_name;
 
 {
-    int	ch;
-    int	num1, num2;
+    int			ch;
+    int			i;
+    int			num1, num2;
+    int			newid;
+    struct bu_list	cids;
+    struct curr_id	*cip;
 
     if ((sfp == NULL) && ((sfp = bu_fopen(sf_name, "r")) == NULL))
     {
@@ -598,44 +335,72 @@ char	*sf_name;
     }
     BU_CK_FILE(sfp);
 
-    for ( ; ; )
+    BU_LIST_INIT(&cids);
+
     for ( ; ; )
     {
-	while (isspace(ch = bu_fgetc(sfp)))
-	    ;
-	if (ch == EOF)
-	    return (1);
-	switch (read_range(sfp, &ch, &num1, &num2))
+	/*
+	 *  Read in guy(s) to be assigned a particular new regionid
+	 */
+	for ( ; ; )
 	{
-	    case 1:
-		printf("OK, I got a single number %d\n", num1);
-		break;
-	    case 2:
-		printf("OK, I got a pair of numbers %d and %d\n", num1, num2);
-		break;
-	    default:
-		return (-1);
-	}
-	while (isspace(ch))
-	    ch = bu_fgetc(sfp);
-
-	switch (ch)
-	{
-	    case ',':
-		continue;
-	    case ':':
-		ch = bu_fgetc(sfp);
-		if (read_int(sfp, &ch, &num1) != 1)
+	    while (isspace(ch = bu_fgetc(sfp)))
+		;
+	    if (ch == EOF)
+		return (1);
+	    switch (read_range(sfp, &ch, &num1, &num2))
+	    {
+		case 1:
+		    cip = lookup_curr_id(num1);
+		    BU_LIST_INSERT(&cids, &(cip -> l));
+		    break;
+		case 2:
+		    if (num1 >= num2)
+		    {
+			bu_file_err(sfp, "remapid:read_spec()",
+			    "Range out of order",
+			    (sfp -> file_bp) - bu_vls_addr(&(sfp -> file_buf))
+			    - 1);
+		    }
+		    for (i = num1; i <= num2; ++i)
+		    {
+			cip = lookup_curr_id(i);
+			BU_LIST_INSERT(&cids, &(cip -> l));
+		    }
+		    break;
+		default:
 		    return (-1);
-		printf("OK, I got the last number %d\n\n", num1);
-		break;
-	    default:
-		bu_file_err(sfp, "remapid:read_spec()",
-		    "Syntax error",
-		    (sfp -> file_bp) - bu_vls_addr(&(sfp -> file_buf)) - 1);
-		break;
+	    }
+	    while (isspace(ch))
+		ch = bu_fgetc(sfp);
+
+	    switch (ch)
+	    {
+		case ',':
+		    continue;
+		case ':':
+		    ch = bu_fgetc(sfp);
+		    if (read_int(sfp, &ch, &newid) != 1)
+			return (-1);
+		    break;
+		default:
+		    bu_file_err(sfp, "remapid:read_spec()",
+			"Syntax error",
+			(sfp -> file_bp) - bu_vls_addr(&(sfp -> file_buf))
+			- 1);
+		    break;
+	    }
+	    break;
 	}
-	break;
+
+	bu_log("The guys to get mapped to %d\n", newid);
+	while (BU_LIST_WHILE(cip, curr_id, &cids))
+	{
+	    cip -> ci_newid = newid;
+	    print_curr_id(cip, 1);
+	    BU_LIST_DEQUEUE(&(cip -> l));
+	}
+	bu_log("-------------------------\n");
     }
 }
 
@@ -658,26 +423,12 @@ int	argc;
 char	*argv[];
 
 {
-    int		numeric;
-    char	*label;
-
     char		*db_name;	/* Name of database */
     char		*sf_name;	/* Name of spec file */
     BU_FILE		*sfp = NULL;	/* Spec file */
     int			ch;		/* Command-line character */
     int			i;
-    int			tankill = 0;	/* Handle TANKILL format (vs. BRL-CAD)? */
-    long		index[2];	/* Indices of edge endpoints */
-    double		weight;		/* Edge weight */
-    rb_tree		*dictionary;	/* Dictionary of vertices */
-    struct bridge	*bp;		/* The current bridge */
-    struct vertex	*up;		/* An uncivilized neighbor of vup */
-    struct vertex	*vcp;		/* The civilized vertex of bp */
-    struct vertex	*vup;		/* The uncvilized vertex of bp */
-    struct vertex	*vertex[2];	/* The current edge */
-    struct neighbor	*neighbor[2];	/* Their neighbors */
-    struct neighbor	*np;		/* A neighbor of vup */
-    int			(*po[2])();	/* Priority queue order functions */
+    int			tankill = 0;	/* TANKILL format (vs. BRL-CAD)? */
 
     extern int	optind;			/* index from getopt(3C) */
     extern char	*optarg;		/* argument from getopt(3C) */
@@ -715,120 +466,17 @@ char	*argv[];
     if (sfp == NULL)
 	sf_name = argv[optind];
 
-#if 0
     /*
-     *	Initialize the dictionary
+     *	Initialize the assignment
      */
-    dictionary = rb_create1("Dictionary of vertices",
-		    numeric ? compare_vertex_indices
-			    : compare_vertex_labels);
-    rb_uniq_on1(dictionary);
-#endif
+    assignment = rb_create1("Relabeling assignment", compare_curr_ids);
+    rb_uniq_on1(assignment);
 
     /*
-     *	Read in the graph
+     *	Read in the specification for the reassignment
      */
     read_spec (sfp, sf_name);
-    exit (0);
-
-    /*
-     *	Initialize the priority queue
-     */
-    po[PRIOQ_INDEX] = compare_bridge_indices;
-    po[PRIOQ_WEIGHT] = compare_bridge_weights;
-    prioq = rb_create("Priority queue of bridges", 2, po);
-    rb_walk1(dictionary, add_to_prioq, INORDER);
 
     if (debug)
-    {
-	print_prioq();
-	rb_walk1(dictionary, print_vertex, INORDER);
-    }
-    
-    /*
-     *	Grow a minimum spanning tree, using Prim's algorithm...
-     *
-     *	While there exists a min-weight bridge (to a vertex v) in the queue
-     *	    Dequeue the bridge
-     *	    If the weight is finite
-     *	        Output the bridge
-     *	    Mark v as civilized
-     *	    For every uncivilized neighbor u of v
-     *	        if uv is cheaper than u's current bridge
-     *		    dequeue u's current bridge
-     *		    enqueue bridge(uv)
-     */
-    weight = 0.0;
-    while ((bp = extract_min()) != BRIDGE_NULL)
-    {
-	if (debug)
-	{
-	    bu_log("extracted min-weight bridge <x%x>, leaving...\n", bp);
-	    print_prioq();
-	}
-
-	BU_CKMAG(bp, BRIDGE_MAGIC, "bridge");
-	vcp = bp -> b_vert_civ;
-	vup = bp -> b_vert_unciv;
-	BU_CKMAG(vup, VERTEX_MAGIC, "vertex");
-
-	if (is_finite_bridge(bp))
-	{
-	    BU_CKMAG(vcp, VERTEX_MAGIC, "vertex");
-	    if (numeric)
-		(void) printf("%d %d %g\n",
-		    vcp -> v_index, vup -> v_index, bp -> b_weight);
-	    else
-		(void) printf("%s %s %g\n",
-		    vcp -> v_label, vup -> v_label, bp -> b_weight);
-	    weight += bp -> b_weight;
-	}
-	free_bridge(bp);
-	vup -> v_civilized = 1;
-
-	if (debug)
-	{
-	    bu_log("Looking for uncivilized neighbors of...\n");
-	    print_vertex((void *) vup, 0);
-	}
-	while (BU_LIST_WHILE(np, neighbor, &(vup -> v_neighbors)))
-	{
-	    BU_CKMAG(np, NEIGHBOR_MAGIC, "neighbor");
-	    up = np -> n_vertex;
-	    BU_CKMAG(up, VERTEX_MAGIC, "vertex");
-
-	    if (up -> v_civilized == 0)
-	    {
-		BU_CKMAG(up -> v_bridge, BRIDGE_MAGIC, "bridge");
-		if (compare_weights(np -> n_weight,
-				    up -> v_bridge -> b_weight) < 0)
-		{
-		    del_from_prioq(up);
-		    if (debug)
-		    {
-			bu_log("After the deletion of bridge <x%x>...\n",
-			    up -> v_bridge);
-			print_prioq();
-		    }
-		    up -> v_bridge -> b_vert_civ = vup;
-		    up -> v_bridge -> b_weight = np -> n_weight;
-		    add_to_prioq((void *) up, 0);
-		    if (debug)
-		    {
-			bu_log("Reduced bridge <x%x> weight to %g\n",
-			    up -> v_bridge,
-			    up -> v_bridge -> b_weight);
-			print_prioq();
-		    }
-		}
-		else if (debug)
-		    bu_log("bridge <x%x>'s weight of %g stands up\n",
-			    up -> v_bridge, up -> v_bridge -> b_weight);
-	    }
-	    else if (debug)
-		bu_log("Skipping civilized neighbor <x%x>\n", up);
-	    BU_LIST_DEQUEUE(&(np -> l));
-	}
-    }
-    bu_log("MST weight: %g\n", weight);
+	rb_walk1(assignment, print_curr_id, INORDER);
 }
