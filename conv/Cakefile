@@ -15,10 +15,10 @@
 /* Explicit composition of each product */
 
 asc2g:	asc2g.o
-	CC LDFLAGS asc2g.o LIBWDB LIBPLOT LIBRT LIBRT_LIBES LIBES -o asc2g
+	CC LDFLAGS asc2g.o LIBWDB LIBRT LIBRT_LIBES LIBES -o asc2g
 
 g2asc:	g2asc.o
-	CC LDFLAGS g2asc.o LIBWDB LIBPLOT LIBRT LIBRT_LIBES LIBES -o g2asc
+	CC LDFLAGS g2asc.o LIBWDB LIBRT LIBRT_LIBES LIBES -o g2asc
 
 conv-vg2g:	conv-vg2g.o
 	CC LDFLAGS conv-vg2g.o -o conv-vg2g
