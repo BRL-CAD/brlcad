@@ -197,13 +197,16 @@ int need_close;
 
   if(need_close){
 #ifdef DO_DISPLAY_LISTS
-    if(displaylist && mged_variables->dlist)
+    if(displaylist &&
+       mged_variables->dlist &&
+       BU_LIST_NON_EMPTY(&HeadSolid.l))
 #ifdef DO_SINGLE_DISPLAY_LIST
-    dmp->dm_freeDLists(dmp, HeadSolid.s_dlist + dmp->dm_displaylist, 1);
+    dmp->dm_freeDLists(dmp, dmp->dm_displaylist + 1, 1);
 #else
-    dmp->dm_freeDLists(dmp, HeadSolid.s_dlist + dmp->dm_displaylist,
+    dmp->dm_freeDLists(dmp, BU_LIST_FIRST(solid, &HeadSolid.l)->s_dlist +
+		       dmp->dm_displaylist,
 		       BU_LIST_LAST(solid, &HeadSolid.l)->s_dlist -
-		       HeadSolid.s_dlist + 1);
+		       BU_LIST_FIRST(solid, &HeadSolid.l)->s_dlist + 1);
 #endif
 #endif
     dmp->dm_close(dmp);
@@ -727,18 +730,18 @@ char    **argv;
   bu_vls_free(&vls1);
   bu_vls_free(&vls2);
 
-  /* free p1's s_info struct if not being used */
-  if(!--p1->s_info->_rc){
-    mged_slider_unlink_vars(p1);
-    mged_slider_free_vls(p1);
+  /* free p2's s_info struct if not being used */
+  if(!--p2->s_info->_rc){
+    mged_slider_unlink_vars(p2);
+    mged_slider_free_vls(p2);
 
     /* free view ring */
-    if(p->s_info->_headView.l.magic == BU_LIST_HEAD_MAGIC){
+    if(p2->s_info->_headView.l.magic == BU_LIST_HEAD_MAGIC){
       struct view_list *vlp;
       struct view_list *nvlp;
 
-      for(vlp = BU_LIST_FIRST(view_list, &p->s_info->_headView.l);
-	  BU_LIST_NOT_HEAD(vlp, &p->s_info->_headView.l);){
+      for(vlp = BU_LIST_FIRST(view_list, &p2->s_info->_headView.l);
+	  BU_LIST_NOT_HEAD(vlp, &p2->s_info->_headView.l);){
 	nvlp = BU_LIST_PNEXT(view_list, vlp);
 	BU_LIST_DEQUEUE(&vlp->l);
 	bu_free((genptr_t)vlp, "release: vlp");
@@ -746,32 +749,32 @@ char    **argv;
       }
     }
 
-    bu_free( (genptr_t)p1->s_info, "share_view: s_info" );
-  /* otherwise if p1's s_info struct is being used and p1 is the owner */
-  }else if(p1->_owner)
-    find_new_owner(p1);
+    bu_free( (genptr_t)p2->s_info, "share_view: s_info" );
+  /* otherwise if p2's s_info struct is being used and p2 is the owner */
+  }else if(p2->_owner)
+    find_new_owner(p2);
 
-  p1->_owner = 0;
+  p2->_owner = 0;
 
-  /* p1 now shares p2's s_info */
-  p1->s_info = p2->s_info;
+  /* p2 now shares p1's s_info */
+  p2->s_info = p1->s_info;
 
   /* reuse p to save curr_dm_list */
   p = curr_dm_list;
-  curr_dm_list = p1;
-  if(p1->aim){
+  curr_dm_list = p2;
+  if(p2->aim){
     save_cclp = curr_cmd_list;
     curr_cmd_list = p1->aim;
   }
   set_scroll();
   curr_dm_list = p;
-  if(p1->aim)
+  if(p2->aim)
     curr_cmd_list = save_cclp;
 
-  p1->_dmp->dm_vp = &p1->s_info->_Viewscale;
+  p2->_dmp->dm_vp = &p2->s_info->_Viewscale;
 
   /* increment the reference count */
-  ++p2->s_info->_rc;
+  ++p1->s_info->_rc;
 
   dmaflag = 1;
   return TCL_OK;
@@ -823,6 +826,12 @@ char    **argv;
   struct _mged_variables *save_mvp;
 
   if(argc != 3){
+    struct bu_vls vls;
+
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help share_vars");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
     return TCL_ERROR;
   }
 
