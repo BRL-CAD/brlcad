@@ -56,8 +56,8 @@ char **argv;
 		exit(1);
 	}
 	while(1)  {
-		register unsigned char r1, g1, b1;
-		static unsigned char r2, g2, b2;
+		register int r1, g1, b1;
+		int r2, g2, b2;
 
 		r1 = fgetc( f1 );
 		g1 = fgetc( f1 );
@@ -98,6 +98,7 @@ char **argv;
 				matching++;
 			}
 			if( b1 != b2 )  {
+				if( (i = b1 - b2) < 0 )  i = -i;
 				if( i > 1 )  {
 					putc( 0xFF, stdout);
 					offmany++;
