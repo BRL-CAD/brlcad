@@ -284,8 +284,8 @@ next_one: ;
 	stp->st_specific = (int *)0;
 
 	/* init solid's maxima and minima */
-	stp->st_max[X] = stp->st_max[Y] = stp->st_max[Z] = -INFINITY;
-	stp->st_min[X] = stp->st_min[Y] = stp->st_min[Z] =  INFINITY;
+	VSETALL( stp->st_max, -INFINITY );
+	VSETALL( stp->st_min,  INFINITY );
 
 	if( rt_functab[stp->st_id].ft_prep( v, stp, mat, &(rec->s) ) )  {
 		/* Error, solid no good */
@@ -1114,6 +1114,17 @@ register struct rt_i *rtip;
 		stp->st_maxreg = 0;
 	}
 
+	/*
+	 *  Enlarge the model RPP just slightly, to avoid nasty
+	 *  effects with a solid's face being exactly on the edge
+	 */
+	rtip->mdl_min[X] = floor( rtip->mdl_min[X] - 1 );
+	rtip->mdl_min[Y] = floor( rtip->mdl_min[Y] - 1 );
+	rtip->mdl_min[Z] = floor( rtip->mdl_min[Z] - 1 );
+	rtip->mdl_max[X] = ceil( rtip->mdl_max[X] + 1 );
+	rtip->mdl_max[Y] = ceil( rtip->mdl_max[Y] + 1 );
+	rtip->mdl_max[Z] = ceil( rtip->mdl_max[Z] + 1 );
+
 	/*  Build array of region pointers indexed by reg_bit.
 	 *  Optimize each region's expression tree.
 	 *  Set this region's bit in the bit vector of every solid
@@ -1156,8 +1167,8 @@ register vect_t min, max;
 	register struct soltab *stp;
 	static vect_t xlated;
 
-	max[X] = max[Y] = max[Z] = -INFINITY;
-	min[X] = min[Y] = min[Z] =  INFINITY;
+	VSETALL( max, -INFINITY );
+	VSETALL( min,  INFINITY );
 
 	for( stp=rt_i.HeadSolid; stp != 0; stp=stp->st_forw ) {
 		MAT4X3PNT( xlated, m2v, stp->st_center );
