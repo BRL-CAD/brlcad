@@ -741,19 +741,21 @@ int		dangling_only;
 				rt_bomb("nmg_findeu() eu has bad up\n");
 			lu = eu->up.lu_p;
 			NMG_CK_LOOPUSE(lu);
-			if( *lu->up.magic_p == NMG_SHELL_MAGIC &&
-			    lu->up.s_p != s )  {
-			    	if (rt_g.NMG_debug & DEBUG_FINDEU)
-			    		rt_log("\tIgnoring -- eu of wire loop in wrong shell s=%x\n", lu->up.s_p);
-				continue;
-			}
-			if( *lu->up.magic_p != NMG_FACEUSE_MAGIC )
+			if( *lu->up.magic_p == NMG_SHELL_MAGIC )  {
+				if( lu->up.s_p != s )  {
+				    	if (rt_g.NMG_debug & DEBUG_FINDEU)
+				    		rt_log("\tIgnoring -- eu of wire loop in wrong shell s=%x\n", lu->up.s_p);
+					continue;
+				}
+			} else if( *lu->up.magic_p == NMG_FACEUSE_MAGIC )  {
+				/* Edgeuse in loop in face, normal case */
+				if( lu->up.fu_p->s_p != s )  {
+				    	if (rt_g.NMG_debug & DEBUG_FINDEU)
+				    		rt_log("\tIgnoring -- eu of lu+fu in wrong shell s=%x\n", lu->up.fu_p->s_p);
+					continue;
+				}
+			} else {
 				rt_bomb("nmg_findeu() lu->up is bad\n");
-			/* Edgeuse in loop in face, normal case */
-			if( lu->up.fu_p->s_p != s )  {
-			    	if (rt_g.NMG_debug & DEBUG_FINDEU)
-		    		rt_log("\tIgnoring -- eu of lu+fu in wrong shell s=%x\n", lu->up.fu_p->s_p);
-				continue;
 			}
 		}
 
@@ -866,14 +868,15 @@ int		dangling_only;
 			    	if (rt_g.NMG_debug & DEBUG_FINDEU)
 			    		rt_log("\tIgnoring -- eu of wire loop not in fu\n");
 				continue;
-			}
-			if( *lu->up.magic_p != NMG_FACEUSE_MAGIC )
+			} else if( *lu->up.magic_p == NMG_FACEUSE_MAGIC )  {
+				/* Edgeuse in loop in face, normal case */
+				if( lu->up.fu_p != fu )  {
+				    	if (rt_g.NMG_debug & DEBUG_FINDEU)
+				    		rt_log("\tIgnoring -- eu of lu+fu in wrong faceuse (%x)\n", lu->up.fu_p);
+					continue;
+				}
+			} else {
 				rt_bomb("nmg_find_eu_in_face() lu->up is bad\n");
-			/* Edgeuse in loop in face, normal case */
-			if( lu->up.fu_p != fu )  {
-			    	if (rt_g.NMG_debug & DEBUG_FINDEU)
-		    		rt_log("\tIgnoring -- eu of lu+fu in wrong faceuse (%x)\n", lu->up.fu_p);
-				continue;
 			}
 		}
 
