@@ -11,6 +11,7 @@ static char RCSid[] = "$Header$";
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
+#include "externs.h"
 #include "./nirt.h"
 #include "./usrfmt.h"
 
