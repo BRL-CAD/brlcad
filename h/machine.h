@@ -205,8 +205,23 @@
  *				  *
  **********************************/
 
-#if defined(_WIN32) && defined(_MSC_VER) && defined(_M_IX86)
-#define const const
+
+#ifdef WIN32
+/********************************
+ *				*
+ *  Windows Windows		*
+ *				*
+ ********************************/
+typedef double fastf_t;	
+#define LOCAL auto	
+#define FAST register	
+typedef long bitv_t;	
+#define BITV_SHIFT	5
+// assume only one processor for now
+#define MAX_PSW	4
+#define DEFAULT_PSW	1
+#define PARALLEL	1
+#define MALLOC_NOT_MP_SAFE 1
 #endif
 
 
@@ -688,7 +703,6 @@ typedef long	bitv_t;		/* largest integer type */
 #	define bcopy(from,to,count)	memcpy( to, from, count )
 #endif
 
-
 /* Functions local to one file should be declared HIDDEN:  (nil)|static */
 /* To aid in using ADB, generally leave this as nil. */
 #if !defined(HIDDEN)
@@ -716,4 +730,4 @@ typedef long	bitv_t;		/* largest integer type */
         extern double hypot(double, double);
 #endif
 
-#endif
+#endif  /* MACHINE_H */

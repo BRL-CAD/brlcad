@@ -49,13 +49,76 @@
 #ifndef ITCLINT_H
 #define ITCLINT_H
 
-#include "itcl.h"
 #include "tclInt.h"
+#include "itcl.h"
 
 #ifdef BUILD_itcl
 # undef TCL_STORAGE_CLASS
 # define TCL_STORAGE_CLASS DLLEXPORT
 #endif
+
+/*
+ * Fix Tcl bug #803489 the right way.  We need to always use the old Stub
+ * slot positions, not the new broken ones part of TIP 127.  I do like
+ * that these functions have moved to the public space (about time), but
+ * the slot change is the killer and is the painful side affect.
+ */
+
+#if defined(USE_TCL_STUBS) && \
+	(TCL_MAJOR_VERSION == 8 && TCL_MINOR_VERSION >= 5)
+#   undef Tcl_CreateNamespace
+#   define Tcl_CreateNamespace \
+	(tclIntStubsPtr->tcl_CreateNamespace)
+#   undef Tcl_DeleteNamespace
+#   define Tcl_DeleteNamespace \
+	(tclIntStubsPtr->tcl_DeleteNamespace)
+#   undef Tcl_AppendExportList
+#   define Tcl_AppendExportList \
+	(tclIntStubsPtr->tcl_AppendExportList)
+#   undef Tcl_Export
+#   define Tcl_Export \
+	(tclIntStubsPtr->tcl_Export)
+#   undef Tcl_Import
+#   define Tcl_Import \
+	(tclIntStubsPtr->tcl_Import)
+#   undef Tcl_ForgetImport
+#   define Tcl_ForgetImport \
+	(tclIntStubsPtr->tcl_ForgetImport)
+#   undef Tcl_GetCurrentNamespace
+#   define Tcl_GetCurrentNamespace \
+	(tclIntStubsPtr->tcl_GetCurrentNamespace)
+#   undef Tcl_GetGlobalNamespace
+#   define Tcl_GetGlobalNamespace \
+	(tclIntStubsPtr->tcl_GetGlobalNamespace)
+#   undef Tcl_FindNamespace
+#   define Tcl_FindNamespace \
+	(tclIntStubsPtr->tcl_FindNamespace)
+#   undef Tcl_FindCommand
+#   define Tcl_FindCommand \
+	(tclIntStubsPtr->tcl_FindCommand)
+#   undef Tcl_GetCommandFromObj
+#   define Tcl_GetCommandFromObj \
+	(tclIntStubsPtr->tcl_GetCommandFromObj)
+#   undef Tcl_GetCommandFullName
+#   define Tcl_GetCommandFullName \
+	(tclIntStubsPtr->tcl_GetCommandFullName)
+#endif
+
+/*
+ * Some backward compatability adjustments.
+ */
+
+#if TCL_MAJOR_VERSION == 8 && TCL_MINOR_VERSION == 0
+#   define Tcl_GetString(obj)	Tcl_GetStringFromObj((obj), NULL)
+#   define TCL_DECLARE_MUTEX(mutexVar)
+#   define Tcl_MutexLock(mutexVar)
+#   define Tcl_MutexUnlock(mutexVar)
+#   define Tcl_Panic panic
+#endif
+
+#define TCL_DOES_STUBS \
+    (TCL_MAJOR_VERSION > 8 || TCL_MAJOR_VERSION == 8 && (TCL_MINOR_VERSION > 1 || \
+    (TCL_MINOR_VERSION == 1 && TCL_RELEASE_LEVEL == TCL_FINAL_RELEASE)))
 
 
 /*
@@ -238,6 +301,13 @@ typedef struct ItclContext {
     Var localStorage[20];     /* default storage for compiled locals */
 } ItclContext;
 
+/*
+ *  Compatibility flags.  Used to support small "hacks".  These are stored
+ *  in the global variable named itclCompatFlags.
+ */
+#define ITCL_COMPAT_USECMDFLAGS 0x0001	/* Tcl8.4a1 introduced a different Command
+					 * structure, and we need to adapt
+					 * dynamically */
 
 #include "itclIntDecls.h"
 
@@ -248,15 +318,11 @@ typedef struct ItclContext {
  */
 
 #undef  assert
-#ifdef  NDEBUG
+#ifndef  DEBUG
 #define assert(EX) ((void)0)
 #else
-#if defined(__STDC__)
-#define assert(EX) (void)((EX) || (Itcl_Assert(#EX, __FILE__, __LINE__), 0))
-#else
-#define assert(EX) (void)((EX) || (Itcl_Assert("EX", __FILE__, __LINE__), 0))
-#endif  /* __STDC__ */
-#endif  /* NDEBUG */
+#define assert(EX) (void)((EX) || (Itcl_Assert(STRINGIFY(EX), __FILE__, __LINE__), 0))
+#endif  /* DEBUG */
 
 #undef TCL_STORAGE_CLASS
 #define TCL_STORAGE_CLASS DLLIMPORT

@@ -48,6 +48,26 @@
 #ifndef ITK_H
 #define ITK_H
 
+#ifndef TCL_ALPHA_RELEASE
+#   define TCL_ALPHA_RELEASE	0
+#endif
+#ifndef TCL_BETA_RELEASE
+#   define TCL_BETA_RELEASE	1
+#endif
+#ifndef TCL_FINAL_RELEASE
+#   define TCL_FINAL_RELEASE	2
+#endif
+
+
+#define ITK_MAJOR_VERSION	3
+#define ITK_MINOR_VERSION	3
+#define ITK_RELEASE_LEVEL	TCL_BETA_RELEASE
+#define ITK_RELEASE_SERIAL	1
+
+#define ITK_VERSION		"3.3"
+#define ITK_PATCH_LEVEL		"3.3b1"
+
+
 /*
  * A special definition used to allow this header file to be included
  * in resource files so that they can get obtain version information from
@@ -55,14 +75,20 @@
  * and procedure declarations, that occur below.
  */
 
-#ifndef RESOURCE_INCLUDED
+#ifndef RC_INVOKED
 
-#include "itclInt.h"
 #include "tk.h"
+#include "itclInt.h"
 
+#undef TCL_STORAGE_CLASS
 #ifdef BUILD_itk
-# undef TCL_STORAGE_CLASS
-# define TCL_STORAGE_CLASS DLLEXPORT
+#   define TCL_STORAGE_CLASS DLLEXPORT
+#else
+#   ifdef USE_ITK_STUBS
+#	define TCL_STORAGE_CLASS
+#   else
+#	define TCL_STORAGE_CLASS DLLIMPORT
+#   endif
 #endif
 
 /*
@@ -100,17 +126,20 @@ typedef struct ItkClassOption {
  */
 
 #ifdef USE_ITK_STUBS
-
-char *		Itk_InitStubs _ANSI_ARGS_((Tcl_Interp *interp,
-			    char *version, int exact));
+TCL_EXTERNC CONST char *
+	Itk_InitStubs _ANSI_ARGS_((Tcl_Interp *interp,
+			    CONST char *version, int exact));
+#else
+#define Itk_InitStubs(interp, version, exact) \
+      Tcl_PkgRequire(interp, "Itk", version, exact)
 #endif
 
 /*
  * Public functions that are not accessible via the stubs table.
  */
 
-# undef TCL_STORAGE_CLASS
-# define TCL_STORAGE_CLASS DLLIMPORT
+#undef TCL_STORAGE_CLASS
+#define TCL_STORAGE_CLASS DLLIMPORT
 
-#endif /* RESOURCE INCLUDED */
+#endif /* RC_INVOKED */
 #endif /* ITK_H */
