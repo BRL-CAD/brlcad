@@ -968,8 +968,9 @@ rt_pg_to_bot( struct rt_db_internal *ip, const struct bn_tol *tol, struct resour
 		LOCAL vect_t work[3], tmp;
 		LOCAL struct tri_specific trip;
 		LOCAL fastf_t m1, m2, m3, m4;
+		LOCAL int first, v0, v2;
 
-
+		first = 1;
 		VMOVE( work[0], &ip_pg->poly[p].verts[0*3] );
 		VMOVE( work[1], &ip_pg->poly[p].verts[1*3] );
 
@@ -990,14 +991,23 @@ rt_pg_to_bot( struct rt_db_internal *ip, const struct bn_tol *tol, struct resour
 			    m3 >= tol->dist && m4 >= tol->dist )  {
 
 			    	/* add this triangle to the BOT */
-			    	VMOVE( &ip_bot->vertices[ip_bot->num_vertices * 3], work[0] );
-			    	ip_bot->faces[ip_bot->num_faces * 3] = ip_bot->num_vertices;
-			    	ip_bot->num_vertices++;
-			    	VMOVE( &ip_bot->vertices[ip_bot->num_vertices * 3], work[1] );
-			    	ip_bot->faces[ip_bot->num_faces * 3 + 1] = ip_bot->num_vertices;
-			    	ip_bot->num_vertices++;
+				if( first ) {
+					ip_bot->faces[ip_bot->num_faces * 3] = ip_bot->num_vertices;
+					VMOVE( &ip_bot->vertices[ip_bot->num_vertices * 3], work[0] );
+					v0 = ip_bot->num_vertices;
+					ip_bot->num_vertices++;
+
+					ip_bot->faces[ip_bot->num_faces * 3 + 1] = ip_bot->num_vertices;
+					VMOVE( &ip_bot->vertices[ip_bot->num_vertices * 3], work[1] );
+					ip_bot->num_vertices++;
+					first = 0;
+				} else {
+					ip_bot->faces[ip_bot->num_faces * 3] = v0;
+					ip_bot->faces[ip_bot->num_faces * 3 + 1] = v2;
+				}
 			    	VMOVE( &ip_bot->vertices[ip_bot->num_vertices * 3], work[2] );
 			    	ip_bot->faces[ip_bot->num_faces * 3 + 2] = ip_bot->num_vertices;
+				v2 = ip_bot->num_vertices;
 			    	ip_bot->num_vertices++;
 
 			    	ip_bot->num_faces++;
