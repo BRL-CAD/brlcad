@@ -280,8 +280,9 @@ char **argv;
 
 	/*
 	 *  Initialize all the per-CPU memory resources.
+	 *  The number of processors can change at runtime, init them all.
 	 */
-	for( i=0; i < npsw; i++ )  {
+	for( i=0; i < MAX_PSW; i++ )  {
 		rt_init_resource( &resource[i], i );
 		rand_init( resource[i].re_randptr, i );
 	}
