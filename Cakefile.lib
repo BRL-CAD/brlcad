@@ -27,6 +27,12 @@
 #ifndef OBJ
 #	include "Symbol OBJ required"
 #endif
+#ifndef VERSION_VARIABLE
+#	include "Symbol VERSION_VARIABLE required"
+#endif
+#ifndef LIBRARY_TITLE
+#	include "Symbol LIBRARY_TITLE required"
+#endif
 
 #ifndef EXTRA_OBJ
 #	define	EXTRA_OBJ	/**/
@@ -42,19 +48,24 @@
 
 #if !defined(BUILD_LIBRARY)
 PRODUCTS::	EXTRA_OBJ OBJ
+	../newvers.sh VERSION_VARIABLE LIBRARY_TITLE
+	CC CFLAGS -c vers.c
 	rm -f PRODUCTS; EXTRA_SETUP
-	AR r PRODUCTS OBJ EXTRA_OBJ EXTRA_OBJ_NO_DEPENDENCY
+	AR r PRODUCTS OBJ EXTRA_OBJ EXTRA_OBJ_NO_DEPENDENCY vers.o
 	RANLIB PRODUCTS
 #else
-/* Shared library support.  "EXTRA_SETUP" increments version number. */
-/* Can't list SHARED_PRODUCT in 'rm' command, or will get wrong version number.
- * (Cake won't re-run the LIBVERS shell script)
- * If non-null, LIBVERS will start with a leading dot.
- */
+	/* Shared library support.
+	 * Can't list SHARED_PRODUCT in 'rm' command, or will get wrong version number.
+	 * (Cake won't re-run the LIBVERS shell script)
+	 * If non-null, LIBVERS will start with a leading dot.
+	 * Note that the RM command zaps anything starting with PRODUCTS.
+	 */
 #	define	SHARED_PRODUCT	PRODUCTS''[[LIBVERS]]
 PRODUCTS&::	EXTRA_OBJ OBJ
+	../newvers.sh VERSION_VARIABLE LIBRARY_TITLE
+	CC CFLAGS -c vers.c
 	rm -f PRODUCTS*; EXTRA_SETUP
-	BUILD_LIBRARY SHARED_PRODUCT OBJ EXTRA_OBJ EXTRA_OBJ_NO_DEPENDENCY
+	BUILD_LIBRARY SHARED_PRODUCT OBJ EXTRA_OBJ EXTRA_OBJ_NO_DEPENDENCY vers.o
 #endif
 
 %.o&:	SRCDIR,,%,o			if exist ../SRCDIR/%.c
