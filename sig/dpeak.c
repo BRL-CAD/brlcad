@@ -28,7 +28,7 @@ main( argc, argv )
 int	argc;
 char	**argv;
 {
-	int	i, j, n, L;
+	int	i, n, L;
 	double	last1, last2;
 
 	if( isatty(fileno(stdin)) /*|| isatty(fileno(stdout))*/ ) {

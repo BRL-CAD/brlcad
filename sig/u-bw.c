@@ -9,7 +9,7 @@ int main(ac, av)
 int ac;
 char *av[];
 {
-	int num, i, lowbyte;
+	int num, i;
 
 	if (isatty(fileno(stdin)) || isatty(fileno(stdout))) {
 		(void)fprintf(stderr, "Usage: %s < u_shorts > bwfile\n",

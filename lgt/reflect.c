@@ -256,7 +256,7 @@ getCenter()
 void
 render_Model( frame )
 int frame;
-	{	int x;
+	{
 	(void) signal( SIGINT, abort_sig );
 	if( npsw > 1 )
 		pix_buffered = B_LINE;
@@ -648,8 +648,6 @@ struct mater_info *map;
 int *id;
 	{
 		char *copy;
-		char *name;
-		char *value;
 		register char *p;
 		int len;
 		int i;

@@ -46,7 +46,7 @@ main( argc, argv )
 int argc;
 char **argv;
 {
-	int	i, n, step;
+	int	i, n;
 	int	L;
 
 	if( isatty(fileno(stdin)) || isatty(fileno(stdout)) ) {

@@ -599,7 +599,7 @@ int	menux, menuy;
 				{	int	level = hmlevel;
 				retitemp = itemp;
 				if( itemp->hfn != (int (*)()) 0 )
-					{	static char	*locargv[MAXARGS];
+					{
 					reset_Tty( 0 );
 					hmlevel = 0;
 					retitemp->data = (*itemp->hfn)( itemp, (char **) NULL );

@@ -121,7 +121,6 @@ char	**argv;
 #endif
 	register double	arg;
 	register int j;
-	long	value;
 
 	if( !get_args( argc, argv ) || isatty(fileno(infp))
 	    || isatty(fileno(stdout)) ) {

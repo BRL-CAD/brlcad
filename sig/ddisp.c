@@ -144,7 +144,7 @@ disp_bars( buf, size )
 double	buf[];
 int size;
 {
-	int	i, x, y;
+	int	x, y;
 	RGBpixel color;
 
 /*	color.red = color.green = color.blue = 255;*/

@@ -18,7 +18,6 @@ int argc; char **argv;
 	int	n;
 	int	max, min;
 	long	num, levels;
-	int	mask;
 
 	while( argc > 1 ) {
 		if( strcmp( argv[1], "-v" ) == 0 ) {

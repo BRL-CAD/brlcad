@@ -27,7 +27,6 @@
 
 /* Max and Min horizon holders */
 static	int	upper[HSCREEN], lower[HSCREEN];
-static	int	Xleft, Yleft, Xright, Yright;		/* XXX */
 
 FBIO	*fbp;	/* XXX - debug */
 
@@ -40,8 +39,6 @@ void
 fhinit()
 {
 	int	i;
-
-	Xleft = Yleft = Xright = Yright = -1;
 
 	/* Set initial horizons */
 	for( i = 0; i < HSCREEN; i++ ) {
@@ -213,7 +210,7 @@ int	x1, y1, x2, y2;
 int	hor[];
 int	*xi, *yi;
 {
-	int	xinc, ysign, denom;
+	int	xinc, ysign;
 	int	slope;
 
 /*
@@ -361,7 +358,7 @@ char	**argv;
 {
 	double	inbuf[512];
 	int	f[512];
-	int	i, x, y, z;
+	int	i, x, z;
 	int	size = 512;
 
 	if( argc > 1 ) {
