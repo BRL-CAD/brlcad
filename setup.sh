@@ -195,10 +195,11 @@ fi
 ############################################################################
 echo "Running brlcad-check.sh"
 if sh/brlcad-check.sh
-then	;
+then
+	echo OK
 else
 	echo "brlcad-check.sh failed, aborting setup.sh"
-	exit 1;
+	exit 1
 fi
 
 ############################################################################
