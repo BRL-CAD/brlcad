@@ -175,7 +175,13 @@ genptr_t		client_data;	/* argument for handler */
 		case ID_MATERIAL:
 			if( do_old_matter ) {
 				/* This is common to RT and MGED */
-				rt_color_addrec( &record, addr );
+				rt_color_addrec(
+					record.md.md_low,
+					record.md.md_hi,
+					record.md.md_r,
+					record.md.md_g,
+					record.md.md_b,
+					addr );
 			}
 			break;
 		case ID_P_HEAD:
