@@ -36,8 +36,8 @@ static char	*framebuffer = NULL;
 #define	BINARY	1
 #define	DECIMAL 2
 
-static int	fbwidth = 512;
-static int	fbheight = 512;
+static int	fbwidth = 0;
+static int	fbheight = 0;
 static int	flavor = DECIMAL;
 static int	clear = 0;
 
