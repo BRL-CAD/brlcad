@@ -2178,6 +2178,7 @@ char	**argv;
 		movedir = ROTARROW;
 	}
 	VSET(specified_pt, atof(argv[1]), atof(argv[2]), atof(argv[3]));
+	VSCALE(specified_pt, specified_pt, dbip->dbi_local2base);
 	VSET(direc, atof(argv[4]), atof(argv[5]), atof(argv[6]));
 
 	/* find point for rotation to take place wrt */
