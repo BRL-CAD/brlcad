@@ -1,13 +1,19 @@
 #!/bin/sh
-
+#			S H O W . S H
+#
 # Regardless of file type, show it on the framebuffer.
 # Mostly uses BRL-CAD LIBFB ($FB_FILE) display;
 # some programs may use X Windows $DISPLAY instead.
 # The args (flags) are for the display program.
+#
+#  -Mike Muuss, ARL
+#
+#  $Header$
+
 
 if test "$1" = ""
 then
-	echo "Usage: show file.pix [flags]"
+	echo "Usage: show filename [filetype-specific-flags]"
 	echo "	Regardless of file type, try to show it on the framebuffer."
 	exit 1
 fi
@@ -24,6 +30,10 @@ fi
 
 eval `pixinfo.sh $FILE`	# sets BASE, SUFFIX, WIDTH, HEIGHT
 
+# Since we don't have an easy (fast) way to query the current framebuffer
+# for it's current size without opening a window, if the user isn't
+# using a full-screen fbserv, they need to set a pair of environment
+# variables to tell us what the maximum target image size is.
 if test "$FB_WIDTH" = ""
 then
 	FB_WIDTH=1280
