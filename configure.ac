@@ -275,14 +275,8 @@ case "$target" in
 		;;
 esac
 
-if test "x$with_java" != "xno" ; then
-	CPPFLAGS="$JAVA_CFLAGS $CPPFLAGS"
-	LDFLAGS="$JAVA_LDFLAGS $LDFLAGS"
-fi
-
 AC_SUBST(JAVA_CFLAGS)
 AC_SUBST(JAVA_LDFLAGS)
-AC_SUBST(CPPFLAGS)
 
 # only build benchmark
 AC_MSG_CHECKING(whether to only build benchmark)
