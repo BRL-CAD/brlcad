@@ -3,56 +3,60 @@
  */
 
 #define SRCDIR	anim
-#define PRODUCTS	anim_script chan_permute anim_orient anim_fly anim_lookat anim_keyread anim_track anim_offset anim_sort anim_hardtrack anim_turn
+#define PRODUCTS	anim_script chan_permute anim_orient anim_fly \
+			anim_lookat anim_keyread anim_track anim_offset \
+			anim_sort anim_hardtrack anim_turn
 #define	SRCSUFF	.c
 #define MANSECTION	1
 
 #include "../Cakefile.defs"
 #include "../Cakefile.prog"
 
-#define FILES	anim anim_script chan_permute anim_orient anim_fly anim_lookat anim_keyread anim_offset anim_sort anim_hardtrack anim_turn
+#define FILES	anim anim_script chan_permute anim_orient anim_fly \
+		anim_lookat anim_keyread anim_offset \
+		anim_sort anim_hardtrack anim_turn
 
 /* Explicit composition of each product */
 anim_cascade: anim_cascade.o anim.o
-	CC LDFLAGS anim_cascade.o anim.o LIBRT -lm -lmpc -o anim_cascade
+	CC LDFLAGS anim_cascade.o anim.o LIBRT LIBRT_LIBES LIBES -o anim_cascade
 
 anim_fly: anim_fly.o
-	CC LDFLAGS anim_fly.o -lm -o anim_fly
+	CC LDFLAGS anim_fly.o LIBES -o anim_fly
 
 anim_hardtrack: anim_hardtrack.o anim.o
-	CC LDFLAGS anim_hardtrack.o anim.o LIBRT -lm -lmpc -o anim_hardtrack
+	CC LDFLAGS anim_hardtrack.o anim.o LIBRT LIBRT_LIBES LIBES -o anim_hardtrack
 
 anim_keyread: anim_keyread.o anim.o
 	CC LDFLAGS anim_keyread.o anim.o LIBES -o anim_keyread
 
 anim_lookat: anim_lookat.o anim.o
-	CC LDFLAGS anim_lookat.o anim.o -lm -o anim_lookat
+	CC LDFLAGS anim_lookat.o anim.o LIBES -o anim_lookat
 
 anim_offset: anim_offset.o anim.o
-	CC LDFLAGS anim_offset.o anim.o -lm -o anim_offset
+	CC LDFLAGS anim_offset.o anim.o LIBES -o anim_offset
 
 anim_orient: anim_orient.o anim.o
-	CC LDFLAGS anim_orient.o anim.o -lm -o anim_orient
+	CC LDFLAGS anim_orient.o anim.o LIBES -o anim_orient
 
 anim_script: anim_script.o anim.o
-	CC LDFLAGS anim_script.o anim.o LIBRT -lm -lmpc -o anim_script
+	CC LDFLAGS anim_script.o anim.o LIBRT LIBRT_LIBES LIBES -o anim_script
 
 anim_sort: anim_sort.o
-	CC LDFLAGS anim_sort.o -o anim_sort
+	CC LDFLAGS anim_sort.o -o LIBES anim_sort
 
 anim_track: anim_track.o cattrack.o anim.o
-	CC LDFLAGS anim_track.o cattrack.o anim.o LIBRT -lm -lmpc -o anim_track
+	CC LDFLAGS anim_track.o cattrack.o anim.o LIBRT LIBRT_LIBES LIBES -o anim_track
 
 anim_turn: anim_turn.o anim.o
-	CC LDFLAGS anim_turn.o anim.o LIBRT -lm -lmpc -o anim_turn
+	CC LDFLAGS anim_turn.o anim.o LIBRT LIBRT_LIBES LIBES -o anim_turn
 
 chan_add: chan_add.o
-	CC LDFLAGS chan_add.o -o chan_add
+	CC LDFLAGS chan_add.o LIBES -o chan_add
 
 chan_mult: chan_mult.o
-	CC LDFLAGS chan_mult.o -o chan_mult
+	CC LDFLAGS chan_mult.o LIBES -o chan_mult
 
 chan_permute: chan_permute.o
-	CC LDFLAGS chan_permute.o -o chan_permute
+	CC LDFLAGS chan_permute.o LIBES -o chan_permute
 
 #include "../Cakefile.rules"
