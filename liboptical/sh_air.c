@@ -85,9 +85,12 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 
 	memcpy(air_sp, &air_defaults, sizeof(struct air_specific) );
 
+#if 0
 	rp->reg_regionid = -1;
 	rp->reg_aircode = 1;
+#endif
 
+	rt_log("\"%s\"\n", RT_VLS_ADDR(matparm) );
 	if( rt_structparse( matparm, air_parse, (char *)air_sp ) < 0 )
 		return(-1);
 
@@ -179,6 +182,14 @@ char	*dp;
 			V3ARGS(ap->a_ray.r_pt));
 	}
 
+	/* We can't trust the reflect/refract support in rt to do the right
+	 * thing so we have to take over here.
+	 */
+#if 0
+	swp->sw_transmit = 1.0;
+	return(1);
+#endif	
+
 	/* Beer's Law Homogeneous Fog */
 
 	/* tau = optical path depth = density per mm * distance */
@@ -200,7 +211,7 @@ char	*dp;
 	VMOVE(swp->sw_basecolor, air_sp->color);
 
 	if( rdebug&RDEBUG_SHADE)
-		rt_log("fog o dist:%gm tau:%g transmit:%g color(%g %g %g)\n",
+		rt_log("fog o dist:%gmm tau:%g transmit:%g color(%g %g %g)\n",
 			dist, tau, swp->sw_transmit, V3ARGS(swp->sw_color) );
 
 	return(1);
