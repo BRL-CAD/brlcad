@@ -116,7 +116,6 @@ main(argc,argv)
 int argc;
 char **argv;
 {
-	register int i;
 	int	rateflag = 0;
 
 	/* Check for proper invocation */
@@ -277,6 +276,7 @@ char **argv;
 		 */	 
 		refresh();
 	}
+	return(0);
 }
 
 /*
@@ -516,7 +516,6 @@ fastf_t xangle, yangle, zangle;
 	/* Joystick is used for parameter or solid rotation (ST_S_EDIT) */
 	if(es_edflag == PROT || es_edflag == SROT || es_edflag == ROTFACE)  {
 		static mat_t tempp;
-		static vect_t point;
 
 		mat_idn( incr_change );
 		buildHrot( incr_change, xangle, yangle, zangle );
