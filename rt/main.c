@@ -51,6 +51,7 @@ extern int	hex_out;		/* Binary or Hex .pix output file */
 extern double	AmbientIntensity;	/* Ambient light intensity */
 extern double	azimuth, elevation;
 extern int	lightmodel;		/* Select lighting model */
+int		output_is_binary = 1;	/* !0 means output file is binary */
 mat_t		view2model;
 mat_t		model2view;
 extern int	use_air;		/* Handling of air in librt */
@@ -186,6 +187,11 @@ char **argv;
 	fprintf(stderr, "db title:  %s\n", idbuf);
 	rtip->useair = use_air;
 
+	/* before view_init */
+	if( outfp == NULL )  outfp = stdout;
+	if( strcmp( outputfile, "-") == 0 )
+		outputfile = (char *)0;
+
 	/* 
 	 *  Initialize application.
 	 */
@@ -204,13 +210,12 @@ char **argv;
 		/* ALERT:  The library wants zoom before window! */
 		fb_zoom( fbp, fb_getwidth(fbp)/width, fb_getheight(fbp)/height );
 		fb_window( fbp, width/2, height/2 );
-	} else if( outputfile == (char *)0 || strcmp( outputfile, "-") == 0 )  {
-		outputfile = (char *)0;
-		if( isatty(fileno(stdout)) )  {
+	} else if( outputfile == (char *)0 )  {
+		/* output_is_binary is changed by view_init, as appropriate */
+		if( output_is_binary && isatty(fileno(outfp)) )  {
 			fprintf(stderr,"rt:  attempting to send binary output to terminal, aborting\n");
 			exit(14);
 		}
-		outfp = stdout;
 	}
 	fprintf(stderr,"initial dynamic memory use=%d.\n",sbrk(0)-beginptr );
 	beginptr = sbrk(0);
