@@ -43,10 +43,13 @@ Usage:  rtwalk [options] model.g objects...\n\
  -p # # #	Set starting point\n\
  -a # # #	Set shoot-at point (destination)\n\
  -n #		Number of steps\n\
+ -v #		Viewsize\n\
 ";
 
 extern double	atof();
 extern char	*sbrk();
+
+double		viewsize = 42;
 
 /*
  *	0 - off
@@ -82,7 +85,10 @@ double		max_dist_togo;
 
 extern int hit(), miss();
 
+static double deg2rad = 57.29577951125853957129;
+
 FILE		*plotfp = stdout;
+FILE		*outfp = NULL;
 
 /*
  *			M A I N
@@ -147,6 +153,13 @@ char **argv;
 		argv += 2;
 		continue;
 
+	case 'v':
+		if( argc < 2 )  goto err;
+		viewsize = atof( argv[1] );
+		argc -= 2;
+		argv += 2;
+		continue;
+
 	default:
 err:
 		(void)fputs(usage, stderr);
@@ -163,6 +176,7 @@ err:
 	VSUB2( diff, ap.a_ray.r_pt, goal_point );
 	incr_dist = MAGNITUDE(diff) / nsteps;
 	fprintf(stderr,"nsteps = %d, incr_dist = %gmm\n", nsteps, incr_dist );
+	fprintf(stderr,"viewsize = %gmm\n", viewsize);
 
 	/* Load database */
 	title_file = argv[0];
@@ -184,9 +198,14 @@ err:
 	}
 	rt_prep(rtip);
 
+	if( (outfp=fopen("rtwalk.mats", "w")) == NULL )  {
+		perror("rtwalk.mats");
+		exit(1);
+	}
+
 	pl_3space( plotfp, 0,0,0, 4096, 4096, 4096);
 /**	rt_plot_cut( plotfp, rtip, &rtip->rti_CutHead, 0 );**/
-	pl_color( plotfp, 200, 200, 200 );
+	pl_color( plotfp, 150, 150, 150 );
 	{
 		register struct soltab *stp;
 		for(stp=rtip->HeadSolid; stp != SOLTAB_NULL; stp=stp->st_forw)  {
@@ -211,6 +230,7 @@ err:
 				pl_color( plotfp, 0, 0, 255 );
 			rt_drawvec( plotfp, ap.a_rt_i,
 				pt_prev_step, ap.a_ray.r_pt );
+			write_matrix(curstep);
 		}
 		VMOVE( pt_prev_step, ap.a_ray.r_pt );
 		VMOVE( dir_prev_step, ap.a_ray.r_dir );
@@ -220,6 +240,7 @@ err:
 		VSUB2( diff, goal_point, ap.a_ray.r_pt );
 		if( (max_dist_togo=MAGNITUDE(diff)) < 1.0 )  {
 			/* Walk is complete */
+			fprintf(stderr,"Complete in %d steps\n", curstep);
 			exit(0);
 		}
 
@@ -421,3 +442,125 @@ bzero(str,n)
 }
 #endif
 #endif
+
+/* wrapper for atan2.  On SGI (and perhaps others), x==0 returns infinity */
+double
+xatan2(y,x)
+double	y,x;
+{
+	if( x > -1.0e-20 && x < 1.0e-20 )  {
+		/* X is equal to zero, check Y */
+		if( y < -1.0e-20 )  return( -3.14159265358979323/2 );
+		if( y >  1.0e-20 )  return(  3.14159265358979323/2 );
+		return(0.0);
+	}
+	return( atan2( y, x ) );
+}
+/*
+ *			M A T _ F R O M T O
+ *
+ *  Given two vectors, compute a rotation matrix that will transform
+ *  space by the angle between the two.  Since there are many
+ *  candidate matricies, the method used here is to convert the vectors
+ *  to azimuth/elevation form (azimuth is +X, elevation is +Z),
+ *  take the difference, and form the rotation matrix.
+ *  See mat_ae for that algorithm.
+ *
+ *  The input 'from' and 'to' vectors must be unit length.
+ */
+mat_fromto( m, from, to )
+mat_t	m;
+vect_t	from;
+vect_t	to;
+{
+	double	az, el;
+	LOCAL double sin_az, sin_el;
+	LOCAL double cos_az, cos_el;
+
+	az = xatan2( to[Y], to[X] ) - xatan2( from[Y], from[X] );
+	el = asin( to[Z] ) - asin( from[Z] );
+
+	sin_az = sin(az);
+	cos_az = cos(az);
+	sin_el = sin(el);
+	cos_el = cos(el);
+
+	m[0] = cos_el * cos_az;
+	m[1] = -sin_az;
+	m[2] = -sin_el * cos_az;
+	m[3] = 0;
+
+	m[4] = cos_el * sin_az;
+	m[5] = cos_az;
+	m[6] = -sin_el * sin_az;
+	m[7] = 0;
+
+	m[8] = sin_el;
+	m[9] = 0;
+	m[10] = cos_el;
+	m[11] = 0;
+
+	m[12] = m[13] = m[14] = 0;
+	m[15] = 1.0;
+}
+
+write_matrix(frame)
+{
+	mat_t	xlate;
+	mat_t	rot;
+	mat_t	model2view;
+	int	i;
+	vect_t	from;
+	vect_t	to;
+
+	/* Build model2view matrix */
+/*	VSUB2( from, hit_cur_try, pt_prev_step );	/* Look to next step */
+	VSUB2( from, goal_point, pt_prev_step );
+	VSET( to, 0, 0, -1 );
+	VUNITIZE( from );
+	VUNITIZE( to );
+
+	mat_idn(xlate);
+	MAT_DELTAS( xlate,
+		-pt_prev_step[X],
+		-pt_prev_step[Y],
+		-pt_prev_step[Z]);
+/**	mat_fromto( rot, from, to ); **/
+	mat_lookat( rot, from );
+	mat_mul( model2view, rot, xlate );
+
+/*	fprintf(outfp, "start %d;\n", frame); */
+	fprintf(outfp, "%g\n", viewsize);
+	fprintf(outfp, "%g %g %g",
+		pt_prev_step[X],
+		pt_prev_step[Y],
+		pt_prev_step[Z]);
+
+	for( i=0; i < 16; i++ ) {
+		if( (i%4) == 0 )  (void)fprintf(outfp, "\n");
+		(void)fprintf( outfp, "%.9e ", rot[i] );
+	}
+	(void)fprintf(outfp,"\n\n");
+
+}
+
+mat_lookat( rot, dir )
+mat_t rot;
+vect_t dir;
+{
+	mat_t left, down, t;
+
+	VUNITIZE( dir );
+	mat_idn( rot );
+	mat_idn( left );
+	mat_idn( down );
+	mat_idn( t );
+	mat_ae( t,
+		atan2(dir[Y],dir[X])*deg2rad ,/* az */
+		asin(dir[Z]) * deg2rad ); /* elev */
+	mat_inv( rot, t );
+	mat_angles( left, 0.0, 0.0, 90.0 );
+	mat_angles( down, -90.0, 0.0, 0.0 );
+	mat_mul( t, left, rot );
+	mat_mul( rot, down, t );
+}
