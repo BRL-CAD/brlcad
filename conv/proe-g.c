@@ -664,6 +664,50 @@ point_t min, max;
 	}
 }
 
+static int
+Unbreak_shell_edges( s_in )
+struct shell *s_in;
+{
+	struct faceuse *fu;
+	int count=0;
+
+	NMG_CK_SHELL( s_in );
+
+	for( BU_LIST_FOR( fu, faceuse, &s_in->fu_hd ) )
+	{
+		struct loopuse *lu;
+
+		for( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
+		{
+			struct edgeuse *eu;
+
+			if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+				continue;
+
+			eu = BU_LIST_FIRST( edgeuse, &lu->down_hd );
+			while( BU_LIST_NOT_HEAD( &eu->l, &lu->down_hd ))
+			{
+				struct edgeuse *next_eu, *prev_eu;
+
+				next_eu = BU_LIST_PNEXT( edgeuse, &eu->l );
+				prev_eu = BU_LIST_PPREV_CIRC( edgeuse, &eu->l );
+
+				if( prev_eu == next_eu )
+					break;
+
+				if( prev_eu->g.magic_p == eu->g.magic_p )
+				{
+					if( nmg_unbreak_shell_edge_unsafe( prev_eu ) > 0 )
+						count++;
+				}
+
+				eu = next_eu;
+			}
+		}
+	}
+	return( count );
+}
+
 static void
 Convert_part( line )
 char line[MAX_LINE_LEN];
@@ -1002,6 +1046,7 @@ char line[MAX_LINE_LEN];
 
 	if( polysolid && !solid_is_written )
 	{
+		Unbreak_shell_edges( s );
 		rt_log( "\tWriting polysolid\n" );
 		write_shell_as_polysolid( fd_out , solid_name , s );
 	}
