@@ -131,17 +131,21 @@ char **argv;
 		fprintf(stderr,"Anim_hardtrack: Could not open file %s.\n",*(argv+optind+1));
 		return(0);
 	}
-	fscanf(stream,"%d %d %lf", &num_wheels, &num_links, &track_y);
-		/*allocate memory for track information*/
+	fscanf(stream,"%d %d", &num_wheels, &num_links);
+	/*allocate memory for track information*/
 	x = (struct all *) calloc(num_wheels,sizeof(struct all));
 		/*read rest of track info */
 	for (i=0;i<NW;i++){
-		fscanf(stream,"%lf %lf",x[i].w.pos,x[i].w.pos+2);
+		fscanf(stream,"%lf %lf %lf", temp, temp+1, temp+2);
 		if (radius)
 			x[i].w.rad = radius;
 		else
 			fscanf(stream,"%lf",& x[i].w.rad);
-		x[i].w.pos[1] = track_y;
+		MAT4X3PNT(x[i].w.pos,m_rev_axes,temp);
+		if (i==0)
+			track_y = x[0].w.pos[1];
+		else
+			x[i].w.pos[1] = track_y;
 	}
 	(void) fclose(stream);
 
