@@ -2494,3 +2494,41 @@ CONST point_t B;
 	return entleave;
 }
 #endif
+
+int
+bn_hlf_class( half_eqn, min, max, tol )
+CONST plane_t		half_eqn;
+CONST vect_t		min, max;
+CONST struct bn_tol    *tol;
+{
+	int	class;	/* current classification */
+	fastf_t d;
+	
+#define CHECK_PT( x, y, z ) \
+	d = (x)*half_eqn[0] + (y)*half_eqn[1] + (z)*half_eqn[2] - half_eqn[3];\
+	if( d < -tol->dist ) { \
+		if( class == BN_CLASSIFY_OUTSIDE ) \
+			return BN_CLASSIFY_OVERLAPPING; \
+		else class = BN_CLASSIFY_INSIDE; \
+	} else if( d > tol->dist ) { \
+		if( class == BN_CLASSIFY_INSIDE ) \
+			return BN_CLASSIFY_OVERLAPPING; \
+		else class = BN_CLASSIFY_OUTSIDE; \
+	} else return BN_CLASSIFY_OVERLAPPING
+
+	class = BN_CLASSIFY_UNIMPLEMENTED;
+	CHECK_PT( min[X], min[Y], min[Z] );
+	CHECK_PT( min[X], min[Y], max[Z] );
+	CHECK_PT( min[X], max[Y], min[Z] );
+	CHECK_PT( min[X], max[Y], max[Z] );
+	CHECK_PT( max[X], min[Y], min[Z] );
+	CHECK_PT( max[X], min[Y], max[Z] );
+	CHECK_PT( max[X], max[Y], min[Z] );
+	CHECK_PT( max[X], max[Y], max[Z] );
+	if( class == BN_CLASSIFY_UNIMPLEMENTED )
+		bu_log( "bn_hlf_class: error in implementation\
+min = (%g, %g, %g), max = (%g, %g, %g), half_eqn = (%d, %d, %d, %d)\n",
+			V3ARGS(min), V3ARGS(max), V3ARGS(half_eqn),
+			half_eqn[3]);
+	return class;
+}
