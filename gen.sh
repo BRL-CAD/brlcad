@@ -193,7 +193,6 @@ BDIRS="bench \
 	conv \
 	db \
 	rt \
-	anim \
 	mged \
 	remrt \
 	libcursor \
@@ -215,6 +214,7 @@ BDIRS="bench \
 	sig \
 	tab \
 	tools \
+	anim \
 	off \
 	halftone \
 	nirt \
