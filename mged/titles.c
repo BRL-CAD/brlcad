@@ -276,7 +276,25 @@ dotitles()
 	/* az/el 0,0 is when screen +Z is model +X */
 	VSET( work, 0, 0, 1 );
 	MAT3X3VEC( temp, view2model, work );
-	ae_vec( &az, &el, temp );
+	if( NEAR_ZERO( VDOT( work , temp ) - 1.0 , SQRT_SMALL_FASTF ) )
+	{
+		/* elevation is 90, find azimuth */
+		VSET( work , 1 , 0 , 0 );
+		MAT3X3VEC( temp , view2model , work );
+		el = 90;
+		az = mat_atan2( -temp[X] , temp[Y] ) * radtodeg;
+	}
+	else if( NEAR_ZERO( VDOT( work , temp ) + 1.0 , SQRT_SMALL_FASTF ) )
+	{
+		/* elevation is -90, find azimuth */
+		VSET( work , 1 , 0 , 0 );
+		MAT3X3VEC( temp , view2model , work );
+		el = (-90);
+		az = mat_atan2( -temp[X] , temp[Y] ) * radtodeg;
+	}
+	else
+		ae_vec( &az, &el, temp );
+
 	(void)sprintf( cp, "az=%3.2f el=%2.2f ang=(%.2f, %.2f, %.2f)",
 		az, el,
 		dm_values.dv_xjoy * 6,
