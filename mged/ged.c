@@ -312,7 +312,6 @@ int	non_blocking;
 	int		len;
 	int		formerly_non_blocking = non_blocking;
 	static int	need_penup = 0;
-	static struct device_values	old_values;
 
 	/*
 	 * dmr_input() will suspend until some change has occured,
@@ -440,9 +439,6 @@ again:
 		dmaflag = 1;
 		new_mats();
 	}
-
-	/* Keep a copy of knob values, for later comparison */
-	old_values = dm_values;	/* struct copy */
 
 	return( non_blocking );
 }
