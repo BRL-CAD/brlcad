@@ -239,10 +239,10 @@ HIDDEN int txt_load_datasource(struct txt_specific *texture, struct db_i *dbInst
 			return -1;				/* FAIL */
 
 		if (texture->tx_mp->buflen < size) {
-			bu_log("\ntxt_load_datasource() ERROR %S needs %d bytes, '%s' only has %d\n", texture->tx_name, size, texture->tx_mp->buflen);
+			bu_log("\ntxt_load_datasource() ERROR %S needs %d bytes, file only has %d\n", texture->tx_name, size, texture->tx_mp->buflen);
 			return -1;
 		} else if (texture->tx_mp->buflen > size) {
-			bu_log("\nWARNING: Texture file size is larger than specified texture size\n\tInput File: %d pixels\n\tSpecified Texture Size: %d pixels\n...continuing to load using image subsection...", texture->tx_binunifp->count);
+			bu_log("\nWARNING: Texture file size is larger than specified texture size\n\tInput File: %d pixels\n\tSpecified Texture Size: %d pixels\n...continuing to load using image subsection...", texture->tx_mp->buflen, size);
 		}
 		
 	}
