@@ -1016,6 +1016,10 @@ cmd_setup()
 	bn_tcl_setup(interp);
 	rt_tcl_setup(interp);
 
+	Tcl_LinkVar(interp, "dbip", (char *)&dbip, TCL_LINK_INT|TCL_LINK_READ_ONLY);
+	/* XXX Change from .db to "db" & eliminate mged-specific "db" command */
+	(void)Tcl_Eval(interp, "set wdbp [wdb_open .db disk $dbip]" );
+
     bu_vls_free(&temp);
     tkwin = NULL;
 }
