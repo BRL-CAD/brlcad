@@ -50,7 +50,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
  *	the model, and will ignore face structures that have their
  *	flag set in the table.
  *
- *	dir must be X,Y,Z, -X, -Y, or -Z.
+ *	dir must be X,Y, or Z
  */
 struct face *
 nmg_find_top_face_in_dir( s, dir , flags )
@@ -77,6 +77,7 @@ long *flags;
 
 	NMG_CK_SHELL( s );
 
+#if 0
 	if( dir < 0 )
 	{
 		bottommost = 1;
@@ -84,7 +85,7 @@ long *flags;
 		extreme_value = MAX_FASTF;
 		extreme_slope = MAX_FASTF;
 	}
-
+#endif
 	/* find extreme vertex */
 	for( RT_LIST_FOR( fu , faceuse , &s->fu_hd ) )
 	{
@@ -273,6 +274,10 @@ long *flags;
 		return( (struct face *)NULL );
 	}
 
+	if( rt_g.NMG_debug & DEBUG_BASIC )
+		rt_log( "nmg_find_top_face_in_dir: top face = x%x, dir = %d, top vertex = x%x ( %g %g %g )\n",
+			f_top, dir, vp_top, V3ARGS( vp_top->vg_p->coord ) );
+
 	return( f_top );
 }
 
@@ -283,29 +288,27 @@ long *flags;
  *	Expects to have a translation table (variable "flags") for
  *	the model, and will ignore face structures that have their
  *	flag set in the table.
+ *
+ * returns the top face in some direction.
+ *
+ * dir will be set to X, Y, or Z to indicate which top face was found.
  */
 
 struct face *
-nmg_find_top_face( s , flags )
+nmg_find_top_face( s, dir , flags )
 CONST struct shell *s;
+int *dir;
 long *flags;
 {
 	struct face *top_face;
-	int dir;
 
-
-	/* try positive directions first */
-	for( dir=X ; dir<=Z ; dir++ )
-		if( (top_face=nmg_find_top_face_in_dir( s, dir, flags )) != (struct face *)NULL )
-			return( top_face );
-
-	/* now try negative directions */
-	for( dir=X ; dir<=Z ; dir++ )
-		if( (top_face=nmg_find_top_face_in_dir( s, -dir, flags )) != (struct face *)NULL )
+	for( *dir=X ; *dir<=Z ; *dir++ )
+		if( (top_face=nmg_find_top_face_in_dir( s, *dir, flags )) != (struct face *)NULL )
 			return( top_face );
 
 	/* give up!! */
 	rt_log( "Nmg_find_top_face: Cannot find a top face\n" );
+	*dir = (-32000); /* will hopefully cause an error if used */
 	return( (struct face *)NULL );
 
 }
@@ -325,6 +328,7 @@ struct top_face
 {
 	struct shell *s;
 	struct face *f;
+	int dir;
 	vect_t normal;
 };
 
@@ -343,6 +347,7 @@ CONST struct rt_tol *ttol;
 	struct top_face *top_faces;
 	int total_shells=0;
 	int i;
+	int dir;
 
 	NMG_CK_REGION( r );
 	NMG_CK_PTBL( shells );
@@ -362,7 +367,8 @@ CONST struct rt_tol *ttol;
 	flags = (long *)rt_calloc( r->m_p->maxindex , sizeof( long ) , "nmg_find_outer_and_void_shells: flags" );
 
 	top_faces[0].s = outer_shell;
-	top_faces[0].f = nmg_find_top_face( outer_shell , flags );
+	top_faces[0].f = nmg_find_top_face( outer_shell, &dir , flags );
+	top_faces[0].dir = dir;
 	ext_f = top_faces[0].f;
 	fu = top_faces[0].f->fu_p;
 	if( fu->orientation != OT_SAME )
@@ -377,11 +383,17 @@ CONST struct rt_tol *ttol;
 			continue;
 
 		top_faces[++i].s = s;
-		top_faces[i].f = nmg_find_top_face( s , flags );
-		fu = top_faces[i].f->fu_p;
-		if( fu->orientation != OT_SAME )
-			fu = fu->fumate_p;
-		NMG_GET_FU_NORMAL( top_faces[i].normal , fu );
+		top_faces[i].f = nmg_find_top_face( s, &dir , flags );
+		top_faces[i].dir = dir;
+		if( top_faces[i].f == (struct face *)NULL )
+			rt_log( "WARNING: nmg_assoc_void_shells() could not find top face for shell x%x\n", s );
+		else
+		{
+			fu = top_faces[i].f->fu_p;
+			if( fu->orientation != OT_SAME )
+				fu = fu->fumate_p;
+			NMG_GET_FU_NORMAL( top_faces[i].normal , fu );
+		}
 	}
 
 	/* look for voids */
@@ -402,6 +414,7 @@ CONST struct rt_tol *ttol;
 			if( top_faces[i].s == void_s )
 			{
 				void_f = top_faces[i].f;
+				dir = top_faces[i].dir;
 				VMOVE( normal , top_faces[i].normal );
 				break;
 			}
@@ -409,7 +422,7 @@ CONST struct rt_tol *ttol;
 		if( void_f == (struct face *)NULL )
 			rt_bomb( "nmg_assoc_void_shells: no top face for a shell\n" );
 
-		if( normal[Z] < 0.0  )
+		if( normal[dir] < 0.0)
 		{
 			/* this is a void shell */
 			struct face *int_f;
@@ -470,13 +483,20 @@ CONST struct rt_tol *ttol;
 			{
 				vect_t test_norm;
 				struct face *test_f;
+				int test_dir;
 
+				/* don't check against the outer shell or the candidate void shell */
+				if( test_s == void_s || test_s == outer_shell )
+					continue;
+
+				/* find top face for the test shell */
 				test_f = (struct face *)NULL;
 				for( i=0 ; i<total_shells ; i++ )
 				{
 					if( top_faces[i].s == test_s )
 					{
 						test_f = top_faces[i].f;
+						test_dir = top_faces[i].dir;
 						VMOVE( test_norm , top_faces[i].normal );
 						break;
 					}
@@ -484,18 +504,24 @@ CONST struct rt_tol *ttol;
 				if( test_f == (struct face *)NULL )
 					rt_bomb( "nmg_assoc_void_shells: no top face for a shell\n" );
 
-				if( test_norm[Z] > 0.0 )
-				{
-					if( !V3RPP1_IN_RPP2( void_s->sa_p->min_pt , void_s->sa_p->max_pt , test_s->sa_p->min_pt , test_s->sa_p->max_pt ) )
-						continue;
+				/* skip test shells that are void shells */
+				if( test_norm[test_dir] < 0.0)
+					continue;
 
-					if( test_f->max_pt[Z] > int_f->max_pt[Z]
-					    && test_f->max_pt[Z] < ext_f->max_pt[Z] )
-					{
-						wrong_void = 1;
-						break;
-					}
+				/* if the void shell is not within the test shell, continue */
+				if( !V3RPP1_IN_RPP2( void_s->sa_p->min_pt , void_s->sa_p->max_pt , test_s->sa_p->min_pt , test_s->sa_p->max_pt ) )
+					continue;
+
+				/* the void shell may be within this shell */
+				/* XXXX Need code here to check if candidate void shell (void_s)
+				 * XXXX is within test shell (test_s) and test shell is
+				 * XXXX is within outer shell (outer_shell)
+				if( void_s in test_s and test_s in outer_shell )
+				{
+					wrong_void = 1;
+					break;
 				}
+				*/
 			}
 			if( wrong_void )
 			{
@@ -531,6 +557,7 @@ CONST struct rt_tol *tol;
 	int total_shells=0;
 	int outer_shell_count;
 	int re_bound=0;
+	int dir;
 	long *flags;
 
 	NMG_CK_REGION( r );
@@ -566,7 +593,7 @@ CONST struct rt_tol *tol;
 		struct faceuse *fu;
 		vect_t normal;
 
-		f = nmg_find_top_face( s , flags );
+		f = nmg_find_top_face( s, &dir , flags );
 		fu = f->fu_p;
 		if( fu->orientation != OT_SAME )
 			fu = fu->fumate_p;
@@ -574,7 +601,7 @@ CONST struct rt_tol *tol;
 			rt_bomb( "nmg_find_outer_and_void_shells: Neither faceuse nor mate have OT_SAME orient\n" );
 
 		NMG_GET_FU_NORMAL( normal , fu );
-		if( normal[Z] > 0.0 )
+		if( normal[dir] > 0.0)
 		{
 			nmg_tbl( outer_shells , TBL_INS , (long *)s );	/* outer shell */
 		}
@@ -1147,6 +1174,71 @@ struct loopuse *lu;
 	return( src_is_empty );
 }
 
+/*	N M G _ L O O P _ P L A N E _ N E W E L L
+ *
+ *	Calculate the plane equation of a loop using Newell's Method
+ *	(See "Graphics Gems III", David Kirk editor, Academic Press, Inc. 1992)
+ *
+ *	If the loop orientation is OT_OPPOSITE, the normal of the plane
+ *	is reversed.
+ */
+void
+nmg_loop_plane_newell( lu, pl )
+CONST struct loopuse *lu;
+plane_t pl;
+{
+	struct edgeuse *eu;
+	point_t ave_pt;
+	fastf_t pt_count=0.0;
+	fastf_t inv_count;
+
+	NMG_CK_LOOPUSE( lu );
+
+	VSETALL( pl, 0.0 );
+	pl[H] = 0.0;
+
+	/* make sure we have a loop of edges */
+	if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+		return;
+
+	/* check if this loop is a crack */
+	if( nmg_loop_is_a_crack( lu ) )
+		return;
+
+	VSETALL( ave_pt, 0.0 );
+
+	if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+		return;
+
+	for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+	{
+		struct edgeuse *eu_next;
+		struct vertex_g *vg;
+		struct vertex_g *vg_next;
+
+		vg = eu->vu_p->v_p->vg_p;
+		VADD2( ave_pt, ave_pt, vg->coord );
+		pt_count += 1.0;
+
+		eu_next = RT_LIST_PNEXT_CIRC( edgeuse, &eu->l );
+
+		vg_next = eu_next->vu_p->v_p->vg_p;
+
+		pl[X] += ( vg->coord[Y] - vg_next->coord[Y]) * ( vg->coord[Z] + vg_next->coord[Z] );
+		pl[Y] += ( vg->coord[Z] - vg_next->coord[Z]) * ( vg->coord[X] + vg_next->coord[X] );
+		pl[Z] += ( vg->coord[X] - vg_next->coord[X]) * ( vg->coord[Y] + vg_next->coord[Y] );
+	}
+
+	VUNITIZE( pl );
+
+	inv_count = 1.0/pt_count;
+	VSCALE( ave_pt, ave_pt, inv_count );
+	pl[H] = VDOT( pl, ave_pt );
+
+	if( lu->orientation == OT_OPPOSITE )
+		HREVERSE( pl, pl );
+}
+
 /*	N M G _ L O O P _ P L A N E _ A R E A
  *
  *  Calculates a plane equation and the area of a loop
@@ -1256,34 +1348,32 @@ plane_t pl;
 	return( area );
 }
 
-/*	N M G _ C A L C _ F A C E _ G
+/*	N M G _ C A L C _ F A C E _ P L A N E
  *
- * Calculate face geometry using a least squares fit.
+ * Calculate face geometry using a least squares fit or Newell's method.
  *
  * If fu does not already have a face_g_plane associated, only
- * vertices in fu will participate.
+ * vertices in fu will participate, and if it has only one loop
+ * Newell's method will be used rather than a least square fit.
  *
  * if fu has a face_g_plane, then all vertices in any face that
  * references the same face_g_plane will participate in the
  * fit for the face plane.
  *
- * This routine is not efficient for use with newly created
- * faces as it calculates the direction of the face normal
- * (old_pl), then fits a plane to the vertices. For faces
- * with a single loop, this is calculating the same thing twice.
- *
  * Returns:
  *	0 - All is well
  *	1 - Failed to calculate face geometry
+ *
  */
 
 int
-nmg_calc_face_g( fu_in )
+nmg_calc_face_plane( fu_in, pl )
 struct faceuse *fu_in;
+plane_t pl;
 {
 	struct faceuse *fu;
 	struct nmg_ptbl verts;
-	plane_t pl,old_pl;
+	plane_t old_pl;
 	struct face *f;
 	struct face_g_plane *fg;
 	struct loopuse *lu;
@@ -1294,21 +1384,66 @@ struct faceuse *fu_in;
 	int i;
 	int got_dir=0;
 	int failed=0;
-
-	nmg_tbl( &verts , TBL_INIT , (long *)NULL );
+	int loop_count=0;
 
 	fu = fu_in;
 	NMG_CK_FACEUSE( fu );
+
+	/* find an OT_SAME loop to use for calculating general direction of normal */
+	for( RT_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
+	{
+		if( !got_dir && RT_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_EDGEUSE_MAGIC )
+		{
+			/* get general direction for face normal */
+			nmg_loop_plane_newell( lu , old_pl );
+			if( old_pl[X] != 0.0 || old_pl[Y] != 0.0 || old_pl[Z] != 0.0 )
+				got_dir = 1;
+		}
+
+		loop_count++;
+	}
+
+	if( !got_dir )
+	{
+		rt_log( "nmg_calc_face_plane: Cannot get general direction for face normal for fu x%x\n" , fu );
+		return( 1 );
+	}
+
 	f = fu->f_p;
 	NMG_CK_FACE( f );
 	fg = f->g.plane_p;
 	if( fg )
 	{
 		NMG_CK_FACE_G_PLANE( fg );
+
+		/* count loops using this face geometry */
+		loop_count = 0;
+		for( RT_LIST_FOR( f , face, &fg->f_hd ) )
+		{
+			for( RT_LIST_FOR( lu, loopuse, &f->fu_p->lu_hd ) )
+				loop_count++;
+		}
+
+		/* if this face geometry only has one loop using it, just use Newell's method */
+		if( loop_count < 2 )
+		{
+			HMOVE( pl, old_pl );
+			return( 0 );
+		}
+		nmg_tbl( &verts , TBL_INIT , (long *)NULL );
 		nmg_tabulate_face_g_verts( &verts , fg );
 	}
-	else
+	else		/* just use vertices from this faceuse */
+	{
+		/* If this faceuse only has one loop, just use Newell's method */
+		if( loop_count < 2 )
+		{
+			HMOVE( pl, old_pl );
+			return( 0 );
+		}
+		nmg_tbl( &verts , TBL_INIT , (long *)NULL );
 		nmg_vertex_tabulate( &verts , &fu->l.magic );
+	}
 
 	/* Get the direction for the plane normal in "old_pl".
 	 * Make sure we are dealing with OT_SAME faceuse.
@@ -1317,34 +1452,8 @@ struct faceuse *fu_in;
 		fu = fu->fumate_p;
 	if( fu->orientation != OT_SAME )
 	{
-		rt_log( "nmg_calc_face_g: fu x%x has no OT_SAME use\n" , fu );
+		rt_log( "nmg_calc_face_plane: fu x%x has no OT_SAME use\n" , fu );
 		nmg_tbl( &verts , TBL_FREE , (long *)NULL );
-		return( 1 );
-	}
-
-	/* find an OT_SAME loop to use for direction calculation */
-	for( RT_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
-	{
-		if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
-			continue;
-
-		if( !got_dir && lu->orientation == OT_SAME )
-		{
-			fastf_t area;
-
-			/* get direction for face normal */
-			area = nmg_loop_plane_area( lu , old_pl );
-			if( area > 0.0 )
-			{
-				got_dir = 1;
-				break;
-			}
-		}
-	}
-
-	if( !got_dir )
-	{
-		rt_log( "nmg_calc_face_g: Cannot get direction for face normal for fu x%x\n" , fu );
 		return( 1 );
 	}
 
@@ -1400,9 +1509,6 @@ struct faceuse *fu_in;
 		/* make sure it points in the correct direction */
 		if( VDOT( pl , old_pl ) < 0.0 )
 			HREVERSE( pl , pl );
-
-		/* assign new geometry to face */
-		nmg_face_g( fu , pl );
 	}
 	else
 	{
@@ -1450,13 +1556,10 @@ struct faceuse *fu_in;
 			/* make sure it points in the correct direction */
 			if( VDOT( pl , old_pl ) < 0.0 )
 				HREVERSE( pl , pl );
-
-			/* assign new geometry to face */
-			nmg_face_g( fu , pl );
 		}
 		else
 		{
-			rt_log( "nmg_calc_face_g: Cannot calculate plane for fu x%x\n" , fu );
+			rt_log( "nmg_calc_face_plane: Cannot calculate plane for fu x%x\n" , fu );
 			nmg_pr_fu_briefly( fu , (char *)NULL );
 			rt_log( "%d verts\n" , NMG_TBL_END( &verts ) );
 			failed = 1;
@@ -1465,6 +1568,27 @@ struct faceuse *fu_in;
 
 	nmg_tbl( &verts , TBL_FREE , (long *)NULL );
 	return( failed );
+}
+
+/*	N M G _ C A L C _ F A C E _ G
+ *
+ * interface to nmg_calc_face_plane(), calls nmg_face_g with the
+ * resulting plane
+ *
+ */
+int
+nmg_calc_face_g( fu )
+struct faceuse *fu;
+{
+	plane_t pl;
+	int ret_val;
+
+	ret_val = nmg_calc_face_plane( fu, pl );
+
+	if( !ret_val )
+		nmg_face_g( fu, pl );
+
+	return( ret_val );
 }
 
 /*	The following routines calculate surface area of
@@ -2571,7 +2695,7 @@ struct rt_tol *tol;
 		
 			/* Create last face from remaining 3 edges */
 			fu = nmg_cface( s , (struct vertex **)NMG_TBL_BASEADDR(&vert_tbl) , 3 );
-			if( nmg_fu_planeeqn( fu , tol ) )
+			if( nmg_calc_face_g( fu ) )
 				rt_log( "Failed planeeq\n" );
 
 			/* and add it to the list */
@@ -2840,9 +2964,8 @@ CONST struct rt_tol *tol;
 /*	N M G _ S H E L L _ I S _ V O I D
  *
  * determines if the shell is a void shell or an exterior shell
- * by finding the topmost face (in the z-direction) and looking at
- * the Z component of the OT_SAME faceuse. Positive is an exterior
- * shell, negative is a void shell.
+ * by finding the topmost face (in some direction) and looking at
+ * the component of the OT_SAME faceuse normal in that direction.
  *
  * returns:
  *	0 - shell is exterior shell
@@ -2858,6 +2981,7 @@ CONST struct shell *s;
 	struct face *f;
 	struct faceuse *fu;
 	vect_t normal;
+	int dir;
 	long *flags;
 
 	NMG_CK_SHELL( s );
@@ -2867,9 +2991,12 @@ CONST struct shell *s;
 
 	flags = (long *)rt_calloc( m->maxindex , sizeof( long ) , "nmg_shell_is_void: flags " );
 
-	f = nmg_find_top_face( s , flags );
+	f = nmg_find_top_face( s, &dir , flags );
 
 	rt_free( (char *)flags , "nmg_shell_is_void: flags" );
+
+	if( f == (struct face *)NULL )
+		rt_bomb( "nmg_shell_is_void: Cannot determine if shell is void\n" );
 
 	NMG_CK_FACE( f );
 	NMG_CK_FACE_G_PLANE( f->g.plane_p );
@@ -2883,9 +3010,9 @@ CONST struct shell *s;
 
 	NMG_GET_FU_NORMAL( normal , fu );
 
-	if( normal[Z] == 0.0 )
+	if( normal[dir] == 0.0 )
 		rt_bomb( "nmg_shell_is_void: Cannot determine if shell is void\n" );
-	if( normal[Z] < 0.0 )
+	if( normal[dir] < 0.0)
 		return( 1 );
 	else
 		return( 0 );
@@ -3003,6 +3130,8 @@ CONST struct rt_tol *tol;
 		/* if this face has already been processed, skip it */
 		if( NMG_INDEX_TEST_AND_SET( flags , fu->f_p ) )
 		{
+			if( rt_g.NMG_debug & DEBUG_BASIC )
+				rt_log( "nmg_propagate_normals: reversing fu x%x\n" , fu );
 #if 0
 			/* if orientation is wrong, or if the radial edges are in the same direction
 			 * then reverse the face and fix the radials */
@@ -3081,9 +3210,17 @@ CONST struct rt_tol *tol;
 	while( missed_faces )
 	{
 		vect_t normal;
+		int dir;
 
 		/* find the top face */
-		f_top = nmg_find_top_face( s , flags );	
+		f_top = nmg_find_top_face( s, &dir , flags );
+		if( f_top == (struct face *)NULL )
+		{
+			rt_log( "nmg_fix_normals: Could not get a top face from nmg_find_top_face()\n" );
+			rt_log( "\tWARNING: continuing without fixing normals!!!!\n" );
+			rt_free( (char *)flags, "nmg_fix_normals: flags" );
+			return;
+		}
 		NMG_CK_FACE( f_top );
 		fu = f_top->fu_p;
 		NMG_CK_FACEUSE( fu );
@@ -3099,18 +3236,18 @@ CONST struct rt_tol *tol;
 
 		if( rt_g.NMG_debug & DEBUG_BASIC )
 		{
-			rt_log( "\tnmg_fix_normals: top face is x%x, OT_SAME use is x%x\n", f_top, fu );
+			rt_log( "\tnmg_fix_normals: top face is x%x in %d direction, OT_SAME use is x%x\n", f_top, dir, fu );
 			rt_log( "\toutward normal = ( %g %g %g )\n" , V3ARGS( normal ) );
 		}
 
-		/* f_top is the topmost face (in the +z direction), so its OT_SAME use should have a
-		 * normal with a positive z component */
-		if( normal[Z] < 0.0 )
+		/* f_top is the topmost face (in the "dir" direction), so its OT_SAME use should have a
+		 * normal with component in the "dir" direction */
+		if( normal[dir] < 0.0 )
 		{
 			if( rt_g.NMG_debug & DEBUG_BASIC )
 				rt_log( "nmg_fix_normals: reversing fu x%x\n" , fu );
 
-			nmg_reverse_face_and_radials( fu , tol );
+			nmg_reverse_face( fu );
 		}
 
 		/* get OT_SAME use of top face */
@@ -5830,7 +5967,7 @@ CONST struct rt_tol *tol;
 		NMG_CK_FACEUSE( new_fu );
 
 		/* calculate a plane equation for the new face */
-		if( nmg_fu_planeeqn( new_fu , tol ) )
+		if( nmg_calc_face_g( new_fu ) )
 		{
 			rt_log( "nmg_make_faces_at_vert: Failed to calculate plane eqn for face:\n " );
 			rt_log( "\tnew_v is x%x at ( %f %f %f )\n" , new_v , V3ARGS( new_v->vg_p->coord ) );
