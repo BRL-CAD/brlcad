@@ -613,6 +613,10 @@ static CONST point_t nmg_good_dirs[10] = {
  *  The algorithm used is to fire a ray from the point, and count
  *  the number of times it crosses a face.
  *
+ *  The flag "in_or_out_only" specifies that the point is known to not
+ *  be on the shell, therfore only returns of NMG_CLASS_AinB or
+ *  NMG_CLASS_AoutB are acceptable.
+ *
  *  The point is "A", and the face is "B".
  *
  *  Returns -
@@ -621,9 +625,10 @@ static CONST point_t nmg_good_dirs[10] = {
  *	NMG_CLASS_AoutB		pt is OUTSIDE the volume of the shell.
  */
 int
-nmg_class_pt_s(pt, s, tol)
+nmg_class_pt_s(pt, s, in_or_out_only, tol)
 CONST point_t		pt;
 CONST struct shell	*s;
+CONST int		in_or_out_only;
 CONST struct rt_tol	*tol;
 {
 	int		hitcount = 0;
@@ -654,50 +659,52 @@ CONST struct rt_tol	*tol;
 
 	m = s->r_p->m_p;
 	NMG_CK_MODEL(m);
-	faces_seen = (long *)rt_calloc( m->maxindex, sizeof(long), "nmg_class_pt_s faces_seen[]" );
+	if( !in_or_out_only )
+	{
+		faces_seen = (long *)rt_calloc( m->maxindex, sizeof(long), "nmg_class_pt_s faces_seen[]" );
 
-	/*
-	 *  First pass:  Try hard to see if point is ON a face.
-	 */
-	for( RT_LIST_FOR(fu, faceuse, &s->fu_hd) )  {
-		plane_t	n;
+		/*
+		 *  First pass:  Try hard to see if point is ON a face.
+		 */
+		for( RT_LIST_FOR(fu, faceuse, &s->fu_hd) )  {
+			plane_t	n;
 
-		/* If this face processed before, skip on */
-		if( NMG_INDEX_TEST( faces_seen, fu->f_p ) )  continue;
+			/* If this face processed before, skip on */
+			if( NMG_INDEX_TEST( faces_seen, fu->f_p ) )  continue;
 
-		/* Only consider the outward pointing faceuses */
-		if( fu->orientation != OT_SAME )  continue;
+			/* Only consider the outward pointing faceuses */
+			if( fu->orientation != OT_SAME )  continue;
 
-		/* See if this point lies on this face */
-		NMG_GET_FU_PLANE( n, fu );
-		if( (fabs(DIST_PT_PLANE(pt, n))) < tol->dist)  {
-			/* Point lies on this plane, it may be possible to
-			 * short circuit everything.
-			 */
-			class = nmg_class_pt_fu_except(pt, fu, (struct loopuse *)0,
-				(void (*)())NULL, (void (*)())NULL, (char *)NULL, 0,
-				tol);
-			if( class == NMG_CLASS_AonBshared )  {
-				/* Point is ON face, therefore it must be
-				 * ON the shell also.
+			/* See if this point lies on this face */
+			NMG_GET_FU_PLANE( n, fu );
+			if( (fabs(DIST_PT_PLANE(pt, n))) < tol->dist)  {
+				/* Point lies on this plane, it may be possible to
+				 * short circuit everything.
 				 */
-				class = NMG_CLASS_AonBshared;
-				goto out;
+				class = nmg_class_pt_fu_except(pt, fu, (struct loopuse *)0,
+					(void (*)())NULL, (void (*)())NULL, (char *)NULL, 0,
+					tol);
+				if( class == NMG_CLASS_AonBshared )  {
+					/* Point is ON face, therefore it must be
+					 * ON the shell also.
+					 */
+					class = NMG_CLASS_AonBshared;
+					goto out;
+				}
+				if( class == NMG_CLASS_AinB )  {
+					/* Point is IN face, therefor it must be
+					 * ON the shell also.
+					 */
+					class = NMG_CLASS_AonBshared;
+					goto out;
+				}
+				/* Point is OUTside face, its undecided. */
 			}
-			if( class == NMG_CLASS_AinB )  {
-				/* Point is IN face, therefor it must be
-				 * ON the shell also.
-				 */
-				class = NMG_CLASS_AonBshared;
-				goto out;
-			}
-			/* Point is OUTside face, its undecided. */
+
+			/* Mark this face as having been processed */
+			NMG_INDEX_SET(faces_seen, fu->f_p);
 		}
-
-		/* Mark this face as having been processed */
-		NMG_INDEX_SET(faces_seen, fu->f_p);
 	}
-
 
 	/* If we got here, the point isn't ON any of the faces.
 	 * Time to do the Jordan Curve Theorem.  We fire an arbitrary
@@ -725,11 +732,13 @@ retry:
 
 
 	/* get NMG ray-tracer to tell us if start point is inside or outside */
-	class = nmg_class_ray_vs_shell(&rp, s, tol);
+	class = nmg_class_ray_vs_shell(&rp, s, in_or_out_only, tol);
 	if( class == NMG_CLASS_Unknown )  goto retry;
 
 out:
-	rt_free( (char *)faces_seen, "nmg_class_pt_s faces_seen[]" );
+	if( !in_or_out_only )
+		rt_free( (char *)faces_seen, "nmg_class_pt_s faces_seen[]" );
+
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY )
 		rt_log("nmg_class_pt_s: returning %s, s=x%x, try=%d\n",
 			nmg_class_name(class), s, try );
@@ -837,7 +846,7 @@ CONST struct rt_tol	*tol;
 	}
 
 	reason = "of nmg_class_pt_s()";
-	class = nmg_class_pt_s(pt, sB, tol);
+	class = nmg_class_pt_s(pt, sB, 1, tol);
 	
 	if( class == NMG_CLASS_AoutB )  {
 		NMG_INDEX_SET(classlist[NMG_CLASS_AoutB], vu->v_p);
@@ -882,7 +891,10 @@ CONST struct rt_tol	*tol;
 	int	class;
 
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY)
+	{
+		rt_log( "class_eu_vs_s( eu=x%x, s=x%x )\n", eu, s );
 		nmg_euprint("class_eu_vs_s\t", eu);
+	}
 
 	NMG_CK_EDGEUSE(eu);	
 	NMG_CK_SHELL(s);	
@@ -948,6 +960,10 @@ CONST struct rt_tol	*tol;
 	}
 
 	if (euv_cl == ON_SURF && matev_cl == ON_SURF) {
+		vect_t eu_dir;
+		int try;
+		int class_topo;
+
 		/* check for radial uses of this edge by the shell */
 		eup = eu->radial_p->eumate_p;
 		do {
@@ -988,15 +1004,139 @@ CONST struct rt_tol	*tol;
 		 *   
 		 *  This would seem to be an intersector problem.
 		 */
+		class = NMG_CLASS_Unknown;
 		eupt = eu->vu_p->v_p->vg_p->coord;
 		matept = eu->eumate_p->vu_p->v_p->vg_p->coord;
-		VADD2SCALE(pt, eupt, matept, 0.5);
 
-		if (rt_g.NMG_debug & DEBUG_CLASSIFY)
-			VPRINT("class_eu_vs_s: midpoint of edge", pt);
+		{
+			/* XXXX This topological algorithm assumes that the intersector is perfect */
 
-		class = nmg_class_pt_s(pt, s, tol);
-		reason = "midpoint classification (both verts ON)";
+			int in=0,out=0,on=0,unk=0;
+			struct edgeuse *eu_loop;
+			struct edgeuse *eu_on=(struct edgeuse *)NULL;
+
+			class_topo = NMG_CLASS_Unknown;
+
+			/* look at other EU's in the loop
+			 * counting in/on/out/unknown EU classes
+			 * if we fins an ON, keep it handy
+			 */
+			eu_loop = RT_LIST_PNEXT_CIRC( edgeuse, &eu->l );
+			while( eu_loop != eu )
+			{
+				if( NMG_INDEX_TEST( classlist[NMG_CLASS_AinB], eu_loop->e_p ) )
+					in++;
+				else if( NMG_INDEX_TEST( classlist[NMG_CLASS_AoutB], eu_loop->e_p ) )
+					out++;
+				else if( NMG_INDEX_TEST( classlist[NMG_CLASS_AonBshared], eu_loop->e_p ) )
+				{
+					eu_on = eu_loop;
+					on++;
+				}
+				else if( NMG_INDEX_TEST( classlist[NMG_CLASS_AonBanti], eu_loop->e_p ) )
+				{
+					eu_on = eu_loop;
+					on++;
+				}
+				else
+					unk++;
+
+				eu_loop = RT_LIST_PNEXT_CIRC( edgeuse, &eu_loop->l );
+			}
+
+			if(in && out )
+			{
+				/* This is obviously a GOOF!!! */
+				rt_log( "loop crosses shell boundary!!!\n" );
+				nmg_pr_fu_briefly( nmg_find_fu_of_eu( eu ), "" );
+				rt_bomb( "loop crosses shell boundary!!!" );
+			}
+
+			if( in )
+			{
+				/* If intersector worked properly, then this entire
+				 * loop must be in
+				 */
+				class_topo = NMG_CLASS_AinB;
+				reason = "of other parts of loop are in";
+			}
+			else if( out )
+			{
+				/* If intersector worked properly, then this entire
+				 * loop must be out
+				 */
+				class_topo = NMG_CLASS_AoutB;
+				reason = "of other parts of loop are out";
+			}
+			else if( on )
+			{
+				struct edgeuse *eu_rad;
+				struct faceuse *fu_rad;
+
+				/* Look radially around this "ON" edgeuse.
+				 * The first eu we encounter from the shell "s"
+				 * tells us if we are in or out
+				 */
+
+				eu_rad = eu_on->radial_p;
+				while( nmg_find_s_of_eu( eu_rad ) != s && eu_rad != eu_on )
+					eu_rad = eu_rad->eumate_p->radial_p;
+
+				fu_rad = nmg_find_fu_of_eu( eu_rad );
+				if( fu_rad->s_p != s )
+				{
+					rt_log( "eu (x%x) is classed on, but isn't!!\n", eu_on );
+					rt_bomb( "eu is classed on, but isn't!!" );
+				}
+
+				if( fu_rad->orientation == OT_SAME )
+				{
+					class_topo = NMG_CLASS_AoutB;
+					reason = "nearest radial face is OT_SAME";
+				}
+				else if( fu_rad->orientation == OT_OPPOSITE )
+				{
+					class_topo = NMG_CLASS_AinB;
+					reason = "nearest radial face is OT_OPPOSITE";
+				}
+				else
+				{
+					rt_log( "FU (x%x) has bad orientation (%s)\n", fu_rad, nmg_orientation( fu_rad->orientation ) );
+					rt_bomb( "FU has bad orientation" );
+				}
+			}
+		}
+
+		class = class_topo;
+		if( class == NMG_CLASS_Unknown )
+		{
+			VSUB2( eu_dir, matept, eupt );
+			VUNITIZE( eu_dir );
+		}
+
+		try = 0;
+		while( class == NMG_CLASS_Unknown && try < 3 )
+		{
+			/* Must resort to ray trace */
+			switch( try )
+			{
+				case 0 :
+					VADD2SCALE(pt, eupt, matept, 0.5);
+					reason = "midpoint classification (both verts ON)";
+					break;
+				case 1:
+					VJOIN1( pt, eupt, 1.05*tol->dist, eu_dir );
+					reason = "point near EU start classification (both verts ON)";
+					break;
+				case 2:
+					VJOIN1( pt, matept, -1.05*tol->dist, eu_dir );
+					reason = "point near EU end classification (both verts ON)";
+					break;
+			}
+			class = nmg_class_pt_s(pt, s, 1, tol);
+			try++;
+		}
+
 		if( class == NMG_CLASS_AoutB )  {
 			NMG_INDEX_SET(classlist[NMG_CLASS_AoutB], eu->e_p);
 			status = OUTSIDE;
@@ -1157,7 +1297,7 @@ CONST struct edgeuse	*eu2;
 
 	if( fu1->f_p->g.plane_p != fu2->f_p->g.plane_p )  {
 		vect_t fu1_norm,fu2_norm;
-
+#if 0
 		rt_log("nmg_2lu_identical() loops lu1=x%x lu2=x%x are shared, face geometry is not? fg1=x%x, fg2=x%x\n",
 			lu1, lu2, fu1->f_p->g.plane_p, fu2->f_p->g.plane_p);
 		rt_log("---- fu1, f=x%x, flip=%d\n", fu1->f_p, fu1->f_p->flip);
@@ -1167,6 +1307,7 @@ CONST struct edgeuse	*eu2;
 		rt_log("---- fu2, f=x%x, flip=%d\n", fu2->f_p, fu2->f_p->flip);
 		nmg_pr_fg(fu2->f_p->g.magic_p, 0);
 		nmg_pr_fu_briefly(fu2, 0);
+#endif
 
 		/* Drop back to using a geometric calculation */
 		if( fu1->orientation != fu2->orientation )
@@ -1851,7 +1992,11 @@ CONST struct rt_tol *tol;
 			}
 
 			if( same_loop )
+			{
+				if( rt_g.NMG_debug & DEBUG_CLASSIFY )
+					rt_log( "nmg_classify_lu_lu returning NMG_CLASS_AonBshared\n" );
 				return( NMG_CLASS_AonBshared );
+			}
 
 			/* maybe the other way round */
 			same_loop = 1;
@@ -1869,7 +2014,11 @@ CONST struct rt_tol *tol;
 			}
 
 			if( same_loop )
+			{
+				if( rt_g.NMG_debug & DEBUG_CLASSIFY )
+					rt_log( "nmg_classify_lu_lu returning NMG_CLASS_AonBshared\n" );
 				return( NMG_CLASS_AonBshared );
+			}
 		}
 	}
 	else if( RT_LIST_FIRST_MAGIC( &lu1->down_hd ) == NMG_VERTEXUSE_MAGIC &&
@@ -1881,22 +2030,34 @@ CONST struct rt_tol *tol;
 		vu2 = RT_LIST_FIRST( vertexuse , &lu2->down_hd );
 
 		if( vu1->v_p == vu2->v_p )
+		{
+			if( rt_g.NMG_debug & DEBUG_CLASSIFY )
+				rt_log( "nmg_classify_lu_lu returning NMG_CLASS_AonBshared\n" );
 			return( NMG_CLASS_AonBshared );
+		}
 		else
+		{
+			if( rt_g.NMG_debug & DEBUG_CLASSIFY )
+				rt_log( "nmg_classify_lu_lu returning NMG_CLASS_AoutB\n" );
 			return( NMG_CLASS_AoutB );
+		}
 	}
 
 	if( RT_LIST_FIRST_MAGIC( &lu1->down_hd ) == NMG_VERTEXUSE_MAGIC )
 	{
 		struct vertexuse *vu;
 		struct vertex_g *vg;
+		int class;
 
 		vu = RT_LIST_FIRST( vertexuse , &lu1->down_hd );
 		NMG_CK_VERTEXUSE( vu );
 		vg = vu->v_p->vg_p;
 		NMG_CK_VERTEX_G( vg );
 
-		return( nmg_class_pt_lu_except( vg->coord, lu2, (struct edgeuse *)NULL, tol ));
+		class = nmg_class_pt_lu_except( vg->coord, lu2, (struct edgeuse *)NULL, tol );
+		if( rt_g.NMG_debug & DEBUG_CLASSIFY )
+			rt_log( "nmg_classify_lu_lu returning %s\n", nmg_class_name( class ) );
+		return( class );
 	}
 
 	for( RT_LIST_FOR( eu , edgeuse , &lu1->down_hd ) )
@@ -1913,16 +2074,30 @@ CONST struct rt_tol *tol;
 		if( class != NMG_CLASS_AonBshared && class != NMG_CLASS_AonBanti )
 		{
 			if( lu2->orientation == OT_SAME )
+			{
+				if( rt_g.NMG_debug & DEBUG_CLASSIFY )
+					rt_log( "nmg_classify_lu_lu returning %s\n", nmg_class_name( class ) );
 				return( class );
+			}
 			else
 			{
 				if( class == NMG_CLASS_AinB )
+				{
+					if( rt_g.NMG_debug & DEBUG_CLASSIFY )
+						rt_log( "nmg_classify_lu_lu returning NMG_CLASS_AoutB\n" );
 					return( NMG_CLASS_AoutB );
+				}
 				if( class == NMG_CLASS_AoutB )
+				{
+					if( rt_g.NMG_debug & DEBUG_CLASSIFY )
+						rt_log( "nmg_classify_lu_lu returning NMG_CLASS_AinB\n" );
 					return( NMG_CLASS_AinB );
+				}
 			}
 		}
 	}
 
+	if( rt_g.NMG_debug & DEBUG_CLASSIFY )
+		rt_log( "nmg_classify_lu_lu returning NMG_CLASS_AonBshaed\n" );
 	return( NMG_CLASS_AonBshared );
 }
