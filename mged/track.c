@@ -510,6 +510,7 @@ tryagain:	/* sent here to try next set of names */
 		char	*arglist[3];
 		arglist[0] = "e";
 		arglist[1] = grpname;
+		arglist[2] = NULL;
 		edit_result = f_edit( clientData, interp, 2, arglist );
 	}
 

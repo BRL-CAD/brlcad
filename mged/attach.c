@@ -134,9 +134,6 @@ void dm_var_init();
 
 /* The [0] entry will be the startup default */
 static struct dm *which_dm[] = {
-#if 0
-	&dm_Null,		/* This should go first */
-#endif
 	&dm_Tek,
 	&dm_T49,
 	&dm_PS,
@@ -189,7 +186,7 @@ static struct dm *which_dm[] = {
 	0
 };
 
-void
+int
 release(name)
 char *name;
 {
@@ -213,11 +210,11 @@ char *name;
 	  if(p == &head_dm_list){
 	    Tcl_AppendResult(interp, "release: ", name,
 			     " not found\n", (char *)NULL);
-	    return;
+	    return TCL_ERROR;
 	  }
 	}else{
 	  if( curr_dm_list == &head_dm_list )
-	    return;
+	    return TCL_OK;  /* Ignore */
 	  else
 	    p = curr_dm_list;
 	}
@@ -245,64 +242,8 @@ char *name;
 	  curr_dm_list = save_dm_list;
 	else
 	  curr_dm_list = (struct dm_list *)head_dm_list.l.forw;
-}
 
-void
-attach(name)
-char *name;
-{
-  register struct dm **dp;
-  register struct solid *sp;
-
-  register struct dm_list *dmlp;
-  register struct dm_list *o_dm_list;
-
-  /* The Null display manager is already attached */
-  if(!strcmp(name, which_dm[0]->dmr_name))
-    return;
-
-  for( dp=which_dm; *dp != (struct dm *)0; dp++ )  {
-    if( strcmp( (*dp)->dmr_name, name ) != 0 )
-      continue;
-
-    dmlp = (struct dm_list *)rt_malloc(sizeof(struct dm_list),
-				       "dm_list");
-    bzero((void *)dmlp, sizeof(struct dm_list));
-
-    RT_LIST_APPEND(&head_dm_list.l, &dmlp->l);
-    o_dm_list = curr_dm_list;
-    curr_dm_list = dmlp;
-    dmp = *dp;
-    dm_var_init(o_dm_list);
-
-    no_memory = 0;
-    if( dmp->dmr_open() )
-      break;
-
-    rt_log("ATTACHING %s (%s)\n",
-	   dmp->dmr_name, dmp->dmr_lname);
-
-    FOR_ALL_SOLIDS( sp )  {
-      /* Write vector subs into new display processor */
-      if( (sp->s_bytes = dmp->dmr_cvtvecs( sp )) != 0 )  {
-	sp->s_addr = rt_memalloc( &(dmp->dmr_map), sp->s_bytes );
-	if( sp->s_addr == 0 )  break;
-	sp->s_bytes = dmp->dmr_load(sp->s_addr, sp->s_bytes);
-      } else {
-	sp->s_addr = 0;
-	sp->s_bytes = 0;
-      }
-    }
-    dmp->dmr_colorchange();
-    color_soltab();
-    dmp->dmr_viewchange( DM_CHGV_REDO, SOLID_NULL );
-    dmaflag++;
-    return;
-  }
-  rt_log("attach(%s): BAD\n", name);
-
-  if(*dp != (struct dm *)0)
-    release(NULL);
+	return TCL_OK;
 }
 
 static int Nu_int0() { return(0); }
@@ -344,50 +285,6 @@ int		noblock;
 	if( cnt < 0 )  {
 		perror("Nu_input/select()");
 	}
-}
-
-/*
- *  			G E T _ A T T A C H E D
- *
- *  Prompt the user with his options, and loop until a valid choice is made.
- */
-void
-get_attached()
-{
-	char line[80];
-	register struct dm **dp;
-
-	/* If non-interactive, don't attach a device and don't ask */
-	if( !isatty(0) )  {
-		attach( "nu" );
-		return;
-	}
-
-	while(1)  {
-		rt_log("attach (");
-		dp = &which_dm[0];
-		rt_log("%s", (*dp++)->dmr_name);
-		for( ; *dp != (struct dm *)0; dp++ )
-			rt_log("|%s", (*dp)->dmr_name);
-		rt_log(")[%s]? ", which_dm[0]->dmr_name);
-
-		(void)fgets(line, sizeof(line), stdin);	/* \n, Null terminated */
-		line[strlen(line)-1] = '\0';		/* remove newline */
-
-		if( feof(stdin) )  quit();
-		if( line[0] == '\0' )  {
-			dp = &which_dm[0];	/* default */
-			break;
-		}
-		for( dp = &which_dm[0]; *dp != (struct dm *)0; dp++ )
-			if( strcmp( line, (*dp)->dmr_name ) == 0 )
-				break;
-		if( *dp != (struct dm *)0 )
-			break;
-		/* Not a valid choice, loop. */
-	}
-	/* Valid choice made, attach to it */
-	attach( (*dp)->dmr_name );
 }
 
 int
@@ -435,10 +332,6 @@ char    **argv;
 
   if(*dp == (struct dm *)0)
     goto Bad;
-
-  /* The Null display manager is already attached */
-  if(dp == &which_dm[0])
-    return TCL_OK;
 
   if(argc == 2){
     char  *envp;
@@ -540,6 +433,54 @@ is_dm_null()
 
 
 int
+f_untie(clientData, interp, argc, argv )
+ClientData clientData;
+Tcl_Interp *interp;
+int     argc;
+char    **argv;
+{
+  struct dm_list *p;
+  struct shared_info *sip;
+
+  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+        return TCL_ERROR;
+
+  for( RT_LIST_FOR(p, dm_list, &head_dm_list.l) )
+    if(!strcmp(argv[1], rt_vls_addr(&p->_pathName)))
+      break;
+
+  if(p == &head_dm_list){
+    Tcl_AppendResult(interp, "f_untie: bad pathname - %s\n", argv[1]);
+    return TCL_ERROR;
+  }
+
+  if(p->_owner){
+    if(p->s_info->_rc > 1){  /* sharing s_info with another display manager */
+      --p->s_info->_rc;
+      sip = p->s_info;
+      find_new_owner(p);
+      p->s_info = (struct shared_info *)rt_malloc(sizeof(struct shared_info),
+						  "shared_info");
+      bcopy((void *)sip, (void *)p->s_info, sizeof(struct shared_info));
+      p->s_info->_rc = 1;
+      
+      return TCL_OK;
+    }else
+      return TCL_OK; /* Nothing to do */
+  }else{
+    --p->s_info->_rc;
+    sip = p->s_info;
+    p->s_info = (struct shared_info *)rt_malloc(sizeof(struct shared_info),
+						"shared_info");
+    bcopy((void *)sip, (void *)p->s_info, sizeof(struct shared_info));
+    p->s_info->_rc = 1;
+    p->_owner = 1;
+
+    return TCL_OK;
+  }
+}
+
+int
 f_tie(clientData, interp, argc, argv )
 ClientData clientData;
 Tcl_Interp *interp;
@@ -563,8 +504,8 @@ char    **argv;
   }
 
   if(p1 == (struct dm_list *)NULL || p2 == (struct dm_list *)NULL){
-    Tcl_AppendResult(interp, "Bad pathname(s)\n\tpathName1: ", argv[1],
-		     "\t\tpathName2: ", argv[2], "\n", (char *)NULL);
+    Tcl_AppendResult(interp, "f_tie: bad pathname(s)\n\tpathName1 - ", argv[1],
+		     "\t\tpathName2 - ", argv[2], "\n", (char *)NULL);
     return TCL_ERROR;
   }
 
@@ -610,24 +551,29 @@ dm_var_init(initial_dm_list, name)
 struct dm_list *initial_dm_list;
 char *name;
 {
-  curr_dm_list->s_info = (struct shared_info *)rt_malloc(sizeof(struct shared_info),
+  if(dmp == &dm_PS){
+    curr_dm_list->s_info = initial_dm_list->s_info;
+    owner = 0;
+    ++initial_dm_list->s_info->_rc;
+    rt_vls_init(&pathName);
+    strcpy(dname, name);
+  }else{
+    curr_dm_list->s_info = (struct shared_info *)rt_malloc(sizeof(struct shared_info),
 							    "shared_info");
-  bzero((void *)curr_dm_list->s_info, sizeof(struct shared_info));
-#if 1
-  bcopy((void *)&default_mged_variables, (void *)&mged_variables, sizeof(struct _mged_variables));
-#else
-  mged_variables = default_mged_variables;
-#endif
+    bzero((void *)curr_dm_list->s_info, sizeof(struct shared_info));
+    bcopy((void *)&default_mged_variables, (void *)&mged_variables,
+	  sizeof(struct _mged_variables));
 
-  rt_vls_init(&pathName);
-  strcpy(dname, name);
-  mat_copy( Viewrot, initial_dm_list->s_info->_Viewrot );
-  size_reset();
-  new_mats();
+    rt_vls_init(&pathName);
+    strcpy(dname, name);
+    mat_copy( Viewrot, initial_dm_list->s_info->_Viewrot );
+    size_reset();
+    new_mats();
 
-  MAT_DELTAS_GET(orig_pos, toViewcenter);
+    MAT_DELTAS_GET(orig_pos, toViewcenter);
 
-  rc = 1;
-  dmaflag = 1;
-  owner = 1;
+    rc = 1;
+    dmaflag = 1;
+    owner = 1;
+  }
 }

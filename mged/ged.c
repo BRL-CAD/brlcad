@@ -106,6 +106,7 @@ void		(*viewpoint_hook)() = NULL;
 static int	windowbounds[6];	/* X hi,lo;  Y hi,lo;  Z hi,lo */
 
 static jmp_buf	jmp_env;		/* For non-local gotos */
+int             cmd_stuff_str();
 void		(*cur_sigint)();	/* Current SIGINT status */
 void            (*cmdline_sig)();
 void		sig2();
@@ -272,12 +273,8 @@ char **argv;
 	rt_vls_init(&mged_prompt);
 	input_str_index = 0;
 
-	/* Perform any necessary initializations for the command parser */
-	cmd_setup(interactive);
-
-	/* Initialize the menu mechanism to be off, but ready. */
-	mmenu_init();
-	btn_head_menu(0,0,0);		/* unlabeled menu */
+	/* Get set up to use Tcl/Tk */
+	mged_setup();
 
 	windowbounds[0] = XMAX;		/* XHR */
 	windowbounds[1] = XMIN;		/* XLR */
@@ -292,7 +289,9 @@ char **argv;
 	else
 	  rt_log("%s", interp->result);
 
+#if 0
 	dmp->dmr_window(windowbounds);
+#endif
 
 	/* --- Now safe to process commands. --- */
 	if( interactive )  {
@@ -304,21 +303,19 @@ char **argv;
 
 	/* If this is an argv[] invocation, do it now */
 	if( argc > 2 )  {
-#if 0
-		mged_cmd( argc-2, argv+2, (struct funtab *)NULL );
-#else
-		/*
-		   Call cmdline instead of calling mged_cmd directly
-		   so that access to Tcl/Tk is possible.
-	        */
-		for(argc -= 2, argv += 2; argc; --argc, ++argv)
-		  rt_vls_printf(&input_str, "%s ", *argv);
+	  char *av[] = {"q", NULL};
+	  /*
+	    Call cmdline instead of calling mged_cmd directly
+	    so that access to Tcl/Tk is possible.
+	    */
+	  for(argc -= 2, argv += 2; argc; --argc, ++argv)
+	    rt_vls_printf(&input_str, "%s ", *argv);
 
-		cmdline(&input_str, TRUE);
-		rt_vls_free(&input_str);
-#endif
-		f_quit((ClientData)NULL, interp, 0, NULL);
-		/* NOTREACHED */
+	  cmdline(&input_str, TRUE);
+	  rt_vls_free(&input_str);
+
+	  f_quit((ClientData)NULL, interp, 1, av);
+	  /* NOTREACHED */
 	}
 
 #if 0
@@ -499,8 +496,11 @@ int mask;
     /* Grab single character from stdin */
 
     count = read(fd, (void *)&ch, 1);
-    if (count <= 0 && feof(stdin))
-	f_quit((ClientData)NULL, interp, 0, NULL);
+    if (count <= 0 && feof(stdin)){
+      char *av[] = {"q", NULL};
+
+      f_quit((ClientData)NULL, interp, 1, av);
+    }
 
     /* Process character */
 #define CTRL_A      1
@@ -792,6 +792,31 @@ int mask;
 	
 }
 
+
+/* Stuff a string to stdout while leaving the current command-line alone */
+int
+cmd_stuff_str(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int     argc;
+char    **argv;
+{
+  int i;
+
+  if(argc != 2)
+    return TCL_ERROR;
+
+  rt_log("\r%s\n", argv[1]);
+  pr_prompt();
+  rt_log("%s", rt_vls_addr(&input_str));
+  pr_prompt();
+  for(i = 0; i < input_str_index; ++i)
+    rt_log("%c", rt_vls_addr(&input_str)[i]);
+
+  return TCL_OK;
+}
+
+
 /*
  *			E V E N T _ C H E C K
  *
@@ -872,7 +897,10 @@ again:
     if( illump != SOLID_NULL )
 	windowbounds[1] = MENUXLIM;
     windowbounds[3] = TITLE_YBASE-TEXT1_DY;	/* YLR */
+
+#if 0
     dmp->dmr_window(windowbounds);	/* hack */
+#endif
 
     save_dm_list = curr_dm_list;
     for( RT_LIST_FOR(p, dm_list, &head_dm_list.l) ){
@@ -957,6 +985,7 @@ refresh()
      */
 
     curr_dm_list = p;
+    dmp->dmr_window(windowbounds);
 
     if(update_views || dmaflag || dirty) {
       double	elapsed_time;
@@ -1373,14 +1402,13 @@ char	**argv;
   static int first = 1;
 
 	if( dbip )  {
-	  int ac = 1;
 	  char *av[] = { "zap", NULL };
 
 	  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	    return TCL_ERROR;
 
 	  /* Clear out anything in the display */
-	  f_zap(clientData, interp, ac, av);
+	  f_zap(clientData, interp, 1, av);
 
 	  /* Close current database.  Releases MaterHead, etc. too. */
 	  db_close(dbip);
@@ -1431,25 +1459,11 @@ char	**argv;
  	/* Quick -- before he gets away -- write a logfile entry! */
 	log_event( "START", argv[1] );
 
-#if 0
-	if( interactive && is_dm_null() )  {
-		/*
-		 * This is an interactive mged, with no display yet.
-		 * Ask which DM, and fire up the display manager.
-		 * Ask this question BEFORE the db_scan, because
-		 * that can take a long time for large models.
-		 */
-
-		get_attached();
-	}
-#else
 	if(first){
 	  first = 0;
 	  Tcl_AppendResult(interp, "Note: the attach command can be used\n",
 			   "      to open a display window.\n\n", (char *)NULL);
 	}
-	  
-#endif
 
 	/* --- Scan geometry database and build in-memory directory --- */
 	db_scan( dbip, (int (*)())db_diradd, 1);

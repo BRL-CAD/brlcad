@@ -74,15 +74,9 @@ struct dm dm_PS = {
 extern struct device_values dm_values;	/* values read from devices */
 
 static vect_t	clipmin, clipmax;	/* for vector clipping */
-#if 0
 FILE	*ps_fp;			/* PostScript file pointer */
-char	ps_ttybuf[BUFSIZ];
-int	in_middle;		/* !0 when in middle of image */
-#else
-static FILE	*ps_fp;			/* PostScript file pointer */
 static char	ttybuf[BUFSIZ];
 static int	in_middle;		/* !0 when in middle of image */
-#endif
 
 /*
  * Display coordinate conversion:
@@ -100,7 +94,7 @@ static int	in_middle;		/* !0 when in middle of image */
 PS_open()
 {
 	char line[64];
-
+#if 0
 	rt_log("PostScript file? ");
 	(void)fgets( line, sizeof(line), stdin ); /* \n, null terminated */
 	line[strlen(line)-1] = '\0';		/* remove newline */
@@ -113,13 +107,15 @@ PS_open()
 	} else {
 		return(1);		/* BAD */
 	}
-
-#if 0
-	setbuf( ps_fp, ps_ttybuf );
 #else
-	setbuf( ps_fp, ttybuf );
+	if( (ps_fp = fopen( dname, "w" )) == NULL ){
+	  Tcl_AppendResult(interp, "f_ps: Error opening file - ", dname,
+			   "\n", (char *)NULL);
+	  return TCL_ERROR;
+	}
 #endif
 
+	setbuf( ps_fp, ttybuf );
 	fputs( "%!PS-Adobe-1.0\n\
 %begin(plot)\n\
 %%DocumentFonts:  Courier\n", ps_fp );
@@ -172,8 +168,10 @@ PS_close()
 
 	fputs("%end(plot)\n", ps_fp);
 	(void)fclose(ps_fp);
-	ps_fp = (FILE *)0;
+	ps_fp = (FILE *)NULL;
+#if 0
 	rt_log("PS_close()\n");
+#endif
 }
 
 /*
@@ -184,8 +182,10 @@ PS_close()
 void
 PS_prolog()
 {
+#if 0
 	if( !dmaflag )
 		return;
+#endif
 
 	/* We expect the screen to be blank so far */
 	if( in_middle )  {
@@ -193,7 +193,11 @@ PS_prolog()
 		 *  Force the release of this Display Manager
 		 *  This assures only one frame goes into the file.
 		 */
+#ifdef MULTI_ATTACH
+	  release(NULL);
+#else
 		release();
+#endif
 		return;
 	}
 	in_middle = 1;
@@ -242,6 +246,7 @@ PS_object( sp, mat, ratio, white )
 register struct solid *sp;
 mat_t mat;
 double ratio;
+int white;
 {
 	static vect_t			last;
 	register struct rt_vlist	*vp;
@@ -279,6 +284,7 @@ double ratio;
 				VMOVE( last, fin );
 				break;
 			}
+
 			if(
 				vclip( start, fin, clipmin, clipmax ) == 0
 			)  continue;
@@ -452,7 +458,9 @@ unsigned
 PS_load( addr, count )
 unsigned addr, count;
 {
+#if 0
 	rt_log("PS_load(x%x, %d.)\n", addr, count );
+#endif
 	return( 0 );
 }
 

@@ -810,8 +810,14 @@ char	**argv;
 	}
 	db_free_external( &external );
 
-	/* draw the "made" solid */
-	return f_edit( clientData, interp, 2, argv );	/* depends on name being in argv[1] */
+	{
+	  char *av[] = {"e", NULL, NULL};
+
+	  av[1] = argv[1]; /* depends on solid name being in argv[1] */
+
+	  /* draw the "made" solid */
+	  return f_edit( clientData, interp, 2, av );
+	}
 }
 
 /* Mirface command - mirror an arb face */

@@ -1920,5 +1920,11 @@ char **argv;
 	rt_clean( rtip );
 	rt_free( (char *)rtip, "f_make_bb: rtip" );
 
-	return f_edit( clientData, interp, 2, argv );
+	{
+	  char *av[] = {"e", NULL, NULL};
+
+	  av[1] = new_name;
+
+	  return f_edit( clientData, interp, 2, av );
+	}
 }

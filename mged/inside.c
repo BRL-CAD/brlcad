@@ -457,6 +457,7 @@ char **argv;
 		char	*arglist[3];
 		arglist[0] = "e";
 		arglist[1] = newname;
+		arglist[2] = NULL;
 		return f_edit(clientData, interp, 2, arglist );
 	}
 }

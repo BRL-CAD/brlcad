@@ -25,6 +25,9 @@ extern struct device_values dm_values;
 /* defined in ged.c */
 extern int dm_pipe[];
 
+/* defined in dm-ps.c */
+extern FILE *ps_fp;
+
 #define VIRTUAL_TRACKBALL_OFF 0
 #define VIRTUAL_TRACKBALL_ON 1
 #define VIRTUAL_TRACKBALL_ROTATE 2 

@@ -485,8 +485,13 @@ char	**argv;
 	  return TCL_ERROR;
 	}
 
-	/* draw the "made" solid */
-	return f_edit(clientData, interp, 2, argv+1 ); /* depends on name being in argv[2] ! */
+	{
+	  char *av[] = {"e", NULL, NULL};
+
+	  av[1] = argv[2]; /* depends on solid name being in argv[2] */
+
+	  return f_edit( clientData, interp, 2, av );
+	}
 }
 
 /* Modify Combination record information */
@@ -1058,8 +1063,14 @@ char	**argv;
 	}
 	db_free_external( &external );
 
-	/* draw the "made" solid */
-	return f_edit( clientData, interp, 2, argv );	/* depends on name being in argv[1] */
+	{
+	  char *av[] = {"e", NULL, NULL};
+
+	  av[1] = argv[1]; /* depends on name being in argv[1] */
+
+	  /* draw the "made" solid */
+	  return f_edit( clientData, interp, 2, av );
+	}
 }
 
 /* allow precise changes to object rotation */

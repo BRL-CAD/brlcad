@@ -75,7 +75,7 @@ struct dm dm_Tek = {
 };
 
 extern struct device_values dm_values;	/* values read from devices */
-
+static int tek_count = 0;
 static vect_t clipmin, clipmax;		/* for vector clipping */
 
 #define BELL	007
@@ -109,8 +109,29 @@ static void	teklabel(), teklinemod(), tekpoint();
  */
 Tek_open()
 {
-	char line[64], line2[64];
+  char line[64], line2[64];
 
+  if(tek_count){
+    ++tek_count;
+    Tcl_AppendResult(interp, "Tek_open: tek is already open\n", (char *)NULL);
+    return TCL_ERROR;
+  }
+
+#if 1
+  if( (outfp = fopen(dname, "r+w")) == NULL ) {
+    (void)sprintf(line, "/dev/tty%s%c", dname, '\0' );
+    if( (outfp = fopen(line, "r+w")) == NULL ){
+      if( (outfp = fopen("/dev/tty","r+w")) == NULL ){
+	Tcl_AppendResult(interp, "Tek_open: failed to open ", dname,
+			 ", ", line, " and /dev/tty", (char *)NULL);
+	return TCL_ERROR;
+      }else 
+	second_fd = 0;          /* no second filedes */
+    }else
+      second_fd = fileno(outfp);
+  }else
+    second_fd = fileno(outfp);
+#else
 	rt_log("Output tty [stdout]? ");
 	(void)fgets( line, sizeof(line), stdin );	/* \n, Null terminated */
 	line[strlen(line)-1] = '\0';			/* remove newline */
@@ -138,7 +159,11 @@ Tek_open()
 			return(1);	/* BAD */
 		second_fd = 0;		/* no second filedes */
 	}
+#endif
 	setbuf( outfp, ttybuf );
+
+	tek_count = 1;
+	rt_vls_printf(&pathName, ".dm_tek");
 	return(0);			/* OK */
 }
 
@@ -150,9 +175,15 @@ Tek_open()
 void
 Tek_close()
 {
-	(void)putc(US,outfp);
-	(void)fflush(outfp);
-	fclose(outfp);
+  if(tek_count > 1){
+    --tek_count;
+    return;
+  }
+  
+  (void)putc(US,outfp);
+    (void)fflush(outfp);
+    fclose(outfp);
+    tek_count = 0;
 }
 
 /*
@@ -197,6 +228,7 @@ Tek_epilog()
 		return;
 	tekmove( TITLE_XBASE, SOLID_YBASE );
 	(void)putc(US,outfp);
+	(void)fflush(outfp);
 }
 
 /*

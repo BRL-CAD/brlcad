@@ -140,8 +140,14 @@ char	**argv;
 	}
 	db_free_external( &external );
 
-	/* draw the new object */
-	return f_edit( clientData, interp, 2, argv+1 );	/* depends on name being in argv[2] ! */
+	{
+	  char *av[] = {"e", NULL, NULL};
+
+	  av[1] = argv[2]; /* depends on solid name being in argv[2] */
+
+	  /* draw the new object */
+	  return f_edit( clientData, interp, 2, av );
+	}
 }
 
 /* Create an instance of something */
@@ -547,12 +553,22 @@ char	**argv;
 	}
 	db_free_external( &external );
 
-	/* draw the new solid */
-	f_edit( clientData, interp, 2, argv+1 );	/* depends on name being in argv[2] ! */
+	{
+	  char *av[] = {"e", NULL, NULL};
+
+	  av[1] = argv[2]; /* depends on solid name being in argv[2] */
+
+	  /* draw the new solid */
+	  (void)f_edit( clientData, interp, 2, av );
+	}
 
 	if(state == ST_VIEW) {
+	  char *av[] = {"sed", NULL, NULL};
+
+	  av[1] = argv[2];  /* new name in argv[2] */
+
 	  /* solid edit this new cylinder */
-	  f_sed( clientData, interp, 2, argv+1 );	/* new name in argv[2] */
+	  (void)f_sed( clientData, interp, 2, av );
 	}
 
 	return TCL_OK;

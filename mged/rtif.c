@@ -1366,7 +1366,9 @@ int	argc;
 
 	/* If new treewalk is needed, get new objects into view. */
 	if( tree_walk_needed )  {
-	  (void)f_zap( (ClientData)NULL, interp, 0, 0 );
+	  char *av[] = {"Z", NULL};
+
+	  (void)f_zap( (ClientData)NULL, interp, 1, av );
 	  edit_com( rt_cmd_vec_len, rt_cmd_vec, rtif_mode, 0 );
 	}
 

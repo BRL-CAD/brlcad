@@ -2045,6 +2045,59 @@ int type;
 	return;						/* success */
 }
 
+int
+get_rotation_vertex()
+{
+  int i, j;
+  int type, loc, valid;
+  int fixv;
+  struct rt_vls str;
+  struct rt_vls cmd;
+
+  type = es_type - 4;
+
+  loc = es_menu*4;
+  valid = 0;
+  rt_vls_init(&str);
+  rt_vls_init(&cmd);
+
+  rt_vls_printf(&str, "Enter fixed vertex number( ");
+  for(i=0; i<4; i++){
+    if( arb_vertices[type][loc+i] )
+      rt_vls_printf(&str, "%d ", arb_vertices[type][loc+i]);
+  }
+  rt_vls_printf(&str, ") [%d]: ",arb_vertices[type][loc]);
+
+  rt_vls_printf(&cmd, "mged_input_dialog .get_vertex %s \{Need vertex for solid rotate\}\
+ \{%s\} vertex_num %d 0 OK", dname, rt_vls_addr(&str), arb_vertices[type][loc]);
+
+  while(!valid){
+    if(Tcl_Eval(interp, rt_vls_addr(&cmd)) != TCL_OK){
+      Tcl_AppendResult(interp, "get_rotation_vertex: Error reading vertex\n", (char *)NULL);
+      /* Using default */
+      return arb_vertices[type][loc];
+    }
+
+    fixv = atoi(Tcl_GetVar(interp, "vertex_num", TCL_GLOBAL_ONLY));
+    for(j=0; j<4; j++)  {
+      if( fixv==arb_vertices[type][loc+j] )
+	valid=1;
+    }
+  }
+
+  rt_vls_free(&str);
+  return fixv;
+  
+#if 0
+  /* check whether nimble fingers entered valid vertex */
+  valid = 0;
+  for(j=0; j<4; j++)  {
+    if( fixv==arb_vertices[type][loc+j] )
+      valid=1;
+  }
+#endif
+}
+
 /*
  * 			S E D I T
  * 
@@ -2075,8 +2128,9 @@ sedit()
 	switch( es_edflag ) {
 
 	case IDLE:
-		/* do nothing */
-		break;
+	  /* do nothing */
+	  update_views = 0;
+	  break;
 
 	case ECMD_ARB_MAIN_MENU:
 		/* put up control (main) menu for GENARB8s */
@@ -2137,6 +2191,9 @@ sedit()
 		  fixv = 5;
 		}
 		else{
+#if 1
+		  fixv = get_rotation_vertex();
+#else
 			/* find fixed vertex for ECMD_ARB_ROTATE_FACE */
 			fixv=0;
 			do  {
@@ -2171,6 +2228,7 @@ sedit()
 				if( !valid )
 					fixv=0;
 			} while( fixv <= 0 || fixv > es_type );
+#endif
 		}
 		
 		pr_prompt();

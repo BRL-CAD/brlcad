@@ -1305,7 +1305,6 @@ char	**argv;
 	struct directory	*dp;
 	union tree		*tmp_tree;
 	char			op;
-	char			*edit_args[2];
 	int			ngran;
 	int			failed;
 
@@ -1538,8 +1537,13 @@ char	**argv;
 	/* Free boolean tree, and the regions in it. */
 	db_free_tree( tmp_tree );
 
-	/* draw the new solid */
-	edit_args[0] = (char *)NULL;
-	edit_args[1] = newname;
-	return( f_edit( clientData, interp, 2, edit_args ) );
+
+	{
+	  char *av[] = {"e", NULL, NULL};
+
+	  av[1] = newname;
+
+	  /* draw the new solid */
+	  return f_edit( clientData, interp, 2, av );
+	}
 }

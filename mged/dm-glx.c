@@ -377,47 +377,12 @@ Glx_configure_window_shape()
  *  and close the window.  Ignore the "ERR_CLOSEDLASTWINDOW" error
  *  message. It doesn't hurt anything.  Silly MEX.
  */
-
-#if 1
 Glx_open()
 {
   glx_var_init();
 
   return glx_setup(dname);
 }
-#else
-Glx_open()
-{
-  char	line[82];
-  char	hostname[80];
-  char	display[82];
-  char	*envp;
-
-  glx_var_init();
-  /* get or create the default display */
-  if( (envp = getenv("DISPLAY")) == NULL ) {
-    /* Env not set, use local host */
-    gethostname( hostname, 80 );
-    hostname[79] = '\0';
-    (void)sprintf( display, "%s:0", hostname );
-    envp = display;
-  }
-
-  rt_log("X Display [%s]? ", envp );
-  (void)fgets( line, sizeof(line), stdin );
-  line[strlen(line)-1] = '\0';		/* remove newline */
-  if( feof(stdin) )  quit();
-  if( line[0] != '\0' ) {
-    if( glx_setup(line) )
-      return(1);		/* BAD */
-  } else {
-    if( glx_setup(envp) )
-      return(1);	/* BAD */
-  }
-
-  return(0);			/* OK */
-}
-#endif
 
 static int
 glx_setup( name )
@@ -759,25 +724,25 @@ void
 Glx_close()
 {
   if(xtkwin != NULL){
-#if 0
-  if(mvars.cueing_on)
-    depthcue(0);
+#if 1
+    if(mvars.cueing_on)
+      depthcue(0);
 
-  lampoff( 0xf );
+    lampoff( 0xf );
 
-  /* avoids error messages when reattaching */
-  mmode(MVIEWING);	
-  lmbind(LIGHT2,0);
-  lmbind(LIGHT3,0);
-  lmbind(LIGHT4,0);
-  lmbind(LIGHT5,0);
+    /* avoids error messages when reattaching */
+    mmode(MVIEWING);	
+    lmbind(LIGHT2,0);
+    lmbind(LIGHT3,0);
+    lmbind(LIGHT4,0);
+    lmbind(LIGHT5,0);
 
-  frontbuffer(1);
-  glx_clear_to_black();
-  frontbuffer(0);
+    frontbuffer(1);
+    glx_clear_to_black();
+    frontbuffer(0);
 #endif
 /*XXX*/
-  Tk_DestroyWindow(Tk_Parent(xtkwin));
+    Tk_DestroyWindow(Tk_Parent(xtkwin));
   }
 
   if(((struct glx_vars *)dm_vars)->l.forw != RT_LIST_NULL)
@@ -1307,22 +1272,14 @@ XEvent *eventPtr;
     /* Window may have moved */
     Glx_configure_window_shape();
 
-#if 0
-    dmaflag = 1;
-#else
     dirty = 1;
-#endif
     refresh();
     goto end;
   }else if( eventPtr->type == ConfigureNotify ){
       /* Window may have moved */
       Glx_configure_window_shape();
 
-#if 0
-      dmaflag = 1;
-#else
       dirty = 1;
-#endif
       refresh();
       goto end;
   }else if( eventPtr->type == MotionNotify ) {
@@ -1334,12 +1291,14 @@ XEvent *eventPtr;
     switch(mvars.virtual_trackball){
     case VIRTUAL_TRACKBALL_OFF:
     case VIRTUAL_TRACKBALL_ON:
-      /* do the regular thing */
-      mx = (mx/(double)winx_size - 0.5) * 4095;
-      my = (0.5 - my/(double)winy_size) * 4095;
+      if(state != ST_S_PICK && state != ST_O_PICK &&
+	 state != ST_S_VPICK && state != ST_O_PATH)
+	goto end;
 
+      /* do the regular thing */
       /* Constant tracking (e.g. illuminate mode) bound to M mouse */
-      rt_vls_printf( &cmd, "M 0 %d %d\n", mx, my );
+      rt_vls_printf( &cmd, "M 0 %d %d\n", (mx/(double)winx_size - 0.5) * 4095,
+		     (0.5 - my/(double)winy_size) * 4095);
       break;
     case VIRTUAL_TRACKBALL_ROTATE:
       rt_vls_printf( &cmd, "irot %f %f 0\n", (my - omy)/2.0,
@@ -1452,7 +1411,10 @@ XEvent *eventPtr;
 
     if(B->button == 1)
       button0 = 0;
-  }
+
+    goto end;
+  }else
+    goto end;
 
   status = cmdline(&cmd, FALSE);
 end:
@@ -2521,8 +2483,7 @@ set_knob_offset()
 static void
 glx_var_init()
 {
-  dm_vars = (char *)rt_malloc(sizeof(struct glx_vars),
-					    "glx_var_init: glx_vars");
+  dm_vars = rt_malloc(sizeof(struct glx_vars), "glx_var_init: glx_vars");
   bzero((void *)dm_vars, sizeof(struct glx_vars));
   devmotionnotify = LASTEvent;
   devbuttonpress = LASTEvent;

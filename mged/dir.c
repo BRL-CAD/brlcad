@@ -1177,6 +1177,7 @@ again:
 
 	/* ALL references removed...now KILL the object[s] */
 	/* reuse argv[] */
+	argv[0] = "kill";
 	return f_kill( clientData, interp, argc, argv );
 }
 

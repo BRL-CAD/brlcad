@@ -60,10 +60,11 @@ int cmd_init();
 int cmd_set();
 int get_more_default();
 int f_tran(), f_irot();
-void set_tran();
+void set_tran(), gui_setup(), mged_setup(), cmd_setup();
 
 extern mat_t    ModelDelta;
 
+extern int cmd_stuff_str();
 extern int f_nmg_simplify();
 extern int f_make_bb();
 
@@ -174,7 +175,7 @@ static struct funtab funtab[] = {
 	f_arced, 3,MAXARGS,TRUE,
 "area", "[endpoint_tolerance]", "calculate presented area of view",
 	f_area, 1, 2, TRUE,
-"attach", "[device]", "attach to a display processor, or NU",
+"attach", "device screen", "attach to a display processor on screen",
 	f_attach,1,3,TRUE,
 "B", "<objects>", "clear screen, edit objects",
 	f_blast,2,MAXARGS,TRUE,
@@ -380,10 +381,8 @@ static struct funtab funtab[] = {
 	f_preview, 2, MAXARGS,TRUE,
 "press", "button_label", "emulate button press",
 	f_press,2,MAXARGS,TRUE,
-#if 0
-"ps", "[f] file", "create postscript file of current view with or without the faceplate",
-        f_ps, 2, 3,FALSE,
-#endif
+"ps", "file", "creates a postscript file of the current view",
+        f_ps, 2, 3,TRUE,
 "push", "object[s]", "pushes object's path transformations to solids",
 	f_push, 2, MAXARGS,TRUE,
 "putmat", "a/b {I | m0 m1 ... m16}", "replace matrix on combination's arc",
@@ -492,6 +491,8 @@ static struct funtab funtab[] = {
 	f_tree, 2, MAXARGS,TRUE,
 "units", "[mm|cm|m|in|ft|...]", "change units",
 	f_units,1,2,TRUE,
+"untie", "pathName", "untie display manager pathName",
+        f_untie, 2,2,TRUE,
 #if 1
 "vdraw", "write|insert|delete|read|length|show [args]", "Expermental drawing (cnuzman)",
 	cmd_vdraw, 2, 7, TRUE,
@@ -892,38 +893,116 @@ char **argv;
 }
 
 
-/* 			C M D _ S E T U P
+/*
  *
- * Sets up the Tcl interpreter and calls other setup functions.
+ * Sets up the Tcl interpreter
  */ 
+void
+mged_setup()
+{
+  /* The following is for GUI output hooks: contains name of function to
+     run with output */
+  rt_vls_init(&tcl_output_hook);
+
+  /* Create the interpreter */
+  interp = Tcl_CreateInterp();
+
+  /* This runs the init.tcl script */
+  if( Tcl_Init(interp) == TCL_ERROR )
+    rt_log("Tcl_Init error %s\n", interp->result);
+
+  /* register commands */
+  cmd_setup();
+
+  /* Initialize the menu mechanism to be off, but ready. */
+  mmenu_init();
+  btn_head_menu(0,0,0);		/* unlabeled menu */
+
+  history_setup();
+  mged_variable_setup(interp);
+  gui_setup();
+}
 
 void
-cmd_setup(interactive)
-int interactive;
+gui_setup()
+{
+  FILE    *fp;
+  struct rt_vls str;
+  char *path;
+  char *filename;
+  int     found;
+
+#define MGED_GUIRC "mged2.tcl"
+
+  found = 0;
+  rt_vls_init( &str );
+
+  if((filename = getenv("MGED_GUIRC")) == (char *)NULL )
+    /* Use default file name */
+    filename = MGED_GUIRC;
+
+  if((path = getenv("MGED_LIBRARY")) != (char *)NULL ){
+    /* Use MGED_LIBRARY path */
+    rt_vls_strcpy( &str, path );
+    rt_vls_strcat( &str, "/" );
+    rt_vls_strcat( &str, filename );
+
+    if ((fp = fopen(rt_vls_addr(&str), "r")) != NULL )
+      found = 1;
+  }
+
+  if(!found){
+    if( (path = getenv("HOME")) != (char *)NULL )  {
+      /* Use HOME path */
+      rt_vls_strcpy( &str, path );
+      rt_vls_strcat( &str, "/" );
+      rt_vls_strcat( &str, filename );
+
+      if( (fp = fopen(rt_vls_addr(&str), "r")) != NULL )
+	found = 1;
+    }
+  }
+
+  if( !found ) {
+    /* Check current directory */
+    if( (fp = fopen( filename, "r" )) != NULL )  {
+      rt_vls_strcpy( &str, filename );
+      found = 1;
+    }
+  }
+
+  if(!found){
+    rt_log("gui_setup: user interface startup file was not found.\n\n");
+    rt_log("Note: there are three environment variables that should be set.\n");
+    rt_log("\tMGED_GUIRC is the name of the startup file.\n");
+    rt_log("\tMGED_LIBRARY is the path where the Tcl files live.\n");
+    rt_log("\tMGED_HTML_DIR is the path where the html files live.\n\n");
+    return;
+  }
+
+  fclose( fp );
+
+  if (Tcl_EvalFile( interp, rt_vls_addr(&str) ) == TCL_ERROR) {
+    rt_vls_free(&str);
+    return;
+  }
+
+  rt_vls_free(&str);
+  return;
+}
+
+
+/* 			C M D _ S E T U P
+ * Register all the MGED commands.
+ */
+void
+cmd_setup()
 {
     register struct funtab *ftp;
     struct rt_vls temp;
 
     rt_vls_init(&temp);
 
-    /* The following is for GUI output hooks: contains name of function to
-       run with output */
-    rt_vls_init(&tcl_output_hook);
-
-    /* Create the interpreter */
-
-    interp = Tcl_CreateInterp();
-
-#if 0
-    Tcl_SetVar(interp, "tcl_interactive", interactive ? "1" : "0",
-	       TCL_GLOBAL_ONLY);
-#endif
-
-    /* This runs the init.tcl script */
-    if( Tcl_Init(interp) == TCL_ERROR )
-	rt_log("Tcl_Init error %s\n", interp->result);
-
-    /* Finally, add in all the MGED commands.  Warn if they conflict */
     for (ftp = funtab+1; ftp->ft_name != NULL; ftp++) {
 #if 0
 	rt_vls_strcpy(&temp, "info commands ");
@@ -943,10 +1022,14 @@ int interactive;
 	    (void)Tcl_CreateCommand(interp, rt_vls_addr(&temp), ftp->ft_func,
 				   (ClientData)ftp, (Tcl_CmdDeleteProc *)NULL);
 	} else {
+#if 0
 	    (void)Tcl_CreateCommand(interp, ftp->ft_name, cmd_wrapper, 	    
 			           (ClientData)ftp, (Tcl_CmdDeleteProc *)NULL);
 	    (void)Tcl_CreateCommand(interp, rt_vls_addr(&temp), cmd_wrapper,
 				   (ClientData)ftp, (Tcl_CmdDeleteProc *)NULL);
+#else
+	    rt_log("cmd_setup: %s needs to be Tcl converted\n", ftp->ft_name);
+#endif
 	}
     }
 
@@ -958,6 +1041,8 @@ int interactive;
     (void)Tcl_CreateCommand(interp, "cmd_set", cmd_set, (ClientData)NULL,
 			    (Tcl_CmdDeleteProc *)NULL);
     (void)Tcl_CreateCommand(interp, "get_more_default", get_more_default, (ClientData)NULL,
+			    (Tcl_CmdDeleteProc *)NULL);
+    (void)Tcl_CreateCommand(interp, "stuff_str", cmd_stuff_str, (ClientData)NULL,
 			    (Tcl_CmdDeleteProc *)NULL);
 #endif
 
@@ -981,9 +1066,6 @@ int interactive;
 
     rt_vls_free(&temp);
     tkwin = NULL;
-
-    history_setup();
-    mged_variable_setup(interp);
 }
 
 
@@ -1250,7 +1332,8 @@ int record;
 
     RT_VLS_CHECK(vp);
 
-    if (rt_vls_strlen(vp) <= 0) return 0;
+    if (rt_vls_strlen(vp) <= 0)
+      return CMD_OK;
 		
     rt_vls_init(&globbed);
 
@@ -1281,13 +1364,23 @@ int record;
 	len = strlen(interp->result);
 
     /* If the command had something to say, print it out. */	     
+	if (len > 0) {
+	  struct rt_vls tmp_vls;
 
-	if (len > 0) rt_log("%s%s", interp->result,
-			    interp->result[len-1] == '\n' ? "" : "\n");
+	  rt_log("%s%s", interp->result,
+		 interp->result[len-1] == '\n' ? "" : "\n");
+
+	  rt_vls_init(&tmp_vls);
+	  rt_vls_printf(&tmp_vls, "distribute_text \{\} \{%s\} \{%s\}",
+			rt_vls_addr(&globbed), interp->result);
+	  Tcl_Eval(interp, rt_vls_addr(&tmp_vls));
+	  Tcl_SetResult(interp, "", TCL_STATIC);
+	  rt_vls_free(&tmp_vls);
+	}
 
     /* Then record it in the history, if desired. */
-
-	if (record) history_record(vp, &start, &finish, CMD_OK);
+	if (record)
+	  history_record(vp, &start, &finish, CMD_OK);
 
 	rt_vls_free(&globbed);
 	rt_vls_strcpy(&mged_prompt, MGED_PROMPT);
@@ -1869,97 +1962,31 @@ char    *argv[];
   rt_log( "closew: currently not available\n");
   return CMD_BAD;
 }
+#endif
 
-static
 int
-f_ps(argc, argv)
+f_ps(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int argc;
 char *argv[];
 {
-  struct dm *o_dmp;
-  void (*o_dotitles_hook)();
-  int o_faceplate;
-  static int windowbounds[] = {
-    2047, -2048, 2047, -2048, 2047, -2048
-  };
+  int status;
+  char *av_attach[] = {"attach", "ps", NULL, NULL};
+  char *av_release[] = {"release", NULL};
 
-  o_faceplate = mged_variables.faceplate;
-  if(argc == 3){
-    if(*argv[1] == 'f'){
-      mged_variables.faceplate = 1;
-      ++argv;
-    }else{
-      rt_log( "Usage: ps filename [f]\n");
-      return CMD_BAD;
-    }
-  }else
-    mged_variables.faceplate = 0;
+  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+    return TCL_ERROR;
 
-  if( (ps_fp = fopen( argv[1], "w" )) == NULL )  {
-	perror(argv[1]);
-	return CMD_BAD;
-  }
+  av_attach[2] = argv[1];
+  status = f_attach(clientData, interp, 3, av_attach);
+  if(status == TCL_ERROR)
+    return TCL_ERROR;
 
-  o_dotitles_hook = dotitles_hook;
-  dotitles_hook = NULL;
-  o_dmp = dmp;
-  dmp = &dm_PS;
-  dmp->dmr_window(windowbounds);
-#if 0
-  if(dmp->dmr_open())
-	goto clean_up;
-#else
-
-	setbuf( ps_fp, ps_ttybuf );
-
-	mged_fputs( "%!PS-Adobe-1.0\n\
-%begin(plot)\n\
-%%DocumentFonts:  Courier\n", ps_fp );
-	fprintf(ps_fp, "%%%%Title: %s\n", argv[1] );
-	mged_fputs( "\
-%%Creator: MGED dm-ps.c\n\
-%%BoundingBox: 0 0 324 324	% 4.5in square, for TeX\n\
-%%EndComments\n\
-\n", ps_fp );
-
-	mged_fputs( "\
-4 setlinewidth\n\
-\n\
-% Sizes, made functions to avoid scaling if not needed\n\
-/FntH /Courier findfont 80 scalefont def\n\
-/DFntL { /FntL /Courier findfont 73.4 scalefont def } def\n\
-/DFntM { /FntM /Courier findfont 50.2 scalefont def } def\n\
-/DFntS { /FntS /Courier findfont 44 scalefont def } def\n\
-\n\
-% line styles\n\
-/NV { [] 0 setdash } def	% normal vectors\n\
-/DV { [8] 0 setdash } def	% dotted vectors\n\
-/DDV { [8 8 32 8] 0 setdash } def	% dot-dash vectors\n\
-/SDV { [32 8] 0 setdash } def	% short-dash vectors\n\
-/LDV { [64 8] 0 setdash } def	% long-dash vectors\n\
-\n\
-/NEWPG {\n\
-	.0791 .0791 scale	% 0-4096 to 324 units (4.5 inches)\n\
-} def\n\
-\n\
-FntH  setfont\n\
-NEWPG\n\
-", ps_fp);
-
-	in_middle = 0;
-#endif
-
-  color_soltab();
-  dmaflag = 1;
+  dirty = 1;
   refresh();
-  dmp->dmr_close();
-clean_up:
-  dmp = o_dmp;
-  dotitles_hook = o_dotitles_hook;
-  mged_variables.faceplate = o_faceplate;
-  return CMD_OK;
+  return f_release(clientData, interp, 1, av_release);
 }
-#endif
 
 int
 f_setview(clientData, interp, argc, argv)

@@ -186,11 +186,12 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
+  char *av[] = {"Z", (char *)NULL};
 
   if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
     return TCL_ERROR;
 
-  if (f_zap(clientData, interp, argc, argv) == TCL_ERROR)
+  if (f_zap(clientData, interp, 1, av) == TCL_ERROR)
     return TCL_ERROR;
 
   if( dmp->dmr_displaylist )  {
@@ -906,20 +907,6 @@ char	**argv;
   return TCL_OK;
 }
 
-#if 0
-int
-f_attach(argc, argv)
-int	argc;
-char	**argv;
-{
-  if (argc == 1)
-    get_attached();
-  else
-    attach( argv[1] );
-  return CMD_OK;
-}
-#endif
-
 int
 f_release(clientData, interp, argc, argv)
 ClientData clientData;
@@ -931,11 +918,9 @@ char	**argv;
     return TCL_ERROR;
 
   if(argc == 2)
-    release(argv[1]);
-  else
-    release(NULL);
+    return release(argv[1]);
 
-  return TCL_OK;
+  return release(NULL);
 }
 
 /*
@@ -1223,6 +1208,8 @@ char	**argv;
   update_views = 1;
 
   button(BE_S_ILLUMINATE);	/* To ST_S_PICK */
+
+  argv[0] = "ill";
   return f_ill(clientData, interp, argc, argv);	/* Illuminate named solid --> ST_S_EDIT */
 }
 
@@ -1507,15 +1494,12 @@ char	**argv;
 			((double)i/2047.0 + 1.0)*Viewscale * base2local * M_SQRT2 );
 		return TCL_OK;
 	} else if( strcmp( cmd, "zap" ) == 0 || strcmp( cmd, "zero" ) == 0 )  {
-		char	*av[3];
+		char	*av[] = {"adc", "reset", (char *)NULL};
 
 		VSETALL( rate_rotate, 0 );
 		VSETALL( rate_slew, 0 );
 		rate_zoom = 0;
 		
-		av[0] = "adc";
-		av[1] = "reset";
-		av[2] = (char *)NULL;
 		(void)f_adc( clientData, interp, 2, av );
 
 		if(knob_offset_hook)

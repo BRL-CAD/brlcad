@@ -121,9 +121,7 @@ struct x_vars {
   Display *dpy;
   Tk_Window xtkwin;
   Window win;
-#ifdef DOUBLE_BUFFERING_WITH_PIXMAPS
   Pixmap pix;
-#endif
   int width;
   int height;
   int omx, omy;
@@ -167,48 +165,13 @@ static int XdoMotion = 0;
  * Fire up the display manager, and the display processor.
  *
  */
-#if 1
 X_open()
 {
   x_var_init();
 
   return xsetup(dname);
 }
-#else
-X_open()
-{
-  char	line[82];
-  char	hostname[80];
-  char	display[82];
-  char	*envp;
 
-  x_var_init();
-  rt_vls_init(&pathName);
-
-  /* get or create the default display */
-  if( (envp = getenv("DISPLAY")) == NULL ) {
-    /* Env not set, use local host */
-    gethostname( hostname, 80 );
-    hostname[79] = '\0';
-    (void)sprintf( display, "%s:0", hostname );
-    envp = display;
-  }
-
-  rt_log("X Display [%s]? ", envp );
-  (void)fgets( line, sizeof(line), stdin );
-  line[strlen(line)-1] = '\0';		/* remove newline */
-  if( feof(stdin) )  quit();
-  if( line[0] != '\0' ) {
-    if( xsetup(line) )
-      return(1);		/* BAD */
-  } else {
-    if( xsetup(envp) )
-      return(1);	/* BAD */
-  }
-
-  return(0);			/* OK */
-}
-#endif
 /*
  *  			X _ C L O S E
  *  
@@ -220,10 +183,8 @@ X_close()
   if(((struct x_vars *)dm_vars)->gc != 0)
     XFreeGC(((struct x_vars *)dm_vars)->dpy, ((struct x_vars *)dm_vars)->gc);
 
-#ifdef DOUBLE_BUFFERING_WITH_PIXMAPS
   if(((struct x_vars *)dm_vars)->pix != 0)
      Tk_FreePixmap(((struct x_vars *)dm_vars)->dpy, ((struct x_vars *)dm_vars)->pix);
-#endif
 
   if(((struct x_vars *)dm_vars)->xtkwin != 0)
     Tk_DestroyWindow(((struct x_vars *)dm_vars)->xtkwin);
@@ -249,7 +210,6 @@ X_close()
 void
 X_prolog()
 {
-#ifdef DOUBLE_BUFFERING_WITH_PIXMAPS
   XGCValues       gcv;
 
   gcv.foreground = ((struct x_vars *)dm_vars)->bg;
@@ -258,9 +218,6 @@ X_prolog()
   XFillRectangle(((struct x_vars *)dm_vars)->dpy, ((struct x_vars *)dm_vars)->pix,
 		 ((struct x_vars *)dm_vars)->gc, 0, 0, ((struct x_vars *)dm_vars)->width + 1,
 		 ((struct x_vars *)dm_vars)->height + 1);
-#else
-  XClearWindow(((struct x_vars *)dm_vars)->dpy, ((struct x_vars *)dm_vars)->win);
-#endif
 }
 
 /*
@@ -272,12 +229,11 @@ X_epilog()
     /* Put the center point up last */
     draw( 0, 0, 0, 0 );
 
-#ifdef DOUBLE_BUFFERING_WITH_PIXMAPS
     XCopyArea(((struct x_vars *)dm_vars)->dpy, ((struct x_vars *)dm_vars)->pix,
 	      ((struct x_vars *)dm_vars)->win, ((struct x_vars *)dm_vars)->gc,
 	      0, 0, ((struct x_vars *)dm_vars)->width, ((struct x_vars *)dm_vars)->height,
 	      0, 0);
-#endif
+
     /* Prevent lag between events and updates */
     XSync(((struct x_vars *)dm_vars)->dpy, 0);
 }
@@ -393,11 +349,7 @@ int white_flag;
 		lasty = y;
 		useful = 1;
 		if( nseg == 1024 ) {
-#ifdef DOUBLE_BUFFERING_WITH_PIXMAPS
 		    XDrawSegments( ((struct x_vars *)dm_vars)->dpy, ((struct x_vars *)dm_vars)->pix, ((struct x_vars *)dm_vars)->gc, segbuf, nseg );
-#else
-		    XDrawSegments( ((struct x_vars *)dm_vars)->dpy, ((struct x_vars *)dm_vars)->win, ((struct x_vars *)dm_vars)->gc, segbuf, nseg );
-#endif
 		    /* Thicken the drawing, if monochrome */
 		    if( white_flag && ((struct x_vars *)dm_vars)->is_monochrome ){
 			int	i;
@@ -411,11 +363,7 @@ int white_flag;
 			    segp->y2++;
 			    segp++;
 			}
-#ifdef DOUBLE_BUFFERING_WITH_PIXMAPS
 			XDrawSegments( ((struct x_vars *)dm_vars)->dpy, ((struct x_vars *)dm_vars)->pix, ((struct x_vars *)dm_vars)->gc, segbuf, nseg );
-#else
-			XDrawSegments( ((struct x_vars *)dm_vars)->dpy, ((struct x_vars *)dm_vars)->win, ((struct x_vars *)dm_vars)->gc, segbuf, nseg );
-#endif
 		    }
 		    nseg = 0;
 		    segp = segbuf;
@@ -425,11 +373,7 @@ int white_flag;
 	}
     }
     if( nseg ) {
-#ifdef DOUBLE_BUFFERING_WITH_PIXMAPS
 	XDrawSegments( ((struct x_vars *)dm_vars)->dpy, ((struct x_vars *)dm_vars)->pix, ((struct x_vars *)dm_vars)->gc, segbuf, nseg );
-#else
-	XDrawSegments( ((struct x_vars *)dm_vars)->dpy, ((struct x_vars *)dm_vars)->win, ((struct x_vars *)dm_vars)->gc, segbuf, nseg );
-#endif
 	if( white_flag && ((struct x_vars *)dm_vars)->is_monochrome ){
 	    int	i;
 	    /* XXX - width and height don't work on Sun! */
@@ -442,11 +386,7 @@ int white_flag;
 		segp->y2++;
 		segp++;
 	    }
-#ifdef DOUBLE_BUFFERING_WITH_PIXMAPS
 	    XDrawSegments( ((struct x_vars *)dm_vars)->dpy, ((struct x_vars *)dm_vars)->pix, ((struct x_vars *)dm_vars)->gc, segbuf, nseg );
-#else
-	    XDrawSegments( ((struct x_vars *)dm_vars)->dpy, ((struct x_vars *)dm_vars)->win, ((struct x_vars *)dm_vars)->gc, segbuf, nseg );
-#endif
 	}
     }
 
@@ -582,25 +522,13 @@ XEvent *eventPtr;
   }
 
   if (eventPtr->type == Expose && eventPtr->xexpose.count == 0){
-#if 0
-    dmaflag = 1;
-#else
     dirty = 1;
-#endif
     refresh();
     goto end;
   }else if(eventPtr->type == ConfigureNotify){
-#if 0
-    ((struct x_vars *)dm_vars)->height = eventPtr->xconfigure.height;
-    ((struct x_vars *)dm_vars)->width = eventPtr->xconfigure.width;
-#endif
     X_configure_window_shape();
 
-#if 0
-    dmaflag = 1;
-#else
     dirty = 1;
-#endif
     refresh();
     goto end;
   } else if( eventPtr->type == MotionNotify ) {
@@ -618,11 +546,10 @@ XEvent *eventPtr;
     case VIRTUAL_TRACKBALL_OFF:
     case VIRTUAL_TRACKBALL_ON:
       /* trackball not active so do the regular thing */
-      mx = (mx/(double)((struct x_vars *)dm_vars)->width - 0.5) * 4095;
-      my = (0.5 - my/(double)((struct x_vars *)dm_vars)->height) * 4095;
-
       /* Constant tracking (e.g. illuminate mode) bound to M mouse */
-      rt_vls_printf( &cmd, "M 0 %d %d\n", mx, my );
+      rt_vls_printf( &cmd, "M 0 %d %d\n",
+		     (mx/(double)((struct x_vars *)dm_vars)->width - 0.5) * 4095,
+		     (0.5 - my/(double)((struct x_vars *)dm_vars)->height) * 4095);
       break;
     case VIRTUAL_TRACKBALL_ROTATE:
       rt_vls_printf( &cmd, "irot %f %f 0\n",
@@ -644,7 +571,8 @@ XEvent *eventPtr;
     ((struct x_vars *)dm_vars)->omx = mx;
     ((struct x_vars *)dm_vars)->omy = my;
   } else {
-    XGetWindowAttributes( ((struct x_vars *)dm_vars)->dpy, ((struct x_vars *)dm_vars)->win, &xwa);
+    XGetWindowAttributes( ((struct x_vars *)dm_vars)->dpy,
+			  ((struct x_vars *)dm_vars)->win, &xwa);
     ((struct x_vars *)dm_vars)->height = xwa.height;
     ((struct x_vars *)dm_vars)->width = xwa.width;
 
@@ -804,19 +732,11 @@ int	x2, y2;		/* to point */
 
   if( sx1 == sx2 && sy1 == sy2 )
     XDrawPoint( ((struct x_vars *)dm_vars)->dpy,
-#ifdef DOUBLE_BUFFERING_WITH_PIXMAPS
 		((struct x_vars *)dm_vars)->pix,
-#else
-		((struct x_vars *)dm_vars)->win,
-#endif
 		((struct x_vars *)dm_vars)->gc, sx1, sy1 );
   else
     XDrawLine( ((struct x_vars *)dm_vars)->dpy,
-#ifdef DOUBLE_BUFFERING_WITH_PIXMAPS
 	       ((struct x_vars *)dm_vars)->pix,
-#else
-	       ((struct x_vars *)dm_vars)->win,
-#endif
 	       ((struct x_vars *)dm_vars)->gc, sx1, sy1, sx2, sy2 );
 }
 
@@ -834,11 +754,7 @@ char	*str;
   /*sy += ((struct x_vars *)dm_vars)->fontstruct->max_bounds.ascent + ((struct x_vars *)dm_vars)->fontstruct->max_bounds.descent/2);*/
 
   XDrawString( ((struct x_vars *)dm_vars)->dpy,
-#ifdef DOUBLE_BUFFERING_WITH_PIXMAPS
 	       ((struct x_vars *)dm_vars)->pix,
-#else
-	       ((struct x_vars *)dm_vars)->win,
-#endif
 	       ((struct x_vars *)dm_vars)->gc, sx, sy, str, strlen(str) );
 }
 
@@ -990,11 +906,9 @@ char	*name;
   ((struct x_vars *)dm_vars)->win =
       Tk_WindowId(((struct x_vars *)dm_vars)->xtkwin);
 
-#ifdef DOUBLE_BUFFERING_WITH_PIXMAPS
   ((struct x_vars *)dm_vars)->pix = Tk_GetPixmap(((struct x_vars *)dm_vars)->dpy,
     DefaultRootWindow(((struct x_vars *)dm_vars)->dpy), ((struct x_vars *)dm_vars)->width,
     ((struct x_vars *)dm_vars)->height, Tk_Depth(((struct x_vars *)dm_vars)->xtkwin));
-#endif
 
   a_screen = Tk_ScreenNumber(((struct x_vars *)dm_vars)->xtkwin);
   a_visual = Tk_Visual(((struct x_vars *)dm_vars)->xtkwin);

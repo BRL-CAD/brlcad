@@ -1033,20 +1033,14 @@ XEvent *eventPtr;
     else
        glClear(GL_COLOR_BUFFER_BIT);
 #endif
-#if 0
-    dmaflag = 1;
-#else
+
     dirty = 1;
-#endif
     refresh();
     goto end;
   } else if( eventPtr->type == ConfigureNotify ) {
     Ogl2_configure_window_shape();
-#if 0
-    dmaflag = 1;
-#else
+
     dirty = 1;
-#endif
     refresh();
     goto end;
   } else if( eventPtr->type == MotionNotify ) {
@@ -1063,11 +1057,10 @@ XEvent *eventPtr;
     case VIRTUAL_TRACKBALL_OFF:
     case VIRTUAL_TRACKBALL_ON:
       /* do the regular thing */
-      mx = (mx/(double)((struct ogl_vars *)dm_vars)->width - 0.5) * 4095;
-      my = (0.5 - my/(double)((struct ogl_vars *)dm_vars)->height) * 4095;
-
       /* Constant tracking (e.g. illuminate mode) bound to M mouse */
-      rt_vls_printf( &cmd, "M 0 %d %d\n", mx, my );
+      rt_vls_printf( &cmd, "M 0 %d %d\n",
+		     (mx/(double)((struct ogl_vars *)dm_vars)->width - 0.5) * 4095,
+		     (0.5 - my/(double)((struct ogl_vars *)dm_vars)->height) * 4095);
       break;
     case VIRTUAL_TRACKBALL_ROTATE:
       rt_vls_printf( &cmd, "irot %f %f 0\n", (my - omy)/2.0,
@@ -1182,7 +1175,10 @@ XEvent *eventPtr;
 
     if(B->button == 1)
       button0 = 0;
-  }
+
+    goto end;
+  }else
+    goto end;
 
   status = cmdline(&cmd, FALSE);
 end:
@@ -1267,6 +1263,7 @@ int	a, b;
 	case ST_S_PICK:
 	case ST_O_PICK:
 	case ST_O_PATH:
+	case ST_S_VPICK:
 	    /* constant tracking ON */
 	    OgldoMotion = 1;
 	    break;
