@@ -25,7 +25,18 @@ else
 	TITLE="Graphics Editor (MGED)"
 fi
 
-eval `machinetype.sh -b`	# sets MACHINE, UNIXTYPE, etc
+if test -x ./machinetype.sh
+then
+	eval `./machinetype.sh -b`
+else
+	MTYPE_SH="`dirname $0`/machinetype.sh"
+	if test -x $MTYPE_SH
+	then
+		eval `$MTYPE_SH -b`
+	else
+		eval `machinetype.sh -b`	# sets MACHINE, UNIXTYPE, etc
+	fi
+fi
 
 # Obtain RELEASE, RCS_REVISION, and REL_DATE
 if test -r ../gen.sh
@@ -34,7 +45,13 @@ then
 	eval `grep '^RELEASE=' ../gen.sh`
 	##RELEASE=4.4;	RCS_REVISION=11;	# Uncomment for Alpha workaround.
 else
-	RELEASE='??.??'
+	GEN_SH="`dirname $0`/../gen.sh"
+	if test -r $GEN_SH
+	then
+		eval `grep '^RELEASE=' $GEN_SH`
+	else
+		RELEASE='??.??'
+	fi
 fi
 
 DIR=`pwd`
