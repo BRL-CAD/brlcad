@@ -89,8 +89,9 @@ benchmark: all
 bench: benchmark
 
 all-local:
-	@@ECHO@
 	@@ECHO@ "Done."
+	@@ECHO@
+	@@ECHO@ "BRL-CAD Release @BRLCAD_VERSION@, Build @CONFIG_DATE@"
 	@@ECHO@
 	@@ECHO@ @ECHO_N@ "Elapsed compilation time: "
 	@sh $(top_srcdir)/sh/elapsed.sh `cat $(top_builddir)/include/brlcad_version.h | grep Compilation`
