@@ -89,6 +89,8 @@ int		debug = 0;
 char		*our_hostname;
 char		*machinetype;
 
+int		listenfd;
+
 FILE		*ifp;
 FILE		*ofp;
 
@@ -505,12 +507,15 @@ int	foo;
 		execl( main_argv[0], main_argv[0], buf, NULL );
 		perror(main_argv[0]);
 	}
+	/* Prepare to start a new daemon in a child process, close listen */
+	(void)close(listenfd);
+
 	/* Try to find our executable in one of the usual places. */
 	run_prog( 2, main_argc, main_argv, "rtmon" );
 
-	/* If that doesn't work either, just go back to what we were doing. */
-	fprintf(stderr, "rtmon: unable to reload, continuing.\n");
-	return;
+	/* If that doesn't work either, just die. */
+	fprintf(stderr, "rtmon: unable to reload, aborting.\n");
+	exit(1);
 }
 
 /*
@@ -524,7 +529,6 @@ char	*argv[];
 	register struct servent *sp;
 	struct	sockaddr *addr;			/* UNIX or INET addr */
 	int	addrlen;			/* length of address */
-	int	listenfd;
 	int	on = 1;
 
 	main_argc = argc;
