@@ -1000,6 +1000,7 @@ int			multi;
 			vu, pos,
 			nmg_state_names[old], nmg_v_assessment_names[assessment],
 			nmg_state_names[stp->new_state], action_names[stp->action] );
+#if 0	/* XXX turn this on only for debugging */
 		/* First, print this faceuse */
 		lu = nmg_lu_of_vu( vu );
 		/* Drop a plot file */
@@ -1047,6 +1048,7 @@ int			multi;
 			fclose(fp);
 			rt_log("wrote error.g\n");
 		}
+#endif
 		/* Explode */
 		rt_bomb("nmg_face_state_transition: got action=ERROR\n");
 	case NMG_ACTION_NONE:
