@@ -85,9 +85,6 @@ int	width, height;
 	short x_pos, y_pos;	/* Lower corner of viewport */
 
 	
-	ifp->if_width = width;
-	ifp->if_height = height;
-	
 	ginit();
 	RGBmode();
 	gconfig();		/* Must be called after RGBmode() */
@@ -101,8 +98,9 @@ int	width, height;
 	if ( height > ifp->if_max_height) 
 		height = ifp->if_max_height;
 
-	x_pos = ( ifp->if_max_width - width ) /2;
-	y_pos = ( ifp->if_max_height - height ) /2;
+	ifp->if_width = width;
+	ifp->if_height = height;
+	
 }
 
 _LOCAL_ int
@@ -196,16 +194,16 @@ int	count;
 			}
 		}
 
-		if ( count >= ifp->if_max_width )  {
-			scan_count = ifp->if_max_width;
+		if ( count >= ifp->if_width )  {
+			scan_count = ifp->if_width;
 			count -= scan_count;
 			x_pos = 0;
-			ypos--;
+			ypos++;
 		} else	{
 			scan_count = 0;
 			count = 0;
 			x_pos = 0;
-			ypos--;
+			ypos++;
 		}
 	}
 }
@@ -247,7 +245,7 @@ short	count;
 			ypos = y;
 		}
 
-		cmov2s( xpos, ypos );		/* move to current position */
+		cmov2s( xpos, ypos++ );		/* move to current position */
 
 
 		for( i = 0; i < scan_count; i++, pixptr++)
@@ -271,17 +269,14 @@ short	count;
 
 		writeRGB( scan_count, rr, gg, bb ); 
 
-		if ( count >= ifp->if_max_width )  {
-			scan_count = ifp->if_max_width;
+		if ( count >= ifp->if_width )  {
+			scan_count = ifp->if_width;
 			count -= scan_count;
-			x_pos = 0;
-			ypos--;
 		} else	{
 			scan_count = 0;
 			count = 0;
-			x_pos = 0;
-			ypos--;
 		}
+		xpos = 0;
 	}
 }
 
