@@ -87,9 +87,9 @@ char **argv;
 	}
 	if( clear )
 		fb_clear( fbp, (Pixel *) 0 );
-	fb_zoom( fbp, fbsize==nlines? 0 : fbsize/nlines,
-		fbsize==nlines? 0 : fbsize/nlines );
-	fb_window( fbp, nlines/2, nlines/2 );		/* center of view */
+	/* Zoom in, in the center of view */
+	fb_zoom( fbp, fbsize/nlines, fbsize/nlines );
+	fb_window( fbp, nlines/2, nlines/2 );
 
 	if( !inverse )  {
 		/* Normal way -- bottom to top */
