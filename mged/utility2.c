@@ -1322,7 +1322,8 @@ genptr_t		user_ptr1, user_ptr2, user_ptr3;
 	}
 
 	/* replace member name with new copy */
-	NAMEMOVE( dp_new->d_namep, comb_leaf->tr_l.tl_name );
+	bu_free( comb_leaf->tr_l.tl_name, "comb_leaf->tr_l.tl_name" );
+	comb_leaf->tr_l.tl_name = bu_strdup( dp_new->d_namep );
 
 	/* make transform for this arc the identity matrix */
 	bn_mat_idn( comb_leaf->tr_l.tl_mat );
