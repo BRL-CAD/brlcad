@@ -247,6 +247,9 @@ fastf_t		dist_tol;
  *  in the plane of the loop, return the angle (in radians) of 'vec'
  *  from x_dir, going CCW around the perpendicular x_dir CROSS y_dir.
  *
+ *  x_dir is -ray_dir
+ *  y_dir points right.
+ *
  *  Returns -
  *	vec == x_dir returns 0,
  *	vec == y_dir returns pi/2,
@@ -305,7 +308,7 @@ int			assessment;
 		/* Skip any edges that stay on this vertex */
 	} while( prev_eu->vu_p->v_p == this_eu->vu_p->v_p );
 
-	/* Get vector which represents the inbound edge */
+	/* Get vector which represents the inbound edge, but pointing away from vert. */
 	VSUB2( vec, prev_eu->vu_p->v_p->vg_p->coord, vu->v_p->vg_p->coord );
 
 	ang = rt_angle_measure( vec, x_dir, y_dir );
