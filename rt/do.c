@@ -439,9 +439,13 @@ extern struct structparse view_parse[];
  *  Generic settable parameters.
  *  By setting the "base address" to zero in the rt_structparse call,
  *  the actual memory address is given here as the structure offset.
+ *
+ *  Strictly speaking, the C language only permits initializers of the
+ *  form: address +- constant, where here the intent is to measure the
+ *  byte address of the indicated variable.
+ *  Matching compensation code for the CRAY is located in librt/parse.c
  */
-#if __STDC__ && CRAY
-/*	Cray SCC bug prevents using correct expression here */
+#if CRAY
 #	define byteoffset(_i)	(((int)&(_i)))
 #else
 #	define byteoffset(_i)	((int)(((char *)&(_i))-((char *)0)))
@@ -450,7 +454,7 @@ struct structparse set_parse[] = {
 	"%d",	"width",	byteoffset(width),		FUNC_NULL,
 	"%d",	"height",	byteoffset(height),		FUNC_NULL,
 	"%f",	"angle",	byteoffset(rt_perspective),	FUNC_NULL,
-	"indir", "View_Module-Specific Parameters", 0, (void (*)())view_parse,
+	"indir", "View_Module-Specific Parameters", (int)view_parse, FUNC_NULL,
 	(char *)0,(char *)0,	0,				FUNC_NULL
 };
 
