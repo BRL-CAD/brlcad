@@ -49,7 +49,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "externs.h"
 #include "./ged.h"
 #include "./solid.h"
-#include "./dm.h"
+#include "./mged_dm.h"
 #include "./sedit.h"
 
 #include "./mgedtcl.h"
@@ -182,7 +182,7 @@ static struct funtab funtab[] = {
 "area", "[endpoint_tolerance]", "calculate presented area of view",
 	f_area, 1, 2, TRUE,
 "attach", "device screen", "attach to a display processor on screen",
-	f_attach,1,3,TRUE,
+	f_attach,1,MAXARGS,TRUE,
 "B", "<objects>", "clear screen, edit objects",
 	f_blast,2,MAXARGS,TRUE,
 "bev",	"[-t] [-P#] new_obj obj1 op obj2 op obj3 op ...", "Boolean evaluation of objects via NMG's",
@@ -387,6 +387,8 @@ static struct funtab funtab[] = {
 	f_permute,2,2,TRUE,
 "plot", "[-float] [-zclip] [-2d] [-grid] [out_file] [|filter]", "make UNIX-plot of view",
 	f_plot, 2, MAXARGS,TRUE,
+"pl", "[-float] [-zclip] [-2d] [-grid] [out_file] [|filter]", "Experimental - uses dm-plot:make UNIX-plot of view",
+	f_pl, 2, MAXARGS,TRUE,
 "polybinout", "file", "store vlist polygons into polygon file (experimental)",
 	f_polybinout, 2, 2,TRUE,
 "pov", "args", "experimental:  set point-of-view",
@@ -399,8 +401,8 @@ static struct funtab funtab[] = {
 	f_preview, 2, MAXARGS,TRUE,
 "press", "button_label", "emulate button press",
 	f_press,2,MAXARGS,TRUE,
-"ps", "file", "creates a postscript file of the current view",
-        f_ps, 2, 3,TRUE,
+"ps", "[-f font] [-t title] [-c creator] [-s size in inches] [-l linewidth] file", "creates a postscript file of the current view",
+        f_ps, 2, MAXARGS,TRUE,
 "push", "object[s]", "pushes object's path transformations to solids",
 	f_push, 2, MAXARGS,TRUE,
 "putmat", "a/b {I | m0 m1 ... m16}", "replace matrix on combination's arc",
@@ -2116,8 +2118,9 @@ Tcl_Interp *interp;
 int argc;
 char *argv[];
 {
+  int i;
   int status;
-  char *av[4];
+  char **av;
   struct dm_list *dml;
   struct shared_info *sip;
 
@@ -2125,14 +2128,20 @@ char *argv[];
     return TCL_ERROR;
 
   dml = curr_dm_list;
+  av = (char **)bu_malloc(sizeof(char *) * (argc + 2), "f_ps: av");
 
+  /* Load the argument vector */
   av[0] = "attach";
   av[1] = "ps";
-  av[2] = argv[1];
-  av[3] = NULL;
-  status = f_attach(clientData, interp, 3, av);
-  if(status == TCL_ERROR)
+  for(i = 2; i < argc + 1; ++i)
+    av[i] = argv[i - 1];
+  av[i] = NULL;
+
+  status = f_attach(clientData, interp, i - 1, av);
+  if(status == TCL_ERROR){
+    bu_free((genptr_t)av, "f_ps: av");
     return TCL_ERROR;
+  }
 
   sip = curr_dm_list->s_info;  /* save state info pointer */
   curr_dm_list->s_info = dml->s_info;  /* use dml's state info */
@@ -2143,7 +2152,61 @@ char *argv[];
   curr_dm_list->s_info = sip;  /* restore state info pointer */
   av[0] = "release";
   av[1] = NULL;
-  return f_release(clientData, interp, 1, av);
+  status = f_release(clientData, interp, 1, av);
+
+  bu_free((genptr_t)av, "f_ps: av");
+  return status;
+}
+
+/*
+ * Experimental - like f_plot except we attach to dm-plot, passing along
+ *                any arguments.
+ */
+int
+f_pl(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char *argv[];
+{
+  int i;
+  int status;
+  char **av;
+  struct dm_list *dml;
+  struct shared_info *sip;
+
+  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+    return TCL_ERROR;
+
+  dml = curr_dm_list;
+  av = (char **)bu_malloc(sizeof(char *) * (argc + 2), "f_pl: av");
+
+  /* Load the argument vector */
+  av[0] = "attach";
+  av[1] = "plot";
+  for(i = 2; i < argc + 1; ++i)
+    av[i] = argv[i - 1];
+  av[i] = NULL;
+
+  status = f_attach(clientData, interp, i - 1, av);
+  if(status == TCL_ERROR){
+    bu_free((genptr_t)av, "f_pl: av");
+    return TCL_ERROR;
+  }
+
+  sip = curr_dm_list->s_info;  /* save state info pointer */
+  curr_dm_list->s_info = dml->s_info;  /* use dml's state info */
+
+  dirty = 1;
+  refresh();
+
+  curr_dm_list->s_info = sip;  /* restore state info pointer */
+  av[0] = "release";
+  av[1] = NULL;
+  status = f_release(clientData, interp, 1, av);
+
+  bu_free((genptr_t)av, "f_pl: av");
+  return status;
 }
 
 int
