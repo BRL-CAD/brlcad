@@ -91,7 +91,7 @@ char *argv[];
 	}
 
 	if ( argc > ++optind )
-		(void)fprintf( stderr, "pix-ppm: excess argument(s) ignored\n" );
+		(void)fprintf( stderr, "png-pix: excess argument(s) ignored\n" );
 
 	if( fread( header, 8, 1, fp_in ) != 1 )
 		bu_bomb( "ERROR: Failed while reading file header!!!\n" );
