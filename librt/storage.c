@@ -56,6 +56,9 @@ struct memdebug {
 
 /*
  *			R T _ M A L L O C
+ *
+ *  This routine only returns on successful allocation.
+ *  Failure results in rt_bomb() being called.
  */
 char *
 rt_malloc(cnt, str)
@@ -65,7 +68,8 @@ char *str;
 	register char *ptr;
 
 	if( cnt == 0 )  {
-		rt_log("WARNING: rt_malloc count=0 %s\n", str );
+		rt_log("ERROR: rt_malloc count=0 %s\n", str );
+		rt_bomb("ERROR: rt_malloc(0)\n");
 	}
 #ifdef MEMDEBUG
 	cnt = (cnt+2*sizeof(int)-1)&(~(sizeof(int)-1));
