@@ -540,8 +540,6 @@ register struct xray	*rp;
 {
 	RT_CK_HIT(hitp);
 
-	if( hitp->hit_surfno != 17 )  bu_bomb("rt_submodel surfno mis-match\n");
-
 	/* hitp->hit_point is already valid */
 	/* hitp->hit_normal is already valid */
 }
@@ -582,8 +580,6 @@ register struct hit	*hitp;
 register struct uvcoord	*uvp;
 {
 	RT_CK_HIT(hitp);
-
-	if( hitp->hit_surfno != 17 )  bu_bomb("rt_submodel surfno mis-match\n");
 
 	uvp->uv_u = hitp->hit_vpriv[X];
 	uvp->uv_v = hitp->hit_vpriv[Y];
