@@ -50,9 +50,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
  */
 
 int
-bn_decode_mat(m, str)
-mat_t m;
-char *str;
+bn_decode_mat(mat_t m, const char *str)
 {
 	if( strcmp( str, "I" ) == 0 )  {
 		bn_mat_idn( m );
@@ -73,9 +71,7 @@ char *str;
  *  provide the same defaults that LIBRT uses.
  */
 int
-bn_decode_tol(tol, str)
-struct bn_tol *tol;
-const char *str;
+bn_decode_tol(struct bn_tol *tol, const char *str)
 {
 	tol->magic = BN_TOL_MAGIC;
 
@@ -90,37 +86,30 @@ const char *str;
 
 	return 2;	/* You always get something good */
 }
+
 int
-bn_decode_quat(q, str)
-quat_t q;
-const char *str;
+bn_decode_quat(quat_t q, const char *str)
 {
 	if( *str == '{' )  str++;
 	return sscanf(str, "%lf %lf %lf %lf", &q[0], &q[1], &q[2], &q[3]);
 }
 
 int
-bn_decode_vect(v, str)
-vect_t v;
-const char *str;
+bn_decode_vect( vect_t v, const char *str )
 {
 	if( *str == '{' )  str++;
 	return sscanf(str, "%lf %lf %lf", &v[0], &v[1], &v[2]);
 }
 
 int
-bn_decode_hvect(v, str)
-hvect_t v;
-const char *str;
+bn_decode_hvect(hvect_t v, const char *str)
 {
 	if( *str == '{' )  str++;
 	return sscanf(str, "%lf %lf %lf %lf", &v[0], &v[1], &v[2], &v[3]);
 }
 
 int
-bn_decode_plane(v, str)
-plane_t v;
-const char *str;
+bn_decode_plane(plane_t v, const char *str)
 {
 	if( *str == '{' )  str++;
 	return sscanf(str, "%lf %lf %lf %lf", &v[0], &v[1], &v[2], &v[3]);
@@ -132,9 +121,7 @@ const char *str;
  */
 
 void
-bn_encode_mat(vp, m)
-struct bu_vls *vp;
-const mat_t m;
+bn_encode_mat(struct bu_vls *vp, const mat_t m)
 {
 	if( m == NULL )  {
 		bu_vls_putc(vp, 'I');
@@ -147,25 +134,19 @@ const mat_t m;
 }
 
 void
-bn_encode_quat(vp, q)
-struct bu_vls *vp;
-const quat_t q;
+bn_encode_quat(struct bu_vls *vp, const quat_t q)
 {
 	bu_vls_printf(vp, "{%g %g %g %g} ", V4ARGS(q));
 }
 
 void
-bn_encode_vect(vp, v)
-struct bu_vls *vp;
-const vect_t v;
+bn_encode_vect(struct bu_vls *vp, const vect_t v)
 {
 	bu_vls_printf(vp, "{%g %g %g} ", V3ARGS(v));
 }
 
 void
-bn_encode_hvect(vp, v)
-struct bu_vls *vp;
-const hvect_t v;
+bn_encode_hvect(struct bu_vls *vp, const hvect_t v)
 {
 	bu_vls_printf(vp, "{%g %g %g %g} ", V4ARGS(v));
 }

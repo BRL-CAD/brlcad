@@ -116,6 +116,21 @@ BU_EXTERN(int			bn_common_image_zie, (int *width,
 						      int num_pixels));
 
 /*----------------------------------------------------------------------*/
+/* bn_tcl.c */
+int bn_decode_mat(mat_t m, const char *str);
+int bn_decode_tol(struct bn_tol *tol, const char *str);
+int bn_decode_quat(quat_t q, const char *str);
+int bn_decode_quat(quat_t q, const char *str);
+int bn_decode_vect( vect_t v, const char *str );
+int bn_decode_hvect(hvect_t v, const char *str);
+int bn_decode_plane(plane_t v, const char *str);
+void bn_encode_mat(struct bu_vls *vp, const mat_t m);
+void bn_encode_quat(struct bu_vls *vp, const quat_t q);
+void bn_encode_vect(struct bu_vls *vp, const vect_t v);
+void bn_encode_hvect(struct bu_vls *vp, const hvect_t v);
+
+
+/*----------------------------------------------------------------------*/
 /* complex.c */
 /*
  *  Complex numbers
