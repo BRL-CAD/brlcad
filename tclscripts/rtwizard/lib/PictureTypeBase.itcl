@@ -111,8 +111,8 @@ namespace eval RtWizard {
 	# The support directory name is the same as the 
 	# class type.
 	#
-	if { [info exists env(BRLCAD_ROOT)] } {
-	    set rootDir $env(BRLCAD_ROOT)
+	if { [info exists ::env(BRLCAD_ROOT)] } {
+	    set rootDir $::env(BRLCAD_ROOT)
 	} else {
 	    set rootDir [file join / usr brlcad ]
 	} 

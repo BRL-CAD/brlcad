@@ -1,5 +1,5 @@
 #
-# Danube.tcl
+# rtwizard.tcl
 #
 # This is the main script for the RtWizard. 
 #
@@ -9,8 +9,8 @@
 #
 # Extend Autopath
 #
-if { [info exists env(BRLCAD_ROOT)] } {
-    set rootDir $env(BRLCAD_ROOT)
+if { [info exists ::env(BRLCAD_ROOT)] } {
+    set rootDir $::env(BRLCAD_ROOT)
 } else {
     set rootDir [file join / usr brlcad ]
 } 
