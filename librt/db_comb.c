@@ -416,6 +416,10 @@ double				local2mm;
 	if( endp )  {
 		int	len;
 		len = endp - bu_vls_addr(&comb->shader);
+		if( len <= 0 && bu_vls_strlen(&comb->shader) > 0 )  {
+			bu_log("WARNING: leading spaces on shader '%s' implies NULL shader\n",
+				bu_vls_addr(&comb->shader) );
+		}
 		if( len > 32 ) len = 32;
 		strncpy( rp[0].c.c_matname, bu_vls_addr(&comb->shader), len );
 		strncpy( rp[0].c.c_matparm, endp+1, 60 );
