@@ -45,6 +45,8 @@ static char RCSrayg3[] = "@(#)$Header$ (BRL)";
 
 #include "rdebug.h"
 
+#define	MM2IN	0.03937008		/* mm times MM2IN gives inches */
+
 extern double	mat_radtodeg;
 
 /***** view.c variables imported from rt.c *****/
@@ -113,6 +115,7 @@ register struct partition *PartHeadp;
 	fastf_t			dfirst, dlast;	/* ray distances */
 	fastf_t			dcorrection;	/* RT to GIFT dist corr */
 	int			card_count;	/* # comp. on this card */
+	char			*fmt;		/* printf() format string */
 
 	if( pp == PartHeadp )
 		return(0);		/* nothing was actually hit?? */
@@ -176,10 +179,12 @@ register struct partition *PartHeadp;
 	 *  NOTE:  azimuth and elevation should really be computed
 	 *  from ap->a_ray.r_dir;  for now, assume all rays are parallel.
 	 */
-	fprintf(stdout,"%7.1f%7.1f%9.3f%9.3f%3d%8.2f%8.2f A%6.1f E%6.1f\n",
-		hcen, vcen, h, v,
+#define	SHOT_FMT	"%7.1f%7.1f%9.3f%9.3f%3d%8.2f%8.2f A%6.1f E%6.1f\n"
+	fprintf(stdout, SHOT_FMT,
+		hcen * MM2IN, vcen * MM2IN,
+		h * MM2IN, v * MM2IN,
 		comp_count,
-		dfirst, dlast,
+		dfirst * MM2IN, dlast * MM2IN,
 		azimuth, elevation );
 
 	/* loop here to deal with individual components */
@@ -238,10 +243,11 @@ register struct partition *PartHeadp;
 
 		/*
 		 *  Compute the obliquity angles in degrees, ie,
-		 *  the "elevation/declension" angle off the normal vector.
-		 *  RT normals always point outwards, but the obliquity
-		 *  angle seems be interpreted differently between
-		 *  in_obliq and out_obliq, hence the sign change.  Check this.
+		 *  the "declension" angle down off the normal vector.
+		 *  RT normals always point outwards;
+		 *  the "inhit" normal points opposite the ray direction,
+		 *  the "outhit" normal points along the ray direction.
+		 *  Hence the one sign change.
 		 *  XXX this should probably be done with atan2()
 		 */
 		RT_HIT_NORM( pp->pt_inhit,
@@ -270,7 +276,14 @@ register struct partition *PartHeadp;
 		if( card_count == 0 )  {
 			putc( ' ', stdout );
 		}
-		fprintf(stdout,"%4d%6.2f%5.1f%5.1f%1d%5.1f",
+		comp_thickness *= MM2IN;
+		air_thickness *= MM2IN;
+		/* Check thickness fields for format overflow */
+		if( comp_thickness > 999.99 || air_thickness > 999.9 )
+			fmt = "%4d%6.1f%5.1f%5.1f%1d%5.0f";
+		else
+			fmt = "%4d%6.2f%5.1f%5.1f%1d%5.1f";
+		fprintf(stdout, fmt,
 			region_id,
 			comp_thickness,
 			in_obliq, out_obliq,
@@ -318,15 +331,37 @@ char *file, *obj;
 	return(0);		/* No framebuffer needed */
 }
 
-void	view_eol() {;}
+/*
+ *			V I E W _ E O L
+ */
+void	view_eol()
+{
+}
 
+/*
+ *			V I E W _ E N D
+ *
+ *  Output special 999.9 "end of view" marker, composed of
+ *  a "999.9" shotline header, with one
+ *  all-zero component record.
+ */
 void
 view_end()
 {
-	/* Need to output special 999.9 record here */
+	fprintf(stdout, SHOT_FMT,
+		999.9, 999.9,
+		999.9, 999.9,
+		1,			/* component count */
+		0.0, 0.0,
+		azimuth, elevation );
+	/* An abbreviated component record:  just give item code 0 */
+	fprintf(stdout, " %4d\n", 0 );
 	fflush(stdout);
 }
 
+/*
+ *			V I E W _ 2 I N I T
+ */
 void
 view_2init( ap )
 struct application	*ap;
@@ -348,7 +383,7 @@ struct application	*ap;
 	 */
 	fprintf(stdout,
 		"     %-15.8f     %-15.8f                              %10g\n",
-		azimuth, elevation, MAGNITUDE(dx_model) );
+		azimuth, elevation, MAGNITUDE(dx_model)*MM2IN );
 
 	regionfix( ap, "rtray.regexp" );		/* XXX */
 }
