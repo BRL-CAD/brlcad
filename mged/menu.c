@@ -61,6 +61,18 @@ mmenu_init()
 }
 
 /*
+ *			M M E N U _ S E T
+ */
+
+void
+mmenu_set( index, value )
+int index;
+struct menu_item *value;
+{
+	menu_array[index] = value;
+}
+
+/*
  *			M M E N U _ D I S P L A Y
  *
  *  Draw one or more menus onto the display.
