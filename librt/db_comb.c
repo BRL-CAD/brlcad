@@ -843,8 +843,6 @@ double		mm2local;
  *			D B _ W R A P _ V 4 _ E X T E R N A L
  *
  *  Wraps the v4 object body in "ip" into a v4 wrapper in "op".
- *  bu_free_external(ip) will be performed.
- *  op and ip must not point at the same bu_external structure.
  *
  *  As the v4 database does not really have the notion of "wrapping",
  *  this function primarily writes the object name into the
@@ -1082,35 +1080,4 @@ final:
 		rt_pr_tree(curtree, 0);
 	}
 	return( curtree );
-}
-
-/* ------------------------------------------------------------ */
-/* Preliminary V5 wrap/unwrap support */
-/* in-memory form of the standardized object 'wrapper' */
-/* Object's name is stashed in directory, not in internal wrapper */
-struct db_wrapper {
-	long	magic;
-	
-};
-
-/*
- *			D B _ W R A P _ V 5 _ E X T E R N A L
- */
-int
-db_wrap_v5_external( op, ip, dp, wp )
-struct bu_external		*op;
-struct bu_external		*ip;
-CONST struct directory		*dp;
-CONST struct db_wrapper		*wp;
-{
-
-	/* First, build up compressible portion of wrapper (header),
-	 * if more than just object body
-	 */
-
-	/* Second, compress compressible portion */
-
-	/* Third, add non-compressible portion of wrapper (header) */
-
-	return( 0 );
 }
