@@ -30,6 +30,10 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 
+#ifdef HAVE_STRING_H
+#include <string.h>
+#endif
+
 long	matching;
 long	off1;
 long	offmany;

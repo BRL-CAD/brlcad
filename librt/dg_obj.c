@@ -30,6 +30,10 @@
 #include "conf.h"
 
 #include <stdio.h>
+#ifdef HAVE_STRING_H
+#include <string.h>
+#endif
+
 #ifdef USE_STRING_H
 #include <string.h>
 #else

@@ -26,6 +26,9 @@
  *	in all countries except the USA.  All rights reserved.
  */
 #include "conf.h"
+#ifdef HAVE_STRING_H
+#include <string.h>
+#endif
 #include <math.h>
 #include "tcl.h"
 #include "machine.h"

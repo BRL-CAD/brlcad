@@ -1,4 +1,7 @@
 #include "conf.h"
+#ifdef HAVE_STRING_H
+#include <string.h>
+#endif
 #include "tk.h"
 #include "machine.h"
 #include "externs.h"

@@ -26,6 +26,9 @@ static const char RCSbomb[] = "@(#)$Header$ (ARL)";
 #include <stdio.h>
 #include <ctype.h>
 #include <unistd.h>
+#ifdef HAVE_STRING_H
+#include <string.h>
+#endif
 #include "machine.h"
 #include "externs.h"
 #include "bu.h"

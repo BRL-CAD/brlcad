@@ -27,6 +27,9 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "tcl.h"
 
 #include <stdio.h>
+#ifdef HAVE_STRING_H
+#include <string.h>
+#endif
 #include <sys/time.h>		/* for struct timeval */
 #include "machine.h"
 #include "externs.h"
