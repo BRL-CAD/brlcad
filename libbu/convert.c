@@ -548,13 +548,13 @@ int	count;
 		} else if (inIsHost != CV_HOST_MASK) { /* net format */
 			switch(incookie & (CV_SIGNED_MASK | CV_TYPE_MASK)) {
 			case CV_SIGNED_MASK | CV_16:
-				return(	ntohss(out, size, in, count));
+				return(	cv_ntohss(out, size, in, count));
 			case CV_16:
-				return( ntohus(out, size, in, count));
+				return( cv_ntohus(out, size, in, count));
 			case CV_SIGNED_MASK | CV_32:
-				return( ntohsl(out, size, in, count));
+				return( cv_ntohsl(out, size, in, count));
 			case CV_32:
-				return( ntohul(out, size, in, count));
+				return( cv_ntohul(out, size, in, count));
 			case CV_D:
 				(void) ntohd(out, in, count);
 				return(count);
@@ -567,13 +567,13 @@ int	count;
 		} else {
 			switch(incookie & (CV_SIGNED_MASK | CV_TYPE_MASK)) {
 			case CV_SIGNED_MASK | CV_16:
-				return(	htonss(out, size, in, count));
+				return(	cv_htonss(out, size, in, count));
 			case CV_16:
-				return( htonus(out, size, in, count));
+				return( cv_htonus(out, size, in, count));
 			case CV_SIGNED_MASK | CV_32:
-				return( htonsl(out, size, in, count));
+				return( cv_htonsl(out, size, in, count));
 			case CV_32:
-				return( htonul(out, size, in, count));
+				return( cv_htonul(out, size, in, count));
 			case CV_D:
 				(void) htond(out, in, count);
 				return(count);
@@ -648,16 +648,16 @@ int	count;
 		if (inIsHost != CV_HOST_MASK) { /* net format */
 			switch(incookie & (CV_SIGNED_MASK | CV_TYPE_MASK)) {
 			case CV_SIGNED_MASK | CV_16:
-				(void) ntohss(t1, bufsize , from, work_count);
+				(void) cv_ntohss(t1, bufsize , from, work_count);
 				break;
 			case CV_16:
-				(void) ntohus(t1, bufsize , from, work_count);
+				(void) cv_ntohus(t1, bufsize , from, work_count);
 				break;
 			case CV_SIGNED_MASK | CV_32:
-				(void) ntohsl(t1, bufsize , from, work_count);
+				(void) cv_ntohsl(t1, bufsize , from, work_count);
 				break;
 			case CV_32:
-				(void) ntohul(t1, bufsize , from, work_count);
+				(void) cv_ntohul(t1, bufsize , from, work_count);
 				break;
 			case CV_D:
 				(void) ntohd(t1, from, work_count);
@@ -826,11 +826,11 @@ int	count;
 					break;
 #if 0
 				case CV_16:
-					(void) htonas(out, bufsize, from,
+					(void) cv_htonas(out, bufsize, from,
 					    work_count);
 					break;
 				case CV_32:
-					(void) htonal(out, bufsize, from,
+					(void) cv_htonal(out, bufsize, from,
 					    work_count);
 					break;
 #endif
@@ -856,7 +856,7 @@ int	count;
 	return(number_done);
 }
 
-/*	ntohss	Network TO Host Signed Short
+/*	cv_ntohss	Network TO Host Signed Short
  *
  * It is assumed that this routine will only be called if there is
  * real work to do.  Ntohs does no checking to see if it is reasonable
@@ -878,7 +878,7 @@ int	count;
  *	Straight-forward.
  */
 int
-ntohss(out, size, in, count)
+cv_ntohss(out, size, in, count)
 register SIGNED short	*out;
 int			size;
 register genptr_t	in;
@@ -902,7 +902,7 @@ int			count;
 	return(count);
 }
 int
-ntohus(out, size, in, count)
+cv_ntohus(out, size, in, count)
 register unsigned short	*out;
 int			size;
 register genptr_t	in;
@@ -922,7 +922,7 @@ int			count;
 	return(count);
 }
 int
-ntohsl(out, size, in, count)
+cv_ntohsl(out, size, in, count)
 register SIGNED long int	*out;
 int				size;
 register genptr_t		in;
@@ -945,7 +945,7 @@ int				count;
 	return(count);
 }
 int
-ntohul(out, size, in, count)
+cv_ntohul(out, size, in, count)
 register unsigned long int	*out;
 int				size;
 register genptr_t		in;
@@ -969,7 +969,7 @@ int				count;
 
 /*****/
 int
-htonss(out, size, in, count)
+cv_htonss(out, size, in, count)
 genptr_t		out;
 int			size;
 register short		*in;
@@ -990,7 +990,7 @@ int			count;
 	return(count);
 }
 int
-htonus(out, size, in, count)
+cv_htonus(out, size, in, count)
 genptr_t		out;
 int			size;
 register unsigned short	*in;
@@ -1011,7 +1011,7 @@ int			count;
 	return(count);
 }
 int
-htonsl(out, size, in, count)
+cv_htonsl(out, size, in, count)
 genptr_t		out;
 int			size;
 register long		*in;
@@ -1034,7 +1034,7 @@ int			count;
 	return(count);
 }
 int
-htonul(out, size, in, count)
+cv_htonul(out, size, in, count)
 genptr_t		out;
 int			size;
 register unsigned long	*in;
