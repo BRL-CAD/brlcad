@@ -65,6 +65,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "machine.h"
 #include "vmath.h"
+#include "rtstring.h"
+#include "rtlist.h"
 #include "raytrace.h"
 #include "fb.h"
 #include "pkg.h"
@@ -111,106 +113,6 @@ void		start_helper();
 void		build_start_cmd();
 void		drop_server();
 void		send_do_lines();
-
-/* ----- */
-
-struct vls  {
-	long	vls_magic;
-	char	*vls_str;
-	int	vls_len;	/* Length, not counting the null */
-	int	vls_max;
-};
-#define VLS_MAGIC		0x89333bbb
-
-#define	VLS_STRLEN(vp)		((vp)->vls_len)
-
-/*
- *			V L S _ I N I T
- *
- *  Used to initialize strings for which storage has already been obtained.
- */
-void
-vls_init( vp )
-register struct vls	*vp;
-{
-	vp->vls_str = (char *)0;
-	vp->vls_len = vp->vls_max = 0;
-}
-
-/*
- *			V L S _ T R U N C
- *
- *  Truncate string to at most 'len' characters.
- *  Truncating to length 0 releases the memory used for the string buffer.
- */
-void
-vls_trunc( vp, len )
-register struct vls	*vp;
-{
-	if( vp->vls_len <= len )  return;
-	if( len <= 0 )  {
-		/* Release string storage */
-		rt_free( vp->vls_str, "vls_trunc" );
-		vp->vls_len = 0;
-		vp->vls_str = (char *)0;
-		return;
-	}
-	vp->vls_len = len;
-}
-
-/*
- *			V L S _ S T R C A T
- *
- *  Concatenate a new string onto the end of the existing vls string.
- */
-void
-vls_strcat( vp, s )
-register struct vls	*vp;
-char		*s;
-{
-	register int	len;
-
-	if( (len = strlen(s)) <= 0 )  return;
-	if( vp->vls_len <= 0 )  {
-		vp->vls_str = rt_malloc( vp->vls_max = len*4, "vls initial" );
-		vp->vls_len = 0;
-	}
-	if( vp->vls_len + len >= vp->vls_max )  {
-		vp->vls_max = (vp->vls_max + len) * 2;
-		vp->vls_str = rt_realloc( vp->vls_str, vp->vls_max, "vls" );
-	}
-	bcopy( s, vp->vls_str + vp->vls_len, len+1 );	/* include null */
-	vp->vls_len += len;
-}
-
-/*
- *			V L S _ V L S C A T
- *
- *  Concatenate a new vls string onto the end of an existing vls string.
- *  The storage of the source string is not affected.
- */
-void
-vls_vlscat( dest, src )
-register struct vls	*dest, *src;
-{
-	if( src->vls_len <= 0 )  return;
-	vls_strcat( dest, src->vls_str );
-}
-
-/*
- *			V L S _ V L S C A T Z A P
- *
- *  Concatenate a new vls string onto the end of an existing vls string.
- *  The storage of the source string is released (zapped).
- */
-void
-vls_vlscatzap( dest, src )
-register struct vls	*dest, *src;
-{
-	if( src->vls_len <= 0 )  return;
-	vls_strcat( dest, src->vls_str );
-	vls_trunc( src, 0 );
-}
 
 
 FBIO *fbp = FBIO_NULL;		/* Current framebuffer ptr */
@@ -267,7 +169,7 @@ struct frame {
 	long		fr_nrays;	/* rays fired so far */
 	double		fr_cpu;		/* CPU seconds used so far */
 	/* Current view */
-	struct vls	fr_cmd;		/* RT options & command string */
+	struct rt_vls	fr_cmd;		/* RT options & command string */
 };
 struct frame FrameHead;
 struct frame *FreeFrame;
@@ -534,7 +436,7 @@ char	**argv;
 			GET_FRAME(fr);
 			prep_frame(fr);
 			sprintf(buf, "ae %g %g;", azimuth, elevation);
-			vls_strcat( &fr->fr_cmd, buf);
+			rt_vls_strcat( &fr->fr_cmd, buf);
 			if( create_outputfilename( fr ) < 0 )  {
 				FREE_FRAME(fr);
 			} else {
@@ -935,29 +837,29 @@ FILE	*fp;
 	char	*ebuf;
 	int	argc;
 	char	*argv[64];
-	struct vls	body;
-	struct vls	prelude;
+	struct rt_vls	body;
+	struct rt_vls	prelude;
 	int	frame;
 	struct frame	*fr;
 
-	vls_init( &prelude );
+	RT_VLS_INIT( &prelude );
 	while( (buf = rt_read_cmd( fp )) != (char *)0 )  {
 		if( strncmp( buf, "start", 5 ) != 0 )  {
-			vls_strcat( &prelude, buf );
-			vls_strcat( &prelude, ";" );
+			rt_vls_strcat( &prelude, buf );
+			rt_vls_strcat( &prelude, ";" );
 			rt_free( buf, "prelude line" );
 			continue;
 		}
 
 		/* Gobble until "end" keyword seen */
-		vls_init( &body );
+		RT_VLS_INIT( &body );
 		while( (ebuf = rt_read_cmd( fp )) != (char *)0 )  {
 			if( strncmp( ebuf, "end", 3 ) == 0 )  {
 				rt_free( ebuf, "end line" );
 				break;
 			}
-			vls_strcat( &body, ebuf );
-			vls_strcat( &body, ";" );
+			rt_vls_strcat( &body, ebuf );
+			rt_vls_strcat( &body, ";" );
 			rt_free( ebuf, "script line" );
 		}
 
@@ -970,15 +872,15 @@ FILE	*fp;
 		}
 		frame = atoi( argv[1] );
 		if( frame < desiredframe )  {
-			rt_free( body.vls_str, "script" );
+			rt_vls_free( &body );
 			goto bad;
 		}
 		/* Might see if frame file exists 444 mode, then skip also */
 		GET_FRAME(fr);
 		fr->fr_number = frame;
 		prep_frame(fr);
-		vls_vlscatzap( &fr->fr_cmd, &prelude );
-		vls_vlscatzap( &fr->fr_cmd, &body );
+		rt_vls_vlscatzap( &fr->fr_cmd, &prelude );
+		rt_vls_vlscatzap( &fr->fr_cmd, &body );
 		if( create_outputfilename( fr ) < 0 )  {
 			FREE_FRAME(fr);
 		} else {
@@ -1118,21 +1020,21 @@ register struct frame *fr;
 	fr->fr_width = width;
 	fr->fr_height = height;
 
-	vls_trunc( &fr->fr_cmd, 0 );	/* Start fresh */
+	rt_vls_free( &fr->fr_cmd );	/* Start fresh */
 	sprintf(buf, "opt -w%d -n%d -H%d -p%g -U%d -J%x -A%g -l%d -E%g",
 		fr->fr_width, fr->fr_height,
 		hypersample, rt_perspective,
 		use_air, jitter,
 		AmbientIntensity, lightmodel,
 		eye_backoff );
-	vls_strcat( &fr->fr_cmd, buf );
-	if( interactive )  vls_strcat( &fr->fr_cmd, " -I");
-	if( benchmark )  vls_strcat( &fr->fr_cmd, " -B");
+	rt_vls_strcat( &fr->fr_cmd, buf );
+	if( interactive )  rt_vls_strcat( &fr->fr_cmd, " -I");
+	if( benchmark )  rt_vls_strcat( &fr->fr_cmd, " -B");
 	if( aspect != 1.0 )  {
 		sprintf(buf, " -V%g", aspect);
-		vls_strcat( &fr->fr_cmd, buf );
+		rt_vls_strcat( &fr->fr_cmd, buf );
 	}
-	vls_strcat( &fr->fr_cmd, ";" );
+	rt_vls_strcat( &fr->fr_cmd, ";" );
 
 	fr->fr_start.tv_sec = fr->fr_end.tv_sec = 0;
 	fr->fr_start.tv_usec = fr->fr_end.tv_usec = 0;
@@ -1720,23 +1622,23 @@ register struct frame *fr;
 	/* Visible part is from -1 to +1 in view space */
 	if( fscanf( fp, "%s", number ) != 1 )  goto eof;
 	sprintf( cmd, "viewsize %s; eye_pt ", number );
-	vls_strcat( &(fr->fr_cmd), cmd );
+	rt_vls_strcat( &(fr->fr_cmd), cmd );
 
 	for( i=0; i<3; i++ )  {
 		if( fscanf( fp, "%s", number ) != 1 )  goto out;
 		sprintf( cmd, "%s ", number );
-		vls_strcat( &fr->fr_cmd, cmd );
+		rt_vls_strcat( &fr->fr_cmd, cmd );
 	}
 
 	sprintf( cmd, "; viewrot " );
-	vls_strcat( &fr->fr_cmd, cmd );
+	rt_vls_strcat( &fr->fr_cmd, cmd );
 
 	for( i=0; i < 16; i++ )  {
 		if( fscanf( fp, "%s", number ) != 1 )  goto out;
 		sprintf( cmd, "%s ", number );
-		vls_strcat( &fr->fr_cmd, cmd );
+		rt_vls_strcat( &fr->fr_cmd, cmd );
 	}
-	vls_strcat( &fr->fr_cmd, "; ");
+	rt_vls_strcat( &fr->fr_cmd, "; ");
 
 	if( feof(fp) ) {
 eof:
@@ -2353,7 +2255,7 @@ register struct frame *fr;
 	CHECK_FRAME(fr);
 	if( sp->sr_pc == PKC_NULL )  return;
 	if( pkg_send( MSG_MATRIX,
-	    fr->fr_cmd.vls_str, VLS_STRLEN(&fr->fr_cmd)+1, sp->sr_pc
+	    RT_VLS_ADDR(&fr->fr_cmd), rt_vls_strlen(&fr->fr_cmd)+1, sp->sr_pc
 	    ) < 0 )
 		drop_server(sp, "MSG_MATRIX pkg_send error");
 }
@@ -2835,16 +2737,16 @@ int	argc;
 char	**argv;
 {
 	register struct servers *sp;
-	int	len;
-	char	rd_buffer[80];		/* Should be tied to argv[1] len XXX */
+	int		len;
+	struct rt_vls	cmd;
 
-
-	strcpy(rd_buffer, "opt ");
-	strcat(rd_buffer, argv[1]);
-	len = strlen(rd_buffer)+1;
+	RT_VLS_INIT( &cmd );
+	rt_vls_strcpy( &cmd, "opt " );
+	rt_vls_strcat( &cmd, argv[1] );
+	len = rt_vls_strlen( &cmd )+1;
 	for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
 		if( sp->sr_pc == PKC_NULL )  continue;
-		if( pkg_send( MSG_OPTIONS, rd_buffer, len, sp->sr_pc) < 0 )
+		if( pkg_send( MSG_OPTIONS, RT_VLS_ADDR(&cmd), len, sp->sr_pc) < 0 )
 			drop_server(sp, "MSG_OPTIONS pkg_send error");
 	}
 }
@@ -3172,7 +3074,7 @@ char	**argv;
 
 		rt_log("\tnrays = %d, cpu sec=%g\n", fr->fr_nrays, fr->fr_cpu);
 		pr_list( &(fr->fr_todo) );
-		rt_log("\tcmd=%s\n", fr->fr_cmd.vls_str );
+		rt_log("\tcmd=%s\n", RT_VLS_ADDR(&fr->fr_cmd) );
 	}
 }
 
