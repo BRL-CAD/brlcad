@@ -569,9 +569,9 @@ worker()
 			register int r,g,b;
 			/* .pix files go bottom to top */
 			pixelp = scanbuf+((a.a_y*npts)+a.a_x)*3;
-			r = a.a_color[0]*255.;
-			g = a.a_color[1]*255.;
-			b = a.a_color[2]*255.;
+			r = a.a_color[0]*255.+rand_half();
+			g = a.a_color[1]*255.+rand_half();
+			b = a.a_color[2]*255.+rand_half();
 			/* Truncate glints, etc */
 			if( r > 255 )  r=255;
 			if( g > 255 )  g=255;

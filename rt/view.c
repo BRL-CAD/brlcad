@@ -180,9 +180,10 @@ register struct application *ap;
 {
 	register int r,g,b;
 
-	r = ap->a_color[0]*255.;
-	g = ap->a_color[1]*255.;
-	b = ap->a_color[2]*255.;
+	/* To prevent bad color aliasing, add some color dither */
+	r = ap->a_color[0]*255.+rand_half();
+	g = ap->a_color[1]*255.+rand_half();
+	b = ap->a_color[2]*255.+rand_half();
 	if( r > 255 ) r = 255;
 	if( g > 255 ) g = 255;
 	if( b > 255 ) b = 255;
