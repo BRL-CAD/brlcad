@@ -1347,7 +1347,28 @@ double		local2mm;
 	else	(ii)->elem.forw = (struct rt_list *)ptrs[sub]; \
 	if( (sub = rt_glong((oo)->elem.back)) < 0 ) \
 		(ii)->elem.back = &(hd); \
-	else (ii)->elem.back = (struct rt_list *)ptrs[sub]; }
+	else	(ii)->elem.back = (struct rt_list *)ptrs[sub]; }
+
+/* For use with the edgeuse l2 / edge_g eu2_hd secondary list */
+/* The subscripts will point to the edgeuse, not the edgeuse's l2 rt_list */
+#define INDEXL_HD2(oo,ii,elem,hd)	{ \
+	register int	sub; \
+	register struct edgeuse	*eu2; \
+	if( (sub = rt_glong((oo)->elem.forw)) < 0 ) { \
+		(ii)->elem.forw = &(hd); \
+	} else { \
+		eu2 = (struct edgeuse *)ptrs[sub]; \
+		NMG_CK_EDGEUSE(eu2); \
+		(ii)->elem.forw = &eu2->l2; \
+	} \
+	if( (sub = rt_glong((oo)->elem.back)) < 0 ) { \
+		(ii)->elem.back = &(hd); \
+	} else { \
+		eu2 = (struct edgeuse *)ptrs[sub]; \
+		NMG_CK_EDGEUSE(eu2); \
+		(ii)->elem.back = &eu2->l2; \
+	} }
+
 
 /*
  *			R T _ N M G _ I D I S K
@@ -1569,11 +1590,9 @@ CONST unsigned char	*basep;	/* base of whole import record */
 	case NMG_KIND_EDGEUSE:
 		{
 			struct edgeuse	*eu = (struct edgeuse *)op;
-			struct edgeuse	*eu2;
 			struct disk_edgeuse	*d;
 			int			up_index;
 			int			up_kind;
-			int			sub;
 
 			d = &((struct disk_edgeuse *)ip)[iindex];
 			NMG_CK_EDGEUSE(eu);
@@ -1600,21 +1619,7 @@ CONST unsigned char	*basep;	/* base of whole import record */
 
 			/* Note that l2 subscripts will be for edgeuse, not l2 */
 			/* g.lseg_p->eu_hd2 is a pun for g.cnurb_p->eu_hd2 also */
-			/* inline INDEXL_HD( d, eu, l2, eu->g.lseg_p->eu_hd2 ); */
-			if( (sub = rt_glong(d->l2.forw)) < 0 )  {
-				eu->l2.forw = &(eu->g.lseg_p->eu_hd2);
-			} else  {
-				eu2 = (struct edgeuse *)ptrs[sub];
-				NMG_CK_EDGEUSE(eu2);
-				eu->l2.forw = &eu2->l2;
-			}
-			if( (sub = rt_glong(d->l2.back)) < 0 )  {
-				eu->l2.back = &(eu->g.lseg_p->eu_hd2);
-			} else  {
-				eu2 = (struct edgeuse *)ptrs[sub];
-				NMG_CK_EDGEUSE(eu2);
-				eu->l2.back = &eu2->l2;
-			}
+			INDEXL_HD2( d, eu, l2, eu->g.lseg_p->eu_hd2 );
 		}
 		return 0;
 	case NMG_KIND_EDGE:
@@ -1639,7 +1644,8 @@ CONST unsigned char	*basep;	/* base of whole import record */
 			d = &((struct disk_edge_g_lseg *)ip)[iindex];
 			NMG_CK_EDGE_G_LSEG(eg);
 			RT_CK_DISKMAGIC( d->magic, DISK_EDGE_G_LSEG_MAGIC );
-			INDEXL_HD( d, eg, eu_hd2, eg->eu_hd2 );
+			/* Forw subscript points to edgeuse, not edgeuse2 */
+			INDEXL_HD2( d, eg, eu_hd2, eg->eu_hd2 );
 			ntohd(pt, d->e_pt, 3);
 			ntohd(dir, d->e_dir, 3);
 			MAT4X3PNT( eg->e_pt, mat, pt );
@@ -1653,7 +1659,7 @@ CONST unsigned char	*basep;	/* base of whole import record */
 			d = &((struct disk_edge_g_cnurb *)ip)[iindex];
 			NMG_CK_EDGE_G_CNURB(eg);
 			RT_CK_DISKMAGIC( d->magic, DISK_EDGE_G_CNURB_MAGIC );
-			INDEXL_HD( d, eg, eu_hd2, eg->eu_hd2 );
+			INDEXL_HD2( d, eg, eu_hd2, eg->eu_hd2 );
 			eg->order = rt_glong( d->order );
 
 			/* If order is zero, so is everything else */
@@ -1877,6 +1883,7 @@ rt_log("%d  %s\n", kind_counts[kind], rt_nmg_kind_names[kind] );
 					struct edgeuse	*eu;
 					GET_EDGEUSE( eu, m );
 					eu->l.magic = NMG_EDGEUSE_MAGIC;
+					eu->l2.magic = NMG_EDGEUSE2_MAGIC;
 					ptrs[subscript] = (long *)eu;
 				}
 				break;
@@ -2209,7 +2216,7 @@ int				compact;
 #endif
 
 	/* Collect overall new subscripts, and structure-specific indices */
-	ecnt = (struct nmg_exp_counts *)rt_calloc( m->maxindex,
+	ecnt = (struct nmg_exp_counts *)rt_calloc( m->maxindex+1,
 		sizeof(struct nmg_exp_counts), "ecnt[]" );
 	for( i = 0; i < NMG_N_KINDS; i++ )
 		kind_counts[i] = 0;
