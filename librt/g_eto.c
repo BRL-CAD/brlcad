@@ -1299,6 +1299,102 @@ CONST struct db_i		*dbip;
 }
 
 /*
+ *			R T _ E T O _ I M P O R T 5
+ *
+ *  Import a eto from the database format to the internal format.
+ *  Apply modeling transformations at the same time.
+ */
+int
+rt_eto_import5( ip, ep, mat, dbip )
+     struct rt_db_internal	*ip;
+     CONST struct bu_external	*ep;
+     register CONST mat_t	mat;
+     CONST struct db_i		*dbip;
+{
+	struct rt_eto_internal	*tip;
+	fastf_t			vec[11];
+
+	BU_CK_EXTERNAL( ep );
+
+	BU_ASSERT_LONG( ep->ext_nbytes, ==, SIZEOF_NETWORK_DOUBLE * 11 );
+
+	RT_INIT_DB_INTERNAL( ip );
+	ip->idb_type = ID_ETO;
+	ip->idb_meth = &rt_functab[ID_ETO];
+	ip->idb_ptr = bu_malloc(sizeof(struct rt_eto_internal), "rt_eto_internal");
+
+	tip = (struct rt_eto_internal *)ip->idb_ptr;
+	tip->eto_magic = RT_ETO_INTERNAL_MAGIC;
+
+	/* Convert from database (network) to internal (host) format */
+	ntohd( (unsigned char *)vec, ep->ext_buf, 11 );
+
+	/* Apply modeling transformations */
+	MAT4X3PNT( tip->eto_V, mat, &vec[0*3] );
+	MAT4X3VEC( tip->eto_N, mat, &vec[1*3] );
+	MAT4X3VEC( tip->eto_C, mat, &vec[2*3] );
+	tip->eto_r  = vec[3*3] / mat[15];
+	tip->eto_rd = vec[3*3+1] / mat[15];
+
+	if( tip->eto_r < SMALL || tip->eto_rd < SMALL )  {
+		bu_log("rt_eto_import:  zero length R or Rd vector\n");
+		return(-1);
+	}
+
+	return(0);		/* OK */
+}
+
+/*
+ *			R T _ E T O _ E X P O R T 5
+ *
+ *  The name will be added by the caller.
+ */
+int
+rt_eto_export5( ep, ip, local2mm, dbip )
+struct bu_external		*ep;
+CONST struct rt_db_internal	*ip;
+double				local2mm;
+CONST struct db_i		*dbip;
+{
+	struct rt_eto_internal	*tip;
+	fastf_t			vec[11];
+
+	RT_CK_DB_INTERNAL(ip);
+	if( ip->idb_type != ID_ETO )  return(-1);
+	tip = (struct rt_eto_internal *)ip->idb_ptr;
+	RT_ETO_CK_MAGIC(tip);
+
+	BU_INIT_EXTERNAL(ep);
+	ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * 11;
+	ep->ext_buf = (genptr_t)bu_malloc( ep->ext_nbytes, "eto external");
+
+	if (MAGNITUDE(tip->eto_C) < RT_LEN_TOL
+		|| MAGNITUDE(tip->eto_N) < RT_LEN_TOL
+		|| tip->eto_r < RT_LEN_TOL
+		|| tip->eto_rd < RT_LEN_TOL) {
+		bu_log("rt_eto_export: not all dimensions positive!\n");
+		return(-1);
+	}
+	
+	if (tip->eto_rd > MAGNITUDE(tip->eto_C) ) {
+		bu_log("rt_eto_export: semi-minor axis cannot be longer than semi-major axis!\n");
+		return(-1);
+	}
+
+	/* scale 'em into local buffer */
+	VSCALE( &vec[0*3], tip->eto_V, local2mm );
+	VSCALE( &vec[1*3], tip->eto_N, local2mm );
+	VSCALE( &vec[2*3], tip->eto_C, local2mm );
+	vec[3*3] = tip->eto_r * local2mm;
+	vec[3*3+1] = tip->eto_rd * local2mm;
+
+	/* Convert from internal (host) to database (network) format */
+	htond( ep->ext_buf, (unsigned char *)vec, 11 );
+
+	return(0);
+}
+
+/*
  *			R T _ E T O _ D E S C R I B E
  *
  *  Make human-readable formatted presentation of this solid.

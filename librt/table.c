@@ -663,7 +663,7 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 		rt_nul_piece_shot, rt_nul_piece_hitsegs,
 		rt_eto_uv,	rt_eto_curve,	rt_eto_class,	rt_eto_free,
 		rt_eto_plot,	rt_eto_vshot,	rt_eto_tess,	rt_nul_tnurb,
-		rt_nul_import5, rt_nul_export5,
+		rt_eto_import5, rt_eto_export5,
 		rt_eto_import,	rt_eto_export,	rt_eto_ifree,
 		rt_eto_describe,rt_eto_xform,	rt_eto_parse,
 		sizeof(struct rt_eto_internal), RT_ETO_INTERNAL_MAGIC,
