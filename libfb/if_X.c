@@ -1199,7 +1199,7 @@ FBIO	*ifp;
  * Convert width x height 8bit grey scale bytes in bytebuf to
  * a bitmap in bitbuf, using the selected "method"
  */
-void
+static void
 Monochrome(bitbuf,bytebuf,width,height,method)
 unsigned char *bitbuf;
 unsigned char *bytebuf;
@@ -1596,7 +1596,7 @@ Display *dpy;
  * We do all of our computation here in the first quadrant form and
  * only switch to fourth for Xlib commands.
  */
-void
+static void
 repaint(ifp)
 FBIO	*ifp;
 {
