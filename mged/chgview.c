@@ -625,7 +625,7 @@ char	**argv;
   if( argc > 1 )  lvl = atoi(argv[1]);
 
   bu_vls_init(&vls);
-  if( lvl != -1 )
+  if( 0 <= lvl )
       bu_vls_printf(&vls, "ndrawn=%d\n", ndrawn);
   Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
   bu_vls_free(&vls);
@@ -1794,6 +1794,12 @@ int		lvl;			/* debug level */
   }
 
   FOR_ALL_SOLIDS(sp, &startp->l){
+    if (lvl <= -2) {
+      /* print only leaves */
+      bu_vls_printf(&vls, "%s ", sp->s_path[sp->s_last]->d_namep);
+      continue;
+    }
+
     if( lvl != -1 )
 	bu_vls_printf(&vls, "%s", sp->s_flag == UP ? "VIEW " : "-no- ");
     for( i=0; i <= sp->s_last; i++ )
