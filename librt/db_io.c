@@ -23,11 +23,13 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
-#ifdef BSD
-#include <strings.h>
-#else
+#ifdef USE_STRING_H
 #include <string.h>
+#else
+#include <strings.h>
 #endif
 
 #include "machine.h"
@@ -176,7 +178,7 @@ long		count;		/* byte count */
 long		offset;		/* byte offset from start of file */
 {
 	register int	got;
-	register int	s;
+	register long	s;
 
 	if( dbip->dbi_magic != DBI_MAGIC )  rt_bomb("db_read:  bad dbip\n");
 	if(rt_g.debug&DEBUG_DB)  {
@@ -187,16 +189,12 @@ long		offset;		/* byte offset from start of file */
 		return(-1);
 	}
 	if( dbip->dbi_inmem )  {
-#if defined(SYSV)
 		memcpy( addr, dbip->dbi_inmem + offset, count );
-#else
-		bcopy( dbip->dbi_inmem + offset, addr, count );
-#endif
 		return(0);
 	}
 	RES_ACQUIRE( &rt_g.res_syscall );
-#if defined(unix) || defined(__unix) || defined(__unix__)
-	if ((s=lseek( dbip->dbi_fd, offset, 0 )) != offset) {
+#ifdef USE_UNIX_IO
+	if ((s=(long)lseek( dbip->dbi_fd, (off_t)offset, 0 )) != offset) {
 		rt_log("db_read: lseek returns %d not %d\n", s, offset);
 		rt_bomb("Goodbye");
 	}
@@ -254,7 +252,7 @@ long		offset;
 		return(-1);
 	}
 	RES_ACQUIRE( &rt_g.res_syscall );
-#if defined(unix) || defined(__unix)  || defined(__unix__)
+#ifdef USE_UNIX_IO
 	(void)lseek( dbip->dbi_fd, offset, 0 );
 	got = write( dbip->dbi_fd, addr, count );
 #else
