@@ -778,7 +778,7 @@ Summary:  BRL-CAD(tm) Solid Modeling System with ray-tracer and geometry editor
 Name: brlcad
 Version: ${RELEASE}
 Release: ${REV}
-Copyright:  Copyright 1999 by U.S.Army in all countires except the USA.  See distribution restrictions in your license agreement or ftp.arl.mil:/pub/brl-cad/agreement
+Copyright:  Copyright 2000 by U.S.Army in all countires except the USA.  See distribution restrictions in your license agreement or ftp.arl.mil:/pub/brl-cad/agreement
 Group: Applications/Graphics
 Source:  ftp.arl.mil:/pub/brl-cad/Rel${RELEASE}/src/
 URL:  http://ftp.arl.mil/brlcad/
@@ -809,6 +809,44 @@ EOF
 	# Privacy step still needed to be run by hand.
 	## enigma $KEY < ./${RPM_BASE}.rpm.gz > ./${RPM_BASE}.rpm.gz.crypt
 	# enigma $KEY < ./${RPM_BASE}.rpm > ./${RPM_BASE}.rpm.crypt
+	;;
+
+sunpkg)
+	# Build Solaris pkg.  Bundle up /usr/brlcad
+	rm -f prototype pkginfo
+	REV=`date '+%Y.%m.%d' `
+	PKG_BASE=brlcad-${RELEASE}-${REV}-solaris
+	cat > pkginfo << EOF
+PKG=brlcad
+NAME=BRL-CAD(tm) Solid Modeling System with ray-tracer and geometry editor
+ARCH=sparc
+VERSION=${RELEASE},REV=${REV}
+CATEGORY=application
+CLASSES=none
+BASEDIR=/usr/brlcad
+PRODNAME=brlcad
+PRODVERS=${RELEASE}
+DESC=The BRL-CAD(tm) Package is a powerful Constructive Solid Geometry (CSG) \
+solid modeling system.  BRL-CAD includes an interactive geometry \
+editor, a ray tracing library, two ray-tracing based lighting models, \
+a generic framebuffer library, a network-distributed image-processing \
+and signal-processing capability, and a large collection of related \
+tools and utilities. \
+Copyright 2000 by U.S.Army in all countires except the USA.  See distribution restrictions in your license agreement or ftp.arl.mil:/pub/brl-cad/agreement
+VENDOR=The U. S. Army Research Laboratory, Aberdeen Proving Ground, MD  USA  21005-5068
+HOTLINE=http://ftp.arl.mil/brlcad/
+EMAIL=acst@arl.mil
+EOF
+	echo "i pkginfo=./pkginfo" >> ./prototype
+	pkgproto /usr/brlcad/.=/usr/brlcad >> ./prototype
+	rm -fr /tmp/brlcad
+	# This creates /tmp/brlcad directory
+	pkgmk -o -a sun4 -d /tmp -f ./prototype brlcad
+	pkgtrans -s /tmp /tmp/$PKG_BASE brlcad
+	##pkgchk -d /tmp/$PKG_BASE all
+	rm -fr /tmp/brlcad
+	echo "Wrote /tmp/$PKG_BASE"
+	# Privacy step sitll needed to be run by hand.
 	;;
 
 *)
