@@ -411,12 +411,134 @@ unsigned long limit; \
 	} \
 }
 
+
+#ifdef __STDC__
+#define reconstruct_2d( DATATYPE ) bn_wlt_haar_2d_ ## DATATYPE ## _reconstruct
+#else
+#define reconstruct_2d(DATATYPE) bn_wlt_haar_2d_/* */DATATYPE/* */_reconstruct
+#endif
+
+#define make_wlt_haar_2d_reconstruct(DATATYPE) \
+void \
+reconstruct_2d(DATATYPE) \
+(tbuf, buf, width, channels, avg_size, limit) \
+DATATYPE *tbuf; \
+DATATYPE *buf; \
+unsigned long width; \
+unsigned long channels; \
+unsigned long avg_size; \
+unsigned long limit; \
+{ \
+	register DATATYPE *detail; \
+	register DATATYPE *avg; \
+	unsigned long img_size; \
+	unsigned long dbl_size; \
+	int do_free = 0; \
+	unsigned long x_tmp, d, x, i, j; \
+	unsigned long y_tmp, y, row_len, row_start; \
+ \
+	CK_POW_2( avg_size ); \
+	CK_POW_2( width ); \
+	CK_POW_2( limit ); \
+ \
+	/* XXX check for: \
+	 * subimage_size < dimen && subimage_size < limit \
+	 * limit <= dimen \
+	 */ \
+ \
+ \
+	if ( ! tbuf ) { \
+		tbuf = ( DATATYPE *)bu_malloc((width/2) * channels * sizeof( *buf ), \
+				"1d wavelet reconstruct tmp buffer"); \
+		do_free = 1; \
+	} \
+ \
+	row_len = width * channels; \
+ \
+	/* Each iteration of this loop reconstructs an image twice as \
+	 * large as the original using a "detail image". \
+	 */ \
+ \
+	for (img_size = avg_size ; img_size < limit ; img_size = dbl_size) { \
+		dbl_size = img_size * 2; \
+		 \
+		 \
+		/* first is a vertical reconstruction */ \
+		for (x=0 ; x < dbl_size ; x++ ) { \
+			/* reconstruct column x */ \
+ \
+			/* copy column of "average" data to tbuf */ \
+			x_tmp = x*channels; \
+			for (y=0 ; y < img_size ; y++) { \
+				i = x_tmp + y*row_len; \
+				j = y * channels; \
+				for (d=0 ; d < channels ; d++) { \
+					tbuf[j++] = buf[i++]; \
+				} \
+			} \
+			avg = tbuf; \
+			detail = &buf[x_tmp + img_size*row_len]; \
+ \
+			/* reconstruct column */ \
+			for (y=0 ; y < dbl_size ; y += 2) { \
+ \
+				i = x_tmp + y*row_len; \
+				j = i + row_len; \
+ \
+				for (d=0 ; d < channels ; d++,avg++,detail++){ \
+					buf[i++] = *avg + *detail; \
+					buf[j++] = *avg - *detail; \
+				} \
+				detail += row_len - channels; \
+			} \
+		} \
+ \
+		/* now a horizontal reconstruction */ \
+		for (y=0 ; y < dbl_size ; y++ ) { \
+			/* reconstruct row y */ \
+ \
+			/* copy "average" row to tbuf and set pointer to \
+			 * begining of "detail" \
+			 */ \
+			d = img_size * channels; \
+			row_start = y*row_len; \
+ \
+ \
+			avg = &buf[ row_start ]; \
+			detail = &buf[ row_start + d]; \
+ \
+			memcpy(tbuf, avg, sizeof(*buf) * d ); \
+			avg = tbuf; \
+ \
+			/* reconstruct row */ \
+			for (x=0 ; x < dbl_size ; x += 2 ) { \
+				x_tmp = x * channels; \
+				i = row_start + x * channels; \
+				j = i + channels; \
+ \
+				for (d=0 ; d < channels ; d++,avg++,detail++){ \
+					buf[i++] = *avg + *detail; \
+					buf[j++] = *avg - *detail; \
+				} \
+			} \
+		} \
+	} \
+}
+
+
 make_wlt_haar_2d_decompose(double)
 make_wlt_haar_2d_decompose(float)
 make_wlt_haar_2d_decompose(char)
 make_wlt_haar_2d_decompose(int)
 make_wlt_haar_2d_decompose(short)
 make_wlt_haar_2d_decompose(long)
+
+make_wlt_haar_2d_reconstruct(double)
+make_wlt_haar_2d_reconstruct(float)
+make_wlt_haar_2d_reconstruct(char)
+make_wlt_haar_2d_reconstruct(int)
+make_wlt_haar_2d_reconstruct(short)
+make_wlt_haar_2d_reconstruct(long)
 
 
 
@@ -537,3 +659,4 @@ make_wlt_haar_2d_decompose2(char)
 make_wlt_haar_2d_decompose2(int)
 make_wlt_haar_2d_decompose2(short)
 make_wlt_haar_2d_decompose2(long)
+
