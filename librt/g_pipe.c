@@ -1,8 +1,9 @@
+#define NEW_IF	0
 /*
  *			G _ P I P E . C
  *
  *  Purpose -
- *	Intersect a ray with a 
+ *	Intersect a ray with a pipe solid
  *
  *  Authors -
  *  
@@ -38,6 +39,8 @@ struct pipe_specific {
 	vect_t	pipe_V;
 };
 
+RT_EXTERN( void rt_pipe_ifree, (struct rt_db_internal *ip) );
+
 /*
  *  			R T _ P I P E _ P R E P
  *  
@@ -53,28 +56,44 @@ struct pipe_specific {
  *  	A struct pipe_specific is created, and it's address is stored in
  *  	stp->st_specific for use by pipe_shot().
  */
+#if NEW_IF
+int
+rt_pipe_prep( stp, ep, rtip )
+struct soltab		*stp;
+struct rt_external	*ep;
+struct rt_i		*rtip;
+{
+#else
 int
 rt_pipe_prep( stp, rec, rtip )
 struct soltab		*stp;
 union record		*rec;
 struct rt_i		*rtip;
 {
+	struct rt_external	ext, *ep;
+#endif
 	register struct pipe_specific *pipe;
-	struct pipe_internal	pi;
+	struct rt_db_internal	intern;
+	struct pipe_internal	*pip;
 	int			i;
 
-	if( rec == (union record *)0 )  {
-		rec = db_getmrec( rtip->rti_dbip, stp->st_dp );
-		i = rt_pipe_import( &pi, rec, stp->st_pathmat );
-		rt_free( (char *)rec, "pipe record" );
-	} else {
-		i = rt_pipe_import( &pi, rec, stp->st_pathmat );
-	}
+#if NEW_IF
+	/* All set */
+#else
+	ep = &ext;
+	RT_INIT_EXTERNAL(ep);
+	ep->ext_buf = (genptr_t)rec;
+	ep->ext_nbytes = stp->st_dp->d_len*sizeof(union record);
+#endif
+	i = rt_pipe_import( &intern, ep, stp->st_pathmat );
 	if( i < 0 )  {
 		rt_log("rt_pipe_setup(%s): db import failure\n", stp->st_name);
 		return(-1);		/* BAD */
 	}
+	RT_CK_DB_INTERNAL( &intern );
+	pip = (struct pipe_internal *)intern.idb_ptr;
 
+	rt_pipe_ifree( &intern );
 	return(-1);	/* unfinished */
 }
 
@@ -213,6 +232,17 @@ rt_pipe_class()
 /*
  *			R T _ P I P E _ P L O T
  */
+#if NEW_IF
+int
+rt_pipe_plot( vhead, mat, ip, abs_tol, rel_tol, norm_tol )
+struct vlhead	*vhead;
+mat_t		mat;
+struct rt_db_internal *ip;
+double		abs_tol;
+double		rel_tol;
+double		norm_tol;
+{
+#else
 int
 rt_pipe_plot( rp, mat, vhead, dp, abs_tol, rel_tol, norm_tol )
 union record	*rp;
@@ -223,21 +253,36 @@ double		abs_tol;
 double		rel_tol;
 double		norm_tol;
 {
+	struct rt_external	ext, *ep;
+	struct rt_db_internal	intern, *ip;
+#endif
 	register struct wdb_pipeseg	*psp;
 	register struct wdb_pipeseg	*np;
-	struct pipe_internal	pi;
+	struct pipe_internal	*pip;
 	vect_t		head, tail;
 	point_t		pt;
 	int		i;
 
-	if( rt_pipe_import( &pi, rp, mat ) < 0 )  {
-		rt_log("rt_pipe_plot(%s): db import failure\n", dp->d_namep);
-		return(-1);
+#if NEW_IF
+	/* All set */
+#else
+	ep = &ext;
+	RT_INIT_EXTERNAL(ep);
+	ep->ext_buf = (genptr_t)rp;
+	ep->ext_nbytes = dp->d_len*sizeof(union record);
+	i = rt_part_import( &intern, ep, mat );
+	if( i < 0 )  {
+		rt_log("rt_part_plot(): db import failure\n");
+		return(-1);		/* BAD */
 	}
+	ip = &intern;
+#endif
+	RT_CK_DB_INTERNAL(ip);
+	pip = (struct pipe_internal *)ip->idb_ptr;
 
-	np = RT_LIST_FIRST(wdb_pipeseg, &pi.pipe_segs.l);
+	np = RT_LIST_FIRST(wdb_pipeseg, &pip->pipe_segs.l);
 	ADD_VL( vhead, np->ps_start, 0 );
-	for( RT_LIST( psp, wdb_pipeseg, &pi.pipe_segs.l ) )  {
+	for( RT_LIST( psp, wdb_pipeseg, &pip->pipe_segs.l ) )  {
 		switch( psp->ps_type )  {
 		case WDB_PIPESEG_TYPE_END:
 			/* Previous segment aleady connected to end plate */
@@ -267,7 +312,7 @@ double		norm_tol;
 		}
 	}
 
-	/* XXX Need to release storage here! */
+	rt_pipe_ifree( ip );
 	return(0);
 }
 
@@ -292,15 +337,20 @@ double			norm_tol;
  *			R T _ P I P E _ I M P O R T
  */
 int
-rt_pipe_import( pipe, rp, mat )
-struct pipe_internal	*pipe;
-union record		*rp;
+rt_pipe_import( ip, ep, mat )
+struct rt_db_internal	*ip;
+struct rt_external	*ep;
 register mat_t		mat;
 {
-	register struct exported_pipeseg *ep;
+	register struct exported_pipeseg *exp;
 	register struct wdb_pipeseg	*psp;
 	struct wdb_pipeseg		tmp;
+	struct pipe_internal		*pipe;
+	union record			*rp;
+	int				count;
 
+	RT_CK_EXTERNAL( ep );
+	rp = (union record *)ep->ext_buf;
 	/* Check record type */
 	if( rp->u_id != DBID_PIPE )  {
 		rt_log("rt_pipe_import: defective record\n");
@@ -308,10 +358,10 @@ register mat_t		mat;
 	}
 
 	/* Count number of segments */
-	pipe->pipe_count = 0;
-	for( ep = &rp->pw.pw_data[0]; ; ep++ )  {
-		pipe->pipe_count++;
-		switch( (int)(ep->eps_type[0]) )  {
+	count = 0;
+	for( exp = &rp->pw.pw_data[0]; ; exp++ )  {
+		count++;
+		switch( (int)(exp->eps_type[0]) )  {
 		case WDB_PIPESEG_TYPE_END:
 			goto done;
 		case WDB_PIPESEG_TYPE_LINEAR:
@@ -322,8 +372,14 @@ register mat_t		mat;
 		}
 	}
 done:	;
-	if( pipe->pipe_count <= 1 )
+	if( count <= 1 )
 		return(-3);		/* Not enough for 1 pipe! */
+
+	RT_INIT_DB_INTERNAL( ip );
+	ip->idb_type = ID_PIPE;
+	ip->idb_ptr = rt_malloc( sizeof(struct pipe_internal), "pipe_internal");
+	pipe = (struct pipe_internal *)ip->idb_ptr;
+	pipe->pipe_count = count;
 
 	/*
 	 *  Walk the array of segments in reverse order,
@@ -331,18 +387,18 @@ done:	;
 	 *  using exactly the same structures as libwdb.
 	 */
 	RT_LIST_INIT( &pipe->pipe_segs.l );
-	for( ep = &rp->pw.pw_data[pipe->pipe_count-1]; ep >= &rp->pw.pw_data[0]; ep-- )  {
-		tmp.ps_type = (int)ep->eps_type[0];
-		ntohd( tmp.ps_start, ep->eps_start, 3 );
-		ntohd( &tmp.ps_id, ep->eps_id, 1 );
-		ntohd( &tmp.ps_od, ep->eps_od, 1 );
+	for( exp = &rp->pw.pw_data[pipe->pipe_count-1]; exp >= &rp->pw.pw_data[0]; exp-- )  {
+		tmp.ps_type = (int)exp->eps_type[0];
+		ntohd( tmp.ps_start, exp->eps_start, 3 );
+		ntohd( &tmp.ps_id, exp->eps_id, 1 );
+		ntohd( &tmp.ps_od, exp->eps_od, 1 );
 
 		/* Apply modeling transformations */
 		GETSTRUCT( psp, wdb_pipeseg );
 		psp->ps_type = tmp.ps_type;
 		MAT4X3PNT( psp->ps_start, mat, tmp.ps_start );
 		if( psp->ps_type == WDB_PIPESEG_TYPE_BEND )  {
-			ntohd( tmp.ps_bendcenter, ep->eps_bendcenter, 3 );
+			ntohd( tmp.ps_bendcenter, exp->eps_bendcenter, 3 );
 			MAT4X3PNT( psp->ps_bendcenter, mat, tmp.ps_bendcenter );
 		} else {
 			VSETALL( psp->ps_bendcenter, 0 );
@@ -353,4 +409,97 @@ done:	;
 	}
 
 	return(0);			/* OK */
+}
+
+/*
+ *			R T _ P I P E _ E X P O R T
+ */
+int
+rt_pipe_export( ep, ip )
+struct rt_external	*ep;
+struct rt_db_internal	*ip;
+{
+	return(-1);
+}
+
+/*
+ *			R T _ P I P E _ D E S C R I B E
+ *
+ *  Make human-readable formatted presentation of this solid.
+ *  First line describes type of solid.
+ *  Additional lines are indented one tab, and give parameter values.
+ */
+int
+rt_pipe_describe( str, ip, verbose )
+struct rt_vls		*str;
+struct rt_db_internal	*ip;
+int			verbose;
+{
+	register struct pipe_internal	*pip =
+		(struct pipe_internal *)ip->idb_ptr;
+	register struct wdb_pipeseg	*psp;
+	char	buf[256];
+	int	segno = 0;
+
+	RT_CK_DB_INTERNAL(ip);
+
+	sprintf(buf, "pipe with %d segments\n", pip->pipe_count );
+	rt_vls_strcat( str, buf );
+
+	for( RT_LIST_FOR( psp, wdb_pipeseg, &pip->pipe_segs.l ) )  {
+		/* XXX check magic number here */
+		sprintf(buf, "\t%d ", segno++ );
+		rt_vls_strcat( str, buf );
+		switch( psp->ps_type )  {
+		case WDB_PIPESEG_TYPE_END:
+			rt_vls_strcat( str, "END" );
+			break;
+		case WDB_PIPESEG_TYPE_LINEAR:
+			rt_vls_strcat( str, "LINEAR" );
+			break;
+		case WDB_PIPESEG_TYPE_BEND:
+			rt_vls_strcat( str, "BEND" );
+			break;
+		default:
+			return(-1);
+		}
+		sprintf(buf, "  od=%g", psp->ps_od );
+		rt_vls_strcat( str, buf );
+		if( psp->ps_id > 0 )  {
+			sprintf(buf, ", id  = %g", psp->ps_id );
+			rt_vls_strcat( str, buf );
+		}
+		rt_vls_strcat( str, "\n" );
+
+		sprintf(buf, "\t  start=(%g, %g, %g)\n", V3ARGS(psp->ps_start) );
+		rt_vls_strcat( str, buf );
+
+		if( psp->ps_type == WDB_PIPESEG_TYPE_BEND )  {
+			sprintf(buf, "\t  bendcenter=(%g, %g, %g)\n",
+				V3ARGS(psp->ps_bendcenter) );
+			rt_vls_strcat( str, buf );
+		}
+	}
+	return(0);
+}
+
+/*
+ *  Free the storage associated with the rt_db_internal version of this solid.
+ *  XXX The suffix of this name is temporary.
+ */
+void
+rt_pipe_ifree( ip )
+struct rt_db_internal	*ip;
+{
+	register struct pipe_internal	*pipe =
+		(struct pipe_internal*)ip->idb_ptr;
+	register struct wdb_pipeseg	*psp;
+
+	RT_CK_DB_INTERNAL(ip);
+
+	while( RT_LIST_WHILE( psp, wdb_pipeseg, &pipe->pipe_segs.l ) )  {
+		RT_LIST_DEQUEUE( &(psp->l) );
+		rt_free( (char *)psp, "wdb_pipeseg" );
+	}
+	rt_free( ip->idb_ptr, "pipe ifree" );
 }
