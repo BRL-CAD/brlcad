@@ -44,3 +44,5 @@
 #define TEMPLATE_COLS		79
 extern int			LI; /* From "libcursor.a".		*/
 extern int			li; /* Actual # of lines in window.	*/
+
+extern char			template[][TEMPLATE_COLS];

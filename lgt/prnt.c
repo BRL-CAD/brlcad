@@ -216,7 +216,7 @@ void
 update_Screen()
 	{	register int	tem_co, row, col;
 	tem_co = Min( co, TEMPLATE_COLS );
-	for( row = 0; template[row] != NULL; row++ )
+	for( row = 0; template[row][0] != '\0'; row++ )
 		{	register int	lastcol = -2;
 		if( template[row+1] == NULL )
 			(void) SetStandout();

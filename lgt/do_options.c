@@ -45,7 +45,11 @@ static char	*prog_id;
 static char	**objects;
 static char	svkey_file[MAX_LN] = { 0 };
 static char	scratchbuf[TEMPLATE_COLS+1];
-static char	*lgt_template[] = {
+
+/* The strings in this array will be modified as the program runs,
+ * so don't point to CONST strings, initialize as character arrays here.
+ */
+char	template[][TEMPLATE_COLS] = {
 /*         1         2         3         4         5         6         7         8
  012345678901234567890123456789012345678901234567890123456789012345678901234567890*/
 "TITLE [                                                                       ]",
@@ -58,9 +62,8 @@ static char	*lgt_template[] = {
 "                                                       background [           ]",
 "FLAGS : buffer [    ] debug [        ] max-bounce [   ]                        ",
 "-------------------------------------------------------------------------------",
-0
+""
 };
-char		**template = lgt_template;
 
 static int	noframes = 1;
 
@@ -638,7 +641,7 @@ STATIC int
 f_Grid_Roll( itemp, args )
 HMitem	*itemp;
 char	**args;
-	{	static char	promptbuf[17];
+	{
 	if( args == NULL || args[1] == NULL || sscanf( args[1], "%lf", &grid_roll ) != 1 )
 		{
 		if( tty )
@@ -665,7 +668,7 @@ STATIC int
 f_Anti_Aliasing( itemp, args )
 HMitem	*itemp;
 char	**args;
-	{	static char	promptbuf[17];
+	{
 	if(	args == NULL || args[1] == NULL
 	     ||	sscanf( args[1], "%d", &aperture_sz ) != 1
 		)
@@ -705,7 +708,7 @@ HMitem	*itemp;
 char	**args;
 	{	static char	tmp_file[L_tmpnam];
 		static char	*batch_com[8];
-		char		*script = tmpnam( tmp_file ), **p;
+		char		*script = tmpnam( tmp_file );
 #ifdef cray
 	rt_log( "Sorry, no batch queue on the Cray yet.\n" );
 	return	1;
@@ -1783,7 +1786,7 @@ HMitem	*itemp;
 char	**args;
 	{	int		ret = TRUE;
 		char		buf[10];
-		char		*locargs[2];
+		char		*locargs[3];
 	/* Will use 'grid_sz' to control resolution. */
 	force_cellsz = FALSE;
 	(void) sprintf( prompt,
