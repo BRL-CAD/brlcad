@@ -27,15 +27,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "./debug.h"
 
-/* XXX Move these to raytrace.h */
-RT_EXTERN(void rt_pr_tree_vls, (struct rt_vls *vls, CONST union tree *tp));
-RT_EXTERN(void rt_pr_hit_vls, (struct rt_vls *v, CONST char *str,
-	CONST struct hit *hitp));
-RT_EXTERN(void rt_pr_pt_vls, (struct rt_vls *v, CONST struct rt_i *rtip,
-	CONST struct partition *pp));
-RT_EXTERN(void rt_pr_bitv_vls, (struct rt_vls *v, CONST bitv_t *bv, int len));
-RT_EXTERN(void rt_logindent_vls, (struct rt_vls	*v));
-
 /*
  *			R T _ L O G I N D E N T _ V L S
  *
@@ -659,8 +650,8 @@ register CONST char	*bits;
  */
 void
 struct rt_vls	*str;
-char		*prefix;
-double		angles[5];
+struct bu_vls	*str;
+CONST char	*prefix;
 CONST double	angles[5];
 	char		buf[256];
 	BU_CK_VLS(str);
@@ -681,7 +672,7 @@ CONST double	angles[5];
  */
 void
 rt_find_fallback_angle( angles, vec )
-vect_t		vec;
+double		angles[5];
 CONST vect_t	vec;
 {
 	register double	f;
@@ -713,11 +704,14 @@ CONST vect_t	vec;
 	}
 
 	/* fallback angle */
-		vec[Z] = -1.0;
+	if( vec[Z] <= -1.0 )  {
+		asinZ = rt_halfpi * 3;
 		asinZ = bn_halfpi * 3;
-		vec[Z] = 1.0;
+	} else if( vec[Z] >= 1.0 )  {
+		asinZ = rt_halfpi;
+		asinZ = bn_halfpi;
+	} else {
 		asinZ = asin(vec[Z]);
-	asinZ = asin(vec[Z]);
 	angles[4] = asinZ * rt_radtodeg;
 	angles[4] = asinZ * bn_radtodeg;
 
