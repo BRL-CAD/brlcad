@@ -973,6 +973,16 @@ struct vlhead {
 	struct vlist	*vh_last;
 };
 
+struct vlblock {
+	int			count;
+	struct color_vlhead	*cvp;
+};
+
+struct color_vlhead {
+	long			rgb;
+	struct vlhead		head;
+};
+
 /* Values for vl_draw */
 #define VL_CMD_LINE_MOVE	0
 #define VL_CMD_LINE_DRAW	1
@@ -1247,10 +1257,15 @@ EXTERN(void memfree, (struct mem_map **pp, unsigned size, unsigned long addr) );
 EXTERN(void mempurge, (struct mem_map **pp) );
 EXTERN(void memprint, (struct mem_map **pp) );
 
+EXTERN(struct vlblock *rt_vlblock_init, () );
+EXTERN(void rt_vlblock_free, (struct vlblock *vbp) );
+EXTERN(struct vlhead *rt_vlblock_find, (struct vlblock *vbp,
+	int r, int g, int b) );
+
 /* plane.c */
 EXTERN(int rt_mk_plane_3pts, (plane_t plane, point_t a, point_t b, point_t c) );
 EXTERN(int rt_mkpoint_3planes, (point_t pt, plane_t a, plane_t b, plane_t c) );
-EXTERN(int rt_isect_ray_plane, (fastf_t *dist, point_t pt, vect_t  dir, plane_t plane) );
+EXTERN(int rt_isect_ray_plane, (fastf_t *dist, point_t pt, vect_t dir, plane_t plane) );
 EXTERN(int rt_isect_2planes, (point_t pt, vect_t  dir, plane_t a, plane_t b, vect_t  rpp_min) );
 EXTERN(int rt_isect_2lines, (fastf_t *t, fastf_t *u, point_t p, vect_t d, point_t a, vect_t c) );
 EXTERN(int rt_isect_line_lseg, (fastf_t *t, point_t p, vect_t d, point_t a, point_t b) );
