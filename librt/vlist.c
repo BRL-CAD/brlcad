@@ -40,19 +40,19 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
  ************************************************************************/
 
 /*
- *			R T _ V L B L O C K _ I N I T
+ *			B N _ V L B L O C K _ I N I T
  */
-struct rt_vlblock *
+struct bn_vlblock *
 rt_vlblock_init()
 {
-	struct rt_vlblock *vbp;
+	struct bn_vlblock *vbp;
 	int	i;
 
 	if (BU_LIST_UNINITIALIZED( &rt_g.rtg_vlfree ))
 		BU_LIST_INIT( &rt_g.rtg_vlfree );
 
-	BU_GETSTRUCT( vbp, rt_vlblock );
-	vbp->magic = RT_VLBLOCK_MAGIC;
+	BU_GETSTRUCT( vbp, bn_vlblock );
+	vbp->magic = BN_VLBLOCK_MAGIC;
 	vbp->max = 32;
 	vbp->head = (struct bu_list *)bu_calloc( vbp->max,
 		sizeof(struct bu_list), "head[]" );
@@ -75,21 +75,21 @@ rt_vlblock_init()
  */
 void
 rt_vlblock_free(vbp)
-struct rt_vlblock *vbp;
+struct bn_vlblock *vbp;
 {
 	int	i;
 
-	RT_CK_VLBLOCK(vbp);
+	BN_CK_VLBLOCK(vbp);
 	for( i=0; i < vbp->nused; i++ )  {
 		/* Release any remaining vlist storage */
 		if( vbp->rgb[i] == 0 )  continue;
 		if( BU_LIST_IS_EMPTY( &(vbp->head[i]) ) )  continue;
-		RT_FREE_VLIST( &(vbp->head[i]) );
+		BN_FREE_VLIST( &rt_g.rtg_vlfree, &(vbp->head[i]) );
 	}
 
 	bu_free( (char *)(vbp->head), "head[]" );
 	bu_free( (char *)(vbp->rgb), "rgb[]" );
-	bu_free( (char *)vbp, "rt_vlblock" );
+	bu_free( (char *)vbp, "bn_vlblock" );
 }
 
 /*
@@ -97,13 +97,13 @@ struct rt_vlblock *vbp;
  */
 struct bu_list *
 rt_vlblock_find( vbp, r, g, b )
-struct rt_vlblock *vbp;
+struct bn_vlblock *vbp;
 int	r, g, b;
 {
 	long	new;
 	int	n;
 
-	RT_CK_VLBLOCK(vbp);
+	BN_CK_VLBLOCK(vbp);
 
 	new = ((r&0xFF)<<16)|((g&0xFF)<<8)|(b&0xFF);
 
@@ -129,7 +129,7 @@ int	r, g, b;
 
 /************************************************************************
  *									*
- *			Generic RT_VLIST routines			*
+ *			Generic BN_VLIST routines			*
  *									*
  ************************************************************************/
 CONST char *rt_vlist_cmd_descriptions[] = {
@@ -146,7 +146,7 @@ CONST char *rt_vlist_cmd_descriptions[] = {
 /*
  *			R T _ C K _ V L I S T
  *
- *  Validate an rt_vlist chain for having reasonable
+ *  Validate an bn_vlist chain for having reasonable
  *  values inside.  Calls bu_bomb() if not.
  *
  *  Returns -
@@ -157,16 +157,16 @@ rt_ck_vlist( vhead )
 CONST struct bu_list	*vhead;
 {
 	register int		i;
-	register struct rt_vlist	*vp;
+	register struct bn_vlist	*vp;
 	int			npts = 0;
 
-	for( BU_LIST_FOR( vp, rt_vlist, vhead ) )  {
+	for( BU_LIST_FOR( vp, bn_vlist, vhead ) )  {
 		register int	i;
 		register int	nused = vp->nused;
 		register int	*cmd = vp->cmd;
 		register point_t *pt = vp->pt;
 
-		RT_CK_VLIST( vp );
+		BN_CK_VLIST( vp );
 		npts += nused;
 
 		for( i = 0; i < nused; i++,cmd++,pt++ )  {
@@ -188,7 +188,7 @@ CONST struct bu_list	*vhead;
 					bu_bomb("rt_ck_vlist() bad coordinate value\n");
 				}
 				/* XXX Need a define for largest command number */
-				if( *cmd < 0 || *cmd > RT_VLIST_POLY_VERTNORM )  {
+				if( *cmd < 0 || *cmd > BN_VLIST_POLY_VERTNORM )  {
 					bu_log("cmd = x%x (%d.)\n", *cmd, *cmd);
 					bu_bomb("rt_ck_vlist() bad vlist command\n");
 				}
@@ -209,9 +209,9 @@ rt_vlist_copy( dest, src )
 struct bu_list	*dest;
 CONST struct bu_list	*src;
 {
-	struct rt_vlist	*vp;
+	struct bn_vlist	*vp;
 
-	for( BU_LIST_FOR( vp, rt_vlist, src ) )  {
+	for( BU_LIST_FOR( vp, bn_vlist, src ) )  {
 		register int	i;
 		register int	nused = vp->nused;
 		register int	*cmd = vp->cmd;
@@ -229,20 +229,28 @@ CONST struct bu_list	*src;
  *  Now, give those structures back to bu_free().
  */
 void
-rt_vlist_cleanup()
+bn_vlist_cleanup(hd)
+struct bu_list	*hd;
 {
-	register struct rt_vlist	*vp;
+	register struct bn_vlist	*vp;
 
-	if (BU_LIST_UNINITIALIZED( &rt_g.rtg_vlfree ))  {
-		BU_LIST_INIT( &rt_g.rtg_vlfree );
+	if (BU_LIST_UNINITIALIZED( hd ))  {
+		BU_LIST_INIT( hd );
 		return;
 	}
 
-	while( BU_LIST_WHILE( vp, rt_vlist, &rt_g.rtg_vlfree ) )  {
-		RT_CK_VLIST( vp );
+	while( BU_LIST_WHILE( vp, bn_vlist, hd ) )  {
+		BN_CK_VLIST( vp );
 		BU_LIST_DEQUEUE( &(vp->l) );
-		bu_free( (char *)vp, "rt_vlist" );
+		bu_free( (char *)vp, "bn_vlist" );
 	}
+}
+
+/*  XXX This needs to remain a LIBRT function. */
+void
+rt_vlist_cleanup()
+{
+	bn_vlist_cleanup( &rt_g.rtg_vlfree );
 }
 
 /************************************************************************
@@ -265,7 +273,7 @@ struct bu_vls	*vls;
 struct bu_list	*hp;
 CONST char	*name;
 {
-	register struct rt_vlist	*vp;
+	register struct bn_vlist	*vp;
 	int		nelem;
 	int		namelen;
 	int		nbytes;
@@ -276,7 +284,7 @@ CONST char	*name;
 
 	/* Count number of element in the vlist */
 	nelem = 0;
-	for( BU_LIST_FOR( vp, rt_vlist, hp ) )  {
+	for( BU_LIST_FOR( vp, bn_vlist, hp ) )  {
 		nelem += vp->nused;
 	}
 
@@ -293,7 +301,7 @@ CONST char	*name;
 	bp += namelen;
 
 	/* Output cmds, as bytes */
-	for( BU_LIST_FOR( vp, rt_vlist, hp ) )  {
+	for( BU_LIST_FOR( vp, bn_vlist, hp ) )  {
 		register int	i;
 		register int	nused = vp->nused;
 		register int	*cmd = vp->cmd;
@@ -303,7 +311,7 @@ CONST char	*name;
 	}
 
 	/* Output points, as three 8-byte doubles */
-	for( BU_LIST_FOR( vp, rt_vlist, hp ) )  {
+	for( BU_LIST_FOR( vp, bn_vlist, hp ) )  {
 		register int	i;
 		register int	nused = vp->nused;
 		register point_t *pt = vp->pt;
@@ -351,7 +359,7 @@ CONST unsigned char	*buf;
 		ntohd( (unsigned char *)point, pp, 3 );
 		pp += 3*8;
 		/* This macro might be expanded inline, for performance */
-		RT_ADD_VLIST( hp, point, cmd );
+		BN_ADD_VLIST( &rt_g.rtg_vlfree, hp, point, cmd );
 	}
 }
 
@@ -364,17 +372,17 @@ CONST unsigned char	*buf;
 /*
  *			R T _ P L O T _ V L B L O C K
  *
- *  Output a rt_vlblock object in extended UNIX-plot format,
+ *  Output a bn_vlblock object in extended UNIX-plot format,
  *  including color.
  */
 void
 rt_plot_vlblock( fp, vbp )
 FILE			*fp;
-CONST struct rt_vlblock	*vbp;
+CONST struct bn_vlblock	*vbp;
 {
 	int	i;
 
-	RT_CK_VLBLOCK(vbp);
+	BN_CK_VLBLOCK(vbp);
 
 	for( i=0; i < vbp->nused; i++ )  {
 		if( vbp->rgb[i] == 0 )  continue;
@@ -399,9 +407,9 @@ rt_vlist_to_uplot( fp, vhead )
 FILE			*fp;
 CONST struct bu_list	*vhead;
 {
-	register struct rt_vlist	*vp;
+	register struct bn_vlist	*vp;
 
-	for( BU_LIST_FOR( vp, rt_vlist, vhead ) )  {
+	for( BU_LIST_FOR( vp, bn_vlist, vhead ) )  {
 		register int		i;
 		register int		nused = vp->nused;
 		register CONST int	*cmd = vp->cmd;
@@ -409,15 +417,15 @@ CONST struct bu_list	*vhead;
 
 		for( i = 0; i < nused; i++,cmd++,pt++ )  {
 			switch( *cmd )  {
-			case RT_VLIST_POLY_START:
+			case BN_VLIST_POLY_START:
 				break;
-			case RT_VLIST_POLY_MOVE:
-			case RT_VLIST_LINE_MOVE:
+			case BN_VLIST_POLY_MOVE:
+			case BN_VLIST_LINE_MOVE:
 				pdv_3move( fp, *pt );
 				break;
-			case RT_VLIST_POLY_DRAW:
-			case RT_VLIST_POLY_END:
-			case RT_VLIST_LINE_DRAW:
+			case BN_VLIST_POLY_DRAW:
+			case BN_VLIST_POLY_END:
+			case BN_VLIST_LINE_DRAW:
 				pdv_3cont( fp, *pt );
 				break;
 			default:
@@ -531,7 +539,7 @@ FILE	*fp;
  */
 int
 rt_uplot_to_vlist( vbp, fp, char_size )
-struct rt_vlblock	*vbp;
+struct bn_vlblock	*vbp;
 register FILE		*fp;
 double			char_size;
 {
@@ -604,52 +612,52 @@ double			char_size;
 		case 'o':
 			/* 2-D move */
 			arg[Z] = 0;
-			RT_ADD_VLIST( vhead, arg, RT_VLIST_LINE_MOVE );
+			BN_ADD_VLIST( &rt_g.rtg_vlfree, vhead, arg, BN_VLIST_LINE_MOVE );
 			break;
 		case 'M':
 		case 'O':
 			/* 3-D move */
-			RT_ADD_VLIST( vhead, arg, RT_VLIST_LINE_MOVE );
+			BN_ADD_VLIST( &rt_g.rtg_vlfree, vhead, arg, BN_VLIST_LINE_MOVE );
 			break;
 		case 'n':
 		case 'q':
 			/* 2-D draw */
 			arg[Z] = 0;
-			RT_ADD_VLIST( vhead, arg, RT_VLIST_LINE_DRAW );
+			BN_ADD_VLIST( &rt_g.rtg_vlfree, vhead, arg, BN_VLIST_LINE_DRAW );
 			break;
 		case 'N':
 		case 'Q':
 			/* 3-D draw */
-			RT_ADD_VLIST( vhead, arg, RT_VLIST_LINE_DRAW );
+			BN_ADD_VLIST( &rt_g.rtg_vlfree, vhead, arg, BN_VLIST_LINE_DRAW );
 			break;
 		case 'l':
 		case 'v':
 			/* 2-D line */
 			VSET( a, arg[0], arg[1], 0.0 );
 			VSET( b, arg[2], arg[3], 0.0 );
-			RT_ADD_VLIST( vhead, a, RT_VLIST_LINE_MOVE );
-			RT_ADD_VLIST( vhead, b, RT_VLIST_LINE_DRAW );
+			BN_ADD_VLIST( &rt_g.rtg_vlfree, vhead, a, BN_VLIST_LINE_MOVE );
+			BN_ADD_VLIST( &rt_g.rtg_vlfree, vhead, b, BN_VLIST_LINE_DRAW );
 			break;
 		case 'L':
 		case 'V':
 			/* 3-D line */
 			VSET( a, arg[0], arg[1], arg[2] );
 			VSET( b, arg[3], arg[4], arg[5] );
-			RT_ADD_VLIST( vhead, a, RT_VLIST_LINE_MOVE );
-			RT_ADD_VLIST( vhead, b, RT_VLIST_LINE_DRAW );
+			BN_ADD_VLIST( &rt_g.rtg_vlfree, vhead, a, BN_VLIST_LINE_MOVE );
+			BN_ADD_VLIST( &rt_g.rtg_vlfree, vhead, b, BN_VLIST_LINE_DRAW );
 			break;
 		case 'p':
 		case 'x':
 			/* 2-D point */
 			arg[Z] = 0;
-			RT_ADD_VLIST( vhead, arg, RT_VLIST_LINE_MOVE );
-			RT_ADD_VLIST( vhead, arg, RT_VLIST_LINE_DRAW );
+			BN_ADD_VLIST( &rt_g.rtg_vlfree, vhead, arg, BN_VLIST_LINE_MOVE );
+			BN_ADD_VLIST( &rt_g.rtg_vlfree, vhead, arg, BN_VLIST_LINE_DRAW );
 			break;
 		case 'P':
 		case 'X':
 			/* 3-D point */
-			RT_ADD_VLIST( vhead, arg, RT_VLIST_LINE_MOVE );
-			RT_ADD_VLIST( vhead, arg, RT_VLIST_LINE_DRAW );
+			BN_ADD_VLIST( &rt_g.rtg_vlfree, vhead, arg, BN_VLIST_LINE_MOVE );
+			BN_ADD_VLIST( &rt_g.rtg_vlfree, vhead, arg, BN_VLIST_LINE_DRAW );
 			break;
 		case 'C':
 			/* Color */
@@ -660,9 +668,9 @@ double			char_size;
 			/* Text string */
 			bn_mat_idn(mat);
 			if( BU_LIST_NON_EMPTY( vhead ) )  {
-				struct rt_vlist *vlp;
+				struct bn_vlist *vlp;
 				/* Use coordinates of last op */
-				vlp = BU_LIST_LAST( rt_vlist, vhead );
+				vlp = BU_LIST_LAST( bn_vlist, vhead );
 				VMOVE( last_pos, vlp->pt[vlp->nused-1] );
 			} else {
 				VSETALL( last_pos, 0 );
@@ -681,19 +689,19 @@ double			char_size;
  */
 void
 rt_label_vlist_verts( vbp, src, mat, sz, mm2local )
-struct rt_vlblock	*vbp;
+struct bn_vlblock	*vbp;
 struct bu_list		*src;
 mat_t			mat;
 double			sz;
 double			mm2local;
 {
-	struct rt_vlist	*vp;
+	struct bn_vlist	*vp;
 	struct bu_list	*vhead;
 	char		label[256];
 
 	vhead = rt_vlblock_find( vbp, 255, 255, 255 );	/* white */
 
-	for( BU_LIST_FOR( vp, rt_vlist, src ) )  {
+	for( BU_LIST_FOR( vp, bn_vlist, src ) )  {
 		register int	i;
 		register int	nused = vp->nused;
 		register int	*cmd = vp->cmd;
