@@ -49,12 +49,12 @@ char	*msg;
 int
 exec_Shell( args )
 char	*args[];
-	{	register int	child_pid;
-		static char	error_buf[32];
-#if __STDC__ || defined( SYSV ) || defined( mips )
-		void		(*intr_sig)(), (*quit_sig)();
+	{	register int child_pid;
+		static char error_buf[32];
+#if __STDC__ || defined( SYSV )
+		void (*intr_sig)(), (*quit_sig)();
 #else
-		int		(*intr_sig)(), (*quit_sig)();
+		int (*intr_sig)(), (*quit_sig)();
 #endif
 	if( args[0] == NULL )
 		{ char	*arg_sh = getenv( "SHELL" );
