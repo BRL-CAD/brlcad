@@ -351,6 +351,131 @@ CONST struct rt_tol *tol;
 	/* There really shouldn't be a lone vertex by now */
 	if( s->vu_p )  rt_log("nmg_rm_redundancies() lone vertex?\n");
 
+	/* get rid of matching OT_SAME/OT_OPPOSITE loops in same faceuse */
+	fu = RT_LIST_FIRST( faceuse, &s->fu_hd );
+	while( RT_LIST_NOT_HEAD( &fu->l, &s->fu_hd ) )
+	{
+		struct faceuse *next_fu;
+		int lu1_count;
+		int lu_count;
+
+		NMG_CK_FACEUSE( fu );
+
+		if( fu->orientation != OT_SAME )
+		{
+			fu = RT_LIST_NEXT( faceuse, &fu->l );
+			continue;
+		}
+
+		next_fu = RT_LIST_NEXT( faceuse, &fu->l );
+		if( next_fu == fu->fumate_p )
+			next_fu = RT_LIST_NEXT( faceuse, &next_fu->l );
+
+		lu = RT_LIST_FIRST( loopuse, &fu->lu_hd );
+		while( RT_LIST_NOT_HEAD( &lu->l, &fu->lu_hd ) )
+		{
+			struct loopuse *next_lu;
+			struct loopuse *lu1;
+			struct edgeuse *eu;
+
+			NMG_CK_LOOPUSE( lu );
+
+			next_lu = RT_LIST_NEXT( loopuse, &lu->l );
+
+			if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+			{
+				lu = next_lu;
+				continue;
+			}
+
+			/* count edges in lu */
+			lu_count = 0;
+			for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+				lu_count++;
+
+			/* look for anther loopuse with opposite orientation */
+			lu1 = RT_LIST_FIRST( loopuse, &fu->lu_hd );
+			while( RT_LIST_NOT_HEAD( &lu1->l, &fu->lu_hd ) )
+			{
+				struct loopuse *next_lu1;
+				int found;
+
+				NMG_CK_LOOPUSE( lu1 );
+
+				next_lu1 = RT_LIST_PNEXT( loopuse, &lu1->l );
+
+				if( RT_LIST_FIRST_MAGIC( &lu1->down_hd ) != NMG_EDGEUSE_MAGIC )
+				{
+					lu1 = next_lu1;
+					continue;
+				}
+
+				if( lu1 == lu )
+				{
+					lu1 = next_lu1;
+					continue;
+				}
+
+				if( lu1->orientation == lu->orientation )
+				{
+					lu1 = next_lu1;
+					continue;
+				}
+
+				/* count edges in lu1 */
+				lu1_count = 0;
+				for( RT_LIST_FOR( eu, edgeuse, &lu1->down_hd ) )
+					lu1_count++;
+
+				if( lu_count != lu1_count )
+				{
+					lu1 = next_lu1;
+					continue;
+				}
+
+				if( nmg_classify_lu_lu( lu, lu1, tol ) != NMG_CLASS_AonBshared )
+				{
+					lu1 = next_lu1;
+					continue;
+				}
+
+				/* lu and lu1 are identical, but with opposite orientations
+				 * kill them both
+				 */
+
+				if( next_lu1 == lu )
+					next_lu1 = RT_LIST_NEXT( loopuse, &next_lu1->l );
+
+				if( next_lu == lu1 )
+					next_lu = RT_LIST_NEXT( loopuse, &next_lu->l );
+
+				(void)nmg_klu( lu );
+				if( nmg_klu( lu1 ) )
+				{
+					/* faceuse is empty, kill it */
+					if( nmg_kfu( fu ) )
+					{
+						/* shell is empty, set "nexts" to get out */
+						next_fu = (struct faceuse *)(&s->fu_hd);
+						next_lu = (struct loopuse *)NULL;
+					}
+					else
+					{
+						/* shell not empty, but fu is */
+						next_lu = (struct loopuse *)NULL;
+					}
+				}
+				break;
+			}
+
+			if( !next_lu )
+				break;
+
+			lu = next_lu;
+		}
+		fu = next_fu;
+	}
+
 	/* get rid of redundant loops in same fu (OT_SAME within an OT_SAME), etc. */
 	for( RT_LIST_FOR( fu, faceuse, &s->fu_hd ) )
 	{
