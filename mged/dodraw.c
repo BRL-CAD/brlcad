@@ -758,7 +758,8 @@ struct solid	*sp;
 		db_free_external( &ext );
 		return(-1);
 	}
-    	if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );
+	if( intern.idb_type > ID_NULL && intern.idb_ptr )
+		rt_functab[id].ft_ifree( &intern );
 	db_free_external( &ext );
 	return(0);
 }
