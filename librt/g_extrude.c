@@ -1650,29 +1650,30 @@ char                    **argv;
 
 	while( argc >= 2 )
 	{
+		int array_len=3;
 
 		if( *argv[0] == 'V' )
 		{
 			new = extr->V;
-			if( (ret=tcl_list_to_fastf_array( interp, argv[1], &new, 3 ) ) )
+			if( (ret=tcl_list_to_fastf_array( interp, argv[1], &new, &array_len ) ) )
 				return( ret );
 		}
 		else if( *argv[0] == 'H' )
 		{
 			new = extr->h;
-			if( (ret=tcl_list_to_fastf_array( interp, argv[1], &new, 3 ) ) )
+			if( (ret=tcl_list_to_fastf_array( interp, argv[1], &new, &array_len ) ) )
 				return( ret );
 		}
 		else if( *argv[0] == 'A' )
 		{
 			new = extr->u_vec;
-			if( (ret=tcl_list_to_fastf_array( interp, argv[1], &new, 3 ) ) )
+			if( (ret=tcl_list_to_fastf_array( interp, argv[1], &new, &array_len ) ) )
 				return( ret );
 		}
 		else if( *argv[0] == 'B' )
 		{
 			new = extr->v_vec;
-			if( (ret=tcl_list_to_fastf_array( interp, argv[1], &new, 3 ) ) )
+			if( (ret=tcl_list_to_fastf_array( interp, argv[1], &new, &array_len ) ) )
 				return( ret );
 		}
 		else if( *argv[0] =='K' )
