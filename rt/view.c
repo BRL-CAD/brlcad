@@ -730,60 +730,19 @@ free_scanlines()
 			scanline[y].sl_buf = (char *)0;
 		}
 	}
+	rt_free( (char *)scanline, "struct scanline[height]" );
+	scanline = (struct scanline *)0;
 }
 
 /*
  *  			V I E W _ I N I T
  *
- *  Called once, early on in RT setup.
+ *  Called once, early on in RT setup, before view size is set.
  */
 view_init( ap, file, obj, minus_o )
 register struct application *ap;
 char *file, *obj;
 {
-
-	/* Always allocate the scanline[] array */
-	if( ! scanline )  {
-		scanline = (struct scanline *)rt_calloc(
-			height, sizeof(struct scanline),
-			"struct scanline[height]" );
-	} else {
-		free_scanlines();
-	}
-
-#ifdef RTSRV
-	buf_mode = BUFMODE_RTSRV;		/* multi-pixel buffering */
-#else
-	if( incr_mode )  {
-		buf_mode = BUFMODE_INCR;
-	} else if( rt_g.rtg_parallel )  {
-		buf_mode = BUFMODE_DYNAMIC;
-	} else if( width <= 96 )  {
-		buf_mode = BUFMODE_UNBUF;
-	}  else  {
-		buf_mode = BUFMODE_DYNAMIC;
-	}
-#endif
-
-	switch( buf_mode )  {
-	case BUFMODE_UNBUF:
-		rt_log("Single pixel I/O, unbuffered\n");
-		break;	
-	case BUFMODE_DYNAMIC:
-		rt_log("Dynamic scanline buffering\n");
-		break;
-	case BUFMODE_INCR:
-		rt_log("Incremental resolution\n");
-		break;
-#ifdef RTSRV
-	case BUFMODE_RTSRV:
-		scanbuf = rt_malloc( srv_scanlen*3 + sizeof(long),
-			"scanbuf [multi-line]" );
-		break;
-#endif
-	default:
-		rt_bomb("bad buf_mode");
-	}
 
 	/*
 	 *  Connect up material library interfaces
@@ -842,8 +801,38 @@ char	*framename;
 	ap->a_miss = hit_nothing;
 	ap->a_onehit = 1;
 
+	/* Always allocate the scanline[] array */
+	if( scanline )  free_scanlines();
+	scanline = (struct scanline *)rt_calloc(
+		height, sizeof(struct scanline),
+		"struct scanline[height]" );
+
+#ifdef RTSRV
+	buf_mode = BUFMODE_RTSRV;		/* multi-pixel buffering */
+#else
+	if( incr_mode )  {
+		buf_mode = BUFMODE_INCR;
+	} else if( rt_g.rtg_parallel )  {
+		buf_mode = BUFMODE_DYNAMIC;
+	} else if( width <= 96 )  {
+		buf_mode = BUFMODE_UNBUF;
+	}  else  {
+		buf_mode = BUFMODE_DYNAMIC;
+	}
+#endif
+
 	switch( buf_mode )  {
+	case BUFMODE_UNBUF:
+		rt_log("Single pixel I/O, unbuffered\n");
+		break;	
+#ifdef RTSRV
+	case BUFMODE_RTSRV:
+		scanbuf = rt_malloc( srv_scanlen*3 + sizeof(long),
+			"scanbuf [multi-line]" );
+		break;
+#endif
 	case BUFMODE_INCR:
+		rt_log("Incremental resolution\n");
 		{
 			register int j = 1<<incr_level;
 			register int w = 1<<(incr_nlevel-incr_level);
@@ -863,6 +852,7 @@ char	*framename;
 		break;
 
 	case BUFMODE_DYNAMIC:
+		rt_log("Dynamic scanline buffering\n");
 		for( i=0; i<height; i++ )
 			scanline[i].sl_left = width;
 
@@ -915,7 +905,7 @@ char	*framename;
 #endif
 		break;
 	default:
-		break;
+		rt_bomb("bad buf_mode");
 	}
 
 	switch( lightmodel )  {
