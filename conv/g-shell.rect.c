@@ -142,7 +142,7 @@ static fastf_t	min_angle=0.0;
 		nmg_vertex_gv( *_v[1], _ep1->pt ); \
 	if( !(*_v[2])->vg_p ) \
 		nmg_vertex_gv( *_v[2], _ep2->pt ); \
-	if( nmg_calc_face_g( _fu, &tol ) ) \
+	if( nmg_calc_face_g( _fu ) ) \
 	{ \
 		if( debug > 3 ) \
 			bu_log( "Killing degenerate face\n" ); \
@@ -179,7 +179,7 @@ static fastf_t	min_angle=0.0;
 		nmg_vertex_gv( *_v[2], _ep2->pt ); \
 	if( !(*_v[3])->vg_p ) \
 		nmg_vertex_gv( *_v[3], _ep3->pt ); \
-	if( nmg_calc_face_g( _fu, &tol ) ) \
+	if( nmg_calc_face_g( _fu ) ) \
 	{ \
 		if( debug > 3 ) \
 			bu_log( "Killing degenerate face\n" ); \
@@ -1307,8 +1307,8 @@ struct seg *segs;
 		}
 	}
 
-	(void) nmg_split_loops_into_faces( ref_data->fu1 , &tol );
-	(void) nmg_split_loops_into_faces( ref_data->fu2 , &tol );
+	(void) nmg_split_loops_into_faces( &ref_data->fu1->l.magic , &tol );
+	(void) nmg_split_loops_into_faces( &ref_data->fu2->l.magic , &tol );
 
 	for( BU_LIST_FOR( vu, vertexuse, &new_vu->v_p->vu_hd ) )
 	{
@@ -1328,7 +1328,7 @@ struct seg *segs;
 
 		bu_ptbl_ins( ref_data->new_edges, (long *)eu->e_p );
 
-		nmg_calc_face_g( fu, &tol );
+		nmg_calc_face_g( fu );
 	}
 
 	return( 1 );
