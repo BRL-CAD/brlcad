@@ -6,12 +6,12 @@
  *  Authors -
  *	Michael Johns Muuss
  *	Bob Suckling
- *  
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
+ *
  *  Copyright Notice -
  *	This software is Copyright (C) 1986 by the United States Army.
  *	All rights reserved.
@@ -27,17 +27,18 @@ FBIO *fbp;
 
 #define	JumpSpeed 30 /* number of pixels skiped with UPPERCASE commands. */
 
-RGBpixel flashPix;		/* Different pixel */
-RGBpixel savePix; 		/* Old Pixel for restoring the image.	*/
-
-int curX, curY;			/* current (new) position */
-int markX, markY;		/* Save the mark.	*/
-int oldX, oldY;			/* saved (previous) position */
+RGBpixel curPix; 		/* Current pixel value */
+int curX, curY;			/* current position */
+int oldX, oldY;			/* previous position */
 
 int	Run = 1;	/* Tells when to stop the main loop.	*/
 
-#define PrtLast	fprintf( stderr, "xy=(%d, %d)      \r",\
-				 curX, curY ); fflush( stderr )
+int	xflag, yflag;
+char	*xprefix = NULL;
+char	*yprefix = NULL;
+
+char usage[] = "\
+Usage: fbpoint [-h] [-x[prefix]] [-y[prefix]]\n";
 
 static char *help = "\
 Char:   Command:                                                \r\n\
@@ -53,7 +54,7 @@ q Q	QUIT\r\n\
 ";
 
 SimpleInput()	/* ==== get keyboard input.	*/
-{ 
+{
 	char ch;
 
 	if( read( 0, &ch, 1) <= 0 ) {
@@ -61,20 +62,18 @@ SimpleInput()	/* ==== get keyboard input.	*/
 		return;
 	}
 	switch( ch ) {
-	default:	
+	default:
 		fprintf( stderr,
 		"Unknown command(%c:%o). Type '?' for help!           \r\n",
 			ch, ch );
-		PrtLast;
 		break;
 
-	case '?':	
+	case '?':
 		fprintf( stderr, "%s", help );
-		PrtLast;
 		return;
 
 	case 'q':
-	case 'Q':	
+	case 'Q':
 		Run = 0;
 		return;
 #define ctl(x)	('x'&037)
@@ -84,105 +83,117 @@ SimpleInput()	/* ==== get keyboard input.	*/
 		--curX;		/* Go left.	*/
 		return;
 	case 'N':
-	case 'j':		
+	case 'j':
 		--curY;		/* Go down.	*/
 		return;
 	case 'P':
-	case 'k':		
+	case 'k':
 		++curY;		/* Go up.	*/
 		return;
 	case 'F':
-	case 'l':		
+	case 'l':
 		++curX;		/* Go right.	*/
 		return;
 	case ctl(b):
-	case 'H':		
+	case 'H':
 		curX -= JumpSpeed;	/* Go LEFT.	*/
 		return;
 	case ctl(n):
-	case 'J':		
+	case 'J':
 		curY -= JumpSpeed;	/* Go DOWN.	*/
 		return;
 	case ctl(p):
-	case 'K':		
+	case 'K':
 		curY += JumpSpeed;	/* Go UP.	*/
 		return;
 	case ctl(f):
 	case 'L':
 		curX += JumpSpeed;	/* Go RIGHT.	*/
 		return;
-/**	case 'Z':		driver(); **/
 	}
 }
 
 main(argc, argv)
 char **argv;
-{ 
+{
 	int width, height;
 	char *malloc();
 
 	setbuf( stderr, malloc( BUFSIZ ) );
+	width = height = 0;
 
-	if( argc > 1 && strcmp( argv[1], "-h" ) == 0 )
-		width = height = 1024;
-	else
-		width = height = 512;
+	while( argc > 1 ) {
+		if( strcmp( argv[1], "-h" ) == 0 ) {
+			width = height = 1024;
+		} else if( strncmp( argv[1], "-x", 2 ) == 0 ) {
+			if( xflag++ != 0 )
+				break;
+			xprefix = &argv[1][2];
+		} else if( strncmp( argv[1], "-y", 2 ) == 0 ) {
+			if( yflag++ != 0 )
+				break;
+			yprefix = &argv[1][2];
+		} else
+			break;
+		argc--;
+		argv++;
+	}
+	if( argc > 1 ) {
+		fprintf( stderr, usage );
+		exit( 1 );
+	}
 
 	if( (fbp = fb_open( NULL, width, height )) == NULL )
 		exit(12);
 
-	curX = markX = oldX = fb_getwidth(fbp)/2;
-	curY = markY = oldY = fb_getheight(fbp)/2;
+	curX = fb_getwidth(fbp)/2;
+	curY = fb_getheight(fbp)/2;
+	oldX = oldY = -1;
 
 	/* Set RAW mode */
 	save_Tty( 0 );
 	set_Raw( 0 );
 	clr_Echo( 0 );
 
-	/* save : old pixel.	*/
-	fb_read( fbp, oldX, oldY, savePix, 1 );
-	fb_cursor( fbp, 1, curX, curY );
-	PrtLast;
-
 	while( Run )  {
-		SimpleInput();			/* read and do keybord	*/
-		if( oldX == curX && oldY == curY )
-			continue;
-
-		/* replace saved pixel.	*/
-		fb_write( fbp, oldX, oldY, savePix, 1 );
 		if( curX < 0 )
-			curX = 0;	
+			curX = 0;
 		if( curX >= fb_getwidth(fbp) )
 			curX = fb_getwidth(fbp) -1;
 		if( curY < 0 )
-			curY = 0;		
+			curY = 0;
 		if( curY >= fb_getheight(fbp) )
 			curY = fb_getheight(fbp) -1;
 
-		/* save : new pixel.	*/
-		fb_read( fbp, curX, curY, savePix, 1 );
-		oldX = curX;
-		oldY = curY;
-		fb_cursor( fbp, 1, curX, curY );
-		PrtLast;
+		if( oldX != curX || oldY != curY ) {
+			/* get pixel value, move cursor */
+			fb_read( fbp, curX, curY, curPix, 1 );
+			fb_cursor( fbp, 1, curX, curY );
+			oldX = curX;
+			oldY = curY;
+		}
+		fprintf( stderr, "xy=(%4d,%4d)  [%3d,%3d,%3d]      \r",
+			curX, curY, curPix[RED], curPix[GRN], curPix[BLU] );
+		fflush( stderr );
 
-		flashPix[RED] = (255 - savePix[RED]) + 32;
-		flashPix[GRN] = (255 - savePix[GRN]) + 32;
-		flashPix[BLU] = (255 - savePix[BLU]) + 32;
-		fb_write( fbp, curX, curY, flashPix, 1 );
+		SimpleInput();			/* read and do keybord	*/
 	}
 
 	fb_cursor( fbp, 0, curX, curY );	/* turn off */
 
-	/* replace saved pixel.	*/
-	fb_write( fbp, oldX, oldY, savePix, 1 );
-	fprintf( stderr, "\n\r" );
+	fprintf( stderr, "\n" );
+	fflush( stderr );
 
 	reset_Tty( 0 );
 
 	/* write final location on stdout */
-	fprintf( stdout, "%d %d\n", curX, curY );
+	if( xflag != 0 && yflag == 0 )
+		printf( "%s%d\n", xprefix, curX );
+	else if( yflag != 0 && xflag == 0 )
+		printf( "%s%d\n", yprefix, curY );
+	else
+		printf( "%s%d %s%d\n", xprefix, curX, yprefix, curY );
+
 	fb_close( fbp );
 	exit( 0 );
 }
