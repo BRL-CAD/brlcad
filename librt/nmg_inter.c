@@ -3294,17 +3294,39 @@ struct faceuse		*fu1;
 
 		if( *eg1 == is->on_eg )  {
 colinear:
-			/* This edge_g is known to be ON the face/face line.
-			 * Enlist all the vertexuses from edgeuses using on_eg.
+			/*
+			 *  This edge_g is known to be ON the face/face line.
+			 *  Intersect all pairs of edgeuses, and enlist
+			 *  every vertexuse along the edge.
+			 *  Because the list can grow, scan in upwards direction.
 			 */
 			if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
 				rt_log("\tThis edge_geom generated the line.  Enlisting.\n");
 			}
-			for( eu1 = (struct edgeuse **)NMG_TBL_LASTADDR(&eu_list);
-			     eu1 >= (struct edgeuse **)NMG_TBL_BASEADDR(&eu_list); eu1--
+			for( eu1 = (struct edgeuse **)NMG_TBL_BASEADDR(&eu_list);
+			     eu1 <= (struct edgeuse **)NMG_TBL_LASTADDR(&eu_list);
+			     eu1++
 			)  {
+				register struct edgeuse	**eu2;
 				NMG_CK_EDGEUSE(*eu1);
 				if( (*eu1)->e_p->eg_p != is->on_eg )  continue;
+
+				for( eu2 = eu1+1;
+				     eu2 <= (struct edgeuse **)NMG_TBL_LASTADDR(&eu_list);
+				     eu2++
+				)  {
+					NMG_CK_EDGEUSE(*eu2);
+					if( (*eu2)->e_p->eg_p != is->on_eg )  continue;
+					/*  Perform intersection.
+					 *  New edgeuses are added to eu_list.
+					 */
+					if( nmg_find_fu_of_eu(*eu1) ==
+					    nmg_find_fu_of_eu(*eu2) )  continue;
+					(void)nmg_isect_2colinear_edge2p( *eu1, *eu2,
+						fu1, is, &eu_list, &eu_list);
+				}
+
+				/* For the case where only 1 face is involved */
 				nmg_enlist_vu(is, (*eu1)->vu_p, 0 );
 				nmg_enlist_vu(is, RT_LIST_PNEXT_CIRC(edgeuse, (*eu1))->vu_p, 0 );
 			}
