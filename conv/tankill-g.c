@@ -352,7 +352,7 @@ main( int argc , char *argv[] )
 		 *
 		 * first decompose the shell into maximally connected shells
 		 */
-		if( nmg_decompose_shell( s ) > 1 )
+		if( nmg_decompose_shell( s , &tol ) > 1 )
 		{
 			/* This shell has more than one part */
 			struct shell *outer_shell=NULL;
