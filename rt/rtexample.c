@@ -5,6 +5,8 @@
  *
  *    cc -I/usr/include/brlcad -o rtexample rtexample.c librt.a -lm
  */
+#include "conf.h"
+
 #include <stdio.h>
 #include <math.h>
 #include "machine.h"		/* machine specific definitions */

@@ -22,6 +22,8 @@
 static char RCSrt[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
 #include <ctype.h>
 #include <math.h>
@@ -30,10 +32,6 @@ static char RCSrt[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "./rdebug.h"
 #include "../librt/debug.h"
-
-extern int	getopt();
-extern char	*optarg;
-extern int	optind;
 
 char	usage[] = "\
 Usage:  rtwalk [options] startXYZ destXYZ model.g objects...\n\
@@ -46,8 +44,6 @@ Usage:  rtwalk [options] startXYZ destXYZ model.g objects...\n\
  -v #		Viewsize\n\
 (output is rtwalk.mats)\n\
 ";
-
-extern char	*sbrk();
 
 double		viewsize = 42;
 
