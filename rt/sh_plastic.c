@@ -33,8 +33,6 @@ static char RCSplastic[] = "@(#)$Header$ (BRL)";
 #include "./mathtab.h"
 #include "./light.h"
 
-extern int colorview();		/* from view.c */
-
 extern struct light_specific *LightHeadp;
 
 /* from view.c */
@@ -93,7 +91,6 @@ HIDDEN int phg_rhit();
 HIDDEN int phg_refract();
 
 extern int light_hit(), light_miss();
-extern int hit_nothing();
 extern double ipow();
 
 #define RI_AIR		1.0    /* Refractive index of air.		*/
@@ -503,8 +500,8 @@ do_inside:
 			goto do_inside;
 		}
 do_exit:
-		sub_ap.a_hit =  colorview;
-		sub_ap.a_miss = hit_nothing;
+		sub_ap.a_hit =  ap->a_hit;
+		sub_ap.a_miss = ap->a_miss;
 		sub_ap.a_level++;
 		(void) rt_shootray( &sub_ap );
 		VJOIN1( ap->a_color, ap->a_color,
@@ -743,22 +740,3 @@ struct partition *PartHeadp;
 
 /* Null function */
 nullf() { return(0); }
-
-/*
- *			H I T _ N O T H I N G
- *
- *  a_miss() routine called when no part of the model is hit.
- *  Background texture mapping could be done here.
- *  For now, return a pleasant dark blue.
- */
-hit_nothing( ap, PartHeadp )
-register struct application *ap;
-struct partition *PartHeadp;
-{
-	if( lightmodel == 2 )  {
-		VSET( ap->a_color, 0, 0, 0 );
-	}  else  {
-		VSET( ap->a_color, .25, 0, .5 );	/* Background */
-	}
-	return(0);
-}
