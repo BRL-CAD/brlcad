@@ -216,7 +216,7 @@ char	*dp;
 	else
 		dist = (pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist);
 
-	/* tau = optical path depth = density per mm * distance */
+	/* tau = optical path depth = density per m * distance */
 	tau = (air_sp->d_p_m*0.001 ) * dist;
 
 	/* transmission = e^(-tau) */
