@@ -171,7 +171,7 @@ dotitles()
 	register int y;			/* for menu computations */
 	static vect_t work;		/* work vector */
 	static vect_t temp;
-	mat_t new_mat;
+	mat_t new_mat,temp_mat1,temp_mat2;
 	register int yloc, xloc;
 	register float y_val;
 	auto fastf_t	az, el;
@@ -273,27 +273,35 @@ dotitles()
 	cp = &linebuf[0];
 #define FINDNULL(p)	while(*p++); p--;	/* leaves p at NULL */
 	FINDNULL(cp);
-	/* az/el 0,0 is when screen +Z is model +X */
-	VSET( work, 0, 0, 1 );
-	MAT3X3VEC( temp, view2model, work );
-	if( NEAR_ZERO( VDOT( work , temp ) - 1.0 , SQRT_SMALL_FASTF ) )
-	{
-		/* elevation is 90, find azimuth */
-		VSET( work , 1 , 0 , 0 );
-		MAT3X3VEC( temp , view2model , work );
-		el = 90;
-		az = mat_atan2( -temp[X] , temp[Y] ) * radtodeg;
-	}
-	else if( NEAR_ZERO( VDOT( work , temp ) + 1.0 , SQRT_SMALL_FASTF ) )
-	{
-		/* elevation is -90, find azimuth */
-		VSET( work , 1 , 0 , 0 );
-		MAT3X3VEC( temp , view2model , work );
-		el = (-90);
-		az = mat_atan2( -temp[X] , temp[Y] ) * radtodeg;
-	}
-	else
-		ae_vec( &az, &el, temp );
+
+	/* Find current azimuth and elevation angles */
+
+	/* Get elevation angle first directly from Viewrot */
+	el = mat_atan2( -Viewrot[6] , Viewrot[10] ) * radtodeg;
+
+	/* create a matrix to reverse the elevation angle */
+	mat_idn( temp_mat1 );
+	buildHrot( temp_mat1 , -el , 0.0 , 0.0 );
+
+	/* apply this matrix to Viewrot to get a matrix that contains
+	 * just the azimuth rotation
+	 */
+	mat_mul( temp_mat2 , temp_mat1 , Viewrot );
+
+	/* get the azimuth rotation from the final matrix
+	 * and adjust for the fact that 0,0 (az,el) is different from
+	 * an identity Viewrot.
+	 */
+	az = (-90.0) - mat_atan2( temp_mat2[4] , temp_mat2[5] ) * radtodeg;
+	if( az < (-180.0) )
+		az += 360.0;
+	else if( az > 180.0 )
+		az -= 360.0;
+	el += 90.0;
+	if( el < (-180.0) )
+		el += 360.0;
+	else if( el > 180 )
+		el -= 360.0;
 
 	(void)sprintf( cp, "az=%3.2f el=%2.2f ang=(%.2f, %.2f, %.2f)",
 		az, el,
