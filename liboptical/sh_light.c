@@ -849,13 +849,16 @@ light_init(struct application *ap)
 	 */
 	for( BU_LIST_FOR( lsp, light_specific, &(LightHead.l) ) )  {
 		RT_CK_LIGHT(lsp);
-		if (lsp->lt_visible && lsp->lt_pt_count < 1)
+		if (lsp->lt_visible && 
+		    lsp->lt_shadows > 1 && 
+		    lsp->lt_pt_count < 1)
 			light_gen_sample_pts(ap, lsp);
 	}
 
 
 	if (rt_verbosity & VERBOSE_LIGHTINFO) {
-		bu_log("Lighting: Ambient = %d%%\n", (int)(AmbientIntensity*100));
+		bu_log("Lighting: Ambient = %d%%\n",
+		       (int)(AmbientIntensity*100));
 
 		for( BU_LIST_FOR( lsp, light_specific, &(LightHead.l) ) )  {
 			RT_CK_LIGHT(lsp);
