@@ -691,7 +691,6 @@ int *id;
 			if( *p == '=' )
 				{
 				value = p+1;
-				*p = '\0';
 				break;
 				}
 		if( value == NULL )
@@ -766,8 +765,10 @@ struct partition *pt_headp;
 	}
 
 	/* Get material id as index into material database. */
+	RES_ACQUIRE( &rt_g.res_syscall ); /* protect use of strtok() */
 	if( ! getMaMID( &pp->pt_regionp->reg_mater, &material_id ) )
 		material_id = (int)(pp->pt_regionp->reg_gmater);
+	RES_RELEASE( &rt_g.res_syscall );
 
 	/* Get material database entry. */
 	if( ir_mapping )
