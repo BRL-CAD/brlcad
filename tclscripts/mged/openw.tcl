@@ -28,8 +28,8 @@ if [info exists env(MGED_HTML_DIR)] {
         set mged_html_dir [lindex $auto_path 0]/../html/mged
 }
 
-if ![info exists bob_testing] {
-    set bob_testing 0
+if ![info exists use_grid_gm] {
+    set use_grid_gm 1
 }
 
 if ![info exists mged_players] {
@@ -167,7 +167,7 @@ proc gui_create_default { args } {
     global vi_search_dir
     global dm_insert_char_flag
     global mged_comb
-    global bob_testing
+    global use_grid_gm
 
     if {$mged_default_dt == ""} {
 	set mged_default_dt [dm_bestXType $mged_default_gdisplay]
@@ -293,7 +293,6 @@ for {set i 0} {$i < $argc} {incr i} {
     }
 }
 
-set mged_comb($id) $comb
 if {$comb} {
     set gscreen $screen
 }
@@ -314,6 +313,7 @@ if {$id == ""} {
 if {$scw == 0 && $sgw == 0} {
     set sgw 1
 }
+set mged_comb($id) $comb
 set mged_show_cmd($id) $scw
 set mged_show_dm($id) $sgw
 set mged_show_status($id) 1
@@ -413,12 +413,14 @@ menu .$id.menubar.file -tearoff $do_tearoffs
 .$id.menubar.file add command -label "Exit" -underline 0 -command quit
 
 menu .$id.menubar.file.saveview -tearoff $do_tearoffs
-.$id.menubar.file.saveview add command -label "RT script" -underline 0\
+.$id.menubar.file.saveview add command -label "RT script..." -underline 0\
 	-command "init_rtScriptTool $id"
-.$id.menubar.file.saveview add command -label "Plot" -underline 1\
+.$id.menubar.file.saveview add command -label "Plot..." -underline 1\
 	-command "init_plotTool $id"
-.$id.menubar.file.saveview add command -label "PostScript" -underline 0\
+.$id.menubar.file.saveview add command -label "PostScript..." -underline 0\
 	-command "init_psTool $id"
+#.$id.menubar.file.saveview add command -label "Ascii..." -underline 0\
+#	-command "init_asciiTool $id"
 
 menu .$id.menubar.file.pref -tearoff $do_tearoffs
 .$id.menubar.file.pref add cascade -label "Units" -underline 0\
@@ -588,28 +590,28 @@ menu .$id.menubar.settings.applyTo -tearoff $do_tearoffs
 menu .$id.menubar.settings.mouse_behavior -tearoff $do_tearoffs
 .$id.menubar.settings.mouse_behavior add radiobutton -value d -variable mged_mouse_behavior($id)\
 	-label "Default" -underline 0\
-	-command "mged_apply $id \"set mouse_behavior \$mged_mouse_behavior($id)\""
+	-command "mged_apply $id \"set mouse_behavior \$mged_mouse_behavior($id); refresh\""
 .$id.menubar.settings.mouse_behavior add radiobutton -value p -variable mged_mouse_behavior($id)\
 	-label "Paint Rectangle Area" -underline 0\
-	-command "mged_apply $id \"set mouse_behavior \$mged_mouse_behavior($id)\""
+	-command "mged_apply $id \"set mouse_behavior \$mged_mouse_behavior($id); refresh\""
 .$id.menubar.settings.mouse_behavior add radiobutton -value r -variable mged_mouse_behavior($id)\
 	-label "Raytrace Rectangle Area" -underline 0\
-	-command "mged_apply $id \"set mouse_behavior \$mged_mouse_behavior($id)\""
+	-command "mged_apply $id \"set mouse_behavior \$mged_mouse_behavior($id); refresh\""
 .$id.menubar.settings.mouse_behavior add radiobutton -value z -variable mged_mouse_behavior($id)\
 	-label "Zoom Rectangle Area" -underline 0\
-	-command "mged_apply $id \"set mouse_behavior \$mged_mouse_behavior($id)\""
+	-command "mged_apply $id \"set mouse_behavior \$mged_mouse_behavior($id); refresh\""
 .$id.menubar.settings.mouse_behavior add radiobutton -value q -variable mged_mouse_behavior($id)\
 	-label "Query Ray" -underline 0\
-	-command "mged_apply $id \"set mouse_behavior \$mged_mouse_behavior($id)\""
+	-command "mged_apply $id \"set mouse_behavior \$mged_mouse_behavior($id); refresh\""
 .$id.menubar.settings.mouse_behavior add radiobutton -value s -variable mged_mouse_behavior($id)\
 	-label "Solid Edit Ray" -underline 0\
-	-command "mged_apply $id \"set mouse_behavior \$mged_mouse_behavior($id)\""
+	-command "mged_apply $id \"set mouse_behavior \$mged_mouse_behavior($id); refresh\""
 .$id.menubar.settings.mouse_behavior add radiobutton -value o -variable mged_mouse_behavior($id)\
 	-label "Object Edit Ray" -underline 0\
-	-command "mged_apply $id \"set mouse_behavior \$mged_mouse_behavior($id)\""
+	-command "mged_apply $id \"set mouse_behavior \$mged_mouse_behavior($id); refresh\""
 .$id.menubar.settings.mouse_behavior add radiobutton -value c -variable mged_mouse_behavior($id)\
 	-label "Combination Edit Ray" -underline 0\
-	-command "mged_apply $id \"set mouse_behavior \$mged_mouse_behavior($id)\""
+	-command "mged_apply $id \"set mouse_behavior \$mged_mouse_behavior($id); refresh\""
 
 menu .$id.menubar.settings.qray -tearoff $do_tearoffs
 .$id.menubar.settings.qray add radiobutton -value t -variable mged_qray_effects($id)\
@@ -778,16 +780,20 @@ menu .$id.menubar.settings.transform -tearoff $do_tearoffs
 	-command "set_transform $id" -state disabled
 
 menu .$id.menubar.modes -tearoff $do_tearoffs
-.$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_rateknobs($id)\
-	-label "Rateknobs" -underline 0\
-	-command "mged_apply $id \"set rateknobs \$mged_rateknobs($id)\""
+.$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_grid_draw($id)\
+	-label "Draw Grid" -underline 0\
+	-command "mged_apply $id \"set grid_draw \$mged_grid_draw($id)\""
 .$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_grid_snap($id)\
 	-label "Snap To Grid" -underline 0\
 	-command "mged_apply $id \"set grid_snap \$mged_grid_snap($id)\""
 .$id.menubar.modes add separator
-.$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_grid_draw($id)\
-	-label "Draw Grid" -underline 0\
-	-command "mged_apply $id \"set grid_draw \$mged_grid_draw($id)\""
+.$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_fb($id)\
+	-label "Framebuffer Active" -underline 0 \
+	-command "set_fb $id; update_Raytrace $id"
+.$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_listen($id)\
+	-label "Listen For Clients" -underline 0\
+	-command "set_listen $id" -state disabled
+.$id.menubar.modes add separator
 .$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_rubber_band($id)\
 	-label "Persistent Rubber Band" -underline 0\
 	-command "mged_apply $id \"set rubber_band \$mged_rubber_band($id)\""
@@ -799,13 +805,6 @@ menu .$id.menubar.modes -tearoff $do_tearoffs
 	-command "mged_apply $id \"set faceplate \$mged_faceplate($id)\""
 .$id.menubar.modes add cascade -label "Axes" -underline 1\
 	-menu .$id.menubar.modes.axes
-.$id.menubar.modes add separator
-.$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_fb($id)\
-	-label "Framebuffer Active" -underline 0 \
-	-command "set_fb $id; update_Raytrace $id"
-.$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_listen($id)\
-	-label "Listen For Clients" -underline 0\
-	-command "set_listen $id" -state disabled
 .$id.menubar.modes add separator
 .$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_multi_view($id)\
 	-label "Multipane" -underline 0 -command "setmv $id"
@@ -823,6 +822,10 @@ if {$comb} {
 	-label "Graphics Window" -underline 0\
 	-command "set_dm_win $id"
 } 
+.$id.menubar.modes add separator
+.$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_rateknobs($id)\
+	-label "Rateknobs" -underline 0\
+	-command "mged_apply $id \"set rateknobs \$mged_rateknobs($id)\""
 
 menu .$id.menubar.modes.axes -tearoff $do_tearoffs
 .$id.menubar.modes.axes add checkbutton -offvalue 0 -onvalue 1\
@@ -897,8 +900,12 @@ label .$id.status.illum.label -textvar ia_illum_label($id)
 #==============================================================================
 
 frame .$id.tf
-if {$bob_testing} {
-    text .$id.t -height $mged_num_lines($id) -relief sunken -bd 2 -yscrollcommand ".$id.s set"
+if {$use_grid_gm} {
+    if {$comb} {
+	text .$id.t -height $mged_num_lines($id) -relief sunken -bd 2 -yscrollcommand ".$id.s set"
+    } else {
+	text .$id.t -relief sunken -bd 2 -yscrollcommand ".$id.s set"
+    }
 } else {
     if {$comb} {
 	text .$id.t -width 10 -relief sunken -bd 2 -yscrollcommand ".$id.s set" -setgrid true
@@ -939,7 +946,7 @@ set vi_search_dir(.$id.t) ""
 # Pack windows
 #==============================================================================
 
-if { $bob_testing } {
+if { $use_grid_gm } {
     grid $mged_active_dm($id) -in $mged_dmc($id) -sticky "nsew" -row 0 -column 0
 } else {
     pack $mged_active_dm($id) -in $mged_dmc($id)
@@ -950,10 +957,9 @@ if { $bob_testing } {
 }
 
 set mged_multi_view($id) $mged_default_mvmode
-#setmv $id
 
-if { $bob_testing } {
-    if {$comb} {
+if { $use_grid_gm } {
+    if {$comb && $mged_show_dm($id)} {
 	grid $mged_dmc($id) -sticky nsew -row 0 -column 0
     }
 
@@ -961,7 +967,10 @@ if { $bob_testing } {
     grid columnconfigure .$id.tf 0 -weight 1
     grid columnconfigure .$id.tf 1 -weight 0
     grid rowconfigure .$id.tf 0 -weight 1
-    grid .$id.tf -sticky "nsew" -row 1 -column 0
+
+    if { $mged_show_cmd($id) } {
+	grid .$id.tf -sticky "nsew" -row 1 -column 0
+    }
 
     grid .$id.status.cent .$id.status.size .$id.status.units .$id.status.aet\
 	    .$id.status.ang x -in .$id.status.dpy -sticky "ew"
@@ -982,16 +991,20 @@ if { $bob_testing } {
     grid rowconfigure .$id.status 0 -weight 0
     grid rowconfigure .$id.status 1 -weight 0
     grid rowconfigure .$id.status 2 -weight 0
-    grid .$id.status -sticky "ew"
+
+    if { $mged_show_status($id) } {
+	grid .$id.status -sticky "ew" -row 2 -column 0
+    }
 
     grid columnconfigure .$id 0 -weight 1
-    if {$comb} {
+    if { $comb } {
 	grid rowconfigure .$id 0 -weight 1
 	grid rowconfigure .$id 1 -weight 0
 	grid rowconfigure .$id 2 -weight 0
     } else {
-	grid rowconfigure .$id 0 -weight 1
-	grid rowconfigure .$id 1 -weight 0
+	grid rowconfigure .$id 0 -weight 0
+	grid rowconfigure .$id 1 -weight 1
+	grid rowconfigure .$id 2 -weight 0
     }
 } else {
     pack .$id.status.cent .$id.status.size .$id.status.units .$id.status.aet\
@@ -1024,11 +1037,6 @@ cmd_init $id
 setupmv $id
 aim $id $mged_active_dm($id)
 
-if {$comb} {
-#    set_dm_win $id
-#    set_cmd_win $id
-}
-
 if { $join_c } {
     jcs $id
 }
@@ -1053,6 +1061,16 @@ set_wm_title $id $dbname
 
 wm protocol $mged_top($id) WM_DELETE_WINDOW "gui_destroy_default $id"
 wm geometry $mged_top($id) -0+0
+#set width [winfo screenwidth $mged_top($id)]
+#set height [winfo screenheight $mged_top($id)]
+#wm geometry $mged_top($id) $width\x$height+8+40
+
+
+if { !$comb } {
+    update
+    set geometry [wm geometry .$id]
+    wm geometry .$id $geometry
+}
 }
 
 proc gui_destroy_default args {
@@ -1373,7 +1391,7 @@ proc set_active_dm { id } {
     global win_size
     global mged_display
     global view_ring
-    global bob_testing
+    global use_grid_gm
 
     if { 1 } {
 	set vloc [string range $mged_dm_loc($id) 0 0]
@@ -1416,7 +1434,7 @@ proc set_active_dm { id } {
 
     if {!$mged_multi_view($id)} {
 # unpack previously active dm
-	if { $bob_testing } {
+	if { $use_grid_gm } {
 	    grid forget $mged_top($id).$save_dm_loc($id)
 	} else {
 	    pack forget $mged_top($id).$save_dm_loc($id)
@@ -1427,7 +1445,7 @@ proc set_active_dm { id } {
 	set mv_size [expr $win_size($id) / 2 - 4]
 	dm size $mv_size $mv_size
 
-	if { $bob_testing } {
+	if { $use_grid_gm } {
 	    grid $mged_top($id).$save_dm_loc($id) -in $save_small_dmc($id) -sticky "nsew"
 	} else {
 	    pack $mged_top($id).$save_dm_loc($id) -in $save_small_dmc($id)
@@ -1480,28 +1498,38 @@ proc set_wm_title { id dbname } {
 }
 
 proc set_cmd_win { id } {
+    global mged_dmc
     global mged_show_cmd
     global mged_show_dm
+    global mged_num_lines
     global win_size
-    global bob_testing
+    global use_grid_gm
 
     if { $mged_show_cmd($id) } {
-	if { $bob_testing } {
+	if { $use_grid_gm } {
 	    if { $mged_show_dm($id) } {
+		.$id.t configure -height $mged_num_lines($id)
 		grid .$id.tf -sticky nsew -row 1 -column 0
+#		update
+#		setmv $id
 	    } else {
 		grid .$id.tf -sticky nsew -row 0 -column 0
 	    }
-#	    setmv $id
 	} else {
 	    set win_size($id) $win_size($id,small)
 	    setmv $id
 	    pack .$id.tf -side top -fill both -expand yes
 	}
     } else {
-	if {$bob_testing} {
+	if {$use_grid_gm} {
 	    grid forget .$id.tf
-#	    setmv $id
+
+	    if { !$mged_show_dm($id) } {
+		set mged_show_dm($id) 1
+		grid $mged_dmc($id) -sticky nsew -row 0 -column 0
+		update
+		setmv $id
+	    }
 	} else {
 	    pack forget .$id.tf
 	    set win_size($id) $win_size($id,big)
@@ -1517,10 +1545,10 @@ proc set_dm_win { id } {
     global mged_show_status
     global mged_dmc
     global mged_num_lines
-    global bob_testing
+    global use_grid_gm
 
     if { $mged_show_dm($id) } {
-	if { $bob_testing } {
+	if { $use_grid_gm } {
 	    if { $mged_show_cmd($id) } {
 		grid forget .$id.tf
 		.$id.t configure -height $mged_num_lines($id)
@@ -1528,13 +1556,14 @@ proc set_dm_win { id } {
 	    }
 
 	    grid $mged_dmc($id) -sticky nsew -row 0 -column 0
-	    setmv $id
 
 	    if { $mged_show_cmd($id) } {
 		grid .$id.tf -sticky nsew -row 1 -column 0
 		update
 		.$id.t see end
 	    }
+
+	    setmv $id
 	} else {
 	    if {[winfo ismapped .$id.tf]} {
 		pack $mged_dmc($id) -side top -before .$id.tf -padx 2 -pady 2
@@ -1544,13 +1573,12 @@ proc set_dm_win { id } {
 	    }
 	}
     } else {
-	if { $bob_testing } {
+	if { $use_grid_gm } {
 	    grid forget $mged_dmc($id)
 
 	    set mged_show_cmd($id) 1
 	    set_cmd_win $id
-	    set tmp_font [lindex [.$id.t configure -font] 4]
-	    set fh [font metrics $tmp_font -linespace]
+	    set fh [get_font_height .$id.t]
 	    set h [winfo height $mged_top($id)]
 
 	    if { $mged_show_status($id) } {
@@ -1762,16 +1790,20 @@ proc do_view_ring_entries { id m } {
 
 proc toggle_status_bar { id } {
     global mged_show_status
+    global use_grid_gm
 
     if {$mged_show_status($id)} {
-	pack .$id.status -side bottom -anchor w
-
-	if {[winfo ismapped .$id.tf]} {
-	    .$id.t configure -height 6
+	if { $use_grid_gm } {
+	    grid .$id.status -sticky ew -row 2 -column 0
+	} else {
+	    pack .$id.status -side bottom -anchor w
 	}
     } else {
-	pack forget .$id.status
-	.$id.t configure -height 9
+	if { $use_grid_gm } {
+	    grid forget .$id.status
+	} else {
+	    pack forget .$id.status
+	}
     }
 }
 
@@ -1917,12 +1949,12 @@ proc set_fb { id } {
 
     if {$mged_fb($id)} {
 	.$id.menubar.settings.fb entryconfigure 7 -state normal
-	.$id.menubar.modes entryconfigure 10 -state normal
+	.$id.menubar.modes entryconfigure 4 -state normal
 	set mged_listen($id) 1
 	mged_apply $id "set listen \$mged_listen($id)"
     } else {
 	.$id.menubar.settings.fb entryconfigure 7 -state disabled
-	.$id.menubar.modes entryconfigure 10 -state disabled
+	.$id.menubar.modes entryconfigure 4 -state disabled
 	set mged_listen($id) 0
     }
 }
@@ -1933,4 +1965,22 @@ proc new_db_callback { dbname } {
     foreach id $mged_players {
 	set_wm_title $id $dbname
     }
+}
+
+proc get_font_height { w } {
+    if { [winfo class $w] != "Text" } {
+	return 0
+    }
+
+    set tmp_font [lindex [$w configure -font] 4]
+
+    return [font metrics $tmp_font -linespace]
+}
+
+proc get_cmd_win_height { id } {
+    global mged_num_lines
+
+    set fh [get_font_height .$id.t]
+
+    return [expr $fh * $mged_num_lines($id)]
 }

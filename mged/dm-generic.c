@@ -557,7 +557,11 @@ end:
       width = atoi( argv[1] );
       height = atoi( argv[2] );
 
+#if 0
+      Tk_ResizeWindow(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin, width, height);
+#else
       Tk_GeometryRequest(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin, width, height);
+#endif
 
       return TCL_OK;
     }

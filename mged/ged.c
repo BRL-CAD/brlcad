@@ -1515,7 +1515,7 @@ refresh()
 	if(mged_variables->fb && !mged_variables->fb_overlay){
 	  if(mged_variables->fb_all)
 	    fb_refresh(fbp, 0, 0, dmp->dm_width, dmp->dm_height);
-	  else
+	  else if(mged_variables->mouse_behavior != 'z')
 	    paint_rect_area();
 	}
 #endif
@@ -1538,7 +1538,7 @@ refresh()
 	if(mged_variables->fb && mged_variables->fb_overlay){
 	  if(mged_variables->fb_all)
 	    fb_refresh(fbp, 0, 0, dmp->dm_width, dmp->dm_height);
-	  else
+	  else if(mged_variables->mouse_behavior != 'z')
 	    paint_rect_area();
 	}
 #endif
@@ -1629,7 +1629,7 @@ char *arg;
 	(void)sprintf(line, "%s [%s] time=%ld uid=%d (%s) %s\n",
 		      event,
 		      dmp->dm_name,
-		      now,
+		      (long)now,
 		      getuid(),
 		      timep,
 		      arg
@@ -1920,7 +1920,8 @@ char	**argv;
       Tcl_AppendResult(interp, dbip->dbi_filename, (char *)NULL);
       return TCL_OK;
     }
-    Tcl_AppendResult(interp, "opendb: No database presently open\n", (char *)NULL);
+
+    Tcl_AppendResult(interp, "", (char *)NULL);
     return TCL_OK;
   }
 

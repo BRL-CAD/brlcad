@@ -2,8 +2,8 @@
 
 check_externs "_mged_attach"
 
-if ![info exists bob_testing] {
-    set bob_testing 0
+if ![info exists use_grid_gm] {
+    set use_grid_gm 0
 }
 
 if ![info exists debug_setmv] {
@@ -14,7 +14,7 @@ set mged_default_bd 2
 
 proc openmv { id w wc dpy dtype S } {
     global win_to_id
-    global bob_testing
+    global use_grid_gm
     global mged_default_bd
 
     frame $wc.u
@@ -34,7 +34,7 @@ proc openmv { id w wc dpy dtype S } {
     set win_to_id($w.ll) $id
     set win_to_id($w.lr) $id
 
-    if { $bob_testing } {
+    if { $use_grid_gm } {
 	grid $w.ul -in $wc.u.l -sticky "nsew" -row 0 -column 0
 	grid $w.ur -in $wc.u.r -sticky "nsew" -row 0 -column 0
 	grid $w.ll -in $wc.l.l -sticky "nsew" -row 0 -column 0
@@ -178,9 +178,9 @@ proc menu_accelerator_bindings { id w pos } {
 
 proc packmv { id } {
     global mged_dmc
-    global bob_testing
+    global use_grid_gm
 
-    if { $bob_testing } {
+    if { $use_grid_gm } {
 	grid $mged_dmc($id).u -sticky "nsew" -row 0 -column 0
 	grid $mged_dmc($id).l -sticky "nsew" -row 1 -column 0
 	grid columnconfigure $mged_dmc($id) 0 -weight 1
@@ -194,9 +194,9 @@ proc packmv { id } {
 
 proc unpackmv { id } {
     global mged_dmc
-    global bob_testing
+    global use_grid_gm
 
-    if { $bob_testing } {
+    if { $use_grid_gm } {
 	grid forget $mged_dmc($id).u $mged_dmc($id).l
     } else {
 	pack forget $mged_dmc($id).u $mged_dmc($id).l
@@ -267,7 +267,7 @@ proc setmv { id } {
     global mged_active_dm
     global mged_small_dmc
     global mged_default_bd
-    global bob_testing
+    global use_grid_gm
     global debug_setmv
 
     incr debug_setmv
@@ -275,13 +275,14 @@ proc setmv { id } {
     set border_offset [expr $mged_default_bd * 2]
 
     if { $mged_multi_view($id) } {
-	if { $bob_testing } {
+	if { $use_grid_gm } {
 	    set width [expr ([winfo width $mged_top($id)] - $border_offset) / 2]
 	    set height [expr ([winfo height $mged_top($id)] - $border_offset) / 2]
 
 	    if {$mged_comb($id)} {
 		if {$mged_show_cmd($id)} {
-		    set height [expr $height - [winfo height .$id.tf]]
+		    set height [expr $height - [get_cmd_win_height $id]]
+#		    set height [expr $height - [winfo height .$id.tf]]
 		}
 
 		if {$mged_show_status($id)} {
@@ -321,15 +322,16 @@ proc setmv { id } {
 	packmv $id
     } else {
 	winset $mged_active_dm($id)
-	unpackmv $id
+	catch { unpackmv $id }
 
-	if { $bob_testing } {
+	if { $use_grid_gm } {
 	    set width [expr [winfo width $mged_top($id)] - $border_offset]
 	    set height [expr [winfo height $mged_top($id)] - $border_offset]
 
 	    if {$mged_comb($id)} {
 		if {$mged_show_cmd($id)} {
-		    set height [expr $height - [winfo height .$id.tf]]
+		    set height [expr $height - [get_cmd_win_height $id]]
+#		    set height [expr $height - [winfo height .$id.tf]]
 		}
 
 		if {$mged_show_status($id)} {

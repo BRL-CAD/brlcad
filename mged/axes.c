@@ -201,7 +201,7 @@ draw_v_axes()
 
   VSET(v_ap,
        mged_variables->v_axes_pos[X] * INV_GED,
-       mged_variables->v_axes_pos[Y] * INV_GED,
+       mged_variables->v_axes_pos[Y] * INV_GED * dmp->dm_aspect,
        0.0);
   draw_axes(v_ap,
 	    Viewrot,

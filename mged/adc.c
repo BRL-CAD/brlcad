@@ -175,8 +175,8 @@ fastf_t angle;
   y2 = dv_yadc + d2 + t2;
   if(clip(&x1, &Y1, &x2, &y2) == 0){
     DM_DRAW_LINE_2D(dmp, 
-		    GED2PM1(x1), GED2PM1(Y1),
-		    GED2PM1(x2), GED2PM1(y2));
+		    GED2PM1(x1), GED2PM1(Y1) * dmp->dm_aspect,
+		    GED2PM1(x2), GED2PM1(y2) * dmp->dm_aspect);
   }
 
   /* Quadrant 2 */
@@ -186,8 +186,8 @@ fastf_t angle;
   y2 = dv_yadc + d1 - t1;
   if(clip (&x1, &Y1, &x2, &y2) == 0){
     DM_DRAW_LINE_2D(dmp,
-		    GED2PM1(x1), GED2PM1(Y1),
-		    GED2PM1(x2), GED2PM1(y2));
+		    GED2PM1(x1), GED2PM1(Y1) * dmp->dm_aspect,
+		    GED2PM1(x2), GED2PM1(y2) * dmp->dm_aspect);
   }
 
   /* Quadrant 3 */
@@ -197,8 +197,8 @@ fastf_t angle;
   y2 = dv_yadc - d2 - t2;
   if(clip (&x1, &Y1, &x2, &y2) == 0){
     DM_DRAW_LINE_2D(dmp,
-		    GED2PM1(x1), GED2PM1(Y1),
-		    GED2PM1(x2), GED2PM1(y2));
+		    GED2PM1(x1), GED2PM1(Y1) * dmp->dm_aspect,
+		    GED2PM1(x2), GED2PM1(y2) * dmp->dm_aspect);
   }
 
   /* Quadrant 4 */
@@ -208,8 +208,8 @@ fastf_t angle;
   y2 = dv_yadc - d1 + t1;
   if(clip (&x1, &Y1, &x2, &y2) == 0){
     DM_DRAW_LINE_2D(dmp,
-		    GED2PM1(x1), GED2PM1(Y1),
-		    GED2PM1(x2), GED2PM1(y2) );
+		    GED2PM1(x1), GED2PM1(Y1) * dmp->dm_aspect,
+		    GED2PM1(x2), GED2PM1(y2) * dmp->dm_aspect);
   }
 }
 
@@ -248,11 +248,11 @@ adcursor()
   DM_SET_COLOR(dmp, DM_YELLOW_R, DM_YELLOW_G, DM_YELLOW_B, 1);
   DM_SET_LINE_ATTR(dmp, mged_variables->linewidth, 0);
   DM_DRAW_LINE_2D(dmp,
-		  GED2PM1(GED_MIN), GED2PM1(dv_yadc),
-		  GED2PM1(GED_MAX), GED2PM1(dv_yadc)); /* Horizontal */
+		  GED2PM1(GED_MIN), GED2PM1(dv_yadc) * dmp->dm_aspect,
+		  GED2PM1(GED_MAX), GED2PM1(dv_yadc) * dmp->dm_aspect); /* Horizontal */
   DM_DRAW_LINE_2D(dmp,
-		  GED2PM1(dv_xadc), GED2PM1(GED_MAX),
-		  GED2PM1(dv_xadc), GED2PM1(GED_MIN));  /* Vertical */
+		  GED2PM1(dv_xadc), GED2PM1(GED_MAX) * dmp->dm_aspect,
+		  GED2PM1(dv_xadc), GED2PM1(GED_MIN) * dmp->dm_aspect);  /* Vertical */
 
   angle1 = adc_a1 * DEG2RAD;
   angle2 = adc_a2 * DEG2RAD;
@@ -272,11 +272,12 @@ adcursor()
   y4 = dv_yadc + d1;
   (void)clip ( &x3, &y3, &x4, &y4 );
 
-  DM_DRAW_LINE_2D(dmp, GED2PM1(x1), GED2PM1(Y1),
-		   GED2PM1(x2), GED2PM1(y2));
   DM_DRAW_LINE_2D(dmp,
-		  GED2PM1(x3), GED2PM1(y3),
-		  GED2PM1(x4), GED2PM1(y4));
+		  GED2PM1(x1), GED2PM1(Y1) * dmp->dm_aspect,
+		  GED2PM1(x2), GED2PM1(y2) * dmp->dm_aspect);
+  DM_DRAW_LINE_2D(dmp,
+		  GED2PM1(x3), GED2PM1(y3) * dmp->dm_aspect,
+		  GED2PM1(x4), GED2PM1(y4) * dmp->dm_aspect);
 
   d1 = cos(angle2) * 8000.0;
   d2 = sin(angle2) * 8000.0;
@@ -294,11 +295,11 @@ adcursor()
 
   DM_SET_LINE_ATTR(dmp, mged_variables->linewidth, 1);
   DM_DRAW_LINE_2D(dmp,
-		  GED2PM1(x1), GED2PM1(Y1),
-		  GED2PM1(x2), GED2PM1(y2));
+		  GED2PM1(x1), GED2PM1(Y1) * dmp->dm_aspect,
+		  GED2PM1(x2), GED2PM1(y2) * dmp->dm_aspect);
   DM_DRAW_LINE_2D(dmp,
-		  GED2PM1(x3), GED2PM1(y3),
-		  GED2PM1(x4), GED2PM1(y4));
+		  GED2PM1(x3), GED2PM1(y3) * dmp->dm_aspect,
+		  GED2PM1(x4), GED2PM1(y4) * dmp->dm_aspect);
   DM_SET_LINE_ATTR(dmp, mged_variables->linewidth, 0);
 
   draw_ticks(0.0);

@@ -1,7 +1,7 @@
 #
 #			E X T R A C T . T C L
 #
-#	Widget for extracting objects out of the current MGED database.
+#	Tool for extracting objects out of the current MGED database.
 #
 #	Author - Robert G. Parker
 #
@@ -25,8 +25,12 @@ proc init_extractTool { id } {
 	set ex_file($id) $default_file
     }
 
-    if ![info exists ex_objects($id)] {
-	set ex_objects($id) ""
+    if { 1 } {
+	set ex_objects($id) [_mged_who]
+    } else {
+	if ![info exists ex_objects($id)] {
+	    set ex_objects($id) ""
+	}
     }
 
     toplevel $top -screen $player_screen($id)
@@ -37,7 +41,7 @@ proc init_extractTool { id } {
     label $top.fileL -text "File Name" -anchor w
     entry $top.fileE -width 24 -textvar ex_file($id)
 
-    label $top.objectsL -text "Objects..." -anchor w
+    label $top.objectsL -text "Objects" -anchor w
     entry $top.objectsE -width 24 -textvar ex_objects($id)
 
     button $top.extractB -relief raised -text "Extract"\

@@ -119,7 +119,7 @@ draw_grid()
 
     for(j = 0; j < nv_lines; ++j){
       fx = (view_grid_start_pt_local[X] + (j * mged_variables->grid_res_h)) * inv_sf;
-      DM_DRAW_POINT_2D(dmp, fx, fy);
+      DM_DRAW_POINT_2D(dmp, fx, fy * dmp->dm_aspect);
     }
   }
 
@@ -130,7 +130,7 @@ draw_grid()
 
       for(j = 0; j < nh_lines; ++j){
 	fy = (view_grid_start_pt_local[Y] + (j * mged_variables->grid_res_v)) * inv_sf;
-	DM_DRAW_POINT_2D(dmp, fx, fy);
+	DM_DRAW_POINT_2D(dmp, fx, fy * dmp->dm_aspect);
       }
     }
   }

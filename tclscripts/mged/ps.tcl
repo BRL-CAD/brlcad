@@ -1,7 +1,7 @@
 #
 #			P S . T C L
 #
-#	Widget for producing PostScript files of MGED's current view.
+#	Tool for producing PostScript files of MGED's current view.
 #
 #	Author - Robert G. Parker
 #
