@@ -13,7 +13,7 @@
 	cubitorle giftorle graytorle painttorle rawtorle \
 	rletoabA60 rletoascii rletogray rletopaint \
 	rletops rletoraw targatorle wasatchrle \
-	rletogif rletoabA62 g_diff
+	rletogif rletoabA62
 #define STATIC_PRODUCTS	../SRCDIR/font.src
 
 #define	SRCSUFF	.c
@@ -23,9 +23,6 @@
 #include "../Cakefile.prog"
 
 /* Explicit composition of each product */
-
-g_diff:	g_diff.o LIBRT_DEP LIBBU_DEP LIBTCL_DEP
-	CC LDFLAGS -o g_diff g_diff.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBTCL LIBES
 
 applymap:	applymap.o
 	CC LDFLAGS applymap.o LIBRLE LIBES -o applymap
