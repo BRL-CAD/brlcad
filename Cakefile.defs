@@ -517,7 +517,7 @@ set -S2 "/bin/sh"
 			-L/usr/X11/lib -lX11
 #	endif
 #	ifdef sun_x11_gds
-/*		Sun with X11 configuration and GDS hardware*/
+/*		Sun with X11 configuration and TekSource GDS hardware*/
 #		define	LIBFB_OBJS	if_remote if_ab if_sun if_X if_ts
 #		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_SUN -DIF_TS \
 			-I/usr/X11/include -DIF_X
@@ -556,6 +556,31 @@ set -S2 "/bin/sh"
 #		define	CC	/usr/lang/cc
 #		define	FC	/usr/lang/f77
 #	endif
+#endif
+
+#ifdef NeXT
+/*	NeXT 2.0 */
+#	undef	next
+#	define	MTYPE	next
+#	define	BSD	43
+#	define	HAS_TCP	1
+#	define	RANLIB	ranlib -c -s
+/*	Using the Gnu C Compiler */
+#	define	CC	cc
+#	define	CC_OPTS -g
+#	define	FC_OPTS	CC_OPTS
+#	ifndef	LD_OPTS
+#		define	LD_OPTS	CC_OPTS
+#	endif
+#	define	LIBMALLOC	/* must use libc.a, for _malloc_at_addr() */
+#	define	LIBRT_TIMER	timer42
+/*	NeXT with X11 configuration */
+#	define	LIBFB_OBJS	if_remote if_ab if_X
+#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_X
+#	define	LIBFB_LIBES	LIBPKG -lX11
+#	define	MGED_OBJS	dm-X
+#	define	MGED_CONFIG	-DDM_X
+#	define	MGED_LIBES	-lX11
 #endif
 
 #if defined(apollo)
