@@ -51,7 +51,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "bn.h"
 #include "externs.h"
-#include "db.h"
+#include "db.h"			/* Needed for ID_MM_UNIT only */
 #include "nmg.h"
 #include "nurb.h"
 #include "raytrace.h"
@@ -331,7 +331,8 @@ char    *argv[];
   int status = TCL_OK;
   FILE *fp;
   register struct directory *dp;
-  union record record;
+	struct rt_db_internal	intern;
+	struct rt_comb_internal	*comb;
 
   if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
     return TCL_ERROR;
@@ -352,18 +353,20 @@ char    *argv[];
       status = TCL_ERROR;
       continue;
     }
+	if( rt_db_get_internal( &intern, dp, dbip, (mat_t *)NULL ) < 0 )  {
+		TCL_READ_ERR;
+		status = TCL_ERROR;
+		continue;
+	}
+	comb = (struct rt_comb_internal *)intern.idb_ptr;
+	RT_CK_COMB(comb);
 
-    if( db_get( dbip, dp, &record, 0 , 1) < 0 ){
-      TCL_READ_ERR;
-      status = TCL_ERROR;
-      continue;
-    }
-
-    fprintf(fp, "\"%s\"\t\"%s\"\t\"%s\"\t%d\t%d\t%d\t%d\t%d\n", argv[i],
-	    record.c.c_matname[0] ? record.c.c_matname : "-",
-	    record.c.c_matparm[0] ? record.c.c_matparm : "-",
-	    (int)record.c.c_rgb[0], (int)record.c.c_rgb[1], (int)record.c.c_rgb[2],
-	    (int)record.c.c_override, (int)record.c.c_inherit);
+	fprintf(fp, "\"%s\"\t\"%s\"\t%d\t%d\t%d\t%d\t%d\n", argv[i],
+		bu_vls_strlen(&comb->shader) > 0 ?
+			bu_vls_addr(&comb->shader) : "-",
+	  	comb->rgb[0], comb->rgb[1], comb->rgb[2],
+	  	comb->rgb_valid, comb->inherit);
+	rt_db_free_internal( &intern );
   }
 
   (void)fclose(fp);
@@ -384,11 +387,11 @@ char    *argv[];
   int status = TCL_OK;
   FILE *fp;
   register struct directory *dp;
-  union record record;
+	struct rt_db_internal	intern;
+	struct rt_comb_internal	*comb;
   char line[LINELEN];
-  char name[NAMESIZE];
-  char matname[32]; 
-  char parm[60];
+  char name[128];
+  char shader[256]; 
   int r,g,b;
   int override;
   int inherit;
@@ -402,42 +405,40 @@ char    *argv[];
   }
 
   while(fgets( line , LINELEN, fp ) != NULL){
-    if((extract_mater_from_line(line, name, matname, parm,
+	if((extract_mater_from_line(line, name, shader,
 			    &r, &g, &b, &override, &inherit)) == TCL_ERROR)
-      continue;
+	continue;
 
-    if( (dp = db_lookup( dbip,  name, LOOKUP_NOISY )) == DIR_NULL ){
-      Tcl_AppendResult(interp, "f_rmater: Failed to find ", name, "\n", (char *)NULL);
-      status = TCL_ERROR;
-      continue;
-    }
+	if( (dp = db_lookup( dbip,  name, LOOKUP_NOISY )) == DIR_NULL ){
+		Tcl_AppendResult(interp, "f_rmater: Failed to find ", name, "\n", (char *)NULL);
+		status = TCL_ERROR;
+		continue;
+	}
 
-    if( db_get( dbip, dp, &record, 0, 1) < 0 )
-      continue;
+	if( rt_db_get_internal( &intern, dp, dbip, (mat_t *)NULL ) < 0 )  {
+		TCL_READ_ERR;
+		status = TCL_ERROR;
+	}
+	comb = (struct rt_comb_internal *)intern.idb_ptr;
+	RT_CK_COMB(comb);
 
-    /* Assign new values */
-    if(matname[0] == '-')
-      record.c.c_matname[0] = '\0';
-    else
-      strcpy(record.c.c_matname, matname);
+	/* Assign new values */
+	if(shader[0] == '-')
+  		bu_vls_free( &comb->shader );
+  	else
+  		bu_vls_strcpy( &comb->shader, shader );
 
-    if(parm[0] == '-')
-      record.c.c_matparm[0] = '\0';
-    else
-      strcpy(record.c.c_matparm, parm);
+  	comb->rgb[0] = (unsigned char)r;
+  	comb->rgb[1] = (unsigned char)g;
+  	comb->rgb[2] = (unsigned char)b;
+  	comb->rgb_valid = override;
+  	comb->inherit = inherit;
 
-    record.c.c_rgb[0] = (unsigned char)r;
-    record.c.c_rgb[1] = (unsigned char)g;
-    record.c.c_rgb[2] = (unsigned char)b;
-    record.c.c_override = (char)override;
-    record.c.c_inherit = (char)inherit;
-
-    /* Write new values to database */
-    if( db_put( dbip, dp, &record, 0, 1 ) < 0 ){
-      Tcl_AppendResult(interp, "Database write error, aborting.\n",
-		       (char *)NULL);
-      return TCL_ERROR;
-    }
+	/* Write new values to database */
+	if( rt_db_put_internal( dp, dbip, &intern ) < 0 )  {
+		TCL_WRITE_ERR;
+		status = TCL_ERROR;
+	}
   }
 
   (void)fclose(fp);
@@ -445,24 +446,23 @@ char    *argv[];
 }
 
 int
-extract_mater_from_line(line, name, matname, parm, r, g, b, override, inherit)
+extract_mater_from_line(line, name, shader, r, g, b, override, inherit)
 char *line;
 char *name;
-char *matname;
-char *parm;
+char *shader;
 int *r, *g, *b;
 int *override;
+
 int *inherit;
 {
   int i,j,k;
   char *str[3];
 
   str[0] = name;
-  str[1] = matname;
-  str[2] = parm;
+  str[1] = shader;
 
-  /* Extract first 3 strings. */
-  for(i=j=0; i < 3; ++i){
+  /* Extract first 2 strings. */
+  for(i=j=0; i < 2; ++i){
 
     /* skip white space */
     while(line[j] == ' ' || line[j] == '\t')
