@@ -252,6 +252,31 @@ typedef long	bitv_t;		/* largest integer type */
 #endif
 
 
+#if defined(__alpha)
+/********************************
+ *				*
+ *	  DEC Alpha (AXP)	*
+ *				*
+ ********************************/
+#define IEEE_FLOAT 1		/* Uses IEEE style floating point */
+#if !defined(LITTLE_ENDIAN)
+	/* Often defined in <alpha/endian.h> */
+#	define LITTLE_ENDIAN	1	/* Under the influence of Intel Corp */
+#endif
+typedef double	fastf_t;	/* double|float, "Fastest" float type */
+#define LOCAL	auto		/* static|auto, for serial|parallel cpu */
+#define FAST	register	/* LOCAL|register, for fastest floats */
+typedef long	bitv_t;		/* largest integer type */
+#define BITV_SHIFT	6	/* log2( bits_wide(bitv_t) ) */
+
+#define RES_INIT(ptr)		;
+#define RES_ACQUIRE(ptr)	;
+#define RES_RELEASE(ptr)	;
+#define MAX_PSW		1	/* only one processor, max */
+#define DEFAULT_PSW	1
+#endif
+
+
 #if defined(alliant) && !defined(i860)
 /********************************
  *				*
