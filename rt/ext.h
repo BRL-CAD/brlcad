@@ -36,7 +36,9 @@ extern vect_t		left_eye_delta;
 /***** variables shared with worker() ******/
 extern int		stereo;			/* stereo viewing */
 extern int		hypersample;		/* number of extra rays to fire */
-extern int		jitter;			/* jitter ray starting positions */
+extern int		jitter;			/* jitter (bit vector) */
+#define JITTER_CELL	0x1			/* jitter position of ray in each cell */
+#define JITTER_FRAME	0x2			/* jitter position of entire frame */
 extern fastf_t		rt_perspective;		/* presp (degrees X) 0 => ortho */
 extern fastf_t		aspect;			/* view aspect ratio X/Y */
 extern vect_t		dx_model;		/* view delta-X as model-space vect */
