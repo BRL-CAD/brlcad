@@ -40,8 +40,16 @@
 
 extern double	degtorad, radtodeg;	/* Defined in e4.c */
 
-extern int	dmaflag;	/* Set to 1 to force a new screen DMA */
-extern int	regdebug;
+/*
+ * All GED files are stored in a fixed base unit (MM).
+ * These factors convert database unit to local (or working) units.
+ */
+extern double	base2local, local2base;	/* Defined in dir.c */
+extern int 	localunit;		/* the current local unit (index) */
+extern char	cur_title[];		/* current model title */
+
+extern int	dmaflag;		/* Set !0 to force a new screen DMA */
+extern int	regdebug;		/* Device register debugging flag */
 
 extern int	inten_offset;		/* Intensity offset */
 extern int	inten_scale;		/* Intensity scale */
