@@ -29,6 +29,8 @@ extern int	getopt();
 extern char	*optarg;
 extern int	optind;
 
+extern double	atof();
+
 ColorMap cm1, cm2;
 ColorMap *inp, *outp;
 
@@ -40,8 +42,6 @@ int size = 512;
 double fps = 0.0;	/* frames per second */
 int increment = 1;
 int onestep = 0;
-
-void	delay();
 
 FBIO *fbp;
 
@@ -73,7 +73,7 @@ register char **argv;
 		/* no fps specified */
 		fps = 0;
 	} else {
-		fps = atoi(argv[optind]);
+		fps = atof(argv[optind]);
 		if( fps == 0 )
 			onestep++;
 	}
@@ -95,7 +95,7 @@ char **argv;
 		exit( 1 );
 	}
 
-	if( fps != 0 ) {
+	if( fps > 0.0 ) {
 		sec = 1.0 / fps;
 		usec = ((1.0 / fps) - sec) * 1000000;
 	}
@@ -129,29 +129,13 @@ char **argv;
 		outp = inp;
 		inp = tp;
 
-		if( fps ) delay( sec, usec );
+		if( fps > 0.0 )  {
+			/* From libsysv */
+			bsdselect( 0L, sec, usec );
+		}
 		if( onestep )
 			break;
 	}
 	fb_close( fbp );
 	return	0;
 }
-
-#ifdef BSD
-#include <sys/time.h>
-void
-delay( s, us )
-{
-	struct timeval tv;
-
-	tv.tv_sec = s;
-	tv.tv_usec = us;
-	select( 2, (char *)0, (char *)0, (char *)0, &tv );
-}
-#else
-void
-delay( s, us )
-{
-	sleep( s + (us/1000000) );
-}
-#endif
