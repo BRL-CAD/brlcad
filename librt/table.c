@@ -67,7 +67,7 @@ static char RCStree[] = "@(#)$Header$ (BRL)";
 			double mm2local)); \
 	RT_EXTERN(int rt_##name##_xform, (struct rt_db_internal *op, \
 			CONST mat_t mat, struct rt_db_internal *ip, \
-			int free, CONST char *name));
+			int free));
 #else
 # define RT_DECLARE_INTERFACE(name)	\
 	RT_EXTERN(int rt_/**/name/**/_prep, (struct soltab *stp, \
@@ -106,7 +106,7 @@ static char RCStree[] = "@(#)$Header$ (BRL)";
 			double mm2local)); \
 	RT_EXTERN(int rt_/**/name/**/_xform, (struct rt_db_internal *op, \
 			CONST mat_t mat, struct rt_db_internal *ip, \
-			int free, CONST char *name));
+			int free));
 #endif
 
 /* Note:  no semi-colons at the end of these, please */	
@@ -158,7 +158,7 @@ RT_EXTERN(void rt_vstub, (struct soltab *stp[], struct xray *rp[],
 	struct seg segp[], int n, struct application *ap ));
 RT_EXTERN(int rt_generic_xform, (struct rt_db_internal *op, 
 	CONST mat_t mat, struct rt_db_internal *ip,
-	int free, CONST char *name));
+	int free));
 
 struct rt_functab rt_functab[ID_MAXIMUM+2] = {
 	"ID_NULL",	0,
@@ -208,7 +208,7 @@ struct rt_functab rt_functab[ID_MAXIMUM+2] = {
 		rt_hlf_uv,	rt_hlf_curve,	rt_hlf_class,	rt_hlf_free,
 		rt_hlf_plot,	rt_hlf_vshot,	rt_hlf_tess,
 		rt_hlf_import,	rt_hlf_export,	rt_hlf_ifree,
-		rt_hlf_describe,rt_hlf_xform,
+		rt_hlf_describe,rt_generic_xform,
 
 	"ID_REC",	1,
 		rt_rec_prep,	rt_rec_shot,	rt_rec_print,	rt_rec_norm,
@@ -388,7 +388,7 @@ int NDEF(rt_nul_describe,(struct rt_vls *str,
 			int verbose, double mm2local))
 int NDEF(rt_nul_xform, (struct rt_db_internal *op,
 			CONST mat_t mat, struct rt_db_internal *ip,
-			int free, CONST char *name))
+			int free))
 
 /* Map for database solidrec objects to internal objects */
 static char idmap[] = {
@@ -509,12 +509,11 @@ struct rt_external	*ep;
  *	 0	OK
  */
 int
-rt_generic_xform(op, mat, ip, free, name)
+rt_generic_xform(op, mat, ip, free)
 struct rt_db_internal	*op;
 CONST mat_t		mat;
 struct rt_db_internal	*ip;
-int			free;
-CONST char		*name;
+CONST int		free;
 {
 	struct rt_external	ext;
 	int			id;
@@ -524,8 +523,8 @@ CONST char		*name;
 	RT_INIT_EXTERNAL(&ext);
 	/* Scale change on export is 1.0 -- no change */
 	if( rt_functab[id].ft_export( &ext, ip, 1.0 ) < 0 )  {
-		rt_log("rt_generic_xform(%s):  %s export failure\n",
-			name, rt_functab[id].ft_name);
+		rt_log("rt_generic_xform():  %s export failure\n",
+			rt_functab[id].ft_name);
 		return -1;			/* FAIL */
 	}
 	if( (free || op == ip) && ip->idb_ptr )  {
@@ -534,8 +533,7 @@ CONST char		*name;
     	}
 
 	if( rt_functab[id].ft_import( op, &ext, mat ) < 0 )  {
-		rt_log("rt_generic_xform(%s):  solid import failure\n",
-			name);
+		rt_log("rt_generic_xform():  solid import failure\n");
 		return -1;			/* FAIL */
 	}
 	RT_CK_DB_INTERNAL( op );
