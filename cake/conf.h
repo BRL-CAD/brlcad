@@ -17,6 +17,11 @@ typedef	int	Cast;
 /* command to invoke the C preprocessor */
 #define	CPP		"/lib/cpp"
 
+/* If C preprocessor needs options, define them here.  For example, GNU CPP */
+#if 0
+#	define	CPP_OPTIONS	"-traditional"
+#endif
+
 /* location of the statistics file - if not defined, no stats kept */
 /*#define	STATS_FILE	"/u/pgrad/zs/lib/cake_stats" **BRL*/
 #define	STATS_FILE	"/usr/brlcad/lib/cake_stats"

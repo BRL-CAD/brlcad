@@ -98,6 +98,9 @@ char	**argv;
 
 	init_sym();
 	cppargv[cppargc++] = new_name(CPP);
+#if defined(CPP_OPTIONS)
+	cppargv[cppargc++] = new_name(CPP_OPTIONS);	
+#endif
 	strcpy(cakeflagbuf, "-DCAKEFLAGS=");
 
 	if ((envstr = getenv("CAKE")) != NULL)
