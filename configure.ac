@@ -683,6 +683,8 @@ dnl **************************
 dnl *** Check for programs ***
 dnl **************************
 
+AC_LANG(C)
+
 AC_AIX
 AC_GNU_SOURCE
 AC_MINIX
@@ -690,6 +692,7 @@ AC_MINIX
 AC_PROG_CC
 AM_PROG_CC_STDC
 AC_PROG_CPP
+AC_REQUIRE_CPP
 AC_PROG_AWK
 AC_PROG_INSTALL
 AC_PROG_LN_S
@@ -697,6 +700,17 @@ AC_PROG_MAKE_SET
 AM_PROG_LEX
 AC_PROG_YACC
 AM_PROG_MKDIR_P
+
+# XXX libtool has a bug that causes a /lib/cpp sanity check failure if
+# a C++ compiler is not installed.  This makes the sanity test pass
+# regardless of whether there is a c++ compiler
+if test "x$CXXCPP" = "x" ; then
+	if test "x$CPP" = "x" ; then
+		CXXCPP="cpp"
+	else
+		CXXCPP="$CPP"
+	fi
+fi
 
 # XXX libtool shouldn't be generated until after LD is set
 # dnl went poof in libtool 1.9 -- AC_PROG_LIBTOOL
