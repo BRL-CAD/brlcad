@@ -316,6 +316,14 @@ db_close(register struct db_i *dbip)
 		dbip->dbi_Head[i] = DIR_NULL;	/* sanity*/
 	}
 
+	if (dbip->dbi_filepath != NULL) {
+	  if (dbip->dbi_filepath[0] != NULL)
+	    bu_free((char *)dbip->dbi_filepath[0], "dbip->dbi_filepath");
+	  if (dbip->dbi_filepath[1] != NULL)
+	    bu_free((char *)dbip->dbi_filepath[1], "dbip->dbi_filepath");
+	  bu_free((char *)dbip->dbi_filepath, "dbip->dbi_filepath");
+	}
+
 	bu_free( (char *)dbip, "struct db_i" );
 }
 
@@ -390,20 +398,15 @@ db_sync(struct db_i *dbip)
 {
 	RT_CK_DBI(dbip);
 
-#ifdef WIN32
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
-	fflush(dbip->dbi_fp);
-	bu_semaphore_release(BU_SEM_SYSCALL);
-#else
 
-#ifdef HAVE_UNIX_IO
-	bu_semaphore_acquire(BU_SEM_SYSCALL);
+#  ifdef WIN32
+	fflush(dbip->dbi_fp);
+#  elif defined(HAVE_UNIX_IO)
 	fsync(dbip->dbi_fd);
-	bu_semaphore_release(BU_SEM_SYSCALL);
-#else
-	bu_semaphore_acquire(BU_SEM_SYSCALL);
+#  else
 	sync();
+#  endif /* WIN32 */
+
 	bu_semaphore_release(BU_SEM_SYSCALL);
-#endif
-#endif
 }
