@@ -1,5 +1,6 @@
 #!wish -f demo.tcl
 # demo.tcl
+#	setenv LD_LIBRARY_PATH /usr/lib/X11:/usr/X11/lib
 # A GUI for starting up a demonstration of the real-time ray-tracer.
 # To be run from the shell, on the machine to run MGED on.
 #  starts rtsync, mged, and various rtnode's.
@@ -77,7 +78,7 @@ entry .sync2_port -width 4 -relief sunken -bd 2 -textvariable rtsync_port
 pack .sync2_title .sync2_port -side left -in .sync2_fr
 
 button .rtsync_button -text "START" -command start_rtsync
-pack .sync1_fr .rtsync_button -side left -in .rtsync_fr
+pack .sync1_fr .sync2_fr .rtsync_button -side top -in .rtsync_fr
 
 proc start_rtsync {} {
 	global rtsync_host
