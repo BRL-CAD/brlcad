@@ -243,8 +243,6 @@ vers.c: $(ALLSRCS)
 	sh $(top_srcdir)/sh/vers.sh version "The BRL-CAD Raytracer RT" > $@
 
 
-AM_CFLAGS = -I$(top_srcdir)/h
-
 LDADD = @RT@ @FB@ @OPTICAL@
 
 EXTRA_DIST = \

@@ -26,8 +26,6 @@ libwdb_la_SOURCES = \
 
 libwdb_la_LDFLAGS = -version-info 19:1
 
-AM_CFLAGS = -I$(top_srcdir)/h
-
 man_MANS = libwdb.3
 
 EXTRA_DIST = $(man_MANS)

@@ -28,7 +28,6 @@ libutahrle_la_SOURCES = \
 	vaxshort.c
 
 libutahrle_la_LDFLAGS = -version-info 19:1
-AM_CFLAGS = -I$(top_srcdir)/include
 
 man_MANS = \
 	buildmap.3 \

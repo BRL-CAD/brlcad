@@ -116,7 +116,6 @@ stl_g_SOURCES = stl-g.c
 tankill_g_SOURCES = tankill-g.c 
 viewpoint_g_SOURCES = viewpoint-g.c 
 
-
 dist_man_MANS = \
 	asc-nmg.1 \
 	bot_shell-vtk.1 \

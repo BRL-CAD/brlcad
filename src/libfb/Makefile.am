@@ -43,7 +43,7 @@ include_HEADERS = \
 
 dist_man_MANS = libfb.3
 
-AM_CFLAGS = @X_CFLAGS@ -I$(top_srcdir)/h -DIF_REMOTE -DIF_AB -DIF_X -DIF_OGL
+AM_CFLAGS = @X_CFLAGS@ -DIF_REMOTE -DIF_AB -DIF_X -DIF_OGL
 
 libfb_la_LIBADD = @PKG@ @X_LIBS@
 

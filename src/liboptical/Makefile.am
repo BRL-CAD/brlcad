@@ -45,8 +45,6 @@ liboptical_la_SOURCES = \
 
 liboptical_la_LDFLAGS = -version-info 19:1
 
-AM_CFLAGS = -I$(top_srcdir)/h
-
 BUILT_SOURCES = vers.c
 vers.c: $(SRCS)
 	sh $(top_srcdir)/sh/vers.sh liboptical_version "The BRL-CAD Optical Shader Library" > $@

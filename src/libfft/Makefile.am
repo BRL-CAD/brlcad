@@ -2,8 +2,6 @@
 
 lib_LTLIBRARIES = libfft.la
 
-AM_CFLAGS=-I$(top_srcdir)/h
-
 noinst_PROGRAMS = \
 	fftc \
 	ifftc

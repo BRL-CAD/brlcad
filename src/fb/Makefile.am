@@ -170,10 +170,6 @@ polar_fb_LDADD = @FB@
 cell_fb_SOURCES = cell-fb.c 
 cell_fb_LDADD = @FB@ @BN@
 
-
-AM_CFLAGS = -I$(top_srcdir)/h
-
-
 man_MANS = \
 	bw-fb.1 \
 	cat-fb.1 \

@@ -59,8 +59,6 @@ chan_mult_SOURCES = chan_mult.c
 
 chan_permute_SOURCES = chan_permute.c
 
-AM_CFLAGS = -I$(top_srcdir)/h
-
 man_MANS = \
 	anim_cascade.1 \
 	anim_fly.1 \

@@ -109,7 +109,7 @@ cad_parea_SOURCES = cad_parea.c
 cad_parea_LDADD = @BU@
 
 
-INCLUDES = @GL_CFLAGS@ @X_CFLAGS@ -I$(top_srcdir)/h
+INCLUDES = @GL_CFLAGS@ @X_CFLAGS@ -I$(top_srcdir)/include
 
 BUILT_SOURCES = vers.c
 vers.c:

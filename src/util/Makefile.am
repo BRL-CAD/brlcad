@@ -435,8 +435,6 @@ binfo_LDADD = @BN@ @FB@
 rtwizard:
 	cp $(top_srcdir)/tclscripts/rtwizard rtwizard
 
-AM_CFLAGS = -I$(top_srcdir)/h
-
 .PHONY : vers.c
 vers.c:
 	sh $(top_srcdir)/sh/vers.sh version "BRL-CAD info" > $@

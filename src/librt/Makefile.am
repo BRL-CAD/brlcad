@@ -153,8 +153,6 @@ dist_man_MANS = librt.3
 
 EXTRA_DIST = g_bot_include.c
 
-AM_CFLAGS = -I$(top_srcdir)/h
-
 BUILT_SOURCES = vers.c
 vers.c: $(SRCS)
 	sh $(top_srcdir)/sh/vers.sh rt_version "The BRL-CAD Ray-Tracing Library" > $@

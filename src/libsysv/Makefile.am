@@ -15,8 +15,6 @@ noinst_HEADERS = \
 	regex2.h \
 	utils.h
 
-AM_CFLAGS = -I$(top_srcdir)/h
-
 BUILT_SOURCES = vers.c
 vers.c:
 	sh $(top_srcdir)/sh/vers.sh libsysv_version "BRL-CAD System V Compatibility Library" > $@

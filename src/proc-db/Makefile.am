@@ -128,4 +128,3 @@ wall_LDADD = @WDB@
 wdb_example_SOURCES = wdb_example.c 
 wdb_example_LDADD = @WDB@
 
-AM_CFLAGS = -I$(top_srcdir)/h

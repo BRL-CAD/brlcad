@@ -39,8 +39,6 @@ man_MANS = libplot3.3
 
 EXTRA_DIST = $(man_MANS)
 
-AM_CFLAGS = -I$(top_srcdir)/h
-
 libbn_la_LDFLAGS = -version-info 19:1
 
 BUILT_SOURCES = vers.c
