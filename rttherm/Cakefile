@@ -3,7 +3,9 @@
  *
  *  $Header$
  */
-#define CONFIGDEFS	RT_CONFIG
+
+/* This shows up in CFLAGS */
+#define CONFIGDEFS	RT_CONFIG -DRT_MULTISPECTRAL
 
 #define SRCDIR	rttherm
 #define PRODUCTS	rttherm disp
@@ -28,7 +30,7 @@
 
 /* Specially compiled versions */
 refract.o: ../rt/refract.c
-	CC CFLAGS -DMULTISPECTRAL -c ../rt/refract.c
+	CC CFLAGS -c ../rt/refract.c
 
 /* Explicit composition of each product */
 
