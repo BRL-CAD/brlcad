@@ -1372,7 +1372,7 @@ char **argv;
 				if( count == 1 )
 				{
 					mat_t tmp_mat;
-					mat_mul( tmp_mat, matrix, acc_matrix );
+					mat_mul( tmp_mat, acc_matrix, matrix );
 					MAT_COPY( acc_matrix, tmp_mat );
 				}
 				found = 1;
