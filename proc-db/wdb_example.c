@@ -79,7 +79,7 @@ main(int ac, char *av[])
 	 * in the combination.  The return from mk_addmember is a pointer
 	 * to the wmember structure 
 	 */
-	(void)mk_addmember( "box.s", &wm_hd, WMOP_UNION );
+	(void)mk_addmember( "box.s", &wm_hd.l, WMOP_UNION );
 
 	/* If we wanted a transformation matrix for this arc, we would
 	 * add the following code:
@@ -98,7 +98,7 @@ main(int ac, char *av[])
 	 * can be a problem.
 	 */
 
-	(void)mk_addmember( "ball.s", &wm_hd, WMOP_UNION );
+	(void)mk_addmember( "ball.s", &wm_hd.l, WMOP_UNION );
 
 	/* Create the combination
 	 * In this case we are going to make it a region (hence the
