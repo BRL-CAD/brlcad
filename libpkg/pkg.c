@@ -1618,7 +1618,9 @@ pkg_ck_debug()
 
 	/* Log version number of this code */
 	pkg_timestamp();
+#ifndef lint
 	fprintf( pkg_debug, "pkg_ck_debug %s\n", RCSid );
+#endif
 }
 
 /*

@@ -24,7 +24,7 @@
  *	The BRL-CAD Package" agreement.
  *
  *  Copyright Notice -
- *	This software is Copyright (C) 1997 by the United States Army
+ *	This software is Copyright (C) 1997-2004 by the United States Army
  *	in all countries except the USA.  All rights reserved.
  */
 #include "conf.h"
@@ -371,7 +371,7 @@ dgo_open_tcl(ClientData	clientData,
 	dgop = dgo_open_cmd(argv[1], wdbp);
 	(void)Tcl_CreateCommand(interp,
 				bu_vls_addr(&dgop->dgo_name),
-				dgo_cmd,
+				(Tcl_CmdProc *)dgo_cmd,
 				(ClientData)dgop,
 				dgo_deleteProc);
 
@@ -2764,6 +2764,11 @@ dgo_nmg_region_end(tsp, pathp, curtree, client_data)
 	  Tcl_AppendResult(dgcdp->interp, "dgo_nmg_region_end() path='", sofar,
 			   "'\n", (char *)NULL);
 	  bu_free((genptr_t)sofar, "path string");
+	} else {
+	  char	*sofar = db_path_to_string(pathp);
+
+	  bu_log( "%s:\n", sofar );
+	  bu_free((genptr_t)sofar, "path string");
 	}
 
 	if( curtree->tr_op == OP_NOP )  return  curtree;
@@ -3404,7 +3409,7 @@ dgo_eraseobjpath(struct dg_obj	*dgop,
 		}
 		list = bu_vls_addr(&vls);
 #endif
-		if (Tcl_SplitList(interp, list, &ac, &av_orig) != TCL_OK)
+		if (Tcl_SplitList(interp, list, &ac, (const char ***)&av_orig) != TCL_OK)
 			continue;
 
 		/* make sure we will not dereference null */

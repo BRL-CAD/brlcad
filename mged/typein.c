@@ -41,7 +41,7 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *
  * Copyright Notice -
- *	This software is Copyright (C) 1985 by the United States Army.
+ *	This software is Copyright (C) 1985-2004 by the United States Army.
  *	All rights reserved.
  */
 #ifndef lint
@@ -1271,7 +1271,7 @@ char			*prompt[];
 	intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	intern->idb_type = ID_BOT;
 	intern->idb_meth = &rt_functab[ID_BOT];
-	bot = (struct rt_bot_internal *)bu_malloc( sizeof( struct rt_bot_internal ), "rt_bot_internal" );
+	bot = (struct rt_bot_internal *)bu_calloc( 1, sizeof( struct rt_bot_internal ), "rt_bot_internal" );
 	intern->idb_ptr = (genptr_t)bot;
 	bot->magic = RT_BOT_INTERNAL_MAGIC;
 	bot->num_vertices = num_verts;

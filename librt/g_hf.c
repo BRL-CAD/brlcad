@@ -21,7 +21,7 @@
  *	The BRL-CAD Package" agreement.
  *
  *  Copyright Notice -
- *	This software is Copyright (C) 1994 by the United States Army
+ *	This software is Copyright (C) 1994-2004 by the United States Army
  *	in all countries except the USA.  All rights reserved.
  */
 #ifndef lint
@@ -223,7 +223,9 @@ struct rt_i		*rtip;
 	static int first_time=1;
 
 	if (first_time) {
+#ifndef lint
 		bu_log("%s\n",rt_hf_RcSid);
+#endif
 		first_time=0;
 	}
 	RT_CK_DB_INTERNAL(ip);

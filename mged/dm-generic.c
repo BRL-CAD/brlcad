@@ -23,6 +23,7 @@
 #ifdef DM_X 
 #  include "tk.h"
 #  include <X11/Xutil.h>
+#  include "dm_xvars.h"
 #else
 #  include "tcl.h"
 #endif
@@ -39,7 +40,6 @@
 #include "vmath.h"
 #include "mater.h"
 #include "raytrace.h"
-#include "dm_xvars.h"
 #include "./ged.h"
 #include "./sedit.h"
 #include "./mged_dm.h"
@@ -53,6 +53,7 @@ extern void rb_set_dirty_flag();
 
 int doMotion = 0;
 
+#ifdef DM_X
 struct bu_structparse dm_xvars_vparse[] = {
 	{"%x",	1,	"dpy",			XVARS_MV_O(dpy),	BU_STRUCTPARSE_FUNC_NULL },
 	{"%x",	1,	"win",			XVARS_MV_O(win),	BU_STRUCTPARSE_FUNC_NULL },
@@ -67,6 +68,7 @@ struct bu_structparse dm_xvars_vparse[] = {
 	{"%d",	1,	"devbuttonrelease",	XVARS_MV_O(devbuttonrelease),	BU_STRUCTPARSE_FUNC_NULL },
 	{"",	0,	(char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
 };
+#endif
 
 /*
  *  Based upon new state, possibly do extra stuff,
@@ -588,10 +590,12 @@ end:
       width = atoi( argv[1] );
       height = atoi( argv[2] );
 
-#if 0
+#ifdef DM_X
+#  if 0
       Tk_ResizeWindow(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin, width, height);
-#else
+#  else
       Tk_GeometryRequest(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin, width, height);
+#  endif
 #endif
 
       return TCL_OK;
@@ -601,6 +605,7 @@ end:
     return TCL_ERROR;
   }
 
+#ifdef DM_X
   if(!strcmp(argv[0], "getx")){
     if(argc == 1){
       struct bu_vls tmp_vls;
@@ -621,6 +626,7 @@ end:
 
     return TCL_OK;
   }
+#endif
 
   if(!strcmp(argv[0], "bg")){
     int r, g, b;

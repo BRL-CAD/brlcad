@@ -21,7 +21,7 @@
  *	The BRL-CAD Package" license agreement.
  *
  *  Copyright Notice -
- *	This software is Copyright (C) 1998 by the United States Army
+ *	This software is Copyright (C) 1998-2004 by the United States Army
  *	in all countries except the USA.  All rights reserved.
  */
 #ifndef lint
@@ -39,8 +39,13 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "shadework.h"
 #include "rtprivate.h"
 
+int		rdebug;			/* RT program debugging */
+double		AmbientIntensity = 0.4;	/* Ambient light intensity */
+vect_t		background = { 0.0, 0.0, 0.0 }; /* Black */
+
 #define MFUNCS(_name)	\
 	{ extern struct mfuncs _name[]; mlib_add_shader( headp, _name ); }
+
 
 /*
  *			O P T I C A L _ S H A D E R _ I N I T
@@ -76,4 +81,5 @@ optical_shader_init(struct mfuncs	**headp)
 	MFUNCS( grass_mfuncs );
 	MFUNCS( tthrm_mfuncs );
 	MFUNCS( flat_mfuncs );
+	MFUNCS( bbd_mfuncs );
 }

@@ -33,7 +33,7 @@
  *	The BRL-CAD Pacakge" agreement.
  *
  *  Copyright Notice -
- *	This software is Copyright (C) 1993 by the United States Army
+ *	This software is Copyright (C) 1993-2004 by the United States Army
  *	in all countries except the USA.  All rights reserved.
  */
 #ifndef lint
@@ -321,6 +321,17 @@ char **argv;
 	cur_sigint = signal( SIGINT, SIG_IGN );		/* sample */
 	(void)signal( SIGINT, cur_sigint );		/* restore */
 
+	if( !classic_mged ) {
+		pid_t pid;
+
+		pid = fork();
+		if( pid > 0 ) {
+			fprintf( stdout, "Backgrounding, please wait...\n" );
+			sleep( 3 );	/* just so it does not appear that MGED has died */
+			exit( 0 );
+		}
+	}
+
 #if 1
 	/* If multiple processors might be used, initialize for it.
 	 * Do not run any commands before here.
@@ -499,7 +510,7 @@ char **argv;
 #endif
 	  } else {
 #ifdef WIN32
-		  if(1) {
+	    if(1) {
 	      struct bu_vls vls;
 	      int status;
 
@@ -550,8 +561,8 @@ char **argv;
 	      (void)close(0);
 #endif
 	    }
-#endif
-		else{
+#endif  /* windows */
+	    else{
 	      exit(0);
 	    }
 

@@ -27,14 +27,22 @@
 #include "rtprivate.h"
 #include "plot3.h"
 
+/* not in a header, but provided by librt */
+HIDDEN void rt_binunif_free();
+
 #define prj_MAGIC 0x70726a00	/* "prj" */
 #define CK_prj_SP(_p) BU_CKMAG(_p, prj_MAGIC, "prj_specific")
 
 struct img_specific {
 	struct bu_list	l;
 	unsigned long	junk;
-	struct bu_vls	i_file;
-	struct bu_mapped_file *i_data;
+  struct bu_vls i_name; /* name of object or file (depending on i_datasrc flag) */
+#define IMG_SRC_FILE 'f'
+#define IMG_SRC_OBJECT  'o'
+#define IMG_SRC_AUTO 0
+  char i_datasrc; /* is the datasource a file/object or automatic */
+  struct bu_mapped_file *i_data; /* mapped file when IMG_SRC_FILE */
+  struct rt_binunif_internal *i_binunifp;  /* db internal object when IMG_SRC_OBJECT */
 	unsigned char 	*i_img;
 	int		i_width;
 	int		i_height;
@@ -62,12 +70,118 @@ struct prj_specific {
 	mat_t			prj_m_to_sh;
 	FILE			*prj_plfd;
 };
+
+/*
+ *  img_source_hook() is used to record where the image datasource is coming from
+ *  so that the image may be loaded automatically as needed from either a file or
+ *  from a database-embedded binary object.
+ */
+HIDDEN void img_source_hook(const struct bu_structparse *ip, const char *sp_name, genptr_t base, char *p) {
+  struct img_specific *imageSpecific = (struct img_specific *)base;
+  if (strncmp(sp_name, "file", 4) == 0) {
+    imageSpecific->i_datasrc=IMG_SRC_FILE;
+  } else if (strncmp(sp_name, "obj", 3) == 0) {
+    imageSpecific->i_datasrc=IMG_SRC_OBJECT;
+  } else {
+    imageSpecific->i_datasrc=IMG_SRC_AUTO;
+  }
+}
+
+
+/*
+ *	i m g _ l o a d _ d a t a s o u r c e
+ *
+ * This is a helper routine used in prj_setup() to load a projection image
+ * either from a file or from a db object.
+ */
+HIDDEN int img_load_datasource(struct img_specific *image, struct db_i *dbInstance, const unsigned long int size) {
+	struct directory *dirEntry;
+
+	RT_CK_DBI(dbInstance);
+
+	if (image == (struct img_specific *)NULL) {
+		bu_bomb("ERROR: img_load_datasource() received NULL arg (struct img_specific *)\n");
+	}
+
+	bu_log("Loading image %s [%S]...", image->i_datasrc==IMG_SRC_AUTO?"from auto-determined datasource":image->i_datasrc==IMG_SRC_OBJECT?"from a database object":image->i_datasrc==IMG_SRC_FILE?"from a file":"from an unknown source (ERROR)", &image->i_name);
+
+	/* if the source is auto or object, we try to load the object */
+	if ((image->i_datasrc==IMG_SRC_AUTO) || (image->i_datasrc==IMG_SRC_OBJECT)) {
+
+		/* see if the object exists */
+		if ( (dirEntry=db_lookup(dbInstance, bu_vls_addr(&image->i_name), LOOKUP_QUIET)) == DIR_NULL) {
+
+			/* unable to find the image object */
+			if (image->i_datasrc!=IMG_SRC_AUTO) {
+				return -1;
+			}
+		}
+		else {
+			struct rt_db_internal *dbip=(struct rt_db_internal *)bu_malloc(sizeof(struct rt_db_internal), "img_load_datasource");
+
+			RT_INIT_DB_INTERNAL(dbip);
+			RT_CK_DB_INTERNAL(dbip);
+			RT_CK_DIR(dirEntry);
+
+			/* the object was in the directory, so go get it */
+			if (rt_db_get_internal(dbip, dirEntry, dbInstance, NULL, NULL) <= 0) {
+				/* unable to load/create the image database record object */
+				return -1;
+			}
+
+			RT_CK_DB_INTERNAL(dbip);
+			RT_CK_BINUNIF(dbip->idb_ptr);
+
+			/* keep the binary object pointer */
+			image->i_binunifp=(struct rt_binunif_internal *)dbip->idb_ptr; /* make it so */
+			
+			/* release the database struct we created */
+			RT_INIT_DB_INTERNAL(dbip);
+			bu_free(dbip, "img_load_datasource");
+
+			/* check size of object */
+			if (image->i_binunifp->count < size) {
+				bu_log("\nWARNING: %S needs %d bytes, binary object only has %d\n", &image->i_name, size, image->i_binunifp->count);
+			} else if (image->i_binunifp->count > size) {
+				bu_log("\nWARNING: Binary object is larger than specified image size\n\tBinary Object: %d pixels\n\tSpecified Image Size: %d pixels\n...continuing to load using image subsection...", image->i_binunifp->count);
+			}
+			image->i_img = (unsigned char *) image->i_binunifp->u.uint8;
+
+		}
+	}
+
+	/* if we are auto and we couldn't find a database object match, or if source
+	 * is explicitly a file then we load the file.
+	 */
+	if ( ( (image->i_datasrc==IMG_SRC_AUTO) && (image->i_binunifp==NULL) ) || (image->i_datasrc==IMG_SRC_FILE) ) {
+
+
+		image->i_data = bu_open_mapped_file_with_path(dbInstance->dbi_filepath,	bu_vls_addr(&image->i_name), NULL);
+		
+		if ( image->i_data==NULL )
+			return -1;				/* FAIL */
+
+		if (image->i_data->buflen < size) {
+			bu_log("\nWARNING: %S needs %d bytes, file only has %d\n", &image->i_name, size, image->i_data->buflen);
+		} else if (image->i_data->buflen > size) {
+			bu_log("\nWARNING: Image file size is larger than specified image size\n\tInput File: %d pixels\n\tSpecified Image Size: %d pixels\n...continuing to load using image subsection...", image->i_data->buflen, size);
+		}
+
+		image->i_img = (unsigned char *) image->i_data->buf;		
+	}
+
+	bu_log("done.\n");
+
+	return 0;
+}
+
+
 /*
  *
  *  Bounds checking on perspective angle
  *
  */
-static void 
+HIDDEN void 
 persp_hook( sdp, name, base, value )
 register const struct bu_structparse	*sdp;	/* structure description */
 register const char			*name;	/* struct member name */
@@ -95,7 +209,7 @@ const char				*value;	/* string containing value */
  * Check for value < 0.0
  *
  */
-static void 
+HIDDEN void 
 dimen_hook( sdp, name, base, value )
 register const struct bu_structparse	*sdp;	/* structure description */
 register const char			*name;	/* struct member name */
@@ -123,7 +237,7 @@ const char				*value;	/* string containing value */
 
 
 #if 0
-static void 
+HIDDEN void 
 noop_hook( sdp, name, base, value )
 register const struct bu_structparse	*sdp;	/* structure description */
 register const char			*name;	/* struct member name */
@@ -136,17 +250,18 @@ const char				*value;	/* string containing value */
 
 	bu_log("%s \"%s\"\n", sdp->sp_name, value);
 
-	BU_CK_VLS(&img_sp->i_file);
+	BU_CK_VLS(&img_sp->i_name);
 }
 #endif
 /* 
  * This routine is responsible for duplicating the image list head to make
- * a new list element.  It also reads in the pixel data for the image, and
- * computes the matrix from the view quaternion.  
+ * a new list element.  It used to read in pixel data for an image (this is
+ * now done in the prj_setup() routine), and computes the matrix from the view 
+ * quaternion.  
  *
  * XXX "orient" MUST ALWAYS BE THE LAST PARAMETER SPECIFIED FOR EACH IMAGE.
  */
-static void 
+static void
 orient_hook( sdp, name, base, value )
 register const struct bu_structparse	*sdp;	/* structure description */
 register const char			*name;	/* struct member name */
@@ -160,7 +275,6 @@ const char				*value;	/* string containing value */
 	vect_t			v_tmp;
 	point_t			p_tmp;
 
-
 	BU_CK_LIST_HEAD(&img_sp->l);
 
 	/* create a new img_specific struct,
@@ -169,15 +283,14 @@ const char				*value;	/* string containing value */
 	 */
 	BU_GETSTRUCT(img_new, img_specific);
 	memcpy(img_new, img_sp, sizeof(struct img_specific));
-	BU_CK_VLS(&img_sp->i_file);
+	BU_CK_VLS(&img_sp->i_name);
 
 
 	/* zero the filename for the next iteration */
-	bu_vls_init(&img_sp->i_file);
+	bu_vls_init(&img_sp->i_name);
 
 	/* Generate matrix from the quaternion */
 	quat_quat2mat(img_new->i_mat, img_new->i_orient);
-
 
 
 	/* compute matrix to transform region coordinates into 
@@ -248,14 +361,8 @@ const char				*value;	/* string containing value */
 
 	}
 
-	/* read in the pixel data */
-	img_new->i_data = bu_open_mapped_file(bu_vls_addr(&img_new->i_file),
-				(char *)NULL);
-	if ( ! img_new->i_data)
-		bu_bomb("shader prj: orient_hook() can't get pixel data... bombing\n");
-
-	img_new->i_img = (unsigned char *)img_new->i_data->buf;
-
+	/* read in the pixel data now happens in prj_setup() */
+	/* we add an image to the list of images regardless of whether the data is valid or not */
 	BU_LIST_MAGIC_SET(&img_new->l, img_MAGIC);
 	BU_LIST_APPEND(&img_sp->l, &img_new->l);
 }
@@ -269,7 +376,10 @@ const char				*value;	/* string containing value */
  * structure above
  */
 struct bu_structparse img_parse_tab[] = {
-	{"%S",	1, "image",		IMG_O(i_file),		BU_STRUCTPARSE_FUNC_NULL},
+	{"%S",	1, "image",		IMG_O(i_name),		BU_STRUCTPARSE_FUNC_NULL},
+	{"%S",  1, "file",		IMG_O(i_name),		img_source_hook},
+	{"%S",	1, "obj",		IMG_O(i_name),		img_source_hook},
+	{"%S",	1, "object",		IMG_O(i_name),		img_source_hook},
 	{"%d",	1, "w",			IMG_O(i_width),		dimen_hook},
 	{"%d",	1, "n",			IMG_O(i_height),	dimen_hook},
 	{"%f",	1, "viewsize",		IMG_O(i_viewsize),	dimen_hook},
@@ -325,7 +435,9 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 {
 	struct prj_specific		*prj_sp;
 	struct img_specific		*img_sp;
-	char 				*fname;
+#if 0
+	char * fname;
+#endif
 	struct bu_vls 			parameter_data;
 	struct bu_mapped_file		*parameter_file;
 
@@ -347,48 +459,84 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 
 
 	if (rdebug&RDEBUG_SHADE) {
-		if ((prj_sp->prj_plfd=fopen("prj.pl", "w")) == (FILE *)NULL) {
-			bu_log("ERROR creating plot file prj.pl");
-		}
-	} else
-		prj_sp->prj_plfd = (FILE *)NULL;
-
-
-	fname = bu_vls_addr(matparm);
+	  if ((prj_sp->prj_plfd=fopen("prj.pl", "w")) == (FILE *)NULL) {
+	    bu_log("ERROR creating plot file prj.pl");
+	  }
+	} else {
+	  prj_sp->prj_plfd = (FILE *)NULL;
+	}
+	
 #if 0
+	fname = bu_vls_addr(matparm);
 	if (! isspace(*fname) )
-		bu_log("------ Stack shader fixed?  Remove hack from prj shader ----\n");
+	  bu_log("------ Stack shader fixed?  Remove hack from prj shader ----\n");
 	while (isspace(*fname)) fname++; /* XXX Hack till stack shader fixed */
-
+	
 #endif
-	if (! *fname)
-		bu_bomb("Null prj shaderfile?\n");
-
-	parameter_file = bu_open_mapped_file( fname, (char *)NULL );
-	if (! parameter_file) {
-		bu_log( "prj_setup can't get shaderfile (%s)\n", fname );
-		bu_bomb("prj_setup can't get shaderfile... bombing\n");
+	if (! *(bu_vls_addr(matparm))) {
+	  bu_log("ERROR: Null projection shader file or options?\n");
+	  return -1;
 	}
-
+	
+	/* first we try to open the specified argument as a file, as previously implemented.  
+	 * if it succeeds, then the file contents become the parameter data.  Otherwise, the
+	 * argument string considered the parameter data.
+	 */
+	
 	bu_vls_init(&parameter_data);
-	bu_vls_strncpy( &parameter_data, (char *)parameter_file->buf,
-		parameter_file->buflen );
+	parameter_file = bu_open_mapped_file( bu_vls_addr(matparm), (char *)NULL );
 
-	if (rdebug&RDEBUG_SHADE ) {
-		bu_log("parsing: %s\n", bu_vls_addr(&parameter_data));
+	if (parameter_file) {
+	  /* the file loaded, so the contents become the parameter string */
+	  bu_log("Filename: %s\n", bu_vls_addr(matparm));
+	  
+	  bu_vls_strncpy( &parameter_data, (char *)parameter_file->buf,
+			  parameter_file->buflen );
+	  
+	  if (rdebug&RDEBUG_SHADE ) {
+	    bu_log("parsing: %s\n", bu_vls_addr(&parameter_data));
+	  }
+
+	  bu_close_mapped_file( parameter_file );
+	} else {
+	  /* the file did not load, so the shader args become the param string */
+	  bu_log("Parameters: %s\n", bu_vls_addr(matparm));
+
+	  bu_vls_strncpy ( &parameter_data, bu_vls_addr(matparm), bu_vls_strlen(matparm) );
 	}
-
-	bu_close_mapped_file( parameter_file );
 
 	/* set defaults on img_specific struct */
 	prj_sp->prj_images.i_width = prj_sp->prj_images.i_height = 512;
 	prj_sp->prj_images.i_antialias = '1';
 	prj_sp->prj_images.i_through = '0';
 	prj_sp->prj_images.i_behind = '0';
+	prj_sp->prj_images.i_datasrc = IMG_SRC_AUTO;
+
+	/* sanity */
+	prj_sp->prj_images.i_data = GENPTR_NULL;
+	prj_sp->prj_images.i_binunifp = GENPTR_NULL;
+	prj_sp->prj_images.i_img = GENPTR_NULL;
 
 	if(bu_struct_parse( &parameter_data, img_parse_tab, 
-	    (char *)&prj_sp->prj_images) < 0)
-		return -1;
+			    (char *)&prj_sp->prj_images) < 0) {
+	  bu_log("ERROR: Unable to properly parse projection shader parameters\n");
+	  return -1;
+	}
+
+	bu_vls_free( &parameter_data );
+
+        /* load the image data for any specified images */
+        for (BU_LIST_FOR(img_sp, img_specific, &prj_sp->prj_images.l)) {
+	  if (img_load_datasource(img_sp, rtip->rti_dbip, img_sp->i_width * img_sp->i_height * 3) < 0) {
+	    bu_log("\nERROR: prj_setup() %s %s could not be loaded [source was %s]\n", rp->reg_name, bu_vls_addr(&img_sp->i_name), img_sp->i_datasrc==IMG_SRC_OBJECT?"object":img_sp->i_datasrc==IMG_SRC_FILE?"file":"auto");
+
+	    /* skip this one */
+	    img_sp->i_through=0;
+	    HREVERSE(img_sp->i_plane,img_sp->i_plane);
+
+	    return -1;
+	  }
+        }
 
 	/* if even one of the images is to be anti-aliased, then we need
 	 * to set the rti_prismtrace flag so that we can compute the exact
@@ -402,11 +550,6 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 			break;
 		}
 	}
-
-	
-
-
-	bu_vls_free( &parameter_data );
 
 	/* The shader needs to operate in a coordinate system which stays
 	 * fixed on the region when the region is moved (as in animation)
@@ -459,8 +602,11 @@ char *cp;
 	while (BU_LIST_WHILE(img_sp, img_specific, &prj_sp->prj_images.l)) {
 
 		img_sp->i_img = (unsigned char *)0;
-		bu_close_mapped_file( img_sp->i_data );
-		bu_vls_vlsfree(&img_sp->i_file);
+		if (img_sp->i_data) bu_close_mapped_file( img_sp->i_data );
+		img_sp->i_data = GENPTR_NULL; /* sanity */
+		if (img_sp->i_binunifp) rt_binunif_free( img_sp->i_binunifp );
+		img_sp->i_binunifp = GENPTR_NULL; /* sanity */
+		bu_vls_vlsfree(&img_sp->i_name);
 
 		BU_LIST_DEQUEUE( &img_sp->l );
 		bu_free( (char *)img_sp, "img_specific");
@@ -474,11 +620,11 @@ char *cp;
 
 	bu_free( cp, "prj_specific" );
 }
-static const double	cs = (1.0/255.0);
-static const point_t delta = {0.5, 0.5, 0.0};
+HIDDEN const double	cs = (1.0/255.0);
+HIDDEN const point_t delta = {0.5, 0.5, 0.0};
 
 #if 0
-static int
+HIDDEN int
 project_antialiased(sh_color, img_sp, prj_sp, ap, r_pe, r_N, r_pt)
 point_t sh_color;
 const struct img_specific *img_sp;
@@ -512,7 +658,7 @@ const point_t r_pt;
 	return 0;
 }
 #endif
-static int
+HIDDEN int
 project_point(sh_color, img_sp, prj_sp, r_pt)
 point_t sh_color;
 struct img_specific *img_sp;
@@ -652,12 +798,15 @@ char			*dp;	/* ptr to the shader-specific struct */
 				r_N,
 				&(ap->a_rt_i->rti_tol));
 
-			if (status <= 0) {
-				/* XXX What to do if we don't
-				 * hit plane?
-				 */
-				bu_log("%s:%d The unthinkable has happened\n",
-					__FILE__, __LINE__);
+			if (rdebug&RDEBUG_SHADE) {
+			  /* status will be <= 0 when the image was not loaded */
+			  if (status <= 0) {
+			    /* XXX What to do if we don't
+			     * hit plane?
+			     */
+			    bu_log("%s:%d The unthinkable has happened\n",
+				   __FILE__, __LINE__);
+			  }
 			}
 
 			VJOIN1(r_pe.corner[i].r_pt,
@@ -702,8 +851,8 @@ char			*dp;	/* ptr to the shader-specific struct */
 					continue;
 		}
 #else
-			if (project_point(sh_color, img_sp, prj_sp, r_pt))
-					continue;
+		if (project_point(sh_color, img_sp, prj_sp, r_pt))
+		  continue;
 #endif
 		VSCALE(sh_color, sh_color, cs);
 		weight = VDOT( r_N, img_sp->i_plane );

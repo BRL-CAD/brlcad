@@ -12,7 +12,7 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *  
  *  Copyright Notice -
- *	This software is Copyright (C) 1989 by the United States Army.
+ *	This software is Copyright (C) 1989-2004 by the United States Army.
  *	All rights reserved.
  */
 #ifndef lint
@@ -1251,7 +1251,7 @@ const char *label;
 	register const struct rt_functab	*ftp;
 
 	for( ftp = rt_functab; ftp->magic != 0; ftp++ )  {
-		if( strcmp( label, ftp->ft_label ) == 0 )
+		if( strncmp( label, ftp->ft_label, 8 ) == 0 )
 			return ftp;
 	}
 	return NULL;
@@ -1282,6 +1282,8 @@ rt_generic_xform(
 {
 	struct bu_external	ext;
 	int			id;
+	struct bu_attribute_value_set avs;
+
 
 	RT_CK_DB_INTERNAL( ip );
 	RT_CK_DBI(dbip);
@@ -1306,15 +1308,40 @@ rt_generic_xform(
 	    }
 	    break;
 	case 5:
+	    avs.magic = -1;
+
 	    if( rt_functab[id].ft_export5( &ext, ip, 1.0, dbip, resp, 0 ) < 0 )  {
 		bu_log("rt_generic_xform():  %s export failure\n",
 			rt_functab[id].ft_name);
 		return -1;			/* FAIL */
 	    }
 
-	    if( (free || op == ip) )  rt_db_free_internal(ip, resp);
+	    if( (free || op == ip) ) {
+		    if( ip->idb_avs.magic == BU_AVS_MAGIC ) {
+			    /* grab the attributes before they are lost
+			     * by rt_db_free_internal or RT_INIT_DB_INTERNAL
+			     */
+			    bu_avs_init( &avs, ip->idb_avs.count, "avs" );
+			    bu_avs_merge( &avs, &ip->idb_avs );
+		    }
+		    rt_db_free_internal(ip, resp);
+	    }
 
 	    RT_INIT_DB_INTERNAL(op);
+
+	    if( !free && op != ip ) {
+		    /* just copy the attributes from ip to op */
+		    if( ip->idb_avs.magic == BU_AVS_MAGIC ) {
+			    bu_avs_init( &op->idb_avs, ip->idb_avs.count, "avs" );
+			    bu_avs_merge( &op->idb_avs, &ip->idb_avs );
+		    }
+	    } else if( avs.magic == BU_AVS_MAGIC ) {
+		    /* put the saved attributes in the output */
+		    bu_avs_init( &op->idb_avs, avs.count, "avs" );
+		    bu_avs_merge( &op->idb_avs, &avs );
+		    bu_avs_free( &avs );
+	    }
+
 	    if( rt_functab[id].ft_import5( op, &ext, mat, dbip, resp, 0 ) < 0 )  {
 		bu_log("rt_generic_xform():  solid import failure\n");
 		return -1;			/* FAIL */

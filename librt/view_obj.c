@@ -23,7 +23,7 @@
  *	The BRL-CAD Package" agreement.
  *
  *  Copyright Notice -
- *	This software is Copyright (C) 1997 by the United States Army
+ *	This software is Copyright (C) 1997-2004 by the United States Army
  *	in all countries except the USA.  All rights reserved.
  */
 #include "conf.h"
@@ -229,7 +229,7 @@ vo_open_tcl(ClientData	clientData,
 	vop = vo_open_cmd(argv[1]);
 	(void)Tcl_CreateCommand(interp,
 				bu_vls_addr(&vop->vo_name),
-				vo_cmd,
+				(Tcl_CmdProc *)vo_cmd,
 				(ClientData)vop,
 				vo_deleteProc);
 

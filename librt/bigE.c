@@ -11,7 +11,7 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *  
  *  Copyright Notice -
- *	This software is Copyright (C) 1997 by the United States Army.
+ *	This software is Copyright (C) 1997-2004 by the United States Army.
  *	All rights reserved.
  */
 #ifndef lint
@@ -2235,6 +2235,7 @@ dgo_E_cmd(struct dg_obj	*dgop,
 
 	dgcdp->rtip = rt_new_rti( dgop->dgo_wdbp->dbip );
 	dgcdp->rtip->rti_tol = dgop->dgo_wdbp->wdb_tol;	/* struct copy */
+	dgcdp->rtip->useair = 1;
 	dgcdp->ap->a_rt_i = dgcdp->rtip;
 
 	dgcdp->nvectors = 0;

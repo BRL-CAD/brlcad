@@ -26,4 +26,8 @@ all&:
 	\B\A\S\E\D\I\R=\"BASEDIR\"; export \B\A\S\E\D\I\R; make proe-brl
 	\B\A\S\E\D\I\R=\"BASEDIR\"; export \B\A\S\E\D\I\R; make proe-brl.dll
 
+unlock&: proe-brl proe-brl.dll
+	protk_unlock proe-brl
+	protk_unlock proe-brl.dll
+
 #include "../../Cakefile.rules"

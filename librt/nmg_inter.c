@@ -42,7 +42,7 @@
  *	The BRL-CAD Pacakge" agreement.
  *
  *  Copyright Notice -
- *	This software is Copyright (C) 1994 by the United States Army
+ *	This software is Copyright (C) 1994-2004 by the United States Army
  *	in all countries except the USA.  All rights reserved.
  */
 #ifndef lint
@@ -1836,7 +1836,8 @@ struct faceuse		*fu2;
 			(void)bu_ptbl_ins_unique(is->l1, &vu1_final->l.magic);
 			(void)bu_ptbl_ins_unique(is->l2, &vu2_final->l.magic);
 		}
-vu1_final = vu1_final = (struct vertexuse *)NULL;	/* XXX HACK HACK -- shut off error checking */
+                /* XXX HACK HACK -- shut off error checking */
+                vu1_final = vu2_final = (struct vertexuse *)NULL;
 		goto out;
 	}
 

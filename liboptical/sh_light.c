@@ -16,7 +16,7 @@
  *	The BRL-CAD Package" license agreement.
  *
  *  Copyright Notice -
- *	This software is Copyright (C) 1998 by the United States Army
+ *	This software is Copyright (C) 1998-2004 by the United States Army
  *	in all countries except the USA.  All rights reserved.
  */
 #ifndef lint
@@ -39,6 +39,7 @@ static const char RCSsh_light[] = "@(#)$Header$ (ARL)";
 #include "plot3.h"
 #include "rtprivate.h"
 #include "light.h"
+#include "photonmap.h"
 
 #if RT_MULTISPECTRAL
 #include "spectrum.h"
@@ -59,7 +60,7 @@ viewshade(struct application *ap,
 #define LIGHT_O(m)	offsetof(struct light_specific, m)
 #define LIGHT_OA(m)	bu_offsetofarray(struct light_specific, m)
 
-RT_EXTERN(HIDDEN void	aim_set, (const struct bu_structparse *sdp, const char *name,
+RT_EXTERN(void	aim_set, (const struct bu_structparse *sdp, const char *name,
 const char *base, char *value));
 
 /***********************************************************************
@@ -276,7 +277,9 @@ char	*dp;
 		bn_tabdata_scale( swp->msw_color, lsp->lt_spectrum, f );
 	}
 #else
-	VSCALE( swp->sw_color, lsp->lt_color, f );
+	if (!PM_Activated) {
+	  VSCALE( swp->sw_color, lsp->lt_color, f );
+	}
 #endif
 	return(1);
 }
@@ -615,7 +618,7 @@ light_setup(register struct region *rp,
 	BU_GETSTRUCT( lsp, light_specific );
 
 	BU_LIST_MAGIC_SET( &(lsp->l), LIGHT_MAGIC );
-	lsp->lt_intensity = 1000.0;	/* Lumens */
+	lsp->lt_intensity = 1.0;	/* Lumens */
 	lsp->lt_fraction = -1.0;		/* Recomputed later */
 	lsp->lt_visible = 1;		/* explicitly modeled */
 	lsp->lt_invisible = 0;		/* explicitly modeled */
@@ -734,9 +737,7 @@ light_setup(register struct region *rp,
 		light_print(rp, lsp);
 
 	if (lsp->lt_invisible )  {
-		lsp->lt_rp = REGION_NULL;
-		/* Note that *dpp (reg_udata) is left null */
-		return(0);	/* don't show light, destroy it */
+		return(2);	/* don't show light, destroy it later */
 	}
 
 	*dpp = (genptr_t)lsp;	/* Associate lsp with reg_udata */
@@ -800,13 +801,13 @@ light_maker(int num, mat_t v2m)
 
 		case 1:
 			/* 1: At right edge, 1/2 high */
-			VSET( color,  1, .1, .1 );	/* Red-ish */
+			VSET( color,  1, 1, 1 );
 			VSET( temp, 1, 0, 1 );
 			break;
 
 		case 2:
 			/* 2:  Behind, and overhead */
-			VSET( color, .1, .1,  1 );	/* Blue-ish */
+			VSET( color, 1, 1,  1 );
 			VSET( temp, 0, 1, -0.5 );
 			break;
 
@@ -834,7 +835,7 @@ light_maker(int num, mat_t v2m)
 
 		/* XXX Is it bogus to set lt_aim? */
 		VSET( lsp->lt_aim, 0, 0, -1 );	/* any direction: spherical */
-		lsp->lt_intensity = 1000.0;
+		lsp->lt_intensity = 1.0;
 		lsp->lt_radius = 0.1;		/* mm, "point" source */
 		lsp->lt_visible = 0;		/* NOT explicitly modeled */
 		lsp->lt_invisible = 1;		/* NOT explicitly modeled */
@@ -906,14 +907,13 @@ light_init(struct application *ap)
 	 */
 	for( BU_LIST_FOR( lsp, light_specific, &(LightHead.l) ) )  {
 		RT_CK_LIGHT(lsp);
-		if (lsp->lt_visible && 
-		    lsp->lt_shadows > 1 && 
+		if (lsp->lt_shadows > 1 && 
 		    lsp->lt_pt_count < 1)
 			light_gen_sample_pts(ap, lsp);
 	}
 
 
-	if (rt_verbosity & VERBOSE_LIGHTINFO) {
+	if (R_DEBUG) {
 		bu_log("Lighting: Ambient = %d%%\n",
 		       (int)(AmbientIntensity*100));
 
@@ -1022,6 +1022,7 @@ struct seg *finished_segs)
 #endif
 	int	light_visible;
 	int	air_sols_seen = 0;
+	int 	is_proc;
 	char	*reason = "???";
 
 	memset(&sw, 0, sizeof(sw));		/* make sure nothing nasty on the stack */
@@ -1231,8 +1232,13 @@ struct seg *finished_segs)
 	}
 
 	/* If we hit an entirely opaque object, this light is invisible */
+	is_proc = ((struct mfuncs *)regp->reg_mfuncs)->mf_flags|MFF_PROC;
+
+
 	if (pp->pt_outhit->hit_dist >= INFINITY ||
-	    (regp->reg_transmit == 0 /* XXX && Not procedural shader */) )  {
+	    (regp->reg_transmit == 0 &&
+	     ! is_proc /* procedural shader */) ) {
+
 #if RT_MULTISPECTRAL
 		bn_tabdata_constval( ap->a_spectrum, 0.0 );
 #else
@@ -1372,10 +1378,12 @@ light_miss(register struct application *ap)
 		return(1);		/* light_visible = 1 */
 	}
 
-	bu_log("light ray missed non-infinite, visible light source\n");
-	bu_log("on pixel: %d %d\n", ap->a_x, ap->a_y);
-	bu_log("ray: (%g %g %g) -> %g %g %g\n", V3ARGS(ap->a_ray.r_pt), V3ARGS(ap->a_ray.r_dir) );
-	bu_log("a_level: %d\n", ap->a_level);
+	if (rdebug & RDEBUG_LIGHT) {
+		bu_log("light ray missed non-infinite, visible light source\n");
+		bu_log("on pixel: %d %d\n", ap->a_x, ap->a_y);
+		bu_log("ray: (%g %g %g) -> %g %g %g\n", V3ARGS(ap->a_ray.r_pt), V3ARGS(ap->a_ray.r_dir) );
+		bu_log("a_level: %d\n", ap->a_level);
+	}
 
 	/* Missed light, either via blockage or dither.  Return black */
 	VSETALL( ap->a_color, 0 );
@@ -1504,8 +1512,11 @@ retry:
 
 		/* if we get here, then everything is used or backfacing */
 
-		bu_log("all light sample pts used.  trying to recycle\n");
+		if (rdebug & RDEBUG_LIGHT ) {
+			bu_log("all light sample pts used.  trying to recycle\n");
+		}
 
+		tryagain = 0;
 		for (k=0 ; k < los->lsp->lt_pt_count ; k++) {
 			if (flags[k] & VF_SEEN ) {
 				/* this one was used, we can re-use it */
@@ -1514,13 +1525,17 @@ retry:
 			}
 		}
 		if (tryagain) {
-			bu_log("recycling\n");
+			if (rdebug & RDEBUG_LIGHT ) {
+				bu_log("recycling\n");
+			}
 			goto reusept;
 		}
 		/* at this point, we have no candidate points available to 
 		 * shoot at
 		 */
-		bu_log("can't find point to shoot at\n");
+		if (rdebug & RDEBUG_LIGHT ) {
+			bu_log("can't find point to shoot at\n");
+		}
 		return 0;
 	done:
 		/* we've got a point on the surface of the light to shoot at */
@@ -1670,14 +1685,18 @@ retry:
 	if (shot_status < 0) {
 		if (los->lsp->lt_infinite) {
 		}  else if (los->lsp->lt_pt_count > 0) {
-			bu_log("was pt %d\n (%g %g %g) normal %g %g %g\n", k,
-			       V3ARGS(los->lsp->lt_sample_pts[k].lp_pt),
-			       V3ARGS(los->lsp->lt_sample_pts[k].lp_norm) );
+			if (rdebug & RDEBUG_LIGHT) {
+				bu_log("was pt %d\n (%g %g %g) normal %g %g %g\n", k,
+				       V3ARGS(los->lsp->lt_sample_pts[k].lp_pt),
+				       V3ARGS(los->lsp->lt_sample_pts[k].lp_norm) );
+			}
 		} else {
-			bu_log("was radius: %g of (%g) angle: %g\n",
-			       radius, los->lsp->lt_radius, angle);
+			if (rdebug & RDEBUG_LIGHT) {
+				bu_log("was radius: %g of (%g) angle: %g\n",
+				       radius, los->lsp->lt_radius, angle);
 
-			bu_log("re-shooting\n");
+				bu_log("re-shooting\n");
+			}
 			goto retry;
 		}
 	}

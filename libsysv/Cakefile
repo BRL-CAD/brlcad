@@ -20,6 +20,10 @@
 
 #include "../Cakefile.defs"
 
+#if defined(RESOLVE_LIBRARIES)
+#	define EXTRA_OBJ_NO_DEPENDENCY -lc
+#endif
+
 #define CPP_ONLY	1	/* needed for conf.h to stay pure */
 #include "../h/conf.h"		/* to get HAVE_POSIX_REGEXEC */
 

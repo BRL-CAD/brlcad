@@ -22,7 +22,7 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *  
  *  Copyright Notice -
- *	This software is Copyright (C) 1988 by the United States Army.
+ *	This software is Copyright (C) 1988-2004 by the United States Army.
  *	All rights reserved.
  */
 #ifndef lint
@@ -105,7 +105,7 @@ static mat_t	rtif_viewrot;
 static struct bn_vlblock	*rtif_vbp;
 static FILE	*rtif_fp;
 static double	rtif_delay;
-static struct _mged_variables    rtif_saved_state;       /* saved state variable\s */
+static struct _mged_variables    rtif_saved_state;       /* saved state variables */
 static int	rtif_mode;
 static int	rtif_desiredframe;
 static int	rtif_finalframe;
@@ -959,7 +959,7 @@ char **argv;
 	/* Do not specify -v option to rt; batch jobs must print everything. -Mike */
 	(void)fprintf(fp, "#!/bin/sh\nrt -M ");
 	if( view_state->vs_vop->vo_perspective > 0 )
-		(void)fprintf(fp, "-p%g", view_state->vs_vop->vo_perspective);
+		(void)fprintf(fp, "-p%g ", view_state->vs_vop->vo_perspective);
 	for( i=2; i < argc; i++ )
 		(void)fprintf(fp,"%s ", argv[i]);
 	(void)fprintf(fp,"\\\n -o %s.pix\\\n $*\\\n", base);
@@ -1022,10 +1022,10 @@ f_loadview(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 	char buffer[512];
 
 	/* data pulled from script file */
-  int perspective=-1;
+	int perspective=-1;
 	char dbName[512];
 	char objects[1024];
-	char *editArgv[2];
+	char *editArgv[3];
 
 	/* save previous interactive state */
 	int prevInteractive = interactive;
@@ -1067,139 +1067,147 @@ f_loadview(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 		return TCL_ERROR;
 	}
 
-	/* turn perspective mode off, by default.  A "-p" option in the view script
-	 * will turn it back on.
+	/* turn perspective mode off, by default.  A "-p" option in the
+	 * view script will turn it back on.
 	 */
 	mged_variables->mv_perspective=-1;
 	set_perspective();
 
 	/* iterate over the contents of the raytrace script */
-  while (!feof(fp)) {
+	while (!feof(fp)) {
 		memset(buffer, 0, 512);
 		fscanf(fp, "%s", buffer);
 
-    if (strncmp(buffer, "-p", 2)==0) {
-      /* we found perspective */
+		if (strncmp(buffer, "-p", 2)==0) {
+		  /* we found perspective */
 
-      buffer[0]=' ';
-      buffer[1]=' ';
-      sscanf(buffer, "%d", &perspective);
-			/*      bu_log("perspective=%d\n", perspective);*/
-			mged_variables->mv_perspective=perspective;
-			set_perspective(); /* !!! this does not update the menu variable.. */
+		  buffer[0]=' ';
+		  buffer[1]=' ';
+		  sscanf(buffer, "%d", &perspective);
+		  /*      bu_log("perspective=%d\n", perspective);*/
+		  mged_variables->mv_perspective=perspective;
+		  /* !!! this does not update the menu variable.. */	
+		  set_perspective(); 
 
-    } else if (strncmp(buffer, "$*", 2)==0) {
-      /* the next read is the file name, the objects come after that */
+		} else if (strncmp(buffer, "$*", 2)==0) {
+		  /* the next read is the file name, the objects come
+		   * after that 
+		   */
 
-      memset(dbName, 0, 1024);
-      fscanf(fp, "%s", dbName);
-      /* if the last character is a line termination, remove it
-       * (it should always be unless the user modifies the file)
-       */
-      if ( *(dbName + strlen(dbName) - 1)=='\\' ) {
-        memset(dbName+strlen(dbName)-1, 0, 1);
-      }
-			/*      bu_log("dbName=%s\n", dbName); */
+		  memset(dbName, 0, 1024);
+		  fscanf(fp, "%s", dbName);
+		  /* if the last character is a line termination, 
+		   * remove it (it should always be unless the user
+		   * modifies the file)
+		   */
+		  if ( *(dbName + strlen(dbName) - 1)=='\\' ) {
+		    memset(dbName+strlen(dbName)-1, 0, 1);
+		  }
+		  /*      bu_log("dbName=%s\n", dbName); */
+		  
+		  /* if no database is open, we attempt to open the
+		   * database listed in the script.  if a database is
+		   * open, we compare the open database's inode number
+		   * with the inode of the database listed in the script.
+		   * If they match, we may proceed. otherwise we need
+		   * to abort since the wrong database would be open.
+		   */
+		  if ( dbip == DBI_NULL ) {
+		    /* load the database */
 
-			/* if no database is open, we attempt to open the database listed in the
-			 * script.  if a database is open, we compare the open database's inode
-			 * number with the inode of the database listed in the script.  If they
-			 * match, we may proceed. otherwise we need to abort since the wrong
-			 * database would be open.
-			 */
-			if ( dbip == DBI_NULL ) {
-				/* load the database */
+		    /* XXX could use better path handling instead of
+		     * assuming rooted or . */
+		    
+		    /* turn off interactive mode so the f_opendb() call
+		     * doesn't blather or attempt to create a new database
+		     */
+		    interactive=0;
+		    editArgv[0]="";
+		    editArgv[1]=dbName;
+		    editArgv[2]=(char *)NULL;
+		    if (f_opendb( (ClientData)NULL, interp, 2, editArgv ) == TCL_ERROR) {
+		      Tcl_AppendResult(interp, "Unable to load database: ", dbName, "\n", (char *)NULL);
+		      
+		      /* restore state before leaving */
+		      mged_variables->mv_perspective=prevPerspective;
+		      set_perspective();
 
-				/* XXX could use better path handling instead of assuming rooted or . */
+		      return TCL_ERROR;
+		    } else {
+		      Tcl_AppendResult(interp, "Loading database: ", dbName, "\n", (char *)NULL);
+		    }
+		    interactive=prevInteractive;
+		    
+		  } else {
+		    /* compare inode numbers */
+		    
+		    stat(dbip->dbi_filename, &dbInode);
+		    stat(dbName, &scriptInode);
+		    
+		    /* stop here if they are not the same file, otherwise,
+		     * we may proceed as expected, and load the objects.
+		     */
+		    if (dbInode.st_ino != scriptInode.st_ino) {
+		      Tcl_AppendResult(interp, "View script references a different database\nCannot load the view without closing the current database\n(i.e. run \"opendb ", dbName, "\")\n", (char *)NULL);
+		      
+		      /* restore state before leaving */
+		      mged_variables->mv_perspective=prevPerspective;
+		      set_perspective();
+		      
+		      return TCL_ERROR;
+		    }
+		    
+		  }
+		  /* end check for loaded database */
+		  
+		  /* get rid of anything that may be displayed, since we
+		   * will load objects that are listed in the script next.
+		   */
+		  (void)cmd_zap( (ClientData)NULL, interp, 1, NULL );
 
-				/* turn off interactive mode so the f_opendb() call doesn't blather or
-				 * attempt to create a new database
-				 */
-				interactive=0;
-				editArgv[0]="";
-				editArgv[1]=dbName;
-				editArgv[2]=(char *)NULL;
-				if (f_opendb( (ClientData)NULL, interp, 2, editArgv ) == TCL_ERROR) {
-					Tcl_AppendResult(interp, "Unable to load database: ", dbName, "\n", (char *)NULL);
+		  /* now get the objects listed */
+		  fscanf(fp, "%s", objects);
+		  /*		  bu_log("OBJECTS=%s\n", objects);*/
+		  while ((!feof(fp)) && (strncmp(objects, "\\", 1)!=0)) {
 
-					/* restore state before leaving */
-					mged_variables->mv_perspective=prevPerspective;
-					set_perspective();
+		    /* clean off the single quotes... */
+		    if (strncmp(objects, "'", 1)==0) {
+		      objects[0]=' ';
+		      memset(objects+strlen(objects)-1, ' ', 1);
+		      sscanf(objects, "%s", objects);
+		    }
 
-					return TCL_ERROR;
-				} else {
-					Tcl_AppendResult(interp, "Loading database: ", dbName, "\n", (char *)NULL);
-				}
-				interactive=prevInteractive;
+		    editArgv[0] = "e";
+		    editArgv[1] = objects;
+		    editArgv[2] = (char *)NULL;
+		    if (edit_com( 2, editArgv, 1, 1 ) != 0) {
+		      Tcl_AppendResult(interp, "Unable to load object: ", objects, "\n", (char *)NULL);
+		    }
+		    
+		    /* bu_log("objects=%s\n", objects);*/
+		    fscanf(fp, "%s", objects);
+		  }
 
-			} else {
-				/* compare inode numbers */
-
-				stat(dbip->dbi_filename, &dbInode);
-				stat(dbName, &scriptInode);
-
-				/* stop here if they are not the same file, otherwise, we may proceed
-				 * as expected, and load the objects.
-				 */
-				if (dbInode.st_ino != scriptInode.st_ino) {
-					Tcl_AppendResult(interp, "View script references a different database\nCannot load the view without closing the current database\n(i.e. run \"opendb ", dbName, "\")\n", (char *)NULL);
-
-					/* restore state before leaving */
-					mged_variables->mv_perspective=prevPerspective;
-					set_perspective();
-
-					return TCL_ERROR;
-				}
-					
-			}
-			/* end check for loaded database */
-
-			/* get rid of anything that may be displayed, since we will load objects
-			 * that are listed in the script next.
-			 */
-			(void)cmd_zap( (ClientData)NULL, interp, 1, NULL );
-
-      /* now get the objects listed */
-      fscanf(fp, "%s", objects);
-			/*			bu_log("objects=%s\n", objects);*/
-      while ((!feof(fp)) && (strncmp(objects, "\\", 1)!=0)) {
-
-				/* clean off the single quotes... */
-				if (strncmp(objects, "'", 1)==0) {
-					objects[0]=' ';
-					memset(objects+strlen(objects)-1, ' ', 1);
-					sscanf(objects, "%s", objects);
-				}
-
-				editArgv[0] = "e";
-				editArgv[1] = objects;
-				editArgv[2] = (char *)NULL;
-				if (edit_com( 2, editArgv, 1, 1 ) != 0) {
-					Tcl_AppendResult(interp, "Unable to load object: ", objects, "\n", (char *)NULL);
-				}
-
-				fscanf(fp, "%s", objects);
-				/*				bu_log("objects=%s\n", objects);*/
-      }			/* end iteration over reading in listed objects */
-    } else if (strncmp(buffer, "<<EOF", 5)==0) {
-			char *cmdBuffer = NULL;
-      /* we are almost done .. read in the view commands */
+		  /* end iteration over reading in listed objects */
+		} else if (strncmp(buffer, "<<EOF", 5)==0) {
+		  char *cmdBuffer = NULL;
+		  /* we are almost done .. read in the view commands */
 			
-			while ( (cmdBuffer = rt_read_cmd( fp )) != NULL ) {
-				/* even unsupported commands should return successfully as they should
-				 * be calling cm_null()
-				 */
-				if ( rt_do_cmd( (struct rt_i *)0, cmdBuffer, view_cmdtab ) < 0 ) { 
-					Tcl_AppendResult(interp, "command failed: ", cmdBuffer, "\n", (char *)NULL);
-				}
-				bu_free( (genptr_t)cmdBuffer, "loadview cmdBuffer" );
-			}
-			/* end iteration over rt commands */
+		  while ( (cmdBuffer = rt_read_cmd( fp )) != NULL ) {
+		    /* even unsupported commands should return successfully as
+		     * they should be calling cm_null()
+		     */
+		    if ( rt_do_cmd( (struct rt_i *)0, cmdBuffer, view_cmdtab ) < 0 ) { 
+		      Tcl_AppendResult(interp, "command failed: ", cmdBuffer, "\n", (char *)NULL);
+		    }
+		    bu_free( (genptr_t)cmdBuffer, "loadview cmdBuffer" );
+		  }
+		  /* end iteration over rt commands */
 
-    }
+		}
 		/* end check for non-view values (dbname, etc) */
 
-  }
+	}
 	/* end iteration over file until eof */
 	fclose(fp);
 
@@ -1215,11 +1223,11 @@ f_loadview(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 	/* XXX not sure why the correction factor is needed, but it works -- csm */
 	/*  Second step:  put eye at view 0,0,1.
 	 *  For eye to be at 0,0,1, the old 0,0,-1 needs to become 0,0,0.
-	 */
-	VSET(xlate, 0.0, 0.0, -1.0);	/* correction factor */
+	VSET(xlate, 0.0, 0.0, -1.0);
 	MAT4X3PNT(new_cent, view_state->vs_vop->vo_view2model, xlate);
 	MAT_DELTAS_VEC_NEG(view_state->vs_vop->vo_center, new_cent);
 	new_mats();
+	 */
 
 	/* update the view next time through the event loop */
 	update_views = 1;
@@ -2259,7 +2267,10 @@ int	argc;
 {
 	if( argc < 2 )
 		return(-1);
-	view_state->vs_vop->vo_scale = atof(argv[1])*0.5;
+	/* for some reason, scale is supposed to be half of size... */
+	view_state->vs_vop->vo_size = atof(argv[1]);
+	view_state->vs_vop->vo_scale = view_state->vs_vop->vo_size * 0.5;
+	view_state->vs_vop->vo_invSize = 1.0 / view_state->vs_vop->vo_size;
 	return(0);
 }
 
@@ -2667,5 +2678,5 @@ cm_null(argc, argv)
 char	**argv;
 int	argc;
 {
-	return(0);
+  return(0);
 }

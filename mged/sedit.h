@@ -15,7 +15,7 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *  
  *  Copyright Notice -
- *	This software is Copyright (C) 1985 by the United States Army.
+ *	This software is Copyright (C) 1985-2004 by the United States Army.
  *	All rights reserved.
  *
  *  $Header$
@@ -111,18 +111,19 @@
 #define	ECMD_BOT_THICK		69	/* set face thickness (one or all) */
 #define	ECMD_BOT_FMODE		70	/* set face mode (one or all) */
 #define ECMD_BOT_FDEL		71	/* delete current face */
+#define ECMD_BOT_FLAGS		72	/* set BOT flags */
 
-#define	ECMD_EXTR_SCALE_H	72	/* scale extrusion vector */
-#define ECMD_EXTR_MOV_H		73	/* move end of extrusion vector */
-#define	ECMD_EXTR_ROT_H		74	/* rotate extrusion vector */
-#define	ECMD_EXTR_SKT_NAME	75	/* set sketch that the extrusion uses */
+#define	ECMD_EXTR_SCALE_H	73	/* scale extrusion vector */
+#define ECMD_EXTR_MOV_H		74	/* move end of extrusion vector */
+#define	ECMD_EXTR_ROT_H		75	/* rotate extrusion vector */
+#define	ECMD_EXTR_SKT_NAME	76	/* set sketch that the extrusion uses */
 
-#define ECMD_CLINE_SCALE_H	76	/* scale height vector */
-#define ECMD_CLINE_MOVE_H	77	/* move end of height vector */
-#define	ECMD_CLINE_SCALE_R	78	/* scale radius */
-#define	ECMD_CLINE_SCALE_T	79	/* scale thickness */
-#define ECMD_TGC_MV_H_CD	80	/* move end of tgc, while scaling CD */
-#define ECMD_TGC_MV_H_V_AB	81	/* move vertex end of tgc, while scaling AB */
+#define ECMD_CLINE_SCALE_H	77	/* scale height vector */
+#define ECMD_CLINE_MOVE_H	78	/* move end of height vector */
+#define	ECMD_CLINE_SCALE_R	79	/* scale radius */
+#define	ECMD_CLINE_SCALE_T	80	/* scale thickness */
+#define ECMD_TGC_MV_H_CD	81	/* move end of tgc, while scaling CD */
+#define ECMD_TGC_MV_H_V_AB	82	/* move vertex end of tgc, while scaling AB */
 
 #define SEDIT_ROTATE (state == ST_S_EDIT && \
 		      (es_edflag == SROT || \

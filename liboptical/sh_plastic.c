@@ -19,7 +19,7 @@
  *	The BRL-CAD Package" license agreement.
  *
  *  Copyright Notice -
- *	This software is Copyright (C) 1998 by the United States Army
+ *	This software is Copyright (C) 1998-2004 by the United States Army
  *	in all countries except the USA.  All rights reserved.
  */
 #ifndef lint
@@ -41,6 +41,8 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #if RT_MULTISPECTRAL
 #include "spectrum.h"
 #endif
+#include "plastic.h"
+#include "photonmap.h"
 
 extern int rr_render(struct application	*ap,
 		     struct partition	*pp,
@@ -54,23 +56,6 @@ extern double AmbientIntensity;
 #if RT_MULTISPECTRAL
 extern const struct bn_table	*spectrum;	/* from rttherm/viewtherm.c */
 #endif
-
-/* Local information */
-struct phong_specific {
-	int	magic;
-	int	shine;
-	double	wgt_specular;
-	double	wgt_diffuse;
-	double	transmit;	/* Moss "transparency" */
-	double	reflect;	/* Moss "transmission" */
-	double	refrac_index;
-	double	extinction;
-	double	emission[3];
-	struct mfuncs *mfp;
-};
-#define PL_MAGIC	0xbeef00d
-#define PL_NULL	((struct phong_specific *)0)
-#define PL_O(m)	offsetof(struct phong_specific, m)
 
 struct bu_structparse phong_parse[] = {
 	{"%d",	1, "shine",		PL_O(shine),		BU_STRUCTPARSE_FUNC_NULL },
@@ -333,14 +318,17 @@ char	*dp;
 {
 	register struct light_specific *lp;
 #if !RT_MULTISPECTRAL
-	register fastf_t *intensity;
+	register	fastf_t	*intensity;
 #endif
-	register fastf_t refl;
-	register fastf_t *to_light;
-	register int	i;
-	register fastf_t cosine;
-	vect_t	work;
-	vect_t	reflected;
+	register	fastf_t	refl;
+	register	fastf_t	*to_light;
+	register	int	i;
+	register	fastf_t	cosine;
+	vect_t			work,color;
+	vect_t			reflected;
+	point_t			pt;
+	fastf_t			dist;
+
 #if RT_MULTISPECTRAL
 	struct bn_tabdata	*ms_matcolor = BN_TABDATA_NULL;
 #else
@@ -375,12 +363,21 @@ char	*dp;
 		return(1);	/* done */
 	}
 
+
 #if RT_MULTISPECTRAL
 	ms_matcolor = bn_tabdata_dup( swp->msw_color );
 #else
 	VMOVE( matcolor, swp->sw_color );
 #endif
 
+/* Photon Mapping */
+#ifndef RT_MULTISPECTRAL
+color[0]= swp -> sw_color[0];
+color[1]= swp -> sw_color[1];
+color[2]= swp -> sw_color[2];
+#endif
+
+if (!PM_Visualize) {
 	/* Diffuse reflectance from "Ambient" light source (at eye) */
 	if ((cosine = -VDOT( swp->sw_hit.hit_normal, ap->a_ray.r_dir )) > 0.0 )  {
 		if (cosine > 1.00001 )  {
@@ -477,8 +474,17 @@ char	*dp;
 					ap->a_x, ap->a_y, ap->a_level);
 				cosine = 1;
 			}
-			refl = ps->wgt_diffuse * swp->sw_lightfract[i] *
-					cosine * lp->lt_fraction;
+			/* Get Obj Hit Point For Attenuation */
+                        if (pp && PM_Activated) {
+				VJOIN1(pt, ap -> a_ray.r_pt, pp -> pt_inhit -> hit_dist, ap -> a_ray.r_dir)
+				dist= sqrt((pt[0]-lp -> lt_pos[0])*(pt[0]-lp -> lt_pos[0]) + (pt[1]-lp -> lt_pos[1])*(pt[1]-lp -> lt_pos[1]) + (pt[2]-lp -> lt_pos[2])*(pt[2]-lp -> lt_pos[2]))/1000.0;
+				dist= (1.0/(0.1 + 1.0*dist + 0.01*dist*dist));
+				refl= dist * ps -> wgt_diffuse * cosine * swp -> sw_lightfract[i] * lp -> lt_intensity;
+/*				bu_log("pt: [%.3f][%.3f,%.3f,%.3f]\n",dist,pt[0],pt[1],pt[2]);*/
+                        } else {
+				refl= ps -> wgt_diffuse * swp -> sw_lightfract[i] * cosine * lp -> lt_fraction;
+			}
+
 #if RT_MULTISPECTRAL
 			bn_tabdata_incr_mul3_scale( swp->msw_color,
 				lp->lt_spectrum,
@@ -529,6 +535,33 @@ char	*dp;
 #endif
 		}
 	}
+
+#ifndef RT_MULTISPECTRAL
+  if (PM_Activated) {
+    IrradianceEstimate(ap, work, swp -> sw_hit.hit_point, swp -> sw_hit.hit_normal, 100, 100);
+    VELMUL(work, work, color);
+    VADD2(swp -> sw_color, work, swp -> sw_color);
+    if (swp -> sw_color[0] > 1.0) swp -> sw_color[0]= 1.0;
+    if (swp -> sw_color[1] > 1.0) swp -> sw_color[1]= 1.0;
+    if (swp -> sw_color[2] > 1.0) swp -> sw_color[2]= 1.0;
+  }
+#endif
+
+} else {
+
+#ifndef RT_MULTISPECTRAL
+  if (PM_Activated) {
+/*  IrradianceEstimate(work, swp -> sw_hit.hit_point, swp -> sw_hit.hit_normal, 100, 100);
+  VELMUL(swp -> sw_color, work, color);*/
+    IrradianceEstimate(ap, swp -> sw_color, swp -> sw_hit.hit_point, swp -> sw_hit.hit_normal, 100, 100);
+    if (swp -> sw_color[0] > 1.0) swp -> sw_color[0]= 1.0;
+    if (swp -> sw_color[1] > 1.0) swp -> sw_color[1]= 1.0;
+    if (swp -> sw_color[2] > 1.0) swp -> sw_color[2]= 1.0;
+  }
+#endif
+}
+
+
 	if (swp->sw_reflect > 0 || swp->sw_transmit > 0 )
 		(void)rr_render( ap, pp, swp );
 
@@ -537,6 +570,8 @@ char	*dp;
 #endif
 	return(1);
 }
+
+
 
 #ifndef PHAST_PHONG
 /*

@@ -583,7 +583,11 @@ db5_export_object3(
 	}
 
 	if( attrib )  {
-BU_ASSERT_PTR( attrib->ext_nbytes, >=, 5 );
+		/* minimum buffer length is a one byte attribute name, followed by a NULL name termination,
+		 * followed by no bytes (for an empty value), followed by a NULL value termination,
+		 * followed by a NULL attribute-value termination. Minimum is 4 bytes
+		 */
+BU_ASSERT_PTR( attrib->ext_nbytes, >=, 4 );
 		cp = db5_encode_length( cp, attrib->ext_nbytes, a_width );
 		bcopy( attrib->ext_buf, cp, attrib->ext_nbytes );
 		cp += attrib->ext_nbytes;
@@ -717,7 +721,7 @@ db5_import_attributes( struct bu_attribute_value_set *avs, const struct bu_exter
 
 	BU_CK_EXTERNAL(ap);
 
-	BU_ASSERT_LONG( ap->ext_nbytes, >=, 5 );
+	BU_ASSERT_LONG( ap->ext_nbytes, >=, 4 );
 
 	/* First pass -- count number of attributes */
 	cp = (const char *)ap->ext_buf;

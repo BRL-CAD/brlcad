@@ -14,7 +14,7 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *  
  *  Copyright Notice -
- *	This software is Copyright (C) 1990 by the United States Army.
+ *	This software is Copyright (C) 1990-2004 by the United States Army.
  *	All rights reserved.
  */
 #ifndef lint
@@ -84,6 +84,9 @@ struct db_i	*dbip;
 
 	rt_uniresource.re_magic = RESOURCE_MAGIC;
 
+	/* list of invisible light regions to be deleted after light_init() */
+	bu_ptbl_init( &rtip->delete_regs, 8, "rt_i delete regions list" );
+
 	VSETALL( rtip->mdl_min,  INFINITY );
 	VSETALL( rtip->mdl_max, -INFINITY );
 	VSETALL( rtip->rti_inf_box.bn.bn_min, -0.1 );
@@ -104,7 +107,14 @@ struct db_i	*dbip;
 
 	rtip->rti_max_beam_radius = 175.0/2;	/* Largest Army bullet */
 
+	/* This sets the space partitioning algorithm to Mike's original
+	 * non-uniform binary space paritioning tree.
+	 * If you change this to anything else, you must also modify
+	 * "rt_find_backing_dist()" (in shoot.c), to handle the different
+	 * alogorithm            -JRA
+	 */
 	rtip->rti_space_partition = RT_PART_NUBSPT;
+
 	rtip->rti_nugrid_dimlimit = 0;
 	rtip->rti_nu_gfactor = RT_NU_GFACTOR_DEFAULT;
 
@@ -593,7 +603,12 @@ rt_init_resource(
 	} else {
 		BU_ASSERT_PTR( resp, !=, NULL );
 		BU_ASSERT_LONG( cpu_num, >=, 0 );
-		BU_ASSERT_LONG( cpu_num, <, MAX_PSW );
+		if( rtip->rti_treetop ) {
+			/* this is a submodel */
+			BU_ASSERT_LONG( cpu_num, <, rtip->rti_resources.blen );
+		} else {
+			BU_ASSERT_LONG( cpu_num, <, MAX_PSW );
+		}
 		RT_CK_RTI(rtip);		/* mandatory */
 	}
 
@@ -762,6 +777,35 @@ struct resource	*resp;
 	rt_init_resource( resp, resp->re_cpu, rtip );
 }
 
+struct bu_bitv *
+get_solidbitv( long nbits, struct resource *resp )
+{
+	struct bu_bitv *solidbits;
+	int counter=0;
+
+	if( resp->re_solid_bitv.magic != BU_LIST_HEAD_MAGIC ) {
+		bu_bomb( "Bad magic number in re_solid_btiv list\n" );
+	}
+
+	if( BU_LIST_IS_EMPTY( &resp->re_solid_bitv ) )  {
+		solidbits = bu_bitv_new( nbits );
+	} else {
+		for( BU_LIST_FOR( solidbits, bu_bitv, &resp->re_solid_bitv ) ) {
+			if( solidbits->nbits >= nbits ) {
+				BU_LIST_DEQUEUE( &solidbits->l );
+				BU_CK_BITV(solidbits);
+				break;
+			}
+			counter++;
+		}
+		if( solidbits == (struct bu_bitv *)&resp->re_solid_bitv ) {
+			solidbits = bu_bitv_new( nbits );
+		}
+	}
+
+	return( solidbits );
+}
+
 /*
  *			R T _ C L E A N
  *
@@ -926,6 +970,8 @@ register struct rt_i *rtip;
 		for( ; dp != DIR_NULL; dp = dp->d_forw )
 			dp->d_uses = 0;
 	}
+
+	bu_ptbl_reset( &rtip->delete_regs );
 
 	rtip->rti_magic = RTI_MAGIC;
 	rtip->needprep = 1;
@@ -1148,4 +1194,587 @@ int rt_load_attrs( struct rt_i *rtip, char **attrs )
 	}
 
 	return( region_count );
+}
+
+/*			R T _ F I N D _ P A T H
+ *
+ *	Routine called by "rt_find_paths". Used for recursing through a tree to find a path
+ *	to the specified "end". The resulting path is returned in "curr_path".
+ */
+static void
+rt_find_path( struct db_i *dbip,
+	      union tree *tp,
+	      struct directory *end,
+	      struct bu_ptbl *paths,
+	      struct db_full_path **curr_path,
+	      struct resource *resp )
+{
+	int curr_path_index=(*curr_path)->fp_len;
+	struct db_full_path *newpath;
+	struct directory *dp;
+	struct rt_db_internal intern;
+	struct rt_comb_internal *comb;
+
+	switch( tp->tr_op ) {
+	case OP_DB_LEAF:
+		dp = db_lookup( dbip, tp->tr_l.tl_name, 1 );
+		if( dp == DIR_NULL ) {
+			bu_bomb( "rt_find_path() failed!!\n" );
+		}
+		db_add_node_to_full_path( *curr_path, dp );
+		if( dp == end ) {
+			bu_ptbl_ins( paths, (long *)(*curr_path) );
+			newpath = (struct db_full_path *)bu_malloc( sizeof( struct db_full_path ),
+								    "newpath" );
+			db_full_path_init( newpath );
+			db_dup_full_path( newpath, (*curr_path) );
+			(*curr_path) = newpath;
+		} else if( (dp->d_flags & DIR_COMB) && !(dp->d_flags & DIR_REGION ) ) {
+			if( rt_db_get_internal( &intern, dp, dbip, NULL, resp ) < 0 ) {
+				bu_bomb( "db_get_internal() failed!!\n" );
+			}
+			comb = (struct rt_comb_internal *)intern.idb_ptr;
+			rt_find_path( dbip, comb->tree, end, paths, curr_path, resp );
+			rt_db_free_internal( &intern, resp );
+		}
+		break;
+	case OP_UNION:
+	case OP_SUBTRACT:
+	case OP_INTERSECT:
+	case OP_XOR:
+		/* binary, process both subtrees */
+		rt_find_path( dbip, tp->tr_b.tb_left, end, paths, curr_path, resp );
+		(*curr_path)->fp_len = curr_path_index;
+		rt_find_path( dbip, tp->tr_b.tb_right, end, paths, curr_path, resp );
+		break;
+	case OP_NOT:
+	case OP_GUARD:
+		rt_find_path( dbip, tp->tr_b.tb_left, end, paths, curr_path, resp );
+		break;
+	default:
+		bu_log( "rt_find_path(): Unrecognized OP (%d)\n", tp->tr_op );
+		bu_bomb( "rt_find_path(): Unrecognized OP\n" );
+		break;
+	}
+}
+
+/*			R T _ F I N D _ P A T H S
+ *
+ *	Routine to find all the paths from the "start" to the "end".
+ *	The resulting paths are returned in "paths"
+ */
+int
+rt_find_paths( struct db_i *dbip,
+	       struct directory *start,
+	       struct directory *end,
+	       struct bu_ptbl *paths,
+	       struct resource *resp )
+{
+	struct rt_db_internal intern;
+	struct db_full_path *path;
+	struct rt_comb_internal *comb;
+
+	path = (struct db_full_path *)bu_malloc( sizeof( struct db_full_path ), "path" );
+	db_full_path_init( path );
+	db_add_node_to_full_path( path, start );
+
+	if( start == end ) {
+		bu_ptbl_ins( paths, (long *)path );
+		return( 0 );
+	}
+
+	if( !(start->d_flags & DIR_COMB) || (start->d_flags & DIR_REGION) ) {
+		bu_log( "Cannot find path from %s to %s\n",
+			start->d_namep, end->d_namep );
+		db_free_full_path( path );
+		bu_free( (char *)path, "path" );
+		return( 1 );
+	}
+
+	if( rt_db_get_internal( &intern, start, dbip, NULL, resp ) < 0 ) {
+		db_free_full_path( path );
+		bu_free( (char *)path, "path" );
+		return( 1 );
+	}
+
+	comb = (struct rt_comb_internal *)intern.idb_ptr;
+	rt_find_path( dbip, comb->tree, end, paths, &path, resp );
+	rt_db_free_internal( &intern, resp );
+
+	return( 0 );
+}
+
+/*			O B J _ I N _ P A T H
+ *
+ *	This routine searches the provided path (in the form of a string) for the specified object name.
+ *	returns:
+ *		1 - the specified object name is somewhere along the path
+ *		0 - the specified object name does not appear in this path
+ */
+int
+obj_in_path( const char *path, const char *obj )
+{
+	int obj_len=strlen( obj );
+	char *ptr;
+
+	ptr = strstr( path, obj );
+
+	while( ptr ) {
+		if( ptr == path ) {
+			/* obj may be first element in path */
+			ptr += obj_len;
+			if( *ptr == '\0' || *ptr == '/' ) {
+				/* found object in path */
+				return( 1 );
+			}
+		} else if( *(ptr-1) == '/' ) {
+			ptr += obj_len;
+			if( *ptr == '\0' || *ptr == '/' ) {
+				/* found object in path */
+				return( 1 );
+			}
+		} else {
+			ptr++;
+		}
+
+		ptr = strstr( ptr, obj );
+	}
+
+	return( 0 );
+}
+
+static int
+unprep_reg_start( struct db_tree_state *tsp,
+		  struct db_full_path *pathp,
+		  const struct rt_comb_internal *comb,
+		  genptr_t client_data )
+{
+	RT_CK_RTI(tsp->ts_rtip);
+	RT_CK_RESOURCE(tsp->ts_resp);
+
+	/* Ignore "air" regions unless wanted */
+	if( tsp->ts_rtip->useair == 0 &&  tsp->ts_aircode != 0 )  {
+		tsp->ts_rtip->rti_air_discards++;
+		return(-1);	/* drop this region */
+	}
+	return(0);
+}
+
+static union tree *
+unprep_reg_end( struct db_tree_state *tsp,
+		  struct db_full_path *pathp,
+		  union tree *tree,
+		  genptr_t client_data )
+{
+	return( (union tree *)NULL );
+}
+
+static union tree *
+unprep_leaf( struct db_tree_state *tsp,
+	     struct db_full_path *pathp,
+	     struct rt_db_internal *ip,
+	     genptr_t client_data )
+{
+	register struct soltab	*stp;
+	struct directory	*dp;
+	register matp_t		mat;
+	struct rt_i		*rtip;
+	struct bu_list		*mid;
+	struct rt_reprep_obj_list *objs=(struct rt_reprep_obj_list *)client_data;
+
+	RT_CK_DBTS(tsp);
+	RT_CK_DBI(tsp->ts_dbip);
+	RT_CK_FULL_PATH(pathp);
+	RT_CK_DB_INTERNAL(ip);
+	rtip = tsp->ts_rtip;
+	RT_CK_RTI(rtip);
+	RT_CK_RESOURCE(tsp->ts_resp);
+	dp = DB_FULL_PATH_CUR_DIR(pathp);
+
+	/* Determine if this matrix is an identity matrix */
+
+	if( !bn_mat_is_equal(tsp->ts_mat, bn_mat_identity, &rtip->rti_tol)) {
+		/* Not identity matrix */
+		mat = (matp_t)tsp->ts_mat;
+	} else {
+		/* Identity matrix */
+		mat = (matp_t)0;
+	}
+
+	/* find corresponding soltab structure */
+	mid = BU_LIST_FIRST( bu_list, &dp->d_use_hd );
+	while( mid != &dp->d_use_hd ) {
+		stp = BU_LIST_MAIN_PTR( soltab, mid, l2 );
+		RT_CK_SOLTAB(stp);
+
+		mid = BU_LIST_PNEXT( bu_list, mid );
+
+		if( ((mat == (matp_t)0) && (stp->st_matp == (matp_t)0) ) ||
+		    bn_mat_is_equal( mat, stp->st_matp, &rtip->rti_tol ) ) {
+			if( stp->st_rtip == rtip ) {
+				long bit=stp->st_bit;
+				struct region *rp;
+				int i,j;
+
+				/* found soltab for this instance */
+
+				/* check all regions using this soltab
+				 * add any that are below an object to be unprepped
+				 * to the "unprep_regions" list
+				 */
+				for( i=0 ; i<BU_PTBL_LEN( &stp->st_regions ) ; i++ ) {
+					rp = (struct region *)BU_PTBL_GET( &stp->st_regions, i );
+					for( j=0 ; j<objs->nunprepped ; j++ ) {
+						if( obj_in_path( rp->reg_name, objs->unprepped[j] ) ) {
+							/* this region has an unprep object
+							 * in its path */
+							bu_ptbl_ins_unique( &objs->unprep_regions, (long *)rp );
+							bu_ptbl_rm( &stp->st_regions, (long *)rp );
+							break;
+						}
+					}
+				}
+				if( stp->st_uses <= 1 ) {
+					/* soltab structure will actually be freed */
+					remove_from_bsp( stp, &rtip->rti_inf_box, &rtip->rti_tol );
+					remove_from_bsp( stp, &rtip->rti_CutHead, &rtip->rti_tol );
+					rtip->rti_Solids[bit] = (struct soltab *)NULL;
+				}
+				rt_free_soltab( stp );
+				return( (union tree *)NULL );
+			}
+		}
+	}
+
+	bu_log( "rt_unprep(): Failed to find soltab structure for an instance of %s\n", dp->d_namep );
+	bu_bomb( "rt_unprep(): Failed to find soltab structure for a solid instance\n");
+
+	return( (union tree *)NULL );
+}
+
+
+/*			R T _ U N P R E P
+ *
+ *	This routine "unpreps" the list of object names that appears in the "unprepped" list
+ *	of the "objs" structure.
+ */
+int
+rt_unprep( struct rt_i *rtip, struct rt_reprep_obj_list *objs, struct resource *resp )
+{
+	struct bu_ptbl paths;
+	struct bu_ptbl unprep_regions;
+	struct db_full_path *path;
+	int i,j,k;
+
+	rt_res_pieces_clean( resp, rtip );
+
+	/* find all paths from top objects to objects being unprepped */
+	bu_ptbl_init( &objs->paths, 5, "paths" );
+	for( i=0 ; i<objs->ntopobjs ; i++ ) {
+		struct directory *start, *end;
+
+		start = db_lookup( rtip->rti_dbip, objs->topobjs[i], 1 );
+		if( start == DIR_NULL ) {
+			for( k=0 ; k<BU_PTBL_END(&objs->paths) ; k++ ) {
+				path = (struct db_full_path *)BU_PTBL_GET( &objs->paths, k );
+				db_free_full_path( path );
+			}
+			bu_ptbl_free( &objs->paths );
+			return( 1 );
+		}
+		for( j=0 ; j<objs->nunprepped ; j++ ) {
+			end = db_lookup( rtip->rti_dbip, objs->unprepped[j], 1 );
+			if( end == DIR_NULL ) {
+				for( k=0 ; k<BU_PTBL_END(&objs->paths) ; k++ ) {
+					path = (struct db_full_path *)BU_PTBL_GET( &objs->paths, k );
+					db_free_full_path( path );
+				}
+				bu_ptbl_free( &objs->paths );
+				return( 1 );
+			}
+			rt_find_paths( rtip->rti_dbip, start, end, &objs->paths, resp );
+		}
+	}
+
+	if( BU_PTBL_LEN( &objs->paths ) < 1 ) {
+		bu_log( "rt_unprep(): Failed to find any paths to objects to reprep!!\n" );
+		bu_ptbl_free( &objs->paths );
+	}
+
+	/* accumulate state along each path */
+	objs->tsp = (struct db_tree_state **)bu_calloc(
+				  BU_PTBL_LEN( &objs->paths ),
+				  sizeof( struct db_tree_state *),
+				  "objs->tsp" );
+
+	bu_ptbl_init( &objs->unprep_regions, 5, "unprep_regions" );
+
+	for( i=0 ; i<BU_PTBL_LEN( &objs->paths ) ; i++ ) {
+		struct db_full_path another_path;
+		struct db_tree_state	*tree_state;
+		char			*obj_name;
+
+		tree_state = (struct db_tree_state *)bu_malloc( sizeof( struct db_tree_state ),
+								"tree_state" );
+		*tree_state = rt_initial_tree_state;	/* struct copy */
+		tree_state->ts_dbip = rtip->rti_dbip;
+		tree_state->ts_resp = resp;
+		tree_state->ts_rtip = rtip;
+		tree_state->ts_tol = &rtip->rti_tol;
+		objs->tsp[i] = tree_state;
+
+		db_full_path_init( &another_path );
+		path = (struct db_full_path *)BU_PTBL_GET( &objs->paths, i );
+		if( db_follow_path( tree_state, &another_path, path, 1, 0 ) ) {
+			bu_log( "rt_unprep(): db_follow_path failed!!\n" );
+			for( k=0 ; k<BU_PTBL_END(&paths) ; k++ ) {
+				if( objs->tsp[k] ) {
+					db_free_db_tree_state( objs->tsp[k] );
+					bu_free( (char *)objs->tsp[k], "tree_state" );
+				}
+				path = (struct db_full_path *)BU_PTBL_GET( &objs->paths, k );
+				db_free_full_path( path );
+			}
+			bu_ptbl_free( &paths );
+			bu_ptbl_free( &unprep_regions );
+			return( 1 );
+		}
+		db_free_full_path( &another_path );
+
+		/* walk tree starting from "unprepped" object,
+		 * using the appropriate tree_state.
+		 * unprep solids and regions along the way
+		 */
+		obj_name = DB_FULL_PATH_CUR_DIR(path)->d_namep;
+		if( db_walk_tree( rtip->rti_dbip, 1, (const char **)&obj_name, 1, tree_state,
+				  unprep_reg_start, unprep_reg_end, unprep_leaf,
+				  (genptr_t)objs ) ) {
+			bu_log( "rt_unprep(): db_walk_tree failed!!!\n" );
+			for( k=0 ; k<BU_PTBL_END(&paths) ; k++ ) {
+				if( objs->tsp[k] ) {
+					db_free_db_tree_state( objs->tsp[k] );
+					bu_free( (char *)objs->tsp[k], "tree_state" );
+				}
+				path = (struct db_full_path *)BU_PTBL_GET( &objs->paths, k );
+				db_free_full_path( path );
+			}
+			bu_ptbl_free( &paths );
+			bu_ptbl_free( &unprep_regions );
+			return( 1 );
+		}
+
+		db_free_db_tree_state( tree_state );
+		bu_free( (char *)tree_state, "tree_state" );
+	}
+
+	/* eliminate regions to be unprepped */
+	objs->nregions_unprepped = BU_PTBL_LEN( &objs->unprep_regions );
+	for( i=0 ; i<BU_PTBL_LEN( &objs->unprep_regions ) ; i++ ) {
+		struct region *rp;
+
+		rp = (struct region *)BU_PTBL_GET( &objs->unprep_regions, i );
+		BU_LIST_DEQUEUE( &rp->l );
+		rtip->Regions[rp->reg_bit] = (struct region *)NULL;
+
+		/* XXX
+		   db_free_tree( rp->reg_treetop, resp ); */
+		bu_free( (genptr_t)rp->reg_name, "region name str");
+		rp->reg_name = (char *)0;
+		if( rp->reg_mater.ma_shader )
+		{
+			bu_free( (genptr_t)rp->reg_mater.ma_shader, "ma_shader" );
+			rp->reg_mater.ma_shader = (char *)NULL;
+		}
+		if( rp->attr_values ) {
+			i = 0;
+			while( rp->attr_values[i] ) {
+				bu_mro_free( rp->attr_values[i] );
+				i++;
+			}
+			bu_free( (char *)rp->attr_values, "rp->attr_values" );
+		}
+		bu_free( (genptr_t)rp, "struct region");
+	}
+
+	/* eliminate NULL region structures */
+	objs->old_nregions = rtip->nregions;
+	i = 0;
+	while( i < rtip->nregions ) {
+		int nulls=0;
+
+		while( i < rtip->nregions && !rtip->Regions[i] ) {
+			i++;
+			nulls++;
+		}
+
+		if( nulls ) {
+			rtip->nregions -= nulls;
+			for( j=i-nulls ; j<rtip->nregions ; j++ ) {
+				rtip->Regions[j] = rtip->Regions[j+nulls];
+				if( rtip->Regions[j] ) {
+					rtip->Regions[j]->reg_bit = j;
+				}
+			}
+			nulls = 0;
+		} else {
+			i++;
+		}
+	}
+
+	/* eliminate NULL soltabs */
+	objs->old_nsolids = rtip->nsolids;
+	objs->nsolids_unprepped = 0;
+	i = 0;
+	while( i < rtip->nsolids) {
+		int nulls=0;
+
+		while( i < rtip->nsolids && !rtip->rti_Solids[i] ) {
+			objs->nsolids_unprepped++;
+			i++;
+			nulls++;
+		}
+		if( nulls ) {
+			for( j=i-nulls ; j+nulls<rtip->nsolids ; j++ ) {
+				rtip->rti_Solids[j] = rtip->rti_Solids[j+nulls];
+				if( rtip->rti_Solids[j] ) {
+					rtip->rti_Solids[j]->st_bit = j;
+				}
+			}
+			rtip->nsolids -= nulls;
+			i -= nulls;
+		} else {
+			i++;
+		}
+	}
+
+	return( 0 );
+}
+
+/*			R T _ R E P R E P
+ *	This routine "re-preps" the list of objects specified in the "unprepped" list of the
+ *	"objs" structure. This structure must previously have been passed to "rt_unprep"
+ */
+int
+rt_reprep( struct rt_i *rtip, struct rt_reprep_obj_list *objs, struct resource *resp )
+{
+	int i;
+	char **argv;
+	struct region *rp;
+	struct soltab *stp;
+	fastf_t old_min[3], old_max[3];
+	int model_extremes_have_changed=0;
+	long bitno;
+
+	VMOVE( old_min, rtip->mdl_min );
+	VMOVE( old_max, rtip->mdl_max );
+
+	rtip->needprep = 1;
+
+	argv = (char **)bu_calloc( BU_PTBL_LEN( &(objs->paths) ), sizeof( char *), "argv" );
+	for( i=0 ; i<BU_PTBL_LEN( &(objs->paths) ) ; i++ ) {
+		argv[i] = db_path_to_string( (const struct db_full_path *)BU_PTBL_GET( &(objs->paths), i ));
+	}
+
+	rtip->rti_add_to_new_solids_list = 1;
+	bu_ptbl_init( &rtip->rti_new_solids, 128, "rti_new_solids" );
+	if( rt_gettrees( rtip, BU_PTBL_LEN( &(objs->paths) ), (const char **)argv, 1 ) ) {
+		return( 1 );
+	}
+	rtip->rti_add_to_new_solids_list = 0;
+
+	for( i=0 ; i<BU_PTBL_LEN( &(objs->paths) ) ; i++ ) {
+		bu_free( argv[i], "argv[i]" );
+	}
+	bu_free( (char *)argv, "argv" );
+
+	rtip->needprep = 0;
+
+	if( rtip->nregions > objs->old_nregions ) {
+		rtip->Regions = (struct region **)bu_realloc( rtip->Regions,
+				     rtip->nregions * sizeof( struct region *), "rtip->Regions" );
+		memset( rtip->Regions, 0, rtip->nregions );
+	}
+
+
+	bitno = 0;
+	for( BU_LIST_FOR( rp, region, &(rtip->HeadRegion) ) ) {
+		rp->reg_bit = bitno;
+		rtip->Regions[bitno] = rp;
+		if( bitno >= objs->old_nregions - objs->nregions_unprepped ) {
+			point_t region_min, region_max;
+
+			if( rt_bound_tree( rp->reg_treetop, region_min, region_max ) ) {
+				bu_log( "rt_reprep(): rt_bound_tree() FAILED for %s\n",
+					rp->reg_name );
+				bu_bomb( "rt_reprep(): rt_bound_tree() FAILED\n" );
+			}
+			if( region_max[X] < INFINITY )  {
+				/* infinite regions are exempted from this */
+				VMINMAX( rtip->mdl_min, rtip->mdl_max, region_min );
+				VMINMAX( rtip->mdl_min, rtip->mdl_max, region_max );
+			}
+			rt_solid_bitfinder( rp->reg_treetop, rp, resp );
+		}
+		bitno++;
+	}
+
+	if( rtip->nsolids > objs->old_nsolids ) {
+		rtip->rti_Solids = (struct soltab **)bu_realloc( rtip->rti_Solids,
+								 rtip->nsolids * sizeof( struct soltab *),
+								 "rtip->rti_Solids" );
+		memset( rtip->rti_Solids, 0, rtip->nsolids );
+	}
+
+	bitno = 0;
+	RT_VISIT_ALL_SOLTABS_START( stp, rtip )  {
+		stp->st_bit = bitno;
+		rtip->rti_Solids[bitno] = stp;
+		bitno++;
+		
+	} RT_VISIT_ALL_SOLTABS_END
+
+	for( i=0 ; i<BU_PTBL_LEN( &rtip->rti_new_solids ) ; i++ ) {
+		stp = (struct soltab * )BU_PTBL_GET( &rtip->rti_new_solids, i );
+		if( stp->st_aradius >= INFINITY ) {
+			insert_in_bsp( stp, &rtip->rti_inf_box );
+		} else {
+			insert_in_bsp( stp, &rtip->rti_CutHead );
+		}
+	}
+
+	bu_ptbl_free( &rtip->rti_new_solids );
+
+	for( i=0 ; i<3 ; i++ ) {
+		if( rtip->mdl_min[i] != old_min[i] ) {
+			model_extremes_have_changed = 1;
+			break;
+		}
+		if( rtip->mdl_max[i] != old_max[i] ) {
+			model_extremes_have_changed = 1;
+			break;
+		}
+	}
+
+	if( model_extremes_have_changed ) {
+		/* fill out BSP, it must completely fill the model BB */
+		fastf_t bb[6];
+
+		VSETALL( bb, INFINITY );
+		VSETALL( &bb[3], -INFINITY );
+		fill_out_bsp( rtip, &rtip->rti_CutHead, resp, bb );
+	}
+
+	if( BU_PTBL_LEN( &rtip->rti_resources ) ) {
+		for( i=0 ; i<BU_PTBL_LEN( &rtip->rti_resources ) ; i++ ) {
+			struct resource *re;
+
+			re = (struct resource *)BU_PTBL_GET( &rtip->rti_resources, i );
+			if( re && rtip->rti_nsolids_with_pieces )
+				rt_res_pieces_init( re, rtip );
+		}
+	} else if( rtip->rti_nsolids_with_pieces ) {
+		rt_res_pieces_init( &rt_uniresource, rtip );
+	}
+
+	return( 0 );
 }

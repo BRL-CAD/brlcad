@@ -17,7 +17,7 @@
  *	The BRL-CAD Package" agreement.
  *
  *  Copyright Notice -
- *	This software is Copyright (C) 1995 by the United States Army
+ *	This software is Copyright (C) 1995-2004 by the United States Army
  *	in all countries except the USA.  All rights reserved.
  */
 #ifndef lint
@@ -217,8 +217,7 @@ genptr_t			client_data;
 		shader_len = strlen( tsp->ts_mater.ma_shader );
 	if( shader_len )
 	{
-		rp->reg_mater.ma_shader = (char *)bu_malloc( shader_len+1, "rt_gettree_region_end: ma_shader" );
-		strcpy( rp->reg_mater.ma_shader, tsp->ts_mater.ma_shader );
+		rp->reg_mater.ma_shader = bu_strdup( tsp->ts_mater.ma_shader );
 	}
 	else
 		rp->reg_mater.ma_shader = (char *)NULL;
@@ -518,6 +517,10 @@ genptr_t			client_data;
 		goto found_it;
 	}
 
+	if( rtip->rti_add_to_new_solids_list ) {
+		bu_ptbl_ins( &rtip->rti_new_solids, (long *)stp );
+	}
+
 	stp->st_id = ip->idb_type;
 	stp->st_meth = &rt_functab[ip->idb_type];
 	if( mat )  {
@@ -748,25 +751,29 @@ int		ncpus;
 		if( attrs ) {
                        if( rtip->rti_dbip->dbi_version < 5 ) {
                                bu_log( "WARNING: requesting attributes from an old database version (ignored)\n" );
-                               tree_state.ts_attrs.count = 0;
+			       bu_avs_init_empty( &tree_state.ts_attrs );
                        } else {
 			       while( attrs[num_attrs] ) {
 				       num_attrs++;
 			       }
-			       bu_avs_init( &tree_state.ts_attrs, num_attrs, "avs in tree_state" );
-			       num_attrs = 0;
-			       while( attrs[num_attrs] ) {
-				       tree_state.ts_attrs.avp[num_attrs].name = bu_strdup( attrs[num_attrs] );
-				       num_attrs++;
+			       if( num_attrs ) {
+				       bu_avs_init( &tree_state.ts_attrs,
+						    num_attrs,
+						    "avs in tree_state" );
+				       num_attrs = 0;
+				       while( attrs[num_attrs] ) {
+					       bu_avs_add( &tree_state.ts_attrs,
+							   attrs[num_attrs],
+							   NULL );
+					       num_attrs++;
+				       }
+			       } else {
+				       bu_avs_init_empty( &tree_state.ts_attrs );
 			       }
-			       tree_state.ts_attrs.count = num_attrs;
 		       }
 		} else {
-			tree_state.ts_attrs.count = 0;
+			bu_avs_init_empty( &tree_state.ts_attrs );
 		}
-
-		if( num_attrs == 0 )
-			bu_avs_init( &tree_state.ts_attrs, 1, "avs in tree_state" );
 
 		/* ifdef this out for now, it is only using memory.
 		 * perhaps a better way of initiating ORCA stuff
@@ -780,7 +787,6 @@ int		ncpus;
 				  rt_gettree_region_start,
 				  rt_gettree_region_end,
 				  rt_gettree_leaf, (genptr_t)tbl );
-
 		bu_avs_free( &tree_state.ts_attrs );
 	}
 
@@ -820,6 +826,9 @@ again:
 	 */
 	RT_VISIT_ALL_SOLTABS_START( stp, rtip )  {
 		if( stp->st_npieces > 1 )  {
+			/* all pieces must be within model bounding box for pieces to work correctly */
+			VMINMAX( rtip->mdl_min, rtip->mdl_max, stp->st_min );
+			VMINMAX( rtip->mdl_min, rtip->mdl_max, stp->st_max );
 			stp->st_piecestate_num = rtip->rti_nsolids_with_pieces++;
 		}
 		if(RT_G_DEBUG&DEBUG_SOLIDS)

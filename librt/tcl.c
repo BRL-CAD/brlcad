@@ -23,7 +23,7 @@
  *	The BRL-CAD Package" agreement.
  *
  *  Copyright Notice -
- *	This software is Copyright (C) 1997 by the United States Army
+ *	This software is Copyright (C) 1997-2004 by the United States Army
  *	in all countries except the USA.  All rights reserved.
  */
 #ifndef lint
@@ -328,12 +328,13 @@ rt_tcl_a_miss( struct application *ap )
  *			R T _ T C L _ S H O O T R A Y
  *
  *  Usage -
- *	procname shootray {P} dir|at {V}
+ *	procname shootray [-R] {P} dir|at {V}
+ *		-R option specifries no overlap reporting
  *
  *  Example -
  *	set glob_compat_mode 0
  *	.inmem rt_gettrees .rt all.g
- *	.rt shootray {0 0 0} dir {0 0 -1}
+ *	.rt shootray -R {0 0 0} dir {0 0 -1}
  *
  *	set tgt [bu_get_value_by_keyword V [concat type [.inmem get LIGHT]]]
  *	.rt shootray {20 -13.5 20} at $tgt
@@ -356,20 +357,28 @@ const char *const*argv;
 {
 	struct application	*ap = (struct application *)clientData;
 	struct rt_i		*rtip;
+	int			index;
 
-	if( argc != 5 )  {
+	if( (argc != 5 && argc != 6) || (argc == 6 && strcmp( argv[2], "-R"))  )  {
 		Tcl_AppendResult( interp,
 				"wrong # args: should be \"",
-				argv[0], " ", argv[1], " {P} dir|at {V}\"",
+				argv[0], " ", argv[1], " [-R] {P} dir|at {V}\"",
 				(char *)NULL );
 		return TCL_ERROR;
+	}
+
+	if( argc == 6 ) {
+		ap->a_logoverlap = rt_silent_logoverlap;
+		index = 3;
+	} else {
+		index = 2;
 	}
 
 	RT_CK_AP_TCL(interp, ap);
 	rtip = ap->a_rt_i;
 	RT_CK_RTI_TCL(interp,rtip);
 
-	if( rt_tcl_parse_ray( interp, &ap->a_ray, &argv[2] ) == TCL_ERROR )
+	if( rt_tcl_parse_ray( interp, &ap->a_ray, &argv[index] ) == TCL_ERROR )
 		return TCL_ERROR;
 	ap->a_hit = rt_tcl_a_hit;
 	ap->a_miss = rt_tcl_a_miss;
@@ -743,7 +752,7 @@ db_tcl_tree_parse( Tcl_Interp *interp, const char *str, struct resource *resp )
 	/* Skip over leading spaces in input */
 	while( *str && isspace(*str) ) str++;
 
-	if( Tcl_SplitList( interp, str, &argc, &argv ) != TCL_OK )
+	if( Tcl_SplitList( interp, str, &argc, (const char ***)&argv ) != TCL_OK )
 		return TREE_NULL;
 
 	if( argc <= 0 || argc > 3 )  {
@@ -1380,7 +1389,7 @@ const char			*attr;
 		} else {
 			status = TCL_OK;
 		}
-		Tcl_DStringAppendElement( &ds, bu_vls_addr(&str) );
+		Tcl_DStringAppend( &ds, bu_vls_addr(&str), -1 );
 	}
 
 	Tcl_DStringResult( interp, &ds );
@@ -1569,7 +1578,7 @@ rt_tcl_setup(Tcl_Interp *interp)
 int
 Rt_Init(Tcl_Interp *interp)
 {
-	char *version_number;
+	const char *version_number;
 
 	/*XXX how much will this break? */
 	if (BU_LIST_UNINITIALIZED(&rt_g.rtg_vlfree)) {

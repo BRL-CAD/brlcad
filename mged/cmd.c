@@ -16,7 +16,7 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *  
  *  Copyright Notice -
- *	This software is Copyright (C) 1985 by the United States Army.
+ *	This software is Copyright (C) 1985-2004 by the United States Army.
  *	All rights reserved.
  */
 
@@ -112,6 +112,7 @@ extern int gui_setup();				/* in attach.c */
 extern int mged_default_dlist;			/* in attach.c */
 extern int classic_mged;			/* in ged.c */
 extern int bot_vertex_fuse(), bot_condense();
+extern int cmd_smooth_bot();
 struct cmd_list head_cmd_list;
 struct cmd_list *curr_cmd_list;
 
@@ -181,9 +182,10 @@ static struct cmdtab cmdtab[] = {
 	{"dbbinary", f_binary},
 	{"bot_face_fuse", f_bot_face_fuse},
 	{"bot_face_sort", cmd_bot_face_sort},
-	{"bot_vertex_fuse", f_bot_fuse},
 	{"bot_condense", f_bot_condense},
 	{"bot_decimate", cmd_bot_decimate},
+	{"bot_smooth", cmd_smooth_bot },
+	{"bot_vertex_fuse", f_bot_fuse},
 	{"bottom",	bv_bottom},
 	{"c", cmd_comb_std},
 	{"cat", cmd_cat},
@@ -787,10 +789,7 @@ mged_setup()
 #endif
 
 	bu_vls_init(&str);
-	bu_vls_printf(&str, "set auto_path [linsert $auto_path 0 \
-                             %stclscripts/mged %stclscripts \
-                             %stclscripts/lib %stclscripts/util]",
-		      filename, filename, filename, filename);
+	bu_vls_printf(&str, "set auto_path [linsert $auto_path 0 %stclscripts/mged %stclscripts %stclscripts/lib %stclscripts/util %stclscripts/geometree]", filename, filename, filename, filename, filename);
 	(void)Tcl_Eval(interp, bu_vls_addr(&str));
 
 	/* Tcl needs to write nulls onto subscripted variable names */

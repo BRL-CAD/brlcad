@@ -18,7 +18,7 @@
  *	The BRL-CAD Package" license agreement.
  *
  *  Copyright Notice -
- *	This software is Copyright (C) 1999 by the United States Army
+ *	This software is Copyright (C) 1999-2004 by the United States Army
  *	in all countries except the USA.  All rights reserved.
  */
 #ifndef lint
@@ -59,9 +59,7 @@ struct rt_many_internal  {
  *  a multiple pixel block may be removed from the work queue at once.
  */
 void
-rt_shoot_many_rays_worker(cpu, arg)
-int		cpu;
-genptr_t	arg;
+rt_shoot_many_rays_worker(int cpu, genptr_t arg)
 {
 	LOCAL struct application app;
 	struct rt_many_internal *rmip = (struct rt_many_internal *)arg;

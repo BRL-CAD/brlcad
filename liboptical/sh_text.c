@@ -16,7 +16,7 @@
  *	The BRL-CAD Package" license agreement.
  *
  *  Copyright Notice -
- *	This software is Copyright (C) 1998 by the United States Army
+ *	This software is Copyright (C) 1998-2004 by the United States Army
  *	in all countries except the USA.  All rights reserved.
  */
 #ifndef lint
@@ -38,10 +38,11 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 /*#include "../rt/mathtab.h"*/
 #include "rtprivate.h"
 
+struct region	env_region;  /* initialized in the app code view handler */
+
 extern int rr_render(struct application	*ap,
 		     struct partition	*pp,
 		     struct shadework   *swp);
-extern struct region	env_region;		/* import from view.c */
 
 HIDDEN void rt_binunif_free();
 HIDDEN void	txt_transp_hook();
@@ -58,8 +59,6 @@ HIDDEN void	bmp_print(), bmp_free();
 HIDDEN int tstm_render();
 HIDDEN int star_render();
 HIDDEN int envmap_setup();
-extern int mlib_zero(), mlib_one();
-extern void	mlib_void();
 
 struct mfuncs txt_mfuncs[] = {
 	{MF_MAGIC,	"texture",	0,		MFI_UV,		0,
@@ -113,6 +112,7 @@ struct bu_structparse txt_parse[] = {
 	{"%d",	1, "transp",	bu_offsetofarray(struct txt_specific, tx_transp),	txt_transp_hook },
 	{"%S",	1, "file", TX_O(tx_name),		txt_source_hook },
 	{"%S",	1, "obj", TX_O(tx_name),		txt_source_hook },
+	{"%S",	1, "object", TX_O(tx_name),		txt_source_hook },
 	{"%S",	1, "texture", TX_O(tx_name),	 BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",	1, "w",		TX_O(tx_w),		BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",	1, "n",		TX_O(tx_n),		BU_STRUCTPARSE_FUNC_NULL },
@@ -214,14 +214,16 @@ HIDDEN int txt_load_datasource(struct txt_specific *texture, struct db_i *dbInst
 			RT_CK_DB_INTERNAL(dbip);
 			RT_CK_BINUNIF(dbip->idb_ptr);
 
+			/* keep the binary object pointer */
 			texture->tx_binunifp=(struct rt_binunif_internal *)dbip->idb_ptr; /* make it so */
 
-			/* !!! need to release the "struct rt_db_internal" but NOT free the binunif */
-			rt_db_free_internal( dbip, (struct resource *)NULL );
+			/* release the database instance pointer struct we created */
+			RT_INIT_DB_INTERNAL(dbip);
+			bu_free(dbip, "txt_load_datasource");
 
 			/* check size of object */
 			if (texture->tx_binunifp->count < size) {
-				bu_log("\ntxt_load_datasource() WARNING %S needs %d bytes, '%s' only has %d\n", texture->tx_name, size, texture->tx_binunifp->count);
+				bu_log("\nWARNING: %S needs %d bytes, binary object only has %d\n", texture->tx_name, size, texture->tx_binunifp->count);
 			} else if (texture->tx_binunifp->count > size) {
 				bu_log("\nWARNING: Binary object is larger than specified texture size\n\tBinary Object: %d pixels\n\tSpecified Texture Size: %d pixels\n...continuing to load using image subsection...", texture->tx_binunifp->count);
 			}
@@ -239,8 +241,7 @@ HIDDEN int txt_load_datasource(struct txt_specific *texture, struct db_i *dbInst
 			return -1;				/* FAIL */
 
 		if (texture->tx_mp->buflen < size) {
-			bu_log("\ntxt_load_datasource() ERROR %S needs %d bytes, file only has %d\n", texture->tx_name, size, texture->tx_mp->buflen);
-			return -1;
+			bu_log("\nWARNING: %S needs %d bytes, file only has %d\n", &texture->tx_name, size, texture->tx_mp->buflen);
 		} else if (texture->tx_mp->buflen > size) {
 			bu_log("\nWARNING: Texture file size is larger than specified texture size\n\tInput File: %d pixels\n\tSpecified Texture Size: %d pixels\n...continuing to load using image subsection...", texture->tx_mp->buflen, size);
 		}
@@ -708,7 +709,7 @@ txt_setup( register struct region *rp, struct bu_vls *matparm, char **dpp, const
 
 	/* load the texture from its datasource */
 	if (txt_load_datasource(tp, rtip->rti_dbip, tp->tx_w * tp->tx_n * pixelbytes)<0) {
-		bu_log("\ntxt_setup() ERROR %s %s could not be loaded [source was %s]\n", rp->reg_name, bu_vls_addr(&tp->tx_name), tp->tx_datasrc==TXT_SRC_OBJECT?"object":tp->tx_datasrc==TXT_SRC_FILE?"file":"auto");
+		bu_log("\nERROR: txt_setup() %s %s could not be loaded [source was %s]\n", rp->reg_name, bu_vls_addr(&tp->tx_name), tp->tx_datasrc==TXT_SRC_OBJECT?"object":tp->tx_datasrc==TXT_SRC_FILE?"file":"auto");
 		return -1;
 	}
 
@@ -1057,4 +1058,41 @@ struct mfuncs	**headp;
 		bu_log("envmap_setup() material '%s' failed\n", env_region.reg_mater );
 
 	return(0);		/* This region should be dropped */
+}
+
+
+
+/*
+ *			M L I B _ Z E R O
+ *
+ *  Regardless of arguments, always return zero.
+ *  Useful mostly as a stub print, and/or free routine.
+ */
+/* VARARGS */
+int
+mlib_zero()
+{
+	return(0);
+}
+
+/*
+ *			M L I B _ O N E
+ *
+ *  Regardless of arguments, always return one.
+ *  Useful mostly as a stub setup routine.
+ */
+/* VARARGS */
+int
+mlib_one()
+{
+	return(1);
+}
+
+/*
+ *			M L I B _ V O I D
+ */
+/* VARARGS */
+void
+mlib_void()
+{
 }
