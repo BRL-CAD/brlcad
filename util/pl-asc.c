@@ -148,10 +148,13 @@ char	**argv;
 			fprintf( stderr, "Bad command '%c' (0x%02x)\n", c, c );
 			continue;
 		}
-		if( verbose )
+		if( verbose ) {
 			counts[ c - 'A' ]++;
+			printf( "%s\t", up->desc );
+		} else {
+			printf( "%c\t", c );
+		}
 
-		printf( "%s\t", up->desc );
 		if( up->narg > 0 ) {
 			switch( up->targ ) {
 			case TNONE:
