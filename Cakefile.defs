@@ -21,7 +21,13 @@
  *
  *  Note that CAKE ordinarily runs shell commands through CSH,
  *  but these Cakefiles insist on using the Bourne Shell instead,
- *  so an override is enforced here.
+ *  so an override is enforced, below, with the "set" command.
+ *
+ *  WARNING:  Do NOT add comments after defining a parameter,
+ *  instead, place all comments on a line by themselves!
+ *  While the comment itself is removed, the trailing tabs
+ *  will remain.  Having unexpected white space at the end of
+ *  most definitions will generally ruin the expansion, later.
  *
  *  WARNING:  For proper operation on the SGI 3-D machines,
  *  all comments must start in the first column, or CPP will
@@ -33,28 +39,90 @@ set -S2 "/bin/sh"
 /* Program to run to obtain the "sub" substitution effect */
 #define SUB	cakesub
 
-/*
- *  Manifest constants
- *
- *  Note that because the C preprocessor does not implement
- *  string comparisons, manifest constants must be given
- *  numbers.  Shades of FORTRAN.
- */
+/****************************************************************
+ *								*
+ *  Manifest constants.  Do not change these.			*
+ *								*
+ *  Note that because the C preprocessor does not implement	*
+ *  string comparisons, manifest constants must be given	*
+ *  numbers.  Shades of FORTRAN.				*
+ *								*
+ ****************************************************************/
 #define BSD	42
 #define SYSV	5
 
 /****************************************************************
-*								*
-*  System-specific definitions					*
-*								*
-*  Note a moderately ugly problem:  the desired value for	*
-*  symbol MTYPE is often the same symbol built into CPP		*
-*  to indicate the type of machine.  Therefore, in order to	*
-*  keep the MTYPE string from being converted to		*
-*  the string "1", the machine type symbol (eg, "vax")		*
-*  must be #undef'ed.						*
-*								*
-****************************************************************/
+ *								*
+ * If the symbol NFS is not defined, then the normal		*
+ * single-machine behavior is implemented.			*
+ * In this mode, the object modules are placed into the		*
+ * same directory as the source code.				*
+ *								*
+ * If the symbol NFS is defined, then the NFS-based		*
+ * multi-machine behavior is implemented.			*
+ * In this mode, a separate directory is made for each		*
+ * source directory for each type of client machine.		*
+ * This way, the binaries for each type of client machine	*
+ * can not co-mingle, yet everything is generated from		*
+ * a common set of source code.					*
+ * This is the strategy used to handle the machines at BRL.	*
+ * For example, the sources in cad/librt/ would have		*
+ * sun3 binaries in cad/.librt.sun3/ and			*
+ * SGI 4-D binaries in cad/.librt.4d/				*
+ * This requires slightly more care to be certain that you	*
+ * are in the right directory before running "cake", but	*
+ * being able to share one set of sources across many		*
+ * different kinds of machines makes this well worthwhile.	*
+ * If you only have one kind of machine, don't bother.		*
+ *								*
+ ****************************************************************/
+#undef NFS
+#define NFS	1	/* BRL */
+
+/****************************************************************
+ *								*
+ *  BEGIN System-specific definitions				*
+ *								*
+ *  Note a moderately ugly problem:  the desired value for	*
+ *  symbol MTYPE is often the same symbol built into CPP	*
+ *  to indicate the type of machine.  Therefore, in order to	*
+ *  keep the MTYPE string from being converted to		*
+ *  the string "1", the machine type symbol (eg, "vax")		*
+ *  must be #undef'ed.						*
+ *								*
+ *  Critical Definitions.  These symbols MUST be defined,	*
+ *  and are not defaulted:					*
+ *	MTYPE							*
+ *	UNIXTYPE						*
+ *	HAS_TCP							*
+ *	LIBRT_TIMER						*
+ *								*
+ *  Optional Definitions.  If not defined, defaults are used.	*
+ *  Some pertain to BRL-CAD software options,			*
+ *  and some pertain to system-specific compiler options	*
+ *	CC_DEFS							*
+ *	CC_OPTS							*
+ *	LIBFB_CONFIG						*
+ *	LIBFB_OBJS						*
+ *	LIBFB_SETUP		(default=undefined)		*
+ *	MGED_CONFIG		(default=undefined)		*
+ *	MGED_OBJS		(default=undefined)		*
+ *	MGED_LIBES		(default=undefined)		*
+ *	RT_CONFIG						*
+ *	RT_LIBES						*
+ *	LGT_CONFIG						*
+ *	RFBD_CONFIG						*
+ *	CC							*
+ *	FC							*
+ *	GETHOST							*
+ *	RANLIB							*
+ *	BINDIR, LIBDIR, ETCDIR, INCLUDE_DIR			*
+ *	ARCH_SUF						*
+ *	MANDIR							*
+ *	OPTIMIZER						*
+ *	PROFILER						*
+ *								*
+ ****************************************************************/
 
 #ifdef vax
 /*	DEC VAX-11 systems */
@@ -62,7 +130,8 @@ set -S2 "/bin/sh"
 #	define	MTYPE	vax
 #	define	UNIXTYPE	BSD
 #	define	HAS_TCP	1
-/*#	define	CC_DEFS	-Dvoid=int	/* Ultrix & 4.1 systems */
+/*	Uncomment the following line on Ultrix & 4.1 systems */
+/*#	define	CC_DEFS	-Dvoid=int
 #	define	LIBFB_OBJS	if_remote pkg if_ptty if_adage
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_PTTY -DIF_ADAGE
 /*	At USNA, add -DGM256 to LIBFB_CONFIG */
@@ -70,7 +139,6 @@ set -S2 "/bin/sh"
 #	define	MGED_OBJS	dm-mg dm-vg
 #	define	MGED_CONFIG	-DDM_MG -DDM_VG
 #	undef	MGED_LIBES
-#	define	MGED_VERS	newvers.sh
 #endif
 
 #ifdef alliant
@@ -90,9 +158,8 @@ set -S2 "/bin/sh"
 ***/
 #	define	FC	/usr/alliant/fortran
 #	define	LIBMALLOC	/* use vendor library */
-#	define	RT_CONFIG	-lcvec
+#	define	RT_LIBES	-lcvec
 #	define	LIBRT_TIMER	timer42
-#	define	MGED_VERS	newvers.sh
 #endif
 
 #ifdef gould
@@ -102,17 +169,14 @@ set -S2 "/bin/sh"
 #	define	UNIXTYPE	BSD
 #	define	HAS_TCP	1
 #	define	CC_OPTS	-m 8
-/*#	define	LIBFB_OBJS	if_remote pkg if_ptty if_X*/
-#	define	LIBFB_OBJS	if_remote pkg if_ptty
 /*#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_PTTY -DIF_X -I/d/phil/X11*/
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_PTTY
-/*		AR x /usr/local/lib/libX11.a; \*/
-#	define	LIBFB_SETUP	(rm -fr tmp;  mkdir tmp; \
-		rm -f libfb.a; cd tmp; \
-		AR uv ../libfb.a *.o; \
-		cd ..; rm -fr tmp)
+/*#	define	LIBFB_OBJS	if_remote pkg if_ptty if_X*/
+#	define	LIBFB_OBJS	if_remote pkg if_ptty
+/*		cp /usr/local/lib/libX11.a PRODUCTS; \*/
+#	define	LIBFB_SETUP	(rm -f PRODUCTS; \
+		AR uv PRODUCTS *.o )
 #	define	LIBRT_TIMER	timer42
-#	define	MGED_VERS	newvers.sh
 #endif
 
 #if defined(sgi) && !defined(mips)
@@ -127,12 +191,12 @@ set -S2 "/bin/sh"
 #	define	RANLIB	ranlib
 #	define	MGED_OBJS	dm-ir
 #	define	MGED_CONFIG	-DDM_IR
-/*		MGED_CONFIG:  append -DMC68010 for non-turbo 2400 */
-/*		MGED_CONFIG:  append -DNOBLOCK for XNS kernels */
-#	define	MGED_VERS	newvers5.sh
-#	ifdef	Version3.4
+/*		mged_config:  append -DMC68010 for non-turbo 2400 */
+/*		mged_config:  append -DNOBLOCK for XNS kernels */
+#	ifdef	Version3_4
 #		define	LIBPKG_CONFIG	-I/usr/include/EXOS -DSGI_EXCELAN
 #		define	LIBPKG_SETUP	cp /usr/lib/libsocket.a PRODUCTS
+#		define	LIBFB_OBJS	if_remote pkg sgiselect.o if_sgi
 #		define	LIBFB_SETUP	(rm -fr tmp;  mkdir tmp; \
 			rm -f libfb.a; cd tmp; \
 			AR x /usr/lib/libsocket.a; \
@@ -147,6 +211,7 @@ set -S2 "/bin/sh"
 /*		Versions 3.5 and 3.6 */
 #		define	LIBPKG_CONFIG	-I/usr/include/bsd -DBSD
 #		define	LIBPKG_SETUP	cp /usr/lib/libbsd.a PRODUCTS
+#		define	LIBFB_OBJS	if_remote pkg if_sgi
 #		define	LIBFB_SETUP	(rm -fr tmp;  mkdir tmp; \
 			rm -f libfb.a; cd tmp; \
 			AR x /usr/lib/libdbm.a; \
@@ -160,7 +225,6 @@ set -S2 "/bin/sh"
 #		define	RFBD_CONFIG	-I/usr/include/bsd -DBSD
 #		define	MGED_LIBES	-lbsd -lgl2
 #	endif
-#	define	LIBFB_OBJS	if_remote pkg if_sgi
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_SGI
 #	define	LIBRT_TIMER	timerunix
 #endif
@@ -188,12 +252,12 @@ set -S2 "/bin/sh"
 		AR uv ../libfb.a *; \
 		cd ..; rm -fr tmp)
 #	define	LIBRT_TIMER	timerunix
-#	define	RT_CONFIG	-lbsd
+#	define	RT_CONFIG	-G 64
+#	define	RT_LIBES	-lbsd
 #	define	LGT_CONFIG	-G 16
 #	define	MGED_OBJS	dm-4d
 #	define	MGED_CONFIG	-G 16 -DDM_4D
 #	define	MGED_LIBES	-lbsd -lgl
-#	define	MGED_VERS	newvers5.sh
 #endif
 
 #ifdef sun
@@ -208,6 +272,7 @@ set -S2 "/bin/sh"
 /*#	define	CC_OPTS	-ffpa */
 #	define	CC_OPTS	-f68881
 #	define	LIBMALLOC	/* use vendor library */
+/***
 #	define	LIBFB_OBJS	if_remote pkg if_sun
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_SUN
 #	define	LIBFB_SETUP	(rm -fr /usr/tmp/libfb; \
@@ -217,11 +282,29 @@ set -S2 "/bin/sh"
 		AR x /usr/lib/libsunwindow.a; \
 		AR uv ../libfb.a *; \
 		AR u libfb.a * ); \
+***/
+#	define	LIBFB_OBJS	if_remote pkg if_sun if_X
+#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_SUN -DIF_X
+#	define	LIBFB_SETUP	(rm -fr tmp;  mkdir tmp; \
+		rm -f libfb.a; cd tmp; \
+		AR x /usr/lib/libsuntool.a; \
+		AR x /usr/lib/libsunwindow.a; \
+		AR x /usr/lib/libpixrect.a; \
+		AR x /usr/brl/lib/libX.a; \
+		rm -f __.SYMDEF; \
+		AR uv ../libfb.a *; \
+		cd ..; rm -fr tmp)
 		mv /usr/tmp/libfb/libfb.a . ; \
+/***
 		rm -fr /usr/tmp/libfb )
 #	define	LIBRT_TIMER	timer42
 #	define	MGED_OBJS	dm-sun
-#	define	MGED_VERS	newvers.sh
+***/
+#	define	MGED_OBJS	dm-sun dm-X
+#	define	MGED_CONFIG	-DDM_SUNPW -DDM_X
+#	define	MGED_LIBES	-lsuntool -lsunwindow -lpixrect \
+		/usr/brl/lib/libX11.a
+/***/
 #	define	MGED_CONFIG
 #	define	MGED_LIBES
 #if defined(CRAY) && !defined(CRAY2)
@@ -239,8 +322,7 @@ set -S2 "/bin/sh"
 #	define	LIBPKG_CONFIG	-I/usr/win-include -DBSD -DSHORT_IDENT -DCRAY
 #	define	REMRT_CONFIG	-I/usr/win-include -DBSD -DSHORT_IDENT -DCRAY
 #	define	LIBRT_TIMER	timercray
-#	define	RT_CONFIG	-L/lib/multi -lu
-#	define	MGED_VERS	newvers5.sh
+#	define	RFBD_LIBES	-lbsd
 #	define	ARCH_SUF	o
 #	define	LIBTERMLIB	-lcurses
 #	define	AR	../cray-ar.sh
@@ -256,19 +338,56 @@ set -S2 "/bin/sh"
 #	define	UNIXTYPE	SYSV
 #	undef	cray
 #	define	CC_DEFS	-DPARALLEL -Dcray
-/**#	define	CC_DEFS	-DPARALLEL -Dcray -DVECTORIZE -hvector,olevel_3,intrinsics**/
-#	define	CC	/bin/vcc
+/**
+#	define	CC_DEFS	-DPARALLEL -Dcray -DVECTORIZE -hvector,olevel_3,vmesg_2
+#	define	CC	/bin/ncc
+**/
 #	define	FC	/bin/cft77
 		AR x /usr/lib/libnet.a select.o socket.o; \
 #	define	LIBPKG_CONFIG	-I/usr/win-include -DBSD -DSHORT_IDENT -DCRAY
 #	define	REMRT_CONFIG	-I/usr/win-include -DBSD -DSHORT_IDENT -DCRAY
 #		define	RFBD_CONFIG	-DBSD=43
-#	define	RT_CONFIG	-lmt
-#	define	MGED_VERS	newvers5.sh
+#	endif
 #	define	RT_LIBES	-lmt
-#	define	LIBFB_SETUP	cp /usr/lib/libnet.ARCH_SUF PRODUCTS
+#	define	LGT_CONFIG	-Dcray
+#	define	LIBPKG_SETUP	cp /usr/lib/libnet.ARCH_SUF PRODUCTS
+#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_X -I/usr/include/X11
+#	define	LIBFB_OBJS	if_remote pkg if_X
+#	define	LIBFB_SETUP	(rm -fr tmp; mkdir tmp; \
+		cp /usr/lib/libX11.a PRODUCTS; \
+		AR x /usr/lib/libnet.a; \
+		rm -f select.o; \
+		AR u ../PRODUCTS *; \
+		cd ..; rm -fr tmp)
+#	define	MGED_LIBES	/usr/lib/libX11.a /usr/lib/libnet.a
  */
 #	define	MGED_LIBES	LIBFB
+#endif
+
+#ifdef convex
+#	undef	convex
+#	define	UNIXTYPE	BSD
+#	define	MTYPE	c1
+#	define	BSD	42
+#	define	HAS_TCP	1
+#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_PTTY
+#	define	LIBFB_OBJS	if_remote pkg if_ptty
+/*	libplot3/htond.c depends on running the Convex in native mode (-fn) */
+/**
+#	define	OPTIMIZER	-fn -O2
+#	define	CC	/usr/convex/vc
+#	define	CC_OPTS	-DVECTORIZE
+**/
+#endif
+#	endif
+#endif
+#ifdef eta10
+/* This configuration information is based on a preliminary test */
+#	define	UNIXTYPE	SYSV
+#	undef	eta
+#	define	MTYPE	eta
+#	define	HAS_TCP	0
+#	define	LIBRT_TIMER	timerunix
 #ifdef pyramid
 
 #ifdef pyr
@@ -276,7 +395,6 @@ set -S2 "/bin/sh"
 #	define	MTYPE	pyr
 #	define	BSD	42
 #	define	HAS_TCP	1
-#	define	MGED_VERS	newvers.sh
 #	define	CC_DEFS	-Dvoid=int
 #	define	LIBRT_TIMER	timer42
 #endif
@@ -287,7 +405,6 @@ set -S2 "/bin/sh"
 #	define	UNIXTYPE	SYSV
 #ifdef RANDOM_SYSV
 #	define	MTYPE	unknown_sysv
-#	define	MGED_VERS	newvers5.sh
 #	define	HAS_TCP	0
 #	define	LIBRT_TIMER	timerunix
 #endif
@@ -296,7 +413,6 @@ set -S2 "/bin/sh"
 #ifdef VLD
 /*	Not yet shaken out for use with Cake */
 #	define	HAS_TCP	0
-#	define	MGED_VERS	newversVLD.sh
 #	define	CC_DEFS	-DVLDSYSV
 #	define	LIBRT_TIMER	timer52brl
 #	define	CC	/usr/5bin/cc
@@ -306,6 +422,16 @@ set -S2 "/bin/sh"
 #	define	LIBDIR	/vld/lib
 #	define	ETCDIR	/vld/etc
 #	define	MANDIR	/usr/5lib/man/local/min
+#endif
+
+/****************************************************************
+*								*
+*  END System-specific definitions				*
+*								*
+*  Please do not modify anything below here without being	*
+*  quite certain of what you are doing (or at least keeping	*
+*  good backups!).						*
+*								*
 ****************************************************************/
 
 #if !defined(MTYPE)
@@ -327,9 +453,15 @@ set -S2 "/bin/sh"
 #if !defined(CC_OPTS)
 #	define	CC_OPTS	/**/
 #endif
-#ifndef LIBFB_OBJS
-#	define	LIBFB_OBJS	if_remote pkg if_ptty
-#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_PTTY
+
+/* Provide defaults here */
+#if !defined(LIBFB_OBJS) || !defined(LIBFB_CONFIG)
+#	if HAS_TCP == 0
+#		define	LIBFB_OBJS	if_ptty
+#		define	LIBFB_CONFIG	-DIF_PTTY
+#	else
+#		define	LIBFB_OBJS	if_remote pkg if_ptty
+#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_PTTY
 #	endif
 /*	LIBFB_SETUP is only to be defined when needed */
 /*	LIBSYSV_SETUP is only to be defined when needed */
@@ -338,12 +470,32 @@ set -S2 "/bin/sh"
 #	define	RT_CONFIG	/**/
 #endif
 
+#ifndef RT_LIBES
+#	define	RT_LIBES	/**/
+#endif
+
 #ifndef LGT_CONFIG
 #	define	LGT_CONFIG	/**/
 #endif
-#	define	RFBD_CONFIG
+
 #ifndef RFBD_CONFIG
 #	define	RFBD_CONFIG	/**/
+#endif
+
+#ifndef LIBPKG_CONFIG
+#	define	LIBPKG_CONFIG	/**/
+#endif
+
+#ifndef MGED_CONFIG
+#	define	MGED_CONFIG	/**/
+#endif
+
+#ifndef MGED_OBJS
+#	define	MGED_OBJS	/**/
+#endif
+
+#ifndef MGED_LIBES
+#	define	MGED_LIBES	/**/
 #endif
 
 /*
@@ -391,31 +543,70 @@ set -S2 "/bin/sh"
 /*	Suffix for archives.  "a" on most UNIX machine, "o" on XMP */
 #	define	ARCH_SUF	a
 #endif
- * Places to find the working copies of the libraries
- *  For the purposes of Cray-2 LIB_PRE, there can only be ONE tab
-#define	LIBFB	../libfb.MTYPE/libfb.ARCH_SUF
-#define	LIBRT	../librt.MTYPE/librt.ARCH_SUF
-#define	LIBPLOT	../libplot3.MTYPE/libplot3.ARCH_SUF
-#define	LIBRLE	../librle.MTYPE/librle.ARCH_SUF
-#define	LIBWDB	../libwdb.MTYPE/libwdb.ARCH_SUF
-#define	LIBSPL	../libspl.MTYPE/libspl.ARCH_SUF
-#define	LIBTERMIO	../libtermio.MTYPE/libtermio.ARCH_SUF
-#define	LIBCURSOR	../libcursor.MTYPE/libcursor.ARCH_SUF
-#define	LIBURT	../liburt.MTYPE/liburt.ARCH_SUF
-#define	LIBFONT	../libfont.MTYPE/libfont.ARCH_SUF
-#ifndef	LIBMALLOC
-#	define	LIBMALLOC	../libmalloc.MTYPE/libmalloc.ARCH_SUF
-#endif
-#if HAS_TCP
-#	define	LIBPKG	../libpkg.MTYPE/libpkg.ARCH_SUF
-#	endif
-#	define	LIBPKG	/**/
-#endif
 
-#if UNIXTYPE == BSD
-#	define	LIBSYSV		../libsysv.MTYPE/libsysv.ARCH_SUF
-#else
-#	define	LIBSYSV		/**/
+/*
+ *  Places to find the working copies of the libraries
+ *  If the binaries are to be separated from the sources,
+ *  as is needed in a multi-machine NFS environment,
+ *  For the purposes of Cray-2 LIB_PRE, there can only be ONE tab
+ *  character between the symbol name and the definition.
+/**
+#if MTYPE == bench
+#	undef	NFS
+#endif
+**/
+/**GAK, no string compares in #if */
+
+#	define	LIBFB	../libfb/libfb.ARCH_SUF
+#	define	LIBRT	../librt/librt.ARCH_SUF
+#	define	LIBPLOT	../libplot3/libplot3.ARCH_SUF
+#	define	LIBORLE	../liborle/liborle.ARCH_SUF
+#	define	LIBRLE	../librle/librle.ARCH_SUF
+#	define	LIBWDB	../libwdb/libwdb.ARCH_SUF
+#	define	LIBSPL	../libspl/libspl.ARCH_SUF
+#	define	LIBWDB	../libwdb/libwdb.ARCH_SUF
+#	define	LIBSPL	../libspl/libspl.ARCH_SUF
+#	define	LIBFONT	../libfont/libfont.ARCH_SUF
+#	define	LIBFONT	../libfont/libfont.ARCH_SUF
+#	define	LIBSYSV	../libsysv/libsysv.ARCH_SUF
+#	ifndef	LIBMALLOC
+#		define	LIBMALLOC	../libmalloc/libmalloc.ARCH_SUF
+#	endif
+#	if HAS_TCP
+#		define	LIBPKG	../libpkg/libpkg.ARCH_SUF
+#	else
+#		define	LIBPKG	/**/
+#	if UNIXTYPE == BSD
+#		define	LIBSYSV		../libsysv/libsysv.ARCH_SUF
+#	else
+#		define	LIBSYSV		/**/
+#	endif
+#	endif
+
+#	define	LIBFB	../.libfb.MTYPE/libfb.ARCH_SUF
+#	define	LIBRT	../.librt.MTYPE/librt.ARCH_SUF
+#	define	LIBPLOT	../.libplot3.MTYPE/libplot3.ARCH_SUF
+#	define	LIBORLE	../.liborle.MTYPE/liborle.ARCH_SUF
+#	define	LIBRLE	../.librle.MTYPE/librle.ARCH_SUF
+#	define	LIBWDB	../.libwdb.MTYPE/libwdb.ARCH_SUF
+#	define	LIBSPL	../.libspl.MTYPE/libspl.ARCH_SUF
+#	define	LIBWDB	../.libwdb.MTYPE/libwdb.ARCH_SUF
+#	define	LIBSPL	../.libspl.MTYPE/libspl.ARCH_SUF
+#	define	LIBFONT	../.libfont.MTYPE/libfont.ARCH_SUF
+#	define	LIBFONT	../.libfont.MTYPE/libfont.ARCH_SUF
+#	define	LIBSYSV	../.libsysv.MTYPE/libsysv.ARCH_SUF
+#	ifndef	LIBMALLOC
+#		define	LIBMALLOC	../.libmalloc.MTYPE/libmalloc.ARCH_SUF
+#	endif
+#	if HAS_TCP
+#		define	LIBPKG	../.libpkg.MTYPE/libpkg.ARCH_SUF
+#	else
+
+#	if UNIXTYPE == BSD
+#		define	LIBSYSV		../.libsysv.MTYPE/libsysv.ARCH_SUF
+#	else
+#		define	LIBSYSV		/**/
+#	endif
 #		define	LIBPKG	/**/
 #	endif
 #endif
@@ -505,7 +696,7 @@ set -S2 "/bin/sh"
  *  When the current host is == MASTERHOST, the "make install"	
  *  rules will also handle the distribution source management.	
  *  Even if you have lots of disk space, you don't want that	
-#define	MASTERHOST	brl-spark
+ *  to happen.							
  */
 #define	MASTERHOST	spark.brl.mil
 #define	DISTRIBUTION	/m/dist
