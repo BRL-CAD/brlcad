@@ -2779,16 +2779,17 @@ struct faceuse		*fu2;
 	 *  the angles are close enough that it's worth searching properly.
 	 *
 	 *  eg1 is potentially colinear with line of intersection.
-	 *  Test each edgeuse on eg1 individually, and list those where
-	 *  both (2D) vertices are within tolerance of the line.
+	 *  Test each edgeuse on eg1 individually, and count all those where
+	 *  both vertices are within tolerance of the line.
 	 */
 	n_colinear = 0;
 	for( eup = (struct edgeuse **)NMG_TBL_LASTADDR(&eutab);
 	     eup >= (struct edgeuse **)NMG_TBL_BASEADDR(&eutab); eup--
 	)  {
 		NMG_CK_EDGEUSE(*eup);
-		if (rt_g.NMG_debug & DEBUG_POLYSECT)
+		if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
 			rt_log("\tConsidering *eup=x%x for colinearity\n", *eup);
+		}
 
 		vu1a = (*eup)->vu_p;
 		vu1b = RT_LIST_PNEXT_CIRC( edgeuse, (*eup) )->vu_p;
@@ -2801,21 +2802,43 @@ struct faceuse		*fu2;
 			continue;
 		if( rt_distsq_line2_point2( is->pt2d, is->dir2d, eu1_end2d ) > is->tol.dist_sq )
 			continue;
-
-		/*
-		 *  The edge is colinear with the line.
-		 *  List both vertexuse structures.
-		 */
-		if (rt_g.NMG_debug & DEBUG_POLYSECT)
-			rt_log("\tedgeuse x%x colinear with isect line.  Listing vu1a, vu1b\n", *eup);
-		nmg_enlist_vu(is, vu1a, 0);
-		nmg_enlist_vu(is, vu1b, 0);
 		n_colinear++;
 	}
-	/*  If rt_isect_line2_line2() says colinear, or if colinear edges
-	 *  were found, we are done.
-	 */
-	if( n_colinear || code == 0 )  {
+	if( n_colinear >= NMG_TBL_END(&eutab) )  {
+		/* All edgeuses are colinear!  Enlist them and return. */
+		if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
+			rt_log("\tAll colinear.  Enlisting all edgeuse vu's\n");
+		}
+		for( eup = (struct edgeuse **)NMG_TBL_LASTADDR(&eutab);
+		     eup >= (struct edgeuse **)NMG_TBL_BASEADDR(&eutab); eup--
+		)  {
+			vu1a = (*eup)->vu_p;
+			vu1b = RT_LIST_PNEXT_CIRC( edgeuse, (*eup) )->vu_p;
+			nmg_enlist_vu(is, vu1a, 0);
+			nmg_enlist_vu(is, vu1b, 0);
+		}
+		ret = 0;
+		goto out;
+	}
+	if( n_colinear > 0 )  {
+		/*
+		 *  Only *some* of the edgeuses are colinear, yet they all
+		 *  came from the same original edge, and share edge geometry.
+		 *  Now what?
+		 */
+		rt_log("\tOnly %d of %d edgeuses claim colinearity.\n", n_colinear, NMG_TBL_END(&eutab)-1);
+		rt_bomb("partially colinear edge geometry?\n");
+	}
+	/*  If rt_isect_line2_line2() says colinear, we are done. */
+	if( code == 0 )  {
+		/*
+		 *  The edges themselves *all* disagree that they are colinear.
+		 *  Since we don't have a hit distance to use,
+		 *  call the 2 lines colinear and parallel.  No intersects.
+		 */
+		if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
+			rt_log("\tNo colinear edgeuses, assuming parallel lines.  Miss.\n");
+		}
 		ret = 0;
 		goto out;
 	}
@@ -2825,6 +2848,9 @@ struct faceuse		*fu2;
 	 */
 not_colinear:
 	VJOIN1( hit3d, is->pt, dist[0], is->dir );
+	if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
+		VPRINT("\t2 lines intersect at", hit3d);
+	}
 	if( !V3PT_IN_RPP( hit3d, fu1->f_p->min_pt, fu1->f_p->max_pt ) )  {
 		/* Lines intersect outside bounds of this face.  Done. */
 		ret = 0;
@@ -2835,6 +2861,11 @@ not_colinear:
 	hit_v = (struct vertex *)NULL;
 	ret = 0;
 
+	/*
+	 *  Because of the possibility of "acordian pleat" loops that
+	 *  run back and forth, it is possible that there might be
+	 *  multiple vertexuses to list.
+	 */
 	for( eup = (struct edgeuse **)NMG_TBL_LASTADDR(&eutab);
 	     eup >= (struct edgeuse **)NMG_TBL_BASEADDR(&eutab); eup--
 	)  {
@@ -2842,8 +2873,9 @@ not_colinear:
 		struct vertexuse	*vu1_final;
 
 		NMG_CK_EDGEUSE(*eup);
-		if (rt_g.NMG_debug & DEBUG_POLYSECT)
+		if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
 			rt_log("\tConsidering *eup=x%x\n", *eup);
+		}
 
 		vu1a = (*eup)->vu_p;
 		vu1b = RT_LIST_PNEXT_CIRC( edgeuse, (*eup) )->vu_p;
@@ -2853,14 +2885,16 @@ not_colinear:
 		/* First, a topology check of both endpoints */
 		if( vu1a->v_p == hit_v )  {
 hit_a:
-			if (rt_g.NMG_debug & DEBUG_POLYSECT)
+			if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
 				rt_log("\tlisting intersect point at vu1a=x%x\n", vu1a);
+			}
 			nmg_enlist_vu(is, vu1a, 0);
 		}
 		if( vu1b->v_p == hit_v )  {
 hit_b:
-			if (rt_g.NMG_debug & DEBUG_POLYSECT)
+			if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
 				rt_log("\tlisting intersect point at vu1b=x%x\n", vu1b);
+			}
 			nmg_enlist_vu(is, vu1b, 0);
 		}
 		if( vu1a->v_p == hit_v || vu1b->v_p == hit_v )  continue;
@@ -2881,8 +2915,9 @@ hit_b:
 		/* Third, a geometry check of the HITPT -vs- the line segment */
 		ldist = 0;
 		code = rt_isect_pt2_lseg2( &ldist, eu1_pt2d, eu1_end2d, hit2d, &(is->tol) );
-		if (rt_g.NMG_debug & DEBUG_POLYSECT)
+		if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
 			rt_log("\trt_isect_pt2_lseg2() returned %d, ldist=%g\n", code, ldist);
+		}
 		switch(code)  {
 		case -2:
 			continue;	/* outside lseg AB pts */
@@ -2929,15 +2964,18 @@ hit_b:
 			if( !hit_v )  {
 				hit_v = vu1_final->v_p;
 				nmg_vertex_gv( hit_v, hit3d );
-				if (rt_g.NMG_debug & DEBUG_POLYSECT)
+				if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
 					rt_log("\tmaking new vertex vu=x%x hit_v=x%x\n",
 						vu1_final, hit_v);
+				}
 			} else {
-				if (rt_g.NMG_debug & DEBUG_POLYSECT)
+				if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
 					rt_log("\tre-using hit_v=x%x, vu=x%x\n", hit_v, vu1_final);
+				}
 				if( hit_v != vu1_final->v_p )  rt_bomb("hit_v changed?\n");
 			}
 			nmg_enlist_vu(is, vu1_final, 0);
+			/* Neither old nor new edgeuse need further handling */
 			break;
 		}
 	}
