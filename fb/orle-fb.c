@@ -23,14 +23,12 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "fb.h"
 #include "rle.h"
 
-#ifndef pdp11
-#define MAX_DMA	1024*64
+/* Number of pixels to buffer, expressed in hi-res scanlines * nlines */
+#ifdef pdp11
+#define BUF_PIXELS	(1024*4)
 #else
-#define MAX_DMA	1024*16
+#define BUF_PIXELS	(1024*32)
 #endif
-#define DMA_PIXELS	(MAX_DMA/sizeof(Pixel))
-#define DMA_SCANS	(DMA_PIXELS/width)
-#define PIXEL_OFFSET	((scan_ln%dma_scans)*width)
 
 typedef unsigned char	u_char;
 static char	*usage[] =
@@ -45,7 +43,7 @@ static char	*usage[] =
 
 static FBIO	*fbp;
 static FILE	*fp = stdin;
-static Pixel	bgpixel = { 0, 0, 0, 0 };
+static RGBpixel	bgpixel;
 static int	bgflag = 0;
 static int	cmflag = 0;
 static int	olflag = 0;
@@ -60,22 +58,27 @@ static int	width = 512;
 main( argc, argv )
 int	argc;
 char	*argv[];
-	{	register int	scan_ln;
-		register int	dma_scans;
-		static Pixel	scans[DMA_PIXELS];
-		static Pixel	bg_scan[1025];
+	{	register int	y;
+		register int	lines_per_buffer;
+		static RGBpixel	scanbuf[BUF_PIXELS];
+		static RGBpixel	bg_scan[1025];
 		static ColorMap	cmap;
 		int		get_flags;
-		int		scan_bytes;
-		int		dma_pixels;
+		int		pixels_per_buffer;
 
 	if( ! pars_Argv( argc, argv ) )
 		{
 		prnt_Usage();
 		return	1;
 		}
-	if( rle_rhdr( fp, &get_flags, bgflag ? NULL : &bgpixel ) == -1 )
+	if( bgflag )  {
+		/* User has supplied his own background */
+		if( rle_rhdr( fp, &get_flags, RGBPIXEL_NULL ) == -1 )
+			return 1;
+	} else {
+		if( rle_rhdr( fp, &get_flags, bgpixel ) == -1 )
 		return	1;
+	}
 
 	rle_rlen( &xlen, &ylen );
 	if( xpos < 0 || ypos < 0 )
@@ -92,19 +95,17 @@ char	*argv[];
 		ylen = width - ypos;
 	rle_wlen( xlen, ylen, 0 );
 
-	dma_pixels = DMA_PIXELS;
-	dma_scans = DMA_SCANS;
-	scan_bytes = width * sizeof(Pixel);
+	lines_per_buffer = BUF_PIXELS / width;	/* # of full scanlines in buffer */
+	pixels_per_buffer = lines_per_buffer * width;
 
 	if( (fbp = fb_open( NULL, width, width )) == NULL )  {
-		fprintf(stderr,"fb_open failed\n");
 		exit(12);
 	}
 
 	if( rle_verbose )
 		(void) fprintf( stderr,
 				"Background is %d %d %d\n",
-				bgpixel.red, bgpixel.green, bgpixel.blue
+				bgpixel[RED], bgpixel[GRN], bgpixel[BLU]
 				);
 
 	/* If color map provided, use it, else go with standard map. */
@@ -122,9 +123,6 @@ char	*argv[];
 			{
 			/* User-supplied map */
 			if( rle_verbose )
-"",
-"rle-fb (1.9)",
-"",
 				(void) fprintf( stderr,
 					"Writing color map to framebuffer\n"
 						);
@@ -145,57 +143,77 @@ char	*argv[];
 	/* Fill a DMA buffer buffer with background */
 	if( ! olflag && (get_flags & NO_BOX_SAVE) )
 		{	register int	i;
-			register Pixel	*to;
-			register Pixel	*from;
+			register RGBpixel	*to;
 		to = bg_scan;
-		from = &bgpixel;
-		for( i = 0; i < width; i++ )
-			*to++ = *from;
+		for( i = 0; i < width; i++,to++ )  {
+			COPYRGB( *to, bgpixel );
+			}
 		}
 
+#ifndef SIMPLE
 	{	register int	page_fault = 1;
 		register int	dirty_flag = 1;
-		register int	by = dma_scans-1;
-		int		btm = ypos + (ylen-1);
-		int		top = ypos;
-	for( scan_ln = width-1; scan_ln >= 0; scan_ln-- )
-		{
-		if( page_fault )
-			{
-			if( olflag )
-				{ /* Overlay - read cluster from fb.	*/
-				if( fb_read( fbp, 0, by, scans, dma_pixels ) == -1 )
+		int		ymax = ypos + (ylen-1);
+		int		start_y;
+	for( y = 0; y < width; y++ )  {
+		if( page_fault )  {
+			start_y = y;
+			if( olflag )  {
+				/* Overlay - read cluster from fb.	*/
+				if( fb_read( fbp, 0, y, scanbuf, pixels_per_buffer ) == -1 )
 					return	1;
-				}
-			else
+			} else
 			if( (get_flags & NO_BOX_SAVE) && dirty_flag )
-				fill_Buffer(	(char *) scans,
+				fill_Buffer(	(char *) scanbuf,
 						(char *) bg_scan,
-						width*sizeof(Pixel),
-						dma_scans
+						width*sizeof(RGBpixel),
+						lines_per_buffer
 						);
 			dirty_flag = 0;
 			page_fault = 0;
-			}
-		if( scan_ln >= top && scan_ln <= btm )
-			{	register int
-			touched = rle_decode_ln( fp, scans+PIXEL_OFFSET );
-			if( touched == -1 )
+		}
+		if( y >= ypos && y <= ymax )  {
+			if( rle_decode_ln( fp,
+			    scanbuf[(y%lines_per_buffer)*width] ) == -1 )
+				break;		/* not return */
+			dirty_flag = 1;
+		}
+		page_fault = ((y%lines_per_buffer)==(lines_per_buffer-1));
+		if( page_fault )  {
+			if( fb_write( fbp, 0, start_y, scanbuf, pixels_per_buffer ) == -1 )
 				return	1;
-			else
-				dirty_flag += touched;
-			}
-		if( page_fault = ! (scan_ln%dma_scans) )
-			{
-			if( fb_write( fbp, 0, by, scans, dma_pixels ) == -1 )
-				return	1;
-			by += dma_scans;
-			}
-		} /* end for */
+		}
+	}
+	if( page_fault == 0 )  {
+		/* Write out the residue, a short buffer */
+		if( fb_write( fbp, 0, start_y, scanbuf, (y-start_y)*width ) == -1 )
+			return(1);
+	}
 	} /* end block */
+#else
+	/* Simplified version, for testing */
+	for( y = 0; y < width; y++ )  {
+		if( olflag )  {
+			/* Overlay - read cluster from fb.	*/
+			if( fb_read( fbp, 0, y, scanbuf, width ) == -1 )
+				return	1;
+		} else {
+			if( (get_flags & NO_BOX_SAVE) )
+				fill_Buffer(	(char *) scanbuf,
+				(char *) bg_scan,
+				width*sizeof(RGBpixel),
+				1 );
+		}
+		if( y <= ypos+ylen && y >= ypos )
+			if( rle_decode_ln( fp, scanbuf ) == -1 )
+				return	1;
+		if( fb_write( fbp, 0, y, scanbuf, width ) == -1 )
+			return	1;
+	}
+#endif
 
 	/* Write background pixel in agreed-upon place */
-	(void)fb_write( fbp, 1, 1, &bgpixel, 1 );
+	(void)fb_write( fbp, 1, 1, bgpixel, 1 );
 
 	fb_close( fbp );
 	return	0;
@@ -204,20 +222,20 @@ char	*argv[];
 /*	f i l l _ B u f f e r ( )
 	Fill cluster buffer from scanline (as fast as possible).
  */
-fill_Buffer( buff_p, scan_p, scan_bytes, dma_scans )
-register char	*buff_p;
-register char	*scan_p;
+fill_Buffer( dest, src, scan_bytes, repeat )
+register char	*dest;
+register char	*src;
 register int	scan_bytes;
-register int	dma_scans;
+register int	repeat;
 	{	register int	i;
-	for( i = 0; i < dma_scans; ++i )
+	for( i = 0; i < repeat; ++i )
 		{
 #ifdef BSD
-		bcopy( (char *)scan_p, (char *)buff_p, scan_bytes );
+		bcopy( src, dest, scan_bytes );
 #else
-		memcpy( (char *)scan_p, (char *)buff_p, scan_bytes );
+		memcpy( dest, src, scan_bytes );
 #endif
-		buff_p += scan_bytes;
+		dest += scan_bytes;
 		}
 	return;
 	}
@@ -242,25 +260,25 @@ register char	**argv;
 			switch( bgflag )
 				{
 			case 'r':
-				bgpixel.red = 255;
+				bgpixel[RED] = 255;
 				break;
 			case 'g':
-				bgpixel.green = 255;
+				bgpixel[GRN] = 255;
 				break;
 			case 'b':
-				bgpixel.blue = 255;
+				bgpixel[BLU] = 255;
 				break;
 			case 'w':
-				bgpixel.red =
-				bgpixel.green =
-				bgpixel.blue = 255;
+				bgpixel[RED] =
+				bgpixel[GRN] =
+				bgpixel[BLU] = 255;
 				break;
 			case 'B':		/* Black */
 				break;
 			case 'G':		/* 18% grey, for alignments */
-				bgpixel.red =
-				bgpixel.green =
-				bgpixel.blue = 255.0 * 0.18;
+				bgpixel[RED] =
+				bgpixel[GRN] =
+				bgpixel[BLU] = 255.0 * 0.18;
 				break;
 			default:
 				(void) fprintf( stderr,
