@@ -172,6 +172,91 @@ int skip;
 }
 
 void
+Get_drawing_name( entityno )
+int entityno;
+{
+	int entity_type;
+	int no_of_views;
+	int no_of_annot;
+	int no_of_assoc;
+	int no_of_props;
+	int i,j,k;
+	int name_de;
+
+	if( dir[entityno]->param <= pstart )
+	{
+		printf( "Illegal parameter pointer for entity D%07d (%s)\n" ,
+				dir[entityno]->direct , dir[entityno]->name );
+		return;
+	}
+
+	Readrec( dir[entityno]->param );
+	Readint( &entity_type , "" );
+	if( entity_type != 404 )
+	{
+		rt_log( "Get_drawing_name: entity at P%07d (type %d) is not a drawing entity\n" , dir[entityno]->param , entity_type );
+		return;
+	}
+
+	Readint( &no_of_views , "" );
+	for( i=0 ; i<no_of_views ; i++ )
+	{
+		for( j=0 ; j<3 ; j++ )
+			Skip_field();
+	}
+
+	Readint( &no_of_annot , "" );
+	for( i=0 ; i<no_of_annot ; i++ )
+		Skip_field();
+	/* skip over the associativities */
+	Readint( &no_of_assoc , "" );
+	for( k=0 ; k<no_of_assoc ; k++ )
+		Readint( &j , "" );
+
+	/* get property entity DE's */
+	Readint( &no_of_props , "" );
+	for( k=0 ; k<no_of_props ; k++ )
+	{
+		j = 0;
+		Readint( &j , "" );
+		if( dir[(j-1)/2]->type == 406 &&
+		    dir[(j-1)/2]->form == 15 )
+		{
+			/* this is a name */
+			name_de = j;
+			break;
+		}
+	}
+
+	if( !name_de )
+		return;
+
+	Readrec( dir[(name_de-1)/2]->param );
+	Readint( &entity_type , "" );
+	if( entity_type != 406 )
+	{
+		/* this is not a property entity */
+		rt_log( "Get_drawing_name: entity at DE %d is not a property entity\n" , name_de );
+		return;
+	}
+
+	Readint( &i , "" );
+	if( i != 1 )
+	{
+		rt_log( "Bad property entity, form 15 (name) should have only one value, not %d\n" , i );
+		return;
+	}
+
+	Readname( &dir[entityno]->name , "" );
+
+	if( !Fix_name( entityno ) )
+	{
+		rt_free( (char *)dir[entityno]->name , "Get_name: name" );
+		dir[entityno]->name = (char *)NULL;
+	}
+}
+
+void
 Get_csg_name( entityno )
 int entityno;
 {
@@ -378,6 +463,9 @@ Check_names()
 			case 186:
 				Get_brep_name( i );
 				break;
+			case 404:
+				Get_drawing_name( i );
+				break;
 			case 430:
 				Get_name( i , 1 );
 				break;
@@ -444,6 +532,10 @@ Check_names()
 				case 186:
 					dir[i]->name = (char *)rt_malloc( NAMELEN+1 , "Check_names: dir->name" );
 					sprintf( dir[i]->name , "brep.%d" , i );
+					break;
+				case 404:
+					dir[i]->name = (char *)rt_malloc( NAMELEN+1 , "Check_names: dir->name" );
+					sprintf( dir[i]->name , "drawing.%d" , i );
 					break;
 				case 430:
 					dir[i]->name = (char *)rt_malloc( NAMELEN+1 , "Check_names: dir->name" );
