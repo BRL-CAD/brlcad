@@ -1560,7 +1560,7 @@ FBIO	*ifp;
 	timeout.tv_usec = 250000;
 
 	while( window_not_destroyed ) {
-		(void) select(0, (long *)0, (long *)0, (long *)0, &timeout);
+		(void) select(0, (fd_set *)0, (fd_set *)0, (fd_set *)0, &timeout);
 		notify_dispatch();
 	}
 	return	0;
