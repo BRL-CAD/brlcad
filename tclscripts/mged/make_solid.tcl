@@ -71,7 +71,7 @@ proc solid_auto_name { id } {
     if {$result == 0} {
 	set mged_solid_name($id) $name
     } else {
-	mged_dialog .$id.solidDialog $player_screen($id)\
+	cad_dialog .$id.solidDialog $player_screen($id)\
 		"Failed to automatically create a solid name!"\
 		$name\
 		"" 0 OK
@@ -89,7 +89,7 @@ proc make_solid { id w type } {
 	_mged_sed $mged_solid_name($id)
 	catch {destroy $w}
     } else {
-	mged_dialog .$id.solidDialog $player_screen($id)\
+	cad_dialog .$id.solidDialog $player_screen($id)\
 		"Bad solid name!"\
 		$msg\
 		"" 0 OK

@@ -24,7 +24,7 @@ proc mouse_get_spath { x y } {
     set paths [ray_get_info $ray in path]
 
     if {![llength $paths]} {
-	mged_dialog .$id.spathDialog $player_screen($id)\
+	cad_dialog .$id.spathDialog $player_screen($id)\
 		"Nothing was hit!"\
 		"Nothing was hit!"\
 		"" 0 OK
@@ -128,7 +128,7 @@ proc mouse_get_comb { x y } {
     set ray [mouse_shoot_ray $x $y]
     set paths [ray_get_info $ray in path]
     if {![llength $paths]} {
-	mged_dialog .$id.combDialog $player_screen($id)\
+	cad_dialog .$id.combDialog $player_screen($id)\
 		"Nothing was hit!"\
 		"Nothing was hit!"\
 		"" 0 OK
