@@ -278,8 +278,7 @@ struct soltab *stp;
 	register struct sph_specific *sph =
 		(struct sph_specific *)stp->st_specific;
 
- 	cvp->crv_c1 = - sph->sph_rad;
- 	cvp->crv_c2 = cvp->crv_c1;
+ 	cvp->crv_c1 = cvp->crv_c2 = - sph->sph_invrad;
 
 	/* any tangent direction */
  	rt_orthovec( cvp->crv_pdir, hitp->hit_normal );
