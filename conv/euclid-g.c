@@ -3,8 +3,9 @@
  *
  *  Program to convert Euclid file into a BRL-CAD NMG object.
  *
- *  Author -
+ *  Authors -
  *	Michael Markowski
+ *	John R. Anderson
  *  
  *  Source -
  *	The US Army Research Laboratory
@@ -13,9 +14,6 @@
  *  Distribution Status -
  *	Public Domain, Distribution Unlimitied.
  */
-#ifndef lint
-static char rcsid[] = "$Header$";
-#endif
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -36,28 +34,55 @@ static char rcsid[] = "$Header$";
 
 #define MAX(A, B) ((A) > (B) ? (A) : (B))
 
+extern struct faceuse *nmg_add_loop_to_face();
+extern int errno;
+
 struct vlist {
 	fastf_t		pt[3*MAX_PTS_PER_FACE];
 	struct vertex	*vt[MAX_PTS_PER_FACE];
 };
 
-static char	usage[] = "Usage: %s [euclid_db] [brlcad_db]\n";
+static int polysolids;
+static char	usage[] = "Usage: %s [-i euclid_db] [-o brlcad_db] [-p]\n\t\t(-p indicates write as polysolids)\n ";
 
 main(argc, argv)
 int	argc;
 char	*argv[];
 {
-	char		*base, *bfile, *grp_name, *efile, *reg_name;
+	char		*bfile, *efile;
 	FILE		*fpin, *fpout;
-	int		doti;
 	register int	c;
 
-	grp_name = reg_name = NULL;
+	fpin = stdin;
+	fpout = stdout;
+	efile = NULL;
+	bfile = NULL;
+	polysolids = 0;
 
 	/* Get command line arguments. */
-	while ((c = getopt(argc, argv, "x")) != EOF) {
+	while ((c = getopt(argc, argv, "i:o:p")) != EOF) {
 		switch (c) {
-		case 'x':
+		case 'i':
+			efile = optarg;
+			if ((fpin = fopen(efile, "r")) == NULL)
+			{
+				fprintf(stderr,	"%s: cannot open %s for reading\n",
+					argv[0], efile);
+				perror( argv[0] );
+				exit(1);
+			}
+			break;
+		case 'o':
+			bfile = optarg;
+			if ((fpout = fopen(bfile, "w")) == NULL) {
+				fprintf(stderr,	"%s: cannot open %s for writing\n",
+					argv[0], bfile);
+				perror( argv[0] );
+				exit(1);
+			}
+			break;
+		case 'p':
+			polysolids = 1;
 			break;
 		default:
 			fprintf(stderr, usage, argv[0]);
@@ -66,37 +91,11 @@ char	*argv[];
 		}
 	}
 
-	/* Get Euclid input file name. */
-	if (optind >= argc) {
-		efile = "-";
-		fpin = stdin;
-	} else {
-		efile = argv[optind];
-		if ((fpin = fopen(efile, "r")) == NULL) {
-			fprintf(stderr,
-				"%s: cannot open %s for reading\n",
-				argv[0], efile);
-			exit(1);
-		}
-	}
-
-	/* Get BRL-CAD output data base name. */
-	optind++;
-	if (optind >= argc) {
-		bfile = "-";
-		fpout = stdout;
-	} else {
-		bfile = argv[optind];
-		if ((fpout = fopen(bfile, "w")) == NULL) {
-			fprintf(stderr,
-				"%s: cannot open %s for writing\n",
-				argv[0], bfile);
-			exit(1);
-		}
-	}
-
 	/* Output BRL-CAD database header.  No problem if more than one. */
-	mk_id(fpout, efile);
+	if( efile == NULL )
+		mk_id( fpout , "Conversion from EUCLID" );
+	else
+		mk_id(fpout, efile);
 
 	euclid_to_brlcad(fpin, fpout);
 
@@ -142,6 +141,10 @@ FILE	*fpin, *fpout;
 	char	str[80];
 	int	reg_id;
 
+	/* skip first string in file (what is it??) */
+	if( fscanf( fpin , "%s" , str ) == EOF )
+		rt_bomb( "Failed on first attempt to read input" );
+
 	/* Id of first region. */
 	if (fscanf(fpin, "%d", &reg_id) != 1) {
 		fprintf(stderr, "euclid_to_brlcad: no region id\n");
@@ -150,7 +153,7 @@ FILE	*fpin, *fpout;
 
 	/* Convert each region to an individual nmg. */
 	do {
-		printf("Converting region %d...\n", reg_id);
+		fprintf( stderr , "Converting region %d...\n", reg_id);
 		reg_id = cvt_euclid_region(fpin, fpout, reg_id);
 	} while (reg_id != -1);
 }
@@ -166,8 +169,8 @@ cvt_euclid_region(fp, fpdb, reg_id)
 FILE	*fp, *fpdb;
 int	reg_id;
 {
-	int	cur_id, face, facet_type, fail, i, j, lst[MAX_PTS_PER_FACE],
-		np, nv;
+	int	cur_id, face, facet_type, fail, hole_face, i, j,
+		lst[MAX_PTS_PER_FACE], np, nv;
 	struct faceuse	*outfaceuses[MAX_PTS_PER_FACE];
 	struct model	*m;	/* Input/output, nmg model. */
 	struct nmgregion *r;
@@ -194,36 +197,39 @@ int	reg_id;
 		/* Get vertices for a single face. */
 		facet_type = read_euclid_face(lst, &np, fp, &vert, &nv);
 
-		/* Make face out of vertices in lst. */
-		for (i = 0; i < np; i++)
-			vertlist[i] = vert.vt[lst[i]];
+		if( np > 2 )
+		{
 
-		switch(facet_type) {
-		case 0:	/* Simple facet (no holes). */
-			outfaceuses[face] = nmg_cface(s, vertlist, np);
-			face++;
-			break;
+			/* Make face out of vertices in lst. */
+			for (i = 0; i < np; i++)
+				vertlist[i] = vert.vt[lst[i]];
 
-		case 1:	/* Facet is a hole. */
-			outfaceuses[face] = nmg_add_loop_to_face(
-				s, (struct faceuse *)NULL, vertlist, np,
-				OT_OPPOSITE);
-			face++;
-			break;
+			switch(facet_type) {
+			case 0:	/* Simple facet (no holes). */
+				outfaceuses[face] = nmg_cface(s, vertlist, np);
+				face++;
+				break;
 
-		case 2:	/* Facet will be given at least one hole. */
-			outfaceuses[face] = nmg_cface(s, vertlist, np);
-			face++;
-			break;
+			case 1:	/* Facet is a hole. */
+				nmg_add_loop_to_face(s, outfaceuses[hole_face],
+					vertlist, np, OT_OPPOSITE);
+				break;
 
-		default:
-			fprintf(stderr, "cvt_euclid_face: in region %d, face %d is an unknown facet type\n", reg_id, face);
-			break;
+			case 2:	/* Facet will be given at least one hole. */
+				outfaceuses[face] = nmg_cface(s, vertlist, np);
+				hole_face = face;
+				face++;
+				break;
+
+			default:
+				fprintf(stderr, "cvt_euclid_face: in region %d, face %d is an unknown facet type\n", reg_id, face);
+				break;
+			}
+
+			/* Save (possibly) newly created vertex structs. */
+			for (i = 0; i < np; i++)
+				vert.vt[lst[i]] = vertlist[i];
 		}
-
-		/* Save (possibly) newly created vertex structs. */
-		for (i = 0; i < np; i++)
-			vert.vt[lst[i]] = vertlist[i];
 
 		/* Get next face's region id. */
 		if (fscanf(fp, "%d", &cur_id) != 1)
@@ -239,17 +245,20 @@ int	reg_id;
 	for (i = 0, fail = 0; i < face; i++)
 		if (nmg_fu_planeeqn(outfaceuses[i], &tol) < 0) {
 			fprintf(stderr, "Warning: in region %d, face %d is degenerate.\n", reg_id, i);
-			for (j = i; j < face-1; j++)
-				outfaceuses[j] = outfaceuses[j+1];
-			face--;
-			i--;
 		}
 
 	/* Glue edges of outward pointing face uses together. */
 	nmg_gluefaces(outfaceuses, face);
 
 	/* Compute "geometry" for region and shell */
-	nmg_region_a(r);
+	nmg_region_a( r , &tol );
+
+	/* fix the normals */
+	s = RT_LIST_FIRST( shell , &r->s_hd );
+	nmg_fix_normals( s );
+	
+	if( nmg_ck_closed_surf( s , &tol ) )
+		fprintf( stderr , "Warning: Region %d is not a closed surface\n" , reg_id );
 
 	add_nmg_to_db(fpdb, m, reg_id);		/* Put region in db. */
 	nmg_km(m);				/* Safe to kill model now. */
@@ -281,7 +290,7 @@ struct vlist	*vert;
 	/* Description of record. */
 	fscanf(fp, "%d %*lf %*lf %lf", &facet_type, &num_points);
 	*ni = (int)num_points;
-
+	
 	/* Read in data points. */
 	for (i = 0; i < *ni; i++) {
 		fscanf(fp, "%*d %lf %lf %lf", &x, &y, &z);
@@ -297,76 +306,27 @@ struct vlist	*vert;
 	for (i = 0; i < *ni; i++)
 		for (j = i+1; j < *ni; j++)
 			if (lst[i] == lst[j]) {
-				fprintf(stderr, "warning: removing duplicate point.\n");
-				for (k = MAX(i, j); k < *ni-1; k++)
-					lst[k] = lst[k+1];
-				--*ni;
+				int increment;
+				
+				if( j == i+1 || (i == 0 && j == (*ni-1))  )
+					increment = 1;
+				else if( j == i+2 )
+				{
+					j = i+1;
+					increment = 2;
+				}
+				else
+				{
+					fprintf( stderr , "warning: removing distant duplicates\n" );
+					increment = 1;
+				}
+
+				for (k = j ; k < *ni-increment; k++)
+					lst[k] = lst[k + increment];
+				*ni -= increment;
 			}
-	
-	/* See if a face needs flipping. */
-	VSET(N, a, b, c);
-	VUNITIZE(N);
-	poly_flop(lst, *ni, facet_type, &(vert->pt[lst[0]*3]),
-		&(vert->pt[lst[1]*3]), &(vert->pt[lst[2]*3]), N);
 
 	return(facet_type);
-}
-
-/*
- *	P o l y _ F l o p
- *
- *	Take 3 points of a Euclid polygon and generate a surface normal
- *	from them.  If the surface normal is opposite the normal stored
- *	in the Euclid data base, assume the face needs flipping.
- *
- *	Assume the normal read from the Euclid data base points outward for
- *	faces and inward for holes.
- */
-poly_flop(lst, n, facet_type, x, y, z, N)
-int	*lst, n, facet_type;
-point_t	x, y, z;
-vect_t	N;
-{
-	int	i, tmp;
-	vect_t	A, B, Nb, Nb_rev;
-
-	VSUB2(A, y, x);
-	VSUB2(B, z, x);
-	VCROSS(Nb, A, B);
-	VUNITIZE(Nb);
-	VREVERSE(Nb_rev, Nb);
-
-	if ((facet_type != 1 && VAPPROXEQUAL(N, Nb, 0.1))
-		|| (facet_type == 1 && VAPPROXEQUAL(N, Nb_rev, 0.1))) {
-#if 0
-		fprintf(stderr,"   Face is ok\n");
-#endif
-	} else if (VAPPROXEQUAL(N, Nb, 0.1) && VAPPROXEQUAL(N, Nb_rev, 0.1)) {
-#if 0
-		fprintf(stderr, "   Flipping a face\n");
-#endif
-		/* Reverse order of points in face. */
-		for (i = 0; i < n/2; i++) {
-			tmp = lst[i];
-			lst[i] = lst[n-i-1];
-			lst[n-i-1] = tmp;
-		}
-	} else {
-		fprintf(stderr, "   Hmm, this is weird.  ");
-		fprintf(stderr, "Neuc=<%lf %lf %lf>, Nbrl=<%lf %lf %lf>\n",
-			V3ARGS(N), V3ARGS(Nb));
-		fprintf(stderr, "facet type is %d\n", facet_type);
-#if 0
-		for (i = 0; i < n; i++)
-			printf("%lf %lf %lf\n", 
-				vert->pt[3*lst[i]+0],
-				vert->pt[3*lst[i]+1],
-				vert->pt[3*lst[i]+2]);
-		printf("plane eqn is: %lf %lf %lf %lf\n",a,b,c,d);
-		printf("my normal is: %lf %lf %lf\n",V3ARGS(Nb));
-		exit(0);
-#endif
-	}
 }
 
 /*
@@ -382,22 +342,25 @@ struct vlist	*vert;
 int		nv;
 fastf_t		x, y, z;
 {
-	int	done, i;
+	int	found, i;
 
 /* XXX What's good here? */
 #define ZERO_TOL 0.0001
 
-	done = 0;
-	for (i = 0; !done && i < nv; i++) {
+	found = 0;
+	for (i = 0; i < nv; i++) {
 		if (NEAR_ZERO(x - vert->pt[3*i+0], ZERO_TOL)
 			&& NEAR_ZERO(y - vert->pt[3*i+1], ZERO_TOL)
 			&& NEAR_ZERO(z - vert->pt[3*i+2], ZERO_TOL))
-			done = 1;
+		{
+			found = 1;
+			break;
+		}
 	}
-	if (!done)
-		i = 0;
-
-	return(i-1);
+	if (!found)
+		return( -1 );
+	else
+		return( i );
 }
 
 /*
@@ -439,13 +402,33 @@ struct model	*m;
 int		reg_id;
 {
 	char	id[80], *rname, *sname;
+	struct nmgregion *r;
+	struct shell *s;
+	struct rt_tol  tol;
+
+        /* XXX These need to be improved */
+        tol.magic = RT_TOL_MAGIC;
+        tol.dist = 0.005;
+        tol.dist_sq = tol.dist * tol.dist;
+        tol.perp = 1e-6;
+        tol.para = 1 - tol.perp;
+
+	r = RT_LIST_FIRST( nmgregion , &m->r_hd );
+	s = RT_LIST_FIRST( shell , &r->s_hd );
 
 	sprintf(id, "%d", reg_id);
 	rname = malloc(sizeof(id) + 3);	/* Region name. */
 	sname = malloc(sizeof(id) + 3);	/* Solid name. */
 
-	sprintf(sname, "%s.nmg", id);
-	mk_nmg(fpout, sname,  m);		/* Make nmg object. */
+	sprintf(sname, "%s.s", id);
+	if( polysolids )
+		write_shell_as_polysolid( fpout , sname , s );
+	else
+		mk_nmg(fpout, sname,  m);		/* Make nmg object. */
+
 	sprintf(rname, "%s.r", id);
 	mk_comb1(fpout, rname, sname, 1);	/* Put object in a region. */
+	
+	rt_free( (char *)rname , "euclid-g: region name" );
+	rt_free( (char *)sname , "euclid-g: solid name" );
 }
