@@ -211,6 +211,17 @@ int main(int argc, char **argv)
 	if( height <= 0 && cell_height <= 0 )
 		height = 512;
 
+	if( sub_grid_mode ) {
+		/* check that we have a legal subgrid */
+		if( sub_xmax >= width || sub_ymax >= height ) {
+			fprintf( stderr, "rt: illegal values for subgrid %d,%d,%d,%d\n", 
+				 sub_xmin, sub_ymin, sub_xmax, sub_ymax );
+			fprintf( stderr, "\tFor a %d X %d image, the subgrid must be within 0,0,%d,%d\n",
+				 width, height, width-1, height-1 );
+			exit( 1 );
+		}
+	}
+
 	if( incr_mode )  {
 		x = height;
 		if( x < width )  x = width;
