@@ -191,7 +191,7 @@ struct application	*ap;
 	register struct partition *pp;
 	struct resource		*res = ap->a_resource;
 	struct rt_i		*rtip = ap->a_rt_i;
-	FAST fastf_t		diff;
+	FAST fastf_t		diff, diff_se;
 	FAST fastf_t	tol_dist;
 
 	RT_CK_PT_HD(PartHdp);
@@ -347,13 +347,18 @@ struct application	*ap;
 			goto done_weave;
 		}
 
+		/* Loop through current partition list weaving the current input segment
+		 * into the list. The following three variables keep track of the current
+		 * starting point of the input segment. The starting point of the segment
+		 * moves to higher hit_dist values (as it is woven in) until it is entirely consumed.
+		 */
 		lastseg = segp;
 		lasthit = &segp->seg_in;
 		lastflip = 0;
 		for( pp=PartHdp->pt_forw; pp != PartHdp; pp=pp->pt_forw ) {
 
-			diff = lasthit->hit_dist - pp->pt_outhit->hit_dist;
-			if( diff > tol_dist )  {
+			diff_se = lasthit->hit_dist - pp->pt_outhit->hit_dist;
+			if( diff_se > tol_dist )  {
 				/* Seg starts beyond the END of the
 				 * current partition.
 				 *	PPPP
@@ -368,7 +373,8 @@ struct application	*ap;
 				continue;
 			}
 			if(rt_g.debug&DEBUG_PARTITION)  rt_pr_pt(rtip, pp);
-			if( diff > -(tol_dist) )  {
+			diff = lasthit->hit_dist - pp->pt_inhit->hit_dist;
+			if( diff_se > -(tol_dist) && diff > tol_dist )  {
 				/*
 				 * Seg starts almost "precisely" at the
 				 * end of the current partition.
@@ -390,7 +396,6 @@ struct application	*ap;
 			 *	PPPPPPPPPPP
 			 *	  SSSS...
 			 */
-			diff = lasthit->hit_dist - pp->pt_inhit->hit_dist;
 			if( diff > tol_dist )  {
 				/*
 				 * lasthit->hit_dist > pp->pt_inhit->hit_dist
