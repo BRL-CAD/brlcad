@@ -1835,16 +1835,26 @@ struct rt_tol		*tol;
 	LOCAL struct rt_tgc_internal	*tip;
 	struct faceuse		*outfaceuses[2*16+2];
 	struct vertex		*vertlist[4];
+	vect_t			aXb;
+	vect_t			cXd;
 
 	RT_CK_DB_INTERNAL(ip);
 	tip = (struct rt_tgc_internal *)ip->idb_ptr;
 	RT_TGC_CK_MAGIC(tip);
 
 	/* Create two 16 point ellipses
-	 *  Note that in both cases the points go counterclockwise (CCW).
+	 *  Note that in both cases the points need to go
+	 *  counterclockwise (CCW) around the H vector.
 	 */
-	rt_ell_16pts( bottom, tip->v, tip->a, tip->b );
+	VCROSS( aXb, tip->a, tip->b );
+	VCROSS( cXd, tip->c, tip->d );
+	if( VDOT( tip->h, aXb ) < 0 )
+		VREVERSE(tip->a, tip->a );
+	if( VDOT( tip->h, cXd ) < 0 )
+		VREVERSE(tip->c, tip->c );
+
 	VADD2( work, tip->v, tip->h );
+	rt_ell_16pts( bottom, tip->v, tip->a, tip->b );
 	rt_ell_16pts( top, work, tip->c, tip->d );
 
 	*r = nmg_mrsv( m );	/* Make region, empty shell, vertex */
