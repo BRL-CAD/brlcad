@@ -77,7 +77,7 @@ set -S2 "/bin/sh"
  *								*
  ****************************************************************/
 #undef NFS
-#define NFS	1	/* BRL */
+
 
 /****************************************************************
  *								*
@@ -148,15 +148,15 @@ set -S2 "/bin/sh"
 #	define	MTYPE	fx
 #	define	UNIXTYPE	BSD
 #	define	HAS_TCP	1
-/***/
-#	define	CC_OPTS	-ce
-/***/
-/*	To get FX/C, use -l option.  Alas, this puts listing on stdout.
-/***
-#	define	CC	/usr/local/fxc2.0.16/fxc
-#	define	CC_OPTS	-ce -DVECTORIZE -l
-#	define	OPTIMIZER -Ogiv
-***/
+#	if 1
+/*		Standard Alliant C Compiler */
+#		define	CC_OPTS	-ce
+#	else
+/*		FX/C, -l option puts listing on stdout. */
+#		define	CC	/usr/local/fxc2.0.16/fxc
+#		define	CC_OPTS	-ce -DVECTORIZE
+#		define	OPTIMIZER -Ogiv
+#	endif
 #	define	LD_OPTS	CC_OPTS
 #	define	FC	/usr/alliant/fortran
 #	define	LIBMALLOC	/* use vendor library */
@@ -171,13 +171,17 @@ set -S2 "/bin/sh"
 #	define	UNIXTYPE	BSD
 #	define	HAS_TCP	1
 #	define	LD_OPTS	-m 8
-/*#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_PTTY -DIF_X -I/d/phil/X11*/
-#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_PTTY
-/*#	define	LIBFB_OBJS	if_remote pkg if_ptty if_X*/
-#	define	LIBFB_OBJS	if_remote pkg if_ptty
-/*		cp /usr/local/lib/libX11.a PRODUCTS; \*/
-#	define	LIBFB_SETUP	(rm -f PRODUCTS; \
-		AR u PRODUCTS *.o )
+#	if 1
+/*		Normal Configuration */
+#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_PTTY
+#		define	LIBFB_OBJS	if_remote pkg if_ptty
+#	else
+/*		X-Windows Configuration */
+#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_PTTY -DIF_X -I/d/phil/X11
+#		define	LIBFB_OBJS	if_remote pkg if_ptty if_X
+#		define	LIBFB_SETUP	(rm -f PRODUCTS; \
+			cp /usr/local/lib/libX11.a PRODUCTS )
+#	endif
 #	define	LIBRT_TIMER	timer42
 #endif
 
@@ -241,7 +245,7 @@ set -S2 "/bin/sh"
 #	undef	sgi
 #	define	GFLAG		-G 16
 
-/*	SGI_4D_TYPE_MARKER: don't alter this comment, setup.sh needs it */
+/* SGI_4D_TYPE_MARKER: don't alter this comment, setup.sh needs it when changing next line */
 #	define	SGI_TYPE	3
 
 
@@ -327,7 +331,7 @@ set -S2 "/bin/sh"
 #	define	LD_OPTS	CC_OPTS
 #	define	LIBMALLOC	/* must use libc.a, for _malloc_at_addr() */
 #	define	LIBRT_TIMER	timer42
-#if 0
+#if 1
 /*		Normal Sun configuration */
 #		define	LIBFB_OBJS	if_remote pkg if_sun
 #		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_SUN
@@ -443,6 +447,7 @@ set -S2 "/bin/sh"
 #endif
 
 #ifdef convex
+/*	libplot3/htond.c depends on running the Convex in native mode (-fn) */
 #	undef	convex
 #	define	UNIXTYPE	BSD
 #	define	MTYPE	c1
@@ -450,12 +455,12 @@ set -S2 "/bin/sh"
 #	define	HAS_TCP	1
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_PTTY
 #	define	LIBFB_OBJS	if_remote pkg if_ptty
-/*	libplot3/htond.c depends on running the Convex in native mode (-fn) */
-/**
-#	define	OPTIMIZER	-fn -O2
-#	define	CC	/usr/convex/vc
-#	define	CC_OPTS	-DVECTORIZE
-**/
+#	define	FC	/usr/convex/fc
+/*	Optional vectorizing C compiler */
+#	if 0
+/*		Optional vectorizing C compiler */
+#		define	CC_OPTS	-DVECTORIZE -fn
+#			define	CC_OPTS	-DVECTORIZE -fn
 #endif
 #	endif
 #endif
