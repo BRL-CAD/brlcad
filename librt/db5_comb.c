@@ -401,14 +401,14 @@ rt_comb_export5(
 	else
 		bu_avs_remove( avsp, "material" );
 #endif
-
+#if 0
 	if( comb->temperature > 0 )  {
 		bu_vls_trunc( &value, 0 );
 		bu_vls_printf( &value, "%f", comb->temperature );
 		bu_avs_add_vls( avsp, "temp", &value );
 	} else
 		bu_avs_remove( avsp, "temp" );
-
+#endif
 	/* GIFT compatability */
 	if( comb->region_id != 0 )  {
 	    bu_vls_trunc( &value, 0 );
