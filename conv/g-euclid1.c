@@ -41,12 +41,13 @@ static char RCSid[] = "$Header$";
 RT_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree));
 RT_EXTERN( struct face *nmg_find_top_face , (struct shell *s , long *flags ));
 
-static char	usage[] = "Usage: %s [-v] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] brlcad_db.g object(s)\n";
+static char	usage[] = "Usage: %s [-v] [-s alarm_seconds] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] brlcad_db.g object(s)\n";
 
 static int	NMG_debug;		/* saved arg of -X, for longjmp handling */
 static int	verbose;
 static int	ncpu = 1;		/* Number of processors */
 static int	face_count;		/* Count of faces output for a region id */
+static int	alarm_secs;		/* Number of seconds to allow for conversion, 0 means no limit */
 static struct db_i		*dbip;
 static struct rt_tess_tol	ttol;
 static struct rt_tol		tol;
@@ -468,6 +469,9 @@ char	*argv[];
 	/* Get command line arguments. */
 	while ((c = getopt(argc, argv, "a:n:r:s:vx:P:X:")) != EOF) {
 		switch (c) {
+		case 's':
+			alarm_secs = atoi( optarg );
+			break;
 		case 'a':		/* Absolute tolerance. */
 			ttol.abs = atof(optarg);
 			break;
@@ -649,7 +653,7 @@ union tree		*curtree;
 
 	signal( SIGALRM , handler );
 
-	(void)alarm( 600 );
+	(void)alarm( alarm_secs );
 
 	r = nmg_booltree_evaluate(curtree, tsp->ts_tol);	/* librt/nmg_bool.c */
 
