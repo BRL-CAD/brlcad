@@ -72,11 +72,15 @@ double		mged_nrm_tol;			/* normal ang tol, radians */
 
 int		rateflag_slew;
 vect_t		rate_slew;
+vect_t		absolute_slew;
+
 int		rateflag_rotate;
 vect_t		rate_rotate;
 vect_t		absolute_rotate;	/* selected by mged_variables.rateknobs */
+
 int		rateflag_zoom;
 fastf_t		rate_zoom;
+fastf_t		absolute_zoom;
 
 RT_EXTERN(int	edit_com, (int argc, char **argv, int kind, int catch_sigint));
 int		f_zap();
@@ -967,6 +971,13 @@ char	**argv;
 	int	i;
 	fastf_t	f;
 	char	*cmd = argv[1];
+	static int aslewflag = 0;
+	vect_t	aslew;
+
+	if( !aslewflag ) {
+		VSETALL( absolute_slew, 0.0 );
+		aslewflag = 1;
+	}
 
 	if(argc == 2)  {
 		i = 0;
@@ -982,51 +993,75 @@ char	**argv;
 	if( cmd[1] == '\0' )  {
 		switch( cmd[0] )  {
 		case 'x':
-			if( mged_variables.rateknobs )  {
-				rate_rotate[X] = f;
-			} else {
-				VSETALL(rate_rotate, 0);
-				absolute_rotate[X] = f;
-				absview_v( absolute_rotate );
-			}
+			rate_rotate[X] = f;
 			break;
 		case 'y':
-			if( mged_variables.rateknobs )  {
-				rate_rotate[Y] = f;
-			} else {
-				VSETALL(rate_rotate, 0);
-				absolute_rotate[Y] = f;
-				absview_v( absolute_rotate );
-			}
+			rate_rotate[Y] = f;
 			break;
 		case 'z':
-			if( mged_variables.rateknobs )  {
-				rate_rotate[Z] = f;
-			} else {
-				VSETALL(rate_rotate, 0);
-				absolute_rotate[Z] = f;
-				absview_v( absolute_rotate );
-			}
+			rate_rotate[Z] = f;
 			break;
 		case 'X':
-			if( mged_variables.rateknobs )
-				rate_slew[X] = f;
+			rate_slew[X] = f;
 			break;
 		case 'Y':
-			if( mged_variables.rateknobs )
-				rate_slew[Y] = f;
+			rate_slew[Y] = f;
 			break;
 		case 'Z':
-			if( mged_variables.rateknobs )
-				rate_slew[Z] = f;
+			rate_slew[Z] = f;
 			break;
 		case 'S':
-			if( mged_variables.rateknobs )
-				rate_zoom = f;
+			rate_zoom = f;
 			break;
 		default:
 			goto usage;
 		}
+	} else if( cmd[0] == 'a' && cmd[1] != '\0' && cmd[2] == '\0' ) {
+		switch( cmd[1] ) {
+		case 'x':
+			VSETALL(rate_rotate, 0);
+			absolute_rotate[X] = f;
+			absview_v( absolute_rotate );
+			break;
+		case 'y':
+			VSETALL(rate_rotate, 0);
+			absolute_rotate[Y] = f;
+			absview_v( absolute_rotate );
+			break;
+		case 'z':
+			VSETALL(rate_rotate, 0);
+			absolute_rotate[Z] = f;
+			absview_v( absolute_rotate );
+			break;
+		case 'X':
+			aslew[X] = f - absolute_slew[X];
+			aslew[Y] = absolute_slew[Y];
+			aslew[Z] = absolute_slew[Z];
+			slewview( aslew );
+			absolute_slew[X] = f;
+			break;
+		case 'Y':
+			aslew[X] = absolute_slew[X];
+			aslew[Y] = f - absolute_slew[Y];
+			aslew[Z] = absolute_slew[Z];
+			slewview( aslew );
+			absolute_slew[Y] = f;
+			break;
+		case 'Z':
+			aslew[X] = absolute_slew[X];
+			aslew[Y] = absolute_slew[Y];
+			aslew[Z] = f - absolute_slew[Z];
+			slewview( aslew );
+			absolute_slew[Z] = f;
+			break;
+		case 'S':
+			break;
+		default:
+			goto usage;
+		}
+	} else if( strcmp( cmd, "calibrate" ) == 0 ) {
+		VSETALL( absolute_slew, 0.0 );
+		return CMD_OK;
 	} else if( strcmp( cmd, "xadc" ) == 0 )  {
 		rt_vls_printf( &dm_values.dv_string, "adc x %d\n" , i );
 		return CMD_OK;
@@ -1057,6 +1092,8 @@ char	**argv;
 	} else {
 usage:
 		rt_log("knob: x,y,z for rotation, S for scale, X,Y,Z for slew (rates, range -1..+1)\n");
+		rt_log("knob: ax,ay,az for absolute rotation, aS for absolute scale,\n");
+		rt_log("knob: aX,aY,aZ for absolute skew.  calibrate to set current slew to 0\n");
 		rt_log("knob: xadc, yadc, zadc, ang1, ang2, distadc (values, range -2048..+2047)\n");
 		rt_log("knob: zero (cancel motion)\n");
 	}
