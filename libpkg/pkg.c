@@ -39,21 +39,13 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
-#define _BSD_TYPES		/* Needed for IRIX 5.0.1 */
-#include <sys/types.h>
 #include <ctype.h>		/* used by inet_addr() routine, below */
-
-#if defined(sgi) && !defined(mips)
-# define IP2			/* Bypass horrible bug in netinet/tcp.h */
-#endif
-
-#ifdef BSD
-/* 4.2BSD, 4.3BSD network stuff */
-#if defined(__bsdi__)
-# include <sys/param.h>	/* needed to pick up #define for BYTE_ORDER */
-#endif
-
+#include <sys/param.h>
+#include <sys/time.h>
+#include <time.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>		/* for FIONBIO */
 #include <netinet/in.h>		/* for htons(), etc */
@@ -65,10 +57,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "externs.h"		/* Can safely be removed for non-BRLCAD use */
 
 /* Not all systems with "BSD Networking" include UNIX Domain sockets */
-#  if !defined(sgi) && !defined(i386)
-#	define HAS_UNIX_DOMAIN_SOCKETS
-#	include <sys/un.h>		/* UNIX Domain sockets */
-#  endif
+#ifdef HAVE_UNIX_DOMAIN_SOCKETS
+# include <sys/un.h>		/* UNIX Domain sockets */
 #endif
 
 #ifdef n16
@@ -82,43 +72,12 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 # undef SYSV
 #endif
 
-/*
- *  The situation with sys/time.h and time.h is crazy.
- *  We need sys/time.h for struct timeval,
- *  and time.h for struct tm.
- *
- *  on BSD (and SGI 4D), sys/time.h includes time.h,
- *  on the XMP (UNICOS 3 & 4), time.h includes sys/time.h [non-STDC only],
- *  on the Cray-2, there is no automatic including.
- *
- *  Note that on many SYSV machines, the Cakefile has to set BSD
- */
-#if BSD && !SYSV
-#  include <sys/time.h>		/* includes <time.h> */
-#else
-#    if CRAY1 && !__STDC__
-#	include <time.h>	/* includes <sys/time.h> */
-#    else
-#	include <sys/time.h>
-#	include <time.h>
-#    endif
-#endif
-
-#if defined(BSD) && !defined(CRAY) && !defined(mips) && !defined(n16) && !defined(i386)
-#define	HAS_WRITEV
-#endif
-
-#ifdef HAS_WRITEV
+#ifdef HAVE_WRITEV
 # include <sys/uio.h>		/* for struct iovec (writev) */
 #endif
 
 #include <errno.h>
 #include "pkg.h"
-
-#if defined(SYSV) && !defined(bzero)
-#	define bzero(str,n)		memset( str, '\0', n )
-#	define bcopy(from,to,count)	memcpy( to, from, count )
-#endif
 
 #if defined(__stardent)
 /* <sys/byteorder.h> seems to be wrong, and this is a LITTLE_ENDIAN machine */
@@ -131,14 +90,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 	((((x)>>16)&0xFF)<< 8) | \
 	((((x)>>24)&0xFF)    )   )
 #endif
-
-#if !__STDC__ && !USE_PROTOTYPES
-extern char	*getenv();
-extern char	*malloc();
-extern char	*realloc();
-extern void	perror();
-#endif
-extern int errno;
 
 int pkg_nochecking = 0;	/* set to disable extra checking for input */
 int pkg_permport = 0;	/* TCP port that pkg_permserver() is listening on XXX */
@@ -262,7 +213,7 @@ void (*errlog)();
 {
 	struct sockaddr_in sinme;		/* Client */
 	struct sockaddr_in sinhim;		/* Server */
-#ifdef HAS_UNIX_DOMAIN_SOCKETS
+#ifdef HAVE_UNIX_DOMAIN_SOCKETS
 	struct sockaddr_un sunhim;		/* Server, UNIX Domain */
 #endif
 	register struct hostent *hp;
@@ -287,7 +238,7 @@ void (*errlog)();
 	bzero((char *)&sinhim, sizeof(sinhim));
 	bzero((char *)&sinme, sizeof(sinme));
 
-#ifdef HAS_UNIX_DOMAIN_SOCKETS
+#ifdef HAVE_UNIX_DOMAIN_SOCKETS
 	if( host == NULL || strlen(host) == 0 || strcmp(host,"unix") == 0 ) {
 		/* UNIX Domain socket, port = pathname */
 		sunhim.sun_family = AF_UNIX;
@@ -302,7 +253,6 @@ void (*errlog)();
 	if( atoi(service) > 0 )  {
 		sinhim.sin_port = htons((unsigned short)atoi(service));
 	} else {
-#ifdef BSD
 		register struct servent *sp;
 		if( (sp = getservbyname( service, "tcp" )) == NULL )  {
 			sprintf(errbuf,"pkg_open(%s,%s): unknown service\n",
@@ -311,7 +261,6 @@ void (*errlog)();
 			return(PKC_ERROR);
 		}
 		sinhim.sin_port = sp->s_port;
-#endif
 	}
 
 	/* Get InterNet address */
@@ -320,7 +269,6 @@ void (*errlog)();
 		sinhim.sin_family = AF_INET;
 		sinhim.sin_addr.s_addr = inet_addr(host);
 	} else {
-#ifdef BSD
 		if( (hp = gethostbyname(host)) == NULL )  {
 			sprintf(errbuf,"pkg_open(%s,%s): unknown host\n",
 				host, service );
@@ -329,19 +277,17 @@ void (*errlog)();
 		}
 		sinhim.sin_family = hp->h_addrtype;
 		bcopy(hp->h_addr, (char *)&sinhim.sin_addr, hp->h_length);
-#endif
 	}
 	addr = (struct sockaddr *) &sinhim;
 	addrlen = sizeof(struct sockaddr_in);
 
-#ifdef BSD
 ready:
 	if( (netfd = socket(addr->sa_family, SOCK_STREAM, 0)) < 0 )  {
 		pkg_perror( errlog, "pkg_open:  client socket" );
 		return(PKC_ERROR);
 	}
 
-#if BSD >= 43 && defined(TCP_NODELAY)
+#if defined(TCP_NODELAY)
 	/* SunOS 3.x defines it but doesn't support it! */
 	if( addr->sa_family == AF_INET ) {
 		int	on = 1;
@@ -357,7 +303,6 @@ ready:
 		close(netfd);
 		return(PKC_ERROR);
 	}
-#endif
 	return( pkg_makeconn(netfd, switchp, errlog) );
 }
 
@@ -410,7 +355,7 @@ int backlog;
 void (*errlog)();
 {
 	struct sockaddr_in sinme;
-#ifdef HAS_UNIX_DOMAIN_SOCKETS
+#ifdef HAVE_UNIX_DOMAIN_SOCKETS
 	struct sockaddr_un sunme;		/* UNIX Domain */
 #endif
 	register struct servent *sp;
@@ -434,7 +379,7 @@ void (*errlog)();
 
 	bzero((char *)&sinme, sizeof(sinme));
 
-#ifdef HAS_UNIX_DOMAIN_SOCKETS
+#ifdef HAVE_UNIX_DOMAIN_SOCKETS
 	if( service != NULL && service[0] == '/' ) {
 		/* UNIX Domain socket */
 		strncpy( sunme.sun_path, service, sizeof(sunme.sun_path) );
@@ -448,7 +393,6 @@ void (*errlog)();
 	if( atoi(service) > 0 )  {
 		sinme.sin_port = htons((unsigned short)atoi(service));
 	} else {
-#ifdef BSD
 		if( (sp = getservbyname( service, "tcp" )) == NULL )  {
 			sprintf(errbuf,
 				"pkg_permserver(%s,%d): unknown service\n",
@@ -457,14 +401,12 @@ void (*errlog)();
 			return(-1);
 		}
 		sinme.sin_port = sp->s_port;
-#endif
 	}
 	pkg_permport = sinme.sin_port;		/* XXX -- needs formal I/F */
 	sinme.sin_family = AF_INET;
 	addr = (struct sockaddr *) &sinme;
 	addrlen = sizeof(struct sockaddr_in);
 
-#ifdef BSD
 ready:
 	if( (pkg_listenfd = socket(addr->sa_family, SOCK_STREAM, 0)) < 0 )  {
 		pkg_perror( errlog, "pkg_permserver:  socket" );
@@ -476,7 +418,7 @@ ready:
 		    (char *)&on, sizeof(on) ) < 0 )  {
 			pkg_perror( errlog, "pkg_permserver: setsockopt SO_REUSEADDR" );
 		}
-#if BSD >= 43 && defined(TCP_NODELAY)
+#if defined(TCP_NODELAY)
 		/* SunOS 3.x defines it but doesn't support it! */
 		if( setsockopt( pkg_listenfd, IPPROTO_TCP, TCP_NODELAY,
 		    (char *)&on, sizeof(on) ) < 0 )  {
@@ -497,7 +439,6 @@ ready:
 		close(pkg_listenfd);
 		return(-1);
 	}
-#endif
 	return(pkg_listenfd);
 }
 
@@ -518,7 +459,6 @@ pkg_getclient(fd, switchp, errlog, nodelay)
 struct pkg_switch *switchp;
 void (*errlog)();
 {
-#ifdef BSD
 	struct sockaddr_in from;
 	register int s2;
 	auto int fromlen = sizeof (from);
@@ -544,11 +484,7 @@ void (*errlog)();
 	}
 #endif
 	do  {
-#if __STDC__
 		s2 = accept(fd, (struct sockaddr *)&from, &fromlen);
-#else
-		s2 = accept(fd, (char *)&from, &fromlen);
-#endif
 		if (s2 < 0) {
 			if(errno == EINTR)
 				continue;
@@ -569,7 +505,6 @@ void (*errlog)();
 #endif
 
 	return( pkg_makeconn(s2, switchp, errlog) );
-#endif
 }
 
 /*
@@ -715,7 +650,7 @@ char *buf;
 int len;
 register struct pkg_conn *pc;
 {
-#ifdef HAS_WRITEV
+#ifdef HAVE_WRITEV
 	static struct iovec cmdvec[2];
 #endif
 	static struct pkg_header hdr;
@@ -758,7 +693,7 @@ register struct pkg_conn *pc;
 	pkg_pshort( hdr.pkh_type, type );	/* should see if valid type */
 	pkg_plong( hdr.pkh_len, len );
 
-#ifdef HAS_WRITEV
+#ifdef HAVE_WRITEV
 	cmdvec[0].iov_base = (caddr_t)&hdr;
 	cmdvec[0].iov_len = sizeof(hdr);
 	cmdvec[1].iov_base = (caddr_t)buf;
@@ -845,7 +780,7 @@ char *buf1, *buf2;
 int len1, len2;
 register struct pkg_conn *pc;
 {
-#ifdef HAS_WRITEV
+#ifdef HAVE_WRITEV
 	static struct iovec cmdvec[3];
 #endif
 	static struct pkg_header hdr;
@@ -879,7 +814,7 @@ register struct pkg_conn *pc;
 	pkg_pshort( hdr.pkh_type, type );	/* should see if valid type */
 	pkg_plong( hdr.pkh_len, len1+len2 );
 
-#ifdef HAS_WRITEV
+#ifdef HAVE_WRITEV
 	cmdvec[0].iov_base = (caddr_t)&hdr;
 	cmdvec[0].iov_len = sizeof(hdr);
 	cmdvec[1].iov_base = (caddr_t)buf1;
@@ -1810,8 +1745,8 @@ register struct pkg_conn	*pc;
 int		nodelay;
 {
 	struct timeval	tv;
-	long		bits;
-	register int	i;
+	fd_set		bits;
+	register int	i, j;
 	extern int	errno;
 
 	/* Check socket for unexpected input */
@@ -1820,18 +1755,23 @@ int		nodelay;
 		tv.tv_usec = 0;		/* poll -- no waiting */
 	else
 		tv.tv_usec = 20000;	/* 20 ms */
-	bits = 1 << pc->pkc_fd;
-	i = select( pc->pkc_fd+1, &bits, (char *)0, (char *)0, &tv );
+
+	FD_ZERO(&bits);
+	FD_SET(pc->pkc_fd, &bits);
+	i = select( pc->pkc_fd+1, &bits, (fd_set *)0, (fd_set *)0, &tv );
 	if( pkg_debug )  {
 		pkg_timestamp();
 		fprintf(pkg_debug,
-			"pkg_checkin: select on fd %d returned %d, bits=x%x\n",
+			"pkg_checkin: select on fd %d returned %d\n",
 			pc->pkc_fd,
-			i, bits );
+			i );
 		fflush(pkg_debug);
 	}
 	if( i > 0 )  {
-		if( bits != 0 )  {
+		for( j = 0; j < FD_SETSIZE; j++ ) 
+			if( FD_ISSET( j, &bits ) ) break;
+			
+		if( j >= FD_SETSIZE )  {   /* No fd's in bits! */
 			(void)pkg_suckin(pc);
 		} else {
 			/* Odd condition */
