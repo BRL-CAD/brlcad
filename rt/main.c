@@ -273,7 +273,7 @@ int main(int argc, char **argv)
 	objtab = &(argv[bu_optind+1]);
 
 	if( nobjs <= 0 )  {
-		bu_log("%s: no objects specified\n", argv[0]);
+		bu_log("%s: no objects specified -- raytrace aborted\n", argv[0]);
 		exit(1);
 	}
 
