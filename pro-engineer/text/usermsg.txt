@@ -48,6 +48,6 @@ Proe-BRL
 #
 #
 Proe-BRL-HELP
-Press this button to convert the currently displayed model to BRL-CAD
+Convert the currently displayed model, or select a file to convert, or restart
 #
 #
