@@ -191,7 +191,10 @@ union record *recordp;
 	}
 	(void)memcpy( (char *)sp->s_vlist, (char *)veclist, count );
 
-	/* set solid/dashed line flag */
+	/*
+	 * If this solid is not illuminated, fill in it's information.
+	 * A solid might be illuminated yet vectorized again by redraw().
+	 */
 	if( sp != illump )  {
 		sp->s_iflag = DOWN;
 		sp->s_soldash = dashflag;
@@ -208,17 +211,10 @@ union record *recordp;
 		/* Copy path information */
 		for( i=0; i<=sp->s_last; i++ )
 			sp->s_path[i] = path[i];
-
-		/* Add to linked list of solid structs */
-		APPEND_SOLID( sp, HeadSolid.s_back );
-		dmp->dmr_viewchange( 1, sp );		/* ADD solid */
-	} else {
-		/* replacing illuminated solid -- struct already linked in */
-		sp->s_iflag = UP;
-		dmp->dmr_viewchange( 3, sp );		/* REPLACE solid */
 	}
 
 	/* Cvt to displaylist, determine displaylist memory requirement. */
+	sp->s_addr = 0;
 	if( (sp->s_bytes = dmp->dmr_cvtvecs( sp )) != 0 )  {
 
 		/* Allocate displaylist storage for object */
@@ -229,15 +225,22 @@ union record *recordp;
 			return(-1);		/* ERROR */
 		}
 		sp->s_bytes = dmp->dmr_load( sp->s_addr, sp->s_bytes );
-	} else {
-		sp->s_addr = 0;
-		sp->s_bytes = 0;
 	}
 
-	/* Compute maximum */
+	/* Solid is successfully drawn.  Compute maximum. */
 	MAX( maxview, sp->s_center[X] + sp->s_size );
 	MAX( maxview, sp->s_center[Y] + sp->s_size );
 	MAX( maxview, sp->s_center[Z] + sp->s_size );
+
+	if( sp != illump )  {
+		/* Add to linked list of solid structs */
+		APPEND_SOLID( sp, HeadSolid.s_back );
+		dmp->dmr_viewchange( 1, sp );		/* ADD solid */
+	} else {
+		/* replacing illuminated solid -- struct already linked in */
+		sp->s_iflag = UP;
+		dmp->dmr_viewchange( 3, sp );		/* REPLACE solid */
+	}
 
 	return(1);		/* OK */
 }
