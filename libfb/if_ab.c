@@ -52,28 +52,28 @@ _LOCAL_ int	ab_open(),
 		ab_write(),
 		ab_rmap(),
 		ab_wmap(),
-		ab_window(),
-		ab_zoom(),
+		ab_view(),
+		ab_getview(),
 		ab_cursor(),
+		ab_getcursor(),
 		ab_help();
 
 FBIO abekas_interface = {
 	ab_open,
 	ab_close,
-	fb_null,			/* reset */
 	ab_clear,
 	ab_read,
 	ab_write,
 	ab_rmap,
 	ab_wmap,
-	fb_null,			/* viewport */
-	ab_window,
-	ab_zoom,
+	ab_view,
+	ab_getview,
 	fb_null,			/* setcursor */
 	ab_cursor,
-	fb_null,			/* scursor */
+	ab_getcursor,
 	fb_sim_readrect,
 	fb_sim_writerect,
+	fb_null,			/* poll */
 	fb_null,			/* flush */
 	ab_close,			/* free */
 	ab_help,
@@ -83,7 +83,11 @@ FBIO abekas_interface = {
 	"/dev/ab",
 	720,				/* current/default width */
 	486,				/* current/default height */
+	-1,				/* select fd */
 	-1,				/* file descriptor */
+	1, 1,				/* zoom */
+	360, 243,			/* window center */
+	0, 0, 0,			/* cursor */
 	PIXEL_NULL,			/* page_base */
 	PIXEL_NULL,			/* page_curp */
 	PIXEL_NULL,			/* page_endp */
@@ -554,26 +558,47 @@ FBIO	*ifp;
 int	mode;
 int	x, y;
 {
+	fb_sim_cursor(ifp, mode, x, y);
+
 	return(-1);
 }
 
 /*
  */
 _LOCAL_ int
-ab_window( ifp, x, y )
+ab_getcursor( ifp, mode, x, y )
 FBIO	*ifp;
-int	x, y;
+int	*mode;
+int	*x, *y;
 {
+	fb_sim_getcursor(ifp, mode, x, y);
+
 	return(-1);
 }
 
 /*
  */
 _LOCAL_ int
-ab_zoom( ifp, x, y )
+ab_view( ifp, xcenter, ycenter, xzoom, yzoom )
 FBIO	*ifp;
-int	x, y;
+int	xcenter, ycenter;
+int	xzoom, yzoom;
 {
+	fb_sim_view(ifp, xcenter, ycenter, xzoom, yzoom);
+
+	return(-1);
+}
+
+/*
+ */
+_LOCAL_ int
+ab_getview( ifp, xcenter, ycenter, xzoom, yzoom )
+FBIO	*ifp;
+int	*xcenter, *ycenter;
+int	*xzoom, *yzoom;
+{
+	fb_sim_getview(ifp, xcenter, ycenter, xzoom, yzoom);
+
 	return(-1);
 }
 
@@ -994,7 +1019,9 @@ unsigned char *yuv_buf;
 {
 	register unsigned char *rgbp;
 	register unsigned char *yuvp;
-	register double	y, u, v;
+	register double	y;
+	register double	u = 0.0;
+	register double	v;
 	register int	pixel;
 	int		last;
 
