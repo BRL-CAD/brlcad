@@ -351,6 +351,11 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 	(a)[Y] = (b)[Y] + (c)*(d)[Y] + (e)*(f)[Y] + (g)*(h)[Y] + (i)*(j)[Y];\
 	(a)[Z] = (b)[Z] + (c)*(d)[Z] + (e)*(f)[Z] + (g)*(h)[Z] + (i)*(j)[Z]
 
+#define VJOIN3(a,b,c,d,e,f,g,h)	\
+	(a)[X] = (b)[X] + (c)*(d)[X] + (e)*(f)[X] + (g)*(h)[X];\
+	(a)[Y] = (b)[Y] + (c)*(d)[Y] + (e)*(f)[Y] + (g)*(h)[Y];\
+	(a)[Z] = (b)[Z] + (c)*(d)[Z] + (e)*(f)[Z] + (g)*(h)[Z]
+
 /* Compose vector at `a' of:
  *	Vector at `b' plus
  *	scalar `c' times vector at `d' plus
