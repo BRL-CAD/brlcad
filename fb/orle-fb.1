@@ -21,7 +21,7 @@ or a similar program)
 to a frame buffer device or a file.
 If
 .I file.rle\^
-is not specified, the standard input is read.
+is not specified, standard input is read.
 .I Rle-fb\^
 determines the type and size of the saved file (color or B&W)
 and acts accordingly.
@@ -44,7 +44,7 @@ before output will begin appearing.
 .TP
 .B \-v
 Provides a verbose description of the parameters of the saved image
-on the standard error output.
+on standard error.
 .TP
 .B \-O
 Restores the image data in \fIoverlay\fP mode.
@@ -75,7 +75,7 @@ can be any of
 .TP
 .BI \-p "x y"
 Reposition the image.
-The original upper left corner is positioned at
+The original lower left corner is positioned at
 .RI ( x\^ ", " y\^ )
 before restoring the image.
 Warning:
