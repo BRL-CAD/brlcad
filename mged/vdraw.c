@@ -60,6 +60,18 @@ In the above listing:
 	for commands 2 and 6 they represent normal vectors
 
 author - Carl Nuzman
+
+Example Use -
+	vdraw open rays
+	vdraw delete all
+	foreach partition $ray {
+		...stuff...
+		vdraw write next 0 $inpt
+		vdraw write next 1 $outpt
+	}
+	vdraw send
+
+
 ********************************************************************/
 #include "conf.h"
 
@@ -121,6 +133,9 @@ struct bu_list *hp;
 }
 #endif
 
+/*
+ *			C M D _ V D R A W
+ */
 int
 cmd_vdraw(clientData, interp, argc, argv)
 ClientData clientData;
@@ -169,11 +184,11 @@ char **argv;
 	switch ( argv[1][0] ) {
 	case 'w': /*write*/
 		if (!curhead) {
-			Tcl_AppendResult(interp, "vdraw: no vlist is currently open.", (char *)NULL);
+			Tcl_AppendResult(interp, "vdraw write: no vlist is currently open.", (char *)NULL);
 			return TCL_ERROR;
 		}
-		if (argc < 7){
-			Tcl_AppendResult(interp, "vdraw: not enough args\n", (char *)NULL);
+		if (argc < 5){
+			Tcl_AppendResult(interp, "vdraw write: not enough args\n", (char *)NULL);
 			return TCL_ERROR;
 		}
 		if (argv[2][0] == 'n') { /* next */
@@ -237,9 +252,18 @@ char **argv;
 			Tcl_AppendResult(interp, "vdraw: cmd not an integer\n", (char *)NULL);
 			return TCL_ERROR;
 		}
-		cp->pt[index][0] = atof(argv[4]);
-		cp->pt[index][1] = atof(argv[5]);
-		cp->pt[index][2] = atof(argv[6]);
+		if( argc == 7 )  {
+			cp->pt[index][0] = atof(argv[4]);
+			cp->pt[index][1] = atof(argv[5]);
+			cp->pt[index][2] = atof(argv[6]);
+		} else {
+			if( argc != 5 ||
+			    bn_decode_vect( cp->pt[index], argv[4] ) != 3 )  {
+				Tcl_AppendResult(interp,
+					"vdraw write: wrong # args, need either x y z or {x y z}\n", (char *)NULL);
+				return TCL_ERROR;
+			}
+		}
 		/* increment counter only if writing onto end */
 		if (index == cp->nused)
 			cp->nused++;
