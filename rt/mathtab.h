@@ -21,7 +21,7 @@
  */
 extern double pi, twopi, halfpi;
 
-#define RANDTABSIZE	2048
+#define RANDTABSIZE	2047	/* Powers of two give streaking */
 #define	SINTABSIZE	2048
 
 extern float *rand_ptr;
