@@ -16,7 +16,7 @@
 
 /*LINTLIBRARY*/
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static const char RCSid[] = "@(#)$Header$ (BRL)";
 static char sccsTag[] = "%Z% %M% %I%, modified %G% at %U%, archive %P%";
 #endif
 

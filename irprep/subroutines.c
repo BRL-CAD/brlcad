@@ -17,7 +17,7 @@
 /*	18 November 1991 - Put /n/walrus/usr/brlcad/include into includes.  */
 
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"

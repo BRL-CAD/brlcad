@@ -7,7 +7,7 @@
 	Modified:	Gary S. Moss	(Added roll rotation.)
 */
 #ifndef lint
-static char RCSid[] = "$Header$ (BRL)";
+static const char RCSid[] = "$Header$ (BRL)";
 #endif
 #include <math.h>
 #include "machine.h"
