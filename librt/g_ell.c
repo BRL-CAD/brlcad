@@ -131,10 +131,11 @@ struct ell_specific {
  *  	A struct ell_specific is created, and it's address is stored in
  *  	stp->st_specific for use by ell_shot().
  */
-ell_prep( vec, stp, mat )
-register fastf_t *vec;
-struct soltab *stp;
-matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
+ell_prep( vec, stp, mat, rtip )
+register fastf_t	*vec;
+struct soltab		*stp;
+matp_t			mat;
+struct rt_i		*rtip;
 {
 	register struct ell_specific *ell;
 	LOCAL fastf_t	magsq_a, magsq_b, magsq_c;
@@ -550,4 +551,24 @@ register struct uvcoord *uvp;
 	r = ap->a_rbeam + ap->a_diverge * hitp->hit_dist;
 	uvp->uv_du = uvp->uv_dv =
 		rt_inv2pi * r / stp->st_aradius;
+}
+
+/*
+ *			E L L _ F R E E
+ */
+ell_free( stp )
+register struct soltab *stp;
+{
+	register struct ell_specific *ell =
+		(struct ell_specific *)stp->st_specific;
+
+	rt_free( (char *)ell, "ell_specific" );
+}
+
+ell_class()
+{
+}
+
+ell_plot()
+{
 }

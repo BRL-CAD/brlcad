@@ -84,6 +84,7 @@ struct mater_info	*materp;
 
 	switch( anp->an_type )  {
 	case AN_MATRIX:
+/*rt_log("rt_do_anim(x%x), matrix, op=%d\n", anp, anp->an_u.anu_m.anm_op);*/
 		switch( anp->an_u.anu_m.anm_op )  {
 		case ANM_RSTACK:
 			mat_copy( stack, anp->an_u.anu_m.anm_mat );
@@ -127,7 +128,9 @@ rt_fr_anim( rtip )
 register struct rt_i *rtip;
 {
 	register struct animate *anp;
+	register struct directory *dp;
 
+	/* Rooted animations */
 	for( anp = rtip->rti_anroot; anp != ANIM_NULL; )  {
 		register struct animate *nextanp = anp->an_forw;
 
@@ -136,4 +139,16 @@ register struct rt_i *rtip;
 		anp = nextanp;
 	}
 	rtip->rti_anroot = ANIM_NULL;
+
+	/* Node animations */
+	for( dp = rtip->rti_DirHead; dp != DIR_NULL; dp = dp->d_forw )  {
+		for( anp = dp->d_animate; anp != ANIM_NULL; )  {
+			register struct animate *nextanp = anp->an_forw;
+
+			rt_free( (char *)anp->an_path, "animation path[]");
+			rt_free( (char *)anp, "struct animate");
+			anp = nextanp;
+		}
+		dp->d_animate = ANIM_NULL;
+	}
 }

@@ -155,10 +155,11 @@ struct tor_specific {
  *  	A struct tor_specific is created, and it's address is stored in
  *  	stp->st_specific for use by tor_shot().
  */
-tor_prep( vec, stp, mat )
-register fastf_t *vec;
-struct soltab *stp;
-matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
+tor_prep( vec, stp, mat, rtip )
+register fastf_t	*vec;
+struct soltab		*stp;
+matp_t			mat;
+struct rt_i		*rtip;
 {
 	register struct tor_specific *tor;
 	LOCAL fastf_t	magsq_a, magsq_b, magsq_h;
@@ -590,5 +591,25 @@ struct xray *rp;
 }
 
 tor_uv()
+{
+}
+
+/*
+ *			T O R _ F R E E
+ */
+tor_free( stp )
+struct soltab *stp;
+{
+	register struct tor_specific *tor =
+		(struct tor_specific *)stp->st_specific;
+
+	rt_free( (char *)tor, "tor_specific");
+}
+
+tor_class()
+{
+}
+
+tor_plot()
 {
 }

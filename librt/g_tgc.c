@@ -73,10 +73,11 @@ struct  tgc_specific {
  *  space to the original space.  This NOT the inverse of the transformation
  *  matrix (if you really want to know why, talk to Ed Davisson).
  */
-tgc_prep( vec, stp, mat )
-register fastf_t *vec;
-struct soltab *stp;
-matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
+tgc_prep( vec, stp, mat, rtip )
+register fastf_t	*vec;
+struct soltab		*stp;
+matp_t			mat;
+struct rt_i		*rtip;
 {
 	register struct tgc_specific *tgc;
 	LOCAL fastf_t	magsq_h, magsq_a, magsq_b, magsq_c, magsq_d;
@@ -894,4 +895,29 @@ register struct xray *rp;
 
 tgc_uv()
 {
+}
+
+/*
+ *			T G C _ F R E E
+ */
+tgc_free( stp )
+struct soltab *stp;
+{
+	register struct tgc_specific	*tgc =
+		(struct tgc_specific *)stp->st_specific;
+
+	rt_free( (char *)tgc, "tgc_specific");
+}
+
+tgc_class()
+{
+}
+
+tgc_plot()
+{
+}
+
+tgc_curve()
+{
+	rt_log("tgc_curve?\n");
 }

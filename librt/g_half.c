@@ -119,10 +119,11 @@ register fastf_t *out, *in;
 /*
  *  			H L F _ P R E P
  */
-hlf_prep( vec, stp, mat )
-fastf_t *vec;
-struct soltab *stp;
-matp_t mat;
+hlf_prep( vec, stp, mat, rtip )
+fastf_t		*vec;
+struct soltab	*stp;
+matp_t		mat;
+struct rt_i	*rtip;
 {
 	register struct half_specific *halfp;
 	FAST fastf_t f;
@@ -369,4 +370,24 @@ register struct uvcoord *uvp;
 		rt_pr_hit( "hlf_uv", hitp );
 		uvp->uv_du = uvp->uv_dv = 0;
 	}
+}
+
+/*
+ *			H L F _ F R E E
+ */
+hlf_free( stp )
+struct soltab *stp;
+{
+	register struct half_specific *halfp =
+		(struct half_specific *)stp->st_specific;
+
+	rt_free( (char *)halfp, "half_specific");
+}
+
+hlf_class()
+{
+}
+
+hlf_plot()
+{
 }

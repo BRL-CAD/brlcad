@@ -76,11 +76,11 @@ rt_log("Cut: Tree Depth=%d, Leaf Len=%d\n", rt_cutDepth, rt_cutLen );
 	if(rt_g.debug&DEBUG_PLOTBOX && (plotfp=fopen("rtbox.plot", "w"))!=NULL) {
 		space3( 0,0,0, 4096, 4096, 4096);
 		/* First, all the cutting boxes */
-		rt_plot_cut( &rtip->rti_CutHead, 0 );
+		rt_plot_cut( rtip, &rtip->rti_CutHead, 0 );
 		/* Then, all the solid bounding boxes, in white */
 		plot_color( 255, 255, 255 );
 		for(stp=rtip->HeadSolid; stp != SOLTAB_NULL; stp=stp->st_forw)  {
-			rt_draw_box( stp->st_min, stp->st_max );
+			rt_draw_box( rtip, stp->st_min, stp->st_max );
 		}
 		(void)fclose(plotfp);
 	}
@@ -376,6 +376,7 @@ rt_ct_get()
 	}
 	cutp = rt_g.rtg_CutFree;
 	rt_g.rtg_CutFree = cutp->cut_forw;
+	cutp->cut_forw = CUTTER_NULL;
 	return(cutp);
 }
 
@@ -461,22 +462,27 @@ int lvl;			/* recursion level */
  * 
  *  Free a whole cut tree.
  *  The strategy we use here is to free everything BELOW the given
- *  node, so as not to clobber rt_i.rti_CutHead !
+ *  node, so as not to clobber rti_CutHead !
  */
 rt_fr_cut( cutp )
 register union cutter *cutp;
 {
 
-	if( cutp == CUTTER_NULL )
+	if( cutp == CUTTER_NULL )  {
+		rt_log("rt_fr_cut NULL\n");
 		return;
+	}
 
 	switch( cutp->cut_type )  {
 
 	case CUT_CUTNODE:
 		rt_fr_cut( cutp->cn.cn_l );
 		rt_ct_free( cutp->cn.cn_l );
+		cutp->cn.cn_l = CUTTER_NULL;
+
 		rt_fr_cut( cutp->cn.cn_r );
 		rt_ct_free( cutp->cn.cn_r );
+		cutp->cn.cn_r = CUTTER_NULL;
 		return;
 
 	case CUT_BOXNODE:
@@ -495,21 +501,22 @@ register union cutter *cutp;
  *  			R T _ P L O T _ C U T
  */
 HIDDEN void
-rt_plot_cut( cutp, lvl )
-register union cutter *cutp;
-int lvl;
+rt_plot_cut( rtip, cutp, lvl )
+struct rt_i		*rtip;
+register union cutter	*cutp;
+int			lvl;
 {
 	switch( cutp->cut_type )  {
 	case CUT_CUTNODE:
-		rt_plot_cut( cutp->cn.cn_l, lvl+1 );
-		rt_plot_cut( cutp->cn.cn_r, lvl+1 );
+		rt_plot_cut( rtip, cutp->cn.cn_l, lvl+1 );
+		rt_plot_cut( rtip, cutp->cn.cn_r, lvl+1 );
 		return;
 	case CUT_BOXNODE:
 		/* Should choose color based on lvl, need a table */
 		plot_color( (AXIS(lvl)==0)?255:0,
 			(AXIS(lvl)==1)?255:0,
 			(AXIS(lvl)==2)?255:0 );
-		rt_draw_box( cutp->bn.bn_min, cutp->bn.bn_max );
+		rt_draw_box( rtip, cutp->bn.bn_min, cutp->bn.bn_max );
 		return;
 	}
 	return;
@@ -523,24 +530,26 @@ int lvl;
  *  will fall out on plotfp.
  */
 void
-rt_draw_box( a, b )
-register vect_t a, b;
+rt_draw_box( rtip, a, b )
+register struct rt_i	*rtip;
+register vect_t		a, b;
 {
 	int ax, ay, az;
 	int bx, by, bz;
 	double conv, f;
-	conv = 4096.0 / (rt_i.mdl_max[X]-rt_i.mdl_min[X]);
-	f = 4096.0 / (rt_i.mdl_max[Y]-rt_i.mdl_min[Y]);
+
+	conv = 4096.0 / (rtip->mdl_max[X] - rtip->mdl_min[X]);
+	f = 4096.0 / (rtip->mdl_max[Y] - rtip->mdl_min[Y]);
 	if( f < conv )  conv = f;
-	f = 4096.0 / (rt_i.mdl_max[Z]-rt_i.mdl_min[Z]);
+	f = 4096.0 / (rtip->mdl_max[Z] - rtip->mdl_min[Z]);
 	if( f < conv )  conv = f;
 
-	ax =	(a[X]-rt_i.mdl_min[X])*conv;
-	ay =	(a[Y]-rt_i.mdl_min[Y])*conv;
-	az =	(a[Z]-rt_i.mdl_min[Z])*conv;
-	bx =	(b[X]-rt_i.mdl_min[X])*conv;
-	by =	(b[Y]-rt_i.mdl_min[Y])*conv;
-	bz =	(b[Z]-rt_i.mdl_min[Z])*conv;
+	ax =	(a[X] - rtip->mdl_min[X])*conv;
+	ay =	(a[Y] - rtip->mdl_min[Y])*conv;
+	az =	(a[Z] - rtip->mdl_min[Z])*conv;
+	bx =	(b[X] - rtip->mdl_min[X])*conv;
+	by =	(b[Y] - rtip->mdl_min[Y])*conv;
+	bz =	(b[Z] - rtip->mdl_min[Z])*conv;
 
 	move3( ax, ay, az );
 	cont3( bx, ay, az );

@@ -4,6 +4,13 @@
  * Ray Tracing program, storage manager.
  *
  *  Functions -
+ *	rt_malloc	Allocate storage, with visibility & checking
+ *	rt_free		Similarly, free storage
+ *	rt_prmem	When debugging, print memory map
+ *	rt_strdup	Duplicate a string in dynamic memory
+ *	rt_get_seg	Invoked by GET_SEG() macro
+ *	rt_get_pt	Invoked by GET_PT() macro
+ *	rt_byte_roundup	Optimize sizing of malloc() requests
  *
  *  Author -
  *	Michael John Muuss
@@ -11,10 +18,10 @@
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
+ *	Aberdeen Proving Ground, Maryland  21005-5066
  *  
  *  Copyright Notice -
- *	This software is Copyright (C) 1985 by the United States Army.
+ *	This software is Copyright (C) 1987 by the United States Army.
  *	All rights reserved.
  */
 #ifndef lint
@@ -27,6 +34,17 @@ static char RCSstorage[] = "@(#)$Header$";
 #include "raytrace.h"
 #include "./debug.h"
 
+#define MEMDEBUG 1
+
+#ifdef MEMDEBUG
+#define MDB_SIZE	500
+#define MDB_MAGIC	0x12348969
+struct memdebug {
+	char	*mdb_addr;
+	char	*mdb_str;
+	int	mdb_len;
+} rt_mdb[MDB_SIZE];
+#endif MEMDEBUG
 
 /*
  *			R T _ M A L L O C
@@ -39,14 +57,35 @@ char *str;
 	register char *ptr;
 	extern char *malloc();
 
-	RES_ACQUIRE( &rt_g.res_malloc );		/* lock */
+#ifdef MEMDEBUG
+	cnt = (cnt+2*sizeof(int)-1)&(~(sizeof(int)-1));
+#endif MEMDEBUG
+	RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
 	ptr = malloc(cnt);
-	RES_RELEASE( &rt_g.res_malloc );		/* unlock */
+	RES_RELEASE( &rt_g.res_syscall );		/* unlock */
 
 	if( ptr==(char *)0 || rt_g.debug&DEBUG_MEM )
-		rt_log("%x=malloc(%d) %s\n", ptr, cnt, str);
+		rt_log("%7x malloc%5d %s\n", ptr, cnt, str);
 	if( ptr==(char *)0 )
 		rt_bomb("rt_malloc: malloc failure");
+#ifdef MEMDEBUG
+	{
+		register struct memdebug *mp = rt_mdb;
+		for( ; mp < &rt_mdb[MDB_SIZE]; mp++ )  {
+			if( mp->mdb_len > 0 )  continue;
+			mp->mdb_addr = ptr;
+			mp->mdb_len = cnt;
+			mp->mdb_str = str;
+			goto ok;
+		}
+		rt_log("rt_malloc:  memdebug overflow\n");
+	}
+ok:	;
+	{
+		register int *ip = (int *)(ptr+cnt-sizeof(int));
+		*ip = MDB_MAGIC;
+	}
+#endif MEMDEBUG
 	return(ptr);
 }
 
@@ -57,17 +96,65 @@ void
 rt_free(ptr,str)
 char *ptr;
 {
-	RES_ACQUIRE( &rt_g.res_malloc );		/* lock */
+#ifdef MEMDEBUG
+	{
+		register struct memdebug *mp = rt_mdb;
+		for( ; mp < &rt_mdb[MDB_SIZE]; mp++ )  {
+			if( mp->mdb_len <= 0 )  continue;
+			if( mp->mdb_addr != ptr )  continue;
+			{
+				register int *ip = (int *)(ptr+mp->mdb_len-sizeof(int));
+				if( *ip != MDB_MAGIC )  {
+					rt_log("ERROR rt_free(x%x, %s) corrupted! x%x!=x%x\n", ptr, str, *ip, MDB_MAGIC);
+					return;
+				}
+			}
+			mp->mdb_len = 0;	/* successful free */
+			goto ok;
+		}
+		rt_log("ERROR rt_free(x%x, %s) bad pointer!\n", ptr, str);
+		return;
+	}
+ok:	;
+#endif MEMDEBUG
+
+	RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
 	*((int *)ptr) = -1;	/* zappo! */
 	free(ptr);
-	RES_RELEASE( &rt_g.res_malloc );		/* unlock */
-	if(rt_g.debug&DEBUG_MEM) rt_log("%x freed %s\n", ptr, str);
+	RES_RELEASE( &rt_g.res_syscall );		/* unlock */
+	if(rt_g.debug&DEBUG_MEM) rt_log("%7x freed %s\n", ptr, str);
+}
+
+/*
+ *			R T _ P R M E M
+ * 
+ *  Print map of memory currently in use.
+ */
+void
+rt_prmem(str)
+char *str;
+{
+#ifdef MEMDEBUG
+	register struct memdebug *mp = rt_mdb;
+	register int *ip;
+
+	rt_log("\nRT memory use\t\t%s\n", str);
+	for( ; mp < &rt_mdb[MDB_SIZE]; mp++ )  {
+		if( mp->mdb_len <= 0 )  continue;
+		ip = (int *)(mp->mdb_addr+mp->mdb_len-sizeof(int));
+		rt_log("%7x %5x %s %s\n",
+			mp->mdb_addr, mp->mdb_len, mp->mdb_str,
+			*ip!=MDB_MAGIC ? "-BAD-" : "" );
+		if( *ip != MDB_MAGIC )
+			rt_log("\t%x\t%x\n", *ip, MDB_MAGIC);
+	}
+#endif MEMDEBUG
 }
 
 /*
  *			R T _ S T R D U P
  *
- * Given a string, allocate enough memory to hold it using malloc(),
+ * Given a string, allocate enough memory to hold it using rt_malloc(),
  * duplicate the strings, returns a pointer to the new string.
  */
 char *
@@ -122,23 +209,28 @@ register struct resource *res;
  *  
  *  This routine is called by the GET_PT macro when the freelist
  *  is exhausted.  Rather than simply getting one additional structure,
- *  we get a whole batch, saving overhead.  When this routine is called,
- *  the partition resource must already be locked.
- *  malloc() locking is done in rt_malloc.
+ *  we get a whole batch, saving overhead.
  *
  *  Also note that there is a bit of trickery going on here:
  *  the *real* size of pt_solhit[] array is determined at runtime, here.
+ *  XXX WARNING:  If multiple models are being used, we need to cope
+ *  XXX with their differing size requirements, nworkers * N(rt_i)!
  */
 void
-rt_get_pt(res)
+rt_get_pt(rtip, res)
+struct rt_i		*rtip;
 register struct resource *res;
 {
 	register char *cp;
 	register int bytes;
 	register int size;		/* size of structure to really get */
 
-	size = PT_BYTES;		/* depends on rt_i.nsolids */
-	size = (size + sizeof(long) -1) & (~(sizeof(long)-1));
+	if( rtip->rti_magic != RTI_MAGIC )  rt_bomb("rt_get_pt:  bad rtip\n");
+
+	size = rtip->rti_pt_bytes;
+	size = (size + sizeof(bitv_t)-1) & (~(sizeof(bitv_t)-1));
+	if( size <= 0 )
+		rt_bomb("rt_get_pt: bad size");
 	bytes = rt_byte_roundup(64*size);
 	if( (cp = rt_malloc(bytes, "rt_get_pt")) == (char *)0 )  {
 		rt_log("rt_get_pt: malloc failure\n");
@@ -178,8 +270,11 @@ register int nbytes;
 	register int n;
 	register int amt;
 
+#ifdef SYSV
+	return(nbytes);
+#else
 	if (pagesz == 0)
-		pagesz = 1024;		/* getpagesize(); */
+		pagesz = getpagesize();
 
 #define OVERHEAD	(4*sizeof(unsigned char) + \
 			2*sizeof(unsigned short) + \
@@ -193,4 +288,5 @@ register int nbytes;
 		amt <<= 1;
 	}
 	return(amt-OVERHEAD-sizeof(int));
+#endif
 }

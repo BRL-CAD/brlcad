@@ -120,10 +120,11 @@ register struct application *ap;
 
 	HeadSeg = SEG_NULL;
 	waitsegs = SEG_NULL;
-	GET_BITV( solidbits, ap->a_resource );	/* see rt_get_bitv() for details */
+
+	/* XXX WARNING this needs attention for multiple rt_i sizes */
+	GET_BITV( ap->a_rt_i, solidbits, ap->a_resource );	/* see rt_get_bitv() for details */
+	bzero( (char *)solidbits, ap->a_rt_i->rti_bv_bytes );
 	regionbits = &solidbits->be_v[2+(BITS2BYTES(ap->a_rt_i->nsolids)/sizeof(bitv_t))];
-	BITZERO(solidbits->be_v,ap->a_rt_i->nsolids);
-	BITZERO(regionbits,ap->a_rt_i->nregions);
 
 	/* Verify that direction vector has unit length */
 	if(rt_g.debug) {
@@ -180,6 +181,9 @@ register struct application *ap;
 			register struct seg *newseg;
 
 			stp = *stpp;
+			if( stp->st_id < 0 || stp->st_id >= rt_nfunctab )
+				rt_bomb("rt_shootray:  bad st_id 1");
+
 			/* Shoot a ray */
 			if(rt_g.debug&DEBUG_SHOOT)rt_log("shooting %s\n", stp->st_name);
 			BITSET( solidbits->be_v, stp->st_bit );
@@ -343,6 +347,9 @@ rt_log("\nrt_shootray:  missed box: rmin,rmax(%g,%g) box(%g,%g)\n",
 			register struct seg *newseg;
 
 			stp = *stpp;
+			if( stp->st_id < 0 || stp->st_id >= rt_nfunctab )
+				rt_bomb("rt_shootray:  bad st_id 2");
+
 			if( BITTEST( solidbits->be_v, stp->st_bit ) )  {
 				if(rt_g.debug&DEBUG_SHOOT)rt_log("skipping %s\n", stp->st_name);
 				ap->a_rt_i->nmiss_tree++;
@@ -401,7 +408,7 @@ rt_log("\nrt_shootray:  missed box: rmin,rmax(%g,%g) box(%g,%g)\n",
 		/* Only run this every three hits, to balance cost/benefit */
 		if( trybool>=3 && ap->a_onehit && waitsegs != SEG_NULL )  {
 			/* Weave these segments into partition list */
-			rt_boolweave( waitsegs, &InitialPart, ap->a_resource );
+			rt_boolweave( waitsegs, &InitialPart, ap );
 
 			/* Add segment chain to list of used segments */
 			{
@@ -436,7 +443,7 @@ weave:
 	if( waitsegs != SEG_NULL )  {
 		register struct seg *seg2 = waitsegs;
 
-		rt_boolweave( waitsegs, &InitialPart, ap->a_resource );
+		rt_boolweave( waitsegs, &InitialPart, ap );
 
 		/* Add segment chain to list of used segments */
 		while( seg2->seg_next != SEG_NULL )
@@ -668,14 +675,15 @@ int nbits;
  *  the *real* size of be_v[] array is determined at runtime, here.
  */
 void
-rt_get_bitv(res)
+rt_get_bitv(rtip, res)
+struct rt_i		*rtip;
 register struct resource *res;
 {
 	register char *cp;
 	register int bytes;
 	register int size;		/* size of structure to really get */
 
-	size = BITS2BYTES(rt_i.nsolids) + BITS2BYTES(rt_i.nregions) + 4*sizeof(bitv_t);
+	size = rtip->rti_bv_bytes;
 	size = (size+sizeof(long)-1) & ~(sizeof(long)-1);
 	bytes = rt_byte_roundup(16*size);
 	if( (cp = rt_malloc(bytes, "rt_get_bitv")) == (char *)0 )  {

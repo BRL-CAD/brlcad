@@ -55,14 +55,16 @@ static char RCSbool[] = "@(#)$Header$ (BRL)";
  *  than a pointer, but that's more cycles than the neatness is worth.
  */
 void
-rt_boolweave( segp_in, PartHdp, res )
+rt_boolweave( segp_in, PartHdp, ap )
 struct seg		*segp_in;
 struct partition	*PartHdp;
-struct resource		*res;
+struct application	*ap;
 {
 	register struct seg *segp;
 	register struct partition *pp;
+	struct resource		*res = ap->a_resource;
 
+	if( ap->a_rt_i->rti_magic != RTI_MAGIC )  rt_bomb("rt_boolweave:  bad rtip\n");
 	if(rt_g.debug&DEBUG_PARTITION)
 		rt_log("-------------------BOOL_WEAVE\n");
 	for( segp = segp_in; segp != SEG_NULL; segp = segp->seg_next )  {
@@ -72,6 +74,7 @@ struct resource		*res;
 		LOCAL lastflip;
 
 		if(rt_g.debug&DEBUG_PARTITION) rt_pr_seg(segp);
+		if( segp->seg_stp->st_bit >= ap->a_rt_i->nsolids) rt_bomb("rt_boolweave: st_bit");
 
 		/* Totally ignore things behind the start position */
 		if( segp->seg_out.hit_dist < -10.0 )
@@ -103,7 +106,7 @@ struct resource		*res;
 		 */
 		if( PartHdp->pt_forw == PartHdp )  {
 			/* No partitions yet, simple! */
-			GET_PT_INIT( pp, res );
+			GET_PT_INIT( ap->a_rt_i, pp, res );
 			BITSET(pp->pt_solhit, segp->seg_stp->st_bit);
 			pp->pt_inseg = segp;
 			pp->pt_inhit = &segp->seg_in;
@@ -118,7 +121,7 @@ struct resource		*res;
 			 * Segment starts exactly at last partition's end,
 			 * or beyond last partitions end.  Make new partition.
 			 */
-			GET_PT_INIT( pp, res );
+			GET_PT_INIT( ap->a_rt_i, pp, res );
 			BITSET(pp->pt_solhit, segp->seg_stp->st_bit);
 			pp->pt_inseg = segp;
 			pp->pt_inhit = &segp->seg_in;
@@ -206,8 +209,8 @@ equal_start:
 				 *	SSSSSS
 				 *	newpp| pp
 				 */
-				GET_PT( newpp, res );
-				COPY_PT(newpp,pp);
+				GET_PT( ap->a_rt_i, newpp, res );
+				COPY_PT( ap->a_rt_i,newpp,pp);
 				/* new partition contains segment */
 				BITSET(newpp->pt_solhit, segp->seg_stp->st_bit);
 				newpp->pt_outseg = segp;
@@ -228,7 +231,7 @@ equal_start:
 				 *	     PPPPP...
 				 *	newpp|pp
 				 */
-				GET_PT_INIT( newpp, res );
+				GET_PT_INIT( ap->a_rt_i, newpp, res );
 				BITSET(newpp->pt_solhit, segp->seg_stp->st_bit);
 				newpp->pt_inseg = lastseg;
 				newpp->pt_inhit = lasthit;
@@ -298,8 +301,8 @@ equal_start:
 			 *	     SSSS...
 			 *	newpp|pp
 			 */
-			GET_PT( newpp, res );
-			COPY_PT( newpp, pp );
+			GET_PT( ap->a_rt_i, newpp, res );
+			COPY_PT( ap->a_rt_i, newpp, pp );
 			/* new part. is the span before seg joins partition */
 			pp->pt_inseg = segp;
 			pp->pt_inhit = &segp->seg_in;
@@ -318,7 +321,7 @@ equal_start:
 		 *  	     SSSSS
 		 */
 		if(rt_g.debug&DEBUG_PARTITION) rt_log("seg extends beyond end\n");
-		GET_PT_INIT( newpp, res );
+		GET_PT_INIT( ap->a_rt_i, newpp, res );
 		BITSET(newpp->pt_solhit, segp->seg_stp->st_bit);
 		newpp->pt_inseg = lastseg;
 		newpp->pt_inhit = lasthit;
@@ -329,7 +332,7 @@ equal_start:
 
 done_weave:	; /* Sorry about the goto's, but they give clarity */
 		if(rt_g.debug&DEBUG_PARTITION)
-			rt_pr_partitions( PartHdp, "After weave" );
+			rt_pr_partitions( ap->a_rt_i, PartHdp, "After weave" );
 	}
 }
 
@@ -355,25 +358,25 @@ struct application *ap;
 	register int hitcnt;
 	LOCAL struct region *TrueRg[2];
 	register int i;
-	extern union tree *RootTree;
 
+	if( ap->a_rt_i->rti_magic != RTI_MAGIC )  rt_bomb("rt_boolweave:  bad rtip\n");
 	pp = InputHdp->pt_forw;
 	while( pp != InputHdp )  {
 		hitcnt = 0;
 		if(rt_g.debug&DEBUG_PARTITION)  {
 			rt_log("rt_boolfinal: (%g,%g)\n", startdist, enddist );
-			rt_pr_pt( pp );
+			rt_pr_pt( ap->a_rt_i, pp );
 		}
 
 		/* Sanity checks on sorting.  Remove later. */
 		if( pp->pt_inhit->hit_dist >= pp->pt_outhit->hit_dist )  {
 			rt_log("rt_boolfinal: thin or inverted partition %.8x\n", pp);
-			rt_pr_partitions( InputHdp, "With problem" );
+			rt_pr_partitions( ap->a_rt_i, InputHdp, "With problem" );
 		}
 		if( pp->pt_forw != InputHdp && pp->pt_outhit->hit_dist > pp->pt_forw->pt_inhit->hit_dist )  {
 			rt_log("rt_boolfinal:  sorting defect!\n");
 			if( !(rt_g.debug & DEBUG_PARTITION) )
-				rt_pr_partitions( InputHdp, "With DEFECT" );
+				rt_pr_partitions( ap->a_rt_i, InputHdp, "With DEFECT" );
 			return; /* give up */
 		}
 
@@ -398,9 +401,8 @@ struct application *ap;
 			continue;
 		}
 
-#ifndef OLDBOOL
 		/* Evaluate the boolean trees of any regions involved */
-		for( i=0; i < rt_i.nregions; i++ )  {
+		for( i=0; i < ap->a_rt_i->nregions; i++ )  {
 			register struct region *regp;
 
 /**			if( !BITTEST(regionbits, i) )  continue; **/
@@ -412,7 +414,7 @@ struct application *ap;
 				}
 				if( !(j & (1<<(i&BITV_MASK))) )  continue;
 			}
-			regp = rt_i.Regions[i];
+			regp = ap->a_rt_i->Regions[i];
 			if(rt_g.debug&DEBUG_PARTITION)
 				rt_log("%.8x=%s: ", regp, regp->reg_name );
 			if( rt_booleval( regp->reg_treetop, pp, TrueRg ) == FALSE )  {
@@ -444,7 +446,7 @@ struct application *ap;
 					regp->reg_name,
 					lastregion->reg_name,
 					ap->a_x, ap->a_y, ap->a_level );
-				rt_pr_pt( pp );
+				rt_pr_pt( ap->a_rt_i, pp );
 			} else {
 				/* last region is air, replace with solid */
 				if( lastregion->reg_aircode != 0 )
@@ -456,23 +458,6 @@ struct application *ap;
 			pp=pp->pt_forw;			/* onwards! */
 			continue;
 		}
-#else
-		if( (hitcnt = rt_booleval( RootTree, pp, TrueRg )) == FALSE )  {
-			if(rt_g.debug&DEBUG_PARTITION) rt_log("FALSE\n");
-			pp = pp->pt_forw;
-			continue;
-		}
-		if( hitcnt < 0 )  {
-			/*  GUARD error:  overlap */
-			rt_log("OVERLAP: %s %s (%g,%g)\n",
-				TrueRg[0]->reg_name,
-				TrueRg[1]->reg_name,
-				pp->pt_inhit->hit_dist,
-				pp->pt_outhit->hit_dist );
-		}
-		lastregion = TrueRg[0];
-		if(rt_g.debug&DEBUG_PARTITION) rt_log("TRUE\n");
-#endif
 		if( pp->pt_outhit->hit_dist <= 0.001 /* milimeters */ )  {
 			/* partition is behind start point (k=0), ignore */
 			pp=pp->pt_forw;
@@ -513,7 +498,7 @@ struct application *ap;
 		}
 	}
 	if( rt_g.debug&DEBUG_PARTITION )
-		rt_pr_partitions( FinalHdp, "rt_boolfinal: Partitions returned" );
+		rt_pr_partitions( ap->a_rt_i, FinalHdp, "rt_boolfinal: Partitions returned" );
 	/* Caller must free both partition chains */
 }
 
@@ -672,16 +657,19 @@ pop:
  *
  */
 void
-rt_pr_partitions( phead, title )
+rt_pr_partitions( rtip, phead, title )
+struct rt_i		*rtip;
 register struct partition *phead;
 char *title;
 {
 	register struct partition *pp;
 	register int i;
 
+	if( rtip->rti_magic != RTI_MAGIC )  rt_bomb("rt_pr_partitions:  bad rtip\n");
+
 	rt_log("------%s\n", title);
 	for( pp = phead->pt_forw; pp != phead; pp = pp->pt_forw ) {
-		rt_pr_pt(pp);
+		rt_pr_pt(rtip, pp);
 	}
 	rt_log("------\n");
 }
@@ -690,9 +678,12 @@ char *title;
  *			R T _ P R _ P T
  */
 void
-rt_pr_pt( pp )
+rt_pr_pt( rtip, pp )
+struct rt_i		*rtip;
 register struct partition *pp;
 {
+	if( rtip->rti_magic != RTI_MAGIC )  rt_bomb("rt_pr_pt:  bad rtip\n");
+
 	rt_log("%.8x: PT %s %s (%g,%g)",
 		pp,
 		pp->pt_inseg->seg_stp->st_name,
@@ -701,7 +692,7 @@ register struct partition *pp;
 	rt_log("%s%s\n",
 		pp->pt_inflip ? " Iflip" : "",
 		pp->pt_outflip ?" Oflip" : "" );
-	rt_pr_bitv( "Solids", pp->pt_solhit, rt_i.nsolids );
+	rt_pr_bitv( "Solids", pp->pt_solhit, rtip->nsolids );
 }
 
 /*

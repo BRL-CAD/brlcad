@@ -55,14 +55,12 @@ int len;
 	/*
 	 *  Allocate and initialize information for this
 	 *  instance of an RT model.
-	 *
-	 *  (Here we will allocate an rt_i struct, someday)
 	 */
-	rtip = &rt_i;		/* XXX malloc() this on a per-db basis */
+	GETSTRUCT( rtip, rt_i );
 	bzero( (char *)rtip, sizeof(struct rt_i) );
 	if( (rtip->fp = fopen(filename, "r")) == NULL )  {
 		perror(filename);
-		return(RTI_NULL);
+		goto bad;
 	}
 	rtip->needprep = 1;
 	rtip->file = rt_strdup( filename );
@@ -112,12 +110,12 @@ int len;
 		case ID_FREE:
 			continue;
 		case ID_ARS_A:
-			rt_dir_add( record.a.a_name, addr );
+			rt_dir_add( rtip, record.a.a_name, addr );
 			continue;
 		case ID_ARS_B:
 			continue;
 		case ID_SOLID:
-			rt_dir_add( record.s.s_name, addr );
+			rt_dir_add( rtip, record.s.s_name, addr );
 			continue;
 		case ID_MATERIAL:
 			rt_color_addrec( &record, addr );
@@ -140,18 +138,18 @@ int len;
 					}
 					nrec++;
 				}
-				rt_dir_add( record.p.p_name, addr );
+				rt_dir_add( rtip, record.p.p_name, addr );
 				continue;
 			}
 		case ID_BSOLID:
-			rt_dir_add( record.B.B_name, addr );
+			rt_dir_add( rtip, record.B.B_name, addr );
 			continue;
 		case ID_BSURF:
 			{
 				union record rec;
 				register int j;
 
-				rt_dir_add( record.p.p_name, addr );
+				rt_dir_add( rtip, record.p.p_name, addr );
 
 				/* Just skip over knots and control mesh */
 				j = (record.d.d_nknots + record.d.d_nctls);
@@ -162,7 +160,7 @@ int len;
 		case ID_MEMB:
 			continue;
 		case ID_COMB:
-			rt_dir_add( record.c.c_name, addr );
+			rt_dir_add( rtip, record.c.c_name, addr );
 			continue;
 		default:
 			rt_log("rt_dirbuild:  unknown record %c (0%o), addr=x%x\n",
@@ -186,11 +184,15 @@ int len;
 	if( fread( (char *)rtip->rti_db, sizeof(union record), addr,
 	    rtip->fp) != addr )  {
 	    	rt_log("rt_dirbuild:  problem reading db on 2nd pass\n");
-	    	return( RTI_NULL );	/* FAIL */
+	    	goto bad;
 	}
 #endif DB_MEM
 
-	return( rtip );	/* OK */
+	rtip->rti_magic = RTI_MAGIC;
+	return( rtip );			/* OK */
+bad:
+	rt_free( (char *)rtip, "rt_i");
+    	return( RTI_NULL );		/* FAIL */
 }
 
 /*
@@ -205,12 +207,15 @@ int len;
  * the return code indicates failure.
  */
 struct directory *
-rt_dir_lookup( str, noisy )
-register char *str;
+rt_dir_lookup( rtip, str, noisy )
+struct rt_i	*rtip;
+register char	*str;
 {
 	register struct directory *dp;
 
-	for( dp = rt_i.rti_DirHead; dp != DIR_NULL; dp=dp->d_forw )  {
+	if( rtip->rti_magic != RTI_MAGIC )  rt_bomb("rt_dir_lookup:  bad rtip\n");
+
+	for( dp = rtip->rti_DirHead; dp != DIR_NULL; dp=dp->d_forw )  {
 		if(
 			str[0] == dp->d_namep[0]  &&	/* speed */
 			str[1] == dp->d_namep[1]  &&	/* speed */
@@ -230,21 +235,25 @@ register char *str;
  * Add an entry to the directory
  */
 struct directory *
-rt_dir_add( name, laddr )
-register char *name;
-long laddr;
+rt_dir_add( rtip, name, laddr )
+struct rt_i	*rtip;
+register char	*name;
+long		laddr;
 {
 	register struct directory *dp;
 	char local[NAMESIZE+2];
 
 	(void)strncpy( local, name, NAMESIZE );	/* Trim the name */
 	local[NAMESIZE] = '\0';			/* Ensure null termination */
-	if(rt_g.debug&DEBUG_DB)rt_log("rt_dir_add(%s,x%x)\n", local, laddr);
+
+	if(rt_g.debug&DEBUG_DB)
+		rt_log("rt_dir_add(x%x,%s,x%x)\n", rtip, local, laddr);
+
 	GETSTRUCT( dp, directory );
 	dp->d_namep = rt_strdup( local );
 	dp->d_addr = laddr;
-	dp->d_forw = rt_i.rti_DirHead;
-	rt_i.rti_DirHead = dp;
+	dp->d_forw = rtip->rti_DirHead;
+	rtip->rti_DirHead = dp;
 	return( dp );
 }
 
@@ -256,7 +265,9 @@ register struct rt_i *rtip;
 {
 	register struct directory *dp;
 
-	rt_log("Dump of directory for rtip x%x\n", rtip);
+	if( rtip->rti_magic != RTI_MAGIC )  rt_bomb("rt_pr_dir:  bad rtip\n");
+
+	rt_log("Dump of directory for %s, rtip=x%x\n", rtip->file, rtip);
 	for( dp = rtip->rti_DirHead; dp != DIR_NULL; dp=dp->d_forw )  {
 		rt_log("%.8x disk=%.8x anim=%.8x %s\n", dp, dp->d_addr,
 			dp->d_animate, dp->d_namep);

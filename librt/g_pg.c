@@ -29,6 +29,8 @@ static char RCSpg[] = "@(#)$Header$ (BRL)";
 #include "./debug.h"
 #include "./plane.h"
 
+#define TRI_NULL	((struct tri_specific *)0)
+
 /* Describe algorithm here */
 
 #define PGMINMAX(a,b,c)	{ FAST fastf_t ftemp;\
@@ -48,11 +50,12 @@ static char RCSpg[] = "@(#)$Header$ (BRL)";
  *  This routine is unusual in that it has to read additional
  *  database records to obtain all the necessary information.
  */
-pg_prep( vecxx, stp, mat, sp )
-fastf_t *vecxx;
-struct soltab *stp;
-matp_t mat;
-struct solidrec *sp;
+pg_prep( vecxx, stp, mat, sp, rtip )
+fastf_t		*vecxx;
+struct soltab	*stp;
+matp_t		mat;
+struct solidrec	*sp;
+struct rt_i	*rtip;
 {
 	LOCAL union record rec;
 	LOCAL fastf_t dx, dy, dz;	/* For finding the bounding spheres */
@@ -62,8 +65,8 @@ struct solidrec *sp;
 	register int	i;
 
 	for( ;; )  {
-		i = fread( (char *)&rec, sizeof(rec), 1, rt_i.fp );
-		if( feof(rt_i.fp) )
+		i = fread( (char *)&rec, sizeof(rec), 1, rtip->fp );
+		if( feof(rtip->fp) )
 			break;
 		if( i != 1 )
 			rt_bomb("pg_prep():  read error");
@@ -178,7 +181,7 @@ register struct soltab *stp;
 		(struct tri_specific *)stp->st_specific;
 	register int i;
 
-	if( trip == (struct tri_specific *)0 )  {
+	if( trip == TRI_NULL )  {
 		rt_log("pg(%s):  no faces\n", stp->st_name);
 		return;
 	}
@@ -342,9 +345,40 @@ register int nh;
 	}
 }
 
+/*
+ *			P G _ F R E E
+ */
+pg_free( stp )
+struct soltab *stp;
+{
+	register struct tri_specific *trip =
+		(struct tri_specific *)stp->st_specific;
+
+	while( trip != TRI_NULL )  {
+		register struct tri_specific *nexttri = trip->tri_forw;
+
+		rt_free( (char *)trip, "pg tri_specific");
+		trip = nexttri;
+	}
+}
+
 pg_norm()
 {
+	rt_log("pg_norm?\n");
 }
+
 pg_uv()
+{
+}
+
+pg_class()
+{
+}
+
+pg_plot()
+{
+}
+
+pg_curve()
 {
 }

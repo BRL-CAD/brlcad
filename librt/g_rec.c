@@ -169,10 +169,11 @@ struct rec_specific {
  *  	stp->st_specific for use by rec_shot().
  *	If the TGC is really an REC, stp->st_id is modified to ID_REC.
  */
-rec_prep( vec, stp, mat )
-register fastf_t *vec;
-struct soltab *stp;
-matp_t mat;
+rec_prep( vec, stp, mat, rtip )
+register fastf_t	*vec;
+struct soltab		*stp;
+matp_t			mat;
+struct rt_i		*rtip;
 {
 	register struct rec_specific *rec;
 	static double	magsq_h, magsq_a, magsq_b, magsq_c, magsq_d;
@@ -609,4 +610,24 @@ register struct uvcoord *uvp;
 
 	/* uv_du should be relative to rotation, uv_dv relative to height */
 	uvp->uv_du = uvp->uv_dv = 0;
+}
+
+/*
+ *			R E C _ F R E E
+ */
+rec_free( stp )
+struct soltab *stp;
+{
+	register struct rec_specific *rec =
+		(struct rec_specific *)stp->st_specific;
+
+	rt_free( (char *)rec, "rec_specific");
+}
+
+rec_class()
+{
+}
+
+rec_plot()
+{
 }

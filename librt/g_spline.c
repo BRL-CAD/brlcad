@@ -70,10 +70,11 @@ int lp1[4], lp2[4];	/* how much tosubdivide for each level */
  *  	A struct surf is created, and it's address is stored in
  *  	stp->st_specific for use by spl_shot().
  */
-spl_prep( vec, stp, mat )
-register fastf_t *vec;
-struct soltab *stp;
-matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
+spl_prep( vec, stp, mat, rtip )
+register fastf_t	*vec;
+struct soltab		*stp;
+matp_t			mat;
+struct rt_i		*rtip;
 {
 	struct surf *list;
 	register int i, j;
@@ -95,8 +96,8 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 		register struct surf *spl;
 
 /***		db_getrec( dp, &rec, cur_gran++ ); ***/
-		i = fread( (char *)&rec, sizeof(rec), 1, rt_i.fp );
-		if( feof(rt_i.fp) )  break;
+		i = fread( (char *)&rec, sizeof(rec), 1, rtip->fp );
+		if( feof(rtip->fp) )  break;
 		if( i != 1 )
 			rt_bomb("spl_prep:  read error");
 		cur_gran++;
@@ -126,7 +127,7 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 		}
 		fp = vp;
 /***		db_getmany( dp, (char *)vp, cur_gran, rec.d.d_nknots ); ***/
-		i = read( (char *)vp, nby, 1, rt_i.fp );
+		i = read( (char *)vp, nby, 1, rtip->fp );
 		if( i != 1 )  rt_bomb("spl_prep:  knot read");
 		cur_gran += rec.d.d_nknots;
 
@@ -145,7 +146,7 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 			return(-1);
 		}
 /***		db_getmany( dp, (char *)spl->spl_mesh, cur_gran, rec.d.d_nctls ); ***/
-		i = fread( (char *)spl->spl_mesh, nby, 1, rt_i.fp );
+		i = fread( (char *)spl->spl_mesh, nby, 1, rtip->fp );
 		if( i != 1 )  rt_bomb("spl_prep:  knot read");
 		cur_gran += rec.d.d_nctls;
 
@@ -360,6 +361,29 @@ register struct uvcoord *uvp;
 	uvp->uv_v = .2;
 	uvp->uv_du = uvp->uv_dv = 0;
 }
+
+/*
+ *			S P L _ F R E E
+ */
+spl_free( stp )
+struct soltab *stp;
+{
+	rt_log("spl_free?\n");
+}
+
+spl_class()
+{
+}
+
+spl_plot()
+{
+}
+
+spl_curve()
+{
+}
+
+
 /*** bsurf3 ***/
 
 /*********************************************************************

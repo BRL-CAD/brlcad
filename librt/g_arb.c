@@ -74,10 +74,11 @@ static struct arb_specific *FreeArb;	/* Head of free list */
 /*
  *  			A R B _ P R E P
  */
-arb_prep( vec, stp, mat )
-fastf_t *vec;
-struct soltab *stp;
-matp_t mat;
+arb_prep( vec, stp, mat, rtip )
+fastf_t		*vec;
+struct soltab	*stp;
+matp_t		mat;
+struct rt_i	*rtip;
 {
 	register fastf_t *op;		/* Used for scanning vectors */
 	LOCAL fastf_t dx, dy, dz;	/* For finding the bounding spheres */
@@ -487,4 +488,30 @@ register struct uvcoord *uvp;
 	r = ap->a_rbeam + ap->a_diverge * hitp->hit_dist;
 	uvp->uv_du = r * arbp->arb_XXlen;
 	uvp->uv_dv = r * arbp->arb_YYlen;
+}
+
+/*
+ *			A R B _ F R E E
+ */
+arb_free( stp )
+register struct soltab *stp;
+{
+	register struct arb_specific *arbp =
+		(struct arb_specific *)stp->st_specific;
+
+	while( arbp != ARB_NULL )  {
+		register struct arb_specific *nextarb = arbp->arb_forw;
+
+		arbp->arb_forw = FreeArb;
+		FreeArb = arbp;
+		arbp = nextarb;
+	}
+}
+
+arb_plot()
+{
+}
+
+arb_class()
+{
 }

@@ -28,7 +28,6 @@ static char RCStree[] = "@(#)$Header$ (BRL)";
 #include "./debug.h"
 
 struct rt_g rt_g;
-struct rt_i rt_i;	/* eventually, malloc'ed by rt_dir_build */
 
 int rt_pure_boolean_expressions = 0;
 
@@ -50,16 +49,16 @@ extern int rec_prep(),	rec_print(), rec_norm(), rec_uv();
 extern int pg_prep(),	pg_print(),  pg_norm(),  pg_uv();
 extern int spl_prep(),	spl_print(), spl_norm(), spl_uv();
 
-extern int nul_curve(), nul_class();
-extern int tor_curve(), tor_class();
-extern int tgc_curve(), tgc_class();
-extern int ell_curve(), ell_class();
-extern int arb_curve(), arb_class();
-extern int hlf_curve(), hlf_class();
-extern int ars_curve(), ars_class();
-extern int rec_curve(), rec_class();
-extern int pg_curve(), pg_class();
-extern int spl_curve(), spl_class();
+extern int nul_curve(), nul_class(), nul_free(), nul_plot();
+extern int tor_curve(), tor_class(), tor_free(), tor_plot();
+extern int tgc_curve(), tgc_class(), tgc_free(), tgc_plot();
+extern int ell_curve(), ell_class(), ell_free(), ell_plot();
+extern int arb_curve(), arb_class(), arb_free(), arb_plot();
+extern int hlf_curve(), hlf_class(), hlf_free(), hlf_plot();
+extern int ars_curve(), ars_class(), ars_free(), ars_plot();
+extern int rec_curve(), rec_class(), rec_free(), rec_plot();
+extern int pg_curve(),  pg_class(),  pg_free(),  pg_plot();
+extern int spl_curve(), spl_class(), spl_free(), spl_plot();
 
 extern struct seg *nul_shot();
 extern struct seg *tor_shot();
@@ -73,46 +72,71 @@ extern struct seg *pg_shot();
 extern struct seg *spl_shot();
 
 struct rt_functab rt_functab[] = {
-	0,	nul_prep,	nul_shot,	nul_print,	nul_norm,
-		nul_uv,		nul_curve,	nul_class,	"ID_NULL",
-	1,	tor_prep,	tor_shot,	tor_print,	tor_norm,
-		tor_uv,		tor_curve,	tor_class,	"ID_TOR",
-	1,	tgc_prep,	tgc_shot,	tgc_print,	tgc_norm,
-		tgc_uv,		tgc_curve,	tgc_class,	"ID_TGC",
-	1,	ell_prep,	ell_shot,	ell_print,	ell_norm,
-		ell_uv,		ell_curve,	ell_class,	"ID_ELL",
-	0,	arb_prep,	arb_shot,	arb_print,	arb_norm,
-		arb_uv,		arb_curve,	arb_class,	"ID_ARB8",
-	1,	ars_prep,	ars_shot,	ars_print,	ars_norm,
-		ars_uv,		ars_curve,	ars_class,	"ID_ARS",
-	0,	hlf_prep,	hlf_shot,	hlf_print,	hlf_norm,
-		hlf_uv,		hlf_curve,	hlf_class,	"ID_HALF",
-	1,	rec_prep,	rec_shot,	rec_print,	rec_norm,
-		rec_uv,		rec_curve,	rec_class,	"ID_REC",
-	1,	pg_prep,	pg_shot,	pg_print,	pg_norm,
-		pg_uv,		pg_curve,	pg_class,	 "ID_POLY",
-	1,	spl_prep,	spl_shot,	spl_print,	spl_norm,
-		spl_uv,		spl_curve,	spl_class,	"ID_BSPLINE",
-	0,	nul_prep,	nul_shot,	nul_print,	nul_norm,
-		nul_uv,		nul_curve,	nul_class,	">ID_NULL"
+	"ID_NULL",	0,
+		nul_prep,	nul_shot,	nul_print, 	nul_norm,
+	 	nul_uv,		nul_curve,	nul_class,	nul_free,
+		nul_plot,
+		
+	"ID_TOR",	1,
+		tor_prep,	tor_shot,	tor_print,	tor_norm,
+		tor_uv,		tor_curve,	tor_class,	tor_free,
+		tor_plot,
+
+	"ID_TGC",	1,
+		tgc_prep,	tgc_shot,	tgc_print,	tgc_norm,
+		tgc_uv,		tgc_curve,	tgc_class,	tgc_free,
+		tgc_plot,
+
+	"ID_ELL",	1,
+		ell_prep,	ell_shot,	ell_print,	ell_norm,
+		ell_uv,		ell_curve,	ell_class,	ell_free,
+		ell_plot,
+
+	"ID_ARB8",	0,
+		arb_prep,	arb_shot,	arb_print,	arb_norm,
+		arb_uv,		arb_curve,	arb_class,	arb_free,
+		arb_plot,
+
+	"ID_ARS",	1,
+		ars_prep,	ars_shot,	ars_print,	ars_norm,
+		ars_uv,		ars_curve,	ars_class,	ars_free,
+		ars_plot,
+
+	"ID_HALF",	0,
+		hlf_prep,	hlf_shot,	hlf_print,	hlf_norm,
+		hlf_uv,		hlf_curve,	hlf_class,	hlf_free,
+		hlf_plot,
+
+	"ID_REC",	1,
+		rec_prep,	rec_shot,	rec_print,	rec_norm,
+		rec_uv,		rec_curve,	rec_class,	rec_free,
+		rec_plot,
+
+	"ID_POLY",	1,
+		pg_prep,	pg_shot,	pg_print,	pg_norm,
+		pg_uv,		pg_curve,	pg_class,	pg_free,
+		pg_plot,
+
+	"ID_BSPLINE",	1,
+		spl_prep,	spl_shot,	spl_print,	spl_norm,
+		spl_uv,		spl_curve,	spl_class,	spl_free,
+		spl_plot,
+
+	">ID_NULL",	0,
+		nul_prep,	nul_shot,	nul_print,	nul_norm,
+		nul_uv,		nul_curve,	nul_class,	nul_free,
+		nul_plot
 };
+int rt_nfunctab = sizeof(rt_functab)/sizeof(struct rt_functab);
 
 /*
  *  Hooks for unimplemented routines
  */
 #define DEF(func)	func() { rt_log("func unimplemented\n"); return(0); }
 
-DEF(nul_prep); struct seg * DEF(nul_shot); DEF(nul_print); DEF(nul_norm); DEF(nul_uv);
-
-DEF(nul_curve); DEF(nul_class);
-DEF(tor_class);
-DEF(tgc_curve); DEF(tgc_class);
-DEF(ell_class);
-DEF(arb_class);
-DEF(hlf_class);
-DEF(rec_class);
-DEF(pg_curve); DEF(pg_class);
-DEF(spl_curve); DEF(spl_class);
+DEF(nul_prep); struct seg * DEF(nul_shot); DEF(nul_print); DEF(nul_norm);
+DEF(nul_uv); DEF(nul_curve); DEF(nul_class); DEF(nul_free);
+DEF(nul_plot);
 
 /* Map for database solidrec objects to internal objects */
 static char idmap[] = {
@@ -167,6 +191,8 @@ char *node;
 	mat_t	root;
 	struct mater_info root_mater;
 
+	if( rtip->rti_magic != RTI_MAGIC )  rt_bomb("rt_gettree:  bad rtip\n");
+
 	if(!rtip->needprep)
 		rt_bomb("rt_gettree called again after rt_prep!");
 
@@ -186,7 +212,7 @@ char *node;
 		}
 	}
 
-	dp = rt_dir_lookup( node, LOOKUP_NOISY );
+	dp = rt_dir_lookup( rtip, node, LOOKUP_NOISY );
 	if( dp == DIR_NULL )
 		return(-1);		/* ERROR */
 
@@ -302,7 +328,9 @@ next_one: ;
 	VSETALL( stp->st_max, -INFINITY );
 	VSETALL( stp->st_min,  INFINITY );
 
-	if( rt_functab[stp->st_id].ft_prep( v, stp, mat, &(rec->s) ) )  {
+	if( stp->st_id < 0 || stp->st_id >= rt_nfunctab )
+		rt_bomb("rt_add_solid:  bad st_id");
+	if( rt_functab[stp->st_id].ft_prep( v, stp, mat, &(rec->s), rtip ) )  {
 		/* Error, solid no good */
 		free(stp);
 		return( SOLTAB_NULL );		/* BAD */
@@ -541,7 +569,7 @@ struct mater_info *materp;
 			rt_log("rt_drawobj:  defective member of %s\n", dp->d_namep);
 			continue;
 		}
-		if( (nextdp = rt_dir_lookup( mp->m_instname, LOOKUP_NOISY )) ==
+		if( (nextdp = rt_dir_lookup( rtip, mp->m_instname, LOOKUP_NOISY )) ==
 		    DIR_NULL )
 			continue;
 
@@ -794,6 +822,8 @@ int		noisy;
 	struct directory *dp;
 	struct directory **newpath;
 
+	if( rtip->rti_magic != RTI_MAGIC )  rt_bomb("rt_plookup:  bad rtip\n");
+
 	depth = 0;
 	if( *cp == '\0' )  return(-1);
 
@@ -806,7 +836,7 @@ int		noisy;
 			ep++;		/* walk over element name */
 		oldc = *ep;
 		*ep = '\0';
-		if( (dp = rt_dir_lookup( cp, noisy )) == DIR_NULL )
+		if( (dp = rt_dir_lookup( rtip, cp, noisy )) == DIR_NULL )
 			return(-1);
 		path[depth++] = dp;
 		cp = ep+1;
@@ -1031,6 +1061,8 @@ register fastf_t	*min_rpp, *max_rpp;
 {	
 	register struct region	*regp = rt_getregion( rtip, reg_name );
 
+	if( rtip->rti_magic != RTI_MAGIC )  rt_bomb("rt_rpp_region:  bad rtip\n");
+
 	if( regp == REGION_NULL )  return(0);
 	VMOVE( min_rpp, rtip->mdl_max );
 	VMOVE( max_rpp, rtip->mdl_min );
@@ -1070,6 +1102,9 @@ register char *name;
 {
 	register struct soltab *stp;
 	register char *cp;
+
+	if( rtip->rti_magic != RTI_MAGIC )  rt_bomb("rt_find_solid:  bad rtip\n");
+
 	for( stp=rtip->HeadSolid; stp != SOLTAB_NULL; stp = stp->st_forw )  {
 		if( *(cp = stp->st_name) == *name  &&
 		    strcmp( cp, name ) == 0 )  {
@@ -1087,7 +1122,6 @@ register char *name;
  *  The region and treetop are cross-linked, and the region is added
  *  to the linked list of regions.
  *  Positions in the region bit vector are established at this time.
- *  Also, this tree is also included in the overall RootTree.
  */
 HIDDEN void
 rt_add_regtree( rtip, regp, tp )
@@ -1105,7 +1139,7 @@ register union tree *tp;
 	rtip->HeadRegion = regp;
 
 	/* Determine material properties */
-	regp->reg_ufunc = 0;
+	regp->reg_mfuncs = MF_NULL;
 	regp->reg_udata = (char *)0;
 	rt_region_color_map(regp);
 
@@ -1114,19 +1148,6 @@ register union tree *tp;
 	rtip->nregions++;
 	if( rt_g.debug & DEBUG_REGIONS )
 		rt_log("Add Region %s\n", regp->reg_name);
-
-	if( rtip->RootTree == TREE_NULL )  {
-		rtip->RootTree = tp;
-		return;
-	}
-	/**GETSTRUCT( xor, union tree ); **/
-	xor = (union tree *)rt_malloc(sizeof(union tree), "rt_add_regtree tree");
-	bzero( (char *)xor, sizeof(union tree) );
-	xor->tr_b.tb_op = OP_XOR;
-	xor->tr_b.tb_left = rtip->RootTree;
-	xor->tr_b.tb_right = tp;
-	xor->tr_b.tb_regionp = REGION_NULL;
-	rtip->RootTree = xor;
 }
 
 /*
@@ -1244,13 +1265,20 @@ register struct rt_i *rtip;
 	register struct region *regp;
 	register struct soltab *stp;
 
-	if( &rt_i != rtip )
-		rt_bomb("rt_prep:  bad arg!");	/* XXX --temp */
+	if( rtip->rti_magic != RTI_MAGIC )  rt_bomb("rt_prep:  bad rtip\n");
+
 	if(!rtip->needprep)
 		rt_bomb("rt_prep: re-invocation");
 	rtip->needprep = 0;
 	if( rtip->nsolids <= 0 )
 		rt_bomb("rt_prep:  no solids to prep");
+
+	/* Compute size of model-specific variable-length data structures */
+	/* -sizeof(bitv_t) == sizeof(struct partition.pt_solhit) */
+	rtip->rti_pt_bytes = sizeof(struct partition) + 
+		BITS2BYTES(rtip->nsolids) - sizeof(bitv_t) + 1;
+	rtip->rti_bv_bytes = BITS2BYTES(rtip->nsolids) +
+		BITS2BYTES(rtip->nregions) + 4*sizeof(bitv_t);
 
 	if( rtip->rti_db )  {
 		rt_free( (char *)rtip->rti_db, "in-core database");
@@ -1319,6 +1347,8 @@ register struct rt_i *rtip;
 	register struct region *regp;
 	register struct soltab *stp;
 
+	if( rtip->rti_magic != RTI_MAGIC )  rt_bomb("rt_clean:  bad rtip\n");
+
 	if( rtip->rti_db )  {
 		rt_free( (char *)rtip->rti_db, "in-core database");
 		rtip->rti_db = (union record *)0;
@@ -1331,15 +1361,15 @@ register struct rt_i *rtip;
 		register struct soltab *nextstp = stp->st_forw;
 
 		rt_free( (char *)stp->st_regions, "st_regions bitv" );
-		if( stp->st_specific )  {
-			/* REALLY need a solid-specific clean routine! */
-			rt_free( (char *)stp->st_specific, "st_specific" );
-		}
+		if( stp->st_id < 0 || stp->st_id >= rt_nfunctab )
+			rt_bomb("rt_clean:  bad st_id");
+		(void)rt_functab[stp->st_id].ft_free( stp );
 		stp->st_name = (char *)0;	/* was ptr to directory */
 		rt_free( (char *)stp, "struct soltab");
 		stp = nextstp;			/* advance to next one */
 	}
 	rtip->HeadSolid = SOLTAB_NULL;
+	rtip->nsolids = 0;
 
 	/*  
 	 *  Clear out the region table
@@ -1353,73 +1383,39 @@ register struct rt_i *rtip;
 		regp = nextregp;
 	}
 	rtip->HeadRegion = REGION_NULL;
+	rtip->nregions = 0;
 
-	/* Clean out the array of pointers to regions */
-	rt_free( (char *)rtip->Regions, "rtip->Regions[]" );
-	rtip->Regions = (struct region **)0;
+	/**** The best thing to do would be to hunt down the
+	 *  bitv and partition structs and release them, because
+	 *  they depend on the number of solids & regions!  XXX
+	 */
 
-	/* Free space partitions */
-	rt_fr_cut( &(rtip->rti_CutHead) );
-	bzero( (char *)&(rtip->rti_CutHead), sizeof(union cutter) );
-	rtip->rti_inf_box.bn.bn_type = CUT_BOXNODE;
-	rt_fr_cut( &(rtip->rti_inf_box) );
-	bzero( (char *)&(rtip->rti_inf_box), sizeof(union cutter) );
-	VMOVE( rtip->rti_inf_box.bn.bn_min, rtip->mdl_min );
-	VMOVE( rtip->rti_inf_box.bn.bn_max, rtip->mdl_max );
+	/* Clean out the array of pointers to regions, if any */
+	if( rtip->Regions )  {
+		rt_free( (char *)rtip->Regions, "rtip->Regions[]" );
+		rtip->Regions = (struct region **)0;
 
-	/* Make no assumptions about next size of model */
-	VSETALL( rtip->mdl_min, -0.1 );
-	VSETALL( rtip->mdl_max,  0.1 );
+		/* Free space partitions */
+		rt_fr_cut( &(rtip->rti_CutHead) );
+		bzero( (char *)&(rtip->rti_CutHead), sizeof(union cutter) );
+		rt_fr_cut( &(rtip->rti_inf_box) );
+		bzero( (char *)&(rtip->rti_inf_box), sizeof(union cutter) );
+	}
 
 	/* Free animation structures */
 	rt_fr_anim(rtip);
 
+	/*
+	 *  Re-initialize everything important.
+	 *  Some things, like file & fp remain untouched.
+	 */
+
+	rtip->rti_inf_box.bn.bn_type = CUT_BOXNODE;
+	VMOVE( rtip->rti_inf_box.bn.bn_min, rtip->mdl_min );
+	VMOVE( rtip->rti_inf_box.bn.bn_max, rtip->mdl_max );
+	VSETALL( rtip->mdl_min, -0.1 );
+	VSETALL( rtip->mdl_max,  0.1 );
+
+	rtip->rti_magic = RTI_MAGIC;
 	rtip->needprep = 1;
-}
-
-/*
- *			R T _ V I E W B O U N D S
- *
- *  Given a model2view transformation matrix, compute the RPP which
- *  encloses all the solids in the model, in view space.
- */
-void
-rt_viewbounds( min, max, m2v )
-matp_t m2v;
-register vect_t min, max;
-{
-	register struct soltab *stp;
-	static vect_t xlated;
-
-	VSETALL( max, -INFINITY );
-	VSETALL( min,  INFINITY );
-
-	for( stp=rt_i.HeadSolid; stp != 0; stp=stp->st_forw ) {
-		if( stp->st_aradius >= INFINITY )
-			continue;
-		MAT4X3PNT( xlated, m2v, stp->st_center );
-#define VBMIN(v,t) {FAST fastf_t rt; rt=(t); if(rt<v) v = rt;}
-#define VBMAX(v,t) {FAST fastf_t rt; rt=(t); if(rt>v) v = rt;}
-		VBMIN( min[X], xlated[0]-stp->st_bradius );		
-		VBMAX( max[X], xlated[0]+stp->st_bradius );
-		VBMIN( min[Y], xlated[1]-stp->st_bradius );
-		VBMAX( max[Y], xlated[1]+stp->st_bradius );
-		VBMIN( min[Z], xlated[2]-stp->st_bradius );
-		VBMAX( max[Z], xlated[2]+stp->st_bradius );
-	}
-
-	if( min[X] >= INFINITY )  {
-		/* Only infinite solids (or none), hard to judge */
-		VSETALL( min, -0.1 );
-		VSETALL( max,  0.1 );
-		return;
-	}
-
-	/* Provide a slight border */
-	min[X] -= fabs(min[X]) * 0.03;
-	min[Y] -= fabs(min[Y]) * 0.03;
-	min[Z] -= fabs(min[Z]) * 0.03;
-	max[X] += fabs(max[X]) * 0.03;
-	max[Y] += fabs(max[Y]) * 0.03;
-	max[Z] += fabs(max[Z]) * 0.03;
 }

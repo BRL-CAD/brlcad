@@ -29,6 +29,8 @@ static char RCSars[] = "@(#)$Header$ (BRL)";
 #include "./debug.h"
 #include "./plane.h"
 
+#define TRI_NULL	((struct tri_specific *)0)
+
 /* Describe algorithm here */
 
 extern fastf_t *rd_curve();
@@ -46,11 +48,12 @@ extern fastf_t *rd_curve();
  *  This routine is unusual in that it has to read additional
  *  database records to obtain all the necessary information.
  */
-ars_prep( vecxx, stp, mat, sp )
-fastf_t *vecxx;
-struct soltab *stp;
-matp_t mat;
-struct solidrec *sp;
+ars_prep( vecxx, stp, mat, sp, rtip )
+fastf_t		*vecxx;
+struct soltab	*stp;
+matp_t		mat;
+struct solidrec	*sp;
+struct rt_i	*rtip;
 {
 	LOCAL struct ars_rec *ap;	/* ARS A record pointer */
 	LOCAL fastf_t dx, dy, dz;	/* For finding the bounding spheres */
@@ -73,7 +76,7 @@ struct solidrec *sp;
 	i = (ncurves+1) * sizeof(fastf_t **);
 	curves = (fastf_t **)malloc( i );
 	for( i=0; i < ncurves; i++ )  {
-		curves[i] = rd_curve( pts_per_curve );
+		curves[i] = rd_curve( rtip, pts_per_curve );
 	}
 
 	/*
@@ -173,8 +176,9 @@ struct solidrec *sp;
  *  to a malloc()'ed memory area of fastf_t's to hold the curve.
  */
 fastf_t *
-rd_curve(npts)
-int npts;
+rd_curve(rtip, npts)
+struct rt_i	*rtip;
+int		npts;
 {
 	LOCAL int bytes;
 	LOCAL int lim;
@@ -190,7 +194,7 @@ int npts;
 	base = fp;
 
 	while( npts > 0 )  {
-		if( fread( (char *)&r, sizeof(r), 1, rt_i.fp ) != 1 )
+		if( fread( (char *)&r, sizeof(r), 1, rtip->fp ) != 1 )
 			rt_bomb("ars.c/rd_curve():  read error");
 
 		if( r.b.b_id != ID_ARS_B )  {
@@ -271,7 +275,7 @@ register struct soltab *stp;
 		(struct tri_specific *)stp->st_specific;
 	register int i;
 
-	if( trip == (struct tri_specific *)0 )  {
+	if( trip == TRI_NULL )  {
 		rt_log("ars(%s):  no faces\n", stp->st_name);
 		return;
 	}
@@ -509,6 +513,28 @@ register struct uvcoord *uvp;
 	uvp->uv_dv = r * yylen;
 }
 
+/*
+ *			A R S _ F R E E
+ */
+ars_free( stp )
+register struct soltab *stp;
+{
+	register struct tri_specific *trip =
+		(struct tri_specific *)stp->st_specific;
+
+	while( trip != TRI_NULL )  {
+		register struct tri_specific *nexttri = trip->tri_forw;
+
+		rt_free( (char *)trip, "ars tri_specific");
+		trip = nexttri;
+	}
+}
+
+
 ars_class()
+{
+}
+
+ars_plot()
 {
 }
