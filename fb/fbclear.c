@@ -1,13 +1,13 @@
 /*
-	SCCS id:	@(#) fbclear.c	1.2
-	Last edit: 	3/12/85 at 21:55:51	G S M
-	Retrieved: 	8/13/86 at 03:11:57
+	SCCS id:	@(#) fbclear.c	1.3
+	Last edit: 	3/13/85 at 19:03:10	G S M
+	Retrieved: 	8/13/86 at 03:12:03
 	SCCS archive:	/m/cad/fb_utils/RCS/s.fbclear.c
 
 */
 #if ! defined( lint )
 static
-char	sccsTag[] = "@(#) fbclear.c	1.2	last edit 3/12/85 at 21:55:51";
+char	sccsTag[] = "@(#) fbclear.c	1.3	last edit 3/13/85 at 19:03:10";
 #endif
 #include <stdio.h>
 #include <fb.h>
