@@ -684,7 +684,7 @@ against MGED database objects."\
 
 menu .$id.menubar.edit -title "Edit" -tearoff $mged_default(tearoff_menus)
 .$id.menubar.edit add command -label "Prim Selection..." -underline 0 \
-	-command "winset \$mged_gui($id,active_dm); build_edit_menu_all s"
+	-command "winset \$mged_gui($id,active_dm); build_edit_menu_all s1"
 hoc_register_menu_data "Edit" "Prim Selection..." "Prim Selection"\
 	{ { summary "A tool for selecting a primitive to edit." } }
 .$id.menubar.edit add command -label "Matrix Selection..." -underline 0 \
@@ -710,7 +710,7 @@ menu .$id.menubar.create -title "Create" -tearoff $mged_default(tearoff_menus)
 .$id.menubar.create add command -label "Prim Editor" -underline 0 \
 	-command "init_edit_solid $id"
 hoc_register_menu_data "Create" "Prim Editor" "Prim Editor"\
-	{ { summary "A tool for editing/creating solids." } }
+	{ { summary "A tool for editing/creating primitives." } }
 .$id.menubar.create add command -label "Combination Editor" -underline 0 \
 	-command "init_comb $id"
 hoc_register_menu_data "Create" "Combination Editor" "Combination Editor"\
@@ -1127,20 +1127,20 @@ hoc_register_menu_data "Active Pane" "Lower Right" "Active Pane - Lower Right" $
 menu .$id.menubar.settings.fb -title "Framebuffer" -tearoff $mged_default(tearoff_menus)
 .$id.menubar.settings.fb add radiobutton -value 1 -variable mged_gui($id,fb_all)\
 	-label "All" -underline 0\
-	-command "mged_apply $id \"set fb_all \$mged_gui($id,fb_all)\""
+	-command "mged_apply $id \"set fb_all \$mged_gui($id,fb_all)\"; rt_update_dest $id"
 hoc_register_menu_data "Framebuffer" "All" "Framebuffer - All"\
 	{ { summary "Use the entire pane for the framebuffer." }
           { see_also "rset, vars" } }
 .$id.menubar.settings.fb add radiobutton -value 0 -variable mged_gui($id,fb_all)\
 	-label "Rectangle Area" -underline 0\
-	-command "mged_apply $id \"set fb_all \$mged_gui($id,fb_all)\""
+	-command "mged_apply $id \"set fb_all \$mged_gui($id,fb_all)\"; rt_update_dest $id"
 hoc_register_menu_data "Framebuffer" "Rectangle Area" "Framebuffer - Rectangle Area"\
 	{ { summary "Use the rectangle area for the framebuffer." }
           { see_also "rset, vars" } }
 .$id.menubar.settings.fb add separator
 .$id.menubar.settings.fb add radiobutton -value 2 -variable mged_gui($id,fb_overlay)\
 	-label "Overlay" -underline 0\
-	-command "mged_apply $id \"set fb_overlay \$mged_gui($id,fb_overlay)\""
+	-command "mged_apply $id \"set fb_overlay \$mged_gui($id,fb_overlay)\"; rt_update_dest $id"
 hoc_register_menu_data "Framebuffer" "Overlay" "Framebuffer - Overlay"\
 	{ { summary "Put the framebuffer in overlay mode. In this mode,
 the framebuffer data is placed above everything.
@@ -1148,7 +1148,7 @@ the framebuffer data is placed above everything.
           { see_also "rset, vars" } }
 .$id.menubar.settings.fb add radiobutton -value 1 -variable mged_gui($id,fb_overlay)\
 	-label "Interlay" -underline 0\
-	-command "mged_apply $id \"set fb_overlay \$mged_gui($id,fb_overlay)\""
+	-command "mged_apply $id \"set fb_overlay \$mged_gui($id,fb_overlay)\"; rt_update_dest $id"
 hoc_register_menu_data "Framebuffer" "Interlay" "Framebuffer - Interlay"\
 	{ { summary "Put the framebuffer in interlay mode. In this mode,
 the framebuffer data is placed above the geometry
@@ -1156,7 +1156,7 @@ and below the faceplate." }
           { see_also "rset, vars" } }
 .$id.menubar.settings.fb add radiobutton -value 0 -variable mged_gui($id,fb_overlay)\
 	-label "Underlay" -underline 0\
-	-command "mged_apply $id \"set fb_overlay \$mged_gui($id,fb_overlay)\""
+	-command "mged_apply $id \"set fb_overlay \$mged_gui($id,fb_overlay)\"; rt_update_dest $id"
 hoc_register_menu_data "Framebuffer" "Underlay" "Framebuffer - Underlay"\
 	{ { summary "Put the framebuffer in underlay mode. In this mode,
 the framebuffer data is placed under everything.
@@ -1225,7 +1225,7 @@ hoc_register_menu_data "Grid" "Anchor" "Grid Anchor"\
 .$id.menubar.settings.grid add separator
 .$id.menubar.settings.grid add checkbutton -offvalue 0 -onvalue 1 -variable mged_gui($id,grid_draw)\
 	-label "Draw Grid" -underline 0\
-	-command "mged_apply $id \"rset grid draw \$mged_gui($id,grid_draw)\""
+	-command "mged_draw_grid $id"
 hoc_register_menu_data "Grid" "Draw Grid" "Draw Grid"\
 	{ { summary "Toggle drawing the grid. The grid is a lattice
 of points over the pane (geometry window). The
@@ -1453,7 +1453,7 @@ mode, the mouse can be used to transform the model parameters." }
 menu .$id.menubar.modes -title "Modes" -tearoff $mged_default(tearoff_menus)
 .$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_gui($id,grid_draw)\
 	-label "Draw Grid" -underline 0\
-	-command "mged_apply $id \"rset grid draw \$mged_gui($id,grid_draw)\""
+	-command "mged_draw_grid $id"
 hoc_register_menu_data "Modes" "Draw Grid" "Draw Grid"\
 	{ { summary "Toggle drawing the grid. The grid is a lattice
 of points over the pane (geometry window). The
@@ -2694,6 +2694,10 @@ proc update_view_ring_labels { id } {
     global mged_gui
     global view_ring
 
+    if {[_mged_opendb] == ""} {
+	error "No database has been opened!"
+    }
+
     winset $mged_gui($id,active_dm)
     set view_ring($id) [view_ring get]
     set views [view_ring get -a]
@@ -2874,4 +2878,18 @@ proc mged_handle_configure { id } {
     if {[winfo exists .$id.rt]} {
 	rt_handle_configure $id
     }
+}
+
+proc mged_draw_grid {id} {
+    global mged_gui
+
+    winset $mged_gui($id,active_dm)
+    rset grid draw $mged_gui($id,grid_draw)
+
+    # Reconcile the Tcl grid_draw with the internal grid_draw.
+    # Note - the internal grid_draw cannot be set to 1 if a database
+    #        is not currently open (i.e. dbip == DBI_NULL).
+    set mged_gui($id,grid_draw) [rset grid draw]
+
+    # XXX - At the moment this routine does not honor the "apply_to" settings
 }
