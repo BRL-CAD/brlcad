@@ -62,6 +62,12 @@ static int num_threads=0;
 /* the threads */
 static pthread_t *threads=NULL;
 
+/* Job ID numbers */
+static int jobIds=0;
+
+/* mutex to protect the jobIds */
+static pthread_mutex_t jobid_mutex = PTHREAD_MUTEX_INITIALIZER;
+
 /* mutex to protect the resources */
 static pthread_mutex_t resource_mutex = PTHREAD_MUTEX_INITIALIZER;
 
@@ -283,6 +289,22 @@ fillItemTree( jobject parent_node,
                 BU_LIST_INSERT( &rts_resource.rtserver_results, &((_p)->l) ); \
                 pthread_mutex_unlock( &resource_mutex ); \
         }
+
+int
+get_unique_jobid()
+{
+	int aJobId;
+
+	pthread_mutex_lock( &jobid_mutex );
+	aJobId = ++jobIds;
+	if( aJobId < 0 ) {
+		jobIds = 0;
+		aJobId = ++jobIds;
+	}
+	pthread_mutex_unlock( &jobid_mutex );
+
+	return aJobId;
+}
                 
 
 struct rtserver_job *
@@ -2270,7 +2292,9 @@ Java_mil_army_arl_muves_rtserver_RtServerImpl_shootRay( JNIEnv *env, jobject job
 
 	/* get a job structure */
 	RTS_GET_RTSERVER_JOB( ajob );
-	ajob->rtjob_id = 1;
+
+	/* assign a unique ID to this job */
+	ajob->rtjob_id = get_unique_jobid();
 	ajob->sessionid = sessionId;
 
 	/* add the requested ray to this job */
