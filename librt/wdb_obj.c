@@ -2228,7 +2228,7 @@ wdb_concat_tcl(clientData, interp, argc, argv)
 	/* Free all the directory entries, and close the input database */
 	db_close(newdbp);
 
-	sync();		/* just in case... */
+	db_sync(wdbop->wdb_wp->dbip);	/* force changes to disk */
 
 	return bad ? TCL_ERROR : TCL_OK;
 }
@@ -2908,6 +2908,8 @@ wdb_do_list(dbip, interp, outstrp, dp, verbose)
  * Add an instance of object 'dp' to combination 'name'.
  * If the combination does not exist, it is created.
  * region_flag is 1 (region), or 0 (group).
+ *
+ *  Preserves the GIFT semantics.
  */
 struct directory *
 wdb_combadd(interp, dbip, objp, combname, region_flag, relation, ident, air, wdbop)
