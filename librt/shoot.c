@@ -38,6 +38,8 @@ long nhits;		/* solid ft_shot() returned a hit */
 struct soltab *HeadSolid = SOLTAB_NULL;
 struct seg *FreeSeg = SEG_NULL;		/* Head of freelist */
 
+HIDDEN int shoot_tree();
+
 /*
  *  			S H O O T R A Y
  *  
@@ -79,7 +81,7 @@ int
 shootray( ap )
 register struct application *ap;
 {
-	extern struct region *HeadRegion;
+	extern struct region *HeadRegion;	/* read-only */
 	register struct region *rp;
 	auto struct shootwork sw;	/* must NOT be static (recursion) */
 	register int ret;
@@ -244,6 +246,7 @@ register fastf_t *min, *max;
  *  Returns TRUE when there is the Potential for a hit;
  *  bool_regions() must ultimately decide.
  */
+HIDDEN int
 shoot_tree( tp, swp )
 register struct tree *tp;
 register struct shootwork *swp;
