@@ -9240,6 +9240,11 @@ char **argv;
   /* free old copy */
   rt_db_free_internal( &es_int, &rt_uniresource );
 
+  /* reset */
+  es_pipept = (struct wdb_pipept *)NULL;
+  es_s = (struct shell *)NULL;
+  es_eu = (struct edgeuse *)NULL;
+
   /* read in a fresh copy */
   if( rt_db_get_internal( &es_int, LAST_SOLID(illump),
    dbip, NULL, &rt_uniresource ) < 0 )  {
