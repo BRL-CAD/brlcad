@@ -1306,7 +1306,7 @@ double	radius;
 		 */
 		return( 360*10 );
 	}
-	n = rt_pi / half_theta;
+	n = rt_pi / half_theta + 0.99;
 
 	/* Impose the limits again */
 	if( n <= 6 )  return(6);
