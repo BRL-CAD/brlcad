@@ -1185,13 +1185,13 @@ CONST char *label;
  *	 0	OK
  */
 int
-rt_generic_xform(op, mat, ip, free, dbip, resp)
-struct rt_db_internal	*op;
-CONST mat_t		mat;
-struct rt_db_internal	*ip;
-int			free;
-struct db_i		*dbip;
-struct resource		*resp;
+rt_generic_xform(
+	struct rt_db_internal	*op,
+	const mat_t		mat,
+	struct rt_db_internal	*ip,
+	int			free,
+	struct db_i		*dbip,
+	struct resource		*resp)
 {
 	struct bu_external	ext;
 	int			id;

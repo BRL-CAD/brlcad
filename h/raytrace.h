@@ -2949,6 +2949,13 @@ BU_EXTERN(void rt_regionfix, (struct rt_i *rtip));
 /* table.c */
 BU_EXTERN(int rt_id_solid, (struct bu_external *ep));
 BU_EXTERN(CONST struct rt_functab *rt_get_functab_by_label, (CONST char *label));
+int rt_generic_xform(
+	struct rt_db_internal	*op,
+	const mat_t		mat,
+	struct rt_db_internal	*ip,
+	int			free,
+	struct db_i		*dbip,
+	struct resource		*resp);
 
 
 /* prep.c */
