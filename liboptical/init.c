@@ -53,6 +53,7 @@ optical_shader_init(struct mfuncs	**headp)
 	 *  Note that sh_plastic.c defines the required "default" entry.
 	 */
 	MFUNCS( phg_mfuncs );
+	MFUNCS( null_mfuncs ); /* null test shader */
 	MFUNCS( light_mfuncs );
 	MFUNCS( cloud_mfuncs );
 	MFUNCS( spm_mfuncs );
@@ -74,4 +75,5 @@ optical_shader_init(struct mfuncs	**headp)
 	MFUNCS( prj_mfuncs );
 	MFUNCS( grass_mfuncs );
 	MFUNCS( tthrm_mfuncs );
+	MFUNCS( flat_mfuncs );
 }

@@ -16,10 +16,12 @@
 	sh_cloud \
 	sh_cook \
 	sh_fire \
+	sh_flat \
 	sh_gauss \
 	sh_grass \
 	sh_light \
 	sh_noise \
+	sh_null \
 	sh_plastic \
 	sh_points \
 	sh_prj \
