@@ -67,10 +67,6 @@ struct arb_specific  {
 };
 #define ARB_NULL	((struct arb_specific *)0)
 
-#define ARB_MINMAX(a,b,c)	{ FAST fastf_t ftemp;\
-			if( (ftemp = (c)) < (a) )  a = ftemp;\
-			if( ftemp > (b) )  b = ftemp; }
-
 HIDDEN int	arb_face(), arb_add_pt();
 
 static struct arb_specific *FreeArb;	/* Head of free list */
@@ -155,10 +151,8 @@ matp_t mat;
 	 */
 	op = &vec[0];
 	for( i=0; i< 8; i++ ) {
-		ARB_MINMAX( stp->st_min[X], stp->st_max[X], *op++ );
-		ARB_MINMAX( stp->st_min[Y], stp->st_max[Y], *op++ );
-		ARB_MINMAX( stp->st_min[Z], stp->st_max[Z], *op++ );
-		op++;		/* Depends on ELEMENTS_PER_VECT */
+		VMINMAX( stp->st_min, stp->st_max, op );
+		op += ELEMENTS_PER_VECT;
 	}
 	VSET( stp->st_center,
 		(stp->st_max[X] + stp->st_min[X])/2,
