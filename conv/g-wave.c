@@ -393,7 +393,10 @@ int material_id;
 	if( usemtl )
 		fprintf( fp, "usemtl %d_%d_%d\n", aircode, los, material_id );
 
-	fprintf( fp, "g %s %s\n", pathp->fp_names[0]->d_namep, DB_FULL_PATH_CUR_DIR(pathp)->d_namep); 
+	fprintf( fp, "g %s", pathp->fp_names[0]->d_namep );
+	for( i=1 ; i<pathp->fp_len ; i++ )
+		fprintf( fp, "/%s", pathp->fp_names[i]->d_namep );
+	fprintf( fp, "\n" );
 
 	/* Write vertices */
 	for( i=0 ; i<numverts ; i++ )
