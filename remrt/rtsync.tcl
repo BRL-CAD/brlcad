@@ -193,14 +193,15 @@ proc apply_air {} {
 # The Update CPU Status button, in it's own window
 toplevel .status
 button .status.button -text "Update CPU Status" -command update_cpu_status
-listbox .status.list -width 48
+listbox .status.list -height 1 -width 48
 pack .status.button .status.list -side top -in .status
 
 proc update_cpu_status {} {
 	set nodes [list_rtnodes]
 
 	.status.list delete 0 end
-	.status.list configure -height [llength $nodes]
+	.status.list configure -height [expr [llength $nodes] + 1]
+	.status.list insert end [get_rtnode -1];# generate title
 	foreach node $nodes {
 		.status.list insert end [get_rtnode $node]
 	}
