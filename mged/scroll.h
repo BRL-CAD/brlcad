@@ -21,5 +21,6 @@ struct	scroll_item  {
 	char	*scroll_string;
 	void	(*scroll_func)();
 	double	*scroll_val;		/* -1.0 <= value <= +1.0 */
+	char	*scroll_cmd;
 };
 #define SCROLL_NULL		((struct scroll_item *)0)
