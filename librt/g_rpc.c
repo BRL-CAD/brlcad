@@ -911,7 +911,7 @@ struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
 struct rt_tol		*tol;
 {
-	int		i, n;
+	int		i, j, n;
 	fastf_t		b, *back, f, *front, h, rh;
 	fastf_t		dtol, ntol;
 	point_t 	p1, p2;
@@ -923,8 +923,13 @@ struct rt_tol		*tol;
 	struct shell	*s;
 	struct faceuse	**outfaceuses;
 	struct vertex	**vfront, **vback, **vtemp, *vertlist[4];
+	vect_t		*norms;
+	fastf_t		r_sq_over_b;
 	struct edgeuse	*eu, *eu2;
 
+	NMG_CK_MODEL( m );
+	RT_CK_TOL( tol );
+	RT_CK_TESS_TOL( ttol );
 
 	RT_CK_DB_INTERNAL(ip);
 	xip = (struct rt_rpc_internal *)ip->idb_ptr;
@@ -1012,6 +1017,7 @@ struct rt_tol		*tol;
 	/* get mem for arrays */
 	front = (fastf_t *)rt_malloc(3*n * sizeof(fastf_t), "fastf_t");
 	back  = (fastf_t *)rt_malloc(3*n * sizeof(fastf_t), "fastf_t");
+	norms = (vect_t *)rt_calloc( n , sizeof( vect_t ) , "rt_rpc_tess: norms" );
 	vfront = (struct vertex **)rt_malloc((n+1) * sizeof(struct vertex *), "vertex *");
 	vback = (struct vertex **)rt_malloc((n+1) * sizeof(struct vertex *), "vertex *");
 	vtemp = (struct vertex **)rt_malloc((n+1) * sizeof(struct vertex *), "vertex *");
@@ -1023,9 +1029,16 @@ struct rt_tol		*tol;
 	}
 	
 	/* generate front & back plates in world coordinates */
+	r_sq_over_b = rh * rh / b;
 	pos = pts;
 	i = 0;
+	j = 0;
 	while (pos) {
+		vect_t tmp_norm;
+
+		VSET( tmp_norm , 0.0 , 2.0 * pos->p[Y] , -r_sq_over_b );
+		MAT4X3VEC( norms[j] , invR , tmp_norm );
+		VUNITIZE( norms[j] );
 		/* rotate back to original position */
 		MAT4X3VEC( &front[i], invR, pos->p );
 		/* move to origin vertex origin */
@@ -1033,6 +1046,7 @@ struct rt_tol		*tol;
 		/* extrude front to create back plate */
 		VADD2( &back[i], &front[i], xip->rpc_H );
 		i += 3;
+		j++;
 		old = pos;
 		pos = pos->next;
 		rt_free( (char *)old, "pt_node" );
@@ -1101,6 +1115,52 @@ struct rt_tol		*tol;
 			rt_free( (char*)outfaceuses, "faceuse *");
 
 			return(-1);		/* FAIL */
+		}
+	}
+
+	/* Associate vertexuse normals */
+	for( i=0 ; i<n ; i++ )
+	{
+		struct vertexuse *vu;
+		struct faceuse *fu;
+		vect_t rev_norm;
+
+		VREVERSE( rev_norm , norms[i] );
+
+		/* do "front" vertices */
+		NMG_CK_VERTEX( vfront[i] );
+		for( RT_LIST_FOR( vu , vertexuse , &vfront[i]->vu_hd ) )
+		{
+			NMG_CK_VERTEXUSE( vu );
+			fu = nmg_find_fu_of_vu( vu );
+			NMG_CK_FACEUSE( fu );
+			if( fu->f_p == outfaceuses[0]->f_p ||
+			    fu->f_p == outfaceuses[1]->f_p ||
+			    fu->f_p == outfaceuses[n+1]->f_p )
+					continue;	/* skip flat faces */
+
+			if( fu->orientation == OT_SAME )
+				nmg_vertexuse_nv( vu , norms[i] );
+			else if( fu->orientation == OT_OPPOSITE )
+				nmg_vertexuse_nv( vu , rev_norm );
+		}
+
+		/* and "back" vertices */
+		NMG_CK_VERTEX( vback[i] );
+		for( RT_LIST_FOR( vu , vertexuse , &vback[i]->vu_hd ) )
+		{
+			NMG_CK_VERTEXUSE( vu );
+			fu = nmg_find_fu_of_vu( vu );
+			NMG_CK_FACEUSE( fu );
+			if( fu->f_p == outfaceuses[0]->f_p ||
+			    fu->f_p == outfaceuses[1]->f_p ||
+			    fu->f_p == outfaceuses[n+1]->f_p )
+					continue;	/* skip flat faces */
+
+			if( fu->orientation == OT_SAME )
+				nmg_vertexuse_nv( vu , norms[i] );
+			else if( fu->orientation == OT_OPPOSITE )
+				nmg_vertexuse_nv( vu , rev_norm );
 		}
 	}
 
