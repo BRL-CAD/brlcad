@@ -368,23 +368,9 @@ CONST struct rt_tol	*tol;
 		/* Let it proceed, on the off chance it's useful */
 	}
 
-	/* What follows should probably be made a generic nmg operation */
 
-	/* Dest must be empty to avoid index confusion */
-	if( RT_LIST_NON_EMPTY( &(m->r_hd) ) )  {
-		rt_log("rt_nmg_tess: destination model non-empty\n");
-		/* XXX Here, should use some kind of nmg_copy() */
-		return(-1);
-	}
+	nmg_merge_models(m, lm);
 
-	/* Swipe newly imported model's stuff */
-	RT_LIST_APPEND_LIST( &(m->r_hd), &(lm->r_hd) );
-	m->maxindex += lm->maxindex;	/* just barely OK for a hack */
-
-	/* Re-home regions to new model (which was empty until now) */
-	for( RT_LIST_FOR( lr, nmgregion, &(m->r_hd) ) )  {
-		lr->m_p = m;
-	}
 
 	return(0);
 }
