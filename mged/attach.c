@@ -180,6 +180,9 @@ void
 release()
 {
 	register struct solid *sp;
+#ifdef MULTI_ATTACH
+	struct dm_list *p;
+#endif
 
 	/* Delete all references to display processor memory */
 	FOR_ALL_SOLIDS( sp )  {
@@ -190,7 +193,18 @@ release()
 	rt_mempurge( &(dmp->dmr_map) );
 
 	dmp->dmr_close();
+
+#ifdef MULTI_ATTACH
+	if( curr_dm_list == &head_dm_list )
+	  return;
+
+	p = curr_dm_list;
+	curr_dm_list = (struct dm_list *)curr_dm_list->l.forw;
+	RT_LIST_DEQUEUE( &p->l );
+	rt_free( (char *)p, "release: curr_dm_list" );
+#else
 	dmp = &dm_Null;
+#endif
 }
 
 void
@@ -249,8 +263,6 @@ char *name;
   curr_dm_list = dmlp;
   curr_dm_list->_dmp = &dm_Null;
   dm_var_init(o_dm_list);
-#else
-  curr_dm_list = &head_dm_list;
 #endif
 #else
 	if( dmp != &dm_Null )
