@@ -17,9 +17,9 @@
  *
  *	This function has three parameters: the root of the tree
  *	to traverse, the order on which to do the walking, and the
- *	function to apply to each node.
+ *	function to apply to the data in each node.
  */
-void _rb_walk (struct rb_node *root, int order, void (*visit)())
+static void _rb_walk (struct rb_node *root, int order, void (*visit)())
 {
 
     /* Check data type of the parameter "root" */
