@@ -136,6 +136,12 @@ struct rt_i	*rtip;
  *
  *  Get an object from the database, and convert it into it's internal
  *  representation.
+ *
+ *  Returns -
+ *	<0	On error
+ *	id	On success.
+ *
+ *  XXX How to handle combinations?
  */
 int
 rt_db_get_internal( ip, dp, dbip, mat )
@@ -152,6 +158,8 @@ CONST mat_t		mat;
 	if( db_get_external( &ext, dp, dbip ) < 0 )
 		return -2;		/* FAIL */
 
+	if( mat == NULL )  mat = bn_mat_identity;
+
 	id = rt_id_solid( &ext );
 	if( rt_functab[id].ft_import( ip, &ext, mat ) < 0 )  {
 		bu_log("rt_db_get_internal(%s):  solid import failure\n",
@@ -162,7 +170,7 @@ CONST mat_t		mat;
 	}
 	db_free_external( &ext );
 	RT_CK_DB_INTERNAL( ip );
-	return 0;			/* OK */
+	return id;			/* OK */
 }
 
 /*
