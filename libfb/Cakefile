@@ -18,6 +18,9 @@
 #define	SRCSUFF	.c
 #define MANSECTION	3
 
+#define VERSION_VARIABLE	fb_version
+#define LIBRARY_TITLE		"BRL-CAD FrameBuffer Library"
+
 #include "../Cakefile.defs"
 
 #ifdef	LIBFB_SETUP

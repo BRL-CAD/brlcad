@@ -12,6 +12,9 @@
 #define	SRCSUFF	.c
 #define MANSECTION	3
 
+#define VERSION_VARIABLE	fft_version
+#define LIBRARY_TITLE		"BRL-CAD FFT Library"
+
 #include "../Cakefile.defs"
 #include "../Cakefile.lib"
 

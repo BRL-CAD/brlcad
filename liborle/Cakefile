@@ -8,6 +8,9 @@
 #define	SRCSUFF	.c
 #define MANSECTION	3
 
+#define VERSION_VARIABLE	liborle_version
+#define LIBRARY_TITLE		"University of Utah RLE Library, Version 2"
+
 #include "../Cakefile.defs"
 
 #include "../Cakefile.lib"

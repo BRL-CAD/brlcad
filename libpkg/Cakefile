@@ -10,6 +10,9 @@
 #define	SRCSUFF	.c
 #define MANSECTION	3
 
+#define VERSION_VARIABLE	pkg_version
+#define LIBRARY_TITLE		"BRL-CAD Network Package (PKG) Library"
+
 #include "../Cakefile.defs"
 
 #ifdef	LIBPKG_SETUP
