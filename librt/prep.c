@@ -44,6 +44,105 @@ HIDDEN void	rt_solid_bitfinder();
 
 extern struct resource	rt_uniresource;		/* from shoot.c */
 
+/* XXX Need rt_init_rtg(), rt_clean_rtg() */
+
+
+/*
+ *			R T _ N E W _ R T I
+ *
+ *  Given a db_i database instance, create an rt_i instance.
+ */
+struct rt_i *
+rt_new_rti( dbip )
+struct db_i	*dbip;
+{
+	register struct rt_i	*rtip;
+	register int		i;
+
+	RT_CK_DBI( dbip );
+
+	/* XXX Move to rt_global_init() ? */
+	if( BU_LIST_FIRST( rt_list, &rt_g.rtg_vlfree ) == 0 )  {
+		BU_LIST_INIT( &rt_g.rtg_vlfree );
+	}
+
+	BU_GETSTRUCT( rtip, rt_i );
+	rtip->rti_magic = RTI_MAGIC;
+	for( i=0; i < RT_DBNHASH; i++ )  {
+		BU_LIST_INIT( &(rtip->rti_solidheads[i]) );
+	}
+	rtip->rti_dbip = dbip;
+	rtip->needprep = 1;
+	dbip->dbi_uses++;
+
+	/* This table is used for discovering the per-cpu resource structures */
+	bu_ptbl_init( &rtip->rti_resources, MAX_PSW, "rti_resources ptbl" );
+
+	rt_uniresource.re_magic = RESOURCE_MAGIC;
+
+	VSETALL( rtip->mdl_min,  INFINITY );
+	VSETALL( rtip->mdl_max, -INFINITY );
+	VSETALL( rtip->rti_inf_box.bn.bn_min, -0.1 );
+	VSETALL( rtip->rti_inf_box.bn.bn_max,  0.1 );
+	rtip->rti_inf_box.bn.bn_type = CUT_BOXNODE;
+
+	/* XXX These need to be improved */
+	rtip->rti_tol.magic = BN_TOL_MAGIC;
+	rtip->rti_tol.dist = 0.005;
+	rtip->rti_tol.dist_sq = rtip->rti_tol.dist * rtip->rti_tol.dist;
+	rtip->rti_tol.perp = 1e-6;
+	rtip->rti_tol.para = 1 - rtip->rti_tol.perp;
+
+	rtip->rti_space_partition = RT_PART_NUBSPT;
+	rtip->rti_nugrid_dimlimit = 0;
+	rtip->rti_nu_gfactor = RT_NU_GFACTOR_DEFAULT;
+
+	/*
+	 *  Zero the solid instancing counters in dbip database instance.
+	 *  Done here because the same dbip could be used by multiple
+	 *  rti's, and rt_gettrees() can be called multiple times on
+	 *  this one rtip.
+	 *  There is a race (collision!) here on d_uses if rt_gettrees()
+	 *  is called on another rtip of the same dbip
+	 *  before this rtip is done
+	 *  with all it's treewalking.
+	 */
+	for( i=0; i < RT_DBNHASH; i++ )  {
+		register struct directory	*dp;
+
+		dp = rtip->rti_dbip->dbi_Head[i];
+		for( ; dp != DIR_NULL; dp = dp->d_forw )
+			dp->d_uses = 0;
+	}
+
+	return rtip;
+}
+
+/*
+ *			R T _ F R E E _ R T I
+ *
+ *  Release all the dynamic storage acquired by rt_dirbuild() and
+ *  any subsequent ray-tracing operations.
+ *
+ *  Any PARALLEL resource structures are freed by rt_clean().
+ *  Note that the rt_g structure needs to be cleaned separately.
+ */
+void
+rt_free_rti( rtip )
+struct rt_i	*rtip;
+{
+	RT_CK_RTI(rtip);
+
+	rt_clean( rtip );
+
+	db_close( rtip->rti_dbip );
+	rtip->rti_dbip = (struct db_i *)NULL;
+
+	bu_ptbl_free( &rtip->rti_resources );
+
+	rt_free( (char *)rtip, "struct rt_i" );
+}
+
 /*
  *  			R T _ P R E P _ P A R A L L E L
  *  
