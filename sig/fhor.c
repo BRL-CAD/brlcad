@@ -376,7 +376,7 @@ char	**argv;
 	 *  (it now goes into the screen).
 	 */
 	z = 0;
-	while( fread( inbuf, sizeof(*inbuf), size, stdin ) > 0 ) {
+	while( fread( inbuf, sizeof(*inbuf), size, stdin ) != 0 ) {
 		/* Left to Right */
 		/*bzero( f, 512*sizeof(*f) );*/
 		for( i = 0; i < 512; i++ ) {
