@@ -39,14 +39,13 @@ char		*yyfile = "no input file";
 bool		afterifdef = FALSE;
 %}
 
-/* The next two lines were required for older versions of lex with
- * small default table sizes.  Newer versions of lex have more realistic
- * default table sizes, and new fast-lex (flex) doesn't support these
- * directives.  Un-comment the next two lines if you have trouble with
- * table sizes.
- */
-/* %a	2500 */
-/* %o	5000 */
+/* The next two lines were required for older versions of lex with */
+/* small default table sizes.  Newer versions of lex have more realistic */
+/* default table sizes, and new fast-lex (flex) doesn't support these */
+/* directives.  Un-comment the next two lines if you have trouble with */
+/* table sizes. */
+%a	2500
+%o	5000
 
 %start	edge middle
 
