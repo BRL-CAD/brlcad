@@ -412,6 +412,8 @@ CONST union tree	*tp;
 /*
  *			D B _ F I N D _ N A M E D _ L E A F
  *
+ *  The search stops on the first match.
+ *
  *  Returns -
  *	tp		if found
  *	TREE_NULL	if not found in this tree
@@ -449,6 +451,8 @@ CONST char		*cp;
 
 /*
  *			D B _ F I N D _ N A M E D _ L E A F S _ P A R E N T
+ *
+ *  The search stops on the first match.
  *
  *  Returns -
  *	TREE_NULL	if not found in this tree
@@ -595,32 +599,43 @@ union tree		*tp;
 /*
  *			D B _ T R E E _ D E L _ D B L E A F
  *
- *  Given a name presumably referenced in a OP_DBLEAF node,
+ *  Given a name presumably referenced in a OP_DB_LEAF node,
  *  delete that node, and the operation node that references it.
  *  Not that this may not produce an equivalant tree,
- *  for example when rewriting A-subtree as "subtree",
+ *  for example when rewriting (A - subtree) as (subtree),
  *  but that will be up to the caller/user to adjust.
  *  This routine gets rid of exactly two nodes in the tree: leaf, and op.
- *  Use some other routine if you wish to kill the rhs of - and intersect nodes.
+ *  Use some other routine if you wish to kill the entire rhs
+ *  below "-" and "intersect" nodes.
  *
  *  The two nodes deleted will have their memory freed.
  *
+ *  If the tree is a single OP_DB_LEAF node, the leaf is freed and
+ *  *tp is set to NULL.
+ *
  *  Returns -
  *	-2	Internal error
- *	-1	Unable to find OP_DBLEAF node specified by 'cp'.
+ *	-1	Unable to find OP_DB_LEAF node specified by 'cp'.
  *	 0	OK
  */
 db_tree_del_dbleaf( tp, cp )
-union tree		*tp;
+union tree		**tp;
 CONST char		*cp;
 {
 	union tree	*parent;
 	int		side = 0;
 
-	RT_CK_TREE(tp);
+	RT_CK_TREE(*tp);
 
-	if( (parent = db_find_named_leafs_parent( &side, tp, cp )) == TREE_NULL )
+	if( (parent = db_find_named_leafs_parent( &side, *tp, cp )) == TREE_NULL )  {
+		/* Perhaps the root of the tree is the named leaf? */
+		if( (*tp)->tr_op == OP_DB_LEAF &&
+		    strcmp( cp, (*tp)->tr_l.tl_name ) == 0 )  {
+		    	db_free_tree( *tp );
+		    	*tp = TREE_NULL;
+		}
 		return -1;
+	}
 
 	switch( side )  {
 	case 1:
