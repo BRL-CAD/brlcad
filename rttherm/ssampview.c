@@ -257,19 +257,22 @@ double x, y, z;
 	point_t	xyz;
 	point_t	new;
 	struct rt_tabdata	*tabp;
+	FAST fastf_t	tab_area;
 
 	RT_GET_TABDATA( tabp, spectrum );
 	xyz[X] = x;
 	xyz[Y] = y;
 	xyz[Z] = z;
-	VPRINT( "\nxyz", xyz );
+	VPRINT( "\nstarting xyz", xyz );
 
 	rt_spect_xyz_to_curve( tabp, xyz, cie_x, cie_y, cie_z );
 	rt_pr_table_and_tabdata( "/dev/tty", tabp );
+	tab_area = rt_tabdata_area2( tabp );
+	bu_log(" tab_area = %g\n", tab_area);
 
 	rt_spect_curve_to_xyz( new, tabp, cie_x, cie_y, cie_z );
 
-	VPRINT( "new", new );
+	VPRINT( "new xyz", new );
 	rt_free( (char *)tabp, "struct rt_tabdata" );
 exit(2);
 }
@@ -281,13 +284,24 @@ char	**argv;
 
 	rt_g.debug = 1;
 
-#if 0
+#if 1
+{
+struct rt_tabdata	*flat;
+vect_t			xyz;
 /* Code for testing library routines */
 spectrum = rt_table_make_uniform( 10, 380.0, 770.0 );
 rt_spect_make_CIE_XYZ( &cie_x, &cie_y, &cie_z, spectrum );
-rt_pr_table_and_tabdata( "/dev/tty", cie_x );
-rt_pr_table_and_tabdata( "/dev/tty", cie_y );
-rt_pr_table_and_tabdata( "/dev/tty", cie_z );
+bu_log("X:\n");rt_pr_table_and_tabdata( "/dev/tty", cie_x );
+bu_log("Y:\n");rt_pr_table_and_tabdata( "/dev/tty", cie_y );
+bu_log("Z:\n");rt_pr_table_and_tabdata( "/dev/tty", cie_z );
+
+/* "A flat spectral curve is represente by equal XYZ values".  Hall pg 52 */
+flat = rt_tabdata_get_constval( 42.0, spectrum );
+bu_log("flat:\n");rt_pr_table_and_tabdata( "/dev/tty", flat );
+rt_spect_curve_to_xyz(xyz, flat, cie_x, cie_y, cie_z );
+VPRINT("flat xyz?", xyz);
+
+/* Check identity of XYZ->spectrum->XYZ */
 check( 1, 0, 0 );
 check( 0, 1, 0 );
 check( 0, 0, 1 );
@@ -297,6 +311,7 @@ check( 1, 0, 1 );
 check( 0, 1, 1 );
 check( .5, .5, .5 );
 exit(1);
+}
 #endif
 
 	rt_make_ntsc_xyz2rgb( xyz2rgb );
