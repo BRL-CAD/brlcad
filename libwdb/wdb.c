@@ -18,6 +18,7 @@
  *  Authors -
  *	Michael John Muuss
  *	Paul R. Stay
+ *	Susanne Muuss, J.D.
  *  
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
@@ -184,6 +185,66 @@ point_t	min, max;
 
 	return( mk_arb8( fp, name, pt8 ) );
 }
+
+
+
+/*			M K _ W E D G E
+ *
+ *  Makes a right angular wedge given a starting vertex located in the, lower
+ *  left corner, an x and a z direction vector, x, y, and z lengths, and an
+ *  x length for the top.  The y direcion vector is x cross z.
+ */
+
+int
+mk_wedge(fp, name, vert, xdirv, zdirv, xlen, ylen, zlen, x_top_len)
+FILE		*fp;
+char		*name;
+point_t		vert;
+vect_t		xdirv;
+vect_t		zdirv;
+fastf_t		xlen;
+fastf_t		ylen;
+fastf_t		zlen;
+fastf_t		x_top_len;
+{
+
+	point_t		pts[8];		/* vertices for the wedge */
+	vect_t		xvec;		/* x_axis vector */
+	vect_t		txvec;		/* top x_axis vector */
+	vect_t		yvec;		/* y-axis vector */
+	vect_t		zvec;		/* z-axix vector */
+	vect_t		x_unitv;	/* x-axis unit vector*/
+	vect_t		z_unitv;	/* z-axis unit vector */
+
+	VUNITIZE(x_unitv);
+	VUNITIZE(z_unitv);
+	
+	/* Make ydirv */
+	VCROSS(ydirv, x_unitv, z_unitv);
+
+	/* Scale all vectors. */
+	VSCALE(xvec, x_unitv, xlen);
+	VSCALE(txvec, x_unitv, x_top_len);
+	VSCALE(zvec, z_unitv, zlen);
+	VSCALE(yvec, ydiv, ylen);
+
+	/* Make bottom face */
+
+	VMOVE(pts[0], vert);		/* Move given vertex into pts[0] */
+	VADD2(pts[1], pts[0], xvec);	/* second vertex. */
+	VADD2(pts[2], pts[1], yvec);	/* third vertex */
+	VADD2(pts[3], pts[0], yvec);	/* foruth vertex */
+
+	/* Make top face by extruding bottom face vertices */
+
+	VADD2(pts[4], pts[0], zvec);	/* fifth vertex */
+	VADD2(pts[5], pts[4], txvec);	/* sixth vertex */
+	VADD2(pts[6], pts[5], yvec);	/* seventh vertex */
+	VADD2(pts[7], pts[4], yvec);	/* eighth vertex */
+
+	return( mk_arb8(fp, name, pts) );
+}
+
 
 /*
  *			M K _ A R B 4
@@ -452,6 +513,50 @@ vect_t	c, d;
 		return(-1);
 	return(0);		/* OK */
 }
+
+
+/*			M K _ C O N E
+ *
+ *  Makes a right circular cone given the center point of the base circle,
+ *  a direction vector, a scalar height, and the radii at each end of the
+ *  cone.
+ */
+
+int
+mk_cone( fp, name, base, dirv, height, rad1, rad2)
+FILE		*fp;
+char		*name;
+point_t		base;
+vect_t		dirv;
+fastf_t		height;
+fastf_t		rad1;
+fastf_t		rad2;
+{
+
+	vect_t		a, avec;	/* one base radius vector */
+	vect_t		b, bvec;	/* another base radius vector */
+	vect_t		cvec;		/* nose radius vector */
+	vect_t		dvec;		/* another nose radius vector */
+	vect_t		h_unitv;	/* local copy of dirv */
+	vect_t		hgtv;		/* height vector */
+
+	VMOVE(h_unitv, dirv);
+	VUNITZE(h_unitv);
+	VSCALE(hgtv, h_unitv, height);
+
+	/* Now make a, b, c, and d vectors. */
+
+	vec_ortho(a, h_unitv);
+	VUNITIZE(a);
+	VCROSS(b, h_unitv, a);
+	VSCALE(avec, a, rad1);
+	VSCALE(bvec, b, rad1);
+	VSCALE(cvec, a, rad2);
+	VSCALE(dvec, b, rad2);
+
+	return( mk_tgc(fp, name, base, hgtv, avec, bvec, cvec, dvec) );
+}
+
 
 /*		M K _ T R C
  *
