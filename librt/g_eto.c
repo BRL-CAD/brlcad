@@ -6,7 +6,6 @@
  *
  * Authors -
  *	Michael Markowski	(Programming)
- *	Edwin O. Davisson	(ETO Eqn Development)
  *	ERIM GIFT code		(ETO Eqn)
  *
  *  Source -
@@ -623,7 +622,7 @@ struct soltab *stp;
 	/* angle between C and Nu */
 	phi = acos( cv / MAGNITUDE(eto->eto_C) );
 	dv = eto->eto_rd * sin(phi);
-	dh = eto->eto_rd * cos(phi);
+	dh = -eto->eto_rd * cos(phi);
 
 	/* build coord system for ellipse: x,y directions are Dp,Cp */
 	VCOMB2( Cp, ch, Ru, cv, Nu );
@@ -819,7 +818,7 @@ struct rt_tol		*tol;
 	/* angle between C and Nu */
 	phi = acos( cv / MAGNITUDE(tip->eto_C) );
 	dv = tip->eto_rd * sin(phi);
-	dh = tip->eto_rd * cos(phi);
+	dh = -tip->eto_rd * cos(phi);
 
 	/* make sure ellipse doesn't overlap itself when revolved */
 	if (ch > tip->eto_r || dh > tip->eto_r) {
@@ -1194,7 +1193,8 @@ register CONST mat_t		mat;
 	VMOVE( tip->eto_N, &rp->s.s_values[1*3] );
 	VMOVE( tip->eto_C, &rp->s.s_values[2*3] );
 	tip->eto_r  = rp->s.s_values[3*3];
-	tip->eto_rd = rp->s.s_values[4*3];
+	tip->eto_rd = rp->s.s_values[3*3+1];
+
 	if( tip->eto_r < SMALL || tip->eto_rd < SMALL )  {
 		rt_log("rt_eto_import:  zero length R or Rd vector\n");
 		return(-1);
@@ -1240,7 +1240,7 @@ double				local2mm;
 	VMOVE( &eto->s.s_values[1*3], tip->eto_N );
 	VMOVE( &eto->s.s_values[2*3], tip->eto_C );
 	eto->s.s_values[3*3] = tip->eto_r;
-	eto->s.s_values[4*3] = tip->eto_rd;
+	eto->s.s_values[3*3+1] = tip->eto_rd;
 
 	return(0);
 }
@@ -1267,13 +1267,12 @@ double			mm2local;
 	double				r3, r4;
 
 	RT_ETO_CK_MAGIC(tip);
-	rt_vls_strcat( str, "eto (ETO)\n");
+	rt_vls_strcat( str, "Elliptical Torus (ETO)\n");
 
-	sprintf(buf, "\tV (%g, %g, %g), r=%g (A), rd=%g (H)\n",
+	sprintf(buf, "\tV (%g, %g, %g)\n",
 		tip->eto_V[X] * mm2local,
 		tip->eto_V[Y] * mm2local,
-		tip->eto_V[Z] * mm2local,
-		tip->eto_r * mm2local, tip->eto_rd * mm2local );
+		tip->eto_V[Z] * mm2local);
 	rt_vls_strcat( str, buf );
 
 	sprintf(buf, "\tN=(%g, %g, %g)\n",
@@ -1282,10 +1281,17 @@ double			mm2local;
 		tip->eto_N[Z] * mm2local );
 	rt_vls_strcat( str, buf );
 
-	sprintf(buf, "\tC=(%g, %g, %g)\n",
+	sprintf(buf, "\tC=(%g, %g, %g) mag=%g\n",
 		tip->eto_C[X] * mm2local,
 		tip->eto_C[Y] * mm2local,
-		tip->eto_C[Z] * mm2local );
+		tip->eto_C[Z] * mm2local,
+		MAGNITUDE(tip->eto_C) * mm2local);
+	rt_vls_strcat( str, buf );
+	
+	sprintf(buf, "\tr=%g\n", tip->eto_r * mm2local);
+	rt_vls_strcat( str, buf );
+	
+	sprintf(buf, "\td=%g\n", tip->eto_rd * mm2local);
 	rt_vls_strcat( str, buf );
 
 	return(0);
