@@ -1524,6 +1524,10 @@ RT_EXTERN(struct rt_i *rt_dirbuild, (char *filename, char *buf, int len) );
 					/* Prepare for raytracing */
 RT_EXTERN(void rt_prep, (struct rt_i *rtip) );
 RT_EXTERN(void rt_prep_parallel, (struct rt_i *rtip, int ncpu) );
+					/* Handle overlap w/o logging */
+RT_EXTERN(int rt_overlap_quietly, (struct application *ap,
+	struct partition *pp, struct region *reg1,
+	struct region *reg2, struct partition *pheadp) );
 					/* Shoot a ray */
 RT_EXTERN(int rt_shootray, (struct application *ap) );
 					/* Get expr tree for object */
