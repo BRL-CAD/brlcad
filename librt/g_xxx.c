@@ -228,9 +228,12 @@ register struct soltab *stp;
  *			R T _ X X X _ C L A S S
  */
 int
-rt_xxx_class()
+rt_xxx_class( stp, min, max, tol )
+CONST struct soltab    *stp;
+CONST vect_t		min, max;
+CONST struct bn_tol    *tol;
 {
-	return(0);
+	return RT_CLASSIFY_UNIMPLEMENTED;
 }
 
 /*
@@ -265,7 +268,7 @@ struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
-struct rt_tol		*tol;
+CONST struct rt_tol	*tol;
 {
 	LOCAL struct rt_xxx_internal	*xxx_ip;
 
@@ -366,7 +369,7 @@ CONST struct db_i		*dbip;
 int
 rt_xxx_describe( str, ip, verbose, mm2local )
 struct rt_vls		*str;
-struct rt_db_internal	*ip;
+CONST struct rt_db_internal	*ip;
 int			verbose;
 double			mm2local;
 {
