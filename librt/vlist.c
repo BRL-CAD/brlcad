@@ -39,6 +39,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
  *									*
  ************************************************************************/
 
+/*
+ *			R T _ V L B L O C K _ I N I T
+ */
 struct rt_vlblock *
 rt_vlblock_init()
 {
@@ -67,6 +70,9 @@ rt_vlblock_init()
 	return(vbp);
 }
 
+/*
+ *			R T _ V L B L O C K _ F R E E
+ */
 void
 rt_vlblock_free(vbp)
 struct rt_vlblock *vbp;
@@ -86,6 +92,9 @@ struct rt_vlblock *vbp;
 	rt_free( (char *)vbp, "rt_vlblock" );
 }
 
+/*
+ *			R T _ V L B L O C K _ F I N D
+ */
 struct bu_list *
 rt_vlblock_find( vbp, r, g, b )
 struct rt_vlblock *vbp;
