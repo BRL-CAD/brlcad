@@ -543,7 +543,7 @@ struct bu_bitv {
 /* This is not done by default for performance reasons */
 #define BU_BITV_BITNUM_CHECK(_bv,_bit)	/* Validate bit number */ \
 	if( ((unsigned)(_bit)) >= (_bv)->nbits )  {\
-		bu_log("BU_BITV_BITNUM_CHECK bit number (%u) out of range (0..%u)\n",
+		bu_log("BU_BITV_BITNUM_CHECK bit number (%u) out of range (0..%u)\n", \
 			((unsigned)(_bit)), (_bv)->nbits); \
 		bu_bomb("process self-terminating\n");\
 	}
