@@ -12,6 +12,7 @@
 	complex \
 	const \
 	mat \
+	msr \
 	noise \
 	plane \
 	poly \
