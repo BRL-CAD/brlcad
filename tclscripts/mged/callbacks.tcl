@@ -25,6 +25,10 @@
 proc new_db_callback { dbname } {
     global mged_players
 
+    if ![info exists mged_players] {
+	return
+    }
+
     foreach id $mged_players {
 	set_wm_title $id $dbname
     }
