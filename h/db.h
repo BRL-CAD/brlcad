@@ -305,7 +305,7 @@ union record  {
 		char	pw_id;			/* DBID_PIPE */
 		char	pw_pad;
 		char	pw_name[NAMESIZE];
-		char	pw_count[4];		/* # granules used */
+		char	pw_count[4];		/* # additional granules */
 		struct exported_pipeseg  {
 			char		eps_type[4];
 			char		eps_start[8*3];
