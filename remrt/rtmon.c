@@ -161,8 +161,12 @@ int	fd;
 
 CONST char *prog_paths[] = {
 	".",
-	"/m/cad/.remrt.8d",
-	"/n/vapor/m/cad/.remrt.8d",
+	"/m/cad/.remrt.m4i64",
+	"/n/vapor/m/cad/.remrt.m4i64",
+	"/m/cad/.remrt.m3i62",
+	"/n/vapor/m/cad/.remrt.m3i62",
+	"/m/cad/.remrt.7d",
+	"/n/vapor/m/cad/.remrt.7d",
 	"/m/cad/.remrt.6d",
 	"/n/vapor/m/cad/.remrt.6d",
 	"/usr/brlcad/bin",
