@@ -48,16 +48,15 @@ struct rt_vls  {
 /*
  *			R T _ V L S _ I N I T
  *
- *  Used to initialize strings for which storage has already been obtained.
+ *  Used to initialize VLS string structures.
+ *  This macro is obsolete, and just referrs to the subroutine.
  */
-#define RT_VLS_INIT(_vp)		{ \
-	(_vp)->vls_magic = RT_VLS_MAGIC; \
-	(_vp)->vls_str = (char *)0; \
-	(_vp)->vls_len = (_vp)->vls_max = 0; }
+#define RT_VLS_INIT(_vp)	rt_vls_init(_vp)
 
 /*
  *  Subroutine declarations
  */
+RT_VLS_EXTERN(void rt_vls_init, (struct rt_vls *vp) );
 RT_VLS_EXTERN(void rt_vls_bomb, (char *str, struct rt_vls *badp) );
 RT_VLS_EXTERN(int rt_vls_strlen, (struct rt_vls *vp) );
 RT_VLS_EXTERN(void rt_vls_trunc, (struct rt_vls *vp, int len) );
