@@ -1646,6 +1646,8 @@ int void_ok;
 	NMG_CK_LOOPUSE(old_lu);
 	new_lu = nmg_cut_loop(p1->vu_p, p2->vu_p);
 	NMG_CK_LOOPUSE(new_lu);
+	NMG_CK_LOOP(new_lu->l_p);
+	nmg_loop_g(new_lu->l_p, tol);
 
 /* XXX Does anyone care about loopuse orientations at this stage?
 	nmg_lu_reorient( old_lu, tol );
@@ -2077,7 +2079,6 @@ CONST struct rt_tol	*tol;
 
 	RT_CK_TOL(tol);
 	NMG_CK_FACEUSE(fu);
-	nmg_s_split_touchingloops(fu->s_p, tol);
 
 	/* convert 3D face to face in the X-Y plane */
 	tbl2d = nmg_flatten_face(fu, TformMat);
@@ -2162,6 +2163,8 @@ CONST struct rt_tol   *tol;
 		NMG_CK_REGION(r);
 		for (RT_LIST_FOR(s, shell, &r->s_hd)) {
 			NMG_CK_SHELL(s);
+			nmg_s_split_touchingloops(s, tol);
+
 			for (RT_LIST_FOR(fu, faceuse, &s->fu_hd)) {
 				NMG_CK_FACEUSE(fu);
 				if (fu->orientation == OT_SAME)
