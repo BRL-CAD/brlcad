@@ -70,6 +70,7 @@ int	fd;
 		return	sgi_Empty();
 	else
 #endif
+#if defined( sgi )
 		{	static struct timeval	timeout = { 0L, 600L };
 			fd_set		readfds;
 			register int	nfound;
@@ -78,4 +79,9 @@ int	fd;
 		nfound = select( fd+1, &readfds, (fd_set *)0, (fd_set *)0, &timeout );
 		return	nfound == -1 ? 1 : (nfound == 0);
 		}
+#else
+	/* On most machines we aren't supporting the mouse, so no need to
+		not block on keyboard input. */
+	return	0;
+#endif
 	}
