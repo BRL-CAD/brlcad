@@ -70,6 +70,7 @@ struct application	*ap;
 	register struct partition *pp;
 	struct resource		*res = ap->a_resource;
 	struct rt_i		*rtip = ap->a_rt_i;
+	fastf_t			diff;
 
 	RT_CHECK_RTI(ap->a_rt_i);
 	RT_CK_RESOURCE(res);
@@ -98,7 +99,8 @@ struct application	*ap;
 		/*  Eliminate very thin segments, or they will cause
 		 *  trouble below.
 		 */
-		if( rt_fdiff(segp->seg_in.hit_dist,segp->seg_out.hit_dist)==0 ) {
+		diff = segp->seg_in.hit_dist - segp->seg_out.hit_dist;
+		if( NEAR_ZERO( diff, ap->a_rt_i->rti_tol.dist ) )  {
 			if(rt_g.debug&DEBUG_PARTITION)  rt_log(
 				"rt_boolweave:  Thin seg discarded: %s (%g,%g)\n",
 				segp->seg_stp->st_name,
@@ -160,7 +162,8 @@ struct application	*ap;
 		for( pp=PartHdp->pt_forw; pp != PartHdp; pp=pp->pt_forw ) {
 			register int i;
 
-			if( (i=rt_fdiff(lasthit->hit_dist, pp->pt_outhit->hit_dist)) > 0 )  {
+			diff = lasthit->hit_dist - pp->pt_outhit->hit_dist;
+			if( diff > ap->a_rt_i->rti_tol.dist )  {
 				/* Seg starts beyond the END of the
 				 * current partition.
 				 *	PPPP
@@ -170,7 +173,7 @@ struct application	*ap;
 				if(rt_g.debug&DEBUG_PARTITION)  rt_log("seg start beyond end, skipping\n");
 				continue;
 			}
-			if( i == 0 )  {
+			if( diff > -(ap->a_rt_i->rti_tol.dist) )  {
 				/*
 				 * Seg starts almost "precisely" at the
 				 * end of the current partition.
@@ -187,16 +190,14 @@ struct application	*ap;
 			if(rt_g.debug&DEBUG_PARTITION)  rt_pr_pt(rtip, pp);
 
 			/*
-			 * i < 0
+			 *  diff < ~~0
 			 *  Seg starts before current partition ends
 			 *	PPPPPPPPPPP
 			 *	  SSSS...
 			 */
-			i=rt_fdiff(lasthit->hit_dist, pp->pt_inhit->hit_dist);
-			if( i > 0 )  {
+			diff = lasthit->hit_dist - pp->pt_inhit->hit_dist;
+			if( diff > ap->a_rt_i->rti_tol.dist )  {
 				/*
-				 * i > 0
-				 *
 				 * lasthit->hit_dist > pp->pt_inhit->hit_dist
 				 *
 				 *  Segment starts after partition starts,
@@ -219,28 +220,18 @@ struct application	*ap;
 				if(rt_g.debug&DEBUG_PARTITION) rt_log("seg starts after p starts, ends after p ends. Split p in two, advance.\n");
 				goto equal_start;
 			}
-			if( i == 0){
+			if( diff > -(ap->a_rt_i->rti_tol.dist) )  {
 equal_start:
 				if(rt_g.debug&DEBUG_PARTITION) rt_log("equal_start\n");
 				/*
 				 * Segment and partition start at
 				 * (roughly) the same point.
 				 * When fuseing 2 points together
-				 * (ie, when rt_fdiff()==0), the two
-				 * points MUST be forced to become
+				 * i.e., when NEAR_ZERO(diff,tol) is true,
+				 * the two points MUST be forced to become
 				 * exactly equal!
 				 */
-				if( (i = rt_fdiff(segp->seg_out.hit_dist, pp->pt_outhit->hit_dist)) == 0 )  {
-					/*
-					 * Segment and partition start & end
-					 * (nearly) together.
-					 *	PPPP
-					 *	SSSS
-					 */
-					BITSET(pp->pt_solhit, segp->seg_stp->st_bit);
-					if(rt_g.debug&DEBUG_PARTITION) rt_log("same start&end\n");
-					goto done_weave;
-				}
+				i = rt_fdiff(segp->seg_out.hit_dist, pp->pt_outhit->hit_dist);
 				if( i > 0 )  {
 					/*
 					 * Seg & partition start at roughly
@@ -257,29 +248,43 @@ equal_start:
 					if(rt_g.debug&DEBUG_PARTITION) rt_log("seg spans p and beyond\n");
 					continue;
 				}
+				if( i == 0 )  {
+					/*
+					 * Segment and partition start & end
+					 * (nearly) together.
+					 *	PPPP
+					 *	SSSS
+					 */
+					BITSET(pp->pt_solhit, segp->seg_stp->st_bit);
+					if(rt_g.debug&DEBUG_PARTITION) rt_log("same start&end\n");
+					goto done_weave;
+				}
+				if( i < 0 )  {
+					/*
+					 *  Segment + Partition start together,
+					 *  segment ends before partition ends.
+					 *	PPPPPPPPPP
+					 *	SSSSSS
+					 *	newpp| pp
+					 */
+					GET_PT( rtip, newpp, res );
+					COPY_PT( rtip, newpp,pp);
+					/* new partition contains segment */
+					BITSET(newpp->pt_solhit, segp->seg_stp->st_bit);
+					newpp->pt_outseg = segp;
+					newpp->pt_outhit = &segp->seg_out;
+					newpp->pt_outflip = 0;
+					pp->pt_inseg = segp;
+					pp->pt_inhit = &segp->seg_out;
+					pp->pt_inflip = 1;
+					INSERT_PT( newpp, pp );
+					if(rt_g.debug&DEBUG_PARTITION) rt_log("start together, seg shorter\n");
+					goto done_weave;
+				}
+			} else {
 				/*
-				 *  Segment + Partition start together,
-				 *  segment ends before partition ends.
-				 *	PPPPPPPPPP
-				 *	SSSSSS
-				 *	newpp| pp
-				 */
-				GET_PT( rtip, newpp, res );
-				COPY_PT( rtip, newpp,pp);
-				/* new partition contains segment */
-				BITSET(newpp->pt_solhit, segp->seg_stp->st_bit);
-				newpp->pt_outseg = segp;
-				newpp->pt_outhit = &segp->seg_out;
-				newpp->pt_outflip = 0;
-				pp->pt_inseg = segp;
-				pp->pt_inhit = &segp->seg_out;
-				pp->pt_inflip = 1;
-				INSERT_PT( newpp, pp );
-				if(rt_g.debug&DEBUG_PARTITION) rt_log("start together, seg shorter\n");
-				goto done_weave;
-			}
-			if( i < 0 )  {
-				/*
+				 *  diff < ~~0
+				 *
 				 * Seg starts before current partition starts,
 				 * but after the previous partition ends.
 				 *	SSSSSSSS...
@@ -345,6 +350,7 @@ equal_start:
 				if(rt_g.debug&DEBUG_PARTITION) rt_log("insert seg before p start, ends after p ends\n");
 				goto equal_start;
 			}
+			/* NOTREACHED */
 		}
 
 		/*
