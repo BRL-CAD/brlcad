@@ -71,6 +71,8 @@ extern short earb8[12][18];
 static void	arb8_edge(int arg), ars_ed(int arg), ell_ed(int arg), tgc_ed(int arg), tor_ed(int arg), spline_ed(int arg);
 static void	nmg_ed(int arg), pipe_ed(int arg), vol_ed(int arg), ebm_ed(int arg), dsp_ed(int arg), cline_ed(int arg), bot_ed(int arg), extr_ed(int arg);
 static void	rpc_ed(int arg), rhc_ed(int arg), part_ed(int arg), epa_ed(int arg), ehy_ed(int arg), eto_ed(int arg);
+static void	superell_ed(int arg);
+
 static void	arb7_edge(int arg), arb6_edge(int arg), arb5_edge(int arg), arb4_point(int arg);
 static void	arb8_mv_face(int arg), arb7_mv_face(int arg), arb6_mv_face(int arg);
 static void	arb5_mv_face(int arg), arb4_mv_face(int arg), arb8_rot_face(int arg), arb7_rot_face(int arg);
@@ -225,6 +227,11 @@ int	es_menu;		/* item selected from menu */
 
 #define MENU_TGC_SCALE_H_CD	110
 #define	MENU_TGC_SCALE_H_V_AB	111
+
+#define MENU_SUPERELL_SCALE_A	112
+#define MENU_SUPERELL_SCALE_B	113
+#define MENU_SUPERELL_SCALE_C	114
+#define MENU_SUPERELL_SCALE_ABC	115
 
 extern int arb_faces[5][24];	/* from edarb.c */
 
@@ -628,6 +635,15 @@ struct menu_item bot_menu[] = {
 	{ "Select Orientation", bot_ed, ECMD_BOT_ORIENT },
 	{ "Set Face Thickness", bot_ed, ECMD_BOT_THICK },
 	{ "Set Face Mode", bot_ed, ECMD_BOT_FMODE },
+	{ "", (void (*)())NULL, 0 }
+};
+
+struct menu_item  superell_menu[] = {
+	{ "SUPERELLIPSOID MENU", (void (*)())NULL, 0 },
+	{ "Set A", superell_ed, MENU_SUPERELL_SCALE_A },
+	{ "Set B", superell_ed, MENU_SUPERELL_SCALE_B },
+	{ "Set C", superell_ed, MENU_SUPERELL_SCALE_C },
+	{ "Set A,B,C", superell_ed, MENU_SUPERELL_SCALE_ABC },
 	{ "", (void (*)())NULL, 0 }
 };
 
@@ -1169,6 +1185,12 @@ extr_ed(int arg)
   sedit();
 }
 
+static void superell_ed(int arg) {
+  es_menu = arg;
+  es_edflag = PSCALE;
+  set_e_axes_pos(1);
+  return;
+}
 
 /*ARGSUSED*/
 static void
@@ -1734,6 +1756,37 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 			}
 			/* Default */
 			VMOVE( mpt, ell->v );
+			*strp = "V";
+			break;
+		}
+	case ID_SUPERELL:
+		{
+			struct rt_superell_internal	*superell = 
+				(struct rt_superell_internal *)ip->idb_ptr;
+			RT_SUPERELL_CK_MAGIC(superell);
+
+			if( strcmp( cp, "V" ) == 0 )  {
+				VMOVE( mpt, superell->v );
+				*strp = "V";
+				break;
+			}
+			if( strcmp( cp, "A" ) == 0 )  {
+				VADD2( mpt , superell->v , superell->a );
+				*strp = "A";
+				break;
+			}
+			if( strcmp( cp, "B" ) == 0 )  {
+				VADD2( mpt , superell->v , superell->b );
+				*strp = "B";
+				break;
+			}
+			if( strcmp( cp, "C" ) == 0 )  {
+				VADD2( mpt , superell->v , superell->c );
+				*strp = "C";
+				break;
+			}
+			/* Default */
+			VMOVE( mpt, superell->v );
 			*strp = "V";
 			break;
 		}
@@ -2452,6 +2505,9 @@ sedit_menu(void) {
 		break;
 	case ID_ELL:
 		mmenu_set_all( MENU_L1, ell_menu );
+		break;
+	case ID_SUPERELL:
+		mmenu_set_all( MENU_L1, superell_menu );
 		break;
 	case ID_ARS:
 		mmenu_set_all( MENU_L1, ars_menu );
@@ -7136,6 +7192,73 @@ pscale(void)
 			VSCALE(ell->c, ell->c, ma/mb);
 		}
 		break;
+
+		/* begin super ellipse menu options */
+	case MENU_SUPERELL_SCALE_A:
+		/* scale vector A */
+		{
+			struct rt_superell_internal	*superell = 
+				(struct rt_superell_internal *)es_int.idb_ptr;
+			RT_SUPERELL_CK_MAGIC(superell);
+			if( inpara ) {
+				/* take es_mat[15] (path scaling) into account */
+				es_scale = es_para[0] * es_mat[15] /
+					MAGNITUDE(superell->a);
+			}
+			VSCALE( superell->a, superell->a, es_scale );
+		}
+		break;
+
+	case MENU_SUPERELL_SCALE_B:
+		/* scale vector B */
+		{
+			struct rt_superell_internal	*superell = 
+				(struct rt_superell_internal *)es_int.idb_ptr;
+			RT_SUPERELL_CK_MAGIC(superell);
+			if( inpara ) {
+				/* take es_mat[15] (path scaling) into account */
+				es_scale = es_para[0] * es_mat[15] /
+					MAGNITUDE(superell->b);
+			}
+			VSCALE( superell->b, superell->b, es_scale );
+		}
+		break;
+
+	case MENU_SUPERELL_SCALE_C:
+		/* scale vector C */
+		{
+			struct rt_superell_internal	*superell = 
+				(struct rt_superell_internal *)es_int.idb_ptr;
+			RT_SUPERELL_CK_MAGIC(superell);
+			if( inpara ) {
+				/* take es_mat[15] (path scaling) into account */
+				es_scale = es_para[0] * es_mat[15] /
+					MAGNITUDE(superell->c);
+			}
+			VSCALE( superell->c, superell->c, es_scale );
+		}
+		break;
+
+	case MENU_SUPERELL_SCALE_ABC:	/* set A,B, and C length the same */
+		{
+			struct rt_superell_internal	*superell = 
+				(struct rt_superell_internal *)es_int.idb_ptr;
+			RT_SUPERELL_CK_MAGIC(superell);
+			if( inpara ) {
+				/* take es_mat[15] (path scaling) into account */
+				es_scale = es_para[0] * es_mat[15] /
+					MAGNITUDE(superell->a);
+			}
+			VSCALE( superell->a, superell->a, es_scale );
+			ma = MAGNITUDE( superell->a );
+			mb = MAGNITUDE( superell->b );
+			VSCALE(superell->b, superell->b, ma/mb);
+			mb = MAGNITUDE( superell->c );
+			VSCALE(superell->c, superell->c, ma/mb);
+		}
+		break;
+
+
 	case MENU_PIPE_PT_OD:	/* scale OD of one pipe segment */
 	  {
 	    if( !es_pipept )
@@ -8103,6 +8226,31 @@ label_edited_solid(
 		}
 		break;
 
+	case ID_SUPERELL:
+		{
+			point_t	work;
+			point_t	pos_view;
+			struct rt_superell_internal	*superell = 
+				(struct rt_superell_internal *)es_int.idb_ptr;
+			RT_SUPERELL_CK_MAGIC(superell);
+
+			MAT4X3PNT( pos_view, xform, superell->v );
+			POINT_LABEL( pos_view, 'V' );
+
+			VADD2( work, superell->v, superell->a );
+			MAT4X3PNT(pos_view, xform, work);
+			POINT_LABEL( pos_view, 'A' );
+
+			VADD2( work, superell->v, superell->b );
+			MAT4X3PNT(pos_view, xform, work);
+			POINT_LABEL( pos_view, 'B' );
+
+			VADD2( work, superell->v, superell->c );
+			MAT4X3PNT(pos_view, xform, work);
+			POINT_LABEL( pos_view, 'C' );
+		}
+		break;
+
 	case ID_TOR:
 		{
 			struct rt_tor_internal	*tor = 
@@ -8924,6 +9072,9 @@ f_get_sedit_menus(ClientData clientData, Tcl_Interp *interp, int argc, char **ar
       break;
     case ID_ELL:
       mip = ell_menu;
+      break;
+    case ID_SUPERELL:
+      mip = superell_menu;
       break;
     case ID_BSPLINE:
       mip = spline_menu;

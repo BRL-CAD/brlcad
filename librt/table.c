@@ -263,6 +263,9 @@ RT_DECLARE_INTERFACE(cline)
 
 RT_DECLARE_INTERFACE(bot)
 
+#define rt_superell_xform rt_generic_xform
+RT_DECLARE_INTERFACE(superell)
+
 /* from db5_comb.c */
 int rt_comb_export5(
 	struct bu_external		*ep,
@@ -941,6 +944,20 @@ const struct rt_functab rt_functab[] = {
 		rt_bot_describe,rt_bot_xform,	NULL,
 		sizeof(struct rt_bot_internal), RT_BOT_INTERNAL_MAGIC,
 		rt_bot_tclget, rt_bot_tcladjust, rt_bot_tclform,
+		NULL,
+	},
+
+	{RT_FUNCTAB_MAGIC, "ID_SUPERELL", "superell",
+		1,		/* 31 Superquadratic Ellipsoid  */
+		rt_superell_prep,	rt_superell_shot,	rt_superell_print,	rt_superell_norm,
+		rt_nul_piece_shot, rt_nul_piece_hitsegs,
+		rt_superell_uv,	rt_superell_curve,	rt_superell_class,	rt_superell_free,
+		rt_superell_plot,	rt_superell_vshot,	rt_superell_tess,	rt_superell_tnurb,
+		rt_superell_import5, rt_superell_export5,
+		rt_superell_import,	rt_superell_export,	rt_superell_ifree,
+		rt_superell_describe,rt_superell_xform,	rt_superell_parse,
+		sizeof(struct rt_superell_internal), RT_SUPERELL_INTERNAL_MAGIC,
+		rt_parsetab_tclget, rt_parsetab_tcladjust, rt_parsetab_tclform,
 		NULL,
 	},
 

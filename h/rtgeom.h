@@ -92,6 +92,20 @@ struct rt_ell_internal  {
 #define RT_ELL_CK_MAGIC(_p)	BU_CKMAG(_p,RT_ELL_INTERNAL_MAGIC,"rt_ell_internal")
 
 /*
+ *      ID_SUPERELL
+ */
+struct rt_superell_internal {
+	long    magic;
+	point_t v;
+	vect_t  a;
+	vect_t  b;
+	vect_t  c;
+};
+#define RT_SUPERELL_INTERNAL_MAGIC      0xff93bb23
+#define RT_SUPERELL_CK_MAGIC(_p)        BU_CKMAG(_p,RT_SUPERELL_INTERNAL_MAGIC,"rt_superell_internal")
+
+
+/*
  *	ID_ARB8
  *
  *  The internal (in memory) form of an ARB8 -- 8 points in space.

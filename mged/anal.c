@@ -55,6 +55,7 @@ static void	ars_anal(struct bu_vls *vp, const struct rt_db_internal *ip);
 static void	rpc_anal(struct bu_vls *vp, const struct rt_db_internal *ip);
 static void	rhc_anal(struct bu_vls *vp, const struct rt_db_internal *ip);
 static void	part_anal(struct bu_vls *vp, const struct rt_db_internal *ip);
+static void	superell_anal(struct bu_vls *vp, const struct rt_db_internal *ip);
 
 /*
  *			F _ A N A L Y Z E
@@ -192,6 +193,10 @@ do_anal(struct bu_vls *vp, const struct rt_db_internal *ip)
 
 	case ID_PARTICLE:
 		part_anal(vp, ip);
+		break;
+
+	case ID_SUPERELL:
+		superell_anal(vp, ip);
 		break;
 
 	default:
@@ -577,6 +582,112 @@ ell_anal(struct bu_vls *vp, const struct rt_db_internal *ip)
 
 	vol = 4.0 * pi * ma * mb * mc / 3.0;
 	bu_vls_printf(vp,"ELL Volume = %.4f (%.4f gal)",
+		vol*base2local*base2local*base2local,
+		vol/GALLONS_TO_MM3);
+
+	if( fabs(ma-mb) < .00001 && fabs(mb-mc) < .00001 ) {
+		/* have a sphere */
+		sur_area = 4.0 * pi * ma * ma;
+		bu_vls_printf(vp,"   Surface Area = %.4f\n",
+				sur_area*base2local*base2local);
+		return;
+	}
+	if( fabs(ma-mb) < .00001 ) {
+		/* A == B */
+		if( mc > ma ) {
+			/* oblate spheroid */
+			type = OBLATE;
+			major = mc;
+			minor = ma;
+		}
+		else {
+			/* prolate spheroid */
+			type = PROLATE;
+			major = ma;
+			minor = mc;
+		}
+	}
+	else
+	if( fabs(ma-mc) < .00001 ) {
+		/* A == C */
+		if( mb > ma ) {
+			/* oblate spheroid */
+			type = OBLATE;
+			major = mb;
+			minor = ma;
+		}
+		else {
+			/* prolate spheroid */
+			type = PROLATE;
+			major = ma;
+			minor = mb;
+		}
+	}
+	else
+	if( fabs(mb-mc) < .00001 ) {
+		/* B == C */
+		if( ma > mb ) {
+			/* oblate spheroid */
+			type = OBLATE;
+			major = ma;
+			minor = mb;
+		}
+		else {
+			/* prolate spheroid */
+			type = PROLATE;
+			major = mb;
+			minor = ma;
+		}
+	}
+	else {
+		bu_vls_printf(vp,"   Cannot find surface area\n");
+		return;
+	}
+	ecc = sqrt(major*major - minor*minor) / major;
+	if( type == PROLATE ) {
+		sur_area = 2.0 * pi * minor * minor +
+			(2.0 * pi * (major*minor/ecc) * asin(ecc));
+	} else if( type == OBLATE ) {
+		sur_area = 2.0 * pi * major * major +
+			(pi * (minor*minor/ecc) * log( (1.0+ecc)/(1.0-ecc) ));
+	} else {
+		sur_area = 0.0;
+	}
+
+	bu_vls_printf(vp,"   Surface Area = %.4f\n",
+			sur_area*base2local*base2local);
+}
+
+
+/*	analyze an superell	*/
+static void
+superell_anal(struct bu_vls *vp, const struct rt_db_internal *ip)
+{
+	struct rt_superell_internal	*superell = (struct rt_superell_internal *)ip->idb_ptr;
+	fastf_t ma, mb, mc;
+#ifdef major		/* Some systems have these defined as macros!!! */
+#undef major
+#endif
+#ifdef minor
+#undef minor
+#endif
+	fastf_t ecc, major, minor;
+	fastf_t vol, sur_area;
+	int	type;
+
+	if(dbip == DBI_NULL)
+	  return;
+
+	RT_SUPERELL_CK_MAGIC( superell );
+
+	ma = MAGNITUDE( superell->a );
+	mb = MAGNITUDE( superell->b );
+	mc = MAGNITUDE( superell->c );
+
+	type = 0;
+
+	vol = 4.0 * pi * ma * mb * mc / 3.0;
+	bu_vls_printf(vp,"SUPERELL Volume = %.4f (%.4f gal)",
 		vol*base2local*base2local*base2local,
 		vol/GALLONS_TO_MM3);
 

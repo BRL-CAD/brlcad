@@ -27,6 +27,7 @@
  *	eto_in		reads elliptical torus params from keyboard
  *	part_in		reads particle params from keyboard
  *	extrude_in	reads extrude params from keyboard
+ *	superell_in		reads params for all SUPERELLs
  *	checkv		checks for zero vector from keyboard
  *
  * Authors -
@@ -493,6 +494,21 @@ char *p_grip[] = {
 	NULL
 };
 
+char *p_superell[] = {
+	"Enter X, Y, Z of superellipse vertex: ",
+	"Enter Y: ",
+	"Enter Z: ",
+	"Enter X, Y, Z of vector A: ",
+	"Enter Y: ",
+	"Enter Z: ",
+	"Enter X, Y, Z of vector B: ",
+	"Enter Y: ",
+	"Enter Z: ",
+	"Enter X, Y, Z of vector C: ",
+	"Enter Y: ",
+	"Enter Z: "
+};
+
 /*	F _ I N ( ) :  	decides which solid reader to call
  *			Used for manual entry of solids.
  */
@@ -513,7 +529,7 @@ f_in(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 				sph_in(char **cmd_argvs, struct rt_db_internal *intern, const char *name), tec_in(char **cmd_argvs, struct rt_db_internal *intern), tgc_in(char **cmd_argvs, struct rt_db_internal *intern), tor_in(char **cmd_argvs, struct rt_db_internal *intern), ars_in(int argc, char **argv, struct rt_db_internal *intern, char **promp),
 				trc_in(char **cmd_argvs, struct rt_db_internal *intern), ebm_in(char **cmd_argvs, struct rt_db_internal *intern), vol_in(char **cmd_argvs, struct rt_db_internal *intern), hf_in(char **cmd_argvs, struct rt_db_internal *intern), bot_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt),
 				dsp_in_v4(char **cmd_argvs, struct rt_db_internal *intern),dsp_in_v5(char **cmd_argvs, struct rt_db_internal *intern), submodel_in(char **cmd_argvs, struct rt_db_internal *intern), part_in(char **cmd_argvs, struct rt_db_internal *intern), pipe_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt),
-				binunif_in(char **cmd_argvs, struct rt_db_internal *intern, const char *name), arbn_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt), extrude_in(char **cmd_argvs, struct rt_db_internal *intern), grip_in(char **cmd_argvs, struct rt_db_internal *intern);
+				binunif_in(char **cmd_argvs, struct rt_db_internal *intern, const char *name), arbn_in(int argc, char **argv, struct rt_db_internal *intern, char **prompt), extrude_in(char **cmd_argvs, struct rt_db_internal *intern), grip_in(char **cmd_argvs, struct rt_db_internal *intern), superell_in(char **cmd_argvs, struct rt_db_internal *intern);
 
 	CHECK_DBI_NULL;
 
@@ -587,7 +603,7 @@ f_in(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	/*
 	 * Decide which solid to make and get the rest of the args
 	 * make name <half|arb[4-8]|sph|ell|ellg|ell1|tor|tgc|tec|
-			rec|trc|rcc|box|raw|rpp|rpc|rhc|epa|ehy|eto>
+			rec|trc|rcc|box|raw|rpp|rpc|rhc|epa|ehy|eto|superell>
 	 */
 	if( strcmp( argv[2], "ebm" ) == 0 )  {
 		nvals = 4;
@@ -782,6 +798,10 @@ f_in(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		nvals = 2*3 + 1;
 		menu = p_grip;
 		fn_in = grip_in;
+	} else if( strcmp( argv[2], "superell" ) == 0 )  {
+		nvals = 3*4;
+		menu = p_superell;
+		fn_in = superell_in;
 	} else if (strcmp(argv[2], "cline") == 0 ||
 		   strcmp(argv[2], "grip") == 0 ||
 		   strcmp(argv[2], "nmg") == 0 ||
@@ -2516,4 +2536,61 @@ grip_in(char **cmd_argvs, struct rt_db_internal *intern)
 	gip->mag = atof(cmd_argvs[9]);
 
 	return 0;
+}
+
+/*   S U P E R E L L _ I N ( ) :   	reads superell parameters from keyboard
+ *				returns 0 if successful read
+ *					1 if unsuccessful read
+ */
+int
+superell_in(cmd_argvs, intern)
+char			*cmd_argvs[];
+struct rt_db_internal	*intern;
+{
+	fastf_t			len, mag_b, r_rev, vals[12];
+	int			i, n;
+	struct rt_superell_internal	*eip;
+
+	CHECK_DBI_NULL;
+
+	n = 12;				/* SUPERELL has twelve params */
+	if (cmd_argvs[2][3] != '\0')	/* ELLG and ELL1 have seven */
+		n = 7;
+
+	/* need to handle special params to make sph and box objects */
+
+	intern->idb_type = ID_SUPERELL;
+	intern->idb_meth = &rt_functab[ID_SUPERELL];
+	intern->idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_superell_internal),
+		"rt_superell_internal" );
+	eip = (struct rt_superell_internal *)intern->idb_ptr;
+	eip->magic = RT_SUPERELL_INTERNAL_MAGIC;
+
+	/* convert typed in args to reals */
+	for (i = 0; i < n; i++) {
+		vals[i] = atof(cmd_argvs[3+i]) * local2base;
+	}
+
+	if (!strcmp("superell", cmd_argvs[2])) {	/* everything's ok */
+		/* V, A, B, C */
+		VMOVE( eip->v, &vals[0] );
+		VMOVE( eip->a, &vals[3] );
+		VMOVE( eip->b, &vals[6] );
+		VMOVE( eip->c, &vals[9] );
+		return(0);
+	}
+	
+	r_rev = 0;
+	
+	/* convert ELL1 format into ELLG format */
+	/* calculate B vector */
+	bn_vec_ortho( eip->b, eip->a );
+	VUNITIZE( eip->b );
+	VSCALE( eip->b, eip->b, r_rev);
+
+	/* calculate C vector */
+	VCROSS( eip->c, eip->a, eip->b );
+	VUNITIZE( eip->c );
+	VSCALE( eip->c, eip->c, r_rev );
+	return(0);	/* success */
 }

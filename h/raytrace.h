@@ -522,16 +522,21 @@ struct soltab {
 #define ID_SUBMODEL	28	/* Instanced submodel */
 #define	ID_CLINE	29	/* FASTGEN4 CLINE solid */
 #define	ID_BOT		30	/* Bag o' triangles */
-#define	ID_MAX_SOLID	30	/* Maximum defined ID_xxx for solids */
+#define ID_SUPERELL	31	/* Superquadratic ellipsoid */
+
+  /* Add a new primitive id above here
+   * XXX must update the non-geometric object id's below XXX 
+   */
+#define	ID_MAX_SOLID	31	/* Maximum defined ID_xxx for solids */
 
 /*
  *	Non-geometric objects
  */
-#define ID_COMBINATION	31	/* Combination Record */
-#define ID_BINEXPM	32	/* Experimental binary */
-#define ID_BINUNIF	33	/* Uniform-array binary */
-#define ID_BINMIME	34	/* MIME-typed binary */
-#define ID_MAXIMUM	35	/* Maximum defined ID_xxx value */
+#define ID_COMBINATION	32	/* Combination Record */
+#define ID_BINEXPM	33	/* Experimental binary */
+#define ID_BINUNIF	34	/* Uniform-array binary */
+#define ID_BINMIME	35	/* MIME-typed binary */
+#define ID_MAXIMUM	36	/* Maximum defined ID_xxx value */
 
 /*
  *			M A T E R _ I N F O

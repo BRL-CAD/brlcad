@@ -144,6 +144,7 @@ writesolid(void)
 		struct rt_ehy_internal *ehy;
 		struct rt_eto_internal *eto;
 		struct rt_part_internal *part;
+		struct rt_superell_internal *superell;
 
 		default:
 		  Tcl_AppendResult(interp, "Cannot text edit this solid type\n", (char *)NULL);
@@ -236,6 +237,13 @@ writesolid(void)
 			(void)fprintf( fp , "Semi-minor length: %.9f\n" , eto->eto_rd * base2local );
 			(void)fprintf( fp , "Radius of roation: %.9f\n" , eto->eto_r * base2local );
 			break;
+		case ID_SUPERELL:
+			superell = (struct rt_superell_internal *)es_int.idb_ptr;
+			(void)fprintf( fp , "Vertex: %.9f %.9f %.9f\n", V3BASE2LOCAL( superell->v ) );
+			(void)fprintf( fp , "A: %.9f %.9f %.9f\n", V3BASE2LOCAL( superell->a ) );
+			(void)fprintf( fp , "B: %.9f %.9f %.9f\n", V3BASE2LOCAL( superell->b ) );
+			(void)fprintf( fp , "C: %.9f %.9f %.9f\n", V3BASE2LOCAL( superell->c ) );
+			break;
 	}
 	
 	(void)fclose(fp);
@@ -293,6 +301,7 @@ readsolid(void)
 		struct rt_ehy_internal *ehy;
 		struct rt_eto_internal *eto;
 		struct rt_part_internal *part;
+		struct rt_superell_internal *superell;
 		char *str;
 		double a,b,c,d;
 
@@ -741,6 +750,45 @@ readsolid(void)
 			}
 			(void)sscanf( str , "%lf" , &a );
 			eto->eto_r = a * local2base;
+			break;
+		case ID_SUPERELL:
+			superell = (struct rt_superell_internal *)es_int.idb_ptr;
+
+			if( (str=Get_next_line( fp )) == NULL )
+			{
+				ret_val = 1;
+				break;
+			}
+			(void)sscanf( str , "%lf %lf %lf" , &a , &b , &c );
+			VSET( superell->v , a , b , c );
+			VSCALE( superell->v , superell->v , local2base );
+
+			if( (str=Get_next_line( fp )) == NULL )
+			{
+				ret_val = 1;
+				break;
+			}
+			(void)sscanf( str , "%lf %lf %lf" , &a , &b , &c );
+			VSET( superell->a , a , b , c );
+			VSCALE( superell->a , superell->a , local2base );
+
+			if( (str=Get_next_line( fp )) == NULL )
+			{
+				ret_val = 1;
+				break;
+			}
+			(void)sscanf( str , "%lf %lf %lf" , &a , &b , &c );
+			VSET( superell->b , a , b , c );
+			VSCALE( superell->b , superell->b , local2base );
+
+			if( (str=Get_next_line( fp )) == NULL )
+			{
+				ret_val = 1;
+				break;
+			}
+			(void)sscanf( str , "%lf %lf %lf" , &a , &b , &c );
+			VSET( superell->c , a , b , c );
+			VSCALE( superell->c , superell->c , local2base );
 			break;
 	}
 

@@ -1178,6 +1178,20 @@ f_mirror(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 			break;
 		}
+		case ID_SUPERELL:
+		{
+			struct rt_superell_internal *superell;
+
+			superell = (struct rt_superell_internal *)internal.idb_ptr;
+			RT_SUPERELL_CK_MAGIC( superell );
+
+			superell->v[k] *= -1.0;
+			superell->a[k] *= -1.0;
+			superell->b[k] *= -1.0;
+			superell->c[k] *= -1.0;
+
+			break;
+		}
 		case ID_COMBINATION:
 		{
 			struct rt_comb_internal	*comb;
@@ -1313,6 +1327,7 @@ f_make(ClientData	clientData,
 	struct rt_extrude_internal *extrude_ip;
 	struct rt_bot_internal *bot_ip;
 	struct rt_arbn_internal *arbn_ip;
+	struct rt_superell_internal	*superell_ip;
 
 	if(argc == 2){
 	  struct bu_vls vls;
@@ -1348,6 +1363,7 @@ f_make(ClientData	clientData,
 	    Tcl_AppendElement(interp, "tgc");
 	    Tcl_AppendElement(interp, "tor");
 	    Tcl_AppendElement(interp, "trc");
+	    Tcl_AppendElement(interp, "superell");
 
 	    return TCL_OK;
 	  }
@@ -1379,7 +1395,7 @@ f_make(ClientData	clientData,
 
 	RT_INIT_DB_INTERNAL( &internal );
 
-	/* make name <arb8 | arb7 | arb6 | arb5 | arb4 | ellg | ell |
+	/* make name <arb8 | arb7 | arb6 | arb5 | arb4 | ellg | ell | superell
 	 * sph | tor | tgc | rec | trc | rcc | grp | half | nmg | bot | sketch | extrude> */
 	if (strcmp(argv[2], "arb8") == 0 ||
 	    strcmp(argv[2],  "rpp") == 0)  {
@@ -1951,6 +1967,17 @@ f_make(ClientData	clientData,
 		csg->radius = -1.0;
 		csg->center_is_left = 1;
 		csg->orientation = 0;
+	} else if( strcmp( argv[2], "superell" ) == 0 )  {
+		internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+		internal.idb_type = ID_SUPERELL;
+		internal.idb_meth = &rt_functab[ID_SUPERELL];
+		internal.idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_superell_internal) , "rt_superell_internal" );
+		superell_ip = (struct rt_superell_internal *)internal.idb_ptr;
+		superell_ip->magic = RT_SUPERELL_INTERNAL_MAGIC;
+		VSET( superell_ip->v , -view_state->vs_vop->vo_center[MDX] , -view_state->vs_vop->vo_center[MDY] , -view_state->vs_vop->vo_center[MDZ] );
+		VSET( superell_ip->a, view_state->vs_vop->vo_scale, 0.0, 0.0 );		/* A */
+		VSET( superell_ip->b, 0.0, (0.5*view_state->vs_vop->vo_scale), 0.0 );	/* B */
+		VSET( superell_ip->c, 0.0, 0.0, (0.25*view_state->vs_vop->vo_scale) );	/* C */
 	} else if (strcmp(argv[2], "hf") == 0) {
 		Tcl_AppendResult(interp, "make: the height field is deprecated and not supported by this command.\nUse the dsp primitive.\n", (char *)NULL);
 		return TCL_ERROR;
@@ -1972,7 +1999,7 @@ f_make(ClientData	clientData,
 			   "\tchoices are: arb8, arb7, arb6, arb5, arb4, arbn, ars, bot,\n",
 			   "\t\tehy, ell, ell1, epa, eto, extrude, grip, half, nmg,\n",
 			   "\t\tpart, pipe, rcc, rec, rhc, rpc, sketch, sph, tec,\n",
-			   "\t\ttgc, tor, trc\n",
+			   "\t\ttgc, tor, trc, superell\n",
 			   (char *)NULL);
 	  return TCL_ERROR;
 	}
