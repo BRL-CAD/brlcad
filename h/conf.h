@@ -93,6 +93,12 @@
 #	define HAVE_UNISTD_H	1
 #	define HAVE_GETHOSTNAME	1
 #	define HAVE_SYS_MMAN_H	1
+#       ifndef __STDC__
+#               define __STDC__         1
+#               define USE_PROTOTYPES   1
+#               define HAVE_FLOAT_H     1
+#               define HAVE_LIMITS_H    1
+#       endif
 #endif
 
 #if IRIX == 5
