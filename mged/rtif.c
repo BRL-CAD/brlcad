@@ -310,10 +310,6 @@ run_rt()
 
 		VSET( temp, 0, 0, 1 );
 		MAT4X3PNT( eye_model, view2model, temp );
-#if 0
-		/* This old way is no longer needed for RT */
-		rt_oldwrite(fp, eye_model );
-#endif
 		rt_write(fp, eye_model );
 	}
 	(void)fclose( fp );
@@ -349,7 +345,6 @@ char	**argv;
 	register int i;
 	int retcode;
 	char *dm;
-	int	needs_reattach;
 	char	pstring[32];
 	struct bu_vls cmd;
 
@@ -358,18 +353,6 @@ char	**argv;
 
 	if( not_state( ST_VIEW, "Ray-trace of current view" ) )
 	  return TCL_ERROR;
-
-#if 0
-	/*
-	 * This may be a workstation where RT and MGED have to share the
-	 * display, so let display go.  We will try to reattach at the end.
-	 */
-	if( (needs_reattach = dmp->dmr_releasedisplay) != 0 ){
-	  bu_vls_init(&cmd);
-	  bu_vls_printf(&cmd, "attach %s %s\n", dmp->dmr_name, dname);
-	  release(NULL);
-	}
-#endif
 
 	vp = &rt_cmd_vec[0];
 	*vp++ = "rt";
@@ -385,19 +368,6 @@ char	**argv;
 
 	setup_rt( vp );
 	retcode = run_rt();
-
-#if 0
-	if( needs_reattach && retcode == 0 )  {
-		/* Wait for a return, then reattach display */
-		bu_log("Press RETURN to reattach\007\n");
-		while( getchar() != '\n' )
-			/* NIL */  ;
-	}
-	if( needs_reattach ){
-	  cmdline(&cmd, FALSE);
-	  bu_vls_free(&cmd);
-	}
-#endif
 
 	return TCL_OK;
 }
@@ -420,7 +390,6 @@ char	**argv;
 	register int i;
 	int	retcode;
 	char	*dm;
-	int	needs_reattach;
 	struct bu_vls cmd;
 
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
@@ -429,18 +398,6 @@ char	**argv;
 	if( not_state( ST_VIEW, "Ray-trace of current view" ) )
 	  return TCL_ERROR;
 
-#if 0
-	/*
-	 * This may be a workstation where RT and MGED have to share the
-	 * display, so let display go.  We will try to reattach at the end.
-	 */
-	if( needs_reattach = dmp->dmr_releasedisplay ){
-	  bu_vls_init(&cmd);
-	  bu_vls_printf(&cmd, "attach %s %s\n", dmp->dmr_name, dname);
-	  release(NULL);
-	}
-#endif
-
 	vp = &rt_cmd_vec[0];
 	for( i=1; i < argc; i++ )
 		*vp++ = argv[i];
@@ -448,20 +405,6 @@ char	**argv;
 
 	setup_rt( vp );
 	retcode = run_rt();
-
-#if 0
-/*XXX*/
-	if( needs_reattach && retcode == 0 )  {
-	  /* Wait for a return, then reattach display */
-		bu_log("Press RETURN to reattach\007\n");
-		while( getchar() != '\n' )
-			/* NIL */  ;
-	}
-	if( needs_reattach ){
-	  cmdline(&cmd, FALSE);
-	  bu_vls_free(&cmd);
-	}
-#endif
 
 	return TCL_OK;
 }
