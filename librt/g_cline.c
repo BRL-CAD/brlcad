@@ -174,6 +174,10 @@ struct seg		*seghead;
 	if( bn_distsq_line3_line3( dist, cline->V, cline->height, rp->r_pt, rp->r_dir, pt1, pt2 ) )
 	{
 		/* ray is parallel to CLINE */
+
+		if( cline->thickness > 0.0 )
+			return( 0 );	/* No end-on hits for plate mode cline */
+
 		if( dist[2] > reff*reff )
 			return( 0 );	/* missed */
 
@@ -186,68 +190,25 @@ struct seg		*seghead;
 			dist[1] = dist[2];
 		}
 
-		if( cline->thickness <= 0.0 )
-		{
-			/* vloume mode */
+		/* vloume mode */
 
-			RT_GET_SEG( segp, ap->a_resource);
-			segp->seg_stp = stp;
-			segp->seg_in.hit_dist = dist[0];
-			segp->seg_in.hit_surfno = 1;
-			if( cosa > 0.0 )
-				VREVERSE( segp->seg_in.hit_normal, cline->h )
-			else
-				VMOVE( segp->seg_in.hit_normal, cline->h );
-
-			segp->seg_out.hit_dist = dist[1];
-			segp->seg_out.hit_surfno = -1;
-			if( cosa < 0.0 )
-				VREVERSE( segp->seg_out.hit_normal, cline->h )
-			else
-				VMOVE( segp->seg_out.hit_normal, cline->h );
-			BU_LIST_INSERT( &(seghead->l), &(segp->l) );
-			return( 1 );
-		}
+		RT_GET_SEG( segp, ap->a_resource);
+		segp->seg_stp = stp;
+		segp->seg_in.hit_dist = dist[0];
+		segp->seg_in.hit_surfno = 1;
+		if( cosa > 0.0 )
+			VREVERSE( segp->seg_in.hit_normal, cline->h )
 		else
-		{
-			/* plate mode */
+			VMOVE( segp->seg_in.hit_normal, cline->h );
 
-			RT_GET_SEG( segp, ap->a_resource);
-			segp->seg_stp = stp;
-			segp->seg_in.hit_dist = dist[0];
-			segp->seg_in.hit_surfno = 1;
-			if( cosa > 0.0 )
-				VREVERSE( segp->seg_in.hit_normal, cline->h )
-			else
-				VMOVE( segp->seg_in.hit_normal, cline->h );
-
-			segp->seg_out.hit_dist = dist[0] + cline->thickness;
-			segp->seg_out.hit_surfno = -1;
-			if( cosa < 0.0 )
-				VREVERSE( segp->seg_out.hit_normal, cline->h )
-			else
-				VMOVE( segp->seg_out.hit_normal, cline->h );
-			BU_LIST_INSERT( &(seghead->l), &(segp->l) );
-
-			RT_GET_SEG( segp, ap->a_resource);
-			segp->seg_stp = stp;
-			segp->seg_in.hit_dist = dist[1];
-			segp->seg_in.hit_surfno = 1;
-			if( cosa > 0.0 )
-				VREVERSE( segp->seg_in.hit_normal, cline->h )
-			else
-				VMOVE( segp->seg_in.hit_normal, cline->h );
-
-			segp->seg_out.hit_dist = dist[1] + cline->thickness;
-			segp->seg_out.hit_surfno = -1;
-			if( cosa < 0.0 )
-				VREVERSE( segp->seg_out.hit_normal, cline->h )
-			else
-				VMOVE( segp->seg_out.hit_normal, cline->h );
-			BU_LIST_INSERT( &(seghead->l), &(segp->l) );
-
-			return( 2 );
-		}
+		segp->seg_out.hit_dist = dist[1];
+		segp->seg_out.hit_surfno = -1;
+		if( cosa < 0.0 )
+			VREVERSE( segp->seg_out.hit_normal, cline->h )
+		else
+			VMOVE( segp->seg_out.hit_normal, cline->h );
+		BU_LIST_INSERT( &(seghead->l), &(segp->l) );
+		return( 1 );
 	}
 
 	if( dist[2] > reff*reff )
