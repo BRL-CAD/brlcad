@@ -83,7 +83,6 @@ if test "$FRAMEWORK_BUILD" = "1" ; then
 else
     TCL_BUILD_CFLAGS="-DTCL_PACKAGE_PATH=\\\"$libdir\\\" -DTCL_LIBRARY=\\\"$TCL_LIBRARY\\\""
 fi
-echo "TCL_BUILD_CFLAGS = $TCL_BUILD_CFLAGS"
 AC_SUBST(TCL_BUILD_CFLAGS)
 
 ITCL_LIBS='${top_builddir}/libitcl3.2/itcl/libitcl.la'
@@ -93,7 +92,6 @@ AC_SUBST(ITCL_VERSION)
 
 dnl tk
 TK_LIBS='${top_builddir}/libtk8.4/libtk8.4.la ${TCL_LIBS} ${X_LIBS}'
-TK
 TK_LIBRARY="$prefix/tk8.4"
 AC_SUBST(TK)
 AC_SUBST(TK_LIBS)
@@ -321,6 +319,7 @@ AC_OUTPUT([
 	remrt/Makefile
 	rt/Makefile
 	sample_applications/Makefile
+	sample_applications/mk
 	sh/Makefile
 	sig/Makefile
 	tab/Makefile
