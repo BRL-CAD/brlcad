@@ -2474,7 +2474,6 @@ nmg_edgeuse_on_line_tabulate(struct bu_ptbl *tab, const long int *magic_p, const
 	bu_free( (char *)st.visited, "visited[]");
 }
 
-/* XXX Move to nmg_info.c */
 struct e_and_v_state  {
 	char		*visited;
 	struct bu_ptbl	*edges;
