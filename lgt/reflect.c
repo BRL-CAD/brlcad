@@ -276,6 +276,7 @@ int frame;
 		ag.a_hit = f_Region;
 		ag.a_miss = f_R_Miss;
 		ag.a_overlap = report_overlaps ? f_Overlap : f_NulOverlap;
+		ag.a_logoverlap =rt_silent_logoverlap; 
 		ag.a_onehit = false;
 		}
 	else
@@ -306,6 +307,7 @@ int frame;
 			bu_log( "Warning, no memory for distance map.\n" );
 		ag.a_hit = f_HL_Hit;
 		ag.a_miss = f_HL_Miss;
+		ag.a_logoverlap =rt_silent_logoverlap; 
 		ag.a_overlap = report_overlaps ? f_Overlap : f_NulOverlap;
 		ag.a_onehit = true;
 		}
@@ -313,6 +315,7 @@ int frame;
 		{
 		ag.a_hit = f_Model;
 		ag.a_miss = f_Backgr;
+		ag.a_logoverlap =rt_silent_logoverlap; 
 		ag.a_overlap = report_overlaps ? f_Overlap : f_NulOverlap;
 		ag.a_onehit = ! (max_bounce > 0);
 		}
