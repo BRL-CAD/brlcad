@@ -106,6 +106,14 @@ trap '/bin/rm -f ${FILE}; exit 1' 1 2 3 15	# Clean up temp file
 	HAS_SYMLINKS=1;
 #endif
 
+#if defined(apollo)
+#	undef	apollo
+	MACHINE=apollo;
+	UNIXTYPE=SYSV;
+	HAS_TCP=0;
+	HAS_SYMLINKS=0;
+#endif
+
 #if defined(CRAY1)
 /*	Cray X-M/P running UNICOS. */
 #	undef	xmp
