@@ -35,7 +35,6 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "raytrace.h"
 #include "./debug.h"	/* For librt debug flags, XXX temp */
 
-CONST struct nmg_visit_handlers	nmg_visit_handlers_null;
 
 /************************************************************************
  *									*
