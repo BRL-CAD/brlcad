@@ -153,6 +153,11 @@ drawing lines."} {see_also "ps"}}
 	    {{summary "If checked, clip to the viewing cube."}
             {see_also "ps"}}
 
+    button $top.okB -relief raised -text "OK"\
+	    -command "do_ps $id; catch {destroy $top}"
+    hoc_register_data $top.okB "Create"\
+	    {{summary "Create the postscript file. The
+postscript dialog is then dismissed."} {see_also "ps"}}
     button $top.createB -relief raised -text "Create"\
 	    -command "do_ps $id"
     hoc_register_data $top.createB "Create"\
@@ -185,8 +190,8 @@ drawing lines."} {see_also "ps"}}
     grid $top.zclipCB x -sticky "ew" -in $top.buttonF -ipadx 4 -ipady 4
     grid columnconfigure $top.buttonF 1 -weight 1
 
-    grid $top.createB x $top.dismissB -sticky "ew" -in $top.buttonF2
-    grid columnconfigure $top.buttonF2 1 -weight 1 -minsize 40
+    grid $top.okB $top.createB x $top.dismissB -sticky "ew" -in $top.buttonF2
+    grid columnconfigure $top.buttonF2 2 -weight 1 -minsize 40
 
     pack $top.elF $top.buttonF $top.buttonF2 -expand 1 -fill both -padx 8 -pady 8
 

@@ -26,17 +26,11 @@ proc init_extractTool { id } {
     }
 
     if ![info exists ex_control($id,file)] {
-	regsub \.g$ [_mged_opendb] .keep default_file
+	regsub \.g$ [_mged_opendb] _keep.g default_file
 	set ex_control($id,file) $default_file
     }
 
-    if { 1 } {
-	set ex_control($id,objects) [_mged_who]
-    } else {
-	if ![info exists ex_control($id,objects)] {
-	    set ex_control($id,objects) ""
-	}
-    }
+    set ex_control($id,objects) [_mged_who]
 
     toplevel $top -screen $mged_gui($id,screen)
 
@@ -57,6 +51,13 @@ the extracted objects."} {see_also keep}}
     entry $top.objectsE -width 24 -textvar ex_control($id,objects)
     hoc_register_data $top.objectsE "Objects" $tmp_hoc_data
 
+    button $top.okB -relief raised -text "OK"\
+	    -command "do_extract $id; catch {destroy $top}"
+    hoc_register_data $top.okB "Extract" {{summary "
+Extract the listed objects from the current database
+and put them into the specified file. The extract dialog
+is then dismissed. Note - these objects are not removed
+from the current database."} {see_also keep}}
     button $top.extractB -relief raised -text "Extract"\
 	    -command "do_extract $id"
     hoc_register_data $top.extractB "Extract" {{summary "
@@ -72,8 +73,8 @@ extracting database objects."}}
     grid $top.objectsE $top.objectsL -sticky "ew" -in $top.gridF -pady 4
     grid columnconfigure $top.gridF 0 -weight 1
 
-    grid $top.extractB x $top.dismissB -in $top.gridF2
-    grid columnconfigure $top.gridF2 1 -weight 1
+    grid  $top.okB $top.extractB x $top.dismissB -in $top.gridF2
+    grid columnconfigure $top.gridF2 1 -weight 2
 
     pack $top.gridF $top.gridF2 -side top -expand 1 -fill both\
 	    -padx 8 -pady 8

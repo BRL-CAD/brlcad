@@ -103,6 +103,11 @@ two-dimensional instead of three-dimensional."} {see_also pl}}
 	    {{summary "If checked, the plot file will use floating
 point numbers instead of integers."}}
 
+    button $top.okB -relief raised -text "OK"\
+	    -command "do_plot $id; catch {destroy $top}"
+    hoc_register_data $top.okB "Create"\
+	    {{summary "Create a plot file of the current view.
+The plot dialog is then dismissed."} {see_also pl}}
     button $top.createB -relief raised -text "Create"\
 	    -command "do_plot $id"
     hoc_register_data $top.createB "Create"\
@@ -121,8 +126,8 @@ point numbers instead of integers."}}
     grid columnconfigure $top.gridF2 1 -weight 1
     grid columnconfigure $top.gridF2 3 -weight 1
 
-    grid $top.createB x $top.dismissB -sticky "ew" -in $top.gridF3 -pady 4
-    grid columnconfigure $top.gridF3 1 -weight 1
+    grid $top.okB $top.createB x $top.dismissB -sticky "ew" -in $top.gridF3 -pady 4
+    grid columnconfigure $top.gridF3 1 -weight 2
 
     pack $top.gridF $top.gridF2 $top.gridF3 -side top -expand 1 -fill both\
 	    -padx 8 -pady 8

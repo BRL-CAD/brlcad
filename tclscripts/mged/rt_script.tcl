@@ -53,6 +53,11 @@ to put the RT script."} {see_also "saveview, rt"}}
     entry $top.argsE -width 12 -textvar rts_control($id,args)
     hoc_register_data $top.argsE "Other args" $tmp_hoc_data
 
+    button $top.okB -relief raised -text "OK"\
+	    -command "do_rtScript $id; catch {destroy $top}"
+    hoc_register_data $top.okB "Create"\
+	    {{summary "Create the RT script. The rt_script
+dialog is then dismissed."}}
     button $top.createB -relief raised -text "Create"\
 	    -command "do_rtScript $id"
     hoc_register_data $top.createB "Create"\
@@ -67,8 +72,8 @@ the RT script."}}
     grid $top.argsE $top.argsL -sticky "ew" -in $top.gridF -pady 4
     grid columnconfigure $top.gridF 0 -weight 1
 
-    grid $top.createB x $top.dismissB -in $top.gridF2
-    grid columnconfigure $top.gridF2 1 -weight 1
+    grid $top.okB $top.createB x $top.dismissB -in $top.gridF2
+    grid columnconfigure $top.gridF2 2 -weight 1
 
     pack $top.gridF $top.gridF2 -side top -expand 1 -fill both\
 	    -padx 8 -pady 8
