@@ -165,6 +165,7 @@ BDIRS="bench \
 	halftone \
 	edpix \
 	nirt irprep \
+	jove \
 	dhrystone"
 
 # If there is no TCP networking, eliminate network-only directories.
