@@ -32,7 +32,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "tcl.h"
 
 extern void	predictor_hook();		/* in ged.c */
-extern void	reattach();			/* in attach.c */
 
 struct _mged_variables default_mged_variables = {
 /* autosize */			1,
