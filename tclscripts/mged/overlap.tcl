@@ -98,7 +98,7 @@ proc plot_overlaps { id } {
 	Z
 	draw -C 0/255/0 $obj1
 	draw -C 0/255/255 $obj2
-	vdraw show
+	vdraw send
 	mged_update 0
 }
 
@@ -384,7 +384,7 @@ proc over_quit { id } {
 		eval view eye $over_cont($id,eye)
 	}
 	catch [vdraw delete all]
-	vdraw show
+	vdraw send
 
 	if { $over_cont($id,ray) == "ray" && $over_cont($id,fd) > 0 } {
 		catch [exec kill -9 [lindex $over_cont($id,pid) 0]]
