@@ -916,9 +916,6 @@ AC_TYPE_OFF_T
 AC_TYPE_PID_T
 AC_TYPE_SIZE_T
 
-AC_CHECK_SIZEOF(void *, 4)
-pointer_size="$ac_cv_sizeof_void_p"
-
 dnl XXX - union wait testing from tcl8.4's configure.in, should be revamped.
 AC_MSG_CHECKING([union wait])
 AC_CACHE_VAL(tcl_cv_union_wait,
@@ -1028,6 +1025,8 @@ fi
 
 dnl 64bit compilation flags
 if test "x$build_64bit" = "xyes" ; then
+	found_64bit_flag=no
+
 	AC_MSG_CHECKING([if configure snuck on a 32bit flag to ld])
 	PRELD="$LD"
 	LD="`echo $LD | sed 's/32/64/'`"
@@ -1037,7 +1036,6 @@ if test "x$build_64bit" = "xyes" ; then
 		AC_MSG_RESULT(yes)
 	fi
 
-	found_64bit_flag=no
 	if test "x$found_64bit_flag" = "xno" ; then
 		flag_64="-64"
 		AC_MSG_CHECKING([if the compiler understands $flag_64])
@@ -1046,7 +1044,10 @@ if test "x$build_64bit" = "xyes" ; then
 		PRELDFLAGS="$LDFLAGS"
 		CFLAGS="$CFLAGS $flag_64"
 		LDFLAGS="$LDFLAGS $flag_64"
-		AC_TRY_COMPILE( [], [], [], [flag_64_works=no])
+		m4_pushdef([AC_TRY_EVAL], [_AC_EVAL_STDERR]($$[1]))
+		AC_TRY_COMPILE( [], [], [if AC_TRY_COMMAND([grep "nrecognize" conftest.err >/dev/null 2>&1]) ; then flag_64_works=no ; fi], [flag_64_works=no])
+		m4_popdef([AC_TRY_EVAL]) 
+		rm -f conftest.err
 		AC_MSG_RESULT($flag_64_works)
 		if test "x$flag_64_works" = "xno" ; then
 			CFLAGS="$PRECFLAGS"
@@ -1064,6 +1065,9 @@ if test "x$build_64bit" = "xyes" ; then
 		PRELDFLAGS="$LDFLAGS"
 		CFLAGS="$CFLAGS $mabi_64_flag"
 		LDFLAGS="$LDFLAGS $mabi_64_flag"
+		m4_pushdef([AC_TRY_EVAL], [_AC_EVAL_STDERR]($$[1]))
+		AC_TRY_COMPILE( [], [], [if AC_TRY_COMMAND([grep "nrecognize" conftest.err >/dev/null 2>&1]) ; then mabit_64_flag_works=no ; fi], [mabit_64_flag_works=no])
+		m4_popdef([AC_TRY_EVAL]) 
 		AC_TRY_COMPILE( [], [], [], [mabi_64_flag_works=no])
 		AC_MSG_RESULT($mabi_64_flag_works)
 		if test "x$mabi_64_flag_works" = "xno" ; then
@@ -1082,6 +1086,9 @@ if test "x$build_64bit" = "xyes" ; then
 		PRELDFLAGS="$LDFLAGS"
 		CFLAGS="$CFLAGS $m64_flag"
 		LDFLAGS="$LDFLAGS $m64_flag"
+		m4_pushdef([AC_TRY_EVAL], [_AC_EVAL_STDERR]($$[1]))
+		AC_TRY_COMPILE( [], [], [if AC_TRY_COMMAND([grep "nrecognize" conftest.err >/dev/null 2>&1]) ; then m64_flag_works=no ; fi], [m64_flag_works=no])
+		m4_popdef([AC_TRY_EVAL]) 
 		AC_TRY_COMPILE( [], [], [], [m64_flag_works=no])
 		AC_MSG_RESULT($m64_flag_works)
 		if test "x$m64_flag_works" = "xno" ; then
@@ -1100,7 +1107,9 @@ if test "x$build_64bit" = "xyes" ; then
 		PRELDFLAGS="$LDFLAGS"
 		CFLAGS="$CFLAGS $q64_flag"
 		LDFLAGS="$LDFLAGS $q64_flag"
-		AC_TRY_COMPILE( [], [], [], [q64_flag_works=no])
+		m4_pushdef([AC_TRY_EVAL], [_AC_EVAL_STDERR]($$[1]))
+		AC_TRY_COMPILE( [], [], [if AC_TRY_COMMAND([grep "nrecognize" conftest.err >/dev/null 2>&1]) ; then q64_flag_works=no ; fi], [q64_flag_works=no])
+		m4_popdef([AC_TRY_EVAL]) 
 		AC_MSG_RESULT($q64_flag_works)
 		if test "x$q64_flag_works" = "xno" ; then
 			CFLAGS="$PRECFLAGS"
@@ -1212,6 +1221,10 @@ dnl AC_C_PROTOTYPES
 AM_C_PROTOTYPES
 
 AC_DEFINE(USE_PROTOTYPES,1,heh)
+
+# figure out what size pointers the compiler is actually generating
+AC_CHECK_SIZEOF(void *, 4)
+pointer_size="$ac_cv_sizeof_void_p"
 
 dnl Last step is to make sure that we can actually compile
 AC_MSG_CHECKING(compiler and flags for sanity)
