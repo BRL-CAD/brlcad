@@ -34,6 +34,8 @@ class Mged {
 
     ######################### Commands related to the Database #########################
     public method adjust {args}
+    public method attr {args}
+    public method attr_rm {args}
     public method blast {args}
     public method c {args}
     public method cat {args}
@@ -41,11 +43,13 @@ class Mged {
     public method color {args}
     public method comb {args}
     public method concat {args}
+    public method copyeval {args}
     public method cp {args}
     public method dbip {}
     public method draw {args}
     public method dump {args}
     public method dup {args}
+    public method E {args}
     public method erase {args}
     public method erase_all {args}
     public method ev {args}
@@ -54,6 +58,7 @@ class Mged {
     public method form {args}
     public method g {args}
     public method get {args}
+    public method hide {args}
     public method i {args}
     public method illum {obj}
     public method keep {args}
@@ -64,13 +69,17 @@ class Mged {
     public method label {obj}
     public method listeval {args}
     public method ls {args}
+    public method lt {args}
     public method make_bb {name args}
     public method make_name {args}
     public method match {args}
     public method mv {args}
     public method mvall {args}
+    public method nmg_collapse {args}
+    public method nmg_simplify {args}
     public method opendb {args}
     public method overlay {args}
+    public method pathlist {args}
     public method paths {args}
     public method prcolor {args}
     public method push {args}
@@ -79,17 +88,22 @@ class Mged {
     public method report {args}
     public method rm {args}
     public method rt_gettrees {args}
+    public method shells {args}
+    public method showmats {args}
+    public method summary {args}
     public method title {args}
     public method tol {args}
     public method tops {args}
     public method tree {args}
+    public method unhide {args}
     public method units {args}
     public method vdraw {args}
     public method whatid {args}
     public method whichair {args}
     public method whichid {args}
     public method who {args}
-    public method zap {}
+    public method xpush {args}
+    public method zap {args}
 
     public method ? {}
     public method apropos {key}
@@ -133,12 +147,32 @@ body Mged::adjust {args} {
     eval $db adjust $args
 }
 
+body Mged::attr {args} {
+    eval $db attr $args
+}
+
+body Mged::attr_rm {args} {
+    eval $db attr_rm $args
+}
+
 body Mged::form {args} {
     eval $db form $args
 }
 
 body Mged::tops {args} {
     eval $db tops $args
+}
+
+body Mged::shells {args} {
+    eval $db shells $args
+}
+
+body Mged::showmats {args} {
+    eval $db showmats $args
+}
+
+body Mged::summary {args} {
+    eval $db summary $args
 }
 
 body Mged::rt_gettrees {args} {
@@ -153,16 +187,24 @@ body Mged::dbip {} {
     $db dbip
 }
 
-body Mged::ls {args} {
-    eval $db ls $args
-}
-
 body Mged::l {args} {
     eval $db l $args
 }
 
 body Mged::listeval {args} {
     eval $db listeval $args
+}
+
+body Mged::ls {args} {
+    eval $db ls $args
+}
+
+body Mged::lt {args} {
+    eval $db lt $args
+}
+
+body Mged::pathlist {args} {
+    eval $db pathlist $args
 }
 
 body Mged::paths {args} {
@@ -195,6 +237,18 @@ body Mged::mv {args} {
 
 body Mged::mvall {args} {
     eval $db mvall $args
+}
+
+body Mged::nmg_collapse {args} {
+    eval $db nmg_collapse $args
+}
+
+body Mged::nmg_simplify {args} {
+    eval $db nmg_simplify $args
+}
+
+body Mged::copyeval {args} {
+    eval $db copyeval $args
 }
 
 body Mged::concat {args} {
@@ -241,6 +295,10 @@ body Mged::tree {args} {
     eval $db tree $args
 }
 
+body Mged::unhide {args} {
+    eval $db unhide $args
+}
+
 body Mged::color {args} {
     eval $db color $args
 }
@@ -267,6 +325,10 @@ body Mged::keep {args} {
 
 body Mged::cat {args} {
     eval $db cat $args
+}
+
+body Mged::hide {args} {
+    eval $db hide $args
 }
 
 body Mged::i {args} {
@@ -318,16 +380,24 @@ body Mged::draw {args} {
     return $result
 }
 
+body Mged::E {args} {
+    eval $db E $args
+}
+
 body Mged::erase {args} {
     eval $db erase $args
 }
 
-body Mged::zap {} {
-    $db zap
-}
-
 body Mged::who {} {
     $db who
+}
+
+body Mged::xpush {args} {
+    eval $db xpush $args
+}
+
+body Mged::zap {args} {
+    $db zap $args
 }
 
 body Mged::blast {args} {
