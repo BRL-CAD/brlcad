@@ -99,6 +99,7 @@ CONST char	*appl;		/* non-null only when app. will use 'apbuf' */
 		return mp;
 	}
 	bu_semaphore_release(FILE_LIST_SEMAPHORE_NUM);
+	mp = (struct bu_mapped_file *)NULL;
 
 	/* File is not yet mapped, open file read only. */
 #ifdef HAVE_UNIX_IO
@@ -179,7 +180,7 @@ CONST char	*appl;		/* non-null only when app. will use 'apbuf' */
 	}
 	/* Read it once to see how large it is */
 	{
-		char	buf[10240];
+		char	buf[32768];
 		int	got;
 		mp->buflen = 0;
 
@@ -224,7 +225,12 @@ CONST char	*appl;		/* non-null only when app. will use 'apbuf' */
 	return mp;
 
 fail:
-	if( mp )  bu_free( mp, "bu_open_mapped_file failed");
+	if( mp )  {
+		bu_free( mp->name, "mp->name" );
+		if( mp->appl ) bu_free( mp->appl, "mp->appl" );
+		/* Don't free mp->buf here, it might not be bu_malloced but mmaped */
+		bu_free( mp, "mp from bu_open_mapped_file fail");
+	}
 	bu_log("bu_open_mapped_file(%s) can't open file\n", name);
 	return (struct bu_mapped_file *)NULL;
 }
