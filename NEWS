@@ -3,12 +3,63 @@ BRL-CAD Release Notes
 
 Included below is the latest news pertaining to BRL-CAD releases.  The
 history or BRL-CAD prior to release 5.0 is covered in doc/history.txt,
-see that file for more historic information.
+see that file and the CVS log for more historic information.  The
+entire history of the project is available through CVS.
 
 
 ----------------------------------------------------------------------
---- 2004-11-01  Release 7.1.0                                      ---
+--- 2005-01-07  Release 7.0.2                                      ---
 ----------------------------------------------------------------------
+
+This release marks the first source and binary distribution of BRL-CAD
+as an Open Source project.  With the exception of a few minor bug
+fixes, the majority of changes made available through this release
+that separate it from 7.0.0 are source code style adoptions and
+clarifications of the developer documentation.  All files have adopted
+an emacs/vi local variables block for style conformance and the source
+code headers are modified to denote the new distribution and copyright
+status of the project.
+
+
+----------------------------------------------------------------------
+--- 2004-12-21  Release 7.0.1                                      ---
+----------------------------------------------------------------------
+
+While with the new release numbering scheme it will be rare to see a
+release with an odd minor patch number, in many ways this is a major
+BRL-CAD release with the package entering the realm of Open Source
+software.  Likewise, the project moves a new public website as well as
+adopts a SourceForge project site.  With the migration of the project
+to SourceForge, new forums, mailing lists, bug tracking, feature
+requests, support mechanisms, task management, and news announcement
+channels all become instantly available.
+
+OPEN SOURCE
+
+This marks the first release of BRL-CAD as Open Source software.  It
+has taken several years and much hard work by many people to actually
+make this happen.  Special thanks goes out to the U.S. Army Research
+Laboratory for giving back to the community by allowing BRL-CAD to be
+released as Open Source software under the Open Source Initiative
+(OSI) approved NASA Open Source Agreement (NOSA).  The "release"
+solely exists in CVS -- binary and source distributions will remain
+unprepared.
+
+The majority of BRL-CAD is covered by the GNU General Public License.
+The BRL-CAD libraries (src/lib*) are all provided under the GNU Lesser
+General Public License.  The documentation is provided under the terms
+of the GNU Free Documentation License.  The build infrastructure and
+supporting scripts are covered by the Berkeley Software Distribution
+license or are in the public domain.  Given the vast size, complexity,
+and varied usage needs of BRL-CAD's source code and supporting data,
+all of the aforementioned licenses allow for a greater degree of
+flexibility in how they may be used.
+
+See the individual files in question and the COPYING file for more
+details.  The licenses are intended to foster and encourage
+improvements to BRL-CAD and the Open Source community as a whole
+without taking away from the package's heritage and history.  See the
+COPYING file for more details and information.
 
 
 ----------------------------------------------------------------------
