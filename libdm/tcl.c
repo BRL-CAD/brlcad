@@ -40,11 +40,9 @@ extern int Vo_Init();
 extern int geo_open_tcl();
 extern int Geo_Init();
 
-#if 1
 /* from libdm/db_obj.c */
 extern int dbo_open_tcl();
 extern int Dbo_Init();
-#endif
 
 HIDDEN int dm_validXType_tcl();
 HIDDEN int dm_bestXType_tcl();
@@ -55,9 +53,7 @@ HIDDEN struct cmdtab cmdtab[] = {
 	"dm_open",		dmo_open_tcl,
 	"vo_open",		vo_open_tcl,
 	"geo_open",		geo_open_tcl,
-#if 1
 	"db_open",		dbo_open_tcl,
-#endif
 	(char *)0,		(int (*)())0
 };
 
