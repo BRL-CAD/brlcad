@@ -87,12 +87,12 @@ $(PACKAGE_NAME)-$(VERSION).pkg:
 	@$(ECHO) "Warning: this package target presently assumes that the install directory"
 	@$(ECHO) "         does not contain extra files and comprises a full clean install."
 	@$(ECHO)
-	@@SH@ sh/make_pkg.sh $(PACKAGE_NAME) $(MAJOR_VERSION) $(MINOR_VERSION) $(PATCH_VERSION) $(DESTDIR)$(prefix)
+	@@SH@ sh/make_pkg.sh "$(PACKAGE_NAME)" "$(MAJOR_VERSION)" "$(MINOR_VERSION)" "$(PATCH_VERSION)" "$(DESTDIR)$(prefix)"
 
 $(PACKAGE_NAME)-$(VERSION).dmg:
 	@$(ECHO) "Building a Disk Image for Mac OS X"
 	@$(ECHO)
-	@@SH@ sh/make_dmg.sh $(PACKAGE_NAME)-$(VERSION)
+	@@SH@ sh/make_dmg.sh "$(PACKAGE_NAME)-$(VERSION)"
 
 # using home is probably not a great choice..
 $(PACKAGE)-$(VERSION).rpm: $(PACKAGE)-$(VERSION).tar.gz
@@ -118,27 +118,27 @@ $(PACKAGE)-$(VERSION).src.rpm: $(PACKAGE)-$(VERSION).tar.gz
 $(PACKAGE)-$(VERSION).deb:
 	@$(ECHO) "Building a package for Debian Linux"
 	@$(ECHO)
-	@@SH@ sh/make_deb.sh $(PACKAGE_NAME)-$(VERSION)
+	@@SH@ sh/make_deb.sh "$(PACKAGE_NAME)-$(VERSION)"
 
 $(PACKAGE)-$(VERSION).bin.zip:
 	@$(ECHO) "Building a zip-compressed file archive"
 	@$(ECHO)
-	@@SH@ sh/make_zip.sh $(PACKAGE_NAME)-$(VERSION)
+	@@SH@ sh/make_zip.sh "$(PACKAGE_NAME)-$(VERSION)"
 
  $(PACKAGE)-$(VERSION).bin.tar.gz: $(PACKAGE)-$(VERSION).bin.tar
 	@$(ECHO) "Building a gzip-compressed tape archive"
 	@$(ECHO)
-	@@SH@ sh/make_tgz.sh $(PACKAGE_NAME)-$(VERSION)
+	@@SH@ sh/make_tgz.sh "$(PACKAGE_NAME)-$(VERSION)"
 
  $(PACKAGE)-$(VERSION).bin.tar.bz2: $(PACKAGE)-$(VERSION).bin.tar
 	@$(ECHO) "Building a bzip2-compressed tape archive"
 	@$(ECHO)
-	@@SH@ sh/make_bz2.sh $(PACKAGE_NAME)-$(VERSION)
+	@@SH@ sh/make_bz2.sh "$(PACKAGE_NAME)-$(VERSION)"
 
  $(PACKAGE)-$(VERSION).bin.tar:
 	@$(ECHO) "Building a uncompressed tape archive"
 	@$(ECHO)
-	@@SH@ sh/make_tar.sh $(PACKAGE_NAME) $(MAJOR_VERSION) $(MINOR_VERSION) $(PATCH_VERSION) $(DESTDIR)$(prefix)
+	@@SH@ sh/make_tar.sh "$(PACKAGE_NAME)" "$(MAJOR_VERSION)" "$(MINOR_VERSION)" "$(PATCH_VERSION)" "$(DESTDIR)$(prefix)"
 
 
 #############
