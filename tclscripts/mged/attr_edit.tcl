@@ -211,6 +211,14 @@ class Attr_editor {
 	# this keeps the cur_value entry for the selected attribute current with the
 	# text in the text widget
 	bind $textb <KeyRelease> [code $this update_cur_attr]
+	bind $textb <ButtonRelease-2> +[code $this update_cur_attr]
+	# re-order the bindings so that the above binding is performed after
+	# any text is pasted
+	set bindings [bindtags $textb]
+	set my_window [lindex $bindings 0]
+	set bindings [lreplace $bindings 0 0]
+	lappend bindings $my_window
+	bindtags $textb $bindings
 
 	# this allows the attributes of a new object to be edited by typing name
 	# into the object entry widget and hitting enter
