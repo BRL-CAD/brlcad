@@ -279,7 +279,6 @@ benchmark)
 	(cd ${DIRPRE}libsysv${DIRSUF};  cake -k)
 	(cd ${DIRPRE}bench${DIRSUF};  cake -k)
 	(cd ${DIRPRE}libwdb${DIRSUF};  cake -k)
-	(cd ${DIRPRE}libplot3${DIRSUF};  cake -k)
 	if test ${HAS_TCP} = 1
 	then
 		(cd ${DIRPRE}libpkg${DIRSUF};  cake -k)  # needed for IF_REMOTE
