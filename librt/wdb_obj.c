@@ -1628,6 +1628,10 @@ wdb_ls_cmd(struct rt_wdb	*wdbp,
 	int rflag = 0;		/* print regions */
 	int sflag = 0;		/* print solids */
 	int lflag = 0;		/* use long format */
+	int attr_flag = 0;	/* arguments are attribute name/value pairs */
+	int or_flag = 0;	/* flag indicating that any one attribute match is sufficient
+				 * default is all attributes must match.
+				 */
 	struct directory **dirp;
 	struct directory **dirp0 = (struct directory **)NULL;
 
@@ -1641,8 +1645,14 @@ wdb_ls_cmd(struct rt_wdb	*wdbp,
 	}
 
 	bu_optind = 1;	/* re-init bu_getopt() */
-	while ((c = bu_getopt(argc, argv, "acrslp")) != EOF) {
+	while ((c = bu_getopt(argc, argv, "acrslpAo")) != EOF) {
 		switch (c) {
+		case 'A':
+			attr_flag = 1;
+			break;
+		case 'o':
+			or_flag = 1;
+			break;
 		case 'a':
 			aflag = 1;
 			break;
@@ -1669,8 +1679,53 @@ wdb_ls_cmd(struct rt_wdb	*wdbp,
 	argc -= (bu_optind - 1);
 	argv += (bu_optind - 1);
 
-	/* create list of objects in database */
-	if (argc > 1) {
+	/* create list of selected objects from database */
+	if( attr_flag ) {
+		/* select objects based on attributes */
+		struct bu_ptbl *tbl;
+		struct bu_attribute_value_set avs;
+		int dir_flags;
+		int op;
+
+		if( argc < 3 || argc%2 != 1 ) {
+			/* should be odd number of args name/value pairs plus argv[0] */
+			bu_vls_printf(&vls, "helplib_alias wdb_ls %s", argv[0]);
+			Tcl_Eval(interp, bu_vls_addr(&vls));
+			bu_vls_free(&vls);
+			return TCL_ERROR;
+		}
+
+		if( or_flag ) {
+			op = 2;
+		} else {
+			op = 1;
+		}
+
+		dir_flags = 0;
+		if( aflag ) dir_flags = -1;
+		if( cflag ) dir_flags = DIR_COMB;
+		if( sflag ) dir_flags = DIR_SOLID;
+		if( rflag ) dir_flags = DIR_REGION;
+		if( !dir_flags ) dir_flags = -1 ^ DIR_HIDDEN;
+
+		bu_avs_init( &avs, argc-1, "wdb_ls_cmd avs" );
+		for (i = 1; i < argc; i += 2) {
+			if( or_flag ) {
+				bu_avs_add_nonunique( &avs, argv[i], argv[i+1] );
+			} else {
+				bu_avs_add( &avs, argv[i], argv[i+1] );
+			}
+		}
+		tbl = db_lookup_by_attr( wdbp->dbip, dir_flags, &avs, op );
+		bu_avs_free( &avs );
+		dirp = wdb_getspace(wdbp->dbip, BU_PTBL_LEN( tbl ));
+		dirp0 = dirp;
+		for( i=0 ; i<BU_PTBL_LEN( tbl ) ; i++ ) {
+			*dirp++ = (struct directory *)BU_PTBL_GET( tbl, i );
+		}
+		bu_ptbl_free( tbl );
+		bu_free( (char *)tbl, "wdb_ls_cmd ptbl" );
+	} else if (argc > 1) {
 		/* Just list specified names */
 		dirp = wdb_getspace(wdbp->dbip, argc-1);
 		dirp0 = dirp;
