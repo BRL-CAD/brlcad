@@ -56,7 +56,7 @@ mk_extrusion(
 
 	BU_GETSTRUCT( extr, rt_extrude_internal );
 	extr->magic = RT_EXTRUDE_INTERNAL_MAGIC;
-	NAMEMOVE( sketch_name, extr->sketch_name );
+	extr->sketch_name = bu_strdup( sketch_name );
 	VMOVE( extr->V, V );
 	VMOVE( extr->h, h );
 	VMOVE( extr->u_vec, u_vec );
