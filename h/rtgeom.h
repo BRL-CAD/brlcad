@@ -364,10 +364,10 @@ struct rt_dsp_internal{
 	unsigned int	dsp_xcnt;		/* # samples in row of data */
 	unsigned int	dsp_ycnt;		/* # of columns in data */
 	unsigned char	dsp_smooth;		/* bool: surf normal interp */
+#define DSP_CUT_DIR_ADAPT	'0'
+#define DSP_CUT_DIR_llUR	'1'
+#define DSP_CUT_DIR_ULlr	'2'
     unsigned char   dsp_cuttype;		/* type of cut to make */
-#define DSP_CUT_DIR_ADAPT	0
-#define DSP_CUT_DIR_llUR	1
-#define DSP_CUT_DIR_ULlr	2
         
 	mat_t		dsp_mtos;		/* model to solid space */
 	/* END OF USER SETABLE VARIABLES, BEGIN INTERNAL STUFF */
@@ -376,14 +376,14 @@ struct rt_dsp_internal{
 	unsigned short	*dsp_buf;		/* actual data */
 	struct bu_mapped_file *dsp_mp;		/* mapped file for data */
 	struct rt_db_internal *dsp_bip;		/* db object for data */
+#define RT_DSP_SRC_V4_FILE	'4'
+#define RT_DSP_SRC_FILE	'f'
+#define RT_DSP_SRC_OBJ	'o'
 	char		dsp_datasrc;		/* which type of data source */
 };
 #define RT_DSP_INTERNAL_MAGIC	0xde6
 #define RT_DSP_CK_MAGIC(_p)	BU_CKMAG(_p,RT_DSP_INTERNAL_MAGIC,"rt_dsp_internal")
 
-#define RT_DSP_SRC_V4_FILE	'4'
-#define RT_DSP_SRC_FILE	'f'
-#define RT_DSP_SRC_OBJ	'o'
 
 /*
  *	ID_SKETCH
