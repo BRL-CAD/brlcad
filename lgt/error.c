@@ -45,8 +45,11 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 /*
  *  		B U _ B O M B
  *  
- *  Abort the RT library
+ *  Abort the LIBRT library
  */
+int		bu_setjmp_valid = 0;	/* !0 = bu_jmpbuf is valid */
+jmp_buf		bu_jmpbuf;		/* for BU_SETJMP() */
+
 void
 bu_bomb(str)
 CONST char *str;
