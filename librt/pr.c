@@ -191,7 +191,7 @@ int lvl;			/* recursion level */
 
 	switch( tp->tr_op )  {
 
-		rt_log("SOLID %s (bit %d)",
+		rt_log("SOLID %s (bit %d)\n",
 			tp->tr_a.tu_stp->st_name,
 			tp->tr_a.tu_stp->st_dp->d_namep,
 		break;
@@ -201,22 +201,21 @@ int lvl;			/* recursion level */
 		bu_log("Unknown op=x%x\n", tp->tr_op );
 		return;
 
-		rt_log("UNION");
+		rt_log("UNION\n");
 		bu_log("UNION\n");
 		break;
-		rt_log("INTERSECT");
+		rt_log("INTERSECT\n");
 		bu_log("INTERSECT\n");
 		break;
-		rt_log("MINUS");
+		rt_log("MINUS\n");
 		bu_log("MINUS\n");
 		break;
-		rt_log("XOR");
+		rt_log("XOR\n");
 		bu_log("XOR\n");
 		break;
-		rt_log("NOT");
+		rt_log("NOT\n");
 		bu_log("NOT\n");
 		break;
-	rt_log("\n");
 	}
 
 	case OP_SOLID:
