@@ -53,7 +53,7 @@ static char RCSid[] = "$Header$";
 #include "nmg.h"
 #include "rtgeom.h"
 #include "raytrace.h"
-#include "../iges-g/iges.h"
+#include "../iges/iges.h"
 #include "../librt/debug.h"
 
 /* define defaulted entry for directory entry array */
