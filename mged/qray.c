@@ -33,6 +33,7 @@ static void qray_print_vars();
 static int qray_get_fmt_index();
 
 struct bu_vls qray_basename;
+struct bu_vls qray_script;
 char qray_effects = 't';
 int qray_cmd_echo = 0;
 struct qray_fmt *qray_fmts;
@@ -61,6 +62,7 @@ static char qray_syntax[] = "\
  qray voidcolor [r g b]		set or get color of void areas\n\
  qray overlapcolor [r g b]	set or get color of overlap areas\n\
  qray fmt [r|h|p|f|m|o [str]]	set or get format string(s)\n\
+ qray script [str]		set or get the nirt script string\n\
  qray [help]			print this help message\n\
 ";
 
@@ -135,6 +137,22 @@ char    **argv;
 
     Tcl_AppendResult(interp,
 		     "The 'qray basename' command accepts 0 or 1 argument\n",
+		     (char *)NULL);
+    return TCL_ERROR;
+  }
+
+  if(strcmp(argv[1], "script") == 0){
+    if(argc == 2){		/* get value */
+      Tcl_AppendResult(interp, bu_vls_addr(&qray_script), (char *)NULL);
+
+      return TCL_OK;
+    }else if(argc == 3){		/* set value */
+      bu_vls_strcpy(&qray_script, argv[2]);
+      return TCL_OK;
+    }
+
+    Tcl_AppendResult(interp,
+		     "The 'qray script' command accepts 0 or 1 argument\n",
 		     (char *)NULL);
     return TCL_ERROR;
   }
@@ -382,6 +400,7 @@ qray_print_vars()
 
   bu_vls_init(&vls);
   bu_vls_printf(&vls, "basename = %s\n", bu_vls_addr(&qray_basename));
+  bu_vls_printf(&vls, "script = %s\n", bu_vls_addr(&qray_script));
   bu_vls_printf(&vls, "effects = %c\n", qray_effects);
   bu_vls_printf(&vls, "echo = %d\n", qray_cmd_echo);
   bu_vls_printf(&vls, "oddcolor = %d %d %d\n",
@@ -420,6 +439,7 @@ init_qray()
 
   bu_vls_init(&qray_basename);
   bu_vls_strcpy(&qray_basename, QRAY_BASENAME);
+  bu_vls_init(&qray_script);
 
   /* count the number of default format types */
   for(qfdp = def_qray_fmt_data; qfdp->fmt != (char *)NULL; ++qfdp)
