@@ -27,8 +27,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./polyno.h"
 #include "./complex.h"
 
-#define	Abs( a )	((a) >= 0 ? (a) : -(a))
-
 static int	stdTorus();
 static void	PtSort(), alignZ(), Zrotat(), Yrotat();
 
@@ -158,7 +156,7 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	register struct tor_specific *tor;
 	static fastf_t	magsq_a, magsq_b, magsq_h;
 	static mat_t	R;
-	static vect_t	A, B, H;
+	static vect_t	A, B, Hv;
 	static vect_t	work;
 	FAST fastf_t	f;
 	static fastf_t	r1, r2;	/* primary and secondary radius */
@@ -173,12 +171,12 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	 */
 	MAT3XVEC( A, mat, SP_A );
 	MAT3XVEC( B, mat, SP_B );
-	MAT3XVEC( H, mat, SP_H );
+	MAT3XVEC( Hv, mat, SP_H );
 
 	/* Validate that |A| > 0, |B| > 0, |H| > 0 */
 	magsq_a = MAGSQ( A );
 	magsq_b = MAGSQ( B );
-	magsq_h = MAGSQ( H );
+	magsq_h = MAGSQ( Hv );
 	if( NEAR_ZERO(magsq_a) || NEAR_ZERO(magsq_b) || NEAR_ZERO(magsq_h) ) {
 		printf("tor(%s):  zero length A, B, or H vector\n",
 			stp->st_name );
@@ -198,12 +196,12 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 		printf("tor(%s):  A not perpendicular to B\n",stp->st_name);
 		return(1);		/* BAD */
 	}
-	f = VDOT( B, H );
+	f = VDOT( B, Hv );
 	if( ! NEAR_ZERO(f) )  {
 		printf("tor(%s):  B not perpendicular to H\n",stp->st_name);
 		return(1);		/* BAD */
 	}
-	f = VDOT( A, H );
+	f = VDOT( A, Hv );
 	if( ! NEAR_ZERO(f) )  {
 		printf("tor(%s):  A not perpendicular to H\n",stp->st_name);
 		return(1);		/* BAD */
@@ -231,8 +229,8 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	tor->tor_alpha = r2/r1;
 
 	/* Compute R and invR matrices */
-	VUNITIZE( H );
-	alignZ( R, H );
+	VUNITIZE( Hv );
+	alignZ( R, Hv );
 	mat_inv( tor->tor_invR, R );
 
 	/* Compute SoR.  Here, S = I / r1 */

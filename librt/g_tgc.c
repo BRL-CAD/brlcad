@@ -84,21 +84,21 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	static mat_t	R;
 	static mat_t	Rinv;
 	static mat_t	S;
-	static vect_t	H, A, B, C, D;
-	static vect_t	invsq;	/* [ 1/(|A|**2), 1/(|B|**2), 1/(|H|**2) ] */
+	static vect_t	Hv, A, B, C, D;
+	static vect_t	invsq;	/* [ 1/(|A|**2), 1/(|B|**2), 1/(|Hv|**2) ] */
 	static vect_t	work;
 	static vect_t	temp;
 	static fastf_t	f;
 
-	/* Apply 3x3 rotation portion of mat to H, A,B,C,D */
-	MAT3XVEC( H, mat, SP_H );
+	/* Apply 3x3 rotation portion of mat to Hv, A,B,C,D */
+	MAT3XVEC( Hv, mat, SP_H );
 	MAT3XVEC( A, mat, SP_A );
 	MAT3XVEC( B, mat, SP_B );
 	MAT3XVEC( C, mat, SP_C );
 	MAT3XVEC( D, mat, SP_D );
 
 	/* Validate that |H| > 0, compute |A| |B| |C| |D| */
-	mag_h = sqrt( magsq_h = MAGSQ( H ) );
+	mag_h = sqrt( magsq_h = MAGSQ( Hv ) );
 	mag_a = sqrt( magsq_a = MAGSQ( A ) );
 	mag_b = sqrt( magsq_b = MAGSQ( B ) );
 	mag_c = sqrt( magsq_c = MAGSQ( C ) );
@@ -126,10 +126,10 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	 */
 
 	/* Check for H.A == 0 and H.B == 0 */
-	f = VDOT( H, A ) / (mag_h * mag_a);
+	f = VDOT( Hv, A ) / (mag_h * mag_a);
 	if( ! NEAR_ZERO(f) )
 		goto hard;
-	f = VDOT( H, B ) / (mag_h * mag_b);
+	f = VDOT( Hv, B ) / (mag_h * mag_b);
 	if( ! NEAR_ZERO(f) )
 		goto hard;
 
@@ -155,7 +155,7 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	GETSTRUCT( rec, rec_specific );
 	stp->st_specific = (int *)rec;
 
-	VMOVE( rec->rec_Hunit, H );
+	VMOVE( rec->rec_Hunit, Hv );
 	VUNITIZE( rec->rec_Hunit );
 
 	/* Apply full 4x4mat to V. */
@@ -172,7 +172,7 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	f = 1.0/mag_b;
 	VSCALE( &R[4], B, f );
 	f = 1.0/mag_h;
-	VSCALE( &R[8], H, f );
+	VSCALE( &R[8], Hv, f );
 	mat_trn( Rinv, R );			/* inv of rot mat is trn */
 
 	/* Compute S.  Uses 3x3 of the 4x4 matrix */
@@ -188,7 +188,7 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	mat_zero( rec->rec_SoR );
 	VSCALE( &rec->rec_SoR[0], A, invsq[0] );
 	VSCALE( &rec->rec_SoR[4], B, invsq[1] );
-	VSCALE( &rec->rec_SoR[8], H, invsq[2] );
+	VSCALE( &rec->rec_SoR[8], Hv, invsq[2] );
 
 	{
 		static fastf_t xmax, ymax, zmax;/* For bounding sphere */
@@ -209,7 +209,7 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 		VADD2( work, rec->rec_V, B ); MM( work );
 		VSUB2( work, rec->rec_V, B ); MM( work );
 
-		VADD2( temp, rec->rec_V, H );
+		VADD2( temp, rec->rec_V, Hv );
 		VADD2( work, temp, A );  MM( work );
 		VSUB2( work, temp, A );  MM( work );
 		VADD2( work, temp, B );  MM( work );
