@@ -291,8 +291,6 @@ struct db_tree_state *tsp;
 				{
 					if( faces[loop1].facet_type != 1 )
 						continue;
-rt_log( "Hole Loop:\n" );
-nmg_pr_lu_briefly( faces[loop1].lu , (char *)NULL );
 
 					/* loop1 is a hole look for loops containing loop1 */
 					outer_loop_count = 0;
@@ -305,8 +303,6 @@ nmg_pr_lu_briefly( faces[loop1].lu , (char *)NULL );
 
 						class = nmg_classify_lu_lu( faces[loop1].lu,
 								faces[loop2].lu , &tol );
-rt_log( "Possible outer loop classified %s (%d):\n" , nmg_class_name( class ) , class );
-nmg_pr_lu_briefly( faces[loop2].lu , (char *)NULL );
 
 						if( class != NMG_CLASS_AinB )
 							continue;
@@ -315,7 +311,6 @@ nmg_pr_lu_briefly( faces[loop2].lu , (char *)NULL );
 						faces[loop2].facet_type = (-2);
 						outer_loop_count++;
 					}
-rt_log( "outer_loop_count = %d\n" , outer_loop_count );
 
 					if( outer_loop_count > 1 )
 					{
@@ -410,13 +405,15 @@ rt_log( "outer_loop_count = %d\n" , outer_loop_count );
 			}
 
 			rt_free( (char *)faces , "g-euclid: faces" );
+			faces = (struct facets*)NULL;
 		}
 	}
 
 	regions_written++;
 
    outt:
-	rt_free( (char *)faces , "g-euclid: faces" );
+	if( faces )
+		rt_free( (char *)faces , "g-euclid: faces" );
 	return;
 }
 
@@ -463,7 +460,7 @@ char	*argv[];
 	tol.perp = 1e-6;
 	tol.para = 1 - tol.perp;
 
-	the_model = nmg_mm();
+	the_model = (struct model *)NULL;
 	tree_state = rt_initial_tree_state;	/* struct copy */
 	tree_state.ts_m = &the_model;
 	tree_state.ts_tol = &tol;
@@ -577,7 +574,9 @@ char	*argv[];
 		rt_log( "Processing id %d\n" , curr_id );
 
 		/* Walk indicated tree(s).  Each region will be output separately */
+
 		tree_state = rt_initial_tree_state;	/* struct copy */
+		the_model = nmg_mm();
 		tree_state.ts_m = &the_model;
 		tree_state.ts_tol = &tol;
 		tree_state.ts_ttol = &ttol;
@@ -588,6 +587,12 @@ char	*argv[];
 			select_region,
 			do_region_end,
 			nmg_booltree_leaf_tess);	/* in librt/nmg_bool.c */
+
+		nmg_km( the_model );
+
+#if MEMORY_LEAK_CHECKING
+		rt_prmem("After conversion of id");
+#endif
 	}
 
 	percent = 0;
