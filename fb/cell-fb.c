@@ -55,9 +55,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #define MinMax(m, M, a)    { m = Min(m, a); M = Max(M, a); }
 #endif
 
-/* Map user units into pixels.  H2SCRX */
-#define XFB(_x) (int)(xorigin+(((_x)-xmin)/cell_size)*(wid+grid_flag))
-
 /* Translate between different coordinate systems at play: h,v (GIFT),
  * view_port (VP), the subdivision of the framebuffer where the image is
  * located and seen, and screen_x, _y coordinates, which are the framebuffer
@@ -479,7 +476,7 @@ long	ncells;
 	    lasty = gp->c_y;
 	}
 	val_To_RGB(gp->c_val, pixel);
-	for (x0 = XFB(gp->c_x), x1 = x0 + wid; x0 < x1;  x0++)
+	for (x0 = H2SCRX(gp->c_x), x1 = x0 + wid; x0 < x1;  x0++)
 	{
 	    COPYRGB(buf[x0], pixel);
 	}
@@ -505,7 +502,7 @@ long	ncells;
 	    COPYRGB(buf[i], BACKGROUND);
 	}
 	base = (xmin+xmax) / 2 - 5 * cell_size;
-	base = XFB(base);
+	base = H2SCRX(base);
 	for (i = 0; i <= 10; i++)
 	{	
 	    cell_val	cv;
