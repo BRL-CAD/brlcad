@@ -1,7 +1,7 @@
 /*
-	SCCS id:	@(#) rle.h	1.2
-	Last edit: 	3/21/85 at 16:22:07	G S M
-	Retrieved: 	8/13/86 at 10:30:54
+	SCCS id:	@(#) rle.h	1.3
+	Last edit: 	3/22/85 at 14:00:10	G S M
+	Retrieved: 	8/13/86 at 10:31:00
 	SCCS archive:	/m/cad/librle/RCS/s.rle.h
 
 	Modified for by :	Gary S. Moss
@@ -43,7 +43,7 @@ typedef struct	/* Extended format RLE header.				*/
 	char	h_pixelbits;	/* Bits per pixel per channel.		*/
 	char	h_ncmap;	/* Channels in color map (map present).	*/
 	char	h_cmaplen;	/* Log base 2 of entries in color map.	*/
-	u_char  h_background[3];/* Background color.			*/
+	unsigned char  h_background[3]; /* Background color.		*/
 } Xtnd_Rle_Header;
 
 typedef struct	/* Old format RLE header.				 */
@@ -51,9 +51,9 @@ typedef struct	/* Old format RLE header.				 */
 	short	magic;
 	short	xpos, ypos;	/* Lower-left corner of image.		*/
 	short	xsize, ysize;	/* Size of saved box.			*/
-	u_char  bg_r;		/* Background colors.			*/
-	u_char	bg_g;
-	u_char	bg_b;
+	unsigned char 	bg_r;	/* Background colors.			*/
+	unsigned char	bg_g;
+	unsigned char	bg_b;
 	char	map;		/* Flag for map presence.		*/
 	} Rle_Header;
 
