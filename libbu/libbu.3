@@ -83,7 +83,7 @@ The
 .I bu_open_mapped_file()
 routines provide a standardized interface for acquiring the entire contents
 of an existing file mapped into the current address space,
-using the virtual-memory cappabilities of the operating-system (such as
+using the virtual-memory capabilities of the operating-system (such as
 .IR mmap (2))
 where available, or if all else fails,
 allocating sufficient dynamic memory and reading the entire file.
@@ -122,8 +122,8 @@ including
 .IR bu_vls_fwrite() ,
 and many others.
 .PP
-Finaly, a set of routines exist for taking text descriptions of
-distance units and converting them to milimeters and back,
+Finally, a set of routines exist for taking text descriptions of
+distance units and converting them to millimeters and back,
 including
 .IR bu_units_conversion() .
 .SH WARNING
@@ -140,7 +140,7 @@ provides:
 .I bu_strdup()
 .fi
 .PP
-The fuction
+The function
 .I bu_log()
 is essentially a semaphore-protected version of
 .I printf()
@@ -165,7 +165,7 @@ routine fails with an unrecoverable error, it will call
 with their last argument (str) as the parameter.  The string parameter
 usually indicates the purpose of the memory being allocated.
 .PP
-The fuction
+The function
 .I bu_strdup()
 calls bu_malloc() instead of malloc() to acquire memory.
 Thus it should be used in place of strdup() in programs linking with 
