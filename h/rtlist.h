@@ -100,6 +100,34 @@ struct rt_list  {
 	(cur)->back->forw = (cur)->forw; \
 	(cur)->forw = (cur)->back = RT_LIST_NULL;  /* sanity */ }
 
+/*
+ *  "Bulk transfer" all elements attached to list headed by src
+ *  the list headed by dest, without examining every element in the list.
+ *  RT_LIST_INSERT_LIST places src elements at head of dest list,
+ *  RT_LIST_APPEND_LIST places src elements at end of dest list.
+ */
+#define RT_LIST_INSERT_LIST(dest,src) \
+	if( RT_LIST_NON_EMPTY(src) )  { \
+		register struct rt_list	*_first = (src)->forw; \
+		register struct rt_list	*_last = (src)->back; \
+		(dest)->forw->back = _last; \
+		_last->forw = (dest)->forw; \
+		(dest)->forw = _first; \
+		_first->back = (dest); \
+		(src)->forw = (src)->back = (src); \
+	}
+
+#define RT_LIST_APPEND_LIST(dest,src) \
+	if( RT_LIST_NON_EMPTY(src) )  {\
+		register struct rt_list	*_first = (src)->forw; \
+		register struct rt_list	*_last = (src)->back; \
+		_first->back = (dest)->back; \
+		(dest)->back->forw = _first; \
+		(dest)->back = _last; \
+		_last->forw = (dest); \
+		(src)->forw = (src)->back = (src); \
+	}
+
 /* Test if a doubly linked list is empty, given head pointer */
 #define RT_LIST_IS_EMPTY(hp)	((hp)->forw == (hp))
 #define RT_LIST_NON_EMPTY(hp)	((hp)->forw != (hp))
