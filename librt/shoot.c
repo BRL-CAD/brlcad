@@ -91,7 +91,9 @@ register struct application *ap;
 	solidbits = BITV_NULL;		/* not allocated yet */
 
 	if(rt_g.debug&(DEBUG_ALLRAYS|DEBUG_SHOOT|DEBUG_PARTITION)) {
-		VPRINT("\nPnt", ap->a_ray.r_pt);
+		rt_log("**********shootray  %d,%d lvl=%d\n",
+			ap->a_x, ap->a_y, ap->a_level );
+		VPRINT("Pnt", ap->a_ray.r_pt);
 		VPRINT("Dir", ap->a_ray.r_dir);
 		fflush(stderr);		/* In case of instant death */
 	}
