@@ -3,7 +3,7 @@
  */
 
 #define SRCDIR	tab
-#define PRODUCTS	tabinterp txyz-pl tabsub
+#define PRODUCTS	tabinterp txyz-pl tabsub scriptsort
 #define	SRCSUFF	.c
 #define MANSECTION	1
 
@@ -22,5 +22,8 @@ tabsub:	tabsub.o  LIBRT_DEP
 
 txyz-pl:	txyz-pl.o LIBPLOT_DEP
 	CC LDFLAGS txyz-pl.o LIBPLOT LIBES -o txyz-pl
+
+scriptsort:	scriptsort.o script.o LIBRT_DEP
+	CC LDFLAGS scriptsort.o script.o LIBRT LIBRT_LIBES LIBES -o scriptsort
 
 #include "../Cakefile.rules"
