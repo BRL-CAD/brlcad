@@ -7,7 +7,7 @@
  * U. S. Army Ballistic Research Laboratory
  * May 1, 1984
  *
- * $Revision $
+ * $Revision$
  */
 
 #define MAXPTS	4			/* All we need are 4 points */
