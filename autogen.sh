@@ -132,16 +132,16 @@ cd "$PATH_TO_AUTOGEN"
 # make sure certain required files exist #
 ##########################################
 
-if ! test -f AUTHORS ; then
+if test ! -f AUTHORS ; then
   touch AUTHORS
 fi
-if ! test -f ChangeLog ; then
+if test ! -f ChangeLog ; then
   touch ChangeLog
 fi
-if ! test -f INSTALL ; then
+if test ! -f INSTALL ; then
   touch INSTALL
 fi
-if ! test -f NEWS ; then
+if test ! -f NEWS ; then
   touch NEWS
 fi
 
