@@ -48,6 +48,31 @@ CONST struct rt_tol	*tol;
 }
 
 /*
+ *			R T _ 3 P T S _ C O L L I N E A R
+ *
+ *  Check to see if three points are collinear.
+ *
+ *  Returns (boolean) -
+ *	1	If all 3 points are collinear
+ *	0	If they are not
+ */
+int
+rt_3pts_collinear(a, b, c, tol)
+point_t	a, b, c;
+fastf_t	tol;
+{
+	vect_t	v1, v2, v3;
+
+	VSUB2(v1, b, a);
+	VUNITIZE(v1);
+	VSUB2(v2, c, a);
+	VUNITIZE(v2);
+	VREVERSE(v3, v2);
+	return(VAPPROXEQUAL(v1, v2, tol) || VAPPROXEQUAL(v1, v3, tol));
+}
+
+
+/*
  *			R T _ 3 P T S _ D I S T I N C T
  *
  *  Check to see if three points are all distinct, i.e.,
