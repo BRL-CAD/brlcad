@@ -105,7 +105,6 @@ WDB_EXTERN(int mk_bsurf, (FILE *fp, struct b_spline *bp) );
 WDB_EXTERN(int mk_particle, (FILE *fp, char *name, point_t vertex,
 			vect_t height, double vradius, double hradius) );
 WDB_EXTERN(int mk_pipe, (FILE *fp, char *name, struct wdb_pipeseg *headp) );
-WDB_EXTERN(void mk_free, (struct wdb_pipeseg *headp ) );
 
 /*
  *  Combination conversion routines
