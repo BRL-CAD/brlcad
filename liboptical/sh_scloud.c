@@ -278,7 +278,6 @@ char	*dp;
 	double	delta_dpmm;
 	double density;
 	struct shadework sub_sw;
-	struct application sub_ap;
 	struct light_specific *lp;
 
 	RT_CHECK_PT(pp);
@@ -330,9 +329,6 @@ char	*dp;
 
 	sub_sw = *swp; /* struct copy */
 	sub_sw.sw_inputs = MFI_HIT;
-
-	sub_ap = *ap; /* struct copy */
-	sub_ap.a_diverge = 0.0; /* light rays shouldn't diverge */
 
 	for (i=0 ; i < steps ; i++ ) {
 		/* compute the next point in the cloud space */
