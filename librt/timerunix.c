@@ -24,6 +24,14 @@ static char RCStimer[] = "@(#)$Header $ (BRL)";
 
 #include <stdio.h>
 #include <memory.h>
+#include <sys/types.h>
+#include <sys/times.h>
+#include <sys/param.h>
+
+#ifndef HZ
+/* It's not always in sys/param.h */
+#define HZ	60
+#endif
 
 bzero( str, n )
 {
@@ -33,7 +41,7 @@ bzero( str, n )
 /* Standard System V stuff */
 extern long time();
 static long time0;
-
+static struct tms tms0;
 
 /*
  *			P R E P _ T I M E R
@@ -42,6 +50,7 @@ void
 rt_prep_timer()
 {
 	(void)time(&time0);
+	(void)times(&tms0);
 }
 
 
@@ -55,12 +64,20 @@ char *str;
 {
 	long now;
 	double usert;
+	double realt;
+	struct tms tmsnow;
 	char line[132];
 
 	(void)time(&now);
-	sprintf(line,"%ld clock seconds", (long)now-time0);
-	usert = now-time0;
-	if( usert < 0.00001 )  usert = 0.00001;
+	realt = now-time0;
+	(void)times(&tmsnow);
+	usert = tmsnow.tms_utime - tms0.tms_utime;
+	usert /= HZ;
+	if( usert < 0.00001 )  usert = 0.01;
+	if( realt < 0.00001 )  realt = usert;
+	sprintf(line,"%g CPU secs in %g elapsed secs (%g%%)",
+		usert, realt,
+		usert/realt*100 );
 	(void)strncpy( str, line, len );
 	return( usert );
 }
