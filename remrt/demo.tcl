@@ -164,6 +164,7 @@ proc register {host formalname cmd} {
 register "vapor" "vapor.arl.mil" ssh
 register "wax" "wax.arl.mil" ssh
 register wilson "wilson.arl.mil" ssh
+register jewel "jewel.arl.mil" ssh
 register cosm0 "cosm0.arl.hpc.mil" rsh
 register cosm1 "cosm1.arl.hpc.mil" rsh
 register cosm2 "cosm2.arl.hpc.mil" rsh
