@@ -223,6 +223,8 @@ char	**argv;
   toViewcenter[MDZ] = -atof( argv[3] ) * local2base;
   new_mats();
 
+  (void)mged_svbase();
+
   return TCL_OK;
 }
 
