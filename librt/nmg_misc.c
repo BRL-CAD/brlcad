@@ -2068,8 +2068,9 @@ long *p;
  *	of an nmg_ptbl structure.
  */
 void
-nmg_purge_unwanted_intersection_points(vert_list, fu, tol)
+nmg_purge_unwanted_intersection_points(vert_list, mag_list, fu, tol)
 struct nmg_ptbl		*vert_list;
+fastf_t			*mag_list;
 CONST struct faceuse	*fu;
 CONST struct rt_tol	*tol;
 {
@@ -2098,10 +2099,14 @@ CONST struct rt_tol	*tol;
 			/* vertexuse probably killed by nmg_repair_v_near_v() */
 			/* delete the entry from the vertex list */
 			for (j=i ; j < vert_list->end ; j++)
+			{
 				vert_list->buffer[j] = vert_list->buffer[j+1];
+				mag_list[j] = mag_list[j+1];
+			}
 
 			--(vert_list->end);
 			vert_list->buffer[vert_list->end] = (long *)NULL;
+			mag_list[vert_list->end] = MAX_FASTF;
 			--i;
 			continue;
 		}
@@ -2187,10 +2192,14 @@ CONST struct rt_tol	*tol;
 
 			/* delete the entry from the vertex list */
 			for (j=i ; j < vert_list->end ; j++)
+			{
 				vert_list->buffer[j] = vert_list->buffer[j+1];
+				mag_list[j] = mag_list[j+1];
+			}
 
 			--(vert_list->end);
 			vert_list->buffer[vert_list->end] = (long *)NULL;
+			mag_list[vert_list->end] = MAX_FASTF;
 			--i;
 		}
 	}
