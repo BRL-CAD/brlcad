@@ -123,11 +123,12 @@ RT_EXTERN(void rt_arb_ifree, (struct rt_db_internal *) );
  *	-1	point was rejected
  */
 HIDDEN int
-rt_arb_add_pt( point, title, pap, ptno )
+rt_arb_add_pt( point, title, pap, ptno, name )
 register pointp_t point;
 CONST char	*title;
 struct prep_arb	*pap;
 int		ptno;	/* current point # on face */
+CONST char	*name;
 {
 	LOCAL vect_t	work;
 	LOCAL vect_t	P_A;		/* new point minus A */
@@ -243,8 +244,8 @@ int		ptno;	/* current point # on face */
 		f = VDOT( afp->peqn, P_A );
 		if( ! NEAR_ZERO(f,RT_SLOPPY_DOT_TOL) )  {
 			/* Non-planar face */
-			rt_log("arb(): face %s[%d] non-planar, dot=%g\n",
-				title, ptno, f );
+			rt_log("arb(%s): face %s[%d] non-planar, dot=%g\n",
+				name, title, ptno, f );
 #ifdef CONSERVATIVE
 			return(-1);			/* BAD */
 #endif
@@ -265,9 +266,10 @@ int		ptno;	/* current point # on face */
  *	<0	failure
  */
 HIDDEN int
-rt_arb_mk_planes( pap, aip )
+rt_arb_mk_planes( pap, aip, name )
 register struct prep_arb	*pap;
 struct rt_arb_internal		*aip;
+CONST char			*name;
 {
 	LOCAL vect_t	sum;		/* Sum of all endpoints */
 	register int	i;
@@ -313,9 +315,10 @@ struct rt_arb_internal		*aip;
 	next_point: ;
 	}
 	if( rt_g.debug & DEBUG_ARB8 )  {
-		rt_log("arb() equiv_pts[] = %d %d %d %d %d %d %d %d\n",
-		equiv_pts[0], equiv_pts[1], equiv_pts[2], equiv_pts[3],
-		equiv_pts[4], equiv_pts[5], equiv_pts[6], equiv_pts[7]);
+		rt_log("arb(%s) equiv_pts[] = %d %d %d %d %d %d %d %d\n",
+			name,
+			equiv_pts[0], equiv_pts[1], equiv_pts[2], equiv_pts[3],
+			equiv_pts[4], equiv_pts[5], equiv_pts[6], equiv_pts[7]);
 	}
 
 	pap->pa_faces = 0;
@@ -345,7 +348,7 @@ struct rt_arb_internal		*aip;
 				}
 			}
 			if( rt_arb_add_pt( aip->pt[pt_index],
-			    rt_arb_info[i].ai_title, pap, npts ) == 0 )  {
+			    rt_arb_info[i].ai_title, pap, npts, name ) == 0 )  {
 				/* Point was accepted */
 				pap->pa_pindex[npts][pap->pa_faces] = pt_index;
 				npts++;
@@ -376,8 +379,8 @@ skip_pt:		;
 		pap->pa_faces++;
 	}
 	if( pap->pa_faces < 4  || pap->pa_faces > 6 )  {
-		rt_log("arb():  only %d faces present\n",
-			pap->pa_faces);
+		rt_log("arb(%s):  only %d faces present\n",
+			name, pap->pa_faces);
 		return(-1);			/* Error */
 	}
 	return(0);			/* OK */
@@ -408,7 +411,7 @@ int			uv_wanted;
 	pa.pa_doopt = uv_wanted;
 	pa.pa_tol_sq = rtip->rti_tol.dist_sq;
 
-	if( rt_arb_mk_planes( &pa, aip ) < 0 )  {
+	if( rt_arb_mk_planes( &pa, aip, stp->st_dp->d_namep ) < 0 )  {
 		return(-2);		/* Error */
 	}
 
@@ -1072,7 +1075,7 @@ struct rt_tol		*tol;
 	bzero( (char *)&pa, sizeof(pa) );
 	pa.pa_doopt = 0;		/* no UV stuff */
 	pa.pa_tol_sq = tol->dist_sq;
-	if( rt_arb_mk_planes( &pa, aip ) < 0 )  return(-2);
+	if( rt_arb_mk_planes( &pa, aip, "(tess)" ) < 0 )  return(-2);
 
 	for( i=0; i<8; i++ )  verts[i] = (struct vertex *)0;
 
