@@ -49,6 +49,7 @@ extern "C" {
 
 #define BU_H_VERSION	"@(#)$Header$ (BRL)"
 
+/*----------------------------------------------------------------------*/
 /*
  *  System library routines used by LIBBS.
  *  If header files are to be included, this should happen first,
@@ -108,6 +109,7 @@ extern char	*realloc();
 	}
 
 
+/*----------------------------------------------------------------------*/
 /*
  *  Bit vector data structure.
  */
@@ -174,6 +176,55 @@ struct bu_bitv {
 	} /* end for(_wd) */ \
 } /* end block */
 
+
+/*----------------------------------------------------------------------*/
+/*
+ *  Support for generalized "pointer tables".
+ */
+#define BU_PTBL_INIT	0	/* initialize table pointer struct & get storage */
+#define BU_PTBL_INS	1	/* insert an item (long *) into a table */
+#define BU_PTBL_LOC 	2	/* locate a (long *) in an existing table */
+#define BU_PTBL_FREE	3	/* deallocate buffer associated with a table */
+#define BU_PTBL_RST	4	/* empty a table, but keep storage on hand */
+#define BU_PTBL_CAT	5	/* catenate one table onto another */
+#define BU_PTBL_RM	6	/* remove all occurrences of an item from a table */
+#define BU_PTBL_INS_UNIQUE 7	/* insert item into table, if not present */
+#define BU_PTBL_ZERO	8	/* replace all occurrences of an item by 0 */
+
+struct bu_ptbl {
+	long	magic;	/* magic */
+	int	end;	/* index into buffer of first available location */
+	int	blen;	/* # of (long *)'s worth of storage at *buffer */
+	long  **buffer;	/* data storage area */
+};
+#define BU_PTBL_MAGIC		0x7074626c		/* "ptbl" */
+#define BU_CK_PTBL(_p)		BU_CKMAG(_p, BU_PTBL_MAGIC, "bu_ptbl")
+
+/*
+ *  For those routines that have to "peek" into the ptbl a little bit.
+ */
+#define BU_PTBL_BASEADDR(ptbl)	((ptbl)->buffer)
+#define BU_PTBL_LASTADDR(ptbl)	((ptbl)->buffer + (ptbl)->end - 1)
+#define BU_PTBL_END(ptbl)	((ptbl)->end)
+#define BU_PTBL_GET(ptbl,i)	((ptbl)->buffer[(i)])
+
+/*
+ *  A handy way to visit all the elements of the table is:
+ *
+ *	struct edgeuse **eup;
+ *	for( eup = (struct edgeuse **)BU_PTBL_LASTADDR(&eutab);
+ *	     eup >= (struct edgeuse **)BU_PTBL_BASEADDR(&eutab); eup-- )  {
+ *		NMG_CK_EDGEUSE(*eup);
+ *	}
+ *  or
+ *	for( BU_PTBL_FOR( eup, (struct edgeuse **), &eutab ) )  {
+ *		NMG_CK_EDGEUSE(*eup);
+ *	}
+ */
+#define BU_PTBL_FOR(ip,cast,ptbl)	\
+    ip = cast BU_PTBL_LASTADDR(ptbl); ip >= cast BU_PTBL_BASEADDR(ptbl); ip--
+
+
 /* histogram */
 
 /* vlist, vlblock?  But they use vmath.h... */
@@ -184,6 +235,7 @@ struct bu_bitv {
 typedef int (*bu_hook_t)BU_ARGS((genptr_t, genptr_t));
 #define BUHOOK_NULL 0
 
+/*----------------------------------------------------------------------*/
 /*
  *  Variable Length Strings: bu_vls support (formerly rt_vls in h/rtstring.h)
  */
@@ -215,6 +267,7 @@ struct bu_vls  {
 extern int	bu_setjmp_valid;		/* !0 = bu_jmpbuf is valid */
 extern jmp_buf	bu_jmpbuf;			/* for BU_SETJMP() */
 
+/*----------------------------------------------------------------------*/
 /*
  * Section for BU_DEBUG values
  */
@@ -227,6 +280,7 @@ extern int	bu_debug;
 #define BU_DEBUG_PARALLEL	0x00000010	/* 005 parallel support */
 
 #define BU_DEBUG_MATH		0x00000100	/* 011 Fundamental math routines (plane.c, mat.c) */
+#define BU_DEBUG_PTBL		0x00000200	/* 012 bu_ptbl_*() logging */
 
 #define BU_DEBUG_COREDUMP	0x00001000	/* 015 If set, bu_bomb() will dump core */
 
@@ -234,9 +288,10 @@ extern int	bu_debug;
 #define BU_DEBUG_FORMAT	\
 "\020\
 \015COREDUMP\
-\011MATH\010?\7?\6?\5PARALLEL\
+\012PTBL\011MATH\010?\7?\6?\5PARALLEL\
 \4?\3?\2MEM_LOG\1MEM_CHECK"
 
+/*----------------------------------------------------------------------*/
 /*
  *  Declarations of external functions in LIBBU.
  *  Source file names listed alphabetically.
@@ -322,6 +377,22 @@ BU_EXTERN(void			bu_vls_printb, (struct bu_vls *vls,
 				CONST char *bits));
 BU_EXTERN(void			bu_printb, (CONST char *s, unsigned long v,
 				CONST char *bits));
+
+/* ptbl.c */
+BU_EXTERN(void			bu_ptbl_init, (struct bu_ptbl	*b));
+BU_EXTERN(void			bu_ptbl_reset, (struct bu_ptbl	*b));
+BU_EXTERN(int			bu_ptbl_ins, (struct bu_ptbl *b, long *p));
+BU_EXTERN(int			bu_ptbl_locate, (struct bu_ptbl *b, long *p));
+BU_EXTERN(int			bu_ptbl_locate, (struct bu_ptbl *b, long *p));
+BU_EXTERN(void			bu_ptbl_zero, (struct bu_ptbl *b, long *p));
+BU_EXTERN(int			bu_ptbl_ins_unique, (struct bu_ptbl *b, long *p));
+BU_EXTERN(int			bu_ptbl_rm, (struct bu_ptbl *b, long *p));
+BU_EXTERN(void			bu_ptbl_cat, (struct bu_ptbl *dest,
+				CONST struct bu_ptbl *src));
+BU_EXTERN(void			bu_ptbl_cat_uniq, (struct bu_ptbl *dest,
+				CONST struct bu_ptbl *src));
+BU_EXTERN(void			bu_ptbl_free, (struct bu_ptbl	*b));
+BU_EXTERN(int			bu_ptbl, (struct bu_ptbl *b, int func, long *p));
 
 /* semaphore.c */
 BU_EXTERN(void			bu_semaphore_init, (unsigned int nsemaphores));

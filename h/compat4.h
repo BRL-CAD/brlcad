@@ -74,6 +74,25 @@ extern "C" {
 /* printb.c */
 #define rt_printb	bu_printb
 
+/* ptbl.c */
+#define nmg_tbl			bu_ptbl		/* main subroutine */
+#define nmg_ptbl		bu_ptbl		/* data structure */
+#define TBL_INIT		BU_PTBL_INIT
+#define TBL_INS			BU_PTBL_INS
+#define TBL_LOC			BU_PTBL_LOC
+#define TBL_FREE		BU_PTBL_FREE
+#define TBL_RST			BU_PTBL_RST
+#define TBL_CAT			BU_PTBL_CAT
+#define TBL_RM			BU_PTBL_RM
+#define TBL_INS_UNIQUE		BU_PTBL_INS_UNIQUE
+#define TBL_ZERO		BU_PTBL_ZERO
+/**#define NMG_PTBL_MAGIC	BU_PTBL_MAGIC	/* */
+#define NMG_CK_PTBL		BU_CK_PTBL
+#define NMG_TBL_BASEADDR	BU_PTBL_BASEADDR
+#define NMG_TBL_LASTADDR	BU_PTBL_LASTADDR
+#define NMG_TBL_END		BU_PTBL_END
+#define NMG_TBL_GET		BU_PTBL_GET
+
 /*
  * semaphore.c
  *
