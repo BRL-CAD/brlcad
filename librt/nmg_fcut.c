@@ -1020,7 +1020,7 @@ tie_break:
 			if( a->seq == b->seq )  AB_EQUAL;
 			B_WINS;
 		}
-		/* Select smallest inbound angle
+		/* Select smallest inbound angle */
 		diff = a->in_vu_angle - b->in_vu_angle;
 		if( NEAR_ZERO( diff, 0.001 ) )  {
 			/* Gak, this really means trouble! */
