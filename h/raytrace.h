@@ -479,6 +479,9 @@ struct animate {
  *  a null a_resource pointer results in using the internal global
  *  structure, making initial application development simpler.
  *
+ *  Applications are responsible for filling the resource structure
+ *  with zeros before letting librt use them.
+ *
  *  Note that if multiple models are being used, the partition and bitv
  *  structures (which are variable length) will require there to be
  *  ncpus * nmodels resource structures, the selection of which will
@@ -497,6 +500,8 @@ struct resource {
 	long		re_bitvlen;
 	long		re_bitvget;
 	long		re_bitvfree;
+	union tree	**re_boolstack;	/* Stack for rt_booleval() */
+	long		re_boolslen;	/* # elements in re_boolstack[] */
 	int		re_cpu;		/* processor number, for ID */
 };
 #define RESOURCE_NULL	((struct resource *)0)
