@@ -128,7 +128,7 @@ CONST struct bu_vls	*value_vls;
 	BU_CK_AVS(avp);
 	BU_CK_VLS(value_vls);
 
-	return bu_avs_add( avp, attribute, bu_vls_addr(&value_vls) );
+	return bu_avs_add( avp, attribute, bu_vls_addr(value_vls) );
 }
 
 /*
@@ -188,11 +188,15 @@ struct bu_attribute_value_set	*avp;
 void
 bu_avs_print( const struct bu_attribute_value_set *avp, const char *title )
 {
+	struct bu_attribute_value_pair	*avpp;
+	int i;
+
 	BU_CK_AVS(avp);
 
 	bu_log("%s\n", title);
 
-	for( i = 0; i < avp->count; i++, avp++ )  {
-		bu_log(" %s = %s\n", avp->avp->name, avp->avp->value );
+	avpp = avp->avp;
+	for( i = 0; i < avp->count; i++, avpp++ )  {
+		bu_log(" %s = %s\n", avpp->name, avpp->value );
 	}
 }
