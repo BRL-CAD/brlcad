@@ -227,12 +227,30 @@ case "$target" in
 esac
 AC_SUBST(PTHREAD_LIBS)
 
+dnl XXX should only add to build paths when something fails that is necessary
+dnl additionally, a compiler might complain if /usr/local or /sw are already
+dnl in the system search path -- so need to try a compile test..
+
+dnl autosearch /usr/local
+AC_MSG_CHECK([for /usr/local])
+if test -d /usr/local/include ; then
+	AC_MSG_RESULT([found, adding /usr/local to search paths])
+	CPPFLAGS="$CPPFLAGS -I/usr/local/include"
+	if test -d /usr/local/lib ; then
+		LDFLAGS="$LDFLAGS -L/usr/local/lib"
+	fi
+else
+	AC_MSG_RESULT([not found])
+fi
+
 dnl autosearch fink paths
-AC_MSG_CHECKING([for fink])
-if test -d /sw ; then
+AC_MSG_CHECKING([for fink in /sw])
+if test -d /sw/include ; then
 	AC_MSG_RESULT([found, adding /sw to search paths])
 	CPPFLAGS="$CPPFLAGS -I/sw/include"
-	LDFLAGS="$LDFLAGS -L/sw/lib"
+	if test -d /sw/lib ; then
+		LDFLAGS="$LDFLAGS -L/sw/lib"
+	fi
 else
 	AC_MSG_RESULT([not found])
 fi
@@ -526,6 +544,23 @@ dnl AC_C_PROTOTYPES
 AM_C_PROTOTYPES
 
 AC_DEFINE(USE_PROTOTYPES,1,heh)
+
+dnl See if regular expression support is available
+have_regex=no
+AC_MSG_CHECKING(for regular expression support)
+AC_TRY_RUN([
+#ifdef HAVE_SYS_TYPES_H
+#  include <sys/types.h>
+#endif
+#include <regex.h>
+int main() { regex_t re; regcomp(&re, 0, 0); regexec(&re, 0, 0, 0, 0); }
+        ],
+	[
+		AC_MSG_RESULT(yes)
+		have_regex=yes
+	],
+	[	AC_MSG_RESULT(no)]
+)
 
 dnl Last step is to make sure that we can actually compile
 AC_MSG_CHECKING(compiler and flags for sanity)
