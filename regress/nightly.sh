@@ -46,7 +46,9 @@ if [ ! -x "`which $CVS`" ] ; then
     fi
 fi
 echo CVS=$CVS
-exit
+echo PATH=$PATH
+echo TIME=`date`
+
 if [ -d brlcad/regress ] ; then 
     rm -rf brlcad/regress
 fi
