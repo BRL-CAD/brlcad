@@ -93,6 +93,7 @@ static int num_queues=3;
 static struct rtserver_geometry **rts_geometry=NULL;	/* array of rtserver_geometry structures
 							 * indexed by session id
 							 * NULL entry -> unused slot
+							 * index 0 must never be NULL
 							 */
 static int num_geometries=0;	/* the length of the rts_geometry array */
 static int used_session_0=0;	/* flag indicating if initial session has been used */
@@ -104,6 +105,8 @@ int ncpus=1;
 /* the title of this BRL-CAD database */
 static char *title=NULL;
 
+
+/* resources for librtserver */
 struct rts_resources {
 	struct bu_list rtserver_results;
 	struct bu_list ray_results;
@@ -114,8 +117,11 @@ struct rts_resources {
 
 static struct rts_resources rts_resource;
 
+
+/* MACRO to add a ray to a job */
 #define RTS_ADD_RAY_TO_JOB( _ajob, _aray ) bu_ptbl_ins( &(_ajob)->rtjob_rays, (long *)(_aray) );
 
+/* MACROS for getting and releasing resources */
 #define RTS_GET_XRAY( _p ) \
         pthread_mutex_lock( &resource_mutex ); \
         if( BU_PTBL_LEN( &rts_resource.xrays ) ) { \
@@ -249,6 +255,8 @@ static struct rts_resources rts_resource;
         }
                 
 
+
+/* count the number of members in a bu_list structure */
 int
 count_list_members( struct bu_list *listhead )
 {
@@ -261,6 +269,8 @@ count_list_members( struct bu_list *listhead )
 	return( count );
 }
 
+
+/* initialize the librtserver resources */
 void
 rts_resource_init()
 {
@@ -273,6 +283,8 @@ rts_resource_init()
         pthread_mutex_unlock( &resource_mutex ); \
 }
 
+
+/* print a summary of librt resources */
 void
 rts_pr_resource_summary()
 {
@@ -292,15 +304,21 @@ rts_pr_resource_summary()
         pthread_mutex_unlock( &resource_mutex ); \
 }
 
+
+/* create a new copy of the rtserver_geometry (typically for a new session)
+ * based on an existing session (usually zero)
+ */
 void
 copy_geometry( int dest, int src )
 {
 	int i, j;
 
+	/* allocate some memory */
 	rts_geometry[dest] = (struct rtserver_geometry *)bu_calloc( 1,
 				 sizeof( struct rtserver_geometry ),
 				 "rts_geometry[]" );
 
+	/* allocate memory for the rtserver_rti structures */
 	rts_geometry[dest]->rts_number_of_rtis =
 		rts_geometry[src]->rts_number_of_rtis;
 	rts_geometry[dest]->rts_rtis =
@@ -311,12 +329,16 @@ copy_geometry( int dest, int src )
 	VSETALL( rts_geometry[dest]->rts_mdl_min, MAX_FASTF );
 	VREVERSE( rts_geometry[dest]->rts_mdl_max, rts_geometry[dest]->rts_mdl_min );
 
+	/* fill out each rtsserver_rti structure */
 	for( i=0 ; i < rts_geometry[dest]->rts_number_of_rtis ; i++ ) {
 		struct rt_i *rtip;
 
+		/* the "calloc" call initializes the xform pointers to NULL */
 		rts_geometry[dest]->rts_rtis[i] = (struct rtserver_rti *)bu_calloc( 1,
 						    sizeof( struct rtserver_rti ),
 						    "rtserver_rti" );
+
+		/* copy the rt_i pointer (the same ones are used by all the sessions */
 		rtip = rts_geometry[src]->rts_rtis[i]->rtrti_rtip;
 		rts_geometry[dest]->rts_rtis[i]->rtrti_rtip = rtip;
 		if( rts_geometry[src]->rts_rtis[i]->rtrti_name ) {
@@ -441,6 +463,8 @@ rts_open_session()
 	return( i );
 }
 
+
+/* routine to set all the xforms to NULL for the given session id */
 void
 reset_xforms( int sessionid )
 {
@@ -460,6 +484,11 @@ reset_xforms( int sessionid )
 	}
 }
 
+
+/* routine to close a session
+ * session id 0 is just marked as closed, but not freed
+ * any other session is deleted
+ */
 void
 rts_close_session( int sessionid )
 {
@@ -483,7 +512,10 @@ rts_close_session( int sessionid )
 		return;
 	}
 
+	/* free the xforms */
 	reset_xforms( sessionid );
+
+	/* free everything else */
 	for( i=0 ; i<rts_geometry[sessionid]->rts_number_of_rtis ; i++ ) {
 		struct rtserver_rti *rts_rtip = rts_geometry[sessionid]->rts_rtis[i];
 
@@ -505,6 +537,8 @@ rts_close_session( int sessionid )
 	bu_free( (char *)rts_geometry[sessionid]->rts_rtis, "rtrtis" );
 
 	bu_free( (char*)rts_geometry[sessionid], "session" );
+
+	/* mark this slot as unused */
 	rts_geometry[sessionid] = NULL;
 }
 
@@ -796,6 +830,8 @@ rts_load_geometry( char *filename, int use_articulation, int num_objs, char **ob
 	return sessionid;
 }
 
+
+/* ray missed routine for rt_shootray() */
 int
 rts_miss( struct application *ap )
 {
@@ -805,6 +841,10 @@ rts_miss( struct application *ap )
 	return 0;
 }
 
+/* ray hit routine for rt_shootray()
+ *
+ * this routine adds the list of ray_hit structures to the ray_result structure for this ray
+ */
 int
 rts_hit( struct application *ap, struct partition *partHeadp, struct seg *segs )
 {
@@ -827,8 +867,10 @@ rts_hit( struct application *ap, struct partition *partHeadp, struct seg *segs )
 		struct region *rp;
 		Tcl_HashEntry *entry;
 
+		/* get one hit structure */
 		RTS_GET_RAY_HIT( ahit );
 
+		/* fill in the data for this hit */
 		ahit->hit_dist = pp->pt_inhit->hit_dist;
 		ahit->los = pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist;
 		RT_HIT_NORMAL( ahit->enter_normal, pp->pt_inhit,
@@ -837,6 +879,8 @@ rts_hit( struct application *ap, struct partition *partHeadp, struct seg *segs )
 			       pp->pt_outseg->seg_stp, 0, pp->pt_outflip );
 
 		rp = pp->pt_regionp;
+
+		/* find has table entry, if we have a table (to get MUVES_Component index) */
 		if( hash_table_exists ) {
 			if( rp->reg_aircode ) {
 				entry = Tcl_FindHashEntry( &air_tbl, (ClientData)rp->reg_aircode );
@@ -847,14 +891,17 @@ rts_hit( struct application *ap, struct partition *partHeadp, struct seg *segs )
 			entry = NULL;
 		}
 
+		/* assign comp_id based on hash table results */
 		if( entry == NULL ) {
 			ahit->comp_id = 0;
 		} else {
 			ahit->comp_id = (int)Tcl_GetHashValue( entry );
 		}
 
+		/* stash a pointer to the region structure (used by JAVA code to get region name) */
 		ahit->regp = rp;
 
+		/* add this to our list of hits */
 		BU_LIST_INSERT( &ray_res->hitHead.l, &ahit->l );
 
 		if( verbose ) {
@@ -867,12 +914,18 @@ rts_hit( struct application *ap, struct partition *partHeadp, struct seg *segs )
 	return 1;
 }
 
+/* Routine to weave a list of results that are from multiple shots.
+ * These are typically from articulated geometry where each "piece" is
+ * raytraced separately. This routine must order them and handle any overlaps
+ */
 void
 rts_uber_boolweave( struct ray_result *ray_res )
 {
 	/* XXX */
 }
 
+
+/* this is the code for a thread in the rtserver */
 void *
 rtserver_thread( void *num )
 {
@@ -885,6 +938,7 @@ rtserver_thread( void *num )
 		fprintf( stderr, "starting thread x%lx (%d)\n", pthread_self(), thread_no );
 	}
 
+	/* set up our own application structure */
 	bzero( &ap, sizeof( struct application ) );
 	ap.a_hit = rts_hit;
 	ap.a_miss = rts_miss;
@@ -919,26 +973,43 @@ rtserver_thread( void *num )
 				BU_LIST_DEQUEUE( &ajob->l );
 				pthread_mutex_unlock( &input_queue_mutex[queue] );
 
+				/* grab the session id */
 				sessionid = ajob->sessionid;
+
+				/* get a result structure for this job */
 				RTS_GET_RTSERVER_RESULT( aresult );
+
+				/* remember which job we are from */
 				aresult->the_job = ajob;
+
+				/* initialize hit count */
 				aresult->got_some_hits = 0;
 
-				/* do some work */
+				/* do some work
+				 * we may have a bunch of rays for this job
+				 */
 				for( j=0 ; j<BU_PTBL_LEN( &ajob->rtjob_rays ) ; j++ ) {
 					struct ray_result *ray_res;
 
 					aray = (struct xray *)BU_PTBL_GET( &ajob->rtjob_rays, j );
 
+					/* get a ray result structure for this ray */
 					RTS_GET_RAY_RESULT( ray_res );
+
+					/* add this ray result structure to the overall result structure */
 					BU_LIST_INSERT( &aresult->resultHead.l, &ray_res->l );
+
+					/* stash a pointer to the ray result structure in the application
+					 * structure (so the hit routine can find it)
+					 */
 					ap.a_uptr = (genptr_t)ray_res;
+
 					if( verbose ) {
 						fprintf( stderr, "thread x%lx (%d) got job %d\n",
 							 pthread_self(), thread_no, ajob->rtjob_id );
 					}
 
-					
+					/* shoot this ray at each rt_i structure for this session */
 					for( i=0 ; i<rts_geometry[sessionid]->rts_number_of_rtis ; i++ ) {
 						struct rtserver_rti *rts_rtip;
 						struct rt_i *rtip;
@@ -969,6 +1040,9 @@ rtserver_thread( void *num )
 						}
 					}
 
+					/* weave together results of all the rays
+					 * nothing to do if we only have one rt_i
+					 */
 					rts_uber_boolweave( ray_res );
 
 					/* put results on output queue */
@@ -996,6 +1070,7 @@ rtserver_thread( void *num )
 	return 0;
 }
 
+/* Routine to submit a job to a specified input queue */
 void
 rts_submit_job( struct rtserver_job *ajob, int queue )
 {
@@ -1011,6 +1086,10 @@ rts_submit_job( struct rtserver_job *ajob, int queue )
 
 }
 
+
+/* Routine to start the server threads.
+ * the number of threads and queues are global
+ */
 void
 rts_start_server_threads()
 {
@@ -1042,12 +1121,20 @@ rts_start_server_threads()
 	}
 }
 
+/* Routine to get any available result for the specified session.
+ * This routine does not wait, just checks and returns
+ *
+ * return:
+ *	NULL - no results availabel right now for this session is
+ *	struct rtserver_result - the highest priority result available for this session
+ */
 struct rtserver_result *
 rts_get_any_waiting_result( int sessionid )
 {
 	struct rtserver_result *aresult=NULL;
 	int queue;
 
+	/* check all the queues in priority order */
 	for( queue=0 ; queue<num_queues ; queue++ ) {
 		/* lock the queue */
 		pthread_mutex_lock( &output_queue_mutex[queue] );
@@ -1058,11 +1145,14 @@ rts_get_any_waiting_result( int sessionid )
 			for( BU_LIST_FOR( aresult, rtserver_result, &output_queue[queue].l ) ) {
 				aresult = BU_LIST_FIRST( rtserver_result, &output_queue[queue].l );
 				if( aresult->the_job->sessionid == sessionid ) {
+
+					/* remove the result from the queue */
 					BU_LIST_DEQUEUE( &aresult->l );
 
 					/* unlock the queue */
 					pthread_mutex_unlock( &output_queue_mutex[queue] );
 
+					/* return the result */
 					return( aresult );
 				}
 			}
@@ -1072,9 +1162,13 @@ rts_get_any_waiting_result( int sessionid )
 		pthread_mutex_unlock( &output_queue_mutex[queue] );
 	}
 
+	/* no results available */
 	return( NULL );
 }
 
+/* Routine to submit a job and get the results.
+ * This routine submits a job to the highest priority queue and waits for the result
+ */
 struct rtserver_result *
 rts_submit_job_and_wait( struct rtserver_job *ajob )
 {
@@ -1083,12 +1177,14 @@ rts_submit_job_and_wait( struct rtserver_job *ajob )
 	int queue_is_empty=0;
 	int sessionid;
 
+	/* grab some identifying info */
 	id = ajob->rtjob_id;
 	sessionid = ajob->sessionid;
 
+	/* submit the job */
 	rts_submit_job( ajob, queue );
 
-	/* run until we get the result from this queue */
+	/* run until we get our result from this queue */
 	while( 1 ) {
 		struct rtserver_result *aresult;
 
@@ -1138,7 +1234,7 @@ rts_submit_job_and_wait( struct rtserver_job *ajob )
 	}
 }
 
-/*	Routine to create an array of all the MUVES component names that appear in this BRL-CAD model
+/*	Routine to create a hash table of all the MUVES component names that appear in this BRL-CAD model
  *
  *  MUVES components are identified by an attribute named "MUVES_Comp", and its value is the MUVES
  *  component name. Ray trace results will employ indices into this list rather than using the name strings
@@ -1152,6 +1248,7 @@ get_muves_components()
 	int i, j;
 	int sessionid;
 
+	/* make sure we have some geometry */
 	if( !rts_geometry ) {
 		return;
 	}
@@ -1166,47 +1263,63 @@ get_muves_components()
 		return;
 	}
 
-	Tcl_InitHashTable( &name_tbl, TCL_STRING_KEYS );
-	Tcl_InitHashTable( &ident_tbl, TCL_ONE_WORD_KEYS );
-	Tcl_InitHashTable( &air_tbl, TCL_ONE_WORD_KEYS );
+	/* initialize the hash tables */
+	Tcl_InitHashTable( &name_tbl, TCL_STRING_KEYS ); /* MUVES Component name to index table */
+	Tcl_InitHashTable( &ident_tbl, TCL_ONE_WORD_KEYS ); /* ident to MUVES_Component index table */
+	Tcl_InitHashTable( &air_tbl, TCL_ONE_WORD_KEYS ); /* aircode to MUVES_Componnet index table */
 	hash_table_exists = 1;
 
+	/* visit each rt_i */
 	for( i=0 ; i<rts_geometry[sessionid]->rts_number_of_rtis ; i++ ) {
 		struct rtserver_rti *rts_rtip=rts_geometry[sessionid]->rts_rtis[i];
 		struct rt_i *rtip=rts_rtip->rtrti_rtip;
 
+		/* visit each region in this rt_i */
 		for( j=0 ; j<rtip->nregions ; j++ ) {
 			struct region *rp=rtip->Regions[j];
 			struct bu_mro *attrs=rp->attr_values[0];
 			int new;
+			int index=0;
 
 			if( !rp || BU_MRO_STRLEN(attrs) < 1 ) {
+				/* not a region, or does not have a MUVES_Component attribute */
 				continue;
 			}
 
+			/* create an entry for this MUVES_Component name */
 			name_entry = Tcl_CreateHashEntry( &name_tbl, BU_MRO_GETSTRING( attrs ), &new );
 			if( verbose ) {
 				fprintf( stderr, "region %s, name = %s\n",
 					 rp->reg_name, BU_MRO_GETSTRING( attrs ) );
 			}
+			/* set value to next index */
 			if( new ) {
 				comp_count++;
 				Tcl_SetHashValue( name_entry, (ClientData)comp_count );
+				index = comp_count;
+			} else {
+				index = (int )Tcl_GetHashValue( name_entry );
 			}
+
 			if( rp->reg_aircode > 0 ) {
+				/* this is an air region, create an air table entry */
 				air_entry = Tcl_CreateHashEntry( &air_tbl, (char *)rp->reg_aircode, &new );
 				if( new ) {
-					Tcl_SetHashValue( air_entry, (ClientData)comp_count );
+					Tcl_SetHashValue( air_entry, (ClientData)index );
 				}
 			} else {
+				/* this is a solid region, create an ident table entry */
 				ident_entry = Tcl_CreateHashEntry( &ident_tbl, (char *)rp->reg_regionid, &new );
 				if( new ) {
-					Tcl_SetHashValue( ident_entry, (ClientData)comp_count );
+					Tcl_SetHashValue( ident_entry, (ClientData)index );
 				}
 			}
 		}
 	}
 
+	/* create an array of MUVES_Component names.
+	 * this can be returned to a client
+	 */
 	comp_count++;
 	names = (char **)bu_calloc( comp_count + 1, sizeof( char *), "MUVES names" );
 	names[0] = bu_strdup( "No MUVES Name" );
@@ -1223,6 +1336,22 @@ get_muves_components()
 	}
 }
 
+/*				b u i l d _ J a v a _ R a y R e s u l t
+ *
+ *	Routine to build a JAVA RayResult object from an rtserver_result.
+ *
+ * inputs:
+ *	JNIEnv *env - The JAVA env object (must come from a JNI call)
+ *	struct rtserver_result *aresult - The result structure produced by the rtserver
+ *	jobject jstart_pt - A JAVA "point" object (the ray start point)
+ *	jobject jdir - A JAVA "direction" object (the ray direction)
+ *	jclass point_class - A JAVA class (point)
+ *	jclass vect_class - A JAVA class (point)
+ *
+ * returns:
+ *	A JAVA RayResult object containing the results from the rtserver_result structure or
+ *	NULL - something went wrong
+ */
 jobject
 build_Java_RayResult( JNIEnv *env, struct rtserver_result *aresult, jobject jstart_pt, jobject jdir, jclass point_class, jclass vect_class )
 {
@@ -1232,11 +1361,14 @@ build_Java_RayResult( JNIEnv *env, struct rtserver_result *aresult, jobject jsta
 	struct ray_result *ray_res;
 	struct ray_hit *ahit;
 
+	/* get the JAVA Ray class */
 	if( (ray_class=(*env)->FindClass( env, "mil/army/arl/muves/math/Ray" )) == NULL ) {
 		fprintf( stderr, "Failed to find Ray class\n" );
 		(*env)->ExceptionDescribe(env);
 		return( (jobject)NULL );
 	}
+
+	/* get the JAVA method id for the Ray class constructor */
 	if( (ray_constructor_id=(*env)->GetMethodID( env, ray_class, "<init>",
 	    "(Lmil/army/arl/muves/math/Point;Lmil/army/arl/muves/math/Vect;)V" )) == NULL ) {
 		fprintf( stderr, "Failed to get method id for ray constructor\n" );
@@ -1244,13 +1376,17 @@ build_Java_RayResult( JNIEnv *env, struct rtserver_result *aresult, jobject jsta
 		return( (jobject)NULL );
 	}
 
+	/* create a JAVA ray object from the passed in ray start point and direction */
 	jray = (*env)->NewObject( env, ray_class, ray_constructor_id, jstart_pt, jdir );
+
+	/* check for any exceptions */
 	if( (*env)->ExceptionOccurred(env) ) {
 		fprintf( stderr, "Exception thrown creating a ray\n" );
 		(*env)->ExceptionDescribe(env);
 		return( (jobject)NULL );
 	}
 
+	/* get the JAVA RayResult class */
 	if( (rayResult_class=(*env)->FindClass( env,
 	    "mil/army/arl/muves/rtserver/RayResult" )) == NULL ) {
 		fprintf( stderr, "Failed to get class for RayResult\n" );
@@ -1258,6 +1394,7 @@ build_Java_RayResult( JNIEnv *env, struct rtserver_result *aresult, jobject jsta
 		return( (jobject)NULL );
 	}
 
+	/* get the JAVA method id for the RayResult constructor */
 	if( (rayResult_constructor_id=(*env)->GetMethodID( env, rayResult_class, "<init>",
 					   "(Lmil/army/arl/muves/math/Ray;)V" )) == NULL ) {
 		fprintf( stderr, "Failed to get method id for rayResult constructor\n" );
@@ -1265,6 +1402,7 @@ build_Java_RayResult( JNIEnv *env, struct rtserver_result *aresult, jobject jsta
 		return( (jobject)NULL );
 	}
 
+	/* create a RayResult object using the newly created Ray */
 	jrayResult = (*env)->NewObject( env, rayResult_class, rayResult_constructor_id, jray );
 	if( (*env)->ExceptionOccurred(env) ) {
 		fprintf( stderr, "Exception thrown while creating a rayResult\n" );
@@ -1272,11 +1410,13 @@ build_Java_RayResult( JNIEnv *env, struct rtserver_result *aresult, jobject jsta
 		return( (jobject)NULL );
 	}
 
+	/* If we have no hits, we are done, just return the empty RayResult object */
 	if( !aresult->got_some_hits ) {
 		RTS_FREE_RTSERVER_RESULT( aresult );
 		return( jrayResult );
 	}
 
+	/* Get the JAVA methodid for the Point constructor */
 	if( (point_constructor_id=(*env)->GetMethodID( env, point_class, "<init>",
 							   "(DDD)V" )) == NULL ) {
 		fprintf( stderr, "Failed to get method id for Point constructor\n" );
@@ -1284,6 +1424,7 @@ build_Java_RayResult( JNIEnv *env, struct rtserver_result *aresult, jobject jsta
 		return( (jobject)NULL );
 	}
 
+	/* Get the JAVA class for Partition */
 	if( (partition_class=(*env)->FindClass( env,
 	    "mil/army/arl/muves/rtserver/Partition" )) == NULL ) {
 		fprintf( stderr, "Failed to get class for Partition\n" );
@@ -1291,13 +1432,15 @@ build_Java_RayResult( JNIEnv *env, struct rtserver_result *aresult, jobject jsta
 		return( (jobject)NULL );
 	}
 
+	/* Get the JAVA constructor for a Partition */
 	if( (partition_constructor_id=(*env)->GetMethodID( env, partition_class, "<init>",
-							   "(DFFLmil/army/arl/muves/math/Point;Lmil/army/arl/muves/math/Point;Ljava/lang/String;)V" )) == NULL ) {
+	     "(DFFLmil/army/arl/muves/math/Point;Lmil/army/arl/muves/math/Point;Ljava/lang/String;)V" )) == NULL ) {
 		fprintf( stderr, "Failed to get method id for Partition constructor\n" );
 		(*env)->ExceptionDescribe(env);
 		return( (jobject)NULL );
 	}
 
+	/* Get the JAVA method id for the RayResult's "addPartition" method */
 	if( (add_partition_id=(*env)->GetMethodID( env, rayResult_class, "addPartition",
 				"(Lmil/army/arl/muves/rtserver/Partition;)Z" )) == NULL ) {
 		fprintf( stderr, "Failed to get method id for rayResult addPartition method\n" );
@@ -1305,6 +1448,7 @@ build_Java_RayResult( JNIEnv *env, struct rtserver_result *aresult, jobject jsta
 		return( (jobject)NULL );
 	}
 
+	/* loop through all the hits in the results, and add them to the JAVA RayResult object */
 	ray_res = BU_LIST_FIRST( ray_result, &aresult->resultHead.l );
 	for( BU_LIST_FOR( ahit, ray_hit, &ray_res->hitHead.l ) ) {
 		jdouble in_hit[3], out_hit[3];
@@ -1315,23 +1459,33 @@ build_Java_RayResult( JNIEnv *env, struct rtserver_result *aresult, jobject jsta
 		/* get reverse ray direction for obliquity calculation */
 		VREVERSE( reverse_ray_dir, ray_res->the_ray->r_dir );
 
+		/* calculate the entrance and exit hit coordinates */
 		VJOIN1( in_hit, ray_res->the_ray->r_pt, ahit->hit_dist, ray_res->the_ray->r_dir );
 		VJOIN1( out_hit, ray_res->the_ray->r_pt, ahit->hit_dist + ahit->los, ray_res->the_ray->r_dir );
+
+		/* Create an entrance hit point (JAVA Point) */
 		jinhitPoint = (*env)->NewObject( env, point_class, point_constructor_id,
 						 in_hit[X], in_hit[Y], in_hit[Z] );
+
+		/* check for any exceptions */
 		if( (*env)->ExceptionOccurred(env) ) {
 			fprintf( stderr, "Exception thrown while creating inhit point\n" );
 			(*env)->ExceptionDescribe(env);
 			return( (jobject)NULL );
 		}
+
+		/* Create an exit hit point (JAVA Point) */
 		jouthitPoint = (*env)->NewObject( env, point_class, point_constructor_id,
 						 out_hit[X], out_hit[Y], out_hit[Z] );
+
+		/* check for any exceptions */
 		if( (*env)->ExceptionOccurred(env) ) {
 			fprintf( stderr, "Exception thrown while creating outhit point\n" );
 			(*env)->ExceptionDescribe(env);
 			return( (jobject)NULL );
 		}
 
+		/* calculate the entrance and exit obliquities */
 		inObl = acos( VDOT( reverse_ray_dir, ahit->enter_normal ) );
 		if( inObl < 0.0 ) {
 			inObl = -inObl;
@@ -1348,24 +1502,29 @@ build_Java_RayResult( JNIEnv *env, struct rtserver_result *aresult, jobject jsta
 			outObl = M_PI_2;
 		}
 
-		/* get region name from ahit->regp */
+		/* Create a JAVA String version of the hit region name from ahit->regp */
 		regionName = (*env)->NewStringUTF(env, ahit->regp->reg_name );
+
+		/* check for any exceptions */
 		if( (*env)->ExceptionOccurred(env) ) {
 			fprintf( stderr, "Exception thrown while getting x coord of ray start point\n" );
 			(*env)->ExceptionDescribe(env);
 			return( (jobject)NULL );
 		}
 
+		/* Create a JAVA Partition with all the needed info */
 		jpartition = (*env)->NewObject( env, partition_class, partition_constructor_id,
 						ahit->los, inObl, outObl,
 						jinhitPoint, jouthitPoint,
 						regionName );
 
+		/* check for any exceptions */
 		if( (*env)->ExceptionOccurred(env) ) {
 			fprintf( stderr, "Exception thrown while creating a partition\n" );
 			(*env)->ExceptionDescribe(env);
 			return( (jobject)NULL );
 		}
+
 		/* add this partition to the linked list of partitions */
 		if( (*env)->CallBooleanMethod( env, jrayResult, add_partition_id, jpartition ) != JNI_TRUE ) {
 			fprintf( stderr, "Failed to add a partition to rayResult!!!\n" );
@@ -1374,10 +1533,26 @@ build_Java_RayResult( JNIEnv *env, struct rtserver_result *aresult, jobject jsta
 		}
 	}
 
+	/* return the RayResult object */
 	return( jrayResult );
 }
 
 /* JAVA JNI bindings */
+
+
+/*				R t S e r v e r I m p l _ r t s I n i t
+ *
+ *	Implements the "rtsInit" method called by the RtServerImpl constructor
+ *
+ * inputs:
+ *	JNIENV *env - Environment object passed in by the JNI structure
+ *	jobject obj - JAVA object ("this")
+ *	jobjectArray args - Array of args passed in by the call from the constructor
+ *
+ * return:
+ *	JNI_FALSE - all is well
+ *	JNI_TRUE - something went wrong
+ */
 JNIEXPORT jboolean JNICALL
 Java_mil_army_arl_muves_rtserver_RtServerImpl_rtsInit(JNIEnv *env, jobject obj, jobjectArray args) 
 {
@@ -1395,6 +1570,7 @@ Java_mil_army_arl_muves_rtserver_RtServerImpl_rtsInit(JNIEnv *env, jobject obj, 
 		return( JNI_TRUE );
 	}
 
+	/* get the aruments from the JAVA args object array */
 	jfile_name = (jstring)(*env)->GetObjectArrayElement( env, args, 2 );
 	file_name = (char *)(*env)->GetStringUTFChars(env, jfile_name, 0);
 
@@ -1405,6 +1581,7 @@ Java_mil_army_arl_muves_rtserver_RtServerImpl_rtsInit(JNIEnv *env, jobject obj, 
 		obj_list[i] = (char *)(*env)->GetStringUTFChars(env, jobj_name[i], 0);
 	}
 
+	/* load the geometry */
 	if( rts_load_geometry( file_name, 0, num_objects, obj_list ) < 0 ) {
 		ret = JNI_TRUE;
 	} else {
@@ -1434,6 +1611,7 @@ Java_mil_army_arl_muves_rtserver_RtServerImpl_rtsInit(JNIEnv *env, jobject obj, 
 		rts_start_server_threads();
 	}
 
+	/* release the JAVA String objects that we created */
 	(*env)->ReleaseStringChars( env, jfile_name, (const jchar *)file_name);
 	for( i=0 ; i<num_objects ; i++ ) {
 		(*env)->ReleaseStringChars( env, jobj_name[i], (const jchar *)obj_list[i]);
@@ -1447,12 +1625,14 @@ Java_mil_army_arl_muves_rtserver_RtServerImpl_rtsInit(JNIEnv *env, jobject obj, 
 }
 
 
+/* JAVA openSession method */
 JNIEXPORT jint JNICALL
 Java_mil_army_arl_muves_rtserver_RtServerImpl_openSession(JNIEnv *env, jobject jobj)
 {
 	return( (jint)rts_open_session() );
 }
 
+/* JAVA closeSession method */
 JNIEXPORT void JNICALL
 Java_mil_army_arl_muves_rtserver_RtServerImpl_closeSession(JNIEnv *env, jobject jobj,
 							   jint sessionId)
@@ -1460,12 +1640,14 @@ Java_mil_army_arl_muves_rtserver_RtServerImpl_closeSession(JNIEnv *env, jobject 
 	rts_close_session( (int)sessionId );
 }
 
+/* JAVA getDbTitle method */
 JNIEXPORT jstring JNICALL
 Java_mil_army_arl_muves_rtserver_RtServerImpl_getDbTitle(JNIEnv *env, jobject jobj )
 {
 	return( (*env)->NewStringUTF(env, title) );
 }
 
+/* JAVA shootRay method */
 JNIEXPORT jobject JNICALL
 Java_mil_army_arl_muves_rtserver_RtServerImpl_shootRay( JNIEnv *env, jobject jobj,
 	jobject jstart_pt, jobject jdir, jint sessionId )
@@ -1477,6 +1659,7 @@ Java_mil_army_arl_muves_rtserver_RtServerImpl_shootRay( JNIEnv *env, jobject job
 	struct xray *aray;
 	struct rtserver_result *aresult;
 
+	/* get a ray structure */
 	RTS_GET_XRAY( aray );
 	aray->index = 1;
 
@@ -1578,11 +1761,15 @@ Java_mil_army_arl_muves_rtserver_RtServerImpl_shootRay( JNIEnv *env, jobject job
 		return( (jobject)NULL );
 	}
 
+	/* get a job structure */
 	RTS_GET_RTSERVER_JOB( ajob );
 	ajob->rtjob_id = 1;
 	ajob->sessionid = sessionId;
+
+	/* add the requested ray to this job */
 	RTS_ADD_RAY_TO_JOB( ajob, aray );
 
+	/* run this job */
 	aresult = rts_submit_job_and_wait( ajob );
 
 	/* build result to return */
@@ -1590,6 +1777,7 @@ Java_mil_army_arl_muves_rtserver_RtServerImpl_shootRay( JNIEnv *env, jobject job
 
 	RTS_FREE_RTSERVER_RESULT( aresult );
 
+	/* return JAVA result */
 	return( jrayResult );
 }
 
