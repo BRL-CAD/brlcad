@@ -1596,38 +1596,44 @@ refresh()
 	/* Restore to non-rotated, full brightness */
 	DM_NORMAL(dmp);
 
-	if(rubber_band->rb_active || rubber_band->rb_draw)
-	  draw_rect();
+	/* only if not doing overlay */
+	if(!mged_variables->mv_fb || mged_variables->mv_fb_overlay != 2){
+	  if(rubber_band->rb_active || rubber_band->rb_draw)
+	    draw_rect();
 
-	if(grid_state->gr_draw)
-	  draw_grid();
+	  if(grid_state->gr_draw)
+	    draw_grid();
 
-	/* Compute and display angle/distance cursor */
-	if (adc_state->adc_draw)
-	  adcursor();
+	  /* Compute and display angle/distance cursor */
+	  if (adc_state->adc_draw)
+	    adcursor();
 
-	if(axes_state->ax_view_draw)
-	  draw_v_axes();
+	  if(axes_state->ax_view_draw)
+	    draw_v_axes();
 
-	if(axes_state->ax_model_draw)
-	  draw_m_axes();
+	  if(axes_state->ax_model_draw)
+	    draw_m_axes();
 
-	if(axes_state->ax_edit_draw &&
-	   (state == ST_S_EDIT || state == ST_O_EDIT))
-	  draw_e_axes();
+	  if(axes_state->ax_edit_draw &&
+	     (state == ST_S_EDIT || state == ST_O_EDIT))
+	    draw_e_axes();
 
-	/* Display titles, etc., if desired */
-	bu_vls_strcpy(&tmp_vls, bu_vls_addr(&overlay_vls));
-	dotitles(&tmp_vls);
-	bu_vls_trunc(&tmp_vls, 0);
+	  /* Display titles, etc., if desired */
+	  bu_vls_strcpy(&tmp_vls, bu_vls_addr(&overlay_vls));
+	  dotitles(&tmp_vls);
+	  bu_vls_trunc(&tmp_vls, 0);
+	}
       }
 
-      /* Draw center dot */
-      DM_SET_FGCOLOR(dmp,
-		     color_scheme->cs_center_dot[0],
-		     color_scheme->cs_center_dot[1],
-		     color_scheme->cs_center_dot[2], 1);
-      DM_DRAW_POINT_2D(dmp, 0.0, 0.0);
+      /* only if not doing overlay */
+      if(!mged_variables->mv_fb || mged_variables->mv_fb_overlay != 2){
+	/* Draw center dot */
+	DM_SET_FGCOLOR(dmp,
+		       color_scheme->cs_center_dot[0],
+		       color_scheme->cs_center_dot[1],
+		       color_scheme->cs_center_dot[2], 1);
+	DM_DRAW_POINT_2D(dmp, 0.0, 0.0);
+      }
 
       DM_DRAW_END(dmp);
 
