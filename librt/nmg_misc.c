@@ -11454,3 +11454,403 @@ struct bn_tol *tol;
 	}
 	return( count );
 }
+
+/*	 	N M G _ E D G E _ C O L L A P S E
+ *
+ * Routine to decimate an NMG model through edge collapse
+ * to obtain a model with less faces at a greater tolerance
+ *
+ * Model must already be triangulated (this is not checked for)
+ *
+ * returns number of edges collapsed
+ */
+int
+nmg_edge_collapse( m, tol )
+struct model *m;
+CONST struct bn_tol *tol;
+{
+	struct bu_ptbl edge_table;
+	long edge_no=0;
+	long count=0;
+	long sub_count=1;
+	int i;
+
+	NMG_CK_MODEL( m );
+	BN_CK_TOL( tol );
+
+	/* Each triangle must be its own face */
+	(void)nmg_split_loops_into_faces( &m->magic, tol );
+
+	nmg_edge_tabulate( &edge_table, &m->magic );
+
+	while( sub_count )
+	{
+		sub_count = 0;
+		for( edge_no=0 ; edge_no < BU_PTBL_END( &edge_table ) ; edge_no++ )
+		{
+			int done=0;
+			struct edge *e;
+			struct edgeuse *eu, *eu2;
+			struct faceuse *fu, *fu2;
+			struct vertex *v1, *v2;
+			struct vertexuse *vu;
+			int real_count1, real_count2;
+			plane_t perp_pl, pl, pl2;
+			vect_t edge_dir;
+			fastf_t min_dist1, min_dist2;
+			fastf_t max_dist1, max_dist2;
+			fastf_t dot;
+			int flip1, flip2;
+
+			min_dist1 = MAX_FASTF;
+			min_dist2 = MAX_FASTF;
+			max_dist1 = -1.0;
+			max_dist2 = -1.0;
+
+			e = (struct edge *)BU_PTBL_GET( &edge_table, edge_no );
+			if( !e )
+				continue;
+			if( e->magic != NMG_EDGE_MAGIC )
+				continue;
+
+			NMG_CK_EDGE( e );
+			eu = e->eu_p;
+			NMG_CK_EDGEUSE( eu );
+
+			v1 = eu->vu_p->v_p;
+			NMG_CK_VERTEX( v1 );
+			v2 = eu->eumate_p->vu_p->v_p;
+			NMG_CK_VERTEX( v2 );
+
+			/* consider collapsing this edge */
+
+			/* don't collapse where more than 2 real edges meet */
+			real_count1 = 0;
+
+			for( BU_LIST_FOR( vu, vertexuse, &v1->vu_hd ) )
+			{
+				struct edgeuse *eu1;
+
+				if( eu->e_p->is_real )
+					real_count1++;
+			}
+
+			if( real_count1 > 2 )
+				continue;
+
+			real_count2 = 0;
+
+			for( BU_LIST_FOR( vu, vertexuse, &v2->vu_hd ) )
+			{
+				struct edgeuse *eu1;
+
+				if( eu->e_p->is_real )
+					real_count2++;
+			}
+
+			if( real_count2 > 2 )
+				continue;
+
+			/* if real edges are involved, only collapse along the real edges */
+			if( (real_count1 || real_count2) && !e->is_real )
+				continue;
+
+			VSUB2( edge_dir, v2->vg_p->coord, v1->vg_p->coord )
+			VUNITIZE( edge_dir )
+
+			/* create plane containing edge and normal to surface */
+			fu = nmg_find_fu_of_eu( eu );
+			NMG_CK_FACEUSE( fu );
+			if( fu->orientation != OT_SAME )
+				fu = fu->fumate_p;
+			if( fu->orientation != OT_SAME )
+			{
+				bu_log( "nmg_edge_collapse: fu (x%x) has no OT_SAME use!!!\n", fu );
+				continue;
+			}
+			NMG_GET_FU_PLANE( pl, fu )
+			eu2 = eu->radial_p;
+			NMG_CK_EDGEUSE( eu2 );
+			fu2 = nmg_find_fu_of_eu( eu2 );
+			NMG_CK_FACEUSE( fu2 );
+			if( fu2->orientation != OT_SAME )
+				fu2 = fu2->fumate_p;
+			if( fu2->orientation != OT_SAME )
+			{
+				bu_log( "nmg_edge_collapse: fu2 (x%x) has no OT_SAME use!!!\n", fu2 );
+				continue;
+			}
+
+
+			/* check if moving v1 to v2 would flip any loops */
+			flip1 = 0;
+			for( BU_LIST_FOR( vu, vertexuse, &v1->vu_hd ) )
+			{
+				struct edgeuse *eu1, *eu2;
+				vect_t vec1, vec2;
+				vect_t norma;
+				struct vertex_g *vg1, *vg2;
+				plane_t normb;
+				fastf_t dist;
+
+				if( *vu->up.magic_p != NMG_EDGEUSE_MAGIC )
+					continue;
+
+				eu1 = vu->up.eu_p;
+				eu2 = BU_LIST_PNEXT_CIRC( edgeuse, &eu1->l );
+
+				if( eu2->eumate_p->vu_p->v_p == v2 )
+					continue;
+
+				if( eu2->vu_p->v_p == v2 )
+					continue;
+
+				vg1 = eu2->vu_p->v_p->vg_p;
+				vg2 = eu2->eumate_p->vu_p->v_p->vg_p;
+
+				VSUB2( vec1, v1->vg_p->coord, vg1->coord )
+				VSUB2( vec2, vg2->coord, vg1->coord )
+				VCROSS( norma, vec1, vec2 )
+
+				VSUB2( vec1, v2->vg_p->coord, vg1->coord )
+				VCROSS( normb, vec1, vec2 )
+
+				fu = nmg_find_fu_of_eu( eu1 );
+				if( fu->orientation == OT_SAME )
+				{
+					VUNITIZE( normb )
+					normb[3] = VDOT( normb, v2->vg_p->coord );
+
+					dist = fabs( DIST_PT_PLANE( v1->vg_p->coord, normb ) );
+					if( dist > max_dist1 )
+						max_dist1 = dist;
+				}
+
+				if( VDOT( norma, normb ) <= 0.0 )
+				{
+					/* this would flip a loop */
+					flip1 = 1;
+					break;
+				}
+				
+			}
+
+			/* check if moving v2 to v1 would flip any loops */
+			flip2 = 0;
+			for( BU_LIST_FOR( vu, vertexuse, &v2->vu_hd ) )
+			{
+				struct edgeuse *eu1, *eu2;
+				vect_t vec1, vec2;
+				vect_t norma, normb;
+				struct vertex_g *vg1, *vg2;
+				fastf_t dist;
+
+				if( *vu->up.magic_p != NMG_EDGEUSE_MAGIC )
+					continue;
+
+				eu1 = vu->up.eu_p;
+				eu2 = BU_LIST_PNEXT_CIRC( edgeuse, &eu1->l );
+
+				if( eu2->eumate_p->vu_p->v_p == v1 )
+					continue;
+
+				if( eu2->vu_p->v_p == v1 )
+					continue;
+
+				vg1 = eu2->vu_p->v_p->vg_p;
+				vg2 = eu2->eumate_p->vu_p->v_p->vg_p;
+
+				VSUB2( vec1, v2->vg_p->coord, vg1->coord )
+				VSUB2( vec2, vg2->coord, vg1->coord )
+				VCROSS( norma, vec1, vec2 )
+
+				VSUB2( vec1, v1->vg_p->coord, vg1->coord )
+				VCROSS( normb, vec1, vec2 )
+
+				fu = nmg_find_fu_of_eu( eu1 );
+				if( fu->orientation == OT_SAME )
+				{
+					VUNITIZE( normb )
+					normb[3] = VDOT( normb, v1->vg_p->coord );
+
+					dist = fabs( DIST_PT_PLANE( v2->vg_p->coord, normb ));
+					if( dist > max_dist2 )
+						max_dist2 = dist;
+				}
+
+				if( VDOT( norma, normb ) <= 0.0 )
+				{
+					/* this would flip a loop */
+					flip2 = 1;
+					break;
+				}
+			}
+
+			if( max_dist1 < 0.0 )
+				max_dist1 = MAX_FASTF;
+			if( max_dist2 < 0.0 )
+				max_dist2 = MAX_FASTF;
+			if( ((max_dist1 > tol->dist) || (flip1 > 0) ) &&
+			    ((max_dist2 > tol->dist) || (flip2 > 0) ) )
+				continue;
+
+			/* edge will be collapsed */
+			bu_ptbl_zero( &edge_table, (long *)e );
+
+			sub_count++;
+
+			/* kill the loops radial to the edge being collapsed */
+			eu2 = eu->radial_p;
+			done = 0;
+			while( !done )
+			{
+				struct edgeuse *next;
+				struct loopuse *lu;
+				struct faceuse *fu;
+
+				next = eu2->eumate_p->radial_p;
+				if( next == eu2 )
+					done = 1;
+
+				if( *eu2->up.magic_p != NMG_LOOPUSE_MAGIC )
+					(void)nmg_keu( eu2 );
+				else
+				{
+					lu = eu2->up.lu_p;
+					if( *lu->up.magic_p != NMG_FACEUSE_MAGIC )
+						(void)nmg_klu( lu );
+					else
+					{
+						fu = lu->up.fu_p;
+						if( nmg_klu( lu ) )
+							nmg_kfu( fu );
+					}
+				}
+				eu2 = next;
+			}
+
+			if( (max_dist1 <= max_dist2) && !flip1 )
+			{
+				struct edgeuse *eu1,*eu2;
+				struct vertexuse *vu2;
+
+				/* vertex1 will be moved to vertex2 */
+				done = 0;
+				while( !done )
+				{
+					vu = BU_LIST_FIRST( vertexuse, &v1->vu_hd );
+					if( BU_LIST_LAST( vertexuse, &v1->vu_hd ) == vu )
+						done = 1;
+					nmg_movevu( vu, v2 );
+				}
+				for( BU_LIST_FOR( vu, vertexuse, &v2->vu_hd ) )
+				{
+					if( *vu->up.magic_p != NMG_EDGEUSE_MAGIC )
+						continue;
+
+					eu1 = vu->up.eu_p;
+
+					vu2 = BU_LIST_NEXT( vertexuse, &vu->l );
+					while( BU_LIST_NOT_HEAD( &vu2->l, &v2->vu_hd ) )
+					{
+						if( *vu2->up.magic_p != NMG_EDGEUSE_MAGIC )
+						{
+							vu2 = BU_LIST_NEXT( vertexuse, &vu2->l );
+							continue;
+						}
+						eu2 = vu2->up.eu_p;
+						if( eu2->eumate_p->vu_p->v_p == eu1->eumate_p->vu_p->v_p &&
+							eu2->e_p != eu1->e_p )
+						{
+							struct edge *e1, *e2;
+
+							e1 = eu1->e_p;
+							e2 = eu2->e_p;
+
+							nmg_radial_join_eu_NEW( eu2, eu1, tol );
+							if( eu1->e_p != e1 )
+								bu_ptbl_zero( &edge_table, (long *)e1 );
+							if( eu2->e_p != e2 )
+								bu_ptbl_zero( &edge_table, (long *)e2 );
+						}
+						vu2 = BU_LIST_NEXT( vertexuse, &vu2->l );
+					}
+				}
+			}
+			else
+			{
+				struct edgeuse *eu1,*eu2;
+				struct vertexuse *vu2;
+
+				/* vertex2 will be moved to vertex1 */
+				done = 0;
+				while( !done )
+				{
+					vu = BU_LIST_FIRST( vertexuse, &v2->vu_hd );
+					if( BU_LIST_LAST( vertexuse, &v2->vu_hd ) == vu )
+						done = 1;
+					nmg_movevu( vu, v1 );
+				}
+				for( BU_LIST_FOR( vu, vertexuse, &v1->vu_hd ) )
+				{
+					if( *vu->up.magic_p != NMG_EDGEUSE_MAGIC )
+						continue;
+
+					eu1 = vu->up.eu_p;
+
+					vu2 = BU_LIST_NEXT( vertexuse, &vu->l );
+					while( BU_LIST_NOT_HEAD( &vu2->l, &v1->vu_hd ) )
+					{
+						if( *vu2->up.magic_p != NMG_EDGEUSE_MAGIC )
+						{
+							vu2 = BU_LIST_NEXT( vertexuse, &vu2->l );
+							continue;
+						}
+						eu2 = vu2->up.eu_p;
+						if( eu2->eumate_p->vu_p->v_p == eu1->eumate_p->vu_p->v_p &&
+							eu2->e_p != eu1->e_p )
+						{
+							struct edge *e1, *e2;
+
+							e1 = eu1->e_p;
+							e2 = eu2->e_p;
+							nmg_radial_join_eu_NEW( eu2, eu1, tol );
+							if( eu1->e_p != e1 )
+								bu_ptbl_zero( &edge_table, (long *)e1 );
+							if( eu2->e_p != e2 )
+								bu_ptbl_zero( &edge_table, (long *)e2 );
+						}
+						vu2 = BU_LIST_NEXT( vertexuse, &vu2->l );
+					}
+				}
+			}
+		}
+		count += sub_count;
+	}
+
+	if( count )
+	{
+		/* recalculate face planes */
+		/* re-use edge table space */
+		bu_ptbl_reset( &edge_table );
+		nmg_face_tabulate( &edge_table, &m->magic );
+
+		for( i=0 ; i<BU_PTBL_END( &edge_table ) ; i++ )
+		{
+			struct face *f;
+			struct faceuse *fu;
+
+			f = (struct face *)BU_PTBL_GET( &edge_table, i );
+			NMG_CK_FACE( f );
+			fu = f->fu_p;
+			if( fu->orientation != OT_SAME )
+				fu = fu->fumate_p;
+			if( fu->orientation != OT_SAME )
+				bu_bomb( "nmg_edge_collapse: Face has no OT_SAME use!!!\n" );
+
+			nmg_calc_face_g( fu );
+		}
+	}
+	bu_ptbl_free( &edge_table );
+	return( count );
+}
