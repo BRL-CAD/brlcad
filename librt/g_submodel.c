@@ -1019,7 +1019,7 @@ bu_log("export: file='%s', treetop='%s', meth=%d\n", bu_vls_addr( &sip->file ), 
 	ep->ext_nbytes = bu_vls_strlen( &str );
 	ep->ext_buf = bu_calloc( 1, ep->ext_nbytes, "submodel external");
 
-	strcpy( ep->ext_buf, bu_vls_addr(&str) );
+	strncpy(ep->ext_buf, bu_vls_addr(&str), ep->ext_nbytes);
 	bu_vls_free( &str );
 #if 0
 bu_log("rt_submodel_export: '%s'\n", rec->ss.ss_args);
