@@ -970,7 +970,7 @@ struct hitmiss *myhit;
 	myhit->outbound_use = (long *)South_vu;
 
 	switch (myhit->in_out) {
-#if 0
+#if 1
 	case HMG_HIT_ON_ON:	/* fallthrough???  -MJM??? */
 #endif
 	case HMG_HIT_IN_IN:	/* fallthrough */
