@@ -20,8 +20,8 @@
  *      The BRL-CAD Package" agreement.
  *
  *  Copyright Notice -
- *      This software is Copyright (C) 1998 & 1999 by the United States
- *      Army in all countries except the USA.  All rights reserved.
+ *      This software is Copyright (C) 1998-2004 by the United States Army
+ *      in all countries except the USA.  All rights reserved.
  */
 #ifndef __VEGITATION_H__
 #define __VEGITATION_H__
