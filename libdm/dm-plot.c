@@ -109,16 +109,23 @@ char *argv[];
   static int count = 0;
   struct dm *dmp;
 
-  dmp = BU_GETSTRUCT(dmp, dm);
+  BU_GETSTRUCT(dmp, dm);
+  if(dmp == DM_NULL)
+    return DM_NULL;
+
   *dmp = dm_Plot;
   dmp->dm_eventHandler = eventHandler;
 
+#if 0
   /* Only need to do this once for this display manager */
-  if(!count)
-    (void)Plot_load_startup(dmp);
+  if(!count){
+    bzero((void *)&head_plot_vars, sizeof(struct plot_vars));
+    BU_LIST_INIT( &head_plot_vars.l );
+  }
+#endif
 
-  dmp->dm_vars = bu_calloc(1, sizeof(struct plot_vars), "Plot_init: plot_vars");
-  if(!dmp->dm_vars){
+  BU_GETSTRUCT(dmp->dm_vars, plot_vars);
+  if(dmp->dm_vars == (struct plot_vars *)NULL){
     bu_free(dmp, "Plot_open: dmp");
     return DM_NULL;
   }
@@ -230,8 +237,10 @@ struct dm *dmp;
   else
     fclose(((struct plot_vars *)dmp->dm_vars)->up_fp);
 
+#if 0
   if(((struct plot_vars *)dmp->dm_vars)->l.forw != BU_LIST_NULL)
     BU_LIST_DEQUEUE(&((struct plot_vars *)dmp->dm_vars)->l);
+#endif
 
   bu_vls_free(&dmp->dm_pathName);
   bu_free(dmp->dm_vars, "Plot_close: plot_vars");
@@ -509,8 +518,6 @@ struct dm *dmp;
 {
   char *filename;
 
-  bzero((void *)&head_plot_vars, sizeof(struct plot_vars));
-  BU_LIST_INIT( &head_plot_vars.l );
 
   if((filename = getenv("DM_PLOT_RCFILE")) != (char *)NULL )
     return Tcl_EvalFile(interp, filename);

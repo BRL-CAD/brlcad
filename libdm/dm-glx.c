@@ -223,7 +223,10 @@ char *argv[];
   XVisualInfo *visual_info;
   struct dm *dmp;
 
-  dmp = BU_GETSTRUCT(dmp, dm);
+  BU_GETSTRUCT(dmp, dm);
+  if(dmp == DM_NULL)
+    return DM_NULL;
+
   *dmp = dm_glx;
   dmp->dm_eventHandler = eventHandler;
 
@@ -233,8 +236,8 @@ char *argv[];
     BU_LIST_INIT( &head_glx_vars.l );
   }
 
-  dmp->dm_vars = bu_calloc(1, sizeof(struct glx_vars), "Glx_init: struct glx_vars");
-  if(!dmp->dm_vars){
+  BU_GETSTRUCT(dmp->dm_vars, glx_vars);
+  if(dmp->dm_vars == (struct glx_vars *)NULL){
     bu_free(dmp, "Glx_open: dmp");
     return DM_NULL;
   }

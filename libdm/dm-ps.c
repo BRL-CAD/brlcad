@@ -40,8 +40,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #define EPSILON          0.0001
 
-static int PS_load_startup();
-
 /* Display Manager package interface */
 
 #define PLOTBOUND	1000.0	/* Max magnification in Rot matrix */
@@ -112,19 +110,30 @@ char *argv[];
   static int count = 0;
   struct dm *dmp;
 
-  dmp = BU_GETSTRUCT(dmp, dm);
-  *dmp = dm_PS;
+  BU_GETSTRUCT(dmp, dm);
+  if(dmp == DM_NULL)
+    return DM_NULL;
+
+  *dmp = dm_PS;  /* struct copy */
   dmp->dm_eventHandler = eventHandler;
 
+#if 0
   /* Only need to do this once for this display manager */
-  if(!count)
-    (void)PS_load_startup(dmp);
+  if(!count){
+    bzero((void *)&head_ps_vars, sizeof(struct ps_vars));
+    BU_LIST_INIT( &head_ps_vars.l );
+  }
+#endif
 
-  dmp->dm_vars = bu_calloc(1, sizeof(struct ps_vars), "PS_init: ps_vars");
-  if(!dmp->dm_vars){
+  BU_GETSTRUCT(dmp->dm_vars, ps_vars);
+  if(dmp->dm_vars == (struct ps_vars *)NULL){
     bu_free(dmp, "PS_open: dmp");
     return DM_NULL;
   }
+
+#if 0
+  BU_LIST_APPEND(&head_x_vars.l, &((struct x_vars *)dmp->dm_vars)->l);
+#endif
 
   bu_vls_init(&dmp->dm_pathName);
   bu_vls_init(&dmp->dm_tkName);
@@ -306,8 +315,10 @@ struct dm *dmp;
   fputs("%end(plot)\n", ((struct ps_vars *)dmp->dm_vars)->ps_fp);
   (void)fclose(((struct ps_vars *)dmp->dm_vars)->ps_fp);
 
+#if 0
   if(((struct ps_vars *)dmp->dm_vars)->l.forw != BU_LIST_NULL)
     BU_LIST_DEQUEUE(&((struct ps_vars *)dmp->dm_vars)->l);
+#endif
 
   bu_vls_free(&dmp->dm_pathName);
   bu_vls_free(&dmp->dm_tkName);
@@ -596,21 +607,6 @@ register int w[];
   ((struct ps_vars *)dmp->dm_vars)->clipmax[0] = w[0] / 2047.;
   ((struct ps_vars *)dmp->dm_vars)->clipmax[1] = w[2] / 2047.;
   ((struct ps_vars *)dmp->dm_vars)->clipmax[2] = w[4] / 2047.;
-
-  return TCL_OK;
-}
-
-static int
-PS_load_startup(dmp)
-struct dm *dmp;
-{
-  char *filename;
-
-  bzero((void *)&head_ps_vars, sizeof(struct ps_vars));
-  BU_LIST_INIT( &head_ps_vars.l );
-
-  if((filename = getenv("DM_PS_RCFILE")) != (char *)NULL )
-    return Tcl_EvalFile(interp, filename);
 
   return TCL_OK;
 }

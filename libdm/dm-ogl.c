@@ -220,8 +220,11 @@ char *argv[];
   fastf_t tmp_vp;
   struct dm *dmp;
 
-  dmp = BU_GETSTRUCT(dmp, dm);
-  *dmp = dm_ogl;
+  BU_GETSTRUCT(dmp, dm);
+  if(dmp == DM_NULL)
+    return DM_NULL;
+
+  *dmp = dm_ogl; /* struct copy */
   dmp->dm_eventHandler = eventHandler;
   dmp->dm_vp = &tmp_vp;
 
@@ -231,8 +234,8 @@ char *argv[];
     BU_LIST_INIT( &head_ogl_vars.l );
   }
 
-  dmp->dm_vars = bu_calloc(1, sizeof(struct ogl_vars), "Ogl_init: ogl_vars");
-  if(!dmp->dm_vars){
+  BU_GETSTRUCT(dmp->dm_vars, ogl_vars);
+  if(dmp->dm_vars == (struct ogl_vars *)NULL){
     bu_free(dmp, "Ogl_open: dmp");
     return DM_NULL;
   }

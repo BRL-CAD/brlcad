@@ -137,8 +137,11 @@ char *argv[];
   Display *tmp_dpy;
   struct dm *dmp;
 
-  dmp = BU_GETSTRUCT(dmp, dm);
-  *dmp = dm_X;
+  BU_GETSTRUCT(dmp, dm);
+  if(dmp == DM_NULL)
+    return DM_NULL;
+
+  *dmp = dm_X; /* struct copy */
   dmp->dm_eventHandler = eventHandler;
 
   /* Only need to do this once for this display manager */
@@ -147,8 +150,8 @@ char *argv[];
     BU_LIST_INIT( &head_x_vars.l );
   }
 
-  dmp->dm_vars = bu_calloc(1, sizeof(struct x_vars), "X_open: x_vars");
-  if(!dmp->dm_vars){
+  BU_GETSTRUCT(dmp->dm_vars, x_vars);
+  if(dmp->dm_vars == (struct x_vars *)NULL){
     bu_free(dmp, "X_open: dmp");
     return DM_NULL;
   }
