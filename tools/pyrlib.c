@@ -12,22 +12,14 @@
 static char rcs_ident[] = "$Id$";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
+
+#include "machine.h"
+#include "externs.h"
 #include "rle.h"
 #include "pyramid.h"
-
-#ifdef USE_STDLIB_H
-#include <stdlib.h>
-#else
-
-#ifdef VOID_STAR
-extern void *malloc();
-#else
-extern char *malloc();
-#endif
-extern void free();
-
-#endif /* USE_STDLIB_H */
 
 void extrap_level(), extrap_int_level();
 void alloc_pyramid(), gauss_level(), band_level(), expand_level();
@@ -531,7 +523,7 @@ float *mask_mult_table;
 	    }
 	}
     }
-    free( *secondbase );
+    free( secondbase );
 }
 
 /* expand_level -

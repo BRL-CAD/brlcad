@@ -19,22 +19,14 @@
  * Default is 4 (because that's what I needed.)
  */
 
+#include "conf.h"
+
 #include <stdio.h>
-#include <rle.h>
 #include <math.h>
 
-#ifdef USE_STDLIB_H
-#include <stdlib.h>
-#else
-
-#ifdef VOID_STAR
-extern void *malloc();
-#else
-extern char *malloc();
-#endif
-extern void free();
-
-#endif /* USE_STDLIB_H */
+#include "machine.h"
+#include "externs.h"		/* For malloc and free */
+#include "rle.h"
 
 /* Change this according the value on your system.  This is a crock.
 #define	RANDOM_MAX	((double)(int)(((unsigned int)~0)>>1))

@@ -25,13 +25,13 @@
  * Copyright (c) 1990, University of Michigan
  */
 
+#include "conf.h"
 
 #include <stdio.h>
-#include <rle.h>
 
-#ifdef USE_STDLIB_H
-#include <stdlib.h>
-#endif
+#include "machine.h"
+#include "externs.h"
+#include "rle.h"
 
 #define MALLOC_ERR {fprintf(stderr, "%s: ran out of heap space\n", \
                             cmd_name( argv ));exit(-2);}

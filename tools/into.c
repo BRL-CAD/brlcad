@@ -30,7 +30,6 @@
 #include <stdio.h>
 #ifdef USE_STRING_H
 #include <string.h>
-#define rindex strrchr
 #else
 #include <strings.h>
 #endif
@@ -41,6 +40,9 @@
 #endif
 #include <sys/param.h>			/* for MAXPATHLEN */
 #include <sys/stat.h>
+
+#include "machine.h"
+#include "externs.h"
 
 #ifdef S_IFSOCK				/* should work */
 # define BSD42
@@ -86,7 +88,7 @@ char **argv;
 	exit(1);
     }
 
-    if ( (cp = rindex( argv[1], '/' )) != NULL )
+    if ( (cp = strrchr( argv[1], '/' )) != NULL )
     {
 	c = *++cp;
 	*cp = 0;

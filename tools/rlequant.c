@@ -25,21 +25,13 @@
  * Copyright (c) 1990, University of Michigan
  */
 
+#include "conf.h"
+
 #include <stdio.h>
-#include <rle.h>
 
-#ifdef USE_STDLIB_H
-#include <stdlib.h>
-#else
-
-#ifdef VOID_STAR
-extern void *malloc();
-#else
-extern char *malloc();
-#endif
-extern void free();
-
-#endif /* USE_STDLIB_H */
+#include "machine.h"
+#include "externs.h"		/* For malloc and free */
+#include "rle.h"
 
 #define Quantize(x)	(x >> shift)
 
@@ -64,7 +56,7 @@ typedef enum { NORMAL=0, INIT_HIST, USE_HIST, PROCESS_HIST, OUTPUT } state_t;
 static void mem_alloc(), read_input(), copy_hdr();
 static void setup_output(), write_output(), free_mem();
 
-static CONST_DECL char *MY_NAME = "rlequant";
+static CONST char *MY_NAME = "rlequant";
 
 /*****************************************************************
  * TAG( main )

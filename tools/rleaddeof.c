@@ -8,12 +8,16 @@
  * Copyright (c) 1990, The Regents of the University of Michigan
  */
 
+#include "conf.h"
+
 #include <stdio.h>
-#include <rle.h>
-#include <rle_raw.h>
-#ifdef USE_STDLIB_H
-#include <stdlib.h>
-#endif
+
+#include "machine.h"
+#include "externs.h"
+#include "rle.h"
+#include "rle_code.h"
+#include "rle_raw.h"
+
 
 /*****************************************************************
  * TAG( main )

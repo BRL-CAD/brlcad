@@ -10,21 +10,13 @@
  * Interface routines for Utah Raster Toolkit
  */
 
+#include "conf.h"
+
 #include <stdio.h>
+
+#include "machine.h"
+#include "externs.h"
 #include "rle.h"
-
-#ifdef USE_STDLIB_H
-#include <stdlib.h>
-#else
-
-#ifdef VOID_STAR
-extern void *malloc();
-#else
-extern char *malloc();
-#endif
-extern void free();
-
-#endif /* USE_STDLIB_H */
 
 /*
  * Globals are stored in a structure.

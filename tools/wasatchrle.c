@@ -27,23 +27,20 @@
  * Thanks to Mike Ware of Wasatch for providing the format information.
  */
 
-#include <stdio.h>
-#include <ctype.h>
-#include <errno.h>
-#include "rle.h"
-#ifdef USE_STDLIB_H
-#include <stdlib.h>
-#else
+#include "conf.h"
 
+#include <stdio.h>
 #ifdef USE_STRING_H
 #include <string.h>
 #else
 #include <strings.h>
 #endif
+#include <ctype.h>
+#include <errno.h>
 
-#endif /* USE_STDLIB_H */
-
-extern int errno;
+#include "machine.h"
+#include "externs.h"			/* For stdlib stuff */
+#include "rle.h"
 
 /* "short" in our world is 16 bits.  Beware of swyte-bopping. */
 

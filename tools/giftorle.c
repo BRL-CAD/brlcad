@@ -32,7 +32,7 @@
 
 #include "machine.h"
 #include "externs.h"
-#include	"rle.h"
+#include "rle.h"
 
 #ifndef lint
 static char rcsid[] = "$Id$";
@@ -65,7 +65,7 @@ int ReadInterlaced(), ReadRaster();
 
 static rle_map out_map[3*(1<<8)];
 
-CONST_DECL char *MY_NAME = "giftorle";
+CONST char *MY_NAME = "giftorle";
 
 FILE *outfile;
 
@@ -216,7 +216,7 @@ FILE	*fd;
 	    EasyFail("EOF in extention\n",TRUE);
 	if (c == 0)
 	    return FALSE;
-	if (read(fd,buf,(int) c)!=(int) c) 
+	if (read(fileno(fd),buf,(int) c)!=(int) c) 
 	    EasyFail("EOF in extention\n",TRUE);
     }
 }

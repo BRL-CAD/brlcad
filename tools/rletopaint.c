@@ -41,11 +41,17 @@
  * as the two formats number their scanlines oppositely.
  */
 
+#include "conf.h"
+
 #include <stdio.h>
-#include <rle.h>
 #include <math.h>
 
+#include "machine.h"
+#include "rle.h"
+
+#ifndef MIN
 #define MIN(x,y) ( (x) < (y) ? (x) : (y) )
+#endif
 
 /* Scanline storage & RLE row pointers */
 rle_pixel ** rows;

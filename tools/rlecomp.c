@@ -29,31 +29,27 @@
  *    SIGGRAPH 84, p.255.
  */
 
+#include "conf.h"
+
 #include <stdio.h>
-#include <rle.h>
-#include <rle_raw.h>
-
-#ifdef USE_STDLIB_H
-#include <stdlib.h>
-#else
-
 #ifdef USE_STRING_H
 #include <string.h>
 #else
 #include <strings.h>
 #endif
 
-#ifdef VOID_STAR
-extern void *malloc();
-#else
-extern char *malloc();
-#endif
-extern void free();
+#include "machine.h"
+#include "externs.h"
+#include "rle.h"
+#include "rle_code.h"
+#include "rle_raw.h"
 
-#endif /* USE_STDLIB_H */
-
+#ifndef MAX
 #define MAX(i,j)   ( (i) > (j) ? (i) : (j) )
+#endif
+#ifndef MIN
 #define MIN(i,j)   ( (i) < (j) ? (i) : (j) )
+#endif
 #define MALLOC_ERR {fprintf(stderr, "%s: ran out of heap space\n", \
 			    cmd_name(argv));exit(-2);}
 
@@ -108,7 +104,7 @@ char	*argv[];
     int		rle_cnt, rle_err;
     char	*err_fname;
       
-    static CONST_DECL char *comp_ops[NUM_OPS] =
+    static CONST char *comp_ops[NUM_OPS] =
 	 { "clear",
 	   "over",
 	   "in",

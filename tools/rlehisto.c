@@ -25,21 +25,14 @@
 static char rcs_ident[] = "$Id$";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
-#include <rle.h>
 
-#ifdef USE_STDLIB_H
-#include <stdlib.h>
-#else
+#include "machine.h"
+#include "externs.h"		/* For malloc, calloc, and free */
 
-#ifdef VOID_STAR
-extern void *malloc(), *calloc();
-#else
-extern char *malloc(), *calloc();
-#endif
-extern void free();
-
-#endif /* USE_STDLIB_H */
+#include "rle.h"
 
 #define MAXCHAN 10
 

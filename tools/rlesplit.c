@@ -8,26 +8,20 @@
  * Copyright (c) 1987, University of Utah
  */
 
-#include <stdio.h>
-#include <rle.h>
-#include <rle_raw.h>
-#ifdef USE_STDLIB_H
-#include <stdlib.h>
-#else
+#include "conf.h"
 
+#include <stdio.h>
 #ifdef USE_STRING_H
 #include <string.h>
 #else
 #include <strings.h>
 #endif
 
-#ifdef VOID_STAR
-extern void *calloc();
-#else
-extern char *calloc();
-#endif
-
-#endif /* USE_STDLIB_H */
+#include "machine.h"
+#include "externs.h"		/* For calloc */
+#include "rle.h"
+#include "rle_code.h"
+#include "rle_raw.h"
 
 /*****************************************************************
  * TAG( main )
@@ -69,10 +63,10 @@ main( argc, argv )
 int argc;
 char **argv;
 {
-    register CONST_DECL char * cp, * slashp;
+    register CONST char * cp, * slashp;
     int num = 1, oflag = 0, digits = 3;
     int rle_err, ynext, y;
-    CONST_DECL char * infname = NULL, * format = "%s%0*d.rle";
+    CONST char * infname = NULL, * format = "%s%0*d.rle";
     char * prefix = "";
     char filebuf[BUFSIZ];
     rle_hdr in_hdr, out_hdr;

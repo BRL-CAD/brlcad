@@ -25,21 +25,19 @@
  * Copyright (c) 1987, University of Utah
  */
 
-#include <stdio.h>
-#include <rle.h>
-/* #include "../patchlevel.h" */
-#ifdef USE_STDLIB_H
-#include <stdlib.h>
-#else
+#include "conf.h"
 
+#include <stdio.h>
 #ifdef USE_STRING_H
 #include <string.h>
-#define index strchr
 #else
 #include <strings.h>
 #endif /* USE_STRING_H */
 
-#endif /* USE_STDLIB_H */
+#include "machine.h"
+#include "externs.h"
+#include "rle.h"
+/* #include "../patchlevel.h" */
 
 /* Utah Raster Toolkit major version number. */
 #define URT_VERSION 	3.0
@@ -76,11 +74,11 @@ main( argc, argv )
 int argc;
 char **argv;
 {
-    CONST_DECL char ** fname = NULL;
-    CONST_DECL char *stdname = "-";
+    CONST char ** fname = NULL;
+    CONST char *stdname = "-";
     char **comment_names = NULL;
-    CONST_DECL char *the_file;
-    int     	brief = 0, 
+    CONST char *the_file;
+    int    	brief = 0, 
 		cflag = 0,
 		mflag = 0,
 		dbg_flag = 0,
@@ -285,7 +283,7 @@ char **comment_names;
 	    for ( ; ncomment > 0; ncomment--, comment_names++ )
 		if (the_comment = rle_getcom( *comment_names, the_hdr ))
 		{
-		    if ( (cp = index( the_comment, '\n' )) )
+		    if ( (cp = strchr( the_comment, '\n' )) )
 			printf( ", %s=%.*s", *comment_names,
 				cp - the_comment - 1, the_comment );
 		    else

@@ -38,22 +38,14 @@
  * the last line (in the file) as the upper left of the image.
  */
 
+#include "conf.h"
+
 #include <stdio.h>
 #include <sys/types.h>
+
+#include "machine.h"
+#include "externs.h"			/* For malloc and free */
 #include "rle.h"
-
-#ifdef USE_STDLIB_H
-#include <stdlib.h>
-#else
-
-#ifdef VOID_STAR
-extern void *malloc();
-#else
-extern char *malloc();
-#endif
-extern void free();
-
-#endif /* USE_STDLIB_H */
 
 /*
  * Description of header for files containing targa type 2 images

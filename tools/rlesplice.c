@@ -25,11 +25,13 @@
  * Date:	Mon Apr 23 1990 (The Apocalypse)
  * Copyright (c) 1990, Martin R. Friedmann
  */
+#include "conf.h"
+
 #include <stdio.h>
-#include <rle.h>
-#ifdef USE_STDLIB_H
-#include <stdlib.h>
-#endif
+
+#include "machine.h"
+#include "externs.h"
+#include "rle.h"
 
 #define MALLOC_ERR {fprintf(stderr, "%s: ran out of heap space\n", \
                             cmd_name( argv ));exit(-2);}

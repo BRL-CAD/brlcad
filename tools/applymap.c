@@ -33,6 +33,7 @@
 #include "externs.h"
 
 #include "rle.h"
+#include "rle_code.h"
 #include "rle_raw.h"
 
 #define	map_pixel( pix, cmaplen, cmap )	((pix) > cmaplen ? (pix) : \

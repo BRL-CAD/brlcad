@@ -28,30 +28,21 @@
  *************************************************************************
  */
 
+#include "conf.h"
+
 #include <stdio.h>
-#include "rle.h"
-#include "./rletogif.h"
-
-#ifdef USE_STDLIB_H
-#include <stdlib.h>
-#else
-
 #ifndef USE_STRING_H
 #include <strings.h>
 #else
 #include <string.h>
 #endif
 
-#ifndef VOID_STAR
-char *malloc();
-#else
-extern void *malloc();
-#endif
-extern void free();
+#include "machine.h"
+#include "externs.h"		/* For malloc and free */
+#include "rle.h"
+#include "./rletogif.h"
 
-#endif /* USE_STDLIB_H */
-
-CONST_DECL char *MY_NAME = "rletogif";
+CONST char *MY_NAME = "rletogif";
 
 static rle_hdr in_hdr;
 static rle_pixel **scan;

@@ -8,8 +8,12 @@
  * Copyright (c) 1987, University of Utah
  */
 
+#include "conf.h"
+
 #include <stdio.h>
 #include <math.h>
+
+#include "machine.h"
 #include "rle.h"
 
 void

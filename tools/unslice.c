@@ -21,22 +21,15 @@
  * are thrown away.  The maximum y of the image must be specified this way.
  */
 
+#include "conf.h"
+
 #include <stdio.h>
-#include <rle.h>
-#include <rle_raw.h>
 
-#ifdef USE_STDLIB_H
-#include <stdlib.h>
-#else
-
-#ifdef VOID_STAR
-extern void *malloc();
-#else
-extern char *malloc();
-#endif
-extern void free();
-
-#endif /* USE_STDLIB_H */
+#include "machine.h"
+#include "externs.h"		/* For malloc and free */
+#include "rle.h"
+#include "rle_code.h"
+#include "rle_raw.h"
 
 void do_slice(), copy_scanline();
 

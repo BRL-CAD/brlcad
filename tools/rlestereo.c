@@ -26,12 +26,13 @@
  * Copyright (C) 1990, Craig E. Kolb
  */
 
-#include <stdio.h>
-#include "rle.h"
+#include "conf.h"
 
-#ifdef USE_STDLIB_H
-#include <stdlib.h>
-#endif
+#include <stdio.h>
+
+#include "machine.h"
+#include "externs.h"
+#include "rle.h"
 
 #define LEFTSCALE	0.7		/* Default left scale factor. */
 #define RIGHTSCALE	1.0		/* Default right scale factor. */

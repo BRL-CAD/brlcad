@@ -20,27 +20,18 @@
  * 
  */
 
+#include "conf.h"
+
 #include <stdio.h>
-#include "rle.h"
-
-#ifdef USE_STDLIB_H
-#include <stdlib.h>
-#else
-
 #ifdef USE_STRING_H
 #include <string.h>
 #else
 #include <strings.h>
 #endif
 
-#ifdef VOID_STAR
-extern void *malloc();
-#else
-extern char *malloc();
-#endif
-extern void free();
-
-#endif /* USE_STDLIB_H */
+#include "machine.h"
+#include "externs.h"			/* For malloc and free */
+#include "rle.h"
 
 typedef FILE	*FILPTR;
 

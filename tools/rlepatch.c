@@ -28,21 +28,13 @@
  * routines someday - this would run MUCH faster for sparse patches.
  */
 
+#include "conf.h"
+
 #include <stdio.h>
-#include <rle.h>
 
-#ifdef USE_STDLIB_H
-#include <stdlib.h>
-#else
-
-#ifdef VOID_STAR
-extern void *malloc();
-#else
-extern char *malloc();
-#endif
-extern void free();
-
-#endif /* USE_STDLIB_H */
+#include "machine.h"
+#include "externs.h"		/* For malloc, calloc and free */
+#include "rle.h"
 
 #define CHECK_MALLOC( ptr ) \
 	{ if (! (ptr)) {fprintf( stderr, "%s: Unable to alloc memory\n", \
@@ -55,8 +47,8 @@ int argc;
 char **argv;
 {
     rle_hdr im_hdr, *patch_hdr, out_hdr;
-    CONST_DECL char *imfilename = NULL, *outfilename = NULL;
-    CONST_DECL char **patchnames;
+    CONST char *imfilename = NULL, *outfilename = NULL;
+    CONST char **patchnames;
     FILE *outfile = stdout;
     rle_pixel ** im_rows, **patch_rows, ** outrows;
     int stdin_used = 0;

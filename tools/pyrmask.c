@@ -12,21 +12,14 @@
 static char rcs_ident[] = "$Header$";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
+
+#include "machine.h"
+#include "externs.h"
 #include "rle.h"
 #include "pyramid.h"
-#ifdef USE_STDLIB_H
-#include <stdlib.h>
-#else
-
-#ifdef VOID_STAR
-extern void *malloc();
-#else
-extern char *malloc();
-#endif
-extern void free();
-
-#endif /* USE_STDLIB_H */
 
 int rle_to_pyramids();
 void alloc_pyramid(), copy_mask_bands(), rebuild_image(), dump_pyramid();

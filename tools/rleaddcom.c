@@ -25,26 +25,25 @@
  * Copyright (c) 1987, University of Utah
  */
 
+#include "conf.h"
+
 #include <stdio.h>
-#include <rle.h>
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
+
+#include "machine.h"
+#include "externs.h"
+#include "rle.h"
+
 #include <sys/types.h>
 #if defined(vax) && defined(BSD) && BSD < 44
 #undef BSD	/* /usr/include/sys/param.h redefines this */
 #endif
 #include <sys/param.h>			/* for MAXPATHLEN */
 #include <sys/stat.h>
-#ifdef USE_STDLIB_H
-#include <stdlib.h>
-#else
-
-#ifdef USE_STRING_H
-#include <string.h>
-#define rindex strrchr
-#else
-#include <strings.h>
-#endif
-
-#endif /* USE_STDLIB_H */
 
 #ifdef S_IFSOCK				/* should work */
 # define BSD42
@@ -129,7 +128,7 @@ char **argv;
 	}
 #endif
 	strcpy( buf, i_fname );
-	if ( (cp = rindex( buf, '/' )) != NULL )
+	if ( (cp = strrchr( buf, '/' )) != NULL )
 	{
 	    *++cp = 0;
 	    strcat( buf, temp );

@@ -25,22 +25,15 @@
  * Copyright (c) 1987, University of Utah
  */
 
+#include "conf.h"
+
 #include <stdio.h>
-#include <rle.h>
-#include <rle_raw.h>
 
-#ifdef USE_STDLIB_H
-#include <stdlib.h>
-#else
-
-#ifdef VOID_STAR
-extern void *malloc(), *calloc();
-#else
-extern char *malloc(), *calloc();
-#endif
-extern void free();
-
-#endif /* USE_STDLIB_H */
+#include "machine.h"
+#include "externs.h"		/* For malloc, calloc, and free */
+#include "rle.h"
+#include "rle_code.h"
+#include "rle_raw.h"
 
 #define ROUND(x) ((int)((x) + 0.5))
 

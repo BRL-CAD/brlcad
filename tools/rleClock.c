@@ -28,16 +28,18 @@
  *	font.src derived from NBS fonts.
  */
 
+#include "conf.h"
+
 #include <stdio.h>
 #include <math.h>
 #include <ctype.h>
-#include <rle.h>
 #include <sys/types.h>
 #include <time.h>
-#include "./font.h"
 
 #include "machine.h"
 #include "externs.h"
+#include "rle.h"
+#include "./font.h"
 
 void	lineDots();
 

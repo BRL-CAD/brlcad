@@ -25,26 +25,18 @@
  * Copyright (c) 1986, Spencer W. Thomas
  */
 
+#include "conf.h"
+
 #include <stdio.h>
 #include <math.h>
-#include <rle.h>
 
-#ifdef USE_STDLIB_H
-#include <stdlib.h>
-#else
-
-#ifdef VOID_STAR
-extern void *malloc();
-#else
-extern char *malloc();
-#endif
-extern void free();
-
-#endif /* USE_STDLIB_H */
+#include "machine.h"
+#include "externs.h"		/* For malloc, calloc, and free */
+#include "rle.h"
 
 /* Check for negative left shift problem (on 68000, at least) */
 #if 2 << -1 == 0
-#define NO_NEGATIVE_SHIFT
+
 #endif
 
 void get_rle_map(), linmap(), gammap(), filemap(), mfilemap();

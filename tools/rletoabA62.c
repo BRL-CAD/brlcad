@@ -37,7 +37,13 @@
  *	    point to arrays of unsigned char to hold the RGB values.
  */
 
+#include "conf.h"
+
 #include <stdio.h>
+
+#include "machine.h"
+#include "externs.h"		/* For getopt */
+#include "rle.h"
 
 #ifndef TRUE
 #define TRUE 1
@@ -68,9 +74,6 @@ int		NumFrames = 2;
 int		BkgRed = 0;
 int		BkgBlue = 0;
 int		BkgGreen= 0;
-
-extern char    *optarg;		/* interface to getopt() */
-extern int	optind;		/* interface to getopt() */
 
 typedef struct {
     char            y, i, q;

@@ -9,11 +9,17 @@
  *		Based on code by Spencer Thomas
  */
 
+#include "conf.h"
+
 #include <stdio.h>
 #include <math.h>
+
+#include "machine.h"
 #include "rle.h"
 
+#ifndef MAX
 #define MAX(i,j)   ( (i) > (j) ? (i) : (j) )
+#endif
 
 #define RLE_EXPONENT (in_hdr.ncolors-1) /* Assume last channel is exp */
 

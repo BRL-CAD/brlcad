@@ -1,4 +1,4 @@
-/* rle2gif.h */
+/* rletogif.h */
 
 
 
@@ -14,4 +14,4 @@ void error();
 int getpixel();
 int GIFNextPixel();
 
-extern CONST_DECL char *MY_NAME;
+extern CONST char *MY_NAME;

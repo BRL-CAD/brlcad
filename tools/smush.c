@@ -13,21 +13,13 @@
 static char rcs_ident[] = "$Header$";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
+
+#include "machine.h"
+#include "externs.h"		/* For malloc and free */
 #include "rle.h"
-
-#ifdef USE_STDLIB_H
-#include <stdlib.h>
-#else
-
-#ifndef VOID_STAR
-extern char *malloc();
-#else
-extern void *malloc();
-#endif
-extern void free();
-
-#endif /* USE_STDLIB_H */
 
 char *progname;
 

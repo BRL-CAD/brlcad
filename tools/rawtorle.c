@@ -1,4 +1,3 @@
-
 /*
  * This software is copyrighted as noted below.  It may be freely copied,
  * modified, and redistributed, provided that the copyright notice is 
@@ -46,21 +45,13 @@
  * pic.[000-100].[rgb]    :  cat pic.* | rawtorle -w ... -h ... -n 3 -s -r 
  */
 
+#include "conf.h"
+
 #include <stdio.h>
+
+#include "machine.h"
+#include "externs.h"
 #include "rle.h"
-
-#ifdef USE_STDLIB_H
-#include <stdlib.h>
-#else
-
-#ifdef VOID_STAR
-extern void *malloc();
-#else
-extern char *malloc();
-#endif
-extern void free();
-
-#endif /* USE_STDLIB_H */
 
 /* hey.. why spin normally! */
 #define duff(counter, block) {\

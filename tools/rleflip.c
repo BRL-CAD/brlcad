@@ -35,20 +35,13 @@
  *      -o : Specify an output file
  */
 
+#include "conf.h"
 
 #include <stdio.h>
+
+#include "machine.h"
+#include "externs.h"		/* For malloc() and free() */
 #include "rle.h"
-
-#ifdef USE_STDLIB_H
-#include <stdlib.h>
-#else
-
-#ifdef VOID_STAR
-extern void *malloc();
-#else
-extern char *malloc();
-#endif
-extern void free();
 
 #endif /* USE_STDLIB_H */
 
@@ -72,11 +65,6 @@ char *argv[];
     rle_pixel *rastptr, *rasterbase;
     rle_pixel **temp_line;
     rle_pixel **rows;
-#ifndef VOID_STAR
-    char *malloc();
-#else
-    extern void *malloc();
-#endif
     int nchan;			/* Number of channels actually used. */
     int rle_err;
 

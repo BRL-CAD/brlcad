@@ -8,22 +8,15 @@
  * Copyright (c) 1990, University of Michigan
  */
 
+#include "conf.h"
+
 #include <stdio.h>
+
+#include "machine.h"
+#include "externs.h"
 #include "rle.h"
+#include "rle_code.h"
 #include "rle_raw.h"
-
-#ifdef USE_STDLIB_H
-#include <stdlib.h>
-#else
-
-#ifdef VOID_STAR
-extern void *malloc();
-#else
-extern char *malloc();
-#endif
-extern void free();
-
-#endif /* USE_STDLIB_H */
 
 /*
  * rlecat

@@ -16,10 +16,16 @@
  * specified, does separate white, red, green, and blue scales. 
  */
 
+#include "conf.h"
+
 #include <stdio.h>
-#include <rle.h>
-#include <rle_raw.h>
 #include <math.h>
+
+#include "machine.h"
+#include "externs.h"
+#include "rle.h"
+#include "rle_code.h"
+#include "rle_raw.h"
 
 void
 main( argc, argv )

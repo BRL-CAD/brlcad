@@ -25,25 +25,17 @@
  * Copyright (c) 1990, University of Michigan
  */
 
+#include "conf.h"
+
 #include <stdio.h>
-#include <rle.h>
 
-#ifdef USE_STDLIB_H
-#include <stdlib.h>
-#else
-
-#ifdef VOID_STAR
-extern void *malloc(), *realloc();
-#else
-extern char *malloc(), *realloc();
-#endif
-extern void free();
-
-#endif /* USE_STDLIB_H */
+#include "machine.h"
+#include "externs.h"		/* For malloc, realloc and free */
+#include "rle.h"
 
 static void insert();
 
-static CONST_DECL char *my_name = "rleselect";
+static CONST char *my_name = "rleselect";
 
 /*****************************************************************
  * TAG( rleselect )

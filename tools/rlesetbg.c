@@ -29,11 +29,13 @@
 static char rcs_ident[] = "$Id$";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
-#include <rle.h>
-#ifdef USE_STDLIB_H
-#include <stdlib.h>
-#endif
+
+#include "machine.h"
+#include "externs.h"
+#include "rle.h"
 
 char buffer[4096];
 
