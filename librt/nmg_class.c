@@ -494,9 +494,9 @@ fastf_t tol;
  *	Classify a loopuse/vertexuse from shell A WRT shell B.
  */
 static int class_vu_vs_s(vu, sB, classlist)
-struct vertexuse *vu;
-struct shell *sB;
-struct nmg_ptbl classlist[4];
+struct vertexuse	*vu;
+struct shell		*sB;
+long			*classlist[4];
 {
 	struct vertexuse *vup;
 	pointp_t pt;
@@ -511,13 +511,13 @@ struct nmg_ptbl classlist[4];
 		VPRINT("class_vu_vs_s ", pt);
 
 	/* check for vertex presence in class list */
-	if (nmg_tbl(&classlist[NMG_CLASS_AinB], TBL_LOC, &vu->v_p->magic) >= 0)
+	if( NMG_INDEX_TEST(classlist[NMG_CLASS_AinB], vu->v_p) )
 		return(INSIDE);
 
-	if (nmg_tbl(&classlist[NMG_CLASS_AonBshared], TBL_LOC, &vu->v_p->magic) >= 0)
+	if( NMG_INDEX_TEST(classlist[NMG_CLASS_AonBshared], vu->v_p) )
 		return(ON_SURF);
 
-	if (nmg_tbl(&classlist[NMG_CLASS_AinB], TBL_LOC, &vu->v_p->magic) >= 0)
+	if( NMG_INDEX_TEST(classlist[NMG_CLASS_AinB], vu->v_p) )
 		return(OUTSIDE);
 
 	/* we use topology to determing if the vertex is "ON" the
@@ -529,7 +529,8 @@ struct nmg_ptbl classlist[4];
 		    nmg_lups(vup->up.lu_p) == sB) {
 
 		    	/* it's ON_SURF */
-		    	(void)nmg_tbl(&classlist[NMG_CLASS_AonBshared], TBL_INS, &vu->v_p->magic);
+		    	NMG_INDEX_SET(classlist[NMG_CLASS_AonBshared], 
+		    		vu->v_p );
 			if (rt_g.NMG_debug & DEBUG_CLASSIFY)
 		    		VPRINT("\tVertex is ON_SURF", pt);
 
@@ -538,7 +539,8 @@ struct nmg_ptbl classlist[4];
 		else if (*vup->up.magic_p == NMG_EDGEUSE_MAGIC &&
 		    nmg_eups(vup->up.eu_p) == sB) {
 
-		    	(void)nmg_tbl(&classlist[NMG_CLASS_AonBshared], TBL_INS, &vu->v_p->magic);
+		    	NMG_INDEX_SET(classlist[NMG_CLASS_AonBshared],
+		    		vu->v_p );
 			if (rt_g.NMG_debug & DEBUG_CLASSIFY)
 		    		VPRINT("\tVertex is ON_SURF", pt);
 
@@ -560,11 +562,11 @@ struct nmg_ptbl classlist[4];
 
 	status = pt_inout_s(pt, sB, 0.005);
 	
-	if (status == OUTSIDE)
-		(void)nmg_tbl(&classlist[NMG_CLASS_AoutB], TBL_INS, &vu->v_p->magic);
-	else if (status == INSIDE)
-		(void)nmg_tbl(&classlist[NMG_CLASS_AinB], TBL_INS, &vu->v_p->magic);
-	else  {
+	if (status == OUTSIDE)  {
+		NMG_INDEX_SET(classlist[NMG_CLASS_AoutB], vu->v_p);
+	}  else if (status == INSIDE)  {
+		NMG_INDEX_SET(classlist[NMG_CLASS_AinB], vu->v_p);
+	}  else  {
 		rt_log("status=%d\n", status);
 		VPRINT("pt", pt);
 		rt_bomb("class_vu_vs_s: Why wasn't this point in or out?\n");
@@ -583,9 +585,9 @@ struct nmg_ptbl classlist[4];
 /*	C L A S S _ E U _ V S _ S
  */
 static int class_eu_vs_s(eu, s, classlist)
-struct edgeuse *eu;
-struct shell *s;
-struct nmg_ptbl classlist[4];
+struct edgeuse	*eu;
+struct shell	*s;
+long		*classlist[4];
 {
 	int euv_cl, matev_cl, status;
 	struct edgeuse *eup;
@@ -599,13 +601,13 @@ struct nmg_ptbl classlist[4];
 	NMG_CK_SHELL(s);	
 	
 	/* check to see if edge is already in one of the lists */
-	if (nmg_tbl(&classlist[NMG_CLASS_AinB], TBL_LOC, &eu->e_p->magic) >= 0)
+	if( NMG_INDEX_TEST(classlist[NMG_CLASS_AinB], eu->e_p) )
 		return(INSIDE);
 
-	if (nmg_tbl(&classlist[NMG_CLASS_AonBshared], TBL_LOC, &eu->e_p->magic) >= 0)
+	if( NMG_INDEX_TEST(classlist[NMG_CLASS_AonBshared], eu->e_p) )
 		return(ON_SURF);
 
-	if (nmg_tbl(&classlist[NMG_CLASS_AinB], TBL_LOC, &eu->e_p->magic) >= 0)
+	if( NMG_INDEX_TEST(classlist[NMG_CLASS_AinB], eu->e_p) )
 		return(OUTSIDE);
 
 	euv_cl = class_vu_vs_s(eu->vu_p, s, classlist);
@@ -625,7 +627,8 @@ struct nmg_ptbl classlist[4];
 		do {
 			NMG_CK_EDGEUSE(eup);
 			if (nmg_eups(eup) == s) {
-			    	(void)nmg_tbl(&classlist[NMG_CLASS_AonBshared], TBL_INS, &eu->e_p->magic);
+				NMG_INDEX_SET(classlist[NMG_CLASS_AonBshared],
+					eu->e_p );
 				return(ON_SURF);
 			}
 
@@ -649,11 +652,11 @@ struct nmg_ptbl classlist[4];
 
 		status = pt_inout_s(pt, s, 0.005);
 	
-		if (status == OUTSIDE)
-			(void)nmg_tbl(&classlist[NMG_CLASS_AoutB], TBL_INS, &eu->e_p->magic);
-		else if (status == INSIDE)
-			(void)nmg_tbl(&classlist[NMG_CLASS_AinB], TBL_INS, &eu->e_p->magic);
-		else {
+		if (status == OUTSIDE)  {
+			NMG_INDEX_SET(classlist[NMG_CLASS_AoutB], eu->e_p);
+		}  else if (status == INSIDE)  {
+			NMG_INDEX_SET(classlist[NMG_CLASS_AinB], eu->e_p);
+		}  else  {
 			EUPRINT("Why wasn't this edge in or out?", eu);
 			rt_bomb("class_eu_vs_s");
 		}
@@ -663,18 +666,20 @@ struct nmg_ptbl classlist[4];
 
 	
 	if (euv_cl == OUTSIDE || matev_cl == OUTSIDE) {
-	    	(void)nmg_tbl(&classlist[NMG_CLASS_AoutB], TBL_INS, &eu->e_p->magic);
+		NMG_INDEX_SET(classlist[NMG_CLASS_AoutB], eu->e_p);
 		return(OUTSIDE);
 	}
-    	(void)nmg_tbl(&classlist[NMG_CLASS_AinB], TBL_INS, &eu->e_p->magic);
+	NMG_INDEX_SET(classlist[NMG_CLASS_AinB], eu->e_p);
 	return(INSIDE);
 }
 
-
+/*
+ *			C L A S S _ L U _ V S _ S
+ */
 static int class_lu_vs_s(lu, s, classlist)
-struct loopuse *lu;
-struct shell *s;
-struct nmg_ptbl classlist[4];
+struct loopuse	*lu;
+struct shell	*s;
+long		*classlist[4];
 {
 	int class;
 	unsigned in, out, on;
@@ -687,13 +692,13 @@ struct nmg_ptbl classlist[4];
 	NMG_CK_SHELL(s);
 
 	/* check to see if loop is already in one of the lists */
-	if (nmg_tbl(&classlist[NMG_CLASS_AinB], TBL_LOC, &lu->l_p->magic) >= 0)
+	if( NMG_INDEX_TEST(classlist[NMG_CLASS_AinB], lu->l_p) )
 		return(INSIDE);
 
-	if (nmg_tbl(&classlist[NMG_CLASS_AonBshared], TBL_LOC, &lu->l_p->magic) >= 0)
+	if( NMG_INDEX_TEST(classlist[NMG_CLASS_AonBshared], lu->l_p) )
 		return(ON_SURF);
 
-	if (nmg_tbl(&classlist[NMG_CLASS_AinB], TBL_LOC, &lu->l_p->magic) >= 0)
+	if( NMG_INDEX_TEST(classlist[NMG_CLASS_AinB], lu->l_p) )
 		return(OUTSIDE);
 
 	magic1 = RT_LIST_FIRST_MAGIC( &lu->down_hd );
@@ -702,13 +707,17 @@ struct nmg_ptbl classlist[4];
 		NMG_CK_VERTEXUSE(vu);
 		class = class_vu_vs_s(vu, s, classlist);
 		switch (class) {
-		case INSIDE	: (void)nmg_tbl(&classlist[NMG_CLASS_AinB], TBL_INS, &lu->l_p->magic);
-				  break;
-		case OUTSIDE	: (void)nmg_tbl(&classlist[NMG_CLASS_AoutB], TBL_INS, &lu->l_p->magic);
-				  break;
-		case ON_SURF	: (void)nmg_tbl(&classlist[NMG_CLASS_AonBshared], TBL_INS, &lu->l_p->magic);
-				  break;
-		default		: rt_bomb("class_lu_vs_s: bad vertexloop classification\n");
+		case INSIDE:
+			NMG_INDEX_SET(classlist[NMG_CLASS_AinB], lu->l_p);
+			break;
+		case OUTSIDE:
+			NMG_INDEX_SET(classlist[NMG_CLASS_AoutB], lu->l_p);
+			 break;
+		case ON_SURF:
+			NMG_INDEX_SET(classlist[NMG_CLASS_AonBshared], lu->l_p);
+			break;
+		default:
+			rt_bomb("class_lu_vs_s: bad vertexloop classification\n");
 		}
 		return(class);
 	} else if (magic1 != NMG_EDGEUSE_MAGIC) {
@@ -749,17 +758,17 @@ struct nmg_ptbl classlist[4];
 		rt_bomb("class_lu_vs_s: loop crosses face?\n");
 	}
 	if (out > 0) {
-		(void)nmg_tbl(&classlist[NMG_CLASS_AoutB], TBL_INS, &lu->l_p->magic);
+		NMG_INDEX_SET(classlist[NMG_CLASS_AoutB], lu->l_p);
 		return(OUTSIDE);
 	} else if (in > 0) {
-		(void)nmg_tbl(&classlist[NMG_CLASS_AinB], TBL_INS, &lu->l_p->magic);
+		NMG_INDEX_SET(classlist[NMG_CLASS_AinB], lu->l_p);
 		return(INSIDE);
 	} else if (on == 0)
 		rt_bomb("class_lu_vs_s: alright, who's the wiseguy that stole my edgeuses?\n");
 
 
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY)
-		rt_log("\tAll edgeuses of loop are on");
+		rt_log("\tAll edgeuses of loop are ON");
 
 	/* since all of the edgeuses of this loop are "on" the other shell,
 	 * we need to see if this loop is "on" the other shell
@@ -779,7 +788,7 @@ struct nmg_ptbl classlist[4];
 	 */
 
 	if (*lu->up.magic_p == NMG_SHELL_MAGIC) {
-		(void)nmg_tbl(&classlist[NMG_CLASS_AonBshared], TBL_INS, &lu->l_p->magic);
+		NMG_INDEX_SET(classlist[NMG_CLASS_AonBshared], lu->l_p);
 		return(ON_SURF);
 	}
 
@@ -828,13 +837,13 @@ struct nmg_ptbl classlist[4];
 				NMG_CK_FACE_G(q_lu->up.fu_p->f_p->fg_p);
 				if (VDOT(q_lu->up.fu_p->f_p->fg_p->N,
 				    lu->up.fu_p->f_p->fg_p->N) >= 0) {
-					(void)nmg_tbl(&classlist[NMG_CLASS_AonBshared],
-						TBL_INS, &lu->l_p->magic);
+				    	NMG_INDEX_SET(classlist[NMG_CLASS_AonBshared],
+				    		lu->l_p );
 					if (rt_g.NMG_debug & DEBUG_CLASSIFY)
 						rt_log("Loop is on-shared\n");
 				} else {
-					(void)nmg_tbl(&classlist[NMG_CLASS_AonBanti],
-						TBL_INS, &lu->l_p->magic);
+					NMG_INDEX_SET(classlist[NMG_CLASS_AonBanti],
+						lu->l_p );
 					if (rt_g.NMG_debug & DEBUG_CLASSIFY)
 						rt_log("Loop is on-antishared\n");
 				}
@@ -866,12 +875,14 @@ struct nmg_ptbl classlist[4];
 			    p->up.lu_p->up.fu_p->s_p == s) {
 
 			    	if (p->up.lu_p->up.fu_p->orientation == OT_OPPOSITE) {
-					(void)nmg_tbl(&classlist[NMG_CLASS_AinB], TBL_INS, &lu->l_p->magic);
+			    		NMG_INDEX_SET(classlist[NMG_CLASS_AinB],
+			    			lu->l_p );
 					if (rt_g.NMG_debug & DEBUG_CLASSIFY)
 						rt_log("Loop is INSIDE\n");
 					return(INSIDE);
 			    	} else if (p->up.lu_p->up.fu_p->orientation == OT_SAME) {
-					(void)nmg_tbl(&classlist[NMG_CLASS_AoutB], TBL_INS, &lu->l_p->magic);
+			    		NMG_INDEX_SET(classlist[NMG_CLASS_AoutB],
+			    			lu->l_p );
 					if (rt_g.NMG_debug & DEBUG_CLASSIFY)
 						rt_log("Loop is OUTSIDE\n");
 					return(OUTSIDE);
@@ -891,7 +902,7 @@ struct nmg_ptbl classlist[4];
 	 * and we already know that the edges are all "on" that must mean that
 	 * the loopuse is "on" a wireframe portion of the shell.
 	 */
-	(void)nmg_tbl(&classlist[NMG_CLASS_AoutB], TBL_INS, &lu->l_p->magic);
+	NMG_INDEX_SET( classlist[NMG_CLASS_AoutB], lu->l_p );
 	return(OUTSIDE);
 }
 
@@ -899,9 +910,9 @@ struct nmg_ptbl classlist[4];
  *			C L A S S _ F U _ V S _ S
  */
 static void class_fu_vs_s(fu, s, classlist)
-struct faceuse *fu;
-struct shell *s;
-struct nmg_ptbl classlist[4];
+struct faceuse	*fu;
+struct shell	*s;
+long		*classlist[4];
 {
 	struct loopuse *lu;
 	
@@ -922,14 +933,13 @@ struct nmg_ptbl classlist[4];
  *	Classify one shell WRT the other shell
  */
 void nmg_class_shells(sA, sB, classlist)
-struct shell *sA, *sB;
-struct nmg_ptbl classlist[4];
+struct shell	*sA;
+struct shell	*sB;
+long		*classlist[4];
 {
 	struct faceuse *fu;
 	struct loopuse *lu;
 	struct edgeuse *eu;
-
-
 
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY &&
 	    RT_LIST_NON_EMPTY(&sA->fu_hd))

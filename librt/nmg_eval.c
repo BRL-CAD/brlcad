@@ -312,7 +312,7 @@ struct nmg_bool_state  {
 	struct shell	*bs_dest;
 	struct shell	*bs_src;
 	int		bs_isA;		/* true if A, else doing B */
-	struct nmg_ptbl	*bs_classtab;
+	long		**bs_classtab;
 	int		*bs_actions;
 };
 
@@ -330,11 +330,11 @@ struct nmg_bool_state  {
  *
  */
 void
-nmg_evaluate_boolean( sA, sB, op, class_table )
+nmg_evaluate_boolean( sA, sB, op, classlist )
 struct shell	*sA;
 struct shell	*sB;
 int		op;
-struct nmg_ptbl class_table[];
+long		*classlist[8];
 {
 	struct loopuse	*lu;
 	struct faceuse	*fu;
@@ -345,11 +345,6 @@ struct nmg_ptbl class_table[];
 	if (rt_g.NMG_debug & DEBUG_BOOLEVAL) {
 		rt_log("nmg_evaluate_boolean(sA=x%x, sB=x%x, op=%d)\n",
 			sA, sB, op );
-		for( i=0; i<8; i++ )  {
-			rt_log("	%6d %s\n",
-				class_table[i].end,
-				nmg_class_names[i] );
-		}
 	}
 
 	switch( op )  {
@@ -368,13 +363,9 @@ struct nmg_ptbl class_table[];
 		rt_bomb("bad boolean\n");
 	}
 
-	/* Reindex structures before starting evaluation. */
-	/* XXX this should be done before starting classification! */
-	nmg_m_reindex( sA->r_p->m_p );
-
 	bool_state.bs_dest = sA;
 	bool_state.bs_src = sB;
-	bool_state.bs_classtab = class_table;
+	bool_state.bs_classtab = classlist;
 	bool_state.bs_actions = actions;
 
 	bool_state.bs_isA = 1;
@@ -687,24 +678,26 @@ register struct nmg_bool_state	*bs;
 {
 	register int	ret;
 	register int	class;
+	int		index;
 
+	index = nmg_index_of_struct(ptr);
 	if( bs->bs_isA )  {
-		if( nmg_tbl( &bs->bs_classtab[NMG_CLASS_AinB], TBL_LOC, ptr ) >= 0 )  {
+		if( NMG_INDEX_VALUE(bs->bs_classtab[NMG_CLASS_AinB], index) )  {
 			class = NMG_CLASS_AinB;
 			ret = bs->bs_actions[NMG_CLASS_AinB];
 			goto out;
 		}
-		if( nmg_tbl( &bs->bs_classtab[NMG_CLASS_AonBshared], TBL_LOC, ptr ) >= 0 )  {
+		if( NMG_INDEX_VALUE(bs->bs_classtab[NMG_CLASS_AonBshared], index) )  {
 			class = NMG_CLASS_AonBshared;
 			ret = bs->bs_actions[NMG_CLASS_AonBshared];
 			goto out;
 		}
-		if( nmg_tbl( &bs->bs_classtab[NMG_CLASS_AonBanti], TBL_LOC, ptr ) >= 0 )  {
+		if( NMG_INDEX_VALUE(bs->bs_classtab[NMG_CLASS_AonBanti], index) )  {
 			class = NMG_CLASS_AonBanti;
 			ret = bs->bs_actions[NMG_CLASS_AonBanti];
 			goto out;
 		}
-		if( nmg_tbl( &bs->bs_classtab[NMG_CLASS_AoutB], TBL_LOC, ptr ) >= 0 )  {
+		if( NMG_INDEX_VALUE(bs->bs_classtab[NMG_CLASS_AoutB], index) )  {
 			class = NMG_CLASS_AoutB;
 			ret = bs->bs_actions[NMG_CLASS_AoutB];
 			goto out;
@@ -717,22 +710,22 @@ register struct nmg_bool_state	*bs;
 	}
 
 	/* is B */
-	if( nmg_tbl( &bs->bs_classtab[NMG_CLASS_BinA], TBL_LOC, ptr ) >= 0 )  {
+	if( NMG_INDEX_VALUE(bs->bs_classtab[NMG_CLASS_BinA], index) )  {
 		class = NMG_CLASS_BinA;
 		ret = bs->bs_actions[NMG_CLASS_BinA];
 		goto out;
 	}
-	if( nmg_tbl( &bs->bs_classtab[NMG_CLASS_BonAshared], TBL_LOC, ptr ) >= 0 )  {
+	if( NMG_INDEX_VALUE(bs->bs_classtab[NMG_CLASS_BonAshared], index) )  {
 		class = NMG_CLASS_BonAshared;
 		ret = bs->bs_actions[NMG_CLASS_BonAshared];
 		goto out;
 	}
-	if( nmg_tbl( &bs->bs_classtab[NMG_CLASS_BonAanti], TBL_LOC, ptr ) >= 0 )  {
+	if( NMG_INDEX_VALUE(bs->bs_classtab[NMG_CLASS_BonAanti], index) )  {
 		class = NMG_CLASS_BonAanti;
 		ret = bs->bs_actions[NMG_CLASS_BonAanti];
 		goto out;
 	}
-	if( nmg_tbl( &bs->bs_classtab[NMG_CLASS_BoutA], TBL_LOC, ptr ) >= 0 )  {
+	if( NMG_INDEX_VALUE(bs->bs_classtab[NMG_CLASS_BoutA], index) )  {
 		class = NMG_CLASS_BoutA;
 		ret = bs->bs_actions[NMG_CLASS_BoutA];
 		goto out;
@@ -743,8 +736,9 @@ register struct nmg_bool_state	*bs;
 	ret = BACTION_RETAIN;
 out:
 	if (rt_g.NMG_debug & DEBUG_BOOLEVAL) {
-		rt_log("nmg_eval_action(ptr=x%x) %s %s %s %s\n",
-			ptr, bs->bs_isA ? "A" : "B",
+		rt_log("nmg_eval_action(ptr=x%x) index=%d %s %s %s %s\n",
+			ptr, index,
+			bs->bs_isA ? "A" : "B",
 			rt_identify_magic( *((long *)ptr) ),
 			nmg_class_names[class],
 			nmg_baction_names[ret] );
@@ -754,6 +748,7 @@ out:
 
 /****/
 
+int
 nmg_find_vertex_in_edgelist( v, hd )
 register struct vertex	*v;
 struct rt_list		*hd;
@@ -770,6 +765,7 @@ struct rt_list		*hd;
 	return(0);
 }
 
+int
 nmg_find_vertex_in_looplist( v, hd, singletons )
 register struct vertex	*v;
 struct rt_list		*hd;
