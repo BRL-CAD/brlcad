@@ -35,6 +35,12 @@
 #define	MUVES_COMPONENT		1
 #define	MUVES_SYSTEM		2
 
+struct region_array
+{
+	struct directory *dp;
+	int region_id;
+};
+
 struct cad_comp_list
 {
 	struct bu_list l;
@@ -135,13 +141,19 @@ char    *argv[];
 	char line[MUVES_LINE_LEN];
 	struct muves_comp *new_comp;
 	struct muves_sys *new_sys;
+	struct directory *dp;
+	struct region_array *regions;
+	struct rt_comb_internal *comb;
+	struct rt_db_internal intern;
 	int found_comp;
 	int line_no=0;
+	int i;
+	long reg_count=0;
 
 	if(dbip == DBI_NULL)
 		return TCL_OK;
 
-	if( argc < 1 || argc > 3 )
+	if( argc < 2 || argc > 3 )
 	{
 		struct bu_vls vls;
 
@@ -163,6 +175,45 @@ char    *argv[];
 
 	if( BU_LIST_NON_EMPTY( &muves_comp_head.l ) )
 		Free_muves_comp( &muves_comp_head.l );
+
+	/* count the number of regions in the model */
+	for( i = 0; i < RT_DBNHASH; i++ )
+	{
+		for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw )
+		{
+			if( !(dp->d_flags & DIR_REGION) )
+				continue;
+			reg_count++;
+		}
+	}
+
+	/* allocate an array to contain info for every region */
+	regions = (struct region_array *)bu_calloc( reg_count, sizeof( struct region_array ), "regions" );
+
+	/* fill in the regions array */
+	reg_count =  0;
+	for( i = 0; i < RT_DBNHASH; i++ )
+	{
+		for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw )
+		{
+			if( !(dp->d_flags & DIR_REGION) )
+				continue;
+
+			if( rt_db_get_internal( &intern, dp, dbip, (mat_t *)NULL ) < 0 )
+			{
+				(void)signal( SIGINT, SIG_IGN );
+				TCL_READ_ERR_return;
+			}
+			comb = (struct rt_comb_internal *)intern.idb_ptr;
+
+			regions[reg_count].dp = dp;
+			regions[reg_count].region_id = comb->region_id;
+
+			rt_db_free_internal( &intern );
+			reg_count++;
+		}
+	}
+
 
 	/* read lines of region map file */
 	found_comp = 0;
@@ -243,8 +294,6 @@ char    *argv[];
 		{
 			char *ptr2;
 			int id1, id2;
-			int i;
-			struct directory *dp;
 
 			if( *ptr == '#' )
 				break;
@@ -265,37 +314,24 @@ char    *argv[];
 			}
 
 			/* search through all regions for these idents */
-			for( i = 0; i < RT_DBNHASH; i++ )
+			for( i = 0; i < reg_count; i++ )
 			{
-				struct rt_comb_internal *comb;
-				struct rt_db_internal intern;
 				struct cad_comp_list *comp;
 
-				for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw )
-				{
-					if( !(dp->d_flags & DIR_REGION) )
-						continue;
+				if( regions[i].region_id < id1 || regions[i].region_id > id2 )
+					continue;
 
-					if( rt_db_get_internal( &intern, dp, dbip, (mat_t *)NULL ) < 0 )
-					{
-						(void)signal( SIGINT, SIG_IGN );
-						TCL_READ_ERR_return;
-					}
-					comb = (struct rt_comb_internal *)intern.idb_ptr;
-					if( comb->region_id < id1 || comb->region_id > id2 )
-						continue;
-
-					/* this region is part of the current MUVES component */
-					comp = (struct cad_comp_list *)bu_malloc( sizeof( struct cad_comp_list ), "comp" );
-					comp->dp = dp;
-					BU_LIST_INSERT( &new_comp->comp_head.l, &comp->l );
-				}
+				/* this region is part of the current MUVES component */
+				comp = (struct cad_comp_list *)bu_malloc( sizeof( struct cad_comp_list ), "comp" );
+				comp->dp = regions[i].dp;
+				BU_LIST_INSERT( &new_comp->comp_head.l, &comp->l );
 			}
 
 			ptr = strtok( (char *)NULL, regionmap_delims );
 		}
 	}
 
+	bu_free( (char *)regions, "regions" );
 
 	if( new_comp )
 	{
