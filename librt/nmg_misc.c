@@ -2082,6 +2082,18 @@ CONST struct rt_tol	*tol;
 
 	for (i=0 ; i < vert_list->end ; i++) {
 		vu = (struct vertexuse *)vert_list->buffer[i];
+		if( vu->l.magic != NMG_VERTEXUSE_MAGIC )
+		{
+			/* vertexuse probably killed by nmg_repair_v_near_v() */
+			/* delete the entry from the vertex list */
+			for (j=i ; j < vert_list->end ; j++)
+				vert_list->buffer[j] = vert_list->buffer[j+1];
+
+			--(vert_list->end);
+			vert_list->buffer[vert_list->end] = (long *)NULL;
+			--i;
+			continue;
+		}
 		NMG_CK_VERTEXUSE(vu);
 		lu = nmg_find_lu_of_vu( vu );
 		NMG_CK_LOOPUSE(lu);
