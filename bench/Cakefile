@@ -4,7 +4,6 @@
 
 #define SRCDIR	bench
 #define	PRODUCTS	pixcmp
-#define STATIC_PRODUCTS	pretty.sh recheck.sh run.sh try.sh perf.sh
 #define	SRCSUFF	.c
 #define MANSECTION	9
 
