@@ -435,43 +435,6 @@ double				local2mm;
 }
 
 /*
- *			R T _ G E T _ C O M B
- *
- *  A convenience wrapper to retrive a combination from the database
- *  into internal form.
- *
- *  Returns -
- *	-1	FAIL
- *	 0	OK
- *
- *  This should be eliminated in favor of rt_db_get_internal().
- */
-int
-rt_get_comb( ip, dp, matp, dbip )
-struct rt_db_internal	*ip;
-CONST struct directory	*dp;
-CONST matp_t		matp;
-CONST struct db_i	*dbip;
-{
-	struct bu_external	ext;
-
-	RT_CK_DIR(dp);
-	RT_CHECK_DBI( dbip );
-
-	/* Load the entire combination into contiguous memory */
-	BU_INIT_EXTERNAL( &ext );
-	if( db_get_external( &ext, dp, dbip ) < 0 )
-		return -1;
-
-	/* Switch out to right routine, based on database version */
-	if( rt_comb_v4_import( ip, &ext, matp ) < 0 )
-		return -1;
-
-	db_free_external( &ext );
-	return 0;
-}
-
-/*
  *			D B _ T R E E _ D E S C R I B E
  */
 void
