@@ -327,8 +327,15 @@ char *argv[];
     return TCL_ERROR;
   }
 
-  if(!ndrawn || (state != ST_S_PICK && state != ST_O_PICK  && state != ST_O_PATH))
-    return TCL_ERROR;
+  if (!ndrawn){
+      Tcl_AppendResult(interp, "aip: no solids displayed\n", (char *)NULL);
+      return TCL_ERROR;
+    }
+    else if (state != ST_S_PICK && state != ST_O_PICK  && state != ST_O_PATH)
+    {
+      state_err("advance the illumination pointer");
+      return TCL_ERROR;
+  }
 
   if(state == ST_O_PATH){
     if(argc == 1 || *argv[1] == 'f'){
@@ -340,7 +347,7 @@ char *argv[];
       if(ipathpos < 0)
 	ipathpos = illump->s_last;
     }else{
-      Tcl_AppendResult(interp, "aill: bad parameter - ", argv[1], "\n", (char *)NULL);
+      Tcl_AppendResult(interp, "aip: bad parameter - ", argv[1], "\n", (char *)NULL);
       return TCL_ERROR;
     }
   }else{
@@ -357,7 +364,7 @@ char *argv[];
       else
 	sp = BU_LIST_PLAST(solid, sp);
     }else{
-      Tcl_AppendResult(interp, "aill: bad parameter - ", argv[1], "\n", (char *)NULL);
+      Tcl_AppendResult(interp, "aip: bad parameter - ", argv[1], "\n", (char *)NULL);
       return TCL_ERROR;
     }
 
