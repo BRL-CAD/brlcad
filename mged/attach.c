@@ -175,6 +175,9 @@ int need_close;
 
   if(!--p->s_info->_rc){
     if(rate_tran_vls[X].vls_magic == BU_VLS_MAGIC){
+#if TRY_NEW_MGED_VARS
+      mged_variable_free_vls(p);
+#endif
       mged_slider_unlink_vars(p);
       mged_slider_free_vls(p->s_info);
     }
@@ -206,7 +209,7 @@ int need_close;
   BU_LIST_DEQUEUE( &p->l );
 #if 0
   bu_vls_free(&pathName);
-  bu_vls_free(&dname);
+  bu_vls_free(&dName);
   bu_vls_free(&dmp->dm_initWinProc);
   bu_free( (genptr_t)p->_dmp, "release: curr_dm_list->_dmp" );
 #endif
@@ -258,7 +261,7 @@ reattach()
 
   av[0] = "attach";
   av[1] = "-d";
-  av[2] = bu_vls_addr(&dname);
+  av[2] = bu_vls_addr(&dName);
   av[3] = "-n";
   av[4] = dmp->dm_name;
   av[5] = NULL;
@@ -364,6 +367,9 @@ char    **argv;
     goto Bad;
 #endif
 
+#if TRY_NEW_MGED_VARS
+  mged_variable_setup(curr_dm_list);
+#endif
   mged_slider_link_vars(curr_dm_list);
   (void)f_load_dv((ClientData)NULL, interp, 0, NULL);
 
@@ -528,6 +534,9 @@ char    **argv;
   p->_owner = 1;
   p->_dmp->dm_vp = &p->s_info->_Viewscale;
   p->s_info->opp = &p->_dmp->dm_pathName;
+#if TRY_NEW_MGED_VARS
+  mged_variable_setup(p);
+#endif
   mged_slider_link_vars(p);
 
   save_cdlp = curr_dm_list;
@@ -598,6 +607,9 @@ char    **argv;
 
   /* free p1's s_info struct if not being used */
   if(!--p1->s_info->_rc){
+#if TRY_NEW_MGED_VARS
+    mged_variable_free_vls(p1);
+#endif
     mged_slider_unlink_vars(p1);
     mged_slider_free_vls(p1->s_info);
     bu_free( (genptr_t)p1->s_info, "tie: s_info" );
@@ -644,6 +656,10 @@ struct dm_list *op;
     if(op != p && p->s_info == op->s_info){
       p->_owner = 1;
       p->s_info->opp = &p->_dmp->dm_pathName;
+#if TRY_NEW_MGED_VARS
+      mged_variable_free_vls(p);
+      mged_variable_setup(p);
+#endif
       mged_slider_unlink_vars(p);
       mged_slider_free_vls(p->s_info);
       mged_slider_link_vars(p);
@@ -692,6 +708,10 @@ struct dm_list *initial_dm_list;
 mged_slider_init_vls(sip)
 struct shared_info *sip;
 {
+  bu_vls_init(&sip->aet_name);
+  bu_vls_init(&sip->ang_name);
+  bu_vls_init(&sip->center_name);
+  bu_vls_init(&sip->size_name);
   bu_vls_init(&sip->_scroll_edit_vls);
   bu_vls_init(&sip->_rate_tran_vls[X]);
   bu_vls_init(&sip->_rate_tran_vls[Y]);
@@ -717,6 +737,10 @@ struct shared_info *sip;
 mged_slider_free_vls(sip)
 struct shared_info *sip;
 {
+  bu_vls_free(&sip->aet_name);
+  bu_vls_free(&sip->ang_name);
+  bu_vls_free(&sip->center_name);
+  bu_vls_free(&sip->size_name);
   bu_vls_free(&sip->_scroll_edit_vls);
   bu_vls_free(&sip->_rate_tran_vls[X]);
   bu_vls_free(&sip->_rate_tran_vls[Y]);
@@ -744,46 +768,54 @@ struct dm_list *p;
 {
   mged_slider_init_vls(p->s_info);
 
+  bu_vls_printf(&p->s_info->aet_name, "mged_display(%S,aet)",
+		&p->_dmp->dm_tkName);
+  bu_vls_printf(&p->s_info->ang_name, "mged_display(%S,ang)",
+		&p->_dmp->dm_tkName);
+  bu_vls_printf(&p->s_info->center_name, "mged_display(%S,center)",
+		&p->_dmp->dm_tkName);
+  bu_vls_printf(&p->s_info->size_name, "mged_display(%S,size)",
+		&p->_dmp->dm_tkName);
   bu_vls_printf(&p->s_info->_scroll_edit_vls, "scroll_edit(%S)",
-		&p->_dmp->dm_pathName);
+		&p->_dmp->dm_tkName);
   bu_vls_printf(&p->s_info->_rate_tran_vls[X], "rate_tran(%S,X)",
-		&p->_dmp->dm_pathName);
+		&p->_dmp->dm_tkName);
   bu_vls_printf(&p->s_info->_rate_tran_vls[Y], "rate_tran(%S,Y)",
-		&p->_dmp->dm_pathName);
+		&p->_dmp->dm_tkName);
   bu_vls_printf(&p->s_info->_rate_tran_vls[Z], "rate_tran(%S,Z)",
-		&p->_dmp->dm_pathName);
+		&p->_dmp->dm_tkName);
   bu_vls_printf(&p->s_info->_rate_rotate_vls[X], "rate_rotate(%S,X)",
-		&p->_dmp->dm_pathName);
+		&p->_dmp->dm_tkName);
   bu_vls_printf(&p->s_info->_rate_rotate_vls[Y], "rate_rotate(%S,Y)",
-		&p->_dmp->dm_pathName);
+		&p->_dmp->dm_tkName);
   bu_vls_printf(&p->s_info->_rate_rotate_vls[Z], "rate_rotate(%S,Z)",
-		&p->_dmp->dm_pathName);
+		&p->_dmp->dm_tkName);
   bu_vls_printf(&p->s_info->_rate_scale_vls, "rate_scale(%S)",
-		&p->_dmp->dm_pathName);
+		&p->_dmp->dm_tkName);
   bu_vls_printf(&p->s_info->_absolute_tran_vls[X], "abs_tran(%S,X)",
-		&p->_dmp->dm_pathName);
+		&p->_dmp->dm_tkName);
   bu_vls_printf(&p->s_info->_absolute_tran_vls[Y], "abs_tran(%S,Y)",
-		&p->_dmp->dm_pathName);
+		&p->_dmp->dm_tkName);
   bu_vls_printf(&p->s_info->_absolute_tran_vls[Z], "abs_tran(%S,Z)",
-		&p->_dmp->dm_pathName);
+		&p->_dmp->dm_tkName);
   bu_vls_printf(&p->s_info->_absolute_rotate_vls[X], "abs_rotate(%S,X)",
-		&p->_dmp->dm_pathName);
+		&p->_dmp->dm_tkName);
   bu_vls_printf(&p->s_info->_absolute_rotate_vls[Y], "abs_rotate(%S,Y)",
-		&p->_dmp->dm_pathName);
+		&p->_dmp->dm_tkName);
   bu_vls_printf(&p->s_info->_absolute_rotate_vls[Z], "abs_rotate(%S,Z)",
-		&p->_dmp->dm_pathName);
+		&p->_dmp->dm_tkName);
   bu_vls_printf(&p->s_info->_absolute_scale_vls, "abs_scale(%S)",
-		&p->_dmp->dm_pathName);
+		&p->_dmp->dm_tkName);
   bu_vls_printf(&p->s_info->_xadc_vls, "xadc(%S)",
-		&p->_dmp->dm_pathName);
+		&p->_dmp->dm_tkName);
   bu_vls_printf(&p->s_info->_yadc_vls, "yadc(%S)",
-		&p->_dmp->dm_pathName);
+		&p->_dmp->dm_tkName);
   bu_vls_printf(&p->s_info->_ang1_vls, "ang1(%S)",
-		&p->_dmp->dm_pathName);
+		&p->_dmp->dm_tkName);
   bu_vls_printf(&p->s_info->_ang2_vls, "ang2(%S)",
-		&p->_dmp->dm_pathName);
+		&p->_dmp->dm_tkName);
   bu_vls_printf(&p->s_info->_distadc_vls, "distadc(%S)",
-		&p->_dmp->dm_pathName);
+		&p->_dmp->dm_tkName);
 
   Tcl_LinkVar(interp, bu_vls_addr(&p->s_info->_scroll_edit_vls),
 	      (char *)&p->s_info->_scroll_edit, TCL_LINK_INT);
