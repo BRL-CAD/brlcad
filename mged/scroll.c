@@ -144,7 +144,9 @@ char **argv;
 	scroll_array[0] = SCROLL_NULL;	
 	scroll_array[1] = SCROLL_NULL;	
     }
-    dmaflag++;
+
+    if(!ignore_scroll_and_menu)
+      dmaflag++;
 
     return TCL_OK;
 }
