@@ -638,13 +638,8 @@ double perspective;
 		else
 			MAT4X3PNT( lpnt, xmat, *pt );
 
-#ifdef USE_RT_ASPECT
 		lpnt[0] *= 2047;
 		lpnt[1] *= 2047 * dmp->dm_aspect;
-#else
-		lpnt[0] *= 2047 * dmp->dm_aspect;
-		lpnt[1] *= 2047;
-#endif
 		lpnt[2] *= 2047;
 		continue;
 	    case RT_VLIST_POLY_DRAW:
@@ -713,13 +708,8 @@ double perspective;
 		else
 			MAT4X3PNT( pnt, xmat, *pt );
 
-#ifdef USE_RT_ASPECT
 		pnt[0] *= 2047;
 		pnt[1] *= 2047 * dmp->dm_aspect;
-#else
-		pnt[0] *= 2047 * dmp->dm_aspect;
-		pnt[1] *= 2047;
-#endif
 		pnt[2] *= 2047;
 
 		/* save pnt --- it might get changed by clip() */
@@ -847,13 +837,8 @@ int use_aspect;
       bu_log("\tuse_aspect - 0");
   }
 
-#ifdef USE_RT_ASPECT
   sx = dm_Normal2Xx(dmp, x);
   sy = dm_Normal2Xy(dmp, y, use_aspect);
-#else
-  sx = dm_Normal2Xx(dmp, x, use_aspect);
-  sy = dm_Normal2Xy(dmp, y);
-#endif
 
   XDrawString( ((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 	       ((struct x_vars *)dmp->dm_vars.priv_vars)->pix,
@@ -874,10 +859,10 @@ fastf_t x2, y2;
   if (((struct x_vars *)dmp->dm_vars.priv_vars)->mvars.debug)
     bu_log("X_drawLine2D()\n");
 
-  sx1 = dm_Normal2Xx(dmp, x1, 0);
-  sx2 = dm_Normal2Xx(dmp, x2, 0);
-  sy1 = dm_Normal2Xy(dmp, y1);
-  sy2 = dm_Normal2Xy(dmp, y2);
+  sx1 = dm_Normal2Xx(dmp, x1);
+  sx2 = dm_Normal2Xx(dmp, x2);
+  sy1 = dm_Normal2Xy(dmp, y1, 0);
+  sy2 = dm_Normal2Xy(dmp, y2, 0);
 
   XDrawLine( ((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 	     ((struct x_vars *)dmp->dm_vars.priv_vars)->pix,
@@ -897,8 +882,8 @@ fastf_t x, y;
   if (((struct x_vars *)dmp->dm_vars.priv_vars)->mvars.debug)
     bu_log("X_drawPoint2D()\n");
 
-  sx = dm_Normal2Xx(dmp, x, 0);
-  sy = dm_Normal2Xy(dmp, y);
+  sx = dm_Normal2Xx(dmp, x);
+  sy = dm_Normal2Xy(dmp, y, 0);
 
   XDrawPoint( ((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 	      ((struct x_vars *)dmp->dm_vars.priv_vars)->pix,
@@ -1014,13 +999,7 @@ struct dm *dmp;
 			((struct dm_xvars *)dmp->dm_vars.pub_vars)->win, &xwa );
   dmp->dm_height = xwa.height;
   dmp->dm_width = xwa.width;
-#ifdef USE_RT_ASPECT
   dmp->dm_aspect = (fastf_t)dmp->dm_width / (fastf_t)dmp->dm_height;
-#else
-  dmp->dm_aspect =
-    (fastf_t)dmp->dm_height /
-    (fastf_t)dmp->dm_width;
-#endif
 
   Tk_FreePixmap(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 		((struct x_vars *)dmp->dm_vars.priv_vars)->pix);
