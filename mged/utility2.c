@@ -1559,6 +1559,7 @@ char *argv[];
 	char *new_name;
 	char *nmg_name;
 	int success = 0;
+	int shell_count=0;
 
 	CHECK_READ_ONLY;
 
@@ -1621,7 +1622,14 @@ char *argv[];
 	m = (struct model *)nmg_intern.idb_ptr;
 	NMG_CK_MODEL( m );
 
-	if( do_arb || do_all )
+	/* count shells */
+	for( BU_LIST_FOR( r, nmgregion, &m->r_hd ) )
+	{
+		for( BU_LIST_FOR( s, shell, &r->s_hd ) )
+			shell_count++;
+	}
+
+	if( (do_arb || do_all) && shell_count == 1 )
 	{
 		struct rt_arb_internal arb_int;
 
@@ -1633,14 +1641,34 @@ char *argv[];
 		}
 		else if( do_arb )
 		{
-		  rt_db_free_internal( &nmg_intern );
-		  Tcl_AppendResult(interp, "Failed to construct an ARB equivalent to ",
-				   nmg_name, "\n", (char *)NULL);
-		  return TCL_OK;
+			/* see if we can get an arb by simplifying the NMG */
+
+			r = BU_LIST_FIRST( nmgregion, &m->r_hd );
+			s = BU_LIST_FIRST( shell, &r->s_hd );
+			nmg_shell_coplanar_face_merge( s, &mged_tol, 1 );
+			if( !nmg_kill_cracks( s ) )
+			{
+				(void) nmg_model_edge_fuse( m, &mged_tol );
+				(void) nmg_model_edge_g_fuse( m, &mged_tol );
+				(void) nmg_unbreak_region_edges( &r->l.magic );
+				if( nmg_to_arb( m, &arb_int ) )
+				{
+					new_intern.idb_ptr = (genptr_t)(&arb_int);
+					new_intern.idb_type = ID_ARB8;
+					success = 1;
+				}
+			}
+			if( !success )
+			{
+				rt_db_free_internal( &nmg_intern );
+				Tcl_AppendResult(interp, "Failed to construct an ARB equivalent to ",
+						 nmg_name, "\n", (char *)NULL);
+				return TCL_OK;
+			}
 		}
 	}
 
-	if( (do_tgc || do_all) && !success )
+	if( (do_tgc || do_all) && !success && shell_count == 1 )
 	{
 		struct rt_tgc_internal tgc_int;
 
@@ -1658,6 +1686,36 @@ char *argv[];
 		  return TCL_OK;
 		}
 	}
+
+	/* see if we can get an arb by simplifying the NMG */
+	if( (do_arb || do_all) && !success && shell_count == 1 )
+	{
+		struct rt_arb_internal arb_int;
+
+		r = BU_LIST_FIRST( nmgregion, &m->r_hd );
+		s = BU_LIST_FIRST( shell, &r->s_hd );
+		nmg_shell_coplanar_face_merge( s, &mged_tol, 1 );
+		if( !nmg_kill_cracks( s ) )
+		{
+			(void) nmg_model_edge_fuse( m, &mged_tol );
+			(void) nmg_model_edge_g_fuse( m, &mged_tol );
+			(void) nmg_unbreak_region_edges( &r->l.magic );
+			if( nmg_to_arb( m, &arb_int ) )
+			{
+				new_intern.idb_ptr = (genptr_t)(&arb_int);
+				new_intern.idb_type = ID_ARB8;
+				success = 1;
+			}
+			else if( do_arb )
+			{
+			  rt_db_free_internal( &nmg_intern );
+			  Tcl_AppendResult(interp, "Failed to construct an ARB equivalent to ",
+					   nmg_name, "\n", (char *)NULL);
+			  return TCL_OK;
+			}
+		}
+	}
+
 	if( (do_poly || do_all) && !success )
 	{
 		struct rt_pg_internal *poly_int;
