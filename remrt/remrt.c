@@ -1493,10 +1493,12 @@ char *buf;
 		fprintf(stderr,"struct_import error, %d, %d\n", i, info.li_len);
 		goto out;
 	}
-printf("%s:fr=%d, %d..%d, ry=%d, cpu=%g, el=%g\n",
-sp->sr_host->ht_name,
-info.li_frame, info.li_startpix, info.li_endpix,
-info.li_nrays, info.li_cpusec, sp->sr_l_elapsed );
+#if 0
+	printf("%s:fr=%d, %d..%d, ry=%d, cpu=%g, el=%g\n",
+		sp->sr_host->ht_name,
+		info.li_frame, info.li_startpix, info.li_endpix,
+	info.li_nrays, info.li_cpusec, sp->sr_l_elapsed );
+#endif
 
 	/* XXX this is bogus -- assignments may have moved on to subsequent
 	 * frames.  Need to search frame list */
@@ -1951,7 +1953,7 @@ FILE	*fp;
 			sprintf(cmd,
 				"cd %s; rtsrv %s %d",
 				rem_dir, ourname, port );
-printf("%s\n", cmd); fflush(stdout);
+			printf("%s\n", cmd); fflush(stdout);
 
 			pid = fork();
 			if( pid == 0 )  {
