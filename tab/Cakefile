@@ -1,0 +1,26 @@
+/*
+ *			tab/Cakefile
+ */
+
+#define SRCDIR	tab
+#define PRODUCTS	tabinterp txyz-pl tabsub
+#define	SRCSUFF	.c
+#define MANSECTION	1
+
+#include "../Cakefile.defs"
+#include "../Cakefile.prog"
+
+#define FILES	tabinterp txyz-pl tabsub
+
+/* Explicit composition of each product */
+
+tabinterp: tabinterp.o LIBRT
+	CC LDFLAGS tabinterp.o LIB_PRE''LIBRT LIBRT_LIBES LIBMALLOC LIBES -o tabinterp
+
+tabsub:	tabsub.o LIBRT
+	CC LDFLAGS tabsub.o LIB_PRE''LIBRT LIBRT_LIBES LIBMALLOC LIBES -o tabsub
+
+txyz-pl:	txyz-pl.o LIBPLOT
+	CC LDFLAGS txyz-pl.o LIB_PRE''LIBPLOT LIBMALLOC LIBES -o txyz-pl
+
+#include "../Cakefile.rules"
