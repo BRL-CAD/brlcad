@@ -85,6 +85,8 @@ char		*beginptr;		/* sbrk() at start of program */
 /***** end variables shared with do.c *****/
 
 /* Variables shared within mainline pieces */
+extern fastf_t	rt_dist_tol;		/* Value for rti_tol.dist */
+extern fastf_t	rt_perp_tol;		/* Value for rti_tol.perp */
 int		rdebug;			/* RT program debugging (not library) */
 
 static char idbuf[132];			/* First ID record info */
@@ -498,6 +500,17 @@ char *buf;
 
 	if( debug )  fprintf(stderr, "ph_gettrees: %s\n", buf );
 
+	/* Copy values from command line options into rtip */
+	rtip->useair = use_air;
+	if( rt_dist_tol > 0 )  {
+		rtip->rti_tol.dist = rt_dist_tol;
+		rtip->rti_tol.dist_sq = rt_dist_tol * rt_dist_tol;
+	}
+	if( rt_perp_tol > 0 )  {
+		rtip->rti_tol.perp = rt_perp_tol;
+		rtip->rti_tol.para = 1 - rt_perp_tol;
+	}
+
 	if( (argc = rt_split_cmd( argv, MAXARGS, buf )) <= 0 )  {
 		/* No words in input */
 		(void)free(buf);
@@ -618,6 +631,8 @@ char *buf;
 	cell_width = cell_height = 0;
 	lightmodel = 0;
 	incr_mode = 0;
+	rt_dist_tol = 0;
+	rt_perp_tol = 0;
 
 	process_cmd( buf );
 	free(buf);
