@@ -198,7 +198,7 @@ const struct bu_structparse *imp;
 					s = *((int *)loc);
 					cp[1] = s;
 					cp[0] = s >> 8;
-					loc += sizeof(int);
+					loc += sizeof(int); /* XXX */
 					cp += 2;
 				}
 			}
@@ -331,7 +331,7 @@ const struct bu_external	*ext;
 						(cp[2] <<  8) |
 						 cp[3];
 					*(int *)loc = l;
-					loc += sizeof(int);
+					loc += sizeof(int); /* XXX */
 					cp += 4;
 				}
 				bytes_used += ip->sp_count * 4;
@@ -342,7 +342,7 @@ const struct bu_external	*ext;
 			for( i = ip->sp_count-1; i >= 0; i-- )  {
 				*(int *)loc =	(cp[0] <<  8) |
 						 cp[1];
-				loc += sizeof(int);
+				loc += sizeof(int); /* XXX */
 				cp += 2;
 			}
 			bytes_used += ip->sp_count * 2;
@@ -988,8 +988,8 @@ int sep_char;                    /* value separator */
 	register int i = sdp->sp_count;
 	register short *sp = (short *)loc;
 
-	bu_vls_printf( vp, "%hd", *sp++ );
-	while( --i > 0 ) bu_vls_printf( vp, "%c%hd", sep_char, *sp++ ); }
+	bu_vls_printf( vp, "%d", *sp++ );
+	while( --i > 0 ) bu_vls_printf( vp, "%c%d", sep_char, *sp++ ); }
 	break;
     case 'd': {
 	register int i = sdp->sp_count;
@@ -1123,7 +1123,7 @@ const char			*base;	  /* base address of users structure */
 			{	register int i = sdp->sp_count;
 				register short *sp = (short *)loc;
 
-				bu_log( " %s=%hd", sdp->sp_name, *sp++ );
+				bu_log( " %s=%d", sdp->sp_name, *sp++ );
 
 				while (--i > 0) bu_log( ",%d", *sp++ );
 
@@ -1474,7 +1474,7 @@ bu_vls_struct_print2(struct bu_vls			*vls_out,
 			{	register int i = sdp->sp_count;
 				register short *sp = (short *)loc;
 
-				bu_vls_printf(vls_out, " %s=%hd", sdp->sp_name, *sp++ );
+				bu_vls_printf(vls_out, " %s=%d", sdp->sp_name, *sp++ );
 
 				while (--i > 0)
 					bu_vls_printf(vls_out, ",%d", *sp++ );
