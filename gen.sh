@@ -359,6 +359,18 @@ all)
 		then	continue;
 		fi
 		cd ${DIRPRE}${dir}${DIRSUF}
+		cake -k ${SILENT}
+		cd ..
+	done;;
+
+# Just like "all", but will use the "fast.sh" scripts when available.
+fast)
+	for dir in ${BDIRS}; do
+		echo -------------------------------- ${DIRPRE}${dir}${DIRSUF};
+		if test ! -d ${DIRPRE}${dir}${DIRSUF}
+		then	continue;
+		fi
+		cd ${DIRPRE}${dir}${DIRSUF}
 		if test -f ../${dir}/fast.sh
 		then
 			../${dir}/fast.sh ${SILENT}
