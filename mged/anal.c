@@ -615,7 +615,11 @@ spline_anal()
  *  Sys-V math-library error catcher.
  *  Some callers of acos trip over DOMAIN errors all the time, so...
  */
-matherr()
+#ifdef SYSV
+int
+matherr(x)
+struct exception *x;
 {
 	return(1);	/* be quiet */
 }
+#endif

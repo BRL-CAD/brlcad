@@ -35,7 +35,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./sedit.h"
 
 extern void	perror();
-extern int	printf(), read();
+extern int	read();
 extern long	lseek();
 
 int	adcflag;	/* angle/distance cursor in use */
