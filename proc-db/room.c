@@ -64,7 +64,7 @@ main(argc, argv)
 char	**argv;
 {
 	vect_t	norm;
-	char	rgb[3];
+	unsigned char	rgb[3];
 	int	ix, iy;
 	double	x, y;
 	double	size;
@@ -258,7 +258,7 @@ vect_t	lwh;
 struct wmember *headp;
 {
 	vect_t	min, max;
-	char	rgb[4];		/* needs all 4 */
+	unsigned char	rgb[4];		/* needs all 4 */
 	char	pilname[32], rname[32], sname[32], oname[32];
 	int	i;
 	struct wmember head;
@@ -313,7 +313,7 @@ struct wmember *headp;
 	mk_rpp( stdout, sname, cmin, cmax );
 	mk_comb( stdout, rname, 1, 1,
 		"stack", args,
-		(char *)0, 0 );
+		(unsigned char *)0, 0 );
 	mk_memb( stdout, sname, identity, UNION );
 
 	(void)mk_addmember( rname, headp, WMOP_UNION );

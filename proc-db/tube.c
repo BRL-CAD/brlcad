@@ -129,7 +129,7 @@ char	**argv;
 	(void)mk_addmember( "bg.s", &head, WMOP_UNION );	/* temp use of "head" */
 	mk_lcomb( stdout, "bg.r", &head, 1,
 		"texture", "file=movie128bw.pix w=128",
-		(char *)0, 0 );
+		(unsigned char *)0, 0 );
 
 #ifdef never
 	/* Numbers for a 105-mm M68 gun */
@@ -183,7 +183,7 @@ char	**argv;
 		sprintf( name, "tube%d", frame);
 		mk_lcomb( stdout, name, &head, 1,
 			"plastic", "",
-			(char *)0, 0 );
+			(unsigned char *)0, 0 );
 
 		/*  Place the tube region and the ammo together.
 		 *  The origin of the ammo is expected to be the center
@@ -211,7 +211,7 @@ char	**argv;
 
 		sprintf( gname, "g%d", frame);
 		mk_lcomb( stdout, gname, &ghead, 0,
-			(char *)0, "", (char *)0, 0 );
+			(char *)0, "", (unsigned char *)0, 0 );
 
 		fprintf( stderr, "%d, ", frame );  fflush(stderr);
 	}
