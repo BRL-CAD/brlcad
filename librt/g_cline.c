@@ -200,6 +200,14 @@ struct seg		*seghead;
 	if( NEAR_ZERO( tmp, RT_DOT_TOL ) )
 	{
 		/* ray is parallel to CLINE */
+#if 1
+		/* FASTGEN developers claim they report hits on volume mode
+		 * when ray is parallel to CLINE axis, but their code drops
+		 * this case from consideration before their intersection code
+		 * is even called (see SUBROUTINE BULK)
+		 */
+		return( 0 );
+#else
 
 		if( cline->thickness > 0.0 )
 			return( 0 );	/* No end-on hits for plate mode cline */
@@ -235,6 +243,7 @@ struct seg		*seghead;
 			VMOVE( segp->seg_out.hit_normal, cline->h );
 		BU_LIST_INSERT( &(seghead->l), &(segp->l) );
 		return( 1 );
+#endif
 	}
 
 	if( dist[2] > reff*reff )
