@@ -310,7 +310,6 @@ bu_free_mapped_files(verbose)
 int	verbose;
 {
 	struct bu_mapped_file	*mp;
-	int	ret;
 
 	bu_semaphore_acquire(FILE_LIST_SEMAPHORE_NUM);
 

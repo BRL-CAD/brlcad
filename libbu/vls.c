@@ -321,7 +321,6 @@ bu_vls_strgrab( vp )
 register struct bu_vls *vp;
 {
 	register char *str;
-	register int len;
 
 	BU_CK_VLS(vp);
 	if( vp->vls_offset != 0 )  {
