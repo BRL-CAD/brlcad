@@ -7,38 +7,20 @@ required_files = \
 	libbu \
 	librt
 
-if ONLY_BENCHMARK
 bench_files = \
 	libpkg \
 	libfb \
 	libwdb \
+	liboptical \
 	libsysv \
 	bench \
 	conv \
 	db \
 	fbserv \
 	rt	
-else
-bench_files =
-endif
 
-if ONLY_RTS
 rts_files = librtserver
-else
-rts_files = 
-endif
 
-if ONLY_BENCHMARK
-kitchensink_files =
-
-else
-# else !ONLY_BENCHMARK
-
-if ONLY_RTS
-kitchensink_files =
-
-else
-# else !ONLY_RTS
 kitchensink_files = \
 	libpng \
 	libtk8.4 \
@@ -50,7 +32,6 @@ kitchensink_files = \
 	libpkg \
 	libfb \
 	libfft \
-	liboptical \
 	liborle \
 	librtserver \
 	libtclcad \
@@ -96,6 +77,42 @@ kitchensink_files = \
 	vas4 \
 	vdeck \
 	vfont
+
+
+#######################
+# put it all together #
+#######################
+
+if ONLY_BENCHMARK
+
+if ONLY_RTS
+SUBDIRS = \
+	$(required_files) \
+	$(bench_files) \
+	$(rts_files)
+
+else !ONLY_RTS
+SUBDIRS = \
+	$(required_files) \
+	$(bench_files)
+
+endif
+# end ONLY_RTS
+
+else !ONLY_BENCHMARK
+
+if ONLY_RTS
+SUBDIRS = \
+	$(required_files) \
+	$(rts_files)
+
+else !ONLY_RTS
+SUBDIRS = \
+	$(required_files) \
+	$(bench_files) \
+	$(rts_files) \
+	$(kitchensink_files)
+
 endif
 # end ONLY_RTS
 
@@ -103,12 +120,9 @@ endif
 # end ONLY_BENCHMARK
 
 
-SUBDIRS = \
-	$(required_files) \
-	$(bench_files) \
-	$(rts_files) \
-	$(kitchensink_files)
-
+####################
+# dist maintenance #
+####################
 
 DIST_SUBDIRS = $(SUBDIRS)
 
@@ -132,6 +146,11 @@ MAINTAINERCLEANFILES = \
 	ltmain.sh \
 	missing \
 	mkinstalldirs
+
+
+##############
+# the rules  #
+##############
 
 .PHONY : rpm
 rpm: dist
