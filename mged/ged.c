@@ -1698,8 +1698,11 @@ char	**argv;
   /* 0 is not a valid database handle. */
   if( !dbih )
 	  dbih = db_tcl_register( dbip );
-  else
-	  db_tcl_change_registered( dbih, dbip );
+  else {
+/*	  db_tcl_change_registered( dbih, dbip ); */
+	  db_tcl_unregister( dbih );
+	  dbih = db_tcl_register( dbip );
+  }
 
   return TCL_OK;
 }
