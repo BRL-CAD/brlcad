@@ -204,23 +204,40 @@ the form of the selected shader type." } }
     $top.shaderMB.m add command -label plastic\
 	    -command "comb_shader_gui $id plastic $top.shaderF"
     hoc_register_menu_data "Shader" plastic "Shader - Plastic"\
-	    { { summary "See jra for info on plastic." } }
+	    { { summary "Set shader parameters to make this object appear as plastic." } }
     $top.shaderMB.m add command -label mirror\
 	    -command "comb_shader_gui $id mirror $top.shaderF"
     hoc_register_menu_data "Shader" mirror "Shader - Mirror"\
-	    { { summary "See jra for info on mirror." } }
+	    { { summary "Set shader parameters to make this object appear as a mirror." } }
     $top.shaderMB.m add command -label glass\
 	    -command "comb_shader_gui $id glass $top.shaderF"
     hoc_register_menu_data "Shader" glass "Shader - Glass"\
-	    { { summary "See jra for info on glass." } }
+	    { { summary "Set shader parameters to make this object appear as glass." } }
     $top.shaderMB.m add command -label "texture (color)"\
 	    -command "comb_shader_gui $id texture $top.shaderF"
     hoc_register_menu_data "Shader" "texture (color)" "Shader - Texture (color)"\
-	    { { summary "See jra for info on texture (color)." } }
+	    { { summary "Map a color texture on this object." } }
     $top.shaderMB.m add command -label "texture (b/w)"\
 	    -command "comb_shader_gui $id bwtexture $top.shaderF"
     hoc_register_menu_data "Shader" "texture (b/w)" "Shader - Texture (b/w)"\
-	    { { summary "See jra for info on texture (b/w)." } }
+	    { { summary "Map a black and white texture on this object." } }
+    $top.shaderMB.m add command -label "bump map"\
+	    -command "comb_shader_gui $id bump $top.shaderF"
+    hoc_register_menu_data "Shader" "bump map" "Shader - Bump"\
+		{ { summary "Apply a bump map to perturb the surface normals of this object." } }
+    $top.shaderMB.m add command -label "checker"\
+	    -command "comb_shader_gui $id checker $top.shaderF"
+    hoc_register_menu_data "Shader" "checker" "Shader - Checker"\
+		{ { summary "texture map a checkerboard pattern on this object." } }
+    $top.shaderMB.m add command -label "Test Map"\
+	    -command "comb_shader_gui $id testmap $top.shaderF"
+    hoc_register_menu_data "Shader" "Test Map" "Shader - testmap"\
+		{ { summary "Map a red and blue gradient on this object proportional to 'uv'\n\
+			texture map coordinates." } }
+    $top.shaderMB.m add command -label "Fake Star Pattern"\
+	    -command "comb_shader_gui $id fakestar $top.shaderF"
+    hoc_register_menu_data "Shader" "Fake Star" "Shader - fakestar"\
+		{ { summary "Map a fake star field on this object." } }
 
     label $top.combL -text "Boolean Expression:" -anchor w
     hoc_register_data $top.combL "Boolean Expression"\
