@@ -22,6 +22,7 @@ rr_render(register struct application *ap,
 extern void do_ae(double azim, double elev);
 extern int do_frame( int framenumber );
 extern void def_tree( register struct rt_i *rtip );
+extern void do_prep( struct rt_i *rtip );
 extern int old_way( FILE *fp );
 
 /* shade.c */
