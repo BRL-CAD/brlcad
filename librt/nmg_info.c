@@ -34,9 +34,6 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "raytrace.h"
 #include "./debug.h"	/* For librt debug flags, XXX temp */
 
-/* XXX move to raytrace.h */
-RT_EXTERN(CONST struct edgeuse *nmg_find_edge_between_2fu, (CONST struct faceuse *fu1, CONST struct faceuse *fu2));
-
 CONST struct nmg_visit_handlers	nmg_visit_handlers_null;
 
 /************************************************************************
@@ -1129,15 +1126,18 @@ CONST struct edgeuse *eu;
  *  NULL is also returned if no common edge could be found.
  */
 CONST struct edgeuse *
-nmg_find_edge_between_2fu(fu1, fu2)
+nmg_find_edge_between_2fu(fu1, fu2, tol)
 CONST struct faceuse	*fu1;
 CONST struct faceuse	*fu2;
+CONST struct rt_tol	*tol;
 {
 	CONST struct loopuse	*lu1;
 	CONST struct edgeuse	*ret = (CONST struct edgeuse *)NULL;
+	int			coincident;
 
 	NMG_CK_FACEUSE(fu1);
 	NMG_CK_FACEUSE(fu2);
+	RT_CK_TOL(tol);
 
 	for( RT_LIST_FOR( lu1, loopuse, &fu1->lu_hd ) )  {
 		CONST struct edgeuse	*eu1;
@@ -1170,7 +1170,22 @@ CONST struct faceuse	*fu2;
 				    			rt_log("eur=x%x, eg_p=x%x;  ret=x%x, eg_p=x%x\n",
 				    				eur, eur->e_p->eg_p,
 				    				ret, ret->e_p->eg_p );
-				    			rt_bomb("nmg_find_edge_between_2fu() 2 faces intersect with differing edge geometries?\n");
+				    			nmg_pr_eg( eur->e_p->eg_p, 0 );
+				    			nmg_pr_eg( ret->e_p->eg_p, 0 );
+				    			nmg_pr_eu_endpoints( eur, 0 );
+				    			nmg_pr_eu_endpoints( ret, 0 );
+
+							coincident = nmg_2edge_g_coincident( eur->e_p, ret->e_p, tol );
+							if( coincident )  {
+								/* Change eur to use ret's eg */
+								rt_log("nmg_find_edge_between_2fu() belatedly fusing e1=x%x, eg1=x%x, e2=x%x, eg2=x%x\n",
+									eur->e_p, eur->e_p->eg_p,
+									ret->e_p, ret->e_p->eg_p );
+									/* XXX Really need to move over all uses of that edge, not just this one. */
+									nmg_use_edge_g( eur->e_p, ret->e_p->eg_p );
+							} else {
+					    			rt_bomb("nmg_find_edge_between_2fu() 2 faces intersect with differing edge geometries?\n");
+							}
 				    		}
 				    	}
 				}
