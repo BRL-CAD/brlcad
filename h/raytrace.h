@@ -430,9 +430,14 @@ struct soltab {
 #define	ID_EXTRUDE	27	/* Solid of extrusion */
 #define ID_SUBMODEL	28	/* Instanced submodel */
 #define	ID_FGP		29	/* FASTGEN4 plate mode solid */
-#define	ID_BOT		30	/* Bag o' triangles */
 
+#if 0
+#define	ID_BOT		30	/* Bag o' triangles */
 #define ID_MAXIMUM	30	/* Maximum defined ID_xxx value */
+#else
+/* XXX Temporarily changing back to 29 until "Bag o' triangles is completed */
+#define ID_MAXIMUM	29	/* Maximum defined ID_xxx value */
+#endif
 
 #define ID_COMBINATION	(ID_MAXIMUM+1)	/* Combination Record (non-geometric) */
 
