@@ -566,7 +566,7 @@ end:
     return TCL_ERROR;
   }
 
-  if(!strcmp(argv[0], "get")){
+  if(!strcmp(argv[0], "getx")){
     if(argc == 1){
       struct bu_vls tmp_vls;
 
