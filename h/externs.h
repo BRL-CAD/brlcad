@@ -199,9 +199,10 @@ extern int	brk();
 extern char *	strdup(const char *s);
 #endif
 
-/* POSIX does not define fdopen */
+/* Even POSIX does not define these, they are UNIX-specific. But we need them. */
 #if __STDC__
 extern FILE	*fdopen( int filedes, const char *type );
+extern FILE	*popen( const char *command, const char *type );
 #endif
 
 #endif /* EXTERNS_H */
