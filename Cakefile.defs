@@ -53,7 +53,7 @@ set -S2 "/bin/sh"
  * In this mode, the object modules are placed into the		*
  * same directory as the source code.				*
  *								*
- * If the symbol NFS is defined, then the NFS-based		*
+ * If the symbol NFS is defined, then the nfs-based		*
  * multi-machine behavior is implemented.			*
  * In this mode, a separate directory is made for each		*
  * source directory for each type of client machine.		*
@@ -117,6 +117,13 @@ set -S2 "/bin/sh"
  *	OPTIMIZER						*
  *	PROFILER						*
  *								*
+ *  Note that when applications link with certain BRL-CAD	*
+ *  libraries, they must also link with some related libraries.	*
+ *  This relationship is listed in this table:			*
+ *								*
+ *	LIBRT		RT_LIBES	(should be LIBRT_LIBES)	*
+ *	LIBFB		LIBFB_LIBES				*
+ *								*
  ****************************************************************/
 
 #ifdef vax
@@ -127,9 +134,10 @@ set -S2 "/bin/sh"
 #	define	BSD	43
 #	define	HAS_TCP	1
 /*	On Ultrix & 4.1 systems, #define	CC_DEFS	-Dvoid=int */
-#	define	LIBFB_OBJS	if_remote pkg if_ptty if_adage
+#	define	LIBFB_OBJS	if_remote if_ptty if_adage
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_PTTY -DIF_ADAGE
 /*	At USNA, add -DGM256 to LIBFB_CONFIG */
+#	define	LIBFB_LIBES	LIBPKG
 #	define	LIBRT_TIMER	timer42
 #	define	MGED_OBJS	dm-mg dm-vg
 #	define	MGED_CONFIG	-DDM_MG -DDM_VG
@@ -140,15 +148,22 @@ set -S2 "/bin/sh"
 /*	Apple MAC II running A/UX 1.0 */
 #	undef	aux
 #	define	MTYPE	aux
+#       define  CC      /usr/local/bin/gcc
 #	define	HAS_TCP	1
 #	define	LIBRT_TIMER	timerunix
-#	define	CC_OPTS	
-/* Some optimization params to try later -ZcI */
+#	define	CC_OPTS	-Daux
+#       define  OPTIMIZER       -O -fstrength-reduce -fomit-frame-pointer -finline-functions
 #	define	LIBPKG_CONFIG	-I/usr/include/netinet -DBSD=42
-#	define	LIBFB_OBJS	if_remote pkg
-#	define	LIBFB_CONFIG	-DIF_REMOTE
-#	define	MGED_OBJS	dm-qd filters
-#	define	MGED_CONFIG	-DDM_QD
+/*      The next two defines are for rfbd version of libfb. */
+/* #    define  LIBFB_OBJS      if_remote if_X pkg */
+/* #    define  LIBFB_CONFIG    -DIF_REMOTE -DIF_X */
+/*      And the next two are for all the rest. */
+#       define  LIBFB_OBJS      if_remote pkg
+#       define  LIBFB_CONFIG    -DIF_REMOTE
+#	define	LIBFB_LIBES	LIBPKG -lX11
+#	define	MGED_OBJS	dm-X
+#	define	MGED_CONFIG	-DDM_X
+#	define	MGED_LIBES	-lX11
 #	define	MANDIR	/usr/catman/u_man/man
 #endif
 
@@ -200,13 +215,13 @@ set -S2 "/bin/sh"
 #	if 0
 /*		Normal Configuration */
 #		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_PTTY -DIF_AB
-#		define	LIBFB_OBJS	if_remote pkg if_ptty if_ab
+#		define	LIBFB_OBJS	if_remote if_ptty if_ab
+#		define	LIBFB_LIBES	LIBPKG
 #	else
 /*		X-Windows Configuration */
 #		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_PTTY -DIF_AB -DIF_X -I/m/X11/core
-#		define	LIBFB_OBJS	if_remote pkg if_ptty if_ab if_X
-#		define	LIBFB_SETUP	(rm -f PRODUCTS; \
-			cp /usr/local/lib/libX11.a PRODUCTS )
+#		define	LIBFB_OBJS	if_remote if_ptty if_ab if_X
+#		define	LIBFB_LIBES	LIBPKG /usr/local/lib/libX11.a
 #		define	MGED_OBJS	dm-X
 #		define	MGED_CONFIG	-DDM_X -I/m/X11/core
 #		define	MGED_LIBES	/usr/local/lib/libX11.a
@@ -233,15 +248,8 @@ set -S2 "/bin/sh"
 /*		This has not been tested */
 #		define	LIBPKG_CONFIG	-I/usr/include/EXOS -DSGI_EXCELAN
 #		define	LIBPKG_SETUP	cp /usr/lib/libsocket.a PRODUCTS
-#		define	LIBFB_OBJS	if_remote pkg sgiselect.o if_sgi
-#		define	LIBFB_SETUP	(rm -fr tmp;  mkdir tmp; \
-			rm -f libfb.a; cd tmp; \
-			AR x /usr/lib/libsocket.a; \
-			AR uv ../libfb.a *; \
-			rm -f *; \
-			AR x /usr/lib/libgl2.a; \
-			AR u ../libfb.a *; \
-			cd ..; rm -fr tmp)
+#		define	LIBFB_OBJS	if_remote sgiselect.o if_sgi
+#		define	LIBFB_LIBES	LIBPKG -lsocket -lgl2
 #		define	RFBD_CONFIG	-I/usr/include/EXOS -DSGI_EXCELAN
 #		define	MGED_LIBES	../libfb/sgiselect.o -lgl2
 #	else
@@ -252,16 +260,8 @@ set -S2 "/bin/sh"
 #		define	LIBSYSV_OBJ	select.o
 #		define	LIBPKG_CONFIG	-I/usr/include/bsd -DBSD=42
 #		define	LIBPKG_SETUP	cp /usr/lib/libbsd.a PRODUCTS
-#		define	LIBFB_OBJS	if_remote pkg if_sgi
-#		define	LIBFB_SETUP	(rm -fr tmp;  mkdir tmp; \
-			rm -f libfb.a; cd tmp; \
-			AR x /usr/lib/libdbm.a; \
-			AR x /usr/lib/libgl2.a; \
-			rm -f select.o; \
-			AR x /usr/lib/libbsd.a; \
-			rm -f __.SYMDEF; \
-			AR u ../libfb.a *; \
-			cd ..; rm -fr tmp)
+#		define	LIBFB_OBJS	if_remote if_sgi
+#		define	LIBFB_LIBES	LIBPKG -lbsd -ldbm -lgl2
 #		define	RFBD_CONFIG	-I/usr/include/bsd -DBSD=42
 #		define	MGED_LIBES	-lbsd -lgl2
 #	endif
@@ -272,36 +272,33 @@ set -S2 "/bin/sh"
 #if defined(sgi) && defined(mips)
 /*	Silicon Graphics 4D, which uses the MIPS chip */
 /*
- *	NOTE:  "IRIX 3.1" is the ONLY software release supported.
+ *	NOTE:  "IRIX 3.1 and 3.2" are the ONLY software releases supported.
  *	NOTE:  If the shared library is used, then all machine types can
  *	use the same binary programs, and no type discrimination is
  *	necessary.  However, this prevents PIXIE from working...
  */
 #	undef	sgi
 #	if 0
-/*		This version for production optimization */
+/*		This version for production: optimization & shared libraries */
 #		define	OPTIMIZER	-O2
 #		define	GFLAG		-G 16
-#	else
-/*		This version for DBX */
-#		define	OPTIMIZER	-g
-#		define	GFLAG		-G 16
-#	endif
-#	define	MTYPE	4d
-#	define  CC_OPTS		GFLAG
-#	if 1
-/*		By default, use this for shared libraries */
+/*		Use shared libraries */
 #		define	SHARED	_s
 #	else
+/*		This version for debugging:  DBX & PIXIE */
+#		define	OPTIMIZER	-g
+#		define	GFLAG		-G 16
 /*		To use PIXIE, you have to use the non-shared libraries */
 #		define	SHARED	/**/
 #	endif
+#	define	MTYPE	4d
+#	define  CC_OPTS		GFLAG
 #	define	STANDARD_LIBES	-lm -lc''SHARED
 #	define	RT_LIBES	-lmpc
 #	define	MGED_LIBES	-lbsd -lgl''SHARED
 #	define	LGT_CONFIG	GFLAG -lmpc
 #	define	LIBMALLOC	/* needs malloc() from -lmpc */
-#	define	LIBFB_OBJS	if_remote pkg if_ab if_4d
+#	define	LIBFB_OBJS	if_remote if_ab if_4d
 #	if 1
 /*		Permit shared binaries, but no PostScript startoff
  *		when not logged in */
@@ -310,34 +307,7 @@ set -S2 "/bin/sh"
 /*		Non-shared binaries, automatic PostScript startoff for rfbd */
 #		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -I/usr/include/bsd -DIF_4D
 #	endif
-#if	1
-/*		The Release 3.2 way */
-#		define	LIBFB_SETUP	(rm -fr /usr/tmp/libfb; \
-			mkdir /usr/tmp/libfb; \
-			cp /usr/lib/libgl''SHARED.a /usr/tmp/libfb/libfb.a; \
-			AR u /usr/tmp/libfb/libfb.a *.o; \
-			( cd /usr/tmp/libfb; \
-			AR x /usr/lib/libbsd.a; \
-			rm -f *EBEB*; \
-			mv in_addr.o net_in_addr.o; \
-			AR u libfb.a * ); \
-			mv /usr/tmp/libfb/libfb.a . ; \
-			rm -fr /usr/tmp/libfb );
-#	else
-/*		The Release 3.1 way, delete select.o */
-#		define	LIBFB_SETUP	(rm -fr /usr/tmp/libfb; \
-			mkdir /usr/tmp/libfb; \
-			cp *.o /usr/tmp/libfb; \
-			( cd /usr/tmp/libfb; \
-			AR x /usr/lib/libgl''SHARED.a; \
-			mv in_addr.o sgi_addr.o; \
-			rm -f select.o *EBEB*; \
-			AR x /usr/lib/libbsd.a; \
-			rm -f *EBEB*; \
-			AR u libfb.a * ); \
-			mv /usr/tmp/libfb/libfb.a . ; \
-			rm -fr /usr/tmp/libfb );
-#	endif
+#	define	LIBFB_LIBES	LIBPKG -lbsd -lgl''SHARED
 #	define	HAS_TCP	1
 #	define	CC	/usr/bin/cc
 #	define	LD_OPTS		GFLAG
@@ -392,31 +362,17 @@ set -S2 "/bin/sh"
 #	define	LIBRT_TIMER	timer42
 #	if 0
 /*		Normal Sun configuration */
-#		define	LIBFB_OBJS	if_remote pkg if_sun
+#		define	LIBFB_OBJS	if_remote if_sun
 #		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_SUN
-#		define	LIBFB_SETUP	(rm -fr tmp;  mkdir tmp; \
-			rm -f libfb.a; cd tmp; \
-			AR x /usr/lib/libsuntool.a; \
-			AR x /usr/lib/libsunwindow.a; \
-			AR x /usr/lib/libpixrect.a; \
-			AR u ../libfb.a *; \
-			cd ..; rm -fr tmp)
+#		define	LIBFB_LIBES	LIBPKG -lsuntool -lsunwindow -lpixrect
 #		define	MGED_OBJS	dm-sun
 #		define	MGED_CONFIG	-DDM_SUNPW
 #		define	MGED_LIBES	-lsuntool -lsunwindow -lpixrect
 #	else
 /*		Sun with X11 configuration */
-#		define	LIBFB_OBJS	if_remote pkg if_sun if_X
+#		define	LIBFB_OBJS	if_remote if_sun if_X
 #		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_SUN -DIF_X
-#		define	LIBFB_SETUP	(rm -fr tmp;  mkdir tmp; \
-			rm -f libfb.a; cd tmp; \
-			AR x /usr/lib/libsuntool.a; \
-			AR x /usr/lib/libsunwindow.a; \
-			AR x /usr/lib/libpixrect.a; \
-			AR x /usr/lib/libX11.a; \
-			rm -f __.SYMDEF; \
-			AR u ../libfb.a *; \
-			cd ..; rm -fr tmp)
+#		define	LIBFB_LIBES	LIBPKG -lsuntool -lsunwindow -lpixrect -lX11
 #		define	MGED_OBJS	dm-sun dm-X
 #		define	MGED_CONFIG	-DDM_SUNPW -DDM_X
 #		define	MGED_LIBES	-lsuntool -lsunwindow -lpixrect \
@@ -432,17 +388,9 @@ set -S2 "/bin/sh"
 #	define	HAS_TCP	1
 #	define	OPTIMIZER	-O2
 #	define	LIBMALLOC	/* use vendor library */
-#	define	LIBFB_OBJS	if_remote pkg if_sun
+#	define	LIBFB_OBJS	if_remote if_sun
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_SUN
-#	define	LIBFB_SETUP	(rm -fr /usr/tmp/libfb; \
-		mkdir /usr/tmp/libfb; \
-		( cd /usr/tmp/libfb; \
-		cp /usr/lib/libsuntool.a libfb.a; \
-		AR x /usr/lib/libsunwindow.a; \
-		AR x /usr/lib/libpixrect.a; \
-		AR u libfb.a * ); \
-		mv /usr/tmp/libfb/libfb.a . ; \
-		rm -fr /usr/tmp/libfb )
+#	define	LIBFB_LIBES	LIBPKG -lsuntool -lsunwindow -lpixrect
 #	define	LIBRT_TIMER	timer42
 #	define	MGED_OBJS	dm-sun
 #	define	MGED_CONFIG	-DDM_SUNPW
@@ -466,17 +414,16 @@ set -S2 "/bin/sh"
 #	define	LD_OPTS	CC_OPTS -g
 #	define	LIBMALLOC	/* may be able to use local libmalloc */
 #	define	LIBRT_TIMER	timer42
-#	define	LIBFB_OBJS	if_remote pkg if_X
+#	define	LIBFB_OBJS	if_remote if_X
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_X
-#	define	LIBFB_SETUP	rm -f libfb.a; \
-			cp /usr/lib/X11/libX11.a libfb.a
+#	define	LIBFB_LIBES	LIBPKG -lX11
 #	define	MGED_OBJS	dm-X
 #	define	MGED_CONFIG	-DDM_X
 #	define	MGED_LIBES	/usr/lib/X11/libX11.a
 #endif
 
 #if defined(CRAY1)
-/*	Cray X-M/P running UNICOS.  Define CRAY_COS for use on COS. */
+/*	Cray X-M/P running UNICOS 5.0 only */
 #	undef	xmp
 #	undef	cray
 #	define	MTYPE	xmp
@@ -496,35 +443,16 @@ set -S2 "/bin/sh"
 #	define	LGT_CONFIG	-Dcray
 #	define	LIBTERMLIB	-lcurses
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB
-#	define	LIBFB_OBJS	if_remote pkg if_ab
-#	if 0
-/*		On XMP UNICOS 4.0, archives finally end in .a */
-#		define	ARCH_SUF	a
-#		define	FC	/bin/cf77
-#		define	AR	../cray-ar.sh
-#		define	LIBPKG_CONFIG	-DBSD=42 -DOLDTCP
-#		define	RFBD_CONFIG	-DBSD=42 -DOLDTCP
-#	else
-#		if 1
-/*			XMP UNICOS 5.0 */
-#			define	LIBPKG_CONFIG	-DBSD=43
-#			define	RFBD_CONFIG	-DBSD=43
-#		else
-/*			On XMP UNICOS 3.0, archives still end in .o */
-#			define	ARCH_SUF	o
-#			define	FC	/bin/cc
-#			define	AR	../cray-ar.sh
-#			define	LIBPKG_CONFIG	-DBSD=42 -DOLDTCP
-#			define	RFBD_CONFIG	-DBSD=42 -DOLDTCP
-#		endif
-#	endif
-#	define	RANLIB	echo
+#	define	LIBFB_OBJS	if_remote if_ab
+#	define	LIBFB_LIBES	LIBPKG
 #	define	LIBPKG_SETUP	cp /usr/lib/libnet.ARCH_SUF PRODUCTS
-#	define	LIBFB_SETUP	cp /usr/lib/libnet.ARCH_SUF PRODUCTS
+#	define	LIBPKG_CONFIG	-DBSD=43
+#	define	RFBD_CONFIG	-DBSD=43
+#	define	RANLIB	echo
 #endif
 
 #if defined(CRAY2)
-/*	Cray-2 running UNICOS */
+/*	Cray-2 running UNICOS 5.0; earlier versions not supported */
 #	undef	cr2
 #	undef	cray
 #	define	MTYPE	cr2
@@ -546,39 +474,19 @@ set -S2 "/bin/sh"
 #	define	LIB_PRE	-L
 #	define	FC	/bin/cf77
 #	define	RANLIB	echo
-#	define	LIBSYSV_SETUP	( \
-		AR x /usr/lib/libnet.a select.o socket.o; \
-		AR u libsysv.a select.o socket.o )
 #	define	LIBMALLOC	/* use vendor library */
-#	if 0
-/*		UNICOS 4.0 */
-#		define	LIBPKG_CONFIG	-DBSD=42 -DOLDTCP
-#		define	RFBD_CONFIG	-DBSD=42 -DOLDTCP
-#	else
-/*		UNICOS 5.0 */
-#		define	LIBPKG_CONFIG	-DBSD=43
-#		define	RFBD_CONFIG	-DBSD=43
-#	endif
 #	define	LIBRT_TIMER	timerunix
 #	define	RT_LIBES	-lmt
 #	define	LGT_CONFIG	-Dcray
 #	define	LIBPKG_SETUP	cp /usr/lib/libnet.ARCH_SUF PRODUCTS
+#	define	LIBPKG_CONFIG	-DBSD=43
+#	define	RFBD_CONFIG	-DBSD=43
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_X -I/usr/include/X11
-#	define	LIBFB_OBJS	if_remote pkg if_ab if_X
-#	define	LIBFB_SETUP	(rm -fr tmp; mkdir tmp; \
-		cp /usr/lib/libX11.a PRODUCTS; \
-		cd tmp; \
-		AR x /usr/lib/libnet.a; \
-		rm -f select.o; \
-		AR u ../PRODUCTS *; \
-		cd ..; rm -fr tmp)
+#	define	LIBFB_OBJS	if_remote if_ab if_X
+#	define	LIBFB_LIBES	LIBPKG -lX11
 #	define	MGED_OBJS	dm-X
 #	define	MGED_CONFIG	-DDM_X
-/*	MGED_LIBES should read /usr/lib/libX11.a /usr/lib/libnet.a,
- *	but we have to use LIBFB instead, to avoid a duplicate select.o
- *	module (libnet.a, LIBSYSV).  SEGLDR is a bitter pill.
- */
-#	define	MGED_LIBES	LIBFB
+#	define	MGED_LIBES	-lX11 -lnet
 #endif
 
 #ifdef convex
@@ -588,7 +496,8 @@ set -S2 "/bin/sh"
 #	define	BSD	42
 #	define	HAS_TCP	1
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_PTTY
-#	define	LIBFB_OBJS	if_remote pkg if_ptty
+#	define	LIBFB_OBJS	if_remote if_ptty
+#	define	LIBFB_LIBES	LIBPKG
 #	define	LIBRT_TIMER	timer42
 #	define	FC	/usr/convex/fc
 /*	libplot3/htond.c depends on running in native mode (CC_OPTS= -fn) */
@@ -617,7 +526,7 @@ set -S2 "/bin/sh"
 /*XXX	Note that this X11 configuration may need tweaking */
 #	define	LIBFB_CONFIG	-DIF_X
 #	define	LIBFB_OBJS	if_X
-#	define	LIBFB_SETUP	cp /usr/lib/libX11.a PRODUCTS
+#	define	LIBFB_LIBES	-lX11
 #	define	MGED_OBJS	dm-X
 #	define	MGED_CONFIG	-DDM_X
 #	define	MGED_LIBES	/usr/lib/libX11.a
@@ -633,7 +542,7 @@ set -S2 "/bin/sh"
 /*XXX	Note that this X11 configuration may need tweaking */
 #	define	LIBFB_CONFIG	-DIF_X
 #	define	LIBFB_OBJS	if_X
-#	define	LIBFB_SETUP	cp /usr/lib/libX11.a PRODUCTS
+#	define	LIBFB_LIBES	-lX11
 #	define	MGED_OBJS	dm-X
 #	define	MGED_CONFIG	-DDM_X
 #	define	MGED_LIBES	/usr/lib/libX11.a
@@ -718,20 +627,29 @@ set -S2 "/bin/sh"
 #		define	LIBFB_OBJS	if_ptty
 #		define	LIBFB_CONFIG	-DIF_PTTY
 #	else
-#		define	LIBFB_OBJS	if_remote pkg if_ptty if_ab
+#		define	LIBFB_OBJS	if_remote if_ptty if_ab
 #		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_PTTY -DIF_AB
+#		define	LIBFB_LIBES	LIBPKG
 #	endif
 /*	LIBFB_SETUP is only to be defined when needed */
 #endif
 
 /*	LIBSYSV_SETUP is only to be defined when needed */
 
-#ifndef RT_CONFIG
-#	define	RT_CONFIG	/**/
-#endif
+/* (potentially null) loader flags needed with the corresponding libraries */
 
 #ifndef RT_LIBES
 #	define	RT_LIBES	/**/
+#endif
+
+#ifndef LIBFB_LIBES
+#	define	LIBFB_LIBES	/**/
+#endif
+
+/* Various configuration flags that default to nothing */
+
+#ifndef RT_CONFIG
+#	define	RT_CONFIG	/**/
 #endif
 
 #ifndef LGT_CONFIG
@@ -795,7 +713,7 @@ set -S2 "/bin/sh"
 #	define	BINDIR	/usr/brlcad/bin
 #	define	LIBDIR	/usr/brlcad/lib
 #	define	ETCDIR	/usr/brlcad/etc
-#	define	INCLUDE_DIR	/usr/include/brlcad
+#	define	INCLUDE_DIR	/usr/brlcad/include
 #endif
 
 /* Permissions for "installed" files of various types */
