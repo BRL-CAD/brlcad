@@ -1490,7 +1490,7 @@ int	*xzoom, *yzoom;
 
 	*xcenter = ifp->if_xcenter;
 	*ycenter = ifp->if_ycenter;
-	*xzoom = ifp->if_yzoom;
+	*xzoom = ifp->if_xzoom;
 	*yzoom = ifp->if_yzoom;
 
 	return(0);
