@@ -612,7 +612,7 @@ int framenumber;
 
 	fprintf(stderr,"Tree: %d solids in %d regions\n",
 		rtip->nsolids, rtip->nregions );
-	if( rtip->HeadSolid == SOLTAB_NULL )  {
+	if( RT_LIST_IS_EMPTY( &rtip->rti_headsolid ) )  {
 		fprintf(stderr,"rt ERROR: No solids\n");
 		exit(3);
 	}
