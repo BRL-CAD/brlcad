@@ -1209,12 +1209,6 @@ dgo_get_eyemodel_tcl(ClientData	clientData,
 		     char	**argv)
 {
 	struct dg_obj *dgop = (struct dg_obj *)clientData;
-
-	fprintf(stderr, "dgo_get_eyemodel_tcl: entered\n");
-	fprintf(stderr, "argv 0 = %s\n", argv[0]);
-	fprintf(stderr, "argv 1 = %s\n", argv[1]);
-	fprintf(stderr, "argv 2 = %s\n", argv[2]);
-	  
 	return dgo_get_eyemodel_cmd(dgop, interp, argc-1, argv+1);
 }
 
