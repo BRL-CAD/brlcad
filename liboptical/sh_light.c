@@ -33,8 +33,15 @@ static char RCSsh_light[] = "@(#)$Header$ (ARL)";
 #include "raytrace.h"
 #include "shadefuncs.h"
 #include "shadework.h"
-#include "../rt/rdebug.h"
+#include "plot3.h"
+#include "rtprivate.h"
 #include "../rt/light.h"
+
+extern int
+viewshade(struct application *ap,
+	  register CONST struct partition *pp,
+	  register struct shadework *swp);
+
 
 #if !defined(M_PI)
 #define M_PI            3.14159265358979323846
@@ -390,9 +397,7 @@ char *cp;
  *  Special hook called by view_2init to build 1 or 3 debugging lights.
  */
 void
-light_maker(num, v2m)
-int	num;
-mat_t	v2m;
+light_maker(int num, mat_t v2m)
 {
 	register struct light_specific *lp;
 	register int i;
@@ -607,6 +612,9 @@ struct seg *finished_segs;
 	int	air_sols_seen = 0;
 	char	*reason = "???";
 
+	if (rdebug&RDEBUG_LIGHT)
+		bu_log("light_hit level %d %d\n", ap->a_level, __LINE__);
+
 #if RT_MULTISPECTRAL
 	sub_ap.a_spectrum = BN_TABDATA_NULL;	/* sanity */
 	BN_CK_TABDATA(ap->a_spectrum);
@@ -624,7 +632,6 @@ struct seg *finished_segs;
 #else
 	VSETALL( filter_color, 1 );
 #endif
-
 	/*XXX Bogus with Air.  We should check to see if it is the same 
 	 * surface.
 	 *
@@ -657,8 +664,9 @@ struct seg *finished_segs;
 			VSETALL( sw.sw_color, 1 );
 			VSETALL( sw.sw_basecolor, 1 );
 #endif
-
+			if (rdebug&RDEBUG_LIGHT) bu_log("calling viewshade\n");
 			(void)viewshade( ap, pp, &sw );
+			if (rdebug&RDEBUG_LIGHT) bu_log("viewshade returns\n");
 			/* sw_transmit is only return */
 
 			/* XXX Clouds don't yet attenuate differently based on freq */
@@ -675,7 +683,12 @@ struct seg *finished_segs;
 		if (pp->pt_outhit->hit_dist >= ap->a_rt_i->rti_tol.dist*10 )
 			break;
 	}
+
+
+
 	if (pp == PartHeadp )  {
+		if (rdebug&RDEBUG_LIGHT) bu_log("pp == PartHeadp\n");
+
 		pp=PartHeadp->pt_forw;
 		RT_CK_PT(pp);
 
@@ -706,7 +719,6 @@ struct seg *finished_segs;
 
 		if (pp->pt_inhit->hit_dist <= ap->a_rt_i->rti_tol.dist) {
 			int retval;
-
 			/* XXX This is bogus if air is being used */
 			/* What has probably happened is that the shadow ray
 			 * has produced an Out-hit from the current solid
@@ -723,6 +735,7 @@ struct seg *finished_segs;
 			VJOIN1(sub_ap.a_ray.r_pt, ap->a_ray.r_pt,
 			    pp->pt_outhit->hit_dist, ap->a_ray.r_dir);
 
+			if (rdebug&RDEBUG_LIGHT) bu_log("hit_dist < tol\n");
 			retval = rt_shootray( &sub_ap );
 
 			ap->a_user = sub_ap.a_user;
@@ -754,6 +767,7 @@ struct seg *finished_segs;
 		reason = "error, nothing hit";
 		goto out;
 	}
+
 	regp = pp->pt_regionp;
 
 	/* Check to see if we hit the light source */
@@ -828,7 +842,9 @@ struct seg *finished_segs;
 	VSETALL( sw.sw_basecolor, 1 );
 #endif
 
+	if (rdebug&RDEBUG_LIGHT) bu_log("calling viewshade\n");
 	(void)viewshade( ap, pp, &sw );
+	if (rdebug&RDEBUG_LIGHT) bu_log("viewshade back\n");
 	/* sw_transmit is output */
 
 #if RT_MULTISPECTRAL
@@ -844,7 +860,6 @@ struct seg *finished_segs;
 		goto out;
 	}
 #endif
-
 	/*
 	 * Push on to exit point, and trace on from there.
 	 * Transmission so far is passed along in sub_ap.a_color[];
@@ -861,7 +876,13 @@ struct seg *finished_segs;
 		VJOIN1(sub_ap.a_ray.r_pt, ap->a_ray.r_pt, f, ap->a_ray.r_dir);
 	}
 	sub_ap.a_purpose = "light transmission after filtering";
+	if (rdebug&RDEBUG_LIGHT) 
+		bu_log("shooting level %d from %d\n",
+		       sub_ap.a_level, __LINE__);
 	light_visible = rt_shootray( &sub_ap );
+	if (rdebug&RDEBUG_LIGHT) 
+		if (light_visible < 0)
+			bu_log("%s:%d\n", __FILE__, __LINE__);
 
 #if RT_MULTISPECTRAL
 	bn_tabdata_mul( ap->a_spectrum, sub_ap.a_spectrum, ms_filter_color );
@@ -870,6 +891,7 @@ struct seg *finished_segs;
 #endif
 	reason = "after filtering";
 out:
+
 #if RT_MULTISPECTRAL
 	if (ms_filter_color ) bn_tabdata_free( ms_filter_color );
 	if (sw.msw_color )  bn_tabdata_free( sw.msw_color );
@@ -915,11 +937,14 @@ register struct application *ap;
 
 	bu_log("light ray missed non-infinite, visible light source\n");
 	bu_log("on pixel: %d %d\n", ap->a_x, ap->a_y);
+	bu_log("ray: (%g %g %g) -> %g %g %g\n", V3ARGS(ap->a_ray.r_pt), V3ARGS(ap->a_ray.r_dir) );
+	bu_log("a_level: %d\n", ap->a_level);
+
 
 	/* Missed light, either via blockage or dither.  Return black */
 	VSETALL( ap->a_color, 0 );
 	if (rdebug & RDEBUG_LIGHT ) bu_log("light_miss vis=0\n");
-	return(0);			/* light_visible = 0 */
+	return(-1);			/* light_visible = 0 */
 }
 
 struct light_obs_stuff {
@@ -954,8 +979,11 @@ struct light_obs_stuff *los;
 	double radius, angle, cos_angle, x, y; 
 	point_t shoot_pt;
 	vect_t shoot_dir;
+	int shot_status;
 
 	if (rdebug & RDEBUG_LIGHT ) bu_log("light_vis\n");
+
+retry:
 
 	/* compute the light direction */
 	if (los->lp->lt_infinite ) {
@@ -991,7 +1019,12 @@ struct light_obs_stuff *los;
 		if (cos_angle > (2.0*M_PI)) cos_angle -= (2.0*M_PI);
 		x = radius * bn_tab_sin(cos_angle);
 
-
+		if (rdebug & RDEBUG_LIGHT) {
+			bu_log("light at (%g %g %g) radius %g\n", 
+			       V3ARGS(los->lp->lt_pos), 
+			       los->lp->lt_radius);
+			bu_log("\tshooting at radius %g\n", radius);
+		}
 		VJOIN2(shoot_pt, los->lp->lt_pos, 
 		       x, los->light_x,
 		       y, los->light_y);
@@ -1082,7 +1115,23 @@ struct light_obs_stuff *los;
 	RT_CK_LIGHT((struct light_specific *)(sub_ap.a_uptr));
 	RT_CK_AP(&sub_ap);
 
-	if (rt_shootray( &sub_ap ) )  {
+	if (rdebug & RDEBUG_LIGHT)
+		bu_log("shooting level %d from %d\n",
+		       sub_ap.a_level, __LINE__);
+	shot_status = rt_shootray( &sub_ap );
+	if (rdebug & RDEBUG_LIGHT)
+		bu_log("shot_status: %d\n", shot_status);
+
+	if (shot_status < 0) {
+		bu_log("was radius: %g of (%g) angle: %g\n",
+			radius, los->lp->lt_radius, 
+			angle);
+
+		bu_log("re-shooting\n");
+		goto retry;
+	}
+
+	if (shot_status > 0 )  {
 		/* light visible */
 		if (rdebug & RDEBUG_LIGHT)
 			bu_log("light visible: %s\n", los->lp->lt_name);
@@ -1244,197 +1293,4 @@ int have;
 
 	if (rdebug & RDEBUG_LIGHT ) bu_log("computing Light obscruration: end\n");
 }
-
-
-
-/*
- *			L I G H T _ V I S I B I L I T Y
- *
- *	Determine the visibility of each light source in the scene from a
- *	particular location.
- */
-void
-light_visibility(ap, swp, have)
-struct application *ap;
-struct shadework *swp;
-int have;
-{
-	register struct light_specific *lp;
-	register int	i;
-#if !RT_MULTISPECTRAL
-	register fastf_t *intensity;
-#endif
-	register fastf_t *tolight;
-	register fastf_t f;
-	struct application sub_ap;
-
-	if (rdebug & RDEBUG_LIGHT ) bu_log("computing Light visibility: start\n");
-
-	/*
-	 *  Determine light visibility
-	 *
-	 *  The sw_intensity field does NOT include the light's
-	 *  emission spectrum (color), only path attenuation.
-	 *  sw_intensity=(1,1,1) for no attenuation.
-	 */
-	i = 0;
-#if !RT_MULTISPECTRAL
-	intensity = swp->sw_intensity;
-#endif
-	tolight = swp->sw_tolight;
-	for( BU_LIST_FOR( lp, light_specific, &(LightHead.l) ) )  {
-		RT_CK_LIGHT(lp);
-		/* compute the light direction */
-		if (lp->lt_infinite ) {
-			/* Infinite lights are point sources, no fuzzy penumbra */
-			VMOVE( tolight, lp->lt_vec );
-		} else {
-			VSUB2(tolight, lp->lt_pos,
-			    swp->sw_hit.hit_point);
-#if 1
-			/*
-			 *  Dither light pos for penumbra by +/- 0.5 light 
-			 *  radius; this presently makes a cubical light 
-			 *  source distribution.
-			 */
-			f = lp->lt_radius * 0.7;
-			tolight[X] = lp->lt_pos[X] +
-			    bn_rand_half(ap->a_resource->re_randptr)*f -
-			    swp->sw_hit.hit_point[X];
-			tolight[Y] = lp->lt_pos[Y] +
-			    bn_rand_half(ap->a_resource->re_randptr)*f -
-			    swp->sw_hit.hit_point[Y];
-			tolight[Z] = lp->lt_pos[Z] +
-			    bn_rand_half(ap->a_resource->re_randptr)*f -
-			    swp->sw_hit.hit_point[Z];
-#endif
-
-		}
-
-		/*
-		 *  If we have a normal, test against light direction
-		 */
-		if ((have & MFI_NORMAL) && (swp->sw_transmit <= 0) )  {
-			if (VDOT(swp->sw_hit.hit_normal,tolight) < 0 ) {
-				/* backfacing, opaque */
-				if (rdebug & RDEBUG_LIGHT)
-					bu_log("normal backfacing, opaque surface: %s\n", lp->lt_name);
-				swp->sw_visible[i] = (char *)0;
-				goto next;
-			}
-		}
-
-		if (rdebug& RDEBUG_RAYPLOT) {
-			point_t ray_endpt;
-
-			/* Yelow -- light visibility ray */
-			pl_color(stdout, 200, 200, 0);
-			VADD2(ray_endpt, swp->sw_hit.hit_point,
-			    tolight);
-			pdv_3line(stdout, swp->sw_hit.hit_point,
-			    ray_endpt);
-		}
-		VUNITIZE( tolight );
-
-		/*
-		 * See if ray from hit point to light lies within light beam
-		 * Note: this is should always be true for infinite lights!
-		 */
-		if (-VDOT(tolight, lp->lt_aim) < lp->lt_cosangle )  {
-			/* dark (outside of light beam) */
-			if (rdebug & RDEBUG_LIGHT)
-				bu_log("point outside beam, obscured: %s\n", lp->lt_name);
-
-			swp->sw_visible[i] = (char *)0;
-			goto next;
-		}
-		if (!(lp->lt_shadows) )  {
-			/* "fill light" in beam, don't care about shadows */
-			if (rdebug & RDEBUG_LIGHT)
-				bu_log("fill light, no shadow, visible: %s\n", lp->lt_name);
-			swp->sw_visible[i] = (char *)lp;
-#if RT_MULTISPECTRAL
-			/* XXX Need a power level for this! */
-			bn_tabdata_constval( swp->msw_intensity[i], 1.0 );
-#else
-			VSETALL( intensity, 1 );
-#endif
-			goto next;
-		}
-
-		/*
-		 *  Fire ray at light source to check for shadowing.
-		 *  (This SHOULD actually return an energy spectrum).
-		 *  Advance start point slightly off surface.
-		 */
-		sub_ap = *ap;			/* struct copy */
-
-		VMOVE( sub_ap.a_ray.r_dir, tolight );
-		{
-			register fastf_t f;
-			f = ap->a_rt_i->rti_tol.dist;
-			VJOIN1( sub_ap.a_ray.r_pt,
-			    swp->sw_hit.hit_point,
-			    f, tolight );
-		}
-		sub_ap.a_rbeam = ap->a_rbeam + swp->sw_hit.hit_dist * ap->a_diverge;
-		sub_ap.a_diverge = ap->a_diverge;
-
-		sub_ap.a_hit = light_hit;
-		sub_ap.a_miss = light_miss;
-		sub_ap.a_user = -1;		/* sanity */
-		sub_ap.a_uptr = (genptr_t)lp;	/* so we can tell.. */
-		sub_ap.a_level = 0;
-		/* Will need entry & exit pts, for filter glass ==> 2 */
-		/* Continue going through air ==> negative */
-		sub_ap.a_onehit = -2;
-
-		VSETALL( sub_ap.a_color, 1 );	/* vis intens so far */
-		sub_ap.a_purpose = lp->lt_name;	/* name of light shot at */
-
-		RT_CK_LIGHT((struct light_specific *)(sub_ap.a_uptr));
-
-
-		if (rt_shootray( &sub_ap ) )  {
-			/* light visible */
-			if (rdebug & RDEBUG_LIGHT)
-				bu_log("light visible: %s\n", lp->lt_name);
-			swp->sw_visible[i] = (char *)lp;
-#if RT_MULTISPECTRAL
-			if (swp->msw_intensity[i] == BN_TABDATA_NULL) {
-				swp->msw_intensity[i] = sub_ap.a_spectrum;
-			} else {
-				bu_bomb("Why are we multisampling?");
-
-				bn_tabdata_add(swp->msw_intensity[i],
-					       swp->msw_intensity[i],
-					       sub_ap.a_spectrum);
-
-				bn_tabdata_free(sub_ap.a_spectrum);
-			}
-			sub_ap.a_spectrum = BN_TABDATA_NULL;
-
-#else
-			VMOVE( intensity, sub_ap.a_color );
-#endif
-		} else {
-			/* dark (light obscured) */
-			if (rdebug & RDEBUG_LIGHT)
-				bu_log("light obscured: %s\n", lp->lt_name);
-			swp->sw_visible[i] = (char *)0;
-		}
-next:
-		/* Advance to next light */
-		i++;
-#if RT_MULTISPECTRAL
-		/* Release sub_ap? */
-#else
-		intensity += 3;
-#endif
-		tolight += 3;
-	}
-
-	if (rdebug & RDEBUG_LIGHT ) bu_log("computing Light visibility: end\n");
-}
-
 

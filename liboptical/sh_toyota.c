@@ -41,7 +41,8 @@
 #include "raytrace.h"
 #include "shadefuncs.h"
 #include "shadework.h"
-#include "../rt/rdebug.h"
+#include "rtprivate.h"
+#include "plot3.h"
 #include "../rt/light.h"
 
 /* Sky onditions for luminance calculations. */

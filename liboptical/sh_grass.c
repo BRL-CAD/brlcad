@@ -33,8 +33,11 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "raytrace.h"
 #include "shadefuncs.h"
 #include "shadework.h"
-#include "../rt/rdebug.h"
+#include "rtprivate.h"
 
+extern int rr_render(struct application	*ap,
+		     struct partition	*pp,
+		     struct shadework   *swp);
 #ifndef M_PI
 #define M_PI            3.14159265358979323846
 #endif
@@ -152,10 +155,6 @@ struct grass_specific grass_defaults = {
 	{ 1.0, 1.0, 1.0 },		/* vscale */
 	{ 1001.6, 1020.5, 1300.4 },	/* delta into noise space */
 	{.7, .6, .3},	
-	{	0.0, 0.0, 0.0, 0.0,	/* m_to_sh */
-		0.0, 0.0, 0.0, 0.0,
-		0.0, 0.0, 0.0, 0.0,
-		0.0, 0.0, 0.0, 0.0 }
 	};
 
 #define SHDR_NULL	((struct grass_specific *)0)

@@ -29,7 +29,7 @@ static char RCScloud[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "shadefuncs.h"
 #include "shadework.h"
-#include "../rt/rdebug.h"
+#include "rtprivate.h"
 
 struct cloud_specific {
 	fastf_t	cl_thresh;

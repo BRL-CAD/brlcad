@@ -21,7 +21,7 @@
 #include "raytrace.h"
 #include "shadefuncs.h"
 #include "shadework.h"
-#include "../rt/rdebug.h"
+#include "rtprivate.h"
 
 #if !defined(M_PI)
 #define M_PI            3.14159265358979323846

@@ -33,8 +33,11 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "shadefuncs.h"
 #include "shadework.h"
 /*#include "../rt/mathtab.h"*/
-#include "../rt/rdebug.h"
+#include "rtprivate.h"
 
+extern int rr_render(struct application	*ap,
+		     struct partition	*pp,
+		     struct shadework   *swp);
 extern struct region	env_region;		/* import from view.c */
 
 HIDDEN int	bwtxt_render();
@@ -609,7 +612,7 @@ char	*dp;
 	u = swp->sw_uv.uv_u * ckp->ckr_scale;
 	v = swp->sw_uv.uv_v * ckp->ckr_scale;
 
-	if ( (u&1) && (v&1) || !(u&1) && !(v&1)) {
+	if ( (u&1) && (v&1) || !(u&1) && !(v&1) ) {
 		cp = ckp->ckr_a;
 	} else {
 		cp = ckp->ckr_b;
@@ -693,7 +696,7 @@ char *cp;
  *  Render a map which varries red with U and blue with V values.
  *  Mostly useful for debugging ft_uv() routines.
  */
-HIDDEN
+HIDDEN int
 tstm_render( ap, pp, swp, dp )
 struct application	*ap;
 struct partition	*pp;
@@ -730,7 +733,7 @@ static vect_t star_colors[] = {
 /*
  *			S T A R _ R E N D E R
  */
-HIDDEN
+HIDDEN int
 star_render( ap, pp, swp, dp )
 register struct application *ap;
 register struct partition *pp;
@@ -771,7 +774,7 @@ char	*dp;
  *  Note that .pix files are stored left-to-right, bottom-to-top,
  *  which works out very naturally for the indexing scheme.
  */
-HIDDEN
+HIDDEN int
 bmp_render( ap, pp, swp, dp )
 struct application	*ap;
 struct partition	*pp;

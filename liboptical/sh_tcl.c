@@ -15,9 +15,12 @@
 #include "raytrace.h"
 #include "shadefuncs.h"
 #include "shadework.h"
-#include "../rt/rdebug.h"
+#include "rtprivate.h"
 #include <tcl.h>
 
+extern int rr_render(struct application	*ap,
+		     struct partition	*pp,
+		     struct shadework   *swp);
 #define tcl_MAGIC 0x54434C00    /* "TCL" */
 #define CK_tcl_SP(_p) BU_CKMAG(_p, tcl_MAGIC, "tcl_specific")
 
@@ -100,8 +103,6 @@ struct mfuncs		*mfp;
 struct rt_i		*rtip;	/* New since 4.4 release */
 {
 	register struct tcl_specific	*tcl_sp;
-	mat_t	tmp;
-	vect_t	bb_min, bb_max, v_tmp;
 	int cpu;
 
 	/* check the arguments */
@@ -196,7 +197,6 @@ char			*dp;	/* ptr to the shader-specific struct */
 		(struct tcl_specific *)dp;
 	point_t pt;
 	int tcl_status;
-	char newVal[64];
 	register int cpu = ap->a_resource->re_cpu;
 
 	/* check the validity of the arguments we got */

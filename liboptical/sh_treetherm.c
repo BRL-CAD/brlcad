@@ -13,7 +13,7 @@
 #include "raytrace.h"
 #include "shadefuncs.h"
 #include "shadework.h"
-#include "../rt/rdebug.h"
+#include "rtprivate.h"
 #include "rtgeom.h"
 
 #define tthrm_MAGIC 0x7468726d	/* 'thrm' */

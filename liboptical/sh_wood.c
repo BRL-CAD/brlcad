@@ -78,7 +78,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "shadefuncs.h"
 #include "shadework.h"
 /*#include "../rt/mathtab.h"*/
-#include "../rt/rdebug.h"
+#include "rtprivate.h"
 
 /*
  *	Sundry external references

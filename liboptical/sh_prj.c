@@ -24,7 +24,8 @@
 #include "shadefuncs.h"
 #include "shadework.h"
 #include "../rt/ext.h"
-#include "../rt/rdebug.h"
+#include "rtprivate.h"
+#include "plot3.h"
 
 #define prj_MAGIC 0x70726a00	/* "prj" */
 #define CK_prj_SP(_p) BU_CKMAG(_p, prj_MAGIC, "prj_specific")

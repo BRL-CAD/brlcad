@@ -24,6 +24,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "conf.h"
 
 #include <stdio.h>
+#include <string.h>
 #include <math.h>
 #include "machine.h"
 #include "externs.h"
@@ -31,7 +32,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "shadefuncs.h"
 #include "shadework.h"
-#include "../rt/rdebug.h"
+#include "rtprivate.h"
 
 HIDDEN int  stxt_setup(), brick_render(), mbound_render(), rbound_render();
 HIDDEN void	stxt_print(), stxt_free();
@@ -240,7 +241,7 @@ char	*dp;
 }
 
 
-HIDDEN
+HIDDEN int
 brick_render( ap, pp, swp, dp )
 struct application	*ap;
 struct partition	*pp;
@@ -338,7 +339,7 @@ char	*dp;
  *
  *  Use region RPP to bound solid texture (rbound).
  */
-HIDDEN
+HIDDEN int
 rbound_render( ap, pp, swp, dp )
 struct application	*ap;
 struct partition	*pp;
@@ -413,7 +414,7 @@ char	*dp;
  *
  *  Use model RPP as solid texture bounds.  (mbound).
  */
-HIDDEN
+HIDDEN int
 mbound_render( ap, pp, swp, dp )
 struct application	*ap;
 struct partition	*pp;
