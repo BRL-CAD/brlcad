@@ -77,20 +77,20 @@ proc init_solid_edit_menus { stype menu } {
 		    set mged_gui($id,transform) e; set_transform $id"
 	    incr i
 	    .$id.menubar.edit insert $i radiobutton -variable edit_type \
-		    -label "none of above" -command "set edit_solid_flag 0; \
+		    -label "none of above" -underline 0 -command "set edit_solid_flag 0; \
 		    set mged_gui($id,transform) e; set_transform $id"
 	    incr i
 	    .$id.menubar.edit insert $i separator
 	}
 
 	incr i
-	.$id.menubar.edit insert $i command -label "Reject" -underline 0 \
+	.$id.menubar.edit insert $i command -label "Reject" -underline 2 \
 		-command "press reject"
 	incr i
 	.$id.menubar.edit insert $i command -label "Accept" -underline 0 \
 		-command "press accept"
 	incr i
-	.$id.menubar.edit insert $i command -label "Reset" -underline 0 \
+	.$id.menubar.edit insert $i command -label "Reset" -underline 1 \
 		-command "reset_edit_solid"
 	incr i
 	.$id.menubar.edit insert $i separator
