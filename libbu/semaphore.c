@@ -311,6 +311,15 @@ unsigned int	nsemaphores;
 		
 	}
 #	endif
+#	if HAS_POSIX_THREADS
+	for( i=0; i < nsemaphores; i++ )  {
+		bu_semaphores[i].magic = BU_SEMAPHORE_MAGIC;
+		if (pthread_mutex_init( &bu_semaphores[i].mu,  (void *)0)) {
+			fprintf(stderr, "bu_semaphore_init(): pthread_mutex_init() failed on %d\n", i);
+			abort();
+		}
+	}
+#	endif
 
 	/*
 	 *  This should be last thing done before returning, so that
@@ -383,6 +392,13 @@ unsigned int	i;
 		abort();
 	}
 #	endif
+#	if HAS_POSIX_THREADS
+	if( pthread_mutex_lock( &bu_semaphores[i].mu ) )  {
+		fprintf(stderr, "bu_semaphore_acquire(): pthread_mutex_lock() failed on %d\n", i);
+		abort();
+	}
+#	endif
+
 #endif
 }
 
@@ -442,6 +458,12 @@ unsigned int	i;
 #	if SUNOS
 	if( mutex_unlock( &bu_semaphores[i].mu ) )  {
 		fprintf(stderr, "bu_semaphore_acquire(): mutex_unlock() failed on %d\n", i);
+		abort();
+	}
+#	endif
+#	if HAS_POSIX_THREADS
+	if( pthread_mutex_unlock( &bu_semaphores[i].mu ) )  {
+		fprintf(stderr, "bu_semaphore_acquire(): pthread_mutex_unlock() failed on %d\n", i);
 		abort();
 	}
 #	endif

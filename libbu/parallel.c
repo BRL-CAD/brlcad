@@ -246,6 +246,7 @@ bu_avail_cpus()
 #if defined(HAS_POSIX_THREADS)
 	/* XXX Posix doesn't specify how to learn how many CPUs there are. */
 	ret = 2;
+#	define	RT_AVAIL_CPUS
 #endif /* HAS_POSIX_THREADS */
 #if defined(n16)
 	if( (ret = sysadmin( SADMIN_NUMCPUS, 0 )) < 0 )
@@ -862,9 +863,13 @@ genptr_t	arg;
 	/* XXX How to advise thread library that we need 'ncpu' processors? */
 
 	/* Create the threads */
-	for (x = 0; x < ncpu; x++)  {
+	for (x = 0; x < ncpu; x++)  { 
+		pthread_attr_t attrs;
+		size_t size;
+		pthread_attr_init(&attrs);
+		pthread_attr_setstacksize(&attrs,10*1024*1024);
 
-		if (pthread_create(&thread, 0,
+		if (pthread_create(&thread, &attrs,
 		    (void *(*)(void *))bu_parallel_interface, NULL)) {
 			fprintf(stderr, "ERROR parallel.c/bu_parallel(): thr_create(0x0, 0x0, 0x%x, 0x0, 0, 0x%x) failed on processor %d\n",
 				bu_parallel_interface, &thread, x);
