@@ -2286,17 +2286,17 @@ CONST vect_t	y_dir;
 	xproj = -VDOT( vec, x_dir );
 	yproj = -VDOT( vec, y_dir );
 	gamma = atan2( yproj, xproj );	/* -pi..+pi */
-	ang = rt_pi + gamma;		/* 0..+2pi */
+	ang = bn_pi + gamma;		/* 0..+2pi */
 	if( ang < 0 )  {
 		do {
-			ang += rt_twopi;
+			ang += bn_twopi;
 		} while( ang < 0 );
-	} else if( ang > rt_twopi )  {
+	} else if( ang > bn_twopi )  {
 		do {
-			ang -= rt_twopi;
-		} while( ang > rt_twopi );
+			ang -= bn_twopi;
+		} while( ang > bn_twopi );
 	}
-	if( ang < 0 || ang > rt_twopi )  bu_bomb("bn_angle_measure() angle out of range\n");
+	if( ang < 0 || ang > bn_twopi )  bu_bomb("bn_angle_measure() angle out of range\n");
 	return ang;
 }
 

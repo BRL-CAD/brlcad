@@ -866,7 +866,7 @@ struct bn_vlist  {
 		(p) = BU_LIST_FIRST( bn_vlist, (_free_hd) ); \
 		if( BU_LIST_IS_HEAD( (p), (_free_hd) ) )  { \
 			(p) = (struct bn_vlist *)bu_malloc(sizeof(struct bn_vlist), "bn_vlist"); \
-			(p)->l.magic = RT_VLIST_MAGIC; \
+			(p)->l.magic = BN_VLIST_MAGIC; \
 		} else { \
 			BU_LIST_DEQUEUE( &((p)->l) ); \
 		} \

@@ -78,7 +78,7 @@ double		scale;		/* scale factor to change 1x1 char sz */
 
 		VSET( temp, offset, 0, 0 );
 		MAT4X3PNT( loc, mat, temp );
-		BN_ADD_VLIST(free_hd, vhead, loc, RT_VLIST_LINE_MOVE );
+		BN_ADD_VLIST(free_hd, vhead, loc, BN_VLIST_LINE_MOVE );
 
 		for( p = tp_cindex[*cp]; ((stroke= *p)) != LAST; p++ )  {
 			int	draw;
@@ -101,9 +101,9 @@ double		scale;		/* scale factor to change 1x1 char sz */
 				   (ysign * (stroke%11)) * 0.1 * scale, 0 );
 			MAT4X3PNT( loc, mat, temp );
 			if( draw )  {
-				BN_ADD_VLIST( free_hd, vhead, loc, RT_VLIST_LINE_DRAW );
+				BN_ADD_VLIST( free_hd, vhead, loc, BN_VLIST_LINE_DRAW );
 			} else {
-				BN_ADD_VLIST( free_hd, vhead, loc, RT_VLIST_LINE_MOVE );
+				BN_ADD_VLIST( free_hd, vhead, loc, BN_VLIST_LINE_MOVE );
 			}
 		}
 	}
