@@ -412,8 +412,10 @@ register struct xray *rp;
 	 *  if the root finder returns other than 4 roots, error.
 	 */
 	if ( (i = polyRoots( &C, val )) != 4 ){
-		rt_log("tor:  polyRoots() 4!=%d\n", i);
-		rt_pr_roots( i, val );
+		if( i != 0 )  {
+			rt_log("tor:  polyRoots() 4!=%d\n", i);
+			rt_pr_roots( i, val );
+		}
 		return(SEG_NULL);		/* MISS */
 	}
 
