@@ -6,8 +6,9 @@
  *	menu_display		Add a list of items to the display list
  *	menu_select		Called by usepen() for menu pointing
  *
- * Author -
+ * Authors -
  *	Bob Suckling
+ *	Michael John Muuss
  *  
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
@@ -27,125 +28,85 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include	"menu.h"
 #include	"dm.h"
 
-int	menuyy;		/* y-location of selected menu item */
 int	menuflag;	/* flag indicating if a menu item is selected */
-int	menu_on;	/* (User || Programmer) controlled by MENU_ON();*/
-struct menu_item	*menu_list;	/* Pointer to the current menu list */
+int	menu_on;
+struct menu_item *menu_list;	/* base of array of menu items */
 
-static int	i_menu_pen;
-		/* Set in menu_pen() to index of menu item closest to pen. */
-static int	menu_y;		/* VG tube space loc of the first menu item */
-static int	x_old_menu;	/* Saves old pen loc.for debounce.*/
-static int	y_old_menu;
+static int	menu_current;	/* y-location of selected menu item */
+static int	menu_top;	/* screen loc of the first menu item */
 
 /* MENU_INIT() ==== clear global data.*/
 
 void
 menu_init()
 {
-	x_old_menu = 999999;
-	y_old_menu = 999999;
-	i_menu_pen = -1;	/* pen not close to menu list.
-					NOTE, setting this fixes the problem 
-					of calling usepen before the call
-					to do zoom.  So do not worry.*/
-	MENU_ON(FALSE);		/* do not display empty menu.*/
-	MENU_INSTALL((struct menu_item *)NULL);	/* no menu list.*/
-/**	init_ars();	/*ARS INPUT ONLY*/
-	/* run the ARS menus.*/
+	menu_on = 0;
+	menuflag = 0;
+	menu_list = MENU_NULL;
 }
 
 /* MENU_DISPLAY(y) ==== Add a list of items to the display list. */
 
 void
-menu_display( y )
-int			y;	/*=== points @ the tube. */
+menu_display( y_top )
+int y_top;
 { 
-	register int	i;
-	register char	*str;
+	register struct menu_item	*mptr;
+	register int y = y_top;
 
-	if( menu_list == (struct menu_item *)NULL )
+	if( menu_list == MENU_NULL || menu_on == 0 )
 		return;
 
-	dmp->dmr_puts(menu_list->menu_string, XLIM, y, 0, DM_YELLOW );
-	if( menu_on == FALSE )
-		return;
+	menu_top = y - MENU_DY / 2;
 
-	/* save the tube space location of the starting point of this menu. */
-	menu_y = y + MENU_DY / 2;
-	y += MENU_DY;		/* skip space for first item.*/
-	for( i = 1; (str = (menu_list + i)->menu_string)[0] != '\0'; ++i )  {
-		dmp->dmr_puts( str, MENUX, y, 0, DM_YELLOW );
-		if( i == i_menu_pen )  {
-			/* pen is near, intensify */
-			dmp->dmr_puts(str,MENUX,y,0, DM_WHITE );
-			dmp->dmr_puts(str,MENUX,y,0, DM_WHITE );
-		}
-		y += MENU_DY; /* skip space for next item.*/
+	for( mptr = &menu_list[0];
+	     mptr->menu_string[0] != '\0';
+	     mptr++, y += MENU_DY )  {
+		dmp->dmr_puts( mptr->menu_string, MENUX, y, 0, DM_YELLOW );
+		dmp->dmr_2d_line(XLIM, y+(MENU_DY/2), 2047, y+(MENU_DY/2), 0);
+	}
+
+	dmp->dmr_2d_line( XLIM, menu_top, XLIM, y-(MENU_DY/2), 0 );
+
+	/* prefix item selected with "==>" to let user know it is selected */
+	if( menuflag ) {
+		dmp->dmr_puts("==>", MENUX-114, menu_current, 0, DM_WHITE);
 	}
 }
 
-/* MENU_SELECT(x,y) ==== called in pen input area, to activate the 
- *	===	pen menu select function. This sets the I_menu_pen
- *	===	integer when the pen is not pushed, else the function
- *	===	in the menu list is activated.
+/* MENU_SELECT(x,y)
  *
  * Returns: 1 if menu claims these pen co-ordinates, 0 otherwise.
  */
 int
-menu_select( x, y, pressval )
-int	x;
-register int y;
-int	pressval;
+menu_select( pen_y )
+register int pen_y;
 { 
-	struct menu_item	*mptr;
-	int			yy;
-	register int		i;
+	register struct menu_item	*mptr;
+	register int			yy;
 
-	if( x <= MENUX )
-		return( 0 );		/* menu does not claim the pen */
+	if( pen_y > menu_top )
+		return(0);	/* pen above menu area */
 
-
-	yy = menu_y;		/* set a finger @ the begining of the
-					menu list on the tube.*/
 	/*
-	 * The pen is within the menu
-	 */
-	i_menu_pen = -1;	/* non selected value!!*/
-	dmaflag = 1;		/* activate dozoom!!*/
-
-	/* Find the pen close location. that is...
 	 * Start at the top of the list and see if the pen is
-	 * above here. The algorithim is ...
-	 *	FOR all menu items DO probe next item
-	 *	UNTIL selected item is found (i.e., selected
-	 *	means pen is close to the item name)
-	 *	THEN mark the item selected.
+	 * above here.
 	 */
-	for( i = 1; ((menu_list + i)->menu_string)[0] != '\0'; ++i )  {
-		yy += MENU_DY;	/* skip an item space */
-		if( y > yy )	/* UNTIL above here...*/
-		{	
-			i_menu_pen = i;	/* THEN select it.*/
-			break;		/* EXIT FOR LOOP */
+	yy = menu_top;
+	for( mptr = &menu_list[0];
+	     mptr->menu_string[0] != '\0';
+	     mptr++ )  {
+		yy += MENU_DY;
+		if( pen_y <= yy )
+			continue;	/* pen is below this item */
+		if( mptr != &menu_list[0] )  {
+			menu_current = yy - (MENU_DY / 2);
+			menuflag = 1;	/* tag a non-title item */
 		}
+		if( mptr->menu_func != ((void (*)())0) )
+			(*(mptr->menu_func))(mptr->menu_arg);
+		dmaflag = 1;
+		return( 1 );		/* menu claims pen value */
 	}
-
-	if(	pressval
-	    &&	( i_menu_pen != -1 )		/* pen on menu item */
-	    &&	( x != x_old_menu)		/* debounce x and y */
-	    &&	( y != y_old_menu)		)
-	{
-		/* Save for debounce when pen is pushed to select.*/
-		x_old_menu = x;		
-		y_old_menu = y;
-		/* get pointer to item[i_menu_pen].*/
-		mptr  = menu_list + i_menu_pen;
-		menuyy = yy - (MENU_DY / 2);
-		menuflag = 1;
-		/* CALL the function corresponding to the users
-		   menu item selected, and pass in the argument.*/
-		(*(mptr->menu_func))(mptr->menu_arg);
-	}
-	return( 1 );	/* menu claims the pen value */
+	return( 0 );		/* pen below menu area */
 }
