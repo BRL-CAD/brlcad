@@ -95,290 +95,6 @@ struct name_conv_list
 #define	ASSEMBLY_TYPE	1
 #define	PART_TYPE	2
 
-int
-nmg_process_imported_model( m, outfaceuses, nfaces, tol )
-struct model *m;
-struct faceuse *outfaceuses[];
-int nfaces;
-struct rt_tol *tol;
-{
-	struct nmgregion *r;
-	struct shell *s;
-	int return_val=0;
-	int i;
-
-	NMG_CK_MODEL( m );
-	RT_CK_TOL( tol );
-
-	if( rt_g.debug & DEBUG_MEM_FULL )
-	{
-		rt_log( "Barrier check at start of nmg_process_imported_model:\n" );
-		if( rt_mem_barriercheck() )
-			rt_bomb( "Barrier check failed!!!\n" );
-	}
-
-	if( debug )
-		rt_log( "\tvertex fuse\n" );
-	(void)nmg_model_vertex_fuse( m, tol );
-
-	/* Break edges on vertices */
-	if( debug )
-		rt_log( "\tBreak edges\n" );
-	(void)nmg_model_break_e_on_v( m, tol );
-
-	/* kill zero length edgeuses */
-	if( debug )
-		rt_log( "\tKill zero length edges\n" );
-	if( nmg_kill_zero_length_edgeuses( m ) )
-		return( 1 );
-
-	/* kill cracks */
-	if( debug )
-		rt_log( "\tKill cracks\n" );
-	r = RT_LIST_FIRST( nmgregion, &m->r_hd );
-	while( RT_LIST_NOT_HEAD( &r->l, &m->r_hd ) )
-	{
-		struct nmgregion *next_r;
-
-		next_r = RT_LIST_PNEXT( nmgregion, &r->l );
-
-		s = RT_LIST_FIRST( shell , &r->s_hd );
-		while( RT_LIST_NOT_HEAD( &s->l, &r->s_hd ) )
-		{
-			struct shell *next_s;
-
-			next_s = RT_LIST_PNEXT( shell, &s->l );
-
-			if( nmg_kill_cracks( s ) )
-			{
-				if( nmg_ks( s ) )
-					return_val = 1;
-			}
-			if( return_val )
-				break;
-			s = next_s;
-		}
-		if( return_val )
-			break;
-		r = next_r;
-	}
-
-	if( return_val )
-		return( return_val );
-
-	/* Associate the face geometry. */
-	if( debug )
-		rt_log( "\tCalculate Face geometry\n" );
-	for (i = 0; i < nfaces; i++)
-	{
-		/* skip faceuses that were killed */
-		if( outfaceuses[i]->l.magic != NMG_FACEUSE_MAGIC )
-			continue;
-
-		/* calculate plane for this faceuse */
-		if( !outfaceuses[i]->f_p->g.magic_p )
-		{
-			if( nmg_calc_face_g( outfaceuses[i] ) )
-			{
-				rt_log( "nmg_calc_face_g failed\n" );
-				nmg_pr_fu_briefly( outfaceuses[i], "" );
-			}
-		}
-	}
-
-	/* Compute "geometry" for model, region, and shell */
-	if( debug )
-		rt_log( "\trebound\n" );
-	nmg_rebound( m , tol );
-#if 0
-
-	/* Break edges on vertices */
-	if( debug )
-		rt_log( "\tBreak edges\n" );
-	(void)nmg_model_break_e_on_v( m, tol );
-
-	/* kill cracks */
-	if( debug )
-		rt_log( "\tKill cracks\n" );
-	r = RT_LIST_FIRST( nmgregion, &m->r_hd );
-	while( RT_LIST_NOT_HEAD( &r->l, &m->r_hd ) )
-	{
-		struct nmgregion *next_r;
-
-		next_r = RT_LIST_PNEXT( nmgregion, &r->l );
-
-		s = RT_LIST_FIRST( shell , &r->s_hd );
-		while( RT_LIST_NOT_HEAD( &s->l, &r->s_hd ) )
-		{
-			struct shell *next_s;
-
-			next_s = RT_LIST_PNEXT( shell, &s->l );
-
-			if( nmg_kill_cracks( s ) )
-			{
-				if( nmg_ks( s ) )
-					return_val = 1;
-			}
-			if( return_val )
-				break;
-			s = next_s;
-		}
-		if( return_val )
-			break;
-		r = next_r;
-	}
-
-	if( return_val )
-		return( return_val );
-
-	/* kill zero length edgeuses */
-	if( debug )
-		rt_log( "\tKill zero length edges\n" );
-	if( nmg_kill_zero_length_edgeuses( m ) )
-		return( 1 );
-#endif
-
-	if( !polysolid )
-	{
-		/* Glue faceuses together. */
-		if( debug )
-			rt_log( "\tEdge fuse\n" );
-		(void)nmg_model_edge_fuse( m, tol );
-
-		/* Compute "geometry" for model, region, and shell */
-		if( debug )
-			rt_log( "\trebound\n" );
-		nmg_rebound( m , tol );
-
-		/* fix the normals */
-		if( debug )
-			rt_log( "\tFix normals\n" );
-		for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )
-		{
-			for( RT_LIST_FOR( s, shell, &r->s_hd ) )
-				nmg_fix_normals( s, tol );
-		}
-
-		if( debug )
-			rt_log( "\tJoin touching loops\n" );
-		for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )
-		{
-			for( RT_LIST_FOR( s, shell, &r->s_hd ) )
-				nmg_s_join_touchingloops( s, tol );
-		}
-
-		/* kill cracks */
-		if( debug )
-			rt_log( "\tKill cracks\n" );
-		r = RT_LIST_FIRST( nmgregion, &m->r_hd );
-		while( RT_LIST_NOT_HEAD( &r->l, &m->r_hd ) )
-		{
-			struct nmgregion *next_r;
-
-			next_r = RT_LIST_PNEXT( nmgregion, &r->l );
-
-			s = RT_LIST_FIRST( shell , &r->s_hd );
-			while( RT_LIST_NOT_HEAD( &s->l, &r->s_hd ) )
-			{
-				struct shell *next_s;
-
-				next_s = RT_LIST_PNEXT( shell, &s->l );
-				
-				if( nmg_kill_cracks( s ) )
-				{
-					if( nmg_ks( s ) )
-						return_val = 1;
-				}
-				if( return_val )
-					break;
-				s = next_s;
-			}
-			if( return_val )
-				break;
-			r = next_r;
-		}
-
-		if( return_val )
-			return( return_val );
-
-		if( debug )
-			rt_log( "\tSplit touching loops\n" );
-		for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )
-		{
-			for( RT_LIST_FOR( s, shell, &r->s_hd ) )
-				nmg_s_split_touchingloops( s, tol);
-		}
-
-		/* kill cracks */
-		if( debug )
-			rt_log( "\tKill cracks\n" );
-		r = RT_LIST_FIRST( nmgregion, &m->r_hd );
-		while( RT_LIST_NOT_HEAD( &r->l, &m->r_hd ) )
-		{
-			struct nmgregion *next_r;
-
-			next_r = RT_LIST_PNEXT( nmgregion, &r->l );
-			
-			s = RT_LIST_FIRST( shell , &r->s_hd );
-			while( RT_LIST_NOT_HEAD( &s->l, &r->s_hd ) )
-			{
-				struct shell *next_s;
-
-				next_s = RT_LIST_PNEXT( shell, &s->l );
-
-				if( nmg_kill_cracks( s ) )
-				{
-					if( nmg_ks( s ) )
-						return_val = 1;
-				}
-				if( return_val )
-					break;
-				s = next_s;
-			}
-			if( return_val )
-				break;
-			r = next_r;
-		}
-
-		if( return_val )
-			return( return_val );
-
-		/* verify face plane calculations */
-		if( debug )
-			rt_log( "\tMake faces within tolerance\n" );
-		for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )
-		{
-			for( RT_LIST_FOR( s, shell, &r->s_hd ) )
-				nmg_make_faces_within_tol( s, tol );
-		}
-#if 0
-		/* Fuse */
-		if( debug )
-			rt_log( "\tFuse\n" );
-		(void)nmg_model_fuse( m, tol );
-
-		if( debug )
-			rt_log( "\tJoin and split touching loops\n" );
-		for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )
-		{
-			for( RT_LIST_FOR( s, shell, &r->s_hd ) )
-			{
-				nmg_s_join_touchingloops( s, tol );
-				nmg_s_split_touchingloops( s, tol);
-			}
-		}
-#endif
-	}
-	if( rt_g.debug & DEBUG_MEM_FULL )
-	{
-		rt_log( "Barrier check at end of nmg_process_imported_model:\n" );
-		if( rt_mem_barriercheck() )
-			rt_bomb( "Barrier check failed!!!\n" );
-	}
-
-	return( 0 );
-}
-
 struct name_conv_list *
 Add_new_name( name , obj , type )
 char *name,*obj;
@@ -666,12 +382,12 @@ char line[MAX_LINE_LEN];
 	char *solid_name;
 	int start;
 	int i;
+	int face_count=0;
 	struct model *m;
 	struct nmgregion *r;
 	struct shell *s;
 	struct render_verts verts[3];
 	struct vertex   **vts[3];
-	struct nmg_ptbl faces;
 	float colr[3];
 	unsigned char color[3];
 	char *brlcad_name;
@@ -691,7 +407,6 @@ char line[MAX_LINE_LEN];
 
 
 	RT_LIST_INIT( &head.l );
-	nmg_tbl( &faces , TBL_INIT , (long *)NULL );
 
 	m = nmg_mm();
 	NMG_CK_MODEL( m );
@@ -706,7 +421,6 @@ char line[MAX_LINE_LEN];
 	if( strncmp( &line[start] , "solid" , 5 ) )
 	{
 		rt_log( "Convert_part: Called for non-part\n%s\n" , line );
-		nmg_tbl( &faces, TBL_FREE, (long *)NULL );
 		return;
 	}
 
@@ -835,14 +549,14 @@ char line[MAX_LINE_LEN];
 			}
 
 			if( area > 0.0 )
-				nmg_tbl( &faces , TBL_INS , (long *)fu );
+				face_count++;
 			else
 				(void)nmg_kfu( fu );
 		}
 	}
 
 	/* Check if this part has any solid parts */
-	if( NMG_TBL_END( &faces ) == 0 )
+	if( face_count == 0 )
 	{
 		char *save_name;
 
@@ -851,43 +565,87 @@ char line[MAX_LINE_LEN];
 		brlcad_name = Get_unique_name( name , obj , PART_TYPE );
 		NAMEMOVE( brlcad_name, save_name );
 		nmg_tbl( &null_parts, TBL_INS, (long *)save_name );
-		nmg_tbl( &faces, TBL_FREE, (long *)NULL );
 		nmg_km( m );
 		return;
 	}
-
-#if 1
-	if( nmg_process_imported_model( m, (struct faceuse **)NMG_TBL_BASEADDR( &faces), NMG_TBL_END( &faces ), &tol ) )
-	{
-		nmg_tbl( &faces , TBL_FREE , (long *)NULL );
-		nmg_km( m );
-		rt_log( "Note: %s is an empty solid\n" , name );
-		return;
-	}
-	nmg_tbl( &faces , TBL_FREE , (long *)NULL );
-#else
-	/* fuse vertices that are within tolerance of each other */
-	rt_log( "\tFusing vertices for part\n" );
-	(void)nmg_model_vertex_fuse( m , &tol );
-
-	rt_log( "\tGlueing faces together\n" );
-	nmg_gluefaces( (struct faceuse **)NMG_TBL_BASEADDR( &faces) , NMG_TBL_END( &faces ) );
-	nmg_tbl( &faces , TBL_FREE , (long *)NULL );
 
 	if( !polysolid )
 	{
+		/* fuse vertices that are within tolerance of each other */
+		rt_log( "\tFusing vertices for part\n" );
+		(void)nmg_model_vertex_fuse( m , &tol );
+
+		/* Break edges on vertices */
+		if( debug )
+			rt_log( "\tBreak edges\n" );
+		(void)nmg_model_break_e_on_v( m, &tol );
+
+		/* kill zero length edgeuses */
+		if( debug )
+			rt_log( "\tKill zero length edges\n" );
+		if( nmg_kill_zero_length_edgeuses( m ) )
+			goto empty_model;
+
+		/* kill cracks */
+		if( debug )
+			rt_log( "\tKill cracks\n" );
+		if( nmg_kill_cracks( s ) )
+		{
+			if( nmg_ks( s ) )
+				goto empty_model;
+		}
+
+		nmg_rebound( m , &tol );
+
+		/* Glue faceuses together. */
+		if( debug )
+			rt_log( "\tEdge fuse\n" );
+		(void)nmg_model_edge_fuse( m, &tol );
+
+		if( debug )
+			rt_log( "\tJoin touching loops\n" );
+		nmg_s_join_touchingloops( s, &tol );
+
+		/* kill cracks */
+		if( debug )
+			rt_log( "\tKill cracks\n" );
+		r = RT_LIST_FIRST( nmgregion, &m->r_hd );
+		if( nmg_kill_cracks( s ) )
+		{
+			if( nmg_ks( s ) )
+				goto empty_model;
+		}
+
+		if( debug )
+			rt_log( "\tSplit touching loops\n" );
+		nmg_s_split_touchingloops( s, &tol);
+
+		/* kill cracks */
+		if( debug )
+			rt_log( "\tKill cracks\n" );
+			
+		if( nmg_kill_cracks( s ) )
+		{
+			if( nmg_ks( s ) )
+				goto empty_model;
+		}
+
+		/* verify face plane calculations */
+		if( debug )
+			rt_log( "\tMake faces within tolerance\n" );
+		nmg_make_faces_within_tol( s, &tol );
+
 		nmg_shell_coplanar_face_merge( s , &tol , 0 );
 
 		nmg_simplify_shell( s );
 
 		nmg_rebound( m , &tol );
 
-		(void)nmg_model_vertex_fuse( m , &tol );
 	}
 	else
 
 		nmg_rebound( m , &tol );
-#endif
+
 	solid_count++;
 	solid_name = Get_solid_name( name , obj );
 
@@ -922,6 +680,21 @@ char line[MAX_LINE_LEN];
 		rt_log( "Barrier check at end of Convert_part:\n" );
 		if( rt_mem_barriercheck() )
 			rt_bomb( "Barrier check failed!!!\n" );
+	}
+
+	return;
+
+empty_model:
+	{
+		char *save_name;
+
+		rt_log( "\t%s is empty, ignoring\n" , name );
+		save_name = (char *)rt_malloc( NAMESIZE*sizeof( char ), "proe-g: save_name" );
+		brlcad_name = Get_unique_name( name , obj , PART_TYPE );
+		NAMEMOVE( brlcad_name, save_name );
+		nmg_tbl( &null_parts, TBL_INS, (long *)save_name );
+		nmg_km( m );
+		return;
 	}
 
 }
