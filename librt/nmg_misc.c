@@ -3098,6 +3098,7 @@ CONST struct rt_tol *tol;
 			if( rt_pt3_pt3_equal( i_fus->vp->vg_p->coord , j_fus->vp->vg_p->coord , tol ) )
 			{
 				struct vertex *set_i_to_null;
+				struct edgeuse *eu_base;
 
 				/* fuse all uses of i_fus->vp to j_fus->vp */
 				while( (vu = RT_LIST_FIRST( vertexuse , &i_fus->vp->vu_hd )) != NULL )
@@ -3108,6 +3109,38 @@ CONST struct rt_tol *tol;
 				set_i_to_null = i_fus->vp;
 				i_fus->vp = NULL;
 				i_fus->eu = NULL;
+
+				/* find one edgeuse from new_v to i_fus->vp */
+				for( RT_LIST_FOR( vu , vertexuse , &new_v->vu_hd ) )
+				{
+					struct edgeuse *eu;
+
+					if( *vu->up.magic_p != NMG_EDGEUSE_MAGIC )
+						continue;
+
+					eu = vu->up.eu_p;
+					if( eu->eumate_p->vu_p->v_p == i_fus->vp )
+					{
+						eu_base = eu;
+						break;
+					}
+				}
+
+				/* join radial edges */
+				for( RT_LIST_FOR( vu , vertexuse , &new_v->vu_hd ) )
+				{
+					struct edgeuse *eu;
+
+					if( *vu->up.magic_p != NMG_EDGEUSE_MAGIC )
+						continue;
+
+					if( eu == eu_base )
+						continue;
+
+					eu = vu->up.eu_p;
+					if( eu->eumate_p->vu_p->v_p == i_fus->vp )
+						nmg_radial_join_eu( eu_base , eu , tol );
+				}
 #if 0
 				for( j=0 ; j<NMG_TBL_END( &int_faces ) ; j++ )
 				{
@@ -3223,6 +3256,8 @@ CONST struct rt_tol *tol;
 			}
 
 			fu = i_fus->fu[1];
+			if( fu->orientation != OT_SAME )
+				fu = fu->fumate_p;
 			/* put this face on the "new_faces" list for glueing */
 			nmg_tbl( &new_faces , TBL_INS , (long *)fu );
 			lu = RT_LIST_FIRST( loopuse , &fu->lu_hd );
@@ -3266,11 +3301,15 @@ CONST struct rt_tol *tol;
 			new_lu->orientation = orientation;
 			new_lu->lumate_p->orientation = orientation;
 #else
-			nmg_lu_reorient( lu , tol );
-			nmg_lu_reorient( new_lu , tol );
+			for( RT_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
+			{
+				if( lu->orientation == OT_UNSPEC )
+				{
+					lu->orientation = OT_SAME;
+					lu->lumate_p->orientation = OT_SAME;
+				}
+			}
 #endif
-
-			new_lu = NULL;
 
 			/* find which loopuse contains new_v
 			 * this will be the one to become a new face
