@@ -36,7 +36,8 @@
 
 /* Guess whether or not a frame buffer name is a disk file. (XXX) */
 #define DiskFile(fil)	(*fil != '\0'\
-			&& strncmp(fil, "/dev", 4 ) && strchr( fil, ':' )==NULL)
+			&& strncmp(fil, "/dev", 4 ) != 0 \
+			&& strchr( fil, ':' ) == (char *)NULL)
 
 /* Values for grid type. */
 #define GT_RPP_CENTERED	0 /* Grid origin aligned with centroid of model RPP. */
