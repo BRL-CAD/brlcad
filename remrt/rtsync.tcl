@@ -45,6 +45,7 @@ menu .mbar.spacepart.menu
 .mbar.spacepart.menu add command -label "Gigante NUgrid" -command "space_partitioning 0"
 
 # Title, across the top
+set cur_vrmgr_status {[vrmgr offline]}
 frame .words_fr
 frame .title3
 image create photo .eagle -file "/m/cad/remrt/eagleCAD.gif"
@@ -52,9 +53,10 @@ label .logo -image .eagle
 label .title1 -text "BRL-CAD's SWISS"
 label .title2 -text "Real-Time Ray-Tracer"
 label .title3a -textvariable cpu_count
-label .title3b -text "CPUs active"
+label .title3b -text "CPUs "
+label .title3c -textvariable cur_vrmgr_status
 label .title4 -textvariable database
-pack .title3a .title3b -side left -in .title3
+pack .title3a .title3b .title3c -side left -in .title3
 pack .title1 .title2 .title3 .title4 -side top -in .words_fr
 pack .logo .words_fr -side left -in .title_fr
 
@@ -76,6 +78,8 @@ pack .status.button .status.incr_fr .status.list -side top -in .status
 
 
 proc update_cpu_status {} {
+	global	cur_vrmgr_status
+
 	set nodes [list_rtnodes]
 
 	.status.list delete 0 end
@@ -83,6 +87,13 @@ proc update_cpu_status {} {
 	.status.list insert end [get_rtnode -1];# generate title
 	foreach node $nodes {
 		.status.list insert end [get_rtnode $node]
+	}
+
+	set name [vrmgr_hostname]
+	if { [llength $name] } {
+		set cur_vrmgr_status $name
+	} else {
+		set cur_vrmgr_status {[vrmgr offline]}
 	}
 }
 
