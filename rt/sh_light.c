@@ -723,7 +723,7 @@ int have;
 		register fastf_t f;
 		struct application sub_ap;
 
-		if( rdebug & RDEBUG_LIGHT ) rt_log("computing Light visibility\n");
+		if( rdebug & RDEBUG_LIGHT ) rt_log("computing Light visibility: start\n");
 
 		/*
 		 *  Determine light visibility
@@ -859,4 +859,6 @@ next:
 			intensity += 3;
 			tolight += 3;
 		}
+
+		if( rdebug & RDEBUG_LIGHT ) rt_log("computing Light visibility: end\n");
 }
