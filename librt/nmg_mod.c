@@ -4068,16 +4068,19 @@ struct edge_g_lseg	*new_eg;
 			old_eg, new_eg );
 	}
 
+	nmg_ck_list( &old_eg->eu_hd2, "nmg_move_eg() eu_hd2");	/* safety */
 	while( RT_LIST_NON_EMPTY( &old_eg->eu_hd2 ) )  {
 		struct rt_list	*midway;	/* &eu->l2, midway into edgeuse */
 
 		/* Obtain an eu from old_eg */
 		midway = RT_LIST_FIRST(rt_list, &old_eg->eu_hd2 );
+		NMG_CKMAG(midway, NMG_EDGEUSE2_MAGIC, "edgeuse2 [l2]");
 		eu = RT_LIST_MAIN_PTR( edgeuse, midway, l2 );
 		NMG_CK_EDGEUSE(eu);
 
 		/* Associate eu and mate with new_eg. old_eg freed when unused. */
 		nmg_use_edge_g( eu, &new_eg->magic );
+		nmg_ck_list( &old_eg->eu_hd2, "nmg_move_eg() eu_hd2 B");	/* safety */
 	}
 }
 
