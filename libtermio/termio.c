@@ -20,7 +20,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <fcntl.h>
 #endif
 
-#if HAVE_IOCTL_COMPAT_H
+#if HAVE_SYS_IOCTL_COMPAT_H
 #	include <sys/ioctl_compat.h>
 #	define TAB3 (TAB1|TAB2)
 #	if !defined(OCRNL)
