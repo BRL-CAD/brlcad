@@ -176,13 +176,12 @@ proc apply_air {} {
 	# XXX Need short (1 sec) delay here.
 	# Use new POV if one receieved, else repeat last POV.
 	send rtsync \
-		node_send .inmem adjust $air_region_name \
-			rgb "{" $air_shader1 "}" \
-			shader "{" $air_shader2 "}" ";" \
-		vrmgr_send .inmem adjust $air_region_name \
-			rgb "{" $air_shader1 "}" \
-			shader "{" $air_shader2 "}" ";" \
-		reprep ";" refresh
+		all_send "{" \
+			.inmem adjust $air_region_name \
+				rgb "{" $air_shader1 "}" \
+				shader "{" $air_shader2 "}" \
+		"}" ";"	reprep ";" refresh
+
 }
 
 # The dynamic hole-maker
