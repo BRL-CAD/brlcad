@@ -27,7 +27,7 @@ extern char	*malloc();
 extern int	LI, CO;
 #define MAX_PROMPT	10
 #define Alloc(p_,t_,s_)\
-		if( ((p_) = (t_ *) malloc(s_)) == (t_ *) 0 )\
+		if( ((p_) = (t_ *) malloc((unsigned)(s_))) == (t_ *) 0 )\
 		{\
 		(void) fprintf( stderr, "\"%s\"(%d): Alloc of %d bytes failed.\n",\
 				__FILE__, __LINE__, s_ );\
@@ -304,15 +304,6 @@ HWindow	*win;
 	for( row = 0; row <= win->height+1; row++ )
 		win->dirty[row] = ~0; /* 0xffff... */
 	return;
-	}
-
-_LOCAL_ int
-hm_Overlap( win1, win2 )
-register HWindow	*win1, *win2;
-	{
-	return	!(win1->menux+win1->width < win2->menux	||
-		  win1->menux > win2->menux + win2->width);
-		
 	}
 
 _LOCAL_ HWindow	*

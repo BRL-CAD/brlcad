@@ -21,7 +21,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./mat_db.h"
 #include "./screen.h"
 #include "./extern.h"
-static FILE		*matdb_fp;
 static Mat_Db_Entry	mat_db_table[MAX_MAT_DB];
 static int		mat_db_size = 0;
 Mat_Db_Entry		mat_dfl_entry =

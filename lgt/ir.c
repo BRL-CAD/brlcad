@@ -81,6 +81,9 @@ int	xmin, ymax;
 				{	int	temp = AMBIENT+percent*RANGE;
 					register int	index = temp - ir_min;
 				pixel = (RGBpixel *) ir_table[Min(index,ir_max_index)];
+					/* LINT: this should be an &ir_table...,
+						allowed by ANSI C, but not current
+						compilers. */
 				(void) fb_wpixel( fbiop, black );
 				}
 			else
@@ -296,7 +299,7 @@ init_Temp_To_RGB()
 			initialize.
 		 */
 		free( (char *) ir_table );
-	ir_table = (RGBpixel *) malloc( sizeof(RGBpixel)*((ir_max-ir_min)+1) );
+	ir_table = (RGBpixel *) malloc( (unsigned)(sizeof(RGBpixel)*((ir_max-ir_min)+1)) );
 	if( ir_table == RGBPIXEL_NULL )
 		{
 		Malloc_Bomb(sizeof(RGBpixel)*((ir_max-ir_min)+1));

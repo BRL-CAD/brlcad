@@ -40,7 +40,7 @@ extern void		abort_RT();
 extern char		*getenv();
 extern char		*malloc();
 extern char		*sbrk();
-extern char		*strncpy();
+extern char		*strcpy(), *strncpy();
 extern char		*get_Input();
 
 extern fastf_t		pow_Of_2();
@@ -51,20 +51,27 @@ extern int		get_Answer();
 extern int		fb_Setup();
 extern int		txtr_Val();
 
+#ifdef BSD
+extern int		exit();
+extern int		free();
+extern int		perror();
+#else
+extern void		exit();
+extern void		free();
+extern void		perror();
+#endif
+
 extern void		append_Octp();
 extern void		close_Output_Device();
 extern void		cons_Vector();
 extern void		delete_OcList();
 extern void		display_Temps();
 extern void		do_line();
-extern void		exit();
 extern void		exit_Neatly();
-extern void		free();
 extern void		fb_Zoom_Window();
 extern void		grid_Rotate();
 extern void		init_Status();
 extern void		loc_Perror();
-extern void		perror();
 extern void		prnt_Event();
 extern void		prnt_IR_Status();
 extern void		prnt_Lgt_Status();

@@ -26,7 +26,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 /* Variables controlling the font itself */
 FILE		*ffdes;		/* File pointer for current font.	*/
-int		offset;		/* Current offset to character data.	*/
+long		offset;		/* Current offset to character data.	*/
 struct header	hdr;		/* Header for font file.		*/
 struct dispatch	dir[256];	/* Directory for character font.	*/
 int		width = 0,	/* Size of current character.		*/

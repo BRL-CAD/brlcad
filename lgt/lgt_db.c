@@ -230,19 +230,6 @@ int	id;
 	return	1;
 	}
 
-/*	l g t _ G e t _ D b _ E n t r y ( )
-	Return pointer to entry indexed by id or NULL.
- */
-Lgt_Source *
-lgt_Get_Db_Entry( lgt_id )
-int	lgt_id;
-	{
-	if( lgt_id >= 0 && lgt_id < lgt_db_size )
-		return	&lgts[lgt_id];
-	else
-		return	LGT_NULL;
-	}
-
 _LOCAL_ int
 get_Lgt_Entry( entry, fp )
 register Lgt_Source	*entry;

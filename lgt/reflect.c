@@ -34,14 +34,16 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./screen.h"
 #include "./extern.h"
 #define Check_Iflip( _pp, _normal, _rdir, _stp )\
-	{	fastf_t	f;\
+	{\
 	if( _pp->pt_inflip )\
 		{\
 		ScaleVec( _normal, -1.0 );\
 		_pp->pt_inflip = 0;\
 		}\
 	}
-#if 0
+#if 0 /* WARNING: These checks are still necessary in ARSes because of bug in LIBRT
+		which flips normals */
+	{	fastf_t	f;\
 	f = Dot( _rdir, _normal );\
 	if( f >= 0.0 )\
 		{\
@@ -52,18 +54,21 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 			}\
 		ScaleVec( _normal, -1.0 );\
 		}\
+	}\
 
 #endif
 
 #define Check_Oflip( _pp, _normal, _rdir, _stp )\
-	{	fastf_t	f;\
+	{\
 	if( _pp->pt_outflip )\
 		{\
 		ScaleVec( _normal, -1.0 );\
 		_pp->pt_outflip = 0;\
 		}\
 	}
-#if 0
+#if 0 /* WARNING: These checks are still necessary in ARSes because of bug in LIBRT
+		which flips normals */
+	{	fastf_t	f;\
 	f = Dot( _rdir, _normal );\
 	if( f <= 0.0 )\
 		{\
@@ -74,6 +79,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 			}\
 		ScaleVec( _normal, -1.0 );\
 		}\
+	}\
 
 #endif
 
@@ -181,8 +187,9 @@ render_Model()
 #ifdef alliant
 	register int	d7;	/* known to be in d7 */
 #endif
+#ifdef PARALLEL
 	int		a, x;
-
+#endif
 	(void) signal( SIGINT, abort_sig );
 #ifdef PARALLEL
 	if( npsw > 1 )
@@ -206,7 +213,7 @@ render_Model()
 	else
 	if( hiddenln_draw )
 		{
-		if( (hl_regmap = (short *) malloc( grid_sz*grid_sz*sizeof(short) ))
+		if( (hl_regmap = (short *) malloc( (unsigned)(grid_sz*grid_sz)*sizeof(short) ))
 			== (short *) NULL
 			)
 			{
@@ -433,6 +440,7 @@ int	cpu;
 	return;
 	}
 
+/*ARGSUSED*/
 _LOCAL_ int
 f_R_Miss( ap )
 register struct application *ap;
@@ -507,7 +515,7 @@ register struct application *ap;
 struct partition *pt_headp;
 	{	register struct partition	*pp;
 		register struct soltab		*stp;
-		register struct hit		*ihitp, *ohitp;
+		register struct hit		*ihitp;
 
 	for(	pp = pt_headp->pt_forw;
 		pp != pt_headp
@@ -546,7 +554,7 @@ struct partition *pt_headp;
 	{	register struct partition	*pp;
 		register Mat_Db_Entry		*entry;
 		register struct soltab		*stp;
-		register struct hit		*ihitp, *ohitp;
+		register struct hit		*ihitp;
 		int				material_id;
 		fastf_t				rgb_coefs[3];
 
@@ -565,10 +573,12 @@ struct partition *pt_headp;
 	Check_Iflip( pp, ihitp->hit_normal, ap->a_ray.r_dir, stp );
 
 #if 0
+	{	register struct hit	*ohitp;
 	stp = pp->pt_outseg->seg_stp;
 	ohitp = pp->pt_outhit;
 	RT_HIT_NORM( ohitp, stp, &(ap->a_ray) );
 	Check_Oflip( pp, ohitp->hit_normal, ap->a_ray.r_dir, stp );
+	}
 #endif
 
 	/* See if we hit a light source.				*/
@@ -616,7 +626,7 @@ struct partition *pt_headp;
 				)
 				fahrenheit = AMBIENT-1;
 			else
-				fahrenheit = pixel_To_Temp( pixel );
+				fahrenheit = pixel_To_Temp( (RGBpixel *) pixel );
 			RES_RELEASE( &rt_g.res_stats );
 			}
 		else
@@ -1116,7 +1126,6 @@ register struct application *ap;
 	}
 
 /*	f _ E r r o r ( )						*/
-/*ARGSUSED*/
 /*ARGSUSED*/
 _LOCAL_ int
 f_Error( ap )

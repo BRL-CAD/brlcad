@@ -211,12 +211,12 @@ close_Output_Device()
 #if defined( BSD ) || defined( SYSV )
 _LOCAL_ int
 #else
-/*ARGSUSED*/
 _LOCAL_ void
 #endif
+/*ARGSUSED*/
 intr_sig( sig )
 int	sig;
-	{	char	buf[10];
+	{
 	(void) signal( SIGINT, intr_sig );
 #if defined( BSD )
 	return	sig;
@@ -232,7 +232,7 @@ _LOCAL_ void
 init_Lgts()
 	{
 	/* Ambient lighting.						*/
-	strcpy( lgts[0].name, "EYE" );
+	(void) strcpy( lgts[0].name, "EYE" );
 	lgts[0].beam = FALSE;
 	lgts[0].over = FALSE;
 	lgts[0].rgb[0] = 255;
@@ -245,7 +245,7 @@ init_Lgts()
 	lgts[0].stp = SOLTAB_NULL;
 
 	/* Primary lighting.						*/
-	strcpy( lgts[1].name, "LIGHT" );
+	(void) strcpy( lgts[1].name, "LIGHT" );
 	lgts[1].beam = FALSE;
 	lgts[1].over = TRUE;
 	lgts[1].rgb[0] = 255;

@@ -154,6 +154,7 @@ register int	xpos, ypos;
 /*	b i t x ( )
 	Extract a bit field from a bit string.
  */
+/*ARGSUSED*/
 _LOCAL_ int
 bitx( bitstring, posn )
 register char *bitstring;

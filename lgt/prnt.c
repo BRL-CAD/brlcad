@@ -325,11 +325,11 @@ char	*s;
 
 /*	p r n t _ T i t l e ( )						*/
 void
-prnt_Title( title )
-char	*title;
+prnt_Title( titleptr )
+char	*titleptr;
 	{
 	if( ! tty || rt_g.debug )
-		rt_log( "%s\n", title == NULL ? "(null)" : title );
+		rt_log( "%s\n", titleptr == NULL ? "(null)" : titleptr );
 	return;
 	}
 
