@@ -356,7 +356,7 @@ CONST char		*s;
 		return;
 	}
 	vp->vls_offset = 0;		/* cancel offset before extending */
-	if( len+1 >= vp->vls_max )  bu_vls_extend( vp, len );
+	if( len+1 >= vp->vls_max )  bu_vls_extend( vp, len+1 );
 	bcopy( s, vp->vls_str, len+1 );		/* include null */
 	vp->vls_len = len;
 }
@@ -383,7 +383,7 @@ int			n;
 		return;
 	}
 	vp->vls_offset = 0;		/* cancel offset before extending */
-	if( len+1 >= vp->vls_max )  bu_vls_extend( vp, len );
+	if( len+1 >= vp->vls_max )  bu_vls_extend( vp, len+1 );
 	bcopy( s, vp->vls_str, len );
 	vp->vls_str[len] = '\0';		/* force null termination */
 	vp->vls_len = len;
@@ -405,7 +405,7 @@ CONST char		*s;
 	if( s == (CONST char *)NULL )  return;
 	if( (len = strlen(s)) <= 0 )  return;
 	if( vp->vls_offset + vp->vls_len + len+1 >= vp->vls_max )
-		bu_vls_extend( vp, len );
+		bu_vls_extend( vp, len+1 );
 	bcopy( s, vp->vls_str +vp->vls_offset + vp->vls_len, len+1 );	/* include null */
 	vp->vls_len += len;
 }
@@ -429,7 +429,7 @@ int			n;
 	if( len > n )  len = n;
 	if( len <= 0 )  return;			/* do nothing */
 	if( vp->vls_offset + vp->vls_len + len+1 >= vp->vls_max )
-		bu_vls_extend( vp, len );
+		bu_vls_extend( vp, len+1 );
 	bcopy( s, vp->vls_str + vp->vls_offset + vp->vls_len, len );
 	vp->vls_len += len;
 	vp->vls_str[vp->vls_offset + vp->vls_len] = '\0';	/* force null termination */
@@ -450,7 +450,7 @@ register CONST struct bu_vls	*src;
 	BU_CK_VLS(dest);
 	if( src->vls_len <= 0 )  return;
 	if( dest->vls_offset + dest->vls_len + src->vls_len+1 >= dest->vls_max )
-		bu_vls_extend( dest, src->vls_len );
+		bu_vls_extend( dest, src->vls_len+1 );
 	/* copy source string, including null */
 	bcopy( src->vls_str+src->vls_offset,
 		dest->vls_str +dest->vls_offset + dest->vls_len,
