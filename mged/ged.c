@@ -469,8 +469,20 @@ if( cmdline_hook )  {if( (*cmdline_hook)(&str)) pr_prompt();} else
 	 *  (Or "invented" here, for compatability with old dm's).
 	 *  Each one is expected to be newline terminated.
 	 */
-if( cmdline_hook )  (*cmdline_hook)(&dm_values.dv_string); else
-	(void)cmdline( &dm_values.dv_string );
+	if( cmdline_hook )  {
+		(*cmdline_hook)(&dm_values.dv_string);
+	} else {
+		/* Some commands (e.g. mouse events) queue further events. */
+		int	oldlen;
+again:
+		oldlen = rt_vls_strlen( &dm_values.dv_string );
+		(void)cmdline( &dm_values.dv_string );
+		if( rt_vls_strlen( &dm_values.dv_string ) > oldlen )  {
+			/* Remove cmds already done, and go again */
+			rt_vls_nibble( &dm_values.dv_string, oldlen );
+			goto again;
+		}
+	}
 	rt_vls_trunc( &dm_values.dv_string, 0 );
 
 	/*
