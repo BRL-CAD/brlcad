@@ -1,14 +1,19 @@
 BRL-CAD Contributors
 ====================
 
-BRL-CAD was originally conceived and written, for the most part, by
-the late Michael John Muuss.  He is the original primary architect and
-author.  Over the years, the package has been improved upon by many
-others.  While Mike is sadly no longer with us, his work lives on in
-testament to his intellect and indomitable spirit through the
-contributions and improvements by others.  We strive to recognize
-those groups and individuals that have helped make BRL-CAD the package
-that it is today here.
+The BRL-CAD development team would like to take this opportunity to
+thank the many people and organizations who have contributed to
+BRL-CAD over the years.
+
+BRL-CAD was originally conceived and written for the most part by the
+late Michael John Muuss.  He is the original primary architect and
+author.  The package has since been improved upon by Mike and the
+Advanced Computer Systems Team at the U.S. Army Research Laboratory,
+as well as by many others around the world.  While Mike is sadly no
+longer with us, his work lives on in testament to his intellect and
+indomitable spirit through the contributions and improvements by
+others.  We strive to recognize those groups and individuals that have
+helped make BRL-CAD the package that it is today here.
 
 Contributions are separated into a few major sections depending on the
 level and type of involvement that the individual maintained.
@@ -23,7 +28,7 @@ chronological order, though many individuals have supported the
 package of their own accord and on their own time.  
 
 Active developers are denoted with an "**", meaning that they have
-been involved within the past 12 months.
+been actively involved within the past 12 months.
 
 
 ORIGINAL ARCHITECT AND AUTHOR
@@ -114,6 +119,10 @@ MATHEMATICAL, ALGORITHMIC, AND GEOMETRIC SUPPORT
 Davisson, Edwin
 U.S. Army Research Laboratory
 
+Reed, Jr., Harry
+Geometric Solutions, Inc.
+U.S. Army Ballistic Research Laboratory
+
 Applin, Keith A
 U.S. Army Research Laboratory
 
@@ -143,20 +152,22 @@ U.S. Army Research Laboratory
 Coates, Sue
 U.S. Army Research Laboratory (??? only brl)
 
-Fiori, Jim
+Lindemann, William
 Sun Microsystems, Inc.
 
-Jackson, Chris
+Smith, Timothy G.
 Sun Microsystems, Inc.
 
-Smith, Tim
-Sun Microsystems, Inc. (??? naval academy)
+Jackson, Christopher J.
+Sun Microsystems, Inc.
+
+Fiori, James D.
+Sun Microsystems, Inc.
+
+Bowden, Mark Huston
+University of Alabama
 
 Suckling, Bob
-U.S. Army Ballistic Research Laboratory
-
-Reed, Jr., Harry
-Geometric Solutions, Inc.
 U.S. Army Ballistic Research Laboratory
 
 Reschly, Jr., Robert J
@@ -170,6 +181,14 @@ U.S. Army Research Laboratory
 
 Nuzman, Carl J
 ARL Student Hire / Princeton University
+
+Laut, Bill
+Gull Island Consultants, Inc.
+
+Hewitt, Terry
+Manchester-Computing Centre, UK
+
+Brand, Mario
 
 McCarty, Corey
 ARL Student Hire / Johns Hopkins University
@@ -202,6 +221,8 @@ U.S. Army Reserach Laboratory
 Haywood, Heather
 U.S. Army Research Laboratory
 
+Ousterhout, John
+
 Edwards, Eric
 Survice Engineering, Inc.
 
@@ -217,6 +238,8 @@ U.S. Army Research Laboratory
 Survivability and Lethality Analysis Directorate
 
 Sun Microsystems, Inc.
+
+University of Alabama in Huntsville
 
 U.S. Army Communications-Electronics Command (CECOM)
 Night Vision & Electronic Sensors Directorate
@@ -239,6 +262,9 @@ Quantum Research Laboratory, Inc.
 
 Paladin Software, Inc.
 
+Manchester-Computing-Centre, UK
+Computer Graphics Unit, MCC
+
 Industrieanlagen-Betriebsgesellschaft mbH (IABG)
 
 TNO Prins Maurits Laboratory
@@ -249,7 +275,6 @@ TO BE FILED
 
 Becker, David
 
-Bowden, Mark Huston
 
 Davies, Steve
 
@@ -277,12 +302,6 @@ U.S. Naval Academy
 
 Kekesi, Alex
 CECOM Night Vision & Electronic Sensors Directorate
-
-Laut, Bill
-(??? Sun Microsystems, Inc.) 
-
-Lindemann, William
-(??? Sun Microsystems, Inc.)
 
 Martin, Glenn E
 Northrup Research and Technology Center
