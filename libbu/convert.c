@@ -373,8 +373,7 @@ register int	cookie;
  *  Returns the number of bytes each "item" of type "cookie" occupies.
  */
 int
-bu_cv_itemlen( cookie )
-register int	cookie;
+bu_cv_itemlen(register int cookie)
 {
 	register int	fmt = (cookie & CV_TYPE_MASK) >> CV_TYPE_SHIFT;
 	static int host_size_table[8] = {0, sizeof(char),
