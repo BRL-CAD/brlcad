@@ -752,7 +752,7 @@ va_dcl
 #if defined(mips) || (defined(alliant) && defined(i860))
 	(void) vsprintf( cp, fmt, ap );
 #else
-	strbuf._flag = _IOWRD|_IOSTRG;
+	strbuf._flag = _IOWRT|_IOSTRG;
 	strbuf._ptr = cp;
 	strbuf._cnt = sizeof(buf)-(cp-buf);
 	(void) _doprnt( fmt, ap, &strbuf );
