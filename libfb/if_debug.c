@@ -6,39 +6,38 @@
 #include "fb.h"
 #include "./fblocal.h"
 
-_LOCAL_ int	debug_device_open(),
-		debug_device_close(),
-		debug_device_reset(),
-		debug_device_clear(),
-		debug_buffer_read(),
-		debug_buffer_write(),
-		debug_colormap_read(),
-		debug_colormap_write(),
-		debug_viewport_set(),
-		debug_window_set(),
-		debug_zoom_set(),
-		debug_cinit_bitmap(),
-		debug_cmemory_addr(),
-		debug_cscreen_addr(),
-		debug_animate();
+_LOCAL_ int	deb_dopen(),
+		deb_dclose(),
+		deb_dreset(),
+		deb_dclear(),
+		deb_bread(),
+		deb_bwrite(),
+		deb_cmread(),
+		deb_cmwrite(),
+		deb_viewport_set(),
+		deb_window_set(),
+		deb_zoom_set(),
+		deb_cinit_bitmap(),
+		deb_cmemory_addr(),
+		deb_cscreen_addr();
 
 /* This is the ONLY thing that we "export" */
 FBIO debug_interface =
 		{
-		debug_device_open,
-		debug_device_close,
-		debug_device_reset,
-		debug_device_clear,
-		debug_buffer_read,
-		debug_buffer_write,
-		debug_colormap_read,
-		debug_colormap_write,
-		debug_viewport_set,
-		debug_window_set,
-		debug_zoom_set,
-		debug_cinit_bitmap,
-		debug_cmemory_addr,
-		debug_cscreen_addr,
+		deb_dopen,
+		deb_dclose,
+		deb_dreset,
+		deb_dclear,
+		deb_bread,
+		deb_bwrite,
+		deb_cmread,
+		deb_cmwrite,
+		deb_viewport_set,
+		deb_window_set,
+		deb_zoom_set,
+		deb_cinit_bitmap,
+		deb_cmemory_addr,
+		deb_cscreen_addr,
 		"Debugging Interface",
 		1024,			/* max width */
 		1024,			/* max height */
@@ -57,16 +56,16 @@ FBIO debug_interface =
 		};
 
 _LOCAL_ int
-debug_device_open( ifp, file, width, height )
+deb_dopen( ifp, file, width, height )
 FBIO	*ifp;
 char	*file;
 int	width, height;
 {
 	if( file == (char *)NULL )
-		fprintf( stderr, "fb_open( fp, 0, %d, %d )\n",
+		fb_log( "fb_open( fp, 0, %d, %d )\n",
 			width, height );
 	else
-		fprintf( stderr, "fb_open( fp, \"%s\", %d, %d )\n",
+		fb_log( "fb_open( fp, \"%s\", %d, %d )\n",
 			file, width, height );
 
 	/* Give the user whatever with was asked for */
@@ -77,126 +76,130 @@ int	width, height;
 }
 
 _LOCAL_ int
-debug_device_close( ifp )
+deb_dclose( ifp )
 FBIO	*ifp;
 {
-	fprintf( stderr, "fb_close( fp )\n" );
+	fb_log( "fb_close( fp )\n" );
+	return	1;
 }
 
 _LOCAL_ int
-debug_device_reset( ifp )
+deb_dreset( ifp )
 FBIO	*ifp;
 {
-	fprintf( stderr, "fb_reset( fp )\n" );
+	fb_log( "fb_reset( fp )\n" );
+	return	1;
 }
 
 _LOCAL_ int
-debug_device_clear( ifp, pp )
+deb_dclear( ifp, pp )
 FBIO	*ifp;
 Pixel	*pp;
 {
 	if( pp == 0 )
-		fprintf( stderr, "fb_clear( fp, 0 )\n" );
+		fb_log( "fb_clear( fp, 0 )\n" );
 	else
-		fprintf( stderr, "fb_clear( fp, &[%d %d %d %d] )\n",
+		fb_log( "fb_clear( fp, &[%d %d %d %d] )\n",
 			(int)pp->red, (int)pp->green,
 			(int)pp->blue, (int)pp->spare );
+	return	1;
 }
 
 _LOCAL_ int
-debug_buffer_read( ifp, x, y, pixelp, count )
+deb_bread( ifp, x, y, pixelp, count )
 FBIO	*ifp;
 int	x, y;
 Pixel	*pixelp;
 int	count;
 {
-	fprintf( stderr, "fb_read( fp,%4d,%4d, 0x%x, %d )\n",
+	fb_log( "fb_read( fp,%4d,%4d, 0x%x, %d )\n",
 		x, y, pixelp, count );
+	return	count;
 }
 
 _LOCAL_ int
-debug_buffer_write( ifp, x, y, pixelp, count )
+deb_bwrite( ifp, x, y, pixelp, count )
 FBIO	*ifp;
 int	x, y;
 Pixel	*pixelp;
 int	count;
 {
-	fprintf( stderr, "fb_write( fp,%4d,%4d, 0x%x, %d )\n",
+	fb_log( "fb_write( fp,%4d,%4d, 0x%x, %d )\n",
 		x, y, pixelp, count );
+	return	count;
 }
 
 _LOCAL_ int
-debug_colormap_read( ifp, cmp )
+deb_cmread( ifp, cmp )
 FBIO	*ifp;
 ColorMap	*cmp;
 {
-	fprintf( stderr, "fb_rmap( fp, 0x%x )\n", cmp );
+	fb_log( "fb_rmap( fp, 0x%x )\n", cmp );
+	return	1;
 }
 
 _LOCAL_ int
-debug_colormap_write( ifp, cmp )
+deb_cmwrite( ifp, cmp )
 FBIO	*ifp;
 ColorMap	*cmp;
 {
-	fprintf( stderr, "fb_wmap( fp, 0x%x )\n", cmp );
+	fb_log( "fb_wmap( fp, 0x%x )\n", cmp );
+	return	1;
 }
 
 _LOCAL_ int
-debug_viewport_set( ifp, left, top, right, bottom )
+deb_viewport_set( ifp, left, top, right, bottom )
 FBIO	*ifp;
 int	left, top, right, bottom;
 {
-	fprintf( stderr, "fb_viewport( fp,%4d,%4d,%4d,%4d )\n",
+	fb_log( "fb_viewport( fp,%4d,%4d,%4d,%4d )\n",
 		left, top, right, bottom );
+	return	1;
 }
 
 _LOCAL_ int
-debug_window_set( ifp, x, y )
+deb_window_set( ifp, x, y )
 FBIO	*ifp;
 int	x, y;
 {
-	fprintf( stderr, "fb_window( fp,%4d,%4d )\n", x, y );
+	fb_log( "fb_window( fp,%4d,%4d )\n", x, y );
+	return	1;
 }
 
 _LOCAL_ int
-debug_zoom_set( ifp, x, y )
+deb_zoom_set( ifp, x, y )
 FBIO	*ifp;
 int	x, y;
 {
-	fprintf( stderr, "fb_zoom( fp, %d, %d )\n", x, y );
+	fb_log( "fb_zoom( fp, %d, %d )\n", x, y );
+	return	1;
 }
 
 _LOCAL_ int
-debug_cinit_bitmap( ifp, bitmap )
+deb_cinit_bitmap( ifp, bitmap )
 FBIO	*ifp;
 long	*bitmap;
 {
-	fprintf( stderr, "fb_setcursor( fp, 0x%x )\n", bitmap );
+	fb_log( "fb_setcursor( fp, 0x%x )\n", bitmap );
+	return	1;
 }
 
 _LOCAL_ int
-debug_cmemory_addr( ifp, mode, x, y )
+deb_cmemory_addr( ifp, mode, x, y )
 FBIO	*ifp;
 int	mode;
 int	x, y;
 {
-	fprintf( stderr, "fb_cursor( fp, %d,%4d,%4d )\n", mode, x, y );
+	fb_log( "fb_cursor( fp, %d,%4d,%4d )\n", mode, x, y );
+	return	1;
 }
 
 _LOCAL_ int
-debug_cscreen_addr( ifp, mode, x, y )
+deb_cscreen_addr( ifp, mode, x, y )
 FBIO	*ifp;
 int	mode;
 int	x, y;
 {
-	fprintf( stderr, "fb_scursor( fp, %d,%4d,%4d )\n", mode, x, y );
-}
-
-_LOCAL_ int
-debug_animate( ifp, nframes, size, fps )
-FBIO	*ifp;
-int	nframes, size, fps;
-{
-	fprintf( stderr, "fb_animate( fp, %d, %d, %d )\n",
-			nframes, size, fps );
+	fb_log( "fb_scursor( fp, %d,%4d,%4d )\n", mode, x, y );
+	return	1;
 }
