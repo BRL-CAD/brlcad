@@ -36,6 +36,7 @@ extern int Dmo_Init();
 extern int vo_open_tcl();
 extern int Vo_Init();
 
+#if 0
 /* from libdm/geometry_obj.c */
 extern int geo_open_tcl();
 extern int Geo_Init();
@@ -43,17 +44,20 @@ extern int Geo_Init();
 /* from libdm/db_obj.c */
 extern int dbo_open_tcl();
 extern int Dbo_Init();
+#endif
 
 HIDDEN int dm_validXType_tcl();
 HIDDEN int dm_bestXType_tcl();
 
-HIDDEN struct cmdtab cmdtab[] = {
+HIDDEN struct bu_cmdtab cmdtab[] = {
 	"dm_validXType",	dm_validXType_tcl,
 	"dm_bestXType",		dm_bestXType_tcl,
 	"dm_open",		dmo_open_tcl,
 	"vo_open",		vo_open_tcl,
+#if 0
 	"geo_open",		geo_open_tcl,
 	"db_open",		dbo_open_tcl,
+#endif
 	(char *)0,		(int (*)())0
 };
 
@@ -61,7 +65,7 @@ int
 Dm_Init(interp)
 Tcl_Interp *interp;
 {
-  register struct cmdtab *ctp;
+  register struct bu_cmdtab *ctp;
 
   for (ctp = cmdtab; ctp->ct_name != (char *)NULL; ctp++) {
     (void)Tcl_CreateCommand(interp, ctp->ct_name, ctp->ct_func,
@@ -74,11 +78,13 @@ Tcl_Interp *interp;
   /* initialize view object code */
   Vo_Init(interp);
 
+#if 0
   /* initialize geometry object code */
   Geo_Init(interp);
 
   /* initialize database object */
   Dbo_Init(interp);
+#endif
 
   return TCL_OK;
 }
