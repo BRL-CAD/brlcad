@@ -655,17 +655,17 @@ register struct xray *rp;
 
 	VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
 	switch( hitp->hit_surfno )  {
-	case 0:	/* REC_NORM_BODY */
+	case REC_NORM_BODY:
 		/* compute it */
 		hitp->hit_vpriv[Z] = 0.0;
 		MAT4X3VEC( hitp->hit_normal, rec->rec_invRoS,
 			hitp->hit_vpriv );
 		VUNITIZE( hitp->hit_normal );
 		break;
-	case 1:	/* REC_NORM_TOP */
+	case REC_NORM_TOP:
 		VMOVE( hitp->hit_normal, rec->rec_Hunit );
 		break;
-	case 2:	/* REC_NORM_BOT */
+	case REC_NORM_BOT:
 		VREVERSE( hitp->hit_normal, rec->rec_Hunit );
 		break;
 	default:
@@ -694,7 +694,7 @@ struct soltab *stp;
 	fastf_t	ax, bx, q;
 
 	switch( hitp->hit_surfno )  {
-	case 0:	/* REC_NORM_BODY */
+	case REC_NORM_BODY:
 		/* This could almost certainly be simpler if we used
 		 * inverse A rather than inverse A squared, right Ed?
 		 */
@@ -706,8 +706,8 @@ struct soltab *stp;
 		q = sqrt( ax * ax * rec->rec_iAsq + bx * bx * rec->rec_iBsq );
 		cvp->crv_c2 = - rec->rec_iAsq * rec->rec_iBsq / (q*q*q);
 		break;
-	case 1:	/* REC_NORM_TOP */
-	case 2:	/* REC_NORM_BOT */
+	case REC_NORM_TOP:
+	case REC_NORM_BOT:
 		vec_ortho( cvp->crv_pdir, hitp->hit_normal );
 		cvp->crv_c1 = cvp->crv_c2 = 0;
 		break;
@@ -746,18 +746,18 @@ register struct uvcoord *uvp;
 	MAT4X3VEC( pprime, rec->rec_SoR, work );
 
 	switch( hitp->hit_surfno )  {
-	case 0:	/* REC_NORM_BODY */
+	case REC_NORM_BODY:
 		/* Skin.  x,y coordinates define rotation.  radius = 1 */
 		uvp->uv_u = acos(pprime[Y]) * rt_inv2pi;
 		uvp->uv_v = pprime[Z];		/* height */
 		break;
-	case 1:	/* REC_NORM_TOP */
+	case REC_NORM_TOP:
 		/* top plate */
 		len = sqrt(pprime[X]*pprime[X]+pprime[Y]*pprime[Y]);
 		uvp->uv_u = acos(pprime[Y]/len) * rt_inv2pi;
 		uvp->uv_v = len;		/* rim v = 1 */
 		break;
-	case 2:	/* REC_NORM_BOT */
+	case REC_NORM_BOT:
 		/* bottom plate */
 		len = sqrt(pprime[X]*pprime[X]+pprime[Y]*pprime[Y]);
 		uvp->uv_u = acos(pprime[Y]/len) * rt_inv2pi;
