@@ -33,9 +33,6 @@ register int	npoints;
 		pd_cont( fp, *x++, *y++ );
 }
 
-/*
- *  This FORTRAN interface expects arrays of REALs (single precision).
- */
 FLINE( fpp, x, y, n )
 FILE	**fpp;
 float	*x, *y;
@@ -50,6 +47,38 @@ int	*n;
 	pd_move( fp, *x++, *y++ );
 	while( --npoints > 0 )
 		pd_cont( fp, *x++, *y++ );
+}
+
+/*
+ *			T P _ 3 L I N E
+ */
+tp_3line( fp, x, y, z, npoints )
+FILE		*fp;
+register double	*x, *y, *z;
+register int	npoints;
+{
+	if( npoints <= 0 )
+		return;
+
+	pd_3move( fp, *x++, *y++, *z++ );
+	while( --npoints > 0 )
+		pd_3cont( fp, *x++, *y++, *z++ );
+}
+
+F3LINE( fpp, x, y, z, n )
+FILE	**fpp;
+float	*x, *y, *z;
+int	*n;
+{
+	FILE	*fp = *fpp;
+	register int npoints = *n;
+
+	if( npoints <= 0 )
+		return;
+
+	pd_3move( fp, *x++, *y++, *z++ );
+	while( --npoints > 0 )
+		pd_3cont( fp, *x++, *y++, *z++ );
 }
 
 /*
