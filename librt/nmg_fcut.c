@@ -402,11 +402,13 @@ int			pos;
 	}
 	if( othereu == eu )  {
 		/* Back to where search started */
+		if(rt_g.NMG_debug) nmg_pr_eu(eu, NULL);
 		rt_bomb("nmg_assess_eu() no edges leave the vertex!\n");
 	}
 	otherv = othereu->vu_p->v_p;
 	if( otherv == v )  {
 		/* Edge stays on this vertex -- can't tell if forw or rev! */
+		if(rt_g.NMG_debug) nmg_pr_eu(eu, NULL);
 		rt_bomb("nmg_assess_eu() edge runs from&to same vertex!\n");
 	}
 
