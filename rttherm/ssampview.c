@@ -252,12 +252,16 @@ char		*argv[];
 
 	BN_CK_TABLE(spectrum);
 
-	if( x < 0 || x > width || y < 0 || y > height )  {
-		interp->result = "x or y out of range";
+	if( x < 0 || x >= width )  {
+		interp->result = "x out of range";
+		return TCL_ERROR;
+	}
+	if( y < 0 || y >= height )  {
+		interp->result = "y out of range";
 		return TCL_ERROR;
 	}
 	if( wl < 0 || wl >= spectrum->nx )  {
-		interp->result = "wavelength out of range";
+		interp->result = "wavelength index out of range";
 		return TCL_ERROR;
 	}
 
@@ -304,7 +308,7 @@ char		*argv[];
 
 	BN_CK_TABLE(spectrum);
 
-	if( x < 0 || x > width || y < 0 || y > height )  {
+	if( x < 0 || x >= width || y < 0 || y >= height )  {
 		interp->result = "x or y out of range";
 		return TCL_ERROR;
 	}
@@ -536,6 +540,7 @@ main( argc, argv )
 char	**argv;
 {
 
+	bu_debug = BU_DEBUG_COREDUMP;
 	rt_g.debug = 1;
 
 	rt_make_ntsc_xyz2rgb( xyz2rgb );

@@ -96,11 +96,12 @@ proc scalechange {var value} {
 
 label .scanline4 -text "Scanline Plot"
 checkbutton .scanline5 -text "Rescale" -variable rescale_scanline -command {update}
-scale .scanline3 -label Scanline -from $height -to 0 -showvalue yes -length 280 \
+scale .scanline3 -label Scanline -from [expr $height - 1] -to 0 \
+	-showvalue yes -length 280 \
 	-orient vertical -variable line_num -command {update}
 canvas .canvas_scanline -width $width -height 280
 
-scale .pixel1 -label Pixel -from 0 -to $width -showvalue yes \
+scale .pixel1 -label Pixel -from 0 -to [expr $width - 1] -showvalue yes \
 	-orient horizontal -variable pixel_num -command {update}
 
 pack .scanline4 .scanline5 .canvas_scanline .pixel1 -side top -in .spatial_v
