@@ -613,6 +613,89 @@ char **argv;
 	return TCL_ERROR;
 }
 
+/*
+ *			B U _ T C L _ R G B _ T O _ H S V
+ */
+int
+bu_tcl_rgb_to_hsv(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
+{
+	int		rgb_int[3];
+	unsigned char	rgb[3];
+	fastf_t		hsv[3];
+	struct bu_vls	result;
+
+	bu_vls_init(&result);
+	if( argc != 4 )  {
+		Tcl_AppendResult( interp, "Usage: bu_rgb_to_hsv R G B\n",
+		    (char *)NULL );
+		return TCL_ERROR;
+	}
+	if (( Tcl_GetInt( interp, argv[1], &rgb_int[0] ) != TCL_OK )
+	 || ( Tcl_GetInt( interp, argv[2], &rgb_int[1] ) != TCL_OK )
+	 || ( Tcl_GetInt( interp, argv[3], &rgb_int[2] ) != TCL_OK )
+	 || ( rgb_int[0] < 0 ) || ( rgb_int[0] > 255 )
+	 || ( rgb_int[1] < 0 ) || ( rgb_int[1] > 255 )
+	 || ( rgb_int[2] < 0 ) || ( rgb_int[2] > 255 ))
+	 {
+		bu_vls_printf(&result, "bu_rgb_to_hsv: Bad RGB (%s, %s, %s)\n",
+		    argv[1], argv[2], argv[3]);
+		Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+		bu_vls_free(&result);
+		return TCL_ERROR;
+	}
+	rgb[0] = rgb_int[0];
+	rgb[1] = rgb_int[1];
+	rgb[2] = rgb_int[2];
+
+	bu_rgb_to_hsv( rgb, hsv );
+	bu_vls_printf(&result, "%g %g %g", V3ARGS(hsv));
+	Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+	bu_vls_free(&result);
+	return TCL_OK;
+	
+}
+
+/*
+ *			B U _ T C L _ H S V _ T O _ R G B
+ */
+int
+bu_tcl_hsv_to_rgb(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
+{
+	fastf_t		hsv[3];
+	unsigned char	rgb[3];
+	struct bu_vls	result;
+
+	bu_vls_init(&result);
+	if( argc != 4 )  {
+		Tcl_AppendResult( interp, "Usage: bu_hsv_to_rgb H S V\n",
+		    (char *)NULL );
+		return TCL_ERROR;
+	}
+	if (( Tcl_GetDouble( interp, argv[1], &hsv[0] ) != TCL_OK )
+	 || ( Tcl_GetDouble( interp, argv[2], &hsv[1] ) != TCL_OK )
+	 || ( Tcl_GetDouble( interp, argv[3], &hsv[2] ) != TCL_OK )
+	 || ( bu_hsv_to_rgb( hsv, rgb ) == 0) ) {
+		bu_vls_printf(&result, "bu_hsv_to_rgb: Bad HSV (%s, %s, %s)\n",
+		    argv[1], argv[2], argv[3]);
+		Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+		bu_vls_free(&result);
+		return TCL_ERROR;
+	}
+
+	bu_vls_printf(&result, "%d %d %d", V3ARGS(rgb));
+	Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
+	bu_vls_free(&result);
+	return TCL_OK;
+	
+}
 
 /*
  *			B U _ T C L _ S E T U P
@@ -641,6 +724,12 @@ Tcl_Interp *interp;
 		(ClientData)0, (Tcl_CmdDeleteProc *)NULL);
 	(void)Tcl_CreateCommand(interp,
 		"bu_get_value_by_keyword", bu_get_value_by_keyword,
+		(ClientData)0, (Tcl_CmdDeleteProc *)NULL);
+	(void)Tcl_CreateCommand(interp,
+		"bu_rgb_to_hsv",	bu_tcl_rgb_to_hsv,
+		(ClientData)0, (Tcl_CmdDeleteProc *)NULL);
+	(void)Tcl_CreateCommand(interp,
+		"bu_hsv_to_rgb",	bu_tcl_hsv_to_rgb,
 		(ClientData)0, (Tcl_CmdDeleteProc *)NULL);
 
 	Tcl_SetVar(interp, "bu_version", (char *)bu_version+5, TCL_GLOBAL_ONLY);	/* from vers.c */

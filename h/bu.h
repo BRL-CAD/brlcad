@@ -1048,6 +1048,10 @@ BU_EXTERN(double bu_mm_value, (CONST char *s) );
 BU_EXTERN(void bu_mm_cvt, (register CONST struct bu_structparse	*sdp,
 		register CONST char *name,  char *base, CONST char *value) );
 
+/* color.c */
+BU_EXTERN(void			bu_rgb_to_hsv, (unsigned char *rgb, fastf_t *hsv) );
+BU_EXTERN(int			bu_hsv_to_rgb, (fastf_t *hsv, unsigned char *rgb) );
+
 
 
 
