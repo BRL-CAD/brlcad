@@ -106,7 +106,7 @@ struct bn_tol {
 /* asize.c */
 BU_EXTERN(int			bn_common_file_size, (int *width,
 						      int *height,
-						      char *filename,
+						      CONST char *filename,
 						      int pixel_size));
 BU_EXTERN(int			bn_common_name_size, (int *width,
 						      int *height,
