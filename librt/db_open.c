@@ -39,7 +39,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #if defined(sgi) && defined(mips)
 # include <sys/mman.h>
-extern caddr_t	mmap();
 #endif
 
 #include "machine.h"
