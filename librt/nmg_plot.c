@@ -415,97 +415,6 @@ int		poly_markers;
 
 #define LEE_DIVIDE_TOL	(1.0e-5)	/* sloppy tolerance */
 
-/*
- *			N M G _ O F F S E T _ E U _ C O O R D
- *
- *  Given an edgeuse structure, return the coordinates of
- *  the "base" and "tip" of this edge, suitable for visualization.
- *  These points will be offset inwards along the edge
- *  slightly, to avoid obscuring the vertex, and will be offset off the
- *  face (in the direction of the face normal) slightly, to avoid
- *  obscuring the edge itself.
- *
- *		    final_pt_p		    next_pt_p
- *			* <-------------------- *
- *				final_vec	^
- *						|
- *						|
- *						| edge_vec
- *						|
- *						|
- *				prev_vec	|
- *			* <-------------------- *
- *		    prev_pt_p		     cur_pt_p
- */
-static void nmg_offset_eu_coord( base, tip, eu, face_normal )
-point_t		base;
-point_t		tip;
-struct edgeuse	*eu;
-vect_t		face_normal;
-{
-	fastf_t		dist1;
-	struct edgeuse	*prev_eu;
-	struct edgeuse	*next_eu;
-	struct edgeuse	*final_eu;
-	vect_t		edge_vec;	/* from cur_pt to next_pt */
-	vect_t		prev_vec;	/* from cur_pt to prev_pt */
-	vect_t		final_vec;	/* from next_pt to final_pt */
-	pointp_t	prev_pt_p;
-	pointp_t	cur_pt_p;
-	pointp_t	next_pt_p;
-	pointp_t	final_pt_p;
-
-	NMG_CK_EDGEUSE(eu);
-	NMG_CK_VERTEXUSE(eu->vu_p);
-	NMG_CK_VERTEX(eu->vu_p->v_p);
-	NMG_CK_VERTEX_G(eu->vu_p->v_p->vg_p);
-
-	NMG_CK_EDGEUSE(eu->eumate_p);
-	NMG_CK_VERTEXUSE(eu->eumate_p->vu_p);
-	NMG_CK_VERTEX(eu->eumate_p->vu_p->v_p);
-	NMG_CK_VERTEX_G(eu->eumate_p->vu_p->v_p->vg_p);
-
-	cur_pt_p = eu->vu_p->v_p->vg_p->coord;
-	next_pt_p = eu->eumate_p->vu_p->v_p->vg_p->coord;
-	VSUB2(edge_vec, next_pt_p, cur_pt_p); 
-	VUNITIZE(edge_vec);
-
-	/* find previous vertex in the loop, not colinear with the edge */
-	prev_eu = RT_LIST_PLAST_CIRC( edgeuse, eu );
-	prev_pt_p = prev_eu->vu_p->v_p->vg_p->coord;
-	dist1 = rt_dist_line_point(cur_pt_p, edge_vec, prev_pt_p);
-	while (NEAR_ZERO(dist1, LEE_DIVIDE_TOL) && prev_eu != eu) {
-		prev_eu = RT_LIST_PLAST_CIRC( edgeuse, prev_eu );
-		prev_pt_p = prev_eu->vu_p->v_p->vg_p->coord;
-		dist1 = rt_dist_line_point(cur_pt_p, edge_vec, prev_pt_p);
-	}
-
-	/* find vertex after "next" in the loop, not colinear with the edge */
-	next_eu = RT_LIST_PNEXT_CIRC( edgeuse, eu );
-	final_eu = RT_LIST_PNEXT_CIRC( edgeuse, next_eu );
-	final_pt_p = final_eu->vu_p->v_p->vg_p->coord;
-	dist1 = rt_dist_line_point(cur_pt_p, edge_vec, final_pt_p);
-	while (NEAR_ZERO(dist1, LEE_DIVIDE_TOL) && final_eu != eu) {
-		final_eu = RT_LIST_PNEXT_CIRC( edgeuse, final_eu );
-		final_pt_p = final_eu->vu_p->v_p->vg_p->coord;
-		dist1 = rt_dist_line_point(cur_pt_p, edge_vec, final_pt_p);
-	}
-
-	VSUB2(prev_vec, prev_pt_p, cur_pt_p);
-	VADD2( prev_vec, prev_vec, edge_vec );
-	VUNITIZE(prev_vec);
-
-	VSUB3(final_vec, final_pt_p, next_pt_p, edge_vec);
-	VUNITIZE(final_vec);
-
-	/* XXX offset vector lengths should be scaled by 5% of face size */
-
-/*	dist1=MAGNITUDE(edge_vec); */
-	dist1=0.125;
-
-	VJOIN2(base, cur_pt_p, dist1,prev_vec, nmg_eue_dist,face_normal);
-	VJOIN2(tip, next_pt_p, dist1,final_vec, nmg_eue_dist,face_normal);
-}
 
 /*	N M G _ O F F S E T _ E U _ V E R T
  *
@@ -620,13 +529,12 @@ point_t base, tip60;
 
 	    	fu = eu->up.lu_p->up.fu_p;
 	    	NMG_GET_FU_NORMAL( face_normal, fu );
-#if 0
-		nmg_offset_eu_coord(base, tip, eu, face_normal);
-#else
+
+
 	    	nmg_offset_eu_vert(base, eu, face_normal, 0);
 		nmg_offset_eu_vert(tip, RT_LIST_PNEXT_CIRC(edgeuse, eu),
 			face_normal, 1);
-#endif
+
 	} else
 		rt_bomb("nmg_eu_coords: bad edgeuse up. What's going on?\n");
 
@@ -850,6 +758,7 @@ CONST struct loopuse	*lu;
 long			*b;
 int			red, green, blue;
 {
+#if 0
 	struct edgeuse	*eu;
 	long		magic1;
 
@@ -865,6 +774,14 @@ int			red, green, blue;
 			nmg_pl_eu(fp, eu, b, red, green, blue);
 		}
 	}
+#else
+	struct rt_vlblock	*vbp;
+
+	vbp = rt_vlblock_init();
+	nmg_vlblock_lu(vbp, lu, b, red, green, blue, 0);
+	rt_plot_vlblock(fp, vbp);
+	rt_vlblock_free(vbp);
+#endif
 }
 
 /*
@@ -877,6 +794,7 @@ CONST struct faceuse	*fu;
 long			*b;
 int			red, green, blue;
 {
+#if 0
 	struct loopuse *lu;
 
 	NMG_CK_FACEUSE(fu);
@@ -884,8 +802,25 @@ int			red, green, blue;
 	NMG_INDEX_RETURN_IF_SET_ELSE_SET(b, fu->index);
 
 	for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
+
 		nmg_pl_lu(fp, lu, b, red, green, blue);
 	}
+#else
+	struct loopuse		*lu;
+	struct rt_vlblock	*vbp;
+
+	NMG_CK_FACEUSE(fu);
+	NMG_INDEX_RETURN_IF_SET_ELSE_SET(b, fu->index);
+
+	vbp = rt_vlblock_init();
+
+	for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
+		nmg_vlblock_lu(vbp, lu, b, red, green, blue, 0);
+	}
+
+	rt_plot_vlblock(fp, vbp);
+	rt_vlblock_free(vbp);
+#endif
 }
 
 /*
@@ -899,6 +834,7 @@ nmg_pl_s(fp, s)
 FILE			*fp;
 CONST struct shell	*s;
 {
+#if 0
 	struct faceuse *fu;
 	struct loopuse *lu;
 	struct edgeuse *eu;
@@ -941,6 +877,14 @@ CONST struct shell	*s;
 	}
 
 	rt_free( (char *)b, "nmg_pl_s flag[]" );
+#else
+	struct rt_vlblock	*vbp;
+
+	vbp = rt_vlblock_init();
+	nmg_vlblock_s(vbp, s, 0);
+	rt_plot_vlblock(fp, vbp);
+	rt_vlblock_free(vbp);
+#endif
 }
 
 /*
@@ -951,11 +895,12 @@ nmg_pl_r(fp, r)
 FILE			*fp;
 CONST struct nmgregion	*r;
 {
-	struct shell *s;
+	struct rt_vlblock	*vbp;
 
-	for( RT_LIST_FOR( s, shell, &r->s_hd ) )  {
-		nmg_pl_s(fp, s);
-	}
+	vbp = rt_vlblock_init();
+	nmg_vlblock_r(vbp, r, 0);
+	rt_plot_vlblock(fp, vbp);
+	rt_vlblock_free(vbp);
 }
 
 /*
@@ -966,11 +911,12 @@ nmg_pl_m(fp, m)
 FILE			*fp;
 CONST struct model	*m;
 {
-	struct nmgregion *r;
+	struct rt_vlblock	*vbp;
 
-	for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )  {
-		nmg_pl_r(fp, r);
-	}
+	vbp = rt_vlblock_init();
+	nmg_vlblock_m(vbp, m, 0);
+	rt_plot_vlblock(fp, vbp);
+	rt_vlblock_free(vbp);
 }
 
 /************************************************************************
@@ -1323,8 +1269,8 @@ CONST struct edgeuse	*eu;
  *  uses around this edge.
  */
 void
-nmg_pl_edges_in_2_shells(fd, b, eu)
-FILE			*fd;
+nmg_pl_edges_in_2_shells(vbp, b, eu)
+struct rt_vlblock	*vbp;
 long			*b;
 CONST struct edgeuse	*eu;
 {
@@ -1344,7 +1290,11 @@ CONST struct edgeuse	*eu;
 		if (*eur->up.magic_p == NMG_LOOPUSE_MAGIC &&
 		    *eur->up.lu_p->up.magic_p == NMG_FACEUSE_MAGIC &&
 		    eur->up.lu_p->up.fu_p->s_p != s) {
+#if 0
 			nmg_pl_around_edge(fd, b, eu);
+#else
+		    	nmg_vlblock_around_eu(vbp, eu, b);
+#endif
 		    	break;
 		    }
 
@@ -1357,12 +1307,13 @@ nmg_pl_isect(filename, s)
 CONST char		*filename;
 CONST struct shell	*s;
 {
-	struct faceuse *fu;
-	struct loopuse *lu;
-	struct edgeuse *eu;
-	long		*b;
-	FILE	*fp;
-	long	magic1;
+	struct faceuse		*fu;
+	struct loopuse		*lu;
+	struct edgeuse		*eu;
+	long			*b;
+	FILE			*fp;
+	long			magic1;
+	struct rt_vlblock	*vbp;
 
 	NMG_CK_SHELL(s);
 
@@ -1374,10 +1325,14 @@ CONST struct shell	*s;
 	b = (long *)rt_calloc( s->r_p->m_p->maxindex+1, sizeof(long),
 		"nmg_pl_isect flags[]" );
 
+	vbp = rt_vlblock_init();
+
 	rt_log("Plotting to \"%s\"\n", filename);
 	if( s->sa_p )  {
 		NMG_CK_SHELL_A( s->sa_p );
+#if 0
 		pdv_3space( fp, s->sa_p->min_pt, s->sa_p->max_pt );
+#endif
 	}
 
 	for( RT_LIST_FOR( fu, faceuse, &s->fu_hd ) )  {
@@ -1388,7 +1343,7 @@ CONST struct shell	*s;
 			if (magic1 == NMG_EDGEUSE_MAGIC) {
 				for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
 					NMG_CK_EDGEUSE(eu);
-					nmg_pl_edges_in_2_shells(fp, b, eu);
+					nmg_pl_edges_in_2_shells(vbp, b, eu);
 				}
 			} else if (magic1 == NMG_VERTEXUSE_MAGIC) {
 				;
@@ -1397,6 +1352,10 @@ CONST struct shell	*s;
 			}
 		}
 	}
+
+	rt_plot_vlblock(fp, vbp);
+	rt_vlblock_free(vbp);
+
 	rt_free( (char *)b, "nmg_pl_isect flags[]" );
 
 	(void)fclose(fp);
@@ -1413,12 +1372,13 @@ int	num1;
 int	num2;
 CONST struct faceuse	*fu1;
 {
-	FILE	*fp;
-	char	name[64];
-	int	do_plot = 0;
-	int	do_anim = 0;
-	struct model	*m;
-	long	*tab;
+	FILE			*fp;
+	char			name[64];
+	int			do_plot = 0;
+	int			do_anim = 0;
+	struct model		*m;
+	long			*tab;
+	struct rt_vlblock	*vbp;
 
 	if(rt_g.NMG_debug & DEBUG_PLOTEM &&
 	   rt_g.NMG_debug & DEBUG_FCUT ) do_plot = 1;
@@ -1432,6 +1392,10 @@ CONST struct faceuse	*fu1;
 	tab = (long *)rt_calloc( m->maxindex+1, sizeof(long),
 		"nmg_pl_comb_fu tab[]");
 
+	vbp = rt_vlblock_init();
+
+	nmg_vlblock_fu(vbp, fu1, tab, 3);
+
 	if( do_plot )  {
 	    	(void)sprintf(name, "comb%d.%d.pl", num1, num2);
 		if ((fp=fopen(name, "w")) == (FILE *)NULL) {
@@ -1439,17 +1403,13 @@ CONST struct faceuse	*fu1;
 			return;
 		}
 		rt_log("Plotting %s\n", name);
-		nmg_pl_fu(fp, fu1, tab, 200, 200, 200);
+
+		rt_plot_vlblock(fp, vbp);
+
 		(void)fclose(fp);
 	}
 
 	if( do_anim )  {
-		struct rt_vlblock	*vbp;
-
-		vbp = rt_vlblock_init();
-
-		nmg_vlblock_fu(vbp, fu1, tab, 3);
-
 		if( nmg_vlblock_anim_upcall )  {
 			(*nmg_vlblock_anim_upcall)( vbp,
 				(rt_g.NMG_debug&DEBUG_PL_SLOW) ? US_DELAY : 0,
@@ -1457,8 +1417,8 @@ CONST struct faceuse	*fu1;
 		} else {
 			rt_log("null nmg_vlblock_anim_upcall, no animation\n");
 		}
-		rt_vlblock_free(vbp);
 	}
+	rt_vlblock_free(vbp);
 	rt_free( (char *)tab, "nmg_pl_comb_fu tab[]" );
 }
 
