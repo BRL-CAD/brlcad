@@ -47,16 +47,16 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
  */
 
 static int		FileMatchPIX _ANSI_ARGS_((Tcl_Channel chan,
-			    char *fileName,
-			    char *formatString, int *widthPtr,
-			    int *heightPtr));
+			    CONST char *fileName,
+			    Tcl_Obj *format, int *widthPtr,
+			    int *heightPtr, Tcl_Interp *interp));
 static int		FileReadPIX  _ANSI_ARGS_((Tcl_Interp *interp,
 			    Tcl_Channel chan,
-			    char *fileName, char *formatString,
+			    CONST char *fileName, Tcl_Obj *formatString,
 			    Tk_PhotoHandle imageHandle, int destX, int destY,
 			    int width, int height, int srcX, int srcY));
 static int		FileWritePIX _ANSI_ARGS_((Tcl_Interp *interp,
-			    char *fileName, char *formatString,
+			    CONST char *fileName, Tcl_Obj *formatString,
 			    Tk_PhotoImageBlock *blockPtr));
 
 Tk_PhotoImageFormat tkImgFmtPIX = {
@@ -93,20 +93,26 @@ Tk_PhotoImageFormat tkImgFmtPIX = {
  */
 
 static int
-FileMatchPIX(chan, fileName, formatString, widthPtr, heightPtr)
+FileMatchPIX(chan, fileName, format, widthPtr, heightPtr, interp)
     Tcl_Channel chan;
-    char *fileName;		/* The name of the image file. */
-    char *formatString;		/* User-specified format string, or NULL. */
+    CONST char *fileName;	/* The name of the image file. */
+    Tcl_Obj *format;	/* User-specified format string, or NULL. */
     int *widthPtr, *heightPtr;	/* The dimensions of the image are
 				 * returned here if the file is a valid
 				 * raw PIX file. */
+    Tcl_Interp *interp;
 {
     /* The format string must be nonnull and it must contain the word "pix". */
     /* If the user also specified the dimensions in the format string,
        use those.  Otherwise, guess from the file size. */
+    char *formatString;
+    int len;
 
-    if (formatString == NULL)
+    if (format == NULL)
 	return 0;
+
+    formatString = Tcl_GetStringFromObj(format, &len);
+    if (formatString == NULL) return 0;
 
     if (strstr(formatString, "pix") == NULL &&
 	strstr(formatString, "PIX") == NULL)
@@ -140,12 +146,12 @@ FileMatchPIX(chan, fileName, formatString, widthPtr, heightPtr)
  */
 
 static int
-FileReadPIX(interp, chan, fileName, formatString, imageHandle, destX, destY,
+FileReadPIX(interp, chan, fileName, format, imageHandle, destX, destY,
 	width, height, srcX, srcY)
     Tcl_Interp *interp;		/* Interpreter to use for reporting errors. */
     Tcl_Channel chan;
-    char *fileName;		/* The name of the image file. */
-    char *formatString;		/* User-specified format string, or NULL. */
+    CONST char *fileName;	/* The name of the image file. */
+    Tcl_Obj *format;		/* User-specified format string, or NULL. */
     Tk_PhotoHandle imageHandle;	/* The photo image to write into. */
     int destX, destY;		/* Coordinates of top-left pixel in
 				 * photo image to be written to. */
@@ -158,8 +164,12 @@ FileReadPIX(interp, chan, fileName, formatString, imageHandle, destX, destY,
     int nBytes, h, count;
     unsigned char *pixelPtr;
     Tk_PhotoImageBlock block;
+    char *formatString;
+    int len;
 
     /* Determine dimensions of file. */
+
+    formatString = Tcl_GetStringFromObj(format, &len);
 
     if (bn_common_name_size(&fileWidth, &fileHeight, formatString) <= 0)
 	if (bn_common_file_size(&fileWidth, &fileHeight, fileName, 3) <= 0) {
@@ -243,10 +253,10 @@ FileReadPIX(interp, chan, fileName, formatString, imageHandle, destX, destY,
  */
 
 static int
-FileWritePIX(interp, fileName, formatString, blockPtr)
+FileWritePIX(interp, fileName, format, blockPtr)
     Tcl_Interp *interp;
-    char *fileName;
-    char *formatString;
+    CONST char *fileName;
+    Tcl_Obj *format;
     Tk_PhotoImageBlock *blockPtr;
 {
     FILE *f;
