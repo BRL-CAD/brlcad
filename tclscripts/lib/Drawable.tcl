@@ -38,6 +38,7 @@ class Drawable {
     public method label {obj}
     public method observer {args}
     public method overlay {args}
+    public method report {args}
     public method rt {args}
     public method rtcheck {args}
     public method vdraw {args}
@@ -96,6 +97,10 @@ body Drawable::erase_all {args} {
 
 body Drawable::overlay {args} {
     eval $dg overlay $args
+}
+
+body Drawable::report {args} {
+    eval $dg report $args
 }
 
 body Drawable::rt {args} {

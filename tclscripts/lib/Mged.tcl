@@ -70,6 +70,7 @@ class Mged {
     public method push {args}
     public method put {args}
     public method r {args}
+    public method report_on_drawable {args}
     public method rm {args}
     public method rt_gettrees {args}
     public method title {args}
@@ -335,4 +336,8 @@ body Mged::illum {args} {
 
 body Mged::label {args} {
     eval $db label $args
+}
+
+body Mged::report_on_drawable {args} {
+    eval $db report $args
 }
