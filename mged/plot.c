@@ -264,13 +264,13 @@ char	**argv;
 		}
 	}
 
-	/* Create pipes to boundp | parea */
+	/* Create pipes to cad_boundp | cad_parea */
 	if( argc == 2 )  {
-		sprintf( buf, "boundp -t %s | parea", argv[1] );
+		sprintf( buf, "cad_boundp -t %s | cad_parea", argv[1] );
 		(void)printf("Tolerance is %s\n", argv[1] );
 	}  else  {
 		double tol = VIEWSIZE * 0.001;
-		sprintf( buf, "boundp -t %e | parea", tol );
+		sprintf( buf, "cad_boundp -t %e | cad_parea", tol );
 		(void)printf("Auto-tolerance of 0.1%% is %e\n", tol );
 	}
 
