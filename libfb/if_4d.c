@@ -353,6 +353,10 @@ FBIO	*ifp;
 	char	*sp;
 	int	new = 0;
 
+	if( sizeof(struct sgi_pixel) != sizeof(long) )  {
+		fb_log("Warning, sgi_pixel=%d, long=%d bytes\n",
+			sizeof(struct sgi_pixel), sizeof(long) );
+	}
 	errno = 0;
 
 	if( (ifp->if_mode & MODE_1MASK) == MODE_1MALLOC )  {
@@ -374,10 +378,18 @@ FBIO	*ifp;
 
 	/* The shared memory section never changes size */
 	SGI(ifp)->mi_memwidth = ifp->if_max_width;
-	pixsize = ifp->if_max_height * ifp->if_max_width *
+
+	/*
+	 *  On Irix 5 with Indigo EXPRESS graphics,
+	 *  lrectwrite() runs off the end!
+	 *  So, provide a pad area of 2 scanlines.
+	 *  (1 line is enough, but this avoids risk of damage to colormap table.)
+	 */
+	pixsize = (ifp->if_max_height+2) * ifp->if_max_width *
 		sizeof(struct sgi_pixel);
+
 	size = pixsize + sizeof(struct sgi_cmap);
-	size = (size + 4096-1) & ~(4096-1);
+	size = (size + getpagesize()-1) & ~(getpagesize()-1);
 
 	/* First try to attach to an existing one */
 	if( (SGI(ifp)->mi_shmid = shmget( SHMEM_KEY, size, 0 )) < 0 )  {
@@ -390,12 +402,13 @@ FBIO	*ifp;
 		new = 1;
 	}
 
+#if IRIX < 5
 	/* Move up the existing break, to leave room for later malloc()s */
 	old_brk = sbrk(0);
 	new_brk = (char *)(6 * (XMAXSCREEN+1) * 1024L);
 	if( new_brk <= old_brk )
 		new_brk = old_brk + (XMAXSCREEN+1) * 1024;
-	new_brk = (char *)((((long)new_brk) + 4096-1) & ~(4096-1));
+	new_brk = (char *)((((long)new_brk) + getpagesize()-1) & ~(getpagesize()-1));
 	if( brk( new_brk ) < 0 )  {
 		fb_log("sgi_getmem: new brk(x%x) failure, errno=%d\n", new_brk, errno);
 		goto fail;
@@ -412,6 +425,14 @@ FBIO	*ifp;
 		fb_log("sgi_getmem: restore brk(x%x) failure, errno=%d\n", old_brk, errno);
 		/* Take the memory and run */
 	}
+#else
+	/* Open the segment Read/Write */
+	/* On Irix 5, this gets mapped in at a high address, no problem. */
+	if( (sp = shmat( SGI(ifp)->mi_shmid, 0, 0 )) == (char *)(-1L) )  {
+		fb_log("sgi_getmem: shmat returned x%x, errno=%d\n", sp, errno );
+		goto fail;
+	}
+#endif
 
 success:
 	ifp->if_mem = sp;
