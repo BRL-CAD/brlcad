@@ -838,6 +838,10 @@ struct soltab		*stp;
 			}
 
 			/* Now bomb off */
+			rt_log("Solid: %s, pixel=%d,%d, lvl=%d %s\n",
+				stp->st_dp->d_namep,
+				ap->a_x, ap->a_y, ap->a_level,
+				ap->a_purpose );
 		    	rt_log("Ray: pt:(%g %g %g) dir:(%g %g %g)\n",
 		    		V3ARGS(rd->rp->r_pt), V3ARGS(rd->rp->r_dir) );
 			nmg_rt_segs_exit("Goodbye\n");
