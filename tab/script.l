@@ -1,4 +1,4 @@
-	#include "./tokens.h"
+	#include "../tab/tokens.h"
 D	[0-9]
 A	[a-zA-Z]
 L	[a-zA-Z0-9_\/]
