@@ -255,7 +255,7 @@ char *argv[];
 		/* read the vertices into our structure and set the nmg vertex pointer to NULL */
 		for( vert_no=0 ; vert_no < no_of_verts ; vert_no++ )
 		{
-			if( fscanf( in_fp , "%6f %6f %6f" , &x , &y , &z ) == EOF )
+			if( fscanf( in_fp , "%f %f %f" , &x , &y , &z ) == EOF )
 			{
 				fprintf( stderr , "Unexpected EOF\n" );
 				break;
