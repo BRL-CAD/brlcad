@@ -198,14 +198,20 @@ void
 fill_buffer( y )
 int y;
 {
+	static int	file_pos = 0;
+
 	buf_start = y - buflines/2;
 	if( buf_start < 0 ) buf_start = 0;
 
-	if( fseek( buffp, buf_start * scanlen, 0 ) < 0 ) {
-		fprintf( stderr, "pixscale: Can't seek to input pixel!\n" );
-		exit( 3 );
+	if( file_pos != buf_start * scanlen )  {
+		if( fseek( buffp, buf_start * scanlen, 0 ) < 0 ) {
+			fprintf( stderr, "pixscale: Can't seek to input pixel! y=%d\n", y );
+			exit( 3 );
+		}
+		file_pos = buf_start * scanlen;
 	}
 	fread( buffer, scanlen, buflines, buffp );
+	file_pos += buflines * scanlen;
 }
 
 /****** THIS PROBABLY SHOULD BE ELSEWHERE *******/
