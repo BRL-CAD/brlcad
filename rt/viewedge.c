@@ -269,7 +269,8 @@ is_edge(struct cell *here, struct cell *left, struct cell *below)
 	return 0;
     }
 
-    if ( here->c_id != left->c_id || here->c_id != below->c_id) {
+    if (here->c_id != -1 &&
+        (here->c_id != left->c_id || here->c_id != below->c_id)) {
 	return 1;
     }
 
