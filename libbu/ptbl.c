@@ -87,7 +87,7 @@ long		*p;
 	if (b->end >= b->blen)  {
 		b->buffer = (long **)bu_realloc( (char *)b->buffer,
 		    sizeof(p)*(b->blen *= 4),
-		    "bu_ptbl.buffer[]" );
+		    "bu_ptbl.buffer[] (ins)" );
 	}
 
 	b->buffer[i=b->end++] = p;
@@ -245,8 +245,8 @@ CONST struct bu_ptbl	*src;
 
 	if ((dest->blen - dest->end) < src->end) {
 		dest->buffer = (long **)bu_realloc( (char *)dest->buffer,
-			sizeof(long *)*(dest->blen += src->blen),
-			"pointer table (CAT)");
+			sizeof(long *)*(dest->blen += src->blen + 8),
+			"bu_ptbl.buffer[] (cat)");
 	}
 	bcopy( (char *)src->buffer, (char *)&dest->buffer[dest->end],
 		src->end*sizeof(long *));
@@ -275,15 +275,12 @@ CONST struct bu_ptbl	*src;
 	/* Assume the worst, ensure sufficient space to add all 'src' items */
 	if ((dest->blen - dest->end) < src->end) {
 		dest->buffer = (long **)bu_realloc( (char *)dest->buffer,
-			sizeof(long *)*(dest->blen += src->blen),
-			"pointer table (CAT)");
+			sizeof(long *)*(dest->blen += src->blen + 8),
+			"bu_ptbl.buffer[] (cat_uniq)");
 	}
 	for( BU_PTBL_FOR( p, (long **), src ) )  {
 		bu_ptbl_ins_unique( dest, *p );
 	}
-
-	bcopy( (char *)src->buffer, (char *)&dest->buffer[dest->end],
-		src->end*sizeof(long *));
 }
 
 /*
