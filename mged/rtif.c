@@ -10,6 +10,7 @@
  *	f_saveview	save the current view parameters
  *	f_rmats		load views from a file
  *	f_savekey	save keyframe in file
+ *	f_nirt          trace a single ray from current view
  *
  *  Author -
  *	Michael John Muuss
@@ -810,6 +811,150 @@ char	**argv;
 
 	cvt_vlblock_to_solids( rtif_vbp, "EYE_PATH" );
 	rt_vlblock_free(rtif_vbp);
+}
+
+/*
+ *			F _ N I R T
+ *
+ *  Invoke NIRT with the current view & stuff
+ */
+void
+f_nirt( argc, argv )
+int	argc;
+char	**argv;
+{
+	register char **vp;
+	register int i;
+	register struct solid *sp;
+	double	t;
+	double	t_in;
+	FILE *fp;
+	int pid, rpid;
+	int retcode;
+	int o_pipe[2];
+	vect_t	center_model;
+	vect_t	direction;
+	vect_t	extremum[2];
+	vect_t	minus, plus;	/* vers of this solid's bounding box */
+	vect_t	unit_H, unit_V;
+
+	if( not_state( ST_VIEW, "Single ray-trace from current view" ) )
+		return;
+
+	vp = &rt_cmd_vec[0];
+	*vp++ = "nirt";
+	*vp++ = "-M";
+	for( i=1; i < argc; i++ )
+		*vp++ = argv[i];
+	*vp++ = dbip->dbi_filename;
+
+	setup_rt( vp );
+
+	(void)pipe( o_pipe );
+	(void)signal( SIGINT, SIG_IGN );
+	if ( ( pid = fork()) == 0 )  {
+		(void)close(0);
+		(void)dup( o_pipe[0] );
+		for( i=3; i < 20; i++ )
+			(void)close(i);
+		(void)signal( SIGINT, SIG_DFL );
+		(void)execvp( rt_cmd_vec[0], rt_cmd_vec );
+		perror( rt_cmd_vec[0] );
+		exit(16);
+	}
+
+	/* As parent, send view information down pipe */
+	(void)close( o_pipe[0] );
+	fp = fdopen( o_pipe[1], "w" );
+	{
+		VSET(center_model, -toViewcenter[MDX],
+		    -toViewcenter[MDY], -toViewcenter[MDZ]);
+		printf("OK, at first center=(%g, %g, %g)\n",
+		    center_model[X], center_model[Y], center_model[Z]);
+		if (adcflag)
+		{
+		    (void) printf("Firing through angle/distance cursor...\n");
+		    /*
+		     * Compute bounding box of all objects displayed.
+		     * Borrowed from size_reset() in chgview.c
+		     */
+		    for (i = 0; i < 3; ++i)
+		    {
+			extremum[0][i] = INFINITY;
+			extremum[1][i] = -INFINITY;
+		    }
+		    FOR_ALL_SOLIDS (sp)
+		    {
+			    minus[X] = sp->s_center[X] - sp->s_size;
+			    minus[Y] = sp->s_center[Y] - sp->s_size;
+			    minus[Z] = sp->s_center[Z] - sp->s_size;
+			    VMIN( extremum[0], minus );
+			    plus[X] = sp->s_center[X] + sp->s_size;
+			    plus[Y] = sp->s_center[Y] + sp->s_size;
+			    plus[Z] = sp->s_center[Z] + sp->s_size;
+			    VMAX( extremum[1], plus );
+#if 0
+			    printf("(%g,%g,%g)+-%g->(%g,%g,%g)(%g,%g,%g)->(%g,%g,%g)(%g,%g,%g)\n",
+				sp->s_center[X], sp->s_center[Y], sp->s_center[Z],
+				sp->s_size,
+				minus[X], minus[Y], minus[Z],
+				plus[X], plus[Y], plus[Z],
+				extremum[0][X], extremum[0][Y], extremum[0][Z],
+				extremum[1][X], extremum[1][Y], extremum[1][Z]);
+#endif
+		    }
+		    VMOVEN(direction, Viewrot + 8, 3);
+		    VSCALE(direction, direction, -1.0);
+		    for (i = 0; i < 3; ++i)
+			if (NEAR_ZERO(direction[i], 1e-10))
+			    direction[i] = 0.0;
+		    if ((center_model[X] >= extremum[0][X]) &&
+			(center_model[X] <= extremum[1][X]) &&
+			(center_model[Y] >= extremum[0][Y]) &&
+			(center_model[Y] <= extremum[1][Y]) &&
+			(center_model[Z] >= extremum[0][Z]) &&
+			(center_model[Z] <= extremum[1][Z]))
+		    {
+			t_in = -INFINITY;
+			for (i = 0; i < 6; ++i)
+			{
+			    if (direction[i%3] == 0)
+				continue;
+			    t = (extremum[i/3][i%3] - center_model[i%3]) /
+				    direction[i%3];
+			    if ((t < 0) && (t > t_in))
+				t_in = t;
+			}
+			VJOIN1(center_model, center_model, t_in, direction);
+		    }
+		    printf("OK, after backing up center=(%g, %g, %g)\n",
+			center_model[X], center_model[Y], center_model[Z]);
+
+		    VMOVEN(unit_H, model2view, 3);
+		    VMOVEN(unit_V, model2view + 4, 3);
+		    VJOIN1(center_model,
+			center_model, curs_x * Viewscale / 2047.0, unit_H);
+		    VJOIN1(center_model,
+			center_model, curs_y * Viewscale / 2047.0, unit_V);
+		    printf("OK, after shifting for ADC center=(%g, %g, %g)\n",
+			center_model[X], center_model[Y], center_model[Z]);
+		}
+		else
+		    (void) printf("Firing from view center...\n");
+		fflush(stdout);
+		rt_write(fp, center_model );
+	}
+	(void)fclose( fp );
+
+	/* Wait for program to finish */
+	while ((rpid = wait(&retcode)) != pid && rpid != -1)
+		;	/* NULL */
+	if( retcode != 0 )
+		pr_wait_status( retcode );
+	(void)signal(SIGINT, cur_sigint);
+
+	FOR_ALL_SOLIDS( sp )
+		sp->s_iflag = DOWN;
 }
 
 cm_start(argc, argv)
