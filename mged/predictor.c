@@ -370,7 +370,7 @@ predictor_frame()
 	RT_ADD_VLIST( &vhead, mJ, RT_VLIST_POLY_END );
 #endif
 
-	invent_solid( PREDICTOR_NAME, &vhead, 0x00FFFFFFL );
+	invent_solid( PREDICTOR_NAME, &vhead, 0x00FFFFFFL, 0 );
 
 	push_trail( &tA, mA );
 	push_trail( &tB, mB );
@@ -386,28 +386,28 @@ predictor_frame()
 
 #if 0
 	draw_trail( &trail, &tA );
-	invent_solid( "_PREDIC_TRAIL_LL_", &trail, 0x00FF00FFL );
+	invent_solid( "_PREDIC_TRAIL_LL_", &trail, 0x00FF00FFL, 0 );
 
 	draw_trail( &trail, &tB );
-	invent_solid( "_PREDIC_TRAIL_LR_", &trail, 0x0000FFFFL );
+	invent_solid( "_PREDIC_TRAIL_LR_", &trail, 0x0000FFFFL, 0 );
 
 	draw_trail( &trail, &tC );
-	invent_solid( "_PREDIC_TRAIL_UR_", &trail, 0x00FF00FFL );
+	invent_solid( "_PREDIC_TRAIL_UR_", &trail, 0x00FF00FFL, 0 );
 
 	draw_trail( &trail, &tD );
-	invent_solid( "_PREDIC_TRAIL_UL_", &trail, 0x0000FFFFL );
+	invent_solid( "_PREDIC_TRAIL_UL_", &trail, 0x0000FFFFL, 0 );
 #else
 	poly_trail( &trail, &tA, &tE );
-	invent_solid( "_PREDIC_TRAIL_LL_", &trail, 0x00FF00FFL );
+	invent_solid( "_PREDIC_TRAIL_LL_", &trail, 0x00FF00FFL, 0 );
 
 	poly_trail( &trail, &tB, &tF );
-	invent_solid( "_PREDIC_TRAIL_LR_", &trail, 0x0000FFFFL );
+	invent_solid( "_PREDIC_TRAIL_LR_", &trail, 0x0000FFFFL, 0 );
 
 	poly_trail( &trail, &tG, &tC );
-	invent_solid( "_PREDIC_TRAIL_UR_", &trail, 0x00FF00FFL );
+	invent_solid( "_PREDIC_TRAIL_UR_", &trail, 0x00FF00FFL, 0 );
 
 	poly_trail( &trail, &tH, &tD );
-	invent_solid( "_PREDIC_TRAIL_UL_", &trail, 0x0000FFFFL );
+	invent_solid( "_PREDIC_TRAIL_UL_", &trail, 0x0000FFFFL, 0 );
 #endif
 
 	/* Done */

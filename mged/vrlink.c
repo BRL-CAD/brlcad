@@ -285,7 +285,7 @@ char			*buf;
 
 	rt_vlist_import( &vhead, &name, buf );
 
-	invent_solid( rt_vls_addr(&name), &vhead, 0x0000FF00L );
+	invent_solid( rt_vls_addr(&name), &vhead, 0x0000FF00L, 0 );
 
 	rt_vls_free( &name );
 	if(buf) (void)free(buf);
