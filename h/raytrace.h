@@ -580,7 +580,6 @@ union cutter  {
 };
 #define CUTTER_NULL	((union cutter *)0)
 
-
 /*
  *			M E M _ M A P
  *
@@ -1071,6 +1070,7 @@ struct rt_i {
 	int		useair;		/* "air" regions are used */
 	int		rti_nlights;	/* number of light sources */
 	char		*rti_region_fix_file; /* rt_regionfix() file or NULL */
+	int		rti_space_partition;  /* space partitioning method */
 	/* THESE ITEMS ARE AVAILABLE FOR APPLICATIONS TO READ */
 	vect_t		mdl_min;	/* min corner of model bounding RPP */
 	vect_t		mdl_max;	/* max corner of model bounding RPP */
@@ -1111,13 +1111,27 @@ struct rt_i {
 	struct bn_tol	rti_tol;	/* Tolerances for this model */
 	struct bu_list	rti_solidheads[RT_DBNHASH]; /* active solid lists */
 	struct bu_ptbl	rti_resources;	/* list of 'struct resource'es encountered */
+	struct nu_axis	*rti_nu_axis[3];           /* arrays of slabs slicing space into cells */
+	int		 rti_nu_cells_per_axis[3]; /* number of slabs */
+	int		 rti_nu_stepsize[3];       /* number of cells to jump for one step in each axis */
+	union cutter	*rti_nu_grid;		   /* array of boxnodes */
 };
+	
 #define RTI_NULL	((struct rt_i *)0)
 #define RTI_MAGIC	0x99101658	/* magic # for integrity check */
 
 #define RT_CHECK_RTI(_p)	BU_CKMAG(_p, RTI_MAGIC, "struct rt_i")
 #define RT_CK_RTI(_p)		BU_CKMAG(_p, RTI_MAGIC, "struct rt_i")
 
+struct nu_axis {
+	fastf_t		nu_spos;	/* cell start position */
+	fastf_t		nu_epos;	/* cell end position */
+	fastf_t		nu_width;	/* voxel size (end - start) */
+};
+
+#define RT_PART_NUGRID	0
+#define	RT_PART_NUBSPT	1
+	
 /*
  *  Macros to painlessly visit all the active solids.  Serving suggestion:
  *
