@@ -650,8 +650,7 @@ char	**argv;
 	}
 
 	/* find point for rotation to take place wrt */
-	/* XXX should have an es_keypoint for this */
-	MAT4X3PNT(model_pt, es_mat, es_rec.s.s_values);
+	MAT4X3PNT(model_pt, es_mat, es_keypoint);
 	MAT4X3PNT(point, modelchanges, model_pt);
 
 	/* Find absolute translation vector to go from "model_pt" to
@@ -743,8 +742,7 @@ char	**argv;
 	}
 
 	/* find point the scaling is to take place wrt */
-	/* XXX should have an es_keypoint for this */
-	MAT4X3PNT(temp, es_mat, es_rec.s.s_values);
+	MAT4X3PNT(temp, es_mat, es_keypoint);
 	MAT4X3PNT(point, modelchanges, temp);
 
 	wrt_point(modelchanges, incr, modelchanges, point);
@@ -778,8 +776,7 @@ char	**argv;
 	for(i=0; i<3; i++) {
 		new_vertex[i] = atof(argv[i+1]) * local2base;
 	}
-	/* XXX should have an es_keypoint for this */
-	MAT4X3PNT(model_sol_pt, es_mat, es_rec.s.s_values);
+	MAT4X3PNT(model_sol_pt, es_mat, es_keypoint);
 	MAT4X3PNT(ed_sol_pt, modelchanges, model_sol_pt);
 	VSUB2(model_incr, new_vertex, ed_sol_pt);
 	MAT_DELTAS(incr, model_incr[0], model_incr[1], model_incr[2]);
