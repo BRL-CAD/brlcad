@@ -75,14 +75,17 @@ char	**argv;
 
 	signal(SIGINT,  cake_finish);
 	signal(SIGQUIT, cake_finish);
-	signal(SIGILL,  cake_abort);
-	signal(SIGTRAP, cake_abort);
-/*	signal(SIGIOT,  cake_abort);	/* BRL */
-	signal(SIGEMT,  cake_abort);
-	signal(SIGFPE,  cake_abort);
-	signal(SIGBUS,  cake_abort);
-	signal(SIGSEGV, cake_abort);
-	signal(SIGSYS,  cake_abort);
+	if(cakedebug)  {
+		/* If debugging enabled, catch signals to do get_trail() */
+		signal(SIGILL,  cake_abort);
+		signal(SIGTRAP, cake_abort);
+		signal(SIGIOT,  cake_abort);
+		signal(SIGEMT,  cake_abort);
+		signal(SIGFPE,  cake_abort);
+		signal(SIGBUS,  cake_abort);
+		signal(SIGSEGV, cake_abort);
+		signal(SIGSYS,  cake_abort);
+	}
 	signal(SIGPIPE, cake_abort);
 	signal(SIGALRM, cake_abort);
 
@@ -132,11 +135,15 @@ char	**argv;
 	if (gflag)
 		cakefile = dir_setup(cakefile);
 
-	pwent = getpwuid(geteuid());
-	strcpy(scratchbuf, "-I");
-	strcat(scratchbuf, pwent->pw_dir);
-	strcat(scratchbuf, ULIB);
-	cppargv[cppargc++] = new_name(scratchbuf);
+	if( (pwent = getpwuid(geteuid())) == (Pwent *)0 )  {
+		printf("cake: Warning: unable to get home directory for uid %d\n",
+			geteuid() );
+	} else {
+		strcpy(scratchbuf, "-I");
+		strcat(scratchbuf, pwent->pw_dir);
+		strcat(scratchbuf, ULIB);
+		cppargv[cppargc++] = new_name(scratchbuf);
+	}
 	strcpy(scratchbuf, "-I");
 	strcat(scratchbuf, SLIB);
 	cppargv[cppargc++] = new_name(scratchbuf);
@@ -420,13 +427,14 @@ reg	int	needtrail;
 **	Handle bus errors and segmentation violations.
 */
 
-cake_abort()
+cake_abort(signo)
+int	signo;
 {
 
 	signal(SIGINT,  SIG_IGN);
 	signal(SIGQUIT, SIG_IGN);
 
-	printf("Abort on signal\n");
+	printf("cake: aborting on signal %d\n", signo);
 	if (cakedebug)
 		get_trail(stdout);
 
