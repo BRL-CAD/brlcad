@@ -1,5 +1,5 @@
 /*
- *			P G . C
+ *			G _ P G . C
  *
  *  Function -
  *	Intersect a ray with a Polygonal Object
@@ -26,18 +26,19 @@ static char RCSpg[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "db.h"
 #include "raytrace.h"
+#include "nmg.h"
 #include "./debug.h"
 #include "./plane.h"
 
 #define TRI_NULL	((struct tri_specific *)0)
 
-HIDDEN int pgface();
+HIDDEN int rt_pgface();
 
 /* Describe algorithm here */
 
 
 /*
- *			P G _ P R E P
+ *			R T _ P G _ P R E P
  *  
  *  This routine is used to prepare a list of planar faces for
  *  being shot at by the triangle routines.
@@ -48,7 +49,7 @@ HIDDEN int pgface();
  *  
  */
 int
-pg_prep( stp, rp, rtip )
+rt_pg_prep( stp, rp, rtip )
 struct soltab	*stp;
 union record	*rp;
 struct rt_i	*rtip;
@@ -60,12 +61,12 @@ struct rt_i	*rtip;
 	/* rp[0] has ID_P_HEAD record */
 	for( j = 1; j < stp->st_dp->d_len; j++ )  {
 		if( rp[j].u_id != ID_P_DATA )  {
-			rt_log("pg_prep(%s):  bad record 0%o\n",
+			rt_log("rt_pg_prep(%s):  bad record 0%o\n",
 				stp->st_name, rp[j].u_id );
 			return(-1);		/* BAD */
 		}
 		if( rp[j].q.q_count < 3 || rp[j].q.q_count > 5 )  {
-			rt_log("pg_prep(%s):  q_count = %d\n",
+			rt_log("rt_pg_prep(%s):  q_count = %d\n",
 				stp->st_name, rp[j].q.q_count);
 			return(-1);		/* BAD */
 		}
@@ -83,7 +84,7 @@ struct rt_i	*rtip;
 			MAT4X3PNT( work[2], stp->st_pathmat, rp[j].q.q_verts[i] );
 			VMINMAX( stp->st_min, stp->st_max, work[2] );
 			/* output a face */
-			(void)pgface( stp, work[0], work[1], work[2], norm );
+			(void)rt_pgface( stp, work[0], work[1], work[2], norm );
 			VMOVE( work[1], work[2] );
 		}
 	}
@@ -115,7 +116,7 @@ struct rt_i	*rtip;
 }
 
 /*
- *			P G F A C E
+ *			R T _ P G F A C E
  *
  *  This function is called with pointers to 3 points,
  *  and is used to prepare PG faces.
@@ -126,7 +127,7 @@ struct rt_i	*rtip;
  *	#pts	(3) if a valid plane resulted.
  */
 HIDDEN int
-pgface( stp, ap, bp, cp, np )
+rt_pgface( stp, ap, bp, cp, np )
 struct soltab	*stp;
 fastf_t		*ap, *bp, *cp;
 fastf_t		*np;
@@ -176,10 +177,10 @@ fastf_t		*np;
 }
 
 /*
- *  			P G _ P R I N T
+ *  			R T _ P G _ P R I N T
  */
 void
-pg_print( stp )
+rt_pg_print( stp )
 register struct soltab *stp;
 {
 	register struct tri_specific *trip =
@@ -200,7 +201,7 @@ register struct soltab *stp;
 }
 
 /*
- *			P G _ S H O T
+ *			R T _ P G _ S H O T
  *  
  * Function -
  *	Shoot a ray at a polygonal object.
@@ -210,14 +211,14 @@ register struct soltab *stp;
  *  	segp	HIT
  */
 struct seg *
-pg_shot( stp, rp, ap )
+rt_pg_shot( stp, rp, ap )
 struct soltab		*stp;
 register struct xray	*rp;
 struct application	*ap;
 {
 	register struct tri_specific *trip =
 		(struct tri_specific *)stp->st_specific;
-#define MAXHITS 12		/* # surfaces hit, must be even */
+#define MAXHITS 32		/* # surfaces hit, must be even */
 	LOCAL struct hit hits[MAXHITS];
 	register struct hit *hp;
 	LOCAL int	nhits;
@@ -277,8 +278,8 @@ struct application	*ap;
 		/* HIT is within planar face */
 		hp->hit_dist = k;
 		VMOVE( hp->hit_normal, trip->tri_N );
-		if( nhits++ >= MAXHITS )  {
-			rt_log("pg(%s): too many hits\n", stp->st_name);
+		if( ++nhits >= MAXHITS )  {
+			rt_log("rt_pg_shot(%s): too many hits\n", stp->st_name);
 			break;
 		}
 		hp++;
@@ -304,7 +305,7 @@ struct application	*ap;
 
 	if( nhits&1 )  {
 		register int i;
-		static int nerrors = 0;
+		static int nerrors = 0;		/* message counter */
 		/*
 		 * If this condition exists, it is almost certainly due to
 		 * the dn==0 check above.  Thus, we will make the last
@@ -317,7 +318,7 @@ struct application	*ap;
 		VREVERSE( hits[nhits].hit_normal, hits[nhits-1].hit_normal );
 		hits[nhits++].hit_dist += 0.1;	/* mm thick */
 		if( nerrors++ < 6 )  {
-			rt_log("pg(%s): %d hits: ", stp->st_name, nhits-1);
+			rt_log("rt_pg_shot(%s): %d hits: ", stp->st_name, nhits-1);
 			for(i=0; i < nhits; i++ )
 				rt_log("%f, ", hits[i].hit_dist );
 			rt_log("\n");
@@ -344,10 +345,10 @@ struct application	*ap;
 }
 
 /*
- *			P G _ F R E E
+ *			R T _ P G _ F R E E
  */
 void
-pg_free( stp )
+rt_pg_free( stp )
 struct soltab *stp;
 {
 	register struct tri_specific *trip =
@@ -362,23 +363,22 @@ struct soltab *stp;
 }
 
 /*
- *			P G _ N O R M
+ *			R T _ P G _ N O R M
  */
 void
-pg_norm( hitp, stp, rp )
+rt_pg_norm( hitp, stp, rp )
 register struct hit *hitp;
 struct soltab *stp;
 register struct xray *rp;
 {
-	/* Normals computed in pg_shot, nothing to do here */
-
-	if( VDOT(rp->r_dir, hitp->hit_normal) > 0 ) {
-		VREVERSE( hitp->hit_normal, hitp->hit_normal );
-	}
+	/* Normals computed in rt_pg_shot, nothing to do here */
 }
 
+/*
+ *			R T _ P G _ U V
+ */
 void
-pg_uv( ap, stp, hitp, uvp )
+rt_pg_uv( ap, stp, hitp, uvp )
 struct application	*ap;
 struct soltab		*stp;
 register struct hit	*hitp;
@@ -389,17 +389,20 @@ register struct uvcoord	*uvp;
 	uvp->uv_du = uvp->uv_dv = 0;
 }
 
+/*
+ *			R T _ P G _ C L A S S
+ */
 int
-pg_class()
+rt_pg_class()
 {
 	return(0);
 }
 
 /*
- *			P G _ P L O T
+ *			R T _ P G _ P L O T
  */
-void
-pg_plot( rp, xform, vhead, dp )
+int
+rt_pg_plot( rp, xform, vhead, dp )
 union record	*rp;
 mat_t		xform;
 struct vlhead	*vhead;
@@ -407,27 +410,233 @@ struct directory *dp;
 {
 	register int	i;
 	register int	n;	/* number of P_DATA records involved */
-	static vect_t work[5];
+	int		npts;
+	vect_t		work[5];
 
 	for( n=1; n < dp->d_len; n++ )  {
-		if( rp[n].q.q_count > 5 )
-			rp[n].q.q_count = 5;
-		for( i=0; i < rp[n].q.q_count; i++ )  {
+		if( (npts = rp[n].q.q_count) < 3 )  {
+			rt_log("rt_pg_plot() face with only %d verts?\n", npts);
+			continue;
+		}
+		if( npts > 5 )
+			npts = 5;
+		for( i=0; i < npts; i++ )  {
 			MAT4X3PNT( work[i], xform, rp[n].q.q_verts[i] );
 		}
-		ADD_VL( vhead, work[rp[n].q.q_count-1], 0 );
-		for( i=0; i < rp[n].q.q_count; i++ )  {
+		ADD_VL( vhead, work[npts-1], 0 );
+		for( i=0; i < npts; i++ )  {
 			ADD_VL( vhead, work[i], 1 );
 		}
 	}
+	return(0);		/* OK */
 }
 
+/*
+ *			R T _ P G _ C U R V E
+ */
 void
-pg_curve( cvp, hitp, stp )
+rt_pg_curve( cvp, hitp, stp )
 register struct curvature *cvp;
 register struct hit *hitp;
 struct soltab *stp;
 {
 	vec_ortho( cvp->crv_pdir, hitp->hit_normal );
 	cvp->crv_c1 = cvp->crv_c2 = 0;
+}
+
+/*
+ *			R T _ N M G _ F I N D _ P T _ I N _ F A C E
+ *
+ *  Given a point in 3-space and a face pointer, try to find a vertex
+ *  in the face which is within sqrt(tol_sq) distance of the given point.
+ *
+ *  Returns -
+ *	pointer to vertex with matching geometry
+ *	NULL
+ */
+struct vertex *
+rt_nmg_find_pt_in_face( fu, pt, tol_sq )
+struct faceuse	*fu;
+point_t		pt;
+double		tol_sq;
+{
+	struct loopuse *lu;
+	struct edgeuse *eu;
+	vect_t		delta;
+
+	NMG_CK_FACEUSE(fu);
+	lu = fu->lu_p;
+	do {
+		NMG_CK_LOOPUSE(lu);
+		if (*lu->down.magic_p == NMG_VERTEXUSE_MAGIC) {
+			VSUB2( delta, lu->down.vu_p->v_p->vg_p->coord, pt );
+			if( MAGSQ(delta) < tol_sq )
+				return(lu->down.vu_p->v_p);
+		}
+		else if (*lu->down.magic_p == NMG_EDGEUSE_MAGIC) {
+			eu = lu->down.eu_p;
+			do {
+				VSUB2( delta, eu->vu_p->v_p->vg_p->coord, pt );
+				if( MAGSQ(delta) < tol_sq )
+					return(eu->vu_p->v_p);
+				eu = eu->next;
+			} while (eu != lu->down.eu_p);
+		} else
+			rt_bomb("rt_nmg_find_pt_in_face: Bogus child of loop\n");
+
+		lu = lu->next;
+	} while (lu != fu->lu_p);
+	return ((struct vertex *)NULL);
+}
+
+/*
+ *			R T _ N M G _ F I N D _ P T _ I N _ S H E L L
+ *
+ *  Given a point in 3-space and a shell pointer, try to find a vertex
+ *  anywhere in the shell which is within sqrt(tol_sq) distance of
+ *  the given point.
+ *
+ *  Returns -
+ *	pointer to vertex with matching geometry
+ *	NULL
+ */
+struct vertex *
+rt_nmg_find_pt_in_shell( s, pt, tol_sq )
+struct shell	*s;
+point_t		pt;
+double		tol_sq;
+{
+	struct faceuse	*fu;
+	struct loopuse	*lu;
+	struct edgeuse	*eu;
+	struct vertex	*v;
+	struct vertex_g	*vg;
+	vect_t		delta;
+
+	NMG_CK_SHELL(s);
+
+	if( fu = s->fu_p ) {
+		/* Shell has faces */
+		do {
+			NMG_CK_FACEUSE(fu);
+			if( (v = rt_nmg_find_pt_in_face( fu, pt, tol_sq )) )
+				return(v);
+			if (fu->next != s->fu_p &&
+			    fu->next->f_p == fu->f_p)
+				fu = fu->next->next;
+			else
+				fu = fu->next;
+		} while (fu != s->fu_p);
+	}
+	if( lu = s->lu_p ) {
+		do {
+			NMG_CK_LOOPUSE(lu);
+			/* XXX what to do here? */
+			rt_log("rt_nmg_find_pt_in_face(): lu?\n");
+			lu = lu->next;
+		} while (lu != s->fu_p->lu_p);
+
+	}
+	if( eu = s->eu_p ) {
+		do {
+			NMG_CK_EDGEUSE(eu);
+			NMG_CK_VERTEXUSE(eu->vu_p);
+			v = eu->vu_p->v_p;
+			NMG_CK_VERTEX(v);
+			if( (vg = v->vg_p) )  {
+				NMG_CK_VERTEX_G(vg);
+				VSUB2( delta, vg->coord, pt );
+				if( MAGSQ(delta) < tol_sq )
+					return(v);
+			}
+			eu = eu->next;
+		} while (eu != s->eu_p);
+	}
+	if (s->vu_p) {
+		NMG_CK_VERTEXUSE(s->vu_p);
+		v = s->vu_p->v_p;
+		NMG_CK_VERTEX(v);
+		if( (vg = v->vg_p) )  {
+			NMG_CK_VERTEX_G( vg );
+			VSUB2( delta, vg->coord, pt );
+			if( MAGSQ(delta) < tol_sq )
+				return(v);
+		}
+	}
+	return( (struct vertex *)0 );
+}
+
+/*
+ *			R T _ P G _ T E S S
+ *
+ *  This is ugly, need to deal with import/export issues!
+ */
+int
+rt_pg_tess( r, m, rp, mat, dp, abs_tol, rel_tol )
+struct nmgregion	**r;
+struct model		*m;
+register union record	*rp;
+register mat_t		mat;
+struct directory	*dp;
+double			abs_tol;
+double			rel_tol;
+{
+	register int	i;
+	register int	n;	/* number of P_DATA records involved */
+	vect_t		work[5];
+	struct shell	*s;
+	struct vertex	*verts[5];
+	struct vertex	**vertp[5];
+	struct faceuse	*fu;
+	fastf_t		tol;
+	fastf_t		tol_sq;
+	int		npts;
+
+	*r = nmg_mrsv( m );	/* Make region, empty shell, vertex */
+	s = m->r_p->s_p;
+
+	/* rel_tol is hard to deal with, given we don't know the RPP yet */
+	tol = abs_tol;
+	if( tol <= 0.0 )
+		tol = 0.1;	/* mm */
+	tol_sq = tol * tol;
+
+	for( i=0; i<5; i++ )
+		vertp[i] = &verts[i];
+	for( n=1; n < dp->d_len; n++ )  {
+		if( (npts = rp[n].q.q_count) < 3 )  {
+			rt_log("rt_pg_tess() face with only %d verts?\n", npts);
+			continue;
+		}
+		if( npts > 5 )
+			npts = 5;
+		for( i=0; i < npts; i++ )  {
+			MAT4X3PNT( work[i], mat, rp[n].q.q_verts[i] );
+		}
+
+		/* Locate these points, if previously mentioned */
+		for( i=0; i < npts; i++ )  {
+			verts[i] = rt_nmg_find_pt_in_shell( s, work[i], tol_sq );
+		}
+
+		/* Construct the face */
+		if( (fu = nmg_cmface( s, vertp, rp[n].q.q_count )) == (struct faceuse *)0 )  {
+			rt_log("rt_pg_tess() nmg_cmface failed, skipping face %d\n",
+				n);
+		}
+
+		/* Associate vertex geometry, where none existed before */
+		for( i=0; i < npts; i++ )  {
+			if( verts[i]->vg_p )  continue;
+			nmg_vertex_gv( verts[i], work[i] );
+		}
+
+		/* Associate face geometry */
+		rt_mk_nmg_planeeqn( fu );
+	}
+
+	/* Compute "geometry" for region and shell */
+	nmg_region_a( *r );
+
+	return(0);		/* OK */
 }
