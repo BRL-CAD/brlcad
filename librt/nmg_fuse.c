@@ -2056,23 +2056,30 @@ CONST struct rt_tol	*tol;
 }
 
 int
-nmg_model_break_all_es_on_v( m, v, tol )
-struct model *m;
+nmg_break_all_es_on_v( magic_p, v, tol )
+long *magic_p;
 struct vertex *v;
 CONST struct rt_tol *tol;
 {
 	struct nmg_ptbl eus;
 	int i;
 	int count=0;
+	char *magic_type;
 
 	if( rt_g.NMG_debug & DEBUG_BOOL )
-		rt_log( "nmg_model_break_all_es_on_v( m=x%x, v=x%x )\n", m, v );
+		rt_log( "nmg_break_all_es_on_v( magic=x%x, v=x%x )\n", magic_p, v );
 
-	NMG_CK_MODEL( m );
 	NMG_CK_VERTEX( v );	
 	RT_CK_TOL( tol );
 
-	nmg_edgeuse_tabulate( &eus, &m->magic );
+	magic_type = rt_identify_magic( *magic_p );
+	if( !strcmp( magic_type, "NULL" ), !strcmp( magic_type, "Unknown_Magic" ) )
+	{
+		rt_log( "Bad magic pointer passed to nmg_break_all_es_on_v (%s)\n", magic_type );
+		rt_bomb( "Bad magic pointer passed to nmg_break_all_es_on_v()\n" );
+	}
+
+	nmg_edgeuse_tabulate( &eus, magic_p );
 
 	for( i=0 ; i<NMG_TBL_END( &eus ) ; i++ )
 	{
@@ -2099,14 +2106,14 @@ CONST struct rt_tol *tol;
 			v->vg_p->coord, tol );
 		if( code < 1 )  continue;	/* missed */
 		if( code == 1 || code == 2 )  {
-			rt_log("nmg_model_break_all_es_on_v() code=%d, why wasn't this vertex fused?\n", code);
+			rt_log("nmg_break_all_es_on_v() code=%d, why wasn't this vertex fused?\n", code);
 			rt_log( "\teu=x%x, v=x%x\n", eu, v );
 			continue;
 		}
 		/* Break edge on vertex, but don't fuse yet. */
 
 		if( rt_g.NMG_debug & DEBUG_BOOL )
-			rt_log( "\tnmg_model_break_all_es_on_v: breaking eu x%x on v x%x\n", eu, v );
+			rt_log( "\tnmg_break_all_es_on_v: breaking eu x%x on v x%x\n", eu, v );
 
 		(void)nmg_ebreak( v, eu );
 		count++;
