@@ -776,7 +776,11 @@ char *file;
 			ed = DEFEDITOR;
 
 		bu_log("Invoking %s...\n", ed);
+#if 0
 		(void)execlp(ed, ed, file, 0);
+#else
+		(void)execlp("xterm", "xterm", "-e", ed, file, (char *)0);
+#endif
 		perror(ed);
 		exit(1);
 	}
@@ -809,7 +813,11 @@ char *file;
 		if ((ed = getenv("EDITOR")) == (char *)0)
 			ed = DEFEDITOR;
 		bu_log("Invoking %s...\n", ed);
+#if 0
 		(void)execlp(ed, ed, file, 0);
+#else
+		(void)execlp("xterm", "xterm", "-e", ed, file, (char *)0);
+#endif
 		perror(ed);
 		exit(1);
 	}
