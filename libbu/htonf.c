@@ -65,7 +65,9 @@ int			count;
 
 	/* Now, for the machine-specific stuff. */
 
-	bu_bomb("htonf() not yet supported on this architecture\n");
+#ifndef HTONF
+# include "ntohf.c:  ERROR, no NtoHD conversion for this machine type"
+#endif
 }
 
 
@@ -94,7 +96,7 @@ int			count;
 		memcpy( out, in, count*SIZEOF_NETWORK_FLOAT );
 #	endif
 	return;
-#	define	NTOHD	yes1
+#	define	NTOHF	yes1
 #endif
 #if	defined(REVERSED_IEEE)
 	/* This machine uses IEEE, but in little-endian byte order */
@@ -107,8 +109,10 @@ int			count;
 		in += SIZEOF_NETWORK_FLOAT;
 	}
 	return;
-#	define	NTOHD	yes2
+#	define	NTOHF	yes2
 #endif
 
-	bu_bomb("ntohf() not yet supported on this architecture\n");
+#ifndef NTOHF
+# include "ntohf.c:  ERROR, no NtoHD conversion for this machine type"
+#endif
 }
