@@ -69,7 +69,7 @@ extern short earb7[12][18];
 extern short earb8[12][18];
 
 static void	arb8_edge(), ars_ed(), ell_ed(), tgc_ed(), tor_ed(), spline_ed();
-static void	nmg_ed(), pipe_ed(), vol_ed(), ebm_ed(), dsp_ed(), fgp_ed(), bot_ed(), extr_ed();
+static void	nmg_ed(), pipe_ed(), vol_ed(), ebm_ed(), dsp_ed(), cline_ed(), bot_ed(), extr_ed();
 static void	rpc_ed(), rhc_ed(), part_ed(), epa_ed(), ehy_ed(), eto_ed();
 static void	arb7_edge(), arb6_edge(), arb5_edge(), arb4_point();
 static void	arb8_mv_face(), arb7_mv_face(), arb6_mv_face();
@@ -205,25 +205,35 @@ int	es_menu;		/* item selected from menu */
 #define MENU_PART_H		88
 #define MENU_PART_v		89
 #define MENU_PART_h		90
-#define MENU_FGP_SOLID		91
-#define MENU_FGP_THICK		92
-#define MENU_FGP_MODE		93
-#define MENU_BOT_PICKV		94
-#define	MENU_BOT_PICKE		95
-#define	MENU_BOT_PICKT		96
-#define	MENU_BOT_MOVEV		97
-#define	MENU_BOT_MOVEE		98
-#define	MENU_BOT_MOVET		99
-#define	MENU_BOT_MODE		100
-#define	MENU_BOT_ORIENT		101
-#define	MENU_BOT_THICK		102
-#define	MENU_BOT_FMODE		103
-#define MENU_EXTR_SCALE_H	104
-#define MENU_EXTR_MOV_H		105
-#define MENU_EXTR_ROT_H		106
-#define MENU_EXTR_SKT_NAME	107
+#define MENU_BOT_PICKV		91
+#define	MENU_BOT_PICKE		92
+#define	MENU_BOT_PICKT		93
+#define	MENU_BOT_MOVEV		94
+#define	MENU_BOT_MOVEE		95
+#define	MENU_BOT_MOVET		96
+#define	MENU_BOT_MODE		97
+#define	MENU_BOT_ORIENT		98
+#define	MENU_BOT_THICK		99
+#define	MENU_BOT_FMODE		100
+#define MENU_EXTR_SCALE_H	101
+#define MENU_EXTR_MOV_H		102
+#define MENU_EXTR_ROT_H		103
+#define MENU_EXTR_SKT_NAME	104
+#define	MENU_CLINE_SCALE_H	105
+#define	MENU_CLINE_MOVE_H	106
+#define MENU_CLINE_SCALE_R	107
+#define	MENU_CLINE_SCALE_T	108
 
 extern int arb_faces[5][24];	/* from edarb.c */
+
+struct menu_item cline_menu[] = {
+	{ "CLINE MENU",		(void (*)())NULL, 0 },
+	{ "Scale H",		cline_ed, ECMD_CLINE_SCALE_H },
+	{ "Move End H",		cline_ed, ECMD_CLINE_MOVE_H },
+	{ "Scale R",		cline_ed, ECMD_CLINE_SCALE_R },
+	{ "Scale plate thickness", cline_ed, ECMD_CLINE_SCALE_T },
+	{ "", (void (*)())NULL, 0 }
+};
 
 struct  menu_item extr_menu[] = {
 	{ "EXTRUSION MENU",	(void (*)())NULL, 0 },
@@ -601,14 +611,6 @@ struct menu_item dsp_menu[] = {
 	{ "", (void (*)())NULL, 0 }
 };
 
-struct menu_item fgp_menu[] = {
-	{ "FGP MENU", (void (*)())NULL, 0 },
-	{ "Referenced Solid", fgp_ed, MENU_FGP_SOLID },
-	{ "Scale Thickness", fgp_ed, MENU_FGP_THICK },
-	{ "Mode", fgp_ed, MENU_FGP_MODE },
-	{ "", (void (*)())NULL, 0 }
-};
-
 struct menu_item bot_menu[] = {
 	{ "BOT MENU", (void (*)())NULL, 0 },
 	{ "Pick Vertex", bot_ed, ECMD_BOT_PICKV },
@@ -741,28 +743,6 @@ int arg;
 }
 
 static void
-fgp_ed( arg )
-{
-	es_menu = arg;
-
-	switch( arg )
-	{
-		case MENU_FGP_SOLID:
-			es_edflag = ECMD_FGP_SOLID;
-			break;
-		case MENU_FGP_THICK:
-			es_edflag = ECMD_FGP_THICK;
-			break;
-		case MENU_FGP_MODE:
-			es_edflag = ECMD_FGP_MODE;
-			break;
-	}
-
-	sedit();
-	set_e_axes_pos(1);
-}
-
-static void
 bot_ed( arg )
 {
 	es_menu = arg;
@@ -821,6 +801,13 @@ int arg;
 	set_e_axes_pos(1);
 }
 
+static void
+cline_ed( arg )
+int arg;
+{
+	es_edflag = arg;
+	sedit();
+}
 
 static void
 vol_ed( arg )
@@ -1541,6 +1528,30 @@ mat_t		mat;
 	RT_CK_DB_INTERNAL( ip );
 
 	switch( ip->idb_type )  {
+	case ID_CLINE:
+		{
+			struct rt_cline_internal *cli = 
+				(struct rt_cline_internal *)ip->idb_ptr;
+
+			RT_CLINE_CK_MAGIC( cli );
+
+			if( !strcmp( cp, "V" ) )
+			{
+				VMOVE( mpt, cli->v );
+				*strp = "V";
+			}
+			else if( !strcmp( cp, "H" ) )
+			{
+				VADD2( mpt, cli->v, cli->h );
+				*strp = "H";
+			}
+			else
+			{
+				VMOVE( mpt, cli->v );
+				*strp = "V";
+			}
+			break;
+		}
 	case ID_PARTICLE:
 		{
 			struct rt_part_internal *part =
@@ -1640,25 +1651,6 @@ mat_t		mat;
 			VSETALL( pt , 0.0 );
 			MAT4X3PNT( mpt , ebm->mat , pt );
 			*strp = "V";
-			break;
-		}
-	case ID_FGP:
-		{
-			struct rt_fgp_internal *plt =
-				(struct rt_fgp_internal *)ip->idb_ptr;
-			struct rt_db_internal in;
-
-			RT_FGP_CK_MAGIC( plt );
-
-			VSETALL( mpt, 0.0 )
-
-			if( rt_db_get_internal( &in, plt->ref_dp, plt->dbip, plt->xform )  < 0 )
-			{
-				Tcl_AppendResult(interp, "get_solid_keypoint() Failed for FGP solid referencing ", plt->ref_dp->d_namep, "\n", (char *)NULL );
-				break;
-			}
-			get_solid_keypoint( mpt, strp, &in, mat );
-			rt_db_free_internal( &in );
 			break;
 		}
 	case ID_BOT:
@@ -2243,6 +2235,23 @@ int both;    /* if(!both) then set only curr_e_axes_pos, otherwise
   		VMOVE(curr_e_axes_pos, es_keypoint)
 
     break;
+  case ID_CLINE:
+  	if( es_edflag == ECMD_CLINE_MOVE_H )
+  	{
+  		struct rt_cline_internal *cli = 
+  			(struct rt_cline_internal *)es_int.idb_ptr;
+  		point_t cli_v;
+  		vect_t cli_h;
+
+  		RT_CLINE_CK_MAGIC( cli );
+
+  		MAT4X3PNT(cli_v, es_mat, cli->v);
+  		MAT4X3VEC(cli_h, es_mat, cli->h);
+  		VADD2(curr_e_axes_pos, cli_h, cli_v);
+  	}
+  	else
+  		VMOVE(curr_e_axes_pos, es_keypoint)
+    break;
   default:
     VMOVE(curr_e_axes_pos, es_keypoint);
     break;
@@ -2383,10 +2392,7 @@ init_sedit()
 
 	/* Finally, enter solid edit state */
 	(void)chg_state( ST_S_PICK, ST_S_EDIT, "Keyboard illuminate");
-	if( id == ID_FGP )
-		chg_l2menu(ST_S_NO_EDIT );
-	else
-		chg_l2menu(ST_S_EDIT);
+	chg_l2menu(ST_S_EDIT);
 	es_edflag = IDLE;
 
 	button( BE_S_EDIT );	/* Drop into edit menu right away */
@@ -2475,10 +2481,7 @@ sedit_menu()  {
 	menu_state->ms_flag = 0;		/* No menu item selected yet */
 
 	mmenu_set_all( MENU_L1, MENU_NULL );
-	if( es_int.idb_type == ID_FGP )
-		chg_l2menu(ST_S_NO_EDIT);
-	else
-		chg_l2menu(ST_S_EDIT);
+	chg_l2menu(ST_S_EDIT);
                                                                       
 	switch( es_int.idb_type ) {
 
@@ -2533,14 +2536,14 @@ sedit_menu()  {
 	case ID_PARTICLE:
 		mmenu_set_all( MENU_L1, part_menu );
 		break;
-	case ID_FGP:
-		mmenu_set_all( MENU_L1, fgp_menu );
-		break;
 	case ID_BOT:
 		mmenu_set_all( MENU_L1, bot_menu );
 		break;
 	case ID_EXTRUDE:
 		mmenu_set_all( MENU_L1, extr_menu );
+		break;
+	case ID_CLINE:
+		mmenu_set_all( MENU_L1, cline_menu );
 		break;
 	}
 	es_edflag = IDLE;	/* Drop out of previous edit mode */
@@ -3022,87 +3025,6 @@ sedit()
 			break;
 		}
 
-	case ECMD_FGP_THICK:
-		{
-			struct rt_fgp_internal *fgp =
-				(struct rt_fgp_internal *)es_int.idb_ptr;
-
-			RT_FGP_CK_MAGIC( fgp );
-
-			if( inpara == 1 )
-				fgp->thickness = es_para[0];
-			else if( inpara > 0 )
-			{
-				Tcl_AppendResult(interp,
-					"plate thickness required\n",
-					(char *)NULL );
-				mged_print_result( TCL_ERROR );
-				return;
-			}
-			else if( es_scale > 0.0 )
-			{
-				fgp->thickness *= es_scale;
-				es_scale = 0.0;
-			}
-		}
-		break;
-
-	case ECMD_FGP_SOLID:
-		{
-			struct rt_fgp_internal *fgp =
-				(struct rt_fgp_internal *)es_int.idb_ptr;
-			char *sol_name;
-			int ret_tcl;
-
-			RT_FGP_CK_MAGIC( fgp );
-
-			ret_tcl = Tcl_VarEval( interp, "cad_input_dialog", " .fgp_solid", " $mged_gui(mged,screen)",
-				" {FGP solid reference}", " {Enter the name of the solid to be referenced by this FGP}",
-				" FGP_Ref_Solid ", fgp->ref_dp->d_namep ," 0 ",
-				"{{ summary \"The solid you name here will be used by the FGP solid to define its extent\" }}",
-				" OK", " CANCEL", (char *)NULL );
-			if( ret_tcl != TCL_OK )
-			{
-				bu_log( "cad_input_dialog failed: %s\n", interp->result );
-				break;
-			}
-			sol_name = Tcl_GetVar( interp, "FGP_Ref_Solid", TCL_GLOBAL_ONLY );
-			NAMEMOVE( sol_name, fgp->referenced_solid );
-			if( (fgp->ref_dp = db_lookup( dbip, sol_name, 0 ) ) == DIR_NULL )
-			{
-				Tcl_AppendResult(interp, "Warning: ", sol_name, " does not exist!!!\n",
-					(char *)NULL );
-			}
-			fgp->dbip = dbip;
-		}
-		break;
-
-	case ECMD_FGP_MODE:
-		{
-			struct rt_fgp_internal *fgp =
-				(struct rt_fgp_internal *)es_int.idb_ptr;
-			char *radio_result;
-			char mode[10];
-			int ret_tcl;
-
-			RT_FGP_CK_MAGIC( fgp );
-			sprintf( mode, " %d", fgp->mode-1 );
-			ret_tcl = Tcl_VarEval( interp, "cad_radio", " .fgp_radio ", bu_vls_addr( &pathName ), " _fgp_mode_result",
-				" \"Plate Mode\"", " \"Select the desired mode\"", mode,
-				" { centered front }",
-				" { \"Selecting the centered mode means the thickness of the plate\nwill be centered about the hit points on the underlying solid\" \"Selecting the front mode means that the thickness of the plate\nwill be extended along the ray starting at the hit points on the underlying solid\" } ",
-				 (char *)NULL );
-
-			if( ret_tcl != TCL_OK )
-			{
-				Tcl_AppendResult(interp, "Mode selection failed!!!\n", (char *)NULL );
-				break;
-			}
-			radio_result = Tcl_GetVar( interp, "_fgp_mode_result", TCL_GLOBAL_ONLY );
-
-			fgp->mode = atoi( radio_result ) + 1;
-		}
-		break;
 	case ECMD_BOT_MODE:
 		{
 			struct rt_bot_internal *bot =
@@ -3762,6 +3684,106 @@ sedit()
 #else
 			VMOVE( fp, es_para );
 #endif
+		}
+		break;
+
+	case ECMD_CLINE_SCALE_H:
+		/*
+		 * Scale height vector
+		 */
+		{
+			struct rt_cline_internal *cli = 
+				(struct rt_cline_internal *)es_int.idb_ptr;
+
+			RT_CLINE_CK_MAGIC( cli );
+
+			if( inpara )
+			{
+				es_para[0] *= es_mat[15];
+				es_scale = es_para[0] / MAGNITUDE(cli->h);
+				VSCALE(cli->h, cli->h, es_scale);
+			}
+			else if( es_scale > 0.0 )
+			{
+				VSCALE(cli->h, cli->h, es_scale);
+				es_scale = 0.0;
+			}
+		}
+		break;
+
+	case ECMD_CLINE_SCALE_R:
+		/*
+		 * Scale radius
+		 */
+		{
+			struct rt_cline_internal *cli = 
+				(struct rt_cline_internal *)es_int.idb_ptr;
+
+			RT_CLINE_CK_MAGIC( cli );
+
+			if( inpara )
+				cli->radius = es_para[0];
+			else if( es_scale > 0.0 )
+			{
+				cli->radius *= es_scale;
+				es_scale = 0.0;
+			}
+		}
+		break;
+
+	case ECMD_CLINE_SCALE_T:
+		/*
+		 * Scale plate thickness
+		 */
+		{
+			struct rt_cline_internal *cli = 
+				(struct rt_cline_internal *)es_int.idb_ptr;
+
+			RT_CLINE_CK_MAGIC( cli );
+
+			if( inpara )
+				cli->thickness = es_para[0];
+			else if( es_scale > 0.0 )
+			{
+				cli->thickness *= es_scale;
+				es_scale = 0.0;
+			}
+		}
+		break;
+
+	case ECMD_CLINE_MOVE_H:
+		/*
+		 * Move end of height vector
+		 */
+		{
+			struct rt_cline_internal *cli = 
+				(struct rt_cline_internal *)es_int.idb_ptr;
+
+			RT_CLINE_CK_MAGIC( cli );
+
+			if( inpara )
+			{
+#ifdef TRY_EDIT_NEW_WAY
+				if( mged_variables->mv_context )
+				{
+					MAT4X3PNT( work, es_invmat, es_para );
+					VSUB2( cli->h, work, cli->v );
+				}
+				else
+					VSUB2( cli->h, es_para, cli->v )
+#else
+				MAT4X3PNT( work, es_invmat, es_para );
+				VSUB2( cli->h, work, cli->v );
+#endif
+			}
+			/* check for zero H vector */
+			if( MAGNITUDE( cli->h ) <= SQRT_SMALL_FASTF ) {
+			  Tcl_AppendResult(interp, "Zero H vector not allowed, resetting to +Z\n",
+					   (char *)NULL);
+				mged_print_result( TCL_ERROR );
+			  VSET(cli->h, 0.0, 0.0, 1.0 );
+			  break;
+			}
 		}
 		break;
 
@@ -5533,6 +5555,9 @@ CONST vect_t	mousevec;
   case ECMD_VOL_THRESH_HI:
   case ECMD_EBM_HEIGHT:
   case ECMD_EXTR_SCALE_H:
+  case ECMD_CLINE_SCALE_H:
+  case ECMD_CLINE_SCALE_T:
+  case ECMD_CLINE_SCALE_R:
     /* use mouse to get a scale factor */
     es_scale = 1.0 + 0.25 * ((fastf_t)
 			     (mousevec[Y] > 0 ? mousevec[Y] : -mousevec[Y]));
@@ -5629,6 +5654,23 @@ CONST vect_t	mousevec;
       MAT4X3PNT( temp, view_state->vs_view2model, pos_view );
       MAT4X3PNT( tr_temp, es_invmat, temp );
       VSUB2( extr->h, tr_temp, extr->V );
+    }
+
+    break;
+  case ECMD_CLINE_MOVE_H:
+    {
+    	struct rt_cline_internal *cli =
+    		(struct rt_cline_internal *)es_int.idb_ptr;
+
+    	RT_CLINE_CK_MAGIC( cli );
+
+      MAT4X3PNT(pos_view, view_state->vs_model2view, curr_e_axes_pos);
+      pos_view[X] = mousevec[X];
+      pos_view[Y] = mousevec[Y];
+      /* Do NOT change pos_view[Z] ! */
+      MAT4X3PNT( temp, view_state->vs_view2model, pos_view );
+      MAT4X3PNT( tr_temp, es_invmat, temp );
+      VSUB2( cli->h, tr_temp, cli->v );
     }
 
     break;
@@ -5970,6 +6012,20 @@ vect_t tvec;
       MAT4X3PNT( temp, view_state->vs_view2model, tvec );
       MAT4X3PNT( tr_temp, es_invmat, temp );
       VSUB2( extr->h, tr_temp, extr->V );
+    }
+
+    break;
+  case ECMD_CLINE_MOVE_H:
+    /* Use mouse to change location of point V+H */
+    {
+      vect_t tr_temp;
+      struct rt_cline_internal	*cli = 
+	(struct rt_cline_internal *)es_int.idb_ptr;
+      RT_CLINE_CK_MAGIC(cli);
+
+      MAT4X3PNT( temp, view_state->vs_view2model, tvec );
+      MAT4X3PNT( tr_temp, es_invmat, temp );
+      VSUB2( cli->h, tr_temp, cli->v );
     }
 
     break;
@@ -7648,12 +7704,15 @@ vect_t argvect;
   case ECMD_DSP_SCALE_ALT:
   case ECMD_EBM_HEIGHT:
   case ECMD_EXTR_SCALE_H:
+  case ECMD_CLINE_SCALE_H:
+  case ECMD_CLINE_SCALE_T:
+  case ECMD_CLINE_SCALE_R:
+  case ECMD_CLINE_MOVE_H:
   case ECMD_EXTR_MOV_H:
   case ECMD_BOT_THICK:
   case ECMD_BOT_MOVET:
   case ECMD_BOT_MOVEE:
   case ECMD_BOT_MOVEV:
-  case ECMD_FGP_THICK:
     /* must convert to base units */
     es_para[0] *= local2base;
     es_para[1] *= local2base;
@@ -8216,6 +8275,22 @@ struct rt_db_internal	*ip;
 			}
 		}
 		break;
+	case ID_CLINE:
+		{
+			register struct rt_cline_internal *cli = 
+				(struct rt_cline_internal *)es_int.idb_ptr;
+			point_t work, work1;
+
+			RT_CLINE_CK_MAGIC( cli );
+
+			MAT4X3PNT( work, xform, cli->v );
+			POINT_LABEL( pos_view, 'V' );
+
+			VADD2( work1, cli->v, cli->h );
+			MAT4X3PNT( work, xform, work1 );
+			POINT_LABEL( pos_view, 'H' );
+		}
+		break;
 	case ID_BOT:
 		{
 			register struct rt_bot_internal *bot =
@@ -8762,14 +8837,14 @@ char **argv;
     case ID_PARTICLE:
       mip = part_menu;
       break;
-    case ID_FGP:
-      mip = fgp_menu;
-      break;
    case ID_BOT:
       mip = bot_menu;
       break;
    case ID_EXTRUDE:
       mip = extr_menu;
+      break;
+   case ID_CLINE:
+      mip = cline_menu;
       break;
     }
 

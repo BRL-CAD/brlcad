@@ -1,7 +1,7 @@
 /*
- *			P L A T E . C
+ *			C L I N E . C
  *
- * Support for fgp mode solids (kludges from FASTGEN)
+ * Support for cline solids (kludges from FASTGEN)
  *
  *  Author -
  *	John Anderson
@@ -16,7 +16,7 @@
  *	The BRL-CAD Package" agreement.
  *
  *  Copyright Notice -
- *	This software is Copyright (C) 1999 by the United States Army
+ *	This software is Copyright (C) 2000 by the United States Army
  *	in all countries except the USA.  All rights reserved.
  */
 #ifndef lint
@@ -35,19 +35,21 @@ static char part_RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "wdb.h"
 
-mk_fgp( fp, name, ref_solid, thickness, mode )
+mk_cline( fp, name, V, height, radius, thickness )
 FILE *fp;
 char *name;
-char *ref_solid;
+point_t V;
+vect_t height;
+fastf_t radius;
 fastf_t thickness;
-int mode;
 {
-	struct rt_fgp_internal plt;
+	struct rt_cline_internal cli;
 
-	plt.magic = RT_FGP_INTERNAL_MAGIC;
-	plt.thickness = thickness;
-	plt.mode = mode;
-	strncpy( plt.referenced_solid, ref_solid, NAMELEN );
+	cli.magic = RT_CLINE_INTERNAL_MAGIC;
+	VMOVE( cli.v, V );
+	VMOVE( cli.h, height );
+	cli.thickness = thickness;
+	cli.radius = radius;
 
-	return mk_export_fwrite( fp, name, (genptr_t)&plt, ID_FGP );
+	return mk_export_fwrite( fp, name, (genptr_t)&cli, ID_CLINE );
 }

@@ -100,25 +100,26 @@
 #define ECMD_DSP_SCALE_Y        59	/* Scale DSP y size */
 #define ECMD_DSP_SCALE_ALT      60	/* Scale DSP Altitude size */
 
-#define	ECMD_FGP_SOLID		61	/* set FGP referenced solid name */
-#define	ECMD_FGP_THICK		62	/* scale FGP plate thickness */
-#define	ECMD_FGP_MODE		63	/* set FGP mode (center or front face) */
+#define	ECMD_BOT_PICKV		61	/* pick a BOT vertex */
+#define	ECMD_BOT_PICKE		62	/* pick a BOT edge */
+#define	ECMD_BOT_PICKT		63	/* pick a BOT triangle */
+#define	ECMD_BOT_MOVEV		64	/* move a BOT vertex */
+#define	ECMD_BOT_MOVEE		65	/* move a BOT edge */
+#define	ECMD_BOT_MOVET		66	/* move a BOT triangle */
+#define	ECMD_BOT_MODE		67	/* set BOT mode */
+#define	ECMD_BOT_ORIENT		68	/* set BOT face orientation */
+#define	ECMD_BOT_THICK		69	/* set face thickness (one or all) */
+#define	ECMD_BOT_FMODE		70	/* set face mode (one or all) */
 
-#define	ECMD_BOT_PICKV		64	/* pick a BOT vertex */
-#define	ECMD_BOT_PICKE		65	/* pick a BOT edge */
-#define	ECMD_BOT_PICKT		66	/* pick a BOT triangle */
-#define	ECMD_BOT_MOVEV		67	/* move a BOT vertex */
-#define	ECMD_BOT_MOVEE		68	/* move a BOT edge */
-#define	ECMD_BOT_MOVET		69	/* move a BOT triangle */
-#define	ECMD_BOT_MODE		70	/* set BOT mode */
-#define	ECMD_BOT_ORIENT		71	/* set BOT face orientation */
-#define	ECMD_BOT_THICK		72	/* set face thickness (one or all) */
-#define	ECMD_BOT_FMODE		73	/* set face mode (one or all) */
+#define	ECMD_EXTR_SCALE_H	71	/* scale extrusion vector */
+#define ECMD_EXTR_MOV_H		72	/* move end of extrusion vector */
+#define	ECMD_EXTR_ROT_H		73	/* rotate extrusion vector */
+#define	ECMD_EXTR_SKT_NAME	74	/* set sketch that the extrusion uses */
 
-#define	ECMD_EXTR_SCALE_H	74	/* scale extrusion vector */
-#define ECMD_EXTR_MOV_H		75	/* move end of extrusion vector */
-#define	ECMD_EXTR_ROT_H		76	/* rotate extrusion vector */
-#define	ECMD_EXTR_SKT_NAME	77	/* set sketch that the extrusion uses */
+#define ECMD_CLINE_SCALE_H	75	/* scale height vector */
+#define ECMD_CLINE_MOVE_H	76	/* move end of height vector */
+#define	ECMD_CLINE_SCALE_R	77	/* scale radius */
+#define	ECMD_CLINE_SCALE_T	78	/* scale thickness */
 
 #define SEDIT_ROTATE (state == ST_S_EDIT && \
 		      (es_edflag == SROT || \
@@ -141,7 +142,9 @@
 		      es_edflag == ECMD_DSP_SCALE_Y || \
 		      es_edflag == ECMD_DSP_SCALE_ALT || \
 		      es_edflag == ECMD_EBM_HEIGHT || \
-		      es_edflag == ECMD_FGP_THICK || \
+		      es_edflag == ECMD_CLINE_SCALE_H || \
+		      es_edflag == ECMD_CLINE_SCALE_R || \
+		      es_edflag == ECMD_CLINE_SCALE_T || \
 		      es_edflag == ECMD_EXTR_SCALE_H ))
 #define OEDIT_SCALE (state == ST_O_EDIT && \
 		     (edobj == BE_O_XSCALE || \
@@ -171,6 +174,7 @@
 		     es_edflag == ECMD_BOT_MOVEV || \
 		     es_edflag == ECMD_BOT_MOVEE || \
 		     es_edflag == ECMD_BOT_MOVET || \
+		     es_edflag == ECMD_CLINE_MOVE_H || \
 		     es_edflag == ECMD_EXTR_MOV_H )
 #define OEDIT_TRAN (state == ST_O_EDIT && \
 		    (edobj == BE_O_X || \
