@@ -388,6 +388,17 @@ struct bu_list {
 #define BU_LIST_HEAD_MAGIC	0x01016580	/* Magic num for list head */
 #define BU_LIST_NULL	((struct bu_list *)0)
 
+typedef struct bu_list bu_list_t;
+
+#define BU_LIST_CLOSE( hp ) { \
+	assert( (hp) != NULL ); \
+	if( (hp) == NULL ) \
+		return; \
+	assert( BU_LIST_IS_EMPTY( (hp) ) ); \
+	BU_LIST_FREE( (hp) ); \
+	bu_free( (char *)(hp), "bu_list head" ); \
+}
+
 
 /*
  *  Insert "new" item in front of "old" item.  Often, "old" is the head.
@@ -435,6 +446,16 @@ struct bu_list {
 	}							\
 	else							\
 	     (p) = (struct structure *) 0
+
+#define BU_LIST_POP_T(type, hp, p )				\
+	if (BU_LIST_NON_EMPTY(hp))				\
+	{							\
+	    (p) = ((type *)((hp)->forw));		\
+	    BU_LIST_DEQUEUE((struct bu_list *)(p));		\
+	}							\
+	else							\
+	     (p) = (type *) 0
+
 /*
  *  "Bulk transfer" all elements from the list headed by src_hd
  *  onto the list headed by dest_hd, without examining every element
