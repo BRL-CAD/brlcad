@@ -208,13 +208,14 @@ register struct soltab *stp;
  *  
  * Returns -
  *	0	MISS
- *  	segp	HIT
+ *	>0	HIT
  */
-struct seg *
-rt_pg_shot( stp, rp, ap )
+int
+rt_pg_shot( stp, rp, ap, seghead )
 struct soltab		*stp;
 register struct xray	*rp;
 struct application	*ap;
+struct seg		*seghead;
 {
 	register struct tri_specific *trip =
 		(struct tri_specific *)stp->st_specific;
@@ -285,7 +286,7 @@ struct application	*ap;
 		hp++;
 	}
 	if( nhits == 0 )
-		return(SEG_NULL);		/* MISS */
+		return(0);		/* MISS */
 
 	/* Sort hits, Near to Far */
 	{
@@ -327,21 +328,17 @@ struct application	*ap;
 
 	/* nhits is even, build segments */
 	{
-		register struct seg *segp;			/* XXX */
-		segp = SEG_NULL;
-		while( nhits > 0 )  {
-			register struct seg *newseg;		/* XXX */
-			GET_SEG(newseg, ap->a_resource);
-			newseg->seg_next = segp;
-			segp = newseg;
+		register struct seg *segp;
+		register int	i;
+		for( i=0; i < nhits; i -= 2 )  {
+			RT_GET_SEG(segp, ap->a_resource);
 			segp->seg_stp = stp;
-			segp->seg_in = hits[nhits-2];	/* struct copy */
-			segp->seg_out = hits[nhits-1];	/* struct copy */
-			nhits -= 2;
+			segp->seg_in = hits[i];		/* struct copy */
+			segp->seg_out = hits[i+1];	/* struct copy */
+			RT_LIST_INSERT( &(seghead->l), &(segp->l) );
 		}
-		return(segp);			/* HIT */
 	}
-	/* NOTREACHED */
+	return(nhits);			/* HIT */
 }
 
 /*

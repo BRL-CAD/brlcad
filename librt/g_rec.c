@@ -400,13 +400,14 @@ register struct soltab *stp;
  *  
  *  Returns -
  *  	0	MISS
- *  	segp	HIT
+ *	>0	HIT
  */
-struct seg *
-rt_rec_shot( stp, rp, ap )
+int
+rt_rec_shot( stp, rp, ap, seghead )
 struct soltab		*stp;
 register struct xray	*rp;
 struct application	*ap;
+struct seg		*seghead;
 {
 	register struct rec_specific *rec =
 		(struct rec_specific *)stp->st_specific;
@@ -488,28 +489,28 @@ check_plates:
 		}
 	}
 	if( hitp != &hits[2] )
-		return(SEG_NULL);	/* MISS */
+		return(0);	/* MISS */
 
 	if( hits[0].hit_dist < hits[1].hit_dist )  {
 		/* entry is [0], exit is [1] */
 		register struct seg *segp;
 
-		GET_SEG(segp, ap->a_resource);
+		RT_GET_SEG(segp, ap->a_resource);
 		segp->seg_stp = stp;
 		segp->seg_in = hits[0];		/* struct copy */
 		segp->seg_out = hits[1];	/* struct copy */
-		return(segp);			/* HIT */
+		RT_LIST_INSERT( &(seghead->l), &(segp->l) );
 	} else {
 		/* entry is [1], exit is [0] */
 		register struct seg *segp;
 
-		GET_SEG(segp, ap->a_resource);
+		RT_GET_SEG(segp, ap->a_resource);
 		segp->seg_stp = stp;
 		segp->seg_in = hits[1];		/* struct copy */
 		segp->seg_out = hits[0];	/* struct copy */
-		return(segp);			/* HIT */
+		RT_LIST_INSERT( &(seghead->l), &(segp->l) );
 	}
-	/* NOTREACHED */
+	return(2);			/* HIT */
 }
 
 #define SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;	
@@ -615,7 +616,6 @@ check_plates:
 			SEG_MISS(segp[i]);		/* MISS */
 		} else {
 			segp[i].seg_stp = stp[i];
-			segp[i].seg_next = SEG_NULL;
 
 			if( hits[0].hit_dist < hits[1].hit_dist )  {
 				/* entry is [0], exit is [1] */

@@ -365,13 +365,14 @@ register struct soltab *stp;
  *  
  *  Returns -
  *  	0	MISS
- *  	segp	HIT
+ *	>0	HIT
  */
-struct seg *
-rt_ell_shot( stp, rp, ap )
+int
+rt_ell_shot( stp, rp, ap, seghead )
 struct soltab		*stp;
 register struct xray	*rp;
 struct application	*ap;
+struct seg		*seghead;
 {
 	register struct ell_specific *ell =
 		(struct ell_specific *)stp->st_specific;
@@ -392,10 +393,10 @@ struct application	*ap;
 	dd = VDOT( dprime, dprime );
 
 	if( (root = dp*dp - dd * (VDOT(pprime,pprime)-1.0)) < 0 )
-		return(SEG_NULL);		/* No hit */
+		return(0);		/* No hit */
 	root = sqrt(root);
 
-	GET_SEG(segp, ap->a_resource);
+	RT_GET_SEG(segp, ap->a_resource);
 	segp->seg_stp = stp;
 	if( (k1=(-dp+root)/dd) <= (k2=(-dp-root)/dd) )  {
 		/* k1 is entry, k2 is exit */
@@ -406,7 +407,8 @@ struct application	*ap;
 		segp->seg_in.hit_dist = k2;
 		segp->seg_out.hit_dist = k1;
 	}
-	return(segp);			/* HIT */
+	RT_LIST_INSERT( &(seghead->l), &(segp->l) );
+	return(2);			/* HIT */
 }
 
 
@@ -455,7 +457,6 @@ struct resource         *resp; /* pointer to a list of free segs */
 	        else {
 			root = sqrt(root);
 
-			segp[i].seg_next = SEG_NULL;
 			segp[i].seg_stp = stp[i];
 
 			if( (k1=(-dp+root)/dd) <= (k2=(-dp-root)/dd) )  {

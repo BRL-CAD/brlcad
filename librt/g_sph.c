@@ -229,13 +229,14 @@ register struct soltab *stp;
  *  
  *  Returns -
  *  	0	MISS
- *  	segp	HIT
+ *	>0	HIT
  */
-struct seg *
-rt_sph_shot( stp, rp, ap )
+int
+rt_sph_shot( stp, rp, ap, seghead )
 struct soltab		*stp;
 register struct xray	*rp;
 struct application	*ap;
+struct seg		*seghead;
 {
 	register struct sph_specific *sph =
 		(struct sph_specific *)stp->st_specific;
@@ -253,25 +254,26 @@ struct application	*ap;
 		/* ray origin is outside of sphere */
 		if( b < 0 ) {
 			/* ray direction is away from sphere */
-			return(SEG_NULL);		/* No hit */
+			return(0);		/* No hit */
 		}
 		root = b*b - magsq_ov + sph->sph_radsq;
 		if( root <= 0 ) {
 			/* no real roots */
-			return(SEG_NULL);		/* No hit */
+			return(0);		/* No hit */
 		}
 	} else {
 		root = b*b - magsq_ov + sph->sph_radsq;
 	}
 	root = sqrt(root);
 
-	GET_SEG(segp, ap->a_resource);
+	RT_GET_SEG(segp, ap->a_resource);
 	segp->seg_stp = stp;
 
 	/* we know root is positive, so we know the smaller t */
 	segp->seg_in.hit_dist = b - root;
 	segp->seg_out.hit_dist = b + root;
-	return(segp);			/* HIT */
+	RT_LIST_INSERT( &(seghead->l), &(segp->l) );
+	return(2);			/* HIT */
 }
 
 #define SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;	
@@ -326,7 +328,6 @@ struct resource         *resp; /* pointer to a list of free segs */
 		root = sqrt(root);
 
 		segp[i].seg_stp = stp[i];
-		segp[i].seg_next = SEG_NULL;
 
 		/* we know root is positive, so we know the smaller t */
 		segp[i].seg_in.hit_dist = b - root;

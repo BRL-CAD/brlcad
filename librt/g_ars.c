@@ -327,13 +327,14 @@ register struct soltab *stp;
  *  
  * Returns -
  *	0	MISS
- *  	segp	HIT
+ *  	!0	HIT
  */
-struct seg *
-rt_ars_shot( stp, rp, ap )
-struct soltab *stp;
-register struct xray *rp;
+int
+rt_ars_shot( stp, rp, ap, seghead )
+struct soltab		*stp;
+register struct xray	*rp;
 struct application	*ap;
+struct seg		*seghead;
 {
 	register struct tri_specific *trip =
 		(struct tri_specific *)stp->st_specific;
@@ -409,7 +410,7 @@ struct application	*ap;
 		hp++;
 	}
 	if( nhits == 0 )
-		return(SEG_NULL);		/* MISS */
+		return(0);		/* MISS */
 
 	/* Sort hits, Near to Far */
 	rt_ars_hitsort( hits, nhits );
@@ -425,7 +426,7 @@ struct application	*ap;
 		for(i=0; i < nhits; i++ )
 			rt_log("k=%g dn=%g\n",
 				hits[i].hit_dist, hp->hit_vpriv[X]);
-		return(SEG_NULL);		/* MISS */
+		return(0);		/* MISS */
 	}
 
 	/* nhits is even, build segments */
@@ -449,27 +450,22 @@ struct application	*ap;
 					hits[j].hit_vpriv[X] );
 		   	}
 #ifdef CONSERVATIVE
-		   	return(SEG_NULL);
+		   	return(0);
 #else
 			/* For now, just chatter, and return *something* */
 			break;
 #endif
 		}
 
-		segp = SEG_NULL;
 		for( i=nhits; i > 0; i -= 2 )  {
-			register struct seg *newseg;
-
-			GET_SEG(newseg, ap->a_resource);
-			newseg->seg_next = segp;
-			segp = newseg;
+			RT_GET_SEG(segp, ap->a_resource);
 			segp->seg_stp = stp;
 			segp->seg_in = hits[i-2];	/* struct copy */
 			segp->seg_out = hits[i-1];	/* struct copy */
+			RT_LIST_INSERT( &(seghead->l), &(segp->l) );
 		}
-		return(segp);			/* HIT */
 	}
-	/* NOTREACHED */
+	return(nhits);			/* HIT */
 }
 
 /*

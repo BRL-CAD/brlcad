@@ -110,11 +110,12 @@ static int vol_normtab[3] = { NORM_XPOS, NORM_YPOS, NORM_ZPOS };
  *  Return intersection segments.
  *
  */
-struct seg *
-vol_shot( stp, rp, ap )
+int
+vol_shot( stp, rp, ap, seghead )
 struct soltab		*stp;
 register struct xray	*rp;
 struct application	*ap;
+struct seg		*seghead;
 {
 	register struct vol_specific *volp =
 		(struct vol_specific *)stp->st_specific;
@@ -127,8 +128,6 @@ struct application	*ap;
 	int	igrid[3];/* Grid cell coordinates of cell (integerized) */
 	vect_t	P;	/* hit point */
 	int	inside;	/* inside/outside a solid flag */
-	struct seg	*head;
-	struct seg	*tail;
 	int	in_index;
 	int	out_index;
 	int	j;
@@ -138,8 +137,6 @@ struct application	*ap;
 	MAT4X3PNT( ideal_ray.r_pt, volp->vol_mat, rp->r_pt );
 	MAT4X3VEC( ideal_ray.r_dir, volp->vol_mat, rp->r_dir );
 	rp = &ideal_ray;	/* XXX */
-
-	head = tail = SEG_NULL;
 
 	/* Compute the inverse of the direction cosines */
 	if( !NEAR_ZERO( rp->r_dir[X], SQRT_SMALL_FASTF ) )  {
@@ -309,7 +306,7 @@ if(rt_g.debug&DEBUG_VOL)rt_log("Exit index is %s, t[]=(%g, %g, %g)\n",
 				/* Start of segment (entering a full voxel) */
 				inside = 1;
 
-				GET_SEG(segp, ap->a_resource);
+				RT_GET_SEG(segp, ap->a_resource);
 				segp->seg_stp = stp;
 				segp->seg_in.hit_dist = t0;
 
@@ -323,18 +320,7 @@ if(rt_g.debug&DEBUG_VOL)rt_log("Exit index is %s, t[]=(%g, %g, %g)\n",
 					segp->seg_in.hit_private = (char *)
 						(-vol_normtab[in_index]);
 				}
-				segp->seg_next = SEG_NULL;
-				if( head == SEG_NULL ||
-				    tail == SEG_NULL )  {
-					/* Install as beginning of list */
-					tail = segp;
-					head = segp;
-				} else {
-					/* Append to list */
-					tail->seg_next = segp;
-					tail = segp;
-				}
-
+				RT_LIST_INSERT( &(seghead->l), &(segp->l) );
 				if(rt_g.debug&DEBUG_VOL) rt_log("START t=%g, n=%d\n",
 					t0, segp->seg_in.hit_private);
 			} else {
@@ -344,10 +330,12 @@ if(rt_g.debug&DEBUG_VOL)rt_log("Exit index is %s, t[]=(%g, %g, %g)\n",
 			if( OK( val ) )  {
 				/* Do nothing, marching through solid */
 			} else {
+				register struct seg	*tail;
 				/* End of segment (now in an empty voxel) */
 				/* Handle transition from solid to vacuum */
 				inside = 0;
 
+				tail = RT_LIST_LAST( seg, &(seghead->l) );
 				tail->seg_out.hit_dist = t0;
 
 				/* Compute exit normal */
@@ -377,7 +365,10 @@ if(rt_g.debug&DEBUG_VOL)rt_log("Exit index is %s, t[]=(%g, %g, %g)\n",
 	}
 
 	if( inside )  {
+		register struct seg	*tail;
+
 		/* Close off the final segment */
+		tail = RT_LIST_LAST( seg, &(seghead->l) );
 		tail->seg_out.hit_dist = tmax;
 
 		/* Compute exit normal.  Previous out_index is now in_index */
@@ -394,7 +385,9 @@ if(rt_g.debug&DEBUG_VOL)rt_log("Exit index is %s, t[]=(%g, %g, %g)\n",
 			tmax, tail->seg_out.hit_private );
 	}
 
-	return(head);
+	if( RT_LIST_IS_EMPTY( &(seghead->l) ) )
+		return(0);
+	return(2);
 }
 
 /*

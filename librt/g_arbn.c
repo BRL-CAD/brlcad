@@ -161,14 +161,15 @@ register struct soltab *stp;
  *  Cyrus & Beck algorithm for convex polyhedra.
  *
  *  Returns -
- *	SEG_NULL	MISS
- *	segp		HIT
+ *	0	MISS
+ *	>0	HIT
  */
-struct seg *
-rt_arbn_shot( stp, rp, ap )
-struct soltab *stp;
-register struct xray *rp;
+int
+rt_arbn_shot( stp, rp, ap, seghead )
+struct soltab		*stp;
+register struct xray	*rp;
 struct application	*ap;
+struct seg		*seghead;
 {
 	register struct arbn_internal	*aip =
 		(struct arbn_internal *)stp->st_specific;
@@ -205,34 +206,34 @@ struct application	*ap;
 			 * rays that lie very nearly in the plane of a face.
 			 */
 			if( norm_dist > SQRT_SMALL_FASTF )
-				return( SEG_NULL );	/* MISS */
+				return( 0 );	/* MISS */
 		}
 		if( in > out )
-			return( SEG_NULL );	/* MISS */
+			return( 0 );	/* MISS */
 	}
 
 	/* Validate */
 	if( iplane == -1 || oplane == -1 )  {
 		rt_log("rt_arbn_shoot(%s): 1 hit => MISS\n",
 			stp->st_name);
-		return( SEG_NULL );	/* MISS */
+		return( 0 );	/* MISS */
 	}
 	if( in >= out || out >= INFINITY )
-		return( SEG_NULL );	/* MISS */
+		return( 0 );	/* MISS */
 
 	{
 		register struct seg *segp;
 
-		GET_SEG( segp, ap->a_resource );
+		RT_GET_SEG( segp, ap->a_resource );
 		segp->seg_stp = stp;
 		segp->seg_in.hit_dist = in;
 		segp->seg_in.hit_private = (char *)iplane;
 
 		segp->seg_out.hit_dist = out;
 		segp->seg_out.hit_private = (char *)oplane;
-		return(segp);			/* HIT */
+		RT_LIST_INSERT( &(seghead->l), &(segp->l) );
 	}
-	/* NOTREACHED */
+	return(2);			/* HIT */
 }
 
 /*

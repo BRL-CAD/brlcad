@@ -88,6 +88,109 @@
 	p = (union unn *)rt_calloc(1,sizeof(union unn), "getstruct unn")
 #endif
 
+/************************************************************************
+ *									*
+ *			Doubly-linked list support			*
+ *									*
+ ************************************************************************/
+
+struct rt_list  {
+	long		magic;
+	struct rt_list	*forw;		/* "forward", "next" */
+	struct rt_list	*back;		/* "back", "last" */
+};
+#define RT_LIST_MAGIC	0x01016580
+#define RT_LIST_NULL	((struct rt_list *)0)
+
+/* These macros all expect pointers to rt_list structures */
+
+/* Insert "new" item in front of "old" item.  Often, "old" is the head. */
+/* To put the new item at the tail of the list, insert before the head */
+#define RT_LIST_INSERT(old,new)	{ \
+	(new)->back = (old)->back; \
+	(old)->back = (new); \
+	(new)->forw = (old); \
+	(new)->back->forw = (new);  }
+
+/* Append "new" item after "old" item.  Often, "old" is the head. */
+/* To put the new item at the head of the list, append after the head */
+#define RT_LIST_APPEND(old,new)	{ \
+	(new)->forw = (old)->forw; \
+	(new)->back = (old); \
+	(old)->forw = (new); \
+	(new)->forw->back = (new);  }
+
+/* Dequeue "cur" item from anywhere in doubly-linked list */
+#define RT_LIST_DEQUEUE(cur)	{ \
+	(cur)->forw->back = (cur)->back; \
+	(cur)->back->forw = (cur)->forw; \
+	(cur)->forw = (cur)->back = (struct rt_list *)NULL; }
+
+/* Test if a doubly linked list is empty, given head pointer */
+#define RT_LIST_IS_EMPTY(hp)	((hp)->forw == (hp))
+#define RT_LIST_NON_EMPTY(hp)	((hp)->forw != (hp))
+
+#define RT_LIST_INIT(hp)	{ \
+	(hp)->forw = (hp)->back = (hp); \
+	(hp)->magic = RT_LIST_MAGIC;	/* sanity */ }
+
+/*
+ *  Macros for walking a linked list, where the first element of
+ *  some application structure is an rt_list structure.
+ *  Thus, the pointer to the rt_list struct is a "pun" for the
+ *  application structure as well.
+ */
+/* Return re-cast pointer to first element on list.
+ * No checking is performed to see if list is empty.
+ */
+#define RT_LIST_LAST(structure,hp)	\
+	((struct structure *)((hp)->back))
+#define RT_LIST_FIRST(structure,hp)	\
+	((struct structure *)((hp)->forw))
+#define RT_LIST_NEXT(structure,hp)	\
+	((struct structure *)((hp)->forw))
+#define RT_LIST_MORE(p,structure,hp)	\
+	((p) != (struct structure *)(hp))
+#define RT_LIST_PNEXT(structure,p)	\
+	((struct structure *)(((struct rt_list *)(p))->forw))
+#define RT_LIST_PLAST(structure,p)	\
+	((struct structure *)(((struct rt_list *)(p))->back))
+
+#define RT_LIST_PNEXT_PNEXT(structure,p)	\
+	((struct structure *)(((struct rt_list *)(p))->forw->forw))
+#define RT_LIST_PNEXT_PLAST(structure,p)	\
+	((struct structure *)(((struct rt_list *)(p))->forw->back))
+#define RT_LIST_PLAST_PNEXT(structure,p)	\
+	((struct structure *)(((struct rt_list *)(p))->back->forw))
+#define RT_LIST_PLAST_PLAST(structure,p)	\
+	((struct structure *)(((struct rt_list *)(p))->back->back))
+
+/* Intended as innards for a for() loop to visit all nodes on list */
+#define RT_LIST(p,structure,hp)	\
+	(p)=RT_LIST_FIRST(structure,hp); \
+	RT_LIST_MORE(p,structure,hp); \
+	(p)=RT_LIST_PNEXT(structure,p)
+
+/* Innards for a while() loop that picks off first elements */
+#define RT_LIST_LOOP(p,structure,hp)	\
+	(((p)=(struct structure *)((hp)->forw)) != (struct structure *)(hp))
+
+/* Return the magic number of the first (or last) item on a list */
+#define RT_LIST_FIRST_MAGIC(hp)		((hp)->forw->magic)
+#define RT_LIST_LAST_MAGIC(hp)		((hp)->back->magic)
+
+/* Return pointer to circular next element; ie, ignoring the list head */
+#define RT_LIST_PNEXT_CIRC(structure,p)	\
+	((RT_LIST_FIRST_MAGIC((struct rt_list *)(p)) == RT_LIST_MAGIC) ? \
+		RT_LIST_PNEXT_PNEXT(structure,(struct rt_list *)(p)) : \
+		RT_LIST_PNEXT(structure,p) )
+
+/* Return pointer to circular last element; ie, ignoring the list head */
+#define RT_LIST_PLAST_CIRC(structure,p)	\
+	((RT_LIST_LAST_MAGIC((struct rt_list *)(p)) == RT_LIST_MAGIC) ? \
+		RT_LIST_PLAST_PLAST(structure,(struct rt_list *)(p)) : \
+		RT_LIST_PLAST(structure,p) )
+
 /*
  *			X R A Y
  *
@@ -181,46 +284,41 @@ struct uvcoord {
  * a ray through a torus).
  */
 struct seg {
+	struct rt_list	l;
 	long		seg_magic;	/* sanity checking */
 	struct hit	seg_in;		/* IN information */
 	struct hit	seg_out;	/* OUT information */
 	struct soltab	*seg_stp;	/* pointer back to soltab */
-	struct seg	*seg_next;	/* non-zero if more segments */
 };
-#define SEG_NULL	((struct seg *)0)
-#define SEG_MAGIC	0x98bcdef1
+#define RT_SEG_NULL	((struct seg *)0)
+#define RT_SEG_MAGIC	0x98bcdef1
 
-#define RT_CHECK_SEG(_p)	{ if( (_p)->seg_magic != SEG_MAGIC )  { \
-				rt_log("RT_CHECK_SEG(x%x) magic was x%x, s/b x%x, %s line %d\n", \
-					(_p), (_p)->seg_magic, SEG_MAGIC, \
-					__FILE__, __LINE__ ); \
-				rt_bomb("bad seg ptr\n"); \
-			} }
+#define RT_CHECK_SEG(_p)	{ \
+	if( (_p)->l.magic != RT_SEG_MAGIC )  { \
+		rt_log("RT_CHECK_SEG(x%x) magic was x%x, s/b x%x, %s line %d\n", \
+			(_p), (_p)->l.magic, RT_SEG_MAGIC, \
+			__FILE__, __LINE__ ); \
+		rt_bomb("bad seg ptr\n"); \
+	} }
 
-#define GET_SEG(p,res)    { \
-			while( ((p)=res->re_seg) == SEG_NULL ) \
-				rt_get_seg(res); \
-			res->re_seg = (p)->seg_next; \
-			(p)->seg_next = SEG_NULL; \
-			(p)->seg_magic = SEG_MAGIC; \
-			res->re_segget++; }
+#define RT_GET_SEG(p,res)    { \
+	while( !RT_LIST_LOOP((p),seg,&((res)->re_seg.l)) || !(p) ) \
+		rt_get_seg(res); \
+	RT_LIST_DEQUEUE( &((p)->l) ); \
+	(p)->l.forw = (p)->l.back = RT_LIST_NULL; \
+	res->re_segget++; }
 
-#define FREE_SEG(p,res)  { \
-			RT_CHECK_SEG(p); \
-			(p)->seg_next = res->re_seg; \
-			res->re_seg = (p); \
-			(p)->seg_magic = 0; \
-			res->re_segfree++; }
+#define RT_FREE_SEG(p,res)  { \
+	RT_CHECK_SEG(p); \
+	RT_LIST_INSERT( &((res)->re_seg.l), &((p)->l) ); \
+	res->re_segfree++; }
 
-#define RT_FREE_SEG_LIST( _head, _res )	{ \
-		register struct seg *_seg; \
-		while( (_head) != SEG_NULL )  { \
-			_seg = (_head)->seg_next; \
-			FREE_SEG( (_head), _res ); \
-			(_head) = _seg; \
-		} \
-		(_head) = SEG_NULL; \
-	}
+#define RT_FREE_SEG_LIST( _segheadp, _res )	{ \
+	register struct seg *_a; \
+	while( RT_LIST_LOOP( _a, seg, &((_segheadp)->l) ) )  { \
+		RT_LIST_DEQUEUE( &(_a->l) ); \
+		RT_FREE_SEG( _a, _res ); \
+	} }
 
 
 /*
@@ -280,7 +378,7 @@ struct rt_functab {
 	char		*ft_name;
 	int		ft_use_rpp;
 	int		(*ft_prep)();
-	struct seg 	*((*ft_shot)());
+	int 		(*ft_shot)();
 	void		(*ft_print)();
 	void		(*ft_norm)();
 	void		(*ft_uv)();
@@ -429,13 +527,12 @@ struct partition {
 	(p)->pt_magic = PT_MAGIC; }
 
 #define GET_PT(ip,p,res)   { \
-			while( res->re_parthead.pt_forw == PT_NULL || \
-			    ((p) = res->re_parthead.pt_forw) == &(res->re_parthead) || \
-			    (p)->pt_len != (ip)->rti_pt_bytes ) \
-				rt_get_pt(ip, res); \
-			(p)->pt_magic = PT_MAGIC; \
-			DEQUEUE_PT(p); \
-			res->re_partget++; }
+	while( ((p) = res->re_parthead.pt_forw) == &(res->re_parthead) || \
+	    !(p) || (p)->pt_len != (ip)->rti_pt_bytes ) \
+		rt_get_pt(ip, res); \
+	(p)->pt_magic = PT_MAGIC; \
+	DEQUEUE_PT(p); \
+	res->re_partget++; }
 
 #define FREE_PT(p,res)  { \
 			RT_CHECK_PT(p); \
@@ -752,7 +849,7 @@ struct animate {
  *  be the responsibility of the application.
  */
 struct resource {
-	struct seg 	*re_seg;	/* Head of segment freelist */
+	struct seg 	re_seg;		/* Head of segment freelist */
 	long		re_seglen;
 	long		re_segget;
 	long		re_segfree;
@@ -1140,8 +1237,8 @@ RT_EXTERN(char *rt_calloc, (unsigned nelem, unsigned elsize, char *str) );
 RT_EXTERN(char *rt_strdup, (char *cp) );
 
 					/* Weave segs into partitions */
-RT_EXTERN(void rt_boolweave, (struct seg *segp_in, struct partition *PartHeadp,
-	struct application *ap) );
+RT_EXTERN(void rt_boolweave, (struct seg *out_hd, struct seg *in_hd,
+	struct partition *PartHeadp, struct application *ap) );
 					/* Eval booleans over partitions */
 RT_EXTERN(int rt_boolfinal, (struct partition *InputHdp,
 	struct partition *FinalHdp,

@@ -555,13 +555,14 @@ register struct soltab *stp;
  *  
  * Returns -
  *	0	MISS
- *  	segp	HIT
+ *	>0	HIT
  */
-struct seg *
-rt_arb_shot( stp, rp, ap )
-struct soltab *stp;
-register struct xray *rp;
+int
+rt_arb_shot( stp, rp, ap, seghead )
+struct soltab		*stp;
+register struct xray	*rp;
 struct application	*ap;
+struct seg		*seghead;
 {
 	struct arb_specific *arbp = (struct arb_specific *)stp->st_specific;
 	LOCAL int		iplane, oplane;
@@ -599,33 +600,33 @@ struct application	*ap;
 			 * rays that lie very nearly in the plane of a face.
 			 */
 			if( dxbdn > SQRT_SMALL_FASTF )
-				return( SEG_NULL );	/* MISS */
+				return( 0 );	/* MISS */
 		}
 		if( in > out )
-			return( SEG_NULL );	/* MISS */
+			return( 0 );	/* MISS */
 	}
 	/* Validate */
 	if( iplane == -1 || oplane == -1 )  {
 		rt_log("rt_arb_shoot(%s): 1 hit => MISS\n",
 			stp->st_name);
-		return( SEG_NULL );	/* MISS */
+		return( 0 );	/* MISS */
 	}
 	if( in >= out || out >= INFINITY )
-		return( SEG_NULL );	/* MISS */
+		return( 0 );	/* MISS */
 
 	{
 		register struct seg *segp;
 
-		GET_SEG( segp, ap->a_resource );
+		RT_GET_SEG( segp, ap->a_resource );
 		segp->seg_stp = stp;
 		segp->seg_in.hit_dist = in;
 		segp->seg_in.hit_private = (char *)iplane;
 
 		segp->seg_out.hit_dist = out;
 		segp->seg_out.hit_private = (char *)oplane;
-		return(segp);			/* HIT */
+		RT_LIST_INSERT( &(seghead->l), &(segp->l) );
 	}
-	/* NOTREACHED */
+	return(2);			/* HIT */
 }
 
 #define SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;	
@@ -656,7 +657,7 @@ struct resource         *resp; /* pointer to a list of free segs */
                 segp[i].seg_in.hit_private = (char *) -1;   /* used as iplane */
                 segp[i].seg_out.hit_dist = INFINITY;        /* used as out */
                 segp[i].seg_out.hit_private = (char *) -1;  /* used as oplane */
-                segp[i].seg_next = SEG_NULL;
+/**                segp[i].seg_next = SEG_NULL;**/
 	}
 
 	/* consider each face */

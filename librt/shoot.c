@@ -4,7 +4,7 @@
  *	Ray Tracing program shot coordinator.
  *  
  *  Given a ray, shoot it at all the relevant parts of the model,
- *  (building the HeadSeg chain), and then call rt_boolregions()
+ *  (building the finished_segs chain), and then call rt_boolregions()
  *  to build and evaluate the partition chain.
  *  If the ray actually hit anything, call the application's
  *  a_hit() routine with a pointer to the partition chain,
@@ -237,7 +237,9 @@ rt_shootray( ap )
 register struct application *ap;
 {
 	AUTO struct shootray_status ss;
-	AUTO struct seg		*HeadSeg;
+	AUTO struct seg		new_segs;	/* from solid intersections */
+	AUTO struct seg		waiting_segs;	/* awaiting rt_boolweave() */
+	AUTO struct seg		finished_segs;	/* processed by rt_boolweave() */
 	AUTO int		ret;
 	AUTO fastf_t		last_bool_start;
 	AUTO union bitv_elem	*solidbits;	/* bits for all solids shot so far */
@@ -245,7 +247,6 @@ register struct application *ap;
 	AUTO char		*status;
 	auto struct partition	InitialPart;	/* Head of Initial Partitions */
 	auto struct partition	FinalPart;	/* Head of Final Partitions */
-	AUTO struct seg		*waitsegs;	/* segs awaiting rt_boolweave() */
 	AUTO struct soltab	**stpp;
 	register union cutter	*cutp;
 	int			end_free_len;
@@ -280,8 +281,9 @@ register struct application *ap;
 	InitialPart.pt_forw = InitialPart.pt_back = &InitialPart;
 	FinalPart.pt_forw = FinalPart.pt_back = &FinalPart;
 
-	HeadSeg = SEG_NULL;
-	waitsegs = SEG_NULL;
+	RT_LIST_INIT( &new_segs.l );
+	RT_LIST_INIT( &waiting_segs.l );
+	RT_LIST_INIT( &finished_segs.l );
 
 	/* see rt_get_bitv() for details on how bitvector len is set. */
 	GET_BITV( rtip, solidbits, ap->a_resource );
@@ -346,21 +348,12 @@ register struct application *ap;
 			if(debug_shoot)rt_log("shooting %s\n", stp->st_name);
 			BITSET( solidbits->be_v, stp->st_bit );
 			rtip->nshots++;
-			if( (newseg = rt_functab[stp->st_id].ft_shot( 
-				stp, &ap->a_ray, ap )
-			     ) == SEG_NULL )  {
+			if( rt_functab[stp->st_id].ft_shot( 
+			    stp, &ap->a_ray, ap, &waiting_segs ) <= 0 )  {
 				rtip->nmiss++;
 				continue;	/* MISS */
 			}
-			if(debug_shoot)  rt_pr_seg(newseg);
-			/* Add seg chain to list awaiting rt_boolweave() */
-			{
-				register struct seg *seg2 = newseg;
-				while( seg2->seg_next != SEG_NULL )
-					seg2 = seg2->seg_next;
-				seg2->seg_next = waitsegs;
-				waitsegs = newseg;
-			}
+			if(debug_shoot)  rt_pr_seg(&waiting_segs);
 			rtip->nhits++;
 		}
 	}
@@ -371,7 +364,7 @@ register struct application *ap;
 	 */
 	if( !rt_in_rpp( &ap->a_ray, ss.inv_dir, rtip->mdl_min, rtip->mdl_max )  ||
 	    ap->a_ray.r_max < 0.0 )  {
-	    	if( waitsegs != SEG_NULL )  {
+	    	if( RT_LIST_IS_EMPTY( &waiting_segs.l ) )  {
 	    		/* Go handle the infinite objects we hit */
 	    		ss.model_end = INFINITY;
 	    		goto weave;
@@ -462,27 +455,23 @@ register struct application *ap;
 
 			if(debug_shoot)rt_log("shooting %s\n", stp->st_name);
 			rtip->nshots++;
-			if( (newseg = rt_functab[stp->st_id].ft_shot( 
-				stp, &ss.newray, ap )
-			     ) == SEG_NULL )  {
+			RT_LIST_INIT( &(new_segs.l) );
+			if( rt_functab[stp->st_id].ft_shot( 
+			    stp, &ss.newray, ap, &new_segs ) <= 0 )  {
 				rtip->nmiss++;
 				continue;	/* MISS */
 			}
 
 			/* Add seg chain to list awaiting rt_boolweave() */
 			{
-				register struct seg *seg2 = newseg;
-				for(;;)  {
+				register struct seg *s2;
+				while(RT_LIST_LOOP(s2,seg,&(new_segs.l)))  {
+					RT_LIST_DEQUEUE( &(s2->l) );
 					/* Restore to original distance */
-					seg2->seg_in.hit_dist += ss.dist_corr;
-					seg2->seg_out.hit_dist += ss.dist_corr;
-					if( seg2->seg_next == SEG_NULL )
-						break;
-					seg2 = seg2->seg_next;
+					s2->seg_in.hit_dist += ss.dist_corr;
+					s2->seg_out.hit_dist += ss.dist_corr;
+					RT_LIST_INSERT( &(waiting_segs.l), &(s2->l) );
 				}
-				if(debug_shoot)  rt_pr_seg(newseg);
-				seg2->seg_next = waitsegs;
-				waitsegs = newseg;
 			}
 			rtip->nhits++;
 		}
@@ -501,21 +490,11 @@ register struct application *ap;
 		 *  partitions over to the application.
 		 *  All partitions will have valid in and out distances.
 		 */
-		if( ap->a_onehit > 0 && waitsegs != SEG_NULL )  {
+		if( ap->a_onehit > 0 && RT_LIST_NON_EMPTY( &(waiting_segs.l) ) )  {
 			int	done;
 
 			/* Weave these segments into partition list */
-			rt_boolweave( waitsegs, &InitialPart, ap );
-
-			/* Add segment chain to list of used segments */
-			{
-				register struct seg *seg2 = waitsegs;
-				while( seg2->seg_next != SEG_NULL )
-					seg2 = seg2->seg_next;
-				seg2->seg_next = HeadSeg;
-				HeadSeg = waitsegs;
-				waitsegs = SEG_NULL;
-			}
+			rt_boolweave( &finished_segs, &waiting_segs, &InitialPart, ap );
 
 			/* Evaluate regions upto box_end */
 			done = rt_boolfinal( &InitialPart, &FinalPart,
@@ -535,21 +514,12 @@ register struct application *ap;
 	 *  Weave any remaining segments into the partition list.
 	 */
 weave:
-	if( waitsegs != SEG_NULL )  {
-		register struct seg *seg2 = waitsegs;
-
-		rt_boolweave( waitsegs, &InitialPart, ap );
-
-		/* Add segment chain to list of used segments */
-		while( seg2->seg_next != SEG_NULL )
-			seg2 = seg2->seg_next;
-		seg2->seg_next = HeadSeg;
-		HeadSeg = waitsegs;
-		waitsegs = SEG_NULL;
+	if( RT_LIST_NON_EMPTY( &(waiting_segs.l) ) )  {
+		rt_boolweave( &finished_segs, &waiting_segs, &InitialPart, ap );
 	}
 
-	/* HeadSeg chain now has all segments hit by this ray */
-	if( HeadSeg == SEG_NULL )  {
+	/* finished_segs chain now has all segments hit by this ray */
+	if( RT_LIST_IS_EMPTY( &(finished_segs.l) ) )  {
 		ret = ap->a_miss( ap );
 		status = "MISS solids";
 		goto out;
@@ -567,7 +537,7 @@ weave:
 		ret = ap->a_miss( ap );
 		status = "MISS bool";
 		RT_FREE_PT_LIST( &InitialPart, ap->a_resource );
-		RT_FREE_SEG_LIST( HeadSeg, ap->a_resource );
+		RT_FREE_SEG_LIST( &finished_segs, ap->a_resource );
 		goto out;
 	}
 
@@ -592,7 +562,7 @@ hitit:
 	 *  persistent memory growth.
 	 */
 	RT_FREE_PT_LIST( &InitialPart, ap->a_resource );
-	RT_FREE_SEG_LIST( HeadSeg, ap->a_resource );
+	RT_FREE_SEG_LIST( &finished_segs, ap->a_resource );
 
 	ret = ap->a_hit( ap, &FinalPart );
 	status = "HIT";
@@ -944,21 +914,21 @@ struct application        *ap; /* pointer to an application */
 {
 	register int    i;
 	register struct seg *tmp_seg;
+	struct seg	seghead;
+
+	RT_LIST_INIT( &(seghead.l) );
 
 	/* go through each ray/solid pair and call a scalar function */
 	for (i = 0; i < n; i++) {
 		if (stp[i] != 0){ /* skip call if solid table pointer is NULL */
-			/* do scalar call */
-			tmp_seg =
-			    rt_functab[stp[i]->st_id].ft_shot(stp[i], rp[i], ap);
-
-			/* place results in segp array */
-			if ( tmp_seg == 0) {
+			/* do scalar call, place results in segp array */
+			if( rt_functab[stp[i]->st_id].ft_shot(stp[i], rp[i], ap, &seghead) <= 0 )  {
 				SEG_MISS(segp[i]);
-			}
-			else {
+			} else {
+				tmp_seg = RT_LIST_FIRST(seg, &(seghead.l) );
+				RT_LIST_DEQUEUE( &(tmp_seg->l) );
 				segp[i] = *tmp_seg; /* structure copy */
-				FREE_SEG(tmp_seg, ap->a_resource);
+				RT_FREE_SEG(tmp_seg, ap->a_resource);
 			}
 		}
 	}

@@ -29,7 +29,7 @@ static char RCSbool[] = "@(#)$Header$ (BRL)";
 #define FALSE	0
 #define TRUE	1
 
-void	rt_grow_boolstack();
+RT_EXTERN(void rt_grow_boolstack, (struct resource *resp) );
 
 /*
  *			R T _ B O O L W E A V E
@@ -57,8 +57,9 @@ void	rt_grow_boolstack();
  *	as well as the partition list that we return.
  */
 void
-rt_boolweave( segp_in, PartHdp, ap )
-struct seg		*segp_in;
+rt_boolweave( out_hd, in_hd, PartHdp, ap )
+struct seg		*out_hd;
+struct seg		*in_hd;
 struct partition	*PartHdp;
 struct application	*ap;
 {
@@ -70,15 +71,19 @@ struct application	*ap;
 
 	if(rt_g.debug&DEBUG_PARTITION)
 		rt_log("-------------------BOOL_WEAVE\n");
-	for( segp = segp_in; segp != SEG_NULL; segp = segp->seg_next )  {
+	while( RT_LIST_NON_EMPTY( &(in_hd->l) ) ) {
 		register struct partition *newpp;
 		register struct seg *lastseg;
 		register struct hit *lasthit;
 		LOCAL int	lastflip;
 
+		segp = RT_LIST_FIRST( seg, &(in_hd->l) );
 		RT_CHECK_SEG(segp);
 		if(rt_g.debug&DEBUG_PARTITION) rt_pr_seg(segp);
 		if( segp->seg_stp->st_bit >= ap->a_rt_i->nsolids) rt_bomb("rt_boolweave: st_bit");
+
+		RT_LIST_DEQUEUE( &(segp->l) );
+		RT_LIST_INSERT( &(out_hd->l), &(segp->l) );
 
 		/* Totally ignore things behind the start position */
 		if( segp->seg_out.hit_dist < -10.0 )

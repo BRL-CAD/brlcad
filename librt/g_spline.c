@@ -727,16 +727,17 @@ register struct xray *rp;
  * occurs a struct seg will be acquired and filled in.
  *  Returns -
  *  	0	MISS
- *  	segp	HIT
+ *	>0	HIT
  */
 
 struct b_head * curr_tree;
 
-struct seg *
-rt_spl_shot( stp,  rp, ap)
-struct soltab *stp;
-register struct xray *rp;
-struct application * ap;
+int
+rt_spl_shot( stp,  rp, ap, seghead )
+struct soltab		*stp;
+register struct xray	*rp;
+struct application	*ap;
+struct seg		*seghead;
 {
 	struct b_head * nlist = ( struct b_head *) stp->st_specific;
 	auto vect_t invdir;
@@ -766,15 +767,15 @@ struct application * ap;
 	if (rt_spl_hit_head == NULLHIT )
 	{
 		RES_RELEASE( &rt_g.res_model );	
-		return (SEG_NULL);
+		return (0);
 	}
-
-	GET_SEG( segp, ap->a_resource );
 
 	while ( rt_spl_hit_head != NULLHIT)
 	{
 		register struct local_hit * hit1, * hit2;
 		register struct seg * seg2p;
+
+		RT_GET_SEG( segp, ap->a_resource );
 
 		hit1 = rt_spl_get_next_hit( );
 		hit2 = rt_spl_get_next_hit( );
@@ -805,15 +806,10 @@ struct application * ap;
 
 		rt_free( (char *)hit1, "rt_spl_shot: hit point");
 
-		if ( rt_spl_hit_head != NULLHIT)
-		{
-			GET_SEG( seg2p, ap->a_resource);
-			seg2p->seg_next = segp;
-			segp =  seg2p;
-		}
+		RT_LIST_INSERT( &(seghead->l), &(segp->l) );
 	}
 	RES_RELEASE( &rt_g.res_model );	
-	return segp;
+	return(2);
 }
 
 /*

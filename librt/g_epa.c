@@ -28,11 +28,11 @@ static char RCSsph[] = "@(#)$Header$ (BRL)";
 #include "./debug.h"
 
 struct epa_internal {
-	vect_t	V;		/* Vertex */
-	vect_t	H;		/* Height Vector */
-	vect_t	A;		/* Semi-major axis (unit vector) */
-	fastf_t	R1;		/* semi-major axis length */
-	fastf_t	R2;		/* semi-minor axis length */
+	vect_t	v;		/* Vertex */
+	vect_t	h;		/* Height Vector */
+	vect_t	a;		/* Semi-major axis (unit vector) */
+	fastf_t	r1;		/* semi-major axis length */
+	fastf_t	r2;		/* semi-minor axis length */
 };
 
 struct epa_specific {
@@ -80,19 +80,20 @@ register struct soltab *stp;
  *  
  *  Returns -
  *  	0	MISS
- *  	segp	HIT
+ *	>0	HIT
  */
-struct seg *
-epa_shot( stp, rp, ap )
+int
+epa_shot( stp, rp, ap, seghead )
 struct soltab		*stp;
 register struct xray	*rp;
 struct application	*ap;
+struct seg		*seghead;
 {
 	register struct epa_specific *epa =
 		(struct epa_specific *)stp->st_specific;
 	register struct seg *segp;
 
-	return(segp);			/* HIT */
+	return(2);			/* HIT */
 }
 
 #define SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;	

@@ -388,13 +388,14 @@ register struct soltab *stp;
  *  
  *  Returns -
  *  	0	MISS
- *  	segp	HIT
+ *	>0	HIT
  */
-struct seg *
-rt_tor_shot( stp, rp, ap )
+int
+rt_tor_shot( stp, rp, ap, seghead )
 struct soltab		*stp;
 register struct xray	*rp;
 struct application	*ap;
+struct seg		*seghead;
 {
 	register struct tor_specific *tor =
 		(struct tor_specific *)stp->st_specific;
@@ -487,7 +488,7 @@ struct application	*ap;
 			rt_log("tor:  polyRoots() 4!=%d\n", i);
 			rt_pr_roots( i, val );
 		}
-		return(SEG_NULL);		/* MISS */
+		return(0);		/* MISS */
 	}
 
 	/*  Only real roots indicate an intersection in real space.
@@ -508,12 +509,12 @@ struct application	*ap;
 	/* Here, 'i' is number of points found */
 	switch( i )  {
 	case 0:
-		return(SEG_NULL);		/* No hit */
+		return(0);		/* No hit */
 
 	default:
 		rt_log("rt_tor_shot: reduced 4 to %d roots\n",i);
 		rt_pr_roots( 4, val );
-		return(SEG_NULL);		/* No hit */
+		return(0);		/* No hit */
 
 	case 2:
 		{
@@ -548,32 +549,28 @@ struct application	*ap;
 
 	/* Now, t[0] > t[npts-1] */
 	/* k[1] is entry point, and k[0] is farthest exit point */
-	GET_SEG(segp, ap->a_resource);
+	RT_GET_SEG(segp, ap->a_resource);
 	segp->seg_stp = stp;
 	segp->seg_in.hit_dist = k[1]*tor->tor_r1;
 	segp->seg_out.hit_dist = k[0]*tor->tor_r1;
 	/* Set aside vector for rt_tor_norm() later */
 	VJOIN1( segp->seg_in.hit_vpriv, pprime, k[1], dprime );
 	VJOIN1( segp->seg_out.hit_vpriv, pprime, k[0], dprime );
+	RT_LIST_INSERT( &(seghead->l), &(segp->l) );
 
 	if( i == 2 )
-		return(segp);			/* HIT */
+		return(2);			/* HIT */
 				
 	/* 4 points */
 	/* k[3] is entry point, and k[2] is exit point */
-	{
-		register struct seg *seg2p;		/* XXX */
-		/* Attach last hit (above) to segment chain */
-		GET_SEG(seg2p, ap->a_resource);
-		seg2p->seg_next = segp;
-		segp = seg2p;
-	}
+	RT_GET_SEG(segp, ap->a_resource);
 	segp->seg_stp = stp;
 	segp->seg_in.hit_dist = k[3]*tor->tor_r1;
 	segp->seg_out.hit_dist = k[2]*tor->tor_r1;
 	VJOIN1( segp->seg_in.hit_vpriv, pprime, k[3], dprime );
 	VJOIN1( segp->seg_out.hit_vpriv, pprime, k[2], dprime );
-	return(segp);			/* HIT */
+	RT_LIST_INSERT( &(seghead->l), &(segp->l) );
+	return(4);			/* HIT */
 }
 
 #define SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;	
@@ -765,7 +762,6 @@ struct resource         *resp; /* pointer to a list of free segs */
 		if( C[i].dgr != 2 )  continue;  /* Not one segment */
 
 		tor = (struct tor_specific *)stp[i]->st_specific;
-		segp[i].seg_next = SEG_NULL;
 
 		/* segp[i].seg_in.hit_normal holds dprime */
 		/* segp[i].seg_out.hit_normal holds pprime */
@@ -819,8 +815,10 @@ struct resource         *resp; /* pointer to a list of free segs */
 		VJOIN1(segp[i].seg_in.hit_vpriv, pprime, C[i].cf[1], dprime );
 		VJOIN1(segp[i].seg_out.hit_vpriv, pprime, C[i].cf[0], dprime);
 
+#if 0
 		/* C[i].cf[3] is entry point */
 		/* Attach second hit to segment chain */
+		/* XXXX need convention for vectorizing doubly linked list! */
 		GET_SEG(seg2p, resp);
 		segp[i].seg_next = seg2p;
 		seg2p->seg_stp = stp[i];
@@ -828,6 +826,7 @@ struct resource         *resp; /* pointer to a list of free segs */
 		seg2p->seg_out.hit_dist = C[i].cf[2]*tor->tor_r1;
 		VJOIN1( seg2p->seg_in.hit_vpriv, pprime, C[i].cf[3], dprime );
 		VJOIN1(seg2p->seg_out.hit_vpriv, pprime, C[i].cf[2], dprime );
+#endif
 	}
 
 	/* Free tmp space used */

@@ -495,11 +495,12 @@ register struct soltab	*stp;
  *  polynomial root finder.  Use those values of 't' to compute
  *  the points of intersection in the original coordinate system.
  */
-struct seg *
-rt_tgc_shot( stp, rp, ap )
+int
+rt_tgc_shot( stp, rp, ap, seghead )
 struct soltab		*stp;
 register struct xray	*rp;
 struct application	*ap;
+struct seg		*seghead;
 {
 	register struct tgc_specific	*tgc =
 		(struct tgc_specific *)stp->st_specific;
@@ -651,7 +652,7 @@ struct application	*ap;
 	if ( npts != 0 && npts != 2 && npts != 4 ){
 		rt_log("tgc(%s):  %d intersects != {0,2,4}\n",
 			stp->st_name, npts );
-		return( SEG_NULL );			/* No hit	*/
+		return(0);			/* No hit */
 	}
 
 	/* Most distant to least distant	*/
@@ -685,7 +686,7 @@ struct application	*ap;
 		/*  If two between-plane intersections exist, they are
 		 *  the hit points for the ray.
 		 */
-		GET_SEG( segp, ap->a_resource );
+		RT_GET_SEG( segp, ap->a_resource );
 		segp->seg_stp = stp;
 
 		segp->seg_in.hit_dist = pt[IN] * t_scale;
@@ -696,7 +697,8 @@ struct application	*ap;
 		segp->seg_out.hit_private = TGC_NORM_BODY;	/* compute N */
 		VJOIN1( segp->seg_out.hit_vpriv, pprime, pt[OUT], dprime );
 
-		return( segp );
+		RT_LIST_INSERT( &(seghead->l), &(segp->l) );
+		return(2);
 	}
 	if ( intersect == 1 )  {
 		genptr_t	nflag;
@@ -712,7 +714,7 @@ struct application	*ap;
 		 */
 		if( dprime[Z] == 0.0 )  {
 			rt_log("tgc: dprime[Z] = 0!\n" );
-			return(SEG_NULL);
+			return(0);
 		}
 		b = ( -pprime[Z] )/dprime[Z];
 		/*  Height vector is unitized (tgc->tgc_sH == 1.0) */
@@ -736,10 +738,10 @@ struct application	*ap;
 		} else {
 			/* intersection apparently invalid  */
 			rt_log("tgc(%s):  only 1 intersect\n", stp->st_name);
-			return( SEG_NULL );
+			return(0);
 		}
 
-		GET_SEG( segp, ap->a_resource );
+		RT_GET_SEG( segp, ap->a_resource );
 		segp->seg_stp = stp;
 		/* pt[OUT] on skin, pt[IN] on end */
 		if ( pt[OUT] >= pt[IN] )  {
@@ -759,7 +761,8 @@ struct application	*ap;
 			segp->seg_out.hit_dist = pt[IN] * t_scale;
 			segp->seg_out.hit_private = nflag;
 		}
-		return( segp );
+		RT_LIST_INSERT( &(seghead->l), &(segp->l) );
+		return(2);
 	}
 
 	/*  If all conic interections lie outside the plane,
@@ -771,11 +774,11 @@ struct application	*ap;
 	 *  either of them.
 	 */
 	if( dprime[Z] == 0.0 )
-		return(SEG_NULL);
+		return(0);
 
 	dir = VDOT( tgc->tgc_N, rp->r_dir );	/* direc */
 	if ( NEAR_ZERO( dir, RT_DOT_TOL ) )
-		return( SEG_NULL );
+		return(0);
 
 	b = ( -pprime[Z] )/dprime[Z];
 	/* Height vector is unitized (tgc->tgc_sH == 1.0) */
@@ -795,9 +798,9 @@ struct application	*ap;
 	 *  but I wouldn't take any chances.
 	 */
 	if ( alf1 > 1.0 || alf2 > 1.0 )
-		return( SEG_NULL );
+		return(0);
 
-	GET_SEG( segp, ap->a_resource );
+	RT_GET_SEG( segp, ap->a_resource );
 	segp->seg_stp = stp;
 
 	/*  Use the dot product (found earlier) of the plane
@@ -817,7 +820,8 @@ struct application	*ap;
 		segp->seg_out.hit_dist = b * t_scale;
 		segp->seg_out.hit_private = TGC_NORM_BOT;	/* reverse normal */
 	}
-	return( segp );
+	RT_LIST_INSERT( &(seghead->l), &(segp->l) );
+	return(2);
 }
 
 

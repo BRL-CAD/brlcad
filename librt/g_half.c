@@ -127,13 +127,14 @@ register struct soltab *stp;
  *  
  * Returns -
  *	0	MISS
- *  	segp	HIT
+ *	>0	HIT
  */
-struct seg *
-rt_hlf_shot( stp, rp, ap )
+int
+rt_hlf_shot( stp, rp, ap, seghead )
 struct soltab		*stp;
 register struct xray	*rp;
 struct application	*ap;
+struct seg		*seghead;
 {
 	register struct half_specific *halfp =
 		(struct half_specific *)stp->st_specific;
@@ -157,7 +158,7 @@ struct application	*ap;
 			/* ray is parallel to plane when dir.N == 0.
 			 * If it is outside the solid, stop now */
 			if( norm_dist > 0.0 )
-				return( SEG_NULL );	/* MISS */
+				return(0);	/* MISS */
 		}
 	}
 	if( rt_g.debug & DEBUG_ARB8 )
@@ -166,13 +167,13 @@ struct application	*ap;
 	{
 		register struct seg *segp;
 
-		GET_SEG( segp, ap->a_resource );
+		RT_GET_SEG( segp, ap->a_resource );
 		segp->seg_stp = stp;
 		segp->seg_in.hit_dist = in;
 		segp->seg_out.hit_dist = out;
-		return(segp);			/* HIT */
+		RT_LIST_INSERT( &(seghead->l), &(segp->l) );
 	}
-	/* NOTREACHED */
+	return(2);			/* HIT */
 }
 
 #define SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;	
@@ -224,7 +225,6 @@ struct resource         *resp; /* pointer to a list of free segs */
 		}
 
 		/* HIT */
-		segp[i].seg_next = SEG_NULL;
 		segp[i].seg_stp = stp[i];
 		segp[i].seg_in.hit_dist = in;
 		segp[i].seg_out.hit_dist = out;

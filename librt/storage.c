@@ -371,23 +371,23 @@ register char *cp;
  */
 void
 rt_get_seg(res)
-register struct resource *res;
+register struct resource	*res;
 {
-	register char *cp;
-	register struct seg *sp;
-	register int bytes;
+	register struct seg	*sp;
+	register int		bytes;
 
 	RT_RESOURCE_CHECK(res);
 
-	bytes = rt_byte_roundup(64*sizeof(struct seg));
-	if( (cp = rt_malloc(bytes, "rt_get_seg")) == (char *)0 )  {
-		rt_bomb("rt_get_seg: malloc failure\n");
+	if( res->re_seg.l.forw == RT_LIST_NULL )  {
+		RT_LIST_INIT( &(res->re_seg.l) );
 	}
-	sp = (struct seg *)cp;
+	bytes = rt_byte_roundup(64*sizeof(struct seg));
+	sp = (struct seg *)rt_malloc(bytes, "rt_get_seg()");
 	while( bytes >= sizeof(struct seg) )  {
-		sp->seg_next = res->re_seg;
-		res->re_seg = sp++;
+		sp->l.magic = RT_SEG_MAGIC;
+		RT_LIST_INSERT(&(res->re_seg.l), &(sp->l));
 		res->re_seglen++;
+		sp++;
 		bytes -= sizeof(struct seg);
 	}
 }

@@ -87,20 +87,20 @@ extern int	ebm_plot();
 extern int	vol_plot();
 extern int	rt_arbn_plot();
 
-extern struct seg *rt_nul_shot();
-extern struct seg *rt_tor_shot();
-extern struct seg *rt_tgc_shot();
-extern struct seg *rt_ell_shot();
-extern struct seg *rt_arb_shot();
-extern struct seg *rt_ars_shot();
-extern struct seg *rt_hlf_shot();
-extern struct seg *rt_rec_shot();
-extern struct seg *rt_pg_shot();
-extern struct seg *rt_spl_shot();
-extern struct seg *rt_sph_shot();
-extern struct seg *ebm_shot();
-extern struct seg *vol_shot();
-extern struct seg *rt_arbn_shot();
+extern int	rt_nul_shot();
+extern int	rt_tor_shot();
+extern int	rt_tgc_shot();
+extern int	rt_ell_shot();
+extern int	rt_arb_shot();
+extern int	rt_ars_shot();
+extern int	rt_hlf_shot();
+extern int	rt_rec_shot();
+extern int	rt_pg_shot();
+extern int	rt_spl_shot();
+extern int	rt_sph_shot();
+extern int	ebm_shot();
+extern int	vol_shot();
+extern int	rt_arbn_shot();
 
 extern void	rt_nul_vshot();
 extern void	rt_ell_vshot();
@@ -219,7 +219,7 @@ int rt_nfunctab = sizeof(rt_functab)/sizeof(struct rt_functab);
 #define NDEF(func)	func() { rt_log("func unimplemented\n"); return(-1); }
 
 int IDEF(rt_nul_prep)
-struct seg * IDEF(rt_nul_shot)
+int	 IDEF(rt_nul_shot)
 void DEF(rt_nul_print)
 void DEF(rt_nul_norm)
 void DEF(rt_nul_uv)

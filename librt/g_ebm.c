@@ -61,10 +61,12 @@ struct structparse ebm_parse[] = {
 	(char *)0,(char *)0,	0,			FUNC_NULL
 };
 
-struct seg		*ebm_shot();
 struct ebm_specific	*ebm_import();
-struct seg		*ebm_dda();
-struct seg		*rt_seg_planeclip();
+RT_EXTERN(int ebm_dda,(struct xray *rp, struct soltab *stp,
+	struct application *ap, struct seg *seghead));
+RT_EXTERN(int rt_seg_planeclip,(struct seg *out_hd, struct seg *in_hd,
+	vect_t out_norm, fastf_t in, fastf_t out,
+	struct xray *rp, struct application *ap));
 
 /*
  *  Codes to represent surface normals.
@@ -100,12 +102,13 @@ struct seg		*rt_seg_planeclip();
  *	kmax is the maximum permissible parameter, "out" units away
  *
  *  Returns -
- *	segp		OK: trimmed segment chain, still in sorted order
- *	SEG_NULL	ERROR
+ *	1	OK: trimmed segment chain, still in sorted order
+ *	0	ERROR
  */
-struct seg *
-rt_seg_planeclip( segp, out_norm, in, out, rp, ap )
-struct seg	*segp;
+int
+rt_seg_planeclip( out_hd, in_hd, out_norm, in, out, rp, ap )
+struct seg	*out_hd;
+struct seg	*in_hd;
 vect_t		out_norm;
 fastf_t		in, out;
 struct xray	*rp;
@@ -115,16 +118,17 @@ struct application *ap;
 	fastf_t		slant_factor;
 	fastf_t		kmin, kmax;
 	vect_t		in_norm;
-	register struct seg	*curr, *next, *outseg, *lastout;
+	register struct seg	*curr;
 	int		out_norm_code;
+	int		count;
 
 	norm_dist_min = in - VDOT( rp->r_pt, out_norm );
 	slant_factor = VDOT( rp->r_dir, out_norm );	/* always abs < 1 */
 	if( NEAR_ZERO( slant_factor, SQRT_SMALL_FASTF ) )  {
 		if( norm_dist_min < 0.0 )  {
 			rt_log("rt_seg_planeclip ERROR -- ray parallel to baseplane, outside \n");
-			/* Free segp chain */
-			return(SEG_NULL);
+			/* XXX Free segp chain */
+			return(0);
 		}
 		kmin = -INFINITY;
 	} else
@@ -136,8 +140,8 @@ struct application *ap;
 	if( NEAR_ZERO( slant_factor, SQRT_SMALL_FASTF ) )  {
 		if( norm_dist_max < 0.0 )  {
 			rt_log("rt_seg_planeclip ERROR -- ray parallel to baseplane, outside \n");
-			/* Free segp chain */
-			return(SEG_NULL);
+			/* XXX Free segp chain */
+			return(0);
 		}
 		kmax = INFINITY;
 	} else
@@ -154,19 +158,18 @@ struct application *ap;
 	}
 	if(rt_g.debug&DEBUG_EBM)rt_log("kmin=%g, kmax=%g, out_norm_code=%d\n", kmin, kmax, out_norm_code );
 
-	curr = segp;
-	lastout = outseg = SEG_NULL;
-	for( curr = segp; curr != SEG_NULL; curr = next )  {
+	count = 0;
+	while( RT_LIST_LOOP( curr, seg, &(in_hd->l) ) )  {
+		RT_LIST_DEQUEUE( &(curr->l) );
 		if(rt_g.debug&DEBUG_EBM)rt_log(" rt_seg_planeclip seg( %g, %g )\n", curr->seg_in.hit_dist, curr->seg_out.hit_dist );
-		next = curr->seg_next;
 		if( curr->seg_out.hit_dist <= kmin )  {
 			if(rt_g.debug&DEBUG_EBM)rt_log("seg_out %g <= kmin %g, freeing\n", curr->seg_out.hit_dist, kmin );
-			FREE_SEG(curr, ap->a_resource);
+			RT_FREE_SEG(curr, ap->a_resource);
 			continue;
 		}
 		if( curr->seg_in.hit_dist >= kmax )  {
 			if(rt_g.debug&DEBUG_EBM)rt_log("seg_in  %g >= kmax %g, freeing\n", curr->seg_in.hit_dist, kmax );
-			FREE_SEG(curr, ap->a_resource);
+			RT_FREE_SEG(curr, ap->a_resource);
 			continue;
 		}
 		if( curr->seg_in.hit_dist <= kmin )  {
@@ -179,16 +182,10 @@ struct application *ap;
 			curr->seg_out.hit_dist = kmax;
 			curr->seg_out.hit_private = (char *)(-out_norm_code);
 		}
-		curr->seg_next = SEG_NULL;
-		if( lastout == SEG_NULL )  {
-			outseg = curr;
-			lastout = outseg;
-		} else {
-			lastout->seg_next = curr;
-			lastout = curr;
-		}
+		RT_LIST_INSERT( &(out_hd->l), &(curr->l) );
+		count += 2;
 	}
-	return( outseg );
+	return( count );
 }
 
 static int ebm_normtab[3] = { NORM_XPOS, NORM_YPOS, NORM_ZPOS };
@@ -201,11 +198,12 @@ static int ebm_normtab[3] = { NORM_XPOS, NORM_YPOS, NORM_ZPOS };
  *
  *
  */
-struct seg *
-ebm_dda( rp, stp, ap )
+int
+ebm_dda( rp, stp, ap, seghead )
 register struct xray	*rp;
 struct soltab		*stp;
 struct application	*ap;
+struct seg		*seghead;
 {
 	register struct ebm_specific *ebmp =
 		(struct ebm_specific *)stp->st_specific;
@@ -218,13 +216,9 @@ struct application	*ap;
 	int	igrid[3];/* Grid cell coordinates of cell (integerized) */
 	vect_t	P;	/* hit point */
 	int	inside;	/* inside/outside a solid flag */
-	struct seg	*head;
-	struct seg	*tail;
 	int	in_index;
 	int	out_index;
 	int	j;
-
-	head = tail = SEG_NULL;
 
 	/* Compute the inverse of the direction cosines */
 	if( !NEAR_ZERO( rp->r_dir[X], SQRT_SMALL_FASTF ) )  {
@@ -249,7 +243,7 @@ struct application	*ap;
 	/* intersect ray with ideal grid rpp */
 	VSETALL( P, 0 );
 	if( ! rt_in_rpp(rp, invdir, P, ebmp->ebm_large ) )
-		return	0;	/* MISS */
+		return(0);	/* MISS */
 	VJOIN1( P, rp->r_pt, rp->r_min, rp->r_dir );	/* P is hit point */
 if(rt_g.debug&DEBUG_EBM)VPRINT("ebm_origin", ebmp->ebm_origin);
 if(rt_g.debug&DEBUG_EBM)VPRINT("r_pt", rp->r_pt);
@@ -283,8 +277,8 @@ if(rt_g.debug&DEBUG_EBM)rt_log("g[X] = %d, g[Y] = %d\n", igrid[X], igrid[Y]);
 		 */
 if(rt_g.debug&DEBUG_EBM)rt_log("ray on local Z axis\n");
 		if( BIT( igrid[X], igrid[Y] ) == 0 )
-			return(SEG_NULL);	/* MISS */
-		GET_SEG(segp, ap->a_resource);
+			return(0);	/* MISS */
+		RT_GET_SEG(segp, ap->a_resource);
 		segp->seg_stp = stp;
 		segp->seg_in.hit_dist = 0;
 		segp->seg_out.hit_dist = INFINITY;
@@ -295,7 +289,8 @@ if(rt_g.debug&DEBUG_EBM)rt_log("ray on local Z axis\n");
 			segp->seg_in.hit_private = (char *)NORM_ZNEG;
 			segp->seg_out.hit_private = (char *)NORM_ZPOS;
 		}
-		return(segp);			/* HIT */
+		RT_LIST_INSERT( &(seghead->l), &(segp->l) );
+		return(2);			/* HIT */
 	}
 
 	/* X setup */
@@ -390,7 +385,7 @@ if(rt_g.debug&DEBUG_EBM)rt_log("Exit index is %s, t[X]=%g, t[Y]=%g\n",
 				/* Start of segment (entering a full voxel) */
 				inside = 1;
 
-				GET_SEG(segp, ap->a_resource);
+				RT_GET_SEG(segp, ap->a_resource);
 				segp->seg_stp = stp;
 				segp->seg_in.hit_dist = t0;
 
@@ -404,17 +399,7 @@ if(rt_g.debug&DEBUG_EBM)rt_log("Exit index is %s, t[X]=%g, t[Y]=%g\n",
 					segp->seg_in.hit_private = (char *)
 						(-ebm_normtab[in_index]);
 				}
-				segp->seg_next = SEG_NULL;
-				if( head == SEG_NULL ||
-				    tail == SEG_NULL )  {
-					/* Install as beginning of list */
-					tail = segp;
-					head = segp;
-				} else {
-					/* Append to list */
-					tail->seg_next = segp;
-					tail = segp;
-				}
+				RT_LIST_INSERT( &(seghead->l), &(segp->l) );
 
 				if(rt_g.debug&DEBUG_EBM) rt_log("START t=%g, n=%d\n",
 					t0, segp->seg_in.hit_private);
@@ -422,6 +407,7 @@ if(rt_g.debug&DEBUG_EBM)rt_log("Exit index is %s, t[X]=%g, t[Y]=%g\n",
 				/* Do nothing, marching through void */
 			}
 		} else {
+			register struct seg	*tail;
 			if( val > 0 )  {
 				/* Do nothing, marching through solid */
 			} else {
@@ -429,6 +415,7 @@ if(rt_g.debug&DEBUG_EBM)rt_log("Exit index is %s, t[X]=%g, t[Y]=%g\n",
 				/* Handle transition from solid to vacuum */
 				inside = 0;
 
+				tail = RT_LIST_LAST( seg, &(seghead->l) );
 				tail->seg_out.hit_dist = t0;
 
 				/* Compute exit normal */
@@ -458,7 +445,10 @@ if(rt_g.debug&DEBUG_EBM)rt_log("Exit index is %s, t[X]=%g, t[Y]=%g\n",
 	}
 
 	if( inside )  {
+		register struct seg	*tail;
+
 		/* Close off the final segment */
+		tail = RT_LIST_LAST( seg, &(seghead->l) );
 		tail->seg_out.hit_dist = tmax;
 
 		/* Compute exit normal.  Previous out_index is now in_index */
@@ -475,7 +465,9 @@ if(rt_g.debug&DEBUG_EBM)rt_log("Exit index is %s, t[X]=%g, t[Y]=%g\n",
 			tmax, tail->seg_out.hit_private );
 	}
 
-	return(head);
+	if( RT_LIST_IS_EMPTY( &(seghead->l) ) )
+		return(0);
+	return(2);
 }
 
 /*
@@ -653,19 +645,23 @@ register struct soltab	*stp;
  *
  *  Returns -
  *	0	MISS
- *	segp	HIT
+ *	>0	HIT
  */
-struct seg *
-ebm_shot( stp, rp, ap )
+int
+ebm_shot( stp, rp, ap, seghead )
 struct soltab		*stp;
 register struct xray	*rp;
 struct application	*ap;
+struct seg		*seghead;
 {
 	register struct ebm_specific *ebmp =
 		(struct ebm_specific *)stp->st_specific;
-	struct seg	*segp;
 	vect_t		norm;
 	struct xray	ideal_ray;
+	struct seg	myhead;
+	int		i;
+
+	RT_LIST_INIT( &(myhead.l) );
 
 	/* Transform actual ray into ideal space at origin in X-Y plane */
 	MAT4X3PNT( ideal_ray.r_pt, ebmp->ebm_mat, rp->r_pt );
@@ -676,10 +672,11 @@ rt_log("%g %g %g %g %g %g\n",
 ideal_ray.r_pt[X], ideal_ray.r_pt[Y], ideal_ray.r_pt[Z],
 ideal_ray.r_dir[X], ideal_ray.r_dir[Y], ideal_ray.r_dir[Z] );
 #endif
-	segp = ebm_dda( &ideal_ray, stp, ap );
+	if( ebm_dda( &ideal_ray, stp, ap, &myhead ) <= 0 )
+		return(0);
 
 	VSET( norm, 0, 0, -1 );		/* letters grow in +z, which is "inside" the halfspace */
-	segp = rt_seg_planeclip( segp, norm, 0.0, ebmp->ebm_tallness,
+	i = rt_seg_planeclip( seghead, &myhead, norm, 0.0, ebmp->ebm_tallness,
 		&ideal_ray, ap );
 #if 0
 	if( segp )  {
@@ -691,7 +688,7 @@ ideal_ray.r_dir[X], ideal_ray.r_dir[Y], ideal_ray.r_dir[Z] );
 		pdv_3line( stdout, a, b );
 	}
 #endif
-	return(segp);
+	return(i);
 }
 
 /*
