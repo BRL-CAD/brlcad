@@ -1,5 +1,8 @@
 /*
+ *			T A B L E . H
+ * and
  *			S P E C T R U M . H
+    ...soon to be separated...
  *
  *  A header file containing data structures to assist with
  *  recording spectral data.
@@ -14,8 +17,8 @@
  *  It is unclear how to properly generalize the names....  Ahh, packaging.
  *  Perhaps the "table" package?
  *
- *  The context is kept in an 'rt_spectrum' structure, and
- *  the data for one particular sample are kept in an 'rt_spectral_sample'
+ *  The context is kept in an 'rt_table' structure, and
+ *  the data for one particular sample are kept in an 'rt_tabdata'
  *  structure.
  *
  *  The contents of the spectral sample in val[j] are interpreted
@@ -62,7 +65,7 @@
  *  but that might preclude very narrow-band calculations, such as might
  *  be required to study a single spectral line,
  *  and it might also preclude future extensions to X-rays.
- *  Because there are likely to be very few rt_spectrum structures
+ *  Because there are likely to be very few rt_table structures
  *  in use, the extra storage isn't a likely problem.
  *  The worst effect of this decision will be floating-point grunge
  *  when printing wavelengths, e.g. 650nm might print as 649.99nm.
@@ -83,82 +86,93 @@
  *  $Header$
  */
 
-struct rt_spectrum {
-	long	magic;
-	int	nwave;
-	fastf_t	wavel[1];	/* array of nwave+1 wavelengths, dynamically sized */
+struct rt_table {
+	long		magic;
+	int		nx;
+	fastf_t		x[1];	/* array of nx+1 wavelengths, dynamically sized */
 };
-#define RT_SPECTRUM_MAGIC	0x53706374
-#define RT_CK_SPECTRUM(_p)	RT_CKMAG(_p, RT_SPECTRUM_MAGIC, "rt_spectrum")
+#define RT_TABLE_MAGIC	0x53706374
+#define RT_CK_TABLE(_p)	RT_CKMAG(_p, RT_TABLE_MAGIC, "rt_table")
 
-/* Gets an rt_spectrum, with wavel[] having size _nwave+1 */
-#define RT_GET_SPECTRUM(_spect, _nwave)  { \
-	if( (_nwave) < 1 )  rt_bomb("RT_GET_SPECTRUM() _nwave < 1\n"); \
-	_spect = (struct rt_spectrum *)rt_calloc( 1, \
-		sizeof(struct rt_spectrum) + sizeof(fastf_t)*(_nwave), \
-		"struct rt_spectrum" ); \
-	_spect->magic = RT_SPECTRUM_MAGIC; \
-	_spect->nwave = (_nwave);  }
+/* Gets an rt_table, with x[] having size _nx+1 */
+#define RT_GET_TABLE(_table, _nx)  { \
+	if( (_nx) < 1 )  rt_bomb("RT_GET_TABLE() _nx < 1\n"); \
+	_table = (struct rt_table *)rt_calloc( 1, \
+		sizeof(struct rt_table) + sizeof(fastf_t)*(_nx), \
+		"struct rt_table" ); \
+	_table->magic = RT_TABLE_MAGIC; \
+	_table->nx = (_nx);  }
 
 
-struct rt_spect_sample {
-	long	magic;
-	int	nwave;
-	CONST struct rt_spectrum *spectrum;	/* Up pointer to "struct spectrum" */
-	fastf_t	val[1];		/* array of nwave samples, dynamically sized */
+struct rt_tabdata {
+	long		magic;
+	int		ny;
+	CONST struct rt_table *table;	/* Up pointer to definition of X axis */
+	fastf_t		y[1];		/* array of ny samples, dynamically sized */
 };
-#define RT_SPECT_SAMPLE_MAGIC	0x53736d70
-#define RT_CK_SPECT_SAMPLE(_p)	RT_CKMAG(_p, RT_SPECT_SAMPLE_MAGIC, "rt_spect_sample")
+#define RT_TABDATA_MAGIC	0x53736d70
+#define RT_CK_TABDATA(_p)	RT_CKMAG(_p, RT_TABDATA_MAGIC, "rt_tabdata")
 
-#define RT_SIZEOF_SPECT_SAMPLE(_spect)	( sizeof(struct rt_spect_sample) + \
-			sizeof(fastf_t)*((_spect)->nwave-1) )
+#define RT_SIZEOF_TABDATA(_table)	( sizeof(struct rt_tabdata) + \
+			sizeof(fastf_t)*((_table)->nx-1) )
 
-/* Gets an rt_spect_sample, with val[] having size _nwave */
-#define RT_GET_SPECT_SAMPLE(_ssamp, _spect)  { \
-	RT_CK_SPECTRUM(_spect);\
-	_ssamp = (struct rt_spect_sample *)rt_calloc( 1, \
-		RT_SIZEOF_SPECT_SAMPLE(_spect), "struct rt_spect_sample" ); \
-	_ssamp->magic = RT_SPECT_SAMPLE_MAGIC; \
-	_ssamp->nwave = (_spect)->nwave; \
-	_ssamp->spectrum = (_spect); }
+/* Gets an rt_tabdata, with y[] having size _ny */
+#define RT_GET_TABDATA(_data, _table)  { \
+	RT_CK_TABLE(_table);\
+	_data = (struct rt_tabdata *)rt_calloc( 1, \
+		RT_SIZEOF_TABDATA(_table), "struct rt_tabdata" ); \
+	_data->magic = RT_TABDATA_MAGIC; \
+	_data->ny = (_table)->nx; \
+	_data->table = (_table); }
 
-RT_EXTERN( struct rt_spectrum	*rt_spect_uniform, (int num, double first,
+/*
+ * *** Table-generic routines
+ */
+
+RT_EXTERN( void			rt_ck_table, (CONST struct rt_table *tabp));
+RT_EXTERN( struct rt_table	*rt_table_make_uniform, (int num, double first,
 					double last));
-RT_EXTERN( void			rt_spect_add, (struct rt_spect_sample *out,
-					CONST struct rt_spect_sample *in1,
-					CONST struct rt_spect_sample *in2));
-RT_EXTERN( void			rt_spect_mul, (struct rt_spect_sample *out,
-					CONST struct rt_spect_sample *in1,
-					CONST struct rt_spect_sample *in2));
-RT_EXTERN( void			rt_spect_scale, (struct rt_spect_sample *out,
-					CONST struct rt_spect_sample *in1,
+RT_EXTERN( void			rt_tabdata_add, (struct rt_tabdata *out,
+					CONST struct rt_tabdata *in1,
+					CONST struct rt_tabdata *in2));
+RT_EXTERN( void			rt_tabdata_mul, (struct rt_tabdata *out,
+					CONST struct rt_tabdata *in1,
+					CONST struct rt_tabdata *in2));
+RT_EXTERN( void			rt_tabdata_scale, (struct rt_tabdata *out,
+					CONST struct rt_tabdata *in1,
 					double scale));
-RT_EXTERN( double		rt_spect_area1, (CONST struct rt_spect_sample *in));
-RT_EXTERN( double		rt_spect_area2, (CONST struct rt_spect_sample *in));
-RT_EXTERN( void			rt_spect_make_CIE_XYZ, (
-					struct rt_spect_sample **x,
-					struct rt_spect_sample **y,
-					struct rt_spect_sample **z,
-					CONST struct rt_spectrum *spect));
-RT_EXTERN( fastf_t		rt_spect_evaluate, (CONST struct rt_spect_sample *samp,
+RT_EXTERN( double		rt_tabdata_area1, (CONST struct rt_tabdata *in));
+RT_EXTERN( double		rt_tabdata_area2, (CONST struct rt_tabdata *in));
+RT_EXTERN( fastf_t		rt_table_lin_interp, (CONST struct rt_tabdata *samp,
 					double wl));
-RT_EXTERN( struct rt_spect_sample *rt_spect_resample, (
-					CONST struct rt_spectrum *newspect,
-					CONST struct rt_spect_sample *oldsamp));
-RT_EXTERN( int			rt_write_spectrum, (CONST char *filename,
-					CONST struct rt_spectrum *spect));
-RT_EXTERN( struct rt_spectrum	*rt_read_spectrum, (CONST char *filename));
-RT_EXTERN( int			rt_write_spect_sample, (CONST char *filename,
-					CONST struct rt_spect_sample *ss));
-RT_EXTERN( struct rt_spect_sample *rt_read_spectrum_and_samples, (
+RT_EXTERN( struct rt_tabdata	*rt_tabdata_resample, (
+					CONST struct rt_table *newtable,
+					CONST struct rt_tabdata *olddata));
+RT_EXTERN( int			rt_table_write, (CONST char *filename,
+					CONST struct rt_table *tabp));
+RT_EXTERN( struct rt_table	*rt_table_read, (CONST char *filename));
+RT_EXTERN( int			rt_pr_table_and_tabdata, (CONST char *filename,
+					CONST struct rt_tabdata *data));
+RT_EXTERN( struct rt_tabdata	*rt_read_table_and_tabdata, (
 					CONST char *filename));
-RT_EXTERN( void			rt_spect_black_body, (struct rt_spect_sample *ss,
+RT_EXTERN( struct rt_tabdata	*rt_tabdata_malloc_array, (
+					CONST struct rt_table *tabp,
+					int num));
+RT_EXTERN( void			rt_tabdata_copy, (struct rt_tabdata *out,
+					CONST struct rt_tabdata *in));
+
+
+/*
+ * *** Spectrum-specific routines
+ */
+RT_EXTERN( void			rt_spect_make_CIE_XYZ, (
+					struct rt_tabdata **x,
+					struct rt_tabdata **y,
+					struct rt_tabdata **z,
+					CONST struct rt_table *tabp));
+
+RT_EXTERN( void			rt_spect_black_body, (struct rt_tabdata *data,
 					double temp, unsigned int n));
 RT_EXTERN( void			rt_spect_black_body_fast, (
-					struct rt_spect_sample *ss,
+					struct rt_tabdata *data,
 					double temp));
-RT_EXTERN( struct rt_spect_sample *rt_get_spect_sample_array, (
-					CONST struct rt_spectrum *spect,
-					int num));
-RT_EXTERN( void			rt_spect_copy, (struct rt_spect_sample *out,
-					CONST struct rt_spect_sample *in));
