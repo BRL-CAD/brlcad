@@ -298,31 +298,36 @@ struct rt_i			*rtip;
 			stp = BU_LIST_MAIN_PTR( soltab, mid, l2 );
 			RT_CK_SOLTAB(stp);
 
-			/* Don't instance this solid in some other model instance */
-			if( stp->st_rtip != rtip )  continue;
-
-			if( mat == (matp_t)0 )  {
-				if( stp->st_matp == (matp_t)0 )  {
+			if( stp->st_matp == (matp_t)0 )  {
+				if( mat == (matp_t)0 )  {
 					have_match = 1;
 					break;
 				}
 				continue;
 			}
-			if( stp->st_matp == (matp_t)0 )  continue;
+			if( mat == (matp_t)0 )  continue;	/* doesn't match */
 
-			if (rt_mat_is_equal(mat, stp->st_matp, &rtip->rti_tol)) {
-				have_match = 1;
-				break;
-			}
+			if( !rt_mat_is_equal(mat, stp->st_matp, &rtip->rti_tol))
+				continue;
+
+			/* Don't instance this solid from some other model instance */
+			/* As this is nearly always equal, check it last */
+			if( stp->st_rtip != rtip )  continue;
+
+			have_match = 1;
+			break;
 		}
 	}
 
 	if( have_match )  {
 		/*
-		 *  stp now points to re-referenced solid
+		 *  stp now points to re-referenced solid.
+		 *  stp->st_id is non-zero, indicating pre-existing solid.
 		 */
 		RT_CK_SOLTAB(stp);		/* sanity */
-		stp->st_uses++;
+		/* Only increment use counter for non-dead solids. */
+		if( !(stp->st_aradius <= -1) )
+			stp->st_uses++;
 		/* dp->d_uses is NOT incremented, because number of soltab's using it has not gone up. */
 		if( rt_g.debug & DEBUG_SOLIDS )  {
 			bu_log( mat ?
@@ -416,8 +421,9 @@ int				id;
 	 */
 	stp = rt_find_identical_solid( mat, dp, rt_tree_rtip );
 	if( stp->st_id != 0 )  {
+		/* stp is an instance of a pre-existing solid */
 		if( stp->st_aradius <= -1 )  {
-			stp->st_uses--;
+			/* It's dead, Jim.  st_uses was not incremented. */
 			return( TREE_NULL );	/* BAD: instance of dead solid */
 		}
 		goto found_it;
@@ -435,11 +441,15 @@ int				id;
 	 */
     	RT_INIT_DB_INTERNAL(&intern);
 	if( rt_functab[id].ft_import( &intern, ep, mat ) < 0 )  {
+		int	hash;
 		bu_log("rt_gettree_leaf(%s):  solid import failure\n", dp->d_namep );
 	    	if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );
 		/* Too late to delete soltab entry; mark it as "dead" */
+		hash = db_dirhash( dp->d_namep );
+		ACQUIRE_SEMAPHORE_TREE(hash);
 		stp->st_aradius = -1;
 		stp->st_uses--;
+		RELEASE_SEMAPHORE_TREE(hash);
 		return( TREE_NULL );		/* BAD */
 	}
 	RT_CK_DB_INTERNAL( &intern );
@@ -454,12 +464,16 @@ int				id;
 	 *  Note that the prep routine may have changed st_id.
     	 */
 	if( rt_functab[id].ft_prep( stp, &intern, rt_tree_rtip ) )  {
+		int	hash;
 		/* Error, solid no good */
 		bu_log("rt_gettree_leaf(%s):  prep failure\n", dp->d_namep );
 	    	if( intern.idb_ptr )  rt_functab[stp->st_id].ft_ifree( &intern );
 		/* Too late to delete soltab entry; mark it as "dead" */
+		hash = db_dirhash( dp->d_namep );
+		ACQUIRE_SEMAPHORE_TREE(hash);
 		stp->st_aradius = -1;
 		stp->st_uses--;
+		RELEASE_SEMAPHORE_TREE(hash);
 		return( TREE_NULL );		/* BAD */
 	}
 
@@ -525,13 +539,10 @@ found_it:
  *  Decrement use count on soltab structure.  If no longer needed,
  *  release associated storage, and free the structure.
  *
- *  This routine can not be used in PARALLEL, hence the st_aradius hack.
- *	???? XXX is this still true?
- *
- *  This routine must semaphore protect against other copies of itself
- *  running in parallel, both in this code and in
+ *  This routine semaphore protects against other copies of itself
+ *  running in parallel, and against
  *  other routines (such as rt_find_identical_solid()) which might
- *  be modifying the linked list heads.
+ *  also be modifying the linked list heads.
  *
  *  Called by -
  *	db_free_tree()
