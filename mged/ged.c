@@ -142,7 +142,8 @@ char **argv;
 
 	/* In some ANSI implementations, symbol "stdin" is a variable. */
 	infile = stdin;
-	outfile = stdout;
+/*	outfile = stdout; */
+	outfile = stderr;
 
 	/* Check for proper invocation */
 	if( argc < 2 )  {
