@@ -4,6 +4,7 @@ fbcmrot \- rotate the color map
 .SH SYNOPSIS
 .B fbcmrot
 .RB [ \-h ]
+.RB [ \-i\  increment]
 steps_per_second
 .SH DESCRIPTION
 .I Fbcmrot
@@ -12,10 +13,21 @@ color map positions.
 The
 .I frames_per_second
 is the number of shifts per second to generate.
-This value can be fractional. A
-.I frames_per_second
-of zero or an unspecified frame rate causes the program to cycle through
+This value can be fractional.
+An unspecified frame rate causes the program to cycle through
 the color maps as fast as possible.
+A
+.I frames_per_second
+of zero causes the program to make one step and then exit.
+.PP
+Each step shifts the colormap one position toward smaller
+values (with a linear colormap this would cause displayed pixels
+to get brighter).  The
+.BR \-i\  increment
+option allows a shift of more than one position.  If
+.I increment
+is negative, the colormap will be shifted the opposite
+direction (toward larger values).
 .PP
 By default, the framebuffer is assumed to be 512x512 pixels.
 Specifying the
