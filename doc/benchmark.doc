@@ -1,7 +1,7 @@
 .\" $Header$
 .\" tbl benchmark.doc | troff -t -ms | catimp -P imt1
 .TL
-The BRL-CAD Benchmark Test
+The BRL-CAD Release 4.4 Benchmark Test
 .AU
 Michael John Muuss
 .AU
@@ -188,6 +188,103 @@ center box;
 l l.
 System Name	Configuration
 _	_
+axposf	DEC Alpha 4000/710, 256M, OSF/1 V3.0 \(dg
+pk	Cray C90, C916/161024, UNICOS 8.0.2.4
+vapor	SGI, 18* 75 MHz R8000 IP21, 1024G RAM 8-way, Irix 6.0
+vgr	DEC VAX-11/780, FPA, 4.3 BSD
+vj	SGI Ingido**2, 100 MHz IP22, 96M RAM, Irix 5.2
+wax	SGI, 24* 150 MHz R4400 IP19, 1024G RAM 4-way, Irix 5.2
+wilson	SGI, 8* 100 MHz R4400 IP19, 1024G RAM 8-way, Irix 5.2
+wimpy	Sun SS10BSX-GX, 2* 50 MHz SuperSPARC, 64M RAM, SunOS 5.4
+wizard	SGI Ingido**2, 150 MHz IP22, 96M RAM, Irix 5.3
+.TE
+\(dg The Alpha was heavily loaded while the benchmark was being run.
+DEC requires us to show the load average at the time:
+.br
+03:28  up 18 days, 10:59,  7 users,  load average: 2.00, 2.00, 2.08
+.NH 1
+BENCHMARK RESULTS
+.PP
+In the tradition of Dongarra, the Rays/sec figure is considered the
+"RT Figure of Merit" (RTFM).  Note that the RTFM can only be compared
+between different runs on the \fIsame\fR database;  it is not meaningful
+to compare RTFM numbers between different databases. The Rays/sec number
+for a multi-processor machine is for "aggregate CPU cluster seconds",
+rather than rays/total CPU seconds (which remains fairly constant on
+good parallel machines). Worthy finalists to date are listed below.
+Entries are omitted for tests in which correct results were not
+obtained.
+.PP
+The statistics are recorded in
+an easily understood format, with all results for
+a particular configuration listed on a single line.
+The numbers reported are the rays/sec (RTFM) figure.
+Entries denoted with a dagger ("\(dg") produced incorrect results.
+Entries denoted with a dash ("-") were not available and should be
+considered differently than those entries with a dagger.
+Generally the results are not available because time constraints
+prevented running the complete set of databases.
+.fi
+.NH 1
+RELEASE 4.4 STATISTICS (4-Jan-1995)
+.PP
+There is very little difference in RTFM numbers between Release 4.0 and
+Release 4.4, so they can be usefully compared.
+.LP
+.TS H
+expand box;
+l l | n n n n | n | l.
+A/*	H/W	Moss	World	Star	Bldg	Mean	S/W Notes
+_
+Abs	pk	128056.46	52355.48	38787.38	36797.60	121368.30	75473.04
+*vgr	pk	934.65	780.72	691.76	689.61	1716.90	962.72	-P16
+_
+Abs	vapor	100408.15	68514.86	54328.03	49231.49	72397.64	68976.03	(S/W locks)
+*vgr	vapor	732.85	1021.69	968.93	922.62	1024.15	934.04	-P18
+_
+Abs	wax	99368.72	64222.13	52011.23	49767.33	70178.03	67109.48
+*vgr	wax	725.26	957.68	927.61	932.67	992.75	907.19	-P24
+_
+Abs	pk	125185.43	51247.95	38294.13	36657.21	52382.70	60753.48
+*vgr	pk	913.69	764.21	682.97	686.97	741.01	757.77	-P8
+_
+Abs	wilson	30554.70	17782.60	16137.37	13990.98	19059.79	19505.08	Irix 5.2
+*vgr	wilson	223.01	265.17	287.8	262.19	269.62	261.55	-P8
+_
+Abs	wimpy	11254.66	6277.37	5168.14	5527.90	5812.74	6808.16
+*vgr	wimpy	82.14	93.60	92.17	103.59	82.22	90.74	-P2
+_
+Abs	axposf	11105.83	5517.03	4862.82	4501.46	5604.39	6318.30
+*vgr	axposf	81.05	82.27	86.72	84.36	79.28	82.73	-P1
+_
+Abs	vapor	9501.09	4703.98	3786.13	3497.90	4714.63	5240.74
+*vgr	vapor	69.34	70.14	67.52	65.55	66.69	67.84	-P1
+_
+Abs	wax	8533.66	3928.70	3658.15	3596.25	4193.07	4781.96
+*vgr	wax	62.28	58.58	65.24	67.39	59.31	62.56	-P1
+_
+Abs	pk	8891.78	3736.08	2692.20	2641.33	3777.48	4347.77
+*vgr	pk	64.89	55.71	48.01	49.50	53.43	54.30	-P1
+_
+Abs	wimpy	6550.35	2899.18	2880.83	2886.95	3268.20	3697.10
+*vgr	wimpy	47.80	43.23	51.37	54.10	46.23	48.54	-P1
+_
+Abs	weber	6375.24	2914.15	2853.04	2686.09	3253.90	3616.48
+*vgr	weber	46.53	43.45	50.88	50.33	46.03	47.44	-P1
+_
+Abs	wilson	5640.40	2652.05	2578.19	2290.79	2461.91	3124.66
+*vgr	wilson	41.16	39.54	45.98	42.93	34.82	40.88	-P1
+.TE
+.NH 1
+THE OLD COMPETITION
+.PP
+These are the definitions for systems measured in previous tests.
+.LP
+.TS
+center box;
+l l.
+System Name	Configuration
+_	_
 alliant	Alliant FX/8 (8 CEs, 9 IPs, 64 Mbytes), Concentrix 3.0
 amber	HP 9000/720, 32 MB memory
 amsaa-seer	Gould PN 9080, w/MACCs, UTX 2.0, 4x4Mb mem boards
@@ -245,28 +342,9 @@ wilted	Sun SPARCstation ELC , Diskless, 12MB memory Sun UNIX 4.1.1
 worm	Silicon Graphics 4D/280 25 Mhz clock 64 MB memory Irix 3.3.1
 .TE
 .NH 1
-BENCHMARK RESULTS
+OLD BENCHMARK RESULTS
 .PP
-In the tradition of Dongarra, the Rays/sec figure is considered the
-"RT Figure of Merit" (RTFM).  Note that the RTFM can only be compared
-between different runs on the \fIsame\fR database;  it is not meaningful
-to compare RTFM numbers between different databases. The Rays/sec number
-for a multi-processor machine is for "aggregate CPU cluster seconds",
-rather than rays/total CPU seconds (which remains fairly constant on
-good parallel machines). Worthy finalists to date are listed below.
-Entries are omitted for tests in which correct results were not
-obtained.
-.PP
-The statistics are recorded in
-an easily understood format, with all results for
-a particular configuration listed on a single line.
-The numbers reported are the rays/sec (RTFM) figure.
-Entries denoted with a dagger ("\(dg") produced incorrect results.
-Entries denoted with a dash ("-") were not available and should be
-considered differently than those entries with a dagger.
-Generally the results are not available because time constraints
-prevented running the complete set of databases.
-.fi
+These are the results of previous benchmarks.
 .NH 1
 RELEASE 1.20 STATISTICS (12-Feb-1987)
 .LP
