@@ -215,7 +215,7 @@ proc mouse_matrix_edit_select { x y } {
 proc mouse_comb_edit_select { x y } {
     global mged_players
     global mged_mouse_behavior
-    global comb_name
+    global comb_control
 
     set comb [mouse_get_comb $x $y]
     if {$comb == ""} {
@@ -225,7 +225,7 @@ proc mouse_comb_edit_select { x y } {
     set win [winset]
     set id [get_player_id_dm $win]
     init_comb $id
-    set comb_name($id) $comb
+    set comb_control($id,name) $comb
     comb_reset $id
 
     mged_apply_all "set mouse_behavior d"
