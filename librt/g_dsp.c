@@ -165,7 +165,7 @@ static CONST vect_t	dsp_pl[BBOX_PLANES] = {
 #define DSP_AO(a) bu_offsetofarray(struct rt_dsp_internal, a)
 
 CONST struct bu_structparse rt_dsp_parse[] = {
-	{"%s",	DSP_NAME_LEN, "file", DSP_AO(dsp_file), BU_STRUCTPARSE_FUNC_NULL },
+	{"%S",	DSP_NAME_LEN, "file", DSP_O(dsp_file), BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",  1, "sm", DSP_O(dsp_smooth), BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",	1, "w", DSP_O(dsp_xcnt), BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",	1, "n", DSP_O(dsp_ycnt), BU_STRUCTPARSE_FUNC_NULL },
@@ -174,7 +174,7 @@ CONST struct bu_structparse rt_dsp_parse[] = {
 };
 
 CONST struct bu_structparse rt_dsp_ptab[] = {
-	{"%s",	DSP_NAME_LEN, "file", DSP_AO(dsp_file), BU_STRUCTPARSE_FUNC_NULL },
+	{"%S",	DSP_NAME_LEN, "file", DSP_O(dsp_file), BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",  1, "sm", DSP_O(dsp_smooth), BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",	1, "w", DSP_O(dsp_xcnt), BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",	1, "n", DSP_O(dsp_ycnt), BU_STRUCTPARSE_FUNC_NULL },
@@ -196,7 +196,7 @@ CONST struct rt_dsp_internal *dsp_ip;
 	bu_vls_init( vls );
 
 	bu_vls_printf( vls, "Displacement Map\n  file='%s' xs=%d ys=%d sm=%d\n",
-		dsp_ip->dsp_file, dsp_ip->dsp_xcnt, dsp_ip->dsp_ycnt, dsp_ip->dsp_smooth);
+		bu_vls_addr(&dsp_ip->dsp_file), dsp_ip->dsp_xcnt, dsp_ip->dsp_ycnt, dsp_ip->dsp_smooth);
 
 	VSETALL(pt, 0.0);
 	MAT4X3PNT(v, dsp_ip->dsp_stom, pt);
@@ -2659,6 +2659,8 @@ CONST struct bn_tol	*tol;
 	return(-1);
 }
 
+
+
 /*
  *			R T _ D S P _ I M P O R T
  *
@@ -2681,7 +2683,8 @@ CONST struct db_i		*dbip;
 	int				in_cookie, out_cookie;
 
 #define IMPORT_FAIL(_s) \
-	bu_log("rt_dsp_import(%d) '%s' %s\n", __LINE__, dsp_ip->dsp_file,_s);\
+	bu_log("rt_dsp_import(%d) '%s' %s\n", __LINE__, \
+               bu_vls_addr(&dsp_ip->dsp_file), _s);\
 	bu_free( (char *)dsp_ip , "rt_dsp_import: dsp_ip" ); \
 	ip->idb_type = ID_NULL; \
 	ip->idb_ptr = (genptr_t)NULL; \
@@ -2710,10 +2713,11 @@ CONST struct db_i		*dbip;
 	dsp_ip->magic = RT_DSP_INTERNAL_MAGIC;
 
 	/* set defaults */
-	/* XXX bu_struct_parse does not set the null? */
-	memset(&dsp_ip->dsp_file[0], 0, DSP_NAME_LEN); 
+	/* XXX bu_struct_parse does not set the null?
+	 * memset(&dsp_ip->dsp_file[0], 0, DSP_NAME_LEN); 
+	 */
 	dsp_ip->dsp_xcnt = dsp_ip->dsp_ycnt = 0;
-	dsp_ip->dsp_xs = dsp_ip->dsp_ys = dsp_ip->dsp_zs = 0.0;
+
 	dsp_ip->dsp_smooth = 1;
 	bn_mat_idn(dsp_ip->dsp_stom);
 	bn_mat_idn(dsp_ip->dsp_mtos);
@@ -2740,7 +2744,7 @@ CONST struct db_i		*dbip;
 	/* get file */
 	mf = dsp_ip->dsp_mp = 
 		bu_open_mapped_file_with_path(dbip->dbi_filepath,
-			dsp_ip->dsp_file, "dsp");
+			bu_vls_addr(&dsp_ip->dsp_file), "dsp");
 	if (!mf) {
 		IMPORT_FAIL("unable to open");
 	}
@@ -2780,6 +2784,7 @@ CONST struct db_i		*dbip;
 	bu_vls_free( &str );
 	return(0);			/* OK */
 }
+
 
 /*
  *			R T _ D S P _ E X P O R T
@@ -2832,6 +2837,126 @@ CONST struct db_i		*dbip;
 
 	return(0);
 }
+
+
+
+
+/*
+ *			R T _ D S P _ I M P O R T 5
+ *
+ *  Import an DSP from the database format to the internal format.
+ *  Apply modeling transformations as well.
+ */
+int
+rt_dsp_import5( ip, ep, mat, dbip )
+struct rt_db_internal		*ip;
+CONST struct bu_external	*ep;
+register CONST mat_t		mat;
+CONST struct db_i		*dbip;
+{
+	struct rt_dsp_internal	*dsp_ip;
+	unsigned short 		name_len;
+	unsigned char		*cp;
+
+	BU_CK_EXTERNAL( ep );
+
+	BU_ASSERT_LONG( ep->ext_nbytes, >, 141 );
+
+	RT_INIT_DB_INTERNAL( ip );
+
+	ip->idb_type = ID_DSP;
+	ip->idb_meth = &rt_functab[ID_DSP];
+	dsp_ip = ip->idb_ptr = 
+		bu_malloc( sizeof(struct rt_dsp_internal), "rt_dsp_internal");
+	
+	dsp_ip->magic = RT_DSP_INTERNAL_MAGIC;
+
+	/* get x, y counts */
+	cp = (unsigned char *)ep->ext_buf;
+
+	dsp_ip->dsp_xcnt = (unsigned) bu_glong( cp );
+	cp += SIZEOF_NETWORK_LONG;
+
+	dsp_ip->dsp_ycnt = (unsigned) bu_glong( cp );
+	cp += SIZEOF_NETWORK_LONG;
+
+	/* matrix */
+	ntohd((char *)dsp_ip->dsp_mtos, cp, 16);
+	cp += SIZEOF_NETWORK_DOUBLE * 16;
+
+	/* smooth flag */
+	dsp_ip->dsp_smooth = bu_gshort( cp );
+	cp += SIZEOF_NETWORK_SHORT;
+
+	/* name of data location */
+	bu_vls_init( &dsp_ip->dsp_file );
+	bu_vls_strcpy( &dsp_ip->dsp_file, cp );
+
+	return 0; /* OK */
+}
+
+/*
+ *			R T _ D S P _ E X P O R T 5
+ *
+ *  The name is added by the caller, in the usual place.
+ */
+int
+rt_dsp_export5( ep, ip, local2mm, dbip )
+struct bu_external		*ep;
+CONST struct rt_db_internal	*ip;
+double				local2mm;
+CONST struct db_i		*dbip;
+{
+	struct rt_dsp_internal	*dsp_ip;
+	struct rt_dsp_internal	dsp;
+	union record		*rec;
+	struct bu_vls		str;
+	unsigned long		name_len;
+	register unsigned long	tmp;
+	unsigned char		*cp;
+
+	RT_CK_DB_INTERNAL(ip);
+	if (ip->idb_type != ID_DSP )  return(-1);
+	dsp_ip = (struct rt_dsp_internal *)ip->idb_ptr;
+	RT_DSP_CK_MAGIC(dsp_ip);
+
+	name_len = bu_vls_strlen(&dsp_ip->dsp_file) + 1;
+
+	BU_INIT_EXTERNAL(ep);
+	ep->ext_nbytes = 140 + name_len;
+	cp = (unsigned char *)ep->ext_buf = 
+		(genptr_t)bu_malloc( ep->ext_nbytes, "dsp external");
+
+
+	/* Now we fill the buffer with the data, making sure everything is
+	 * converted to Big-Endian IEEE
+	 */
+
+	bu_plong( cp, (unsigned long)dsp_ip->dsp_xcnt );
+	cp += SIZEOF_NETWORK_LONG;
+
+	bu_plong( cp, (unsigned long)dsp_ip->dsp_ycnt );
+	cp += SIZEOF_NETWORK_LONG;
+
+	/* Since libwdb users may want to operate in units other
+	 * than mm, we offer the opportunity to scale the solid
+	 * (to get it into mm) on the way out.
+	 */
+	dsp_ip->dsp_mtos[15] /= local2mm;
+
+	htond(cp, (char *)dsp_ip->dsp_mtos, 16);
+	cp += SIZEOF_NETWORK_DOUBLE * 16;
+
+	bu_pshort( cp, (int)dsp_ip->dsp_smooth );
+	cp += SIZEOF_NETWORK_SHORT;
+
+	strncpy(cp, bu_vls_addr(&dsp_ip->dsp_file), name_len);
+
+	return 0; /* OK */
+}
+
+
+
 
 /*
  *			R T _ D S P _ D E S C R I B E
@@ -2897,6 +3022,8 @@ struct rt_db_internal	*ip;
 
 	dsp_ip->magic = 0;			/* sanity */
 	dsp_ip->dsp_mp = (struct bu_mapped_file *)0;
+
+	bu_vls_free(  &dsp_ip->dsp_file );
 
 	bu_free( (char *)dsp_ip, "dsp ifree" );
 	ip->idb_ptr = GENPTR_NULL;	/* sanity */
