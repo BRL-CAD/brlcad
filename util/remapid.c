@@ -304,6 +304,7 @@ struct remap_reg	*rp;
 {
     BU_CKMAG(rp, REMAP_REG_MAGIC, "remap_reg");
     bu_free((genptr_t) rp -> rr_name, "region name");
+    bu_free((genptr_t) rp -> rr_ip, "rt_db_internal");
     bu_free((genptr_t) rp, "remap_reg");
 }
 
@@ -539,9 +540,7 @@ char	*db_name;
     int				i;
     struct directory		*dp;
     struct rt_comb_internal	*comb;
-    struct rt_db_internal	intern;
-
-    bu_log("db_init(%s)...\n", db_name);
+    struct rt_db_internal	*ip;
 
     if ((dbip = db_open(db_name, "r+w")) == DBI_NULL)
     {
@@ -555,16 +554,18 @@ char	*db_name;
 	{
 	    if (!(dp -> d_flags & DIR_REGION))
 		continue;
-	    if (rt_db_get_internal(&intern, dp, dbip, (mat_t *) NULL) < 0)
+	    ip = (struct rt_db_internal *)
+		bu_malloc(sizeof(struct rt_db_internal), "rt_db_internal");
+	    if (rt_db_get_internal(ip, dp, dbip, (mat_t *) NULL) < 0)
 	    {
 		bu_log("remapid: rt_db_get_internal(%s) failed.  ",
 		    dp -> d_namep);
 		bu_log("This shouldn't happen\n");
 		exit (1);
 	    }
-	    comb = (struct rt_comb_internal *) intern.idb_ptr;
+	    comb = (struct rt_comb_internal *) (ip -> idb_ptr);
 	    RT_CK_COMB(comb);
-	    record_region(dp -> d_namep, comb -> region_id, dp, &intern);
+	    record_region(dp -> d_namep, comb -> region_id, dp, ip);
 	}
 }
 
@@ -588,11 +589,10 @@ int	depth;
     if (BU_LIST_NON_EMPTY(&(cip -> ci_regions)))
     {
 	region_id = cip -> ci_newid;
-	bu_log(" curr_id <x%x> %d %d...\n",
-	    cip, cip -> ci_id, region_id);
 	for (BU_LIST_FOR(rp, remap_reg, &(cip -> ci_regions)))
 	{
 	    BU_CKMAG(rp, REMAP_REG_MAGIC, "remap_reg");
+	    RT_CK_DB_INTERNAL(rp -> rr_ip);
 
 	    comb = (struct rt_comb_internal *) rp -> rr_ip -> idb_ptr;
 	    RT_CK_COMB(comb);
