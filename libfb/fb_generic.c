@@ -33,6 +33,12 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 extern char *getenv();
 
 /*
+ * Disk interface enable flag.  Used so the the remote daemon
+ * can turn off the disk interface.
+ */
+int _disk_enable = 1;
+
+/*
  *		f b _ n u l l
  *
  *  Filler for FBIO function slots not used by a particular device
@@ -151,7 +157,14 @@ int	width, height;
 	if( _if_list[i] != (FBIO *)NULL )
 		*ifp = *(_if_list[i]);
 	else {
-		*ifp = disk_interface;
+		/* Assume it's a disk file */
+		if( _disk_enable ) {
+			*ifp = disk_interface;
+		} else {
+			fb_log(	"fb_open : no such device \"%s\".\n", file );
+			free( (void *) ifp );
+			return	FBIO_NULL;
+		}
 	}
 
 found_interface:
