@@ -114,7 +114,7 @@ char	**argv;
 	return CMD_OK;
 }
 
-void
+int
 f_vrot(argc, argv)
 int	argc;
 char	**argv;
@@ -985,6 +985,7 @@ usage:
 	}
 
 	check_nonzero_rates();
+	return CMD_OK;
 }
 
 /*
@@ -995,7 +996,7 @@ usage:
  *  "tol rel #"	sets relative tolerance.  0.0 < # < 1.0
  *  "tol norm #" sets normal tolerance, in degrees.
  */
-void
+int
 f_tol( argc, argv )
 int	argc;
 char	**argv;
@@ -1041,7 +1042,7 @@ char	**argv;
 		/* Absolute tol */
 		if( f <= 0.0 )  {
 			mged_abs_tol = 0.0;	/* None */
-			return;
+			return CMD_OK;
 		}
 		mged_abs_tol = f * local2base;
 		return CMD_OK;

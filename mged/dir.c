@@ -99,7 +99,7 @@ register int num_entries;
  * This routine lists the names of all the objects accessible
  * in the object file.
  */
-void
+int
 dir_print(argc, argv)
 int	argc;
 char	**argv;
@@ -137,6 +137,8 @@ char	**argv;
 	}
 	col_pr4v( dirp0, (int)(dirp - dirp0));
 	rt_free( (char *)dirp0, "dir_getspace dp[]" );
+
+	return CMD_OK;
 }
 
 /*
