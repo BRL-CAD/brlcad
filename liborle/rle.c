@@ -20,7 +20,7 @@
  *	Public Domain, Distribution Unlimited
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"
@@ -35,7 +35,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #define PRNT_A1_DEBUG(_op,_n) \
 	if(rle_debug) (void)fprintf(stderr,"%s(%d)\n",_op,_n)
 #define PRNT_A2_DEBUG(_op,_n,_c) \
-	if(rle_debug) (void)fprintf(stderr,"%s(%ld,%d)\n",_op,_n,_c)
+	if(rle_debug) (void)fprintf(stderr,"%s(%ld,%d)\n",_op,(long)(_n),_c)
 #define CUR	RED		/* Must be rightmost part of Pixel.		*/
 
 /*	States for run detection					*/
@@ -135,6 +135,7 @@ HIDDEN int	_get_Old_Inst();	/* Old format inst. reader.	*/
 HIDDEN int	_get_New_Inst();	/* New extended inst. reader.	*/
 HIDDEN void	_enc_Color_Seg();
 HIDDEN void	_enc_Segment();
+HIDDEN int	_bg_Get_Runs();
 
 void		prnt_XSetup();
 
@@ -199,6 +200,7 @@ int	xpos, ypos, mode;
 
 	Returns -1 for failure, 0 otherwise.
  */
+int
 rle_rhdr( fp, flags, bgpixel )
 FILE		*fp;
 int		*flags;
@@ -347,6 +349,7 @@ register unsigned char	*bgpixel;
 	the global data: _bg_flag, _bw_flag, _cm_flag, and _bg_pixel.
 	Returns -1 for failure, 0 otherwise.
  */
+int
 rle_whdr( fp, ncolors, bgflag, cmflag, bgpixel )
 FILE		*fp;
 int		ncolors, bgflag, cmflag;
@@ -425,6 +428,7 @@ RGBpixel		bgpixel;
 	Read a color map in RLE format.
 	Returns -1 upon failure, 0 otherwise.
  */
+int
 rle_rmap( fp, cmap )
 FILE		*fp;
 ColorMap	*cmap;
@@ -444,6 +448,7 @@ ColorMap	*cmap;
 	Write a color map in RLE format.
 	Returns -1 upon failure, 0 otherwise.
  */
+int
 rle_wmap( fp, cmap )
 FILE		*fp;
 ColorMap	*cmap;
@@ -479,6 +484,7 @@ ColorMap	*cmap;
 	Returns -1 on failure, 1 if buffer is altered
 	and 0 if untouched.
  */
+int
 rle_decode_ln( fp, scan_buf )
 register FILE	*fp;
 RGBpixel	*scan_buf;
@@ -626,6 +632,7 @@ RGBpixel	*scan_buf;
 	Encode a given scanline of pixels into RLE format.
 	Returns -1 upon failure, 0 otherwise.
  */
+int
 rle_encode_ln( fp, scan_buf )
 register FILE	*fp;
 RGBpixel		*scan_buf;
@@ -692,6 +699,7 @@ RGBpixel		*scan_buf;
 	This routine will fail and return -1 if the array fills up
 	before all pixels are processed, otherwise a 'nseg' is returned.
  */
+HIDDEN int
 _bg_Get_Runs( pixelp, endpix )
 register RGBpixel *pixelp;
 register RGBpixel *endpix;
@@ -870,7 +878,7 @@ int		n;
 	RIGHT justified in the word, while libfb expects color
 	maps to be LEFT justified within a short.
  */
-HIDDEN
+HIDDEN int
 _get_Color_Map_Seg( fp, cmap_seg )
 FILE	*fp;
 register unsigned short	*cmap_seg;
@@ -893,7 +901,7 @@ register unsigned short	*cmap_seg;
 /*	_ p u t _ C o l o r _ M a p _ S e g ( )
 	Output color map segment to RLE file as shorts.  See above.
  */
-HIDDEN
+HIDDEN int
 _put_Color_Map_Seg( fp, cmap_seg )
 FILE	*fp;
 register unsigned short	*cmap_seg;
@@ -918,7 +926,7 @@ register unsigned short	*cmap_seg;
 /*	_ p u t _ S t d _ M a p ( )
 	Output standard color map to RLE file as shorts.
  */
-HIDDEN
+HIDDEN int
 _put_Std_Map( fp )
 FILE	*fp;
 	{	static unsigned short	rle_cmap[256*3];
@@ -940,7 +948,7 @@ FILE	*fp;
 	return	0;
 	}
 
-HIDDEN
+HIDDEN int
 _get_New_Inst( fp, opcode, datum )
 register FILE	*fp;
 register int	*opcode;
@@ -963,7 +971,7 @@ register int	*datum;
 	return	1;
 	}
 
-HIDDEN
+HIDDEN int
 _get_Old_Inst( fp, op, dat )
 register FILE	*fp;
 register int	*op;
