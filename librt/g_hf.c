@@ -780,13 +780,15 @@ bzero(hits,sizeof(hits));
 		}
 
 		if (dn < -SQRT_SMALL_FASTF) {		/* Leaving */
+			s = dxbdn/dn;
 			if ( out > s ) {
-				allDist[allIndex] = out = s = dxbdn/dn;
+				allDist[allIndex] = out = s;
 				oplane = j;
 			}
 		} else if (dn > SQRT_SMALL_FASTF) {	/* entering */
+			s = dxbdn/dn;
 			if ( in < s ) {
-				allDist[allIndex] = in = s = dxbdn/dn; 
+				allDist[allIndex] = in = s;
 				iplane = j;
 			}
 		} else {				/* Parallel */
