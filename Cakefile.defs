@@ -710,7 +710,7 @@ set -S2 "/bin/sh"
 #	define	MGED_LIBES	-L''XLIBDIR -lX11
 #	define	FC	/usr/convex/fc
 /*	libplot3/htond.c depends on running in native mode (CC_OPTS= -fn) */
-#	define	CC_OPTS -D__STDC__=1
+#	define	CC_OPTS -D__STDC__=1 -DHAVE_UNISTD_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1
 #	if 0
 /*		-O0 -O1 are scalar, -O1 for vectors, -O2 for parallel */
 #		define	OPTIMIZER	-O2
@@ -1470,9 +1470,9 @@ set -S2 "/bin/sh"
 #	define	LIBSYSV_DIR	../libsysv
 #	define	LIBSYSV		-L''LIBSYSV_DIR -lsysv
 #	define	LIBSYSV_DEP	[[LIBVERS ../libsysv/libsysv.ARCH_SUF]]
-#	define	LIBTCL_DIR	../libtck
-#	define	LIBTCL		-L''LIBTCL_DIR -ltck
-#	define	LIBTCL_DEP	[[LIBVERS ../libtck/libtck.ARCH_SUF]]
+#	define	LIBTCL_DIR	../libtcl
+#	define	LIBTCL		-L''LIBTCL_DIR -ltcl
+#	define	LIBTCL_DEP	[[LIBVERS ../libtcl/libtcl.ARCH_SUF]]
 #	define	LIBTK_DIR	../libtk
 #	define	LIBTK		-L''LIBTK_DIR -ltk
 #	define	LIBTK_DEP	[[LIBVERS ../libtk/libtk.ARCH_SUF]]
