@@ -1085,19 +1085,19 @@ unsigned char *yuv_buf;
 	for( pixel = last; pixel; pixel-- ) {
 		/* even pixel, get y and next v */
 		if( pixel == last ) {
-			u = ((double)(*yuvp++ - 128)) * (255.0/224.0);
+			u = ((double)(((int)*yuvp++) - 128)) * (255.0/224.0);
 		}
-		y = ((double)(*yuvp++ - 16)) * (255.0/219.0);
-		v = ((double)(*yuvp++ - 128)) * (255.0/224.0);
+		y = ((double)(((int)*yuvp++) - 16)) * (255.0/219.0);
+		v = ((double)(((int)*yuvp++) - 128)) * (255.0/224.0);
 
 		CLIP( *rgbp++, y + 1.4026 * v);			/* R */
 		CLIP( *rgbp++, y - 0.3444 * u - 0.7144 * v);	/* G */
 		CLIP( *rgbp++, y + 1.7730 * u);			/* B */
 
 		/* odd pixel, got v already, get y and next u */
-		y = ((double)(*yuvp++ - 16)) * (255.0/219.0);
+		y = ((double)(((int)*yuvp++) - 16)) * (255.0/219.0);
 		if( pixel != 1 ) {
-			u = ((double)(*yuvp++ - 128)) * (255.0/224.0);
+			u = ((double)(((int)*yuvp++) - 128)) * (255.0/224.0);
 		}
 
 		CLIP( *rgbp++, y + 1.4026 * v);			/* R */
