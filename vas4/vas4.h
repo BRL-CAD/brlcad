@@ -1,8 +1,26 @@
-/* Constants used with VAS IV */
-
-/* Use 'C_' prefix for commands */
-/* Use 'R_' prefix for result codes */
-
+/*
+ *			V A S 4 . H
+ *
+ *  Constants used with the Lyon-Lamb VAS IV video animation controller.
+ *
+ *  Use 'C_' prefix for commands
+ *  Use 'R_' prefix for result codes
+ *
+ *  Authors -
+ *	Steve Satterfield, USNA
+ *	Joe Johnson, USNA
+ *	Michael John Muuss, BRL
+ *  
+ *  Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5066
+ *  
+ *  Distribution Status -
+ *	Public Domain, Distribution Unlimitied.
+ *
+ *  $Header$
+ */
 
 /* Commands */
 #define C_DISPLAY_DATA	'+'
@@ -21,12 +39,13 @@
 #define C_SEARCH	'?'
 #define C_RESET_TAPETIME '<'
 
+/* There seems to be at least 2 version of the microcode in the VAS IV */
 #ifdef USNA
 #define C_FFORWARD	'!'
 #define C_PAUSE		'"'
 #define C_REWIND	'#'
 #else
-/* BRL version */
+/* BRL version can not do these operations */
 #define C_FFORWARD	C_STOP
 #define C_PAUSE		C_STOP
 #define C_REWIND	C_STOP
@@ -44,9 +63,10 @@
 #define R_PROGRAM	'P'
 #define R_SEARCH	'S'
 #define R_RECORD	'R'
-#define R_DOWN		'D'
+#define R_DONE		'D'
 #define R_MISSED	'M'
-
+#define R_CUT_IN	'X'
+#define R_CUT_OUT	'Y'
 
 #define TRUE 1
 #define FALSE 0
