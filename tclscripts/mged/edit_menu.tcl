@@ -60,24 +60,29 @@ proc init_solid_edit_menus { stype menu } {
 	set i [build_solid_edit_menus .$id.menubar.edit $id 0 $cmds $menu]
 
 	.$id.menubar.edit insert $i separator
-	incr i
-	.$id.menubar.edit insert $i radiobutton -variable edit_type \
-		-label "Rotate" -underline 0 -command "press srot; \
-		set mged_gui($id,transform) e; set_transform $id"
-	incr i
-	.$id.menubar.edit insert $i radiobutton -variable edit_type \
-		-label "Translate" -underline 0 -command "press sxy; \
-		set mged_gui($id,transform) e; set_transform $id"
-	incr i
-	.$id.menubar.edit insert $i radiobutton -variable edit_type \
-		-label "Scale" -underline 0 -command "press sscale; \
-		set mged_gui($id,transform) e; set_transform $id"
-	incr i
-	.$id.menubar.edit insert $i radiobutton -variable edit_type \
-		-label "none of above" -command "set edit_solid_flag 0; \
-		set mged_gui($id,transform) e; set_transform $id"
-	incr i
-	.$id.menubar.edit insert $i separator
+
+	# Special treatment for the fastgen plate solid
+	if {$stype != "fgp"} {
+	    incr i
+	    .$id.menubar.edit insert $i radiobutton -variable edit_type \
+		    -label "Rotate" -underline 0 -command "press srot; \
+		    set mged_gui($id,transform) e; set_transform $id"
+	    incr i
+	    .$id.menubar.edit insert $i radiobutton -variable edit_type \
+		    -label "Translate" -underline 0 -command "press sxy; \
+		    set mged_gui($id,transform) e; set_transform $id"
+	    incr i
+	    .$id.menubar.edit insert $i radiobutton -variable edit_type \
+		    -label "Scale" -underline 0 -command "press sscale; \
+		    set mged_gui($id,transform) e; set_transform $id"
+	    incr i
+	    .$id.menubar.edit insert $i radiobutton -variable edit_type \
+		    -label "none of above" -command "set edit_solid_flag 0; \
+		    set mged_gui($id,transform) e; set_transform $id"
+	    incr i
+	    .$id.menubar.edit insert $i separator
+	}
+
 	incr i
 	.$id.menubar.edit insert $i command -label "Reject" -underline 0 \
 		-command "press reject"
