@@ -239,6 +239,10 @@ char	**argv;
 
 /*
  *			I L L U M I N A T E
+ *
+ *  All solids except for the illuminated one have s_iflag set to DOWN.
+ *  The illuminated one has s_iflag set to UP, and also has the global
+ *  variable "illump" pointing at it.
  */
 static void
 illuminate( y )  {
@@ -256,13 +260,17 @@ illuminate( y )  {
 	count = ( (fastf_t) y + 2048.0 ) * ndrawn / 4096.0;
 
 	FOR_ALL_SOLIDS( sp )  {
-		if( sp->s_flag == UP )
+		/* Only consider solids which are presently in view */
+		if( sp->s_flag == UP )  {
 			if( count-- == 0 && illump != sp )  {
 				sp->s_iflag = UP;
 				dmp->dmr_viewchange( DM_CHGV_ILLUM, sp );
 				illump = sp;
-			}  else
+			}  else  {
+				/* All other solids have s_iflag set DOWN */
 				sp->s_iflag = DOWN;
+			}
+		}
 	}
 	if( saveillump != illump )
 		dmaflag++;
