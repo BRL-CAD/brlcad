@@ -6,7 +6,8 @@
 #include "bu.h"
 #include "dm.h"
 
-int dm_processOptions(dmp, init_proc_vls, argc, argv)
+int
+dm_processOptions(dmp, init_proc_vls, argc, argv)
 struct dm *dmp;
 struct bu_vls *init_proc_vls;
 int argc;
