@@ -2233,6 +2233,7 @@ wdb_concat_tcl(clientData, interp, argc, argv)
 	}
 
 	/* Scan new database, adding everything encountered. */
+/* XXX Need to use db_dirbuild() or equivalent. */
 	das.interp = interp;
 	das.main_dbip = wdbp->dbip;
 	das.wdbp = wdbp;
