@@ -82,8 +82,8 @@ extern int	optind;
 extern char	*getenv();
 
 #ifdef SYSV
-#define vfork	fork
-#endif SYSV
+# define vfork	fork
+#endif
 
 void		read_rc_file();
 void		check_input();
