@@ -37,6 +37,11 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "externs.h"
 #include "vmath.h"
 #include "raytrace.h"
+#include "msr.h"
+
+#define MSRMAXTBL
+
+
 
 #define PI 3.14159265358979323846262	/*  Pi.  */
 #define ADJTOL 1.e-1	/*  Tolerance for adjacent regions.  */
@@ -97,6 +102,8 @@ char **argv;
    double totalsf;	/*  Sum of shape factors.  */
    double totalnh;	/*  Sum of number of hits.  */
 
+   struct msr_unif *msr;
+
    /*  Check to see if arguments are implimented correctly.  */
    if( (argv[1] == NULL) || (argv[2] == NULL) )
    {
@@ -134,7 +141,11 @@ char **argv;
 		(void)fflush(stderr);
 		(void)scanf("%ld",&seed);
 	}
+#ifdef MSRMAXTBL
+   	msr_unif_init(seed, 0);
+#else
 	(void) srand48(seed);
+#endif
 
 	/*  Build directory.  */
 	index = 1;	/*  Set index for rt_dirbuild.  */
@@ -236,13 +247,21 @@ char **argv;
  *	   (void)printf("\n\nrho:  %f\n",rho);
  *	   (void)fflush(stdout);
  */
+#ifdef MSRMAXTBL
+	   q = MSR_UNIF_DOUBLE(msr);
+#else
 	   q = drand48();
+#endif
 	   theta = q * 2. * PI;
 /*
  *	   (void)printf("random number:  %f, theta:  %f\n",q,theta);
  *	   (void)fflush(stdout);
  */
+#ifdef MSRMAXTBL
+	   q = MSR_UNIF_DOUBLE(msr);
+#else
 	   q = drand48();
+#endif
 	   phi = ( q * 2.) - 1.;
 	   phi = acos(phi);
 /*
@@ -267,13 +286,22 @@ char **argv;
  */
 
 	   /*  Find vector in yz-plane.  */
+
+#ifdef MSRMAXTBL
+	   q = MSR_UNIF_DOUBLE(msr);
+#else
 	   q = drand48();
+#endif
 	   theta = q * 2. * PI;
 /*
  *	   (void)printf("random number:  %f, theta:  %f\n",q,theta);
  *	   (void)fflush(stdout);
  */
+#ifdef MSRMAXTBL
+	   q = MSR_UNIF_DOUBLE(msr);
+#else
 	   q = drand48();
+#endif
 	   rad = rho * sqrt( q );
 /*
  *	   (void)printf("random number:  %f, rad:  %f\n",q,rad);
