@@ -111,7 +111,7 @@ static int second_fd;		/* fd of Tektronix if not /dev/tty */
 static FILE *outfp;		/* Tektronix device to output on */
 static char ttybuf[BUFSIZ];
 
-static void	t49move(), t49cont(), t49debug();
+static void	t49move(), t49cont();
 static void	get_cursor(), cancel_cursor();
 static void	t49label(), t49point(), t49linemod();
 
