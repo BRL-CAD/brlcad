@@ -1,4 +1,3 @@
-#define	OLD	1	/* db/demo.g region BRL and BRL.p exhibit bug in new */
 /*
  *				P R O C _ R E G . C
  *
@@ -1129,36 +1128,9 @@ orregion:	/* sent here if region has or's */
 						}
 					}
 noskip:
-#if OLD
-					if(fabs(VDOT(&peq[i*4],&peq[j*4]))>=.9999)
-						continue; /* planes parallel */
-
-					/* planes not parallel */
-					/* compute direction vector for ray */
-					VCROSS(wb,&peq[i*4],&peq[j*4]);
-					VUNITIZE( wb );
-
-					k=0;
-					if(fabs(wb[1]) > fabs(wb[0])) k=1;
-					if(fabs(wb[2]) > fabs(wb[k])) k=2;
-					if(wb[k] < 0.0)  {
-						VREVERSE( wb, wb );
-					}
-					{
-						plane_t	c1;
-
-						VSETALL(c1, 0);
-						c1[k] = 1;
-						c1[3] = reg_min[k];
-						if( rt_mkpoint_3planes( xb, c1, &peq[i*4], &peq[j*4] ) < 0 )
-							continue;
-					}
-#else
 					if( rt_isect_2planes( xb, wb,
 					    &peq[i*4], &peq[j*4], reg_min ) < 0 )
 						continue;
-
-#endif
 
 					/* check if ray intersects region */
 					if( (k=region(lmemb,umemb))<=0)
