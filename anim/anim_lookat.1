@@ -9,23 +9,18 @@ a specified point.
 .B > out.script
 .PP
 .B anim_lookat 
-.B \-y 
+.B \-[y|q] 
 .B < in.table 
 .B > out.table
 
 .SH DESCRIPTION
 This program takes as input a seven-column animation table
 consisting of time, an eye point, and a "look-at point", and prints a
-view animation script to control the virtual camera. A similar effect
-could be acheived by using the 
-.I tabsub 
-to create a script which uses the
-"lookat_pt" command. The advantage to using 
-.I anim_lookat 
-instead is that the
-camera remains "right side up", and that when the view is vertically up
-or down, the orientation is controlled by the previous orientation of the
-camera. This avoids sudden jumps as much as possible. 
+view animation script to control the virtual camera. 
+The camera always remains "right-side up"; that is, it yaws and pitches but 
+doesn't roll. In cases where the camera looks vertically up or down, the 
+yaw from the previous frame is retained. This avoids sudden jumps as much
+as possible.
 .PP
 The 
 .B \-f#
@@ -38,9 +33,12 @@ option specifies that the output should be an animation table rather
 than an animation script. The output table has 7 columns: a time column, three
 columns representing position, and three columns representing yaw,
 pitch, and roll.
-.SH BUGS
-Looking straight up or straight down for two or more frames in a
-row may cause errors.
+.PP
+The
+.B \-q
+option specifies that the output should be an eight-column animation table
+consisting of a time column, three position columns, and four columns 
+representing the x,y,z, and w coordinates of an orientation quaternion.
 .SH AUTHOR
 Carl J. Nuzman
 .SH COPYRIGHT
