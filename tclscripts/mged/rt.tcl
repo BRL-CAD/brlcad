@@ -12,15 +12,7 @@ proc init_Raytrace { id } {
     global player_screen
     global mged_active_dm
     global fb
-    global rt_fb_or_file
-    global rt_fb
-    global rt_file
-    global rt_size
-    global rt_color
-    global rt_nproc
-    global rt_hsample
-    global rt_jitter
-    global rt_lmodel
+    global rt_control
 
     set top .$id.do_rt
 
@@ -31,45 +23,45 @@ proc init_Raytrace { id } {
 
     winset $mged_active_dm($id)
 
-    if ![info exists rt_fb_or_file($id)] {
-	set rt_fb_or_file($id) framebuffer
+    if ![info exists rt_control($id,fb_or_file)] {
+	set rt_control($id,fb_or_file) framebuffer
     }
 
-    if ![info exists rt_file($id)] {
+    if ![info exists rt_control($id,file)] {
 	regsub \.g$ [_mged_opendb] .pix default_file
-	set rt_file($id) $default_file
+	set rt_control($id,file) $default_file
     }
 
-    if ![info exists rt_size($id)] {
-	set rt_size($id) 512
+    if ![info exists rt_control($id,size)] {
+	set rt_control($id,size) 512
     }
 
-    if ![info exists rt_color($id)] {
-	set rt_color($id) "0 0 0"
+    if ![info exists rt_control($id,color)] {
+	set rt_control($id,color) "0 0 0"
     }
 
-    if ![info exists rt_nproc($id)] {
-	set rt_nproc($id) 1
+    if ![info exists rt_control($id,nproc)] {
+	set rt_control($id,nproc) 1
     }
 
-    if ![info exists rt_hsample($id)] {
-	set rt_hsample($id) 0
+    if ![info exists rt_control($id,hsample)] {
+	set rt_control($id,hsample) 0
     }
 
-    if ![info exists rt_jitter($id)] {
-	set rt_jitter($id) 0
+    if ![info exists rt_control($id,jitter)] {
+	set rt_control($id,jitter) 0
     }
 
-    if ![info exists rt_lmodel($id)] {
-	set rt_lmodel($id) 0
+    if ![info exists rt_control($id,lmodel)] {
+	set rt_control($id,lmodel) 0
     }
 
     if {$fb} {
-	set rt_fb_or_file($id) "framebuffer"
+	set rt_control($id,fb_or_file) "framebuffer"
 	set fb_state normal
 	set file_state disabled
     } else {
-	set rt_fb_or_file($id) "filename"
+	set rt_control($id,fb_or_file) "filename"
 	set fb_state disabled
 	set file_state normal
     }
@@ -126,59 +118,59 @@ proc init_Raytrace { id } {
 #	    -command "set_listen $id" -state disabled
 
     radiobutton $top.framebufferRB -text "Frame Buffer" -anchor w\
-	    -value framebuffer -variable rt_fb_or_file($id)\
+	    -value framebuffer -variable rt_control($id,fb_or_file)\
 	    -command "rt_set_fb_state $id"
-#    entry $top.framebufferE -relief flat -width 12 -textvar rt_fb($id)\
+#    entry $top.framebufferE -relief flat -width 12 -textvar rt_control($id,fb)\
 #	    -state $fb_state
-    label $top.framebufferL -textvariable rt_fb($id)
+    label $top.framebufferL -textvariable rt_control($id,fb)
 
     radiobutton $top.filenameRB -text "File Name" -anchor w\
-	    -value filename -variable rt_fb_or_file($id)\
+	    -value filename -variable rt_control($id,fb_or_file)\
 	    -command "rt_set_file_state $id"
-    entry $top.filenameE -relief flat -width 12 -textvar rt_file($id)\
+    entry $top.filenameE -relief flat -width 12 -textvar rt_control($id,file)\
 	    -state $file_state
 
     label $top.sizeL -text "Size" -anchor w
-    entry $top.sizeE -relief flat -width 12 -textvar rt_size($id)
+    entry $top.sizeE -relief flat -width 12 -textvar rt_control($id,size)
     menubutton $top.sizeMB -relief raised -bd 2\
 	    -menu $top.sizeMB.sizeM -indicatoron 1
     menu $top.sizeMB.sizeM -tearoff 0
     $top.sizeMB.sizeM add command -label "winsize"\
 	    -command "rt_set_fb_size $id"
     $top.sizeMB.sizeM add command -label 128\
-	    -command "set rt_size($id) 128"
+	    -command "set rt_control($id,size) 128"
     $top.sizeMB.sizeM add command -label 256\
-	    -command "set rt_size($id) 256"
+	    -command "set rt_control($id,size) 256"
     $top.sizeMB.sizeM add command -label 512\
-	    -command "set rt_size($id) 512"
+	    -command "set rt_control($id,size) 512"
     $top.sizeMB.sizeM add command -label 640x480\
-	    -command "set rt_size($id) 640x480"
+	    -command "set rt_control($id,size) 640x480"
     $top.sizeMB.sizeM add command -label 720x486\
-	    -command "set rt_size($id) 720x486"
+	    -command "set rt_control($id,size) 720x486"
     $top.sizeMB.sizeM add command -label 1024\
-	    -command "set rt_size($id) 1024"
+	    -command "set rt_control($id,size) 1024"
 
     label $top.colorL -text "Background Color" -anchor w
-    entry $top.colorE -relief flat -width 12 -textvar rt_color($id)
+    entry $top.colorE -relief flat -width 12 -textvar rt_control($id,color)
     menubutton $top.colorMB -relief raised -bd 2\
 	    -menu $top.colorMB.colorM -indicatoron 1
     menu $top.colorMB.colorM -tearoff 0
     $top.colorMB.colorM add command -label black\
-	     -command "set rt_color($id) \"0 0 0\"; rt_set_colorMB $id"
+	     -command "set rt_control($id,color) \"0 0 0\"; rt_set_colorMB $id"
     $top.colorMB.colorM add command -label white\
-	     -command "set rt_color($id) \"220 220 220\"; rt_set_colorMB $id"
+	     -command "set rt_control($id,color) \"220 220 220\"; rt_set_colorMB $id"
     $top.colorMB.colorM add command -label red\
-	     -command "set rt_color($id) \"220 0 0\"; rt_set_colorMB $id"
+	     -command "set rt_control($id,color) \"220 0 0\"; rt_set_colorMB $id"
     $top.colorMB.colorM add command -label green\
-	     -command "set rt_color($id) \"0 220 0\"; rt_set_colorMB $id"
+	     -command "set rt_control($id,color) \"0 220 0\"; rt_set_colorMB $id"
     $top.colorMB.colorM add command -label blue\
-	     -command "set rt_color($id) \"0 0 220\"; rt_set_colorMB $id"
+	     -command "set rt_control($id,color) \"0 0 220\"; rt_set_colorMB $id"
     $top.colorMB.colorM add command -label yellow\
-	     -command "set rt_color($id) \"220 220 0\"; rt_set_colorMB $id"
+	     -command "set rt_control($id,color) \"220 220 0\"; rt_set_colorMB $id"
     $top.colorMB.colorM add command -label cyan\
-	    -command "set rt_color($id) \"0 220 220\"; rt_set_colorMB $id"
+	    -command "set rt_control($id,color) \"0 220 220\"; rt_set_colorMB $id"
     $top.colorMB.colorM add command -label magenta\
-	    -command "set rt_color($id) \"220 0 220\"; rt_set_colorMB $id"
+	    -command "set rt_control($id,color) \"220 0 220\"; rt_set_colorMB $id"
     $top.colorMB.colorM add separator
     $top.colorMB.colorM add command -label "Color Tool..."\
 	    -command "rt_choose_color $id $top"
@@ -238,27 +230,18 @@ proc do_Raytrace { id } {
     global mged_dm_loc
     global port
     global fb_all
-    global rt_fb_or_file
-    global rt_fb
-    global rt_file
-    global rt_size
-    global rt_color
-    global rt_nproc
-    global rt_hsample
-    global rt_jitter
-    global rt_lmodel
-    global debug_rt_cmd
+    global rt_control
 
     winset $mged_active_dm($id)
 #    cmd_set $id
     set rt_cmd "_mged_rt"
 
-    if {$rt_fb_or_file($id) == "filename"} {
-	if {$rt_file($id) != ""} {
-	    if {[file exists $rt_file($id)]} {
+    if {$rt_control($id,fb_or_file) == "filename"} {
+	if {$rt_control($id,file) != ""} {
+	    if {[file exists $rt_control($id,file)]} {
 		set result [cad_dialog .$id.rtDialog $player_screen($id)\
-			"Overwrite $rt_file($id)?"\
-			"Overwrite $rt_file($id)?"\
+			"Overwrite $rt_control($id,file)?"\
+			"Overwrite $rt_control($id,file)?"\
 			"" 0 OK CANCEL]
 
 		if {$result} {
@@ -266,7 +249,7 @@ proc do_Raytrace { id } {
 		}
 	    }
 
-	    append rt_cmd " -o $rt_file($id)"
+	    append rt_cmd " -o $rt_control($id,file)"
 	} else {
 	    cad_dialog .$id.rtDialog $player_screen($id)\
 		    "No file name specified!"\
@@ -276,14 +259,14 @@ proc do_Raytrace { id } {
 	}
     } else {
 	append rt_cmd " -F $port"
-#	if {$rt_fb($id) != ""} {
-#	    append rt_cmd " -F $rt_fb($id)"
+#	if {$rt_control($id,fb) != ""} {
+#	    append rt_cmd " -F $rt_control($id,fb)"
 #	}
     }
 
-    if {$rt_size($id) != ""} {
+    if {$rt_control($id,size) != ""} {
 	set result [regexp "^(\[ \]*\[0-9\]+)((\[ \]*\[xX\]?\[ \]*)|(\[ \]+))(\[0-9\]*\[ \]*)$"\
-		$rt_size($id) smatch width junkA junkB junkC height]
+		$rt_control($id,size) smatch width junkA junkB junkC height]
 	if {$result} {
 	    if {$height != ""} {
 		append rt_cmd " -w $width -n $height"
@@ -298,7 +281,7 @@ proc do_Raytrace { id } {
 	} else {
 	    cad_dialog .$id.rtDialog $player_screen($id)\
 		    "Improper size specification!"\
-		    "Improper size specification: $rt_size($id)"\
+		    "Improper size specification: $rt_control($id,size)"\
 		    "" 0 OK
 	    return
 	}
@@ -306,34 +289,34 @@ proc do_Raytrace { id } {
 	set aspect 1
     }
 
-    if {$rt_color($id) != ""} {
+    if {$rt_control($id,color) != ""} {
 	set result [regexp "^(\[0-9\]+)\[ \]+(\[0-9\]+)\[ \]+(\[0-9\]+)$" \
-		$rt_color($id) cmatch red green blue]
+		$rt_control($id,color) cmatch red green blue]
 	if {$result} {
 	    append rt_cmd " -C$red/$green/$blue"
 	} else {
 	    cad_dialog .$id.rtDialog $player_screen($id)\
 		    "Improper color specification!"\
-		    "Improper color specification: $rt_color($id)"\
+		    "Improper color specification: $rt_control($id,color)"\
 		    "" 0 OK
 	    return
 	}
     }
 
-    if {$rt_nproc($id) != ""} {
-	append rt_cmd " -P$rt_nproc($id)"
+    if {$rt_control($id,nproc) != ""} {
+	append rt_cmd " -P$rt_control($id,nproc)"
     }
 
-    if {$rt_hsample($id) != ""} {
-	append rt_cmd " -H$rt_hsample($id)"
+    if {$rt_control($id,hsample) != ""} {
+	append rt_cmd " -H$rt_control($id,hsample)"
     }
 
-    if {$rt_jitter($id) != ""} {
-	append rt_cmd " -J$rt_jitter($id)"
+    if {$rt_control($id,jitter) != ""} {
+	append rt_cmd " -J$rt_control($id,jitter)"
     }
 
-    if {$rt_lmodel($id) != ""} {
-	append rt_cmd " -l$rt_lmodel($id)"
+    if {$rt_control($id,lmodel) != ""} {
+	append rt_cmd " -l$rt_control($id,lmodel)"
     }
 
     if {!$fb_all} {
@@ -364,8 +347,6 @@ proc do_Raytrace { id } {
 	}
     }
 
-    set debug_rt_cmd $rt_cmd
-
     catch {eval $rt_cmd}
 }
 
@@ -373,19 +354,17 @@ proc do_fbclear { id } {
     global player_screen
     global mged_active_dm
     global port
-    global rt_fb_or_file
-    global rt_fb
-    global rt_color
+    global rt_control
 
     winset $mged_active_dm($id)
 
-    if {$rt_color($id) != ""} {
+    if {$rt_control($id,color) != ""} {
 	set result [regexp "^(\[0-9\]+)\[ \]+(\[0-9\]+)\[ \]+(\[0-9\]+)$" \
-		$rt_color($id) cmatch red green blue]
+		$rt_control($id,color) cmatch red green blue]
 	if {!$result} {
 	    cad_dialog .$id.rtDialog $player_screen($id)\
 		    "Improper color specification!"\
-		    "Improper color specification: $rt_color($id)"\
+		    "Improper color specification: $rt_control($id,color)"\
 		    "" 0 OK
 	    return
 	}
@@ -395,7 +374,7 @@ proc do_fbclear { id } {
 	set blue 0
     }
 
-    if {$rt_fb($id) != ""} {
+    if {$rt_control($id,fb) != ""} {
 	set result [catch { exec fbclear -F $port $red $green $blue & } rt_error]
     } else {
 	set result [catch { exec fbclear $red $green $blue & } rt_error]
@@ -436,7 +415,7 @@ proc rt_set_file_state { id } {
 
 proc rt_choose_color { id parent } {
     global player_screen
-    global rt_color
+    global rt_control
 
     set child bgColor
 
@@ -448,12 +427,12 @@ proc rt_choose_color { id parent } {
 }
 
 proc rt_color_ok { id parent w } {
-    global rt_color
+    global rt_control
 
     upvar #0 $w data
 
     $parent.colorMB configure -bg $data(finalColor)
-    set rt_color($id) "$data(red) $data(green) $data(blue)"
+    set rt_control($id,color) "$data(red) $data(green) $data(blue)"
 
     destroy $w
     unset data
@@ -461,17 +440,17 @@ proc rt_color_ok { id parent w } {
 
 proc rt_set_colorMB { id } {
     global player_screen
-    global rt_color
+    global rt_control
 
     set top .$id.do_rt
 
-    if {$rt_color($id) != ""} {
+    if {$rt_control($id,color) != ""} {
 	set result [regexp "^(\[0-9\]+)\[ \]+(\[0-9\]+)\[ \]+(\[0-9\]+)$" \
-		$rt_color($id) cmatch red green blue]
+		$rt_control($id,color) cmatch red green blue]
 	if {!$result} {
 	    cad_dialog .$id.rtDialog $player_screen($id)\
 		    "Improper color specification!"\
-		    "Improper color specification: $rt_color($id)"\
+		    "Improper color specification: $rt_control($id,color)"\
 		    "" 0 OK
 	    return
 	}
@@ -484,22 +463,17 @@ proc rt_set_colorMB { id } {
 
 proc rt_set_fb_size { id } {
     global mged_top
-    global rt_size
     global mged_dm_loc
+    global rt_control
 
     winset $mged_top($id).$mged_dm_loc($id)
     set size [dm size]
-    set rt_size($id) "[lindex $size 0]x[lindex $size 1]"
+    set rt_control($id,size) "[lindex $size 0]x[lindex $size 1]"
 }
 
 proc do_Advanced_Settings { id } {
     global player_screen
-    global rt_hsample
-    global rt_jitter
-    global rt_lmodel
-    global rt_nproc
-    global rt_rect_loc
-    global rt_rect_size
+    global rt_control
 
     set top .$id.do_rtAS
     if [winfo exists $top] {
@@ -527,42 +501,42 @@ proc do_Advanced_Settings { id } {
 #    frame $top.rect_sizeF -relief sunken -bd 2
 
     label $top.nprocL -text "# of Processors" -anchor w
-    entry $top.nprocE -relief flat -width 4 -textvar rt_nproc($id)
+    entry $top.nprocE -relief flat -width 4 -textvar rt_control($id,nproc)
 
     label $top.hsampleL -text "Hypersample" -anchor w
-    entry $top.hsampleE -relief flat -width 4 -textvar rt_hsample($id)
+    entry $top.hsampleE -relief flat -width 4 -textvar rt_control($id,hsample)
 
     label $top.jitterL -text "Jitter" -anchor w
-    entry $top.jitterE -relief flat -width 4 -textvar rt_jitter($id)
+    entry $top.jitterE -relief flat -width 4 -textvar rt_control($id,jitter)
     menubutton $top.jitterMB -relief raised -bd 2\
 	    -menu $top.jitterMB.jitterM -indicatoron 1
     menu $top.jitterMB.jitterM -tearoff 0
     $top.jitterMB.jitterM add command -label 0\
-	 -command "set rt_jitter($id) 0"
+	 -command "set rt_control($id,jitter) 0"
     $top.jitterMB.jitterM add command -label 1\
-	 -command "set rt_jitter($id) 1"
+	 -command "set rt_control($id,jitter) 1"
     $top.jitterMB.jitterM add command -label 2\
-	 -command "set rt_jitter($id) 2"
+	 -command "set rt_control($id,jitter) 2"
     $top.jitterMB.jitterM add command -label 3\
-	 -command "set rt_jitter($id) 3"
+	 -command "set rt_control($id,jitter) 3"
     
     label $top.lmodelL -text "Light Model" -anchor w
-    entry $top.lmodelE -relief flat -width 4 -textvar rt_lmodel($id)
+    entry $top.lmodelE -relief flat -width 4 -textvar rt_control($id,lmodel)
     menubutton $top.lmodelMB -relief raised -bd 2\
 	    -menu $top.lmodelMB.lmodelM -indicatoron 1
     menu $top.lmodelMB.lmodelM -tearoff 0
     $top.lmodelMB.lmodelM add command -label 0\
-	    -command "set rt_lmodel($id) 0"
+	    -command "set rt_control($id,lmodel) 0"
     $top.lmodelMB.lmodelM add command -label 1\
-	    -command "set rt_lmodel($id) 1"
+	    -command "set rt_control($id,lmodel) 1"
     $top.lmodelMB.lmodelM add command -label 2\
-	    -command "set rt_lmodel($id) 2"
+	    -command "set rt_control($id,lmodel) 2"
     $top.lmodelMB.lmodelM add command -label 3\
-	    -command "set rt_lmodel($id) 3"
+	    -command "set rt_control($id,lmodel) 3"
     $top.lmodelMB.lmodelM add command -label 4\
-	    -command "set rt_lmodel($id) 4"
+	    -command "set rt_control($id,lmodel) 4"
     $top.lmodelMB.lmodelM add command -label 5\
-	    -command "set rt_lmodel($id) 5"
+	    -command "set rt_control($id,lmodel) 5"
 
 #    radiobutton $top.rectRB -text "Rectangle" -anchor w\
 #	    -value 1 -variable 
@@ -623,13 +597,12 @@ proc do_Advanced_Settings { id } {
 proc update_Raytrace { id } {
     global mged_active_dm
     global mged_dm_loc
-    global fb
     global mged_fb
-    global listen
     global mged_listen
+    global fb
+    global listen
     global port
-    global rt_fb
-    global rt_fb_or_file
+    global rt_control
 
     set top .$id.do_rt
     if ![winfo exists $top] {
@@ -639,26 +612,26 @@ proc update_Raytrace { id } {
     winset $mged_active_dm($id)
     switch $mged_dm_loc($id) {
 	ul {
-	    set rt_fb($id) "Upper Left"
+	    set rt_control($id,fb) "Upper Left"
 	}
 	ur {
-	    set rt_fb($id) "Upper Right"
+	    set rt_control($id,fb) "Upper Right"
 	}
 	ll {
-	    set rt_fb($id) "Lower Left"
+	    set rt_control($id,fb) "Lower Left"
 	}
 	lr {
-	    set rt_fb($id) "Upper Right"
+	    set rt_control($id,fb) "Upper Right"
 	}
     }
 
     if {$mged_fb($id)} {
-	set rt_fb_or_file($id) "framebuffer"
+	set rt_control($id,fb_or_file) "framebuffer"
 	set fb_state normal
 	set file_state disabled
 	rt_set_fb_state $id
     } else {
-	set rt_fb_or_file($id) "filename"
+	set rt_control($id,fb_or_file) "filename"
 	set fb_state disabled
 	set file_state normal
 	rt_set_file_state $id
