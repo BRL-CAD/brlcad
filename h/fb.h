@@ -22,13 +22,8 @@
  *  $Header$
  */
 
-#ifndef INCL_FB
-#define INCL_FB
-
-#ifndef MACHINE_H
-/* For backwards compatability, include machine.h automatically */
-# include "machine.h"
-#endif
+#ifndef FB_H
+#define FB_H seen
 
 /*
  *			R G B p i x e l
@@ -60,7 +55,7 @@ typedef struct  {
 	unsigned short cm_blue[256];
 } ColorMap;
 
-#if USE_PROTOTYPES
+#ifdef USE_PROTOTYPES
 #	define	FB_ARGS(args)			args
 #else
 #	define	FB_ARGS(args)			()
@@ -167,7 +162,7 @@ typedef struct FBIO_ {
 		(*_ifp->if_writerect)(_ifp,_xmin,_ymin,_width,_height,_pp)
 
 /* Library entry points which are true functions. */
-#if __STDC__
+#ifdef USE_PROTOTYPES
 extern FBIO	*fb_open(char *file, int width, int height);
 extern int	fb_close(FBIO *ifp);
 extern int	fb_genhelp(void);
@@ -284,4 +279,4 @@ extern int	fb_sim_getcursor();
 	}
 #define FB_CK_FBIO(_p)	FB_CKMAG(_p, FB_MAGIC, "FBIO" )
 
-#endif /* INCL_FB */
+#endif /* FB_H */
