@@ -47,12 +47,13 @@ BU_EXTERN(void db_ck_tree, (const union tree *tp));
  *			D B _ D U P _ D B _ T R E E _ S T A T E
  *
  *  Duplicate the contents of a db_tree_state structure,
- *  including a private copy of the ts_mater field(s).
+ *  including a private copy of the ts_mater field(s) and the attribute/value set.
  */
 void
 db_dup_db_tree_state(struct db_tree_state *otsp, const struct db_tree_state *itsp)
 {
 	int		shader_len=0;
+	int		i;
 
 	RT_CK_DBTS(itsp);
 	RT_CK_DBI(itsp->ts_dbip);
@@ -68,6 +69,15 @@ db_dup_db_tree_state(struct db_tree_state *otsp, const struct db_tree_state *its
 	}
 	else
 		otsp->ts_mater.ma_shader = (char *)NULL;
+
+	if( itsp->ts_attrs.count > 0 ) {
+		bu_avs_init( &otsp->ts_attrs, itsp->ts_attrs.count, "otsp->ts_attrs" );
+		for( i=0 ; i<itsp->ts_attrs.count ; i++ )
+			bu_avs_add( &otsp->ts_attrs, itsp->ts_attrs.avp[i].name,
+				    itsp->ts_attrs.avp[i].value );
+	} else {
+		bu_avs_init_empty( &otsp->ts_attrs );
+	}
 }
 
 /*
@@ -83,6 +93,10 @@ db_free_db_tree_state( struct db_tree_state *tsp )
 	if( tsp->ts_mater.ma_shader )  {
 		bu_free( tsp->ts_mater.ma_shader, "db_free_combined_tree_state: ma_shader" );
 		tsp->ts_mater.ma_shader = (char *)NULL;		/* sanity */
+	}
+	if( tsp->ts_attrs.max > 0 ) {
+		bu_avs_free( &tsp->ts_attrs );
+		tsp->ts_attrs.avp = (struct bu_attribute_value_pair *)NULL;
 	}
 	tsp->ts_dbip = (struct db_i *)NULL;			/* sanity */
 }
@@ -104,6 +118,7 @@ db_init_db_tree_state( struct db_tree_state *tsp, struct db_i *dbip, struct reso
 	tsp->magic = RT_DBTS_MAGIC;
 	tsp->ts_dbip = dbip;
 	tsp->ts_resp = resp;
+	bu_avs_init_empty( &tsp->ts_attrs );
 	MAT_IDN( tsp->ts_mat );	/* XXX should use null pointer convention! */
 }
 
@@ -168,6 +183,8 @@ void
 db_pr_tree_state( tsp )
 register const struct db_tree_state	*tsp;
 {
+	int i;
+
 	RT_CK_DBTS(tsp);
 
 	bu_log("db_pr_tree_state(x%x):\n", tsp);
@@ -184,6 +201,9 @@ register const struct db_tree_state	*tsp;
 		tsp->ts_mater.ma_color[2] );
 	bu_log(" ts_mater.ma_temperature=%g K\n", tsp->ts_mater.ma_temperature);
 	bu_log(" ts_mater.ma_shader=%s\n", tsp->ts_mater.ma_shader ? tsp->ts_mater.ma_shader : "" );
+	for( i=0 ; i<tsp->ts_attrs.count ; i++ ) {
+		bu_log( "\t%s = %s\n", tsp->ts_attrs.avp[i].name, tsp->ts_attrs.avp[i].value );
+	}
 	bn_mat_print("ts_mat", tsp->ts_mat );
 	bu_log(" ts_resp=x%x\n", tsp->ts_resp );
 }
@@ -1068,6 +1088,7 @@ genptr_t	client_data;
 	struct directory	*dp;
 	struct rt_db_internal	intern;
 	union tree		*curtree = TREE_NULL;
+	int			i;
 
 	RT_CK_DBTS(tsp);
 	RT_CHECK_DBI( tsp->ts_dbip );
@@ -1121,6 +1142,21 @@ genptr_t	client_data;
 
 		if( is_region > 0 )  {
 			struct combined_tree_state	*ctsp;
+			const char *value;
+
+			/* get attribute/value structure */
+			for( i=0 ; i<nts.ts_attrs.count ; i++ ) {
+				if( nts.ts_attrs.avp[i].value ) {
+					if( AVS_IS_FREEABLE( &nts.ts_attrs, nts.ts_attrs.avp[i].value ) )
+						bu_free( (char *)nts.ts_attrs.avp[i].value, "tree state AVS value" );
+				}
+				value = bu_avs_get( &intern.idb_avs, nts.ts_attrs.avp[i].name );
+				if( value )
+					nts.ts_attrs.avp[i].value = bu_strdup( value );
+				else
+					nts.ts_attrs.avp[i].value = (char *)NULL;
+			}
+
 			/*
 			 *  This is the start of a new region.
 			 *  If handler rejects this region, skip on.
