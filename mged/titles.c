@@ -23,6 +23,11 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <math.h>
+#ifdef BSD
+#include <strings.h>
+#else
+#include <string.h>
+#endif
 #include "machine.h"
 #include "vmath.h"
 #include "db.h"
@@ -54,6 +59,114 @@ struct point_labels {
 };
 
 /*
+ *			C R E A T E _ T E X T _ O V E R L A Y
+ *
+ *  Prepare the numerical display of the currently edited solid/object.
+ */
+void
+create_text_overlay( vp )
+register struct rt_vls	*vp;
+{
+	auto char linebuf[512];
+	register int	i;
+
+	RT_VLS_CHECK(vp);
+
+	/*
+	 * Set up for character output.  For the best generality, we
+	 * don't assume that the display can process a CRLF sequence,
+	 * so each line is written with a separate call to dmp->dmr_puts().
+	 */
+
+	/* print solid info at top of screen */
+	if( es_edflag >= 0 ) {
+		rt_vls_strcat( vp, "** SOLID -- " );
+		rt_vls_strcat( vp, es_name );
+		rt_vls_strcat( vp, ": ");
+
+		vls_solid( vp, &es_rec.s, rt_identity );
+
+		if(illump->s_last) {
+			rt_vls_strcat( vp, "\n** PATH --  ");
+			for(i=0; i <= illump->s_last; i++) {
+				rt_vls_strcat( vp, "/" );
+				rt_vls_strcat( vp, illump->s_path[i]->d_namep);
+			}
+			rt_vls_strcat( vp, ": " );
+
+			/* print the evaluated (path) solid parameters */
+			vls_solid( vp, &es_rec.s, es_mat );
+		}
+	}
+
+	/* display path info for object editing also */
+	if( state == ST_O_EDIT ) {
+		rt_vls_strcat( vp, "** PATH --  ");
+		for(i=0; i <= illump->s_last; i++) {
+			rt_vls_strcat( vp, "/" );
+			rt_vls_strcat( vp, illump->s_path[i]->d_namep);
+		}
+		rt_vls_strcat( vp, ": " );
+
+		/* print the evaluated (path) solid parameters */
+		if( state == ST_O_EDIT && illump->s_Eflag == 0 ) {
+			mat_t	new_mat;
+			/* NOT an evaluated region */
+			/* object edit option selected */
+			mat_mul(new_mat, modelchanges, es_mat);
+
+			vls_solid( vp, &es_rec.s, new_mat );
+		}
+
+		if( state == ST_O_EDIT && illump->s_Eflag ) {
+			point_t	work;
+			/* region has been evaluated */
+			/* XXX should have an es_keypoint for this */
+			MAT4X3PNT(work, modelchanges, es_rec.s.s_values);
+			(void)sprintf( &linebuf[0],
+				"CENTER : %.4f %.4f %.4f\n",
+				work[0]*base2local, work[1]*base2local, work[2]*base2local );
+			rt_vls_strcat( vp, &linebuf[0] );
+		}
+
+	}
+}
+
+/*
+ *			S C R E E N _ V L S
+ *
+ *  Output a vls string to the display manager,
+ *  as a text overlay on the graphics area (ugh).
+ *
+ * Set up for character output.  For the best generality, we
+ * don't assume that the display can process a CRLF sequence,
+ * so each line is written with a separate call to dmp->dmr_puts().
+ */
+void
+screen_vls( xbase, ybase, vp )
+int	xbase;
+int	ybase;
+register struct rt_vls	*vp;
+{
+	register char	*start;
+	register char	*end;
+	register int	y;
+
+	RT_VLS_CHECK( vp );
+	y = ybase;
+
+	start = rt_vls_addr( vp );
+	while( *start != '\0' )  {
+		if( (end = strchr( start, '\n' )) == NULL )  return;
+
+		*end = '\0';
+		dmp->dmr_puts( start, xbase, y, 0, DM_YELLOW );
+		start = end+1;
+		y += TEXT0_DY;
+	}
+}
+
+/*
  *			D O T I T L E S
  *
  * Produce titles, etc, on the screen.
@@ -67,12 +180,14 @@ dotitles()
 	register int y;			/* for menu computations */
 	static vect_t work;		/* work vector */
 	static vect_t temp;
-	union record temp_rec;		/* copy of es_rec record */
 	mat_t new_mat;
 	register int yloc, xloc;
 	register float y_val;
 	auto fastf_t	az, el;
 	auto char linebuf[512];
+	struct rt_vls	vls;
+
+	RT_VLS_INIT( &vls );
 
 	/* Enclose window in decorative box.  Mostly for alignment. */
 	dmp->dmr_2d_line( XMIN, YMIN, XMAX, YMIN, 0 );
@@ -147,132 +262,11 @@ dotitles()
 	}
 
 	/*
-	 * Set up for character output.  For the best generality, we
-	 * don't assume that the display can process a CRLF sequence,
-	 * so each line is written with a separate call to dmp->dmr_puts().
+	 * Prepare the numerical display of the currently edited solid/object.
 	 */
-
-#define FINDNULL(p)	while(*p++); p--;	/* leaves p at NULL */
-	/* print solid info at top of screen */
-	if( es_edflag >= 0 ) {
-		(void)sprintf(&linebuf[0], "** SOLID -- %s:", es_name);
-		dmp->dmr_puts(	&linebuf[0],
-				SOLID_XBASE,
-				SOLID_YBASE,
-				1,
-				DM_YELLOW);
-		for( i=0; i<es_nlines; i++ )  {
-			dmp->dmr_puts( &es_display[i*ES_LINELEN],
-				SOLID_XBASE,
-				SOLID_YBASE+TEXT1_DY+(TEXT0_DY*i),
-				0,
-				DM_YELLOW );
-		}
-
-		if(illump->s_last) {
-			(void)sprintf(&linebuf[0], "** PATH --  ");
-			for(i=0; i <= illump->s_last; i++) {
-				cp = &linebuf[0];
-				FINDNULL( cp );
-				(void)sprintf(cp,"/%s",illump->s_path[i]->d_namep);
-			}
-			cp = &linebuf[0];
-			FINDNULL( cp );
-			(void)sprintf(cp,":");
-			
-			/* This breaks on the 4D compilers if done
-			 * as part of the procedure call 
-			 * also if its a int so   (sigh....)
-			 */
-			y_val = (float) ((es_nlines + 2) *(TEXT0_DY))
-	                               + SOLID_YBASE + TEXT1_DY;
-
-			dmp->dmr_puts(	&linebuf[0],
-					SOLID_XBASE,
-					y_val,
-					1,
-					DM_RED);
-			/* print the evaluated (path) solid parameters */
-			temp_rec.s = es_rec.s;		/* struct copy */
-			MAT4X3PNT( &temp_rec.s.s_values[0], es_mat,
-					&es_rec.s.s_values[0] );
-			for(i=1; i<8; i++) {
-				MAT4X3VEC( &temp_rec.s.s_values[i*3], es_mat,
-						&es_rec.s.s_values[i*3] );
-			}
-
-			y_val = (float) SOLID_YBASE+(2*TEXT1_DY)+(TEXT0_DY*(es_nlines+2));
-			pr_solid( &temp_rec.s );
-
-			for(i=0; i<es_nlines; i++) {
-				yloc = (int) y_val + (TEXT0_DY*i);
-				dmp->dmr_puts(	&es_display[i*ES_LINELEN],
-						SOLID_XBASE,
-						yloc,
-						0,
-						DM_RED );
-			}
-			pr_solid( &es_rec.s );
-
-		}
-	}
-
-	/* display path info for object editing also */
-	if( state == ST_O_EDIT ) {
-		(void)sprintf(&linebuf[0], "** PATH --  ");
-		for(i=0; i <= illump->s_last; i++) {
-			cp = &linebuf[0];
-			FINDNULL( cp );
-			(void)sprintf(cp,"/%s",illump->s_path[i]->d_namep);
-		}
-		cp = &linebuf[0];
-		FINDNULL( cp );
-		(void)sprintf(cp,":");
-
-		dmp->dmr_puts(	&linebuf[0],
-				SOLID_XBASE,
-				SOLID_YBASE,
-				1,
-				DM_RED);
-
-		/* print the evaluated (path) solid parameters */
-		if( state == ST_O_EDIT && illump->s_Eflag == 0 ) {
-			/* NOT an evaluated region */
-			/* object edit option selected */
-			temp_rec.s = es_rec.s;		/* struct copy */
-			mat_mul(new_mat, modelchanges, es_mat);
-			MAT4X3PNT( temp_rec.s.s_values, new_mat, es_rec.s.s_values );
-			for(i=1; i<8; i++) {
-				MAT4X3VEC( &temp_rec.s.s_values[i*3], new_mat, &es_rec.s.s_values[i*3] );
-			}
-
-			pr_solid( &temp_rec.s );
-
-			for(i=0; i<es_nlines; i++) {
-				dmp->dmr_puts(	&es_display[i*ES_LINELEN],
-						SOLID_XBASE,
-						SOLID_YBASE+TEXT1_DY+(TEXT0_DY*i),
-						0,
-						DM_RED );
-			}
-			pr_solid( &es_rec.s );
-		}
-
-		if( state == ST_O_EDIT && illump->s_Eflag ) {
-			/* region has been evaluated */
-			/* XXX should have an es_keypoint for this */
-			MAT4X3PNT(work, modelchanges, es_rec.s.s_values);
-			(void)sprintf( &linebuf[0],
-					"CENTER : %.4f %.4f %.4f",
-					work[0]*base2local, work[1]*base2local, work[2]*base2local );
-			dmp->dmr_puts( &linebuf[0],
-					SOLID_XBASE,
-					SOLID_YBASE+TEXT1_DY+TEXT0_DY,
-					1,
-					DM_RED );
-		}
-
-	}
+	create_text_overlay( &vls );
+	screen_vls( SOLID_XBASE, SOLID_YBASE, &vls );
+	rt_vls_free( &vls );
 
 	/*
 	 * General status information on the next to last line
@@ -286,6 +280,7 @@ dotitles()
 		rt_units_string(dbip->dbi_local2base) );
 
 	cp = &linebuf[0];
+#define FINDNULL(p)	while(*p++); p--;	/* leaves p at NULL */
 	FINDNULL(cp);
 	/* az/el 0,0 is when screen +Z is model +X */
 	VSET( work, 0, 0, 1 );
@@ -351,7 +346,7 @@ dotitles()
  *			L A B E L _ E D I T E D _ S O L I D
  *
  *  Put labels on the vertices of the currently edited solid.
- *  XXX This really should use import/export interface!!!
+ *  XXX This really should use import/export interface!!!  Or be part of it.
  */
 label_edited_solid( pl, max_pl, xform, ip )
 struct point_labels	pl[];
