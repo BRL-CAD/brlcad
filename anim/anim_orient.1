@@ -1,0 +1,137 @@
+.TH ANIM_ORIENT 1 BRL/CAD
+.SH NAME
+anim_orient - convert between orientation formats
+.SH SYNOPSIS
+.B anim_orient 
+.B [-i{yzvo}] 
+.B [-o{yzvo}] 
+.B [-p] 
+.B [-r] 
+.B < in.table 
+.B > out.table
+.SH DESCRIPTION
+.I Anim_orient
+is a filter which translates a table of orientation
+information from one format to another. The method used is to convert
+the input format to a matrix, then convert the matrix to the desired
+output format. The input format is specified by a one or two letter code
+following the 
+.B -i 
+option. Similarly, the output format is specified by
+the 
+.B -o 
+option. The possible formats are:
+.TP
+.BR default : 
+quaternions. These are in the order x,y,z,w. The output will
+always be unit quaternions. For a unit quaternion, the
+xyz-vector represents an axis and and w represents cos(omega/2), where
+omega is the angle to be rotated about the given axis.
+.TP
+.B z
+or 
+.BR zr : 
+xyz angles, in the order x, y, z. They represent a rotation
+of z degrees around the z-axis, followed by y degrees around the y-axis,
+followed by x degrees around the x-axis. If the code 
+.B zr 
+is used
+instead of 
+.B z, 
+then the angles will be read or written in radians
+rather than degrees.
+.TP
+.B y
+or 
+.BR yr : 
+yaw-pitch-roll format, in that order. They represent
+a rotation of +roll degrees about the x-axis, -pitch degrees about
+the y-axis, followed by +yaw degrees about the z-axis. If the code
+.B yr 
+is used, angles are in radians rather than degrees. If used in
+conjuction with the 
+.B \-p 
+permutation option, then the definition of the
+yaw-pitch-roll format is that the virtual camera on the z-axis is rotated
+down to face the positive x-direction before applying the above
+mentioned rotations. This should be used when the yaw, pitch, and roll 
+are supposed to refer to the virtual camera.
+.TP
+.BR o : 
+pre-multiplication matrix (used for animating "objects"). Sixteen
+numbers form a 4x4 matrix. This is the format used at the interior of
+the conversion routine.
+.TP
+.BR v : 
+post-multiplication matrix (used by 
+.I rt 
+for animating the virtual camera,
+with the "viewrot" command). Sixteen numbers form a 4x4 matrix, which is
+the transpose of a pre-multiplication matrix. 
+
+OPTIONS:
+.TP
+.B \-r 
+Input and output in radians, if they are angle formats.
+.TP
+.B \-p 
+Permute the interior matrix, in situations where yaw, pitch, and roll 
+are being
+used to control the virtual camera. The virtual camera is normally
+facing the negative z-direction, with the x-axis to the right and the
+y-axis going up. The permutation moves the virtual camera to the position
+in which vehicles are usually modelled (facing the positive x
+direction, with the y-axis to the left and the z-axis going up). The
+yaw, pitch, and roll would be applied from this point.
+In a word, the 
+.B \-p 
+option should be used whevever yaw, pitch, and roll are
+involved and the orientation refers to the virtual camera.
+.SH EXAMPLES
+.sp
+Unitize a table of quaternions.
+.sp
+	anim_orient < in.table > out.table 
+.sp
+change xyz-angles to view matrix format
+.sp
+	anim_orient -iz -ov < in.table > out.table
+.sp
+transpose matrices
+.sp
+	anim_orient -iv -oo < in.table > out.table
+.sp
+change radian xyz angles to yaw-pitch-roll in degrees
+.sp
+	anim_orient -izr -oy < in.table > out.table
+.sp
+change yaw, pitch, roll to an object matrix
+.sp
+	anim_orient -iy -oo < in.table > out.table
+.sp
+change yaw, pitch, and roll to a view matrix, including a permutation which 
+brings
+the camera from the z-axis to the negative x-axis before beginning the
+specified rotations.
+.sp
+	anim_orient -iy -ov -p < in.table > out.table
+.sp
+change a quaternion representation of the view orientation to an
+yaw, pitch, roll form
+.sp
+	anim_orient -oy -p < in.table > out.table
+.SH BUGS
+There are built in trouble spots which occur, in ypr or xyz
+formats, when the pitch or the y-rotation is an odd multiple of 90
+degrees, because at this point the other two angles become
+indistinguishable. The program makes the arbitrary assumption that the
+roll is zero or that the x-rotation is zero, depending on the format,
+and gives a warning to that effect.
+.SH AUTHOR
+Carl J. Nuzman
+.SH COPYRIGHT
+	This software is Copyright (C) 1993 by the United States Army
+in all countries except the USA.  All rights reserved.
+.SH "BUG REPORTS"
+Reports of bugs or problems should be submitted via electronic
+mail to <CAD@BRL.MIL>.
