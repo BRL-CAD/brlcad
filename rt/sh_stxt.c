@@ -66,17 +66,17 @@ struct	structparse stxt_parse[] = {
 };
 
 HIDDEN int  stxt_setup(), brick_render(), mbound_render(), rbound_render();
-HIDDEN void	stxt_print();
+HIDDEN void	stxt_print(), stxt_free();
 
 struct	mfuncs stxt_mfuncs[] = {
 	"brick",	0,		0,		MFI_HIT,
-	stxt_setup,	brick_render,	stxt_print,	0,
+	stxt_setup,	brick_render,	stxt_print,	stxt_free,
 
 	"mbound",	0,		0,		MFI_HIT,
-	stxt_setup,	mbound_render,	stxt_print,	0,
+	stxt_setup,	mbound_render,	stxt_print,	stxt_free,
 
 	"rbound",	0,		0,		MFI_HIT,
-	stxt_setup,	rbound_render,	stxt_print,	0,
+	stxt_setup,	rbound_render,	stxt_print,	stxt_free,
 
 	(char *)0,	0,		0,		0,
 	0,		0,		0,		0
@@ -179,6 +179,26 @@ char	**dpp;
 	return( stxt_read(stp) );
 }
 
+/*
+ *			S T X T _ F R E E
+ */
+HIDDEN void
+stxt_free( cp )
+char	*cp;
+{
+	register struct stxt_specific *stp =
+		(struct stxt_specific *)cp;
+
+	if( stp->stx_magic != STXT_MAGIC )  rt_log("stxt_free(): bad magic\n");
+
+	if( stp->stx_pixels )
+		rt_free( stp->stx_pixels, "solid texture pixel array" );
+	rt_free( cp, "stx_specific" );
+}
+
+/*
+ *			S T X T _ P R I N T
+ */
 HIDDEN void
 stxt_print( rp, dp )
 register struct region *rp;
