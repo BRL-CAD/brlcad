@@ -116,6 +116,10 @@ long *p;
 			/* Table needs to grow */
 			return( nmg_tbl( b, TBL_INS, p ) );
 		}
+
+		if (rt_g.NMG_debug & DEBUG_INS)
+			rt_log("nmg_tbl Inserting %8x\n", p);
+
 		b->buffer[k=b->end++] = p;
 		return(-1);		/* To signal that it was added */
 	} else if (func == TBL_RM) {
@@ -170,6 +174,107 @@ long *p;
 	}
 	return(-1);/* this is here to keep lint happy */
 }
+
+
+
+
+/* N M G _ P U R G E _ U N W A N T E D _ I N T E R S E C T I O N _ P O I N T S
+ *
+ *	Make sure that the list of intersection points doesn't contain
+ *	any vertexuses from loops whose bounding boxes don;t overlap the
+ *	bounding box of a loop in the given faceuse.
+ *
+ *	This is really a special purpose routine to help the intersection
+ *	operations of the boolean process.  The only reason it's here instead
+ *	of nmg_inter.c is that it knows too much about the format and contents
+ *	of an nmg_ptbl structure.
+ */
+void
+nmg_purge_unwanted_intersection_points(vert_list, fu)
+struct nmg_ptbl *vert_list;
+struct faceuse *fu;
+{
+	int i, j;
+	struct vertexuse *vu;
+	struct loopuse *lu;
+	struct loopuse *fu2lu;
+	int overlap;
+
+	if (rt_g.NMG_debug & DEBUG_POLYSECT)
+		rt_log(" purge here (0x%08x, 0x%08x)\n", vert_list, fu);
+
+	for (i=0 ; i < vert_list->end ; i++) {
+		vu = (struct vertexuse *)vert_list->buffer[i];
+		NMG_CK_VERTEXUSE(vu);
+		lu = nmg_lu_of_vu( vu );
+
+		if (lu->up.fu_p->f_p == fu->f_p)
+			rt_log("I'm checking against my own face?\n");
+
+		/* If the bounding box of a loop doesn't intersect the
+		 * bounding box of a loop in the other face, it shouldn't
+		 * be on the list of intersecting loops.
+		 */
+		overlap = 0;
+		for (RT_LIST_FOR(fu2lu, loopuse, &fu->lu_hd )){
+			NMG_CK_LOOPUSE(fu2lu);
+			NMG_CK_LOOP(fu2lu->l_p);
+			NMG_CK_LOOP_G(fu2lu->l_p->lg_p);
+
+			/* If this loop is just some drek deposited as part of
+			 * the intersection operation, it doesn't really
+			 * count
+			 */
+			if (fu2lu->orientation != OT_SAME &&
+			    fu2lu->orientation != OT_OPPOSITE)
+			    	continue;
+
+			if (NMG_EXTENT_OVERLAP(
+			   fu2lu->l_p->lg_p->min_pt, fu2lu->l_p->lg_p->max_pt,
+			    lu->l_p->lg_p->min_pt,   lu->l_p->lg_p->max_pt)) {
+				overlap = 1;
+				break;
+			}
+		}
+		if (!overlap) {
+			/* why is this vertexuse in the list? */
+			if (rt_g.NMG_debug & DEBUG_POLYSECT) {
+				rt_log("This little bugger slipped in somehow\n");
+				nmg_pr_vu_briefly(vu, (char *)NULL);
+			}
+
+			/* delete the entry from the vertex list */
+			for (j=i ; j < vert_list->end ; j++)
+				vert_list->buffer[j] = vert_list->buffer[j+1];
+
+			--(vert_list->end);
+			vert_list->buffer[vert_list->end] = (long *)NULL;
+			--i;
+		} else if (rt_g.NMG_debug & DEBUG_POLYSECT) {
+			rt_log("keep vu: 0x%08x (%g %g %g) lu: 0x%08x\n",
+				vu,
+				vu->v_p->vg_p->coord[0],
+				vu->v_p->vg_p->coord[1],
+				vu->v_p->vg_p->coord[2],
+				lu);
+			rt_log("\tlu BBox: %g %g %g  %g %g %g\n",
+				lu->l_p->lg_p->min_pt[0],
+				lu->l_p->lg_p->min_pt[1],
+				lu->l_p->lg_p->min_pt[2],
+				lu->l_p->lg_p->max_pt[0],
+				lu->l_p->lg_p->max_pt[1],
+				lu->l_p->lg_p->max_pt[2]);
+			rt_log("\tfu2lu BBox: %g %g %g  %g %g %g\n",
+				fu2lu->l_p->lg_p->min_pt[0],
+				fu2lu->l_p->lg_p->min_pt[1],
+				fu2lu->l_p->lg_p->min_pt[2],
+				fu2lu->l_p->lg_p->max_pt[0],
+				fu2lu->l_p->lg_p->max_pt[1],
+				fu2lu->l_p->lg_p->max_pt[2]);
+		}
+	}
+}
+
 
 /*				N M G _ I N _ O R _ R E F
  *
@@ -538,7 +643,7 @@ char *h;
 	MKPAD(h);
 	NMG_CK_LOOPUSE(lu);
 
-	rt_log("%sLOOPUSE %8x, lumate_p=x%x (%s)\n",
+	rt_log("%sLOOPUSE %8x, lumate_p=x%x (%s) \n",
 		h, lu, lu->lumate_p, nmg_orientation(lu->orientation) );
 
 	magic1 = RT_LIST_FIRST_MAGIC( &lu->down_hd );
