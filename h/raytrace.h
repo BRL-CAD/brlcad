@@ -1828,18 +1828,6 @@ RT_EXTERN(double rt_mm_value, (CONST char *s) );
 RT_EXTERN(void rt_plot_all_bboxes, (FILE *fp, struct rt_i *rtip));
 RT_EXTERN(void rt_plot_all_solids, (FILE *fp, struct rt_i *rtip));
 
-/* inout.c */
-RT_EXTERN( unsigned char *rt_plong, (unsigned char *msgp, unsigned long l) );
-RT_EXTERN( unsigned char *rt_pshort, (unsigned char *msgp, int s));
-RT_EXTERN( unsigned long rt_glong, (CONST unsigned char *msgp));
-RT_EXTERN( unsigned short rt_gshort, (CONST unsigned char *msgp));
-RT_EXTERN( int rt_struct_get, (struct rt_external *ext, FILE *fp));
-RT_EXTERN( int rt_struct_put, (FILE *fp, CONST struct rt_external *ext));
-RT_EXTERN( int rt_struct_import, (genptr_t base, CONST struct rt_imexport *imp,
-				CONST struct rt_external *ext));
-RT_EXTERN( int rt_struct_export, (struct rt_external *ext, CONST genptr_t base,
-				CONST struct rt_imexport *imp));
-
 /* vlist.c */
 RT_EXTERN(struct rt_vlblock *	rt_vlblock_init, () );
 RT_EXTERN(void			rt_vlblock_free, (struct rt_vlblock *vbp) );
