@@ -27,7 +27,7 @@ proc mmenu_set { id i } {
     set mmenu($id,$i) $menu
 
     if { [llength $menu]<=0 } {
-	pack forget $w.f$i
+	grid forget $w.f$i
 	return
     }
 
@@ -37,22 +37,8 @@ proc mmenu_set { id i } {
     }
     $w.f$i.l configure -height [llength $menu]
 
-    if { [winfo ismapped $w.f$i]==0 } {
-	set packcmd "pack $w.f$i -side top -fill both -expand yes"
-	for { set scan [expr $i-1] } { $scan >= 0 } { incr scan -1 } {
-	    if { [llength $mmenu($id,$scan)]>0 } {
-		lappend packcmd -after $w.f$scan
-		break
-	    }
-	}
-	for { set scan [expr $i+1] } { $scan < $mmenu($id,num) } { incr scan } {
-	    if { [llength $mmenu($id,$scan)]>0 } then {
-		lappend packcmd -before $w.f$scan
-		break
-	    }
-	}
-	eval $packcmd
-    }
+    set row [expr $i + 1]
+    grid $w.f$i -row $row -sticky nsew
 }
 
 proc mmenu_init { id } {
@@ -66,20 +52,27 @@ proc mmenu_init { id } {
     toplevel $w -screen $mged_gui($id,screen)
 
     label $w.state -textvariable mged_display(state)
-    pack $w.state -side top
+    grid $w.state -row 0
     
     set mmenu($id,num) 3
 
     for { set i 0 } { $i < $mmenu($id,num) } { incr i } {
 	frame $w.f$i -relief raised -bd 1
 	listbox $w.f$i.l -bd 2 -exportselection false
-        pack $w.f$i.l -side left -fill both -expand yes
+        grid $w.f$i.l -sticky nsew -row 0 -column 0
+	grid columnconfigure $w.f$i 0 -weight 1
+	grid rowconfigure $w.f$i 0 -weight 1
 
 	bind $w.f$i.l <Button-1> "handle_select %W %y; mged_press $id %W; break"
 	bind $w.f$i.l <Button-2> "handle_select %W %y; mged_press $id %W; break"
 
 	mmenu_set $id $i
     }
+
+    grid columnconfigure $w 0 -weight 1
+    grid rowconfigure $w 1 -weight 1
+    grid rowconfigure $w 2 -weight 1
+    grid rowconfigure $w 3 -weight 1
 
     wm title $w "MGED Button Menu ($id)"
     wm protocol $w WM_DELETE_WINDOW "toggle_button_menu $id"
