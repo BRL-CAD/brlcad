@@ -1218,11 +1218,13 @@ struct rt_functab {
 			struct rt_external * /*ep*/,
 			mat_t /*mat*/));
 	int	(*ft_export) RT_ARGS((struct rt_external * /*ep*/,
-			struct rt_db_internal * /*ip*/));
+			struct rt_db_internal * /*ip*/,
+			double /*local2mm*/));
 	void	(*ft_ifree) RT_ARGS((struct rt_db_internal * /*ip*/));
 	int	(*ft_describe) RT_ARGS((struct rt_vls * /*str*/,
 			struct rt_db_internal * /*ip*/,
-			int /*verbose*/));
+			int /*verbose*/,
+			double /*mm2local*/));
 };
 extern struct rt_functab rt_functab[];
 extern int rt_nfunctab;
