@@ -56,10 +56,11 @@ char	*optarg;		/* argument associated with option */
 		fputc(optopt,stderr);fputc('\n',stderr); \
 	} return(BADCH);
 
+int
 getopt(nargc,nargv,ostr)
 int	nargc;
-char	**nargv,
-	*ostr;
+char	* CONST nargv[];
+CONST char *ostr;
 {
 	static char	*place = EMSG;	/* option letter processing */
 	register char	*oli;		/* option letter list index */
