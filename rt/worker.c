@@ -181,6 +181,8 @@ do_run( a, b )
 	cur_pixel = a;
 	last_pixel = b;
 
+	nworkers_started = 0;
+	nworkers_finished = 0;
 	if( !rt_g.rtg_parallel )  {
 		/*
 		 * SERIAL case -- one CPU does all the work.
@@ -190,8 +192,6 @@ do_run( a, b )
 		/*
 		 *  Parallel case.
 		 */
-		nworkers_started = 0;
-		nworkers_finished = 0;
 		rt_parallel( worker, npsw );
 
 		/*
