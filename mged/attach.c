@@ -179,7 +179,7 @@ int need_close;
       mged_variable_free_vls(p);
 #endif
       mged_slider_unlink_vars(p);
-      mged_slider_free_vls(p->s_info);
+      mged_slider_free_vls(p);
     }
     bu_free( (genptr_t)p->s_info, "release: s_info" );
   }else if(p->_owner)
@@ -207,12 +207,10 @@ int need_close;
   }
 	
   BU_LIST_DEQUEUE( &p->l );
-#if 0
-  bu_vls_free(&pathName);
-  bu_vls_free(&dName);
-  bu_vls_free(&dmp->dm_initWinProc);
-  bu_free( (genptr_t)p->_dmp, "release: curr_dm_list->_dmp" );
-#endif
+  if(p->_scroll_edit_vls.vls_magic == BU_VLS_MAGIC){
+    Tcl_UnlinkVar(interp, bu_vls_addr(&p->_scroll_edit_vls));
+    bu_vls_free(&p->_scroll_edit_vls);
+  }
   bu_free( (genptr_t)p, "release: curr_dm_list" );
 
   if(save_dm_list != DM_LIST_NULL)
@@ -370,8 +368,21 @@ char    **argv;
 #if TRY_NEW_MGED_VARS
   mged_variable_setup(curr_dm_list);
 #endif
+
+  bu_vls_init(&curr_dm_list->_scroll_edit_vls);
+  bu_vls_printf(&curr_dm_list->_scroll_edit_vls, "scroll_edit(%S)",
+		&curr_dm_list->_dmp->dm_tkName);
+  Tcl_LinkVar(interp, bu_vls_addr(&curr_dm_list->_scroll_edit_vls),
+	      (char *)&curr_dm_list->_scroll_edit, TCL_LINK_INT);
   mged_slider_link_vars(curr_dm_list);
   (void)f_load_dv((ClientData)NULL, interp, 0, NULL);
+  mmenu_init();
+  btn_head_menu(0,0,0);
+
+  if(state == ST_S_EDIT)
+    sedit_menu();
+  else if(state == ST_O_EDIT)
+    chg_l2menu(ST_O_EDIT);
 
   Tcl_ResetResult(interp);
   Tcl_AppendResult(interp, "ATTACHING ", dmp->dm_name, " (", dmp->dm_lname,
@@ -533,7 +544,7 @@ char    **argv;
   p->s_info->_rc = 1;
   p->_owner = 1;
   p->_dmp->dm_vp = &p->s_info->_Viewscale;
-  p->s_info->opp = &p->_dmp->dm_pathName;
+  p->s_info->opp = &p->_dmp->dm_tkName;
 #if TRY_NEW_MGED_VARS
   mged_variable_setup(p);
 #endif
@@ -611,7 +622,7 @@ char    **argv;
     mged_variable_free_vls(p1);
 #endif
     mged_slider_unlink_vars(p1);
-    mged_slider_free_vls(p1->s_info);
+    mged_slider_free_vls(p1);
     bu_free( (genptr_t)p1->s_info, "tie: s_info" );
   /* otherwise if p1's s_info struct is being used and p1 is the owner */
   }else if(p1->_owner)
@@ -655,13 +666,13 @@ struct dm_list *op;
     /* first one found is the new owner */
     if(op != p && p->s_info == op->s_info){
       p->_owner = 1;
-      p->s_info->opp = &p->_dmp->dm_pathName;
+      p->s_info->opp = &p->_dmp->dm_tkName;
 #if TRY_NEW_MGED_VARS
       mged_variable_free_vls(p);
       mged_variable_setup(p);
 #endif
       mged_slider_unlink_vars(p);
-      mged_slider_free_vls(p->s_info);
+      mged_slider_free_vls(p);
       mged_slider_link_vars(p);
 
       save_cdlp = curr_dm_list;
@@ -705,68 +716,66 @@ struct dm_list *initial_dm_list;
   adc_a1_deg = adc_a2_deg = 45.0;
 }
 
-mged_slider_init_vls(sip)
-struct shared_info *sip;
+mged_slider_init_vls(p)
+struct dm_list *p;
 {
-  bu_vls_init(&sip->aet_name);
-  bu_vls_init(&sip->ang_name);
-  bu_vls_init(&sip->center_name);
-  bu_vls_init(&sip->size_name);
-  bu_vls_init(&sip->_scroll_edit_vls);
-  bu_vls_init(&sip->_rate_tran_vls[X]);
-  bu_vls_init(&sip->_rate_tran_vls[Y]);
-  bu_vls_init(&sip->_rate_tran_vls[Z]);
-  bu_vls_init(&sip->_rate_rotate_vls[X]);
-  bu_vls_init(&sip->_rate_rotate_vls[Y]);
-  bu_vls_init(&sip->_rate_rotate_vls[Z]);
-  bu_vls_init(&sip->_rate_scale_vls);
-  bu_vls_init(&sip->_absolute_tran_vls[X]);
-  bu_vls_init(&sip->_absolute_tran_vls[Y]);
-  bu_vls_init(&sip->_absolute_tran_vls[Z]);
-  bu_vls_init(&sip->_absolute_rotate_vls[X]);
-  bu_vls_init(&sip->_absolute_rotate_vls[Y]);
-  bu_vls_init(&sip->_absolute_rotate_vls[Z]);
-  bu_vls_init(&sip->_absolute_scale_vls);
-  bu_vls_init(&sip->_xadc_vls);
-  bu_vls_init(&sip->_yadc_vls);
-  bu_vls_init(&sip->_ang1_vls);
-  bu_vls_init(&sip->_ang2_vls);
-  bu_vls_init(&sip->_distadc_vls);
+  bu_vls_init(&p->s_info->aet_name);
+  bu_vls_init(&p->s_info->ang_name);
+  bu_vls_init(&p->s_info->center_name);
+  bu_vls_init(&p->s_info->size_name);
+  bu_vls_init(&p->s_info->_rate_tran_vls[X]);
+  bu_vls_init(&p->s_info->_rate_tran_vls[Y]);
+  bu_vls_init(&p->s_info->_rate_tran_vls[Z]);
+  bu_vls_init(&p->s_info->_rate_rotate_vls[X]);
+  bu_vls_init(&p->s_info->_rate_rotate_vls[Y]);
+  bu_vls_init(&p->s_info->_rate_rotate_vls[Z]);
+  bu_vls_init(&p->s_info->_rate_scale_vls);
+  bu_vls_init(&p->s_info->_absolute_tran_vls[X]);
+  bu_vls_init(&p->s_info->_absolute_tran_vls[Y]);
+  bu_vls_init(&p->s_info->_absolute_tran_vls[Z]);
+  bu_vls_init(&p->s_info->_absolute_rotate_vls[X]);
+  bu_vls_init(&p->s_info->_absolute_rotate_vls[Y]);
+  bu_vls_init(&p->s_info->_absolute_rotate_vls[Z]);
+  bu_vls_init(&p->s_info->_absolute_scale_vls);
+  bu_vls_init(&p->s_info->_xadc_vls);
+  bu_vls_init(&p->s_info->_yadc_vls);
+  bu_vls_init(&p->s_info->_ang1_vls);
+  bu_vls_init(&p->s_info->_ang2_vls);
+  bu_vls_init(&p->s_info->_distadc_vls);
 }
 
-mged_slider_free_vls(sip)
-struct shared_info *sip;
+mged_slider_free_vls(p)
+struct dm_list *p;
 {
-  bu_vls_free(&sip->aet_name);
-  bu_vls_free(&sip->ang_name);
-  bu_vls_free(&sip->center_name);
-  bu_vls_free(&sip->size_name);
-  bu_vls_free(&sip->_scroll_edit_vls);
-  bu_vls_free(&sip->_rate_tran_vls[X]);
-  bu_vls_free(&sip->_rate_tran_vls[Y]);
-  bu_vls_free(&sip->_rate_tran_vls[Z]);
-  bu_vls_free(&sip->_rate_rotate_vls[X]);
-  bu_vls_free(&sip->_rate_rotate_vls[Y]);
-  bu_vls_free(&sip->_rate_rotate_vls[Z]);
-  bu_vls_free(&sip->_rate_scale_vls);
-  bu_vls_free(&sip->_absolute_tran_vls[X]);
-  bu_vls_free(&sip->_absolute_tran_vls[Y]);
-  bu_vls_free(&sip->_absolute_tran_vls[Z]);
-  bu_vls_free(&sip->_absolute_rotate_vls[X]);
-  bu_vls_free(&sip->_absolute_rotate_vls[Y]);
-  bu_vls_free(&sip->_absolute_rotate_vls[Z]);
-  bu_vls_free(&sip->_absolute_scale_vls);
-  bu_vls_free(&sip->_xadc_vls);
-  bu_vls_free(&sip->_yadc_vls);
-  bu_vls_free(&sip->_ang1_vls);
-  bu_vls_free(&sip->_ang2_vls);
-  bu_vls_free(&sip->_distadc_vls);
+  bu_vls_free(&p->s_info->aet_name);
+  bu_vls_free(&p->s_info->ang_name);
+  bu_vls_free(&p->s_info->center_name);
+  bu_vls_free(&p->s_info->size_name);
+  bu_vls_free(&p->s_info->_rate_tran_vls[X]);
+  bu_vls_free(&p->s_info->_rate_tran_vls[Y]);
+  bu_vls_free(&p->s_info->_rate_tran_vls[Z]);
+  bu_vls_free(&p->s_info->_rate_rotate_vls[X]);
+  bu_vls_free(&p->s_info->_rate_rotate_vls[Y]);
+  bu_vls_free(&p->s_info->_rate_rotate_vls[Z]);
+  bu_vls_free(&p->s_info->_rate_scale_vls);
+  bu_vls_free(&p->s_info->_absolute_tran_vls[X]);
+  bu_vls_free(&p->s_info->_absolute_tran_vls[Y]);
+  bu_vls_free(&p->s_info->_absolute_tran_vls[Z]);
+  bu_vls_free(&p->s_info->_absolute_rotate_vls[X]);
+  bu_vls_free(&p->s_info->_absolute_rotate_vls[Y]);
+  bu_vls_free(&p->s_info->_absolute_rotate_vls[Z]);
+  bu_vls_free(&p->s_info->_absolute_scale_vls);
+  bu_vls_free(&p->s_info->_xadc_vls);
+  bu_vls_free(&p->s_info->_yadc_vls);
+  bu_vls_free(&p->s_info->_ang1_vls);
+  bu_vls_free(&p->s_info->_ang2_vls);
+  bu_vls_free(&p->s_info->_distadc_vls);
 }
 
 mged_slider_link_vars(p)
 struct dm_list *p;
 {
-  mged_slider_init_vls(p->s_info);
+  mged_slider_init_vls(p);
 
   bu_vls_printf(&p->s_info->aet_name, "mged_display(%S,aet)",
 		&p->_dmp->dm_tkName);
@@ -775,8 +784,6 @@ struct dm_list *p;
   bu_vls_printf(&p->s_info->center_name, "mged_display(%S,center)",
 		&p->_dmp->dm_tkName);
   bu_vls_printf(&p->s_info->size_name, "mged_display(%S,size)",
-		&p->_dmp->dm_tkName);
-  bu_vls_printf(&p->s_info->_scroll_edit_vls, "scroll_edit(%S)",
 		&p->_dmp->dm_tkName);
   bu_vls_printf(&p->s_info->_rate_tran_vls[X], "rate_tran(%S,X)",
 		&p->_dmp->dm_tkName);
@@ -817,8 +824,6 @@ struct dm_list *p;
   bu_vls_printf(&p->s_info->_distadc_vls, "distadc(%S)",
 		&p->_dmp->dm_tkName);
 
-  Tcl_LinkVar(interp, bu_vls_addr(&p->s_info->_scroll_edit_vls),
-	      (char *)&p->s_info->_scroll_edit, TCL_LINK_INT);
   Tcl_LinkVar(interp, bu_vls_addr(&p->s_info->_rate_tran_vls[X]),
 	      (char *)&p->s_info->_rate_tran[X], TCL_LINK_DOUBLE);
   Tcl_LinkVar(interp, bu_vls_addr(&p->s_info->_rate_tran_vls[Y]),
@@ -863,7 +868,6 @@ struct dm_list *p;
 mged_slider_unlink_vars(p)
 struct dm_list *p;
 {
-  Tcl_UnlinkVar(interp, bu_vls_addr(&p->s_info->_scroll_edit_vls));
   Tcl_UnlinkVar(interp, bu_vls_addr(&p->s_info->_rate_tran_vls[X]));
   Tcl_UnlinkVar(interp, bu_vls_addr(&p->s_info->_rate_tran_vls[Y]));
   Tcl_UnlinkVar(interp, bu_vls_addr(&p->s_info->_rate_tran_vls[Z]));
