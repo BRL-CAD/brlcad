@@ -441,6 +441,17 @@ struct seg		*dummy;
     return (problems);
 }
 
+static int no_op_overlap (ap, pp, r1, r2)
+
+struct application	*ap;
+struct partition	*pp;
+struct region		*r1;
+struct region		*r2;
+
+{
+	return( 0 );
+}
+
 /*			N O _ O P
  *
  *	Null event handler for use by rt_shootray().
@@ -740,7 +751,7 @@ char	**argv;
     ap.a_resource = RESOURCE_NULL;
     ap.a_overlap =
 	(control.glc_what_to_report & G_LINT_OVLP) ? rpt_ovlp
-						   : no_op_hit;
+						   : no_op_overlap;
     ap.a_onehit = 0;		/* Don't stop at first partition */
     ap.a_uptr = (char *) &control;
     ap.a_rt_i = rtip;
