@@ -23,57 +23,127 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 
-extern char *malloc();
+#ifdef SYSV
+#define bzero(p,cnt)	memset(p,'\0',cnt);
+#endif
 
-int pix_line;		/* number of pixels/line (512, 1024) */
-int scanbytes;		/* bytes per input line */
-int w;			/* width of sub-images in pixels */
-int im_line;		/* number of images across output scanline */
-int image;		/* current sub-image number */
+extern int	getopt();
+extern char	*optarg;
+extern int	optind;
 
-char usage[] = "Usage: pixtile [-h] basename width [startframe] >file.pix\n";
+extern char	*malloc();
+
+int file_width = 64;	/* width of input sub-images in pixels (64) */
+int file_height = 64;	/* height of input sub-images in scanlines (64) */
+int scr_width = 512;	/* number of output pixels/line (512, 1024) */
+int scr_height = 512;	/* number of output lines (512, 1024) */
+char *basename;		/* basename of input file(s) */
+int framenumber = 0;	/* starting frame number (default is 0) */
+
+char usage[] = "\
+Usage: pixtile [-h] [-s squareinsize] [-w file_width] [-n file_height]\n\
+	[-S squareoutsize] [-W out_width] [-N out_height]\n\
+	[-o startframe] basename [file2 ... fileN] >file.pix\n";
+
+get_args( argc, argv )
+register char **argv;
+{
+	register int c;
+
+	while ( (c = getopt( argc, argv, "hs:w:n:S:W:N:o:" )) != EOF )  {
+		switch( c )  {
+		case 'h':
+			/* high-res */
+			scr_width = 1024;
+			break;
+		case 's':
+			/* square input file size */
+			file_height = file_width = atoi(optarg);
+			break;
+		case 'w':
+			file_width = atoi(optarg);
+			break;
+		case 'n':
+			file_height = atoi(optarg);
+			break;
+		case 'S':
+			scr_height = scr_width = atoi(optarg);
+			break;
+		case 'W':
+			scr_width = atoi(optarg);
+			break;
+		case 'N':
+			scr_height = atoi(optarg);
+			break;
+		case 'o':
+			framenumber = atoi(optarg);
+			break;
+		default:		/* '?' */
+			return(0);	/* Bad */
+		}
+	}
+
+	if( isatty(fileno(stdout)) )  {
+		return(0);	/* Bad */
+	}
+
+	if( optind >= argc )  {
+		fprintf(stderr, "pixtile: basename or filename(s) missing\n");
+		return(0);	/* Bad */
+	}
+
+	return(1);		/* OK */
+}
 
 main( argc, argv )
 char **argv;
 {
 	register int i;
 	char *obuf;
-	char *basename;
-	int framenumber;
-	int swathbytes;
+	int im_line;		/* number of images across output scanline */
+	int scanbytes;		/* bytes per input line */
+	int swathbytes;		/* bytes per swath of images */
+	int image;		/* current sub-image number */
 	int rel;		/* Relative image # within swath */
+	int maximage;		/* Maximum # of images that will fit */
+	int islist = 0;		/* set if a list, zero if basename */
 	char name[128];
 
-	if( argc < 2 || isatty(fileno(stdout)) )  {
-		fprintf(stderr, "%s", usage);
+	if( !get_args( argc, argv ) )  {
+		(void)fputs(usage, stderr);
+		exit( 1);
+	}
+
+	if( optind+1 == argc )  {
+		basename = argv[optind];
+		islist = 0;
+	} else {
+		islist = 1;
+	}
+
+	if( file_width < 1 ) {
+		fprintf(stderr,"pixtile: width of %d out of range\n", file_width);
 		exit(12);
 	}
 
-	if( strcmp( argv[1], "-h" ) == 0 )  {
-		argc--; argv++;
-		pix_line = 1024;
-	}  else
-		pix_line = 512;
+	scanbytes = file_width * 3;
 
-	basename = argv[1];
-	w = atoi( argv[2] );
-	if( w < 1 ) {
-		fprintf(stderr,"pixtile: width of %d out of range\n", w);
-		exit(12);
-	}
-	if( argc == 4 )
-		framenumber = atoi(argv[3]);
-	else	framenumber = 0;
+	/* number of images across line */
+	im_line = scr_width/file_width;
 
-	scanbytes = w * 3;
-	im_line = pix_line/w;	/* number of images across line */
-	swathbytes = pix_line * w * 3;	/* One swath of images */
+	/* One swath of images */
+	swathbytes = scr_width * file_height * 3;
+
+	maximage = im_line * (scr_height/file_height);
+
 	if( (obuf = (char *)malloc( swathbytes )) == (char *)0 )  {
-		fprintf(stderr,"pixtile:  malloc %d failure\n", swathbytes );
+		(void)fprintf(stderr,"pixtile:  malloc %d failure\n", swathbytes );
 		exit(10);
 	}
+
 	image = 0;
-	while( 1 )  {
+	while( image < maximage )  {
+		bzero( obuf, swathbytes );
 		/*
 		 * Collect together one swath
 		 */
@@ -87,20 +157,28 @@ char **argv;
 				/* All swaths already written out */
 				exit(0);
 			}
-			sprintf(name,"%s.%d", basename, framenumber);
+			/* XXX */
+			if( islist )  {
+				/*See if we read all the files */
+				if( optind == argc )
+					goto done;
+				strcpy(name, argv[optind++]);
+			} else {
+				sprintf(name,"%s.%d", basename, framenumber);
+			}
 			if( (fd=open(name,0))<0 )  {
 				perror(name);
 				goto done;
 			}
 			/* Read in .pix file.  Bottom to top */
-			for( i=0; i<w; i++ )  {
+			for( i=0; i<file_height; i++ )  {
 				register int j;
 
 				/* virtual image l/r offset */
-				j = (rel*w);
+				j = (rel*file_width);
 
 				/* select proper scanline within image */
-				j += i*pix_line;
+				j += i*scr_width;
 
 				if( read( fd, &obuf[j*3], scanbytes ) != scanbytes )
 					break;
