@@ -15,6 +15,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <ctype.h>
 #include <signal.h>
 #include <fcntl.h>
+#include <errno.h>
 
 #include "machine.h"
 #include "externs.h"
@@ -809,13 +810,9 @@ char *buf;
 	restore_Tty();
 	if( kill( pid, sig ) == -1 )
 		{
-#ifndef CRAY2
 		extern int errno;
 		perror( "(fbed.c) kill" );
 		exit( errno );
-#else
-		exit( 1 );
-#endif
 		}
 	init_Tty();
 	init_Status();
