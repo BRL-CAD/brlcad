@@ -24,10 +24,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "vmath.h"
 
-#ifdef SYSV
-#define bzero(p,cnt)	memset(p,'\0',cnt);
-#endif
-
 #define	UPPER_CASE(c)	((c)-32)
 #define	COPY(n)	{fread(cbuf,1,n,fp); fwrite(cbuf,1,n,stdout);}
 #define	SKIP(n)	{fread(cbuf,1,n,fp);}
