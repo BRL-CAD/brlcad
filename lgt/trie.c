@@ -17,12 +17,12 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 */
 
 #include <stdio.h>
-#include <ascii.h>
-#include <machine.h>
-#include <vmath.h>
-#include <vecmath.h>
-#include <fb.h>
-#include <lgt.h>
+#include "machine.h"
+#include "vmath.h"
+#include "fb.h"
+#include "./lgt.h"
+#include "./vecmath.h"
+#include "./ascii.h"
 #include "./tree.h"
 #include "./extern.h"
 #define NewTrie( p ) \

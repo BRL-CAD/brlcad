@@ -90,3 +90,11 @@ F_Hdr_Ptlist;
 #define IR_READONLY	(1<<0) /* Read IR data base.			*/
 #define IR_EDIT		(1<<1) /* Edit IR data base.			*/
 #define IR_OCTREE	(1<<2) /* If ON, display octree, else GED model.*/
+
+extern OcList		*get_Region_Name();
+extern Octree		*find_Octant();
+extern Octree		*add_Region_Octree();
+extern Trie		*add_Trie();
+
+extern Octree		ir_octree;
+extern Trie		*reg_triep;

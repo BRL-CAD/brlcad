@@ -36,6 +36,8 @@ extern double	sqrt();
 #define CrossProd( A, B, C )  {	(C)[X] = (A)[Y]*(B)[Z]-(A)[Z]*(B)[Y]; \
 				(C)[Y] = (A)[Z]*(B)[X]-(A)[X]*(B)[Z]; \
 				(C)[Z] = (A)[X]*(B)[Y]-(A)[Y]*(B)[X]; }
+#define DEGRAD	57.2957795130823208767981548141051703324054724665642
+					/* degrees per radian */
 #define DiffVec( A, B )       { (A)[X] -= (B)[X]; \
 				(A)[Y] -= (B)[Y]; \
 				(A)[Z] -= (B)[Z]; }
@@ -54,6 +56,8 @@ extern double	sqrt();
 #define EPSILON	0.000001
 #endif
 #define Expand_Vec_Int( V )	(int)(V)[X], (int)(V)[Y], (int)(V)[Z]
+#define LOG10E	0.43429448190325182765112891891660508229439700580367
+					/* log of e to the base 10 */
 #define Mag( A )	      	sqrt( AbsDotProd(A,A) )
 #define Mag3(a1,a2,a3)		(sqrt(Sqr(a1)+Sqr(a2)+Sqr(a3)))
 #ifndef Min
@@ -69,6 +73,8 @@ extern double	sqrt();
 			       (B)[Z] = Max( (B)[Z], (C)[Z] ); }
 #define NearZero( a )		((a) < EPSILON && (a) > -EPSILON)
 #define NonZeroVec( V )	(!NearZero((V)[X]) || !NearZero((V)[Y])|| !NearZero((V)[Z]))
+#define PI	3.14159265358979323846264338327950288419716939937511
+					/* ratio of circumf. to diam. */
 #define RelDist3d( A, B )	(Sqr((A)[X]-(B)[X])+\
 				 Sqr((A)[Y]-(B)[Y])+\
 				 Sqr((A)[Z]-(B)[Z]))
@@ -99,4 +105,3 @@ extern double	sqrt();
 #define Y		1
 #define Z		2
 #endif
-typedef double	Matrix[3][3];

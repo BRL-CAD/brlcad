@@ -34,7 +34,7 @@
 #define IR_AUTO_MAP_MOVE()	MvCursor( 54, 9 )
 #define IR_PAINT_MOVE()		MvCursor( 73, 9 )
 #define PROGRAM_NM_MOVE()	MvCursor( 3, 10 )
-#define F_GED_DB_MOVE()		MvCursor( 20, 10 )
+#define F_GED_DB_MOVE()		MvCursor( 24, 10 )
 #define GRID_PIX_MOVE()		MvCursor( 53, 10 )
 #define GRID_SIZ_MOVE()		MvCursor( 60, 10 )
 #define GRID_SCN_MOVE()		MvCursor( 65, 10 )

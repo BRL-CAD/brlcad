@@ -20,8 +20,11 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include <gl.h>
 #include <device.h>
-#include <std.h>
 #include <string.h>
+#include "machine.h"
+#include "vmath.h"
+#include "./lgt.h"
+#include "./vecmath.h"
 #undef RED
 #include "./extern.h"
 extern char	*get_Input();
@@ -37,19 +40,6 @@ long		two_digit_menu;
 static long	popup_gid = -1;
 
 _LOCAL_ void	sgi_Read_Keyboard();
-
-#if 0
-#include <bsd/sys/time.h>
-#include <bsd/sys/types.h>
-void
-loc_Nap( secs )
-double	secs;
-	{	static struct timeval	timeout = { 0L, 0L };
-	timeout.tv_usec = (long)(secs*1.0e+06);
-	(void) select( 0, (fd_set *) 0, (fd_set *) 0, (fd_set *) 0, &timeout );
-	return;
-	}
-#endif
 
 int
 sgi_User_Input( args )

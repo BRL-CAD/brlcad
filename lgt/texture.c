@@ -18,11 +18,11 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <fcntl.h>
-#include <machine.h>
-#include <fb.h>
-#include <vmath.h>
-#include <raytrace.h>
-#include <mat_db.h>
+#include "machine.h"
+#include "fb.h"
+#include "vmath.h"
+#include "raytrace.h"
+#include "./mat_db.h"
 #include "./extern.h"
 #define BITS_PER_BYTE	8
 #define BITS_WIDE	48

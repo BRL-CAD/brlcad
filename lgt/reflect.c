@@ -21,19 +21,18 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <signal.h>
-#include <std.h>
 #include <fcntl.h>
-#include <fb.h>
 #include <math.h>
-#include <machine.h>
-#include <vmath.h>
-#include <raytrace.h>
-#include <mat_db.h>
-#include <vecmath.h>
-#include <lgt.h>
+#include "machine.h"
+#include "vmath.h"
+#include "raytrace.h"
+#include "fb.h"
+#include "./vecmath.h"
+#include "./lgt.h"
+#include "./mat_db.h"
 #include "./tree.h"
-#include "./extern.h"
 #include "./screen.h"
+#include "./extern.h"
 
 #define TWO_PI		6.28318530717958647692528676655900576839433879875022
 #define RI_AIR		1.0    /* Refractive index of air.		*/
@@ -111,13 +110,6 @@ render_Model()
 	register int	d7;	/* known to be in d7 */
 #endif
 	int		a, x;
-	if( tty )
-		{
-		rt_prep_timer();
-		prnt_Event( "Raytracing..." );
-		SCROLL_DL_MOVE();
-		(void) fflush( stdout );
-		}
 #ifdef PARALLEL
 	pix_buffered = B_LINE;
 #endif
@@ -174,6 +166,13 @@ render_Model()
 	curr_scan = grid_y_org;
 	last_scan = grid_y_fin;
 
+	if( tty )
+		{
+		rt_prep_timer();
+		prnt_Event( "Raytracing..." );
+		SCROLL_DL_MOVE();
+		(void) fflush( stdout );
+		}
 #ifdef PARALLEL
 	/*
 	 *  Parallel case.
@@ -1241,10 +1240,7 @@ int	sig;
 	{
 	(void) signal( SIGINT, abort_RT );
 	if( tty )
-		{
 		prnt_Event( "Aborted raytrace." );
-		(void) fflush( stdout );
-		}
 	(void) fb_flush( fbiop );
 	user_interrupt = 1;
 #if defined( BSD )
