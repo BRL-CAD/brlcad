@@ -30,16 +30,16 @@
 
 #include <stdio.h>
 #include "rle.h"
-#include "rletogif.h"
+#include "./rletogif.h"
 
 #ifdef USE_STDLIB_H
 #include <stdlib.h>
 #else
 
 #ifndef USE_STRING_H
-#include "strings.h"
+#include <strings.h>
 #else
-#include "string.h"
+#include <string.h>
 #endif
 
 #ifndef VOID_STAR
