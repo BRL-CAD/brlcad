@@ -98,6 +98,9 @@ g/rt_identify_magic/s//bu_identify_magic/g
 g/rt_identity/s//bn_mat_identity/g
 g/rt_prmem/s//bu_prmem/g
 g/rt_strdup/s//bu_strdup/g
+g/rt_malloc/s//bu_malloc/g
+g/rt_calloc/s//bu_calloc/g
+g/rt_free/s//bu_free/g
 g/rt_byte_roundup/s//bu_malloc_len_roundup/g
 g/rt_mem_barriercheck/s//bu_mem_barriercheck/g
 g/rt_open_mapped_file/s//bu_open_mapped_file/g
