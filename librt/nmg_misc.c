@@ -1454,10 +1454,7 @@ plane_t pl;
 	}
 
 	if( !got_dir )
-	{
-		rt_log( "nmg_calc_face_plane: Cannot get general direction for face normal for fu x%x\n" , fu );
 		return( 1 );
-	}
 
 	f = fu->f_p;
 	NMG_CK_FACE( f );
@@ -1778,16 +1775,28 @@ CONST struct rt_tol *tol;
 	vect_t a1_to_a2;
 	vect_t p2_to_p1;
 	fastf_t min_dist;
+	fastf_t tol_dist_sq;
+	fastf_t tol_dist;
 
 	RT_CK_TOL( tol );
 
-	if( !NEAR_ZERO( MAGSQ( d1 ) - 1.0 , tol->dist_sq ) )
+	if( tol->dist > 0.0 )
+		tol_dist = tol->dist;
+	else
+		tol_dist = 0.005;
+
+	if( tol->dist_sq > 0.0 )
+		tol_dist_sq = tol->dist_sq;
+	else
+		tol_dist_sq = tol_dist * tol_dist;
+
+	if( !NEAR_ZERO( MAGSQ( d1 ) - 1.0 , tol_dist_sq ) )
 	{
 		rt_log( "rt_dist_line3_line3: non-unit length direction vector ( %f %f %f )\n" , V3ARGS( d1 ) );
 		rt_bomb( "rt_dist_line3_line3\n" );
 	}
 
-	if( !NEAR_ZERO( MAGSQ( d2 ) - 1.0 , tol->dist_sq ) )
+	if( !NEAR_ZERO( MAGSQ( d2 ) - 1.0 , tol_dist_sq ) )
 	{
 		rt_log( "rt_dist_line3_line3: non-unit length direction vector ( %f %f %f )\n" , V3ARGS( d2 ) );
 		rt_bomb( "rt_dist_line3_line3\n" );
@@ -1797,7 +1806,7 @@ CONST struct rt_tol *tol;
 
 	if( RT_VECT_ARE_PARALLEL( d1_d2 , tol ) )
 	{
-		if( rt_dist_line_point( p1 , d1 , p2 ) > tol->dist )
+		if( rt_dist_line_point( p1 , d1 , p2 ) > tol_dist )
 			return( -2 ); /* parallel, but not collinear */
 		else
 			return( -1 ); /* parallel and collinear */
@@ -1812,7 +1821,7 @@ CONST struct rt_tol *tol;
 
 	VSUB2( a1_to_a2 , a2 , a1 );
 	min_dist = MAGNITUDE( a1_to_a2 );
-	if( min_dist < tol->dist )
+	if( min_dist < tol_dist )
 		return( 0 );
 	else
 		return( 1 );
