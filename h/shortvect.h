@@ -2,8 +2,8 @@
  *			S H O R T V E C T . H
  *
  *  This header file is intended to be #include'ed in front of any
- *  loop that involves pointers that do not alias each other,
- *  to permit vectorizing compilers to proceed.
+ *  loop which is known to never involve more than 32,
+ *  to permit vectorizing compilers to omit extra overhead.
  *
  *  This file contains various definitions which can be safely seen
  *  by both ANSI and non-ANSI compilers and preprocessors.
