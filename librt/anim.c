@@ -33,17 +33,18 @@ static char RCSanim[] = "@(#)$Header$ (BRL)";
  *
  *  Add a user-supplied animate structure to the end of the chain of such
  *  structures hanging from the directory structure of the last node of
- *  the path specifier.  A pathlen of 0 indicates that this change is
- *  to affect the root of the tree itself, rather than an arc, and is
+ *  the path specifier.  When 'root' is non-zero, this matrix is
+ *  located at the root of the tree itself, rather than an arc, and is
  *  stored differently.
  *
  *  In the future, might want to check to make sure that callers directory
  *  references are in the right model (rtip).
  */
 int
-rt_add_anim( rtip, anp )
+rt_add_anim( rtip, anp, root )
 struct rt_i *rtip;
 register struct animate *anp;
+int	root;
 {
 	register struct animate **headp;
 	register int i;
@@ -55,13 +56,13 @@ register struct animate *anp;
 			return(-1);	/* BAD */
 
 	anp->an_forw = ANIM_NULL;
-	if( anp->an_pathlen <= 0 )  {
+	if( root )  {
 		if( rt_g.debug&DEBUG_ANIM )
-			rt_log("rt_add_anim(x%x) ROOT\n", anp);
+			rt_log("rt_add_anim(x%x) root\n", anp);
 		headp = &(rtip->rti_anroot);
 	} else {
 		if( rt_g.debug&DEBUG_ANIM )
-			rt_log("rt_add_anim(x%x) leaf %s\n", anp,
+			rt_log("rt_add_anim(x%x) arc %s\n", anp,
 				anp->an_path[anp->an_pathlen-1]->d_namep);
 		headp = &(anp->an_path[anp->an_pathlen-1]->d_animate);
 	}
