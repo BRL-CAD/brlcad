@@ -374,10 +374,10 @@ struct rt_list	*vhead;
 struct model	*m;
 int		poly_markers;
 {
-	register struct region	*r;
+	register struct nmgregion	*r;
 
 	NMG_CK_MODEL( m );
-	for( RT_LIST_FOR( r, region, &m->r_hd ) )  {
+	for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )  {
 		NMG_CK_REGION( r );
 		nmg_r_to_vlist( vhead, r, poly_markers );
 	}
@@ -1264,7 +1264,7 @@ FILE			*fd;
 long			*b;
 CONST struct edgeuse	*eu;
 {
-	struct edgeuse *eur = eu;
+	CONST struct edgeuse *eur = eu;
 	do {
 		NMG_CK_EDGEUSE(eur);
 		nmg_pl_eu(fd, eur, b, 180, 180, 180);
@@ -1905,7 +1905,7 @@ CONST char	*a_string;
 		show_broken_eu( vbp, (struct edgeuse *)p, fancy);
 		break;
 	case NMG_VERTEXUSE_MAGIC:
-		show_broken_vu( vbp, ((struct vertexuse *)p)->v_p, fancy);
+		show_broken_vu( vbp, (struct vertexuse *)p, fancy);
 		break;
 	default: fprintf(stderr, "Unknown magic number %ld %0x %ld %0x\n", *p, *p, p, p);
 				break;
