@@ -10353,7 +10353,7 @@ start:
 			eu_new = nmg_esplit( v, eu, 1 );
 			break_count++;
 
-			bu_ptbl_rm( &edges, (long *)e );
+			bu_ptbl_rm( &edges, (long *)e1 );
 			bu_ptbl_ins( &edges, (long *)eu->e_p );
 			bu_ptbl_ins( &edges, (long *)eu_new->e_p );
 
