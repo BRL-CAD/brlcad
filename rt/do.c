@@ -20,17 +20,6 @@
 static char RCSrt[] = "@(#)$Header$ (BRL)";
 #endif
 
-#include <stdio.h>
-#include <ctype.h>
-#include <math.h>
-#include "machine.h"
-#include "vmath.h"
-#include "raytrace.h"
-#include "fb.h"
-#include "./material.h"
-#include "./rdebug.h"
-#include "../librt/debug.h"
-
 #ifdef unix
 # include <sys/types.h>
 # include <sys/stat.h>
@@ -42,6 +31,17 @@ static char RCSrt[] = "@(#)$Header$ (BRL)";
 # define stderr stdout
 # define PARALLEL 1
 #endif
+
+#include <stdio.h>
+#include <ctype.h>
+#include <math.h>
+#include "machine.h"
+#include "vmath.h"
+#include "raytrace.h"
+#include "fb.h"
+#include "./material.h"
+#include "./rdebug.h"
+#include "../librt/debug.h"
 
 extern char	*sbrk();
 
@@ -395,7 +395,7 @@ char	**argv;
 }
 
 /* viewing module specific variables */
-extern struct struct_desc view_parse[];
+extern struct structparse view_parse[];
 
 /*
  *  Generic settable parameters.
@@ -412,12 +412,12 @@ extern struct struct_desc view_parse[];
 #else
 #	define byteoffset(_i)	((int)(((char *)&(_i))-((char *)0)))
 #endif
-struct struct_desc set_parse[] = {
-	"%d",	"width",	byteoffset(width),		1, FUNC_NULL,
-	"%d",	"height",	byteoffset(height),		1, FUNC_NULL,
-	"%f",	"angle",	byteoffset(rt_perspective),	1, FUNC_NULL,
-	"indir", "View_Module-Specific Parameters", (int)view_parse, 1, FUNC_NULL,
-	(char *)0,(char *)0,	0,				0, FUNC_NULL
+struct structparse set_parse[] = {
+	"%d",	1, "width",	byteoffset(width),		FUNC_NULL,
+	"%d",	1, "height",	byteoffset(height),		FUNC_NULL,
+	"%f",	1, "angle",	byteoffset(rt_perspective),	FUNC_NULL,
+	"indir",(int)view_parse,"View_Module-Specific Parameters", 0, FUNC_NULL,
+	(char *)0,(char *)0,	0,				FUNC_NULL
 };
 
 /*
