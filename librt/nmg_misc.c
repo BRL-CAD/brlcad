@@ -1305,7 +1305,7 @@ struct edgeuse *eu;
 char *str;
 {
 	char *errstr;
-	struct edgeuse *eur;	
+	struct edgeuse *eur, *eu_next, *eu_last;	
 
 	errstr = rt_calloc(strlen(str)+128, 1, "nmg_ck_eu error str");
 	(void)sprintf(errstr, "%sedgeuse %8x\n", str, eu);
@@ -1341,6 +1341,14 @@ char *str;
 			strcat(errstr, "radial path leads to null ptr\n"));
 		else if (eur == eu) rt_bomb(
 			strcat(errstr, "Never saw eumate\n"));
+
+		eu_next = NMG_LIST_PNEXT_CIRC(edgeuse, eu);
+		if (eu_next->vu_p->v_p != eu->eumate_p->vu_p->v_p)
+			rt_bomb("nmg_ck_eu: next and mate don't share vertex\n");
+
+		eu_last = NMG_LIST_PLAST_CIRC(edgeuse, eu);
+		if (eu_last->eumate_p->vu_p->v_p != eu->vu_p->v_p)
+			rt_bomb("nmg_ck_eu: edge and last-mate don't share vertex\n");
 
 	} else {
 		rt_bomb(strcat(errstr, "Bad edgeuse parent\n"));

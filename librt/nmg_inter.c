@@ -480,11 +480,18 @@ struct faceuse *fu;
 			plu = nmg_mlv(&fu->l.magic,
 				eu->eumate_p->vu_p->v_p, OT_SAME);
 
-			if (rt_g.NMG_debug & DEBUG_POLYSECT)
+			if (rt_g.NMG_debug & DEBUG_POLYSECT) {
 			    	VPRINT("Making vertexloop",
-					NMG_LIST_PNEXT(vertexuse,&plu->down_hd)->
+				NMG_LIST_PNEXT(vertexuse,&plu->down_hd)->
 					v_p->vg_p->coord);
+				if (NMG_LIST_FIRST_MAGIC(&plu->down_hd) !=
+					NMG_VERTEXUSE_MAGIC)
+					rt_bomb("bad plu\n");
+				if (NMG_LIST_FIRST_MAGIC(&plu->lumate_p->down_hd) !=
+					NMG_VERTEXUSE_MAGIC)
+					rt_bomb("bad plumate\n");
 
+			}
 			(void)nmg_tbl(bs->l2, TBL_INS,
 				&NMG_LIST_FIRST_MAGIC(&plu->down_hd) );
 		}
@@ -746,6 +753,13 @@ fastf_t tol;
 				rt_log("EDGEUSE\n");
 			} else if (*p.vu[i]->up.magic_p == NMG_LOOPUSE_MAGIC){
 				rt_log("LOOPUSE\n");
+	if ((struct vertexuse *)p.vu[i]->up.lu_p->down_hd.forw != p.vu[i]) {
+		rt_log("vertexuse's parent disowns us!\n");
+		if (((struct vertexuse *)(p.vu[i]->up.lu_p->lumate_p->down_hd.forw))->l.magic == NMG_VERTEXUSE_MAGIC)
+			rt_bomb("lumate has vertexuse\n");
+		else
+			rt_bomb("lumate has garbage\n");
+	}
 			} else
 				rt_log("UNKNOWN\n");
 		}
