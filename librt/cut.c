@@ -209,6 +209,15 @@ CONST void *p1, *p2;
 	return CMP(p1,p2,st_max,Z);
 }
 
+static struct cmp_pair {
+	int (*cmp_min)();
+	int (*cmp_max)();
+} pairs[] = {
+	{ rt_projXmin_comp, rt_projXmax_comp },
+	{ rt_projYmin_comp, rt_projYmax_comp },
+	{ rt_projZmin_comp, rt_projZmax_comp }
+};
+
 /*
  *			R T _ N U G R I D _ C U T
  *
@@ -420,14 +429,6 @@ int				 just_collect_info, depth;
 	}
 #else
 	{
-		struct cmp_pair {
-			int (*cmp_min)();
-			int (*cmp_max)();
-		} pairs[] = {
-			{ rt_projXmin_comp, rt_projXmax_comp },
-			{ rt_projYmin_comp, rt_projYmax_comp },
-			{ rt_projZmin_comp, rt_projZmax_comp }
-		};
 		struct soltab **list_min, **list_max;
 		register struct soltab **l1, **l2;
 		register int nstart, nend, axi, len = fromp->bn_len;
