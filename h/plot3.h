@@ -33,6 +33,10 @@
 #	define	PL_ARGS(args)			()
 #endif
 
+#define	pl_mat_idn( _mat )		MAT_IDN( _mat )
+#define pl_mat_zero( _mat )		MAT_ZERO( _mat )
+#define pl_mat_copy( _mat1, _mat2 )	MAT_COPY( _mat1, _mat2 )
+
 /*
  *  The basic UNIX-plot routines.
  *  The calling sequence is the same as the original Bell Labs routines,
