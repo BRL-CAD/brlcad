@@ -90,7 +90,7 @@ proc cadColorWidget { mode parent child args } {
     toplevel $w -class tkColorDialog -screen [winfo screen $parent]
     cadColorWidget_Build $w $mode
 
-    wm transient $w $parent
+#    wm transient $w $parent
 
     # 5. Withdraw the window, then update all the geometry information
     # so we know how big it wants to be.
