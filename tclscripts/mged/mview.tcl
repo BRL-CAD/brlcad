@@ -6,50 +6,38 @@ if ![info exists mged_default(bd)] {
     set mged_default(bd) 2
 }
 
-proc openmv { id w wc dpy dtype S } {
+proc openmv { id w wc dpy dtype } {
     global win_to_id
     global mged_default
 
-    frame $wc.u
-    frame $wc.l
-    frame $wc.u.l -relief sunken -borderwidth $mged_default(bd)
-    frame $wc.u.r -relief sunken -borderwidth $mged_default(bd)
-    frame $wc.l.l -relief sunken -borderwidth $mged_default(bd)
-    frame $wc.l.r -relief sunken -borderwidth $mged_default(bd)
+    frame $wc.ulF -relief sunken -borderwidth $mged_default(bd)
+    frame $wc.urF -relief sunken -borderwidth $mged_default(bd)
+    frame $wc.llF -relief sunken -borderwidth $mged_default(bd)
+    frame $wc.lrF -relief sunken -borderwidth $mged_default(bd)
 
-    attach -d $dpy -t 0 -S $S -n $w.ul $dtype
-    attach -d $dpy -t 0 -S $S -n $w.ur $dtype
-    attach -d $dpy -t 0 -S $S -n $w.ll $dtype
-    attach -d $dpy -t 0 -S $S -n $w.lr $dtype
+    attach -d $dpy -t 0 -n $w.ul $dtype
+    attach -d $dpy -t 0 -n $w.ur $dtype
+    attach -d $dpy -t 0 -n $w.ll $dtype
+    attach -d $dpy -t 0 -n $w.lr $dtype
 
     set win_to_id($w.ul) $id
     set win_to_id($w.ur) $id
     set win_to_id($w.ll) $id
     set win_to_id($w.lr) $id
 
-    grid $w.ul -in $wc.u.l -sticky "nsew" -row 0 -column 0
-    grid $w.ur -in $wc.u.r -sticky "nsew" -row 0 -column 0
-    grid $w.ll -in $wc.l.l -sticky "nsew" -row 0 -column 0
-    grid $w.lr -in $wc.l.r -sticky "nsew" -row 0 -column 0
-    grid $wc.u.l -sticky "nsew" -row 0 -column 0
-    grid $wc.u.r -sticky "nsew" -row 0 -column 1
-    grid $wc.l.l -sticky "nsew" -row 0 -column 0
-    grid $wc.l.r -sticky "nsew" -row 0 -column 1
+    grid $w.ul -in $wc.ulF -sticky "nsew" -row 0 -column 0
+    grid $w.ur -in $wc.urF -sticky "nsew" -row 0 -column 0
+    grid $w.ll -in $wc.llF -sticky "nsew" -row 0 -column 0
+    grid $w.lr -in $wc.lrF -sticky "nsew" -row 0 -column 0
 
-    grid columnconfigure $wc.u.l 0 -weight 1
-    grid rowconfigure $wc.u.l 0 -weight 1
-    grid columnconfigure $wc.u.r 0 -weight 1
-    grid rowconfigure $wc.u.r 0 -weight 1
-    grid columnconfigure $wc.l.l 0 -weight 1
-    grid rowconfigure $wc.l.l 0 -weight 1
-    grid columnconfigure $wc.l.r 0 -weight 1
-    grid rowconfigure $wc.l.r 0 -weight 1
-    grid columnconfigure $wc.u 0 -weight 1
-    grid columnconfigure $wc.u 1 -weight 1
-    grid rowconfigure $wc.u 0 -weight 1
-    grid columnconfigure $wc.l 0 -weight 1
-    grid columnconfigure $wc.l 1 -weight 1
-    grid rowconfigure $wc.l 0 -weight 1
+    grid rowconfigure $wc.ulF 0 -weight 1
+    grid columnconfigure $wc.ulF 0 -weight 1
+    grid rowconfigure $wc.urF 0 -weight 1
+    grid columnconfigure $wc.urF 0 -weight 1
+    grid rowconfigure $wc.llF 0 -weight 1
+    grid columnconfigure $wc.llF 0 -weight 1
+    grid rowconfigure $wc.lrF 0 -weight 1
+    grid columnconfigure $wc.lrF 0 -weight 1
 }
 
 proc mview_build_menubar { id } {
@@ -162,18 +150,16 @@ proc menu_accelerator_bindings { id w pos } {
 proc packmv { id } {
     global mged_gui
 
-    grid $mged_gui($id,dmc).u -sticky "nsew" -row 0 -column 0
-    grid $mged_gui($id,dmc).l -sticky "nsew" -row 1 -column 0
-    grid columnconfigure $mged_gui($id,dmc) 0 -weight 1
-    grid rowconfigure $mged_gui($id,dmc) 0 -weight 1
-    grid rowconfigure $mged_gui($id,dmc) 1 -weight 1
+    grid $mged_gui($id,dmc).ulF -sticky "nsew" -row 0 -column 0
+    grid $mged_gui($id,dmc).urF -sticky "nsew" -row 0 -column 1
+    grid $mged_gui($id,dmc).llF -sticky "nsew" -row 1 -column 0
+    grid $mged_gui($id,dmc).lrF -sticky "nsew" -row 1 -column 1
 }
-
 
 proc unpackmv { id } {
     global mged_gui
 
-    grid forget $mged_gui($id,dmc).u $mged_gui($id,dmc).l
+    catch { eval grid forget [grid slaves $mged_gui($id,dmc)] }
 }
 
 proc releasemv { id } {
@@ -198,15 +184,11 @@ proc setupmv { id } {
 
     set_default_views $id
     mged_apply_local $id "set faceplate 0"
-    set height [expr [winfo screenheight $mged_gui($id,top)] - 50]
-    set width $height
-    wm geometry $mged_gui($id,top) $width\x$height
-#    setmv $id
 
-#    bind $mged_gui($id,top).ul m "togglemv $id; break"
-#    bind $mged_gui($id,top).ur m "togglemv $id; break"
-#    bind $mged_gui($id,top).ll m "togglemv $id; break"
-#    bind $mged_gui($id,top).lr m "togglemv $id; break"
+    grid columnconfigure $mged_gui($id,dmc) 0 -weight 1
+    grid columnconfigure $mged_gui($id,dmc) 1 -weight 1
+    grid rowconfigure $mged_gui($id,dmc) 0 -weight 1
+    grid rowconfigure $mged_gui($id,dmc) 1 -weight 1
 }
 
 proc set_default_views { id } {
@@ -231,73 +213,20 @@ proc set_default_views { id } {
 
 proc setmv { id } {
     global mged_gui
-    global mged_default
-
-    set border_offset [expr $mged_default(bd) * 2]
 
     if { $mged_gui($id,multi_view) } {
-	set width [expr ([winfo width $mged_gui($id,top)] - $border_offset) / 2]
-	set height [expr ([winfo height $mged_gui($id,top)] - $border_offset) / 2]
+	# insure that the weight is not exaggerated
+	grid columnconfigure $mged_gui($id,dmc) 0 -weight 1
 
-	if {$mged_gui($id,comb)} {
-	    if {$mged_gui($id,show_cmd)} {
-		set height [expr $height - [get_cmd_win_height $id]]
-#		set height [expr $height - [winfo height .$id.tf]]
-	    }
-
-	    if {$mged_gui($id,show_status)} {
-		set height [expr $height - [winfo height .$id.status]]
-	    }
-	}
-
-	# In case of resize/reconfiguration --- resize everybody
-	winset $mged_gui($id,top).ul
-	dm size $width $height
-	winset $mged_gui($id,top).ur
-	dm size $width $height
-	winset $mged_gui($id,top).ll
-	dm size $width $height
-	winset $mged_gui($id,top).lr
-	dm size $width $height
-
-	grid $mged_gui($id,active_dm) -in $mged_gui($id,small_dmc) -sticky "nsew" -row 0 -column 0
-
+	unpackmv $id
 	packmv $id
     } else {
-	winset $mged_gui($id,active_dm)
-	catch { unpackmv $id }
+	# exaggerate the weight so that the single display manager window 
+	# will grow to completely fill the container window
+	grid columnconfigure $mged_gui($id,dmc) 0 -weight 1000
 
-	set width [expr [winfo width $mged_gui($id,top)] - $border_offset]
-	set height [expr [winfo height $mged_gui($id,top)] - $border_offset]
-
-	if {$mged_gui($id,comb)} {
-	    if {$mged_gui($id,show_cmd)} {
-		set height [expr $height - [get_cmd_win_height $id]]
-#		set height [expr $height - [winfo height .$id.tf]]
-	    }
-
-	    if {$mged_gui($id,show_status)} {
-		set height [expr $height - [winfo height .$id.status]]
-	    }
-	}
-
-	dm size $width $height
-
-	grid $mged_gui($id,active_dm) -in $mged_gui($id,dmc) -sticky "nsew" -row 0 -column 0
-	grid columnconfigure $mged_gui($id,dmc) 0 -weight 1
-	grid rowconfigure $mged_gui($id,dmc) 0 -weight 1
+	unpackmv $id
+	grid $mged_gui($id,dmc).$mged_gui($id,dm_loc)\F -in $mged_gui($id,dmc) \
+		-sticky "nsew" -row 0 -column 0
     }
 }
-
-proc togglemv { id } {
-    global mged_gui
-
-    if $mged_gui($id,multi_view) {
-	set mged_gui($id,multi_view) 0
-    } else {
-	set mged_gui($id,multi_view) 1
-    }
-
-    setmv $id
-}
-
