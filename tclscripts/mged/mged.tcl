@@ -172,7 +172,7 @@ proc do_New { id } {
 
     set ret [cad_input_dialog .$id.new $mged_gui($id,screen)\
 	    "New MGED Database" \
-	    "Enter new database filename:" ia_filename $mged_gui(databaseDir) \
+	    "Enter new database filename:" ia_filename "${mged_gui(databaseDir)}/" \
 	    0 {{ summary "Enter a new database name. Note - a database
 must not exist by this name."}}\
 	    OK CANCEL]
