@@ -89,6 +89,7 @@ struct rt_i		*rtip;
 	struct submodel_specific	*submodel;
 	struct rt_i			*sub_rtip;
 	struct db_i			*sub_dbip;
+	struct resource			*resp;
 	vect_t	radvec;
 	vect_t	diam;
 	char	*argv[2];
@@ -163,6 +164,14 @@ struct rt_i		*rtip;
 		bu_log("rt_submodel_prep(%s): Opened database %s\n",
 			stp->st_dp->d_namep, sub_dbip->dbi_filename );
 	}
+
+	/*
+	 *  Initialize per-processor resources for the submodel.
+	 *  We treewalk here with only one processor (CPU 0).
+	 *  rt_submodel_shot() will get additional resources as needed.
+	 */
+	resp = (struct resource *)BU_PTBL_GET(&sub_rtip->rti_resources, 0);
+	rt_init_resource( resp, 0 );
 
 	/* Propagate some important settings downward */
 	sub_rtip->useair = rtip->useair;
@@ -472,8 +481,7 @@ struct seg		*seghead;
 	if( (resp = (struct resource *)BU_PTBL_GET(restbl, cpu)) == NULL )  {
 		/* First ray for this cpu for this submodel, alloc up */
 		BU_GETSTRUCT( resp, resource );
-		/* XXX Should be a BU_PTBL_SET() */
-		BU_PTBL_GET(restbl, cpu) = (long *)resp;
+		BU_PTBL_SET(restbl, cpu, resp);
 		rt_init_resource( resp, cpu );
 	}
 	RT_CK_RESOURCE(resp);

@@ -78,8 +78,8 @@ struct db_i	*dbip;
 	BU_LIST_INIT( &rtip->HeadRegion );
 
 	/* This table is used for discovering the per-cpu resource structures */
-	bu_ptbl_init( &rtip->rti_resources, MAX_PSW, "rti_resources ptbl" );
-	BU_PTBL_END(&rtip->rti_resources) = MAX_PSW;	/* Make 'em all available */
+	bu_ptbl_init( &rtip->rti_resources, MAX_PSW+1, "rti_resources ptbl" );
+	BU_PTBL_END(&rtip->rti_resources) = MAX_PSW+1;	/* Make 'em all available */
 
 	rt_uniresource.re_magic = RESOURCE_MAGIC;
 
