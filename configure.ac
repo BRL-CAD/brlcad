@@ -130,7 +130,7 @@ AC_MSG_CHECKING(whether to only build benchmark)
 only_benchmark=no
 AC_ARG_ENABLE(only-benchmark,
 	AC_HELP_STRING(--enable-only-benchmark,
-		[Only build the components necessary for the benchmark suite]),
+		[Only build the components necessary for the benchmark suite (default=no)]),
 	[if ! test "x$enableval" = "xno" ; then
 		only_benchmark=yes
 	fi]
@@ -143,9 +143,9 @@ AM_CONDITIONAL(ONLY_BENCHMARK, [! test "x$only_benchmark" = "xno"])
 AC_MSG_CHECKING(whether to only build librtserver)
 only_rts=no
 warn_only_both=no
-AC_ARG_ENABLE(only-rts,
-	AC_HELP_STRING(--enable-only-rts,
-		[Only build the components necessary for librtserver]),
+AC_ARG_ENABLE(only-rtserver,
+	AC_HELP_STRING(--enable-only-rtserver,
+		[Only build the components necessary for the raytrace server (default=no)]),
 	[if ! test "x$enableval" = "xno" ; then
 		only_rts=yes
 		if ! test "x$only_benchmark" = "xno" ; then
@@ -162,6 +162,48 @@ if ! test "x$warn_only_both" = "xno" ; then
 	AC_MSG_NOTICE([<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<])
 fi
 
+
+# force enable/disable building of libregex
+AC_MSG_CHECKING(whether to build the regular expression library)
+build_regex=auto
+AC_ARG_ENABLE(regex-build,
+	AC_HELP_STRING(--enable-regex-build,
+		[Build and use BRL-CAD's regular expression library (default=auto)]),
+	[if test "x$enableval" = "xno" ; then
+		build_regex=no
+	elif test "x$enableval" = "xyes" ; then
+		build_regex=yes
+	fi]
+)
+AC_MSG_RESULT($build_regex)
+
+# force enable/disable building of libpng
+AC_MSG_CHECKING(whether to build the PNG library)
+build_png=auto
+AC_ARG_ENABLE(png-build,
+	AC_HELP_STRING(--enable-png-build,
+		[Build and use BRL-CAD's Portable Network Graphics library (default=auto)]),
+	[if test "x$enableval" = "xno" ; then
+		build_png=no
+	elif test "x$enableval" = "xyes" ; then
+		build_png=yes
+	fi]
+)
+AC_MSG_RESULT($build_png)
+
+# force enable/disable building of zlib
+AC_MSG_CHECKING(whether to build the data compression library)
+build_zlib=auto
+AC_ARG_ENABLE(zlib-build,
+	AC_HELP_STRING(--enable-zlib-build,
+		[Build and use BRL-CAD's zlib compression library (default=auto)]),
+	[if test "x$enableval" = "xno" ; then
+		build_zlib=no
+	elif test "x$enableval" = "xyes" ; then
+		build_zlib=yes
+	fi]
+)
+AC_MSG_RESULT($build_zlib)
 
 # doxygen
 AC_MSG_CHECKING(whether to generate documentation with doxygen)
@@ -284,8 +326,6 @@ AC_SUBST(GL_LIBS)
 LEX_CFLAGS="-Dyylex=cmd_nop"
 AC_SUBST(LEX_CFLAGS)
 
-AC_DEFINE(USE_REGCOMP,1,new regex stuff)
-
 
 dnl **************************
 dnl *** Check for programs ***
@@ -294,6 +334,18 @@ dnl **************************
 AC_PROG_CC
 AM_PROG_CC_STDC
 AC_PROG_CPP
+
+dnl Determine whether we are using the MIPSpro compiler on SGI systems
+if test "x$build_vendor" = "xsgi" ; then
+   AC_MSG_CHECKING([whether we are using the MIPSpro compiler])
+   using_mipspro=no
+   AC_LINK_IFELSE([#if defined(sgi) && defined(_COMPILER_VERSION) && !defined(__GNUC__)
+If we get here, we are using the MIPSPro compiler (and the link should fail).
+#endif
+   ], [using_mipspro=no], [using_mipspro=yes])
+   AC_MSG_RESULT($using_mipspro)
+fi
+
 AC_PROG_INSTALL
 AC_PROG_LIBTOOL
 AM_PROG_LEX
@@ -333,7 +385,7 @@ AC_SEARCH_LIBS(initscr, ncurses curses,,
 CURSES="${LIBS}"
 
 LIBS=
-AC_SEARCH_LIBS(getvideo, gl, AC_DEFINE(HAS_SGIGL,1, Irix GL is present.))
+AC_SEARCH_LIBS(getvideo, gl, AC_DEFINE(HAS_SGIGL, 1, Irix GL is present.))
 SGIGL="${LIBS}"
 AC_SUBST(SGIGL)
 
@@ -341,7 +393,7 @@ LIBS="${SAVELIBS}"
 
 AC_SEARCH_LIBS(mallopt, malloc)
 AC_SEARCH_LIBS(matherr, mx)
-AC_SEARCH_LIBS(dlopen, [dl ldl], AC_DEFINE(HAVE_DLOPEN,1,dlopen is available))
+AC_SEARCH_LIBS(dlopen, [dl ldl], AC_DEFINE(HAVE_DLOPEN, 1, dlopen is available))
 AC_SUBST(DL)
 
 dnl X
@@ -367,9 +419,9 @@ esac
 TCL_LIBRARY="$prefix/tcl${TCLVER}"
 if test "x$FRAMEWORK_BUILD" = "x1" ; then
 	dnl this may be wrong
-    TCL_BUILD_CFLAGS="-DTCL_PACKAGE_PATH=\\\"$libdir/Resources/Scripts\\\" -DTCL_LIBRARY=\\\"$TCL_LIBRARY\\\""
+	TCL_BUILD_CFLAGS="-DTCL_PACKAGE_PATH=\\\"$libdir/Resources/Scripts\\\" -DTCL_LIBRARY=\\\"$TCL_LIBRARY\\\""
 else
-    TCL_BUILD_CFLAGS="-DTCL_PACKAGE_PATH=\\\"$libdir\\\" -DTCL_LIBRARY=\\\"$TCL_LIBRARY\\\""
+	TCL_BUILD_CFLAGS="-DTCL_PACKAGE_PATH=\\\"$libdir\\\" -DTCL_LIBRARY=\\\"$TCL_LIBRARY\\\""
 fi
 AC_SUBST(TCL)
 AC_SUBST(TCLVER)
@@ -393,11 +445,18 @@ AC_SUBST(ITCL_LIBS)
 AC_SUBST(ITCL_VERSION)
 AC_SUBST(ITK_LIBS)
 
+dnl detect a useable system regular expression library
+regex_link_works=no
+AC_CHECK_LIB(regex, regcomp, regex_link_works=yes)
+if test "x$regex_link_works" = "xno" ; then
+	AC_CHECK_LIB(compat, regcomp, regex_link_works=yes)
+fi
+
+dnl detect a useable system zlib
 have_zlib=no
 build_zlib=no
 AC_CHECK_LIB(z, deflate, have_zlib=yes)
-if test "$have_zlib" == yes
-then
+if test "x$have_zlib" == "xyes" ; then
 	build_zlib="no (use native)"
 	Z="-lz"
 else
@@ -406,11 +465,11 @@ else
 fi
 AM_CONDITIONAL(NEED_ZLIB, [test "$have_zlib" == no])
 
+dnl detect a useable system png library
 have_png=no
 build_png=no
 AC_CHECK_LIB(png, png_check_sig, have_png=yes,,'-lz')
-if test "$have_png"
-then
+if test "x$have_png" = "xno" ; then
 	build_png="no (use native)"
 	PNG_LIBS='-lpng ${Z}'
 else
@@ -452,6 +511,11 @@ AC_CHECK_HEADERS( \
 )
 AC_CHECK_HEADER(sys/stat.h, AC_DEFINE(HAVE_UNIX_IO,, Fix this, sys/types.h and sys/stat.h ...))
 AC_CHECK_HEADER(sys/time.h, AC_DEFINE(TIME_WITH_SYS_TIME,1,sys/time.h))
+
+found_regex_h=no
+AC_CHECK_HEADER(regex.h, 
+		AC_DEFINE(HAVE_REGEX_H,1,[Define to 1 if you have the '<regex.h>' header file])
+		found_regex_h=yes )
 
 found_jni_h=no
 AC_CHECK_HEADER(JavaVM/jni.h, 
@@ -549,26 +613,6 @@ AC_CHECK_DECL(sys_errlist,
 	      AC_DEFINE(HAVE_SYS_ERRLIST_DECL,0,don't have sys_errlist[]),
 	      [# include <stdio.h>])
 
-dnl XXX re_comp is old ..
-AC_CHECK_DECL(re_comp, AC_DEFINE(HAVE_REGEX_DECL,, BSD regular expressions))
-
-dnl See if regular expression support is available
-have_regex=no
-AC_MSG_CHECKING(for regular expression support)
-AC_TRY_RUN([
-#ifdef HAVE_SYS_TYPES_H
-#  include <sys/types.h>
-#endif
-#include <regex.h>
-int main() { regex_t re; regcomp(&re, 0, 0); regexec(&re, 0, 0, 0, 0); }
-        ],
-	[
-		AC_MSG_RESULT(yes)
-		have_regex=yes
-	],
-	[	AC_MSG_RESULT(no)]
-)
-
 
 dnl ******************************************
 dnl *** Check for compiler characteristics ***
@@ -638,7 +682,6 @@ AC_CHECK_FUNCS( \
 	drand \
 	gethostname \
 	getopt \
-	regex \
 	sbrk \
 	strcasecmp \
 	strchr \
@@ -663,9 +706,6 @@ AC_CHECK_FUNCS(socket, SOCKET="" ,
 	       ])
 AC_SUBST(SOCKET)
 
-dnl AC_CHECK_FUNCS(re_comp, REGEX_LIB="", [AC_CHECK_LIB(compat, re_comp, REGEX_LIB="-lcompat",)])
-AC_SUBST(REGEX_LIB)
-
 
 dnl *********************************
 dnl *** Check for system services ***
@@ -683,13 +723,47 @@ if ! test "x$only_rts" = "xno" ; then
 fi
 AM_CONDITIONAL(JAVA, [! test "x$with_java" = "xno"])
 
+dnl See if regular expression support is available
+regex_works=no
+AC_MSG_CHECKING(for regular expression support)
+AC_TRY_RUN([
+#ifdef HAVE_SYS_TYPES_H
+#  include <sys/types.h>
+#endif
+#include <regex.h>
+int main() { regex_t re; regcomp(&re, 0, 0); regexec(&re, 0, 0, 0, 0); }
+        ],
+	[regex_works=yes]
+)
+AC_MSG_RESULT($regex_works)
+
+dnl figure out whether we need to build libregex
+build_brlcad_regex=no
+if test "x$build_regex" = "xyes" ; then
+	build_brlcad_bregex=yes
+else
+	if test "x$build_regex" = "xno" ; then
+		if ! test "x$regex_works" = "xyes" ; then
+			AC_MSG_NOTICE([>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>])
+			AC_MSG_NOTICE([Try adding --enable-build-regex])
+			AC_MSG_ERROR([*** Building libregex was disabled, yet no system regex was found ***])
+		fi
+	else
+		dnl automatic detection
+		if test "x$regex_works" = "xno" ; then
+			build_brlcad_regex=yes
+		fi
+	fi
+fi
+AC_MSG_CHECKING(whether to build BRL-CAD's included regular expression library)
+AM_CONDITIONAL(BUILD_REGEX, [test "x$build_brlcad_regex" = "xyes"])
+AC_MSG_RESULT($build_brlcad_regex)
 
 dnl ***************************
 dnl *** Configure Makefiles ***
 dnl ***************************
 
 dnl XXX - These defines are available but not presently necessary
-dnl POSIX_REGEXEC
 dnl CALTECH_MALLOC
 dnl DRAND
 dnl DLOPEN
@@ -701,7 +775,6 @@ dnl VFORK
 dnl SBRK_DECL
 dnl POPEN_DECL
 dnl GETOPT_DECL
-dnl REGEX_DECL
 dnl XOPEN
 dnl BZERO
 dnl STRCHR
@@ -711,7 +784,6 @@ dnl FLOAT
 dnl GETOPT
 dnl OFF_T
 dnl WRITEV
-dnl REGEX
 dnl BSDGETTIMEOFDAY
 
 BN='${top_builddir}/src/libbn/libbn.la ${BU}'
@@ -939,7 +1011,7 @@ echo Build Tcl ............................: yes
 echo Build Tk .............................: yes
 echo Build Itcl/Itk .......................: yes
 echo Build IWidgets .......................: yes
-echo Build libregex .......................: yes
+echo Build libregex .......................: ${build_regex}
 echo Build libpng .........................: ${build_png}
 echo Build libz ...........................: ${build_zlib}
 echo 
@@ -962,3 +1034,4 @@ echo
 echo ---
 echo "$0 complete, type 'make' to begin building"
 echo
+
