@@ -125,12 +125,7 @@ char *file, *obj;
 
 	output_is_binary = 1;		/* output is binary */
 
-	if( minus_o )  {
-		return(0);		/* No framebuffer needed */
-	} else {
-		/* write to stdout */
-		return(1);
-	}
+	return(0);			/* No framebuffer needed */
 }
 
 /*
