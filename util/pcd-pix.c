@@ -232,9 +232,6 @@ enum ERRORS e;
  *			P L A N E A L L O C
  *
  *  Allocate memory for one YCC color plane.
- *  Twice as much memory is allocated, so that the interpolators have
- *  space to work in.
- *  (versus 8X more, in the original code)
  */
 static void planealloc(p,width,height)
 implane *p;
@@ -244,7 +241,7 @@ dim width,height;
 	p->mwidth=width;
 	p->mheight=height;
 
-	p->im = ( uBYTE * ) malloc  (width*height*2);
+	p->im = ( uBYTE * ) malloc  (width*height);
 	if(!(p->im)) error(E_MEM);
 }
 
@@ -683,6 +680,12 @@ implane *l,*c1,*c2;
 	return E_NONE;
 }
 
+/*
+ *			I N T E R P O L A T E
+ *
+ *  Take in image where iwidth is half of mwidth,
+ *  output image where iwidth has been doubled.  (Height too).
+ */
 static void interpolate(p)
 implane *p;
 {
@@ -698,15 +701,12 @@ implane *p;
 	if(p->mwidth  < 2*w ) error(E_INTERN);
 	if(p->mheight < 2*h ) error(E_INTERN);
 
-
 	p->iwidth=2*w;
 	p->iheight=2*h;
-
 
 	for(y=0;y<h;y++)
 	{
 		yi=h-1-y;
-		/* XXX Old is at 0*y, new is at 1*y */
 		optr=p->im+  yi*p->mwidth + (w-1);
 		nptr=p->im+2*yi*p->mwidth + (2*w - 2);
 
@@ -747,9 +747,13 @@ implane *p;
 		*(nptr++) = *(optr++);  
 		*(nptr++) = *(optr++); 
 	}
-
 }
 
+/*
+ *			H A L V E
+ *
+ *  Image is shrunk by half, by discarding data values.
+ */
 static void halve(p)
 implane *p;
 {
@@ -768,7 +772,6 @@ implane *p;
 		nptr=(p->im) +   y*(p->mwidth);
 		optr=(p->im) + 2*y*(p->mwidth);
 
-		/* XXX old image is at 1*Y, new is at 0*Y */
 		for(x=0;x<w;x++,nptr++,optr+=2)
 		{ 
 			*nptr = *optr;
@@ -778,6 +781,11 @@ implane *p;
 
 #define BitShift 12
 
+/*
+ *			Y C C T O R G B
+ *
+ *  Convert in place.
+ */
 static void ycctorgb(w,h,l,c1,c2)
 dim w,h;
 implane *l,*c1,*c2;
@@ -855,7 +863,6 @@ implane *r,*g,*b;
 	if((!b) || (b->iwidth != w ) || (b->iheight != h) || (!b->im)) error(E_INTERN);
 
 	BUinit;
-	/* Output from 0*y */
 	for( y=h-1; y>=0; y-- )  {
 		pr= r->im + y * r->mwidth;
 		pg= g->im + y * g->mwidth;
@@ -1028,6 +1035,11 @@ int n;
 	readhqtsub((struct pcdhqt *)ptr,myhuff2,&myhufflen2);
 }
 
+/*
+ *			D E C O D E
+ *
+ *  Read the input stream, decoding into the given buffer(s).
+ */
 static void decode(w,h,f,f1,f2,autosync)
 dim w,h;
 implane *f,*f1,*f2;
