@@ -77,8 +77,16 @@ register struct application *ap;
 	auto struct partition InitialPart; /* Head of Initial Partitions */
 	auto struct partition FinalPart;	/* Head of Final Partitions */
 	auto struct seg *waitsegs;	/* segs awaiting rt_boolweave() */
+	auto struct soltab **stpp;
 	register union cutter *cutp;
-	auto int hack_flag;
+
+	if(rt_g.debug&(DEBUG_ALLRAYS|DEBUG_SHOOT|DEBUG_PARTITION)) {
+		rt_log("**********shootray  %d,%d lvl=%d\n",
+			ap->a_x, ap->a_y, ap->a_level );
+		VPRINT("Pnt", ap->a_ray.r_pt);
+		VPRINT("Dir", ap->a_ray.r_dir);
+		fflush(stderr);		/* In case of instant death */
+	}
 
 	ap->a_rt_i->rti_nrays++;
 	if( ap->a_rt_i->needprep )
@@ -88,15 +96,11 @@ register struct application *ap;
 	FinalPart.pt_forw = FinalPart.pt_back = &FinalPart;
 
 	HeadSeg = SEG_NULL;
-	solidbits = BITV_NULL;		/* not allocated yet */
-
-	if(rt_g.debug&(DEBUG_ALLRAYS|DEBUG_SHOOT|DEBUG_PARTITION)) {
-		rt_log("**********shootray  %d,%d lvl=%d\n",
-			ap->a_x, ap->a_y, ap->a_level );
-		VPRINT("Pnt", ap->a_ray.r_pt);
-		VPRINT("Dir", ap->a_ray.r_dir);
-		fflush(stderr);		/* In case of instant death */
-	}
+	waitsegs = SEG_NULL;
+	GET_BITV( solidbits );	/* see rt_get_bitv() for details */
+	regionbits = &solidbits->be_v[2+(BITS2BYTES(ap->a_rt_i->nsolids)/sizeof(bitv_t))];
+	BITZERO(solidbits->be_v,ap->a_rt_i->nsolids);
+	BITZERO(regionbits,ap->a_rt_i->nregions);
 
 	/* Verify that direction vector has unit length */
 	if(rt_g.debug) {
@@ -139,53 +143,72 @@ register struct application *ap;
 	}
 
 	/*
+	 *  If there are infinite solids in the model,
+	 *  shoot at all of them, all of the time
+	 *  (until per-solid classification is implemented)
+	 *  before considering the model RPP.
+	 *  This code is a streamlined version of the real version.
+	 */
+	if( ap->a_rt_i->rti_inf_box.bn.bn_len > 0 )  {
+		/* Consider all objects within the box */
+		cutp = &(ap->a_rt_i->rti_inf_box);
+		stpp = &(cutp->bn.bn_list[cutp->bn.bn_len-1]);
+		for( ; stpp >= cutp->bn.bn_list; stpp-- )  {
+			register struct soltab *stp;
+			register struct seg *newseg;
+
+			stp = *stpp;
+			/* Shoot a ray */
+			if(rt_g.debug&DEBUG_SHOOT)rt_log("shooting %s\n", stp->st_name);
+			BITSET( solidbits->be_v, stp->st_bit );
+			ap->a_rt_i->nshots++;
+			if( (newseg = rt_functab[stp->st_id].ft_shot( 
+				stp, &ap->a_ray )
+			     ) == SEG_NULL )  {
+				ap->a_rt_i->nmiss++;
+				continue;	/* MISS */
+			}
+			if(rt_g.debug&DEBUG_SHOOT)  rt_pr_seg(newseg);
+			/* Add seg chain to list awaiting rt_boolweave() */
+			{
+				register struct seg *seg2 = newseg;
+				while( seg2->seg_next != SEG_NULL )
+					seg2 = seg2->seg_next;
+				seg2->seg_next = waitsegs;
+				waitsegs = newseg;
+			}
+			/* Would be even better done by per-partition bitv */
+			rt_bitv_or( regionbits, stp->st_regions, stp->st_maxreg);
+			if(rt_g.debug&DEBUG_PARTITION)
+				rt_pr_bitv( "shoot Regionbits", regionbits, ap->a_rt_i->nregions);
+			ap->a_rt_i->nhits++;
+		}
+	}
+
+	/*
 	 *  If ray does not enter the model RPP, skip on.
 	 */
-	hack_flag = 0;
 	if( !rt_in_rpp( &ap->a_ray, inv_dir, ap->a_rt_i->mdl_min, ap->a_rt_i->mdl_max )  ||
 	    ap->a_ray.r_max <= 0.0 )  {
-	    	if( ap->a_rt_i->rti_inf_box.bn.bn_len > 0 )  {
-	    		/*
-	    		 *  Because there are some infinite solids in this
-	    		 *  model, we need to shoot at them even outside
-	    		 *  the model RPP.  Thus, this hack.
-	    		 */
-	    		hack_flag = 1;
-	    	}  else  {
-			ap->a_rt_i->nmiss_model++;
-			ret = ap->a_miss( ap );
-			status = "MISS model";
-			goto out;
+	    	if( waitsegs != SEG_NULL )  {
+	    		/* Go handle the infinite objects we hit */
+	    		model_end = INFINITY;
+	    		goto weave;
 	    	}
+		ap->a_rt_i->nmiss_model++;
+		ret = ap->a_miss( ap );
+		status = "MISS model";
+		goto out;
 	}
 
-top:
-	if(rt_g.debug&DEBUG_SHOOT) rt_log("rt_shootray:  loop top, hack=%d\n", hack_flag);
-	if( hack_flag == 0 )  {
-		/* Push ray starting point to edge of model RPP */
-		box_start = ap->a_ray.r_min;
-		model_end = ap->a_ray.r_max;
-		if( box_start < -10.0 )
-			box_start = -10.0;	/* don't look back far */
-		lastcut = CUTTER_NULL;
-	}  else  {
-		cutp = &(ap->a_rt_i->rti_inf_box);
-		lastcut = cutp;
-    		box_start = -100000;
-		box_end = ap->a_ray.r_max = INFINITY;
-    		model_end = box_end * 0.99999;
-		waitsegs = SEG_NULL;
-	}
-	last_bool_start = box_start;
-
-	if( solidbits == BITV_NULL )  {
-		GET_BITV( solidbits );	/* see rt_get_bitv() for details */
-		regionbits = &solidbits->be_v[2+(BITS2BYTES(ap->a_rt_i->nsolids)/sizeof(bitv_t))];
-		BITZERO(solidbits->be_v,ap->a_rt_i->nsolids);
-		BITZERO(regionbits,ap->a_rt_i->nregions);
-	}
+	/* Push ray starting point to edge of model RPP */
+	box_start = ap->a_ray.r_min;
+	box_end = model_end = ap->a_ray.r_max;
+	if( box_start < -10.0 )
+		box_start = -10.0;	/* don't look back far */
+	lastcut = CUTTER_NULL;
+	last_bool_start = -10.0;
 	trybool = 0;
-	if( hack_flag )  goto middle;
 
 	/*
 	 *  While the ray remains inside model space,
@@ -193,9 +216,6 @@ top:
 	 *  model space again (or first hit is found, if user is impatient).
 	 */
 	while( box_start < model_end )  {
-		struct soltab **stpp;
-
-		waitsegs = SEG_NULL;
 
 		/* Move point (not box_start) slightly into the new box */
 		{
@@ -216,7 +236,8 @@ top:
 
 		/* Don't get stuck within the same box for long */
 		if( cutp==lastcut )  {
-			rt_log("%d,%d box push failed %g\n", ap->a_x, ap->a_y, box_end);
+			rt_log("%d,%d box push failed %g,%g\n",
+				ap->a_x, ap->a_y, box_start, box_end);
 			box_end += 1.0;		/* Advance 1mm */
 			box_start = box_end;
 			continue;
@@ -237,7 +258,6 @@ top:
 			box_start = box_end;
 		     	continue;
 		}
-middle:
 		box_end = ap->a_ray.r_max;	
 
 		if(rt_g.debug&DEBUG_SHOOT) {
@@ -329,37 +349,29 @@ middle:
 		/* Push ray onwards to next box */
 		box_start = box_end;
 	}
+
 	/*
 	 *  Ray has finally left known space --
 	 *  Weave any remaining segments into the partition list.
 	 */
+weave:
 	if( waitsegs != SEG_NULL )  {
+		register struct seg *seg2 = waitsegs;
+
 		rt_boolweave( waitsegs, &InitialPart );
 
 		/* Add segment chain to list of used segments */
-		{
-			register struct seg *seg2 = waitsegs;
-			while( seg2->seg_next != SEG_NULL )
-				seg2 = seg2->seg_next;
-			seg2->seg_next = HeadSeg;
-			HeadSeg = waitsegs;
-			waitsegs = SEG_NULL;
-		}
+		while( seg2->seg_next != SEG_NULL )
+			seg2 = seg2->seg_next;
+		seg2->seg_next = HeadSeg;
+		HeadSeg = waitsegs;
+		waitsegs = SEG_NULL;
 	}
 
 	/* HeadSeg chain now has all segments hit by this ray */
 	if( HeadSeg == SEG_NULL )  {
 		ret = ap->a_miss( ap );
 		status = "MISS solids";
-		if( hack_flag == 0 && ap->a_rt_i->rti_inf_box.bn.bn_len > 0 )  {
-	    		/*
-	    		 *  Because there are some infinite solids in this
-	    		 *  model, we need to shoot at them even outside
-	    		 *  the model RPP.  Thus, this hack.
-	    		 */
-	    		hack_flag = 1;
-			goto top;
-		}
 		goto out;
 	}
 
@@ -367,20 +379,13 @@ middle:
 	 *  All intersections of the ray with the model have
 	 *  been computed.  Evaluate the boolean trees over each partition.
 	 */
-	rt_boolfinal( &InitialPart, &FinalPart, 0.0, model_end, regionbits, ap);
+	rt_boolfinal( &InitialPart, &FinalPart, -10.0,
+		ap->a_rt_i->rti_inf_box.bn.bn_len > 0 ? INFINITY : model_end,
+		regionbits, ap);
 
 	if( FinalPart.pt_forw == &FinalPart )  {
 		ret = ap->a_miss( ap );
 		status = "MISS bool";
-		if( hack_flag == 0 && ap->a_rt_i->rti_inf_box.bn.bn_len > 0 )  {
-	    		/*
-	    		 *  Because there are some infinite solids in this
-	    		 *  model, we need to shoot at them even outside
-	    		 *  the model RPP.  Thus, this hack.
-	    		 */
-	    		hack_flag = 1;
-			goto top;
-		}
 		goto freeup;
 	}
 
@@ -399,7 +404,8 @@ hitit:
 			rt_functab[stp->st_id].ft_norm(
 				pp->pt_inhit, stp, &(ap->a_ray) );
 
-			if( ap->a_onehit )  break;
+			if( ap->a_onehit && pp->pt_inhit->hit_dist >= 0.0 )
+				break;
 			stp = pp->pt_outseg->seg_stp;
 			rt_functab[stp->st_id].ft_norm(
 				pp->pt_outhit, stp, &(ap->a_ray) );
