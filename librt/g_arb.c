@@ -946,6 +946,8 @@ struct directory	*dp;
 }
 
 /*
+ *			R T _ M K _ N M G _ P L A N E E Q N
+ *
  *  This routine is just a hack, for getting started quickly.
  *
  *  If face was built in clockwise manner from points A, B, C, then
@@ -954,20 +956,25 @@ struct directory	*dp;
  *	C is at eu->next
  *  as a consequence of the way nmg_cmface() makes the face.
  */
-rt_mk_nmg_planeeqn( ofp )
-struct faceuse	*ofp;
+rt_mk_nmg_planeeqn( fu )
+struct faceuse	*fu;
 {
 	struct edgeuse		*eu;
 	plane_t			plane;
 
-	eu = ofp->lu_p->down.eu_p;
-	if (rt_mk_plane_3pts(plane, eu->vu_p->v_p->vg_p->coord,
-				eu->last->vu_p->v_p->vg_p->coord,
-				eu->next->vu_p->v_p->vg_p->coord)) {
+	if( fu == (struct faceuse *)0 )  {
+		rt_bomb("rt_mk_nmg_planeeqn(): null faceuse\n");
+	}
+
+	eu = fu->lu_p->down.eu_p;
+	if (rt_mk_plane_3pts(plane,
+	    eu->vu_p->v_p->vg_p->coord,
+	    eu->last->vu_p->v_p->vg_p->coord,
+	    eu->next->vu_p->v_p->vg_p->coord)) {
 		rt_log("rt_mk_nmg_planeeqn(): rt_mk_plane_3pts failed\n");
 	}
 	else if (plane[0] == 0.0 && plane[1] == 0.0 && plane[2] == 0.0) {
 		rt_log("rt_mk_nmg_planeeqn():  Bad plane equation from rt_mk_plane_3pts\n" );
 	}
-	else nmg_face_g( ofp, plane);
+	else nmg_face_g( fu, plane);
 }
