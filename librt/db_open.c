@@ -77,7 +77,6 @@ CONST char	*mode;
 {
 	register struct db_i	*dbip = DBI_NULL;
 	register int		i;
-	unsigned char		header[8];
 
 	if(rt_g.debug&DEBUG_DB) bu_log("db_open(%s, %s)\n", name, mode );
 
@@ -155,19 +154,7 @@ CONST char	*mode;
 	}
 
 	/* determine version */
-	rewind(dbip->dbi_fp);
-	if( fread( header, sizeof header, 1, dbip->dbi_fp ) != 1  )  {
-		bu_log("db_open(%s) ERROR, file too short to be BRL-CAD database\n",
-			dbip->dbi_filename);
-		goto fail;
-	}
-
-	
-	if( db5_header_is_valid( header ) ) {
-		dbip->dbi_version = 5;
-	} else {
-		dbip->dbi_version = 4;
-	}
+	dbip->dbi_version = db_get_version( dbip );
 
 	bu_ptbl_init( &dbip->dbi_clients, 128, "dbi_clients[]" );
 	dbip->dbi_magic = DBI_MAGIC;		/* Now it's valid */
