@@ -46,12 +46,19 @@
 
 #ifndef lint
 static char sccsid[] = "@(#)if_X24.c version 1.40 (22 Nov 1994)";
+static char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
+
+#include "conf.h"
 
 #include <stdio.h>
 #include <sys/types.h>
 
-#include "conf.h"
+#if defined(USE_SYS_TIME_H)
+# include <sys/time.h>
+#endif
+#include <time.h>
+
 #include "machine.h"
 #include "fb.h"
 #include "externs.h"
@@ -102,7 +109,7 @@ static	int	linger();
 static	int	xsetup();
 static	void	print_display_info();	/* debug */
 
-static void	handle_event(FBIO *ifp, XEvent *event);
+static void	handle_event FB_ARGS((FBIO *ifp, XEvent *event));
 
 
 /* This is the ONLY thing that we normally "export" */
@@ -1327,9 +1334,9 @@ printf("xsetup(ifp:0x%x, width:%d, height:%d) entered\n", ifp, width, height);
 
 		/* Create fast lookup tables for dithering */
 
-		xi->xi_ccredtbl = malloc(64 * 256);
-		xi->xi_ccgrntbl = malloc(64 * 256);
-		xi->xi_ccblutbl = malloc(64 * 256);
+		xi->xi_ccredtbl = (unsigned char *)malloc(64 * 256);
+		xi->xi_ccgrntbl = (unsigned char *)malloc(64 * 256);
+		xi->xi_ccblutbl = (unsigned char *)malloc(64 * 256);
 
 		for (i = 0; i < 256; i++)
 		{
@@ -1449,8 +1456,8 @@ printf("xsetup(ifp:0x%x, width:%d, height:%d) entered\n", ifp, width, height);
 
 		/* Create fast lookup tables for dithering */
 
-		xi->xi_andtbl = malloc(64 * 256);
-		xi->xi_ortbl = malloc(64 * 256);
+		xi->xi_andtbl = (unsigned char *)malloc(64 * 256);
+		xi->xi_ortbl = (unsigned char *)malloc(64 * 256);
 
 		for (i = 0; i < 256; i++)
 			for (j = 0; j < 64; j++) {
@@ -1476,9 +1483,9 @@ printf("xsetup(ifp:0x%x, width:%d, height:%d) entered\n", ifp, width, height);
 	/* Create fake colormaps if the X server won't do it for us */
 
 	if (!(xi->xi_flags & FLG_XCMAP)) {
-		xi->xi_redmap = malloc(256);
-		xi->xi_grnmap = malloc(256);
-		xi->xi_blumap = malloc(256);
+		xi->xi_redmap = (unsigned char *)malloc(256);
+		xi->xi_grnmap = (unsigned char *)malloc(256);
+		xi->xi_blumap = (unsigned char *)malloc(256);
 
 		if (!xi->xi_redmap || !xi->xi_grnmap || !xi->xi_blumap) {
 			fb_log("if_X24: Can't allocate colormap memory\n");
@@ -2083,7 +2090,7 @@ private memory instead, errno %d\n", errno);
 		else
 		{
 			/* Open the segment Read/Write */
-			if ((mem = shmat(xi->xi_shmid, 0, 0)) != (void *)-1L)
+			if ((mem = (char *)shmat(xi->xi_shmid, 0, 0)) != (char *)-1L)
 				break;
 			else
 				fb_log("X24_getmem: can't shmat shared memory, \
