@@ -484,6 +484,8 @@ dnl *************************
 
 AC_HEADER_STDC
 AC_CHECK_HEADERS( \
+	errno.h \
+	fcntl.h \
 	float.h \
 	getopt.h \
 	limits.h \
@@ -493,6 +495,7 @@ AC_CHECK_HEADERS( \
 	stdarg.h \
 	stdlib.h \
 	string.h \
+	sys/errno.h \
 	sys/ioctl_compat.h \
 	sys/machd.h \
 	sys/mman.h \
@@ -674,6 +677,7 @@ dnl ***************************
 
 AC_TYPE_SIGNAL
 AC_CHECK_FUNCS( \
+	access \
 	bzero \
 	dlopen \
 	drand \
