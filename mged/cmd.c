@@ -3152,8 +3152,13 @@ cmd_blast(ClientData	clientData,
 	  int		argc,
 	  char		**argv)
 {
+	char *av[2];
 
-	dgo_zap_cmd(dgop, interp);
+	av[0] = "Z";
+	av[1] = (char *)0;
+
+	if (cmd_zap(clientData, interp, 1, av) == TCL_ERROR)
+		return TCL_ERROR;
 
 	return edit_com(argc, argv, 1, 1);
 }
