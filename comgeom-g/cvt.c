@@ -18,8 +18,8 @@ March 81  CAS	Added processing for ARS
 #include <string.h>
 #include <signal.h>
 #include <math.h>
-#include "ged_types.h"
-#include "3d.h"
+#include "./ged_types.h"
+#include "./3d.h"
 
 char name_it[16];	/* stores argv if it exists and appends it
 			to each name generated.*/
@@ -51,8 +51,6 @@ char *titles[] = {
 
 #define NUMPERCOL 8
 
-int bang();
-
 int outfd;		/* Output file descriptor */
 int updfd;		/* Update file descriptor */
 
@@ -74,7 +72,7 @@ char **argv;
 
 	if( ! (argc == 3 || argc == 4) )
 	{
-		printf(	"Usage:  cvt4 input_file output_file" );
+		printf(	"Usage:  comg-g [opts] input_file output_file" );
 		printf(		" [ name_postfix ]\n");
 		exit(10);
 	}
@@ -100,20 +98,21 @@ char **argv;
 	}
 	updfd = open( argv[2], 2 );
 
-/*
-	setexit();
-*/
-	signal( 8, &bang );
-
+#ifdef GIFT5
+	printf("\n**** CVT5: 12Jun84 ****\n\n");
+#else
 	printf("\n**** CVT4: 12Jun84 ****\n\n");
+#endif
 
-	printf("COMGEOM file must be as input to GIFT4:\n");
+	printf("COMGEOM input file must have this format:\n");
 	printf("     1.  title card\n");
 	printf("     2.  control card\n");
 	printf("     3.  solid table\n");
 	printf("     4.  region table\n");
 	printf("     5.  -1\n");
+#ifndef GIFT4
 	printf("     6.  blank\n");
+#endif
    	printf("     7.  region ident table\n\n");
 
 	/* read title */
@@ -177,8 +176,12 @@ char **argv;
 
 	/* REGION IDENT TABLE */
 	lseek( updfd, regionpos, 0 );
+
+#ifndef GIFT5
 	/* read the blank card (line) */
 	getline( &record );
+#endif
+
 	printf("\nprocessing region ident table\n");
 
 	while( 1 ) {
@@ -238,15 +241,6 @@ printf("producing groups\n");
 	}
 }
 
-bang()  {
-	signal( 8, &bang );
-	printf("floating point error!\n");
-	exit(10);
-/*
-	reset();
-*/
-}
-
 /*	J O I N			 */
 join( rp, name, low, high )register union record *rp;
 { static struct members M;  static struct combination header;
@@ -271,7 +265,7 @@ join( rp, name, low, high )register union record *rp;
 		{
 			M.m_id = MEMB;
 			M.m_relation = UNION;
-			mat_idn( &M.m_mat );
+			mat_idn( M.m_mat );
 
 			movename( rp->c.c_name, M.m_instname );
 			M.m_brname[0] = 0;

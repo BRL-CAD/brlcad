@@ -14,14 +14,19 @@ extern char *malloc();
 
 #define DOWN 0
 #define UP   1
-#define NCARDS	29	/* Number of cards in 1 region */
+#define NCARDS	30	/* Number of cards in 1 region */
 
 extern union record record;
 extern int sol_total, sol_work;
 
 struct scard {
+#ifdef GIFT5
+	char	sc_num[5];
+	char	sc_type[5];
+#else
 	char	sc_num[3];
 	char	sc_type[7];
+#endif
 	char	sc_fields[6][10];
 	char	sc_remark[16];
 } 
@@ -41,12 +46,21 @@ struct rcard  {
 rcard;
 
 struct idcard  {
+#ifdef GIFT5
+	char	id_region[5];
+	char	id_rid[5];
+	char	id_air[5];
+	char	id_mat[5];
+	char	id_los[5];
+	char	id_waste[55];
+#else
 	char	id_region[10];
 	char	id_rid[10];
 	char	id_air[10];
 	char	id_waste[44];
 	char	id_mat[3];	/* use any existing material code */
 	char	id_los[3];	/* use any existing los percentage */
+#endif
 } 
 idcard;
 
@@ -98,7 +112,7 @@ register struct solids *solidp;
 	if( sol_work == sol_total )	/* processed all solids */
 		return( 0 );
 
-	if( (i = getline( &scard )) == 0 )
+	if( (i = getline( &scard )) == EOF )
 		return( 0 );	/* end of file */
 
 	/* another solid - increment solid counter */
@@ -110,10 +124,7 @@ register struct solids *solidp;
 	 * PROCESS ARS SOLID
 	 */
 	if( lookup(scard.sc_type) == ARS){
-		arsap = solidp;
-/*
-		b = solidp;
-*/
+		arsap = (struct ars_rec *) solidp;
 		arsap->a_id = ARS_A;
 		arsap -> a_type = lookup(scard.sc_type);
 		namecvt( sol_work, arsap -> a_name, 's');
@@ -123,6 +134,7 @@ register struct solids *solidp;
 		xmax = ymax = zmax = -10000.0;
 		xmin = ymin = zmin = 10000.0;
 		/* read   N  M values    ->     convert ASCII to integer  */
+		nbuf[10] = '\0';
 		for (i=0; i<10; i++)
 			nbuf[i]=scard.sc_fields[0][i];
 
@@ -154,11 +166,6 @@ register struct solids *solidp;
 		 * by the total number of cross sections equals the total
 		 * amount of storage required.
 		 */
-		if( (b = (union record *) malloc( (unsigned) Nb_strsl*sizeof record )) == (union record *) NULL ) {
-			(void) fprintf( stderr, "getsolid(): malloc() failed!\n" );
-			exit(1);
-		}
-
 		Nb_strsl = Nb_strcx * M;
 		arsap->a_totlen = Nb_strsl;
 
@@ -166,7 +173,14 @@ register struct solids *solidp;
 		 * the number of b type structures is used here
 		 * to allocate proper storage dynamically
 		 */
-		b = malloc( (unsigned)(Nb_strsl * sizeof record) );
+		if( (b =
+		    (union record *)
+		    malloc( (unsigned) Nb_strsl*sizeof record )
+		    ) == (union record *) NULL
+			) {
+			(void) fprintf( stderr, "Getsolid(): Malloc() failed!\n" );
+			exit( 1 );
+		}
 
 		/* calculate number of ARS data cards that have to be read in */
 		/*   as given in GIFT users manual  */
@@ -186,7 +200,11 @@ register struct solids *solidp;
 		for(m=1; m < (M+1); m++)  {
 			structn=0;
 			for(n=1; n <(cdcx+1); n++)  {
-				getline(&scard);
+				if( getline(&scard) == EOF)
+					{
+					printf("read of granule failed\n");
+					return	0;
+					}
 				cds++;
 				if((j=(n % 4)) == 1)  {
 					structn++;   /* increment granule number   */
@@ -301,7 +319,11 @@ register struct solids *solidp;
 
 		for( cd=1; cd <= ncards[solidp->s_type]; cd++ )  {
 			if( cd != 1 )  {
-				getline( &scard );
+				if( getline( &scard ) == EOF )
+					{
+					printf("too few cards for solid %d\n",solidp->s_num);
+					return	0;
+					}
 				/* continuation card
 				 * solid type should be blank 
 				 */
@@ -331,17 +353,18 @@ register union record *rp;
 {
 	static union record mem[9*NCARDS];	/* Holds WHOLE Combination */
 	register struct members *mp;		/* Pointer to current member */
-	int i;
+	int i, j;
 	int card;
 	int count;
 	int n;
+	int reg_reg_flag = 0;
 	char *cp;
 
 	rp->c.c_id = COMB;
 	count = 0;		/* count of # of solids in region */
 
 	if( noreadflag == DOWN )  {
-		if( getline( &rcard ) < 0 ) 
+		if( getline( &rcard ) == EOF ) 
 			return( 0 );		/* EOF */
 	}
 	noreadflag = DOWN;
@@ -365,11 +388,11 @@ register union record *rp;
 
 	for( card=0; card<NCARDS; card++ )  {
 		if( card != 0 )  {
-/*
-			if( getline( &rcard ) < 0 ) 
+			if( getline( &rcard ) == EOF )
+				{
+				printf("read of card failed\n");
 				return(0);
-*/
-			getline( &rcard );
+				}
 			rcard.rc_null = 0;
 			if( atoi( rcard.rc_num ) != 0 )  {
 				/* finished with this region */
@@ -378,11 +401,25 @@ register union record *rp;
 			}
 		}
 
-		cp = &rcard.rc_fields;
+		cp = (char *) rcard.rc_fields;
 
 		/* Scan each of the 9 fields on the card */
 		for( i=0; i<9; i++ )  {
 			cp[7] = 0;	/* clobber succeeding 'O' pos */
+
+			/* check for "-    5" field which atoi will
+			 *	return a zero
+			 */
+			if(cp[2] == '-' || cp[2] == '+') {
+				/* remove any followin blanks */
+				for(j=3; j<6; j++) {
+					if(cp[j] == ' ') {
+						cp[j] = cp[j-1];
+						cp[j-1] = ' ';
+					}
+				}
+			}
+
 			n = atoi( cp+2 );
 
 			/* Check for null field -- they are to be skipped */
@@ -392,7 +429,22 @@ register union record *rp;
 			}
 
 			mp = &(mem[count++].M);
+#ifdef GIFT5
+			if(rcard.rc_fields[i].rcf_or == 'g' ||
+			   rcard.rc_fields[i].rcf_or == 'G')
+				reg_reg_flag = 1;
 
+			if( cp[1] == 'R' || cp[1] == 'r' ) 
+				mp->m_relation = UNION;
+			else {
+				if( n < 0 )  {
+					mp->m_relation = SUBTRACT;
+					n = -n;
+				}  else  {
+					mp->m_relation = INTERSECT;
+				}
+			}
+#else
 			if( cp[1] != ' ' )  {
 				mp->m_relation = UNION;
 			}  else  {
@@ -403,18 +455,27 @@ register union record *rp;
 					mp->m_relation = INTERSECT;
 				}
 			}
+#endif
 			mp->m_id = MEMB;
 			mp->m_num = n;
-			mat_idn( &mp->m_mat );
+			mat_idn( mp->m_mat );
 
+#ifdef GIFT5
+			if( reg_reg_flag )
+				namecvt(n, mp->m_instname, 'r');
+			else
+				namecvt( n, mp->m_instname, 's' );
+			reg_reg_flag = 0;
+#else
 			namecvt( n, mp->m_instname, 's' );
+#endif
 			cp += 7;
 		}
 	}
 
 	if(card == NCARDS) {
 		/* check if NCARDS is large enough */
-		if(getline(&rcard) < 0)
+		if(getline(&rcard) == EOF )
 			return(0);
 		rcard.rc_null = 0;
 		if(atoi(rcard.rc_num) == 0) {
@@ -428,7 +489,7 @@ register union record *rp;
 	rp->c.c_length = count;
 
 	write( outfd, rp, sizeof record );
-	write( outfd, &mem, count * sizeof record );
+	write( outfd, mem, count * sizeof record );
 
 	return( 1 );		/* success */
 }
@@ -441,31 +502,46 @@ register union record *rp;
 getid( rp )
 register union record *rp;
 {
+	register int	i;
 	int reg;
 	int id;
 	int air;
 	int mat;
 	int los;
-	int i;
 	char buff[11];
 
-	if( getline( &idcard ) < 0 )
+	if( getline( (char *) &idcard ) == EOF ||
+	    ((char *) &idcard)[0] == '\n' )
 		return( 0 );
 
-	buff[10] = '\0';
+#ifdef GIFT5
+#	define BUFLEN	5
+#else
+#	define BUFLEN	10
+#endif
+	buff[BUFLEN] = '\0';
 
-	for(i=0; i<10; i++)
+	for(i=0; i<BUFLEN; i++)
 		buff[i] = idcard.id_region[i];
 	reg = atoi( buff );
 
-	for(i=0; i<10; i++)
+	for(i=0; i<BUFLEN; i++)
 		buff[i] = idcard.id_rid[i];
 	id = atoi( buff );
 
-	for(i=0; i<10; i++)
+	for(i=0; i<BUFLEN; i++)
 		buff[i] = idcard.id_air[i];
 	air = atoi( buff );
 
+#ifdef GIFT5
+	for(i=0; i<5; i++)
+		buff[i] = idcard.id_mat[i];
+	mat = atoi( buff );
+
+	for(i=0; i<5; i++)
+		buff[i] = idcard.id_los[i];
+	los = atoi( buff );
+#else
 	idcard.id_mat[2] = '\0';
 	mat = atoi( idcard.id_mat );
 
@@ -473,13 +549,23 @@ register union record *rp;
 		buff[i] = idcard.id_los[i];
 	buff[3] = '\0';
 	los = atoi( buff );
+#endif
 
-	if( read( updfd, rp, sizeof record ) != sizeof record ) {
-		printf("read error....STOP\n");
-		exit( 10 );
-	}
-	lseek( updfd, -(long)(sizeof record), 1 );		/* Back up */
-
+	if( (i = read( updfd, (char *) rp, sizeof(union record) ))
+		!= sizeof(union record)
+		)
+		{
+		if( i == -1 )
+			perror( "read" );
+		printf("read error...STOP\n");
+		exit(10);
+		}
+	/* Back up */
+	if( lseek( updfd, -(long)(sizeof(union record)), 1 ) == -1 )
+		{
+		perror( "lseek" );
+		exit(10);
+		}
 	if( rp->c.c_id != COMB )  {
 		printf("Record ID was not COMB...STOP\n");
 		exit( 10 );
@@ -577,7 +663,7 @@ lookup( cp )  {
 	}
 
 	printf("ERROR:  bad solid type '%s'\n", cp );
-	exit(10);
+	return(0);
 }
 
 /*
@@ -612,19 +698,21 @@ inbuf = {
 getline( cp )
 register char *cp;
 {
-	register char c;
-	register int count;
+	register char	c;
+	register int	count = 80;
 
-	count = 80;
-	while( (c = getchar()) > 0 && c != '\n' )  {
+	while( (c = getchar()) == '\n' ) /* Skip blank lines.		*/
+		;
+	while( c != EOF && c != '\n' )  {
 		*cp++ = c;
 		count--;
+		c = getchar();
 	}
-
-	while( count-- >= 0 ) 
+	if( c == EOF )
+		return	EOF;
+	while( count-- > 0 ) 
 		*cp++ = 0;
-
-	return( c );
+	return	c;
 }
 
 
@@ -652,11 +740,11 @@ get_title()
 	char ctitle[80];
 	int i;
 
-	if( (i = getline( ctitle )) == 0 ) {
+	if( (i = getline( ctitle )) == EOF ) {
 		printf("Empty input file\n");
 		exit(10);
 	}
-	printf("Title: %s\n",ctitle);
+	printf("Units  Title: %s\n",ctitle);
 	return;
 }
 
@@ -670,16 +758,18 @@ get_control()
 	int i;
 	char ch[80];
 
-	if( (i = getline( ch )) == 0 ) {
+	if( (i = getline( ch )) == EOF ) {
 		printf("No control card .... STOP\n");
 		exit(10);
 	}
 
-	for(i=0;i<10;i++)
-		ch[i] = ' ';
-
-	ch[20] = 0;
+#ifdef GIFT5
+	ch[5] = 0;
 	sol_total = atoi( ch );
+#else
+	ch[20] = 0;
+	sol_total = atoi( ch+10 );
+#endif
 
 	return;
 

@@ -21,8 +21,8 @@
 
 #include <stdio.h>
 #include <math.h>
-#include "ged_types.h"
-#include "3d.h"
+#include "./ged_types.h"
+#include "./3d.h"
 
  double sqrt();
 
@@ -227,6 +227,9 @@ struct solids *in;
 		return;
 
 	case ELL:
+#ifdef GIFT5
+		/* NO ELL's in gift5  -  fall through to ELL1 */
+#else
 		/*
 		 * For simplicity, we convert ELL to ELL1, then
 		 * fall through to ELL1 code.  Format of ELL is
@@ -246,6 +249,7 @@ struct solids *in;
 		VMOVE( F1, O1 );	/* Move V */
 		VMOVE( F2, O2 );	/* Move A */
 		/* fall through */
+#endif
 
 	case ELL1:
 		/* GENELL is V, A, B, C */
@@ -306,11 +310,11 @@ struct solids *in;
 		return;
 
 	default:
-		return;
+		break;
 	}
 
 	/*
 	 * We should never reach here
 	 */
-	printf("convert:  fell out of loop\n");
+	printf("convert:  no support for type %d\n", in->s_type );
 }

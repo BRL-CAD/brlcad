@@ -25,7 +25,7 @@
  *
  */
 
-#include "ged_types.h"
+#include "./ged_types.h"
 
 
 /*
