@@ -201,22 +201,17 @@ register struct bu_vls	*vp;
   BU_CK_VLS( vp );
   y = ybase;
 
+  DM_SET_FGCOLOR(dmp,
+		 color_scheme->fp_edit_info[0],
+		 color_scheme->fp_edit_info[1],
+		 color_scheme->fp_edit_info[2], 1);
+
   start = bu_vls_addr( vp );
   while( *start != '\0' )  {
     if( (end = strchr( start, '\n' )) == NULL )  return;
 
     *end = '\0';
-#if 0
-    {
-      register char *p;
 
-      /* Some display managers don't handle TABs properly, so
-	 we replace any TABs with spaces. */
-      for(p = start; *p != '\0'; ++p)
-	if(*p == '\t')
-	  *p = ' ';
-    }
-#endif
     DM_DRAW_STRING_2D(dmp, start,
 		      GED2PM1(xbase), GED2PM1(y), 0, 0);
     start = end+1;
@@ -330,7 +325,10 @@ struct bu_vls *overlay_vls;
 
 		label_edited_solid( pl, 8+1, xform, &es_int );
 
-		DM_SET_FGCOLOR(dmp, DM_YELLOW_R, DM_YELLOW_G, DM_YELLOW_B, 1);
+		DM_SET_FGCOLOR(dmp,
+			       color_scheme->geo_label[0],
+			       color_scheme->geo_label[1],
+			       color_scheme->geo_label[2], 1);
 		for( i=0; i<8+1; i++ )  {
 			if( pl[i].str[0] == '\0' )  break;
 			DM_DRAW_STRING_2D( dmp, pl[i].str,
@@ -341,7 +339,10 @@ struct bu_vls *overlay_vls;
 
 if(mged_variables->faceplate){
 	/* Line across the bottom, above two bottom status lines */
-	DM_SET_FGCOLOR(dmp, DM_YELLOW_R, DM_YELLOW_G, DM_YELLOW_B, 1);
+	DM_SET_FGCOLOR(dmp,
+		       color_scheme->fp_other_line[0],
+		       color_scheme->fp_other_line[1],
+		       color_scheme->fp_other_line[2], 1);
 	DM_DRAW_LINE_2D( dmp,
 			 GED2PM1(XMIN), GED2PM1(TITLE_YBASE-TEXT1_DY),
 			 GED2PM1(XMAX), GED2PM1(TITLE_YBASE-TEXT1_DY) );
@@ -366,15 +367,13 @@ if(mged_variables->faceplate){
 	  y = MENUY;
 	  x = MENUX;
 
-	  /* Display state and local unit in upper right corner, boxed */
-#define YPOS	(MENUY - MENU_DY - 75 )
-	  DM_DRAW_LINE_2D(dmp,
-			  GED2PM1(MENUXLIM), GED2PM1(YPOS),
-			  GED2PM1(MENUXLIM), GED2PM1(YMAX));	/* vert. */
-	  DM_SET_FGCOLOR(dmp, DM_WHITE_R, DM_WHITE_G, DM_WHITE_B, 1);
+	  /* Display state and local unit in upper left corner, boxed */
+	  DM_SET_FGCOLOR(dmp,
+			 color_scheme->fp_state_text1[0],
+			 color_scheme->fp_state_text1[1],
+			 color_scheme->fp_state_text1[2], 1);
 	  DM_DRAW_STRING_2D(dmp, state_str[state],
 			    GED2PM1(MENUX), GED2PM1(MENUY - MENU_DY), 1, 0 );
-#undef YPOS
 	}else{
 	  scroll_ybot = SCROLLY;
 	  x = XMIN + 20;
@@ -388,12 +387,18 @@ if(mged_variables->faceplate){
 	    (state==ST_O_PATH || state==ST_O_PICK || state==ST_S_PICK) )  {
 	  for( i=0; i <= illump->s_last; i++ )  {
 	    if( i == ipathpos  &&  state == ST_O_PATH )  {
-	      DM_SET_FGCOLOR(dmp, DM_WHITE_R, DM_WHITE_G, DM_WHITE_B, 1);
+	      DM_SET_FGCOLOR(dmp,
+			     color_scheme->fp_state_text1[0],
+			     color_scheme->fp_state_text1[1],
+			     color_scheme->fp_state_text1[2], 1);
 	      DM_DRAW_STRING_2D( dmp, "[MATRIX]",
 				 GED2PM1(x), GED2PM1(y), 0, 0 );
 	      y += MENU_DY;
 	    }
-	    DM_SET_FGCOLOR(dmp, DM_YELLOW_R, DM_YELLOW_G, DM_YELLOW_B, 1);
+	    DM_SET_FGCOLOR(dmp,
+			   color_scheme->fp_state_text2[0],
+			   color_scheme->fp_state_text2[1],
+			   color_scheme->fp_state_text2[2], 1);
 	    DM_DRAW_STRING_2D( dmp, illump->s_path[i]->d_namep,
 			       GED2PM1(x), GED2PM1(y), 0, 0 );
 	    y += MENU_DY;
@@ -401,6 +406,13 @@ if(mged_variables->faceplate){
 	}
 
 	if(mged_variables->orig_gui){
+	  DM_SET_FGCOLOR(dmp,
+			 color_scheme->fp_other_line[0],
+			 color_scheme->fp_other_line[1],
+			 color_scheme->fp_other_line[2], 1);
+	  DM_DRAW_LINE_2D(dmp,
+			  GED2PM1(MENUXLIM), GED2PM1(y),
+			  GED2PM1(MENUXLIM), GED2PM1(YMAX));	/* vert. */
 	  /*
 	   * The top of the menu (if any) begins at the Y value specified.
 	   */
@@ -412,7 +424,10 @@ if(mged_variables->faceplate){
 		MAT4X3PNT(temp, model2objview, es_keypoint);
 		xloc = (int)(temp[X]*2048);
 		yloc = (int)(temp[Y]*2048);
-		DM_SET_FGCOLOR(dmp, DM_YELLOW_R, DM_YELLOW_G, DM_YELLOW_B, 1);
+		DM_SET_FGCOLOR(dmp,
+			       color_scheme->fp_edit_info[0],
+			       color_scheme->fp_edit_info[1],
+			       color_scheme->fp_edit_info[2], 1);
 		DM_DRAW_LINE_2D(dmp,
 				GED2PM1(xloc-TEXT0_DY), GED2PM1(yloc+TEXT0_DY),
 				GED2PM1(xloc+TEXT0_DY), GED2PM1(yloc-TEXT0_DY));
@@ -445,7 +460,7 @@ if(mged_variables->faceplate){
 	}
 
 	/*
-	 * General status information on the next to last line
+	 * General status information on first status line
 	 */
 	bu_vls_trunc(&vls, 0);
 	bu_vls_printf(&vls,
@@ -457,7 +472,10 @@ if(mged_variables->faceplate){
 		      curr_dm_list->s_info->elevation,
 		      curr_dm_list->s_info->twist,
 		      ang_x, ang_y, ang_z);
-	DM_SET_FGCOLOR(dmp, DM_WHITE_R, DM_WHITE_G, DM_WHITE_B, 1);
+	DM_SET_FGCOLOR(dmp,
+		       color_scheme->fp_status_text1[0],
+		       color_scheme->fp_status_text1[1],
+		       color_scheme->fp_status_text1[2], 1);
 	DM_DRAW_STRING_2D( dmp, bu_vls_addr(&vls),
 			   GED2PM1(TITLE_XBASE), GED2PM1(TITLE_YBASE), 1, 0 );
 } /* if faceplate !0 */
@@ -487,7 +505,10 @@ if(mged_variables->faceplate){
 			 adc_pos_grid[X] * f, adc_pos_grid[Y] * f,
 			 adc_pos_view[X] * f, adc_pos_view[Y] * f);
 		if(mged_variables->faceplate){
-		  DM_SET_FGCOLOR(dmp, DM_YELLOW_R, DM_YELLOW_G, DM_YELLOW_B, 1);
+		  DM_SET_FGCOLOR(dmp,
+				 color_scheme->fp_status_text2[0],
+				 color_scheme->fp_status_text2[1],
+				 color_scheme->fp_status_text2[2], 1);
 		  DM_DRAW_STRING_2D( dmp, bu_vls_addr(&vls),
 				     GED2PM1(TITLE_XBASE), GED2PM1(TITLE_YBASE + TEXT1_DY), 1, 0 );
 		}
@@ -510,7 +531,10 @@ if(mged_variables->faceplate){
 			 es_keypoint[Y] * base2local,
 			 es_keypoint[Z] * base2local);
 	  if(mged_variables->faceplate && ss_line_not_drawn){
-	    DM_SET_FGCOLOR(dmp, DM_YELLOW_R, DM_YELLOW_G, DM_YELLOW_B, 1);
+	    DM_SET_FGCOLOR(dmp,
+			   color_scheme->fp_status_text2[0],
+			   color_scheme->fp_status_text2[1],
+			   color_scheme->fp_status_text2[2], 1);
 	    DM_DRAW_STRING_2D( dmp, bu_vls_addr(&kp_vls),
 			       GED2PM1(TITLE_XBASE), GED2PM1(TITLE_YBASE + TEXT1_DY), 1, 0 );
 	    ss_line_not_drawn = 0;
@@ -539,7 +563,10 @@ if(mged_variables->faceplate){
 		bu_vls_strcat( &vls, "/__MATRIX__" );
 	      bu_vls_printf(&vls, "/%s", illump->s_path[i]->d_namep);
 	    }
-	    DM_SET_FGCOLOR(dmp, DM_YELLOW_R, DM_YELLOW_G, DM_YELLOW_B, 1);
+	    DM_SET_FGCOLOR(dmp,
+			   color_scheme->fp_status_text2[0],
+			   color_scheme->fp_status_text2[1],
+			   color_scheme->fp_status_text2[2], 1);
 	    DM_DRAW_STRING_2D( dmp, bu_vls_addr(&vls),
 			       GED2PM1(TITLE_XBASE), GED2PM1(TITLE_YBASE + TEXT1_DY), 1, 0 );
 
@@ -550,7 +577,10 @@ if(mged_variables->faceplate){
 	bu_vls_trunc(&vls, 0);
 	bu_vls_printf(&vls, "%.2f fps", 1/frametime );
 	if(mged_variables->faceplate && ss_line_not_drawn){
-	  DM_SET_FGCOLOR(dmp, DM_YELLOW_R, DM_YELLOW_G, DM_YELLOW_B, 1);
+	  DM_SET_FGCOLOR(dmp,
+			 color_scheme->fp_status_text2[0],
+			 color_scheme->fp_status_text2[1],
+			 color_scheme->fp_status_text2[2], 1);
 	  DM_DRAW_STRING_2D( dmp, bu_vls_addr(&vls),
 			     GED2PM1(TITLE_XBASE), GED2PM1(TITLE_YBASE + TEXT1_DY), 1, 0 );
 	}
