@@ -51,6 +51,7 @@ static int col;				/* column; for PP 75 char/line crap */
 view_pixel() {}
 
 /* Support for pretty-picture files */
+int
 pphit( ap, PartHeadp )
 register struct application *ap;
 struct partition *PartHeadp;
@@ -75,7 +76,7 @@ struct partition *PartHeadp;
 		cosI0 = -cosI0;
 	if( cosI0 <= 0.0 )  {
 		ntomiss++;
-		return;
+		return(0);
 	}
 	if( ntomiss > 0 )  {
 		pchar(' ');	/* miss target cmd */
@@ -101,11 +102,14 @@ struct partition *PartHeadp;
 	}
 	j = i & 037;
 	pchar( '@'+j );			/* low bits of pixel */
+	return(1);
 }
 
+int
 ppmiss()  {
 	last_solidp = SOLTAB_NULL;
 	ntomiss++;
+	return(0);
 }
 
 view_eol()
