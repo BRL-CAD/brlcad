@@ -323,6 +323,40 @@ CONST struct faceuse	*fu2;
 	return (struct faceuse *)NULL;
 }
 
+/*
+ *			N M G _ M E A S U R E _ F U _ A N G L E
+ *
+ *  Return the angle in radians from the interior portion of the faceuse
+ *  associated with edgeuse 'eu', measured in the coordinate system
+ *  defined by xvec and yvec, which are known to be perpendicular to
+ *  each other, and to the edge vector.
+ *
+ *  This is done by finding the "left-ward" vector for the edge in the
+ *  face, which points into the interior of the face, and measuring
+ *  the angle it forms relative to xvec and yvec.
+ *
+ *  Wire edges are indicated by always returning angle of -pi.
+ *  That will be the only case for negative returns.
+ */
+double
+nmg_measure_fu_angle( eu, xvec, yvec, zvec )
+CONST struct edgeuse	*eu;
+CONST vect_t		xvec;
+CONST vect_t		yvec;
+CONST vect_t		zvec;
+{
+	vect_t			left;
+	double			ret;
+
+	NMG_CK_EDGEUSE(eu);
+	if( *eu->up.magic_p != NMG_LOOPUSE_MAGIC )  return -rt_pi;
+
+	if( nmg_find_eu_leftvec( left, eu ) < 0 )  return -rt_pi;
+
+	ret = rt_angle_measure( left, xvec, yvec );
+	return ret;
+}
+
 /************************************************************************
  *									*
  *				LOOP Routines				*
@@ -1141,6 +1175,94 @@ CONST struct rt_tol	*tol;
 		return st.ep;
 	}
 	return (struct edge *)NULL;
+}
+
+/*
+ *			N M G _ E U _ 2 V E C S _ P E R P
+ *
+ *  Given an edgeuse, return two arbitrary unit-length vectors which
+ *  are perpendicular to each other and to the edgeuse, such that
+ *  they can be considered the +X and +Y axis, and the edgeuse is +Z.
+ *  That is, X cross Y = Z.
+ *
+ *  Useful for erecting a coordinate system around an edge suitable
+ *  for measuring the angles of other edges and faces with.
+ */
+void
+nmg_eu_2vecs_perp( xvec, yvec, zvec, eu, tol )
+vect_t		xvec;
+vect_t		yvec;
+vect_t		zvec;
+CONST struct edgeuse	*eu;
+CONST struct rt_tol	*tol;
+{
+	CONST struct vertex	*v1, *v2;
+	fastf_t			len;
+
+	NMG_CK_EDGEUSE(eu);
+	v1 = eu->vu_p->v_p;
+	NMG_CK_VERTEX(v1);
+	v2 = eu->eumate_p->vu_p->v_p;
+	NMG_CK_VERTEX(v2);
+	if( v1 == v2 )  rt_bomb("nmg_eu_2vecs_perp() start&end vertex of edge are the same!\n");
+	RT_CK_TOL(tol);
+
+	NMG_CK_VERTEX_G(v1->vg_p);
+	NMG_CK_VERTEX_G(v2->vg_p);
+	VSUB2( zvec, v2->vg_p->coord, v1->vg_p->coord );
+	len = MAGNITUDE(zvec);
+	/* See if v1 == v2, within tol */
+	if( len < tol->dist )  rt_bomb("nmg_eu_2vecs_perp(): 0-length edge (geometry)\n");
+	len = 1 / len;
+	VSCALE( zvec, zvec, len );
+
+	mat_vec_perp( xvec, zvec );
+	VCROSS( yvec, zvec, xvec );
+}
+
+/*
+ *			N M G _ F I N D _ E U _ L E F T V E C
+ *
+ *  Given an edgeuse, if it is part of a faceuse, return the inward pointing
+ *  "left" vector which points into the interior of this loop, and
+ *  lies in the plane of the face.
+ *
+ *  This routine depends on the vertex ordering in an OT_SAME loopuse being
+ *  properly CCW for exterior loops, and CW for interior (hole) loops.
+ *
+ *  Returns -
+ *	-1	if edgeuse is not part of a faceuse.
+ *	 0	if left vector successfully computed into caller's array.
+ */
+int
+nmg_find_eu_leftvec( left, eu )
+vect_t			left;
+CONST struct edgeuse	*eu;
+{
+	CONST struct loopuse	*lu;
+	CONST struct faceuse	*fu;
+	vect_t			Norm;
+	vect_t			edgevect;
+
+	NMG_CK_EDGEUSE(eu);
+	if( *eu->up.magic_p != NMG_LOOPUSE_MAGIC )  return -1;
+	lu = eu->up.lu_p;
+	NMG_CK_LOOPUSE(lu);
+	if( *lu->up.magic_p != NMG_FACEUSE_MAGIC )  return -1;
+	fu = lu->up.fu_p;
+	NMG_CK_FACEUSE(fu);
+	NMG_CK_FACE(fu->f_p);
+	NMG_CK_FACE_G(fu->f_p->fg_p);
+
+	/* Get unit length Normal vector for edgeuse's faceuse */
+	NMG_GET_FU_NORMAL( Norm, fu );
+
+	VSUB2( edgevect, eu->eumate_p->vu_p->v_p->vg_p->coord,
+		eu->vu_p->v_p->vg_p->coord );
+	VUNITIZE( edgevect );
+
+	VCROSS( left, Norm, edgevect );
+	return 0;
 }
 
 /************************************************************************
