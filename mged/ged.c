@@ -263,11 +263,11 @@ char **argv;
 	owner = 1;
 	frametime = 1;
 	adc_a1_deg = adc_a2_deg = 45.0;
-	curr_dm_list->s_info->opp = &tkName;
+	curr_dm_list->s_info->opp = &pathName;
 
 	bu_vls_init(&fps_name);
 	bu_vls_printf(&fps_name, "mged_display(%S,fps)",
-		      &curr_dm_list->_dmp->dm_tkName);
+		      &curr_dm_list->_dmp->dm_pathName);
 
 	bn_mat_idn( identity );		/* Handy to have around */
 	/* init rotation matrix */
@@ -345,6 +345,7 @@ char **argv;
 	if( interactive )  {
 		/* This is an interactive mged, process .mgedrc */
 		do_rc();
+		get_attached();
 	}
 
 	/* --- Now safe to process geometry. --- */
@@ -1712,12 +1713,8 @@ char	**argv;
   /* Quick -- before he gets away -- write a logfile entry! */
   log_event( "START", argv[1] );
 
-  if(first){
+  if(first)
     first = 0;
-
-    if( interactive )
-      get_attached();
-  }
 
   /* --- Scan geometry database and build in-memory directory --- */
   db_scan( dbip, (int (*)())db_diradd, 1);
