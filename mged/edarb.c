@@ -40,10 +40,11 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "vmath.h"
 #include "db.h"
-#include "./sedit.h"
 #include "raytrace.h"
-#include "./ged.h"
 #include "externs.h"
+#include "rtgeom.h"
+#include "./sedit.h"
+#include "./ged.h"
 #include "./solid.h"
 #include "./dm.h"
 
