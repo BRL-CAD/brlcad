@@ -36,38 +36,19 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "rtgeom.h"
 #include "wdb.h"
 
-static union record record;
 static struct db_i *dbip;
 static int verbose=0;
 static struct rt_wdb *fdout=NULL;
 
 static void
-nmg_conv()
+nmg_conv(struct rt_db_internal *intern, const char *name )
 {
-	struct directory *dp;
-	struct rt_db_internal intern;
 	struct model *m;
 	struct nmgregion *r;
 	struct shell *s;
-	int id;
 
-	if( (dp=db_lookup( dbip, record.nmg.N_name, LOOKUP_NOISY)) == DIR_NULL )
-	{
-		bu_log( "Cannot find NMG solid named %s (skipping)\n", record.nmg.N_name );
-		return;
-	}
-
-	id = rt_db_get_internal( &intern, dp, dbip, bn_mat_identity );
-	if( id != ID_NMG )
-	{
-		bu_log( "ERROR: rt_db_get_internal returned %d (was expecting %d)\n", id, ID_NMG);
-		bu_bomb( "ERROR: rt_db_get_internal returned wrong type\n" );
-	}
-
-	if( verbose )
-		bu_log( "%s\n", record.nmg.N_name );
-
-	m = (struct model *)intern.idb_ptr;
+	RT_CK_DB_INTERNAL(intern);
+	m = (struct model *)intern->idb_ptr;
 	NMG_CK_MODEL( m );
 	r = BU_LIST_FIRST( nmgregion, &m->r_hd );
 	if( BU_LIST_NEXT( nmgregion, &r->l ) !=  (struct nmgregion *)&m->r_hd )
@@ -80,13 +61,14 @@ nmg_conv()
 	if( BU_SETJUMP )
 	{
 		BU_UNSETJUMP;
-		bu_log( "Failed to convert %s\n", record.nmg.N_name );
-		rt_db_free_internal( &intern );
+		bu_log( "Failed to convert %s\n", name );
+		rt_db_free_internal( intern );
 		return;
 	}
-	write_shell_as_polysolid( fdout, record.nmg.N_name, s);
+/* XXX convert in place to BoT */
+	write_shell_as_polysolid( fdout, name, s);
 	BU_UNSETJUMP;
-	rt_db_free_internal( &intern );
+	rt_db_free_internal( intern );
 }
 
 int
@@ -145,7 +127,7 @@ char *argv[];
 			continue;
 		}
 		if ( id == ID_NMG ) {
-	    		nmg_conv( &intern );
+	    		nmg_conv( &intern, dp->d_namep );
 		}
 		ret = wdb_put_internal( fdout, dp->d_namep, &intern, 1.0 );
 		if( ret < 0 )  {
