@@ -15,6 +15,7 @@
  *	Peter F. Stiller	(Curvature)
  *	Phillip Dykstra		(Curvature)
  *	Bill Homer		(Vectorization)
+ *	Paul Stay		(Convert to tnurbs)
  *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
@@ -42,9 +43,9 @@ static char RCStgc[] = "@(#)$Header$ (BRL)";
 #include "./debug.h"
 #include "./complex.h"
 #include "./polyno.h"
-
+#include "nurb.h" 
 RT_EXTERN(int rt_rec_prep, (struct soltab *stp, struct rt_db_internal *ip,
-	struct rt_i *rtip));
+struct rt_i *rtip));
 
 static void	rt_tgc_rotate(), rt_tgc_shear();
 static void	rt_tgc_scale();
@@ -69,6 +70,11 @@ struct  tgc_specific {
 
 #define VLARGE		1000000.0
 #define	ALPHA(x,y,c,d)	( (x)*(x)*(c) + (y)*(y)*(d) )
+
+struct snurb * tgc_disk();
+struct snurb * tgc_nurb_cyl();
+struct cnurb * tgc_unitcircle();
+
 
 /*
  *			R T _ T G C _ P R E P
@@ -126,7 +132,7 @@ struct rt_i		*rtip;
 
 	/* Validate that figure is not two-dimensional			*/
 	if( NEAR_ZERO( mag_a, RT_LEN_TOL ) &&
-	     NEAR_ZERO( mag_c, RT_LEN_TOL ) ) {
+	    NEAR_ZERO( mag_c, RT_LEN_TOL ) ) {
 		rt_log("tgc(%s):  vectors A, C zero length\n", stp->st_name );
 		return (1);
 	}
@@ -167,9 +173,9 @@ struct rt_i		*rtip;
 		f = VDOT( tip->a, tip->b ) / prod_ab;
 		if( ! NEAR_ZERO(f, RT_DOT_TOL) ) {
 			rt_log("tgc(%s):  A not perpendicular to B, f=%g\n",
-				stp->st_name, f);
+			    stp->st_name, f);
 			rt_log("tgc: dot=%g / a*b=%g\n",
-				VDOT( tip->a, tip->b ),  prod_ab );
+			    VDOT( tip->a, tip->b ),  prod_ab );
 			return(1);		/* BAD */
 		}
 	}
@@ -178,9 +184,9 @@ struct rt_i		*rtip;
 		f = VDOT( tip->c, tip->d ) / prod_cd;
 		if( ! NEAR_ZERO(f, RT_DOT_TOL) ) {
 			rt_log("tgc(%s):  C not perpendicular to D, f=%g\n",
-				stp->st_name, f);
+			    stp->st_name, f);
 			rt_log("tgc: dot=%g / c*d=%g\n",
-				VDOT( tip->c, tip->d ), prod_cd );
+			    VDOT( tip->c, tip->d ), prod_cd );
 			return(1);		/* BAD */
 		}
 	}
@@ -190,7 +196,7 @@ struct rt_i		*rtip;
 		f = 1.0 - VDOT( tip->a, tip->c ) / (mag_a * mag_c);
 		if( ! NEAR_ZERO(f, RT_DOT_TOL) ) {
 			rt_log("tgc(%s):  A not parallel to C, f=%g\n",
-				stp->st_name, f);
+			    stp->st_name, f);
 			return(1);		/* BAD */
 		}
 	}
@@ -200,7 +206,7 @@ struct rt_i		*rtip;
 		f = 1.0 - VDOT( tip->b, tip->d ) / (mag_b * mag_d);
 		if( ! NEAR_ZERO(f, RT_DOT_TOL) ) {
 			rt_log("tgc(%s):  B not parallel to D, f=%g\n",
-				stp->st_name, f);
+			    stp->st_name, f);
 			return(1);		/* BAD */
 		}
 	}
@@ -293,9 +299,9 @@ struct rt_i		*rtip;
 		TGC_MM( work );	/* V + H - C - D */
 
 		VSET( stp->st_center,
-			(stp->st_max[X] + stp->st_min[X])/2,
-			(stp->st_max[Y] + stp->st_min[Y])/2,
-			(stp->st_max[Z] + stp->st_min[Z])/2 );
+		    (stp->st_max[X] + stp->st_min[X])/2,
+		    (stp->st_max[Y] + stp->st_min[Y])/2,
+		    (stp->st_max[Z] + stp->st_min[Z])/2 );
 
 		dx = (stp->st_max[X] - stp->st_min[X])/2;
 		f = dx;
@@ -338,7 +344,7 @@ struct tgc_specific	*tgc;
 {
 	LOCAL vect_t	uA, uB, uC;	/*  unit vectors		*/
 	LOCAL fastf_t	mag_ha,		/*  magnitude of H in the	*/
-			mag_hb;		/*    A and B directions	*/
+	mag_hb;		/*    A and B directions	*/
 
 	/* copy A and B, then 'unitize' the results			*/
 	VMOVE( uA, A );
@@ -439,7 +445,7 @@ rt_tgc_print( stp )
 register CONST struct soltab	*stp;
 {
 	register CONST struct tgc_specific	*tgc =
-		(struct tgc_specific *)stp->st_specific;
+	(struct tgc_specific *)stp->st_specific;
 
 	VPRINT( "V", tgc->tgc_V );
 	rt_log( "mag sheared H = %f\n", tgc->tgc_sH );
@@ -500,7 +506,7 @@ struct application	*ap;
 struct seg		*seghead;
 {
 	register CONST struct tgc_specific	*tgc =
-		(struct tgc_specific *)stp->st_specific;
+	(struct tgc_specific *)stp->st_specific;
 	register struct seg	*segp;
 	LOCAL vect_t		pprime;
 	LOCAL vect_t		dprime;
@@ -529,7 +535,7 @@ struct seg		*seghead;
 	t_scale = MAGNITUDE(dprime);
 	if( NEAR_ZERO( t_scale, SMALL_FASTF ) )  {
 		rt_log("tgc(%s) dprime=(%g,%g,%g), t_scale=%e, miss.\n",
-			V3ARGS(dprime), t_scale);
+		    V3ARGS(dprime), t_scale);
 		return 0;
 	}
 	t_scale = 1/t_scale;
@@ -661,23 +667,23 @@ struct seg		*seghead;
 		 */
 		C.dgr = 4;
 		C.cf[0] = Qsqr.cf[0] * Xsqr.cf[0] +
-			  Rsqr.cf[0] * Ysqr.cf[0] -
-			  (Rsqr.cf[0] * Qsqr.cf[0]);
+		    Rsqr.cf[0] * Ysqr.cf[0] -
+		    (Rsqr.cf[0] * Qsqr.cf[0]);
 		C.cf[1] = Qsqr.cf[0] * Xsqr.cf[1] + Qsqr.cf[1] * Xsqr.cf[0] +
-			  Rsqr.cf[0] * Ysqr.cf[1] + Rsqr.cf[1] * Ysqr.cf[0] -
-			  (Rsqr.cf[0] * Qsqr.cf[1] + Rsqr.cf[1] * Qsqr.cf[0]);
+		    Rsqr.cf[0] * Ysqr.cf[1] + Rsqr.cf[1] * Ysqr.cf[0] -
+		    (Rsqr.cf[0] * Qsqr.cf[1] + Rsqr.cf[1] * Qsqr.cf[0]);
 		C.cf[2] = Qsqr.cf[0] * Xsqr.cf[2] + Qsqr.cf[1] * Xsqr.cf[1] +
-				 Qsqr.cf[2] * Xsqr.cf[0] +
-			  Rsqr.cf[0] * Ysqr.cf[2] + Rsqr.cf[1] * Ysqr.cf[1] +
-				 Rsqr.cf[2] * Ysqr.cf[0] -
-			  (Rsqr.cf[0] * Qsqr.cf[2] + Rsqr.cf[1] * Qsqr.cf[1] +
-				 Rsqr.cf[2] * Qsqr.cf[0]);
+		    Qsqr.cf[2] * Xsqr.cf[0] +
+		    Rsqr.cf[0] * Ysqr.cf[2] + Rsqr.cf[1] * Ysqr.cf[1] +
+		    Rsqr.cf[2] * Ysqr.cf[0] -
+		    (Rsqr.cf[0] * Qsqr.cf[2] + Rsqr.cf[1] * Qsqr.cf[1] +
+		    Rsqr.cf[2] * Qsqr.cf[0]);
 		C.cf[3] = Qsqr.cf[1] * Xsqr.cf[2] + Qsqr.cf[2] * Xsqr.cf[1] +
-			  Rsqr.cf[1] * Ysqr.cf[2] + Rsqr.cf[2] * Ysqr.cf[1] -
-			  (Rsqr.cf[1] * Qsqr.cf[2] + Rsqr.cf[2] * Qsqr.cf[1]);
+		    Rsqr.cf[1] * Ysqr.cf[2] + Rsqr.cf[2] * Ysqr.cf[1] -
+		    (Rsqr.cf[1] * Qsqr.cf[2] + Rsqr.cf[2] * Qsqr.cf[1]);
 		C.cf[4] = Qsqr.cf[2] * Xsqr.cf[2] +
-			  Rsqr.cf[2] * Ysqr.cf[2] -
-			  (Rsqr.cf[2] * Qsqr.cf[2]);
+		    Rsqr.cf[2] * Ysqr.cf[2] -
+		    (Rsqr.cf[2] * Qsqr.cf[2]);
 
 		/*  The equation is 4th order, so we expect 0 to 4 roots */
 		nroots = rt_poly_roots( &C , val );
@@ -708,7 +714,7 @@ struct seg		*seghead;
 
 	if ( npts != 0 && npts != 2 && npts != 4 ){
 		rt_log("tgc(%s):  %d intersects != {0,2,4}\n",
-			stp->st_name, npts );
+		    stp->st_name, npts );
 		return(0);			/* No hit */
 	}
 
@@ -747,7 +753,7 @@ struct seg		*seghead;
 		if ( zval < 1.0 && zval > 0.0 ){
 			if ( ++intersect == 2 )  {
 				pt[IN] = k[i];
-			}  else  {
+			}  else {
 				pt[OUT] = k[i];
 			}
 		}
@@ -928,55 +934,55 @@ struct application	*ap;
 	LOCAL poly		Xsqr, Ysqr;
 	LOCAL poly		R, Rsqr;
 
-        /* Allocate space for polys and roots */
-        C = (poly *)rt_malloc(n * sizeof(poly), "tor poly");
- 
-        /* Initialize seg_stp to assume hit (zero will then flag miss) */
-#       include "noalias.h"
-        for(ix = 0; ix < n; ix++) segp[ix].seg_stp = stp[ix];
+	/* Allocate space for polys and roots */
+	C = (poly *)rt_malloc(n * sizeof(poly), "tor poly");
 
-    /* for each ray/cone pair */
+	/* Initialize seg_stp to assume hit (zero will then flag miss) */
+#       include "noalias.h"
+	for(ix = 0; ix < n; ix++) segp[ix].seg_stp = stp[ix];
+
+	/* for each ray/cone pair */
 #   include "noalias.h"
-    for(ix = 0; ix < n; ix++) {
+	for(ix = 0; ix < n; ix++) {
 
 #if !CRAY       /* XXX currently prevents vectorization on cray */
-	if (segp[ix].seg_stp == 0) continue; /* == 0 signals skip ray */
+		if (segp[ix].seg_stp == 0) continue; /* == 0 signals skip ray */
 #endif
 
-	tgc = (struct tgc_specific *)stp[ix]->st_specific;
+		tgc = (struct tgc_specific *)stp[ix]->st_specific;
 
-	/* find rotated point and direction */
-	MAT4X3VEC( dprime, tgc->tgc_ScShR, rp[ix]->r_dir );
+		/* find rotated point and direction */
+		MAT4X3VEC( dprime, tgc->tgc_ScShR, rp[ix]->r_dir );
 
-	/*
+		/*
 	 *  A vector of unit length in model space (r_dir) changes length in
 	 *  the special unit-tgc space.  This scale factor will restore
 	 *  proper length after hit points are found.
 	 */
-	t_scale = 1/MAGNITUDE( dprime );
-	VSCALE( dprime, dprime, t_scale );	/* VUNITIZE( dprime ); */
+		t_scale = 1/MAGNITUDE( dprime );
+		VSCALE( dprime, dprime, t_scale );	/* VUNITIZE( dprime ); */
 
-	if( NEAR_ZERO( dprime[Z], RT_PCOEF_TOL ) )
-		dprime[Z] = 0.0;	/* prevent rootfinder heartburn */
+		if( NEAR_ZERO( dprime[Z], RT_PCOEF_TOL ) )
+			dprime[Z] = 0.0;	/* prevent rootfinder heartburn */
 
-	/* Use segp[ix].seg_in.hit_normal as tmp to hold dprime */
-	VMOVE( segp[ix].seg_in.hit_normal, dprime );
- 
-	VSUB2( work, rp[ix]->r_pt, tgc->tgc_V );
-	MAT4X3VEC( pprime, tgc->tgc_ScShR, work );
+		/* Use segp[ix].seg_in.hit_normal as tmp to hold dprime */
+		VMOVE( segp[ix].seg_in.hit_normal, dprime );
 
-	/* Use segp[ix].seg_out.hit_normal as tmp to hold pprime */
-	VMOVE( segp[ix].seg_out.hit_normal, pprime );
+		VSUB2( work, rp[ix]->r_pt, tgc->tgc_V );
+		MAT4X3VEC( pprime, tgc->tgc_ScShR, work );
 
-	/* Translating ray origin along direction of ray to closest
+		/* Use segp[ix].seg_out.hit_normal as tmp to hold pprime */
+		VMOVE( segp[ix].seg_out.hit_normal, pprime );
+
+		/* Translating ray origin along direction of ray to closest
 	 * pt. to origin of solids coordinate system, new ray origin
 	 * is 'cor_pprime'.
 	 */
-	cor_proj = VDOT( pprime, dprime );
-	VSCALE( cor_pprime, dprime, cor_proj );
-	VSUB2( cor_pprime, pprime, cor_pprime );
+		cor_proj = VDOT( pprime, dprime );
+		VSCALE( cor_pprime, dprime, cor_proj );
+		VSUB2( cor_pprime, pprime, cor_pprime );
 
-	/*
+		/*
 	 *  Given a line and the parameters for a standard cone, finds
 	 *  the roots of the equation for that cone and line.
 	 *  Returns the number of real roots found.
@@ -998,213 +1004,213 @@ struct application	*ap;
 	 *  in 'k', eg, (dprime[X] * k) + cor_pprime[X], and
 	 *  substitute into the cone equation.
 	 */
-	Xsqr.dgr = 2;
-	Xsqr.cf[0] = dprime[X] * dprime[X];
-	Xsqr.cf[1] = 2.0 * dprime[X] * cor_pprime[X];
-	Xsqr.cf[2] = cor_pprime[X] * cor_pprime[X];
+		Xsqr.dgr = 2;
+		Xsqr.cf[0] = dprime[X] * dprime[X];
+		Xsqr.cf[1] = 2.0 * dprime[X] * cor_pprime[X];
+		Xsqr.cf[2] = cor_pprime[X] * cor_pprime[X];
 
-	Ysqr.dgr = 2;
-	Ysqr.cf[0] = dprime[Y] * dprime[Y];
-	Ysqr.cf[1] = 2.0 * dprime[Y] * cor_pprime[Y];
-	Ysqr.cf[2] = cor_pprime[Y] * cor_pprime[Y];
+		Ysqr.dgr = 2;
+		Ysqr.cf[0] = dprime[Y] * dprime[Y];
+		Ysqr.cf[1] = 2.0 * dprime[Y] * cor_pprime[Y];
+		Ysqr.cf[2] = cor_pprime[Y] * cor_pprime[Y];
 
-	R.dgr = 1;
-	R.cf[0] = dprime[Z] * tgc->tgc_CdAm1;
-	/* A vector is unitized (tgc->tgc_A == 1.0) */
-	R.cf[1] = (cor_pprime[Z] * tgc->tgc_CdAm1) + 1.0;
+		R.dgr = 1;
+		R.cf[0] = dprime[Z] * tgc->tgc_CdAm1;
+		/* A vector is unitized (tgc->tgc_A == 1.0) */
+		R.cf[1] = (cor_pprime[Z] * tgc->tgc_CdAm1) + 1.0;
 
-	/* (void) rt_poly_mul( &R, &R, &Rsqr ); inline expands to: */
-                Rsqr.dgr = 2;
-                Rsqr.cf[0] = R.cf[0] * R.cf[0];
-                Rsqr.cf[1] = R.cf[0] * R.cf[1] * 2;
-                Rsqr.cf[2] = R.cf[1] * R.cf[1];
+		/* (void) rt_poly_mul( &R, &R, &Rsqr ); inline expands to: */
+		Rsqr.dgr = 2;
+		Rsqr.cf[0] = R.cf[0] * R.cf[0];
+		Rsqr.cf[1] = R.cf[0] * R.cf[1] * 2;
+		Rsqr.cf[2] = R.cf[1] * R.cf[1];
 
-	/*
+		/*
 	 *  If the eccentricities of the two ellipses are the same,
 	 *  then the cone equation reduces to a much simpler quadratic
 	 *  form.  Otherwise it is a (gah!) quartic equation.
 	 */
-	if ( tgc->tgc_AD_CB ){
-		/* (void) rt_poly_add( &Xsqr, &Ysqr, &sum ); and */
-		/* (void) rt_poly_sub( &sum, &Rsqr, &C ); inline expand to */
-		C[ix].dgr = 2;
-		C[ix].cf[0] = Xsqr.cf[0] + Ysqr.cf[0] - Rsqr.cf[0];
-		C[ix].cf[1] = Xsqr.cf[1] + Ysqr.cf[1] - Rsqr.cf[1];
-		C[ix].cf[2] = Xsqr.cf[2] + Ysqr.cf[2] - Rsqr.cf[2];
-	} else {
-		LOCAL poly	Q, Qsqr;
+		if ( tgc->tgc_AD_CB ){
+			/* (void) rt_poly_add( &Xsqr, &Ysqr, &sum ); and */
+			/* (void) rt_poly_sub( &sum, &Rsqr, &C ); inline expand to */
+			C[ix].dgr = 2;
+			C[ix].cf[0] = Xsqr.cf[0] + Ysqr.cf[0] - Rsqr.cf[0];
+			C[ix].cf[1] = Xsqr.cf[1] + Ysqr.cf[1] - Rsqr.cf[1];
+			C[ix].cf[2] = Xsqr.cf[2] + Ysqr.cf[2] - Rsqr.cf[2];
+		} else {
+			LOCAL poly	Q, Qsqr;
 
-		Q.dgr = 1;
-		Q.cf[0] = dprime[Z] * tgc->tgc_DdBm1;
-		/* B vector is unitized (tgc->tgc_B == 1.0) */
-		Q.cf[1] = (cor_pprime[Z] * tgc->tgc_DdBm1) + 1.0;
+			Q.dgr = 1;
+			Q.cf[0] = dprime[Z] * tgc->tgc_DdBm1;
+			/* B vector is unitized (tgc->tgc_B == 1.0) */
+			Q.cf[1] = (cor_pprime[Z] * tgc->tgc_DdBm1) + 1.0;
 
-		/* (void) rt_poly_mul( &Q, &Q, &Qsqr ); inline expands to */
+			/* (void) rt_poly_mul( &Q, &Q, &Qsqr ); inline expands to */
 			Qsqr.dgr = 2;
 			Qsqr.cf[0] = Q.cf[0] * Q.cf[0];
 			Qsqr.cf[1] = Q.cf[0] * Q.cf[1] * 2;
 			Qsqr.cf[2] = Q.cf[1] * Q.cf[1];
 
-		/* (void) rt_poly_mul( &Qsqr, &Xsqr, &T1 ); inline expands to */
+			/* (void) rt_poly_mul( &Qsqr, &Xsqr, &T1 ); inline expands to */
 			C[ix].dgr = 4;
 			C[ix].cf[0] = Qsqr.cf[0] * Xsqr.cf[0];
 			C[ix].cf[1] = Qsqr.cf[0] * Xsqr.cf[1] +
-					 Qsqr.cf[1] * Xsqr.cf[0];
+			    Qsqr.cf[1] * Xsqr.cf[0];
 			C[ix].cf[2] = Qsqr.cf[0] * Xsqr.cf[2] +
-					 Qsqr.cf[1] * Xsqr.cf[1] +
-					 Qsqr.cf[2] * Xsqr.cf[0];
+			    Qsqr.cf[1] * Xsqr.cf[1] +
+			    Qsqr.cf[2] * Xsqr.cf[0];
 			C[ix].cf[3] = Qsqr.cf[1] * Xsqr.cf[2] +
-					 Qsqr.cf[2] * Xsqr.cf[1];
+			    Qsqr.cf[2] * Xsqr.cf[1];
 			C[ix].cf[4] = Qsqr.cf[2] * Xsqr.cf[2];
 
-		/* (void) rt_poly_mul( &Rsqr, &Ysqr, &T2 ); and */
-		/* (void) rt_poly_add( &T1, &T2, &sum ); inline expand to */
+			/* (void) rt_poly_mul( &Rsqr, &Ysqr, &T2 ); and */
+			/* (void) rt_poly_add( &T1, &T2, &sum ); inline expand to */
 			C[ix].cf[0] += Rsqr.cf[0] * Ysqr.cf[0];
 			C[ix].cf[1] += Rsqr.cf[0] * Ysqr.cf[1] +
-					 Rsqr.cf[1] * Ysqr.cf[0];
+			    Rsqr.cf[1] * Ysqr.cf[0];
 			C[ix].cf[2] += Rsqr.cf[0] * Ysqr.cf[2] +
-					 Rsqr.cf[1] * Ysqr.cf[1] +
-					 Rsqr.cf[2] * Ysqr.cf[0];
+			    Rsqr.cf[1] * Ysqr.cf[1] +
+			    Rsqr.cf[2] * Ysqr.cf[0];
 			C[ix].cf[3] += Rsqr.cf[1] * Ysqr.cf[2] +
-					 Rsqr.cf[2] * Ysqr.cf[1];
+			    Rsqr.cf[2] * Ysqr.cf[1];
 			C[ix].cf[4] += Rsqr.cf[2] * Ysqr.cf[2];
 
-		/* (void) rt_poly_mul( &Rsqr, &Qsqr, &T3 ); and */
-		/* (void) rt_poly_sub( &sum, &T3, &C ); inline expand to */
+			/* (void) rt_poly_mul( &Rsqr, &Qsqr, &T3 ); and */
+			/* (void) rt_poly_sub( &sum, &T3, &C ); inline expand to */
 			C[ix].cf[0] -= Rsqr.cf[0] * Qsqr.cf[0];
 			C[ix].cf[1] -= Rsqr.cf[0] * Qsqr.cf[1] +
-					 Rsqr.cf[1] * Qsqr.cf[0];
+			    Rsqr.cf[1] * Qsqr.cf[0];
 			C[ix].cf[2] -= Rsqr.cf[0] * Qsqr.cf[2] +
-					 Rsqr.cf[1] * Qsqr.cf[1] +
-					 Rsqr.cf[2] * Qsqr.cf[0];
+			    Rsqr.cf[1] * Qsqr.cf[1] +
+			    Rsqr.cf[2] * Qsqr.cf[0];
 			C[ix].cf[3] -= Rsqr.cf[1] * Qsqr.cf[2] +
-					 Rsqr.cf[2] * Qsqr.cf[1];
+			    Rsqr.cf[2] * Qsqr.cf[1];
 			C[ix].cf[4] -= Rsqr.cf[2] * Qsqr.cf[2];
 		}
 
 	}
 
-    /* It seems impractical to try to vectorize finding and sorting roots. */
-    for(ix = 0; ix < n; ix++){
-	if (segp[ix].seg_stp == 0) continue; /* == 0 signals skip ray */
+	/* It seems impractical to try to vectorize finding and sorting roots. */
+	for(ix = 0; ix < n; ix++){
+		if (segp[ix].seg_stp == 0) continue; /* == 0 signals skip ray */
 
-	/* Again, check for the equal eccentricities case. */
-	if ( C[ix].dgr == 2 ){
-		FAST fastf_t roots;
+		/* Again, check for the equal eccentricities case. */
+		if ( C[ix].dgr == 2 ){
+			FAST fastf_t roots;
 
-		/* Find the real roots the easy way. */
-		if( (roots = C[ix].cf[1]*C[ix].cf[1]-4*C[ix].cf[0]*C[ix].cf[2]
-		    ) < 0 ) {
-			npts = 0;	/* no real roots */
+			/* Find the real roots the easy way. */
+			if( (roots = C[ix].cf[1]*C[ix].cf[1]-4*C[ix].cf[0]*C[ix].cf[2]
+			    ) < 0 ) {
+				npts = 0;	/* no real roots */
+			} else {
+				roots = sqrt(roots);
+				k[0] = (roots - C[ix].cf[1]) * 0.5 / C[ix].cf[0];
+				k[1] = (roots + C[ix].cf[1]) * (-0.5) / C[ix].cf[0];
+				npts = 2;
+			}
 		} else {
-			roots = sqrt(roots);
-			k[0] = (roots - C[ix].cf[1]) * 0.5 / C[ix].cf[0];
-			k[1] = (roots + C[ix].cf[1]) * (-0.5) / C[ix].cf[0];
-			npts = 2;
-		}
-	} else {
-		LOCAL complex	val[MAXP];	/* roots of final equation */
-		register int	l;
-		register int nroots;
+			LOCAL complex	val[MAXP];	/* roots of final equation */
+			register int	l;
+			register int nroots;
 
-		/*  The equation is 4th order, so we expect 0 to 4 roots */
-		nroots = rt_poly_roots( &C[ix] , val );
+			/*  The equation is 4th order, so we expect 0 to 4 roots */
+			nroots = rt_poly_roots( &C[ix] , val );
 
-		/*  Only real roots indicate an intersection in real space.
+			/*  Only real roots indicate an intersection in real space.
 		 *
 		 *  Look at each root returned; if the imaginary part is zero
 		 *  or sufficiently close, then use the real part as one value
 		 *  of 't' for the intersections
 		 */
-		for ( l=0, npts=0; l < nroots; l++ ){
-			if ( NEAR_ZERO( val[l].im, 0.0001 ) )
-				k[npts++] = val[l].re;
+			for ( l=0, npts=0; l < nroots; l++ ){
+				if ( NEAR_ZERO( val[l].im, 0.0001 ) )
+					k[npts++] = val[l].re;
+			}
+			/* Here, 'npts' is number of points being returned */
+			if ( npts != 0 && npts != 2 && npts != 4 ){
+				rt_log("tgc:  reduced %d to %d roots\n",nroots,npts);
+				rt_pr_roots( "tgc", val, nroots );
+			}
 		}
-		/* Here, 'npts' is number of points being returned */
-		if ( npts != 0 && npts != 2 && npts != 4 ){
-			rt_log("tgc:  reduced %d to %d roots\n",nroots,npts);
-			rt_pr_roots( "tgc", val, nroots );
-		}
-	}
 
-	/*
+		/*
 	 * Reverse above translation by adding distance to all 'k' values.
 	 */
-	for( i = 0; i < npts; ++i )
-		k[i] -= cor_proj;
+		for( i = 0; i < npts; ++i )
+			k[i] -= cor_proj;
 
-	if ( npts != 0 && npts != 2 && npts != 4 ){
-		rt_log("tgc(%s):  %d intersects != {0,2,4}\n",
-			stp[ix]->st_name, npts );
-		RT_TGC_SEG_MISS(segp[ix]);		/* No hit	*/
-		continue;
-	}
+		if ( npts != 0 && npts != 2 && npts != 4 ){
+			rt_log("tgc(%s):  %d intersects != {0,2,4}\n",
+			    stp[ix]->st_name, npts );
+			RT_TGC_SEG_MISS(segp[ix]);		/* No hit	*/
+			continue;
+		}
 
-	/* Most distant to least distant	*/
-	rt_pt_sort( k, npts );
+		/* Most distant to least distant	*/
+		rt_pt_sort( k, npts );
 
-	/* Now, k[0] > k[npts-1] */
+		/* Now, k[0] > k[npts-1] */
 
-	/* General Cone may have 4 intersections, but	*
+		/* General Cone may have 4 intersections, but	*
 	 * Truncated Cone may only have 2.		*/
 
 #define OUT		0
 #define	IN		1
 
-	/*		Truncation Procedure
+		/*		Truncation Procedure
 	 *
 	 *  Determine whether any of the intersections found are
 	 *  between the planes truncating the cone.
 	 */
-	intersect = 0;
-	tgc = (struct tgc_specific *)stp[ix]->st_specific;
-	for ( i=0; i < npts; i++ ){
-		/* segp[ix].seg_in.hit_normal holds dprime */
-		/* segp[ix].seg_out.hit_normal holds pprime */
-		zval = k[i]*segp[ix].seg_in.hit_normal[Z] +
-			segp[ix].seg_out.hit_normal[Z];
-		/* Height vector is unitized (tgc->tgc_sH == 1.0) */
-		if ( zval < 1.0 && zval > 0.0 ){
-			if ( ++intersect == 2 )  {
-				pt[IN] = k[i];
-			}  else
-				pt[OUT] = k[i];
+		intersect = 0;
+		tgc = (struct tgc_specific *)stp[ix]->st_specific;
+		for ( i=0; i < npts; i++ ){
+			/* segp[ix].seg_in.hit_normal holds dprime */
+			/* segp[ix].seg_out.hit_normal holds pprime */
+			zval = k[i]*segp[ix].seg_in.hit_normal[Z] +
+			    segp[ix].seg_out.hit_normal[Z];
+			/* Height vector is unitized (tgc->tgc_sH == 1.0) */
+			if ( zval < 1.0 && zval > 0.0 ){
+				if ( ++intersect == 2 )  {
+					pt[IN] = k[i];
+				}  else
+					pt[OUT] = k[i];
+			}
 		}
+		/* Reuse C to hold values of intersect and k. */
+		C[ix].dgr = intersect;
+		C[ix].cf[OUT] = pt[OUT];
+		C[ix].cf[IN]  = pt[IN];
 	}
-	/* Reuse C to hold values of intersect and k. */
-	C[ix].dgr = intersect;
-	C[ix].cf[OUT] = pt[OUT];
-	C[ix].cf[IN]  = pt[IN];
-    }
 
-    /* for each ray/cone pair */
+	/* for each ray/cone pair */
 #   include "noalias.h"
-    for(ix = 0; ix < n; ix++) {
-	if (segp[ix].seg_stp == 0) continue; /* Skip */
+	for(ix = 0; ix < n; ix++) {
+		if (segp[ix].seg_stp == 0) continue; /* Skip */
 
-	tgc = (struct tgc_specific *)stp[ix]->st_specific;
-	intersect = C[ix].dgr;
-	pt[OUT] = C[ix].cf[OUT];
-	pt[IN]  = C[ix].cf[IN];
-	/* segp[ix].seg_out.hit_normal holds pprime */
-	VMOVE( pprime, segp[ix].seg_out.hit_normal );
-	/* segp[ix].seg_in.hit_normal holds dprime */
-	VMOVE( dprime, segp[ix].seg_in.hit_normal );
+		tgc = (struct tgc_specific *)stp[ix]->st_specific;
+		intersect = C[ix].dgr;
+		pt[OUT] = C[ix].cf[OUT];
+		pt[IN]  = C[ix].cf[IN];
+		/* segp[ix].seg_out.hit_normal holds pprime */
+		VMOVE( pprime, segp[ix].seg_out.hit_normal );
+		/* segp[ix].seg_in.hit_normal holds dprime */
+		VMOVE( dprime, segp[ix].seg_in.hit_normal );
 
-	if ( intersect == 2 ){
-		/*  If two between-plane intersections exist, they are
+		if ( intersect == 2 ){
+			/*  If two between-plane intersections exist, they are
 		 *  the hit points for the ray.
 		 */
-		segp[ix].seg_in.hit_dist = pt[IN] * t_scale;
-		segp[ix].seg_in.hit_surfno = TGC_NORM_BODY;	/* compute N */
-		VJOIN1( segp[ix].seg_in.hit_vpriv, pprime, pt[IN], dprime );
+			segp[ix].seg_in.hit_dist = pt[IN] * t_scale;
+			segp[ix].seg_in.hit_surfno = TGC_NORM_BODY;	/* compute N */
+			VJOIN1( segp[ix].seg_in.hit_vpriv, pprime, pt[IN], dprime );
 
-		segp[ix].seg_out.hit_dist = pt[OUT] * t_scale;
-		segp[ix].seg_out.hit_surfno = TGC_NORM_BODY;	/* compute N */
-		VJOIN1( segp[ix].seg_out.hit_vpriv, pprime, pt[OUT], dprime );
-	} else if ( intersect == 1 ) {
-		int	nflag;
-		/*
+			segp[ix].seg_out.hit_dist = pt[OUT] * t_scale;
+			segp[ix].seg_out.hit_surfno = TGC_NORM_BODY;	/* compute N */
+			VJOIN1( segp[ix].seg_out.hit_vpriv, pprime, pt[OUT], dprime );
+		} else if ( intersect == 1 ) {
+			int	nflag;
+			/*
 		 *  If only one between-plane intersection exists (pt[OUT]),
 		 *  then the other intersection must be on
 		 *  one of the planar surfaces (pt[IN]).
@@ -1214,62 +1220,62 @@ struct application	*ap;
 		 *  plane (in the standard coordinate system), and test
 		 *  whether this lies within the governing ellipse.
 		 */
-		if( dprime[Z] == 0.0 )  {
+			if( dprime[Z] == 0.0 )  {
 #if 0
-			rt_log("tgc: dprime[Z] = 0!\n" );
+				rt_log("tgc: dprime[Z] = 0!\n" );
 #endif
-			RT_TGC_SEG_MISS(segp[ix]);
-			continue;
-		}
-		b = ( -pprime[Z] )/dprime[Z];
-		/*  Height vector is unitized (tgc->tgc_sH == 1.0) */
-		t = ( 1.0 - pprime[Z] )/dprime[Z];
+				RT_TGC_SEG_MISS(segp[ix]);
+				continue;
+			}
+			b = ( -pprime[Z] )/dprime[Z];
+			/*  Height vector is unitized (tgc->tgc_sH == 1.0) */
+			t = ( 1.0 - pprime[Z] )/dprime[Z];
 
-		VJOIN1( work, pprime, b, dprime );
-		/* A and B vectors are unitized (tgc->tgc_A == _B == 1.0) */
-		/* alf1 = ALPHA(work[X], work[Y], 1.0, 1.0 ) */
-		alf1 = work[X]*work[X] + work[Y]*work[Y];
+			VJOIN1( work, pprime, b, dprime );
+			/* A and B vectors are unitized (tgc->tgc_A == _B == 1.0) */
+			/* alf1 = ALPHA(work[X], work[Y], 1.0, 1.0 ) */
+			alf1 = work[X]*work[X] + work[Y]*work[Y];
 
-		VJOIN1( work, pprime, t, dprime );
-		/* Must scale C and D vectors */
-		alf2 = ALPHA(work[X], work[Y], tgc->tgc_AAdCC,tgc->tgc_BBdDD);
+			VJOIN1( work, pprime, t, dprime );
+			/* Must scale C and D vectors */
+			alf2 = ALPHA(work[X], work[Y], tgc->tgc_AAdCC,tgc->tgc_BBdDD);
 
-		if ( alf1 <= 1.0 ){
-			pt[IN] = b;
-			nflag = TGC_NORM_BOT; /* copy reverse normal */
-		} else if ( alf2 <= 1.0 ){
-			pt[IN] = t;
-			nflag = TGC_NORM_TOP;	/* copy normal */
-		} else {
-			/* intersection apparently invalid  */
+			if ( alf1 <= 1.0 ){
+				pt[IN] = b;
+				nflag = TGC_NORM_BOT; /* copy reverse normal */
+			} else if ( alf2 <= 1.0 ){
+				pt[IN] = t;
+				nflag = TGC_NORM_TOP;	/* copy normal */
+			} else {
+				/* intersection apparently invalid  */
 #if 0
-			rt_log("tgc(%s):  only 1 intersect\n", stp[ix]->st_name);
+				rt_log("tgc(%s):  only 1 intersect\n", stp[ix]->st_name);
 #endif
-			RT_TGC_SEG_MISS(segp[ix]);
-			continue;
-		}
+				RT_TGC_SEG_MISS(segp[ix]);
+				continue;
+			}
 
-		/* pt[OUT] on skin, pt[IN] on end */
-		if ( pt[OUT] >= pt[IN] )  {
-			segp[ix].seg_in.hit_dist = pt[IN] * t_scale;
-			segp[ix].seg_in.hit_surfno = nflag;
+			/* pt[OUT] on skin, pt[IN] on end */
+			if ( pt[OUT] >= pt[IN] )  {
+				segp[ix].seg_in.hit_dist = pt[IN] * t_scale;
+				segp[ix].seg_in.hit_surfno = nflag;
 
-			segp[ix].seg_out.hit_dist = pt[OUT] * t_scale;
-			segp[ix].seg_out.hit_surfno = TGC_NORM_BODY;	/* compute N */
-			/* transform-space vector needed for normal */
-			VJOIN1( segp[ix].seg_out.hit_vpriv, pprime, pt[OUT], dprime );
+				segp[ix].seg_out.hit_dist = pt[OUT] * t_scale;
+				segp[ix].seg_out.hit_surfno = TGC_NORM_BODY;	/* compute N */
+				/* transform-space vector needed for normal */
+				VJOIN1( segp[ix].seg_out.hit_vpriv, pprime, pt[OUT], dprime );
+			} else {
+				segp[ix].seg_in.hit_dist = pt[OUT] * t_scale;
+				/* transform-space vector needed for normal */
+				segp[ix].seg_in.hit_surfno = TGC_NORM_BODY;	/* compute N */
+				VJOIN1( segp[ix].seg_in.hit_vpriv, pprime, pt[OUT], dprime );
+
+				segp[ix].seg_out.hit_dist = pt[IN] * t_scale;
+				segp[ix].seg_out.hit_surfno = nflag;
+			}
 		} else {
-			segp[ix].seg_in.hit_dist = pt[OUT] * t_scale;
-			/* transform-space vector needed for normal */
-			segp[ix].seg_in.hit_surfno = TGC_NORM_BODY;	/* compute N */
-			VJOIN1( segp[ix].seg_in.hit_vpriv, pprime, pt[OUT], dprime );
 
-			segp[ix].seg_out.hit_dist = pt[IN] * t_scale;
-			segp[ix].seg_out.hit_surfno = nflag;
-		}
-	} else {
-
-	/*  If all conic interections lie outside the plane,
+			/*  If all conic interections lie outside the plane,
 	 *  then check to see whether there are two planar
 	 *  intersections inside the governing ellipses.
 	 *
@@ -1277,59 +1283,59 @@ struct application	*ap;
 	 *  so) to the planes, it (obviously) won't intersect
 	 *  either of them.
 	 */
-	if( dprime[Z] == 0.0 ) {
-		RT_TGC_SEG_MISS(segp[ix]);
-		continue;
-	}
+			if( dprime[Z] == 0.0 ) {
+				RT_TGC_SEG_MISS(segp[ix]);
+				continue;
+			}
 
-	dir = VDOT( tgc->tgc_N, rp[ix]->r_dir );	/* direc */
-	if ( NEAR_ZERO( dir, RT_DOT_TOL ) ) {
-		RT_TGC_SEG_MISS(segp[ix]);
-		continue;
-	}
+			dir = VDOT( tgc->tgc_N, rp[ix]->r_dir );	/* direc */
+			if ( NEAR_ZERO( dir, RT_DOT_TOL ) ) {
+				RT_TGC_SEG_MISS(segp[ix]);
+				continue;
+			}
 
-	b = ( -pprime[Z] )/dprime[Z];
-	/* Height vector is unitized (tgc->tgc_sH == 1.0) */
-	t = ( 1.0 - pprime[Z] )/dprime[Z];
+			b = ( -pprime[Z] )/dprime[Z];
+			/* Height vector is unitized (tgc->tgc_sH == 1.0) */
+			t = ( 1.0 - pprime[Z] )/dprime[Z];
 
-	VJOIN1( work, pprime, b, dprime );
-	/* A and B vectors are unitized (tgc->tgc_A == _B == 1.0) */
-	/* alpf = ALPHA(work[0], work[1], 1.0, 1.0 ) */
-	alf1 = work[X]*work[X] + work[Y]*work[Y];
+			VJOIN1( work, pprime, b, dprime );
+			/* A and B vectors are unitized (tgc->tgc_A == _B == 1.0) */
+			/* alpf = ALPHA(work[0], work[1], 1.0, 1.0 ) */
+			alf1 = work[X]*work[X] + work[Y]*work[Y];
 
-	VJOIN1( work, pprime, t, dprime );
-	/* Must scale C and D vectors. */
-	alf2 = ALPHA(work[X], work[Y], tgc->tgc_AAdCC,tgc->tgc_BBdDD);
+			VJOIN1( work, pprime, t, dprime );
+			/* Must scale C and D vectors. */
+			alf2 = ALPHA(work[X], work[Y], tgc->tgc_AAdCC,tgc->tgc_BBdDD);
 
-	/*  It should not be possible for one planar intersection
+			/*  It should not be possible for one planar intersection
 	 *  to be outside its ellipse while the other is inside ...
 	 *  but I wouldn't take any chances.
 	 */
-	if ( alf1 > 1.0 || alf2 > 1.0 ) {
-		RT_TGC_SEG_MISS(segp[ix]);
-		continue;
-	}
+			if ( alf1 > 1.0 || alf2 > 1.0 ) {
+				RT_TGC_SEG_MISS(segp[ix]);
+				continue;
+			}
 
-	/*  Use the dot product (found earlier) of the plane
+			/*  Use the dot product (found earlier) of the plane
 	 *  normal with the direction vector to determine the
 	 *  orientation of the intersections.
 	 */
-	if ( dir > 0.0 ){
-		segp[ix].seg_in.hit_dist = b * t_scale;
-		segp[ix].seg_in.hit_surfno = TGC_NORM_BOT;	/* reverse normal */
+			if ( dir > 0.0 ){
+				segp[ix].seg_in.hit_dist = b * t_scale;
+				segp[ix].seg_in.hit_surfno = TGC_NORM_BOT;	/* reverse normal */
 
-		segp[ix].seg_out.hit_dist = t * t_scale;
-		segp[ix].seg_out.hit_surfno = TGC_NORM_TOP;	/* normal */
-	} else {
-		segp[ix].seg_in.hit_dist = t * t_scale;
-		segp[ix].seg_in.hit_surfno = TGC_NORM_TOP;	/* normal */
+				segp[ix].seg_out.hit_dist = t * t_scale;
+				segp[ix].seg_out.hit_surfno = TGC_NORM_TOP;	/* normal */
+			} else {
+				segp[ix].seg_in.hit_dist = t * t_scale;
+				segp[ix].seg_in.hit_surfno = TGC_NORM_TOP;	/* normal */
 
-		segp[ix].seg_out.hit_dist = b * t_scale;
-		segp[ix].seg_out.hit_surfno = TGC_NORM_BOT;	/* reverse normal */
-	}
-	}
-    } /* end for each ray/cone pair */
-    rt_free( (char *)C, "tor poly" );
+				segp[ix].seg_out.hit_dist = b * t_scale;
+				segp[ix].seg_out.hit_surfno = TGC_NORM_BOT;	/* reverse normal */
+			}
+		}
+	} /* end for each ray/cone pair */
+	rt_free( (char *)C, "tor poly" );
 }
 
 /*
@@ -1415,7 +1421,7 @@ struct soltab *stp;
 register struct xray *rp;
 {
 	register struct tgc_specific	*tgc =
-		(struct tgc_specific *)stp->st_specific;
+	(struct tgc_specific *)stp->st_specific;
 	FAST fastf_t	Q;
 	FAST fastf_t	R;
 	LOCAL vect_t	stdnorm;
@@ -1438,11 +1444,11 @@ register struct xray *rp;
 		stdnorm[X] = hitp->hit_vpriv[X] * Q * Q;
 		stdnorm[Y] = hitp->hit_vpriv[Y] * R * R;
 		stdnorm[Z] = (hitp->hit_vpriv[X]*hitp->hit_vpriv[X] - R*R)
-			     * Q * tgc->tgc_DdBm1
-			   + (hitp->hit_vpriv[Y]*hitp->hit_vpriv[Y] - Q*Q)
-			     * R * tgc->tgc_CdAm1;
+		    * Q * tgc->tgc_DdBm1
+		    + (hitp->hit_vpriv[Y]*hitp->hit_vpriv[Y] - Q*Q)
+		    * R * tgc->tgc_CdAm1;
 		MAT4X3VEC( hitp->hit_normal, tgc->tgc_invRtShSc, stdnorm );
-/*XXX - save scale */
+		/*XXX - save scale */
 		VUNITIZE( hitp->hit_normal );
 		break;
 	default:
@@ -1462,7 +1468,7 @@ register struct hit	*hitp;
 register struct uvcoord	*uvp;
 {
 	register struct tgc_specific	*tgc =
-		(struct tgc_specific *)stp->st_specific;
+	(struct tgc_specific *)stp->st_specific;
 	LOCAL vect_t work;
 	LOCAL vect_t pprime;
 	FAST fastf_t len;
@@ -1509,7 +1515,7 @@ rt_tgc_free( stp )
 struct soltab *stp;
 {
 	register struct tgc_specific	*tgc =
-		(struct tgc_specific *)stp->st_specific;
+	(struct tgc_specific *)stp->st_specific;
 
 	rt_free( (char *)tgc, "tgc_specific");
 }
@@ -1616,7 +1622,7 @@ int			verbose;
 double			mm2local;
 {
 	register struct rt_tgc_internal	*tip =
-		(struct rt_tgc_internal *)ip->idb_ptr;
+	(struct rt_tgc_internal *)ip->idb_ptr;
 	char	buf[256];
 	double	angles[5];
 	vect_t	unitv;
@@ -1626,17 +1632,17 @@ double			mm2local;
 	rt_vls_strcat( str, "truncated general cone (TGC)\n");
 
 	sprintf(buf, "\tV (%g, %g, %g)\n",
-		tip->v[X] * mm2local,
-		tip->v[Y] * mm2local,
-		tip->v[Z] * mm2local );
+	    tip->v[X] * mm2local,
+	    tip->v[Y] * mm2local,
+	    tip->v[Z] * mm2local );
 	rt_vls_strcat( str, buf );
 
 	Hmag = MAGNITUDE(tip->h);
 	sprintf(buf, "\tH (%g, %g, %g) mag=%g\n",
-		tip->h[X] * mm2local,
-		tip->h[Y] * mm2local,
-		tip->h[Z] * mm2local,
-		Hmag * mm2local);
+	    tip->h[X] * mm2local,
+	    tip->h[Y] * mm2local,
+	    tip->h[Z] * mm2local,
+	    Hmag * mm2local);
 	rt_vls_strcat( str, buf );
 	if( Hmag < VDIVIDE_TOL )  {
 		rt_vls_strcat( str, "H vector is zero!\n");
@@ -1648,31 +1654,31 @@ double			mm2local;
 	}
 
 	sprintf(buf, "\tA (%g, %g, %g) mag=%g\n",
-		tip->a[X] * mm2local,
-		tip->a[Y] * mm2local,
-		tip->a[Z] * mm2local,
-		MAGNITUDE(tip->a) * mm2local);
+	    tip->a[X] * mm2local,
+	    tip->a[Y] * mm2local,
+	    tip->a[Z] * mm2local,
+	    MAGNITUDE(tip->a) * mm2local);
 	rt_vls_strcat( str, buf );
 
 	sprintf(buf, "\tB (%g, %g, %g) mag=%g\n",
-		tip->b[X] * mm2local,
-		tip->b[Y] * mm2local,
-		tip->b[Z] * mm2local,
-		MAGNITUDE(tip->b) * mm2local);
+	    tip->b[X] * mm2local,
+	    tip->b[Y] * mm2local,
+	    tip->b[Z] * mm2local,
+	    MAGNITUDE(tip->b) * mm2local);
 	rt_vls_strcat( str, buf );
 
 	sprintf(buf, "\tC (%g, %g, %g) mag=%g\n",
-		tip->c[X] * mm2local,
-		tip->c[Y] * mm2local,
-		tip->c[Z] * mm2local,
-		MAGNITUDE(tip->c) * mm2local);
+	    tip->c[X] * mm2local,
+	    tip->c[Y] * mm2local,
+	    tip->c[Z] * mm2local,
+	    MAGNITUDE(tip->c) * mm2local);
 	rt_vls_strcat( str, buf );
 
 	sprintf(buf, "\tD (%g, %g, %g) mag=%g\n",
-		tip->d[X] * mm2local,
-		tip->d[Y] * mm2local,
-		tip->d[Z] * mm2local,
-		MAGNITUDE(tip->d) * mm2local);
+	    tip->d[X] * mm2local,
+	    tip->d[Y] * mm2local,
+	    tip->d[Z] * mm2local,
+	    MAGNITUDE(tip->d) * mm2local);
 	rt_vls_strcat( str, buf );
 
 	VCROSS( unitv, tip->c, tip->d );
@@ -1753,7 +1759,7 @@ register struct hit *hitp;
 struct soltab *stp;
 {
 	register struct tgc_specific *tgc =
-		(struct tgc_specific *)stp->st_specific;
+	(struct tgc_specific *)stp->st_specific;
 	fastf_t	R, Q, R2, Q2;
 	mat_t	M, dN, mtmp;
 	vect_t	gradf, tmp, u, v;
@@ -1783,10 +1789,10 @@ struct soltab *stp;
 	dN[5] = R2;
 	dN[6] = dN[9] = 2.0*R*tgc->tgc_CdAm1 * hitp->hit_vpriv[Y];
 	dN[10] = tgc->tgc_DdBm1*tgc->tgc_DdBm1 * hitp->hit_vpriv[X]*hitp->hit_vpriv[X]
-	       + tgc->tgc_CdAm1*tgc->tgc_CdAm1 * hitp->hit_vpriv[Y]*hitp->hit_vpriv[Y]
-	       - tgc->tgc_DdBm1*tgc->tgc_DdBm1 * R2
-	       - tgc->tgc_CdAm1*tgc->tgc_CdAm1 * Q2
-	       - 4.0*tgc->tgc_CdAm1*tgc->tgc_DdBm1 * R*Q;
+	    + tgc->tgc_CdAm1*tgc->tgc_CdAm1 * hitp->hit_vpriv[Y]*hitp->hit_vpriv[Y]
+	    - tgc->tgc_DdBm1*tgc->tgc_DdBm1 * R2
+	    - tgc->tgc_CdAm1*tgc->tgc_CdAm1 * Q2
+	    - 4.0*tgc->tgc_CdAm1*tgc->tgc_DdBm1 * R*Q;
 
 	/* M = At * dN * A */
 	mat_mul( mtmp, dN, tgc->tgc_ScShR );
@@ -1796,7 +1802,7 @@ struct soltab *stp;
 	gradf[X] = Q2 * hitp->hit_vpriv[X];
 	gradf[Y] = R2 * hitp->hit_vpriv[Y];
 	gradf[Z] = (hitp->hit_vpriv[X]*hitp->hit_vpriv[X] - R2) * Q * tgc->tgc_DdBm1 +
-		   (hitp->hit_vpriv[Y]*hitp->hit_vpriv[Y] - Q2) * R * tgc->tgc_CdAm1;
+	    (hitp->hit_vpriv[Y]*hitp->hit_vpriv[Y] - Q2) * R * tgc->tgc_CdAm1;
 	MAT4X3VEC( tmp, tgc->tgc_invRtShSc, gradf );
 	scale = -1.0 / MAGNITUDE(tmp);
 	/* XXX */
@@ -2003,7 +2009,7 @@ struct rt_tol		*tol;
 		VMOVE( A[0] , tip->b );
 		VMOVE( B[nells-1] , tip->c );
 		VMOVE( A[nells-1] , tip->d );
-		
+
 	}
 
 	/* set intermediate ellipses */
@@ -2128,10 +2134,10 @@ struct rt_tol		*tol;
 			/* normal at vertex */
 			if( i == nells - 1 )
 				VSUB2( tan_h , pts[i][j].v->vg_p->coord , pts[k][j].v->vg_p->coord )
-			else
+			    else
 				VSUB2( tan_h , pts[k][j].v->vg_p->coord , pts[i][j].v->vg_p->coord )
 
-			VCROSS( normal , pts[i][j].tan_axb , tan_h );
+				    VCROSS( normal , pts[i][j].tan_axb , tan_h );
 			VUNITIZE( normal );
 			VREVERSE( rev_norm , normal );
 
@@ -2145,7 +2151,7 @@ struct rt_tol		*tol;
 				/* don't need vertexuse normals for faces that are really flat */
 				if( fu == fu_base || fu == fu_base->fumate_p ||
 				    fu == fu_top  || fu == fu_top->fumate_p )
-						continue;
+					continue;
 
 				if( fu->orientation == OT_SAME )
 					nmg_vertexuse_nv( vu , normal );
@@ -2203,3 +2209,446 @@ struct rt_tol		*tol;
 
 	return( 0 );
 }
+
+/*	R T _ T G C _ T N U R B
+ *
+ *  "Tessellate an TGC into a trimmed-NURB-NMG data structure.
+ *  Computing NRUB surfaces and trimming curves to interpolate
+ *  the parameters of the TGC
+ *
+ *  The process is to create the nmg  topology of the TGC fill it
+ *  in with a unit cylinder geometry (i.e. unitcircle at the top (0,0,1)
+ *  unit cylinder of radius 1, and unitcirlce at the bottom), and then 
+ *  scale it with a perspective matrix derived from the parameters of the
+ *  tgc. The result is three trimmed nub surfaces which interpolate the 
+ *  parameters of  the original TGC.
+ * 
+ *  Returns -
+ *	-1 	failure
+ *	0	OK. *r points to nmgregion that holds this tesselation
+ */
+
+int
+rt_tgc_tnurb( r, m, ip, tol )
+struct nmgregion	**r;
+struct model		*m;
+struct rt_db_internal	*ip;
+struct rt_tol		*tol;
+{
+	LOCAL struct rt_tgc_internal	*tip;
+
+	struct shell			*s;
+	struct vertex			*verts[2];
+	struct vertex			**vertp[4];
+	struct faceuse			* top_fu;
+	struct faceuse			* cyl_fu;
+	struct faceuse			* bot_fu;
+	vect_t				uvw;
+	struct loopuse			*lu;
+	struct edgeuse			*eu;
+	struct snurb 			*top_srf;
+	struct cnurb			*top_cnurb;
+
+	struct snurb 			*bot_srf;
+	struct cnurb			*bot_cnurb;
+	
+	struct snurb			* cyl_srf;
+
+	int				i;
+	mat_t 				mat;
+	mat_t 				imat, omat, top_mat, bot_mat;
+	int 				coords;
+	vect_t 				anorm;
+	vect_t 				bnorm;
+	vect_t 				cnorm;
+	fastf_t 			* mptr;
+	fastf_t 			Height;
+
+
+	/* Get the internal representation of the tgc */
+
+	RT_CK_DB_INTERNAL(ip);
+	tip = (struct rt_tgc_internal *) ip->idb_ptr;
+	RT_TGC_CK_MAGIC(tip);
+
+	/* Create the NMG Topology */
+
+	*r = nmg_mrsv( m );	/* Make region, empty shell, vertex */
+	s = RT_LIST_FIRST( shell, &(*r)->s_hd);
+
+	/* Create topology for top cap surface */
+
+	vertp[0] = &verts[0];
+	top_fu = nmg_cmface(s, vertp, 1);
+
+	lu = RT_LIST_FIRST( loopuse, &top_fu->lu_hd);
+	NMG_CK_LOOPUSE(lu);
+	eu= RT_LIST_FIRST( edgeuse, &lu->down_hd);
+	NMG_CK_EDGEUSE(eu);
+
+	VSET( uvw, 0,0,0);
+	nmg_vertexuse_a_cnurb( eu->vu_p, &uvw);
+	VSET( uvw, 1, 0, 0);
+	nmg_vertexuse_a_cnurb( eu->eumate_p->vu_p, &uvw );
+	eu = RT_LIST_NEXT( edgeuse, &eu->l);
+
+	nmg_vertexuse_a_cnurb( eu->vu_p, &uvw );
+	VSET( uvw, 0, 0, 0);
+	nmg_vertexuse_a_cnurb( eu->eumate_p->vu_p, &uvw );
+
+	/* Create topology for cylinder surface  */
+
+	vertp[0] = &verts[0];
+	vertp[1] = &verts[0];
+	vertp[2] = &verts[1];
+	vertp[3] = &verts[1];
+	cyl_fu = nmg_cmface(s, vertp, 4);
+
+	lu = RT_LIST_FIRST( loopuse, &cyl_fu->lu_hd );
+	NMG_CK_LOOPUSE(lu);
+	eu = RT_LIST_FIRST( edgeuse, &lu->down_hd);
+	NMG_CK_EDGEUSE(eu);
+
+	/* March around the fu's loop assignin uv parameter values */
+	VSET( uvw, 0,0,0);
+	nmg_vertexuse_a_cnurb( eu->vu_p, &uvw );
+	VSET( uvw, 1, 0, 0);
+	nmg_vertexuse_a_cnurb( eu->eumate_p->vu_p, &uvw );
+	eu = RT_LIST_NEXT( edgeuse, &eu->l);
+
+	nmg_vertexuse_a_cnurb( eu->vu_p, &uvw );
+	VSET( uvw, 1, 1, 0);
+	nmg_vertexuse_a_cnurb( eu->eumate_p->vu_p, &uvw );
+	eu = RT_LIST_NEXT( edgeuse, &eu->l);
+
+	nmg_vertexuse_a_cnurb( eu->vu_p, &uvw );
+	VSET( uvw, 0, 1, 0);
+	nmg_vertexuse_a_cnurb( eu->eumate_p->vu_p, &uvw );
+	eu = RT_LIST_NEXT( edgeuse, &eu->l);
+
+	nmg_vertexuse_a_cnurb( eu->vu_p, &uvw );
+	VSET( uvw, 0,0, 0);
+	nmg_vertexuse_a_cnurb( eu->eumate_p->vu_p, &uvw );
+	eu = RT_LIST_NEXT( edgeuse, &eu->l);
+
+	/* Create topology for bottom cap surface */
+
+	vertp[0] = &verts[1];
+	bot_fu = nmg_cmface(s, vertp, 1);
+
+	lu = RT_LIST_FIRST( loopuse, &top_fu->lu_hd);
+	NMG_CK_LOOPUSE(lu);
+	eu= RT_LIST_FIRST( edgeuse, &lu->down_hd);
+	NMG_CK_EDGEUSE(eu);
+
+	VSET( uvw, 0,0,0);
+	nmg_vertexuse_a_cnurb( eu->vu_p, &uvw);
+	VSET( uvw, 1, 0, 0);
+	nmg_vertexuse_a_cnurb( eu->eumate_p->vu_p, &uvw );
+	eu = RT_LIST_NEXT( edgeuse, &eu->l);
+
+	nmg_vertexuse_a_cnurb( eu->vu_p, &uvw );
+	VSET( uvw, 0, 0, 0);
+	nmg_vertexuse_a_cnurb( eu->eumate_p->vu_p, &uvw );
+
+	/* Create transformation matrix  for the top cap surface*/
+
+	mat_idn( omat );
+	mat_idn( mat);
+	
+	omat[0] = MAGNITUDE(tip->c);
+	omat[5] = MAGNITUDE(tip->d);
+	omat[3] = tip->v[0] + tip->h[0];
+	omat[7] = tip->v[1] + tip->h[1];
+	omat[11] = tip->v[2] + tip->h[2];
+
+	mat_mul(imat, mat, omat);
+
+        VMOVE(anorm, tip->c);
+        VMOVE(bnorm, tip->d);
+        VCROSS(cnorm, tip->c, tip->d);
+        VUNITIZE(anorm);
+        VUNITIZE(bnorm);
+        VUNITIZE(cnorm);
+
+        mat_idn( omat );
+
+        VMOVE( &omat[0], anorm);
+        VMOVE( &omat[4], bnorm);
+        VMOVE( &omat[8], cnorm);
+
+
+	mat_mul(top_mat, omat, imat);
+
+	/* Top cap surface */
+	top_srf = (struct snurb *) tgc_disk( top_mat, 0.0, 0 );
+	top_cnurb = (struct cnurb *) tgc_unitcircle();
+
+	/* Create transformation matrix  for the bottom cap surface*/
+
+	mat_idn( omat );
+	mat_idn( mat);
+	
+	omat[0] = MAGNITUDE(tip->a);
+	omat[5] = MAGNITUDE(tip->b);
+        omat[3] = tip->v[0];
+        omat[7] = tip->v[1];
+        omat[11] = tip->v[2];
+
+        mat_mul(imat, mat, omat);
+
+        VMOVE(anorm, tip->a);
+        VMOVE(bnorm, tip->b);
+        VCROSS(cnorm, tip->a, tip->b);
+        VUNITIZE(anorm);
+        VUNITIZE(bnorm);
+        VUNITIZE(cnorm);
+
+        mat_idn( omat );
+
+        VMOVE( &omat[0], anorm);
+        VMOVE( &omat[4], bnorm);
+        VMOVE( &omat[8], cnorm);
+
+        mat_mul(bot_mat, omat, imat);
+
+	bot_srf = (struct snurb*) tgc_disk( bot_mat, 1.0, 0 );
+	bot_cnurb = (struct cnurb*) tgc_unitcircle();
+
+	cyl_srf = (struct snurb *) tgc_nurb_cyl(top_mat, bot_mat);
+
+}
+
+struct snurb *
+tgc_disk(rmat, height, flip)
+mat_t 	rmat;
+fastf_t height;
+int	flip;
+{
+	struct snurb * srf;
+	fastf_t	*mptr;
+	int coords;
+	int i;
+	vect_t	vect;
+
+	srf = (struct snurb *) rt_nurb_new_snurb(
+	    2, 2, 4, 4, 2, 2, RT_NURB_MAKE_PT_TYPE(3,2,0));
+
+	srf->u_knots.knots[0] = 0.0;
+	srf->u_knots.knots[1] = 0.0;
+	srf->u_knots.knots[2] = 1.0;
+	srf->u_knots.knots[3] = 1.0;
+
+	srf->v_knots.knots[0] = 0.0;
+	srf->v_knots.knots[1] = 0.0;
+	srf->v_knots.knots[2] = 1.0;
+	srf->v_knots.knots[3] = 1.0;
+	if(flip)
+	{
+		srf->ctl_points[0] = 1.;
+		srf->ctl_points[1] = -1.;
+		srf->ctl_points[2] = height;
+
+		srf->ctl_points[3] = -1;
+		srf->ctl_points[4] = -1.;
+		srf->ctl_points[5] = height;
+
+		srf->ctl_points[6] = 1.;
+		srf->ctl_points[7] = 1.;
+		srf->ctl_points[8] = height;
+
+		srf->ctl_points[9] = -1.;
+		srf->ctl_points[10] = 1.;
+		srf->ctl_points[11] = height;
+	} else
+	{
+
+		srf->ctl_points[0] = -1.;
+		srf->ctl_points[1] = -1.;
+		srf->ctl_points[2] = height;
+
+		srf->ctl_points[3] = 1;
+		srf->ctl_points[4] = -1.;
+		srf->ctl_points[5] = height;
+
+		srf->ctl_points[6] = -1.;
+		srf->ctl_points[7] = 1.;
+		srf->ctl_points[8] = height;
+
+		srf->ctl_points[9] = 1.;
+		srf->ctl_points[10] = 1.;
+		srf->ctl_points[11] = height;
+	}
+
+	/* multiple the matrix to get orientation and scaling that we want */
+	mptr = srf->ctl_points;
+	coords = RT_NURB_EXTRACT_COORDS(srf->pt_type);
+
+	i = srf->s_size[0] * srf->s_size[1];
+
+        for( ; i> 0; i--)
+        {
+		MAT4X3PNT(vect,rmat,mptr);
+                mptr[0] = vect[0];
+                mptr[1] = vect[1];
+                mptr[2] = vect[2];
+                mptr += 3;
+        }
+
+	return srf;
+}
+
+struct cnurb *
+tgc_unitcircle()
+{
+
+	struct cnurb * cir;
+	fastf_t rat = .707107;
+
+	cir = (struct cnurb * )
+		rt_nurb_new_cnurb( 3, 12,9, RT_NURB_MAKE_PT_TYPE(4,3,1));
+
+	cir->knot.k_size = 12;
+
+	cir->knot.knots[0] = 0.0;
+	cir->knot.knots[1] = 0.0;
+	cir->knot.knots[2] = 0.0;
+	cir->knot.knots[3] = 1.0;
+	cir->knot.knots[4] = 1.0;
+	cir->knot.knots[5] = 2.0;
+	cir->knot.knots[6] = 2.0;
+	cir->knot.knots[7] = 3.0;
+	cir->knot.knots[8] = 3.0;
+	cir->knot.knots[9] = 4.0;
+	cir->knot.knots[10] = 4.0;
+	cir->knot.knots[11] = 4.0;
+
+	cir->c_size = 9;
+
+        cir->ctl_points[0] = 1.0;               /* point 1 */
+        cir->ctl_points[1] = 0.0;
+        cir->ctl_points[2] = 0.0;
+        cir->ctl_points[3] = 1.0;
+
+        cir->ctl_points[4] = rat;               /* point 2*/
+        cir->ctl_points[5] = rat;
+        cir->ctl_points[6] = 0.0;
+        cir->ctl_points[7] = rat;
+
+        cir->ctl_points[8] = 0;                 /* point 3 */
+        cir->ctl_points[9] = 1.0;
+        cir->ctl_points[10] = 0.0;
+        cir->ctl_points[11] = 1.0;
+
+        cir->ctl_points[12] = -rat;             /* point 4 */
+        cir->ctl_points[13] = rat;
+        cir->ctl_points[14] = 0.0;
+        cir->ctl_points[15] = rat;
+
+        cir->ctl_points[16] = -1.0;             /* point 5 */
+        cir->ctl_points[17] = 0.0;
+        cir->ctl_points[18] = 0.0;
+        cir->ctl_points[19] = 1.0;
+
+        cir->ctl_points[20] = -rat;             /* point 6 */
+        cir->ctl_points[21] = -rat;
+        cir->ctl_points[22] = 0.0;
+        cir->ctl_points[23] = rat;
+
+        cir->ctl_points[24] = 0;                /* point 7 */
+        cir->ctl_points[25] = -1.0;
+        cir->ctl_points[26] = 0.0;
+        cir->ctl_points[27] = 1.0;
+
+        cir->ctl_points[28] = rat;              /* point 8 */
+        cir->ctl_points[29] = -rat;
+        cir->ctl_points[30] = 0.0;
+        cir->ctl_points[31] = rat;
+
+        cir->ctl_points[32] = 1.0;              /* point 9 */
+        cir->ctl_points[33] = 0.0;
+        cir->ctl_points[34] = 0.0;
+        cir->ctl_points[35] = 1.0;
+
+	return cir;
+}
+
+/* Create a cylinder with a top surface and a bottom surfce 
+ * defined by the ellipsods at the top and bottom of the
+ * cylinder, the top_mat, and bot_mat are applied to a unit circle
+ * for the top row of the surface and the bot row of the surface
+ * respectively.
+ */
+
+struct snurb *
+tgc_nurb_cyl(top_mat, bot_mat)
+mat_t	top_mat;
+mat_t	bot_mat;
+{
+	
+	struct cnurb 	* top_crv;
+	struct cnurb 	* bot_crv;
+	struct snurb 	* srf;
+	fastf_t		* mptr;
+	int		i;
+	hvect_t		vect;
+
+	top_crv = tgc_unitcircle();
+	bot_crv = tgc_unitcircle();
+
+	mptr = top_crv->ctl_points;
+
+	i = top_crv->c_size;
+
+	for( ; i > 0; i--)
+	{
+		MAT4X4PNT(vect, top_mat, mptr);
+		mptr[0] = vect[0];
+		mptr[1] = vect[1];
+		mptr[2] = vect[2];
+		mptr[3] = vect[3];
+		mptr += 4;
+	}
+
+	mptr = bot_crv->ctl_points;
+
+	i = bot_crv->c_size;
+
+	for( ; i > 0; i--)
+	{
+		MAT4X4PNT(vect, bot_mat, mptr);
+		mptr[0] = vect[0];
+		mptr[1] = vect[1];
+		mptr[2] = vect[2];
+		mptr[3] = vect[3];
+		mptr += 4;
+	}
+
+	srf = rt_nurb_new_snurb(2, top_crv->order, 
+		4, top_crv->knot.k_size, 
+		2, top_crv->c_size, top_crv->pt_type);
+
+	srf->u_knots.knots[0] = 0.0;
+	srf->u_knots.knots[1] = 0.0;
+	srf->u_knots.knots[2] = 1.0;
+	srf->u_knots.knots[3] = 1.0;
+
+	for(i = 0; i < top_crv->knot.k_size; i++)
+	{
+		srf->v_knots.knots[i] = top_crv->knot.knots[i];
+	}
+
+	mptr = srf->ctl_points;
+
+	for(i = 0; i < top_crv->c_size * 4; i++)
+	{
+		*mptr++ = top_crv->ctl_points[i];
+	}
+
+	for(i = 0; i < bot_crv->c_size * 4; i++)
+	{
+		*mptr++ = bot_crv->ctl_points[i];
+	}
+	return srf;
+}
+
