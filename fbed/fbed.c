@@ -30,7 +30,7 @@ static struct
 	int	xorig, yorig;
 	unsigned char bits[32*4];
 	} cursor = {
-#include "cursorbits.h"
+#include "./cursorbits.h"
 	};
 
 #define JUMP		(40/zoom_factor)

@@ -8,7 +8,7 @@
  */
 #include <stdio.h>
 #include <fb.h>
-#include "font.h"
+#include "./font.h"
 
 /*	g e t f o n t ( )
 	Copy the font name and determine if you need to put a path variable
