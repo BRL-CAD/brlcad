@@ -29,7 +29,6 @@ install-data-hook:
 	    echo "Installing $$i" ; \
 	    $(INSTALL_DATA) $$i $(DESTDIR)$(pkglibdir)/. ; \
 	done;
-	$(INSTALL_DATA) itkConfig.sh $(DESTDIR)$(libdir)/. 
 	$(INSTALL_DATA) pkgIndex.tcl $(DESTDIR)$(pkglibdir)/. 
 	$(INSTALL_DATA) library/itk.tcl $(DESTDIR)$(pkglibdir)/. 
 	$(INSTALL_DATA) library/tclIndex $(DESTDIR)$(pkglibdir)/.
