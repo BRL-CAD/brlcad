@@ -637,6 +637,7 @@ struct partition {
 		for( _pp = (_headp)->pt_forw; _pp != (_headp);  )  { \
 			_zap = _pp; \
 			_pp = _pp->pt_forw; \
+			BU_LIST_DEQUEUE( (struct bu_list *)(_zap) ); \
 			FREE_PT(_zap, _res); \
 		} \
 		(_headp)->pt_forw = (_headp)->pt_back = (_headp); \
