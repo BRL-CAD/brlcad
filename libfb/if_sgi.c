@@ -193,9 +193,11 @@ int	width, height;
 	RGBmode();
 	gconfig();
 	if( getplanes() < 24 )  {
-		fb_log("Only %d bit planes?  24 required\n", getplanes());
-		(void)sgi_dclose(ifp);
-		return(-1);
+		singlebuffer();
+		gconfig();
+		gexit();
+		*ifp = sgiw_interface;	/* struct copy */
+		return( sgw_dopen( ifp, file, width, height ) );
 	}
 	tpoff();		/* Turn off textport */
 	cursoff();
