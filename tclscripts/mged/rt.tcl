@@ -329,6 +329,10 @@ specified by the destination." } }
     hoc_register_data $top.clearB "Clear the Framebuffer"\
 	    { { summary "Clear the framebuffer specified by the
 destination to the background color." } }
+    button $top.abortB -relief raised -text "Abort" \
+	    -command "rt_abort"
+    hoc_register_data $top.abortB "Abort Raytrace"\
+	    { { summary "Abort all raytraces initiated by MGED." } }
     button $top.dismissB -relief raised -text "Dismiss" \
 	    -command "rt_dismiss $id"
     hoc_register_data $top.dismissB "Dismiss"\
@@ -361,9 +365,9 @@ destination to the background color." } }
     grid columnconfigure $top.gridF2 0 -weight 1
     grid rowconfigure $top.gridF2 0 -weight 1
 
-    grid $top.okB $top.raytraceB x $top.clearB x $top.dismissB -sticky "nsew" -in $top.gridF3
-    grid columnconfigure $top.gridF3 2 -weight 1
-    grid columnconfigure $top.gridF3 4 -weight 1
+    grid $top.okB $top.raytraceB $top.abortB x $top.clearB x $top.dismissB -sticky "nsew" -in $top.gridF3
+    grid columnconfigure $top.gridF3 3 -weight 1
+    grid columnconfigure $top.gridF3 5 -weight 1
 
     grid $top.gridF2 -padx 4 -pady 4 -sticky nsew
     grid $top.gridF3 -padx 4 -pady 4 -sticky nsew
