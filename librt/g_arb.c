@@ -1,5 +1,5 @@
 /*
- *  			A R B . C
+ *  			G _ A R B . C
  *  
  *  Function -
  *  	Intersect a ray with an Arbitrary Regular Polyhedron with
@@ -867,17 +867,13 @@ struct directory	*dp;
 
 	/* Build all 6 faces of the ARB */
 
-	/* make top */
-	outfaceuses[0] = nmg_cface(s, (struct vertex **)NULL, 4);
-	for (eu = outfaceuses[0]->lu_p->down.eu_p->next, i = 0 ;
-	    i < 4 ; ++i, eu = eu->next)
-		verts[i] = eu->vu_p->v_p;
+	/* make "top" */
+	outfaceuses[0] = nmg_cface(s, verts, 4);
 
-	/* make bottom */
-	outfaceuses[1] = nmg_cface(s, (struct vertex **)NULL, 4);
-	for (eu = outfaceuses[1]->lu_p->down.eu_p->next, i = 7 ;
-	    i > 3 ; --i, eu = eu->next)
-		verts[i] = eu->vu_p->v_p;
+	/* make "bottom", going the other way around */
+	for( i=0; i<4; i++ )  vertlist[i] = (struct vertex *)0;
+	outfaceuses[1] = nmg_cface(s, vertlist, 4);
+	for( i=0; i<4; i++ )  verts[8-1-i] = vertlist[i];
 
 	/* make sure that vertices are listed in clockwise fashion when
 	 * viewed from the outside of the face.  In this way the face
