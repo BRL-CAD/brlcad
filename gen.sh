@@ -24,13 +24,14 @@ SHELL=/bin/sh
 export SHELL
 
 # Set to 0 for non-NFS environment (default), 1 for NFS configuration.
-NFS=1
+NFS=0
 
 # Label number for this CAD Release,
 # RCS main Revision number, and date.
 #RELEASE=M.N;	RCS_REVISION=X;		REL=DATE=dd-mmm-yy
 #RELEASE=4.8;	RCS_REVISION=11;	REL_DATE=Today
-RELEASE=4.3;	RCS_REVISION=10;	REL_DATE=2-Jan-95	# Beta6
+RELEASE=4.4;	RCS_REVISION=11;	REL_DATE=4-Jan-95
+#RELEASE=4.3;	RCS_REVISION=10;	REL_DATE=2-Jan-95	# Beta6
 #RELEASE=4.3;	RCS_REVISION=10;	REL_DATE=29-Dec-94	# Beta5
 #RELEASE=4.3;	RCS_REVISION=10;	REL_DATE=27-Dec-94	# Beta4
 #RELEASE=4.3;	RCS_REVISION=10;	REL_DATE=20-Dec-94	# Beta3
@@ -400,7 +401,7 @@ shell)
 		( cd ${dir}; echo ${dir}; /bin/sh )
 	done;;
 
-checkin)
+rcs-lock)
 	rcs -l ${TOP_FILES}
 	rcs -u ${TOP_FILES}
 	for dir in ${ADIRS} ${BDIRS}; do
@@ -418,7 +419,7 @@ checkin)
 	ci -u ${CI_ARGS} ${TOP_FILES}
 	for dir in ${ADIRS} ${BDIRS}; do
 		echo -------------------------------- $dir;
-		(cd $dir; \
+		(cd $dir; rm -f vers.c version \
 		rcs -l *.[cshf1-9] Cakefile; \
 		ci -u ${CI_ARGS} *.[cshf1-9] Cakefile )
 	done;;

@@ -78,7 +78,6 @@ set -S2 "/bin/sh"
  *								*
  ****************************************************************/
 #undef NFS
-#define NFS	1
 /* Place "#define NFS	1" here to enable NFS feature */
 
 /****************************************************************
@@ -167,7 +166,7 @@ set -S2 "/bin/sh"
 #	undef	sgi
 #	define	MTYPE	5d
 /*** WARNING WARNING:  *not* using -O2 on Irix 4.0.4 gives bad code ***/
-#	if 0	/* PRODUCTION=1 */
+#	if 1	/* PRODUCTION=1 */
 /*		This version for production: optimization & shared libraries */
 #		define	OPTIMIZER	-O2
 /*		Use shared libraries */
@@ -286,7 +285,7 @@ set -S2 "/bin/sh"
 /*	Silicon Graphics 4D, running IRIX 6.0 (on a 64-bit machine) */
 #	undef	sgi
 #	define	MTYPE	7d
-#	if 0	/* PRODUCTION=1 */
+#	if 1	/* PRODUCTION=1 */
 /*		This version for production: optimization & shared libraries */
 /*		Warning 1174 is "variable declared but never referenced". */
 /*		Warning 1032 is "expression must have arithmetic type". */
