@@ -6,7 +6,10 @@ static char rcsid[] = "$Header$";
 extern int Debug;
 extern int Levels;
 extern int RandomFlag;
-
+/*
+ * Clustered-Dot ordered dither at 45 degrees.
+ *	Page 86 of Digital Halftoning.
+ */
 static unsigned char	ordered[6][6] = {
 	{5,4,3,14,15,16},
 	{6,1,2,13,18,17},
@@ -19,6 +22,8 @@ static unsigned char	ordered[6][6] = {
  *
  * Entry:
  *	Pix	Pixel value	0-255
+ * The following are not used but are here for consistency with
+ * other halftoning methods.
  *	X	Current column
  *	Y	Current row
  *	NX	Next column
@@ -43,6 +48,9 @@ static unsigned char	ordered[6][6] = {
  *	Christopher T. Johnson	- 90/03/21
  *
  * $Log$
+ * Revision 1.5  90/04/12  17:36:46  cjohnson
+ * Add Random number processing.
+ * 
  * Revision 1.4  90/04/10  16:45:49  cjohnson
  * Fix Intensity methods 
  * 
