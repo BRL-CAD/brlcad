@@ -89,14 +89,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 # include <sys/uio.h>		/* for struct iovec (writev) */
 #endif
 
-#ifdef SGI_EXCELAN
-# include <EXOS/exos/misc.h>
-# include <EXOS/sys/socket.h>
-# include <EXOS/netinet/in.h>
-# include <sys/time.h>		/* for struct timeval */
-# define select	bsdselect	/* bloody GL2 select() conflict */
-#endif
-
 #include <errno.h>
 #include "pkg.h"
 
@@ -239,7 +231,6 @@ void (*errlog)();
 #endif
 	register struct hostent *hp;
 	register int netfd;
-	unsigned long addr_tmp;
 	struct	sockaddr *addr;			/* UNIX or INET addr */
 	int	addrlen;			/* length of address */
 
@@ -285,22 +276,13 @@ void (*errlog)();
 		}
 		sinhim.sin_port = sp->s_port;
 #endif
-#ifdef SGI_EXCELAN
-		/* What routine does SGI give for this one? */
-		sinhim.sin_port = htons(5558);	/* mfb service!! XXX */
-#endif
 	}
 
 	/* Get InterNet address */
 	if( atoi( host ) > 0 )  {
 		/* Numeric */
 		sinhim.sin_family = AF_INET;
-#if CRAY && OLDTCP
-		addr_tmp = inet_addr(host);
-		sinhim.sin_addr = addr_tmp;
-#else
 		sinhim.sin_addr.s_addr = inet_addr(host);
-#endif
 	} else {
 #ifdef BSD
 		if( (hp = gethostbyname(host)) == NULL )  {
@@ -310,21 +292,7 @@ void (*errlog)();
 			return(PKC_ERROR);
 		}
 		sinhim.sin_family = hp->h_addrtype;
-		bcopy(hp->h_addr, (char *)&addr_tmp, hp->h_length);
-#		if CRAY && OLDTCP
-			sinhim.sin_addr = addr_tmp;
-#		else
-			sinhim.sin_addr.s_addr = addr_tmp;
-#		endif
-#endif
-#ifdef SGI_EXCELAN
-		char **hostp = &host;
-		if((sinhim.sin_addr.s_addr = rhost(&hostp)) == -1) {
-			sprintf(errbuf,"pkg_open(%s,%s): unknown host\n",
-				host, service );
-			errlog(errbuf);
-			return(PKC_ERROR);
-		}
+		bcopy(hp->h_addr, (char *)&sinhim.sin_addr, hp->h_length);
 #endif
 	}
 	addr = (struct sockaddr *) &sinhim;
@@ -354,21 +322,6 @@ ready:
 		return(PKC_ERROR);
 	}
 #endif
-#ifdef SGI_EXCELAN
-	sinme.sin_family = AF_INET;
-	sinme.sin_port = 0;		/* let kernel pick it */
-	if( (netfd = socket(SOCK_STREAM, 0, &sinme, 0)) <= 0 )  {
-		pkg_perror( errlog, "pkg_open:  client socket" );
-		return(PKC_ERROR);
-	}
-
-	if( connect(netfd, (char *)&sinhim) < 0 )  {
-		pkg_perror( errlog, "pkg_open: client connect" );
-		close(netfd);
-		return(PKC_ERROR);
-	}
-#endif
-
 	return( pkg_makeconn(netfd, switchp, errlog) );
 }
 
@@ -424,9 +377,6 @@ void (*errlog)();
 #ifdef HAS_UNIX_DOMAIN_SOCKETS
 	struct sockaddr_un sunme;		/* UNIX Domain */
 #endif
-#ifdef SGI_EXCELAN
-	struct sockaddr_in sinhim;		/* Server */
-#endif
 	register struct servent *sp;
 	struct	sockaddr *addr;			/* UNIX or INET addr */
 	int	addrlen;			/* length of address */
@@ -472,10 +422,6 @@ void (*errlog)();
 		}
 		sinme.sin_port = sp->s_port;
 #endif
-#ifdef SGI_EXCELAN
-		/* What routine does SGI give for this one? */
-		sinme.sin_port = htons(5558);	/* mfb service!! XXX */
-#endif
 	}
 	pkg_permport = sinme.sin_port;		/* XXX -- needs formal I/F */
 	sinme.sin_family = AF_INET;
@@ -512,13 +458,6 @@ ready:
 	if( backlog > 5 )  backlog = 5;
 	if( listen(pkg_listenfd, backlog) < 0 )  {
 		pkg_perror( errlog, "pkg_permserver:  listen" );
-		close(pkg_listenfd);
-		return(-1);
-	}
-#endif
-#ifdef SGI_EXCELAN
-	if( (pkg_listenfd = socket(SOCK_STREAM,0,&sinme,SO_ACCEPTCONN|SO_KEEPALIVE)) < 0 )  {
-		pkg_perror( errlog, "pkg_permserver:  socket" );
 		close(pkg_listenfd);
 		return(-1);
 	}
@@ -586,18 +525,6 @@ void (*errlog)();
 	}
 
 	return( pkg_makeconn(s2, switchp, errlog) );
-#endif
-#ifdef SGI_EXCELAN
-	struct sockaddr_in from;
-
-	/* block until someone tries to connect */
-	if(accept(fd, &from) < 0){
-		pkg_perror( errlog, "pkg_getclient:  accept" );
-		return(PKC_ERROR);
-	}
-
-	/* Hopefully, once-only XXX */
-	return( pkg_makeconn(fd, switchp, errlog) );
 #endif
 }
 
@@ -1518,117 +1445,6 @@ char *s;
 	fputs( s, stderr );
 }
 
-#ifdef SGI_EXCELAN
-/*
- *			B S D S E L E C T
- *
- *  Not only is the calling sequence different, but
- *  it conflicts with naming in the GL2 library, so
- *  select can't be used!
- */
-#undef select
-int
-bsdselect( nfd, a, b, c, tvp )
-int nfd;
-long *a, *b, *c;
-struct timeval *tvp;
-{
-/**	return( select( nfd, a, b, tvp->tv_usec ); **/
-	return(0);
-}
-#endif
-
-#ifdef SGI_EXCELAN
-/*
- * Internet address interpretation routine.
- * All the network library routines call this
- * routine to interpret entries in the data bases
- * which are expected to be an address.
- * The value returned is in network order.
- */
-u_long
-inet_addr(cp)
-	register char *cp;
-{
-	register u_long val, base, n;
-	register char c;
-	u_long parts[4], *pp = parts;
-
-again:
-	/*
-	 * Collect number up to ``.''.
-	 * Values are specified as for C:
-	 * 0x=hex, 0=octal, other=decimal.
-	 */
-	val = 0; base = 10;
-	if (*cp == '0')
-		base = 8, cp++;
-	if (*cp == 'x' || *cp == 'X')
-		base = 16, cp++;
-	while (c = *cp) {
-		if (isdigit(c)) {
-			val = (val * base) + (c - '0');
-			cp++;
-			continue;
-		}
-		if (base == 16 && isxdigit(c)) {
-			val = (val << 4) + (c + 10 - (islower(c) ? 'a' : 'A'));
-			cp++;
-			continue;
-		}
-		break;
-	}
-	if (*cp == '.') {
-		/*
-		 * Internet format:
-		 *	a.b.c.d
-		 *	a.b.c	(with c treated as 16-bits)
-		 *	a.b	(with b treated as 24 bits)
-		 */
-		if (pp >= parts + 4)
-			return (-1);
-		*pp++ = val, cp++;
-		goto again;
-	}
-	/*
-	 * Check for trailing characters.
-	 */
-	if (*cp && !isspace(*cp))
-		return (-1);
-	*pp++ = val;
-	/*
-	 * Concoct the address according to
-	 * the number of parts specified.
-	 */
-	n = pp - parts;
-	switch (n) {
-
-	case 1:				/* a -- 32 bits */
-		val = parts[0];
-		break;
-
-	case 2:				/* a.b -- 8.24 bits */
-		val = (parts[0] << 24) | (parts[1] & 0xffffff);
-		break;
-
-	case 3:				/* a.b.c -- 8.8.16 bits */
-		val = (parts[0] << 24) | ((parts[1] & 0xff) << 16) |
-			(parts[2] & 0xffff);
-		break;
-
-	case 4:				/* a.b.c.d -- 8.8.8.8 bits */
-		val = (parts[0] << 24) | ((parts[1] & 0xff) << 16) |
-		      ((parts[2] & 0xff) << 8) | (parts[3] & 0xff);
-		break;
-
-	default:
-		return (-1);
-	}
-	val = htonl(val);
-	return (val);
-}
-#endif
-
 /*
  *			P K G _ C K _ D E B U G
  */
@@ -1791,12 +1607,6 @@ int		nodelay;
 	long		bits;
 	register int	i;
 	extern int	errno;
-
-#if 0
-	/* XXX Setting this flag will lead to handing applications! */
-	if( pkg_nochecking )
-		return;
-#endif
 
 	/* Check socket for unexpected input */
 	tv.tv_sec = 0;
