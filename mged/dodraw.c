@@ -1434,6 +1434,7 @@ char	**argv;
 	struct directory	*dp;
 	int			failed;
 	int			mged_nmg_use_tnurbs = 0;
+	int			make_bot = 0;
 
 	CHECK_DBI_NULL;
 
@@ -1463,8 +1464,9 @@ char	**argv;
 	triangulate = 0;
 
 	/* Parse options. */
+	make_bot = 1;
 	bu_optind = 1;		/* re-init bu_getopt() */
-	while( (c=bu_getopt(argc,argv,"tTP:")) != EOF )  {
+	while( (c=bu_getopt(argc,argv,"ntTP:")) != EOF )  {
 		switch(c)  {
 		case 'P':
 			ncpu = atoi(bu_optarg);
@@ -1474,6 +1476,9 @@ char	**argv;
 			break;
 		case 't':
 			mged_nmg_use_tnurbs = 1;
+			break;
+		case 'n':
+			make_bot = 0;
 			break;
 		default:
 		  {
@@ -1582,7 +1587,7 @@ char	**argv;
 			 "\n", (char *)NULL);
 
 	/* Triangulate model, if requested */
-	if( triangulate )
+	if( triangulate && !make_bot )
 	{
 		Tcl_AppendResult(interp, "facetize:  triangulating resulting object\n", (char *)NULL);
 		if( BU_SETJUMP )
@@ -1600,14 +1605,34 @@ char	**argv;
 		BU_UNSETJUMP;
 	}
 
-	Tcl_AppendResult(interp, "facetize:  converting NMG to database format\n", (char *)NULL);
+	if( make_bot ) {
+		struct rt_bot_internal *bot;
+		struct nmgregion *r;
+		struct shell *s;
 
-	/* Export NMG as a new solid */
-	RT_INIT_DB_INTERNAL(&intern);
-	intern.idb_type = ID_NMG;
-	intern.idb_meth = &rt_functab[ID_NMG];
-	intern.idb_ptr = (genptr_t)mged_nmg_model;
-	mged_nmg_model = (struct model *)NULL;
+		r = BU_LIST_FIRST( nmgregion, &mged_nmg_model->r_hd );
+		s = BU_LIST_FIRST( shell, &r->s_hd );
+		bot = (struct rt_bot_internal *)nmg_bot( s, &mged_tol );
+		nmg_km( mged_nmg_model );
+		mged_nmg_model = (struct model *)NULL;
+
+		/* Export BOT as a new solid */
+		RT_INIT_DB_INTERNAL(&intern);
+		intern.idb_type = ID_BOT;
+		intern.idb_meth = &rt_functab[ID_BOT];
+		intern.idb_ptr = (genptr_t) bot;
+	}
+	else {
+
+		Tcl_AppendResult(interp, "facetize:  converting NMG to database format\n", (char *)NULL);
+
+		/* Export NMG as a new solid */
+		RT_INIT_DB_INTERNAL(&intern);
+		intern.idb_type = ID_NMG;
+		intern.idb_meth = &rt_functab[ID_NMG];
+		intern.idb_ptr = (genptr_t)mged_nmg_model;
+		mged_nmg_model = (struct model *)NULL;
+	}
 
 	if( (dp=db_diradd( dbip, newname, -1L, 0, DIR_SOLID, NULL)) == DIR_NULL )
 	{
