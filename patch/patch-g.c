@@ -443,7 +443,7 @@ char	*argv[];
 				{
 					proc_triangle(i);
 				}
-				else if( (in[i-1].surf_mode == '-') && (in[i-1].surf_thick == 0) )
+				else if( (in[i-1].surf_mode == '-') && (in[i-1].rsurf_thick == 0) )
 				{
 					proc_triangle(i);
 				}
