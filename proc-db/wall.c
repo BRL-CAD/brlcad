@@ -11,14 +11,16 @@
 #include "wdb.h"
 #include "raytrace.h"
 
+#define min(_a, _b) ((_a) < (_b) ? (_a) : (_b))
+#define max(_a, _b) ((_a) > (_b) ? (_a) : (_b))
+
 /* declarations to support use of getopt() system call */
-char *options = "w:o:n:t:b:u:c:rlhdm:";
+char *options = "w:o:n:t:b:u:c:rlhdm:T:R:";
 extern char *optarg;
 extern int optind, opterr, getopt();
 
 int debug = 0;
 char *progname = "(noname)";
-FILE *fd;
 char *obj_name = "wall";
 char sol_name[64];
 int sol_num = 0;
@@ -27,6 +29,8 @@ char *units = "mm";
 double unit_conv = 1.0;
 char *color;
 char def_color[3];
+matp_t trans_matrix = (matp_t)NULL; 
+CONST double degtorad =  0.01745329251994329573;
 
 int log_cmds = 0;	/* log sessions to a log file */
 /* standard construction brick:
@@ -44,6 +48,7 @@ int make_mortar = 1;
 /* real dimensions of a "2 by 4" board */
 double bd_thick = 3.25 * 25.4;
 double bd_thin = 1.5 * 25.4;
+double beam_height = 5.5 * 25.4;
 double sr_thick = 0.75 * 25.4;	/* sheetrock thickness */
 double stud_spacing = 16.0 * 25.4; /* spacing between vertical studs */
 char sheetrock_color[3] = { 200, 200, 200 };
@@ -74,19 +79,119 @@ struct boardseg {
 void usage(s)
 char *s;
 {
-	if (s) (void)fputs(s, stderr);
+	if (s) (void)rt_log("%s\n", s);
 
-	(void) fprintf(stderr, "Usage: %s %s\n%s\n%s\n%s\n",
+	rt_log("Usage: %s %s\n%s\n%s\n%s\n",
 progname,
 "[ -u units ] -w(all) width,height [-o(pening) lx,lz,hx,hz ...]",
 " [-n name] [ -d(ebug) ] [-t {frame|brick|block|sheetrock} ] [-c R/G/B]",
-" [-l(og_commands)]",
+" [-l(og_commands)] [-R(otate) rx/ry/rz] [-T(ranslate) dx/dy/dz]",
 " brick sub-options: [-r(and_color)] [-b width,height,depth ] [-m min_mortar]"
 );
 
 	exit(1);
 }
 
+
+void
+set_translate(s)
+char *s;
+{
+	double dx, dy, dz;
+
+	if (sscanf(s, "%lf/%lf/%lf", &dx, &dy, &dz) != 3)
+		usage("translation option problem\n");
+
+    	if (!trans_matrix) {
+    		trans_matrix = (matp_t)rt_calloc(sizeof(mat_t), 1,
+    					"transformation matrix");
+    		bcopy(rt_identity, trans_matrix, sizeof(mat_t));
+    	}
+	
+    	MAT_DELTAS(trans_matrix, dx*unit_conv, dy*unit_conv, dz*unit_conv);
+}
+
+/*
+ *			B U I L D H R O T
+ *
+ * This routine builds a Homogeneous rotation matrix, given
+ * alpha, beta, and gamma as angles of rotation.
+ *
+ * NOTE:  Only initialize the rotation 3x3 parts of the 4x4
+ * There is important information in dx,dy,dz,s .
+ */
+void
+buildHrot( mat, alpha, beta, ggamma )
+register matp_t mat;
+double alpha, beta, ggamma;
+{
+	static fastf_t calpha, cbeta, cgamma;
+	static fastf_t salpha, sbeta, sgamma;
+
+	calpha = cos( alpha );
+	cbeta = cos( beta );
+	cgamma = cos( ggamma );
+
+	salpha = sin( alpha );
+	sbeta = sin( beta );
+	sgamma = sin( ggamma );
+
+	/*
+	 * compute the new rotation to apply to the previous
+	 * viewing rotation.
+	 * Alpha is angle of rotation about the X axis, and is done third.
+	 * Beta is angle of rotation about the Y axis, and is done second.
+	 * Gamma is angle of rotation about Z axis, and is done first.
+	 */
+#ifdef m_RZ_RY_RX
+	/* view = model * RZ * RY * RX (Neuman+Sproul, premultiply) */
+	mat[0] = cbeta * cgamma;
+	mat[1] = -cbeta * sgamma;
+	mat[2] = -sbeta;
+
+	mat[4] = -salpha * sbeta * cgamma + calpha * sgamma;
+	mat[5] = salpha * sbeta * sgamma + calpha * cgamma;
+	mat[6] = -salpha * cbeta;
+
+	mat[8] = calpha * sbeta * cgamma + salpha * sgamma;
+	mat[9] = -calpha * sbeta * sgamma + salpha * cgamma;
+	mat[10] = calpha * cbeta;
+#endif
+	/* This is the correct form for this version of GED */
+	/* view = RX * RY * RZ * model (Rodgers, postmultiply) */
+	/* Point thumb along axis of rotation.  +Angle as hand closes */
+	mat[0] = cbeta * cgamma;
+	mat[1] = -cbeta * sgamma;
+	mat[2] = sbeta;
+
+	mat[4] = salpha * sbeta * cgamma + calpha * sgamma;
+	mat[5] = -salpha * sbeta * sgamma + calpha * cgamma;
+	mat[6] = -salpha * cbeta;
+
+	mat[8] = -calpha * sbeta * cgamma + salpha * sgamma;
+	mat[9] = calpha * sbeta * sgamma + salpha * cgamma;
+	mat[10] = calpha * cbeta;
+}
+
+void
+set_rotate(s)
+char *s;
+{
+	double rx, ry, rz;
+
+	if (sscanf(s, "%lf/%lf/%lf", &rx, &ry, &rz) != 3)
+		usage("rotation option problem\n");
+
+    	if (!trans_matrix) {
+    		trans_matrix = (matp_t)rt_calloc(sizeof(mat_t), 1,
+	    		"rotation matrix");
+    		bcopy(rt_identity, trans_matrix, sizeof(mat_t));
+    	}
+	buildHrot(trans_matrix,
+		rx * degtorad,
+		ry * degtorad,
+		rz * degtorad);
+}
 
 
 /*
@@ -122,6 +227,11 @@ char *av[];
 	/* get all the option flags from the command line */
 	while ((c=getopt(ac,av,options)) != EOF)
 		switch (c) {
+		case 'T'	: set_translate(optarg);
+				units_lock = 1;
+				break;
+		case 'R'	: set_rotate(optarg);
+				break;
 		case 'b'	: if (sscanf(optarg, "%lf,%lf,%lf",
 				     &width, &height, &dy) == 3) {
 					brick_width = width * unit_conv;
@@ -151,7 +261,9 @@ char *av[];
 
 				  break;
 		case 'n'	: obj_name = optarg; break;
-		case 'o'	: if (sscanf(optarg, "%lf,%lf,%lf,%lf",
+		case 'o'	: if (ol_hd.ex == 0.0)
+					usage("set wall dim before openings\n");
+				  else if (sscanf(optarg, "%lf,%lf,%lf,%lf",
 				     &dx, &dy, &width, &height) == 4) {
 					op = (struct opening *)rt_calloc(1, sizeof(struct opening), "calloc opening");
 				     	RT_LIST_INSERT(&ol_hd.l, &op->l);
@@ -159,6 +271,15 @@ char *av[];
 				     	op->sz = dy * unit_conv;
 				     	op->ex = width * unit_conv;
 				     	op->ez = height * unit_conv;
+
+				     	/* do bounds checking */
+				     	if (op->sx < 0.0) op->sx = 0.0;
+				     	if (op->sz < 0.0) op->sz = 0.0;
+				     	if (op->ex > WALL_WIDTH)
+				     		op->ex = WALL_WIDTH;
+				     	if (op->ez > WALL_HEIGHT)
+				     		op->ez = WALL_HEIGHT;
+
 				     	units_lock = 1;
 				} else
 					usage("error parsing -o option\n");
@@ -166,7 +287,7 @@ char *av[];
 		case 'r'	: rand_brick_color = !rand_brick_color; break;
 		case 't'	: type = optarg; break;
 		case 'u'	: if (units_lock)
-					(void)fprintf(stderr,
+					rt_log(
 					"Warning: attempting to change units in mid-parse\n");
 				if ((dx=rt_units_conversion(optarg)) != 0.0) {
 					unit_conv = dx;
@@ -204,6 +325,7 @@ char *av[];
 }
 
 
+#if 0
 void
 v_segs(sz, ez, seglist, sx, ex)
 double sz, ez, sx, ex;
@@ -242,7 +364,7 @@ struct boardseg *seglist;
 			    	RT_LIST_DEQUEUE(&(seg->l));
 			    	rt_free((char *)seg, "seg free");
 				if (debug)
-				 	printf("deleting segment\n");
+				 	rt_log("deleting segment\n");
 			    	seg = sp;
 			    } else if (op->ez > seg->s) {
 			    	/* opening covers begining of segment */
@@ -266,7 +388,7 @@ struct boardseg *seglist;
 				 seg->s = op->ez;
 				 RT_LIST_INSERT(&(seg->l), &(sp->l));
 				 if (debug)
-				 	printf("splitting segment\n");
+				 	rt_log("splitting segment\n");
 			}
 
 
@@ -275,6 +397,8 @@ struct boardseg *seglist;
 	    }
 	}
 }
+#endif
+
 
 void
 h_segs(sz, ez, seglist, sx, ex)
@@ -339,33 +463,300 @@ struct boardseg *seglist;
 	}
 
 }
+
 mksolid(fd, pts, wm_hd)
 FILE *fd;
 point_t pts[8];
 struct wmember *wm_hd;
 {
-	sprintf(sol_name, "s.%s.%d", obj_name, sol_num++);
+	struct wmember *wm;
+	(void)sprintf(sol_name, "s.%s.%d", obj_name, sol_num++);
 
 	mk_arb8(fd, sol_name, pts);
-	(void)mk_addmember(sol_name, wm_hd, WMOP_UNION);
+	wm = mk_addmember(sol_name, wm_hd, WMOP_UNION);
+
+	if (trans_matrix)
+		bcopy(trans_matrix, wm->wm_mat, sizeof(mat_t));
 }
+
+mk_h_rpp(fd, wm_hd, xmin, xmax, ymin, ymax, zmin, zmax)
+FILE *fd;
+struct wmember *wm_hd;
+double xmin, xmax, ymin, ymax, zmin, zmax;
+{
+	point_t pts[8];
+	
+	VSET(pts[0], xmin, ymin, zmin);
+	VSET(pts[1], xmin, ymin, zmax);
+	VSET(pts[2], xmin, ymax, zmax);
+	VSET(pts[3], xmin, ymax, zmin);
+	VSET(pts[4], xmax, ymin, zmin);
+	VSET(pts[5], xmax, ymin, zmax);
+	VSET(pts[6], xmax, ymax, zmax);
+	VSET(pts[7], xmax, ymax, zmin);
+
+	mksolid(fd, pts, wm_hd);
+}
+
+mk_v_rpp(fd, wm_hd, xmin, xmax, ymin, ymax, zmin, zmax)
+FILE *fd;
+struct wmember *wm_hd;
+double xmin, xmax, ymin, ymax, zmin, zmax;
+{
+	point_t pts[8];
+	
+	VSET(pts[0], xmin, ymin, zmin);
+	VSET(pts[1], xmax, ymin, zmin);
+	VSET(pts[2], xmax, ymax, zmin);
+	VSET(pts[3], xmin, ymax, zmin);
+	VSET(pts[4], xmin, ymin, zmax);
+	VSET(pts[5], xmax, ymin, zmax);
+	VSET(pts[6], xmax, ymax, zmax);
+	VSET(pts[7], xmin, ymax, zmax);
+
+	mksolid(fd, pts, wm_hd);
+}
+
+/*
+ *	put the sides on a frame opening
+ */
+void
+frame_o_sides(fd, wm_hd, op, h)
+FILE *fd;
+struct wmember *wm_hd;
+struct opening *op;
+double h;
+{
+	double sx, ex;
+
+	/* put in the side(s) of the window */
+	if (op->sx-bd_thin >= 0.0) {
+		/* put in a closing board on the side */
+		sx = op->sx-bd_thin;
+
+		if (sx < bd_thin) sx = 0.0;
+		mk_v_rpp(fd, wm_hd,
+			sx,	 op->sx,
+			0.0,	 bd_thick,
+			bd_thin, h);
+
+				
+		if (op->sx-bd_thin*2.0 >= 0.0) {
+			/* put in reinforcing board on side */
+
+			if ((sx=op->sx-bd_thin*2.0) < bd_thin)
+				sx = 0.0;
+
+			mk_v_rpp(fd, wm_hd,
+				sx,	op->sx-bd_thin,
+				0.0, 	bd_thick,
+				bd_thin,WALL_HEIGHT-bd_thin);
+		}
+	}
+
+	/* close off the end of the opening */
+	if (op->ex+bd_thin <= WALL_WIDTH) {
+
+		ex = op->ex+bd_thin;
+			
+		if (ex > WALL_WIDTH-bd_thin)
+			ex = WALL_WIDTH;
+
+		mk_v_rpp(fd, wm_hd,
+			op->ex,	 ex,
+			0.0,	 bd_thick,
+			bd_thin, h);
+
+		if (ex+bd_thin <= WALL_WIDTH) {
+
+			if ((ex += bd_thin) > WALL_WIDTH-bd_thin)
+				ex = WALL_WIDTH;
+
+			mk_v_rpp(fd, wm_hd,
+				ex-bd_thin,	ex,
+				0.0,		bd_thick,
+				bd_thin,	WALL_HEIGHT-bd_thin);
+		}
+	}
+
+}
+
+
+/*
+ *	Make the frame opening (top & bottom, call frame_o_sides for sides)
+ */
+void
+frame_opening(fd, wm_hd, op)
+FILE *fd;
+struct wmember *wm_hd;
+struct opening *op;
+{
+	double pos;
+	int studs;
+	double dx, span;
+
+	/* 2 vertical studs @ op->sx-bd_thin*2.0 && op->ex+bd_thin*2.0 */
+
+
+
+
+	/* build the bottom of the opening */
+	if (op->sz > bd_thin) {
+		/* put in bottom board of opening */
+
+		if (op->sz-bd_thin >= bd_thin) pos = op->sz - bd_thin;
+		else pos = bd_thin;
+
+		mk_h_rpp(fd, wm_hd, op->sx, op->ex, 0.0, bd_thick,
+			pos, op->sz);
+
+		if (op->sz > bd_thin*2.0) {
+			/* put in support for bottom board */
+			if (op->ex - op->sx < bd_thin*2) {
+				/* one wide board to support */
+				mk_v_rpp(fd, wm_hd,
+					op->sx, op->ex,
+					0.0,	bd_thick,
+					bd_thin, op->sz-bd_thin);
+			} else {
+
+				/* multiple support boards */
+				mk_v_rpp(fd, wm_hd, 
+					op->sx, op->sx+bd_thin,
+					0.0, bd_thick,
+					bd_thin, op->sz-bd_thin);
+
+				mk_v_rpp(fd, wm_hd,
+					op->ex-bd_thin, op->ex,
+					0.0,	bd_thick,
+					bd_thin, op->sz-bd_thin);
+
+				/* do we need some in the span? */
+				span = op->ex - op->sx;
+				span -= bd_thin*2.0;
+
+				studs = (int) (span/stud_spacing);
+
+				dx = span / ((double)studs+1.0);
+
+				if (debug)
+					rt_log("making %d xtra studs, spacing %g on span %g\n",
+						studs, dx / unit_conv,
+						span / unit_conv);
+
+				for(pos=op->sx+dx ; studs ; pos+=dx,studs--) {
+					if (debug)
+						rt_log("making xtra stud @ %g\n",
+						pos / unit_conv);
+
+					mk_v_rpp(fd,	wm_hd,
+						pos,	pos+bd_thin,
+						0.0,	bd_thick,
+						bd_thin,
+						op->sz-bd_thin);
+				}
+			}
+		}
+
+	}
+
+
+	/* build the top of the opening */
+	if (op->ez < WALL_HEIGHT-bd_thin*2.0) {
+		/* put in board in top of opening */
+
+
+		if (op->ez+bd_thin+beam_height < WALL_HEIGHT-bd_thin) {
+			/* there's room to separate the beam from the
+			 * board at the top of the opening.  First, we
+			 * put in the board for the top of the opening.
+			 */
+			mk_h_rpp(fd, wm_hd,
+				op->sx, op->ex,
+				0.0, bd_thick,
+				op->ez, op->ez+bd_thin);
+
+
+			/* put the beam in */
+			mk_h_rpp(fd, wm_hd,
+				max(0.0, op->sx-bd_thin),
+				min(WALL_WIDTH,op->ex+bd_thin),
+				0.0, bd_thick,
+				WALL_HEIGHT-bd_thin-beam_height,
+				WALL_HEIGHT-bd_thin);
+
+			/* put in the offset boards */
+			mk_v_rpp(fd, wm_hd, 
+				op->sx, op->sx+bd_thin,
+			    	0.0, bd_thick,
+				op->ez+bd_thin,
+				WALL_HEIGHT-bd_thin-beam_height);
+
+			mk_v_rpp(fd, wm_hd, 
+				op->ex-bd_thin, op->ex,
+			    	0.0, bd_thick,
+				op->ez+bd_thin,
+				WALL_HEIGHT-bd_thin-beam_height);
+
+
+			span = op->ex - op->sx;
+			span -= bd_thin*2.0;
+			
+			studs = (int) (span/stud_spacing);
+			dx = span / ((double)studs+1.0);
+
+			for(pos=op->sx+dx ; studs-- ; pos += dx) {
+				mk_v_rpp(fd, wm_hd, 
+					pos, pos+bd_thin,
+				    	0.0, bd_thick,
+					op->ez+bd_thin,
+					WALL_HEIGHT-bd_thin-beam_height);
+			}
+
+			frame_o_sides(fd, wm_hd, op,
+				WALL_HEIGHT-bd_thin-beam_height);
+
+
+		} else {
+			/* Make the beam on the top of the window the top
+			 * of the window.
+			 */
+
+			mk_h_rpp(fd, wm_hd,
+				max(0.0, op->sx-bd_thin),
+				min(WALL_WIDTH,op->ex+bd_thin),
+				0.0, bd_thick,
+				op->ez, WALL_HEIGHT-bd_thin);
+
+			/* put in the sides of the opening */
+			frame_o_sides(fd, wm_hd, op,
+				op->ez);
+		}
+	} else {
+		/* There is no top board capping the opening 
+		 * (with the possible exception of the top rail of the wall)
+		 */
+
+		frame_o_sides(fd, wm_hd, op, WALL_HEIGHT-bd_thin);
+	}
+}
+
 
 void
 frame(fd)
 FILE *fd;
 {
 	struct boardseg *s_hd, *seg;
-	struct opening *op, *nop;
-	point_t pts[8];
+	struct opening *op;
 	double pos;
 	struct wmember wm_hd;
 
 	if (WALL_WIDTH <= bd_thin*2) {
-		(void)fprintf(stderr, "wall width must exceed %g.\n", (bd_thin*2)/unit_conv);
+		rt_log("wall width must exceed %g.\n", (bd_thin*2)/unit_conv);
 		return;
 	}
 	if (WALL_HEIGHT <= bd_thin*2) {
-		(void)fprintf(stderr, "wall height must exceed %g.\n", (bd_thin*2)/unit_conv);
+		rt_log("wall height must exceed %g.\n", (bd_thin*2)/unit_conv);
 		return;
 	}
 	RT_LIST_INIT(&wm_hd.l);
@@ -375,15 +766,6 @@ FILE *fd;
 
 	mk_id(fd, "A wall");
 
-	/* add the thickness of the opening frame to the size of the
-	 * openings
-	 */
-	for (RT_LIST_FOR(op, opening, &ol_hd.l)) {
-		op->sx -= bd_thin;
-		op->ex += bd_thin;
-		op->sz -= bd_thin;
-		op->ez += bd_thin;
-	}
 
 	/* find the segments of the base-board */
 	s_hd = (struct boardseg *)rt_calloc(1, sizeof(struct boardseg), "s_hd");
@@ -395,23 +777,17 @@ FILE *fd;
 	while (RT_LIST_WHILE(seg, boardseg, &(s_hd->l))) {
 
 		if (debug) {
-			printf("baseboard seg: %g -> %g\n",
+			rt_log("baseboard seg: %g -> %g\n",
 				seg->s/unit_conv, seg->e/unit_conv);
 		}
 
-		VSET(pts[0], seg->s, 0.0, 0.0);
-		VSET(pts[1], seg->s, bd_thick, 0.0);
-		VSET(pts[2], seg->s, bd_thick, bd_thin);
-		VSET(pts[3], seg->s, 0.0, bd_thin);
-		VSET(pts[4], seg->e, 0.0, 0.0);
-		VSET(pts[5], seg->e, bd_thick, 0.0);
-		VSET(pts[6], seg->e, bd_thick, bd_thin);
-		VSET(pts[7], seg->e, 0.0, bd_thin);
+		mk_h_rpp(fd, &wm_hd,
+			seg->s, seg->e,
+			0.0, bd_thick,
+			0.0, bd_thin);
 
 		RT_LIST_DEQUEUE(&(seg->l));
 		rt_free( (char *)seg, "seg free 3");
-
-		mksolid(fd, pts, &wm_hd);
 	}
 
 	/* now find the segments of the cap board */
@@ -422,208 +798,68 @@ FILE *fd;
 	while (RT_LIST_WHILE(seg, boardseg, &(s_hd->l))) {
 
 		if (debug) {
-			printf("capboard seg: %g -> %g\n",
+			rt_log("capboard seg: %g -> %g\n",
 				seg->s/unit_conv, seg->e/unit_conv);
 		}
 
-		VSET(pts[0], seg->s, 0.0, WALL_HEIGHT);
-		VSET(pts[1], seg->s, bd_thick, WALL_HEIGHT);
-		VSET(pts[2], seg->s, bd_thick, WALL_HEIGHT-bd_thin);
-		VSET(pts[3], seg->s, 0.0, WALL_HEIGHT-bd_thin);
-		VSET(pts[4], seg->e, 0.0, WALL_HEIGHT);
-		VSET(pts[5], seg->e, bd_thick, WALL_HEIGHT);
-		VSET(pts[6], seg->e, bd_thick, WALL_HEIGHT-bd_thin);
-		VSET(pts[7], seg->e, 0.0, WALL_HEIGHT-bd_thin);
+		mk_h_rpp(fd, &wm_hd,
+			seg->s, seg->e,
+			0.0, bd_thick,
+			WALL_HEIGHT-bd_thin, WALL_HEIGHT);
 
 		RT_LIST_DEQUEUE(&(seg->l));
 		rt_free( (char *)seg, "seg_free 4");
-
-		mksolid(fd, pts, &wm_hd);
 	}
 
-	/* make the base board for each of the openings */
-	for (RT_LIST_FOR(op, opening, &ol_hd.l)) {
 
-	    nop = RT_LIST_NEXT(opening, &op->l);
-	    RT_LIST_DEQUEUE(&(op->l));
 
-	    if (op->sz > 0.0) {
-		/* build base board segments for the opening */
-
-		h_segs(op->sz, op->sz+bd_thin, s_hd, op->sx, op->ex);
-
-		/* make opening base board(s) */
-		while (RT_LIST_WHILE(seg, boardseg, &(s_hd->l))) {
-
-			if (debug) {
-				printf("opening base-board seg: %g -> %g (%d)\n",
-					seg->s/unit_conv, seg->e/unit_conv, sol_num);
-			}
-
-			VSET(pts[0], seg->s, 0.0, op->sz);
-			VSET(pts[1], seg->s, bd_thick, op->sz);
-			VSET(pts[2], seg->s, bd_thick, op->sz+bd_thin);
-			VSET(pts[3], seg->s, 0.0, op->sz+bd_thin);
-			VSET(pts[4], seg->e, 0.0, op->sz);
-			VSET(pts[5], seg->e, bd_thick, op->sz);
-			VSET(pts[6], seg->e, bd_thick, op->sz+bd_thin);
-			VSET(pts[7], seg->e, 0.0, op->sz+bd_thin);
-
-			RT_LIST_DEQUEUE(&(seg->l));
-			rt_free( (char *)seg, "seg_free 5");
-
-			mksolid(fd, pts, &wm_hd);
-		}
-	    }
-	    
-	    if (op->ez < WALL_HEIGHT) {
-		/* build cap board segments for the opening */
-
-		h_segs(op->ez-bd_thin, op->ez, s_hd, op->sx, op->ex);
-		
-		/* make opening cap board(s) */
-		while (RT_LIST_WHILE(seg, boardseg, &(s_hd->l))) {
-
-			if (debug) {
-				printf("opening capboard seg: %g -> %g\n",
-					seg->s/unit_conv, seg->e/unit_conv);
-			}
-
-			VSET(pts[0], seg->s, 0.0, op->ez);
-			VSET(pts[1], seg->s, bd_thick, op->ez);
-			VSET(pts[2], seg->s, bd_thick, op->ez-bd_thin);
-			VSET(pts[3], seg->s, 0.0, op->ez-bd_thin);
-			VSET(pts[4], seg->e, 0.0, op->ez);
-			VSET(pts[5], seg->e, bd_thick, op->ez);
-			VSET(pts[6], seg->e, bd_thick, op->ez-bd_thin);
-			VSET(pts[7], seg->e, 0.0, op->ez-bd_thin);
-
-			RT_LIST_DEQUEUE(&(seg->l));
-			rt_free( (char *)seg, "seg_free 6");
-
-			mksolid(fd, pts, &wm_hd);
-		}
-	    }
-	    RT_LIST_INSERT(&(nop->l), &(op->l));
-	}
-
-	/* this concludes the horizontal segments.  It's time to build the
-	 * vertical studs.
+	/* put in the vertical stud boards that are not a part of an
+	 * opening for a window or a door.
 	 */
+	for (pos = 0.0 ; pos <= WALL_WIDTH-bd_thin ; pos += stud_spacing) {
+		register int mk_stud_flag;
 
-	for (pos=0.0 ; pos+bd_thin*2.0 <= WALL_WIDTH ; pos += stud_spacing) {
-		v_segs(bd_thin, WALL_HEIGHT-bd_thin, s_hd, pos, pos+bd_thin);
-		while (RT_LIST_WHILE(seg, boardseg, &(s_hd->l))) {
-			if (debug)
-				printf("stud %d @ %g Zmin:%g  Zmax:%g\n",
-					sol_num, pos/unit_conv,
-					seg->s/unit_conv, seg->e/unit_conv);
+		if (pos > WALL_WIDTH-bd_thin*2.0)
+			pos = WALL_WIDTH-bd_thin;
 
-			
-			VSET(pts[0], pos, 	  0.0,	     seg->s);
-			VSET(pts[1], pos,	  bd_thick, seg->s);
-			VSET(pts[2], pos+bd_thin, bd_thick, seg->s);
-			VSET(pts[3], pos+bd_thin, 0.0,	     seg->s);
-			VSET(pts[4], pos, 	  0.0,	     seg->e);
-			VSET(pts[5], pos,	  bd_thick, seg->e);
-			VSET(pts[6], pos+bd_thin, bd_thick, seg->e);
-			VSET(pts[7], pos+bd_thin, 0.0,	     seg->e);
+		mk_stud_flag = 1;
+		/* make sure stud doesn't overlap an opening */
+		for (RT_LIST_FOR(op, opening, &ol_hd.l)) {
+			if ((pos > op->sx-bd_thin*2.0 &&
+				pos < op->ex+bd_thin*2.0) ||
+			    (pos+bd_thin > op->sx-bd_thin*2.0 &&
+				pos+bd_thin < op->ex+bd_thin*2.0)
+			    ) {
+			    	if (debug)
+			    		rt_log("not making stud @ %g\n", pos / unit_conv);
 
-			RT_LIST_DEQUEUE(&(seg->l));
-			rt_free( (char *)seg, "seg_free 7");
-
-			mksolid(fd, pts, &wm_hd);
+				mk_stud_flag = 0;
+				break;
+			}
 		}
+		if (mk_stud_flag) {
+			/* put in the vertical stud */
+		    	if (debug)
+		    		rt_log("Making stud @ %g\n", pos / unit_conv);
+
+			mk_v_rpp(fd, &wm_hd,
+				pos, pos+bd_thin,
+				0.0, bd_thick,
+				bd_thin, WALL_HEIGHT-bd_thin);
+		}
+
+
+		if (pos < WALL_WIDTH-bd_thin && 
+		    pos+stud_spacing > WALL_WIDTH-bd_thin)
+		    	pos = WALL_WIDTH - bd_thin - stud_spacing;
 	}
 
-	/* make sure the closing stud is in place */
-	if (pos - stud_spacing + bd_thin*2.0 < WALL_WIDTH ) {
-		pos = WALL_WIDTH - bd_thin;
-		v_segs(bd_thin, WALL_HEIGHT-bd_thin, s_hd, pos, pos+bd_thin);
-		while (RT_LIST_WHILE(seg, boardseg, &(s_hd->l))) {
-			if (debug)
-				printf("last stud %d @ %g Zmin:%g  Zmax:%g\n",
-					sol_num, pos/unit_conv,
-					seg->s/unit_conv, seg->e/unit_conv);
-
-			VSET(pts[0], pos,	  0.0,	     seg->s);
-			VSET(pts[1], pos,	  bd_thick, seg->s);
-			VSET(pts[2], pos+bd_thin, bd_thick, seg->s);
-			VSET(pts[3], pos+bd_thin, 0.0,          seg->s);
-			VSET(pts[4], pos,	  0.0,          seg->e);
-			VSET(pts[5], pos,	  bd_thick, seg->e);
-			VSET(pts[6], pos+bd_thin, bd_thick, seg->e);
-			VSET(pts[7], pos+bd_thin, 0.0,	     seg->e);
-
-			RT_LIST_DEQUEUE(&(seg->l));
-			rt_free( (char *)seg, "seg_free 8");
-
-			mksolid(fd, pts, &wm_hd);
-		}
-	}
-
-
-	/* put the vertical frame pieces in the openings */
-	for (RT_LIST_FOR(op, opening, &ol_hd.l)) {
-
-	    nop = RT_LIST_NEXT(opening, &op->l);
-	    RT_LIST_DEQUEUE(&(op->l));
-
-	    if (op->sx > 0.0) {
-	    	v_segs(op->sz+bd_thin, op->ez-bd_thin, s_hd, op->sx, op->sx+bd_thin);
-		while (RT_LIST_WHILE(seg, boardseg, &(s_hd->l))) {
-			if (debug)
-				printf("opening vl frame @ %g Zmin:%g  Zmax:%g\n",
-					op->sx/unit_conv,
-					seg->s/unit_conv, seg->e/unit_conv);
-
-			VSET(pts[0], op->sx,	     0.0,		seg->s);
-			VSET(pts[1], op->sx,	     bd_thick, seg->s);
-			VSET(pts[2], op->sx+bd_thin, bd_thick, seg->s);
-			VSET(pts[3], op->sx+bd_thin, 0.0,		seg->s);
-			VSET(pts[4], op->sx,	     0.0,		seg->e);
-			VSET(pts[5], op->sx,	     bd_thick, seg->e);
-			VSET(pts[6], op->sx+bd_thin, bd_thick, seg->e);
-			VSET(pts[7], op->sx+bd_thin, 0.0,		seg->e);
-
-			RT_LIST_DEQUEUE(&(seg->l));
-			rt_free( (char *)seg, "seg free 9");
-
-			mksolid(fd, pts, &wm_hd);
-		}
-	    	
-	    }
-	    if (op->ex < WALL_WIDTH) {
-	    	v_segs(op->sz+bd_thin, op->ez-bd_thin, s_hd, op->ex-bd_thin, op->ex);
-		while (RT_LIST_WHILE(seg, boardseg, &(s_hd->l))) {
-			if (debug)
-				printf("opening vr frame @ %g Zmin:%g  Zmax:%g\n",
-					op->sx/unit_conv,
-					seg->s/unit_conv, seg->e/unit_conv);
-
-			VSET(pts[0], op->ex-bd_thin, 0.0,		seg->s);
-			VSET(pts[1], op->ex-bd_thin, bd_thick,	seg->s);
-			VSET(pts[2], op->ex, 	     bd_thick, seg->s);
-			VSET(pts[3], op->ex,	     0.0,		seg->s);
-			VSET(pts[4], op->ex-bd_thin, 0.0,		seg->e);
-			VSET(pts[5], op->ex-bd_thin, bd_thick, seg->e);
-			VSET(pts[6], op->ex,	     bd_thick, seg->e);
-			VSET(pts[7], op->ex,	     0.0,		seg->e);
-
-			RT_LIST_DEQUEUE(&(seg->l));
-			rt_free( (char *)seg, "seg_free 10");
-
-			mksolid(fd, pts, &wm_hd);
-		}
-	    }
-
-	    RT_LIST_INSERT(&(nop->l), &(op->l));
-
-	}
+	for (RT_LIST_FOR(op, opening, &ol_hd.l))
+		frame_opening(fd, &wm_hd, op);
 
 
 	/* put all the studding in a region */
-	sprintf(sol_name, "r.%s.studs", obj_name);
+	(void)sprintf(sol_name, "r.%s.studs", obj_name);
 	mk_lcomb(fd, sol_name, &wm_hd, 1,
 		stud_properties[0], stud_properties[1], color, 0);
 
@@ -652,7 +888,7 @@ FILE *fd;
 	VSET(pts[6], WALL_WIDTH, sr_thick, WALL_HEIGHT);
 	VSET(pts[7], WALL_WIDTH, 0.0, WALL_HEIGHT);
 
-	sprintf(sol_name, "s.%s.sr1", obj_name);
+	(void)sprintf(sol_name, "s.%s.sr1", obj_name);
 	mk_arb8(fd, sol_name, pts);
 	(void)mk_addmember(sol_name, &wm_hd, WMOP_UNION);
 
@@ -666,12 +902,12 @@ FILE *fd;
 		VSET(pts[6], op->ex, sr_thick+0.01,	op->ez);
 		VSET(pts[7], op->ex, -0.01,		op->ez);
 
-		sprintf(sol_name, "s.%s.o.%d", obj_name, i++);
+		(void)sprintf(sol_name, "s.%s.o.%d", obj_name, i++);
 		mk_arb8(fd, sol_name, pts);
 		(void)mk_addmember(sol_name, &wm_hd, WMOP_SUBTRACT);
 	}
 
-	sprintf(sol_name, "r.%s.sr1", obj_name);
+	(void)sprintf(sol_name, "r.%s.sr1", obj_name);
 	mk_lcomb(fd, sol_name, &wm_hd, 1, (char *)NULL, (char *)NULL,
 		color, 0);
 
@@ -685,13 +921,12 @@ FILE *fd;
 	int vert_bricks;
 	double mortar_height;
 	double mortar_width;
-	int make_mortar = (type[1] == 'm');
 	point_t pts[8];
 	struct wmember wm_hd;
 	
 	RT_LIST_INIT(&wm_hd.l);
 
-	fputs("Not Yet Implemented\n", stderr);
+	rt_log("Not Yet Implemented\n");
 	exit(0);
 
 	horiz_bricks = (WALL_WIDTH-brick_depth) / (brick_width + min_mortar);
@@ -720,7 +955,7 @@ FILE *fd;
 	VSET(pts[6], brick_width, brick_depth,	mortar_height+brick_height);
 	VSET(pts[7], brick_width, 0.0,		mortar_height+brick_height);
 
-	sprintf(sol_name, "s.%s.b", obj_name);
+	(void)sprintf(sol_name, "s.%s.b", obj_name);
 	mk_arb8(fd, sol_name, pts);
 
 	(void)mk_addmember(sol_name, &wm_hd, WMOP_UNION);
@@ -745,7 +980,7 @@ FILE *fd;
 	VSET(pts[6], brick_width, brick_depth,	mortar_height);
 	VSET(pts[7], brick_width, 0.0,		mortar_height);
 		
-	sprintf(sol_name, "s.%s.vm", obj_name);
+	(void)sprintf(sol_name, "s.%s.vm", obj_name);
 	mk_arb8(fd, sol_name, pts);
 
 	(void)mk_addmember(sol_name, &wm_hd, WMOP_UNION);
@@ -767,7 +1002,7 @@ FILE *fd;
 	VSET(pts[6], -mortar_width, brick_depth, mortar_height+brick_height);
 	VSET(pts[7], -mortar_width, 0.0,	 mortar_height+brick_height);
 
-	sprintf(sol_name, "s.%s.vm", obj_name);
+	(void)sprintf(sol_name, "s.%s.vm", obj_name);
 	mk_arb8(fd, sol_name, pts);
 
 	(void)mk_addmember(sol_name, &wm_hd, WMOP_UNION);
@@ -785,14 +1020,13 @@ FILE *fd;
 	int vert_bricks;
 	double mortar_height;
 	double mortar_width;
-	int make_mortar = (type[1] == 'm');
 	point_t pts[8];
 	struct wmember wm_hd;
 	char proto_brick[64];
 	
 	RT_LIST_INIT(&wm_hd.l);
 
-	fputs("Not Yet Implemented\n", stderr);
+	rt_log("Not Yet Implemented\n");
 	exit(0);
 
 	if (!color) color = brick_color;
@@ -817,7 +1051,7 @@ FILE *fd;
 	VSET(pts[6], brick_width, brick_depth,	mortar_height+brick_height);
 	VSET(pts[7], brick_width, 0.0,		mortar_height+brick_height);
 
-	sprintf(proto_brick, "s.%s.b", obj_name);
+	(void)sprintf(proto_brick, "s.%s.b", obj_name);
 	mk_arb8(fd, proto_brick, pts);
 	(void)mk_addmember(proto_brick, &wm_hd, WMOP_UNION);
 	*proto_brick = 'r';
@@ -841,34 +1075,37 @@ char *av[];
 {
 	int arg_index;
 	struct opening *op;
+	FILE *db_fd;
+
+	ol_hd.ex = ol_hd.ez = 0.0;
 
 	if ((arg_index=parse_args(ac, av)) < ac)
 		usage("excess command line arguments\n");
 
 	if (ac < 2) usage((char *)NULL);
 
-	sprintf(sol_name, "%s.g", obj_name);
-	if ((fd = fopen(sol_name, "w")) == (FILE *)NULL) {
+	(void)sprintf(sol_name, "%s.g", obj_name);
+	if ((db_fd = fopen(sol_name, "w")) == (FILE *)NULL) {
 		perror(sol_name);
 		return(-1);
 	}
 
 	if (debug) {
-		printf("Wall \"%s\"(%g) %g by %g\n", units, unit_conv,
+		rt_log("Wall \"%s\"(%g) %g by %g\n", units, unit_conv,
 			WALL_WIDTH/unit_conv, WALL_HEIGHT/unit_conv);
 		for (RT_LIST_FOR(op, opening, &ol_hd.l)) {
-			printf("opening at %g %g to %g %g\n",
+			rt_log("opening at %g %g to %g %g\n",
 				op->sx/unit_conv, op->sz/unit_conv,
 				op->ex/unit_conv, op->ez/unit_conv);
 		}
 	}
 
-	if (*type == 'f') frame(fd);
-	else if (*type == 's') sheetrock(fd);
+	if (*type == 'f') frame(db_fd);
+	else if (*type == 's') sheetrock(db_fd);
 	else if (*type == 'b') {
-		if (type[1] == 'm' ) mortar_brick(fd);
-		else brick(fd);
+		if (type[1] == 'm' ) mortar_brick(db_fd);
+		else brick(db_fd);
 	}
 
-	return(fclose(fd));
+	return(fclose(db_fd));
 }
