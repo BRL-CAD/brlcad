@@ -52,9 +52,16 @@ char MGEDCopyRight_Notice[] = "@(#) Copyright (C) 1985,1987 by the United States
 #	include <termio.h>
 #	undef VMIN	/* also used in vmath.h */
 #endif
-#ifdef sgi
-#	include <bsd/sys/types.h>
-#	include <bsd/sys/time.h>
+#if defined(sgi)
+#	if !defined(mips) || defined(SGI4D_Rel2)
+		/* 3D systems, and Rel2 4D systems. */
+#		include <bsd/sys/types.h>
+#		include <bsd/sys/time.h>
+#	else
+		/* Rel3 4D systems got it right */
+#		include <sys/types.h>
+#		include <sys/time.h>
+#	endif
 #endif
 #ifdef stellar
 #	include <sys/timeval.h>
