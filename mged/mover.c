@@ -62,73 +62,75 @@ matp_t xlate;
 	register int i;
 	register dbfloat_t *p;		/* -> to vector to be worked on */
 	static dbfloat_t *area_end;	/* End of area to be processed */
-	union record record;
+	union record	*rec;
 
-	db_get( dbip,  dp, &record, 0 , 1);
+	if( (rec = db_getmrec( dbip, dp )) == (union record *)0 )
+		READ_ERR_return;
 
-	switch( record.u_id )  {
+	switch( rec->u_id )  {
 
 	case ID_ARS_A:
-		/* 1st B type record is special:  Vertex point */
-		db_get( dbip,  dp, &record, 1 , 1);
-
+		/*
+		 * 1st B type record is special:  Vertex point
+		 */
 		/* displace the base vector */
-		MAT4X3PNT( work, xlate, &record.b.b_values[0] );
-		VMOVE( &record.b.b_values[0], work );
+		MAT4X3PNT( work, xlate, &rec[1].b.b_values[0] );
+		VMOVE( &rec[1].b.b_values[0], work );
 
 		/* Transform remaining vectors */
-		for( p = &record.b.b_values[1*3]; p < &record.b.b_values[8*3];
+		for( p = &rec[1].b.b_values[1*3]; p < &rec[1].b.b_values[8*3];
 								p += 3) {
 			MAT4X3VEC( work, xlate, p );
 			VMOVE( p, work );
 		}
-		db_put( dbip,  dp, &record, 1, 1 );
 
 		/* Process all the remaining B records */
 		for( i = 2; i < dp->d_len; i++ )  {
-			db_get( dbip,  dp, &record, i , 1);
 			/* Transform remaining vectors */
-			for( p = &record.b.b_values[0*3];
-			     p < &record.b.b_values[8*3]; p += 3) {
+			for( p = &rec[i].b.b_values[0*3];
+			     p < &rec[i].b.b_values[8*3]; p += 3) {
 				MAT4X3VEC( work, xlate, p );
 				VMOVE( p, work );
 			}
-			db_put( dbip,  dp, &record, i, 1 );
 		}
+		if( db_put( dbip, dp, rec, 0, dp->d_len ) < 0 )
+			WRITE_ERR_return;
+		rt_free( (char *)rec, "union record");
 		break;
 
 	case ID_BSOLID:
-		move_spline( &record.B, dp, xlate );
+		move_spline( rec, dp, xlate );
+		rt_free( (char *)rec, "union record");
 		break;
 
 	case ID_SOLID:
 		/* Displace the vertex (V) */
-		MAT4X3PNT( work, xlate, &record.s.s_values[0] );
-		VMOVE( &record.s.s_values[0], work );
+		MAT4X3PNT( work, xlate, &rec[0].s.s_values[0] );
+		VMOVE( &rec[0].s.s_values[0], work );
 
-		switch( record.s.s_type )  {
+		switch( rec[0].s.s_type )  {
 
 		case GENARB8:
-			if(record.s.s_cgtype < 0)
-				record.s.s_cgtype = -record.s.s_cgtype;
-			area_end = &record.s.s_values[8*3];
+			if(rec[0].s.s_cgtype < 0)
+				rec[0].s.s_cgtype = -rec[0].s.s_cgtype;
+			area_end = &rec[0].s.s_values[8*3];
 			goto common;
 
 		case GENTGC:
-			area_end = &record.s.s_values[6*3];
+			area_end = &rec[0].s.s_values[6*3];
 			goto common;
 
 		case GENELL:
-			area_end = &record.s.s_values[4*3];
+			area_end = &rec[0].s.s_values[4*3];
 			goto common;
 
 		case TOR:
-			area_end = &record.s.s_values[8*3];
+			area_end = &rec[0].s.s_values[8*3];
 			/* Fall into COMMON section */
 
 		common:
 			/* Transform all the vectors */
-			for( p = &record.s.s_values[1*3]; p < area_end;
+			for( p = &rec[0].s.s_values[1*3]; p < area_end;
 			     p += 3) {
 				MAT4X3VEC( work, xlate, p );
 				VMOVE( p, work );
@@ -137,10 +139,12 @@ matp_t xlate;
 
 		default:
 			(void)printf("moveobj:  can't move obj type %d\n",
-				record.s.s_type );
+				rec[0].s.s_type );
 			return;		/* ERROR */
 		}
-		db_put( dbip,  dp, &record, 0, 1 );
+		if( db_put( dbip, dp, rec, 0, dp->d_len ) < 0 )
+			WRITE_ERR_return;
+		rt_free( (char *)rec, "union record");
 		break;
 
 	default:
@@ -154,14 +158,13 @@ matp_t xlate;
 		for( i=1; i < dp->d_len; i++ )  {
 			static mat_t temp, xmat;
 
-			db_get( dbip,  dp, &record, i , 1);
-			rt_mat_dbmat( xmat, record.M.m_mat );
-
+			rt_mat_dbmat( xmat, rec[i].M.m_mat );
 			mat_mul( temp, xlate, xmat );
-
-			rt_dbmat_mat( record.M.m_mat, temp );
-			db_put( dbip,  dp, &record, i, 1 );
+			rt_dbmat_mat( rec[i].M.m_mat, temp );
 		}
+		if( db_put( dbip,  dp, rec, 0, dp->d_len ) < 0 )
+			WRITE_ERR_return;
+		rt_free( (char *)rec, "union record");
 	}
 	return;
 }
@@ -181,23 +184,26 @@ struct directory *dp;
 matp_t xlate;
 {
 	register int i;
-	union record record;
+	union record	*rec;
 	mat_t temp, xmat;		/* Temporary for mat_mul */
 
+	if( (rec = db_getmrec( dbip, cdp )) == (union record *)0 )
+		READ_ERR_return;
 	for( i=1; i < cdp->d_len; i++ )  {
-		db_get( dbip,  cdp, &record, i , 1);
-
 		/* Check for match */
-		if( strcmp( dp->d_namep, record.M.m_instname ) != 0 )
+		if( strcmp( dp->d_namep, rec[i].M.m_instname ) != 0 )
 			continue;
 
-		rt_mat_dbmat( xmat, record.M.m_mat );
+		rt_mat_dbmat( xmat, rec[i].M.m_mat );
 		mat_mul(temp, xlate, xmat);
+		rt_dbmat_mat( rec[i].M.m_mat, temp );
 
-		rt_dbmat_mat( record.M.m_mat, temp );
-		db_put( dbip,  cdp, &record, i, 1 );
+		if( db_put( dbip,  cdp, rec, 0, cdp->d_len ) < 0 )
+			WRITE_ERR_return;
+		rt_free( (char *)rec, "union record");
 		return;
 	}
+	rt_free( (char *)rec, "union record");
 	(void)printf( "moveinst:  couldn't find %s/%s\n",
 		cdp->d_namep, dp->d_namep );
 	return;				/* ERROR */
@@ -229,10 +235,13 @@ int air;				/* Air code */
 	if( (dp = db_lookup( dbip,  combname, LOOKUP_QUIET )) == DIR_NULL )  {
 
 		/* Update the in-core directory */
-		dp = db_diradd( dbip, combname, -1, 2, DIR_COMB );
-		if( dp == DIR_NULL )
+		if( (dp = db_diradd( dbip, combname, -1, 2, DIR_COMB )) == DIR_NULL ||
+		    db_alloc( dbip, dp, 2 ) < 0 )  {
+			(void)printf("An error has occured while adding '%s' to the database.\n",
+				combname);
+			ERROR_RECOVERY_SUGGESTION;
 			return DIR_NULL;
-		db_alloc( dbip, dp, 2 );
+		}
 
 		/* Generate the disk record */
 		record.c.c_id = ID_COMB;
@@ -255,17 +264,29 @@ int air;				/* Air code */
 		}
 
 		/* finished with combination record - write it out */
-		db_put( dbip,  dp, &record, 0, 1 );
+		if( db_put( dbip,  dp, &record, 0, 1 ) < 0 )  {
+			printf("write error, aborting\n");
+			ERROR_RECOVERY_SUGGESTION;
+			return DIR_NULL;
+		}
 
 		/* create first member record */
-		db_get( dbip,  dp, &record, 1, 1);
+		if( db_get( dbip,  dp, &record, 1, 1) < 0 )  {
+			printf("read error, aborting\n");
+			ERROR_RECOVERY_SUGGESTION;
+			return DIR_NULL;
+		}
 		(void)strcpy( record.M.m_instname, objp->d_namep );
 
 		record.M.m_id = ID_MEMB;
 		record.M.m_relation = relation;
 		mat_idn( identity );
 		rt_dbmat_mat( record.M.m_mat, identity );
-		db_put( dbip,  dp, &record, 1, 1 );
+		if( db_put( dbip,  dp, &record, 1, 1 ) < 0 )  {
+			printf("write error, aborting\n");
+			ERROR_RECOVERY_SUGGESTION;
+			return DIR_NULL;
+		}
 		return( dp );
 	}
 
@@ -273,7 +294,11 @@ int air;				/* Air code */
 	 * The named combination already exists.  Fetch the header record,
 	 * and verify that this is a combination.
 	 */
-	db_get( dbip,  dp, &record, 0 , 1);
+	if( db_get( dbip,  dp, &record, 0 , 1) < 0 )  {
+		printf("read error, aborting\n");
+		ERROR_RECOVERY_SUGGESTION;
+		return DIR_NULL;
+	}
 	if( record.u_id != ID_COMB )  {
 		(void)printf("%s:  not a combination\n", combname );
 		return DIR_NULL;
@@ -285,16 +310,28 @@ int air;				/* Air code */
 			return DIR_NULL;
 		}
 	}
-	db_grow( dbip, dp, 1 );
+	if( db_grow( dbip, dp, 1 ) < 0 )  {
+		printf("db_grow error, aborting\n");
+		ERROR_RECOVERY_SUGGESTION;
+		return DIR_NULL;
+	}
 
 	/* Fill in new Member record */
-	db_get( dbip,  dp, &record, dp->d_len-1, 1);
+	if( db_get( dbip,  dp, &record, dp->d_len-1, 1) < 0 )  {
+		printf("read error, aborting\n");
+		ERROR_RECOVERY_SUGGESTION;
+		return DIR_NULL;
+	}
 	record.M.m_id = ID_MEMB;
 	record.M.m_relation = relation;
 	(void)strcpy( record.M.m_instname, objp->d_namep );
 
 	mat_idn( identity );
 	rt_dbmat_mat( record.M.m_mat, identity );
-	db_put( dbip,  dp, &record, dp->d_len-1, 1 );
+	if( db_put( dbip,  dp, &record, dp->d_len-1, 1 ) < 0 )  {
+		printf("write error, aborting\n");
+		ERROR_RECOVERY_SUGGESTION;
+		return DIR_NULL;
+	}
 	return( dp );
 }

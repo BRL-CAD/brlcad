@@ -423,12 +423,11 @@ do_update:
 	(void)signal( SIGINT, SIG_IGN);
  
 	/* Add to in-core directory */
-	if( (dp = db_diradd( dbip,  record.s.s_name, -1, 0, DIR_SOLID )) == DIR_NULL )  {
-		(void)printf("ERROR, dir_add failure, database not updated!\n");
-		return;		/* failure */
+	if( (dp = db_diradd( dbip,  record.s.s_name, -1, 0, DIR_SOLID )) == DIR_NULL ||
+	    db_alloc( dbip, dp, 1 ) < 0 )  {
+	    	ALLOC_ERR_return;
 	}
-	db_alloc( dbip, dp, 1 );
-	db_put( dbip, dp, &record, 0, 1 );
+	if( db_put( dbip, dp, &record, 0, 1 ) < 0 )  WRITE_ERR_return;
 
 	/* draw the "made" solid */
 	f_edit( 2, cmd_args );	/* depends on name being in argv[1] */

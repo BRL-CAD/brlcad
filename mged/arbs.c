@@ -295,13 +295,11 @@ thickagain:
 	/* no interuprts */
 	(void)signal( SIGINT, SIG_IGN );
 
-	if( (dp = db_diradd( dbip, record.s.s_name, -1, 0, DIR_SOLID)) == DIR_NULL )
-		return;
-	if( db_alloc( dbip, dp, 1 ) < 0 || 
-	    db_put( dbip,  dp, &record, 0, 1 ) < 0 )  {
-	    	printf("error, aborting\n");
-	    	return;
-	}
+	if( (dp = db_diradd( dbip, record.s.s_name, -1, 0, DIR_SOLID)) == DIR_NULL ||
+	    db_alloc( dbip, dp, 1 ) < 0 )  {
+	    	ALLOC_ERR_return;
+	    }
+	if( db_put( dbip,  dp, &record, 0, 1 ) < 0 )  WRITE_ERR_return;
 
 	/* draw the "made" solid */
 	f_edit( 2, cmd_args );	/* depends on name being in cmd_args[1] */
@@ -537,13 +535,11 @@ thckagain:
 	/* no interuprts */
 	(void)signal( SIGINT, SIG_IGN );
 
-	if( (dp = db_diradd( dbip, record.s.s_name, -1, 0, DIR_SOLID)) == DIR_NULL )
-		return;
-	if( db_alloc( dbip, dp, 1 ) < 0  ||
-	    db_put( dbip,  dp, &record, 0, 1 ) < 0 )  {
-	    	printf("error, aborting\n");
-	    	return;
+	if( (dp = db_diradd( dbip, record.s.s_name, -1, 0, DIR_SOLID)) == DIR_NULL ||
+	    db_alloc( dbip, dp, 1 ) < 0  )  {
+	    	ALLOC_ERR_return;
 	}
+	if( db_put( dbip,  dp, &record, 0, 1 ) < 0 )  WRITE_ERR_return;
 
 	/* draw the "made" solid */
 	f_edit( 2, cmd_args );	/* depends on name being in cmd_args[1] */

@@ -184,7 +184,7 @@ dir_nref( )
 			if( !(dp->d_flags & DIR_COMB) )
 				continue;
 			if( (rp = db_getmrec( dbip, dp )) == (union record *)0 )
-				continue;
+				READ_ERR_return;
 			/* [0] is COMB, [1..n] are MEMBERs */
 			for( j=1; j < dp->d_len; j++ )  {
 				if( rp[j].M.m_instname[0] == '\0' )
@@ -478,7 +478,7 @@ char	**argv;
 			if( !(dp->d_flags & DIR_COMB) )
 				continue;
 			if( (rp = db_getmrec( dbip, dp )) == (union record *)0 )
-				continue;
+				READ_ERR_return;
 			/* [0] is COMB, [1..n] are MEMBERs */
 			for( j=1; j < dp->d_len; j++ )  {
 				if( rp[j].M.m_instname[0] == '\0' )
@@ -539,6 +539,7 @@ char	**argv;
 		/*  Change object name in the directory. */
 		if( db_rename( dbip, dp, tempstring ) < 0 )  {
 			printf("error in rename to %s, aborting\n", tempstring );
+			ERROR_RECOVERY_SUGGESTION;
 			return;
 		}
 	}
@@ -549,7 +550,7 @@ char	**argv;
 			if( !(dp->d_flags & DIR_COMB) )
 				continue;
 			if( (rp = db_getmrec( dbip, dp )) == (union record *)0 )
-				continue;
+				READ_ERR_return;
 			/* [0] is COMB, [1..n] are MEMBERs */
 			for( j=1; j < dp->d_len; j++ )  {
 				if( rp[j].M.m_instname[0] == '\0' )
@@ -562,10 +563,8 @@ char	**argv;
 					(void)strcat( tempstring, argv[k]);
 					(void)strncpy(rp[j].M.m_instname,
 						tempstring, NAMESIZE);
-					if( db_put( dbip, dp, rp, 0, dp->d_len ) < 0 )  {
-						printf("db_put error, aborting\n");
-						return;
-					}
+					if( db_put( dbip, dp, rp, 0, dp->d_len ) < 0 )
+						WRITE_ERR_return;
 				}
 			}
 			rt_free( (char *)rp, "dir_nref recs" );
@@ -593,7 +592,7 @@ register struct directory *dp;
 		return;		/* already written */
 
 	if( (rp = db_getmrec( dbip, dp )) == (union record *)0 )
-		return;
+		READ_ERR_return;
 	want = dp->d_len*sizeof(union record);
 	if( write( keepfd, (char *)rp, want ) != want )
 		perror("keep write");
@@ -673,7 +672,7 @@ int cont;		/* non-zero when continuing partly printed line */
 	register struct directory *nextdp;
 
 	if( (rp = db_getmrec( dbip, dp )) == (union record *)0 )
-		return;
+		READ_ERR_return;
 
 	if( !cont ) {
 		for( i=0; i<(pathpos*(NAMESIZE+2)); i++) 
@@ -747,7 +746,7 @@ char prefix;
 	register struct directory *nextdp;
 
 	if( (rp = db_getmrec( dbip, dp )) == (union record *)0 )
-		return;
+		READ_ERR_return;
 
 	for( i=0; i<pathpos; i++) 
 		putchar('\t');
@@ -815,15 +814,14 @@ char	**argv;
 	/*  Change object name in the directory. */
 	if( db_rename( dbip, dp, argv[2] ) < 0 )  {
 		printf("error in rename to %s, aborting\n", argv[2] );
+		ERROR_RECOVERY_SUGGESTION;
+		return;
 	}
 
 	/* Change name in the file */
-	(void)db_get( dbip,  dp, &record, 0 , 1);
+	if( db_get( dbip,  dp, &record, 0 , 1) < 0 )  READ_ERR_return;
 	NAMEMOVE( argv[2], record.c.c_name );
-	if( db_put( dbip, dp, &record, 0, 1 ) < 0 )  {
-		printf("unable to update name, aborting\n");
-		return;
-	}
+	if( db_put( dbip, dp, &record, 0, 1 ) < 0 )  WRITE_ERR_return;
 
 	/* Examine all COMB nodes */
 	for( i = 0; i < RT_DBNHASH; i++ )  {
@@ -831,7 +829,7 @@ char	**argv;
 			if( !(dp->d_flags & DIR_COMB) )
 				continue;
 			if( (rp = db_getmrec( dbip, dp )) == (union record *)0 )
-				continue;
+				READ_ERR_return;
 			/* [0] is COMB, [1..n] are MEMBERs */
 			for( j=1; j < dp->d_len; j++ )  {
 				if( rp[j].M.m_instname[0] == '\0' )
@@ -842,10 +840,8 @@ char	**argv;
 						continue;
 					(void)strncpy(rp[j].M.m_instname,
 						argv[2], NAMESIZE);
-					if( db_put( dbip, dp, rp, 0, dp->d_len ) < 0 )  {
-						printf("db_put failure, aborting\n");
-						return;
-					}
+					if( db_put( dbip, dp, rp, 0, dp->d_len ) < 0 )
+						WRITE_ERR_return;
 				}
 			}
 			rt_free( (char *)rp, "dir_nref recs" );
@@ -880,7 +876,7 @@ char	**argv;
 				continue;
 again:
 			if( (rp = db_getmrec( dbip, dp )) == (union record *)0 )
-				continue;
+				READ_ERR_return;
 			/* [0] is COMB, [1..n] are MEMBERs */
 			for( j=1; j < dp->d_len; j++ )  {
 				if( rp[j].M.m_instname[0] == '\0' )
@@ -892,7 +888,9 @@ again:
 
 					/* Remove this reference */
 					if( db_delrec( dbip, dp, j ) < 0 )  {
-						printf("aborting\n");
+						printf("error in killing reference to '%s', exit MGED and retry\n",
+							argv[k]);
+						ERROR_RECOVERY_SUGGESTION;
 						return;
 					}
 					rt_free( (char *)rp, "dir_nref recs" );
@@ -943,8 +941,8 @@ register struct directory *dp;
 		(dp->d_flags & DIR_COMB) ? "COMB" : "Solid",
 		dp->d_namep );
 	eraseobj( dp );
-	db_delete( dbip, dp);
-	db_dirdelete( dbip, dp );
+	if( db_delete( dbip, dp) < 0 || db_dirdelete( dbip, dp ) < 0 )
+		DELETE_ERR_return("");
 }
 
 void

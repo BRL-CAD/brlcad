@@ -196,7 +196,7 @@ f_inside()
 		if( (dp = db_lookup( dbip,  cmd_args[args], LOOKUP_NOISY )) == DIR_NULL )  
 			return;
 		args += argcnt;
-		db_get( dbip,  dp, &newrec, 0 , 1);
+		if( db_get( dbip,  dp, &newrec, 0 , 1) < 0 )  READ_ERR_return;
 
 		if(newrec.u_id != ID_SOLID) {
 			(void)printf("%s: NOT a solid\n",dp->d_namep);
@@ -362,10 +362,11 @@ f_inside()
 	(void)signal( SIGINT, SIG_IGN);
  
 	/* Add to in-core directory */
-	if( (dp = db_diradd( dbip,  newrec.s.s_name, -1, 0, DIR_SOLID )) == DIR_NULL )
-		return;
-	db_alloc( dbip, dp, 1 );
-	db_put( dbip, dp, &newrec, 0, 1 );
+	if( (dp = db_diradd( dbip,  newrec.s.s_name, -1, 0, DIR_SOLID )) == DIR_NULL ||
+	    db_alloc( dbip, dp, 1 ) < 0 )  {
+	    	ALLOC_ERR_return;
+	}
+	if( db_put( dbip, dp, &newrec, 0, 1 ) < 0 )  WRITE_ERR_return;
 
 	/* Draw the new solid */
 	{

@@ -55,7 +55,7 @@ f_tabobj( )
 	for(i=1; i<numargs; i++) {
 		if( (dp = db_lookup( dbip, cmd_args[i], LOOKUP_NOISY)) == DIR_NULL )
 			continue;
-		db_get( dbip, dp, &record, 0, 1);
+		if( db_get( dbip, dp, &record, 0, 1) < 0 )  READ_ERR_return;
 		if(record.u_id == ID_ARS_A) {
 			(void)printf("%c %d %s ",record.a.a_id,record.a.a_type,record.a.a_name);
 			(void)printf("%d %d %d %d\n",record.a.a_m,record.a.a_n,
@@ -63,7 +63,7 @@ f_tabobj( )
 			/* the b-records */
 			ngran = record.a.a_totlen;
 			for(j=1; j<=ngran; j++) {
-				db_get( dbip, dp, &record, j, 1);
+				if( db_get( dbip, dp, &record, j, 1) < 0 )  READ_ERR_return;
 				(void)printf("%c %d %d %d\n",record.b.b_id,record.b.b_type,record.b.b_n,record.b.b_ngranule);
 				for(k=0; k<24; k+=6) {
 					for(kk=k; kk<k+6; kk++)
@@ -93,7 +93,7 @@ f_tabobj( )
 			for(j=1; j<=nmemb; j++) {
 				mat_t	xmat;
 
-				db_get( dbip, dp, &record, j, 1);
+				if( db_get( dbip, dp, &record, j, 1) < 0 )  READ_ERR_return;
 				(void)printf("%c %c %s\n",
 					record.M.m_id,
 					record.M.m_relation,
@@ -232,7 +232,7 @@ f_copyeval( )
 	}
 
 	/* check if last path member is a solid */
-	db_get( dbip,  obj[objpos-1], &record, 0, 1);
+	if( db_get( dbip,  obj[objpos-1], &record, 0, 1) < 0 )  READ_ERR_return;
 	if(record.u_id != ID_SOLID && record.u_id != ID_ARS_A &&
 		record.u_id != ID_BSOLID && record.u_id != ID_P_HEAD) {
 		(void)printf("Bottom of path is not a solid\n");
@@ -272,14 +272,17 @@ f_copyeval( )
 	if(saverec.u_id == ID_ARS_A) {
 		NAMEMOVE(cmd_args[args], saverec.a.a_name);
 		ngran = saverec.a.a_totlen;
-		if( (dp = db_diradd( dbip, saverec.a.a_name, -1, ngran+1, DIR_SOLID)) == DIR_NULL )
-			return;
-		db_alloc( dbip, dp, ngran+1 );
-		db_put( dbip, dp, &saverec, 0, 1 );
+		if( (dp = db_diradd( dbip, saverec.a.a_name, -1, ngran+1, DIR_SOLID)) == DIR_NULL ||
+		    db_alloc( dbip, dp, ngran+1 ) < 0 )  {
+		    	ALLOC_ERR_return;
+		}
+		if( db_put( dbip, dp, &saverec, 0, 1 ) < 0 )
+			WRITE_ERR_return;
 
 		/* apply transformation to the b-records */
 		for(i=1; i<=ngran; i++) {
-			db_get( dbip, obj[objpos-1], &record, i , 1);
+			if( db_get( dbip, obj[objpos-1], &record, i , 1) < 0 )
+				READ_ERR_return;
 			if(i == 1) {
 				/* vertex */
 				MAT4X3PNT( vec, xform,
@@ -298,7 +301,7 @@ f_copyeval( )
 			kk = 0;
 
 			/* write this b-record */
-			db_put( dbip, dp, &record, i, 1);
+			if( db_put( dbip, dp, &record, i, 1) < 0 )  WRITE_ERR_return;
 		}
 		return;
 	}
@@ -315,16 +318,17 @@ f_copyeval( )
 
 	if(saverec.u_id == ID_SOLID) {
 		NAMEMOVE(cmd_args[args], saverec.s.s_name);
-		if( (dp = db_diradd( dbip, saverec.s.s_name, -1, 1, DIR_SOLID)) == DIR_NULL )
-			return;
+		if( (dp = db_diradd( dbip, saverec.s.s_name, -1, 1, DIR_SOLID)) == DIR_NULL ||
+		    db_alloc( dbip, dp, 1 ) < 0 )  {
+			ALLOC_ERR_return;
+		}
 		MAT4X3PNT( vec, xform, &saverec.s.s_values[0] );
 		VMOVE(&saverec.s.s_values[0], vec);
 		for(i=3; i<=21; i+=3) {
 			MAT4X3VEC( vec, xform, &saverec.s.s_values[i] );
 			VMOVE(&saverec.s.s_values[i], vec);
 		}
-		db_alloc( dbip, dp, 1 );
-		db_put( dbip, dp, &saverec, 0, 1 );
+		if( db_put( dbip, dp, &saverec, 0, 1 ) < 0 )  WRITE_ERR_return;
 		return;
 	}
 
@@ -361,14 +365,14 @@ int flag;
 		return;
 	}
 
-	db_get( dbip, dp, &record, 0, 1);
+	if( db_get( dbip, dp, &record, 0, 1) < 0 )  READ_ERR_return;
 
 	if( record.u_id == ID_COMB ) {
 		nparts = dp->d_len-1;
 		for(i=1; i<=nparts; i++) {
 			mat_t	xmat;
 
-			db_get( dbip, dp, &record, i, 1);
+			if( db_get( dbip, dp, &record, i, 1) < 0 )  READ_ERR_return;
 			path[pathpos] = dp;
 			if( (nextdp = db_lookup( dbip, record.M.m_instname, LOOKUP_NOISY)) == DIR_NULL )
 				continue;
@@ -409,7 +413,7 @@ int flag;
 
 	if(flag == CPEVAL) { 
 		/* save this record */
-		db_get( dbip, dp, &saverec, 0, 1);
+		if( db_get( dbip, dp, &saverec, 0, 1) < 0 )  READ_ERR_return;
 		return;
 	}
 
@@ -449,7 +453,7 @@ int flag;
 		(void)printf("%d curves  %d points per curve\n",record.a.a_m,n);
 		arslen = record.a.a_totlen;
 		for(i=1; i<=arslen; i++) {
-			db_get( dbip, dp, &record, i, 1);
+			if( db_get( dbip, dp, &record, i, 1) < 0 )  READ_ERR_return;
 			if( (npt = (n - ((record.b.b_ngranule-1)*8))) > 8 )
 				npt = 8;
 			if(i == 1) {
@@ -583,7 +587,7 @@ f_push( )
 						idpush.i_name);
 				continue;
 			}
-			db_get( dbip, tdp, &record, 0, 1);
+			if( db_get( dbip, tdp, &record, 0, 1) < 0 )  READ_ERR_return;
 			switch( record.u_id ) {
 
 			case ID_SOLID:
@@ -597,14 +601,16 @@ f_push( )
 							&record.s.s_values[k]	);
 					VMOVE( &record.s.s_values[k], vec );
 				}
-				db_put( dbip, tdp, &record, 0, 1 );
+				if( db_put( dbip, tdp, &record, 0, 1 ) < 0 )
+					WRITE_ERR_return;
 			break;
 
 			case ID_ARS_A:
 				/* apply transformation to the b-records */
 				ngran = record.a.a_totlen;
 				for(ii=1; ii<=ngran; ii++) {
-					db_get( dbip, tdp, &record, ii, 1);
+					if( db_get( dbip, tdp, &record, ii, 1) < 0 )
+						READ_ERR_return;
 					if(ii == 1) {
 						/* vertex */
 						MAT4X3PNT(	vec,
@@ -624,7 +630,8 @@ f_push( )
 					kk = 0;
 
 					/* write this b-record */
-					db_put( dbip, tdp, &record, ii, 1 );
+					if( db_put( dbip, tdp, &record, ii, 1 ) < 0 )
+						WRITE_ERR_return;
 				}
 			break;
 
@@ -699,13 +706,13 @@ mat_t	old_xlate;
 		return;
 	}
 
-	db_get( dbip, dp, &record, 0, 1);
+	if( db_get( dbip, dp, &record, 0, 1) < 0 )  READ_ERR_return;
 	if( record.u_id == ID_COMB ) {
 		nparts = dp->d_len-1;
 		for(i=1; i<=nparts; i++) {
 			mat_t	xmat;
 
-			db_get( dbip, dp, &record, i, 1);
+			if( db_get( dbip, dp, &record, i, 1) < 0 )  READ_ERR_return;
 			path[pathpos] = dp;
 			if( (nextdp = db_lookup( dbip, record.M.m_instname, LOOKUP_NOISY)) == DIR_NULL )
 				continue;
@@ -810,14 +817,14 @@ struct directory *dp;
 	mat_t	identity;
 
 	mat_idn( identity );
-	db_get( dbip, dp, &record, 0, 1);
+	if( db_get( dbip, dp, &record, 0, 1) < 0 )  READ_ERR_return;
 	if( record.u_id == ID_COMB ) {
 		nparts = dp->d_len-1;
 		for(i=1; i<=nparts; i++) {
-			db_get( dbip, dp, &record, i, 1);
+			if( db_get( dbip, dp, &record, i, 1) < 0 )  READ_ERR_return;
 
 			rt_dbmat_mat( record.M.m_mat, identity );
-			db_put( dbip, dp, &record, i, 1 );
+			if( db_put( dbip, dp, &record, i, 1 ) < 0 )  WRITE_ERR_return;
 
 			if( (nextdp = db_lookup( dbip, record.M.m_instname, LOOKUP_NOISY)) == DIR_NULL )
 				continue;
@@ -851,8 +858,3 @@ mat_t mat1, mat2;
 	return( 1 );	/* same */
 
 }
-
-
-
-
-

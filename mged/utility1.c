@@ -285,7 +285,7 @@ int flag;
 		return;
 	}
 
-	db_get( dbip, dp, &record, 0, 1);
+	if( db_get( dbip, dp, &record, 0, 1) < 0 )  READ_ERR_return;
 	if( record.u_id == ID_COMB ) {
 		if(regflag > 0) {
 			/* this comb record is part of a region */
@@ -330,7 +330,7 @@ int flag;
 
 			if(i == nparts)
 				lastmemb = 1;
-			db_get( dbip, dp, &record, i, 1);
+			if( db_get( dbip, dp, &record, i, 1) < 0 )  READ_ERR_return;
 			operate = record.M.m_relation;
 
 			if(regflag && operate != SUBTRACT)
@@ -517,7 +517,7 @@ int flag;
 		(void)fprintf(tabptr," ARS %7d curves%7d points/curve",record.a.a_m,n);
 		arslen = record.a.a_totlen;
 		for(i=1; i<=arslen; i++) {
-			db_get( dbip, dp, &record, i, 1);
+			if( db_get( dbip, dp, &record, i, 1) < 0 )  READ_ERR_return;
 			if( (npt = (n - ((record.b.b_ngranule-1)*8))) > 8 )
 				npt = 8;
 			if(i == 1) {
@@ -587,7 +587,7 @@ int pathpos;
 		return;
 	}
 
-	db_get( dbip, dp, &record, 0, 1);
+	if( db_get( dbip, dp, &record, 0, 1) < 0 )  READ_ERR_return;
 	if( record.u_id == ID_COMB ) {
 		if(regflag > 0) {
 			/* this comb record is part of a region */
@@ -633,7 +633,7 @@ int pathpos;
 		for(i=1; i<=nparts; i++) {
 			if(i == nparts)
 				lastmemb = 1;
-			db_get( dbip, dp, &record, i, 1);
+			if( db_get( dbip, dp, &record, i, 1) < 0 )  READ_ERR_return;
 			operate = record.M.m_relation;
 
 			if(regflag && operate != SUBTRACT)
@@ -787,7 +787,8 @@ struct directory	*dp;
 					record.c.c_material = mat;
 					record.c.c_los = los;
 					/* write out all changes */
-					(void)db_put( dbip, dp, &record, 0, 1 );
+					if( db_put( dbip, dp, &record, 0, 1 ) < 0 )
+						WRITE_ERR_return;
 				}
 				/* get out of loop */
 				return(0);
@@ -931,7 +932,7 @@ char	**argv;
 				    (DIR_COMB|DIR_REGION) )
 					continue;
 				if( db_get( dbip, dp, &rec, 0, 1 ) < 0 )
-					continue;
+					READ_ERR_return;
 				if( rec.c.c_regionid != item )
 					continue;
 				(void)printf("   %s\n",rec.c.c_name);

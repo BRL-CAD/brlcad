@@ -474,10 +474,13 @@ char name[];
 		(void)printf("amtrack naming error: %s already exists\n",name);
 		return(-1);
 	}
-	if( (tdp = db_diradd( dbip, name, -1, 1, DIR_SOLID)) == DIR_NULL )
+	if( (tdp = db_diradd( dbip, name, -1, 1, DIR_SOLID)) == DIR_NULL ||
+	    db_alloc( dbip, tdp, 1) < 0 ||
+	    db_put( dbip, tdp, &record, 0, 1 ) < 0 )  {
+	    	(void)printf("wrobj(%s):  write error\n", name);
+	    	ERROR_RECOVERY_SUGGESTION;
 		return( -1 );
-	db_alloc( dbip, tdp, 1);
-	db_put( dbip, tdp, &record, 0, 1 );
+	}
 	return(0);
 }
 

@@ -211,13 +211,13 @@ register struct mater *mp;
 	dir.d_namep = "color_putrec";
 	if( mp->mt_daddr == MATER_NO_ADDR )  {
 		/* Need to allocate new database space */
-		db_alloc( dbip, &dir, 1 );
+		if( db_alloc( dbip, &dir, 1 ) < 0 )  ALLOC_ERR_return;
 		mp->mt_daddr = dir.d_addr;
 	} else {
 		dir.d_addr = mp->mt_daddr;
 		dir.d_len = 1;
 	}
-	db_put( dbip, &dir, &rec, 0, 1 );
+	if( db_put( dbip, &dir, &rec, 0, 1 ) < 0 )  WRITE_ERR_return;
 }
 
 /*
@@ -236,7 +236,7 @@ register struct mater *mp;
 	dir.d_namep = "color_zaprec";
 	dir.d_len = 1;
 	dir.d_addr = mp->mt_daddr;
-	db_delete( dbip, &dir );
+	if( db_delete( dbip, &dir ) < 0 )  DELETE_ERR_return("color_zaprec");
 	mp->mt_daddr = MATER_NO_ADDR;
 }
 

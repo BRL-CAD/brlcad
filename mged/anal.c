@@ -103,7 +103,7 @@ f_analyze()
 		if( (ndp = db_lookup( dbip,  cmd_args[i], LOOKUP_NOISY )) == DIR_NULL )
 			continue;
 
-		db_get( dbip, ndp, &temp_rec, 0, 1);
+		if( db_get( dbip, ndp, &temp_rec, 0, 1) < 0 )  READ_ERR_return;
 
 		if(temp_rec.u_id == ID_P_HEAD) {
 			(void)printf("Analyze cannot handle polygons\n");

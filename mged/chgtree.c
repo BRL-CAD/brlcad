@@ -65,13 +65,16 @@ char	**argv;
 	}
 
 	/*  Change object name in the directory. */
-	if( db_rename( dbip, dp, argv[2] ) < 0 )
-		printf("error in rename to %s\n", argv[2] );
+	if( db_rename( dbip, dp, argv[2] ) < 0 ||
+	    db_get( dbip,  dp, &record, 0 , 1) < 0 )  {
+		printf("error in rename to %s, aborting\n", argv[2] );
+	    	ERROR_RECOVERY_SUGGESTION;
+	    	return;
+	}
 
 	/* Change name in the file */
-	(void)db_get( dbip,  dp, &record, 0 , 1);
 	NAMEMOVE( argv[2], record.c.c_name );
-	(void)db_put( dbip, dp, &record, 0, 1 );
+	if( db_put( dbip, dp, &record, 0, 1 ) < 0 )  WRITE_ERR_return;
 }
 
 /* Copy an object */
@@ -93,19 +96,17 @@ char	**argv;
 		return;
 	}
 
-	rp = db_getmrec( dbip, proto );
+	if( (rp = db_getmrec( dbip, proto )) == (union record *)0 )
+		READ_ERR_return;
 
-	if( (dp=db_diradd( dbip, argv[2], -1, proto->d_len, proto->d_flags)) == DIR_NULL )
-		return;
-	db_alloc( dbip, dp, proto->d_len );
+	if( (dp=db_diradd( dbip, argv[2], -1, proto->d_len, proto->d_flags)) == DIR_NULL ||
+	    db_alloc( dbip, dp, proto->d_len ) < 0 )  {
+	    	ALLOC_ERR_return;
+	}
 
 	/* All objects have name in the same place */
 	NAMEMOVE( argv[2], rp->c.c_name );
-	if( db_put( dbip, dp, rp, 0, proto->d_len ) < 0 )  {
-		(void)printf("db_put() failed, skipping\n");
-		rt_free( (char *)rp, "record" );
-		return;
-	}
+	if( db_put( dbip, dp, rp, 0, proto->d_len ) < 0 )  WRITE_ERR_return;
 
 	/* draw the new object */
 	f_edit( 2, argv+1 );	/* depends on name being in argv[2] ! */
@@ -186,7 +187,7 @@ char	**argv;
 			continue;
 		}
 
-		db_get( dbip,  dp, &record, 0 , 1);
+		if( db_get( dbip,  dp, &record, 0 , 1) < 0 )  READ_ERR_return;
 		if( record.u_id == ID_COMB ) {
 			if( record.c.c_flags == 'R' ) {
 				(void)printf(
@@ -277,8 +278,10 @@ char	**argv;
 	for( i = 1; i < argc; i++ )  {
 		if( (dp = db_lookup( dbip,  argv[i], LOOKUP_NOISY )) != DIR_NULL )  {
 			eraseobj( dp );
-			db_delete( dbip, dp );
-			db_dirdelete( dbip, dp );
+			if( db_delete( dbip, dp ) < 0 ||
+			    db_dirdelete( dbip, dp ) < 0 )  {
+			    	DELETE_ERR_return(argv[i]);
+			}
 		}
 	}
 }
@@ -322,14 +325,18 @@ char	**argv;
 	num_deleted = 0;
 top:
 	for( rec = 1; rec < dp->d_len; rec++ )  {
-		db_get( dbip,  dp, &record, rec , 1);
+		if( db_get( dbip,  dp, &record, rec , 1) < 0 )  READ_ERR_return;
 		/* Compare this member to each command arg */
 		for( i = 2; i < argc; i++ )  {
 			if( strcmp( argv[i], record.M.m_instname ) != 0 )
 				continue;
 			(void)printf("deleting member %s\n", argv[i] );
+			if( db_delrec( dbip, dp, rec ) < 0 )  {
+				(void)printf("Error in deleting member.\n");
+				ERROR_RECOVERY_SUGGESTION;
+				return;
+			}
 			num_deleted++;
-			db_delrec( dbip, dp, rec );
 			goto top;
 		}
 	}
@@ -359,16 +366,17 @@ char	**argv;
 		return;
 	}
 
-	db_get( dbip,  proto, &record, 0 , 1);
+	if( db_get( dbip,  proto, &record, 0 , 1) < 0 )  READ_ERR_return;
 
 	if(record.u_id != ID_SOLID || record.s.s_type != GENTGC )  {
 		(void)printf("%s: Not a cylinder\n",record.s.s_name);
 		return;
 	}
 
-	if( (dp = db_diradd( dbip,  argv[2], -1, proto->d_len, DIR_SOLID )) == DIR_NULL )
-		return;
-	db_alloc( dbip, dp, proto->d_len );
+	if( (dp = db_diradd( dbip,  argv[2], -1, proto->d_len, DIR_SOLID )) == DIR_NULL ||
+	    db_alloc( dbip, dp, proto->d_len ) < 0 )  {
+	    	ALLOC_ERR_return;
+	}
 
 	/* translate to end of "original" cylinder */
 	for(i=0; i<3; i++) {
@@ -379,7 +387,7 @@ char	**argv;
 	 * Update the disk record
 	 */
 	NAMEMOVE( argv[2], record.s.s_name );
-	db_put( dbip, dp, &record, 0, 1 );
+	if( db_put( dbip, dp, &record, 0, 1 ) < 0 )  WRITE_ERR_return;
 
 	/* draw the new solid */
 	f_edit( 2, argv+1 );	/* depends on name being in argv[2] ! */

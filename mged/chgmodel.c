@@ -85,7 +85,7 @@ char	**argv;
 	if( argc == 4 )  {
 		air = atoi( argv[3] );
 	}
-	db_get( dbip,  dp, &record, 0 , 1);
+	if( db_get( dbip,  dp, &record, 0 , 1) < 0 )  READ_ERR_return;
 	if( record.u_id != ID_COMB ) {
 		(void)printf("%s: not a combination\n", dp->d_namep );
 		return;
@@ -96,7 +96,7 @@ char	**argv;
 	}
 	record.c.c_regionid = ident;
 	record.c.c_aircode = air;
-	db_put( dbip, dp, &record, 0, 1 );
+	if( db_put( dbip, dp, &record, 0, 1 ) < 0 )  WRITE_ERR_return;
 }
 
 /* Modify material information */
@@ -115,7 +115,7 @@ char	**argv;
 	if( (dp = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
 		return;
 
-	db_get( dbip,  dp, &record, 0 , 1);
+	if( db_get( dbip,  dp, &record, 0 , 1) < 0 )  READ_ERR_return;
 	if( record.u_id != ID_COMB )  {
 		(void)printf("%s: not a combination\n", dp->d_namep );
 		return;
@@ -211,7 +211,7 @@ char	**argv;
 		break;
 	}		
 out:
-	db_put( dbip, dp, &record, 0, 1 );
+	if( db_put( dbip, dp, &record, 0, 1 ) < 0 )   WRITE_ERR_return;
 }
 
 /* Mirror image */
@@ -224,7 +224,7 @@ char	**argv;
 	register struct directory *proto;
 	register struct directory *dp;
 	register int i, j, k;
-	union record record;
+	union record	*rec;
 	mat_t mirmat;
 	mat_t temp;
 
@@ -247,56 +247,51 @@ char	**argv;
 		return;
 	}
 
-	db_get( dbip,  proto, &record, 0 , 1);
-	if( record.u_id == ID_SOLID ||
-		record.u_id == ID_ARS_A
+	if( (rec = db_getmrec( dbip, proto )) == (union record *)0 )
+		READ_ERR_return;
+	if( rec[0].u_id == ID_SOLID ||
+		rec[0].u_id == ID_ARS_A
 	)  {
-		if( (dp = db_diradd( dbip,  argv[2], -1, proto->d_len, DIR_SOLID )) == DIR_NULL )
-			return;
-		db_alloc( dbip, dp, proto->d_len );
+		if( (dp = db_diradd( dbip,  argv[2], -1, proto->d_len, proto->d_flags )) == DIR_NULL ||
+		    db_alloc( dbip, dp, proto->d_len ) < 0 )  {
+		    	ALLOC_ERR_return;
+		}
 
 		/* create mirror image */
-		if( record.u_id == ID_ARS_A )  {
-			NAMEMOVE( argv[2], record.a.a_name );
-			db_put( dbip, dp, &record, 0, 1 );
+		if( rec[0].u_id == ID_ARS_A )  {
+			NAMEMOVE( argv[2], rec[0].a.a_name );
 			for( i = 1; i < proto->d_len; i++ )  {
-				db_get( dbip,  proto, &record, i , 1);
 				for( j = k; j < 24; j += 3 )
-					record.b.b_values[j] *= -1.0;
-				db_put( dbip, dp, &record, i, 1 );
+					rec[i].b.b_values[j] *= -1.0;
 			}
 		} else  {
 			for( i = k; i < 24; i += 3 )
-				record.s.s_values[i] *= -1.0;
-			NAMEMOVE( argv[2], record.s.s_name );
-			db_put( dbip, dp, &record, 0, 1 );
+				rec[0].s.s_values[i] *= -1.0;
+			NAMEMOVE( argv[2], rec[0].s.s_name );
 		}
-	} else if( record.u_id == ID_COMB ) {
-		if( (dp = db_diradd( dbip, 
-			argv[2], -1, proto->d_len,
-				record.c.c_flags == 'R' ?
-				DIR_COMB|DIR_REGION :
-				DIR_COMB)
-		) == DIR_NULL )
-			return;
-		db_alloc( dbip, dp, proto->d_len );
-		NAMEMOVE(argv[2], record.c.c_name);
-		db_put( dbip, dp, &record, 0, 1 );
+		if( db_put( dbip, dp, rec, 0, dp->d_len ) < 0 )  WRITE_ERR_return;
+		rt_free( (char *)rec, "record" );
+	} else if( rec[0].u_id == ID_COMB ) {
+		if( (dp = db_diradd( dbip, argv[2], -1, proto->d_len, proto->d_flags ) ) == DIR_NULL ||
+		    db_alloc( dbip, dp, proto->d_len ) < 0 )  {
+		    	ALLOC_ERR_return;
+		}
+		NAMEMOVE(argv[2], rec[0].c.c_name);
 		mat_idn( mirmat );
 		mirmat[k*5] = -1.0;
 		for( i=1; i < proto->d_len; i++) {
 			mat_t	xmat;
 
-			db_get( dbip, proto, &record, i, 1);
-			if(record.u_id != ID_MEMB) {
+			if(rec[i].u_id != ID_MEMB) {
 				(void)printf("f_mirror: bad db record\n");
 				return;
 			}
-			rt_mat_dbmat( xmat, record.M.m_mat );
+			rt_mat_dbmat( xmat, rec[i].M.m_mat );
 			mat_mul(temp, mirmat, xmat);
-			rt_dbmat_mat( record.M.m_mat, temp );
-			db_put( dbip, dp, &record, i, 1 );
+			rt_dbmat_mat( rec[i].M.m_mat, temp );
 		}
+		if( db_put( dbip, dp, rec, 0, dp->d_len ) < 0 )  WRITE_ERR_return;
+		rt_free( (char *)rec, "record" );
 	} else {
 		(void)printf("%s: Cannot mirror\n",argv[2]);
 		return;
@@ -573,9 +568,10 @@ char	**argv;
 	/* get fallback angle */
 	fb = atof( argv[3] ) * degtorad;
 
-	if( (dp = db_diradd( dbip,  argv[1], -1, 1, DIR_SOLID )) == DIR_NULL )
-		return;
-	db_alloc( dbip, dp, 1 );
+	if( (dp = db_diradd( dbip,  argv[1], -1, 1, DIR_SOLID )) == DIR_NULL ||
+	    db_alloc( dbip, dp, 1 ) < 0 )  {
+	    	ALLOC_ERR_return;
+	}
 	NAMEMOVE( argv[1], record.s.s_name );
 	record.s.s_id = ID_SOLID;
 	record.s.s_type = GENARB8;
@@ -620,7 +616,7 @@ char	**argv;
 	}
 
 	/* update dbip->dbi_fd and draw new arb8 */
-	db_put( dbip, dp, &record, 0, 1 );
+	if( db_put( dbip, dp, &record, 0, 1 ) < 0 )  WRITE_ERR_return;
 	if( no_memory )  {
 		(void)printf(
 			"ARB8 (%s) created but no memory left to draw it\n",
@@ -651,7 +647,7 @@ char	**argv;
 	los = atoi( argv[5] );
 	mat = atoi( argv[6] );
 
-	db_get( dbip,  dp, &record, 0 , 1);
+	if( db_get( dbip,  dp, &record, 0 , 1) < 0 )  READ_ERR_return;
 	if( record.u_id != ID_COMB ) {
 		(void)printf("%s: not a combination\n", dp->d_namep );
 		return;
@@ -665,7 +661,7 @@ char	**argv;
 	record.c.c_aircode = air;
 	record.c.c_los = los;
 	record.c.c_material = mat;
-	db_put( dbip, dp, &record, 0, 1 );
+	if( db_put( dbip, dp, &record, 0, 1 ) < 0 )  WRITE_ERR_return;
 }
 
 /* Mirface command - mirror an arb face */
@@ -1136,12 +1132,13 @@ char	**argv;
 	}
 
 	/* Add to in-core directory */
-	if( (dp = db_diradd( dbip,  argv[1], -1, 0, DIR_SOLID )) == DIR_NULL )
-		return;
-	db_alloc( dbip, dp, 1 );
+	if( (dp = db_diradd( dbip,  argv[1], -1, 0, DIR_SOLID )) == DIR_NULL ||
+	    db_alloc( dbip, dp, 1 ) < 0 )  {
+	    	ALLOC_ERR_return;
+	}
 
 	NAMEMOVE( argv[1], record.s.s_name );
-	db_put( dbip, dp, &record, 0, 1 );
+	if( db_put( dbip, dp, &record, 0, 1 ) < 0 )  WRITE_ERR_return;
 
 	/* draw the "made" solid */
 	f_edit( 2, argv );	/* depends on name being in argv[1] */
