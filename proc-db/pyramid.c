@@ -20,6 +20,8 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
 #include <math.h>
 #include "machine.h"
@@ -31,6 +33,7 @@ void	rt_log();
 
 double sin60;
 
+int
 main(argc, argv)
 char	**argv;
 {
@@ -48,6 +51,8 @@ char	**argv;
 	do_leaf("leaf");
 	do_pleaf("polyleaf");
 	do_tree("tree", "leaf", depth);
+
+	return 0;
 }
 
 /* Make a leaf node out of an ARB4 */
