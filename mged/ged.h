@@ -63,7 +63,6 @@ extern struct db_i	*dbip;			/* defined in ged.c */
 #define local2base	(dbip->dbi_local2base)
 #define localunit	(dbip->dbi_localunit)	/* current local unit (index) */
 #define	cur_title	(dbip->dbi_title)	/* current model title */
-extern char		*local_unit[];			/* titles.c */
 
 extern int		dmaflag;		/* !0 forces screen update */
 
