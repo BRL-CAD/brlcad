@@ -1172,7 +1172,7 @@ rt_bot_tnurb( r, m, ip, tol )
 struct nmgregion        **r;
 struct model            *m;
 struct rt_db_internal   *ip;
-struct bn_tol           *tol;
+CONST struct bn_tol           *tol;
 {
 	return( 1 );
 }

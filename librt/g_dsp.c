@@ -65,13 +65,13 @@ static char RCSdsp[] = "@(#)$Header$ (BRL)";
 
 #define BBSURF(_s) (-((_s)+1))	/* bounding box surface */
 #define BBOX_PLANES	7	/* 2 tops & 5 other sides */
-#define XMIN 0
-#define XMAX 1
-#define YMIN 2
-#define YMAX 3
-#define ZMIN 4
-#define ZMAX 5
-#define ZMID 6
+#define DSP_XMIN 0
+#define DSP_XMAX 1
+#define DSP_YMIN 2
+#define DSP_YMAX 3
+#define DSP_ZMIN 4
+#define DSP_ZMAX 5
+#define DSP_ZMID 6
 
 #define TRI1	10
 #define TRI2	20
@@ -358,13 +358,13 @@ struct rt_i		*rtip;
 		bu_log("  x:%d y:%d min %d max %d\n", XCNT(dsp), YCNT(dsp), dsp_min, dsp_max);
 
 	/* record the distance to each of the bounding planes */
-	dsp->dsp_pl_dist[XMIN] = 0.0;
-	dsp->dsp_pl_dist[XMAX] = (fastf_t)dsp->xsiz;
-	dsp->dsp_pl_dist[YMIN] = 0.0;
-	dsp->dsp_pl_dist[YMAX] = (fastf_t)dsp->ysiz;
-	dsp->dsp_pl_dist[ZMIN] = 0.0;
-	dsp->dsp_pl_dist[ZMAX] = (fastf_t)dsp_max;
-	dsp->dsp_pl_dist[ZMID] = (fastf_t)dsp_min;
+	dsp->dsp_pl_dist[DSP_XMIN] = 0.0;
+	dsp->dsp_pl_dist[DSP_XMAX] = (fastf_t)dsp->xsiz;
+	dsp->dsp_pl_dist[DSP_YMIN] = 0.0;
+	dsp->dsp_pl_dist[DSP_YMAX] = (fastf_t)dsp->ysiz;
+	dsp->dsp_pl_dist[DSP_ZMIN] = 0.0;
+	dsp->dsp_pl_dist[DSP_ZMAX] = (fastf_t)dsp_max;
+	dsp->dsp_pl_dist[DSP_ZMID] = (fastf_t)dsp_min;
 
 	/* compute bounding box and spere */
 
@@ -1198,10 +1198,10 @@ point_t pt;
 		bu_log("isect_cell_x_wall() cell(%d,%d) surf:%d ss_dist:%g pt(%g %g %g)\n",
 			V2ARGS(cell), surf, dist, V3ARGS(t));
 	}
-	if (surf == BBSURF(XMIN)) {
+	if (surf == BBSURF(DSP_XMIN)) {
 		a = DSP(isect->dsp, cell[X],   cell[Y]);
 		b = DSP(isect->dsp, cell[X],   cell[Y]+1);
-	} else if (surf == BBSURF(XMAX)) {
+	} else if (surf == BBSURF(DSP_XMAX)) {
 		a = DSP(isect->dsp, cell[X]+1, cell[Y]);
 		b = DSP(isect->dsp, cell[X]+1, cell[Y]+1);
 	} else {
@@ -1251,10 +1251,10 @@ point_t pt;
 		bu_log("isect_cell_y_wall() cell(%d,%d) surf:%d ss_dist:%d pt(%g %g %g)\n",
 			V2ARGS(cell), surf, dist, V3ARGS(t));
 	}
-	if (surf == BBSURF(YMIN)) {
+	if (surf == BBSURF(DSP_YMIN)) {
 		a = DSP(isect->dsp, cell[X],   cell[Y]);
 		b = DSP(isect->dsp, cell[X]+1, cell[Y]);
-	} else if (surf == BBSURF(YMAX)) {
+	} else if (surf == BBSURF(DSP_YMAX)) {
 		a = DSP(isect->dsp, cell[X],   cell[Y]+1);
 		b = DSP(isect->dsp, cell[X]+1, cell[Y]+1);
 	} else {
@@ -1368,8 +1368,8 @@ int (*isect_wall)();
 				(rising?"rising":"falling") );
 
 		switch (*cs->curr_surf) {
-		case BBSURF(XMIN) :
-		case BBSURF(XMAX) :
+		case BBSURF(DSP_XMIN) :
+		case BBSURF(DSP_XMAX) :
 			hit = isect_cell_x_wall(
 				isect, cs->grid_cell, *cs->curr_surf,
 				*cs->curr_dist, cs->curr_pt);
@@ -1380,8 +1380,8 @@ int (*isect_wall)();
 					bu_log("\tmiss X in-wall\n");
 			}
 			break;
-		case BBSURF(YMIN) :
-		case BBSURF(YMAX) :
+		case BBSURF(DSP_YMIN) :
+		case BBSURF(DSP_YMAX) :
 			hit = isect_cell_y_wall(
 				isect, cs->grid_cell, *cs->curr_surf,
 				*cs->curr_dist, cs->curr_pt);
@@ -1392,7 +1392,7 @@ int (*isect_wall)();
 					bu_log("\tmiss Y in-wall\n");
 			}
 			break;
-		case BBSURF(ZMIN) :
+		case BBSURF(DSP_ZMIN) :
 			if (*cs->curr_dist != cs->bbin_dist){
 				bu_log("\t%s:%d hitting bottom of dsp for entry while past bottom?  pixel(%d,%d)\n",
 					__FILE__, __LINE__,
@@ -1401,7 +1401,7 @@ int (*isect_wall)();
 			}
 			hit = 1;
 			break;
-		case BBSURF(ZMAX) :
+		case BBSURF(DSP_ZMAX) :
 			hit = 0;
 			break;
 		default:
@@ -1521,18 +1521,18 @@ struct isect_stuff *isect;
 	 * ray overlap with bounding box
 	 */
 	if (bbout_cell[X] < grid_cell[X]) {
-		cell_bbox[XMIN] = bbout_cell[X];
-		cell_bbox[XMAX] = grid_cell[X];
+		cell_bbox[DSP_XMIN] = bbout_cell[X];
+		cell_bbox[DSP_XMAX] = grid_cell[X];
 	} else {
-		cell_bbox[XMIN] = grid_cell[X];
-		cell_bbox[XMAX] = bbout_cell[X];
+		cell_bbox[DSP_XMIN] = grid_cell[X];
+		cell_bbox[DSP_XMAX] = bbout_cell[X];
 	}
 	if (bbout_cell[Y] < grid_cell[Y]) {
-		cell_bbox[YMIN] = bbout_cell[Y];
-		cell_bbox[YMAX] = grid_cell[Y];
+		cell_bbox[DSP_YMIN] = bbout_cell[Y];
+		cell_bbox[DSP_YMAX] = grid_cell[Y];
 	} else {
-		cell_bbox[YMIN] = grid_cell[Y];
-		cell_bbox[YMAX] = bbout_cell[Y];
+		cell_bbox[DSP_YMIN] = grid_cell[Y];
+		cell_bbox[DSP_YMAX] = bbout_cell[Y];
 	}
 
 
@@ -1555,8 +1555,8 @@ struct isect_stuff *isect;
 	 */
 	if (isect->r.r_dir[X] < 0.0) {
 		stepX = -1;	/* cell delta for stepping X dir on ray */
-		insurfX = BBSURF(XMAX);
-		outsurfX = BBSURF(XMIN);
+		insurfX = BBSURF(DSP_XMAX);
+		outsurfX = BBSURF(DSP_XMIN);
 
 		/* tDX is the distance along the ray we have to travel
 		 * to traverse a cell (travel a unit distance) along the
@@ -1572,8 +1572,8 @@ struct isect_stuff *isect;
 		
 	} else {
 		stepX = 1;
-		insurfX = BBSURF(XMIN);
-		outsurfX = BBSURF(XMAX);
+		insurfX = BBSURF(DSP_XMIN);
+		outsurfX = BBSURF(DSP_XMAX);
 
 		tDX = 1.0 / isect->r.r_dir[X];
 
@@ -1585,8 +1585,8 @@ struct isect_stuff *isect;
 	}
 	if (isect->r.r_dir[Y] < 0) {
 		stepY = -1;
-		insurfY = BBSURF(YMAX);
-		outsurfY = BBSURF(YMIN);
+		insurfY = BBSURF(DSP_YMAX);
+		outsurfY = BBSURF(DSP_YMIN);
 
 		tDY = -1.0 / isect->r.r_dir[Y];
 
@@ -1594,8 +1594,8 @@ struct isect_stuff *isect;
 
 	} else {
 		stepY = 1;
-		insurfY = BBSURF(YMIN);
-		outsurfY = BBSURF(YMAX);
+		insurfY = BBSURF(DSP_YMIN);
+		outsurfY = BBSURF(DSP_YMAX);
 
 		tDY = 1.0 / isect->r.r_dir[Y];
 
@@ -1690,10 +1690,10 @@ grid_cell[X], grid_cell[Y], tX, tY, inside, V3ARGS(t), curr_dist, curr_surf);
 		}
 
 
-	} while ( grid_cell[X] >= cell_bbox[XMIN] &&
-		grid_cell[X] <= cell_bbox[XMAX] &&
-		grid_cell[Y] >= cell_bbox[YMIN] &&
-		grid_cell[Y] <= cell_bbox[YMAX] );
+	} while ( grid_cell[X] >= cell_bbox[DSP_XMIN] &&
+		grid_cell[X] <= cell_bbox[DSP_XMAX] &&
+		grid_cell[Y] >= cell_bbox[DSP_YMIN] &&
+		grid_cell[Y] <= cell_bbox[DSP_YMAX] );
 
 	if (inside) {
 		OUTHIT( isect, 

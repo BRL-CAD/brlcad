@@ -53,7 +53,8 @@ static char RCSextrude[] = "@(#)$Header$ (BRL)";
 #include "rtgeom.h"
 #include "./debug.h"
 
-RT_EXTERN( struct rt_sketch_internal *copy_sketch, (struct rt_sketch_internal *sketch_ip ) );
+/* From g_sketch.c */
+BU_EXTERN( struct rt_sketch_internal *rt_copy_sketch, (CONST struct rt_sketch_internal *sketch_ip ) );
 
 struct extrude_specific {
 	fastf_t mag_h;
@@ -497,7 +498,7 @@ rt_extrude_import( ip, ep, mat, dbip )
 struct rt_db_internal		*ip;
 CONST struct bu_external	*ep;
 register CONST mat_t		mat;
-struct db_i		*dbip;
+CONST struct db_i		*dbip;
 {
 	LOCAL struct rt_extrude_internal	*extrude_ip;
 	struct rt_sketch_internal		*sketch_ip;
@@ -728,7 +729,7 @@ int free;
 		ip->idb_ptr = (genptr_t) 0;
 	}
 	else
-		eop->skt = copy_sketch( eip->skt );
+		eop->skt = rt_copy_sketch( eip->skt );
 
 	if( bu_debug&BU_DEBUG_MEM_CHECK )
 	{

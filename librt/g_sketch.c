@@ -739,7 +739,7 @@ struct rt_db_internal	*ip;
 }
 
 struct rt_sketch_internal *
-copy_sketch( sketch_ip )
+rt_copy_sketch( sketch_ip )
 CONST struct rt_sketch_internal *sketch_ip;
 {
 	struct rt_sketch_internal *out;
@@ -749,7 +749,7 @@ CONST struct rt_sketch_internal *sketch_ip;
 
 	if( bu_debug&BU_DEBUG_MEM_CHECK )
 	{
-		bu_log( "Barrier check at start of copy_sketch():\n" );
+		bu_log( "Barrier check at start of rt_copy_sketch():\n" );
 		bu_mem_barriercheck();
 	}
 
@@ -795,7 +795,7 @@ CONST struct rt_sketch_internal *sketch_ip;
 					*csg_out = *csg_in;
 					break;
 				default:
-					bu_log( "copy_sketch: ERROR: unrecognized segment type!!!!\n" );
+					bu_log( "rt_copy_sketch: ERROR: unrecognized segment type!!!!\n" );
 					return( (struct rt_sketch_internal *)NULL );
 			}
 		}
@@ -803,7 +803,7 @@ CONST struct rt_sketch_internal *sketch_ip;
 
 	if( bu_debug&BU_DEBUG_MEM_CHECK )
 	{
-		bu_log( "Barrier check at end of copy_sketch():\n" );
+		bu_log( "Barrier check at end of rt_copy_sketch():\n" );
 		bu_mem_barriercheck();
 	}
 

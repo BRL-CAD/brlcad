@@ -521,7 +521,7 @@ CONST struct bn_tol	*tol;
 	fgp_ip = (struct rt_fgp_internal *)ip->idb_ptr;
 	RT_FGP_CK_MAGIC(fgp_ip);
 
-	if( (ref_id = rt_db_get_internal( &ref_int, fgp_ip->ref_dp , fgp_ip->dbip, &fgp_ip->xform ) ) < 0 )
+	if( (ref_id = rt_db_get_internal( &ref_int, fgp_ip->ref_dp , fgp_ip->dbip, fgp_ip->xform ) ) < 0 )
 	{
 		bu_log( "Error getting internal form of solid %s (referenced by fgp mode solid)\n",
 			fgp_ip->referenced_solid );
@@ -713,7 +713,7 @@ rt_fgp_tnurb( r, m, ip, tol )
 struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
-struct bn_tol		*tol;
+CONST struct bn_tol		*tol;
 {
 	return( 1 );
 }
