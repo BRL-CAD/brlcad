@@ -1,6 +1,12 @@
 /*
  *			M E M A L L O C . C
  *
+ * Functions -
+ *	memalloc	allocate 'size' of memory from a given map
+ *	memget		allocate 'size' of memory from map at 'place'
+ *	memfree		return 'size' of memory to map at 'place'
+ *	memprint	print a map
+ *
  * Structure of the displaylist memory map chains.
  * Consists of non-zero count and base address of that many contiguous units.
  * The addresses are increasing and the list is terminated with the
@@ -57,17 +63,17 @@ static struct mem_map *freemap = MAP_NULL;	/* Freelist of buffers */
  *	Comments:
  *	Algorithm is first fit.
  */
-unsigned
+unsigned long
 memalloc( pp, size )
 struct mem_map **pp;
 register unsigned size;
 {
 	register struct mem_map *prevp = MAP_NULL;
 	register struct mem_map *curp;
-	unsigned	addr;
+	unsigned long	addr;
 
 	if( size == 0 )
-		return( 1 );	/* Anything non-zero */
+		return( 1L );	/* Anything non-zero */
 
 	for( curp = *pp; curp; curp = (prevp=curp)->m_nxtp )  {
 		if( curp->m_size >= size )
@@ -76,7 +82,7 @@ register unsigned size;
 
 	if( curp == MAP_NULL )  {
 		printf("memalloc(%d):  no more space\n", size );
-		return(0);		/* No more space */
+		return(0L);		/* No more space */
 	}
 
 	addr = curp->m_addr;
@@ -97,6 +103,61 @@ register unsigned size;
 }
 
 /*
+ *			M E M G E T
+ *
+ *	Returns:	NULL	Error
+ *			-1	Zero Request
+ *			<addr>	Othewise
+ *
+ *	Comments:
+ *	Algorithm is first fit.
+ */
+unsigned long
+memget( pp, size, place )
+struct mem_map **pp;
+register unsigned int size;
+unsigned int place;
+{
+	register struct mem_map *prevp, *curp;
+	unsigned int addr;
+
+	prevp = MAP_NULL;		/* special for first pass through */
+	if( size == 0 )
+		return( -1 );	/* Anything non-zero */
+
+	curp = *pp;
+	while( curp )  {
+		/*
+		 * Assumption:  We will always be APPENDING to an existing
+		 * memory allocation, so we search for a free piece of memory
+		 * which begins at 'place', without worrying about ones which
+		 * could begin earlier but be long enough to satisfy this
+		 * request.
+		 */
+		if( curp->m_addr == place && curp->m_size >= size )
+			break;
+		curp = (prevp=curp)->m_nxtp;
+	}
+
+	if( curp == MAP_NULL )
+		return(0L);		/* No space here */
+
+	addr = curp->m_addr;
+	curp->m_addr += size;
+
+	/* If the element size goes to zero, put it on the freelist */
+	if( (curp->m_size -= size) == 0 )  {
+		if( prevp )
+			prevp->m_nxtp = curp->m_nxtp;
+		else
+			*pp = curp->m_nxtp;	/* Click list down at start */
+		curp->m_nxtp = freemap;		/* Link it in */
+		freemap = curp;			/* Make it the start */
+	}
+	return( addr );
+}
+
+/*
  *			M E M F R E E
  *
  *	Takes:
@@ -111,7 +172,7 @@ void
 memfree( pp, size, addr )
 struct mem_map **pp;
 unsigned size;
-unsigned addr;
+unsigned long addr;
 {
 	register int type = {0};
 	register struct mem_map *prevp = MAP_NULL;
@@ -225,4 +286,20 @@ struct mem_map **pp;
 	freemap = *pp;
 
 	*pp = MAP_NULL;
+}
+
+/*
+ *			M E M P R I N T
+ *
+ *  Print a memory chain.
+ */
+void
+memprint( pp )
+struct mem_map **pp;
+{
+	register struct mem_map *curp;
+
+	curp = *pp;
+	for( curp = *pp; curp; curp = curp->m_nxtp )
+		printf(" %ld, len=%d\n", curp->m_addr, curp->m_size );
 }
