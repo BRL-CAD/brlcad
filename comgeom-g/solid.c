@@ -396,43 +396,9 @@ getsolid()
 		return(2);
 
 	}  else   {
-
 		/* solid type other than ARS */
+		convert( cur_type, sol_work, solid_type );
 
-		solidp->s_id = SOLID;
-		solidp->s_type = cur_type;
-		solidp->s_num = sol_work;
-
-		namecvt( solidp->s_num, solidp->s_name, 's' );
-
-		for(i=0; i<24; i++)
-			solidp->s_values[i] = 0.0;
-
-		for( cd=1; cd <= ncards[solidp->s_type]; cd++ )  {
-			if( cd != 1 )  {
-				if( getline( &scard, sizeof(scard), "solid continuation card" ) == EOF )  {
-					printf("too few cards for solid %d\n",
-						solidp->s_num);
-					return	0;
-				}
-				/* continuation card
-				 * solid type should be blank 
-				 */
-				if( (version==5 && ((char *)&scard)[5] != ' ' ) ||
-				    (version==4 && ((char *)&scard)[3] != ' ' ) )  {
-					printf("solid %d continuation card solid type non-blank, ='%s'\n",
-						solidp->s_num, solid_type);
-					return 0;
-				}
-			}
-
-			fp = &solidp->s_values[cd*6-1];
-			for(i=5; i>=0; i--)   {
-				scard.sc_fields[i][10] = '\0';	/* null OFF END */
-				*fp-- = atof( scard.sc_fields[i] );
-			}
-		}
-		convert( solidp, solidp->s_name );
 		return(1);		/* input is valid */
 	}
 }
@@ -476,10 +442,12 @@ getsolid()
  *
  *  This routine is expected to write the records out itself.
  */
-convert( in, name )
-struct solids *in;
-char	*name;
+convert( cur_type, sol_work, solid_type )
+int	cur_type;
+int	sol_work;
+char	*solid_type;
 {
+	struct solids	in;
 	static struct solids out;
 	register float *iv;
 	register float *ov;
@@ -489,13 +457,51 @@ char	*name;
 	static float m5, m6;	/* TOR temporaries */
 	static float r3,r4; /* magnitude temporaries */
 	static int i;
+	int	cd;
+	float	*fp;
+	char	name[16+2];
+
+	in.s_id = SOLID;
+	in.s_type = cur_type;
+	in.s_num = sol_work;
+
+	namecvt( in.s_num, name, 's' );
+	NAMEMOVE( name, in.s_name );
+
+	for(i=0; i<24; i++)
+		in.s_values[i] = 0.0;
+
+	for( cd=1; cd <= ncards[in.s_type]; cd++ )  {
+		if( cd != 1 )  {
+			if( getline( &scard, sizeof(scard), "solid continuation card" ) == EOF )  {
+				printf("too few cards for solid %d\n",
+					in.s_num);
+				return	0;
+			}
+			/* continuation card
+			 * solid type should be blank 
+			 */
+			if( (version==5 && ((char *)&scard)[5] != ' ' ) ||
+			    (version==4 && ((char *)&scard)[3] != ' ' ) )  {
+				printf("solid %d continuation card solid type non-blank, ='%s'\n",
+					in.s_num, solid_type);
+				return 0;
+			}
+		}
+
+		fp = &in.s_values[cd*6-1];
+		for(i=5; i>=0; i--)   {
+			scard.sc_fields[i][10] = '\0';	/* null OFF END */
+			*fp-- = atof( scard.sc_fields[i] );
+		}
+	}
 
 	col_pr( name );
 
-	iv = &in->s_values[0];
+	iv = &in.s_values[0];
 	ov = &out.s_values[0];
 
-	switch( in->s_type )  {
+	switch( in.s_type )  {
 
 	case RPP:
 		{
@@ -532,7 +538,7 @@ char	*name;
 		for( i=2; i<=8; i++ )  {
 			VSUB2( Fi, Oi, O1 );
 		}
-		in->s_type = GENARB8;
+		in.s_type = GENARB8;
 		break;
 
 	case ARB8:
@@ -540,12 +546,12 @@ char	*name;
 		for(i=2; i<=8; i++)  {
 			VSUB2( Fi, Fi, F1 );
 		}
-		in->s_type = GENARB8;
+		in.s_type = GENARB8;
 		break;
 
 	case ARB7:
 		VMOVE( F8, F5 );
-		in->s_type = ARB8;
+		in.s_type = ARB8;
 		goto arb8common;
 
 	case ARB6:
@@ -553,14 +559,14 @@ char	*name;
 		VMOVE( F8, F6 );
 		VMOVE( F7, F6 );
 		VMOVE( F6, F5 );
-		in->s_type = ARB8;
+		in.s_type = ARB8;
 		goto arb8common;
 
 	case ARB5:
 		VMOVE( F6, F5 );
 		VMOVE( F7, F5 );
 		VMOVE( F8, F5 );
-		in->s_type = ARB8;
+		in.s_type = ARB8;
 		goto arb8common;
 
 	case ARB4:
@@ -570,7 +576,7 @@ char	*name;
 		VMOVE( F6, F4 );
 		VMOVE( F5, F4 );
 		VMOVE( F4, F1 );
-		in->s_type = ARB8;
+		in.s_type = ARB8;
 		goto arb8common;
 
 	case RCC:
@@ -581,7 +587,7 @@ char	*name;
 	case REC:
 		VMOVE( F5, F3 );
 		VMOVE( F6, F4 );
-		in->s_type = GENTGC;
+		in.s_type = GENTGC;
 		break;
 
 		/*
@@ -610,14 +616,14 @@ char	*name;
 
 		VSCALE( F5, F3, r2/r1 );
 		VSCALE( F6, F4, r2/r1 );
-		in->s_type = GENTGC;
+		in.s_type = GENTGC;
 		break;
 
 	case TEC:
 		r1 = iv[12];	/* P */
 		VSCALE( F5, F3, (1.0/r1) );
 		VSCALE( F6, F4, (1.0/r1) );
-		in->s_type = GENTGC;
+		in.s_type = GENTGC;
 		break;
 
 	case TGC:
@@ -625,7 +631,7 @@ char	*name;
 		r2 = iv[13] / MAGNITUDE( F4 );	/* B/|B| * D */
 		VSCALE( F5, F3, r1 );
 		VSCALE( F6, F4, r2 );
-		in->s_type = GENTGC;
+		in.s_type = GENTGC;
 		break;
 
 	case SPH:
@@ -677,7 +683,7 @@ char	*name;
 		VCROSS( F4, F2, F3 );
 		m2 = MAGNITUDE( F4 );
 		VSCALE( F4, F4, r1/m2 );
-		in->s_type = GENELL;
+		in.s_type = GENELL;
 		break;
 
 	case TOR:
@@ -697,11 +703,11 @@ char	*name;
 		/*
 		 * We should never reach here
 		 */
-		printf("convert:  no support for type %d\n", in->s_type );
+		printf("convert:  no support for type %d\n", in.s_type );
 		return;
 	}
 
 	/* Common code to write out the record */
 	/* XXX error checking? */
-	fwrite( (char *)in, sizeof(union record), 1, outfp );
+	fwrite( (char *)&in, sizeof(union record), 1, outfp );
 }
