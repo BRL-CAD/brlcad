@@ -52,6 +52,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "fb.h"
 
 #include "../librt/debug.h"
+#include "../rt/mathtab.h"
 #include "../rt/material.h"
 #include "../rt/ext.h"
 #include "../rt/rdebug.h"
@@ -312,6 +313,15 @@ char **argv;
 	if( max_cpus <= 0 )  {
 		pkg_close(pcsrv);
 		exit(0);
+	}
+
+	/*
+	 *  Initialize all the per-CPU memory resources.
+	 *  Go for the max, as TCL interface may change npsw as we run.
+	 */
+	for( n=0; n < avail_cpus; n++ )  {
+		rt_init_resource( &resource[n], n );
+		rand_init( resource[n].re_randptr, n );
 	}
 
 	BU_LIST_INIT( &WorkHead );
