@@ -57,34 +57,16 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 static char		lockfile[] = "/var/tmp/ipuscanXXXXXX";
 static usptr_t		*lockstuff = 0;
 
+#include "./chore.h"
 
 static 	struct dsreq *dsp;
 static	int	fd;
-
-struct chore {
-	int	todo;
-	int	buflen;
-	int	pix_y;
-	int	canon_y;
-	unsigned char	*cbuf;			/* ptr to canon buffer */
-	unsigned char	obuf[255*1024];
-};
 
 struct chore	chores[3];
 
 struct chore	*await1;
 struct chore	*await2;
 struct chore	*await3;
-
-#define GET(item, queue)	{\
-	while( queue == NULL )  sginap(1); \
-	item = queue; \
-	queue = NULL; }
-
-#define PUT(queue, item)	{ \
-	while( queue != NULL )  sginap(1); \
-	queue = item; \
-	item = NULL;  }
 
 void step1(aa,bb)
 void	*aa;
