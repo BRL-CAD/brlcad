@@ -83,6 +83,9 @@ CONST struct rt_tol	*tol;
  *  This is done by finding the "left-ward" vector for the edge in the
  *  face, which points into the interior of the face, and measuring
  *  the angle it forms relative to xvec and yvec.
+ *
+ *  Wire edges are indicated by always returning angle of -pi.
+ *  That will be the only case for negative returns.
  */
 double
 nmg_measure_fu_angle( eu, xvec, yvec, zvec )
@@ -99,8 +102,10 @@ CONST vect_t		zvec;
 	double			ret;
 
 	NMG_CK_EDGEUSE(eu);
+	if( *eu->up.magic_p != NMG_LOOPUSE_MAGIC )  return -rt_pi;
 	lu = eu->up.lu_p;
 	NMG_CK_LOOPUSE(lu);
+	if( *lu->up.magic_p != NMG_FACEUSE_MAGIC )  return -rt_pi;
 	fu = lu->up.fu_p;
 	NMG_CK_FACEUSE(fu);
 	NMG_CK_FACE(fu->f_p);
