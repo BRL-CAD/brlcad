@@ -432,7 +432,6 @@ ipu_put_image(struct dsreq *dsp,
 {
 	u_char *ipubuf;
 	int saved_debug;
-	int i;
 
 	int bytes_per_line, lines_per_buf, bytes_per_buf, img_line;
 	int buf_no, buf_line, orphan_lines, fullbuffers, pixel, ip;

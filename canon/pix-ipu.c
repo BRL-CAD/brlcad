@@ -102,9 +102,6 @@ int	n;
 #include <fcntl.h>
 #include <stdlib.h>
 
-static char		lockfile[] = "/var/tmp/pix-ipuXXXXXX";
-static usptr_t		*lockstuff = 0;
-
 #include "./chore.h"
 
 static 	struct dsreq *dsp;
@@ -171,7 +168,7 @@ void	*aa;
 {
 	struct chore	*chorep;
 	register unsigned char	*cp;
-	unsigned char *red, *green, *blue;
+	unsigned char *green, *blue;
 	int	buf_y;
 
 	for(;;)  {
@@ -208,7 +205,6 @@ void	*aa;
 			for( buf_y = chorep->todo-1; buf_y >= 0; buf_y-- )  {
 				int	offset;
 				register unsigned char	*rp;
-				register int		x;
 					offset = buf_y * width;
 				rp = &chorep->cbuf[offset];
 				bcopy( cp, rp, width );

@@ -77,9 +77,6 @@ char **argv;
    char idbuf[32];	/*  Contains data base info.  */
    struct region *pr;   /*  Used in finding region names.  */
 
-   struct rt_i *e_rtip;	/*  Used to build directory for each region.  */
-   char e_idbuf[32];	/*  Data base info for each region.  */
-
    int numreg;		/*  Number of regions.  */
    double centall[3];	/*  Center of entire model.  */
    double minall[3];	/*  Minimum of entire model.  */
@@ -87,7 +84,6 @@ char **argv;
    double areaall;	/*  Surface area of bounding sphere.  */
    double radall;	/*  Radius of bounding sphere.  */
    long seed;		/*  Seed for random number generator.  */
-   struct msr_unif *msr;/*  Used for random number.  */
    double rayfir;	/*  Number of rays to be fired.  */
    double rho,phi,theta;/*  Spherical coordinates for starting point.  */
    double elev,az,rds;	/*  Elevation, azimuth, & radius for finding vector  */
@@ -542,8 +538,6 @@ struct partition *PartHeadp;
    double lvpt[3];	/*  Leaving point of 1st region.  */
    double entpt[3];	/*  Entering point of 2nd region.  */
    double tol[3];	/*  Used to check tolerance of equal numbers.  */
-   int flag;		/*  Flag for finding if correct region hit,  */
-			/*  0=>still looking, 1=>not hit, 2=>hit.  */
 
 /*
  * (void)fprintf(fpw1,"In function hit.\n");

@@ -54,8 +54,6 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 /* task.h #include's <sys/prctl.h> */
 # include <malloc.h>
 /* <malloc.h> #include's <stddef.h> */
-static char		lockfile[] = "/var/tmp/ipuscanXXXXXX";
-static usptr_t		*lockstuff = 0;
 
 #include "./chore.h"
 
@@ -115,7 +113,7 @@ void	*aa;
 {
 	struct chore	*chorep;
 	register unsigned char	*cp;
-	unsigned char *red, *green, *blue;
+	unsigned char *green, *blue;
 	int	buf_y;
 
 	for(;;)  {
@@ -153,7 +151,6 @@ void	*aa;
 			for( buf_y = chorep->todo-1; buf_y >= 0; buf_y-- )  {
 				int	offset;
 				register unsigned char	*rp;
-				register int		x;
 					offset = buf_y * width;
 				rp = &chorep->cbuf[offset];
 				bcopy( rp, cp, width );
@@ -207,7 +204,6 @@ char *av[];
 {
 	int arg_index;
 	int i;
-	int	pix_y;
 	int	pid[3];
 
 	/* pick the LUN for the scanner this time */

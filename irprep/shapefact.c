@@ -143,8 +143,6 @@ char **argv;
    int itype;		/*  Type of file to be created, 0=>regular,  */
 			/*  1=>generic.  */
    char line[500];	/*  Buffer to read a line of data into.  */
-   int flag;		/*  Flag for reading geometric file, it counts  */
-			/*  commas.  */
    int c;		/*  Reads one character of information.  */
    int icnt;		/*  Counter for shape factor.  */
    char tmpname[150];	/*  Temporary name.  */
@@ -155,12 +153,9 @@ char **argv;
    int rnnreg[800];	/*  Region number from region # & name file.  */
    int jcnt;		/*  Counter.  */
    int equal;		/*  0=>equal, 1=>not equal.  */
-   double stemp;	/*  Temporary variables.  */
    double rcpi,rcpj;	/*  Used to check reciprocity.  */
    double rcp_diff;	/*  Difference in reciprocity.  */
    double rcp_pdiff;	/*  Percent difference in reciprocity.  */
-
-   struct msr_unif *msr;
 
    /*  Check to see if arguments are implimented correctly.  */
    if( (argv[1] == NULL) || (argv[2] == NULL) )

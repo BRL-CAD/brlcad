@@ -81,7 +81,6 @@ char *argv[];
  char idbuf[132];	/*  First id record in .g file.  */
 
  int i,j,k;		/*  Loop variables.  */
- double s,t;		/*  Loop variables.  */
  double vec[3];		/*  Temporary vector.  */
  double r[8];		/*  Temporary variable.  */
  int c;			/*  Variable to read a character.  */
@@ -573,8 +572,6 @@ struct partition *PartHeadp;
 
 {
    register struct partition *pp;
-   register struct hit *hitp;
-   register struct soltab *stp;
 
 /*
  * (void)printf("It is a hit.\n");
@@ -620,8 +617,6 @@ register struct application *ap_p;
 register struct partition *PartHeadp;
 
 {
-   register struct partition *pp;
-
    (void)printf("It is an overlap.\n");
    (void)fflush(stdout);
 

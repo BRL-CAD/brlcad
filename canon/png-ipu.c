@@ -108,7 +108,6 @@ char *av[];
 {
 	int arg_index;
 	struct dsreq *dsp;
-	u_char	*img_buffer = (u_char *)NULL;
 	int i;
 	/**/
 	png_structp png_p;
