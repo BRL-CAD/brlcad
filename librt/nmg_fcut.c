@@ -168,12 +168,10 @@ struct vertexuse	*vu;
 }
 
 /*
- *			N M G _ V U _ A N G L E _ M E A S U R E
+ *			R T _ A N G L E _ M E A S U R E
  *
- *  Given a vertexuse from a loop which lies in a plane,
- *  compute the vector 'vec' from the previous vertex to this one.
- *  Using two perpendicular vectors (x_dir and y_dir) which both lie
- *  in the plane of the loop, return the angle (in radians) of 'vec'
+ *  Using two perpendicular vectors (x_dir and y_dir) which lie
+ *  in the same plane as 'vec', return the angle (in radians) of 'vec'
  *  from x_dir, going CCW around the perpendicular x_dir CROSS y_dir.
  *
  *  Trig note -
@@ -183,12 +181,50 @@ struct vertexuse	*vu;
  *  This could be implemented by adding 2pi to theta when theta is negative,
  *  but this could have nasty numeric ambiguity right in the vicinity
  *  of theta = +pi, which is a very critical angle for the applications using
- *  this routine, wishing to sort edges by angle from x_dir.
+ *  this routine.
  *  So, an alternative formulation is to compute gamma = atan2(-x,-y),
  *  and then theta = gamma + pi.  Now, any error will occur in the
  *  vicinity of theta = 0, which can be handled much more readily.
  *  If theta is negative, set it to zero.
- *  If theta is greater than two pi, that's OK
+ *  If theta is greater than two pi, set it to two pi.
+ *  These conditions only occur if there are problems in atan2().
+ *
+ *  Returns -
+ *	vec == x_dir returns 0,
+ *	vec == y_dir returns pi/2,
+ *	vec == -x_dir returns pi,
+ *	vec == -y_dir returns 3*pi/2.
+ */
+double
+rt_angle_measure( vec, x_dir, y_dir )
+vect_t	vec;
+vect_t	x_dir;
+vect_t	y_dir;
+{
+	fastf_t		xproj, yproj;
+	fastf_t		gamma;
+	fastf_t		ang;
+
+	xproj = -VDOT( vec, x_dir );
+	yproj = -VDOT( vec, y_dir );
+	gamma = atan2( yproj, xproj );	/* -pi..+pi */
+	ang = rt_pi + gamma;		/* 0..+2pi */
+	if( ang < 0 )  {
+		return 0;
+	} else if( ang > rt_twopi )  {
+		return rt_twopi;
+	}
+	return ang;
+}
+
+/*
+ *			N M G _ V U _ A N G L E _ M E A S U R E
+ *
+ *  Given a vertexuse from a loop which lies in a plane,
+ *  compute the vector 'vec' from the previous vertex to this one.
+ *  Using two perpendicular vectors (x_dir and y_dir) which both lie
+ *  in the plane of the loop, return the angle (in radians) of 'vec'
+ *  from x_dir, going CCW around the perpendicular x_dir CROSS y_dir.
  *
  *  Returns -
  *	vec == x_dir returns 0,
@@ -207,8 +243,6 @@ vect_t			y_dir;
 	struct edgeuse	*this_eu;
 	struct edgeuse	*prev_eu;
 	vect_t		vec;
-	fastf_t		xproj, yproj;
-	fastf_t		gamma;
 	fastf_t		ang;
 
 	NMG_CK_VERTEXUSE( vu );
@@ -226,14 +260,7 @@ vect_t			y_dir;
 		/* Skip any edges that stay on this vertex */
 	} while( prev_eu->vu_p->v_p == this_eu->vu_p->v_p );
 	VSUB2( vec, prev_eu->vu_p->v_p->vg_p->coord, vu->v_p->vg_p->coord );
-	xproj = -VDOT( vec, x_dir );
-	yproj = -VDOT( vec, y_dir );
-	gamma = atan2( yproj, xproj );	/* -pi..+pi */
-	ang = rt_pi + gamma;		/* 0..+2pi */
-	if( ang < 0 )  {
-rt_log("ang=0, ang was %e\n", ang);
-		return 0;
-	}
+	ang = rt_angle_measure( vec, x_dir, y_dir );
 rt_log("ang=%g, vec=(%g,%g,%g), x=(%g,%g,%g), y=(%g,%g,%g)\n",
  ang*rt_radtodeg, V3ARGS(vec), V3ARGS(x_dir), V3ARGS(y_dir) );
 	return ang;
