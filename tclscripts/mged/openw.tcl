@@ -710,7 +710,7 @@ menu .$id.menubar.create -title "Create" -tearoff $mged_default(tearoff_menus)
 .$id.menubar.create add command -label "Prim Editor" -underline 0 \
 	-command "init_edit_solid $id"
 hoc_register_menu_data "Create" "Prim Editor" "Prim Editor"\
-	{ { summary "A tool for editing/creating solids." } }
+	{ { summary "A tool for editing/creating primitives." } }
 .$id.menubar.create add command -label "Combination Editor" -underline 0 \
 	-command "init_comb $id"
 hoc_register_menu_data "Create" "Combination Editor" "Combination Editor"\
@@ -1127,20 +1127,20 @@ hoc_register_menu_data "Active Pane" "Lower Right" "Active Pane - Lower Right" $
 menu .$id.menubar.settings.fb -title "Framebuffer" -tearoff $mged_default(tearoff_menus)
 .$id.menubar.settings.fb add radiobutton -value 1 -variable mged_gui($id,fb_all)\
 	-label "All" -underline 0\
-	-command "mged_apply $id \"set fb_all \$mged_gui($id,fb_all)\""
+	-command "mged_apply $id \"set fb_all \$mged_gui($id,fb_all)\"; rt_update_dest $id"
 hoc_register_menu_data "Framebuffer" "All" "Framebuffer - All"\
 	{ { summary "Use the entire pane for the framebuffer." }
           { see_also "rset, vars" } }
 .$id.menubar.settings.fb add radiobutton -value 0 -variable mged_gui($id,fb_all)\
 	-label "Rectangle Area" -underline 0\
-	-command "mged_apply $id \"set fb_all \$mged_gui($id,fb_all)\""
+	-command "mged_apply $id \"set fb_all \$mged_gui($id,fb_all)\"; rt_update_dest $id"
 hoc_register_menu_data "Framebuffer" "Rectangle Area" "Framebuffer - Rectangle Area"\
 	{ { summary "Use the rectangle area for the framebuffer." }
           { see_also "rset, vars" } }
 .$id.menubar.settings.fb add separator
 .$id.menubar.settings.fb add radiobutton -value 2 -variable mged_gui($id,fb_overlay)\
 	-label "Overlay" -underline 0\
-	-command "mged_apply $id \"set fb_overlay \$mged_gui($id,fb_overlay)\""
+	-command "mged_apply $id \"set fb_overlay \$mged_gui($id,fb_overlay)\"; rt_update_dest $id"
 hoc_register_menu_data "Framebuffer" "Overlay" "Framebuffer - Overlay"\
 	{ { summary "Put the framebuffer in overlay mode. In this mode,
 the framebuffer data is placed above everything.
@@ -1148,7 +1148,7 @@ the framebuffer data is placed above everything.
           { see_also "rset, vars" } }
 .$id.menubar.settings.fb add radiobutton -value 1 -variable mged_gui($id,fb_overlay)\
 	-label "Interlay" -underline 0\
-	-command "mged_apply $id \"set fb_overlay \$mged_gui($id,fb_overlay)\""
+	-command "mged_apply $id \"set fb_overlay \$mged_gui($id,fb_overlay)\"; rt_update_dest $id"
 hoc_register_menu_data "Framebuffer" "Interlay" "Framebuffer - Interlay"\
 	{ { summary "Put the framebuffer in interlay mode. In this mode,
 the framebuffer data is placed above the geometry
@@ -1156,7 +1156,7 @@ and below the faceplate." }
           { see_also "rset, vars" } }
 .$id.menubar.settings.fb add radiobutton -value 0 -variable mged_gui($id,fb_overlay)\
 	-label "Underlay" -underline 0\
-	-command "mged_apply $id \"set fb_overlay \$mged_gui($id,fb_overlay)\""
+	-command "mged_apply $id \"set fb_overlay \$mged_gui($id,fb_overlay)\"; rt_update_dest $id"
 hoc_register_menu_data "Framebuffer" "Underlay" "Framebuffer - Underlay"\
 	{ { summary "Put the framebuffer in underlay mode. In this mode,
 the framebuffer data is placed under everything.
