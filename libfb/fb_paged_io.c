@@ -84,7 +84,7 @@ int	x, y;
 	}
 
 	if( x < 0 || y < 0 || x >= ifp->if_width || y >= ifp->if_height ) {
-		fb_log(	"fb_seek : illegal address <%d,%d>.\n", x, y );
+		fb_log(	"fb_seek: illegal address <%d,%d>.\n", x, y );
 		return	-1;
 	}
 	pixelnum = ((long) y * (long) ifp->if_width) + x;
@@ -181,15 +181,29 @@ int
 fb_flush( ifp )
 register FBIO	*ifp;
 {
+	_fb_pgflush(ifp);
+
+	/* call device specific flush routine */
+	if( (*ifp->if_flush)( ifp ) == -1 )
+		return	-1;
+
+	return	0;
+}
+
+int
+_fb_pgflush( ifp )
+register FBIO	*ifp;
+{
 	if( ifp->if_debug & FB_DEBUG_BIO ) {
-		fb_log( "fb_flush( 0x%lx )\n", (unsigned long)ifp );
+		fb_log( "_fb_pgflush( 0x%lx )\n", (unsigned long)ifp );
 	}
 
-	if( ifp->if_pdirty )
+	if( ifp->if_pdirty ) {
 		if( _fb_pgout( ifp ) == -1 )
 			return	-1;
+		ifp->if_pdirty = 0;
+	}
 
-	ifp->if_pdirty = 0;
 	return	0;
 }
 
