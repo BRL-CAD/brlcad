@@ -36,7 +36,7 @@ extern char	*optarg;
 extern int	optind;
 extern unsigned char *malloc();
 
-#define	MAXBUFBYTES	(1280*1024*3)
+#define	MAXBUFBYTES	(1280*1024*3*4)	/* 4 times bigger than typ. screen */
 
 int	buflines, scanbytes;
 int	firsty = -1;	/* first "y" scanline in buffer */
