@@ -226,6 +226,7 @@ struct db_tree_state *tsp;
 					faces[i].facet_type = (-1); /* TBD */
 
 				faces[i].outer_loop = NULL;
+				i++;
 			}
 
 			/* determine type of face 
@@ -246,48 +247,100 @@ struct db_tree_state *tsp;
 				for( i=0 ; i<no_of_loops ; i++ )
 					faces[i].facet_type = 0;
 			}
-
-			if( no_of_holes )
+			else if( no_of_loops == no_of_holes + 1 )
 			{
-				/* must determine which holes go with which outer loops */
+				struct loopuse *outer_lu;
+
+				/* only one outer loop, so find it */
 				for( i=0 ; i<no_of_loops ; i++ )
 				{
-					if( faces[i].facet_type != 1 )
-						continue;
-					for( j=0 ; j<no_of_loops ; j++ )
+					if( faces[i].facet_type == (-1) )
 					{
-						if( j == i )
+						outer_lu = faces[i].lu;
+						faces[i].facet_type = 2;
+						break;
+					}
+				}
+
+				/* every hole must have this same outer_loop */
+				for( i=0 ; i<no_of_loops ; i++ )
+				{
+					if( faces[i].facet_type == 1 )
+						faces[i].outer_loop = outer_lu;
+				}
+			}
+			else
+			{
+				int loop1,loop2;
+				int outer_loop_count;
+
+				/* must determine which holes go with which outer loops */
+				for( loop1=0 ; loop1<no_of_loops ; loop1++ )
+				{
+					if( faces[loop1].facet_type != 1 )
+						continue;
+
+					/* loop1 is a hole look for loops containing loop1 */
+					outer_loop_count = 0;
+					for( loop2=0 ; loop2<no_of_loops ; loop2++ )
+					{
+						int class;
+
+						if( faces[loop2].facet_type == 1 )
 							continue;
 
-						if( faces[j].facet_type == 1 )
+						class = nmg_classify_lu_lu( faces[loop1].lu,
+								faces[loop2].lu , &tol );
+
+						if( class != NMG_CLASS_AinB )
 							continue;
 
-						if( V3RPP1_IN_RPP2( faces[i].lu->l_p->lg_p->min_pt ,
-								    faces[i].lu->l_p->lg_p->max_pt ,
-								    faces[j].lu->l_p->lg_p->min_pt ,
-								    faces[j].lu->l_p->lg_p->max_pt ) )
+						/* loop1 is inside loop2, possible outer loop */
+						faces[loop2].facet_type = (-2);
+						outer_loop_count++;
+					}
+
+					if( outer_loop_count > 1 )
+					{
+						/* must choose outer loop from a list of candidates
+						 * if any of these candidates contain one of the
+						 * other candidates, the outer one can be eliminated
+						 * as a possible choice */
+						for( loop2=0 ; loop2<no_of_loops ; loop2++ )
 						{
-							vect_t diag;
-							fastf_t diag_len;
+							if( faces[loop2].facet_type != (-2) )
+								continue;
 
-							if( faces[i].outer_loop == NULL )
+							for( i=0 ; i<no_of_loops ; i++ )
 							{
-								VSUB2( diag , faces[j].lu->l_p->lg_p->max_pt ,
-									      faces[j].lu->l_p->lg_p->min_pt );
-								faces[i].diag_len = MAGSQ( diag );
-								faces[i].outer_loop = faces[j].lu;
-							}
-							else
-							{
-								VSUB2( diag , faces[j].lu->l_p->lg_p->max_pt ,
-									      faces[j].lu->l_p->lg_p->min_pt );
-								diag_len = MAGSQ( diag );
-								if( diag_len < faces[i].diag_len )
+								if( faces[i].facet_type != (-2) )
+									continue;
+
+								if( nmg_classify_lu_lu( faces[i].lu,
+									faces[loop2].lu , &tol ) )
 								{
-									faces[i].outer_loop = faces[j].lu;
-									faces[i].diag_len = diag_len;
+									if( faces[i].facet_type != (-2) )
+										continue;
+
+									faces[loop2].facet_type = (-1);
+									outer_loop_count--;
 								}
 							}
+						}
+					}
+
+					if( outer_loop_count != 1 )
+					{
+						rt_log( "Failed to find outer loop for hole in component %d\n" , tsp->ts_regionid );
+						goto outt;
+					}
+
+					for( i=0 ; i<no_of_loops ; i++ )
+					{
+						if( faces[i].facet_type == (-2) )
+						{
+							faces[i].facet_type = 2;
+							faces[loop1].outer_loop = faces[i].lu;
 						}
 					}
 				}
@@ -336,6 +389,8 @@ struct db_tree_state *tsp;
 					continue;
 				Write_euclid_face( faces[i].lu , 0 , tsp->ts_regionid , ++face_count );
 			}
+
+			rt_free( (char *)faces , "g-euclid: faces" );
 		}
 	}
 
