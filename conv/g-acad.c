@@ -71,6 +71,7 @@ static int	regions_tried = 0;
 static int	regions_converted = 0;
 static int	regions_written = 0;
 static int	inches = 0;
+static long	tot_polygons = 0;
 
 /*
  *			M A I N
@@ -83,6 +84,7 @@ char	*argv[];
 	register int	c;
 	double		percent;
 	char 		buf[80];
+	int		i;
 #ifdef BSD
 	setlinebuf( stderr );
 #else
@@ -211,6 +213,24 @@ char	*argv[];
 	RT_CK_TOL(tree_state.ts_tol);
 	RT_CK_TESS_TOL(tree_state.ts_ttol);
 
+	fprintf( fpe, "Model: %s\n", argv[0] );
+	fprintf( fpe, "Objects:" );
+	for( i=1 ; i<argc ; i++ )
+		fprintf( fpe, " %s", argv[i] );
+	fprintf( fpe, "\nTesselation tolerances:\n\tabs = %g mm\n\trel = %g\n\tnorm = %g\n",
+		tree_state.ts_ttol->abs, tree_state.ts_ttol->rel, tree_state.ts_ttol->norm );
+	fprintf( fpe, "Calculational tolerances:\n\tdist = %g mm perp = %g\n",
+		tree_state.ts_tol->dist, tree_state.ts_tol->perp );
+
+	rt_log( "Model: %s\n", argv[0] );
+	rt_log( "Objects:" );
+	for( i=1 ; i<argc ; i++ )
+		rt_log( " %s", argv[i] );
+	rt_log( "\nTesselation tolerances:\n\tabs = %g mm\n\trel = %g\n\tnorm = %g\n",
+		tree_state.ts_ttol->abs, tree_state.ts_ttol->rel, tree_state.ts_ttol->norm );
+	rt_log( "Calculational tolerances:\n\tdist = %g mm perp = %g\n",
+		tree_state.ts_tol->dist, tree_state.ts_tol->perp );
+
 /* Write out ACAD facet header */
 	if (inches)
 		fprintf(fp,"BRL-CAD generated ACAD FACET FILE (Units in)\n");
@@ -242,6 +262,9 @@ char	*argv[];
 	printf( "                  %d triangulated successfully. %g%%\n",
 		regions_written, percent );
 	}
+
+	rt_log( "%d triangles written\n", tot_polygons );
+	fprintf( fpe, "%d triangles written\n", tot_polygons );
 /* XXX Write out number of facet entities to .facet file */
 
 	rewind(fp);
@@ -453,6 +476,7 @@ int material_id;
 					rt_log( "lu x%x has %d vertices!!!!\n", lu, vert_count );
 					rt_bomb( "LU is not a triangle" );
 				}
+				tot_polygons++;
 			}
 		}
 	}
