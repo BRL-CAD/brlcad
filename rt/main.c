@@ -535,10 +535,10 @@ do_more:
 #ifdef PARALLEL
 	/* No live fb display yet */
 	if( fbp )
-		fb_write( fbp, 0, 0, scanbuf, npts*npts*3 );
+		fb_write( fbp, 0, 0, scanbuf, npts*npts );
 #endif PARALLEL
 
-#ifdef PARALLEL
+#ifdef STAT_PARALLEL
 	lock_pr();
 	res_pr();
 #endif PARALLEL
