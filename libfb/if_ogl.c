@@ -106,6 +106,7 @@ static int CloseCB();
 static int PostIt();
 
 /* Other Internal routines */
+void ogl_clipper();
 _LOCAL_ int ogl_getmem();
 _LOCAL_ void		backbuffer_to_screen();
 _LOCAL_ void		ogl_cminit();
@@ -540,7 +541,13 @@ ogl_zapmem()
 /*
  *			S I G K I D
  */
-static void sigkid()
+static void
+#if _XOPEN_SOURCE
+sigkid(pid)
+int pid;
+#else
+sigkid()
+#endif
 {
 	exit(0);
 }
@@ -665,7 +672,7 @@ int		npix;
 			glPixelStorei(GL_UNPACK_SKIP_PIXELS,xbase);
 			glRasterPos2i(xbase,y);
 			glDrawPixels(npix,1,GL_ABGR_EXT,GL_UNSIGNED_BYTE,
-					(unsigned long *) op);
+					(const GLvoid *) op);
 
 		}
 
@@ -678,7 +685,7 @@ int		npix;
 		
 		glRasterPos2i(xbase,ybase);
 		glDrawPixels(npix,nlines,GL_ABGR_EXT,GL_UNSIGNED_BYTE,
-				(unsigned long *) ifp->if_mem);
+				(const GLvoid *) ifp->if_mem);
 
 
 if (CJDEBUG) {
@@ -1183,8 +1190,9 @@ unsigned char	*pp;		/* pointer to beginning of memory segment*/
 	XEvent event;
 
 	if(CJDEBUG) printf("entering ogl_clear\n");
-
+#if 0
 	while(Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT));
+#endif
 
 	if (multiple_windows) {
 	if (glXMakeCurrent(OGL(ifp)->dispp,OGL(ifp)->wind,OGL(ifp)->glxc)==False){
@@ -1260,9 +1268,9 @@ int	xzoom, yzoom;
 	XEvent event;
 
 	if(CJDEBUG) printf("entering ogl_view\n");
-
+#if 0
 	while(Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT));
-
+#endif
 	if( xzoom < 1 ) xzoom = 1; 
 	if( yzoom < 1 ) yzoom = 1;
 	if( ifp->if_xcenter == xcenter && ifp->if_ycenter == ycenter
@@ -1336,9 +1344,9 @@ int	*xzoom, *yzoom;
 {
 	XEvent event;
 	if(CJDEBUG) printf("entering ogl_getview\n");
-
+#if 0
 	while(Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT));
-
+#endif
 	*xcenter = ifp->if_xcenter;
 	*ycenter = ifp->if_ycenter;
 	*xzoom = ifp->if_xzoom;
@@ -1421,7 +1429,6 @@ int	count;
 
 	if(CJDEBUG) printf("entering ogl_write\n");
 
-
 	/* fast exit cases */
 	if( (pix_count = count) == 0 )
 		return 0;	/* OK, no pixels transferred */
@@ -1496,9 +1503,9 @@ int	count;
 	 * Handle events after updating the memory, and
 	 * before updating the screen
 	 */
-
+#if 0
 	while(Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT));
-
+#endif
 	if (multiple_windows) {
 	if (glXMakeCurrent(OGL(ifp)->dispp,OGL(ifp)->wind,OGL(ifp)->glxc)==False){
 		fb_log("Warning, ogl_write: glXMakeCurrent unsuccessful.\n");
@@ -1526,7 +1533,7 @@ int	count;
 			ogl_xmit_scanlines( ifp, 0, ifp->if_height, 0, ifp->if_width );
 			glXSwapBuffers( OGL(ifp)->dispp, OGL(ifp)->wind);
 		}
-		else { /* just write rectangle*/
+		else { /* just write rectangle */
 			ogl_xmit_scanlines( ifp, ybase, y-ybase, 0, ifp->if_width );
 			if (OGL(ifp)->copy_flag){
 				backbuffer_to_screen(ifp,-1);
@@ -1590,8 +1597,9 @@ CONST unsigned char	*pp;
 	 * Handle events after updating the memory, and
 	 * before updating the screen
 	 */
+#if 0
 	while(Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT));
-	
+#endif	
 	if (multiple_windows) {
 	if (glXMakeCurrent(OGL(ifp)->dispp,OGL(ifp)->wind,OGL(ifp)->glxc)==False){
 		fb_log("Warning, ogl_writerect: glXMakeCurrent unsuccessful.\n");
@@ -1689,9 +1697,9 @@ register CONST ColorMap	*cmp;
     	int num;
 	
 	if(CJDEBUG) printf("entering ogl_wmap\n");
-
+#if 0
 	while(Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT));
-
+#endif
 	prev = SGI(ifp)->mi_cmap_flag;
 	if ( cmp == COLORMAP_NULL)  {
 		ogl_cminit( ifp );
@@ -1781,9 +1789,9 @@ int	xorig, yorig;
 	XEvent event;
 	Pixmap new_bitmap;
 	Cursor new_cursor;
-
+#if 0
 	while(Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT));
-
+#endif
 	/* Check size of cursor */
 	if( xbits < 0 )
 		return	-1;
@@ -1830,9 +1838,9 @@ int	mode;
 int	x, y;
 {
 	XEvent event;
-
+#if 0
 	while(Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT));
-
+#endif
 	/* set values into FBIO structure */
 	fb_sim_cursor(ifp, mode, x, y);
 
@@ -1880,6 +1888,7 @@ FBIO *ifp;
  *	 - the portion of the image which is visible in the viewport
  *		(xpixmin,xpixmax,ypixmin,ypixmax)
  */
+void
 ogl_clipper( ifp )
 register FBIO	*ifp;
 {
