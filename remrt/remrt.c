@@ -172,8 +172,6 @@ int argc; char **argv;
 	(void)signal( SIGPIPE, SIG_IGN );
 	clients = (1<<0);
 
-	(void)init_fb( (char *)0 );	/* take default */
-
 	while(clients)  {
 		check_input( 30 );	/* delay 30 secs */
 	}
@@ -678,6 +676,10 @@ FILE *fp;
 				running ? "RUNNING" : "loaded",
 				start_cmd );
 
+		if( fbp != FBIO_NULL )
+			printf("Framebuffer is %s\n", fbp->if_name);
+		else
+			printf("No framebuffer\n");
 		if( out_file[0] != '\0' )
 			printf("Output file: %s.###\n", out_file );
 		printf("Printing of remote messages is %s\n",
