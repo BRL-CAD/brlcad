@@ -14,6 +14,20 @@
  *			each shader name being built.
  *		edit the xxx_setup function to do shader-specific setup
  *		edit the xxx_render function to do the actual rendering
+ *
+ *  If you are building a dynamically loaded shader, compile this into a
+ *  shared library called "shadername.so".  If you have a number of shaders
+ *  for you are adding, you can create a single library called "shaders.so"
+ *  which contains all of your DSO shaders.
+ *
+ *  RT will look in the following locations for DSO shaders:
+ *		./
+ *		BRLCAD_ROOT/lib/
+ *		$LD_LIBRARY_PATH
+ *
+ *  If you are adding the shader to "rt" as a permanent shader, then the
+ *  following steps are necessary:
+ *
  *	3) Edit init.c to add extern for xxx_mfuncs and 
  *		a call to mlib_add_shader().
  *	4) Edit Cakefile to add shader file to "FILES" macro (without the .o)
@@ -21,6 +35,8 @@
  *		and use.
  *	6) Edit shaders.tcl and comb.tcl in the ../tclscripts/mged directory to
  *		add a new gui for this shader.
+ *
+ *
  */
 #include "conf.h"
 
