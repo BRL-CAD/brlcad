@@ -32,6 +32,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #define Min( x1, x2 )	((x1) < (x2) ? (x1) : (x2))
 #define Max( x1, x2 )	((x1) > (x2) ? (x1) : (x2))
 
+extern int	getopt();
+extern char	*optarg;
+extern int	optind;
+
 Matrix	*viewmat;	/* current viewing projection */
 Matrix	viewortho;	/* ortho viewing projection */
 Matrix	viewpersp;	/* perspective viewing projection */
@@ -42,6 +46,8 @@ Coord	viewsize;
 int	axis = 0;	/* display coord axis */
 int	info = 0;	/* output orientation info */
 int	fullscreen = 0;	/* use a full screen window (if mex) */
+short	thickness = 0;	/* line thickness */
+int	file_input = 0;	/* !0 if input came from a disk file */
 int	minobj = 1;	/* lowest active object number */
 int	maxobj = 1;	/* next available object number */
 long	menu;
@@ -60,8 +66,37 @@ char	*menustring;
 #define COLOR_APPROX(r,g,b)	\
 	((r/26)+ (g/26)*10 + (b/26)*100 + MAP_RESERVED)
 
+get_args( argc, argv )
+register char **argv;
+{
+	register int c;
+
+	while ( (c = getopt( argc, argv, "aft:" )) != EOF )  {
+		switch( c )  {
+		case 'a':
+			axis++;
+			break;
+		case 'f':
+			fullscreen++;
+			break;
+		case 't':
+			thickness = atoi(optarg);
+			break;
+		default:		/* '?' */
+			return(0);
+		}
+	}
+
+	if( optind >= argc )  {
+		if( isatty(fileno(stdin)) )
+			return(0);
+	}
+
+	return(1);		/* OK */
+}
+
 static char usage[] = "\
-Usage: pl-sgi [-a] < unixplot\n";
+Usage: pl-sgi [-a -f] [-t #] [file.plot]\n";
 #endif sgi
 
 main( argc, argv )
@@ -70,20 +105,11 @@ char	**argv;
 {
 #ifdef sgi
 	Coord	max[3], min[3];
+	char	*file;
+	FILE	*fp;
 
-	while( argc > 1 ) {
-		if( strcmp(argv[1],"-a") == 0 ) {
-			axis++;
-		} else if( strcmp(argv[1],"-f") == 0 ) {
-			fullscreen++;
-		} else
-			break;
-		argc--;
-		argv++;
-	}
-
-	if( isatty(fileno(stdin)) ) {
-		fprintf( stderr, usage );
+	if ( !get_args( argc, argv ) )  {
+		(void)fputs(usage, stderr);
 		exit( 1 );
 	}
 
@@ -93,14 +119,26 @@ char	**argv;
 
 	init_display();
 
-	makeobj( maxobj );
-	/* set the default drawing color to white */
-	if( ismex() )
-		color( COLOR_APPROX(255,255,255) );
-	else
-		color( (255&0xf0)<<4 | (255&0xf0) | (255>>4) );
-	uplot( max, min );
-	closeobj( maxobj++ );	/* it's for real now */
+	if( optind >= argc ) {
+		makeobj( maxobj );
+		uplot( stdin, max, min );
+		closeobj( maxobj++ );
+	}
+	while( optind < argc ) {
+		file = argv[optind];
+		if( (fp = fopen(file,"r")) == NULL ) {
+			fprintf(stderr,"pl-sgi: can't open \"%s\"\n", file);
+			exit( 3 );
+		}
+		file_input = 1;
+
+		makeobj( maxobj );
+		uplot( fp, max, min );
+		closeobj( maxobj++ );
+
+		fclose( fp );
+		optind++;
+	}
 
 	/* scale to the largest X, Y, or Z interval */
 	viewsize = max[0] - min[0];
@@ -152,6 +190,14 @@ char	**argv;
 
 	/* set up the command menu */
 	menu = defpup( menustring );
+
+	/* set up line thickness/styles */
+	if( thickness > 0 )
+		linewidth( thickness );
+	deflinestyle( 1, 0x8888 );	/* dotted */
+	deflinestyle( 2, 0xF8F8 );	/* longdashed */
+	deflinestyle( 3, 0xE0E0 );	/* shortdashed */
+	deflinestyle( 4, 0x4F4F );	/* dotdashed */
 
 	view_loop();
 	exit( 0 );
@@ -374,17 +420,24 @@ view_loop()
 			clear();
 			if( axis )
 				draw_axis();
-			for( o = minobj; o < maxobj; o++ )
+			/* draw all objects */
+			for( o = minobj; o < maxobj; o++ ) {
+				/* set the default drawing color to white */
+				if( ismex() )
+					color( COLOR_APPROX(255,255,255) );
+				else
+					color( (255&0xf0)<<4 | (255&0xf0) | (255>>4) );
 				callobj( o );
+			}
 			curson();
 			swapbuffers();
 		}
 
 		/* Check for more objects to be read */
-		if( !feof(stdin) /* && select()*/ ) {
+		if( !file_input && !feof(stdin) /* && select()*/ ) {
 			double	max[3], min[3];
 			makeobj( maxobj );
-			uplot( max, min );
+			uplot( stdin, max, min );
 			closeobj( maxobj++ );
 		}
 	}
@@ -526,11 +579,12 @@ init_display()
  *
  *  UNIX-Plot integers are 16bit VAX order (little-endian) 2's complement.
  */
-#define	geti(x)	{ (x) = getchar(); (x) |= (short)(getchar()<<8); }
-#define	getb()	(getchar())
+#define	geti(fp,x)	{ (x) = getc(fp); (x) |= (short)(getc(fp)<<8); }
+#define	getb(fp)	(getc(fp))
 
-uplot( max, min )
-Coord max[3], min[3];
+uplot( fp, max, min )
+FILE	*fp;
+Coord	max[3], min[3];
 {
 	register int	c;
 	int	x, y, z, x1, y1, z1, x2, y2, z2;
@@ -547,133 +601,146 @@ Coord max[3], min[3];
 	double	xp, yp, zp;
 
 	xp = yp = zp = 0;
-	while( (c = getchar()) != EOF ) {
+	while( (c = getc(fp)) != EOF ) {
 		switch( c ) {
 		/* One of a kind functions */
 		case 'e':
-			/* remove any objects, start a new one */
-			closeobj( maxobj );
-			for( o = minobj; o <= maxobj; o++ )
-				delobj( o );
-			minobj = maxobj;
-			makeobj( maxobj );
-			/* set the default drawing color */
-			if( ismex() )
-				color( COLOR_APPROX(255,255,255) );
-			else
-				color( (255&0xf0)<<4 | (255&0xf0) | (255>>4) );
+			if( !file_input ) {
+				/* remove any objects, start a new one */
+				closeobj( maxobj );
+				for( o = minobj; o <= maxobj; o++ )
+					delobj( o );
+				minobj = maxobj;
+				makeobj( maxobj );
+			}
 			break;
 		case 'F':
 			/* display everything up to here */
-			return;
+			if( !file_input )
+				return;
+			break;
 		case 'f':
-			eat_string();
+			get_string( fp, str );
+			if( strcmp(str, "solid") == 0 )
+				setlinestyle( 0 );
+			else if( strcmp(str, "dotted") == 0 )
+				setlinestyle( 1 );
+			else if( strcmp(str, "longdashed") == 0 )
+				setlinestyle( 2 );
+			else if( strcmp(str, "shortdashed") == 0 )
+				setlinestyle( 3 );
+			else if( strcmp(str, "dotdashed") == 0 )
+				setlinestyle( 4 );
+			else {
+				fprintf(stderr, "pl-sgi: unknown linestyle \"%s\"\n", str);
+				setlinestyle( 0 );
+			}
 			break;
 		case 't':
-			get_string( str );
+			get_string( fp, str );
 			cmov( xp, yp, zp );	/* all that for this... */
 			charstr( str );
 			break;
 		/* 2D integer */
 		case 's':
-			geti(x1);
-			geti(y1);
-			geti(x2);
-			geti(y2);
+			geti(fp,x1);
+			geti(fp,y1);
+			geti(fp,x2);
+			geti(fp,y2);
 			min[0] = x1; min[1] = y1;
 			max[0] = x2; max[1] = y2;
 			min[2] = -1.0; max[2] = 1.0;
 			break;
 		case 'p':
-			geti(x);
-			geti(y);
+			geti(fp,x);
+			geti(fp,y);
 			pnti( x, y, 0 );
 			xp = x; yp = y; zp = 0;
 			break;
 		case 'm':
-			geti(x);
-			geti(y);
+			geti(fp,x);
+			geti(fp,y);
 			movei( x, y, 0 );
 			xp = x; yp = y; zp = 0;
 			break;
 		case 'n':
-			geti(x);
-			geti(y);
+			geti(fp,x);
+			geti(fp,y);
 			drawi( x, y, 0 );
 			xp = x; yp = y; zp = 0;
 			break;
 		case 'l':
-			geti(x1);
-			geti(y1);
-			geti(x2);
-			geti(y2);
+			geti(fp,x1);
+			geti(fp,y1);
+			geti(fp,x2);
+			geti(fp,y2);
 			movei( x1, y1, 0 );
 			drawi( x2, y2, 0 );
 			xp = x2; yp = y2; zp = 0;
 			break;
 		case 'c':
-			geti(x);
-			geti(y);
-			geti(r);
+			geti(fp,x);
+			geti(fp,y);
+			geti(fp,r);
 			circ( (double)x, (double)y, (double)r );
 			xp = x; yp = y; zp = 0;
 			break;
 		case 'a':
-			geti(x);
-			geti(y);
-			geti(x1);
-			geti(y1);
-			geti(x2);
-			geti(y2);
+			geti(fp,x);
+			geti(fp,y);
+			geti(fp,x1);
+			geti(fp,y1);
+			geti(fp,x2);
+			geti(fp,y2);
 			/* ARC XXX */
 			break;
 		/* 3D integer */
 		case 'S':
-			geti(x1);
-			geti(y1);
-			geti(z1);
-			geti(x2);
-			geti(y2);
-			geti(z2);
+			geti(fp,x1);
+			geti(fp,y1);
+			geti(fp,z1);
+			geti(fp,x2);
+			geti(fp,y2);
+			geti(fp,z2);
 			min[0] = x1; min[1] = y1; min[2] = z1;
 			max[0] = x2; max[1] = y2; max[2] = z2;
 			break;
 		case 'P':
-			geti(x);
-			geti(y);
-			geti(z);
+			geti(fp,x);
+			geti(fp,y);
+			geti(fp,z);
 			pnti( x, y, z );
 			xp = x; yp = y; zp = z;
 			break;
 		case 'M':
-			geti(x);
-			geti(y);
-			geti(z);
+			geti(fp,x);
+			geti(fp,y);
+			geti(fp,z);
 			movei( x, y, z );
 			xp = x; yp = y; zp = z;
 			break;
 		case 'N':
-			geti(x);
-			geti(y);
-			geti(z);
+			geti(fp,x);
+			geti(fp,y);
+			geti(fp,z);
 			drawi( x, y, z );
 			xp = x; yp = y; zp = z;
 			break;
 		case 'L':
-			geti(x1);
-			geti(y1);
-			geti(z1);
-			geti(x2);
-			geti(y2);
-			geti(z2);
+			geti(fp,x1);
+			geti(fp,y1);
+			geti(fp,z1);
+			geti(fp,x2);
+			geti(fp,y2);
+			geti(fp,z2);
 			movei( x1, y1, z1 );
 			drawi( x2, y2, z2 );
 			xp = x2; yp = y2; zp = z2;
 			break;
 		case 'C':
-			r = getb();
-			g = getb();
-			b = getb();
+			r = getb(fp);
+			g = getb(fp);
+			b = getb(fp);
 			if( ismex() )
 				color( COLOR_APPROX(r,g,b) );
 			else
@@ -681,62 +748,62 @@ Coord max[3], min[3];
 			break;
 		/* 2D and 3D IEEE */
 		case 'w':
-			getieee( d, 4 );
+			getieee( fp, d, 4 );
 			min[0] = d[0]; min[1] = d[1]; min[2] = -1.0;
 			max[0] = d[2]; max[1] = d[3]; max[2] = 1.0;
 			break;
 		case 'W':
-			getieee( d, 6 );
+			getieee( fp, d, 6 );
 			min[0] = d[0]; min[1] = d[1]; min[2] = d[2];
 			max[0] = d[3]; max[1] = d[4]; max[2] = d[5];
 			break;
 		case 'o':
-			getieee( d, 2 );
+			getieee( fp, d, 2 );
 			xp = d[0]; yp = d[1]; zp = 0;
 			move( xp, yp, 0.0 );
 			break;
 		case 'O':
-			getieee( d, 3 );
+			getieee( fp, d, 3 );
 			xp = d[0]; yp = d[1]; zp = d[2];
 			move( xp, yp, zp );
 			break;
 		case 'q':
-			getieee( d, 2 );
+			getieee( fp, d, 2 );
 			xp = d[0]; yp = d[1]; zp = 0;
 			draw( xp, yp, 0.0 );
 			break;
 		case 'Q':
-			getieee( d, 3 );
+			getieee( fp, d, 3 );
 			xp = d[0]; yp = d[1]; zp = d[2];
 			draw( xp, yp, zp );
 			break;
 		case 'x':
-			getieee( d, 2 );
+			getieee( fp, d, 2 );
 			xp = d[0]; yp = d[1]; zp = 0;
 			pnt( xp, yp, 0.0 );
 			break;
 		case 'X':
-			getieee( d, 3 );
+			getieee( fp, d, 3 );
 			pnt( d[0], d[1], d[2] );
 			break;
 		case 'v':
-			getieee( d, 4 );
+			getieee( fp, d, 4 );
 			move( d[0], d[1], 0.0 );
 			draw( d[2], d[3], 0.0 );
 			xp = d[2]; yp = d[3]; zp = 0;
 			break;
 		case 'V':
-			getieee( d, 6 );
+			getieee( fp, d, 6 );
 			move( d[0], d[1], d[2] );
 			draw( d[3], d[4], d[5] );
 			xp = d[3]; yp = d[4]; zp = d[5];
 			break;
 		case 'r':
-			getieee( d, 6 );
+			getieee( fp, d, 6 );
 			/*XXX*/
 			break;
 		case 'i':
-			getieee( d, 3 );
+			getieee( fp, d, 3 );
 			circ( d[0], d[1], d[2] );
 			xp = d[0]; yp = d[1]; zp = d[2];
 			break;
@@ -747,30 +814,24 @@ Coord max[3], min[3];
 	}
 }
 
-eat_string()
-{
-	int	c;
-
-	while( (c = getchar()) != '\n' && c != EOF )
-		;
-}
-
-get_string( s )
+get_string( fp, s )
+FILE	*fp;
 char	*s;
 {
 	int	c;
 
-	while( (c = getchar()) != '\n' && c != EOF )
+	while( (c = getc(fp)) != '\n' && c != EOF )
 		*s++ = c;
 	*s = NULL;
 }
 
-getieee( out, n )
+getieee( fp, out, n )
+FILE	*fp;
 double	out[];
 int	n;
 {
 	char	in[8*16];
-	fread( in, 8, n, stdin );
+	fread( in, 8, n, fp );
 	ntohd( out, in, n );
 }
 
