@@ -51,7 +51,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #define NMG_STATE_ON_R		3
 #define NMG_STATE_ON_B		4
 #define NMG_STATE_IN		5
-static char *nmg_state_names[] = {
+static CONST char *nmg_state_names[] = {
 	"*ERROR*",
 	"out",
 	"on_L",
@@ -115,6 +115,30 @@ static CONST char *nmg_e_assessment_names[4] = {
 	"ON_REV"
 };
 
+/*
+ *  Action entries for the state transition tables
+ */
+#define NMG_ACTION_ERROR		0
+#define NMG_ACTION_NONE			1
+#define NMG_ACTION_NONE_OPTIM		2
+#define NMG_ACTION_VFY_EXT		3
+#define NMG_ACTION_VFY_MULTI		4
+#define NMG_ACTION_LONE_V_ESPLIT	5
+#define NMG_ACTION_LONE_V_JAUNT		6
+#define NMG_ACTION_CUTJOIN		7
+static CONST char *action_names[] = {
+	"*ERROR*",
+	"NONE",
+	"NONE_OPTIM",
+	"VFY_EXT",
+	"VFY_MULTI",
+	"LONE_V_ESPLIT",
+	"LONE_V_JAUNT",
+	"CUTJOIN",
+	"*TOOBIG*"
+};
+
+/* The "ray" here is the intersection line between two faces */
 struct nmg_ray_state {
 	struct vertexuse	**vu;		/* ptr to vu array */
 	int			nvu;		/* len of vu[] */
@@ -823,53 +847,6 @@ CONST genptr_t	bb;
 	int	hi_equal = 0;
 	register int	ret = 0;
 
-#if 0
-	if( a->loop_index == b->loop_index )  {
-		/* Within a loop, sort by vu sequence number */
-		if( a->seq < b->seq )  A_WINS;
-		if( a->seq == b->seq )  AB_EQUAL;
-		B_WINS;
-	}
-#endif
-#if 0
-	/* Between two loops each with a single vertex, use min angle */
-	/* This works, but is the "very old way".  Should use dot products. */
-	if( a->lsp->n_vu_in_loop <= 1 && b->lsp->n_vu_in_loop <= 1 )  {
-		diff = a->in_vu_angle - b->in_vu_angle;
-		if( diff < 0 )  A_WINS;
-		if( diff == 0 )  {
-			/* Gak, this really means trouble! */
-			rt_log("nmg_face_vu_compare(): two loops (single vertex) have same in_vu_angle%g?\n",
-				a->in_vu_angle);
-			AB_EQUAL;
-		}
-		B_WINS;
-	}
-#endif
-
-#if 0
-	/* Between loops, sort by minimum dot product of the loops */
-/* XXX This is wrong.  Test13.r shows how */
-	/* The intermediate old way */
-	diff = a->lsp->min_dot - b->lsp->min_dot;
-	if( NEAR_ZERO( diff, RT_DOT_TOL) )  {
-		/*
-		 *  The dot product is the same, so loop edges are parallel.
-		 *  Take minimum CCW angle first.
-		 */
-		diff = a->in_vu_angle - b->in_vu_angle;
-		if( diff < 0 )  A_WINS;	/* A ang < B ang */
-		if( diff == 0 )  {
-			/* Gak, this really means trouble! */
-			rt_log("nmg_face_vu_compare(): two loops have same min_dot %g, in_vu_angle%g?\n",
-				a->lsp->min_dot, a->in_vu_angle);
-			AB_EQUAL;
-		}
-		B_WINS;			/* A ang > B ang */
-	}
-	if( diff < 0 )  A_WINS;		/* A dot < B dot */
-	B_WINS;				/* A dot > B dot */
-#else
 	lo_equal = NEAR_ZERO( a->lo_ang - b->lo_ang, 0.001 );
 	hi_equal = NEAR_ZERO( a->hi_ang - b->hi_ang, 0.001 );
 	/* If both have the same assessment & angles match, => tie */
@@ -960,7 +937,6 @@ tie_break:
 			B_WINS;
 		}
 	}
-#endif
 out:
 	if(rt_g.NMG_debug&DEBUG_VU_SORT)  {
 		rt_log("nmg_face_vu_comapre(x%x, x%x) %s %s, %s\n",
@@ -1717,25 +1693,6 @@ rt_log("nmg_join_2singvu_loops( x%x, x%x )\n", vu1, vu2 );
 #define NMG_ON_REV_ON_REV NMG_V_COMB(NMG_E_ASSESSMENT_ON_REV,NMG_E_ASSESSMENT_ON_REV)
 #define NMG_LONE	NMG_V_ASSESSMENT_LONE
 
-#define NMG_ACTION_ERROR		0
-#define NMG_ACTION_NONE			1
-#define NMG_ACTION_NONE_OPTIM		2
-#define NMG_ACTION_VFY_EXT		3
-#define NMG_ACTION_VFY_MULTI		4
-#define NMG_ACTION_LONE_V_ESPLIT	5
-#define NMG_ACTION_LONE_V_JAUNT		6
-#define NMG_ACTION_CUTJOIN		7
-static char *action_names[] = {
-	"*ERROR*",
-	"-none-",
-	"none(optim)",
-	"VFY_EXT",
-	"VFY_MULTI",
-	"ESPLIT",
-	"JAUNT",
-	"CUTJOIN",
-	"*TOOBIG*"
-};
 
 struct state_transitions {
 	int	assessment;
@@ -1880,6 +1837,7 @@ int			other_rs_state;
 	struct edgeuse	*second_new_eu;
 	int			e_assessment;
 	int			action;
+	int			e_pos;
 
 #ifdef PARANOID_VERIFY
 	nmg_vfu( &rs->fu1->s_p->fu_hd, rs->fu1->s_p );
@@ -1928,7 +1886,8 @@ int			other_rs_state;
 	 *  This can reduce the amount of unnecessary topology by 75% or more.
 	 */
 /* XXX This is a bit too agressive.  r5 */
-	if( other_rs_state == NMG_STATE_OUT && action != NMG_ACTION_ERROR )  {
+	if( other_rs_state == NMG_STATE_OUT && action != NMG_ACTION_ERROR &&
+	    action != NMG_ACTION_NONE )  {
 		action = NMG_ACTION_NONE_OPTIM;
 	}
 #endif
@@ -2039,28 +1998,35 @@ rt_log("force next eu to ray\n");
 		 *  starts (or ends) with the previously seen vertex.
 		 *  Note that the forward going edge may point the wrong way,
 		 *  i.e., not lie on the ray at all.
+		 *  Also note that the previous member(s) of vu[] may be
+		 *  lone vert loops that were not processed due to optimization,
+		 *  so it may be necessary to look back a ways to find
+		 *  the vertexuse which started this ON edge.
 		 */
 		lu = nmg_lu_of_vu( vu );
 		NMG_CK_LOOPUSE(lu);
-		prev_vu = rs->vu[pos-1];
-		NMG_CK_VERTEXUSE(prev_vu);
-		prev_lu = nmg_lu_of_vu( prev_vu );
-		/* lu is lone vert loop; l_p is distinct from prev_lu->l_p */
-/* XXX sometimes up is an lu */
-/* Different self-loops, not near each other */
-		if( *prev_vu->up.magic_p != NMG_EDGEUSE_MAGIC )  {
+		for( e_pos = pos-1; e_pos >= 0; e_pos-- )  {
+			prev_vu = rs->vu[e_pos];
+			NMG_CK_VERTEXUSE(prev_vu);
+			prev_lu = nmg_lu_of_vu( prev_vu );
+			/* lu is lone vert loop; l_p is distinct from prev_lu->l_p */
+			if( *prev_vu->up.magic_p == NMG_EDGEUSE_MAGIC )
+				break;
+			/* Not an edgeuse, prob. a loopuse, continue backwards */
+#if 0
 			rt_log("prev_vu->up is %s\n", rt_identify_magic(*prev_vu->up.magic_p) );
 			nmg_pr_vu(prev_vu, "prev ");
-			nmg_pr_vu(rs->vu[pos], "cur  ");
-			rt_bomb("nmg_face_state_transition: prev_vu->up is not an edge\n");
+			nmg_pr_vu(rs->vu[e_pos], "cur  ");
+#endif
 		}
+		if( e_pos < 0 ) rt_bomb("nmg_face_state_transition: LONE_V_ESPLIT can't find start of edge!\n");
 		eu = prev_vu->up.eu_p;
 		NMG_CK_EDGEUSE(eu);
-		e_assessment = nmg_assess_eu( eu, 1, rs, pos-1 );	/* forw */
+		e_assessment = nmg_assess_eu( eu, 1, rs, e_pos );	/* forw */
 		if( e_assessment == NMG_E_ASSESSMENT_ON_FORW )  {
 			/* "eu" (forw) is the right edge to split */
 		} else {
-			e_assessment = nmg_assess_eu( eu, 0, rs, pos-1 ); /*rev*/
+			e_assessment = nmg_assess_eu( eu, 0, rs, e_pos ); /*rev*/
 			if( e_assessment == NMG_E_ASSESSMENT_ON_REV )  {
 				/* (reverse) "eu" is the right one */
 				eu = RT_LIST_PLAST_CIRC( edgeuse, eu );
@@ -2070,9 +2036,8 @@ rt_log("force next eu to ray\n");
 				rt_bomb("nmg_face_state_transition: LONE_V_ESPLIT could not find ON edge to split\n");
 			}
 		}
-		(void)nmg_ebreak( vu->v_p, eu );
-		/* Update vu table with new value */
-		rs->vu[pos] = RT_LIST_PNEXT_CIRC(edgeuse, eu)->vu_p;
+		/* Break edge, update vu table with new value */
+		rs->vu[pos] = nmg_ebreak( vu->v_p, eu )->vu_p;
 		/* Kill lone vertex loop */
 		nmg_klu(lu);
 		if(rt_g.NMG_debug&DEBUG_FCUT)  {
