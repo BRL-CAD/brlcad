@@ -66,11 +66,18 @@ static int dgo_cmd();
 static int dgo_headSolid_tcl();
 static int dgo_draw_tcl();
 static int dgo_erase_tcl();
+static int dgo_erase_all_tcl();
 static int dgo_who_tcl();
 static int dgo_rt_tcl();
 static int dgo_vdraw_tcl();
 static int dgo_overlay_tcl();
 static int dgo_getview_tcl();
+static int dgo_zap_tcl();
+static int dgo_blast_tcl();
+static int dgo_tol_tcl();
+#if 0
+static int dgo_rtcheck_tcl();
+#endif
 
 static void dgo_plot_anim_upcall_handler();
 static void dgo_vlblock_anim_upcall_handler();
@@ -99,9 +106,6 @@ static int dgo_shade_per_vertex_normals=0;
 static int dgo_wireframe_color_override;
 static int dgo_wireframe_color[3];
 static struct model	*dgo_nmg_model;
-static struct db_tree_state	dgo_initial_tree_state;
-static struct rt_tess_tol	dgo_ttol;
-static struct bn_tol		dgo_tol;
 
 static int dgo_do_not_draw_nmg_solids_during_debugging = 0;
 static int dgo_draw_edge_uses=0;
@@ -117,22 +121,23 @@ static struct solid *curr_hsp;		/* current head solid pointer */
 static struct solid FreeSolid;		/* head of free solid list */
 
 static struct bu_cmdtab dgo_cmds[] = {
-	"headSolid",		dgo_headSolid_tcl,
+	"blast",		dgo_blast_tcl,
+	"clear",		dgo_zap_tcl,
 	"draw",			dgo_draw_tcl,
 	"ev",			dgo_draw_tcl,
 	"erase",		dgo_erase_tcl,
-	"overlay",		dgo_overlay_tcl,
-	"getview",		dgo_getview_tcl,
-	"who",			dgo_who_tcl,
-	"rt",			dgo_rt_tcl,
-	"vdraw",		dgo_vdraw_tcl,
-#if 0
-	"B",			dgo_blast_tcl,
-	"Z",			dgo_zap_tcl,
 	"erase_all",		dgo_erase_all_tcl,
+	"getview",		dgo_getview_tcl,
+	"headSolid",		dgo_headSolid_tcl,
+	"overlay",		dgo_overlay_tcl,
+	"rt",			dgo_rt_tcl,
+#if 0
 	"rtcheck",		dgo_rtcheck_tcl,
-	"tol",			dgo_tol_tcl,
 #endif
+	"tol",			dgo_tol_tcl,
+	"vdraw",		dgo_vdraw_tcl,
+	"who",			dgo_who_tcl,
+	"zap",			dgo_zap_tcl,
 	"close",		dgo_close_tcl,
 	(char *)0,		(int (*)())0
 };
@@ -162,23 +167,6 @@ Dgo_Init(interp)
 {
 	BU_LIST_INIT(&HeadDGObj.l);
 	BU_LIST_INIT(&FreeSolid.l);
-
-	/* initilize tolerance structures */
-	dgo_ttol.magic = RT_TESS_TOL_MAGIC;
-	dgo_ttol.abs = 0.0;		/* disabled */
-	dgo_ttol.rel = 0.01;
-	dgo_ttol.norm = 0.0;		/* disabled */
-
-	dgo_tol.magic = BN_TOL_MAGIC;
-	dgo_tol.dist = 0.005;
-	dgo_tol.dist_sq = dgo_tol.dist * dgo_tol.dist;
-	dgo_tol.perp = 1e-6;
-	dgo_tol.para = 1 - dgo_tol.perp;
-
-	/* initialize tree state */
-	dgo_initial_tree_state = rt_initial_tree_state;  /* struct copy */
-	dgo_initial_tree_state.ts_ttol = &dgo_ttol;
-	dgo_initial_tree_state.ts_tol = &dgo_tol;
 
 	(void)Tcl_CreateCommand(interp, "dg_open", dgo_open_tcl,
 				(ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
@@ -287,6 +275,23 @@ dgo_open_tcl(clientData, interp, argc, argv)
 	BU_LIST_INIT(&dgop->dgo_headSolid.l);
 	BU_LIST_INIT(&dgop->dgo_headVDraw);
 
+	/* initilize tolerance structures */
+	dgop->dgo_ttol.magic = RT_TESS_TOL_MAGIC;
+	dgop->dgo_ttol.abs = 0.0;		/* disabled */
+	dgop->dgo_ttol.rel = 0.01;
+	dgop->dgo_ttol.norm = 0.0;		/* disabled */
+
+	dgop->dgo_tol.magic = BN_TOL_MAGIC;
+	dgop->dgo_tol.dist = 0.005;
+	dgop->dgo_tol.dist_sq = dgop->dgo_tol.dist * dgop->dgo_tol.dist;
+	dgop->dgo_tol.perp = 1e-6;
+	dgop->dgo_tol.para = 1 - dgop->dgo_tol.perp;
+
+	/* initialize tree state */
+	dgop->dgo_initial_tree_state = rt_initial_tree_state;  /* struct copy */
+	dgop->dgo_initial_tree_state.ts_ttol = &dgop->dgo_ttol;
+	dgop->dgo_initial_tree_state.ts_tol = &dgop->dgo_tol;
+
 	/* append to list of dg_obj's */
 	BU_LIST_APPEND(&HeadDGObj.l,&dgop->l);
 
@@ -336,6 +341,41 @@ dgo_headSolid_tcl(clientData, interp, argc, argv)
 	return TCL_OK;
 }
 
+static void
+dgo_draw(dgop, interp, argc, argv, kind)
+     struct dg_obj *dgop;
+     Tcl_Interp *interp;
+     int     argc;
+     char    **argv;
+     int kind;
+{
+	struct wdb_obj *wdbop;
+	register struct directory *dp;
+	register int i;
+
+	curr_dgop = dgop;
+	curr_interp = interp;
+	curr_dbip = dgop->dgo_wdbop->wdb_wp->dbip;
+	curr_hsp = &dgop->dgo_headSolid;
+
+	/* skip past procname and cmd */
+	argc -= 2;
+	argv += 2;
+
+	/*  First, delete any mention of these objects.
+	 *  Silently skip any leading options (which start with minus signs).
+	 */
+	for (i = 0; i < argc; i++) {
+		if ((dp = db_lookup(curr_dbip,  argv[i], LOOKUP_QUIET)) != DIR_NULL) {
+			dgo_eraseobj(dgop, interp, dp);
+		}
+	}
+
+	dgo_drawtrees(argc, argv, kind);
+	dgo_color_soltab(&dgop->dgo_headSolid);
+
+}
+
 /*
  * Prepare database objects for drawing.
  *
@@ -351,18 +391,16 @@ dgo_draw_tcl(clientData, interp, argc, argv)
      char    **argv;
 {
 	struct dg_obj *dgop = (struct dg_obj *)clientData;
-	struct wdb_obj *wdbop;
-	register struct directory *dp;
-	register int i;
-	struct bu_vls vls;
-	int ret;
 	int kind;
 
 	if (argc < 3) {
+		struct bu_vls vls;
+
 		bu_vls_init(&vls);
 		bu_vls_printf(&vls, "helplib dgo_draw");
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
+
 		return TCL_ERROR;
 	}
 
@@ -371,25 +409,7 @@ dgo_draw_tcl(clientData, interp, argc, argv)
 	else
 		kind = 1;
 
-	curr_dgop = dgop;
-	curr_interp = interp;
-	curr_dbip = dgop->dgo_wdbop->wdb_wp->dbip;
-	curr_hsp = &dgop->dgo_headSolid;
-
-	argc -= 2;
-	argv += 2;
-
-	/*  First, delete any mention of these objects.
-	 *  Silently skip any leading options (which start with minus signs).
-	 */
-	for (i = 0; i < argc; i++) {
-		if ((dp = db_lookup(curr_dbip,  argv[i], LOOKUP_QUIET)) != DIR_NULL) {
-			dgo_eraseobj(interp, dgop, dp);
-		}
-	}
-
-	dgo_drawtrees(argc, argv, kind);
-	dgo_color_soltab(&dgop->dgo_headSolid);
+	dgo_draw(dgop, interp, argc, argv, kind);
 
 	return TCL_OK;
 }
@@ -406,7 +426,7 @@ dgo_erase(dgop, interp, argc, argv)
 
 	for (i = 0; i < argc; i++) {
 		if ((dp = db_lookup(dgop->dgo_wdbop->wdb_wp->dbip,  argv[i], LOOKUP_NOISY)) != DIR_NULL)
-			dgo_eraseobj(interp, dgop, dp);
+			dgo_eraseobj(dgop, interp, dp);
 	}
 }
 
@@ -424,8 +444,8 @@ dgo_erase_tcl(clientData, interp, argc, argv)
      int     argc;
      char    **argv;
 {
-	struct bu_vls vls;
 	struct dg_obj *dgop = (struct dg_obj *)clientData;
+	struct bu_vls vls;
 
 	if (argc < 3) {
 		bu_vls_init(&vls);
@@ -436,6 +456,49 @@ dgo_erase_tcl(clientData, interp, argc, argv)
 	}
 
 	dgo_erase(dgop, interp, argc-2, argv+2);
+
+	return TCL_OK;
+}
+
+static void
+dgo_erase_all(dgop, interp, argc, argv)
+     struct dg_obj *dgop;
+     Tcl_Interp *interp;
+     int     argc;
+     char    **argv;
+{
+	register struct directory *dp;
+	register int i;
+
+	for (i = 0; i < argc; i++) {
+		if ((dp = db_lookup(dgop->dgo_wdbop->wdb_wp->dbip,  argv[i], LOOKUP_NOISY)) != DIR_NULL)
+			dgo_eraseobjall(dgop, interp, dp);
+	}
+}
+
+/*
+ * Usage:
+ *        procname erase_all object(s)
+ */
+static int
+dgo_erase_all_tcl(clientData, interp, argc, argv)
+     ClientData clientData;
+     Tcl_Interp *interp;
+     int	argc;
+     char	**argv;
+{
+	struct dg_obj *dgop = (struct dg_obj *)clientData;
+	struct bu_vls vls;
+
+	if (argc < 3) {
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "helplib dgo_erase");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
+
+	dgo_erase_all(dgop, interp, argc-2, argv+2);
 
 	return TCL_OK;
 }
@@ -755,6 +818,416 @@ char	**argv;
 
 	return bu_cmd(clientData, interp, argc, argv, vdraw_cmds, 2);
 }
+
+static void
+dgo_zap(dgop, interp)
+     struct dg_obj *dgop;
+     Tcl_Interp *interp;
+{
+	register struct solid *sp;
+	register struct solid *nsp;
+	register struct dm_list *dmlp;
+	struct directory *dp;
+
+	sp = BU_LIST_NEXT(solid, &dgop->dgo_headSolid.l);
+	while (BU_LIST_NOT_HEAD(sp, &dgop->dgo_headSolid.l)) {
+		dp = sp->s_path[0];
+		RT_CK_DIR(dp);
+		if (dp->d_addr == RT_DIR_PHONY_ADDR) {
+			if (db_dirdelete(dgop->dgo_wdbop->wdb_wp->dbip, dp) < 0) {
+			  Tcl_AppendResult(interp, "dgo_zap: db_dirdelete failed\n", (char *)NULL);
+			}
+		}
+
+		nsp = BU_LIST_PNEXT(solid, sp);
+		BU_LIST_DEQUEUE(&sp->l);
+		FREE_SOLID(sp,&FreeSolid.l);
+		sp = nsp;
+	}
+}
+
+/*
+ * Usage:
+ *        procname clear|zap
+ */
+static int
+dgo_zap_tcl(clientData, interp, argc, argv)
+     ClientData clientData;
+     Tcl_Interp *interp;
+     int	argc;
+     char	**argv;
+{
+	struct dg_obj *dgop = (struct dg_obj *)clientData;
+
+	if (argc != 2) {
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "helplib dgo_%s", argv[1]);
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
+	  return TCL_ERROR;
+	}
+
+	dgo_zap(dgop, interp);
+
+	return TCL_OK;
+}
+
+/*
+ * Usage:
+ *        procname blast object(s)
+ */
+static int
+dgo_blast_tcl(clientData, interp, argc, argv)
+     ClientData clientData;
+     Tcl_Interp *interp;
+     int	argc;
+     char	**argv;
+{
+	struct dg_obj *dgop = (struct dg_obj *)clientData;
+	int kind = 1;	    /* wireframe */
+
+	if (argc < 3) {
+		struct bu_vls vls;
+
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "helplib dgo_blast");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+
+		return TCL_ERROR;
+	}
+
+	/* First, clear the screen. */
+	dgo_zap(dgop, interp);
+
+	/* Now, draw the new object(s). */
+	dgo_draw(dgop, interp, argc, argv, 1);
+}
+
+/*
+ * Usage:
+ *        procname tol [abs|rel|norm|dist|perp [#]]
+ *
+ *  abs #	sets absolute tolerance.  # > 0.0
+ *  rel #	sets relative tolerance.  0.0 < # < 1.0
+ *  norm #	sets normal tolerance, in degrees.
+ *  dist #	sets calculational distance tolerance
+ *  perp #	sets calculational normal tolerance.
+ *
+ */
+static int
+dgo_tol_tcl(clientData, interp, argc, argv)
+     ClientData clientData;
+     Tcl_Interp *interp;
+     int	argc;
+     char	**argv;
+{
+	struct dg_obj *dgop = (struct dg_obj *)clientData;
+	struct bu_vls vls;
+	double	f;
+
+	if (argc < 2 || 4 < argc){
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "helplib dgo_tol");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
+
+	/* print all tolerance settings */
+	if (argc == 2) {
+		Tcl_AppendResult(interp, "Current tolerance settings are:\n", (char *)NULL);
+		Tcl_AppendResult(interp, "Tesselation tolerances:\n", (char *)NULL );
+
+		if (dgop->dgo_ttol.abs > 0.0) {
+			bu_vls_init(&vls);
+			bu_vls_printf(&vls, "\tabs %g mm\n", dgop->dgo_ttol.abs);
+			Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+			bu_vls_free(&vls);
+		} else {
+			Tcl_AppendResult(interp, "\tabs None\n", (char *)NULL);
+		}
+
+		if (dgop->dgo_ttol.rel > 0.0) {
+			bu_vls_init(&vls);
+			bu_vls_printf(&vls, "\trel %g (%g%%)\n",
+				      dgop->dgo_ttol.rel, dgop->dgo_ttol.rel * 100.0 );
+			Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+			bu_vls_free(&vls);
+		} else {
+			Tcl_AppendResult(interp, "\trel None\n", (char *)NULL);
+		}
+
+		if (dgop->dgo_ttol.norm > 0.0) {
+			int	deg, min;
+			double	sec;
+
+			bu_vls_init(&vls);
+			sec = dgop->dgo_ttol.norm * bn_radtodeg;
+			deg = (int)(sec);
+			sec = (sec - (double)deg) * 60;
+			min = (int)(sec);
+			sec = (sec - (double)min) * 60;
+
+			bu_vls_printf(&vls, "\tnorm %g degrees (%d deg %d min %g sec)\n",
+				      dgop->dgo_ttol.norm * bn_radtodeg, deg, min, sec);
+			Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+			bu_vls_free(&vls);
+		} else {
+			Tcl_AppendResult(interp, "\tnorm None\n", (char *)NULL);
+		}
+
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls,"Calculational tolerances:\n");
+		bu_vls_printf(&vls,
+			      "\tdistance = %g mm\n\tperpendicularity = %g (cosine of %g degrees)\n",
+			      dgop->dgo_tol.dist, dgop->dgo_tol.perp,
+			      acos(dgop->dgo_tol.perp)*bn_radtodeg);
+		Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+		bu_vls_free(&vls);
+
+		return TCL_OK;
+	}
+
+	/* get the specified tolerance */
+	if (argc == 3) {
+		int status = TCL_OK;
+
+		bu_vls_init(&vls);
+
+		switch (argv[2][0]) {
+		case 'a':
+			if (dgop->dgo_ttol.abs > 0.0)
+				bu_vls_printf(&vls, "%g", dgop->dgo_ttol.abs);
+			else
+				bu_vls_printf(&vls, "None");
+			break;
+		case 'r':
+			if (dgop->dgo_ttol.rel > 0.0)
+				bu_vls_printf(&vls, "%g", dgop->dgo_ttol.rel);
+			else
+				bu_vls_printf(&vls, "None");
+			break;
+		case 'n':
+			if (dgop->dgo_ttol.norm > 0.0)
+				bu_vls_printf(&vls, "%g", dgop->dgo_ttol.norm);
+			else
+				bu_vls_printf(&vls, "None");
+			break;
+		case 'd':
+			bu_vls_printf(&vls, "%g", dgop->dgo_tol.dist);
+			break;
+		case 'p':
+			bu_vls_printf(&vls, "%g", dgop->dgo_tol.perp);
+			break;
+		default:
+			bu_vls_printf(&vls, "unrecognized tolerance type - %s\n", argv[2]);
+			status = TCL_ERROR;
+			break;
+		}
+
+		Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+		bu_vls_free(&vls);
+		return status;
+	}
+
+	/* set the specified tolerance */
+	if (sscanf(argv[3], "%lf", &f) != 1) {
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "bad tolerance - %s\n", argv[3]);
+		Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+		bu_vls_free(&vls);
+
+		return TCL_ERROR;
+	}
+
+	switch (argv[2][0]) {
+	case 'a':
+		/* Absolute tol */
+		if (f <= 0.0)
+			dgop->dgo_ttol.abs = 0.0;
+		else
+			dgop->dgo_ttol.abs = f;
+		break;
+	case 'r':
+		if (f < 0.0 || f >= 1.0) {
+			   Tcl_AppendResult(interp,
+					    "relative tolerance must be between 0 and 1, not changed\n",
+					    (char *)NULL);
+			   return TCL_ERROR;
+		}
+		/* Note that a value of 0.0 will disable relative tolerance */
+		dgop->dgo_ttol.rel = f;
+		break;
+	case 'n':
+		/* Normal tolerance, in degrees */
+		if (f < 0.0 || f > 90.0) {
+			Tcl_AppendResult(interp,
+					 "Normal tolerance must be in positive degrees, < 90.0\n",
+					 (char *)NULL);
+			return TCL_ERROR;
+		}
+		/* Note that a value of 0.0 or 360.0 will disable this tol */
+		dgop->dgo_ttol.norm = f * bn_degtorad;
+		break;
+	case 'd':
+		/* Calculational distance tolerance */
+		if (f < 0.0) {
+			Tcl_AppendResult(interp,
+					 "Calculational distance tolerance must be positive\n",
+					 (char *)NULL);
+			return TCL_ERROR;
+		}
+		dgop->dgo_tol.dist = f;
+		dgop->dgo_tol.dist_sq = dgop->dgo_tol.dist * dgop->dgo_tol.dist;
+		break;
+	case 'p':
+		/* Calculational perpendicularity tolerance */
+		if (f < 0.0 || f > 1.0) {
+			Tcl_AppendResult(interp,
+					 "Calculational perpendicular tolerance must be from 0 to 1\n",
+					 (char *)NULL);
+			return TCL_ERROR;
+		}
+		dgop->dgo_tol.perp = f;
+		dgop->dgo_tol.para = 1.0 - f;
+		break;
+	default:
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "unrecognized tolerance type - %s\n", argv[2]);
+		Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+		bu_vls_free(&vls);
+
+		return TCL_ERROR;
+	}
+
+	return TCL_OK;
+}
+
+#if 0
+/*
+ * Usage:
+ *        procname rtcheck view_obj [args]
+ */
+static int
+dgo_rtcheck_tcl(clientData, interp, argc, argv)
+     ClientData clientData;
+     Tcl_Interp *interp;
+     int	argc;
+     char	**argv;
+{
+	struct dg_obj *dgop = (struct dg_obj *)clientData;
+	struct view_obj *vop;
+	register char **vp;
+	register int i;
+	int	pid; 	 
+	int	retcode;
+	int	i_pipe[2];	/* object reads results for building vectors */
+	int	o_pipe[2];	/* object writes view parameters */
+	int	e_pipe[2];	/* object reads textual results */
+	FILE	*fp;
+	struct rtcheck *rtcp;
+
+	if (argc < 3 || MAXARGS < argc) {
+		struct bu_vls vls;
+
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "helplib dgo_rtcheck");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+
+		return TCL_ERROR;
+	}
+
+	/* search for view object */
+	for (BU_LIST_FOR(vop, view_obj, &HeadViewObj.l)) {
+		if (strcmp(bu_vls_addr(&vop->vo_name), argv[2]) == 0)
+			break;
+	}
+
+	if (BU_LIST_IS_HEAD(vop, &HeadViewObj.l)) {
+		Tcl_AppendResult(interp, "dgo_rtcheck: bad view object - ", argv[2],
+				 "\n", (char *)NULL);
+		return TCL_ERROR;
+	}
+
+	vp = &dgop->dgo_rt_cmd[0];
+	*vp++ = "rtcheck";
+	*vp++ = "-s50";
+	*vp++ = "-M";
+	for( i=1; i < argc; i++ )
+		*vp++ = argv[i];
+	*vp++ = dgop->dgo_wdbop->wdb_wp->dbip->dbi_filename;
+
+	setup_rt( vp, 1 );
+
+	(void)pipe(i_pipe);
+	(void)pipe(o_pipe);
+	(void)pipe(e_pipe);
+
+	if ((pid = fork()) == 0) {
+		/* Redirect stdin, stdout and stderr */
+		(void)close(0);
+		(void)dup( o_pipe[0] );
+		(void)close(1);
+		(void)dup( i_pipe[1] );
+		(void)close(2);
+		(void)dup( e_pipe[1] );
+
+		/* close pipes */
+		(void)close(i_pipe[0]);
+		(void)close(i_pipe[1]);
+		(void)close(o_pipe[0]);
+		(void)close(o_pipe[1]);
+		(void)close(e_pipe[0]);
+		(void)close(e_pipe[1]);
+
+		for (i=3; i < 20; i++)
+			(void)close(i);
+
+		(void)execvp( rt_cmd_vec[0], rt_cmd_vec );
+		perror(dgop->dgo_rt_cmd[0]);
+		exit(16);
+	}
+
+	/* As parent, send view information down pipe */
+	(void)close(o_pipe[0]);
+	fp = fdopen(o_pipe[1], "w");
+	{
+		vect_t temp;
+		vect_t eye_model;
+
+		VSET( temp, 0.0, 0.0, 1.0 );
+		MAT4X3PNT( eye_model, view_state->vs_view2model, temp );
+		rt_write(fp, eye_model );
+	}
+	(void)fclose(fp);
+
+	/* close write end of pipes */
+	(void)close(i_pipe[1]);
+	(void)close(e_pipe[1]);
+
+	BU_GETSTRUCT(rtcp, rtcheck);
+
+	/* initialize the rtcheck struct */
+	rtcp->fd = i_pipe[0];
+	rtcp->fp = fdopen(i_pipe[0], "r");
+	rtcp->pid = pid;
+	rtcp->vbp = rt_vlblock_init();
+	rtcp->vhead = rt_vlblock_find( rtcp->vbp, 0xFF, 0xFF, 0x00 );
+	rtcp->csize = view_state->vs_Viewscale * 0.01;
+
+	/* register file handlers */
+	Tcl_CreateFileHandler(i_pipe[0], TCL_READABLE,
+			      rtcheck_vector_handler, (ClientData)rtcp);
+	Tcl_CreateFileHandler(e_pipe[0], TCL_READABLE,
+			      rtcheck_output_handler, (ClientData)e_pipe[0]);
+
+	return TCL_OK;
+}
+#endif
 
 /****************** utility routines ********************/
 
@@ -1288,7 +1761,7 @@ dgo_drawtrees(argc, argv, kind)
 	case 1:		/* Wireframes */
 		ret = db_walk_tree(curr_dbip, argc, (CONST char **)argv,
 			ncpu,
-			&dgo_initial_tree_state,
+			&curr_dgop->dgo_initial_tree_state,
 			0,			/* take all regions */
 			dgo_wireframe_region_end,
 			dgo_wireframe_leaf);
@@ -1300,7 +1773,7 @@ dgo_drawtrees(argc, argv, kind)
 		{
 		/* NMG */
 	  	dgo_nmg_model = nmg_mm();
-		dgo_initial_tree_state.ts_m = &dgo_nmg_model;
+		curr_dgop->dgo_initial_tree_state.ts_m = &dgo_nmg_model;
 	  	if (dgo_draw_edge_uses) {
 		  Tcl_AppendResult(curr_interp, "Doing the edgeuse thang (-u)\n", (char *)NULL);
 		  dgo_draw_edge_uses_vbp = rt_vlblock_init();
@@ -1308,7 +1781,7 @@ dgo_drawtrees(argc, argv, kind)
 
 		ret = db_walk_tree(curr_dbip, argc, (CONST char **)argv,
 			ncpu,
-			&dgo_initial_tree_state,
+			&curr_dgop->dgo_initial_tree_state,
 			dgo_enable_fastpath ? dgo_nmg_region_start : 0,
 			dgo_nmg_region_end,
 	  		dgo_nmg_use_tnurbs ?
@@ -1405,7 +1878,7 @@ dgo_invent_solid(name, vhead, rgb, copy)
 		 * Name exists from some other overlay,
 		 * zap any associated solids
 		 */
-		dgo_eraseobjall(curr_interp, curr_dgop, dp);
+		dgo_eraseobjall(curr_dgop, curr_interp, dp);
 	}
 	/* Need to enter phony name in directory structure */
 	dp = db_diradd(curr_dbip,  name, RT_DIR_PHONY_ADDR, 0, DIR_SOLID, NULL);
@@ -1612,9 +2085,9 @@ struct solid		*existing_sp;
  * object is not phony.
  */
 void
-dgo_eraseobjall_callback(interp, dbip, dp)
-     Tcl_Interp *interp;
+dgo_eraseobjall_callback(dbip, interp, dp)
      struct db_i *dbip;
+     Tcl_Interp *interp;
      struct directory *dp;
 {
 	struct dg_obj *dgop;
@@ -1622,7 +2095,7 @@ dgo_eraseobjall_callback(interp, dbip, dp)
 	for (BU_LIST_FOR(dgop, dg_obj, &HeadDGObj.l))
 		/* drawable geometry objects associated database matches */
 		if (dgop->dgo_wdbop->wdb_wp->dbip == dbip)
-			dgo_eraseobjall(interp, dgop, dp);
+			dgo_eraseobjall(dgop, interp, dp);
 }
 
 /*
@@ -1632,9 +2105,9 @@ dgo_eraseobjall_callback(interp, dbip, dp)
  * which contain the specified object in their 'path'
  */
 static void
-dgo_eraseobjall(interp, dgop, dp)
-     Tcl_Interp *interp;
+dgo_eraseobjall(dgop, interp, dp)
      struct dg_obj *dgop;
+     Tcl_Interp *interp;
      register struct directory *dp;
 {
   register struct solid *sp;
@@ -1669,8 +2142,8 @@ dgo_eraseobjall(interp, dgop, dp)
 
 static void
 dgo_eraseobj(interp, dgop, dp)
-     Tcl_Interp *interp;
      struct dg_obj *dgop;
+     Tcl_Interp *interp;
      register struct directory *dp;
 {
 	register struct solid *sp;
