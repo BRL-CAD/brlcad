@@ -28,8 +28,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include <math.h>
 #include "machine.h"
+#include "bu.h"
 #include "db.h"
 #include "vmath.h"
+#include "bn.h"
 
 #include "nurb.h"
 #define B_SPLINE_DEFINED 1		/* currently wdb.h needs this */

@@ -30,10 +30,11 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include <math.h>
 #include "machine.h"
+#include "bu.h"
 #include "externs.h"
 #include "db.h"
 #include "vmath.h"
-#include "rtlist.h"
+#include "bn.h"
 #include "wdb.h"
 
 /* so we don't have to include mat.o */

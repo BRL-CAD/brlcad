@@ -15,6 +15,7 @@
  *	#include <stdio.h>
  *	#include <math.h>
  *	#include "machine.h"
+ *	#include "bu.h"
  *	#include "vmath.h"
  *	#include "nmg.h"
  *	#include "raytrace.h"
@@ -251,7 +252,7 @@ struct rt_arbn_internal  {
  */
 struct rt_pipe_internal {
 	long		pipe_magic;
-	struct rt_list	pipe_segs_head;
+	struct bu_list	pipe_segs_head;
 	/* REMAINING ELEMENTS PROVIDED BY IMPORT, UNUSED BY EXPORT */
 	int		pipe_count;
 };

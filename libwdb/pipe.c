@@ -33,8 +33,9 @@ static char part_RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include <math.h>
 #include "machine.h"
+#include "bu.h"
 #include "vmath.h"
-#include "rtlist.h"
+#include "bn.h"
 #include "rtgeom.h"
 #include "raytrace.h"
 #include "wdb.h"
