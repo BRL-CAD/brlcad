@@ -220,8 +220,7 @@ BDIRS="bench \
 	canon \
 	burst \
 	gtools \
-	tk \
-	cwish \
+	bwish \
 "			# This ends the list.
 
 TSDIRS=". mged nirt pl-dm lib util"
