@@ -65,7 +65,7 @@ struct bu_semaphores {
 # define SGI_4D	1
 # define _SGI_SOURCE	1	/* IRIX 5.0.1 needs this to def M_BLKSZ */
 # define _BSD_TYPES	1	/* IRIX 5.0.1 botch in sys/prctl.h */
-#if ( IRIX == 6 )
+#if ( IRIX == 6 ) && !defined(IRIX64)
 typedef __uint64_t k_sigset_t;  /* signal set type */
 #endif
 # include <sys/types.h>
