@@ -190,6 +190,7 @@ struct dm_list {
   int _owner;      /* true if owner of the shared info */
   int _am_mode;    /* alternate mouse mode */
   int _ndrawn;
+  int _perspective_angle;
   double _frametime;/* time needed to draw last frame */
   struct bu_vls _fps_name;
   struct cmd_list *aim;
@@ -225,6 +226,7 @@ struct dm_list {
 #define owner curr_dm_list->_owner
 #define am_mode curr_dm_list->_am_mode
 #define ndrawn curr_dm_list->_ndrawn
+#define perspective_angle curr_dm_list->_perspective_angle
 #define frametime curr_dm_list->_frametime
 #define fps_name curr_dm_list->_fps_name
 #define knob_hook curr_dm_list->_knob_hook
