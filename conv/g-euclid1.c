@@ -19,6 +19,7 @@
 static char RCSid[] = "$Header$";
 #endif
 
+#include <unistd.h>
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
@@ -489,7 +490,7 @@ char	*argv[];
 	nmg_km( the_model );
 
 #if MEMORY_LEAK_CHECKING
-	rt_prmem("After conversion of id");
+	rt_prmem("After conversions");
 #endif
 
 	percent = 0;
@@ -554,10 +555,9 @@ union tree		*curtree;
 		return  curtree;
 
 	dir = DB_FULL_PATH_CUR_DIR( pathp );
-	sprintf( file_name , "%05d.%s" , tsp->ts_regionid , dir->d_namep );
-	if( (fp_out = fopen( file_name , "w" )) == NULL )
+	if( (fp_out = fopen( dir->d_namep , "w" )) == NULL )
 	{
-		rt_log(" Cannot open file %s\n" , file_name );
+		rt_log(" Cannot open file %s\n" , dir->d_namep );
 		perror( "g-euclid" );
 		rt_bomb( "g-euclid: Cannot open output file\n" );
 	}
@@ -582,6 +582,8 @@ union tree		*curtree;
 		/* Release the tree memory & input regions */
 		db_free_tree(curtree);		/* Does an nmg_kr() */
 
+		rt_vlist_cleanup();
+
 		/* Get rid of (m)any other intermediate structures */
 		if( (*tsp->ts_m)->magic == NMG_MODEL_MAGIC )
 			nmg_km(*tsp->ts_m);
@@ -591,13 +593,24 @@ union tree		*curtree;
 		/* Now, make a new, clean model structure for next pass. */
 		*tsp->ts_m = nmg_mm();
 
+#if MEMORY_LEAK_CHECKING
+		rt_prmem("After Failure:");
+#endif
+
+
 		rt_log( "FAILED: %s\n" , dir->d_namep );
 	
 		goto out;
 	}
 	if( verbose )
 		rt_log( "\tEvaluating region\n" );
+
+	(void)alarm( 1200 );
+
 	r = nmg_booltree_evaluate(curtree, tsp->ts_tol);	/* librt/nmg_bool.c */
+
+	(void)alarm( 0 );
+
 	RT_UNSETJUMP;		/* Relinquish the protection */
 	regions_converted++;
 	if (r != 0)
@@ -607,7 +620,15 @@ union tree		*curtree;
 
 		rt_log( "Wrote region %s to file %s\n" , dir->d_namep , file_name );
 
-		nmg_kr( r );
+		if( (*tsp->ts_m)->magic == NMG_MODEL_MAGIC )
+			nmg_km(*tsp->ts_m);
+		else
+			rt_log("WARNING: tsp->ts_m pointer corrupted, ignoring it.\n");
+
+		/* Now, make a new, clean model structure for next pass. */
+		*tsp->ts_m = nmg_mm();
+
+		rt_vlist_cleanup();
 	}
 
 	/*
@@ -617,6 +638,10 @@ union tree		*curtree;
 	 *  so we need to cons up an OP_NOP node to return.
 	 */
 	db_free_tree(curtree);		/* Does an nmg_kr() */
+
+#if MEMORY_LEAK_CHECKING
+	rt_prmem("After Success:");
+#endif
 
 out:
 	/* close any output file */
