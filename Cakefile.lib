@@ -46,6 +46,10 @@
 #	define EXTRA_OBJ_NO_DEPENDENCY	/**/
 #endif
 
+#ifndef LIB_FLAGS
+#	define LIB_FLAGS	/**/
+#endif
+
 #if !defined(BUILD_LIBRARY)
 PRODUCTS::	EXTRA_OBJ OBJ
 	../newvers.sh VERSION_VARIABLE LIBRARY_TITLE
@@ -79,7 +83,7 @@ PRODUCTS&::	EXTRA_OBJ OBJ
 %.o&:	SRCDIR,,%,o			if exist ../SRCDIR/%.c
 
 %9,,%,o&:	../%9/%.c HDR_DEP9	if exist ../%9/%.c
-	CC CFLAGS -c ../%9/%.c
+	CC CFLAGS LIB_FLAGS -c ../%9/%.c
 
 /* Override the modes for the library */
 #undef	BINDIR
