@@ -1048,8 +1048,13 @@ struct rt_tol		*tol;
 	/* Front face topology.  Verts are considered to go CCW */
 	outfaceuses[0] = nmg_cface(s, vfront, n);
 
+	(void)nmg_mark_edges_real( &outfaceuses[0]->l );
+
 	/* Back face topology.  Verts must go in opposite dir (CW) */
 	outfaceuses[1] = nmg_cface(s, vtemp, n);
+
+	(void)nmg_mark_edges_real( &outfaceuses[1]->l );
+
 	for( i=0; i<n; i++ )  vback[i] = vtemp[n-1-i];
 
 	/* Duplicate [0] as [n] to handle loop end condition, below */
@@ -1068,6 +1073,8 @@ struct rt_tol		*tol;
 		outfaceuses[2+i] = nmg_cface(s, vertlist, 4);
 	}
 
+	(void)nmg_mark_edges_real( &outfaceuses[n+1]->l );
+
 	for( i=0; i<n; i++ )  {
 		NMG_CK_VERTEX(vfront[i]);
 		NMG_CK_VERTEX(vback[i]);
@@ -1084,7 +1091,17 @@ struct rt_tol		*tol;
 	/* Associate the face geometry */
 	for (i=0 ; i < n+2 ; i++) {
 		if( nmg_fu_planeeqn( outfaceuses[i], tol ) < 0 )
+		{
+			/* free mem */
+			rt_free( (char *)front, "fastf_t");
+			rt_free( (char *)back, "fastf_t");
+			rt_free( (char*)vfront, "vertex *");
+			rt_free( (char*)vback, "vertex *");
+			rt_free( (char*)vtemp, "vertex *");
+			rt_free( (char*)outfaceuses, "faceuse *");
+
 			return(-1);		/* FAIL */
+		}
 	}
 
 	/* Glue the edges of different outward pointing face uses together */
