@@ -1,16 +1,3 @@
-/* XXX Move to VMATH.h.  Use in nmg_misc.c */
-/*
- * Compare two extents represented as RPPs.
- * If they overlap, within tolerance distance, return true
- */
-#define V3RPP_OVERLAP_TOL(_l1, _h1, _l2, _h2, _t) \
-    (! ((_l1)[0] > (_h2)[0] + (_t)->dist || \
-	(_l1)[1] > (_h2)[1] + (_t)->dist || \
-	(_l1)[2] > (_h2)[2] + (_t)->dist || \
-	(_l2)[0] > (_h1)[0] + (_t)->dist || \
-	(_l2)[1] > (_h1)[1] + (_t)->dist || \
-	(_l2)[2] > (_h1)[2] + (_t)->dist ) )
-
 /*
  *			N M G _ I N T E R . C
  *
@@ -1581,7 +1568,7 @@ struct faceuse		*eu_fu;		/* fu that eu is from */
     		nmg_pr_ptbl_vert_list( "vert_list2", &vert_list2 );
     	}
 
-    	if (vert_list1.end == 0) {
+    	if (vert_list1.end == 0 && vert_list2.end == 0) {
     		/* there were no intersections */
     		goto out;
     	}
@@ -1723,7 +1710,7 @@ struct faceuse		*fu1, *fu2;
     		nmg_pr_ptbl_vert_list( "vert_list2", &vert_list2 );
     	}
 
-    	if (vert_list1.end == 0) {
+    	if (vert_list1.end == 0 && vert_list2.end == 0) {
     		/* there were no intersections */
     		goto out;
     	}
