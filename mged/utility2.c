@@ -2239,6 +2239,7 @@ char **argv;
 	}
 }
 
+
 int
 f_edge_collapse( clientData, interp, argc, argv)
 ClientData clientData;
@@ -2253,13 +2254,14 @@ char **argv;
 	long count;
 	char count_str[32];
 	fastf_t tol_coll;
+	fastf_t min_angle;
 
 	if(dbip == DBI_NULL)
 	  return TCL_OK;
 
 	CHECK_READ_ONLY;
 
-	if(argc < 4 || MAXARGS < argc){
+	if(argc < 5 || MAXARGS < argc){
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -2267,13 +2269,6 @@ char **argv;
 	  Tcl_Eval(interp, bu_vls_addr(&vls));
 	  bu_vls_free(&vls);
 	  return TCL_ERROR;
-	}
-
-	tol_coll = atof( argv[1] ) * local2base;
-	if( tol_coll <= 0.0 )
-	{
-		Tcl_AppendResult(interp, "tolerance distance too small\n", (char *)NULL );
-		return TCL_ERROR;
 	}
 
 	if( strchr( argv[2], '/' ) )
@@ -2290,27 +2285,46 @@ char **argv;
 	  return TCL_ERROR;
 	}
 
-	if( (dp=db_lookup( dbip, argv[3], LOOKUP_NOISY )) == DIR_NULL )
+	if( (dp=db_lookup( dbip, argv[1], LOOKUP_NOISY )) == DIR_NULL )
 		return TCL_ERROR;
 
 	if( dp->d_flags & DIR_COMB )
 	{
-		Tcl_AppendResult(interp, argv[3], " is a combination, only NMG solids are allowed here\n", (char *)NULL );
+		Tcl_AppendResult(interp, argv[1], " is a combination, only NMG solids are allowed here\n", (char *)NULL );
 		return TCL_ERROR;
 	}
 
 	if( rt_db_get_internal( &intern, dp, dbip, (matp_t)NULL ) < 0 )
 	{
-		Tcl_AppendResult(interp, "Failed to get internal form of ", argv[3], "!!!!\n", (char *)NULL);
+		Tcl_AppendResult(interp, "Failed to get internal form of ", argv[1], "!!!!\n", (char *)NULL);
 		return TCL_ERROR;
 	}
 
 	if( intern.idb_type != ID_NMG )
 	{
-		Tcl_AppendResult(interp, argv[3], " is not an NMG solid!!!!\n", (char *)NULL );
+		Tcl_AppendResult(interp, argv[1], " is not an NMG solid!!!!\n", (char *)NULL );
 		rt_db_free_internal( &intern );
 		return TCL_ERROR;
 	}
+
+	tol_coll = atof( argv[3] ) * local2base;
+	if( tol_coll <= 0.0 )
+	{
+		Tcl_AppendResult(interp, "tolerance distance too small\n", (char *)NULL );
+		return TCL_ERROR;
+	}
+
+	if( argc == 5 )
+	{
+		min_angle = atof( argv[4] );
+		if( min_angle < 0.0 )
+		{
+			Tcl_AppendResult(interp, "Minimum angle cannot be less than zero\n", (char *)NULL );
+			return TCL_ERROR;
+		}
+	}
+	else
+		min_angle = 0.0;
 
 	m = (struct model *)intern.idb_ptr;
 	NMG_CK_MODEL( m );
@@ -2318,7 +2332,7 @@ char **argv;
 	/* triangulate model */
 	nmg_triangulate_model( m, &mged_tol );
 
-	count = nmg_edge_collapse( m, &mged_tol, tol_coll );
+	count = nmg_edge_collapse( m, &mged_tol, tol_coll, min_angle );
 
 	if( (dp=db_diradd( dbip, new_name, -1L, 0, DIR_SOLID)) == DIR_NULL )
 	{
