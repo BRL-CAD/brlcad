@@ -43,6 +43,7 @@ static char RCSrayview[] = "@(#)$Header$ (BRL)";
 
 #include "rdebug.h"
 
+extern char	*strchr();
 extern char	*re_comp();
 extern int	re_exec();
 
