@@ -697,6 +697,7 @@ int	width, height;
 		fb_log("sgi_dopen:  sgiinfo malloc failed\n");
 		return(-1);
 	}
+	SGI(ifp)->si_shmid = -1;	/* indicate no shared memory */
 
 	/* Must initialize these window state variables BEFORE calling
 		"sgi_getmem", because this function can indirectly trigger
@@ -761,8 +762,23 @@ FBIO	*ifp;
 		}
 		break;
 	}
-	if( SGIL(ifp) != NULL )
+	if( SGIL(ifp) != NULL ) {
+		/* free up memory associated with image */
+		if( SGI(ifp)->si_shmid != -1 ) {
+			/* detach from shared memory */
+			if( shmdt( ifp->if_mem ) == -1 ) {
+				fb_log("sgi_dclose shmdt failed, errno=%d\n", errno);
+				return -1;
+			}
+		} else {
+			/* free private memory */
+			(void)free( ifp->if_mem );
+		}
+		/* free state information */
 		(void)free( (char *)SGIL(ifp) );
+		SGIL(ifp) = NULL;
+	}
+
 	return(0);
 }
 

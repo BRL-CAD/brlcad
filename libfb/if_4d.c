@@ -809,6 +809,7 @@ int	width, height;
 		fb_log("sgi_dopen:  sgiinfo malloc failed\n");
 		return(-1);
 	}
+	SGI(ifp)->mi_shmid = -1;	/* indicate no shared memory */
 
 	/* the Silicon Graphics Library Window management routines
 	 * use shared memory. This causes lots of problems when you
@@ -1253,10 +1254,24 @@ out:
 	if( sgi_nwindows <= 1 )  {
 		gexit();		/* mandatory finish */
 	}
-	if( fp )  fclose(fp);
+	if( fp ) fclose(fp);		/* close our "complaints window" */
 
-	if( SGIL(ifp) != NULL )
-		(void)free( (char *)SGI(ifp) );
+	if( SGIL(ifp) != NULL ) {
+		/* free up memory associated with image */
+		if( SGI(ifp)->mi_shmid != -1 ) {
+			/* detach from shared memory */
+			if( shmdt( ifp->if_mem ) == -1 ) {
+				fb_log("sgi_dclose shmdt failed, errno=%d\n", errno);
+				return -1;
+			}
+		} else {
+			/* free private memory */
+			(void)free( ifp->if_mem );
+		}
+		/* free state information */
+		(void)free( (char *)SGIL(ifp) );
+		SGIL(ifp) = NULL;
+	}
 
 	sgi_nwindows--;
 	return(0);
