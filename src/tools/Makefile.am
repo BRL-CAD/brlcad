@@ -118,7 +118,7 @@ unslice_SOURCES = unslice.c
 wasatchrle_SOURCES = wasatchrle.c
 
 font.c: ${srcdir}/makeFont.sh ${srcdir}/font.src
-	${srcdir}/makeFont.sh ${srcdir}/font.src > font.c
+	@SH@ ${srcdir}/makeFont.sh ${srcdir}/font.src > font.c
 
 man_MANS = \
 	applymap.1 \
