@@ -7,15 +7,11 @@ SUBDIRS = \
 data_DATA = \
 	anim.txt \
 	benchmark.tr \
-	bsd.txt \
 	cvs.txt \
 	description.txt \
-	fdl.txt \
 	ged.tr \
-	gpl.txt \
 	hypot.txt \
 	irprep.tr \
-	lgpl.txt \
 	mater.txt \
 	matrix.txt \
 	mged.tr \
