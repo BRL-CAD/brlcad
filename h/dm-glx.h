@@ -50,8 +50,6 @@ extern void glx_set_perspective();
 extern void glx_establish_lighting();
 extern void glx_establish_zbuffer();
 extern void glx_clear_to_black();
-extern int glx_irisX2ged();
-extern int glx_irisY2ged();
 extern struct glx_vars head_glx_vars;
 
 #endif /* SEEN_DM_GLX */
