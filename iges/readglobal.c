@@ -40,7 +40,8 @@ char *iges_version[NO_OF_VERSIONS]={
 	"5.0",
 	"5.1" };
 
-Readglobal()
+Readglobal( file_count )
+int file_count;
 {
 
 	int field=2,i;
@@ -102,13 +103,16 @@ Readglobal()
 	   switch( ++field )
 		{
 		case 3:		Readname( &name , "Product ID: ");
-				if( name != NULL )
+				if( !file_count )
 				{
-					mk_id( fdout , name );
-					rt_free( name, "Readglobal: name" );
+					if( name != NULL )
+					{
+						mk_id( fdout , name );
+						rt_free( name, "Readglobal: name" );
+					}
+					else
+						mk_id( fdout , "Un-named Product" );
 				}
-				else
-					mk_id( fdout , "Un-named Product" );
 				break;
 		case 4:		Readstrg( "File Name: " );
 				break;

@@ -38,6 +38,9 @@ struct iges_edge_list *edge_root;
 struct iges_vertex_list *vertex_root;
 struct rt_tol tol;
 char *solid_name=(char *)NULL;
+struct file_list iges_list;
+struct file_list *curr_file;
+struct name_list *name_root;
 
 char operator[]={
 	' ',
@@ -128,6 +131,7 @@ char *argv[];
 {
 	int i;
 	int c;
+	int file_count=0;
 	char *output_file=(char *)NULL;
 
 	while( (c=getopt( argc , argv , "dntpo:x:X:N:" )) != EOF )
@@ -178,22 +182,22 @@ char *argv[];
 	regroot = NULL;
 	edge_root = NULL;
 	vertex_root = NULL;
+	name_root = NULL;
 	tol.magic = RT_TOL_MAGIC;
 	tol.dist = 0.005;
 	tol.dist_sq = tol.dist * tol.dist;
 	tol.perp = 1e-6;
 	tol.para = 1 - tol.perp;
 
-	argc -= optind;
-	argv += optind;
-	iges_file = argv[0];
-	fd = fopen( argv[0] , "r" );	/* open IGES file */
-	if( fd == NULL )
+	Initstack();	/* Initialize node stack */
+
+	identity = (mat_t *)rt_malloc( sizeof( mat_t ), "main: identity" );
+	for( i=0 ; i<16 ; i++ )
 	{
-		fprintf( stderr , "Cannot open %s\n" , argv[0] );
-		perror( "iges-g" );
-		usage();
-		exit( 1 );
+		if( !(i%5) )
+			(*identity)[i] = 1.0;
+		else
+			(*identity)[i] = 0.0;
 	}
 
 	if( (fdout = fopen( output_file , "w" )) == NULL )
@@ -205,58 +209,88 @@ char *argv[];
 	}
 	strcpy( brlcad_file ,  output_file );
 
-	reclen = Recsize() * sizeof( char ); /* Check length of records */
-	if( reclen == 0 )
-	{
-		fprintf( stderr , "File not in IGES ASCII format\n" );
-		exit(1);
-	}
+	argc -= optind;
+	argv += optind;
 
-	identity = (mat_t *)rt_malloc( sizeof( mat_t ), "main: identity" );
-	for( i=0 ; i<16 ; i++ )
-	{
-		if( !(i%5) )
-			(*identity)[i] = 1.0;
-		else
-			(*identity)[i] = 0.0;
-	}
-
-	Initstack();	/* Initialize node stack */
-
-	Readstart();	/* Read start section */
-
-	Readglobal();	/* Read global section */
-
-	pstart = Findp();	/* Find start of parameter section */
-
-	Makedir();	/* Read directory section and build a linked list of entries */
-
-	Summary();	/* Print a summary of what is in the IGES file */
-
-	Docolor();	/* Get color info from color definition entities */
-
-	Get_att();	/* Look for a BRLCAD attribute definition */
-
-	Evalxform();	/* Accumulate the transformation matrices */
-
-	Check_names();	/* Look for name entities */
-
-	if( do_drawings )
-		Conv_drawings();	/* convert drawings to wire edges */
-	else if( trimmed_surf )
-		Convtrimsurfs();	/* try to convert trimmed surfaces to a single solid */
-	else if( do_splines )
-		Convsurfs();		/* Convert NURBS to a single solid */
+	RT_LIST_INIT( &iges_list.l );
+	curr_file = (struct file_list *)rt_malloc( sizeof( struct file_list ), "iges-g: curr_file" );
+	if( solid_name )
+		strcpy( curr_file->obj_name, Make_unique_brl_name( solid_name ) );
 	else
+		strcpy( curr_file->obj_name, Make_unique_brl_name( "all" ) );
+
+	curr_file->file_name = (char *)rt_malloc( strlen( argv[0] ) + 1, "iges-g: curr_file->file_name" );
+	strcpy( curr_file->file_name, argv[0] );
+	RT_LIST_APPEND( &iges_list.l, &curr_file->l );
+
+	while( RT_LIST_NON_EMPTY( &iges_list.l ) )
 	{
-		Convinst();	/* Handle Instances */
+		curr_file = RT_LIST_FIRST( file_list, &iges_list.l );
+		iges_file = curr_file->file_name;
 
-		Convsolids();	/* Convert solid entities */
+		fd = fopen( iges_file , "r" );	/* open IGES file */
+		if( fd == NULL )
+		{
+			fprintf( stderr , "Cannot open %s\n" , iges_file );
+			perror( "iges-g" );
+			usage();
+			exit( 1 );
+		}
 
-		Convtree();	/* Convert Boolean Trees */
+		reclen = Recsize() * sizeof( char ); /* Check length of records */
+		if( reclen == 0 )
+		{
+			fprintf( stderr , "File (%s) not in IGES ASCII format\n", iges_file );
+			exit(1);
+		}
 
-		Convassem();	/* Convert solid assemblies */
+		Freestack();	/* Set node stack to empty */
+
+		Readstart();	/* Read start section */
+
+		Readglobal( file_count);	/* Read global section */
+
+		pstart = Findp();	/* Find start of parameter section */
+
+		Makedir();	/* Read directory section and build a linked list of entries */
+
+		Summary();	/* Print a summary of what is in the IGES file */
+
+		Docolor();	/* Get color info from color definition entities */
+
+		Get_att();	/* Look for a BRLCAD attribute definition */
+
+		Evalxform();	/* Accumulate the transformation matrices */
+
+		Check_names();	/* Look for name entities */
+
+		Do_subfigs();	/* Look for Singular Subfigure Instances */
+
+		if( do_drawings )
+			Conv_drawings();	/* convert drawings to wire edges */
+		else if( trimmed_surf )
+			Convtrimsurfs();	/* try to convert trimmed surfaces to a single solid */
+		else if( do_splines )
+			Convsurfs();		/* Convert NURBS to a single solid */
+		else
+		{
+			Convinst();	/* Handle Instances */
+
+			Convsolids();	/* Convert solid entities */
+
+			Convtree();	/* Convert Boolean Trees */
+
+			Convassem();	/* Convert solid assemblies */
+		}
+
+		Free_dir();
+
+		RT_LIST_DEQUEUE( &curr_file->l );
+		rt_free( (char *)curr_file->file_name, "iges-g: curr_file->file_name" );
+		rt_free( (char *)curr_file, "iges-g: curr_file" );
+		file_count++;
 	}
 
+	iges_file = argv[0];
 	Suggestions();
 }

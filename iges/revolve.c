@@ -37,7 +37,7 @@ struct trclist
 	fastf_t r1,r2;
 	int op; /* 0 => union, 1=> subtract */
 	int index;
-	char name[NAMELEN];
+	char name[NAMESIZE];
 	struct subtracts *subtr;
 	struct trclist *next,*prev;
 };
@@ -63,7 +63,7 @@ int entityno;
 	fastf_t		hmax,hmin;		/* Max and Min distances along axis of rotation */
 	fastf_t		rmax;			/* Max radius */
 	int		cutop = Intersect;	/* Operator for cutting solid */
-	char		cutname[NAMELEN];	/* Name for cutting solid */
+	char		cutname[NAMESIZE];	/* Name for cutting solid */
 	struct subtracts *subp;
 	int		i;
 

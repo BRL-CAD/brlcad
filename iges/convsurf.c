@@ -38,8 +38,8 @@ Convsurfs()
 	if( totsurfs )
 	{
 		/* Make the spline solid header record */
-		if( solid_name )
-			mk_bsolid( fdout , solid_name , totsurfs , (double)1.0 );
+		if( curr_file->obj_name )
+			mk_bsolid( fdout , curr_file->obj_name , totsurfs , (double)1.0 );
 		else
 			mk_bsolid( fdout , "nurb.s" , totsurfs , (double)1.0 );
 	}

@@ -1044,8 +1044,8 @@ Convtrimsurfs()
 
 	(void)nmg_model_vertex_fuse( m, &tol );
 
-	if( solid_name )
-		mk_nmg( fdout , solid_name , m );
+	if( curr_file->obj_name )
+		mk_nmg( fdout , curr_file->obj_name , m );
 	else
 		mk_nmg( fdout , "Trimmed_surf" , m );
 

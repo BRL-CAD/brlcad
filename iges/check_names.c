@@ -14,44 +14,135 @@
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
-int
-Fix_name( entityno )
-int entityno;
+char *
+Make_unique_brl_name( name )
+char *name;
 {
-	char *ptr;
-	int i;
+	struct name_list *ptr;
+	int found;
+	int namelen;
+	int char_ptr;
+	int i,j;
 
-	ptr = dir[entityno]->name;
-	i = 0;
-	while( *ptr != '\0' && i < NAMELEN )
+	/* replace white space */
+	namelen = strlen( name );
+	for( i=0 ; i<namelen ; i++ )
 	{
-		i++;
-		if( isspace(*ptr) || *ptr == '/' )
-			*ptr = '_';
-		ptr++;
+		if( isspace( name[i] ) || name[i] == '/' )
+			name[i] = '_';
 	}
-	*ptr = '\0';
 
-	for( i=0 ; i<totentities ; i++ )
+	/* check if name is already unique */
+	found = 0;
+	ptr = name_root;
+	while( ptr )
 	{
-		if( dir[i]->name == (char *)NULL )
-			continue;
-		if( i == entityno )
-			continue;
-		if( (dir[i]->type > 149 && dir[i]->type < 187)
-			|| dir[i]->type == 128
-			|| dir[i]->type == 430 )
+		if( !strncmp( ptr->name, name, NAMESIZE ) )
 		{
-			if( !strcmp( dir[i]->name , ptr ) )
-			{
-				printf( "Name (%s) already used\n" , ptr );
-				return( 0 );
-			}
+			found = 1;
+			break;
 		}
+		ptr = ptr->next;
 	}
 
-	return( 1 );
+	if( !found )
+	{
+		/* add this name to the list */
+		ptr = (struct name_list *)rt_malloc( sizeof( struct name_list ), "Make_unique_brl_name: ptr" );
+		strcpy( ptr->name, name );
+		ptr->next = name_root;
+		name_root = ptr;
+		return( ptr->name );
+	}
+
+	/* name is not unique, make it unique with a single character suffix */
+	if( namelen < NAMESIZE )
+		char_ptr = namelen;
+	else
+		char_ptr = NAMESIZE - 1;
+
+	i = 0;
+	while( found && 'A'+i <= 'z' )
+	{
+		name[char_ptr] = 'A' + i;
+		name[char_ptr+1] = '\0';
+		found = 0;
+		ptr = name_root;
+		while( ptr )
+		{
+			if( !strncmp( ptr->name, name, NAMESIZE ) )
+			{
+				found = 1;
+				break;
+			}
+			ptr = ptr->next;
+		}
+		i++;
+		if( 'A'+i == '[' )
+			i = 'a' - 'A';
+	}
+
+	if( !found )
+	{
+		/* add this name to the list */
+		ptr = (struct name_list *)rt_malloc( sizeof( struct name_list ), "Make_unique_brl_name: ptr" );
+		strcpy( ptr->name, name );
+		ptr->next = name_root;
+		name_root = ptr;
+		return( ptr->name );
+	}
+
+	/* still not unique!!! Try two character suffix */
+	char_ptr--;
+	i = 0;
+	j = 0;
+	while( found && 'A'+i <= 'z' && 'A'+j <= 'z' )
+	{
+		name[char_ptr] = 'A'+i;
+		name[char_ptr+1] = 'A'+j;
+		name[char_ptr+2] = '\0';
+		found = 0;
+		ptr = name_root;
+		while( ptr )
+		{
+			if( !strncmp( ptr->name, name, NAMESIZE ) )
+			{
+				found = 1;
+				break;
+			}
+			ptr = ptr->next;
+		}
+		j++;
+		if( 'A'+j == '[' )
+			j = 'a' - 'A';
+
+		if( 'A'+j > 'z' )
+		{
+			j = 0;
+			i++;
+		}
+
+		if( 'A'+i == '[' )
+			i = 'a' - 'A';
+	}
+
+	if( !found )
+	{
+		/* not likely */
+		rt_log( "Could not make name unique: (%s)\n", name );
+		rt_bomb( "Make_unique_brl_name: failed\n" );
+	}
+	else
+	{
+		/* add this name to the list */
+		ptr = (struct name_list *)rt_malloc( sizeof( struct name_list ), "Make_unique_brl_name: ptr" );
+		strcpy( ptr->name, name );
+		ptr->next = name_root;
+		name_root = ptr;
+		return( ptr->name );
+	}
 }
+
 
 void
 Skip_field()
@@ -99,6 +190,7 @@ int skip;
 	int			no_of_assoc=0;
 	int			no_of_props=0;
 	int			name_de=0;
+	char			*name;
 
 	if( dir[entityno]->param <= pstart )
 	{
@@ -151,13 +243,10 @@ int skip;
 		return;
 	}
 
-	Readname( &dir[entityno]->name , "" );
+	Readname( &name , "" );
+	dir[entityno]->name = Make_unique_brl_name( name );
+	rt_free( (char *)name, "Get_name: name" );
 
-	if( !Fix_name( entityno ) )
-	{
-		rt_free( (char *)dir[entityno]->name , "Get_name: name" );
-		dir[entityno]->name = (char *)NULL;
-	}
 }
 
 void
@@ -171,6 +260,7 @@ int entityno;
 	int no_of_props;
 	int i,j,k;
 	int name_de=0;
+	char *name;
 
 	if( dir[entityno]->param <= pstart )
 	{
@@ -236,13 +326,9 @@ int entityno;
 		return;
 	}
 
-	Readname( &dir[entityno]->name , "" );
-
-	if( !Fix_name( entityno ) )
-	{
-		rt_free( (char *)dir[entityno]->name , "Get_name: name" );
-		dir[entityno]->name = (char *)NULL;
-	}
+	Readname( &name , "" );
+	dir[entityno]->name = Make_unique_brl_name( name );
+	rt_free( (char *)name, "Get_name: name" );
 }
 
 void
@@ -256,6 +342,7 @@ int entityno;
 	int			no_of_assoc=0;
 	int			no_of_props=0;
 	int			name_de=0;
+	char			*name;
 
 	if( dir[entityno]->param <= pstart )
 	{
@@ -319,13 +406,9 @@ int entityno;
 		return;
 	}
 
-	Readname( &dir[entityno]->name , "" );
-
-	if( !Fix_name( entityno ) )
-	{
-		rt_free( (char *)dir[entityno]->name , "Get_name: name" );
-		dir[entityno]->name = (char *)NULL;
-	}
+	Readname( &name , "" );
+	dir[entityno]->name = Make_unique_brl_name( name );
+	rt_free( (char *)name, "Get_name: name" );
 }
 
 
@@ -340,6 +423,7 @@ int entityno;
 	int			no_of_assoc=0;
 	int			no_of_props=0;
 	int			name_de=0;
+	char			*name;
 
 	if( dir[entityno]->param <= pstart )
 	{
@@ -402,13 +486,9 @@ int entityno;
 		return;
 	}
 
-	Readname( &dir[entityno]->name , "" );
-
-	if( !Fix_name( entityno ) )
-	{
-		rt_free( (char *)dir[entityno]->name , "Get_name: name" );
-		dir[entityno]->name = (char *)NULL;
-	}
+	Readname( &name , "" );
+	dir[entityno]->name = Make_unique_brl_name( name );
+	rt_free( (char *)name, "Get_name: name" );
 }
 
 void
@@ -470,73 +550,71 @@ Check_names()
 	printf( "Assigning names to entities without names...\n" );
 	for( i=0 ; i < totentities ; i++ )
 	{
+		char tmp_name[NAMESIZE + 1];
+
 		if( dir[i]->name == (char *)NULL )
 		{
 			switch( dir[i]->type )
 			{
-				case 128:
-					dir[i]->name = (char *)rt_malloc( NAMELEN+1 , "Check_names: dir->name" );
-					sprintf( dir[i]->name , "nurb.%d" , i );
-					break;
 				case 150:
-					dir[i]->name = (char *)rt_malloc( NAMELEN+1 , "Check_names: dir->name" );
-					sprintf( dir[i]->name , "block.%d" , i );
+					sprintf( tmp_name , "block.%d" , i );
+					dir[i]->name = Make_unique_brl_name( tmp_name );
 					break;
 				case 152:
-					dir[i]->name = (char *)rt_malloc( NAMELEN+1 , "Check_names: dir->name" );
-					sprintf( dir[i]->name , "wedge.%d" , i );
+					sprintf( tmp_name , "wedge.%d" , i );
+					dir[i]->name = Make_unique_brl_name( tmp_name );
 					break;
 				case 154:
-					dir[i]->name = (char *)rt_malloc( NAMELEN+1 , "Check_names: dir->name" );
-					sprintf( dir[i]->name , "cyl.%d" , i );
+					sprintf( tmp_name , "cyl.%d" , i );
+					dir[i]->name = Make_unique_brl_name( tmp_name );
 					break;
 				case 156:
-					dir[i]->name = (char *)rt_malloc( NAMELEN+1 , "Check_names: dir->name" );
-					sprintf( dir[i]->name , "cone.%d" , i );
+					sprintf( tmp_name , "cone.%d" , i );
+					dir[i]->name = Make_unique_brl_name( tmp_name );
 					break;
 				case 158:
-					dir[i]->name = (char *)rt_malloc( NAMELEN+1 , "Check_names: dir->name" );
-					sprintf( dir[i]->name , "sphere.%d" , i );
+					sprintf( tmp_name , "sphere.%d" , i );
+					dir[i]->name = Make_unique_brl_name( tmp_name );
 					break;
 				case 160:
-					dir[i]->name = (char *)rt_malloc( NAMELEN+1 , "Check_names: dir->name" );
-					sprintf( dir[i]->name , "torus.%d" , i );
+					sprintf( tmp_name , "torus.%d" , i );
+					dir[i]->name = Make_unique_brl_name( tmp_name );
 					break;
 				case 162:
-					dir[i]->name = (char *)rt_malloc( NAMELEN+1 , "Check_names: dir->name" );
-					sprintf( dir[i]->name , "revolution.%d" , i );
+					sprintf( tmp_name , "revolution.%d" , i );
+					dir[i]->name = Make_unique_brl_name( tmp_name );
 					break;
 				case 164:
-					dir[i]->name = (char *)rt_malloc( NAMELEN+1 , "Check_names: dir->name" );
-					sprintf( dir[i]->name , "extrusion.%d" , i );
+					sprintf( tmp_name , "extrusion.%d" , i );
+					dir[i]->name = Make_unique_brl_name( tmp_name );
 					break;
 				case 168:
-					dir[i]->name = (char *)rt_malloc( NAMELEN+1 , "Check_names: dir->name" );
-					sprintf( dir[i]->name , "ell.%d" , i );
+					sprintf( tmp_name , "ell.%d" , i );
+					dir[i]->name = Make_unique_brl_name( tmp_name );
 					break;
 				case 180:
-					dir[i]->name = (char *)rt_malloc( NAMELEN+1 , "Check_names: dir->name" );
-					sprintf( dir[i]->name , "region.%d" , i );
+					sprintf( tmp_name , "region.%d" , i );
+					dir[i]->name = Make_unique_brl_name( tmp_name );
 					break;
 				case 184:
-					dir[i]->name = (char *)rt_malloc( NAMELEN+1 , "Check_names: dir->name" );
-					sprintf( dir[i]->name , "group.%d" , i );
+					sprintf( tmp_name , "group.%d" , i );
+					dir[i]->name = Make_unique_brl_name( tmp_name );
 					break;
 				case 186:
-					dir[i]->name = (char *)rt_malloc( NAMELEN+1 , "Check_names: dir->name" );
-					sprintf( dir[i]->name , "brep.%d" , i );
+					sprintf( tmp_name , "brep.%d" , i );
+					dir[i]->name = Make_unique_brl_name( tmp_name );
 					break;
 				case 404:
-					dir[i]->name = (char *)rt_malloc( NAMELEN+1 , "Check_names: dir->name" );
-					sprintf( dir[i]->name , "drawing.%d" , i );
+					sprintf( tmp_name , "drawing.%d" , i );
+					dir[i]->name = Make_unique_brl_name( tmp_name );
 					break;
 				case 410:
-					dir[i]->name = (char *)rt_malloc( NAMELEN+1 , "Check_names: dir->name" );
-					sprintf( dir[i]->name , "view.%d" , i );
+					sprintf( tmp_name , "view.%d" , i );
+					dir[i]->name = Make_unique_brl_name( tmp_name );
 					break;
 				case 430:
-					dir[i]->name = (char *)rt_malloc( NAMELEN+1 , "Check_names: dir->name" );
-					sprintf( dir[i]->name , "inst.%d" , i );
+					sprintf( tmp_name , "inst.%d" , i );
+					dir[i]->name = Make_unique_brl_name( tmp_name );
 					break;
 			}
 		}

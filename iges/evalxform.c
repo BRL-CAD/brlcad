@@ -31,11 +31,12 @@ Evalxform()
 {
 
 	int i,j,xform;
-	struct list *ptr,*ptr1;
+	struct list *ptr,*ptr1,*ptr_root;
 	mat_t rot;
 
 	ptr = NULL;
 	ptr1 = NULL;
+	ptr_root = NULL;
 
 	for( i=0 ; i<totentities ; i++ ) /* loop through all entities */
 	{
@@ -67,6 +68,7 @@ Evalxform()
 			for( j=0 ; j<16 ; j++ )
 				rot[j] = (*identity)[j];
 
+			ptr_root = ptr;
 			while( ptr != NULL )
 			{
 				if( !dir[ptr->index]->referenced )
@@ -82,6 +84,15 @@ Evalxform()
 					rot[j] = (*dir[ptr->index]->rot)[j];
 				}
 				ptr = ptr->prev;
+			}
+
+			/* Free some memory */
+			ptr = ptr_root;
+			while( ptr )
+			{
+				ptr1 = ptr;
+				ptr = ptr->prev;
+				rt_free( (char *)ptr1, "Evalxform: ptr1" );
 			}
 		}
 	}

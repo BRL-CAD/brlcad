@@ -24,8 +24,6 @@ extern char	version[];
 
 extern fastf_t brlabs();
 
-#define	NAMELEN	16	/* from "brlcad/db.h" */
-
 #define	TOL		0.0005
 #define EQUAL( a , b )		((brlabs( (a)-(b) ) < TOL) ? 1 : 0 )
 #define	SAMEPT( pt1 , pt2 )	(EQUAL( pt1[X] , pt2[X] ) && \
@@ -35,6 +33,21 @@ extern fastf_t brlabs();
 #define	Union		1
 #define	Intersect	2
 #define	Subtract	3
+
+/* Circularly linked list of files and names for external references */
+struct file_list
+{
+	struct rt_list		l;			/* for links */
+	char			*file_name;		/* Name of external file */
+	char			obj_name[NAMESIZE];	/* BRL-CAD name for top level object */
+};
+
+/* linked list of used BRL-CAD object names */
+struct name_list
+{
+	char name[NAMESIZE+1];
+	struct name_list *next;
+};
 
 /* Structure for storing info from the IGES file directory section along with
 	transformation matrices */
@@ -116,7 +129,7 @@ struct spline
 
 struct reglist
 {
-	char name[NAMELEN];
+	char name[NAMESIZE];
 	struct node *tree;
 	struct reglist *next;
 };
@@ -175,6 +188,7 @@ struct iges_edge_list
 };
 
 RT_EXTERN( char *iges_type, (int type_no ) );
+RT_EXTERN( char *Make_unique_brl_name, (char *name ) );
 RT_EXTERN( int Add_loop_to_face , (struct shell *s , struct faceuse *fu , int entityno , int face_orient ));
 RT_EXTERN( int Add_nurb_loop_to_face, ( struct shell *s, struct faceuse *fu, int loop_entityno, int face_orient ) );
 RT_EXTERN( int arb_to_iges , ( struct rt_db_internal *ip , char *name , FILE *fp_dir , FILE *fp_param ));

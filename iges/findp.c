@@ -77,3 +77,18 @@ Findp()
 
 	return( pstart );
 }
+
+void
+Free_dir()
+{
+	int i;
+
+	for( i=0 ; i<totentities ; i++ )
+	{
+		if( dir[i]->type == 124 || dir[i]->type == 700 )
+			rt_free( (char *)dir[i]->rot, "Free_dir: dir[i]->rot" );
+		rt_free( (char *)dir[i], "Free_dir: dir[i]" );
+	}
+
+	rt_free( (char *)dir, "Free_dir: dir" );
+}
