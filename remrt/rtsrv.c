@@ -24,6 +24,11 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
 #ifdef HAVE_STDARG_H
 # include <stdarg.h>
 #else
@@ -43,10 +48,10 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #undef	VMIN
 #include "machine.h"
-#include "vmath.h"
-#include "rtlist.h"
-#include "rtstring.h"
 #include "externs.h"
+#include "bu.h"
+#include "vmath.h"
+#include "bn.h"
 #include "raytrace.h"
 #include "pkg.h"
 #include "fb.h"
