@@ -203,98 +203,96 @@ CONST struct rt_list	*eu_hd;
 /*
  *			N M G _ L U _ T O _ V L I S T
  *
- *  Plot a list of loopuses.
+ *  Plot a single loopuse into a rt_vlist chain headed by vhead.
  */
 void
-nmg_lu_to_vlist( vhead, lu_hd, poly_markers, normal )
+nmg_lu_to_vlist( vhead, lu, poly_markers, normal )
 struct rt_list		*vhead;
-CONST struct rt_list	*lu_hd;
+CONST struct loopuse	*lu;
 int			poly_markers;
 CONST vectp_t		normal;
 {
-	struct loopuse	*lu;
-	struct edgeuse	*eu;
-	struct vertexuse *vu;
-	struct vertex	*v;
-	register struct vertex_g *vg;
+	CONST struct edgeuse		*eu;
+	CONST struct vertexuse		*vu;
+	CONST struct vertex		*v;
+	register CONST struct vertex_g	*vg;
+	CONST struct vertex_g		*first_vg;
+	int		isfirst;
+	point_t		centroid;
+	int		npoints;
 
-	for( RT_LIST_FOR( lu, loopuse, lu_hd ) )  {
-		int		isfirst;
-		struct vertex_g	*first_vg;
-		point_t		centroid;
-		int		npoints;
+	RT_CKMAG(vhead, RT_LIST_HEAD_MAGIC, "struct rt_list");
 
-		/* Consider this loop */
-		NMG_CK_LOOPUSE(lu);
-		if( RT_LIST_FIRST_MAGIC(&lu->down_hd)==NMG_VERTEXUSE_MAGIC )  {
-			/* loop of a single vertex */
-			vu = RT_LIST_FIRST(vertexuse, &lu->down_hd);
-			nmg_vu_to_vlist( vhead, vu );
+	NMG_CK_LOOPUSE(lu);
+	if( RT_LIST_FIRST_MAGIC(&lu->down_hd)==NMG_VERTEXUSE_MAGIC )  {
+		/* Process a loop of a single vertex */
+		vu = RT_LIST_FIRST(vertexuse, &lu->down_hd);
+		nmg_vu_to_vlist( vhead, vu );
+		return;
+	}
+
+	/* Consider all the edges in the loop */
+	isfirst = 1;
+	first_vg = (struct vertex_g *)0;
+	npoints = 0;
+	VSETALL( centroid, 0 );
+	for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
+		/* Consider this edge */
+		NMG_CK_EDGEUSE(eu);
+		vu = eu->vu_p;
+		NMG_CK_VERTEXUSE(vu);
+		v = vu->v_p;
+		NMG_CK_VERTEX(v);
+		vg = v->vg_p;
+		if( !vg ) {
 			continue;
 		}
-		/* Consider all the edges in the loop */
-		isfirst = 1;
-		first_vg = (struct vertex_g *)0;
-		npoints = 0;
-		VSETALL( centroid, 0 );
-		for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
-			/* Consider this edge */
-			NMG_CK_EDGEUSE(eu);
-			vu = eu->vu_p;
-			NMG_CK_VERTEXUSE(vu);
-			v = vu->v_p;
-			NMG_CK_VERTEX(v);
-			vg = v->vg_p;
-			if( !vg ) {
-				continue;
-			}
-			NMG_CK_VERTEX_G(vg);
-			VADD2( centroid, centroid, vg->coord );
-			npoints++;
-			if (isfirst) {
-				if( poly_markers) {
-					/* Insert a "start polygon, normal" marker */
-					RT_ADD_VLIST( vhead, normal, RT_VLIST_POLY_START );
-					RT_ADD_VLIST( vhead, vg->coord, RT_VLIST_POLY_MOVE );
-				} else {
-					/* move */
-					RT_ADD_VLIST( vhead, vg->coord, RT_VLIST_LINE_MOVE );
-				}
-				isfirst = 0;
-				first_vg = vg;
+		NMG_CK_VERTEX_G(vg);
+		VADD2( centroid, centroid, vg->coord );
+		npoints++;
+		if (isfirst) {
+			if( poly_markers) {
+				/* Insert a "start polygon, normal" marker */
+				RT_ADD_VLIST( vhead, normal, RT_VLIST_POLY_START );
+				RT_ADD_VLIST( vhead, vg->coord, RT_VLIST_POLY_MOVE );
 			} else {
-				if( poly_markers) {
-					RT_ADD_VLIST( vhead, vg->coord, RT_VLIST_POLY_DRAW );
-				} else {
-					/* Draw */
-					RT_ADD_VLIST( vhead, vg->coord, RT_VLIST_LINE_DRAW );
-				}
+				/* move */
+				RT_ADD_VLIST( vhead, vg->coord, RT_VLIST_LINE_MOVE );
 			}
-		}
-
-		/* Draw back to the first vertex used */
-		if( !isfirst && first_vg )  {
-			if( poly_markers )  {
-				/* Draw, end polygon */
-				RT_ADD_VLIST( vhead, first_vg->coord, RT_VLIST_POLY_END );
+			isfirst = 0;
+			first_vg = vg;
+		} else {
+			if( poly_markers) {
+				RT_ADD_VLIST( vhead, vg->coord, RT_VLIST_POLY_DRAW );
 			} else {
 				/* Draw */
-				RT_ADD_VLIST( vhead, first_vg->coord, RT_VLIST_LINE_DRAW );
+				RT_ADD_VLIST( vhead, vg->coord, RT_VLIST_LINE_DRAW );
 			}
 		}
-		if( poly_markers > 1 && npoints > 2 )  {
-			/* Draw surface normal as a little vector */
-			double	f;
-			vect_t	tocent;
-			f = 1.0 / npoints;
-			VSCALE( centroid, centroid, f );
-			RT_ADD_VLIST( vhead, centroid, RT_VLIST_LINE_MOVE );
-			VSUB2( tocent, first_vg->coord, centroid );
-			f = MAGNITUDE( tocent ) * 0.5;
-			VSCALE( tocent, normal, f );
-			VADD2( centroid, centroid, tocent );
-			RT_ADD_VLIST( vhead, centroid, RT_VLIST_LINE_DRAW );
+	}
+
+	/* Draw back to the first vertex used */
+	if( !isfirst && first_vg )  {
+		if( poly_markers )  {
+			/* Draw, end polygon */
+			RT_ADD_VLIST( vhead, first_vg->coord, RT_VLIST_POLY_END );
+		} else {
+			/* Draw */
+			RT_ADD_VLIST( vhead, first_vg->coord, RT_VLIST_LINE_DRAW );
 		}
+	}
+	if( poly_markers > 1 && npoints > 2 )  {
+		/* Draw surface normal as a little vector */
+		double	f;
+		vect_t	tocent;
+		f = 1.0 / npoints;
+		VSCALE( centroid, centroid, f );
+		RT_ADD_VLIST( vhead, centroid, RT_VLIST_LINE_MOVE );
+		VSUB2( tocent, first_vg->coord, centroid );
+		f = MAGNITUDE( tocent ) * 0.5;
+		VSCALE( tocent, normal, f );
+		VADD2( centroid, centroid, tocent );
+		RT_ADD_VLIST( vhead, centroid, RT_VLIST_LINE_DRAW );
 	}
 }
 
@@ -316,6 +314,7 @@ int			poly_markers;
 {
 	struct faceuse	*fu;
 	struct face_g	*fg;
+	register struct loopuse	*lu;
 	vect_t		normal;
 
 	NMG_CK_SHELL(s);
@@ -328,12 +327,16 @@ int			poly_markers;
 		fg = fu->f_p->fg_p;
 		NMG_CK_FACE_G(fg);
 		if (fu->orientation != OT_SAME)  continue;
-	   	nmg_lu_to_vlist( vhead, &fu->lu_hd, poly_markers, fg->N );
+		for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
+		   	nmg_lu_to_vlist( vhead, lu, poly_markers, fg->N );
+		}
 	}
 
 	/* wire loops.  poly_markers=0 so wires are always drawn as vectors */
 	VSETALL(normal, 0);
-	nmg_lu_to_vlist( vhead, &s->lu_hd, 0, normal );
+	for( RT_LIST_FOR( lu, loopuse, &s->lu_hd ) )  {
+		nmg_lu_to_vlist( vhead, lu, 0, normal );
+	}
 
 	/* wire edges */
 	nmg_eu_to_vlist( vhead, &s->eu_hd );
@@ -1489,12 +1492,12 @@ static struct rt_vlblock *vbp_old;
 static long	*broken_tab;
 static int 	broken_color;
 static unsigned char broken_colors[][3] = {
-	{ 100, 100, 255 },	/* NMG_CLASS_AinB */
-	{ 255,  50,  50 },	/* NMG_CLASS_AonBshared */
-	{ 255,  50, 255 }, 	/* NMG_CLASS_AonBanti */
-	{  50, 255,  50 },	/* NMG_CLASS_AoutB */
-	{ 255, 255, 255 },	/* UNKNOWN */
-	{ 255, 255, 125 }	/* no classification list */
+	{ 100, 100, 255 },	/* NMG_CLASS_AinB (bright blue) */
+	{ 255,  50,  50 },	/* NMG_CLASS_AonBshared (red) */
+	{ 255,  50, 255 }, 	/* NMG_CLASS_AonBanti (magenta) */
+	{  50, 255,  50 },	/* NMG_CLASS_AoutB (bright green) */
+	{ 255, 255, 255 },	/* UNKNOWN (white) */
+	{ 255, 255, 125 }	/* no classification list (cyan) */
 };
 #define PICK_BROKEN_COLOR(type, p) { \
 	if (global_classlist == (long **)NULL) { \
@@ -1716,6 +1719,8 @@ int fancy;
 CONST struct loopuse *lu;
 {
 	register struct edgeuse *eu;
+	struct rt_list	*vh;
+
 	NMG_CK_LOOPUSE(lu);
 
 	if( RT_LIST_FIRST_MAGIC(&lu->down_hd)==NMG_VERTEXUSE_MAGIC )  {
@@ -1727,6 +1732,16 @@ CONST struct loopuse *lu;
 
 	for (RT_LIST_FOR(eu, edgeuse, &lu->down_hd))
 		show_broken_eu(vbp, eu, fancy);
+
+	if (rt_g.NMG_debug & (DEBUG_GRAPHCL|DEBUG_PL_LOOP) ) {
+		/* Draw colored polygons for the actual face loops */
+		/* Faces are not classified, only loops */
+		/* This can obscure the edge/vertex info */
+		PICK_BROKEN_COLOR(face, lu->l_p);
+		vh = rt_vlblock_find( vbp, 
+			broken_colors[broken_color][0], broken_colors[broken_color][1], broken_colors[broken_color][2]);
+		nmg_lu_to_vlist( vh, lu, 1, lu->up.fu_p->f_p->fg_p->N );
+	}
 }
 
 
