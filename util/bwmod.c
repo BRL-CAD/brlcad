@@ -133,7 +133,11 @@ int argc;
 char **argv;
 {
 	int	i, n;
+#ifdef sgi
+	double	*bp;		/* avoid SGI -Zf reg pointer ++ problem */
+#else
 	register double	*bp;
+#endif
 	register double	arg;
 	register int j;
 	long	value;
@@ -169,8 +173,7 @@ char **argv;
 			case POW:
 				bp = &buf[0];
 				for( j = n; j > 0; j-- ) {
-					*bp = pow( *bp, arg );
-					bp++;
+					*bp++ = pow( *bp, arg );
 				}
 				break;
 			case ABS:
