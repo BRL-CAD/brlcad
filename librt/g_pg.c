@@ -836,7 +836,7 @@ double			mm2local;
 		pgp->poly[0].verts[Z] * mm2local );
 	rt_vls_strcat( str, buf );
 
-	if( !verbose )  return;
+	if( !verbose )  return(0);
 
 	/* Print out all the vertices of all the faces */
 	for( i=0; i < pgp->npoly; i++ )  {
