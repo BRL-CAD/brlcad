@@ -1,54 +1,54 @@
 /*
- *	SCCS id:	@(#) vdeck.c	2.7
- *	Last edit: 	12/11/84 at 14:20:06
- *	Retrieved: 	8/13/86 at 08:11:57
- *	SCCS archive:	/m/cad/vdeck/RCS/s.vdeck.c
- *
- *	Author:		Gary S. Moss
- *			U. S. Army Ballistic Research Laboratory
- *			Aberdeen Proving Ground
- *			Maryland 21005
- *			(301)278-6647 or AV-283-6647
+	SCCS id:	@(#) vdeck.c	2.8
+	Last edit: 	1/31/85 at 14:59:28
+	Retrieved: 	8/13/86 at 08:12:21
+	SCCS archive:	/m/cad/vdeck/RCS/s.vdeck.c
+
+	Author:		Gary S. Moss
+			U. S. Army Ballistic Research Laboratory
+			Aberdeen Proving Ground
+			Maryland 21005
+			(301)278-6647 or AV-283-6647
  */
 static
-char	sccsTag[] = "@(#) vdeck.c	2.7	last edit 12/11/84 at 14:20:06";
+char	sccsTag[] = "@(#) vdeck.c	2.8	last edit 1/31/85 at 14:59:28";
 
 /*
- *	Derived from KARDS, written by Keith Applin.
- *
- *	Generate a COM-GEOM card images suitable for input to gift5
- *	(also gift(1V)) from a vged(1V) target description.
- *
- *      There are 3 files generated at a time, the Solid table, Region table,
- *      and Ident table, which when concatenated in that order, make a
- *	COM-GEOM deck.  The record formats in the order that they appear, are
- *	described below, and are strictly column oriented.
- *
- *      Note that the Solid table begins with a Title and a Control card, the
- *	rest of the record types appear once for each object, that is, one
- *	Solid record for each Solid, one Region and one
- *      Ident record for each Region as totaled on the Control card, however,
- *      the Solid and Region records may span more than 1 card.
- *
- * ---------------------------------------------------------------------------
- * File|Record  :             Contents              :       Format           |
- * ----|---------------------------------------------------------------------|
- *  1  |Title   : target_units, title               : a2,3x,a60              |
- *     |Control : #_of_solids, #_of_regions         : i5,i5                  |
- *     |Solid   : sol_#,sol_type,params.,comment    : i5,a5,6f10.0,a10       |
- *     | cont'  : sol_#,parameters,comment          : i5,5x,6f10.0,a10       |
- * ----|---------------------------------------------------------------------|
- *  2  |Region  : reg_#,(op,[sol/reg]_#)*,comment   : i5,1x,9(a2,i5),1x,a10  |
- *     | cont'  : reg_#,(op,[sol/reg]_#)*,comment   : i5,1x,9(a2,i5),1x,a10  |
- * ----|---------------------------------------------------------------------|
- *  3  |Flag    : a -1 marks end of region table    : i5                     |
- *     |Idents  : reg_#,ident,space,mat,%,descriptn : 5i5,5x,a40             |
- * --------------------------------------------------------------------------|
- *
- *	To compile,
- *	               $ make 
- *		   or  $ make install clobber
- *
+	Derived from KARDS, written by Keith Applin.
+
+	Generate a COM-GEOM card images suitable for input to gift5
+	(also gift(1V)) from a vged(1V) target description.
+
+	There are 3 files generated at a time, the Solid table, Region table,
+	and Ident table, which when concatenated in that order, make a
+	COM-GEOM deck.  The record formats in the order that they appear, are
+	described below, and are strictly column oriented.
+
+	Note that the Solid table begins with a Title and a Control card, the
+	rest of the record types appear once for each object, that is, one
+	Solid record for each Solid, one Region and one
+  	Ident record for each Region as totaled on the Control card, however,
+  	the Solid and Region records may span more than 1 card.
+
+----------------------------------------------------------------------------
+|File|Record  :             Contents              :       Format           |
+|----|---------------------------------------------------------------------|
+| 1  |Title   : target_units, title               : a2,3x,a60              |
+|    |Control : #_of_solids, #_of_regions         : i5,i5                  |
+|    |Solid   : sol_#,sol_type,params.,comment    : i5,a5,6f10.0,a10       |
+|    | cont'  : sol_#,parameters,comment          : i5,5x,6f10.0,a10       |
+|----|---------------------------------------------------------------------|
+| 2  |Region  : reg_#,(op,[sol/reg]_#)*,comment   : i5,1x,9(a2,i5),1x,a10  |
+|    | cont'  : reg_#,(op,[sol/reg]_#)*,comment   : i5,1x,9(a2,i5),1x,a10  |
+|----|---------------------------------------------------------------------|
+| 3  |Flag    : a -1 marks end of region table    : i5                     |
+|    |Idents  : reg_#,ident,space,mat,%,descriptn : 5i5,5x,a40             |
+|--------------------------------------------------------------------------|
+
+	To compile,
+	               $ make 
+		   or  $ make install clobber
+
  */
 #include <stdio.h>
 #include <signal.h>
@@ -69,7 +69,7 @@ char			regBuffer[BUFSIZ], *regBufPtr;
 				for( i = 0; i < (xx); i++ ) *s++ = ' ';\
 			  }
 
-/*	==== m a i n ( )
+/*	m a i n ( )
  */
 main( argc, argv )	char	*argv[];
 {
@@ -83,14 +83,13 @@ main( argc, argv )	char	*argv[];
 	builddir();	/* Build directory from object file.	 	*/
 	toc();		/* Build table of contents from directory.	*/
 
-	/* C o m m a n d   I n t e r p r e t e r
-	 */
+	/*      C o m m a n d   I n t e r p r e t e r			*/
 	setjmp( env );	/* Point of re-entry from aborted command.	*/
 	prompt( "%s", CMD_PROMPT );	
 	while( 1 ) {
 		/* Return to default interrupt handler after every command,
-		 * allows exit from program only while command interpreter
-		 * is waiting for input from keyboard.
+		 allows exit from program only while command interpreter
+		 is waiting for input from keyboard.
 		 */
 		signal( SIGINT, quit );
 
@@ -153,7 +152,7 @@ main( argc, argv )	char	*argv[];
 			shell( arg_list );
 			break;
 		case SORT_TOC:
-			sort( toc_list, toc_ct );
+			sort( toc_list, ndir );
 			break;
 		case TOC:
 			list_toc( arg_list );
@@ -170,8 +169,8 @@ main( argc, argv )	char	*argv[];
 	}
 }
 
-/*	==== c g o b j ( )
- *	Build deck for object pointed to by 'dp'.
+/*	c g o b j ( )
+	Build deck for object pointed to by 'dp'.
  */
 cgobj(	   dp, pathpos, old_xlate )
 register
@@ -204,7 +203,7 @@ matp_t	old_xlate;
 	lseek( objfd, dp->d_addr, 0 );
 	readF( objfd, &rec, sizeof rec );
 
-	if( rec.u_id == COMB )  { /* We have a group.			*/
+	if( rec.u_id == ID_COMB )  { /* We have a group.		*/
 		if( regflag > 0 ) {
 			/* record is part of a region
 			 */
@@ -227,8 +226,7 @@ matp_t	old_xlate;
 				return;
 			}
 
-			/* check for end of line in region table
-			 */
+			/* Check for end of line in region table.	*/
 			if(	(isave % 9 ==  1 && isave >  1)
 			    ||	(isave % 9 == -1 && isave < -1) )
 			{
@@ -239,8 +237,7 @@ matp_t	old_xlate;
 			regBufPtr += 3;
 			RgOffset = (long)(regBufPtr - regBuffer);
 
-			/* check if this region is in desc yet
-			 */
+			/* Check if this region is in desc yet		*/
 			lseek( rd_rrfd, 0L, 0 );
 			for( j = 1; j <= nnr; j++ ) {
 				readF( rd_rrfd, name, 16 );
@@ -260,8 +257,7 @@ matp_t	old_xlate;
 					exit( 10 );
 				}
 
-				/* add to list of regions to look up later
-				 */
+				/* Add to list of regions to look up.	*/
 				findrr[numrr].rr_pos = lseek(	regfd,
 								0L,
 								1
@@ -272,8 +268,7 @@ matp_t	old_xlate;
 				putSpaces( regBufPtr, 4 );
 			}
 
-			/* check for end of this region
-			 */
+			/* Check for end of this region.		*/
 			if( isave < 0 ) { int	n;
 				isave = -isave;
 				regflag = 0;
@@ -288,26 +283,21 @@ matp_t	old_xlate;
 		regflag = 0;
 		nparts = rec.c.c_length;
 		if( rec.c.c_flags == 'R') {
-			/* record is a region but not member of a region
-			 */
+			/* Record is region but not member of a region.	*/
 			regflag = 1;
 			nnr++;
 
-			/* dummy region
-			 */
+			/* dummy region */
 			if( nparts == 0 )	regflag = 0;
 
-			/* save the region name
-			 */
+			/* Save the region name.			*/
 			strncpy( buff, rec.c.c_name, 16 );
 
-			/* start new region
-			 */
+			/* Start new region.				*/
 			sprintf( regBufPtr, "%5d ", nnr+delreg );
 			regBufPtr += 6;
 
-			/* check for dummy region
-			 */
+			/* Check for dummy region.			*/
 			if( nparts == 0 ) { int	n;
 				n = 69 - (regBufPtr - regBuffer);
 				putSpaces( regBufPtr, n );
@@ -315,17 +305,15 @@ matp_t	old_xlate;
 				regflag = 0;
 			}
 
-			/* add region to list of regions in desc
-			 */
+			/* Add region to list of regions in desc.	*/
 			lseek( rrfd, 0L, 2 );
 			write( rrfd, rec.c.c_name, 16 );
 
-			/* check for any OR
-			 */
+			/* Check for any OR.				*/
 			orflag = 0;
 			if( nparts > 1 ) {
-				/* first OR doesn't count, throw away
-				 * first member
+				/* First OR doesn't count, throw away
+					first member.
 				 */
 				readF( objfd, &rec, sizeof rec );
 				for( i = 2; i <= nparts; i++ ) {
@@ -339,8 +327,7 @@ matp_t	old_xlate;
 				readF( objfd, &rec, sizeof rec );
 			}
 
-			/* write region ident table
-			 */
+			/* Write region ident table.			*/
 			itoa( nnr+delreg, buf, 5 );
 			itoa( rec.c.c_regionid,	&buf[5], 5 );
 			itoa( rec.c.c_aircode, &buf[10], 5 );
@@ -383,8 +370,7 @@ matp_t	old_xlate;
 			readF( objfd, &rec, sizeof rec );
 			mp = &rec.M;
  
-			/* save this operation
-			 */
+			/* Save this operation.				*/
 			operate = mp->m_relation;
  
 			path[pathpos] = dp;
@@ -392,17 +378,16 @@ matp_t	old_xlate;
 				lookup( mp->m_instname, NOISY )) == DIR_NULL )
 				continue;
 			if( mp->m_brname[0] != 0 )  {
-				/* Create an alias.
-				 * First step towards full branch naming.
-				 * User is responsible for his branch names
-				 * being unique.
+				/* Create an alias.  First step towards
+					full branch naming.  User is
+					responsible for his branch names
+				 	being unique.
 				 */
 				if(	(tdp =
 					lookup( mp->m_brname, QUIET ))
 				     !=	DIR_NULL
 					)
-					/* use existing alias
-					 */
+					/* Use existing alias.		*/
 					nextdp = tdp;
 				else	nextdp = diradd(mp->m_brname,
 							nextdp->d_addr );
@@ -417,9 +402,8 @@ matp_t	old_xlate;
 		return;
 	}
 
-	/* N O T  a  C O M B I N A T I O N  record
-	 */
-	if( rec.u_id != SOLID && rec.u_id != ARS_A ) {
+	/* N O T  a  C O M B I N A T I O N  record.			*/
+	if( rec.u_id != ID_SOLID && rec.u_id != ID_ARS_A ) {
 		fprintf( stderr,
 			"Bad input: should have a 'S' or 'A' record, " );
 		fprintf( stderr,
@@ -427,60 +411,55 @@ matp_t	old_xlate;
 		exit( 10 );
 	}
 
-	/* now have proceeded down branch to a solid
-	 *
-	 * if regflag = 1  add this solid to present region
-         * if regflag = 0  solid not defined as part of a region
-	 *		   make new region if scale != 0 
-	 *
-	 * if orflag = 1   this region has or's
-	 * if orflag = 0   none
-	 */
-	if( old_xlate[15] < .0001 ) {     /* do not add solid */
+	/* Now have proceeded down branch to a solid
+	
+		if regflag = 1  add this solid to present region
+		if regflag = 0  solid not defined as part of a region
+				make new region if scale != 0 
+	
+		if orflag = 1   this region has or's
+		if orflag = 0   no
+	*/
+	if( old_xlate[15] < .0001 ) { /* Do not add solid.		*/
 		lseek( objfd, savepos, 0 );
 		return;
 	}
 
-	/* fill ident struct
-	 */
-	mat_copy( ident.i_mat, old_xlate );
-	strncpy( ident.i_name, rec.s.s_name, 16 );
+	/* Fill ident struct.						*/
+	mat_copy( d_ident.i_mat, old_xlate );
+	strncpy( d_ident.i_name, rec.s.s_name, 16 );
 	strncpy(     ars_name, rec.s.s_name, 16 );
 	
-	/* calculate first look discriminator for this solid
-	 */
+	/* Calculate first look discriminator for this solid.		*/
 	dchar = 0;
 	for( i = 0; i < 16; i++ ) {
 		if( rec.s.s_name[i] == 0 )	break;
 		dchar += (rec.s.s_name[i] << (i&7));
 	}
 
-	/* quick check if solid already in solid table
-	 */
+	/* Quick check if solid already in solid table.			*/
 	nnt = 0;
 	for( i = 0; i < nns; i++ ) {
 		if( dchar == discr[i] ) {
-			/* quick look match - check further
-			 */
-			lseek( rd_idfd, ((long)i) * sizeof ident, 0);
-			readF( rd_idfd, &idbuf, sizeof ident );
-			ident.i_index = i + 1;
-			if( check( &ident, &idbuf ) == 1 ) {
-				/*really is an old solid
-				 */
+			/* Quick look match - check further.		*/
+			lseek( rd_idfd, ((long)i) * sizeof d_ident, 0);
+			readF( rd_idfd, &idbuf, sizeof d_ident );
+			d_ident.i_index = i + 1;
+			if( check( &d_ident, &idbuf ) == 1 ) {
+				/* Really is an old solid.		*/
 				nnt = i + 1;
 				goto notnew;
 			}
-			/* false alarm - keep looking for
-			 * quick look matches */
+			/* False alarm - keep looking for quick look
+				matches.
+			 */
 		}
 	}
 
-	/* new solid
-	 */
+	/* New solid.							*/
 	discr[nns] = dchar;
 	nns++;
-	ident.i_index = nns;
+	d_ident.i_index = nns;
 
 	if( nns > MAXSOL ) {
 		fprintf( stderr,
@@ -489,19 +468,16 @@ matp_t	old_xlate;
 		exit( 10 );
 	}
 
-	/* write ident struct at end of idfd file
-	 */
+	/* Write ident struct at end of idfd file.			*/
 	lseek( idfd, 0L, 2 );
-	write( idfd, &ident, sizeof ident );
+	write( idfd, &d_ident, sizeof d_ident );
 	nnt = nns;
 
-	/* process this solid
-	 */
+	/* Process this solid.						*/
 	mat_copy( xform, old_xlate );
 	mat_copy( notrans, xform );
 
-	/* notrans = homogeneous matrix with a zero translation vector
-	 */
+	/* Notrans = homogeneous matrix with a zero translation vector.	*/
 	notrans[3]  = notrans[7]  = notrans[11] = 0.0;
 
 	/* Write solid #.						*/
@@ -531,15 +507,13 @@ matp_t	old_xlate;
 		exit( 10 );
 	}
 
-notnew:	/* sent here if solid already in solid table
-	 */
-	/* finished with solid
-	 */
-	/* put solid in present region if regflag == 1
-	 */
+notnew:	/* Sent here if solid already in solid table.			*/
+	/* Finished with solid.						*/
+	/* Put solid in present region if regflag == 1.			*/
 	if( regflag == 1 ) {
-		/* isave = number of this solid in this region
-		 * if negative then is the last solid in this region */
+		/* isave = number of this solid in this region, if
+			negative then is the last solid in this region.
+		 */
 		if(	(isave % 9 ==  1 && isave >  1)
 		    ||	(isave % 9 == -1 && isave < -1) ) { int	n;
 			/* New line.					*/
@@ -569,8 +543,8 @@ notnew:	/* sent here if solid already in solid table
 			endRegion( buff );
 		}
 	} else if( old_xlate[15] > 0.0001 ) {
-		/* solid not part of a region
-		 * make solid into region if scale > 0
+		/* Solid not part of a region, make solid into region
+			if scale > 0
 		 */
 		++nnr;
 		sprintf( regBufPtr, "%5d%8d", nnr+delreg, nnt+delsol );
@@ -582,7 +556,7 @@ notnew:	/* sent here if solid already in solid table
 		write( ridfd, buf, 5 );
 
 		/* Values for item, space, material and percentage are
-		 * meaningless at this point.
+			meaningless at this point.
 		 */
 		(void) write( ridfd, "    0", 5 );
 		(void) write( ridfd, "    0", 5 );
@@ -610,8 +584,7 @@ notnew:	/* sent here if solid already in solid table
 			);
 		} else	write( ridfd, buf, bp - buf );
 
-		if( rec.u_id == ARS_B ) {	/* ars extension record
-						 */
+		if( rec.u_id == ID_ARS_B ) { /* Ars extension record.	*/
 			prompt( "/%s", ars_name );
 			write( ridfd, ars_name, strlen( ars_name ) );
 		} else	{
@@ -633,54 +606,8 @@ notnew:	/* sent here if solid already in solid table
 	return;
 }
 
-/*	==== p s p ( )
- *	Print solid parameters  -  npts points or vectors.
- */
-psp(	npts,  rec )
-register
-int	npts;
-register
-Record *rec;
-{
-	register int	i, j, k, jk;
-	char		buf[60];
-
-	j = jk = 0;
-	for( i = 0; i < npts*3; i += 3 )  {
-		/* Write 3 points.					*/
-		for( k = i; k <= i+2; k++ ) {
-			ftoascii( rec->s.s_values[k], &buf[jk*10], 10, 4 );
-			++jk;
-		}
-
-		if( (++j & 01) == 0 ) {
-			/* end of line
-			 */
-			write( solfd, buf, 60 );
-			jk = 0;
-			write(	solfd,
-				rec->s.s_name,
-				strlen( rec->s.s_name )
-			);
-			write( solfd, LF, 1 );
-			if( i != (npts-1)*3 ) {   /* new line */
-				itoa( nns+delsol, buf, 5 );
-				write( solfd, buf, 5 );
-				blank_fill( solfd, 5 );
-			}
-		}
-	}	
-	if( (j & 01) == 1 ) {   /* finish off rest of line */
-		for( k = 30; k <= 60; k++ )	buf[k] = ' ';
-		write( solfd, buf, 60 );
-		write( solfd, rec->s.s_name, strlen( rec->s.s_name ) );
-		write( solfd, LF, 1 );
-	}
-	return;
-}
-
-/*	==== a d d t o r ( )
- *	Process torus.
+/*	a d d t o r ( )
+	Process torus.
  */
 addtor( rec )
 register
@@ -720,8 +647,8 @@ Record *rec;
 	return;
 }
 
-/*	==== a d d a r b ( )
- *	Process generalized arb.
+/*	a d d a r b ( )
+	Process generalized arb.
  */
 addarb( rec )
 register
@@ -822,8 +749,8 @@ Record *rec;
 	return;
 }
 
-/*	==== a d d e l l ( )
- *	Process the general ellipsoid.
+/*	a d d e l l ( )
+	Process the general ellipsoid.
  */
 addell( rec )
 register
@@ -909,8 +836,8 @@ Record *rec;
 	return;
 }
 
-/*	==== a d d t g c ( )
- *	Process generalized truncated cone.
+/*	a d d t g c ( )
+	Process generalized truncated cone.
  */
 addtgc( rec )
 register
@@ -1015,8 +942,8 @@ Record *rec;
 	return;
 }
 
-/*	==== a d d a r s ( )
- *	Process triangular surfaced polyhedron - ars.
+/*	a d d a r s ( )
+	Process triangular surfaced polyhedron - ars.
  */
 addars( rec )
 register
@@ -1082,8 +1009,55 @@ Record *rec;
 	return;
 }
 
-/*	==== p a r s p ( )
- *	Print npts points of an ars.
+/*	p s p ( )
+	Print solid parameters  -  npts points or vectors.
+ */
+psp(	npts,  rec )
+register
+int	npts;
+register
+Record *rec;
+{
+	register int	i, j, k, jk;
+	char		buf[60];
+
+	j = jk = 0;
+	for( i = 0; i < npts*3; i += 3 )  {
+		/* Write 3 points.					*/
+		for( k = i; k <= i+2; k++ ) {
+			rec->s.s_values[k] *= unit_conversion;
+			ftoascii( rec->s.s_values[k], &buf[jk*10], 10, 4 );
+			++jk;
+		}
+
+		if( (++j & 01) == 0 ) {
+			/* end of line
+			 */
+			write( solfd, buf, 60 );
+			jk = 0;
+			write(	solfd,
+				rec->s.s_name,
+				strlen( rec->s.s_name )
+			);
+			write( solfd, LF, 1 );
+			if( i != (npts-1)*3 ) {   /* new line */
+				itoa( nns+delsol, buf, 5 );
+				write( solfd, buf, 5 );
+				blank_fill( solfd, 5 );
+			}
+		}
+	}	
+	if( (j & 01) == 1 ) {   /* finish off rest of line */
+		for( k = 30; k <= 60; k++ )	buf[k] = ' ';
+		write( solfd, buf, 60 );
+		write( solfd, rec->s.s_name, strlen( rec->s.s_name ) );
+		write( solfd, LF, 1 );
+	}
+	return;
+}
+
+/*	p a r s p ( )
+	Print npts points of an ars.
  */
 parsp(	npts,	 rec )
 register
@@ -1107,6 +1081,7 @@ Record	*rec;
 		 */
 		for( k = i; k <= i+2; k++ ) {
 			++jk;
+			rec->b.b_values[k] *= unit_conversion;
 			ftoascii(	rec->b.b_values[k],
 					&bufout[jk*10],
 					10,
@@ -1130,8 +1105,8 @@ Record	*rec;
 	return;
 }
 
-/*	==== m a t _ z e r o ( )
- *	Fill in the matrix "m" with zeros.
+/*	m a t _ z e r o ( )
+	Fill in the matrix "m" with zeros.
  */
 mat_zero(	m )
 register matp_t m;
@@ -1143,7 +1118,7 @@ register matp_t m;
 }
 
 /*	m a t _ i d n ( )
- *	Fill in the matrix "m" with an identity matrix.
+	Fill in the matrix "m" with an identity matrix.
  */
 mat_idn(	m )
 register matp_t m;
@@ -1152,8 +1127,8 @@ register matp_t m;
 	m[0] = m[5] = m[10] = m[15] = 1;
 }
 
-/*	==== m a t _ c o p y ( )
- *	Copy the matrix "im" into the matrix "om".
+/*	m a t _ c o p y ( )
+	Copy the matrix "im" into the matrix "om".
  */
 mat_copy(	om, im )
 register matp_t om, im;
@@ -1165,10 +1140,10 @@ register matp_t om, im;
 }
 
 
-/*	==== m a t _ m u l ( )
- *	Multiply matrix "im1" by "im2" and store the result in "om".
- *	NOTE:  This is different from multiplying "im2" by "im1" (most
- *	of the time!)
+/*	m a t _ m u l ( )
+	Multiply matrix "im1" by "im2" and store the result in "om".
+	NOTE:  This is different from multiplying "im2" by "im1" (most
+	of the time!)
  */
 mat_mul(	om, im1, im2 )
 register matp_t om, im1, im2;
@@ -1190,9 +1165,9 @@ register matp_t om, im1, im2;
 	}
 }
 
-/*	==== m a t X v e c ( )
- *	Multiply the vector "iv" by the matrix "im" and store the result
- *	in the vector "ov".
+/*	m a t X v e c ( )
+	Multiply the vector "iv" by the matrix "im" and store the result
+	in the vector "ov".
  */
 matXvec( op, mp, vp )
 register vectp_t op;
@@ -1213,7 +1188,7 @@ register vectp_t vp;
 	}
 }
 
-/*	==== v t o h _ m o v e ( )
+/*	v t o h _ m o v e ( )
  */
 vtoh_move(	h, v)
 register float *h,*v;
@@ -1224,7 +1199,7 @@ register float *h,*v;
 	*h++ = 1.;
 }
 
-/*	==== h t o v _ m o v e ( )
+/*	h t o v _ m o v e ( )
  */
 htov_move(	v, h )
 register float *v,*h;
@@ -1243,8 +1218,8 @@ register float *v,*h;
 	}
 }
 
-/*	==== p r o m p t ( )
- *	Flush stdout after the printf.
+/*	p r o m p t ( )
+	Flush stdout after the printf.
  */
 #ifndef prompt
 prompt( a0, a1, a2, a3, a4, a5, a6, a7, a8, a9 )
@@ -1254,8 +1229,8 @@ prompt( a0, a1, a2, a3, a4, a5, a6, a7, a8, a9 )
 }
 #endif
 
-/*	==== r e a d F ( )
- *	Read with error checking and debugging.
+/*	r e a d F ( )
+	Read with error checking and debugging.
  */
 readF(	fd, buf, bytes )
 int	fd,	 bytes;
