@@ -158,6 +158,14 @@ if {![info exists mged_default(zclip)]} {
 	set mged_default(zclip) 1
 }
 
+if {![info exists mged_default(zbuffer)]} {
+	set mged_default(zbuffer) 1
+}
+
+if {![info exists mged_default(lighting)]} {
+	set mged_default(lighting) 0
+}
+
 if {![info exists mged_default(perspective_mode)]} {
 	set mged_default(perspective_mode) 0
 }

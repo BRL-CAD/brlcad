@@ -20,24 +20,32 @@ proc openmv { id w wc dpy dtype } {
 
     attach -d $dpy -t 0 -n $w.ul $dtype
     dm set zclip $mged_default(zclip)
+    dm set zbuffer $mged_default(zbuffer)
+    dm set lighting $mged_default(lighting)
     set faceplate $mged_default(faceplate)
     set orig_gui $mged_default(orig_gui)
     set perspective_mode $mged_default(perspective_mode)
 
     attach -d $dpy -t 0 -n $w.ur $dtype
     dm set zclip $mged_default(zclip)
+    dm set zbuffer $mged_default(zbuffer)
+    dm set lighting $mged_default(lighting)
     set faceplate $mged_default(faceplate)
     set orig_gui $mged_default(orig_gui)
     set perspective_mode $mged_default(perspective_mode)
 
     attach -d $dpy -t 0 -n $w.ll $dtype
     dm set zclip $mged_default(zclip)
+    dm set zbuffer $mged_default(zbuffer)
+    dm set lighting $mged_default(lighting)
     set faceplate $mged_default(faceplate)
     set orig_gui $mged_default(orig_gui)
     set perspective_mode $mged_default(perspective_mode)
 
     attach -d $dpy -t 0 -n $w.lr $dtype
     dm set zclip $mged_default(zclip)
+    dm set zbuffer $mged_default(zbuffer)
+    dm set lighting $mged_default(lighting)
     set faceplate $mged_default(faceplate)
     set orig_gui $mged_default(orig_gui)
     set perspective_mode $mged_default(perspective_mode)
