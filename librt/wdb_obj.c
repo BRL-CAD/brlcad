@@ -194,7 +194,6 @@ char		**argv;
 {
 	struct wdb_obj *wdbop;
 	struct rt_wdb	*wdbp;
-	char		buf[32];
 
 	if (argc == 1) {
 		/* get list of database objects */
@@ -310,8 +309,6 @@ wdb_prep_dbip(interp, filename)
 	/* open database */
 	if (((dbip = db_open(filename, "r+w")) == DBI_NULL ) &&
 	    ((dbip = db_open(filename, "r"  )) == DBI_NULL )) {
-		char line[128];
-
 		/*
 		 * Check to see if we can access the database
 		 */
@@ -705,7 +702,6 @@ char	      **argv;
 	struct application	*ap;
 	struct resource		*resp;
 	char		*newprocname;
-	char		buf[64];
 
 	RT_CK_WDB_TCL(interp, wdp);
 	RT_CK_DBI_TCL(interp, wdp->dbip);

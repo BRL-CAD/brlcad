@@ -50,7 +50,7 @@ fastf_t epsilon;
 {
 	struct face_g_snurb * us, *vs, * uus, * vvs, *uvs;
 	fastf_t d1,d2,d3;
-	int i,j;
+	int i;
 	fastf_t *pt;
 	
 

@@ -1049,7 +1049,7 @@ genptr_t	arg;
 {
 	int	pixel_start;
 	int	pixelnum;
-	register struct floatpixel	*ip, *op;
+	register struct floatpixel	*ip;
 	int	count = 0;
 
 	/* The more CPUs at work, the bigger the bites we take */

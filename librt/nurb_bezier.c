@@ -139,8 +139,7 @@ struct edge_g_cnurb *crv;
 {
 	fastf_t knot_min, knot_max;
 	int i;
-	int bezier=1;
-	struct edge_g_cnurb *crv1, *crv2, *crv_copy;
+	struct edge_g_cnurb *crv1, *crv_copy;
 	int done;
 
 	/* make a copy of original curve */

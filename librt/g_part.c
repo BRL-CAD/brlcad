@@ -1079,7 +1079,6 @@ CONST struct bn_tol		*tol;
 	LOCAL mat_t	invS;
 	LOCAL vect_t	zz;
 	LOCAL vect_t	hcenter;
-	LOCAL fastf_t	f;
 	struct part_state	state;
 	register int		i;
 	fastf_t		radius;

@@ -2109,12 +2109,12 @@ long		*magic_p;
 
 	/* Sanity check */
 	if( old && eg )  {
+#if 0
 		vect_t		dir_src;
 		vect_t		dir_dest;
 		fastf_t		deg;
 		double		cos_ang;
 
-#if 0
 		VMOVE( dir_src, old->e_dir );
 		VUNITIZE( dir_src );
 		VMOVE( dir_dest, eg->e_dir );

@@ -199,7 +199,6 @@ struct rt_pm_res *pmem;
 	register struct overhead *p, *q;
 	register struct rt_qelem *bucket;
 	register Size surplus;
-Size orig_size=nbytes;
 
 	nbytes = ((nbytes + (NALIGN-1)) & ~(NALIGN-1))
 		+ sizeof(struct overhead);

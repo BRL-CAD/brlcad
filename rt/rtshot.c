@@ -239,7 +239,6 @@ register struct application *ap;
 struct partition *PartHeadp;
 {
 	register struct partition *pp;
-	register struct hit *hitp;
 	register struct soltab *stp;
 	struct curvature cur;
 	fastf_t out;
