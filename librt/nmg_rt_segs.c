@@ -21,9 +21,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include "machine.h"
 #include "vmath.h"
-#include "raytrace.h"
 #include "nmg.h"
-#include "nmg_rt.h"
+#include "raytrace.h"
+#include "./nmg_rt.h"
 
 /*	EDGE-FACE correlation data
  * 	used in edge_hit() for 3manifold case
@@ -55,6 +55,34 @@ struct structparse hit_parsetab[] = {
 {"", 0, (char *)NULL,	  0,			  FUNC_NULL}
 };
 
+static
+print_seg_list(seghead)
+struct seg *seghead;
+{
+	struct seg *seg_p;
+
+	/* print debugging data before returning */
+	for (RT_LIST_FOR(seg_p, seg, &seghead->l) ) {
+		rt_log("dist %g  pt(%g,%g,%g)  N(%g,%g,%g)  =>  ",
+		seg_p->seg_in.hit_dist,
+		seg_p->seg_in.hit_point[0],
+		seg_p->seg_in.hit_point[1],
+		seg_p->seg_in.hit_point[2],
+		seg_p->seg_in.hit_normal[0],
+		seg_p->seg_in.hit_normal[1],
+		seg_p->seg_in.hit_normal[2]);
+		rt_log("dist %g  pt(%g,%g,%g)  N(%g,%g,%g)\n",
+		seg_p->seg_out.hit_dist,
+		seg_p->seg_out.hit_point[0],
+		seg_p->seg_out.hit_point[1],
+		seg_p->seg_out.hit_point[2],
+		seg_p->seg_out.hit_normal[0],
+		seg_p->seg_out.hit_normal[1],
+		seg_p->seg_out.hit_normal[2]);
+	}
+}
+
+
 /*
  *	We know we've hit a wire.  Make the appropriate 0-length segment.
  *	The caller is responsible for removing the hit point from the hitlist.
@@ -64,7 +92,7 @@ wire_hit(e_p, seg_p, rp, a_hit)
 struct edge	*e_p;
 struct seg	*seg_p;
 struct xray	*rp;
-struct hitlist	*a_hit;
+struct hitmiss	*a_hit;
 {
 
 	vect_t eray;
@@ -163,8 +191,10 @@ vect_t left_vect;
 		 NMG_CK_FACE_G(tmp.eu->up.lu_p->up.fu_p->f_p->fg_p);
 
 		fg_p = tmp.eu->up.lu_p->up.fu_p->f_p->fg_p;
-	    	rt_log("\n");
-		HPRINT("face_normal", fg_p->N);
+		if (rt_g.NMG_debug & DEBUG_NMGRT) {
+		    	rt_log("\n");
+			HPRINT("face_normal", fg_p->N);
+		}
 	    	
 	    	if (tmp.eu->up.lu_p->up.fu_p->orientation == OT_SAME)
 	    		teu = tmp.eu;
@@ -181,8 +211,9 @@ vect_t left_vect;
 	    	}
 		VUNITIZE(face_vect);
 
-		VPRINT("face_vect", face_vect);
-
+	    	if (rt_g.NMG_debug & DEBUG_NMGRT) {
+			VPRINT("face_vect", face_vect);
+	    	}
 		/* figure out if this is one of the prime edgeuses */
 		tmp.fdotr = VDOT(face_vect, rp->r_dir);
 		tmp.fdotl = VDOT(face_vect, left_vect);
@@ -193,8 +224,8 @@ vect_t left_vect;
 		prime_uses[a].ndotr = tmp.ndotr;	\
 		prime_uses[a].eu = tmp.eu
 
-	    	rt_structprint("tmp", ef_parsetab, (char *)&tmp);
-	    	
+	    	if (rt_g.NMG_debug & DEBUG_NMGRT)
+		    	rt_structprint("tmp", ef_parsetab, (char *)&tmp);
 
 		if (tmp.fdotl >= 0.0) {
 			/* face is on "left" of ray */
@@ -267,7 +298,7 @@ struct vertex	*v_p;
 struct seg	*seg_p;
 struct xray	*rp;
 char		*tbl;
-struct hitlist	*a_hit;
+struct hitmiss	*a_hit;
 int		filled;
 {
 
@@ -468,7 +499,7 @@ int		filled;
 static void
 edge_ray_graze(a_hit, seg_p, i_u, in, out, s)
 struct seg	*seg_p;
-struct hitlist	*a_hit;
+struct hitmiss	*a_hit;
 struct ef_data i_u[8];	/* "important" uses of edge */
 int in, out;
 char *s;
@@ -497,7 +528,7 @@ char *s;
 static void
 edge_enter_solid(a_hit, seg_p, i_u)
 struct seg	*seg_p;
-struct hitlist	*a_hit;
+struct hitmiss	*a_hit;
 struct ef_data *i_u;	/* "important" uses of edge */
 {
 
@@ -555,7 +586,7 @@ struct ef_data *i_u;	/* "important" uses of edge */
 static void
 edge_zero_depth_hit(a_hit, seg_p, i_u)
 struct seg	*seg_p;
-struct hitlist	*a_hit;
+struct hitmiss	*a_hit;
 struct ef_data *i_u;	/* "important" uses of edge */
 {
 
@@ -603,7 +634,7 @@ struct ef_data *i_u;	/* "important" uses of edge */
 static void
 edge_leave_solid(a_hit, seg_p, i_u)
 struct seg	*seg_p;
-struct hitlist	*a_hit;
+struct hitmiss	*a_hit;
 struct ef_data *i_u;	/* "important" uses of edge */
 {
 
@@ -639,7 +670,7 @@ struct ef_data *i_u;	/* "important" uses of edge */
 
 static void
 edge_confusion(a_hit, i_u, file, line)
-struct hitlist	*a_hit;
+struct hitmiss	*a_hit;
 struct ef_data i_u[8];	/* "important" uses of edge */
 char *file;
 int line;
@@ -679,7 +710,7 @@ struct edge	*e_p;
 struct seg	*seg_p;
 struct xray	*rp;
 char		*tbl;
-struct hitlist	*a_hit;
+struct hitmiss	*a_hit;
 int		filled;
 {
 
@@ -936,7 +967,7 @@ struct face	*f_p;
 struct seg	*seg_p;
 struct xray	*rp;
 char		*tbl;
-struct hitlist	*a_hit;
+struct hitmiss	*a_hit;
 int		filled;
 {
 
@@ -992,7 +1023,7 @@ int		filled;
 
 static int
 build_segs(hl, ap, nmg_spec, seghead, rp, stp)
-struct hitlist		*hl;
+struct hitmiss		*hl;
 struct application	*ap;
 struct nmg_specific	*nmg_spec;
 struct seg		*seghead;	/* intersection w/ ray */
@@ -1002,7 +1033,7 @@ struct soltab		*stp;
 
 	struct seg *seg_p;
 	int seg_count=0;
-	struct hitlist *a_hit;
+	struct hitmiss *a_hit;
 	char *tbl;
 	int hits_filled;
 
@@ -1013,18 +1044,18 @@ struct soltab		*stp;
 
 	while (RT_LIST_NON_EMPTY(&hl->l) ) {
 	    RT_GET_SEG(seg_p, ap->a_resource);
-
 	    RT_CK_SEG(seg_p);
-
 	    seg_p->seg_stp = stp;
 
 	    hits_filled = 0;
 
 	    while (hits_filled < 2 ) {
-	    	if (RT_LIST_IS_EMPTY(&hl->l) && hits_filled > 0)
+	    	if (RT_LIST_IS_EMPTY(&hl->l) && hits_filled > 0) {
+	    		rt_log("empty list?\n");
+	    		print_seg_list(seghead);
 	    		rt_bomb("Infinite NMG?");
-	    	
-		a_hit = RT_LIST_FIRST(hitlist, &hl->l);
+	    	}
+		a_hit = RT_LIST_FIRST(hitmiss, &hl->l);
 
 		if (rt_g.NMG_debug & DEBUG_NMGRT) {
 			rt_log("build_seg w/ ray_hit_distance %g (%g %g %g)",
@@ -1091,23 +1122,27 @@ struct seg		*seghead;	/* intersection w/ ray */
 struct nmg_specific	*nmg_spec;
 {
 
-	struct hitlist *hl, *a_hit;
+	struct hitmiss *hl, *a_hit;
 	struct seg *seg_p;
 	int seg_count=0;
 
+/*	rt_g.NMG_debug = rt_g.NMG_debug | DEBUG_NMGRT;
+	rt_log("============================ New Ray ===================================\n");
+	rt_log("Screen pos(%d %d)\n", ap->a_x, ap->a_y);
+
 	/* Shoot the ray */
-	hl = nmg_isect_ray(rp, nmg_spec->nmg_invdir, nmg_spec->nmg_model,
-		&ap->a_rt_i->rti_tol);
-		
+	hl = nmg_isect_ray_model(rp, nmg_spec->nmg_invdir,
+		nmg_spec->nmg_model, &ap->a_rt_i->rti_tol);
+
+
 	if (! hl || RT_LIST_IS_EMPTY(&hl->l)) {
 		if (rt_g.NMG_debug & DEBUG_NMGRT)
 			rt_log("ray missed NMG\n");
 		return(0);			/* MISS */
-	}
+	} else /* if (rt_g.NMG_debug & DEBUG_NMGRT) */{
 
-	if (rt_g.NMG_debug & DEBUG_NMGRT) {
 		rt_log("\nsorted nmg/ray hit list\n");
-		for (RT_LIST_FOR(a_hit, hitlist, &hl->l)) {
+		for (RT_LIST_FOR(a_hit, hitmiss, &hl->l)) {
 			rt_log("ray_hit_distance %g (%g %g %g)",
 				a_hit->hit.hit_dist,
 				a_hit->hit.hit_point[0],
@@ -1130,28 +1165,8 @@ struct nmg_specific	*nmg_spec;
 		return(seg_count);
 
 	/* print debugging data before returning */
-	rt_log("segment list (%d)\n", seg_count);
-	for (RT_LIST_FOR(seg_p, seg, &seghead->l) ) {
-		rt_log("dist %g  pt(%g,%g,%g)  N(%g,%g,%g)  =>  ",
-		seg_p->seg_in.hit_dist,
-		seg_p->seg_in.hit_point[0],
-		seg_p->seg_in.hit_point[1],
-		seg_p->seg_in.hit_point[2],
-		seg_p->seg_in.hit_normal[0],
-		seg_p->seg_in.hit_normal[1],
-		seg_p->seg_in.hit_normal[2]);
-		rt_log("dist %g  pt(%g,%g,%g)  N(%g,%g,%g)\n",
-		seg_p->seg_out.hit_dist,
-		seg_p->seg_out.hit_point[0],
-		seg_p->seg_out.hit_point[1],
-		seg_p->seg_out.hit_point[2],
-		seg_p->seg_out.hit_normal[0],
-		seg_p->seg_out.hit_normal[1],
-		seg_p->seg_out.hit_normal[2]);
-	}
-
-	rt_log("returning\n");
+	print_seg_list(seghead);
 
 	return(seg_count);
-
 }
+

@@ -18,15 +18,34 @@ struct hitmiss {
 					 */
 };
 
+/*	Ray Data structure
+ *
+ * A)	the hitmiss table has one element for each nmg structure in the
+ *	nmgmodel.  The table keeps track of which elements have been
+ *	processed before and which haven't.  Elements in this table
+ *	will either be:
+ *		(NULL)		item not previously processed
+ *		hitmiss ptr	item previously processed
+ *
+ *	the 0th item in the array is a pointer to the head of the "hit"
+ *	list.  The 1th item in the array is a pointer to the head of the
+ *	"miss" list.
+ *
+ * B)	If plane_pt is non-null then we are currently processing a face
+ *	intersection.  The plane_dist and ray_dist_to_plane are valid.
+ *	The ray/edge intersector should check the distance from the plane
+ *	intercept to the edge and update "plane_closest" if the current
+ *	edge is closer to the intercept than the previous closest object.
+ */
 struct ray_data {
 	struct xray	*rp;
 	struct rt_tol	*tol;
-	struct hitmiss	**hitmiss;
+	struct hitmiss	**hitmiss;	/* 1 hitmiss struct for ea obj */
 	vect_t		invdir;
-	pointp_t	plane_pt;
-	fastf_t		plane_dist;
-	fastf_t		ray_dist_to_plane;
-	long		*plane_closest;
+	pointp_t	plane_pt;	/* ray plane(face) intercept point */
+	fastf_t		ray_dist_to_plane; /* parametric dist to plane */
+	fastf_t		plane_dist;	/* dist in plane (item -> plane_pt) */
+	long		*plane_closest;	/* ptr to item with min(plane_dist) */
 };
 
 #define GET_HITMISS(_p) { \
