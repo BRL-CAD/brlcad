@@ -1712,6 +1712,5 @@ char 		**argv;
 	FOR_ALL_SOLIDS(sp, &HeadSolid.l)
 		sp->s_iflag = DOWN;
 
-	Tcl_AppendResult(interp, "\n", (char *)NULL);
 	return TCL_OK;
 }
