@@ -7568,7 +7568,12 @@ char **argv;
   Tcl_Obj *pnto;
 
   if(argc < 1 || 2 < argc){
-    Tcl_AppendResult(interp, "Usage: get_edit_solid [-c]", (char *)0);
+    struct bu_vls vls;
+
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "helpdevel get_edit_solid");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
     return TCL_ERROR;
   }
 
@@ -7634,6 +7639,12 @@ char **argv;
 
   /*XXX needs better argument checking */
   if(argc < 6){
+    struct bu_vls vls;
+
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "helpdevel put_edit_solid");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
     return TCL_ERROR;
   }
 
@@ -7705,6 +7716,16 @@ char **argv;
 
   if(state != ST_S_EDIT)
     return TCL_ERROR;
+
+  if(argc != 1){
+    struct bu_vls vls;
+
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "helpdevel reset_edit_solid");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
+    return TCL_ERROR;
+  }
 
   /* free old copy */
   if(es_int.idb_ptr)

@@ -106,7 +106,7 @@ char **argv;
   bu_vls_init(&vls);
 
   if (argc != 4) {
-    bu_vls_printf(&vls, "help share");
+    bu_vls_printf(&vls, "helpdevel share");
     Tcl_Eval(interp, bu_vls_addr(&vls));
 
     bu_vls_free(&vls);

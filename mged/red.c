@@ -517,7 +517,7 @@ char **argv;
   bu_vls_init(&vls);
 
   if(argc != 2){
-    bu_vls_printf(&vls, "help get_comb");
+    bu_vls_printf(&vls, "helpdevel get_comb");
     Tcl_Eval(interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
     return TCL_ERROR;
@@ -676,7 +676,7 @@ char **argv;
     struct bu_vls vls;
 
     bu_vls_init(&vls);
-    bu_vls_printf(&vls, "help put_comb");
+    bu_vls_printf(&vls, "helpdevel put_comb");
     Tcl_Eval(interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
     return TCL_ERROR;

@@ -1147,8 +1147,15 @@ char    **argv;
 {
   int i;
 
-  if(argc != 2)
+  if(argc != 2){
+    struct bu_vls vls;
+
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "helpdevel stuff_str");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
     return TCL_ERROR;
+  }
 
   if(classic_mged){
     bu_log("\r%s\n", argv[1]);

@@ -1794,7 +1794,12 @@ char	**argv;
 	  return TCL_OK;
 
 	if( argc < 2 )  {
-		Tcl_AppendResult(interp, "Usage: rtdraw_vlist object(s)\n", NULL);
+		struct bu_vls vls;
+
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "help redraw_vlist");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
 		return TCL_ERROR;
 	}
 

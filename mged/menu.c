@@ -55,8 +55,12 @@ char **argv;
     int index;
     
     if (argc > 2) {
-	Tcl_AppendResult(interp, "wrong # args: must be \"mmenu_get ?index?\"",
-			 (char *)NULL);
+	struct bu_vls vls;
+
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "helpdevel mmenu_get");
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
 	return TCL_ERROR;
     }
 

@@ -376,7 +376,7 @@ char **argv;
       struct bu_vls vls;
 
       bu_vls_init(&vls);
-      bu_vls_printf(&vls, "help hist_prev");
+      bu_vls_printf(&vls, "helpdevel hist_prev");
       Tcl_Eval(interp, bu_vls_addr(&vls));
       bu_vls_free(&vls);
       return TCL_ERROR;
@@ -409,7 +409,7 @@ char **argv;
       struct bu_vls vls;
 
       bu_vls_init(&vls);
-      bu_vls_printf(&vls, "help hist_next");
+      bu_vls_printf(&vls, "helpdevel hist_next");
       Tcl_Eval(interp, bu_vls_addr(&vls));
       bu_vls_free(&vls);
       return TCL_ERROR;
@@ -438,7 +438,7 @@ char **argv;
       struct bu_vls vls;
 
       bu_vls_init(&vls);
-      bu_vls_printf(&vls, "help cmd_hist_add");
+      bu_vls_printf(&vls, "helpdevel hist_add");
       Tcl_Eval(interp, bu_vls_addr(&vls));
       bu_vls_free(&vls);
       return TCL_ERROR;

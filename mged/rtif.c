@@ -1895,7 +1895,7 @@ char		**argv;
       struct bu_vls vls;
 
       bu_vls_init(&vls);
-      bu_vls_printf(&vls, "help solids_on_ray");
+      bu_vls_printf(&vls, "helpdevel solids_on_ray");
       Tcl_Eval(interp, bu_vls_addr(&vls));
       bu_vls_free(&vls);
       return TCL_ERROR;

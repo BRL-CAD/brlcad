@@ -708,7 +708,7 @@ char **argv;
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
-	  bu_vls_printf(&vls, "help viewget");
+	  bu_vls_printf(&vls, "helpdevel viewget");
 	  Tcl_Eval(interp, bu_vls_addr(&vls));
 	  bu_vls_free(&vls);
 	  return TCL_ERROR;
@@ -796,7 +796,7 @@ char **argv;
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
-	  bu_vls_printf(&vls, "help viewset");
+	  bu_vls_printf(&vls, "helpdevel viewset");
 	  Tcl_Eval(interp, bu_vls_addr(&vls));
 	  bu_vls_free(&vls);
 	  return TCL_ERROR;
