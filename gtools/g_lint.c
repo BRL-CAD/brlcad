@@ -21,7 +21,16 @@
  *	in all countries except the USA.  All rights reserved.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (ARL)";
+static const char RCSid[] = "@(#)$Header$ (ARL)";
+#endif
+
+#include <stdlib.h>
+#include "conf.h"
+
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
 #endif
 
 #include <stdio.h>
@@ -31,6 +40,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
+#include "plot3.h"
 
 #define made_it()	bu_log("Made it to %s:%d\n", __FILE__, __LINE__);
 
@@ -343,7 +353,6 @@ void	*v2;
 {
     struct g_lint_ovlp	*o1 = (struct g_lint_ovlp *) v1;
     struct g_lint_ovlp	*o2 = (struct g_lint_ovlp *) v2;
-    int			i;
 
     BU_CKMAG(o1, G_LINT_OVLP_MAGIC, "g_lint overlap structure");
     BU_CKMAG(o2, G_LINT_OVLP_MAGIC, "g_lint overlap structure");
@@ -374,7 +383,6 @@ void	*v2;
 {
     struct g_lint_ovlp	*o1 = (struct g_lint_ovlp *) v1;
     struct g_lint_ovlp	*o2 = (struct g_lint_ovlp *) v2;
-    int			i;
 
     BU_CKMAG(o1, G_LINT_OVLP_MAGIC, "g_lint overlap structure");
     BU_CKMAG(o2, G_LINT_OVLP_MAGIC, "g_lint overlap structure");
@@ -402,7 +410,7 @@ int	depth;
     int			rc;	/* Return code from bu_rb_insert() */
     struct g_lint_ovlp	*op = (struct g_lint_ovlp *) v;
 
-    if (rc = bu_rb_insert(ovlps_by_vol, (void *) op))
+    if( (rc = bu_rb_insert(ovlps_by_vol, (void *) op)))
     {
 	bu_log("%s:%d: bu_rb_insert() returns %d:  This should not happen\n",
 	    __FILE__, __LINE__, rc);
@@ -552,6 +560,7 @@ struct seg		*dummy;
     {
 	/* Check air partitions */
 	if (what_to_report & G_LINT_A_ANY)
+	{
 	    if (pp -> pt_regionp -> reg_regionid <= 0)
 	    {
 		if ((what_to_report & G_LINT_A_CONT)
@@ -730,6 +739,7 @@ struct seg		*dummy;
 	    }
 	    else
 		last_air = 0;
+	}
 	
 	/* Look for vacuum */
 	if ((what_to_report & G_LINT_VAC) && (pp -> pt_back != ph))
@@ -892,6 +902,7 @@ void init_plot3 (struct application *ap)
     pdv_3space(cp -> glc_fp, rtip->rti_pmin, rtip->rti_pmax);
 }
 
+int
 main (argc, argv)
 
 int	argc;
@@ -922,13 +933,11 @@ char	**argv;
     point_t		mdl_vpo;		/* View-plane origin */
     point_t		v_bb_vertex;	/* bounding-box vertex, view coords */
     struct rt_i		*rtip;
-    unsigned char	*color;
     vect_t		unit_D;			/* View basis vectors */
     vect_t		unit_H;
     vect_t		unit_V;
 
     extern int		optind;			/* For use with getopt(3) */
-    extern int		opterr;
     extern char		*optarg;
 
     extern int		getopt();
