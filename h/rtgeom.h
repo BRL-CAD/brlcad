@@ -179,8 +179,9 @@ struct rt_arbn_internal  {
  */
 struct rt_pipe_internal {
 	int		pipe_magic;
-	int		pipe_count;
 	struct rt_list	pipe_segs_head;
+	/* REMAINING ELEMENTS PROVIDED BY IMPORT, UNUSED BY EXPORT */
+	int		pipe_count;
 };
 #define RT_PIPE_INTERNAL_MAGIC	0x77ddbbe3
 #define RT_PIPE_CK_MAGIC(_p)	RT_CKMAG(_p,RT_PIPE_INTERNAL_MAGIC,"rt_pipe_internal")
@@ -194,6 +195,7 @@ struct rt_part_internal {
 	vect_t	part_H;
 	fastf_t	part_vrad;
 	fastf_t	part_hrad;
+	/* REMAINING ELEMENTS PROVIDED BY IMPORT, UNUSED BY EXPORT */
 	int	part_type;		/* sphere, cylinder, cone */
 };
 #define RT_PART_INTERNAL_MAGIC	0xaaccee87
