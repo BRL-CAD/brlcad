@@ -115,6 +115,7 @@ char	**argv;
 	register struct directory *dp;
 	register int i;
 	struct directory **dirp, **dirp0;
+	struct rt_vls	str;
 
 #ifdef XMGED
 	(void)signal( SIGINT, cur_sigint);	/* allow interupts */
@@ -147,10 +148,12 @@ char	**argv;
 			for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw)
 				*dirp++ = dp;
 	}
-	col_pr4v( dirp0, (int)(dirp - dirp0));
+	rt_vls_init( &str );
+	vls_col_pr4v( &str, dirp0, (int)(dirp - dirp0));
 	rt_free( (char *)dirp0, "dir_getspace dp[]" );
 
-	return CMD_OK;
+	Tcl_SetResult(interp, rt_vls_addr(&str), TCL_VOLATILE );
+	return TCL_OK;
 }
 
 /*
