@@ -41,12 +41,12 @@ static char RCSparse[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 
 /*
- *		P A R S E _ F L O A T
+ *			R T _ P A R S E _ D O U B L E
  *
- *	parse an array of one or more floats.  The floats
+ *  Parse an array of one or more doubles.
  */
 HIDDEN void
-parse_float(value, count, loc)
+rt_parse_double(value, count, loc)
 char *value;
 int count;
 double *loc;
@@ -244,7 +244,7 @@ char				*value;		/* string containing value */
 			}
 			break;
 		case 'f':
-			parse_float(value, sdp->sp_count, (double *)loc);
+			rt_parse_double(value, sdp->sp_count, (double *)loc);
 			break;
 		default:
 			rt_log("rt_struct_lookup(%s): unknown format '%s'\n",
@@ -343,12 +343,13 @@ char			*base;		/* base address of users structure */
 
 }
 
-/*	M A T P R I N T
+/*
+ *			R T _ M A T P R I N T
  *
  *	pretty-print a matrix
  */
 HIDDEN void
-matprint(name, mat)
+rt_matprint(name, mat)
 char *name;
 register matp_t mat;
 {
@@ -469,7 +470,7 @@ char			*base;		/* base address of users structure */
 				register double *dp = (double *)loc;
 
 				if (sdp->sp_count == ELEMENTS_PER_MAT) {
-					matprint(sdp->sp_name, (matp_t)dp);
+					rt_matprint(sdp->sp_name, (matp_t)dp);
 				} else if (sdp->sp_count <= ELEMENTS_PER_VECT){
 					rt_log( " %s=%.25G", sdp->sp_name, *dp++ );
 
@@ -512,8 +513,11 @@ char			*base;		/* base address of users structure */
 	}
 }
 
+/*
+ *			R T _ V L S _ P R I N T _ D O U B L E
+ */
 HIDDEN void
-vls_print_float(vls, name, count, dp)
+rt_vls_print_double(vls, name, count, dp)
 struct rt_vls *vls;
 char *name;
 register int count;
@@ -703,7 +707,7 @@ char				*base;	/* structure ponter */
 			}
 			break;
 		case 'f':
-			vls_print_float(vls, sdp->sp_name, sdp->sp_count,
+			rt_vls_print_double(vls, sdp->sp_name, sdp->sp_count,
 				(double *)loc);
 			break;
 		default:
