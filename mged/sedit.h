@@ -21,6 +21,8 @@
  *  $Header$
  */
 
+#define MGED_SMALL_SCALE 1.0e-10
+
 /* These EDIT_CLASS_ values go in es_edclass. */
 #define EDIT_CLASS_NULL 0
 #define EDIT_CLASS_TRAN 1
@@ -184,7 +186,11 @@ extern char edit_rate_model_origin;
 extern char edit_rate_object_origin;
 extern char edit_rate_view_origin;
 extern char edit_rate_coords;
-extern struct dm_list *edit_dm_list;
+extern struct dm_list *edit_rate_mr_dm_list;
+extern struct dm_list *edit_rate_or_dm_list;
+extern struct dm_list *edit_rate_vr_dm_list;
+extern struct dm_list *edit_rate_mt_dm_list;
+extern struct dm_list *edit_rate_vt_dm_list;
 
 extern struct bu_vls edit_info_vls;
 extern struct bu_vls edit_rate_model_tran_vls[3];
