@@ -202,11 +202,13 @@ char **argv;
 		register int xx, yy;
 		int	zoom;
 
-		xx = yy = 512;		/* SGI 3D users may want 768 */
-		while( xx < width )
-			xx <<= 1;
-		while( yy < width )
-			yy <<= 1;
+		/* Ask for a fb big enough to hold the image, at least 512. */
+		/* This is so MGED-invoked "postage stamps" get zoomed up big enough to see */
+		xx = yy = 512;
+		if( width > xx || height > yy )  {
+			xx = width;
+			yy = height;
+		}
 		RES_ACQUIRE( &rt_g.res_syscall );
 		fbp = fb_open( framebuffer, xx, yy );
 		RES_RELEASE( &rt_g.res_syscall );
@@ -214,6 +216,8 @@ char **argv;
 			fprintf(stderr,"rt:  can't open frame buffer\n");
 			exit(12);
 		}
+
+		/* If the fb is lots bigger (>= 2X), zoom up & center */
 		RES_ACQUIRE( &rt_g.res_syscall );
 		if( width > 0 && height > 0 )  {
 			zoom = fb_getwidth(fbp)/width;
