@@ -892,10 +892,10 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 	VSCALE(q, q, _rot ); }
 
 #define QUAT_FROM_VROT_DEG(q, r, v) \
-	QUAT_FROM_VROT(q, ((r)*(180.0/M_PI), v)
+	QUAT_FROM_VROT(q, ((r)*(M_PI/180.0), v)
 
 #define QUAT_FROM_ROT_DEG(q, r, x, y, z) \
-	QUAT_FROM_ROT(q, ((r)*(180.0/M_PI), x, y, z)
+	QUAT_FROM_ROT(q, ((r)*(M_PI/180.0), x, y, z)
 
 
 
