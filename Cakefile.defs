@@ -850,14 +850,33 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 /*	for "ncurses" change "-lcurses" to "-lncurses" (Caldera OpenLinux, RedHat) */
 #	define	LIBTERMLIB	-lncurses
 #	define	LIBBU_LIBES	LIBTCL LIBTCL_LIBES	/*hack*/
-#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -I''XINCDIR -DIF_X
-#	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
-#	define	LIBFB_OBJS	if_remote if_ab if_X if_X24
-#	define	LIBDM_OBJS	dm-X
-#	define	LIBDM_CONFIG	-DDM_X -I''XINCDIR
-#	define 	LIBDM_LIBES	LIBTK LIBTCL LIBTCL_LIBES -L''XLIBDIR -lXi
-#	define	MGED_OBJS	dm-X dm-generic
-#	define	MGED_CONFIG	-DDM_X -I''XINCDIR
+#	if 0	/* Use MESA  and GLX */
+#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -I''XINCDIR -DIF_X -DIF_OGL
+#		if 0
+#			define	LIBFB_LIBES	LIBPKG -lMesaGL -lMesaGLU -lglut -L''XLIBDIR -lX11  -lXi -lXmu
+#		else
+#			define	LIBFB_LIBES	LIBPKG -lMesaGL -lMesaGLU -L''XLIBDIR -lX11  -lXi -lXmu -lpthread
+#		endif
+#		define	LIBFB_OBJS	if_remote if_ab if_X if_X24 if_ogl
+#		define	LIBDM_OBJS	dm-X dm-ogl
+#		define	LIBDM_CONFIG	-DUSE_MESA_GL -DDM_X -I''XINCDIR -DDM_OGL
+#		if 0
+#			define 	LIBDM_LIBES	LIBTK LIBTCL LIBTCL_LIBES -lMesaGL -lMesaGLU -lglut -L''XLIBDIR -lXi -lXmu
+#		else
+#			define 	LIBDM_LIBES	LIBTK LIBTCL LIBTCL_LIBES -lMesaGL -lMesaGLU -L''XLIBDIR -lXi -lXmu -lpthread
+#		endif
+#		define	MGED_OBJS	dm-ogl dm-X dm-generic
+#		define	MGED_CONFIG	-DUSE_MESA_GL -DDM_X -DDM_OGL -I''XINCDIR
+#	else	/* just use X */
+#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -I''XINCDIR -DIF_X
+#		define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
+#		define	LIBFB_OBJS	if_remote if_ab if_X if_X24
+#		define	LIBDM_OBJS	dm-X
+#		define	LIBDM_CONFIG	-DDM_X -I''XINCDIR
+#		define 	LIBDM_LIBES	LIBTK LIBTCL LIBTCL_LIBES -L''XLIBDIR -lXi
+#		define	MGED_OBJS	dm-X dm-generic
+#		define	MGED_CONFIG	-DDM_X -I''XINCDIR
+#	endif
 #	define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lX11
 #	define	LIBDM_SAMPLE_LIBES \$"(LIBDM)" \$"(LIBTK)" \$"(LIBTCL)" \$"(LIBTCL_LIBES)" \$"(XLIBDIR)" -lXi -lXext -lX11
 /*	Use the system-provided TCL and Tk libraries */
