@@ -244,7 +244,7 @@ f_inside()
 		aexists( cmd_args[args] );
 		return;
 	}
-	if( strlen(cmd_args[args]) >= NAMESIZE )  {
+	if( (int)strlen(cmd_args[args]) >= NAMESIZE )  {
 		(void)printf("Names are limited to %d characters\n", NAMESIZE-1);
 		return;
 	}

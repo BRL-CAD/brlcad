@@ -232,7 +232,7 @@ f_in()
 		aexists( cmd_args[1] );
 		return;
 	}
-	if( strlen(cmd_args[1]) >= NAMESIZE )  {
+	if( (int)strlen(cmd_args[1]) >= NAMESIZE )  {
 		(void)printf("ERROR, names are limited to %d characters\n", NAMESIZE-1);
 		return;
 	}

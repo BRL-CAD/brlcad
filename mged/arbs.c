@@ -108,7 +108,7 @@ char	**argv;
 		return;
 	}
 
-	if( strlen(cmd_args[1]) >= NAMESIZE ) {
+	if( (int)strlen(cmd_args[1]) >= NAMESIZE ) {
 		(void)printf("Names are limited to %d charscters\n",NAMESIZE-1);
 		return;
 	}
@@ -354,7 +354,7 @@ char	**argv;
 		return;
 	}
 
-	if( strlen(cmd_args[1]) >= NAMESIZE ) {
+	if( (int)strlen(cmd_args[1]) >= NAMESIZE ) {
 		(void)printf("Names are limited to %d charscters\n",NAMESIZE-1);
 		return;
 	}
