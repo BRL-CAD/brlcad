@@ -640,17 +640,6 @@ AC_MSG_CHECKING(whether to enable verbose compilation warnings)
 AC_MSG_RESULT($use_warnings)
 
 
-# XXX pthread lib stuff should go away (and be made proper lib check)
-case "$target" in
-	*-*-linux*)
-		PTHREAD_LIBS="-lpthread"
-		;;
-	*-*-*BSD*)
-		PTHREAD_LIBS="-pthread"
-		;;
-esac
-AC_SUBST(PTHREAD_LIBS)
-
 dnl XXX should only add to build paths when something fails that is
 dnl necessary additionally, a compiler might complain if /usr/local or
 dnl /sw are already in the system search path -- so need to try a
@@ -836,6 +825,14 @@ dnl ***************************
 
 AC_MSG_CHECKING([... l i b r a r i e s ])
 AC_MSG_RESULT([])
+
+dnl check if pthread library link works
+pthread_link_works=no
+AC_CHECK_LIB(pthread, pthread_create, pthread_link_works=yes)
+
+dnl check if the BSD c_r threading library link works
+c_r_link_works=no
+AC_CHECK_LIB(c_r, pthread_create, c_r_link_works=yes)
 
 dnl need curses, would prefer ncurses  (XXX should look for tputs)
 #LIBS=
@@ -1694,6 +1691,39 @@ else
 	AC_MSG_RESULT(no)
 fi
 AC_SUBST(LIBZ)
+
+
+dnl *** libthread ***
+
+LIBTHREAD=""
+AC_MSG_CHECKING(for threading library availability)
+if test "xpthread_link_works" = "xyes" ; then
+	LIBTHREAD="-lpthread"
+else
+	if test "xc_r_link_works" = "xyes" ; then
+		LIBTHREAD="-pthread"
+	fi
+fi
+AC_SUBST(LIBTHREAD)
+
+thread_works=no
+AC_TRY_RUN([
+#ifdef HAVE_PTHREAD_H
+#  include <pthread.h>
+#endif
+void *thread_hook(void *arg) {
+     return NULL;
+}
+main () {
+     pthread_t thread;
+     pthread_create(&thread, (void *)0, thread_hook, (void *)0);
+     pthread_join(thread, NULL);
+     return 0;
+}
+	],
+	[thread_works=yes]
+)
+AC_MSG_RESULT($thread_works)
 
 
 dnl *** libsocket ***
