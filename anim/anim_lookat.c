@@ -33,13 +33,14 @@ extern int optind;
 extern char *optarg;
 
 int frame = 0;
+int print_ypr = 0;
 
 main(argc,argv)
 int argc;
 char **argv;
 {
 	fastf_t time;
-	vect_t eye,look,dir,prev_dir;
+	vect_t eye,look,dir,prev_dir, angles;
 	mat_t mat;
 	int val = 0;
 
@@ -52,32 +53,44 @@ char **argv;
 	while (!feof(stdin)){
 		VMOVE(prev_dir,dir);
 		val=scanf("%lf %lf %lf %lf %lf %lf %lf",&time,eye,eye+1,eye+2,look,look+1,look+2);
-		if (val == 7){
-			VSUBUNIT(dir,look,eye);
+		if (val < 7){
+			break;
 		}
-		else{
-			VMOVE(dir,prev_dir);
-		}
+
+		VSUBUNIT(dir,look,eye);
 		dir2mat(mat,dir,prev_dir);
-		printf("start %d;\n",frame++);
-                printf("eye_pt %f %f %f;\n",eye[0],eye[1],eye[2]);
-		printf("viewrot %f %f %f 0\n", -mat[1], -mat[5], -mat[9]);
-                printf("%f %f %f 0\n", mat[2], mat[6], mat[10]);
-                printf("%f %f %f 0\n", -mat[0], -mat[4], -mat[8]);
-                printf("0 0 0 1;\n");
-		printf("end;\n");
+		if (!print_ypr){
+			printf("start %d;\n",frame++);
+	                printf("eye_pt %f %f %f;\n",eye[0],eye[1],eye[2]);
+			printf("viewrot %f %f %f 0\n", -mat[1], -mat[5], -mat[9]);
+	                printf("%f %f %f 0\n", mat[2], mat[6], mat[10]);
+	                printf("%f %f %f 0\n", -mat[0], -mat[4], -mat[8]);
+	                printf("0 0 0 1;\n");
+			printf("end;\n");
+		}
+		else {
+			mat2ypr(angles,mat);
+			printf("%g\t%g\t%g\t%g\t",time,eye[0],eye[1],eye[2]);
+			printf("%g\t%g\t%g\n",angles[0],angles[1],angles[2]);
+		}
+
 	}
 }
+
+#define OPT_STR "f:y"
 
 int get_args(argc,argv)
 int argc;
 char **argv;
 {
 	int c;
-	while ( (c=getopt(argc,argv,"f:")) != EOF) {
+	while ( (c=getopt(argc,argv,OPT_STR)) != EOF) {
 		switch(c){
 		case 'f':
 			sscanf(optarg,"%d",&frame);
+			break;
+		case 'y':
+			print_ypr=1;
 			break;
 		default:
 			fprintf(stderr,"Unknown option: -%c\n",c);
