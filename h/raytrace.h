@@ -3616,13 +3616,24 @@ BU_EXTERN(int			nmg_edge_collapse, (struct model *m,
 				CONST fastf_t min_angle));
 
 /* g_bot.c */
-int rt_bot_find_v_nearest_pt2();	/* needs rt_bot_internal for arg list */
 int rt_bot_edge_in_list( const int v1, const int v2, const int edge_list[], const int edge_count );
+#ifdef SEEN_RTGEOM_H
+int rt_bot_find_v_nearest_pt2(
+	const struct rt_bot_internal *bot,
+	const point_t	pt2,
+	const mat_t	mat);
+int rt_bot_find_e_nearest_pt2(
+	int *vert1,
+	int *vert2,
+	const struct rt_bot_internal *bot,
+	const point_t	pt2,
+	const mat_t	mat);
 int rt_bot_find_e_nearest_pt2();	/* needs rt_bot_internal for arg list */
 int rt_bot_vertex_fuse( struct rt_bot_internal *bot );
-int rt_bot_same_orientation( const int *a, const int *b );
 int rt_bot_face_fuse( struct rt_bot_internal *bot );
 int rt_bot_condense( struct rt_bot_internal *bot );
+#endif
+int rt_bot_same_orientation( const int *a, const int *b );
 
 /* From nmg_tri.c */
 extern void nmg_triangulate_shell(struct shell *s, const struct bn_tol  *tol);
