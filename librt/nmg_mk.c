@@ -2292,233 +2292,6 @@ int n;
 	}
 }
 
-/*
- *			N M G _ V U _ T O _ V L I S T
- *
- *  Plot a single vertexuse
- */
-nmg_vu_to_vlist( vhead, vu )
-struct vlhead		*vhead;
-struct vertexuse	*vu;
-{
-	struct vertex	*v;
-	register struct vertex_g *vg;
-
-	NMG_CK_VERTEXUSE(vu);
-	v = vu->v_p;
-	NMG_CK_VERTEX(v);
-	vg = v->vg_p;
-	if( vg )  {
-		/* Only thing in this shell is a point */
-		NMG_CK_VERTEX_G(vg);
-		ADD_VL( vhead, vg->coord, VL_CMD_LINE_MOVE );
-		ADD_VL( vhead, vg->coord, VL_CMD_LINE_DRAW );
-	}
-}
-
-/*
- *			N M G _ E U _ T O _ V L I S T
- *
- *  Plot a list of edgeuses.  The last edge is joined back to the first.
- */
-nmg_eu_to_vlist( vhead, eu_hd )
-struct vlhead	*vhead;
-struct nmg_list	*eu_hd;
-{
-	struct edgeuse		*eu;
-	struct edgeuse		*eumate;
-	struct vertexuse	*vu;
-	struct vertexuse	*vumate;
-	register struct vertex_g *vg;
-	register struct vertex_g *vgmate;
-
-	/* Consider all the edges in the wire edge list */
-	for( NMG_LIST( eu, edgeuse, eu_hd ) )  {
-		/* This wire edge runs from vertex to mate's vertex */
-		NMG_CK_EDGEUSE(eu);
-		vu = eu->vu_p;
-		NMG_CK_VERTEXUSE(vu);
-		NMG_CK_VERTEX(vu->v_p);
-		vg = vu->v_p->vg_p;
-
-		eumate = eu->eumate_p;
-		NMG_CK_EDGEUSE(eumate);
-		vumate = eumate->vu_p;
-		NMG_CK_VERTEXUSE(vumate);
-		NMG_CK_VERTEX(vumate->v_p);
-		vgmate = vumate->v_p->vg_p;
-
-		if( !vg || !vgmate ) {
-			rt_log("nmg_eu_to_vlist() no vg or mate?\n");
-			continue;
-		}
-		NMG_CK_VERTEX_G(vg);
-		NMG_CK_VERTEX_G(vgmate);
-
-		ADD_VL( vhead, vg->coord, VL_CMD_LINE_MOVE );
-		ADD_VL( vhead, vgmate->coord, VL_CMD_LINE_DRAW );
-	}
-}
-
-/*
- *			N M G _ L U _ T O _ V L I S T
- *
- *  Plot a list of loopuses.
- */
-nmg_lu_to_vlist( vhead, lu_hd, poly_markers, normal )
-struct vlhead	*vhead;
-struct nmg_list	*lu_hd;
-int		poly_markers;
-vectp_t		normal;
-{
-	struct loopuse	*lu;
-	struct edgeuse	*eu;
-	struct vertexuse *vu;
-	struct vertex	*v;
-	register struct vertex_g *vg;
-
-	for( NMG_LIST( lu, loopuse, lu_hd ) )  {
-		int		isfirst;
-		struct vertex_g	*first_vg;
-		point_t		centroid;
-		int		npoints;
-
-		/* Consider this loop */
-		NMG_CK_LOOPUSE(lu);
-		if( NMG_LIST_FIRST_MAGIC(&lu->down_hd)==NMG_VERTEXUSE_MAGIC )  {
-			/* loop of a single vertex */
-			vu = NMG_LIST_FIRST(vertexuse, &lu->down_hd);
-			nmg_vu_to_vlist( vhead, vu );
-			continue;
-		}
-		/* Consider all the edges in the loop */
-		isfirst = 1;
-		first_vg = (struct vertex_g *)0;
-		npoints = 0;
-		VSETALL( centroid, 0 );
-		for( NMG_LIST( eu, edgeuse, &lu->down_hd ) )  {
-			/* Consider this edge */
-			NMG_CK_EDGEUSE(eu);
-			vu = eu->vu_p;
-			NMG_CK_VERTEXUSE(vu);
-			v = vu->v_p;
-			NMG_CK_VERTEX(v);
-			vg = v->vg_p;
-			if( !vg ) {
-				continue;
-			}
-			NMG_CK_VERTEX_G(vg);
-			VADD2( centroid, centroid, vg->coord );
-			npoints++;
-			if (isfirst) {
-				if( poly_markers) {
-					/* Insert a "start polygon, normal" marker */
-					ADD_VL( vhead, normal, VL_CMD_POLY_START );
-					ADD_VL( vhead, vg->coord, VL_CMD_POLY_MOVE );
-				} else {
-					/* move */
-					ADD_VL( vhead, vg->coord, VL_CMD_LINE_MOVE );
-				}
-				isfirst = 0;
-				first_vg = vg;
-			} else {
-				if( poly_markers) {
-					ADD_VL( vhead, vg->coord, VL_CMD_POLY_DRAW );
-				} else {
-					/* Draw */
-					ADD_VL( vhead, vg->coord, VL_CMD_LINE_DRAW );
-				}
-			}
-		}
-
-		/* Draw back to the first vertex used */
-		if( !isfirst && first_vg )  {
-			if( poly_markers )  {
-				/* Draw, end polygon */
-				ADD_VL( vhead, first_vg->coord, VL_CMD_POLY_END );
-			} else {
-				/* Draw */
-				ADD_VL( vhead, first_vg->coord, VL_CMD_LINE_DRAW );
-			}
-		}
-		if( poly_markers > 1 && npoints > 2 )  {
-			/* Draw surface normal as a little vector */
-			double	f;
-			vect_t	tocent;
-			f = 1.0 / npoints;
-			VSCALE( centroid, centroid, f );
-			ADD_VL( vhead, centroid, VL_CMD_LINE_MOVE );
-			VSUB2( tocent, first_vg->coord, centroid );
-			f = MAGNITUDE( tocent ) * 0.5;
-			VSCALE( tocent, normal, f );
-			VADD2( centroid, centroid, tocent );
-			ADD_VL( vhead, centroid, VL_CMD_LINE_DRAW );
-		}
-	}
-}
-
-/*
- *			N M G _ S _ T O _ V L I S T
- *
- *  Plot the entire contents of a shell.
- *
- *  poly_markers =
- *	0 for vectors
- *	1 for polygons
- *	2 for polygons and surface normals drawn with vectors
- */
-void
-nmg_s_to_vlist( vhead, s, poly_markers )
-struct vlhead	*vhead;
-struct shell	*s;
-int		poly_markers;
-{
-	struct faceuse	*fu;
-	struct face_g	*fg;
-	vect_t		normal;
-
-	NMG_CK_SHELL(s);
-
-	/* faces */
-	for( NMG_LIST( fu, faceuse, &s->fu_hd ) )  {
-		/* Consider this face */
-		NMG_CK_FACEUSE(fu);
-		NMG_CK_FACE(fu->f_p);
-		fg = fu->f_p->fg_p;
-		NMG_CK_FACE_G(fg);
-		if (fu->orientation != OT_SAME)  continue;
-	   	nmg_lu_to_vlist( vhead, &fu->lu_hd, poly_markers, fg->N );
-	}
-
-	/* wire loops.  poly_markers=0 so wires are always drawn as vectors */
-	VSETALL(normal, 0);
-	nmg_lu_to_vlist( vhead, &s->lu_hd, 0, normal );
-
-	/* wire edges */
-	nmg_eu_to_vlist( vhead, &s->eu_hd );
-
-	/* single vertices */
-	if (s->vu_p)  {
-		nmg_vu_to_vlist( vhead, s->vu_p );
-	}
-}
-
-/*
- *			N M G _ R _ T O _ V L I S T
- */
-void
-nmg_r_to_vlist( vhead, r, poly_markers )
-struct vlhead	*vhead;
-struct nmgregion	*r;
-int		poly_markers;
-{
-	register struct shell	*s;
-
-	NMG_CK_REGION( r );
-	for( NMG_LIST( s, shell, &r->s_hd ) )  {
-		nmg_s_to_vlist( vhead, s, poly_markers );
-	}
-}
 
 /*
  *			F I N D E U
@@ -3285,7 +3058,197 @@ struct model *m;
 	}
 	nmg_vregion( &m->r_hd, m);
 }
+
+
+/*	N M G _ J L
+ *
+ *	Join two loops together which share a common edge
+ *
+ */
+void nmg_jl(lu, eu)
+struct loopuse *lu;
+struct edgeuse *eu;
+{
+	struct edgeuse *eu_r, *nexteu;
+	NMG_CK_LOOPUSE(lu);
+
+	NMG_CK_EDGEUSE(eu);
+	NMG_CK_EDGEUSE(eu->eumate_p);
+	NMG_CK_EDGEUSE(eu->radial_p);
+	NMG_CK_EDGEUSE(eu->radial_p->eumate_p);
+
+	if (eu->up.lu_p != lu)
+		rt_bomb("nmg_jl: edgeuse is not child of loopuse?\n");
+
+	eu_r = eu->radial_p;
+	if (*eu_r->up.magic_p != NMG_LOOPUSE_MAGIC)
+		rt_bomb("nmg_jl: radial edgeuse not part of loopuse\n");
+
+	if (eu_r->up.lu_p == lu)
+		rt_bomb("nmg_jl: some moron trying to join a loop to itself\n");
+
+	if (lu->up.magic_p != eu_r->up.lu_p->up.magic_p)
+		rt_bomb("nmg_jl: loopuses do not share parent\n");
+
+	if (eu_r->up.lu_p->orientation != lu->orientation)
+		rt_bomb("nmg_jl: can't join loops of different orientation!\n");
+
+	if (eu->radial_p->eumate_p->radial_p->eumate_p != eu ||
+	    eu->eumate_p->radial_p->eumate_p->radial_p != eu)
+	    	rt_bomb("nmg_jl: edgeuses must be sole uses of edge to join loops\n");
+
+
+	/* remove all the edgeuses "ahead" of our radial and insert them
+	 * "behind" the current edgeuse.
+	 */
+	nexteu = NMG_LIST_PNEXT_CIRC(edgeuse, eu_r);
+	while (nexteu != eu_r) {
+		NMG_LIST_DEQUEUE(&nexteu->l);
+		NMG_LIST_INSERT(&eu->l, &nexteu->l);
+		nexteu->up.lu_p = eu->up.lu_p;
+
+		NMG_LIST_DEQUEUE(&nexteu->eumate_p->l);
+		NMG_LIST_APPEND(&eu->eumate_p->l, &nexteu->eumate_p->l);
+		nexteu->eumate_p->up.lu_p = eu->eumate_p->up.lu_p;
+
+		nexteu = NMG_LIST_PNEXT_CIRC(edgeuse, eu_r);
+	}
+
+	/* at this point, the other loop just has the one edgeuse/edge in
+	 * it.  we can delete the other loop.
+	 */
+	nmg_klu(eu_r->up.lu_p);
+
+	/* we pop out the one remaining use of the "shared" edge and
+	 * voila! we should have one contiguous loop.
+	 */
+	nmg_keu(eu);
+}
+
+/*	N M G _ S I M P L I F Y _ L O O P
+ *
+ *	combine adjacent loops within the same parent
+ */
+void nmg_simplify_loop(lu)
+struct loopuse *lu;
+{
+	struct edgeuse *eu, *eu_r, *tmpeu;
+
+	NMG_CK_LOOPUSE(lu);
+	if (NMG_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
+		return;
+
+	eu = NMG_LIST_FIRST(edgeuse, &lu->down_hd);
+	while (NMG_LIST_MORE(eu, edgeuse, &lu->down_hd) ) {
+
+		NMG_CK_EDGEUSE(eu);
+
+		eu_r = eu->radial_p;
+		NMG_CK_EDGEUSE(eu_r);
+
+		/* if the radial edge is part of a loop, but not the
+		 * loop containing the current edge, and the loop of
+		 * the other edge is a part of the same object (face)
+		 * as the loop containing the current edge, and my
+		 * edgeuse mate is radial to my radial`s edgeuse
+		 * mate, then this is a "worthless" edge between
+		 * these two loops.
+		 */
+		if (*eu_r->up.magic_p == NMG_LOOPUSE_MAGIC &&
+		    eu_r->up.lu_p != lu &&
+		    eu_r->up.lu_p->up.magic_p == lu->up.magic_p &&
+		    eu->eumate_p->radial_p == eu->radial_p->eumate_p) {
+		    	
+		    	/* save a pointer to where we've already been
+		    	 * so that when eu becomes an invalid pointer, we
+		    	 * still know where to pick up from.
+		    	 */
+		    	tmpeu = NMG_LIST_PLAST(edgeuse, eu);
+
+			nmg_jl(lu, eu);
+
+		    	/* Since all the new edges will have been appended
+		    	 * after tmpeu, we can pick up processing with the
+		    	 * edgeuse immediately after tmpeu
+		    	 */
+		    	eu = tmpeu;
+
+		    	if (rt_g.NMG_debug &(DEBUG_PLOTEM|DEBUG_PL_ANIM) &&
+			    *lu->up.magic_p == NMG_FACEUSE_MAGIC ) {
+		    	    	static int fno=0;
+
+				nmg_pl_2fu("After_joinloop%d.pl", fno++,
+				    lu->up.fu_p, lu->up.fu_p->fumate_p, 0);
+					
+		    	}
+		}
+		eu = NMG_LIST_PNEXT(edgeuse, eu);
+	}
+}
+
+
+/*	N M G _ S I M P L I F Y _ F A C E
+ *
+ *
+ *	combine adjacent loops within a face which serve no apparent purpose
+ *	by remaining separate and distinct.
+ */
+void nmg_simplify_face(fu)
+struct faceuse *fu;
+{
+	struct loopuse *lu;
+
+	NMG_CK_FACEUSE(fu);
+
+	for (NMG_LIST(lu, loopuse, &fu->lu_hd)) {
+		nmg_simplify_loop(lu);
+	}
+}
+
+
+void nmg_simplify_shell(s)
+struct shell *s;
+{
+	struct faceuse *fu;
+	NMG_CK_SHELL(s);
+
+	for (NMG_LIST(fu, faceuse, &s->fu_hd)) {
+		nmg_simplify_face(fu);
+	}
+}
 #if 0
+
+
+/*	N M G _ E U _ S Q
+ *
+ *	squeeze an edgeuse out of a list
+ *
+ *	All uses of the edge being "Squeezed" must be followed by
+ *	the same "next" edge
+ *
+ */
+nmg_eu_sq(eu)
+struct edgeuse *eu;
+{
+	struct edgeuse *matenext;
+	NMG_CK_EDGEUSE(eu);
+	NMG_CK_EDGEUSE(eu->eumate_p);
+
+	/* foreach use of this edge, there must be exactly one use of the
+	 * previous edge.  There may not be any "extra" uses of the
+	 * previous edge
+	 */
+
+
+
+	matenext = NMG_LIST_PNEXT_CIRC(eu->eumate_p);
+	NMG_CK_EDGEUSE(matenext);
+
+	NMG_LIST_DEQUEUE(eu);
+	NMG_LIST_DEQUEUE(matenext);
+
+}
+
 
 /* ToDo:
  * esqueeze

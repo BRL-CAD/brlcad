@@ -813,6 +813,7 @@ fastf_t tol;
     	    	nmg_pl_2fu( "After_mesh%d.pl", fno++, fu1, fu2, 1 );
     	}
 
+
 	(void)nmg_tbl(&vert_list1, TBL_FREE, (long *)NULL);
 	(void)nmg_tbl(&vert_list2, TBL_FREE, (long *)NULL);
 }
