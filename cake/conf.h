@@ -32,6 +32,11 @@ typedef	int	Cast;
 #	define	CPP		"/lib/cpp"
 #	define	CPP_OPTIONS	"-traditional"
 #endif
+#if !defined(alliant) && defined(i860) && defined(unix) && __STDC__ == 0
+	/* Stardent i860 machine.  cc -E puts spaces around substitutions */
+#	define	CPP		"/lib/cpp"
+#	define	CPP_OPTIONS	"-D__stardent=1"
+#endif
 #if !defined(CPP)
 #    if 1
 	/*
