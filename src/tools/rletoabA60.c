@@ -28,6 +28,7 @@
 
 #include "common.h"
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 
@@ -39,6 +40,7 @@
 
 #include "machine.h"
 #include "rle.h"
+
 
 #define LINE_LENGTH 720
 #define FRAME_LENGTH 486

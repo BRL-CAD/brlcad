@@ -14,13 +14,13 @@ static const char rcs_ident[] = "$Header$";
 
 #include "common.h"
 
-
-
+#include <stdlib.h>
 #include <stdio.h>
 
 #include "machine.h"
 #include "rle.h"
 #include "pyramid.h"
+
 
 int rle_to_pyramids(FILE *infile, pyramid *gausspyr, pyramid *bandpyr, rle_hdr *in_hdr, int levellimit, float *mask_mult_table);
 void alloc_pyramid(pyramid *pyr);

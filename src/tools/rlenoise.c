@@ -21,14 +21,14 @@
 
 #include "common.h"
 
-
-
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 #include <time.h>
 
 #include "machine.h"
 #include "rle.h"
+
 
 /* Change this according the value on your system.  This is a crock.
 #define	RANDOM_MAX	((double)(int)(((unsigned int)~0)>>1))

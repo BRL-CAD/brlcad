@@ -23,9 +23,8 @@
 
 #include "common.h"
 
-
-
-#include	<stdio.h>
+#include <stdlib.h>
+#include <stdio.h>
 #ifdef HAVE_STRING_H
 #include <string.h>
 #else
@@ -34,6 +33,7 @@
 
 #include "machine.h"
 #include "rle.h"
+
 
 #ifndef lint
 static const char rcsid[] = "$Id$";

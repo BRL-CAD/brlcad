@@ -27,12 +27,12 @@
 
 #include "common.h"
 
-
-
+#include <stdlib.h>
 #include <stdio.h>
 
 #include "machine.h"
 #include "rle.h"
+
 
 #define Quantize(x)	(x >> shift)
 

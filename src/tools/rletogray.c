@@ -27,6 +27,7 @@
 
 #include "common.h"
 
+#include <stdlib.h>
 #include <stdio.h>
 #ifdef HAVE_STRING_H
 #include <string.h>
@@ -36,6 +37,7 @@
 
 #include "machine.h"
 #include "rle.h"
+
 
 typedef FILE	*FILPTR;
 

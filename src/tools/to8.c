@@ -31,11 +31,13 @@ static const char rcs_ident[] = "$Header$";
 
 #include "common.h"
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 
 #include "machine.h"
 #include "rle.h"
+
 
 void init_color(void);
 void map_scanline(unsigned char **rgb, int n, int y, unsigned char *line);

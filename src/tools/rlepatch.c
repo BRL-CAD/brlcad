@@ -30,8 +30,7 @@
 
 #include "common.h"
 
-
-
+#include <stdlib.h>
 #include <stdio.h>
 
 #ifdef HAVE_STRING_H
@@ -42,6 +41,7 @@
 
 #include "machine.h"
 #include "rle.h"
+
 
 #define CHECK_MALLOC( ptr ) \
 	{ if (! (ptr)) {fprintf( stderr, "%s: Unable to alloc memory\n", \

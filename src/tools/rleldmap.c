@@ -27,8 +27,7 @@
 
 #include "common.h"
 
-
-
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 
@@ -40,6 +39,7 @@
 
 #include "machine.h"
 #include "rle.h"
+
 
 void get_rle_map(rle_hdr *the_hdr, char *fname);
 void linmap(double factor, int nchan, int length, int range, rle_map **amap);

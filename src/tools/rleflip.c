@@ -37,12 +37,12 @@
 
 #include "common.h"
 
-
-
+#include <stdlib.h>
 #include <stdio.h>
 
 #include "machine.h"
 #include "rle.h"
+
 
 #define VERT_FLAG  0x01		/* Command line flags */
 #define HORIZ_FLAG 0x02		/* must match appearance in scanargs */

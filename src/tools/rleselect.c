@@ -27,10 +27,12 @@
 
 #include "common.h"
 
+#include <stdlib.h>
 #include <stdio.h>
 
 #include "machine.h"
 #include "rle.h"
+
 
 static void insert(int **sorted_list_p, int i, int n);
 

@@ -13,6 +13,7 @@
 
 #include "common.h"
 
+#include <stdlib.h>
 #include <stdio.h>
 
 #ifdef HAVE_STRING_H
@@ -25,6 +26,7 @@
 #include "rle.h"
 #include "rle_code.h"
 #include "rle_raw.h"
+
 
 void copy_raw(rle_hdr *the_hdr, int y, rle_op **scan, int *nraw, rle_op ***save_scan, int **save_nraw);
 

@@ -23,12 +23,14 @@
 
 #include "common.h"
 
+#include <stdlib.h>
 #include <stdio.h>
 
 #include "machine.h"
 #include "rle.h"
 #include "rle_code.h"
 #include "rle_raw.h"
+
 
 void do_slice(int num, char *filename);
 void copy_scanline(int ypos, int copy_flag);

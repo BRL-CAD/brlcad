@@ -47,12 +47,12 @@
 
 #include "common.h"
 
-
-
+#include <stdlib.h>
 #include <stdio.h>
 
 #include "machine.h"
 #include "rle.h"
+
 
 /* hey.. why spin normally! */
 #define duff(counter, block) {\

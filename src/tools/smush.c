@@ -15,10 +15,12 @@ static const char rcs_ident[] = "$Header$";
 
 #include "common.h"
 
+#include <stdlib.h>
 #include <stdio.h>
 
 #include "machine.h"
 #include "rle.h"
+
 
 char *progname;
 

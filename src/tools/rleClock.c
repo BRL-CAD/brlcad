@@ -30,8 +30,7 @@
 
 #include "common.h"
 
-
-
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 #include <ctype.h>
@@ -46,7 +45,9 @@
 
 #include "machine.h"
 #include "rle.h"
+
 #include "./font.h"
+
 
 /*
  * Type definitions

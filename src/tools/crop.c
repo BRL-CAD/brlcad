@@ -31,12 +31,12 @@ static const char rcs_ident[] = "$Header$";
 
 #include "common.h"
 
-
-
+#include <stdlib.h>
 #include <stdio.h>
 
 #include "machine.h"
 #include "rle.h"
+
 
 extern void rle_box(rle_hdr *the_hdr, int *xminp, int *xmaxp, int *yminp, int *ymaxp);
 int pos_box_vals(int x1, int y1, int x2, int y2);

@@ -27,14 +27,14 @@
 
 #include "common.h"
 
-
-
+#include <stdlib.h>
 #include <stdio.h>
 
 #include "machine.h"
 #include "rle.h"
 #include "rle_code.h"
 #include "rle_raw.h"
+
 
 #define	map_pixel( pix, cmaplen, cmap )	((pix) > (unsigned)cmaplen ? (pix) : \
 					 (cmap[pix]) >> 8)

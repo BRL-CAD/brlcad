@@ -13,13 +13,13 @@
 
 #include "common.h"
 
-
-
+#include <stdlib.h>
 #include <stdio.h>
 #include "machine.h"
 #include "rle.h"
 #include "rle_code.h"
 #include "rle_raw.h"
+
 
 #define CHECK_MALLOC( ptr ) \
   { if (! (ptr)) {fprintf( stderr, "%s: Malloc failed\n", cmd_name( argv ) ); \

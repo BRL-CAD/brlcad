@@ -30,6 +30,7 @@
 
 #include "common.h"
 
+#include <stdlib.h>
 #include <stdio.h>
 #ifndef HAVE_STRING_H
 #include <strings.h>
@@ -39,7 +40,9 @@
 
 #include "machine.h"
 #include "rle.h"
+
 #include "./rletogif.h"
+
 
 const char *MY_NAME = "rletogif";
 

@@ -47,8 +47,7 @@
 
 #include "common.h"
 
-
-
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 
@@ -60,6 +59,7 @@
 
 #include "machine.h"
 #include "rle.h"
+
 
 #define MAXCHAN 4
 #ifdef M_PI

@@ -27,11 +27,13 @@
 
 #include "common.h"
 
+#include <stdlib.h>
 #include <stdio.h>
 
 #include "machine.h"
 #include "rle.h"
 #include "rle_raw.h"
+
 
 extern void scan_usage();
 

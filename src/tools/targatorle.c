@@ -40,6 +40,7 @@
 
 #include "common.h"
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <sys/types.h>
 
@@ -51,6 +52,7 @@
 
 #include "machine.h"
 #include "rle.h"
+
 
 /*
  * Description of header for files containing targa type 2 images

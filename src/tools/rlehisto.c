@@ -27,12 +27,12 @@ static const char rcs_ident[] = "$Id$";
 
 #include "common.h"
 
-
-
+#include <stdlib.h>
 #include <stdio.h>
 
 #include "machine.h"
 #include "rle.h"
+
 
 #define MAXCHAN 10
 

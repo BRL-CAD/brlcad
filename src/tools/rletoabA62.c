@@ -43,6 +43,7 @@
 # include <unistd.h>
 #endif
                                                                                                                                                                             
+#include <stdlib.h>
 #include <stdio.h>
 
 #ifdef HAVE_STRING_H
@@ -53,6 +54,7 @@
 
 #include "machine.h"
 #include "rle.h"
+
 
 #ifndef TRUE
 #define TRUE 1

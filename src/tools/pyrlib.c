@@ -14,13 +14,13 @@ static const char rcs_ident[] = "$Id$";
 
 #include "common.h"
 
-
-
+#include <stdlib.h>
 #include <stdio.h>
 
 #include "machine.h"
 #include "rle.h"
 #include "pyramid.h"
+
 
 void extrap_level(int level, pyramid *pyr), extrap_int_level(int level, int **corners, int xlen, int ylen, int nchan);
 void alloc_pyramid(pyramid *pyr), gauss_level(int level, pyramid *pyr, float *mask_mult_table), band_level(int level, pyramid *bandpyr, pyramid *gausspyr, float *mask_mult_table), expand_level(int level, pyramid *gausspyr, rle_pixel **corner, float *mask_mult_table);

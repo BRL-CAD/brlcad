@@ -31,8 +31,7 @@
 
 #include "common.h"
 
-
-
+#include <stdlib.h>
 #include <stdio.h>
 #ifdef HAVE_STRING_H
 #include <string.h>
@@ -44,6 +43,7 @@
 #include "rle.h"
 #include "rle_code.h"
 #include "rle_raw.h"
+
 
 #ifndef MAX
 #define MAX(i,j)   ( (i) > (j) ? (i) : (j) )

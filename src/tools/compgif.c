@@ -34,13 +34,13 @@
 
 #include "common.h"
 
-
-
+#include <stdlib.h>
 #include <stdio.h>
 
 #include "machine.h"
 
 #include "./rletogif.h"
+
 
 #define MAXIMUMCODE 4095   /* 2**maximum_code_size */
 #define BLOCKSIZE 256   /* max block byte count + 1 */
