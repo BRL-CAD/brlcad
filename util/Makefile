@@ -1,26 +1,25 @@
 #	Makefile -- for Frame buffer utilities
 
-#	last edit:	85/03/12	Gary S. Moss
+#	last edit:	85/03/13	Gary S. Moss
 
-#	SCCS ID:	@(#)Makefile	1.2
+#	SCCS ID:	@(#)Makefile	1.3
 
-PRODUCT	= pp-ik pc-ik ikclear ikgrid rle-ik ik-rle ikcmap ikzoom
+PRODUCT	= pp-fb pc-fb fbclear fbgrid rle-fb fb-rle fbcmap fbzoom
 HEADERS =
-CFILES	= pp-ik.c pc-ik.c ikclear.c ikgrid.c rle-ik.c ik-rle.c\
-	ikcmap.c ikzoom.c
-OBJS	= pp-ik.o pc-ik.o ikclear.o ikgrid.o rle-ik.o ik-rle.o\
-	ikcmap.o ikzoom.o
-TFILES	= ${PRODUCT}.in ${PRODUCT}.exp
+CFILES	= pp-fb.c pc-fb.c fbclear.c fbgrid.c rle-fb.c fb-rle.c\
+	fbcmap.c fbzoom.c termio.c
+OBJS	= pp-fb.o pc-fb.o fbclear.o fbgrid.o rle-fb.o fb-rle.o\
+	fbcmap.o fbzoom.o termio.o
 BINDIR	= /usr/brl/bin
 LIBDIR	= /vld/lib
 INCDIR	= /vld/include
 MANDIR	= /usr/man/man1
-MANUAL	= ik-rle.1
+MANUAL	= fb-rle.1
 BINPERM	= 755
 MANPERM	= 664
 CFLAGS	= -I${INCDIR} -O
 LDFLAGS = -n
-LIBES	= ${LIBDIR}/libfb.a -lm
+LIBES	= termio.o ${LIBDIR}/libfb.a -lm
 INS	= cp
 
 .DEFAULT:
@@ -29,7 +28,7 @@ INS	= cp
 
 all:		${PRODUCT} ${MANUAL}
 
-${PRODUCT}:	$$@.o
+${PRODUCT}:	$$@.o termio.o
 	$(CC) -o $@ ${LDFLAGS} $@.o ${LIBES} 
 	size $@
 	touch $@
@@ -59,7 +58,7 @@ install:	all
 	chmod ${MANPERM} ${MANDIR}/${MANUAL}
 
 clean:
-	-if vax; then rm -f ${HEADERS} ${CFILES} ${TFILES}; fi
+	-if vax; then rm -f ${HEADERS} ${CFILES}; fi
 	-rm -f ${OBJS} ${PRODUCT}.lint \
 		${PRODUCT}.flow ${PRODUCT}.xref \
 		${PRODUCT}.out ${PRODUCT}.err
