@@ -352,9 +352,21 @@ mem_wmap( ifp, cmp )
 FBIO	*ifp;
 ColorMap	*cmp;
 {
-	MI(ifp)->cmap = *cmp;		/* struct copy */
+	if( cmp == COLORMAP_NULL )  {
+		/* Standard Colormap */
+		register int	i;
+
+		for( i=0; i<256; i++ )  {
+			MI(ifp)->cmap.cm_red[i] = i<<8;
+			MI(ifp)->cmap.cm_green[i] = i<<8;
+			MI(ifp)->cmap.cm_blue[i] = i<<8;
+		}
+	} else {
+		MI(ifp)->cmap = *cmp;		/* struct copy */
+	}
 	if( MI(ifp)->write_thru ) {
 		return fb_wmap( MI(ifp)->fbp, cmp );
+		/* Map isn't dirty if already written through */
 	}
 	MI(ifp)->cmap_dirty = 1;
 	return(0);
