@@ -22,15 +22,13 @@ static char RCSid[] = "@(#)$Header";
 #include <math.h>
 #include "tk.h"
 
-#if 1
 #ifdef USE_MESA_GL
-#include <MESA_GL/glx.h>
-#include <MESA_GL/gl.h>
+#include <GL/glx.h>
+#include <GL/gl.h>
 #else
 #include <GL/glx.h>
 #include <GL/gl.h>
 #include <gl/device.h>
-#endif
 #endif
 
 #include "machine.h"
