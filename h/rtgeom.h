@@ -489,8 +489,9 @@ struct rt_bot_internal
 #define RT_BOT_SOLID			2	/* triangles respresent the boundary of a solid object */
 #define	RT_BOT_PLATE			3	/* triangles represent plates. Thicknesses are specified in "thickness" array,
 						 * and face mode is specified in "face_mode" bit vector.
-						 * This is the FASTGEN "plate" mode. Orientation is ignored.
-						 */
+						 * This is the FASTGEN "plate" mode. Orientation is ignored. */
+#define RT_BOT_PLATE_NOCOS		4	/* same as plate mode, but LOS is set equal to face thickness, not
+						 * the thickness divided by the cosine of the obliquity angle */
 
 #define	RT_BOT_INTERNAL_MAGIC		0x626F7472	/* botr */
 #define RT_BOT_CK_MAGIC(_p)	BU_CKMAG(_p,RT_BOT_INTERNAL_MAGIC,"rt_bot_internal")
