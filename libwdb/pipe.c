@@ -83,10 +83,16 @@ int
 mk_pipe( fp, name, headp )
 FILE			*fp;
 char			*name;
-struct wdb_pipeseg	*headp;
+struct wdb_pipept	*headp;
 {
 	struct rt_pipe_internal		pipe;
 	int				ret;
+
+	if( rt_pipe_ck( headp ) )
+	{
+		rt_log( "mk_pipe: BAD PIPE SOLID (%s)\n" , name );
+		return( 1 );
+	}
 
 	pipe.pipe_magic = RT_PIPE_INTERNAL_MAGIC;
 	RT_LIST_INIT( &pipe.pipe_segs_head );
@@ -108,11 +114,11 @@ struct wdb_pipeseg	*headp;
  */
 void
 mk_pipe_free( headp )
-register struct wdb_pipeseg	*headp;
+register struct wdb_pipept	*headp;
 {
-	register struct wdb_pipeseg	*wp;
+	register struct wdb_pipept	*wp;
 
-	while( RT_LIST_WHILE( wp, wdb_pipeseg, &headp->l ) )  {
+	while( RT_LIST_WHILE( wp, wdb_pipept, &headp->l ) )  {
 		RT_LIST_DEQUEUE( &wp->l );
 		rt_free( (char *)wp, "mk_pipe_free" );
 	}
