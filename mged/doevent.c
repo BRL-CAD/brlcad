@@ -223,6 +223,11 @@ XMotionEvent *xmotion;
       rubber_band->rb_height = y - rubber_band->rb_y;
 
       rect_view2image();
+      /*
+       * Now go back the other way to reconcile
+       * differences caused by floating point fuzz.
+       */
+      rect_image2view();
       rb_set_dirty_flag();
 
       goto handled;
