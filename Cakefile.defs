@@ -310,7 +310,7 @@ set -S2 "/bin/sh"
 /*	Silicon Graphics 4D, running IRIX64 6.2 (on a MIPS3 machine) */
 #	undef	sgi
 #	define	MTYPE	m3i62
-#	if 0	/* PRODUCTION=1 */
+#	if 1	/* PRODUCTION=1 */
 /*		This version for production: optimization & shared libraries */
 /*		Warning 1174 is "variable declared but never referenced". */
 /*		Warning 1032 is "expression must have arithmetic type". */
@@ -333,7 +333,7 @@ set -S2 "/bin/sh"
 #	define	GFLAG		-64 -mips3 -KPIC -G 7
 #	define  XINCDIR /usr/include/X11
 #	define	XLIBDIR /usr/lib64
-#	if 0	/* PRODUCTION=1 */
+#	if 1	/* PRODUCTION=1 */
 /*		Shared library version support */
 #		define	ARCH_SUF	so
 #		define	LIBVERS ../sh/sharedlibvers.sh
