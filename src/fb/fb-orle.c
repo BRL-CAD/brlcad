@@ -21,9 +21,9 @@ static const char RCSid[] = "@(#)$Id$ (BRL)";
 
 #include "common.h"
 
-
-
+#include <stdlib.h>
 #include <stdio.h>
+
 #include "machine.h"
 #include "fb.h"
 #include "orle.h"

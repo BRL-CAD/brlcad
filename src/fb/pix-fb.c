@@ -24,12 +24,12 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-                                                                                                                                                                            
 #ifdef HAVE_SYS_TYPES_H
 # include <sys/types.h>
 #endif
-                                                                                                                                                                            
 #include <stdio.h>
+#include <stdlib.h>
+
 #include "machine.h"
 #include "fb.h"
 

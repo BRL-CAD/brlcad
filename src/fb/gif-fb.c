@@ -61,6 +61,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include	<assert.h>
 #include	<signal.h>
 #include	<stdio.h>
+#include	<stdlib.h>
 #ifdef HAVE_STRING_H
 #include	<string.h>
 #else
@@ -73,7 +74,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 # define	RBMODE	"r"
 # include	<varargs.h>
 #endif
-
 
 #include "machine.h"
 #include "fb.h"			/* BRL CAD package libfb.a interface */

@@ -26,7 +26,9 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 # include <unistd.h>
 #endif
                                                                                                                                                                             
+#include <stdlib.h>
 #include <stdio.h>
+
 #include "machine.h"
 #include "fb.h"
 

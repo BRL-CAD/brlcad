@@ -26,11 +26,13 @@ static const char RCSid[] = "@(#)$Id$ (BRL)";
 #endif
                                                                                                                                                                             
 #include <stdio.h>
+#include <stdlib.h>
 #ifdef HAVE_STRING_H
 #include <string.h>
 #else
 #include <strings.h>
 #endif
+
 #include "machine.h"
 #include "fb.h"
 #include "orle.h"
