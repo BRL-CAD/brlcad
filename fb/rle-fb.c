@@ -153,12 +153,12 @@ char ** argv;
 	int	screen_xlen;		/* clipped len of rectangle */
 	int	ncolors;
 
+	infp = stdin;
 	if( !get_args( argc, argv ) )  {
 		(void)fputs(usage, stderr);
 		exit( 1 );
 	}
 
-	infp = stdin;
 	rle_dflt_hdr.rle_file = infp;
 	if( rle_get_setup( &rle_dflt_hdr ) < 0 )  {
 		fprintf(stderr, "rle-fb: Error reading setup information\n");
