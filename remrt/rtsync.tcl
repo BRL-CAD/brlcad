@@ -135,7 +135,8 @@ proc apply_color {} {
 
 proc net_speed_test {val} {
 	node_send \
-		set test_fb_speed $val
+		set test_fb_speed $val ";" \
+		set curframe 0
 }
 
 # Allow "send rtsync _stuff_" directives to reach us.
