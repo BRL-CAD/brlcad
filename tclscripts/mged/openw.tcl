@@ -1736,6 +1736,8 @@ hoc_register_menu_data "Tools" "Geometry Window" "Geometry Window"\
 	{ { summary "Raise the geometry window." } }
 
 menu .$id.menubar.help -title "Help" -tearoff $mged_default(tearoff_menus)
+.$id.menubar.help add command -label "Dedication" -underline 0\
+	-command "mike_dedication $id"
 .$id.menubar.help add command -label "About MGED" -underline 0\
 	-command "do_About_MGED $id"
 hoc_register_menu_data "Help" "About MGED" "About MGED"\
