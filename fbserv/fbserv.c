@@ -60,9 +60,9 @@ int argc; char **argv;
 	(void)signal( SIGPIPE, SIG_IGN );
 
 #ifdef BSD
-	/* Started by /etc/inetd, network fd=0 */
+	/* Transient server, started by /etc/inetd, network fd=0 */
 	netfd = 0;
-	rem_pcp = pkg_makeconn( netfd, pkg_switch, comm_error );
+	rem_pcp = pkg_transerver( pkg_switch, comm_error );
 #else
 	while(1)  {
 		int stat;
