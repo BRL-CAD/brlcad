@@ -802,6 +802,9 @@ struct fpi	*fpi;
  *  Values for "call_on_hits"
  *	1	find all elements pt touches, call user routine for each geom.
  *	2	find all elements pt touches, call user routine for each use
+ *
+ *  Returns -
+ *	NMG_CLASS_AonB, etc...
  */
 int
 nmg_class_pt_fu_except(pt, fu, ignore_lu,
@@ -874,7 +877,7 @@ CONST struct rt_tol     *tol;
 		rt_log("nmg_class_pt_fu_except(%g %g %g)\nParity error @ %s:%d ot_same_in:%d ot_opposite_out:%d\n",
 			V3ARGS(pt), __FILE__, __LINE__,
 			ot_same_in, ot_opposite_out);
-		rt_bomb("");
+		rt_bomb("nmg_class_pt_fu_except() loop classification parity error\n");
 	}
 
 	while (RT_LIST_WHILE(ved_p, ve_dist, &fpi.ve_dh)) {
