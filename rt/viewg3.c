@@ -42,6 +42,7 @@ static char RCSrayg3[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "raytrace.h"
 #include "./material.h"
+#include "./ext.h"
 
 #include "rdebug.h"
 
@@ -49,24 +50,7 @@ static char RCSrayg3[] = "@(#)$Header$ (BRL)";
 
 extern double	mat_radtodeg;
 
-/***** view.c variables imported from rt.c *****/
-extern int	output_is_binary;	/* !0 means output file is binary */
-extern mat_t	view2model;
-extern mat_t	model2view;
-
-/***** worker.c variables imported from rt.c *****/
-extern int	jitter;			/* jitter ray starting positions */
-extern fastf_t	aspect;			/* view aspect ratio X/Y */
-extern vect_t	dx_model;		/* view delta-X as model-space vect */
-extern vect_t	dy_model;		/* view delta-Y as model-space vect */
-extern point_t	eye_model;		/* model-space location of eye */
-extern fastf_t	rt_perspective;		/* persp (degrees X) 0 => ortho */
-extern int	width;			/* # of pixels in X */
-extern int	height;			/* # of lines in Y */
-/*****/
-
 int		use_air = 1;		/* Handling of air in librt */
-
 int		using_mlib = 0;		/* Material routines NOT used */
 
 /* Viewing module specific "set" variables */
@@ -74,11 +58,7 @@ struct structparse view_parse[] = {
 	(char *)0,(char *)0,	0,			FUNC_NULL
 };
 
-FILE            *plotfp;		/* optional plotting file */
-
-extern FILE	*outfp;			/* optional output file */
-
-extern double	azimuth, elevation;
+static FILE	*plotfp;		/* optional plotting file */
 
 char usage[] = "\
 Usage:  rtg3 [options] model.g objects... >file.ray\n\
