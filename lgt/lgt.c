@@ -178,36 +178,40 @@ int	frame;
 	if( movie.m_keys )
 		return	key_Frame() == -1 ? FALSE : TRUE;
 	lgts[0].azim = movie.m_azim_beg +
-				rel_frame * (movie.m_azim_end - movie.m_azim_beg);
+			rel_frame * (movie.m_azim_end - movie.m_azim_beg);
 	lgts[0].elev = movie.m_elev_beg +
-				rel_frame * (movie.m_elev_end - movie.m_elev_beg);
+			rel_frame * (movie.m_elev_end - movie.m_elev_beg);
 	grid_roll = movie.m_roll_beg +
-				rel_frame * (movie.m_roll_end - movie.m_roll_beg);
-	if( movie.m_over )
-		{
-		lgts[0].over = TRUE;
-		lgts[0].dist = movie.m_dist_beg +
-				rel_frame * (movie.m_dist_end - movie.m_dist_beg);
-		grid_dist = movie.m_grid_beg +
-				rel_frame * (movie.m_grid_end - movie.m_grid_beg);
-		}
-	else
-		{
-		lgts[0].over = FALSE;
-		if( movie.m_pers_beg >= 0.0 )
-			rel_perspective = movie.m_pers_beg +
-			rel_frame * (movie.m_pers_end - movie.m_pers_beg);
-		}
+			rel_frame * (movie.m_roll_end - movie.m_roll_beg);
 	rt_log( "\tview azimuth\t%g\n", lgts[0].azim*DEGRAD );
 	rt_log( "\tview elevation\t%g\n", lgts[0].elev*DEGRAD );
 	rt_log( "\tview roll\t%g\n", grid_roll*DEGRAD );
 	if( movie.m_over )
 		{
+		lgts[0].over = TRUE;
+		lgts[0].dist = movie.m_dist_beg +
+			rel_frame * (movie.m_dist_end - movie.m_dist_beg);
+		grid_dist = movie.m_grid_beg +
+			rel_frame * (movie.m_grid_end - movie.m_grid_beg);
 		rt_log( "\teye distance\t%g\n", lgts[0].dist );
 		rt_log( "\tgrid distance\t%g\n", grid_dist );
 		}
 	else
+		{
+		lgts[0].over = FALSE;
+		if( movie.m_pers_beg == 0.0 && movie.m_pers_end == 0.0 )
+			{
+			rel_perspective = 0.0;
+			grid_dist = movie.m_grid_beg +
+			     rel_frame * (movie.m_grid_end - movie.m_grid_beg);
+			rt_log( "\tgrid distance\t%g\n", grid_dist );
+			}
+		else
+		if( movie.m_pers_beg >= 0.0 )
+			rel_perspective = movie.m_pers_beg +
+			rel_frame * (movie.m_pers_end - movie.m_pers_beg);
 		rt_log( "\tperspective\t%g\n", rel_perspective );
+		}
 	return	TRUE;
 	}
 
