@@ -93,7 +93,8 @@ col_eol()
  */
 int
 cmpdirname(a, b)
-CONST genptr_t a, b;
+CONST genptr_t a;
+CONST genptr_t b;
 {
 	register struct directory **dp1, **dp2;
 
