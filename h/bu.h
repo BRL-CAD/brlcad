@@ -223,6 +223,18 @@ extern char	*realloc();
 #endif
 
 /*----------------------------------------------------------------------*/
+/*
+ *  Sizes of "network" format data.
+ *  We use the same convention as the TCP/IP specification,
+ *  namely, big-Endian, IEEE format, twos compliment.
+ *  This is the BRL-CAD external data representation (XDR).
+ *  See also the support routines in libbu/xdr.c
+ */
+#define SIZEOF_NETWORK_SHORT	2	/* htons(), bu_gshort(), bu_pshort() */
+#define SIZEOF_NETWORK_LONG	4	/* htonl(), bu_glong(), bu_plong() */
+#define SIZEOF_NETWORK_DOUBLE	8	/* htond() */
+
+/*----------------------------------------------------------------------*/
 /* list.c */
 /*
  *									*
@@ -742,6 +754,41 @@ typedef int (*bu_hook_t)BU_ARGS((genptr_t, genptr_t));
 #define BUHOOK_NULL 0
 
 /*----------------------------------------------------------------------*/
+/* avs.c */
+/*
+ *  Attribute/value sets
+ */
+
+/*
+ *			B U _ A T T R I B U T E _ V A L U E _ P A I R
+ *
+ *  These strings may or may not be individually allocated,
+ *  it depends on usage.
+ */
+struct bu_attribute_value_pair {
+	char	*name;
+	char	*value;
+};
+
+/*
+ *			B U _ A T T R I B U T E _ V A L U E _ S E T
+ *
+ *  Every one of the names and values is a local copy made with bu_strdup().
+ *  They need to be freed individually.
+ */
+struct bu_attribute_value_set {
+	long				magic;
+	int				count;	/* # valid entries in avp */
+	int				max;	/* # allocated slots in avp */
+	struct bu_attribute_value_pair	*avp;
+};
+#define BU_AVS_MAGIC		0x41765321	/* AvS! */
+#define BU_CK_AVS(_avp)		BU_CKMAG(_avp, BU_AVS_MAGIC, "bu_attribute_value_set")
+
+#define BU_AVS_FOR(_pp, _avp)	\
+	(_pp) = &(_avp)->avp[(_avp)->count-1]; (_pp) >= (_avp)->avp; (_pp)--
+
+/*----------------------------------------------------------------------*/
 /* vls.c */
 /*
  *  Variable Length Strings: bu_vls support (formerly rt_vls in h/rtstring.h)
@@ -799,6 +846,7 @@ extern int	bu_debug;
 
 #define BU_DEBUG_MATH		0x00000100	/* 011 Fundamental math routines (plane.c, mat.c) */
 #define BU_DEBUG_PTBL		0x00000200	/* 012 bu_ptbl_*() logging */
+#define BU_DEBUG_AVS		0x00000400	/* 013 bu_avs_*() logging */
 
 #define BU_DEBUG_TABDATA	0x00010000	/* 025 LIBBN: tabdata */
 
@@ -807,7 +855,7 @@ extern int	bu_debug;
 "\020\
 \025TABDATA\
 \015?\
-\012PTBL\011MATH\010?\7?\6?\5PARALLEL\
+\013AVS\012PTBL\011MATH\010?\7?\6?\5PARALLEL\
 \4?\3MEM_LOG\2MEM_CHECK\1COREDUMP"
 
 /*----------------------------------------------------------------------*/
@@ -891,6 +939,8 @@ struct bu_structparse {
 
 /*----------------------------------------------------------------------*/
 /*
+ *			B U _ E X T E R N A L
+ *
  *  An "opaque" handle for holding onto objects,
  *  typically in some kind of external form that is not directly
  *  usable without passing through an "importation" function.
@@ -1092,6 +1142,17 @@ struct bu_observer {
  *  Declarations of external functions in LIBBU.
  *  Source file names listed alphabetically.
  */
+
+/* avs.c */
+BU_EXTERN(void			bu_avs_init, (struct bu_attribute_value_set *avp,
+				int len, CONST char *str));
+BU_EXTERN(struct bu_attribute_value_set	*bu_avs_new, (int len, CONST char *str));
+BU_EXTERN(int			bu_avs_add, (struct bu_attribute_value_set *avp,
+				CONST char *attribute,
+				CONST char *value));
+BU_EXTERN(int			bu_avs_remove, (struct bu_attribute_value_set *avp,
+				CONST char *attribute));
+BU_EXTERN(void			bu_avs_free, (struct bu_attribute_value_set *avp));
 
 /* badmagic.c */
 BU_EXTERN(void			bu_badmagic, (CONST long *ptr, long magic,

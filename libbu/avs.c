@@ -29,32 +29,10 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "machine.h"
 #include "bu.h"
 
-#define BU_DEBUG_AVS		0x00000400	/* 012 bu_avs_*() logging */
-
-struct bu_attribute_value_pair {
-	char	*name;
-	char	*value;
-};
-
-/*
- *  Every one of the names and values is a local copy made with bu_strdup().
- *  They need to be freed automatically.
- */
-struct bu_attribute_value_set {
-	long				magic;
-	int				count;	/* # valid entries in avp */
-	int				max;	/* # allocated slots in avp */
-	struct bu_attribute_value_pair	*avp;
-};
-#define BU_AVS_MAGIC		0x41765321	/* AvS! */
-#define BU_CK_AVS(_avp)		BU_CKMAG(_avp, BU_AVS_MAGIC, "bu_attribute_value_set")
-
-#define BU_AVS_FOR(_pp, _avp)	\
-	(_pp) = &(_avp)->avp[(_avp)->count-1]; (_pp) >= (_avp)->avp; (_pp)--
-
 /*
  *			B U _ A V S _ I N I T
  */
+void
 bu_avs_init( avp, len, str )
 struct bu_attribute_value_set	*avp;
 int		len;
@@ -69,6 +47,30 @@ CONST char	*str;
 	avp->max = len;
 	avp->avp = (struct bu_attribute_value_pair *)bu_calloc(avp->max,
 		sizeof(struct bu_attribute_value_pair), str);
+}
+
+/*
+ *			B U _ A V S _ I N I T
+ *
+ *  Allocate storage for a new attribute/value set, with at least
+ *  'len' slots pre-allocated.
+ */
+struct bu_attribute_value_set	*
+bu_avs_new( len, str )
+int		len;
+CONST char	*str;
+{
+	struct bu_attribute_value_set	*avp;
+
+	avp = (struct bu_attribute_value_set *)bu_malloc(
+		sizeof(struct bu_attribute_value_set),
+		"struct bu_attribute_value_set");
+	bu_avs_init( avp, len, "bu_avs_new" );
+
+	if (bu_debug & BU_DEBUG_AVS)
+		bu_log("bu_avs_new(len=%d, %s) = x%x\n", len, str, avp);
+
+	return avp;
 }
 
 /*
