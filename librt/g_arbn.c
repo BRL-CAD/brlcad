@@ -62,7 +62,7 @@ struct rt_i	*rtip;
 	int		*used = (int *)0;	/* plane eqn use count */
 
 	GETSTRUCT( aip, arbn_internal );
-	stp->st_specific = (int *)aip;
+	stp->st_specific = (genptr_t)aip;
 
 	if( arbn_import( aip, rec, stp->st_pathmat ) < 0 )  {
 		rt_log("arbn(%s): db import error\n", stp->st_name );

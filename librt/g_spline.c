@@ -229,7 +229,7 @@ struct rt_i	*rtip;
 		}
 	}
 
-	stp->st_specific = (int *)nlist;
+	stp->st_specific = (genptr_t)nlist;
 	VSET( stp->st_center,
 	    (stp->st_max[0] + stp->st_min[0])/2,
 	    (stp->st_max[1] + stp->st_min[1])/2,

@@ -213,7 +213,7 @@ struct rt_i		*rtip;
 
 	/* solid is OK, compute constant terms, etc. */
 	GETSTRUCT( tgc, tgc_specific );
-	stp->st_specific = (int *)tgc;
+	stp->st_specific = (genptr_t)tgc;
 
 	VMOVE( tgc->tgc_V, ti.v );
 	tgc->tgc_A = mag_a;

@@ -71,7 +71,7 @@ struct rt_i	*rtip;
 	 * normal vector, and a distance.
 	 */
 	GETSTRUCT( halfp, half_specific );
-	stp->st_specific = (int *)halfp;
+	stp->st_specific = (genptr_t)halfp;
 
 	if( hlf_import( halfp->half_eqn, rec, stp->st_pathmat ) < 0 )  {
 		rt_log("hlf_prep(%s): db import failure\n", stp->st_name);

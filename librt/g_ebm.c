@@ -603,7 +603,7 @@ struct rt_i	*rtip;
 	VSET( norm, 0, 0, 1 );
 	MAT4X3VEC( ebmp->ebm_znorm, stp->st_pathmat, norm );
 
-	stp->st_specific = (int *)ebmp;
+	stp->st_specific = (genptr_t)ebmp;
 
 	/* Find bounding RPP of rotated local RPP */
 	VSETALL( small, 0 );

@@ -253,7 +253,7 @@ struct rt_i		*rtip;
 
 	/* Solid is OK, compute constant terms now */
 	GETSTRUCT( ell, ell_specific );
-	stp->st_specific = (int *)ell;
+	stp->st_specific = (genptr_t)ell;
 
 	VMOVE( ell->ell_V, ei.v );
 

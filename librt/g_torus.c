@@ -238,7 +238,7 @@ struct rt_i		*rtip;
 
 	/* Solid is OK, compute constant terms now */
 	GETSTRUCT( tor, tor_specific );
-	stp->st_specific = (int *)tor;
+	stp->st_specific = (genptr_t)tor;
 
 	tor->tor_r1 = r1;
 	tor->tor_r2 = r2;

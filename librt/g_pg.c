@@ -87,7 +87,7 @@ struct rt_i	*rtip;
 			VMOVE( work[1], work[2] );
 		}
 	}
-	if( stp->st_specific == 0 )  {
+	if( stp->st_specific == (genptr_t)0 )  {
 		rt_log("pg(%s):  no faces\n", stp->st_name);
 		return(-1);		/* BAD */
 	}
@@ -171,7 +171,7 @@ fastf_t		*np;
 
 	/* Add this face onto the linked list for this solid */
 	trip->tri_forw = (struct tri_specific *)stp->st_specific;
-	stp->st_specific = (int *)trip;
+	stp->st_specific = (genptr_t)trip;
 	return(3);				/* OK */
 }
 

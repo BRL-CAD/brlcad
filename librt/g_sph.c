@@ -160,7 +160,7 @@ union record		*rec;
 
 	/* Solid is OK, compute constant terms now */
 	GETSTRUCT( sph, sph_specific );
-	stp->st_specific = (int *)sph;
+	stp->st_specific = (genptr_t)sph;
 
 	VMOVE( sph->sph_V, ei.v );
 

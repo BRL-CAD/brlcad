@@ -158,7 +158,7 @@ struct rt_i	*rtip;
 	if( dz > f )  f = dz;
 	stp->st_aradius = f;
 	stp->st_bradius = sqrt(dx*dx + dy*dy + dz*dz);
-	stp->st_specific = (int *) 0;
+	stp->st_specific = (genptr_t) 0;
 
 	/*
 	 *  Compute planar faces
@@ -283,7 +283,7 @@ pointp_t ap, bp, cp;
 
 	/* Add this face onto the linked list for this solid */
 	trip->tri_forw = (struct tri_specific *)stp->st_specific;
-	stp->st_specific = (int *)trip;
+	stp->st_specific = (genptr_t)trip;
 	return(3);				/* OK */
 }
 

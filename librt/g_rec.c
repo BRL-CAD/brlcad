@@ -241,7 +241,7 @@ struct rt_i		*rtip;
 	stp->st_id = ID_REC;		/* "fix" soltab ID */
 
 	GETSTRUCT( rec, rec_specific );
-	stp->st_specific = (int *)rec;
+	stp->st_specific = (genptr_t)rec;
 
 	VMOVE( rec->rec_Hunit, Hv );
 	VUNITIZE( rec->rec_Hunit );

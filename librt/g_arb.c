@@ -237,7 +237,7 @@ next_pt:		;
 				sizeof(struct arb_specific) +
 				sizeof(struct aface) * (pa.pa_faces - 4),
 				"arb_specific" );
-			stp->st_specific = (int *)arbp;
+			stp->st_specific = (genptr_t)arbp;
 		}
 		arbp->arb_nmfaces = pa.pa_faces;
 		bcopy( (char *)pa.pa_face, (char *)arbp->arb_face,
