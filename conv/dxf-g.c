@@ -18,33 +18,180 @@ extern int errno;
 
 static char *usage="dxf-g [-d] [-l] [-n] [-p] [-t tolerance] [-i input_file] [-o output_file_name]";
 static char *all="all";
+static FILE *dxf;			/* Input DXF file */
+static FILE *out_fp;			/* Output BRLCAD file */
+static struct rt_tol tol;		/* Tolerance */
+static char line[LINELEN];		/* Buffer for line from input file */
+static char *curr_name;			/* Current layer name */
+static int debug=0;			/* Debug flag */
+static struct nmg_ptbl vertices;	/* Table of vertices */
+static struct nmg_ptbl faces;		/* Table of faceuses */
+static struct nmg_ptbl layers;		/* Table of layer names */
+static struct model *m;
+static struct nmgregion *r;
+static struct shell *s;
+
+int
+Do_3dface()
+{
+	struct faceuse *fu;
+	struct vertex *vp[4];
+	point_t pt[4];
+	int no_of_pts;
+	int skip_face;
+	int i,j,group_code;
+
+	if( debug )
+		rt_log( "3DFACE\n" );
+	skip_face = 0;
+	no_of_pts = (-1);
+	group_code = 1;
+	while( group_code )
+	{
+		if( fgets( line , LINELEN , dxf ) == NULL )
+			rt_bomb( "Unexpected EOF in input file\n" );
+		sscanf( line , "%d" , &group_code );
+		switch( group_code )
+		{
+			default:
+				if( fgets( line , LINELEN , dxf ) == NULL )
+					rt_bomb( "Unexpected EOF in input file\n" );
+				break;
+			case 8:
+				if( fgets( line , LINELEN , dxf ) == NULL )
+					rt_bomb( "Unexpected EOF in input file\n" );
+				line[ strlen( line ) - 1 ] = '\0';
+				if( curr_name != NULL && strcmp( line , curr_name ) )
+					skip_face = 1;
+				break;
+			case 10:
+			case 20:
+			case 30:
+			case 11:
+			case 21:
+			case 31:
+			case 12:
+			case 22:
+			case 32:
+			case 13:
+			case 23:
+			case 33:
+				if( fgets( line , LINELEN , dxf ) == NULL )
+					rt_bomb( "Unexpected EOF in input file\n" );
+				if( !skip_face )
+				{
+					i = group_code%10;
+					j = group_code/10 - 1;
+					if( i > no_of_pts )
+						no_of_pts = i;
+					pt[i][j] = atof( line );
+				}
+				break;
+			case 0:
+				if( skip_face )
+					break;
+				no_of_pts++;
+				if( debug )
+				{
+					rt_log( "Original FACE:\n" );
+					for( i=0 ; i<no_of_pts ; i++ )
+						rt_log( "\t( %f %f %f )\n" , V3ARGS( pt[i] ) );
+				}
+				for( i=0 ; i<no_of_pts ; i++ )
+				{
+					for( j=i+1 ; j<no_of_pts ; j++ )
+					{
+						if( VAPPROXEQUAL( pt[i] , pt[j] , tol.dist ) )
+						{
+							int k;
+
+							if( debug )
+								rt_log( "Combining points %d and %d\n" , i , j );
+							no_of_pts--;
+							for( k=j ; k<no_of_pts ; k++ )
+							{
+								VMOVE( pt[k] , pt[k+1] );
+							}
+							j--;
+						}
+					}
+				}
+				if( no_of_pts != 3 && no_of_pts != 4 )
+				{
+					if( debug )
+						rt_log( "Skipping face with %d vertices\n" , no_of_pts );
+					break;
+				}
+				if( no_of_pts == 3 && rt_3pts_collinear( pt[0],pt[1],pt[2],&tol ) )
+				{
+					if( debug )
+						rt_log( "Skipping triangular face with collinear vertices\n" );
+					break;
+				}
+				if( debug )
+					rt_log( "final FACE:\n" );
+				for( i=0 ; i<no_of_pts ; i++ )
+				{
+					if( debug )
+						rt_log( "\t( %f %f %f )\n" , V3ARGS( pt[i] ) );
+					vp[i] = (struct vertex *)NULL;
+					for( j=0 ; j<NMG_TBL_END( &vertices ) ; j++ )
+					{
+						struct vertex *v;
+
+						v = (struct vertex *)NMG_TBL_GET( &vertices , j );
+						if( rt_pt3_pt3_equal( pt[i] , v->vg_p->coord , &tol) )
+						{
+							vp[i] = v;
+							break;
+						}
+					}
+				}
+				fu = nmg_cface( s , vp , no_of_pts );
+				for( i=0 ; i<no_of_pts ; i++ )
+				{
+					if( vp[i]->vg_p == NULL )
+					{
+						nmg_vertex_gv( vp[i] , pt[i] );
+						nmg_tbl( &vertices , TBL_INS , (long *)vp[i] );
+					}
+				}
+		                if( nmg_fu_planeeqn( fu , &tol ) )
+				{
+		                        rt_log( "Failed to calculate plane eqn\n" );
+					rt_log( "FACE:\n" );
+					for( i=0 ; i<no_of_pts ; i++ )
+						rt_log( "( %f %f %f )\n" , V3ARGS( pt[i] ) );
+				}
+				else
+					nmg_tbl( &faces , TBL_INS , (long *)fu );
+				for( i=0 ; i<no_of_pts ; i++ )
+				{
+					for( j=i+1 ; j<no_of_pts ; j++ )
+					{
+						if( vp[i] == vp[j] )
+							rt_log( "vertex %d is same as vertex %d\n" , i , j );
+					}
+				}
+				break;
+		}
+	}
+	return( group_code );
+}
 
 main( int argc , char *argv[] )
 {
 	register int c;			/* Command line option letter */
-	FILE *dxf;			/* Input DXF file */
-	FILE *out_fp;			/* Output BRLCAD file */
 	char *dxf_name;			/* Name of input file */
 	char *base_name;		/* Base name from dxf_name (no /`s) */
-	char *curr_name;		/* Current layer name */
 	int name_len;			/* Length of name */
-	struct rt_tol tol;		/* Tolerance */
 	int done=0;			/* Flag for loop control */
 	int polysolids=0;		/* Flag for polysolid output */
-	int debug=0;			/* Debug flag */
 	int do_layers=1;		/* Flag for grouping according to layer name */
 	int no_of_layers;		/* number of layers to process */
 	int curr_layer;			/* current layer number */
 	int do_normals=0;
 	int obj_count=0;		/* count of objects written to BRLCAD DB file */
-	char line[LINELEN];		/* Buffer for line from input file */
-	struct nmg_ptbl vertices;	/* Table of vertices */
-	struct nmg_ptbl faces;		/* Table of faceuses */
-	struct nmg_ptbl	layers;		/* Table of layer names */
-	struct model *m;
-	struct nmgregion *r;
-	struct shell *s;
-	struct faceuse *fu;
 	char *ptr1,*ptr2;
 	int i,j,group_code;
 
@@ -125,11 +272,11 @@ main( int argc , char *argv[] )
 	strncpy( base_name , ptr1 , name_len );
 
 	curr_name = NULL;
+	nmg_tbl( &layers , TBL_INIT , NULL );
 
 	if( do_layers )
 	{
 		/* Make list of layer names */
-		nmg_tbl( &layers , TBL_INIT , NULL );
 		while( fgets( line , LINELEN , dxf ) != NULL )
 		{
 			group_code = atoi( line );
@@ -192,35 +339,33 @@ main( int argc , char *argv[] )
 		rewind( dxf );
 		while( fgets( line , LINELEN , dxf ) != NULL )
 		{
-			sscanf( line , "%d" , &group_code );
+			group_code = atoi( line );
 			if( group_code == 0 )
 			{
-				/* read label from next line */
 				if( fgets( line , LINELEN , dxf ) == NULL )
 					rt_bomb( "Unexpected EOF in input file\n" );
 				if( !strncmp( line , "SECTION" , 7 ) )
 				{
+					/* start of a section, is it the ENTITIES section ??? */
 					if( fgets( line , LINELEN , dxf ) == NULL )
 						rt_bomb( "Unexpected EOF in input file\n" );
-					sscanf( line , "%d" , &group_code );
-					if( group_code == 2 )
+					group_code = atoi( line );
+					/* look for the section name */
+					while( group_code != 2 )
 					{
 						if( fgets( line , LINELEN , dxf ) == NULL )
 							rt_bomb( "Unexpected EOF in input file\n" );
-						if( !strncmp( line , "ENTITIES" , 8 ) )
-						{
-							if( fgets( line , LINELEN , dxf ) == NULL )
-								rt_bomb( "Unexpected EOF in input file\n" );
-							sscanf( line , "%d" , &group_code );
-							if( group_code != 0 )
-								rt_bomb( "Expected group code 0 at start of ENTITIES\n" );
-							break;
-						}
+						if( fgets( line , LINELEN , dxf ) == NULL )
+							rt_bomb( "Unexpected EOF in input file\n" );
+						group_code = atoi(line );
 					}
-					else	/* skip next line */
+					if( fgets( line , LINELEN , dxf ) == NULL )
+						rt_bomb( "Unexpected EOF in input file\n" );
+					if( !strncmp( line , "ENTITIES" , 8 ) )
 					{
-						if( fgets( line , LINELEN , dxf ) == NULL )
-							rt_bomb( "Unexpected EOF in input file\n" );
+						if( debug )
+							rt_log( "Found ENTITIES Section\n" );
+						break;
 					}
 				}
 			}
@@ -240,173 +385,33 @@ main( int argc , char *argv[] )
 		nmg_tbl( &faces , TBL_INIT , NULL );
 
 		/* Read the ENTITIES section */
+		if( fgets( line , LINELEN , dxf ) == NULL )
+			rt_bomb( "Unexpected EOF in input file\n" );
+		group_code = atoi( line );
 		done = 0;
 		while( !done )
 		{
-			struct vertex *vp[4];
-			point_t pt[4];
-			int no_of_pts;
-			int skip_face;
-
-			if( fgets( line , LINELEN , dxf ) == NULL )
-				rt_bomb( "Unexpected EOF in input file\n" );
-			while( strncmp( line , "3DFACE" , 6 ) )
-			{
-				if( !strncmp( line , "ENDSEC" , 6 ) )
-				{
-					rt_log( "Found end of ENTITIES section\n" );
-					done = 1;
-					break;
-				}
-				line[ strlen(line)-1 ] = '\0';
-				if( debug )
-					rt_log( "Unknown entity type (%s), skipping\n" , line );
-				group_code = 1;
-				while( group_code != 0 )
-				{
-					if( fgets( line , LINELEN , dxf ) == NULL )
-						rt_bomb( "Unexpected EOF in input file\n" );
-					sscanf( line , "%d" , &group_code );
-					if( fgets( line , LINELEN , dxf ) == NULL )
-						rt_bomb( "Unexpected EOF in input file\n" );
-				}
-			}
-			skip_face = 0;
-
-			if( done )
-				break;
-
-			no_of_pts = (-1);
-			group_code = 1;
-			while( group_code )
+			if (group_code == 0 )
 			{
 				if( fgets( line , LINELEN , dxf ) == NULL )
 					rt_bomb( "Unexpected EOF in input file\n" );
-				sscanf( line , "%d" , &group_code );
-				switch( group_code )
+				if( !strncmp( line , "3DFACE" , 6 ) )
+					group_code = Do_3dface();
+				else if( !strncmp( line , "ENDSEC" , 6 ) )
 				{
-					default:
-						if( fgets( line , LINELEN , dxf ) == NULL )
-							rt_bomb( "Unexpected EOF in input file\n" );
-						break;
-					case 8:
-						if( fgets( line , LINELEN , dxf ) == NULL )
-							rt_bomb( "Unexpected EOF in input file\n" );
-						line[ strlen( line ) - 1 ] = '\0';
-						if( curr_name != NULL && strcmp( line , curr_name ) )
-							skip_face = 1;
-						break;
-					case 10:
-					case 20:
-					case 30:
-					case 11:
-					case 21:
-					case 31:
-					case 12:
-					case 22:
-					case 32:
-					case 13:
-					case 23:
-					case 33:
-						if( fgets( line , LINELEN , dxf ) == NULL )
-							rt_bomb( "Unexpected EOF in input file\n" );
-						if( !skip_face )
-						{
-							i = group_code%10;
-							j = group_code/10 - 1;
-							if( i > no_of_pts )
-								no_of_pts = i;
-							pt[i][j] = atof( line );
-						}
-						break;
-					case 0:
-						if( skip_face )
-							break;
-						no_of_pts++;
-						if( debug )
-						{
-							rt_log( "Original FACE:\n" );
-							for( i=0 ; i<no_of_pts ; i++ )
-								rt_log( "\t( %f %f %f )\n" , V3ARGS( pt[i] ) );
-						}
-						for( i=0 ; i<no_of_pts ; i++ )
-						{
-							for( j=i+1 ; j<no_of_pts ; j++ )
-							{
-								if( VAPPROXEQUAL( pt[i] , pt[j] , tol.dist ) )
-								{
-									int k;
-
-									if( debug )
-										rt_log( "Combining points %d and %d\n" , i , j );
-									no_of_pts--;
-									for( k=j ; k<no_of_pts ; k++ )
-									{
-										VMOVE( pt[k] , pt[k+1] );
-									}
-									j--;
-								}
-							}
-						}
-						if( no_of_pts != 3 && no_of_pts != 4 )
-						{
-							if( debug )
-								rt_log( "Skipping face with %d vertices\n" , no_of_pts );
-							break;
-						}
-						if( no_of_pts == 3 && rt_3pts_collinear( pt[0],pt[1],pt[2],&tol ) )
-						{
-							if( debug )
-								rt_log( "Skipping triangular face with collinear vertices\n" );
-							break;
-						}
-						if( debug )
-							rt_log( "final FACE:\n" );
-						for( i=0 ; i<no_of_pts ; i++ )
-						{
-							if( debug )
-								rt_log( "\t( %f %f %f )\n" , V3ARGS( pt[i] ) );
-							vp[i] = (struct vertex *)NULL;
-							for( j=0 ; j<NMG_TBL_END( &vertices ) ; j++ )
-							{
-								struct vertex *v;
-
-								v = (struct vertex *)NMG_TBL_GET( &vertices , j );
-								if( rt_pt3_pt3_equal( pt[i] , v->vg_p->coord , &tol) )
-								{
-									vp[i] = v;
-									break;
-								}
-							}
-						}
-						fu = nmg_cface( s , vp , no_of_pts );
-						for( i=0 ; i<no_of_pts ; i++ )
-						{
-							if( vp[i]->vg_p == NULL )
-							{
-								nmg_vertex_gv( vp[i] , pt[i] );
-								nmg_tbl( &vertices , TBL_INS , (long *)vp[i] );
-							}
-						}
-				                if( nmg_fu_planeeqn( fu , &tol ) )
-						{
-				                        rt_log( "Failed to calculate plane eqn\n" );
-							rt_log( "FACE:\n" );
-							for( i=0 ; i<no_of_pts ; i++ )
-								rt_log( "( %f %f %f )\n" , V3ARGS( pt[i] ) );
-						}
-						else
-							nmg_tbl( &faces , TBL_INS , (long *)fu );
-						for( i=0 ; i<no_of_pts ; i++ )
-						{
-							for( j=i+1 ; j<no_of_pts ; j++ )
-							{
-								if( vp[i] == vp[j] )
-									rt_log( "vertex %d is same as vertex %d\n" , i , j );
-							}
-						}
-						break;
+					if( debug )
+						rt_log( "Found end of ENTITIES section\n" );
+					done = 1;
+					break;
 				}
+			}
+			else
+			{
+				if( fgets( line , LINELEN , dxf ) == NULL )
+					rt_bomb( "Unexpected EOF in input file\n" );
+				if( fgets( line , LINELEN , dxf ) == NULL )
+					rt_bomb( "Unexpected EOF in input file\n" );
+				group_code = atoi( line );
 			}
 		}
 
@@ -414,15 +419,21 @@ main( int argc , char *argv[] )
 			rt_log( "%d unique vertices\n" , NMG_TBL_END( &vertices ) );
 
 		/* glue faces together */
-		if( debug )
-			rt_log( "Glueing %d faces together...\n" , NMG_TBL_END( &faces ) );
-		nmg_gluefaces( (struct faceuse **)NMG_TBL_BASEADDR( &faces) , NMG_TBL_END( &faces ) );
+		if( NMG_TBL_END( &faces ) )
+		{
+			if( debug )
+				rt_log( "Glueing %d faces together...\n" , NMG_TBL_END( &faces ) );
+			nmg_gluefaces( (struct faceuse **)NMG_TBL_BASEADDR( &faces) , NMG_TBL_END( &faces ) );
+		}
 
 		if( do_normals )
 			nmg_fix_normals( s );
 
 		/* write the nmg to the output file */
 		obj_count++;
+
+		if( !do_layers )
+			curr_name = all;
 		if( polysolids )
 		{
 			if( debug )
