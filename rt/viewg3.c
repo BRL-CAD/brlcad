@@ -200,6 +200,8 @@ view_pixel()
  *  to satisfy GIFT.  Likewise, the ray's starting position is adjusted
  *  to coincide with the cell-center, rather than its lower left corner.
  *  This too is a GIFT requirement.
+ *  An optional rtg3.pl UnixPlot file is written, permitting the
+ *  color graphic display of ray-model intersections.
  *  Finally, the individual ray headers are written.
  */
 int
@@ -220,6 +222,9 @@ register struct partition *PartHeadp;
 
 	if( pp == PartHeadp )
 		return(0);		/* nothing was actually hit?? */
+
+
+/*  NOTE: wish to insert  "viewing direction" stuff here if feasible     */
 
 	/*  comp components in partitions */
 	comp_count = 0;
@@ -395,6 +400,13 @@ register struct partition *PartHeadp;
 			putc( '\n', outfp );
 			card_count = 0;
 		}
+
+		/* A color rtg3.pl UnixPlot file of output commands
+		 * is generated.  This is processed by plot(1)
+		 * plotting filters such as pl-fb or pl-xxx.
+		 * Inhits are assigned green; outhits are assigned
+		 * blue.
+		 */
 
 		if(rdebug & RDEBUG_RAYPLOT) {
 			vect_t     inpt;
