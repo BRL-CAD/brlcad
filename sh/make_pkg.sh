@@ -48,28 +48,29 @@ MAJOR_VERSION="$2"
 MINOR_VERSION="$3"
 PATCH_VERSION="$4"
 ARCHIVE="$5"
+RESOURCES="$6"
 if [ "x$NAME" = "x" ] ; then
-    echo "Usage: $0 title major_version minor_version patch_version archive_dir"
+    echo "Usage: $0 title major_version minor_version patch_version archive_dir [resource_dir]"
     echo "ERROR: must specify a package name"
     exit 1
 fi
 if [ "x$MINOR_VERSION" = "x" ] ; then
-    echo "Usage: $0 title major_version minor_version patch_version archive_dir"
+    echo "Usage: $0 title major_version minor_version patch_version archive_dir [resource_dir]"
     echo "ERROR: must specify a major package version"
     exit 1
 fi
 if [ "x$MINOR_VERSION" = "x" ] ; then
     echo "ERROR: must specify a minor package version"
-    echo "Usage: $0 title major_version minor_version patch_version archive_dir"
+    echo "Usage: $0 title major_version minor_version patch_version archive_dir [resource_dir]"
     exit 1
 fi
 if [ "x$PATCH_VERSION" = "x" ] ; then
-    echo "Usage: $0 title major_version minor_version patch_version archive_dir"
+    echo "Usage: $0 title major_version minor_version patch_version archive_dir [resource_dir]"
     echo "ERROR: must specify a patch package version"
     exit 1
 fi
 if [ "x$ARCHIVE" = "x" ] ; then
-    echo "Usage: $0 title major_version minor_version patch_version archive_dir"
+    echo "Usage: $0 title major_version minor_version patch_version archive_dir [resource_dir]"
     echo "ERROR: must specify an archive directory"
     exit 1
 fi
@@ -77,10 +78,18 @@ if [ ! -d "$ARCHIVE" ] ; then
     echo "ERROR: specified archive path (${ARCHIVE}) is not a directory"
     exit 1
 fi
+if [ "x$RESOURCES" = "x" ] ; then
+    RESOURCES="none>>make_pkg_sh<<none"
+else
+    if [ ! -d "$RESOURCES" ] ; then
+	echo "ERROR: specified resource path (${RESOURCES}) is not a directory"
+	exit 1
+    fi
+fi    
 
 if [ "x`id -u`" != "x0" ] ; then
     echo "This script requires superuser privileges, restarting via sudo"
-    sudo "$0" "$1" "$2" "$3" "$4" "$5"
+    sudo "$0" "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9"
     exit $?
 fi
 
@@ -103,6 +112,19 @@ mkdir "${PKG_NAME}.pkg/Contents/Resources"
 if [ ! -d "${PKG_NAME}.pkg/Contents/Resources" ] ; then
     echo "ERROR: unable to create the package resources directory"
     exit 1
+fi
+
+if [ ! "x$RESOURCES" = "xnone>>make_pkg_sh<<none" ] ; then
+    if [ ! -d "$RESOURCES" ] ; then
+	echo "ERROR: sanity check failure -- resources directory disappeared?"
+	exit 1
+    fi
+    
+    cp -R "${RESOURCES}/" "${PKG_NAME}.pkg/Contents/Resources"
+    if [ $? != 0 ] ; then
+	echo "ERROR: unable to copy the resource directory contents"
+	exit 1
+    fi
 fi
 
 cat > "${PKG_NAME}.pkg/Contents/PkgInfo" <<EOF
