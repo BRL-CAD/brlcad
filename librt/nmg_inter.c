@@ -287,6 +287,7 @@ CONST struct faceuse	*fu;	/* for plane equation */
 			fu, fu->f_p, is->face);
 		rt_bomb("nmg_get_2d_vertex:  face mis-match\n");
 	}
+	NMG_CK_FACEUSE(fu);
 
 	if( !v->vg_p )  {
 		rt_log("nmg_get_2d_vertex: v=x%x, fu=x%x, null vg_p\n", v, fu);
@@ -338,14 +339,18 @@ CONST struct faceuse	*fu;	/* for plane equation */
 	v2d[2] = pt2d[2] = 0;		/* flag */
 
 	if( !NEAR_ZERO( pt[2], is->tol.dist ) )  {
-		rt_log("nmg_get_2d_vertex ERROR #%d (%g %g %g) becomes (%g,%g) %g != zero!\n",
-			v->index, V3ARGS(vg->coord), V3ARGS(pt) );
-		if( !NEAR_ZERO( pt[2], 10*is->tol.dist ) )  {
-			plane_t	n;
+		plane_t	n;
+		fastf_t	dist;
+		NMG_GET_FU_PLANE( n, fu );
+		dist = DIST_PT_PLANE(vg->coord, n);
+		rt_log("nmg_get_2d_vertex ERROR #%d (%g %g %g) becomes (%g,%g)\n\t%g != zero, dist3d=%g, %g*tol\n",
+			v->index, V3ARGS(vg->coord), V3ARGS(pt),
+			dist, dist/is->tol.dist );
+		if( !NEAR_ZERO( dist, is->tol.dist ) &&
+		    !NEAR_ZERO( pt[2], 10*is->tol.dist ) )  {
 			rt_log("nmg_get_2d_vertex(,fu=%x) f=x%x, is->face=%x\n",
 				fu, fu->f_p, is->face);
 			PLPRINT("is->face N", is->face->fg_p->N);
-			NMG_GET_FU_PLANE( n, fu );
 			PLPRINT("fu->f_p N", n);
 			rt_bomb("3D->2D point projection error\n");
 		}
@@ -511,6 +516,7 @@ struct vertexuse	*vu;
 
 	/* XXX a 2d formulation would be better! */
 #if 0
+	/* Has to wait for non-faceuse based versions of the 2d proj */
 	nmg_get_2d_vertex( is->pt, eu->vu_p->v_p, is, fu );
 	nmg_get_2d_vertex( endpt, eu->eumate_p->vu_p->v_p, is, fu );
 	VSUB2_2D( is->dir, endpt, is->pt );
@@ -561,13 +567,10 @@ out:
  *  Since this is an intersection of a vertex, no loop cut/join action
  *  is needed, since the only possible actions are fusing vertices
  *  and breaking edges into two edges about this vertex.
- *  This also means that no nmg_tbl( , TBL_INS_UNIQUE ) ops need be done.
+ *  No vertexuses need to be added to the intersect list.
  *
- *  XXX It would be useful to have one of the new vu's in fu returned
- *  XXX as a flag, so that nmg_find_v_in_face() wouldn't have to be called
- *  XXX to re-determine what was just done.
  *  Returns -
- *	vu2	dual of vu2
+ *	vu2	dual of vu1.  vu2 is in fu2.
  */
 struct vertexuse *
 nmg_isect_vert2p_face2p(is, vu1, fu2)
@@ -1804,9 +1807,9 @@ struct faceuse *fu;
 	struct edgeuse	*eu;
 	long		magic1;
 	int		discards = 0;
-	plane_t		n;
 
 	if (rt_g.NMG_debug & DEBUG_POLYSECT) {
+		plane_t		n;
 		rt_log("nmg_isect_loop3p_face3p(, lu=x%x, fu=x%x) START\n", lu, fu);
 		NMG_GET_FU_PLANE( n, fu );
 		HPRINT("  fg N", n);
