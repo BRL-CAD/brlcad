@@ -25,7 +25,7 @@
 	wray
 
 /*  The "top-half" (user interface) for the RT family of programs */
-#define RTUIF	main.o opt.o do.o worker.o bomb.o
+#define RTUIF	main.o opt.o do.o worker.o
 
 /* Explicit composition of each product */
 
