@@ -5,26 +5,15 @@
 #  @(#)$Header$;
 #
 
-# For the VAX
+# For BSD UNIX on the VAX and Gould
 #CC = cc
-#CFLAGS=	-O -DJOBCONTROL -DVMUNIX
+#CFLAGS=	-O -DBSD=42
 #LB=	-ltermlib
 
-# For BRLUNIX (pdp11)
-#LDFLAGS = -i
-#CC = cc -7 -DBRLUNIX
-#LB=	-ltermlib7
-
 # For SGI 4D
-# compile flags
-# -cckr works in all cases.
-# -xansi works only in cases where -G is greater 16
-# -ansi does not work at all nor can I dbx the core file
 CC = cc
-#CFLAGS= -cckr -g -DSYS5 -Dindex=strchr -Drindex=strrchr
-#CFLAGS= -xansi -g -G64 -DSYS5 -Dindex=strchr -Drindex=strrchr
-#CFLAGS= -xansi -g -DSYS5 -Dindex=strchr -Drindex=strrchr
-CFLAGS= -ansi -O2 -DSYS5 -Dindex=strchr -Drindex=strrchr
+CFLAGS= -O2 -DSYS5
+#CFLAGS= -ansi -O2 -DSYS5
 LDFLAGS = -O2
 LB=	-lcurses
 
@@ -54,7 +43,7 @@ OBJECTS =	jove_buf.o \
 all:	xjove xfindcom
 
 xjove:	$(OBJECTS)
-	sh mkversion
+	sh mkversion.sh
 	$(CC) $(LDFLAGS) -o xjove version.o $(OBJECTS) $(LB)
 	size xjove
 
@@ -68,8 +57,9 @@ jove_disp.c jove_draw.c jove_wind.c	: termcap.h
 jove_io.c	jove_screen.c		: termcap.h jove_temp.h
 
 install: xjove xfindcom
-	install -c xjove $(BINDIR)/jove
-	install -c xfindcom $(LIBDIR)/findcom
+	-mkdir $(LIBDIR); chmod 755 $(LIBDIR)
+	install -c -m 755 xjove $(BINDIR)/jove
+	install -c -m 755 xfindcom $(LIBDIR)/findcom
 	install -c -m 755 teach-jove.sh $(BINDIR)/teach-jove
 
 clean:
