@@ -65,7 +65,7 @@ extern double radians();/*  Subroutines to find angle in radians.  */
 /*  Define structure.  */
 struct table
 {
-	char *regname;		/*  region name  */
+	CONST char *regname;		/*  region name  */
 	short mat;		/*  material code  */
 	double cumnorm[3];	/*  cummulative normal vector sum  */
 				/*  for the exterior free surfaces  */
@@ -1670,7 +1670,7 @@ struct partition *PartHeadp;
  *		fflush(stdout);
  */
 
-		region[icur].regname = pp->pt_regionp->reg_name;
+		region[icur].regname = (char *)pp->pt_regionp->reg_name;
 
 /*
  *		(void)printf("region #:  %d, region name:  %s\n",
@@ -2026,7 +2026,7 @@ struct region *reg1,*reg2;
 
 	/*  Enter region names incase they are never entered  */
 	/*  anywhere else.  */
-	region[a].regname = reg1->reg_name;
+	region[a].regname = (char *)reg1->reg_name;
 	region[b].regname = reg2->reg_name;
 
 	overlaps[a].ovrreg[b] = 1;

@@ -49,7 +49,7 @@ extern int overlap();	/*  User supplied overlap function.  */
 /*  Define structure to hold all information needed.  */
 struct table
 {
-   char *name;		/*  Region name.  */
+   CONST char *name;		/*  Region name.  */
    double lvrays;	/*  Number of rays that leave the region through  */
 			/*  air.  */
    double intrays[MAXREG];	/*  Number of rays that leave region  */
