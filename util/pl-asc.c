@@ -104,7 +104,7 @@ FILE	*fp;
 void	outchar(), outstring(), outshort(), outfloat();
 
 static char usage[] = "\
-Usage: pldebug [-v] [unix_plot]\n";
+Usage: pl-asc [-v] [unix_plot]\n";
 
 main( argc, argv )
 int	argc;
@@ -125,7 +125,7 @@ char	**argv;
 	}
 	if( argc == 2 ) {
 		if( (fp = fopen(argv[1],"r")) == NULL ) {
-			perror( "pldebug" );
+			perror( "pl-asc" );
 			exit( 1 );
 		}
 	} else {
