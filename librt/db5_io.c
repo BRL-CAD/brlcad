@@ -261,34 +261,32 @@ unsigned char		* CONST ip;
 		return NULL;
 	}
 
+	BU_INIT_EXTERNAL( &rip->name );
+	BU_INIT_EXTERNAL( &rip->body );
+	BU_INIT_EXTERNAL( &rip->attributes );
+
 	/* Grab name, if present */
 	if( rip->h_name_present )  {
-		cp += db5_decode_length( &rip->name_length, cp, rip->h_name_width );
-		rip->name = (char *)cp;		/* discard CONST */
-		cp += rip->name_length;
-	} else {
-		rip->name_length = 0;
-		rip->name = NULL;
+		cp += db5_decode_length( &rip->name.ext_nbytes,
+			cp, rip->h_name_width );
+		rip->name.ext_buf = (genptr_t)cp;	/* discard CONST */
+		cp += rip->name.ext_nbytes;
 	}
 
 	/* Point to attributes, if present */
 	if( rip->a_present )  {
-		cp += db5_decode_length( &rip->attribute_length, cp, rip->a_width );
-		rip->attributes = (unsigned char *)cp;	/* discard CONST */
-		cp += rip->attribute_length;
-	} else {
-		rip->attribute_length = 0;
-		rip->attributes = NULL;
+		cp += db5_decode_length( &rip->attributes.ext_nbytes,
+			cp, rip->a_width );
+		rip->attributes.ext_buf = (genptr_t)cp;	/* discard CONST */
+		cp += rip->attributes.ext_nbytes;
 	}
 
 	/* Point to body, if present */
 	if( rip->b_present )  {
-		cp += db5_decode_length( &rip->body_length, cp, rip->b_width );
-		rip->body = (unsigned char *)cp;	/* discard CONST */
-		cp += rip->body_length;
-	} else {
-		rip->body_length = 0;
-		rip->body = NULL;
+		cp += db5_decode_length( &rip->body.ext_nbytes,
+			cp, rip->b_width );
+		rip->body.ext_buf = (genptr_t)cp;	/* discard CONST */
+		cp += rip->body.ext_nbytes;
 	}
 
 	rip->buf = NULL;	/* no buffer needs freeing */
@@ -366,34 +364,32 @@ FILE			*fp;
 		return -2;
 	}
 
+	BU_INIT_EXTERNAL( &rip->name );
+	BU_INIT_EXTERNAL( &rip->body );
+	BU_INIT_EXTERNAL( &rip->attributes );
+
 	/* Grab name, if present */
 	if( rip->h_name_present )  {
-		cp += db5_decode_length( &rip->name_length, cp, rip->h_name_width );
-		rip->name = (char *)cp;
-		cp += rip->name_length;
-	} else {
-		rip->name_length = 0;
-		rip->name = NULL;
+		cp += db5_decode_length( &rip->name.ext_nbytes,
+			cp, rip->h_name_width );
+		rip->name.ext_buf = (genptr_t)cp;	/* discard CONST */
+		cp += rip->name.ext_nbytes;
 	}
 
 	/* Point to attributes, if present */
 	if( rip->a_present )  {
-		cp += db5_decode_length( &rip->attribute_length, cp, rip->a_width );
-		rip->attributes = (unsigned char *)cp;	/* discard CONST */
-		cp += rip->attribute_length;
-	} else {
-		rip->attribute_length = 0;
-		rip->attributes = NULL;
+		cp += db5_decode_length( &rip->attributes.ext_nbytes,
+			cp, rip->a_width );
+		rip->attributes.ext_buf = (genptr_t)cp;	/* discard CONST */
+		cp += rip->attributes.ext_nbytes;
 	}
 
 	/* Point to body, if present */
 	if( rip->b_present )  {
-		cp += db5_decode_length( &rip->body_length, cp, rip->b_width );
-		rip->body = (unsigned char *)cp;	/* discard CONST */
-		cp += rip->body_length;
-	} else {
-		rip->body_length = 0;
-		rip->body = NULL;
+		cp += db5_decode_length( &rip->body.ext_nbytes,
+			cp, rip->b_width );
+		rip->body.ext_buf = (genptr_t)cp;	/* discard CONST */
+		cp += rip->body.ext_nbytes;
 	}
 
 	return 0;		/* success */
@@ -779,7 +775,6 @@ CONST mat_t		mat;
 	struct bu_external	ext;
 	register int		id;
 	struct db5_raw_internal	raw;
-	struct bu_external	body;
 
 	BU_INIT_EXTERNAL(&ext);
 	RT_INIT_DB_INTERNAL(ip);
@@ -809,18 +804,14 @@ CONST mat_t		mat;
 		return -1;		/* FAIL */
 	}
 
-	if( !raw.body )  {
+	if( !raw.body.ext_buf )  {
 		bu_log("rt_db_get_internal5(%s):  object has no body\n",
 			dp->d_namep );
 		db_free_external( &ext );
 		return -4;
 	}
 
-	BU_INIT_EXTERNAL(&body);
-	body.ext_nbytes = raw.body_length;
-	body.ext_buf = raw.body;
-	
-	if( rt_functab[id].ft_import5( ip, &body, mat, dbip ) < 0 )  {
+	if( rt_functab[id].ft_import5( ip, &raw.body, mat, dbip ) < 0 )  {
 		bu_log("rt_db_get_internal5(%s):  import failure\n",
 			dp->d_namep );
 	    	if( ip->idb_ptr )  ip->idb_meth->ft_ifree( ip );
@@ -828,7 +819,7 @@ CONST mat_t		mat;
 		return -1;		/* FAIL */
 	}
 	db_free_external( &ext );
-	/* Don't free &body */
+	/* Don't free &raw.body */
 
 	RT_CK_DB_INTERNAL( ip );
 	ip->idb_type = id;

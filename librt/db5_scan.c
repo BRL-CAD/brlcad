@@ -145,19 +145,19 @@ genptr_t		client_data;	/* unused client_data from db_scan() */
 	}
 	
 	/* If somehow it doesn't have a name, ignore it */
-	if( rip->name == NULL )  return;
+	if( rip->name.ext_buf == NULL )  return;
 
 	if(rt_g.debug&DEBUG_DB)  {
 		bu_log("db5_diradd_handler(dbip=x%x, name='%s', addr=x%x, len=%d)\n",
 			dbip, rip->name, laddr, rip->object_length );
 	}
 
-	if( db_lookup( dbip, rip->name, LOOKUP_QUIET ) != DIR_NULL )  {
+	if( db_lookup( dbip, rip->name.ext_buf, LOOKUP_QUIET ) != DIR_NULL )  {
 		register int	c;
 
 		bu_vls_init(&local);
 		bu_vls_strcpy( &local, "A_" );
-		bu_vls_strcat( &local, rip->name );
+		bu_vls_strcat( &local, rip->name.ext_buf );
 		cp = bu_vls_addr(&local);
 
 		for( c = 'A'; c <= 'Z'; c++ )  {
@@ -182,7 +182,7 @@ genptr_t		client_data;	/* unused client_data from db_scan() */
 		dp->d_namep = bu_strdup( cp );
 		bu_vls_free( &local );
 	} else {
-		dp->d_namep = bu_strdup( rip->name );
+		dp->d_namep = bu_strdup( rip->name.ext_buf );
 	}
 	dp->d_un.file_offset = laddr;
 	switch( rip->major_type )  {
