@@ -194,17 +194,17 @@ arb_anal()
 	type -= 4;
 
 	/* analyze each face */
-	(void)printf("\n--------------------------------------------------------------------------\n");
-	(void)printf("| FACE |   ROT     FB  |        PLANE EQUATION        |   SURFACE AREA   |\n");
-	(void)printf("|------|---------------|------------------------------|------------------|\n");
+	(void)printf("\n------------------------------------------------------------------------------\n");
+	(void)printf("| FACE |   ROT     FB  |        PLANE EQUATION            |   SURFACE AREA   |\n");
+	(void)printf("|------|---------------|----------------------------------|------------------|\n");
 	for(i=0; i<6; i++) 
 		anal_face( i );
 
-	(void)printf("--------------------------------------------------------------------------\n");
+	(void)printf("------------------------------------------------------------------------------\n");
 
 	/* analyze each edge */
-	(void)printf("    | EDGE     LEN  | EDGE     LEN  | EDGE     LEN  | EDGE     LEN  |\n");
-	(void)printf("    |---------------|---------------|---------------|---------------|\n  ");
+	(void)printf("    | EDGE     LEN   | EDGE     LEN   | EDGE     LEN   | EDGE     LEN   |\n");
+	(void)printf("    |----------------|----------------|----------------|----------------|\n  ");
 
 	/* set up the records for arb4's and arb6's */
 	if( (type+4) == ARB4 ) {
@@ -219,7 +219,7 @@ arb_anal()
 			break;
 	}
 
-	(void)printf("  -----------------------------------------------------------------\n");
+	(void)printf("  ---------------------------------------------------------------------\n");
 
 	/* put records back */
 	if( (type+4) == ARB4 ) {
@@ -232,11 +232,11 @@ arb_anal()
 	for(i=0; i<6; i++)
 		find_vol( i );
 
-	(void)printf("    | Volume = %18.3f    Surface Area = %15.3f |\n",
+	(void)printf("      | Volume = %18.3f    Surface Area = %15.3f |\n",
 			tot_vol*base2local*base2local*base2local,
 			tot_area*base2local*base2local);
-	(void)printf("    |          %18.3f gal                               |\n",tot_vol/3787878.79);
-	(void)printf("    -----------------------------------------------------------------\n");
+	(void)printf("      |          %18.3f gal                               |\n",tot_vol/3787878.79);
+	(void)printf("      -----------------------------------------------------------------\n");
 
 	return;
 }
@@ -316,7 +316,7 @@ int face;
 	}
 
 	(void)printf("| %4d |",prface[type][face]);
-	(void)printf(" %6.2f %6.2f | %5.2f %5.2f %5.2f %10.2f |",angles[3],angles[4],
+	(void)printf(" %6.2f %6.2f | %6.3f %6.3f %6.3f %11.3f |",angles[3],angles[4],
 			es_peqn[6][0],es_peqn[6][1],es_peqn[6][2],es_peqn[6][3]*base2local);
 	(void)printf("   %13.3f  |\n",(area[0]+area[1])*base2local*base2local);
 }
@@ -337,19 +337,19 @@ int edge;
 		if( (a = edge%4) == 0 ) 
 			return;
 		if( a == 1 ) {
-			(void)printf("  |               |               |               |\n  ");
+			(void)printf("  |                |                |                |\n  ");
 			return;
 		}
 		if( a == 2 ) {
-			(void)printf("  |               |               |\n  ");
+			(void)printf("  |                |                |\n  ");
 			return;
 		}
-		(void)printf("  |               |\n  ");
+		(void)printf("  |                |\n  ");
 		return;
 	}
 
 	VSUB2(v_temp, &temp_rec.s.s_values[b*3], &temp_rec.s.s_values[a*3]);
-	(void)printf("  |  %d%d %8.2f",a+1,b+1,MAGNITUDE(v_temp)*base2local);
+	(void)printf("  |  %d%d %9.3f",a+1,b+1,MAGNITUDE(v_temp)*base2local);
 
 	if( ++edge%4 == 0 )
 		(void)printf("  |\n  ");
