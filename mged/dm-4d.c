@@ -83,6 +83,7 @@ static int	zbuffer_on = 1;		/* Hardware Z buffer is on */
 static int	lighting_on = 0;	/* Lighting model on */
 static int	ir_debug;		/* 2 for basic, 3 for full */
 static int	no_faceplate = 0;	/* Don't draw faceplate */
+static int	ir_linewidth = 1;	/* Line drawing width */
 /*
  * These are derived from the hardware inventory -- user can change them,
  * but the results may not be pleasing.  Mostly, this allows them to be seen.
@@ -210,6 +211,7 @@ struct structparse Ir_vparse[] = {
 	{"%d",  1, "min_scr_z",		(int)&min_scr_z,	refresh_hook },
 	{"%d",  1, "max_scr_z",		(int)&max_scr_z,	refresh_hook },
 	{"%d",  1, "debug",		(int)&ir_debug,		FUNC_NULL },
+	{"%d",  1, "linewidth",		(int)&ir_linewidth,	refresh_hook },
 	{"",	0,  (char *)0,		0,			FUNC_NULL }
 };
 
@@ -324,7 +326,7 @@ Ir_configure_window_shape()
 		xlim_view = XMAX170 / (double)YMAX170;
 		ylim_view = 1;	/* YMAX170 / YMAX170 */
 
-		linewidth(3);
+		ir_linewidth = 3;
 		blanktime(0);	/* don't screensave while recording video! */
 		break;
 	case PAL:
@@ -338,7 +340,7 @@ Ir_configure_window_shape()
 		win_t = win_b + winy_size;
 		viewport( (XMAXPAL - npix)/2, npix + (XMAXPAL - npix)/2,
 			(YMAXPAL-npix)/2, npix + (YMAXPAL-npix)/2 );
-		linewidth(3);
+		ir_linewidth = 3;
 		blanktime(0);	/* don't screensave while recording video! */
 		break;
 	}
@@ -686,6 +688,7 @@ Ir_prolog()
 		ir_clear_to_black();
 		return;
 	}
+	linewidth(ir_linewidth);
 }
 
 /*
