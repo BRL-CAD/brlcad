@@ -286,6 +286,9 @@ set -S2 "/bin/sh"
 #	define  LIBFB_OBJS      if_remote if_X
 #	define  LIBFB_CONFIG    -DIF_REMOTE -DIF_X
 #	define	LIBFB_LIBES	LIBPKG -lX11 -lresolv -lsocket -lnsl -L/usr/ucblib -lucb
+#	define	MGED_OBJS	dm-X
+#	define	MGED_CONFIG	-DDM_X
+#	define	MGED_LIBES	-lX11 -lresolv -lsocket -lnsl -L/usr/ucblib -lucb
 #endif
 
 #ifdef gould
