@@ -2351,7 +2351,6 @@ CONST struct region *rp;
 	mat_t	tmp;
 	vect_t	bb_min, bb_max, v_tmp;
 
-
 	/* get model-to-region space mapping */
 	db_region_mat(model_to_region, dbip, rp->reg_name);
 
@@ -2368,5 +2367,5 @@ CONST struct region *rp;
 	VINVDIR(v_tmp, v_tmp);
 	mat_idn(tmp);
 	MAT_SCALE_VEC(tmp, v_tmp);
-	mat_mul(model_to_shader, model_to_region, tmp);
+	mat_mul(model_to_shader, tmp, model_to_region);
 }
