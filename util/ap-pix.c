@@ -65,7 +65,7 @@ int argc; char **argv;
 	fseek( cyafp, (long)(100*sizeof(cyaline)), 0 );
 
 	line = 0;
-	while( fread( &cyaline, sizeof( cyaline ), 1, cyafp ) > 0 ) {
+	while( (int)fread( &cyaline, sizeof( cyaline ), 1, cyafp ) > 0 ) {
 		fread( &magline, sizeof( magline ), 1, magfp );
 		fread( &yelline, sizeof( yelline ), 1, yelfp );
 		line++;

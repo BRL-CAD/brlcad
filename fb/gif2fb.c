@@ -60,7 +60,7 @@ struct acolor {
 	unsigned char	blue;
 	};
 
-#define WORD(x)	(((int)x[MSB]<<8)+x[LSB])
+#define WORD(x)	(((int)x[MSB]<<8)+(int)x[LSB])
 
 int ScreenWidth, ScreenHeight;
 int GlobalMap;
