@@ -67,6 +67,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 extern int mged_param();
 extern void color_soltab();
 
+int mged_zoom();
 int knob_tran();
 int mged_vrot();
 static void abs_zoom();
@@ -2278,6 +2279,9 @@ abs_zoom()
       Viewscale = i_Viewscale * (1.0 + (absolute_zoom * -9.0));
   }
 
+  if( Viewscale < MINVIEW )
+    Viewscale = MINVIEW;
+
   new_mats();
 
   if(absolute_slew[X] != 0.0 ||
@@ -2291,36 +2295,21 @@ abs_zoom()
     (void)Tcl_Eval(interp, "set_sliders");
 }
 
-
-/*
- *			F _ Z O O M
- *
- *  A scale factor of 2 will increase the view size by a factor of 2,
- *  (i.e., a zoom out) which is accomplished by reducing Viewscale in half.
- */
 int
-f_zoom(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
+mged_zoom(val)
+double val;
 {
-  double val;
   vect_t new_pos;
 
-  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
-    return TCL_ERROR;
-
-  val = atof(argv[1]);
   if( val < SMALL_FASTF || val > INFINITY )  {
     Tcl_AppendResult(interp, "zoom: scale factor out of range\n", (char *)NULL);
     return TCL_ERROR;
   }
 
-  if( Viewscale < SMALL_FASTF || Viewscale > INFINITY )
-    return TCL_ERROR;
-
   Viewscale /= val;
+  if( Viewscale < MINVIEW )
+    Viewscale = MINVIEW;
+
   new_mats();
 
   absolute_zoom = 1.0 - Viewscale / i_Viewscale;
@@ -2338,6 +2327,26 @@ char	**argv;
         (void)Tcl_Eval(interp, "set_sliders");
 
   return TCL_OK;
+}
+
+
+/*
+ *			F _ Z O O M
+ *
+ *  A scale factor of 2 will increase the view size by a factor of 2,
+ *  (i.e., a zoom out) which is accomplished by reducing Viewscale in half.
+ */
+int
+f_zoom(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int	argc;
+char	**argv;
+{
+  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+    return TCL_ERROR;
+
+  return mged_zoom(atof(argv[1]));
 }
 
 /*
