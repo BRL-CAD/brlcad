@@ -1,19 +1,11 @@
 
-Known bugs and suggested enhancements in libpng-1.0.2
+Known bugs in libpng version 1.2.5
 
+1. April 22, 2001: pnggccrd.c has been reported to crash on NetBSD when
+   reading interlaced PNG files, when assembler code is enabled but running
+   on a non-MMX i386 platform.
 
-1. March 15, 1998 -- OPTIMIZATION -- Kevin Bracey
-
-   Loops need to be optimized everywhere
-
-   Make them count down instead of up -- Kevin Bracey
-   
-   Optimizing compilers don't need this, and making
-   the change would be error prone -- Tom Lane, Glenn R-P
-
-   Question whether i-- or --i is better.
-
-   STATUS: Under investigation, postponed until after
-   libpng-1.0.2.  About 160 loops turned around
-   in libpng-1.0.2a, for testing.
+   STATUS: Under investigation.  The change to pnggccrd.c in libpng-1.2.1
+   fixed a problem under FreeBSD but not the problem with NetBSD, which
+   still fails as of libpng-1.2.2rc1.
 

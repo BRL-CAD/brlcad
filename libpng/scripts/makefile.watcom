@@ -1,28 +1,48 @@
 # Makefile for libpng
-# Watcom 10.0a and later 32-bit protected mode flat memory model
+# Watcom C/C++ 10.0 and later, 32-bit protected mode, flat memory model
 
-# Adapted by Pawel Mrochen, based on makefile.msc
+# Copyright (C) 2000, Pawel Mrochen, based on makefile.msc which is
+# copyright 1995 Guy Eric Schalnat, Group 42, Inc.
 # For conditions of distribution and use, see copyright notice in png.h
-# Assumes that zlib.lib, zconf.h, and zlib.h have been copied to ..\zlib
 
-# To use, do "wmake -f makefile.wat"
+# To use, do "wmake /f scripts\makefile.watcom"
 
-# ------------- Watcom 10.0a and later -------------
-MODEL=-mf
-CFLAGS= $(MODEL) -5r -fp5 -fpi87 -oneatx -zp8 -i=..\zlib
+
+# ---------------------- Watcom C/C++ 10.0 and later -----------------------
+
+# Where the zlib library and include files are located
+ZLIBLIB=..\zlib
+ZLIBINC=..\zlib
+
+# Target OS
+OS=DOS
+#OS=NT
+
+# Target CPU
+CPU=6		# Pentium Pro
+#CPU=5		# Pentium
+
+# Calling convention
+CALLING=r	# registers
+#CALLING=s	# stack
+
+# Uncomment next to put error messages in a file
+#ERRFILE=>>pngerrs
+
+# --------------------------------------------------------------------------
+
+
 CC=wcc386
+CFLAGS=-$(CPU)$(CALLING) -fp$(CPU) -fpi87 -oneatx -mf -bt=$(OS) -i=$(ZLIBINC) -zq
 LD=wcl386
-LIB=wlib -b -c
-LDFLAGS=
+LDFLAGS=-zq
+
 O=.obj
 
-#uncomment next to put error messages in a file
-#ERRFILE= >> pngerrs
+OBJS1=png$(O) pngset$(O) pngget$(O) pngrutil$(O) pngtrans$(O) pngwutil$(O)
+OBJS2=pngmem$(O) pngpread$(O) pngread$(O) pngerror$(O) pngwrite$(O)
+OBJS3=pngrtran$(O) pngwtran$(O) pngrio$(O) pngwio$(O)
 
-# variables
-OBJS1 = png$(O) pngset$(O) pngget$(O) pngrutil$(O) pngtrans$(O) pngwutil$(O)
-OBJS2 = pngmem$(O) pngpread$(O) pngread$(O) pngerror$(O) pngwrite$(O)
-OBJS3 = pngrtran$(O) pngwtran$(O) pngrio$(O) pngwio$(O)
 
 all: test
 
@@ -75,14 +95,15 @@ pngwutil$(O): png.h pngconf.h
 	$(CC) $(CFLAGS) $*.c $(ERRFILE)
 
 libpng.lib: $(OBJS1) $(OBJS2) $(OBJS3)
-	$(LIB) -n libpng.lib $(OBJS1)
-	$(LIB) libpng.lib $(OBJS2)
-	$(LIB) libpng.lib $(OBJS3)
+	wlib -b -c -n -q libpng.lib $(OBJS1)
+	wlib -b -c -q libpng.lib $(OBJS2)
+	wlib -b -c -q libpng.lib $(OBJS3)
 
 pngtest.exe: pngtest.obj libpng.lib
-	$(LD) $(LDFLAGS) pngtest.obj libpng.lib ..\zlib\zlib.lib
+	$(LD) $(LDFLAGS) pngtest.obj libpng.lib $(ZLIBLIB)\zlib.lib
 
-test: pngtest.exe
-	pngtest
+test: pngtest.exe .symbolic
+	pngtest.exe
+
 
 # End of makefile for libpng
