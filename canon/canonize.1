@@ -120,6 +120,10 @@ option.
 \-N
 Specifies the height of the image on the output page.
 This option is available only when 
+.IR \-A
+AutoScaling (on by default).
+The image is scaled equally in the X and Y dimensions to make it fit the
+available print area as closely as possible.
 .IR \-R
 or 
 .IR \-M
@@ -142,6 +146,17 @@ causes the image to be repeated accross the page.
 .TP
 \-v
 Turn on debugging output.
+.SH Notes
+The Canon CLC500(tm) prints at 400dpi on the output page.  This results
+in approximately 2550 by 3300 pixels on an 8.5 inch by 11 inch page. Images of
+less than 1024 by 1024 pixels do not look especially pleasing when printed
+using AutoScaling.  This is because the pixels become enlarged enough to be
+annoying.
+
+Because high resolution images occupy a substantial amount of disk space, it
+is relatively easy to run the MDQS queue server out of disk space by queuing
+many images at once.
+
 .SH "SEE ALSO"
 pix-fb(1), pix-ipu(1), IPU Programmer's Manual
 .SH DIAGNOSTICS
