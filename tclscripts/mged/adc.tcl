@@ -232,12 +232,8 @@ default values." } }
     adc_interpval $id
     adc_adjust_coords $id
 
-    set pxy [winfo pointerxy $top]
-    set x [lindex $pxy 0]
-    set y [lindex $pxy 1]
-
+    place_near_mouse $top
     wm protocol $top WM_DELETE_WINDOW "catch { destroy $top; set mged_adc_control($id) 0 }"
-    wm geometry $top +$x+$y
     wm title $top "ADC Control Panel ($id)"
 }
 

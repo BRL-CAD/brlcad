@@ -376,10 +376,7 @@ from the combination." } }
 
     bind $top.nameE <Return> "comb_reset $id; break"
 
-    set pxy [winfo pointerxy $top]
-    set x [lindex $pxy 0]
-    set y [lindex $pxy 1]
-    wm geometry $top +$x+$y
+    place_near_mouse $top
     wm title $top "Combination Editor ($id)"
 }
 

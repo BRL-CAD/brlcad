@@ -97,10 +97,7 @@ proc init_plotTool { id } {
     pack $top.gridF $top.gridF2 $top.gridF3 -side top -expand 1 -fill both\
 	    -padx 8 -pady 8
 
-    set pxy [winfo pointerxy $top]
-    set x [lindex $pxy 0]
-    set y [lindex $pxy 1]
-    wm geometry $top +$x+$y
+    place_near_mouse $top
     wm title $top "Unix Plot Tool ($id)"
 }
 

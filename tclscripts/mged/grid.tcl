@@ -113,12 +113,8 @@ and 200. The tick spacing will be a power of
 
     grid_spacing_reset $id $spacing_type
 
-    set pxy [winfo pointerxy $top]
-    set x [lindex $pxy 0]
-    set y [lindex $pxy 1]
-
+    place_near_mouse $top
     wm protocol $top WM_DELETE_WINDOW "catch { destroy $top }"
-    wm geometry $top +$x+$y
     wm title $top "Grid Spacing ($id)"
 }
 
@@ -196,12 +192,8 @@ settings to the grid." } }
 
     grid columnconfigure $top 0 -weight 1
 
-    set pxy [winfo pointerxy $top]
-    set x [lindex $pxy 0]
-    set y [lindex $pxy 1]
-
+    place_near_mouse $top
     wm protocol $top WM_DELETE_WINDOW "catch { destroy $top }"
-    wm geometry $top +$x+$y
     wm title $top "Grid Anchor Point ($id)"
 }
 
@@ -486,12 +478,8 @@ The tick spacing will be a power of 10 in local units." } }
     set grid_control($id,square) 1
     set_grid_square $id
 
-    set pxy [winfo pointerxy $top]
-    set x [lindex $pxy 0]
-    set y [lindex $pxy 1]
-
+    place_near_mouse $top
     wm protocol $top WM_DELETE_WINDOW "catch { destroy $top }"
-    wm geometry $top +$x+$y
     wm title $top "Grid Control Panel ($id)"
 }
 

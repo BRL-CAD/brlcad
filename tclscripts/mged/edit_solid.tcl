@@ -211,12 +211,8 @@ with values from the database." } }
     # only one column
     grid columnconfigure $w 0 -weight 1
 
-    set pxy [winfo pointerxy $w]
-    set x [lindex $pxy 0]
-    set y [lindex $pxy 1]
-
+    place_near_mouse $w
     wm protocol $w WM_DELETE_WINDOW "catch { destroy $w }"
-    wm geometry $w +$x+$y
     wm title $w "Solid Editor ($id)"
 }
 

@@ -14,6 +14,7 @@ set mged_help_data(3ptarb)	{{}	{makes arb given 3 pts, 2 coord of 4th pt, and th
 set mged_help_data(adc)		{{[<a1|a2|dst|dh|dv|hv|dx|dy|dz|xyz|reset|help> [value(s)]]}	{control the angle/distance cursor}}
 set mged_help_data(ae)		{{[-i] azim elev [twist]}	{set view using azim, elev and twist angles}}
 set mged_help_data(analyze)	{{[arbname]}	{analyze faces of ARB}}
+set mged_help_data(animmate)	{{[parent]}	{tool for building animation scripts}}
 set mged_help_data(apropos)	{{keyword}	{finds commands whose descriptions contain the given keyword}}
 set mged_help_data(aproposlib)	{{keyword}	{finds library commands whose descriptions contain the given keyword}}
 set mged_help_data(aproposdevel)	{{keyword}	{finds commands used for development whose descriptions

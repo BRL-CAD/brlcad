@@ -195,13 +195,10 @@ proc color_scheme_build { id primary_title primary_map secondary_title secondary
 
     grid columnconfigure $top 0 -weight 1
     
-    set pxy [winfo pointerxy $top]
-    set x [lindex $pxy 0]
-    set y [lindex $pxy 1]
-
+    place_near_mouse $top
     wm protocol $top WM_DELETE_WINDOW "catch { destroy $top }"
     wm title $top $primary_title
-    wm geometry $top 500x$height\+$x+$y
+    wm geometry $top 500x$height
 }
 
 ## color_scheme_build_entries --

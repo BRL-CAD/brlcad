@@ -150,10 +150,7 @@ see muves_states_init or muves_states_initp"
     bind $top.stateLB <ButtonPress-1> "set muves_active($id,sindex) \[%W nearest %y\]; \
 	    muves_update_components $id $top"
 
-#    set pxy [winfo pointerxy $top]
-#    set x [lindex $pxy 0]
-#    set y [lindex $pxy 1]
-    wm geometry $top +30+60
+    place_near_mouse $top
 
     # force behavior change to favor user specified size
     update

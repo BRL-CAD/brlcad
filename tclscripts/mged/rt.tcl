@@ -253,10 +253,7 @@ is enabled, it will be cleared." } }
     color_entry_update $top color $rt_control($id,color)
     update_Raytrace $id
 
-    set pxy [winfo pointerxy $top]
-    set x [lindex $pxy 0]
-    set y [lindex $pxy 1]
-    wm geometry $top +$x+$y
+    place_near_mouse $top
     wm title $top "Raytrace Control Panel ($id)"
 }
 
@@ -645,10 +642,7 @@ showing the principal direction vector." } }
     grid columnconfigure $top.gridF2 0 -weight 1
     grid columnconfigure $top 0 -weight 1
 
-    set pxy [winfo pointerxy $top]
-    set x [lindex $pxy 0]
-    set y [lindex $pxy 1]
-    wm geometry $top +$x+$y
+    place_near_mouse $top
     wm title $top "Advanced Settings ($id)"
 }
 

@@ -53,12 +53,8 @@ proc init_solid_create { id type } {
 
     bind $top <Return> "make_solid $id $top $type; break"
 
-    set pxy [winfo pointerxy $top]
-    set x [lindex $pxy 0]
-    set y [lindex $pxy 1]
-
+    place_near_mouse $top
     wm protocol $top WM_DELETE_WINDOW "catch { destroy $top }"
-    wm geometry $top +$x+$y
     wm title $top "Enter Solid Name"
 }
 
