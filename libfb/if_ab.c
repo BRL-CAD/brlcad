@@ -220,14 +220,17 @@ int		width, height;
 	}
 
 	/* Process frame number */
-	ifp->if_frame = 1;		/* default */
+	ifp->if_frame = -1;		/* default to frame store */
 	if( *cp == '#' )  {
 		register int	i;
 
 		i = atoi(cp+1);
-		if( i < 0 || i >= 50*30 )  {
+		if( i >= 50*30 )  {
 			fb_log("ab_open: frame %d out of range\n", i);
 			return(-1);
+		}
+		if( i < 0 ) {
+			fb_log("ab_open: frame < 0, using frame store\n");
 		}
 		ifp->if_frame = i;
 	} else if( *cp != '\0' )  {
@@ -306,9 +309,15 @@ char	*str;
 
 	(void)time( &now );
 	tmp = localtime( &now );
-	fb_log("%2.2d:%2.2d:%2.2d %s frame %d: %s\n",
-		tmp->tm_hour, tmp->tm_min, tmp->tm_sec,
-		ifp->if_host, ifp->if_frame, str );
+	if( ifp->if_frame < 0 ) {
+		fb_log("%2.2d:%2.2d:%2.2d %s frame store: %s\n",
+			tmp->tm_hour, tmp->tm_min, tmp->tm_sec,
+			ifp->if_host, str );
+	} else {
+		fb_log("%2.2d:%2.2d:%2.2d %s frame %d: %s\n",
+			tmp->tm_hour, tmp->tm_min, tmp->tm_sec,
+			ifp->if_host, ifp->if_frame, str );
+	}
 }
 
 /*
@@ -610,8 +619,13 @@ FBIO	*ifp;
 		ifp->if_width,
 		ifp->if_height );
 	fb_log( "A60 Host: %s\n", ifp->if_host );
-	fb_log( "Frame: %d\n", ifp->if_frame );
+	if( ifp->if_frame < 0 ) {
+		fb_log( "Frame: store\n" );
+	} else {
+		fb_log( "Frame: %d\n", ifp->if_frame );
+	}
 	fb_log( "Usage: /dev/ab[options][@host][#framenumber]\n" );
+	fb_log( "       If no framenumber is given, the frame store is used\n" );
 	for( mfp = modeflags; mfp->c != '\0'; mfp++ ) {
 		fb_log( "   %c   %s\n", mfp->c, mfp->help );
 	}
@@ -707,7 +721,10 @@ int	frame;		/* frame number */
 	if( output )  {
 		/* Output from buffer to A60 */
 		/* Send command, null-terminated */
-		sprintf( xmit_buf, "rcp -t %d.yuv", frame );
+		if( frame < 0 )
+			sprintf( xmit_buf, "rcp -t store.yuv" );
+		else
+			sprintf( xmit_buf, "rcp -t %d.yuv", frame );
 		n = strlen(xmit_buf)+1;		/* include null */
 		if( write( netfd, xmit_buf, n ) != n )  {
 			perror("write()");
@@ -716,7 +733,10 @@ int	frame;		/* frame number */
 		if( ab_get_reply(netfd) < 0 )  goto err;
 
 		/* Send Access flags, length, old name */
-		sprintf( xmit_buf, "C0664 %d %d.yuv\n", len, frame );
+		if( frame < 0 )
+			sprintf( xmit_buf, "C0664 %d store.yuv\n", len );
+		else
+			sprintf( xmit_buf, "C0664 %d %d.yuv\n", len, frame );
 		n = strlen(xmit_buf);
 		if( write( netfd, xmit_buf, n ) != n )  {
 			perror("write()");
@@ -748,7 +768,10 @@ int	frame;		/* frame number */
 		int		src_size;
 		/* Input from A60 into buffer */
 		/* Send command, null-terminated */
-		sprintf( xmit_buf, "rcp -f %d.yuv", frame );
+		if( frame < 0 )
+			sprintf( xmit_buf, "rcp -f store.yuv" );
+		else
+			sprintf( xmit_buf, "rcp -f %d.yuv", frame );
 		n = strlen(xmit_buf)+1;		/* include null */
 		if( write( netfd, xmit_buf, n ) != n )  {
 			perror("write()");
