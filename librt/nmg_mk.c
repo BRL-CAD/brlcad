@@ -1618,6 +1618,7 @@ struct vertex	*v;
 struct shell	*s;
 {
 	struct vertexuse *vu;
+	struct loopuse	*lu;
 
 	NMG_CK_VERTEX(v);
 	NMG_CK_SHELL(s);
@@ -1626,9 +1627,11 @@ struct shell	*s;
 	for (RT_LIST_FOR(vu, vertexuse, &v->vu_hd)) {
 		NMG_CK_VERTEXUSE(vu);
 		if (*vu->up.magic_p != NMG_LOOPUSE_MAGIC )  continue;
-		NMG_CK_LOOPUSE(vu->up.lu_p);
-		NMG_CK_SHELL(vu->up.lu_p->up.s_p);
-		if( vu->up.lu_p->up.s_p == s)
+		lu = vu->up.lu_p;
+		NMG_CK_LOOPUSE(lu);
+		if( *lu->up.magic_p != NMG_SHELL_MAGIC )  continue;
+		NMG_CK_SHELL(lu->up.s_p);
+		if( lu->up.s_p == s)
 			return;
 	}
 
