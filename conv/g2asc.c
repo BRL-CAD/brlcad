@@ -318,8 +318,8 @@ pipe_dump()	/* Print out Pipe record information */
 	struct rt_external	ext;
 	struct rt_db_internal	intern;
 
-	ngranules = rt_glong(record.pw.pw_count)+1;
-	name = record.pw.pw_name;
+	ngranules = rt_glong(record.pwr.pwr_count)+1;
+	name = record.pwr.pwr_name;
 
 	get_ext( &ext, ngranules );
 
@@ -345,47 +345,20 @@ pipe_dump()	/* Print out Pipe record information */
 void
 dump_pipe_segs(name, headp)
 char			*name;
-struct wdb_pipeseg	*headp;
+struct rt_list	*headp;
 {
 
-	struct wdb_pipeseg	*sp;
+	struct wdb_pipept	*sp;
 
 	printf("%c %.16s\n", DBID_PIPE, name);
 
-	/* print parameters for each segment: one segment per line */
+	/* print parameters for each point: one point per line */
 
-	for( RT_LIST_FOR( sp, wdb_pipeseg, &(headp->l) ) )  {
-		switch(sp->ps_type)  {
-		case WDB_PIPESEG_TYPE_END:
-			printf("end %26.20e %26.20e %26.20e %26.20e %26.20e\n",
-				sp->ps_id, sp->ps_od,
-				sp->ps_start[X],
-				sp->ps_start[Y],
-				sp->ps_start[Z] );
-			break;
-		case WDB_PIPESEG_TYPE_LINEAR:
-			printf("linear %26.20e %26.20e %26.20e %26.20e %26.20e\n",
-				sp->ps_id, sp->ps_od,
-				sp->ps_start[X],
-				sp->ps_start[Y],
-				sp->ps_start[Z] );
-			break;
-		case WDB_PIPESEG_TYPE_BEND:
-			printf("bend %26.20e %26.20e %26.20e %26.20e %26.20e %26.20e %26.20e %26.20e\n",
-				sp->ps_id, sp->ps_od,
-				sp->ps_start[X],
-				sp->ps_start[Y],
-				sp->ps_start[Z],
-				sp->ps_bendcenter[X],
-				sp->ps_bendcenter[Y],
-				sp->ps_bendcenter[Z]);
-			break;
-		default:
-			fprintf(stderr, "g2asc: unknown pipe type %d\n",
-				sp->ps_type);
-			break;
-		}
+	for( RT_LIST_FOR( sp, wdb_pipept, headp ) )  {
+			printf( "%26.20e %26.20e %26.20e %26.20e %26.20e %26.20e\n",
+				sp->pp_id, sp->pp_od, sp->pp_bendradius, V3ARGS( sp->pp_coord ) );
 	}
+	printf( "END_PIPE %s\n", name );
 }
 
 /*

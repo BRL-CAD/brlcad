@@ -1053,7 +1053,7 @@ bsurfbld()
 /*		P I P E B L D
  *
  *  This routine reads pipe data from standard in, constructs a doublely
- *  linked list of pipe segments, and sends this list to mk_pipe().
+ *  linked list of pipe points, and sends this list to mk_pipe().
  */
 
 void
@@ -1061,15 +1061,10 @@ pipebld()
 {
 
 	char			name[NAMELEN];
-	char			type[TYPELEN];
-	fastf_t			id;
-	fastf_t			od;
-	point_t			start;
-	point_t			bendcenter;
 	register char		*cp;
 	register char		*np;
-	struct wdb_pipeseg	*sp;
-	struct wdb_pipeseg	head;
+	struct wdb_pipept	*sp;
+	struct wdb_pipept	head;
 
 	/* Process the first buffer */
 
@@ -1087,45 +1082,34 @@ pipebld()
 	/* Read data lines and process */
 
 	RT_LIST_INIT( &head.l );
-	do{
-		fgets( buf, BUFSIZE, ifp);
-		(void)sscanf( buf, "%s %le %le %le %le %le %le %le %le", type, 
-				&id, &od,
-				&start[0],
-				&start[1],
-				&start[2],
-				&bendcenter[0],
-				&bendcenter[1],
-				&bendcenter[2]);
+	fgets( buf, BUFSIZE, ifp);
+	while( strncmp (buf , "END_PIPE", 8 ) )
+	{
+		double id,od,x,y,z,bendradius;
 
-		if( (sp = (struct wdb_pipeseg *)malloc(sizeof(struct wdb_pipeseg) ) )
-			== WDB_PIPESEG_NULL)  {
+		if( (sp = (struct wdb_pipept *)malloc(sizeof(struct wdb_pipept)) ) == NULL)
+		{
 				fprintf(stderr,"asc2g: malloc failure for pipe\n");
 				exit(-1);
 		}
 
-		sp->ps_id = id;
-		sp->ps_od = od;
-		VMOVE(sp->ps_start, start);
+		(void)sscanf( buf, "%le %le %le %le %le %le",
+				&id, &od,
+				&bendradius, &x, &y, &z );
 
-		/* Identify type */
-		if( ((strcmp( type, "end" ))) == 0)  {
-			sp->ps_type = WDB_PIPESEG_TYPE_END;
-		} else if( ((strcmp( type, "linear" ))) == 0)  {
-			sp->ps_type = WDB_PIPESEG_TYPE_LINEAR;
-		} else if( ((strcmp( type, "bend"))) == 0)  {
-			sp->ps_type = WDB_PIPESEG_TYPE_BEND;
-			VMOVE(sp->ps_bendcenter, bendcenter);
-		} else  {
-			rt_log("asc2g: no pipe type %s\n", type);
-		}
+		sp->l.magic = WDB_PIPESEG_MAGIC;
+
+		sp->pp_id = id;
+		sp->pp_od = od;
+		sp->pp_bendradius = bendradius;
+		VSET( sp->pp_coord, x, y, z );
 
 		RT_LIST_INSERT( &head.l, &sp->l);
-	} while( ((strcmp (type , "end"))) != 0);
+		fgets( buf, BUFSIZE, ifp);
+	}
 
 	mk_pipe(ofp, name, &head);
 	mk_pipe_free( &head );
-	free( (char *)sp );
 }
 
 /*			P A R T I C L E B L D
