@@ -13,14 +13,14 @@
 			usepen dir columns mover tedit \
 			cmd chgview chgmodel chgtree \
 			rtif anal typein predictor \
-			buttons clip menu adc edsol edarb edpipe edars \
+			buttons menu adc edsol edarb edpipe edars \
 			proc_reg hideline polyif red \
 			mater math plot overlay inside \
 			concat utility1 utility2 track arbs \
 			facedef arb set animedit db comb_std \
 			comb_bool_parse bool_rewrite solids_on_ray history \
-			TCP_FILES attach dm-tek dm-plot dm-ps \
-			dm-tek4109 MGED_OBJS vdraw anim
+			TCP_FILES attach dm-plot dm-ps \
+			MGED_OBJS vdraw anim
 
 /*#define USING_NEW_SO*/
 #include "../Cakefile.defs"
