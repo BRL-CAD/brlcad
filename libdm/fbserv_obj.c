@@ -163,6 +163,7 @@ fbs_close(interp, fbsp)
   Tcl_DeleteFileHandler(fbsp->fbs_listener.fbsl_fd);
   close(fbsp->fbs_listener.fbsl_fd);
   fbsp->fbs_listener.fbsl_fd = -1;
+  fbsp->fbs_listener.fbsl_port = -1;
 
   return TCL_OK;
 }
