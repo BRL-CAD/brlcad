@@ -77,7 +77,12 @@ char ** argv;
 		   &noise_amount, &noise_amount, &oflag, &out_fname, &in_fname) == 0 )
 	exit( 1 );
 
+#if (defined(__EXTENSIONS__) || defined (_POSIX_SOURCE))
+    rand_mult = noise_amount / HUGE_VAL;
+#else
     rand_mult = noise_amount / HUGE;
+#endif
+
     noise_amount /= 2;
 
     in_hdr.rle_file = rle_open_f(cmd_name( argv ), in_fname, "r");
