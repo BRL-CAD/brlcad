@@ -1,0 +1,12 @@
+.deps
+.libs
+Makefile
+Makefile.in
+all_sf
+display
+firpass
+ir-X
+ir-sgi
+irdisp
+secpass
+shapefact

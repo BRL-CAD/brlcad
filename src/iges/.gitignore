@@ -1,0 +1,9 @@
+.deps
+.libs
+Makefile
+Makefile.in
+g-iges
+g-iges-vers.c
+iges-g
+iges-g-vers.c
+version
