@@ -310,7 +310,8 @@ group_write()
 		/* Skip empty groups */
 		if( wp->wm_forw == wp )  continue;
 
-		mk_lfcomb( outfp, wp->wm_name, wp, -1 );
+		/* Make a non-region combination */
+		mk_lfcomb( outfp, wp->wm_name, wp, 0 );
 
 		col_pr( wp->wm_name );
 	}
