@@ -38,9 +38,14 @@ static union record	record;		/* GED database record */
 #define BUFSIZE		1024		/* Record input buffer size */
 static char buf[BUFSIZE];		/* Record input buffer */
 
+int debug;
+
 main(argc, argv)
 char **argv;
 {
+	if( argc > 1 )
+		debug = 1;
+
 	/* Read ASCII input file, each record on a line */
 	while( ( fgets( buf, BUFSIZE, stdin ) ) != (char *)0 )  {
 
@@ -48,8 +53,8 @@ char **argv;
 		(void)bzero( (char *)&record, sizeof(record) );
 
 		/* Check record type */
-		if( argc > 1 )
-			fprintf(stderr,"0%o (%c)\n", buf[0], buf[0] );
+		if( debug )
+			fprintf(stderr,"rec %c\n", buf[0] );
 		if( buf[0] == ID_SOLID )  {
 			/* Build the record */
 			solbld();
@@ -147,7 +152,16 @@ solbld()	/* Build Solid record */
 	}
 	record.s.s_type = (char)temp1;
 	record.s.s_cgtype = (short)temp2;
-
+	if( debug )  {
+		fprintf(stderr,"%s ty%d [0]=%f,%f,%f [3]=%e,%e,%e\n",
+			record.s.s_name, record.s.s_type,
+			record.s.s_values[0],
+			record.s.s_values[1],
+			record.s.s_values[2],
+			record.s.s_values[3],
+			record.s.s_values[4],
+			record.s.s_values[5] );
+	}
 	/* Write out the record */
 	(void)fwrite( (char *)&record, sizeof record, 1, stdout );
 }
