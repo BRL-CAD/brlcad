@@ -88,8 +88,8 @@ char	**argv;
 	register int i;
 	char *timep;
 	long now;
-	static char sortcmd[80] = "sort -n +1 -2 -o /tmp/ord_id < ";
-	static char catcmd[80] = "cat /tmp/ord_id >> ";
+	static CONST char sortcmd[] = "sort -n +1 -2 -o /tmp/ord_id ";
+	static CONST char catcmd[] = "cat /tmp/ord_id >> ";
 
 	(void)signal( SIGINT, sig2 );		/* allow interrupts */
 
@@ -170,16 +170,26 @@ char	**argv;
 	}
 
 	else {
+		struct rt_vls	cmd;
+
 		(void)fprintf(tabptr,"* 9999999\n* 9999999\n* 9999999\n* 9999999\n* 9999999\n");
 		(void)fclose( tabptr );
 		(void)printf("Processed %d Regions\n",numreg);
+
 		/* make ordered idents */
-		sortcmd[31] = '\0';
-		catcmd[19] = '\0';
-		(void)strcat(sortcmd, argv[1]);
-		(void)system( sortcmd );
-		(void)strcat(catcmd, argv[1]);
-		(void)system( catcmd );
+		rt_vls_init( &cmd );
+		rt_vls_strcpy( &cmd, sortcmd );
+		rt_vls_strcat( &cmd, argv[1] );
+		printf("%s\n", rt_vls_addr(&cmd) );
+		(void)system( rt_vls_addr(&cmd) );
+
+		rt_vls_trunc( &cmd, 0 );
+		rt_vls_strcpy( &cmd, catcmd );
+		rt_vls_strcat( &cmd, argv[1] );
+		printf("%s\n", rt_vls_addr(&cmd) );
+		(void)system( rt_vls_addr(&cmd) );
+		rt_vls_free( &cmd );
+
 		(void)unlink( "/tmp/ord_id\0" );
 	}
 
