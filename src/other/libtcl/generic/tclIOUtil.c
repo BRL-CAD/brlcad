@@ -20,6 +20,10 @@
  * RCS: @(#) $Id$
  */
 
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
 #include "tclInt.h"
 #include "tclPort.h"
 #ifdef MAC_TCL
@@ -28,6 +32,10 @@
 #ifdef __WIN32__
 /* for tclWinProcs->useWide */
 #include "tclWinInt.h"
+#endif
+
+#ifndef blkcnt_t
+# define blkcnt_t fsblkcnt_t
 #endif
 
 /* 
