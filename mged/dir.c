@@ -17,6 +17,7 @@
  *	db_alloc	Find a contiguous block of database storage
  *	db_grow		Increase size of existing database entry
  *	db_trunc	Decrease size of existing entry, from it's end
+ *	db_delrec	Delete a specific record from database entry
  *	f_memprint	Debug, print memory & db free maps
  *	conversions	Builds conversion factors given a local unit
  *	dir_units	Changes the local unit
@@ -833,6 +834,37 @@ int count;
 	for( i = 0; i < count; i++ )
 		db_putrec( dp, &zapper, (dp->d_len - 1) - i );
 	dp->d_len -= count;
+}
+
+/*
+ *			D B _ D E L R E C
+ *
+ *  Delete a specific record from database entry
+ */
+void
+db_delrec( dp, recnum )
+register struct directory *dp;
+int recnum;
+{
+	register int i;
+	auto union record rec;
+
+	if( read_only )  {
+		(void)printf("db_delrec on READ-ONLY file\n");
+		return;
+	}
+	/* If deleting last member, just truncate */
+	if( recnum == dp->d_len-1 )  {
+		db_trunc( dp, 1 );
+		return;
+	}
+
+	/* "Ripple up" the rest of the entry */
+	for( i = recnum+1; i < dp->d_len; i++ )  {
+		db_getrec( dp, &rec, i );
+		db_putrec( dp, &rec, i-1 );
+	}
+	db_trunc( dp, 1 );
 }
 
 /*
