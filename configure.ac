@@ -825,6 +825,7 @@ dl_link_works=no
 AC_CHECK_LIB(dl, dlopen, dl_link_works=yes)
 
 dnl check if a graphics library links
+gl_link_works=no
 AC_CHECK_LIB(gl, getvideo, gl_link_works=yes)
 
 
@@ -1794,7 +1795,7 @@ dnl ***************************
 dnl *** Configure Makefiles ***
 dnl ***************************
 
-AC_MSG_CHECKING([... M a k e f i l e s ])
+AC_MSG_CHECKING([... o u t p u t ])
 AC_MSG_RESULT([])
 
 AM_CONDITIONAL(BUILD_JOVE, [test "x$build_jove" = "xyes"])
