@@ -63,7 +63,7 @@ int		newedge;		/* new edge for arb editing */
 
 /* Add/modify item and air codes of a region */
 /* Format: I region item <air>	*/
-void
+int
 f_itemair( argc, argv )
 int	argc;
 char	**argv;
@@ -73,7 +73,7 @@ char	**argv;
 	union record record;
 
 	if( (dp = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
-		return;
+		return CMD_BAD;
 
 	air = ident = 0;
 	ident = atoi( argv[2] );
@@ -82,23 +82,31 @@ char	**argv;
 	if( argc == 4 )  {
 		air = atoi( argv[3] );
 	}
-	if( db_get( dbip,  dp, &record, 0 , 1) < 0 )  READ_ERR_return;
+	if( db_get( dbip,  dp, &record, 0 , 1) < 0 ) {
+		READ_ERR;
+		return CMD_BAD;
+	}
 	if( record.u_id != ID_COMB ) {
 		(void)printf("%s: not a combination\n", dp->d_namep );
-		return;
+		return CMD_BAD;
 	}
 	if( record.c.c_flags != 'R' ) {
 		(void)printf("%s: not a region\n", dp->d_namep );
-		return;
+		return CMD_BAD;
 	}
 	record.c.c_regionid = ident;
 	record.c.c_aircode = air;
-	if( db_put( dbip, dp, &record, 0, 1 ) < 0 )  WRITE_ERR_return;
+	if( db_put( dbip, dp, &record, 0, 1 ) < 0 ) {
+		WRITE_ERR;
+		return CMD_BAD;
+	}
+
+	return CMD_OK;
 }
 
 /* Modify material information */
 /* Usage:  mater name */
-void
+int
 f_mater( argc, argv )
 int	argc;
 char	**argv;
@@ -110,17 +118,21 @@ char	**argv;
 	char	*nlp;
 
 	if( (dp = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
-		return;
+		return CMD_BAD;
 
-	if( db_get( dbip,  dp, &record, 0 , 1) < 0 )  READ_ERR_return;
+	if( db_get( dbip,  dp, &record, 0 , 1) < 0 ) {
+		READ_ERR;
+		return CMD_BAD;
+	}
+
 	if( record.u_id != ID_COMB )  {
 		(void)printf("%s: not a combination\n", dp->d_namep );
-		return;
+		return CMD_BAD;
 	}
 	if( argc >= 3 )  {
 		if( strncmp( argv[2], "del", 3 ) != 0 )  {
 			(void)printf("Use 'mater name del' to delete\n");
-			return;
+			return CMD_BAD;
 		}
 		(void)printf("Was %s %s\n", record.c.c_matname, record.c.c_matparm);
 		record.c.c_matname[0] = '\0';
@@ -208,12 +220,17 @@ char	**argv;
 		break;
 	}		
 out:
-	if( db_put( dbip, dp, &record, 0, 1 ) < 0 )   WRITE_ERR_return;
+	if( db_put( dbip, dp, &record, 0, 1 ) < 0 ) {
+		WRITE_ERR;
+		return CMD_BAD;
+	}
+
+	return CMD_OK;
 }
 
 /* Mirror image */
 /* Format: m oldobject newobject axis	*/
-void
+int
 f_mirror( argc, argv )
 int	argc;
 char	**argv;
@@ -226,11 +243,11 @@ char	**argv;
 	mat_t temp;
 
 	if( (proto = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
-		return;
+		return CMD_BAD;
 
 	if( db_lookup( dbip,  argv[2], LOOKUP_QUIET ) != DIR_NULL )  {
 		aexists( argv[2] );
-		return;
+		return CMD_BAD;
 	}
 	k = -1;
 	if( strcmp( argv[3], "x" ) == 0 )
@@ -241,17 +258,20 @@ char	**argv;
 		k = 2;
 	if( k < 0 ) {
 		(void)printf("axis must be x, y or z\n");
-		return;
+		return CMD_BAD;
 	}
 
-	if( (rec = db_getmrec( dbip, proto )) == (union record *)0 )
-		READ_ERR_return;
+	if( (rec = db_getmrec( dbip, proto )) == (union record *)0 ) {
+		READ_ERR;
+		return CMD_BAD;
+	}
 	if( rec[0].u_id == ID_SOLID ||
 		rec[0].u_id == ID_ARS_A
 	)  {
 		if( (dp = db_diradd( dbip,  argv[2], -1, proto->d_len, proto->d_flags )) == DIR_NULL ||
 		    db_alloc( dbip, dp, proto->d_len ) < 0 )  {
-		    	ALLOC_ERR_return;
+		    	ALLOC_ERR;
+			return CMD_BAD;
 		}
 
 		/* create mirror image */
@@ -266,12 +286,16 @@ char	**argv;
 				rec[0].s.s_values[i] *= -1.0;
 			NAMEMOVE( argv[2], rec[0].s.s_name );
 		}
-		if( db_put( dbip, dp, rec, 0, dp->d_len ) < 0 )  WRITE_ERR_return;
+		if( db_put( dbip, dp, rec, 0, dp->d_len ) < 0 ) {
+			WRITE_ERR;
+			return CMD_BAD;
+		}
 		rt_free( (char *)rec, "record" );
 	} else if( rec[0].u_id == ID_COMB ) {
 		if( (dp = db_diradd( dbip, argv[2], -1, proto->d_len, proto->d_flags ) ) == DIR_NULL ||
 		    db_alloc( dbip, dp, proto->d_len ) < 0 )  {
-		    	ALLOC_ERR_return;
+		    	ALLOC_ERR;
+			return CMD_BAD;
 		}
 		NAMEMOVE(argv[2], rec[0].c.c_name);
 		mat_idn( mirmat );
@@ -281,33 +305,36 @@ char	**argv;
 
 			if(rec[i].u_id != ID_MEMB) {
 				(void)printf("f_mirror: bad db record\n");
-				return;
+				return CMD_BAD;
 			}
 			rt_mat_dbmat( xmat, rec[i].M.m_mat );
 			mat_mul(temp, mirmat, xmat);
 			rt_dbmat_mat( rec[i].M.m_mat, temp );
 		}
-		if( db_put( dbip, dp, rec, 0, dp->d_len ) < 0 )  WRITE_ERR_return;
+		if( db_put( dbip, dp, rec, 0, dp->d_len ) < 0 ) {
+			WRITE_ERR;
+			return CMD_BAD;
+		}
 		rt_free( (char *)rec, "record" );
 	} else {
 		(void)printf("%s: Cannot mirror\n",argv[2]);
-		return;
+		return CMD_BAD;
 	}
 
 	if( no_memory )  {
 		(void)printf(
 		"Mirror image (%s) created but NO memory left to draw it\n",
 			argv[2] );
-		return;
+		return CMD_BAD;
 	}
 
 	/* draw the "made" solid */
-	f_edit( 2, argv+1 );	/* depends on name being in argv[2] ! */
+	return f_edit( 2, argv+1 ); /* depends on name being in argv[2] ! */
 }
 
 /* Modify Combination record information */
 /* Format: edcomb combname Regionflag regionid air los GIFTmater */
-void
+int
 f_edcomb( argc, argv )
 int	argc;
 char	**argv;
@@ -317,17 +344,20 @@ char	**argv;
 	int regionid, air, mat, los;
 
 	if( (dp = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
-		return;
+		return CMD_BAD;
 
 	regionid = atoi( argv[3] );
 	air = atoi( argv[4] );
 	los = atoi( argv[5] );
 	mat = atoi( argv[6] );
 
-	if( db_get( dbip,  dp, &record, 0 , 1) < 0 )  READ_ERR_return;
+	if( db_get( dbip,  dp, &record, 0 , 1) < 0 ) {
+		READ_ERR;
+		return CMD_BAD;
+	}
 	if( record.u_id != ID_COMB ) {
 		(void)printf("%s: not a combination\n", dp->d_namep );
-		return;
+		return CMD_BAD;
 	}
 
 	if( argv[2][0] == 'R' )
@@ -338,7 +368,12 @@ char	**argv;
 	record.c.c_aircode = air;
 	record.c.c_los = los;
 	record.c.c_material = mat;
-	if( db_put( dbip, dp, &record, 0, 1 ) < 0 )  WRITE_ERR_return;
+	if( db_put( dbip, dp, &record, 0, 1 ) < 0 ) {
+		WRITE_ERR;
+		return CMD_BAD;
+	}
+
+	return CMD_OK;
 }
 
 /*
@@ -348,7 +383,7 @@ char	**argv;
  * Base unit is fixed in mm, so this just changes the current local unit
  * that the user works in.
  */
-void
+int
 f_units( argc, argv )
 int	argc;
 char	**argv;
@@ -361,7 +396,7 @@ char	**argv;
 		str = rt_units_string(dbip->dbi_local2base);
 		(void)printf("You are currently editing in '%s'.  1%s = %gmm \n",
 			str, str, dbip->dbi_local2base );
-		return;
+		return CMD_OK;
 	}
 
 	if( strcmp(argv[1], "mm") == 0 ) 
@@ -390,7 +425,7 @@ char	**argv;
 	} else if( (loc2mm = rt_units_conversion(argv[1]) ) <= 0 )  {
 		(void)printf("%s: unrecognized unit\n", argv[1]);
 		(void)printf("valid units: <mm|cm|m|in|ft|meters|inches|feet>\n");
-		return;
+		return CMD_BAD;
 	} else {
 		/*
 		 *  Can't stash requested units into the database for next session,
@@ -406,31 +441,38 @@ this choice of units will not be remembered on your next editing session.\n");
 	(void)printf("New editing units = '%s'\n",
 		rt_units_string(dbip->dbi_local2base) );
 	dmaflag = 1;
+
+	return CMD_OK;
 }
 
 /*
  *	Change the current title of the description
  */
-void
+int
 f_title( argc, argv )
 int	argc;
 char	**argv;
 {
 	struct rt_vls	title;
+	int bad = 0;
 
 	if( argc < 2 )  {
 		(void)printf("%s\n", dbip->dbi_title);
-		return;
+		return CMD_OK;
 	}
 
 	rt_vls_init( &title );
 	rt_vls_from_argv( &title, argc-1, argv+1 );
 
-	if( db_ident( dbip, rt_vls_addr(&title), dbip->dbi_localunit ) < 0 )
+	if( db_ident( dbip, rt_vls_addr(&title), dbip->dbi_localunit ) < 0 ) {
 		printf("Error: unable to change database title\n");
+		bad = 1;
+	}
 
 	rt_vls_free( &title );
 	dmaflag = 1;
+
+	return bad ? CMD_BAD : CMD_OK;
 }
 
 /* tell him it already exists */
@@ -447,7 +489,7 @@ char	*name;
  *  Create a new solid of a given type
  *  (Generic, or explicit)
  */
-void
+int
 f_make( argc, argv )
 int	argc;
 char	**argv;
@@ -465,7 +507,7 @@ char	**argv;
 
 	if( db_lookup( dbip,  argv[1], LOOKUP_QUIET ) != DIR_NULL )  {
 		aexists( argv[1] );
-		return;
+		return CMD_BAD;
 	}
 
 	RT_INIT_DB_INTERNAL( &internal );
@@ -683,17 +725,17 @@ char	**argv;
 		VSET( tgc_ip->d,  0, (0.5*Viewscale), 0 );
 	} else if( strcmp( argv[2], "ars" ) == 0 )  {
 		(void)printf("make ars not implimented yet\n");
-		return;
+		return CMD_BAD;
 	} else {
 		(void)printf("make:  %s is not a known primitive\n", argv[2]);
-		return;
+		return CMD_BAD;
 	}
 
 	if( rt_functab[internal.idb_type].ft_export( &external, &internal, local2base ) < 0 )
 	{
 		rt_log( "f_make: export failure\n" );
 		rt_functab[internal.idb_type].ft_ifree( &internal );
-		return;
+		return CMD_BAD;
 	}
 	rt_functab[internal.idb_type].ft_ifree( &internal );   /* free internal rep */
 
@@ -705,22 +747,24 @@ char	**argv;
 	    db_alloc( dbip, dp, 1 ) < 0 )
 	    {
 	    	db_free_external( &external );
-	    	ALLOC_ERR_return;
+	    	ALLOC_ERR;
+		return CMD_BAD;
 	    }
 
 	if (db_put_external( &external, dp, dbip ) < 0 )
 	{
 		db_free_external( &external );
-		WRITE_ERR_return;
+		WRITE_ERR;
+		return CMD_BAD;
 	}
 	db_free_external( &external );
 
 	/* draw the "made" solid */
-	f_edit( 2, argv );	/* depends on name being in argv[1] */
+	return f_edit( 2, argv );	/* depends on name being in argv[1] */
 }
 
 /* allow precise changes to object rotation */
-void
+int
 f_rot_obj( argc, argv )
 int	argc;
 char	**argv;
@@ -729,7 +773,7 @@ char	**argv;
 	vect_t s_point, point, v_work, model_pt;
 
 	if( not_state( ST_O_EDIT, "Object Rotation" ) )
-		return;
+		return CMD_BAD;
 
 	if(movedir != ROTARROW) {
 		/* NOT in object rotate mode - put it in obj rot */
@@ -772,10 +816,12 @@ char	**argv;
 
 	new_mats();
 	dmaflag = 1;
+
+	return CMD_OK;
 }
 
 /* allow precise changes to object scaling, both local & global */
-void
+int
 f_sc_obj( argc, argv )
 int	argc;
 char	**argv;
@@ -784,11 +830,11 @@ char	**argv;
 	vect_t point, temp;
 
 	if( not_state( ST_O_EDIT, "Object Scaling" ) )
-		return;
+		return CMD_BAD;
 
 	if( atof(argv[1]) <= 0.0 ) {
 		(void)printf("ERROR: scale factor <=  0\n");
-		return;
+		return CMD_BAD;
 	}
 
 	if(movedir != SARROW) {
@@ -837,10 +883,12 @@ char	**argv;
 
 	wrt_point(modelchanges, incr, modelchanges, point);
 	new_mats();
+
+	return CMD_OK;
 }
 
 /* allow precise changes to object translation */
-void
+int
 f_tr_obj( argc, argv )
 int	argc;
 char	**argv;
@@ -850,7 +898,7 @@ char	**argv;
 	vect_t model_sol_pt, model_incr, ed_sol_pt, new_vertex;
 
 	if( not_state( ST_O_EDIT, "Object Translation") )
-		return;
+		return CMD_BAD;
 
 	mat_idn(incr);
 	mat_idn(old);
@@ -873,12 +921,12 @@ char	**argv;
 	mat_copy(old,modelchanges);
 	mat_mul(modelchanges, incr, old);
 	new_mats();
-	return;
+	return CMD_OK;
 }
 
 /* Change the default region ident codes: item air los mat
  */
-void
+int
 f_regdef( argc, argv )
 int	argc;
 char	**argv;
@@ -888,21 +936,23 @@ char	**argv;
 	item_default = atoi(argv[1]);
 
 	if(argc == 2)
-		return;
+		return CMD_OK;
 
 	air_default = atoi(argv[2]);
 	if(air_default) 
 		item_default = 0;
 
 	if(argc == 3)
-		return;
+		return CMD_OK;
 
 	los_default = atoi(argv[3]);
 
 	if(argc == 4)
-		return;
+		return CMD_OK;
 
 	mat_default = atoi(argv[4]);
+
+	return CMK_OK;
 }
 
 static int frac_stat;
@@ -951,7 +1001,7 @@ struct directory *old_dp;
  *	given an NMG solid, break it up into several NMG solids, each
  *	containing a single shell with a single sub-element.
  */
-void
+int
 f_fracture( argc, argv )
 int	argc;
 char	**argv;
@@ -979,11 +1029,11 @@ char	**argv;
 	rt_log("\n");
 
 	if( (old_dp = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
-		return;
+		return CMD_BAD;
 
 	if( rt_db_get_internal( &old_intern, old_dp, dbip, rt_identity ) < 0 )  {
 		(void)printf("rt_db_get_internal() error\n");
-		return;
+		return CMD_BAD;
 	}
 
 	m = (struct model *)old_intern.idb_ptr;
@@ -1032,7 +1082,7 @@ char	**argv;
 
 				mged_add_nmg_part(newname, new_model,
 							dbip, old_dp);
-				if (frac_stat) return;
+				if (frac_stat) return CMD_BAD;
 				continue;
 			}
 			for (RT_LIST_FOR(fu, faceuse, &s->fu_hd)) {
@@ -1055,7 +1105,7 @@ char	**argv;
 				sprintf(newname, "%s%0*d", prefix, maxdigits, i++);
 				mged_add_nmg_part(newname, new_model,
 							dbip, old_dp);
-				if (frac_stat) return;
+				if (frac_stat) return CMD_BAD;
 			}
 #if 0
 			while (RT_LIST_NON_EMPTY(&s->lu_hd)) {
@@ -1070,7 +1120,7 @@ char	**argv;
 				sprintf(newname, "%s%0*d", prefix, maxdigits, i++);
 				mged_add_nmg_part(newname, new_model,
 							dbip, old_dp);
-				if (frac_stat) return;
+				if (frac_stat) return CMD_BAD;
 			}
 			while (RT_LIST_NON_EMPTY(&s->eu_hd)) {
 				eu = RT_LIST_FIRST(edgeuse, &s->eu_hd);
@@ -1085,11 +1135,12 @@ char	**argv;
 
 				mged_add_nmg_part(newname, new_model,
 							dbip, old_dp);
-				if (frac_stat) return;
+				if (frac_stat) return CMD_BAD;
 			}
 #endif
 		}
 	}
+	return CMD_OK;
 
 }
 
