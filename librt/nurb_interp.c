@@ -97,9 +97,9 @@ int order;
 		
 		for( j = 1; j <= order -1; j++)
 		{
-			sum += knots->knots[i+j]/(order-1);
+			sum += knots->knots[i+j];
 		}
-		nodes[i] = sum;
+		nodes[i] = sum/(order -1);
 	}
 }
 
