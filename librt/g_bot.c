@@ -2595,6 +2595,10 @@ char			**argv;
 			    Tcl_DecrRefCount( list );
 			    return( TCL_ERROR );
 			  }
+			if( !bot->thickness ) {
+				bot->thickness = (fastf_t *)bu_calloc( bot->num_faces, sizeof( fastf_t ),
+								       "bot->thickness" );
+			}
 			for( i=0 ; i<len ; i++ )
 			  {
 			    bot->thickness[i] = atof( Tcl_GetStringFromObj( obj_array[i], NULL ) );
@@ -2610,6 +2614,10 @@ char			**argv;
 			    Tcl_DecrRefCount( list );
 			    return( TCL_ERROR );
 			  }
+			if( !bot->thickness ) {
+				bot->thickness = (fastf_t *)bu_calloc( bot->num_faces, sizeof( fastf_t ),
+								       "bot->thickness" );
+			}
 			t_str = Tcl_GetStringFromObj( list, NULL );
 			bot->thickness[i] = atof( t_str );
 		      }
