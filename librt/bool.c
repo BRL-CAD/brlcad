@@ -737,14 +737,26 @@ CONST struct partition *pp;
 
 	RT_CK_REGION(*fr1);
 	RT_CK_REGION(*fr2);
-#if 0
-	bu_log("Resolving FASTGEN volume/volume overlap: %s %s\n", (*fr1)->reg_name, (*fr2)->reg_name);
-#endif
+
+	if(rt_g.debug&DEBUG_PARTITION) bu_log("Resolving FASTGEN volume/volume overlap: %s %s\n", (*fr1)->reg_name, (*fr2)->reg_name);
+
 	rt_get_region_seglist_for_partition( &sl1, pp, *fr1 );
 	rt_get_region_seglist_for_partition( &sl2, pp, *fr2 );
 
-	if( BU_PTBL_LEN(&sl1) > 1 )  bu_log("rt_fastgen_vol_vol_overlap(), tricked by %s having more than one segment\n", (*fr1)->reg_name );
-	if( BU_PTBL_LEN(&sl2) > 1 )  bu_log("rt_fastgen_vol_vol_overlap(), tricked by %s having more than one segment\n", (*fr2)->reg_name );
+	if( BU_PTBL_LEN(&sl1) > 1 )  {
+		struct seg **segpp;
+		bu_log("rt_fastgen_vol_vol_overlap(), tricked by %s having more than one segment\n", (*fr1)->reg_name );
+		for( BU_PTBL_FOR( segpp, (struct seg **), &sl1 ) )
+			rt_pr_seg(*segpp);
+bu_bomb("vol_vol s1");
+	}
+	if( BU_PTBL_LEN(&sl2) > 1 )  {
+		struct seg **segpp;
+		bu_log("rt_fastgen_vol_vol_overlap(), tricked by %s having more than one segment\n", (*fr2)->reg_name );
+		for( BU_PTBL_FOR( segpp, (struct seg **), &sl2 ) )
+			rt_pr_seg(*segpp);
+bu_bomb("vol_vol s2");
+	}
 
 	s1 = (CONST struct seg *)BU_PTBL_GET(&sl1, 0);
 	s2 = (CONST struct seg *)BU_PTBL_GET(&sl2, 0);
@@ -807,9 +819,9 @@ struct application *ap;
 	RT_CK_REGION(*fr2);
 	RT_CK_PT(pp);
 	RT_CK_AP(ap);
-#if 0
-	bu_log("Resolving FASTGEN plate/volume overlap: %s %s\n", (*fr1)->reg_name, (*fr2)->reg_name);
-#endif
+
+	if(rt_g.debug&DEBUG_PARTITION) bu_log("Resolving FASTGEN plate/volume overlap: %s %s\n", (*fr1)->reg_name, (*fr2)->reg_name);
+
 	prev = pp->pt_back;
 	if( prev->pt_magic == PT_HD_MAGIC )  {
 		/* No prev partition, this is the first.  d=0, plate wins */
@@ -909,9 +921,15 @@ struct partition	*InputHdp;
 	if( n_fastgen >= 2 )  {
 		struct region **fr1;
 		struct region **fr2;
-#if 0
-		bu_log("I see %d FASTGEN overlaps in this partition\n", n_fastgen);
-#endif
+
+		if(rt_g.debug&DEBUG_PARTITION)  {
+			bu_log("I see %d FASTGEN overlaps in this partition\n", n_fastgen);
+			for( BU_PTBL_FOR( fr1, (struct region **), regiontable ) )  {
+				if( *fr1 == REGION_NULL )  continue;
+				rt_pr_region(*fr1);
+			}
+		}
+
 		/*
 		 *  First, resolve volume_mode/volume_mode overlaps
 		 *  because they are a simple choice.
@@ -938,7 +956,7 @@ struct partition	*InputHdp;
 			RT_CK_REGION(*fr1);
 			if( (*fr1)->reg_is_fastgen != REGION_FASTGEN_PLATE )
 				continue;
-			for( fr2 = fr1-1; fr2 >= (struct region **)BU_PTBL_BASEADDR(regiontable); fr2-- )  {
+			for( BU_PTBL_FOR( fr2, (struct region **), regiontable ) )  {
 				if( *fr2 == REGION_NULL )  continue;
 				RT_CK_REGION(*fr2);
 				if( (*fr2)->reg_is_fastgen != REGION_FASTGEN_VOLUME )
