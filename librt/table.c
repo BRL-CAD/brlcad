@@ -1289,8 +1289,6 @@ rt_generic_xform(
 	RT_CK_DBI(dbip);
 	RT_CK_RESOURCE(resp);
 
-	avs.magic = -1;
-
 	id = ip->idb_type;
 	BU_INIT_EXTERNAL(&ext);
 	/* Scale change on export is 1.0 -- no change */
@@ -1318,7 +1316,9 @@ rt_generic_xform(
 
 	    if( (free || op == ip) ) {
 		    if( ip->idb_avs.magic == BU_AVS_MAGIC ) {
-			    /* grab the attributes before freeing */
+			    /* grab the attributes before they are lost
+			     * by rt_db_free_internal or RT_INIT_DB_INTERNAL
+			     */
 			    bu_avs_init( &avs, ip->idb_avs.count, "avs" );
 			    bu_avs_merge( &avs, &ip->idb_avs );
 		    }
@@ -1327,8 +1327,12 @@ rt_generic_xform(
 
 	    RT_INIT_DB_INTERNAL(op);
 
-	    if( avs.magic == BU_AVS_MAGIC ) {
-		    /* put the attributes in the output */
+	    if( !free && op != ip ) {
+		    /* just copy the attributes from ip to op */
+		    bu_avs_init( &op->idb_avs, ip->idb_avs.count, "avs" );
+		    bu_avs_merge( &op->idb_avs, &ip->idb_avs );
+	    } else {
+		    /* put the saved attributes in the output */
 		    bu_avs_init( &op->idb_avs, avs.count, "avs" );
 		    bu_avs_merge( &op->idb_avs, &avs );
 		    bu_avs_free( &avs );
