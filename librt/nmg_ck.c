@@ -60,6 +60,7 @@ struct vertex *v;
 struct vertexuse *vup;
 {
 	struct vertexuse *vu;
+	int vup_is_in_list = 0;
 
 	NMG_CK_VERTEX(v);
 
@@ -67,8 +68,12 @@ struct vertexuse *vup;
 		NMG_CK_VERTEXUSE(vu);
 		if (vu->v_p != v)
 			rt_bomb("nmg_vvertex() a vertexuse in my list doesn't share my vertex\n");
+		if (vu == vup)
+			vup_is_in_list = 1;
 	}
 	if (v->vg_p) nmg_vvg(v->vg_p);
+	if ( ! vup_is_in_list )
+		rt_bomb("nmg_vvertex() vup not found in list of vertexuses\n");
 }
 
 /* Verify vertex attributes */
