@@ -34,7 +34,6 @@ static char RCStree[] = "@(#)$Header$ (BRL)";
 
 int rt_pure_boolean_expressions = 0;
 
-HIDDEN void	rt_add_regtree();
 HIDDEN int	rt_rpp_tree();
 extern char	*rt_basename();
 HIDDEN struct region *rt_getregion();
@@ -60,6 +59,11 @@ static struct db_tree_state	rt_initial_tree_state = {
 
 static struct rt_i	*db_rtip;
 
+/*
+ *			R T _ G E T T R E E _ R E G I O N _ S T A R T
+ *
+ *  This routine must be prepared to run in parallel.
+ */
 HIDDEN int rt_gettree_region_start( tsp, pathp )
 struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
@@ -73,6 +77,11 @@ struct db_full_path	*pathp;
 	return(0);
 }
 
+/*
+ *			R T _ G E T T R E E _ R E G I O N _ E N D
+ *
+ *  This routine must be prepared to run in parallel.
+ */
 HIDDEN union tree *rt_gettree_region_end( tsp, pathp, curtree )
 register struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
@@ -91,21 +100,52 @@ union tree		*curtree;
 	rp->reg_name = db_path_to_string( pathp );
 
 	dp = DB_FULL_PATH_CUR_DIR(pathp);
-	/* XXX This should be semaphore protected! */
-	rp->reg_instnum = dp->d_uses++;
 
 	if(rt_g.debug&DEBUG_TREEWALK)  {
 		rt_log("rt_gettree_region_end() %s\n", rp->reg_name );
 		rt_pr_tree( curtree, 0 );
 	}
 
-	/* Mark all solids & nodes as belonging to this region */
+	/*
+	 *  Add a region and it's boolean tree to all the appropriate places.
+	 *  The	region and treetop are cross-linked, and the region is added
+	 *  to the linked list of regions.
+	 *  Positions in the region bit vector are established at this time.
+	 */
+	/* Cross-ref: Mark all solids & nodes as belonging to this region */
 	rt_tree_region_assign( curtree, rp );
+	rp->reg_treetop = curtree;
 
-	rt_add_regtree( db_rtip, rp, curtree );
-	return(curtree);
+	/* Determine material properties */
+	rp->reg_mfuncs = (char *)0;
+	rp->reg_udata = (char *)0;
+	if( rp->reg_mater.ma_override == 0 )
+		rt_region_color_map(rp);
+
+	RES_ACQUIRE( &rt_g.res_results );	/* enter critical section */
+	rp->reg_instnum = dp->d_uses++;
+
+	/* Add to linked list */
+	rp->reg_forw = db_rtip->HeadRegion;
+	db_rtip->HeadRegion = rp;
+
+	rp->reg_bit = db_rtip->nregions++;	/* Assign bit vector pos. */
+	RES_RELEASE( &rt_g.res_results );	/* leave critical section */
+
+	if( rt_g.debug & DEBUG_REGIONS )  {
+		rt_log("Add Region %s instnum %d\n",
+			rp->reg_name, rp->reg_instnum);
+	}
+
+	/* Indicate that we have swiped 'curtree' */
+	return(TREE_NULL);
 }
 
+/*
+ *			R T _ G E T T R E E _ L E A F
+ *
+ *  This routine must be prepared to run in parallel.
+ */
 HIDDEN union tree *rt_gettree_leaf( tsp, pathp, rp, id )
 struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
@@ -554,43 +594,6 @@ register char *name;
 	return(SOLTAB_NULL);
 }
 
-
-/*
- *  			R T _ A D D _ R E G T R E E
- *  
- *  Add a region and it's boolean tree to all the appropriate places.
- *  The region and treetop are cross-linked, and the region is added
- *  to the linked list of regions.
- *  Positions in the region bit vector are established at this time.
- */
-HIDDEN void
-rt_add_regtree( rtip, regp, tp )
-register struct rt_i	*rtip;
-register struct region	*regp;
-register union tree	*tp;
-{
-
-	/* Cross-reference */
-	regp->reg_treetop = tp;
-	tp->tr_regionp = regp;
-	/* Add to linked list */
-	regp->reg_forw = rtip->HeadRegion;
-	rtip->HeadRegion = regp;
-
-	/* Determine material properties */
-	regp->reg_mfuncs = (char *)0;
-	regp->reg_udata = (char *)0;
-	if( regp->reg_mater.ma_override == 0 )
-		rt_region_color_map(regp);
-
-	regp->reg_bit = rtip->nregions;	/* Add to bit vectors */
-	/* Will be added to rtip->Regions[] in final prep stage */
-	rtip->nregions++;
-	if( rt_g.debug & DEBUG_REGIONS )  {
-		rt_log("Add Region %s instnum %d\n",
-			regp->reg_name, regp->reg_instnum);
-	}
-}
 
 /*
  *			R T _ O P T I M _ T R E E

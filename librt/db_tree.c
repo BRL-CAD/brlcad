@@ -166,7 +166,6 @@ union record		*rp;
 			tsp->ts_regionid = rp->c.c_regionid;
 			tsp->ts_aircode = rp->c.c_aircode;
 			tsp->ts_gmater = rp->c.c_material;
-			/* XXX region name, instnum too? */
 			return(1);	/* Success, this starts new region */
 		}
 	}
@@ -393,18 +392,22 @@ found_it:
 			goto fail;
 		/* directory entry was pushed */
 
-		/* Take note of operation */
-		switch( mp->m_relation )  {
-		default:
-			break;		/* handle as union */
-		case UNION:
-			break;
-		case SUBTRACT:
-			tsp->ts_sofar |= TS_SOFAR_MINUS;
-			break;
-		case INTERSECT:
-			tsp->ts_sofar |= TS_SOFAR_INTER;
-			break;
+		/* If not first element of comb, take note of operation */
+		if( i > 1 )  {
+			switch( mp->m_relation )  {
+			default:
+				break;		/* handle as union */
+			case UNION:
+				break;
+			case SUBTRACT:
+				tsp->ts_sofar |= TS_SOFAR_MINUS;
+				break;
+			case INTERSECT:
+				tsp->ts_sofar |= TS_SOFAR_INTER;
+				break;
+			}
+		} else {
+			/* Handle as a union */
 		}
 
 		/* Free record */
@@ -464,9 +467,13 @@ int		howfar;
 		if( inuse++ == 0 )
 			first_tlp = tlp;
 	}
-	if( rt_g.debug & DEBUG_REGIONS && first_tlp->tl_op != OP_UNION )
-		rt_log("db_mkbool_tree() WARNING: non-union (%c) first operation ignored\n",
-			first_tlp->tl_op );
+	if( first_tlp->tl_op != OP_UNION )  {
+		first_tlp->tl_op = OP_UNION;	/* Fix it */
+		if( rt_g.debug & DEBUG_REGIONS )  {
+			rt_log("db_mkbool_tree() WARNING: non-union (%c) first operation ignored\n",
+				first_tlp->tl_op );
+		}
+	}
 
 	/* Handle trivial cases */
 	if( inuse <= 0 )
@@ -514,12 +521,11 @@ struct db_tree_state	*tsp;
 	if( rt_pure_boolean_expressions )  goto final;
 
 	/*
-	 * This is the way GIFT interpreted equations, so we
-	 * duplicate it here.  Any expressions between UNIONs
-	 * is evaluated first, eg:
-	 *	A - B - C u D - E - F
-	 * is	(A - B - C) u (D - E - F)
-	 * so first we do the parenthesised parts, and then go
+	 * This is how GIFT interpreted equations, so it is duplicated here.
+	 * Any expressions between UNIONs are evaluated first.  For example:
+	 *		A - B - C u D - E - F
+	 * becomes	(A - B - C) u (D - E - F)
+	 * so first do the parenthesised parts, and then go
 	 * back and glue the unions together.
 	 * As always, unions are the downfall of free enterprise!
 	 */
@@ -666,23 +672,28 @@ struct combined_tree_state	**region_start_statepp;
 			/* Member was pushed on pathp stack */
 
 			/* Note & store operation on subtree */
-			switch( mp->m_relation )  {
-			default:
-				rt_log("%s: bad m_relation '%c'\n",
-					dp->d_namep, mp->m_relation );
+			if( i > 1 )  {
+				switch( mp->m_relation )  {
+				default:
+					rt_log("%s: bad m_relation '%c'\n",
+						dp->d_namep, mp->m_relation );
+					tlp->tl_op = OP_UNION;
+					break;
+				case UNION:
+					tlp->tl_op = OP_UNION;
+					break;
+				case SUBTRACT:
+					tlp->tl_op = OP_SUBTRACT;
+					memb_state.ts_sofar |= TS_SOFAR_MINUS;
+					break;
+				case INTERSECT:
+					tlp->tl_op = OP_INTERSECT;
+					memb_state.ts_sofar |= TS_SOFAR_INTER;
+					break;
+				}
+			} else {
+				/* Handle first one as union */
 				tlp->tl_op = OP_UNION;
-				break;
-			case UNION:
-				tlp->tl_op = OP_UNION;
-				break;
-			case SUBTRACT:
-				tlp->tl_op = OP_SUBTRACT;
-				memb_state.ts_sofar |= TS_SOFAR_MINUS;
-				break;
-			case INTERSECT:
-				tlp->tl_op = OP_INTERSECT;
-				memb_state.ts_sofar |= TS_SOFAR_INTER;
-				break;
 			}
 
 			/* Recursive call */
@@ -1024,7 +1035,7 @@ union record		*rp;
 int			id;
 {
 	register struct combined_tree_state	*cts;
-	union tree	*curtree;
+	register union tree	*curtree;
 
 	GETSTRUCT( cts, combined_tree_state );
 	cts->cts_s = *tsp;	/* struct copy */
@@ -1100,6 +1111,15 @@ struct combined_tree_state	**region_start_statepp;
 	}
 }
 
+/*
+ *			D B _ W A L K _ D I S P A T C H E R
+ *
+ *  This routine handles parallel operation.
+ *  There will be at least one, and possibly more, instances of
+ *  this routine running simultaneously.
+ *
+ *  Pick off the next region's tree, and walk it.
+ */
 void
 db_walk_dispatcher()
 {
@@ -1124,7 +1144,7 @@ db_walk_dispatcher()
 			continue;
 		db_walk_subtree( curtree, &region_start_statep );
 		if( curtree->tr_op == OP_NOP )  {
-			rt_log("db_walk_dispatcher() Entire subtree vanished?\n");
+			/* Entire tree vanished, nothing to make region from */
 			if( region_start_statep )
 				db_free_combined_tree_state( region_start_statep );
 			continue;
@@ -1137,8 +1157,12 @@ db_walk_dispatcher()
 		if( rt_g.debug&DEBUG_TREEWALK )
 			db_pr_combined_tree_state(region_start_statep);
 
-		/* XXX use return code? */
-		(*db_reg_end_func)( &(region_start_statep->cts_s),
+		/*
+		 *  reg_end_func() returns a pointer to any unused
+		 *  subtree for freeing.
+		 */
+		db_reg_trees[mine] = (*db_reg_end_func)(
+			&(region_start_statep->cts_s),
 			&(region_start_statep->cts_p),
 			curtree );
 
@@ -1146,6 +1170,12 @@ db_walk_dispatcher()
 	}
 }
 
+/*
+ *			D B _ W A L K _ T R E E
+ *
+ *  This is the top interface to the tree walker.
+ */
+int
 db_walk_tree( dbip, argc, argv, ncpu, init_state, reg_start_func, reg_end_func, leaf_func )
 struct db_i	*dbip;
 int		argc;
@@ -1245,6 +1275,8 @@ union tree *	(*leaf_func)();
 		}
 	}
 
+	/* XXX Need to zap from whole_tree to region points */
+
 	/*
 	 *  Fourth, in parallel, for each region, walk the tree to the leaves.
 	 */
@@ -1264,5 +1296,7 @@ union tree *	(*leaf_func)();
 		/* XXX Need to check that RES_INIT()s have been done too! */
 		rt_parallel( db_walk_dispatcher, ncpu );
 	}
+
+	/* XXX Clean any remaining trees still in reg_trees[] */
 	return(0);	/* OK */
 }
