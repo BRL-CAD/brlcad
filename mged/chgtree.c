@@ -395,8 +395,8 @@ char	**argv;
 	for( i = 1; i < argc; i++ )  {
 		if( (dp = db_lookup( dbip,  argv[i], verbose )) != DIR_NULL )  {
 			is_phony = (dp->d_addr == RT_DIR_PHONY_ADDR);
-			eraseobj( dp );
-			/* eraseobj() does db_dirdelete() on phony entries, don't re-do. */
+			eraseobjall( dp );
+			/* eraseobjall() does db_dirdelete() on phony entries, don't re-do. */
 			if( is_phony )  continue;
 
 			if( db_delete( dbip, dp ) < 0 ||

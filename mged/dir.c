@@ -1385,7 +1385,7 @@ register struct directory *dp;
 	Tcl_AppendResult(interp, "KILL ", (dp->d_flags & DIR_COMB) ? "COMB" : "Solid",
 		   ":  ", dp->d_namep, "\n", (char *)NULL);
 
-	eraseobj( dp );
+	eraseobjall( dp );
 
 	if( db_delete( dbip, dp) < 0 || db_dirdelete( dbip, dp ) < 0 ){
 	  TCL_DELETE_ERR("");
