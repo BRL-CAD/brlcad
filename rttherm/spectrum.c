@@ -375,9 +375,10 @@ CONST struct rt_spect_sample	*ss;
  *  Compute at 'n-1' wavelengths evenly spaced between ax and bx.
  */
 void
-rt_spect_black_body( ss, temp )
+rt_spect_black_body( ss, temp, n )
 struct rt_spect_sample	*ss;
 double			temp;		/* Degrees Kelvin */
+unsigned int		n;		/* # wavelengths to eval at */
 {
 	CONST struct rt_spectrum	*spect;
 	int				j;
@@ -390,18 +391,18 @@ spect->wavel[0] * 0.001,	/* nm to um */
 spect->wavel[spect->nwave] * 0.001	/* nm to um */
 );
 
+	if( n < 3 )  n = 3;
+
 	for( j = 0; j < spect->nwave; j++ )  {
 		double	ax;		/* starting wavelength, um */
 		double	bx;		/* ending wavelength, um */
-		double	w_sum;
-		double	wavlen;
-		double	dx;
-		unsigned long n,i;
+		double	dx;		/* wavelength interval, um */
+		double	w_sum;		/* sum over wavelengths */
+		double	wavlen;		/* current wavelength */
+		unsigned long i;
 
 		ax = spect->wavel[j] * 0.001;	/* nm to um */
 		bx = spect->wavel[j+1] * 0.001;	/* nm to um */
-
-		n = 3;
 		dx = (bx - ax) / (double)n;
 
 		w_sum = 0;
@@ -492,11 +493,10 @@ main()
 	rt_write_spect_sample( "/tmp/x", x );
 
 	RT_GET_SPECT_SAMPLE( y, spect );
-	rt_spect_black_body( y, 10000.0 );
+	rt_spect_black_body( y, 10000.0, 3 );
 	rt_write_spect_sample( "/tmp/y", y );
 
 	RT_GET_SPECT_SAMPLE( z, spect );
 	rt_spect_black_body_fast( z, 10000.0 );
 	rt_write_spect_sample( "/tmp/z", z );
 }
-
