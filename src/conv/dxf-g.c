@@ -1564,9 +1564,11 @@ process_dimension_entities_code( int code )
 			bu_log( "Created a new state for DIMENSION\n" );
 		}
 		for( BU_LIST_FOR( blk, block_list, &block_head ) ) {
+		    if (block_name) {
 			if( !strcmp( blk->block_name, block_name ) ) {
-				break;
+			    break;
 			}
+		    }
 		}
 		if( BU_LIST_IS_HEAD( blk, &block_head ) ) {
 			bu_log( "ERROR: INSERT references non-existent block (%s)\n", line );
@@ -1578,7 +1580,9 @@ process_dimension_entities_code( int code )
 			bu_log( "Inserting block %s\n", blk->block_name );
 		}
 
-		bu_free( block_name, "block_name" );
+		if (block_name) {
+		    bu_free( block_name, "block_name" );
+		}
 		
 		if( new_state->curr_block ) {
 			BU_LIST_PUSH( &state_stack, &(curr_state->l) );
