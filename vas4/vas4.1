@@ -81,7 +81,7 @@ action to perform, but not a precise command.
 .nf
 	FB_FILE=/dev/ik0v
 	export FB_FILE
-	cbars-fb		# Display color bars, switch to RS-170
+	fbcbars			# Display color bars, switch to RS-170
 	vas4 init		# Initialize VAS IV
 	vas4 new 1		# Initiate new scene 1, record title matte
 	vas4 reset_time		# Set VTR time counter to 00:00:00
@@ -114,7 +114,7 @@ Note that the following is a description of the steps performed
 by "sequence", not commands to be entered.
 .nf
 	vas4 init		/*Initialize VAS IV*/
-	cbars-fb		/*Display color bars*/
+	fbcbars			/*Display color bars*/
 	vas4 new 1		/*Initiate new scene*/
 	vas4 record 300		/*Record 10 seconds of color bars*/
 	for (i=start; i<n; i++){
@@ -168,9 +168,9 @@ For an Ikonas framebuffer, this is done by setting FB_FILE to /dev/ik0v,
 and then running
 .I fbclear
 or
-.I cbars-fb
+.I fbcbars
 Any operations which will change the RS170 setting
-should be avioded during the recording process.
+should be avoided during the recording process.
 .SH TAPE PREPARATION
 Before using a new tape to record an animation sequence, it \fImust\fR be
 prepared by recording any signal on the VTR, to establish valid time codes.
@@ -184,7 +184,7 @@ has been recorded with the black signal.
 /dev/vas	tty port connected to the VAS IV
 .fi
 .SH SEE ALSO
-brlcad(1), cbars-fb(1), rle-fb(1), pix-fb(1), rle-ik(1)
+brlcad(1), fbcbars(1), rle-fb(1), pix-fb(1), rle-ik(1)
 .br
 VAS IV Operations Manual, 
 Lyon-Lamb Video Animation Systems, Inc., 4531 Empire Avenue, Burbank, 
