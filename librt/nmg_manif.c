@@ -106,13 +106,26 @@ register CONST char	*manifolds;
 	    	    }
 
 		    if (eur == eu->eumate_p) {
-			return(1);
+		    	goto out;
 		    }
 		}
 	    }
 	}
+	eur = (CONST struct edgeuse *)NULL;
 
-	return(0);
+out:
+	if (rt_g.NMG_debug & DEBUG_BASIC)  {
+		struct rt_tol	tol;	/* HACK */
+		tol.magic = RT_TOL_MAGIC;
+		tol.dist = 1;
+		tol.dist_sq = tol.dist * tol.dist;
+		tol.perp = 1e-5;
+		tol.para = 1 - tol.perp;
+
+		rt_log("nmg_dangling_face(fu=x%x, manifolds=x%x) dangling_eu=x%x\n", fu, manifolds, eur);
+		if( eur )  nmg_pr_fu_around_eu( eur, &tol );
+	}
+	return eur != (CONST struct edgeuse *)NULL;
 }
 
 /*
