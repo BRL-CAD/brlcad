@@ -754,7 +754,7 @@ register struct soltab *stp;
  *  This draws each edge only once.
  *  XXX No checking for degenerate faces is done, but probably should be.
  */
-void
+int
 arb_plot( rp, matp, vhead, dp )
 register union record	*rp;
 register matp_t		matp;
@@ -765,13 +765,14 @@ struct directory	*dp;
 
 	if( arb_import( &ai, rp, matp ) < 0 )  {
 		rt_log("arb_plot(%s): db import failure\n", dp->d_namep);
-		return;
+		return(-1);
 	}
 
 	ARB_FACE( ai.arbi_pt, 0, 1, 2, 3 );
 	ARB_FACE( ai.arbi_pt, 4, 0, 3, 7 );
 	ARB_FACE( ai.arbi_pt, 5, 4, 7, 6 );
 	ARB_FACE( ai.arbi_pt, 1, 5, 6, 2 );
+	return(0);
 }
 
 /*
@@ -841,14 +842,20 @@ register matp_t		matp;
  *  "Tessellate" an ARB into an NMG data structure.
  *  Purely a mechanical transformation of one faceted object
  *  into another.
+ *
+ *  Returns -
+ *	-1	failure
+ *	 0	OK.  *r points to nmgregion that holds this tessellation.
  */
-void
-arb_tess( s, rp, mat, dp )
-struct shell		*s;
+int
+arb_tess( r, m, rp, mat, dp )
+struct nmgregion	**r;
+struct model		*m;
 register union record	*rp;
 register mat_t		mat;
 struct directory	*dp;
 {
+	struct shell		*s;
 	struct arb_internal	ai;
 	register int		i;
 	struct faceuse		*outfaceuses[6];
@@ -860,12 +867,14 @@ struct directory	*dp;
 
 	if( arb_import( &ai, rp, mat ) < 0 )  {
 		rt_log("arb_tess(%s): import failure\n", dp->d_namep);
-		return;
+		return(-1);
 	}
 
 	for( i=0; i<8; i++ )  verts[i] = (struct vertex *)0;
 
 	/* Build all 6 faces of the ARB */
+	*r = nmg_mrsv( m );	/* Make region, empty shell, vertex */
+	s = m->r_p->s_p;
 
 	/* make "top" */
 	outfaceuses[0] = nmg_cface(s, verts, 4);
@@ -928,5 +937,5 @@ struct directory	*dp;
 	/* Glue the edges of different outward pointing face uses together */
 	nmg_gluefaces( outfaceuses, 6 );
 
-	return;
+	return(0);
 }

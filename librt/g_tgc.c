@@ -1444,7 +1444,7 @@ register mat_t		mat;
 /*
  *			T G C _ P L O T
  */
-void
+int
 tgc_plot( rp, mat, vhead, dp )
 union record	*rp;
 register mat_t	mat;
@@ -1458,7 +1458,7 @@ struct directory *dp;
 	LOCAL fastf_t		points[3*8];
 	LOCAL struct tgc_internal	ti;
 
-	if( tgc_import( &ti, rp, mat ) < 0 )  return;
+	if( tgc_import( &ti, rp, mat ) < 0 )  return(-1);
 
 	ell_16pts( bottom, ti.v, ti.a, ti.b );
 	VADD2( work, ti.v, ti.h );
@@ -1481,6 +1481,7 @@ struct directory *dp;
 		ADD_VL( vhead, &top[i*ELEMENTS_PER_VECT], 0 );
 		ADD_VL( vhead, &bottom[i*ELEMENTS_PER_VECT], 1 );
 	}
+	return(-1);
 }
 
 /*
@@ -1566,14 +1567,20 @@ struct soltab *stp;
  *			T G C _ T E S S
  *
  *  Preliminary tesselation of the TGC, same algorithm as vector list.
+ *
+ *  Returns -
+ *	-1	failure
+ *	 0	OK.  *r points to nmgregion that holds this tessellation.
  */
-void
-tgc_tess( s, rp, mat, dp )
-struct shell	*s;
+int
+tgc_tess( r, m, rp, mat, dp )
+struct nmgregion	**r;
+struct model		*m;
 union record	*rp;
 register mat_t	mat;
 struct directory *dp;
 {
+	struct shell		*s;
 	register int		i;
 	LOCAL fastf_t		top[16*3];
 	struct vertex		*vtop[16+1];
@@ -1589,12 +1596,18 @@ struct directory *dp;
 	int			face;
 	plane_t			plane;
 
-	if( tgc_import( &ti, rp, mat ) < 0 )  return;
+	if( tgc_import( &ti, rp, mat ) < 0 )  {
+		rt_log("tgc_tess(%s): import failure\n", dp->d_namep);
+		return(-1);
+	}
 
 	/* Create two 16 point ellipses */
 	ell_16pts( bottom, ti.v, ti.a, ti.b );
 	VADD2( work, ti.v, ti.h );
 	ell_16pts( top, work, ti.c, ti.d );
+
+	*r = nmg_mrsv( m );	/* Make region, empty shell, vertex */
+	s = m->r_p->s_p;
 
 	for( i=0; i<16; i++ )  {
 		vtop[i] = vtemp[i] = (struct vertex *)0;
@@ -1657,5 +1670,5 @@ struct directory *dp;
 	/* Glue the edges of different outward pointing face uses together */
 	nmg_gluefaces( outfaceuses, 2*16+2 );
 
-	return;
+	return(0);
 }

@@ -632,7 +632,7 @@ fastf_t *A, *B;
 /*
  *			E L L _ P L O T
  */
-void
+int
 ell_plot( rp, matp, vhead, dp )
 union record	*rp;
 register matp_t matp;
@@ -648,7 +648,7 @@ struct directory *dp;
 
 	if( ell_import( &ei, rp, matp ) < 0 )  {
 		rt_log("ell_plot(%s): db import failure\n", dp->d_namep);
-		return;
+		return(-1);
 	}
 
 	ell_16pts( top, ei.v, ei.a, ei.b );
@@ -669,6 +669,7 @@ struct directory *dp;
 	for( i=0; i<16; i++ )  {
 		ADD_VL( vhead, &middle[i*ELEMENTS_PER_VECT], 1 );
 	}
+	return(0);
 }
 
 #define XPLUS 0
@@ -699,14 +700,20 @@ static struct usvert {
  *			E L L _ T E S S
  *
  *  Tessellate an ellipsoid.
+ *
+ *  Returns -
+ *	-1	failure
+ *	 0	OK.  *r points to nmgregion that holds this tessellation.
  */
 int
-ell_tess( s, rp, mat, dp )
-struct shell		*s;
+ell_tess( r, m, rp, mat, dp )
+struct nmgregion	**r;
+struct model		*m;
 register union record	*rp;
 register mat_t		mat;
 struct directory	*dp;
 {
+	struct shell		*s;
 	struct ell_internal	ei;
 	register int		i;
 	struct faceuse		*outfaceuses[8];
@@ -719,10 +726,13 @@ struct directory	*dp;
 
 	if( ell_import( &ei, rp, mat ) < 0 )  {
 		rt_log("ell_tess(%s): import failure\n", dp->d_namep);
-		return;
+		return(-1);
 	}
 
 	for( i=0; i<6; i++ )  verts[i] = (struct vertex *)0;
+
+	*r = nmg_mrsv( m );	/* Make region, empty shell, vertex */
+	s = m->r_p->s_p;
 
 	/* Build all 8 faces of the octahedron, 3 verts each */
 	for( i=0; i<8; i++ )  {
