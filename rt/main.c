@@ -226,7 +226,7 @@ char **argv;
 	/* Load the desired portion of the model */
 	while( argc > 0 )  {
 		if( rt_gettree(rtip, argv[0]) < 0 )
-			fprintf("rt_gettree(%s) FAILED\n", argv[0]);
+			fprintf(stderr,"rt_gettree(%s) FAILED\n", argv[0]);
 		argc--; argv++;
 	}
 	(void)rt_read_timer( outbuf, sizeof(outbuf) );
