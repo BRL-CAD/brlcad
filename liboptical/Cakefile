@@ -10,12 +10,29 @@
 
 #define FILES	\
 	init \
-	sh_text sh_cloud \
+	sh_air \
+	sh_brdf \
+	sh_camo \
+	sh_cloud \
+	sh_cook \
+	sh_fire \
+	sh_gauss \
+	sh_grass \
+	sh_light \
+	sh_noise \
+	sh_plastic \
+	sh_points \
+	sh_prj \
+	sh_rtrans \
+	sh_scloud \
+	sh_spm \
 	sh_stack \
-	sh_plastic sh_cook sh_spm sh_light \
-	sh_wood sh_stxt sh_points sh_toyota \
-	sh_camo sh_scloud sh_air sh_fire sh_rtrans sh_brdf \
-	sh_gauss sh_noise sh_prj sh_grass sh_treetherm sh_tcl\
+	sh_stxt \
+	sh_tcl\
+	sh_text \
+	sh_toyota \
+	sh_treetherm \
+	sh_wood \
 	turb
 
 #define VERSION_VARIABLE	liboptical_version
