@@ -1109,32 +1109,93 @@ identbld()
 
 /*		P O L Y H B L D
  *
- *  This routine builds the record headder for a polysolid.
+ *  Collect up all the information for a POLY-solid.
+ *  These are handled as BoT solids in v5, but we still have to read
+ *  the data in the old format, and then convert it.
+ *
+ *  The poly header line is followed by an unknown number of
+ *  poly data lines.
  */
 
 void
 polyhbld()
 {
-#if 0
-	/* Headder for polysolid */
+	char	*cp;
+	char	*name;
+	long	startpos;
+	long	nlines;
+	struct rt_pg_internal	*pg;
+	struct rt_pg_face_internal	*face;
+	struct rt_db_internal	intern;
 
-	register char	*cp;
-	register char	*np;
+	(void)strtok( buf, " " );	/* skip the ident character */
+	cp = strtok( NULL, " \n" );
+	name = bu_strdup(cp);
 
-	cp = buf;
-	cp++;				/* ident */
-	cp = nxt_spc( cp );		/* skip the space */
-
-	np = name;
-	while( *cp != '\n' && *cp != '\0' )  {
-		*np++ = *cp++;
+	/* Count up the number of poly data lines which follow */
+	startpos = ftell(ifp);
+	for( nlines = 0; ; nlines++ )  {
+		if( fgets( buf, BUFSIZE, ifp ) == NULL )  break;
+		if( buf[0] != ID_P_DATA )  break;	/* 'Q' */
 	}
-	*np = '\0';
+	BU_ASSERT_LONG( nlines, >, 0 );
 
-	mk_polysolid(ofp, name);
-#else
-	bu_bomb("bsrfbld() needs to be upgraded to v5\n");
-#endif
+	/* Allocate storage for the faces */
+	BU_GETSTRUCT( pg, rt_pg_internal );
+	pg->magic = RT_PG_INTERNAL_MAGIC;
+	pg->npoly = nlines;
+	pg->poly = (struct rt_pg_face_internal *)bu_calloc( pg->npoly,
+		sizeof(struct rt_pg_face_internal), "poly[]" );
+	pg->max_npts = 0;
+
+	/* Return to first 'Q' record */
+	fseek( ifp, startpos, 0 );
+
+	for( nlines = 0; nlines < pg->npoly; nlines++ )  {
+		register struct rt_pg_face_internal	*fp = &pg->poly[nlines];
+		register int	i;
+
+		if( fgets( buf, BUFSIZE, ifp ) == NULL )  break;
+		if( buf[0] != ID_P_DATA )  bu_bomb("mis-count of Q records?\n");
+
+		/* Input always has 5 points, even if all aren't significant */
+		fp->verts = (fastf_t *)bu_malloc( 5*3*sizeof(fastf_t), "verts[]" );
+		fp->norms = (fastf_t *)bu_malloc( 5*3*sizeof(fastf_t), "norms[]" );
+
+		cp = buf;
+		cp++;				/* ident */
+		cp = nxt_spc( cp );		/* skip the space */
+
+		fp->npts = (char)atoi( cp );
+		if( fp->npts > pg->max_npts )  pg->max_npts = fp->npts;
+
+		for( i = 0; i < 5*3; i++ )  {
+			cp = nxt_spc( cp );
+			fp->verts[i] = atof( cp );
+		}
+
+		for( i = 0; i < 5*3; i++ )  {
+			cp = nxt_spc( cp );
+			fp->norms[i] = atof( cp );
+		}
+	}
+
+	/* Convert the polysolid to a BoT */
+	RT_INIT_DB_INTERNAL(&intern);
+	intern.idb_type = ID_POLY;
+	intern.idb_meth = &rt_functab[ID_POLY];
+	intern.idb_ptr = pg;
+	if( rt_pg_to_bot( &intern, &ofp->wdb_tol ) < 0 )
+		bu_bomb("rt_pg_to_bot() failed\n");
+	/* The polysolid is freed by the converter */
+
+	/*
+	 * Since we already have an internal form, this is much simpler than
+	 * calling mk_bot().
+	 */
+	if( wdb_put_internal( ofp, name, &intern, mk_conv2mm ) < 0 )
+		bu_bomb("wdb_put_internal() failure on BoT from polysolid\n");
+	/* BoT internal has been freed */
 }
 
 /*		P O L Y D B L D
