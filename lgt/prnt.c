@@ -361,7 +361,7 @@ prnt_Usage()
 	}
 
 #include <varargs.h>
-#if defined( cray ) && ! defined( CRAY2 )
+#if defined( CRAY1 )
 /* VARARGS */
 void
 prnt_Scroll(fmt, a,b,c,d,e,f,g,h,i)
