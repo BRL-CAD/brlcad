@@ -46,6 +46,7 @@ dnl
 
 AC_PREREQ(2.50)
 
+
 AC_INIT(BRL-CAD, 7.0, [http://brlcad.org], brlcad)
 AC_REVISION($Revision$)
 AC_CONFIG_AUX_DIR(misc)
@@ -74,6 +75,7 @@ AC_SUBST(BRLCAD_VERSION)
 # necessary for proper file creation on nfs volumes
 umask 022
 
+# classify this machine
 AC_CANONICAL_HOST
 AC_CANONICAL_TARGET
 
@@ -89,6 +91,48 @@ AC_PREFIX_DEFAULT(/usr/brlcad)
 AM_INIT_AUTOMAKE
 AM_CONFIG_HEADER(include/config.h)
 
+# automatically enable and load our configure cache file if available
+AC_MSG_CHECKING([whether a configure cache exists])
+if test "x$cache_file" = "x/dev/null" ; then
+	brlcad_cache="config.cache.${host_os}.${ac_hostname}"
+	CONFIG_CACHE=""
+	if test -f "$brlcad_cache"; then
+		# if the configure script has been modified since
+		# the last caching, assume it to be invalid.
+		last_modified="`ls -Lt $brlcad_cache configure`"
+		case "x$last_modified" in
+			xconfigure*)
+				AC_MSG_RESULT([found but out of date])
+				rm -f $brlcad_cache
+				;;
+			*)
+				AC_MSG_RESULT([found $brlcad_cache])
+
+				dnl go ahead and load our cache
+				case $brlcad_cache in
+					[\\/]* | ?:[\\/]* )
+						. $brlcad_cache
+						;;
+					*)
+						. ./$brlcad_cache
+						;;
+				esac
+		esac
+	fi
+
+	dnl if we are on sgi, bash may choke on sed syntax in the cache
+	if test "x$host_os" != "xirix6.5" ; then
+		AC_MSG_NOTICE([*** Automatically caching to $brlcad_cache ***])
+		>$brlcad_cache
+		cache_file="$brlcad_cache"
+		CONFIG_CACHE="$cache_file"
+	else
+		AC_MSG_NOTICE([Automatic caching is unavailable on IRIX])
+	fi
+	AC_SUBST(CONFIG_CACHE)
+else
+	AC_MSG_RESULT($cache_file)
+fi
 
 
 dnl ***********************
@@ -182,8 +226,8 @@ AC_MSG_RESULT($only_rts)
 AM_CONDITIONAL(ONLY_RTS, [test "x$only_rts" != "xno"])
 if test "x$warn_only_both" != "xno" ; then
 	AC_MSG_NOTICE([>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>])
-	AC_MSG_WARN(Requesting BOTH benchmark and librtserver "only"?)
-	AC_MSG_WARN(Building both benchmark and librtserver)
+	AC_MSG_WARN([Requesting BOTH benchmark and librtserver "only"?])
+	AC_MSG_WARN([Building both benchmark and librtserver])
 	AC_MSG_NOTICE([<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<])
 fi
 
@@ -366,6 +410,10 @@ dnl **************************
 dnl *** Check for programs ***
 dnl **************************
 
+AC_AIX
+AC_GNU_SOURCE
+AC_MINIX
+
 AC_PROG_CC
 AM_PROG_CC_STDC
 AC_PROG_CPP
@@ -437,23 +485,6 @@ fi
 AC_MSG_CHECKING(whether to enable doxygen)
 AC_MSG_RESULT($use_doxygen)
 
-dnl now that the compiler is known, we can enable a compiler-specific cache file
-dnl unless we are on sgi, where bash may choke on sed syntax in the cache
-AC_MSG_CHECKING(what cache file is set to)
-CONFIG_CACHE=""
-if test "x$cache_file" = "x/dev/null" ; then
-	if test "x$host_os" != "xirix6.5" ; then
-		compsys="`echo $CC | awk '{print $1}' | tr -d '/'`"
-		if test "x$compsys" = "x" ; then
-			compsys="$compiler"
-		fi
-		cache_file="config.cache.${compsys}.${host_os}"
-		CONFIG_CACHE="$cache_file"
-	fi
-fi
-AC_MSG_RESULT($cache_file)
-AC_SUBST(CONFIG_CACHE)
-
 
 dnl ***************************
 dnl *** Check for libraries ***
@@ -488,46 +519,6 @@ AC_SUBST(X_CFLAGS)
 AC_SUBST(X_LIBS)
 AC_SUBST(X_PREFIX)
 
-dnl tcl
-TCLVER=8.4
-TCL=libtcl${TCLVER}
-case "$target" in
-	powerpc-apple-darwin*)
-		TCL_LIBS='-L${top_builddir}/src/other/libtcl/unix -ltcl${TCLVER} ${DL} ${SOCKET} -lm'
-dnl -compatibility_version 20 -current_version 20.1
-		;;
-	*)
-		TCL_LIBS='-L${top_builddir}/src/other/libtcl/unix -ltcl${TCLVER} -Wl,-rpath,${libdir} -rdynamic ${DL} ${SOCKET} -lm'
-esac
-TCL_LIBRARY="$prefix/tcl${TCLVER}"
-if test "x$FRAMEWORK_BUILD" = "x1" ; then
-	dnl this may be wrong
-	TCL_BUILD_CFLAGS="-DTCL_PACKAGE_PATH=\\\"$libdir/Resources/Scripts\\\" -DTCL_LIBRARY=\\\"$TCL_LIBRARY\\\""
-else
-	TCL_BUILD_CFLAGS="-DTCL_PACKAGE_PATH=\\\"$libdir\\\" -DTCL_LIBRARY=\\\"$TCL_LIBRARY\\\""
-fi
-AC_SUBST(TCL)
-AC_SUBST(TCLVER)
-AC_SUBST(TCL_BUILD_CFLAGS)
-AC_SUBST(TCL_LIBRARY)
-AC_SUBST(TCL_LIBS)
-
-dnl tk
-TKVER="8.4"
-TK_LIBS='-L${top_builddir}/src/other/libtk/unix -ltk${TKVER} ${TCL_LIBS} ${X_LIBS}'
-TK_LIBRARY="$prefix/tk${TKVER}"
-AC_SUBST(TKVER)
-AC_SUBST(TK_LIBRARY)
-AC_SUBST(TK_LIBS)
-
-dnl itcl
-ITCL_VERSION="3.3"
-ITCL_LIBS='${top_builddir}/src/other/incrTcl/itcl/libitcl${ITCL_VERSION}.la'
-ITK_LIBS='${top_builddir}/src/other/incrTcl/itk/libitk${ITCL_VERSION}.la'
-AC_SUBST(ITCL_LIBS)
-AC_SUBST(ITCL_VERSION)
-AC_SUBST(ITK_LIBS)
-
 dnl detect a useable system regular expression library
 regex_link_works=no
 AC_CHECK_LIB(c, regcomp, regex_link_works=yes)
@@ -538,13 +529,17 @@ if test "x$regex_link_works" = "xno" ; then
 	AC_CHECK_LIB(compat, regcomp, regex_link_works=yes)
 fi
 
-dnl detect a useable system zlib
+dnl check whether there is a useable zlib library
 zlib_link_works=no
 AC_CHECK_LIB(z, deflate, zlib_link_works=yes)
 
 dnl detect a useable system png library
 png_link_works=no
 AC_CHECK_LIB(png, png_check_sig, png_link_works=yes)
+
+dnl check whether there is a useable math library
+m_link_works=no
+AC_CHECK_LIB(m, cos, m_link_works=yes)
 
 
 dnl *************************
@@ -681,6 +676,8 @@ AC_HEADER_STAT
 AC_HEADER_STDBOOL
 AC_HEADER_TIME
 AC_STRUCT_ST_BLOCKS
+dnl Tcl still uses HAVE_ST_BLKSIZE
+AC_STRUCT_ST_BLKSIZE
 AC_CHECK_MEMBERS([struct stat.st_blksize])
 AC_CHECK_MEMBERS([struct stat.st_rdev])
 AC_STRUCT_TM
@@ -728,6 +725,19 @@ case "x$compiler" in
 		CFLAGS="$CFLAGS -fno-strict-aliasing"
 		;;
 esac
+
+dnl try to use -pipe to speed up the compiles
+
+AC_MSG_CHECKING([if the compiler understands -pipe])
+PRECFLAGS="$CFLAGS"
+CFLAGS="$CFLAGS -pipe"
+AC_TRY_COMPILE( [], [],
+	[ AC_MSG_RESULT(yes) ], 
+	[
+		CFLAGS="$PRECFLAGS"
+		AC_MSG_RESULT(no)
+	]
+)
 
 dnl optimization flags
 if test "x$use_optimized" != "xno" ; then
@@ -895,7 +905,17 @@ AC_CHECK_FUNCS(\
 	writev \
 )
 
+dnl XXX for tcl (some duplicate)
 AC_CHECK_FUNC(fstatfs, , [AC_DEFINE(NO_FSTATFS,, Lacking fstatfs)])
+AC_CHECK_FUNC(strerror, , [AC_DEFINE(NO_STRERROR,, From Tcl -- No strerror)])
+AC_CHECK_FUNC(getwd, , [AC_DEFINE(NO_GETWD,, From Tcl -- No getwd)])
+AC_CHECK_FUNC(wait3, , [AC_DEFINE(NO_WAIT3,, From Tcl -- No wait3)])
+AC_CHECK_FUNC(uname, , [AC_DEFINE(NO_UNAME,, From Tcl -- No uname)])
+AC_CHECK_FUNC(realpath, , [AC_DEFINE(NO_REALPATH,, From Tcl -- No realpath)])
+AC_CHECK_FUNC(memmove, , [AC_DEFINE(NO_MEMMOVE,, From Tcl -- No memmove) 
+		          AC_DEFINE(NO_STRING_H,, From Tcl -- No string)])
+AC_CHECK_FUNC(opendir, , [AC_DEFINE(USE_DIRENT2_H,, From Tcl -- use dirent2)])
+
 AC_CHECK_FUNC(popen, AC_DEFINE(HAVE_POPEN_DECL,1,popen))
 
 # XXX duplicate for decl (needs to go away)
@@ -914,8 +934,12 @@ dnl *********************************
 dnl *** Check for system services ***
 dnl *********************************
 
+dnl *** X11 ***
+
 AC_PATH_X
 AC_PATH_XTRA
+
+dnl *** java ***
 
 if test "x$only_rts" != "xno" ; then
 	if test "x$with_java" = "xno" ; then
@@ -925,6 +949,19 @@ if test "x$only_rts" != "xno" ; then
 	fi
 fi
 AM_CONDITIONAL(JAVA, [test "x$with_java" != "xno"])
+
+dnl *** libm ***
+
+AC_MSG_CHECKING(whether to link with the math library)
+dnl See if libm library support works
+LIBM=""
+if test "x$m_link_works" = "xyes" ; then
+   	LIBM="-lm"
+	AC_MSG_RESULT(yes)
+else
+	AC_MSG_RESULT(no)
+fi
+AC_SUBST(LIBM)
 
 dnl *** libpng ***
 
@@ -942,7 +979,7 @@ int main () {
 )
 AC_MSG_RESULT($png_works)
 
-dnl figure out whether we need to build libz
+dnl figure out whether we need to build libpng
 build_brlcad_png="no (using system)"
 if test "x$build_png" = "xyes" ; then
 	build_brlcad_png=yes
@@ -957,19 +994,18 @@ else
 		dnl automatic detection
 		if test "x$png_works" = "xno" ; then
 			build_brlcad_png=yes
-		else
-			PNG_LIBS="-lpng -lz"
 		fi
 	fi
 fi
 AC_MSG_CHECKING(whether to build the included portable network graphics library)
 if test "x$build_brlcad_png" = "xyes" ; then
-	PNG_LIBS='${top_builddir}/src/other/libpng/libpng.la -lz'
+	LIBPNG='${top_builddir}/src/other/libpng/libpng.la'
 	AC_MSG_RESULT(yes)
 else
+	LIBPNG="-lpng"
 	AC_MSG_RESULT(no)
 fi
-AC_SUBST(PNG_LIBS)
+AC_SUBST(LIBPNG)
 AM_CONDITIONAL(BUILD_PNG, [test "x$build_brlcad_png" = "xyes"])
 
 dnl *** libregex ***
@@ -1054,13 +1090,19 @@ else
 	fi
 fi
 AC_MSG_CHECKING(whether to build the included zlib compression library)
+LIBZ=""
 if test "x$build_brlcad_zlib" = "xyes" ; then
-	ZLIB_LIBS='${top_builddir}/src/other/libz/libz.la'
+	LIBZ='${top_builddir}/src/other/libz/libz.la'
 	AC_MSG_RESULT(yes)
 else
+	if test "x$zlib_link_works" = "xyes" ; then
+		LIBZ='-lz'
+	fi
 	AC_MSG_RESULT(no)
 fi
-AC_SUBST(ZLIB_LIBS)
+AC_SUBST(LIBZ)
+
+
 AM_CONDITIONAL(BUILD_ZLIB, [test "x$build_brlcad_zlib" = "xyes"])
 
 
@@ -1137,11 +1179,34 @@ AC_SUBST(TERMIO)
 WDB='${top_builddir}/src/libwdb/libwdb.la'
 AC_SUBST(WDB)
 
+dnl tcl
+dnl Need to update version number(s) in src/other/libtcl/Makefile.am
+TCL_VERSION="8.4"
+TCL_LIBRARY="'${prefix}/tcl${TCL_VERSION}'"
+TCL_PACKAGE_PATH="'${libdir}'"
+TCL='${top_builddir}/src/other/libtcl/libtcl${TCL_VERSION}.la'
+AC_SUBST(TCL_VERSION)
+AC_SUBST(TCL_LIBRARY)
+AC_SUBST(TCL_PACKAGE_PATH)
+AC_SUBST(TCL)
 
-AC_CONFIG_SUBDIRS([ \
-	src/other/libtcl/unix \
-	src/other/libtk/unix \
-])
+dnl tk
+dnl Need to update version number(s) in src/other/libtk/Makefile.am
+TK_VERSION="8.4"
+TK_LIBRARY="'${prefix}/tk${TK_VERSION}'"
+TK='${top_builddir}/src/other/libtk/libtk${TK_VERSION}.la'
+AC_SUBST(TK_VERSION)
+AC_SUBST(TK_LIBRARY)
+AC_SUBST(TK)
+
+dnl itcl/itk
+ITCL_VERSION="3.3"
+ITCL_LIBS='${top_builddir}/src/other/incrTcl/itcl/libitcl${ITCL_VERSION}.la'
+ITK_LIBS='${top_builddir}/src/other/incrTcl/itk/libitk${ITCL_VERSION}.la'
+AC_SUBST(ITCL_VERSION)
+AC_SUBST(ITCL_LIBS)
+AC_SUBST(ITK_LIBS)
+
 
 AC_CONFIG_FILES([
 	Makefile
@@ -1238,7 +1303,13 @@ AC_CONFIG_FILES([
 	src/other/libpng/Makefile
 	src/other/libregex/Makefile
 	src/other/libtcl/Makefile
+	src/other/libtcl/doc/Makefile
+	src/other/libtcl/generic/Makefile
+	src/other/libtcl/unix/Makefile
 	src/other/libtk/Makefile
+	src/other/libtk/doc/Makefile
+	src/other/libtk/generic/Makefile
+	src/other/libtk/unix/Makefile
 	src/other/libtkGLX/Makefile
 	src/other/libutahrle/Makefile
 	src/other/libz/Makefile
