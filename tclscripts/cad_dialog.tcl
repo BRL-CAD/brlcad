@@ -25,6 +25,8 @@
 #		*- mods to pop up the dialog box near the pointer.
 #		*- mods to cad_dialog (i.e. use text widget with
 #		   scrollbar if string length becomes too large).
+#	 (John Anderson):
+#		*- added cad_radio proc
 #
 #==============================================================================
 
@@ -201,4 +203,68 @@ actions as indicated by the button label."}}
     set entrylocal [set entry$w]
     catch { destroy $w }
     return [set button$w]
+}
+
+# This proc pops up a dialog box with some radio buttons, an "apply" button, and a "dismiss" button
+#
+#	my_widget_name is the name to be used for this toplevel window
+#	screen can be the pathname of some widget where the screen value can be obtained. Otherwise,
+#		it is assumed to be a genuine X DISPLAY string.
+#	radio_result is a string containing the name of the variable to hold the result (must be global)
+#	title is the title to be displayed on the popup
+#	text_message is a message to be displayed in the window (typically instructions for the user)
+#	choice_labels is a list of labels for the radio buttons
+#	default is the index of the default choice
+#	help_strings is a list of help strings for the corresponding labels in choice_labels
+proc cad_radio { my_widget_name screen radio_result title text_message default choice_labels help_strings } {
+	global $radio_result
+	# The screen parameter can be the pathname of some
+	# widget where the screen value can be obtained.
+	# Otherwise, it is assumed to be a genuine X DISPLAY
+	# string.
+	if [winfo exists $screen] {
+		set screen [winfo screen $screen]
+	}
+
+	set done 0
+	set w $my_widget_name
+
+	if [winfo exists $w] { catch "destroy $w" }
+	toplevel $w -screen $screen
+	wm title $w $title
+	wm iconname $w Dialog
+	message $w.mess -text $text_message -justify center -width 500
+	hoc_register_data $w.mess "Radio Button Selection Dialog" {
+		{ summary "Use this window to select any one of the possibilities listed" }
+	}
+	grid $w.mess -row 0 -column 0 -columnspan 2 -sticky ew
+	set counter 0
+	foreach choice $choice_labels {
+		radiobutton $w.but_$counter -value $counter -variable $radio_result
+		label $w.lab_$counter -text $choice
+		grid $w.lab_$counter -row [expr $counter + 1] -column 1 -sticky ew
+		grid $w.but_$counter -row [expr $counter + 1] -column 0 -sticky ew
+		set hoc_data [subst {{ summary \"[lindex $help_strings $counter]\" }}]
+		hoc_register_data $w.lab_$counter [lindex $choice_labels $counter] $hoc_data
+		hoc_register_data $w.but_$counter [lindex $choice_labels $counter] $hoc_data
+		incr counter
+	}
+	$w.but_$default invoke
+
+	button $w.apply -text Apply -command {set done 1}
+	hoc_register_data $w.apply "Apply" {
+		{ summary "Click on this button to indicate you have finished making your selection" }
+	}
+
+	button $w.dismiss -text Dismiss -command "set $radio_result $default; set done 2"
+	hoc_register_data $w.dismiss "DIsmiss" {
+		{ summary "Click on this button to indicate you do not want to change\nthis selection from its value when the window appeard" }
+	}
+
+	grid $w.apply -row [expr $counter + 1] -column 0
+	grid $w.dismiss -row [ expr $counter + 1] -column 1
+	update
+
+	tkwait variable done
+	catch " destroy $w "
 }
