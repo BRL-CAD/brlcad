@@ -6,7 +6,7 @@ stuff_DATA = debug.h $(top_srcdir)/conv/g-xxx.c $(top_srcdir)/conv/g-xxx_facets.
 EXTRA_DIST = $(stuff_DATA) mk.in
 
 install-data-hook:
-	${INSTALL_DATA} mk ${stuffdir}/makefile
+	$(stuffDATA_INSTALL) mk $(DESTDIR)$(stuffdir)/makefile
 
 # I don't think this works
 uninstall-hook:
