@@ -5647,26 +5647,34 @@ struct object_use
 };
 
 static void
-Free_uses(struct db_i		*dbip,
-	  struct directory	*dp,
-	  genptr_t		ptr)
+Free_uses( struct db_i *dbip )
 {
-	struct object_use *use;
+	int i;
 
-	RT_CK_DIR(dp);
+	for (i=0 ; i<RT_DBNHASH ; i++) {
+		struct directory *dp;
+		struct object_use *use;
 
-	while (BU_LIST_NON_EMPTY(&dp->d_use_hd)) {
-		use = BU_LIST_FIRST(object_use, &dp->d_use_hd);
-		if (!use->used) {
-			/* never used, so delete directory entry.
-			 * This could actually delete the original, buts that's O.K.
-			 */
-			db_dirdelete(dbip, use->dp);
+		for (dp=dbip->dbi_Head[i]; dp!=DIR_NULL; dp=dp->d_forw) {
+			if (!(dp->d_flags & (DIR_SOLID | DIR_COMB)))
+				continue;
+
+			while (BU_LIST_NON_EMPTY(&dp->d_use_hd)) {
+				use = BU_LIST_FIRST(object_use, &dp->d_use_hd);
+				if( !use->used ) {
+					if( use->dp->d_un.file_offset >= 0 ) {
+						/* was written to disk */
+						db_delete( dbip, use->dp );
+					}
+					db_dirdelete(dbip, use->dp);
+				}
+				BU_LIST_DEQUEUE(&use->l);
+				bu_free((genptr_t)use, "Free_uses: use");
+			}
+			
 		}
-
-		BU_LIST_DEQUEUE(&use->l);
-		bu_free((genptr_t)use, "Free_uses: use");
 	}
+
 }
 
 static void
@@ -6110,13 +6118,13 @@ wdb_xpush_cmd(struct rt_wdb	*wdbp,
 	if (rt_db_get_internal(&intern, old_dp, wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 		bu_log("ERROR: cannot load %s feom the database!!!\n", old_dp->d_namep);
 		bu_log("\tNothing has been changed!!\n");
-		db_functree(wdbp->dbip, old_dp, Free_uses, Free_uses, &rt_uniresource, NULL);
+		Free_uses( wdbp->dbip );
 		return TCL_ERROR;
 	}
 
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
 	if (!comb->tree) {
-		db_functree(wdbp->dbip, old_dp, Free_uses, Free_uses, &rt_uniresource, NULL);
+		Free_uses( wdbp->dbip );
 		return TCL_OK;
 	}
 
@@ -6127,13 +6135,12 @@ wdb_xpush_cmd(struct rt_wdb	*wdbp,
 		Tcl_AppendResult(interp, "rt_db_put_internal failed for ", old_dp->d_namep,
 				 "\n", (char *)NULL);
 		rt_comb_ifree(&intern, &rt_uniresource);
-		db_functree(wdbp->dbip, old_dp, Free_uses, Free_uses, &rt_uniresource, NULL);
+		Free_uses( wdbp->dbip );
 		return TCL_ERROR;
 	}
 
 	/* Free use lists and delete unused directory entries */
-	db_functree(wdbp->dbip, old_dp, Free_uses, Free_uses, &rt_uniresource, NULL);
-
+	Free_uses( wdbp->dbip );
 	return TCL_OK;
 }
 
