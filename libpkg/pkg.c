@@ -699,7 +699,7 @@ register struct pkg_conn *pc;
 
 	pkg_pshort( hdr.pkh_magic, PKG_MAGIC );
 	pkg_pshort( hdr.pkh_type, type );	/* should see if valid type */
-	pkg_plong( hdr.pkh_len, len );
+	pkg_plong( hdr.pkh_len, (unsigned long)len );
 
 #ifdef HAVE_WRITEV
 	cmdvec[0].iov_base = (caddr_t)&hdr;
@@ -818,7 +818,7 @@ register struct pkg_conn *pc;
 
 	pkg_pshort( hdr.pkh_magic, PKG_MAGIC );
 	pkg_pshort( hdr.pkh_type, type );	/* should see if valid type */
-	pkg_plong( hdr.pkh_len, len1+len2 );
+	pkg_plong( hdr.pkh_len, (unsigned long)(len1+len2) );
 
 #ifdef HAVE_WRITEV
 	cmdvec[0].iov_base = (caddr_t)&hdr;
@@ -957,7 +957,7 @@ register struct pkg_conn *pc;
 	/* Queue it */
 	pkg_pshort( hdr.pkh_magic, PKG_MAGIC );
 	pkg_pshort( hdr.pkh_type, type );	/* should see if valid type */
-	pkg_plong( hdr.pkh_len, len );
+	pkg_plong( hdr.pkh_len, (unsigned long)len );
 
 	bcopy( (char *)&hdr, &(pc->pkc_stream[pc->pkc_strpos]),
 		sizeof(struct pkg_header) );
