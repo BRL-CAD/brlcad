@@ -453,57 +453,6 @@ struct faceuse *fu;
     	(void)nmg_tbl(bs->l2, TBL_INS_UNIQUE, &vup->l.magic);
 }
 
-/*	M E G A _ C H E C K _ E B R E A K _ R E S U L T
- *
- *	Given all the trouble that nmg_ebreak() and nmg_esplit() were
- *	to develop, this routine exists to assist isect_edge_face() in
- *	checking the results of a call to these routines.
- */
-static struct edgeuse *
-mega_check_ebreak_result(eu)
-struct edgeuse *eu;
-{
-	struct edgeuse *euforw;
-
-	NMG_CK_EDGEUSE(eu);
-	NMG_CK_EDGEUSE(eu->eumate_p);
-
-	/* since we just split eu, the "next" edgeuse
-	 * from eu CAN'T (in a working [as opposed to broken]
-	 * system) be the list head.
-	 */
-	euforw = RT_LIST_PNEXT(edgeuse, eu);
-
-	NMG_CK_EDGEUSE(euforw);
-	NMG_CK_EDGEUSE(euforw->eumate_p);
-
-	NMG_CK_VERTEXUSE(eu->vu_p);
-	NMG_CK_VERTEXUSE(eu->eumate_p->vu_p);
-	NMG_CK_VERTEXUSE(euforw->vu_p);
-	NMG_CK_VERTEXUSE(euforw->eumate_p->vu_p);
-
-	NMG_CK_VERTEX(eu->vu_p->v_p);
-	NMG_CK_VERTEX(eu->eumate_p->vu_p->v_p);
-	NMG_CK_VERTEX(euforw->vu_p->v_p);
-	NMG_CK_VERTEX(euforw->eumate_p->vu_p->v_p);
-
-	nmg_ck_lueu(eu->up.lu_p, "isect_edge_face" );
-
-	if (euforw->vu_p->v_p != eu->eumate_p->vu_p->v_p)
-		rt_bomb("I was supposed to share verticies!\n");
-
-	/* Make sure there is no geometry at the place we're about
-	 * to stick the new geometry
-	 */
-	if (eu->eumate_p->vu_p->v_p->vg_p != (struct vertex_g *)NULL) {
-		VPRINT("where'd this geometry come from?",
-			eu->eumate_p->vu_p->v_p->vg_p->coord);
-		rt_bomb("I didn't order this\n");
-	}
-
-	return(euforw);
-}
-
 /*
  *			N M G _ B R E A K _ 3 E D G E _ A T _ P L A N E
  *
@@ -541,34 +490,23 @@ struct vertex	*v1mate;
 	vu_other = nmg_find_vu_in_face(hit_pt, fu, &(bs->tol));
 	if (vu_other) {
 		/* the other face has a convenient vertex for us */
-
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
-			rt_log("re-using vertex from other face\n");
+			rt_log("re-using vertex v=x%x from other face\n", vu_other->v_p);
 
-		(void)nmg_ebreak(vu_other->v_p, eu);
+		euforw = nmg_ebreak(vu_other->v_p, eu);
 		(void)nmg_tbl(bs->l2, TBL_INS_UNIQUE, &vu_other->l.magic);
 	} else {
 		/* The other face has no vertex in this vicinity */
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
 			rt_log("Making new vertex\n");
 
-		(void)nmg_ebreak((struct vertex *)NULL, eu);
-
-		(void)mega_check_ebreak_result(eu);
-		euforw = RT_LIST_PNEXT(edgeuse, eu);
-
-		if (euforw->vu_p->v_p != eu->eumate_p->vu_p->v_p)
-			rt_bomb("I thought you said I was sharing verticies!\n");
-
-		nmg_vertex_gv(eu->eumate_p->vu_p->v_p, hit_pt);
+		euforw = nmg_ebreak((struct vertex *)NULL, eu);
+		nmg_vertex_gv(euforw->vu_p->v_p, hit_pt);
 
 		NMG_CK_VERTEX_G(eu->vu_p->v_p->vg_p);
 		NMG_CK_VERTEX_G(eu->eumate_p->vu_p->v_p->vg_p);
 		NMG_CK_VERTEX_G(euforw->vu_p->v_p->vg_p);
 		NMG_CK_VERTEX_G(euforw->eumate_p->vu_p->v_p->vg_p);
-
-		if (euforw->vu_p->v_p != eu->eumate_p->vu_p->v_p)
-			rt_bomb("I thought I was sharing verticies!\n");
 
 		if (rt_g.NMG_debug & DEBUG_POLYSECT) {
 			register pointp_t p1 = eu->vu_p->v_p->vg_p->coord;
@@ -586,7 +524,7 @@ struct vertex	*v1mate;
 		 * and make sure it is in the other shell's
 		 * list of vertices on the intersect line
 		 */
-		plu = nmg_mlv(&fu->l.magic, eu->eumate_p->vu_p->v_p, OT_UNSPEC);
+		plu = nmg_mlv(&fu->l.magic, euforw->vu_p->v_p, OT_UNSPEC);
 		vu_other = RT_LIST_FIRST( vertexuse, &plu->down_hd );
 		NMG_CK_VERTEXUSE(vu_other);
 		nmg_loop_g(plu->l_p);
@@ -594,17 +532,10 @@ struct vertex	*v1mate;
 		if (rt_g.NMG_debug & DEBUG_POLYSECT) {
 		    	VPRINT("Making vertexloop",
 				vu_other->v_p->vg_p->coord);
-			if (RT_LIST_FIRST_MAGIC(&plu->down_hd) !=
-				NMG_VERTEXUSE_MAGIC)
-				rt_bomb("bad plu\n");
-			if (RT_LIST_FIRST_MAGIC(&plu->lumate_p->down_hd) !=
-				NMG_VERTEXUSE_MAGIC)
-				rt_bomb("bad plumate\n");
 		}
 		(void)nmg_tbl(bs->l2, TBL_INS_UNIQUE, &vu_other->l.magic);
 	}
 
-	euforw = RT_LIST_PNEXT_CIRC(edgeuse, eu);
 	if (rt_g.NMG_debug & DEBUG_POLYSECT) {
 		register pointp_t	p1, p2;
 		p1 = eu->vu_p->v_p->vg_p->coord;
@@ -620,6 +551,8 @@ struct vertex	*v1mate;
 }
 
 /*
+ *			N M G _ C K _ F A C E _ W O R T H L E S S _ E D G E S
+ *
  *  For the moment, a quick hack to see if breaking an edge at a given
  *  vertex results in a null edge being created.
  */
@@ -648,7 +581,7 @@ CONST struct faceuse	*fu;
 #endif
 				rt_log("eu=x%x, neu=x%x, v=x%x\n", eu, neu, eu->vu_p->v_p);
 				rt_log("eu=x%x, neu=x%x, v=x%x\n", eu->eumate_p, neu->eumate_p, eu->eumate_p->vu_p->v_p);
-				rt_bomb("edge runs from&to same vertex\n");
+				rt_bomb("nmg_ck_face_worthless_edges() edge runs from&to same vertex\n");
 			}
 		}
 	}
