@@ -1212,14 +1212,19 @@ BU_EXPORT extern int	bu_debug;
 #	define bu_byteoffset(_i)	(((int)&(_i)))	/* actually a word offset */
 #else
 #  if defined(IRIX) && IRIX > 5 && _MIPS_SIM != _MIPS_SIM_ABI32
-#	define bu_byteoffset(_i)	((size_t)__INTADDR__(&(_i)))
+#      define bu_byteoffset(_i)	((size_t)__INTADDR__(&(_i)))
 #  else
 #    if defined(sgi) || defined(__convexc__) || defined(ultrix) || defined(_HPUX_SOURCE)
-	/* "Lazy" way.  Works on reasonable machines with byte addressing */
-#	define bu_byteoffset(_i)	((int)((char *)&(_i)))
+       /* "Lazy" way.  Works on reasonable machines with byte addressing */
+#      define bu_byteoffset(_i)	((int)((char *)&(_i)))
 #    else
-	/* "Conservative" way of finding # bytes as diff of 2 char ptrs */
-#	define bu_byteoffset(_i)	((int)(((char *)&(_i))-((char *)0)))
+#      if defined(__ia64__)
+#        define bu_byteoffset(_i)	((long)(((char *)&(_i))-((char *)0)))
+
+#      else
+         /* "Conservative" way of finding # bytes as diff of 2 char ptrs */
+#        define bu_byteoffset(_i)	((int)(((char *)&(_i))-((char *)0)))
+#      endif
 #    endif
 #  endif
 #endif
