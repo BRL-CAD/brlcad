@@ -457,6 +457,9 @@ CONST struct rt_tol *tol;
 
 	NMG_CK_SHELL( s );
 
+	if( rt_g.NMG_debug & DEBUG_BASIC )
+		rt_log( "nmg_fix_overlapping_loops: s = x%x\n" , s );
+
 	nmg_split_loops_into_faces( &s->l.magic , tol );
 
 	nmg_tbl( &loops , TBL_INIT , (long *)NULL );
@@ -632,6 +635,9 @@ CONST struct rt_tol *tol;
 		}
 	}
 	nmg_tbl( &loops , TBL_FREE , (long *)NULL );
+
+	if( rt_g.NMG_debug & DEBUG_BASIC )
+		rt_log( "nmg_fix_overlapping_loops: done\n" );
 }
 
 /*
@@ -656,8 +662,10 @@ CONST struct rt_tol *tol;
 	struct loopuse *lu;
 	struct edgeuse *eu;
 	struct vertexuse *vu;
+	struct nmg_ptbl fus;
 	struct shell *s_fu;	/* Shell to temporarily hold fu2 */
 	int i,j;
+	int fu_no,fu2_no;
 
 	NMG_CK_SHELL( is );
 	RT_CK_TOL( tol );
@@ -676,60 +684,59 @@ CONST struct rt_tol *tol;
 	s_fu = nmg_msv( r );
 	NMG_CK_SHELL( s_fu );
 
+	nmg_tbl( &fus , TBL_INIT , (long *)NULL );
+
+	for( RT_LIST_FOR( fu , faceuse , &is->fu_hd ) )
+	{
+		NMG_CK_FACEUSE( fu );
+
+		if( fu->orientation == OT_SAME )
+			nmg_tbl( &fus , TBL_INS , (long *)fu );
+	}
+
 	/* intersect each face with every other face in the shell */
-	fu = RT_LIST_FIRST( faceuse , &is->fu_hd );
-	while( RT_LIST_NOT_HEAD( fu , &is->fu_hd ) )
+	for( fu_no=0 ; fu_no < NMG_TBL_END( &fus ) ; fu_no ++ )
 	{
 		struct faceuse *fu2;
 		struct faceuse *next_fu;
 
+		fu = (struct faceuse *)NMG_TBL_GET( &fus , fu_no );
+
 		NMG_CK_FACEUSE( fu );
 
-		/* only look at OT_SAME faceuses */
-		if( fu->orientation != OT_SAME )
-		{
-			fu = RT_LIST_PNEXT( faceuse , &fu->l );
-			continue;
-		}
-
-		next_fu = RT_LIST_PNEXT( faceuse , &fu->l );
-		if( next_fu == fu->fumate_p && RT_LIST_NOT_HEAD( fu , &is->fu_hd ) )
-			 next_fu = RT_LIST_PNEXT( faceuse , &next_fu->l );
-
-		/* consider intersection this faceuse with all the faceuses
-		 * after it in the list
-		 */
-		fu2 = RT_LIST_PNEXT( faceuse , &fu->l );
-		if( RT_LIST_IS_HEAD( fu2 , &is->fu_hd ) )
-			break;
+		if( rt_g.NMG_debug & DEBUG_BASIC )
+			rt_log( "nmg_extrude_cleanup: fu=x%x\n" );
 
 		/* move fu to another shell to avoid radial edge problems */
 		nmg_mv_fu_between_shells( s_fu, is, fu );
 
-		while( RT_LIST_NOT_HEAD( fu2 , &is->fu_hd ) )
+		/* consider intersection this faceuse with all the faceuses
+		 * after it in the list
+		 */
+		for( fu2_no=fu_no+1 ; fu2_no < NMG_TBL_END( &fus ) ; fu2_no++ )
 		{
 			struct face *f,*f2;
 
+			fu2 = (struct faceuse *)NMG_TBL_GET( &fus , fu2_no );
+
+			if( rt_g.NMG_debug & DEBUG_BASIC )
+				rt_log( "nmg_extrude_cleanup: fu=x%x, fu2=x%x\n" , fu , fu2 );
+
 			/* skip faceuses radial to fu or not OT_SAME */
 			if( fu2->orientation != OT_SAME || nmg_faces_are_radial( fu , fu2 ) )
-			{
-				fu2 = RT_LIST_PNEXT( faceuse , &fu2->l );
 				continue;
-			}
 
 			f = fu->f_p;
 			f2 = fu2->f_p;
 
 			/* skip faceuse pairs that don't have overlapping BB's */
 			if( !V3RPP_OVERLAP( f->min_pt , f->max_pt , f2->min_pt , f2->max_pt ) )
-			{
-				fu2 = RT_LIST_PNEXT( faceuse , &fu2->l );
 				continue;
-			}
+
+			if( rt_g.NMG_debug & DEBUG_BASIC )
+				rt_log( "nmg_extrude_cleanup: calling nmg_isect_two_generic_faces( fu=x%x , fu2=x%x )\n" , fu , fu2 );
 
 			nmg_isect_two_generic_faces( fu , fu2 , tol );
-
-			fu2 = RT_LIST_PNEXT( faceuse , &fu2->l );
 		}
 		/* move fu back where it belongs */
 		while( RT_LIST_NON_EMPTY( &s_fu->fu_hd ) )
@@ -738,10 +745,12 @@ CONST struct rt_tol *tol;
 
 			fu_tmp = RT_LIST_FIRST( faceuse , &s_fu->fu_hd );
 			NMG_CK_FACEUSE( fu_tmp );
+
+			if( rt_g.NMG_debug & DEBUG_BASIC )
+				rt_log( "nmg_extrude_cleanup: moving fu x%x back\n" , fu_tmp );
+
 			nmg_mv_fu_between_shells( is, s_fu, fu_tmp );
 		}
-
-		fu = next_fu;
 	}
 
 	/* get rid of the temporary shell */
