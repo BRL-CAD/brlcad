@@ -136,6 +136,8 @@ static void	X24_updstate();
 static	int	linger();
 static	int	xsetup();
 static	void	print_display_info();	/* debug */
+static	void	X24_createColorCube();
+static	void	X24_createColorTables();
 
 static void X24_handle_event FB_ARGS((FBIO *ifp, XEvent *event));
 void X24_configureWindow FB_ARGS((FBIO *ifp, int width, int height));
@@ -609,17 +611,39 @@ GC gc;
   }
   XI_SET(ifp, xi);
 
+  /* X setup */
+  xi->xi_xwidth = width;
+  xi->xi_xheight = height;
+  xi->xi_dpy = dpy;
+  xi->xi_screen = DefaultScreen(xi->xi_dpy);
+
+  xi->xi_visinfo = *vip;		/* struct copy */
+  xi->xi_visual = vip->visual;
+  xi->xi_depth = vip->depth;
+  xi->xi_cmap = cmap;
+  xi->xi_win = win;
+
+  /*XXX For now use same GC for both */
+  xi->xi_gc = gc;
+  xi->xi_cgc = gc;
+
   switch (vip->class) {
   case TrueColor:
     if (vip->depth >= 24) {
       xi->xi_mode = FLG_VT24 << 1;
       xi->xi_flags = FLG_VT24 | FLG_XCMAP;
+      xi->xi_wp = 0xFFFFFF;
+      xi->xi_bp = 0x000000;
     } else if (vip->depth >= 16) {
       xi->xi_mode = FLG_VT16 << 1;
       xi->xi_flags = FLG_VT16 | FLG_XCMAP;
+      xi->xi_wp = 0xFFFFFF;
+      xi->xi_bp = 0x000000;
     } else {
       xi->xi_mode = FLG_VS1 << 1;
       xi->xi_flags = FLG_VS1 | FLG_XCMAP;
+      xi->xi_wp = 0x0;
+      xi->xi_bp = 0x1;
     }
 
     break;
@@ -627,12 +651,18 @@ GC gc;
     if (vip->depth >= 24) {
       xi->xi_mode = FLG_VD24 << 1;
       xi->xi_flags = FLG_VD24 | FLG_XCMAP;
+      xi->xi_wp = 0xFFFFFF;
+      xi->xi_bp = 0x000000;
     } else if (vip->depth >= 16) {
       xi->xi_mode = FLG_VD16 << 1;
       xi->xi_flags = FLG_VD16 | FLG_XCMAP;
+      xi->xi_wp = 0xFFFFFF;
+      xi->xi_bp = 0x000000;
     } else {
       xi->xi_mode = FLG_VS1 << 1;
       xi->xi_flags = FLG_VS1 | FLG_XCMAP;
+      xi->xi_wp = 0x0;
+      xi->xi_bp = 0x1;
     }
 
     break;
@@ -640,15 +670,26 @@ GC gc;
     if (vip->depth >= 8) {
       xi->xi_mode = FLG_VP8 << 1;
       xi->xi_flags = FLG_VP8 | FLG_XCMAP;
+
+      xi->xi_ncolors = sizeof (reds) * sizeof (blus) * sizeof (grns);
+      xi->xi_base = 255 - xi->xi_ncolors;
+      xi->xi_bp = xi->xi_base;
+      xi->xi_wp = xi->xi_base + xi->xi_ncolors - 1;
+
+      X24_createColorTables(xi);
     } else {
       xi->xi_mode = FLG_VS1 << 1;
       xi->xi_flags = FLG_VS1 | FLG_XCMAP;
+      xi->xi_wp = 0x0;
+      xi->xi_bp = 0x1;
     }
 
     break;
   default:
     xi->xi_mode = FLG_VS1 << 1;
     xi->xi_flags = FLG_VS1 | FLG_XCMAP;
+    xi->xi_wp = 0x0;
+    xi->xi_bp = 0x1;
 
     break;
   }
@@ -661,24 +702,6 @@ GC gc;
     free((char *)xi);
     return -1;
   }
-
-  /* X setup */
-  xi->xi_xwidth = width;
-  xi->xi_xheight = height;
-  xi->xi_dpy = dpy;
-  xi->xi_screen = DefaultScreen(xi->xi_dpy);
-
-  xi->xi_visinfo = *vip;		/* struct copy */
-  xi->xi_visual = vip->visual;
-  xi->xi_depth = vip->depth;
-  xi->xi_cmap = cmap;
-  xi->xi_wp = 0xFFFFFF;
-  xi->xi_bp = 0x000000;
-  xi->xi_win = win;
-
-  /*XXX For now use same GC for both */
-  xi->xi_gc = gc;
-  xi->xi_cgc = gc;
 
   /* Initialize the valid region */
   xi->xi_reg = XCreateRegion();
@@ -744,6 +767,13 @@ FBIO    *ifp;
 
   if (xi->xi_reg)
     XDestroyRegion(xi->xi_reg);
+
+  if (xi->xi_ccredtbl)
+    free(xi->xi_ccredtbl);
+  if (xi->xi_ccgrntbl)
+    free(xi->xi_ccgrntbl);
+  if (xi->xi_ccblutbl)
+    free(xi->xi_ccblutbl);
 
   free((char *)xi);
 
@@ -1409,6 +1439,104 @@ printf("X24_help(ifp:0x%x) entered\n", ifp);
 	return(0);
 }
 
+/*
+  Create 6x9x4 color cube.
+*/
+static void
+X24_createColorCube(xi)
+struct xinfo *xi;
+{
+  int i;
+  int redmul, grnmul;
+  unsigned long pixels[256], pmask[1], pixel[1];
+  XColor colors[256];
+
+  /*
+   * Color cube is in RGB order
+   */
+  grnmul = sizeof (blus);
+  redmul = sizeof (blus) * sizeof (grns);
+
+  XAllocColorCells(xi->xi_dpy, xi->xi_cmap, 1, pmask, 0, pixels,
+		   xi->xi_base + xi->xi_ncolors);
+
+  for (pixel[0] = 0; pixel[0] < xi->xi_base; pixel[0]++) {
+    XFreeColors(xi->xi_dpy, xi->xi_cmap, pixel, 1, 0);
+  }
+
+  /* Fill the colormap and the colorcube */
+  for (i = 0; i < xi->xi_ncolors; i++) {
+    colors[i].red = reds[i / redmul] << 8;
+    colors[i].green = grns[(i % redmul) / grnmul] << 8;
+    colors[i].blue = blus[i % grnmul] << 8;
+    colors[i].flags = DoRed | DoGreen | DoBlue;
+    colors[i].pixel = xi->xi_base + i;
+  }
+
+  XStoreColors(xi->xi_dpy, xi->xi_cmap, colors, xi->xi_ncolors);
+}
+
+/*
+  Create fast lookup tables for dithering
+*/
+static void
+X24_createColorTables(xi)
+struct xinfo *xi;
+{
+  int i, j, idx;
+  int redmul, grnmul;
+
+  grnmul = sizeof (blus);
+  redmul = sizeof (blus) * sizeof (grns);
+
+  xi->xi_ccredtbl = (unsigned char *)malloc(64 * 256);
+  xi->xi_ccgrntbl = (unsigned char *)malloc(64 * 256);
+  xi->xi_ccblutbl = (unsigned char *)malloc(64 * 256);
+
+  for (i = 0; i < 256; i++) {
+    int redval, grnval, bluval;
+    int redtbl, grntbl, blutbl;
+    int reditbl, grnitbl, bluitbl;
+
+    idx = i / (256 / (sizeof (reds) - 1));
+    reditbl = redtbl = idx * redmul;
+    if (idx < (sizeof (reds) - 1))
+      reditbl += redmul;
+    redval = reds[idx];
+			
+    idx = i / (256 / (sizeof (grns) - 1));
+    grnitbl = grntbl = idx * grnmul;
+    if (idx < (sizeof (grns) - 1))
+      grnitbl += grnmul;
+    grnval = grns[idx];
+			
+    idx = i / (256 / (sizeof (blus) - 1));
+    bluitbl = blutbl = idx;
+    if (idx < (sizeof (blus) - 1))
+      bluitbl++;
+    bluval = blus[idx];
+			
+    for (j = 0; j < 64; j++) {
+      if (i - redval > (256 / (sizeof (reds) - 1)) *
+	  dmsk883[128+j])
+	xi->xi_ccredtbl[(i << 6) + j] = reditbl;
+      else
+	xi->xi_ccredtbl[(i << 6) + j] = redtbl;
+
+      if (i - grnval > (256 / (sizeof (grns) - 1)) *
+	  dmsk883[64+j])
+	xi->xi_ccgrntbl[(i << 6) + j] = grnitbl;
+      else
+	xi->xi_ccgrntbl[(i << 6) + j] = grntbl;
+
+      if (i - bluval > (256 / (sizeof (blus) - 1)) *
+	  dmsk883[j])
+	xi->xi_ccblutbl[(i << 6) + j] = bluitbl;
+      else
+	xi->xi_ccblutbl[(i << 6) + j] = blutbl;
+    }
+  }
+}
 
 static
 xsetup(ifp, width, height)
@@ -1570,96 +1698,19 @@ printf("xsetup(ifp:0x%x, width:%d, height:%d) entered\n", ifp, width, height);
 
 	case FLG_VP8:
 	{
-		unsigned long pixels[256], pmask[1], pixel[1];
-		int	i, j, idx;
-		int	redmul, grnmul;
-		XColor	colors[256];
-
 		xi->xi_cmap = XCreateColormap(xi->xi_dpy, RootWindow(xi->xi_dpy,
 			xi->xi_screen), xi->xi_visual, AllocNone);
 
-		/*
-		 * Colorcube is in RGB order
-		 */
 		xi->xi_ncolors = sizeof (reds) * sizeof (blus) * sizeof (grns);
 		xi->xi_base = 255 - xi->xi_ncolors;
-		grnmul = sizeof (blus);
-		redmul = sizeof (blus) * sizeof (grns);
 
-
-		XAllocColorCells(xi->xi_dpy, xi->xi_cmap, 1, pmask, 0, pixels,
-			xi->xi_base + xi->xi_ncolors);
-
-		for (pixel[0] = 0; pixel[0] < xi->xi_base; pixel[0]++) {
-			XFreeColors(xi->xi_dpy, xi->xi_cmap, pixel, 1, 0);
-		}
-
-		/* Fill the colormap and the colorcube */
-
-		for (i = 0; i < xi->xi_ncolors; i++) {
-
-			colors[i].red = reds[i / redmul] << 8;
-			colors[i].green = grns[(i % redmul) / grnmul] << 8;
-			colors[i].blue = blus[i % grnmul] << 8;
-			colors[i].flags = DoRed | DoGreen | DoBlue;
-			colors[i].pixel = xi->xi_base + i;
-		}
-
-		XStoreColors(xi->xi_dpy, xi->xi_cmap, colors, xi->xi_ncolors);
+		/* Create color cube */
+		X24_createColorCube(xi);
 
 		/* Create fast lookup tables for dithering */
-
-		xi->xi_ccredtbl = (unsigned char *)malloc(64 * 256);
-		xi->xi_ccgrntbl = (unsigned char *)malloc(64 * 256);
-		xi->xi_ccblutbl = (unsigned char *)malloc(64 * 256);
-
-		for (i = 0; i < 256; i++)
-		{
-			int redval, grnval, bluval;
-			int redtbl, grntbl, blutbl;
-			int reditbl, grnitbl, bluitbl;
-
-			idx = i / (256 / (sizeof (reds) - 1));
-			reditbl = redtbl = idx * redmul;
-			if (idx < (sizeof (reds) - 1))
-				reditbl += redmul;
-			redval = reds[idx];
-			
-			idx = i / (256 / (sizeof (grns) - 1));
-			grnitbl = grntbl = idx * grnmul;
-			if (idx < (sizeof (grns) - 1))
-				grnitbl += grnmul;
-			grnval = grns[idx];
-			
-			idx = i / (256 / (sizeof (blus) - 1));
-			bluitbl = blutbl = idx;
-			if (idx < (sizeof (blus) - 1))
-				bluitbl++;
-			bluval = blus[idx];
-			
-			for (j = 0; j < 64; j++) {
-				if (i - redval > (256 / (sizeof (reds) - 1)) *
-				    dmsk883[128+j])
-					xi->xi_ccredtbl[(i << 6) + j] = reditbl;
-				else
-					xi->xi_ccredtbl[(i << 6) + j] = redtbl;
-
-				if (i - grnval > (256 / (sizeof (grns) - 1)) *
-				    dmsk883[64+j])
-					xi->xi_ccgrntbl[(i << 6) + j] = grnitbl;
-				else
-					xi->xi_ccgrntbl[(i << 6) + j] = grntbl;
-
-				if (i - bluval > (256 / (sizeof (blus) - 1)) *
-				    dmsk883[j])
-					xi->xi_ccblutbl[(i << 6) + j] = bluitbl;
-				else
-					xi->xi_ccblutbl[(i << 6) + j] = blutbl;
-			}
-		}
+		X24_createColorTables(xi);
 
 		/* Do white/black pixels */
-
 		xi->xi_bp = xi->xi_base;
 		xi->xi_wp = xi->xi_base + xi->xi_ncolors - 1;
 
