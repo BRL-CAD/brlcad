@@ -93,6 +93,7 @@ static int wdb_region_tcl();
 static int wdb_comb_tcl();
 static int wdb_find_tcl();
 static int wdb_which_tcl();
+static int wdb_title_tcl();
 
 static void wdb_deleteProc();
 static void wdb_deleteProc_rt();
@@ -137,6 +138,7 @@ static struct bu_cmdtab wdb_cmds[] = {
 	"find",		wdb_find_tcl,
 	"whichair",	wdb_which_tcl,
 	"whichid",	wdb_which_tcl,
+	"title",	wdb_title_tcl,
 #if 0
 	"cat",		wdb_cat_tcl,
 	"color",	wdb_color_tcl,
@@ -148,20 +150,19 @@ static struct bu_cmdtab wdb_cmds[] = {
 	"inside",	wdb_inside_tcl,
 	"keep",		wdb_keep_tcl,
 	"pathlist",	wdb_pathlist_tcl,
-	"push",		wdb_push_tcl,
 	"getmat",	wdb_getmat_tcl,
 	"putmat",	wdb_putmat_tcl,
 	"summary",	wdb_summary_tcl,
-	"title",	wdb_title_tcl,
 	"tree",		wdb_tree_tcl,
 	"units",	wdb_units_tcl,
 	"whatid",	wdb_whatid_tcl,
 	"which_shader",	wdb_which_shader_tcl,
-	"xpush",	wdb_xpush_tcl,
 	"rcodes",	wdb_rcodes_tcl,
 	"wcodes",	wdb_wcodes_tcl,
 	"rmater",	wdb_rmater_tcl,
 	"wmater",	wdb_wmater_tcl,
+	"push",		wdb_push_tcl,
+	"xpush",	wdb_xpush_tcl,
 #endif
 	"close",	wdb_close_tcl,
 	(char *)0,	(int (*)())0
@@ -2805,6 +2806,55 @@ wdb_which_tcl(clientData, interp, argc, argv)
 	}
 
 	return TCL_OK;
+}
+
+/*
+ * Change or return the database title.
+ *
+ * Usage:
+ *        procname title [description]
+ */
+static int
+wdb_title_tcl(clientData, interp, argc, argv)
+     ClientData clientData;
+     Tcl_Interp *interp;
+     int     argc;
+     char    **argv;
+{
+	struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
+	struct bu_vls	title;
+	int bad = 0;
+
+	if (wdbp->dbip->dbi_read_only) {
+		Tcl_AppendResult(interp, "Database is read-only!\n", (char *)NULL);
+		return TCL_ERROR;
+	}
+
+	if (argc < 2 || MAXARGS < argc) {
+		struct bu_vls vls;
+
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "helplib wdb_title");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
+
+	if (argc < 3) {
+		Tcl_AppendResult(interp, wdbp->dbip->dbi_title, "\n", (char *)NULL);
+		return TCL_OK;
+	}
+
+	bu_vls_init(&title);
+	bu_vls_from_argv(&title, argc-2, argv+2);
+
+	if (db_ident(wdbp->dbip, bu_vls_addr(&title), wdbp->dbip->dbi_localunit) < 0) {
+		Tcl_AppendResult(interp, "Error: unable to change database title\n");
+		bad = 1;
+	}
+
+	bu_vls_free(&title);
+	return bad ? TCL_ERROR : TCL_OK;
 }
 
 #if 0
