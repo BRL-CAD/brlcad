@@ -202,8 +202,8 @@ BUILT_SOURCES = \
 	rtrange_vers.c \
 	rtray_vers.c \
 	rtweight_vers.c \
-	rtxray_vers.c
-	vers.c \
+	rtxray_vers.c \
+	vers.c
 
 
 rt_bot_faces_vers.c: $(rt_bot_faces_SOURCES)
