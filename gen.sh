@@ -196,6 +196,8 @@ BDIRS="bench \
 	canon \
 	dhrystone"
 
+TDIRS="libtcl libtk tcl tmged"
+
 # If there is no TCP networking, eliminate network-only directories.
 if test "${HAS_TCP}" = "0"
 then
@@ -256,6 +258,8 @@ help)
 	echo '	mkdir		NFS: create binary dirs'
 	echo '	relink		NFS: relink Cakefile'
 	echo '	rmdir		NFS: remove binary dirs'
+	echo '  tcl		compile experimental TCL dirs'
+	echo '  install-tcl	install experimental TCL dirs and mged-tcl'
 	;;
 
 benchmark)
@@ -374,9 +378,31 @@ wc)
 	rm -f /tmp/cad-lines
 	;;
 
+tcl)
+	for dir in ${TDIRS}; do
+		echo -------------------------------- ${DIRPRE}${dir}${DIRSUF};
+		( cd ${DIRPRE}${dir}${DIRSUF}; cake -k )
+	done;;
+
+install-tcl)
+	for dir in ${TDIRS}; do
+		echo -------------------------------- ${DIRPRE}${dir}${DIRSUF};
+		( cd ${DIRPRE}${dir}${DIRSUF}; cake -k install )
+	done;;
+
 shell)
 	for dir in ${BDIRS}; do
 		( cd ${dir}; echo ${dir}; /bin/sh )
+	done;;
+
+checkin)
+	rcs -l ${TOP_FILES}
+	rcs -u ${TOP_FILES}
+	for dir in ${ADIRS} ${BDIRS}; do
+		echo -------------------------------- $dir;
+		(cd $dir; \
+		rcs -l *.[cshf1-9] Cakefile; \
+		rcs -u *.[cshf1-9] Cakefile )
 	done;;
 
 checkin)
@@ -394,6 +420,7 @@ checkin)
 
 #
 # Steps in creating a distribution:
+#	"make rcs-lock"	to make sure everything is checked in already
 #	"make checkin"	to mark the RCS archives
 #	"make install"	to install released binaries, copy over source tree.
 #			(or "make inst-dist" for trial attempts)
