@@ -199,9 +199,9 @@ register struct region *regp;
 		if( regp->reg_regionid <= mp->mt_high &&
 		    regp->reg_regionid >= mp->mt_low ) {
 		    	regp->reg_mater.ma_override = 1;
-		    	regp->reg_mater.ma_rgb[0] = mp->mt_r;
-		    	regp->reg_mater.ma_rgb[1] = mp->mt_g;
-		    	regp->reg_mater.ma_rgb[2] = mp->mt_b;
+		    	regp->reg_mater.ma_color[0] = mp->mt_r/255.;
+		    	regp->reg_mater.ma_color[1] = mp->mt_g/255.;
+		    	regp->reg_mater.ma_color[2] = mp->mt_b/255.;
 			return;
 		}
 	}
