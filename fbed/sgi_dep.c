@@ -17,7 +17,7 @@ char sccsTag[] = "@(#) sgi_dep.c 2.3, modified 1/5/87 at 16:57:35, archive /vld/
 
 #include "conf.h"
 
-#if defined(sgi) || defined(__sgi)
+#if HAS_SGIGL
 
 #include <stdio.h>
 #include <device.h>

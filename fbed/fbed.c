@@ -357,7 +357,7 @@ char *argv[];
 	(void) fb_flush( fbp );
 	prnt_Prompt( "" );
 	for( cread_buf[0] = NUL; ; )
-		{	register int button_press;
+		{
 			register int status_change = false;
 		for( ; *cptr != NUL; )
 			{
@@ -390,7 +390,7 @@ char *argv[];
 				}
 			}
 		if(   !	reposition_cursor
-		    &&	(button_press = get_Mouse_Pos( &cursor_pos ))
+		    &&	(get_Mouse_Pos( &cursor_pos ))
 		    	!= -1
 			)
 			status_change = true;
@@ -2131,7 +2131,7 @@ init_Tty()
 	clr_Tabs( tty_fd );
 	clr_Echo( tty_fd );
 	clr_CRNL( tty_fd );
-#if defined(sgi) || defined(__sgi)
+#if HAS_SGIGL
 	if( isSGI )
 		sgi_Init();
 #endif
@@ -2385,7 +2385,7 @@ Point *pointp;
 	if( pad_flag )
 		return do_Bitpad( pointp );
 	else
-#if defined(sgi) || defined(__sgi)
+#if HAS_SGIGL
 	if( isSGI )
 		return sgi_Mouse_Pos( &cursor_pos );
 	else
