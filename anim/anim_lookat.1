@@ -1,12 +1,18 @@
 .TH ANIM_LOOKAT 1 BRL/CAD
 .SH NAME
-anim_lookat - create a view animation script which looks from an eye point to 
+anim_lookat - create a view animation script or table which looks from an eye point to 
 a specified point.
 .SH SYNOPSIS
 .B anim_lookat 
-.B [-f #] 
+.B [\-f #]
 .B < in.table 
 .B > out.script
+.PP
+.B anim_lookat 
+.B \-y 
+.B < in.table 
+.B > out.table
+
 .SH DESCRIPTION
 This program takes as input a seven-column animation table
 consisting of time, an eye point, and a "look-at point", and prints a
@@ -25,6 +31,13 @@ The
 .B \-f#
 option is used to specify an integer with which to begin
 numbering frames. The default is 0.
+.PP
+The
+.B \-y
+option specifies that the output should be an animation table rather
+than an animation script. The output table has 7 columns: a time column, three
+columns representing position, and three columns representing yaw,
+pitch, and roll.
 .SH BUGS
 Looking straight up or straight down for two or more frames in a
 row may cause errors.
