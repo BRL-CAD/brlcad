@@ -1,7 +1,7 @@
 /*
  *				C M D . C
  *
- * This is the place where BWISH's commands live.
+ * This is the place where BWISH/BTCLSH's commands live.
  * The history routines were borrowed from mged/history.c
  * and modified for use in this application.
  *
@@ -70,7 +70,7 @@ int
 cmdInit(interp)
      Tcl_Interp *interp;
 {
-	/* Register bwish commands */
+	/* Register bwish/btclsh commands */
 	bu_register_cmds(interp, bwish_cmds);
 
 #ifdef BWISH
@@ -83,7 +83,7 @@ cmdInit(interp)
 	return TCL_OK;
 }
 
-/***************************** BWISH COMMANDS *****************************/
+/***************************** BWISH/BTCLSH COMMANDS *****************************/
 
 HIDDEN int
 cmd_quit(clientData, interp, argc, argv)
@@ -92,12 +92,12 @@ cmd_quit(clientData, interp, argc, argv)
      int argc;
      char **argv;
 {
-	Cad_Exit(interp, 0);
+	Cad_Exit(TCL_OK);
 	/* NOTREACHED */
 	return TCL_OK;
 }
 
-/***************************** BWISH COMMAND HISTORY *****************************/
+/***************************** BWISH/BTCLSH COMMAND HISTORY *****************************/
 
 HIDDEN void
 historyInit()
