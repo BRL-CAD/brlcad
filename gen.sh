@@ -445,11 +445,10 @@ arch)
 	rm -f ${EXCLUDE}
 	echo 'papers/*' >> ${EXCLUDE}
 	echo 'vfont/*' >> ${EXCLUDE}
-	echo 'dmdfb/*' >> ${EXCLUDE}
 	echo 'contributed/*' >> ${EXCLUDE}
 	echo 'html/*' >> ${EXCLUDE}
 	echo 'pix/*' >> ${EXCLUDE}
-	/usr/gnu/bin/tar cfv - Copy* README doc papers dmdfb \
+	/usr/gnu/bin/tar cfv - Copy* README doc papers \
 	/usr/gnu/bin/tar cfv - Copy* README doc html papers \
 	    zzzEND |\
 		compress | crypt ${KEY} > ${FTP_ARCHIVE}-a.Z
