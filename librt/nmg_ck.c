@@ -230,6 +230,13 @@ long	*up_magic_p;
 	nmg_ck_list_magic( hp, "nmg_veu() edegeuse list head", NMG_EDGEUSE_MAGIC );
 
 	up_magic = *up_magic_p;
+	switch( up_magic )  {
+	case NMG_SHELL_MAGIC:
+	case NMG_LOOPUSE_MAGIC:
+		break;
+	default:
+		rt_bomb("nmg_veu() bad up_magic_p\n");
+	}
 	for( RT_LIST_FOR( eu, edgeuse, hp ) )  {
 		NMG_CK_EDGEUSE(eu);
 
@@ -256,27 +263,47 @@ long	*up_magic_p;
 		}
 
 		/*
-		 *  Ensure that vertices are shared.
+		 *  For edgeuses in loops, ensure that vertices are shared.
 		 *  This does not apply to wire edgeuses in the shell.
 		 */
-		if ( up_magic != NMG_SHELL_MAGIC &&
+		if ( up_magic == NMG_LOOPUSE_MAGIC &&
 		     eu->vu_p->v_p != eulast->eumate_p->vu_p->v_p) {
+		     	rt_log("eu=x%x, e=x%x\n", eu, eu->e_p );
+		     	rt_log("eulast=x%x, e=x%x\n", eulast, eulast->e_p);
+		     	rt_log("	    eu: (%g, %g, %g) <--> (%g, %g, %g)\n",
+		     		V3ARGS(eu->vu_p->v_p->vg_p->coord),
+		     		V3ARGS(eu->eumate_p->vu_p->v_p->vg_p->coord) );
+		     	rt_log("	eulast: (%g, %g, %g) <--> (%g, %g, %g)\n",
+		     		V3ARGS(eulast->vu_p->v_p->vg_p->coord),
+		     		V3ARGS(eulast->eumate_p->vu_p->v_p->vg_p->coord) );
 			rt_log("unshared vertex (mine) v=x%x: (%g, %g, %g)\n",
 				eu->vu_p->v_p,
 				V3ARGS(eu->vu_p->v_p->vg_p->coord) );
 			rt_log("\t\t (last->eumate_p) v=x%x: (%g, %g, %g)\n",
 				eulast->eumate_p->vu_p->v_p,
 				V3ARGS(eulast->eumate_p->vu_p->v_p->vg_p->coord) );
+		     	nmg_pr_lu_briefly(eu->up.lu_p, (char *)NULL);
+		     	nmg_pr_lu_briefly(eu->up.lu_p->lumate_p, (char *)NULL);
 			rt_bomb("nmg_veu() discontinuous edgeloop mine/last\n");
 		}
-		if ( up_magic != NMG_SHELL_MAGIC &&
+		if ( up_magic == NMG_LOOPUSE_MAGIC &&
 		     eunext->vu_p->v_p != eu->eumate_p->vu_p->v_p) {
+		     	rt_log("eu=x%x, e=x%x\n", eu, eu->e_p );
+		     	rt_log("eunext=x%x, e=x%x\n", eunext, eunext->e_p);
+		     	rt_log("	    eu: (%g, %g, %g) <--> (%g, %g, %g)\n",
+		     		V3ARGS(eu->vu_p->v_p->vg_p->coord),
+		     		V3ARGS(eu->eumate_p->vu_p->v_p->vg_p->coord) );
+		     	rt_log("	eunext: (%g, %g, %g) <--> (%g, %g, %g)\n",
+		     		V3ARGS(eunext->vu_p->v_p->vg_p->coord),
+		     		V3ARGS(eunext->eumate_p->vu_p->v_p->vg_p->coord) );
 			rt_log("unshared vertex (mate) v=x%x: (%g, %g, %g)\n",
 				eu->eumate_p->vu_p->v_p,
 				V3ARGS(eu->eumate_p->vu_p->v_p->vg_p->coord) );
 			rt_log("\t\t (next) v=x%x: (%g, %g, %g)\n",
 				eunext->vu_p->v_p,
 				V3ARGS(eunext->vu_p->v_p->vg_p->coord) );
+		     	nmg_pr_lu_briefly(eu->up.lu_p, (char *)NULL);
+		     	nmg_pr_lu_briefly(eu->up.lu_p->lumate_p, (char *)NULL);
 			rt_bomb("nmg_veu() discontinuous edgeloop next/mate\n");
 		}
 
