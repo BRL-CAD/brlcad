@@ -489,6 +489,14 @@ polydbld()	/* Build Polydata record */
 		}
 	}
 
+	/* Remove trash from unused entries */
+	for( i = record.q.q_count; i < 5; i++ )  {
+		for( j=0; j < 3; j++ )  {
+			record.q.q_verts[i][j] = 0;
+			record.q.q_norms[i][j] = 0;
+		}
+	}
+
 #ifdef never
 	int temp1;
 
