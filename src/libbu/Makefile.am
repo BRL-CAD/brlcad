@@ -73,11 +73,13 @@ EXTRA_DIST = \
 	libbu.ncb \
 	libbu.opt
 
-DISTCLEANFILES = version
-
 AM_CFLAGS = -DPREFIX=\"$(prefix)\"
 
 BUILT_SOURCES = vers.c
 
 vers.c: $(SRCS)
 	@SH@ $(top_srcdir)/sh/vers.sh bu_version "The BRL-CAD Utility Library" > $@
+
+CLEANFILES = $(BUILT_SOURCES)
+DISTCLEANFILES = version
+MAINTAINERCLEANFILES = Makefile.in

@@ -2,6 +2,8 @@
 
 bin_PROGRAMS = iges-g g-iges
 
+man_MANS = g-iges.1 iges-g.1
+
 noinst_HEADERS = \
 	iges.h \
 	iges_extern.h \
@@ -88,17 +90,15 @@ g_iges_srcs = g-iges.c iges.c
 g_iges_SOURCES = $(g_iges_srcs) g-iges-vers.c
 g_iges_LDADD = ${LIBRT}
 
+BUILT_SOURCES = \
+	iges-g-vers.c \
+	g-iges-vers.c
+
 iges-g-vers.c: $(iges_g_srcs) Makefile.am
 	sh $(top_srcdir)/sh/vers.sh version "IGES-to-BRLCAD Translator" > $@
 
 g-iges-vers.c: $(g_iges_srcs) Makefile.am
 	sh $(top_srcdir)/sh/vers.sh version "BRLCAD-to-IGES Translator" > $@
-
-BUILT_SOURCES = \
-	iges-g-vers.c \
-	g-iges-vers.c
-
-man_MANS = g-iges.1 iges-g.1
 
 EXTRA_DIST = \
 	$(man_MANS) \
@@ -111,4 +111,6 @@ EXTRA_DIST = \
 	wing128.igs \
 	woodie.igs
 
+CLEANFILES = $(BUILT_SOURCES)
 DISTCLEANFILES = version
+MAINTAINERCLEANFILES = Makefile.in

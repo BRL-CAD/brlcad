@@ -2,6 +2,8 @@
 
 lib_LTLIBRARIES = libbn.la
 
+man_MANS = libplot3.3
+
 SRCS = \
 	anim.c \
 	asize.c \
@@ -42,8 +44,6 @@ libbn_la_LIBADD = \
 	${TCL} \
 	${LIBM}
 
-man_MANS = libplot3.3
-
 EXTRA_DIST = \
 	$(man_MANS) \
 	htester.c \
@@ -53,9 +53,11 @@ EXTRA_DIST = \
 	libbn.opt \
 	plot3.doc
 
-DISTCLEANFILES = version
-
 BUILT_SOURCES = vers.c
 
 vers.c: $(SRCS)
 	@SH@ $(top_srcdir)/sh/vers.sh bn_version "The BRL-CAD Numerical Computation Library" > $@
+
+CLEANFILES = $(BUILT_SOURCES)
+DISTCLEANFILES = version
+MAINTAINERCLEANFILES = Makefile.in

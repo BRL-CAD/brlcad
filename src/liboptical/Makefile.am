@@ -64,9 +64,10 @@ EXTRA_DIST = \
 	liboptical.opt
 
 BUILT_SOURCES = vers.c
+
 vers.c: $(SRCS)
 	@SH@ $(top_srcdir)/sh/vers.sh liboptical_version "The BRL-CAD Optical Shader Library" > $@
 
+CLEANFILES = $(BUILT_SOURCES)
 DISTCLEANFILES = version
-
 MAINTAINERCLEANFILES = Makefile.in

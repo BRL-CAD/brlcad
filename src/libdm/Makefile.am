@@ -39,7 +39,10 @@ libdm_la_LIBADD = ${TCL} ${TK} ${LIBRT} ${LIBPNG} ${X_LIBS}
 AM_CFLAGS = ${X_CFLAGS}
 
 BUILT_SOURCES = vers.c
+
 vers.c: $(SRCS)
 	@SH@ $(top_srcdir)/sh/vers.sh dm_version "The BRL-CAD Display Manager Library" > $@
 
+CLEANFILES = $(BUILT_SOURCES)
 DISTCLEANFILES = version
+MAINTAINERCLEANFILES = Makefile.in

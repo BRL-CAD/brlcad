@@ -18,6 +18,7 @@ man_MANS = \
 	rttherm.1 \
 	ssamp-bw.1
 
+BUILT_SOURCES = vers.c
 vers.c: $(ALLSRCS)
 	@SH@ $(top_srcdir)/sh/vers.sh version "Thermal Multi-Spectral RT" > $@
 
@@ -46,16 +47,12 @@ ssamp_bw_SOURCES = \
 #	pixtest.c \
 #	spectrum.c
 
-BUILT_SOURCES = vers.c
-
 EXTRA_DIST = \
 	$(BUILT_SOURCES) \
 	$(man_MANS) \
 	std_day_1km.dat \
 	test.sh
 
-DISTCLEANFILES = \
-	$(BUILT_SOURCES) \
-	version
-
+CLEANFILES = $(BUILT_SOURCES)
+DISTCLEANFILES = version
 MAINTAINERCLEANFILES = Makefile.in

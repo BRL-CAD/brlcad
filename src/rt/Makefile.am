@@ -236,16 +236,25 @@ man_MANS = \
 
 BUILT_SOURCES = \
 	rt_bot_faces_vers.c \
+	rt_simple_vers.c \
+	rtarea_vers.c \
+	rtcell_vers.c \
 	rtcheck_vers.c \
 	rtedge_vers.c \
+	rtfrac_vers.c \
 	rtg3_vers.c \
 	rthide_vers.c \
 	rtpp_vers.c \
+	rtrad_vers.c \
 	rtrange_vers.c \
 	rtray_vers.c \
+	rtsil_vers.c \
 	rtweight_vers.c \
 	rtxray_vers.c \
 	vers.c
+
+vers.c: $(ALLSRCS)
+	@SH@ $(top_srcdir)/sh/vers.sh version "The BRL-CAD Raytracer RT" > $@
 
 noinst_LIBRARIES = \
 	libremrt.a \
@@ -264,9 +273,6 @@ libremrt_a_SOURCES = \
 sample_applicationsdir=$(SAMPLE_APPLICATIONS_DIR)
 sample_applications_DATA = rtexample.c
 
-vers.c: $(ALLSRCS)
-	@SH@ $(top_srcdir)/sh/vers.sh version "The BRL-CAD Raytracer RT" > $@
-
 EXTRA_DIST = \
 	$(ALLSRCS) \
 	$(man_MANS) \
@@ -275,6 +281,6 @@ EXTRA_DIST = \
 	rt.ncb \
 	rt.opt
 
+CLEANFILES = $(BUILT_SOURCES)
 DISTCLEANFILES = version
-
 MAINTAINERCLEANFILES = Makefile.in

@@ -25,6 +25,6 @@ BUILT_SOURCES = vers.c
 vers.c:
 	@SH@ $(top_srcdir)/sh/vers.sh libsysv_version "BRL-CAD System V Compatibility Library" > $@
 
+CLEANFILES = $(BUILT_SOURCES)
 DISTCLEANFILES = version
-
 MAINTAINERCLEANFILES = Makefile.in

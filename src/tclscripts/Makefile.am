@@ -45,5 +45,4 @@ tclIndex:
 EXTRA_DIST = $(scripties)
 
 CLEANFILES = $(BUILT_SOURCES)
-
 MAINTAINERCLEANFILES = Makefile.in

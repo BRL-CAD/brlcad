@@ -76,6 +76,6 @@ BUILT_SOURCES = vers.c
 vers.c: $(SRCS)
 	@SH@ $(top_srcdir)/sh/vers.sh fb_version "The BRL-CAD Framebuffer Library" > $@
 
+CLEANFILES = $(BUILT_SOURCES)
 DISTCLEANFILES = version
-
 MAINTAINERCLEANFILES = Makefile.in

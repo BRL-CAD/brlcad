@@ -44,6 +44,6 @@ BUILT_SOURCES = vers.c
 vers.c: $(SRCS)
 	@SH@ $(top_srcdir)/sh/vers.sh > $@
 
+CLEANFILES = $(BUILT_SOURCES)
 DISTCLEANFILES = version
-
 MAINTAINERCLEANFILES = Makefile.in

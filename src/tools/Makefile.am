@@ -186,4 +186,5 @@ EXTRA_DIST = \
 	rleaddeof.c \
 	rleskel.c
 
+DISTCLEANFILES = font.c
 MAINTAINERCLEANFILES = Makefile.in

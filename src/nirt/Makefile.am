@@ -40,9 +40,10 @@ EXTRA_DIST = \
 	nirt.ncb \
 	nirt.opt
 
+BUILT_SOURCES = vers.c
 vers.c: $(nirt_srcs) Makefile.am
 	sh $(top_srcdir)/sh/vers.sh version "Natalie's Interactive Ray Tracer" > $@
 
+CLEANFILES = vers.c
 DISTCLEANFILES = version
-
 MAINTAINERCLEANFILES = Makefile.in

@@ -194,9 +194,10 @@ EXTRA_DIST = \
 	vshoot.c
 
 BUILT_SOURCES = vers.c
+
 vers.c: $(SRCS)
 	@SH@ $(top_srcdir)/sh/vers.sh rt_version "The BRL-CAD Ray-Tracing Library" > $@
 
+CLEANFILES = $(BUILT_SOURCES)
 DISTCLEANFILES = version
-
 MAINTAINERCLEANFILES = Makefile.in

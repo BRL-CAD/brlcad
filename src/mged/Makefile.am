@@ -145,6 +145,6 @@ EXTRA_DIST = \
 	mged.ncb \
 	mged.opt
 
+CLEANFILES = $(BUILT_SOURCES)
 DISTCLEANFILES = version
-
 MAINTAINERCLEANFILES = Makefile.in
