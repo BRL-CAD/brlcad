@@ -47,6 +47,7 @@ void	f_edcomb(), f_status(), f_rot();
 void	f_refresh(), f_fix(), f_rt();
 void	f_make(), f_attach(), f_release();
 void	f_tedit(), f_memprint();
+void	f_mirface();
 
 static struct funtab {
 	char *ft_name;
@@ -73,6 +74,7 @@ static struct funtab {
 	"g",f_group,3,20,"g groupname <objects> (group objects)",
 	"p",f_param,2,4,"p dx [dy dz] (set parameters)",
 	"mirror",f_mirror,4,4,"mirror oldsolid newsolid axis",
+	"mirface",f_mirface,3,3,"mirface #### axis (mirror an ARB face)",
 	"extrude",f_extrude,3,3,"extrude #### distance (extrude dist from face)",
 	"rm",f_delmem,3,20,"rm comb <members> (remove members from comb)",
 	"arb",f_arbdef,4,4,"arb name rot fb (make arb8, rotation + fallback)",

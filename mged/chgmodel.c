@@ -392,6 +392,9 @@ f_extrude()
 	}
 	/* get distance to project face */
 	dist = atof( cmd_args[2] );
+	/* apply es_mat[15] to get to real model space */
+	dist *= es_mat[15];
+
 	newedge = 1;
 
 	/* convert to point notation in temporary buffer */
@@ -557,6 +560,13 @@ top:
 			    strcmp( cmd_args[i], record.M.m_brname ) != 0 )
 				continue;
 			printf("deleting member %s\n", cmd_args[i] );
+
+			/* If deleting last member, just truncate */
+			if( rec == dp->d_len-1 ) {
+				db_trunc(dp, 1);
+				continue;
+			}
+
 			db_getrec( dp, &record, dp->d_len-1 );	/* last one */
 			db_putrec( dp, &record, rec );		/* xch */
 			db_trunc( dp, 1 );
@@ -681,6 +691,182 @@ f_edcomb()
 	db_putrec( dp, &record, 0 );
 	(void)printf("done\n");
 }
+
+/* Mirface command - mirror an arb face */
+/* Format: mirror face axis	*/
+void
+f_mirface()
+{
+	register int i, j, k;
+	static int face;
+	static int pt[4];
+	static int prod;
+	static float dist;
+	static vect_t work;
+	static struct solidrec lsolid;	/* local copy of solid */
+
+	if( state != ST_S_EDIT )  {
+		state_err( "Mirface" );
+		return;
+	}
+	if( es_gentype != GENARB8 )  {
+		(void)printf("Mirface: solid type must be ARB\n");
+		return;
+	}
+	face = atoi( cmd_args[1] );
+	if( face < 1000 || face > 9999 ) {
+		(void)printf("ERROR: face must be 4 points\n");
+		return;
+	}
+	/* check which axis */
+	k = -1;
+	if( strcmp( cmd_args[2], "x" ) == 0 )
+		k = 0;
+	if( strcmp( cmd_args[2], "y" ) == 0 )
+		k = 1;
+	if( strcmp( cmd_args[2], "z" ) == 0 )
+		k = 2;
+	if( k < 0 ) {
+		(void)printf("axis must be x, y or z\n");
+		return;
+	}
+
+	work[0] = work[1] = work[2] = 1.0;
+	work[k] = -1.0;
+
+	/* convert to point notation in temporary buffer */
+	VMOVE( &lsolid.s_values[0], &es_rec.s.s_values[0] );
+	for( i = 3; i <= 21; i += 3 )  {  
+		VADD2(&lsolid.s_values[i], &es_rec.s.s_values[i], &lsolid.s_values[0]);
+	}
+
+	pt[0] = face / 1000;
+	i = face - (pt[0]*1000);
+	pt[1] = i / 100;
+	i = i - (pt[1]*100);
+	pt[2] = i / 10;
+	pt[3] = i - (pt[2]*10);
+
+	/* user can input face in any order - will use product of
+	 * face points to distinguish faces:
+	 *    product       face
+	 *       24         1234
+	 *     1680         5678
+	 *      252         2367
+	 *      160         1548
+	 *      672         4378
+	 *       60         1256
+	 */
+	prod = 1;
+	for( i = 0; i <= 3; i++ )  {
+		prod *= pt[i];
+		--pt[i];
+		if( pt[i] > 7 )  {
+			(void)printf("bad face: %d\n",face);
+			return;
+		}
+	}
+
+	/* mirror the selected face */
+	switch( prod )  {
+
+	case 24:   /* mirror face 1234 */
+		for( i = 0; i < 4; i++ )  {
+			j = i + 4;
+			VELMUL( &lsolid.s_values[j*3],
+				&lsolid.s_values[i*3],
+				work);
+		}
+		break;
+
+	case 1680:   /* mirror face 5678 */
+		for( i = 0; i < 4; i++ )  {
+			j = i + 4;
+			VELMUL( &lsolid.s_values[i*3],
+				&lsolid.s_values[j*3],
+				work );
+		}
+		break;
+
+	case 60:   /* mirror face 1256 */
+		VELMUL( &lsolid.s_values[9],
+			&lsolid.s_values[0],
+			work );
+		VELMUL( &lsolid.s_values[6],
+			&lsolid.s_values[3],
+			work );
+		VELMUL( &lsolid.s_values[21],
+			&lsolid.s_values[12],
+			work );
+		VELMUL( &lsolid.s_values[18],
+			&lsolid.s_values[15],
+			work );
+		break;
+
+	case 672:   /* mirror face 4378 */
+		VELMUL( &lsolid.s_values[0],
+			&lsolid.s_values[9],
+			work );
+		VELMUL( &lsolid.s_values[3],
+			&lsolid.s_values[6],
+			work );
+		VELMUL( &lsolid.s_values[15],
+			&lsolid.s_values[18],
+			work );
+		VELMUL( &lsolid.s_values[12],
+			&lsolid.s_values[21],
+			work );
+		break;
+
+	case 252:   /* mirror face 2367 */
+		VELMUL( &lsolid.s_values[0],
+			&lsolid.s_values[3],
+			work );
+		VELMUL( &lsolid.s_values[9],
+			&lsolid.s_values[6],
+			work );
+		VELMUL( &lsolid.s_values[12],
+			&lsolid.s_values[15],
+			work );
+		VELMUL( &lsolid.s_values[21],
+			&lsolid.s_values[18],
+			work );
+		break;
+
+	case 160:   /* mirror face 1548 */
+		VELMUL( &lsolid.s_values[3],
+			&lsolid.s_values[0],
+			work );
+		VELMUL( &lsolid.s_values[15],
+			&lsolid.s_values[12],
+			work );
+		VELMUL( &lsolid.s_values[6],
+			&lsolid.s_values[9],
+			work );
+		VELMUL( &lsolid.s_values[18],
+			&lsolid.s_values[21],
+			work );
+		break;
+
+	default:
+		(void)printf("bad face: %d\n", face );
+		return;
+	}
+
+	/* Convert back to point&vector notation */
+	VMOVE( &es_rec.s.s_values[0], &lsolid.s_values[0] );
+	for( i = 3; i <= 21; i += 3 )  {  
+		VSUB2( &es_rec.s.s_values[i], &lsolid.s_values[i], &lsolid.s_values[0]);
+	}
+
+	/* draw the new solid */
+	illump = redraw( illump, &es_rec );
+
+	/* Update display information */
+	pr_solid( &es_rec.s );
+	dmaflag = 1;
+}
+
 
 /* tell him it already exists */
 static void
