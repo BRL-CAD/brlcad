@@ -95,7 +95,7 @@ char	**argv;
 	 */
 	VSUB2( dir, pt, eye_model );
 	VUNITIZE( dir );
-	mat_lookat( Viewrotscale, dir, yflip );
+	bn_mat_lookat( Viewrotscale, dir, yflip );
 	return(0);
 }
 
@@ -297,10 +297,10 @@ char	**argv;
 #endif
 		ret = rt_do_cmd( NULL, buf, rt_cmdtab );
 		if( ret < 0 )  {
-			rt_log("Command failure on '%s'\n", buf);
-			rt_free( buf, "cmd buf" );
+			bu_log("Command failure on '%s'\n", buf);
+			bu_free( buf, "cmd buf" );
 			break;
 		}
-		rt_free( buf, "cmd buf" );
+		bu_free( buf, "cmd buf" );
 	}
 }

@@ -32,7 +32,7 @@ static char RCSid[] = "$Id$";
 #include "./tokens.h"
 
 struct  frame {
-	struct rt_list	l;
+	struct bu_list	l;
 
 	int	number;
 	long	flags;
@@ -46,7 +46,7 @@ struct  frame {
 #define FLAG_CLEAN	0x1
 #define FLAG_SCRIPT	0x2
 
-struct rt_list head = {MAGIC, &head, &head};
+struct bu_list head = {MAGIC, &head, &head};
 struct frame globals;
 
 extern int optind;
@@ -79,12 +79,12 @@ char *tp;
 	}
 	if (length > fp->tl) {
 		fp->tl = (length/1024)*1024 + 1024;
-		p = (char *) rt_malloc(fp->tl, "text area");
+		p = (char *) bu_malloc(fp->tl, "text area");
 		*p = '\0';
 
 		if (fp->text) {
 			strcpy(p,fp->text);
-			rt_free(fp->text,"text area");
+			bu_free(fp->text,"text area");
 		}
 		fp->text = p;
 	}
@@ -131,9 +131,9 @@ FILE *in;
 /*
  * get a frame and set it up.
  */
-	new = (struct frame *) rt_calloc(1, sizeof(struct frame), "struct frame");
-	RT_LIST_INIT(&(new->l));
-	RT_LIST_MAGIC_SET(&(new->l),MAGIC);
+	new = (struct frame *) bu_calloc(1, sizeof(struct frame), "struct frame");
+	BU_LIST_INIT(&(new->l));
+	BU_LIST_MAGIC_SET(&(new->l),MAGIC);
 	new->number = atoi(yytext);
 	new->number += frame_offset;
 /*
@@ -142,7 +142,7 @@ FILE *in;
 	token = yylex();
 	if (!token) {
 		new->l.magic = -1;
-		rt_free(new,"struct frame");
+		bu_free(new,"struct frame");
 		return NULL;
 	}
 
@@ -209,8 +209,8 @@ bubblesort()
 	while (a->l.forw != &head ) {
 		b = (struct frame *)a->l.forw;
 		if (a->number > b->number) {
-			RT_LIST_DEQUEUE(&b->l);
-			RT_LIST_INSERT(&a->l,&b->l);
+			BU_LIST_DEQUEUE(&b->l);
+			BU_LIST_INSERT(&a->l,&b->l);
 			if (b->l.back != &head) {
 				a = (struct frame *)b->l.back;
 			};
@@ -238,18 +238,18 @@ void merge()
 {
 	register struct frame *cur, *next;
 
-	for (RT_LIST_FOR(cur, frame, &head)) {
-		next = RT_LIST_NEXT(frame,&cur->l);
-		if (RT_LIST_IS_HEAD(next, &head)) break;
+	for (BU_LIST_FOR(cur, frame, &head)) {
+		next = BU_LIST_NEXT(frame,&cur->l);
+		if (BU_LIST_IS_HEAD(next, &head)) break;
 		if (cur->number == next->number) {
 			if (next->text) addtext(cur, next->text);
 			cur->flags |= next->flags;
-			RT_LIST_DEQUEUE(&next->l);
-			if (next->text) rt_free(next->text,"text area");
+			BU_LIST_DEQUEUE(&next->l);
+			if (next->text) bu_free(next->text,"text area");
 			next->text = NULL;
 			next->l.magic = -1;
-			rt_free(next, "struct frame");
-			cur = RT_LIST_PREV(frame,&cur->l);
+			bu_free(next, "struct frame");
+			cur = BU_LIST_PREV(frame,&cur->l);
 		}
 	}
 }
@@ -270,7 +270,7 @@ char **argv;
 	}
 	if (verbose) fprintf(stderr,"scriptsort: starting.\n");
 
-	RT_LIST_INIT(&head);
+	BU_LIST_INIT(&head);
 	globals.text=NULL;
 	globals.tp=globals.tl=0;
 	globals.flags=globals.location=globals.length = 0;
@@ -279,7 +279,7 @@ char **argv;
 	if (verbose) fprintf(stderr,"scriptsort: reading.\n");
 
 	while((new=getframe(stdin)) != NULL) {
-		RT_LIST_INSERT(&head,&new->l);
+		BU_LIST_INSERT(&head,&new->l);
 	}
 	if (verbose) fprintf(stderr,"scriptsort: sorting.\n");
 	bubblesort();
@@ -296,7 +296,7 @@ char **argv;
 		/*compute base as largest power of 2 less than num of frames*/
 		base = 1;
 		count = 2;
-		for ( RT_LIST_FOR( lp, frame, &head ) ) {
+		for ( BU_LIST_FOR( lp, frame, &head ) ) {
 			if (count-- <= 0) {
 				base *= 2;
 				count = base - 1;

@@ -97,7 +97,7 @@ char	*file;
 		fprintf(stderr,"tabsub:  %s is empty\n", file );
 		exit(1);
 	}
-	prototype = rt_malloc( sb.st_size+4, "prototype document");
+	prototype = bu_malloc( sb.st_size+4, "prototype document");
 	if( read( fd, prototype, sb.st_size ) != sb.st_size )  {
 		perror(file);
 		exit(2);
@@ -258,8 +258,8 @@ int	nwords;
 
 		/* Expects rotations rx, ry, rz, in degrees */
 		if( nwords < 4 )  return(-1);
-		mat_idn( mat );
-		mat_angles( mat, 
+		bn_mat_idn( mat );
+		bn_mat_angles( mat, 
 		    atof( words[1] ),
 		    atof( words[2] ),
 		    atof( words[3] ) );
@@ -271,7 +271,7 @@ int	nwords;
 
 		if( nwords < 4 )  return(-1);
 		/* Expects translations tx, ty, tz */
-		mat_idn( mat );
+		bn_mat_idn( mat );
 		MAT_DELTAS( mat, 
 		    atof( words[1] ),
 		    atof( words[2] ),
@@ -292,16 +292,16 @@ int	nwords;
 
 		if( nwords < 7 )  return(-1);
 
-		mat_idn( mat1 );
-		mat_idn( mat2 );
-		mat_idn( mat3 );
+		bn_mat_idn( mat1 );
+		bn_mat_idn( mat2 );
+		bn_mat_idn( mat3 );
 
 		MAT_DELTAS( mat1, 
 		    -atof( words[1] ),
 		    -atof( words[2] ),
 		    -atof( words[3] ) );
 
-		mat_angles( mat2, 
+		bn_mat_angles( mat2, 
 		    atof( words[4] ),
 		    atof( words[5] ),
 		    atof( words[6] ) );
@@ -311,8 +311,8 @@ int	nwords;
 		    atof( words[2] ),
 		    atof( words[3] ) );
 
-		mat_mul( mat, mat2, mat1 );
-		mat_mul2( mat3, mat );
+		bn_mat_mul( mat, mat2, mat1 );
+		bn_mat_mul2( mat3, mat );
 
 		out_mat( mat, stdout );
 		return(0);
@@ -331,8 +331,8 @@ int	nwords;
 		args[7] = 1.0;	/* optional */
 		for( i=1; i<nwords; i++ )
 			args[i] = atof( words[i] );
-		mat_idn( mat );
-		mat_angles( mat, args[4], args[5], args[6] );
+		bn_mat_idn( mat );
+		bn_mat_angles( mat, args[4], args[5], args[6] );
 		MAT_DELTAS( mat, args[1], args[2], args[3] );
 		if( args[7] > -1e-17 && args[7] < 1e-17 )  {
 			/* Nearly zero, signal error */
@@ -356,9 +356,9 @@ int	nwords;
 			twist = 0.0;
 		else
 			twist = atof(words[3]);
-		mat_idn( mat );
+		bn_mat_idn( mat );
 		/* XXX does not take twist, for now XXX */
-		mat_ae( mat, az, el );
+		bn_mat_ae( mat, az, el );
 		out_mat( mat, stdout );
 		return(0);
 	}
@@ -375,7 +375,7 @@ int	nwords;
 		ang = atof(words[7]) * bn_degtorad;
 		VSUB2( dir, pt2, pt2 );
 		VUNITIZE(dir);
-		mat_idn( mat );
+		bn_mat_idn( mat );
 		bn_mat_arb_rot( mat, pt1, dir, ang );
 		out_mat( mat, stdout );
 		return(0);
@@ -392,7 +392,7 @@ int	nwords;
 		VSET( dir, atof(words[4]), atof(words[5]), atof(words[6]) );
 		ang = atof(words[7]) * bn_degtorad;
 		VUNITIZE(dir);
-		mat_idn( mat );
+		bn_mat_idn( mat );
 		bn_mat_arb_rot( mat, pt1, dir, ang );
 		out_mat( mat, stdout );
 		return(0);
@@ -439,14 +439,14 @@ int	nwords;
 		VSET( next, atof(words[5]), atof(words[6]), atof(words[7]) );
 		VSUB2( to, next, cur );
 		VUNITIZE(to);
-		mat_fromto( mat, from, to );
+		bn_mat_fromto( mat, from, to );
 		/* Check to see if it worked. */
 		{
 			vect_t	got;
 
 			MAT4X3VEC( got, mat, from );
 			if( VDOT( got, to ) < 0.9 )  {
-				rt_log("\ntabsub ERROR: At t=%s, mat_fromto failed!\n", chanwords[0] );
+				bu_log("\ntabsub ERROR: At t=%s, bn_mat_fromto failed!\n", chanwords[0] );
 				VPRINT("\tfrom", from);
 				VPRINT("\tto", to);
 				VPRINT("\tgot", got);

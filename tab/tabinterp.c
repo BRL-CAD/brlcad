@@ -142,19 +142,19 @@ char	**argv;
 	 * the maximum number of columns that a 'file' command can list.
 	 */
 	while( (buf = rt_read_cmd( stdin )) != (char *)0 )  {
-		if(verbose) rt_log("cmd: %s\n", buf );
+		if(verbose) bu_log("cmd: %s\n", buf );
 		ret = rt_do_cmd( 0, buf, cmdtab );
-		rt_free( buf, "cmd buf" );
+		bu_free( buf, "cmd buf" );
 		if( ret < 0 )  {
-			if(verbose) rt_log("aborting\n");
+			if(verbose) bu_log("aborting\n");
 			exit(1);
 		}
 	}
 
-	if(verbose) rt_log("performing interpolations\n");
+	if(verbose) bu_log("performing interpolations\n");
 	go();
 
-	if(verbose) rt_log("writing output\n");
+	if(verbose) bu_log("writing output\n");
 	output();
 
 	exit(0);	
@@ -172,15 +172,15 @@ char	**argv;
 
 	if( argc <= 1 )
 	{
-		rt_log("The following commands are available:\n\n");
+		bu_log("The following commands are available:\n\n");
 		for( ctp = cmdtab; ctp->ct_cmd != (char *)0; ctp++ )  {
-			rt_log("%s %s\n\t%s\n",
+			bu_log("%s %s\n\t%s\n",
 				ctp->ct_cmd, ctp->ct_parms,
 				ctp->ct_comment );
 		}
 		return 0;
 	}
-	rt_log("Detailed help is not yet available.\n");
+	bu_log("Detailed help is not yet available.\n");
 	return -1;
 }
 
@@ -204,7 +204,7 @@ char	**argv;
 	fastf_t	*times;
 	auto double	d;
 	int	errors = 0;
-	struct rt_vls	buf;	/* unlimited size input line buffer */
+	struct bu_vls	buf;	/* unlimited size input line buffer */
 
 	file = argv[1];
 	if( (fp = fopen( file, "r" )) == NULL )  {
@@ -226,13 +226,13 @@ char	**argv;
 
 	/* Intermediate dynamic memory */
 
-	cnum = (int *)rt_malloc( argc * sizeof(int), "cnum[]");
+	cnum = (int *)bu_malloc( argc * sizeof(int), "cnum[]");
 	nwords = argc - 1;
-	iwords = (char **)rt_malloc( (nwords+1) * sizeof(char *), "iwords[]" );
-	rt_vls_init(&buf);
+	iwords = (char **)bu_malloc( (nwords+1) * sizeof(char *), "iwords[]" );
+	bu_vls_init(&buf);
 
 	/* Retained dynamic memory */
-	times = (fastf_t *)rt_malloc( nlines * sizeof(fastf_t), "times");
+	times = (fastf_t *)bu_malloc( nlines * sizeof(fastf_t), "times");
 
 	/* Now, create & allocate memory for each chan */
 	for( i = 1; i < nwords; i++ )  {
@@ -254,9 +254,9 @@ char	**argv;
 	for( line=0; line < nlines; line++ )  {
 		register char *bp;
 
-		rt_vls_trunc( &buf, 0 );
-		if( rt_vls_gets( &buf, fp ) == -1 )  break;
-		bp = rt_vls_addr(&buf);
+		bu_vls_trunc( &buf, 0 );
+		if( bu_vls_gets( &buf, fp ) == -1 )  break;
+		bp = bu_vls_addr(&buf);
 
 		if( bp[0] == '#' )  {
 			line--;
@@ -271,7 +271,7 @@ char	**argv;
 		i = rt_split_cmd( iwords, nwords+1, bp );
 
 		if( i != nwords )  {
-			rt_log("File '%s', Line %d:  expected %d columns, got %d\n",
+			bu_log("File '%s', Line %d:  expected %d columns, got %d\n",
 				file, line, nwords, i );
 			while( i < nwords )  {
 				iwords[i++] = "0.123456789";
@@ -283,7 +283,7 @@ char	**argv;
 		sscanf( iwords[0], "%lf", &d );
 		times[line] = d;
 		if( line > 0 && times[line-1] > times[line] )  {
-			rt_log("File '%s', Line %d:  time sequence error %g > %g\n",
+			bu_log("File '%s', Line %d:  time sequence error %g > %g\n",
 		    		file, line, times[line-1], times[line] );
 			errors++;
 		}
@@ -294,7 +294,7 @@ char	**argv;
 		for( i=1; i < nwords; i++ )  {
 			if( cnum[i] < 0 )  continue;
 			if( sscanf( iwords[i], "%lf", &d ) != 1 )  {
-				rt_log("File '%s', Line %d:  scanf failure on '%s'\n",
+				bu_log("File '%s', Line %d:  scanf failure on '%s'\n",
 			    		file, line, iwords[i] );
 				d = 0.0;
 				errors++;
@@ -306,9 +306,9 @@ char	**argv;
 
 	/* Free intermediate dynamic memory */
 out:
-	rt_free( (char *)cnum, "cnum[]");
-	rt_free( (char *)iwords, "iwords[]");
-	rt_vls_free(&buf);
+	bu_free( (char *)cnum, "cnum[]");
+	bu_free( (char *)iwords, "iwords[]");
+	bu_vls_free(&buf);
 
 	if(errors)
 		return(-1);	/* abort */
@@ -334,13 +334,13 @@ char	*itag;
 
 		if( max_chans <= 0 )  {
 			max_chans = 32;
-			chan = (struct chan *)rt_calloc( 1, 
+			chan = (struct chan *)bu_calloc( 1, 
 				max_chans * sizeof(struct chan),
 				"chan[]" );
 		} else {
 			while( n >= max_chans )
 				max_chans *= 2;
-			if(verbose) rt_log("reallocating from %d to %d chans\n",
+			if(verbose) bu_log("reallocating from %d to %d chans\n",
 				prev, max_chans);
 			chan = (struct chan *)rt_realloc( (char *)chan,
 				max_chans * sizeof(struct chan),
@@ -352,17 +352,17 @@ char	*itag;
 	/* Allocate and clear channels */
 	while( nchans <= n )  {
 		if( chan[nchans].c_ilen > 0 ) {
-			rt_log("create_chan: internal error\n");
+			bu_log("create_chan: internal error\n");
 			return -1;
 		} else {
 			bzero( (char *)&chan[nchans++], sizeof(struct chan) );
 		}
 	}
 
-	if(verbose) rt_log("chan %d:  %s\n", n, itag );
+	if(verbose) bu_log("chan %d:  %s\n", n, itag );
 	chan[n].c_ilen = len;
-	chan[n].c_itag = rt_strdup( itag );
-	chan[n].c_ival = (fastf_t *)rt_malloc( len * sizeof(fastf_t), "c_ival");
+	chan[n].c_itag = bu_strdup( itag );
+	chan[n].c_ival = (fastf_t *)bu_malloc( len * sizeof(fastf_t), "c_ival");
 	return(n);
 }
 
@@ -403,15 +403,15 @@ register int		ch;
 	register int		i;
 
 	if( ch < 0 || ch >= nchans )  {
-		rt_log("pr_ichan(%d) out of range\n", ch );
+		bu_log("pr_ichan(%d) out of range\n", ch );
 		return;
 	}
 	cp = &chan[ch];
 	if( cp->c_itag == (char *)0 )  cp->c_itag = "_no_file_";
-	rt_log("--- Channel %d, ilen=%d (%s):\n",
+	bu_log("--- Channel %d, ilen=%d (%s):\n",
 		ch, cp->c_ilen, cp->c_itag );
 	for( i=0; i < cp->c_ilen; i++ )  {
-		rt_log(" %g\t%g\n", cp->c_itime[i], cp->c_ival[i]);
+		bu_log(" %g\t%g\n", cp->c_itime[i], cp->c_ival[i]);
 	}
 }
 
@@ -426,7 +426,7 @@ output()
 	register int		t;
 
 	if( !o_time )  {
-		rt_log("times command not given, aborting\n");
+		bu_log("times command not given, aborting\n");
 		return;
 	}
 
@@ -460,16 +460,16 @@ char	**argv;
 	fps = atoi(argv[3]);
 
 	if( a >= b )  {
-		rt_log("times:  %g >= %g\n", a, b );
+		bu_log("times:  %g >= %g\n", a, b );
 		return(0);
 	}
 	if( o_len > 0 )  {
-		rt_log("times:  already specified\n");
+		bu_log("times:  already specified\n");
 		return(0);	/* ignore */
 	}
 	o_len = ((b-a) * fps) + 0.999;
 	o_len++;	/* one final step to reach endpoint */
-	o_time = (fastf_t *)rt_malloc( o_len * sizeof(fastf_t), "o_time[]");
+	o_time = (fastf_t *)bu_malloc( o_len * sizeof(fastf_t), "o_time[]");
 
 	/*
 	 *  Don't use an incremental algorithm, to avoid acrueing error
@@ -516,7 +516,7 @@ char	**argv;
 		interp = INTERP_QUAT;
 		periodic = 0;
 	} else {
-		rt_log("interpolation type '%s' unknown\n", argv[1] );
+		bu_log("interpolation type '%s' unknown\n", argv[1] );
 		interp = INTERP_LINEAR;
 	}
 
@@ -555,11 +555,11 @@ go()
 	register int	t;
 
 	if( !o_time )  {
-		rt_log("times command not given\n");
+		bu_log("times command not given\n");
 		return;
 	}
 
-	times = (fastf_t *)rt_malloc( o_len*sizeof(fastf_t), "periodic times");
+	times = (fastf_t *)bu_malloc( o_len*sizeof(fastf_t), "periodic times");
 
 	/* First, get memory for all output channels */
 	for( ch=0; ch < nchans; ch++ )  {
@@ -568,7 +568,7 @@ go()
 			continue;
 
 		/* Allocate memory for all the output values */
-		chan[ch].c_oval = (fastf_t *)rt_malloc(
+		chan[ch].c_oval = (fastf_t *)bu_malloc(
 			o_len * sizeof(fastf_t), "c_oval[]");
 	}
 
@@ -606,7 +606,7 @@ go()
 again:
 		switch( chp->c_interp )  {
 		default:
-			rt_log("channel %d: unknown interpolation type %d\n", ch, chp->c_interp);
+			bu_log("channel %d: unknown interpolation type %d\n", ch, chp->c_interp);
 			break;
 		case INTERP_LINEAR:
 			linear_interpolate( chp, times );
@@ -616,7 +616,7 @@ again:
 			break;
 		case INTERP_SPLINE:
 			if( spline( chp, times ) <= 0 )  {
-				rt_log("spline failure, switching to linear\n");
+				bu_log("spline failure, switching to linear\n");
 				chp->c_interp = INTERP_LINEAR;
 				goto again;
 			}
@@ -645,7 +645,7 @@ again:
 		next_interpolate( chp );
 	}
 
-	rt_free( (char *)times, "loc times");
+	bu_free( (char *)times, "loc times");
 }
 
 /*
@@ -735,7 +735,7 @@ register fastf_t	*times;
 	register int	i;		/* input time index */
 
 	if( chp->c_ilen < 2 )  {
-		rt_log("lienar_interpolate:  need at least 2 points\n");
+		bu_log("lienar_interpolate:  need at least 2 points\n");
 		return;
 	}
 
@@ -786,7 +786,7 @@ register fastf_t	*times;
 	register double	rate;
 
 	if( chp->c_ilen != 2 )  {
-		rt_log("rate_interpolate:  only 2 points (ival & rate) may be specified\n");
+		bu_log("rate_interpolate:  only 2 points (ival & rate) may be specified\n");
 		return;
 	}
 	ival = chp->c_ival[0];
@@ -812,7 +812,7 @@ register fastf_t	*times;
 	register double scale;
 
 	if( chp->c_ilen != 2 )  {
-		rt_log("accel_interpolate:  only 2 points (ival & mul) may be specified\n");
+		bu_log("accel_interpolate:  only 2 points (ival & mul) may be specified\n");
 		return;
 	}
 	ival = chp->c_ival[0];
@@ -860,7 +860,7 @@ fastf_t			*times;
 	register int	t;
 
 	if(chp->c_ilen<3) {
-		rt_log("spline(%s): need at least 3 points\n", chp->c_itag);
+		bu_log("spline(%s): need at least 3 points\n", chp->c_itag);
 		goto bad;
 	}
 
@@ -871,15 +871,15 @@ fastf_t			*times;
 		linear_interpolate( chp, times );
 
 	if( chp->c_periodic && chp->c_ival[0] != chp->c_ival[chp->c_ilen-1] )  {
-		rt_log("spline(%s): endpoints don't match, replacing final data value\n", chp->c_itag);
+		bu_log("spline(%s): endpoints don't match, replacing final data value\n", chp->c_itag);
 		chp->c_ival[chp->c_ilen-1] = chp->c_ival[0];
 	}
 
 	i = (chp->c_ilen+1)*sizeof(double);
-	diag = (double *)rt_malloc((unsigned)i, "diag");
-	rrr = (double *)rt_malloc((unsigned)i, "rrr");
+	diag = (double *)bu_malloc((unsigned)i, "diag");
+	rrr = (double *)bu_malloc((unsigned)i, "rrr");
 	if( !rrr || !diag )  {
-		rt_log("spline: malloc failure\n");
+		bu_log("spline: malloc failure\n");
 		goto bad;
 	}
 
@@ -896,7 +896,7 @@ fastf_t			*times;
 			chp->c_itime[1] - chp->c_itime[0] :
 			chp->c_itime[i+1] - chp->c_itime[i];
 		if(hi1*hi<=0) {
-			rt_log(
+			bu_log(
 			    "spline: Horiz. interval changed sign at i=%d, time=%g\n",
 			    i, chp->c_itime[i]);
 			goto bad;
@@ -977,12 +977,12 @@ fastf_t			*times;
 			chp->c_oval[t] = yy;
 		}
 	}
-	rt_free( (char *)diag, "diag");
-	rt_free( (char *)rrr, "rrr" );
+	bu_free( (char *)diag, "diag");
+	bu_free( (char *)rrr, "rrr" );
 	return(1);
 bad:
-	if(diag) rt_free( (char *)diag, "diag");
-	if(rrr) rt_free( (char *)rrr, "rrr" );
+	if(diag) bu_free( (char *)diag, "diag");
+	if(rrr) bu_free( (char *)rrr, "rrr" );
 	return(0);
 }
 
@@ -1005,7 +1005,7 @@ char	**argv;
 	chp = &chan[ch];
 	chp->c_interp = INTERP_RATE;
 	chp->c_periodic = 0;
-	chp->c_itime = (fastf_t *)rt_malloc( nvals * sizeof(fastf_t), "rate times");
+	chp->c_itime = (fastf_t *)bu_malloc( nvals * sizeof(fastf_t), "rate times");
 	chp->c_itime[0] = chp->c_itime[1] = 0;
 	chp->c_ival[0] = atof(argv[2]);
 	chp->c_ival[1] = atof(argv[3]);
@@ -1031,7 +1031,7 @@ char	**argv;
 	chp = &chan[ch];
 	chp->c_interp = INTERP_ACCEL;
 	chp->c_periodic = 0;
-	chp->c_itime = (fastf_t *)rt_malloc( nvals * sizeof(fastf_t), "accel times");
+	chp->c_itime = (fastf_t *)bu_malloc( nvals * sizeof(fastf_t), "accel times");
 	chp->c_itime[0] = chp->c_itime[1] = 0;
 	chp->c_ival[0] = atof(argv[2]);
 	chp->c_ival[1] = atof(argv[3]);
@@ -1190,17 +1190,17 @@ char	*argv[];
 	if( argc > 3 )  offset = atoi(argv[3]);
 	/* If input channel not loaded, or not interpolated, error */
 	if( chan[ichan].c_ilen <= 0 || chan[ichan].c_interp <= 0 )  {
-		rt_log("ERROR next: ichan %d not loaded yet\n");
+		bu_log("ERROR next: ichan %d not loaded yet\n");
 		return 0;
 	}
 	/* If output channel is loaded, error */
 	if( chan[ochan].c_ilen > 0 )  {
-		rt_log("ERROR next: ochan %d previous loaded\n");
+		bu_log("ERROR next: ochan %d previous loaded\n");
 		return 0;
 	}
 	sprintf(buf, "next: value of chan %d [%d]", ichan, offset);
 	if( create_chan( argv[1], chan[ichan].c_ilen, buf ) < 0 )  {
-		rt_log("ERROR next: uanble to create output channel\n");
+		bu_log("ERROR next: uanble to create output channel\n");
 		return 0;
 	}
 	/* c_ilen, c_itag, c_ival are now initialized */
@@ -1225,11 +1225,11 @@ int	ch;
 {
 	if( ch < 0 || ch >= nchans )  return -1;
 	if( chan[ch].c_ilen <= 0 )  {
-		rt_log("error: attempt to set interpolation type on unallocated channel %d\n", ch);
+		bu_log("error: attempt to set interpolation type on unallocated channel %d\n", ch);
 		return 1;
 	}
 	if( chan[ch].c_interp > 0 )  {
-		rt_log("error: attempt to modify channel %d which already has interpolation type set\n", ch);
+		bu_log("error: attempt to modify channel %d which already has interpolation type set\n", ch);
 		return 1;
 	}
 	return 0;
