@@ -186,6 +186,12 @@ struct nmg_ray_state {
 #define NMG_RAYSTATE_MAGIC	0x54322345
 #define NMG_CK_RAYSTATE(_p)	NMG_CKMAG(_p, NMG_RAYSTATE_MAGIC, "nmg_ray_state")
 
+struct loop_cuts {
+	struct loopuse *lu;
+	struct vertexuse *vu1;
+	struct vertexuse *vu2;
+};
+
 /*
  *			P T B L _ V S O R T
  *
@@ -2229,7 +2235,7 @@ out:
 	}
 }
 
-static int
+static struct nmg_ptbl *
 find_loop_to_cut( index1, index2, prior_start, prior_end, next_start, next_end, mid_pt, rs )
 int *index1,*index2;
 int prior_start, prior_end;
@@ -2242,8 +2248,10 @@ struct nmg_ray_state *rs;
 	struct loopuse *match_lu=(struct loopuse *)NULL;
 	struct loopuse *prior_lu,*next_lu;
 	struct vertexuse *prior_vu, *next_vu;
+	struct nmg_ptbl *cuts=(struct nmg_ptbl *)NULL;
+	struct loop_cuts *lcut;
 	int count=0;
-	int i,j;
+	int i,j,k;
 	int done=0;
 
 	if(rt_g.NMG_debug&DEBUG_FCUT)
@@ -2251,6 +2259,7 @@ struct nmg_ray_state *rs;
 			prior_start, prior_end, next_start, next_end, rs );
 
 	NMG_CK_RAYSTATE(rs);
+
 	/* check if any coincident VU's can give us a loop to cut */
 	while( !done )
 	{
@@ -2259,6 +2268,11 @@ struct nmg_ray_state *rs;
 		if( count > 100 )
 		{
 			rt_log( "find_loop_to_cut: infinite loop\n" );
+			rt_log( "prior_start = %d, prior_end = %d, next_start = %d next_nd = %d\n",
+				prior_start, prior_end, next_start, next_end );
+			rt_log( "mid_point = ( %f %f %f )\n", V3ARGS( mid_pt ) );
+			for( i=0 ; i<rs->nvu ; i++ )
+				rt_log( "\t%d x%x\n", i, rs->vu[i] );
 			rt_bomb( "find_loop_to_cut: infinite loop" );
 		}
 		for( i=prior_start ; i < prior_end ; i++ )
@@ -2277,6 +2291,11 @@ struct nmg_ray_state *rs;
 					if( !match_lu )
 					{
 						match_lu = next_lu;
+						cuts = (struct nmg_ptbl *)rt_malloc( sizeof( struct nmg_ptbl ), "cuts" );
+						nmg_tbl( cuts, TBL_INIT, (long *)NULL );
+						lcut = (struct loop_cuts *)rt_malloc( sizeof( struct loop_cuts ), "lcut" );
+						lcut->lu = match_lu;
+						nmg_tbl( cuts, TBL_INS, (long *)lcut );
 						continue;
 					}
 
@@ -2297,39 +2316,64 @@ struct nmg_ray_state *rs;
 					}
 					class_lu = nmg_classify_lu_lu( next_lu, match_lu, rs->tol );
 
-					if( class_lu == class_pt )
+					if( class_lu == class_pt ||
+						class_lu == NMG_CLASS_AonBshared )
 					{
+						int found=0;
+
 						match_lu = next_lu;
-						done = 0;
+						for( k=0 ; k<NMG_TBL_END( cuts ) ; k++ )
+						{
+							lcut = (struct loop_cuts *)NMG_TBL_GET( cuts , k );
+							if( lcut->lu == match_lu )
+							{
+								found = 1;
+								break;
+							}
+						}
+						if( !found )
+						{
+							done = 0;
+							lcut = (struct loop_cuts *)rt_malloc( sizeof( struct loop_cuts ), "lcut" );
+							lcut->lu = match_lu;
+							nmg_tbl( cuts, TBL_INS, (long *)lcut );
+						}
 					}
 				}
 			}
 		}
 	}
 
-	if( match_lu )
+	if( cuts )
 	{
-		if(rt_g.NMG_debug&DEBUG_FCUT)
-			rt_log( "\tfind_loop_to_cut: matching lu's = x%x\n", match_lu );
-		lu1 = match_lu;
-		for( i=prior_start ; i < prior_end ; i++ )
+		for( k=0 ; k<NMG_TBL_END( cuts ) ; k++ )
 		{
-			if( nmg_find_lu_of_vu( rs->vu[i] ) == lu1 )
-			{
-				*index1 = i;
-				vu1 = rs->vu[i];
-				break;
-			}
-		}
-		lu2 = match_lu;
-		for( i=next_start ; i < next_end ; i++ )
-		{
-			if( nmg_find_lu_of_vu( rs->vu[i] ) == lu2 )
-			{
-				*index2 = i;
-				vu2 = rs->vu[i];
-				break;
+			lcut = (struct loop_cuts *)NMG_TBL_GET( cuts, k );
+			match_lu = lcut->lu;
 
+			if(rt_g.NMG_debug&DEBUG_FCUT)
+				rt_log( "\tfind_loop_to_cut: matching lu's = x%x\n", match_lu );
+			lu1 = match_lu;
+			for( i=prior_start ; i < prior_end ; i++ )
+			{
+				if( nmg_find_lu_of_vu( rs->vu[i] ) == lu1 )
+				{
+					*index1 = i;
+					vu1 = rs->vu[i];
+					lcut->vu1 = vu1;
+					break;
+				}
+			}
+			lu2 = match_lu;
+			for( i=next_start ; i < next_end ; i++ )
+			{
+				if( nmg_find_lu_of_vu( rs->vu[i] ) == lu2 )
+				{
+					*index2 = i;
+					vu2 = rs->vu[i];
+					lcut->vu2 = vu2;
+					break;
+				}
 			}
 		}
 	}
@@ -2337,171 +2381,184 @@ struct nmg_ray_state *rs;
 	{
 		if(rt_g.NMG_debug&DEBUG_FCUT)
 			rt_log( "\tfind_loop_to_cut returning 0\n" );
-		return( 0 );
+		return( (struct nmg_ptbl *)NULL );
 	}
 
-	/* Check if there is more than one VU from lu2 */
-	count = 0;
-	for( i=next_start ; i<next_end ; i++ )
+	for( k=0 ; k<NMG_TBL_END( cuts ) ; k++ )
 	{
-		if( nmg_find_lu_of_vu( rs->vu[i] ) == lu2 )
-			count++;
-	}
+		lcut = (struct loop_cuts *)NMG_TBL_GET( cuts, k );
+		lu1 = lcut->lu;
+		lu2 = lu1;
 
-	if( count > 1 )
-	{
-		struct vertexuse *vu_best;
-		fastf_t vu_angle;
-		vect_t x_dir,y_dir;
-		vect_t norm;
-
-		if(rt_g.NMG_debug&DEBUG_FCUT)
-			rt_log( "\tfind_loop_to_cut: %d VU's from lu x%x\n", count, lu2 );
-
-		/* need to select correct VU */
-		vu_angle = (-rt_pi);
-		vu_best = (struct vertexuse *)NULL;
-
-		VSUB2( x_dir, vu2->v_p->vg_p->coord, vu1->v_p->vg_p->coord );
-		VUNITIZE( x_dir );
-		NMG_GET_FU_NORMAL( norm, rs->fu1 );
-
-		VCROSS( y_dir, norm, x_dir );
-		VUNITIZE( y_dir );
-
-		if(rt_g.NMG_debug&DEBUG_FCUT)
-			rt_log( "\tx_dir=(%g %g %g), y_dir=(%g %g %g)\n",
-				V3ARGS( x_dir ), V3ARGS( y_dir ) );
-
+		/* Check if there is more than one VU from lu2 */
+		count = 0;
 		for( i=next_start ; i<next_end ; i++ )
 		{
-			struct edgeuse *eu;
-			fastf_t angle;
-			vect_t eu_dir;
-
-
-			if( nmg_find_lu_of_vu( rs->vu[i] ) != lu2 )
-				continue;
-
-			if( *(rs->vu[i]->up.magic_p) != NMG_EDGEUSE_MAGIC )
-			{
-				rt_log( "nmg_fcut_face: VU (x%x) is not from an EU\n", rs->vu[i] );
-				rt_bomb( "nmg_fcut_face: VU is not from an EU" );
-			}
-
-			/* calculate angle this EU will make with edgeuse
-			 * that will be created by the cut/join
-			 */
-			eu = rs->vu[i]->up.eu_p;
-			VSUB2( eu_dir, eu->eumate_p->vu_p->v_p->vg_p->coord, eu->vu_p->v_p->vg_p->coord );
-			angle = atan2( VDOT( y_dir,eu_dir ), VDOT( x_dir, eu_dir ) );
-
-			if(rt_g.NMG_debug&DEBUG_FCUT)
-				rt_log( "\tangle for eu x%x (vu=x%x, #%d) is %g\n",
-					eu, rs->vu[i], i, angle );
-
-			/* select max angle */
-			if( angle > vu_angle )
-			{
-				if(rt_g.NMG_debug&DEBUG_FCUT)
-					rt_log( "\t\tabove is the new best VU\n" );
-				vu_angle = angle;
-				vu_best = rs->vu[i];
-				*index2 = i;
-			}
+			if( nmg_find_lu_of_vu( rs->vu[i] ) == lu2 )
+				count++;
 		}
 
-		if( vu_best )
-			vu2 = vu_best;
+		if( count > 1 )
+		{
+			struct vertexuse *vu_best;
+			fastf_t vu_angle;
+			vect_t x_dir,y_dir;
+			vect_t norm;
 
-		if(rt_g.NMG_debug&DEBUG_FCUT)
-			rt_log( "\tfind_loop_to_cut: selecting VU2 x%x\n", vu2 );
-	}
+			if(rt_g.NMG_debug&DEBUG_FCUT)
+				rt_log( "\tfind_loop_to_cut: %d VU's from lu x%x\n", count, lu2 );
 
-	/* Check if there is more than one VU from lu1 */
-	count = 0;
-	for( i=prior_start ; i<prior_end ; i++ )
-	{
-		if( nmg_find_lu_of_vu( rs->vu[i] ) == lu1 )
-			count++;
-	}
+			/* need to select correct VU */
+			vu_angle = (-rt_pi);
+			vu_best = (struct vertexuse *)NULL;
 
-	if( count > 1 )
-	{
-		struct vertexuse *vu_best;
+			VSUB2( x_dir, vu2->v_p->vg_p->coord, vu1->v_p->vg_p->coord );
+			VUNITIZE( x_dir );
+			NMG_GET_FU_NORMAL( norm, rs->fu1 );
 
-		fastf_t vu_angle;
-		vect_t x_dir,y_dir;
-		vect_t norm;
+			VCROSS( y_dir, norm, x_dir );
+			VUNITIZE( y_dir );
 
-		if(rt_g.NMG_debug&DEBUG_FCUT)
-			rt_log( "\tfind_loop_to_cut: %d VU's from lu x%x\n", count, lu1 );
+			if(rt_g.NMG_debug&DEBUG_FCUT)
+				rt_log( "\tx_dir=(%g %g %g), y_dir=(%g %g %g)\n",
+					V3ARGS( x_dir ), V3ARGS( y_dir ) );
 
-		/* need to select correct VU */
-		vu_angle = (-rt_pi);
-		vu_best = (struct vertexuse *)NULL;
+			for( i=next_start ; i<next_end ; i++ )
+			{
+				struct edgeuse *eu;
+				fastf_t angle;
+				vect_t eu_dir;
 
-		VSUB2( x_dir, vu1->v_p->vg_p->coord, vu2->v_p->vg_p->coord );
-		VUNITIZE( x_dir );
-		NMG_GET_FU_NORMAL( norm, rs->fu1 );
 
-		VCROSS( y_dir, norm, x_dir );
-		VUNITIZE( y_dir );
+				if( nmg_find_lu_of_vu( rs->vu[i] ) != lu2 )
+					continue;
 
-		if(rt_g.NMG_debug&DEBUG_FCUT)
-			rt_log( "\tx_dir=(%g %g %g), y_dir=(%g %g %g)\n",
-				V3ARGS( x_dir ), V3ARGS( y_dir ) );
+				if( *(rs->vu[i]->up.magic_p) != NMG_EDGEUSE_MAGIC )
+				{
+					rt_log( "nmg_fcut_face: VU (x%x) is not from an EU\n", rs->vu[i] );
+					rt_bomb( "nmg_fcut_face: VU is not from an EU" );
+				}
 
+				/* calculate angle this EU will make with edgeuse
+				 * that will be created by the cut/join
+				 */
+				eu = rs->vu[i]->up.eu_p;
+				VSUB2( eu_dir, eu->eumate_p->vu_p->v_p->vg_p->coord, eu->vu_p->v_p->vg_p->coord );
+				angle = atan2( VDOT( y_dir,eu_dir ), VDOT( x_dir, eu_dir ) );
+
+				if(rt_g.NMG_debug&DEBUG_FCUT)
+					rt_log( "\tangle for eu x%x (vu=x%x, #%d) is %g\n",
+						eu, rs->vu[i], i, angle );
+
+				/* select max angle */
+				if( angle > vu_angle )
+				{
+					if(rt_g.NMG_debug&DEBUG_FCUT)
+						rt_log( "\t\tabove is the new best VU\n" );
+					vu_angle = angle;
+					vu_best = rs->vu[i];
+					*index2 = i;
+				}
+			}
+
+			if( vu_best )
+			{
+				vu2 = vu_best;
+				lcut->vu2 = vu2;
+			}
+
+			if(rt_g.NMG_debug&DEBUG_FCUT)
+				rt_log( "\tfind_loop_to_cut: selecting VU2 x%x\n", vu2 );
+		}
+
+		/* Check if there is more than one VU from lu1 */
+		count = 0;
 		for( i=prior_start ; i<prior_end ; i++ )
 		{
-			struct edgeuse *eu;
-			fastf_t angle;
-			vect_t eu_dir;
-
-			if( nmg_find_lu_of_vu( rs->vu[i] ) != lu1 )
-				continue;
-
-			if( *(rs->vu[i]->up.magic_p) != NMG_EDGEUSE_MAGIC )
-			{
-				rt_log( "nmg_fcut_face: VU (x%x) is not from an EU\n", rs->vu[i] );
-				rt_bomb( "nmg_fcut_face: VU is not from an EU" );
-			}
-
-			/* calculate angle this EU will make with edgeuse
-			 * that will be created by the cut/join
-			 */
-			eu = rs->vu[i]->up.eu_p;
-			VSUB2( eu_dir, eu->eumate_p->vu_p->v_p->vg_p->coord, eu->vu_p->v_p->vg_p->coord );
-			angle = atan2( VDOT( y_dir,eu_dir ), VDOT( x_dir, eu_dir ) );
-
-			if(rt_g.NMG_debug&DEBUG_FCUT)
-				rt_log( "\tangle for eu x%x (vu=x%x, #%d) is %g\n",
-					eu, rs->vu[i], i, angle );
-
-			/* select max angle */
-			if( angle > vu_angle )
-			{
-				if(rt_g.NMG_debug&DEBUG_FCUT)
-					rt_log( "\t\tabove is the new best VU\n" );
-				vu_angle = angle;
-
-				vu_best = rs->vu[i];
-				*index1 = i;
-			}
+			if( nmg_find_lu_of_vu( rs->vu[i] ) == lu1 )
+				count++;
 		}
 
-		if( vu_best )
-			vu1 = vu_best;
+		if( count > 1 )
+		{
+			struct vertexuse *vu_best;
 
-		if(rt_g.NMG_debug&DEBUG_FCUT)
-			rt_log( "\tfind_loop_to_cut: selecting VU1 x%x\n", vu1 );
+			fastf_t vu_angle;
+			vect_t x_dir,y_dir;
+			vect_t norm;
+
+			if(rt_g.NMG_debug&DEBUG_FCUT)
+				rt_log( "\tfind_loop_to_cut: %d VU's from lu x%x\n", count, lu1 );
+
+			/* need to select correct VU */
+			vu_angle = (-rt_pi);
+			vu_best = (struct vertexuse *)NULL;
+
+			VSUB2( x_dir, vu1->v_p->vg_p->coord, vu2->v_p->vg_p->coord );
+			VUNITIZE( x_dir );
+			NMG_GET_FU_NORMAL( norm, rs->fu1 );
+
+			VCROSS( y_dir, norm, x_dir );
+			VUNITIZE( y_dir );
+
+			if(rt_g.NMG_debug&DEBUG_FCUT)
+				rt_log( "\tx_dir=(%g %g %g), y_dir=(%g %g %g)\n",
+					V3ARGS( x_dir ), V3ARGS( y_dir ) );
+
+			for( i=prior_start ; i<prior_end ; i++ )
+			{
+				struct edgeuse *eu;
+				fastf_t angle;
+				vect_t eu_dir;
+
+				if( nmg_find_lu_of_vu( rs->vu[i] ) != lu1 )
+					continue;
+
+				if( *(rs->vu[i]->up.magic_p) != NMG_EDGEUSE_MAGIC )
+				{
+					rt_log( "nmg_fcut_face: VU (x%x) is not from an EU\n", rs->vu[i] );
+					rt_bomb( "nmg_fcut_face: VU is not from an EU" );
+				}
+
+				/* calculate angle this EU will make with edgeuse
+				 * that will be created by the cut/join
+				 */
+				eu = rs->vu[i]->up.eu_p;
+				VSUB2( eu_dir, eu->eumate_p->vu_p->v_p->vg_p->coord, eu->vu_p->v_p->vg_p->coord );
+				angle = atan2( VDOT( y_dir,eu_dir ), VDOT( x_dir, eu_dir ) );
+
+				if(rt_g.NMG_debug&DEBUG_FCUT)
+					rt_log( "\tangle for eu x%x (vu=x%x, #%d) is %g\n",
+						eu, rs->vu[i], i, angle );
+
+				/* select max angle */
+				if( angle > vu_angle )
+				{
+					if(rt_g.NMG_debug&DEBUG_FCUT)
+						rt_log( "\t\tabove is the new best VU\n" );
+					vu_angle = angle;
+
+					vu_best = rs->vu[i];
+					*index1 = i;
+				}
+			}
+
+			if( vu_best )
+			{
+				vu1 = vu_best;
+				lcut->vu1 = vu1;
+			}
+
+			if(rt_g.NMG_debug&DEBUG_FCUT)
+				rt_log( "\tfind_loop_to_cut: selecting VU1 x%x\n", vu1 );
+		}
 	}
 
 	if(rt_g.NMG_debug&DEBUG_FCUT)
-		rt_log( "\tfind_loop_to_cut: returning 1 (index1=%d, index2=%d)\n",
-				*index1, *index2 );
+		rt_log( "\tfind_loop_to_cut: returning %d cuts (index1=%d, index2=%d)\n",
+				NMG_TBL_END( cuts ), *index1, *index2 );
 
-	return( 1 );
+	return( cuts );
 }
 
 static fastf_t
@@ -2711,7 +2768,9 @@ struct nmg_ray_state *rs;
 	struct edgeuse *new_eu1,*new_eu2;
 	struct edgeuse *old_eu;
 	struct vertex *prev_v;
+	struct nmg_ptbl *cuts;
 	int prior_start;
+	int cut_no;
 
 	NMG_CK_RAYSTATE(rs);
 	RT_CK_TOL(rs->tol);
@@ -2829,8 +2888,9 @@ struct nmg_ray_state *rs;
 		old_eu = nmg_findeu( vu1->v_p, vu2->v_p, (struct shell *)NULL,
 			(struct edgeuse *)NULL, 0);
 
-		if( find_loop_to_cut( &index1, &index2, prior_start, prior_end,
-			next_start, next_end, mid_pt, rs ) )
+		if( (cuts=find_loop_to_cut( &index1, &index2, prior_start, prior_end,
+			next_start, next_end, mid_pt, rs )) == (struct nmg_ptbl *)NULL )
+#if 0
 		{
 			vu1 = rs->vu[index1];
 			vu2 = rs->vu[index2];
@@ -2841,6 +2901,7 @@ struct nmg_ray_state *rs;
 
 		}
 		else
+#endif
 		{
 			index1 = find_best_vu( prior_start, prior_end, vu2->v_p, rs );
 			index2 = find_best_vu( next_start, next_end, vu1->v_p, rs );
@@ -2852,45 +2913,58 @@ struct nmg_ray_state *rs;
 			orient2 = lu2->orientation;
 		}
 
-		if( lu1 == lu2 )
+		if( cuts )
 		{
-			if(rt_g.NMG_debug&DEBUG_FCUT)
-				rt_log( "\tcut loop\n" );
-
-			new_lu = nmg_cut_loop( vu1, vu2 );
-			new_eu1 = RT_LIST_LAST( edgeuse, &new_lu->down_hd );
-			NMG_CK_EDGEUSE( new_eu1 );
-
-			nmg_loop_g( lu1->l_p, rs->tol );
-			nmg_loop_g( new_lu->l_p, rs->tol );
-
-			nmg_lu_reorient( lu1 );
-			nmg_lu_reorient( new_lu );
-
-			if(rt_g.NMG_debug&DEBUG_FCUT)
+			for( cut_no=0 ; cut_no<NMG_TBL_END( cuts ) ; cut_no++ )
 			{
-				rt_log( "\t\t new_eu = x%x\n", new_eu1 );
-				nmg_pr_fu_briefly( rs->fu1, "" );
-			}
+				struct loop_cuts *lcut;
+
+				if(rt_g.NMG_debug&DEBUG_FCUT)
+					rt_log( "\tcut loop (#%d of %d)\n", cut_no, NMG_TBL_END( cuts ) );
+
+				lcut = (struct loop_cuts *)NMG_TBL_GET( cuts, cut_no );
+
+				vu1 = lcut->vu1;
+				vu2 = lcut->vu2;
+				lu1 = lcut->lu;
+
+				new_lu = nmg_cut_loop( vu1, vu2 );
+				new_eu1 = RT_LIST_LAST( edgeuse, &new_lu->down_hd );
+				NMG_CK_EDGEUSE( new_eu1 );
+
+				nmg_loop_g( lu1->l_p, rs->tol );
+				nmg_loop_g( new_lu->l_p, rs->tol );
+
+				nmg_lu_reorient( lu1 );
+				nmg_lu_reorient( new_lu );
+
+				if(rt_g.NMG_debug&DEBUG_FCUT)
+				{
+					rt_log( "\t\t new_eu = x%x\n", new_eu1 );
+					nmg_pr_fu_briefly( rs->fu1, "" );
+				}
 #if 0
-			/* Fuse new edge to intersect line, old edge */
-			nmg_edge_geom_isect_line( new_eu1, rs, "CUTJOIN, new edge after loop cut" );
+				/* Fuse new edge to intersect line, old edge */
+				nmg_edge_geom_isect_line( new_eu1, rs, "CUTJOIN, new edge after loop cut" );
 #endif
-			if( old_eu ) nmg_radial_join_eu( old_eu, new_eu1, rs->tol );
+				if( old_eu ) nmg_radial_join_eu( old_eu, new_eu1, rs->tol );
 
-			/* A new VU has been added to vu2->v_p, add it to the rs->vu[]
-			 * array by overwriting the last use of vu1->v_p
-			 */
+				/* A new VU has been added to vu2->v_p, add it to the rs->vu[]
+				 * array by overwriting the last use of vu1->v_p
+				 */
 
-			eu_tmp = vu1->up.eu_p;
-			eu_tmp = RT_LIST_PPREV_CIRC( edgeuse, &eu_tmp->l );
-			if( eu_tmp->vu_p->v_p != vu2->v_p )
-			{
-				rt_log( "nmg_fcut_face: eu (x%x) has wrong vertex (x%x) should be (x%x)\n", eu_tmp, eu_tmp->vu_p->v_p, vu2->v_p );
-				rt_bomb( "nmg_fcut_face: eu has wrong vertex" );
+				eu_tmp = vu1->up.eu_p;
+				eu_tmp = RT_LIST_PPREV_CIRC( edgeuse, &eu_tmp->l );
+				if( eu_tmp->vu_p->v_p != vu2->v_p )
+				{
+					rt_log( "nmg_fcut_face: eu (x%x) has wrong vertex (x%x) should be (x%x)\n", eu_tmp, eu_tmp->vu_p->v_p, vu2->v_p );
+					rt_bomb( "nmg_fcut_face: eu has wrong vertex" );
+				}
+
+				rs->vu[prior_end-1-cut_no] = eu_tmp->vu_p;
 			}
-
-			rs->vu[prior_end-1] = eu_tmp->vu_p;
+			nmg_tbl( cuts, TBL_FREE, (long *)NULL );
+			rt_free( (char *)cuts, "cuts" );
 
 			continue;
 		}
