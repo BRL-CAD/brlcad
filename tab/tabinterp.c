@@ -261,17 +261,22 @@ char	*itag;
 	if( n < 0 )  return(-1);
 
 	if( n >= max_chans )  {
+		int	prev = max_chans;
 		if( max_chans <= 0 )  {
 			max_chans = 32;
 			chan = (struct chan *)rt_malloc(
 				max_chans * sizeof(struct chan),
 				"chan[]" );
 		} else {
-			while( n > max_chans )
+			while( n >= max_chans )
 				max_chans *= 2;
+			fprintf(stderr,"reallocating from %d to %d chans\n",
+				prev, max_chans);
 			chan = (struct chan *)rt_realloc( (char *)chan,
 				max_chans * sizeof(struct chan),
 				"chan[]" );
+			bzero( (char *)(&chan[prev]),
+				(max_chans-prev)*sizeof(struct chan) );
 		}
 	}
 	/* Allocate and clear channels */
