@@ -68,6 +68,7 @@ struct dm {
 
 struct shared_info {
   fastf_t _Viewscale;
+  fastf_t _i_Viewscale;
   mat_t   _Viewrot;
   mat_t   _toViewcenter;
   mat_t   _model2view;
@@ -77,7 +78,6 @@ struct shared_info {
   struct _mged_variables _mged_variables;
 
 /* Angle/distance cursor stuff */
-  int     _adcflag;
   int     _dv_xadc;
   int     _dv_yadc;
   int     _dv_1adc;
@@ -109,7 +109,6 @@ struct shared_info {
 
 /* Slider stuff */
   int _scroll_top;
-  int _scroll_enabled;
   int _scroll_active;
   int _scroll_y;
   struct scroll_item *_scroll_array[6];
@@ -153,7 +152,6 @@ extern struct dm_list *curr_dm_list;
 
 #define mged_variables curr_dm_list->s_info->_mged_variables
 
-#define adcflag curr_dm_list->s_info->_adcflag
 #define curs_x curr_dm_list->s_info->_curs_x
 #define curs_y curr_dm_list->s_info->_curs_y
 #define c_tdist curr_dm_list->s_info->_c_tdist
@@ -176,6 +174,7 @@ extern struct dm_list *curr_dm_list;
 #define absolute_zoom curr_dm_list->s_info->_absolute_zoom
 
 #define Viewscale curr_dm_list->s_info->_Viewscale
+#define i_Viewscale curr_dm_list->s_info->_i_Viewscale
 #define Viewrot curr_dm_list->s_info->_Viewrot
 #define toViewcenter curr_dm_list->s_info->_toViewcenter
 #define model2view curr_dm_list->s_info->_model2view
@@ -197,7 +196,6 @@ extern struct dm_list *curr_dm_list;
 #define rc curr_dm_list->s_info->_rc
 
 #define scroll_top curr_dm_list->s_info->_scroll_top
-#define scroll_enabled curr_dm_list->s_info->_scroll_enabled
 #define scroll_active curr_dm_list->s_info->_scroll_active
 #define scroll_y curr_dm_list->s_info->_scroll_y
 #define scroll_array curr_dm_list->s_info->_scroll_array
