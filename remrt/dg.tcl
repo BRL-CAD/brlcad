@@ -142,6 +142,8 @@ proc apply_color {} {
 		"}" ";" refresh
 
 	# Try to have MGED update it's color too.  Color doesn't change.
+	# XXX This fails because cmd_redraw_vlist uses replot_original_solid(),
+	# XXX which calls pathHmat() rather than db_follow_path_for_state().
 }
 
 # The air shader
