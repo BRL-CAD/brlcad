@@ -1361,8 +1361,9 @@ double			local2mm;
 	VSCALE( &rec->s.s_values[1*3], norm, r2 ); /* F2: normal radius len */
 
 	/* Create two mutually perpendicular vectors, perpendicular to Norm */
+	/* Ensure that AxB points in direction of N */
 	mat_vec_ortho( cross1, norm );
-	VCROSS( cross2, cross1, norm );
+	VCROSS( cross2, norm, cross1 );
 	VUNITIZE( cross2 );
 
 	/* F3, F4 are perpendicular, goto center of solid part */
