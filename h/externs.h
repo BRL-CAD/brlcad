@@ -199,4 +199,9 @@ extern int	brk();
 extern char *	strdup(const char *s);
 #endif
 
+/* POSIX does not define fdopen */
+#if __STDC__
+extern FILE	*fdopen( int filedes, const char *type );
+#endif
+
 #endif /* EXTERNS_H */
