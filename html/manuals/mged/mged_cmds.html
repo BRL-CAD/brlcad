@@ -758,6 +758,23 @@ It returns the number of faces eliminated.
 </DD>
 <HR>
 
+<DT><a NAME="bot_face_sort"><B>bot_face_sort</B> <I>triangles_per_piece bot_solid1 [bot_solid2 bot_solid3 ...]</I></DT>
+
+<DD> The ``bot_face_sort'' command is used to sort the list of triangles that constitutes the BOT primitive to optimize it
+for raytracing with the specified number of triangles per piece. Most BRL-CAD primitives are treated as a single
+object when a model is being prepared for raytracing, but BOT primitives are normally broken into ``pieces'' to
+improve performance. The raytracer normally uses 4 triangles per piece.
+
+<DL>
+<DT><big>Examples:</big></DT>
+<DD>
+<DT><kbd>mged></kbd> <b>bot_face_sort 4 bot1 bot2</b><br>
+-- sort the faces of <I>bot1</I> and <I>bot2</I> to optimize them for raytracing with 4 triangles per piece<br>
+</DD>
+</DL>
+</DD>
+<HR>
+
 <DT><a NAME="bot_vertex_fuse"><B>bot_vertex_fuse</B> <I>new_bot_solid old_bot_solid</I></DT>
 
 <DD> The ``bot_vertex_fuse'' command is used to eliminate duplicate vertices from a <I>BOT</I> solid.
