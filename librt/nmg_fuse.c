@@ -353,9 +353,9 @@ again:
 	nmg_edgeuse_tabulate( &eutab, &m->magic );
 
 	for( i = NMG_TBL_END(&eutab)-1; i >= 0; i-- )  {
-		register struct edgeuse	*eu1;
-		register struct edge	*e1;
-		struct vertex		*v1a, *v1b;
+		struct edgeuse		*eu1;
+		struct edge		*e1;
+		register struct vertex	*v1a, *v1b;
 
 		eu1 = (struct edgeuse *)NMG_TBL_GET(&eutab, i);
 		NMG_CK_EDGEUSE(eu1);
@@ -379,20 +379,21 @@ again:
 			goto again;
 		}
 
+		/* For performance, don't recheck pointers here */
 		for( j = i-1; j >= 0; j-- )  {
 			register struct edgeuse	*eu2;
-			register struct edge	*e2;
+			register struct vertex	*v2a, *v2b;
 
 			eu2 = (struct edgeuse *)NMG_TBL_GET(&eutab,j);
-			NMG_CK_EDGEUSE(eu2);
-			e2 = eu2->e_p;
-			NMG_CK_EDGE(e2);
 
-			if( e1 == e2 )  continue;	/* Already shared */
-			if( (eu2->vu_p->v_p == v1a &&
-			     eu2->eumate_p->vu_p->v_p == v1b) ||
-			    (eu2->eumate_p->vu_p->v_p == v1a &&
-			     eu2->vu_p->v_p == v1b) )  {
+			/* Do this vertex test first, to reduce memory loads */
+			v2a = eu2->vu_p->v_p;
+			if( v2a != v1a && v2a != v1b )  continue;
+
+			if( e1 == eu2->e_p )  continue;	/* Already shared */
+			v2b = eu2->eumate_p->vu_p->v_p;
+			if( (v2a == v1a && v2b == v1b) ||
+			    (v2b == v1a && v2a == v1b) )  {
 				nmg_radial_join_eu(eu1, eu2, tol);
 			     	total++;
 			 }
