@@ -8,12 +8,15 @@ bin_SCRIPTS = \
 	copyright.sh \
 	cray.sh \
 	elapsed.sh \
+	footer.sh \
+	header.sh \
 	ldAix.sh \
 	machinetype.sh \
 	make_deb.sh \
 	make_dmg.sh \
 	make_pkg.sh \
 	make_rpm.sh \
+	make_tar.sh \
 	make_tbz.sh \
 	make_tgz.sh \
 	make_zip.sh \
