@@ -222,9 +222,6 @@ struct bu_structparse rt_dsp_parse[] = {
 	{"%d",  1, "sm", DSP_O(dsp_smooth), FUNC_NULL },
 	{"%d",	1, "w", DSP_O(dsp_xcnt), FUNC_NULL },
 	{"%d",	1, "n", DSP_O(dsp_ycnt), FUNC_NULL },
-	{"%f",	1, "xs", DSP_O(dsp_xs), FUNC_NULL },
-	{"%f",	1, "ys", DSP_O(dsp_ys), FUNC_NULL },
-	{"%f",	1, "zs", DSP_O(dsp_zs), FUNC_NULL },
 	{"%f", 16, "stom", DSP_AO(dsp_stom), FUNC_NULL },
 	{"",	0, (char *)0, 0,			FUNC_NULL }
 };
