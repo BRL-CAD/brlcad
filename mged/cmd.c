@@ -44,7 +44,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "db.h"
 #include "raytrace.h"
-#include "rtstring.h"
+#include "bu.h"
 #include "rtlist.h"
 #include "rtgeom.h"
 #include "externs.h"
@@ -104,7 +104,7 @@ int glob_compat_mode = 1;
 int output_as_return = 1;
 
 int mged_cmd();
-struct rt_vls tcl_output_hook;
+struct bu_vls tcl_output_hook;
 
 int gui_not_initialized = 1;
 Tcl_Interp *interp = NULL;
@@ -570,14 +570,15 @@ static struct funtab funtab[] = {
 HIDDEN int
 output_catch(clientdata, str)
 genptr_t clientdata;
-char *str;
+genptr_t str;
 {
-    register struct rt_vls *vp = (struct rt_vls *)clientdata;
+    register struct bu_vls *vp = (struct bu_vls *)clientdata;
     register int len;
 
-    len = rt_vls_strlen(vp);
-    rt_vls_strcat(vp, str);
-    len = rt_vls_strlen(vp) - len;
+    BU_CK_VLS(vp);
+    len = bu_vls_strlen(vp);
+    bu_vls_strcat(vp, str);
+    len = bu_vls_strlen(vp) - len;
 
     return len;
 }
@@ -591,9 +592,9 @@ char *str;
 
 void
 start_catching_output(vp)
-struct rt_vls *vp;
+struct bu_vls *vp;
 {
-    rt_add_hook(output_catch, (genptr_t)vp);
+    bu_add_hook(output_catch, (genptr_t)vp);
 }
 
 /*
@@ -604,9 +605,9 @@ struct rt_vls *vp;
 
 void
 stop_catching_output(vp)
-struct rt_vls *vp;
+struct bu_vls *vp;
 {
-    rt_delete_hook(output_catch, (genptr_t)vp);
+    bu_delete_hook(output_catch, (genptr_t)vp);
 }
 
 /*
@@ -640,7 +641,7 @@ char **argv;
 {
     int status;
     size_t len;
-    struct rt_vls result;
+    struct bu_vls result;
     int catch_output;
 
     argv[0] = ((struct funtab *)clientData)->ft_name;
@@ -654,7 +655,7 @@ char **argv;
 
     catch_output = output_as_return;
     
-    rt_vls_init(&result);
+    bu_vls_init(&result);
 
     if (catch_output)
 	start_catching_output(&result);
@@ -665,39 +666,39 @@ char **argv;
     /* Remove any trailing newlines. */
 
     if (catch_output) {
-	len = rt_vls_strlen(&result);
-	while (len > 0 && rt_vls_addr(&result)[len-1] == '\n')
-	    rt_vls_trunc(&result, --len);
+	len = bu_vls_strlen(&result);
+	while (len > 0 && bu_vls_addr(&result)[len-1] == '\n')
+	    bu_vls_trunc(&result, --len);
     }
     
     switch (status) {
     case CMD_OK:
 	if (catch_output)
-	    Tcl_SetResult(interp, rt_vls_addr(&result), TCL_VOLATILE);
+	    Tcl_SetResult(interp, bu_vls_addr(&result), TCL_VOLATILE);
 	status = TCL_OK;
 	break;
     case CMD_BAD:
 	if (catch_output)
-	    Tcl_SetResult(interp, rt_vls_addr(&result), TCL_VOLATILE);
+	    Tcl_SetResult(interp, bu_vls_addr(&result), TCL_VOLATILE);
 	status = TCL_ERROR;
 	break;
     case CMD_MORE:
 	Tcl_SetResult(interp, MORE_ARGS_STR, TCL_STATIC);
 	if (catch_output) {
-	    Tcl_AppendResult(interp, rt_vls_addr(&result), (char *)NULL);
+	    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
 	}
 	status = TCL_ERROR;
 	break;
     default:
 	Tcl_SetResult(interp, "error executing mged routine::", TCL_STATIC);
 	if (catch_output) {
-	    Tcl_AppendResult(interp, rt_vls_addr(&result), (char *)NULL);
+	    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
 	}
 	status = TCL_ERROR;
 	break;
     }
     
-    rt_vls_free(&result);
+    bu_vls_free(&result);
     return status;
 }
 
@@ -712,20 +713,20 @@ char **argv;
 int
 gui_output(clientData, str)
 genptr_t clientData;
-char *str;
+genptr_t str;
 {
     Tcl_DString tclcommand;
     static int level = 0;
 
     if (level > 50) {
-	rt_delete_hook(gui_output, clientData);
+	bu_delete_hook(gui_output, clientData);
 	/* Now safe to run rt_log? */
     	rt_log("Ack! Something horrible just happened recursively.\n");
 	return 0;
     }
 
     Tcl_DStringInit(&tclcommand);
-    (void)Tcl_DStringAppendElement(&tclcommand, rt_vls_addr(&tcl_output_hook));
+    (void)Tcl_DStringAppendElement(&tclcommand, bu_vls_addr(&tcl_output_hook));
     (void)Tcl_DStringAppendElement(&tclcommand, str);
 
     ++level;
@@ -938,7 +939,7 @@ Tcl_Interp *interp;
 int argc;
 char **argv;
 {
-    struct rt_vls infocommand;
+    struct bu_vls infocommand;
     int status;
 
     if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
@@ -951,18 +952,18 @@ char **argv;
 	return TCL_ERROR;
     }
 
-    rt_delete_hook(gui_output, (genptr_t)interp);/* Delete the existing hook */
+    bu_delete_hook(gui_output, (genptr_t)interp);/* Delete the existing hook */
 
     if (argc < 2)
 	return TCL_OK;
 
     /* Make sure the command exists before putting in the hook! */
     
-    rt_vls_init(&infocommand);
-    rt_vls_strcat(&infocommand, "info commands ");
-    rt_vls_strcat(&infocommand, argv[1]);
-    status = Tcl_Eval(interp, rt_vls_addr(&infocommand));
-    rt_vls_free(&infocommand);
+    bu_vls_init(&infocommand);
+    bu_vls_strcat(&infocommand, "info commands ");
+    bu_vls_strcat(&infocommand, argv[1]);
+    status = Tcl_Eval(interp, bu_vls_addr(&infocommand));
+    bu_vls_free(&infocommand);
 
     if (status != TCL_OK || interp->result[0] == '\0') {
       Tcl_AppendResult(interp, "command does not exist", (char *)NULL);
@@ -978,8 +979,8 @@ char **argv;
 
     /* Set up the hook! */
 
-    rt_vls_strcpy(&tcl_output_hook, argv[1]);
-    rt_add_hook(gui_output, (genptr_t)interp);
+    bu_vls_strcpy(&tcl_output_hook, argv[1]);
+    bu_add_hook(gui_output, (genptr_t)interp);
     
     Tcl_ResetResult(interp);
     return TCL_OK;
@@ -1007,12 +1008,12 @@ char **argv;
 void
 mged_setup()
 {
-  struct rt_vls str;
+  struct bu_vls str;
   char *filename;
 
   /* The following is for GUI output hooks: contains name of function to
      run with output */
-  rt_vls_init(&tcl_output_hook);
+  bu_vls_init(&tcl_output_hook);
 
   /* Create the interpreter */
   interp = Tcl_CreateInterp();
@@ -1032,12 +1033,12 @@ mged_setup()
   mged_variable_setup(interp);
 
 #ifdef MGED_LIBRARY
-  rt_vls_init(&str);
+  bu_vls_init(&str);
   filename = getenv("MGED_TCL_LIBRARY");
-  rt_vls_printf(&str, "set auto_path \\[linsert $auto_path 0 %s\\];\
+  bu_vls_printf(&str, "set auto_path \\[linsert $auto_path 0 %s\\];\
 set junk \"\"", filename ? filename : MGED_LIBRARY);
   (void)cmdline(&str, False);
-  rt_vls_free(&str);
+  bu_vls_free(&str);
   Tcl_ResetResult(interp);
 #endif
 }
@@ -1083,33 +1084,33 @@ void
 cmd_setup()
 {
     register struct funtab *ftp;
-    struct rt_vls temp;
+    struct bu_vls temp;
 
-    rt_vls_init(&temp);
+    bu_vls_init(&temp);
 
     for (ftp = funtab+1; ftp->ft_name != NULL; ftp++) {
 #if 0
-	rt_vls_strcpy(&temp, "info commands ");
-	rt_vls_strcat(&temp, ftp->ft_name);
-	if (Tcl_Eval(interp, rt_vls_addr(&temp)) != TCL_OK ||
+	bu_vls_strcpy(&temp, "info commands ");
+	bu_vls_strcat(&temp, ftp->ft_name);
+	if (Tcl_Eval(interp, bu_vls_addr(&temp)) != TCL_OK ||
 	    interp->result[0] != '\0') {
 	    rt_log("WARNING:  '%s' name collision (%s)\n", ftp->ft_name,
 		   interp->result);
 	}
 #endif
-	rt_vls_strcpy(&temp, "_mged_");
-	rt_vls_strcat(&temp, ftp->ft_name);
+	bu_vls_strcpy(&temp, "_mged_");
+	bu_vls_strcat(&temp, ftp->ft_name);
 	
 	if (ftp->tcl_converted) {
 	    (void)Tcl_CreateCommand(interp, ftp->ft_name, ftp->ft_func,
 				   (ClientData)ftp, (Tcl_CmdDeleteProc *)NULL);
-	    (void)Tcl_CreateCommand(interp, rt_vls_addr(&temp), ftp->ft_func,
+	    (void)Tcl_CreateCommand(interp, bu_vls_addr(&temp), ftp->ft_func,
 				   (ClientData)ftp, (Tcl_CmdDeleteProc *)NULL);
 	} else {
 #if 0
 	    (void)Tcl_CreateCommand(interp, ftp->ft_name, cmd_wrapper, 	    
 			           (ClientData)ftp, (Tcl_CmdDeleteProc *)NULL);
-	    (void)Tcl_CreateCommand(interp, rt_vls_addr(&temp), cmd_wrapper,
+	    (void)Tcl_CreateCommand(interp, bu_vls_addr(&temp), cmd_wrapper,
 				   (ClientData)ftp, (Tcl_CmdDeleteProc *)NULL);
 #else
 	    rt_log("cmd_setup: %s needs to be Tcl converted\n", ftp->ft_name);
@@ -1150,7 +1151,7 @@ cmd_setup()
 
 	math_setup();
 
-    rt_vls_free(&temp);
+    bu_vls_free(&temp);
     tkwin = NULL;
 }
 
@@ -1175,19 +1176,19 @@ char **argv;
   /* First, search to see if there exists a command window with the name
      in argv[1] */
   for( RT_LIST_FOR(clp, cmd_list, &head_cmd_list.l) )
-    if(!strcmp(argv[1], rt_vls_addr(&clp->name))){
+    if(!strcmp(argv[1], bu_vls_addr(&clp->name))){
       name_not_used = 0;
       break;
     }
 
   if(name_not_used){
-    clp = (struct cmd_list *)rt_malloc(sizeof(struct cmd_list), "cmd_list");
+    clp = (struct cmd_list *)bu_malloc(sizeof(struct cmd_list), "cmd_list");
     bzero((void *)clp, sizeof(struct cmd_list));
     RT_LIST_APPEND(&head_cmd_list.l, &clp->l);
     clp->cur_hist = head_cmd_list.cur_hist;
-    rt_vls_init(&clp->more_default);
-    rt_vls_init(&clp->name);
-    rt_vls_strcpy(&clp->name, argv[1]);
+    bu_vls_init(&clp->more_default);
+    bu_vls_init(&clp->name);
+    bu_vls_strcpy(&clp->name, argv[1]);
   }else{
     clp->cur_hist = head_cmd_list.cur_hist;
 
@@ -1199,13 +1200,13 @@ char **argv;
 
 #else
 
-  clp = (struct cmd_list *)rt_malloc(sizeof(struct cmd_list), "cmd_list");
+  clp = (struct cmd_list *)bu_malloc(sizeof(struct cmd_list), "cmd_list");
   bzero((void *)clp, sizeof(struct cmd_list));
   RT_LIST_APPEND(&head_cmd_list.l, &clp->l);
   clp->cur_hist = head_cmd_list.cur_hist;
-  rt_vls_init(&clp->more_default);
-  rt_vls_init(&clp->name);
-  rt_vls_strcpy(&clp->name, argv[1]);
+  bu_vls_init(&clp->more_default);
+  bu_vls_init(&clp->name);
+  bu_vls_strcpy(&clp->name, argv[1]);
 
 #endif
 
@@ -1226,7 +1227,7 @@ char **argv;
   /* The current command window is not tied to a display manager so,
      simply return the id of the current command window */
   if(!curr_cmd_list->aim){
-    Tcl_AppendElement(interp, rt_vls_addr(&curr_cmd_list->name));
+    Tcl_AppendElement(interp, bu_vls_addr(&curr_cmd_list->name));
     return TCL_OK;
   }
 
@@ -1237,7 +1238,7 @@ char **argv;
     if(curr_cmd_list->aim->s_info == p->s_info)
       /* This display manager is tied to a command window */
       if(p->aim)
-	Tcl_AppendElement(interp, rt_vls_addr(&p->aim->name));
+	Tcl_AppendElement(interp, bu_vls_addr(&p->aim->name));
   }
 
   return TCL_OK;
@@ -1260,7 +1261,7 @@ char **argv;
   }
 
   for( RT_LIST_FOR(p, cmd_list, &head_cmd_list.l) ){
-    if(strcmp(rt_vls_addr(&p->name), argv[1]))
+    if(strcmp(bu_vls_addr(&p->name), argv[1]))
       continue;
 
     curr_cmd_list = p;
@@ -1273,7 +1274,7 @@ char **argv;
   if(curr_cmd_list->aim)
     curr_dm_list = curr_cmd_list->aim;
 
-  rt_vls_trunc(&curr_cmd_list->more_default, 0);
+  bu_vls_trunc(&curr_cmd_list->more_default, 0);
   return TCL_OK;
 }
 
@@ -1291,7 +1292,7 @@ char **argv;
     return TCL_ERROR;
   }
 
-  Tcl_AppendResult(interp, rt_vls_addr(&curr_cmd_list->more_default), (char *)NULL);
+  Tcl_AppendResult(interp, bu_vls_addr(&curr_cmd_list->more_default), (char *)NULL);
   return TCL_OK;
 }
 
@@ -1303,20 +1304,20 @@ Tcl_Interp *interp;
 int argc;
 char **argv;
 {
-  struct rt_vls dest, src;
+  struct bu_vls dest, src;
 
   if(argc != 2){
     Tcl_AppendResult(interp, "cmd_mged_glob: There must be only one argument.", (char *)NULL);
     return TCL_ERROR;
   }
 
-  rt_vls_init(&src);
-  rt_vls_init(&dest);
-  rt_vls_strcpy(&src, argv[1]);
+  bu_vls_init(&src);
+  bu_vls_init(&dest);
+  bu_vls_strcpy(&src, argv[1]);
   mged_compat( &dest, &src );
-  Tcl_AppendResult(interp, rt_vls_addr(&dest), (char *)NULL);
-  rt_vls_free(&src);
-  rt_vls_free(&dest);
+  Tcl_AppendResult(interp, bu_vls_addr(&dest), (char *)NULL);
+  bu_vls_free(&src);
+  bu_vls_free(&dest);
 
   return TCL_OK;
 }
@@ -1329,44 +1330,44 @@ char **argv;
 
 void
 debackslash( dest, src )
-struct rt_vls *dest, *src;
+struct bu_vls *dest, *src;
 {
     char *ptr;
 
-    ptr = rt_vls_addr(src);
+    ptr = bu_vls_addr(src);
     while( *ptr ) {
 	if( *ptr == '\\' )
 	    ++ptr;
 	if( *ptr == '\0' )
 	    break;
-	rt_vls_putc( dest, *ptr++ );
+	bu_vls_putc( dest, *ptr++ );
     }
 }
 
 void
 backslash_specials( dest, src )
-struct rt_vls *dest, *src;
+struct bu_vls *dest, *src;
 {
     int backslashed;
     char *ptr, buf[2];
 
     buf[1] = '\0';
     backslashed = 0;
-    for( ptr = rt_vls_addr( src ); *ptr; ptr++ ) {
+    for( ptr = bu_vls_addr( src ); *ptr; ptr++ ) {
 	if( *ptr == '[' && !backslashed )
-	    rt_vls_strcat( dest, "\\[" );
+	    bu_vls_strcat( dest, "\\[" );
 	else if( *ptr == ']' && !backslashed )
-	    rt_vls_strcat( dest, "\\]" );
+	    bu_vls_strcat( dest, "\\]" );
 	else if( backslashed ) {
-	    rt_vls_strcat( dest, "\\" );
+	    bu_vls_strcat( dest, "\\" );
 	    buf[0] = *ptr;
-	    rt_vls_strcat( dest, buf );
+	    bu_vls_strcat( dest, buf );
 	    backslashed = 0;
 	} else if( *ptr == '\\' )
 	    backslashed = 1;
 	else {
 	    buf[0] = *ptr;
-	    rt_vls_strcat( dest, buf );
+	    bu_vls_strcat( dest, buf );
 	}
     }
 }
@@ -1379,19 +1380,19 @@ struct rt_vls *dest, *src;
 
 void
 mged_compat( dest, src )
-struct rt_vls *dest, *src;
+struct bu_vls *dest, *src;
 {
     char *start, *end;          /* Start and ends of words */
     int regexp;                 /* Set to TRUE when word is a regexp */
     int backslashed;
     int firstword;
-    struct rt_vls word;         /* Current word being processed */
-    struct rt_vls temp;
+    struct bu_vls word;         /* Current word being processed */
+    struct bu_vls temp;
 
-    rt_vls_init( &word );
-    rt_vls_init( &temp );
+    bu_vls_init( &word );
+    bu_vls_init( &temp );
     
-    start = end = rt_vls_addr( src );
+    start = end = bu_vls_addr( src );
     firstword = 1;
     while( *end != '\0' ) {            /* Run through entire string */
 
@@ -1402,7 +1403,7 @@ struct rt_vls *dest, *src;
 	    if( *start == ' '  ||
 	        *start == '\t' ||
 	        *start == '\n' )
-		rt_vls_putc( dest, *start++ );
+		bu_vls_putc( dest, *start++ );
 	    else
 		break;
 	}
@@ -1414,7 +1415,7 @@ struct rt_vls *dest, *src;
 	   unbackslashed wildcard characters. */
 
 	end = start;
-	rt_vls_trunc( &word, 0 );
+	bu_vls_trunc( &word, 0 );
 	regexp = 0;
 	backslashed = 0;
 	while( *end != '\0' ) {
@@ -1428,7 +1429,7 @@ struct rt_vls *dest, *src;
 		backslashed = 1;
 	    else
 		backslashed = 0;
-	    rt_vls_putc( &word, *end++ );
+	    bu_vls_putc( &word, *end++ );
 	}
 
 	if( firstword )
@@ -1438,12 +1439,12 @@ struct rt_vls *dest, *src;
 	   it to the database. */
 
 	if( regexp ) {
-	    rt_vls_trunc( &temp, 0 );
-	    if( regexp_match_all(&temp, rt_vls_addr(&word)) == 0 ) {
+	    bu_vls_trunc( &temp, 0 );
+	    if( regexp_match_all(&temp, bu_vls_addr(&word)) == 0 ) {
 		debackslash( &temp, &word );
 		backslash_specials( dest, &temp );
 	    } else
-		rt_vls_vlscat( dest, &temp );
+		bu_vls_vlscat( dest, &temp );
 	} else {
 	    debackslash( dest, &word );
 	}
@@ -1451,8 +1452,8 @@ struct rt_vls *dest, *src;
 	firstword = 0;
     }
 
-    rt_vls_free( &temp );
-    rt_vls_free( &word );
+    bu_vls_free( &temp );
+    bu_vls_free( &word );
 }
     
 /*
@@ -1469,22 +1470,22 @@ struct rt_vls *dest, *src;
 
 int
 cmdline(vp, record)
-struct rt_vls *vp;
+struct bu_vls *vp;
 int record;
 {
     int	status;
-    struct rt_vls globbed;
+    struct bu_vls globbed;
     struct timeval start, finish;
     size_t len;
-    extern struct rt_vls mged_prompt;
+    extern struct bu_vls mged_prompt;
     char *cp;
 
     RT_VLS_CHECK(vp);
 
-    if (rt_vls_strlen(vp) <= 0)
+    if (bu_vls_strlen(vp) <= 0)
       return CMD_OK;
 		
-    rt_vls_init(&globbed);
+    bu_vls_init(&globbed);
 
 
     /* MUST MAKE A BACKUP OF THE INPUT STRING AND USE THAT IN THE CALL TO
@@ -1500,10 +1501,10 @@ int record;
     if (glob_compat_mode)
 	mged_compat(&globbed, vp);
     else
-	rt_vls_vlscat(&globbed, vp);
+	bu_vls_vlscat(&globbed, vp);
 
     gettimeofday(&start, (struct timezone *)NULL);
-    status = Tcl_Eval(interp, rt_vls_addr(&globbed));
+    status = Tcl_Eval(interp, bu_vls_addr(&globbed));
     gettimeofday(&finish, (struct timezone *)NULL);
 
     /* Contemplate the result reported by the Tcl interpreter. */
@@ -1522,14 +1523,14 @@ int record;
 	/* A user typed this command so let everybody see, then record
 	   it in the history. */
 	if (record && tkwin != NULL) {
-	  struct rt_vls tmp_vls;
+	  struct bu_vls tmp_vls;
 
-	  rt_vls_init(&tmp_vls);
-	  rt_vls_printf(&tmp_vls, "distribute_text {} {%s} {%s}",
-			rt_vls_addr(&globbed), interp->result);
-	  Tcl_Eval(interp, rt_vls_addr(&tmp_vls));
+	  bu_vls_init(&tmp_vls);
+	  bu_vls_printf(&tmp_vls, "distribute_text {} {%s} {%s}",
+			bu_vls_addr(&globbed), interp->result);
+	  Tcl_Eval(interp, bu_vls_addr(&tmp_vls));
 	  Tcl_SetResult(interp, "", TCL_STATIC);
-	  rt_vls_free(&tmp_vls);
+	  bu_vls_free(&tmp_vls);
 	}
       }else
 	rt_log("\n");
@@ -1538,8 +1539,8 @@ int record;
       if(record)
 	history_record(vp, &start, &finish, CMD_OK);
 
-      rt_vls_free(&globbed);
-      rt_vls_strcpy(&mged_prompt, MGED_PROMPT);
+      bu_vls_free(&globbed);
+      bu_vls_strcpy(&mged_prompt, MGED_PROMPT);
       return CMD_OK;
 
     case TCL_ERROR:
@@ -1549,18 +1550,18 @@ int record;
 
 	if ((cp = strstr(interp->result, MORE_ARGS_STR)) != NULL) {
 	    if(cp == interp->result){
-	      rt_vls_trunc(&mged_prompt, 0);
-	      rt_vls_printf(&mged_prompt, "\r%s",
+	      bu_vls_trunc(&mged_prompt, 0);
+	      bu_vls_printf(&mged_prompt, "\r%s",
 			    interp->result+sizeof(MORE_ARGS_STR)-1);
 	    }else{
 	      len = cp - interp->result;
 	      rt_log("%*s%s", len, interp->result, interp->result[len-1] == '\n' ? "" : "\n");
-	      rt_vls_trunc(&mged_prompt, 0);
-	      rt_vls_printf(&mged_prompt, "\r%s",
+	      bu_vls_trunc(&mged_prompt, 0);
+	      bu_vls_printf(&mged_prompt, "\r%s",
 			    interp->result+sizeof(MORE_ARGS_STR)-1+len);
 	    }
 
-	    rt_vls_free(&globbed);
+	    bu_vls_free(&globbed);
 	    return CMD_MORE;
 	}
 
@@ -1571,8 +1572,8 @@ int record;
 			    interp->result[len-1] == '\n' ? "" : "\n");
 
 	if (record) history_record(vp, &start, &finish, CMD_BAD);
-	rt_vls_free(&globbed);
-	rt_vls_strcpy(&mged_prompt, MGED_PROMPT);
+	bu_vls_free(&globbed);
+	bu_vls_strcpy(&mged_prompt, MGED_PROMPT);
 	return CMD_BAD;
     }
 }
@@ -1895,18 +1896,18 @@ int	argc;
 char	**argv;
 {
 	register struct funtab *ftp;
-	struct rt_vls		str;
+	struct bu_vls		str;
 
-	rt_vls_init(&str);
+	bu_vls_init(&str);
 	for( ftp = &funtab[1]; ftp->ft_name; ftp++ )  {
 		vls_col_item( &str, ftp->ft_name);
 	}
 	vls_col_eol( &str );
 
-	/* XXX should be rt_vls_strgrab() */
-	Tcl_AppendResult(interp, rt_vls_strdup( &str), (char *)NULL);
+	/* XXX should be bu_vls_strgrab() */
+	Tcl_AppendResult(interp, bu_vls_strdup( &str), (char *)NULL);
 
-	rt_vls_free(&str);
+	bu_vls_free(&str);
 	return TCL_OK;
 }
 
@@ -1917,18 +1918,18 @@ char	**argv;
 struct funtab *functions;
 {
 	register struct funtab *ftp;
-	struct rt_vls		str;
+	struct bu_vls		str;
 
 	if( argc <= 1 )  {
-	  rt_vls_init(&str);
+	  bu_vls_init(&str);
 	  Tcl_AppendResult(interp, "The following ", functions->ft_name,
 			   " commands are available:\n", (char *)NULL);
 	  for( ftp = functions+1; ftp->ft_name; ftp++ )  {
 	    vls_col_item( &str, ftp->ft_name);
 	  }
 	  vls_col_eol( &str );
-	  Tcl_AppendResult(interp, rt_vls_addr( &str ), (char *)NULL);
-	  rt_vls_free(&str);
+	  Tcl_AppendResult(interp, bu_vls_addr( &str ), (char *)NULL);
+	  bu_vls_free(&str);
 	  return TCL_OK;
 	}
 	return helpcomm( argc, argv, functions );
@@ -2027,35 +2028,35 @@ f_savedit(argc, argv)
 int	argc;
 char	*argv[];
 {
-  struct rt_vls str;
+  struct bu_vls str;
   char	line[35];
   int o_ipathpos;
   register struct solid *o_illump;
 
   o_illump = illump;
-  rt_vls_init(&str);
+  bu_vls_init(&str);
 
   if(state == ST_S_EDIT){
-    rt_vls_strcpy( &str, "press accept\npress sill\n" );
+    bu_vls_strcpy( &str, "press accept\npress sill\n" );
     cmdline(&str, 0);
     illump = o_illump;
-    rt_vls_strcpy( &str, "M 1 0 0\n");
+    bu_vls_strcpy( &str, "M 1 0 0\n");
     cmdline(&str, 0);
     return CMD_OK;
   }else if(state == ST_O_EDIT){
     o_ipathpos = ipathpos;
-    rt_vls_strcpy( &str, "press accept\npress oill\n" );
+    bu_vls_strcpy( &str, "press accept\npress oill\n" );
     cmdline(&str, 0);
     (void)chg_state( ST_O_PICK, ST_O_PATH, "savedit");
     illump = o_illump;
     ipathpos = o_ipathpos;
-    rt_vls_strcpy( &str, "M 1 0 0\n");
+    bu_vls_strcpy( &str, "M 1 0 0\n");
     cmdline(&str, 0);
     return CMD_OK;
   }
 
   rt_log( "Savedit will only work in an edit state\n");
-  rt_vls_free(&str);
+  bu_vls_free(&str);
   return CMD_BAD;
 }
 #endif
@@ -2076,30 +2077,30 @@ char *argv[];
   if(argc == 1){
     for( RT_LIST_FOR(p_cmd, cmd_list, &head_cmd_list.l) )
       if(p_cmd->aim)
-	Tcl_AppendResult(interp, rt_vls_addr(&p_cmd->name), " ---> ",
-			 rt_vls_addr(&p_cmd->aim->_pathName),
+	Tcl_AppendResult(interp, bu_vls_addr(&p_cmd->name), " ---> ",
+			 bu_vls_addr(&p_cmd->aim->_pathName),
 			 "\n", (char *)NULL);
       else
-	Tcl_AppendResult(interp, rt_vls_addr(&p_cmd->name), " ---> ",
+	Tcl_AppendResult(interp, bu_vls_addr(&p_cmd->name), " ---> ",
 			 "\n", (char *)NULL);
 
     if(p_cmd->aim)
-      Tcl_AppendResult(interp, rt_vls_addr(&p_cmd->name), " ---> ",
-		       rt_vls_addr(&p_cmd->aim->_pathName),
+      Tcl_AppendResult(interp, bu_vls_addr(&p_cmd->name), " ---> ",
+		       bu_vls_addr(&p_cmd->aim->_pathName),
 		       "\n", (char *)NULL);
     else
-      Tcl_AppendResult(interp, rt_vls_addr(&p_cmd->name), " ---> ",
+      Tcl_AppendResult(interp, bu_vls_addr(&p_cmd->name), " ---> ",
 		       "\n", (char *)NULL);
 
     return TCL_OK;
   }
 
   for( RT_LIST_FOR(p_cmd, cmd_list, &head_cmd_list.l) )
-    if(!strcmp(rt_vls_addr(&p_cmd->name), argv[1]))
+    if(!strcmp(bu_vls_addr(&p_cmd->name), argv[1]))
       break;
 
   if(p_cmd == &head_cmd_list &&
-     (strcmp(rt_vls_addr(&head_cmd_list.name), argv[1]))){
+     (strcmp(bu_vls_addr(&head_cmd_list.name), argv[1]))){
     Tcl_AppendResult(interp, "f_aim: unrecognized command_window - ", argv[1],
 		     "\n", (char *)NULL);
     return TCL_ERROR;
@@ -2108,21 +2109,21 @@ char *argv[];
   /* print out the display manager being aimed at */
   if(argc == 2){
     if(p_cmd->aim)
-      Tcl_AppendResult(interp, rt_vls_addr(&p_cmd->name), " ---> ",
-		       rt_vls_addr(&p_cmd->aim->_pathName),
+      Tcl_AppendResult(interp, bu_vls_addr(&p_cmd->name), " ---> ",
+		       bu_vls_addr(&p_cmd->aim->_pathName),
 		       "\n", (char *)NULL);
     else
-      Tcl_AppendResult(interp, rt_vls_addr(&p_cmd->name), " ---> ", "\n", (char *)NULL);
+      Tcl_AppendResult(interp, bu_vls_addr(&p_cmd->name), " ---> ", "\n", (char *)NULL);
 
     return TCL_OK;
   }
 
   for( RT_LIST_FOR(p_dm, dm_list, &head_dm_list.l) )
-    if(!strcmp(argv[2], rt_vls_addr(&p_dm->_pathName)))
+    if(!strcmp(argv[2], bu_vls_addr(&p_dm->_pathName)))
       break;
 
   if(p_dm == &head_dm_list &&
-     strcmp(argv[2], rt_vls_addr(&head_dm_list._pathName))){
+     strcmp(argv[2], bu_vls_addr(&head_dm_list._pathName))){
     Tcl_AppendResult(interp, "f_aim: unrecognized pathName - ", argv[2],
 		     "\n", (char *)NULL);
 
@@ -2140,8 +2141,8 @@ char *argv[];
     p_dm->aim->aim = (struct dm_list *)NULL;
 
   p_dm->aim = p_cmd;
-  Tcl_AppendResult(interp, rt_vls_addr(&p_cmd->name), " ---> ",
-		   rt_vls_addr(&p_cmd->aim->_pathName),
+  Tcl_AppendResult(interp, bu_vls_addr(&p_cmd->name), " ---> ",
+		   bu_vls_addr(&p_cmd->aim->_pathName),
 		   "\n", (char *)NULL);
   
   return TCL_OK;
@@ -2377,13 +2378,13 @@ char    **argv;
 
   /* print pathname of drawing window with primary focus */
   if( argc == 1 ){
-    Tcl_AppendResult(interp, rt_vls_addr(&pathName), "\n", (char *)NULL);
+    Tcl_AppendResult(interp, bu_vls_addr(&pathName), "\n", (char *)NULL);
     return TCL_OK;
   }
 
   /* change primary focus to window argv[1] */
   for( RT_LIST_FOR(p, dm_list, &head_dm_list.l ) ){
-    if( !strcmp( argv[1], rt_vls_addr( &p->_pathName ) ) ){
+    if( !strcmp( argv[1], bu_vls_addr( &p->_pathName ) ) ){
       curr_dm_list = p;
 
       if(curr_dm_list->aim)
@@ -2469,17 +2470,17 @@ fastf_t x, y, z;
   point_t diff;
   int status;
   char *av[5];
-  struct rt_vls xval, yval, zval;
+  struct bu_vls xval, yval, zval;
 
-  rt_vls_init(&xval);
-  rt_vls_init(&yval);
-  rt_vls_init(&zval);
-  rt_vls_printf(&xval, "%f", x);
-  rt_vls_printf(&yval, "%f", y);
-  rt_vls_printf(&zval, "%f", z);
-  av[1] = rt_vls_addr(&xval);
-  av[2] = rt_vls_addr(&yval);
-  av[3] = rt_vls_addr(&zval);
+  bu_vls_init(&xval);
+  bu_vls_init(&yval);
+  bu_vls_init(&zval);
+  bu_vls_printf(&xval, "%f", x);
+  bu_vls_printf(&yval, "%f", y);
+  bu_vls_printf(&zval, "%f", z);
+  av[1] = bu_vls_addr(&xval);
+  av[2] = bu_vls_addr(&yval);
+  av[3] = bu_vls_addr(&zval);
   av[4] = NULL;
 
   /* if in view state or not doing a solid rotate then allow the view to be rotated */
@@ -2504,9 +2505,9 @@ fastf_t x, y, z;
     status = f_rot_obj((ClientData)NULL, interp, 4, av);
   }
 
-  rt_vls_free(&xval);
-  rt_vls_free(&yval);
-  rt_vls_free(&zval);
+  bu_vls_free(&xval);
+  bu_vls_free(&yval);
+  bu_vls_free(&zval);
 
   if(status == TCL_OK)
     return CMD_OK;
