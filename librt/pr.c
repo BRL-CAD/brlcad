@@ -158,6 +158,7 @@ struct rt_vls			*v;
 CONST struct rt_i		*rtip;
 register CONST struct partition *pp;
 {
+	register CONST struct soltab	*stp;
 	char		buf[128];
 
 	RT_CHECK_RTI(rtip);
@@ -167,20 +168,32 @@ register CONST struct partition *pp;
 	rt_logindent_vls( v );
 	sprintf(buf, "%.8x: PT ", pp );
 	rt_vls_strcat( v, buf );
-	rt_vls_strcat( v, pp->pt_inseg->seg_stp->st_dp->d_namep );
-	rt_vls_strcat( v, " " );
-	rt_vls_strcat( v, pp->pt_outseg->seg_stp->st_dp->d_namep );
-	sprintf(buf, " (%g,%g)",
+
+	stp = pp->pt_inseg->seg_stp;
+	sprintf(buf, "%s (%s#%d) ",
+		stp->st_dp->d_namep,
+		rt_functab[stp->st_id].ft_name+3,
+		stp->st_bit );
+	rt_vls_strcat( v, buf );
+
+	stp = pp->pt_outseg->seg_stp;
+	sprintf(buf, "%s (%s#%d) ",
+		stp->st_dp->d_namep,
+		rt_functab[stp->st_id].ft_name+3,
+		stp->st_bit );
+	rt_vls_strcat( v, buf );
+
+	sprintf(buf, "(%g,%g)",
 		pp->pt_inhit->hit_dist, pp->pt_outhit->hit_dist );
 	rt_vls_strcat( v, buf );
 	if( pp->pt_inflip )  rt_vls_strcat( v, " Iflip" );
 	if( pp->pt_outflip )  rt_vls_strcat( v, " Oflip" );
 	rt_vls_strcat( v, "\n");
 
-	rt_pr_hit_vls( v, " In hit", pp->pt_inhit );
-	rt_pr_hit_vls( v, "Out hit", pp->pt_outhit );
+	rt_pr_hit_vls( v, "  In", pp->pt_inhit );
+	rt_pr_hit_vls( v, " Out", pp->pt_outhit );
 	rt_logindent_vls( v );
-	rt_vls_strcat( v, "Solids present: " );
+	rt_vls_strcat( v, "  Solids: " );
 	rt_pr_bitv_vls( v, pp->pt_solhit, rtip->nsolids );
 	rt_vls_strcat( v, "\n" );
 	}
@@ -302,22 +315,21 @@ register CONST struct hit	*hitp;
 	RT_VLS_CHECK( v );
 	bu_vls_strcat( v, str );
 	rt_logindent_vls( v );
-	rt_vls_strcat( v, "HIT " );
 	rt_vls_strcat( v, str );
 
-	sprintf(buf, " dist=%g (surf %d)\n",
+	sprintf(buf, "HIT dist=%g (surf %d)\n",
 	bu_vls_printf(v, "HIT dist=%g (surf %d)\n",
 	rt_vls_strcat( v, buf );
 
 	if( !VNEAR_ZERO( hitp->hit_point, SMALL_FASTF ) )  {
 		rt_logindent_vls( v );
-		sprintf(buf, "HIT Point (%g, %g, %g)\n",
+		sprintf(buf, "    Point (%g, %g, %g)\n",
 			V3ARGS(hitp->hit_point) );
 		rt_vls_strcat( v, buf );
 	}
 	if( !VNEAR_ZERO( hitp->hit_normal, SMALL_FASTF ) )  {
 		rt_logindent_vls( v );
-		sprintf(buf, "HIT Normal (%g, %g, %g)\n",
+		sprintf(buf, "    Normal (%g, %g, %g)\n",
 			V3ARGS(hitp->hit_normal) );
 		rt_vls_strcat( v, buf );
 	}
