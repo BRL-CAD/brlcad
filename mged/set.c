@@ -35,6 +35,8 @@ extern void	reattach();			/* in attach.c */
 struct _mged_variables default_mged_variables = {
 /* autosize */			1,
 /* rateknobs */			1,
+/* adcflag */                   0,
+/* scroll_enabled */            0,
 /* sgi_win_size */		0,
 /* sgi_win_origin */		{ 0, 0 },
 /* faceplate */			1,
@@ -61,7 +63,8 @@ struct _mged_variables default_mged_variables = {
 static int current_view = 0;
 static mat_t view_table[VIEW_TABLE_SIZE];
 static fastf_t view_scale_table[VIEW_TABLE_SIZE];
-static void     set_view();
+static void set_view();
+static void set_scroll();
 
 
 /*
@@ -91,6 +94,8 @@ nmg_eu_dist_set()
 struct structparse mged_vparse[] = {
 	{"%d",	1, "autosize",		MV_O(autosize),		FUNC_NULL },
 	{"%d",	1, "rateknobs",		MV_O(rateknobs),	FUNC_NULL },
+	{"%d",	1, "adcflag",		MV_O(adcflag),          set_scroll },
+	{"%d",	1, "scroll_enabled",	MV_O(scroll_enabled),   set_scroll },
 	{"%d",	1, "sgi_win_size",	MV_O(sgi_win_size),	FUNC_NULL },
 	{"%d",	2, "sgi_win_origin",	MV_O(sgi_win_origin[0]),FUNC_NULL },
 	{"%d",	1, "faceplate",		MV_O(faceplate),	refresh_hook },
@@ -295,4 +300,13 @@ set_view()
   mat_copy(Viewrot, view_table[current_view]);
   Viewscale = view_scale_table[current_view];
   new_mats();
+}
+
+static void
+set_scroll()
+{
+  /* pre-toggle scroll_enabled */
+  mged_variables.scroll_enabled = !mged_variables.scroll_enabled;
+
+  sl_toggle_scroll();
 }
