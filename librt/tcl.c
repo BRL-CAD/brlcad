@@ -98,13 +98,13 @@ struct rt_solid_type_lookup {
 	{ ID_TOR,     sizeof(struct rt_tor_internal), (long)RT_TOR_INTERNAL_MAGIC, "tor", rt_tor_parse },
 	{ ID_TGC,     sizeof(struct rt_tgc_internal), (long)RT_TGC_INTERNAL_MAGIC, "tgc", rt_tgc_parse },
 	{ ID_ELL,     sizeof(struct rt_ell_internal), (long)RT_ELL_INTERNAL_MAGIC, "ell", rt_ell_parse },
-	{ ID_ARB8,    sizeof(struct rt_arb_internal), (long)RT_ARB_INTERNAL_MAGIC, "arb8",rt_arb8_parse },
-	{ ID_HALF,    sizeof(struct rt_half_internal),(long)RT_HALF_INTERNAL_MAGIC,"half",rt_half_parse },
+	{ ID_ARB8,    sizeof(struct rt_arb_internal), (long)RT_ARB_INTERNAL_MAGIC, "arb8", rt_arb8_parse },
+	{ ID_HALF,    sizeof(struct rt_half_internal),(long)RT_HALF_INTERNAL_MAGIC,"half", rt_half_parse },
 	{ ID_REC,     sizeof(struct rt_tgc_internal), (long)RT_TGC_INTERNAL_MAGIC, "rec", rt_tgc_parse },
 	{ ID_ELL,     sizeof(struct rt_ell_internal), (long)RT_ELL_INTERNAL_MAGIC, "sph", rt_ell_parse },
 	{ ID_EBM,     sizeof(struct rt_ebm_internal), (long)RT_EBM_INTERNAL_MAGIC, "ebm", rt_ebm_parse },
 	{ ID_VOL,     sizeof(struct rt_vol_internal), (long)RT_VOL_INTERNAL_MAGIC, "vol", rt_vol_parse },
-	{ ID_PARTICLE,sizeof(struct rt_part_internal),(long)RT_PART_INTERNAL_MAGIC,"part",rt_part_parse },
+	{ ID_PARTICLE,sizeof(struct rt_part_internal),(long)RT_PART_INTERNAL_MAGIC,"part", rt_part_parse },
 	{ ID_RPC,     sizeof(struct rt_rpc_internal), (long)RT_RPC_INTERNAL_MAGIC, "rpc", rt_rpc_parse },
 	{ ID_RHC,     sizeof(struct rt_rhc_internal), (long)RT_RHC_INTERNAL_MAGIC, "rhc", rt_rhc_parse },
 	{ ID_EPA,     sizeof(struct rt_epa_internal), (long)RT_EPA_INTERNAL_MAGIC, "epa", rt_epa_parse },
@@ -112,6 +112,10 @@ struct rt_solid_type_lookup {
 	{ ID_ETO,     sizeof(struct rt_eto_internal), (long)RT_ETO_INTERNAL_MAGIC, "eto", rt_eto_parse },
 	{ ID_HF,      sizeof(struct rt_hf_internal),  (long)RT_HF_INTERNAL_MAGIC,  "hf",  rt_hf_parse },
 	{ ID_DSP,     sizeof(struct rt_dsp_internal), (long)RT_DSP_INTERNAL_MAGIC, "dsp", rt_dsp_parse },
+	{ ID_ARS, 0, 0, "ars", 0 },
+	{ ID_NMG, 0, 0, "nmg", 0 },
+	{ ID_PIPE, 0, 0, "pipe", 0 },
+	{ ID_VOL, 0, 0, "vol", 0 },
 	{ 0, 0, 0, 0 }
 };
 
@@ -1199,6 +1203,13 @@ char			*attr;
 			return TCL_OK;
 		}
 
+		if( stlp->parsetab == (struct bu_structparse *)NULL ) {
+			Tcl_AppendResult( interp, stlp->label,
+ " {an output routine for this data type has not yet been implemented}",
+				  (char *)NULL );
+			return TCL_OK;
+		}
+
 		bu_vls_init( &str );
 		Tcl_DStringInit( &ds );
 
@@ -1258,7 +1269,6 @@ char	      **argv;
 {
 	register struct directory	       *dp;
 	register struct bu_structparse	       *sp = NULL;
-	register struct rt_solid_type_lookup   *stlp;
 	int			id, status;
 	struct rt_db_internal	intern;
 	char			objecttype;
@@ -1448,6 +1458,13 @@ char	      **argv;
 		if( stlp == NULL ) {
 			Tcl_AppendResult( interp,
 					  "unknown object type",
+					  (char *)NULL );
+			return TCL_ERROR;
+		}
+
+		if( stlp->parsetab == (struct bu_structparse *)NULL ) {
+			Tcl_AppendResult( interp, stlp->label,
+					  " object type not supported",
 					  (char *)NULL );
 			return TCL_ERROR;
 		}
