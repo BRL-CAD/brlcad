@@ -433,45 +433,6 @@ struct soltab {
 
 
 /*
- *			T R E E
- *
- *  Binary trees representing the Boolean operations between solids.
- */
-#define MKOP(x)		((x))
-
-#define OP_SOLID	MKOP(1)		/* Leaf:  tr_stp -> solid */
-#define OP_UNION	MKOP(2)		/* Binary: L union R */
-#define OP_INTERSECT	MKOP(3)		/* Binary: L intersect R */
-#define OP_SUBTRACT	MKOP(4)		/* Binary: L subtract R */
-#define OP_XOR		MKOP(5)		/* Binary: L xor R, not both*/
-#define OP_REGION	MKOP(6)		/* Leaf: tr_stp -> combined_tree_state */
-#define OP_NOP		MKOP(7)		/* Leaf with no effect */
-/* Internal to library routines */
-#define OP_NOT		MKOP(8)		/* Unary:  not L */
-#define OP_GUARD	MKOP(9)		/* Unary:  not L, or else! */
-#define OP_XNOP		MKOP(10)	/* Unary:  L, mark region */
-
-union tree {
-	int	tr_op;		/* Operation */
-	struct tree_node {
-		int		tb_op;		/* non-leaf */
-		struct region	*tb_regionp;	/* ptr to containing region */
-		union tree	*tb_left;
-		union tree	*tb_right;
-	} tr_b;
-	struct tree_leaf {
-		int		tu_op;		/* leaf, OP_SOLID */
-		struct region	*tu_regionp;	/* ptr to containing region */
-		struct soltab	*tu_stp;
-		char		*tu_name;	/* full path name of leaf */
-	} tr_a;
-};
-/* Things which are in the same place in both structures */
-#define tr_regionp	tr_a.tu_regionp
-
-#define TREE_NULL	((union tree *)0)
-
-/*
  *			M A T E R _ I N F O
  */
 struct mater_info {
@@ -840,9 +801,56 @@ struct db_tree_state {
  *			C O M B I N E D _ T R E E _ S T A T E
  */
 struct combined_tree_state {
+	long			magic;
 	struct db_tree_state	cts_s;
 	struct db_full_path	cts_p;
 };
+#define RT_CTS_MAGIC	0x98989123
+#define RT_CK_CTS(_p)	RT_CKMAG(_p, RT_CTS_MAGIC, "combined_tree_state")
+
+/*
+ *			T R E E
+ *
+ *  Binary trees representing the Boolean operations between solids.
+ */
+#define MKOP(x)		(x)
+
+#define OP_SOLID	MKOP(1)		/* Leaf:  tr_stp -> solid */
+#define OP_UNION	MKOP(2)		/* Binary: L union R */
+#define OP_INTERSECT	MKOP(3)		/* Binary: L intersect R */
+#define OP_SUBTRACT	MKOP(4)		/* Binary: L subtract R */
+#define OP_XOR		MKOP(5)		/* Binary: L xor R, not both*/
+#define OP_REGION	MKOP(6)		/* Leaf: tr_stp -> combined_tree_state */
+#define OP_NOP		MKOP(7)		/* Leaf with no effect */
+/* Internal to library routines */
+#define OP_NOT		MKOP(8)		/* Unary:  not L */
+#define OP_GUARD	MKOP(9)		/* Unary:  not L, or else! */
+#define OP_XNOP		MKOP(10)	/* Unary:  L, mark region */
+
+union tree {
+	int	tr_op;		/* Operation */
+	struct tree_node {
+		int		tb_op;		/* non-leaf */
+		struct region	*tb_regionp;	/* ptr to containing region */
+		union tree	*tb_left;
+		union tree	*tb_right;
+	} tr_b;
+	struct tree_leaf {
+		int		tu_op;		/* leaf, OP_SOLID */
+		struct region	*tu_regionp;	/* ptr to containing region */
+		struct soltab	*tu_stp;
+		char		*tu_name;	/* full path name of leaf */
+	} tr_a;
+	struct tree_cts {
+		int		tc_op;		/* leaf, OP_REGION */
+		struct region	*tc_pad;	/* unused */
+		struct combined_tree_state	*tc_ctsp;
+	} tr_c;
+};
+/* Things which are in the same place in both structures */
+#define tr_regionp	tr_a.tu_regionp
+
+#define TREE_NULL	((union tree *)0)
 
 /*
  *			A N I M A T E
