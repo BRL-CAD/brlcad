@@ -1074,10 +1074,10 @@ char	*framename;
 			xx = pix_start % width;
 			yy = pix_start / width;
 			fprintf(stderr,
-				"Continuing with pixel %d (%d, %d) [size=%d]\n",
+				"Continuing with pixel %d (%d, %d) [size=%ld]\n",
 				pix_start,
 				xx, yy,
-				sb.st_size );
+				(long)sb.st_size );
 
 			scanline[yy].sl_buf = bu_calloc( width,
 				sizeof(RGBpixel), 

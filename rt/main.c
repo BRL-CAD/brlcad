@@ -292,7 +292,8 @@ char **argv;
 	}
 
 #ifdef HAVE_SBRK
-	fprintf(stderr,"initial dynamic memory use=%d.\n", (char *)sbrk(0)-beginptr );
+	fprintf(stderr,"initial dynamic memory use=%ld.\n",
+		(long)((char *)sbrk(0)-beginptr) );
 	beginptr = (char *) sbrk(0);
 #endif
 
