@@ -189,7 +189,6 @@ BDIRS="bench \
 	libmultispectral \
 	libtermio \
 	libtclcad \
-	libtclhooks \
 	conv \
 	db \
 	rt \
