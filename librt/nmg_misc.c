@@ -2000,9 +2000,10 @@ struct edgeuse	*eu1_first;
 		if( eu1 == eu1_first )  break;
 	}
 out:
-rt_log("nmg_unbreak_edge(eu=x%x, vb=x%x) ret = %d\n", eu1_first, vb, ret);
-	if( *eu1->up.magic_p == NMG_LOOPUSE_MAGIC )
-		nmg_veu( &eu1->up.lu_p->down_hd, &eu1->up.lu_p->l.magic );
+	if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
+		rt_log("nmg_unbreak_edge(eu=x%x, vb=x%x) ret = %d\n",
+			eu1_first, vb, ret);
+	}
 	return ret;
 }
 
