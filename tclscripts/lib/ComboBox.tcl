@@ -21,9 +21,9 @@
 #
 
 
-#itk::usual Display {
-#    keep -tearoff
-#}
+itk::usual ComboBox {
+    keep -tearoff
+}
 
 class cadwidgets::ComboBox {
     inherit itk::Widget
@@ -57,7 +57,9 @@ configbody cadwidgets::ComboBox::text {
 body cadwidgets::ComboBox::constructor {args} {
     itk_component add frame {
 	frame $itk_interior.frame -relief sunken -bd 2
-    } {}
+    } {
+	usual
+    }
 
     itk_component add label {
 	label $itk_interior.label
@@ -84,6 +86,7 @@ body cadwidgets::ComboBox::constructor {args} {
 	menu $itk_interior.menubutton.m
     } {
 	usual
+	keep -tearoff
     }
 
     grid $itk_component(entry) $itk_component(menubutton) \
