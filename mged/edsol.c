@@ -4891,7 +4891,8 @@ sedit()
 
 			if( bot_verts[0] < 0 || bot_verts[1] < 0 )
 			{
-				bu_log( "No BOT edge selected\n" );
+				Tcl_AppendResult( interp, "No BOT edge selected\n", (char *)NULL );
+				mged_print_result( TCL_ERROR );
 				break;
 			}
 			v1 = bot_verts[0];
@@ -4924,6 +4925,56 @@ sedit()
 			VSUB2( diff, new_pt, &bot->vertices[v1*3] );
 			VMOVE( &bot->vertices[v1*3] , new_pt );
 			VADD2( &bot->vertices[v2*3], &bot->vertices[v2*3], diff );
+		}
+		break;
+	case ECMD_BOT_MOVET:
+		{
+			struct rt_bot_internal *bot = (struct rt_bot_internal *)es_int.idb_ptr;
+			int v1, v2, v3;
+			point_t new_pt;
+			vect_t diff;
+
+			RT_BOT_CK_MAGIC( bot );
+
+			if( bot_verts[0] < 0 ||
+				bot_verts[1] < 0 ||
+				bot_verts[2] < 0 )
+			{
+				Tcl_AppendResult( interp, "No BOT triangle selected\n", (char *)NULL );
+				mged_print_result( TCL_ERROR );
+				break;
+			}
+			v1 = bot_verts[0];
+			v2 = bot_verts[1];
+			v3 = bot_verts[2];
+
+			if( es_mvalid )
+				VMOVE( new_pt , es_mparam )
+			else if( inpara == 3 ){
+#ifdef TRY_EDIT_NEW_WAY
+			  if(mged_variables->mv_context){
+			    /* apply es_invmat to convert to real model space */
+			    MAT4X3PNT( new_pt, es_invmat, es_para);
+			  }else{
+			    VMOVE( new_pt , es_para );
+			  }
+#else
+				VMOVE( new_pt , es_para )
+#endif
+			}
+			else if( inpara && inpara != 3 )
+			{
+			  Tcl_AppendResult(interp, "x y z coordinates required for point movement\n", (char *)NULL);
+			  mged_print_result( TCL_ERROR );
+			  break;
+			}
+			else if( !es_mvalid && !inpara )
+				break;
+
+			VSUB2( diff, new_pt, &bot->vertices[v1*3] );
+			VMOVE( &bot->vertices[v1*3] , new_pt );
+			VADD2( &bot->vertices[v2*3], &bot->vertices[v2*3], diff );
+			VADD2( &bot->vertices[v3*3], &bot->vertices[v3*3], diff );
 		}
 		break;
 	case ECMD_BOT_PICKV:
@@ -5184,6 +5235,51 @@ CONST vect_t	mousevec;
 	mged_print_result( TCL_OK );
     }
     break;
+  case ECMD_BOT_PICKT:
+  	{
+		struct rt_bot_internal *bot = (struct rt_bot_internal *)es_int.idb_ptr;
+  		point_t start_pt, tmp;
+  		vect_t dir;
+  		int i;
+  		int v1, v2, v3;
+  		point_t pt1, pt2, pt3;
+  		fastf_t dist;
+
+  		RT_BOT_CK_MAGIC( bot );
+
+  		VSET( tmp, mousevec[X], mousevec[Y], 0.0 );
+  		MAT4X3PNT( start_pt, view_state->vs_view2model, tmp );
+  		VSET( tmp, 0, 0, 1 );
+  		MAT4X3VEC( dir, view_state->vs_view2model, tmp );
+
+  		for( i=0 ; i<bot->num_faces ; i++ )
+  		{
+  			v1 = bot->faces[i*3];
+  			v2 = bot->faces[i*3+1];
+  			v3 = bot->faces[i*3+2];
+  			VMOVE( pt1, &bot->vertices[v1*3] );
+  			VMOVE( pt2, &bot->vertices[v2*3] );
+  			VMOVE( pt3, &bot->vertices[v3*3] );
+
+  			if( bn_isect_ray_tri( &dist, NULL, NULL, NULL, start_pt, dir,
+  				pt1, pt2, pt3 ) )
+  					break;
+  		}
+
+  		if( i < bot->num_faces )
+  		{
+	  		bot_verts[0] = v1;
+	  		bot_verts[1] = v2;
+	  		bot_verts[2] = v3;
+  		}
+  		else
+  		{
+	  		bot_verts[0] = -1;
+	  		bot_verts[1] = -1;
+	  		bot_verts[2] = -1;
+  		}
+  	}
+  	break;
   case ECMD_NMG_EPICK:
     /* XXX Should just leave desired location in es_mparam for sedit() */
     {
@@ -7125,7 +7221,9 @@ double	xangle, yangle, zangle;
  *  XXX This really should use import/export interface!!!  Or be part of it.
  */
 void
-label_edited_solid( pl, max_pl, xform, ip )
+label_edited_solid( num_lines, lines, pl, max_pl, xform, ip )
+int *num_lines;
+point_t *lines;
 struct rt_point_labels	pl[];
 int			max_pl;
 CONST mat_t		xform;
@@ -7571,6 +7669,25 @@ struct rt_db_internal	*ip;
 				bot_verts[0] > -1 )
 			{
 				/* editing a face */
+				point_t mid_pt;
+				point_t p1, p2, p3;
+				fastf_t one_third=1.0/3.0;
+
+				MAT4X3PNT( p1, xform, &bot->vertices[bot_verts[0]*3] );
+				MAT4X3PNT( p2, xform, &bot->vertices[bot_verts[1]*3] );
+				MAT4X3PNT( p3, xform, &bot->vertices[bot_verts[2]*3] );
+				VADD3( mid_pt, p1, p2, p3 );
+
+				VSCALE( mid_pt, mid_pt, one_third );
+				
+/*				POINT_LABEL_STR( mid_pt, "face" ); */
+				*num_lines = 3;
+				VMOVE( lines[0], mid_pt );
+				VMOVE( lines[1], p1 );
+				VMOVE( lines[2], mid_pt );
+				VMOVE( lines[3], p2 );
+				VMOVE( lines[4], mid_pt );
+				VMOVE( lines[5], p3 );
 			}
 			else if( bot_verts[1] > -1 && bot_verts[0] > -1 )
 			{
@@ -8089,6 +8206,9 @@ char **argv;
       break;
     case ID_FGP:
       mip = fgp_menu;
+      break;
+   case ID_BOT:
+      mip = bot_menu;
       break;
     }
 

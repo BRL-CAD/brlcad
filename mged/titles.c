@@ -313,6 +313,8 @@ struct bu_vls *overlay_vls;
 	if(es_edflag >= 0 || (state == ST_O_EDIT && illump->s_Eflag == 0))  {
 		mat_t			xform;
 		struct rt_point_labels	pl[8+1];
+		point_t lines[2*4];	/* up to 4 lines to draw */
+		int num_lines=0;
 
 		if( mged_variables->mv_perspective <= 0)
 		  bn_mat_mul( xform, view_state->vs_model2objview, es_mat );
@@ -323,12 +325,18 @@ struct bu_vls *overlay_vls;
 		  bn_mat_mul( xform, perspective_mat, tmat );
 		}
 
-		label_edited_solid( pl, 8+1, xform, &es_int );
+		label_edited_solid( &num_lines, lines,  pl, 8+1, xform, &es_int );
 
 		DM_SET_FGCOLOR(dmp,
 			       color_scheme->cs_geo_label[0],
 			       color_scheme->cs_geo_label[1],
 			       color_scheme->cs_geo_label[2], 1);
+		for( i=0 ; i<num_lines ; i++ )
+			DM_DRAW_LINE_2D( dmp,
+			   GED2PM1(((int)(lines[i*2][X]*GED_MAX))+15),
+			   GED2PM1(((int)(lines[i*2][Y]*GED_MAX))+15),
+			   GED2PM1(((int)(lines[i*2+1][X]*GED_MAX))+15),
+			   GED2PM1(((int)(lines[i*2+1][Y]*GED_MAX))+15) );
 		for( i=0; i<8+1; i++ )  {
 			if( pl[i].str[0] == '\0' )  break;
 			DM_DRAW_STRING_2D( dmp, pl[i].str,
