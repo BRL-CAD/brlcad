@@ -54,6 +54,9 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "tcl.h"
 #include "tk.h"
 
+
+extern struct bn_table *spectrum; /* from liboptical */
+
 extern void
 rt_spect_curve_to_xyz(
 		      point_t			xyz,
@@ -77,12 +80,10 @@ int	width = 64;				/* Linked with TCL */
 int	height = 64;				/* Linked with TCL */
 int	nwave = 2;				/* Linked with TCL */
 
-char	*basename = "mtherm";
+char	*datafile_basename = "mtherm";
 char	spectrum_name[100];
 
 FBIO	*fbp;
-
-struct bn_table		*spectrum;
 
 struct bn_tabdata	*data;
 
@@ -428,16 +429,16 @@ tcl_appinit(Tcl_Interp *inter)
 	rt_tcl_setup(interp);
 
 	/* Add commands offered by this program */
-	Tcl_CreateCommand(interp, "fb_cursor", tcl_fb_cursor, (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
-	Tcl_CreateCommand(interp, "fb_readpixel", tcl_fb_readpixel, (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
+	Tcl_CreateCommand(interp, "fb_cursor", (Tcl_CmdProc *)tcl_fb_cursor, (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
+	Tcl_CreateCommand(interp, "fb_readpixel", (Tcl_CmdProc *)tcl_fb_readpixel, (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
 
-	Tcl_CreateCommand(interp, "doit", doit, (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
-	Tcl_CreateCommand(interp, "doit1", doit1, (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
+	Tcl_CreateCommand(interp, "doit", (Tcl_CmdProc *)doit, (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
+	Tcl_CreateCommand(interp, "doit1", (Tcl_CmdProc *)doit1, (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
 
-	Tcl_CreateCommand(interp, "getspectval", getspectval, (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
-	Tcl_CreateCommand(interp, "getspectrum", getspectrum, (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
-	Tcl_CreateCommand(interp, "getspectxy", getspectxy, (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
-	Tcl_CreateCommand(interp, "getntsccurves", getntsccurves, (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
+	Tcl_CreateCommand(interp, "getspectval", (Tcl_CmdProc *)getspectval, (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
+	Tcl_CreateCommand(interp, "getspectrum", (Tcl_CmdProc *)getspectrum, (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
+	Tcl_CreateCommand(interp, "getspectxy", (Tcl_CmdProc *)getspectxy, (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
+	Tcl_CreateCommand(interp, "getntsccurves", (Tcl_CmdProc *)getntsccurves, (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
 
 	Tcl_LinkVar( interp, "minval", (char *)&minval, TCL_LINK_DOUBLE );
 	Tcl_LinkVar( interp, "maxval", (char *)&maxval, TCL_LINK_DOUBLE );
@@ -613,7 +614,7 @@ main(int argc, char **argv)
 	if( argc > 1 && strcmp(argv[1], "-t") == 0 )  {
 	}
 
-	basename = argv[optind];
+	datafile_basename = argv[optind];
 
 	first_command = "doit1 42";
 
@@ -623,7 +624,7 @@ main(int argc, char **argv)
 	fb_view( fbp, width/2, height/2, fb_getwidth(fbp)/width, fb_getheight(fbp)/height );
 
 	/* Read spectrum definition */
-	sprintf( spectrum_name, "%s.spect", basename );
+	sprintf( spectrum_name, "%s.spect", datafile_basename );
 	spectrum = (struct bn_table *)bn_table_read( spectrum_name );
 	if( spectrum == NULL )  {
 		rt_bomb("Unable to read spectrum\n");
@@ -638,8 +639,8 @@ main(int argc, char **argv)
 	atmosphere = bn_tabdata_resample_max( spectrum, atmosphere_orig );
 
 	/* Allocate and read 2-D spectrum array */
-	data = bn_tabdata_binary_read( basename, width*height, spectrum );
-	if( !data )  bu_bomb("bn_tabdata_binary_read() of basename failed\n");
+	data = bn_tabdata_binary_read( datafile_basename, width*height, spectrum );
+	if( !data )  bu_bomb("bn_tabdata_binary_read() of datafile_basename failed\n");
 
 	/* Allocate framebuffer image buffer */
 	pixels = (unsigned char *)bu_malloc( width * height * 3, "pixels[]" );
