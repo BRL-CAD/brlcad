@@ -71,10 +71,10 @@ CONST struct db_tree_state	rt_initial_tree_state = {
 	}
 #endif
 	,
-	{1.0, 0.0, 0.0, 0.0},
-	{0.0, 1.0, 0.0, 0.0},
-	{0.0, 0.0, 1.0, 0.0},
-	{0.0, 0.0, 0.0, 1.0},
+	{1.0, 0.0, 0.0, 0.0,
+	0.0, 1.0, 0.0, 0.0,
+	0.0, 0.0, 1.0, 0.0,
+	0.0, 0.0, 0.0, 1.0},
 	REGION_NON_FASTGEN,		/* ts_is_fastgen */
 	0,				/* ts_stop_at_regions */
 	NULL,				/* ts_region_start_func */
