@@ -156,23 +156,31 @@ extern double   modf();
  */
 #if USE_PROTOTYPES
 extern void	port_setlinebuf( FILE *fp );
-#if !defined(__stardent) && !defined(__bsdi__)
+#if !defined(HAVE_GETOPT_DECL)
 extern int	getopt( int argc, char **argv, char *optstr );
 #endif
+#if !defined(HAVE_REGEX_DECL)
 extern char	*re_comp( char *s );
 extern int	re_exec( char *s );
+#endif
 
 #else
 extern void	port_setlinebuf();
+#if !defined(HAVE_GETOPT_DECL)
 extern int	getopt();
+#endif
+#if !defined(HAVE_REGEX_DECL)
 extern char	*re_comp();
 extern int	re_exec();
 #endif
+#endif
 
+#if !defined(HAVE_GETOPT_DECL)
 /* getopt munchies */
 extern char	*optarg;
 extern int	optind;
 extern int	opterr;
+#endif
 
 /* sys_errlist and errno */
 #ifndef HAVE_SYS_ERRLIST_DECL
