@@ -216,6 +216,27 @@ set -S2 "/bin/sh"
 #	define	STANDARD_LIBES	-lm
 #endif
 
+#ifdef ipsc860
+/*	iPSC/860 Hypercube running NX/2 */
+/*	This one is cross-compiled from another machine.  There are no */
+/*	useful cpp symbols other than i860, so we have to hard wire in */
+/*	the above define to get this version (and perhaps undef symbols */
+/*	for the host machine) */
+#	undef	ipsc860
+#	define	MTYPE	ipsc
+#	define	HAS_TCP	0
+#	define	LIBRT_TIMER	timerunix
+#	define	CC	icc -node -Uunix -Dipsc860
+#	define	CC_OPTS
+#	define	OPTIMIZER	/**/
+#	define	AR ar860
+#	define	LIBPKG_CONFIG
+#	define	LIBFB_OBJS
+#	define	LIBFB_CONFIG
+#	define	MGED_OBJS
+#	define	MGED_CONFIG
+#endif
+
 #if defined(alliant) && !defined(i860)
 /*	Alliant FX/8.  Compile all programs for the CEs */
 #	undef	fx
