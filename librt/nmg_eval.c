@@ -247,11 +247,15 @@ struct shell		*dest;
 register struct shell	*src;
 register struct vertexuse	*vu;
 {
-
+	struct loopuse *lu;
 	NMG_CK_VERTEXUSE( vu );
 	NMG_CK_VERTEX( vu->v_p );
 
-	(void)nmg_mlv( &(dest->l.magic), vu->v_p, OT_SAME );
+	lu = nmg_mlv( &(dest->l.magic), vu->v_p, OT_SAME );
+	if (vu->v_p->vg_p) {
+		NMG_CK_VERTEX_G(vu->v_p->vg_p);
+		nmg_loop_g(lu->l_p);
+	}
 	nmg_kvu( vu );
 }
 
