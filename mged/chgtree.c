@@ -269,7 +269,7 @@ f_comb()
 	char	oper;
 
 	/* Check for odd number of arguments */
-	if( !(numargs & 01) )  {
+	if( numargs & 01 )  {
 		(void)printf("error in number of args!\n");
 		return;
 	}
@@ -277,11 +277,8 @@ f_comb()
 	/* Save combination name, for use inside loop */
 	comb_name = cmd_args[1];
 
-	/* Fake up first operation as a UNION, to be tidy */
-	cmd_args[1] = "u";
-
 	/* Get operation and solid name for each solid */
-	for( i = 1; i < numargs; i += 2 )  {
+	for( i = 2; i < numargs; i += 2 )  {
 		if( cmd_args[i][1] != '\0' )  {
 			(void)printf("bad operation: %s skip member: %s\n",
 				cmd_args[i], cmd_args[i+1] );
