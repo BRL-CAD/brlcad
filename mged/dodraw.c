@@ -1171,3 +1171,224 @@ char	**argv;
 	db_free_external( &ext );
 	return CMD_OK;					/* OK */
 }
+
+/* eval [opts] new_obj obj1 op obj2 op obj3 ...
+ *
+ *	tesselates each operand object, then performs
+ *	the Boolean evaluation, storing result in
+ *	new_obj
+ */
+int
+f_eval( argc, argv )
+int	argc;
+char	**argv;
+{
+	int			i;
+	register int		c;
+	int			ncpu;
+	int			triangulate;
+	char			*newname;
+	struct rt_external	ext;
+	struct rt_db_internal	intern;
+	struct directory	*dp;
+	struct nmgregion	*r;
+	union tree		*tmp_tree;
+	char			op;
+	char			*edit_args[2];
+	int			ngran;
+
+	RT_CHECK_DBI( dbip );
+
+	rt_log("Please note that the NMG library used by this command is experimental.\n");
+	rt_log("A production implementation will exist in the maintenance release.\n");
+
+	/* Establish tolerances */
+	mged_initial_tree_state.ts_ttol = &mged_ttol;
+	mged_initial_tree_state.ts_tol = &mged_tol;
+
+	mged_ttol.magic = RT_TESS_TOL_MAGIC;
+	mged_ttol.abs = mged_abs_tol;
+	mged_ttol.rel = mged_rel_tol;
+	mged_ttol.norm = mged_nrm_tol;
+
+	/* Initial vaues for options, must be reset each time */
+	ncpu = 1;
+	triangulate = 0;
+
+	/* Parse options. */
+	optind = 1;		/* re-init getopt() */
+	while( (c=getopt(argc,argv,"tP:")) != EOF )  {
+		switch(c)  {
+		case 'P':
+			ncpu = atoi(optarg);
+			break;
+		case 't':
+			triangulate = 1;
+			break;
+		default:
+			rt_log("option '%c' unknown\n", c);
+			break;
+		}
+	}
+	argc -= optind;
+	argv += optind;
+
+	newname = argv[0];
+	argv++;
+	argc--;
+
+	if( db_lookup( dbip, newname, LOOKUP_QUIET ) != DIR_NULL )  {
+		rt_log("error: solid '%s' already exists, aborting\n", newname);
+		return CMD_BAD;
+	}
+
+	if( argc < 2 )
+	{
+		rt_log( "Nothing to evaluate!!!\n" );
+		return CMD_BAD;
+	}
+
+	rt_log("eval:  tessellating primitives with tolerances a=%g, r=%g, n=%g\n",
+		mged_abs_tol, mged_rel_tol, mged_nrm_tol );
+	mged_facetize_tree = (union tree *)0;
+  	mged_nmg_model = nmg_mm();
+	mged_initial_tree_state.ts_m = &mged_nmg_model;
+
+	op = ' ';
+	tmp_tree = (union tree *)NULL;
+
+	while( argc )
+	{
+		i = db_walk_tree( dbip, 1, (CONST char **)argv,
+			ncpu,
+			&mged_initial_tree_state,
+			0,			/* take all regions */
+			mged_facetize_region_end,
+			nmg_booltree_leaf_tess );
+
+		if( i < 0 )  {
+			rt_log("eval: error in db_walk_tree()\n");
+			/* Destroy NMG */
+			nmg_km( mged_nmg_model );
+			return CMD_BAD;
+		}
+		argc--;
+		argv++;
+
+		if( tmp_tree && op != ' ' )
+		{
+			union tree *new_tree;
+
+			GETUNION( new_tree, tree );
+
+			new_tree->magic = RT_TREE_MAGIC;
+			new_tree->tr_b.tb_regionp = REGION_NULL;
+			new_tree->tr_b.tb_left = tmp_tree;
+			new_tree->tr_b.tb_right = mged_facetize_tree;
+
+			switch( op )
+			{
+				case 'u':
+				case 'U':
+					new_tree->tr_op = OP_UNION;
+					break;
+				case '-':
+					new_tree->tr_op = OP_SUBTRACT;
+					break;
+				case '+':
+					new_tree->tr_op = OP_INTERSECT;
+					break;
+				default:
+					rt_log( "Unrecognized operator: (%c)\n" , op );
+					rt_log( "Aborting\n" );
+					nmg_km( mged_nmg_model );
+					db_free_tree( mged_facetize_tree );
+					return CMD_BAD;
+					break;
+			}
+
+			tmp_tree = new_tree;
+			mged_facetize_tree = (union tree *)NULL;
+		}
+		else if( !tmp_tree && op == ' ' )
+		{
+			/* just starting out */
+			tmp_tree = mged_facetize_tree;
+			mged_facetize_tree = (union tree *)NULL;
+		}
+
+		if( argc )
+		{
+			op = *argv[0];
+			argc--;
+			argv++;
+		}
+		else
+			op = ' ';
+
+	}
+	/* Now, evaluate the boolean tree into ONE region */
+	rt_log("eval:  evaluating boolean expressions\n");
+
+	r = nmg_booltree_evaluate( tmp_tree, &mged_tol );
+	if( r == 0 )  {
+		rt_log("eval:  no resulting region, aborting\n");
+		nmg_km( mged_nmg_model );
+		return CMD_BAD;
+	}
+	/* New region remains part of this nmg "model" */
+	NMG_CK_REGION( r );
+
+	/* Free boolean tree */
+	db_free_tree( tmp_tree );
+
+	/* Triangulate model, if requested */
+	if( triangulate )
+	{
+		rt_log("eval:  triangulating resulting object\n" );
+		nmg_triangulate_model( mged_nmg_model , &mged_tol );
+	}
+
+	rt_log("eval:  converting NMG to database format\n");
+
+	/* Export NMG as a new solid */
+	RT_INIT_DB_INTERNAL(&intern);
+	intern.idb_type = ID_NMG;
+	intern.idb_ptr = (genptr_t)mged_nmg_model;
+	mged_nmg_model = (struct model *)NULL;
+
+	RT_INIT_EXTERNAL( &ext );
+
+	/* Scale change on export is 1.0 -- no change */
+	if( rt_functab[ID_NMG].ft_export( &ext, &intern, 1.0 ) < 0 )  {
+		rt_log("eval(%s):  solid export failure\n",
+			newname );
+		if( intern.idb_ptr )  rt_functab[ID_NMG].ft_ifree( &intern );
+		db_free_external( &ext );
+		return CMD_BAD;				/* FAIL */
+	}
+	rt_functab[ID_NMG].ft_ifree( &intern );
+
+	ngran = (ext.ext_nbytes + sizeof(union record)-1)/sizeof(union record);
+	if( (dp=db_diradd( dbip, newname, -1, ngran, DIR_SOLID)) == DIR_NULL ||
+	    db_alloc( dbip, dp, ngran ) < 0 )  {
+	    	ALLOC_ERR;
+		return CMD_BAD;
+	}
+
+	if( db_put_external( &ext, dp, dbip ) < 0 )  {
+		db_free_external( &ext );
+		ERROR_RECOVERY_SUGGESTION;
+		WRITE_ERR;
+		return CMD_BAD;
+	}
+	rt_log("eval:  wrote %.2f Kbytes to database\n",
+		ext.ext_nbytes / 1024.0 );
+	db_free_external( &ext );
+
+
+	/* draw the new solid */
+	edit_args[0] = (char *)NULL;
+	edit_args[1] = newname;
+	return( f_edit( 2, edit_args ) );
+}

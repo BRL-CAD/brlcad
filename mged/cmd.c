@@ -281,6 +281,8 @@ static struct funtab funtab[] = {
 	f_edgedir, 3, 4,
 "ev",	"[-w] [-n] [-P#] [-T] <objects>", "evaluate objects via NMG tessellation",
 	f_ev, 2, MAXARGS,
+"eval",	"[-t] [-P#] new_obj obj1 op obj2 op obj3 op ...", "evaluate objects via NMG Booleans",
+	f_eval, 2, MAXARGS,
 "eqn", "A B C", "planar equation coefficients",
 	f_eqn, 4, 4,
 "extrude", "#### distance", "extrude dist from face",
