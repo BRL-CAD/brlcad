@@ -36,6 +36,90 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 static void 	vertex_neighborhood RT_ARGS((struct ray_data *rd, struct vertexuse *vu_p, struct hitmiss *myhit));
 RT_EXTERN(void	nmg_isect_ray_model, (struct ray_data *rd));
 
+/* XXX move to ./nmg_rt.h */
+#define NMG_RAY_STATE_ANY	8
+
+CONST char *
+nmg_rt_inout_str( code )
+int	code;
+{
+	switch(code) {
+	case HMG_HIT_IN_IN:
+		return("IN_IN");
+	case HMG_HIT_IN_OUT:
+		return("IN_OUT");
+	case HMG_HIT_OUT_IN:
+		return("OUT_IN");
+	case HMG_HIT_OUT_OUT:
+		return("OUT_OUT");
+	case HMG_HIT_IN_ON:
+		return("IN_ON");
+	case HMG_HIT_ON_IN:
+		return("ON_IN");
+	case HMG_HIT_OUT_ON:
+		return("OUT_ON");
+	case HMG_HIT_ON_OUT:
+		return("ON_OUT");
+	case HMG_HIT_ANY_ANY:
+		return("ANY_ANY");
+	}
+	return("?_?\n");
+}
+
+CONST char *
+nmg_rt_state_str( code )
+int	code;
+{
+	switch(code) {
+	case NMG_RAY_STATE_INSIDE:
+		return "RS_INSIDE";
+	case NMG_RAY_STATE_ON:
+		return "RS_ON";
+	case NMG_RAY_STATE_OUTSIDE:
+		return "RS_OUTSIDE";
+	case NMG_RAY_STATE_ANY:
+		return "RS_ANY";
+	}
+	return "RS_UNKNOWN";
+}
+
+/*
+ *				N M G _ C K _ H I T M I S S _ L I S T
+ *
+ *  Ensure that the ray makes a valid set of state transitions.
+ */
+void
+nmg_ck_hitmiss_list( hd )
+CONST struct rt_list	*hd;
+{
+	struct hitmiss	*hmp;
+	int		state = NMG_RAY_STATE_OUTSIDE;
+	int		istate;
+	int		ostate;
+
+	for( RT_LIST_FOR( hmp, hitmiss, hd ) )  {
+		NMG_CK_HITMISS(hmp);
+
+		/* Skip hits on non-3-manifolds */
+		if( hmp->in_out == HMG_HIT_ANY_ANY )  continue;
+
+		istate = HMG_INBOUND_STATE(hmp);
+		ostate = HMG_OUTBOUND_STATE(hmp);
+		if( state != istate )  {
+			rt_log("ray state was=%s, transition=%s (istate=%s)\n",
+				nmg_rt_state_str(state),
+				nmg_rt_inout_str(hmp->in_out),
+				nmg_rt_state_str(istate) );
+			rt_bomb("nmg_ck_hitmiss_list() NMG ray-tracer bad in/out state transition\n");
+		}
+		state = ostate;
+	}
+	if( state != NMG_RAY_STATE_OUTSIDE )  {
+		rt_log("ray ending state was %s, should have been RS_OUT\n", nmg_rt_state_str(state));
+		rt_bomb("nmg_ck_hitmiss_list() NMG ray-tracer bad ending state\n");
+	}
+}
+
 /* Plot a faceuse and a line between pt and plane_pt */
 static int plot_file_number=0;
 
@@ -130,33 +214,6 @@ struct vertexuse *vu;
 {
 }
 
-CONST char *
-nmg_rt_inout_str( code )
-int	code;
-{
-	switch(code) {
-	case HMG_HIT_IN_IN:
-		return("IN_IN");
-	case HMG_HIT_IN_OUT:
-		return("IN_OUT");
-	case HMG_HIT_OUT_IN:
-		return("OUT_IN");
-	case HMG_HIT_OUT_OUT:
-		return("OUT_OUT");
-	case HMG_HIT_IN_ON:
-		return("IN_ON");
-	case HMG_HIT_ON_IN:
-		return("ON_IN");
-	case HMG_HIT_OUT_ON:
-		return("OUT_ON");
-	case HMG_HIT_ON_OUT:
-		return("ON_OUT");
-	case HMG_HIT_ANY_ANY:
-		return("ANY_ANY");
-	}
-	return("?_?\n");
-}
-
 void
 nmg_rt_print_hitmiss(a_hit)
 struct hitmiss *a_hit;
@@ -168,7 +225,7 @@ struct hitmiss *a_hit;
 		a_hit->hit.hit_point[1],
 		a_hit->hit.hit_point[2],
 		rt_identify_magic(*(long *)a_hit->hit.hit_private),
-		*(long *)a_hit->hit.hit_private
+		a_hit->hit.hit_private
 	);
 	rt_log("\tstate:%s", nmg_rt_inout_str(a_hit->in_out));
 
@@ -2283,6 +2340,13 @@ struct rt_tol *tol;
 	/* count the number of hits */
 	if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT)) {
 		rt_log("%s[%d]: shell Hits:\n", __FILE__, __LINE__);
+		for( RT_LIST_FOR( a_hit, hitmiss, &rd.rd_hit ) )  {
+			if (a_hit->hit.hit_dist >= 0.0)
+				rt_log("Positive dist hit\n");
+			else
+				rt_log("Negative dist hit\n");
+			nmg_rt_print_hitmiss(a_hit);
+		}
 	}
 
 	if( (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT)) &&
@@ -2291,17 +2355,16 @@ struct rt_tol *tol;
 		nmg_pl_hitmiss_list( "shell-ray", num++, &rd.rd_hit, rp );
 	}
 
+	/* After potentially having printed it, now check it */
+	nmg_ck_hitmiss_list( &rd.rd_hit );
+
+	/* Count and dequeue the list */
+	/* XXX This is an overly simplistic algorithm */
 	while (RT_LIST_WHILE(a_hit, hitmiss, &rd.rd_hit)) {
 		RT_LIST_DEQUEUE( &a_hit->l );
-		if (a_hit->hit.hit_dist >= 0.0) {
+		if ( a_hit->in_out != HMG_HIT_ANY_ANY &&
+		     a_hit->hit.hit_dist >= 0.0) {
 			hit_count++;
-			if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT)) {
-				rt_log("Positive direction hit\n");
-				nmg_rt_print_hitmiss(a_hit);
-			}
-		} else if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT)) {
-			rt_log("Negative direction hit\n");
-			nmg_rt_print_hitmiss(a_hit);
 		}
 		rt_free( (char *)a_hit, "Hit list hitmiss struct" );
 	}
