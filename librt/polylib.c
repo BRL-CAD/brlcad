@@ -7,15 +7,11 @@
 poly	Zpoly = { 0, 0.0 };
 
 /*
-	polyMul -- multiply two polynomials
-
-
-*/
-
+ *	polyMul -- multiply two polynomials
+ */
 poly *
 polyMul(mult1,mult2,product)
-poly	*mult1, *mult2, *product;
-
+register poly	*mult1, *mult2, *product;
 {
 	register int		ct1, ct2;
 
@@ -38,16 +34,12 @@ poly	*mult1, *mult2, *product;
 
 
 /*
-	polyScal -- scale a polynomial
-
-
-*/
-
+ *	polyScal -- scale a polynomial
+ */
 poly *
 polyScal(eqn,factor)
-poly	*eqn;
+register poly	*eqn;
 double	factor;
-
 {
 	register int		cnt;
 
@@ -59,18 +51,13 @@ double	factor;
 
 
 /*
-	polyAdd -- add two polynomials
-
-
-
-*/
-
+ *	polyAdd -- add two polynomials
+ */
 poly *
 polyAdd(poly1,poly2,sum)
-poly	*poly1, *poly2, *sum;
-
+register poly	*poly1, *poly2, *sum;
 {
-	poly			tmp;
+	static poly		tmp;
 	register int		i, offset;
 
 	offset = Abs(poly1->dgr - poly2->dgr);
@@ -97,18 +84,13 @@ poly	*poly1, *poly2, *sum;
 
 
 /*
-	polySub -- subtract two polynomials
-
-
-
-*/
-
+ *	polySub -- subtract two polynomials
+ */
 poly *
 polySub(poly1,poly2,diff)
-poly	*poly1, *poly2, *diff;
-
+register poly	*poly1, *poly2, *diff;
 {
-	poly			tmp;
+	static poly		tmp;
 	register int		i, offset;
 
 	offset = Abs(poly1->dgr - poly2->dgr);
@@ -142,10 +124,10 @@ poly	*poly1, *poly2, *diff;
  */
 void
 synDiv(dvdend,dvsor,quo,rem)
-poly	*dvdend, *dvsor, *quo, *rem;
-
+register poly	*dvdend, *dvsor, *quo, *rem;
 {
- 	int	qcnt, div, rno;
+	register int	div;
+	register int	n;
 
 	*quo = *dvdend;
 	*rem = Zpoly;
@@ -155,31 +137,30 @@ poly	*dvdend, *dvsor, *quo, *rem;
 	if ((rem->dgr = dvsor->dgr - 1) > dvdend->dgr)
 		rem->dgr = dvdend->dgr;
 
-	for ( qcnt=0; qcnt <= quo->dgr; ++qcnt){
-		quo->cf[qcnt] /= dvsor->cf[0];
+	for ( n=0; n <= quo->dgr; ++n){
+		quo->cf[n] /= dvsor->cf[0];
 		for ( div=1; div <= dvsor->dgr; ++div){
-			quo->cf[qcnt+div] -= quo->cf[qcnt] * dvsor->cf[div];
+			quo->cf[n+div] -= quo->cf[n] * dvsor->cf[div];
 		}
 	}
-	for ( rno=1; rno<=(rem->dgr+1); ++rno){
-		rem->cf[rno-1] = quo->cf[quo->dgr+rno];
-		quo->cf[quo->dgr+rno] = 0;
+	for ( n=1; n<=(rem->dgr+1); ++n){
+		rem->cf[n-1] = quo->cf[quo->dgr+n];
+		quo->cf[quo->dgr+n] = 0;
 	}
-	return;
 }
 
 
 /*	>>>  q u a d r a t i c ( )  <<<
+ *
  *	Uses the quadratic formula to find the roots (in 'complex' form)
  *	of any quadratic equation with real coefficients.
  */
 void
 quadratic(quad,root1,root2)
-poly		*quad;
-complex		*root1, *root2;
-
+register poly		*quad;
+register complex	*root1, *root2;
 {
-	double		discrim, denom;
+	static double	discrim, denom;
 
 	discrim = quad->cf[1]*quad->cf[1] - 4.0* quad->cf[0]*quad->cf[2];
 	denom = 2.0* quad->cf[0];
@@ -196,23 +177,20 @@ complex		*root1, *root2;
 		root2->re = -quad->cf[1] / denom;
 		root2->im = -sqrt(discrim) / denom;
 	}
-	return;
 }
 
-
+/*
+ *			P R N T P O L Y
+ */
 void
 prntpoly(eqn)
-poly	*eqn;
-
+register poly	*eqn;
 {
-	int	n;  /*  trivial loop counter  */
+	register int	n;
 
 	printf("\nDegree of polynomial = %d\n",eqn->dgr);
 	for ( n=0; n<=eqn->dgr; ++n){
 		printf(" %g ",eqn->cf[n]);
 	}
 	printf("\n");
-
-	return;
 }
-
