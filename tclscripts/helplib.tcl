@@ -40,11 +40,10 @@ set helplib_data(wdb_attr)        {{ {set|get|show|rm|append} object [args]}
          The "get" subcommand retrieves and displays the specified attributes.
          The "rm" subcommand deletes the specified attributes.
          The "show" subcommand does a "get" and displays the results in a user readable format.}   }
-set helplib_data(dbbinary)		{{(-i major_type minor_type | -o) dest source}
+set helplib_data(wdb_binary)		{{(-i|-o) major_type minor_type dest source}
                 {manipulate opaque objects.
                  Must specify one of -i (for creating or adjusting objects (input))
                  or -o for extracting objects (output).
-                 For input, the major and minor types must also be specified.
                  If the major type is "u" the minor type must be one of:
                       "f" -> float
                       "d" -> double
@@ -59,7 +58,6 @@ set helplib_data(dbbinary)		{{(-i major_type minor_type | -o) dest source}
                  For input, source is a file name and dest is an object name.
                  For output source is an object name and dest is a file name.
                  Only uniform array binary objects (major_type=u) are currently supported}}
-set helplib_data(wdb_binary)            $helplib_data(dbbinary)
 set helplib_data(wdb_bot_face_sort)     {{triangles_per_piece bot_solid1 [bot_solid2 bot_solid3 ...]} {sort the facelist of BOT solids to optimize ray trace performance for a particular number of triangles per raytrace piece }}
 set helplib_data(wdb_bot_decimate)      {{ -c maximum_chord_error -n maximum_normal_error -e minimum_edge_length new_bot_name current_bot_name} {Uses edge decimation to reduce the number of triangles in the specified BOT while keeping within the specified constraints}}
 set helplib_data(wdb_cat)		{{<objects>} {list attributes (brief)}}
@@ -100,7 +98,7 @@ set helplib_data(wdb_paths)		{{pattern}	{lists all paths matching input path}}
 set helplib_data(wdb_prcolor)		{{} {print color table}}
 set helplib_data(wdb_push)		{{object(s)} {push object(s) path transformations to solids}}
 set helplib_data(wdb_put)		{{object type attrs} {create a database object}}
-set helplib_data(wdb_region)		{{op object(s)} {create or append objects to a region}}
+set helplib_data(wdb_region)		{{object(s)} {create or append objects to a region}}
 set helplib_data(wdb_remove)		{{comb object(s)} {remove members from a combination}}
 set helplib_data(wdb_reopen)		{{[filename]} {open a database}}
 set helplib_data(wdb_rt_gettrees)	{{procname [-i] [-u] treetops...} {create an rt instance object}}
@@ -173,6 +171,7 @@ set helplib_data(dgo_rt)		{{[options] [-- objects]}	{do raytrace of view or spec
 set helplib_data(dgo_rtabort)		{{} {abort the associated raytraces}}
 set helplib_data(dgo_rtcheck)		{{[options]}	{check for overlaps in current view}}
 set helplib_data(dgo_rtedge)		{{[options] [-- objects]}	{do edge rendering of view or specified objects}}
+set helplib_data(dgo_shaded_mode)	{{[0|1|2]}	{get/set shaded mode}}
 set helplib_data(dgo_vdraw)		{{write|insert|delete|read|send|params|open|vlist [args]}	{Expermental drawing (cnuzman)}}
 set helplib_data(dgo_who)		{{[r(eal)|p(hony)|b(oth)]}	{list the top-level objects currently being displayed}}
 set helplib_data(dgo_zap)		{{} {erase all objects from the display}}

@@ -165,6 +165,9 @@ MGED_EXTERN(int f_set, (ClientData clientData, Tcl_Interp *interp, int argc, cha
 MGED_EXTERN(int cmd_setview, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_share, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_shader, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
+
+MGED_EXTERN(int cmd_shaded_mode, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
+
 MGED_EXTERN(int cmd_shells, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int cmd_showmats, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int cmd_size, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));

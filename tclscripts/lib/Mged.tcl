@@ -88,6 +88,7 @@ class Mged {
     public method report {args}
     public method rm {args}
     public method rt_gettrees {args}
+    public method shaded_mode {args}
     public method shells {args}
     public method showmats {args}
     public method summary {args}
@@ -434,6 +435,10 @@ body Mged::label {args} {
 
 body Mged::r {args} {
     eval $db r $args
+}
+
+body Mged::shaded_mode {args} {
+    eval $db shaded_mode $args
 }
 
 body Mged::report {args} {

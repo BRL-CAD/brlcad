@@ -397,6 +397,9 @@ static struct cmdtab cmdtab[] = {
 	{"setview", cmd_setview},
 	{"shader", f_shader},
 	{"share", f_share},
+#if USE_SURVICE_MODS
+	{"shaded_mode", cmd_shaded_mode},
+#endif
 	{"shells", cmd_shells},
 	{"showmats", cmd_showmats},
 	{"sill",		be_s_illuminate},
@@ -3407,3 +3410,31 @@ cmd_bot_decimate( ClientData	clientData,
 	CHECK_DBI_NULL;
 	return wdb_bot_decimate_cmd( wdbp, interp, argc, argv );
 }
+
+#if USE_SURVICE_MODS
+int
+cmd_shaded_mode(ClientData	clientData,
+		Tcl_Interp	*interp,
+		int     	argc,
+		char    	**argv)
+{
+	/* check to see if we have -a or -auto */
+	if (argc == 3 && 
+	    argv[1][0] == '-' &&
+	    argv[1][1] == 'a') {
+	  struct bu_vls vls;
+
+	  /* set zbuffer, zclip and lighting for all */
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "mged_shaded_mode_helper %s", argv[2]);
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
+
+	  /* skip past -a */
+	  --argc;
+	  ++argv;
+	}
+
+	return dgo_shaded_mode_cmd(dgop, interp, argc, argv);
+}
+#endif

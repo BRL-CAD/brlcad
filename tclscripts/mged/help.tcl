@@ -55,7 +55,6 @@ set mged_help_data(dall)	$helplib_data(dgo_erase_all)
 set mged_help_data(db)		{{command}	{database manipulation routines}}
 set mged_help_data(db_glob)	{{cmd_string}	{globs cmd_string against the MGED database
          resulting in an expanded command string}}
-set mged_help_data(dbbinary)    $helplib_data(dbbinary)
 set mged_help_data(dbconcat)	$helplib_data(wdb_concat)
 set mged_help_data(dbfind)	$helplib_data(wdb_find)
 set mged_help_data(dbupgrade)	{{[-f|-help]}	{upgrade your database to the current format}}
@@ -76,7 +75,7 @@ set mged_help_data(e)		$helplib_data(dgo_draw)
 set mged_help_data(em)          {{[-C#/#/#] value [value value...]} {display all regions with attribute "MUVES_Component" set to any of the specified values}}
 set mged_help_data(eac)		{{air_code(s)}	{display all regions with given air code}}
 set mged_help_data(echo)	{{[text]}	{echo arguments back}}
-set mged_help_data(edcodes)	{{[-i|-r] object(s)}	{edit region ident codes, possibly sorted by ident or region}}
+set mged_help_data(edcodes)	{{object(s)}	{edit region ident codes}}
 set mged_help_data(edcolor)	{{}	{text edit color table}}
 set mged_help_data(edcomb)	{{combname Regionflag regionid air los [material]}	{edit combination record info}}
 set mged_help_data(edgedir)	{{[delta_x delta_y delta_z]|[rot fb]}	{define direction of ARB edge being moved}}
@@ -209,6 +208,7 @@ set mged_help_data(sca)		$helplib_data(vo_sca)
 set mged_help_data(sed)		{{<path>}	{solid-edit named solid}}
 set mged_help_data(setview)	$helplib_data(vo_setview)
 set mged_help_data(shader)	{{comb {shader_name {keyword value keyword value ...}}}	{assign shader using Tcl list format}}
+set mged_help_data(shaded_mode)	{{[-a |-auto] [0|1|2]}	{get/set shaded mode}}
 set mged_help_data(shells)	$helplib_data(wdb_shells)
 set mged_help_data(showmats)	$helplib_data(wdb_showmats)
 set mged_help_data(size)	$helplib_data(vo_size)
@@ -241,6 +241,7 @@ set mged_help_data(vquery_ray)	{{x y}  	{trace a single ray from x y}}
 #set mged_help_data(vrmgr)	{{host {master|slave|overview}}	{link with Virtual Reality manager}}
 set mged_help_data(vrot)	$helplib_data(vo_vrot)
 set mged_help_data(wcodes)	{{filename object(s)}	{write region ident codes to filename}}
+set mged_help_data(wdb_binary)	$helplib_data(wdb_binary)
 set mged_help_data(whatid)	helplib_data(wdb_whatid)
 set mged_help_data(whichair)	helplib_data(wdb_whichair)
 set mged_help_data(whichid)	helplib_data(wdb_whichid)

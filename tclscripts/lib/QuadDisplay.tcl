@@ -108,6 +108,10 @@ class QuadDisplay {
     public method detach_drawable {dg}
     public method detach_drawableall {dg}
 
+    public method lightall {args}
+    public method zbufferall {args}
+    public method zclipall {args}
+
     public method ? {}
     public method apropos {key}
     public method getUserCmds {}
@@ -511,12 +515,33 @@ body QuadDisplay::zclip {args} {
     eval $itk_component($itk_option(-pane)) zclip $args
 }
 
+body QuadDisplay::zclipall {args} {
+    eval $itk_component(ul) zclip $args
+    eval $itk_component(ur) zclip $args
+    eval $itk_component(ll) zclip $args
+    eval $itk_component(lr) zclip $args
+}
+
 body QuadDisplay::zbuffer {args} {
     eval $itk_component($itk_option(-pane)) zbuffer $args
 }
 
+body QuadDisplay::zbufferall {args} {
+    eval $itk_component(ul) zbuffer $args
+    eval $itk_component(ur) zbuffer $args
+    eval $itk_component(ll) zbuffer $args
+    eval $itk_component(lr) zbuffer $args
+}
+
 body QuadDisplay::light {args} {
     eval $itk_component($itk_option(-pane)) light $args
+}
+
+body QuadDisplay::lightall {args} {
+    eval $itk_component(ul) light $args
+    eval $itk_component(ur) light $args
+    eval $itk_component(ll) light $args
+    eval $itk_component(lr) light $args
 }
 
 body QuadDisplay::perspective {args} {

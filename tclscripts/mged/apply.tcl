@@ -74,3 +74,34 @@ proc mged_apply_all { win cmd } {
 
     return $msg
 }
+
+## - mged_shaded_mode_helper
+#
+# Automatically set GUI state for shaded_mode.
+#
+proc mged_shaded_mode_helper {val} {
+    global mged_gui
+    global mged_players
+
+    if {$val < 0 || 2 < $val} {
+	# do nothing
+	return
+    }
+
+    # the gui variables must be either 0 or 1
+    if {$val} {
+	set val 1
+    } else {
+	set val 0
+    }
+
+    foreach id $mged_players {
+	set mged_gui($id,zbuffer) $val
+	set mged_gui($id,zclip) $val
+	set mged_gui($id,lighting) $val
+
+	mged_apply_local $id "dm set zbuffer $val; dm set zclip $val; dm set lighting $val"
+    }
+
+    return ""
+}

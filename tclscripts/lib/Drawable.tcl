@@ -47,6 +47,7 @@ class Drawable {
     public method rtabort {args}
     public method rtcheck {args}
     public method rtedge {args}
+    public method shaded_mode {args}
     public method vdraw {args}
     public method who {args}
     public method zap {args}
@@ -160,6 +161,10 @@ body Drawable::rtedge {args} {
     eval $dg rtedge $args
 }
 
+body Drawable::shaded_mode {args} {
+    eval $dg shaded_mode $args
+}
+
 body Drawable::vdraw {args} {
     eval $dg vdraw $args
 }
@@ -211,6 +216,7 @@ body Drawable::help_init {} {
     $help add rtabort		{{} {abort the associated raytraces}}
     $help add rtcheck		{{[options]} {check for overlaps in current view}}
     $help add rtedge		{{[options] [-- objects]} {do raytrace of view or specified objects yielding only edges}}
+    $help add shaded_mode	{{[0|1|2]}	{get/set shaded mode}}
     $help add vdraw		{{write|insert|delete|read|length|show [args]} {vector drawing (cnuzman)}}
     $help add who		{{[r(eal)|p(hony)|b(oth)]} {list the top-level objects currently being displayed}}
     $help add zap		{{} {clear screen}}
