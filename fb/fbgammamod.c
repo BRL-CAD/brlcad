@@ -26,7 +26,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "externs.h"
 #include "fb.h"
 
-char *options = "F:";
+char *options = "f:F:";
 /* externs.h includes externs for getopt and associated variables */
 
 static char usage[] = "\
@@ -36,14 +36,69 @@ Usage: fbgammamod [-f in_file] [-F framebuffer] \
 char	*framebuffer = (char *)NULL;
 char	*input_file = NULL;
 
-FBIO	*fbp;
-
 ColorMap map;
 
 double	ra, rm, rg;		/* addition, multiply, gamma */
 double	ga, gm, gg;
 double	ba, bm, bg;
 double	add, mul, gam;	/* globals */
+
+/*
+ */
+void
+do_file()
+{
+	char	*output_file;
+	FILE	*ifp, *ofp;
+	int	i;
+
+	if( (ifp = fopen( input_file, "r" )) == NULL )  {
+		perror(input_file);
+		exit(1);
+	}
+	output_file = (char *)malloc( strlen(input_file)+10 );
+	strcpy( output_file, "MOD_" );
+	strcat( output_file, input_file );
+
+	if( (ofp = fopen( output_file, "w" )) == NULL )  {
+		perror(output_file);
+		exit(2);
+	}
+
+	/* Shift cmap to be more useful */
+	for( i=0; i<256; i++ )  {
+		map.cm_red[i] >>= 8;
+		map.cm_green[i] >>= 8;
+		map.cm_blue[i] >>= 8;
+	}
+
+	while( !feof(ifp) )  {
+		i = map.cm_red[getc(ifp)];
+		putc( i, ofp );
+
+		i = map.cm_green[getc(ifp)];
+		putc( i, ofp );
+
+		i = map.cm_blue[getc(ifp)];
+		putc( i, ofp );
+	}
+}
+
+/*
+ *			D O _ F B
+ */
+void
+do_fb()
+{
+	FBIO	*fbp;
+
+	if( (fbp = fb_open( framebuffer, 0, 0 )) == FBIO_NULL ) {
+		exit( 2 );
+	}
+	if( fb_wmap( fbp, &map ) < 0 )
+		fprintf( stderr, "fbgammamod: unable to write color map\n");
+	fb_close(fbp);
+}
 
 /*
  *			M A I N
@@ -68,7 +123,9 @@ char	**argv;
 			input_file = optarg;
 			break;
 		default:
-			break;
+			fprintf( stderr, "fbgammamod: Unrecognized option '%c'\n%s",
+				i, usage);
+			exit(2);
 		}
 	}
 
@@ -93,10 +150,6 @@ char	**argv;
 	add = atof( argv[optind+9] );
 	mul = atof( argv[optind+10] );
 	gam = atof( argv[optind+11] );
-
-	if( (fbp = fb_open( framebuffer, 0, 0 )) == FBIO_NULL ) {
-		exit( 2 );
-	}
 
 	/* Build the color map, per specifications */
 	rexp = 1.0 / ( gam + rg - 1 );
@@ -146,8 +199,9 @@ char	**argv;
 		map.cm_blue[i] = val;
 	}
 
-	if( fb_wmap( fbp, &map ) < 0 )
-		fprintf( stderr, "fbgammamod: unable to write color map\n");
-	fb_close(fbp);
+	if( !input_file )
+		do_fb();
+	else
+		do_file();
 	exit(0);
 }
