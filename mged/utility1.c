@@ -45,15 +45,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 extern void f_quit();
 
-extern int	args;		/* total number of args available */
-extern int	argcnt;		/* holder for number of args added later */
-
-extern char	*cmd_args[];	/* array of pointers to args */
 extern char	*local_unit[];
 
-extern void	exit(), perror();
-extern char	 *strcpy(), *strncat();
-extern long	time();
 extern struct passwd *getpwuid();
 
 void		tables(), edcodes(), changes(), prfield();
@@ -924,21 +917,11 @@ char	**argv;
 	register struct directory *dp;
 	int		item;
 
-	args = argc;
-	argcnt = 0;
-
 	/* allow interupts */
 	(void)signal( SIGINT, sig2 );
 
-	/* get the ident code number(s) */
-	while( args < 2 ) {
-		(void)printf("Enter the region item code(s) sought: ");
-		argcnt = getcmd(args);
-		args += argcnt;
-	}
-
-	for( j=1; j<args; j++) {
-		item = atoi( cmd_args[j] );
+	for( j=1; j<argc; j++) {
+		item = atoi( argv[j] );
 		(void)printf("Region[s] with ident %d:\n",item);
 
 		/* Examine all COMB nodes */
@@ -956,5 +939,3 @@ char	**argv;
 		}
 	}
 }
-
-
