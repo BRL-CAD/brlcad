@@ -82,6 +82,8 @@ extern FBIO	*fbp;			/* Framebuffer handle */
 
 extern int	max_bounces;		/* from refract.c */
 extern int	max_ireflect;		/* from refract.c */
+extern int	curframe;		/* from main.c */
+extern fastf_t	frame_delta_t;		/* from main.c */
 
 extern struct region	env_region;	/* from text.c */
 
@@ -472,6 +474,9 @@ struct partition *PartHeadp;
 		VSETALL( u.sw.sw_color, 1 );
 		VSETALL( u.sw.sw_basecolor, 1 );
 
+		if (rdebug&RDEBUG_SHADE)
+			rt_log("hit_nothing calling viewshade\n");
+
 		(void)viewshade( ap, &u.part, &u.sw );
 
 		VMOVE( ap->a_color, u.sw.sw_color );
@@ -522,6 +527,7 @@ struct partition *PartHeadp;
 
 	/* Check to see if eye is "inside" the solid */
 	/* It might only be worthwhile doing all this in perspective mode */
+#if 0
 	if( hitp->hit_dist < 0.0 )  {
 		struct application sub_ap;
 		FAST fastf_t f;
@@ -550,7 +556,7 @@ struct partition *PartHeadp;
 		ap->a_user = 1;		/* Signal view_pixel: HIT */
 		goto out;
 	}
-
+#endif
 	if( rdebug&RDEBUG_RAYWRITE )  {
 		/* Record the approach path */
 		if( hitp->hit_dist > 0.0001 )  {
@@ -598,8 +604,13 @@ struct partition *PartHeadp;
 	sw.sw_extinction = 0;
 	sw.sw_xmitonly = 0;		/* want full data */
 	sw.sw_inputs = 0;		/* no fields filled yet */
+	sw.sw_frame = curframe;
+	sw.sw_pixeltime = sw.sw_frametime = curframe * frame_delta_t;
 	VSETALL( sw.sw_color, 1 );
 	VSETALL( sw.sw_basecolor, 1 );
+
+	if (rdebug&RDEBUG_SHADE)
+		rt_log("colorview calling viewshade\n");
 
 	(void)viewshade( ap, pp, &sw );
 
@@ -755,8 +766,10 @@ char *file, *obj;
 		extern struct mfuncs points_mfuncs[];
 		extern struct mfuncs toyota_mfuncs[];
 		extern struct mfuncs wood_mfuncs[];
-		extern struct mfuncs fbm_mfuncs[];
+		extern struct mfuncs Nfbm_mfuncs[];
 		extern struct mfuncs camo_mfuncs[];
+		extern struct mfuncs scloud_mfuncs[];
+		extern struct mfuncs air_mfuncs[];
 
 		mlib_add( phg_mfuncs );
 		mlib_add( light_mfuncs );
@@ -770,8 +783,10 @@ char *file, *obj;
 		mlib_add( points_mfuncs );
 		mlib_add( toyota_mfuncs );
 		mlib_add( wood_mfuncs );
-		mlib_add( fbm_mfuncs );
+		mlib_add( Nfbm_mfuncs );
 		mlib_add( camo_mfuncs );
+		mlib_add( scloud_mfuncs );
+		mlib_add( air_mfuncs );
 	}
 
 	if( minus_o )  {
