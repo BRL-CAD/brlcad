@@ -135,7 +135,6 @@ char **argv;
 
 	if( clear ) {
 		fb_clear( fbp, PIXEL_NULL);
-		fb_wmap( fbp, COLORMAP_NULL );
 	}
 
 	if( (vfp = vfont_get(font1)) == VFONT_NULL )  {

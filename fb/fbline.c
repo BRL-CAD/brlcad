@@ -138,7 +138,6 @@ char **argv;
 
 	if( clear ) {
 		fb_clear( fbp, PIXEL_NULL);
-		fb_wmap( fbp, COLORMAP_NULL );
 	}
 	screen_width = fb_getwidth(fbp);
 	screen_height = fb_getheight(fbp);
