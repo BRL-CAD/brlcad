@@ -627,7 +627,15 @@ register FILE		*fp;
 
 	startlen = bu_vls_strlen(vp);
 	bu_vls_extend( vp, 80 );		/* Ensure room to grow */
-	while( (c = getc(fp)) != EOF && c != '\n' )  {
+	for( ;; )  {
+		/* Talk about inefficiency... */
+		bu_semaphore_acquire( BU_SEM_SYSCALL );
+		c = getc(fp);
+		bu_semaphore_release( BU_SEM_SYSCALL );
+
+		/* XXX Alternatively, code up something with fgets(), chunking */
+
+		if( c == EOF || c == '\n' )  break;
 		bu_vls_putc( vp, c );
 	}
 	if( c == EOF && bu_vls_strlen(vp) <= startlen )  return -1;
