@@ -279,6 +279,7 @@ char **argv;
 	owner = 1;
 	frametime = 1;
 	adc_a1_deg = adc_a2_deg = 45.0;
+	last_v_axes = 2; /* center location */
 	curr_dm_list->s_info->opp = &pathName;
 	mged_view_init(curr_dm_list);
 	BU_GETSTRUCT(curr_dm_list->menu_vars, menu_vars);
@@ -1114,52 +1115,205 @@ int	non_blocking;
     dmp->dm_setWinBounds(windowbounds);	/* hack */
 #endif
 
+    /*********************************
+     *  Handle rate-based processing *
+     *********************************/
     save_dm_list = curr_dm_list;
+    if( edit_rateflag_model_rotate ) {
+      struct bu_vls vls;
+      int save_edflag;
+      char save_coords;
+
+      curr_dm_list = edit_dm_list;
+      save_coords = mged_variables.coords;
+      mged_variables.coords = 'm';
+
+      if(state == ST_S_EDIT){
+	save_edflag = es_edflag;
+	if(!SEDIT_ROTATE)
+	  es_edflag = SROT;
+      }else{
+	save_edflag = edobj;
+	edobj = BE_O_ROTATE;
+      }
+
+      non_blocking++;
+      bu_vls_init(&vls);
+      bu_vls_printf(&vls, "knob -o %c -i -e ax %f ay %f az %f\n",
+		    edit_rate_model_origin,
+		    edit_rate_model_rotate[X],
+		    edit_rate_model_rotate[Y],
+		    edit_rate_model_rotate[Z]);
+	
+      Tcl_Eval(interp, bu_vls_addr(&vls));
+      bu_vls_free(&vls);
+
+      mged_variables.coords = save_coords;
+
+      if(state == ST_S_EDIT)
+	es_edflag = save_edflag;
+      else
+	edobj = save_edflag;
+    }
+    if( edit_rateflag_object_rotate ) {
+      struct bu_vls vls;
+      int save_edflag;
+      char save_coords;
+
+      curr_dm_list = edit_dm_list;
+      save_coords = mged_variables.coords;
+      mged_variables.coords = 'o';
+
+      if(state == ST_S_EDIT){
+	save_edflag = es_edflag;
+	if(!SEDIT_ROTATE)
+	  es_edflag = SROT;
+      }else{
+	save_edflag = edobj;
+	edobj = BE_O_ROTATE;
+      }
+
+      non_blocking++;
+      bu_vls_init(&vls);
+      bu_vls_printf(&vls, "knob -o %c -i -e ax %f ay %f az %f\n",
+		    edit_rate_object_origin,
+		    edit_rate_object_rotate[X],
+		    edit_rate_object_rotate[Y],
+		    edit_rate_object_rotate[Z]);
+	
+      Tcl_Eval(interp, bu_vls_addr(&vls));
+      bu_vls_free(&vls);
+
+      mged_variables.coords = save_coords;
+
+      if(state == ST_S_EDIT)
+	es_edflag = save_edflag;
+      else
+	edobj = save_edflag;
+    }
+    if( edit_rateflag_view_rotate ) {
+      struct bu_vls vls;
+      int save_edflag;
+      char save_coords;
+
+      curr_dm_list = edit_dm_list;
+      save_coords = mged_variables.coords;
+      mged_variables.coords = 'v';
+
+      if(state == ST_S_EDIT){
+	save_edflag = es_edflag;
+	if(!SEDIT_ROTATE)
+	  es_edflag = SROT;
+      }else{
+	save_edflag = edobj;
+	edobj = BE_O_ROTATE;
+      }
+
+      non_blocking++;
+      bu_vls_init(&vls);
+      bu_vls_printf(&vls, "knob -o %c -i -e ax %f ay %f az %f\n",
+		    edit_rate_view_origin,
+		    edit_rate_view_rotate[X],
+		    edit_rate_view_rotate[Y],
+		    edit_rate_view_rotate[Z]);
+	
+      Tcl_Eval(interp, bu_vls_addr(&vls));
+      bu_vls_free(&vls);
+
+      mged_variables.coords = save_coords;
+
+      if(state == ST_S_EDIT)
+	es_edflag = save_edflag;
+      else
+	edobj = save_edflag;
+    }
+    if( edit_rateflag_model_tran ) {
+      int save_edflag;
+      char save_coords;
+      struct bu_vls vls;
+
+      curr_dm_list = edit_dm_list;
+      save_coords = mged_variables.coords;
+      mged_variables.coords = 'm';
+
+      if(state == ST_S_EDIT){
+	save_edflag = es_edflag;
+	if(!SEDIT_TRAN)
+	  es_edflag = STRANS;
+      }else{
+	save_edflag = edobj;
+	edobj = BE_O_XY;
+      }
+
+      non_blocking++;
+      bu_vls_init(&vls);
+      bu_vls_printf(&vls, "knob -i -e aX %f aY %f aZ %f\n",
+		    edit_rate_model_tran[X] * 0.05 * Viewscale * base2local,
+		    edit_rate_model_tran[Y] * 0.05 * Viewscale * base2local,
+		    edit_rate_model_tran[Z] * 0.05 * Viewscale * base2local);
+	
+      Tcl_Eval(interp, bu_vls_addr(&vls));
+      bu_vls_free(&vls);
+
+      mged_variables.coords = save_coords;
+
+      if(state == ST_S_EDIT)
+	es_edflag = save_edflag;
+      else
+	edobj = save_edflag;
+    }
+    if( edit_rateflag_view_tran ) {
+      int save_edflag;
+      char save_coords;
+      struct bu_vls vls;
+
+      curr_dm_list = edit_dm_list;
+      save_coords = mged_variables.coords;
+      mged_variables.coords = 'v';
+
+      if(state == ST_S_EDIT){
+	save_edflag = es_edflag;
+	if(!SEDIT_TRAN)
+	  es_edflag = STRANS;
+      }else{
+	save_edflag = edobj;
+	edobj = BE_O_XY;
+      }
+
+      non_blocking++;
+      bu_vls_init(&vls);
+      bu_vls_printf(&vls, "knob -i -e aX %f aY %f aZ %f\n",
+		    edit_rate_view_tran[X] * 0.05 * Viewscale * base2local,
+		    edit_rate_view_tran[Y] * 0.05 * Viewscale * base2local,
+		    edit_rate_view_tran[Z] * 0.05 * Viewscale * base2local);
+	
+      Tcl_Eval(interp, bu_vls_addr(&vls));
+      bu_vls_free(&vls);
+
+      mged_variables.coords = save_coords;
+
+      if(state == ST_S_EDIT)
+	es_edflag = save_edflag;
+      else
+	edobj = save_edflag;
+    }
+    if( edit_rateflag_scale ) {
+      struct bu_vls vls;
+
+      non_blocking++;
+      bu_vls_init(&vls);
+      bu_vls_printf(&vls, "knob -i -e aS %f\n", edit_rate_scale * 0.01);
+	
+      Tcl_Eval(interp, bu_vls_addr(&vls));
+      bu_vls_free(&vls);
+    }
+
     for( BU_LIST_FOR(p, dm_list, &head_dm_list.l) ){
       if(!p->_owner)
 	continue;
 
       curr_dm_list = p;
 
-      /*********************************
-       *  Handle rate-based processing *
-       *********************************/
-      if( edit_rateflag_rotate ) {
-	struct bu_vls vls;
-
-	non_blocking++;
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "knob -i -e ax %f ay %f az %f\n",
-		      edit_rate_rotate[X],
-		      edit_rate_rotate[Y],
-		      edit_rate_rotate[Z]);
-	
-	Tcl_Eval(interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-      }
-      if( edit_rateflag_tran ) {
-	struct bu_vls vls;
-
-	non_blocking++;
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "knob -i -e aX %f aY %f aZ %f\n",
-		      -edit_rate_tran[X] * 0.1,
-		      -edit_rate_tran[Y] * 0.1,
-		      -edit_rate_tran[Z] * 0.1);
-	
-	Tcl_Eval(interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-      }
-      if( edit_rateflag_scale ) {
-	struct bu_vls vls;
-
-	non_blocking++;
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "knob -i -e aS %f\n", edit_rate_scale * 0.01);
-	
-	Tcl_Eval(interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-      }
       if( rateflag_model_rotate ) {
 	struct bu_vls vls;
 
@@ -1202,7 +1356,6 @@ int	non_blocking;
 	bu_vls_free(&vls);
       }
       if( rateflag_tran )  {
-#if 1
 	struct bu_vls vls;
 
 	non_blocking++;
@@ -1214,26 +1367,14 @@ int	non_blocking;
 
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
-#else
-	non_blocking++;
-	mged_do_rate_slew();
-#endif
       }
-      if( rateflag_zoom )  {
+      if( rateflag_scale )  {
 	struct bu_vls vls;
 
+	non_blocking++;
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "zoom %f",
-		      1.0 / (1.0 - (rate_zoom / 10.0)));
-	Tcl_Eval(interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-      }
-      if ( rateflag_azimuth ) {
-	struct bu_vls vls;
-
-	non_blocking++;
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "knob -i -v aazim %f", rate_azimuth);
+		      1.0 / (1.0 - (rate_scale / 10.0)));
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
       }
@@ -1267,9 +1408,6 @@ refresh()
   struct bu_vls tmp_vls;
   register int do_overlay = 1;
 
-  if(dbip == DBI_NULL)
-    return;
-
   save_dm_list = curr_dm_list;
   for( BU_LIST_FOR(p, dm_list, &head_dm_list.l) ){
     double	elapsed_time;
@@ -1280,50 +1418,54 @@ refresh()
      */
     curr_dm_list = p;
     if(mapped && (update_views || dmaflag || dirty)) {
-      if(do_overlay){
-	bu_vls_init(&overlay_vls);
-	bu_vls_init(&tmp_vls);
-	create_text_overlay(&overlay_vls);
-	do_overlay = 0;
+      if(dbip != DBI_NULL){
+	if(do_overlay){
+	  bu_vls_init(&overlay_vls);
+	  bu_vls_init(&tmp_vls);
+	  create_text_overlay(&overlay_vls);
+	  do_overlay = 0;
+	}
+
+	/* XXX VR hack */
+	if( viewpoint_hook )  (*viewpoint_hook)();
+
+	rt_prep_timer();
+	elapsed_time = -1;		/* timer running */
+
+	dmp->dm_setWinBounds(dmp, windowbounds);
+
+	if( mged_variables.predictor )
+	  predictor_frame();
       }
-
-      /* XXX VR hack */
-      if( viewpoint_hook )  (*viewpoint_hook)();
-
-      rt_prep_timer();
-      elapsed_time = -1;		/* timer running */
-
-      dmp->dm_setWinBounds(dmp, windowbounds);
-
-      if( mged_variables.predictor )
-	predictor_frame();
 
       dmp->dm_drawBegin(dmp);	/* update displaylist prolog */
 
-      /*  Draw each solid in it's proper place on the screen
-       *  by applying zoom, rotation, & translation.
-       *  Calls dmp->dm_newrot() and dmp->dm_drawVList().
-       */
-      if( mged_variables.eye_sep_dist <= 0 )  {
-	/* Normal viewing */
-	dozoom(0);
-      } else {
-	/* Stereo viewing */
-	dozoom(1);
-	dozoom(2);
+      if(dbip != DBI_NULL){
+	/*  Draw each solid in it's proper place on the screen
+	 *  by applying zoom, rotation, & translation.
+	 *  Calls dmp->dm_newrot() and dmp->dm_drawVList().
+	 */
+	if( mged_variables.eye_sep_dist <= 0 )  {
+	  /* Normal viewing */
+	  dozoom(0);
+	} else {
+	  /* Stereo viewing */
+	  dozoom(1);
+	  dozoom(2);
+	}
+
+	/* Restore to non-rotated, full brightness */
+	dmp->dm_normal(dmp);
+
+	/* Compute and display angle/distance cursor */
+	if (mged_variables.adcflag)
+	  adcursor();
+
+	/* Display titles, etc., if desired */
+	bu_vls_strcpy(&tmp_vls, bu_vls_addr(&overlay_vls));
+	dotitles(&tmp_vls);
+	bu_vls_trunc(&tmp_vls, 0);
       }
-
-      /* Restore to non-rotated, full brightness */
-      dmp->dm_normal(dmp);
-
-      /* Compute and display angle/distance cursor */
-      if (mged_variables.adcflag)
-	adcursor();
-
-      /* Display titles, etc., if desired */
-      bu_vls_strcpy(&tmp_vls, bu_vls_addr(&overlay_vls));
-      dotitles(&tmp_vls);
-      bu_vls_trunc(&tmp_vls, 0);
 
       /* Draw center dot */
       dmp->dm_setColor(dmp, DM_YELLOW, 1);
@@ -1650,6 +1792,7 @@ char	**argv;
   static int first = 1;
   int force_new = 0;
   struct db_i *save_dbip;
+  struct bu_vls vls;
 
   if( argc <= 1 )  {
     /* Invoked without args, return name of current database */
@@ -1751,11 +1894,6 @@ char	**argv;
   /* --- Scan geometry database and build in-memory directory --- */
   db_scan( dbip, (int (*)())db_diradd, 1);
 
-  /* Print title/units information */
-  if( interactive )
-    Tcl_AppendResult(interp, dbip->dbi_title, " (units=",
-		     units_str[dbip->dbi_localunit], ")\n", (char *)NULL);
-
   /* Close previous databases, if any.  Ignore errors. */
   (void)Tcl_Eval( interp, "db close; .inmem close" );
 
@@ -1767,6 +1905,23 @@ char	**argv;
 	return TCL_ERROR;
   }
   Tcl_ResetResult( interp );
+
+  bu_vls_init(&vls);
+
+  bu_vls_strcpy(&vls, "local2base");
+  Tcl_LinkVar(interp, bu_vls_addr(&vls), (char *)&local2base,
+	      TCL_LINK_DOUBLE|TCL_LINK_READ_ONLY);
+
+  bu_vls_strcpy(&vls, "base2local");
+  Tcl_LinkVar(interp, bu_vls_addr(&vls), (char *)&base2local,
+	      TCL_LINK_DOUBLE|TCL_LINK_READ_ONLY);
+
+  bu_vls_free(&vls);
+
+  /* Print title/units information */
+  if( interactive )
+    Tcl_AppendResult(interp, dbip->dbi_title, " (units=",
+		     units_str[dbip->dbi_localunit], ")\n", (char *)NULL);
 
   return TCL_OK;
 }
