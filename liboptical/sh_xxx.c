@@ -51,9 +51,11 @@ struct xxx_specific {
 CONST static
 struct xxx_specific xxx_defaults = {
 	xxx_MAGIC,
-	1.0,
-	{ 1.0, 1.0, 1.0 },
-	{	0.0, 0.0, 0.0, 0.0,
+	1.0,				/* xxx_val */
+	{ 1.0, 1.0, 1.0 },		/* xxx_delta */
+	{ 0.0, 0.0, 0.0 },		/* xxx_min */
+	{ 0.0, 0.0, 0.0 },		/* xxx_max */
+	{	0.0, 0.0, 0.0, 0.0,	/* xxx_m_to_sh */
 		0.0, 0.0, 0.0, 0.0,
 		0.0, 0.0, 0.0, 0.0,
 		0.0, 0.0, 0.0, 0.0 }
@@ -152,11 +154,16 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	 * world coordinates into "region coordinates" (the coordinate system
 	 * in which the region is defined).  Then the bounding box of the 
 	 * region is used to establish a mapping to the unit cube
+	 *
+*	db_shader_mat(xxx_sp->xxx_m_to_sh, rtip, rp, xxx_sp->xxx_min,
+*		xxx_sp->xxx_max);
+	 *
+	 * Alternatively, shading may be done in "region coordinates"
+	 * if desired:
+	 *
+*	db_region_mat(model_to_region, rtip->rti_dbip, rp->reg_name);	 
+	 *
 	 */
-
-	db_shader_mat(xxx_sp->xxx_m_to_sh, rtip, rp, xxx_sp->xxx_min,
-		xxx_sp->xxx_max);
-
 
 	if( rdebug&RDEBUG_SHADE) {
 		bu_struct_print( " Parameters:", xxx_print_tab, (char *)xxx_sp );
