@@ -437,8 +437,16 @@ fastf_t	*azp;
 fastf_t	*elp;
 vect_t	v;
 {
-	*azp = mat_atan2( v[Y], v[X] );
-	*elp = mat_atan2( v[Z], hypot( v[X], v[Y] ) );
+	register fastf_t	az;
+
+	if( (az = mat_atan2( v[Y], v[X] ) * mat_radtodeg) < 0 )  {
+		*azp = 360 + az;
+	} else if( az >= 360 ) {
+		*azp = az - 360;
+	} else {
+		*azp = az;
+	}
+	*elp = mat_atan2( v[Z], hypot( v[X], v[Y] ) ) * mat_radtodeg;
 }
 
 /*
