@@ -90,14 +90,14 @@
 	RT_LIST_INIT( &(p)->l ); (p)->l.magic = RT_SNURB_MAGIC; }
 
 /* Definition of a knot vector */
-
+#ifndef NMG_H
 struct knot_vector {
 	int		magic;
 	int		k_size;		/* knot vector size */
 	fastf_t		* knots;	/* pointer to knot vector  */
 	long		index;		/* struct # in this model */
 };
-
+#endif
 #define RT_KNOT_VECTOR_MAGIC	0x6b6e6f74
 
 /* ----- The actual data structures for curves and surfaces ----- */
