@@ -3,10 +3,23 @@
  *  
  *  Converts .vg files to .g (latest style, with idents).
  *  
- *  Quick hack to get underway with MGED.
+ *  Authors -
+ *	Mike Muuss, BRL, 5/25/84.
+ *	Keith A. Applin
  *  
- *  Mike Muuss, BRL, 5/25/84.
+ *  Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005
+ *  
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1985 by the United States Army.
+ *	All rights reserved.
  */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (BRL)";
+#endif
+
 #include <stdio.h>
 #include "ged_types.h"
 #include "db.h"
