@@ -306,7 +306,7 @@ char	**argv;
 		return(0);
 	}
 	rt_prep_timer();
-	if( rt_gettrees(rtip, argc, argv) < 0 )
+	if( rt_gettrees(rtip, argc, argv, npsw) < 0 )
 		fprintf(stderr,"rt_gettrees(%s) FAILED\n", argv[0]);
 	(void)rt_read_timer( outbuf, sizeof(outbuf) );
 	fprintf(stderr,"GETTREE: %s\n", outbuf);
@@ -519,7 +519,7 @@ register struct rt_i	*rtip;
 	}
 
 	rt_prep_timer();
-	if( rt_gettrees(rtip, nobjs, objtab) < 0 )
+	if( rt_gettrees(rtip, nobjs, objtab, npsw) < 0 )
 		fprintf(stderr,"rt_gettrees(%s) FAILED\n", objtab[0]);
 	(void)rt_read_timer( outbuf, sizeof(outbuf) );
 	fprintf(stderr,"GETTREE: %s\n", outbuf);
