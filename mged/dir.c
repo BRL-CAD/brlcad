@@ -1136,8 +1136,8 @@ char	**argv;
 			if( !(dp->d_flags & DIR_COMB) )
 				continue;
 
-			if( rt_get_comb( &intern, dp, (mat_t *)NULL, dbip ) < 0 )  {
-				Tcl_AppendResult(interp, "rt_get_comb(", dp->d_namep,
+			if( rt_db_get_internal( &intern, dp, dbip, (mat_t *)NULL ) < 0 )  {
+				Tcl_AppendResult(interp, "rt_db_get_internal(", dp->d_namep,
 					") failure", (char *)NULL );
 				ret = TCL_ERROR;
 				continue;
