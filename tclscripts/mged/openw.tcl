@@ -150,10 +150,8 @@ if ![info exists mged_default(doubleClickTol)] {
     set mged_default(doubleClickTol) 500
 }
 
-if ![info exists solid_data(attr,arb8)] {
-    # Call this routine to initialize the "solid_data" array
-    solid_data_init
-}
+# Call this routine to initialize the "solid_data" array
+solid_data_init
 
 ##
 # Set the class bindings for use with help. This requires the
@@ -1658,7 +1656,8 @@ hoc_register_menu_data "Tools" "Grid Control Panel" "Grid Control Panel"\
 .$id.menubar.tools add command -label "Query Ray Control Panel" -underline 0\
 	-command "init_qray_control $id"
 hoc_register_menu_data "Tools" "Query Ray Control Panel" "Query Ray Control Panel"\
-	{ { summary "Tool for setting query ray parameters." } }
+	{ { summary "Tool for setting query ray parameters." }
+          { see_also "qray" } }
 .$id.menubar.tools add command -label "Raytrace Control Panel" -underline 0\
 	-command "init_Raytrace $id"
 hoc_register_menu_data "Tools" "Raytrace Control Panel" "Raytrace Control Panel"\
