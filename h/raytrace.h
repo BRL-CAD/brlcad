@@ -143,11 +143,14 @@ struct soltab {
  *  Table is indexed by ID_xxx value of particular solid.
  */
 struct rt_functab {
+	int		ft_use_rpp;
 	int		(*ft_prep)();
 	struct seg 	*((*ft_shot)());
 	int		(*ft_print)();
 	int		(*ft_norm)();
 	int		(*ft_uv)();
+	int		(*ft_curve)();
+	int		(*ft_classify)();
 	char		*ft_name;
 };
 extern struct rt_functab rt_functab[];
