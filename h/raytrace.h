@@ -89,13 +89,13 @@ struct curvature {
  *  Use this macro after having computed the normal, to
  *  compute the curvature at a hit point.
  */
-#define RT_CURVE( curvp, hitp, stp, rayp )  { \
+#define RT_CURVE( curvp, hitp, stp )  { \
 	register int id = (stp)->st_id; \
 	if( id < 0 || id >= rt_nfunctab )  { \
 		rt_log("stp=x%x, id=%d.\n", stp, id); \
 		rt_bomb("RT_CURVE:  bad st_id"); \
 	} \
-	(void)rt_functab[id].ft_curve( curvp, hitp, stp, rayp ); }
+	(void)rt_functab[id].ft_curve( curvp, hitp, stp ); }
 
 /*
  *			U V C O O R D
