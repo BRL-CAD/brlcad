@@ -30,7 +30,8 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "rtgeom.h"
 #include "rtlist.h"
 
-struct faceuse *nmg_add_loop_to_face();
+RT_EXTERN( struct faceuse *nmg_add_loop_to_face, (struct shell *s, struct faceuse *fu, struct vertex **verts, int n, int dir ) );
+RT_EXTERN( fastf_t nmg_loop_plane_area, (CONST struct loopuse *lu, plane_t pl ) );
 
 char		usage[] = "Usage: %s [file]\n";
 extern char	*optarg;
@@ -122,6 +123,8 @@ char	*reg_name, *grp_name;
 	struct rt_tol	tol;
 	struct shell	*s;
 	vect_t		Ext;
+	struct faceuse *fu;
+	plane_t		pl;
 
 	VSETALL(Ext, 0.);
 
@@ -138,8 +141,11 @@ char	*reg_name, *grp_name;
 	tol.para = 0.999;
 
 	/* Associate the face geometry. */
-	if (nmg_fu_planeeqn(RT_LIST_FIRST(faceuse, &s->fu_hd), &tol) < 0)
+	fu = RT_LIST_FIRST( faceuse , &s->fu_hd );
+	if (nmg_loop_plane_area(RT_LIST_FIRST(loopuse, &fu->lu_hd), pl) < 0.0)
 		return(-1);
+	else
+		nmg_face_g( fu , pl );
 
 	if (!NEAR_ZERO(MAGNITUDE(Ext), 0.001))
 		nmg_extrude_face(RT_LIST_FIRST(faceuse, &s->fu_hd), Ext, &tol);
