@@ -21,7 +21,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
  
 #include "conf.h"
@@ -32,8 +32,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "externs.h"
 #include "db.h"
-#include "wdb.h"
 #include "raytrace.h"
+#include "wdb.h"
 #include "rtgeom.h"
 
 

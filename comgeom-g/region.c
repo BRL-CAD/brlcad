@@ -13,7 +13,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"
@@ -24,7 +24,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "externs.h"
 #include "vmath.h"
-#include "rtlist.h"
+#include "raytrace.h"
 #include "wdb.h"
 
 extern char	name_it[];
@@ -55,6 +55,7 @@ void	group_write();
  *	-1	error
  *	 0	done
  */
+int
 getregion()
 {
 	int i, j;
