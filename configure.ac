@@ -1,17 +1,23 @@
 dnl $Id$
 
-AC_INIT
+AC_INIT(librt/bool.c)
+AC_PREREQ(2.14)
+
+MAJOR_VERSION=6
+MINOR_VERSION=1
+PATCH_VERSION=0
+CONFIG_DATE=`date +%Y%m%d`
+BRLCAD_VERSION="$MAJOR_VERSION.$MINOR_VERSION.$PATCH_VERSION"
+echo "Configuring BRL-CAD Release $BRLCAD_VERSION, Build $CONFIG_DATE"
+
 AC_CANONICAL_TARGET([])
+AM_INIT_AUTOMAKE(brlcad, $BRLCAD_VERSION.$CONFIG_DATE)
 AM_CONFIG_HEADER(h/config.h)
-AM_INIT_AUTOMAKE(brlcad, 6.0)
 
-dnl progs
-AC_PROG_CC
-AC_PROG_INSTALL
-AC_PROG_LIBTOOL
-AM_PROG_LEX
 
-AM_C_PROTOTYPES
+dnl ***********************
+dnl *** Check arguments ***
+dnl ***********************
 
 CFLAGS="$CFLAGS "'-I$(top_srcdir)/h -fno-strict-aliasing'
 
@@ -23,11 +29,51 @@ case "$target" in
 		PTHREAD_LIBS="-pthread"
 		;;
 esac
+
+JAVA_CFLAGS=
+have_java=no
+AC_ARG_WITH(jdk,
+        [  --with-jdk=path         Specify location of Java Development Kit],[
+        JAVA_CFLAGS="-I$withval/include -I$withval/include/`uname | tr [A-Z] [a-z]`"
+        have_java=yes
+        ])
+AM_CONDITIONAL(JAVA, test x$have_java = xyes)
+
+AC_DEFINE(DM_X,1,[Display for X])
+AC_DEFINE(USE_MESA_GL,1,[Assume mesagl is always around (fixme)])
+AC_DEFINE(DM_OGL,1,[yeah, GL])
+GL_CFLAGS="-I/usr/X11R6/include"
+GL_LIBS="-L/usr/X11R6/lib -lGL"
+
+LEX_CFLAGS="-Dyylex=cmd_nop"
+
+AC_C_BIGENDIAN(AC_DEFINE(NATURAL_IEEE,,64b floating point storage technique), AC_DEFINE(REVERSED_IEEE,,64b floating point storage technique), AC_ERROR("Don't know the endian of this machine!"))
+
+AC_DEFINE(USE_PROTOTYPES,1,heh)
+AC_DEFINE(USE_REGCOMP,1,new regex stuff)
+
+
+dnl **************************
+dnl *** Check for programs ***
+dnl **************************
+
+AC_PROG_CC
+AC_PROG_CPP
+AC_PROG_INSTALL
+AC_PROG_LIBTOOL
+AM_PROG_LEX
+
+AM_C_PROTOTYPES
+
 AC_DEFINE(HAS_POSIX_THREADS,1,[Posix Threading API])
 
 AC_DEFINE(EXTERN_STDOUT,,[Stdout is extern])
 
-dnl libs
+
+dnl ***************************
+dnl *** Check for libraries ***
+dnl ***************************
+
 SAVELIBS="${LIBS}"
 
 dnl need curses, would prefer ncurses
@@ -39,12 +85,11 @@ LIBS=
 AC_SEARCH_LIBS(getvideo, gl, AC_DEFINE(HAS_SGIGL,1, Irix GL is present.))
 SGIGL="${LIBS}"
 
-
 LIBS="${SAVELIBS}"
 
-AC_SEARCH_LIBS(mallopt,malloc)
-AC_SEARCH_LIBS(matherr,mx)
-
+AC_SEARCH_LIBS(mallopt, malloc)
+AC_SEARCH_LIBS(matherr, mx)
+AC_SEARCH_LIBS(dlopen, [dl ldl], AC_DEFINE(HAVE_DLOPEN,1,dlopen is available))
 
 dnl X
 X_PREFIX=/usr/X11R6
@@ -83,24 +128,46 @@ ITK_LIBS='${top_builddir}/libitcl/itk/libitk.la'
 
 PNG_LIBS='${top_builddir}/libpng/libpng.la ${top_builddir}/libz/libz.la'
 
-dnl headers
+
+dnl *************************
+dnl *** Check for headers ***
+dnl *************************
+
 AC_HEADER_STDC
-AC_CHECK_HEADERS(float.h getopt.h limits.h limits.h memory.h stdarg.h stdlib.h string.h sys/ioctl_compat.h sys/machd.h sys/mman.h sys/select.h sys/socket.h sys/stat.h sys/time.h sys/types.h termcap.h termios.h time.h unistd.h varargs.h xosdefs.h)
+AC_CHECK_HEADERS( \
+	float.h \
+	getopt.h \
+	limits.h \
+	limits.h \
+	memory.h \
+	stdarg.h \
+	stdlib.h \
+	string.h \
+	sys/ioctl_compat.h \
+	sys/machd.h \
+	sys/mman.h \
+	sys/select.h \
+	sys/socket.h \
+	sys/stat.h \
+	sys/time.h \
+	sys/types.h \
+	termcap.h \
+	termios.h \
+	time.h \
+	unistd.h \
+	varargs.h \
+	xosdefs.h
+)
 AC_CHECK_HEADER(sys/stat.h, AC_DEFINE(HAVE_UNIX_IO,, Fix this, sys/types.h and sys/stat.h ...))
 AC_CHECK_HEADER(sys/time.h, AC_DEFINE(TIME_WITH_SYS_TIME,1,sys/time.h))
-AC_CHECK_MEMBERS([struct stat.st_blksize],[AC_DEFINE(HAVE_ST_BLKSIZE, 1, [the old blksize define])])
 
-JAVA_CFLAGS=
-have_java=no
-AC_ARG_WITH(jdk,
-        [  --with-jdk=path         Specify location of Java Development Kit],[
-        JAVA_CFLAGS="-I$withval/include -I$withval/include/`uname | tr [A-Z] [a-z]`"
-        have_java=yes
-        ])
-AM_CONDITIONAL(JAVA, test x$have_java = xyes)
 
+dnl ***********************
+dnl *** Check for types ***
+dnl ***********************
+
+dnl XXX - union wait testing from tcl8.4's configure.in, should be revamped?
 dnl ============================================================
-dnl union wait testing from tcl8.4's configure.in, should be revamped?
 AC_MSG_CHECKING([union wait])
 AC_CACHE_VAL(tcl_cv_union_wait,
     AC_TRY_LINK([#include <sys/types.h>
@@ -115,23 +182,19 @@ if test $tcl_cv_union_wait = no; then
 fi
 dnl ============================================================
 
-
-AC_DEFINE(DM_X,1,[Display for X])
-AC_DEFINE(USE_MESA_GL,1,[Assume mesagl is always around (fixme)])
-AC_DEFINE(DM_OGL,1,[yeah, GL])
-GL_CFLAGS="-I/usr/X11R6/include"
-GL_LIBS="-L/usr/X11R6/lib -lGL"
-
-LEX_CFLAGS="-Dyylex=cmd_nop"
-
-dnl TODO
+dnl XXX -- need to really check for time zone
 AC_DEFINE(HAVE_TM_ZONE,,string in time zone)
 
-dnl typedefs
+AC_CHECK_MEMBERS([struct stat.st_blksize],[AC_DEFINE(HAVE_ST_BLKSIZE, 1, [the old blksize define])])
+
 AC_CHECK_DECL(sys_errlist, AC_DEFINE(HAVE_SYS_ERRLIST_DECL,1,sys_errlist[]), AC_DEFINE(HAVE_SYS_ERRLIST_DECL,0,don't have sys_errlist[]),[# include <stdio.h>])
 AC_CHECK_DECL(re_comp, AC_DEFINE(HAVE_REGEX_DECL,, BSD regular expressions))
 
-dnl functions
+
+dnl ***************************
+dnl *** Check for functions ***
+dnl ***************************
+
 AC_CHECK_FUNC(fstatfs, , [AC_DEFINE(NO_FSTATFS,, Lacking fstatfs)])
 AC_CHECK_FUNC(getopt, AC_DEFINE(HAVE_GETOPT_DECL,1,getopt))
 AC_CHECK_FUNC(popen, AC_DEFINE(HAVE_POPEN_DECL,1,popen))
@@ -140,15 +203,12 @@ AC_CHECK_FUNCS(drand gethostname vprintf sbrk vfork dlopen bzero strdup strcasec
 AC_CHECK_FUNCS(socket, SOCKET="" ,[AC_CHECK_LIB(socket, socket, SOCKET="-lsocket", AC_MSG_ERROR([No internet socket found]))])
 dnl AC_CHECK_FUNCS(re_comp, REGEX_LIB="", [AC_CHECK_LIB(compat, re_comp, REGEX_LIB="-lcompat",)])
 
-AC_SEARCH_LIBS(dlopen, [dl ldl], AC_DEFINE(HAVE_DLOPEN,1,dlopen is available))
-DL=""
 
-AC_C_BIGENDIAN(AC_DEFINE(NATURAL_IEEE,,64b floating point storage technique), AC_DEFINE(REVERSED_IEEE,,64b floating point storage technique), AC_ERROR("Don't know the endian of this machine!"))
+dnl ***************************
+dnl *** Configure Makefiles ***
+dnl ***************************
 
-AC_DEFINE(USE_PROTOTYPES,1,heh)
-AC_DEFINE(USE_REGCOMP,1,new regex stuff)
-
-dnl === these are things that are defined, but don't seem to be necessary on the 4 supported platforms? ===
+dnl XXX - These defines are available but not presently necessary
 dnl POSIX_REGEXEC
 dnl CALTECH_MALLOC
 dnl DRAND
@@ -345,3 +405,11 @@ AC_CONFIG_FILES([
 	brlcad.spec
 ])
 AC_OUTPUT
+
+
+dnl **********************
+dnl *** Report Summary ***
+dnl **********************
+
+dnl XXX - should report significant summary configuration details (what options
+dnl and args are enabled, disabled, build settings, etc).
