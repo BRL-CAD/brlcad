@@ -429,12 +429,11 @@ TCLVER=8.4
 TCL=libtcl${TCLVER}
 case "$target" in
 	powerpc-apple-darwin*)
-		TCL_LIBS='-L${top_builddir}/src/other/libtcl/unix -ltcl${TCLVER} ${DL} ${SOCKET} -lm'
+		TCL_LIBS='-L${abs_top_builddir}/src/other/libtcl/unix -ltcl${TCLVER} ${DL} ${SOCKET} -lm'
 dnl -compatibility_version 20 -current_version 20.1
 		;;
 	*)
-		TCL_LIBS='-L${top_builddir}/src/other/libtcl/unix -ltcl${TCLVER} -Wl,-rpath,${libdir} -rdynamic ${DL} ${SOCKET} -lm'
-		;;
+		TCL_LIBS='-L${abs_top_builddir}/src/other/libtcl/unix -ltcl${TCLVER} -Wl,-rpath,${libdir} -rdynamic ${DL} ${SOCKET} -lm'
 esac
 TCL_LIBRARY="$prefix/tcl${TCLVER}"
 if test "x$FRAMEWORK_BUILD" = "x1" ; then
@@ -451,7 +450,7 @@ AC_SUBST(TCL_LIBS)
 
 dnl tk
 TKVER="8.4"
-TK_LIBS='-L${top_builddir}/src/other/libtk/unix -ltk${TKVER} ${TCL_LIBS} ${X_LIBS}'
+TK_LIBS='-L${abs_top_builddir}/src/other/libtk/unix -ltk${TKVER} ${TCL_LIBS} ${X_LIBS}'
 TK_LIBRARY="$prefix/tk${TKVER}"
 AC_SUBST(TKVER)
 AC_SUBST(TK_LIBRARY)
@@ -459,8 +458,8 @@ AC_SUBST(TK_LIBS)
 
 dnl itcl
 ITCL_VERSION="3.3"
-ITCL_LIBS='-L${top_builddir}/src/other/incrTcl/itcl -litcl3.3'
-ITK_LIBS='-L${top_builddir}/src/other/incrTcl/itk -litk3.3'
+ITCL_LIBS='-L${abs_top_builddir}/src/other/incrTcl/itcl -litcl3.3'
+ITK_LIBS='-L${abs_top_builddir}/src/other/incrTcl/itk -litk3.3'
 AC_SUBST(ITCL_LIBS)
 AC_SUBST(ITCL_VERSION)
 AC_SUBST(ITK_LIBS)
@@ -770,7 +769,7 @@ else
 fi
 AC_MSG_CHECKING(whether to build the included portable network graphics library)
 if test "x$build_brlcad_png" = "xyes" ; then
-	PNG_LIBS='${top_builddir}/src/other/libpng/libpng.la -lz'
+	PNG_LIBS='${abs_top_builddir}/src/other/libpng/libpng.la -lz'
 	AC_MSG_RESULT(yes)
 else
 	AC_MSG_RESULT(no)
@@ -817,7 +816,7 @@ else
 fi
 AC_MSG_CHECKING(whether to build the included regular expression library)
 if test "x$build_brlcad_regex" = "xyes" ; then
-	REGEX_LIBS='${top_builddir}/src/other/libregex/libregex.la'
+	REGEX_LIBS='${abs_top_builddir}/src/other/libregex/libregex.la'
 	AC_MSG_RESULT(yes)
 else
 	AC_MSG_RESULT(no)
@@ -861,7 +860,7 @@ else
 fi
 AC_MSG_CHECKING(whether to build the included zlib compression library)
 if test "x$build_brlcad_zlib" = "xyes" ; then
-	ZLIB_LIBS='${top_builddir}/src/other/libz/libz.la'
+	ZLIB_LIBS='${abs_top_builddir}/src/other/libz/libz.la'
 	AC_MSG_RESULT(yes)
 else
 	AC_MSG_RESULT(no)
