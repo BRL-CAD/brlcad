@@ -1,8 +1,0 @@
-.cvsignore 
-Makefile
-Makefile.in
-brlcad_version.h
-config.h
-config.h.in
-stamp-h1
-version
