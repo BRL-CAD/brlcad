@@ -1064,16 +1064,29 @@ char *s;
  *
  *  A debugging routine to print all the faceuses around a given edge,
  *  starting with the given edgeuse.
+ *  The normal of the  first face is considered to be "0 degrees",
+ *  and the rest are measured from there.
+ *
+ *  Note that the proper ordering of the edgeuses' faceuses is:
+ *  SAME, OPPOSITE, OPPOSITE, SAME, ....
+ *  This can be verified by calling nmg_check_radial(eu);
+ *
+ *  The first faceuse will have an angle of 0 degrees if it is an OT_SAME
+ *  faceuse, otherwise, it will have an angle of 180 degrees (off the
+ *  true face normal).
  */
 void
 nmg_pr_fu_around_eu( eu )
 CONST struct edgeuse *eu;
 {
 	CONST struct edgeuse	*eu1;
+	CONST struct loopuse	*lu;
 	CONST struct faceuse	*fu;
 	vect_t			evect;
 	vect_t			xdir;
 	vect_t			ydir;
+	vect_t			norm;
+	vect_t			left;
 
 	NMG_CK_EDGEUSE(eu);
 	rt_log("nmg_pr_fu_around_eu(x%x)\n", eu);
@@ -1081,26 +1094,55 @@ CONST struct edgeuse *eu;
 	VSUB2( evect, eu->eumate_p->vu_p->v_p->vg_p->coord,
 		eu->vu_p->v_p->vg_p->coord );
 	VUNITIZE( evect );
-	mat_vec_perp( xdir, evect );
-	VCROSS( ydir, xdir, evect );
+
+	/* get normal vector for the face */
+	fu = eu->up.lu_p->up.fu_p;
+	if (fu->orientation == OT_SAME) {
+		VMOVE(norm, fu->f_p->fg_p->N);
+	} else if (fu->orientation == OT_OPPOSITE){
+		VREVERSE(norm, fu->f_p->fg_p->N);
+	} else rt_bomb("nmg_pr_around_eu() bad fu orientation\n");
+
+	/*
+	 * Because edgeuses are oriented, and run CCW for an exterior
+	 * face loop, crossing the face normal with the edge vector will
+	 * give a vector which lies in the plane of the face and
+	 * points "left", towards the interior of the faceloop.
+	 */
+	VCROSS(left, norm, evect);
+	VMOVE( xdir, norm );
+	VMOVE( ydir, left );
 
 	eu1 = eu;
 	do {
 		/* First, the edgeuse */
 		NMG_CK_EDGEUSE(eu1);
-		fu = eu1->up.lu_p->up.fu_p;
+		lu = eu1->up.lu_p;
+		NMG_CK_LOOPUSE(lu);
+		fu = lu->up.fu_p;
 		NMG_CK_FACEUSE(fu);
-		rt_log("%8.8x EDGEUSE, %8.8x FACEUSE, %8.8x FACE, %s %g\n",
-			eu1, fu, fu->f_p, nmg_orientation(fu->orientation),
-			rt_angle_measure( fu->f_p->fg_p->N, xdir, ydir) );
+		rt_log("EU=%8.8x, e=%8.8x, %s fu=%8.8x, f=%8.8x %s, s=%8.8x %g deg\n",
+			eu1, eu1->e_p,
+			lu->orientation == OT_SAME ? "S" : "O",
+			fu, fu->f_p,
+			fu->orientation == OT_SAME ? "SAME" : "OPP.",
+			fu->s_p,
+			rt_angle_measure( fu->f_p->fg_p->N, xdir, ydir) * rt_radtodeg );
 
 		/* Second, the edgeuse mate */
 		eu1 = eu1->eumate_p;
 		NMG_CK_EDGEUSE(eu1);
-		fu = eu1->up.lu_p->up.fu_p;
+		lu = eu1->up.lu_p;
+		NMG_CK_LOOPUSE(lu);
+		fu = lu->up.fu_p;
 		NMG_CK_FACEUSE(fu);
-		rt_log("%8.8x  EUMATE, %8.8x FACEUSE, %8.8x FACE, %s\n",
-			eu1, fu, fu->f_p, nmg_orientation(fu->orientation) );
+		rt_log("MU=%8.8x, e=%8.8x, %s fu=%8.8x, f=%8.8x %s, s=%8.8x %g deg\n",
+			eu1, eu1->e_p,
+			lu->orientation == OT_SAME ? "S" : "O",
+			fu, fu->f_p,
+			fu->orientation == OT_SAME ? "SAME" : "OPP.",
+			fu->s_p,
+			rt_angle_measure( fu->f_p->fg_p->N, xdir, ydir) * rt_radtodeg );
 
 		/* Now back around to the radial edgeuse */
 		eu1 = eu1->radial_p;
@@ -1172,21 +1214,26 @@ CONST struct edgeuse *eu;
 			NMG_CK_LOOPUSE(eur->up.lu_p);
 			NMG_CK_FACEUSE(eur->up.lu_p->up.fu_p);
 
-			if (eur->up.lu_p->up.fu_p->orientation != curr_orient) {
-				rt_bomb("nmg_check_radial: orient error while skipping to edge on this shell\n");
-			}
+			/* Can't check faceuse orientation parity for
+			 * things from another shell;  parity is conserved
+			 * only within faces from a single shell.
+			 */
 		}
 
 		/* if that radial edgeuse doesn't have the
 		 * correct orientation, print & bomb
+		 * If radial (eur) is my (virtual, this-shell) mate (eu1),
+		 * then it's ok, a mis-match is to be expected.
 		 */
-		if (eur->up.lu_p->up.fu_p->orientation != curr_orient) {
+		if (eur->up.lu_p->up.fu_p->orientation != curr_orient &&
+		    eur != eu1->eumate_p ) {
 			p = eu1->vu_p->v_p->vg_p->coord;
 			q = eu1->eumate_p->vu_p->v_p->vg_p->coord;
 			rt_log("Radial orientation problem at edge %g %g %g -> %g %g %g\n",
 				p[0], p[1], p[2], q[0], q[1], q[2]);
-			rt_log("Problem Edgeuses: %8x, %8x\n", eu1, eur);
+			rt_log("Problem Edgeuses: eu1=%8x, eur=%8x\n", eu1, eur);
 			if (rt_g.NMG_debug) {
+				nmg_pr_fu_around_eu(eu1);
 				nmg_pr_fu(eu1->up.lu_p->up.fu_p, 0);
 				rt_log("Radial loop:\n");
 				nmg_pr_fu(eur->up.lu_p->up.fu_p, 0);
