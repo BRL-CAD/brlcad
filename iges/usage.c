@@ -22,10 +22,11 @@
 
 usage()
 {
-	fprintf( stderr , "Usage:  iges-g [-n|d] -o file.g file.iges\n" );
+	fprintf( stderr , "Usage:  iges-g [-n|d|t] -o file.g file.iges\n" );
 	fprintf( stderr , "\t-n - Convert all rational B-spline surfaces to a single spline solid\n" );
 	fprintf( stderr , "\t-d - Convert IGES drawings to NMG objects (and ignore solid objects)\n" );
-	fprintf( stderr , "\t\tthe n and d options are mutually exclusive\n" );
+	fprintf( stderr , "\t-t - Convert all trimmed surfaces to NMG trimmed NURBS\n" );
+	fprintf( stderr , "\t\tthe n, d, and t options are mutually exclusive\n" );
 	fprintf( stderr , "\t-o - Specify BRLCAD output file\n" );
 	exit( 1 );
 }
