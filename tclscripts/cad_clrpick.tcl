@@ -17,6 +17,7 @@
 #
 # Modified by:
 #	Robert G. Parker
+#               *- help on context
 #		*- no tkwait
 #		*- no grab
 #		*- dynamic update
@@ -228,19 +229,31 @@ proc cadColorWidget_Config { w argList } {
 #	Build the color tool.
 #
 proc cadColorWidget_Build { w mode } {
+    global hoc_data
+
     upvar #0 $w data
 
     set topFrame [frame $w.top -relief groove -bd 2]
 
     frame $topFrame.cmF
     label $topFrame.cmL -text "Color Model:"
+    hoc_register_data $topFrame.cmL "Color Model"\
+	    { { summary "Select a color model from the menu. Currently, there
+are two choices: RGB and HSV." } }
     menubutton $topFrame.cmMB -relief raised -bd 2\
 	    -menu $topFrame.cmMB.m -indicatoron 1 -textvariable $w\(colorModel\)
-    menu $topFrame.cmMB.m -tearoff 0
+    hoc_register_data $topFrame.cmMB "Color Model"\
+	    { { summary "Select a color model from the menu. Currently, there
+are two choices: RGB and HSV." } }
+    menu $topFrame.cmMB.m -title "Color Model" -tearoff 0
     $topFrame.cmMB.m add radiobutton -value RGB -variable $w\(colorModel\) \
 	    -label "RGB" -command  "cadColorWidget_setColorModel $w"
+    hoc_register_menu_data "Color Model" "RGB" "Color Model - RGB"\
+	    { { summary "Change the color model to RGB." } }
     $topFrame.cmMB.m add radiobutton -value HSV -variable $w\(colorModel\) \
 	    -label "HSV" -command  "cadColorWidget_setColorModel $w"
+    hoc_register_menu_data "Color Model" "HSV" "Color Model - HSV"\
+	    { { summary "Change the color model to HSV." } }
     grid $topFrame.cmL $topFrame.cmMB -in $topFrame.cmF -padx 2
 
     # StripsFrame contains the colorstrips and the individual RGB entries
@@ -256,6 +269,9 @@ proc cadColorWidget_Build { w mode } {
 
 	label $box.label -text $colorBar: -width 9 -under 0 -anchor ne
 	entry $box.entry -textvariable $w\($colorBar\) -width 7
+	hoc_register_data $box.entry "Color Entry"\
+		{ { summary "Enter the color component indicated by
+the label." } }
 	grid $box.label $box.entry -sticky w
 	grid columnconfigure $box 0 -weight 0
 	grid columnconfigure $box 1 -weight 0
@@ -266,8 +282,14 @@ proc cadColorWidget_Build { w mode } {
 
 	canvas $f.color -height $height\
 	    -width $data(COLORBARS_WIDTH) -relief sunken -bd 2
+	hoc_register_data $f.color "Color Ramp"\
+		{ { summary "This is a color ramp that indicates
+the choice of colors." } }
 	canvas $f.sel -height $data(PLGN_HEIGHT) \
 	    -width $data(canvasWidth) -highlightthickness 0
+	hoc_register_data $f.sel "Color Selector"\
+		{ { summary "This is a color selector which is used
+to select colors from the color ramp." } }
 	grid $box -row $row -column 0 -sticky w
 	grid $f.color -row $row -column 1 -sticky ew -padx $data(indent)
 	grid $f -sticky ew -row $row
@@ -303,9 +325,11 @@ proc cadColorWidget_Build { w mode } {
     grid columnconfigure $stripsFrame 0 -weight 1
     grid rowconfigure $stripsFrame 1 -weight 1
     grid rowconfigure $stripsFrame 3 -weight 1
-
     set f1 [frame $topFrame.f1 -relief sunken -bd 2]
     set data(finalCanvas) [frame $f1.demo -bd 0 -width 100 -height 70]
+    hoc_register_data $f1.demo "Color Demo"\
+	    { { summary "This area is used to demonstrate
+what the specified color looks like." } }
 
     grid $data(finalCanvas) -sticky nsew -in $f1
     grid columnconfigure $f1 0 -weight 1
@@ -325,6 +349,15 @@ proc cadColorWidget_Build { w mode } {
     frame $midFrame.selF
     label $midFrame.selF.lab -text "Name or Hex String:" -underline 0 -anchor sw
     entry $midFrame.selF.ent -textvariable $w\(selection\)
+    hoc_register_data $midFrame.selF.ent "Color Entry"\
+		{ { summary "
+Enter the composite color specification in either
+hex format or using a string from the X color
+database (i.e. /usr/X11/lib/X11/rgb.txt). For
+example, black or #000000 would specify an
+equivalent RGB of 0 0 0. In another example,
+wheat or #efca8c would specify an RGB value of
+239 202 140." } }
     bind $midFrame.selF.ent <Return> "cadColorWidget_HandleSelEntry $w"
     grid $midFrame.selF.lab $midFrame.selF.ent -sticky ew -in $midFrame.selF
     grid columnconfigure $midFrame.selF 0 -weight 0
@@ -370,8 +403,14 @@ proc cadColorWidget_SelectDismissButtons { w botFrame } {
 
     button $botFrame.apply -text Select -width 8 -under 0 \
 	    -command "cadColorWidget_ApplyCmd $w"
+    hoc_register_data $botFrame.apply "Select Color"\
+	    { { summary "Select the color from the composite color entry.
+Once selected, the color can be pasted to any
+window that implements the X selection protocol." } }
     button $botFrame.dismiss -text Dismiss -width 8 -under 0 \
 	    -command "cadColorWidget_DismissCmd $w"
+    hoc_register_data $botFrame.dismiss "Dismiss Editor"\
+	    { { summary "Dismiss the color editor." } }
 
     set data(applyBtn)      $botFrame.apply
     set data(dismissBtn)  $botFrame.dismiss
@@ -393,8 +432,14 @@ proc cadColorWidget_OkCancelButtons { w botFrame } {
 
     button $botFrame.ok -text OK -width 8 -under 0 \
 	    -command "cadColorWidget_OkCmd $w"
+    hoc_register_data $botFrame.ok "Color Editor - Ok"\
+	    { { summary "Dismiss the color editor and apply
+the color." } }
     button $botFrame.cancel -text Cancel -width 8 -under 0 \
 	    -command "cadColorWidget_CancelCmd $w"
+    hoc_register_data $botFrame.cancel "Color Editor - Cancel"\
+	    { { summary "Dismiss the color editor, but do not
+apply the color." } }
 
     set data(okBtn)      $botFrame.ok
     set data(cancelBtn)  $botFrame.cancel
@@ -983,15 +1028,19 @@ proc cadColorWidget_HandleColorEntry { w colorBar } {
 proc cadColorWidget_EnterColorBar {w colorBar} {
     upvar #0 $w data
 
-    $data($colorBar,sel) itemconfig $data($colorBar,index) -fill red
+    if [info exists data($colorBar,index)] {
+	$data($colorBar,sel) itemconfig $data($colorBar,index) -fill red
+    }
 }
 
-# mouse leaves enters a color bar
+# mouse leaves a color bar
 #
 proc cadColorWidget_LeaveColorBar {w colorBar} {
     upvar #0 $w data
 
-    $data($colorBar,sel) itemconfig $data($colorBar,index) -fill black
+    if [info exists data($colorBar,index)] {
+	$data($colorBar,sel) itemconfig $data($colorBar,index) -fill black
+    }
 }
 
 # user hits OK button
