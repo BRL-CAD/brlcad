@@ -375,7 +375,7 @@ register char **argv;
 			output_pix = 1;
 			break;
 		case 'd':
-			debug = 1;
+			debug++;
 			break;
 		case 'O':
 			overlay_from_stdin = 1;
@@ -525,15 +525,18 @@ register FILE	*fp;
 	static int initialized;
 
 	while ((c = getc(fp)) != EOF) {
+		if(debug>1)fprintf(stderr,"0%o v=%d (row=%g) h=%d col=%g\n", c, xpos, row, ypos, col);
 		if (!c)
 			continue;
 		if (c & 0200) {
 			esc += (~c) & 0177;
+			if(debug>1)fprintf(stderr,"esc=%d\n", esc);
 			continue;
 		}
 		if (esc) {
 			if (back)
 				esc = -esc;
+			if(debug>1)fprintf(stderr,"esc=%d, back=%d\n", esc, back);
 			col += esc;
 			ypos = CONVERT(col);
 			esc = 0;
@@ -638,6 +641,7 @@ register FILE	*fp;
 
 normal_char:
 			c = (c & 077) | mcase;
+			if(debug>1)fprintf(stderr,"outc(0%o %c)\n", c, c);
 			outc(c);
 		}
 	}
@@ -649,6 +653,7 @@ findsize(code)
 	register int code;
 {
 	register struct point_sizes *psp;
+	register int delta;
 
 	psp = point_sizes;
 	while (psp->real_code != 0) {
@@ -656,14 +661,19 @@ findsize(code)
 			break;
 		psp++;
 	}
-	code = 0;
+	delta = 0;
 	if (!(last_ssize & 0200) && (psp->stupid_code & 0200))
-		code = -55;
+		delta = -55;		/* Size getting larger */
 	else if ((last_ssize & 0200) && !(psp->stupid_code & 0200))
-		code = 55;
+		delta = 55;		/* Size getting smaller */
 	if (back)
-		code = -code;
-	esc += code;
+		delta = -delta;
+	/*
+	 * Due to the optics in the C/A/T, characters appear with an X offset
+	 * when some of the larger sizes are used.
+	 */
+	esc += delta;	/* Compensate for C/A/T hardware shift during size change */
+	if(debug>1)fprintf(stderr,"findsize: dorking escapment by %d, code=0%o, last_ssize=0%o, stupid_code=0%o\n", delta, code, last_ssize, psp->stupid_code);
 	last_ssize = psp->stupid_code;
 	return (psp->real_code);
 }
