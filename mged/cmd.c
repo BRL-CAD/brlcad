@@ -155,7 +155,7 @@ static struct funtab funtab[] = {
         f_adc, 1, 5, TRUE,
 "ae", "[-i] azim elev [twist]", "set view using azim, elev and twist angles",
 	f_aetview, 3, 5, TRUE,
-"aim", "[command_window [pathName]]", "aims command_window at pathName",
+"aim", "[command_window [pathName of display window]]", "aims command_window at pathName",
         f_aim, 1, 3, TRUE,
 "aip", "[fb]", "advance illumination pointer or path position forward or backward",
         f_aip, 1, 2, TRUE,
@@ -757,128 +757,135 @@ Tcl_Interp *interp;
 int argc;
 char **argv;
 {
-    register int i;
-#if 1
-    static struct {
-	char *knobname;
-	fastf_t variable;
-    } knobs[] = {
-	"ax", 0, 
-	"ay", 0,
-	"az", 0,
-	"aX", 0,
-	"aY", 0,
-	"aZ", 0,
-	"aS", 0,
-	"x", 0,
-	"y", 0,
-	"z", 0,
-	"X", 0,
-	"Y", 0,
-	"Z", 0,
-	"S", 0,
-	"xadc", 0,
-	"yadc", 0,
-	"ang1", 0,
-	"ang2", 0,
-	"distadc", 0,
-    };
+  int len;
+  fastf_t f;
+  char *cp;
 
-    if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
-      return TCL_ERROR;
-
-    knobs[0].variable = absolute_rotate[X];
-    knobs[1].variable = absolute_rotate[Y];
-    knobs[2].variable = absolute_rotate[Z];
-    knobs[3].variable = absolute_slew[X];
-    knobs[4].variable = absolute_slew[Y];
-    knobs[5].variable = absolute_slew[Z];
-    knobs[6].variable = absolute_zoom;
-    knobs[7].variable = rate_rotate[X];
-    knobs[8].variable = rate_rotate[Y];
-    knobs[9].variable = rate_rotate[Z];
-    knobs[10].variable = rate_slew[X];
-    knobs[11].variable = rate_slew[Y];
-    knobs[12].variable = rate_slew[Z];
-    knobs[13].variable = rate_zoom;
-    knobs[14].variable = (fastf_t)dv_xadc;
-    knobs[15].variable = (fastf_t)dv_yadc;
-    knobs[16].variable = (fastf_t)dv_1adc;
-    knobs[17].variable = (fastf_t)dv_2adc;
-    knobs[18].variable = (fastf_t)dv_distadc;
-	
-    if( argc < 2 ) {
-	Tcl_AppendResult(interp, "getknob: need a knob name", (char *)NULL);
-	return TCL_ERROR;
-    }
-
-    for (i = 0; i < 19; ++i)
-      if (strcmp(knobs[i].knobname, argv[1]) == 0) {
-	sprintf(interp->result, "%lf", knobs[i].variable);
-	return TCL_OK;
-      }
-#else
-    static struct {
-	char *knobname;
-	fastf_t *variable;
-    } knobs[] = {
-	"ax", (fastf_t *)NULL, 
-	"ay", (fastf_t *)NULL,
-	"az", (fastf_t *)NULL,
-	"aX", (fastf_t *)NULL,
-	"aY", (fastf_t *)NULL,
-	"aZ", (fastf_t *)NULL,
-	"aS", (fastf_t *)NULL,
-	"x", (fastf_t *)NULL,
-	"y", (fastf_t *)NULL,
-	"z", (fastf_t *)NULL,
-	"X", (fastf_t *)NULL,
-	"Y", (fastf_t *)NULL,
-	"Z", (fastf_t *)NULL,
-	"S", (fastf_t *)NULL,
-	"xadc", (fastf_t *)NULL,
-	"yadc", (fastf_t *)NULL,
-	"ang1", (fastf_t *)NULL,
-	"ang2", (fastf_t *)NULL,
-	"distadc", (fastf_t *)NULL,
-    };
-
-    if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
-      return TCL_ERROR;
-
-    knobs[0].variable = &absolute_rotate[X];
-    knobs[1].variable = &absolute_rotate[Y];
-    knobs[2].variable = &absolute_rotate[Z];
-    knobs[3].variable = &absolute_slew[X];
-    knobs[4].variable = &absolute_slew[Y];
-    knobs[5].variable = &absolute_slew[Z];
-    knobs[6].variable = &absolute_zoom;
-    knobs[7].variable = &rate_rotate[X];
-    knobs[8].variable = &rate_rotate[Y];
-    knobs[9].variable = &rate_rotate[Z];
-    knobs[10].variable = &rate_slew[X];
-    knobs[11].variable = &rate_slew[Y];
-    knobs[12].variable = &rate_slew[Z];
-    knobs[13].variable = &rate_zoom;
-    knobs[14].variable = (fastf_t *)&dv_xadc;
-    knobs[15].variable = (fastf_t *)&dv_yadc;
-    knobs[16].variable = (fastf_t *)&dv_1adc;
-    knobs[17].variable = (fastf_t *)&dv_2adc;
-    knobs[18].variable = (fastf_t *)&dv_distadc;
-	
-    if( argc < 2 ) {
-	Tcl_AppendResult(interp, "getknob: need a knob name", (char *)NULL);
-	return TCL_ERROR;
-    }
-
-    for (i = 0; i < 19; ++i)
-      if (strcmp(knobs[i].knobname, argv[1]) == 0) {
-	sprintf(interp->result, "%lf", *(knobs[i].variable));
-	return TCL_OK;
-      }
-#endif    
-    Tcl_AppendResult(interp, "getknob: invalid knob name", (char *)NULL);
+  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
     return TCL_ERROR;
+
+  cp  = argv[1];
+  len = strlen(cp);
+  if(len == 1){
+    switch(*cp){
+    case 'x':
+      if(EDIT_ROTATE && mged_variables.edit)
+	f = edit_rate_rotate[X];
+      else
+	f = rate_rotate[X];
+      break;
+    case 'y':
+      if(EDIT_ROTATE && mged_variables.edit)
+	f = edit_rate_rotate[Y];
+      else
+	f = rate_rotate[Y];
+      break;
+    case 'z':
+      if(EDIT_ROTATE && mged_variables.edit)
+	f = edit_rate_rotate[Z];
+      else
+	f = rate_rotate[Z];
+      break;
+    case 'X':
+      if(EDIT_TRAN && mged_variables.edit)
+	f = edit_rate_tran[X];
+      else
+	f = rate_slew[X];
+      break;
+    case 'Y':
+      if(EDIT_TRAN && mged_variables.edit)
+	f = edit_rate_tran[Y];
+      else
+	f = rate_slew[Y];
+      break;
+    case 'Z':
+      if(EDIT_TRAN && mged_variables.edit)
+	f = edit_rate_tran[Z];
+      else
+	f = rate_slew[Z];
+      break;
+    case 'S':
+      if(EDIT_SCALE && mged_variables.edit)
+	f = edit_rate_scale;
+      else
+	f = rate_zoom;
+      break;
+    default:
+      Tcl_AppendResult(interp, "getknob: bad value - ", argv[1], "\n", (char *)NULL);
+      return TCL_ERROR;
+    }
+  }else if(len == 2){
+    if(*cp++ != 'a'){
+      Tcl_AppendResult(interp, "getknob: bad value - ", argv[1], "\n", (char *)NULL);
+      return TCL_ERROR;
+    }
+
+    switch(*cp){
+    case 'x':
+      if(EDIT_ROTATE && mged_variables.edit)
+	f = edit_absolute_rotate[X];
+      else
+	f = absolute_rotate[X];
+      break;
+    case 'y':
+      if(EDIT_ROTATE && mged_variables.edit)
+	f = edit_absolute_rotate[Y];
+      else
+	f = absolute_rotate[Y];
+      break;
+    case 'z':
+      if(EDIT_ROTATE && mged_variables.edit)
+	f = edit_absolute_rotate[Z];
+      else
+	f = absolute_rotate[Z];
+      break;
+    case 'X':
+      if(EDIT_TRAN && mged_variables.edit)
+	f = edit_absolute_tran[X];
+      else
+	f = absolute_slew[X];
+      break;
+    case 'Y':
+      if(EDIT_TRAN && mged_variables.edit)
+	f = edit_absolute_tran[Y];
+      else
+	f = absolute_slew[Y];
+      break;
+    case 'Z':
+      if(EDIT_TRAN && mged_variables.edit)
+	f = edit_absolute_tran[Z];
+      else
+	f = absolute_slew[Z];
+      break;
+    case 'S':
+      if(EDIT_SCALE && mged_variables.edit)
+	f = edit_absolute_scale;
+      else
+	f = absolute_zoom;
+      break;
+    default:
+      Tcl_AppendResult(interp, "getknob: bad value - ", argv[1], "\n", (char *)NULL);
+      return TCL_ERROR;
+    }
+  }else{
+    if(strcmp(argv[1], "xadc") == 0)
+      f = dv_xadc;
+    else if(strcmp(argv[1], "yadc") == 0)
+      f = dv_yadc;
+    else if(strcmp(argv[1], "ang1") == 0)
+      f = dv_1adc;
+    else if(strcmp(argv[1], "ang2") == 0)
+      f = dv_2adc;
+    else if(strcmp(argv[1], "distadc") == 0)
+      f = dv_distadc;
+    else{
+      Tcl_AppendResult(interp, "getknob: bad value - ", argv[1], "\n", (char *)NULL);
+       return TCL_ERROR;
+    }
+  }
+
+  sprintf(interp->result, "%lf", f);
+  return TCL_OK;
 }
 
 /*
