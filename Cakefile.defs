@@ -235,6 +235,7 @@ set -S2 "/bin/sh"
 #	define	UNIXTYPE	SYSV
 #	define	HAS_TCP	1
 #	define	CC	/usr/bin/cc
+#	define  CC_OPTS		-G 16
 #	define	OPTIMIZER	-O2
 #	define	GFLAG		-G 16
 #	define	RANLIB	ar ts
