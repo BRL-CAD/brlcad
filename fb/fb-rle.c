@@ -64,6 +64,7 @@ Usage: fb-rle [-c -h -d] [-F framebuffer] [-C r/g/b]\n\
 \n\
 If omitted, the .rle file is written to stdout\n";
 
+#ifndef HAVE_STRDUP
 /*
  *			S T R D U P
  *
@@ -84,6 +85,7 @@ register CONST char *cp;
 	bcopy( cp, base, len );
 	return(base);
 }
+#endif
 
 extern void	cmap_crunch();
 
