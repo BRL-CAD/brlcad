@@ -1224,6 +1224,11 @@ CONST struct edgeuse	*eu2;
 		rt_bomb("nmg_2lu_identical() faces should have been fused\n");
 	}
 
+	rt_log("---- fu1, f=x%x, flip=%d\n", fu1->f_p, fu1->f_p->flip);
+	nmg_pr_fu_briefly(fu1, 0);
+	rt_log("---- fu2, f=x%x, flip=%d\n", fu2->f_p, fu2->f_p->flip);
+	nmg_pr_fu_briefly(fu2, 0);
+
 	/* If loopuse and faceuse and face orientations match,
 	 * this is ON-shared */
 	anti = 0;
@@ -1366,12 +1371,12 @@ retry:
 	}
 	if (out > 0) {
 		NMG_INDEX_SET(classlist[NMG_CLASS_AoutB], lu->l_p);
-		reason = "all edgeuses were OUT";
+		reason = "edgeuses were OUT and ON";
 		status = OUTSIDE;
 		goto out;
 	} else if (in > 0) {
 		NMG_INDEX_SET(classlist[NMG_CLASS_AinB], lu->l_p);
-		reason = "all edgeuses were IN";
+		reason = "edgeuses were IN and ON";
 		status = INSIDE;
 		goto out;
 	} else if (on == 0)
@@ -1408,50 +1413,54 @@ retry:
 	NMG_CK_FACEUSE(lu->up.fu_p);
 
 	eu = RT_LIST_FIRST(edgeuse, &lu->down_hd);
-	eu = eu->radial_p->eumate_p;
-	do {
+	for(
+	    eu = eu->radial_p->eumate_p;
+	    eu != RT_LIST_FIRST(edgeuse, &lu->down_hd);
+	    eu = eu->radial_p->eumate_p
+	)  {
 		int	code;
 
 		/* if the radial edge is a part of a loop which is part of
 		 * a face, then it's one that we might be "on"
 		 */
-		if (*eu->up.magic_p == NMG_LOOPUSE_MAGIC && 
-		    *eu->up.lu_p->up.magic_p == NMG_FACEUSE_MAGIC && 
-		    eu->up.lu_p->up.fu_p->s_p == s ) {
+		if( *eu->up.magic_p != NMG_LOOPUSE_MAGIC ) continue;
+	    	q_lu = eu->up.lu_p;
+		if( *q_lu->up.magic_p != NMG_FACEUSE_MAGIC ) continue;
 
-		    	q_lu = eu->up.lu_p;
-			code = nmg_2lu_identical( eu,
-				RT_LIST_FIRST(edgeuse, &lu->down_hd) );
-		    	switch(code)  {
-		    	default:
-		    	case 0:
-		    		/* Not identical */
-		    		break;
-		    	case 1:
-		    		/* ON-shared */
-			    	NMG_INDEX_SET(classlist[NMG_CLASS_AonBshared],
-			    		lu->l_p );
-				if (rt_g.NMG_debug & DEBUG_CLASSIFY)
-					rt_log("Loop is on-shared\n");
-				reason = "edges identical with radial face, normals colinear";
-		    		status = ON_SURF;
-		    		goto out;
-		    	case 2:
-		    		/* ON-antishared */
-				NMG_INDEX_SET(classlist[NMG_CLASS_AonBanti],
-					lu->l_p );
-				if (rt_g.NMG_debug & DEBUG_CLASSIFY)
-					rt_log("Loop is on-antishared\n");
-				reason = "edges identical with radial face, normals opposite";
-				status = ON_SURF;
-				goto out;
-		    	case 3:
-		    		rt_bomb("class_lu_vs_s() unexpected wire ON\n");
-			}
+		if( q_lu == lu )  continue;
 
+		/* Only consider faces from shell 's' */
+		if( q_lu->up.fu_p->s_p != s )  continue;
+
+		code = nmg_2lu_identical( eu,
+			RT_LIST_FIRST(edgeuse, &lu->down_hd) );
+	    	switch(code)  {
+	    	default:
+	    	case 0:
+	    		/* Not identical */
+	    		break;
+	    	case 1:
+	    		/* ON-shared */
+		    	NMG_INDEX_SET(classlist[NMG_CLASS_AonBshared],
+		    		lu->l_p );
+			if (rt_g.NMG_debug & DEBUG_CLASSIFY)
+				rt_log("Loop is on-shared\n");
+			reason = "edges identical with radial face, normals colinear";
+	    		status = ON_SURF;
+	    		goto out;
+	    	case 2:
+	    		/* ON-antishared */
+			NMG_INDEX_SET(classlist[NMG_CLASS_AonBanti],
+				lu->l_p );
+			if (rt_g.NMG_debug & DEBUG_CLASSIFY)
+				rt_log("Loop is on-antishared\n");
+			reason = "edges identical with radial face, normals opposite";
+			status = ON_SURF;
+			goto out;
+	    	case 3:
+	    		rt_bomb("class_lu_vs_s() unexpected wire ON\n");
 		}
-		eu = eu->radial_p->eumate_p;
-	} while (eu != RT_LIST_FIRST(edgeuse, &lu->down_hd) );
+	}
 
 
 
@@ -1538,6 +1547,8 @@ CONST struct rt_tol	*tol;
 	for (RT_LIST_FOR(lu, loopuse, &fu->lu_hd))
 		(void)class_lu_vs_s(lu, s, classlist, tol);
 
+	if (rt_g.NMG_debug & DEBUG_CLASSIFY)
+		rt_log("class_fu_vs_s() END\n");
 }
 
 /*
