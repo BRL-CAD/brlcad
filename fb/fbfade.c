@@ -65,25 +65,18 @@ static char	RCSid[] =		/* for "what" utility */
 #else
 #include	<string.h>
 #endif
+#include "machine.h"
+#include "externs.h"
+
 #if __STDC__
-#include	<stdarg.h>
-#include	<stdlib.h>
 #define	SIZE_T	size_t
-#if __STDC__ == 1	/* workaround for Cray nonsense */
-extern int	getopt( int, char const * const *, char const * );
-#endif
 extern double	drand48( void );	/* in UNIX System V C library */
+#include	<stdarg.h>
 #else
-#ifdef NO_STRRCHR
-#define	strrchr( s, c )	rindex( s, c )
-#endif
-#include	<varargs.h>
 #define	SIZE_T	unsigned
-extern void	exit();
-extern char	*malloc();
-extern int	atoi(), getopt();
-extern double	drand48();
+#include	<varargs.h>
 #endif
+
 #ifndef EXIT_SUCCESS
 #define	EXIT_SUCCESS	0
 #endif
