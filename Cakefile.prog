@@ -27,9 +27,11 @@ everything&::	PRODUCTS
 	FC FFLAGS -c ../SRCDIR/%.f
 
 
+/* lex always generates lex.yy.c */
 %.o:    ../SRCDIR/%.l			if exist ../SRCDIR/%.l
-	rm -f ./%.c
+	rm -f ./%.c lex.yy.c
         LEX LEX_OPTS ../SRCDIR/%.l
+	mv lex.yy.c ./%.c
 	CC CFLAGS -I. -c ./%.c
 
 %.o:    ../SRCDIR/%.y			if exist ../SRCDIR/%.y
