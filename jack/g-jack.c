@@ -368,8 +368,9 @@ union tree		*curtree;
 
 	if (rt_g.debug&DEBUG_TREEWALK || verbose) {
 		char	*sofar = db_path_to_string(pathp);
-		rt_log("\ndo_region_end(%d) path='%s'\n",
+		rt_log("\ndo_region_end(%d %d%%) %s\n",
 			regions_tried,
+			regions_tried>0 ? (regions_done * 100) / regions_tried : 0,
 			sofar);
 		rt_free(sofar, "path string");
 	}
@@ -382,19 +383,21 @@ union tree		*curtree;
 	if( ncpu == 1 && RT_SETJUMP )  {
 		/* Error, bail out */
 		RT_UNSETJUMP;		/* Relinquish the protection */
-		rt_log("bailed out via longjmp\n");
-		rt_g.NMG_debug = NMG_debug;	/* restore mode */
-		/*
-		 *  Eliminate whatever stuff is leftover.
-		 *  Basic routines should be sturdy enough that
-		 *  this can be done safely.  If it dumps core,
-		 *  well, that's worth knowing about.
-		 */
-		nmg_km(the_model);
 
+		/* Sometimes the NMG library adds debugging bits when
+		 * it detects an internal error, before rt_bomb().
+		 */
+		rt_g.NMG_debug = NMG_debug;	/* restore mode */
+
+		/* Release the tree memory & input regions */
+		db_free_tree(curtree);		/* Does an nmg_kr() */
+
+		/* Get rid of (m)any other intermediate structures */
+		nmg_km(the_model);
+	
 		/* Now, make a new, clean model structure for next pass. */
-		the_model = nmg_mm();	/* sanity -- ignore current memory */
-		return	curtree;
+		the_model = nmg_mm();
+		goto out;
 	}
 	r = doit(curtree, &ttol);
 	RT_UNSETJUMP;		/* Relinquish the protection */
@@ -487,7 +490,17 @@ union tree		*curtree;
 		nmg_kr(r);
 	}
 
-	/* Return original tree -- it needs to be freed (by caller) */
+	/*
+	 *  Dispose of original tree, so that all associated dynamic
+	 *  memory is released now, not at the end of all regions.
+	 *  A return of TREE_NULL from this routine signals an error,
+	 *  so we need to cons up an OP_NOP node to return.
+	 */
+	db_free_tree(curtree);		/* Does an nmg_kr() */
+
+out:
+	GETUNION(curtree, tree);
+	curtree->tr_op = OP_NOP;
 	return(curtree);
 }
 
