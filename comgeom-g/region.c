@@ -27,7 +27,7 @@ struct rcard  {
 		char	rcf_solid[5];
 	}  
 	rc_fields[9];
-	char	rc_remark[11+3];
+	char	rc_remark[11+3+100];
 } rcard;
 
 /*
