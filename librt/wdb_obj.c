@@ -52,6 +52,9 @@ extern int rt_tcl_rt();
 extern int rt_tcl_import_from_path();
 extern void rt_generic_make();
 
+/* from librt/dg_obj.c */
+extern void dgo_eraseobjall_callback();
+
 HIDDEN int wdb_open_tcl();
 HIDDEN int wdb_close_tcl();
 HIDDEN int wdb_decode_dbip();
@@ -71,6 +74,7 @@ HIDDEN int wdb_ls_tcl();
 HIDDEN int wdb_list_tcl();
 HIDDEN int wdb_pathsum_tcl();
 HIDDEN int wdb_expand_tcl();
+HIDDEN int wdb_kill_tcl();
 
 HIDDEN void wdb_deleteProc();
 HIDDEN void wdb_deleteProc_rt();
@@ -115,6 +119,7 @@ HIDDEN struct bu_cmdtab wdb_cmds[] = {
 	"listeval",	wdb_pathsum_tcl,
 	"paths",	wdb_pathsum_tcl,
 	"expand",	wdb_expand_tcl,
+	"kill",		wdb_kill_tcl,
 #if 0
 	"c",		wdb_comb_std_tcl,
 	"cat",		wdb_cat_tcl,
@@ -132,7 +137,6 @@ HIDDEN struct bu_cmdtab wdb_cmds[] = {
 	"i",		wdb_instance_tcl,
 	"inside",	wdb_inside_tcl,
 	"keep",		wdb_keep_tcl,
-	"kill",		wdb_kill_tcl,
 	"killall",	wdb_killall_tcl,
 	"killtree",	wdb_killtree_tcl,
 	"mv",		wdb_move_tcl,
@@ -1466,6 +1470,92 @@ wdb_expand_tcl(clientData, interp, argc, argv)
 
 	return TCL_OK;
 }
+
+/*
+ * Usage:
+ *        procname kill arg(s)
+ */
+HIDDEN int
+wdb_kill_tcl(clientData, interp, argc, argv)
+     ClientData clientData;
+     Tcl_Interp *interp;
+     int     argc;
+     char    **argv;
+{
+	struct wdb_obj *wdbop = (struct wdb_obj *)clientData;
+	register struct directory *dp;
+	register int i;
+	register struct dm_list *dmlp;
+	register struct dm_list *save_dmlp;
+	int	is_phony;
+	int	verbose = LOOKUP_NOISY;
+
+	if (wdbop->wdb_wp->dbip->dbi_read_only) {
+		Tcl_AppendResult(interp, "Database is read-only!\n", (char *)NULL);
+		return TCL_ERROR;
+	}
+
+	if (argc < 3 || MAXARGS < argc) {
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "helplib wdb_kill");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
+	  return TCL_ERROR;
+	}
+
+	/* skip past procname */
+	argc--;
+	argv++;
+
+	/* skip past "-f" */
+	if (argc > 1 && strcmp(argv[1], "-f") == 0) {
+		verbose = LOOKUP_QUIET;
+		argc--;
+		argv++;
+	}
+
+	for (i = 1; i < argc; i++) {
+		if ((dp = db_lookup(wdbop->wdb_wp->dbip,  argv[i], verbose)) != DIR_NULL) {
+			is_phony = (dp->d_addr == RT_DIR_PHONY_ADDR);
+
+			/* don't worry about phony objects */
+			if (is_phony)
+				continue;
+
+			/* notify drawable geometry objects associated with this database object */
+			dgo_eraseobjall_callback(interp, wdbop, dp);
+
+			if (db_delete(wdbop->wdb_wp->dbip, dp) < 0 ||
+			    db_dirdelete(wdbop->wdb_wp->dbip, dp) < 0) {
+				/* Abort kill processing on first error */
+				Tcl_AppendResult(interp,
+						 "an error occurred while deleting ",
+						 argv[i], "\n", (char *)NULL);
+				return TCL_ERROR;
+			}
+		}
+	}
+
+	return TCL_OK;
+}
+
+#if 0
+/*
+ * Usage:
+ *        procname 
+ */
+HIDDEN int
+wdb__tcl(clientData, interp, argc, argv)
+     ClientData clientData;
+     Tcl_Interp *interp;
+     int     argc;
+     char    **argv;
+{
+	struct wdb_obj *wdbop = (struct wdb_obj *)clientData;
+}
+#endif
 
 /****************** utility routines ********************/
 /*
