@@ -64,6 +64,16 @@ If you need to install the software somewhere other than /usr/brlcad,
 	sh gen.sh install
 .ft R
 .fi
+.PP
+If you are adventurous and which to try our experimental TCL version
+of MGED (tmged), run these two additional commands:
+.sp .5
+.nf
+.ft B
+	sh gen.sh tcl
+	sh gen.sh install-tcl
+.ft R
+.fi
 .NH 1
 DISTRIBUTION TERMS
 .PP
