@@ -16,7 +16,7 @@
  *	This software is Copyright (C) 1989 by the United States Army.
  *	All rights reserved.
  *  
- *  $Revision$
+ *  @(#)$Header$
  */
 
 /***** Variables declared in viewXXX.c */
@@ -49,7 +49,7 @@ extern int		width;			/* # of pixels in X */
 extern int		height;			/* # of lines in Y */
 extern mat_t		Viewrotscale;
 extern fastf_t		viewsize;
-extern char		*scanbuf;		/* For optional output buffering */
+extern char		*scanbuf;		/* pixels for REMRT */
 extern int		incr_mode;		/* !0 for incremental resolution */
 extern int		incr_level;		/* current incremental level */
 extern int		incr_nlevel;		/* number of levels */
