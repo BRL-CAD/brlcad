@@ -1927,6 +1927,10 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	LIBPKG_LIBES	/**/
 #endif
 
+#ifndef LIBTCLHOOKS_CONFIG
+#	define	LIBTCLHOOKS_CONFIG	/**/
+#endif
+
 #ifndef MGED_CONFIG
 #	define	MGED_CONFIG	/**/
 #endif
