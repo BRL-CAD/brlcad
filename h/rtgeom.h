@@ -361,6 +361,8 @@ struct rt_fbm_internal {
 	fastf_t	fbm_octaves;	/* # octaves in noise */
 	fastf_t	fbm_lacunarity;
 	fastf_t	fbm_h;
+	fastf_t	fbm_thresh;
+
 	/* mapping from solid coordinates to noise coordinates */
 	mat_t	fbm_mat;
 
