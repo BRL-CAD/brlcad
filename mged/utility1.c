@@ -877,7 +877,7 @@ int flag;
 			{
 				/* if we get here, we must be looking for a solid table */
 				bu_vls_init_if_uninit( &tmp_vls );
-				if( rt_functab[sol_intern.idb_type].ft_describe( &tmp_vls, &sol_intern, 1, base2local, &rt_uniresource ) < 0 )
+				if( rt_functab[sol_intern.idb_type].ft_describe( &tmp_vls, &sol_intern, 1, base2local, &rt_uniresource, dbip ) < 0 )
 				{
 					Tcl_AppendResult(interp, tree_list[i].tl_tree->tr_l.tl_name,
 						"describe error\n" , (char *)NULL );

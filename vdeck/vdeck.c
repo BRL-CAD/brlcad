@@ -662,7 +662,7 @@ next_one:
 		struct rt_vls	str;
 		rt_vls_init( &str );
 		/* verbose=1, mm2local=1.0 */
-		if( ip->idb_meth->ft_describe( &str, ip, 1, 1.0, &rt_uniresource ) < 0 )  {
+		if( ip->idb_meth->ft_describe( &str, ip, 1, 1.0, &rt_uniresource, dbip ) < 0 )  {
 			rt_log("rt_gettree_leaf(%s):  solid describe failure\n",
 			    dp->d_namep );
 		}

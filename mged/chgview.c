@@ -777,7 +777,7 @@ int	verbose;
 	bu_vls_printf( outstrp, "%s:  ", dp->d_namep );
 
 	if( rt_functab[id].ft_describe( outstrp, &intern,
-	    verbose, base2local, &rt_uniresource ) < 0 )
+	    verbose, base2local, &rt_uniresource, dbip ) < 0 )
 	  Tcl_AppendResult(interp, dp->d_namep, ": describe error\n", (char *)NULL);
 	rt_db_free_internal( &intern, &rt_uniresource );
 }

@@ -119,7 +119,7 @@ set -S2 "/bin/sh"
 
 /* 1==YES, 0==NO */
 
-#define PRODUCTION	1
+#define PRODUCTION	0
 
 #if PRODUCTION
 #	define BUILD_OPTIMIZED	1
@@ -132,7 +132,7 @@ set -S2 "/bin/sh"
 #	define BUILD_OPTIMIZED	0
 #	define BUILD_SHARED	1
 #	define BUILD_XWINDOWS	1
-#	define BUILD_OPENGL	0
+#	define BUILD_OPENGL	1
 #	define BUILD_PRODUCTION	0
 /* #	define BUILD_SMP	0 */ /* does nothing right now */
 #endif
