@@ -291,7 +291,6 @@ register complex	root[];
 	register int	i;
 	static int	first_time = 1;
 	
-
 	if( first_time )  {
 		first_time = 0;
 		(void)signal(SIGFPE, cubic_catch);
@@ -299,8 +298,8 @@ register complex	root[];
 	expecting_fpe = 1;
 	if( setjmp( abort_buf ) )  {
 		(void)signal(SIGFPE, cubic_catch);
+		fprintf(stderr,"rt: cubic() Floating Point Error\n");
 		if( debug & DEBUG_ROOTS )  {
-			fprintf(stderr,"cubic Floating Point Error on:\n");
 			pr_poly(eqn);
 		}
 		return(0);	/* FAIL */
