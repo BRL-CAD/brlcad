@@ -2643,6 +2643,45 @@ CONST struct rt_tol	*tol;
 }
 
 /*
+ *			N M G _ K 0 E U
+ *
+ *  Kill all 0-length edgeuses that start and end on this vertex.
+ *
+ *  Returns -
+ *	0	If none were found
+ *	count	Number of 0-length edgeuses killed (not counting mates)
+ */
+int
+nmg_k0eu(v)
+struct vertex	*v;
+{
+	struct edgeuse		*eu;
+	struct vertexuse	*vu;
+	int			count = 0;
+
+	NMG_CK_VERTEX(v);
+top:
+	for( RT_LIST_FOR( vu, vertexuse, &v->vu_hd ) )  {
+		NMG_CK_VERTEXUSE(vu);
+		if( *vu->up.magic_p != NMG_EDGEUSE_MAGIC )  continue;
+		eu = vu->up.eu_p;
+		NMG_CK_EDGEUSE(eu);
+		if( eu->eumate_p->vu_p->v_p != v )  continue;
+		rt_log("nmg_k0eu(v=x%x) killing 0-len eu=x%x, mate=x%x\n",
+			v, eu, eu->eumate_p);
+nmg_pr_eu_briefly(eu, 0);
+nmg_pr_eu_briefly(eu->eumate_p, 0);
+		if( nmg_keu(eu) )  {
+			rt_log("nmg_k0eu() WARNING: parent now has no edgeuses\n");
+			/* XXX Now what? */
+		}
+		count++;
+		goto top;	/* vu_hd list is altered by nmg_keu() */
+	}
+	return count;
+}
+
+/*
  *			N M G _ R E P A I R _ V _ N E A R _ V
  *
  *  Attempt to join two vertices which both claim to be the intersection
@@ -2664,7 +2703,7 @@ CONST struct rt_tol	*tol;
 {
 	NMG_CK_VERTEX(hit_v);
 	NMG_CK_VERTEX(v);
-	NMG_CK_EDGE_G_LSEG(eg1);
+	if(eg1) NMG_CK_EDGE_G_LSEG(eg1);	/* eg1 may be NULL */
 	NMG_CK_EDGE_G_LSEG(eg2);
 	RT_CK_TOL(tol);
 
@@ -2676,16 +2715,18 @@ CONST struct rt_tol	*tol;
 		rt_dist_pt3_pt3(v->vg_p->coord, hit_v->vg_p->coord),
 		rt_pt3_pt3_equal(v->vg_p->coord, hit_v->vg_p->coord, tol)
 	    );
-	if( rt_2line3_colinear( eg1->e_pt, eg1->e_dir, eg2->e_pt, eg2->e_dir, 1e5, tol ) )
-		rt_log("ERROR: eg1 and eg2 are colinear!\n");
-	rt_log("eg1: line/ vu dist=%g, hit dist=%g\n",
-		rt_dist_line3_pt3( eg1->e_pt, eg1->e_dir, v->vg_p->coord ),
-		rt_dist_line3_pt3( eg1->e_pt, eg1->e_dir, hit_v->vg_p->coord ) );
-	rt_log("eg2: line/ vu dist=%g, hit dist=%g\n",
-		rt_dist_line3_pt3( eg2->e_pt, eg2->e_dir, v->vg_p->coord ),
-		rt_dist_line3_pt3( eg2->e_pt, eg2->e_dir, hit_v->vg_p->coord ) );
-	nmg_pr_eg(&eg1->magic, 0);
-	nmg_pr_eg(&eg2->magic, 0);
+	if( eg1 )  {
+		if( rt_2line3_colinear( eg1->e_pt, eg1->e_dir, eg2->e_pt, eg2->e_dir, 1e5, tol ) )
+			rt_bomb("ERROR: nmg_repair_v_near_v() eg1 and eg2 are colinear!\n");
+		rt_log("eg1: line/ vu dist=%g, hit dist=%g\n",
+			rt_dist_line3_pt3( eg1->e_pt, eg1->e_dir, v->vg_p->coord ),
+			rt_dist_line3_pt3( eg1->e_pt, eg1->e_dir, hit_v->vg_p->coord ) );
+		rt_log("eg2: line/ vu dist=%g, hit dist=%g\n",
+			rt_dist_line3_pt3( eg2->e_pt, eg2->e_dir, v->vg_p->coord ),
+			rt_dist_line3_pt3( eg2->e_pt, eg2->e_dir, hit_v->vg_p->coord ) );
+		nmg_pr_eg(&eg1->magic, 0);
+		nmg_pr_eg(&eg2->magic, 0);
+	}
 
 	if( rt_dist_pt3_pt3(v->vg_p->coord,
 	      hit_v->vg_p->coord) < 10 * tol->dist )  {
@@ -2698,18 +2739,19 @@ CONST struct rt_tol	*tol;
 			(struct edgeuse *)NULL, 0);
 		if( eu0 )  {
 			rt_log("DANGER: a 0-length edge is being created eu0=x%x\n", eu0);
-			goto out;	/* XXX blow up, for now */
 		}
 
 		nmg_jv(hit_v, v);
-		/* XXX Kill all uses of the 0-length edge? */
-		return hit_v;
+		(void)nmg_k0eu(hit_v);
+		goto out;
 	}
-out:
-	/* Separate is too great */
-	if( bomb )
+	/* Separation is too great */
+/**	if( bomb ) **/
 		rt_bomb("nmg_repair_v_near_v() separation is too great to repair.\n");
-	return (struct vertex *)NULL;
+	hit_v = (struct vertex *)NULL;
+out:
+	rt_log("nmg_repair_v_near_v(v=x%x) ret=x%x\n", v, hit_v);
+	return hit_v;
 }
 
 /*
@@ -2930,6 +2972,7 @@ struct nmg_ptbl		*eu2_list;
 	MAT4X3PNT( is->pt2d, is->proj, is->pt );
 	MAT4X3VEC( is->dir2d, is->proj, is->dir );
 
+re_tabulate:
 	/* Build list of all edge_g_lseg's in fu1 */
 	/* XXX This could be more cheaply done by cooking down eu1_list */
 	nmg_edge_g_tabulate( &eg_list, &fu1->l.magic );
@@ -3228,6 +3271,8 @@ hit_b:
 #if 0
 				nmg_repair_v_near_v( hit_v, vu1a->v_p,
 					is->on_eg, *eg1, 1, &(is->tol) );
+				nmg_tbl( &eg_list, TBL_FREE, (long *)0 );
+				goto re_tabulate;
 #else
 				/* Fall through to rt_isect_pt2_lseg2() */
 #endif
@@ -3241,6 +3286,8 @@ hit_b:
 #if 0
 				nmg_repair_v_near_v( hit_v, vu1b->v_p,
 					is->on_eg, *eg1, 1, &(is->tol) );
+				nmg_tbl( &eg_list, TBL_FREE, (long *)0 );
+				goto re_tabulate;
 #else
 				/* Fall through to rt_isect_pt2_lseg2() */
 #endif
@@ -3265,6 +3312,8 @@ hit_b:
 				if( hit_v && hit_v != vu1a->v_p )  {
 					nmg_repair_v_near_v( hit_v, vu1a->v_p,
 						is->on_eg, *eg1, 1, &(is->tol) );
+					nmg_tbl( &eg_list, TBL_FREE, (long *)0 );
+					goto re_tabulate;
 				}
 				hit_v = vu1a->v_p;
 				if (rt_g.NMG_debug & DEBUG_POLYSECT) rt_log("\thit_v = x%x (vu1a)\n", hit_v);
@@ -3274,6 +3323,8 @@ hit_b:
 				if( hit_v && hit_v != vu1b->v_p )  {
 					nmg_repair_v_near_v( hit_v, vu1b->v_p,
 						is->on_eg, *eg1, 1, &(is->tol) );
+					nmg_tbl( &eg_list, TBL_FREE, (long *)0 );
+					goto re_tabulate;
 				}
 				hit_v = vu1b->v_p;
 				if (rt_g.NMG_debug & DEBUG_POLYSECT) rt_log("\thit_v = x%x (vu1b)\n", hit_v);
