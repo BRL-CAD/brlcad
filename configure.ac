@@ -964,6 +964,7 @@ AC_CHECK_FUNCS(\
 	strncasecmp \
 	strpbrk \
 	strrchr \
+	strsep \
 	strspn \
 	strstr \
 	strtol \
