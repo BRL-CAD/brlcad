@@ -762,7 +762,7 @@ else
 fi
 AC_MSG_CHECKING(whether to build the included portable network graphics library)
 if test "x$build_brlcad_png" = "xyes" ; then
-	PNG_LIBS='${top_builddir}/src/other/libpng/libpng.la'
+	PNG_LIBS='${top_builddir}/src/other/libpng/libpng.la -lz'
 	AC_MSG_RESULT(yes)
 else
 	AC_MSG_RESULT(no)
