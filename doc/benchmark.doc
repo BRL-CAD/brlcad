@@ -1,5 +1,9 @@
 .\" $Header$
-.\" tbl benchmark.doc | troff -t -ms | catimp -P imt1
+.\" groff -t -ms -X benchmark.doc
+.\" groff -t -ms benchmark.doc | print-postscript
+.de BR
+\fB\\$1\fR\\$2
+..
 .TL
 The BRL-CAD Release 4.4 Benchmark Test
 .AU
@@ -9,7 +13,7 @@ Charles M. Kennedy
 .AU
 Lee A. Butler
 .AI
-The Ballistic Research Laboratory
+The U.S. Army Research Laboratory
 .PP
 This document describes the BRL-CAD Benchmark Test Methodology,
 and the Ray-Tracing Figure of Merit (RTFM) used to judge the
@@ -231,10 +235,10 @@ RELEASE 4.4 STATISTICS (4-Jan-1995)
 There is very little difference in RTFM numbers between Release 4.0 and
 Release 4.4, so they can be usefully compared.
 .LP
-.TS H
+.TS
 expand box;
-l l | n n n n | n | l.
-A/*	H/W	Moss	World	Star	Bldg	Mean	S/W Notes
+l l | n n n n n | n | l.
+A/*	H/W	Moss	World	Star	Bldg	M35	Mean	S/W Notes
 _
 Abs	pk	128056.46	52355.48	38787.38	36797.60	121368.30	75473.04
 *vgr	pk	934.65	780.72	691.76	689.61	1716.90	962.72	-P16
@@ -752,20 +756,20 @@ _
 Abs	patton	5235.87	2108.02	1509.85	1507.81	2132.01	2498.71	1
 *vgr	patton	38.21	31.43	26.92	28.25	30.15	30.99
 _
-Abs     crim    4679.97 2246.04 2143.07 1936.85 2224.65 2646.11 1
-*vgr    crim    34.15   33.49   38.22   36.29   31.47   34.72
+Abs	crim	4679.97	2246.04	2143.07	1936.85	2224.65	2646.11	1
+*vgr	crim	34.15	33.49	38.22	36.29	31.47	34.72
 _
 Abs	uy1	6220.79	2474.97	1742.33	1748.73	2464.90	2930.34	1
 *vgr	uy1	45.40	36.90	31.07	32.77	34.86	36.20
 _
-Abs     wiltse  5785.83 2737.06 2473.66 2310.58 2699.06 3201.23 1
-*vgr    wiltse  42.22   40.81   44.11   43.30   38.18   41.72   -mips1
+Abs	wiltse	5785.83	2737.06	2473.66	2310.58	2699.06	3201.23	1
+*vgr	wiltse	42.22	40.81	44.11	43.30	38.18	41.72	-mips1
 _
 Abs	walrus	5743.85	2938.73	2513.24	2446.85	2858.84	3300.30	3
 *vgr	walrus	41.92	43.82	44.82	45.85	40.44	43.37
 _
-Abs     wiltse  7093.51 3458.89 2887.77 2730.62 3199.08 3873.97 1
-*vgr    wiltse  51.77   51.57   51.50   51.17   45.25   50.25	-mips2
+Abs	wiltse	7093.51	3458.89	2887.77	2730.62	3199.08	3873.97	1
+*vgr	wiltse	51.77	51.57	51.50	51.17	45.25	50.25	-mips2
 _
 Abs	walrus	7131.48	3613.02	3262.01	3048.77	3594.35	4129.92	4
 *vgr	walrus	52.05	53.87	58.17	57.13	50.84	54.41
@@ -793,7 +797,7 @@ ADDITIONAL STATISTICS
 It would be greatly appreciated if you would return to BRL any
 statistics that you gather, including:
 the ``summary'' file produced by the benchmark script,
-which BRL CAD release
+which BRL-CAD release
 was used, the manufacturer of the machine,
 hardware model name/number,
 software version numbers (OS and compiler),
