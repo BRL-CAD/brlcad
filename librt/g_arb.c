@@ -6,9 +6,7 @@
  *  	as many as 8 vertices.
  *  
  *  Contributors -
- *	Edwin O. Davisson	(Triangle & Intercept Analysis)
  *	Michael John Muuss	(Programming, Generalization)
- *	Douglas A. Gwyn		("Inside" routine)
  *
  * U. S. Army Ballistic Research Laboratory
  * April 18, 1984.
@@ -23,9 +21,22 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "raytrace.h"
 #include "debug.h"
-#include "plane.h"
+
 
 /* Describe algorithm here */
+
+#define MAXPTS	4			/* All we need are 4 points */
+#define pl_A	pl_points[0]		/* Synonym for A point */
+
+struct arb_specific  {
+	int	pl_npts;		/* number of points on plane */
+	point_t	pl_points[MAXPTS];	/* Actual points on plane */
+	vect_t	pl_Xbasis;		/* X (B-A) vector (for 2d coords) */
+	vect_t	pl_N;			/* Unit-length Normal (outward) */
+	fastf_t	pl_NdotA;		/* Normal dot A */
+	struct arb_specific *pl_forw;	/* Forward link */
+	char	pl_code[MAXPTS+1];	/* Face code string.  Decorative. */
+};
 
 #define MINMAX(a,b,c)	{ FAST fastf_t ftemp;\
 			if( (ftemp = (c)) < (a) )  a = ftemp;\
@@ -146,11 +157,11 @@ int a, b, c, d;
 pointp_t ap, bp, cp, dp;
 int noise;
 {
-	register struct plane_specific *plp;
+	register struct arb_specific *plp;
 	register int pts;
 	register int i;
 
-	GETSTRUCT( plp, plane_specific );
+	GETSTRUCT( plp, arb_specific );
 	plp->pl_npts = 0;
 	pts  = add_pt( ap, stp, plp, a, noise );
 	pts += add_pt( bp, stp, plp, b, noise );
@@ -161,22 +172,9 @@ int noise;
 		free(plp);
 		return(0);				/* BAD */
 	}
-	/* Make the 2d-point list contain the origin as start+end */
-	plp->pl_2d_x[plp->pl_npts] = plp->pl_2d_y[plp->pl_npts] = 0.0;
-
-	/* Compute the common sub-expression for inside() */
-	for( i=0; i < pts; i++ )  {
-		LOCAL fastf_t f;
-		f = (plp->pl_2d_y[i+1] - plp->pl_2d_y[i]);
-		if( NEAR_ZERO(f) )
-			plp->pl_2d_com[i] = 0.0;	/* anything */
-		else
-			plp->pl_2d_com[i] =
-				(plp->pl_2d_x[i+1] - plp->pl_2d_x[i]) / f;
-	}
 
 	/* Add this face onto the linked list for this solid */
-	plp->pl_forw = (struct plane_specific *)stp->st_specific;
+	plp->pl_forw = (struct arb_specific *)stp->st_specific;
 	stp->st_specific = (int *)plp;
 	return(pts);					/* OK */
 }
@@ -184,7 +182,7 @@ int noise;
 /*
  *			A D D _ P T
  *
- *  Add another point to a struct plane_specific, checking for unique pts.
+ *  Add another point to a struct arb_specific, checking for unique pts.
  *  The first two points are easy.  The third one triggers most of the
  *  plane calculations, and forth and subsequent ones are merely
  *  check for validity.  If noise!=0, then non-planar 4th points give
@@ -193,7 +191,7 @@ int noise;
 add_pt( point, stp, plp, a, noise )
 register pointp_t point;
 struct soltab *stp;
-register struct plane_specific *plp;
+register struct arb_specific *plp;
 int a;
 int noise;			/* non-0: check 4,> pts for being planar */
 {
@@ -216,12 +214,9 @@ int noise;			/* non-0: check 4,> pts for being planar */
 	/* The first 3 points are treated differently */
 	switch( i )  {
 	case 0:
-		plp->pl_2d_x[0] = plp->pl_2d_y[0] = 0.0;
 		return(1);				/* OK */
 	case 1:
 		VSUB2( plp->pl_Xbasis, point, plp->pl_A );	/* B-A */
-		plp->pl_2d_x[1] = VDOT( plp->pl_Xbasis, plp->pl_Xbasis );
-		plp->pl_2d_y[1] = 0.0;
 		return(1);				/* OK */
 	case 2:
 		VSUB2( P_A, point, plp->pl_A );	/* C-A */
@@ -244,18 +239,11 @@ int noise;			/* non-0: check 4,> pts for being planar */
 		if( f < 0.0 )  {
 			VREVERSE(plp->pl_N, plp->pl_N);	/* "fix" normal */
 		}
-		/* Generate an arbitrary Y basis perp to Xbasis & Normal */
-		VCROSS( plp->pl_Ybasis, plp->pl_Xbasis, plp->pl_N );
 		plp->pl_NdotA = VDOT( plp->pl_N, plp->pl_A );
-		plp->pl_2d_x[2] = VDOT( P_A, plp->pl_Xbasis );
-		plp->pl_2d_y[2] = VDOT( P_A, plp->pl_Ybasis );
 		return(1);				/* OK */
 	default:
 		/* Merely validate 4th and subsequent points */
 		VSUB2( P_A, point, plp->pl_A );
-		/* Project into 2-d, even if non-planar */
-		plp->pl_2d_x[i] = VDOT( P_A, plp->pl_Xbasis );
-		plp->pl_2d_y[i] = VDOT( P_A, plp->pl_Ybasis );
 		f = VDOT( plp->pl_N, P_A );
 		if( ! NEAR_ZERO(f) )  {
 			/* Non-planar face */
@@ -279,11 +267,11 @@ int noise;			/* non-0: check 4,> pts for being planar */
 arb_print( stp )
 register struct soltab *stp;
 {
-	register struct plane_specific *plp =
-		(struct plane_specific *)stp->st_specific;
+	register struct arb_specific *plp =
+		(struct arb_specific *)stp->st_specific;
 	register int i;
 
-	if( plp == (struct plane_specific *)0 )  {
+	if( plp == (struct arb_specific *)0 )  {
 		fprintf(stderr,"arb(%s):  no faces\n", stp->st_name);
 		return;
 	}
@@ -294,15 +282,8 @@ register struct soltab *stp;
 			VPRINT( "", plp->pl_points[i] );
 		}
 		VPRINT( "Xbasis", plp->pl_Xbasis );
-		VPRINT( "Ybasis", plp->pl_Ybasis );
 		VPRINT( "Normal", plp->pl_N );
 		fprintf(stderr, "N.A = %f\n", plp->pl_NdotA );
-		fprintf(stderr, "2-d projection of vertices:\n");
-		for( i=0; i < plp->pl_npts; i++ )  {
-			fprintf(stderr, "(%f,%f), ",
-				plp->pl_2d_x[i],
-				plp->pl_2d_y[i] );
-		}
 		putc('\n',stderr);
 	} while( plp = plp->pl_forw );
 }
@@ -312,6 +293,11 @@ register struct soltab *stp;
  *  
  * Function -
  *	Shoot a ray at an ARB8.
+ *
+ * Algorithm -
+ * 	The intersection distance is computed for each face.
+ *  The largest IN distance and the smallest OUT distance are
+ *  used as the entry and exit points.
  *  
  * Returns -
  *	0	MISS
@@ -322,205 +308,70 @@ arb_shot( stp, rp )
 struct soltab *stp;
 register struct xray *rp;
 {
-	register struct plane_specific *plp =
-		(struct plane_specific *)stp->st_specific;
-#define MAXHITS 12		/* # surfaces hit, must be even */
-	LOCAL struct hit hits[MAXHITS];
-	register struct hit *hp;
-	LOCAL int	nhits;
-	LOCAL vect_t	work;
-	LOCAL fastf_t	xt, yt;
+	register struct arb_specific *plp =
+		(struct arb_specific *)stp->st_specific;
+	register struct seg *segp;
+	LOCAL struct arb_specific *iplane, *oplane;
+	LOCAL fastf_t	in, out;	/* ray in/out distances */
+	FAST fastf_t	dxbdn;
+	FAST fastf_t	dn;		/* Direction dot Normal */
+	FAST fastf_t	s;
 
-	nhits = 0;
-	hp = &hits[0];
+	in = -INFINITY;
+	out = INFINITY;
+#define PLANE_NULL	(struct arb_specific *)0
+	iplane = oplane = PLANE_NULL;
 
 	/* consider each face */
 	for( ; plp; plp = plp->pl_forw )  {
-		FAST fastf_t dn;		/* Direction dot Normal */
-		FAST fastf_t k;		/* (NdotA - (N dot P))/ (N dot D) */
-		/*
-		 *  Ray Direction dot N.  (N is outward-pointing normal)
-		 */
-		dn = VDOT( plp->pl_N, rp->r_dir );
+
+		/* Ray Direction dot N.  (N is outward-pointing normal) */
+		dn = -VDOT( plp->pl_N, rp->r_dir );
+		dxbdn = VDOT( plp->pl_N, rp->r_pt ) - plp->pl_NdotA;
 		if( debug & DEBUG_ARB8 )
-			fprintf(stderr,"Shooting at face %s.  N.Dir=%f\n", plp->pl_code, dn );
-		/*
-		 *  If ray lies directly along the face, drop this face.
-		 */
-		if( dn == 0.0 )
-			continue;
+			fprintf(stderr,"arb: face %s.  N.Dir=%f dxbdn=%f\n", plp->pl_code, dn, dxbdn );
 
-		/* Compute distance along ray of intersection */
-		k = (plp->pl_NdotA - VDOT(plp->pl_N, rp->r_pt)) / dn;
-
-		/*  If dn < 0, we should be entering the solid.
-		 *  However, we just assume in/out sorting later will work.
-		 *  This code is an inline version of:
-		 *
-		 *	if( pl_shot( plp, rp, &in, k ) != 0 ) continue;
-		 */
-		VJOIN1( hp->hit_point, rp->r_pt, k, rp->r_dir );
-		VSUB2( work, hp->hit_point, plp->pl_A );
-		xt = VDOT( work, plp->pl_Xbasis );
-		yt = VDOT( work, plp->pl_Ybasis );
-		if( !inside(
-			&xt, &yt,
-			plp->pl_2d_x, plp->pl_2d_y, plp->pl_2d_com,
-			plp->pl_npts )
-		)
-			continue;			/* MISS */
-
-		/* HIT is within planar face */
-		hp->hit_dist = k;
-		VMOVE( hp->hit_normal, plp->pl_N );
-		if(debug&DEBUG_ARB8) fprintf(stderr,"arb: hit dist=%f, dn=%f, k=%f\n", hp->hit_dist, dn, k );
-		if( nhits++ >= MAXHITS )  {
-			fprintf(stderr,"arb(%s): too many hits\n", stp->st_name);
-			break;
+		if( dn < -EPSILON )  {
+			/* exit point, when dir.N < 0.  out = min(out,s) */
+			if( out > (s = dxbdn/dn) )  {
+				out = s;
+				oplane = plp;
+			}
+		} else if ( dn > EPSILON )  {
+			/* entry point, when dir.N > 0.  in = max(in,s) */
+			if( in < (s = dxbdn/dn) )  {
+				in = s;
+				iplane = plp;
+			}
+		}  else  {
+			/* ray is parallel to plane when dir.N == 0.
+			 * If it is outside the solid, stop now */
+			if( dxbdn > 0.0 )
+				return( SEG_NULL );	/* MISS */
 		}
-		hp++;
+		if( debug & DEBUG_ARB8 )
+			fprintf(stderr,"arb: in=%f, out=%f\n", in, out);
+		if( in > out )
+			return( SEG_NULL );	/* MISS */
 	}
-	if( nhits == 0 )
-		return(SEG_NULL);		/* MISS */
-
-	/* Sort hits, Near to Far */
-	HitSort( hits, nhits );
-
-	if( nhits&1 )  {
-		/*
-		 * If this condition exists, it is almost certainly due to
-		 * the dn==0 check above.  Thus, we will make the last
-		 * surface infinitely thin and just replicate the entry
-		 * point as the exit point.  This at least makes the
-		 * presence of this solid known.  There may be something
-		 * better we can do.
-		 */
-		hits[nhits] = hits[nhits-1];	/* struct copy */
-		VREVERSE( hp->hit_normal, hits[nhits-1].hit_normal );
-		fprintf(stderr,"ERROR: arb(%s): %d hits, false exit\n",
-			stp->st_name, nhits);
-		nhits++;
+	/* Validate */
+	if( iplane == PLANE_NULL || oplane == PLANE_NULL )  {
+		fprintf(stderr,"ERROR: arb(%s): 1 hit => MISS\n",
+			stp->st_name);
+		return( SEG_NULL );	/* MISS */
 	}
+	if( out < 0.0 || in >= out )
+		return( SEG_NULL );	/* MISS */
 
-	/* nhits is even, build segments */
-	{
-		register struct seg *segp;			/* XXX */
-		segp = SEG_NULL;
-		while( nhits > 0 )  {
-			register struct seg *newseg;		/* XXX */
-			GET_SEG(newseg);
-			newseg->seg_next = segp;
-			segp = newseg;
-			segp->seg_stp = stp;
-			segp->seg_flag = SEG_IN|SEG_OUT;
-			segp->seg_in = hits[nhits-2];	/* struct copy */
-			segp->seg_out = hits[nhits-1];	/* struct copy */
-			nhits -= 2;
-		}
-		return(segp);			/* HIT */
-	}
-	/* NOTREACHED */
-}
+	GET_SEG( segp );
+	segp->seg_stp = stp;
+	segp->seg_flag = SEG_IN|SEG_OUT;
+	segp->seg_in.hit_dist = in;
+	VJOIN1( segp->seg_in.hit_point, rp->r_pt, in, rp->r_dir );
+	VMOVE( segp->seg_in.hit_normal, iplane->pl_N );
 
-HitSort( h, nh )
-register struct hit h[];
-register int nh;
-{
-	register int i, j;
-	LOCAL struct hit temp;
-
-	for( i=0; i < nh-1; i++ )  {
-		for( j=i+1; j < nh; j++ )  {
-			if( h[i].hit_dist <= h[j].hit_dist )
-				continue;
-			temp = h[j];		/* struct copy */
-			h[j] = h[i];		/* struct copy */
-			h[i] = temp;		/* struct copy */
-		}
-	}
-}
-
-/*
- *  			P L _ S H O T
- *
- *  This routine has been expanded in-line, but is preserved here for
- *  study, and possible re-use elsewhere.
- */
-pl_shot( plp, rp, hitp, k )
-register struct plane_specific *plp;
-register struct xray *rp;
-register struct hit *hitp;
-double	k;			/* dist along ray */
-{
-	LOCAL vect_t	hit_pt;		/* ray hits solid here */
-	LOCAL vect_t	work;
-	LOCAL fastf_t	xt, yt;
-
-	VJOIN1( hit_pt, rp->r_pt, k, rp->r_dir );
-	/* Project the hit point onto the plane, making this a 2-d problem */
-	VSUB2( work, hit_pt, plp->pl_A );
-	xt = VDOT( work, plp->pl_Xbasis );
-	yt = VDOT( work, plp->pl_Ybasis );
-
-	if( !inside(
-		&xt, &yt,
-		plp->pl_2d_x, plp->pl_2d_y, plp->pl_2d_com,
-		plp->pl_npts )
-	)
-		return(1);			/* MISS */
-
-	/* Hit is within planar face */
-	hitp->hit_dist = k;
-	VMOVE( hitp->hit_point, hit_pt );
-	VMOVE( hitp->hit_normal, plp->pl_N );
-	return(0);				/* HIT */
-}
-
-/*
- *  			I N S I D E
- *  
- * Function -
- *  	Determines whether test point (xt,yt) is inside the polygon
- *  	whose vertices have coordinates (in cyclic order) of
- *  	(x[i],y[i]) for i = 0 to n-1.
- *  
- * Returns -
- *  	1	iff test point is inside polygon
- *  	0	iff test point is outside polygon
- *  
- * Method -
- *  	A horizontal line through the test point intersects an even
- *  	number of the polygon's sides to the right of the point
- *  	IFF the point is exterior to the polygon (Jordan Curve Theorem).
- *  
- * Note -
- *  	For speed, we assume that x[n] == x[0], y[n] == y[0],
- *  	ie, that the starting point is repeated as the ending point.
- *
- * Credit -
- *	Douglas A. Gwyn (Algorithm, original FORTRAN subroutine)
- *	Michael Muuss (This "C" routine)
- */
-inside( xt, yt, x, y, com, n )
-register fastf_t *xt, *yt;
-register fastf_t *x, *y, *com;
-int n;
-{
-	register fastf_t *xend;
-	LOCAL int ret;
-
-	/*
-	 * Starts with 0 intersections, an even number ==> outside.
-	 * Proceed around the polygon, testing each side for intersection.
-	 */
-	xend = &x[n];
-	for( ret=0; x < xend; x++,y++,com++ )  {
-		/* See if edge is crossed by horiz line through test point */
-		if( (*yt > *y || *yt <= y[1])  &&  (*yt <= *y || *yt > y[1]) )
-			continue;
-		/* Yes.  See if intersection is to the right of test point */
-		if( (*xt - *x) < (*yt-*y) * (*com) )
-			ret = !ret;
-	}
-	return(ret);
+	segp->seg_out.hit_dist = out;
+	VJOIN1( segp->seg_out.hit_point, rp->r_pt, out, rp->r_dir );
+	VMOVE( segp->seg_out.hit_normal, oplane->pl_N );
+	return(segp);			/* HIT */
 }
