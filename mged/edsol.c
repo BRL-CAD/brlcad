@@ -8288,15 +8288,15 @@ struct rt_db_internal	*ip;
 		{
 			register struct rt_cline_internal *cli = 
 				(struct rt_cline_internal *)es_int.idb_ptr;
-			point_t work, work1;
+			point_t work1;
 
 			RT_CLINE_CK_MAGIC( cli );
 
-			MAT4X3PNT( work, xform, cli->v );
+			MAT4X3PNT( pos_view, xform, cli->v );
 			POINT_LABEL( pos_view, 'V' );
 
 			VADD2( work1, cli->v, cli->h );
-			MAT4X3PNT( work, xform, work1 );
+			MAT4X3PNT( pos_view, xform, work1 );
 			POINT_LABEL( pos_view, 'H' );
 		}
 		break;
