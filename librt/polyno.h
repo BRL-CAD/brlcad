@@ -3,7 +3,7 @@
 */
 
 #define		MAXP			4
-#define 	SMALL			.00001
+#define 	SMALL			.00000001
 #define		Abs( a )		((a) >= 0 ? (a) : -(a))
 #define 	Max( a, b )		((a) > (b) ? (a) : (b))
 
