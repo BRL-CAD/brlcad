@@ -171,7 +171,7 @@ set -S2 "/bin/sh"
 #	if 0	/* PRODUCTION=1 */
 /*		This version for production: optimization & shared libraries */
 /*		SGI's netinet/tcp.h flunks ANSI conformance.  Silence the warnings */
-#		define	OPTIMIZER	-O2 -Olimit 1400 -woff 658 -Wl,-w1
+#		define	OPTIMIZER	-O2 -Olimit 1500 -woff 658 -Wl,-w1
 /*		Use shared libraries */
 #		define	SHARED	_s
 #	else
@@ -254,19 +254,20 @@ set -S2 "/bin/sh"
 /*		Warning 1174 is "variable declared but never referenced". */
 /*		Warning 1032 is "expression must have arithmetic type". */
 /*		Warning 1203 is "nonstandard type for a bit field" (libpkg). */
+/*		Warning 1209 is "controlling expression is constant */
 /*		Warning 1048 is "cast between pointer-to-object and pointer-to-function */
 /*		Warning 1110 is "statement is unreachable" */
 /*		Warning 1048 is "cast between pointer-to-object and pointer-to-function" */
 #		define	OPTIMIZER	-O2 -OPT:fold_arith_limit=16000 \
 					-OPT:const_copy_limit=16000 \
 					-use_readonly_const \
-					-woff 1203,1048,1110
+					-woff 1203,1048,1110,1209
 #	else
 /*		This version for debugging with DBX */
 /*		-fullwarn is pretty verbose */
 #		define	OPTIMIZER	-g -use_readonly_const
 #	endif
-#	define	GFLAG		-mips3 -KPIC -G 7
+#	define	GFLAG	-n32 -mips3 -KPIC -G 7
 #	define  XINCDIR /usr/include/X11
 #	define	XLIBDIR /usr/lib32
 #	if 0	/* PRODUCTION=1 */
