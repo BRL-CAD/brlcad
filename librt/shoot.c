@@ -512,6 +512,10 @@ push:			;
 					ssp->dist_corr, ssp->box_start, ssp->box_end );
 		     	}
 		}
+	     	if( rt_g.debug & DEBUG_ADVANCE )  {
+			bu_log("rt_advance_to_next_cell()=x%x lastcut=x%x\n",
+	     			cutp, ssp->lastcut);
+	     	}
 		ssp->lastcut = cutp;
 
 		ssp->newray.r_pt[X] = px;
@@ -538,7 +542,8 @@ push:			;
 	}
 	/* Off the end of the model RPP */
      	if( rt_g.debug & DEBUG_ADVANCE )  {
-     		bu_log("rt_advance_to_next_cell(): escaped model RPP\n");
+		bu_log("rt_advance_to_next_cell()=NULL lastcut=x%x: escaped model RPP\n",
+ 			ssp->lastcut);
      		VPRINT("mdl_min", ap->a_rt_i->mdl_min);
      		VPRINT("mdl_max", ap->a_rt_i->mdl_max);
      	}
