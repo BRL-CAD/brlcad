@@ -3880,3 +3880,4 @@ UpdateStringOfNsName(objPtr)
     }
     objPtr->length = length;
 }
+

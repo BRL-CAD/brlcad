@@ -1584,3 +1584,4 @@ Tcl_UniCharIsWordChar(ch)
 
     return (((ALPHA_BITS | DIGIT_BITS | CONNECTOR_BITS) >> category) & 1);
 }
+

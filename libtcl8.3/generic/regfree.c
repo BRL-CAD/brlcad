@@ -51,3 +51,4 @@ regex_t *re;
 		return;
 	(*((struct fns *)re->re_fns)->free)(re);
 }
+

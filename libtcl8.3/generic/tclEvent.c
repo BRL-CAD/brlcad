@@ -1055,3 +1055,4 @@ Tcl_UpdateObjCmd(clientData, interp, objc, objv)
     Tcl_ResetResult(interp);
     return TCL_OK;
 }
+

@@ -978,3 +978,4 @@ EXTERN void		TclVerifyLocalLiteralTable _ANSI_ARGS_((
 # define TCL_STORAGE_CLASS DLLIMPORT
 
 #endif /* _TCLCOMPILATION */
+

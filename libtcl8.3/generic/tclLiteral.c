@@ -1060,3 +1060,4 @@ TclVerifyGlobalLiteralTable(iPtr)
     }
 }
 #endif /*TCL_COMPILE_DEBUG*/
+

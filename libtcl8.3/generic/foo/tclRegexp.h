@@ -49,3 +49,4 @@ typedef struct TclRegexp {
 } TclRegexp;
 
 #endif /* _TCLREGEXP */
+

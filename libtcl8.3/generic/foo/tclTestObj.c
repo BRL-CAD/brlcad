@@ -1155,3 +1155,4 @@ CheckIfVarUnset(interp, varIndex)
     }
     return 0;
 }
+

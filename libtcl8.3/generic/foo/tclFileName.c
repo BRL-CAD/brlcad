@@ -2129,3 +2129,4 @@ TclDoGlob(interp, separators, headPtr, tail, types)
 
     return TCL_OK;
 }
+

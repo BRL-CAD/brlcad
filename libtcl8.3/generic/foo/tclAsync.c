@@ -278,3 +278,4 @@ Tcl_AsyncReady()
 {
     return asyncReady;
 }
+

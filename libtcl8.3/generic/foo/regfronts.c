@@ -81,3 +81,4 @@ int flags;
 
 	return re_exec(re, start, len, nmatch, pmatch, f);
 }
+

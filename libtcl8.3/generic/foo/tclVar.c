@@ -4806,3 +4806,4 @@ TclVarTraceExists(interp, varName)
     }
     return varPtr;
 }
+

@@ -1027,3 +1027,4 @@ FinalizeRegexp(clientData)
 	ckfree(tsdPtr->patterns[i]);
     }
 }
+

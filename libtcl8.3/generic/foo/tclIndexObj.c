@@ -343,3 +343,4 @@ Tcl_WrongNumArgs(interp, objc, objv, message)
     }
     Tcl_AppendStringsToObj(objPtr, "\"", (char *) NULL);
 }
+

@@ -1036,3 +1036,4 @@ chr *end;			/* end of same */
 
 
 #include "rege_dfa.c"
+

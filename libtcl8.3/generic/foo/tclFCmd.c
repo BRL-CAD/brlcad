@@ -839,3 +839,4 @@ TclFileAttrsCmd(interp, objc, objv)
     Tcl_DStringFree(&buffer);
     return result;
 }
+

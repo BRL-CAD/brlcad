@@ -1618,3 +1618,4 @@ FreeStringInternalRep(objPtr)
 {
     ckfree((char *) GET_STRING(objPtr));
 }
+

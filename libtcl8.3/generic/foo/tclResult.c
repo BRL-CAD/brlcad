@@ -1050,3 +1050,4 @@ TclTransferResult(sourceInterp, result, targetInterp)
     Tcl_SetObjResult(targetInterp, Tcl_GetObjResult(sourceInterp));
     Tcl_ResetResult(sourceInterp);
 }
+

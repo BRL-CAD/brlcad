@@ -2290,3 +2290,4 @@ TclIsLocalScalar(src, len)
 	
     return 1;
 }
+

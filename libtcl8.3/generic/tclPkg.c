@@ -977,3 +977,4 @@ ComparePkgVersions(v1, v2, satPtr)
 	return -1;
     }
 }
+

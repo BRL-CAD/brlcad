@@ -1057,3 +1057,4 @@ UpdateStringOfList(listPtr)
     }
     listPtr->length = dst - listPtr->bytes;
 }
+

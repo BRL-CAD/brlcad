@@ -416,3 +416,4 @@ Tcl_GetNamespaceResolvers(namespacePtr, resInfoPtr)
     }
     return 0;
 }
+

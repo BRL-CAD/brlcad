@@ -1059,3 +1059,4 @@ pchr lastresort;		/* what to return if name lookup fails */
 		return (chr)lastresort;
 	return cv->chrs[0];
 }
+

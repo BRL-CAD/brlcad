@@ -416,3 +416,4 @@ struct guts {
 	struct subre *lacons;	/* lookahead-constraint vector */
 	int nlacons;		/* size of lacons */
 };
+

@@ -1549,3 +1549,4 @@ ScanNumber(buffer, type)
     }
     return NULL;
 }
+

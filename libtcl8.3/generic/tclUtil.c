@@ -2469,3 +2469,4 @@ Tcl_Stat(path, bufPtr)
 {
     return TclStat(path, bufPtr);
 }
+

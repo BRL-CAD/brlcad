@@ -1539,3 +1539,4 @@ Tcl_FcopyObjCmd(dummy, interp, objc, objv)
 
     return TclCopyChannel(interp, inChan, outChan, toRead, cmdPtr);
 }
+

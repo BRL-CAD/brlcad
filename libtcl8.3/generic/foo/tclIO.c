@@ -8288,3 +8288,4 @@ Tcl_ChannelHandlerProc(chanTypePtr)
 {
     return (chanTypePtr->handlerProc);
 }
+
