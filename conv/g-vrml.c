@@ -720,6 +720,8 @@ union tree		*curtree;
 	if (curtree->tr_op == OP_NOP)
 		return  curtree;
 
+	bu_log( "Attempting %s\n", db_path_to_string( pathp ) );
+
 	regions_tried++;
 	/* Begin rt_bomb() protection */
 	if( RT_SETJUMP )
@@ -805,6 +807,9 @@ union tree		*curtree;
 			nmg_kr(r);
 
 	}
+	else
+		bu_log( "WARNING: Nothing left after Boolean evaluation of %s\n",
+			db_path_to_string( pathp ) );
 
 	/*
 	 *  Dispose of original tree, so that all associated dynamic
