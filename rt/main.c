@@ -94,7 +94,8 @@ char **argv;
 #ifdef BSD
 	setlinebuf( stderr );
 #else
-#	if defined( SYSV ) && !defined( sgi ) && !defined(CRAY2)
+#	if defined( SYSV ) && !defined( sgi ) && !defined(CRAY2) && \
+	 !defined(n16)
 		(void) setvbuf( stderr, (char *) NULL, _IOLBF, BUFSIZ );
 #	endif
 #endif
