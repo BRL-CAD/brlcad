@@ -29,5 +29,5 @@ core
 .lib*.* .proc-db.* .cvsignore .util.* .patch.* .burst.* .iges.* .mged.*
 .fbserv.* .canon.* .anim.* .bench.* .conv.* .remrt.* .tools.* .comgeom-g.*
 .tab.* .sig.* .irprep.* .vdeck.* .fbed.* .jack.* .vas4.* .off.* .jove.*
-.lgt.* .nirt.* .mk.* .db.* .fb.* .tk.* .rt.* .halftone.* .gtools.*
-.cake*.* .cwish.*
+.lgt.* .nirt.* .mk.* .db.* .fb.* .rt.* .halftone.* .gtools.*
+.cake*.* .bwish.*
