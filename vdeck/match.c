@@ -1,8 +1,8 @@
 /*
 	SCCS id:	@(#) match.c	1.1
 	Last edit: 	2/1/85 at 13:51:37
-	Retrieved: 	8/13/86 at 08:01:40
-	SCCS archive:	/m/cad/vdeck/RCS/s.match.c
+	Retrieved: 	6/16/86 at 20:29:40
+	SCCS archive:	/vld/src/vdeck/s.match.c
 
 	Author:		Gary S. Moss
 			U. S. Army Ballistic Research Laboratory
@@ -16,6 +16,8 @@ char	sccsTag[] = "@(#) match.c	1.1	last edit 2/1/85 at 13:51:37";
 #endif
 #include <stdio.h>
 #include <string.h>
+#include "./vextern.h"
+
 #define NUL	'\0'
 
 /*	m a t c h ( )
