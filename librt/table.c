@@ -365,6 +365,7 @@ BU_EXTERN(int rt_cline_tclget, (Tcl_Interp *interp,
 BU_EXTERN(int rt_cline_tcladjust, (Tcl_Interp *interp,
 		struct rt_db_internal *intern, int argc, char **argv,
 		struct resource *resp));
+BU_EXTERN(int rt_cline_tclform, (const struct rt_functab *ftp, Tcl_Interp *interp));
 
 /* EXTRUSION */
 BU_EXTERN(int rt_extrude_tclget, (Tcl_Interp *interp,
@@ -372,6 +373,7 @@ BU_EXTERN(int rt_extrude_tclget, (Tcl_Interp *interp,
 BU_EXTERN(int rt_extrude_tcladjust, (Tcl_Interp *interp,
 		struct rt_db_internal *intern, int argc, char **argv,
 		struct resource *resp));
+BU_EXTERN(int rt_extrude_tclform, (const struct rt_functab *ftp, Tcl_Interp *interp));
 
 /* XXX from shoot.c / vshoot.c */
 BU_EXTERN(void rt_vstub, (struct soltab *stp[], struct xray *rp[],
@@ -825,7 +827,7 @@ const struct rt_functab rt_functab[] = {
 		rt_extrude_import,	rt_extrude_export,	rt_extrude_ifree,
 		rt_extrude_describe,rt_extrude_xform, NULL,
 		sizeof(struct rt_extrude_internal), RT_EXTRUDE_INTERNAL_MAGIC,
-		rt_extrude_tclget, rt_extrude_tcladjust, rt_parsetab_tclform,
+		rt_extrude_tclget, rt_extrude_tcladjust, rt_extrude_tclform,
 		NULL,
 	},
 
@@ -853,7 +855,7 @@ const struct rt_functab rt_functab[] = {
 		rt_cline_import,	rt_cline_export,	rt_cline_ifree,
 		rt_cline_describe,rt_cline_xform,	rt_cline_parse,
 		sizeof(struct rt_cline_internal), RT_CLINE_INTERNAL_MAGIC,
-		rt_cline_tclget, rt_cline_tcladjust, rt_parsetab_tclform,
+		rt_cline_tclget, rt_cline_tcladjust, rt_cline_tclform,
 		NULL,
 	},
 

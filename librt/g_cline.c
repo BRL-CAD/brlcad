@@ -1135,3 +1135,15 @@ char                    **argv;
 
 	return( TCL_OK );
 }
+
+int
+rt_cline_tclform( const struct rt_functab *ftp, Tcl_Interp *interp )
+{
+        RT_CK_FUNCTAB(ftp);
+
+        Tcl_AppendResult( interp,
+			  "V {%f %f %f} H {%f %f %f} R %f T %f", (char *)NULL );
+
+        return TCL_OK;
+
+}

@@ -1620,6 +1620,18 @@ rt_extrude_xform(
 }
 
 int
+rt_extrude_tclform( const struct rt_functab *ftp, Tcl_Interp *interp )
+{
+        RT_CK_FUNCTAB(ftp);
+
+        Tcl_AppendResult( interp,
+			  "V {%f %f %f} H {%f %f %f} A {%f %f %f} B {%f %f %f} S %s K %d", (char *)NULL );
+
+        return TCL_OK;
+
+}
+
+int
 rt_extrude_tclget( interp, intern, attr )
 Tcl_Interp                      *interp;
 CONST struct rt_db_internal     *intern;
