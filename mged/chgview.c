@@ -514,6 +514,7 @@ emuves_com( int argc, char **argv )
 	struct bu_attribute_value_set avs;
 	char **objs;
 	int ret;
+	int num_opts=0;
 
 	CHECK_DBI_NULL;
 
@@ -525,6 +526,14 @@ emuves_com( int argc, char **argv )
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
+	}
+
+	for( i=1 ; i<argc ; i++ ) {
+		if( *argv[i] == '-' ) {
+			num_opts++;
+		} else {
+			break;
+		}
 	}
 
 	bu_avs_init( &avs, argc/2, "muves_avs" );
@@ -545,13 +554,15 @@ emuves_com( int argc, char **argv )
 		return TCL_OK;
 	}
 
-	objs = (char **)bu_calloc( (BU_PTBL_LEN( tbl ) + 1), sizeof( char *), "emuves_com objs" );
-	objs[0] = "e";
+	objs = (char **)bu_calloc( (BU_PTBL_LEN( tbl ) + 1 + num_opts), sizeof( char *), "emuves_com objs" );
+	for( i=0 ; i<=num_opts ; i++ ) {
+		objs[i] = argv[i];
+	}
 	for( i=0 ; i<BU_PTBL_LEN( tbl ) ; i++ ) {
 		struct directory *dp;
 
 		dp = (struct directory *)BU_PTBL_GET( tbl, i );
-		objs[i+1] = dp->d_namep;
+		objs[i+num_opts+1] = dp->d_namep;
 	}
 
 	ret = edit_com( (BU_PTBL_LEN( tbl ) + 1), objs, 1, 1 );
