@@ -42,6 +42,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
+#define _BSD_TYPES		/* Needed for IRIX 5.0.1 */
 #include <ctype.h>
 #include <signal.h>
 #include <errno.h>
@@ -537,7 +538,7 @@ char *buf;
 {
 	int	x, y, num;
 	int	ret;
-	static char	*scanbuf = NULL;
+	static unsigned char	*scanbuf = NULL;
 	static int	buflen = 0;
 
 	x = pkg_glong( &buf[0*NET_LONG_LEN] );
@@ -546,11 +547,11 @@ char *buf;
 
 	if( num*sizeof(RGBpixel) > buflen ) {
 		if( scanbuf != NULL )
-			free( scanbuf );
+			free( (char *)scanbuf );
 		buflen = num*sizeof(RGBpixel);
 		if( buflen < 1024*sizeof(RGBpixel) )
 			buflen = 1024*sizeof(RGBpixel);
-		if( (scanbuf = malloc( buflen )) == NULL ) {
+		if( (scanbuf = (unsigned char *)malloc( buflen )) == NULL ) {
 			fb_log("fb_read: malloc failed!");
 			if( buf ) (void)free(buf);
 			buflen = 0;
@@ -579,7 +580,7 @@ char *buf;
 	y = pkg_glong( &buf[1*NET_LONG_LEN] );
 	num = pkg_glong( &buf[2*NET_LONG_LEN] );
 	type = pcp->pkc_type;
-	ret = fb_write( fbp, x, y, (RGBpixel *)&buf[3*NET_LONG_LEN], num );
+	ret = fb_write( fbp, x, y, (unsigned char *)&buf[3*NET_LONG_LEN], num );
 
 	if( type < MSG_NORETURN ) {
 		(void)pkg_plong( &rbuf[0*NET_LONG_LEN], ret );
@@ -600,7 +601,7 @@ char *buf;
 	int	width, height;
 	int	num;
 	int	ret;
-	static char	*scanbuf = NULL;
+	static unsigned char	*scanbuf = NULL;
 	static int	buflen = 0;
 
 	xmin = pkg_glong( &buf[0*NET_LONG_LEN] );
@@ -611,11 +612,11 @@ char *buf;
 
 	if( num*sizeof(RGBpixel) > buflen ) {
 		if( scanbuf != NULL )
-			free( scanbuf );
+			free( (char *)scanbuf );
 		buflen = num*sizeof(RGBpixel);
 		if( buflen < 1024*sizeof(RGBpixel) )
 			buflen = 1024*sizeof(RGBpixel);
-		if( (scanbuf = malloc( buflen )) == NULL ) {
+		if( (scanbuf = (unsigned char *)malloc( buflen )) == NULL ) {
 			fb_log("fb_read: malloc failed!");
 			if( buf ) (void)free(buf);
 			buflen = 0;
@@ -651,7 +652,7 @@ char *buf;
 
 	type = pcp->pkc_type;
 	ret = fb_writerect( fbp, x, y, width, height,
-		(RGBpixel *)&buf[4*NET_LONG_LEN] );
+		(unsigned char *)&buf[4*NET_LONG_LEN] );
 
 	if( type < MSG_NORETURN ) {
 		(void)pkg_plong( &rbuf[0*NET_LONG_LEN], ret );
