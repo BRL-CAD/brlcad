@@ -752,11 +752,39 @@ region_end:
 			goto fail;
 		}
 
-		/* Note:  solid may not be contained by a region */
+		if( (tsp->ts_sofar & TS_SOFAR_REGION) == 0 &&
+		    tsp->ts_stop_at_regions == 0 )  {
+			struct combined_tree_state	*ctsp;
+			char	*sofar = db_path_to_string(pathp);
+			/*
+			 *  Solid is not contained in a region.
+		    	 *  "Invent" region info.
+		    	 *  Take note of full state here at "region start".
+			 */
+			if( *region_start_statepp != (struct combined_tree_state *)0 ) {
+				rt_log("db_recurse(%s) ERROR at start of a region (bare solid), *region_start_statepp = x%x\n",
+					sofar, *region_start_statepp );
+				goto fail;
+			}
+		    	rt_log("WARNING: db_recurse(): solid '%s' not contained in a region\n",
+		    		sofar );
 
+			GETSTRUCT( ctsp, combined_tree_state );
+			ctsp->cts_s = *tsp;	/* struct copy */
+		    	ctsp->cts_s.ts_sofar |= TS_SOFAR_REGION;
+			db_dup_full_path( &(ctsp->cts_p), pathp );
+			*region_start_statepp = ctsp;
+			if(rt_g.debug&DEBUG_TREEWALK)  {
+				rt_log("db_recurse(%s): setting *region_start_statepp to x%x (bare solid)\n",
+					sofar, ctsp );
+				db_pr_combined_tree_state(ctsp);
+			}
+		    	rt_free( sofar, "path string" );
+		}
+
+		/* Hand the solid off for leaf processing */
 		if( !tsp->ts_leaf_func )  goto fail;
 		curtree = tsp->ts_leaf_func( tsp, pathp, rp, id );
-		/* eg, rt_add_solid() */
 	} else {
 		rt_log("db_functree:  %s is neither COMB nor SOLID?\n",
 			dp->d_namep );
@@ -1199,7 +1227,7 @@ db_walk_dispatcher()
 		}
 
 		if( !region_start_statep )
-			rt_bomb("db_walk_dispatcher() region started with no state?\n");
+			rt_bomb("ERROR db_walk_dispatcher() region started with no state?\n");
 
 		/* This is a new region */
 		if( rt_g.debug&DEBUG_TREEWALK )
