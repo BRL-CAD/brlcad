@@ -73,10 +73,7 @@ static int perspective_table[] = { 30, 45, 60, 90 };
 static int lighting_on = 0;	/* Lighting model on */
 static int no_faceplate = 0;	/* Don't draw faceplate */
 static int ovec = -1;		/* Old color map entry number */
-static mat_t perspect_mat;
-static mat_t nozclip_mat;
 static int kblights();
-static int persp_mat();
 
 #ifdef IR_BUTTONS
 /*
@@ -595,11 +592,6 @@ Ir_open()
 	deflinestyle( 1, 0xCF33 );
 	setlinestyle( 0 );
 
-	/* Compute some viewing matricies */
-	mat_idn( nozclip_mat );
-	nozclip_mat[10] = 1.0e-20;
-	persp_mat( perspect_mat, 90.0, 1.0, 0.01, 1.0e10, 1.0 );
-
 #if IR_WIDGETS
 	if (use_widgets) {
 		create_the_forms();
@@ -731,34 +723,23 @@ mat_t	mat;
 	register fastf_t *mptr;
 	Matrix	gtmat;
 	mat_t	newm;
-	int	i,j;	
+	int	i;
 
-	/* It seems that this needs to be done before the loadmatrix() */
-	if( ir_is_gt && lighting_on )  {
-		/* Separate projection matrix from
-		 * modeling and viewing xforms.
-		 */
-		mmode(MVIEWING);
-		/* Select the material */
-		lmbind(MATERIAL, 20);
-	}
+	if( ! zclipping_on ) {
+		mat_t	nozclip;
 
-	/* This section has the potential of being speed up since a new
-	 * matrix is loaded for each object. Even though its the same
-	 * matrix.
-	 */
-	if( perspective_mode ) {
-		mat_mul( newm, perspect_mat, mat );
-		mptr = newm;
-	} else if( ! zclipping_on ) {
-		mat_mul( newm, nozclip_mat, mat );
+		mat_idn( nozclip );
+		nozclip[10] = 1.0e-20;
+		mat_mul( newm, nozclip, mat );
 		mptr = newm;
 	} else {
 		mptr = mat;
 	}
 	for(i= 0; i < 4; i++) {
-		for(j= 0; j < 4; j++)
-			gtmat[j][i] = *(mptr++);
+		gtmat[0][i] = *(mptr++);
+		gtmat[1][i] = *(mptr++);
+		gtmat[2][i] = *(mptr++);
+		gtmat[3][i] = *(mptr++);
 	}
 
 	/*
@@ -788,9 +769,9 @@ mat_t	mat;
 int
 Ir_object( sp, m, ratio, white )
 register struct solid *sp;
-register fastf_t *m;
-double ratio;
-int white;
+fastf_t		*m;
+double		ratio;
+int		white;
 {
 	register struct rt_vlist	*vp;
 	register int nvec;
@@ -807,6 +788,7 @@ int white;
 		mmode(MVIEWING);
 		/* Select the material */
 		lmbind(MATERIAL, 20);
+		Ir_newrot(m);
 	}
 
 	/*
@@ -1301,24 +1283,6 @@ checkevents()  {
 				}
 				/* toggle perspective matrix */
 				if (--perspective_angle < 0) perspective_angle = 3;
-				switch (perspective_angle) {
-				case 3:
-					persp_mat( perspect_mat, 90.0,
-					    1.0, 0.01, 1.0e10, 1.0 );
-					break;
-				case 2:
-					persp_mat( perspect_mat, 60.0,
-					    1.0, 0.01, 1.0e10, 1.0 );
-					break;
-				case 1:
-					persp_mat( perspect_mat, 45.0,
-					    1.0, 0.01, 1.0e10, 1.0 );
-					break;
-				case 0:
-					persp_mat( perspect_mat, 30.0,
-					    1.0, 0.01, 1.0e10, 1.0 );
-					break;
-				}
 				if(perspective_mode) rt_vls_printf( &dm_values.dv_string,
 					"set perspective=%d\n",
 					perspective_table[perspective_angle] );
@@ -1905,31 +1869,6 @@ kblights()
 	lampoff(lights^0xf);
 }
 #endif
-/*
- *  Compute a perspective matrix.
- *  Reference: SGI Graphics Reference Appendix C
- */
-static int
-persp_mat( m, fovy, aspect, near, far, backoff )
-mat_t	m;
-fastf_t	fovy, aspect, near, far, backoff;
-{
-	mat_t	m2, tran;
-
-	fovy *= 3.1415926535/180.0;
-
-	mat_idn( m2 );
-	m2[5] = cos(fovy/2.0) / sin(fovy/2.0);
-	m2[0] = m2[5]/aspect;
-	m2[10] = -(far+near) / (far-near);	/* negate Z! */
-	m2[11] = -2*far*near / (far-near);
-	m2[14] = -1;
-	m2[15] = 0;
-
-	mat_idn( tran );
-	tran[11] = -backoff;
-	mat_mul( m, m2, tran );
-}
 
 ir_clear_to_black()
 {
