@@ -211,9 +211,9 @@ install-binaries: $(ITCL_LIB_FILE) itclsh
 	@$(INSTALL_DATA) itclConfig.sh $(LIB_INSTALL_DIR)/itclConfig.sh
 
 install-libraries:
-	@$(MKINSTALLDIRS) $(INCLUDE_INSTALL_DIR) $(SCRIPT_INSTALL_DIR)
-	@echo "Installing itcl.h"
-	@$(INSTALL_DATA) $(GENERIC_DIR)/itcl.h $(INCLUDE_INSTALL_DIR)
+	@$(MKINSTALLDIRS) $(SCRIPT_INSTALL_DIR)
+#	@echo "Installing itcl.h"
+#	@$(INSTALL_DATA) $(GENERIC_DIR)/itcl.h $(INCLUDE_INSTALL_DIR)
 	@for i in $(TOP_DIR)/library/*.* $(UNIX_DIR)/tclAppInit.c; \
 	    do \
 	    echo "Installing $$i"; \
