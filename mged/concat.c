@@ -42,52 +42,11 @@ static const char RCSconcat[] = "@(#)$Header$ (BRL)";
 #include "./ged.h"
 #include "./sedit.h"
 
-int			num_dups;
-struct directory	**dup_dirp;
-
 char	new_name[NAMESIZE];
 char	prestr[NAMESIZE];
 int	ncharadd;
 
-/*
- *			M G E D _ D I R _ C H E C K
- *
- * Check a name against the global directory.
- */
-int
-mged_dir_check( input_dbip, name, laddr, len, flags, ptr )
-register struct db_i	*input_dbip;
-register CONST char	*name;
-long			laddr;
-int			len;
-int			flags;
-genptr_t		ptr;
-{
-	struct directory	*dupdp;
-	char			local[NAMESIZE+2];
-
-	if(dbip == DBI_NULL)
-	  return 0;
-
-	if( input_dbip->dbi_magic != DBI_MAGIC )  bu_bomb("mged_dir_check:  bad dbip\n");
-
-	/* Add the prefix, if any */
-	if( ncharadd > 0 )  {
-		(void)strncpy( local, prestr, ncharadd );
-		(void)strncpy( local+ncharadd, name, NAMESIZE-ncharadd );
-	} else {
-		(void)strncpy( local, name, NAMESIZE );
-	}
-	local[NAMESIZE] = '\0';
-		
-	/* Look up this new name in the existing (main) database */
-	if( (dupdp = db_lookup( dbip, local, LOOKUP_QUIET )) != DIR_NULL )  {
-		/* Duplicate found, add it to the list */
-		num_dups++;
-		*dup_dirp++ = dupdp;
-	}
-	return 0;
-}
+int invoke_db_wrapper( ClientData clientData, Tcl_Interp *interp, int argc, char **argv, const char *cmd );
 
 /*
  *
@@ -96,6 +55,7 @@ genptr_t		ptr;
  *  Check for duplicate names in preparation for cat'ing of files
  *
  *  Usage:  dup file.g [prefix]
+ *  becomes: db dup file.g [prefix]
  */
 int
 f_dup(clientData, interp, argc, argv )
@@ -104,9 +64,6 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-  struct db_i		*newdbp = DBI_NULL;
-  struct directory	**dirp0 = (struct directory **)NULL;
-  int status = TCL_OK;
   struct bu_vls vls;
 
   CHECK_DBI_NULL;
@@ -121,218 +78,8 @@ char	**argv;
     return TCL_ERROR;
   }
 
-  bu_vls_init(&vls);
-  if( setjmp( jmp_env ) == 0 )
-    (void)signal( SIGINT, sig3);	/* allow interupts */
-  else{
-    bu_vls_free(&vls);
-
-    if(dirp0)
-      bu_free( (genptr_t)dirp0, "dir_getspace array" );
-
-    if(newdbp && newdbp->dbi_magic == DBI_MAGIC)
-      db_close( newdbp );
-
-    return TCL_OK;
-  }
-
-  /* get any prefix */
-  if( argc < 3 ) {
-    prestr[0] = '\0';
-  } else {
-    (void)strcpy(prestr, argv[2]);
-  }
-  num_dups = 0;
-  if( (ncharadd = strlen( prestr )) > 12 )  {
-    ncharadd = 12;
-    prestr[12] = '\0';
-  }
-
-  /* open the input file */
-  if( (newdbp = db_open( argv[1], "r" )) == DBI_NULL )  {
-    perror( argv[1] );
-    Tcl_AppendResult(interp, "dup: Can't open ", argv[1], "\n", (char *)NULL);
-    status = TCL_ERROR;
-    goto end;
-  }
-
-  Tcl_AppendResult(interp, "\n*** Comparing ", dbip->dbi_filename,
-		   "  with ", argv[1], " for duplicate names\n", (char *)NULL);
-  if( ncharadd ) {
-    Tcl_AppendResult(interp, "  For comparison, all names in ",
-		     argv[1], " were prefixed with:  ", prestr, "\n", (char *)NULL);
-  }
-
-  /* Get array to hold names of duplicates */
-  if( (dup_dirp = dir_getspace(0)) == (struct directory **) 0) {
-    Tcl_AppendResult(interp, "f_dup: unable to get memory\n", (char *)NULL);
-    status = TCL_ERROR;
-    db_close( newdbp );
-    goto end;
-  }
-  dirp0 = dup_dirp;
-
-  /* Scan new database for overlaps */
-  if( db_scan( newdbp, mged_dir_check, 0, NULL ) < 0 )  {
-    Tcl_AppendResult(interp, "dup: db_scan failure\n", (char *)NULL);
-    status = TCL_ERROR;
-    bu_free( (genptr_t)dirp0, "dir_getspace array" );
-    db_close( newdbp );
-    goto end;
-  }
-  rt_mempurge( &(newdbp->dbi_freep) );	/* didn't really build a directory */
-
-  vls_col_pr4v(&vls, dirp0, (int)(dup_dirp - dirp0));
-  bu_vls_printf(&vls, "\n -----  %d duplicate names found  -----\n",num_dups);
-  Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-  bu_free( (genptr_t)dirp0, "dir_getspace array" );
-  db_close( newdbp );
-
-end:
-  (void)signal( SIGINT, SIG_IGN );
-  bu_vls_free(&vls);
-  return status;
+  return invoke_db_wrapper( clientData, interp, argc, argv, "dup" );
 }
-
-HIDDEN void
-Do_update( dbip, comb, comb_leaf, user_ptr1, user_ptr2, user_ptr3 )
-struct db_i		*dbip;
-struct rt_comb_internal *comb;
-union tree		*comb_leaf;
-genptr_t		user_ptr1, user_ptr2, user_ptr3;
-{
-	char	mref[NAMESIZE+2];
-	char	*prestr;
-	int	*ncharadd;
-
-	if(dbip == DBI_NULL)
-	  return;
-
-	RT_CK_DBI( dbip );
-	RT_CK_TREE( comb_leaf );
-
-	ncharadd = (int *)user_ptr1;
-	prestr = (char *)user_ptr2;
-
-	(void)strncpy( mref, prestr, *ncharadd );
-	(void)strncpy( mref+(*ncharadd),
-		comb_leaf->tr_l.tl_name,
-		NAMESIZE-(*ncharadd) );
-	bu_free( comb_leaf->tr_l.tl_name, "comb_leaf->tr_l.tl_name" );
-	comb_leaf->tr_l.tl_name = bu_strdup( mref );
-}
-
-/*
- *			M G E D _ D I R _ A D D
- *
- *  Add a solid or conbination from an auxillary database
- *  into the primary database.
- */
-int
-mged_dir_add( input_dbip, name, laddr, len, flags, ptr )
-register struct db_i	*input_dbip;
-register CONST char	*name;
-long			laddr;
-int			len;
-int			flags;
-genptr_t		ptr;
-{
-	register struct directory *input_dp;
-	register struct directory *dp;
-	struct rt_db_internal intern;
-	struct rt_comb_internal *comb;
-	char			local[NAMESIZE+2+2];
-
-	CHECK_DBI_NULL;
-
-	if( input_dbip->dbi_magic != DBI_MAGIC )  bu_bomb("mged_dir_add:  bad dbip\n");
-
-	/* Add the prefix, if any */
-	if( ncharadd > 0 )  {
-		(void)strncpy( local, prestr, ncharadd );
-		(void)strncpy( local+ncharadd, name, NAMESIZE-ncharadd );
-	} else {
-		(void)strncpy( local, name, NAMESIZE );
-	}
-	local[NAMESIZE] = '\0';
-		
-	/* Look up this new name in the existing (main) database */
-	if( (dp = db_lookup( dbip, local, LOOKUP_QUIET )) != DIR_NULL )  {
-		register int	c;
-		char		loc2[NAMESIZE+2+2];
-
-		/* This object already exists under the (prefixed) name */
-		/* Protect the database against duplicate names! */
-		/* Change object names, but NOT any references made by combinations. */
-		(void)strncpy( loc2, local, NAMESIZE );
-		/* Shift name right two characters, and further prefix */
-		strncpy( local+2, loc2, NAMESIZE-2 );
-		local[1] = '_';			/* distinctive separater */
-		local[NAMESIZE] = '\0';	/* ensure null termination */
-
-		for( c = 'A'; c <= 'Z'; c++ )  {
-			local[0] = c;
-			if( (dp = db_lookup( dbip, local, LOOKUP_QUIET )) == DIR_NULL )
-				break;
-		}
-		if( c > 'Z' )  {
-			bu_log("mged_dir_add: Duplicate of name '%s', ignored\n",
-				local );
-			return 0;
-		}
-		bu_log("mged_dir_add: Duplicate of '%s' given new name '%s'\nYou should have used the 'dup' command to detect this,\nand then specified a prefix for the 'concat' command.\n",
-			loc2, local );
-	}
-
-	/* First, register this object in input database */
-	if( (input_dp = db_diradd( input_dbip, name, laddr, len, flags, ptr)) == DIR_NULL )
-		return(-1);
-
-	/* Then, register a new object in the main database */
-	if( (dp = db_diradd( dbip, local, -1L, 0, flags, ptr)) == DIR_NULL )
-		return(-1);
-
-	if( rt_db_get_internal( &intern, input_dp, input_dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )
-	{
-		READ_ERR;
-		if( db_delete( dbip, dp ) < 0 ||
-		    db_dirdelete( dbip, dp ) < 0 )  {
-		    	DELETE_ERR(local);
-		}
-	    	/* Abort processing on first error */
-		return -1;
-	}
-
-	/* The name is set, update any references */
-	if( flags & DIR_SOLID )
-	{
-		bu_log("adding solid '%s'\n", local );
-		if ((ncharadd + strlen(name)) > (unsigned)NAMESIZE)
-			bu_log("WARNING: solid name \"%s%s\" truncated to \"%s\"\n",
-				prestr,name, local);
-	}
-	else
-	{
-		bu_log("adding  comb '%s'\n", local );
-
-		/* Update all the member records */
-		comb = (struct rt_comb_internal *)intern.idb_ptr;
-		if( ncharadd && comb->tree )
-		{
-			db_tree_funcleaf( dbip, comb, comb->tree, Do_update,
-				(genptr_t)&ncharadd, (genptr_t)prestr, (genptr_t)NULL );
-		}
-	}
-
-	if( rt_db_put_internal( dp, dbip, &intern, &rt_uniresource ) < 0 )
-	{
-		bu_log( "Failed writing %s to database\n", dp->d_namep );
-		return( -1 );
-	}
-
-	return 0;
-}
-
 
 /*
  *			I N V O K E _ D B _ W R A P P E R
@@ -350,6 +97,7 @@ invoke_db_wrapper( ClientData clientData, Tcl_Interp *interp, int argc, char **a
 
 	bu_vls_printf( &str, "db %s ", cmd );
 	bu_vls_from_argv( &str, argc-1, argv+1 );
+	if(bu_debug) bu_log("%s\n", bu_vls_addr(&str) );
 
 	ret = Tcl_Eval( interp, bu_vls_addr(&str) );
 	bu_vls_free( &str );
@@ -363,10 +111,12 @@ invoke_db_wrapper( ClientData clientData, Tcl_Interp *interp, int argc, char **a
  *  Interrupts are not permitted during this function.
  *
  *  Usage:  dbconcat file.g [prefix]
+ *  becomes: db concat file.g prefix
  *
  *  NOTE:  If a prefix is not given on the command line,
  *  then the users insist that they be prompted for the prefix,
  *  to prevent inadvertently sucking in a non-prefixed file.
+ *  Slash ("/") specifies no prefix.
  */
 int
 f_concat(clientData, interp, argc, argv)
