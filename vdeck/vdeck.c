@@ -639,7 +639,7 @@ next_one:
 	VSETALL( stp->st_min,  INFINITY );
 
 	RT_INIT_DB_INTERNAL(&intern);
-	if( rt_functab[id].ft_import( &intern, ep, stp->st_matp ? stp->st_matp : rt_identity ) < 0 )  {
+	if( rt_functab[id].ft_import( &intern, ep, stp->st_matp ? stp->st_matp : rt_identity, tsp->ts_dbip ) < 0 )  {
 		rt_log("rt_gettree_leaf(%s):  solid import failure\n", dp->d_namep );
 		if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );
 		if( stp->st_matp )  rt_free( (char *)stp->st_matp, "st_matp");
