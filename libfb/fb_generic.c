@@ -1,21 +1,24 @@
 /*
-  Author -
-	Gary S. Moss
-
-  Source -
-	SECAD/VLD Computing Consortium, Bldg 394
-	The U. S. Army Ballistic Research Laboratory
-	Aberdeen Proving Ground, Maryland  21005-5066
-  
-  Copyright Notice -
-	This software is Copyright (C) 1986 by the United States Army.
-	All rights reserved.
-
-	$Header$ (BRL)
+ *			F B _ G E N E R I C
+ *
+ *  Authors -
+ *	Phil Dykstra
+ *	Gary S. Moss
+ *	Michael John Muuss
+ *
+ *  Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5066
+ *  
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1986 by the United States Army.
+ *	All rights reserved.
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
+
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
