@@ -775,7 +775,7 @@ struct rt_db_internal	*intern;
 	ebm->xdim = atoi( cmd_argvs[4] );
 	ebm->ydim = atoi( cmd_argvs[5] );
 	ebm->tallness = atof( cmd_argvs[6] ) * local2base;
-	bn_mat_idn( ebm->mat );
+	MAT_IDN( ebm->mat );
 
 	return( 0 );
 }
@@ -832,7 +832,7 @@ struct rt_db_internal	*intern;
 	dsp->dsp_xcnt = atoi( cmd_argvs[4] );
 	dsp->dsp_ycnt = atoi( cmd_argvs[5] );
 	dsp->dsp_smooth = atoi( cmd_argvs[6] );
-	bn_mat_idn( dsp->dsp_stom );
+	MAT_IDN( dsp->dsp_stom );
 	
 	dsp->dsp_stom[0] = dsp->dsp_stom[5] = 
 		atof( cmd_argvs[7] ) * local2base;
@@ -876,7 +876,7 @@ struct rt_db_internal	*intern;
 	dsp->dsp_xcnt = atoi( cmd_argvs[5] );
 	dsp->dsp_ycnt = atoi( cmd_argvs[6] );
 	dsp->dsp_smooth = atoi( cmd_argvs[7] );
-	bn_mat_idn( dsp->dsp_stom );
+	MAT_IDN( dsp->dsp_stom );
 	
 	dsp->dsp_stom[0] = dsp->dsp_stom[5] = 
 		atof( cmd_argvs[8] ) * local2base;
@@ -984,7 +984,7 @@ struct rt_db_internal	*intern;
 	vol->cellsize[0] = atof( cmd_argvs[9] ) * local2base;
 	vol->cellsize[1] = atof( cmd_argvs[10] ) * local2base;
 	vol->cellsize[2] = atof( cmd_argvs[11] ) * local2base;
-	bn_mat_idn( vol->mat );
+	MAT_IDN( vol->mat );
 
 	return( 0 );
 }

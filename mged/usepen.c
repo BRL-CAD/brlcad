@@ -451,7 +451,7 @@ wrt_view( mat_t out, const mat_t change, const mat_t in )
 	bn_mat_mul( t2, change, t1 );
 
 	/* Build "fromViewcenter" matrix */
-	bn_mat_idn( t1 );
+	MAT_IDN( t1 );
 	MAT_DELTAS( t1, -view_state->vs_toViewcenter[MDX], -view_state->vs_toViewcenter[MDY], -view_state->vs_toViewcenter[MDZ] );
 	bn_mat_mul( out, t1, t2 );
 }
@@ -492,11 +492,11 @@ wrt_point_direc( mat_t out, const mat_t change, const mat_t in, const point_t po
 	static vect_t	zaxis;
 
 	/* build "point to origin" matrix */
-	bn_mat_idn( pt_to_origin );
+	MAT_IDN( pt_to_origin );
 	MAT_DELTAS(pt_to_origin, -point[X], -point[Y], -point[Z]);
 
 	/* build "origin to point" matrix */
-	bn_mat_idn( origin_to_pt );
+	MAT_IDN( origin_to_pt );
 	MAT_DELTAS(origin_to_pt, point[X], point[Y], point[Z]);
 
 	/* build "direc to zaxis" matrix */

@@ -772,7 +772,7 @@ char	**argv;
 	RT_CK_DB_INTERNAL( &internal );
 
 	/* Build mirror transform matrix, for those who need it. */
-	bn_mat_idn( mirmat );
+	MAT_IDN( mirmat );
 	mirmat[k*5] = -1.0;
 
 	switch( id )
@@ -1988,13 +1988,13 @@ vect_t argvect;
    *	2. trans == v_work
    *	3. same scale factor
    */
-  bn_mat_idn(temp);
+  MAT_IDN(temp);
   MAT_DELTAS(temp, v_work[X], v_work[Y], v_work[Z]);
   temp[15] = modelchanges[15];
   bn_mat_copy(modelchanges, temp);
 
   /* build new rotation matrix */
-  bn_mat_idn(temp);
+  MAT_IDN(temp);
   buildHrot(temp,
 	    argvect[0]*degtorad,
 	    argvect[1]*degtorad,
@@ -2109,7 +2109,7 @@ char	**argv;
 	}
 #endif
 
-	bn_mat_idn(incr);
+	MAT_IDN(incr);
 
 	/* switch depending on type of scaling to do */
 	switch( edobj ) {
@@ -2200,8 +2200,8 @@ char	**argv;
 
 	update_views = 1;
 
-	bn_mat_idn(incr);
-	bn_mat_idn(old);
+	MAT_IDN(incr);
+	MAT_IDN(old);
 
 	if( (movedir & (RARROW|UARROW)) == 0 ) {
 		/* put in object trans mode */
@@ -2561,13 +2561,13 @@ char	**argv;
 	 *	2. trans == v_work
 	 *	3. same scale factor
 	 */
-	bn_mat_idn(temp);
+	MAT_IDN(temp);
 	MAT_DELTAS(temp, v_work[X], v_work[Y], v_work[Z]);
 	temp[15] = modelchanges[15];
 	bn_mat_copy(modelchanges, temp);
 
 	/* build new rotation matrix */
-	bn_mat_idn(temp);
+	MAT_IDN(temp);
 	buildHrot(temp, 0.0, 0.0, atof(argv[7])*degtorad);
 
 	/* Record the new rotation matrix into the revised

@@ -723,7 +723,7 @@ char	**argv;
 #endif
 
 	/* Only the matrix rarc, lmul, and rmul directives are useful here */
-	bn_mat_idn( stack );
+	MAT_IDN( stack );
 
 	/* Load the combination into memory */
 	dp = anp->an_path.fp_names[anp->an_path.fp_len-2];
@@ -948,7 +948,7 @@ char      	**argv;
 	illump = BU_LIST_NEXT(solid, &HeadSolid.l);/* any valid solid would do */
 	edobj = 0;		/* sanity */
 	movedir = 0;		/* No edit modes set */
-	bn_mat_idn( modelchanges );	/* No changes yet */
+	MAT_IDN( modelchanges );	/* No changes yet */
 	(void)chg_state( ST_VIEW, ST_O_PICK, "internal change of state");
 	/* reset accumulation local scale factors */
 	acc_sc[0] = acc_sc[1] = acc_sc[2] = 1.0;

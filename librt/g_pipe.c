@@ -162,7 +162,7 @@ fastf_t od, id;
 	pipe->bend_R_SQ = (pipe->bend_radius + pipe->bend_or) *
 				(pipe->bend_radius + pipe->bend_or);
 
-	bn_mat_idn( R );
+	MAT_IDN( R );
 	VMOVE( &R[0], pipe->bend_ra );
 	VMOVE( &R[4], pipe->bend_rb );
 	VMOVE( &R[8], pipe->bend_N );
@@ -246,7 +246,7 @@ fastf_t od2;
 	VCROSS( v2, seg_ht, v1 );
 
 	/* build R matrix */
-	bn_mat_idn( R );
+	MAT_IDN( R );
 	VMOVE( &R[0], v1 );
 	VMOVE( &R[4], v2 );
 	VMOVE( &R[8], seg_ht );
@@ -255,7 +255,7 @@ fastf_t od2;
 	bn_mat_trn( Rinv, R );
 
 	/* Build Scale matrix */
-	bn_mat_idn( S );
+	MAT_IDN( S );
 	S[10] = 1.0/pipe->pipe_len;
 
 	/* Compute SoR and invRoS */

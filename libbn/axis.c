@@ -95,7 +95,7 @@ double	char_width;		/* character scale (size) */
 	 *  scaling in his matrix, it will also be applied, but in most
 	 *  cases that would not be useful.
 	 */
-	bn_mat_idn( xlate_to_0 );
+	MAT_IDN( xlate_to_0 );
 	MAT_DELTAS( xlate_to_0,	 origin[X],  origin[Y],  origin[Z] );
 	bn_mat_mul( mat, rot, xlate_to_0 );
 	VMOVE( cur_point, origin );
@@ -182,7 +182,7 @@ float		*char_width;	/* character scale (size) */
 	vect_t	pnt;
 
 	VSET( pnt, *x, *y, *z );
-	bn_mat_idn(mat);
+	MAT_IDN(mat);
 	bn_mat_angles( mat, 0.0, 0.0, *theta );
 	strncpy( buf, string, sizeof(buf)-1 );
 	buf[sizeof(buf)-1] = '\0';

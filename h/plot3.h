@@ -22,8 +22,8 @@
 #include "vmath.h"
 #include "bn.h"
 
-#define	pl_mat_idn( _mat )		bn_mat_idn( _mat )
-#define pl_mat_zero( _mat )		bn_mat_zero( _mat )
+#define	pl_mat_idn( _mat )		MAT_IDN( _mat )
+#define pl_mat_zero( _mat )		MAT_ZERO( _mat )
 #define pl_mat_copy( _mat1, _mat2 )	bn_mat_copy( _mat1, _mat2 )
 
 /*

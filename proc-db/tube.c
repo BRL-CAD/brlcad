@@ -211,7 +211,7 @@ char	**argv;
 		xfinddir( to, projectile_pos + 480.0/2, offset );
 		bn_mat_fromto( rot2, from, to );
 
-		bn_mat_idn( xlate );
+		MAT_IDN( xlate );
 		MAT_DELTAS( xlate, offset[X], offset[Y], offset[Z] );
 		bn_mat_mul( rot3, rot2, rot1 );
 		bn_mat_mul( matp, xlate, rot3 );

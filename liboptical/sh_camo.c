@@ -231,7 +231,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	db_region_mat(model_to_region, rtip->rti_dbip, rp->reg_name, &rt_uniresource);
 
 	/* add the noise-space scaling */
-	bn_mat_idn(tmp);
+	MAT_IDN(tmp);
 	if (camo_sp->noise_size != 1.0) {
 		/* the user sets "noise_size" to the size of the biggest
 		 * noise-space blob in model coordinates
@@ -246,7 +246,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	bn_mat_mul(camo_sp->xform, tmp, model_to_region);
 
 	/* Add any translation within shader/region space */
-	bn_mat_idn(tmp);
+	MAT_IDN(tmp);
 	tmp[MDX] = camo_sp->noise_delta[0];
 	tmp[MDY] = camo_sp->noise_delta[1];
 	tmp[MDZ] = camo_sp->noise_delta[2];
@@ -382,7 +382,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	db_region_mat(model_to_region, rtip->rti_dbip, rp->reg_name, &rt_uniresource);
 
 	/* add the noise-space scaling */
-	bn_mat_idn(tmp);
+	MAT_IDN(tmp);
 	if (camo_sp->noise_size != 1.0) {
 		/* the user sets "noise_size" to the size of the biggest
 		 * noise-space blob in model coordinates
@@ -397,7 +397,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	bn_mat_mul(camo_sp->xform, tmp, model_to_region);
 
 	/* Add any translation within shader/region space */
-	bn_mat_idn(tmp);
+	MAT_IDN(tmp);
 	tmp[MDX] = camo_sp->noise_delta[0];
 	tmp[MDY] = camo_sp->noise_delta[1];
 	tmp[MDZ] = camo_sp->noise_delta[2];

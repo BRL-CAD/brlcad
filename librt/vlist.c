@@ -792,7 +792,7 @@ double			char_size;
 		break;
 	case 't':
 		/* Text string */
-		bn_mat_idn(mat);
+		MAT_IDN(mat);
 		if( BU_LIST_NON_EMPTY( *vhead ) )  {
 			struct bn_vlist *vlp;
 			/* Use coordinates of last op */

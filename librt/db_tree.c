@@ -104,7 +104,7 @@ db_init_db_tree_state( struct db_tree_state *tsp, struct db_i *dbip, struct reso
 	tsp->magic = RT_DBTS_MAGIC;
 	tsp->ts_dbip = dbip;
 	tsp->ts_resp = resp;
-	bn_mat_idn( tsp->ts_mat );	/* XXX should use null pointer convention! */
+	MAT_IDN( tsp->ts_mat );	/* XXX should use null pointer convention! */
 }
 
 /*
@@ -363,7 +363,7 @@ CONST union tree	*tp;
 	if( tp->tr_l.tl_mat )
 		bn_mat_copy( xmat, tp->tr_l.tl_mat );
 	else
-		bn_mat_idn( xmat );
+		MAT_IDN( xmat );
 
 	/*  If the owning region it above this node in the tree,
 	 *  it is not possible to animation region-material properties
@@ -834,7 +834,7 @@ db_follow_path(
 				if( dp != anp->an_path.fp_names[0] )
 					continue;
 				bn_mat_copy( old_xlate, tsp->ts_mat );
-				bn_mat_idn( xmat );
+				MAT_IDN( xmat );
 				db_do_anim( anp, old_xlate, xmat, &(tsp->ts_mater) );
 				bn_mat_mul( tsp->ts_mat, old_xlate, xmat );
 			}
@@ -2555,7 +2555,7 @@ db_shader_mat(
 	/*
 	 * Translate bounding box to origin
 	 */
-	bn_mat_idn(m_xlate);
+	MAT_IDN(m_xlate);
 	VSCALE(v_tmp, p_min, -1);
 	MAT_DELTAS_VEC(m_xlate, v_tmp);
 	bn_mat_mul(m_tmp, m_xlate, model_to_region);
@@ -2566,7 +2566,7 @@ db_shader_mat(
 	 */
 	VSUB2(v_tmp, p_max, p_min);
 	VINVDIR(v_tmp, v_tmp);
-	bn_mat_idn(m_scale);
+	MAT_IDN(m_scale);
 	MAT_SCALE_VEC(m_scale, v_tmp);
 	bn_mat_mul(model_to_shader, m_scale, m_tmp);
 	return 0;

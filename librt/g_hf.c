@@ -143,7 +143,7 @@ rt_hf_to_dsp(struct rt_db_internal *db_intern, struct resource *resp)
 	dsp->dsp_ycnt = hip->n;
 	dsp->dsp_smooth = 0;
 
-	bn_mat_idn(dsp->dsp_stom);
+	MAT_IDN(dsp->dsp_stom);
 	MAT_DELTAS_VEC(dsp->dsp_stom, hip->v);	/* translate */
 
 	/* Apply modeling transformations */

@@ -370,8 +370,8 @@ struct tgc_specific	*tgc;
 	VUNITIZE( uC );
 	VMOVE( tgc->tgc_N, uC );
 
-	bn_mat_idn( Rot );
-	bn_mat_idn( Inv );
+	MAT_IDN( Rot );
+	MAT_IDN( Inv );
 
 	Rot[0] = Inv[0] = uA[X];
 	Rot[1] = Inv[4] = uA[Y];
@@ -405,9 +405,9 @@ CONST vect_t	vect;
 int		axis;
 mat_t		Shr, Trn, Inv;
 {
-	bn_mat_idn( Shr );
-	bn_mat_idn( Trn );
-	bn_mat_idn( Inv );
+	MAT_IDN( Shr );
+	MAT_IDN( Trn );
+	MAT_IDN( Inv );
 
 	if( NEAR_ZERO( vect[axis], SMALL_FASTF ) )
 		rt_bomb("rt_tgc_shear() divide by zero\n");
@@ -432,8 +432,8 @@ rt_tgc_scale( a, b, h, Scl, Inv )
 fastf_t	a, b, h;
 mat_t	Scl, Inv;
 {
-	bn_mat_idn( Scl );
-	bn_mat_idn( Inv );
+	MAT_IDN( Scl );
+	MAT_IDN( Inv );
 	Scl[0]  /= a;
 	Scl[5]  /= b;
 	Scl[10] /= h;
@@ -1881,7 +1881,7 @@ struct soltab *stp;
 	 * in ideal coords.  This is a symmetric matrix with
 	 * the columns (dNx, dNy, dNz).
 	 */
-	bn_mat_idn( dN );
+	MAT_IDN( dN );
 	dN[0] = Q2;
 	dN[2] = dN[8] = 2.0*Q*tgc->tgc_DdBm1 * hitp->hit_vpriv[X];
 	dN[5] = R2;
@@ -2728,8 +2728,8 @@ CONST struct bn_tol		*tol;
 
 	/* Create transformation matrix  for the top cap surface*/
 
-	bn_mat_idn( omat );
-	bn_mat_idn( mat);
+	MAT_IDN( omat );
+	MAT_IDN( mat);
 	
 	omat[0] = MAGNITUDE(tip->c);
 	omat[5] = MAGNITUDE(tip->d);
@@ -2746,7 +2746,7 @@ CONST struct bn_tol		*tol;
         VUNITIZE(bnorm);
         VUNITIZE(cnorm);
 
-        bn_mat_idn( omat );
+        MAT_IDN( omat );
 
         VMOVE( &omat[0], anorm);
         VMOVE( &omat[4], bnorm);
@@ -2778,8 +2778,8 @@ CONST struct bn_tol		*tol;
 
 	/* Create transformation matrix  for the bottom cap surface*/
 
-	bn_mat_idn( omat );
-	bn_mat_idn( mat);
+	MAT_IDN( omat );
+	MAT_IDN( mat);
 	
 	omat[0] = MAGNITUDE(tip->a);
 	omat[5] = MAGNITUDE(tip->b);
@@ -2796,7 +2796,7 @@ CONST struct bn_tol		*tol;
         VUNITIZE(bnorm);
         VUNITIZE(cnorm);
 
-        bn_mat_idn( omat );
+        MAT_IDN( omat );
 
         VMOVE( &omat[0], anorm);
         VMOVE( &omat[4], bnorm);

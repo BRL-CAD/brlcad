@@ -205,7 +205,7 @@ char *av[];
 			exit(-1);
 		}
 		
-		bn_mat_idn( my_mat );
+		MAT_IDN( my_mat );
 		if ((rt_db_get_internal( &ip, dp, dbip, my_mat, &rt_uniresource ))<0) {
 			fprintf(stderr, "%s: rt_db_get_internal() failed\n", progname );
 			exit(-1);

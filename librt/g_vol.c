@@ -428,7 +428,7 @@ CONST struct db_i		*dbip;
 	vip->magic = RT_VOL_INTERNAL_MAGIC;
 
 	/* Establish defaults */
-	bn_mat_idn( vip->mat );
+	MAT_IDN( vip->mat );
 	vip->lo = 0;
 	vip->hi = 255;
 
@@ -567,7 +567,7 @@ CONST struct db_i		*dbip;
 	vip->magic = RT_VOL_INTERNAL_MAGIC;
 
 	/* Establish defaults */
-	bn_mat_idn( vip->mat );
+	MAT_IDN( vip->mat );
 	vip->lo = 0;
 	vip->hi = 255;
 

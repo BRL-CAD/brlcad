@@ -958,7 +958,7 @@ genptr_t                user_ptr1, user_ptr2, user_ptr3;
 	if( comb_leaf->tr_l.tl_mat )
 		bn_mat_copy( xmat, comb_leaf->tr_l.tl_mat );
 	else
-		bn_mat_idn( xmat );
+		MAT_IDN( xmat );
 }
 
 /*

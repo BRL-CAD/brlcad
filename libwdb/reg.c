@@ -220,7 +220,7 @@ mk_addmember(
 		bu_log("mk_addmember() op=x%x is bad\n", op);
 		return(WMEMBER_NULL);
 	}
-	bn_mat_idn( wp->wm_mat );
+	MAT_IDN( wp->wm_mat );
 
 	/* Append to end of doubly linked list */
 	BU_LIST_INSERT( headp, &wp->l );

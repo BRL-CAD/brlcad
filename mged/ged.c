@@ -325,9 +325,9 @@ char **argv;
 	view_ring_init(curr_dm_list->dml_view_state, (struct _view_state *)NULL);
 	/* init rotation matrix */
 	view_state->vs_Viewscale = 500;		/* => viewsize of 1000mm (1m) */
-	bn_mat_idn( view_state->vs_Viewrot );
-	bn_mat_idn( view_state->vs_toViewcenter );
-	bn_mat_idn( view_state->vs_ModelDelta );
+	MAT_IDN( view_state->vs_Viewrot );
+	MAT_IDN( view_state->vs_toViewcenter );
+	MAT_IDN( view_state->vs_ModelDelta );
 	MAT_DELTAS_GET_NEG(view_state->vs_orig_pos, view_state->vs_toViewcenter);
 	view_state->vs_i_Viewscale = view_state->vs_Viewscale;
 
@@ -335,9 +335,9 @@ char **argv;
 	owner = 1;
 	frametime = 1;
 
-	bn_mat_idn( identity );		/* Handy to have around */
-	bn_mat_idn( modelchanges );
-	bn_mat_idn( acc_rot_sol );
+	MAT_IDN( identity );		/* Handy to have around */
+	MAT_IDN( modelchanges );
+	MAT_IDN( acc_rot_sol );
 
 	state = ST_VIEW;
 	es_edflag = -1;

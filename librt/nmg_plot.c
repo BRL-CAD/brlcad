@@ -941,7 +941,7 @@ long				*tab;
 	if (rt_g.NMG_debug & DEBUG_LABEL_PTS) {
 		static char label[128];
 		mat_t	mat;
-		bn_mat_idn(mat);
+		MAT_IDN(mat);
 		(void)sprintf(label, "%g %g %g", p[0], p[1], p[2]);
 		/* XXX What size characters to use? */
 		bn_vlist_3string( vh, vbp->free_vlist_hd, label, p, mat, scale );
@@ -1207,7 +1207,7 @@ CONST struct bn_tol		*tol;
 		/*  Construct matrix to rotate characters from 2D drawing space
 		 *  into model coordinates, oriented in plane perpendicular to eu.
 		 */
-		bn_mat_zero( mat );
+		MAT_ZERO( mat );
 		mat[0] = xvec[X];
 		mat[4] = xvec[Y];
 		mat[8] = xvec[Z];

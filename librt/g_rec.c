@@ -247,7 +247,7 @@ struct rt_i		*rtip;
 	VSET( invsq, 1.0/magsq_a, 1.0/magsq_b, 1.0/magsq_h );
 
 	/* Compute R and Rinv matrices */
-	bn_mat_idn( R );
+	MAT_IDN( R );
 	f = 1.0/mag_a;
 	VSCALE( &R[0], tip->a, f );
 	f = 1.0/mag_b;
@@ -257,7 +257,7 @@ struct rt_i		*rtip;
 	bn_mat_trn( Rinv, R );			/* inv of rot mat is trn */
 
 	/* Compute S */
-	bn_mat_idn( S );
+	MAT_IDN( S );
 	S[ 0] = sqrt( invsq[0] );
 	S[ 5] = sqrt( invsq[1] );
 	S[10] = sqrt( invsq[2] );

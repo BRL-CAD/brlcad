@@ -132,7 +132,7 @@ struct mater_info	*materp;
 			break;
 		case ANM_RBOTH:
 			bn_mat_copy( stack, anp->an_u.anu_m.anm_mat );
-			bn_mat_idn( arc );
+			MAT_IDN( arc );
 			break;
 		case ANM_LMUL:
 			/* arc = DELTA * arc */
@@ -335,7 +335,7 @@ const char	**argv;
 		    			argv[3], argc );
 		    		goto bad;
 		    	}
-		    	bn_mat_idn( anp->an_u.anu_m.anm_mat );
+		    	MAT_IDN( anp->an_u.anu_m.anm_mat );
 		    	MAT_DELTAS( anp->an_u.anu_m.anm_mat,
 		    		atof( argv[5+0] ),
 		    		atof( argv[5+1] ),
@@ -346,7 +346,7 @@ const char	**argv;
 		    			argv[3], argc );
 		    		goto bad;
 		    	}
-		    	bn_mat_idn( anp->an_u.anu_m.anm_mat );
+		    	MAT_IDN( anp->an_u.anu_m.anm_mat );
 			bn_mat_angles( anp->an_u.anu_m.anm_mat,
 		    		atof( argv[5+0] ),
 		    		atof( argv[5+1] ),
@@ -364,7 +364,7 @@ const char	**argv;
 		    			argv[3] );
 				goto bad;
 			}
-		    	bn_mat_idn( anp->an_u.anu_m.anm_mat );
+		    	MAT_IDN( anp->an_u.anu_m.anm_mat );
 			anp->an_u.anu_m.anm_mat[15] = 1/scale;
 		} else if( strcmp( argv[4], "scale_about" ) == 0 )  {
 			point_t	pt;

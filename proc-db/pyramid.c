@@ -188,7 +188,7 @@ int	level;
 
 	sprintf(nm, "%sL", name);
 	wp = mk_addmember( leafp, &head.l, WMOP_UNION );
-	bn_mat_idn( wp->wm_mat );
+	MAT_IDN( wp->wm_mat );
 
 	sprintf(nm, "%sR", name);
 	wp = mk_addmember( leafp, &head.l, WMOP_UNION );

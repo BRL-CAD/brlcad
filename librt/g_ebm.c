@@ -553,7 +553,7 @@ CONST struct db_i		*dbip;
 	eip->magic = RT_EBM_INTERNAL_MAGIC;
 
 	/* Provide default orientation info */
-	bn_mat_idn( eip->mat );
+	MAT_IDN( eip->mat );
 
 	bu_vls_init( &str );
 	bu_vls_strcpy( &str, rp->ss.ss_args );
@@ -702,7 +702,7 @@ CONST struct db_i		*dbip;
 	eip->magic = RT_EBM_INTERNAL_MAGIC;
 
 	/* Provide default orientation info */
-	bn_mat_idn( eip->mat );
+	MAT_IDN( eip->mat );
 
 	bu_vls_init( &str );
 	bu_vls_strcpy( &str, ep->ext_buf );
@@ -1693,7 +1693,7 @@ char	**argv;
 	Tappl.a_purpose = "testing";
 	Tappl.a_resource = &resource;
 	Tsolid.st_matp = &Tmat;
-	bn_mat_idn( Tsolid.st_matp );
+	MAT_IDN( Tsolid.st_matp );
 
 	strcpy( rec.ss.ss_keyword, "ebm" );
 	strcpy( rec.ss.ss_args, "file=bm.bw w=6 n=6 d=6.0" );

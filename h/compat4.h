@@ -158,8 +158,8 @@ extern "C" {
 #define	mat_identity	bn_mat_identity
 #define mat_print	bn_mat_print
 #define mat_atan2	bn_atan2
-#define mat_zero	bn_mat_zero
-#define mat_idn		bn_mat_idn
+#define mat_zero	MAT_ZERO
+#define mat_idn		MAT_IDN
 #define mat_copy	bn_mat_copy
 #define mat_mul		bn_mat_mul
 #define mat_mul2	bn_mat_mul2

@@ -489,7 +489,7 @@ Skip_dials:
 			 ((struct x_vars *)dmp->dm_vars.priv_vars)->bg);
   Tk_MapWindow(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin);
 
-  bn_mat_idn(((struct x_vars *)dmp->dm_vars.priv_vars)->xmat);
+  MAT_IDN(((struct x_vars *)dmp->dm_vars.priv_vars)->xmat);
 
   return dmp;
 }

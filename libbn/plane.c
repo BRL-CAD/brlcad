@@ -2732,7 +2732,7 @@ CONST int pl_count;
 		}
 	}
 
-	bn_mat_zero( matrix );
+	MAT_ZERO( matrix );
 	VSET( hpq , 0.0 , 0.0 , 0.0 );
 
 	for( i=0 ; i<pl_count ; i++ )

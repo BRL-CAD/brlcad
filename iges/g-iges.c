@@ -195,7 +195,7 @@ char	*argv[];
 	bu_log( "%s", version+5);
 	bu_log( "Please direct bug reports to <acst@arl.army.mil>\n\n" );
 
-	bn_mat_idn( identity_mat );
+	MAT_IDN( identity_mat );
 
 	tree_state = rt_initial_tree_state;	/* struct copy */
 	tree_state.ts_tol = &tol;

@@ -83,7 +83,7 @@ char	**argv;
 
 	BU_LIST_INIT( &head.l );
 
-	bn_mat_idn( identity );
+	MAT_IDN( identity );
 	sin60 = sin(60.0 * 3.14159265358979323846264 / 180.0);
 
 	outfp = wdb_fopen("room.g");

@@ -341,7 +341,7 @@ NEWPG\n\
 		((struct ps_vars *)dmp->dm_vars.priv_vars)->scale,
 		((struct ps_vars *)dmp->dm_vars.priv_vars)->scale);
 
-	bn_mat_idn(psmat);
+	MAT_IDN(psmat);
 
 	Tcl_SetObjResult(interp, obj);
 	return dmp;

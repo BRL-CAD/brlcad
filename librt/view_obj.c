@@ -222,8 +222,8 @@ int vo_open_tcl(clientData, interp, argc, argv)
 	vop->vo_local2base = 1.0;		/* default units - mm */
 	vop->vo_base2local = 1.0;		/* default units - mm */
 	VSET(vop->vo_eye_pos, 0.0, 0.0, 1.0);
-	bn_mat_idn(vop->vo_rotation);
-	bn_mat_idn(vop->vo_center);
+	MAT_IDN(vop->vo_rotation);
+	MAT_IDN(vop->vo_center);
 	VSETALL(vop->vo_keypoint, 0.0);
 	vop->vo_coord = 'v';
 	vop->vo_rotate_about = 'v';
@@ -775,7 +775,7 @@ vo_persp_mat(m, fovy, aspect, near, far, backoff)
 
 	fovy *= 3.1415926535/180.0;
 
-	bn_mat_idn(m2);
+	MAT_IDN(m2);
 	m2[5] = cos(fovy/2.0) / sin(fovy/2.0);
 	m2[0] = m2[5]/aspect;
 	m2[10] = (far+near) / (far-near);
@@ -785,7 +785,7 @@ vo_persp_mat(m, fovy, aspect, near, far, backoff)
 	m2[15] = 0;
 
 	/* Move eye to origin, then apply perspective */
-	bn_mat_idn(tran);
+	MAT_IDN(tran);
 	tran[11] = -backoff;
 	bn_mat_mul(m, m2, tran);
 }
@@ -819,7 +819,7 @@ vo_mike_persp_mat(pmat, eye)
 	}
 
 	/* Shear "eye" to +Z axis */
-	bn_mat_idn(shear);
+	MAT_IDN(shear);
 	shear[2] = -eye[X]/eye[Z];
 	shear[6] = -eye[Y]/eye[Z];
 
@@ -830,12 +830,12 @@ vo_mike_persp_mat(pmat, eye)
 	}
 
 	/* Translate along +Z axis to put sheared_eye at (0,0,1). */
-	bn_mat_idn(xlate);
+	MAT_IDN(xlate);
 	/* XXX should I use MAT_DELTAS_VEC_NEG()?  X and Y should be 0 now */
 	MAT_DELTAS( xlate, 0, 0, 1-sheared_eye[Z] );
 
 	/* Build perspective matrix inline, substituting fov=2*atan(1,Z) */
-	bn_mat_idn( persp );
+	MAT_IDN( persp );
 	/* From page 492 of Graphics Gems */
 	persp[0] = sheared_eye[Z];	/* scaling: fov aspect term */
 	persp[5] = sheared_eye[Z];	/* scaling: determines fov */

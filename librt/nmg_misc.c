@@ -1693,7 +1693,7 @@ plane_t pl;
 	}
 
 	/* build matrix */
-	bn_mat_zero( matrix );
+	MAT_ZERO( matrix );
 	VSET( vsum , 0.0 , 0.0 , 0.0 );
 
 	one_over_vertex_count = 1.0/(double)(BU_PTBL_END( &verts ));

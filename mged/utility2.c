@@ -245,7 +245,7 @@ char **argv;
 	  return TCL_ERROR;
 	}
 
-	bn_mat_idn( start_mat );
+	MAT_IDN( start_mat );
 
 	if( setjmp( jmp_env ) == 0 )
 	  (void)signal( SIGINT, sig3);  /* allow interupts */
@@ -869,7 +869,7 @@ genptr_t	ptr;
 		use = (struct object_use *)bu_malloc( sizeof( struct object_use ), "Make_new_name: use" );
 
 		/* set xform for this object_use to all zeros */
-		bn_mat_zero( use->xform );
+		MAT_ZERO( use->xform );
 		use->used = 0;
 		if( dbip->dbi_version < 5 ) {
 			NAMEMOVE( dp->d_namep, name_v4 );
@@ -1063,7 +1063,7 @@ genptr_t		user_ptr1, user_ptr2, user_ptr3;
 	if( !comb_leaf->tr_l.tl_mat )  {
 		comb_leaf->tr_l.tl_mat = (matp_t)bu_malloc( sizeof(mat_t), "tl_mat" );
 	}
-	bn_mat_idn( comb_leaf->tr_l.tl_mat );
+	MAT_IDN( comb_leaf->tr_l.tl_mat );
 }
 
 static struct directory *
@@ -1292,7 +1292,7 @@ char **argv;
 	/* Make new names */
 	db_functree( dbip, old_dp, Make_new_name, Make_new_name, &rt_uniresource, NULL );
 
-	bn_mat_idn( xform );
+	MAT_IDN( xform );
 
 	/* Make new objects */
 	if( rt_db_get_internal( &intern, old_dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )

@@ -105,7 +105,7 @@ struct wmember	*headp;
 	 */
 	VSET( from, 0, 0, -1 );
 	bn_mat_fromto( rot, from, dir );
-	bn_mat_idn( xlate );
+	MAT_IDN( xlate );
 	MAT_DELTAS( xlate, pos[X], pos[Y], pos[Z] );
 	bn_mat_mul( both, xlate, rot );
 

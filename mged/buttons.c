@@ -471,7 +471,7 @@ ill_common()  {
 	edobj = 0;		/* sanity */
 	edsol = 0;		/* sanity */
 	movedir = 0;		/* No edit modes set */
-	bn_mat_idn( modelchanges );	/* No changes yet */
+	MAT_IDN( modelchanges );	/* No changes yet */
 
 	return(1);		/* OK */
 }

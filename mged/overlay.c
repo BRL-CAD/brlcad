@@ -111,7 +111,7 @@ char	**argv;
 	}
 
 	vbp = rt_vlblock_init();
-	bn_mat_idn(mat);
+	MAT_IDN(mat);
 	bn_mat_inv( mat, view_state->vs_Viewrot );
 	scale = VIEWSIZE / 100;		/* divide by # chars/screen */
 

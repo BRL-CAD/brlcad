@@ -174,7 +174,7 @@ struct rt_i		*rtip;
 	bn_mat_inv(model_to_region, region_to_model);
 
 	/* add the noise-space scaling */
-	bn_mat_idn(tmp);
+	MAT_IDN(tmp);
 	if (scloud->scale != 1.0) {
 		tmp[0] = tmp[5] = tmp[10] = 1.0 / scloud->scale;
 	} else {
@@ -186,7 +186,7 @@ struct rt_i		*rtip;
 	bn_mat_mul(scloud->mtos, tmp, model_to_region);
 
 	/* add the translation within noise space */
-	bn_mat_idn(tmp);
+	MAT_IDN(tmp);
 	tmp[MDX] = scloud->delta[0];
 	tmp[MDY] = scloud->delta[1];
 	tmp[MDZ] = scloud->delta[2];

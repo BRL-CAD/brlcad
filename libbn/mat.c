@@ -4,8 +4,8 @@
  * 4 x 4 Matrix manipulation functions..............
  *
  *	bn_atan2()			Wrapper for library atan2()
- *	bn_mat_zero( &m )		Fill matrix m with zeros
- *	bn_mat_idn( &m )		Fill matrix m with identity matrix
+ *(deprecated) bn_mat_zero( &m )		Fill matrix m with zeros
+ *(deprecated) bn_mat_idn( &m )		Fill matrix m with identity matrix
  *	bn_mat_copy( &o, &i )		Copy matrix i to matrix o
  *	bn_mat_mul( &o, &i1, &i2 )	Multiply i1 by i2 and store in o
  *	bn_mat_mul2( &i, &o )
@@ -19,7 +19,7 @@
  *	bn_mat_angles( &o, alpha, beta, gama )	Make rot matrix from angles
  *	bn_eigen2x2()			Eigen values and vectors
  *	bn_mat_lookat			Make rot mat:  xform from D to -Z
- *	bn_mat_fromto			Make rot mat:  xform from A to B
+ *	bn_mat_fromto			Make rot mat:  xform from A to
  *	bn_mat_arb_rot( &m, pt, dir, ang)	Make rot mat about axis (pt,dir), through ang
  *	bn_mat_is_equal()		Is mat a equal to mat b?
  *
@@ -145,6 +145,7 @@ mat_t	m;
 	register int i = 0;
 	register matp_t mp = m;
 
+	bu_log("libbn/mat.c:  bn_mat_zero() is deprecated, use MAT_ZERO()\n");
 	/* Clear everything */
 	for(; i<16; i++)
 		*mp++ = 0.0;
@@ -161,6 +162,7 @@ void
 bn_mat_idn( m )
 register mat_t	m;
 {
+	bu_log("libbn/mat.c:  bn_mat_idn() is deprecated, use MAT_IDN()\n");
 	memcpy(m, bn_mat_identity, sizeof(m));
 }
 
@@ -621,7 +623,7 @@ double alpha_in, beta_in, ggamma_in;
 	LOCAL double salpha, sbeta, sgamma;
 
 	if( alpha_in == 0.0 && beta_in == 0.0 && ggamma_in == 0.0 )  {
-		bn_mat_idn( mat );
+		MAT_IDN( mat );
 		return;
 	}
 
@@ -798,7 +800,7 @@ CONST vect_t	to;
 	dot = VDOT(unit_from, unit_to);
 	if( dot > 1.0-0.00001 )  {
 		/* dot == 1, return identity matrix */
-		bn_mat_idn(m);
+		MAT_IDN(m);
 		return;
 	}
 	if( dot < -1.0+0.00001 )  {
@@ -812,7 +814,7 @@ CONST vect_t	to;
 	VUNITIZE( M );			/* should be unnecessary */
 
 	/* Almost everything here is done with pre-multiplys:  vector * mat */
-	bn_mat_idn( Q );
+	MAT_IDN( Q );
 	VMOVE( &Q[0], unit_from );
 	VMOVE( &Q[4], M );
 	VMOVE( &Q[8], N );
@@ -821,7 +823,7 @@ CONST vect_t	to;
 	/* w_prime = w * Qt */
 	MAT4X3VEC( w_prime, Q, unit_to );	/* post-multiply by transpose */
 
-	bn_mat_idn( R );
+	MAT_IDN( R );
 	VMOVE( &R[0], w_prime );
 	VSET( &R[4], -w_prime[Y], w_prime[X], w_prime[Z] );
 	VSET( &R[8], 0, 0, 1 );		/* is unnecessary */
@@ -992,7 +994,7 @@ int		yflip;
 		/* If original Z inverts sign, flip sign on resulting Y */
 		if( zproj[Y] < 0.0 )  {
 			bn_mat_copy( prod12, rot );
-			bn_mat_idn( third );
+			MAT_IDN( third );
 			third[5] = -1;
 			bn_mat_mul( rot, third, prod12 );
 		}
@@ -1076,12 +1078,12 @@ CONST double	scale;
 	mat_t	s;
 	mat_t	tmp;
 
-	bn_mat_idn( xlate );
+	MAT_IDN( xlate );
 	MAT_DELTAS_VEC_NEG( xlate, pt );
 
-	bn_mat_idn( s );
+	MAT_IDN( s );
 	if( NEAR_ZERO( scale, SMALL ) )  {
-		bn_mat_zero( mat );
+		MAT_ZERO( mat );
 		return -1;			/* ERROR */
 	}
 	s[15] = 1/scale;
@@ -1107,7 +1109,7 @@ CONST point_t	pt;
 	mat_t	xlate;
 	mat_t	tmp;
 
-	bn_mat_idn( xlate );
+	MAT_IDN( xlate );
 	MAT_DELTAS_VEC_NEG( xlate, pt );
 
 	bn_mat_mul( tmp, xform, xlate );
@@ -1214,12 +1216,12 @@ CONST fastf_t ang;
 
 	if( ang == 0.0 )
 	{
-		bn_mat_idn( m );
+		MAT_IDN( m );
 		return;
 	}
 
-	bn_mat_idn( tran1 );
-	bn_mat_idn( tran2 );
+	MAT_IDN( tran1 );
+	MAT_IDN( tran2 );
 
 	/* construct translation matrix to pt */
 	tran1[MDX] = (-pt[X]);
@@ -1242,7 +1244,7 @@ CONST fastf_t ang;
 	n1_n3 = dir[X]*dir[Z];
 	n2_n3 = dir[Y]*dir[Z];
 
-	bn_mat_idn( rot );
+	MAT_IDN( rot );
 	rot[0] = n1_sq + (1.0 - n1_sq)*cos_ang;
 	rot[1] = n1_n2 * one_m_cosang - dir[Z]*sin_ang;
 	rot[2] = n1_n3 * one_m_cosang + dir[Y]*sin_ang;

@@ -882,7 +882,7 @@ int which_eye;
   if (!dmp->dm_zclip) {
     mat_t       nozclip;
 
-    bn_mat_idn( nozclip );
+    MAT_IDN( nozclip );
     nozclip[10] = 1.0e-20;
     bn_mat_mul( newm, nozclip, mat );
     mptr = newm;

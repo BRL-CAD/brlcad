@@ -268,7 +268,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	 * we could factor the flicker of flames into this matrix 
 	 * rather than having to recompute it on a pixel-by-pixel basis.
 	 */
-	bn_mat_idn(fire_sp->fire_sh_to_noise);
+	MAT_IDN(fire_sp->fire_sh_to_noise);
 	MAT_DELTAS_VEC(fire_sp->fire_sh_to_noise, fire_sp->noise_delta);
 	MAT_SCALE_VEC(fire_sp->fire_sh_to_noise, fire_sp->noise_vscale);
 

@@ -231,7 +231,7 @@ struct rt_i		*rtip;
 	/* Compute R and invR matrices */
 	VMOVE( tor->tor_N, tip->h );
 
-	bn_mat_idn( R );
+	MAT_IDN( R );
 	VSCALE( &R[0], tip->a, 1.0/tip->r_a );
 	VSCALE( &R[4], tip->b, 1.0/tip->r_b );
 	VMOVE( &R[8], tor->tor_N );

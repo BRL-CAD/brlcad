@@ -429,7 +429,7 @@ CONST struct bn_tol *tol;
 	}
 
 	/* build matrix */
-	bn_mat_zero( matrix );
+	MAT_ZERO( matrix );
 	VSET( vsum , 0.0 , 0.0 , 0.0 );
 
 	one_over_vertex_count = 1.0/(double)(srf->s_size[0]*srf->s_size[1]);

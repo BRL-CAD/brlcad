@@ -2286,7 +2286,7 @@ int both;    /* if(!both) then set only curr_e_axes_pos, otherwise
       es_edclass = EDIT_CLASS_NULL;
 
 #if 1
-    bn_mat_idn(acc_rot_sol);
+    MAT_IDN(acc_rot_sol);
 #endif
 
     FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l)
@@ -2404,8 +2404,8 @@ init_sedit(void)
 static void
 init_sedit_vars()
 {
-	bn_mat_idn(acc_rot_sol);
-	bn_mat_idn(incr_change);
+	MAT_IDN(acc_rot_sol);
+	MAT_IDN(incr_change);
 
 	VSETALL(edit_absolute_model_rotate, 0.0);
 	VSETALL(edit_absolute_object_rotate, 0.0);
@@ -3568,7 +3568,7 @@ sedit()
 			if( inpara == 3 ){
 				/* 3 params:  absolute X,Y,Z rotations */
 				/* Build completely new rotation change */
-				bn_mat_idn( modelchanges );
+				MAT_IDN( modelchanges );
 				buildHrot( modelchanges,
 					es_para[0] * degtorad,
 					es_para[1] * degtorad,
@@ -3589,7 +3589,7 @@ sedit()
 				   */
 				  bn_mat_mul( mat1, edit, es_mat );
 				  bn_mat_mul( mat, es_invmat, mat1 );
-				  bn_mat_idn( incr_change );
+				  MAT_IDN( incr_change );
 				  /* work contains original es_peqn[es_menu][0] */
 				  MAT4X3VEC( eqp, mat, work );
 				}else{
@@ -3629,7 +3629,7 @@ sedit()
 			es_peqn[es_menu][3]=VDOT(eqp,tempvec);	
 
 			/*  Clear out solid rotation */
-			bn_mat_idn( modelchanges );
+			MAT_IDN( modelchanges );
 
 		}  else  {
 			/* Apply incremental changes */
@@ -3648,7 +3648,7 @@ sedit()
 		}
 
 		(void)rt_arb_calc_points( arb , es_type , es_peqn , &mged_tol );
-		bn_mat_idn( incr_change );
+		MAT_IDN( incr_change );
 
 		/* no need to calc_planes again */
 		replot_editing_solid();
@@ -3705,18 +3705,18 @@ sedit()
 			    MAT4X3PNT(raw_para, es_invmat, es_para);
 			    MAT4X3PNT(work, es_invmat, es_keypoint);
 			    VSUB2( delta, work, raw_para );
-			    bn_mat_idn( xlatemat );
+			    MAT_IDN( xlatemat );
 			    MAT_DELTAS_VEC_NEG( xlatemat, delta );
 			  }else{ /* move solid to position es_para */
 			    /* move solid to position es_para */
 			    MAT4X3PNT(work, es_invmat, es_keypoint);
 			    VSUB2( delta, work, es_para );
-			    bn_mat_idn( xlatemat );
+			    MAT_IDN( xlatemat );
 			    MAT_DELTAS_VEC_NEG( xlatemat, delta );
 			  }
 #else
 				VSUB2( delta, es_para, es_keypoint );
-				bn_mat_idn( xlatemat );
+				MAT_IDN( xlatemat );
 				MAT_DELTAS_VEC( xlatemat, delta );
 #endif
 				transform_editing_solid(&es_int, xlatemat, &es_int, 1);
@@ -3997,7 +3997,7 @@ sedit()
 				bn_mat_inv( invsolr, acc_rot_sol );
 
 				/* Build completely new rotation change */
-				bn_mat_idn( modelchanges );
+				MAT_IDN( modelchanges );
 				buildHrot( modelchanges,
 					es_para[0] * degtorad,
 					es_para[1] * degtorad,
@@ -4008,7 +4008,7 @@ sedit()
 
 				/* Apply new rotation to solid */
 				/*  Clear out solid rotation */
-				bn_mat_idn( modelchanges );
+				MAT_IDN( modelchanges );
 			}  else  {
 				/* Apply incremental changes already in incr_change */
 			}
@@ -4053,7 +4053,7 @@ sedit()
 #endif
 			transform_editing_solid(&es_int, mat, &es_int, 1);
 
-			bn_mat_idn( incr_change );
+			MAT_IDN( incr_change );
 		}
 		break;
 
@@ -4075,7 +4075,7 @@ sedit()
 				bn_mat_inv( invsolr, acc_rot_sol );
 
 				/* Build completely new rotation change */
-				bn_mat_idn( modelchanges );
+				MAT_IDN( modelchanges );
 				buildHrot( modelchanges,
 					es_para[0] * degtorad,
 					es_para[1] * degtorad,
@@ -4086,7 +4086,7 @@ sedit()
 
 				/* Apply new rotation to solid */
 				/*  Clear out solid rotation */
-				bn_mat_idn( modelchanges );
+				MAT_IDN( modelchanges );
 			}  else  {
 				/* Apply incremental changes already in incr_change */
 			}
@@ -4110,7 +4110,7 @@ sedit()
 			MAT4X3VEC(extr->h, incr_change, extr->h);
 #endif
 
-			bn_mat_idn( incr_change );
+			MAT_IDN( incr_change );
 		}
 		break;
 
@@ -4132,7 +4132,7 @@ sedit()
 				bn_mat_inv( invsolr, acc_rot_sol );
 
 				/* Build completely new rotation change */
-				bn_mat_idn( modelchanges );
+				MAT_IDN( modelchanges );
 				buildHrot( modelchanges,
 					es_para[0] * degtorad,
 					es_para[1] * degtorad,
@@ -4143,7 +4143,7 @@ sedit()
 
 				/* Apply new rotation to solid */
 				/*  Clear out solid rotation */
-				bn_mat_idn( modelchanges );
+				MAT_IDN( modelchanges );
 			}  else  {
 				/* Apply incremental changes already in incr_change */
 			}
@@ -4167,7 +4167,7 @@ sedit()
 			MAT4X3VEC(tgc->h, incr_change, tgc->h);
 #endif
 
-			bn_mat_idn( incr_change );
+			MAT_IDN( incr_change );
 		}
 		break;
 
@@ -4189,7 +4189,7 @@ sedit()
 				bn_mat_inv( invsolr, acc_rot_sol );
 
 				/* Build completely new rotation change */
-				bn_mat_idn( modelchanges );
+				MAT_IDN( modelchanges );
 				buildHrot( modelchanges,
 					es_para[0] * degtorad,
 					es_para[1] * degtorad,
@@ -4200,7 +4200,7 @@ sedit()
 
 				/* Apply new rotation to solid */
 				/*  Clear out solid rotation */
-				bn_mat_idn( modelchanges );
+				MAT_IDN( modelchanges );
 			}  else  {
 				/* Apply incremental changes already in incr_change */
 			}
@@ -4236,7 +4236,7 @@ sedit()
 			MAT4X3VEC(work, incr_change, tgc->d);
 			VMOVE(tgc->d, work);
 #endif
-			bn_mat_idn( incr_change );
+			MAT_IDN( incr_change );
 		}
 		break;
 
@@ -4258,7 +4258,7 @@ sedit()
 				bn_mat_inv( invsolr, acc_rot_sol );
 
 				/* Build completely new rotation change */
-				bn_mat_idn( modelchanges );
+				MAT_IDN( modelchanges );
 				buildHrot( modelchanges,
 					es_para[0] * degtorad,
 					es_para[1] * degtorad,
@@ -4269,7 +4269,7 @@ sedit()
 
 				/* Apply new rotation to solid */
 				/*  Clear out solid rotation */
-				bn_mat_idn( modelchanges );
+				MAT_IDN( modelchanges );
 			}  else  {
 				/* Apply incremental changes already in incr_change */
 			}
@@ -4295,7 +4295,7 @@ sedit()
 			VMOVE(eto->eto_C, work);
 #endif
 		}
-		bn_mat_idn( incr_change );
+		MAT_IDN( incr_change );
 		break;
 
 	case ECMD_NMG_EPICK:
@@ -5672,7 +5672,7 @@ sedit_mouse( const vect_t mousevec )
       MAT4X3PNT( raw_mp, es_invmat, pt );
       MAT4X3PNT( raw_kp, es_invmat, curr_e_axes_pos );
       VSUB2( delta, raw_kp, raw_mp );
-      bn_mat_idn( xlatemat );
+      MAT_IDN( xlatemat );
       MAT_DELTAS_VEC_NEG( xlatemat, delta );
       transform_editing_solid(&es_int, xlatemat, &es_int, 1);
     }
@@ -6040,7 +6040,7 @@ vect_t tvec;
        * to desired new location.
        */
       VSUB2( delta, raw_kp, pt );
-      bn_mat_idn( xlatemat );
+      MAT_IDN( xlatemat );
       MAT_DELTAS_VEC_NEG( xlatemat, delta );
       transform_editing_solid(&es_int, xlatemat, &es_int, 1);
     }
@@ -6257,7 +6257,7 @@ objedit_mouse( const vect_t mousevec )
   vect_t	tr_temp;		/* temp translation vector */
   vect_t	temp;
 
-  bn_mat_idn( incr_change );
+  MAT_IDN( incr_change );
   scale = 1;
   if( movedir & SARROW )  {
     /* scaling option is in effect */
@@ -6321,7 +6321,7 @@ objedit_mouse( const vect_t mousevec )
     MAT4X3PNT(pos_model, modelchanges, temp);
     wrt_point(modelchanges, incr_change, modelchanges, pos_model);
 
-    bn_mat_idn( incr_change );
+    MAT_IDN( incr_change );
     new_edit_mats();
   }  else if( movedir & (RARROW|UARROW) )  {
     mat_t oldchanges;	/* temporary matrix */
@@ -6347,7 +6347,7 @@ objedit_mouse( const vect_t mousevec )
     bn_mat_copy( oldchanges, modelchanges );
     bn_mat_mul( modelchanges, incr_change, oldchanges );
 
-    bn_mat_idn( incr_change );
+    MAT_IDN( incr_change );
     new_edit_mats();
 
     update_edit_absolute_tran(pos_view);
@@ -6368,7 +6368,7 @@ point_t tvec;
   mat_t incr_mat;
   mat_t oldchanges;	/* temporary matrix */
 
-  bn_mat_idn( incr_mat );
+  MAT_IDN( incr_mat );
 #if 0
   MAT4X3PNT( temp, es_mat, es_keypoint );
 #else
@@ -6394,7 +6394,7 @@ oedit_abs_scale(void)
   vect_t pos_model;
   mat_t incr_mat;
 
-  bn_mat_idn( incr_mat );
+  MAT_IDN( incr_mat );
 
   if(-SMALL_FASTF < edit_absolute_scale && edit_absolute_scale < SMALL_FASTF)
     scale = 1;
@@ -7299,7 +7299,7 @@ init_oedit_guts()
 	/* for safety sake */
 	es_menu = 0;
 	es_edflag = -1;
-	bn_mat_idn(es_mat);
+	MAT_IDN(es_mat);
 
 	if (dbip == DBI_NULL)
 		return;
@@ -7374,8 +7374,8 @@ init_oedit_vars()
 	VSETALL(edit_rate_model_tran, 0.0);
 	VSETALL(edit_rate_view_tran, 0.0);
 
-	bn_mat_idn(modelchanges);
-	bn_mat_idn(acc_rot_sol);
+	MAT_IDN(modelchanges);
+	MAT_IDN(acc_rot_sol);
 }
 
 /*
@@ -7424,10 +7424,10 @@ oedit_apply()
 			      modelchanges);
 		break;
 	default:
-		bn_mat_idn(topm);
-		bn_mat_idn(inv_topm);
-		bn_mat_idn(deltam);
-		bn_mat_idn(tempm);
+		MAT_IDN(topm);
+		MAT_IDN(inv_topm);
+		MAT_IDN(deltam);
+		MAT_IDN(tempm);
 
 		pathHmat(illump, topm, ipathpos-2);
 
@@ -7881,7 +7881,7 @@ double	xangle, yangle, zangle;
 	if(!SEDIT_ROTATE)
 	  return 0;
 
-	bn_mat_idn( incr_change );
+	MAT_IDN( incr_change );
 	buildHrot( incr_change, xangle, yangle, zangle );
 
 	/* accumulate the translations */
@@ -7908,7 +7908,7 @@ double	xangle, yangle, zangle;
 
 	if( movedir != ROTARROW )  return 0;
 
-	bn_mat_idn( incr_change );
+	MAT_IDN( incr_change );
 	buildHrot( incr_change, xangle, yangle, zangle );
 
 	/* accumulate change matrix - do it wrt a point NOT view center */
@@ -9160,7 +9160,7 @@ char **argv;
   get_solid_keypoint( es_keypoint, &es_keytag, &es_int, es_mat );
 
   /* Reset relevant variables */
-  bn_mat_idn(acc_rot_sol);
+  MAT_IDN(acc_rot_sol);
   VSETALL( edit_absolute_model_rotate, 0.0 );
   VSETALL( edit_absolute_object_rotate, 0.0 );
   VSETALL( edit_absolute_view_rotate, 0.0 );
@@ -9273,7 +9273,7 @@ f_oedit_apply(clientData, interp, argc, argv)
 	replot_original_solid(illump);
 
 	/* Save aggregate path matrix */
-	bn_mat_idn(es_mat);
+	MAT_IDN(es_mat);
 	pathHmat(illump, es_mat, illump->s_fullpath.fp_len-2);
 
 	/* get the inverse matrix */

@@ -231,7 +231,7 @@ struct resource *resp;
 		 * by the ellipse into model space, and get inverse for use
 		 * in the _render() proc
 		 */
-		bn_mat_idn(mp);
+		MAT_IDN(mp);
 		VMOVE(v, ell_p->a);	VUNITIZE(v);
 		mp[0] = v[0];	mp[4] = v[1];	mp[8] = v[2];
 

@@ -217,12 +217,14 @@ extern CONST mat_t 	bn_mat_identity;
 BU_EXTERN(void		bn_mat_print, (CONST char *title, CONST mat_t m));
 BU_EXTERN(double	bn_atan2, (double x, double y));
 
-#if 0 /* deprecated for macros below */
+#if 0 /* deprecated for macros below (which were deprecated for vmath.h) */
 BU_EXTERN(void		bn_mat_zero, (mat_t m));
 BU_EXTERN(void		bn_mat_idn, (mat_t m));
 BU_EXTERN(void		bn_mat_copy, (register mat_t dest,register CONST mat_t src));
 #else
 #define bn_mat_zero( _m )	{ \
+	bu_log("%s:%d bn_mat_zero() is deprecated, use MAT_ZERO()\n", \
+			__FILE__, __LINE__); \
 	(_m)[0] = (_m)[1] = (_m)[2] = (_m)[3] = \
 	(_m)[4] = (_m)[5] = (_m)[6] = (_m)[7] = \
 	(_m)[8] = (_m)[9] = (_m)[10] = (_m)[11] = \
@@ -231,6 +233,8 @@ BU_EXTERN(void		bn_mat_copy, (register mat_t dest,register CONST mat_t src));
 #define	bn_mat_zero( _m )	(void)memset( (void *)_m, 0, sizeof(mat_t))
   */
 #define bn_mat_idn( _m )	{ \
+	bu_log("%s:%d bn_mat_idn() is deprecated, use MAT_IDN()\n", \
+			__FILE__, __LINE__); \
 	(_m)[1] = (_m)[2] = (_m)[3] = (_m)[4] = \
 	(_m)[6] = (_m)[7] = (_m)[8] = (_m)[9] = \
 	(_m)[11] = (_m)[12] = (_m)[13] = (_m)[14] = 0.0; \

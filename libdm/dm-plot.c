@@ -249,7 +249,7 @@ plot_open(interp, argc, argv)
 		pl_space(((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp,
 			 -2048, -2048, 2048, 2048);
 
-	bn_mat_idn(plotmat);
+	MAT_IDN(plotmat);
 
 	Tcl_SetObjResult(interp, obj);
 	return dmp;

@@ -87,9 +87,9 @@ char	**argv;
 	mat_t		view2model;		/* matrix for converting from view to model space */
 	int		ret;			/* function return code */
 
-	bn_mat_idn(mod2view1);				/* makes an identity matrix */
-	bn_mat_idn(mod2view2);
-	bn_mat_idn(regismat);
+	MAT_IDN(mod2view1);				/* makes an identity matrix */
+	MAT_IDN(mod2view2);
+	MAT_IDN(regismat);
 
 	/* Check to see that the correct format is given, else print
 	 * usage message.

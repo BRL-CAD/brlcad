@@ -2980,8 +2980,8 @@ CONST struct db_i		*dbip;
 	dsp_ip->dsp_xcnt = dsp_ip->dsp_ycnt = 0;
 
 	dsp_ip->dsp_smooth = 1;
-	bn_mat_idn(dsp_ip->dsp_stom);
-	bn_mat_idn(dsp_ip->dsp_mtos);
+	MAT_IDN(dsp_ip->dsp_stom);
+	MAT_IDN(dsp_ip->dsp_mtos);
 
 	bu_vls_init( &str );
 	bu_vls_strcpy( &str, rp->ss.ss_args );

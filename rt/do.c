@@ -649,7 +649,7 @@ int framenumber;
 			bn_mat_print("model2view", model2view);
 			quat_quat2mat( rotscale, quat );
 			rotscale[15] = 0.5 * viewsize;
-			bn_mat_idn( xlate );
+			MAT_IDN( xlate );
 			MAT_DELTAS( xlate, -eye_model[X], -eye_model[Y], -eye_model[Z] );
 			bn_mat_mul( new, rotscale, xlate );
 			bn_mat_print("reconstructed m2v", new);
@@ -970,11 +970,11 @@ double azim, elev;
 	rtip->mdl_max[Y] = ceil( rtip->mdl_max[Y] );
 	rtip->mdl_max[Z] = ceil( rtip->mdl_max[Z] );
 
-	bn_mat_idn( Viewrotscale );
+	MAT_IDN( Viewrotscale );
 	bn_mat_angles( Viewrotscale, 270.0+elev, 0.0, 270.0-azim );
 
 	/* Look at the center of the model */
-	bn_mat_idn( toEye );
+	MAT_IDN( toEye );
 	toEye[MDX] = -(rtip->mdl_max[X]+rtip->mdl_min[X])/2;
 	toEye[MDY] = -(rtip->mdl_max[Y]+rtip->mdl_min[Y])/2;
 	toEye[MDZ] = -(rtip->mdl_max[Z]+rtip->mdl_min[Z])/2;

@@ -267,7 +267,7 @@ mat_t 	model2view;
 
 	quat_quat2mat( rotate, orientation );
 	rotate[15] = 0.5 * m_size;
-	bn_mat_idn( xlate );
+	MAT_IDN( xlate );
 	MAT_DELTAS( xlate, -eye_pos[0], -eye_pos[1], -eye_pos[2] );
 	bn_mat_mul( model2view, rotate, xlate );
 

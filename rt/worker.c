@@ -79,7 +79,7 @@ grid_setup()
 	if( viewsize <= 0.0 )
 		rt_bomb("viewsize <= 0");
 	/* model2view takes us to eye_model location & orientation */
-	bn_mat_idn( toEye );
+	MAT_IDN( toEye );
 	MAT_DELTAS_VEC_NEG( toEye, eye_model );
 	Viewrotscale[15] = 0.5*viewsize;	/* Viewscale */
 	bn_mat_mul( model2view, Viewrotscale, toEye );

@@ -335,14 +335,14 @@ struct rt_i		*rtip;
 	part->part_hrad_prime = part->part_h_erad / part->part_v_erad;
 
 	/* Compute R and Rinv */
-	bn_mat_idn( R );
+	MAT_IDN( R );
 	VMOVE( &R[0], a );		/* has unit length */
 	VMOVE( &R[4], b );		/* has unit length */
 	VMOVE( &R[8], Hunit );
 	bn_mat_trn( Rinv, R );
 
 	/* Compute scale matrix S, where |A| = |B| = equiv_Vradius */ 
-	bn_mat_idn( S );
+	MAT_IDN( S );
 	S[ 0] = 1.0 / part->part_v_erad;
 	S[ 5] = S[0];
 	S[10] = inv_hlen;
@@ -1151,7 +1151,7 @@ CONST struct bn_tol		*tol;
 
 	/* Compute S and invS matrices */
 	/* invS is just 1/diagonal elements */
-	bn_mat_idn( S );
+	MAT_IDN( S );
 	S[ 0] = S[ 5] = S[10] = 1/pip->part_hrad;
 	bn_mat_inv( invS, S );
 
@@ -1165,7 +1165,7 @@ CONST struct bn_tol		*tol;
 
 	/* Compute S and invS matrices */
 	/* invS is just 1/diagonal elements */
-	bn_mat_idn( S );
+	MAT_IDN( S );
 	S[ 0] = S[ 5] = S[10] = 1/pip->part_vrad;
 	bn_mat_inv( invS, S );
 

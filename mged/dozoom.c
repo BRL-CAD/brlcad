@@ -67,7 +67,7 @@ fastf_t	fovy, aspect, near, far, backoff;
 
 	fovy *= 3.1415926535/180.0;
 
-	bn_mat_idn( m2 );
+	MAT_IDN( m2 );
 	m2[5] = cos(fovy/2.0) / sin(fovy/2.0);
 	m2[0] = m2[5]/aspect;
 	m2[10] = (far+near) / (far-near);
@@ -77,7 +77,7 @@ fastf_t	fovy, aspect, near, far, backoff;
 	m2[15] = 0;
 
 	/* Move eye to origin, then apply perspective */
-	bn_mat_idn( tran );
+	MAT_IDN( tran );
 	tran[11] = -backoff;
 	bn_mat_mul( m, m2, tran );
 }
@@ -115,7 +115,7 @@ CONST point_t	eye;
 	}
 
 	/* Shear "eye" to +Z axis */
-	bn_mat_idn(shear);
+	MAT_IDN(shear);
 	shear[2] = -eye[X]/eye[Z];
 	shear[6] = -eye[Y]/eye[Z];
 
@@ -129,12 +129,12 @@ VPRINT("sheared_eye", sheared_eye);
 #endif
 
 	/* Translate along +Z axis to put sheared_eye at (0,0,1). */
-	bn_mat_idn(xlate);
+	MAT_IDN(xlate);
 	/* XXX should I use MAT_DELTAS_VEC_NEG()?  X and Y should be 0 now */
 	MAT_DELTAS( xlate, 0, 0, 1-sheared_eye[Z] );
 
 	/* Build perspective matrix inline, substituting fov=2*atan(1,Z) */
-	bn_mat_idn( persp );
+	MAT_IDN( persp );
 	/* From page 492 of Graphics Gems */
 	persp[0] = sheared_eye[Z];	/* scaling: fov aspect term */
 	persp[5] = sheared_eye[Z];	/* scaling: determines fov */
@@ -312,7 +312,7 @@ VPRINT("h", h);
 }
 		VSET( eye, 0.0, 0.0, to_eye_scr );
 #if 0
-		bn_mat_idn(tmat);
+		MAT_IDN(tmat);
 		tmat[11] = -1.0;
 		bn_mat_mul( tvmat, tmat, view_state->vs_model2view );
 #endif

@@ -251,10 +251,10 @@ char *argv[];
   bzero((void *)&HeadPlot, sizeof(struct plot_list));
   BU_LIST_INIT(&HeadPlot.l);
 
-  bn_mat_idn(toViewcenter);
-  bn_mat_idn(Viewrot);
-  bn_mat_idn(model2view);
-  bn_mat_idn(view2model);
+  MAT_IDN(toViewcenter);
+  MAT_IDN(Viewrot);
+  MAT_IDN(model2view);
+  MAT_IDN(view2model);
 
   if(cmd_openpl((ClientData)NULL, (Tcl_Interp *)NULL,
 		   argc-bu_optind+1, argv+bu_optind-1) == TCL_ERROR)
@@ -368,7 +368,7 @@ double x, y, z;
 {
   mat_t newrot;
 
-  bn_mat_idn( newrot );
+  MAT_IDN( newrot );
   buildHrot( newrot,
 	     x * degtorad,
 	     y * degtorad,
@@ -499,7 +499,7 @@ size_reset()
   if( VNEAR_ZERO( radial , SQRT_SMALL_FASTF ) )
     VSETALL( radial , 1.0 );
 
-  bn_mat_idn( toViewcenter );
+  MAT_IDN( toViewcenter );
   MAT_DELTAS( toViewcenter, -center[X], -center[Y], -center[Z] );
   Viewscale = radial[X];
   V_MAX( Viewscale, radial[Y] );

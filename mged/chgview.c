@@ -552,7 +552,7 @@ size_reset()
 	if( VNEAR_ZERO( radial , SQRT_SMALL_FASTF ) )
 		VSETALL( radial , 1.0 );
 
-	bn_mat_idn( view_state->vs_toViewcenter );
+	MAT_IDN( view_state->vs_toViewcenter );
 	MAT_DELTAS( view_state->vs_toViewcenter, -center[X], -center[Y], -center[Z] );
 	view_state->vs_Viewscale = radial[X];
 	V_MAX( view_state->vs_Viewscale, radial[Y] );
@@ -1010,7 +1010,7 @@ int recurse;
       ts = mged_initial_tree_state;	/* struct copy */
       ts.ts_dbip = dbip;
       ts.ts_resp = &rt_uniresource;
-      bn_mat_idn(ts.ts_mat);
+      MAT_IDN(ts.ts_mat);
 
       if (db_follow_path_for_state(&ts, &path, argv[arg], 1))
 	continue;
@@ -4272,7 +4272,7 @@ double	xangle, yangle, zangle;
 	 * Apply delta viewing rotation for non-edited parts.
 	 * The view rotates around the VIEW CENTER.
 	 */
-	bn_mat_idn( newrot );
+	MAT_IDN( newrot );
 	buildHrot( newrot, xangle, yangle, zangle );
 
 	bn_mat_mul2( newrot, view_state->vs_Viewrot );
@@ -4346,7 +4346,7 @@ vect_t view_pos;
   MAT_DELTAS_VEC_NEG( view_state->vs_toViewcenter, new_model_center );
 
   VSUB2( diff, new_model_center, old_model_center );
-  bn_mat_idn( delta );
+  MAT_IDN( delta );
   MAT_DELTAS_VEC( delta, diff );
   bn_mat_mul2( delta, view_state->vs_ModelDelta );	/* updates ModelDelta */
   new_mats();
@@ -5305,7 +5305,7 @@ mged_erot_xyz(
 {
   mat_t newrot;
 
-  bn_mat_idn(newrot);
+  MAT_IDN(newrot);
   buildHrot(newrot, rvec[X]*degtorad, rvec[Y]*degtorad, rvec[Z]*degtorad);
 
   return mged_erot(origin, newrot);
@@ -5418,7 +5418,7 @@ mged_vrot_xyz(
   mat_t newrot;
   mat_t temp1, temp2;
 
-  bn_mat_idn(newrot);
+  MAT_IDN(newrot);
   buildHrot(newrot, rvec[X]*degtorad, rvec[Y]*degtorad, rvec[Z]*degtorad);
 
   if (coords == 'm') {
@@ -5511,7 +5511,7 @@ vect_t rvec;
 {
   mat_t newrot;
 
-  bn_mat_idn(newrot);
+  MAT_IDN(newrot);
   buildHrot(newrot, rvec[X]*degtorad, rvec[Y]*degtorad, rvec[Z]*degtorad);
 
   return mged_rot(origin, newrot);
@@ -5647,7 +5647,7 @@ mged_etran(const point_t pt)
     sedit();
     es_edflag = save_edflag;
   }else{
-    bn_mat_idn(xlatemat);
+    MAT_IDN(xlatemat);
     MAT_DELTAS_VEC(xlatemat, delta);
     bn_mat_mul2(xlatemat, modelchanges);
 
@@ -5813,7 +5813,7 @@ fastf_t sfactor;
     fastf_t inv_sfactor;
 
     inv_sfactor = 1.0 / sfactor;
-    bn_mat_idn(smat);
+    MAT_IDN(smat);
 
     switch(edobj){
     case BE_O_XSCALE:                            /* local scaling ... X-axis */

@@ -714,7 +714,7 @@ char *argv[];
 		exit( 1 );
 	}
 
-	bn_mat_idn(identity);	/* Identity matrix for all objects */
+	MAT_IDN(identity);	/* Identity matrix for all objects */
 	pi = atan2( 0.0 , -1.0 );	/* PI */
 
 	printf( "FLUID & PIPING V%d.%d 10 Mar 89\n\n" , VERSION , RELEASE );

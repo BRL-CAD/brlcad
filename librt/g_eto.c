@@ -214,7 +214,7 @@ struct rt_i		*rtip;
 	eto->fv =  eto->eu;
 
 	/* Compute R and invR matrices */
-	bn_mat_idn( eto->eto_R );
+	MAT_IDN( eto->eto_R );
 	VMOVE( &eto->eto_R[0], Bu );
 	VMOVE( &eto->eto_R[4], Au );
 	VMOVE( &eto->eto_R[8], Nu );

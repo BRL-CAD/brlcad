@@ -1266,7 +1266,7 @@ wdb_list_tcl(clientData, interp, argc, argv)
 			db_full_path_init( &path );
 
 			ts.ts_dbip = wdbp->dbip;
-			bn_mat_idn(ts.ts_mat);
+			MAT_IDN(ts.ts_mat);
 
 			if (db_follow_path_for_state(&ts, &path, argv[arg], 1))
 				continue;
@@ -1509,7 +1509,7 @@ wdb_pathsum_tcl(clientData, interp, argc, argv)
 		}
 	}
 
-	bn_mat_idn(wtd.wtd_xform);
+	MAT_IDN(wtd.wtd_xform);
 
 	wdb_trace(wtd.wtd_obj[0], 0, bn_mat_identity, &wtd);
 
@@ -5484,7 +5484,7 @@ wdb_do_identitize(dbip, comb, comb_leaf, user_ptr1, user_ptr2, user_ptr3)
 	if (!comb_leaf->tr_l.tl_mat) {
 		comb_leaf->tr_l.tl_mat = (matp_t)bu_malloc(sizeof(mat_t), "tl_mat");
 	}
-	bn_mat_idn(comb_leaf->tr_l.tl_mat);
+	MAT_IDN(comb_leaf->tr_l.tl_mat);
 	if ((dp = db_lookup(dbip, comb_leaf->tr_l.tl_name, LOOKUP_NOISY)) == DIR_NULL)
 		return;
 

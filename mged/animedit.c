@@ -3305,7 +3305,7 @@ struct joint *jp;
 	/*
 	 * Build the base matrix.  Ident with translate back to origin.
 	 */
-	bn_mat_idn(ANIM_MAT);
+	MAT_IDN(ANIM_MAT);
 	MAT_DELTAS_VEC_NEG(ANIM_MAT, jp->location);
 
 	/*
@@ -3353,7 +3353,7 @@ struct joint *jp;
 		 * build matrix.
 		 */
 		tmp = jp->dirs[i].current;
-		bn_mat_idn(m2);
+		MAT_IDN(m2);
 		MAT_DELTAS(m2, jp->dirs[i].unitvec[X]*tmp,
 		    jp->dirs[i].unitvec[Y]*tmp,
 		    jp->dirs[i].unitvec[Z]*tmp);
@@ -3373,7 +3373,7 @@ struct joint *jp;
 	/*
 	 * Now move the whole thing back to original location.
 	 */
-	bn_mat_idn(m2);
+	MAT_IDN(m2);
 	MAT_DELTAS_VEC(m2, jp->location);
 	bn_mat_copy(m1, ANIM_MAT);
 	bn_mat_mul(ANIM_MAT,m2,m1);

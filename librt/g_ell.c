@@ -248,8 +248,8 @@ struct rt_i		*rtip;
 	VMOVE( ell->ell_Bu, Bu );
 	VMOVE( ell->ell_Cu, Cu );
 
-	bn_mat_idn( ell->ell_SoR );
-	bn_mat_idn( R );
+	MAT_IDN( ell->ell_SoR );
+	MAT_IDN( R );
 
 	/* Compute R and Rinv matrices */
 	VMOVE( &R[0], Au );
@@ -258,7 +258,7 @@ struct rt_i		*rtip;
 	bn_mat_trn( Rinv, R );			/* inv of rot mat is trn */
 
 	/* Compute SoS (Affine transformation) */
-	bn_mat_idn( SS );
+	MAT_IDN( SS );
 	SS[ 0] = ell->ell_invsq[0];
 	SS[ 5] = ell->ell_invsq[1];
 	SS[10] = ell->ell_invsq[2];
@@ -828,7 +828,7 @@ CONST struct bn_tol	*tol;
 	}
 
 	/* Compute R and Rinv matrices */
-	bn_mat_idn( R );
+	MAT_IDN( R );
 	VMOVE( &R[0], Au );
 	VMOVE( &R[4], Bu );
 	VMOVE( &R[8], Cu );
@@ -836,7 +836,7 @@ CONST struct bn_tol	*tol;
 
 	/* Compute S and invS matrices */
 	/* invS is just 1/diagonal elements */
-	bn_mat_idn( S );
+	MAT_IDN( S );
 	S[ 0] = invAlen;
 	S[ 5] = invBlen;
 	S[10] = invClen;
@@ -1457,7 +1457,7 @@ CONST struct bn_tol		*tol;
 	}
 
 	/* Compute R and Rinv matrices */
-	bn_mat_idn( R );
+	MAT_IDN( R );
 	VMOVE( &R[0], Au );
 	VMOVE( &R[4], Bu );
 	VMOVE( &R[8], Cu );
@@ -1465,7 +1465,7 @@ CONST struct bn_tol		*tol;
 
 	/* Compute S and invS matrices */
 	/* invS is just 1/diagonal elements */
-	bn_mat_idn( S );
+	MAT_IDN( S );
 	S[ 0] = invAlen;
 	S[ 5] = invBlen;
 	S[10] = invClen;
@@ -1484,7 +1484,7 @@ CONST struct bn_tol		*tol;
 	if( Clen > radius )
 		radius = Clen;
 
-	bn_mat_idn( xlate );
+	MAT_IDN( xlate );
 	MAT_DELTAS_VEC( xlate, eip->v );
 	bn_mat_mul( unit2model, xlate, invRinvS );
 

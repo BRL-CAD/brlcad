@@ -276,7 +276,7 @@ found:
 
 	db_region_mat(model_to_region, rtip->rti_dbip, rp->reg_name, &rt_uniresource);
 
-	bn_mat_idn(tmp);
+	MAT_IDN(tmp);
 	if (noise_sp->size != 1.0) {
 		/* the user sets "size" to the size of the biggest
 		 * noise-space blob in model coordinates
@@ -291,7 +291,7 @@ found:
 	bn_mat_mul(noise_sp->m_to_sh, tmp, model_to_region);
 
 	/* Add any translation within shader/region space */
-	bn_mat_idn(tmp);
+	MAT_IDN(tmp);
 	tmp[MDX] = noise_sp->delta[0];
 	tmp[MDY] = noise_sp->delta[1];
 	tmp[MDZ] = noise_sp->delta[2];

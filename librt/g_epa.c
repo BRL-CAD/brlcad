@@ -251,14 +251,14 @@ struct rt_i		*rtip;
 	VMOVE( epa->epa_V, xip->epa_V );
 
 	/* Compute R and Rinv matrices */
-	bn_mat_idn( R );
+	MAT_IDN( R );
 	VREVERSE( &R[0], epa->epa_Bunit );
 	VMOVE(    &R[4], epa->epa_Aunit );
 	VREVERSE( &R[8], epa->epa_Hunit );
 	bn_mat_trn( Rinv, R );			/* inv of rot mat is trn */
 
 	/* Compute S */
-	bn_mat_idn( S );
+	MAT_IDN( S );
 	S[ 0] = 1.0/r2;
 	S[ 5] = 1.0/r1;
 	S[10] = 1.0/mag_h;
@@ -525,7 +525,7 @@ struct soltab		*stp;
 		/* get the saved away scale factor */
 		scale = - hitp->hit_vpriv[X];
 
-		bn_mat_idn( M1 );
+		MAT_IDN( M1 );
 		M1[10] = 0;	/* M1[3,3] = 0 */
 		/* M1 = invR * S * M1 * S * R */
 		bn_mat_mul( M2, epa->epa_invRoS, M1);
@@ -681,7 +681,7 @@ CONST struct bn_tol	*tol;
 	VCROSS(   Bu, Au, Hu );
 
 	/* Compute R and Rinv matrices */
-	bn_mat_idn( R );
+	MAT_IDN( R );
 	VREVERSE( &R[0], Bu );
 	VMOVE(    &R[4], Au );
 	VREVERSE( &R[8], Hu );
@@ -1067,7 +1067,7 @@ CONST struct bn_tol	*tol;
 	VSCALE( B_orig , Bu , xip->epa_r2 );
 
 	/* Compute R and Rinv matrices */
-	bn_mat_idn( R );
+	MAT_IDN( R );
 	VREVERSE( &R[0], Bu );
 	VMOVE(    &R[4], Au );
 	VREVERSE( &R[8], Hu );

@@ -2857,7 +2857,7 @@ char	**args;
 		return	-1;
 
 	/* Compute view-to-model rotation matrix. */
-	bn_mat_idn( to_eye );
+	MAT_IDN( to_eye );
 	to_eye[MDX] = -lgts[0].loc[X];
 	to_eye[MDY] = -lgts[0].loc[Y];
 	to_eye[MDZ] = -lgts[0].loc[Z];

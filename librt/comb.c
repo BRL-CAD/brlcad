@@ -78,7 +78,7 @@ char *argv[];
 		exit( 1 );
 	}
 
-	bn_mat_idn( identity_mat );
+	MAT_IDN( identity_mat );
 	bu_vls_init( &file );
 
 	if( (dbip = db_open( argv[1] , "r" ) ) == NULL )

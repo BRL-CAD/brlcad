@@ -260,7 +260,7 @@ struct rt_i		*rtip;
 	VMOVE( rpc->rpc_V, xip->rpc_V );
 
 	/* Compute R and Rinv matrices */
-	bn_mat_idn( R );
+	MAT_IDN( R );
 	VREVERSE( &R[0], rpc->rpc_Hunit );
 	VMOVE(    &R[4], rpc->rpc_Runit );
 	VREVERSE( &R[8], rpc->rpc_Bunit );
@@ -268,7 +268,7 @@ struct rt_i		*rtip;
 
 	/* Compute S */
 	VSET( invsq, 1.0/magsq_h, 1.0/magsq_r, 1.0/magsq_b );
-	bn_mat_idn( S );
+	MAT_IDN( S );
 	S[ 0] = sqrt( invsq[0] );
 	S[ 5] = sqrt( invsq[1] );
 	S[10] = sqrt( invsq[2] );
@@ -694,7 +694,7 @@ CONST struct bn_tol		*tol;
 	VCROSS(   Ru, Bu, Hu );
 
 	/* Compute R and Rinv matrices */
-	bn_mat_idn( R );
+	MAT_IDN( R );
 	VREVERSE( &R[0], Hu );
 	VMOVE(    &R[4], Ru );
 	VREVERSE( &R[8], Bu );
@@ -975,7 +975,7 @@ CONST struct bn_tol	*tol;
 	VCROSS(   Ru, Bu, Hu );
 
 	/* Compute R and Rinv matrices */
-	bn_mat_idn( R );
+	MAT_IDN( R );
 	VREVERSE( &R[0], Hu );
 	VMOVE(    &R[4], Ru );
 	VREVERSE( &R[8], Bu );

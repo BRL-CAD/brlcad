@@ -185,10 +185,10 @@ CONST char				*value;	/* string containing value */
 	 *
 	 *	prj_coord = scale * rot * translate * region_coord
 	 */
-	bn_mat_idn(trans);
+	MAT_IDN(trans);
 	MAT_DELTAS_VEC_NEG(trans, img_new->i_eye_pt);
 
-	bn_mat_idn(scale);
+	MAT_IDN(scale);
 	MAT_SCALE_ALL(scale, img_new->i_viewsize);
 
 	bn_mat_mul(tmp, img_new->i_mat, trans);

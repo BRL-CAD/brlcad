@@ -55,7 +55,7 @@ mat_t m;
 const char *str;
 {
 	if( strcmp( str, "I" ) == 0 )  {
-		bn_mat_idn( m );
+		MAT_IDN( m );
 		return 16;
 	}
 	if( *str == '{' )  str++;

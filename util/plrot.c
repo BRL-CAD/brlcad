@@ -82,7 +82,7 @@ register char **argv;
 	int	i, num;
 	double	mtmp[16];
 
-	bn_mat_idn( rmat );
+	MAT_IDN( rmat );
 	scale = 1.0;
 
 	while ( (c = getopt( argc, argv, "S:m:vMga:e:x:y:z:X:Y:Z:s:" )) != EOF )  {
@@ -142,19 +142,19 @@ register char **argv;
 			}
 			break;
 		case 'X':
-			bn_mat_idn( tmp );
+			MAT_IDN( tmp );
 			tmp[MDX] = atof(optarg);
 			bn_mat_copy( m, rmat );
 			bn_mat_mul( rmat, tmp, m );
 			break;
 		case 'Y':
-			bn_mat_idn( tmp );
+			MAT_IDN( tmp );
 			tmp[MDY] = atof(optarg);
 			bn_mat_copy( m, rmat );
 			bn_mat_mul( rmat, tmp, m );
 			break;
 		case 'Z':
-			bn_mat_idn( tmp );
+			MAT_IDN( tmp );
 			tmp[MDZ] = atof(optarg);
 			bn_mat_copy( m, rmat );
 			bn_mat_mul( rmat, tmp, m );
@@ -169,7 +169,7 @@ register char **argv;
 			 *  seen in the arg list.
 			 */
 			if( !rpp )  {
-				bn_mat_idn( tmp );
+				MAT_IDN( tmp );
 				tmp[15] = 1/scale;
 				bn_mat_copy( m, rmat );
 				bn_mat_mul( rmat, tmp, m );
@@ -469,9 +469,9 @@ CONST point_t	min, max;
 		VADD2SCALE( rot_center, min, max, 0.5 );
 
 		/* Create the matrix which encodes this */
-		bn_mat_idn( xlate );
+		MAT_IDN( xlate );
 		MAT_DELTAS( xlate, -rot_center[X], -rot_center[Y], -rot_center[Z] );
-		bn_mat_idn( resize );
+		MAT_IDN( resize );
 		resize[15] = 1/scale;
 		bn_mat_mul( t1, resize, xlate );
 		bn_mat_mul( t2, rmat, t1 );

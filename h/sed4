@@ -258,7 +258,7 @@ g/mat_eigen2x2/s//bn_eigen2x2/g
 g/mat_fromto/s//bn_mat_fromto/g
 g/mat_htov_move/s//bn_htov_move/g
 g/mat_identity/s//bn_mat_identity/g
-g/mat_idn/s//bn_mat_idn/g
+g/mat_idn/s//MAT_IDN/g
 g/mat_inv/s//bn_mat_inv/g
 g/rt_mat_is_equal/s//bn_mat_is_equal/g
 g/mat_is_identity/s//bn_mat_is_identity/g

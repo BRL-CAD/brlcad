@@ -109,8 +109,8 @@ char	**argv;
 	int		ret;			/* function return code */
 	fastf_t		m_len;			/* scale length in model size */
 
-	bn_mat_idn(view2model);			/* makes an identity matrix */
-	bn_mat_idn(model2view);
+	MAT_IDN(view2model);			/* makes an identity matrix */
+	MAT_IDN(model2view);
 
 	/* Check to see that the correct format is given, else print
 	 * usage message.

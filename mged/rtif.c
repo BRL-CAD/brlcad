@@ -995,7 +995,7 @@ work:
 	    		break;
 	    	case 0:
 		       	view_state->vs_Viewscale = scale;
-			bn_mat_idn(view_state->vs_Viewrot);	/* top view */
+			MAT_IDN(view_state->vs_Viewrot);	/* top view */
 			MAT_DELTAS( view_state->vs_toViewcenter,
 				-eye_model[X],
 				-eye_model[Y],

@@ -67,7 +67,7 @@ double		scale;		/* scale factor to change 1x1 char sz */
 	 *  If the user provided translation or
 	 *  scaling in his matrix, it will *also* be applied.
 	 */
-	bn_mat_idn( xlate_to_origin );
+	MAT_IDN( xlate_to_origin );
 	MAT_DELTAS( xlate_to_origin,	origin[X], origin[Y], origin[Z] );
 	bn_mat_mul( mat, xlate_to_origin, rot );
 

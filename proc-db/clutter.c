@@ -101,7 +101,7 @@ char	**argv;
 	rgb[0] = 240;	/* gold/brown */
 	rgb[1] = 180;
 	rgb[2] = 64;
-	bn_mat_idn( identity );
+	MAT_IDN( identity );
 
 	mk_region1( outfp, "plane.r", "plane", NULL, NULL, rgb );
 
