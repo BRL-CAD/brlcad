@@ -142,6 +142,10 @@ register struct shadework *swp;
 	return(1);
 }
 
+
+
+
+
 /*
  *			S H A D E _ I N P U T S
  *
@@ -163,7 +167,6 @@ register struct partition *pp;
 register struct shadework *swp;
 register int	want;
 {
-	register struct light_specific *lp;
 	register int	have;
 
 	/* These calcuations all have MFI_HIT as a pre-requisite */
@@ -236,106 +239,7 @@ register int	want;
 		have |= MFI_UV;
 	}
 	if( want & MFI_LIGHT )  {
-		register int	i;
-		register fastf_t *intensity, *tolight;
-		register fastf_t f;
-		struct application sub_ap;
-
-		/*
-		 *  Determine light visibility
-		 */
-		i = 0;
-		intensity = swp->sw_intensity;
-		tolight = swp->sw_tolight;
-		for( RT_LIST_FOR( lp, light_specific, &(LightHead.l) ) )  {
-			RT_CK_LIGHT(lp);
-			/* compute the light direction */
-			if( lp->lt_infinite ) {
-				/* Infinite lights are point sources, no fuzzy penumbra */
-				VMOVE( tolight, lp->lt_vec );
-			} else {
-				/*
-				 *  Dither light pos for penumbra by +/- 0.5 light radius;
-				 *  this presently makes a cubical light source distribution.
-				 */
-				f = lp->lt_radius * 0.9;
-				tolight[X] = lp->lt_pos[X] +
-					rand_half(ap->a_resource->re_randptr)*f -
-					swp->sw_hit.hit_point[X];
-				tolight[Y] = lp->lt_pos[Y] +
-					rand_half(ap->a_resource->re_randptr)*f -
-					swp->sw_hit.hit_point[Y];
-				tolight[Z] = lp->lt_pos[Z] +
-					rand_half(ap->a_resource->re_randptr)*f -
-					swp->sw_hit.hit_point[Z];
-			}
-
-			/*
-			 *  If we have a normal, test against light direction
-			 */
-			if( (have & MFI_NORMAL) && (swp->sw_transmit <= 0) )  {
-				if( VDOT(swp->sw_hit.hit_normal,tolight) < 0 ) {
-					/* backfacing, opaque */
-					swp->sw_visible[i] = (char *)0;
-					goto next;
-				}
-			}
-			VUNITIZE( tolight );
-
-			/*
-			 * See if ray from hit point to light lies within light beam
-			 * Note: this is should always be true for infinite lights!
-			 */
-			if( -VDOT(tolight, lp->lt_aim) < lp->lt_cosangle )  {
-				/* dark (outside of light beam) */
-				swp->sw_visible[i] = (char *)0;
-				goto next;
-			}
-			if( !(lp->lt_shadows) )  {
-				/* "fill light" in beam, don't care about shadows */
-				swp->sw_visible[i] = (char *)lp;
-				VSETALL( intensity, 1 );
-				goto next;
-			}
-
-			/*
-			 *  Fire ray at light source to check for shadowing.
-			 *  (This SHOULD actually return an energy spectrum).
-			 *  Advance start point slightly off surface.
-			 */
-			sub_ap = *ap;			/* struct copy */
-			VMOVE( sub_ap.a_ray.r_dir, tolight );
-			{
-				register fastf_t f;
-				f = ap->a_rt_i->rti_tol.dist;
-				VJOIN1( sub_ap.a_ray.r_pt,
-					swp->sw_hit.hit_point,
-					f, tolight );
-			}
-			sub_ap.a_hit = light_hit;
-			sub_ap.a_miss = light_miss;
-			sub_ap.a_user = -1;		/* sanity */
-			sub_ap.a_uptr = (genptr_t)lp;	/* so we can tell.. */
-			sub_ap.a_level = 0;
-			/* Will need entry & exit pts, for filter glass */
-			sub_ap.a_onehit = 2;
-
-			VSETALL( sub_ap.a_color, 1 );	/* vis intens so far */
-			sub_ap.a_purpose = lp->lt_name;	/* name of light shot at */
-			if( rt_shootray( &sub_ap ) )  {
-				/* light visible */
-				swp->sw_visible[i] = (char *)lp;
-				VMOVE( intensity, sub_ap.a_color );
-			} else {
-				/* dark (light obscured) */
-				swp->sw_visible[i] = (char *)0;
-			}
-next:
-			/* Advance to next light */
-			i++;
-			intensity += 3;
-			tolight += 3;
-		}
+		light_visibility(ap, swp, have);
 		have |= MFI_LIGHT;
 	}
 
@@ -345,3 +249,5 @@ next:
 	if( (want & have) != want )
 		rt_log("shade_inputs:  unable to satisfy request for x%x\n", want);
 }
+
+
