@@ -274,14 +274,13 @@ set -S2 "/bin/sh"
 /*		Warning 84:  library not used for resolving any symbol */
 /*		Warning 85: definition in one library preempts that in another */
 /*		Warning 134: weak definition in one library preempts that in another */
-#		define	LD_OPTS		GFLAG 
 #		define	LIBTCLHOOKS_LIBES	-lGL -lXi -lXext
 #	else
 /*		Static linked executables */
 #		define	RANLIB	ranlib5.sh
-#		define	STANDARD_LIBES	-n32 -lm -lmalloc -lc
-#		define	LD_OPTS		-n32 GFLAG 
+#		define	STANDARD_LIBES	-o32 -lm -lmalloc -lc
 #	endif
+#	define	LD_OPTS		GFLAG 
 /* -ansiposix	ANSI+POSIX mode is used over ANSI, to get fdopen(), etc, defined. */
 #	define  CC_OPTS		GFLAG -xansi -DIRIX=6 
 #	define	LGT_CONFIG	GFLAG
