@@ -56,7 +56,14 @@ extern char	version[];
 #define SUFFIX_LEN	10	/* max size of suffix for 'part' files (-m option) */
 
 BU_EXTERN( union tree *do_nmg_region_end , (struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data));
-BU_EXTERN( void w_start_global , (FILE *fp_dir , FILE *fp_param , char *db_name , char *prog_name , char *output_file , char *id , char *version ));
+void w_start_global(
+	FILE *fp_dir,
+	FILE *fp_param,
+	const char *db_name,
+	const char *prog_name,
+	const char *output_file,
+	const char *id,
+	const char *version);
 BU_EXTERN( void w_terminate , (FILE *fp) );
 BU_EXTERN( void write_edge_list , (struct nmgregion *r , int vert_de , struct bu_ptbl *etab , struct bu_ptbl *vtab , FILE *fp_dir , FILE *fp_param ) );
 BU_EXTERN( void write_vertex_list , ( struct nmgregion *r , struct bu_ptbl *vtab , FILE *fp_dir , FILE *fp_param ) );

@@ -763,13 +763,14 @@ char c;		/* 'G' for global section
 }
 
 void
-w_start_global(fp_dir , fp_param , db_name , prog_name , output_file , id , version )
-FILE *fp_dir,*fp_param;
-char *db_name;
-char *prog_name;
-char *output_file;
-char *id;
-char *version;
+w_start_global(
+	FILE *fp_dir,
+	FILE *fp_param,
+	const char *db_name,
+	const char *prog_name,
+	const char *output_file,
+	const char *id,
+	const char *version)
 {
 	struct bu_vls str;
 	time_t now;
