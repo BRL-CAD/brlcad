@@ -31,7 +31,7 @@ static int nlines;		/* Number of input lines */
 static int pix_line;		/* Number of pixels/line */
 
 char usage[] = 
-"Usage: pixbustup basename.pix width [image_offset] [first_number] <input.pix\n";
+"Usage: pixbustup basename width [image_offset] [first_number] <input.pix\n";
 
 int infd;
 
