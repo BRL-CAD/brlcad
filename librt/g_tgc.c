@@ -89,7 +89,7 @@ struct rt_i		*rtip;
 	register struct tgc_specific *tgc;
 	register fastf_t	f;
 	LOCAL fastf_t	prod_ab, prod_cd;
-	LOCAL fastf_t	magsq_h, magsq_a, magsq_b, magsq_c, magsq_d;
+	LOCAL fastf_t	magsq_a, magsq_b, magsq_c, magsq_d;
 	LOCAL fastf_t	mag_h, mag_a, mag_b, mag_c, mag_d;
 	LOCAL mat_t	Rot, Shr, Scl;
 	LOCAL mat_t	iRot, tShr, iShr, iScl;
@@ -109,7 +109,7 @@ struct rt_i		*rtip;
 		return(0);		/* OK */
 
 	/* Validate that |H| > 0, compute |A| |B| |C| |D|		*/
-	mag_h = sqrt( magsq_h = MAGSQ( tip->h ) );
+	mag_h = sqrt( MAGSQ( tip->h ) );
 	mag_a = sqrt( magsq_a = MAGSQ( tip->a ) );
 	mag_b = sqrt( magsq_b = MAGSQ( tip->b ) );
 	mag_c = sqrt( magsq_c = MAGSQ( tip->c ) );
@@ -512,7 +512,6 @@ struct seg		*seghead;
 	LOCAL poly		C;	/*  final equation	*/
 	LOCAL poly		Xsqr, Ysqr;
 	LOCAL poly		R, Rsqr;
-	LOCAL poly		sum;
 
 	/* find rotated point and direction */
 	MAT4X3VEC( dprime, tgc->tgc_ScShR, rp->r_dir );
@@ -627,7 +626,6 @@ struct seg		*seghead;
 		}
 	} else {
 		LOCAL poly	Q, Qsqr;
-		LOCAL poly	T1, T2, T3;
 		LOCAL complex	val[MAXP];	/* roots of final equation */
 		register int	l;
 		register int nroots;
@@ -1701,7 +1699,6 @@ struct rt_tol		*tol;
 	LOCAL fastf_t		top[16*3];
 	LOCAL fastf_t		bottom[16*3];
 	LOCAL vect_t		work;		/* Vec addition work area */
-	LOCAL fastf_t		points[3*8];
 
 	RT_CK_DB_INTERNAL(ip);
 	tip = (struct rt_tgc_internal *)ip->idb_ptr;
@@ -1835,13 +1832,9 @@ struct rt_tol		*tol;
 	struct vertex		*vbottom[16+1];
 	struct vertex		*vtemp[16+1];
 	LOCAL vect_t		work;		/* Vec addition work area */
-	LOCAL fastf_t		points[3*8];
 	LOCAL struct rt_tgc_internal	*tip;
 	struct faceuse		*outfaceuses[2*16+2];
 	struct vertex		*vertlist[4];
-	struct edgeuse		*eu, *eu2;
-	int			face;
-	plane_t			plane;
 
 	RT_CK_DB_INTERNAL(ip);
 	tip = (struct rt_tgc_internal *)ip->idb_ptr;

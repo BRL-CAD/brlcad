@@ -85,7 +85,6 @@ struct rt_i		*rtip;
 	LOCAL vect_t	Au, Bu, Cu;	/* A,B,C with unit length */
 	LOCAL fastf_t	f;
 	struct rt_ell_internal	*eip;
-	int		i;
 
 	eip = (struct rt_ell_internal *)ip->idb_ptr;
 	RT_ELL_CK_MAGIC(eip);

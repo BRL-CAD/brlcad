@@ -171,11 +171,10 @@ struct rt_i		*rtip;
 	struct rt_tgc_internal	*tip;
 	register struct rec_specific *rec;
 	LOCAL double	magsq_h, magsq_a, magsq_b, magsq_c, magsq_d;
-	LOCAL double	mag_h, mag_a, mag_b, mag_c, mag_d;
+	LOCAL double	mag_h, mag_a, mag_b;
 	LOCAL mat_t	R;
 	LOCAL mat_t	Rinv;
 	LOCAL mat_t	S;
-	LOCAL vect_t	Hv, A, B, C, D;
 	LOCAL vect_t	invsq;	/* [ 1/(|A|**2), 1/(|B|**2), 1/(|Hv|**2) ] */
 	LOCAL vect_t	work;
 	LOCAL fastf_t	f;
@@ -187,8 +186,8 @@ struct rt_i		*rtip;
 	mag_h = sqrt( magsq_h = MAGSQ( tip->h ) );
 	mag_a = sqrt( magsq_a = MAGSQ( tip->a ) );
 	mag_b = sqrt( magsq_b = MAGSQ( tip->b ) );
-	mag_c = sqrt( magsq_c = MAGSQ( tip->c ) );
-	mag_d = sqrt( magsq_d = MAGSQ( tip->d ) );
+	magsq_c = MAGSQ( tip->c );
+	magsq_d = MAGSQ( tip->d );
 
 	/* Check for |H| > 0, |A| > 0, |B| > 0 */
 	if( NEAR_ZERO(mag_h, RT_LEN_TOL) || NEAR_ZERO(mag_a, RT_LEN_TOL)
