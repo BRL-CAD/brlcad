@@ -33,23 +33,20 @@
 	units vert nmg_extrude nmg_tri nmg_fuse nmg_pt_fu \
 	rtassoc \
 	pr LIBRT_TIMER storage global \
-	rt_dspline
-
-#define NURB_OBJ	\
-        nurb_basis.o nurb_bound.o nurb_diff.o nurb_eval.o nurb_flat.o \
-        nurb_knot.o nurb_norm.o nurb_poly.o nurb_ray.o nurb_refine.o \
-        nurb_solve.o nurb_split.o nurb_util.o nurb_xsplit.o nurb_copy.o \
-        nurb_c2.o oslo_calc.o oslo_map.o nurb_plot.o nurb_bezier.o nurb_trim.o \
-	nurb_interp.o nurb_reverse.o nurb_tess.o nurb_trim_util.o
-
+	rt_dspline \
+        nurb_basis nurb_bound nurb_diff nurb_eval nurb_flat \
+        nurb_knot nurb_norm nurb_poly nurb_ray nurb_refine \
+        nurb_solve nurb_split nurb_util nurb_xsplit nurb_copy \
+        nurb_c2 oslo_calc oslo_map nurb_plot nurb_bezier nurb_trim \
+	nurb_interp nurb_reverse nurb_tess nurb_trim_util
 
 #define PLOT_OBJ	plot3.o
 
 /* Oddly, this line needs to be present to keep IBM AIX cpp happy. */
 #ifdef FAST_SQRT
-#	define	EXTRA_OBJ	FAST_SQRT PLOT_OBJ NURB_OBJ
+#	define	EXTRA_OBJ	FAST_SQRT PLOT_OBJ
 #else
-#	define	EXTRA_OBJ	PLOT_OBJ NURB_OBJ
+#	define	EXTRA_OBJ	PLOT_OBJ
 #endif
 
 #define VERSION_VARIABLE	rt_version
@@ -61,13 +58,5 @@
  *  Special rules for additions from other directories
  */
 %.o&:	libplot3,,%,o			if exist ../libplot3/%.c
-
-#if NFS
-%.o:	../libnurb/%.c			if exist ../.libnurb.MTYPE/%.o
-	cp ../.libnurb.MTYPE/%.o %.o
-#else
-%.o:	../libnurb/%.c			if exist ../libnurb/%.o
-	cp ../libnurb/%.o %.o
-#endif
 
 #include "../Cakefile.rules"
