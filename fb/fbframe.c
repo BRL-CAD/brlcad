@@ -30,23 +30,23 @@ FBIO *fbp;
 main(argc, argv)
 char **argv;
 {
-	int	x, y, xsize, ysize;
+	register int	x, y;
+	int	xsize, ysize;
 	static RGBpixel white = { 255, 255, 255 };
 	static RGBpixel red = { 255, 0, 0 };
 	static RGBpixel green = { 0, 255, 0 };
 	static RGBpixel blue = { 0, 0, 255 };
 
-	for( x = 0; x < 512; x++ )
-		line[x][RED] = 255;
-	for( x = 512; x < 1024; x++ )
-		line[x][BLU] = 255;
-
 	if( argc > 1 && strcmp( argv[1], "-h" ) == 0 )
 		xsize = ysize = 1024;
 	else
-		xsize = ysize = 512;
+		xsize = ysize = 0;
 	if( (fbp = fb_open( NULL, xsize, ysize )) == FBIO_NULL )
 		exit( 1 );
+	xsize = fb_getwidth(fbp);
+	ysize = fb_getheight(fbp);
+
+#define FLOOD(col)	{ for( x=0; x < xsize; x++ ) {COPYRGB(line[x], col);} }
 
 	/*
 	 * Red:		(   0 -> 510,   0	 )
@@ -54,6 +54,7 @@ char **argv;
 	 * Blue:	( 511 ->   1, 511	 )
 	 * White:	(          0, 511 -> 1	 )
 	 */
+#if 0
 	for( x = 0; x < xsize-1; x++ )
 		fb_write( fbp, x, 0, red, 1 );
 	for( y = 0; y < ysize-1; y++ )
@@ -63,10 +64,16 @@ char **argv;
 	for( y = 1; y < ysize; y++ ) {
 		fb_write( fbp, 0, y, white, 1 );
 	}
-/**	fb_write( fbp, 0, 100, line, 1024 );
-	fb_write( fbp, 100, 200, line, 1024 );
-	fb_write( fbp, 0, 300, line, 700 );
-**/
+#else
+	FLOOD( red );
+	fb_writerect( fbp, 0, 0, xsize-1, 1, line );
+	FLOOD( green );
+	fb_writerect( fbp, xsize-1, 0, 1, xsize-1, line );
+	FLOOD( blue );
+	fb_writerect( fbp, 1, ysize-1, xsize-1, 1, line );
+	FLOOD( white );
+	fb_writerect( fbp, 0, 1, 1, ysize-1, line );
+#endif
 
 	fb_close( fbp );
 }
