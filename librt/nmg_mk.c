@@ -510,7 +510,8 @@ int		orientation;
 {
 	struct loop	*l;
 	struct loopuse	*lu1, *lu2;
-	struct vertexuse *vu1, *vu2;
+	struct vertexuse *vu1 = NULL;
+	struct vertexuse *vu2;
 	struct model	*m;
 	/* XXX - why the new union? ctj */
 	union {
