@@ -289,6 +289,12 @@ CONST struct db_i		*dbip;
 		comb->GIFTmater = rp[0].c.c_material;
 		comb->los = rp[0].c.c_los;
 	}
+	else {	/* set some reasonable defaults */
+		comb->region_id = 0;
+		comb->aircode = 0;
+		comb->GIFTmater = 0;
+		comb->los = 0;
+	}
 
 	if( comb->rgb_valid = rp[0].c.c_override )  {
 		comb->rgb[0] = rp[0].c.c_rgb[0];
@@ -319,7 +325,8 @@ CONST struct db_i		*dbip;
 	/* This ? is necessary to clean up old databases with grunge here */
 	comb->inherit = (rp[0].c.c_inherit == DB_INH_HIGHER) ? 1 : 0;
 	/* Automatic material table lookup here? */
-	bu_vls_printf( &comb->material, "gift%d", comb->GIFTmater );
+	if( comb->region_flag )
+		bu_vls_printf( &comb->material, "gift%d", comb->GIFTmater );
 
 	if( rt_tree_array )  bu_free( (genptr_t)rt_tree_array, "rt_tree_array" );
 
