@@ -170,15 +170,15 @@ struct rt_i		*rtip;
 {
 	struct rt_tgc_internal	*tip;
 	register struct rec_specific *rec;
-	static double	magsq_h, magsq_a, magsq_b, magsq_c, magsq_d;
-	static double	mag_h, mag_a, mag_b, mag_c, mag_d;
-	static mat_t	R;
-	static mat_t	Rinv;
-	static mat_t	S;
-	static vect_t	Hv, A, B, C, D;
-	static vect_t	invsq;	/* [ 1/(|A|**2), 1/(|B|**2), 1/(|Hv|**2) ] */
-	static vect_t	work;
-	static fastf_t	f;
+	LOCAL double	magsq_h, magsq_a, magsq_b, magsq_c, magsq_d;
+	LOCAL double	mag_h, mag_a, mag_b, mag_c, mag_d;
+	LOCAL mat_t	R;
+	LOCAL mat_t	Rinv;
+	LOCAL mat_t	S;
+	LOCAL vect_t	Hv, A, B, C, D;
+	LOCAL vect_t	invsq;	/* [ 1/(|A|**2), 1/(|B|**2), 1/(|Hv|**2) ] */
+	LOCAL vect_t	work;
+	LOCAL fastf_t	f;
 
 	tip = (struct rt_tgc_internal *)ip->idb_ptr;
 	RT_TGC_CK_MAGIC(tip);
