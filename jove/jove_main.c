@@ -4,6 +4,10 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.10  87/09/10  00:23:01  mike
+ * Hopefully, the fix for the "scramble the input" bug on the Crays
+ * and other SysV machines.
+ * 
  * Revision 2.9  87/05/05  21:04:12  dpk
  * Simplified getchar code. Now all systems use the read loop
  * 
@@ -190,7 +194,6 @@ register int	c;
 
 getchar()
 {
-	char buf[128];
 	if (nchars <= 0) {
 		/*
 		 *  This loop will retry the read if it is interrupted
@@ -244,10 +247,14 @@ charp()
 		/* Since VMIN=1, we need to be able to poll for input
 		 * here.  Yes, the 4-syscalls to do it are costly,
 		 * but not as costly as the infinite loop when VMIN=0!
+		 * Have to be careful, as we actually read in the
+		 * characters here, to see if there are any.
 		 */
 		flags = fcntl( Input, F_GETFL, 0);
 		(void)fcntl( Input, F_SETFL, flags|O_NDELAY );
-		c = read(Input, smbuf+nchars, sizeof(smbuf)-nchars);
+		c = &smbuf[NTOBUF] - bp - nchars;	/* space left */
+		if( c < 0 )  c = 0;
+		c = read(Input, bp+nchars, c );
 		if (c > 0)
 			nchars += c;
 		(void)fcntl( Input, F_SETFL, flags );
