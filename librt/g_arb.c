@@ -24,30 +24,17 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "ray.h"
 #include "db.h"
 #include "debug.h"
+#include "plane.h"
 
 /* Describe algorithm here */
 
-#define MAXPTS	4			/* All we need are 4 points */
-#define pl_A	pl_points[0]		/* Synonym for A point */
-
-struct plane_specific  {
-	int	pl_npts;		/* number of points on plane */
-	point_t	pl_points[MAXPTS];	/* Actual points on plane */
-	vect_t	pl_Xbasis;		/* X (B-A) vector (for 2d coords) */
-	vect_t	pl_Ybasis;		/* Y (C-A) vector (for 2d coords) */
-	vect_t	pl_N;			/* Unit-length Normal (outward) */
-	fastf_t	pl_NdotA;		/* Normal dot A */
-	fastf_t	pl_2d_x[MAXPTS];	/* X 2d-projection of points */
-	fastf_t	pl_2d_y[MAXPTS];	/* Y 2d-projection of points */
-	fastf_t	pl_2d_com[MAXPTS];	/* pre-computed common-term */
-	struct plane_specific *pl_forw;	/* Forward link */
-	char	pl_code[MAXPTS+1];	/* Face code string.  Decorative. */
-};
-
-#define MINMAX(a,b,c)	{ static float ftemp;\
+#define MINMAX(a,b,c)	{ FAST float ftemp;\
 			if( (ftemp = (c)) < (a) )  a = ftemp;\
 			if( ftemp > (b) )  b = ftemp; }
 
+/*
+ *  			A R B 8 _ P R E P
+ */
 arb8_prep( sp, stp, mat )
 struct solidrec *sp;
 struct soltab *stp;
@@ -107,21 +94,22 @@ matp_t mat;
 	stp->st_radsq = dx*dx + dy*dy + dz*dz;
 	stp->st_specific = (int *) 0;
 
+#define P(x)	(&sp->s_values[(x)*3])
 	faces = 0;
-	faces += face( sp->s_values, stp, 3, 2, 1, 0 );	/* 1234 */
-	faces += face( sp->s_values, stp, 4, 5, 6, 7 );	/* 8765 */
-	faces += face( sp->s_values, stp, 4, 7, 3, 0 );	/* 1485 */
-	faces += face( sp->s_values, stp, 2, 6, 5, 1 );	/* 2673 */
-	faces += face( sp->s_values, stp, 1, 5, 4, 0 );	/* 1562 */
-	faces += face( sp->s_values, stp, 7, 6, 2, 3 );	/* 4378 */
-#ifdef reversed
-	faces += face( sp->s_values, stp, 0, 1, 2, 3 );	/* 1234 */
-	faces += face( sp->s_values, stp, 7, 6, 5, 4 );	/* 8765 */
-	faces += face( sp->s_values, stp, 0, 3, 7, 4 );	/* 1485 */
-	faces += face( sp->s_values, stp, 1, 5, 6, 2 );	/* 2673 */
-	faces += face( sp->s_values, stp, 0, 4, 5, 1 );	/* 1562 */
-	faces += face( sp->s_values, stp, 3, 2, 6, 7 );	/* 4378 */
-#endif
+	if( face( stp, 3, 2, 1, 0, P(3), P(2), P(1), P(0), 1 ) )
+		faces++;					/* 1234 */
+	if( face( stp, 4, 5, 6, 7, P(4), P(5), P(6), P(7), 1 ) )
+		faces++;					/* 8765 */
+	if( face( stp, 4, 7, 3, 0, P(4), P(7), P(3), P(0), 1 ) )
+		faces++;					/* 1485 */
+	if( face( stp, 2, 6, 5, 1, P(2), P(6), P(5), P(1), 1 ) )
+		faces++;					/* 2673 */
+	if( face( stp, 1, 5, 4, 0, P(1), P(5), P(4), P(0), 1 ) )
+		faces++;					/* 1562 */
+	if( face( stp, 7, 6, 2, 3, P(7), P(6), P(2), P(3), 1 ) )
+		faces++;					/* 4378 */
+#undef P
+
 	if( faces >= 4  && faces <= 6 )
 		return(0);		/* OK */
 
@@ -130,11 +118,24 @@ matp_t mat;
 	return(1);			/* Error */
 }
 
-/*static */
-face( vects, stp, a, b, c, d )
-register float vects[];
+/*
+ *			F A C E
+ *
+ *  This function is called with pointers to 4 points,
+ *  and is used to prepare both ARS and ARB8 faces.
+ *  a,b,c,d are "index" values, merely decorative.
+ *  ap, bp, cp, dp point to float[3] (NOT fastf_t) points.
+ *  noise is non-zero for ARB8, for non-planar face complaints.
+ *
+ * Return -
+ *	0	if the 4 points didn't form a plane (eg, colinear, etc).
+ *	#pts	(>=3) if a valid plane resulted.  # valid pts is returned.
+ */
+face( stp, a, b, c, d, ap, bp, cp, dp, noise )
 struct soltab *stp;
 int a, b, c, d;
+float *ap, *bp, *cp, *dp;			/* not pointp_t */
+int noise;
 {
 	register struct plane_specific *plp;
 	register int pts;
@@ -142,10 +143,10 @@ int a, b, c, d;
 
 	GETSTRUCT( plp, plane_specific );
 	plp->pl_npts = 0;
-	pts = add_pt( vects, stp, plp, a );
-	pts += add_pt( vects, stp, plp, b );
-	pts += add_pt( vects, stp, plp, c );
-	pts += add_pt( vects, stp, plp, d );
+	pts  = add_pt( ap, stp, plp, a, noise );
+	pts += add_pt( bp, stp, plp, b, noise );
+	pts += add_pt( cp, stp, plp, c, noise );
+	pts += add_pt( dp, stp, plp, d, noise );
 
 	if( pts < 3 )  {
 		free(plp);
@@ -168,25 +169,29 @@ int a, b, c, d;
 	/* Add this face onto the linked list for this solid */
 	plp->pl_forw = (struct plane_specific *)stp->st_specific;
 	stp->st_specific = (int *)plp;
-	return(1);					/* OK */
+	return(pts);					/* OK */
 }
 
-#define VERT(x)	(&vects[(x)*3])
-
-/*static */
-add_pt( vects, stp, plp, a )
-float *vects;
+/*
+ *			A D D _ P T
+ *
+ *  Add another point to a struct plane_specific, checking for unique pts.
+ *  The first two points are easy.  The third one triggers most of the
+ *  plane calculations, and forth and subsequent ones are merely
+ *  check for validity.  If noise!=0, then non-planar 4th points give
+ *  a warning message.  noise=1 for ARB8's, and noise=0 for ARS's.
+ */
+add_pt( point, stp, plp, a, noise )
+register float *point;
 struct soltab *stp;
 register struct plane_specific *plp;
 int a;
+int noise;			/* non-0: check 4,> pts for being planar */
 {
 	register int i;
-	register float *point;
 	static vect_t work;
 	static vect_t P_A;		/* new point - A */
 	static float f;
-
-	point = VERT(a);
 
 	/* Verify that this point is not the same as an earlier point */
 	for( i=0; i < plp->pl_npts; i++ )  {
@@ -248,14 +253,19 @@ int a;
 			plp->pl_2d_y[i] = VDOT( P_A, plp->pl_Ybasis );
 			return(1);			/* OK */
 		}
-		printf("ERROR: arb8(%s) face %s non-planar\n",
-			stp->st_name, plp->pl_code );
+		if( noise )  {
+			printf("ERROR: arb8(%s) face %s non-planar\n",
+				stp->st_name, plp->pl_code );
+		}
 		plp->pl_npts--;
 		plp->pl_code[i] = '\0';
 		return(0);				/* BAD */
 	}
 }
 
+/*
+ *  			A R B 8 _ P R I N T
+ */
 arb8_print( stp )
 register struct soltab *stp;
 {
@@ -371,6 +381,9 @@ register struct ray *rp;
 	return(segp);			/* HIT */
 }
 
+/*
+ *  			P L _ S H O T
+ */
 pl_shot( plp, rp, hitp, k )
 register struct plane_specific *plp;
 register struct ray *rp;
