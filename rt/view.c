@@ -1,10 +1,9 @@
 /*
- *			V I E W
+ *			V I E W . C
  *
- * Ray Tracing program, sample lighting models.  Part of the
- * RT program proper.
+ *	Ray Tracing program, lighting model manager.
  *
- *  Many varied and wonderous "lighting models" are implemented.
+ *  Output is either interactive to a frame buffer, or written in a file.
  *  The output format is a .PIX file (a byte stream of R,G,B as u_char's).
  *
  *  The extern "lightmodel" selects which one is being used:
@@ -15,7 +14,7 @@
  *
  *  Notes -
  *	The normals on all surfaces point OUT of the solid.
- *	The incomming light rays point IN.  Thus the sign change.
+ *	The incomming light rays point IN.
  *
  *  Authors -
  *	Michael John Muuss
@@ -61,7 +60,7 @@ extern int lightmodel;		/* lighting model # to use */
 extern mat_t view2model;
 extern mat_t model2view;
 
-#define MAX_LINE	1024		/* Max pixels/line */
+#define MAX_LINE	(1024*8)	/* Max pixels/line */
 /* Current arrangement is definitely non-parallel! */
 static char scanline[MAX_LINE*3];	/* 1 scanline pixel buffer, R,G,B */
 static char *pixelp;			/* pointer to first empty pixel */
@@ -202,68 +201,10 @@ register struct application *ap;
 
 
 /*
-	Color pixel based on the energy of a point light source (Eps)
-	plus some diffuse illumination (Epd) reflected from the point
-	<x,y> :
-
-				E = Epd + Eps		(1)
-
-	The energy reflected from diffuse illumination is the product
-	of the reflectance coefficient at point P (Rp) and the diffuse
-	illumination (Id) :
-
-				Epd = Rp * Id		(2)
-
-	The energy reflected from the point light source is calculated
-	by the sum of the diffuse reflectance (Rd) and the specular
-	reflectance (Rs), multiplied by the intensity of the light
-	source (Ips) :
-
-				Eps = (Rd + Rs) * Ips	(3)
-
-	The diffuse reflectance is calculated by the product of the
-	reflectance coefficient (Rp) and the cosine of the angle of
-	incidence (I) :
-
-				Rd = Rp * cos(I)	(4)
-
-	The specular reflectance is calculated by the product of the
-	specular reflectance coeffient and (the cosine of the angle (S)
-	raised to the nth power) :
-
-				Rs = W(I) * cos(S)**n	(5)
-
-	Where,
-		I is the angle of incidence.
-		S is the angle between the reflected ray and the observer.
-		W returns the specular reflection coefficient as a function
-	of the angle of incidence.
-		n (roughly 1 to 10) represents the shininess of the surface.
+ *			C O L O R V I E W
  *
-	This is the heart of the lighting model which is based on a model
-	developed by Bui-Tuong Phong, [see Wm M. Newman and R. F. Sproull,
-	"Principles of Interactive Computer Graphics", 	McGraw-Hill, 1979]
-
-	Er = Ra(m)*cos(Ia) + Rd(m)*cos(I1) + W(I1,m)*cos(s)^^n
-	where,
- 
-	Er	is the energy reflected in the observer's direction.
-	Ra	is the diffuse reflectance coefficient at the point
-		of intersection due to ambient lighting.
-	Ia	is the angle of incidence associated with the ambient
-		light source (angle between ray direction (negated) and
-		surface normal).
-	Rd	is the diffuse reflectance coefficient at the point
-		of intersection due to primary lighting.
-	I1	is the angle of incidence associated with the primary
-		light source (angle between light source direction and
-		surface normal).
-	m	is the material identification code.
-	W	is the specular reflectance coefficient,
-		a function of the angle of incidence, range 0.0 to 1.0,
-		for the material.
-	s	is the angle between the reflected ray and the observer.
-	n	'Shininess' of the material,  range 1 to 10.
+ *  Manage the coloring of whatever it was we just hit.
+ *  This can be a recursive procedure.
  */
 colorview( ap, PartHeadp )
 register struct application *ap;
@@ -359,6 +300,10 @@ view_eol()
 		pixelp = &scanline[0];
 	}
 }
+
+/*
+ *			V I E W _ E N D
+ */
 view_end()
 {
 	if( fbfd > 0 )
@@ -382,7 +327,8 @@ char *file, *obj;
 		scanbytes = npts * 3;
 	}  else  {
 		int width;
-		/* Output directly to Ikonas */
+
+		/* Output interactively to framebuffer */
 		if( npts <= 512 )
 			width = 512;
 		else
@@ -390,7 +336,7 @@ char *file, *obj;
 
 		fbsetsize( width );
 		if( (fbfd = fbopen( NULL, APPEND )) < 0 )  {
-			rt_log("Can't get frame buffer\n");
+			rt_log("view:  can't open frame buffer\n");
 			exit(12);
 		}
 		fbclear();
@@ -402,7 +348,7 @@ char *file, *obj;
 }
 
 /*
- *  			V I E W _ I N I T
+ *  			V I E W 2 _ I N I T
  *
  *  Called each time a new image is about to be done.
  */
@@ -434,7 +380,6 @@ FILE *outfp;
 		ap->a_hit = viewit;
 debug_lighting:
 		/* Determine the Light location(s) in view space */
-		/* lightmodel 0 does this in view.c */
 		/* 0:  At left edge, 1/2 high */
 		VSET( temp, -1, 0, 1 );
 		MAT4X3VEC( l0pos, view2model, temp );
