@@ -1504,6 +1504,7 @@ char	**argv;
 	struct rt_pipe_internal *pipe_ip;
 	struct rt_sketch_internal *sketch_ip;
 	struct rt_extrude_internal *extrude_ip;
+	struct rt_bot_internal *bot_ip;
 
 	if(argc == 2){
 	  struct bu_vls vls;
@@ -1514,6 +1515,7 @@ char	**argv;
 	    Tcl_AppendElement(interp, "arb6");
 	    Tcl_AppendElement(interp, "arb5");
 	    Tcl_AppendElement(interp, "arb4");
+	    Tcl_AppendElement(interp, "bot");
 	    Tcl_AppendElement(interp, "ehy");
 	    Tcl_AppendElement(interp, "ell");
 	    Tcl_AppendElement(interp, "ellg");
@@ -1533,7 +1535,7 @@ char	**argv;
 	    Tcl_AppendElement(interp, "tgc");
 	    Tcl_AppendElement(interp, "tor");
 	    Tcl_AppendElement(interp, "trc");
-#if 0
+#if 1
 	    Tcl_AppendElement(interp, "extrude");
 	    Tcl_AppendElement(interp, "sketch");
 #endif
@@ -1569,7 +1571,7 @@ char	**argv;
 	RT_INIT_DB_INTERNAL( &internal );
 
 	/* make name <arb8 | arb7 | arb6 | arb5 | arb4 | ellg | ell |
-	 * sph | tor | tgc | rec | trc | rcc | grp | half | nmg | sketch | extrude> */
+	 * sph | tor | tgc | rec | trc | rcc | grp | half | nmg | bot | sketch | extrude> */
 	if( strcmp( argv[2], "arb8" ) == 0 )  {
 		internal.idb_type = ID_ARB8;
 		internal.idb_meth = &rt_functab[ID_ARB8];
@@ -1905,6 +1907,29 @@ char	**argv;
 		ps->pp_id = 0.5*ps->pp_od;
 		ps->pp_bendradius = ps->pp_od;
 		BU_LIST_INSERT( &pipe_ip->pipe_segs_head, &ps->l );
+	} else if( strcmp( argv[2], "bot" ) == 0 ) {
+		internal.idb_type = ID_BOT;
+		internal.idb_meth = &rt_functab[ID_BOT];
+		internal.idb_ptr = (genptr_t)bu_malloc( sizeof( struct rt_bot_internal ), "rt_bot_internal" );
+		bot_ip = (struct rt_bot_internal *)internal.idb_ptr;
+		bot_ip->magic = RT_BOT_INTERNAL_MAGIC;
+		bot_ip->mode = RT_BOT_SOLID;
+		bot_ip->orientation = RT_BOT_UNORIENTED;
+		bot_ip->error_mode = 0;
+		bot_ip->num_vertices = 4;
+		bot_ip->num_faces = 4;
+		bot_ip->faces = (int *)bu_calloc( bot_ip->num_faces * 3, sizeof( int ), "BOT faces" );
+		bot_ip->vertices = (fastf_t *)bu_calloc( bot_ip->num_vertices * 3, sizeof( fastf_t ), "BOT vertices" );
+		bot_ip->thickness = (fastf_t *)NULL;
+		bot_ip->face_mode = (struct bu_bitv *)NULL;
+		VSET( &bot_ip->vertices[0],  -view_state->vs_toViewcenter[MDX] , -view_state->vs_toViewcenter[MDY] , -view_state->vs_toViewcenter[MDZ]+view_state->vs_Viewscale );
+		VSET( &bot_ip->vertices[3], -view_state->vs_toViewcenter[MDX]-0.5*view_state->vs_Viewscale , -view_state->vs_toViewcenter[MDY] , -view_state->vs_toViewcenter[MDZ]-view_state->vs_Viewscale );
+		VSET( &bot_ip->vertices[6], -view_state->vs_toViewcenter[MDX]-0.5*view_state->vs_Viewscale , -view_state->vs_toViewcenter[MDY]-0.5*view_state->vs_Viewscale , -view_state->vs_toViewcenter[MDZ]-view_state->vs_Viewscale );
+		VSET( &bot_ip->vertices[9], -view_state->vs_toViewcenter[MDX]+0.5*view_state->vs_Viewscale , -view_state->vs_toViewcenter[MDY]-0.5*view_state->vs_Viewscale , -view_state->vs_toViewcenter[MDZ]-view_state->vs_Viewscale );
+		VSET( &bot_ip->faces[0], 0, 1, 3 );
+		VSET( &bot_ip->faces[3], 0, 1, 2 );
+		VSET( &bot_ip->faces[6], 0, 2, 3 );
+		VSET( &bot_ip->faces[9], 1, 2, 3 );
 	} else if( strcmp( argv[2], "extrude" ) == 0 ) {
 		char *av[3];
 
@@ -1996,7 +2021,7 @@ char	**argv;
 	  return TCL_ERROR;
 	} else {
 	  Tcl_AppendResult(interp, "make:  ", argv[2], " is not a known primitive\n",
-			   "\tchoices are: arb8, arb7, arb6, arb5, arb4, sph, ell, ellg, grip, tor,\n",
+			   "\tchoices are: arb8, arb7, arb6, arb5, arb4, bot, sph, ell, ellg, grip, tor,\n",
 			   "\t\ttgc, tec, rec, trc, rcc, half, rpc, rhc, epa, ehy, eto, part, sketch extrude\n",
 			   (char *)NULL);
 	  return TCL_ERROR;
