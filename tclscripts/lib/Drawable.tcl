@@ -28,7 +28,7 @@ class Drawable {
     public method assoc {args}
     public method autoview {args}
     public method blast {args}
-    public method clear {}
+    public method clear {args}
     public method draw {args}
     public method E {args}
     public method erase {args}
@@ -84,8 +84,8 @@ body Drawable::blast {args} {
     eval $dg blast $args
 }
 
-body Drawable::clear {} {
-    $dg clear
+body Drawable::clear {args} {
+    eval $dg clear $args
 }
 
 body Drawable::draw {args} {
@@ -169,7 +169,7 @@ body Drawable::who {args} {
 }
 
 body Drawable::zap {args} {
-    $dg zap $args
+    eval $dg zap $args
 }
 
 body Drawable::help {args} {
@@ -203,7 +203,9 @@ body Drawable::help_init {} {
     $help add get_autoview	{{} {get view parameters that shows drawn geometry}}
     $help add illum		{{name} {illuminate object}}
     $help add label		{{[-n] obj} {label objects}}
+    $help add nirt		{{[nirt(1) options] [x y z]}	{trace a single ray from current view}}
     $help add overlay		{{file.plot [name]} {read UNIX-Plot as named overlay}}
+    $help add qray		{{subcommand}	{get/set query_ray characteristics}}
     $help add report		{{[lvl]} {print solid table & vector list}}
     $help add rt		{{[options] [-- objects]} {do raytrace of view or specified objects}}
     $help add rtabort		{{} {abort the associated raytraces}}
