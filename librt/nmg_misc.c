@@ -1694,6 +1694,191 @@ struct rt_tol *tol;
 	return( split_count );
 }
 
+/*	N M G _ M K _ N E W _ F A C E _ F R O M _ L O O P
+ *
+ *  Remove a loopuse from an existing face and construct a new face
+ *  from that loop
+ *
+ *  Returns new faceuse as built by nmg_mf()
+ *
+ */
+struct faceuse *
+nmg_mk_new_face_from_loop( lu )
+struct loopuse *lu;
+{
+	struct shell *s;
+	struct faceuse *fu;
+	struct loopuse *lu1;
+	struct loopuse *lu_mate;
+	int ot_same_loops=0;
+
+	NMG_CK_LOOPUSE( lu );
+
+	if( *lu->up.magic_p != NMG_FACEUSE_MAGIC )
+	{
+		rt_log( "nmg_mk_new_face_from_loop: loopuse is not in a faceuse\n" );
+		return( (struct faceuse *)NULL );
+	}
+
+	fu = lu->up.fu_p;
+	NMG_CK_FACEUSE( fu );
+
+	s = fu->s_p;
+	NMG_CK_SHELL( s );
+
+	/* Count the number of exterior loops in this faceuse */
+	for( RT_LIST_FOR( lu1 , loopuse , &fu->lu_hd ) )
+	{
+		NMG_CK_LOOPUSE( lu1 );
+		if( lu1->orientation == OT_SAME )
+			ot_same_loops++;
+	}
+
+	if( ot_same_loops == 1 && lu->orientation == OT_SAME )
+	{
+		rt_log( "nmg_mk_new_face_from_loop: cannot remove only exterior loop from faceuse\n" );
+		return( (struct faceuse *)NULL );
+	}
+
+	lu_mate = lu->lumate_p;
+
+	/* remove loopuse from faceuse */
+	RT_LIST_DEQUEUE( &lu->l );
+
+	/* remove its mate from faceuse mate */
+	RT_LIST_DEQUEUE( &lu_mate->l );
+
+	/* insert these loops in the shells list of wire loops
+	 * put the original loopuse at the head of the list
+	 * so that it will end up as the returned faceuse from "nmg_mf"
+	 */
+	RT_LIST_INSERT( &s->lu_hd , &lu_mate->l );
+	RT_LIST_INSERT( &s->lu_hd , &lu->l );
+
+	/* set the "up" pointers to the shell */
+	lu->up.s_p = s;
+	lu_mate->up.s_p = s;
+
+	/* Now make the new face */
+	return( nmg_mf( lu ) );
+}
+
+/* state for nmg_split_loops_into_faces */
+struct nmg_split_loops_state
+{
+	long		*flags;		/* index based array of flags for model */
+	int		split;		/* count of faces split */
+};
+/* state for nmg_unbreak_edge */
+
+void
+nmg_split_loops_handler( fu_p , sl_state , after )
+long *fu_p;
+genptr_t sl_state;
+int after;
+{
+	struct faceuse *fu;
+	struct nmg_split_loops_state *state;
+	struct loopuse *lu;
+	int otsame_loops=0;
+	int otopp_loops=0;
+
+	fu = (struct faceuse *)fu_p;
+	NMG_CK_FACEUSE( fu );
+
+	state = (struct nmg_split_loops_state *)sl_state;
+
+	if( !NMG_INDEX_TEST_AND_SET( state->flags , fu ) )  return;
+
+	NMG_INDEX_SET( state->flags , fu->fumate_p );
+
+	for( RT_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
+	{
+		NMG_CK_LOOPUSE( lu );
+
+		if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+			continue;
+
+		if( lu->orientation == OT_SAME )
+			otsame_loops++;
+		else if( lu->orientation == OT_OPPOSITE )
+			otopp_loops++;
+		else
+		{
+			rt_log( "nmg_split_loops_into_faces: facuse (x%x) with %s loopuse (x%x)\n",
+				fu , nmg_orientation( lu->orientation ) , lu );
+			return;
+		}
+	}
+
+	if( otsame_loops < 2 )
+		return;
+
+	if( otopp_loops == 0 )
+	{
+		int first=1;
+		struct faceuse *new_fu;
+
+		lu = RT_LIST_FIRST( loopuse , &fu->lu_hd );
+		while( RT_LIST_NOT_HEAD( lu , &fu->lu_hd ) )
+		{
+			struct loopuse *next_lu;
+
+			next_lu = RT_LIST_PNEXT( loopuse , &lu->l );
+
+			if( first )
+				first = 0;
+			else
+			{
+				plane_t plane;
+
+				NMG_GET_FU_PLANE( plane , fu );
+				new_fu = nmg_mk_new_face_from_loop( lu );
+				nmg_face_g( new_fu , plane );
+			}
+
+			lu = next_lu;
+		}
+	}
+
+	/* XXXX Need code for faces with OT_OPPOSITE loops */
+}
+
+/*	N M G _ S P L I T _ L O O P S _ I N T O _ F A C E S
+ *
+ *	Visits each faceuse and splits disjoint loops into
+ *	seperate faces.
+ *
+ *	Returns the number of faces modified.
+ */
+int
+nmg_split_loops_into_faces( magic_p )
+long		*magic_p;
+{
+	struct model *m;
+	struct nmg_visit_handlers htab;
+	struct nmg_split_loops_state sl_state;
+	long *flags;
+	int count;
+
+	m = nmg_find_model( magic_p );
+	NMG_CK_MODEL( m );	
+
+	htab = nmg_visit_handlers_null;		/* struct copy */
+	htab.aft_faceuse = nmg_split_loops_handler;
+
+	sl_state.split = 0;
+	sl_state.flags = (long *)rt_calloc( m->maxindex , sizeof( long ) , "nmg_split_loops_into_faces: flags" );
+
+	nmg_visit( magic_p , &htab , (genptr_t *)&sl_state );
+
+	count = sl_state.split;
+
+	rt_free( (char *)sl_state.flags , "nmg_unbreak_region_edges: flags" );
+
+	return( count );
+}
+
 /*	N M G _ D E C O M P O S E _ S H E L L
  *
  *	Accepts one shell and breaks it to the minimum number
@@ -1726,6 +1911,8 @@ struct shell *s;
 	long *flags;
 
 	NMG_CK_SHELL( s );
+
+	(void)nmg_split_loops_into_faces( &s->l.magic );
 
 	/* Make an index table to insure we visit each face once and only once */
 	r = s->r_p;
@@ -2274,75 +2461,6 @@ long		*magic_p;
 	rt_free( (char *)ub_state.flags , "nmg_unbreak_region_edges: flags" );
 
 	return( count );
-}
-
-/*	N M G _ M K _ N E W _ F A C E _ F R O M _ L O O P
- *
- *  Remove a loopuse from an existing face and construct a new face
- *  from that loop
- *
- *  Returns new faceuse as built by nmg_mf()
- *
- */
-struct faceuse *
-nmg_mk_new_face_from_loop( lu )
-struct loopuse *lu;
-{
-	struct shell *s;
-	struct faceuse *fu;
-	struct loopuse *lu1;
-	struct loopuse *lu_mate;
-	int ot_same_loops=0;
-
-	NMG_CK_LOOPUSE( lu );
-
-	if( *lu->up.magic_p != NMG_FACEUSE_MAGIC )
-	{
-		rt_log( "nmg_mk_new_face_from_loop: loopuse is not in a faceuse\n" );
-		return( (struct faceuse *)NULL );
-	}
-
-	fu = lu->up.fu_p;
-	NMG_CK_FACEUSE( fu );
-
-	s = fu->s_p;
-	NMG_CK_SHELL( s );
-
-	/* Count the number of exterior loops in this faceuse */
-	for( RT_LIST_FOR( lu1 , loopuse , &fu->lu_hd ) )
-	{
-		NMG_CK_LOOPUSE( lu1 );
-		if( lu1->orientation == OT_SAME )
-			ot_same_loops++;
-	}
-
-	if( ot_same_loops == 1 && lu->orientation == OT_SAME )
-	{
-		rt_log( "nmg_mk_new_face_from_loop: cannot remove only exterior loop from faceuse\n" );
-		return( (struct faceuse *)NULL );
-	}
-
-	lu_mate = lu->lumate_p;
-
-	/* remove loopuse from faceuse */
-	RT_LIST_DEQUEUE( &lu->l );
-
-	/* remove its mate from faceuse mate */
-	RT_LIST_DEQUEUE( &lu_mate->l );
-
-	/* insert these loops in the shells list of wire loops
-	 * put the original loopuse at the head of the list
-	 * so that it will end up as the returned faceuse from "nmg_mf"
-	 */
-	RT_LIST_INSERT( &s->lu_hd , &lu_mate->l );
-	RT_LIST_INSERT( &s->lu_hd , &lu->l );
-
-	/* set the "up" pointers to the shell */
-	lu->up.s_p = s;
-	lu_mate->up.s_p = s;
-
-	/* Now make the new face */
-	return( nmg_mf( lu ) );
 }
 
 /*
