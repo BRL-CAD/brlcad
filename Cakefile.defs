@@ -480,7 +480,7 @@ set -S2 "/bin/sh"
 #	define	STANDARD_LIBES	-L''LIBDIR -lm
 #	define	LIBRT_TIMER	timer42
 
-#	if 1	/* PRODUCTION=1 */
+#	if 0	/* PRODUCTION=1 */
 /*		Sun with X11 (aka "openwin") Default for SunOS 41.1 */
 #		define	XINCDIR		/usr/openwin/include
 #		define	XLIBDIR		/usr/openwin/lib
