@@ -67,6 +67,7 @@
     public method drawBegin {}
     public method drawEnd {}
     public method drawGeom {args}
+    public method drawLabels {args}
     public method drawLine {x1 y1 x2 y2}
     public method drawPoint {x y}
     public method drawString {str x y size use_aspect}
@@ -76,6 +77,7 @@
     public method fg {args}
     public method flush {}
     public method get_aspect {}
+    public method getDrawLabelsHook {args}
     public method light {args}
     public method linestyle {args}
     public method linewidth {args}
@@ -84,6 +86,7 @@
     public method observer {args}
     public method perspective {args}
     public method png {args}
+    public method setDrawLabelsHook {args}
     public method sync {}
     public method transparency {args}
     public method zbuffer {args}
@@ -285,6 +288,10 @@ if {$tcl_platform(os) != "Windows NT"} {
     eval $itk_component(dm) drawGeom $args
 }
 
+::itcl::body Dm::drawLabels {args} {
+    eval $itk_component(dm) drawLabels $args
+}
+
 ::itcl::body Dm::drawLine {x1 y1 x2 y2} {
     $itk_component(dm) drawLine $x1 $y1 $x2 $y2
 }
@@ -407,6 +414,14 @@ if {$tcl_platform(os) != "Windows NT"} {
 
 ::itcl::body Dm::png {args} {
     eval $itk_component(dm) png $args
+}
+
+::itcl::body Dm::getDrawLabelsHook {args} {
+    eval $itk_component(dm) getDrawLabelsHook $args
+}
+
+::itcl::body Dm::setDrawLabelsHook {args} {
+    eval $itk_component(dm) setDrawLabelsHook $args
 }
 
 ::itcl::body Dm::bounds {args} {
