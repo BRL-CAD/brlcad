@@ -1380,6 +1380,7 @@ plane_t pl;
 	mat_t matrix;
 	mat_t inverse;
 	fastf_t det;
+	double one_over_vertex_count;
 	vect_t vsum;
 	int i;
 	int got_dir=0;
@@ -1430,6 +1431,7 @@ plane_t pl;
 			HMOVE( pl, old_pl );
 			return( 0 );
 		}
+
 		nmg_tbl( &verts , TBL_INIT , (long *)NULL );
 		nmg_tabulate_face_g_verts( &verts , fg );
 	}
@@ -1441,25 +1443,31 @@ plane_t pl;
 			HMOVE( pl, old_pl );
 			return( 0 );
 		}
+
 		nmg_tbl( &verts , TBL_INIT , (long *)NULL );
 		nmg_vertex_tabulate( &verts , &fu->l.magic );
 	}
 
 	/* Get the direction for the plane normal in "old_pl".
-	 * Make sure we are dealing with OT_SAME faceuse.
+	 * Make sure we are dealing with OT_SAME or OT_UNSPEC faceuse.
 	 */
-	if( fu->orientation != OT_SAME )
-		fu = fu->fumate_p;
-	if( fu->orientation != OT_SAME )
+	if( fu->orientation != OT_UNSPEC )
 	{
-		rt_log( "nmg_calc_face_plane: fu x%x has no OT_SAME use\n" , fu );
-		nmg_tbl( &verts , TBL_FREE , (long *)NULL );
-		return( 1 );
+		if( fu->orientation != OT_SAME )
+			fu = fu->fumate_p;
+		if( fu->orientation != OT_SAME )
+		{
+			rt_log( "nmg_calc_face_plane: fu x%x has no OT_SAME use\n" , fu );
+			nmg_tbl( &verts , TBL_FREE , (long *)NULL );
+			return( 1 );
+		}
 	}
 
 	/* build matrix */
 	mat_zero( matrix );
 	VSET( vsum , 0.0 , 0.0 , 0.0 );
+
+	one_over_vertex_count = 1.0/(double)(NMG_TBL_END( &verts ));
 
 	for( i=0 ; i<NMG_TBL_END( &verts ) ; i++ )
 	{
@@ -1499,12 +1507,15 @@ plane_t pl;
 		/* get normal vector */
 		MAT4X3PNT( pl , inverse , vsum );
 
-		/* get distance from plane to orgin */
-		inv_len_pl = 1.0/(MAGNITUDE( pl ));
-		pl[H] = VDOT( pl , vsum )/(fastf_t)(NMG_TBL_END( &verts));
-
 		/* unitize direction vector */
+		inv_len_pl = 1.0/(MAGNITUDE( pl ));
 		HSCALE( pl , pl , inv_len_pl );
+
+		/* get average vertex coordinates */
+		VSCALE( vsum, vsum, one_over_vertex_count );
+
+		/* get distance from plane to orgin */
+		pl[H] = VDOT( pl , vsum );
 
 		/* make sure it points in the correct direction */
 		if( VDOT( pl , old_pl ) < 0.0 )
@@ -1551,7 +1562,11 @@ plane_t pl;
 
 		if( x_same || y_same || z_same )
 		{
-			pl[H] = VDOT( pl , vsum )/(fastf_t)(NMG_TBL_END( &verts));
+			/* get average vertex coordinates */
+			VSCALE( vsum, vsum, one_over_vertex_count );
+
+			/* get distance from plane to orgin */
+			pl[H] = VDOT( pl , vsum );
 
 			/* make sure it points in the correct direction */
 			if( VDOT( pl , old_pl ) < 0.0 )
@@ -2934,7 +2949,7 @@ struct nmg_ptbl *stack;
 	return( eu );
 }
 
-#if 0
+#if 1
 /* XXX Don't use this, use nmg_s_radial_harmonize() at the right time. */
 /*	N M G _ R E V E R S E _ F A C E _ A N D _ R A D I A L S
  *
@@ -2948,6 +2963,8 @@ nmg_reverse_face_and_radials( fu , tol )
 struct faceuse *fu;
 CONST struct rt_tol *tol;
 {
+	struct loopuse *lu;
+
 	if( rt_g.NMG_debug & DEBUG_BASIC )
 		rt_log( "nmg_reverse_face_and_radials( fu = x%x )\n" , fu );
 
@@ -2956,8 +2973,43 @@ CONST struct rt_tol *tol;
 
 	/* reverse face */
 	nmg_reverse_face( fu );
-
+#if 0
 	(void)nmg_face_fix_radial_parity( fu , tol );
+#else
+	for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
+	{
+		struct edgeuse *eu;
+		struct edgeuse *eu_radial;
+		struct edgeuse *eumate;
+		struct edgeuse *eumate_radial;
+
+		NMG_CK_LOOPUSE( lu );
+
+		if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+			continue;
+
+		for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+		{
+			eu_radial = eu->radial_p;
+			eumate = eu->eumate_p;
+			eumate_radial = eumate->radial_p;
+
+			/* if no radials continue to next edgeuse in loop */
+			if( eu_radial == eumate )
+				continue;
+
+			/* Note: there is no problem if this loop is radial to another
+			 * loop in the same face, the radials will get switched as we process
+			 * the first loop, then switched back as we process the second
+			 */
+
+			eu_radial->radial_p = eumate;
+			eu->radial_p = eumate_radial;
+			eumate_radial->radial_p = eu;
+			eumate->radial_p = eu_radial;
+		}
+	}
+#endif
 }
 #endif
 
@@ -3132,7 +3184,7 @@ CONST struct rt_tol *tol;
 		{
 			if( rt_g.NMG_debug & DEBUG_BASIC )
 				rt_log( "nmg_propagate_normals: reversing fu x%x\n" , fu );
-#if 0
+#if 1
 			/* if orientation is wrong, or if the radial edges are in the same direction
 			 * then reverse the face and fix the radials */
 			if( fu->orientation != OT_SAME ||
@@ -3247,7 +3299,7 @@ CONST struct rt_tol *tol;
 			if( rt_g.NMG_debug & DEBUG_BASIC )
 				rt_log( "nmg_fix_normals: reversing fu x%x\n" , fu );
 
-			nmg_reverse_face( fu );
+			nmg_reverse_face_and_radials( fu, tol );
 		}
 
 		/* get OT_SAME use of top face */
@@ -3256,18 +3308,20 @@ CONST struct rt_tol *tol;
 			fu = fu->fumate_p;
 
 		NMG_CK_FACEUSE( fu );
-
+#if 0
 		/* Establish radial parity */
 		nmg_s_radial_harmonize( s, tol );
+#endif
 
 		/* fu is now known to be a correctly oriented faceuse,
 		 * propagate this throughout the shell, face by face, by
 		 * traversing the shell using the radial edge structure */
 
 		nmg_propagate_normals( fu , flags , tol );
-
+#if 0
 		/* Re-establish radial parity */
 		nmg_s_radial_harmonize( s, tol );
+#endif
 
 		if( rt_g.NMG_debug & DEBUG_BASIC )
 		{
@@ -3623,6 +3677,7 @@ int after;
 
 			new_fu = nmg_mk_new_face_from_loop( lu );
 			nmg_face_g( new_fu , plane );
+
 			for( index=0 ; index<NMG_TBL_END( &inside_loops ) ; index++ )
 			{
 				lu1 = (struct loopuse *)NMG_TBL_GET( &inside_loops , index );
