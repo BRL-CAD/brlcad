@@ -74,18 +74,35 @@ class RtControl {
     private method enterAbortCB {}
     private method enterClearCB {}
     private method enterDismissCB {}
+    private method enterDestCB {}
+    private method enterSizeCB {}
+    private method enterColorCB {}
     private method getPane {}
     private method getPaneStr {}
     private method getSize {}
+
+    private method menuStatusAdvCB {w}
+    private method leaveAdvCB {}
+    private method enterDismissAdvCB {}
+    private method enterNProcCB {}
+    private method enterHSampleCB {}
+    private method enterOtherCB {}
 
     private variable fb_mode 0
     private variable raw_src ""
     private variable win_geom ""
     private variable win_geom_adv ""
     private variable msg ""
+    private variable msg_adv ""
     private variable srcM
     private variable destM
+    private variable destE
     private variable sizeM
+    private variable sizeE
+    private variable colorM
+    private variable colorE
+    private variable jitterM
+    private variable lmodelM
 
     constructor {args} {}
 }
@@ -190,7 +207,10 @@ body RtControl::constructor {args} {
 	usual
     }
     set destM [$itk_component(destCB) component menu]
+    set destE [$itk_component(destCB) component entry]
     bind $destM <<MenuSelect>> [code $this menuStatusCB %W]
+    bind $destE <Enter> [code $this enterDestCB]
+    bind $destE <Leave> [code $this leaveCB]
 
     # populate destination's combobox menu
     $itk_component(destCB) add command -label "Active Pane" \
@@ -219,7 +239,10 @@ body RtControl::constructor {args} {
 	usual
     }
     set sizeM [$itk_component(sizeCB) component menu]
+    set sizeE [$itk_component(sizeCB) component entry]
     bind $sizeM <<MenuSelect>> [code $this menuStatusCB %W]
+    bind $sizeE <Enter> [code $this enterSizeCB]
+    bind $sizeE <Leave> [code $this leaveCB]
 
     # populate size's combobox
     $itk_component(sizeCB) add command -label "Size of Pane" \
@@ -248,6 +271,11 @@ body RtControl::constructor {args} {
     } {
 	usual
     }
+    set colorM [$itk_component(bgcolorCB) component menu]
+    set colorE [$itk_component(bgcolorCB) component entry]
+    bind $colorM <<MenuSelect>> [code $this menuStatusCB %W]
+    bind $colorE <Enter> [code $this enterColorCB]
+    bind $colorE <Leave> [code $this leaveCB]
 
     itk_component add advB {
 	::button $itk_interior.advB -relief raised -text "Advanced Settings..." \
@@ -352,6 +380,7 @@ body RtControl::constructor {args} {
     $itk_component(destCB) configure -entryvariable [scope itk_option(-dest)]
 
     wm withdraw $itk_component(hull)
+    wm title $itk_component(hull) "Raytrace Control Panel"
 }
 
 itcl::body RtControl::build_adv {} {
@@ -383,6 +412,8 @@ itcl::body RtControl::build_adv {} {
     } {
 	usual
     }
+    bind $itk_component(adv_nprocE) <Enter> [code $this enterNProcCB]
+    bind $itk_component(adv_nprocE) <Leave> [code $this leaveAdvCB]
 
     itk_component add adv_hsampleL {
 	::label $itk_component(adv).hsampleL -text "Hypersample" -anchor e
@@ -396,6 +427,8 @@ itcl::body RtControl::build_adv {} {
     } {
 	usual
     }
+    bind $itk_component(adv_hsampleE) <Enter> [code $this enterHSampleCB]
+    bind $itk_component(adv_hsampleE) <Leave> [code $this leaveAdvCB]
 
     itk_component add adv_jitterL {
 	::label $itk_component(adv).jitterL -text "Jitter" -anchor e
@@ -409,6 +442,8 @@ itcl::body RtControl::build_adv {} {
 	usual
 	rename -state -jitterState jitterState JitterState
     }
+    set jitterM [$itk_component(adv_jitterCB) component menu]
+    bind $jitterM <<MenuSelect>> [code $this menuStatusAdvCB %W]
 
     # populate jitter's combobox menu
     $itk_component(adv_jitterCB) add command -label "None" \
@@ -432,6 +467,8 @@ itcl::body RtControl::build_adv {} {
 	usual
 	rename -state -lmodelState lmodelState LmodelState
     }
+    set lmodelM [$itk_component(adv_lmodelCB) component menu]
+    bind $lmodelM <<MenuSelect>> [code $this menuStatusAdvCB %W]
 
     # populate lmodel's combobox menu
     $itk_component(adv_lmodelCB) add command -label "Full" \
@@ -459,10 +496,20 @@ itcl::body RtControl::build_adv {} {
     } {
 	usual
     }
+    bind $itk_component(adv_otherE) <Enter> [code $this enterOtherCB]
+    bind $itk_component(adv_otherE) <Leave> [code $this leaveAdvCB]
 
     itk_component add adv_dismissB {
 	::button $itk_component(adv).buttonB -relief raised -text "Dismiss" \
 		-command [code $this deactivate_adv]
+    } {
+	usual
+    }
+    bind $itk_component(adv_dismissB) <Enter> [code $this enterDismissAdvCB]
+    bind $itk_component(adv_dismissB) <Leave> [code $this leaveAdvCB]
+
+    itk_component add adv_statusL {
+	::label $itk_component(adv).statusL -anchor w -relief sunken -bd 2 -textvar [scope msg_adv]
     } {
 	usual
     }
@@ -471,13 +518,13 @@ itcl::body RtControl::build_adv {} {
     grid forget [$itk_component(adv_jitterCB) component label]
     grid forget [$itk_component(adv_lmodelCB) component label]
 
-    grid $itk_component(adv_nprocL) $itk_component(adv_nprocE) \
-	    -sticky nsew -pady 1 -in $itk_component(adv_gridF1)
-    grid $itk_component(adv_hsampleL) $itk_component(adv_hsampleE) \
+    grid $itk_component(adv_lmodelL) $itk_component(adv_lmodelCB) \
 	    -sticky nsew -pady 1 -in $itk_component(adv_gridF1)
     grid $itk_component(adv_jitterL) $itk_component(adv_jitterCB) \
 	    -sticky nsew -pady 1 -in $itk_component(adv_gridF1)
-    grid $itk_component(adv_lmodelL) $itk_component(adv_lmodelCB) \
+    grid $itk_component(adv_nprocL) $itk_component(adv_nprocE) \
+	    -sticky nsew -pady 1 -in $itk_component(adv_gridF1)
+    grid $itk_component(adv_hsampleL) $itk_component(adv_hsampleE) \
 	    -sticky nsew -pady 1 -in $itk_component(adv_gridF1)
     grid $itk_component(adv_otherL) $itk_component(adv_otherE) \
 	    -sticky nsew -pady 1 -in $itk_component(adv_gridF1)
@@ -494,11 +541,12 @@ itcl::body RtControl::build_adv {} {
 
     grid $itk_component(adv_gridF2) -sticky nsew -padx 2 -pady 2
     grid $itk_component(adv_dismissB) -sticky s -padx 2 -pady 2
+    grid $itk_component(adv_statusL) -padx 2 -pady 2 -sticky nsew
     grid columnconfigure $itk_component(adv) 0 -weight 1
     grid rowconfigure $itk_component(adv) 0 -weight 1
 
     wm withdraw $itk_component(adv)
-    wm title $itk_component(adv) "Advanced Settings ($itk_component(adv))"
+    wm title $itk_component(adv) "Advanced Settings"
 }
 
 configbody RtControl::nproc {
@@ -621,36 +669,7 @@ itcl::body RtControl::set_size {size} {
     }
 
     if {$size == "Size of Pane"} {
-	# Try using the destination for obtaining the size.
-	set pane $itk_option(-dest)
-	switch -- $pane {
-	    ul -
-	    ur -
-	    ll -
-	    lr {
-		set itk_option(-size) [$itk_option(-mged) component $pane cget -dmsize]
-		return
-	    }
-	}
-
-	# The destination could be a file or a framebuffer.
-	# We don't know what its size is so try to use the
-	# source pane for obtaining the size.
-	set pane [$itk_component(srcCB) getText]
-	switch -- $pane {
-	    ul -
-	    ur -
-	    ll -
-	    lr {
-		set itk_option(-size) [$itk_option(-mged) component $pane cget -dmsize]
-		return
-	    }
-	}
-
-	# We failed to get the size using the destination and source panes.
-	# So, we use the active pane for obtaining the size.
-	set pane [$itk_option(-mged) pane]
-	set itk_option(-size) [$itk_option(-mged) component $pane cget -dmsize]
+	set itk_option(-size) [getSize]
 	return
     }
 
@@ -911,8 +930,6 @@ itcl::body RtControl::update_control_panel {} {
 }
 
 itcl::body RtControl::menuStatusCB {w} {
-    global myjunk
-
     if {[catch {$w entrycget active -label} op]} {
 	# probably a tearoff entry
 	set op ""
@@ -996,6 +1013,33 @@ itcl::body RtControl::menuStatusCB {w} {
 	"720x486" {
 	    set msg "Make the image size $op"
 	}
+	"black" {
+	    set msg "Make the background color black"
+	}
+	"white" {
+	    set msg "Make the background color white"
+	}
+	"red" {
+	    set msg "Make the background color red"
+	}
+	"green" {
+	    set msg "Make the background color green"
+	}
+	"blue" {
+	    set msg "Make the background color blue"
+	}
+	"yellow" {
+	    set msg "Make the background color yellow"
+	}
+	"cyan" {
+	    set msg "Make the background color cyan"
+	}
+	"magenta" {
+	    set msg "Make the background color magenta"
+	}
+	"Color Tool..." {
+	    set msg "Activate the color tool"
+	}
 	default {
 	    set msg ""
 	}
@@ -1044,6 +1088,18 @@ itcl::body RtControl::enterClearCB {} {
 
 itcl::body RtControl::enterDismissCB {} {
     set msg "Dismiss the raytrace control panel"
+}
+
+itcl::body RtControl::enterDestCB {} {
+    set msg "Specify a destination (i.e. framebuffer or file)"
+}
+
+itcl::body RtControl::enterSizeCB {} {
+    set msg "Specify an image size" 
+}
+
+itcl::body RtControl::enterColorCB {} {
+    set msg "Specify an RGB color"
 }
 
 ## - getPane
@@ -1133,4 +1189,67 @@ itcl::body RtControl::getSize {} {
     # So, we use the active pane for obtaining the size.
     set size [$itk_option(-mged) component [$itk_option(-mged) pane] cget -dmsize]
     return "[lindex $size 0]x[lindex $size 1]"
+}
+
+itcl::body RtControl::menuStatusAdvCB {w} {
+    if {[catch {$w entrycget active -label} op]} {
+	# probably a tearoff entry
+	set op ""
+    }
+
+    switch -- $op {
+	"Full" {
+	    set msg_adv "Full lighting model"
+	}
+	"Diffuse" {
+	    set msg_adv "Diffuse lighting model (debugging)"
+	}
+	"Surface Normals" {
+	    set msg_adv "Display surface normals"
+	}
+	"Diffuse - 3 light" {
+	    set msg_adv "3-light diffuse (debugging)"
+	}
+	"Curvature - inverse radius" {
+	    set msg_adv "Curvature debugging - inverse radius"
+	}
+	"Curvature - direction vector" {
+	    set msg_adv "Curvature debugging - direction vector"
+	}
+	"None" {
+	    set msg_adv "Fire rays from center of cell"
+	}
+	"Cell" {
+	    set msg_adv "Jitter each cell by +/- one half pixel"
+	}
+	"Frame" {
+	    set msg_adv "Jitter the frame by +/- one half pixel"
+	}
+	"Both" {
+	    set msg_adv "Jitter the cells and the frame"
+	}
+	default {
+	    set msg_adv ""
+	}
+    }
+}
+
+itcl::body RtControl::leaveAdvCB {} {
+    set msg_adv ""
+}
+
+itcl::body RtControl::enterDismissAdvCB {} {
+    set msg_adv "Dismiss the advanced settings dialog"
+}
+
+itcl::body RtControl::enterNProcCB {} {
+    set msg_adv "Requested number of processors"
+}
+
+itcl::body RtControl::enterHSampleCB {} {
+    set msg_adv "Extra rays to fire per pixel"
+}
+
+itcl::body RtControl::enterOtherCB {} {
+    set msg_adv "Other rt options"
 }
