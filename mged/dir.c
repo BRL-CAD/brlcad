@@ -19,6 +19,9 @@
  *	conversions	Builds conversion factors given a local unit
  *	dir_units	Changes the local unit
  *	dir_title	Change the target title
+ *	dir_nref	Count number of times each db element referenced
+ *	regexp_match	Does regular exp match given string?
+ *	f_tops		Prints top level items in database
  *
  * Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
@@ -211,50 +214,17 @@ dir_build()  {
  */
 void
 dir_print()  {
-	struct directory	*dp;
+	register struct directory	*dp;
 	register char	*cp;		/* -> name char to output */
-	register int	count;		/* names listed on current line */
-	register int	len;		/* length of previous name */
 
-#define	COLUMNS	((80 + NAMESIZE - 1) / NAMESIZE)
-
-	count = 0;
-	len = 0;
 	for( dp = DirHead; dp != DIR_NULL; dp = dp->d_forw )  {
-		if ( (cp = dp->d_namep)[0] == '\0' )
-			continue;	/* empty slot */
-
-		/* Tab to start column. */
-		if ( count != 0 )
-			do
-				(void)putchar( '\t' );
-			while ( (len += 8) < NAMESIZE );
-
-		/* Output name and save length for next tab. */
-		len = 0;
-		do {
-			(void)putchar( *cp++ );
-			++len;
-		}  while ( *cp != '\0' );
-		if( dp->d_flags & DIR_COMB )  {
-			(void)putchar( '/' );
-			++len;
-		}
-		if( dp->d_flags & DIR_REGION )  {
-			(void)putchar( 'R' );
-			++len;
-		}
-
-		/* Output newline if last column printed. */
-		if ( ++count == COLUMNS )  {	/* line now full */
-			(void)putchar( '\n' );
-			count = 0;
-		}
+		col_item( dp->d_namep );
+		if( dp->d_flags & DIR_COMB )
+			col_putchar( '/' );
+		if( dp->d_flags & DIR_REGION )
+			col_putchar( 'R' );
 	}
-	/* No more names. */
-	if ( count != 0 )		/* partial line */
-		(void)putchar( '\n' );
-#undef	COLUMNS
+	col_eol();
 }
 
 /*
@@ -710,4 +680,165 @@ dir_title( )
 	strcat(record.i.i_title, cur_title);
 
 	(void)write(objfd, (char *)&record, sizeof record);
+}
+
+/*
+ *			D I R _ N R E F
+ *
+ * Count the number of time each directory member is referenced
+ * by a COMBination record.
+ */
+dir_nref( )
+{
+	register struct directory *dp, *tdp;
+	register int i;
+	union record record;
+
+	/* First, clear any existing counts */
+	for( dp = DirHead; dp != DIR_NULL; dp = dp->d_forw )
+		dp->d_nref = 0;
+
+	for( dp = DirHead; dp != DIR_NULL; dp = dp->d_forw )  {
+		if( !(dp->d_flags&DIR_COMB) )
+			continue;
+		for( i=1; i < dp->d_len; i++ )  {
+			db_getrec( dp, &record, i );
+			if( record.M.m_brname[0] != '\0' &&
+			    (tdp = lookup(record.M.m_brname, LOOKUP_QUIET)) != DIR_NULL )
+				tdp->d_nref++;
+			if( record.M.m_instname[0] != '\0' &&
+			    (tdp = lookup(record.M.m_instname, LOOKUP_QUIET)) != DIR_NULL )
+				tdp->d_nref++;
+		}
+	}
+}
+
+/*
+ *			R E G E X P _ M A T C H
+ *
+ *	If string matches pattern, return 1, else return 0
+ *
+ *	special characters:
+ *		*	Matches any string including the null string.
+ *		?	Matches any single character.
+ *		[...]	Matches any one of the characters enclosed.
+ *		-	May be used inside brackets to specify range
+ *			(i.e. str[1-58] matches str1, str2, ... str5, str8)
+ *		\	Escapes special characters.
+ */
+regexp_match(	 pattern,  string )
+register char	*pattern, *string;
+{
+	do {
+		switch( *pattern ) {
+		case '*': /*
+			   * match any string including null string
+			   */
+			++pattern;
+			do {
+				if( regexp_match( pattern, string ) )
+					 return( 1 );
+			} while( *string++ != '\0' );
+			return( 0 );
+		case '?': /*
+			   * match any character
+			   */
+			if( *string == '\0' )	return( 0 );
+			break;
+		case '[': /*
+			   * try to match one of the characters in brackets
+			   */
+			++pattern;
+			while( *pattern != *string ) {
+				if(	pattern[ 0] == '-'
+				    &&	pattern[-1] != '\\'
+				)	if(	pattern[-1] <= *string
+					    &&	pattern[-1] != '['
+					    &&	pattern[ 1] >= *string
+					    &&	pattern[ 1] != ']'
+					)	break;
+				if( *++pattern == ']' )	return( 0 );
+			}
+
+			/* skip to next character after closing bracket
+			 */
+			while( *++pattern != ']' );
+			break;
+		case '\\': /*
+			    * escape special character
+			    */
+			++pattern;
+			/* WARNING: falls through to default case */
+		default:  /*
+			   * compare characters
+			   */
+			if( *pattern != *string )	return( 0 );
+			break;
+		}
+		++string;
+	} while( *pattern++ != '\0' );
+	return( 1 );
+}
+
+/*
+ *  			D I R _ S U M M A R Y
+ *
+ * Summarize the contents of the directory by categories
+ * (solid, comb, region).  If flag is != 0, it is interpreted
+ * as a request to print all the names in that category (eg, DIR_SOLID).
+ */
+void
+dir_summary(flag)
+{
+	register struct directory *dp;
+	static int sol, comb, reg, br;
+
+	sol = comb = reg = br = 0;
+	for( dp = DirHead; dp != DIR_NULL; dp = dp->d_forw )  {
+		if( dp->d_flags & DIR_SOLID )
+			sol++;
+		if( dp->d_flags & DIR_COMB )
+			if( dp->d_flags & DIR_REGION )
+				reg++;
+			else
+				comb++;
+		if( dp->d_flags & DIR_BRANCH )
+			br++;
+	}
+	printf("Summary:\n");
+	printf("  %5d solids\n", sol);
+	printf("  %5d regions, %d non-region combinations\n", reg, comb);
+	printf("  %5d branch names\n", br);
+	printf("  %5d total objects\n", sol+reg+comb );
+
+	if( flag == 0 )
+		return;
+	/* Print all names matching the flags parameter */
+	/* THIS MIGHT WANT TO BE SEPARATED OUT BY CATEGORY */
+	for( dp = DirHead; dp != DIR_NULL; dp = dp->d_forw )  {
+		if( dp->d_flags & flag )
+			col_item(dp->d_namep);
+	}
+	col_eol();
+}
+
+/*
+ *  			F _ T O P S
+ *  
+ *  Find all top level objects.
+ *  TODO:  Perhaps print all objects, sorted by use count, as an option?
+ */
+void
+f_tops()
+{
+	register struct directory *dp;
+
+	dir_nref();
+	for( dp = DirHead; dp != DIR_NULL; dp = dp->d_forw )  {
+		if( dp->d_nref > 0 )
+			continue;
+		/* Object is not a member of any combination */
+		col_item(dp->d_namep);
+	}
+	col_eol();
 }
