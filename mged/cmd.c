@@ -176,6 +176,8 @@ static struct funtab {
 	f_pathsum, 1, 27,
 "ls", "", "table of contents",
 	dir_print,1,MAXARGS,
+"make", "name <arb8|sph|ellg|tor|tgc>", "create a primitive",
+	f_make,3,3,
 "mater", "comb [material]", "assign/delete material to combination",
 	f_mater,2,3,
 "memprint", "", "print memory maps",
