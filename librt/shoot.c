@@ -748,6 +748,11 @@ register struct application *ap;
 		}
 	}
 
+	/*
+	 *  Record essential statistics in per-processor data structure.
+	 */
+	resp->re_nshootray++;
+
 	/* Compute the inverse of the direction cosines */
 	if( ap->a_ray.r_dir[X] < -SQRT_SMALL_FASTF )  {
 		ss.abs_inv_dir[X] = -(ss.inv_dir[X]=1.0/ap->a_ray.r_dir[X]);
@@ -912,7 +917,65 @@ register struct application *ap;
 			continue;
 		}
 
-		/* Consider all objects within the box */
+		/* Consider all "pieces" of solids within the box */
+#if 0
+		struct bn_piecelist **plpp;
+		plpp = &(cutp->bn.bn_piecelist[cutp->bn.bn_piecelen-1]);
+		for( ; plpp >= cutp->bn.bn_piecelist; plpp-- )  {
+			register struct bn_piecelist *plp = *plpp;
+			struct bn_piecestate *psp;
+			int piecenum;
+
+			RT_CK_PIECELIST(plp);
+			piecenum = plp->stp->st_piecestate_num;
+			psp = &(resp->re_pieces[piecenum]);
+			RT_CK_PIECESTATE(psp);
+			if( psp->ray_seqno != resp->re_nshootray )  {
+				/* state is from an earlier ray, scrub */
+/* XXX move to h/bu.h */
+#define BU_BITV_ZEROALL(_bv)	\
+	{ bzero( (char *)((_bv)->bits), BU_BITS2BYTES( (_bv)->nbits ) ); }
+				BU_BITV_ZEROALL(psp->shot);
+				psp->ray_seqno = resp->re_nshootray;
+				psp->oddhit.hit_dist = INFINITY;
+			}
+
+			if( BU_BITTEST( psp->shot, plp->stp->st_piecestate_num ) )  {
+				resp->re_ndup++;
+				continue;	/* already shot */
+			}
+
+			/* Shoot a ray */
+			BU_BITSET( psp->shot, piecenum );
+
+			if(debug_shoot)bu_log("shooting %s piece %d\n", stp->st_name, piecenum );
+			resp->re_shots++;
+			BU_LIST_INIT( &(new_segs.l) );
+	/* XXX */
+			if( rt_functab[stp->st_id].ft_shot( 
+			    stp, &ss.newray, ap, &new_segs ) <= 0 )  {
+				resp->re_shot_miss++;
+				continue;	/* MISS */
+			}
+
+			/* Add seg chain to list awaiting rt_boolweave() */
+			{
+				register struct seg *s2;
+				while(BU_LIST_WHILE(s2,seg,&(new_segs.l)))  {
+					BU_LIST_DEQUEUE( &(s2->l) );
+					/* Restore to original distance */
+					s2->seg_in.hit_dist += ss.dist_corr;
+					s2->seg_out.hit_dist += ss.dist_corr;
+					s2->seg_in.hit_rayp = s2->seg_out.hit_rayp = &ap->a_ray;
+					BU_LIST_INSERT( &(waiting_segs.l), &(s2->l) );
+				}
+			}
+			resp->re_shot_hit++;
+
+		}
+#endif
+
+		/* Consider all solids within the box */
 		stpp = &(cutp->bn.bn_list[cutp->bn.bn_len-1]);
 		for( ; stpp >= cutp->bn.bn_list; stpp-- )  {
 			register struct soltab *stp = *stpp;
@@ -1082,11 +1145,6 @@ out:
 	BU_LIST_APPEND( &resp->re_solid_bitv, &solidbits->l );
 	BU_CK_PTBL(regionbits);
 	BU_LIST_APPEND( &resp->re_region_ptbl, &regionbits->l );
-
-	/*
-	 *  Record essential statistics in per-processor data structure.
-	 */
-	resp->re_nshootray++;
 
 	/* Terminate any logging */
 	if(rt_g.debug&(DEBUG_ALLRAYS|DEBUG_SHOOT|DEBUG_PARTITION|DEBUG_ALLHITS))  {

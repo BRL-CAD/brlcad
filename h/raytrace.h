@@ -650,6 +650,10 @@ struct partition {
  *
  *  cut_type is an integer for efficiency of access in rt_shootray()
  *  on non-word addressing machines.
+ *
+ *  If a solid has 'pieces', it will be listed either in bn_list (initially),
+ *  or in bn_piecelist, but not both.
+XXX question: is bn_piecelist an array, or a bu_list, of struct rt_piecelist's?
  */
 union cutter  {
 #define CUT_CUTNODE	1
@@ -669,9 +673,11 @@ union cutter  {
 		int	bn_type;
 		fastf_t	bn_min[3];
 		fastf_t	bn_max[3];
-		struct soltab **bn_list;
+		struct soltab **bn_list; /* bn_list[bn_len] */
 		int	bn_len;		/* # of solids in list */
 		int	bn_maxlen;	/* # of ptrs allocated to list */
+		struct rt_piecelist *bn_piecelist; /* solids with pieces */
+		int	bn_piecelen;	/* # of solids with pieces */
 	} bn;
 	struct nugridnode {
 		int	nu_type;
@@ -1163,6 +1169,7 @@ struct rt_pm_res {
  */
 struct rt_piecestate  {
 	long		magic;
+	long		ray_seqno;	/* res_nshootray */
 	struct soltab	*stp;
 	struct bu_bitv	*shot;
 	/* Marked as unused with oddhit.hit_dist >= INFINITY */
@@ -1188,7 +1195,7 @@ struct rt_piecelist  {
 	struct bu_list	l;
 	long		npieces;
 	long		*pieces;	/* pieces[npieces], piece indices */
-	struct soltab	*stp;
+	struct soltab	*stp;		/* ref back to solid */
 };
 #define RT_PIECELIST_MAGIC	0x70636c73	/* pcls */
 #define RT_CK_PIECELIST(_p)	BU_CKMAG(_p, RT_PIECELIST_MAGIC, "struct rt_piecelist")
