@@ -164,7 +164,7 @@ extern void		eraseobj(), mged_finish(), slewview(),
 			mmenu_init(), moveHinstance(), moveHobj(),
 			quit(), refresh(), rej_sedit(), sedit(),
 			setview(),
-			adcursor(), mmenu_display(),
+			adcursor(), mmenu_display(), mmenu_set(),
 			col_item(), col_putchar(), col_eol(), col_pr4v();
 extern void		sedit_menu();
 extern void		attach(), release(), get_attached();
