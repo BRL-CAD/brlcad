@@ -1036,3 +1036,42 @@ hard:
 	}
 	return(1);			/* success */
 }
+
+/*
+ *  			F _ F I N D
+ *  
+ *  Find all references to the named objects.
+ */
+void
+f_find()
+{
+	register FILE *fp;
+	register int i;
+	char lastname[NAMESIZE];
+
+	(void)signal( SIGINT, sig2 );	/* allow interupts */
+	/* Read whole database, looking only at MEMBER + COMB records */
+	if( (fp = fopen( filename, "r" )) == NULL )  {
+		(void)printf("f_find: fopen failed\n");
+		return;
+	}
+	while(fread( (char *)&record, sizeof(record), 1, fp ) == 1 &&
+	     !feof(fp))  {
+		if( record.u_id == ID_COMB )  {
+			strncpy( lastname, record.c.c_name, NAMESIZE );
+			continue;
+		}
+		if( record.u_id != ID_MEMB )
+			continue;
+
+		if( record.M.m_instname[0] == '\0' )
+			continue;
+		for( i=1; i < numargs; i++ )  {
+			if( strncmp( record.M.m_instname, cmd_args[i], NAMESIZE ) != 0 )
+				continue;
+			(void)printf("%s:  member of %s\n",
+				record.M.m_instname, lastname );
+		}
+	}
+	(void)fclose(fp);
+}

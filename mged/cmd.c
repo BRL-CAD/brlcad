@@ -65,7 +65,7 @@ void	f_rot_obj(), f_tr_obj(), f_sc_obj();
 void	f_analyze(), f_sed();
 void	f_ill(), f_knob(), f_tops(), f_summary();
 void	f_prcolor(), f_color(), f_edcolor();
-void	f_plot(), f_area();
+void	f_plot(), f_area(), f_find();
 
 static struct funtab {
 	char *ft_name;
@@ -102,8 +102,10 @@ static struct funtab {
 	f_modify,4,4,
 "kill", "<objects>", "delete objects from file",
 	f_kill,2,MAXARGS,
-"l", "object", "list object attributes",
+"l", "<objects>", "list attributes",
 	f_list,2,MAXARGS,
+"find", "<objects>", "find all references to objects",
+	f_find, 1, MAXARGS,
 "Z", "", "zap all objects off screen",
 	f_zap,1,1,
 "g", "groupname <objects>", "group objects",
