@@ -45,7 +45,7 @@ static char	usage[] = "Usage: %s [-v] [-s alarm_seconds] [-xX lvl] [-a abs_tol] 
 
 static int	NMG_debug;		/* saved arg of -X, for longjmp handling */
 static int	verbose;
-static int	ncpu = 1;		/* Number of processors */
+/* static int	ncpu = 1; */		/* Number of processors */
 static int	face_count;		/* Count of faces output for a region id */
 static int	alarm_secs;		/* Number of seconds to allow for conversion, 0 means no limit */
 static struct db_i		*dbip;
@@ -487,7 +487,7 @@ char	*argv[];
 			verbose++;
 			break;
 		case 'P':
-			ncpu = atoi( optarg );
+/*			ncpu = atoi( optarg ); */
 			rt_g.debug = 1;	/* XXX DEBUG_ALLRAYS -- to get core dumps */
 			break;
 		case 'x':
