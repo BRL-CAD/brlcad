@@ -1757,6 +1757,7 @@ char                    **argv;
 {
         struct rt_extrude_internal *extr;
         fastf_t *new;
+	fastf_t len;
 
         RT_CK_DB_INTERNAL( intern );
         extr = (struct rt_extrude_internal *)intern->idb_ptr;
@@ -1798,6 +1799,11 @@ char                    **argv;
 				      TCL_STATIC );
 				return( TCL_ERROR );
 			}
+
+			/* insure that u_vec and v_vec are the same length */
+			len = MAGNITUDE( extr->u_vec );
+			VUNITIZE( extr->v_vec );
+			VSCALE( extr->v_vec, extr->v_vec, len );
 		}
 		else if( *argv[0] == 'B' )
 		{
@@ -1809,6 +1815,10 @@ char                    **argv;
 				      TCL_STATIC );
 				return( TCL_ERROR );
 			}
+			/* insure that u_vec and v_vec are the same length */
+			len = MAGNITUDE( extr->v_vec );
+			VUNITIZE( extr->u_vec );
+			VSCALE( extr->u_vec, extr->u_vec, len );
 		}
 		else if( *argv[0] =='K' )
 			extr->keypoint = atoi( argv[1] );
