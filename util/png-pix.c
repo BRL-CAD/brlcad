@@ -37,12 +37,16 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 static png_color_16 def_backgrd={ 0,0,0,0,0 };
 static double def_gamma=1.0;
+static int verbose=0;
+
+static char *usage="Usage:\n\t%s [-v] [png_input_file] > pix_output_file\n";
 
 main( argc, argv )
 int argc;
 char *argv[];
 {
 	int i;
+	int c;
 	FILE *fp_in;
 	png_structp png_p;
 	png_infop info_p;
@@ -55,17 +59,39 @@ char *argv[];
 	unsigned char *image;
 	unsigned char **rows;
 
-	if( argc == 2 )
+	while( (c=getopt( argc, argv, "v" ) ) != EOF )
 	{
-		if( (fp_in=fopen( argv[1], "rb" )) == NULL )
+		switch( c )
 		{
-			perror( argv[0] );
-			bu_log( "Cannot open %s\n", argv[1] );
-			bu_bomb( "Cannot open PNG file\n" );
+			case 'v':
+				verbose = 1;
+				break;
+			default:
+				bu_log( "Illegal option (%c)\n", c );
+				bu_log( usage, argv[0] );
+				bu_bomb( "Illegal option\n" );
 		}
 	}
-	else
+
+	if( optind >= argc )  {
+		if( isatty(fileno(stdin)) )
+		{
+			bu_log( usage, argv[0] );
+			bu_bomb( "Are you intending to type in a PNG format file??\n" );
+		}
 		fp_in = stdin;
+	} else {
+		if( (fp_in = fopen(argv[optind], "rb")) == NULL )  {
+			perror(argv[optind]);
+			(void)fprintf( stderr,
+				"png-pix: cannot open \"%s\" for reading\n",
+				argv[optind] );
+			exit(1);
+		}
+	}
+
+	if ( argc > ++optind )
+		(void)fprintf( stderr, "pix-ppm: excess argument(s) ignored\n" );
 
 	if( fread( header, 8, 1, fp_in ) != 1 )
 		bu_bomb( "ERROR: Failed while reading file header!!!\n" );
@@ -96,16 +122,6 @@ char *argv[];
 		png_set_gray_to_rgb( png_p );
 	}
 
-	if( png_get_bKGD( png_p, info_p, &input_backgrd ) )
-		png_set_background( png_p, input_backgrd, PNG_BACKGROUND_GAMMA_FILE, 1, 1.0 );
-	else
-		png_set_background( png_p, &def_backgrd, PNG_BACKGROUND_GAMMA_FILE, 0, 1.0 );
-
-	if( png_get_gAMA( png_p, info_p, &gamma ) )
-		png_set_gamma( png_p, 1.0, gamma );
-	else
-		png_set_gamma( png_p, 1.0, def_gamma );
-
 	bit_depth = png_get_bit_depth( png_p, info_p );
 	if( bit_depth < 8 )
 		png_set_packing( png_p );
@@ -114,6 +130,54 @@ char *argv[];
 
 	file_width = png_get_image_width( png_p, info_p );
 	file_height = png_get_image_height( png_p, info_p );
+
+	if( verbose )
+	{
+		switch (color_type)
+		{
+			case PNG_COLOR_TYPE_GRAY:
+				bu_log( "color type: b/w (bit depth=%d)\n", bit_depth );
+				break;
+			case PNG_COLOR_TYPE_GRAY_ALPHA:
+				bu_log( "color type: b/w with alpha channel (bit depth=%d)\n", bit_depth );
+				break;
+			case PNG_COLOR_TYPE_PALETTE:
+				bu_log( "color type: color palette (bit depth=%d)\n", bit_depth );
+				break;
+			case PNG_COLOR_TYPE_RGB:
+				bu_log( "color type: RGB (bit depth=%d)\n", bit_depth );
+				break;
+			case PNG_COLOR_TYPE_RGB_ALPHA:
+				bu_log( "color type: RGB with alpha channel (bit depth=%d)\n", bit_depth );
+				break;
+			default:
+				bu_log( "Unrecognized color type (bit depth=%d)\n", bit_depth );
+				break;
+		}
+		bu_log( "Image size: %d X %d\n", file_width, file_height );
+	}
+
+	if( png_get_bKGD( png_p, info_p, &input_backgrd ) )
+	{
+		if( verbose && (color_type == PNG_COLOR_TYPE_GRAY_ALPHA ||
+				color_type == PNG_COLOR_TYPE_RGB_ALPHA ) )
+			bu_log( "background color: %d %d %d\n", input_backgrd->red, input_backgrd->green, input_backgrd->blue );
+		png_set_background( png_p, input_backgrd, PNG_BACKGROUND_GAMMA_FILE, 1, 1.0 );
+	}
+	else
+		png_set_background( png_p, &def_backgrd, PNG_BACKGROUND_GAMMA_FILE, 0, 1.0 );
+
+	if( verbose )
+		if( png_get_gAMA( png_p, info_p, &gamma ) )
+			bu_log( "gamma: %g\n", gamma );
+
+	if( verbose )
+	{
+		if( png_get_interlace_type( png_p, info_p ) == PNG_INTERLACE_NONE )
+			bu_log( "not interlaced\n" );
+		else
+			bu_log( "interlaced\n" );
+	}
 
 	png_read_update_info( png_p, info_p );
 
