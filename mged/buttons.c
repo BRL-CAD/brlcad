@@ -879,6 +879,9 @@ chg_l2menu(i)  {
 	case ST_S_EDIT:
 		mmenu_set_all( MENU_L2, sed_menu );
 		break;
+	case ST_S_NO_EDIT:
+		mmenu_set_all( MENU_L2, MENU_NULL );
+		break;
 	case ST_O_EDIT:
 		mmenu_set_all( MENU_L2, oed_menu );
 		break;

@@ -69,7 +69,7 @@ extern short earb7[12][18];
 extern short earb8[12][18];
 
 static void	arb8_edge(), ars_ed(), ell_ed(), tgc_ed(), tor_ed(), spline_ed();
-static void	nmg_ed(), pipe_ed(), vol_ed(), ebm_ed(), dsp_ed();
+static void	nmg_ed(), pipe_ed(), vol_ed(), ebm_ed(), dsp_ed(), fgp_ed();
 static void	rpc_ed(), rhc_ed(), part_ed(), epa_ed(), ehy_ed(), eto_ed();
 static void	arb7_edge(), arb6_edge(), arb5_edge(), arb4_point();
 static void	arb8_mv_face(), arb7_mv_face(), arb6_mv_face();
@@ -203,6 +203,9 @@ int	es_menu;		/* item selected from menu */
 #define MENU_PART_H		88
 #define MENU_PART_v		89
 #define MENU_PART_h		90
+#define MENU_FGP_SOLID		91
+#define MENU_FGP_THICK		92
+#define MENU_FGP_MODE		93
 
 extern int arb_faces[5][24];	/* from edarb.c */
 
@@ -575,6 +578,14 @@ struct menu_item dsp_menu[] = {
 	{ "", (void (*)())NULL, 0 }
 };
 
+struct menu_item fgp_menu[] = {
+	{ "FGP MENU", (void (*)())NULL, 0 },
+	{ "referenced solid", fgp_ed, MENU_FGP_SOLID },
+	{ "Scale thickness", fgp_ed, MENU_FGP_THICK },
+	{ "mode", fgp_ed, MENU_FGP_MODE },
+	{ "", (void (*)())NULL, 0 }
+};
+
 struct menu_item *which_menu[] = {
 	point4_menu,
 	edge5_menu,
@@ -689,6 +700,28 @@ int arg;
   }
 
   set_e_axes_pos(1);
+}
+
+static void
+fgp_ed( arg )
+{
+	es_menu = arg;
+
+	switch( arg )
+	{
+		case MENU_FGP_SOLID:
+			es_edflag = ECMD_FGP_SOLID;
+			break;
+		case MENU_FGP_THICK:
+			es_edflag = ECMD_FGP_THICK;
+			break;
+		case MENU_FGP_MODE:
+			es_edflag = ECMD_FGP_MODE;
+			break;
+	}
+
+	sedit();
+	set_e_axes_pos(1);
 }
 
 static void
@@ -1552,6 +1585,26 @@ mat_t		mat;
 			*strp = "V";
 			break;
 		}
+	case ID_FGP:
+		{
+			struct rt_fgp_internal *plt =
+				(struct rt_fgp_internal *)ip->idb_ptr;
+			int id;
+			struct rt_db_internal in;
+
+			RT_FGP_CK_MAGIC( plt );
+
+			VSETALL( mpt, 0.0 )
+
+			if( (id=rt_db_get_internal( &in, plt->ref_dp, plt->dbip, plt->xform ))  < 0 )
+			{
+				Tcl_AppendResult(interp, "get_solid_keypoint() Failed for FGP solid referencing ", plt->ref_dp->d_namep, "\n", (char *)NULL );
+				break;
+			}
+			get_solid_keypoint( mpt, strp, &in, mat );
+			rt_db_free_internal( &in );
+			break;
+		}
 	case ID_DSP:
 		{
 			struct rt_dsp_internal *dsp =
@@ -2220,7 +2273,10 @@ init_sedit()
 
 	/* Finally, enter solid edit state */
 	(void)chg_state( ST_S_PICK, ST_S_EDIT, "Keyboard illuminate");
-	chg_l2menu(ST_S_EDIT);
+	if( id == ID_FGP )
+		chg_l2menu(ST_S_NO_EDIT );
+	else
+		chg_l2menu(ST_S_EDIT);
 	es_edflag = IDLE;
 
 	button( BE_S_EDIT );	/* Drop into edit menu right away */
@@ -2308,7 +2364,10 @@ sedit_menu()  {
 	menu_state->ms_flag = 0;		/* No menu item selected yet */
 
 	mmenu_set_all( MENU_L1, MENU_NULL );
-	chg_l2menu(ST_S_EDIT);
+	if( es_int.idb_type == ID_FGP )
+		chg_l2menu(ST_S_NO_EDIT);
+	else
+		chg_l2menu(ST_S_EDIT);
                                                                       
 	switch( es_int.idb_type ) {
 
@@ -2362,6 +2421,9 @@ sedit_menu()  {
 		break;
 	case ID_PARTICLE:
 		mmenu_set_all( MENU_L1, part_menu );
+		break;
+	case ID_FGP:
+		mmenu_set_all( MENU_L1, fgp_menu );
 		break;
 	}
 	es_edflag = IDLE;	/* Drop out of previous edit mode */
@@ -2842,6 +2904,88 @@ sedit()
 
 			break;
 		}
+
+	case ECMD_FGP_THICK:
+		{
+			struct rt_fgp_internal *fgp =
+				(struct rt_fgp_internal *)es_int.idb_ptr;
+
+			RT_FGP_CK_MAGIC( fgp );
+
+			if( inpara == 1 )
+				fgp->thickness = es_para[0];
+			else if( inpara > 0 )
+			{
+				Tcl_AppendResult(interp,
+					"plate thickness required\n",
+					(char *)NULL );
+				mged_print_result( TCL_ERROR );
+				return;
+			}
+			else if( es_scale > 0.0 )
+			{
+				fgp->thickness *= es_scale;
+				es_scale = 0.0;
+			}
+		}
+		break;
+
+	case ECMD_FGP_SOLID:
+		{
+			struct rt_fgp_internal *fgp =
+				(struct rt_fgp_internal *)es_int.idb_ptr;
+			char *sol_name;
+			int ret_tcl;
+
+			RT_FGP_CK_MAGIC( fgp );
+
+			ret_tcl = Tcl_VarEval( interp, "cad_input_dialog", " .fgp_solid", " $mged_gui(mged,screen)",
+				" {FGP solid reference}", " {Enter the name of the solid to be referenced by this FGP}",
+				" FGP_Ref_Solid ", fgp->ref_dp->d_namep ," 0 ",
+				"{{ summary \"The solid you name here will be used by the FGP solid to define its extent\" }}",
+				" OK", " CANCEL", (char *)NULL );
+			if( ret_tcl != TCL_OK )
+			{
+				bu_log( "cad_input_dialog failed: %s\n", interp->result );
+				break;
+			}
+			sol_name = Tcl_GetVar( interp, "FGP_Ref_Solid", TCL_GLOBAL_ONLY );
+			NAMEMOVE( sol_name, fgp->referenced_solid );
+			if( (fgp->ref_dp = db_lookup( dbip, sol_name, 0 ) ) == DIR_NULL )
+			{
+				Tcl_AppendResult(interp, "Warning: ", sol_name, " does not exist!!!\n",
+					(char *)NULL );
+			}
+			fgp->dbip = dbip;
+		}
+		break;
+
+	case ECMD_FGP_MODE:
+		{
+			struct rt_fgp_internal *fgp =
+				(struct rt_fgp_internal *)es_int.idb_ptr;
+			char *radio_result;
+			char mode[10];
+			int ret_tcl;
+
+			RT_FGP_CK_MAGIC( fgp );
+			sprintf( mode, " %d", fgp->mode-1 );
+			ret_tcl = Tcl_VarEval( interp, "cad_radio", " .fgp_radio ", bu_vls_addr( &pathName ), " _fgp_mode_result",
+				" \"Plate Mode\"", " \"Select the desired mode\"", mode,
+				" { centered front }",
+				" { \"Selecting the centered mode means the thickness of the plate\nwill be centered about the hit points on the underlying solid\" \"Selecting the front mode means that the thickness of the plate\nwill be extended along the ray starting at the hit points on the underlying solid\" } ",
+				 (char *)NULL );
+
+			if( ret_tcl != TCL_OK )
+			{
+				Tcl_AppendResult(interp, "Mode selection failed!!!\n", (char *)NULL );
+				break;
+			}
+			radio_result = Tcl_GetVar( interp, "_fgp_mode_result", TCL_GLOBAL_ONLY );
+
+			fgp->mode = atoi( radio_result ) + 1;
+		}
+		break;
 
 	case ECMD_ARB_MAIN_MENU:
 		/* put up control (main) menu for GENARB8s */
@@ -7693,6 +7837,9 @@ char **argv;
       break;
     case ID_PARTICLE:
       mip = part_menu;
+      break;
+    case ID_FGP:
+      mip = fgp_menu;
       break;
     }
 

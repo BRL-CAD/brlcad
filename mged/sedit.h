@@ -100,6 +100,9 @@
 #define ECMD_DSP_SCALE_Y        59	/* Scale DSP y size */
 #define ECMD_DSP_SCALE_ALT      60	/* Scale DSP Altitude size */
 
+#define	ECMD_FGP_SOLID		61	/* set FGP referenced solid name */
+#define	ECMD_FGP_THICK		62	/* scale FGP plate thickness */
+#define	ECMD_FGP_MODE		63	/* set FGP mode (center or front face) */
 
 #define SEDIT_ROTATE (state == ST_S_EDIT && \
 		      (es_edflag == SROT || \
@@ -120,7 +123,8 @@
 		      es_edflag == ECMD_DSP_SCALE_X || \
 		      es_edflag == ECMD_DSP_SCALE_Y || \
 		      es_edflag == ECMD_DSP_SCALE_ALT || \
-		      es_edflag == ECMD_EBM_HEIGHT ))
+		      es_edflag == ECMD_EBM_HEIGHT || \
+		      es_edflag == ECMD_FGP_THICK ))
 #define OEDIT_SCALE (state == ST_O_EDIT && \
 		     (edobj == BE_O_XSCALE || \
 		      edobj == BE_O_YSCALE || \

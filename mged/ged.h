@@ -273,6 +273,7 @@ extern char *state_str[];		/* identifying strings */
 #define ST_O_PATH	5		/* Path select for Object Edit */
 #define ST_O_EDIT	6		/* Object Editing */
 #define ST_S_VPICK	7		/* Vertex Pick */
+#define ST_S_NO_EDIT	8		/* Solid edit without Rotate, translate, or scale */
 
 #if 0 /* Using the one provided by bu.h */
 #ifndef GETSTRUCT
