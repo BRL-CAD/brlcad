@@ -85,6 +85,7 @@ SYSTEM		= -DBSD
 
 #SGI#SYSVERS	= SGI34
 #SGI#SYSVERS	= SGI35
+#4D#SYSVERS	= 4D32
 #XMP#SYSVERS	= UNICOS20
 #CRAY2#SYSVERS	= UNICOS20
 #SUN#SYSVERS	= SUN3
@@ -104,6 +105,7 @@ SYSTEM		= -DBSD
 
 #SGI34#LIBPKG_CONFIG	= -I/usr/include/EXOS -DSGI_EXCELAN
 #SGI35#LIBPKG_CONFIG	= -I/usr/include/bsd -DBSD
+#4D32#LIBPKG_CONFIG	= -I/usr/include/bsd -DBSD
 #XMP#LIBPKG_CONFIG	= -I/usr/win-include -DBSD -DSHORT_IDENT -DCRAY
 #CRAY2#LIBPKG_CONFIG	= -I/usr/win-include -DBSD -DSHORT_IDENT -DCRAY
 
@@ -115,6 +117,7 @@ SYSTEM		= -DBSD
 
 #SGI34#REMRT_CONFIG	= -I/usr/include/EXOS -DSGI_EXCELAN
 #SGI35#REMRT_CONFIG	= -I/usr/include/bsd -DBSD
+#4D32#REMRT_CONFIG	= -I/usr/include/bsd -DBSD
 #XMP#REMRT_CONFIG	= -I/usr/win-include -DBSD -DSHORT_IDENT -DCRAY
 #CRAY2#REMRT_CONFIG	= -I/usr/win-include -DBSD -DSHORT_IDENT -DCRAY
 
@@ -125,6 +128,7 @@ SYSTEM		= -DBSD
 #################################################################
 
 #SGI35#RFBD_CONFIG	= -I/usr/include/bsd -DBSD
+#4D32#RFBD_CONFIG	= -I/usr/include/bsd -DBSD
 
 #################################################################
 #								#
@@ -139,6 +143,7 @@ SYSTEM		= -DBSD
 #	if_sun		SUNView interface			#
 #	if_ug		Ultra Graphics device			#
 #	if_rat		Raster Technology One/80 (24-bit RGB)	#
+#	if_4d		SGI 4D/60T "clover" workstation
 #								#
 #  Edit all three LIBFB_* lines below similarly.		#
 #  NOTES:							#
@@ -158,17 +163,20 @@ LIBFB_CFILES	= if_remote.c \
 		  if_ptty.c
 #SGI#		  if_sgi.c
 #SUN#		  if_sun.c
+#4D32#		  if_4d.c
 LIBFB_OBJS	= if_remote.o ../libpkg/pkg.o \
 		  if_adage.o \
 		  if_ptty.o
 #SGI35#		  if_sgi.o
 #SGI34#		  if_sgi.o sgiselect.o
 #SUN#		  if_sun.o
+#4D32#		  if_4d.o
 LIBFB_CONFIG	= -DIF_REMOTE \
 		  -DIF_ADAGE \
 		  -DIF_PTTY
 #SGI#		  -DIF_SGI	# -DMC_68010
 #SUN#		  -DIF_SUN
+#4D32#		  -DIF_4D
 #USNA#		  -DIF_ADAGE -DGM256
 #								#
 #################################################################
@@ -198,6 +206,7 @@ LIBRT_TIMER	= timer42
 #								#
 #XMP#RT_CONFIG	= -L/lib/multi -lu
 #CRAY2#RT_CONFIG	= -lmt
+#4D32#RT_CONFIG	= 	-lbsd
 #								#
 #################################################################
 
@@ -221,6 +230,7 @@ LIBRT_TIMER	= timer42
 #	dm-rat		Raster Tech One/180,380			#
 #	dm-rat80	Raster Tech One/80			#
 #	dm-ps		E&S Picture System 300			#
+#	dm-4d		Silicon Graphics 4D/60T
 #	dm-mer		Megatek Merlin 9200	[ Marginal ]	#
 #	dm-sab		Saber w/GOPS		[ Marginal ]	#
 #								#
@@ -231,6 +241,11 @@ MGED_CFILES	= dm-mg.c dm-vg.c
 MGED_OBJS	= dm-mg.o dm-vg.o
 MGED_CONFIG	= -DDM_MG -DDM_VG
 MGED_LIBES	=
+#
+#4D32#MGED_CFILES	= dm-4d.c
+#4D32#MGED_OBJS		= dm-4d.o
+#4D32#MGED_CONFIG	= -G 64 -DDM_4D
+#4D32#MGED_LIBES	= -lbsd -lgl
 #
 #SGI#MGED_CFILES	= dm-ir.c
 #SGI#MGED_OBJS	= dm-ir.o
@@ -264,6 +279,7 @@ MGED_VERS	= newvers.sh
 #################################################################
 
 CC		= /bin/cc
+#4D32#CC	= /usr/bin/cc
 #VLD#CC		= /usr/5bin/cc
 
 SHELL		= /bin/sh
@@ -277,12 +293,14 @@ MAKEFILE	= ../Makefile.defs ./Makefile.loc ../Makefile.rules ./Makefile
 # Program to get name of current system
 GETHOST		= hostname
 #SYSV#GETHOST	= uname -n
+#4D32#GETHOST	= hostname
 
 # If BSD42, use ranlib on archives.  For SYSV, set to "echo" (except SGI).
 RANLIB		= ranlib
 #VLD#RANLIB	= ranlib
 #SYSV#RANLIB	= echo
 #SGI#RANLIB	= ranlib
+#4D32#RANLIB	= ar ts
 
 # Place to install binary executable
 BINDIR		= /usr/brl/bin
@@ -342,15 +360,16 @@ MANPERM		= 664
 LIBPERM		= 664
 DIRPERM		= 775
 
-# Compiler Paths
-#SGI#FC		= f77
-
 # Compiler Flags
 PROFILE		=
 CFLAGS		= -O ${PROFILE} -I${INCDIR} ${SYSTEM} ${CONFIGDEFS}
+#4D#CFLAGS	= -O2 ${PROFILE} -I${INCDIR} ${SYSTEM} ${CONFIGDEFS}
 
 # Loader Flags.  Note that ${CC} is used to invoke the loader
 LDFLAGS 	= ${SYSTEM} ${PROFILE}
+#4D#LDFLAGS 	= -O2 ${SYSTEM} ${PROFILE}
+
+${SYSTEM} ${PROFILE}
 
 # Lint Flags
 LINT		= lint
