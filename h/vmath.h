@@ -24,11 +24,12 @@ typedef	fastf_t	mat_t[4*4];
 typedef	fastf_t	*matp_t;
 
 #define ELEMENTS_PER_VECT	4	/* # of fastf_t's per [xyz] */
+#define ELEMENTS_PER_PT         4
 
 typedef	fastf_t	vect_t[ELEMENTS_PER_VECT];
 typedef	fastf_t	*vectp_t;
 
-typedef fastf_t	point_t[ELEMENTS_PER_VECT];
+typedef fastf_t	point_t[ELEMENTS_PER_PT];
 typedef fastf_t	*pointp_t;
 
 /* Element names in homogeneous vector (4-tuple) */
