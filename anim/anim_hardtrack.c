@@ -82,11 +82,13 @@ int num_links, num_wheels;
 fastf_t track_y, tracklen;
 
 /* variables set by get_args */
-char wheel_name[40];	/* base name of wheels */
+int wheel_nindex;	/* argv[wheel_nindex] = wheelname*/
+int link_nindex;	/* argv[link_nindex] = linkname*/
 int print_wheel;	/* flag: do wheel animation */
+int print_link;		/* flag: do link animation */
 int links_placed;	/* flag: links are initially on the track */
 int axes, cent;		/* flags: alternate axes, centroid specified */
-int u_control;		/* flag: vehicle orientation specified by user */
+int steer;		/* flag: vehicle automatically steered */
 int first_frame;	/* integer with which to begin numbering frames */
 fastf_t radius;		/* common radius of all wheels */
 fastf_t init_dist; 	/* initial distance of first link along track */
@@ -110,7 +112,8 @@ char **argv;
 	VSETALL(centroid,0.0);
 	VSETALL(rcentroid,0.0);
 	init_dist = y_rot = radius= 0.0;
-	first_frame = num_wheels = u_control = axes = cent = links_placed=0;
+	first_frame = num_wheels = steer = axes = cent = links_placed=0;
+	num_wheels = num_links = 0;
 	MAT_IDN(mat_v);
 	MAT_IDN(mat_x);
 	MAT_IDN(wmat);
@@ -127,11 +130,24 @@ char **argv;
 
 	/* get track information from specified file */
 
-	if (!(stream = fopen(*(argv+optind+1),"r"))){
-		fprintf(stderr,"Anim_hardtrack: Could not open file %s.\n",*(argv+optind+1));
+	if (!(stream = fopen(*(argv+optind),"r"))){
+		fprintf(stderr,"Anim_hardtrack: Could not open file %s.\n",*(argv+optind));
 		return(0);
 	}
-	fscanf(stream,"%d %d", &num_wheels, &num_links);
+	num_wheels = -1;
+	if (radius) {
+		while (!feof(stream)) {
+			fscanf(stream,"%*lf %*lf %*lf");
+			num_wheels++;
+		}
+	} else {
+		while (!feof(stream)) {
+			fscanf(stream,"%*lf %*lf %*lf %*lf");
+			num_wheels++;
+		}
+	}
+	rewind(stream);
+
 	/*allocate memory for track information*/
 	x = (struct all *) calloc(num_wheels,sizeof(struct all));
 		/*read rest of track info */
@@ -155,9 +171,13 @@ char **argv;
 	VSET(to_track, 0.0, track_y, 0.0);
 	VSET(to_front,1.0,0.0,0.0);
 
+	if ((!print_link)&&(!print_wheel)) {
+		fprintf(stderr,"anim_hardtrack: no ouput requested. Use -l or -w.\n");
+		exit(0);
+	}
 	/* main loop */
 	distance = init_dist;
-	if(u_control)
+	if(!steer)
 		frame = first_frame;
 	else
 		frame = first_frame-1; 
@@ -168,7 +188,7 @@ char **argv;
 		VMOVE(p2,p3);
 		scanf("%*f");/*time stamp*/
 		val = scanf("%lf %lf %lf", p3, p3+1, p3 + 2);
-		if(u_control){
+		if(!steer){
 			scanf("%lf %lf %lf",&yaw,&pitch,&roll);
 			anim_dy_p_r2mat(mat_v,yaw,pitch,roll);
 			anim_add_trans(mat_v,p3,rcentroid);			
@@ -205,20 +225,22 @@ char **argv;
 
 		if (go){
 			printf("start %d;\nclean;\n", frame);
-		        for (count=0;count<num_links;count++){
-	        	        (void) get_link(position,&y_rot,distance+tracklen*count/num_links);
-				anim_y_p_r2mat(wmat,0.0,y_rot+r[count].ang,0.0);
-		        	anim_add_trans(wmat,position,r[count].pos);
-		        	if ((axes || cent) && links_placed){ /* link moved from vehicle coords */
-			        	mat_mul(mat_x,wmat,m_rev_axes);
-		        		mat_mul(wmat,m_axes,mat_x);
-		        	}
-		        	else if (axes || cent){ /* link moved to vehicle coords */
-		        		MAT_MOVE(mat_x,wmat);
-		        		mat_mul(wmat,m_axes,mat_x);
-		        	}
-				printf("anim %s.%d matrix lmul\n", *(argv+optind),count);
-		        	anim_mat_print(wmat,1);
+			if (print_link) {
+			        for (count=0;count<num_links;count++){
+		        	        (void) get_link(position,&y_rot,distance+tracklen*count/num_links);
+					anim_y_p_r2mat(wmat,0.0,y_rot+r[count].ang,0.0);
+			        	anim_add_trans(wmat,position,r[count].pos);
+			        	if ((axes || cent) && links_placed){ /* link moved from vehicle coords */
+				        	mat_mul(mat_x,wmat,m_rev_axes);
+			        		mat_mul(wmat,m_axes,mat_x);
+			        	}
+			        	else if (axes || cent){ /* link moved to vehicle coords */
+			        		MAT_MOVE(mat_x,wmat);
+			        		mat_mul(wmat,m_axes,mat_x);
+			        	}
+					printf("anim %s.%d matrix lmul\n", *(argv+link_nindex),count);
+			        	anim_mat_print(wmat,1);
+				}
 			}
 			if (print_wheel){
 				for (count = 0;count<num_wheels;count++){
@@ -229,7 +251,7 @@ char **argv;
 				        	mat_mul(mat_x,wmat,m_rev_axes);
 			        		mat_mul(wmat,m_axes,mat_x);
 			        	}
-					printf("anim %s.%d matrix lmul\n",wheel_name,count);
+					printf("anim %s.%d matrix lmul\n",*(argv+wheel_nindex),count);
 					anim_mat_print(wmat,1);
 				}
 			}
@@ -336,7 +358,7 @@ vect_t pos;
 	return -1;
 }
 
-#define OPT_STR "b:d:f:i:lr:w:u"
+#define OPT_STR "b:d:f:i:l:pr:w:s"
 
 int get_args(argc,argv)
 int argc;
@@ -345,7 +367,7 @@ char **argv;
 	fastf_t yaw, pch, rll;
 	void anim_dx_y_z2mat(), anim_dz_y_x2mat();
 	int c, i;
-	axes = cent = links_placed = print_wheel = 0;
+	axes = cent = links_placed = print_wheel = print_link = 0;
         while ( (c=getopt(argc,argv,OPT_STR)) != EOF) {
                 i=0;
                 switch(c){
@@ -374,18 +396,25 @@ char **argv;
                 case 'i':
                 	sscanf(optarg,"%lf",&init_dist);
                 	break;
-                case 'l':
+                case 'p':
                 	links_placed = 1;
                 	break;
                 case 'r':
                 	sscanf(optarg,"%lf",&radius);
                 	break;
                 case 'w':
-                	sscanf(optarg,"%s",wheel_name);
+                	wheel_nindex = optind - 1;
+                	/*sscanf(optarg,"%s",wheel_name);*/
                 	print_wheel = 1;
                         break;
-                case 'u':
-                	u_control = 1;
+                case 'l':
+                	sscanf(optarg,"%d", &num_links);
+                	link_nindex = optind;
+                	optind += 1;
+                	print_link = 1;
+                        break;
+                case 's':
+                	steer = 1;
                 	break;
                 default:
                         fprintf(stderr,"Unknown option: -%c\n",c);
