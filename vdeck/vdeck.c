@@ -1,15 +1,19 @@
 /*
- *	@(#) vdeck.c			retrieved: 8/13/86 at 08:06:38,
- *	@(#) version 1.10		last edit: 10/28/83 at 17:36:12.
+ *	SCCS id:	@(#) vdeck.c	1.11
+ *	Last edit: 	11/16/83 at 14:32:59
+ *	Retrieved: 	8/13/86 at 08:07:02
+ *	SCCS archive:	/m/cad/vdeck/RCS/s.vdeck.c
  *
- *	Written by Gary S. Moss.
- *	All rights reserved, Ballistic Research Laboratory.
- *
- *	Generates interactively, a COMGEOM deck of objects from "vged"
- *	file.
- *
- *	Written by	Gary S. Moss
- *
+ *	Author:		Gary S. Moss
+ *			U. S. Army Ballistic Research Laboratory
+ *			Aberdeen Proving Ground
+ *			Maryland 21005
+ *			(301)278-6647 or AV-283-6647
+ */
+static
+char	sccsTag[] = "@(#) vdeck.c	1.11	last edit 11/16/83 at 14:32:59";
+
+/*
  *	Derived from KARDS, written by Keith Applin.
  *
  *	To compile	make all
@@ -24,6 +28,14 @@ extern double		fabs();
 extern long		lseek();
 int			quit(), abort();
 char			getcmd();
+char			regBuffer[BUFSIZ], *regBufPtr;
+#define endRegion( buff )     	sprintf( regBufPtr, "%s\n", buff );\
+			    	write( regfd, regBuffer, strlen( regBuffer ) );\
+			    	regBufPtr = regBuffer;
+
+#define putSpaces( s, n ) {	register int i;\
+				for( i = 0; i < (n); i++ ) *s++ = ' ';\
+			  }
 
 /*	==== m a i n ( )
  */
@@ -52,6 +64,7 @@ main( argc, argv )	char	*argv[];
 
 		switch( getcmd( arg_list, 0 ) ) {
 		case DECK:
+			regBufPtr = regBuffer;
 			deck( arg_list[1] );
 			break;
 		case ERASE:
@@ -178,12 +191,11 @@ matp_t	old_xlate;
 			if(	(isave % 9 ==  1 && isave >  1)
 			    ||	(isave % 9 == -1 && isave < -1) )
 			{
-				write( regfd, buff, strlen( buff ) );
-				write( regfd, LF, 1 );
-				blank_fill( regfd, 6 );
+				endRegion( buff );
+				putSpaces( regBufPtr, 6 );
 			}
-			buf[0] = 'r';	buf[1] = 'g';	buf[2] = operate;
-			write( regfd, buf, 3 );
+			sprintf( regBufPtr, "rg%c", operate );
+			regBufPtr += 3;
 
 			/* check if this region is in desc yet
 			 */
@@ -192,8 +204,8 @@ matp_t	old_xlate;
 				readF( rd_rrfd, name, 16 );
 				if( strcmp( name, rec.c.c_name ) == 0 ) {
 					/* Region is #j.		*/
-					itoa( j+delreg, buf, 4 );
-					write( regfd, buf, 4 );
+					sprintf( regBufPtr, "%4d", j+delreg );
+					regBufPtr += 4;
 					break;
 				}
 			}
@@ -214,18 +226,17 @@ matp_t	old_xlate;
 				for( i = 0; i < 16; i++ )
 					findrr[numrr].rr_name[i] =
 						   rec.c.c_name[i];
-				blank_fill( regfd, 4 );
+				putSpaces( regBufPtr, 4 );
 			}
 
 			/* check for end of this region
 			 */
-			if( isave < 0 ) {
+			if( isave < 0 ) { int	n;
 				isave = -isave;
 				regflag = 0;
-				if( (j = isave % 9) > 0 )
-					blank_fill( regfd, 7*(9-j) );
-				write( regfd, buff, strlen( buff ) );
-				write( regfd, LF, 1 );
+				n = 69 - strlen( regBuffer );
+				putSpaces( regBufPtr, n );
+				endRegion( buff );
 			}
 			lseek( objfd, savepos, 0);
 			return;
@@ -249,14 +260,15 @@ matp_t	old_xlate;
 
 			/* start new region
 			 */
-			itoa( nnr+delreg, buf, 5 );
-			write( regfd, buf, 5 );
-			blank_fill( regfd, 1 );
+			sprintf( regBufPtr, "%5d ", nnr+delreg );
+			regBufPtr += 6;
 
 			/* check for dummy region
 			 */
-			if( nparts == 0 ) {
-				write( regfd, LF, 1 );
+			if( nparts == 0 ) { int	n;
+				n = 69 - strlen( regBuffer );
+				putSpaces( regBufPtr, n );
+				endRegion( "" );
 				regflag = 0;
 			}
 
@@ -484,44 +496,43 @@ notnew:	/* sent here if solid already in solid table
 		/* isave = number of this solid in this region
 		 * if negative then is the last solid in this region */
 		if(	(isave % 9 ==  1 && isave >  1)
-		    ||	(isave % 9 == -1 && isave < -1) ) {
+		    ||	(isave % 9 == -1 && isave < -1) ) { int	n;
 			/* New line.					*/
-			write( regfd, buff, strlen( buff ) );
-			write( regfd, LF, 1 );
-			blank_fill( regfd, 6 );
+		    	n = 69 - strlen( regBuffer );
+		    	putSpaces( regBufPtr, n );
+		    	endRegion( buff );
+			putSpaces( regBufPtr, 6 );
 		}
-		buf[0] = ' ';	buf[1] = ' ';
 		nnt += delsol;
 		if( operate == '-' )	nnt = -nnt;
 		if( orflag == 1 ) {
 			if( operate == UNION || isave == 1 ) {
-				buf[0] = 'o';
-				buf[1] = 'r';
-			}
-		}
-		write( regfd, buf, 2 );
-		itoa( nnt, buf, 5 );
-		write( regfd, buf, 5 );
+				sprintf( regBufPtr, "or" );
+				regBufPtr += 2;
+			} else
+				putSpaces( regBufPtr, 2 );
+		} else		putSpaces( regBufPtr, 2 );
+		sprintf( regBufPtr, "%5d", nnt );
+		regBufPtr += 5;
 		if( nnt < 0 )	nnt = -nnt;
 		nnt -= delsol;
-		if( isave < 0 ) {   /* end this region */
+		if( isave < 0 ) {  int	n; /* end this region */
 			isave = -isave;
 			regflag = 0;
-			if( (j = isave % 9) > 0 )
-				blank_fill( regfd, 7*(9-j) );
-			write( regfd, buff, strlen( buff ) );
-			write( regfd, LF, 1 );
+			n = 69 - strlen( regBuffer );
+			putSpaces( regBufPtr, n );
+			endRegion( buff );
 		}
 	} else if( old_xlate[15] > 0.0001 ) {
 		/* solid not part of a region
 		 * make solid into region if scale > 0
 		 */
 		++nnr;
-		itoa(	nnr+delreg, buf,     5 );
-		itoa(	nnt+delsol, &buf[5], 8 );
-		write(	regfd,	    buf,    13 );
-		blank_fill( regfd, 56 );
-		write( regfd, rec.s.s_name, strlen( rec.s.s_name ) );
+		sprintf( regBufPtr, "%5d%8d", nnr+delreg, nnt+delsol );
+		regBufPtr += 13;
+		putSpaces( regBufPtr, 56 );
+		sprintf( regBufPtr, rec.s.s_name );
+		regBufPtr += strlen( rec.s.s_name );
 		itoa( nnr+delreg, buf,	  10 );
 		itoa(	item,	&buf[10], 10 );
 		itoa(	space,	&buf[20], 10 );
@@ -560,7 +571,11 @@ notnew:	/* sent here if solid already in solid table
 			);
 		}
 		write( ridfd, LF, 1 );
-		write( regfd, LF, 1 );
+		{ int	n;
+			n = 69 - strlen( regBuffer );
+			putSpaces( regBufPtr, n );
+			endRegion( "" );
+		}
 	}
 	if( isave < 0 )	regflag = 0;
 	lseek( objfd, savepos, 0 );
