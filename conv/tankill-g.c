@@ -7,12 +7,19 @@
  *      John R. Anderson
  *  
  *  Source -
- *      The US Army Research Laboratory
- *      Aberdeen Proving Ground, Maryland  21005-5066
+ *	The U. S. Army Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *  
- *  Distribution Status -
- *      Public Domain, Distribution Unlimitied.
+ *  Distribution Notice -
+ *	Re-distribution of this software is restricted, as described in
+ *	your "Statement of Terms and Conditions for the Release of
+ *	The BRL-CAD Pacakge" agreement.
+ *
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1993 by the United States Army
+ *	in all countries except the USA.  All rights reserved.
  */
+
 #ifndef lint
 static char RCSid[] = "$Header$";
 #endif
@@ -31,7 +38,7 @@ static char RCSid[] = "$Header$";
 #include "../librt/debug.h"
 
 extern int errno;
-static int keep_1001=0;
+static int keep_1001=0;		/* flag to indicate that components with id 1001 should not be ignored */
 
 #define START_ARRAY_SIZE	64
 #define ARRAY_BLOCK_SIZE	64
@@ -42,13 +49,16 @@ struct tankill_verts
 	struct vertex *vp;
 };
 
-struct comp_idents
+struct comp_idents		/* structure for linked list of components */
 {
 	int ident;
 	int no_of_solids;
 	struct comp_idents *next;
 } *id_root;
 
+/* macro to determine if one bounding box in entirely within another
+ * also returns true if the boxes are the same
+ */
 #define V3RPP1_IN_RPP2( _lo1 , _hi1 , _lo2 , _hi2 )	( \
 	(_lo1)[X] >= (_lo2)[X] && (_hi1)[X] <= (_hi2)[X] && \
 	(_lo1)[Y] >= (_lo2)[Y] && (_hi1)[Y] <= (_hi2)[Y] && \
@@ -116,7 +126,7 @@ main( int argc , char *argv[] )
 	int vert_no;
 	int no_of_verts;
 	int comp_code;
-	int array_size=START_ARRAY_SIZE;
+	int array_size=START_ARRAY_SIZE;		/* size of "tankill_verts" array */
 	int surr_code;	/* not useful */
 	float x,y,z;
 	struct tankill_verts *verts;
@@ -132,9 +142,10 @@ main( int argc , char *argv[] )
 	struct wmember reg_head;
 	struct comp_idents *ptr;
 	char name[NAMESIZE+1];
-	char *input_file;
-	FILE *in_fp,*out_fp;
-	int polysolids;
+	char *input_file;				/* input file name */
+	FILE *in_fp;					/* input file pointer */
+	FILE *out_fp;					/* output file pointer */
+	int polysolids;					/* flag indicating polysolid output */
 	int group_len[100];
 	int all_len=0;
 
@@ -151,6 +162,8 @@ main( int argc , char *argv[] )
 	out_fp = stdout;
 	polysolids = 0;
 	input_file = (char *)NULL;
+	id_root = (struct comp_idents *)NULL;
+	nmg_tbl( &faces , TBL_INIT , NULL );
 
 	/* get command line arguments */
 	while ((c = getopt(argc, argv, "pt:i:o:")) != EOF)
@@ -192,10 +205,7 @@ main( int argc , char *argv[] )
 	}
 
 
-	id_root = (struct comp_idents *)NULL;
-
-	nmg_tbl( &faces , TBL_INIT , NULL );
-
+	/* use the input file name as the title (if available) */
 	if( input_file == (char *)NULL )
 		mk_id( out_fp , "Conversion from TANKILL" );
 	else
@@ -250,7 +260,7 @@ main( int argc , char *argv[] )
 		if( comp_code == 1001 && !keep_1001 )
 			continue;
 
-		/* now start making faces */
+		/* now start making faces, patch-style */
 		vert_no = 0;
 		vert1 = 0;
 		while( vert_no < no_of_verts - 2 )
@@ -336,8 +346,15 @@ main( int argc , char *argv[] )
 		s = RT_LIST_FIRST( shell , &r->s_hd );
 		nmg_fix_normals( s );
 
+		/* if the shell we just built has a void shell inside, nmg_fix_normals will
+		 * point the normals of the void shell in the wrong direction. This section
+		 * of code looks for such a situation and reverses the normals of the void shell
+		 *
+		 * first decompose the shell into maximally connected shells
+		 */
 		if( nmg_decompose_shell( s ) > 1 )
 		{
+			/* This shell has more than one part */
 			struct shell *outer_shell=NULL;
 			long *flags;
 
@@ -346,20 +363,26 @@ main( int argc , char *argv[] )
 			for( RT_LIST_FOR( s , shell , &r->s_hd ) )
 			{
 				struct shell *s2;
+
 				int is_outer=1;
 
+				/* insure that bounding boxes are available */
 				if( !s->sa_p )
 					nmg_shell_a( s , &tol );
 
-				/* Check if this shells contains all the others */
+				/* Check if this shells contains all the others
+				 * In TANKILL, there should only be one outer shell
+				 */
 				for( RT_LIST_FOR( s2 , shell , &r->s_hd ) )
 				{
 					if( !s2->sa_p )
+
 						nmg_shell_a( s2 , &tol );
 
 					if( !V3RPP1_IN_RPP2( s2->sa_p->min_pt , s2->sa_p->max_pt ,
 							    s->sa_p->min_pt , s->sa_p->max_pt ) )
 					{
+						/* doesn't contain shell s2, so it's not an outer shell */
 						is_outer = 0;
 						break;
 					}
@@ -376,6 +399,8 @@ main( int argc , char *argv[] )
 				outer_shell = RT_LIST_FIRST( shell , &r->s_hd );
 			}
 
+			/* reverse the normals for each void shell
+			 * and merge back into one shell */
 			s = RT_LIST_FIRST( shell , &r->s_hd );
 			while( RT_LIST_NOT_HEAD( s , &r->s_hd ) )
 			{
@@ -406,14 +431,19 @@ main( int argc , char *argv[] )
 			write_shell_as_polysolid( out_fp , name , s );
 		else
 		{
-			int loop_count;
-
 			/* simplify the structure as much as possible before writing */
 			nmg_shell_coplanar_face_merge( s , &tol , 1 );
-			nmg_simplify_shell( s );
-
-			/* write it out */
-			mk_nmg( out_fp , name , m );
+			if( nmg_simplify_shell( s ) )
+			{
+				rt_log( "tankill-g: nmg_simplify_shell emptied %s\n" , name );
+				nmg_km( m );
+				continue;
+			}
+			else
+			{
+				/* write it out */
+				mk_nmg( out_fp , name , m );
+			}
 		}
 
 		/* kill the nmg model */
