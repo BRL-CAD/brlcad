@@ -41,7 +41,7 @@ will show up during ray-tracing.
 Both ways of doing business are okay, except you must be careful about
 overlapping regions when higher levels are made using groups.  I guess
 it is a case of personal preference.
-
+========================================
 ;Date: Sun, 26 Apr 87 18:51:29 edt
 ;From: Mike McDonnell <mike>
 
@@ -67,7 +67,7 @@ baggage, then they should be excised as a warty complication of
 what could be an elegant system in which there are only solids
 and regions with solids as leaf nodes and regions for all
 interior nodes.
-
+========================================
 ;Date:     Mon, 27 Apr 87 13:39:32 EDT
 ;From: "Gary S. Moss (SLCBR-VLD-V)" <moss@BRL.ARPA>
 
@@ -105,7 +105,7 @@ of groups, because they are much cheaper then regions and have a
 distinct purpose.
 
 ~moss/...
-
+========================================
 ;Date:     Wed, 29 Apr 87 2:01:37 EDT
 ;From: Mike Muuss <mike@BRL.ARPA>
 
