@@ -1371,6 +1371,8 @@ point_t result;
 	short		m;
 	point_t		pt;
 
+	if ( ! hashTableValid ) NoiseInit();
+
 	FILTER_ARGS( point); /* sets x,y,z, ix,iy,iz, fx,fy,fz */
 
 	/* its equivalent integer lattice point. */
