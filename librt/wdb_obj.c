@@ -1797,8 +1797,7 @@ wdb_copy_tcl(clientData, interp, argc, argv)
 		return TCL_ERROR;
 	}
 
-	if ((dp=db_diradd(wdbp->dbip, argv[3], -1, proto->d_len, proto->d_flags, NULL)) == DIR_NULL ||
-	    db_alloc(wdbp->dbip, dp, proto->d_len) < 0) {
+	if ((dp=db_diradd(wdbp->dbip, argv[3], -1, proto->d_len, proto->d_flags, NULL)) == DIR_NULL ) {
 		Tcl_AppendResult(interp,
 				 "An error has occured while adding a new object to the database.",
 				 (char *)NULL);
@@ -2121,8 +2120,6 @@ wdb_dir_add(input_dbip, name, laddr, len, flags, ptr)
 	/* Then, register a new object in the main database */
 	if ((dp = db_diradd(dasp->main_dbip, local, -1L, len, flags, NULL)) == DIR_NULL)
 		return(-1);
-	if(db_alloc(dasp->main_dbip, dp, len) < 0)
-		return(-1);
 
 	if (rt_db_get_internal(&intern, input_dp, input_dbip, (fastf_t *)NULL) < 0) {
 		Tcl_AppendResult(dasp->interp, "Database read error, aborting\n", (char *)NULL);
@@ -2148,7 +2145,7 @@ wdb_dir_add(input_dbip, name, laddr, len, flags, ptr)
 
 		bu_free((genptr_t)dp->d_namep, "mged_dir_add: dp->d_namep");
 		dp->d_namep = bu_strdup(local);
-	} else {
+	} else if(flags & DIR_COMB) {
 		Tcl_AppendResult(dasp->interp,
 				 "adding  comb '",
 				 local, "'\n", (char *)NULL);
@@ -2162,6 +2159,13 @@ wdb_dir_add(input_dbip, name, laddr, len, flags, ptr)
 			 (genptr_t)&(dasp->wdbp->wdb_ncharadd),
 			 (genptr_t)dasp->wdbp->wdb_prestr, (genptr_t)NULL);
 		}
+	} else {
+		Tcl_AppendResult(dasp->interp,
+				 "WARNING: object name \"",
+				 dasp->wdbp->wdb_prestr, name,
+				 "\" is of an supported type\n",
+				 (char *)NULL);
+		return -1;
 	}
 
 	if (rt_db_put_internal(dp, dasp->main_dbip, &intern) < 0) {
@@ -3140,6 +3144,8 @@ wdb_color_putrec(mp, interp, dbip)
 
 	if (dbip->dbi_read_only)
 		return;
+
+	BU_ASSERT_LONG( dbip->dbi_version, ==, 4 );
 
 	rec.md.md_id = ID_MATERIAL;
 	rec.md.md_low = mp->mt_low;
@@ -4414,8 +4420,7 @@ wdb_combadd(interp, dbip, objp, combname, region_flag, relation, ident, air, wdb
 			flags = DIR_COMB;
 
 		/* Update the in-core directory */
-		if ((dp = db_diradd(dbip, combname, -1, 2, flags, NULL)) == DIR_NULL ||
-		    db_alloc(dbip, dp, 2) < 0)  {
+		if ((dp = db_diradd(dbip, combname, -1, 2, flags, NULL)) == DIR_NULL )  {
 			Tcl_AppendResult(interp, "An error has occured while adding '",
 					 combname, "' to the database.\n", (char *)NULL);
 			return DIR_NULL;
@@ -4526,12 +4531,6 @@ wdb_combadd(interp, dbip, objp, combname, region_flag, relation, ident, air, wdb
 
 	/* rebuild the tree */
 	comb->tree = (union tree *)db_mkgift_tree( tree_list, node_count, (struct db_tree_state *)NULL );
-
-	/* increase the length of this record */
-	if (db_grow(dbip, dp, 1) < 0) {
-		Tcl_AppendResult(interp, "db_grow error, aborting\n", (char *)NULL);
-		return DIR_NULL;
-	}
 
 	/* and finally, write it out */
 	if (rt_db_put_internal(dp, dbip, &intern) < 0) {
