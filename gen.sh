@@ -724,8 +724,8 @@ EOF
 #!/bin/sh
 
 more << EOF
-BRLCAD is copyrighted software.  It is distributed under a license
-agreement.  Do not redistribute this software outside your organization.
+BRL-CAD is copyrighted software.  It is distributed under a license agreement.
+Please do not redistribute this software outside your organization.
 EOF
 EndOfFile
 
@@ -737,7 +737,7 @@ EndOfFile
 	#########################################
 
 cat > contents << EOF
-@name brlcad-5.0
+@name brlcad-$RELEASE
 @pkgdep tcl-8.0.4
 @pkgdep tk-8.0.4
 @pkgdep png-1.0.3
@@ -763,7 +763,7 @@ find /usr/brlcad -type d -print | sort -r | sed "s,/usr/,@dirrm ," >> contents
 	#
 	##############################
 
-pkg_create -I postinst.sh -d desc -c comment -f contents brlcad-5.0
+pkg_create -I postinst.sh -d desc -c comment -f contents brlcad-$RELEASE
 rm ./comment ./contents ./desc ./postinst.sh
 
 ;;
