@@ -941,13 +941,16 @@ struct application *ap;
  *
  *  This routine is for resolving overlaps only, and should not print
  *  any messages in normal operation; a_logoverlap() is for logging.
+ *
+ *  InputHdp is the list of partitions up to this point.  It allows us
+ *  to look at the regions that have come before in deciding what to do
+ *
  */
 void
-rt_default_multioverlap( ap, pp, regiontable, InputHdp )
-struct application	*ap;
-struct partition	*pp;
-struct bu_ptbl		*regiontable;
-struct partition	*InputHdp;
+rt_default_multioverlap(struct application	*ap,
+			struct partition	*pp,
+			struct bu_ptbl		*regiontable,
+			struct partition	*InputHdp)
 {
 	LOCAL struct region *lastregion = (struct region *)NULL;
 	int	n_regions;
@@ -1024,7 +1027,7 @@ struct partition	*InputHdp;
 		}
 
 
-		/* Finally, think up some way to pass plate/plate overlaps on */
+		/* Finally, think up a way to pass plate/plate overlaps on */
 		n_fastgen = 0;
 		for( i = n_regions-1; i >= 0; i-- )  {
 			struct region *regp = (struct region *)BU_PTBL_GET(regiontable, i);
