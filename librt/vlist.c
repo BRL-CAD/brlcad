@@ -53,7 +53,31 @@ register CONST struct rt_list	*hd;
 		count++;
 	}
 	return count;
-}	
+}
+
+/*
+ *			R T _ L I S T _ R E V E R S E
+ *
+ *	Reverses the order of elements in an rt_list linked list.
+ */
+void
+rt_list_reverse( hd )
+register struct rt_list   *hd;
+{
+	struct rt_list tmp_hd;
+	register struct rt_list *ep;
+
+	RT_CK_LIST_HEAD( hd );
+
+	RT_LIST_INIT( &tmp_hd );
+	RT_LIST_INSERT_LIST( &tmp_hd, hd );
+
+	while( RT_LIST_WHILE( ep, rt_list, &tmp_hd ) )
+	{
+		RT_LIST_DEQUEUE( ep );
+		RT_LIST_APPEND( hd, ep );
+	}
+}
 
 /************************************************************************
  *									*
