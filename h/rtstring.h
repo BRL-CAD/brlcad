@@ -26,7 +26,7 @@
  *  It is vital that the argument list given for "args" be enclosed
  *  in parens.
  */
-#if __STDC__
+#if __STDC__ || defined(USE_PROTOTYPES)
 #       define  RT_VLS_EXTERN(type_and_name,args)  extern type_and_name args
 #       define  RT_VLS_ARGS(args)                  args
 #else
