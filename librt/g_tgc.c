@@ -1485,30 +1485,28 @@ register struct uvcoord	*uvp;
 
 	switch( hitp->hit_surfno )  {
 	case TGC_NORM_BODY:
-		/* Skin.  x,y coordinates define rotation.  radius = 1 */
-		if( pprime[Y] > 1.0 )
-			pprime[Y] = 1.0;
-		if( pprime[Y] < -1.0 )
-			pprime[Y] = -1.0;
-		uvp->uv_u = acos(pprime[Y]) * bn_inv2pi;
+		/* scale coords to unit circle (they are already scaled by bottom plate radii) */
+		pprime[X] *= tgc->tgc_A / (tgc->tgc_A*( 1.0 - pprime[Z]) + tgc->tgc_C*pprime[Z]);
+		pprime[Y] *= tgc->tgc_B / (tgc->tgc_B*( 1.0 - pprime[Z]) + tgc->tgc_D*pprime[Z]);
+		uvp->uv_u = atan2( pprime[Y], pprime[X] ) / bn_twopi + 0.5;
 		uvp->uv_v = pprime[Z];		/* height */
 		break;
 	case TGC_NORM_TOP:
 		/* top plate */
+		/* scale coords to unit circle (they are already scaled by bottom plate radii) */
+		pprime[X] *= tgc->tgc_A / tgc->tgc_C;
+		pprime[Y] *= tgc->tgc_B / tgc->tgc_D;
+		uvp->uv_u = atan2( pprime[Y], pprime[X] ) / bn_twopi + 0.5;
 		len = sqrt(pprime[X]*pprime[X]+pprime[Y]*pprime[Y]);
-		uvp->uv_u = acos(pprime[Y]/len) * bn_inv2pi;
 		uvp->uv_v = len;		/* rim v = 1 */
 		break;
 	case TGC_NORM_BOT:
 		/* bottom plate */
 		len = sqrt(pprime[X]*pprime[X]+pprime[Y]*pprime[Y]);
-		uvp->uv_u = acos(pprime[Y]/len) * bn_inv2pi;
+		uvp->uv_u = atan2( pprime[Y], pprime[X] ) / bn_twopi + 0.5;
 		uvp->uv_v = 1 - len;	/* rim v = 0 */
 		break;
 	}
-	/* Handle other half of acos() domain */
-	if( pprime[X] < 0 )
-		uvp->uv_u = 1.0 - uvp->uv_u;
 
 	if( uvp->uv_u < 0.0 )
 		uvp->uv_u = 0.0;
