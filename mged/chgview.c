@@ -56,6 +56,11 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 #include "conf.h"
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
 
 #include <signal.h>
 #include <stdio.h>
