@@ -1379,7 +1379,7 @@ wdb_pathsum_tcl(clientData, interp, argc, argv)
 		if( db_string_to_path( &desired_path, wdbp->dbip, argv[1] ) < 0 )
 			goto err;
 	} else {
-		if( db_argv_to_path( &desired_path, wdbp->dbip, argc-1, argv+1 ) < 0 )
+		if( db_argv_to_path( &desired_path, wdbp->dbip, argc-1, (const char*const*)(argv+1) ) < 0 )
 			goto err;
 	}
 
