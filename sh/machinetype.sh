@@ -54,6 +54,15 @@ trap '/bin/rm -f ${FILE}; exit 1' 1 2 3 15	# Clean up temp file
 	HAS_SYMLINKS=1;
 #endif
 
+#if defined(unix) && defined(i386)
+/* PC/AT with Interactive Systems Unix V/386 3.2 */
+#	undef	at
+	MACHINE=at;
+	UNIXTYPE=SYSV;
+	HAS_TCP=1;
+	HAS_SYMLINKS=0;
+#endif
+
 #if defined(alliant) && !defined(i860)
 /*	Alliant FX/8 or FX/80 */
 #	undef	fx
