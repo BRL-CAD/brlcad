@@ -162,7 +162,9 @@ char *file, *obj;
  *
  *  A null-function.
  *  View_2init is called by do_frame(), which in turn is called by
- *  main() in rt.c.
+ *  main() in rt.c.  This routine is called once per frame.  Static
+ *  images only have one frame.  Animations have MANY frames, and bounding
+ *  boxes, for example, need to be computed once per frame.
  */
 
 void
@@ -174,7 +176,16 @@ struct application	*ap;
 		rt_bomb("outfp is NULL\n");
 
 	regionfix( ap, "rtray.regexp" );		/* XXX */
+
+	/* Obtain the bounding boxes for the model from the rt_i(stance)
+	 * structure and feed the maximum and minimum coordinates to
+	 * pdv_3space.  This will allow the image to appear in the plot
+	 * starting with the same size as the model.
+	 */
+
+	pdv_3space(plotfp, ap->a_rt_i->rti_pmin, ap->a_rt_i->rti_pmax);
 }
+
 
 /*
  *			R A Y M I S S
