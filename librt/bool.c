@@ -928,3 +928,42 @@ register struct resource	*resp;
 			"extend boolstack" );
 	}
 }
+
+/*
+ *			R T _ P R I N T B
+ *
+ *  Print a value a la the %b format of the kernel's printf
+ *
+ *    s		title string
+ *    v		the integer with the bits in it
+ *    bits	a string which starts with the desired base, then followed by
+ *		words preceeded with embedded low-value bytes indicating
+ *		bit number plus one,
+ *		in little-endian order, eg:
+ *		"\010\2Bit_one\1BIT_zero"
+ */
+rt_printb(s, v, bits)
+char *s;
+register unsigned long v;
+register char *bits;
+{
+	register int i, any = 0;
+	register char c;
+
+	if (*bits++ == 8)
+		rt_log("%s=0%o <", s, v);
+	else
+		rt_log("%s=x%x <", s, v);
+	while (i = *bits++) {
+		if (v & (1L << (i-1))) {
+			if (any)
+				rt_log(",");
+			any = 1;
+			for (; (c = *bits) > 32; bits++)
+				rt_log("%c", c);
+		} else
+			for (; *bits > 32; bits++)
+				;
+	}
+	rt_log(">");
+}
