@@ -793,6 +793,7 @@ struct db_tree_state {
 	int		ts_regionid;	/* GIFT compat region ID code*/
 	int		ts_aircode;	/* GIFT compat air code */
 	int		ts_gmater;	/* GIFT compat material code */
+	int		ts_los;		/* equivalent LOS estimate .. */
 	struct mater_info ts_mater;	/* material properties */
 
 	mat_t		ts_mat;		/* transform matrix */
