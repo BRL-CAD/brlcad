@@ -2,7 +2,7 @@
  *			S E C P A S S . C
  *
  *  Author -
- *	S.Coates - 8 July 1991
+ *	S.Coates - 10 March 1992
  *  
  *  Source -
  *	The U. S. Army Ballistic Research Laboratory
@@ -16,6 +16,9 @@
  *	This version ONLY shoots down x-axis.
  */
 
+/*	To compile:  cc -c secpass.c  */
+/*		     cake  */
+
 /*	CHANGES		*/
 /*	11 December 1990 - 'Dimension' arrays using malloc.  */
 /*	18 December 1990 - Incorperates subroutines rotate and radians.  */
@@ -25,6 +28,15 @@
 /*			   computes entire matrix).  */
 /*	14 March 1991    - Creates a generic file if needed.  */
 /*	13 May 1991      - Remove some write statements.  */
+/*	24 October 1991  - Put in appropriate include statements so that  */
+/*			   I can compile.  */
+/*	30 October 1991  - Make region numbering scheme the same through-  */
+/*			   out, i.e. region numbers start at 1.  */
+/*	15 November 1991 - Make a change to printing of conductivity table.  */
+/*	11 February 1992 - Reverse order of regions in writing conductivity  */
+/*			   file.  The largest number must come first.  */
+/*	13 February 1992 - Change format for writing PRISM 3.0 files.  */
+/*	10 March 1992    - Print out PRISM release being used.  */
 
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
@@ -38,10 +50,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 #include <math.h>
 
-#include "machine.h"
-#include "externs.h"
-#include "vmath.h"
-#include "raytrace.h"
+#include "/n/walrus/usr/brlcad/include/machine.h"
+#include "/n/walrus/usr/brlcad/include/externs.h"
+#include "/n/walrus/usr/brlcad/include/vmath.h"
+#include "/n/walrus/usr/brlcad/include/raytrace.h"
 
 #define ADJTOL 1.e-1	/*  Tolerance for adjacent regions.  */
 #define ZEROTOL 1.e-20	/*  Tolerance for dividing by zero.  */
@@ -117,7 +129,7 @@ char *argv[];
 			/*  to file  */
    int typeout;		/*  Type of file to be written, 0 => PRISM file,  */
 			/*  1 => generic file.  */
-   FILE *fp6;		/*  Used in writine generic file.  */
+   FILE *fp6;		/*  Used in writing generic file.  */
    char genfile[16];	/*  Generic file name.  */
    FILE *fp3;		/*  used for writing output to file  */
    char filename[16];	/*  output file name  */
@@ -149,6 +161,7 @@ char *argv[];
    double ymin,ymax;	/*  Maximum & minimum y of grid.  */
    double zmin,zmax;	/*  Maximum & minimum z of grid.  */
    int nadjreg;		/*  Number of adjacent regions.  */
+   int prmrel;		/*  PRISM release number, 2=>2.0, 3=>3.0.  */
 
    /*  Check to see if arguments implimented correctly.  */
    if(argv[1] == NULL || argv[2] == NULL)
@@ -194,6 +207,16 @@ char *argv[];
 	   (void)fprintf(stdout,"conductivity\ninformation (15 char max).  ");
 	   (void)fflush(stdout);
 	   (void)scanf("%s",confile);
+
+	   /*  Find which release of PRISM is being used.  The format  */
+	   /*  for writing region numbers is I3 for PRISM 2.0 & I6 for  */
+	   /*  PRISM 3.0.  */
+	   prmrel = 2;
+	   (void)printf("Which release of PRISM is being used, 2.0 (2) ");
+	   (void)printf("or 3.0 (3)?  ");
+	   (void)fflush(stdout);
+	   (void)scanf("%d",&prmrel);
+	   if(prmrel != 3) prmrel = 2;
 	}
 
 	/*  Read generic file name if necessary.  */
@@ -245,6 +268,7 @@ char *argv[];
 	   {
 		(void)fprintf(fp3,"conductivity file for use ");
 	   	(void)fprintf(fp3,"with PRISM:  %s\n",confile);
+	   	(void)fprintf(fp3,"  (format is PRISM %d.0)\n",prmrel);
 	   }
 	   if(typeout == 1) (void)fprintf(fp3,"generic file:  %s\n",genfile);
 	   (void)fflush(fp3);
@@ -572,13 +596,13 @@ char *argv[];
 
 	   if(iwrite == 0)
 	   {
-	   	(void)fprintf(stdout,"reg#=%d, matid=%d\n",i,cond[i].mat);
+	   	(void)fprintf(stdout,"reg#=%d, matid=%d\n",(i+1),cond[i].mat);
 	   	(void)fflush(stdout);
 	   }
 
 	   if(iwrite == 1)
 	   {
-		(void)fprintf(fp3,"reg#=%d, matid=%d\n",i,cond[i].mat);
+		(void)fprintf(fp3,"reg#=%d, matid=%d\n",(i+1),cond[i].mat);
 		(void)fflush(fp3);
 	   }
 
@@ -593,7 +617,7 @@ char *argv[];
 		   if(iwrite == 0)
 		   {
 		      (void)fprintf(stdout,"\tadjreg=%d, numcal=%f, shrarea=%f, ",
-		         j,cond[i].numcal[j],cond[i].shrarea[j]);
+		         (j+1),cond[i].numcal[j],cond[i].shrarea[j]);
 		      (void)fprintf(stdout,"avglen=%f\n",cond[i].avglen[j]);
 		      (void)fprintf(stdout,"\t\trmslen=%f, ",cond[i].rmslen[j]);
 		      (void)fprintf(stdout,"minlen=%f, maxlen=%f\n",
@@ -604,7 +628,7 @@ char *argv[];
 		   if(iwrite == 1)
 		   {
 		      (void)fprintf(fp3,"\tadjreg=%d, numcal=%f, shrarea=%f, ",
-		         j,cond[i].numcal[j],cond[i].shrarea[j]);
+		         (j+1),cond[i].numcal[j],cond[i].shrarea[j]);
 		      (void)fprintf(fp3,"avglen=%f\n",cond[i].avglen[j]);
 		      (void)fprintf(fp3,"\t\trmslen=%f, ",cond[i].rmslen[j]);
 		      (void)fprintf(fp3,"minlen=%f, maxlen=%f\n",
@@ -639,9 +663,12 @@ char *argv[];
 		spfile);
 	   (void)fprintf(fp3,"\tmaterial file used:  %s\n",filemat);
 	   (void)fprintf(fp3,"\toutput file created:  %s\n",filename);
-	   if(itype == 0) (void)fprintf(fp3,"\tconductivity file created:  %s\n"
-		,confile);
-	   if(itype == 1) (void)fprintf(fp3,"\tgeneric file created:  %s\n"
+	   if(typeout == 0)
+	   {
+		(void)fprintf(fp3,"\tconductivity file created:  %s\n",confile);
+		(void)fprintf(fp3,"\t  (format is PRISM %d.0)\n",prmrel);
+	   }
+	   if(typeout == 1) (void)fprintf(fp3,"\tgeneric file created:  %s\n"
 		,genfile);
 	   (void)fprintf(fp3,"\tconductivity table file created:  %s\n",
 		tblfile);
@@ -650,6 +677,8 @@ char *argv[];
 
 	   (void)fclose(fp3);
 	}
+
+	/*------------------------------------------------------------------*/
 
 	/*  Open conductivity file to be used with PRISM if needed.  */
 	if(typeout == 0)
@@ -739,24 +768,52 @@ char *argv[];
 		   /*  Print only if PRISM file is to be created.  */
 		   if(typeout == 0) {		/*  START # 8A  */
 		   if( (itype == 1) && (cond[i].shrarea[j] > ZEROTOL) )
+		   {
+		     if(prmrel == 2)
 			(void)fprintf(fp1,"%3d %3d %7.3f %.3e\n",
-			(i+1),(j+1),cond[i].rkavg[j],
+			(j+1),(i+1),cond[i].rkavg[j],
 			(cond[i].shrarea[j] * 1.0e-6));
+		     if(prmrel == 3)
+			(void)fprintf(fp1,"%6d %6d %7.3f %.3e\n",
+			(j+1),(i+1),cond[i].rkavg[j],
+			(cond[i].shrarea[j] * 1.0e-6));
+		   }
 
 		   if( (itype == 2) && (cond[i].shrarea[j] > ZEROTOL) )
+		   {
+		     if(prmrel == 2)
 			(void)fprintf(fp1,"%3d %3d %7.3f %.3e\n",
-			(i+1),(j+1),cond[i].rkrms[j],
+			(j+1),(i+1),cond[i].rkrms[j],
 			(cond[i].shrarea[j] * 1.0e-6));
+		     if(prmrel == 3)
+			(void)fprintf(fp1,"%6d %6d %7.3f %.3e\n",
+			(j+1),(i+1),cond[i].rkrms[j],
+			(cond[i].shrarea[j] * 1.0e-6));
+		   }
 
 		   if( (itype == 3) && (cond[i].shrarea[j] > ZEROTOL) )
+		   {
+		     if(prmrel == 2)
 			(void)fprintf(fp1,"%3d %3d %7.3f %.3e\n",
-			(i+1),(j+1),cond[i].rkmin[j],
+			(j+1),(i+1),cond[i].rkmin[j],
 			(cond[i].shrarea[j] * 1.0e-6));
+		     if(prmrel == 3)
+			(void)fprintf(fp1,"%6d %6d %7.3f %.3e\n",
+			(j+1),(i+1),cond[i].rkmin[j],
+			(cond[i].shrarea[j] * 1.0e-6));
+		   }
 
 		   if( (itype == 4) && (cond[i].shrarea[j] > ZEROTOL) )
+		   {
+		     if(prmrel == 2)
 			(void)fprintf(fp1,"%3d %3d %7.3f %.3e\n",
-			(i+1),(j+1),cond[i].rkmax[j],
+			(j+1),(i+1),cond[i].rkmax[j],
 			(cond[i].shrarea[j] * 1.0e-6));
+		     if(prmrel == 3)
+			(void)fprintf(fp1,"%6d %6d %7.3f %.3e\n",
+			(j+1),(i+1),cond[i].rkmax[j],
+			(cond[i].shrarea[j] * 1.0e-6));
+		   }
 
 		   (void)fflush(fp1);
 		   }				/*  END of # 8A  */
@@ -765,6 +822,8 @@ char *argv[];
 	}	/*  END # 6  */
 
 	if(typeout == 0) (void)fclose(fp1);
+
+	/*------------------------------------------------------------------*/
 
 	/*  Open and write to generic file if necessary. */
 	/*  The format follows.  */
@@ -781,19 +840,27 @@ char *argv[];
 	   for(i=0; i<numreg; i++)
 	   {
 		/*  Find number of adjacent regions.  */
-		(void)printf("Ready to find number of adjacent areas.\n");
-		(void)fflush(stdout);
+/*
+ *		(void)printf("Ready to find number of adjacent areas.\n");
+ *		(void)fflush(stdout);
+ */
 		nadjreg = 0;
-		(void)printf("nadjreg = %d\n",nadjreg);
-		(void)fflush(stdout);
+/*
+ *		(void)printf("nadjreg = %d\n",nadjreg);
+ *		(void)fflush(stdout);
+ */
 		for(j=0; j<numreg; j++)
 		{
-		   (void)printf("%d, %d, %f\n",i,j,cond[i].shrarea[j]);
-		   (void)fflush(stdout);
+/*
+ *		   (void)printf("%d, %d, %f\n",i,j,cond[i].shrarea[j]);
+ *		   (void)fflush(stdout);
+ */
 		   if(cond[i].shrarea[j] > ZEROTOL) nadjreg += 1;
 		}
-		(void)printf("Found number of adjacent areas.\n");
-		(void)fflush(stdout);
+/*
+ *		(void)printf("Found number of adjacent areas.\n");
+ *		(void)fflush(stdout);
+ */
 
 		(void)fprintf(fp6,"4  %5d  %5d\n",(i+1),nadjreg);
 		(void)fflush(fp6);
@@ -818,6 +885,8 @@ char *argv[];
 	   }
 	   (void)fclose(fp6);
 	}
+
+	/*------------------------------------------------------------------*/
 
 	/*  Open conductivity table file and write information to  */
 	/*  it.  All units will be in meters or square meters.  */
@@ -847,10 +916,20 @@ char *argv[];
 
 		   (void)fprintf(fp2,"%4d,%4d,%4d, %.3e,",
 			(i+1),cond[i].mat,(j+1),a1);
-		   (void)fprintf(fp2," %.3e, %.3e,",l1,cond[i].rkavg[j]);
-		   (void)fprintf(fp2," %.3e, %.3e,",l2,cond[i].rkrms[j]);
-		   (void)fprintf(fp2," %.3e, %.3e,",l3,cond[i].rkmin[j]);
-		   (void)fprintf(fp2," %.3e, %.3e\n",l4,cond[i].rkmax[j]);
+		   if(j > i)
+		   {
+		     (void)fprintf(fp2," %.3e, %.3e,",l1,cond[i].rkavg[j]);
+		     (void)fprintf(fp2," %.3e, %.3e,",l2,cond[i].rkrms[j]);
+		     (void)fprintf(fp2," %.3e, %.3e,",l3,cond[i].rkmin[j]);
+		     (void)fprintf(fp2," %.3e, %.3e\n",l4,cond[i].rkmax[j]);
+		   }
+		   else
+		   {
+		     (void)fprintf(fp2," %.3e, %.3e,",l1,cond[j].rkavg[i]);
+		     (void)fprintf(fp2," %.3e, %.3e,",l2,cond[j].rkrms[i]);
+		     (void)fprintf(fp2," %.3e, %.3e,",l3,cond[j].rkmin[i]);
+		     (void)fprintf(fp2," %.3e, %.3e\n",l4,cond[j].rkmax[i]);
+		   }
 
 		   (void)fflush(fp2);
 		}	/*  END # 11  */
@@ -858,6 +937,8 @@ char *argv[];
 	}	/*  END # 9  */
 
 	(void)fclose(fp2);
+
+	/*------------------------------------------------------------------*/
 
 	/*  Print summary of all files used.  */
 	(void)fprintf(stdout,"\n\nSUMMARY OF FILES USED & CREATED\n");
@@ -881,17 +962,28 @@ char *argv[];
 	if(typeout == 0)
 	{
 	   (void)fprintf(stdout,"\tconductivity file created:  %s\n",confile);
+	   (void)fprintf(stdout,"\t  (format is PRISM %d.0)\n",prmrel);
 	}
 	if(typeout == 1) (void)printf("\tgeneric file created:  %s\n",genfile);
 	(void)fprintf(stdout,"\tconductivity table file created:  %s\n",tblfile);
 	(void)fprintf(stdout,"\terror file created:  %s\n\n\n",fileerr);
 	(void)fflush(stdout);
 
+	/*------------------------------------------------------------------*/
+
 	/*  Open error file.  */
 	fp4 = fopen(fileerr,"w");
 
 	/*  Write errors to error file.  */
 	(void)fprintf(fp4,"\nERRORS from secpass\n\n");
+	/*  Write type of file created to error file.  */
+	if(typeout == 0)
+	{
+	   (void)fprintf(fp4,"PRISM %d.0 conductivity file, %s, created.\n\n",
+		prmrel,confile);
+	}
+	if(typeout == 1) (void)fprintf(fp4,"Generic file, %s, created.\n\n",
+		genfile);
 	(void)fflush(fp4);
 	for(i=0; i<numreg; i++)
 	{
@@ -901,13 +993,16 @@ char *argv[];
 		   ( cond[i].numcal[j] < MINCAL ) )
 		{
 		   (void)fprintf(fp4,"region %d, adjacent region %d:\n",
-			i,j);
+			(i+1),(j+1));
 		   (void)fprintf(fp4,"\tnumber of length calculations ");
 		   (void)fprintf(fp4,"below minimum of %d\n",MINCAL);
 		   (void)fflush(fp4);
 		}
 	   }
 	}
+	(void)fclose(fp4);
+
+	/*------------------------------------------------------------------*/
 
    /*  Everything completed, free memory.  */
    (void)fprintf(stdout,"Freeing memory.\n");
