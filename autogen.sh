@@ -10,8 +10,9 @@ MINOR_VERSION=50
 # environment check
 ###
 _have_sed="`echo no | sed 's/no/yes/'`"
+HAVE_SED=no
 if [ $? = 0 ] ; then
-  [ "x$_have_sed" = "xyes" ] && HAVE_SED=yes || HAVE_SED=no
+    [ "x$_have_sed" = "xyes" ] && HAVE_SED=yes
 fi
 
 # version check
