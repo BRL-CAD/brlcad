@@ -63,7 +63,9 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
  * introducing periodicity.	-FKM 4/93
  */
 
+#define FLOOR(x)	(  (int)(x) - (  (x) < 0 && (x) != (int)(x)  )  )
 
+#if 0
 #define MAXVAL  	2147483647.  /* (2^31)-1 max val for noise integers */
 #define TWICE_MAXVAL 	4294967294.
 
@@ -74,7 +76,6 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
  * #endif
  */
 
-#define FLOOR(x)	(  (int)(x) - (  (x) < 0 && (x) != (int)(x)  )  )
 
 #define FILTER_ARGS( src) {\
 	register int i; \
@@ -96,6 +97,40 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 	x = dst[0];	ix = FLOOR(x);	fx = x - ix; \
 	y = dst[1];	iy = FLOOR(y);	fy = y - iy; \
 	z = dst[2];	iz = FLOOR(z);	fz = z - iz; \
+}
+#endif
+static void
+filter_args(src, p, f, ip)
+point_t src;
+point_t p;
+point_t f;
+int	ip[3];
+{
+	register int i;
+	point_t dst;
+	static unsigned long max2x = -1;
+	static unsigned long max = (-1) >> 1;
+
+	for (i=0 ; i < 3 ; i++) {
+		/* assure values are positive */
+		if (src[i] < 0) dst[i] = -src[i];
+		else dst[i] = src[i];
+
+
+		/* fold space */
+		while (dst[i] > max || dst[i]<0) {
+			if (dst[i] > max) {
+				dst[i] = max2x - dst[i];
+			} else {
+				dst[i] = -dst[i];
+			}
+		}
+
+	}
+
+	p[X] = dst[0];	ip[X] = FLOOR(p[X]);	f[X] = p[X] - ip[X];
+	p[Y] = dst[1];	ip[Y] = FLOOR(p[Y]);	f[Y] = p[Y] - ip[Y];
+	p[Z] = dst[2];	ip[Z] = FLOOR(p[Z]);	f[Z] = p[Z] - ip[Z];
 }
 
 
@@ -235,12 +270,26 @@ CONST point_t point;
 	double	sx, sy, sz, tx, ty, tz;
 	double	sum;
 	short	m;
+	point_t p, f;
+	int ip[3];
 
 	if (!ht.hashTableValid) bn_noise_init();
 	else {
 /*		CK_HT(); */
 	}
-	FILTER_ARGS( point); /* sets x,y,z, ix,iy,iz, fx,fy,fz */
+
+	filter_args( point, p, f, ip);
+	ix = ip[X];
+	iy = ip[Y];
+	iz = ip[Z];
+
+	fx = f[X];
+	fy = f[Y];
+	fz = f[Z];
+
+	x = p[X];
+	y = p[Y];
+	z = p[Z];
 
 	jx = ix + 1; /* (jx,jy,jz) = integer lattice point above (ix,iy,iz) */
 	jy = iy + 1; 
@@ -302,6 +351,8 @@ point_t result;
 	double		px, py, pz, s;
 	double		sx, sy, sz, tx, ty, tz;
 	short		m;
+	point_t p, f;
+	int ip[3];
 
 
 	if ( ! ht.hashTableValid ) bn_noise_init();
@@ -312,7 +363,18 @@ point_t result;
 	 * ix,iy,iz to integer portion,
 	 * fx,fy,fz to fractional portion
 	 */
-	FILTER_ARGS( point);
+	filter_args( point, p, f, ip);
+	ix = ip[X];
+	iy = ip[Y];
+	iz = ip[Z];
+
+	fx = f[X];
+	fy = f[Y];
+	fz = f[Z];
+
+	x = p[X];
+	y = p[Y];
+	z = p[Z];
 
 	jx = ix+1;   jy = iy + 1;   jz = iz + 1;
 
