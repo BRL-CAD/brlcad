@@ -29,12 +29,12 @@
 /* Explicit composition of each product */
 
 canonize : canonize.o canonlib.o asize.o
-	cc LDFLAGS -o canonize canonize.o canonlib.o asize.o DSLIB LIBES
+	CC LDFLAGS -o canonize canonize.o canonlib.o asize.o DSLIB LIBES
 
 pix-ipu : pix-ipu.o canonlib.o asize.o
-	cc LDFLAGS -o pix-ipu pix-ipu.o canonlib.o asize.o DSLIB LIBES
+	CC LDFLAGS -o pix-ipu pix-ipu.o canonlib.o asize.o DSLIB LIBES
 
 ipustat : ipustat.o canonlib.o
-	cc LDFLAGS -o ipustat ipustat.o canonlib.o DSLIB LIBES
+	CC LDFLAGS -o ipustat ipustat.o canonlib.o DSLIB LIBES
 
 #include "../Cakefile.rules"
