@@ -16,7 +16,10 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
-#define BSD43
+#if __STDC__
+#	define BSD43
+#	undef SYSV
+#endif
 /* #define BSD42 */
 /* #define BSD41a */
 
