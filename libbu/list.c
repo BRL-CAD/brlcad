@@ -63,3 +63,23 @@ register struct bu_list   *hd;
 		BU_LIST_APPEND( hd, ep );
 	}
 }
+
+/*
+ *			B U _ L I S T _ F R E E
+ *
+ *  Given a list of structures allocated with bu_malloc() enrolled
+ *  on a bu_list head, walk the list and free the structures.
+ *  This routine can only be used when the structures have no interior
+ *  pointers.
+ */
+void
+bu_list_free(hd)
+struct bu_list	*hd;
+{
+	struct bu_list	*p;
+
+	while( BU_LIST_WHILE( p, bu_list, hd ) )  {
+		BU_LIST_DEQUEUE( p );
+		bu_free( (genptr_t)p, "struct bu_list" );
+	}
+}
