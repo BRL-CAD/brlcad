@@ -1,6 +1,10 @@
-.PHONY : regress moss.pix lights.pix solids.pix shaders.pix spdi.pix iges
+.PHONY : regression regress test moss.pix lights.pix solids.pix shaders.pix spdi.pix iges
 
-regress: solids.pix shaders.pix spdi.pix moss.pix lights.pix Makefile iges
+regression: solids.pix shaders.pix spdi.pix moss.pix lights.pix Makefile iges
+
+regress: regression
+
+test: regression
 
 moss.pix: moss.sh
 	${SH} moss.sh $(prefix) $(top_srcdir)
@@ -21,21 +25,72 @@ iges:
 	${SH} iges.sh $(prefix) $(top_srcdir)
 
 # these are here because they go in the distribution but are not installed
-EXTRA_DIST = solids.sh shaders.sh spdi.sh lights.sh moss.sh iges.sh \
-	solidspix.asc shaderspix.asc spdipix.asc lights_ref.asc mosspix.asc
+EXTRA_DIST = \
+	iges.sh \
+	lights.sh \
+	lights_ref.asc \
+	moss.sh \
+	mosspix.asc \
+	shaders.sh \
+	shaderspix.asc \
+	solids.sh \
+	solidspix.asc \
+	spdi.sh \
+	spdipix.asc
 
 CLEANFILES = \
-	dsp.dat mged_shaders.log mged_solids.log \
-	moss.asc moss.g moss.log moss.png moss2.pix moss-png.log moss_png.diff \
-	shaders.pix solids solids.g solids.log solids.pix spdi spdi.g spdi_mged.log spdi_ref.pix \
-	spdi.log spdi.pix moss.pix moss_ref.pix solids_ref.pix spdi_diff.pix \
-	shaders_ref.pix moss-diff.log moss.pix.diff shaders.pix.diff \
-	iges.log iges.g iges_file.iges iges_new.g iges_stdout.iges iges_stdout_new.g \
-	solids-diff.log solids.pix.diff lights.g lights_diff.pix lights_ref.pix lights.pix lights.asc
+	dsp.dat \
+	iges.g \
+	iges.log \
+	iges_file.iges \
+	iges_new.g \
+	iges_stdout.iges \
+	iges_stdout_new.g \
+	lights.asc \
+	lights.g \
+	lights.pix \
+	lights_diff.pix \
+	lights_ref.pix \
+	mged_shaders.log \
+	mged_solids.log \
+	moss-diff.log \
+	moss-png.log \
+	moss.asc \
+	moss.g \
+	moss.log \
+	moss.pix \
+	moss.pix.diff \
+	moss.png \
+	moss2.pix \
+	moss_png.diff \
+	moss_ref.pix \
+	shaders.pix \
+	shaders.pix.diff \
+	shaders_ref.pix \
+	solids \
+	solids-diff.log \
+	solids.g \
+	solids.log \
+	solids.pix \
+	solids.pix.diff \
+	solids_ref.pix \
+	spdi \
+	spdi.g \
+	spdi.log \
+	spdi.pix \
+	spdi_diff.pix \
+	spdi_mged.log \
+	spdi_ref.pix
 
 MOSTLYCLEANFILES = \
-	mged_shaders.log mged_solids.log moss.asc moss.log moss-png.log \
-	solids.log spdi.log lights.log
+	lights.log \
+	mged_shaders.log \
+	mged_solids.log \
+	moss-png.log \
+	moss.asc \
+	moss.log \
+	solids.log \
+	spdi.log
 
 MAINTAINERCLEANFILES = Makefile.in
 
