@@ -1507,9 +1507,6 @@ char	**argv;
 	struct rt_sketch_internal *sketch_ip;
 	struct rt_extrude_internal *extrude_ip;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
-
 	if(argc == 2){
 	  struct bu_vls vls;
 
@@ -1550,6 +1547,9 @@ char	**argv;
 	  bu_vls_free(&vls);
 	  return TCL_ERROR;
 	}
+
+	if(dbip == DBI_NULL)
+	  return TCL_OK;
 
 	CHECK_READ_ONLY;
 
