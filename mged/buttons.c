@@ -162,7 +162,7 @@ struct menu_item sed_menu[] = {
 	{ "", (void (*)())NULL, 0 }
 };
 
-static struct menu_item oed_menu[] = {
+struct menu_item oed_menu[] = {
 	{ "*OBJ EDIT*", btn_head_menu, 2 },
 	{ "Scale", btn_item_hit, BE_O_SCALE },
 	{ "X move", btn_item_hit, BE_O_X },
@@ -909,6 +909,9 @@ char *str;
 
 	  curr_dm_list = save_dm_list;
 	}
+
+	Tcl_SetVar(interp, "mged_display(state)", state_str[state],
+		    TCL_GLOBAL_ONLY);
 
 	return(0);		/* GOOD */
 }
