@@ -911,3 +911,98 @@ char *str;
 	}
 	rt_free(errstr, "nmg_ck_fu error str");
 }
+
+/*
+ *			N M G _ C K _ L I S T
+ *
+ *  Generic rt_list doubly-linked list checker.
+ */
+void
+nmg_ck_list( hd, str )
+struct rt_list		*hd;
+CONST char		*str;
+{
+	register struct rt_list	*cur;
+	int	head_count = 0;
+
+	cur = hd;
+	do  {
+		if( cur->magic == RT_LIST_HEAD_MAGIC )  head_count++;
+		if( cur->forw->back != cur )  {
+			rt_log("nmg_ck_list(%s) cur=x%x, cur->forw=x%x, cur->forw->back=x%x\n",
+				str, cur, cur->forw, cur->forw->back );
+			rt_bomb("nmg_ck_list() forw\n");
+		}
+		if( cur->back->forw != cur )  {
+			rt_log("nmg_ck_list(%s) cur=x%x, cur->back=x%x, cur->back->forw=x%x\n",
+				str, cur, cur->back, cur->back->forw );
+			rt_bomb("nmg_ck_list() back\n");
+		}
+		cur = cur->forw;
+	} while( cur != hd );
+
+	if( head_count != 1 )  {
+		rt_log("nmg_ck_list(%s) head_count = %d\n", head_count);
+		rt_bomb("headless!\n");
+	}
+}
+
+/*
+ *			N M G _ C K _ L U E U
+ *
+ *	check all the edgeuses of a loopuse to make sure these children
+ *	know who thier parent really is.
+ */
+void nmg_ck_lueu(cklu, s)
+struct loopuse *cklu;
+char *s;
+{
+	struct edgeuse *eu;
+
+	if (RT_LIST_FIRST_MAGIC(&cklu->down_hd) == NMG_VERTEXUSE_MAGIC)
+		rt_bomb("NMG nmg_ck_lueu.  I got a vertex loop!\n");
+
+	eu = RT_LIST_FIRST(edgeuse, &cklu->down_hd);
+	if (eu->l.back != &cklu->down_hd) {
+		rt_bomb("nmg_ck_lueu first element in list doesn't point back to head\n");
+	}
+
+	for (RT_LIST_FOR(eu, edgeuse, &cklu->down_hd)) {
+		NMG_CK_EDGEUSE(eu);
+		if (eu->up.lu_p != cklu) {
+			rt_log("nmg_cl_lueu() edgeuse of %s (going next) has lost proper parent\n", s);
+			rt_bomb("nmg_ck_lueu");
+		}
+		if ((struct edgeuse *)eu->l.forw->back != eu) {
+			rt_log("nmg_cl_lueu() %s next edge (%8x) doesn't point back to me (%8x)!\n", s, eu->l.forw, eu);
+			nmg_pr_lu(cklu, NULL);
+		}
+		if ((struct edgeuse *)eu->l.back->forw != eu) {
+			rt_log("nmg_cl_lueu() %s last edge (%8x) doesn't point forward to me (%8x)!\n", s, eu->l.forw, eu);
+			nmg_pr_lu(cklu, NULL);
+		}
+	}
+
+	cklu = cklu->lumate_p;
+
+	eu = RT_LIST_FIRST(edgeuse, &cklu->down_hd);
+	if (eu->l.back != &cklu->down_hd) {
+		rt_bomb("nmg_ck_lueu first element in lumate list doesn't point back to head\n");
+	}
+
+	for (RT_LIST_FOR(eu, edgeuse, &cklu->down_hd)) {
+		NMG_CK_EDGEUSE(eu);
+		if (eu->up.lu_p != cklu) {
+			rt_log("nmg_cl_lueu() edgeuse of %s (lumate going next) has lost proper parent\n", s);
+			rt_bomb("nmg_ck_lueu");
+		}
+		if ((struct edgeuse *)eu->l.forw->back != eu) {
+			rt_log("nmg_cl_lueu() %s next edge (%8x) doesn't point back to me (%8x)!\n", s, eu->l.forw, eu);
+			nmg_pr_lu(cklu, NULL);
+		}
+		if ((struct edgeuse *)eu->l.back->forw != eu) {
+			rt_log("nmg_cl_lueu() %s (lumate) back edge (%8x) doesn't point forward to me (%8x)!\n", s, eu->l.forw, eu);
+			nmg_pr_lu(cklu, NULL);
+		}
+	}
+}
