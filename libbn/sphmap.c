@@ -212,15 +212,22 @@ char	*filename;
 
 	if( strcmp( filename, "-" ) == 0 )
 		fp = stdin;
-	else if( (fp = fopen( filename, "r" )) == NULL )
-		return( -1 );
+	else  {
+		RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
+		fp = fopen( filename, "r" );
+		RES_RELEASE( &rt_g.res_syscall );		/* unlock */
+		if( fp == NULL )
+			return( -1 );
+	}
 
 	total = 0;
 	for( y = 0; y < mapp->ny; y++ )
 		total += mapp->nx[y];
 
-	y = fread( (char *)mapp->_data, mapp->elsize, total, fp );
+	RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
+	y = fread( (char *)mapp->_data, mapp->elsize, total, fp );	/* res_syscall */
 	(void) fclose( fp );
+	RES_RELEASE( &rt_g.res_syscall );		/* unlock */
 
 	if( y != total )
 		return( -1 );
@@ -240,22 +247,36 @@ spm_map_t *mapp;
 char	*filename;
 {
 	int	i;
+	int	got;
 	FILE	*fp;
 
 	if( strcmp( filename, "-" ) == 0 )
 		fp = stdout;
-	else if( (fp = fopen( filename, "w" )) == NULL )
-		return( -1 );
+	else  {
+		RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
+		fp = fopen( filename, "w" );			/* res_syscall */
+		RES_RELEASE( &rt_g.res_syscall );		/* unlock */
+		if( fp == NULL )
+			return( -1 );
+	}
 
 	for( i = 0; i < mapp->ny; i++ ) {
-		if( fwrite( (char *)mapp->xbin[i], mapp->elsize,
-		    mapp->nx[i], fp ) != mapp->nx[i] ) {
+		RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
+		got = fwrite( (char *)mapp->xbin[i], mapp->elsize,	/* res_syscall */
+		    mapp->nx[i], fp );
+		RES_RELEASE( &rt_g.res_syscall );		/* unlock */
+		if( got != mapp->nx[i] ) {
+			rt_log("spm_save(%s): write error\n", filename);
+			RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
 		    	(void) fclose( fp );
+			RES_RELEASE( &rt_g.res_syscall );		/* unlock */
 		    	return( -1 );
 		}
 	}
 
+	RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
 	(void) fclose( fp );
+	RES_RELEASE( &rt_g.res_syscall );		/* unlock */
 
 	return( 0 );
 }
@@ -285,14 +306,24 @@ int	nx, ny;
 
 	if( strcmp( filename, "-" ) == 0 )
 		fp = stdin;
-	else if( (fp = fopen( filename, "r" )) == NULL )
-		return( -1 );
+	else  {
+		RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
+		fp = fopen( filename, "r" );
+		RES_RELEASE( &rt_g.res_syscall );		/* unlock */
+		if( fp == NULL )
+			return( -1 );
+	}
 
 	/* Shamelessly suck it all in */
 	buffer = (unsigned char *)rt_malloc( (unsigned)(nx*nx*3), "spm_px_load buffer" );
-	/* XXX */
-	(void) fread( (char *)buffer, 3, nx*ny, fp );
+	RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
+	i = fread( (char *)buffer, 3, nx*ny, fp );	/* res_syscall */
 	(void) fclose( fp );
+	RES_RELEASE( &rt_g.res_syscall );		/* unlock */
+	if( i != nx*ny )  {
+		rt_log("spm_px_load(%s) read error\n", filename);
+		return( -1 );
+	}
 
 	j_per_y = (double)ny / (double)mapp->ny;
 	nj = (int)j_per_y;
@@ -340,18 +371,37 @@ int	nx, ny;
 	int	x, y;
 	FILE	*fp;
 	unsigned char pixel[3];
+	int	got;
 
 	if( strcmp( filename, "-" ) == 0 )
 		fp = stdout;
-	else if( (fp = fopen( filename, "w" )) == NULL )
-		return( -1 );
+	else  {
+		RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
+		fp = fopen( filename, "w" );
+		RES_RELEASE( &rt_g.res_syscall );		/* unlock */
+		if( fp == NULL )
+			return( -1 );
+	}
 
 	for( y = 0; y < ny; y++ ) {
 		for( x = 0; x < nx; x++ ) {
 			spm_read( mapp, pixel, (double)x/(double)nx, (double)y/(double)ny );
-			(void) fwrite( (char *)pixel, sizeof(pixel), 1, fp );
+			RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
+			got = fwrite( (char *)pixel, sizeof(pixel), 1, fp );	/* res_syscall */
+			RES_RELEASE( &rt_g.res_syscall );		/* unlock */
+			if( got != 1 )  {
+				rt_log("spm_px_save(%s): write error\n", filename);
+				RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
+				(void) fclose( fp );
+				RES_RELEASE( &rt_g.res_syscall );		/* unlock */
+				return( -1 );
+			}
 		}
 	}
+
+	RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
+	(void) fclose( fp );
+	RES_RELEASE( &rt_g.res_syscall );		/* unlock */
 
 	return( 0 );
 }
@@ -368,11 +418,11 @@ spm_map_t *mp;
 {
 	int	i;
 
-	fprintf( stderr, "elsize = %d\n", mp->elsize );
-	fprintf( stderr, "ny = %d\n", mp->ny );
-	fprintf( stderr, "_data = 0x%x\n", mp->_data );
+	rt_log("elsize = %d\n", mp->elsize );
+	rt_log("ny = %d\n", mp->ny );
+	rt_log("_data = 0x%x\n", mp->_data );
 	for( i = 0; i < mp->ny; i++ ) {
-		fprintf( stderr, "  nx[%d] = %3d, xbin[%d] = 0x%x\n",
+		rt_log("  nx[%d] = %3d, xbin[%d] = 0x%x\n",
 			i, mp->nx[i], i, mp->xbin[i] );
 	}
 }
