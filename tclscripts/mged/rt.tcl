@@ -21,15 +21,22 @@ proc init_Raytrace { id } {
 	return
     }
 
+    if ![info exists mged_gui($id,active_dm)] {
+	return
+    }
+
+    if ![winfo exists $mged_gui($id,active_dm)] {
+	return
+    }
+
     winset $mged_gui($id,active_dm)
-    rt_init_vars $id $top $top\AS
+    rt_init_vars $id $mged_gui($id,active_dm)
 
     toplevel $top -screen $mged_gui($id,screen) -menu $top.menubar
 
     frame $top.gridF1
     frame $top.gridF2 -relief groove -bd 2
     frame $top.gridF3
-    frame $top.gridF4
     frame $top.srcF -relief sunken -bd 2
     frame $top.destF -relief sunken -bd 2
     frame $top.sizeF -relief sunken -bd 2
@@ -43,29 +50,34 @@ proc init_Raytrace { id } {
 	    -label "Active" -underline 0 \
 	    -command "rt_set_fb $id"
     hoc_register_menu_data "Framebuffer" "Active" "Framebuffer Active"\
-	    { { summary "This activates the framebuffer." } }
+	    { { summary "This activates/deactivates the destination framebuffer.
+Note - this pertains only to MGED's framebuffers." } }
     $top.menubar.fb add separator
     $top.menubar.fb add radiobutton -value 1 -variable rt_control($id,fb_all)\
 	    -label "All" -underline 0\
 	    -command "rt_set_fb_all $id"
     hoc_register_menu_data "Framebuffer" "All" "Framebuffer - All"\
-	    { { summary "Use the entire pane as a framebuffer." } }
+	    { { summary "Use the entire pane as a framebuffer.
+Note - this pertains only to MGED's framebuffers." } }
     $top.menubar.fb add radiobutton -value 0 -variable rt_control($id,fb_all)\
 	    -label "Rectangle Area" -underline 0\
 	    -command "rt_set_fb_all $id"
     hoc_register_menu_data "Framebuffer" "Rectangle Area" "Framebuffer - Rectangle Area"\
-	    { { summary "Use only the rectangular area for the framebuffer." } }
+	    { { summary "Use only the rectangular area for the framebuffer.
+Note - this pertains only to MGED's framebuffers." } }
     $top.menubar.fb add separator
     $top.menubar.fb add radiobutton -value 1 -variable rt_control($id,fb_overlay)\
 	    -label "Overlay" -underline 0\
 	    -command "rt_set_fb_overlay $id"
     hoc_register_menu_data "Framebuffer" "Overlay" "Framebuffer - Overlay"\
-	    { { summary "Draw the framebuffer on top of the geometry." } }
+	    { { summary "Draw the framebuffer on top of the geometry.
+Note - this pertains only to MGED's framebuffers." } }
     $top.menubar.fb add radiobutton -value 0 -variable rt_control($id,fb_overlay)\
 	    -label "Underlay" -underline 0\
 	    -command "rt_set_fb_overlay $id"
     hoc_register_menu_data "Framebuffer" "Underlay" "Framebuffer - Underlay"\
-	    { { summary "Draw the framebuffer under the geometry." } }
+	    { { summary "Draw the framebuffer under the geometry.
+Note - this pertains only to MGED's framebuffers." } }
 
     menu $top.menubar.obj -title "Objects" -tearoff 0
     $top.menubar.obj add radiobutton -value one -variable rt_control($id,omode)\
@@ -95,19 +107,19 @@ proc init_Raytrace { id } {
     $top.srcMB.menu add command -label "Upper Left"\
 	    -command "rt_cook_src $id $mged_gui($id,top).ul"
     hoc_register_menu_data "Source" "Upper Left" "Source - Upper Left"\
-	    { { summary "Set the source to \"Upper Left\"." } }
+	    { { summary "Set the source to \"Upper Left\" pane." } }
     $top.srcMB.menu add command -label "Upper Right"\
 	    -command "rt_cook_src $id $mged_gui($id,top).ur"
     hoc_register_menu_data "Source" "Upper Right" "Source - Upper Right"\
-	    { { summary "Set the source to \"Upper Right\"." } }
+	    { { summary "Set the source to \"Upper Right\" pane." } }
     $top.srcMB.menu add command -label "Lower Left"\
 	    -command "rt_cook_src $id $mged_gui($id,top).ll"
     hoc_register_menu_data "Source" "Lower Left" "Source - Lower Left"\
-	    { { summary "Set the source to \"Lower Left\"." } }
+	    { { summary "Set the source to \"Lower Left\" pane." } }
     $top.srcMB.menu add command -label "Lower Right"\
 	    -command "rt_cook_src $id $mged_gui($id,top).lr"
     hoc_register_menu_data "Source" "Lower Right" "Source - Lower Right"\
-	    { { summary "Set the source to \"Lower Right\"." } }
+	    { { summary "Set the source to \"Lower Right\" pane." } }
 
     label $top.destL -text "Destination" -anchor e
     entry $top.destE -relief flat -width 12 -textvar rt_control($id,raw_dest)
@@ -120,22 +132,34 @@ proc init_Raytrace { id } {
     $top.destMB.menu add separator
     $top.destMB.menu add command -label "Upper Left"\
 	    -command "rt_cook_dest $id $mged_gui($id,top).ul"
+    hoc_register_menu_data "Destination" "Upper Left" "Destination - Upper Left"\
+	    { { summary "Set the destination to \"Upper Left\" pane." } }
     $top.destMB.menu add command -label "Upper Right"\
 	    -command "rt_cook_dest $id $mged_gui($id,top).ur"
+    hoc_register_menu_data "Destination" "Upper Right" "Destination - Upper Right"\
+	    { { summary "Set the destination to \"Upper Right\" pane." } }
     $top.destMB.menu add command -label "Lower Left"\
 	    -command "rt_cook_dest $id $mged_gui($id,top).ll"
+    hoc_register_menu_data "Destination" "Lower Left" "Destination - Lower Left"\
+	    { { summary "Set the destination to \"Lower Left\" pane." } }
     $top.destMB.menu add command -label "Lower Right"\
 	    -command "rt_cook_dest $id $mged_gui($id,top).lr"
+    hoc_register_menu_data "Destination" "Lower Right" "Destination - Lower Right"\
+	    { { summary "Set the destination to \"Lower Right\" pane." } }
     $top.destMB.menu add separator
     if {[info exists env(FB_FILE)] && $env(FB_FILE) != ""} {
 	$top.destMB.menu add command -label "$env(FB_FILE)"\
 		-command "rt_cook_dest $id $env(FB_FILE)"
+	hoc_register_menu_data "Destination" "$env(FB_FILE)" "Destination - $env(FBFILE)"\
+		{ { summary "Set the destination to the specified framebuffer." } }
     }
 
     set dbname [rt_db_to_pix]
     if {$dbname != ""} {
 	$top.destMB.menu add command -label $dbname\
 		-command "rt_cook_dest $id $dbname"
+	hoc_register_menu_data "Destination" "$dbname" "Destination - $dbname"\
+		{ { summary "Set the destination to the specified file." } }
     }
 
     label $top.sizeL -text "Size" -anchor e
@@ -658,6 +682,7 @@ proc rt_edit_olist { id } {
     global mged_gui
     global rt_control
 
+    set top $rt_control($id,topEOL)
     return
 }
 
@@ -725,12 +750,16 @@ proc rt_cook_dest { id raw_dest } {
 	return
     }
 
+    set bad [catch {winset $rt_control($id,half_baked_dest)} msg]
+    if {$bad} {
+	return
+    }
+
     # re-enable framebuffer menu
     if [winfo exists $rt_control($id,top)] {
 	$rt_control($id,top).menubar entryconfigure 0 -state normal
     }
 
-    winset $rt_control($id,half_baked_dest)
     set fb 1
     set fb_all 1
     set listen 1
@@ -740,9 +769,14 @@ proc rt_cook_dest { id raw_dest } {
     set rt_control($id,fb_overlay) $fb_overlay
     set size [dm size]
     set rt_control($id,size) "[lindex $size 0]x[lindex $size 1]"
+    set rt_control($id,color) [rset cs bg]
+    color_entry_update $rt_control($id,top) color $rt_control($id,color)
 
     if {$mouse_behavior == "o"} {
-	set rt_control($id,omode) one
+	if {![info exists rt_mode($id,omode)] ||\
+		$rt_control($id,omode) == "all"} {
+	    set rt_control($id,omode) one
+	}
     } else {
 	set rt_control($id,omode) all
     }
@@ -887,16 +921,23 @@ proc rt_db_to_pix {} {
 
 ## - rt_init_vars
 #
-# Called by init_Raytrace to initialize rt_control
+# Called to initialize rt_control
+# Called by: init_Raytrace, mouse_rt_obj_select
 #
-proc rt_init_vars { id top topAS } {
+proc rt_init_vars { id win } {
     global mged_gui
     global rt_control
+
+    if ![winfo exists $win] {
+	return
+    }
     
     # initialize once
     if ![info exists rt_control($id,top)] {
-	set rt_control($id,top) $top
-	set rt_control($id,topAS) $topAS
+	set rt_control($id,top) .$id.rt
+	set rt_control($id,topAS) .$id.rtAS
+	set rt_control($id,topEOL) .$id.rtEOL
+	set rt_control($id,olist) {}
 	set rt_control($id,nproc) 1
 	set rt_control($id,hsample) 0
 	set rt_control($id,jitter) 0
@@ -910,10 +951,6 @@ proc rt_init_vars { id top topAS } {
     }
 
     # initialize everytime
-    set rt_control($id,olist) {}
-    set rt_control($id,color) [rset cs bg]
-    rt_cook_src $id $mged_gui($id,active_dm)
-    rt_cook_dest $id $mged_gui($id,active_dm)
-    set size [dm size]
-    set rt_control($id,size) "[lindex $size 0]x[lindex $size 1]"
+    rt_cook_src $id $win
+    rt_cook_dest $id $win
 }
