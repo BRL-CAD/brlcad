@@ -462,7 +462,7 @@ struct partition *PartHeadp;
 			point_t in_trans;
 
 			MAT4X3PNT( in_trans, inv_mat, inpt );
-			bu_log( "\ttranslated ORCA inhit = (%g %g %g)\n", V3ARGS( in_trans ) );
+			bu_log( "\ttransformed ORCA inhit = (%g %g %g)\n", V3ARGS( in_trans ) );
 		}
 
 		/* outhit info */
@@ -479,9 +479,13 @@ struct partition *PartHeadp;
 
 		if( inv_mat ) {
 			point_t out_trans;
+			vect_t dir_trans;
 
 			MAT4X3PNT( out_trans, inv_mat, outpt );
-			bu_log( "\ttranslated ORCA outhit = (%g %g %g)\n", V3ARGS( out_trans ) );
+			MAT4X3VEC( dir_trans, inv_mat, ap->a_ray.r_dir );
+			VUNITIZE( dir_trans );
+			bu_log( "\ttranformed ORCA outhit = (%g %g %g)\n", V3ARGS( out_trans ) );
+			bu_log( "\ttransformed ORCA ray direction = (%g %g %g)\n", V3ARGS( dir_trans ) );
 		}
 
 		/* Plot inhit to outhit */
