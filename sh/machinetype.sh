@@ -255,6 +255,15 @@ cat << EOF > ${IN_FILE}
 	HAS_SYMLINKS=1;
 #endif
 
+#if defined(hpux)
+/*	HP 9000, Model 730 et.al. running HPUX */
+#	undef	hp
+	MACHINE=hp;
+	UNIXTYPE=SYSV;
+	HAS_TCP=0;
+	HAS_SYMLINKS=1;
+#endif
+
 EOF
 
 # Run the file through the macro preprocessor.
