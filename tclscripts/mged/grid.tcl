@@ -199,6 +199,7 @@ settings to the grid." } }
 
 proc init_grid_control { id } {
     global mged_gui
+    global mged_default
     global grid_control
     global localunit
 
@@ -213,7 +214,26 @@ proc init_grid_control { id } {
     set grid_control($id,padx) 4
     set grid_control($id,pady) 4
 
-    toplevel $top -screen $mged_gui($id,screen)
+    toplevel $top -screen $mged_gui($id,screen) -menu $top.menubar
+
+    menu $top.menubar -tearoff $mged_default(tearoff_menus)
+    $top.menubar add cascade -label "Apply To" -underline 0\
+	    -menu $top.menubar.applyTo
+    menu $top.menubar.applyTo -title "Apply To"\
+	    -tearoff $mged_default(tearoff_menus)
+    # The help on context for the applyTo menu was already defined in openw.tcl
+    $top.menubar.applyTo add radiobutton -value 0\
+	    -variable mged_gui($id,apply_to)\
+	    -label "Active Pane" -underline 0
+    $top.menubar.applyTo add radiobutton -value 1\
+	    -variable mged_gui($id,apply_to)\
+	    -label "Local Panes" -underline 0
+    $top.menubar.applyTo add radiobutton -value 2\
+	    -variable mged_gui($id,apply_to)\
+	    -label "Listed Panes" -underline 1
+    $top.menubar.applyTo add radiobutton -value 3\
+	    -variable mged_gui($id,apply_to)\
+	    -label "All Panes" -underline 4
 
     frame $top.gridF1
     frame $top.gridFF1 -relief groove -bd 2
