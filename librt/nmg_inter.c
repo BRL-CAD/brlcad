@@ -73,6 +73,8 @@ struct nmg_inter_struct {
 	struct nmg_ptbl *l2;		/* intersection between planes */
 	struct shell	*s1;
 	struct shell	*s2;
+	struct faceuse	*fu1;		/* null if l1 comes from a wire */
+	struct faceuse	*fu2;		/* null if l2 comes from a wire */
 	struct rt_tol	tol;
 	int		coplanar;	/* a flag */
 	point_t		pt;		/* 3D line of intersection */
@@ -106,6 +108,106 @@ static int	nmg_isect_edge2p_face2p RT_ARGS((struct nmg_inter_struct *is,
 
 static struct nmg_inter_struct	*nmg_hack_last_is;	/* see nmg_isect2d_final_cleanup() */
 
+
+/*
+ *			N M G _ E N L I S T _ V U
+ *
+ *  Given a vu which represents a point of intersection between shells
+ *  s1 and s2, insert it and it's dual into lists l1 and l2.
+ *  First, determine whether the vu came from s1 or s2, and insert in
+ *  the corresponding list.
+ *  Second, try and find a dual of that vertex
+ *  in the other shell's faceuse (fu1 or fu2)
+ *  (if the entity in the other shell is not a wire), and enlist the dual.
+ *  If there is no dual, make a self-loop over there, and enlist that.
+ *
+ *  While it is true that in most cases the calling routine will know
+ *  which shell the vu came from, it's cheap to re-determine it here.
+ *  This "all in one" packaging, which handles both lists automaticly
+ *  is *vastly* superior to the previous version, which pushed 10-20
+ *  lines of bookkeeping up into *every* place an intersection vu was
+ *  created.
+ */
+void
+nmg_enlist_vu( is, vu )
+struct nmg_inter_struct	*is;
+CONST struct vertexuse	*vu;
+{
+	struct shell		*sv;		/* shell of vu */
+	struct loopuse		*lu;		/* lu of new self-loop */
+	struct faceuse		*dualfu;	/* faceuse of vu's dual */
+	struct vertexuse	*dualvu;	/* vu's dual in other shell */
+	struct shell		*duals;		/* shell of vu's dual */
+
+	NMG_CK_INTER_STRUCT(is);
+	NMG_CK_VERTEXUSE(vu);
+
+	sv = nmg_find_s_of_vu( vu );
+
+	/* First step:  add vu to corresponding list */
+	if( sv == is->s1 )  {
+		nmg_tbl( is->l1, TBL_INS_UNIQUE, (long *)&vu->l.magic );
+		duals = is->s2;		/* other shell */
+		dualfu = is->fu2;
+	} else if( sv == is->s2 )  {
+		nmg_tbl( is->l2, TBL_INS_UNIQUE, (long *)&vu->l.magic );
+		duals = is->s1;		/* other shell */
+		dualfu = is->fu1;
+	} else {
+		rt_log("nmg_enlist_vu(vu=x%x) sv=x%x, s1=x%x, s2=x%x\n",
+			vu, sv, is->s1, is->s2 );
+		rt_bomb("nmg_enlist_vu: vu is not in s1 or s2\n");
+	}
+
+	/* Second, search for vu's dual */
+	dualvu = (struct vertexuse *)NULL;
+	if( dualfu )  {
+		NMG_CK_FACEUSE(dualfu);
+		if( dualfu->s_p != duals )  rt_bomb("dual fu's shell is not dual's shell?\n");
+		if( !(dualvu = nmg_find_v_in_face( vu->v_p, dualfu )) )  {
+			/* Not found, make self-loop in dualfu */
+			lu = nmg_mlv( &dualfu->l.magic, vu->v_p, OT_BOOLPLACE );
+			nmg_loop_g( lu->l_p, &(is->tol) );
+			dualvu = RT_LIST_FIRST( vertexuse, &lu->down_hd );
+		} else {
+			if( rt_g.NMG_debug & DEBUG_POLYSECT )  {
+				rt_log("nmg_enlist_vu(vu=x%x) re-using dualvu=x%x from dualfu=x%x\n",
+					vu,
+					dualvu, dualfu);
+			}
+		}
+	} else {
+		/* Must have come from a wire in other shell, make wire loop */
+		rt_log("\tvu=x%x, %s, fu1=x%x, fu2=x%x\n", vu, (sv==is->s1)?"shell 1":"shell 2", is->fu1, is->fu2);
+		rt_log("nmg_enlist_vu(): QUESTION: What do I search for wire intersections?  Making self-loop\n");
+		if( !(dualvu = nmg_find_v_in_shell( vu->v_p, duals, 0 )) )  {
+			/* Not found, make self-loop in dual shell */
+			lu = nmg_mlv( &duals->l.magic, vu->v_p, OT_BOOLPLACE );
+			nmg_loop_g( lu->l_p, &(is->tol) );
+			dualvu = RT_LIST_FIRST( vertexuse, &lu->down_hd );
+		} else {
+			if( rt_g.NMG_debug & DEBUG_POLYSECT )  {
+				rt_log("nmg_enlist_vu(vu=x%x) re-using dualvu=x%x from dualshell=x%x\n",
+					vu,
+					dualvu, duals);
+			}
+		}
+	}
+	NMG_CK_VERTEXUSE(dualvu);
+
+	/* Enlist the dual onto the other list */
+	if( sv == is->s1 )  {
+		nmg_tbl( is->l2, TBL_INS_UNIQUE, (long *)&dualvu->l.magic );
+	} else {
+		nmg_tbl( is->l1, TBL_INS_UNIQUE, (long *)&dualvu->l.magic );
+	}
+
+	if( rt_g.NMG_debug & DEBUG_POLYSECT )  {
+		rt_log("nmg_enlist_vu(vu=x%x) v=x%x, dualvu=x%x (%s)\n",
+			vu, vu->v_p, dualvu,
+			(sv == is->s1) ? "shell 1" : "shell 2" );
+	}
+}
 
 /*
  *		N M G _ I N S E R T _ F U _ V U _ I N _ O T H E R _ L I S T
@@ -801,8 +903,8 @@ rt_log("%%%%%% point is outside face loop, no need to break eu1?\n");
 /*
  *			N M G _ B R E A K _ E U _ O N _ V
  *
- *  The vertexuse 'vu' is known to lie in the plane of eu's face.
- *  If vu lies between the two endpoints of eu, break eu and
+ *  The vertex 'v2' is known to lie in the plane of eu1's face.
+ *  If v2 lies between the two endpoints of eu1, break eu1 and
  *  return the new edgeuse pointer.
  *
  *  If an edgeuse vertex is joined with v2, v2 remains as the survivor,
@@ -2281,6 +2383,8 @@ struct faceuse		*fu1;		/* fu that eu1 is from */
     	is->l2 = &vert_list2;
 	is->s1 = nmg_find_s_of_eu(eu1);		/* may be wire edge */
 	is->s2 = fu2->s_p;
+	is->fu1 = fu1;
+	is->fu2 = fu2;
 
     	if ( fu1 && rt_g.NMG_debug & (DEBUG_POLYSECT|DEBUG_FCUT|DEBUG_MESH)
     	    && rt_g.NMG_debug & DEBUG_PLOTEM) {
@@ -2591,6 +2695,8 @@ nmg_fu_touchingloops(fu2);
 	    	is->l2 = &vert_list2;
 		is->s1 = fu1->s_p;
 		is->s2 = fu2->s_p;
+		is->fu1 = fu1;
+		is->fu2 = fu2;
 
 	    	if (rt_g.NMG_debug & (DEBUG_POLYSECT|DEBUG_FCUT|DEBUG_MESH)
 	    	    && rt_g.NMG_debug & DEBUG_PLOTEM) {
@@ -2626,6 +2732,8 @@ nmg_fu_touchingloops(fu2);
 	    	is->l1 = &vert_list2;
 		is->s2 = fu1->s_p;
 		is->s1 = fu2->s_p;
+		is->fu2 = fu1;
+		is->fu1 = fu2;
 
 		if( nmg_isect_face3p_face3p(is, fu2, fu1) )  {
 			if (rt_g.NMG_debug & DEBUG_POLYSECT)
@@ -2777,6 +2885,8 @@ struct faceuse		*fu2;
 /* XXX XYZZY What happens here?  Do vu's get added to other list??? */
 		nmg_insert_fu_vu_in_other_list( is, list, vu1a->v_p, fu2 );
 		nmg_insert_fu_vu_in_other_list( is, list, vu1b->v_p, fu2 );
+nmg_enlist_vu(is, vu1a);
+nmg_enlist_vu(is, vu1b);
 		ret = 0;
 		goto out;
 	}
@@ -2795,6 +2905,7 @@ struct faceuse		*fu2;
 			rt_bomb("vu1a does not match calculated point\n");
 		(void)nmg_tbl(list, TBL_INS_UNIQUE, &vu1a->l.magic);
 		nmg_insert_fu_vu_in_other_list( is, list, vu1a->v_p, fu2 );
+nmg_enlist_vu(is, vu1a);
 		nmg_ck_face_worthless_edges( fu1 );
 		ret = 0;
 	} else if( status == 2 || dist[1] == 1 )  {
@@ -2804,6 +2915,7 @@ struct faceuse		*fu2;
 			rt_bomb("vu1b does not match calculated point\n");
 		(void)nmg_tbl(list, TBL_INS_UNIQUE, &vu1b->l.magic);
 		nmg_insert_fu_vu_in_other_list( is, list, vu1b->v_p, fu2 );
+nmg_enlist_vu(is, vu1b);
 		nmg_ck_face_worthless_edges( fu1 );
 		ret = 0;
 	} else {
@@ -2863,6 +2975,7 @@ if( !rt_between(vu1a->v_p->vg_p->coord[X], hit_pt[X], vu1b->v_p->vg_p->coord[X],
 				rt_log("\t\tre-using vertex v=x%x from face, vu=x%x\n", new_v, vu1_final);
 		}
 		nmg_insert_fu_vu_in_other_list( is, list, vu1_final->v_p, fu2 );
+nmg_enlist_vu(is, vu1_final);
 
 		nmg_ck_face_worthless_edges( fu1 );
 	}
@@ -3069,6 +3182,8 @@ struct faceuse		*fu2;
 		(void)nmg_tbl(list, TBL_INS_UNIQUE, &vu1b->l.magic);
 		nmg_insert_fu_vu_in_other_list( is, list, vu1a->v_p, fu2 );
 		nmg_insert_fu_vu_in_other_list( is, list, vu1b->v_p, fu2 );
+nmg_enlist_vu(is, vu1a);
+nmg_enlist_vu(is, vu1b);
 		n_colinear++;
 	}
 	/*  If rt_isect_line2_line2() says colinear, or if colinear edges
@@ -3116,6 +3231,7 @@ hit_a:
 				rt_log("\tlisting intersect point at vu1a=x%x\n", vu1a);
 			(void)nmg_tbl(list, TBL_INS_UNIQUE, &vu1a->l.magic);
 			nmg_insert_fu_vu_in_other_list( is, list, vu1a->v_p, fu2 );
+nmg_enlist_vu(is, vu1a);
 		}
 		if( vu1b->v_p == hit_v )  {
 hit_b:
@@ -3123,6 +3239,7 @@ hit_b:
 				rt_log("\tlisting intersect point at vu1b=x%x\n", vu1b);
 			(void)nmg_tbl(list, TBL_INS_UNIQUE, &vu1b->l.magic);
 			nmg_insert_fu_vu_in_other_list( is, list, vu1b->v_p, fu2 );
+nmg_enlist_vu(is, vu1b);
 		}
 		if( vu1a->v_p == hit_v || vu1b->v_p == hit_v )  continue;
 
@@ -3200,6 +3317,7 @@ hit_b:
 				if( hit_v != vu1_final->v_p )  rt_bomb("hit_v changed?\n");
 			}
 			nmg_insert_fu_vu_in_other_list( is, list, hit_v, fu2 );
+nmg_enlist_vu(is, vu1_final);
 			break;
 		}
 	}
@@ -3366,6 +3484,8 @@ nmg_fu_touchingloops(fu2);
     	is->l2 = &vert_list2;
 	is->s1 = fu1->s_p;
 	is->s2 = fu2->s_p;
+	is->fu1 = fu1;
+	is->fu2 = fu2;
 
     	if (rt_g.NMG_debug & (DEBUG_POLYSECT|DEBUG_FCUT|DEBUG_MESH)
     	    && rt_g.NMG_debug & DEBUG_PLOTEM) {
@@ -3399,6 +3519,8 @@ nmg_fu_touchingloops(fu2);
     	is->l1 = &vert_list2;
 	is->s2 = fu1->s_p;
 	is->s1 = fu2->s_p;
+	is->fu2 = fu1;
+	is->fu1 = fu2;
 	(void)nmg_isect_line2_face2p(is, &vert_list2, fu2, fu1);
 
 	if( rt_g.NMG_debug & DEBUG_VERIFY )  {
@@ -3897,12 +4019,14 @@ struct shell		*s2;
 	for( RT_LIST_FOR( fu2, faceuse, &s2->fu_hd ) )  {
 		NMG_CK_FACEUSE(fu2);
 		if( fu2->orientation != OT_SAME )  continue;
+		is->fu2 = fu2;
 
 		/* We aren't interested in the vert_list's, ignore return */
 		(void)nmg_isect_edge3p_face3p( is, eu1, fu2 );
 	}
 
 	/* Check eu1 of s1 against all wire loops in s2 */
+	is->fu2 = (struct faceuse *)NULL;
 	for( RT_LIST_FOR( lu2, loopuse, &s2->lu_hd ) )  {
 		NMG_CK_LOOPUSE(lu2);
 		/* Really, it's just a bunch of wire edges, in a loop. */
@@ -4088,6 +4212,8 @@ nmg_ck_vs_in_region( s2->r_p, tol );
 	is.l2 = &vert_list2;
 	is.s1 = s1;
 	is.s2 = s2;
+	is.fu1 = (struct faceuse *)NULL;
+	is.fu2 = (struct faceuse *)NULL;
 	(void)nmg_tbl(&vert_list1, TBL_INIT, (long *)NULL);
 	(void)nmg_tbl(&vert_list2, TBL_INIT, (long *)NULL);
 
@@ -4129,6 +4255,8 @@ nmg_ck_vs_in_region( s2->r_p, tol );
 		    f1->min_pt, f1->max_pt, tol) )
 			continue;
 
+		is.fu1 = fu1;
+
 		/*
 		 *  Now, check the face f1 from shell 1
 		 *  against each of the faces of shell 2
@@ -4138,22 +4266,19 @@ nmg_ck_vs_in_region( s2->r_p, tol );
 	    		NMG_CK_FACE(fu2->f_p);
 			if( fu2->orientation != OT_SAME )  continue;
 
+	    		is.fu2 = fu2;
 			nmg_isect_two_generic_faces(fu1, fu2, tol);
 	    	}
-
-#if 0
-		/* XXX Test16.r.  This is not the correct fix.  Leave out. */
-		/* Intersect all "interior" edges that got missed by generic. */
-		/* This may make additional wire loops in s2 */
-		nmg_isect_face3p_shell_int( &is, fu1, s2 );
-#endif
 
 		/*
 		 *  Because the rest of the shell elements are wires,
 		 *  there is no need to invoke the face cutter;
-		 *  finding the intersection points (vertices)
+		 *  calculating the intersection points (vertices)
 		 *  is sufficient.
+		 *  XXX Is this true?  What about a wire edge cutting
+		 *  XXX clean across fu1?  fu1 ought to be cut!
 		 */
+		is.fu2 = (struct faceuse *)NULL;
 
 		/* Check f1 from s1 against wire loops of s2 */
 		for( RT_LIST_FOR( lu2, loopuse, &s2->lu_hd ) )  {
@@ -4182,7 +4307,9 @@ nmg_ck_vs_in_region( s2->r_p, tol );
 		}
 	}
 
-	/*  Check each wire loop of shell 1 against all of shell 2. */
+	/*  Check each wire loop of shell 1 against non-faces of shell 2. */
+	is.fu1 = (struct faceuse *)NULL;
+	is.fu2 = (struct faceuse *)NULL;
 	for( RT_LIST_FOR( lu1, loopuse, &s1->lu_hd ) )  {
 		NMG_CK_LOOPUSE( lu1 );
 		/* Really, it's just a bunch of wire edges, in a loop. */
