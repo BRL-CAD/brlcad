@@ -98,8 +98,11 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #	define bcopy(from,to,count)	memcpy( to, from, count )
 #endif
 
-extern char *malloc();
-extern void perror();
+#if !__STDC__
+extern char	*malloc();
+extern char	*realloc();
+extern void	perror();
+#endif
 extern int errno;
 
 int pkg_nochecking = 0;	/* set to disable extra checking for input */
@@ -571,6 +574,7 @@ void (*errlog)();
 	pc->pkc_buf = (char *)0;
 	pc->pkc_curpos = (char *)0;
 	pc->pkc_strpos = 0;
+	pc->pkc_incur = pc->pkc_inend = 0;
 	return(pc);
 }
 
@@ -667,8 +671,6 @@ register struct pkg_conn *pc;
 	static struct iovec cmdvec[2];
 #endif
 	static struct pkg_header hdr;
-	struct timeval tv;
-	long bits;
 	register int i;
 
 	PKG_CK(pc);
@@ -682,23 +684,8 @@ register struct pkg_conn *pc;
 		fflush(pkg_debug);
 	}
 
-	/* Finish any partially read message */
-	do  {
-		if( pc->pkc_left > 0 )
-			if( pkg_block(pc) < 0 )
-				return(-1);
-
-		if( pkg_nochecking )
-			continue;
-		/* Check socket for unexpected input */
-		tv.tv_sec = 0;
-		tv.tv_usec = 0;		/* poll -- no waiting */
-		bits = 1 << pc->pkc_fd;
-		i = select( pc->pkc_fd+1, &bits, (char *)0, (char *)0, &tv );
-		if( i > 0 && bits )
-			if( pkg_block(pc) < 0 )
-				return(-1);
-	} while( pc->pkc_left > 0 );
+	/* Check for any pending input, no delay */
+	pkg_checkin( pc, 1 );
 
 	/* Flush any queued stream output first. */
 	if( pc->pkc_strpos > 0 )  {
@@ -801,23 +788,8 @@ register struct pkg_conn *pc;
 		fflush(pkg_debug);
 	}
 
-	/* Finish any partially read message */
-	do  {
-		if( pc->pkc_left > 0 )
-			if( pkg_block(pc) < 0 )
-				return(-1);
-
-		if( pkg_nochecking )
-			continue;
-		/* Check socket for unexpected input */
-		tv.tv_sec = 0;
-		tv.tv_usec = 0;		/* poll -- no waiting */
-		bits = 1 << pc->pkc_fd;
-		i = select( pc->pkc_fd+1, &bits, (char *)0, (char *)0, &tv );
-		if( i > 0 && bits )
-			if( pkg_block(pc) < 0 )
-				return(-1);
-	} while( pc->pkc_left > 0 );
+	/* Check for any pending input, no delay */
+	pkg_checkin( pc, 1 );
 
 	/* Flush any queued stream output first. */
 	if( pc->pkc_strpos > 0 )  {
@@ -1042,9 +1014,9 @@ again:
 	}
 
 	/* Read the whole message into the users buffer */
-	if( (i = pkg_mread( pc, buf, pc->pkc_len )) != pc->pkc_len )  {
+	if( (i = pkg_inget( pc, buf, pc->pkc_len )) != pc->pkc_len )  {
 		sprintf(errbuf,
-			"pkg_waitfor:  pkg_mread %d gave %d\n", pc->pkc_len, i );
+			"pkg_waitfor:  pkg_inget %d gave %d\n", pc->pkc_len, i );
 		(pc->pkc_errlog)(errbuf);
 		return(-1);
 	}
@@ -1107,9 +1079,9 @@ register struct pkg_conn *pc;
 		return((char *)0);
 
 	/* Read the whole message into the dynamic buffer */
-	if( (i = pkg_mread( pc, pc->pkc_buf, pc->pkc_len )) != pc->pkc_len )  {
+	if( (i = pkg_inget( pc, pc->pkc_buf, pc->pkc_len )) != pc->pkc_len )  {
 		sprintf(errbuf,
-			"pkg_bwaitfor:  pkg_mread %d gave %d\n", pc->pkc_len, i );
+			"pkg_bwaitfor:  pkg_inget %d gave %d\n", pc->pkc_len, i );
 		(pc->pkc_errlog)(errbuf);
 	}
 	tmpbuf = pc->pkc_buf;
@@ -1126,13 +1098,15 @@ register struct pkg_conn *pc;
  *  This routine should be called whenever select() indicates that there
  *  is data waiting on the network connection and the user's program is
  *  not blocking on the arrival of a particular message type.
+ *
  *  As portions of the message body arrive, they are read and stored.
- *  When the entire message body has been read, it is handed to the
- *  user-provided message handler for that type message, from pkg_switch[].
+ *  When the entire message body has been read, it is dispatched.
  *
  *  If this routine is called when there is no message already being
  *  assembled, and there is no input on the network connection, it will
  *  block, waiting for the arrival of the header.
+ *
+ *  The companion routine is pkg_block(), which does one full message.
  *
  *  Returns -1 on error, 0 if more data comming, 1 if user handler called.
  *  The user handler is responsible for calling free()
@@ -1142,9 +1116,7 @@ int
 pkg_get(pc)
 register struct pkg_conn *pc;
 {
-	register int i;
-	struct timeval tv;
-	auto long bits;
+	register int	len;
 
 	PKG_CK(pc);
 	if( pkg_debug )  {
@@ -1156,30 +1128,31 @@ register struct pkg_conn *pc;
 	}
 	if( pc->pkc_left < 0 )  {
 		if( pkg_gethdr( pc, (char *)0 ) < 0 )  return(-1);
-		if( pc->pkc_left == 0 )  return( pkg_dispatch(pc) );
-
-		/* See if any message body has arrived yet */
-		tv.tv_sec = 0;
-		tv.tv_usec = 20000;	/* 20 ms */
-		bits = (1<<pc->pkc_fd);
-		i = select( pc->pkc_fd+1, (char *)&bits, (char *)0, (char *)0, &tv );
-		if( i <= 0 )  return(0);	/* timed out */
-		if( !bits )  return(0);		/* no input */
+		/* Now pkc_left >= 0 */
 	}
 
-	/* read however much is here already, and remember our position */
+	/* copy what is here already, and dispatch when all here */
 	if( pc->pkc_left > 0 )  {
-		if( (i = read( pc->pkc_fd, pc->pkc_curpos, pc->pkc_left )) <= 0 )  {
-			pc->pkc_left = -1;
-			pkg_perror(pc->pkc_errlog, "pkg_get: read");
-			return(-1);
+		/*
+		 * Header has been seen, stop briefly to
+		 * see if any more of the message body has arrived yet
+		 */
+		pkg_checkin( pc, 0 );
+
+		len = pc->pkc_inend - pc->pkc_incur;	/* amt in input buf */
+		if( len > pc->pkc_left )  len = pc->pkc_left; /* amt wanted */
+		if( len > 0 )  {
+			bcopy( &pc->pkc_inbuf[pc->pkc_incur],
+				pc->pkc_curpos, len );
+			pc->pkc_incur += len;
+			pc->pkc_curpos += len;
+			pc->pkc_left -= len;
 		}
-		pc->pkc_curpos += i;
-		pc->pkc_left -= i;
 		if( pc->pkc_left > 0 )
 			return(0);		/* more is on the way */
 	}
 
+	/* Now, pkc_left == 0, dispatch the message */
 	return( pkg_dispatch(pc) );
 }
 
@@ -1258,7 +1231,7 @@ char *buf;
 	 *  At message boundary, read new header.
 	 *  This will block until the new header arrives (feature).
 	 */
-	if( (i = pkg_mread( pc, &(pc->pkc_hdr),
+	if( (i = pkg_inget( pc, &(pc->pkc_hdr),
 	    sizeof(struct pkg_header) )) != sizeof(struct pkg_header) )  {
 		if(i > 0) {
 			sprintf(errbuf,"pkg_gethdr: header read of %d?\n", i);
@@ -1273,7 +1246,7 @@ char *buf;
 		(pc->pkc_errlog)(errbuf);
 		/* Slide over one byte and try again */
 		bcopy( ((char *)&pc->pkc_hdr)+1, (char *)&pc->pkc_hdr, sizeof(struct pkg_header)-1);
-		if( (i=read( pc->pkc_fd,
+		if( (i=pkg_inget( pc,
 		    ((char *)&pc->pkc_hdr)+sizeof(struct pkg_header)-1,
 		    1 )) != 1 )  {
 			sprintf(errbuf,"pkg_gethdr: hdr read=%d?\n",i);
@@ -1311,6 +1284,8 @@ char *buf;
  *  This routine can be used in a loop to pass the time while waiting
  *  for a flag to be changed by the arrival of an asynchronous message,
  *  or for the arrival of a message of uncertain type.
+ *
+ *  The companion routine is pkg_get(), which does not block.
  *  
  *  Control returns to the caller after one full message is processed.
  *  Returns -1 on error, etc.
@@ -1327,20 +1302,23 @@ register struct pkg_conn *pc;
 			pc );
 		fflush(pkg_debug);
 	}
-	if( pc->pkc_left == 0 )  return( pkg_dispatch(pc) );
 
-	/* If no read outstanding, start one. */
+	/* If no read operation going now, start one. */
 	if( pc->pkc_left < 0 )  {
 		if( pkg_gethdr( pc, (char *)0 ) < 0 )  return(-1);
-		if( pc->pkc_left <= 0 )  return( pkg_dispatch(pc) );
+		/* Now pkc_left >= 0 */
 	}
 
-	/* Read the rest of the message, blocking in read() */
-	if( pc->pkc_left > 0 && pkg_mread( pc, pc->pkc_curpos, pc->pkc_left ) != pc->pkc_left )  {
-		pc->pkc_left = -1;
-		return(-1);
+	/* Read the rest of the message, blocking if necessary */
+	if( pc->pkc_left > 0 )  {
+		if( pkg_inget( pc, pc->pkc_curpos, pc->pkc_left ) != pc->pkc_left )  {
+			pc->pkc_left = -1;
+			return(-1);
+		}
+		pc->pkc_left = 0;
 	}
-	pc->pkc_left = 0;
+
+	/* Now, pkc_left == 0, dispatch the message */
 	return( pkg_dispatch(pc) );
 }
 
@@ -1524,4 +1502,133 @@ pkg_timestamp()
 		tmp->tm_hour, tmp->tm_min, tmp->tm_sec,
 		getpid() );
 	/* Don't fflush here, wait for rest of line */
+}
+
+/*
+ *			P K G _ S U C K I N
+ *
+ *  This routine is the only place where data is taken off the network.
+ *  All input is appended to the internal buffer for later processing.
+ *
+ *  Subscripting was used for pkc_incur/pkc_inend to avoid having to
+ *  recompute pointers after a realloc().
+ *
+ *  Returns -
+ *	-1	on error
+ *	 0	on EOF
+ *	 1	success
+ */
+int
+pkg_suckin(pc)
+register struct pkg_conn	*pc;
+{
+	int	avail;
+	int	got;
+
+	PKG_CK(pc);
+
+	/* If no buffer allocated yet, get one */
+	if( pc->pkc_inbuf == (char *)0 || pc->pkc_inlen <= 0 )  {
+		pc->pkc_inlen = PKG_STREAMLEN;
+		if( (pc->pkc_inbuf = malloc(pc->pkc_inlen)) == (char *)0 )  {
+			pc->pkc_errlog("pkg_suckin malloc failure\n");
+			pc->pkc_inlen = 0;
+			return(-1);
+		}
+		pc->pkc_incur = pc->pkc_inend = 0;
+	}
+
+	if( pc->pkc_incur >= pc->pkc_inend )  {
+		/* Reset to beginning of buffer */
+		pc->pkc_incur = pc->pkc_inend = 0;
+	}
+
+	/* If remaining buffer space is small, make buffer bigger */
+	avail = pc->pkc_inlen - pc->pkc_inend;
+	if( avail < 2 * sizeof(struct pkg_header) )  {
+		pc->pkc_inlen <<= 1;
+		if( (pc->pkc_inbuf = realloc(pc->pkc_inbuf, pc->pkc_inlen)) == (char *)0 )  {
+			pc->pkc_errlog("pkg_suckin realloc failure\n");
+			pc->pkc_inlen = 0;
+			return(-1);
+		}
+	}
+
+	/* Take as much as the system will give us, up to buffer size */
+	if( (got = read( pc->pkc_fd, &pc->pkc_inbuf[pc->pkc_inend], avail )) <= 0 )  {
+		if( got == 0 )  return(0);	/* EOF */
+		pkg_perror(pc->pkc_errlog, "pkg_suckin: read");
+		return(-1);
+	}
+	if( got > avail )  {
+		pc->pkc_errlog("pkg_suckin:  read more bytes than desired\n");
+		got = avail;
+	}
+	pc->pkc_inend += got;
+	return(1);
+}
+
+/*
+ *			P K G _ C H E C K I N
+ *
+ *  This routine is called whenever it is necessary to see if there
+ *  is more input that can be read.
+ *  If input is available, it is read into pkc_inbuf[].
+ *  If nodelay is set, poll without waiting.
+ */
+pkg_checkin(pc, nodelay)
+register struct pkg_conn	*pc;
+int		nodelay;
+{
+	struct timeval	tv;
+	long		bits;
+	register int	i;
+
+	if( pkg_nochecking )
+		return;
+
+	/* Check socket for unexpected input */
+	tv.tv_sec = 0;
+	if( nodelay )
+		tv.tv_usec = 0;		/* poll -- no waiting */
+	else
+		tv.tv_usec = 20000;	/* 20 ms */
+	bits = 1 << pc->pkc_fd;
+	i = select( pc->pkc_fd+1, &bits, (char *)0, (char *)0, &tv );
+	if( i > 0 && bits )
+		(void)pkg_suckin(pc);
+}
+
+/*
+ *			P K G _ I N G E T
+ *
+ *  A functional replacement for mread(), through the
+ *  first level input buffer.
+ *  This will block if the required number of bytes are not available.
+ *  The number of bytes actually transferred is returned.
+ */
+int
+pkg_inget( pc, buf, count )
+register struct pkg_conn	*pc;
+char		*buf;
+int		count;
+{
+	register int	len;
+	register int	todo = count;
+
+	while( todo > 0 )  {
+		
+		while( (len = pc->pkc_inend - pc->pkc_incur) <= 0 )  {
+			/* This can block */
+			if( pkg_suckin( pc ) < 1 )
+				return( count - todo );
+		}
+		/* Input Buffer has some data in it, move to caller's buffer */
+		if( len > todo )  len = todo;
+		bcopy( &pc->pkc_inbuf[pc->pkc_incur], buf, len );
+		pc->pkc_incur += len;
+		buf += len;
+		todo -= len;
+	}
+	return( count );
 }
