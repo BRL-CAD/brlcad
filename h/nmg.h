@@ -325,14 +325,16 @@ struct shell_a {
  *  To find them, go up fu_p for one, then across fumate_p to other.
  */
 struct face {
-	long	   		magic;
+	struct rt_list		l;	/* faces in face_g's f_hd list */
 	struct faceuse		*fu_p;	/* Ptr up to one use of this face */
 	struct face_g		*fg_p;	/* geometry */
+	int			flip;	/* !0 ==> flip normal of fg */
 	long			index;	/* struct # in this model */
 };
 
 struct face_g {
 	long			magic;
+	struct rt_list		f_hd;	/* list of faces sharing this surface */
 	plane_t			N;	/* Plane equation (incl normal) */
 	point_t			min_pt;	/* minimums of bounding box */
 	point_t			max_pt;	/* maximums of bounding box */
@@ -354,6 +356,15 @@ struct faceuse_a {
 	long			magic;
 	long			index;	/* struct # in this model */
 };
+
+#define NMG_GET_FU_NORMAL(_N, _fu)	{ \
+	NMG_CK_FACEUSE(_fu); \
+	if( (fu->orientation != OT_SAME) != (fu->f_p->flip != 0) )  { \
+		VREVERSE(_N, fu->f_p->fg_p->N); \
+		_N[3] = fu->f_p->fg_p->N[3]; \
+	} else { \
+		HMOVE( _N, fu->f_p->fg_p->N ); \
+	} }
 
 /*
  *			L O O P
