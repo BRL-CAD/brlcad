@@ -1598,10 +1598,28 @@ RT_EXTERN(void mat_zrot, (mat_t dest, double sinz, double cosz) );
 RT_EXTERN(void mat_lookat, (mat_t dest, CONST vect_t dir, int yflip) );
 RT_EXTERN(void mat_vec_ortho, (vect_t dest, CONST vect_t src) );
 RT_EXTERN(void mat_vec_perp, (vect_t dest, CONST vect_t src) );
+RT_EXTERN(int mat_scale_about_pt, (mat_t mat, CONST point_t pt, CONST double scale));
 RT_EXTERN(void mat_xform_about_pt, (mat_t mat, CONST mat_t xform, CONST point_t pt));
+RT_EXTERN(void mat_arb_rot, (mat_t mat, CONST point_t pt, CONST vect_t dir, CONST fastf_t ang));
 RT_EXTERN(int rt_mat_is_equal, (CONST mat_t a, CONST mat_t b, CONST struct rt_tol *tol));
 #define vec_ortho(_d,_s)	mat_vec_ortho(_d,_s)	/* compat */
 #define vec_perp(_d,_s)		mat_vec_perp(_d,_s)	/* compat */
+
+
+
+/* Routines from qmath.h */
+RT_EXTERN(void quat_mat2quat, (quat_t quat, mat_t mat));
+RT_EXTERN(void quat_quat2mat, (mat_t mat, quat_t quat));
+RT_EXTERN(double quat_distance, (quat_t q1, quat_t q2));
+RT_EXTERN(void quat_double, (quat_t qout, quat_t q1, quat_t q2));
+RT_EXTERN(void quat_bisect, (quat_t qout, quat_t q1, quat_t q2));
+RT_EXTERN(void quat_slerp, (quat_t qout, quat_t q1, quat_t q2, double f));
+RT_EXTERN(void quat_sberp, (quat_t qout, quat_t q1, quat_t qa, quat_t qb,
+			    quat_t q2, double f));
+RT_EXTERN(void quat_make_nearest, (quat_t q1, quat_t q2));
+RT_EXTERN(void quat_print, (char *title, quat_t quat));
+RT_EXTERN(void quat_exp, (quat_t out, quat_t in));
+RT_EXTERN(void quat_log, (quat_t out, quat_t in));
 
 /*****************************************************************
  *                                                               *
