@@ -523,7 +523,7 @@ char *buf;
 	} else
 		rt_g.rtg_parallel = 0;
 
-	beginptr = sbrk(0);
+	beginptr = (char *) sbrk(0);
 
 	seen_gettrees = 1;
 	(void)free(buf);
