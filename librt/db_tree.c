@@ -614,7 +614,8 @@ union tree		*tp;
  *  *tp is set to NULL.
  *
  *  Returns -
- *	-2	Internal error
+ *	-3	Internal error
+ *	-2	Tree is empty
  *	-1	Unable to find OP_DB_LEAF node specified by 'cp'.
  *	 0	OK
  */
@@ -625,6 +626,8 @@ CONST char		*cp;
 	union tree	*parent;
 	int		side = 0;
 
+	if( *tp == TREE_NULL )  return -1;
+
 	RT_CK_TREE(*tp);
 
 	if( (parent = db_find_named_leafs_parent( &side, *tp, cp )) == TREE_NULL )  {
@@ -633,8 +636,9 @@ CONST char		*cp;
 		    strcmp( cp, (*tp)->tr_l.tl_name ) == 0 )  {
 		    	db_free_tree( *tp );
 		    	*tp = TREE_NULL;
+		    	return 0;
 		}
-		return -1;
+		return -2;
 	}
 
 	switch( side )  {
@@ -646,7 +650,7 @@ CONST char		*cp;
 		return 0;
 	}
 	bu_log("db_tree_del_dbleaf() unknown side=%d?\n", side);
-	return -2;
+	return -3;
 }
 
 
