@@ -71,17 +71,16 @@ char	*devname;
 		goto	safe_exit;
 		}
 	if(	(	(fbiop != FBIO_NULL && fb_getwidth( fbiop ) != devwid)
-		||	pixgrid == NULL
-		)
-	    && (pixgrid = (RGBpixel *) malloc( sizeof(RGBpixel)*devwid ))
-			== (RGBpixel *) NULL )
+		||	pixgrid == NULL)
+		&&	(pixgrid = (unsigned char *) calloc( devwid*3, sizeof(unsigned char) ))
+				== (unsigned char *) NULL )
 		{
-		prntScr( "Memory allocation of %d bytes failed.",
-			sizeof(RGBpixel)*devwid );
-		ret = false;
-		goto	safe_exit;
+			prntScr( "Memory allocation of %d bytes failed.",
+				sizeof(unsigned char)*devwid );
+			ret = false;
+			goto	safe_exit;
 		}
-	(void) memset( (char *) pixgrid, NUL, sizeof(RGBpixel)*devwid );
+	(void) memset( (char *) pixgrid, NUL, sizeof(unsigned char)*devwid*3 );
 	if( fbiop != FBIO_NULL )
 		{
 #if SGI_WINCLOSE_BUG
