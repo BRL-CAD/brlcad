@@ -58,7 +58,6 @@ double	tick_separation;	/* plot distance between ticks */
 double	char_width;		/* character scale (size) */
 {
 	register int i;
-	int	direction;			/* 1=clockwise, -1=counter */
 	int	nticks;
 	point_t	tick_bottom;			/* -Y point of tick */
 	vect_t	axis_incr;			/* +X vect between ticks */
@@ -71,8 +70,6 @@ double	char_width;		/* character scale (size) */
 	vect_t	temp;
 	vect_t	diff;
 	mat_t	xlate_to_0;
-	mat_t	xlate_to_origin;
-	mat_t	mtemp;
 	mat_t	mat;				/* combined transform */
 	char	fmt[32];
 	char	str[64];
