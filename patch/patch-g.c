@@ -55,7 +55,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./patch-g.h"
 #include "../rt/mathtab.h"
 
-RT_EXTERN( struct shell *nmg_dup_shell , ( struct shell *s , long ***trans_tbl ) );
+RT_EXTERN( struct shell *nmg_dup_shell , ( struct shell *s , long ***trans_tbl, struct bn_tol *tol ) );
 RT_EXTERN( fastf_t mat_determinant, ( CONST mat_t m ) );
 
 #define ABS( _x )	(( _x > 0.0 )? _x : (-_x))
@@ -1022,7 +1022,7 @@ struct rt_tol *tol;
 		rt_log( "nmg_break_edges broke %d edges\n" , i );
 
 	/* glue all the faces together */
-	nmg_gluefaces( (struct faceuse **)NMG_TBL_BASEADDR( &faces) , NMG_TBL_END( &faces ) );
+	nmg_gluefaces( (struct faceuse **)NMG_TBL_BASEADDR( &faces) , NMG_TBL_END( &faces ), tol );
 
 	for( RT_LIST_FOR( s , shell , &r->s_hd ) )
 		nmg_make_faces_within_tol( s, tol );
@@ -1202,7 +1202,7 @@ struct rt_tol *tol;
 	}
 
 	/* Duplicate shell */
-	is = nmg_dup_shell( s , &copy_tbl );
+	is = nmg_dup_shell( s , &copy_tbl, tol );
 
 	/* make a new flags array */
 	rt_free( (char *)flags , "build_solid: flags" );
@@ -1259,7 +1259,7 @@ struct rt_tol *tol;
 		if( fu->orientation == OT_SAME )
 			nmg_tbl( &faces , TBL_INS , (long *)fu );
 	}
-	nmg_gluefaces( (struct faceuse **)NMG_TBL_BASEADDR( &faces) , NMG_TBL_END( &faces ) );
+	nmg_gluefaces( (struct faceuse **)NMG_TBL_BASEADDR( &faces) , NMG_TBL_END( &faces ), tol );
 	nmg_tbl( &faces , TBL_RST , NULL );
 
 	nmg_shell_coplanar_face_merge( is , tol , 0 );
@@ -1425,7 +1425,7 @@ nmg_face_g( fu , pl1 );
 	}
 	if( debug )
 		rt_log( "Re-glue faces\n" );
-	nmg_gluefaces( (struct faceuse **)NMG_TBL_BASEADDR( &faces) , NMG_TBL_END( &faces ) );
+	nmg_gluefaces( (struct faceuse **)NMG_TBL_BASEADDR( &faces) , NMG_TBL_END( &faces ), tol );
 	nmg_tbl( &faces , TBL_FREE , NULL );
 
 	/* Calculate bounding boxes */
