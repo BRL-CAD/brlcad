@@ -217,7 +217,6 @@ char ** argv;
 	rle_dflt_hdr.xmin += scr_xoff;
 	rle_dflt_hdr.xmax += scr_xoff;
 	rle_dflt_hdr.ymin += scr_yoff;
-	rle_dflt_hdr.ymax += scr_yoff;
 
 	/* Pretend saved image origin is at 0, clip & position in fb_write call */
 	screen_xbase = rle_dflt_hdr.xmin;
