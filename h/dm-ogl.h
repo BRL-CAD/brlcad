@@ -1,3 +1,6 @@
+#ifndef SEEN_DM_OGL
+#define SEEN_DM_OGL
+
 /*
  * Display coordinate conversion:
  *  GED is using -2048..+2048,
@@ -85,3 +88,5 @@ extern int Ogl_irlimit();			/* provides knob dead spot */
 extern int Ogl_irisX2ged();
 extern int Ogl_irisY2ged();
 extern struct ogl_vars head_ogl_vars;
+
+#endif /* SEEN_DM_OGL */
