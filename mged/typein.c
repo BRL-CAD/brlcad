@@ -165,6 +165,14 @@ char *p_bot[] = {
 	"Enter thickness"
 };
 
+char *p_arbn[] = {
+	"Enter number of planes: ",
+	"Enter coefficients",
+	"Enter Y-coordinate of normal",
+	"Enter Z-coordinate of normal",
+	"Enter distance of plane along normal from origin"
+};
+
 char *p_pipe[] = {
 	"Enter number of points: ",
 	"Enter X, Y, Z, inner diameter, outer diameter, and bend radius for first point: ",
@@ -479,7 +487,7 @@ char **argv;
 				sph_in(), tec_in(), tgc_in(), tor_in(), ars_in(),
 				trc_in(), ebm_in(), vol_in(), hf_in(), bot_in(),
 				dsp_in_v4(),dsp_in_v5(), submodel_in(), part_in(), pipe_in(),
-				binunif_in();
+				binunif_in(), arbn_in();
 
 	CHECK_DBI_NULL;
 
@@ -559,6 +567,17 @@ char **argv;
 		nvals = 4;
 		menu = p_ebm;
 		fn_in = ebm_in;
+	} else if( strcmp( argv[2], "arbn" ) == 0 ) {
+		switch( arbn_in(argc, argv, &internal, &p_arbn[0]) ) {
+		case CMD_BAD:
+		  Tcl_AppendResult(interp, "ERROR, ARBN not made!\n",
+				   (char *)NULL);
+		  rt_db_free_internal( &internal, &rt_uniresource );
+		  return TCL_ERROR;
+		case CMD_MORE:
+		  return TCL_ERROR;
+		}
+		goto do_new_update;
 	} else if( strcmp( argv[2], "bot" ) == 0 ) {
 		switch( bot_in(argc, argv, &internal, &p_bot[0]) ) {
 		case CMD_BAD:
@@ -1230,6 +1249,59 @@ char			*prompt[];
 			}
 			bot->thickness[i] = atof( argv[arg_count + i*2 + 1] );
 		}
+	}
+
+	return CMD_OK;
+}
+
+/*
+ *			A R B N _ I N
+ */
+int arbn_in( argc, argv, intern, prompt )
+int			argc;
+char			**argv;
+struct rt_db_internal	*intern;
+char			*prompt[];
+{
+	struct rt_arbn_internal *arbn;
+	int num_planes=0;
+	int i;
+
+	CHECK_DBI_NULL;
+
+	if( argc < 4 ) {
+	  Tcl_AppendResult(interp, MORE_ARGS_STR, prompt[argc-3], (char *)NULL);
+	  return CMD_MORE;
+	}
+
+	num_planes = atoi( argv[3] );
+
+	if( argc < num_planes * 4 + 4 ) {
+		struct bu_vls tmp_vls;
+
+		bu_vls_init( &tmp_vls );
+		bu_vls_printf( &tmp_vls, "%s for plane %d : ", prompt[(argc-4)%4 + 1], 1+(argc-4)/4 );
+
+		Tcl_AppendResult(interp, MORE_ARGS_STR, bu_vls_addr(&tmp_vls), (char *)NULL);
+		bu_vls_free(&tmp_vls);
+
+		return CMD_MORE;
+	}
+
+	intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+	intern->idb_type = ID_ARBN;
+	intern->idb_meth = &rt_functab[ID_ARBN];
+	intern->idb_ptr = (genptr_t)bu_malloc( sizeof( struct rt_arbn_internal ),
+					       "rt_arbn_internal" );
+	arbn = (struct rt_arbn_internal *)intern->idb_ptr;
+	arbn->magic = RT_ARBN_INTERNAL_MAGIC;
+	arbn->neqn = num_planes;
+	arbn->eqn = (plane_t *)bu_calloc( arbn->neqn, sizeof( plane_t ), "arbn planes" );
+	for( i=0 ; i<arbn->neqn ; i++ ) {
+		arbn->eqn[i][0] = atof( argv[4+i*4] );
+		arbn->eqn[i][1] = atof( argv[4+i*4+1] );
+		arbn->eqn[i][2] = atof( argv[4+i*4+2] );
+		arbn->eqn[i][3] = atof( argv[4+i*4+3] );
 	}
 
 	return CMD_OK;
