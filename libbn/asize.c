@@ -16,7 +16,7 @@
  */
 
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"
@@ -29,6 +29,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #else
 #include <strings.h>
 #endif
+
+/* forward declarations */
+int bn_common_name_size(int *, int *, char *);
+int bn_common_image_size(int *, int *, int);
 
 /* This table does not need to include any square sizes */
 struct sizes {

@@ -33,7 +33,7 @@
  *	Public Domain, Distribution Unlimitied.
  */
 #ifndef lint
-static char tp_RCSid[] = "@(#)$Header$ (ARL)";
+static const char tp_RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 
 #include "conf.h"

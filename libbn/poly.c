@@ -14,7 +14,7 @@
  *	Public Domain, Distribution Unlimited.
  */
 #ifndef lint
-static char RCSpoly[] = "@(#)$Header$ (ARL)";
+static const char RCSpoly[] = "@(#)$Header$ (ARL)";
 #endif
 
 #include "conf.h"
@@ -36,7 +36,7 @@ static char RCSpoly[] = "@(#)$Header$ (ARL)";
 #endif
 #define PI_DIV_3	(M_PI/3.0)
 
-static CONST struct bn_poly	bn_Zero_poly = { BN_POLY_MAGIC, 0, 0.0 };
+static CONST struct bn_poly	bn_Zero_poly = { BN_POLY_MAGIC, 0, {0.0} };
 
 /*
  *	bn_poly_mul -- multiply two polynomials

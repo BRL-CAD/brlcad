@@ -28,11 +28,20 @@
  *  With thanks to Russ Moulton Jr, EOSoft Inc. for his "rad.c" module.
  */
 #ifndef lint
-static char RCStabdata[] = "@(#)$Header$ (ARL)";
+static const char RCStabdata[] = "@(#)$Header$ (ARL)";
 #endif
 
+#include "conf.h"
 #include <stdio.h>
 #include <math.h>
+#include <fcntl.h>
+#ifdef HAVE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
+
+#include "externs.h"
 #include "machine.h"
 #include "vmath.h"
 #include "bu.h"
