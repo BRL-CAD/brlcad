@@ -407,13 +407,10 @@ com:
 	/* debug */
 	NMG_CK_REGION( r );
 	NMG_CK_REGION( l );
-	if( nmg_ck_closed_region( r ) != 0 ||
-	    nmg_ck_closed_region( l ) != 0 )  {
-	    	rt_log("mged_nmg_doit:  non-closed shell, skipped\n");
-	    	nmg_kr( r );
-	    	nmg_kr( l );
-		return(0);
-	}
+	if( nmg_ck_closed_region( r ) != 0 )
+	    	rt_log("mged_nmg_doit:  WARNING, non-closed shell (r), barging ahead\n");
+	if( nmg_ck_closed_region( l ) != 0 )
+	    	rt_log("mged_nmg_doit:  WARNING, non-closed shell (l), barging ahead\n");
 
 	/*
 	 *  Compute appropriate tolerance for the boolean routine.
