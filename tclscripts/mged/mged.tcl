@@ -174,9 +174,14 @@ proc do_Open { id } {
     set ia_filename [tk_getOpenFile -parent .$id -filetypes $file_types\
 	    -title "Open MGED Database" -defaultextension ".g"]
     if {$ia_filename != ""} {
-	opendb $ia_filename
-	cad_dialog .$id.cool $mged_gui($id,screen) "File loaded" \
-		"Database $ia_filename successfully loaded." info 0 OK
+	set ret [catch {opendb $ia_filename} msg]
+	if {$ret} {
+	    cad_dialog .$id.cool $mged_gui($id,screen) "Error" \
+		    $msg info 0 OK
+	} else {
+	    cad_dialog .$id.cool $mged_gui($id,screen) "File loaded" \
+		    $msg info 0 OK
+	}
     }
 }
 
@@ -195,9 +200,14 @@ must not exist by this name."}}\
 	    cad_dialog .$id.uncool $mged_gui($id,screen) "Existing Database" \
 		    "$ia_filename already exists" info 0 OK
 	} else {
-	    opendb $ia_filename y
-	    cad_dialog .$id.cool $mged_gui($id,screen) "File loaded" \
-		    "Database $ia_filename successfully loaded." info 0 OK
+	    set ret [catch {opendb $ia_filename y} msg]
+	    if {$ret} {
+		cad_dialog .$id.cool $mged_gui($id,screen) "Error" \
+			$msg info 0 OK
+	    } else {
+		cad_dialog .$id.cool $mged_gui($id,screen) "File loaded" \
+			$msg info 0 OK
+	    }
 	}
     }
 }
@@ -216,12 +226,12 @@ This is where to enter a prefix. The prefix,
 if entered, is prepended to each object of
 the database being inserted."} { see_also dbconcat } } OK CANCEL]
 
+        if {$prefix == ""} {
+	    set prefix /
+	}
+
 	if {$ret == 0} {
-	    if {$prefix != ""} {
-		dbconcat $ia_filename $prefix
-	    } else {
-		dbconcat $ia_filename /
-	    }
+	    dbconcat $ia_filename $prefix
 	}
     }
 }
