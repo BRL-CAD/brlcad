@@ -21,7 +21,7 @@
  *	mat_lookat			Make rot mat:  xform from D to -Z
  *	mat_fromto			Make rot mat:  xform from A to B
  *	mat_arb_rot( &m, pt, dir, ang)	Make rot mat about axis (pt,dir), through ang
- *	rt_mat_is_equal()		Is mat a equal to mat b?
+ *	mat_is_equal()			Is mat a equal to mat b?
  *
  *
  * Matrix array elements have the following positions in the matrix:
@@ -37,6 +37,7 @@
  *  Authors -
  *	Robert S. Miles
  *	Michael John Muuss
+ *	Lee A. Butler
  *  
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
@@ -57,8 +58,10 @@ static char RCSmat[] = "@(#)$Header$ (BRL)";
 #include <math.h>
 
 #include "machine.h"
+#include "bu.h"
 #include "vmath.h"
-#include "raytrace.h"
+#include "bn.h"
+#include "raytrace.h" /* for rt_tol */
 
 CONST double	mat_degtorad = 0.0174532925199433;
 CONST double	mat_radtodeg = 57.29577951308230698802;
@@ -89,7 +92,7 @@ CONST mat_t	m;
 		}
 	}
 	*cp++ = '\0';
-	rt_log("%s\n", obuf);
+	bu_log("%s\n", obuf);
 }
 
 /*
@@ -291,9 +294,9 @@ CONST mat_t	input;
 		}
 
 		if( fabs(y) < SQRT_SMALL_FASTF )  {
-			rt_log("mat_inv:  error! fabs(y)=%g\n", fabs(y));
+			bu_log("mat_inv:  error! fabs(y)=%g\n", fabs(y));
 			mat_print("singular matrix", input);
-			rt_bomb("mat_inv: singular matrix\n");
+			bu_bomb("mat_inv: singular matrix\n");
 			/* NOTREACHED */
 		}
 		y = 1.0 / y;
@@ -379,7 +382,7 @@ register CONST vect_t	h;
 		v[Z] = h[Z];
 	}  else  {
 		if( h[W] == SMALL_FASTF )  {
-			rt_log("mat_htov_move: divide by %f!\n", h[W]);
+			bu_log("mat_htov_move: divide by %f!\n", h[W]);
 			return;
 		}
 		inv = 1.0 / h[W];
@@ -756,7 +759,7 @@ CONST vect_t	to;
 	MAT4X3VEC( test_to, m, unit_from );
 	dot = VDOT( unit_to, test_to );
 	if( dot < 0.98 || dot > 1.02 )  {
-		rt_log("mat_fromto() ERROR!  from (%g,%g,%g) to (%g,%g,%g) went to (%g,%g,%g), dot=%g?\n",
+		bu_log("mat_fromto() ERROR!  from (%g,%g,%g) to (%g,%g,%g) went to (%g,%g,%g), dot=%g?\n",
 			V3ARGS(from),
 			V3ARGS(to),
 			V3ARGS( test_to ), dot );
@@ -900,7 +903,7 @@ int		yflip;
 	MAT4X3VEC( xproj, prod12, x );
 	hypot_xy = hypot( xproj[X], xproj[Y] );
 	if( hypot_xy < 1.0e-10 )  {
-		rt_log("Warning: mat_lookat:  unable to twist correct, hypot=%g\n", hypot_xy);
+		bu_log("Warning: mat_lookat:  unable to twist correct, hypot=%g\n", hypot_xy);
 		VPRINT( "xproj", xproj );
 		mat_copy( rot, prod12 );
 		return;
@@ -923,7 +926,7 @@ int		yflip;
 	/* Check the final results */
 	MAT4X3VEC( t1, rot, dir );
 	if( t1[Z] > -0.98 )  {
-		rt_log("Error:  mat_lookat final= (%g, %g, %g)\n", t1[X], t1[Y], t1[Z] );
+		bu_log("Error:  mat_lookat final= (%g, %g, %g)\n", t1[X], t1[Y], t1[Z] );
 	}
 }
 
@@ -1046,7 +1049,7 @@ CONST point_t	pt;
  *	1	When matricies are equal
  */
 int
-rt_mat_is_equal(a,b,tol)
+mat_is_equal(a, b, tol)
 CONST mat_t	a;
 CONST mat_t	b;
 CONST struct rt_tol	*tol;
@@ -1182,32 +1185,6 @@ CONST fastf_t ang;
 	mat_mul2( tran2, m );
 }
 
-#if 0
-/*
- *			R T _ V E C T _ M A X M A G
- *
- *  Return the subscript (X, Y, Z) of the element of a vector (3-tuple)
- *  that has the maximum absolute value.
- */
-int
-rt_vect_maxmag( v )
-CONST vect_t	v;
-{
-	if( fabs(v[X]) >= fabs(v[Y]) )  {
-		/* X -vs- Z */
-		if( fabs(v[X]) >= fabs(v[Z]) )
-			return X;
-		else
-			return Z;
-	}
-
-	/* Y -vs- Z */
-	if( fabs(v[Y]) >= fabs(v[Z]) )
-		return Y;
-
-	return Z;
-}
-#endif
 
 /*
  *			M A T _ D U P
@@ -1220,7 +1197,7 @@ CONST mat_t	in;
 {
 	matp_t	out;
 
-	out = (matp_t) rt_malloc( sizeof(mat_t), "mat_dup" );
+	out = (matp_t) bu_malloc( sizeof(mat_t), "mat_dup" );
 	bcopy( (CONST char *)in, (char *)out, sizeof(mat_t) );
 	return out;
 }
