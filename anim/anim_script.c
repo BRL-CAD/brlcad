@@ -23,8 +23,11 @@
  *      in all countries except the USA.  All rights reserved.
  */
 
+#include "conf.h"
+
 #include <math.h>
 #include <stdio.h>
+
 #include "machine.h"
 #include "vmath.h"
 #include "anim.h"
@@ -115,7 +118,7 @@ char **argv;
 		/* print one frame of script */
 		if (go && view){
 	                printf("start %d;\n", first_frame + frame);
-			printf("clean\n");
+			printf("clean;\n");
 			if (readview)
 		                printf("viewsize %f;\n", viewsize);
 	                printf("eye_pt %f %f %f;\n",a[3],a[7],a[11]);
