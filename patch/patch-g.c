@@ -654,8 +654,8 @@ int			simplify;
 	struct faceuse	*fu2;
 	struct face	*f1;
 	struct face	*f2;
-	struct face_g	*fg1;
-	struct face_g	*fg2;
+	struct face_g_plane	*fg1;
+	struct face_g_plane	*fg2;
 
 	NMG_CK_SHELL(s);
 	RT_CK_TOL( tol );
@@ -677,8 +677,8 @@ int			simplify;
 		if( NMG_INDEX_TEST(flags1, f1) )  continue;
 		NMG_INDEX_SET(flags1, f1);
 
-		fg1 = f1->fg_p;
-		NMG_CK_FACE_G(fg1);
+		fg1 = f1->g.plane_p;
+		NMG_CK_FACE_G_PLANE(fg1);
 		NMG_GET_FU_PLANE( n1, fu1 );
 
 		/* find the entry in p_faces for this faceuse */
@@ -708,8 +708,8 @@ int			simplify;
 			if( NMG_INDEX_TEST(flags2, f2) )  continue;
 			NMG_INDEX_SET(flags2, f2);
 
-			fg2 = f2->fg_p;
-			NMG_CK_FACE_G(fg2);
+			fg2 = f2->g.plane_p;
+			NMG_CK_FACE_G_PLANE(fg2);
 
 			/* See if face geometry is shared & same direction */
 			if( fg1 != fg2 || f1->flip != f2->flip )  {
@@ -1141,7 +1141,7 @@ struct rt_tol *tol;
 	/* Move faces planes */
 	for( i=0 ; i<face_count ; i++ )
 	{
-		struct face_g *fg_p;
+		struct face_g_plane *fg_p;
 		plane_t plane;
 
 		fu = NMG_INDEX_GETP( faceuse , copy_tbl , p_faces[i].fu );
@@ -1160,8 +1160,8 @@ struct rt_tol *tol;
 		if( fu->orientation != OT_SAME )
 			rt_bomb( "patch-g: neither faceuse nor mate has orientation of OT_SAME\n" );
 
-		fg_p = fu->f_p->fg_p;
-		NMG_CK_FACE_G( fg_p );
+		fg_p = fu->f_p->g.plane_p;
+		NMG_CK_FACE_G_PLANE( fg_p );
 
 		/* move the faces by the distance "thick" */
 		if( NMG_INDEX_TEST_AND_SET( flags , fg_p ) )
