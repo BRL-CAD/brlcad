@@ -16,11 +16,7 @@ Recent Bugs
 
 * bwmod gives a divide by zero error whenever you use the "-d" option
 
-* mged help seems to be busted
-
 * you can't run a make benchmark unless you're compiling in place
-
-* reflected light energy seems to be accumulating too much
 
 * benchmark may report environment garbage into the summary file if
   the benchmark run is aborted.
