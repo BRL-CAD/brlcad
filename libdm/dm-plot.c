@@ -115,8 +115,8 @@ char *argv[];
 
   /* Process any options */
   ((struct plot_vars *)dmp->dm_vars)->is_3D = 1;          /* 3-D w/color, by default */
-  while( argv[1] != (char *)0 && argv[1][0] == '-' )  {
-    switch( argv[1][1] )  {
+  while( argv[0] != (char *)0 && argv[0][0] == '-' )  {
+    switch( argv[0][1] )  {
     case '3':
       break;
     case '2':
@@ -137,26 +137,26 @@ char *argv[];
       break;
 #endif
     default:
-      Tcl_AppendResult(interp, "bad PLOT option ", argv[1], "\n", (char *)NULL);
+      Tcl_AppendResult(interp, "bad PLOT option ", argv[0], "\n", (char *)NULL);
       return TCL_ERROR;
     }
     argv++;
   }
-  if( argv[1] == (char *)0 )  {
+  if( argv[0] == (char *)0 )  {
     Tcl_AppendResult(interp, "no filename or filter specified\n", (char *)NULL);
     return TCL_ERROR;
   }
 
-  if( argv[1][0] == '|' )  {
-    bu_vls_strcpy(&((struct plot_vars *)dmp->dm_vars)->vls, &argv[1][1]);
+  if( argv[0][0] == '|' )  {
+    bu_vls_strcpy(&((struct plot_vars *)dmp->dm_vars)->vls, &argv[0][1]);
     while( (++argv)[1] != (char *)0 ) {
       bu_vls_strcat( &((struct plot_vars *)dmp->dm_vars)->vls, " " );
-      bu_vls_strcat( &((struct plot_vars *)dmp->dm_vars)->vls, argv[1] );
+      bu_vls_strcat( &((struct plot_vars *)dmp->dm_vars)->vls, argv[0] );
     }
 
     ((struct plot_vars *)dmp->dm_vars)->is_pipe = 1;
   }else{
-    bu_vls_strcpy(&((struct plot_vars *)dmp->dm_vars)->vls, argv[1]);
+    bu_vls_strcpy(&((struct plot_vars *)dmp->dm_vars)->vls, argv[0]);
   }
 
   if(!dmp->dm_vars)

@@ -127,72 +127,72 @@ char *argv[];
   ((struct ps_vars *)dmp->dm_vars)->linewidth = 4;
   
   /* Process any options */
-  while(argv[1] != (char *)0 && argv[1][0] == '-'){
-    switch(argv[1][1]){
+  while(argv[0] != (char *)0 && argv[0][0] == '-'){
+    switch(argv[0][1]){
     case 'f':               /* font */
-      if(argv[1][2] != '\0')
-	bu_vls_strcpy(&((struct ps_vars *)dmp->dm_vars)->font, &argv[1][2]);
+      if(argv[0][2] != '\0')
+	bu_vls_strcpy(&((struct ps_vars *)dmp->dm_vars)->font, &argv[0][2]);
       else{
 	argv++;
-	if(argv[1] == (char *)0 || argv[1][0] == '-'){
+	if(argv[0] == (char *)0 || argv[0][0] == '-'){
 	  Tcl_AppendResult(interp, ps_usage, (char *)0);
 	  return TCL_ERROR;
 	}else
-	  bu_vls_strcpy(&((struct ps_vars *)dmp->dm_vars)->font, &argv[1][0]);
+	  bu_vls_strcpy(&((struct ps_vars *)dmp->dm_vars)->font, &argv[0][0]);
       }
       break;
     case 't':               /* title */
-      if(argv[1][2] != '\0')
-	bu_vls_strcpy(&((struct ps_vars *)dmp->dm_vars)->title, &argv[1][2]);
+      if(argv[0][2] != '\0')
+	bu_vls_strcpy(&((struct ps_vars *)dmp->dm_vars)->title, &argv[0][2]);
       else{
 	argv++;
-	if(argv[1] == (char *)0 || argv[1][0] == '-'){
+	if(argv[0] == (char *)0 || argv[0][0] == '-'){
 	  Tcl_AppendResult(interp, ps_usage, (char *)0);
 	  return TCL_ERROR;
 	}else
-	  bu_vls_strcpy(&((struct ps_vars *)dmp->dm_vars)->title, &argv[1][0]);
+	  bu_vls_strcpy(&((struct ps_vars *)dmp->dm_vars)->title, &argv[0][0]);
       }
       break;
     case 'c':               /* creator */
-      if(argv[1][2] != '\0')
-	bu_vls_strcpy(&((struct ps_vars *)dmp->dm_vars)->creator, &argv[1][2]);
+      if(argv[0][2] != '\0')
+	bu_vls_strcpy(&((struct ps_vars *)dmp->dm_vars)->creator, &argv[0][2]);
       else{
 	argv++;
-	if(argv[1] == (char *)0 || argv[1][0] == '-'){
+	if(argv[0] == (char *)0 || argv[0][0] == '-'){
 	  Tcl_AppendResult(interp, ps_usage, (char *)0);
 	  return TCL_ERROR;
 	}else
-	  bu_vls_strcpy(&((struct ps_vars *)dmp->dm_vars)->creator, &argv[1][0]);
+	  bu_vls_strcpy(&((struct ps_vars *)dmp->dm_vars)->creator, &argv[0][0]);
       }
       break;
     case 's':               /* size in inches */
       {
 	fastf_t size;
 
-	if(argv[1][2] != '\0')
-	  sscanf(&argv[1][2], "%lf", &size);
+	if(argv[0][2] != '\0')
+	  sscanf(&argv[0][2], "%lf", &size);
 	else{
 	  argv++;
-	  if(argv[1] == (char *)0 || argv[1][0] == '-'){
+	  if(argv[0] == (char *)0 || argv[0][0] == '-'){
 	    Tcl_AppendResult(interp, ps_usage, (char *)0);
 	    return TCL_ERROR;
 	  }else
-	    sscanf(&argv[1][0], "%lf", &size);
+	    sscanf(&argv[0][0], "%lf", &size);
 	}
 
 	((struct ps_vars *)dmp->dm_vars)->scale = size * 0.017578125;
       }
       break;
     case 'l':               /* line width */
-      if(argv[1][2] != '\0')
-	sscanf(&argv[1][2], "%d", &((struct ps_vars *)dmp->dm_vars)->linewidth);
+      if(argv[0][2] != '\0')
+	sscanf(&argv[0][2], "%d", &((struct ps_vars *)dmp->dm_vars)->linewidth);
       else{
 	argv++;
-	if(argv[1] == (char *)0 || argv[1][0] == '-'){
+	if(argv[0] == (char *)0 || argv[0][0] == '-'){
 	  Tcl_AppendResult(interp, ps_usage, (char *)0);
 	  return TCL_ERROR;
 	}else
-	  sscanf(&argv[1][0], "%d", &((struct ps_vars *)dmp->dm_vars)->linewidth);
+	  sscanf(&argv[0][0], "%d", &((struct ps_vars *)dmp->dm_vars)->linewidth);
       }
       break;
     default:
@@ -202,12 +202,12 @@ char *argv[];
     argv++;
   }
 
-  if(argv[1] == (char *)0){
+  if(argv[0] == (char *)0){
     Tcl_AppendResult(interp, "no filename specified\n", (char *)NULL);
     return TCL_ERROR;
   }
 
-  bu_vls_strcpy(&((struct ps_vars *)dmp->dm_vars)->fname, argv[1]);
+  bu_vls_strcpy(&((struct ps_vars *)dmp->dm_vars)->fname, argv[0]);
 
   if(!dmp->dm_vars)
     return TCL_ERROR;
