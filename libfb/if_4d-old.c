@@ -760,7 +760,7 @@ int	width, height;
 	 */
 	if( (ifp->if_mode & MODE_4MASK) == MODE_4HZ30 )  {
 		MIPS(ifp)->mi_der1 = getvideo(DE_R1);
-		setvideo( DE_R1, DER1_30HZ);	/* 4-wire RS-343 */
+		setvideo( DE_R1, DER1_30HZ|DER1_UNBLANK);	/* 4-wire RS-343 */
 	} else if( (ifp->if_mode & MODE_5MASK) == MODE_5GENLOCK )  {
 		MIPS(ifp)->mi_der1 = getvideo(DE_R1);
 		if( (MIPS(ifp)->mi_der1 & DER1_VMASK) == DER1_170 )  {
@@ -802,19 +802,19 @@ int	width, height;
 			if( (ifp->if_mode & MODE_6MASK) == MODE_6EXTSYNC )  {
 				/* external sync via GENLOCK board REM IN */
 			    	setvideo(CG_MODE, CG2_M_MODE3);
-			    	setvideo(DE_R1, DER1_G_170 );
+			    	setvideo(DE_R1, DER1_G_170|DER1_UNBLANK );
 			} else {
 				/* internal sync */
 #ifdef GENLOCK_SYNC
 				/* GENLOCK sync, found to be highly unstable */
 			    	setvideo(CG_MODE, CG2_M_MODE2);
-			    	setvideo(DE_R1, DER1_G_170 );
+			    	setvideo(DE_R1, DER1_G_170|DER1_UNBLANK );
 #else
 				/* Just use DE3 sync generator.
 				 * For this case, GENLOCK board does nothing!
 				 * Equiv to setmonitor(NTSC);
 				 */
-				setvideo(DE_R1, DER1_170);
+				setvideo(DE_R1, DER1_170|DER1_UNBLANK);
 #endif
 			}
 		} else {
@@ -824,7 +824,7 @@ int	width, height;
 			 *  and hope that they have an outboard NTSC
 			 *  encoder device.  Equiv to setmonitor(NTSC);
 			 */
-			setvideo(DE_R1, DER1_170);
+			setvideo(DE_R1, DER1_170|DER1_UNBLANK);
 		}
 	}
 
