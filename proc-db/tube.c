@@ -272,7 +272,7 @@ double	radius;
 	 *  The first and last "slice" are the center points that
 	 *  create the end caps.
 	 */
-	meshp = bp->mesh.ctl_points;
+	meshp = bp->ctl_points;
 
 	/* Row 0 */
 	for( col=0; col<9; col++ )  {

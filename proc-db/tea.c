@@ -117,7 +117,7 @@ pt patch;
 
 	/* Copy the control points */
 
-	mesh_pointer = b_patch->mesh.ctl_points;
+	mesh_pointer = b_patch->ctl_points;
 
 	for( i = 0; i< 4; i++)
 	for( j = 0; j < 4; j++)
