@@ -23,8 +23,8 @@
  *	#include <stdio.h>	/_* For FILE * *_/
  *	#include <math.h>
  *	#include "machine.h"	/_* For fastf_t definition on this machine *_/
+ *	#include "bu.h"
  *	#include "vmath.h"	/_* For vect_t definition *_/
- *	#include "rtlist.h"	/_* OPTIONAL, auto-included by wdb.h *_/
  *	#include "nmg.h"	/_* OPTIONAL, precedes wdb.h when used *_/
  *	#include "raytrace.h"	/_* OPTIONAL, precedes wdb.h when used *_/
  *	#include "nurb.h"	/_* OPTIONAL, precedes wdb.h when used *_/
@@ -35,9 +35,8 @@
  *
  *  $Header$
  */
-
-#ifndef SEEN_RTLIST_H
-# include "rtlist.h"
+#ifndef SEEN_BU_H
+# include "bu.h"
 #endif
 
 #ifndef WDB_H
@@ -60,7 +59,7 @@
  *  In-memory form of database combinations
  */
 struct wmember  {
-	struct rt_list	l;
+	struct bu_list	l;
 	int		wm_op;		/* Boolean operation */
 	mat_t		wm_mat;
 	char		wm_name[16+3];	/* NAMESIZE */
@@ -73,7 +72,7 @@ struct wmember  {
  */
 
 struct wdb_pipept {
-	struct rt_list	l;		/* doubly linked list support */
+	struct bu_list	l;		/* doubly linked list support */
 	point_t		pp_coord;	/* "control" point for pipe solid */
 	fastf_t		pp_id;		/* inner diam, <=0 if solid (wire) */
 	fastf_t		pp_od;		/* pipe outer diam */
