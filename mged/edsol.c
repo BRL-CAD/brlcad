@@ -4847,6 +4847,9 @@ sedit_accept()
 
 	if( not_state( ST_S_EDIT, "Solid edit accept" ) )  return;
 
+	if( sedraw > 0)
+	  sedit();
+
 	es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
 	es_pipept = (struct wdb_pipept *)NULL; /* Reset es_pipept */
 	if( lu_copy )
@@ -4890,6 +4893,9 @@ void
 sedit_reject()
 {
 	if( not_state( ST_S_EDIT, "Solid edit reject" ) )  return;
+
+	if( sedraw > 0)
+	  sedit();
 
 	es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
 	es_pipept = (struct wdb_pipept *)NULL; /* Reset es_pipept */
