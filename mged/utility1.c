@@ -50,6 +50,12 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 extern struct bn_tol    mged_tol;       /* from ged.c */
 
+/* bu_getopt parameters */
+extern int	bu_opterr;
+extern int	bu_optind;
+extern int	bu_optopt;
+extern char	*bu_optarg;
+
 int readcodes(), writecodes();
 int loadcodes(), printcodes();
 void		tables(), edcodes(), changes(), prfield();
@@ -91,6 +97,28 @@ char ctemp[7];
 static char	tmpfil[17];
 static char	*tmpfil_init = "/tmp/GED.aXXXXXX";
 
+static int
+id_compare( const void *p1, const void *p2 )
+{
+	int id1, id2;
+
+	id1 = atoi( *(char **)p1 );
+	id2 = atoi( *(char **)p2 );
+
+	return( id1 - id2 );
+}
+
+static int
+reg_compare( const void *p1, const void *p2 )
+{
+	char *reg1, *reg2;
+
+	reg1 = strchr( *(char **)p1, '/' );
+	reg2 = strchr( *(char **)p2, '/' );
+
+	return( strcmp( reg1, reg2 ) );
+}
+
 /*
  *
  *	F _ E D C O D E S ( )
@@ -108,6 +136,9 @@ char	*argv[];
 {
   int i;
   int status;
+  int sort_by_ident=0;
+  int sort_by_region=0;
+  int c;
   char **av;
 
   CHECK_DBI_NULL;
@@ -121,6 +152,27 @@ char	*argv[];
     bu_vls_free(&vls);
     return TCL_ERROR;
   }
+
+  bu_optind = 1;
+  while ((c = bu_getopt(argc, argv, "ir")) != EOF) {
+	  switch( c ) {
+		  case 'i':
+			  sort_by_ident = 1;
+			  break;
+		  case 'r':
+			  sort_by_region = 1;
+			  break;
+	  }
+  }
+
+  if( (sort_by_ident + sort_by_region) > 1 ) {
+	  Tcl_AppendResult(interp, "edcodes: can only sort by region or ident, not both\n",
+			   (char *)NULL );
+	  return TCL_ERROR;
+  }
+
+  argc -= (bu_optind - 1);
+  argv += (bu_optind - 1);
 
   strcpy(tmpfil, tmpfil_init);
 #if 0
@@ -155,6 +207,53 @@ char	*argv[];
 		Tcl_AppendResult(interp, "f_edcodes: nesting is too deep\n", (char *)NULL );
 		(void)unlink(tmpfil);
 		return TCL_ERROR;
+	}
+
+	if( sort_by_ident || sort_by_region ) {
+		char **line_array;
+		char aline[256];
+		FILE *f_srt;
+		int line_count=0;
+		int j;
+
+		if( (f_srt=fopen( tmpfil, "r+" ) ) == NULL ) {
+			Tcl_AppendResult(interp, "edcodes: Failed to open temp file for sorting\n",
+					 (char *)NULL );
+			unlink( tmpfil );
+			return TCL_ERROR;
+		}
+
+		/* count lines */
+		while( fgets( aline, 256, f_srt ) ) {
+			line_count++;
+		}
+
+		/* build array of lines */
+		line_array = (char **)bu_calloc( line_count, sizeof( char *), "edcodes line array" );
+
+		/* read lines and save into the array */
+		rewind( f_srt );
+		line_count = 0;
+		while( fgets( aline, 256, f_srt ) ) {
+			line_array[line_count] = bu_strdup( aline );
+			line_count++;
+		}
+
+		/* sort the array of lines */
+		if( sort_by_ident ) {
+			qsort( line_array, line_count, sizeof( char *), id_compare );
+		} else {
+			qsort( line_array, line_count, sizeof( char *), reg_compare );
+		}
+
+		/* rewrite the temp file using the sorted lines */
+		rewind( f_srt );
+		for( j=0 ; j<line_count ; j++ ) {
+			fprintf( f_srt, "%s", line_array[j] );
+			bu_free( line_array[j], "edcodes line array element" );
+		}
+		bu_free( (char *)line_array, "edcodes line array" );
+		fclose( f_srt );
 	}
 
   if( editit(tmpfil) ){
