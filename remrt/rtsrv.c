@@ -123,7 +123,7 @@ void	ph_loglvl();
 struct pkg_switch pkgswitch[] = {
 	{ MSG_START, ph_start, "Startup" },
 	{ MSG_MATRIX, ph_matrix, "Set Matrix" },
-	{ MSG_OPTIONS, ph_options, "Set options" },
+	{ MSG_OPTIONS, ph_options, "Options" },
 	{ MSG_LINES, ph_lines, "Compute lines" },
 	{ MSG_END, ph_end, "End" },
 	{ MSG_PRINT, ph_unexp, "Log Message" },
@@ -193,6 +193,10 @@ char **argv;
 	}
 	if( !debug )  {
 		/* Close off the world */
+		fclose(stdin);
+		fclose(stdout);
+		fclose(stderr);
+
 		for( n=0; n < 20; n++ )
 			if( n != pcsrv->pkc_fd )
 				(void)close(n);
@@ -266,45 +270,6 @@ char *buf;
 }
 
 void
-ph_options(pc, buf)
-register struct pkg_comm *pc;
-char *buf;
-{
-	register char *cp;
-	register int i;
-	int	argc;
-	char	*argv[64];
-
-	if( debug )  fprintf(stderr,"ph_options: %s\n", buf);
-	/* Start options in a known state */
-	hypersample = 0;
-	jitter = 0;
-	rt_perspective = 0;
-	eye_backoff = 1.414;
-	aspect = 1;
-	stereo = 0;
-	width = 0;
-	height = 0;
-
-	argv[0] = "program_name";
-	if( (argc = rt_split_cmd( &argv[1], 64-1, buf )+1) <= 1 )  {
-		rt_log("rt_split_cmd error\n");
-		exit(1);
-	}
-
-	if( get_args( argc, argv ) <= 0 )  {
-		rt_log("get_args error\n");
-		exit(2);
-	}
-
-	if( width <= 0 || height <= 0 )  {
-		rt_log("ph_options:  width=%d, height=%d\n", width, height);
-		exit(3);
-	}
-	(void)free(buf);
-}
-
-void
 ph_start(pc, buf)
 register struct pkg_comm *pc;
 char *buf;
@@ -364,50 +329,65 @@ char *buf;
 }
 
 void
-ph_matrix(pc, buf)
+ph_options( pc, buf )
 register struct pkg_comm *pc;
-char *buf;
+char	*buf;
 {
-	register int i;
-	register char *cp = buf;
-	register struct rt_i *rtip = ap.a_rt_i;
+	register char	*cp;
 	register char	*sp;
 	register char	*ep;
 	int		len;
+	extern struct command_tab rt_cmdtab[];	/* from do.c */
 
-	if( debug )  fprintf(stderr, "ph_matrix: %s\n", buf );
+	if( debug )  fprintf(stderr, "ph_options: %s\n", buf );
 
-#if 0
-	/* Visible part is from -1 to +1 in view space */
-	viewsize = atof(cp);
-	while( *cp && *cp++ != ' ') ;
-	eye_model[X] = atof(cp);
-	while( *cp && *cp++ != ' ') ;
-	eye_model[Y] = atof(cp);
-	while( *cp && *cp++ != ' ') ;
-	eye_model[Z] = atof(cp);
-	for( i=0; i < 16; i++ )  {
-		while( *cp && *cp++ != ' ') ;
-		Viewrotscale[i] = atof(cp);
-	}
-#else
+	/* Parse the string */
 	len = strlen(buf);
 	ep = buf+len;
 	sp = buf;
 	cp = buf;
 	while( sp < ep )  {
-		extern struct command_tab rt_cmdtab[];	/* from do.c */
 		/* Find next semi-colon */
 		while( *cp && *cp != ';' )  cp++;
 		*cp++ = '\0';
 		/* Process this command */
-		if( rt_do_cmd( rtip, sp, rt_cmdtab ) < 0 )  {
+		if( rt_do_cmd( ap.a_rt_i, sp, rt_cmdtab ) < 0 )  {
 			rt_log("error on '%s'\n", sp );
 			exit(1);
 		}
 		sp = cp;
 	}
-#endif
+
+	if( width <= 0 || height <= 0 )  {
+		rt_log("ph_matrix:  width=%d, height=%d\n", width, height);
+		exit(3);
+	}
+	(void)free(buf);
+}
+
+void
+ph_matrix(pc, buf)
+register struct pkg_comm *pc;
+char *buf;
+{
+	register int i;
+	register struct rt_i *rtip = ap.a_rt_i;
+
+	if( debug )  fprintf(stderr, "ph_matrix: %s\n", buf );
+
+	/* Start options in a known state */
+	hypersample = 0;
+	jitter = 0;
+	rt_perspective = 0;
+	eye_backoff = 1.414;
+	aspect = 1;
+	stereo = 0;
+	width = 0;
+	height = 0;
+
+	/* Simulate arrival of options message */
+	ph_options( pc, buf );
+	buf = (char *)0;
 
 	/*
 	 * initialize application -- it will allocate 1 line and
@@ -436,7 +416,6 @@ char *buf;
 	rtip->rti_nrays = 0;
 
 	seen_matrix = 1;
-	(void)free(buf);
 }
 
 /* 
