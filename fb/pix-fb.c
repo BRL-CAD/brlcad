@@ -296,7 +296,9 @@ char **argv;
 				skipbytes( infd, (file_width-file_xoff-xout)*sizeof(RGBpixel) );
 		}
 	}
-	fb_close( fbp );
+	if( fb_close( fbp ) < 0 )  {
+		fprintf(stderr, "pix-fb: Warning: fb_close() error\n");
+	}
 	exit(0);
 }
 
