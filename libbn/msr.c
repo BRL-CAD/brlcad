@@ -24,6 +24,9 @@ static char rcsid[] = "$Header$";
  *
  *
  * $Log$
+ * Revision 10.2  1994/02/07  17:54:36  cjohnson
+ * Fix comments.
+ *
  * Revision 10.1  1991/10/12  06:40:37  mike
  * Release_4.0
  *
@@ -129,7 +132,18 @@ struct msr_unif *p;
 	register long test,work_seed;
 	register int i;
 
-	MSR_CK_UNIF(p);
+	/*
+	 * Gauss and uniform structures have the same format for the
+	 * first part (gauss is an extention of uniform) so that a gauss
+	 * structure can be passed to a uniform routine.  This means 
+	 * that we only maintain one structure for gaussian distributions
+	 * rather than two.  It also means that the user can pull 
+	 * uniform numbers from a guass structure when the user wants.
+	 */
+	if (!p || (p->magic != MSR_UNIF_MAGIC &&
+	    p->magic != MSR_GAUSS_MAGIC)) {
+		MSR_CK_UNIF(p);
+	}
 
 	work_seed = p->msr_seed;
 
@@ -180,7 +194,18 @@ struct msr_unif *p;
 	register long test,work_seed;
 	register int i;
 
-	MSR_CK_UNIF(p);
+	/*
+	 * Gauss and uniform structures have the same format for the
+	 * first part (gauss is an extention of uniform) so that a gauss
+	 * structure can be passed to a uniform routine.  This means 
+	 * that we only maintain one structure for gaussian distributions
+	 * rather than two.  It also means that the user can pull 
+	 * uniform numbers from a guass structure when the user wants.
+	 */
+	if (!p || (p->magic != MSR_UNIF_MAGIC &&
+	    p->magic != MSR_GAUSS_MAGIC)) {
+		MSR_CK_UNIF(p);
+	}
 
 	work_seed = p->msr_seed;
 
