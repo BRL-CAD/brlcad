@@ -38,7 +38,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 static char promptbuf[LNBUFSZ];
 static char *bannerp = "BURST (%s)";
-static char *pgmverp = "$Revision$";
+static char *pgmverp = "2.0";
 
 #define AddCmd( nm, f )\
 	{	Trie	*p;\
@@ -415,9 +415,7 @@ Ftable *tp;
 STATIC void
 banner()
         {
-        (void) sprintf(	scrbuf,
-			bannerp,
-			pgmverp[0] == '%' ? "EXP" : pgmverp );
+        (void) sprintf(	scrbuf,	bannerp, pgmverp );
 	HmBanner( scrbuf, BORDER_CHR );
         return;
         }
@@ -569,12 +567,14 @@ HmItem *itemp;
 			{ "Burst along shotline", "n", "%d", "y or n" },
 			};
 		register Input *ip = input;
-	GetBool( nriplevels, ip );
+	GetBool( shotburst, ip );
 	(void) sprintf( scrbuf, "%s\t\t%s",
 			itemp != NULL ? itemp->text : cmdname,
-			nriplevels == 1 ? "yes" : "no" );
+			shotburst == 1 ? "yes" : "no" );
 	logCmd( scrbuf );
-	firemode &= ~FM_BURST; /* disable discrete burst point option */
+	
+	if( shotburst )
+		firemode &= ~FM_BURST; /* disable discrete burst points */
 	return;
 	}
 
@@ -1170,7 +1170,6 @@ HmItem *itemp;
 	burstpoint[X] /= unitconv; /* convert to millimeters */
 	burstpoint[Y] /= unitconv;
 	burstpoint[Z] /= unitconv;
-	nriplevels = 1;
 	firemode = FM_BURST | FM_3DIM;
 	return;
 	}
@@ -1377,7 +1376,7 @@ HmItem *itemp;
 			itemp != NULL ? itemp->text : cmdname,
 			shotfile );
 	logCmd( scrbuf );
-	firemode = FM_SHOT | FM_FILE  | FM_3DIM;
+	firemode = FM_SHOT | FM_FILE | FM_3DIM;
 	return;
 	}
 
@@ -1404,7 +1403,6 @@ HmItem *itemp;
 			itemp != NULL ? itemp->text : cmdname,
 			burstfile );
 	logCmd( scrbuf );
-	nriplevels = 1;
 	firemode = FM_BURST | FM_3DIM | FM_FILE ;
 	return;
 	}

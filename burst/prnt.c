@@ -79,7 +79,6 @@ struct application	*ap;
 	V_Print( "\tpnt", ap->a_ray.r_pt, rt_log );
 	V_Print( "\tdir", ap->a_ray.r_dir, rt_log );
 	ap->a_rbeam = 0.0;
-	VSET( ap->a_vvec, 0.0, 0.0, 0.0 );
 	return	0;
 	}
 
@@ -87,7 +86,7 @@ struct application	*ap;
 
 	Shooting from surface of object along reversed entry normal to
 	compute exit point along normal direction and normal thickness.
-	Exit point returned in "a_vvec", thickness returned in "a_rbeam".
+	Thickness returned in "a_rbeam".
  */
 STATIC int
 f_Normal( ap, pt_headp )
@@ -95,7 +94,6 @@ struct application	*ap;
 struct partition	*pt_headp;
 	{	register struct partition	*pp = pt_headp->pt_forw;
 		register struct partition	*cp;
-		register struct xray		*rp = &ap->a_ray;
 		register struct hit		*ohitp;
 	for(	cp = pp->pt_forw;
 		cp != pt_headp && SameCmp( pp->pt_regionp, cp->pt_regionp );
@@ -104,7 +102,6 @@ struct partition	*pt_headp;
 		;
 	ohitp = cp->pt_back->pt_outhit;
 	ap->a_rbeam = ohitp->hit_dist - pp->pt_inhit->hit_dist;
-	VJOIN1( ap->a_vvec, rp->r_pt, ohitp->hit_dist, rp->r_dir );
 #ifdef DEBUG
 	rt_log( "f_Normal: thickness=%g dout=%g din=%g\n",
 		ap->a_rbeam*unitconv, ohitp->hit_dist, pp->pt_inhit->hit_dist );
@@ -576,32 +573,33 @@ getNormThickness( ap, pp, cosobliquity )
 register struct application *ap;
 register struct partition *pp;
 fastf_t cosobliquity;
-	{	struct application a_thick;
-		register struct hit *ihitp = pp->pt_inhit;
-		register struct region *regp = pp->pt_regionp;
-	a_thick = *ap;
-	a_thick.a_hit = f_Normal;
-	a_thick.a_miss = f_Nerror;
-	a_thick.a_level++;     
-	a_thick.a_uptr = regp->reg_name;
-	a_thick.a_user = regp->reg_regionid;
-	a_thick.a_purpose = "normal thickness";
-	CopyVec( a_thick.a_ray.r_pt, ihitp->hit_point );
+	{
 	if( AproxEq( cosobliquity, 1.0, COS_TOL ) )
 		{ /* Trajectory was normal to surface, so no need
-			to shoot another ray.  We will use the
-			f_Normal routine to make sure we are
-			consistant in our calculations, even
-			though it requires some unnecessary vector
-			math. */
-		CopyVec( a_thick.a_ray.r_dir, ap->a_ray.r_dir );
+			to shoot another ray. */
+			fastf_t	thickness = pp->pt_outhit->hit_dist -
+					pp->pt_inhit->hit_dist;
 #ifdef DEBUG
 		rt_log( "getNormThickness: using existing partitions.\n" );
+		rt_log( "\tthickness=%g dout=%g din=%g\n",
+			thickness*unitconv,
+			pp->pt_outhit->hit_dist, pp->pt_inhit->hit_dist );
 #endif
-		(void) f_Normal( &a_thick, pp->pt_back );
-		} 
+		return	thickness;
+		}
 	else     
 		{ /* need to shoot ray */
+			struct application a_thick;
+			register struct hit *ihitp = pp->pt_inhit;
+			register struct region *regp = pp->pt_regionp;
+		a_thick = *ap;
+		a_thick.a_hit = f_Normal;
+		a_thick.a_miss = f_Nerror;
+		a_thick.a_level++;     
+		a_thick.a_uptr = regp->reg_name;
+		a_thick.a_user = regp->reg_regionid;
+		a_thick.a_purpose = "normal thickness";
+		CopyVec( a_thick.a_ray.r_pt, ihitp->hit_point );
 #ifdef DEBUG
 		rt_log( "getNormThickness: ray tracing.\n" );
 #endif
@@ -611,8 +609,9 @@ fastf_t cosobliquity;
 			rt_log( "Fatal error: raytracing aborted.\n" );
 			return	0.0;
 			}
+		return	a_thick.a_rbeam;
 		}
-	return	a_thick.a_rbeam;
+	/*NOTREACHED*/
 	}
 
 /*

@@ -36,7 +36,7 @@ Tc/libTc.a:
 	cd Tc; make
 
 PRODUCTS:	OBJ MYLIBES
-	CC LDFLAGS -o burst OBJ LIBRT RT_LIBES LIBFB LIBTERMLIB LIBES MYLIBES -ltermlib -lm
+	CC LDFLAGS -o burst OBJ LIB_PRE''LIBRT RT_LIBES LIB_PRE''LIBFB LIBTERMLIB LIBES MYLIBES -ltermlib -lm
 
 test&:	PRODUCTS
 	./burst < tfiles/ktank.in

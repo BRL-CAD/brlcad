@@ -823,6 +823,18 @@ gridInit()
 	if( TSTBIT(firemode,FM_FILE) || TSTBIT(firemode,FM_3DIM) )
 		rt_log( "BUG: insane combination of fire mode bits:0x%x\n",
 			firemode );
+	if( TSTBIT(firemode,FM_BURST) || shotburst )
+		nriplevels = 1;
+	else
+		nriplevels = 0;
+	if( !shotburst && groundburst )
+		{
+		(void) sprintf( scrbuf,
+				"Ground bursting directive ignored: %s.\n",
+				"only relevant if bursting along shotline" );
+		warning( scrbuf );
+		rt_log( scrbuf );
+		}
 #endif
 	/* compute grid unit vectors */
 	gridRotate( viewazim, viewelev, 0.0, gridhor, gridver );
