@@ -37,9 +37,9 @@ static char RCSparse[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "machine.h"
-#include "vmath.h"
-#include "rtstring.h"
 #include "externs.h"
+#include "vmath.h"
+#include "bu.h"
 #include "raytrace.h"
 
 /*
@@ -156,7 +156,7 @@ CONST char				*value;	/* string containing value */
 				continue;
 		}
 		if (sdp->sp_fmt[0] != '%') {
-			rt_log("rt_struct_lookup(%s): unknown format '%s'\n",
+			bu_log("rt_struct_lookup(%s): unknown format '%s'\n",
 				name, sdp->sp_fmt );
 			return(-1);
 		}
@@ -181,11 +181,9 @@ CONST char				*value;	/* string containing value */
 			}
 			break;
 		case 'S':
-			{	struct rt_vls *vls = (struct rt_vls *)loc;
-				if (vls->vls_magic != RT_VLS_MAGIC)
-					rt_vls_init(vls);
-
-				rt_vls_strcpy(vls, value);
+			{	struct bu_vls *vls = (struct bu_vls *)loc;
+				bu_vls_init_if_uninit( vls );
+				bu_vls_strcpy(vls, value);
 			}
 			break;
 		case 'i':
@@ -262,7 +260,7 @@ CONST char				*value;	/* string containing value */
 						 (double *)loc);
 			break;
 		default:
-			rt_log("rt_struct_lookup(%s): unknown format '%s'\n",
+			bu_log("rt_struct_lookup(%s): unknown format '%s'\n",
 				name, sdp->sp_fmt );
 			return(-1);
 		}
@@ -286,26 +284,26 @@ CONST char				*value;	/* string containing value */
  */
 int
 rt_structparse( in_vls, desc, base )
-CONST struct rt_vls		*in_vls;	/* string to parse through */
+CONST struct bu_vls		*in_vls;	/* string to parse through */
 CONST struct structparse	*desc;		/* structure description */
 char				*base;		/* base addr of users struct */
 {
-	struct rt_vls	vls;
+	struct bu_vls	vls;
 	register char *cp;
 	char	*name;
 	char	*value;
 	int retval;
 
-	RT_VLS_CHECK(in_vls);
+	BU_CK_VLS(in_vls);
 	if (desc == (struct structparse *)NULL) {
-		rt_log( "Null \"struct structparse\" pointer\n");
+		bu_log( "Null \"struct structparse\" pointer\n");
 		return(-1);
 	}
 
 	/* Duplicate the input string.  This algorithm is destructive. */
-	RT_VLS_INIT( &vls );
-	rt_vls_vlscat( &vls, in_vls );
-	cp = RT_VLS_ADDR( &vls );
+	bu_vls_init( &vls );
+	bu_vls_vlscat( &vls, in_vls );
+	cp = bu_vls_addr( &vls );
 
 	while( *cp )  {
 		/* NAME = VALUE white-space-separator */
@@ -323,9 +321,9 @@ char				*base;		/* base addr of users struct */
 			if( name == cp ) break;
 
 			/* end of string in middle of arg */
-			rt_log("rt_structparse: name '%s' without '='\n",
+			bu_log("rt_structparse: name '%s' without '='\n",
 				name );
-			rt_vls_free( &vls );
+			bu_vls_free( &vls );
 			return(-2);
 		}
 
@@ -343,9 +341,9 @@ char				*base;		/* base addr of users struct */
 					break;
 
 			if (*cp != '"') {
-				rt_log("rt_structparse: name '%s'=\" without closing \"\n",
+				bu_log("rt_structparse: name '%s'=\" without closing \"\n",
 					name);
-				rt_vls_free( &vls );
+				bu_vls_free( &vls );
 				return(-3);
 			}
 		} else {
@@ -361,16 +359,16 @@ char				*base;		/* base addr of users struct */
 		/* Lookup name in desc table and modify */
 		retval = rt_struct_lookup( desc, name, base, value );
 		if( retval == -1 ) {
-		    rt_log("rt_structparse:  '%s=%s', element name not found in:\n",
+		    bu_log("rt_structparse:  '%s=%s', element name not found in:\n",
 			   name, value);
 		    rt_structprint( "troublesome one", desc, base );
 		} else if( retval == -2 ) {
-		    rt_vls_free( &vls );
+		    bu_vls_free( &vls );
 		    return -2;
 		}
 
 	}
-	rt_vls_free( &vls );
+	bu_vls_free( &vls );
 	return(0);
 }
 
@@ -384,29 +382,29 @@ rt_matprint(name, mat)
 CONST char		*name;
 register CONST matp_t	mat;
 {
-	int i = rt_g.rtg_logindent;
+	int	delta = strlen(name)+2;
 
 	/* indent the body of the matrix */
-	rt_g.rtg_logindent += strlen(name)+2;
+	bu_log_indent_delta(delta);
 
-	rt_log(" %s=%.-12E %.-12E %.-12E %.-12E\n",
+	bu_log(" %s=%.-12E %.-12E %.-12E %.-12E\n",
 		name, mat[0], mat[1], mat[2], mat[3]);
 					
-	rt_log("%.-12E %.-12E %.-12E %.-12E\n",
+	bu_log("%.-12E %.-12E %.-12E %.-12E\n",
 		mat[4], mat[5], mat[6], mat[7]);
 
-	rt_log("%.-12E %.-12E %.-12E %.-12E\n",
+	bu_log("%.-12E %.-12E %.-12E %.-12E\n",
 		mat[8], mat[9], mat[10], mat[11]);
 
-	rt_g.rtg_logindent = i;
+	bu_log_indent_delta(-delta);
 
-	rt_log("%.-12E %.-12E %.-12E %.-12E\n",
+	bu_log("%.-12E %.-12E %.-12E %.-12E\n",
 		mat[12], mat[13], mat[14], mat[15]);
 }
 
 HIDDEN void
 rt_vls_item_print_core( vp, sdp, base, sep_char )
-struct rt_vls *vp;
+struct bu_vls *vp;
 CONST struct structparse *sdp;    /* item description */
 CONST char *base;                 /* base address of users structure */
 char sep_char;                    /* value separator */
@@ -414,7 +412,7 @@ char sep_char;                    /* value separator */
     register char *loc;
 
     if (sdp == (struct structparse *)NULL) {
-	rt_log( "Null \"struct structparse\" pointer\n");
+	bu_log( "Null \"struct structparse\" pointer\n");
 	return;
     }
 
@@ -425,12 +423,12 @@ char sep_char;                    /* value separator */
 #endif
 
     if (sdp->sp_fmt[0] == 'i' )  {
-	rt_log( "Cannot print type 'i' yet!\n" );
+	bu_log( "Cannot print type 'i' yet!\n" );
 	return;
     }
 
     if ( sdp->sp_fmt[0] != '%')  {
-	rt_log("rt_vls_item_print:  %s: unknown format '%s'\n",
+	bu_log("rt_vls_item_print:  %s: unknown format '%s'\n",
 	       sdp->sp_name, sdp->sp_fmt );
 	return;
     }
@@ -441,42 +439,42 @@ char sep_char;                    /* value separator */
 	if (sdp->sp_count < 1)
 	    break;
 	if (sdp->sp_count == 1)
-	    rt_vls_printf( vp, "%c", *loc );
+	    bu_vls_printf( vp, "%c", *loc );
 	else
-	    rt_vls_printf( vp, "%s", (char *)loc );
+	    bu_vls_printf( vp, "%s", (char *)loc );
 	break;
     case 'S': {
-	register struct rt_vls *vls = (struct rt_vls *)loc;
+	register struct bu_vls *vls = (struct bu_vls *)loc;
 
-	rt_vls_vlscat( vp, vls ); }
+	bu_vls_vlscat( vp, vls ); }
 	break;
     case 'i': {
 	register int i = sdp->sp_count;
 	register short *sp = (short *)loc;
 
-	rt_vls_printf( vp, "%hd", *sp++ );
-	while( --i > 0 ) rt_vls_printf( vp, "%c%hd", sep_char, *sp++ ); }
+	bu_vls_printf( vp, "%hd", *sp++ );
+	while( --i > 0 ) bu_vls_printf( vp, "%c%hd", sep_char, *sp++ ); }
 	break;
     case 'd': {
 	register int i = sdp->sp_count;
 	register int *dp = (int *)loc;
 
-	rt_vls_printf( vp, "%d", *dp++ );
-	while( --i > 0 ) rt_vls_printf( vp, "%c%d", sep_char, *dp++ ); }
+	bu_vls_printf( vp, "%d", *dp++ );
+	while( --i > 0 ) bu_vls_printf( vp, "%c%d", sep_char, *dp++ ); }
 	break;
     case 'f': {
 	register int i = sdp->sp_count;
 	register double *dp = (double *)loc;
 
-	rt_vls_printf( vp, "%.25G", *dp++ );
-	while( --i > 0 ) rt_vls_printf( vp, "%c%.25G", sep_char, *dp++ ); }
+	bu_vls_printf( vp, "%.25G", *dp++ );
+	while( --i > 0 ) bu_vls_printf( vp, "%c%.25G", sep_char, *dp++ ); }
 	break;
     case 'x': {
 	register int i = sdp->sp_count;
 	register int *dp = (int *)loc;
 
-	rt_vls_printf( vp, "%08x", *dp++ );
-	while( --i > 0 ) rt_vls_printf( vp, "%c%08x", sep_char, *dp++ );  }
+	bu_vls_printf( vp, "%08x", *dp++ );
+	while( --i > 0 ) bu_vls_printf( vp, "%c%08x", sep_char, *dp++ );  }
 	break;
     default:
 	break;
@@ -494,7 +492,7 @@ char sep_char;                    /* value separator */
 
 void
 rt_vls_item_print( vp, sdp, base )
-struct rt_vls *vp;
+struct bu_vls *vp;
 CONST struct structparse *sdp;     /* item description */
 CONST char *base;                 /* base address of users structure */
 {
@@ -509,7 +507,7 @@ CONST char *base;                 /* base address of users structure */
 
 void
 rt_vls_item_print_nc( vp, sdp, base )
-struct rt_vls *vp;
+struct bu_vls *vp;
 CONST struct structparse *sdp;     /* item description */
 CONST char *base;                 /* base address of users structure */
 {
@@ -523,7 +521,7 @@ CONST char *base;                 /* base address of users structure */
 
 int
 rt_vls_name_print( vp, parsetab, name, base )
-struct rt_vls *vp;
+struct bu_vls *vp;
 CONST struct structparse *parsetab;
 CONST char *name;
 CONST char *base;
@@ -546,7 +544,7 @@ CONST char *base;
 
 int
 rt_vls_name_print_nc( vp, parsetab, name, base )
-struct rt_vls *vp;
+struct bu_vls *vp;
 CONST struct structparse *parsetab;
 CONST char *name;
 CONST char *base;
@@ -577,12 +575,12 @@ CONST char			*base;	  /* base address of users structure */
 	register CONST struct structparse	*sdp;
 	register char			*loc;
 	register int			lastoff = -1;
-	struct rt_vls vls;
+	struct bu_vls vls;
 
-	rt_vls_init( &vls );
-	rt_log( "%s\n", title );
+	bu_vls_init( &vls );
+	bu_log( "%s\n", title );
 	if (parsetab == (struct structparse *)NULL) {
-		rt_log( "Null \"struct structparse\" pointer\n");
+		bu_log( "Null \"struct structparse\" pointer\n");
 		return;
 	}
 	for( sdp = parsetab; sdp->sp_name != (char *)0; sdp++ )  {
@@ -606,14 +604,14 @@ CONST char			*base;	  /* base address of users structure */
 		}
 
 		if ( sdp->sp_fmt[0] != '%')  {
-			rt_log("rt_structprint:  %s: unknown format '%s'\n",
+			bu_log("rt_structprint:  %s: unknown format '%s'\n",
 				sdp->sp_name, sdp->sp_fmt );
 			continue;
 		}
 #if 0
-		rt_vls_trunc( &vls, 0 );
+		bu_vls_trunc( &vls, 0 );
 		rt_vls_item_print( &vls, sdp, base );
-		rt_log( " %s=%s\n", sdp->sp_name, rt_vls_addr(&vls) );
+		bu_log( " %s=%s\n", sdp->sp_name, bu_vls_addr(&vls) );
 #else
 		switch( sdp->sp_fmt[1] )  {
 		case 'c':
@@ -621,46 +619,46 @@ CONST char			*base;	  /* base address of users structure */
 			if (sdp->sp_count < 1)
 				break;
 			if (sdp->sp_count == 1)
-				rt_log( " %s='%c'\n", sdp->sp_name, *loc);
+				bu_log( " %s='%c'\n", sdp->sp_name, *loc);
 			else
-				rt_log( " %s=\"%s\"\n", sdp->sp_name,
+				bu_log( " %s=\"%s\"\n", sdp->sp_name,
 					(char *)loc );
 			break;
 		case 'S':
-			{	register int indent = rt_g.rtg_logindent;
-				register struct rt_vls *vls =
-					(struct rt_vls *)loc;
+			{
+				int delta = strlen(sdp->sp_name)+2;
+				register struct bu_vls *vls =
+					(struct bu_vls *)loc;
 
-				rt_g.rtg_logindent = strlen(sdp->sp_name)+2;
-				
-				rt_log(" %s=(vls_magic)%d (vls_offset)%d (vls_len)%d (vls_max)%d\n",
+				bu_log_indent_delta(delta);
+				bu_log(" %s=(vls_magic)%d (vls_offset)%d (vls_len)%d (vls_max)%d\n",
 					sdp->sp_name, vls->vls_magic,
 					vls->vls_offset,
 					vls->vls_len, vls->vls_max);
-				rt_g.rtg_logindent = indent;
-				rt_log("\"%s\"\n", vls->vls_str+vls->vls_offset);
+				bu_log_indent_delta(-delta);
+				bu_log("\"%s\"\n", vls->vls_str+vls->vls_offset);
 			}
 			break;
 		case 'i':
 			{	register int i = sdp->sp_count;
 				register short *sp = (short *)loc;
 
-				rt_log( " %s=%hd", sdp->sp_name, *sp++ );
+				bu_log( " %s=%hd", sdp->sp_name, *sp++ );
 
-				while (--i > 0) rt_log( ",%d", *sp++ );
+				while (--i > 0) bu_log( ",%d", *sp++ );
 
-				rt_log("\n");
+				bu_log("\n");
 			}
 			break;
 		case 'd':
 			{	register int i = sdp->sp_count;
 				register int *dp = (int *)loc;
 
-				rt_log( " %s=%d", sdp->sp_name, *dp++ );
+				bu_log( " %s=%d", sdp->sp_name, *dp++ );
 
-				while (--i > 0) rt_log( ",%d", *dp++ );
+				while (--i > 0) bu_log( ",%d", *dp++ );
 
-				rt_log("\n");
+				bu_log("\n");
 			}
 			break;
 		case 'f':
@@ -670,25 +668,24 @@ CONST char			*base;	  /* base address of users structure */
 				if (sdp->sp_count == ELEMENTS_PER_MAT) {
 					rt_matprint(sdp->sp_name, (matp_t)dp);
 				} else if (sdp->sp_count <= ELEMENTS_PER_VECT){
-					rt_log( " %s=%.25G", sdp->sp_name, *dp++ );
+					bu_log( " %s=%.25G", sdp->sp_name, *dp++ );
 
 					while (--i > 0)
-						rt_log( ",%.25G", *dp++ );
+						bu_log( ",%.25G", *dp++ );
 
-					rt_log("\n");
+					bu_log("\n");
 				}else  {
-					register int j = rt_g.rtg_logindent;
+					int delta = strlen(sdp->sp_name)+2;
 
-					rt_g.rtg_logindent += strlen(sdp->sp_name)+2;
-					
-					rt_log( " %s=%.25G\n", sdp->sp_name, *dp++ );
+					bu_log_indent_delta(delta);
+
+					bu_log( " %s=%.25G\n", sdp->sp_name, *dp++ );
 
 					while (--i > 1)
-						rt_log( "%.25G\n", *dp++ );
+						bu_log( "%.25G\n", *dp++ );
 
-					rt_g.rtg_logindent = j;
-					rt_log( "%.25G\n", *dp );
-
+					bu_log_indent_delta(-delta);
+					bu_log( "%.25G\n", *dp );
 				}
 			}
 			break;
@@ -696,21 +693,21 @@ CONST char			*base;	  /* base address of users structure */
 			{	register int i = sdp->sp_count;
 				register int *dp = (int *)loc;
 
-				rt_log( " %s=%08x", sdp->sp_name, *dp++ );
+				bu_log( " %s=%08x", sdp->sp_name, *dp++ );
 
-				while (--i > 0) rt_log( ",%08x", *dp++ );
+				while (--i > 0) bu_log( ",%08x", *dp++ );
 
-				rt_log("\n");
+				bu_log("\n");
 			}
 			break;
 		default:
-			rt_log( " rt_structprint: Unknown format: %s=%s??\n",
+			bu_log( " rt_structprint: Unknown format: %s=%s??\n",
 				sdp->sp_name, sdp->sp_fmt );
 			break;
 		}
 #endif
 	}
-	rt_vls_free(&vls);
+	bu_vls_free(&vls);
 }
 
 /*
@@ -718,7 +715,7 @@ CONST char			*base;	  /* base address of users structure */
  */
 HIDDEN void
 rt_vls_print_double(vls, name, count, dp)
-struct rt_vls		*vls;
+struct bu_vls		*vls;
 CONST char		*name;
 register long		count;
 register CONST double	*dp;
@@ -726,7 +723,7 @@ register CONST double	*dp;
 	register int tmpi;
 	register char *cp;
 
-	rt_vls_extend(vls, strlen(name) + 3 + 32 * count);
+	bu_vls_extend(vls, strlen(name) + 3 + 32 * count);
 
 	cp = vls->vls_str + vls->vls_offset + vls->vls_len;
 	sprintf(cp, "%s%s=%.27G", (vls->vls_len?" ":""), name, *dp++);
@@ -749,7 +746,7 @@ register CONST double	*dp;
  */
 void
 rt_vls_structprint( vls, sdp, base)
-struct	rt_vls				*vls;	/* vls to print into */
+struct	bu_vls				*vls;	/* vls to print into */
 register CONST struct structparse	*sdp;	/* structure description */
 CONST char				*base;	/* structure ponter */
 {
@@ -757,10 +754,10 @@ CONST char				*base;	/* structure ponter */
 	register int			lastoff = -1;
 	register char			*cp;
 
-	RT_VLS_CHECK(vls);
+	BU_CK_VLS(vls);
 
 	if (sdp == (struct structparse *)NULL) {
-		rt_log( "Null \"struct structparse\" pointer\n");
+		bu_log( "Null \"struct structparse\" pointer\n");
 		return;
 	}
 
@@ -778,20 +775,20 @@ CONST char				*base;	/* structure ponter */
 #endif
 
 		if (sdp->sp_fmt[0] == 'i')  {
-			struct rt_vls sub_str;
+			struct bu_vls sub_str;
 
-			rt_vls_init(&sub_str);
+			bu_vls_init(&sub_str);
 			rt_vls_structprint( &sub_str,
 				(struct structparse *)sdp->sp_count,
 				base );
 
-			rt_vls_vlscat(vls, &sub_str);
-			rt_vls_free( &sub_str );
+			bu_vls_vlscat(vls, &sub_str);
+			bu_vls_free( &sub_str );
 			continue;
 		}
 
 		if ( sdp->sp_fmt[0] != '%' )  {
-			rt_log("rt_structprint:  %s: unknown format '%s'\n",
+			bu_log("rt_structprint:  %s: unknown format '%s'\n",
 				sdp->sp_name, sdp->sp_fmt );
 			break;
 		}
@@ -802,7 +799,7 @@ CONST char				*base;	/* structure ponter */
 			if (sdp->sp_count < 1)
 				break;
 			if (sdp->sp_count == 1) {
-				rt_vls_extend(vls, strlen(sdp->sp_name)+6);
+				bu_vls_extend(vls, strlen(sdp->sp_name)+6);
 				cp = vls->vls_str + vls->vls_offset + vls->vls_len;
 				if (*loc == '"')
 					sprintf(cp, "%s%s=\"%s\"",
@@ -823,7 +820,7 @@ CONST char				*base;	/* structure ponter */
 					++p;
 					++count;
 				}
-				rt_vls_extend(vls, strlen(sdp->sp_name)+
+				bu_vls_extend(vls, strlen(sdp->sp_name)+
 					strlen(loc)+5+count);
 
 				cp = vls->vls_str + vls->vls_offset + vls->vls_len;
@@ -847,17 +844,17 @@ CONST char				*base;	/* structure ponter */
 			vls->vls_len += strlen(cp);
 			break;
 		case 'S':
-			{	register struct rt_vls *vls_p =
-					(struct rt_vls *)loc;
+			{	register struct bu_vls *vls_p =
+					(struct bu_vls *)loc;
 
-				rt_vls_extend(vls, rt_vls_strlen(vls_p) + 5 +
+				bu_vls_extend(vls, bu_vls_strlen(vls_p) + 5 +
 					strlen(sdp->sp_name) );
 
 				cp = vls->vls_str + vls->vls_offset + vls->vls_len;
 				sprintf(cp, "%s%s=\"%s\"",
 					(vls->vls_len?" ":""),
 					sdp->sp_name,
-					rt_vls_addr(vls_p) );
+					bu_vls_addr(vls_p) );
 				vls->vls_len += strlen(cp);
 			}
 			break;
@@ -866,7 +863,7 @@ CONST char				*base;	/* structure ponter */
 				register short *sp = (short *)loc;
 				register int tmpi;
 
-				rt_vls_extend(vls, 
+				bu_vls_extend(vls, 
 					64 * i + strlen(sdp->sp_name) + 3 );
 
 				cp = vls->vls_str + vls->vls_offset + vls->vls_len;
@@ -889,7 +886,7 @@ CONST char				*base;	/* structure ponter */
 				register int *dp = (int *)loc;
 				register int tmpi;
 
-				rt_vls_extend(vls, 
+				bu_vls_extend(vls, 
 					64 * i + strlen(sdp->sp_name) + 3 );
 
 				cp = vls->vls_str + vls->vls_offset + vls->vls_len;
@@ -912,7 +909,7 @@ CONST char				*base;	/* structure ponter */
 				(double *)loc);
 			break;
 		default:
-			rt_log( " %s=%s??\n", sdp->sp_name, sdp->sp_fmt );
+			bu_log( " %s=%s??\n", sdp->sp_name, sdp->sp_fmt );
 			abort();
 			break;
 		}

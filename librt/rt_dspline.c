@@ -42,9 +42,13 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 
 #include <stdio.h>
+#include <math.h>
 
 #include "machine.h"
+#include "externs.h"
 #include "vmath.h"
+#include "bu.h"
+#include "raytrace.h"
 
 static void
 GetBeta(m, bias, tension)
