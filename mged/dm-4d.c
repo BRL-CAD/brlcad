@@ -74,6 +74,9 @@ static int lighting_on = 0;	/* Lighting model on */
 static int no_faceplate = 0;	/* Don't draw faceplate */
 static int ovec = -1;		/* Old color map entry number */
 static int kblights();
+static double	xlim_view = 1.0;	/* args for ortho() */
+static double	ylim_view = 1.0;
+static mat_t	aspect_corr;
 
 #ifdef IR_BUTTONS
 /*
@@ -207,6 +210,10 @@ Ir_configure_window_shape()
 {
 	int		npix;
 
+	xlim_view = 1.0;
+	ylim_view = 1.0;
+	mat_idn(aspect_corr);
+
 	getsize( &winx_size, &winy_size);
 	getorigin( &win_l, & win_b );
 	win_r = win_l + winx_size;
@@ -249,15 +256,26 @@ Ir_configure_window_shape()
 		win_r = win_l + winx_size;
 		win_b = (YMAX170-winy_size)/2;
 		win_t = win_b + winy_size;
-		viewport( (XMAX170 - npix)/2, npix + (XMAX170 - npix)/2,
-			(YMAX170-npix)/2, npix + (YMAX170-npix)/2 );
+
+		if( no_faceplate )  {
+			/* Use the whole screen, for VR & visualization */
+			xlim_view = XMAX170 / (double)npix / (4 / 3);;
+			ylim_view = YMAX170 / (double)npix;
+		} else {
+			/* Only use the central (square) faceplate area */
+			viewport( (XMAX170 - npix)/2, npix + (XMAX170 - npix)/2,
+				(YMAX170-npix)/2, npix + (YMAX170-npix)/2 );
+			xlim_view = 1;
+			ylim_view = 1;
+		}
+
 		linewidth(3);
 		blanktime(0);	/* don't screensave while recording video! */
 		break;
 	case PAL:
 		/* Only use the central square part */
 		npix = YMAXPAL-30;
-		winx_size = npix;
+		winx_size = npix;	/* What is PAL aspect ratio? */
 		winy_size = npix;
 		win_l = (XMAXPAL - winx_size)/2;
 		win_r = win_l + winx_size;;
@@ -269,6 +287,11 @@ Ir_configure_window_shape()
 		blanktime(0);	/* don't screensave while recording video! */
 		break;
 	}
+
+	ortho( -xlim_view, xlim_view, -ylim_view, ylim_view, -1.0, 1.0 );
+	/* The ortho() call really just makes this matrix: */
+	aspect_corr[0] = 1/xlim_view;
+	aspect_corr[5] = 1/ylim_view;
 }
 
 #define CMAP_BASE	32
@@ -532,7 +555,11 @@ Ir_prolog()
 {
 	if (ir_debug)
 		fprintf(stderr, "Ir_prolog\n");
+#if 0
 	ortho2( -1.0,1.0, -1.0,1.0);	/* L R Bot Top */
+#else
+	ortho( -xlim_view, xlim_view, -ylim_view, ylim_view, -1.0, 1.0 );
+#endif
 
 	if( dmaflag && !ir_has_doublebuffer )
 	{
@@ -560,7 +587,11 @@ Ir_normal()
 		color(BLACK);
 	}
 
+#if 0
 	ortho2( -1.0,1.0, -1.0,1.0);	/* L R Bot Top */
+#else
+	ortho( -xlim_view, xlim_view, -ylim_view, ylim_view, -1.0, 1.0 );
+#endif
 }
 
 /*
@@ -633,12 +664,34 @@ mat_t	mat;
 	} else {
 		mptr = mat;
 	}
+#if 0
 	for(i= 0; i < 4; i++) {
 		gtmat[0][i] = *(mptr++);
 		gtmat[1][i] = *(mptr++);
 		gtmat[2][i] = *(mptr++);
 		gtmat[3][i] = *(mptr++);
 	}
+#else
+	gtmat[0][0] = *(mptr++) * aspect_corr[0];
+	gtmat[1][0] = *(mptr++) * aspect_corr[0];
+	gtmat[2][0] = *(mptr++) * aspect_corr[0];
+	gtmat[3][0] = *(mptr++) * aspect_corr[0];
+
+	gtmat[0][1] = *(mptr++) * aspect_corr[5];
+	gtmat[1][1] = *(mptr++) * aspect_corr[5];
+	gtmat[2][1] = *(mptr++) * aspect_corr[5];
+	gtmat[3][1] = *(mptr++) * aspect_corr[5];
+
+	gtmat[0][2] = *(mptr++);
+	gtmat[1][2] = *(mptr++);
+	gtmat[2][2] = *(mptr++);
+	gtmat[3][2] = *(mptr++);
+
+	gtmat[0][3] = *(mptr++);
+	gtmat[1][3] = *(mptr++);
+	gtmat[2][3] = *(mptr++);
+	gtmat[3][3] = *(mptr++);
+#endif
 
 	/*
 	 *  Convert between MGED's right handed coordinate system
@@ -1201,6 +1254,7 @@ checkevents()  {
 					no_faceplate ?
 					"set faceplate=0\n" :
 					"set faceplate=1\n" );
+				Ir_configure_window_shape();
 				dmaflag = 1;
 				continue;
 			}
