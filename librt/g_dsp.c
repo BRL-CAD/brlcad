@@ -426,8 +426,8 @@ int line;
 		point_t in, t;
 		VJOIN1(t, isp->r.r_pt, dist, isp->r.r_dir);
 		MAT4X3PNT(in, isp->dsp->dsp_i.dsp_stom, t);
-		bu_log("line %d New in pt(%g %g %g) ss_dist %g surf: %d\n",
-			__LINE__, V3ARGS(in), dist, surf);
+		bu_log("line %d(%d) New in pt(%g %g %g) ss_dist %g surf: %d\n",
+			__LINE__, line, V3ARGS(in), dist, surf);
 		bu_log("\tNormal: %g %g %g\n", V3ARGS(norm));
 	}
 }
@@ -471,8 +471,8 @@ int line;
 
 		VJOIN1(t, isp->r.r_pt, dist, isp->r.r_dir);
 		MAT4X3PNT(out, isp->dsp->dsp_i.dsp_stom, t);
-		bu_log("line %d New out pt(%g %g %g) ss_dist %g surf:%d\n",
-			__LINE__, V3ARGS(out), dist, surf);
+		bu_log("line %d(%d) New out pt(%g %g %g) ss_dist %g surf:%d\n",
+			__LINE__, line, V3ARGS(out), dist, surf);
 		bu_log("\tNormal: %g %g %g\n", V3ARGS(norm));
 	}
 }
@@ -1591,6 +1591,16 @@ struct cell_stuff *cs;
 		OUTHIT(isect, cs->next_dist, cs->cell_outsurf, 
 			cs->grid_cell,
 			dsp_pl[BBSURF(cs->cell_outsurf)]);
+
+	     	if (BBSURF(cs->cell_outsurf) == ZMIN ||
+		    BBSURF(cs->cell_outsurf) == XMIN ||
+		    BBSURF(cs->cell_outsurf) == XMAX ||
+		    BBSURF(cs->cell_outsurf) == YMIN ||
+		    BBSURF(cs->cell_outsurf) == YMAX ) {
+	     		/* we're leaving the DSP */
+	     		HIT_COMMIT(isect);
+	     	}
+
 		return;
 	}
 
@@ -1864,12 +1874,12 @@ struct isect_stuff *isect;
 		VMOVE(cs.curr_pt, cs.next_pt);
 	}
 
-	if (isect->sp_is_valid) {
+	if (isect->sp_is_valid && !isect->sp_is_done) {
 		OUTHIT( isect, 
 		isect->bbox.out_dist,
 		isect->bbox.out_surf,
 		bbout_cell,
-		dsp_pl[isect->bbox.out_surf]);
+		dsp_pl[BBSURF(isect->bbox.out_surf)]);
 
 
 		HIT_COMMIT( isect );
