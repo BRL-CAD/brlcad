@@ -838,6 +838,7 @@ char	**argv;
 {
 	char	*cmd;
 	int	c;
+	vect_t	temp;
 
 	if( not_state( ST_VIEW, "animate viewpoint from new RT file") )
 		return;
@@ -881,6 +882,14 @@ char	**argv;
 	rtif_vbp = rt_vlblock_init();
 
 	printf("eyepoint at (0,0,1) viewspace\n");
+
+	/*
+	 *  Initialize the view to the current one in MGED
+	 *  in case a view specification is never given.
+	 */
+	mat_copy(rtif_viewrot, Viewrot);
+	VSET(temp, 0, 0, 1);
+	MAT4X3PNT(rtif_eye_model, view2model, temp);
 
 	/* If user hits ^C, preview will stop, and clean up */
 	(void)signal(SIGINT, rtif_sigint);
