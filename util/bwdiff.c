@@ -39,7 +39,7 @@ main( argc, argv )
 int argc; char **argv;
 {
 	register unsigned char *p1, *p2, *op;
-	int	i, n, m, dot;
+	int	i, n, m;
 	
 	if( argc > 1 && strcmp(argv[1],"-m") == 0 ) {
 		mflag++;
@@ -78,13 +78,14 @@ int argc; char **argv;
 		}
 		for( i = 0; i < n; i++ ) {
 			if( mflag ) {
-				dot = abs( (int)*p1 - (int)*p2 );
+				*op++ = abs( (int)*p1 - (int)*p2 );
 			} else {
-				dot = ((int)*p1 - (int)*p2)/2 + 127;
+				/*
+				 * *p's promoted to ints automatically,
+				 * VAX then does /2 much faster! (extzv)
+				 */
+				*op++ = (*p1 - *p2)/2 + 128;
 			}
-			if(dot < 0) dot = 0;
-			if(dot > 255) dot = 255;
-			*op++ = (unsigned char) dot;
 			p1++;
 			p2++;
 		}
