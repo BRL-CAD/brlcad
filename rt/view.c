@@ -86,8 +86,8 @@ vect_t l2vec;			/* 2st light vector */
 vect_t l0pos;			/* pos of light0 (overrides l0vec) */
 extern double AmbientIntensity;
 
-#define MAX_IREFLECT	6	/* Maximum internal reflection level */
-#define MAX_BOUNCE	3	/* Maximum recursion level */
+#define MAX_IREFLECT	9	/* Maximum internal reflection level */
+#define MAX_BOUNCE	4	/* Maximum recursion level */
 
 HIDDEN int	rfr_hit(), rfr_miss();
 HIDDEN int	refract();
@@ -656,7 +656,11 @@ do_inside:
 			if( ++sub_ap.a_level > 100+MAX_IREFLECT )  {
 				rtlog("Excessive internal reflection (x%d,y%d, lvl%d)\n",
 					sub_ap.a_x, sub_ap.a_y, sub_ap.a_level );
-				VSET( ap->a_color, 0, 1, 0 );	/* green */
+				if(debug) {
+					VSET( ap->a_color, 0, 1, 0 );	/* green */
+				} else {
+					VSET( ap->a_color, .16, .16, .16 );	/* grey */
+				}
 				goto finish;
 			}
 			goto do_inside;
