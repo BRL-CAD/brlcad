@@ -84,6 +84,8 @@ xbm)
 yuv)
 	KEY=`echo $FILE | sed -e 's/[0-9]/#&/' -e 's/^/@/' -e 's/\\.yuv//' `
 	fb-fb /dev/abf$KEY ;;
+pcd)
+	pcd-pix -p $FILE;;
 *)
 	echo "$SUFFIX is not supported by this script"
 	exit 1
