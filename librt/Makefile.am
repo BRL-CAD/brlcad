@@ -12,6 +12,6 @@ AM_CFLAGS = -I$(top_srcdir)/h
 
 BUILT_SOURCES = vers.c
 vers.c: $(SRCS)
-	$(top_srcdir)/sh/newvers.sh rt_version librt
+	$(top_srcdir)/sh/newvers2.sh rt_version librt > $(srcdir)/vers.c
 
 dist_man_MANS = librt.3
