@@ -1,47 +1,50 @@
 /*
- *			J O V E _ M I S C . C 
+ *			J O V E _ M I S C . C
  *
  * $Revision$
  *
  * $Log$
+ * Revision 11.1  95/01/04  10:35:18  mike
+ * Release_4.4
+ *
  * Revision 10.4  95/01/04  08:43:58  mike
  * "../jove/jove_misc.c", line 234: value of void expression used
  * on VAX
- * 
+ *
  * Revision 10.3  93/10/26  06:05:57  mike
  * ANSI C
- * 
+ *
  * Revision 10.2  93/10/26  06:01:52  mike
  * Changed getchar() to jgetchar() to prevent stdio.h conflict
- * 
+ *
  * Revision 10.1  91/10/12  06:54:02  mike
  * Release_4.0
- * 
+ *
  * Revision 2.6  91/08/30  18:59:49  mike
  * Modifications for clean compilation on the XMP
- * 
+ *
  * Revision 2.5  91/08/30  17:54:37  mike
  * Changed #include directives to distinguish between local and system header
  * files.
- * 
+ *
  * Revision 2.4  91/08/30  17:49:12  mike
  * Paul Stay mods for ANSI C
- * 
+ *
  * Revision 2.3  87/04/14  22:46:43  dpk
  * Fixed bug in paragraph justification.
- * 
+ *
  * Revision 2.2  87/04/14  20:19:12  dpk
  * Fixed casting on RunEdit call
- * 
+ *
  * Revision 2.1  84/12/31  16:43:09  dpk
  * Make CTL(Y)==CTL(R) in RunEdit() (command line editor)
- * 
+ *
  * Revision 2.0  84/12/26  16:47:08  dpk
  * System as distributed to Berkeley 26 Dec 84
- * 
+ *
  * Revision 1.2  83/12/16  00:09:03  dpk
  * Added distinctive RCS header
- * 
+ *
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$";
@@ -49,7 +52,7 @@ static char RCSid[] = "@(#)$Header$";
 
 /*
    Jonathan Payne at Lincoln-Sudbury Regional High School 5-25-83
-  
+
    jove_meta.c
 
    Various commands that are (by default) invoked by ESC-key.
@@ -214,7 +217,7 @@ CopyRegion()
 	else
 		ignore(DoYank(curline, curchar, mp->m_line, mp->m_char,
 				nl, 0, (BUFFER *) 0));
-	if (mod)		
+	if (mod)
 		curbuf->b_status |= B_MODIFIED;
 	else
 		curbuf->b_status &= ~B_MODIFIED;
@@ -677,7 +680,7 @@ int	(*HowToRead)();
 		break;
 
 	case CTL('G'):
-		return (char *) -1;
+		return (char *) 0;
 
 	case CTL('K'):
 		*cp = '\0';
@@ -764,13 +767,15 @@ NoMacGetc()
 
 extern int	Interactive;
 
-/* VARARGS2 */
+/* VARARGS */
 
 char *
-ask(def, fmt, aa, bb, cc)
-char	*def, *fmt;
-char	*aa, *bb, *cc;
+ask(VA_T(char *def) VA_T(const char *fmt) VA_ALIST)
+	VA_DCL
 {
+	VA_D(char	*def)
+	VA_D(char	*fmt)
+	VA_LIST(ap)
 	static char	string[ASKSIZE];
 	char	*cp,
 		*begin;	/* Beginning of real text */
@@ -778,7 +783,11 @@ char	*aa, *bb, *cc;
 	extern int	(*Getchar)();
 	int	(*HowToRead)() = Interactive ? NoMacGetc : Getchar;
 
-	sprintf(string, fmt, aa, bb, cc);
+	VA_START(ap, fmt)
+	VA_I(ap, char *, def)
+	VA_I(ap, char *, fmt)
+	vsprintf(string, fmt, ap);
+	VA_END(ap)
 	message(string);
 	Asking = strlen(string);	/* Entirely for redisplay */
 	begin = string + Asking;
@@ -794,7 +803,7 @@ char	*aa, *bb, *cc;
 		if (c == '\033')	/* Again */
 			c = (*HowToRead)() | 0200;
 		while (NumArg-- > 0)
-			if ((cp = RunEdit(c, begin, cp, def, HowToRead)) == (char *)-1)
+			if ((cp = RunEdit(c, begin, cp, def, HowToRead)) == (char *)0)
 				complain("Aborted");
 
 		/* Show the change */
@@ -845,10 +854,10 @@ YankPop()
 WtModBuf()
 {
 	int	askp = exp_p;
-	BUFFER	*oldb = curbuf,	
-		*bp;		
+	BUFFER	*oldb = curbuf,
+		*bp;
 	char	*yorn,
-		name[100];
+		name[LBSIZE];
 
 	for (bp = world; bp; bp = bp->b_next) {
 		if (bp->b_zero == 0 || !IsModified(bp) || IsScratch(bp))
@@ -856,7 +865,7 @@ WtModBuf()
 		SetBuf(bp);	/* Make this current buffer */
 		if (Crashing) {
 			strcpy(name, curbuf->b_name);
-			insert('_', name, 0, 1, 100);
+			insert('_', name, 0, 1, LBSIZE);
 		} else {
 			if (curbuf->b_fname == 0)
 				setfname(curbuf, ask((char *) 0, "No file.  File to use: "));
