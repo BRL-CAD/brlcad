@@ -1,4 +1,4 @@
-/*	R T . H  --- header file for the "rt" program
+/*	R T P R I V A T E . H  --- header file for the "rt" program
  *
  *
  *
