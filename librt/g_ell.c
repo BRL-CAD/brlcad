@@ -135,6 +135,7 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	LOCAL vect_t	A, B, C;
 	LOCAL vect_t	invsq;	/* [ 1/(|A|**2), 1/(|B|**2), 1/(|C|**2) ] */
 	LOCAL vect_t	work;
+	LOCAL vect_t	vbc;	/* used for bounding RPP */
 	LOCAL fastf_t	f;
 
 #define SP_V	&vec[0*ELEMENTS_PER_VECT]
@@ -221,11 +222,6 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	stp->st_radsq = f;
 
 	/* Compute bounding RPP */
-
-	/* init maxima and minima */
-	stp->st_max[X] = stp->st_max[Y] = stp->st_max[Z] = -INFINITY;
-	stp->st_min[X] = stp->st_min[Y] = stp->st_min[Z] =  INFINITY;
-
 #define MINMAX(a,b,c)	{ FAST fastf_t ftemp;\
 			if( (ftemp = (c)) < (a) )  a = ftemp;\
 			if( ftemp > (b) )  b = ftemp; }
@@ -234,12 +230,24 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 		MINMAX( stp->st_min[Y], stp->st_max[Y], v[Y] ); \
 		MINMAX( stp->st_min[Z], stp->st_max[Z], v[Z] )
 
-	VADD2( work, ell->ell_V, A ); MM( work );
-	VSUB2( work, ell->ell_V, A ); MM( work );
-	VADD2( work, ell->ell_V, B ); MM( work );
-	VSUB2( work, ell->ell_V, B ); MM( work );
-	VADD2( work, ell->ell_V, C ); MM( work );
-	VSUB2( work, ell->ell_V, C ); MM( work );
+	/* There are 8 corners to the enclosing RPP;  find max and min */
+	VADD3( vbc, ell->ell_V, B, C );
+	VADD2( work, vbc, A ); MM( work );	/* V + A + B + C */
+	VSUB2( work, vbc, A ); MM( work );	/* V - A + B + C */
+
+	VSUB2( vbc, ell->ell_V, B );
+	VADD2( vbc, vbc, C );
+	VADD2( work, vbc, A ); MM( work );	/* V + A - B + C */
+	VSUB2( work, vbc, A ); MM( work );	/* V - A - B + C */
+	
+	VSUB2( vbc, ell->ell_V, C );
+	VADD2( vbc, vbc, B );
+	VADD2( work, vbc, A ); MM( work );	/* V + A + B - C */
+	VSUB2( work, vbc, A ); MM( work );	/* V - A + B - C */
+
+	VSUB3( vbc, ell->ell_V, B, C );
+	VADD2( work, vbc, A ); MM( work );	/* V + A - B - C */
+	VSUB2( work, vbc, A ); MM( work );	/* V - A - B - C */
 
 	return(0);			/* OK */
 }

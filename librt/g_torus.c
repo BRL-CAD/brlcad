@@ -247,11 +247,6 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	stp->st_radsq = f * f;
 
 	/* Compute bounding RPP */
-
-	/* init maxima and minima */
-	stp->st_max[X] = stp->st_max[Y] = stp->st_max[Z] = -INFINITY;
-	stp->st_min[X] = stp->st_min[Y] = stp->st_min[Z] =  INFINITY;
-
 #define MINMAX(a,b,c)	{ FAST fastf_t ftemp;\
 			if( (ftemp = (c)) < (a) )  a = ftemp;\
 			if( ftemp > (b) )  b = ftemp; }
@@ -260,34 +255,25 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 		MINMAX( stp->st_min[Y], stp->st_max[Y], v[Y] ); \
 		MINMAX( stp->st_min[Z], stp->st_max[Z], v[Z] )
 
-	VADD2( work, tor->tor_V, A );
-	VADD2( temp, work, Hv ); MM( work );
-	VSUB2( temp, work, Hv ); MM( work );
+	/* There are 8 corners to the enclosing RPP;  find max and min */
+	VADD3( temp, tor->tor_V, B, Hv );
+	VADD2( work, temp, A ); MM( work );	/* V + A + B + Hv */
+	VSUB2( work, temp, A ); MM( work );	/* V - A + B + Hv */
 
-	VSUB2( work, tor->tor_V, A );
-	VADD2( temp, work, Hv ); MM( work );
-	VSUB2( temp, work, Hv ); MM( work );
+	VSUB2( temp, tor->tor_V, B );
+	VADD2( temp, temp, Hv );
+	VADD2( work, temp, A ); MM( work );	/* V + A - B + Hv */
+	VSUB2( work, temp, A ); MM( work );	/* V - A - B + Hv */
+	
+	VSUB2( temp, tor->tor_V, Hv );
+	VADD2( temp, temp, B );
+	VADD2( work, temp, A ); MM( work );	/* V + A + B - Hv */
+	VSUB2( work, temp, A ); MM( work );	/* V - A + B - Hv */
 
-	VADD2( work, tor->tor_V, B );
-	VADD2( temp, work, Hv ); MM( work );
-	VSUB2( temp, work, Hv ); MM( work );
+	VSUB3( temp, tor->tor_V, B, Hv );
+	VADD2( work, temp, A ); MM( work );	/* V + A - B - Hv */
+	VSUB2( work, temp, A ); MM( work );	/* V - A - B - Hv */
 
-	VSUB2( work, tor->tor_V, B );
-	VADD2( temp, work, Hv ); MM( work );
-	VSUB2( temp, work, Hv ); MM( work );
-
-	/*  In the case of A and B being 45 degrees off an axis,
-	 *  the above code is not good enough, and sqrt(2)*radius
-	 *  error will creep in, so compensate for this.
-	 *  We +/- one half of the correction factor.
-	 */
-	f *= sqrt(2.0) / 2.0;
-	stp->st_min[X] -= f;
-	stp->st_min[Y] -= f;
-	stp->st_min[Z] -= f;
-	stp->st_max[X] += f;
-	stp->st_max[X] += f;
-	stp->st_max[X] += f;
 	return(0);			/* OK */
 }
 

@@ -162,14 +162,10 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 
 	mat_mul( tgc->tgc_invRoSh, iRot, tShr );
 
-	/* Compute bounding sphere */
+	/* Compute bounding sphere and RPP */
 	{
 		LOCAL fastf_t dx, dy, dz;	/* For bounding sphere */
 		LOCAL vect_t temp;
-
-		/* init maxima and minima */
-		stp->st_max[X] = stp->st_max[Y] = stp->st_max[Z] = -INFINITY;
-		stp->st_min[X] = stp->st_min[Y] = stp->st_min[Z] =  INFINITY;
 
 #define MINMAX(a,b,c)	{ FAST fastf_t ftemp;\
 			if( (ftemp = (c)) < (a) )  a = ftemp;\
@@ -179,16 +175,24 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 		MINMAX( stp->st_min[Y], stp->st_max[Y], v[Y] ); \
 		MINMAX( stp->st_min[Z], stp->st_max[Z], v[Z] )
 
-		VADD2( work, tgc->tgc_V, A ); MM( work );
-		VSUB2( work, tgc->tgc_V, A ); MM( work );
-		VADD2( work, tgc->tgc_V, B ); MM( work );
-		VSUB2( work, tgc->tgc_V, B ); MM( work );
+		/* There are 8 corners to the bounding RPP */
+		/* This may not be minimal, but does fully contain the TGC */
+		VADD2( temp, tgc->tgc_V, A );
+		VADD2( work, temp, B ); MM( work );	/* V + A + B */
+		VSUB2( work, temp, B ); MM( work );	/* V + A - B */
+
+		VSUB2( temp, tgc->tgc_V, A );
+		VADD2( work, temp, B ); MM( work );	/* V - A + B */
+		VSUB2( work, temp, B ); MM( work );	/* V - A - B */
+
+		VADD3( temp, tgc->tgc_V, Hv, C );
+		VADD2( work, temp, D ); MM( work );	/* V + H + C + D */
+		VSUB2( work, temp, D ); MM( work );	/* V + H + C - D */
 
 		VADD2( temp, tgc->tgc_V, Hv );
-		VADD2( work, temp, C );  MM( work );
-		VSUB2( work, temp, C );  MM( work );
-		VADD2( work, temp, D );  MM( work );
-		VSUB2( work, temp, D );  MM( work );
+		VSUB2( temp, temp, C );
+		VADD2( work, temp, D ); MM( work );	/* V + H - C + D */
+		VSUB2( work, temp, D ); MM( work );	/* V + H - C - D */
 
 		VSET( stp->st_center,
 			(stp->st_max[X] + stp->st_min[X])/2,
