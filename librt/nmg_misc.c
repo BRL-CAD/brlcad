@@ -41,6 +41,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "nmg.h"
 #include "raytrace.h"
 #include "nurb.h"
+#include "rtgeom.h"
 
 #include "db.h"		/* for debugging stuff at bottom */
 
@@ -9818,4 +9819,851 @@ struct rt_tol *tol;
 	nmg_tbl( &verts, TBL_FREE, (long *)NULL );
 
 	return( break_count );
+}
+
+
+static int
+Shell_is_arb( s, tab )
+struct shell *s;
+struct nmg_ptbl *tab;
+{
+	struct faceuse *fu;
+	struct face *f;
+	int arb;
+	int four_verts=0;
+	int three_verts=0;
+	int face_count=0;
+	int loop_count;
+
+	NMG_CK_SHELL( s );
+
+	nmg_vertex_tabulate( tab, &s->l.magic );
+
+	if( NMG_TBL_END( tab ) > 8 || NMG_TBL_END( tab ) < 4 )
+		goto not_arb;
+
+	for( RT_LIST_FOR( fu, faceuse, &s->fu_hd ) )
+	{
+		struct loopuse *lu;
+		vect_t fu_norm;
+
+		NMG_CK_FACEUSE( fu );
+
+		if( fu->orientation != OT_SAME )
+			continue;
+
+		f = fu->f_p;
+		NMG_CK_FACE( f );
+
+		if( *f->g.magic_p != NMG_FACE_G_PLANE_MAGIC )
+			goto not_arb;
+
+		NMG_GET_FU_NORMAL( fu_norm, fu );
+
+		loop_count = 0;
+		for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
+		{
+			struct edgeuse *eu;
+
+			NMG_CK_LOOPUSE( lu );
+
+			if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+				goto not_arb;
+
+			loop_count++;
+
+			/* face must be a single loop */
+			if( loop_count > 1 )
+				goto not_arb;
+
+			for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+			{
+				struct edgeuse *eu_radial;
+				struct faceuse *fu_radial;
+				struct face *f_radial;
+				vect_t norm_radial;
+				vect_t eu_dir;
+				vect_t cross;
+
+				NMG_CK_EDGEUSE( eu );
+
+				eu_radial = nmg_next_radial_eu( eu, s, 0 );
+
+				/* Can't have any dangling faces */
+				if( eu_radial == eu || eu_radial == eu->eumate_p )
+					goto not_arb;
+
+				fu_radial = nmg_find_fu_of_eu( eu_radial );
+				NMG_CK_FACEUSE( fu_radial );
+
+				if( fu_radial->orientation != OT_SAME )
+					fu_radial = fu_radial->fumate_p;
+
+				f_radial = fu_radial->f_p;
+				NMG_CK_FACE( f_radial );
+
+				/* faces must be planar */
+				if( *f_radial->g.magic_p != NMG_FACE_G_PLANE_MAGIC )
+					goto not_arb;
+
+
+				/* Make sure shell is convex by checking that edguses
+				 * run in direction fu_norm X norm_radial
+				 */
+				NMG_GET_FU_NORMAL( norm_radial, fu_radial );
+
+				VCROSS( cross, fu_norm, norm_radial );
+
+				if( eu->orientation == OT_NONE )
+				{
+					VSUB2( eu_dir, eu->vu_p->v_p->vg_p->coord, eu->eumate_p->vu_p->v_p->vg_p->coord )
+					if( eu->orientation != OT_SAME )
+						VREVERSE( eu_dir, eu_dir )
+				}
+				else
+					VMOVE( eu_dir, eu->g.lseg_p->e_dir )
+
+				if( eu->orientation == OT_SAME || eu->orientation == OT_NONE )
+				{
+					if( VDOT( cross, eu_dir ) < 0.0 )
+						goto not_arb;
+				}
+				else
+				{
+					if( VDOT( cross, eu_dir ) > 0.0 )
+						goto not_arb;
+				}
+			}
+		}
+	}
+
+	/* count face types */
+	for( RT_LIST_FOR( fu, faceuse, &s->fu_hd ) )
+	{
+		struct loopuse *lu;
+		int vert_count=0;
+
+		if( fu->orientation != OT_SAME )
+			continue;
+
+		face_count++;
+		for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
+		{
+			struct edgeuse *eu;
+
+			for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+				vert_count++;
+		}
+
+		if( vert_count == 3 )
+			three_verts++;
+		else if( vert_count == 4 )
+			four_verts++;
+	}
+
+	/* must have only three and four vertices in each face */
+	if( face_count != three_verts + four_verts )
+		goto not_arb;
+
+	/* which type of arb is this?? */
+	switch( NMG_TBL_END( tab ) )
+	{
+		case 4:		/* each face must have 3 vertices */
+			if( three_verts != 4 || four_verts != 0 )
+				goto not_arb;
+			break;
+		case 5:		/* one face with 4 verts, four with 3 verts */
+			if( four_verts != 1 || three_verts != 4 )
+				goto not_arb;
+			break;
+		case 6:		/* three faces with 4 verts, two with 3 verts */
+			if( three_verts != 2 || four_verts != 3 )
+				goto not_arb;
+			break;
+		case 7:		/* four faces with 4 verts, two with 3 verts */
+			if( four_verts != 4 || three_verts != 2 )
+				goto not_arb;
+			break;
+		case 8:		/* each face must have 4 vertices */
+			if( four_verts != 6 || three_verts != 0 )
+				goto not_arb;
+			break;
+	}
+
+	return( NMG_TBL_END( tab ) );
+
+
+not_arb:
+	nmg_tbl( tab, TBL_FREE, (long *)NULL );
+	return( 0 );
+}
+
+/*		N M G _ T O _ A R B
+ *
+ *	Converts an NMG to an ARB, if possible.
+ *
+ *	NMG must have been coplanar face merged and simplified
+ *
+ *	Returns:
+ *		1 - Equivalent ARB was constructed
+ *		0 - Cannot construct an equivalent ARB
+ *
+ *	The newly constructed arb is in "arb_int"
+ */
+int
+nmg_to_arb( m, arb_int )
+CONST struct model *m;
+struct rt_arb_internal *arb_int;
+{
+	struct nmgregion *r;
+	struct shell *s;
+	struct faceuse *fu;
+	struct loopuse *lu;
+	struct edgeuse *eu;
+	struct vertex *v;
+	struct edgeuse *eu_start;
+	struct faceuse *fu1;
+	struct nmg_ptbl tab;
+	int face_verts;
+	int i,j;
+	int found;
+	int ret_val;
+
+	NMG_CK_MODEL( m );
+
+	r = RT_LIST_FIRST( nmgregion, &m->r_hd );
+
+	/* must be a single region */
+	if( RT_LIST_NEXT_NOT_HEAD( &r->l, &m->r_hd ) )
+		return( 0 );
+
+	s = RT_LIST_FIRST( shell, &r->s_hd );
+	NMG_CK_SHELL( s );
+
+	/* must be a single shell */
+	if( RT_LIST_NEXT_NOT_HEAD( &s->l, &r->s_hd ) )
+		return( 0 );
+
+	switch( Shell_is_arb( s, &tab ) )
+	{
+		case 0:
+			ret_val = 0;
+			break;
+		case 4:
+			v = (struct vertex *)NMG_TBL_GET( &tab, 0 );
+			NMG_CK_VERTEX( v );
+			VMOVE( arb_int->pt[0], v->vg_p->coord );
+			v = (struct vertex *)NMG_TBL_GET( &tab, 1 );
+			NMG_CK_VERTEX( v );
+			VMOVE( arb_int->pt[1], v->vg_p->coord );
+			v = (struct vertex *)NMG_TBL_GET( &tab, 2 );
+			NMG_CK_VERTEX( v );
+			VMOVE( arb_int->pt[2], v->vg_p->coord );
+			VMOVE( arb_int->pt[3], v->vg_p->coord );
+			v = (struct vertex *)NMG_TBL_GET( &tab, 3 );
+			NMG_CK_VERTEX( v );
+			VMOVE( arb_int->pt[4], v->vg_p->coord );
+			VMOVE( arb_int->pt[5], v->vg_p->coord );
+			VMOVE( arb_int->pt[6], v->vg_p->coord );
+			VMOVE( arb_int->pt[7], v->vg_p->coord );
+
+			nmg_tbl( &tab, TBL_FREE, (long *)NULL );
+			ret_val = 1;
+			break;
+		case 5:
+			fu = RT_LIST_FIRST( faceuse, &s->fu_hd );
+			face_verts = 0;
+			while( face_verts != 4 )
+			{
+				face_verts = 0;
+				fu = RT_LIST_PNEXT_CIRC( faceuse, &fu->l );
+				lu = RT_LIST_FIRST( loopuse, &fu->lu_hd );
+				for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+					face_verts++;
+			}
+			NMG_CK_FACEUSE( fu );
+			if( fu->orientation != OT_SAME )
+				fu = fu->fumate_p;
+			NMG_CK_FACEUSE( fu );
+
+			lu = RT_LIST_FIRST( loopuse, &fu->lu_hd );
+			j = 0;
+			eu_start = RT_LIST_FIRST( edgeuse, &lu->down_hd );
+			for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+			{
+				VMOVE( arb_int->pt[j], eu->vu_p->v_p->vg_p->coord )
+				j++;
+			}
+
+			eu = eu_start->radial_p;
+			eu = RT_LIST_PNEXT_CIRC( edgeuse, &eu->l );
+			eu = eu->eumate_p;
+			for( i=0 ; i<4 ; i++ )
+			{
+				VMOVE( arb_int->pt[j], eu->vu_p->v_p->vg_p->coord )
+				j++;
+			}
+
+			nmg_tbl( &tab, TBL_FREE, (long *)NULL );
+			ret_val = 1;
+			break;
+		case 6:
+			fu = RT_LIST_FIRST( faceuse, &s->fu_hd );
+			face_verts = 0;
+			while( face_verts != 3 )
+			{
+				face_verts = 0;
+				fu = RT_LIST_PNEXT_CIRC( faceuse, &fu->l );
+				lu = RT_LIST_FIRST( loopuse, &fu->lu_hd );
+				for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+					face_verts++;
+			}
+			NMG_CK_FACEUSE( fu );
+			if( fu->orientation != OT_SAME )
+				fu = fu->fumate_p;
+			NMG_CK_FACEUSE( fu );
+
+			lu = RT_LIST_FIRST( loopuse, &fu->lu_hd );
+
+			eu_start = RT_LIST_FIRST( edgeuse, &lu->down_hd );
+			eu = eu_start;
+			VMOVE( arb_int->pt[1], eu->vu_p->v_p->vg_p->coord );
+			eu = RT_LIST_PNEXT_CIRC( edgeuse, &eu->l );
+			VMOVE( arb_int->pt[0], eu->vu_p->v_p->vg_p->coord );
+			eu = RT_LIST_PNEXT_CIRC( edgeuse, &eu->l );
+			VMOVE( arb_int->pt[4], eu->vu_p->v_p->vg_p->coord );
+			VMOVE( arb_int->pt[5], eu->vu_p->v_p->vg_p->coord );
+
+			eu = eu_start->radial_p;
+			eu = RT_LIST_PNEXT_CIRC( edgeuse, &eu->l );
+			eu = RT_LIST_PNEXT_CIRC( edgeuse, &eu->l );
+			eu = eu->radial_p->eumate_p;
+			VMOVE( arb_int->pt[2], eu->vu_p->v_p->vg_p->coord );
+			eu = RT_LIST_PNEXT_CIRC( edgeuse, &eu->l );
+			VMOVE( arb_int->pt[3], eu->vu_p->v_p->vg_p->coord );
+			eu = RT_LIST_PNEXT_CIRC( edgeuse, &eu->l );
+			VMOVE( arb_int->pt[6], eu->vu_p->v_p->vg_p->coord );
+			VMOVE( arb_int->pt[7], eu->vu_p->v_p->vg_p->coord );
+
+			nmg_tbl( &tab, TBL_FREE, (long *)NULL );
+			ret_val = 1;
+			break;
+		case 7:
+			found = 0;
+			fu = RT_LIST_FIRST( faceuse, &s->fu_hd );
+			while( !found )
+			{
+				int verts4=0,verts3=0;
+
+				lu = RT_LIST_FIRST( loopuse, &fu->lu_hd );
+				for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+				{
+					struct loopuse *lu1;
+					struct edgeuse *eu1;
+					int vert_count=0;
+
+					fu1 = nmg_find_fu_of_eu( eu->radial_p );
+					lu1 = RT_LIST_FIRST( loopuse, &fu1->lu_hd );
+					for( RT_LIST_FOR( eu1, edgeuse, &lu1->down_hd ) )
+						vert_count++;
+
+					if( vert_count == 4 )
+						verts4++;
+					else if( vert_count == 3 )
+						verts3++;
+				}
+
+				if( verts4 == 2 && verts3 == 2 )
+					found = 1;
+			}
+			if( fu->orientation != OT_SAME )
+				fu = fu->fumate_p;
+			NMG_CK_FACEUSE( fu );
+
+			lu = RT_LIST_FIRST( loopuse, &fu->lu_hd );
+			j = 0;
+			eu_start = RT_LIST_FIRST( edgeuse, &lu->down_hd );
+			for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+			{
+				VMOVE( arb_int->pt[j], eu->vu_p->v_p->vg_p->coord )
+				j++;
+			}
+
+			eu = eu_start->radial_p;
+			eu = RT_LIST_PNEXT_CIRC( edgeuse, &eu->l );
+			eu = RT_LIST_PNEXT_CIRC( edgeuse, &eu->l );
+			eu = eu->radial_p->eumate_p;
+			fu1 = nmg_find_fu_of_eu( eu );
+			if( nmg_faces_are_radial( fu, fu1 ) )
+			{
+				eu = eu_start->radial_p;
+				eu = RT_LIST_PNEXT_CIRC( edgeuse, &eu->l );
+				eu = eu->radial_p->eumate_p;
+			}
+			for( i=0 ; i<4 ; i++ )
+			{
+				VMOVE( arb_int->pt[j], eu->vu_p->v_p->vg_p->coord )
+				j++;
+				eu = RT_LIST_PNEXT_CIRC( edgeuse, &eu->l );
+			}
+
+			nmg_tbl( &tab, TBL_FREE, (long *)NULL );
+			ret_val = 1;
+			break;
+		case 8:
+			fu = RT_LIST_FIRST( faceuse, &s->fu_hd );
+			NMG_CK_FACEUSE( fu );
+			if( fu->orientation != OT_SAME )
+				fu = fu->fumate_p;
+			NMG_CK_FACEUSE( fu );
+
+			lu = RT_LIST_FIRST( loopuse, &fu->lu_hd );
+			j = 0;
+			eu_start = RT_LIST_FIRST( edgeuse, &lu->down_hd );
+			for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+			{
+				VMOVE( arb_int->pt[j], eu->vu_p->v_p->vg_p->coord )
+				j++;
+			}
+
+			eu = eu_start->radial_p;
+			eu = RT_LIST_PNEXT_CIRC( edgeuse, &eu->l );
+			eu = RT_LIST_PNEXT_CIRC( edgeuse, &eu->l );
+			eu = eu->radial_p->eumate_p;
+			for( i=0 ; i<4 ; i++ )
+			{
+				VMOVE( arb_int->pt[j], eu->vu_p->v_p->vg_p->coord )
+				j++;
+				eu = RT_LIST_PNEXT_CIRC( edgeuse, &eu->l );
+			}
+
+			nmg_tbl( &tab, TBL_FREE, (long *)NULL );
+			ret_val = 1;
+			break;
+		default:
+			rt_bomb( "Shell_is_arb screwed up" );
+			break;
+	}
+	if( ret_val )
+		arb_int->magic = RT_ARB_INTERNAL_MAGIC;
+	return( ret_val );
+}
+
+/*		N M G _ T O _ T G C
+ *
+ *	Converts an NMG to a TGC, if possible.
+ *
+ *	NMG must have been coplanar face merged and simplified
+ *
+ *	Returns:
+ *		1 - Equivalent TGC was constructed
+ *		0 - Cannot construct an equivalent TGC
+ *
+ *	The newly constructed tgc is in "tgc_int"
+ *
+ *	Currently only supports RCC, and creates circumscribed RCC
+ */
+int
+nmg_to_tgc( m, tgc_int,  tol )
+CONST struct model *m;
+struct rt_tgc_internal *tgc_int;
+CONST struct rt_tol *tol;
+{
+	struct nmgregion *r;
+	struct shell *s;
+	struct faceuse *fu;
+	struct loopuse *lu;
+	struct edgeuse *eu;
+	struct faceuse *fu_base=(struct faceuse *)NULL;
+	struct faceuse *fu_top=(struct faceuse *)NULL;
+	int three_vert_faces=0;
+	int four_vert_faces=0;
+	int many_vert_faces=0;
+	int base_vert_count=0;
+	int top_vert_count=0;
+	int ret=0;
+	point_t sum;
+	fastf_t vert_count=0.0;
+	fastf_t one_over_vert_count;
+	point_t base_center;
+	fastf_t min_base_r_sq;
+	fastf_t max_base_r_sq;
+	fastf_t sum_base_r_sq;
+	fastf_t ave_base_r_sq;
+	fastf_t base_r;
+	point_t top_center;
+	fastf_t min_top_r_sq;
+	fastf_t max_top_r_sq;
+	fastf_t sum_top_r_sq;
+	fastf_t ave_top_r_sq;
+	fastf_t top_r;
+	plane_t top_pl;
+	plane_t base_pl;
+	vect_t plv_1,plv_2;
+
+	NMG_CK_MODEL( m );
+
+	RT_CK_TOL( tol );
+
+	r = RT_LIST_FIRST( nmgregion, &m->r_hd );
+
+	/* must be a single region */
+	if( RT_LIST_NEXT_NOT_HEAD( &r->l, &m->r_hd ) )
+		return( 0 );
+
+	s = RT_LIST_FIRST( shell, &r->s_hd );
+	NMG_CK_SHELL( s );
+
+	/* must be a single shell */
+	if( RT_LIST_NEXT_NOT_HEAD( &s->l, &r->s_hd ) )
+		return( 0 );
+
+	for( RT_LIST_FOR( fu, faceuse, &s->fu_hd ) )
+	{
+		int lu_count=0;
+
+		NMG_CK_FACEUSE( fu );
+		if( fu->orientation != OT_SAME )
+			continue;
+
+		vert_count = 0.0;
+
+		for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
+		{
+
+			NMG_CK_LOOPUSE( lu );
+
+			if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+				return( 0 );
+
+			lu_count++;
+			if( lu_count > 1 )
+				return( 0 );
+
+			for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+				vert_count++;
+		}
+
+		if( vert_count < 3 )
+			return( 0 );
+
+		if( vert_count == 4 )
+			four_vert_faces++;
+		else if( vert_count ==3 )
+			three_vert_faces++;
+		else
+		{
+			many_vert_faces++;
+			if( many_vert_faces > 2 )
+				return( 0 );
+
+			if( many_vert_faces == 1 )
+			{
+				fu_base = fu;
+				base_vert_count = vert_count;
+				NMG_GET_FU_PLANE( base_pl, fu_base );
+			}
+			else if( many_vert_faces == 2 )
+			{
+				fu_top = fu;
+				top_vert_count = vert_count;
+				NMG_GET_FU_PLANE( top_pl, fu_top );
+			}
+		}
+	}
+	/* if there are any three vertex faces,
+	 * there must be an even number of them
+	 */
+	if( three_vert_faces%2 )
+		return( 0 );
+
+	/* base and top must have same number of vertices */
+	if( base_vert_count != top_vert_count )
+		return( 0 );
+
+	/* Must have correct number of side faces */
+	if( (base_vert_count != four_vert_faces) &&
+	    (base_vert_count*2 != three_vert_faces ) )
+		return( 0 );
+
+	if( !NEAR_ZERO( 1.0 + VDOT( top_pl, base_pl ), tol->perp ) )
+		return( 0 );
+
+	/* This looks like a good candidate,
+	 * Calculate center of base and top faces
+	 */
+
+	vert_count = 0.0;
+	VSETALL( sum, 0.0 );
+	lu = RT_LIST_FIRST( loopuse, &fu_base->lu_hd );
+	for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+	{
+		struct vertex_g *vg;
+
+		NMG_CK_EDGEUSE( eu );
+
+		NMG_CK_VERTEXUSE( eu->vu_p );
+		NMG_CK_VERTEX( eu->vu_p->v_p );
+		vg = eu->vu_p->v_p->vg_p;
+		NMG_CK_VERTEX_G( vg );
+
+		VADD2( sum, sum, vg->coord );
+		vert_count++;
+	}
+
+	one_over_vert_count = 1.0/vert_count;
+	VSCALE( base_center, sum, one_over_vert_count );
+
+	/* Calculate Average Radius */
+	min_base_r_sq = MAX_FASTF;
+	max_base_r_sq = (-min_base_r_sq);
+	sum_base_r_sq = 0.0;
+	lu = RT_LIST_FIRST( loopuse, &fu_base->lu_hd );
+	for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+	{
+		struct vertex_g *vg;
+		vect_t rad_vect;
+		fastf_t r_sq;
+
+		vg = eu->vu_p->v_p->vg_p;
+
+		VSUB2( rad_vect, vg->coord, base_center );
+		r_sq = MAGSQ( rad_vect );
+		if( r_sq > max_base_r_sq )
+			max_base_r_sq = r_sq;
+		if( r_sq < min_base_r_sq )
+			min_base_r_sq = r_sq;
+
+		sum_base_r_sq += r_sq;
+	}
+
+	ave_base_r_sq = sum_base_r_sq/vert_count;
+
+	base_r = sqrt( max_base_r_sq );
+
+	if( !NEAR_ZERO( (max_base_r_sq - ave_base_r_sq)/ave_base_r_sq, 0.001 ) ||
+	    !NEAR_ZERO( (min_base_r_sq - ave_base_r_sq)/ave_base_r_sq, 0.001 ) )
+			return( 0 );
+
+	VSETALL( sum, 0.0 );
+	lu = RT_LIST_FIRST( loopuse, &fu_top->lu_hd );
+	for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+	{
+		struct vertex_g *vg;
+
+		NMG_CK_EDGEUSE( eu );
+
+		NMG_CK_VERTEXUSE( eu->vu_p );
+		NMG_CK_VERTEX( eu->vu_p->v_p );
+		vg = eu->vu_p->v_p->vg_p;
+		NMG_CK_VERTEX_G( vg );
+
+		VADD2( sum, sum, vg->coord );
+	}
+
+	VSCALE( top_center, sum, one_over_vert_count );
+
+	/* Calculate Average Radius */
+	min_top_r_sq = MAX_FASTF;
+	max_top_r_sq = (-min_top_r_sq);
+	sum_top_r_sq = 0.0;
+	lu = RT_LIST_FIRST( loopuse, &fu_top->lu_hd );
+	for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+	{
+		struct vertex_g *vg;
+		vect_t rad_vect;
+		fastf_t r_sq;
+
+		vg = eu->vu_p->v_p->vg_p;
+
+		VSUB2( rad_vect, vg->coord, top_center );
+		r_sq = MAGSQ( rad_vect );
+		if( r_sq > max_top_r_sq )
+			max_top_r_sq = r_sq;
+		if( r_sq < min_top_r_sq )
+			min_top_r_sq = r_sq;
+
+		sum_top_r_sq += r_sq;
+	}
+
+	ave_top_r_sq = sum_top_r_sq/vert_count;
+	top_r = sqrt( max_top_r_sq );
+
+	if( !NEAR_ZERO( (max_top_r_sq - ave_top_r_sq)/ave_top_r_sq, 0.001 ) ||
+	    !NEAR_ZERO( (min_top_r_sq - ave_top_r_sq)/ave_top_r_sq, 0.001 ) )
+			return( 0 );
+
+
+	VMOVE( tgc_int->v, base_center );
+	VSUB2( tgc_int->h, top_center, base_center );
+
+	mat_vec_perp( plv_1, top_pl );
+	VCROSS( plv_2, top_pl, plv_1 );
+	VUNITIZE( plv_1 );
+	VUNITIZE( plv_2 );
+	VSCALE( tgc_int->a, plv_1, base_r );
+	VSCALE( tgc_int->b, plv_2, base_r );
+	VSCALE( tgc_int->c, plv_1, top_r );
+	VSCALE( tgc_int->d, plv_2, top_r );
+
+	tgc_int->magic = RT_TGC_INTERNAL_MAGIC;
+
+	return( 1 );
+}
+
+int
+nmg_to_poly( m, poly_int, tol )
+CONST struct model *m;
+struct rt_pg_internal *poly_int;
+CONST struct rt_tol *tol;
+{
+	struct nmgregion *r;
+	struct shell  *s;
+	struct faceuse *fu;
+	struct loopuse *lu;
+	struct edgeuse *eu;
+	struct model *dup_m;
+	struct nmgregion *dup_r;
+	struct shell *dup_s;
+	int max_count;
+	int count_npts;
+	int face_count=0;
+	int i;
+	struct rt_pg_face_internal *poly;
+
+	NMG_CK_MODEL( m );
+
+	RT_CK_TOL( tol );
+
+	for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )
+	{
+		for( RT_LIST_FOR( s, shell, &r->s_hd ) )
+		{
+			if( nmg_check_closed_shell( s, tol ) )
+				return( 0 );
+		}
+	}
+
+	dup_m = nmg_mm();
+	dup_r = nmg_mrsv( dup_m );
+	dup_s = RT_LIST_FIRST( shell, &dup_r->s_hd );
+
+	for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )
+	{
+		for( RT_LIST_FOR( s, shell, &r->s_hd ) )
+		{
+			for( RT_LIST_FOR( fu, faceuse, &s->fu_hd ) )
+			{
+				if( fu->orientation != OT_SAME )
+					continue;
+				(void)nmg_dup_face( fu, dup_s );
+			}
+		}
+	}
+
+	for( RT_LIST_FOR( dup_r, nmgregion, &dup_m->r_hd ) )
+	{
+		for( RT_LIST_FOR( dup_s, shell, &dup_r->s_hd ) )
+		{
+			for( RT_LIST_FOR( fu , faceuse , &dup_s->fu_hd ) )
+			{
+				NMG_CK_FACEUSE( fu );
+
+				/* only do OT_SAME faces */
+				if( fu->orientation != OT_SAME )
+					continue;
+
+				/* count vertices in loops */
+				max_count = 0;
+				for( RT_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
+				{
+					NMG_CK_LOOPUSE( lu );
+					if( RT_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC )
+						continue;
+
+					count_npts = 0;
+					for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
+						count_npts++;
+
+					if( count_npts > max_count )
+						max_count = count_npts;
+				}
+
+				/* if any loop has more than 5 vertices, triangulate the face */
+				if( max_count > 5 ) {
+					if( rt_g.NMG_debug & DEBUG_BASIC )
+						rt_log( "write_shell_as_polysolid: triangulating fu x%x\n", fu );
+						nmg_triangulate_fu( fu, tol );
+				}
+
+				for( RT_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
+				{
+					NMG_CK_LOOPUSE( lu );
+					if( RT_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC )
+						continue;
+
+					face_count++;
+				}
+			}
+		}
+	}
+	poly_int->npoly = face_count;
+	poly_int->poly = (struct rt_pg_face_internal *)rt_calloc( face_count,
+		sizeof( struct rt_pg_face_internal ), "nmg_to_poly: poly" );
+
+	face_count = 0;
+	for( RT_LIST_FOR( dup_r, nmgregion, &dup_m->r_hd ) )
+	{
+		for( RT_LIST_FOR( dup_s, shell, &dup_r->s_hd ) )
+		{
+			for( RT_LIST_FOR( fu , faceuse , &dup_s->fu_hd ) )
+			{
+				vect_t norm;
+
+				NMG_CK_FACEUSE( fu );
+
+				/* only do OT_SAME faces */
+				if( fu->orientation != OT_SAME )
+					continue;
+
+				NMG_GET_FU_NORMAL( norm, fu );
+
+				for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
+				{
+					int pt_no=0;
+
+					if( RT_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC )
+						continue;
+
+					/* count vertices in loop */
+					count_npts = 0;
+					for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
+						count_npts++;
+
+					poly_int->poly[face_count].npts = count_npts;
+					poly_int->poly[face_count].verts = (fastf_t *) rt_calloc( 3*count_npts, sizeof( fastf_t ), "nmg_to_poly: verts" );
+					poly_int->poly[face_count].norms = (fastf_t *) rt_calloc( 3*count_npts, sizeof( fastf_t ), "nmg_to_poly: norms" );
+
+					for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
+					{
+						struct vertex_g *vg;
+
+						vg = eu->vu_p->v_p->vg_p;
+						NMG_CK_VERTEX_G( vg );
+
+						VMOVE( &(poly_int->poly[face_count].verts[pt_no*3]), vg->coord );
+						VMOVE( &(poly_int->poly[face_count].norms[pt_no*3]), norm );
+
+						pt_no++;
+					}
+					face_count++;
+				}
+			}
+		}
+	}
+
+	poly_int->magic = RT_PG_INTERNAL_MAGIC;
+	nmg_km( dup_m );
+
+	return( 1 );
 }
