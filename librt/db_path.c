@@ -45,6 +45,8 @@ db_add_node_to_full_path( pp, dp )
 register struct db_full_path	*pp;
 register struct directory	*dp;
 {
+	RT_CK_FULL_PATH( pp );
+
 	if( pp->fp_maxlen <= 0 )  {
 		pp->fp_maxlen = 32;
 		pp->fp_names = (struct directory **)rt_malloc(
@@ -85,6 +87,34 @@ register CONST struct db_full_path	*oldp;
 }
 
 /*
+ *			D B _ D U P _ P A T H _ T A I L
+ *
+ *  Dup old path from starting index to end.
+ */
+void
+db_dup_path_tail( newp, oldp, start )
+register struct db_full_path		*newp;
+register CONST struct db_full_path	*oldp;
+int					start;
+{
+	RT_CK_FULL_PATH(newp);
+	RT_CK_FULL_PATH(oldp);
+
+	if( start < 0 || start > oldp->fp_len-1 )  rt_bomb("db_dup_path_tail: start offset out of range\n");
+
+	newp->fp_maxlen = newp->fp_len = oldp->fp_len - start;
+	if( newp->fp_len <= 0 )  {
+		newp->fp_names = (struct directory **)0;
+		return;
+	}
+	newp->fp_names = (struct directory **)rt_malloc(
+		newp->fp_maxlen * sizeof(struct directory *),
+		"duplicate full path array" );
+	bcopy( (char *)&oldp->fp_names[start], (char *)newp->fp_names,
+		newp->fp_len * sizeof(struct directory *) );
+}
+
+/*
  *			D B _ P A T H _ T O _ S T R I N G
  *
  *  Unlike rt_path_str(), this version can be used in parallel.
@@ -98,6 +128,8 @@ register CONST struct db_full_path	*pp;
 	char	*buf;
 	int	len;
 	int	i;
+
+	RT_CK_FULL_PATH( pp );
 
 	len = 3;	/* leading slash, trailing null, spare */
 	for( i=pp->fp_len-1; i >= 0; i-- )  {
@@ -197,6 +229,8 @@ void
 db_free_full_path( pp )
 register struct db_full_path	*pp;
 {
+	RT_CK_FULL_PATH( pp );
+
 	if( pp->fp_maxlen > 0 )  {
 		rt_free( (char *)pp->fp_names, "db_full_path array" );
 		pp->fp_maxlen = pp->fp_len = 0;
