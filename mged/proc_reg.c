@@ -1150,7 +1150,8 @@ noskip:
 						VSETALL(c1, 0);
 						c1[k] = 1;
 						c1[3] = reg_min[k];
-						cpoint(xb,c1,&peq[i*4],&peq[j*4]);
+						if( rt_mkpoint_3planes( xb, c1, &peq[i*4], &peq[j*4] ) < 0 )
+							continue;
 					}
 #else
 					if( rt_isect_2planes( xb, wb,
@@ -1743,32 +1744,3 @@ solpl(lmemb,umemb)
 		mlc[id]=lc-1;
 	}
 }
-
-/* XXX begin old versions */
-#if OLD
-/*
- *			C P O I N T
- *
- * computes point of intersection of three planes, answer in "point".
- */
-cpoint(point,c1,c2,c3)
-vect_t	point;
-register fastf_t *c1, *c2, *c3;
-{
-	static vect_t	v1, v2, v3;
-	register int i;
-	static fastf_t d;
-
-	VCROSS(v1,c2,c3);
-	if((d=VDOT(c1,v1))==0)  {
-		printf("cpoint failure\n");
-		return;
-	}
-	d = 1.0 / d;
-	VCROSS(v2,c1,c3);
-	VCROSS(v3,c1,c2);
-	for(i=0; i<3; i++)
-		point[i]=d*(c1[3]*v1[i]-c2[3]*v2[i]+c3[3]*v3[i]);
-}
-
-#endif
