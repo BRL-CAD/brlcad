@@ -48,7 +48,8 @@ AC_SEARCH_LIBS(matherr,mx)
 
 dnl X
 X_PREFIX=/usr/X11R6
-X_LIBS="-L/usr/X11R6/lib -lX11 -lXi"
+X_CFLAGS="-I${X_PREFIX}/include"
+X_LIBS="-L${X_PREFIX}/lib -lX11 -lXi"
 
 dnl tcl
 TCLVER=8.4
@@ -122,7 +123,6 @@ GL_CFLAGS="-I/usr/X11R6/include"
 GL_LIBS="-L/usr/X11R6/lib -lGL"
 
 LEX_CFLAGS="-Dyylex=cmd_nop"
-X_CFLAGS="-I/usr/X11R6/include"
 
 dnl TODO
 AC_DEFINE(HAVE_TM_ZONE,,string in time zone)
