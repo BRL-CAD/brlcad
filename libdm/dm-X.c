@@ -56,7 +56,6 @@ int      X_drawString2D();
 static void	label();
 static void	draw();
 static void     x_var_init();
-static int X_load_startup();
 static int X_set_visual();
 
 /* Display Manager package interface */
@@ -150,10 +149,12 @@ char *argv[];
 #endif
 
   /* Only need to do this once for this display manager */
-  if(!count)
-    (void)X_load_startup(dmp);
+  if(!count){
+    bzero((void *)&head_x_vars, sizeof(struct x_vars));
+    BU_LIST_INIT( &head_x_vars.l );
+  }
 
-  dmp->dm_vars = bu_calloc(1, sizeof(struct x_vars), "X_init: x_vars");
+  dmp->dm_vars = bu_calloc(1, sizeof(struct x_vars), "X_open: x_vars");
   if(!dmp->dm_vars){
     bu_free(dmp, "X_open: dmp");
     return DM_NULL;
@@ -226,6 +227,8 @@ char *argv[];
 	Tk_NameToWindow(interp, bu_vls_addr(&top_vls), tkwin);
     }
 
+    bu_vls_free(&top_vls);
+
     /* Make xtkwin an embedded window */
     ((struct x_vars *)dmp->dm_vars)->xtkwin =
       Tk_CreateWindow(interp, ((struct x_vars *)dmp->dm_vars)->top,
@@ -243,21 +246,19 @@ char *argv[];
   bu_vls_printf(&dmp->dm_tkName, "%s",
 		(char *)Tk_Name(((struct x_vars *)dmp->dm_vars)->xtkwin));
 
-#if 1
   bu_vls_init(&str);
-  bu_vls_printf(&str, "_new_init_dm %S %S %S\n",
+  bu_vls_printf(&str, "_init_dm %S %S\n",
 		&dmp->dm_initWinProc,
-		&top_vls,
 		&dmp->dm_pathName);
 
   if(Tcl_Eval(interp, bu_vls_addr(&str)) == TCL_ERROR){
     bu_vls_free(&str);
     (void)X_close(dmp);
+
     return DM_NULL;
   }
 
   bu_vls_free(&str);
-  bu_vls_free(&top_vls);
 
   ((struct x_vars *)dmp->dm_vars)->dpy =
     Tk_Display(((struct x_vars *)dmp->dm_vars)->top);
@@ -275,35 +276,7 @@ char *argv[];
 		    DefaultScreen(((struct x_vars *)dmp->dm_vars)->dpy)) - 20;
     ++make_square;
   }
-#else
-  /*
-   * Create the X drawing window by calling init_x which
-   * is defined in xinit.tcl
-   */
-  bu_vls_init(&str);
-  bu_vls_printf(&str, "_init_dm %s %s\n",
-		bu_vls_addr(&dmp->dm_initWinProc),
-		bu_vls_addr(&dmp->dm_pathName));
 
-  if(Tcl_Eval(interp, bu_vls_addr(&str)) == TCL_ERROR){
-    bu_vls_free(&str);
-    (void)X_close(dmp);
-    return DM_NULL;
-  }
-
-  bu_vls_free(&str);
-
-  ((struct x_vars *)dmp->dm_vars)->dpy =
-    Tk_Display(((struct x_vars *)dmp->dm_vars)->xtkwin);
-
-  dmp->dm_width =
-    DisplayWidth(((struct x_vars *)dmp->dm_vars)->dpy,
-		 DefaultScreen(((struct x_vars *)dmp->dm_vars)->dpy)) - 20;
-  dmp->dm_height =
-    DisplayHeight(((struct x_vars *)dmp->dm_vars)->dpy,
-		  DefaultScreen(((struct x_vars *)dmp->dm_vars)->dpy)) - 20;
-
-#endif
   if(make_square > 0){
     /* Make window square */
     if(dmp->dm_height <
@@ -905,23 +878,6 @@ struct dm *dmp;
    */
   ((struct x_vars *)dmp->dm_vars)->mvars.dummy_perspective = 1;
 }
-
-
-static int
-X_load_startup(dmp)
-struct dm *dmp;
-{
-  char *filename;
-
-  bzero((void *)&head_x_vars, sizeof(struct x_vars));
-  BU_LIST_INIT( &head_x_vars.l );
-
-  if((filename = getenv("DM_X_RCFILE")) != (char *)NULL )
-    return Tcl_EvalFile(interp, filename);
-
-  return TCL_OK;
-}
-
 
 static int
 X_set_visual(dpy, tkwin, cmap, depth)
