@@ -1592,9 +1592,9 @@ set -S2 "/bin/sh"
 #	define	LIBMESA_DIR	../libMesa
 #	define	LIBMESA		-L''LIBMESA_DIR -lMesa
 #	define	LIBMESA_DEP	[[LIBVERS ../libMesa/libMesa.ARCH_SUF]]
-#	define	LIBPLOT_DIR	../libplot3
-#	define	LIBPLOT		-L''LIBPLOT_DIR -lplot3
-#	define	LIBPLOT_DEP	[[LIBVERS ../libplot3/libplot3.ARCH_SUF]]
+#	define	LIBPLOT_DIR	LIBBN_DIR
+#	define	LIBPLOT		/**/
+#	define	LIBPLOT_DEP	/**/
 #	define	LIBORLE_DIR	../liborle
 #	define	LIBORLE		-L''LIBORLE_DIR -lorle
 #	define	LIBORLE_DEP	[[LIBVERS ../liborle/liborle.ARCH_SUF]]
@@ -1668,9 +1668,9 @@ set -S2 "/bin/sh"
 #	define	LIBMESA_DIR	../.libMesa.MTYPE
 #	define	LIBMESA		-L''LIBMESA_DIR -lMesa
 #	define	LIBMESA_DEP	[[LIBVERS ../.libMesa.MTYPE/libMesa.ARCH_SUF]]
-#	define	LIBPLOT_DIR	../.libplot3.MTYPE
-#	define	LIBPLOT		-L''LIBPLOT_DIR -lplot3
-#	define	LIBPLOT_DEP	[[LIBVERS ../.libplot3.MTYPE/libplot3.ARCH_SUF]]
+#	define	LIBPLOT_DIR	LIBBN_DIR
+#	define	LIBPLOT		/**/
+#	define	LIBPLOT_DEP	/**/
 #	define	LIBORLE_DIR	../.liborle.MTYPE
 #	define	LIBORLE		-L''LIBORLE_DIR -lorle
 #	define	LIBORLE_DEP	[[LIBVERS ../.liborle.MTYPE/liborle.ARCH_SUF]]
