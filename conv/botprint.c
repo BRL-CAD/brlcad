@@ -75,8 +75,6 @@ process(FILE *inp, char *name)
 int main(int ac, char *av[])
 {
 	int arg_count;
-	FILE *inp;
-	int status;
 	char idbuf[132];		/* First ID record info */
 	struct rt_db_internal intern;
 	struct rt_bot_internal *bot;
@@ -132,4 +130,5 @@ int main(int ac, char *av[])
 	    }
 
 	}
+	return 0;
 }
