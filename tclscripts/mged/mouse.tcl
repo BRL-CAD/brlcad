@@ -12,7 +12,7 @@ proc mouse_get_spath { x y } {
     set win [winset]
     set id [get_player_id_dm $win]
     if {$id == "mged"} {
-	return
+	mouse_init_mged_gui
     }
 
     if {[info exists mged_gui($id,edit_menu)] && \
@@ -81,7 +81,7 @@ proc mouse_get_spath_and_pos { x y } {
     set win [winset]
     set id [get_player_id_dm $win]
     if {$id == "mged"} {
-	return
+	mouse_init_mged_gui
     }
 
     set mged_gui($id,mgs_path) [mouse_get_spath $x $y]
@@ -137,7 +137,7 @@ proc mouse_get_comb { x y } {
     set win [winset]
     set id [get_player_id_dm $win]
     if {$id == "mged"} {
-	return
+	mouse_init_mged_gui
     }
 
     if {[info exists mged_gui($id,edit_menu)] && \
@@ -251,7 +251,7 @@ proc mouse_rt_obj_select { x y } {
     set win [winset]
     set id [get_player_id_dm $win]
     if {$id == "mged"} {
-	return
+	mouse_init_mged_gui
     }
 
     set spath_and_pos [mouse_get_spath_and_pos $x $y]
@@ -264,7 +264,7 @@ proc mouse_rt_obj_select { x y } {
     incr sindex
     set component [lindex [split $spath /] $sindex]
 
-    mouse_update_rt_vars $id $win
+    rt_init_vars $id $win
 
     switch $rt_control($id,omode) {
 	all
@@ -289,7 +289,7 @@ proc mouse_comb_edit_select { x y } {
     set win [winset]
     set id [get_player_id_dm $win]
     if {$id == "mged"} {
-	return
+	mouse_init_mged_gui
     }
 
     set comb [mouse_get_comb $x $y]
@@ -315,34 +315,13 @@ proc place_near_mouse { top } {
     catch { wm geometry $top +$x+$y }
 }
 
-
-## - mouse_update_rt_vars
+##
 #
-# Assumes that winset has been called prior to invoking this proc.
+# Hack to use new mouse utilities with an arbitrary 
+# display manager window.
 #
-proc mouse_update_rt_vars { id win } {
-    global rt_control
+proc mouse_init_mged_gui {} {
+    global mged_gui
 
-    if ![info exists rt_control($id,top)] {
-	set rt_control($id,top) .$id.rt
-	set rt_control($id,topAS) .$id.rtAS
-	set rt_control($id,color) [rset cs bg]
-	set rt_control($id,nproc) 1
-	set rt_control($id,hsample) 0
-	set rt_control($id,jitter) 0
-	set rt_control($id,jitterTitle) "None"
-	set rt_control($id,lmodel) 0
-	set rt_control($id,lmodelTitle) "Full"
-
-	# set widget padding
-	set rt_control($id,padx) 4
-	set rt_control($id,pady) 2
-    }
-
-    set rt_control($id,color) [rset cs bg]
-    rt_cook_src $id $win
-    rt_cook_dest $id $win
-
-    set size [dm size]
-    set rt_control($id,size) "[lindex $size 0]x[lindex $size 1]"
+    set mged_gui(mged,active_dm) ""
 }
