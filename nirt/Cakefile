@@ -1,0 +1,23 @@
+/*
+ *			nirt/Cakefile
+ *
+ *  $Header$
+ */
+#define CONFIGDEFS	RT_CONFIG -DDFLT_SHELL=\\\\"/bin/tbsh\\\\"
+
+#define SRCDIR	nirt
+#define PRODUCTS	nirt
+#define	SRCSUFF	.c
+#define MANSECTION	1
+
+#include "../Cakefile.defs"
+#include "../Cakefile.prog"
+
+#define	NIRT_OBJ	\
+	nirt.o command.o conversion.o if.o interact.o dist_def.o \
+	str_manip.o parse_fmt.o
+
+nirt:	NIRT_OBJ LIBRT
+	sh ../newvers.sh version "Natalie's Interactive Ray-Tracer"
+	CC CFLAGS -c vers.c
+	CC LDFLAGS NIRT_OBJ vers.o LIB_PRE''LIBRT LIB_PRE''LIBFB LIBFB_LIBES LIBRT_LIBES LIBMALLOC LIBES -o nirt
