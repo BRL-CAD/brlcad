@@ -699,7 +699,11 @@ int which_eye;
     /* R eye */
     glViewport(0,  0, (XMAXSCREEN)+1, ( YSTEREO)+1); 
     glScissor(0,  0, (XMAXSCREEN)+1, (YSTEREO)+1);
+#if 0
     ogl_drawString2D( dmp, "R", 2020, 0, 0, DM_RED );
+#else
+    ogl_drawString2D( dmp, "R", 0.986, 0.0, 0, 1 );
+#endif
     break;
   case 2:
     /* L eye */
@@ -721,6 +725,17 @@ int which_eye;
     mptr = mat;
   }
 
+#ifdef USE_RT_ASPECT
+  gtmat[0] = *(mptr++);
+  gtmat[4] = *(mptr++);
+  gtmat[8] = *(mptr++);
+  gtmat[12] = *(mptr++);
+
+  gtmat[1] = *(mptr++) * dmp->dm_aspect;
+  gtmat[5] = *(mptr++) * dmp->dm_aspect;
+  gtmat[9] = *(mptr++) * dmp->dm_aspect;
+  gtmat[13] = *(mptr++) * dmp->dm_aspect;
+#else
   gtmat[0] = *(mptr++) * dmp->dm_aspect;
   gtmat[4] = *(mptr++) * dmp->dm_aspect;
   gtmat[8] = *(mptr++) * dmp->dm_aspect;
@@ -730,6 +745,7 @@ int which_eye;
   gtmat[5] = *(mptr++);
   gtmat[9] = *(mptr++);
   gtmat[13] = *(mptr++);
+#endif
 
   gtmat[2] = *(mptr++);
   gtmat[6] = *(mptr++);
@@ -876,8 +892,12 @@ int use_aspect;
   if (((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.debug)
     bu_log("ogl_drawString2D()\n");
 
-  if(use_aspect)	
+  if(use_aspect)
+#ifdef USE_RT_ASPECT
+    glRasterPos2f(x, y * dmp->dm_aspect);
+#else
     glRasterPos2f(x * dmp->dm_aspect, y);
+#endif
   else
     glRasterPos2f(x, y);
 
@@ -1218,10 +1238,14 @@ struct dm *dmp;
   glLoadIdentity();
   glOrtho( -xlim_view, xlim_view, -ylim_view, ylim_view, 0.0, 2.0 );
   glMatrixMode(mm);
+
+#ifdef USE_RT_ASPECT
+  dmp->dm_aspect = (fastf_t)dmp->dm_width / (fastf_t)dmp->dm_height;
+#else
   dmp->dm_aspect =
     (fastf_t)dmp->dm_height/
     (fastf_t)dmp->dm_width;
-
+#endif
 
   /* First time through, load a font or quit */
   if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct == NULL) {
