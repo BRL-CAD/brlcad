@@ -780,6 +780,7 @@ char *file, *obj;
 		extern struct mfuncs air_mfuncs[];
 		extern struct mfuncs rtrans_mfuncs[];
 		extern struct mfuncs fire_mfuncs[];
+		extern struct mfuncs brdf_mfuncs[];
 
 		mlib_add( phg_mfuncs );
 		mlib_add( light_mfuncs );
@@ -799,6 +800,7 @@ char *file, *obj;
 		mlib_add( air_mfuncs );
 		mlib_add( rtrans_mfuncs );
 		mlib_add( fire_mfuncs );
+		mlib_add( brdf_mfuncs );
 	}
 
 	if( minus_o )  {
