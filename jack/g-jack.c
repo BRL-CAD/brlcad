@@ -39,8 +39,10 @@ struct vertex	**init_heap();
 void		heap_increase();
 
 
-static char	usage[] = "Usage: %s [-p prefix] brlcad_db.g object(s)\n";
+static char	usage[] = "Usage: %s [-v] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-p prefix] brlcad_db.g object(s)\n";
 
+static int	NMG_debug;	/* saved arg of -X, for longjmp handling */
+static int	verbose;
 int		heap_cur_sz;	/* Next free spot in heap. */
 static char	*prefix = NULL;	/* output filename prefix. */
 static FILE	*fp_fig;	/* Jack Figure file. */
@@ -50,6 +52,9 @@ static struct rt_tess_tol	ttol;
 static struct rt_tol		tol;
 static char			*base_seg;
 
+static int	regions_tried = 0;
+static int	regions_done = 0;
+
 main(argc, argv)
 int	argc;
 char	*argv[];
@@ -57,6 +62,7 @@ char	*argv[];
 	char		*dot, *fig_file;
 	int		i, ret;
 	register int	c;
+	double		percent;
 
 	ttol.magic = RT_TESS_TOL_MAGIC;
 	/* Defaults, updated by command line options. */
@@ -74,7 +80,7 @@ char	*argv[];
 	the_model = nmg_mm();
 
 	/* Get command line arguments. */
-	while ((c = getopt(argc, argv, "a:n:p:r:")) != EOF) {
+	while ((c = getopt(argc, argv, "a:n:p:r:vx:X:")) != EOF) {
 		switch (c) {
 		case 'a':		/* Absolute tolerance. */
 			ttol.abs = atof(optarg);
@@ -87,6 +93,16 @@ char	*argv[];
 			break;
 		case 'r':		/* Relative tolerance. */
 			ttol.rel = atof(optarg);
+			break;
+		case 'v':
+			verbose++;
+			break;
+		case 'x':
+			sscanf( optarg, "%x", &rt_g.debug );
+			break;
+		case 'X':
+			sscanf( optarg, "%x", &rt_g.NMG_debug );
+			NMG_debug = rt_g.NMG_debug;
 			break;
 		default:
 			fprintf(stderr, usage, argv[0]);
@@ -147,6 +163,11 @@ char	*argv[];
 	fclose(fp_fig);
 	rt_free(fig_file, "st");
 	rt_free(base_seg, "s");
+
+	percent = 0;
+	if(regions_tried>0)  percent = ((double)regions_done * 100) / regions_tried;
+	printf("Tried %d regions, %d converted successfully.  %g%%\n",
+		regions_tried, regions_done, percent);
 
 	return 0;
 }
@@ -317,9 +338,9 @@ union tree		*curtree;
 
 	RT_LIST_INIT(&vhead);
 
-	if (rt_g.debug&DEBUG_TREEWALK) {
+	if (rt_g.debug&DEBUG_TREEWALK || verbose) {
 		char	*sofar = db_path_to_string(pathp);
-		rt_log("do_region_end() path='%s'\n",
+		rt_log("\ndo_region_end() path='%s'\n",
 			sofar);
 		rt_free(sofar, "path string");
 	}
@@ -327,7 +348,18 @@ union tree		*curtree;
 	if (curtree->tr_op == OP_NOP)
 		return  curtree;
 
+	regions_tried++;
+	/* Begin rt_bomb() protection */
+	if( RT_SETJUMP )  {
+		/* Error, bail out */
+		rt_log("bailed out via longjmp\n");
+		rt_g.NMG_debug = NMG_debug;	/* restore mode */
+		the_model = nmg_mm();	/* sanity -- ignore current memory */
+		return	curtree;
+	}
 	r = doit(curtree, &ttol);
+	RT_UNSETJUMP;		/* Relinquish the protection */
+	regions_done++;
 	if (r != 0) {
 		FILE	*fp_psurf;
 		int	i;
@@ -377,6 +409,7 @@ union tree		*curtree;
 		if ((fp_psurf = fopen(rt_vls_addr(&file), "w")) == NULL)
 			perror(rt_vls_addr(&file));
 		else {
+			if(verbose) rt_log("*** Wrote %s\n", rt_vls_addr(&file));
 			nmg_to_psurf(r, fp_psurf);
 			fclose(fp_psurf);
 		}
@@ -391,7 +424,7 @@ union tree		*curtree;
 }
 
 /*
-*	N M G _ T O _ P S U R F S
+*	N M G _ T O _ P S U R F
 *
 *	Convert an nmg region into Jack format.  This routine makes a
 *	list of unique vertices and writes them to the ascii Jack
