@@ -213,15 +213,13 @@ char **argv;
 #ifndef COMMAND_LINE_EDITING
 #define COMMAND_LINE_EDITING 1
 #endif
+	      /* Set up for character-at-a-time terminal IO. */
 	      cbreak_mode = COMMAND_LINE_EDITING;
+	      save_Tty(fileno(stdin));
 	    }
 	  }
 	}
 
-	/* Set up for character-at-a-time terminal IO. */
-	if(classic_mged && cbreak_mode)
-	    save_Tty(fileno(stdin));
-	
 	(void)signal( SIGPIPE, SIG_IGN );
 
 	/*
