@@ -23,6 +23,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include <math.h>
 #include "machine.h"
+#include "externs.h"
 #include "db.h"
 #include "vmath.h"
 #include "wdb.h"
@@ -40,6 +41,9 @@ double a,b;
 #else
 #include <malloc.h>		/* not needed on SGI 3030s */
 #endif /* sgi */
+
+void	proc_label();
+void	mk_cyladdmember();
 
 static char usage[] = "\
 Usage: patch-g [options] > model.g\n\
@@ -2284,6 +2288,7 @@ int regnum;
  *	headd == linked list of this thousand series
  *	heade == linked list of over-all group
  */
+void
 proc_label(in,name,labelfile)
 struct input in[500];
 char *name;
@@ -2540,6 +2545,7 @@ fastf_t rad1,rad2;
  * of cylinders determined from the subtraction list. Assume that the
  * subtracted solids will be eventually be made.
  */
+void
 mk_cyladdmember(name,head,slist,mirflag)
 char *name;
 struct wmember *head;
@@ -2634,7 +2640,6 @@ add_to_list( slist,outsolid,insolid,inmirror )
 struct subtract_list *slist;
 int outsolid,insolid,inmirror;
 {
-	char *malloc();
 
 	if( slist == NULL ){
 		slist = (struct subtract_list *)malloc(sizeof(struct subtract_list));
