@@ -416,7 +416,9 @@ struct partition *PartHeadp;
 	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
 		if( pp->pt_inhit->hit_dist >= ap->a_rt_i->rti_tol.dist )  break;
 	if( pp == PartHeadp )  {
-		rt_log("light_hit:  ERROR, nothing hit, vis=0\n");
+		pp=PartHeadp->pt_forw;
+		rt_log("light_hit:  ERROR, nothing hit, vis=0, dtol=%e\n",ap->a_rt_i->rti_tol.dist);
+		rt_pr_partitions(ap->a_rt_i, PartHeadp, "light_hit pt list");
 		return(0);		/* light_visible = 0 */
 	}
 	regp = pp->pt_regionp;
@@ -486,8 +488,8 @@ struct partition *PartHeadp;
 	sub_ap = *ap;			/* struct copy */
 	sub_ap.a_level = ap->a_level+1;
 	{
-		FAST fastf_t f;
-		f = pp->pt_outhit->hit_dist+0.0001;
+		register fastf_t f;
+		f = pp->pt_outhit->hit_dist + ap->a_rt_i->rti_tol.dist;
 		VJOIN1(sub_ap.a_ray.r_pt, ap->a_ray.r_pt, f, ap->a_ray.r_dir);
 	}
 	sub_ap.a_purpose = "light transmission after filtering";
