@@ -189,6 +189,7 @@ ardec-3	Pyramid 90Mx, Dual-CPU, OSx 2.5, 16 Mbytes
 bob.brl.mil	Cray-2, SN 2009, 4.3ns clock
 brl-patton	Cray X-MP/48, SN213, COS V115BF2, 8.5ns clock
 brl-spark	Gould PN 9050, no MACC, UTX 2.0, 2x4Mb mem boards
+brl-sws2	Convex C120, 16 Mbytes, Convex Unix 6.2.32.2
 brl-vector	Alliant FX/80 (8 ACEs, 6 IPs, 32 Mbytes), Concentrix
 brl-venom	Alliant FX/8 (8 CEs, 6 IPs, 32 Mbytes), Concentrix
 brl-vgr	VAX 780, FPA, 4.3 BSD
@@ -377,6 +378,9 @@ Rays	vmb	375.4	218.6	186.4	196.2	?	UTX 2.0
 _
 Rays	venom	468.2	221.7	166.1	144.9	?	Concentrix 3.0,
 *vgr	venom	3.94	3.42	4.55	4.24	?	1 CE, no vectors
+_
+Rays	sws2	471.9	258.4	202.5	186.4	?	Convex Unix 6.2.32.2
+*vgr	sws2	3.97	3.98	5.55	5.45	?	vanilla cc -O
 _
 Rays	vector	656.6	301.6	221.1	195.0	?	Concentrix 3.0,
 *vgr	vector	5.53	4.65	6.06	5.70	?	1 ACE, no vectors
