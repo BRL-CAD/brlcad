@@ -51,7 +51,7 @@ static char	*framebuffer = NULL;
 static FBIO	*fbp;
 
 static char usage[] = "\
-Usage: fbzoom [-h] [-F framebuffer]\n\
+Usage: fbzoom [-hT] [-F framebuffer]\n\
 	[-{sS} squarescrsize] [-{wW} scr_width] [-{nN} scr_height]\n";
 
 main(argc, argv )
@@ -127,8 +127,10 @@ char **argv;
 				xZoom, yZoom, xPan, yPan );
 #else
 		(void) fprintf( stdout,
-				"Center Pixel: %4d %4d   Zoom: %2d %2d            \r",
-				xPan, yPan, xZoom, yZoom );
+				"Center Pixel: %4d %4d   Zoom: %2d %2d   %s\r",
+				xPan, yPan, xZoom, yZoom,
+				toggle_pan ? "Pan: image "
+					   : "Pan: window");
 #endif
 		(void) fflush( stdout );
 	}  while( doKeyPad() );
@@ -146,14 +148,15 @@ b ^V	zoom Bigger (*2)\r\n\
 s	zoom Smaller (*0.5)\r\n\
 +	zoom Bigger (+1)\r\n\
 -	zoom Smaller (-1)\r\n\
-h B 	move Right (1)\r\n\
-j P	move Up (1)\r\n\
-k N	move Down (1)\r\n\
-l F	move Left (1)\r\n\
-H ^B	move Right (many)\r\n\
-J ^P	move Up (many)\r\n\
-K ^N	move Down (many)\r\n\
-L ^F	move Left (many)\r\n\
+h B 	pan Left (1)\r\n\
+j N	pan Down (1)\r\n\
+k P	pan Up (1)\r\n\
+l F	pan Right (1)\r\n\
+H ^B	pan Left (many)\r\n\
+J ^N	pan Down (many)\r\n\
+K ^P	pan Up (many)\r\n\
+L ^F	pan Right (many)\r\n\
+T	toggle sense of pan commands\r\n\
 c	goto Center\r\n\
 z	zoom 1 1\r\n\
 r	Reset to normal\r\n\
@@ -249,37 +252,37 @@ doKeyPad()
 		--new_yZoom;
 		break;
 
-	case 'F' :
-	case 'l' :				/* move RIGHT.	*/
-		new_xPan += 1 - 2 * toggle_pan;
-		break;
-	case ctl('f') :
-	case 'L' :
-		new_xPan += PanFactor * (1 - 2 * toggle_pan);
-		break;
-	case 'N' :
-	case 'j' :				/* move DOWN.	*/
-		new_yPan -= 1 - 2 * toggle_pan;
-		break;
-	case ctl('n') :
-	case 'J' :
-		new_yPan -= PanFactor * (1 - 2 * toggle_pan);
-		break;
-	case 'P' :
-	case 'k' :				/* move UP.	*/
-		new_yPan += 1 - 2 * toggle_pan;
-		break;
-	case ctl('p') :
-	case 'K' :
-		new_yPan += PanFactor * (1 - 2 * toggle_pan);
-		break;
+	case 'h' :				/* pan LEFT.	*/
 	case 'B' :
-	case 'h' :				/* move LEFT.	*/
 		new_xPan -= 1 - 2 * toggle_pan;
 		break;
-	case ctl('b') :
 	case 'H' :
+	case ctl('b') :
 		new_xPan -= PanFactor * (1 - 2 * toggle_pan);
+		break;
+	case 'j' :				/* pan DOWN.	*/
+	case 'N' :
+		new_yPan -= 1 - 2 * toggle_pan;
+		break;
+	case 'J' :
+	case ctl('n') :
+		new_yPan -= PanFactor * (1 - 2 * toggle_pan);
+		break;
+	case 'k' :				/* pan UP.	*/
+	case 'P' :
+		new_yPan += 1 - 2 * toggle_pan;
+		break;
+	case 'K' :
+	case ctl('p') :
+		new_yPan += PanFactor * (1 - 2 * toggle_pan);
+		break;
+	case 'l' :				/* pan RIGHT.	*/
+	case 'F' :
+		new_xPan += 1 - 2 * toggle_pan;
+		break;
+	case 'L' :
+	case ctl('f') :
+		new_xPan += PanFactor * (1 - 2 * toggle_pan);
 		break;
 	}
 	return	1;		/* keep going */
