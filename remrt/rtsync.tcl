@@ -164,12 +164,15 @@ proc apply_color {} {
 # The air shader
 label .air_title -text "Air Shader"
 entry .air_string1 -width 32 -relief sunken -bd 2 -textvariable air_shader1
-entry .air_string2 -width 32 -relief sunken -bd 2 -textvariable air_shader2
+entry .air_string2 -width 42 -relief sunken -bd 2 -textvariable air_shader2
 
 frame .air_apply_fr
+button .air_demo -text "Cloud" -command {\
+	set air_shader1 "255 255 255";\
+	set air_shader2 "scloud s=10/10/10 m=.05 d=10/21.25/10 o=3"}
 entry .air_region -width 16 -relief sunken -bd 2 -textvariable air_region_name
 button .air_apply -text "Apply" -command apply_air
-pack .air_region .air_apply -side left -in .air_apply_fr
+pack .air_demo .air_region .air_apply -side left -in .air_apply_fr
 pack .air_title .air_string1 .air_string2 .air_apply_fr -side top -in .air_fr
 
 proc apply_air {} {
@@ -178,10 +181,12 @@ proc apply_air {} {
 	global air_region_name
 
 	# send new stuff to servers
-	node_send .inmem adjust $air_region_name rgb "{" $air_shader1 "}" ";" \
-		  .inmem adjust $air_region_name shader "{" $air_shader2 "}"
-	vrmgr_send .inmem adjust $air_region_name rgb "{" $air_shader1 "}" ";" \
-		   .inmem adjust $air_region_name shader "{" $air_shader2 "}"
+	node_send .inmem adjust $air_region_name \
+		rgb "{" $air_shader1 "}" \
+		shader "{" $air_shader2 "}"
+	vrmgr_send .inmem adjust $air_region_name \
+		rgb "{" $air_shader1 "}" \
+		shader "{" $air_shader2 "}"
 
 	# indicate LIBRT re-prep required.
 	reprep
