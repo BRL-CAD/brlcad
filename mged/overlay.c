@@ -38,11 +38,11 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 /* Usage:  overlay file.plot [name] */
 int
-f_overlay(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
+f_overlay(
+	ClientData clientData,
+	Tcl_Interp *interp,
+	int	argc,
+	char	**argv)
 {
 	char		*name;
 	FILE		*fp;

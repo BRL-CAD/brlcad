@@ -698,3 +698,70 @@ void find_nearest_ars_pt(
 #else
 void find_nearest_ars_pt();
 #endif
+
+/* ged.c */
+int event_check( int non_blocking );
+int f_opendb(
+	ClientData clientData,
+	Tcl_Interp *interp,
+	int	argc,
+	char	**argv);
+void new_edit_mats(void);
+void new_mats(void);
+void pr_prompt(void);
+void pr_beep(void);
+
+/* grid.c */
+void round_to_grid(fastf_t *view_dx, fastf_t *view_dy);
+void snap_keypoint_to_grid(void);
+void snap_view_center_to_grid(void);
+void snap_to_grid(
+	fastf_t *mx,		/* input and return values */
+	fastf_t *my);		/* input and return values */
+void snap_view_to_grid(fastf_t view_dx, fastf_t view_dy);
+
+/* menu.c */
+int mmenu_select( int pen_y, int do_func );
+
+/* overlay.c */
+int f_overlay(
+	ClientData clientData,
+	Tcl_Interp *interp,
+	int	argc,
+	char	**argv);
+
+/* predictor.c */
+void predictor_frame();
+
+/* usepen.c */
+int f_mouse(
+	ClientData clientData,
+	Tcl_Interp *interp,
+	int	argc,
+	char	**argv);
+int f_aip(
+	ClientData clientData,
+	Tcl_Interp *interp,
+	int argc,
+	char **argv);
+void buildHrot( mat_t mat, double alpha, double beta, double ggamma );
+void wrt_view( mat_t out, const mat_t change, const mat_t in );
+void wrt_point( mat_t out, const mat_t change, const mat_t in, const point_t point );
+void wrt_point_direc( mat_t out, const mat_t change, const mat_t in, const point_t point, const vect_t direc );
+int f_matpick(
+	ClientData clientData,
+	Tcl_Interp *interp,
+	int	argc,
+	char	**argv);
+
+/* tedit.c */
+int editit( const char *file );
+
+/* titles.c */
+void create_text_overlay( struct bu_vls *vp );
+void screen_vls(
+	int	xbase,
+	int	ybase,
+	struct bu_vls	*vp);
+void dotitles(struct bu_vls *overlay_vls);
+

@@ -750,8 +750,8 @@ readsolid()
 }
 
 /* Run $EDITOR on temp file */
-editit( file )
-char *file;
+int
+editit( const char *file )
 {
 #if 0
 #ifdef BSD

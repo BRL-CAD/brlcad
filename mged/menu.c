@@ -325,9 +325,7 @@ int y_top;
  *		-1 if pen is ABOVE menu	(error)
  */
 int
-mmenu_select( pen_y, do_func )
-register int pen_y;
-int do_func;
+mmenu_select( int pen_y, int do_func )
 { 
 	static int menu, item;
 	struct menu_item	**m;

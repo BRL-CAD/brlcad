@@ -68,8 +68,7 @@ extern struct rt_db_internal	es_int;
  *  Prepare the numerical display of the currently edited solid/object.
  */
 void
-create_text_overlay( vp )
-register struct bu_vls	*vp;
+create_text_overlay( struct bu_vls *vp )
 {
 	struct directory	*dp;
 	register int	i;
@@ -189,10 +188,10 @@ register struct bu_vls	*vp;
  * so each line is written with a separate call to DM_DRAW_STRING_2D().
  */
 void
-screen_vls( xbase, ybase, vp )
-int	xbase;
-int	ybase;
-register struct bu_vls	*vp;
+screen_vls(
+	int	xbase,
+	int	ybase,
+	struct bu_vls	*vp)
 {
   register char	*start;
   register char	*end;
@@ -226,8 +225,7 @@ register struct bu_vls	*vp;
  * NOTE that this routine depends on being called AFTER dozoom();
  */
 void
-dotitles(overlay_vls)
-struct bu_vls *overlay_vls;
+dotitles(struct bu_vls *overlay_vls)
 {
 	register int    i;
 	register int    x, y;			/* for menu computations */

@@ -1187,8 +1187,7 @@ int mask;
  */
 
 int
-event_check( non_blocking )
-int	non_blocking;
+event_check( int non_blocking )
 {
     register struct dm_list *p;
     struct dm_list *save_dm_list;
@@ -1962,11 +1961,11 @@ do_rc()
  *	cmdline()		Only one arg is permitted.
  */
 int
-f_opendb(clientData, interp, argc, argv )
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
+f_opendb(
+	ClientData clientData,
+	Tcl_Interp *interp,
+	int	argc,
+	char	**argv)
 {
 	struct db_i *save_dbip;
 	struct bu_vls vls;
