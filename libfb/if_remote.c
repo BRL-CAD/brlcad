@@ -155,7 +155,9 @@ int	width, height;
 	ifp->if_max_height = fbgetlong( &buf[2*NET_LONG_LEN] );
 	ifp->if_width = fbgetlong( &buf[3*NET_LONG_LEN] );
 	ifp->if_height = fbgetlong( &buf[4*NET_LONG_LEN] );
-	return( fbgetlong( &buf[0*NET_LONG_LEN] ) );
+	if( fbgetlong( &buf[0*NET_LONG_LEN] ) != 0 )
+		return(-1);		/* fail */
+	return( 0 );			/* OK */
 }
 
 _LOCAL_ int
