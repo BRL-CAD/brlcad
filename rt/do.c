@@ -252,23 +252,24 @@ int	argc;
 char	**argv;
 {
 	register struct rt_i *rtip = ap.a_rt_i;
+	int i;
 	static int a[] = {
-		-35,
+		-35,   0,
 		  0,  90, 135, 180, 225, 270, 315,
 		  0,  90, 135, 180, 225, 270, 315
 	};
 	static int e[] = {
-		-25,
+		-25, -90,
 		-30, -30, -30, -30, -30, -30, -30,
-		  0,   0,   0,   0,   0,   0,   0
+		-60, -60, -60, -60, -60, -60, -60
 	};
 
 	if( rtip->HeadRegion == REGION_NULL )  {
 		def_tree( rtip );		/* Load the default trees */
 	}
-	for( curframe=0; curframe<(sizeof(a)/sizeof(a[0])); curframe++ )  {
-		do_ae( (double)a[curframe], (double)e[curframe] );
-		(void)do_frame( curframe );
+	for( i=0; i<(sizeof(a)/sizeof(a[0])); i++ )  {
+		do_ae( (double)a[i], (double)e[i] );
+		(void)do_frame( curframe++ );
 	}
 	return(-1);	/* end RT by returning an error */
 }
