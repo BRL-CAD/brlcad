@@ -1,0 +1,70 @@
+.TH PIX-FB 1 BRL/CAD
+.SH NAME
+pix-fb \- display a .pix format RGB image file on a framebuffer
+.SH SYNOPSIS
+.B pix-fb
+[
+.B \-h
+] [
+.B \-i
+] [
+.B \-c
+] [
+.B width
+] <
+.B file.pix
+.SH DESCRIPTION
+.I pix-fb
+reads a .pix format file from standard input, and displays the
+image on the currently selected framebuffer.
+The environment variable FB_FILE specifies
+the current framebuffer, see
+.I libfb(3) .
+.P
+By default, the .pix file is assumed to be 512x512 pixels;
+by specifying the
+.B \-h
+flag, the default is changed to 1024x1024.
+.P
+If the
+.B \-i
+flag is specified, the image is output from top to bottom.
+Customarily, .pix files are stored bottom to top, so this
+inverts the image.
+.P
+The
+.B \-c
+flag causes the screen to be cleared before the image is displayed;
+otherwise, the default behavior is to overwrite the current image
+with the new image.
+.P
+An optional line
+.B width
+can be specified to indicate other size images.
+.SH "FORMAT"
+A .pix file contains sequences of pixels.
+Each pixel is stored as three \fBunsigned char\fRs,
+first red, then green, then blue.
+The first pixel in a .pix file is the lower left corner of the image.
+The pixels proceed from left-to-right across each scanline,
+with scanlines being written from the bottom to the top of the image.
+By convention, .pix images are always square.
+.SH "SEE ALSO"
+rt(1), fb-pix(1), libfb(3).
+.SH DIAGNOSTICS
+If the .pix file is shorter than expected, the program exits silently.
+.SH AUTHOR
+Michael John Muuss
+.SH SOURCE
+ SECAD/VLD Computing Consortium, Bldg 394
+ The U. S. Army Ballistic Research Laboratory
+ Aberdeen Proving Ground, Maryland  21005
+.SH COPYRIGHT
+This software is Copyright (C) 1985 by the United States Army.
+All rights reserved.
+.SH BUGS
+The upper limit of 1024x1024 is pointless, and should be removed.
+However, it's a rare framebuffer that is that big.
+.SH "BUG REPORTS"
+Reports of bugs or problems should be submitted via electronic
+mail to <GED@BRL.ARPA>.
