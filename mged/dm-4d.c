@@ -2431,7 +2431,6 @@ char	**argv;
 		/* Bare set command, print out current settings */
 		rt_structprint("dm_4d internal variables", Ir_vparse, (char *)0 );
 		rt_log("%s", rt_vls_addr(&vls) );
-		fflush(stdout);
 	} else {
 		rt_vls_from_argv( &vls, argc-1, argv+1 );
 		rt_structparse( &vls, Ir_vparse, (char *)0 );
