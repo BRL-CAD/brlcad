@@ -197,6 +197,7 @@ BDIRS="bench \
 	anim \
 	jove \
 	canon \
+	burst \
 	dhrystone"
 
 TDIRS="libtcl libtk tcl tmged"
