@@ -57,6 +57,9 @@ char	*argv[];
 #endif
 	beginptr = sbrk(0);
 
+	npsw = rt_avail_cpus();
+	if( npsw > MAX_PSW )
+		npsw = MAX_PSW;
 	if( npsw > 1 )
 		rt_g.rtg_parallel = 1;
 	else
