@@ -160,7 +160,8 @@ typedef long	bitv_t;		/* largest integer type */
  *				*
  ********************************/
 #if __STDC__
-#define const	/**/		/* Does not support this keyword */
+#define const	/**/		/* Does not support const keyword */
+#define CONST	/**/		/* Does not support const keyword */
 #endif
 
 typedef double	fastf_t;	/* double|float, "Fastest" float type */
@@ -231,6 +232,13 @@ typedef long	bitv_t;		/* largest integer type */
 #  else
 	typedef char	*genptr_t;
 #  endif
+#endif
+
+/* A portable way of handling the ANSI C const keyword */
+#if __STDC__ && !defined(CONST)
+#	define	CONST	const
+#else
+#	define	CONST	/**/
 #endif
 
 /*
