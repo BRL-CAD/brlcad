@@ -40,8 +40,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
-
-#include "../libtk/generic/tkPort.h"
+#include "tk.h"
 
 /*
  * The format record for the PIX file format:
