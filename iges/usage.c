@@ -20,7 +20,7 @@
 
 usage()
 {
-	fprintf( stderr , "Usage:  iges-g file.iges file.g\n" );
+	fprintf( stderr , "Usage:  iges-g [-n] file.iges file.g\n" );
 	fprintf( stderr , "\t-n - Convert all rational B-spline surfaces to a single spline solid\n" );
 	exit( 1 );
 }
