@@ -20,8 +20,8 @@
 #ifndef POLYNO_H
 #define POLYNO_H seen
 
-#define		MAXP			4
-#define 	SMALL			.00000001
+#define		MAXP			4	/* Maximum Poly Order */
+
 #define		Abs( a )		((a) >= 0 ? (a) : -(a))
 #define 	Max( a, b )		((a) > (b) ? (a) : (b))
 
