@@ -2126,11 +2126,12 @@ RT_EXTERN(void			nmg_vlblock_e, (struct rt_vlblock *vbp,
 				int red, int green, int blue, int fancy) );
 RT_EXTERN(void			nmg_vlblock_eu, (struct rt_vlblock *vbp,
 				CONST struct edgeuse *eu, long *tab,
-				int red, int green, int blue, int fancy,
-				int loopnum) );
+				int red, int green, int blue,
+				int fancy, int loopnum) );
 RT_EXTERN(void			nmg_vlblock_lu, (struct rt_vlblock *vbp,
 				CONST struct loopuse *lu, long *tab,
-				int red, int green, int blue, int fancy) );
+				int red, int green, int blue,
+				int fancy, int loopnum) );
 RT_EXTERN(void			nmg_vlblock_fu, (struct rt_vlblock *vbp,
 				CONST struct faceuse *fu, long *tab, int fancy) );
 RT_EXTERN(void			nmg_vlblock_s, (struct rt_vlblock *vbp,
