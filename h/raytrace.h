@@ -958,7 +958,7 @@ struct resource {
  *  is handled in the parsing routines that use sp_offset,
  *  because of the limitations placed on compile-time initializers.
  */
-#if __STDC__
+#if __STDC__ && !defined(ipsc860)
 #	define offsetofarray(_t, _m)	offsetof(_t, _m)
 #else
 #	if !defined(offsetof)
