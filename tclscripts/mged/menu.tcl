@@ -10,10 +10,17 @@
 #		*- Added procs to implement edit menus
 #
 
-proc mmenu_set { w id i menu } {
+proc mmenu_set { id i } {
     global mmenu
 
+    set w .mmenu$id
+
     if {![winfo exists $w]} {
+	return
+    }
+
+    set result [catch {mmenu_get $i} menu]
+    if {$result != 0} {
 	return
     }
 
@@ -48,7 +55,6 @@ proc mmenu_set { w id i menu } {
     }
 }
 
-
 proc mmenu_init { id } {
     global mmenu
     global mged_gui
@@ -62,12 +68,9 @@ proc mmenu_init { id } {
     label $w.state -textvariable mged_display(state)
     pack $w.state -side top
     
-    set i 0
-    set mmenu($id,num) 0
+    set mmenu($id,num) 3
 
-    foreach menu [mmenu_get] {
-	incr mmenu($id,num)
-	
+    for { set i 0 } { $i < $mmenu($id,num) } { incr i } {
 	frame $w.f$i -relief raised -bd 1
 	listbox $w.f$i.l -bd 2 -exportselection false
         pack $w.f$i.l -side left -fill both -expand yes
@@ -75,9 +78,7 @@ proc mmenu_init { id } {
 	bind $w.f$i.l <Button-1> "handle_select %W %y; mged_press $id %W; break"
 	bind $w.f$i.l <Button-2> "handle_select %W %y; mged_press $id %W; break"
 
-	mmenu_set $w $id $i $menu
-
-	incr i
+	mmenu_set $id $i
     }
 
     wm title $w "MGED Button Menu ($id)"
@@ -100,25 +101,9 @@ proc reconfig_mmenu { id } {
     }
 
     set w .mmenu$id
-    for {set i 0} {$i < 3} {incr i} {
-	catch { destroy $w.f$i } 
-    }
 
-    set i 0
-    set mmenu($id,num) 0
-    foreach menu [mmenu_get] {
-	incr mmenu($id,num)
-	
-	frame $w.f$i -relief raised -bd 1
-	listbox $w.f$i.l -bd 2 -exportselection false
-        pack $w.f$i.l -side left -fill both -expand yes
-
-	bind $w.f$i.l <Button-1> "handle_select %W %y; mged_press $id %W; break"
-	bind $w.f$i.l <Button-2> "handle_select %W %y; mged_press $id %W; break"
-
-	mmenu_set $w $id $i $menu
-
-	incr i
+    for { set i 0 } { $i < $mmenu($id,num) } { incr i } {
+	mmenu_set $id $i
     }
 }
 
