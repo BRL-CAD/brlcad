@@ -2047,11 +2047,7 @@ int both;    /* if(!both) then set only curr_e_axes_pos, otherwise
     }else if(EDIT_TRAN){
       es_edclass = EDIT_CLASS_TRAN;
       VSETALL( edit_absolute_tran, 0.0 );
-#if 0
-    }else if(SEDIT_SCALE){
-#else
     }else if(EDIT_SCALE){
-#endif
       es_edclass = EDIT_CLASS_SCALE;
 
       if(SEDIT_SCALE){
@@ -2061,14 +2057,9 @@ int both;    /* if(!both) then set only curr_e_axes_pos, otherwise
     }else
       es_edclass = EDIT_CLASS_NULL;
 
-#if 0
-    if(mged_variables.transform == 'e')
-      scroll_edit = es_edclass;
-    else
-      scroll_edit = EDIT_CLASS_NULL;
-#endif
-
+#if 1
     bn_mat_idn(acc_rot_sol);
+#endif
 
     mged_variables.transform = 'e';
     set_scroll();
@@ -2167,9 +2158,6 @@ init_sedit()
 	es_ars_crv = (-1);
 	es_ars_col = (-1);
 
-	sedit_menu();		/* put up menu header */
-	build_tcl_edit_menu();
-
 	/* Finally, enter solid edit state */
 	(void)chg_state( ST_S_PICK, ST_S_EDIT, "Keyboard illuminate");
 	chg_l2menu(ST_S_EDIT);
@@ -2177,6 +2165,18 @@ init_sedit()
 	sedit();
 
 	button( BE_S_EDIT );	/* Drop into edit menu right away */
+
+#if 1
+	build_tcl_edit_menu();
+
+	bn_mat_idn(acc_rot_sol);
+	VSETALL( edit_absolute_rotate, 0.0 );
+	VSETALL( edit_absolute_tran, 0.0 );
+	edit_absolute_scale = 0;
+	acc_sc_sol = 1;
+
+	set_e_axes_pos(1);
+#endif
 }
 
 /*
@@ -2444,18 +2444,19 @@ sedit()
 	mat_t	mat;
 	mat_t	mat1;
 	mat_t	edit;
+	point_t rot_point;
 
 	if(dbip == DBI_NULL)
 	  return;
 
 	sedraw = 0;
-	update_views = 1;
+	++update_views;
 
 	switch( es_edflag ) {
 
 	case IDLE:
-	  /* do nothing */
-	  update_views = 0;
+	  /* do nothing more */
+	  --update_views;
 	  break;
 
 	case ECMD_DSP_SCALE_X:
@@ -3237,9 +3238,27 @@ sedit()
 			/* Apply changes to solid */
 			/* xlate keypoint to origin, rotate, then put back. */
 #ifdef TRY_EDIT_NEW_WAY
+			switch(mged_variables.rotate_about){
+			case 'v':       /* View Center */
+			  VSET(work, 0.0, 0.0, 0.0);
+			  MAT4X3PNT(rot_point, view2model, work);
+			  break;
+			case 'e':       /* Eye */
+			  VSET(work, 0.0, 0.0, 1.0);
+			  MAT4X3PNT(rot_point, view2model, work);
+			  break;
+			case 'm':       /* Model Center */
+			  VSETALL(rot_point, 0.0);
+			  break;
+			case 'k':       /* Key Point */
+			default:
+			  VMOVE(rot_point, es_keypoint);
+			  break;
+			}
+
 			if(mged_variables.context){
 			  /* calculate rotations about keypoint */
-			  bn_mat_xform_about_pt( edit, incr_change, es_keypoint );
+			  bn_mat_xform_about_pt( edit, incr_change, rot_point );
 
 			  /* We want our final matrix (mat) to xform the original solid
 			   * to the position of this instance of the solid, perform the
@@ -3249,7 +3268,7 @@ sedit()
 			  bn_mat_mul( mat1, edit, es_mat );
 			  bn_mat_mul( mat, es_invmat, mat1 );
 			}else{
-			  MAT4X3PNT(work, es_invmat, es_keypoint);
+			  MAT4X3PNT(work, es_invmat, rot_point);
 			  bn_mat_xform_about_pt( mat, incr_change, work );
 			}
 #else
@@ -5186,8 +5205,12 @@ CONST vect_t	mousevec;
     /* Have scaling take place with respect to keypoint,
      * NOT the view center.
      */
+#if 0
+    MAT4X3PNT(pos_model, modelchanges, es_keypoint);
+#else
     MAT4X3PNT(temp, es_mat, es_keypoint);
     MAT4X3PNT(pos_model, modelchanges, temp);
+#endif
     wrt_point(modelchanges, incr_change, modelchanges, pos_model);
 
     bn_mat_idn( incr_change );
@@ -5201,8 +5224,13 @@ CONST vect_t	mousevec;
     mat_t oldchanges;	/* temporary matrix */
 
     /* Vector from object keypoint to cursor */
+#if 0
+    VMOVE( temp, es_keypoint );
+    MAT4X3PNT( pos_view, model2objview, es_keypoint );
+#else
     MAT4X3PNT( temp, es_mat, es_keypoint );
     MAT4X3PNT( pos_view, model2objview, temp );
+#endif
     if( movedir & RARROW )
       pos_view[X] = mousevec[X];
     if( movedir & UARROW )
@@ -5233,17 +5261,21 @@ CONST vect_t	mousevec;
 
 void
 oedit_trans(tvec)
-vect_t tvec;
+point_t tvec;
 {
-  vect_t  pos_model;
-  vect_t  tr_temp;
-  vect_t  temp;
+  point_t  pos_model;
+  point_t  tr_temp;
+  point_t  temp;
   mat_t incr_mat;
   mat_t oldchanges;	/* temporary matrix */
 
   bn_mat_idn( incr_mat );
+#if 0
+  VMOVE(temp, es_keypoint);
+#else
   MAT4X3PNT( temp, es_mat, es_keypoint );
-  MAT4X3PNT( pos_model, view2model, tvec);/* NOT objview */
+#endif
+  MAT4X3PNT( pos_model, view2model, tvec );/* NOT objview */
   MAT4X3PNT( tr_temp, modelchanges, temp );
   VSUB2( tr_temp, pos_model, tr_temp );
   MAT_DELTAS(incr_mat,
@@ -5318,8 +5350,12 @@ oedit_abs_scale()
   /* Have scaling take place with respect to keypoint,
    * NOT the view center.
    */
+#if 0
+  MAT4X3PNT(pos_model, modelchanges, es_keypoint);
+#else
   MAT4X3PNT(temp, es_mat, es_keypoint);
   MAT4X3PNT(pos_model, modelchanges, temp);
+#endif
   wrt_point(modelchanges, incr_mat, modelchanges, pos_model);
 
 #ifdef DO_NEW_EDIT_MATS
@@ -6172,6 +6208,10 @@ init_objedit()
 
 	set_e_axes_pos(1);
 
+	VSETALL( edit_absolute_rotate, 0.0 );
+	VSETALL( edit_absolute_tran, 0.0 );
+	edit_absolute_scale = 0;
+
 	bu_vls_init(&vls);
 	bu_vls_strcpy(&vls, "do_edit_menu {}");
 	(void)Tcl_Eval(interp, bu_vls_addr(&vls));
@@ -6656,8 +6696,12 @@ double	xangle, yangle, zangle;
 	buildHrot( incr_change, xangle, yangle, zangle );
 
 	/* accumulate change matrix - do it wrt a point NOT view center */
+#if 0
+	MAT4X3PNT(point, modelchanges, es_keypoint);
+#else
 	bn_mat_mul(tempp, modelchanges, es_mat);
 	MAT4X3PNT(point, tempp, es_keypoint);
+#endif
 	wrt_point(modelchanges, incr_change, modelchanges, point);
 
 #ifdef DO_NEW_EDIT_MATS
@@ -7410,10 +7454,10 @@ char	**argv;
   case 0:
     {
       struct bu_vls tmp_vls;
-    	point_t key;
+      point_t key;
 
 
-    	VSCALE( key, es_keypoint, base2local );
+      VSCALE( key, es_keypoint, base2local );
       bu_vls_init(&tmp_vls);
       bu_vls_printf(&tmp_vls, "%s (%g, %g, %g)\n", es_keytag, V3ARGS(key));
       Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
