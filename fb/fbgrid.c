@@ -51,7 +51,7 @@ char	**argv;
 	black.red = black.green = black.blue = 0;
 	red.red = 255;
 	middle = fb_sz/2;
-	fb_ioinit();
+	fb_ioinit(fbp);
 	if( fb_sz == 512 )
 	for( y = 0; y < fb_sz; y++ )
 		{
