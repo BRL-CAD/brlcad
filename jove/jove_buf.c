@@ -1,34 +1,37 @@
 /*
- *			J O V E _ B U F . C 
+ *			J O V E _ B U F . C
  *
  * $Revision$
  *
  * $Log$
+ * Revision 11.1  95/01/04  10:35:08  mike
+ * Release_4.4
+ *
  * Revision 10.3  94/09/17  04:57:35  butler
  * changed all calls to bcopy to be memcpy instead.  Useful for Solaris 5.2
- * 
+ *
  * Revision 10.2  1993/10/26  03:40:29  mike
  * ANSI C
  *
  * Revision 10.1  91/10/12  06:53:54  mike
  * Release_4.0
- * 
+ *
  * Revision 2.3  91/08/30  18:59:33  mike
  * Modifications for clean compilation on the XMP
- * 
+ *
  * Revision 2.2  91/08/30  17:54:09  mike
  * Changed #include directives to distinguish between local and system header
  * files.
- * 
+ *
  * Revision 2.1  91/08/30  17:48:53  mike
  * Paul Stay mods for ANSI C
- * 
+ *
  * Revision 2.0  84/12/26  16:45:00  dpk
  * System as distributed to Berkeley 26 Dec 84
- * 
+ *
  * Revision 1.2  83/12/16  00:07:12  dpk
  * Added distinctive RCS header
- * 
+ *
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$";
@@ -37,7 +40,7 @@ static char RCSid[] = "@(#)$Header$";
 /* Jonathan Payne at Lincoln-Sudbury Regional High School 5-25-83
 
    jove_buf.c
-   
+
    Contains commands that deal with creating, selecting, killing and
    listing buffers.  (And find-file) */
 
@@ -180,7 +183,7 @@ setfuncs(flags)
 int	*flags;
 {
 	UpdModLine++;	/* Kludge ... but speeds things up considerably */
-	memcpy(curbuf->b_flags, flags, NFLAGS*sizeof(int));
+	bcopy(flags, curbuf->b_flags, NFLAGS*sizeof(int));
 
 	if (IsFlagSet(flags, OVERWRITE))
 		BindInserts(OverWrite);
@@ -217,7 +220,7 @@ register int	*f;
 setflags(buf)
 BUFFER	*buf;
 {
-	memcpy(buf->b_flags, origflags, NFLAGS*sizeof(int));
+	bcopy(origflags, buf->b_flags, NFLAGS*sizeof(int));
 	SetUnmodified(buf);
 	ClrScratch(buf);	/* Normal until proven SCRATCHBUF */
 }
@@ -355,13 +358,13 @@ BUFFER	*newbuf;
 	if (newbuf == curbuf)
 		return;
 	lastbuf = curbuf;
-	memcpy(curbuf->b_flags, globflags, NFLAGS*sizeof(int));
+	bcopy(globflags, curbuf->b_flags, NFLAGS*sizeof(int));
 	lsave();
 	curbuf = newbuf;
 	getDOT();
-	memcpy( globflags, curbuf->b_flags, NFLAGS*sizeof(int));
+	bcopy(curbuf->b_flags, globflags, NFLAGS*sizeof(int));
 	setfuncs(curbuf->b_flags);
-}	
+}
 
 SelBuf()
 {
@@ -399,7 +402,7 @@ BUFFER *bp;
 				del_wind(wp);
 				wp = save->w_prev;
 			}
-		}				
+		}
 		wp = wp->w_next;
 	} while (wp != fwind);
 }
