@@ -38,6 +38,22 @@
 #define RAYTRACE_H_VERSION	"@(#)$Header$ (BRL)"
 
 /*
+ *  System library routines used by the RT library.
+ *  If header files are to be included, this should happen first,
+ *  to prevent accidentally redefining important stuff.
+ */
+#if __STDC__ && !apollo
+/*	NOTE:  Nested includes, gets malloc(), offsetof(), etc */
+#	include <stdlib.h>
+#	include <stddef.h>
+#else
+extern char	*malloc();
+extern char	*calloc();
+extern char	*realloc();
+/**extern void	free(); **/
+#endif
+
+/*
  *  It is necessary to have a representation of 1.0/0.0, or "infinity"
  *  that fits within the dynamic range of the machine being used.
  *  This constant places an upper bound on the size object which
@@ -819,7 +835,9 @@ struct resource {
 #if __STDC__
 #	define offsetofarray(_t, _m)	offsetof(_t, _m)
 #else
-#	define offsetof(_t, _m)		(int)(&(((_t *)0)->_m))
+#	if !defined(offsetof)
+#		define offsetof(_t, _m)		(int)(&(((_t *)0)->_m))
+#	endif
 #	define offsetofarray(_t, _m)	(int)( (((_t *)0)->_m))
 #endif
 
@@ -1365,19 +1383,5 @@ extern CONST double rt_inv2pi;
 extern CONST double rt_inv255;
 extern CONST double rt_degtorad;
 extern CONST double rt_radtodeg;
-
-/*
- *  System library routines used by the RT library.
- */
-#if __STDC__ && !apollo
-/*	NOTE:  Nested includes, gets malloc(), offsetof(), etc */
-#	include <stdlib.h>
-#	include <stddef.h>
-#else
-extern char	*malloc();
-extern char	*calloc();
-extern char	*realloc();
-/**extern void	free(); **/
-#endif
 
 #endif /* RAYTRACE_H */
