@@ -330,6 +330,25 @@ CONST char	**argv;
 		    		atof( argv[5+0] ),
 		    		atof( argv[5+1] ),
 		    		atof( argv[5+2] ) );
+		} else if( strcmp( argv[4], "scale_about" ) == 0 )  {
+			point_t	pt;
+			fastf_t	scale;
+			if( argc < 5+3 )  {
+		    		bu_log("db_parse_1anim:  matrix %s scale_about does not have enough arguments, only %d\n",
+		    			argv[3], argc );
+		    		goto bad;
+		    	}
+			VSET( pt,
+		    		atof( argv[5+0] ),
+		    		atof( argv[5+1] ),
+		    		atof( argv[5+2] ) );
+			scale = atof( argv[5+3] );
+			if( bn_mat_scale_about_pt( anp->an_u.anu_m.anm_mat,
+			    pt, scale ) < 0 )  {
+				bu_log("db_parse_1anim: matrix %s scale_about (%g, %g, %g) scale=%g failed\n",
+			    		argv[3], V3ARGS(pt), scale );
+			    	goto bad;
+			}
 		} else {
 			/* No keyword, assume full 4x4 matrix */
 			for( i=0; i<16; i++ )
@@ -365,9 +384,11 @@ CONST char	**argv;
 		bu_log("db_parse_1anim:  animation type '%s' unknown\n", argv[2]);
 		goto bad;
 	}
+	db_free_db_tree_state( &ts );
 	return anp;
 bad:
-	db_free_1anim( anp );
+	db_free_db_tree_state( &ts );
+	db_free_1anim( anp );		/* Does db_free_full_path() for us */
 	return (struct animate *)NULL;
 }
 
