@@ -73,12 +73,13 @@ struct structparse mged_vparse[] = {
 	{"",	0,  (char *)0,		0,			FUNC_NULL }
 };
 
-void
+int
 f_set(ac,av)
 int ac;
 char *av[];
 {
 	struct rt_vls vls;
+	int bad = 0;
 
 	rt_vls_init(&vls);
 
@@ -91,7 +92,10 @@ char *av[];
 		rt_structparse(&vls, mged_vparse, (char *)&mged_variables);
 	} else {
 		printf("Usage: set\t\t- prints all options\n\tset opt=val\t- sets an option\n");
+		bad = 1;
 		fflush(stdout);
 	}
 	rt_vls_free(&vls);
+
+	return bad ? CMD_BAD : CMD_OK;
 }
