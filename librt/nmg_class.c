@@ -213,7 +213,7 @@ CONST struct rt_tol	*tol;
 	CONST fastf_t	*matept;
 	point_t pca;	/* point of closest approach from pt to edge lseg */
 	fastf_t dist;	/* distance from pca to pt */
-	fastf_t dot, mag;
+	fastf_t dot;
 	int	code;
 
 	NMG_CK_EDGEUSE(eu);
@@ -1289,7 +1289,7 @@ CONST struct rt_tol	*tol;
 {
 	int class;
 	unsigned int	in, outside, on;
-	struct edgeuse *eu, *p, *q;
+	struct edgeuse *eu, *p;
 	struct loopuse *q_lu;
 	struct vertexuse *vu;
 	long		magic1;
@@ -1679,7 +1679,7 @@ CONST struct rt_tol *tol;
 {
 	struct neighbor	closest;
 	struct faceuse *fu;
-	vect_t n;
+	plane_t n;
 	fastf_t dist;
 
 	NMG_CK_LOOPUSE( lu );

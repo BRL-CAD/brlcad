@@ -29,11 +29,14 @@
 #ifndef line
 static char RCSid[] = "$Header$ (BRL)";
 #endif
+
 #include "conf.h"
 
 #include <stdio.h>
 #include <ctype.h>
 #include "machine.h"
+#include "vmath.h"
+#include "raytrace.h"
 
 /*
  * Theses should be moved to a header file soon.
@@ -108,7 +111,7 @@ char *in;			/* input format */
 	if (*p == 'h') {
 		result |= CV_HOST_MASK;
 		++p;
-	} else if (*p = 'n') {
+	} else if (*p == 'n') {
 		++p;
 	}
 
@@ -317,7 +320,6 @@ cv_optimize( cookie )
 register int	cookie;
 {
 	static int Indian = IND_NOTSET;
-	int	IsHost;
 	int	fmt;
 
 	if( cookie & CV_HOST_MASK )

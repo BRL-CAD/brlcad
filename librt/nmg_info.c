@@ -253,6 +253,7 @@ CONST struct loopuse *lu;
 		__FILE__, __LINE__, *lu->up.magic_p, *lu->up.magic_p);
 	    rt_bomb("nmg_find_fu_of_lu() giving up on loopuse");
 	}
+	return (struct faceuse *)NULL;
 }
 
 
@@ -273,16 +274,13 @@ CONST struct vertexuse *vu;
 	case NMG_SHELL_MAGIC:
 		rt_log("nmg_find_fu_of_vu() vertexuse is child of shell, can't find faceuse\n");
 		return ((struct faceuse *)NULL);
-		break;
 	case NMG_EDGEUSE_MAGIC:
 		switch (*vu->up.eu_p->up.magic_p) {
 		case NMG_LOOPUSE_MAGIC:
 			return nmg_find_fu_of_lu( vu->up.eu_p->up.lu_p );
-			break;
 		case NMG_SHELL_MAGIC:
 			rt_log("nmg_find_fu_of_vu() vertexuse is child of shell/edgeuse, can't find faceuse\n");
 			return ((struct faceuse *)NULL);
-			break;
 		}
 		rt_log("Error at %s %d:\nInvalid loopuse parent magic 0x%x\n",
 			__FILE__, __LINE__, *vu->up.lu_p->up.magic_p);
@@ -297,6 +295,7 @@ CONST struct vertexuse *vu;
 	}
 	rt_log("How did I get here %s %d?\n", __FILE__, __LINE__);
 	rt_bomb("nmg_find_fu_of_vu()\n");
+	return ((struct faceuse *)NULL);
 }
 /*
  *			N M G _ F I N D _ F U _ W I T H _ F G _ I N _ S
@@ -726,7 +725,6 @@ CONST struct loopuse	*lu;
 		for( RT_LIST_FOR( tvu, vertexuse, &v->vu_hd ) )  {
 			CONST struct edgeuse		*teu;
 			CONST struct loopuse		*tlu;
-			CONST struct loopuse		*newlu;
 
 			if( tvu == vu )  continue;
 			/*
@@ -769,7 +767,6 @@ CONST struct edgeuse	*eu1;
 CONST struct shell	*s2;
 {
 	CONST struct vertexuse	*vu1a, *vu1b;
-	struct vertexuse	*vu2a, *vu2b;
 	struct edgeuse		*eu2;
 
 	NMG_CK_EDGEUSE(eu1);
@@ -779,9 +776,9 @@ CONST struct shell	*s2;
 	vu1b = RT_LIST_PNEXT_CIRC( edgeuse, eu1 )->vu_p;
 	NMG_CK_VERTEXUSE(vu1a);
 	NMG_CK_VERTEXUSE(vu1b);
-	if( (vu2a = nmg_find_v_in_shell( vu1a->v_p, s2, 1 )) == (struct vertexuse *)NULL )
+	if( (nmg_find_v_in_shell( vu1a->v_p, s2, 1 )) == (struct vertexuse *)NULL )
 		return (struct edgeuse *)NULL;
-	if( (vu2b = nmg_find_v_in_shell( vu1b->v_p, s2, 1 )) == (struct vertexuse *)NULL )
+	if( (nmg_find_v_in_shell( vu1b->v_p, s2, 1 )) == (struct vertexuse *)NULL )
 		return (struct edgeuse *)NULL;
 
 	/* Both vertices have vu's of eu's in s2 */
