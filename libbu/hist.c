@@ -108,12 +108,15 @@ fastf_t				high;
 }
 
 /*
- *			B U _ H I S T _ P R
+ *			B U _ H I S T _ P R _ S U P P R E S S
+ *
+ *  Allows caller control over zero-suppression feature.
  */
 void
-bu_hist_pr( histp, title )
+bu_hist_pr_suppress( histp, title, zero_suppress )
 register struct bu_hist	*histp;
-CONST char			*title;
+CONST char		*title;
+int			zero_suppress;
 {
 	register int	i;
 	long		maxcount;
@@ -135,9 +138,12 @@ CONST char			*title;
 	}
 	if( maxcount <= 0 )  maxcount = 1;
 
-	/* Supress trailing bins with zero counts.  nbins s/b >= 1 */
-	for( nbins = histp->hg_nbins; nbins >= 1; nbins-- )
-		if(histp->hg_bins[nbins] > 0)  break;
+	nbins = histp->hg_nbins;
+	if( zero_suppress )  {
+		/* Supress trailing bins with zero counts.  nbins s/b >= 1 */
+		for( ; nbins >= 1; nbins-- )
+			if(histp->hg_bins[nbins] > 0)  break;
+	}
 
 	/* 12345678 12345678 123 .... */
 	bu_log("\nHistogram of %s\nmin=%g, max=%g, nbins=%d, clumpsize=%g\n%d samples collected, highest count was %d\n\n Value      Count Rel%%|  Bar Graph\n",
@@ -146,9 +152,13 @@ CONST char			*title;
 		histp->hg_nbins, histp->hg_clumpsize,
 		histp->hg_nsamples, maxcount );
 
-	/* Print each bin.  Leading & final bins with zero counts are supressed. */
-	for( i=0; i <= nbins; i++ )  {
-		if(histp->hg_bins[i] > 0)  break;
+	/* Print each bin. */
+	i = 0;
+	if( zero_suppress )  {
+		/* Leading bins with zero counts are supressed. */
+		for( ; i <= nbins; i++ )  {
+			if(histp->hg_bins[i] > 0)  break;
+		}
 	}
 	for( ; i <= nbins; i++ )  {
 		percent = (int)(((double)histp->hg_bins[i])*100.0/maxcount);
@@ -171,4 +181,17 @@ CONST char			*title;
 			val,
 			histp->hg_bins[i], percent, buf );
 	}
+}
+
+/*
+ *			B U _ H I S T _ P R
+ *
+ *  The original interface.
+ */
+void
+bu_hist_pr( histp, title )
+register struct bu_hist	*histp;
+CONST char			*title;
+{
+	bu_hist_pr_suppress( histp, title, 1 );
 }
