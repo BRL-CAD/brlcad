@@ -4892,8 +4892,10 @@ int final;
 				comp_count++;
 			rt_log( "Making component %s, group #%d, component #%d\n",
 					name_name, group_id , comp_id );
-			if( nmgs && make_nmg_objects() )
+			if( nmgs )
 			{
+			    if( (RT_SETJUMP) || make_nmg_objects() )
+			    {
 				struct fast_fus *fus;
 				struct adjacent_faces *adj;
 
@@ -4926,13 +4928,6 @@ int final;
 					rt_free( (char *)tmp , "Do_section: fus" );
 				}
 				fus_root = (struct fast_fus *)NULL;
-
-				if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
-					rt_log( "ERROR: rt_mem_barriercheck failed in Do_section before freeing cline list\n" );
-
-				if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
-					rt_log( "ERROR: rt_mem_barriercheck failed in Do_section before freeing shell list\n" );
-
 
 				if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
 					rt_log( "ERROR: rt_mem_barriercheck failed in Do_section before freeing adj_face list\n" );
@@ -4974,7 +4969,8 @@ int final;
 					}
 				}
 				conv_count--;
-
+			    }
+			    RT_UNSETJUMP;
 			}
 			make_cline_regions();
 			make_comp_group();
