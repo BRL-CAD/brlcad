@@ -103,7 +103,7 @@ int numargs;
 struct pkg_conn *pcsrv;		/* PKG connection to server */
 char *control_host;	/* name of host running controller */
 
-char usage[] = "Usage: rtsrv [-d] control-host\n";
+char srv_usage[] = "Usage: rtsrv [-d] control-host\n";
 
 /*
  *			M A I N
@@ -116,7 +116,7 @@ char **argv;
 	int debug = 0;
 
 	if( argc < 2 )  {
-		fprintf(stderr, usage);
+		fprintf(stderr, srv_usage);
 		exit(1);
 	}
 	if( strcmp( argv[1], "-d" ) == 0 )  {
@@ -124,7 +124,7 @@ char **argv;
 		debug = 1;
 	}
 	if( argc != 2 )  {
-		fprintf(stderr, usage);
+		fprintf(stderr, srv_usage);
 		exit(2);
 	}
 
