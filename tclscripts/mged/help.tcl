@@ -80,6 +80,8 @@ set mged_help_data(db_glob)	{{cmd_string}	{globs cmd_string against the MGED dat
          resulting in an expanded command string}}
 set mged_help_data(dbconcat)	{{file [prefix]}	{concatenate 'file' onto end of present database.  Run 'dup file' first.}}
 set mged_help_data(dbfind)	{{[-s] <objects>}	{find all references to objects}}
+set mged_help_data(dbupgrade)	{{[-f|-help]}	{upgrade your database to the current format}}
+set mged_help_data(dbversion)	{{}	{return the database version}}
 set mged_help_data(debugbu)	{{[hex_code]}	{show/set debugging bit vector for libbu}}
 set mged_help_data(debugdir)	{{}	{Print in-memory directory, for debugging}}
 set mged_help_data(debuglib)	{{[hex_code]}	{show/set debugging bit vector for librt}}
