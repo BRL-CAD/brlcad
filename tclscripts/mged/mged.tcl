@@ -41,143 +41,6 @@ if { [info exists tk_strictMotif] == 0 } {
 }
 
 #==============================================================================
-# Support routines: MGED dialog boxes
-#------------------------------------------------------------------------------
-# "mged_dialog" and "mged_input_dialog" are based off of the "tk_dialog" that
-# comes with Tk 4.0.
-#==============================================================================
-
-# mged_dialog
-# Much like tk_dialog, but doesn't perform a grab.
-# Makes a dialog window with the given title, text, bitmap, and buttons.
-
-proc mged_dialog { w screen title text bitmap default args } {
-    global button$w
-
-    toplevel $w -screen $screen
-    wm title $w $title
-    wm iconname $w Dialog
-    frame $w.top -relief raised -bd 1
-    pack $w.top -side top -fill both
-    frame $w.bot -relief raised -bd 1
-    pack $w.bot -side bottom -fill both
-
-    message $w.top.msg -text $text -width 12i
-    pack $w.top.msg -side right -expand yes -fill both -padx 2m -pady 2m
-    if { $bitmap != "" } {
-	label $w.top.bitmap -bitmap $bitmap
-	pack $w.top.bitmap -side left -padx 2m -pady 2m
-    }
-
-    set i 0
-    foreach but $args {
-	button $w.bot.button$i -text $but -command "set button$w $i"
-	if { $i == $default } {
-	    frame $w.bot.default -relief sunken -bd 1
-	    raise $w.bot.button$i
-	    pack $w.bot.default -side left -expand yes -padx 2m -pady 1m
-	    pack $w.bot.button$i -in $w.bot.default -side left -padx 1m \
-		    -pady 1m -ipadx 1m -ipady 1
-	} else {
-	    pack $w.bot.button$i -side left -expand yes \
-		    -padx 2m -pady 2m -ipadx 1m -ipady 1
-	}
-	incr i
-    }
-
-    if { $default >= 0 } {
-	bind $w <Return> "$w.bot.button$default flash ; set button$w $default"
-    }
-
-    set pxy [winfo pointerxy $w]
-    set x [lindex $pxy 0]
-    set y [lindex $pxy 1]
-    set width [winfo reqwidth $w]
-    set dx [expr $width / 2]
-    set x [expr $x - $dx]
-    set y [expr $y - 70]
-    if {$x < 0} {
-	set x 0
-    }
-    if {$y < 0} {
-	set y 0
-    }
-    wm geometry $w +$x+$y
-
-    tkwait variable button$w
-    catch { destroy $w }
-    return [set button$w]
-}
-
-## mged_input_dialog
-##   Creates a dialog with the given title, text, and buttons, along with an
-##   entry box (with possible default value) whose contents are to be returned
-##   in the variable name contained in entryvar.
-
-proc mged_input_dialog { w screen title text entryvar defaultentry default args } {
-    global button$w entry$w
-    upvar $entryvar entrylocal
-
-    set entry$w $defaultentry
-    
-    toplevel $w -screen $screen
-    wm title $w $title
-    wm iconname $w Dialog
-    frame $w.top -relief raised -bd 1
-    pack $w.top -side top -fill both
-    frame $w.mid -relief raised -bd 1
-    pack $w.mid -side top -fill both
-    frame $w.bot -relief raised -bd 1
-    pack $w.bot -side bottom -fill both
-
-    message $w.top.msg -text $text -width 12i
-    pack $w.top.msg -side right -expand yes -fill both -padx 2m -pady 2m
-
-    entry $w.mid.ent -relief sunken -width 16 -textvariable entry$w
-    pack $w.mid.ent -side top -expand yes -fill both -padx 1m -pady 1m
-
-    set i 0
-    foreach but $args {
-	button $w.bot.button$i -text $but -command "set button$w $i"
-	if { $i == $default } {
-	    frame $w.bot.default -relief sunken -bd 1
-	    raise $w.bot.button$i
-	    pack $w.bot.default -side left -expand yes -padx 2m -pady 1m
-	    pack $w.bot.button$i -in $w.bot.default -side left -padx 1m \
-		    -pady 1m -ipadx 1m -ipady 1
-	} else {
-	    pack $w.bot.button$i -side left -expand yes \
-		    -padx 2m -pady 2m -ipadx 1m -ipady 1
-	}
-	incr i
-    }
-
-    if { $default >= 0 } {
-	bind $w <Return> "$w.bot.button$default flash ; set button$w $default"
-    }
-
-    set pxy [winfo pointerxy $w]
-    set x [lindex $pxy 0]
-    set y [lindex $pxy 1]
-    set width [winfo reqwidth $w]
-    set dx [expr $width / 2]
-    set x [expr $x - $dx]
-    set y [expr $y - 70]
-    if {$x < 0} {
-	set x 0
-    }
-    if {$y < 0} {
-	set y 0
-    }
-    wm geometry $w +$x+$y
-
-    tkwait variable button$w
-    set entrylocal [set entry$w]
-    catch { destroy $w }
-    return [set button$w]
-}
-
-#==============================================================================
 # Loading MGED support routines from other files:
 #------------------------------------------------------------------------------
 #        vmath.tcl  :  The vector math library
@@ -230,14 +93,14 @@ proc handle_select { w y } {
 proc mged_help { w1 w2 screen } {
     catch { help [$w1 get [$w1 curselection]]} msg
     catch { destroy $w2 }
-    mged_dialog $w2 $screen Usage $msg info 0 OK
+    cad_dialog $w2 $screen Usage $msg info 0 OK
 }
 
 proc ia_apropos { parent screen } {
     set w $parent.apropos
 
     catch { destroy $w }
-    if { [mged_input_dialog $w $screen Apropos \
+    if { [cad_input_dialog $w $screen Apropos \
 	   "Enter keyword to search for:" keyword "" 0 OK Cancel] == 1 } {
 	return
     }
@@ -310,7 +173,7 @@ proc do_Open { id } {
 	    -initialdir . -title "Open MGED Database" -defaultextension ".g"]
     if {$ia_filename != ""} {
 	opendb $ia_filename
-	mged_dialog .$id.cool $player_screen($id) "File loaded" \
+	cad_dialog .$id.cool $player_screen($id) "File loaded" \
 		"Database $ia_filename successfully loaded." info 0 OK
     }
 }
@@ -318,16 +181,16 @@ proc do_Open { id } {
 proc do_New { id } {
     global player_screen
 
-    set ret [mged_input_dialog .$id.new $player_screen($id) "New MGED Database" \
+    set ret [cad_input_dialog .$id.new $player_screen($id) "New MGED Database" \
 	    "Enter new database filename:" ia_filename "" 0 OK CANCEL]
 
     if {$ia_filename != "" && $ret == 0} {
 	if [file exists $ia_filename] {
-	    mged_dialog .$id.uncool $player_screen($id) "Existing Database" \
+	    cad_dialog .$id.uncool $player_screen($id) "Existing Database" \
 		    "$ia_filename already exists" info 0 OK
 	} else {
 	    opendb $ia_filename y
-	    mged_dialog .$id.cool $player_screen($id) "File loaded" \
+	    cad_dialog .$id.cool $player_screen($id) "File loaded" \
 		    "Database $ia_filename successfully loaded." info 0 OK
 	}
     }
@@ -340,7 +203,7 @@ proc do_Concat { id } {
     set ia_filename [tk_getOpenFile -parent .$id -filetypes $file_types\
 	    -initialdir . -title "Insert MGED Database" -defaultextension ".g"]
     if {$ia_filename != ""} {
-	mged_input_dialog .$id.prefix $player_screen($id) "Prefix" \
+	cad_input_dialog .$id.prefix $player_screen($id) "Prefix" \
 		"Enter prefix:" prefix "" 0 OK
 
 	if {$prefix != ""} {
@@ -364,7 +227,7 @@ proc do_rt_script { id } {
     if {[string length $ia_filename] > 0} {
 	saveview $ia_filename
     } else {
-	mged_dialog .$id.uncool $player_screen($id) "Error" \
+	cad_dialog .$id.uncool $player_screen($id) "Error" \
 		"No such file exists." warning 0 OK
     }
 }
@@ -372,7 +235,7 @@ proc do_rt_script { id } {
 proc do_About_MGED { id } {
     global player_screen
 
-    mged_dialog .$id.about $player_screen($id) "About MGED..." \
+    cad_dialog .$id.about $player_screen($id) "About MGED..." \
 	    "MGED: Multi-device Geometry EDitor\n\
 \n\
 MGED is a part of the BRL-CAD(TM) package.\n\n\
@@ -483,7 +346,7 @@ proc echo args {
 proc man_goto { w screen } {
     global ia_url
 
-    mged_input_dialog $w.goto $screen "Go To" "Enter filename to read:" \
+    cad_input_dialog $w.goto $screen "Go To" "Enter filename to read:" \
 	    filename $ia_url(current) 0 OK
     if { [file exists $filename]!=0 } {
 	if { [string match /* $filename] } {
@@ -494,7 +357,7 @@ proc man_goto { w screen } {
 
 	HMlink_callback $w.text $new_url
     } else {
-	mged_dialog $w.gotoerror $screen "Error reading file" \
+	cad_dialog $w.gotoerror $screen "Error reading file" \
 		"Cannot read file $filename." error 0 OK
     }
 }
@@ -529,7 +392,7 @@ proc ia_man { parent screen } {
 
 #    if { [info exists ia_url]==0 } {
 #	while { [file exists $mged_html_dir/index.html]==0 } {
-#	    mged_input_dialog .mgedhtmldir $screen "Need path to MGED .html files"
+#	    cad_input_dialog .mgedhtmldir $screen "Need path to MGED .html files"
 #		    "Please enter the full path to the MGED .html files:" \
 #		    mged_html_dir $mged_html_dir 0 OK
 #	}
