@@ -9,11 +9,9 @@
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ *
+ * SCCS: @(#) tkAppInit.c 1.21 96/03/26 16:47:07
  */
-
-#ifndef lint
-static char sccsid[] = "@(#) tkAppInit.c 1.15 95/06/28 13:14:28";
-#endif /* not lint */
 
 #include "tk.h"
 
@@ -24,6 +22,10 @@ static char sccsid[] = "@(#) tkAppInit.c 1.15 95/06/28 13:14:28";
 
 extern int matherr();
 int *tclDummyMathPtr = (int *) matherr;
+
+#ifdef TK_TEST
+EXTERN int		Tktest_Init _ANSI_ARGS_((Tcl_Interp *interp));
+#endif /* TK_TEST */
 
 /*
  *----------------------------------------------------------------------
@@ -74,14 +76,21 @@ int
 Tcl_AppInit(interp)
     Tcl_Interp *interp;		/* Interpreter for application. */
 {
-    Tk_Window main;
-
     if (Tcl_Init(interp) == TCL_ERROR) {
 	return TCL_ERROR;
     }
     if (Tk_Init(interp) == TCL_ERROR) {
 	return TCL_ERROR;
     }
+    Tcl_StaticPackage(interp, "Tk", Tk_Init, (Tcl_PackageInitProc *) NULL);
+#ifdef TK_TEST
+    if (Tktest_Init(interp) == TCL_ERROR) {
+	return TCL_ERROR;
+    }
+    Tcl_StaticPackage(interp, "Tktest", Tktest_Init,
+            (Tcl_PackageInitProc *) NULL);
+#endif /* TK_TEST */
+
 
     /*
      * Call the init procedures for included packages.  Each call should
@@ -106,6 +115,6 @@ Tcl_AppInit(interp)
      * then no user-specific startup file will be run under any conditions.
      */
 
-    tcl_RcFileName = "~/.wishrc";
+    Tcl_SetVar(interp, "tcl_rcFileName", "~/.wishrc", TCL_GLOBAL_ONLY);
     return TCL_OK;
 }
