@@ -61,8 +61,6 @@ void read_mat ()
 		exit (1);
 	    }
 	    quat_quat2mat(m,q);
-	    printf("  The quat is: %g %g %g %g\n", q[0], q[1], q[2], q[3]);
-	    mat_print("The matrix is:", m);
 	    azimuth() = atan2(-m[0],m[1]) / deg2rad;
 	    elevation() = atan2(m[10],m[6]) / deg2rad;
 	    status |= RMAT_SAW_ORI;
