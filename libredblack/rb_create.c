@@ -11,7 +11,6 @@ static char RCSid[] = "@(#) $Header$";
 
 #include "conf.h"
 
-#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 #include "machine.h"
