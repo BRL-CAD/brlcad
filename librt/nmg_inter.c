@@ -2788,13 +2788,13 @@ CONST struct edgeuse		*eu;
 int				second;		/* 2nd vu on eu, not 1st */
 CONST struct edge_g_lseg	*eg1;
 CONST struct edge_g_lseg	*eg2;
-struct vertex			*hit_v;		/* often will be NULL */
+register struct vertex		*hit_v;		/* often will be NULL */
 CONST struct rt_tol		*tol;
 {
-	struct vertex		*v;
-	struct vertexuse	*vu1;
-	struct edgeuse		*seen1 = (struct edgeuse *)NULL;
-	struct edgeuse		*seen2 = (struct edgeuse *)NULL;
+	struct vertex			*v;
+	register struct vertexuse	*vu1;
+	register struct edgeuse		*seen1 = (struct edgeuse *)NULL;
+	register struct edgeuse		*seen2 = (struct edgeuse *)NULL;
 
 	NMG_CK_EDGEUSE(eu);
 	NMG_CK_EDGE_G_LSEG(eg1);
@@ -2820,10 +2820,10 @@ CONST struct rt_tol		*tol;
 		rt_bomb("nmg_search_v_eg() eu vertex not on eg line\n");
 	}
 
+	/* This loop accounts for 30% of the runtime of a boolean! */
 	for( RT_LIST_FOR( vu1, vertexuse, &v->vu_hd ) )  {
-		struct edgeuse	*eu1;
+		register struct edgeuse	*eu1;
 
-		NMG_CK_VERTEXUSE(vu1);
 		if( *vu1->up.magic_p != NMG_EDGEUSE_MAGIC )  continue;
 		eu1 = vu1->up.eu_p;
 		if( eu1->g.lseg_p == eg1 )  seen1 = eu1;
