@@ -15,6 +15,9 @@ on-going issues.
 Recent Bugs
 -----------
 
+* benchmark fails to compute the vgr metric on Debian due to missing
+  dc utility (bc is available)
+
 * bot-bldxf fails in db_walk_tree(), interface may have changed
 
 * bwmod gives a divide by zero error whenever you use the "-d" option
