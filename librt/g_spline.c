@@ -962,7 +962,7 @@ get_next_hit(  )
 {
 	register struct local_hit * list_ptr;
 	struct local_hit *rt_hit = NULLHIT;
-	float dist;
+	fastf_t dist;
 
 	dist = INFINITY;
 
@@ -1015,7 +1015,7 @@ struct spl_poly * p1;
 	fastf_t uv[2], tmp;
 	struct plane plane_form(), pln;
 
-	float denom, t;
+	fastf_t denom, t;
 	int curr_sign;
 
 	pln = plane_form( p1->ply[0], p1->ply[1], p1->ply[2] );
