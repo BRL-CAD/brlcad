@@ -1730,6 +1730,11 @@ will look like this:
 There are workarounds included in both shell scripts, simply comment out
 the defective line and uncomment the workaround, and all will be well.
 A bug report has been filed with the vendor.
+.PP
+When the DEC loader builds a shared library, it insists on printout out
+a list of all the external symbols referenced by that library, even
+though the -S flag has been given.  These messages are unsightly
+but not harmful.
 .NH 1
 ENHANCEMENTS
 .PP
