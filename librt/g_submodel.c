@@ -117,7 +117,7 @@ struct rt_i		*rtip;
 
 		if( !db_is_directory_non_empty(sub_dbip) )  {
 			/* This is first open of db, build directory */
-			if( db_scan( sub_dbip, (int (*)())db_diradd, 1, NULL ) < 0 )  {
+			if( db_dirbuild( sub_dbip ) < 0 )  {
 				db_close( sub_dbip );
 				bu_semaphore_release(RT_SEM_MODEL);
 				return -1;
@@ -765,8 +765,8 @@ CONST struct bn_tol	*tol;
 		}
 		if( !db_is_directory_non_empty(good.dbip) )  {
 			/* This is first open of this database, build directory */
-			if( db_scan( good.dbip, (int (*)())db_diradd, 1, NULL ) < 0 )  {
-				bu_log("rt_submodel_plot() db_scan() failure\n");
+			if( db_dirbuild( good.dbip ) < 0 )  {
+				bu_log("rt_submodel_plot() db_dirbuild() failure\n");
 				db_close(good.dbip);
 				return -1;
 			}

@@ -367,7 +367,7 @@ Usage: wdb_open\n\
 			RT_CK_DBI_TCL(interp,dbip);
 
 			/* --- Scan geometry database and build in-memory directory --- */
-			db_scan(dbip, (int (*)())db_diradd, 1, NULL);
+			db_dirbuild(dbip);
 
 			wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
 		} else {
@@ -532,7 +532,7 @@ wdb_reopen_tcl( clientData, interp, argc, argv )
 		wdbp->dbip = dbip;
 
 		/* --- Scan geometry database and build in-memory directory --- */
-		db_scan(wdbp->dbip, (int (*)())db_diradd, 1, NULL);
+		db_dirbuild(wdbp->dbip);
 
 		Tcl_AppendResult(interp, wdbp->dbip->dbi_filename, (char *)NULL);
 		return TCL_OK;
