@@ -42,6 +42,21 @@ bu_list_new()
 }
 
 /*
+ *			B U _ L I S T _ P O P
+ *
+ *	Returns the results of BU_LIST_POP
+ */
+struct bu_list *
+bu_list_pop( struct bu_list *hp )
+{
+	struct bu_list *p;
+
+	BU_LIST_POP( bu_list, hp, p );
+
+	return( p );
+}
+
+/*
  *			B U _ L I S T _ L E N
  *
  *  Returns the number of elements on a bu_list brand linked list.
