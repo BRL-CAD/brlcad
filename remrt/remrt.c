@@ -53,7 +53,8 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
  *  Note that on many SYSV machines, the Cakefile has to set BSD
  */
 #if BSD && !SYSV
-#  include <sys/time.h>		/* includes <time.h> */
+#  include <time.h>
+#  include <sys/time.h>		/* sometimes includes <time.h> */
 #else
 #  if CRAY1 && !__STDC__
 #	include <time.h>	/* includes <sys/time.h> */
@@ -830,7 +831,7 @@ struct pkg_conn *pc;
 	fd = pc->pkc_fd;
 
 	fromlen = sizeof (from);
-	if (getpeername(fd, (struct sockaddr *)&from, &fromlen) < 0) {
+	if (getpeername(fd, (struct sockaddr *)&from, (socklen_t *)&fromlen) < 0) {
 		perror("getpeername");
 		close(fd);
 		return;
@@ -1216,7 +1217,7 @@ register char *str;
 
 	ret = 0;
 	if( str[0] == '0' && str[1] == 'x' )
-		cnt = sscanf( str+2, "%x", &ret );
+		cnt = sscanf( str+2, "%x", (unsigned int *)&ret );
 	else
 		cnt = sscanf( str, "%d", &ret );
 	if( cnt != 1 )
@@ -3135,7 +3136,7 @@ char	**argv;
 	if( argc <= 1 )  {
 		rem_debug = !rem_debug;
 	} else {
-		sscanf( argv[1], "%x", &rem_debug );
+		sscanf( argv[1], "%x", (unsigned int *)&rem_debug );
 	}
 	bu_log("%s Dispatcher debug=x%x\n", stamp(), rem_debug );
 	return 0;
