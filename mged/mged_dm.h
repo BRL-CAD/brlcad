@@ -109,11 +109,25 @@ struct shared_info {
   struct view_list *_last_view;
 
   /* Angle/distance cursor stuff */
-  int	  _dv_xadc;
-  int	  _dv_yadc;
-  int	  _dv_1adc;
-  int	  _dv_2adc;
-  int	  _dv_distadc;
+  int		_dv_xadc;
+  int		_dv_yadc;
+  int		_dv_1adc;
+  int		_dv_2adc;
+  int		_dv_distadc;
+  int		_adc_draw;
+  fastf_t	_adc_pos_model[3];
+  fastf_t	_adc_pos_view[3];
+  fastf_t	_adc_pos_grid[3];
+  fastf_t	_adc_a1;
+  fastf_t	_adc_a2;
+  fastf_t	_adc_dst;
+  int		_adc_anchor_pos;
+  int		_adc_anchor_a1;
+  int		_adc_anchor_a2;
+  int		_adc_anchor_dst;
+  fastf_t	_adc_anchor_pt_a1[3];
+  fastf_t	_adc_anchor_pt_a2[3];
+  fastf_t	_adc_anchor_pt_dst[3];
 
   /* Rate stuff */
   int     _rateflag_model_tran;
@@ -303,6 +317,21 @@ struct dm_char_queue {
 #define dv_1adc curr_dm_list->s_info->_dv_1adc
 #define dv_2adc curr_dm_list->s_info->_dv_2adc
 #define dv_distadc curr_dm_list->s_info->_dv_distadc
+
+#define adc_draw curr_dm_list->s_info->_adc_draw
+#define adc_pos_model curr_dm_list->s_info->_adc_pos_model
+#define adc_pos_view curr_dm_list->s_info->_adc_pos_view
+#define adc_pos_grid curr_dm_list->s_info->_adc_pos_grid
+#define adc_a1 curr_dm_list->s_info->_adc_a1
+#define adc_a2 curr_dm_list->s_info->_adc_a2
+#define adc_dst curr_dm_list->s_info->_adc_dst
+#define adc_anchor_pos curr_dm_list->s_info->_adc_anchor_pos
+#define adc_anchor_a1 curr_dm_list->s_info->_adc_anchor_a1
+#define adc_anchor_a2 curr_dm_list->s_info->_adc_anchor_a2
+#define adc_anchor_dst curr_dm_list->s_info->_adc_anchor_dst
+#define adc_anchor_pt_a1 curr_dm_list->s_info->_adc_anchor_pt_a1
+#define adc_anchor_pt_a2 curr_dm_list->s_info->_adc_anchor_pt_a2
+#define adc_anchor_pt_dst curr_dm_list->s_info->_adc_anchor_pt_dst
 
 #define rateflag_model_tran curr_dm_list->s_info->_rateflag_model_tran
 #define rateflag_model_rotate curr_dm_list->s_info->_rateflag_model_rotate
