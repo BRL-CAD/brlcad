@@ -3,7 +3,7 @@
  */
 
 #define SRCDIR	anim
-#define PRODUCTS	qinterp
+#define PRODUCTS	qinterp keyread
 #define	SRCSUFF	.c
 #define MANSECTION	1
 
@@ -14,11 +14,22 @@
 
 /* Explicit composition of each product */
 
-qinterp: qinterp.o 
-	CC LDFLAGS qinterp.o LIBES -o qinterp
+ascript: ascript.o anim.o
+	CC LDFLAGS ascript.o anim.o LIBRT -lm -lmpc -o ascript
+
+fly: fly.o
+	CC LDFLAGS fly.o -lm -o fly
 
 keyread: keyread.o anim.o
 	CC LDFLAGS keyread.o anim.o LIBES -o keyread
 
+offset: offset.o anim.o
+	CC LDFLAGS offset.o anim.o -lm -o offset
+
+qinterp: qinterp.o 
+	CC LDFLAGS qinterp.o LIBES -o qinterp
+
+turn: turn.o anim.o
+	CC LDFLAGS turn.o anim.o LIBRT -lm -lmpc -o turn
 
 #include "../Cakefile.rules"
