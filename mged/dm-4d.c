@@ -143,6 +143,7 @@ struct dm dm_4d = {
 	Ir_colorchange,
 	Ir_window, Ir_debug,
 	0,			/* no "displaylist", per. se. */
+	0,			/* multi-window */
 	IRBOUND,
 	"sgi", "SGI 4d"
 };
@@ -189,9 +190,13 @@ register int y;
 /*
  *			I R _ O P E N
  *
- * Fire up the display manager, and the display processor.
- *
+ *  Fire up the display manager, and the display processor. Note that
+ *  this brain-damaged version of the MEX display manager gets terribly
+ *  confused if you try to close your last window.  Tough. We go ahead
+ *  and close the window.  Ignore the "ERR_CLOSEDLASTWINDOW" error
+ *  message. It doesn't hurt anything.  Silly MEX.
  */
+
 int
 Ir_open()
 {
@@ -199,8 +204,6 @@ Ir_open()
 	Matrix	m;
 
 	foreground();
-	prefposition( 0, 10, 0, 10);
-	winopen("dummy");
 	prefposition( 276, 1276, 12, 1012 );
 	if( (gr_id = winopen( "BRL MGED" )) == -1 )  {
 		printf( "No more graphics ports available.\n" );
@@ -227,15 +230,23 @@ Ir_open()
 	
 	ir_buffer = 0;
 
-/* 	swapinterval( 5 );*/
-
 	qdevice(LEFTMOUSE);
 	qdevice(MIDDLEMOUSE);
 	qdevice(RIGHTMOUSE);
 	tie(MIDDLEMOUSE, MOUSEX, MOUSEY);
 
+#if IR_KNOBS
+	/*
+	 *  Turn on the dials and initialize them for -2048 to 2047
+	 *  range with a dead spot at zero (Iris knobs are 1024 units
+	 *  per rotation).
+	 */
+	for(i = DIAL0; i <= DIAL8; i++) {
+		qdevice(i);
+		setvaluator(i, 0, -2048-NOISE, 2047+NOISE);
+	}
+#endif
 #if IR_BUTTONS
-	ir_dbtext("dm_ir");
 	/*
 	 *  Enable all the buttons in the button table.
 	 */
@@ -251,24 +262,13 @@ Ir_open()
 		if( (j = bmap[i]) != 0 )
 			invbmap[j] = i;
 	}
+	ir_dbtext(ir_title);
+#endif
 
 	/* Enable the pf1 key for depthcue switching */
 	qdevice(F1KEY);
 	qdevice(F2KEY);	/* pf2 for Z clipping */
 	qdevice(F3KEY);	/* pf3 for perspective */
-#endif
-#if IR_KNOBS
-	/*
-	 *  Turn on the dials and initialize them for -2048 to 2047
-	 *  range with a dead spot at zero (Iris knobs are 1024 units
-	 *  per rotation).
-	 */
-	for(i = DIAL0; i <= DIAL8; i++) {
-		qdevice(i);
-		setvaluator(i, 0, -2048-NOISE, 2047+NOISE);
-	}
-	ir_dbtext(ir_title);
-#endif
 	
 	while( getbutton(LEFTMOUSE)||getbutton(MIDDLEMOUSE)||getbutton(RIGHTMOUSE) )  {
 		printf("IRIS_open:  mouse button stuck\n");
@@ -290,7 +290,8 @@ Ir_open()
 /*
  *  			I R _ C L O S E
  *  
- *  Gracefully release the display.
+ *  Gracefully release the display.  Well, mostly gracefully -- see
+ *  the comments in the open routine.
  */
 void
 Ir_close()
@@ -299,12 +300,11 @@ Ir_close()
 
 	lampoff( 0xf );
 
+	frontbuffer(1);
 	color(BLACK);
 	clear();
-	frontbuffer(1);
-	clear();
-
-	greset();
+	frontbuffer(0);
+	winclose(gr_id);
 	return;
 }
 
