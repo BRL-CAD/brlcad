@@ -234,7 +234,7 @@ dir_nref( )
 			if( rt_db_get_internal( &intern, dp, dbip, (mat_t *)NULL ) < 0 )
 				continue;
 			comb = (struct rt_comb_internal *)intern.idb_ptr;
-			comb_functree( dbip, comb, comb->tree, Count_refs, (genptr_t)NULL, (genptr_t)NULL );
+			db_tree_funcleaf( dbip, comb, comb->tree, Count_refs, (genptr_t)NULL, (genptr_t)NULL );
 			rt_comb_ifree( &intern );
 		}
 	}
@@ -740,7 +740,7 @@ char	**argv;
 	}
     	comb = (struct rt_comb_internal *)intern.idb_ptr;
 	for( k=0; k<argc; k++ )
-	    	comb_functree( dbip, comb, comb->tree, Find_ref, (genptr_t)argv[k], dp->d_namep );
+	    	db_tree_funcleaf( dbip, comb, comb->tree, Find_ref, (genptr_t)argv[k], dp->d_namep );
 
     	rt_comb_ifree( &intern );
     }
