@@ -4,7 +4,7 @@
 #
 .SUFFIXES: .g .asc
 
-.asc.g: ; $(A2G) < $? > $@
+.asc.g: ; $(A2G) < $< > $@
 
 A2G=../conv/asc2g
 G2A=../conv/g2asc
