@@ -39,6 +39,77 @@ struct nmg_boolstruct {
 /********************** isects ***************************************/
 
 
+/*
+ *	T B L _ V S O R T
+ *	sort list of vertices in fu1 on plane of fu2 
+ *
+ *	W A R N I N G:
+ *		This function makes gross assumptions about the contents
+ *	and structure of an nmg_ptbl list!  If I could figure a way of folding
+ *	this into the nmg_tbl routine, I would do it.
+ */
+void tbl_vsort(b, fu1, fu2)
+struct nmg_ptbl *b;		/* table of vertexuses on intercept line */
+struct faceuse *fu1, *fu2;
+{
+	point_t pt, min_pt;
+	vect_t	dir, vect;
+	union {
+		struct vertexuse **vu;
+		long **magic_p;
+	} p;
+	struct vertexuse *tvu;
+	fastf_t *mag, tmag;
+	int i, j;
+
+	VMOVE(min_pt, fu1->f_p->fg_p->min_pt);
+	VMIN(min_pt, fu2->f_p->fg_p->min_pt);
+	rt_isect_2planes(pt, dir, fu1->f_p->fg_p->N, fu2->f_p->fg_p->N, min_pt);
+	mag = (fastf_t *)rt_calloc(b->end, sizeof(fastf_t),
+					"vector magnitudes for sort");
+
+	p.magic_p = b->buffer;
+	/* check vertexuses and compute distance from start of line */
+	for(i = 0 ; i < b->end ; ++i) {
+		NMG_CK_VERTEXUSE(p.vu[i]);
+
+		VSUB2(vect, pt, p.vu[i]->v_p->vg_p->coord);
+		mag[i] = MAGNITUDE(vect);
+	}
+
+	/* a trashy bubble-head sort, because I hope this list is never
+	 * very long.
+	 */
+	for(i=0 ; i < b->end - 1 ; ++i) {
+		for (j=i+1; j < b->end ; ++j) {
+			if (mag[i] > mag[j]) {
+				tvu = p.vu[i];
+				p.vu[i] = p.vu[j];
+				p.vu[j] = tvu;
+
+				tmag = mag[i];
+				mag[i] = mag[j];
+				mag[j] = tmag;
+			}
+		}
+	}
+	/*
+	 * We should do something here to "properly"
+	 * order vertexuses which share a vertex
+	 * or whose coordinates are equal.
+	 *
+	 * Just what should be done & how is not
+	 * clear to me at this hour of the night.
+	 * for (i=0 ; i < b->end - 1 ; ++i) {
+	 *	if (p.vu[i]->v_p == p.vu[i+1]->v_p ||
+	 *	    VAPPROXEQUAL(p.vu[i]->v_p->vg_p->coord,
+	 *	    p.vu[i+1]->v_p->vg_p->coord, VDIVIDE_TOL) ) {
+	 *	}
+	 * }
+	 */
+	rt_free((char *)mag, "vector magnitudes");
+}
+
 
 /*	V E R T E X _ O N _ F A C E
  *
@@ -597,10 +668,10 @@ fastf_t tol;
 	    		return;
 	    	}
 		tbl_vsort(&vert_list1, fu1, fu2);
-		combine(&vert_list1, fu1, fu2);
+		nmg_face_combine(&vert_list1, fu1, fu2);
 
 		tbl_vsort(&vert_list2, fu2, fu1);
-		combine(&vert_list2, fu2, fu1);
+		nmg_face_combine(&vert_list2, fu2, fu1);
 
 		/* When two faces are intersected
 		 * with each other, they should
