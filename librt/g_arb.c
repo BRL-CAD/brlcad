@@ -319,7 +319,6 @@ register struct soltab *stp;
 			arbp->arb_XXlen, arbp->arb_YYlen);
 		VPRINT( "Normal", arbp->arb_N );
 		rtlog( "N.A = %f\n", arbp->arb_NdotA );
-		rtlog("\n");
 	} while( arbp = arbp->arb_forw );
 }
 
@@ -445,7 +444,8 @@ register fastf_t *uvp;
 	uvp[0] = VDOT( P_A, arbp->arb_Xbasis ) * arbp->arb_XXlen;
 	uvp[1] = 1.0 - ( VDOT( P_A, arbp->arb_Ybasis ) * arbp->arb_YYlen );
 	if( uvp[0] < 0 || uvp[1] < 0 )  {
-		rtlog("arb_uv: bad uv=%f,%f\n", uvp[0], uvp[1]);
+		if( debug )
+			rtlog("arb_uv: bad uv=%f,%f\n", uvp[0], uvp[1]);
 		/* Fix it up */
 		if( uvp[0] < 0 )  uvp[0] = (-uvp[0]);
 		if( uvp[1] < 0 )  uvp[1] = (-uvp[1]);
