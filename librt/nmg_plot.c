@@ -122,6 +122,29 @@ int	r, g, b;
 	return( &(vbp->head[0]) );
 }
 
+/*
+ *			R T _ P L O T _ V L B L O C K
+ *
+ *  Output a rt_vlblock object in extended UNIX-plot format.
+ */
+void
+rt_plot_vlblock( fp, vbp )
+FILE			*fp;
+CONST struct rt_vlblock	*vbp;
+{
+	int	i;
+
+	for( i=0; i < vbp->nused; i++ )  {
+		if( vbp->rgb[i] == 0 )  continue;
+		if( RT_LIST_IS_EMPTY( &(vbp->head[i]) ) )  continue;
+		pl_color( fp,
+			(vbp->rgb[i]>>16) & 0xFF,
+			(vbp->rgb[i]>> 8) & 0xFF,
+			(vbp->rgb[i]    ) & 0xFF );
+		rt_vlist_to_uplot( fp, &(vbp->head[i]) );
+	}
+}
+
 /************************************************************************
  *									*
  *		NMG to VLIST routines, for MGED interface		*
@@ -1422,9 +1445,9 @@ CONST struct faceuse	*fu1;
  *  Called from nmg_isect_2faces and other places.
  */
 void
-nmg_pl_2fu( str, num, fu1, fu2, show_mates )
+nmg_pl_2fu( str, unused, fu1, fu2, show_mates )
 CONST char		*str;
-int			num;
+int			unused;
 CONST struct faceuse	*fu1;
 CONST struct faceuse	*fu2;
 int			show_mates;
@@ -1433,6 +1456,10 @@ int			show_mates;
 	char		name[32];
 	struct model	*m;
 	long		*tab;
+	static int	num = 1;
+	struct rt_vlblock	*vbp;
+
+	if( rt_g.NMG_debug & (DEBUG_PLOTEM|DEBUG_PL_ANIM) == 0 )  return;
 
 	m = nmg_find_model( &fu1->l.magic );
 	NMG_CK_MODEL(m);
@@ -1440,46 +1467,38 @@ int			show_mates;
 	tab = (long *)rt_calloc( m->maxindex+1, sizeof(long),
 		"nmg_pl_comb_fu tab[]");
 
+	/* Create the vlblock */
+	vbp = rt_vlblock_init();
+
+	nmg_vlblock_fu( vbp, fu1, tab, 3);
+	if( show_mates )
+		nmg_vlblock_fu( vbp, fu1->fumate_p, tab, 3);
+
+	nmg_vlblock_fu( vbp, fu2, tab, 3);
+	if( show_mates )
+		nmg_vlblock_fu( vbp, fu2->fumate_p, tab, 3);
+
 	if( rt_g.NMG_debug & DEBUG_PLOTEM )  {
-		(void)sprintf(name, str, num);
+		(void)sprintf(name, str, num++);
 		rt_log("plotting to %s\n", name);
 		if ((fp=fopen(name, "w")) == (FILE *)NULL)  {
 			perror(name);
 			return;
 		}
-
-		nmg_pl_fu(fp, fu1, tab, 100, 100, 180);
-		if( show_mates )
-			nmg_pl_fu(fp, fu1->fumate_p, tab, 100, 100, 180);
-
-		nmg_pl_fu(fp, fu2, tab, 100, 100, 180);
-		if( show_mates )
-			nmg_pl_fu(fp, fu2->fumate_p, tab, 100, 100, 180);
-
+		rt_plot_vlblock( fp, vbp );
 		(void)fclose(fp);
 	}
 
 	if( rt_g.NMG_debug & DEBUG_PL_ANIM )  {
-		struct rt_vlblock	*vbp;
-
-		vbp = rt_vlblock_init();
-
-		nmg_vlblock_fu( vbp, fu1, tab, 3);
-		if( show_mates )
-			nmg_vlblock_fu( vbp, fu1->fumate_p, tab, 3);
-
-		nmg_vlblock_fu( vbp, fu2, tab, 3);
-		if( show_mates )
-			nmg_vlblock_fu( vbp, fu2->fumate_p, tab, 3);
-
 		/* Cause animation of boolean operation as it proceeds! */
 		if( nmg_vlblock_anim_upcall )  {
 			(*nmg_vlblock_anim_upcall)( vbp,
 				(rt_g.NMG_debug&DEBUG_PL_SLOW) ? US_DELAY : 0,
 				0 );
 		}
-		rt_vlblock_free(vbp);
 	}
+
+	rt_vlblock_free(vbp);
 	rt_free( (char *)tab, "nmg_pl_2fu tab[]" );
 }
 
@@ -1959,14 +1978,17 @@ void
 nmg_face_plot( fu )
 CONST struct faceuse	*fu;
 {
+	FILE		*fp;
+	char		name[32];
 	extern void (*nmg_vlblock_anim_upcall)();
 	struct model		*m;
 	struct rt_vlblock	*vbp;
 	struct face_g	*fg;
 	long		*tab;
 	int		fancy;
+	static int	num = 1;
 
-	if( ! (rt_g.NMG_debug & DEBUG_PL_ANIM) )  return;
+	if( rt_g.NMG_debug & (DEBUG_PLOTEM|DEBUG_PL_ANIM) == 0 )  return;
 
 	NMG_CK_FACEUSE(fu);
 
@@ -1982,14 +2004,27 @@ CONST struct faceuse	*fu;
 	fancy = 3;	/* show both types of edgeuses */
 	nmg_vlblock_fu(vbp, fu, tab, fancy );
 
-	/* Cause animation of boolean operation as it proceeds! */
-	if( nmg_vlblock_anim_upcall )  {
-		/* if requested, delay 3/4 second */
-		(*nmg_vlblock_anim_upcall)( vbp,
-			(rt_g.NMG_debug&DEBUG_PL_SLOW) ? 750000 : 0,
-			0 );
-	} else {
-		rt_log("null nmg_vlblock_anim_upcall, no animation\n");
+	if( rt_g.NMG_debug & DEBUG_PLOTEM )  {
+		(void)sprintf(name, "face%d.pl", num++);
+		rt_log("plotting to %s\n", name);
+		if ((fp=fopen(name, "w")) == (FILE *)NULL)  {
+			perror(name);
+			return;
+		}
+		rt_plot_vlblock( fp, vbp );
+		(void)fclose(fp);
+	}
+
+	if( rt_g.NMG_debug & DEBUG_PL_ANIM )  {
+		/* Cause animation of boolean operation as it proceeds! */
+		if( nmg_vlblock_anim_upcall )  {
+			/* if requested, delay 3/4 second */
+			(*nmg_vlblock_anim_upcall)( vbp,
+				(rt_g.NMG_debug&DEBUG_PL_SLOW) ? 750000 : 0,
+				0 );
+		} else {
+			rt_log("null nmg_vlblock_anim_upcall, no animation\n");
+		}
 	}
 	rt_vlblock_free(vbp);
 	rt_free( (char *)tab, "nmg_face_plot tab[]" );
