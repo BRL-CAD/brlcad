@@ -146,8 +146,9 @@ export BRLCAD_ROOT
 CAKE=../cake.$MACHINE/cake
 
 if [ ! -f Cakefile.defs -a X$1 != Xdist ] ; then
-	echo "You must run this from root of brlcad source tree."
-	exit -1
+	echo "WARNING: $0 should be run from the root of the brlcad source tree."
+	echo "WARNING: Many operations won't work (but some will)"
+	echo ""
 fi
 DISTDIR=dist
 ARCHDIR=arch
@@ -848,6 +849,9 @@ EOF
 	echo "Wrote /tmp/$PKG_BASE"
 	# Privacy step sitll needed to be run by hand.
 	;;
+
+# For SGI IRIX, use the "swpkg" GUI tool.
+
 
 *)
 	echo "$0: No code to make ${TARGET}, use 'help' for help"
