@@ -148,6 +148,10 @@ char *node;
 	}
 }
 
+static vect_t xaxis = { 1.0, 0, 0, 0 };
+static vect_t yaxis = { 0, 1.0, 0, 0 };
+static vect_t zaxis = { 0, 0, 1.0, 0 };
+
 HIDDEN
 struct soltab *
 add_solid( rec, name, mat, regp )
@@ -158,20 +162,26 @@ struct region *regp;
 {
 	register struct soltab *stp;
 	static vect_t v[8];
+	static vect_t A, B, C;
+	static fastf_t fx, fy, fz;
 	FAST fastf_t f;
 
-	/* Eliminate any [15] scaling */
-	f = mat[15];
-	if( NEAR_ZERO(f) )  {
-		fprintf(stderr,"solid %s:  ", name );
-		mat_print("defective matrix", mat);
-	} else if( f != 1.0 )  {
-		f = 1.0 / f;
-		mat[0] *= f;
-		mat[5] *= f;
-		mat[10]*= f;
-		mat[15] = 1;
+	/* Validate that matrix preserves perpendicularity of axis */
+	/* by checking that A.B == 0, B.C == 0, A.C == 0 */
+	MAT4X3VEC( A, mat, xaxis );
+	MAT4X3VEC( B, mat, yaxis );
+	MAT4X3VEC( C, mat, zaxis );
+	fx = VDOT( A, B );
+	fy = VDOT( B, C );
+	fz = VDOT( A, C );
+	if( ! NEAR_ZERO(fx) || ! NEAR_ZERO(fy) || ! NEAR_ZERO(fz) )  {
+		fprintf(stderr,"add_solid(%s):  matrix does not preserve axis perpendicularity.\n  X.Y=%f, Y.Z=%f, X.Z=%f\n",
+			name, fx, fy, fz );
+		mat_print("bad matrix", mat);
+		return( SOLTAB_NULL );		/* BAD */
 	}
+
+	/* Convert from database (float) to fastf_t */
 	fastf_float( v, rec->s.s_values, 8 );
 
 	GETSTRUCT(stp, soltab);
@@ -187,7 +197,7 @@ struct region *regp;
 	if( functab[stp->st_id].ft_prep( v, stp, mat, &(rec->s) ) )  {
 		/* Error, solid no good */
 		free(stp);
-		return( SOLTAB_NULL );		/* continue */
+		return( SOLTAB_NULL );		/* BAD */
 	}
 
 	/* For now, just link them all onto the same list */
