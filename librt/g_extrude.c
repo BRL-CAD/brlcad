@@ -110,9 +110,9 @@ struct rt_i		*rtip;
 	struct rt_extrude_internal *eip;
 	register struct extrude_specific *extr;
 	struct rt_sketch_internal *skt;
-	LOCAL vect_t tmp, tmp2;
-	fastf_t tmp_f;
-	int i, curve_no;
+	LOCAL vect_t tmp, tmp2, xyz[3];
+	fastf_t tmp_f, ldir[3];
+	int i, j, curve_no;
 	int vert_count;
 	int curr_vert;
 
@@ -147,32 +147,6 @@ struct rt_i		*rtip;
 	/* and save the inverse */
 	bn_mat_inv( extr->irot, extr->rot );
 
-	tmp_f = VDOT( tmp, extr->unit_h );
-	if( tmp_f < 0.0 )
-		tmp_f = -tmp_f;
-	tmp_f -= 1.0;
-	if( NEAR_ZERO( tmp_f, SQRT_SMALL_FASTF ) )
-	{
-		VSET( extr->rot_axis, 1.0, 0.0, 0.0 );
-		VSET( extr->perp, 0.0, 1.0, 0.0 );
-	}
-	else
-	{
-		VCROSS( extr->rot_axis, tmp, extr->unit_h );
-		VUNITIZE( extr->rot_axis );
-		if( MAGNITUDE( extr->rot_axis ) < SQRT_SMALL_FASTF )
-		{
-			VSET( extr->rot_axis, 1.0, 0.0, 0.0 );
-			VSET( extr->perp, 0.0, 1.0, 0.0 );
-		}
-		else
-		{
-			VCROSS( tmp2, tmp, extr->rot_axis );
-			MAT4X3VEC( extr->perp, extr->rot, tmp2 );
-			VUNITIZE( extr->perp );
-		}
-	}
-
 	/* calculate plane equations of top and bottom planes */
 	VCROSS( extr->pl1, eip->u_vec, eip->v_vec );
 	VUNITIZE( extr->pl1 )
@@ -196,7 +170,7 @@ struct rt_i		*rtip;
 		vert_count++;
 	}
 
-	/* apply the rotation matrix  to all the vertices */
+	/* apply the rotation matrix to all the vertices, and start bounding box calculation */
 	if( vert_count )
 		extr->verts = (point_t *)bu_calloc( vert_count, sizeof( point_t ), "extr->verts" );
 	VSETALL( stp->st_min, MAX_FASTF );
@@ -206,6 +180,8 @@ struct rt_i		*rtip;
 		VJOIN2( tmp, eip->V, skt->verts[i][0], eip->u_vec, skt->verts[i][1], eip->v_vec );
 		VMINMAX( stp->st_min, stp->st_max, tmp );
 		MAT4X3PNT( extr->verts[i], extr->rot, tmp );
+		VADD2( tmp, tmp, eip->h );
+		VMINMAX( stp->st_min, stp->st_max, tmp );
 	}
 	curr_vert = skt->vert_count;
 
@@ -218,8 +194,43 @@ struct rt_i		*rtip;
 	VUNITIZE( extr->pl1_rot );
 	extr->pl1_rot[3] = VDOT( extr->pl1_rot, extr->verts[0] );
 
+	VSET( tmp, 0, 0, 1 )
+	tmp_f = VDOT( tmp, extr->unit_h );
+	if( tmp_f < 0.0 )
+		tmp_f = -tmp_f;
+	tmp_f -= 1.0;
+	if( NEAR_ZERO( tmp_f, SQRT_SMALL_FASTF ) )
+	{
+		VSET( extr->rot_axis, 1.0, 0.0, 0.0 );
+		VSET( extr->perp, 0.0, 1.0, 0.0 );
+	}
+	else
+	{
+		VCROSS( extr->rot_axis, tmp, extr->unit_h );
+		VUNITIZE( extr->rot_axis );
+		if( MAGNITUDE( extr->rot_axis ) < SQRT_SMALL_FASTF )
+		{
+			VSET( extr->rot_axis, 1.0, 0.0, 0.0 );
+			VSET( extr->perp, 0.0, 1.0, 0.0 );
+		}
+		else
+		{
+			VCROSS( extr->perp, extr->rot_axis, extr->pl1_rot );
+			VUNITIZE( extr->perp );
+		}
+	}
+
 	/* copy the curve */
 	rt_copy_curve( &extr->crv, &skt->skt_curve );
+
+	VSET( xyz[X], 1, 0, 0 );
+	VSET( xyz[Y], 0, 1, 0 );
+	VSET( xyz[Z], 0, 0, 1 );
+
+	for( i=X ; i<=Z ; i++ ) {
+		VCROSS( tmp, extr->unit_h, xyz[i] );
+		ldir[i] = MAGNITUDE( tmp );
+	}
 
 	/* if any part of the curve is a circular arc, the arc may extend beyond the listed vertices */
 	for( i=0 ; i<skt->skt_curve.seg_count ; i++ )
@@ -242,14 +253,19 @@ struct rt_i		*rtip;
 			VSUB2( tmp, start, center );
 			radius = MAGNITUDE( tmp );
 			csg_extr->radius = -radius;	/* need the correct magnitude for normal calculation */
-			VJOIN1( tmp, center, radius, eip->u_vec );
-			VMINMAX( stp->st_min, stp->st_max, tmp );
-			VJOIN1( tmp, center, -radius, eip->u_vec );
-			VMINMAX( stp->st_min, stp->st_max, tmp );
-			VJOIN1( tmp, center, radius, eip->v_vec );
-			VMINMAX( stp->st_min, stp->st_max, tmp );
-			VJOIN1( tmp, center, -radius, eip->v_vec );
-			VMINMAX( stp->st_min, stp->st_max, tmp );
+
+			for( j=X ; j<=Z ; j++ ) {
+				tmp_f = radius * ldir[j];
+				VJOIN1( tmp, center, tmp_f, xyz[j] );
+				VMINMAX( stp->st_min, stp->st_max, tmp );
+				VADD2( tmp, tmp, eip->h );
+				VMINMAX( stp->st_min, stp->st_max, tmp );
+
+				VJOIN1( tmp, center, -tmp_f, xyz[j] );
+				VMINMAX( stp->st_min, stp->st_max, tmp );
+				VADD2( tmp, tmp, eip->h );
+				VMINMAX( stp->st_min, stp->st_max, tmp );
+			}
 		}
 		else
 		{
@@ -266,11 +282,20 @@ struct rt_i		*rtip;
 			VCROSS( bisector, extr->pl1, s_to_m );
 			VUNITIZE( bisector );
 			magsq_s2m = MAGSQ( s_to_m );
-			if( magsq_s2m >= csg->radius*csg->radius )
+			if( magsq_s2m > csg->radius*csg->radius )
 			{
-				bu_log( "Impossible radius for circular arc in extrusion (%s)!!!\n", 
-						stp->st_dp->d_namep );
-				return( -1 );
+				fastf_t max_radius;
+
+				max_radius = sqrt( magsq_s2m );
+				if( NEAR_ZERO( max_radius - csg->radius, RT_LEN_TOL ) )
+					csg->radius = max_radius;
+				else
+				{
+					bu_log( "Impossible radius for circular arc in extrusion (%s), is %g, cannot be more than %g!!!\n", 
+							stp->st_dp->d_namep, csg->radius, sqrt(magsq_s2m)  );
+					bu_log( "Difference is %g\n", max_radius - csg->radius );
+					return( -1 );
+				}
 			}
 			dist = sqrt( csg->radius*csg->radius - magsq_s2m );
 
@@ -283,21 +308,21 @@ struct rt_i		*rtip;
 			csg_extr->center = curr_vert;
 			curr_vert++;
 
-			VJOIN1( tmp, center, csg->radius, eip->u_vec );
-			VMINMAX( stp->st_min, stp->st_max, tmp );
-			VJOIN1( tmp, center, -csg->radius, eip->u_vec );
-			VMINMAX( stp->st_min, stp->st_max, tmp );
-			VJOIN1( tmp, center, csg->radius, eip->v_vec );
-			VMINMAX( stp->st_min, stp->st_max, tmp );
-			VJOIN1( tmp, center, -csg->radius, eip->v_vec );
-			VMINMAX( stp->st_min, stp->st_max, tmp );
+			for( j=X ; j<=Z ; j++ ) {
+				tmp_f = csg->radius * ldir[j];
+				VJOIN1( tmp, center, tmp_f, xyz[j] );
+				VMINMAX( stp->st_min, stp->st_max, tmp );
+				VADD2( tmp, tmp, eip->h );
+				VMINMAX( stp->st_min, stp->st_max, tmp );
+
+				VJOIN1( tmp, center, -tmp_f, xyz[j] );
+				VMINMAX( stp->st_min, stp->st_max, tmp );
+				VADD2( tmp, tmp, eip->h );
+				VMINMAX( stp->st_min, stp->st_max, tmp );
+			}
 		}
 	}
 
-	VADD2( tmp, stp->st_min, eip->h );
-	VADD2( tmp2, stp->st_max, eip->h );
-	VMINMAX( stp->st_min, stp->st_max, tmp );
-	VMINMAX( stp->st_min, stp->st_max, tmp2 );
 	VBLEND2( stp->st_center, 0.5, stp->st_min, 0.5, stp->st_max );
 	VSUB2( tmp, stp->st_max, stp->st_min );
 	stp->st_aradius = 0.5 * MAGNITUDE( tmp );
@@ -521,7 +546,8 @@ vect_t ray_dir, ra, rb;
 	rb_4 = rb_sq * rb_sq;
 	if( ra_4 < SMALL_FASTF || rb_4 < SMALL_FASTF )
 	{
-		bu_log( "ray (%g %g %g) -> (%g %g %g), semi-axes lengths = %g %g\n", V3ARGS( ray_start ), V3ARGS( ray_dir ), ra, rb );
+		bu_log( "ray (%g %g %g) -> (%g %g %g), semi-axes  = (%g %g %g) and (%g %g %g), center = (%g %g %g)\n",
+			V3ARGS( ray_start ), V3ARGS( ray_dir ), V3ARGS( ra ), V3ARGS( rb ), V3ARGS( center ) );
 		bu_bomb( "ERROR: isect_line2_ellipse: semi-axis length is too small!!!\n" );
 	}
 
@@ -537,7 +563,7 @@ vect_t ray_dir, ra, rb;
 	if( disc < 0.0 )
 		return( 0 );
 
-	if( disc == 0.0 )
+	if( disc <= SMALL_FASTF )
 	{
 		dist[0] = -b/(2.0*a);
 		return( 1 );
@@ -666,6 +692,7 @@ struct seg		*seghead;
 
 				if( dist[1] > 1.0 || dist[1] < 0.0 )
 					continue;
+
 				dists = dist;
 				dist_count = 1;
 				free_dists = 0;
@@ -723,7 +750,6 @@ struct seg		*seghead;
 				if( NEAR_ZERO( diff, extr_tol.dist ) )
 				{
 					int n;
-
 					for( n=k ; n<dist_count-1 ; n++ )
 						dists[n] = dists[n+1];
 					dist_count--;
