@@ -149,8 +149,8 @@ static struct funtab funtab[] = {
 	f_arced, 3,MAXARGS,TRUE,
 "area", "[endpoint_tolerance]", "calculate presented area of view",
 	f_area, 1, 2, TRUE,
-"attach", "[-d display_string] [-i init_script] [-n name] [-t is_toplevel]\n\
-\t\t[-W width] [-N height] [-S square_size] dev_type", "attach to a display manager",
+"attach", "[-d display_string] [-i init_script] [-n name]\n\t\t[-t is_toplevel]\
+[-W width] [-N height]\n\t\t[-S square_size] dev_type", "attach to a display manager",
 	f_attach,2,MAXARGS,TRUE,
 "B", "<objects>", "clear screen, edit objects",
 	f_blast,2,MAXARGS,TRUE,
