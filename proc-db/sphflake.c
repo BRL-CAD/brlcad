@@ -374,7 +374,7 @@ void initializeInfo(p, inter, name, depth)
 	len = strlen(input);
 	if ((len > 0) && (input[len-1] == '\n')) input[len-1] = 0;
 	if (strncmp(input, "", MAX_INPUT_LENGTH) != 0) {
-	  sscanf(input, "%d %d %d", &(c[0]), &(c[1]), &(c[2]));
+	  sscanf(input, "%d %d %d", (int *)&(c[0]), (int *)&(c[1]), (int *)&(c[2]));
 	  p->matArray[i].color[0] = c[0];
 	  p->matArray[i].color[1] = c[1];
 	  p->matArray[i].color[2] = c[2];
@@ -466,7 +466,7 @@ void createPlane(p)
   /* now make the plane region... */
   mk_addmember(name, &(wmemberArray[PLANE_ID].l), WMOP_UNION);
   strcat(name, ".r");
-  mk_lcomb(fp, name, &(wmemberArray[PLANE_ID]), 1, PLANE_MAT, PLANE_MATPARAM, PLANE_MATCOLOR, 0);
+  mk_lcomb(fp, name, &(wmemberArray[PLANE_ID]), 1, PLANE_MAT, PLANE_MATPARAM, (unsigned char *)PLANE_MATCOLOR, 0);
   
   printf("\nPlane created");
 }
@@ -481,7 +481,7 @@ void createEnvironMap(p)
   mk_addmember(name, &(wmemberArray[ENVIRON_ID].l), WMOP_UNION);
   memset(name, 0, MAX_INPUT_LENGTH);
   sprintf(name, "environ.r");
-  mk_lcomb(fp, name, &(wmemberArray[ENVIRON_ID]), 1, ENVIRON_MAT, ENVIRON_MATPARAM, "0 0 0", 0);
+  mk_lcomb(fp, name, &(wmemberArray[ENVIRON_ID]), 1, ENVIRON_MAT, ENVIRON_MATPARAM, (unsigned char *)"0 0 0", 0);
   
   printf("\nEnvironment map created");
   

@@ -94,7 +94,7 @@ main(int ac, char *av[])
 	  mk_addmember(prevName, &wm_hd.l, WMOP_SUBTRACT);
 
 	  sprintf(name, "air.%d.r", counter);
-	  sprintf(shaderparams, "", (float)finalSize/currentSize);
+/*	  sprintf(shaderparams, "", (float)finalSize/currentSize); */
 	  /* can also use d for delta and s for scale */
 
 	  mk_lcomb(db_fp,

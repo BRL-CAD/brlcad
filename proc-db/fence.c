@@ -477,7 +477,7 @@ int parseArguments(argc, argv)
       break;
 
     case 'c' :
-      if ((sscanf(optarg, "%u %u %u", &color[0], &color[1], &color[2]))!=3) {
+      if ((sscanf(optarg, "%u %u %u", (unsigned int *)&color[0], (unsigned int *)&color[1], (unsigned int *)&color[2]))!=3) {
 	(void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Invalid number of parameters for material color: need r, g, b values"); 
 	exit(1);
       }
@@ -490,7 +490,7 @@ int parseArguments(argc, argv)
       fenceMaterialColor[2] = (unsigned char)color[2];
       break;
     case 'C' :
-      if ((sscanf(optarg, "%u %u %u", &color[0], &color[1], &color[2]))!=3) {
+      if ((sscanf(optarg, "%u %u %u", (unsigned int *)&color[0], (unsigned int *)&color[1], (unsigned int *)&color[2]))!=3) {
 	(void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Invalid number of parameters for material color: need r, g, b values"); 
 	exit(1);
       }
