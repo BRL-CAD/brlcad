@@ -187,12 +187,21 @@ f_region()
 	int ident, air;
 	char oper;
 
-	ident = air = 0;
+ 	ident = item_default;
+ 	air = air_default;
+ 
 	/* Check for even number of arguments */
 	if( numargs & 01 )  {
 		(void)printf("error in number of args!\n");
 		return;
 	}
+
+	if( lookup(cmd_args[1], LOOKUP_QUIET) == DIR_NULL ) {
+		/* will attempt to create the region */
+		item_default++;
+		(void)printf("Defaulting item number to %d\n", idem_default);
+	}
+
 	/* Get operation and solid name for each solid */
 	for( i = 2; i < numargs; i += 2 )  {
 		if( cmd_args[i][1] != '\0' )  {
@@ -225,6 +234,11 @@ f_region()
 			(void)printf("error in combadd\n");
 			return;
 		}
+	}
+
+	if( lookup(cmd_args[1], LOOKUP_QUIET) == DIR_NULL ) {
+		/* failed to create region */
+		item_default--;
 	}
 }
 

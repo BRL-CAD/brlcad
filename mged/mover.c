@@ -32,6 +32,12 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 extern int	printf();
 
+/* default region ident codes */
+int	item_default = 1000;
+int	air_default = 0;
+int	mat_default = 1;
+int	los_default = 100;
+
 /*
  *			M O V E H O B J
  *
@@ -236,6 +242,10 @@ int air;				/* Air code */
 			record.c.c_flags = 'R';
 			record.c.c_regionid = ident;
 			record.c.c_aircode = air;
+			record.c.c_material = mat_default;
+			record.c.c_los = los_default;
+			(void)printf("Creating region id=%d, air=%d, mat=%d, los=%d\n",
+				ident, air, mat_default, los_default );
 		}
 
 		/* finished with combination record - write it out */
