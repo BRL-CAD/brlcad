@@ -1272,13 +1272,13 @@ CONST struct db_i		*dbip;
 			extrude_ip->skt = (struct rt_sketch_internal *)tmp_ip.idb_ptr;
 	}
 
-	ntohd( (unsigned char *)tmp_vec, rp->extr.ex_V, 3 );
+	ntohd( (unsigned char *)tmp_vec, rp->extr.ex_V, ELEMENTS_PER_VECT );
 	MAT4X3PNT( extrude_ip->V, mat, tmp_vec );
-	ntohd( (unsigned char *)tmp_vec, rp->extr.ex_h, 3 );
+	ntohd( (unsigned char *)tmp_vec, rp->extr.ex_h, ELEMENTS_PER_VECT );
 	MAT4X3VEC( extrude_ip->h, mat, tmp_vec );
-	ntohd( (unsigned char *)tmp_vec, rp->extr.ex_uvec, 3 );
+	ntohd( (unsigned char *)tmp_vec, rp->extr.ex_uvec, ELEMENTS_PER_VECT );
 	MAT4X3VEC( extrude_ip->u_vec, mat, tmp_vec );
-	ntohd( (unsigned char *)tmp_vec, rp->extr.ex_vvec, 3 );
+	ntohd( (unsigned char *)tmp_vec, rp->extr.ex_vvec, ELEMENTS_PER_VECT );
 	MAT4X3VEC( extrude_ip->v_vec, mat, tmp_vec );
 	extrude_ip->keypoint = bu_glong( rp->extr.ex_key );
 
@@ -1320,13 +1320,13 @@ CONST struct db_i		*dbip;
 	rec->extr.ex_id = DBID_EXTR;
 
 	VSCALE( tmp_vec, extrude_ip->V, local2mm );
-	htond( rec->extr.ex_V, (unsigned char *)tmp_vec, 3 );
+	htond( rec->extr.ex_V, (unsigned char *)tmp_vec, ELEMENTS_PER_VECT );
 	VSCALE( tmp_vec, extrude_ip->h, local2mm );
-	htond( rec->extr.ex_h, (unsigned char *)tmp_vec, 3 );
+	htond( rec->extr.ex_h, (unsigned char *)tmp_vec, ELEMENTS_PER_VECT );
 	VSCALE( tmp_vec, extrude_ip->u_vec, local2mm );
-	htond( rec->extr.ex_uvec, (unsigned char *)tmp_vec, 3 );
+	htond( rec->extr.ex_uvec, (unsigned char *)tmp_vec, ELEMENTS_PER_VECT );
 	VSCALE( tmp_vec, extrude_ip->v_vec, local2mm );
-	htond( rec->extr.ex_vvec, (unsigned char *)tmp_vec, 3 );
+	htond( rec->extr.ex_vvec, (unsigned char *)tmp_vec, ELEMENTS_PER_VECT );
 	bu_plong( rec->extr.ex_key, extrude_ip->keypoint );
 	bu_plong( rec->extr.ex_count, 1 );
 
@@ -1362,7 +1362,7 @@ CONST struct db_i		*dbip;
 	RT_EXTRUDE_CK_MAGIC(extrude_ip);
 
 	BU_CK_EXTERNAL(ep);
-	ep->ext_nbytes = 4 * 3 * SIZEOF_NETWORK_DOUBLE + SIZEOF_NETWORK_LONG + strlen( extrude_ip->sketch_name ) + 1;
+	ep->ext_nbytes = 4 * ELEMENTS_PER_VECT * SIZEOF_NETWORK_DOUBLE + SIZEOF_NETWORK_LONG + strlen( extrude_ip->sketch_name ) + 1;
 	ep->ext_buf = (genptr_t)bu_calloc( 1, ep->ext_nbytes, "extrusion external");
 	ptr = (unsigned char *)ep->ext_buf;
 
@@ -1370,8 +1370,8 @@ CONST struct db_i		*dbip;
 	VSCALE( tmp_vec[1], extrude_ip->h, local2mm );
 	VSCALE( tmp_vec[2], extrude_ip->u_vec, local2mm );
 	VSCALE( tmp_vec[3], extrude_ip->v_vec, local2mm );
-	htond( ptr, (unsigned char *)tmp_vec, 3*4 );
-	ptr += 3 * 4 * SIZEOF_NETWORK_DOUBLE;
+	htond( ptr, (unsigned char *)tmp_vec, ELEMENTS_PER_VECT*4 );
+	ptr += ELEMENTS_PER_VECT * 4 * SIZEOF_NETWORK_DOUBLE;
 	bu_plong( ptr, extrude_ip->keypoint );
 	ptr += SIZEOF_NETWORK_LONG;
 	strcpy( (char *)ptr, extrude_ip->sketch_name );
@@ -1410,7 +1410,7 @@ CONST struct db_i		*dbip;
 	extrude_ip->magic = RT_EXTRUDE_INTERNAL_MAGIC;
 
 	ptr = (unsigned char *)ep->ext_buf;
-	sketch_name = (char *)ptr + 3*4*SIZEOF_NETWORK_DOUBLE + SIZEOF_NETWORK_LONG;
+	sketch_name = (char *)ptr + ELEMENTS_PER_VECT*4*SIZEOF_NETWORK_DOUBLE + SIZEOF_NETWORK_LONG;
 	if( !dbip )
 		extrude_ip->skt = (struct rt_sketch_internal *)NULL;
 	else if( (dp=db_lookup( dbip, sketch_name, LOOKUP_NOISY)) == DIR_NULL )
@@ -1432,15 +1432,15 @@ CONST struct db_i		*dbip;
 			extrude_ip->skt = (struct rt_sketch_internal *)tmp_ip.idb_ptr;
 	}
 
-	ntohd( (unsigned char *)tmp_vec, ptr, 3*4 );
+	ntohd( (unsigned char *)tmp_vec, ptr, ELEMENTS_PER_VECT*4 );
 	MAT4X3PNT( extrude_ip->V, mat, tmp_vec[0] );
 	MAT4X3VEC( extrude_ip->h, mat, tmp_vec[1] );
 	MAT4X3VEC( extrude_ip->u_vec, mat, tmp_vec[2] );
 	MAT4X3VEC( extrude_ip->v_vec, mat, tmp_vec[3] );
-	ptr += 3 * 4 * SIZEOF_NETWORK_DOUBLE;
+	ptr += ELEMENTS_PER_VECT * 4 * SIZEOF_NETWORK_DOUBLE;
 	extrude_ip->keypoint = bu_glong( ptr );
 	ptr += SIZEOF_NETWORK_LONG;
-	extrude_ip->sketch_name = strdup( ptr );
+	extrude_ip->sketch_name = strdup( (const char *)ptr );
 
 	return(0);			/* OK */
 }
