@@ -152,13 +152,22 @@ CONST struct rt_tol *tol;
 	NMG_CK_FACEUSE( fu );
 	RT_CK_TOL( tol );
 
+	if (rt_g.NMG_debug & DEBUG_POLYSECT)
+		rt_log( "nmg_make_dualvu( v=x%x, fu=x%x )\n", v, fu );
+
 	/* check for existing vu */
 	if( dualvu=nmg_find_v_in_face( v, fu ) )
+	{
+		if (rt_g.NMG_debug & DEBUG_POLYSECT)
+			rt_log( "\tdualvu already exists (x%x)\n", dualvu );
 		return( dualvu );
+	}
 
 	new_eu = (struct edgeuse *)NULL;
 
 	/* check if v lies within tolerance of an edge in face */
+	if (rt_g.NMG_debug & DEBUG_POLYSECT)
+		rt_log( "\tLooking for an edge to split\n" );
 	for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
 	{
 		struct edgeuse *eu;
@@ -172,10 +181,19 @@ CONST struct rt_tol *tol;
 			fastf_t   dist;
 			point_t pca;
 
+			if (rt_g.NMG_debug & DEBUG_POLYSECT)
+				rt_log( "\tChecking eu x%x (%f %f %f) <-> (%f %f %f)\n",
+					eu,
+					V3ARGS( eu->vu_p->v_p->vg_p->coord ),
+					V3ARGS( eu->eumate_p->vu_p->v_p->vg_p->coord ) );
+
 			code = rt_dist_pt3_lseg3( &dist, pca,
 				eu->vu_p->v_p->vg_p->coord,
 				eu->eumate_p->vu_p->v_p->vg_p->coord,
 				v->vg_p->coord, tol );
+
+			if (rt_g.NMG_debug & DEBUG_POLYSECT)
+				rt_log( "rt_dist_pt3_lseg3 returns %d, dist=%f\n", code, dist );
 
 			if( code > 2 )
 				continue;
