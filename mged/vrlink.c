@@ -41,13 +41,28 @@ static char		*tcp_port = "5555";	/* "gedd", remote mged */
 #define VRMSG_CMD	2	/* to MGED: Command to process */
 #define VRMSG_EVENT	3	/* from MGED: device event */
 #define VRMSG_POV	4	/* from MGED: point of view info */
+#define VRMSG_VLIST	5	/* transfer binary vlist block */
 
 void	ph_cmd();
+void	ph_vlist();
 static struct pkg_switch pkgswitch[] = {
 	{ VRMSG_CMD,		ph_cmd,		"Command" },
+	{ VRMSG_VLIST,		ph_vlist,	"Import vlist" },
 	{ 0,			0,		(char *)0 }
 };
 
+/*
+ *			P K G _ S E N D _ V L S
+ */
+int
+pkg_send_vls( type, vp, pc )
+int		type;
+struct rt_vls	*vp;
+struct pkg_conn	*pc;
+{
+	RT_VLS_CHECK(vp);
+	return pkg_send( type, rt_vls_addr(vp), rt_vls_strlen(vp)+1, pc );
+}
 
 /*
  *  Called from cmdline() for now.
@@ -66,7 +81,7 @@ struct rt_vls	*vp;
 		return 1;
 	}
 
-	if( pkg_send( VRMSG_EVENT, rt_vls_addr(vp), rt_vls_strlen(vp)+1, vrmgr ) < 0 )  {
+	if( pkg_send_vls( VRMSG_EVENT, vp, vrmgr ) < 0 )  {
 		fprintf(stderr,"event: pkg_send VRMSG_EVENT failed, disconnecting\n");
 		pkg_close(vrmgr);
 		vrmgr = PKC_NULL;
@@ -123,7 +138,7 @@ vr_viewpoint_hook()
 		V4ARGS(orient),
 		Viewscale );
 
-	if( pkg_send( VRMSG_POV, rt_vls_addr(&str), rt_vls_strlen(&str)+1, vrmgr ) < 0 )  {
+	if( pkg_send_vls( VRMSG_POV, &str, vrmgr ) < 0 )  {
 		fprintf(stderr,"viewpoint: pkg_send VRMSG_POV failed, disconnecting\n");
 		pkg_close(vrmgr);
 		vrmgr = PKC_NULL;
@@ -236,4 +251,31 @@ char			*buf;
 	(void)cmdline( &str );
 
 	rt_vls_free( &str );
+	if(buf) (void)free(buf);
+}
+
+/*
+ *			P H _ V L I S T
+ *
+ *  Package handler for incomming vlist.
+ *  Install whatever phantom solids he wants.
+ */
+void
+ph_vlist(pc, buf)
+register struct pkg_conn *pc;
+char			*buf;
+{
+	struct rt_list	vhead;
+	struct rt_vls	name;
+
+	rt_vls_init(&name);
+
+	RT_LIST_INIT( &vhead );
+
+	rt_vlist_import( &vhead, &name, buf );
+
+	invent_solid( rt_vls_addr(&name), &vhead, 0x0000FF00L );
+
+	rt_vls_free( &name );
+	if(buf) (void)free(buf);
 }
