@@ -533,6 +533,7 @@ register struct xray *rp;
 	switch( hitp->hit_private-rec_compute )  {
 	case 0:
 		/* compute it */
+		hitp->hit_vpriv[Z] = 0.0;
 		MAT4X3VEC( hitp->hit_normal, rec->rec_invRoS,
 			hitp->hit_vpriv );
 		VUNITIZE( hitp->hit_normal );
