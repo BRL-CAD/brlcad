@@ -62,8 +62,6 @@ extern long	time();
 
 extern long	nvectors;	/* from dodraw.c */
 
-int		drawreg;	/* if > 0, process and draw regions */
-
 double		mged_abs_tol;
 double		mged_rel_tol = 0.01;		/* 1%, by default */
 double		mged_nrm_tol;			/* normal ang tol, radians */
@@ -156,8 +154,6 @@ char	**argv;
 		refresh();
 	}
 
-	drawreg = 0;
-	regmemb = -1;
 	eedit( argc, argv, 1 );
 }
 
@@ -168,8 +164,6 @@ f_edit(argc, argv)
 int	argc;
 char	**argv;
 {
-	drawreg = 0;
-	regmemb = -1;
 	eedit( argc, argv, 1 );
 }
 
@@ -179,11 +173,14 @@ f_ev(argc, argv)
 int	argc;
 char	**argv;
 {
-	drawreg = 0;
-	regmemb = -1;
 	eedit( argc, argv, 3 );
 }
 
+#if 0
+/* XXX until NMG support is complete,
+ * XXX the old Big-E command is retained in all it's glory in
+ * XXX the file proc_reg.c, including the command processing.
+ */
 /*
  *			F _ E V E D I T
  *
@@ -196,10 +193,9 @@ f_evedit(argc, argv)
 int	argc;
 char	**argv;
 {
-	drawreg = 1;
-	regmemb = -1;
 	eedit( argc, argv, 2 );
 }
+#endif
 
 /*
  *			S I Z E _ R E S E T
