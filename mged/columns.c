@@ -88,36 +88,6 @@ struct bu_vls	*str;
 
 
 /*
- *			C O L _ I T E M
- */
-void
-col_item(cp)
-register char *cp;
-{
-	/* Output newline if last column printed. */
-	if( col_count >= COLUMNS || (col_len+NAMESIZE-1) >= TERMINAL_WIDTH )  {
-		/* line now full */
-		bu_putchar( '\n' );
-		col_count = 0;
-	} else if ( col_count != 0 ) {
-		/* Space over before starting new column */
-		do {
-			bu_putchar( ' ' );
-			col_len++;
-		}  while ( (col_len % NAMESIZE) != 0 );
-	}
-	/* Output string and save length for next tab. */
-	col_len = 0;
-	while ( *cp != '\0' )  {
-		bu_putchar( *cp );
-		++cp;
-		++col_len;
-	}
-	col_count++;
-#undef	COLUMNS
-}
-
-/*
  *			C M P D I R N A M E
  *
  * Given two pointers to pointers to directory entries, do a string compare
