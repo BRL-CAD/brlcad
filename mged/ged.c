@@ -183,7 +183,7 @@ char **argv;
 
 	new_mats();
 
-	setview( 0, 0, 0 );
+	setview( 0.0, 0.0, 0.0 );
 
 	no_memory = 0;		/* memory left */
 	es_edflag = -1;		/* no solid editing just now */
@@ -256,8 +256,7 @@ char **argv;
 	while(1) {
 		(void)signal( SIGINT, SIG_IGN );
 
-		/* This test stops optimizers from complaining about an infinite loop */
-		if( (rateflag = event_check( rateflag )) < 0 )  break;
+		rateflag = event_check( rateflag );
 
 		/* apply solid editing changes if necessary */
 		if( sedraw > 0) {
@@ -272,6 +271,7 @@ char **argv;
 		 */	 
 		refresh();
 	}
+	/* NOTREACHED */
 }
 
 /*
@@ -279,10 +279,6 @@ char **argv;
  *
  *  Check for events, and dispatch them.
  *  Eventually, this will be done entirely by generating commands
- *
- *  Returns -
- *	 0	no events detected
- *	>0	number of events detected
  */
 int
 event_check( non_blocking )
@@ -558,14 +554,14 @@ fastf_t xangle, yangle, zangle;
 /*
  *			S E T V I E W
  *
- * Set the view.  Angles are integers, in degrees.
+ * Set the view.  Angles are DOUBLES, in degrees.
  *
  * Given that viewvec = scale . rotate . (xlate to view center) . modelvec,
  * we just replace the rotation matrix.
  */
 void
 setview( a1, a2, a3 )
-int a1, a2, a3;		/* integer angles, in degrees */
+double a1, a2, a3;		/* DOUBLE angles, in degrees */
 {
 	buildHrot( Viewrot, a1 * degtorad, a2 * degtorad, a3 * degtorad );
 	new_mats();
