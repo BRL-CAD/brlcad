@@ -102,7 +102,7 @@ Sets the direction vector to the unit vector in direction
 If this command is invoked with no arguments,
 .I nirt
 prints the current direction vector.
-Default is (-1, 0, 0).
+Default is (\-1, 0, 0).
 Changing (\fIdx\fR, \fIdy\fR, \fIdz\fR) will change
 the azimuth and elevation angles.
 .TP 12
@@ -118,6 +118,17 @@ Changing azimuth and elevation will change the direction vector.
 .TP 12
 .B s
 Fires a ray from the current origination point in the current direction.
+.TP 12
+.B backout
+Backs the ray origination point out of the geometry:
+.IR h " and " v
+retain their previous values and
+.I d
+is set to
+.I Dmax,
+the largest value of
+.I d
+anywhere in the geometry.
 .TP 12
 .BI "useair [" n "]"
 Sets the \fIuseair\fR member
@@ -451,7 +462,7 @@ of the model coordinate system as follows:
 \fBo\fR = \fBm\fR \(mu \fBn\fR corresponds to \fIv\fR.
 
 .in -5m
-Thus if the direction vector is (-1, 0, 0),
+Thus if the direction vector is (\-1, 0, 0),
 then
 (\fId\fR, \fIh\fR, \fIv\fR) =
 (\fIx\fR, \fIy\fR, \fIz\fR).

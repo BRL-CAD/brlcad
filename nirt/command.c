@@ -147,7 +147,6 @@ com_table		*ctp;
 	{
 		grid(HORZ) = Gr[HORZ] * local2base;
 		grid(VERT) = Gr[VERT] * local2base;
-		dist_default();
 		grid2targ();
 		return;
 	}
@@ -544,4 +543,18 @@ com_table	*ctp;
 	}
 	else
 	    com_usage(ctp);
+}
+
+void backout(buffer, ctp)
+char			*buffer;
+int			ctp;
+{
+    int		i;
+    point_t	point;
+    vect_t	direction;
+
+    double	dist_default();  /* computes grid[DIST] default val*/
+
+    grid(DIST) = dist_default();     /* extreme of the target */
+    grid2targ();
 }

@@ -49,6 +49,7 @@ com_table	ComTab[] =
 		    { "xyz", target_coor, "set/query target coordinates", 
 			"X Y Z" },
 		    { "s", shoot, "shoot a ray at the target" },
+		    { "backout", backout, "Back out of model" },
 		    { "useair", use_air, "set/query use of air",
 			"<0|1|2|...>" },
 		    { "units", nirt_units, "set/query local units",
@@ -118,6 +119,7 @@ char **argv;
     void		   grid_coor();
     void		   target_coor();
     void		   dir_vect();
+    void		   backout();
     void		   quit();
     void		   show_menu();
     void		   print_item();

@@ -72,6 +72,7 @@ extern void		az_el();
 extern void		dir_vect();
 extern void	        grid_coor();
 extern void	        target_coor();
+extern void	        backout();
 extern void		shoot();
 extern void		sh_esc();
 extern void	        quit();
