@@ -93,6 +93,7 @@ void mged_setup(), cmd_setup(), mged_compat();
 void mged_print_result();
 void mged_global_variable_setup();
 int f_bot_fuse(), f_bot_condense(), f_bot_face_fuse();
+extern int f_hide(), f_unhide();
 
 #ifndef HAVE_UNISTD_H
 extern void sync();
@@ -211,6 +212,7 @@ static struct cmdtab cmdtab[] = {
 #ifdef HIDELINE
 	{"H", f_hideline},
 #endif
+	{"hide", f_hide },
 	{"history", f_history},
 	{"hist", cmd_hist},
 	{"i", f_instance},
@@ -367,6 +369,7 @@ static struct cmdtab cmdtab[] = {
 	{"translate", f_tr_obj},
 	{"tree", f_tree},
 	{"t_muves", f_t_muves},
+	{"unhide", f_unhide},
 	{"units", f_units},
 	{"vars", f_set},
 	{"vdraw", cmd_vdraw},

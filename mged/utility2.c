@@ -196,8 +196,6 @@ char	**argv;
 	return ret;
 }
 
-
-
 /*   	F _ C O P Y E V A L : copys an evaluated solid
  */
 
@@ -649,6 +647,32 @@ genptr_t		client_data;
  */
 int
 f_push(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
+{
+	CHECK_DBI_NULL;
+	CHECK_READ_ONLY;
+
+	return invoke_db_wrapper(interp, argc, argv);
+}
+
+int
+f_hide(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
+{
+	CHECK_DBI_NULL;
+	CHECK_READ_ONLY;
+
+	return invoke_db_wrapper(interp, argc, argv);
+}
+
+int
+f_unhide(clientData, interp, argc, argv)
 ClientData clientData;
 Tcl_Interp *interp;
 int argc;
