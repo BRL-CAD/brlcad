@@ -1009,7 +1009,9 @@ CONST struct rt_tol		*tol;
 				new_eu = nmg_ebreak( v, eu );
 				/* Put new edges into follow-on list */
 				nmg_tbl( &new_edgeuses, TBL_INS, &new_eu->l.magic );
-				nmg_tbl( &new_edgeuses, TBL_INS, &eu->l.magic );
+
+				/* reset vertex vb */
+				vb = eu->eumate_p->vu_p->v_p;
 				count++;
 			}
 		}
