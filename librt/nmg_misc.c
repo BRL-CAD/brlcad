@@ -1883,23 +1883,6 @@ CONST char		*title;
 	rt_log("nmg_stash_model_to_file(): wrote '%s' in %d bytes\n", filename, ext.ext_nbytes);
 }
 
-/* XXX move to nmg_info.c
-/*
- *			N M G _ V U P S
- *
- *  Return parent shell of vertexuse
- */
-struct shell *
-nmg_vups(vu)
-struct vertexuse *vu;
-{
-	NMG_CK_VERTEXUSE(vu);
-
-	if( *vu->up.magic_p == NMG_LOOPUSE_MAGIC )
-		return nmg_lups( vu->up.lu_p );
-	return nmg_eups( vu->up.eu_p );
-}
-
 /* state for nmg_unbreak_edge */
 struct nmg_unbreak_state
 {
@@ -1910,6 +1893,8 @@ struct nmg_unbreak_state
 /* XXX move to nmg_mod.c */
 /*
  *			N M G _ U N B R E A K _ E D G E
+ *
+ *  Undoes the effect of an unwanted nmg_ebreak().
  *
  *  Eliminate the vertex between this edgeuse and the next edge,
  *  on all edgeuses radial to this edgeuse's edge.
@@ -1950,8 +1935,6 @@ struct edgeuse	*eu1_first;
 	e1 = eu1_first->e_p;
 	NMG_CK_EDGE( e1 );
 
-rt_log("nmg_unbreak_edge(eu1=x%x)\n", eu1_first);
-
 	eg = e1->eg_p;
 	if( !eg )  {
 		rt_log( "nmg_unbreak_edge: no geometry for edge1 x%x\n" , e1 );
@@ -1967,7 +1950,7 @@ rt_log("nmg_unbreak_edge(eu1=x%x)\n", eu1_first);
 		goto out;
 	}
 
-	s1 = nmg_eups(eu1_first);
+	s1 = nmg_find_s_of_eu(eu1_first);
 	NMG_CK_SHELL(s1);
 
 	eu1 = eu1_first;
@@ -1987,7 +1970,7 @@ rt_log("nmg_unbreak_edge(eu1=x%x)\n", eu1_first);
 	for( RT_LIST_FOR( vu , vertexuse , &vb->vu_hd ) )  {
 		NMG_CK_VERTEXUSE(vu);
 		/* Ignore vu's not in this shell */
-		if( nmg_vups( vu ) != s1 )  continue;
+		if( nmg_find_s_of_vu( vu ) != s1 )  continue;
 
 		if( *(vu->up.magic_p) != NMG_EDGEUSE_MAGIC )  {
 			ret = -4;

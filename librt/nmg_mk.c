@@ -1907,7 +1907,7 @@ struct loopuse *lu1;
 		rt_bomb("nmg_demote_lu: bad loopuse child\n");
 
 	/* get the parent shell */
-	s = nmg_lups(lu1);
+	s = nmg_find_s_of_lu(lu1);
 	NMG_CK_SHELL(s);
 
 	/* move all edgeuses (&mates) to shell

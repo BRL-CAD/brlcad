@@ -134,34 +134,52 @@ register CONST struct shell *s;
 	return 1;
 }
 
-/*				N M G _ L U P S
+/*				N M G _ F I N D _ S _ O F _ L U
  *
  *	return parent shell for loopuse
+ *	formerly nmg_lups().
  */
 struct shell *
-nmg_lups(lu)
+nmg_find_s_of_lu(lu)
 struct loopuse *lu;
 {
 	if (*lu->up.magic_p == NMG_SHELL_MAGIC) return(lu->up.s_p);
 	else if (*lu->up.magic_p != NMG_FACEUSE_MAGIC) 
-		rt_bomb("bad parent for loopuse\n");
+		rt_bomb("nmg_find_s_of_lu() bad parent for loopuse\n");
 
 	return(lu->up.fu_p->s_p);
 }
 
-/*				N M G _ E U P S 
+/*				N M G _ F I N D _ S _ O F _ E U
  *
  *	return parent shell of edgeuse
+ *	formerly nmg_eups().
  */
 struct shell *
-nmg_eups(eu)
+nmg_find_s_of_eu(eu)
 struct edgeuse *eu;
 {
 	if (*eu->up.magic_p == NMG_SHELL_MAGIC) return(eu->up.s_p);
 	else if (*eu->up.magic_p != NMG_LOOPUSE_MAGIC)
-		rt_bomb("bad parent for edgeuse\n");
+		rt_bomb("nmg_find_s_of_eu() bad parent for edgeuse\n");
 
-	return(nmg_lups(eu->up.lu_p));
+	return(nmg_find_s_of_lu(eu->up.lu_p));
+}
+
+/*
+ *			N M G _ F I N D _ S _ O F _ V U
+ *
+ *  Return parent shell of vertexuse
+ */
+struct shell *
+nmg_find_s_of_vu(vu)
+struct vertexuse *vu;
+{
+	NMG_CK_VERTEXUSE(vu);
+
+	if( *vu->up.magic_p == NMG_LOOPUSE_MAGIC )
+		return nmg_find_s_of_lu( vu->up.lu_p );
+	return nmg_find_s_of_eu( vu->up.eu_p );
 }
 
 /************************************************************************
@@ -807,9 +825,9 @@ CONST struct faceuse	*fu;
  *	(struct vertexuse *)	A matching vertexuse from that face.
  */
 struct vertexuse *
-nmg_find_pt_in_face(pt, fu, tol)
-CONST point_t		pt;
+nmg_find_pt_in_face(fu, pt, tol)
 CONST struct faceuse	*fu;
+CONST point_t		pt;
 CONST struct rt_tol	*tol;
 {
 	register struct loopuse	*lu;
@@ -1113,7 +1131,7 @@ CONST struct rt_tol	*tol;
 	while (RT_LIST_NOT_HEAD(fu, &s->fu_hd) ) {
 		/* Shell has faces */
 		NMG_CK_FACEUSE(fu);
-			if( (vu = nmg_find_pt_in_face( pt, fu, tol )) )
+			if( (vu = nmg_find_pt_in_face( fu, pt, tol )) )
 				return(vu->v_p);
 
 			if (RT_LIST_PNEXT(faceuse, fu) == fu->fumate_p)

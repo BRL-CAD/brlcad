@@ -1532,7 +1532,7 @@ struct vertexuse *vu1, *vu2;
 	}
 
 	/* make a wire edge in the shell to "cap off" the new loop */
-	neweu = nmg_me(eu1->vu_p->v_p, eu2->vu_p->v_p, nmg_eups(eu1));
+	neweu = nmg_me(eu1->vu_p->v_p, eu2->vu_p->v_p, nmg_find_s_of_eu(eu1));
 
 	/* move the new edgeuse into the new loopuse */
 	RT_LIST_DEQUEUE(&neweu->l);
@@ -1545,7 +1545,7 @@ struct vertexuse *vu1, *vu2;
 	neweu->eumate_p->up.lu_p = lu->lumate_p;
 
 	/* now we go back and close up the loop we just ripped open */
-	eunext = nmg_me(eu2->vu_p->v_p, eu1->vu_p->v_p, nmg_eups(eu1));
+	eunext = nmg_me(eu2->vu_p->v_p, eu1->vu_p->v_p, nmg_find_s_of_eu(eu1));
 
 	RT_LIST_DEQUEUE(&eunext->l);
 	RT_LIST_INSERT(&eu1->l, &eunext->l);

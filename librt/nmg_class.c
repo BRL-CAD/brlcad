@@ -765,7 +765,7 @@ CONST struct rt_tol	*tol;
 	for(RT_LIST_FOR(vup, vertexuse, &vu->v_p->vu_hd)) {
 
 		if (*vup->up.magic_p == NMG_LOOPUSE_MAGIC &&
-		    nmg_lups(vup->up.lu_p) == sB) {
+		    nmg_find_s_of_lu(vup->up.lu_p) == sB) {
 		    	NMG_INDEX_SET(classlist[NMG_CLASS_AonBshared], 
 		    		vu->v_p );
 		    	reason = "other loopuse of vertex is on shell";
@@ -773,7 +773,7 @@ CONST struct rt_tol	*tol;
 			goto out;
 		}
 		else if (*vup->up.magic_p == NMG_EDGEUSE_MAGIC &&
-		    nmg_eups(vup->up.eu_p) == sB) {
+		    nmg_find_s_of_eu(vup->up.eu_p) == sB) {
 		    	NMG_INDEX_SET(classlist[NMG_CLASS_AonBshared],
 		    		vu->v_p );
 		    	reason = "other edgeuse of vertex is on shell";
@@ -910,7 +910,7 @@ CONST struct rt_tol	*tol;
 		eup = eu->radial_p->eumate_p;
 		do {
 			NMG_CK_EDGEUSE(eup);
-			if (nmg_eups(eup) == s) {
+			if (nmg_find_s_of_eu(eup) == s) {
 				NMG_INDEX_SET(classlist[NMG_CLASS_AonBshared],
 					eu->e_p );
 				reason = "a radial edgeuse is on shell";

@@ -572,7 +572,7 @@ rt_log("vu dist=%e, next dist=%e, tol=%e\n",
 rt_dist_line_point( rs->pt, rs->dir, this_eu->vu_p->v_p->vg_p->coord ),
 rt_dist_line_point( rs->pt, rs->dir, prev->vu_p->v_p->vg_p->coord ),
 rs->tol->dist );
-			if( nmg_break_long_edges( nmg_eups(this_eu), rs->tol ) > 0 )
+			if( nmg_break_long_edges( nmg_find_s_of_eu(this_eu), rs->tol ) > 0 )
 				rt_log("\tnmg_break_long_edges succeeded\n");
 			rt_bomb("nmg_assess_vu() ON/ON edgeuse ends on different vertices.\n");
 		}
