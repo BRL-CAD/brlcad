@@ -37,7 +37,7 @@ int	wflag = FALSE;
 int	xflag = FALSE;
 int	zflag = FALSE;
 
-char	*cakefile  = NULL;
+char	*cakefile  = NULL;		/* also used in entry.c */
 char	*shellfile[2] = { SYSTEM_CMD, SCRIPT_CMD };
 char	*metachars = METACHARS;
 int	maxprocs   = 1;
@@ -340,6 +340,7 @@ char	**argv;
 	reg	char	*envstr;
 	reg	int	status;
 	reg	Node	*rootnode;
+	char		*newcakefile;		/* /tmp/cakef###.c, for CC -E */
 
 	signal(SIGINT,  cake_finish);
 	signal(SIGQUIT, cake_finish);
@@ -368,6 +369,9 @@ char	**argv;
 	cppargv[cppargc++] = new_name(CPP);
 #if defined(CPP_OPTIONS)
 	cppargv[cppargc++] = new_name(CPP_OPTIONS);	
+#endif
+#if defined(CPP_OPTIONS2)
+	cppargv[cppargc++] = new_name(CPP_OPTIONS2);
 #endif
 	strcpy(cakeflagbuf, "-DCAKEFLAGS=");
 
@@ -404,7 +408,29 @@ char	**argv;
 	}
 
 	if (gflag)
-		cakefile = dir_setup(cakefile);
+		cakefile = dir_setup(cakefile);		/* changes directory */
+
+	/*
+	 *  In order to use more modern CC -E commands, the name of
+	 *  the Cakefile string has to end in a ".c".
+	 *  So, copy the cakefile into /tmp, and pre-process that one.
+	 *  -Mike Muuss, ARL, 25-Aug-93.
+	 */
+	{
+		char	*newbase;
+		char	cmd[256];
+
+		newbase = tempnam(NULL, "cakef");
+		if( newbase == NULL )  exit(17);
+		newcakefile = malloc(strlen(newbase)+3);	/* room for .c */
+		if( newcakefile == NULL )  exit(18);
+		strcpy( newcakefile, newbase );
+		strcat( newcakefile, ".c" );
+		free(newbase);
+
+		sprintf(cmd, "cp %s %s", cakefile, newcakefile);
+		system(cmd);
+	}
 
 	if( (pwent = getpwuid(geteuid())) == (Pwent *)0 )  {
 		printf("cake: Warning: unable to get home directory for uid %d\n",
@@ -419,20 +445,29 @@ char	**argv;
 	strcat(scratchbuf, SLIB);
 	cppargv[cppargc++] = new_name(scratchbuf);
 	cppargv[cppargc++] = cakeflagbuf;
+#if 0
 	cppargv[cppargc++] = cakefile;
+#else
+	cppargv[cppargc++] = "-I.";
+	cppargv[cppargc++] = newcakefile;
+#endif
 	cppargv[cppargc]   = NULL;
 
+#if 0
 	if (cakedebug)
+#endif
 	{
 		reg	int	i;
 
 		for (i = 0; i < cppargc; i++)
-			printf("%s\n", cppargv[i]);
+			printf("%s ", cppargv[i]);
+		printf("\n");
 	}
 
 	if ((yyin = cake_popen(cppargv, "r")) == NULL)
 	{
 		fprintf(stderr, "cake: cannot open cpp filter\n");
+		(void)unlink(newcakefile);
 		exit(1);
 	}
  
@@ -445,6 +480,7 @@ char	**argv;
 			putchar(c);
 
 		cake_pclose(yyin);
+		(void)unlink(newcakefile);
 		exit(0);
 	}
 
@@ -461,6 +497,8 @@ char	**argv;
 	meta_setup(metachars);
 
 	cake_pclose(yyin);
+	(void)unlink(newcakefile);
+
 	dir_start();
 	prep_entries();
 	final_entry(argc, argv);
