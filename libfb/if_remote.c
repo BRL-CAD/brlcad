@@ -26,11 +26,20 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
+
+#ifdef BSD
 #include <sys/types.h>
 #include <sys/uio.h>		/* for struct iovec */
 #include <netinet/in.h>		/* for htons(), etc */
 #include <netdb.h>		/* for gethostbyname() stuff */
+#endif
+
+#ifdef BSD
+#include <strings.h>
+#else
 #include <string.h>
+#endif
+
 #include "./pkg.h"
 #include "./pkgtypes.h"
 #include "fb.h"
