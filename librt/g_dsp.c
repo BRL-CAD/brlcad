@@ -2838,7 +2838,7 @@ CONST struct db_i		*dbip;
 
 	BU_INIT_EXTERNAL(ep);
 	ep->ext_nbytes = sizeof(union record)*DB_SS_NGRAN;
-	ep->ext_buf = (genptr_t)bu_calloc( 1, ep->ext_nbytes, "dsp external");
+	ep->ext_buf = bu_calloc( 1, ep->ext_nbytes, "dsp external");
 	rec = (union record *)ep->ext_buf;
 
 	dsp = *dsp_ip;	/* struct copy */
@@ -2909,7 +2909,7 @@ CONST struct db_i		*dbip;
 	cp += SIZEOF_NETWORK_LONG;
 
 	/* convert matrix */
-	ntohd((char *)dsp_ip->dsp_mtos, cp, 16);
+	ntohd((unsigned char *)dsp_ip->dsp_mtos, cp, 16);
 	cp += SIZEOF_NETWORK_DOUBLE * 16;
 	bn_mat_inv(dsp_ip->dsp_stom, dsp_ip->dsp_mtos);
 
@@ -2958,8 +2958,8 @@ CONST struct db_i		*dbip;
 
 	BU_INIT_EXTERNAL(ep);
 	ep->ext_nbytes = 138 + name_len;
-	cp = (unsigned char *)ep->ext_buf = 
-		(genptr_t)bu_malloc( ep->ext_nbytes, "dsp external");
+	ep->ext_buf = bu_malloc( ep->ext_nbytes, "dsp external");
+	cp = (unsigned char *)ep->ext_buf;
 
 	memset(ep->ext_buf, 0, ep->ext_nbytes);
 
@@ -2980,7 +2980,7 @@ CONST struct db_i		*dbip;
 	 */
 	dsp_ip->dsp_mtos[15] /= local2mm;
 
-	htond(cp, (char *)dsp_ip->dsp_mtos, 16);
+	htond(cp, (unsigned char *)dsp_ip->dsp_mtos, 16);
 	cp += SIZEOF_NETWORK_DOUBLE * 16;
 
 	bu_pshort( cp, (int)dsp_ip->dsp_smooth );
