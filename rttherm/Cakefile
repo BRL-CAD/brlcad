@@ -15,7 +15,7 @@
 #include "../Cakefile.defs"
 #include "../Cakefile.prog"
 
-/* light.h material.h mathtab.h rad.h rdebug.h */
+/* light.h material.h rad.h rdebug.h */
 #define FILES	\
 	viewtherm ssampview
 
@@ -26,7 +26,7 @@
 #endif
 
 /*  The "top-half" (user interface) for the RT family of programs */
-#define RTUIF	RTDIR/main.o RTDIR/opt.o RTDIR/do.o RTDIR/worker.o RTDIR/mathtab.o RTDIR/material.o
+#define RTUIF	RTDIR/main.o RTDIR/opt.o RTDIR/do.o RTDIR/worker.o RTDIR/material.o
 
 /* Specially compiled versions */
 refract.o: ../rt/refract.c

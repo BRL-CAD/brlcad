@@ -54,7 +54,6 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "shadework.h"
 #include "../rt/ext.h"
 #include "../rt/rdebug.h"
-#include "../rt/mathtab.h"
 #include "../rt/light.h"
 
 /* XXX Move to raytrace.h when routine goes into LIBRT */
