@@ -1,5 +1,7 @@
 /*
  *			vas4/Cakefile
+ *
+ *  $Header$
  */
 
 #define SRCDIR	vas4
@@ -15,6 +17,6 @@
 /* Explicit composition of each product */
 
 vas4:	OBJ LIBFB
-	CC LDFLAGS -o vas4 OBJ LIB_PRE''LIBFB LIBES
+	CC LDFLAGS -o vas4 OBJ LIB_PRE''LIBFB LIBFB_LIBES LIBES
 
 #include "../Cakefile.rules"
