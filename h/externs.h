@@ -30,12 +30,10 @@
 /*
  *	System calls
  */
-extern void	exit();
-extern void	sync();
-
 extern int	close();
 extern int	dup();
 extern int	execl();
+extern void	exit();
 extern int	fork();
 extern int	getuid();
 extern int	lseek();
@@ -43,6 +41,8 @@ extern int	nice();
 extern int	open();
 extern int	pipe();
 extern int	read();
+extern unsigned	sleep();
+extern void	sync();
 extern int	unlink();
 extern int	wait();
 extern int	write();
@@ -55,6 +55,7 @@ extern void	free();
 
 extern char	*malloc();
 extern char	*calloc();
+extern char	*getenv();
 extern char	*realloc();
 extern char	*tempnam();
 
