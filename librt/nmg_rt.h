@@ -8,6 +8,10 @@
 /* These values are for the hitmiss "in_out" variable and indicate the
  * nature of the hit when known
  */
+#define HMG_INBOUND_STATE(_hm) (((_hm)->in_out & 0x0f0) >> 4)
+#define HMG_OUTBOUND_STATE(_hm) ((_hm)->in_out & 0x0f)
+
+
 #define NMG_RAY_STATE_INSIDE	1
 #define NMG_RAY_STATE_ON	2
 #define NMG_RAY_STATE_OUTSIDE	4
@@ -138,10 +142,27 @@ struct ray_data {
 	int		face_subhit;	
 };
 
-#define GET_HITMISS(_p) { \
-	(_p) = (struct hitmiss *)rt_calloc(1, sizeof(struct hitmiss), \
-		"GET_HITMISS"); }
 
+#define GET_HITMISS(_p) { \
+	char str[64]; \
+	(void)sprintf(str, "GET_HITMISS %s %d", __FILE__, __LINE__); \
+	(_p) = (struct hitmiss *)rt_calloc(1, sizeof(struct hitmiss), str); \
+	}
+
+#define FREE_HITMISS(_p) { \
+	char str[64]; \
+	(void)sprintf(str, "FREE_HITMISS %s %d", __FILE__, __LINE__); \
+	(void)rt_free( (char *)_p,  str); \
+	}
+
+
+#define NMG_FREE_HITLIST(_p) { \
+	struct hitmiss *_hit; \
+	while ( RT_LIST_WHILE(_hit, hitmiss, _p)) { \
+		NMG_CK_HITMISS(_hit); \
+		RT_LIST_DEQUEUE( &_hit->l ); \
+		FREE_HITMISS( _hit ); \
+	} }
 
 #define HIT 1	/* a hit on a face */
 #define MISS 0	/* a miss on the face */

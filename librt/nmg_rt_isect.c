@@ -271,8 +271,8 @@ struct vertexuse *vu_p;
 
 	GET_HITMISS(myhit);
 	NMG_INDEX_ASSIGN(rd->hitmiss, vu_p->v_p, myhit);
-	myhit->outbound_use = (long *)NULL;
-	myhit->inbound_use = (long *)NULL;
+	myhit->outbound_use = (long *)vu_p;
+	myhit->inbound_use = (long *)vu_p;
 	myhit->hit.hit_private = (genptr_t)vu_p->v_p;
 
 	/* get build_vertex_miss() to compute this */
@@ -452,18 +452,62 @@ char *Pole_name;
 			VMOVE(Pole_pca, pcaB);
 		}
 		break;
-	case 0x33:/* Do the Tanenbaum algorithm. */
+	case 0x33: {
+		/* The point is over the vertex shared by the points,
+		 * and not over one edge or the other.  We now need to
+		 * figure out which edge to classify this point against.
+		 *
+		 * Time to do the Tanenbaum algorithm.
+		 */
+		double dotA;
+		double dotB;
+
+		rt_log("\tplane point beyond both edges.... Doing the Tanenbaum algorithm.\n");
+
 		VSUB2(VtoPole_prj, Pole_prj_pt, vu->v_p->vg_p->coord);
-	   	if (rt_g.NMG_debug & DEBUG_RT_ISECT)
-				rt_log("\tplane point outside face\n");
-		if (VDOT(leftA, VtoPole_prj) > VDOT(leftB, VtoPole_prj)) {
-			VSUB2(pca_to_pole_vect, pcaA, Pole);
-			VMOVE(Pole_pca, pcaA);
+
+		dotA = VDOT(leftA, VtoPole_prj);
+		dotB = VDOT(leftB, VtoPole_prj);
+		
+		if (dotA > dotB) {
+			if (dotA >= 0.0) {
+				/* Point is "inside" face,
+				 * PCA is plane projection point.
+				 */
+			   	if (rt_g.NMG_debug & DEBUG_RT_ISECT)
+					rt_log("Tanenbaum says the point is inside the face\n");
+				VMOVE(Pole_pca, Pole_prj_pt);
+				VMOVE(pca_to_pole_vect, polar_height_vect);
+			} else {
+				/* Point is "outside" face,
+				 * PCA is at vertex.
+				 */
+			   	if (rt_g.NMG_debug & DEBUG_RT_ISECT)
+					rt_log("Tanenbaum says the point is outside the face, PCA is at the vertex\n");
+				VSUB2(pca_to_pole_vect, pcaA, Pole);
+				VMOVE(Pole_pca, pcaA);
+			}
 		} else {
-			VSUB2(pca_to_pole_vect, pcaB, Pole);
-			VMOVE(Pole_pca, pcaB);
+			if (dotB >= 0.0) {
+				/* Point is "inside" face,
+				 * PCA is plane projection point
+				 */
+			   	if (rt_g.NMG_debug & DEBUG_RT_ISECT)
+					rt_log("Tanenbaum says the point is inside the face\n");
+				VMOVE(Pole_pca, Pole_prj_pt);
+				VMOVE(pca_to_pole_vect, polar_height_vect);
+			} else {
+				/* Point is "outside" face,
+				 * PCA is at vertex.
+				 */
+			   	if (rt_g.NMG_debug & DEBUG_RT_ISECT)
+					rt_log("Tanenbaum says the point is outside the face, PCA is at the vertex\n");
+				VSUB2(pca_to_pole_vect, pcaB, Pole);
+				VMOVE(Pole_pca, pcaB);
+			}
 		}
 		break;
+	}
 	case 0x34: /* fallthrough */
 	case 0x54: /* fallthrough */
 	case 0x43: /* fallthrough */
@@ -852,26 +896,23 @@ struct hitmiss *myhit;
 		myhit->in_out |= NMG_RAY_STATE_INSIDE;
 
 
+	myhit->inbound_use = (long *)North_vu;
+	myhit->outbound_use = (long *)South_vu;
+
 	switch (myhit->in_out) {
 	case HMG_HIT_IN_IN:	/* fallthrough */
 	case HMG_HIT_OUT_OUT:	/* fallthrough */
 	case HMG_HIT_IN_ON:	/* fallthrough */
 	case HMG_HIT_ON_IN:	/* two hits */
-		myhit->inbound_use = (long *)North_vu;
 		myhit->hit.hit_private = (genptr_t)North_vu;
-		myhit->outbound_use = (long *)South_vu;
 		break;
 	case HMG_HIT_IN_OUT:	/* one hit - outbound */
 	case HMG_HIT_ON_OUT:	/* one hit - outbound */
-		myhit->inbound_use = (long *)NULL;
 		myhit->hit.hit_private = (genptr_t)South_vu;
-		myhit->outbound_use = (long *)South_vu;
 		break;
 	case HMG_HIT_OUT_IN:	/* one hit - inbound */
 	case HMG_HIT_OUT_ON:	/* one hit - inbound */
-		myhit->inbound_use = (long *)North_vu;
 		myhit->hit.hit_private = (genptr_t)North_vu;
-		myhit->outbound_use = (long *)NULL;
 		break;
 	default:
 		rt_log("%s %d: Bad vertex in/out state?\n",
@@ -911,8 +952,8 @@ int status;
 	} else {
 		GET_HITMISS(myhit);
 		NMG_INDEX_ASSIGN(rd->hitmiss, vu_p->v_p, myhit);
-		myhit->outbound_use = (long *)NULL;
-		myhit->inbound_use = (long *)NULL;
+		myhit->outbound_use = (long *)vu_p;
+		myhit->inbound_use = (long *)vu_p;
 	}
 
 	/* v = vector from ray point to hit vertex */
@@ -1344,8 +1385,8 @@ point_t pt;
 
 	/* create hit structure for this edge */
 	NMG_INDEX_ASSIGN(rd->hitmiss, eu_p->e_p, myhit);
-	myhit->outbound_use = (long *)NULL;
-	myhit->inbound_use = (long *)NULL;
+	myhit->outbound_use = (long *)eu_p;
+	myhit->inbound_use = (long *)eu_p;
 
 	/* build the hit structure */
 	myhit->hit.hit_dist = dist_along_ray;
@@ -1656,8 +1697,8 @@ struct hitmiss		*a_hit;
 	double cos_angle;
 
 	RT_LIST_MAGIC_SET(&myhit->l, NMG_RT_HIT_MAGIC);
-	myhit->outbound_use = (long *)NULL;
-	myhit->inbound_use = (long *)NULL;
+	myhit->outbound_use = (long *)fu_p;
+	myhit->inbound_use = (long *)fu_p;
 
 
 	VMOVE(myhit->hit.hit_point, plane_pt);
@@ -1780,7 +1821,9 @@ struct faceuse *fu_p;
 	NMG_CK_FACE(fu_p->f_p);
 	NMG_CK_FACE_G(fu_p->f_p->fg_p);
 
+#ifdef CHECK_HITMISS_LISTS
 	NMG_CK_HITMISS_LISTS(a_hit, rd);
+#endif
 
 	/* if this face already processed, we are done. */
 	if (myhit = NMG_INDEX_GET(rd->hitmiss, fu_p->f_p)) {
@@ -1805,7 +1848,6 @@ struct faceuse *fu_p;
 		return;
 	}
 
-	NMG_CK_HITMISS_LISTS(a_hit, rd);
 
 	/* bounding box intersection */
 	if (!rt_in_rpp(rd->rp, rd->rd_invdir,
@@ -1816,7 +1858,6 @@ struct faceuse *fu_p;
 		RT_LIST_MAGIC_SET(&myhit->l, NMG_RT_MISS_MAGIC);
 		RT_LIST_INSERT(&rd->rd_miss, &myhit->l);
 	    	NMG_CK_HITMISS(myhit);
-		NMG_CK_HITMISS_LISTS(a_hit, rd);
 
 		if (rt_g.NMG_debug & DEBUG_RT_ISECT)
 			rt_log("missed bounding box\n");
@@ -1832,7 +1873,6 @@ struct faceuse *fu_p;
 	code = rt_isect_line3_plane(&dist, rd->rp->r_pt, rd->rp->r_dir,
 			norm, rd->tol);
 
-	NMG_CK_HITMISS_LISTS(a_hit, rd);
 
 	if (code < 0) {
 		/* ray is parallel to halfspace and (-1)inside or (-2)outside
@@ -1847,7 +1887,6 @@ struct faceuse *fu_p;
 		RT_LIST_MAGIC_SET(&myhit->l, NMG_RT_MISS_MAGIC);
 		RT_LIST_INSERT(&rd->rd_miss, &myhit->l);
 		NMG_CK_HITMISS(myhit);
-		NMG_CK_HITMISS_LISTS(a_hit, rd);
 
 		return;
 	} else if (code == 0) {
@@ -1863,7 +1902,6 @@ struct faceuse *fu_p;
 		RT_LIST_MAGIC_SET(&myhit->l, NMG_RT_MISS_MAGIC);
 		RT_LIST_INSERT(&rd->rd_miss, &myhit->l);
 		NMG_CK_HITMISS(myhit);
-		NMG_CK_HITMISS_LISTS(a_hit, rd);
 
 		return;
 	}
@@ -1890,7 +1928,6 @@ struct faceuse *fu_p;
 		rt_log("\tdistance along ray to intersection point %g\n", dist);
 	}
 
-	NMG_CK_HITMISS_LISTS(a_hit, rd);
 
 	/* determine if the plane point is in or out of the face, and
 	 * if it is within tolerance of any of the elements of the faceuse.
@@ -1901,17 +1938,15 @@ struct faceuse *fu_p;
 	 */
 	rd->face_subhit = 0;
 	rd->ray_dist_to_plane = dist;
-	NMG_CK_HITMISS_LISTS(a_hit, rd);
 	fpi = nmg_class_pt_fu_except(plane_pt, fu_p, (struct loopuse *)NULL,
 		eu_touch_func, vu_touch_func, (char *)rd, 1, rd->tol);
-	NMG_CK_HITMISS_LISTS(a_hit, rd);
 
 
 	GET_HITMISS(myhit);
 	NMG_INDEX_ASSIGN(rd->hitmiss, fu_p->f_p, myhit);
 	myhit->hit.hit_private = (genptr_t)fu_p->f_p;
-	myhit->inbound_use = myhit->outbound_use = (long *)NULL;
-	NMG_CK_HITMISS_LISTS(a_hit, rd);
+	myhit->inbound_use = myhit->outbound_use = &fu_p->l.magic;
+
 
 
 	switch (fpi->pt_class) {
@@ -1936,7 +1971,6 @@ struct faceuse *fu_p;
 			myhit->hit.hit_private = (genptr_t)fu_p->f_p;
 			RT_LIST_INSERT(&rd->rd_miss, &myhit->l);
 			NMG_CK_HITMISS(myhit);
-			NMG_CK_HITMISS_LISTS(a_hit, rd);
 		} else {
 			/* The plane_pt was NOT within tolerance of a 
 			 * sub-element, but it WAS within the area of the 
@@ -1950,7 +1984,6 @@ struct faceuse *fu_p;
 		RT_LIST_MAGIC_SET(&myhit->l, NMG_RT_MISS_MAGIC);
 		RT_LIST_INSERT(&rd->rd_miss, &myhit->l);
 		NMG_CK_HITMISS(myhit);
-		NMG_CK_HITMISS_LISTS(a_hit, rd);
 
 		break;
 	default	:
@@ -1961,13 +1994,14 @@ struct faceuse *fu_p;
 
 
 
-	NMG_CK_HITMISS_LISTS(a_hit, rd);
 
 	/* intersect the ray with the edges/verticies of the face */
 	for ( RT_LIST_FOR(lu_p, loopuse, &fu_p->lu_hd) )
 		isect_ray_loopuse(rd, lu_p);
 
 	NMG_CK_HITMISS_LISTS(a_hit, rd);
+
+	NMG_FPI_FREE( fpi );
 }
 
 
@@ -2064,6 +2098,7 @@ struct ray_data *rd;
 	}
 
 	NMG_CK_HITMISS_LISTS(a_hit, rd);
+
 
 	if (rt_g.NMG_debug & DEBUG_RT_ISECT) {
 		if (RT_LIST_IS_EMPTY(&rd->rd_hit)) {

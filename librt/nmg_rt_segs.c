@@ -250,7 +250,7 @@ struct rt_tol	*tol;
 	case HMG_HIT_IN_OUT:
 	case HMG_HIT_ON_OUT:
 		/* error */
-		rt_log("%s[line:%d]: State transition error.\n",
+		rt_log("%s[line:%d]: State transition error: exit without entry.\n",
 			__FILE__, __LINE__);
 		ret_val = -2;
 		break;
@@ -852,21 +852,139 @@ struct soltab		*stp;
 		seg_count++;
 	}
 
-
-
-	if (rt_g.NMG_debug & DEBUG_RT_SEGS && RT_LIST_NON_EMPTY(&rd->rd_miss))
-		rt_log("freeing miss point(s)\n");
-
-	while ( RT_LIST_NON_EMPTY(&rd->rd_miss) ) {
-		a_hit = RT_LIST_FIRST(hitmiss, &rd->rd_miss);
-		NMG_CK_HITMISS(a_hit);
-		RT_LIST_DEQUEUE( &a_hit->l );
-		rt_free((char *)a_hit, "freeing miss point");
-	}
-
 	return seg_count;
 }
 
+/*
+ *	If a_tbl and next_tbl have an element in common, return it.
+ *	Otherwise return a NULL pointer.
+ */
+static long *
+common_topo(a_tbl, next_tbl)
+struct nmg_ptbl *a_tbl;
+struct nmg_ptbl *next_tbl;
+{
+	long **p;
+
+	for (p=&a_tbl->buffer[a_tbl->end] ; p >= a_tbl->buffer ; p--) {
+		if (nmg_tbl(next_tbl, TBL_LOC, *p) >= 0)
+			return *p;
+	}
+
+	return (long *)NULL;
+}
+
+/*
+ *	Add an element provided by nmg_visit to a nmg_ptbl struct.
+ */
+static void
+visitor(l, tbl, i)
+long *l;
+genptr_t tbl;
+int i;
+{
+	(void)nmg_tbl((struct nmg_ptbl *)tbl, TBL_INS_UNIQUE, l);
+}
+
+
+static void
+check_hitstate(hd)
+struct hitmiss *hd;
+{
+	struct hitmiss *a_hit;
+	struct hitmiss *next_hit;
+	int curr_state;
+	int ibs;
+	int obs;
+	int bad_state;
+	char *a_list;
+	char *next_list;
+	struct nmg_ptbl *a_tbl = (struct nmg_ptbl *)NULL;
+	struct nmg_ptbl *next_tbl = (struct nmg_ptbl *)NULL;
+	struct nmg_ptbl *tbl_p = (struct nmg_ptbl *)NULL;
+	struct nmg_visit_handlers       htab;
+	long *long_ptr;
+
+	htab = nmg_visit_handlers_null;	/* struct copy */
+	htab.vis_face = htab.vis_edge = htab.vis_vertex = visitor;
+
+	/* find that first "OUTSIDE" point */
+	a_hit = RT_LIST_FIRST(hitmiss, &hd->l);
+
+	while( a_hit != hd && 
+	     ((a_hit->in_out & 0x0f0)>>4) != NMG_RAY_STATE_OUTSIDE) {
+		/* this better be a 2-manifold face */
+		rt_log("%s[%d]: This better be a 2-manifold face\n",
+			__FILE__, __LINE__);
+		a_hit = RT_LIST_PNEXT(hitmiss, a_hit);
+	}
+
+
+	a_tbl = (struct nmg_ptbl *)
+		rt_calloc(1, sizeof(struct nmg_ptbl), "a_tbl");
+	nmg_tbl(a_tbl, TBL_INIT, (long *)NULL);
+
+
+	next_tbl = (struct nmg_ptbl *)
+		rt_calloc(1, sizeof(struct nmg_ptbl), "next_tbl");
+	nmg_tbl(next_tbl, TBL_INIT, (long *)NULL);
+
+	/* check the state transition on the rest of the hit points */
+	curr_state = HMG_OUTBOUND_STATE(a_hit);
+	while ((next_hit = RT_LIST_PNEXT(hitmiss, &a_hit->l)) != hd) {
+		ibs = HMG_INBOUND_STATE(next_hit);
+		obs = HMG_OUTBOUND_STATE(a_hit);
+		if (ibs != obs) {
+			/* if these two hits share some common topological
+			 * element, then we can fix things.
+			 *
+			 * First we build the table of elements associated
+			 * with each hit.
+			 */
+
+			nmg_tbl(a_tbl, TBL_RST, (long *)NULL);
+			
+			nmg_visit((long *)a_hit->outbound_use, &htab, a_tbl);
+
+			nmg_tbl(next_tbl, TBL_RST, (long *)NULL);
+			nmg_visit((long *)next_hit->inbound_use, &htab,
+					next_tbl);
+
+
+			/* If the tables have elements in common,
+			 *   then resolve the conflict by
+			 *	morphing the two hits to match.
+			 *   else
+			 *	This is a real conflict.
+			 */
+			if (long_ptr = common_topo(a_tbl, next_tbl)) {
+				/* morf the two hit points */
+				a_hit->in_out = (a_hit->in_out & 0x0f0) + 
+					NMG_RAY_STATE_ON;
+				a_hit->outbound_use = long_ptr;
+
+				next_hit->in_out = (next_hit->in_out & 0x0f) +
+					(NMG_RAY_STATE_ON << 4);
+				a_hit->inbound_use = long_ptr;
+
+			} else {
+				rt_bomb("Unable to fix state transition\n");
+			}
+		}
+
+		/* save next_tbl as a_tbl for next iteration */
+		tbl_p = a_tbl;
+		a_tbl = next_tbl;
+		next_tbl = tbl_p;
+
+		a_hit = next_hit;
+	}
+
+	nmg_tbl(next_tbl, TBL_FREE, (long *)NULL);
+	nmg_tbl(a_tbl, TBL_FREE, (long *)NULL);
+	(void)rt_free( (char *)a_tbl, "a_tbl");
+	(void)rt_free( (char *)next_tbl, "next_tbl");
+}
 
 
 /*	N M G _ R A Y _ S E G S
@@ -885,6 +1003,9 @@ struct ray_data	*rd;
 	NMG_CK_HITMISS_LISTS(a_hit, rd);
 
 	if (RT_LIST_IS_EMPTY(&rd->rd_hit)) {
+
+		NMG_FREE_HITLIST( &rd->rd_miss );
+
 		if (rt_g.NMG_debug & DEBUG_RT_SEGS) {
 			if (last_miss)	rt_log(".");
 			else		rt_log("ray missed NMG\n");
@@ -903,13 +1024,26 @@ struct ray_data	*rd;
 
 	last_miss = 0;
 
+	check_hitstate(&rd->rd_hit);
+
+	if (rt_g.NMG_debug & DEBUG_RT_SEGS) {
+		rt_log("----------morphed nmg/ray hit list---------\n");
+		for (RT_LIST_FOR(a_hit, hitmiss, &rd->rd_hit))
+			nmg_rt_print_hitmiss(a_hit);
+	}
+
 	seg_count = nmg_bsegs(rd, rd->ap, rd->seghead, rd->stp);
 
-	if (!(rt_g.NMG_debug & DEBUG_RT_SEGS))
-		return(seg_count);
 
-	/* print debugging data before returning */
-	print_seg_list(rd->seghead, seg_count, "after");
+	NMG_FREE_HITLIST( &rd->rd_hit );
+
+	NMG_FREE_HITLIST( &rd->rd_miss );
+
+
+	if (rt_g.NMG_debug & DEBUG_RT_SEGS) {
+		/* print debugging data before returning */
+		print_seg_list(rd->seghead, seg_count, "after");
+	}
 
 	return(seg_count);
 }
