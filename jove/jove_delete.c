@@ -1,25 +1,28 @@
 /*
- *			J O V E _ D E L E T E . C 
+ *			J O V E _ D E L E T E . C
  *
  * $Revision$
  *
  * $Log$
+ * Revision 11.1  95/01/04  10:35:10  mike
+ * Release_4.4
+ *
  * Revision 10.2  93/10/26  03:41:22  mike
  * ANSI C
- * 
+ *
  * Revision 10.1  91/10/12  06:53:55  mike
  * Release_4.0
- * 
+ *
  * Revision 2.1  91/08/30  17:54:30  mike
  * Changed #include directives to distinguish between local and system header
  * files.
- * 
+ *
  * Revision 2.0  84/12/26  16:45:23  dpk
  * System as distributed to Berkeley 26 Dec 84
- * 
+ *
  * Revision 1.2  83/12/16  00:07:27  dpk
  * Added distinctive RCS header
- * 
+ *
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$";
@@ -29,8 +32,8 @@ static char RCSid[] = "@(#)$Header$";
    Jonathan Payne at Lincoln-Sudbury Regional High School 5-25-83
 
    jove_delete.c
-  
-   Routines to perform deletion.  The word delete and line delete 
+
+   Routines to perform deletion.  The word delete and line delete
    use the same routine as "delete-to-killbuffer".  Character delete
    uses some of the same stuff, but doesn't save the text in the
    kill-buffer.  */
@@ -239,7 +242,7 @@ del_char(forward)
 /* This kills a region and puts it on the kill-ring.  If the last command
    was one of the kill commands, the region is appended (prepended if
    backwards) to the last entry. */
-   
+
 
 reg_kill(line1, char1, line2, char2, backwards)
 LINE	*line1, *line2;

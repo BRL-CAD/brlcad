@@ -1,28 +1,31 @@
 /*
- *			J O V E _ C . C 
+ *			J O V E _ C . C
  *
  * $Revision$
  *
  * $Log$
+ * Revision 11.1  95/01/04  10:35:09  mike
+ * Release_4.4
+ *
  * Revision 10.1  91/10/12  06:53:55  mike
  * Release_4.0
- * 
+ *
  * Revision 2.3  91/08/30  18:59:44  mike
  * Modifications for clean compilation on the XMP
- * 
+ *
  * Revision 2.2  91/08/30  18:46:02  mike
  * Changed from BSD index/rindex nomenclature to SYSV strchr/strrchr.
- * 
+ *
  * Revision 2.1  91/08/30  17:54:29  mike
  * Changed #include directives to distinguish between local and system header
  * files.
- * 
+ *
  * Revision 2.0  84/12/26  16:45:11  dpk
  * System as distributed to Berkeley 26 Dec 84
- * 
+ *
  * Revision 1.2  83/12/16  00:07:20  dpk
  * Added distinctive RCS header
- * 
+ *
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$";

@@ -1,38 +1,41 @@
 /*
- *			J O V E _ D I S P . C 
+ *			J O V E _ D I S P . C
  *
  * $Revision$
  *
  * $Log$
+ * Revision 11.1  95/01/04  10:35:11  mike
+ * Release_4.4
+ *
  * Revision 10.4  93/10/26  06:32:47  mike
  * Changed printf() to jprintf() so that all modules could safely
  * use stdio.h
- * 
+ *
  * Revision 10.3  93/10/26  03:43:10  mike
  * ANSI C
- * 
+ *
  * Revision 10.2  93/08/11  20:25:34  mike
  * Removed 132 column restriction on output displays.
- * 
+ *
  * Revision 10.1  91/10/12  06:53:56  mike
  * Release_4.0
- * 
+ *
  * Revision 2.3  91/08/30  18:10:44  mike
  * Made explicit that termcap.h to be used is the local version
- * 
+ *
  * Revision 2.2  91/08/30  17:54:31  mike
  * Changed #include directives to distinguish between local and system header
  * files.
- * 
+ *
  * Revision 2.1  85/01/17  23:57:57  dpk
  * Added minimal blit support, more to come...
- * 
+ *
  * Revision 2.0  84/12/26  16:45:33  dpk
  * System as distributed to Berkeley 26 Dec 84
- * 
+ *
  * Revision 1.2  83/12/16  00:07:36  dpk
  * Added distinctive RCS header
- * 
+ *
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$";
@@ -338,7 +341,7 @@ register WINDOW	*w;
 				*np = clean_plate;
 		}
 	}
-		
+
 	if (((np->Line = (LINE *) w->w_bufp) != op->Line) || UpdModLine) {
 		if (IDstart < 0)
 			IDstart = i;
@@ -513,13 +516,13 @@ char	*outbuf;
 			op = &outbuf[CO - 1];
 			*op++ = '!';
 			break;
-		}			
+		}
 	}
 	*op = 0;
 }
 
 /* Update line linenum in window w.  Only set oimage to nimage if
- * the swrite or cl_eol works, that is nothing is interupted by 
+ * the swrite or cl_eol works, that is nothing is interrupted by
  * characters typed
  */
 
