@@ -203,28 +203,28 @@ fi
 # Try very hard to avoid putting stuff here, because this technique
 # is not available for use in "Cakefile.defs", so special handling
 # will be required.
-case ${MACHINE} in
-
-4d)
-	if test -d /usr/NeWS
-	then
-		# This is definitely an SGI sw Release 3.? system
-		if test ! -x /tmp/gt
-		then
-			echo 'main(){char b[50];gversion(b);printf("%2.2s\\n",b+4);exit(0);}'>/tmp/gt.c
-			cc /tmp/gt.c -lgl -o /tmp/gt
-		fi
-		case `/tmp/gt` in
-		GT)	MACHINE=4gt;;
-		PI)	MACHINE=4gt;;	# Personal Iris
-		*)	MACHINE=4d;;
-		esac
-	else
-		# This is an SGI sw Release 2 system
-		MACHINE=4d2
-	fi;;
-
-esac
+#case ${MACHINE} in
+#
+#4d)
+#	if test -d /usr/NeWS
+#	then
+#		# This is definitely an SGI sw Release 3.? system
+#		if test ! -x /tmp/gt
+#		then
+#			echo 'main(){char b[50];gversion(b);printf("%2.2s\\n",b+4);exit(0);}'>/tmp/gt.c
+#			cc /tmp/gt.c -lgl -o /tmp/gt
+#		fi
+#		case `/tmp/gt` in
+#		GT)	MACHINE=4gt;;
+#		PI)	MACHINE=4p;;	# Personal Iris
+#		*)	MACHINE=4d;;
+#		esac
+#	else
+#		# This is an SGI sw Release 2 system
+#		MACHINE=4d2		# Unsupported
+#	fi;;
+#
+#esac
 
 # Now, look at first arg to determine output behavior
 case x$1 in
