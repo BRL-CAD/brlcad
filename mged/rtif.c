@@ -272,7 +272,7 @@ static char	*rt_cmd_vec[MAXARGS];
 static int	rt_cmd_vec_len;
 static char	rt_cmd_storage[MAXARGS*9];
 
-void
+static void
 setup_rt( vp, printcmd )
 register char	**vp;
 int printcmd;
@@ -315,6 +315,67 @@ int mask;
 
   /*XXX For now just blather to stderr */
   bu_log("%s", line);
+}
+
+static void
+rt_set_eye_model(eye_model)
+vect_t eye_model;
+{
+  if((zclip_ptr != NULL && *zclip_ptr) || mged_variables->mv_perspective_mode){
+    vect_t temp;
+
+    VSET( temp, 0.0, 0.0, 1.0 );
+    MAT4X3PNT( eye_model, view_state->vs_view2model, temp );
+  }else{ /* not doing zclipping, so back out of geometry */
+    register struct solid *sp;
+    register int i;
+    double  t;
+    double  t_in;
+    vect_t  direction;
+    vect_t  extremum[2];
+    vect_t  minus, plus;    /* vers of this solid's bounding box */
+    vect_t  unit_H, unit_V;
+
+    VSET(eye_model, -view_state->vs_toViewcenter[MDX],
+	 -view_state->vs_toViewcenter[MDY], -view_state->vs_toViewcenter[MDZ]);
+
+    for (i = 0; i < 3; ++i){
+      extremum[0][i] = INFINITY;
+      extremum[1][i] = -INFINITY;
+    }
+    FOR_ALL_SOLIDS (sp, &HeadSolid.l){
+      minus[X] = sp->s_center[X] - sp->s_size;
+      minus[Y] = sp->s_center[Y] - sp->s_size;
+      minus[Z] = sp->s_center[Z] - sp->s_size;
+      VMIN( extremum[0], minus );
+      plus[X] = sp->s_center[X] + sp->s_size;
+      plus[Y] = sp->s_center[Y] + sp->s_size;
+      plus[Z] = sp->s_center[Z] + sp->s_size;
+      VMAX( extremum[1], plus );
+    }
+    VMOVEN(direction, view_state->vs_Viewrot + 8, 3);
+    VSCALE(direction, direction, -1.0);
+    for(i = 0; i < 3; ++i)
+      if (NEAR_ZERO(direction[i], 1e-10))
+	direction[i] = 0.0;
+    if ((eye_model[X] >= extremum[0][X]) &&
+	(eye_model[X] <= extremum[1][X]) &&
+	(eye_model[Y] >= extremum[0][Y]) &&
+	(eye_model[Y] <= extremum[1][Y]) &&
+	(eye_model[Z] >= extremum[0][Z]) &&
+	(eye_model[Z] <= extremum[1][Z])){
+      t_in = -INFINITY;
+      for(i = 0; i < 6; ++i){
+	if (direction[i%3] == 0)
+	  continue;
+	t = (extremum[i/3][i%3] - eye_model[i%3]) /
+	  direction[i%3];
+	if ((t < 0) && (t > t_in))
+	  t_in = t;
+      }
+      VJOIN1(eye_model, eye_model, t_in, direction);
+    }
+  }
 }
 
 /*
@@ -364,59 +425,7 @@ run_rt()
 
 	(void)close( pipe_err[1] );
 
-	if((zclip_ptr != NULL && *zclip_ptr) || mged_variables->mv_perspective_mode){
-	  vect_t temp;
-
-	  VSET( temp, 0.0, 0.0, 1.0 );
-	  MAT4X3PNT( eye_model, view_state->vs_view2model, temp );
-	}else{ /* not doing zclipping, so back out of geometry */
-	  double  t;
-	  double  t_in;
-	  vect_t  direction;
-	  vect_t  extremum[2];
-	  vect_t  minus, plus;    /* vers of this solid's bounding box */
-	  vect_t  unit_H, unit_V;
-
-	  VSET(eye_model, -view_state->vs_toViewcenter[MDX],
-	        -view_state->vs_toViewcenter[MDY], -view_state->vs_toViewcenter[MDZ]);
-
-	  for (i = 0; i < 3; ++i){
-	    extremum[0][i] = INFINITY;
-	    extremum[1][i] = -INFINITY;
-	  }
-	  FOR_ALL_SOLIDS (sp, &HeadSolid.l){
-	    minus[X] = sp->s_center[X] - sp->s_size;
-	    minus[Y] = sp->s_center[Y] - sp->s_size;
-	    minus[Z] = sp->s_center[Z] - sp->s_size;
-	    VMIN( extremum[0], minus );
-	    plus[X] = sp->s_center[X] + sp->s_size;
-	    plus[Y] = sp->s_center[Y] + sp->s_size;
-	    plus[Z] = sp->s_center[Z] + sp->s_size;
-	    VMAX( extremum[1], plus );
-	  }
-	  VMOVEN(direction, view_state->vs_Viewrot + 8, 3);
-	  VSCALE(direction, direction, -1.0);
-	  for(i = 0; i < 3; ++i)
-	    if (NEAR_ZERO(direction[i], 1e-10))
-	      direction[i] = 0.0;
-	  if ((eye_model[X] >= extremum[0][X]) &&
-	      (eye_model[X] <= extremum[1][X]) &&
-	      (eye_model[Y] >= extremum[0][Y]) &&
-	      (eye_model[Y] <= extremum[1][Y]) &&
-	      (eye_model[Z] >= extremum[0][Z]) &&
-	      (eye_model[Z] <= extremum[1][Z])){
-	    t_in = -INFINITY;
-	    for(i = 0; i < 6; ++i){
-	      if (direction[i%3] == 0)
-		continue;
-	      t = (extremum[i/3][i%3] - eye_model[i%3]) /
-		direction[i%3];
-	      if ((t < 0) && (t > t_in))
-		t_in = t;
-	    }
-	    VJOIN1(eye_model, eye_model, t_in, direction);
-	  }
-	}
+	rt_set_eye_model(eye_model);
 	rt_write(fp_in, eye_model);
 	(void)fclose( fp_in );
 
@@ -811,14 +820,14 @@ char	**argv;
 	}
 	(void)fprintf(fp,"\\\n 2>> %s.log\\\n", base);
 	(void)fprintf(fp," <<EOF\n");
-	{
-		vect_t temp;
-		vect_t eye_model;
 
-		VSET( temp, 0.0, 0.0, 1.0 );
-		MAT4X3PNT( eye_model, view_state->vs_view2model, temp );
-		rt_write(fp, eye_model);
+	{
+	  vect_t eye_model;
+
+	  rt_set_eye_model(eye_model);
+	  rt_write(fp, eye_model);
 	}
+
 	(void)fprintf(fp,"\nEOF\n");
 	(void)fclose( fp );
 	
