@@ -99,7 +99,7 @@ char **argv;
 	char idbuf[132];		/* First ID record info */
 	void	application_init();
 
-	port_setlinebuf( stderr );
+	bu_setlinebuf( stderr );
 
 	/* Identify the versions of the libraries we are using. */
 	(void)fprintf(stderr, "%s%s%s\n",
@@ -174,13 +174,25 @@ char **argv;
 	 *  Do not use rt_log() or rt_malloc() before this point!
 	 */
 
+	/* Compat */
+	if( rt_g.debug || rdebug )  bu_debug |= BU_DEBUG_COREDUMP;
+	if( rt_g.debug & DEBUG_MEM_FULL )  bu_debug |= BU_DEBUG_MEM_CHECK;
+	if( rt_g.debug & DEBUG_MEM )  bu_debug |= BU_DEBUG_MEM_LOG;
+	if( rt_g.debug & DEBUG_PARALLEL )  bu_debug |= BU_DEBUG_PARALLEL;
+	if( rt_g.debug & DEBUG_MATH )  bu_debug |= BU_DEBUG_MATH;
+
+	if( bu_debug )  {
+		bu_printb( "libbu bu_debug", bu_debug, BU_DEBUG_FORMAT );
+		bu_log("\n");
+	}
+
 	if( rt_g.debug )  {
-		rt_printb( "librt rt_g.debug", rt_g.debug, DEBUG_FORMAT );
-		rt_log("\n");
+		bu_printb( "librt rt_g.debug", rt_g.debug, DEBUG_FORMAT );
+		bu_log("\n");
 	}
 	if( rdebug )  {
-		rt_printb( "rt rdebug", rdebug, RDEBUG_FORMAT );
-		rt_log("\n");
+		bu_printb( "rt rdebug", rdebug, RDEBUG_FORMAT );
+		bu_log("\n");
 	}
 
 	title_file = argv[optind];
@@ -189,17 +201,17 @@ char **argv;
 	objtab = &(argv[optind+1]);
 
 	if( nobjs <= 0 )  {
-		fprintf(stderr,"rt: no objects specified\n");
+		bu_log("rt: no objects specified\n");
 		exit(1);
 	}
 
 	/* Build directory of GED database */
 	if( (rtip=rt_dirbuild(title_file, idbuf, sizeof(idbuf))) == RTI_NULL ) {
-		fprintf(stderr,"rt:  rt_dirbuild(%s) failure\n", title_file);
+		bu_log("rt:  rt_dirbuild(%s) failure\n", title_file);
 		exit(2);
 	}
 	ap.a_rt_i = rtip;
-	fprintf(stderr, "db title:  %s\n", idbuf);
+	bu_log("db title:  %s\n", idbuf);
 
 	/* Copy values from command line options into rtip */
 	rtip->useair = use_air;
