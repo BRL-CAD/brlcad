@@ -71,6 +71,8 @@ struct shadework	*swp;
 
 	RT_AP_CHECK(ap);
 
+	if( swp->sw_xmitonly )  return 1;
+
 	reflect = swp->sw_reflect;
 	transmit = swp->sw_transmit;
 	if( reflect <= 0 && transmit <= 0 )
