@@ -41,7 +41,7 @@ static char rcs_ident[] = "$Header$";
 
 #define MALLOC_ERR {fprintf(stderr, "avg4: ran out of heap space\n");exit(-2);}
 
-static bit_count[16] = {0, 63, 63, 127, 63, 127, 127,
+static int bit_count[16] = {0, 63, 63, 127, 63, 127, 127,
     192, 63, 127, 127, 192, 127, 192, 192, 255};
 
 int

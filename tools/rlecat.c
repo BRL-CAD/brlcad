@@ -18,6 +18,8 @@
 #include "rle_code.h"
 #include "rle_raw.h"
 
+void	rep_file();
+
 /*
  * rlecat
  *
@@ -241,6 +243,7 @@ char **argv;
  * 	    Copy nbytes bytes from the input to the output.
  *  	Rewind the input.
  */
+void
 rep_file( in_hdr, out_hdr, rep_cnt)
 rle_hdr *in_hdr, *out_hdr;
 int rep_cnt;

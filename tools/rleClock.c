@@ -42,6 +42,16 @@
 #include "./font.h"
 
 void	lineDots();
+void	ifImageSet();
+void	drawHand();
+void	rasterAddBits();
+void	polarLine();
+void	rasterWrite();
+void	procargs();
+void	usageExit();
+void	drawText();
+void	areaFlood();
+void	stackPush();
 
 /*
  * Program parameters defaults
@@ -266,6 +276,7 @@ char	*argv[];
 
     rasterWrite(stdout);
 }
+void
 ifImageSet(i, j, value, color)
 int i, j, value;
 color_t *color;
@@ -277,6 +288,7 @@ color_t *color;
     }
 }
 
+void
 drawHand(place, scale, radius, mask, edge)
 float place;
 float scale;
@@ -298,6 +310,7 @@ int mask, edge;
     rasterAddBits(edge, edge, mask);
 }
 
+void
 rasterAddBits(mask, match, value)
 int mask, match, value;
 {
@@ -311,6 +324,7 @@ int mask, match, value;
     }
 }
 
+void
 polarLine(r0, a0, r1, a1, arg1, arg2)
 float r0, a0, r1, a1;
 int arg1, arg2;
@@ -406,6 +420,7 @@ int height, width;
  * Dump the entire raster to a Utah RLE format file.
  */
 
+void
 rasterWrite(fd)
 FILE *fd;
 {
@@ -552,6 +567,7 @@ struct {
     { FALSE, NULL }
 };
 
+void
 procargs(argc, argv)
 int argc;
 char *argv[];
@@ -620,6 +636,7 @@ char *argVar;
     return FALSE;
 }
 
+void
 usageExit(pgm)
 char *pgm;
 {
@@ -784,6 +801,7 @@ char *str;
 
 #define CHARPAD 25
 
+void
 drawText()
 {
     char           *string;
@@ -866,6 +884,7 @@ struct {
 int XMove[4] = {0, 1, 0, -1};
 int YMove[4] = {1, 0, -1, 0};
 
+void
 areaFlood(firstX, firstY, mask, match, value)
 int firstX, firstY;
 int mask, match, value;
@@ -898,6 +917,7 @@ int mask, match, value;
 	}
     }
 }
+void
 stackPush(x, y, dir)
 int x, y, dir;
 {

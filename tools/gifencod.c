@@ -33,12 +33,12 @@ static long CountDown;
 static int Pass = 0;
 static int Interlace;
 
-
+void	Putword();
 
 /*
  * Bump the 'curx' and 'cury' to point to the next pixel
  */
-static
+static void
 BumpPixel()
 {
 	/*
@@ -113,7 +113,7 @@ ifunptr getpixel;
 }
 
 /* public */
-
+void
 GIFEncode( FName, GWidth, GHeight, GInterlace, Background, 
 	   BitsPerPixel, Red, Green, Blue, GetPixel )
 	 
@@ -274,6 +274,7 @@ ifunptr GetPixel;
 /*
  * Write out a word to the GIF file
  */
+void
 Putword( w, fp )
 int w;
 FILE *fp;

@@ -224,7 +224,7 @@ puthexpix(outfile,p)
 FILE *outfile;
 unsigned char p;
 {
-    static npixo = 0;
+    static int	npixo = 0;
     static char tohex[] = "0123456789ABCDEF";
 
     putc(tohex[(p>>4)&0xF],outfile);

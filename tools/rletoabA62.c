@@ -79,6 +79,11 @@ typedef struct {
     char            y, i, q;
 } yiq_t;
 
+void	filterY();
+void	filterIQ();
+void	dump1();
+void	dump2();
+
 /*
  * Main entry...
  */
@@ -284,7 +289,7 @@ char **argv;
  * The multiplier arrays m0, m1, and m2 exist to reduce the number of floating
  * point multiplications and to allow the filtering to occur in place.
  */
- 
+void 
 filterY(yVal, c0, c1, c2)
 float *yVal, c0, c1, c2;
 {
@@ -322,7 +327,7 @@ float *yVal, c0, c1, c2;
  * This is different from the manual in than the filtering is done on adjacent
  * pixels, rather than every other pixel.  This may be a problem...
  */
- 
+void 
 filterIQ(iqVal, c0, c1, c2, start, stride)
 float *iqVal, c0, c1, c2;
 int start, stride;
@@ -357,6 +362,7 @@ int start, stride;
  */
 
 #define OUT(y, OP, iq) putc((char) (raster[i][j + 0].y OP raster[i][j + 0].iq + 60), stdout);
+void
 dump1(raster, start)
 register yiq_t **raster;
 int start;
@@ -387,7 +393,7 @@ int start;
  *
  * This routine also adds 60 to put the data in the 60 .. 200 range.
  */
-
+void
 dump2(raster, start)
 register yiq_t **raster;
 int start;
