@@ -60,19 +60,26 @@ extern int	opterr;
  */
 extern int	close();
 extern int	dup();
-extern int	execl();
 #ifndef CRAY1		/* Horrid XMP UNICOS 4.0.7 /bin/cc bug if you define this */
 extern void	exit();
 #endif
+
+#if !defined(__convexc__)
+extern int	execl();
 extern int	fork();
 extern int	getuid();
+
 #ifdef BSD
 extern int	lseek();
 #else
 extern long	lseek();
 #endif
-extern int	nice();
+
 extern int	open();
+
+#endif /* !defined(__convexc__) */
+
+extern int	nice();
 extern int	pipe();
 extern int	read();
 extern char	*sbrk();
