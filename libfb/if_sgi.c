@@ -89,12 +89,13 @@ union gepipe {
 #define GEP_END(p)	((union gepipe *)(((char *)p)-0x1000))	/* 68000 efficient 0xFd4000 */
 
 #define CMOV2S(_p,_x,_y) { \
-		(_p)->l = 0x0008001A; \
-		(_p)->s = 0x0912; \
+		PASSCMD( _p, 0, FBCcharposnabs ); \
+		(_p)->s = GEpoint | GEPA_2S; \
 		(_p)->s = (_x); \
 		(_p)->s = (_y); \
-		GEP_END(hole)->s = (0xFF<<8)|8; \
 		}
+
+#define PASSCMD(p, n, cmd)	{(p)->l = ((GEpassthru|((n)<<8))<<16)|(cmd); }
 
 static Cursor	cursor =
 	{
@@ -345,15 +346,18 @@ register FBIO	*ifp;
 			for( i=xwidth; i > 0; i--)  {
 				switch( SGI(ifp)->si_mode ) {
 				case MODE_RGB:
-					RGBcolor( (short)(ip[RED]),
-						(short)(ip[GRN]),
-						(short)(ip[BLU]) );
+					PASSCMD(hole,3,FBCrgbcolor);
+					hole->s = (ip[RED]);
+					hole->s = (ip[GRN]);
+					hole->s = (ip[BLU]);
 					break;
 				case MODE_FIT:
-					color(get_Color_Index( ifp, ip ));
+					PASSCMD(hole,1,FBCcolor);
+					hole->s = get_Color_Index( ifp, ip );
 					break;
 				case MODE_APPROX:
-					color(COLOR_APPROX(ip));
+					PASSCMD(hole,1,FBCcolor);
+					hole->s = COLOR_APPROX(ip);
 					break;
 				}
 				r = l + SGI(ifp)->si_xzoom;
@@ -378,10 +382,8 @@ register FBIO	*ifp;
 		}
 
 		/* Non-zoomed case */
-		hole->l = 0x0008001A;	/* passthru, */
-		hole->s = 0x0912;		/* cmov2s */
-		hole->s = xscroff + xmin;
-		hole->s = yscroff + y;
+		CMOV2S( hole, xscroff + xmin, yscroff + y );
+
 		switch( SGI(ifp)->si_mode )  {
 		case MODE_RGB:
 			for( i=xwidth; i > 0; )  {
@@ -391,8 +393,7 @@ register FBIO	*ifp;
 					chunk = i;
 				else
 					chunk = 127/3;
-				hole->s = ((chunk*3)<<8) | GEpassthru;
-				hole->s = FBCdrawpixels;
+				PASSCMD(hole, chunk*3, FBCdrawpixels);
 				i -= chunk;
 				for( ; chunk>0; chunk--)  {
 					hole->us = *ip++;
@@ -409,8 +410,7 @@ register FBIO	*ifp;
 					chunk = i;
 				else
 					chunk = 127;
-				hole->s = (chunk<<8) | GEpassthru;
-				hole->s = FBCdrawpixels;
+				PASSCMD(hole, chunk, FBCdrawpixels);
 				i -= chunk;
 				for( ; chunk > 0; chunk-- )  {
 					hole->s = get_Color_Index( ifp, ip );
@@ -425,8 +425,7 @@ register FBIO	*ifp;
 					chunk = i;
 				else
 					chunk = 127;
-				hole->s = (chunk<<8) | GEpassthru;
-				hole->s = FBCdrawpixels;
+				PASSCMD(hole, chunk, FBCdrawpixels);
 				i -= chunk;
 				for( ; chunk > 0; chunk--, ip += sizeof(RGBpixel) )  {
 					hole->s = COLOR_APPROX(ip);
@@ -745,15 +744,18 @@ int	count;
 
 				switch( SGI(ifp)->si_mode )  {
 				case MODE_RGB:
-					RGBcolor( (short)(cp[RED]),
-						(short)(cp[GRN]),
-						(short)(cp[BLU]) );
+					PASSCMD(hole,3,FBCrgbcolor);
+					hole->s = (cp[RED]);
+					hole->s = (cp[GRN]);
+					hole->s = (cp[BLU]);
 					break;
 				case MODE_FIT:
-					color(get_Color_Index( ifp, cp ));
+					PASSCMD(hole,1,FBCcolor);
+					hole->s = get_Color_Index( ifp, cp );
 					break;
 				case MODE_APPROX:
-					color(COLOR_APPROX(cp));
+					PASSCMD(hole,1,FBCcolor);
+					hole->s = COLOR_APPROX(cp);
 					break;
 				}
 				r = l + SGI(ifp)->si_xzoom;
@@ -782,10 +784,8 @@ int	count;
 		}
 
 		/* Non-zoomed case */
-		hole->l = 0x0008001A;		/* passthru, */
-		hole->s = 0x0912;		/* cmov2s */
-		hole->s = xpos;
-		hole->s = ypos;
+		CMOV2S( hole, xpos, ypos );
+
 		switch( SGI(ifp)->si_mode )  {
 		case MODE_RGB:
 			if ( SGI(ifp)->si_cmap_flag == FALSE )  {
@@ -796,8 +796,7 @@ int	count;
 						chunk = i;
 					else
 						chunk = 127/3;
-					hole->s = ((chunk*3)<<8) | GEpassthru;
-					hole->s = FBCdrawpixels;
+					PASSCMD(hole, chunk*3, FBCdrawpixels);
 					i -= chunk;
 					for( ; chunk>0; chunk--)  {
 						hole->us = (*op++ = *cp++);
@@ -813,8 +812,7 @@ int	count;
 						chunk = i;
 					else
 						chunk = 127/3;
-					hole->s = ((chunk*3)<<8) | GEpassthru;
-					hole->s = FBCdrawpixels;
+					PASSCMD(hole, chunk*3, FBCdrawpixels);
 					i -= chunk;
 					for( ; chunk>0; chunk-- )  {
 						hole->s = _sgi_cmap.cm_red[
@@ -835,8 +833,7 @@ int	count;
 						chunk = i;
 					else
 						chunk = 127;
-					hole->s = (chunk<<8) | GEpassthru;
-					hole->s = FBCdrawpixels;
+					PASSCMD(hole, chunk, FBCdrawpixels);
 					i -= chunk;
 					for( ; chunk > 0; chunk--, pixelp++ )  {
 						hole->s = get_Color_Index( ifp, pixelp );
@@ -852,8 +849,7 @@ int	count;
 						chunk = i;
 					else
 						chunk = 127;
-					hole->s = (chunk<<8) | GEpassthru;
-					hole->s = FBCdrawpixels;
+					PASSCMD(hole, chunk, FBCdrawpixels);
 					i -= chunk;
 					for( ; chunk > 0; chunk--, pixelp++ )  {
 						static RGBpixel new;
@@ -875,8 +871,7 @@ int	count;
 						chunk = i;
 					else
 						chunk = 127;
-					hole->s = (chunk<<8) | GEpassthru;
-					hole->s = FBCdrawpixels;
+					PASSCMD(hole, chunk, FBCdrawpixels);
 					i -= chunk;
 					for( ; chunk > 0; chunk--, pixelp++ )  {
 						hole->s = COLOR_APPROX(*pixelp);
@@ -892,8 +887,7 @@ int	count;
 						chunk = i;
 					else
 						chunk = 127;
-					hole->s = (chunk<<8) | GEpassthru;
-					hole->s = FBCdrawpixels;
+					PASSCMD(hole, chunk, FBCdrawpixels);
 					i -= chunk;
 					for( ; chunk > 0; chunk--, pixelp++ )  {
 						static RGBpixel new;
