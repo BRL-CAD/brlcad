@@ -477,11 +477,12 @@ set -S2 "/bin/sh"
 /*		-fullwarn is pretty verbose */
 #		define	OPTIMIZER	-g -use_readonly_const
 #	endif
+/*	-KPIC is the default, don't have to specify it */
 #	ifdef M4I64_USE_64_BIT
-#		define	GFLAG		-64 -mips4 -KPIC
+#		define	GFLAG		-64 -mips4
 #		define	XLIBDIR /usr/lib64
 #	else
-#		define	GFLAG		-n32 -mips4 -KPIC
+#		define	GFLAG		-n32 -mips4
 #		define	XLIBDIR /usr/lib32
 #	endif
 #	define  XINCDIR /usr/include/X11
@@ -504,7 +505,8 @@ set -S2 "/bin/sh"
 /*		Static linked executables */
 #		define	RANLIB	ranlib5.sh
 #		define	STANDARD_LIBES	-lm -lmalloc -lc
-#		define	LD_OPTS		GFLAG -Wl,-multigot -Wl,-woff,84 -Wl,-woff,85 -Wl,-woff,134
+/*		-nltgot,128 is undocumented loader feature */
+#		define	LD_OPTS		GFLAG -Wl,-multigot -Wl,-nltgot,128 -Wl,-woff,84 -Wl,-woff,85 -Wl,-woff,134
 #	endif
 #	define  CC_OPTS		GFLAG -xansi -DIRIX=6 -DIRIX64=64
 #	define	LGT_CONFIG	GFLAG
