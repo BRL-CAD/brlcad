@@ -43,8 +43,11 @@ proc do_fakestar { shade_var id } {
 		{summary "The Fake Star texture maps an imaginary star field onto the object."}
 	}
 
-	grid $shader_params($id,window).fr.fakestar_m -row 0 -column 1 -columnspan 2
-	grid $shader_params($id,window).fr -columnspan 4
+	grid $shader_params($id,window).fr.fakestar_m -sticky ew
+	grid $shader_params($id,window).fr -ipadx 3 -pady 3
+
+	grid columnconfigure $shader_params($id,window).fr.fakestar_m 0 -weight 1
+	grid columnconfigure $shader_params($id,window).fr 0 -weight 1
 
 	return $shader_params($id,window).fr
 }
@@ -77,8 +80,11 @@ proc do_testmap { shade_var id } {
 			'uv' == (0,0) to (255 0 255) at 'uv' == (1,1)."}
 	}
 
-	grid $shader_params($id,window).fr.tst_m -row 0 -column 1 -columnspan 2
-	grid $shader_params($id,window).fr -columnspan 4
+	grid $shader_params($id,window).fr.tst_m -sticky ew
+	grid $shader_params($id,window).fr -ipadx 3 -ipady 3
+
+	grid columnconfigure $shader_params($id,window).fr.tst_m 0 -weight 1
+	grid columnconfigure $shader_params($id,window).fr 0 -weight 1
 
 	return $shader_params($id,window).fr
 }
@@ -132,12 +138,17 @@ proc do_checker { shade_var id } {
 
 	set_checker_values $shader_str $id
 
-	grid $shader_params($id,window).fr.color1 -row 0 -column 1 -sticky e
-	grid $shader_params($id,window).fr.color1_e -row 0 -column 2 -sticky w
-	grid $shader_params($id,window).fr.color2 -row 1 -column 1 -sticky e
-	grid $shader_params($id,window).fr.color2_e -row 1 -column 2 -sticky w
+	grid $shader_params($id,window).fr.color1 -row 0 -column 0 -sticky e
+	grid $shader_params($id,window).fr.color1_e -row 0 -column 1 -sticky w
+	grid $shader_params($id,window).fr.color2 -row 1 -column 0 -sticky e
+	grid $shader_params($id,window).fr.color2_e -row 1 -column 1 -sticky w
 
-	grid $shader_params($id,window).fr -columnspan 4
+	grid columnconfigure $shader_params($id,window).fr.color1_e 0 -weight 1
+	grid columnconfigure $shader_params($id,window).fr.color2_e 0 -weight 1
+
+	grid $shader_params($id,window).fr -sticky ew -ipadx 3 -ipady 3
+	grid columnconfigure $shader_params($id,window).fr 0 -weight 1
+	grid columnconfigure $shader_params($id,window).fr 1 -weight 1
 
 	return $shader_params($id,window).fr
 }
@@ -415,7 +426,7 @@ proc do_phong { shade_var id } {
 	grid $shader_params($id,window).fr.ext -row 4 -column 1 -sticky e
 	grid $shader_params($id,window).fr.ext_e -row 4 -column 2 -sticky w
 	
-	grid $shader_params($id,window).fr -columnspan 4
+	grid $shader_params($id,window).fr -sticky ew -ipadx 3 -ipady 3
 
 	return $shader_params($id,window).fr
 }
@@ -848,7 +859,7 @@ proc do_texture { shade_var id } {
 	grid $shader_params($id,window).fr.valid_e -row 2 -column 2 -sticky e
 	grid $shader_params($id,window).fr.valid -row 2 -column 3 -sticky w
 
-	grid $shader_params($id,window).fr -columnspan 4
+	grid $shader_params($id,window).fr -columnspan 4 -sticky ew -ipadx 3 -ipady 3
 
 	return $shader_params($id,window).fr
 }
@@ -918,11 +929,11 @@ proc stack_add { shader shade_var id } {
 	set shader_params($id,stk_$index,window) $shader_params($id,window).fr.stk_$index
 
 	label $shader_params($id,window).fr.stk_$index.lab -text $shader
-	grid $shader_params($id,window).fr.stk_$index.lab -columnspan 4
+	grid $shader_params($id,window).fr.stk_$index.lab -columnspan 4 -sticky ew
 	set shader_params($id,stk_$index,shader_name) $shader
 
 	set index_lab [expr $index + 1]
-	$shader_params($id,window).fr.del.m add command -label "#$index_lab $shader"\
+	$shader_params($id,window).fr.del.m add command -label "$shader"\
 		-command "stack_delete $index $id"
 
 	switch $shader {
@@ -963,6 +974,7 @@ proc stack_add { shader shade_var id } {
 	}
 
 	grid $shader_params($id,window).fr.stk_$index -columnspan 2 -sticky ew
+	grid columnconfigure $shader_params($id,window).fr.stk_$index 0 -minsize 400
 }
 
 proc set_stack_values { shade_str id } {
@@ -1057,6 +1069,8 @@ proc do_stack { shade_var id } {
 	$shader_params($id,window).fr.add.m add command \
 		-label cloud -command "stack_add cloud $shade_var $id"
 	$shader_params($id,window).fr.add.m add command \
+		-label checker -command "stack_add checker $shade_var $id"
+	$shader_params($id,window).fr.add.m add command \
 		-label testmap -command "stack_add testmap $shade_var $id"
 
 	menubutton $shader_params($id,window).fr.del\
@@ -1071,7 +1085,7 @@ proc do_stack { shade_var id } {
 
 	grid $shader_params($id,window).fr.add $shader_params($id,window).fr.del
 
-	grid $shader_params($id,window).fr -ipadx 3 -ipady 3 -sticky ew
+	grid $shader_params($id,window).fr -sticky ew -ipadx 3 -ipady 3
 
 	set_stack_values $shade_str $id
 
@@ -1102,7 +1116,9 @@ proc env_select { shader shade_var id } {
 	set shader_params($id,env,window) $shader_params($id,window).fr.env
 
 	label $shader_params($id,window).fr.env.lab -text $shader
-	grid $shader_params($id,window).fr.env.lab -columnspan 4
+	grid $shader_params($id,window).fr.env.lab -columnspan 4 -sticky ew
+	grid $shader_params($id,window).fr.env -sticky ew
+	grid columnconfigure $shader_params($id,window).fr.env 0 -minsize 400
 
 	switch $shader {
 		plastic {
@@ -1145,7 +1161,6 @@ proc env_select { shader shade_var id } {
 		}
 	}
 
-	grid $shader_params($id,window).fr.env -sticky ew
 }
 
 proc set_envmap_defaults { id } {
@@ -1244,8 +1259,7 @@ proc do_envmap { shade_var id } {
 
 	grid $shader_params($id,window).fr.sel_env
 
-	grid $shader_params($id,window).fr -ipadx 3 -ipady 3 -sticky ew
-	grid columnconfigure $shader_params($id,window).fr 0 -weight 1
+	grid $shader_params($id,window).fr -sticky ew -ipadx 3 -ipady 3
 
 	set_envmap_values $shade_str $id
 
@@ -1275,7 +1289,7 @@ proc do_cloud { shade_var id } {
 	hoc_register_data $shader_params($id,window).fr.cl_thresh_e Threshold {
 		{summary "A value (from 0 to 1) is calculated for each point in the texture\n\
 			and compared to the threshold. Values above the threshold are cloud\n\
-			otherwise it becomes blue sky." The default value is 0.35}
+			otherwise it becomes blue sky. The default value is 0.35"}
 		{range "0.0 to 1.0"}
 	}
 	hoc_register_data $shader_params($id,window).fr.cl_range range {
@@ -1300,7 +1314,7 @@ proc do_cloud { shade_var id } {
 	grid $shader_params($id,window).fr.cl_range -row 0 -column 2 -sticky e
 	grid $shader_params($id,window).fr.cl_range_e -row 0 -column 3 -sticky w
 
-	grid $shader_params($id,window).fr -columnspan 4
+	grid $shader_params($id,window).fr -ipadx 3 -ipady 3 -sticky ew
 
 	return $shader_params($id,window).fr
 }
