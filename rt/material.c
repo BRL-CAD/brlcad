@@ -113,7 +113,7 @@ try_load(const char *path, const char *material, const char *shader_name)
 
 found:
 	if (rdebug&RDEBUG_MATERIAL)
-		bu_log("%s mfuncs table found\n", shader_name);
+		bu_log("%s_mfuncs table found\n", shader_name);
 
 	/* make sure the shader we were looking for is in the mfuncs table */
 	for (mfp = shader_mfuncs ; mfp->mf_name != (char *)NULL; mfp++) {
@@ -209,7 +209,6 @@ done:
 	rdebug = old_rdebug;
 
 	return shader_mfuncs;
-
 }
 #endif
 
@@ -259,10 +258,10 @@ mlib_setup( struct mfuncs **headp,
 	}
 retry:
 	for( mfp = *headp; mfp != MF_NULL; mfp = mfp->mf_forw )  {
-		if( material[0] != mfp->mf_name[0]  ||
-		    strncmp( material, mfp->mf_name, mlen ) != 0 )
-			continue;
-		goto found;
+	    if (material[0] != mfp->mf_name[0] ||
+		strcmp(material, mfp->mf_name))
+		continue;
+	    goto found;
 	}
 
 #ifdef HAVE_DLOPEN
