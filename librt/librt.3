@@ -3,8 +3,9 @@
 librt \- library for raytracing an MGED database
 .SH SYNOPSIS
 .nf
-\fB#include ``raytrace.h''
-\fB#include ``vmath.h''
+\fB#include "machine.h"
+\fB#include "vmath.h"
+\fB#include "raytrace.h"
 .sp
 extern struct rt_functab rt_functab[];
 extern struct rt_g rt_g;
@@ -17,6 +18,9 @@ int len;
 int rt_gettree( rtip, object_name )
 struct rt_i *rtip;
 char *object_name;
+.sp
+void rt_prep( rtip )
+struct rt_i *rtip;
 .sp
 int rt_shootray( ap )
 struct application *ap;
@@ -37,8 +41,8 @@ struct seg *segp;
 void rt_bomb( msg )
 char *msg;
 .sp
-void rt_log( msg )
-char *msg;
+void rt_log( fmt, ...\& )
+char *fmt;
 .sp
 struct soltab *rt_find_solid( )
 .sp
@@ -84,7 +88,7 @@ vectp_t h, v;
 .SH DESCRIPTION
 .I rt_dirbuild\^
 opens
-.I mged_file_name\^
+.I mged_file_name
 and builds a directory for quick lookup of objects.
 .I rt_dirbuild\^
 returns a pointer to a struct rt_i on success (often called ``rtip''),
@@ -96,25 +100,37 @@ of information from the first title record in the database.
 .P
 All objects (groups and regions) which are to be included in the description
 to be raytraced must be preprocessed with
-.IR rt_gettree\^ ,
-which returns -1 for failure and 0 for success.
+.IR rt_gettree ,
+which returns \-1 for failure and 0 for success.
 This function can be called as many times as required.
 Be certain to pass the struct rt_i pointer from rt_dirbuild() each time.
 .P
+After the last
+.I rt_gettree
+call,
+.I rt_prep
+can be called to complete the preparation of internal data structures.
+If
+.I rt_prep
+is not explicitly called, it will be indirectly invoked by the first use of
+.IR rt_shootray .
+.P
 To fire a ray at the model, an application structure must be
 prepared and its address passed to
-.IR rt_shootray\^ .
+.IR rt_shootray .
 Note that it is mandatory that you provide values for
 a_ray.r_pt (the starting point of the ray to be fired),
 a_ray.r_dir (a unit-length direction vector),
 a_hit (address of user-supplied hit routine),
-a_miss (address of user-supplised miss routine),
+a_miss (address of user-supplied miss routine),
+a_overlap (address of user-supplied overlap routine; may be null),
 a_rt_i (struct rt_i pointer, from rt_dirbuild()),
 a_onehit (flag controlling stop after first hit),
+a_level (recursion level, just for diagnostic printing),
 and
-a_level (recursion level, just for diagnostic printing).
+a_resource (address of resource structure; may be null).
 .P
-To obtain a report of cpu usage for a portion or portions of your program,
+To obtain a report of CPU usage for a portion or portions of your program,
 frame the statements with calls to
 .I rt_prep_timer
 and
@@ -125,76 +141,88 @@ resets the timing process, after which
 .I rt_read_timer
 can be called to get
 a double which is the elapsed CPU time in seconds since
-.I rt_prep_timer\^
+.I rt_prep_timer
 was last called.
 In addition, up to ``len'' bytes of
 system-specific detailing of resource consumption
 is placed in the user-supplied buffer ``buf''.
 .P
-.I rt_bomb\^
+.I rt_bomb
 can be used to exit your program with
-.I msg\^
+.I msg
 printed on the standard error output.
+.I rt_log
+is called with
+.IR printf\^ -like
+arguments to print an error message without terminating.
+If this default behavior is inappropriate,
+these functions can be preempted by versions provided by the application.
 .SH "EXIT CODE"
-All truely fatal errors detected by the library use \fIrtbomb\^
-\fRto exit with a status of 12.
+All truly fatal errors detected by the library use
+.I rtbomb
+to exit with a status of 12.
 .SH DEFINITION
-RPP \- Rectangular parallel-piped.
+RPP \- Rectangular parallelepiped.
 A region of space defined by minimum and maximum values in X, Y, and Z.
 RPPs are used by librt as the bounding volume for solids.
 .SH DISCUSSION
 You should study the structures in
-.IR raytrace.h\^ ,
+.IR raytrace.h ,
 in particular, the
-.IR application\^ ,
+.I application
+structure,
 the
-.I partition\^
+.I partition
 structure and its component structures to get an idea of what information
 is handed to/from
-.IR rt_shootray\^ .
-.I rt_shootray\^
-may be called recursively as from your
-.I a_hit\^
-routine (good for doing bounced rays).  If you only care about the first
+.IR rt_shootray .
+.I rt_shootray
+may be called recursively from your
+.I a_hit
+routine (good for doing bounced rays).
+If you only care about the first
 object hit along the path of the ray, set the
-.I a_onehit\^ 
+.I a_onehit 
 flag in the application structure before calling
-.IR rt_shootray\^ .
-.I rt_shootray\^
-returns the return value of the user-supplied hit or miss function called.
+.IR rt_shootray .
+.I rt_shootray
+returns the return value of the last user-supplied hit or miss function called.
 .P
-If the ray intersects the model, the a_hit() routine is called
+If the ray intersects the model, the
+.I a_hit
+routine is called
 with a pointer to the application structure and a pointer to a
 linked list of ray \fBpartitions\fR (struct partition).  Within each
 partition are \fBsegment\fR and \fBhit\fR structure pointers
 for the places that the ray enters and leaves this partition of space.
 pt_inhit.hit_dist is the parametric distance at which the ray enters
 the partition,
-and pt_outhit.hit_dist is the parameteric distance the ray leaves.
+and pt_outhit.hit_dist is the parametric distance at which the ray leaves.
 Note that while the \fBhit\fR structure contains hit_point
 and hit_norm elements, they are not computed by rt_shootray().
 If these are needed, they can be filled in by using the RT_HIT_NORM()
 macro.
 .P
-Helpful in generation a grid of ray origins, the bounding RPP of the
-model is computed as
-.I rt_gettree\^
-is called and stored in
-.I rtip->mdl_min\^
+Helpful in generating a grid of ray origins, the bounding RPP of the
+model is computed by
+.I rt_gettree
+and is stored in
+.I rtip\->mdl_min
 and
-.IR rtip->mdl_max\^ .
+.IR rtip\->mdl_max .
 .SH EXAMPLE(S)
 .RS
 A program can be loaded as follows:
 .sp
-$ \|\fIcc \|\-I?? \|main.c \|/usr/brl/lib/librt.a \|\-lm\fP
+$ \|\fIcc \|\-I/usr/include/brlcad \|main.c \|/usr/brl/lib/librt.a \|\-lm\fP
 .sp
 Here is a portion of a hypethetical program which uses the library:
 .sp
 .nf
-#include "vmath.h"
-#include "raytrace.h"
-main( argc, argv )				/* m a i n ( ) */
+#include <machine.h>
+#include <vmath.h>
+#include <raytrace.h>
+main( argc, argv )
 int argc;
 char *argv[];
 {
@@ -202,7 +230,7 @@ char *argv[];
 	extern int do_if_hit(), do_if_miss();	/* Application routines */
 	register int h, v;
 	int grid_sz;
-	struct application ap;		/* Set up for rt_shootray() */
+	struct application ap;			/* Set up for rt_shootray() */
 	struct rt_i *rtip;
 	...
 
@@ -210,19 +238,20 @@ char *argv[];
 	rtip = rt_dirbuild( argv[optind++] );
 
 	/* Load the desired portion of the model. */
-	objects = &argv[optind];
 	while( argv[optind] != NULL )  {
 		rt_gettree( rtip, argv[optind++] );
 	}
 	ap.a_hit = do_if_hit;		/* Supply routine for hit */
 	ap.a_miss = do_if_missed;	/* Supply routine for miss */
+	ap.a_overlap = 0;
 	ap.a_rt_i = rtip;
 	ap.a_level = 0;
 	ap.a_onehit = 1;		/* Return only closest object hit */
+	ap.a_resource = 0;
 
-	for(	v = 0;			/* First scanline.	*/
-		v < grid_sz;		/* Check for end.	*/
-		++v			/* Next scanline.	*/
+	for(	v = 0;			/* First scanline */
+		v < grid_sz;		/* Check for end */
+		++v			/* Next scanline */
 	    )  {
 		for( h = 0; h < grid_sz; ++h )  {
 			/* Set up ray origin. */
@@ -233,6 +262,7 @@ char *argv[];
 			(void) rt_shootray( &ap );
 		}
 	}
+	/* ...\& */
 }
 
 static int
@@ -240,26 +270,26 @@ do_if_hit( ap, PartHeadp )
 register struct application *ap;
 struct partition *PartHeadp;
 {
-	register struct partition	*pp = PartHeadp->pt_forw;
+	register struct partition	*pp = PartHeadp\->pt_forw;
 
-	RT_HIT_NORM( pp->pt_inhit, pp->pt_inseg->seg_stp, &(ap->a_ray) );
-	RT_HIT_NORM( pp->pt_outhit, pp->pt_outseg->seg_stp, &(ap->a_ray) );
+	RT_HIT_NORM( pp\->pt_inhit, pp\->pt_inseg\->seg_stp, &(ap\->a_ray) );
+	RT_HIT_NORM( pp\->pt_outhit, pp\->pt_outseg\->seg_stp, &(ap\->a_ray) );
 	/* Check for flipped normal and fix (if you intend to use it) */
-	if( pp->pt_inflip )  {
-		VREVERSE( pp->pt_inhit->hit_normal, pp->pt_inhit->hit_normal );
-		pp->pt_inflip = 0;
+	if( pp\->pt_inflip )  {
+		VREVERSE( pp\->pt_inhit\->hit_normal, pp\->pt_inhit\->hit_normal );
+		pp\->pt_inflip = 0;
 	}
-	if( pp->pt_outflip )  {
-		VREVERSE( pp->pt_outhit->hit_normal, pp->pt_outhit->hit_normal );
-		pp->pt_outflip = 0;
+	if( pp\->pt_outflip )  {
+		VREVERSE( pp\->pt_outhit\->hit_normal, pp\->pt_outhit\->hit_normal );
+		pp\->pt_outflip = 0;
 	}
 
 	/* Do something based on information in partition structure
 	 *	such as output a pixel to the frame buffer
-         */
-	light_model( pp->pt_inhit );
-	...
-	return	1; /* Report hit to main routine */
+	 */
+	light_model( pp\->pt_inhit );
+	/* ...\& */
+	return	1;	/* Report hit to main routine */
 }
 
 /*ARGSUSED*/
@@ -268,7 +298,7 @@ do_if_miss( ap, PartHeadp )
 register struct application *ap;
 struct partition *PartHeadp;
 {
-	return	0; /* Report miss to main routine */
+	return	0;	/* Report miss to main routine */
 }
 .RE
 .sp
@@ -277,11 +307,11 @@ mged(1B), rt(1B)
 .SH DIAGNOSTICS
 "rt_malloc: malloc failure",
 if librt is unable to allocate memory will malloc().
-"rt_XXX:  read error", if an error or EOF occures while
+"rt_XXX:  read error", if an error or EOF occurs while
 reading from the model database.
-"unexpected SIGFPE!\n" when a floating point error occurs.
-(The rootfinder traps SIGFPE, but SIGFPE elsewhere is unexpected).
-"rt_shootray:  zero length dir vector\n" when the a_ray.r_dir
+"unexpected SIGFPE!" when a floating point error occurs.
+(The rootfinder traps SIGFPE, but SIGFPE elsewhere is unexpected.)
+"rt_shootray:  zero length dir vector" when the a_ray.r_dir
 vector is not unit length.
 "rt_gettree called again after rt_prep!" when an attempt is made
 to add more sub-trees to the active model after calling rt_prep
@@ -292,8 +322,9 @@ in the model.
 .SH AUTHOR(S)
 Michael John Muuss
 .SH BUGS
-The rootfinder detects "hard" cases by taking a SIGFPE and retyring
-with a slower but more stable algorithm.  This is unfortunate.
+The rootfinder detects "hard" cases by taking a SIGFPE and retrying
+with a slower but more stable algorithm.
+This is unfortunate.
 .SH SOURCE
  SECAD/VLD Computing Consortium, Bldg 394
  The U. S. Army Ballistic Research Laboratory
