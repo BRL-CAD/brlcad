@@ -372,6 +372,8 @@ extern int	pkg_permport;	/* libpkg/pkg_permserver() listen port */
 
 int		debug;		/* dispatcher debugging flag */
 
+extern int	version[];	/* From vers.c */
+
 /*
  *			T V S U B
  */
@@ -466,7 +468,7 @@ char	**argv;
 
 	/* Random inits */
 	gethostname( ourname, sizeof(ourname) );
-	fprintf(stderr,"%s %s\n", stamp(), RCSid+13);
+	fprintf(stderr,"%s %s\n", stamp(), version+5 );
 	fflush(stderr);
 
 	width = height = 512;			/* same size as RT */
@@ -1229,7 +1231,7 @@ register struct frame *fr;
 	fr->fr_width = width;
 	fr->fr_height = height;
 
-	rt_vls_free( &fr->fr_cmd );	/* Start fresh */
+	rt_vls_trunc( &fr->fr_cmd, 0 );	/* Start fresh */
 	sprintf(buf, "opt -w%d -n%d -H%d -p%g -U%d -J%x -A%g -l%d -E%g",
 		fr->fr_width, fr->fr_height,
 		hypersample, rt_perspective,
@@ -1826,6 +1828,8 @@ struct timeval		*nowp;
 	 */
 	/* Base new assignment on desired result rate & measured speed */
 	lump = assignment_time() * sp->sr_w_elapsed;
+	/* If for an interactive demo, limit assignment to 1 scanline */
+	if( interactive && lump > fr->fr_width )  lump = fr->fr_width;
 	/* Limit growth in assignment size to 2X each assignment */
 	if( lump > 2*sp->sr_lump )  lump = 2*sp->sr_lump;
 	/* Provide some bounds checking */
@@ -2455,11 +2459,10 @@ char *name;
 		rt_log("fb_open %d,%d failed\n", xx, yy);
 		return(-1);
 	}
-	/* ALERT:  The library wants zoom before window! */
-	fb_zoom( fbp, fb_getwidth(fbp)/xx, fb_getheight(fbp)/yy );
-	fb_window( fbp, xx/2, yy/2 );
+	/* New way:  center, zoom */
+	fb_view( fbp, xx/2, yy/2,
+		fb_getwidth(fbp)/xx, fb_getheight(fbp)/yy );
 
-	fb_wmap( fbp, COLORMAP_NULL );	/* Standard map: linear */
 	cur_fbwidth = 0;
 	return(0);
 }
@@ -3435,6 +3438,7 @@ char	**argv;
 	s = stamp();
 
 	/* Print work assignments */
+	if(interactive) rt_log("%s Interactive mode\n", s);
 	rt_log("%s Worker assignment interval=%d seconds:\n",
 		s, assignment_time() );
 	rt_log("   Server   Last  Last   Average  Cur   Machine\n");
