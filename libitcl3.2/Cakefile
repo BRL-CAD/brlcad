@@ -37,6 +37,8 @@
 /* Rule to see if cake is running with -s flag */
 #define MINUS_S	[[echo CAKEFLAGS | tr '\040' '\012' | sed -n -e /-s/p ]]
 
+all&: PRODUCTS
+
 PRODUCTS: Makefile.MTYPE cache.MTYPE
 	echo cakeflags=CAKEFLAGS
 	echo make MINUS_S -f Makefile.MTYPE CAKEFLAGS all
