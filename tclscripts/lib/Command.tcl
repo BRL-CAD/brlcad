@@ -36,6 +36,7 @@ class Command {
     itk_option define -result_color result_color TextColor blue3
 
     public method history {args}
+    public method edit_style {args}
 
     private method invoke {}
     private method first_char_in_line {}
@@ -103,16 +104,7 @@ class Command {
 }
 
 configbody Command::edit_style {
-    switch $itk_option(-edit_style) {
-	emacs -
-	vi {
-	    doKeyBindings
-	}
-	default {
-	    return -code error "Bad edit_style"
-	}
-    }
-
+    edit_style $itk_option(-edit_style)
 }
 
 configbody Command::cmd_prefix {
@@ -180,6 +172,30 @@ body Command::destructor {} {
     rename $hist ""
 }
 
+
+############################## Public Methods ##############################
+body Command::history {args} {
+    eval $hist history $args
+}
+
+body Command::edit_style {args} {
+    if {$args == ""} {
+	return $itk_option(-edit_style)
+    }
+
+    switch $args {
+	emacs -
+	vi {
+	    set itk_option(-edit_style) $args
+	    doKeyBindings
+	}
+	default {
+	    return -code error "Bad edit_style - $args"
+	}
+    }
+}
+
+############################## Protected/Private Method  ##############################
 body Command::invoke {} {
     set w $itk_component(text)
 
@@ -1097,9 +1113,4 @@ body Command::doRight {} {
     if {$itk_option(-edit_style) == "vi"} {
 	vi_edit_mode
     }
-}
-
-############################## Command Object's Interface ##############################
-body Command::history {args} {
-    eval $hist history $args
 }
