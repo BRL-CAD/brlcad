@@ -349,6 +349,7 @@ BU_EXTERN(int rt_bot_tclget, (Tcl_Interp *interp,
 BU_EXTERN(int rt_bot_tcladjust, (Tcl_Interp *interp,
 		struct rt_db_internal *intern, int argc, char **argv,
 		struct resource *resp));
+BU_EXTERN(int rt_bot_tclform, (const struct rt_functab *ftp, Tcl_Interp *interp));
 
 /* SKETCH */
 BU_EXTERN(int rt_sketch_tclget, (Tcl_Interp *interp,
@@ -864,7 +865,7 @@ const struct rt_functab rt_functab[] = {
 		rt_bot_import,	rt_bot_export,	rt_bot_ifree,
 		rt_bot_describe,rt_bot_xform,	NULL,
 		sizeof(struct rt_bot_internal), RT_BOT_INTERNAL_MAGIC,
-		rt_bot_tclget, rt_bot_tcladjust, rt_parsetab_tclform,
+		rt_bot_tclget, rt_bot_tcladjust, rt_bot_tclform,
 		NULL,
 	},
 

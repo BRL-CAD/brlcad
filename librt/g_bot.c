@@ -2538,6 +2538,17 @@ char			**argv;
 	return( TCL_OK );
 }
 
+int
+rt_bot_tclform( const struct rt_functab *ftp, Tcl_Interp *interp)
+{
+	RT_CK_FUNCTAB(ftp);
+
+	Tcl_AppendResult( interp,
+			  "mode {%s} orient {%s} V { {%f %f %f} {%f %f %f} ...} F { {%d %d %d} {%d %d %d} ...} T { %f %f %f ... } fm %s", (char *)NULL );
+
+	return TCL_OK;		  
+}
+
 /*************************************************************************
  *
  *  BoT support routines used by MGED, converters, etc.
