@@ -452,6 +452,10 @@ set -S2 "/bin/sh"
 #	undef	sgi
 #	if 1 /*	Use 64 bit	*/
 #		define M4I64_USE_64_BIT
+#	else
+#		if 1 /* Use n32 */
+#			define M4I64_USE_N32
+#		endif /* else use 32 */
 #	endif
 #	if 1 /*	PRODUCTION=1	*/
 #		define	M4I64_PRODUCTION
@@ -466,12 +470,27 @@ set -S2 "/bin/sh"
 /*		Warning 1412 is "destination type of cast is too small to hold all pointers: truncation possible" */
 /*		Warning 1167 is "pointer points outside of underlying object" (tab/script.l) */
 /*		Warning 1209 is "controlling expression is constant" */
-#		define	OPTIMIZER	-O3 -r10000 \
+#		ifdef M4I64_USE_64_BIT
+#			define	OPTIMIZER	-O3 -r10000 \
 			-OPT:const_copy_limit=20000:Olimit=0 \
 			-use_readonly_const \
 			-woff 1429,1203,1048,1110,1412,1167,1209 \
 			-Wl,-w
-/*		-Wl,-S doesn't work! use -Wl,-w.  SGI case #0390575. */
+/*			-Wl,-S doesn't work! use -Wl,-w.  SGI case #0390575. */
+#		else
+#			ifdef M4I64_USE_N32
+#				define	OPTIMIZER	-O3 -r10000 \
+				-OPT:const_copy_limit=20000:Olimit=0 \
+				-use_readonly_const \
+				-woff 1429,1203,1048,1110,1412,1167,1209 \
+				-Wl,-w
+#			else
+#				define	OPTIMIZER	-O2 \
+				-use_readonly_const \
+				-woff 1429,1203,1048,1110,1412,1167,1209 \
+				-Wl,-w
+#			endif
+#		endif
 #	else
 /*		This version for debugging with DBX */
 /*		-fullwarn is pretty verbose */
@@ -482,8 +501,13 @@ set -S2 "/bin/sh"
 #		define	GFLAG		-64 -mips4
 #		define	XLIBDIR /usr/lib64
 #	else
-#		define	GFLAG		-n32 -mips4
-#		define	XLIBDIR /usr/lib32
+#		ifdef M4I64_USE_N32
+#			define	GFLAG		-n32 -mips4
+#			define	XLIBDIR /usr/lib32
+#		else
+#			define	GFLAG		-32 -mips2
+#			define	XLIBDIR /usr/lib
+#		endif
 #	endif
 #	define  XINCDIR /usr/include/X11
 
@@ -495,8 +519,15 @@ set -S2 "/bin/sh"
 #			define	BUILD_LIBRARY	ld -64 -mips4 -shared -multigot -o
 #			define	STANDARD_LIBES	-lm -lmalloc -lc -rpath LIBDIR:/usr/lib64
 #		else
-#			define	BUILD_LIBRARY	ld -n32 -mips4 -shared -multigot -o
-#			define	STANDARD_LIBES	-lm -lmalloc -lc -rpath LIBDIR:/usr/lib32
+#			ifdef M4I64_USE_N32
+#				define	BUILD_LIBRARY	ld -n32 -mips4 -shared -multigot -o
+#				define	STANDARD_LIBES	-lm -lmalloc -lc -rpath LIBDIR:/usr/lib32
+#				define	LDSHARED	CC -n32 -shared
+#			else
+#				define	BUILD_LIBRARY	ld -32 -mips2 -shared -multigot -o
+#				define	STANDARD_LIBES	-lm -lmalloc -lc -rpath LIBDIR:/usr/lib
+#				define	LDSHARED	CC -32 -shared
+#			endif
 #		endif
 #		define	RANLIB	true
 /*		When debugging libraries, -m and -v are helpful LD_OPTS */
