@@ -63,8 +63,8 @@ CONST struct db_tree_state	rt_initial_tree_state = {
 		0,			/* override */
 		DB_INH_LOWER,		/* color inherit */
 		DB_INH_LOWER,		/* mater inherit */
-		"",			/* material name */
-		""			/* material params */
+		(char *)0,		/* material name */
+		(char *)0		/* material params */
 #if __STDC__
 	}
 #endif
