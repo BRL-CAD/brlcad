@@ -730,7 +730,7 @@ struct mem_map {
  *  The directory is organized as forward linked lists hanging off of
  *  one of RT_DBNHASH headers in the db_i structure.
  */
-#define	RT_DBNHASH		128	/* size of hash table */
+#define	RT_DBNHASH		1024	/* size of hash table */
 
 #if	((RT_DBNHASH)&((RT_DBNHASH)-1)) != 0
 #define	RT_DBHASH(sum)	((unsigned)(sum) % (RT_DBNHASH))
