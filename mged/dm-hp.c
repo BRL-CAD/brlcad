@@ -67,7 +67,9 @@ struct dm dm_Hp = {
 	0,				/* no displaylist */
 	0,				/* No frame buffer */
 	HPBOUND,
-	"HP", "Hewlett Packard 2397a"
+	"HP", "Hewlett Packard 2397a",
+	0,
+	0
 };
 
 extern struct device_values dm_values;	/* values read from devices */
