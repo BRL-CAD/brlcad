@@ -430,7 +430,7 @@ extern struct bu_structparse view_parse[];
 #if CRAY
 #	define byteoffset(_i)	(((int)&(_i)))	/* actually a word offset */
 #else
-#  if IRIX > 5
+#  if IRIX > 5 && _MIPS_SIM != _MIPS_SIM_ABI32
 #	define byteoffset(_i)	((size_t)__INTADDR__(&(_i)))
 #  else
 #    if sgi || __convexc__ || ultrix || _HPUX_SOURCE
