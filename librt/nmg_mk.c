@@ -1704,7 +1704,7 @@ struct edge *e;
 	}
 
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
-		rt_log("nmg_edge_g(e=x%x)\n", e );
+		rt_log("nmg_edge_g(e=x%x) eg=x%x\n", e, e->eg_p );
 	}
 }
 
@@ -1719,10 +1719,12 @@ nmg_use_edge_g( e, eg )
 struct edge	*e;
 struct edge_g	*eg;
 {
+	struct edge_g	*old;
+
 	NMG_CK_EDGE(e);
 	NMG_CK_EDGE_G(eg);
 
-	if( e->eg_p )  {
+	if( old = e->eg_p )  {
 		/* Macro releases previous edge geom, if usage hits zero */
 		FREE_EDGE_G(e->eg_p);
 	}
@@ -1730,7 +1732,8 @@ struct edge_g	*eg;
 	eg->usage++;
 
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
-		rt_log("nmg_use_egde_g(e=x%x, eg=x%x)\n", e , eg);
+		rt_log("nmg_use_egde_g(e=x%x, new_eg=x%x) old_eg=x%x\n",
+			e , eg, old);
 	}
 }
 
