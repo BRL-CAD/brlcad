@@ -163,7 +163,6 @@ BDIRS="bench \
 	rfbd \
 	fbserv \
 	libbn \
-	libnurb \
 	librt \
 	libredblack \
 	libtermio \
@@ -289,7 +288,8 @@ benchmark)
 		(cd ${DIRPRE}libpkg${DIRSUF};  cake -k)  # needed for IF_REMOTE
 	fi
 	(cd ${DIRPRE}libfb${DIRSUF};  cake -k)
-	(cd ${DIRPRE}libnurb${DIRSUF};  cake -k)
+	(cd ${DIRPRE}libbu${DIRSUF};  cake -k)
+	(cd ${DIRPRE}libbn${DIRSUF};  cake -k)
 	(cd ${DIRPRE}librt${DIRSUF};  cake -k)
 	(cd ${DIRPRE}conv${DIRSUF}; cake -k)
 	(cd ${DIRPRE}db${DIRSUF}; cake -k)
