@@ -35,7 +35,7 @@ mged_vls_struct_parse(vls, title, how_to_parse, structp, argc, argv)
 struct bu_vls *vls;
 char *title;
 struct bu_structparse *how_to_parse;
-CONST char *structp;
+char *structp;
 int argc;
 char *argv[];
 {
@@ -66,7 +66,7 @@ mged_vls_struct_parse_old(vls, title, how_to_parse, structp, argc, argv)
 struct bu_vls *vls;
 char *title;
 struct bu_structparse *how_to_parse;
-CONST char *structp;
+char *structp;
 int argc;
 char *argv[];
 {
