@@ -446,8 +446,9 @@ struct soltab {
 #define ID_ETO		21	/* Elliptical Torus  */
 #define ID_GRIP		22	/* Pseudo Solid Grip */
 #define ID_JOINT	23	/* Pseudo Solid/Region Joint */
+#define ID_HF		24	/* Height Field */
 
-#define ID_MAXIMUM	23	/* Maximum defined ID_xxx value */
+#define ID_MAXIMUM	24	/* Maximum defined ID_xxx value */
 
 
 /*
@@ -1972,6 +1973,8 @@ RT_EXTERN(void			nmg_lu_reorient, (struct loopuse *lu,
 RT_EXTERN(struct edgeuse	*nmg_eusplit, (struct vertex *v, struct edgeuse *oldeu) );
 RT_EXTERN(struct edgeuse	*nmg_esplit, (struct vertex *v, struct edgeuse *eu) );
 RT_EXTERN(struct edgeuse	*nmg_ebreak, (struct vertex *v, struct edgeuse *eu));
+RT_EXTERN(struct edgeuse	*nmg_ebreaker, (struct vertex *v,
+				struct edgeuse *eu, CONST struct rt_tol *tol));
 RT_EXTERN(struct vertex		*nmg_e2break, (struct edgeuse *eu1, struct edgeuse *eu2) );
 RT_EXTERN(struct edgeuse	*nmg_eins, (struct edgeuse *eu) );
 RT_EXTERN(void			nmg_mv_eu_between_shells, (struct shell *dest,
