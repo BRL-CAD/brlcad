@@ -404,6 +404,61 @@ edit_com(int	argc,
 }
 
 int
+emuves_com( int argc, char **argv )
+{
+	int i;
+	struct bu_ptbl *tbl;
+	struct bu_attribute_value_set avs;
+	char **objs;
+	int ret;
+
+	CHECK_DBI_NULL;
+
+	if( argc < 2 ) {
+		struct bu_vls vls;
+
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "help %s", argv[0]);
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
+
+	bu_avs_init( &avs, argc/2, "muves_avs" );
+	for( i=1 ; i<argc ; i++ ) {
+		bu_avs_add_nonunique( &avs, "MUVES_Component", argv[i] );
+	}
+
+	tbl = db_lookup_by_attr( dbip, DIR_REGION, &avs, 2 );
+
+	bu_avs_free( &avs );
+
+	if( !tbl ) {
+		return TCL_OK;
+	}
+
+	if( BU_PTBL_LEN( tbl ) < 1 ) {
+		bu_free( (char *)tbl, "tbl returned by wdb_get_by_attr" );
+		return TCL_OK;
+	}
+
+	objs = (char **)bu_calloc( (BU_PTBL_LEN( tbl ) + 1), sizeof( char *), "emuves_com objs" );
+	objs[0] = "e";
+	for( i=0 ; i<BU_PTBL_LEN( tbl ) ; i++ ) {
+		struct directory *dp;
+
+		dp = (struct directory *)BU_PTBL_GET( tbl, i );
+		objs[i+1] = dp->d_namep;
+	}
+
+	ret = edit_com( (BU_PTBL_LEN( tbl ) + 1), objs, 1, 1 );
+	bu_ptbl_free( tbl );
+	bu_free( (char *)tbl, "tbl returned by wdb_get_by_attr" );
+	bu_free( (char *)objs, "emuves_com objs" );
+	return( ret );
+}
+
+int
 cmd_autoview(ClientData clientData,
 	     Tcl_Interp *interp,
 	     int	argc,

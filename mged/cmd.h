@@ -47,6 +47,7 @@ MGED_EXTERN(int f_edcolor, (ClientData clientData, Tcl_Interp *interp, int argc,
 MGED_EXTERN(int f_edcomb, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_edgedir, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int cmd_draw, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
+MGED_EXTERN(int cmd_emuves, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_eqn, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int cmd_erase, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int cmd_erase_all, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));

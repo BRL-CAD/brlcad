@@ -218,6 +218,7 @@ static struct cmdtab cmdtab[] = {
 	{"edcomb", f_edcomb},
 	{"edgedir", f_edgedir},
 	{"edmater", f_edmater},
+	{"em", cmd_emuves},
 	{"erase", cmd_erase},
 	{"erase_all", cmd_erase_all},
 #ifdef DM_X
@@ -3210,6 +3211,19 @@ cmd_draw(ClientData	clientData,
 	 char		**argv)
 {
 	return edit_com(argc, argv, 1, 1);
+}
+
+extern int emuves_com( int argc, char **argv );	/* from chgview.c */
+
+/* Add regions with attribute MUVES_Component haveing the specified values */
+/* Format: em value [value value ...]	*/
+int
+cmd_emuves(ClientData	clientData,
+	 Tcl_Interp	*interp,
+	 int		argc,
+	 char		**argv)
+{
+	return emuves_com(argc, argv);
 }
 
 /* Format: ev objects	*/
