@@ -338,20 +338,16 @@ pcsrv, control_host, tcp_port);
 
 	if( bu_set_realtime() )  {
 		/* We have realtime priority, use all but one CPU */
+		/* (To leave time for OS to handle NFS, ILMI, etc.) */
 		max_cpus = avail_cpus-1;
 	} else {
-		/* Be nice on loaded machines */
-		if( (debug&1) == 0 )  {
-			int	iload;
-
-			load = bu_get_load_average();
-			iload = (int)(load + 0.5);	/* round up */
-			max_cpus -= iload;
-			if( max_cpus <= 0 )  {
-				bu_log("This machine is overloaded, load=%g, aborting.\n", load);
-				exit(9);
-			}
-		}
+		/*
+		 *  Non-realtime, we compete with everybody else.
+		 *  As our duty-cycle is less than 50%,
+		 *  try to use 'em all for those moments we want to compute.
+		 *  User can interactively decrement if he wants.
+		 */
+		max_cpus = avail_cpus;
 	}
 
 	/* Need to set rtg_parallel non_zero here for RES_INIT to work */
@@ -362,17 +358,19 @@ pcsrv, control_host, tcp_port);
 		rt_g.rtg_parallel = 0;
 	bu_semaphore_init( RT_SEM_LAST );
 
+	load = bu_get_load_average();
 	bu_log("load average = %f, using %d of %d cpus\n",
 		load,
 		npsw, avail_cpus );
-	if( max_cpus <= 0 )  {
+	if( npsw <= 0 )  {
 		pkg_close(pcsrv);
 		exit(0);
 	}
 
 	/*
 	 *  Initialize all the per-CPU memory resources.
-	 *  Go for the max, as TCL interface may change npsw as we run.
+	 *  Go for the max, as TCL interface may change npsw as we run,
+	 *  up or down.
 	 */
 	for( n=0; n < MAX_PSW; n++ )  {
 		rt_init_resource( &resource[n], n );
