@@ -32,7 +32,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "externs.h"
 #include "pkg.h"
 #include "./ged.h"
-#include "./dm.h"
+#include "./mged_dm.h"
 
 extern int		(*cmdline_hook)();	/* cmd.c */
 extern void		(*viewpoint_hook)();	/* ged.c */

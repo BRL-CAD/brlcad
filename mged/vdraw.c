@@ -81,7 +81,7 @@ author - Carl Nuzman
 #include "./sedit.h"
 #include "./ged.h"
 #include "./solid.h"
-#include "./dm.h"
+#include "./mged_dm.h"
 
 #include "../librt/debug.h"	/* XXX */
 

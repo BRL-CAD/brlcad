@@ -41,7 +41,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "db.h"
 #include "raytrace.h"
 #include "./ged.h"
-#include "./dm.h"
+#include "./mged_dm.h"
 
 extern void aexists();
 
