@@ -1011,11 +1011,13 @@ struct seg		*seghead;
 	{
 		point_t pt;
 
-		bu_log( "ERROR: rt_extrude_shot(): odd number of hits (%d) (ignoring last hit)\n", hit_count );
-		bu_log( "ray start = (%20.10f %20.10f %20.10f)\n", V3ARGS( rp->r_pt ) );
-		bu_log( "\tray dir = (%20.10f %20.10f %20.10f)", V3ARGS( rp->r_dir ) );
-		VJOIN1( pt, rp->r_pt, hits[hit_count-1].hit_dist, rp->r_dir );
-		bu_log( "\tignored hit at (%g %g %g)\n", V3ARGS( pt ) );
+		if( hit_count != 1 ) {
+			bu_log( "ERROR: rt_extrude_shot(): odd number of hits (%d) (ignoring last hit)\n", hit_count );
+			bu_log( "ray start = (%20.10f %20.10f %20.10f)\n", V3ARGS( rp->r_pt ) );
+			bu_log( "\tray dir = (%20.10f %20.10f %20.10f)", V3ARGS( rp->r_dir ) );
+			VJOIN1( pt, rp->r_pt, hits[hit_count-1].hit_dist, rp->r_dir );
+			bu_log( "\tignored hit at (%g %g %g)\n", V3ARGS( pt ) );
+		}
 		hit_count--;
 	}
 
