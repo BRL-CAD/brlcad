@@ -19,7 +19,7 @@
 .\"	Last Update to File:  1 April 1993 - to put in info about firpass
 .\"	  & secpass being able to fire 3 sets of orthogonal rays.
 .\"	To Print:
-.\"	troff -Ti300 irprep.doc | dimp -P imt2 &
+.\"	troff -Ti300 irprep.tr | dimp -P imt2 &
 .ft B
 .ce
 IRPREP

@@ -1,6 +1,6 @@
 .\" $Header$
-.\" groff -t -ms -X benchmark.doc
-.\" groff -t -ms benchmark.doc | print-postscript
+.\" groff -t -ms -X benchmark.tr
+.\" groff -t -ms benchmark.tr | print-postscript
 .\"
 .\"  sort '-t       ' +7nr -8
 .de BR

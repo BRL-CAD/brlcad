@@ -2,23 +2,23 @@
 
 data_DATA = \
 	anim.txt \
-	benchmark.doc \
+	benchmark.tr \
 	bsd.txt \
 	cvs.txt \
 	description.txt \
 	fdl.txt \
-	ged.doc \
+	ged.tr \
 	gpl.txt \
 	hypot.txt \
-	irprep.doc \
+	irprep.tr \
 	lgpl.txt \
 	mater.txt \
 	matrix.txt \
-	mged.doc \
-	mk.doc \
+	mged.tr \
+	mk.tr \
 	movie.txt \
-	old-mged.doc \
-	pkg.doc \
+	old-mged.tr \
+	pkg.tr \
 	regions.txt \
 	rounding.txt \
 	sun.txt \

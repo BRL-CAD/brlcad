@@ -15,7 +15,7 @@
 .nf
 .\"	Last Update to File:  27 October 1992 - to put in troff format
 .\"	To Print:
-.\"	troff -Ti300 mk.doc | dimp -P imt2 &
+.\"	troff -Ti300 mk.tr | dimp -P imt2 &
 .ft B
 .ce
 Make Programs
