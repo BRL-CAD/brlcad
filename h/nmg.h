@@ -35,6 +35,28 @@
 #ifndef NULL
 #define NULL 0
 #endif
+
+#define DEBUG_INS	0x00000001	/* 1 nmg_tbl table insert */
+#define DEBUG_FINDEU	0x00000002	/* 2 findeu (find edge[use]) */
+#define DEBUG_CMFACE	0x00000004	/* 3 nmg_cmface() */
+#define DEBUG_COMBINE	0x00000008	/* 4 combine() */
+#define DEBUG_CUTLOOP	0x00000010	/* 5 cutting loops in two */
+#define DEBUG_POLYSECT	0x00000020	/* 6 combine() */
+#define DEBUG_PLOTEM	0x00000040	/* 7 combine() */
+#define DEBUG_BOOL	0x00000080	/* 8 combine() */
+#define DEBUG_CLASSIFY	0x00000100	/* 9 combine() */
+#define DEBUG_SUBTRACT	0x00000200	/* 10 combine() */
+#define DEBUG_GRAZING	0x00000400	/* 11 combine() */
+#define DEBUG_MESH	0x00000800	/* 12 combine() */
+#define DEBUG_MESH_EU	0x00001000	/* 13 combine() */
+#define DEBUG_POLYTO	0x00002000	/* 14 combine() */
+#define DEBUG_LABEL_PTS 0x00004000	/* label points in plot files */
+
+#define NMG_DEBUG_FORMAT \
+"\020\017LABEL_PTS\016POLYTO\015MESH_EU\014MESH\013GRAZING\
+\012SUBTRACT\011CLASSIFY\
+\010BOOL\7PLOTEM\6POLYSECT\5CUTLOOP\4COMBINE\3CMFACE\2FINDEU\1TBL_INS"
+
 /* Boolean operations */
 #define NMG_BOOL_SUB 1		/* subtraction */
 #define NMG_BOOL_ADD 2		/* addition/union */
@@ -45,7 +67,7 @@
 #define OT_SAME     '\1'    /* orientation same */
 #define OT_OPPOSITE '\2'    /* orientation opposite */
 #define OT_UNSPEC   '\3'    /* orientation unspecified */
-
+#define OT_BOOLPLACE '\4'   /* object is intermediate data for boolean ops */
 
 /* support for pointer tables.  Our table is currently un-ordered, and is
  * merely a list of objects.  The support routine nmg_tbl manipulates the
@@ -483,7 +505,7 @@ extern char *rt_calloc();
 
 /* Minimum distance from a point to a plane */
 #define NMG_DIST_PT_PLANE(_pt, _pl) (VDOT(_pt, _pl) - (_pl)[H])
-
+/*#define NMG_DIST_PT_PLANE(_pt, _pl) pnt_pln_dist(_pt, _pl) */
 /* Believe it or not, not every system has these macros somewhere
  * in the include files
  */
@@ -560,11 +582,11 @@ extern void		nmg_pl_eu(FILE *fp, struct edgeuse *eu,
 extern void		nmg_pl_s(FILE *fp, struct shell *s);
 extern void		nmg_pl_r(FILE *fp, struct nmgregion *r);
 extern void		nmg_pl_m(FILE *fp, struct model *m);
-extern struct vertexuse	*nmg_find_vu_in_face(point_t pt, struct faceuse *fu);
+extern struct vertexuse	*nmg_find_vu_in_face(point_t pt, struct faceuse *fu, fastf_t tol);
 extern void		nmg_mesh_faces(struct faceuse *fu1, struct faceuse *fu2);
 extern void		nmg_isect_faces(struct faceuse *fu1, struct faceuse *fu2);
-extern struct nmgregion	*nmg_do_bool(struct shell *s1, struct shell *s2, int oper);
-extern void		nmg_ck_closed_surf(struct shell *s);
+extern struct nmgregion	*nmg_do_bool(struct shell *s1, struct shell *s2, int oper, fastf_t tol);
+extern int		nmg_ck_closed_surf(struct shell *s);
 extern void		nmg_m_to_g(FILE *fp, struct model *m);
 extern void		nmg_r_to_g(FILE *fp, struct nmgregion *r);
 extern void		nmg_s_to_g(FILE *fp, struct shell *s, RGBpixel rgb);
@@ -631,7 +653,7 @@ extern struct vertexuse	*nmg_find_vu_in_face();
 extern void		nmg_mesh_faces();
 extern void		nmg_isect_faces();
 extern struct nmgregion	*nmg_do_bool();
-extern void		nmg_ck_closed_surf();
+extern int		nmg_ck_closed_surf();
 extern void		nmg_m_to_g();
 extern void		nmg_r_to_g();
 extern void		nmg_s_to_g();
