@@ -440,10 +440,10 @@ long	ncells;
 	    {
 		if (debug_flag & CFB_DBG_GRID)
 		{
-		    fprintf(stderr, "%d = YFB(%g)\n", YFB(lasty), lasty);
+		    fprintf(stderr, "%d = V2SCRY(%g)\n", V2SCRY(lasty), lasty);
 		    fflush(stderr);
 		}
-		for(y0 = YFB(lasty), y1 = y0 + hgt; y0 < y1; y0++)
+		for(y0 = V2SCRY(lasty), y1 = y0 + hgt; y0 < y1; y0++)
 		    if (fb_write(fbiop, 0, y0, buf, fb_width) == -1)
 		    {
 			fb_log("Couldn't write to <%d,%d>\n", 0, y0);
@@ -483,7 +483,7 @@ long	ncells;
     }
 
     /* Write out last row of cells. */
-    for (y0 = YFB(lasty), y1 = y0 + hgt; y0 < y1;  y0++)
+    for (y0 = V2SCRY(lasty), y1 = y0 + hgt; y0 < y1;  y0++)
 	if (fb_write(fbiop, 0, y0, buf, fb_width) == -1)
 	{
 	    fb_log("Couldn't write to <%d,%d>\n", 0, y0);
@@ -807,26 +807,6 @@ STATIC void prnt_Usage()
     while (*p)
 	fb_log("%s\n", *p++);
     return;
-}
-
-int YFB(_y)
-
-double	_y;
-
-{
-	double vpy;
-    if (debug_flag & CFB_DBG_GRID)
-    {
-	fprintf(stderr,
-	    "YFB(%g) = (int)(%d + (int)((%g - %g) / %g + %g) * (%d + %d)) = %d\n",
-	    _y, yorigin, _y, ymin, cell_size, key_height, hgt, grid_flag,
-	    (int)(yorigin + (int)((_y - ymin) / cell_size + key_height)
-	    * (hgt + grid_flag)));
-    }
-	vpy = ((_y - ymin) / cell_size + key_height) * (hgt + grid_flag);
-	vpy = V2VPY(_y);
-
-	return (int)(VPY2SCRY(vpy));
 }
 
 STATIC void log_Run()
