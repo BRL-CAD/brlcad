@@ -1001,6 +1001,9 @@ struct db_i *db_ip;
 struct directory *dp;
 {
 	struct object_use *use;
+	struct rt_external sol_ext;
+	struct rt_db_internal sol_int;
+	int id;
 
 	RT_CK_DIR( dp );
 
@@ -1009,7 +1012,9 @@ struct directory *dp;
 		use = RT_LIST_FIRST( object_use, &dp->d_use_hd );
 		if( !use->used )
 		{
-			/* never used, so delete directory entry */
+			/* never used, so delete directory entry.
+			 * This could actually delete the original, buts that's O.K.
+			 */
 			db_dirdelete( dbip, use->dp );
 		}
 
@@ -1060,7 +1065,11 @@ struct directory *dp;
 		use->used = 0;
 		NAMEMOVE( dp->d_namep, name );
 
-		if( use_no == 0 ) /* Add an entry for the original at the end of the list */
+		/* Add an entry for the original at the end of the list
+		 * This insures that the original will be last to be modified
+		 * If original were modified earlier, copies would be screwed-up
+		 */
+		if( use_no == dp->d_uses-1 )
 			use->dp = dp;
 		else
 		{
