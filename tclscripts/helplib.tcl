@@ -29,6 +29,24 @@ set helplib_data(dm_size)		{{[width [height]]} {Set/get the window size}}
 set helplib_data(dm_getaspect)		{{} {Get window's aspect ratio }}
 set helplib_data(dm_observer)		{{cmd [args]} {Attach/detach observer to/from list}}
 
+set helplib_data(wdb_binary)		{{(-i|-o) major_type minor_type dest source}
+                {manipulate opaque objects.
+                 Must specify one of -i (for creating or adjusting objects (input))
+                 or -o for extracting objects (output).
+                 If the major type is "u" the minor type must be one of:
+                      "f" -> float
+                      "d" -> double
+                      "c" -> char (8 bit)
+                      "s" -> short (16 bit)
+                      "i" -> int (32 bit)
+                      "l" -> long (64 bit)
+                      "C" -> unsigned char (8 bit)
+                      "S" -> unsigned short (16 bit)
+                      "I" -> unsigned int (32 bit)
+                      "L" -> unsigned long (64 bit)
+                 For input, source is a file name and dest is an object name.
+                 For output source is an object name and dest is a file name.
+                 Only uniform array binary objects (major_type=u) are currently supported}}
 set helplib_data(wdb_close)		{{} {close/destroy this database object}}
 set helplib_data(wdb_comb_std)		{{[-gr] comb_name [boolean_expr]}	{create or extend a combination using standard notation}}
 set helplib_data(wdb_reopen)		{{[filename]} {open a database}}
@@ -107,6 +125,8 @@ set helplib_data(vo_view2model)		{{} {get the view2model matrix}}
 set helplib_data(vo_vrot)		{{xdeg ydeg zdeg} {rotate viewpoint}}
 set helplib_data(vo_zoom)		{{sf} {zoom view by specified scale factor}}
 
+set helplib_data(dgo_qray)		{{subcommand}	{get/set query_ray characteristics}}
+set helplib_data(dgo_nirt)		{{[nirt(1) options] [x y z]}	{trace a single ray from current view}}
 set helplib_data(dgo_get_autoview)	{{}	{get view size and center such that all displayed solids would be in view}}
 set helplib_data(dgo_close)		{{} {close/destroy this drawable geometry object}}
 set helplib_data(dgo_open)		{{name wdb_obj} {open/create a new drawable geometry object}}

@@ -39,11 +39,11 @@ set mged_help_data(attr_rm)     {{object attr_name [attr_name attr_name ...]}
 set mged_help_data(autoview)	{{}	{set view size and center so that all displayed solids are in view}}
 set mged_help_data(B)		{{-C#/#/# <objects>}	{clear screen, edit objects}}
 set mged_help_data(bev)		{{[-t] [-P#] new_obj obj1 op obj2 op obj3 op ...}	{boolean evaluation of objects via NMG's}}
-set mged_help_data(binary)      {{[-i|-o] -u type dest source}
+set mged_help_data(wdb_binary)		{{(-i|-o) major_type minor_type dest source}
                 {manipulate opaque objects.
                  Must specify one of -i (for creating or adjusting objects (input))
-                 or -o for extracting objects (output)
-                 the "type" must be one of:
+                 or -o for extracting objects (output).
+                 If the major type is "u" the minor type must be one of:
                       "f" -> float
                       "d" -> double
                       "c" -> char (8 bit)
@@ -56,7 +56,7 @@ set mged_help_data(binary)      {{[-i|-o] -u type dest source}
                       "L" -> unsigned long (64 bit)
                  For input, source is a file name and dest is an object name.
                  For output source is an object name and dest is a file name.
-                 Only uniform array binary objects are currently supported}}
+                 Only uniform array binary objects (major_type=u) are currently supported}}
 set mged_help_data(import_body)	{{object file type}	{read an object's body from a file}}
 set mged_help_data(export_body)	{{file object}	{write an object's body to a file}}
 set mged_help_data(bot_condense) {{new_bot_solid old_bot_solid} {remove unreferenced vertices in a BOT solid}}
