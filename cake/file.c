@@ -11,6 +11,8 @@ rcs_id[] = "$Header$";
 #ifndef		ATT
 #include	<sys/dir.h>
 #include	<sys/time.h>
+#else
+#include	<time.h>
 #endif
 
 typedef	struct	timeval		Tval;
