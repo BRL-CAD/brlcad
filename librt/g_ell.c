@@ -40,6 +40,13 @@ static char RCSell[] = "@(#)$Header$ (BRL)";
 RT_EXTERN(int rt_sph_prep, (struct soltab *stp, struct rt_db_internal *ip,
 	struct rt_i *rtip));
 
+struct bu_structparse rt_ell_parse[] = {
+    { "%f", 3, "V", offsetof(struct rt_ell_internal, v[X]), BU_STRUCTPARSE_FUNC_NULL },
+    { "%f", 3, "A", offsetof(struct rt_ell_internal, a[X]), BU_STRUCTPARSE_FUNC_NULL },
+    { "%f", 3, "B", offsetof(struct rt_ell_internal, b[X]), BU_STRUCTPARSE_FUNC_NULL },
+    { "%f", 3, "C", offsetof(struct rt_ell_internal, c[X]), BU_STRUCTPARSE_FUNC_NULL },
+    {0} };
+
 static void  nmg_sphere_face_snurb();
 
 /*
