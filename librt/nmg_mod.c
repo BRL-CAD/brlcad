@@ -1907,7 +1907,8 @@ CONST char		*str;
  *
  *  Move everything from the source faceuse into the destination faceuse.
  */
-void nmg_move_fu_fu( dest_fu, src_fu )
+void
+nmg_move_fu_fu( dest_fu, src_fu )
 register struct faceuse	*dest_fu;
 register struct faceuse	*src_fu;
 {
@@ -1925,4 +1926,18 @@ register struct faceuse	*src_fu;
 		RT_LIST_INSERT( &(dest_fu->lu_hd), &(lu->l) );
 		lu->up.fu_p = dest_fu;
 	}
+}
+
+void
+nmg_merge_2faces(dest_fu, src_fu)
+register struct faceuse	*dest_fu;
+register struct faceuse	*src_fu;
+{
+	NMG_CK_FACEUSE(dest_fu);
+	NMG_CK_FACEUSE(src_fu);
+
+	nmg_move_fu_fu(dest_fu, src_fu);
+	nmg_move_fu_fu(dest_fu->fumate_p, src_fu->fumate_p);
+
+	nmg_kfu(src_fu);
 }
