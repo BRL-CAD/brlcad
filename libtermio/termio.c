@@ -62,6 +62,9 @@ int	fd;
 	curr_tio[fd].sg_flags &= ~RAW;		/* Raw mode OFF.	*/
 #else
 	curr_tio[fd].c_lflag |= ICANON;		/* Raw mode OFF.	*/
+	curr_tio[fd].c_lflag |= ISIG;		/* Signals ON.		*/
+	curr_tio[fd].c_cc[VEOF] = 4;		/* defaults!		*/
+	curr_tio[fd].c_cc[VEOL] = 0;		/*   best we can do.... */
 #endif
 	(void) ioctl( fd, TCSETA, &curr_tio[fd] );
 	return;
@@ -78,6 +81,9 @@ int	fd;
 	curr_tio[fd].sg_flags |= RAW;		/* Raw mode ON.		*/
 #else
 	curr_tio[fd].c_lflag &= ~ICANON;	/* Raw mode ON.		*/
+	curr_tio[fd].c_lflag &= ~ISIG;		/* Signals OFF.		*/
+	curr_tio[fd].c_cc[VMIN] = 1;
+	curr_tio[fd].c_cc[VTIME] = 0;
 #endif
 	(void) ioctl( fd, TCSETA, &curr_tio[fd] );
 	return;
