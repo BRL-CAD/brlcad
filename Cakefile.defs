@@ -243,12 +243,14 @@ set -S2 "/bin/sh"
 
 /*	SGI_4D_TYPE_MARKER: don't alter this comment, setup.sh needs it */
 #	define	SGI_TYPE	3
+
+
 #	if SGI_TYPE == 1
 /******		Graphics Turbo is installed */
 #		define	MTYPE	4gt
 #		define  CC_OPTS		GFLAG -DSGI4D_GT
 #		define	RT_LIBES	-lmpc
-#		define	MGED_LIBES	-lgl_s
+#		define	MGED_LIBES	-lbsd -lgl_s
 #		define	LGT_CONFIG	GFLAG -lmpc
 #		define	LIBMALLOC	/* needs malloc() from -lmpc */
 #		define	LIBFB_OBJS	if_remote pkg if_gt
@@ -265,7 +267,7 @@ set -S2 "/bin/sh"
 #	if SGI_TYPE == 2
 /******		No Graphics Turbo, but has NeWS, SGI sw Release 3 */
 #		define	MTYPE	4d
-#		define  CC_OPTS		GFLAG -g
+#		define  CC_OPTS		GFLAG
 #		define	RT_LIBES	-lmpc
 #		define	MGED_LIBES	-lgl_s
 #		define	LGT_CONFIG	GFLAG -lmpc
@@ -300,7 +302,7 @@ set -S2 "/bin/sh"
 #	define	UNIXTYPE	SYSV
 #	define	HAS_TCP	1
 #	define	CC	/usr/bin/cc
-#	define	LD_OPTS		GFLAG -g
+#	define	LD_OPTS		GFLAG
 #	define	OPTIMIZER	-O2
 #	define	RANLIB	ar ts
 #	define	GETHOST	hostname
@@ -310,10 +312,6 @@ set -S2 "/bin/sh"
 #	define	RT_CONFIG	GFLAG
 #	define	MGED_OBJS	dm-4d
 #	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D
-/**
-#	define	MGED_OBJS	dm-gt
-#	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_GT
-**/
 #endif
 
 #if defined(sun) && !defined(sparc)
