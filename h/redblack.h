@@ -18,18 +18,20 @@ typedef struct
     int		 	rbt_nm_orders;	  /* Number of simultaneous orders */
     int			(**rbt_order)();  /* Comparison functions */
     struct rb_node	**rbt_root;	  /* The actual trees */
+    struct rb_node	*rbt_empty_node;  /* Sentinel representing nil */
 }	rb_tree;
 #define	RB_TREE_NULL	((rb_tree *) 0)
 
 struct rb_node
 {
-    long		rbn_magic;	/* Magic no. for integrity check */
-    rb_tree		*rbn_tree;	/* Tree containing this node */
-    struct rb_node	**rbn_parent;	/* Parents */
-    struct rb_node	**rbn_left;	/* Left subtrees */
-    struct rb_node	**rbn_right;	/* Right subtrees */
-    char		*rbn_color;	/* Colors of this node */
-    void		*rbn_data;	/* Contents of this node */
+    long		rbn_magic;	  /* Magic no. for integrity check */
+    rb_tree		*rbn_tree;	  /* Tree containing this node */
+    struct rb_node	**rbn_parent;	  /* Parents */
+    struct rb_node	**rbn_left;	  /* Left subtrees */
+    struct rb_node	**rbn_right;	  /* Right subtrees */
+    char		*rbn_color;	  /* Colors of this node */
+    void		**rbn_data;	  /* Contents of this node */
+    int			rbn_data_count;  /* How many orders being used? */
 };
 #define	RB_NODE_NULL	((struct rb_node *) 0)
 
@@ -56,10 +58,7 @@ rb_tree *rb_create1	(
 			    char	*description,
 			    int		(*order_func)()
 			);
-int rb_delete		(
-			    rb_tree	*tree,
-			    void	*data
-			);
+void *rb_delete		(   rb_tree	*tree	);
 void rb_diagnose_tree	(
 			    rb_tree	*tree,
 			    int		order
