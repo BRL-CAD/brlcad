@@ -1518,9 +1518,13 @@ BU_EXTERN(void			bu_vls_strncat, (struct bu_vls *vp, CONST char *s, long n) );
 BU_EXTERN(void			bu_vls_vlscat, (struct bu_vls *dest, CONST struct bu_vls *src) );
 BU_EXTERN(void			bu_vls_vlscatzap, (struct bu_vls *dest, struct bu_vls *src) );
 BU_EXTERN(void			bu_vls_from_argv, (struct bu_vls *vp, int argc, char **argv) );
+BU_EXTERN(int			bu_argv_from_string, (char **argv, int lim, char *lp));
 BU_EXTERN(void			bu_vls_fwrite, (FILE *fp, CONST struct bu_vls *vp) );
+void				bu_vls_write( int fd, const struct bu_vls *vp );
+int				bu_vls_read( struct bu_vls *vp, int fd );
 BU_EXTERN(int			bu_vls_gets, (struct bu_vls *vp, FILE *fp) );
 BU_EXTERN(void			bu_vls_putc, (struct bu_vls *vp, int c) );
+void				bu_vls_trimspace( struct bu_vls *vp );
 #if 0
 BU_EXTERN(void			bu_vls_vprintf, (struct bu_vls *vls,
 				CONST char *fmt, va_list ap));

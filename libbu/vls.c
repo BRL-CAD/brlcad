@@ -585,9 +585,7 @@ CONST struct bu_vls	*vp;
  *			B U _ V L S _ W R I T E
  */
 void
-bu_vls_write( fd, vp )
-int			fd;
-CONST struct bu_vls	*vp;
+bu_vls_write( int fd, const struct bu_vls *vp )
 {
 	int status;
 
@@ -619,9 +617,7 @@ CONST struct bu_vls	*vp;
  *	-1	read error
  */
 int
-bu_vls_read( vp, fd )
-struct bu_vls	*vp;
-int		fd;
+bu_vls_read( struct bu_vls *vp, int fd )
 {
 	int	ret = 0;
 	int	todo;
@@ -718,8 +714,7 @@ int			c;
  *  Remove leading and trailing white space from a vls string.
  */
 void
-bu_vls_trimspace( vp )
-struct bu_vls	*vp;
+bu_vls_trimspace( struct bu_vls *vp )
 {
 	BU_CK_VLS(vp);
 
