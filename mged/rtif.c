@@ -49,6 +49,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./mged_dm.h"
 #include "./mgedtcl.h"
 
+extern void reset_input_strings();
+extern int event_check();
 extern int mged_svbase();
 void		setup_rt();
 
@@ -439,6 +441,41 @@ run_rt()
 	rt_write(fp_in, eye_model );
 	(void)fclose( fp_in );
 
+	FOR_ALL_SOLIDS(sp, &HeadSolid.l)
+		sp->s_iflag = DOWN;
+
+#ifdef USE_FRAMEBUFFER
+	{
+	  struct dm_list *dlp;
+
+	  dlp = curr_dm_list;
+	  reset_input_strings();
+
+	  /* loop until fb_busy_flag gets incremented */
+	  i = fb_busy_flag + 1;
+	  while(fb_busy_flag < i){
+	    event_check(1);  /* non-blocking */
+
+	    if(sedraw > 0)
+	      sedit();
+
+	    refresh();
+	  }
+
+	  while(fb_busy_flag){
+	    event_check(1);  /* non-blocking */
+
+	    if(sedraw > 0)
+	      sedit();
+
+	    if(dlp->_mged_variables->fb)
+	      dlp->_dirty = 1;  /* redraw display manager window contents */
+
+	    refresh();
+	  }
+	}
+#endif
+
 	while(fgets(line, MAXLINE, fp_out) != (char *)NULL)
 	  Tcl_AppendResult(interp, line, (char *)NULL);
 	(void)fclose(fp_out);
@@ -449,7 +486,7 @@ run_rt()
 
 	/* Wait for program to finish */
 	while ((rpid = wait(&retcode)) != pid && rpid != -1)
-		;	/* NULL */
+	  ; /* Null */
 
 	if( retcode != 0 )
 		pr_wait_status( retcode );
@@ -457,9 +494,6 @@ run_rt()
 #if 0
 	(void)signal(SIGINT, cur_sigint);
 #endif
-
-	FOR_ALL_SOLIDS(sp, &HeadSolid.l)
-		sp->s_iflag = DOWN;
 
 	return(retcode);
 }
