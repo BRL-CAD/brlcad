@@ -5,7 +5,7 @@
  *	init_sedit	set up for a Solid Edit
  *	sedit		Apply Solid Edit transformation(s)
  *	pscale		Partial scaling of a solid
- *	init_objedit	set up for object edit?
+ *	init_oedit	set up for object edit?
  *	f_dextrude()	extrude a drawing (nmg wire loop) to create a solid
  *	f_eqn		change face of GENARB8 to new equation
  *
@@ -75,9 +75,8 @@ static void	arb7_edge(), arb6_edge(), arb5_edge(), arb4_point();
 static void	arb8_mv_face(), arb7_mv_face(), arb6_mv_face();
 static void	arb5_mv_face(), arb4_mv_face(), arb8_rot_face(), arb7_rot_face();
 static void 	arb6_rot_face(), arb5_rot_face(), arb4_rot_face(), arb_control();
+static void	init_sedit_vars(), init_oedit_vars(), init_oedit_guts();
 
-static int sedit_apply();
-int get_edit_solid_menus();
 void pscale();
 void update_edit_absolute_tran();
 void set_e_axes_pos();
@@ -2099,7 +2098,7 @@ mat_t		mat;
 }
 
 int
-get_solid_keypoint_tcl(clientData, interp, argc, argv)
+f_get_solid_keypoint(clientData, interp, argc, argv)
 ClientData clientData;
 Tcl_Interp *interp;
 int     argc;
@@ -2396,41 +2395,44 @@ init_sedit()
 	es_edflag = IDLE;
 
 	button( BE_S_EDIT );	/* Drop into edit menu right away */
+	init_sedit_vars();
 
-#if 1
+	{
+		struct bu_vls vls;
+
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "begin_edit_callback");
+		(void)Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+	}
+}
+
+static void
+init_sedit_vars()
+{
 	bn_mat_idn(acc_rot_sol);
-	bn_mat_idn( incr_change );
+	bn_mat_idn(incr_change);
 
-	VSETALL( edit_absolute_model_rotate, 0.0 );
-	VSETALL( edit_absolute_object_rotate, 0.0 );
-	VSETALL( edit_absolute_view_rotate, 0.0 );
-	VSETALL( last_edit_absolute_model_rotate, 0.0 );
-	VSETALL( last_edit_absolute_object_rotate, 0.0 );
-	VSETALL( last_edit_absolute_view_rotate, 0.0 );
-	VSETALL( edit_absolute_model_tran, 0.0 );
-	VSETALL( edit_absolute_view_tran, 0.0 );
-	VSETALL( last_edit_absolute_model_tran, 0.0 );
-	VSETALL( last_edit_absolute_view_tran, 0.0 );
+	VSETALL(edit_absolute_model_rotate, 0.0);
+	VSETALL(edit_absolute_object_rotate, 0.0);
+	VSETALL(edit_absolute_view_rotate, 0.0);
+	VSETALL(last_edit_absolute_model_rotate, 0.0);
+	VSETALL(last_edit_absolute_object_rotate, 0.0);
+	VSETALL(last_edit_absolute_view_rotate, 0.0);
+	VSETALL(edit_absolute_model_tran, 0.0);
+	VSETALL(edit_absolute_view_tran, 0.0);
+	VSETALL(last_edit_absolute_model_tran, 0.0);
+	VSETALL(last_edit_absolute_view_tran, 0.0);
 	edit_absolute_scale = 0.0;
 	acc_sc_sol = 1.0;
 
-	VSETALL( edit_rate_model_rotate, 0.0 );
-	VSETALL( edit_rate_object_rotate, 0.0 );
-	VSETALL( edit_rate_view_rotate, 0.0 );
-	VSETALL( edit_rate_model_tran, 0.0 );
-	VSETALL( edit_rate_view_tran, 0.0 );
+	VSETALL(edit_rate_model_rotate, 0.0);
+	VSETALL(edit_rate_object_rotate, 0.0);
+	VSETALL(edit_rate_view_rotate, 0.0);
+	VSETALL(edit_rate_model_tran, 0.0);
+	VSETALL(edit_rate_view_tran, 0.0);
 
 	set_e_axes_pos(1);
-
-	{
-	  struct bu_vls vls;
-
-	  bu_vls_init(&vls);
-	  bu_vls_printf(&vls, "begin_edit_callback");
-	  (void)Tcl_Eval(interp, bu_vls_addr(&vls));
-	  bu_vls_free(&vls);
-	}
-#endif
 }
 
 /*
@@ -6250,7 +6252,11 @@ CONST vect_t	mousevec;
     /* Have scaling take place with respect to keypoint,
      * NOT the view center.
      */
+#if 0
     MAT4X3PNT(temp, es_mat, es_keypoint);
+#else
+    VMOVE(temp, es_keypoint);
+#endif
     MAT4X3PNT(pos_model, modelchanges, temp);
     wrt_point(modelchanges, incr_change, modelchanges, pos_model);
 
@@ -6260,7 +6266,11 @@ CONST vect_t	mousevec;
     mat_t oldchanges;	/* temporary matrix */
 
     /* Vector from object keypoint to cursor */
+#if 0
     MAT4X3PNT( temp, es_mat, es_keypoint );
+#else
+    VMOVE(temp, es_keypoint);
+#endif
     MAT4X3PNT( pos_view, view_state->vs_model2objview, temp );
 
     if( movedir & RARROW )
@@ -6298,7 +6308,11 @@ point_t tvec;
   mat_t oldchanges;	/* temporary matrix */
 
   bn_mat_idn( incr_mat );
+#if 0
   MAT4X3PNT( temp, es_mat, es_keypoint );
+#else
+  VMOVE(temp, es_keypoint);
+#endif
   MAT4X3PNT( pos_model, view_state->vs_view2model, tvec );/* NOT objview */
   MAT4X3PNT( tr_temp, modelchanges, temp );
   VSUB2( tr_temp, pos_model, tr_temp );
@@ -6366,7 +6380,11 @@ oedit_abs_scale()
   /* Have scaling take place with respect to keypoint,
    * NOT the view center.
    */
+#if 0
   MAT4X3PNT(temp, es_mat, es_keypoint);
+#else
+  VMOVE(temp, es_keypoint);
+#endif
   MAT4X3PNT(pos_model, modelchanges, temp);
   wrt_point(modelchanges, incr_mat, modelchanges, pos_model);
 
@@ -7214,8 +7232,8 @@ pscale()
  *			I N I T _ O B J E D I T _ G U T S
  *
  */
-void
-init_objedit_guts()
+static void
+init_oedit_guts()
 {
 	int			id;
 	char			*strp="";
@@ -7225,14 +7243,13 @@ init_objedit_guts()
 	es_edflag = -1;
 	bn_mat_idn(es_mat);
 
-	if(dbip == DBI_NULL)
-	  return;
+	if (dbip == DBI_NULL)
+		return;
 
 	/*
 	 * Check for a processed region 
 	 */
-	if( illump->s_Eflag )  {
-
+	if (illump->s_Eflag) {
 		/* Have a processed (E'd) region - NO key solid.
 		 * 	Use the 'center' as the key
 		 */
@@ -7242,62 +7259,71 @@ init_objedit_guts()
 	}
 
 	/* Not an evaluated region - just a regular path ending in a solid */
-	if( db_get_external( &es_ext, illump->s_path[illump->s_last], dbip ) < 0 )  {
-	  Tcl_AppendResult(interp, "init_objedit(", illump->s_path[illump->s_last]->d_namep,
-			   "): db_get_external failure\n", (char *)NULL);
-	  button(BE_REJECT);
-	  return;
+	if (db_get_external(&es_ext, illump->s_path[illump->s_last], dbip) < 0) {
+		Tcl_AppendResult(interp, "init_oedit(", illump->s_path[illump->s_last]->d_namep,
+				 "): db_get_external failure\n", (char *)NULL);
+		button(BE_REJECT);
+		return;
 	}
 
-	id = rt_id_solid( &es_ext );
-	if( rt_functab[id].ft_import( &es_int, &es_ext, bn_mat_identity, dbip ) < 0 )  {
-	  Tcl_AppendResult(interp, "init_objedit(", illump->s_path[illump->s_last]->d_namep,
-			   "):  solid import failure\n", (char *)NULL);
-	  if( es_int.idb_ptr )  rt_functab[id].ft_ifree( &es_int );
-	  db_free_external( &es_ext );
-	  return;				/* FAIL */
+	id = rt_id_solid(&es_ext);
+	if (rt_functab[id].ft_import(&es_int, &es_ext, bn_mat_identity, dbip) < 0) {
+		Tcl_AppendResult(interp, "init_oedit(", illump->s_path[illump->s_last]->d_namep,
+				 "):  solid import failure\n", (char *)NULL);
+		if (es_int.idb_ptr)
+			rt_functab[id].ft_ifree( &es_int );
+		db_free_external(&es_ext);
+		return;				/* FAIL */
 	}
-	RT_CK_DB_INTERNAL( &es_int );
+	RT_CK_DB_INTERNAL(&es_int);
 
-	if( id == ID_ARB8 )
-	{
+	if (id == ID_ARB8) {
 		struct rt_arb_internal *arb;
 
 		arb = (struct rt_arb_internal *)es_int.idb_ptr;
-		RT_ARB_CK_MAGIC( arb );
+		RT_ARB_CK_MAGIC(arb);
 
-		es_type = rt_arb_std_type( &es_int , &mged_tol );
+		es_type = rt_arb_std_type(&es_int , &mged_tol);
 	}
 
 	/* Save aggregate path matrix */
-	pathHmat( illump, es_mat, illump->s_last-1 );
+	pathHmat(illump, es_mat, illump->s_last-1);
 
 	/* get the inverse matrix */
-	bn_mat_inv( es_invmat, es_mat );
+	bn_mat_inv(es_invmat, es_mat);
 
-	get_solid_keypoint( es_keypoint , &strp , &es_int , es_mat );
+	get_solid_keypoint(es_keypoint, &strp, &es_int, es_mat);
+	init_oedit_vars();
+}
+
+static void
+init_oedit_vars()
+{
 	set_e_axes_pos(1);
 
-	VSETALL( edit_absolute_model_rotate, 0.0 );
-	VSETALL( edit_absolute_object_rotate, 0.0 );
-	VSETALL( edit_absolute_view_rotate, 0.0 );
-	VSETALL( last_edit_absolute_model_rotate, 0.0 );
-	VSETALL( last_edit_absolute_object_rotate, 0.0 );
-	VSETALL( last_edit_absolute_view_rotate, 0.0 );
-	VSETALL( edit_absolute_model_tran, 0.0 );
-	VSETALL( edit_absolute_view_tran, 0.0 );
-	VSETALL( last_edit_absolute_model_tran, 0.0 );
-	VSETALL( last_edit_absolute_view_tran, 0.0 );
+	VSETALL(edit_absolute_model_rotate, 0.0);
+	VSETALL(edit_absolute_object_rotate, 0.0);
+	VSETALL(edit_absolute_view_rotate, 0.0);
+	VSETALL(last_edit_absolute_model_rotate, 0.0);
+	VSETALL(last_edit_absolute_object_rotate, 0.0);
+	VSETALL(last_edit_absolute_view_rotate, 0.0);
+	VSETALL(edit_absolute_model_tran, 0.0);
+	VSETALL(edit_absolute_view_tran, 0.0);
+	VSETALL(last_edit_absolute_model_tran, 0.0);
+	VSETALL(last_edit_absolute_view_tran, 0.0);
 	edit_absolute_scale = 0.0;
 	acc_sc_sol = 1.0;
 	acc_sc_obj = 1.0;
-	VSETALL( acc_sc, 1.0 );
+	VSETALL(acc_sc, 1.0);
 
-	VSETALL( edit_rate_model_rotate, 0.0 );
-	VSETALL( edit_rate_object_rotate, 0.0 );
-	VSETALL( edit_rate_view_rotate, 0.0 );
-	VSETALL( edit_rate_model_tran, 0.0 );
-	VSETALL( edit_rate_view_tran, 0.0 );
+	VSETALL(edit_rate_model_rotate, 0.0);
+	VSETALL(edit_rate_object_rotate, 0.0);
+	VSETALL(edit_rate_view_rotate, 0.0);
+	VSETALL(edit_rate_model_tran, 0.0);
+	VSETALL(edit_rate_view_tran, 0.0);
+
+	bn_mat_idn(modelchanges);
+	bn_mat_idn(acc_rot_sol);
 }
 
 /*
@@ -7305,24 +7331,26 @@ init_objedit_guts()
  *
  */
 void
-init_objedit()
+init_oedit()
 {
-  struct bu_vls		vls;
+	struct bu_vls		vls;
 
-  /* do real initialization work */
-  init_objedit_guts();
+	/* do real initialization work */
+	init_oedit_guts();
 
-  /* begin edit callback */
-  bu_vls_init(&vls);
-  bu_vls_strcpy(&vls, "begin_edit_callback");
-  (void)Tcl_Eval(interp, bu_vls_addr(&vls));
-  bu_vls_free(&vls);
+	es_edclass = EDIT_CLASS_NULL;
+
+	/* begin edit callback */
+	bu_vls_init(&vls);
+	bu_vls_strcpy(&vls, "begin_edit_callback");
+	(void)Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
 }
 
 void oedit_reject();
 
-void
-oedit_accept()
+static void
+oedit_apply()
 {
 	register struct solid *sp;
 	/* matrices used to accept editing done from a depth
@@ -7333,53 +7361,31 @@ oedit_accept()
 	mat_t deltam;	/* final "changes":  deltam = (inv_topm)(modelchanges)(topm) */
 	mat_t tempm;
 
-	if(dbip == DBI_NULL)
-	  return;
-
-	if( dbip->dbi_read_only )
-	{
-		oedit_reject();
-		FOR_ALL_SOLIDS(sp, &HeadSolid.l)  {
-			if( sp->s_iflag == DOWN )
-				continue;
-			(void)replot_original_solid( sp );
-			sp->s_iflag = DOWN;
-		}
-		bu_log( "Sorry, this database is READ-ONLY\n" );
-		pr_prompt();
-
-		return;
-	}
-
-	switch( ipathpos )  {
+	switch (ipathpos) {
 	case 0:
-		moveHobj( illump->s_path[ipathpos], modelchanges );
+		moveHobj(illump->s_path[ipathpos], modelchanges);
 		break;
 	case 1:
-		moveHinstance(
-			illump->s_path[ipathpos-1],
-			illump->s_path[ipathpos],
-			modelchanges
-		);
+		moveHinstance(illump->s_path[ipathpos-1],
+			      illump->s_path[ipathpos],
+			      modelchanges);
 		break;
 	default:
-		bn_mat_idn( topm );
-		bn_mat_idn( inv_topm );
-		bn_mat_idn( deltam );
-		bn_mat_idn( tempm );
+		bn_mat_idn(topm);
+		bn_mat_idn(inv_topm);
+		bn_mat_idn(deltam);
+		bn_mat_idn(tempm);
 
-		pathHmat( illump, topm, ipathpos-2 );
+		pathHmat(illump, topm, ipathpos-2);
 
-		bn_mat_inv( inv_topm, topm );
+		bn_mat_inv(inv_topm, topm);
 
-		bn_mat_mul( tempm, modelchanges, topm );
-		bn_mat_mul( deltam, inv_topm, tempm );
+		bn_mat_mul(tempm, modelchanges, topm);
+		bn_mat_mul(deltam, inv_topm, tempm);
 
-		moveHinstance(
-			illump->s_path[ipathpos-1],
-			illump->s_path[ipathpos],
-			deltam
-		);
+		moveHinstance(illump->s_path[ipathpos-1],
+			      illump->s_path[ipathpos],
+			      deltam);
 		break;
 	}
 
@@ -7391,32 +7397,48 @@ oedit_accept()
 	 */
 	modelchanges[15] = 1000000000;	/* => small ratio */
 
-#if 0
-	view_state->vs_flag=1;
-	refresh();
-#endif
-
 	/* Now, recompute new chunks of displaylist */
-	FOR_ALL_SOLIDS(sp, &HeadSolid.l)  {
-		if( sp->s_iflag == DOWN )
+	FOR_ALL_SOLIDS(sp, &HeadSolid.l) {
+		if (sp->s_iflag == DOWN)
 			continue;
-		(void)replot_original_solid( sp );
+		(void)replot_original_solid(sp);
 		sp->s_iflag = DOWN;
 	}
+}
 
+void
+oedit_accept()
+{
+	register struct solid *sp;
+
+	if (dbip == DBI_NULL)
+		return;
+
+	if (dbip->dbi_read_only) {
+		oedit_reject();
+		FOR_ALL_SOLIDS(sp, &HeadSolid.l) {
+			if (sp->s_iflag == DOWN)
+				continue;
+			(void)replot_original_solid(sp);
+			sp->s_iflag = DOWN;
+		}
+		bu_log("Sorry, this database is READ-ONLY\n");
+		pr_prompt();
+
+		return;
+	}
+
+	oedit_apply();
 	oedit_reject();
 }
 
 void
 oedit_reject()
 {
-  bn_mat_idn( modelchanges );
-  bn_mat_idn( acc_rot_sol );
-  es_edclass = EDIT_CLASS_NULL;
-
-  if( es_int.idb_ptr )  rt_functab[es_int.idb_type].ft_ifree( &es_int );
-  es_int.idb_ptr = (genptr_t)NULL;
-  db_free_external( &es_ext );
+	if (es_int.idb_ptr)
+		rt_functab[es_int.idb_type].ft_ifree(&es_int);
+	es_int.idb_ptr = (genptr_t)NULL;
+	db_free_external(&es_ext);
 }
 
 /* 			F _ E Q N ( )
@@ -7490,26 +7512,115 @@ char	*argv[];
 /* Hooks from buttons.c */
 void sedit_reject();
 
+/*
+ * Copied from sedit_accept - modified to optionally leave
+ *                            solid edit state.
+ */
+static int
+sedit_apply(accept_flag)
+     int	accept_flag;
+{
+	struct directory	*dp;
+
+	es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
+	es_pipept = (struct wdb_pipept *)NULL; /* Reset es_pipept */
+	bot_verts[0] = -1;
+	bot_verts[1] = -1;
+	bot_verts[2] = -1;
+	
+	if (lu_copy) {
+		struct model *m;
+
+		m = nmg_find_model(&lu_copy->l.magic);
+		nmg_km(m);
+		lu_copy = (struct loopuse *)NULL;
+	}
+
+	/* write editing changes out to disc */
+	dp = illump->s_path[illump->s_last];
+
+	/* make sure that any BOT solid is minimally legal */
+	if (es_int.idb_type == ID_BOT) {
+		struct rt_bot_internal *bot = (struct rt_bot_internal *)es_int.idb_ptr;
+
+		RT_BOT_CK_MAGIC(bot);
+		if (bot->mode == RT_BOT_SURFACE || bot->mode == RT_BOT_SOLID) {
+			/* make sure facemodes and thicknesses have been freed */
+			if (bot->thickness) {
+				bu_free( (char *)bot->thickness, "BOT thickness" );
+				bot->thickness = NULL;
+			}
+			if (bot->face_mode) {
+				bu_free( (char *)bot->face_mode, "BOT face_mode" );
+				bot->face_mode = NULL;
+			}
+		} else {
+			/* make sure face_modes and thicknesses exist */
+			if (!bot->thickness)
+				bot->thickness = (fastf_t *)bu_calloc( bot->num_faces, sizeof( fastf_t ), "BOT thickness" );
+			if (!bot->face_mode) {
+				bot->face_mode = bu_bitv_new( bot->num_faces );
+				bu_bitv_clear( bot->face_mode );
+			}
+		}
+	}
+
+	/* Scale change on export is 1.0 -- no change */
+	if (rt_functab[es_int.idb_type].ft_export( &es_ext, &es_int, 1.0, dbip) < 0)  {
+		Tcl_AppendResult(interp, "sedit_apply(", dp->d_namep,
+				 "):  solid export failure\n", (char *)NULL);
+		if (accept_flag) {
+			if (es_int.idb_ptr)
+				rt_functab[es_int.idb_type].ft_ifree(&es_int);
+			db_free_external(&es_ext);
+		}
+		return TCL_ERROR;				/* FAIL */
+	}
+
+    	if (es_int.idb_ptr && accept_flag)
+		rt_functab[es_int.idb_type].ft_ifree(&es_int);
+
+	if (db_put_external(&es_ext, dp, dbip) < 0) {
+		if (accept_flag)
+			db_free_external(&es_ext);
+		TCL_WRITE_ERR_return;
+	}
+
+	if (accept_flag) {
+		menu_state->ms_flag = 0;
+		movedir = 0;
+		es_edflag = -1;
+		es_edclass = EDIT_CLASS_NULL;
+
+		if (es_int.idb_ptr)
+			rt_functab[es_int.idb_type].ft_ifree(&es_int);
+		es_int.idb_ptr = (genptr_t)NULL;
+		db_free_external(&es_ext);
+	}
+
+	return TCL_OK;
+}
+
 void
 sedit_accept()
 {
 	struct directory	*dp;
 
-	if(dbip == DBI_NULL)
-	  return;
+	if (dbip == DBI_NULL)
+		return;
 
-	if( not_state( ST_S_EDIT, "Solid edit accept" ) )  return;
+	if (not_state(ST_S_EDIT, "Solid edit accept"))
+		return;
 
-	if( dbip->dbi_read_only )
-	{
+	if (dbip->dbi_read_only) {
 		sedit_reject();
 		bu_log( "Sorry, this database is READ-ONLY\n" );
 		pr_prompt();
 		return;
 	}
 
-	if( sedraw > 0)
-	  sedit();
+	if (sedraw > 0)
+		sedit();
 
 	(void)sedit_apply(1);
 }
@@ -8580,7 +8691,7 @@ CONST mat_t			mat;
 
 
 int
-f_keypoint (clientData, interp, argc, argv)
+f_keypoint(clientData, interp, argc, argv)
 ClientData clientData;
 Tcl_Interp *interp;
 int	argc;
@@ -8643,7 +8754,8 @@ char	**argv;
   return TCL_OK;
 }
 
-get_edit_solid_menus(clientData, interp, argc, argv)
+int
+f_get_sedit_menus(clientData, interp, argc, argv)
 ClientData clientData;
 Tcl_Interp *interp;
 int argc;
@@ -8804,7 +8916,7 @@ char **argv;
 }
 
 int
-f_get_edit_solid(clientData, interp, argc, argv)
+f_get_sedit(clientData, interp, argc, argv)
 ClientData clientData;
 Tcl_Interp *interp;
 int argc;
@@ -8820,14 +8932,14 @@ char **argv;
     struct bu_vls vls;
 
     bu_vls_init(&vls);
-    bu_vls_printf(&vls, "helpdevel get_edit_solid");
+    bu_vls_printf(&vls, "helpdevel get_sed");
     Tcl_Eval(interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
     return TCL_ERROR;
   }
 
   if(state != ST_S_EDIT){
-    Tcl_AppendResult(interp, "get_edit_solid: must be in solid edit state", (char *)0);
+    Tcl_AppendResult(interp, "get_sed: must be in solid edit state", (char *)0);
     return TCL_ERROR;
   }
 
@@ -8848,7 +8960,7 @@ char **argv;
   }
 
   if(argv[1][0] != '-' || argv[1][1] != 'c'){
-    Tcl_AppendResult(interp, "Usage: get_edit_solid [-c]", (char *)0);
+    Tcl_AppendResult(interp, "Usage: get_sed [-c]", (char *)0);
     return TCL_ERROR;
   }
 
@@ -8880,7 +8992,7 @@ char **argv;
 }
 
 int
-f_put_edit_solid(clientData, interp, argc, argv)
+f_put_sedit(clientData, interp, argc, argv)
 ClientData clientData;
 Tcl_Interp *interp;
 int argc;
@@ -8895,14 +9007,14 @@ char **argv;
     struct bu_vls vls;
 
     bu_vls_init(&vls);
-    bu_vls_printf(&vls, "helpdevel put_edit_solid");
+    bu_vls_printf(&vls, "helpdevel put_sedit");
     Tcl_Eval(interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
     return TCL_ERROR;
   }
 
   if(state != ST_S_EDIT){
-    Tcl_AppendResult(interp, "put_edit_solid: must be in solid edit state", (char *)0);
+    Tcl_AppendResult(interp, "put_sed: must be in solid edit state", (char *)0);
     return TCL_ERROR;
   }
 
@@ -8917,7 +9029,7 @@ char **argv;
   ftp = rt_get_functab_by_label( argv[1] );
   if( ftp == NULL ||
       ftp->ft_parsetab == (struct bu_structparse *)NULL) {
-    Tcl_AppendResult( interp, "put_edit_solid: ", argv[1],
+    Tcl_AppendResult( interp, "put_sed: ", argv[1],
 		      " object type is not supported for db get",
 		      (char *)0 );
     return TCL_ERROR;
@@ -8926,7 +9038,7 @@ char **argv;
   RT_CK_FUNCTAB(es_int.idb_meth);
   if( es_int.idb_meth != ftp ) {
     Tcl_AppendResult( interp,
-		      "put_edit_solid: idb_meth type mismatch",
+		      "put_sed: idb_meth type mismatch",
 		      (char *)0 );
   }
 
@@ -8961,7 +9073,7 @@ char **argv;
 }
 
 int
-f_reset_edit_solid(clientData, interp, argc, argv)
+f_sedit_reset(clientData, interp, argc, argv)
 ClientData clientData;
 Tcl_Interp *interp;
 int argc;
@@ -9034,95 +9146,6 @@ char **argv;
   return TCL_OK;
 }
 
-/*
- * Copied from sedit_accept - modified to optionally leave
- *                            solid edit state.
- */
-static int
-sedit_apply(accept_flag)
-     int	accept_flag;
-{
-	struct directory	*dp;
-
-	es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
-	es_pipept = (struct wdb_pipept *)NULL; /* Reset es_pipept */
-	bot_verts[0] = -1;
-	bot_verts[1] = -1;
-	bot_verts[2] = -1;
-	
-	if (lu_copy) {
-		struct model *m;
-
-		m = nmg_find_model(&lu_copy->l.magic);
-		nmg_km(m);
-		lu_copy = (struct loopuse *)NULL;
-	}
-
-	/* write editing changes out to disc */
-	dp = illump->s_path[illump->s_last];
-
-	/* make sure that any BOT solid is minimally legal */
-	if (es_int.idb_type == ID_BOT) {
-		struct rt_bot_internal *bot = (struct rt_bot_internal *)es_int.idb_ptr;
-
-		RT_BOT_CK_MAGIC(bot);
-		if (bot->mode == RT_BOT_SURFACE || bot->mode == RT_BOT_SOLID) {
-			/* make sure facemodes and thicknesses have been freed */
-			if (bot->thickness) {
-				bu_free( (char *)bot->thickness, "BOT thickness" );
-				bot->thickness = NULL;
-			}
-			if (bot->face_mode) {
-				bu_free( (char *)bot->face_mode, "BOT face_mode" );
-				bot->face_mode = NULL;
-			}
-		} else {
-			/* make sure face_modes and thicknesses exist */
-			if (!bot->thickness)
-				bot->thickness = (fastf_t *)bu_calloc( bot->num_faces, sizeof( fastf_t ), "BOT thickness" );
-			if (!bot->face_mode) {
-				bot->face_mode = bu_bitv_new( bot->num_faces );
-				bu_bitv_clear( bot->face_mode );
-			}
-		}
-	}
-
-	/* Scale change on export is 1.0 -- no change */
-	if (rt_functab[es_int.idb_type].ft_export( &es_ext, &es_int, 1.0, dbip) < 0)  {
-		Tcl_AppendResult(interp, "sedit_apply(", dp->d_namep,
-				 "):  solid export failure\n", (char *)NULL);
-		if (accept_flag) {
-			if (es_int.idb_ptr)
-				rt_functab[es_int.idb_type].ft_ifree(&es_int);
-			db_free_external(&es_ext);
-		}
-		return TCL_ERROR;				/* FAIL */
-	}
-
-    	if (es_int.idb_ptr && accept_flag)
-		rt_functab[es_int.idb_type].ft_ifree(&es_int);
-
-	if (db_put_external(&es_ext, dp, dbip) < 0) {
-		if (accept_flag)
-			db_free_external(&es_ext);
-		TCL_WRITE_ERR_return;
-	}
-
-	if (accept_flag) {
-		menu_state->ms_flag = 0;
-		movedir = 0;
-		es_edflag = -1;
-		es_edclass = EDIT_CLASS_NULL;
-
-		if (es_int.idb_ptr)
-			rt_functab[es_int.idb_type].ft_ifree(&es_int);
-		es_int.idb_ptr = (genptr_t)NULL;
-		db_free_external(&es_ext);
-	}
-
-	return TCL_OK;
-}
-
 int
 f_sedit_apply(clientData, interp, argc, argv)
      ClientData	clientData;
@@ -9130,48 +9153,97 @@ f_sedit_apply(clientData, interp, argc, argv)
      int	argc;
      char	**argv;
 {
-	RT_CK_DBI_TCL(interp, dbip);
+	struct bu_vls vls;
 
-	if (not_state(ST_S_EDIT, "Solid edit accept"))
+	CHECK_DBI_NULL;
+
+	if (not_state(ST_S_EDIT, "Solid edit accept")) {
+		Tcl_AppendResult(interp, "Must be in solid edit state!\n");
 		return TCL_ERROR;
+	}
 
 	if (sedraw > 0)
 		sedit();
 
-	return sedit_apply(0);
+	init_sedit_vars();
+	(void)sedit_apply(0);
+
+	/* active edit callback */
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "active_edit_callback");
+	(void)Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+
+	return TCL_OK;
 }
 
 int
-f_reset_edit_matrix(clientData, interp, argc, argv)
+f_oedit_reset(clientData, interp, argc, argv)
 ClientData clientData;
 Tcl_Interp *interp;
 int argc;
 char **argv;
 {
-  struct bu_vls vls;
+	struct bu_vls vls;
 
-  if(state != ST_O_EDIT)
-    return TCL_ERROR;
+	if (state != ST_O_EDIT)
+		return TCL_ERROR;
 
-  if(argc != 1){
-    bu_vls_init(&vls);
-    bu_vls_printf(&vls, "helpdevel reset_edit_matrix");
-    Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-    return TCL_ERROR;
-  }
+	if (argc != 1) {
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "helpdevel reset_edit_matrix");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
 
-  oedit_reject();
-  init_objedit_guts();
+	oedit_reject();
+	init_oedit_guts();
 
-  new_mats();
-  update_views = 1;
+	new_edit_mats();
+	update_views = 1;
 
-  /* active edit callback */
-  bu_vls_init(&vls);
-  bu_vls_printf(&vls, "active_edit_callback");
-  (void)Tcl_Eval(interp, bu_vls_addr(&vls));
-  bu_vls_free(&vls);
+	/* active edit callback */
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "active_edit_callback");
+	(void)Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
 
-  return TCL_OK;
+	return TCL_OK;
+}
+
+int
+f_oedit_apply(clientData, interp, argc, argv)
+     ClientData	clientData;
+     Tcl_Interp *interp;
+     int	argc;
+     char	**argv;
+{
+	struct bu_vls	vls;
+	char		*strp="";
+
+	CHECK_DBI_NULL;
+	oedit_apply();
+
+	replot_original_solid(illump);
+
+	/* Save aggregate path matrix */
+	bn_mat_idn(es_mat);
+	pathHmat(illump, es_mat, illump->s_last-1);
+
+	/* get the inverse matrix */
+	bn_mat_inv(es_invmat, es_mat);
+
+	get_solid_keypoint(es_keypoint, &strp, &es_int, es_mat);
+	init_oedit_vars();
+	new_edit_mats();
+	update_views = 1;
+
+	/* active edit callback */
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "active_edit_callback");
+	(void)Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+
+	return TCL_OK;
 }
