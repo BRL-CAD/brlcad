@@ -182,32 +182,35 @@ fail:
  *	db_i *		success
  */
 struct db_i *
-db_create( name )
-CONST char *name;
+db_create( CONST char *name, int version )
 {
 	FILE	*fp;
 	struct db_i	*dbip;
 
-	if(rt_g.debug&DEBUG_DB) bu_log("db_create(%s, %s)\n", name );
+	if(rt_g.debug&DEBUG_DB) bu_log("db_create(%s, %d)\n", name, version );
 
 	if( (fp = fopen( name, "w" )) == NULL )  {
 		perror(name);
 		return(DBI_NULL);
 	}
 
-#if 1
-	/* Create a v5 database */
-	if( db5_fwrite_ident( fp, "Untitled v5 BRL-CAD Database", 1.0 ) < 0 )  {
-		(void)fclose(fp);
-		return DBI_NULL;
+	switch( version )  {
+	default:
+	case 5:
+		/* Create a v5 database */
+		if( db5_fwrite_ident( fp, "Untitled v5 BRL-CAD Database", 1.0 ) < 0 )  {
+			(void)fclose(fp);
+			return DBI_NULL;
+		}
+		break;
+	case 4:
+		/* Create a v4 database */
+		if( db_fwrite_ident( fp, "Untitled v4 BRL-CAD Database", 1.0 ) < 0 )  {
+			(void)fclose(fp);
+			return DBI_NULL;
+		}
+		break;
 	}
-#else
-	/* Create a v4 database */
-	if( db_fwrite_ident( fp, "Untitled v4 BRL-CAD Database", 1.0 ) < 0 )  {
-		(void)fclose(fp);
-		return DBI_NULL;
-	}
-#endif
 
 	(void)fclose(fp);
 

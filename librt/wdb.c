@@ -55,7 +55,7 @@ wdb_fopen( const char *filename )
 	if( rt_uniresource.re_magic != RESOURCE_MAGIC )
 		rt_init_resource( &rt_uniresource, 0, NULL );
 
-	if( (dbip = db_create( filename )) == DBI_NULL )
+	if( (dbip = db_create( filename, 5 )) == DBI_NULL )
 		return RT_WDB_NULL;
 
 	return wdb_dbopen( dbip, RT_WDB_TYPE_DB_DISK );

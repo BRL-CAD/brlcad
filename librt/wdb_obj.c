@@ -477,7 +477,7 @@ wdb_prep_dbip(interp, filename)
 #if WIN32
 #endif
 
-		if ((dbip = db_create(filename)) == DBI_NULL) {
+		if ((dbip = db_create(filename, 5)) == DBI_NULL) {
 			Tcl_AppendResult(interp,
 					 "wdb_open: failed to create ", filename,
 					 (char *)NULL);
