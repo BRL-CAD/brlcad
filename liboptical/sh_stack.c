@@ -1,3 +1,24 @@
+/*
+ *			S T A C K . C
+ *
+ *  Stack multiple material modules together
+ *
+ *  Author -
+ *	Phillip Dykstra
+ *  
+ *  Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5066
+ *  
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1986 by the United States Army.
+ *	All rights reserved.
+ */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (BRL)";
+#endif
+
 #include <stdio.h>
 #include "machine.h"
 #include "vmath.h"
@@ -52,23 +73,33 @@ char	**dpp;		/* pointer to user data pointer */
 	sp->st_file[0] = '\0';
 	/*mlib_parse( matparm, stk_parse, (mp_off_ty)sp );*/
 
-fprintf( stderr, "stk_setup called with \"%s\"\n", matparm );
+	if(rdebug&RDEBUG_MATERIAL)
+		rt_log( "stk_setup called with \"%s\"\n", matparm );
 	i = 0;
 	start = cp = matparm;
 	while( *cp != NULL ) {
 		if( *cp == ';' ) {
 			*cp = NULL;
 			if( i >= 16 ) {
-				fprintf( stderr, "stk_setup: max levels exceeded\n" );
-				break;
+				rt_log( "stk_setup: max levels exceeded\n" );
+				return( 0 );
 			}
 			/* add one */
-			if( dosetup(start, sp, i, rp, &sp->udata[i]) == 0 )
+			if( dosetup(start, rp, &sp->udata[i], &sp->mfuncs[i]) == 0 )
 				i++;	/* XXX else clear entry? */
 			start = ++cp;
 		} else {
 			cp++;
 		}
+	}
+	if( start != cp ) {
+		if( i >= 16 ) {
+			rt_log( "stk_setup: max levels exceeded\n" );
+			return( 0 );
+		}
+		/* add one */
+		if( dosetup(start, rp, &sp->udata[i], &sp->mfuncs[i]) == 0 )
+			i++;	/* XXX else clear entry? */
 	}
 
 	return( 1 );
@@ -126,24 +157,29 @@ char *cp;
 
 extern struct mfuncs *mfHead;	/* Head of list of materials */
 
-dosetup( string, sp, n, rp, dpp )
-char	*string;
-register struct stk_specific *sp;
-int	n;
+dosetup( cp, rp, dpp, mpp )
+char	*cp;
 char	*rp;
-char	**dpp;
+char	**dpp;		/* udata pointer address */
+char	**mpp;		/* mfuncs pointer address */
 {
 	register struct mfuncs *mfp;
 	char	matname[32];
 	int	i;
 
-fprintf( stderr, "...starting \"%s\"\n", string );
-	for( i = 0; i < 31 && string[i] != NULL; i++ ) {
-		if( string[i] == ' ' ) {
+	if(rdebug&RDEBUG_MATERIAL)
+		rt_log( "...starting \"%s\"\n", cp );
+
+	/* skip leading white space */
+	while( *cp == ' ' || *cp == '\t' )
+		cp++;
+
+	for( i = 0; i < 31 && *cp != NULL; i++, cp++ ) {
+		if( *cp == ' ' || *cp == '\t' ) {
 			matname[i++] = '\0';
 			break;
 		} else
-			matname[i] = string[i];
+			matname[i] = *cp;
 	}
 	matname[i] = '\0';	/* ensure null termination */
 
@@ -158,9 +194,9 @@ fprintf( stderr, "...starting \"%s\"\n", string );
 	return(-1);
 
 found:
-	sp->mfuncs[n] = mfp;
-	sp->udata[n] = (char *)0;
-	if( mfp->mf_setup( rp, &string[i], &sp->udata[n] ) < 0 )  {
+	*mpp = (char *)mfp;
+	*dpp = (char *)0;
+	if( mfp->mf_setup( rp, cp, dpp ) < 0 )  {
 		/* What to do if setup fails? */
 		return(-1);		/* BAD */
 	}
