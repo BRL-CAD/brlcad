@@ -174,7 +174,7 @@ char *argv[];
 	nmg_tbl( &faces , TBL_INIT , NULL );
 
 	/* get command line arguments */
-	while ((c = getopt(argc, argv, "pt:i:o:")) != EOF)
+	while ((c = getopt(argc, argv, "kpt:i:o:")) != EOF)
 	{
 		switch( c )
 		{
@@ -424,7 +424,7 @@ char *argv[];
 				next_s = RT_LIST_PNEXT( shell , s );
 				fu = RT_LIST_FIRST( faceuse , &s->fu_hd );
 				nmg_reverse_face( fu );
-				nmg_propagate_normals( fu , flags );
+				nmg_propagate_normals( fu , flags, &tol );
 				nmg_js( outer_shell , s , &tol );
 				s = next_s;
 			}
