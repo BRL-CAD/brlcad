@@ -25,6 +25,10 @@
 #include "../Cakefile.prog"
 
 /* Explicit composition of each product */
+PRODUCTS:	OBJ
+	CC LDFLAGS -o burst OBJ LIB_PRE''LIBRT RT_LIBES LIB_PRE''LIBFB LIBTERMLIB LIBES MYLIBES -ltermlib -lm
+
+all: MYLIBES PRODUCTS
 
 Hm/libHm.a:
 	cd Hm; make
@@ -35,10 +39,22 @@ Sc/libSc.a:
 Tc/libTc.a:
 	cd Tc; make
 
-PRODUCTS:	OBJ MYLIBES
-	CC LDFLAGS -o burst OBJ LIB_PRE''LIBRT RT_LIBES LIB_PRE''LIBFB LIBTERMLIB LIBES MYLIBES -ltermlib -lm
+test&:	PRODUCTS tfiles/ktank.g
+	./burst -b < tfiles/ktank.in
+	@if test $? -ne 0 \
+	then	echo "Test failed."; exit 1 \
+	fi
+	diff tfiles/ktank.burst tfiles/ktank.burst.bak
+	@if test $? -ne 0 \
+	then	echo "Test failed."; exit 1 \
+	fi
+	diff tfiles/ktank.shotlines tfiles/ktank.shotlines.bak
+	@if test $? -ne 0 \
+	then	echo "Test failed."; exit 1 \
+	fi
+	@echo "Tested OK."
 
-test&:	PRODUCTS
-	./burst < tfiles/ktank.in
+tfiles/ktank.g:
+	asc2g < tfiles/ktank.asc > tfiles/ktank.g
 
 #include "../Cakefile.rules"
