@@ -173,12 +173,12 @@ int			op;
 }
 
 /*
- *			R T _ C O M B _ V 4 _ I M P O R T
+ *			R T _ C O M B _ I M P O R T 4
  *
  *  Import a combination record from a V4 database into internal form.
  */
 int
-rt_comb_v4_import( ip, ep, matrix, dbip )
+rt_comb_import4( ip, ep, matrix, dbip )
 struct rt_db_internal		*ip;
 CONST struct bu_external	*ep;
 CONST matp_t			matrix;		/* NULL if identity */
@@ -196,7 +196,7 @@ CONST struct db_i		*dbip;
 
 	if( rp[0].u_id != ID_COMB )
 	{
-		bu_log( "rt_comb_v4_import: Attempt to import a non-combination\n" );
+		bu_log( "rt_comb_import4: Attempt to import a non-combination\n" );
 		return( -1 );
 	}
 
@@ -212,8 +212,8 @@ CONST struct db_i		*dbip;
 	{
 		if( rp[j+1].u_id != ID_MEMB )
 		{
-			bu_free( (genptr_t)rt_tree_array , "rt_comb_v4_import: rt_tree_array" );
-			bu_log( "rt_comb_v4_import(): granule in external buffer is not ID_MEMB, id=%d\n", rp[j+1].u_id );
+			bu_free( (genptr_t)rt_tree_array , "rt_comb_import4: rt_tree_array" );
+			bu_log( "rt_comb_import4(): granule in external buffer is not ID_MEMB, id=%d\n", rp[j+1].u_id );
 			return( -1 );
 		}
 
@@ -226,7 +226,7 @@ CONST struct db_i		*dbip;
 				rt_tree_array[j].tl_op = OP_SUBTRACT;
 				break;
 			default:
-				bu_log("rt_comb_v4_import() unknown op=x%x, assuming UNION\n", rp[j+1].M.m_relation );
+				bu_log("rt_comb_import4() unknown op=x%x, assuming UNION\n", rp[j+1].M.m_relation );
 				/* Fall through */
 			case 'u':
 				rt_tree_array[j].tl_op = OP_UNION;
@@ -292,7 +292,7 @@ CONST struct db_i		*dbip;
 	RT_INIT_DB_INTERNAL( ip );
 	ip->idb_type = ID_COMBINATION;
 	ip->idb_meth = &rt_functab[ID_COMBINATION];
-	comb = (struct rt_comb_internal *)bu_malloc( sizeof( struct rt_comb_internal ) , "rt_comb_v4_import: rt_comb_internal" );
+	comb = (struct rt_comb_internal *)bu_malloc( sizeof( struct rt_comb_internal ) , "rt_comb_import4: rt_comb_internal" );
 	ip->idb_ptr = (genptr_t)comb;
 	comb->magic = RT_COMB_MAGIC;
 	bu_vls_init( &comb->shader );
@@ -361,7 +361,7 @@ CONST struct db_i		*dbip;
 		/* convert to TCL format and place into comb->shader */
 		if( bu_shader_to_tcl_list( shader_str, &comb->shader ) )
 		{
-			bu_log( "rt_comb_v4_import: Error: Cannot convert following shader to TCL format:\n" );
+			bu_log( "rt_comb_import4: Error: Cannot convert following shader to TCL format:\n" );
 			bu_log( "\t%s\n", shader_str );
 			bu_vls_free( &comb->shader );
 		}
@@ -380,10 +380,10 @@ CONST struct db_i		*dbip;
 }
 
 /*
- *			R T _ C O M B _ V 4 _ E X P O R T
+ *			R T _ C O M B _ E X P O R T 4
  */
 int
-rt_comb_v4_export( ep, ip, local2mm, dbip )
+rt_comb_export4( ep, ip, local2mm, dbip )
 struct bu_external		*ep;
 CONST struct rt_db_internal	*ip;
 double				local2mm;
@@ -400,7 +400,7 @@ CONST struct db_i		*dbip;
 	struct bu_vls		tmp_vls;
 
 	RT_CK_DB_INTERNAL( ip );
-	if( ip->idb_type != ID_COMBINATION ) bu_bomb("rt_comb_v4_export() type not ID_COMBINATION");
+	if( ip->idb_type != ID_COMBINATION ) bu_bomb("rt_comb_export4() type not ID_COMBINATION");
 	comb = (struct rt_comb_internal *)ip->idb_ptr;
 	RT_CK_COMB(comb);
 
@@ -408,7 +408,7 @@ CONST struct db_i		*dbip;
 		db_non_union_push( comb->tree );
 		if( db_ck_v4gift_tree( comb->tree ) < 0 )  {
 			/* Need to further modify tree */
-			bu_log("rt_comb_v4_export() Unfinished: need to V4-ify tree\n");
+			bu_log("rt_comb_export4() Unfinished: need to V4-ify tree\n");
 			rt_pr_tree( comb->tree, 0 );
 			return -1;
 		}
@@ -421,8 +421,8 @@ CONST struct db_i		*dbip;
 
 		/* Convert tree into array form */
 		actual_count = db_flatten_tree( rt_tree_array, comb->tree, OP_UNION ) - rt_tree_array;
-		if( actual_count > node_count )  bu_bomb("rt_comb_v4_export() array overflow!");
-		if( actual_count < node_count )  bu_log("WARNING rt_comb_v4_export() array underflow! %d < %d", actual_count, node_count);
+		if( actual_count > node_count )  bu_bomb("rt_comb_export4() array overflow!");
+		if( actual_count < node_count )  bu_log("WARNING rt_comb_export4() array underflow! %d < %d", actual_count, node_count);
 	} else {
 		rt_tree_array = (struct rt_tree_array *)NULL;
 		actual_count = 0;
@@ -438,7 +438,7 @@ CONST struct db_i		*dbip;
 	for( j = 0; j < node_count; j++ )  {
 		tp = rt_tree_array[j].tl_tree;
 		RT_CK_TREE(tp);
-		if( tp->tr_op != OP_DB_LEAF )  bu_bomb("rt_comb_v4_export() tree not OP_DB_LEAF");
+		if( tp->tr_op != OP_DB_LEAF )  bu_bomb("rt_comb_export4() tree not OP_DB_LEAF");
 
 		rp[j+1].u_id = ID_MEMB;
 		switch( rt_tree_array[j].tl_op )  {
@@ -452,7 +452,7 @@ CONST struct db_i		*dbip;
 			rp[j+1].M.m_relation = 'u';
 			break;
 		default:
-			bu_bomb("rt_comb_v4_export() corrupt rt_tree_array");
+			bu_bomb("rt_comb_export4() corrupt rt_tree_array");
 		}
 		strncpy( rp[j+1].M.m_instname, tp->tr_l.tl_name, NAMESIZE );
 		if( tp->tr_l.tl_mat )  {
@@ -497,7 +497,7 @@ CONST struct db_i		*dbip;
 	/* convert TCL list format shader to keyword=value format */
 	if( bu_shader_to_key_eq( bu_vls_addr(&comb->shader), &tmp_vls ) )
 	{
-		bu_log( "rt_comb_v4_export: Error in combination!\n" );
+		bu_log( "rt_comb_export4: Error in combination!\n" );
 		bu_log( "\tCannot convert following shader string to keyword=value format:\n" );
 		bu_log( "\t%s\n", bu_vls_addr(&comb->shader) );
 		rp[0].c.c_matparm[0] = '\0';
@@ -788,36 +788,6 @@ double		mm2local;
 	} else {
 		bu_vls_strcat( str, "(empty tree)\n");
 	}
-}
-
-/*==================== BEGIN table.c rt_functab interface ========== */
-
-/*
- *			R T _ C O M B _ I M P O R T
- */
-int
-rt_comb_import(ip, ep, mat, dbip)
-struct rt_db_internal	*ip;
-CONST struct bu_external *ep;
-CONST mat_t		mat;
-CONST struct db_i	*dbip;
-{
-	/* XXX Switch out to right routine, based on database version */
-	return rt_comb_v4_import( ip, ep, mat, dbip );
-}
-
-/*
- *			R T _ C O M B _ E X P O R T
- */
-int
-rt_comb_export(ep, ip, local2mm, dbip)
-struct bu_external	*ep;
-CONST struct rt_db_internal *ip;
-double			local2mm;
-CONST struct db_i	*dbip;
-{
-	/* XXX Switch out to right routine, based on database version */
-	return rt_comb_v4_export( ep, ip, local2mm, dbip );
 }
 
 /*
