@@ -26,6 +26,11 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <math.h>
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
 #include "machine.h"
 #include "vmath.h"
 #include "db.h"
@@ -83,7 +88,6 @@ f_mouse( argc, argv )
 int	argc;
 char	**argv;
 {
-	register struct solid	*sp;
 	vect_t	mousevec;		/* float pt -1..+1 mouse pos vect */
 	int	isave;
 	int	up = atoi(argv[1]);
@@ -199,30 +203,17 @@ char	**argv;
 		 * vector drawing time), but all the objects should
 		 * move/scale in unison.
 		 */
-		dmp->dmr_light( LIGHT_ON, BE_ACCEPT );
-		dmp->dmr_light( LIGHT_ON, BE_REJECT );
-		dmp->dmr_light( LIGHT_OFF, BE_O_ILLUMINATE );
-
-		/* Include all solids with same tree top */
-		FOR_ALL_SOLIDS( sp )  {
-			register int j;
-
-			for( j = 0; j <= ipathpos; j++ )  {
-				if( sp->s_path[j] != illump->s_path[j] )
-					break;
-			}
-			/* Only accept if top of tree is identical */
-			if( j == ipathpos+1 )
-				sp->s_iflag = UP;
+		{
+			char	*av[3];
+			char	num[8];
+			(void)sprintf(num, "%d", ipathpos);
+			av[0] = "matpick";
+			av[1] = num;
+			av[2] = (char *)NULL;
+			(void)f_matpick( 2, av );
+			/* How to record this in the journal file? */
+			return CMD_OK;
 		}
-		(void)chg_state( ST_O_PATH, ST_O_EDIT, "mouse press" );
-		chg_l2menu(ST_O_EDIT);
-
-		/* begin object editing - initialize */
-		init_objedit();
-
-		dmaflag++;
-		return CMD_OK;
 
 	case ST_S_VPICK:
 		sedit_vpick( mousevec );
@@ -450,4 +441,75 @@ register vect_t point, direc;
 	 *		d_to_zaxis * pt_to_origin * in
 	 */
 	mat_mul( out, origin_to_pt, t2 );
+}
+
+/*
+ *			F _ M A T P I C K
+ *
+ *  When in O_PATH state, select the arc which contains the matrix
+ *  which is going to be "object edited".
+ *  The choice is recorded in variable "ipathpos".
+ *
+ *  There are two syntaxes:
+ *	matpick a/b	Pick arc between a and b.
+ *	matpick #	Similar to internal interface.
+ *			0 = top level object is a solid.
+ *			n = edit arc from s_path[n-1] to [n]
+ */
+int
+f_matpick( argc, argv )
+int	argc;
+char	**argv;
+{
+	register struct solid	*sp;
+	char			*cp;
+	register int		j;
+
+	if( not_state( ST_O_PATH, "Object Edit matrix pick" ) )  return CMD_BAD;
+
+	if( cp = strchr( argv[1], '/' ) )  {
+		struct directory	*d0, *d1;
+		if( (d1 = db_lookup( dbip, cp+1, LOOKUP_NOISY )) == DIR_NULL )
+			return CMD_BAD;
+		*cp = '\0';		/* modifies argv[1] */
+		if( (d0 = db_lookup( dbip, argv[1], LOOKUP_NOISY )) == DIR_NULL )
+			return CMD_BAD;
+		/* Find arc on illump path which runs from d0 to d1 */
+		for( j=1; j <= illump->s_last; j++ )  {
+			if( illump->s_path[j-1] != d0 )  continue;
+			if( illump->s_path[j-0] != d1 )  continue;
+			ipathpos = j;
+			goto got;
+		}
+		rt_log("matpick: unable to find arc %s/%s in current selection.  Re-specify.\n",
+			d0->d_namep, d1->d_namep );
+		return CMD_BAD;
+	} else {
+		ipathpos = atoi(argv[1]);
+		if( ipathpos < 0 )  ipathpos = 0;
+		else if( ipathpos > illump->s_last )  ipathpos = illump->s_last;
+	}
+got:
+	dmp->dmr_light( LIGHT_ON, BE_ACCEPT );
+	dmp->dmr_light( LIGHT_ON, BE_REJECT );
+	dmp->dmr_light( LIGHT_OFF, BE_O_ILLUMINATE );
+
+	/* Include all solids with same tree top */
+	FOR_ALL_SOLIDS( sp )  {
+		for( j = 0; j <= ipathpos; j++ )  {
+			if( sp->s_path[j] != illump->s_path[j] )
+				break;
+		}
+		/* Only accept if top of tree is identical */
+		if( j == ipathpos+1 )
+			sp->s_iflag = UP;
+	}
+	(void)chg_state( ST_O_PATH, ST_O_EDIT, "mouse press" );
+	chg_l2menu(ST_O_EDIT);
+
+	/* begin object editing - initialize */
+	init_objedit();
+
+	dmaflag++;
+	return CMD_OK;
 }
