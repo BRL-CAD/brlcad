@@ -568,7 +568,7 @@ CONST struct rt_tol	*tol;
 {
 	CONST struct faceuse	*fu;
 	struct vertexuse	*vu;
-	CONST fastf_t	*pt;
+	CONST struct vertex_g	*vg;
 	struct loopuse *lu2;
 	struct neighbor closest;
 	struct edgeuse	*eu;
@@ -597,18 +597,18 @@ CONST struct rt_tol	*tol;
 again:
 	NMG_CK_VERTEXUSE(vu);
 	NMG_CK_VERTEX(vu->v_p);
-	NMG_CK_VERTEX_G(vu->v_p->vg_p);
-	pt = vu->v_p->vg_p->coord;
+	vg = vu->v_p->vg_p;
+	NMG_CK_VERTEX_G(vg);
 
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
-		VPRINT("nmg_class_lu_fu\tPt:", pt);
+		VPRINT("nmg_class_lu_fu\tPt:", vg->coord);
 	}
 
 	/* Validate distance from point to plane */
 	NMG_GET_FU_PLANE( n, fu );
-	if( (dist=fabs(DIST_PT_PLANE( pt, n ))) > tol->dist )  {
+	if( (dist=fabs(DIST_PT_PLANE( vg->coord, n ))) > tol->dist )  {
 		rt_log("nmg_class_lu_fu() ERROR, point (%g,%g,%g) not on face, dist=%g\n",
-			V3ARGS(pt), dist );
+			V3ARGS(vg->coord), dist );
 	}
 
 	/* find the closest approach in this face to the projected point */
@@ -631,7 +631,7 @@ again:
 		}
 
 		/* XXX Any point to doing a topology search first? */
-		nmg_class_pt_l( &closest, pt, lu2, tol );
+		nmg_class_pt_l( &closest, vg->coord, lu2, tol );
 
 		/* If this vertex lies ON loop edge, must check all others. */
 		if( closest.class == NMG_CLASS_AonBshared )  {
