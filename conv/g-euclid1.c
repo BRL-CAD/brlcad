@@ -547,7 +547,7 @@ char	*argv[];
 		regions_written, percent );
 
 	/* Release dynamic storage */
-	bn_vlist_cleanup();
+	rt_vlist_cleanup();
 	db_close(dbip);
 
 #if MEMORY_LEAK_CHECKING
@@ -627,7 +627,7 @@ genptr_t		client_data;
 		/* Release the tree memory & input regions */
 		db_free_tree(curtree);		/* Does an nmg_kr() */
 
-		bn_vlist_cleanup();
+		rt_vlist_cleanup();
 
 		/* Get rid of (m)any other intermediate structures */
 		if( (*tsp->ts_m)->magic == NMG_MODEL_MAGIC )
@@ -710,7 +710,7 @@ genptr_t		client_data;
 		/* Now, make a new, clean model structure for next pass. */
 		*tsp->ts_m = nmg_mm();
 
-		bn_vlist_cleanup();
+		rt_vlist_cleanup();
 	}
 
 	/*

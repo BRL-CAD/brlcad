@@ -668,7 +668,7 @@ char	*argv[];
 		regions_written, percent );
 
 	/* Release dynamic storage */
-	bn_vlist_cleanup();
+	rt_vlist_cleanup();
 	db_close(dbip);
 
 #if MEMORY_LEAK_CHECKING

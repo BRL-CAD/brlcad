@@ -26,6 +26,7 @@ static const char RCSid[] = "$Header$";
 #include "raytrace.h"
 #include "../librt/debug.h"
 
+int
 main()
 {
 	char str[1024];
