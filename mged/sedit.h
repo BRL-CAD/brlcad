@@ -253,6 +253,7 @@ extern mat_t 	es_invmat;		/* inverse of es_mat   KAA */
 
 extern point_t	es_keypoint;		/* center of editing xforms */
 extern char	*es_keytag;		/* string identifying the keypoint */
+extern point_t	curr_e_axes_pos;	/* center of editing xforms */
 
 extern int arb_faces[5][24];	/* from edarb.c */
 extern int arb_planes[5][24];	/* from edarb.c */

@@ -624,7 +624,7 @@ got:
 	  chg_l2menu(ST_O_EDIT);
 
 	  /* begin object editing - initialize */
-	  init_objedit();
+	  init_oedit();
 	}
 
 	update_views = 1;

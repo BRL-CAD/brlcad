@@ -57,12 +57,10 @@ void mged_setup(), cmd_setup(), mged_compat();
 void mged_print_result();
 void mged_global_variable_setup();
 int f_bot_fuse(), f_bot_condense(), f_bot_face_fuse();
-int get_solid_keypoint_tcl();
 
 extern void sync();
 extern void init_qray();			/* in qray.c */
 extern int gui_setup();				/* in attach.c */
-extern int get_edit_solid_menus();		/* in edsol.c */
 extern int mged_default_dlist;			/* in attach.c */
 extern int classic_mged;			/* in ged.c */
 extern int bot_vertex_fuse(), bot_condense();
@@ -91,7 +89,6 @@ static struct cmdtab cmdtab[] = {
 	"ae", f_aetview,
 	"aip", f_aip,
 	"analyze", f_analyze,
-	"apply_edit_solid", f_sedit_apply,
 	"arb", f_arbdef,
 	"arced", f_arced,
 	"area", f_area,
@@ -151,10 +148,12 @@ static struct cmdtab cmdtab[] = {
 	"fracture", f_fracture,
 	"g", f_group,
 	"get_comb", cmd_get_comb,
+	"get_dbip", cmd_get_ptr,
 	"get_dm_list", f_get_dm_list,
-	"get_edit_solid", f_get_edit_solid,
 	"get_more_default", cmd_get_more_default,
-	"get_solid_keypoint", get_solid_keypoint_tcl,
+	"get_sed", f_get_sedit,
+	"get_sed_menus", f_get_sedit_menus,
+	"get_solid_keypoint", f_get_solid_keypoint,
 	"grid2model_lu", f_grid2model_lu,
 	"grid2view_lu", f_grid2view_lu,
 #ifdef HIDELINE
@@ -205,6 +204,8 @@ static struct cmdtab cmdtab[] = {
 	"nmg_collapse", f_edge_collapse,
 	"nmg_simplify", f_nmg_simplify,
 	"oed", cmd_oed,
+	"oed_apply", f_oedit_apply,
+	"oed_reset", f_oedit_reset,
 	"opendb", f_opendb,
 	"orientation", f_orientation,
 	"orot", f_rot_obj,
@@ -226,7 +227,7 @@ static struct cmdtab cmdtab[] = {
 	"ps", f_ps,
 	"push", f_push,
 	"put_comb", cmd_put_comb,
-	"put_edit_solid", f_put_edit_solid,
+	"put_sed", f_put_sedit,
 	"putmat", f_putmat,
 	"q", f_quit,
 	"qray", f_qray,
@@ -244,8 +245,6 @@ static struct cmdtab cmdtab[] = {
 	"regdef", f_regdef,
 	"regions", f_tables,
 	"release", f_release,
-	"reset_edit_matrix", f_reset_edit_matrix,
-	"reset_edit_solid", f_reset_edit_solid,
 	"rfarb", f_rfarb,
 	"rm", f_rm,
 	"rmater", f_rmater,
@@ -263,6 +262,8 @@ static struct cmdtab cmdtab[] = {
 	"saveview", f_saveview,
 	"sca", f_sca,
 	"sed", f_sed,
+	"sed_apply", f_sedit_apply,
+	"sed_reset", f_sedit_reset,
 	"set_more_default", cmd_set_more_default,
 	"setview", f_setview,
 	"shader", f_shader,
@@ -626,7 +627,7 @@ char	      **argv;
 {
 	char buf[128];
 
-	sprintf( buf, "%ld", (long)(*((void **)clientData)) );
+	sprintf( buf, "%ld", (long)(*((void **)&dbip)) );
 	Tcl_AppendResult( interp, buf, (char *)NULL );
 	return TCL_OK;
 }
@@ -722,11 +723,6 @@ cmd_setup()
 		(void)Tcl_CreateCommand(interp, bu_vls_addr(&temp), ctp->ct_func,
 					(ClientData)ctp, (Tcl_CmdDeleteProc *)NULL);
 	}
-
-	(void)Tcl_CreateCommand(interp, "get_dbip", cmd_get_ptr,
-				(ClientData)&dbip, (Tcl_CmdDeleteProc *)NULL);
-	(void)Tcl_CreateCommand(interp, "get_edit_solid_menus", get_edit_solid_menus,
-				(ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
 
 	bu_vls_strcpy(&temp, "glob_compat_mode");
 	Tcl_LinkVar(interp, bu_vls_addr(&temp), (char *)&glob_compat_mode,
