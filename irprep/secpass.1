@@ -1,0 +1,119 @@
+.TH SECPASS 1 BRL/CAD
+.SH NAME
+secpass \- interrogates an mged file to obtain the conductivity table
+of the PRISM-ready input file or a generic thermal data file
+.SH SYNOPSIS
+.B secpass
+model.g objects...
+.SH DESCRIPTION
+Secpass is an interactive program used to create a conductivity
+table for the PRISM-ready input file (when used in conjunction
+with firpass) or a generic thermal data file.  The conduction approximation
+is based on the following formula from the PRISM manual.
+.nf
+
+	RK(i,j) =             1
+		    ---------------------------
+		      L(i)/K(i)A + L(j)/K(j)A 
+
+	RK(i,j) - conductivity between region i and j
+	L(i)    - conduction path length of region i
+	L(j)    - conduction path length of region j
+	K(i)    - conductivity of material of region i
+	K(j)    - conductivity of material of region j
+	A       - shared surface area
+
+.fi
+The conduction path length is a distance between the centroid of
+the region and the shared surface.  The user may select the average,
+root mean squared (rms), minimum, or maximum distance for the length.
+.sp
+The following information about each region is obtained from
+secpass when creating a PRISM ready file.
+.nf
+
+	number (same scheme as in firpass)
+	number of region there is conduction between
+	conduction
+
+.fi
+The following information about each region is obtained when creating
+a generic thermal data file
+.nf
+
+	number
+	number of adjacent regions
+	shared area of each adjacent region (m**2)
+	conduction distance (m)
+.SH EXAMPLE
+The following is an example from an interactive session.
+.nf
+
+$ secpass ../simple.g all
+Write output to standard out (0) or a file(1) not at all (2)?  1
+Enter name of output file (15 char max).  all.s.out
+Enter name of file that has second pass information
+in it (15 char max).  ../all.f.2nd
+Enter type of output file to be generated.
+	 0 - PRISM File
+	 1 - Generic File
+0
+Enter name of file to be created for PRISM conductivity
+information (15 char max).  all.s.con
+Which length calculation should be used when
+computing conduction
+between regions?
+	1 - average length
+	2 - rms length
+	3 - minimum length
+	4 - maximum length
+1
+Enter name of file to be created for conductivity
+table (15 char max).  all.s.tbl
+Enter name of material file (15 char max).  matprop_table
+Enter name of error file to be created (15 char max).  all.s.err
+Database title:  simple object 
+Number of regions in mged file:  5
+Mallocing arrays.
+cond malloced
+loop malloced
+All variables zeroed.
+second pass file opened
+The number of regions read was 5
+Center of bounding rpp ( 0.000000, 0.000000, 0.000000 )
+Length of diagonal of bounding rpp:  634.455834
+Minimums & maximums of grid:
+  -634.455834 - 634.455834
+  -634.455834 - 634.455834
+  -634.455834 - 634.455834
+
+Model minimum & maximum.
+	X:  -630.000000 to 630.000000
+	Y:  -50.000000 to 50.000000
+	Z:  -50.000000 to 50.000000
+
+Enter spacing (mm) between fired rays.  1
+
+grid spacing:  1.000000
+
+Shooting down x-axis.
+
+
+SUMMARY OF FILES USED & CREATED
+	.g file used:  ../simple.g
+	regions used:
+		all
+	file containing second pass information:  ../all.f.2nd
+	material file used:  matprop_table
+	output file created:  all.s.out
+	conductivity file created:  all.s.con
+	conductivity table file created:  all.s.tbl
+	error file created:  all.s.err
+
+
+Freeing memory.
+.fi
+.SH SEE ALSO
+firpass(1), shape(1)
+.SH AUTHOR
+Susan A. Coates

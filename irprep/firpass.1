@@ -1,0 +1,143 @@
+.TH FIRPASS 1 BRL/CAD
+.SH NAME
+firpass \- interrogates an mged file to obtain the facet records of
+a PRISM-ready input file, a generic thermal data file, or a geometric properties file
+.SH SYNOPSIS
+.B firpass
+model.g objects...
+.SH DESCRIPTION
+Firpass is an interactive program used to create a PRISM ready input
+file (when used in conjunction with secpass), a generic thermal data
+file, or a
+geometric properties file.  The following information about each region
+of the mged description may be obtained from firpass when creating a
+PRISM ready file.
+.nf
+
+	number (arbitrarily assigned by rt_shootray plus one)
+	name (25 right most characters of region name)
+	type (set to 1)
+	exterior surface area (m**2) (surface bounding exterior air)
+	mass (kg)
+	specific heat (J/kg degree C)
+	emissivity
+	surface normal unit vector (averaged over free surface of region)
+	convection coefficient (set to 1)
+	region number seen by back surface (set to 0)
+	region number seen by front surface (set to 0)
+	shape factor (set to 0)
+	hub radius (set to 0)
+	bearing friction constant (set to 0)
+
+.fi
+The variables set to 0 or 1 need to be changed by the user for special
+cases.
+.sp
+The following information about each region is obtained when creating
+a generic thermal data file.
+.nf
+
+	number (arbitrarily assigned by rt_shootray plus one)
+	name (25 right most characters of region name)
+	volume (m**3)
+	density (kg/m3)
+	thermal conductivity
+	specific heat
+	material
+	number of external convection surfaces and areas (m**2)
+	number of internal convection surfaces and areas (m**2)
+	number of solar loaded surfaces and areas (m**2)
+	external surface area
+	surface normal unit vector (averaged over free surface of region)
+	absorptivity
+
+.fi
+The following information about each region is obtained when creating
+a geometric properties file.
+.nf
+
+	number (arbitrarily assigned by rt_shootray plus one)
+	name (25 right most characters of region name)
+	centroid
+	volume (m**3)
+	mass (kg)
+	external surface area (m**2)
+	engine surface area (m**2)
+	crew surface area (m**2)
+	closed compartment surface area (m**2)
+	material code
+	density (kg/m3)
+	specific heat
+	absorptivity
+	emissivity
+	thermal conductivity (W/mK)
+	material
+	all adjacent regions (up to 20)
+
+.fi
+.SH EXAMPLE
+The following is an example from an interactive session.
+.sp
+.nf
+$ firpass simple.g all
+Write output to standard out (0) or a file (1) or not at all (2)?  1
+Enter name of file output is to be written to (15 char max).  all.f.out
+Enter name of error file to be created (15 char max).  all.f.err
+Enter name of second pass file to be created (15 char max).  all.f.2nd
+Enter name of material id file to be read (15 char max).  matprop_table
+Enter type of file to be written.
+	0 - PRISM file
+	1 - Generic file
+	2 - Geometric properties file
+0
+Enter name of facet file to be created. (15 char max)  all.f.fac
+File Used:  simple.g
+Material ID File:  matprop_table
+Database Title:  simple object 
+Mallocing arrays.
+Zeroing variables.
+Center of bounding rpp ( 0.000000, 0.000000, 0.000000 )
+Length of diagonal of bounding rpp:  634.455834
+Minimums & maximums
+  x:  -634.455834 - 634.455834
+  y:  -634.455834 - 634.455834
+  z:  -634.455834 - 634.455834
+Model minimum & maximum.
+	X:  -630.000000 to 630.000000
+	Y:  -50.000000 to 50.000000
+	Z:  -50.000000 to 50.000000
+
+Enter grid spacing (mm) for fired rays.
+1
+
+SHOOTING DOWN X-AXIS
+Normal before normalizing
+  829.094287, -1436.706436, -491.207450
+Normal before normalizing
+  -810.212222, -519.348694, -192.003269
+Normal before normalizing
+  0.000000, 0.000000, 1.305407
+Normal before normalizing
+  0.000000, -3.681156, 0.000000
+Normal before normalizing
+  6.866205, -14.724625, 1.305407
+
+
+SUMMARY OF FILES USED & CREATED
+	.g file used:  simple.g
+	regions used:
+		all
+	material id file used:  matprop_table
+	output file created:  all.f.out
+	second pass file created:  all.f.2nd
+	error file created:  all.f.err
+	facet file created:  all.f.fac
+
+
+Freeing memory.
+.fi
+.SH SEE ALSO
+secpass(1), shape(1)
+
+.SH AUTHOR
+Susan A. Coates

@@ -1,0 +1,47 @@
+.TH SHAPE 1 BRL/CAD
+.SH NAME
+shape \- interrogates an mged file to obtain shape factors between
+all of the named regions
+.SH SYNOPSIS
+shape model.g objects...
+.SH DESCRIPTIONS
+Shape is an interactive program used to create a file containing shape
+factors between all regions of the named objects.  The shape factor
+from region i to region j is the fraction of total energy radiated
+from region i that is intercepted by region j.  This file can be
+used with the enhanced engine model developed by Jim Rapp at BRL
+for use in the PRISM thermal simulation.
+.sp
+Air must be explicitly modeled since shape will only calculate
+shape factors between regions separated by engine air (air code of 5).
+Shape uses a Monte Carlo simulation, so increasing the number of
+significant digits in the answer by one requires about one hundred
+fold increase in the number of rays fired.
+.SH EXAMPLE
+The following is an example from an interactive session.
+.nf
+
+	$ shape sphere.disk.g all.air
+	Enter name of output file (15 char max).  sph.dsk.out
+	Do you want to dump interm shape factors to screen (0-no, 1-yes)?  0
+	Enter number of rays to be fired.  10000000
+	Do you wish to enter your own seed (0) or
+	use the default of 1 (1)?  1
+	Database Title:  Untitled MGED Database
+	Number of regions:  4
+	1000000.000000 rays have been fired.
+	2000000.000000 rays have been fired.
+	3000000.000000 rays have been fired.
+	4000000.000000 rays have been fired.
+	5000000.000000 rays have been fired.
+	6000000.000000 rays have been fired.
+	7000000.000000 rays have been fired.
+	8000000.000000 rays have been fired.
+	9000000.000000 rays have been fired.
+	10000000.000000 rays have been fired.
+	$
+.fi
+.SH SEE ALSO
+firpass(1), secpass(1)
+.SH AUTHOR
+Susan A. Coates
