@@ -275,8 +275,8 @@ BU_EXTERN(double		bn_gauss_fill, (struct bn_gauss *p));
 	} while ((_r) >= 1.0) }
 
 #define	BN_GAUSS_DOUBLE(_p)	\
-	(((_p)->bn_gauss_ptr) ? \
-		(_p)->msr_gausses[--(_p)->bn_gauss_ptr] : \
+	(((_p)->msr_gauss_ptr) ? \
+		(_p)->msr_gausses[--(_p)->msr_gauss_ptr] : \
 		bn_gauss_fill(_p))
 
 
