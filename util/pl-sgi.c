@@ -30,7 +30,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #define Min( x1, x2 )	((x1) < (x2) ? (x1) : (x2))
 #define Max( x1, x2 )	((x1) > (x2) ? (x1) : (x2))
 
-Matrix	viewmat;	/* viewing projection */
+Matrix	*viewmat;	/* current viewing projection */
+Matrix	viewortho;	/* ortho viewing projection */
+Matrix	viewpersp;	/* perspective viewing projection */
 Matrix	centermat;	/* center screen matrix */
 Coord	viewsize;
 #endif sgi
@@ -44,6 +46,10 @@ main()
 		fprintf( stderr, "Usage: tiris < unixplot\n" );
 		exit( 1 );
 	}
+
+	/* In case if there is no space command */
+	min[0] = min[1] = min[2] = -32768.0;
+	max[0] = max[1] = max[2] = 32768.0;
 
 	init_display();
 
@@ -62,12 +68,20 @@ main()
 	if( ismex() ) {
 		ortho( -viewsize, viewsize, -viewsize, viewsize,
 			-32768.0, 32768.0 );
+		getmatrix( viewortho );
+		perspective( 900, 1.0, 0.01, 1.0e10 );
+		/*polarview( 1.414, 0, 0, 0 );*/
+		getmatrix( viewpersp );
 	} else {
 		/* Try to make up for the rectangular display surface */
 		ortho( -1.33*viewsize, 1.33*viewsize, -viewsize, viewsize,
 			-32768.0, 32768.0 );
+		getmatrix( viewortho );
+		perspective( 900, 1.0, 0.01, 1.0e10 );
+		/*polarview( 1.414, 0, 0, 0 );*/
+		getmatrix( viewpersp );
 	}
-	getmatrix( viewmat );
+	viewmat = (Matrix *)viewortho;
 
 	/* set up and save the initial rot/trans/scale matrix */
 	ortho( -1.0, 1.0, -1.0, 1.0, -1.0, 1.0 );	/* ident on stack XXX */
@@ -175,6 +189,7 @@ view_loop()
 			setvaluator(ZOOM, 1, -1000, 1000);
 			break;
 		case LEFTMOUSE:
+		case SW3:
 			loadmatrix( centermat );
 			getmatrix( m );
 			loadmatrix( ident );
@@ -183,13 +198,10 @@ view_loop()
 			end_it = 1;
 			break;
 		case SW0:
-			obj_num = 1;
+			viewmat = (Matrix *)viewortho;
 			break;
 		case SW1:
-			obj_num = 2;
-			break;
-		case SW2:
-			obj_num = 3;
+			viewmat = (Matrix *)viewpersp;
 			break;
 		}
 		event = 0;
@@ -370,7 +382,9 @@ Coord max[3], min[3];
 			geti(y1);
 			geti(x2);
 			geti(y2);
-			ortho( (Coord)x1, (Coord)x2, (Coord)y1, (Coord)y2, -100.0, 100.0 );
+			min[0] = x1; min[1] = y1;
+			max[0] = x2; max[1] = y2;
+			min[2] = -32768.0; max[2] = 32768.0;
 			break;
 		case 'a':
 			geti(x);
