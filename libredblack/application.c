@@ -127,31 +127,42 @@ main ()
 	rb_insert(tree, (void *) &(pres[i]));
     
     rt_log("Before we begin...\n");
-    rb_diagnose_tree(tree, ORDER_LASTNAME);
-    rb_diagnose_tree(tree, ORDER_FIRSTNAME);
-    rb_diagnose_tree(tree, ORDER_PARTY);
+    rb_diagnose_tree(tree, ORDER_LASTNAME, PREORDER);
+    rb_diagnose_tree(tree, ORDER_FIRSTNAME, PREORDER);
+    rb_diagnose_tree(tree, ORDER_PARTY, PREORDER);
+
     /*
-     *	Delete Reagan, Nixon, and Roosevelt
+     *	Delete Reagan and Eisenhower
      */
     r = (record *) rb_search(tree, ORDER_LASTNAME, (void *) (pres + 8));
     if (r != NULL)
 	rb_delete(tree, ORDER_LASTNAME);
-    r = (record *) rb_search(tree, ORDER_LASTNAME, (void *) (pres + 5));
+    rt_log("After deleting Reagan...\n");
+    rb_diagnose_tree(tree, ORDER_LASTNAME, PREORDER);
+    rb_diagnose_tree(tree, ORDER_FIRSTNAME, PREORDER);
+
+    r = (record *) rb_search(tree, ORDER_LASTNAME, (void *) (pres + 2));
     if (r != NULL)
 	rb_delete(tree, ORDER_LASTNAME);
+    rt_log("After deleting Eisenhower...\n");
+    rb_diagnose_tree(tree, ORDER_LASTNAME, PREORDER);
+    rb_diagnose_tree(tree, ORDER_FIRSTNAME, PREORDER);
+    
+    /*
+     *	Insert Clinton
+     */
+    rb_insert(tree, (void *) &(pres[nm_presidents - 1]));
+    rt_log("After inserting Clinton...\n");
+    rb_diagnose_tree(tree, ORDER_LASTNAME, PREORDER);
+    rb_diagnose_tree(tree, ORDER_FIRSTNAME, PREORDER);
+
+    /*
+     *	Delete Roosevelt
+     */
     r = (record *) rb_search(tree, ORDER_LASTNAME, (void *) (pres + 0));
     if (r != NULL)
 	rb_delete(tree, ORDER_LASTNAME);
-
-    rt_log("After deleting Reagan, Nixon, and Roosevelt...\n");
-    rb_diagnose_tree(tree, ORDER_LASTNAME);
-    rb_diagnose_tree(tree, ORDER_FIRSTNAME);
-    rb_diagnose_tree(tree, ORDER_PARTY);
-    
-    rb_insert(tree, (void *) &(pres[nm_presidents - 1]));
-
-    rt_log("After inserting Clinton...\n");
-    rb_diagnose_tree(tree, ORDER_LASTNAME);
-    rb_diagnose_tree(tree, ORDER_FIRSTNAME);
-    rb_diagnose_tree(tree, ORDER_PARTY);
+    rt_log("After deleting Roosevelt...\n");
+    rb_diagnose_tree(tree, ORDER_LASTNAME, PREORDER);
+    rb_diagnose_tree(tree, ORDER_FIRSTNAME, PREORDER);
 }
