@@ -264,6 +264,24 @@ int call_dm;
 	Tcl_SetVar2(interp, MGED_DISPLAY_VAR, "keypoint", "", TCL_GLOBAL_ONLY);
 	Tcl_SetVar2(interp, MGED_DISPLAY_VAR, "fps", "", TCL_GLOBAL_ONLY);
 
+	/* Label the vertices of the edited solid */
+	if(es_edflag >= 0 || (state == ST_O_EDIT && illump->s_Eflag == 0))  {
+		mat_t			xform;
+		struct rt_point_labels	pl[8+1];
+
+		mat_mul( xform, model2objview, es_mat );
+
+		label_edited_solid( pl, 8+1, xform, &es_int );
+
+		for( i=0; i<8+1; i++ )  {
+			if( pl[i].str[0] == '\0' )  break;
+			dmp->dmr_puts( pl[i].str,
+				((int)(pl[i].pt[X]*2048))+15,
+				((int)(pl[i].pt[Y]*2048))+15,
+				0, DM_WHITE );
+		}
+	}
+
 	if (!call_dm) {
 	    rt_vls_free(&vls);
 	    return;
@@ -337,24 +355,6 @@ int call_dm;
 				 yloc-TEXT0_DY, 0);
 		dmp->dmr_2d_line(xloc-TEXT0_DY, yloc+TEXT0_DY, xloc-TEXT0_DY,
 				 yloc-TEXT0_DY, 0);
-	}
-
-	/* Label the vertices of the edited solid */
-	if(es_edflag >= 0 || (state == ST_O_EDIT && illump->s_Eflag == 0))  {
-		mat_t			xform;
-		struct rt_point_labels	pl[8+1];
-
-		mat_mul( xform, model2objview, es_mat );
-
-		label_edited_solid( pl, 8+1, xform, &es_int );
-
-		for( i=0; i<8+1; i++ )  {
-			if( pl[i].str[0] == '\0' )  break;
-			dmp->dmr_puts( pl[i].str,
-				((int)(pl[i].pt[X]*2048))+15,
-				((int)(pl[i].pt[Y]*2048))+15,
-				0, DM_WHITE );
-		}
 	}
 
 	/*
