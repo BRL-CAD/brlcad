@@ -338,7 +338,7 @@ char *p_eto[] = {
 /*	F _ I N ( ) :  	decides which solid reader to call
  *			Used for manual entry of solids.
  */
-void
+int
 f_in()
 {
 	register int i;
@@ -372,11 +372,11 @@ f_in()
 	}
 	if( db_lookup( dbip,  cmd_args[1], LOOKUP_QUIET ) != DIR_NULL )  {
 		aexists( cmd_args[1] );
-		return;
+		return CMD_BAD;
 	}
 	if( (int)strlen(cmd_args[1]) >= NAMESIZE )  {
 		(void)printf("ERROR, names are limited to %d characters\n", NAMESIZE-1);
-		return;
+		return CMD_BAD;
 	}
 	/* Save the solid name since cmd_args[] might get bashed */
 	strcpy( name, cmd_args[1] );
@@ -396,13 +396,13 @@ f_in()
 	if( strcmp( cmd_args[2], "ebm" ) == 0 )  {
 		if( strsol_in( &external, "ebm" ) < 0 )  {
 			(void)printf("ERROR, EBM solid not made!\n");
-			return;
+			return CMD_BAD;
 		}
 		goto do_extern_update;
 	} else if( strcmp( cmd_args[2], "vol" ) == 0 )  {
 		if( strsol_in( &external, "vol" ) < 0 )  {
 			(void)printf("ERROR, VOL solid not made!\n");
-			return;
+			return CMD_BAD;
 		}
 		goto do_extern_update;
 	} else if( strcmp( cmd_args[2], "ars" ) == 0 )  {
@@ -410,7 +410,7 @@ f_in()
 			(void)printf("ERROR, ars not made!\n");
 			if(internal.idb_type) rt_functab[internal.idb_type].
 				ft_ifree( &internal );
-			return;
+			return CMD_BAD;
 		}
 		goto do_new_update;
 	} else if( strcmp( cmd_args[2], "half" ) == 0 )  {
@@ -492,17 +492,13 @@ f_in()
 		fn_in = eto_in;
 	} else {
 		(void)printf("f_in:  %s is not a known primitive\n", cmd_args[2]);
-		return;
+		return CMD_BAD;
 	}
 	
 	/* Read arguments */
-	while( args < 3+nvals )  {
+	if( args < 3+nvals )  {
 		(void)printf("%s", menu[args-3]);
-		if( (argcnt = getcmd(args)) < 0 )  {
-			fprintf(stderr, "in: not enough args!\n");
-			return;	/* failure */
-		}
-		args += argcnt;
+		return CMD_MORE;
 	}
 
 	RT_INIT_DB_INTERNAL( &internal );
@@ -510,7 +506,7 @@ f_in()
 		(void)printf("ERROR, %s not made!\n", cmd_args[2]);
 		if(internal.idb_type) rt_functab[internal.idb_type].
 			ft_ifree( &internal );
-		return;
+		return CMD_BAD;
 	}
 
 do_new_update:
@@ -519,7 +515,7 @@ do_new_update:
 	if( rt_functab[id].ft_export( &external, &internal, local2base ) < 0 )  {
 		printf("export failure\n");
 		rt_functab[id].ft_ifree( &internal );
-		return;
+		return CMD_BAD;
 	}
 	rt_functab[id].ft_ifree( &internal );	/* free internal rep */
 
@@ -531,11 +527,13 @@ do_extern_update:
 	if ((dp=db_diradd(dbip, name, -1L, ngran, DIR_SOLID)) == DIR_NULL ||
 	     db_alloc(dbip, dp, ngran ) < 0) {
 		db_free_external( &external );
-	    	ALLOC_ERR_return;
+	    	ALLOC_ERR;
+		return CMD_BAD;
 	}
 	if (db_put_external( &external, dp, dbip ) < 0 )  {
 		db_free_external( &external );
-		WRITE_ERR_return;
+		WRITE_ERR;
+		return CMD_BAD;
 	}
 	db_free_external( &external );
 
@@ -543,7 +541,7 @@ do_extern_update:
 	new_cmd[0] = "e";
 	new_cmd[1] = name;
 	new_cmd[2] = (char *)NULL;
-	f_edit( 2, new_cmd );
+	return f_edit( 2, new_cmd );
 }
 
 /*
