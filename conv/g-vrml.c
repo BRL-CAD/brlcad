@@ -345,7 +345,6 @@ char	*argv[];
 	/* Release dynamic storage */
 	nmg_km(the_model);
 
-	bn_vlist_cleanup();
 	db_close(dbip);
 
 		/* Now we need to close each group set */
