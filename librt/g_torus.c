@@ -1063,7 +1063,7 @@ struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
-struct rt_tol		*tol;
+CONST struct rt_tol	*tol;
 {
 	fastf_t		alpha;
 	fastf_t		beta;
@@ -1455,7 +1455,7 @@ double				local2mm;
 int
 rt_tor_describe( str, ip, verbose, mm2local )
 struct rt_vls		*str;
-struct rt_db_internal	*ip;
+CONST struct rt_db_internal	*ip;
 int			verbose;
 double			mm2local;
 {
