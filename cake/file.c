@@ -16,7 +16,12 @@ rcs_id[] = "$Header$";
 typedef	struct	timeval		Tval;
 typedef	struct	timezone	Tzone;
 typedef	struct	stat		Stat;
-typedef	struct	direct		Dirent;
+#if defined(__convex__)
+	/* This is a hack, because Convex no longer defines struct direct */
+	typedef struct dirent	Dirent;
+#else
+	typedef	struct	direct	Dirent;
+#endif
 
 extern	int	errno;
 
