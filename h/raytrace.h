@@ -1240,14 +1240,8 @@ RT_EXTERN(void rt_pr_pt, (struct rt_i *rtip, struct partition *pp) );
 RT_EXTERN(void rt_pr_bitv, (char *str, bitv_t *bv, int len) );
 					/* Print a hit point */
 RT_EXTERN(void rt_pr_hit, (char *str, struct hit *hitp) );
-					/* convert dbfloat->fastf_t */
-/* XXX these next two should be dbfloat_t, but that means
- * XXX including db.h in absolutely everything.  No way.
- */
-RT_EXTERN(void rt_fastf_float, (fastf_t *ff, float *fp, int n) );
-					/* convert dbfloat mat->fastf_t */
-RT_EXTERN(void rt_mat_dbmat, (fastf_t *ff, float *dbp) );
-RT_EXTERN(void rt_dbmat_mat, (float *dbp, fastf_t *ff) );
+/* rt_fastf_float, rt_mat_dbmat, rt_dbmat_mat
+ * declarations moved to h/db.h */
 					/* storage obtainers */
 RT_EXTERN(void rt_get_seg, (struct resource *res) );
 RT_EXTERN(void rt_get_pt, (struct rt_i *rtip, struct resource *res) );

@@ -318,5 +318,25 @@ union record  {
 		char	p_hrad[8];		/* radius at end of height */
 	}  part;
 };
+#define DB_RECORD_NULL	((union record *)0)
+
+/*
+ *  Macros for providing function prototypes, regardless of whether
+ *  the compiler understands them or not.
+ *  It is vital that the argument list given for "args" be enclosed
+ *  in parens.
+ */
+#if __STDC__
+#	define	DB_ARGS(args)			args
+#else
+#	define	DB_ARGS(args)			()
+#endif
+
+/* convert dbfloat->fastf_t */
+void rt_fastf_float DB_ARGS( (fastf_t *ff, dbfloat_t *fp, int n) );
+
+/* convert dbfloat mat->fastf_t */
+void rt_mat_dbmat DB_ARGS( (fastf_t *ff, dbfloat_t *dbp) );
+void rt_dbmat_mat DB_ARGS( (dbfloat_t *dbp, fastf_t *ff) );
 
 #endif	/* DB_H */
