@@ -201,6 +201,10 @@ char	*dp;
 	swp->sw_transmit = 1.0 - CLAMP(val, 0.0, 1.0);
 
 /* 	VSET(swp->sw_color, val, val, val); */
+
+	if( swp->sw_reflect > 0 || swp->sw_transmit > 0 )
+		(void)rr_render( ap, pp, swp );
+
 	return 1;
 #endif
 	/* compute the ray/solid in and out points,
@@ -223,6 +227,8 @@ char	*dp;
 	/* shade with a transparency proportional to the thickness */
 	swp->sw_transmit = exp( - scloud_sp->max_d_p_mm * thickness );
 	swp->sw_transmit = CLAMP(swp->sw_transmit, 0.0, 1.0);
+	if( swp->sw_reflect > 0 || swp->sw_transmit > 0 )
+		(void)rr_render( ap, pp, swp );
 	return 1;
 #endif
 
@@ -265,6 +271,9 @@ char	*dp;
 	}
 	
 	swp->sw_transmit = trans;
+
+	if( swp->sw_reflect > 0 || swp->sw_transmit > 0 )
+		(void)rr_render( ap, pp, swp );
 
 	return(1);
 }

@@ -148,6 +148,8 @@ char	*dp;
 	 */
 	if( tp->tx_file[0] == '\0' || !tp->mp )  {
 		VSET( swp->sw_color, swp->sw_uv.uv_u, 0, swp->sw_uv.uv_v );
+		if( swp->sw_reflect > 0 || swp->sw_transmit > 0 )
+			(void)rr_render( ap, pp, swp );
 		return(1);
 	}
 
@@ -200,6 +202,8 @@ opaque:
 			r * rt_inv255,
 			g * rt_inv255,
 			b * rt_inv255 );
+		if( swp->sw_reflect > 0 || swp->sw_transmit > 0 )
+			(void)rr_render( ap, pp, swp );
 		return(1);
 	}
 	/* This circumlocution needed to keep expression simple for Cray,
@@ -215,6 +219,8 @@ opaque:
 	 */
 	swp->sw_transmit = 1.0;
 	swp->sw_reflect = 0.0;
+	if( swp->sw_reflect > 0 || swp->sw_transmit > 0 )
+		(void)rr_render( ap, pp, swp );
 	return(1);
 }
 
@@ -248,6 +254,8 @@ char	*dp;
 	 */
 	if( tp->tx_file[0] == '\0' || !tp->mp )  {
 		VSET( swp->sw_color, swp->sw_uv.uv_u, 0, swp->sw_uv.uv_v );
+		if( swp->sw_reflect > 0 || swp->sw_transmit > 0 )
+			(void)rr_render( ap, pp, swp );
 		return(1);
 	}
 
@@ -292,6 +300,8 @@ char	*dp;
 opaque:
 		VSETALL( swp->sw_color,
 			bw * rt_inv255 / (dx*dy) );
+		if( swp->sw_reflect > 0 || swp->sw_transmit > 0 )
+			(void)rr_render( ap, pp, swp );
 		return(1);
 	}
 	/* This circumlocution needed to keep expression simple for Cray,
@@ -305,6 +315,8 @@ opaque:
 	 */
 	swp->sw_transmit = 1.0;
 	swp->sw_reflect = 0.0;
+	if( swp->sw_reflect > 0 || swp->sw_transmit > 0 )
+		(void)rr_render( ap, pp, swp );
 	return(1);
 }
 
@@ -425,6 +437,10 @@ char	*dp;
 		(unsigned char)cp[0] * rt_inv255,
 		(unsigned char)cp[1] * rt_inv255,
 		(unsigned char)cp[2] * rt_inv255 );
+
+	if( swp->sw_reflect > 0 || swp->sw_transmit > 0 )
+		(void)rr_render( ap, pp, swp );
+
 	return(1);
 }
 
@@ -490,6 +506,10 @@ register struct shadework	*swp;
 char	*dp;
 {
 	VSET( swp->sw_color, swp->sw_uv.uv_u, 0, swp->sw_uv.uv_v );
+
+	if( swp->sw_reflect > 0 || swp->sw_transmit > 0 )
+		(void)rr_render( ap, pp, swp );
+
 	return(1);
 }
 
@@ -533,6 +553,10 @@ char	*dp;
 	} else {
 		VSETALL( swp->sw_color, 0 );
 	}
+
+	if( swp->sw_reflect > 0 || swp->sw_transmit > 0 )
+		(void)rr_render( ap, pp, swp );
+
 	return(1);
 }
 
@@ -569,6 +593,8 @@ char	*dp;
 	 */
 	if( tp->tx_file[0] == '\0' || !tp->mp )  {
 		VSET( swp->sw_color, swp->sw_uv.uv_u, 0, swp->sw_uv.uv_v );
+		if( swp->sw_reflect > 0 || swp->sw_transmit > 0 )
+			(void)rr_render( ap, pp, swp );
 		return(1);
 	}
 	/* u is left->right index, v is line number bottom->top */
@@ -578,6 +604,8 @@ char	*dp;
 			swp->sw_uv.uv_du, swp->sw_uv.uv_dv,
 			pp->pt_inseg->seg_stp->st_name );
 		VSET( swp->sw_color, 0, 1, 0 );
+		if( swp->sw_reflect > 0 || swp->sw_transmit > 0 )
+			(void)rr_render( ap, pp, swp );
 		return(1);
 	}
 
@@ -607,6 +635,9 @@ char	*dp;
 	if( rdebug&RDEBUG_LIGHT ) {
 		VPRINT("after", swp->sw_hit.hit_normal);
 	}
+
+	if( swp->sw_reflect > 0 || swp->sw_transmit > 0 )
+		(void)rr_render( ap, pp, swp );
 
 	return(1);
 }

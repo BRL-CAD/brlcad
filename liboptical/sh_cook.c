@@ -295,7 +295,12 @@ char	*dp;
 
 	swp->sw_refrac_index = ps->refrac_index;
 	swp->sw_extinction = ps->extinction;
-	if( swp->sw_xmitonly )  return(1);	/* done */
+	if( swp->sw_xmitonly )
+	{
+		if( swp->sw_reflect > 0 || swp->sw_transmit > 0 )
+			(void)rr_render( ap, pp, swp );
+		return(1);	/* done */
+	}
 
 	VMOVE( matcolor, swp->sw_color );
 
@@ -364,6 +369,9 @@ char	*dp;
 		VADD2( swp->sw_color, swp->sw_color, work );
 #endif
 	}
+	if( swp->sw_reflect > 0 || swp->sw_transmit > 0 )
+		(void)rr_render( ap, pp, swp );
+
 	return(1);
 }
 

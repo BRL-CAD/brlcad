@@ -137,6 +137,9 @@ char	*dp;
 		swp->sw_reflect = 0.0;
 		swp->sw_refrac_index = 1.0;
 		VSETALL( swp->sw_basecolor, 1.0 );
+
+		if( swp->sw_reflect > 0 || swp->sw_transmit > 0 )
+			(void)rr_render( ap, pp, swp );
 	}
 
 	return(1);
