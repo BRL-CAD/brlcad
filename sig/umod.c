@@ -21,7 +21,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"
@@ -56,6 +56,7 @@ double	val[256];		/* arguments to operations */
 unsigned short iobuf[BUFLEN];		/* input buffer */
 int mapbuf[65536];		/* translation buffer/lookup table */
 
+int
 get_args( argc, argv )
 register char **argv;
 {
