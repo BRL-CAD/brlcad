@@ -372,7 +372,26 @@ struct xray *rp;
 	fastf_t	t1, t2;
 	fastf_t	t5, t6;
 	fastf_t	a1, b1, c1;
-	fastf_t	d;
+	fastf_t	aa1, bb1, dd1, aa2, bb2, dd2;
+	fastf_t	rc1sav, rc2sav;
+
+	/*
+	 * Sphere special case
+	 */
+	if( (ell->ell_invsq[X] == ell->ell_invsq[Y])
+	 && (ell->ell_invsq[X] == ell->ell_invsq[Z]) ) {
+	 	cvp->crv_c1 = sqrt(ell->ell_invsq[X]);
+	 	cvp->crv_c2 = cvp->crv_c1;
+		/* any tangent direction */
+	 	rt_orthovec( cvp->crv_pdir, hitp->hit_normal );
+
+		if( VDOT( hitp->hit_normal, rp->r_dir ) > 0 )  {
+			/* ray strikes surface from inside; make curv negative */
+			cvp->crv_c1 = - cvp->crv_c1;
+			cvp->crv_c2 = - cvp->crv_c2;
+		}
+	 	return;
+	}
 
 	VSUB2( w4, hitp->hit_point, ell->ell_V );
 	aup = ell->ell_Au;
@@ -382,11 +401,12 @@ struct xray *rp;
 		fastf_t	*tup;
 		fastf_t	*iap, *ibp, *icp, *itp;
 		fastf_t	x0, y0, z0;
-		FAST fastf_t	c4;
+		FAST fastf_t	c4, a2, b2, c2;
 
 		iap = &ell->ell_invsq[X];
 		ibp = &ell->ell_invsq[Y];
 		icp = &ell->ell_invsq[Z];
+		/* find a coordinate system with non-zero z */
 		while(1)  {
 			x0 = VDOT( w4, aup );
 			y0 = VDOT( w4, bup );
@@ -402,72 +422,93 @@ struct xray *rp;
 			ibp = icp;
 			icp = itp;
 		}
-		c4 = (*icp)*(*icp);
-		t2 = 1.0 / ((*iap)*(*ibp)*z0*z0*z0);
-		fxx = -(c4*((*ibp) - y0*y0))*t2;
-		fyy = -(c4*((*iap) - x0*x0))*t2;
+		a2 = 1.0 / (*iap);
+		b2 = 1.0 / (*ibp);
+		c2 = 1.0 / (*icp);
+		c4 = c2 * c2;
+		t2 = 1.0 / (a2*b2*z0*z0*z0);
+		/* 1st and 2nd partials */
+		fx = -(c2*x0) / (a2*z0);
+		fy = -(c2*y0) / (b2*z0);
+		fxx = -(c4*(b2 - y0*y0))*t2;
+		fyy = -(c4*(a2 - x0*x0))*t2;
 		fxy = -(c4*x0*y0)*t2;
-		fx = -((*icp)*x0) / ((*iap)*z0);
-		fy = -((*icp)*y0) / ((*ibp)*z0);
 	}
 	e = 1.0 + fx*fx;
 	f = fx*fy;
 	g = 1.0 + fy*fy;
 	t1 = e + fy*fy;
-	t2 = 1.0 / (2.0*t1*sqrt(t1));
+	t2 = 2.0*t1*sqrt(t1);
+/*
 	t5 = sqrt( (g*fxx - e*fyy)*(g*fxx - e*fyy) +
 		4.0 * (g*fxy - f*fyy)*(e*fxy - f*fxx) );
+*/
+	/* XXX - t5 goes negative when we are nearly spherical */
+	t5 = (g*fxx - e*fyy)*(g*fxx - e*fyy) +
+		4.0 * (g*fxy - f*fyy)*(e*fxy - f*fxx);
+	if( t5 < 0 ) {
+		fprintf( stderr, "t5 Negative\n" );
+		VPRINT( "Ray origin", rp->r_pt );
+		VPRINT( "Ray dir", rp->r_dir );
+		VPRINT( "w4", w4 );
+		fprintf( stderr, "fx,fy,fxx,fyy,fxy = %e %e %e %e %e\n", fx, fy, fxx, fyy, fxy );
+		fprintf( stderr, "e,f,g = %e %e %e\n", e, f, g );
+		fprintf( stderr, "t3 = %e\n",  (g*fxx - e*fyy)*(g*fxx - e*fyy) );
+		fprintf( stderr, "t4 = %e\n",  4.0*(g*fxy - f*fyy)*(e*fxy - f*fxx) );
+		t5 = 0;
+	}
+	t5 = sqrt(t5);
 	t6 = g*fxx + e*fyy - 2.0*f*fxy;
 
-	if( (cvp->crv_c1 = (t6 + t5)*t2) < 0 )
+	rc1sav = (t6 - t5)/t2;
+	rc2sav = (t6 + t5)/t2;
+	if( (cvp->crv_c1 = rc1sav) < 0 )
 		cvp->crv_c1 = -cvp->crv_c1;
-	if( (cvp->crv_c2 = (t6 - t5)*t2) < 0 )
+	if( (cvp->crv_c2 = rc2sav) < 0 )
 		cvp->crv_c2 = -cvp->crv_c2;
 
-	a1 = 2.0*(g*fxy - f*fyy);
-	if( cvp->crv_c1 >= cvp->crv_c2 )
-		b1 = e*fyy - g*fxx + t5;
-	else
-		b1 = e*fyy - g*fxx - t5;
-	c1 = a1*fx + b1*fy;
-
-	d = sqrt(a1*a1 + b1*b1 + c1*c1);
-	if( NEAR_ZERO( d, 0.0001 ) )  {
-		if( cvp->crv_c1 >= cvp->crv_c2 )
-			a1 = g*fxx - e*fyy + t5;
-		else
-			a1 = g*fxx - e*fyy - t5;
-		b1 = 2.0*(e*fxy - f*fxx);
-		c1 = a1*fx + b1*fy;
-
-		d = sqrt(a1*a1 + b1*b1 + c1*c1);
-		if( NEAR_ZERO( d, 0.0001 ) )  {
-			/* Make an arbitrary choice of pdir */
-			a1 = 1.0;
-			b1 = 1.0;
-			c1 = fx + fy;
-		}
-	}
-	if( cvp->crv_c1 >= cvp->crv_c2 )  {
+	/* smaller magnitude curvature first */
+	if( cvp->crv_c1 > cvp->crv_c2 )  {
 		FAST fastf_t f;
 		f = cvp->crv_c2;
 		cvp->crv_c2 = cvp->crv_c1;
 		cvp->crv_c1 = f;
+		f = rc2sav;
+		rc2sav = rc1sav;
+		rc1sav = f;
 	}
+
+	/* construct 1st possible eigenvector */
+	aa1 = g*fxy - f*fyy;
+	bb1 = f*fxy - g*fxx + rc1sav*t2/2.0;
+	dd1 = aa1*aa1 + bb1*bb1;
+	/* construct 2nd possible eigenvector */
+	aa2 = f*fxy - e*fyy + rc1sav*t2/2.0;
+	bb2 = e*fxy - f*fxx;
+	dd2 = aa2*aa2 + bb2*bb2;
+	if( (dd1 >= dd2) && (dd1 > 0) ) {
+		a1 = aa1;
+		b1 = bb1;
+		c1 = aa1*fx + bb1*fy;
+	} else if( dd2 > 0 ) {
+		a1 = aa2;
+		b1 = bb2;
+		c1 = aa2*fx + bb2*fy;
+	} else {
+		/* point is umbilic, any tangent vector is OK */
+		a1 = 1.0;
+		b1 = 0.0;
+		c1 = fx;
+	}
+
+	/* transform coords back to usual system */
 	VCOMB3( cvp->crv_pdir, a1, aup, b1, bup, c1, cup );
 	VUNITIZE( cvp->crv_pdir );
 
-	if( VDOT( w4, hitp->hit_normal ) < 0 )  {
-		LOCAL vect_t temp;
-		rt_log("ell_curve(%s): normal flip?\n", stp->st_name);
-		VMOVE( temp, cvp->crv_pdir );
-		VCROSS( cvp->crv_pdir, hitp->hit_normal, temp);
-	} else {
-		FAST fastf_t f;
-		/* Why did we do it wrong to start with? */
-		f = -cvp->crv_c1;
-		cvp->crv_c1 = -cvp->crv_c2;
-		cvp->crv_c2 = f;
+	if( VDOT( hitp->hit_normal, rp->r_dir ) > 0 )  {
+		/* ray strikes surface from inside; make curv negative */
+		cvp->crv_c1 = - cvp->crv_c1;
+		cvp->crv_c2 = - cvp->crv_c2;
 	}
 }
 
