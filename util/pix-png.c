@@ -157,6 +157,8 @@ char	**argv;
 		PNG_COLOR_TYPE_RGB, PNG_INTERLACE_NONE,
 		PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT );
 
+	png_set_gAMA( png_p, info_p, 1.0 );
+
 	png_write_info( png_p, info_p );
 	png_write_image( png_p, rows );
 	png_write_end( png_p, NULL );
