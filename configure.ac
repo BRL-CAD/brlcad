@@ -155,39 +155,20 @@ BC_RESTORE_CLOBBERED([COPYING INSTALL], [misc])
 # automatically enable and load our configure cache file if available
 BC_CONFIG_CACHE([config.cache.${host_os}.${ac_hostname}])
 
-# define a function that can restart configure with a given set of flags
-# BC_RESTART_CONFIGURE(CONFIGURE, FLAGS)
-AC_DEFUN([BC_RETRY_CONFIGURE], [
-	if test "x$RETRY" = "x" ; then
-		RETRY=no
-		AC_MSG_WARN([Restarting configure with additional flags])
-		AC_MSG_NOTICE([Restarting with [$1] [$2]])
-		exec [$1] [$2] RETRY=no
-		exit $?
-	fi
-])
+dnl search several additional locations if configure happens to fail
+dnl to find a required component
+BC_RETRY_DIRECTORY([/usr/freeware], [freeware])
+BC_RETRY_DIRECTORY([/usr/local])
+BC_RETRY_DIRECTORY([/opt])
+BC_RETRY_DIRECTORY([/sw], [fink])
 
-# load extra search paths for common locations
-AC_DEFUN([BC_EXTRA_SEARCH_DIRS], [
-	if test "x$ul_PATH" != "x" ; then
-		PATH="$ul_PATH:$PATH"
-	fi
-	if test "x$sw_PATH" != "x" ; then
-		PATH="$sw_PATH:$PATH"
-	fi
-	if test "x$ul_CPPFLAGS" != "x" ; then
-		CPPFLAGS="$ul_CPPFLAGS $CPPFLAGS"
-	fi
-	if test "x$sw_CPPFLAGS" != "x" ; then
-		CPPFLAGS="$sw_CPPFLAGS $CPPFLAGS"
-	fi
-	if test "x$ul_LDFLAGS" != "x" ; then
-		LDFLAGS="$ul_LDFLAGS $LDFLAGS"
-	fi
-	if test "x$sw_LDFLAGS" != "x" ; then
-		LDFLAGS="$sw_LDFLAGS $LDFLAGS"
-	fi
-])
+AC_DEFINE(DM_X,1,[Display for X])
+AC_DEFINE(USE_MESA_GL,1,[Assume mesagl is always around (fixme)])
+AC_DEFINE(DM_OGL,1,[yeah, GL])
+GL_CFLAGS="-I/usr/X11R6/include"
+AC_SUBST(GL_CFLAGS)
+GL_LIBS="-L/usr/X11R6/lib -lGL"
+AC_SUBST(GL_LIBS)
 
 
 dnl ***********************
@@ -569,54 +550,6 @@ AC_MSG_CHECKING(whether to enable verbose compilation warnings)
 AC_MSG_RESULT($use_warnings)
 
 
-dnl XXX should only add to build paths when something fails that is
-dnl necessary additionally, a compiler might complain if /usr/local or
-dnl /sw are already in the system search path -- so need to try a
-dnl compile test..
-
-dnl autosearch /usr/local
-AC_MSG_CHECKING([for /usr/local])
-ul_CPPFLAGS=
-ul_LDFLAGS=
-ul_PATH=
-if test -d /usr/local/include ; then
-	if test -d /usr/local/lib ; then
-		AC_MSG_RESULT([found])
-		ul_CPPFLAGS=-I/usr/local/include
-		ul_LDFLAGS=-L/usr/local/lib
-		ul_PATH=/usr/local/bin
-	fi
-else
-	AC_MSG_RESULT([not found])
-fi
-
-dnl autosearch fink paths
-AC_MSG_CHECKING([for fink in /sw])
-sw_CPPFLAGS=
-sw_LDFLAGS=
-sw_PATH=
-if test -d /sw/include ; then
-	if test -d /sw/lib ; then
-		AC_MSG_RESULT([found])
-		sw_CPPFLAGS=-I/sw/include
-		sw_LDFLAGS=-L/sw/lib
-		sw_PATH=/sw/bin
-	fi
-else
-	AC_MSG_RESULT([not found])
-fi
-
-AC_DEFINE(DM_X,1,[Display for X])
-AC_DEFINE(USE_MESA_GL,1,[Assume mesagl is always around (fixme)])
-AC_DEFINE(DM_OGL,1,[yeah, GL])
-GL_CFLAGS="-I/usr/X11R6/include"
-AC_SUBST(GL_CFLAGS)
-GL_LIBS="-L/usr/X11R6/lib -lGL"
-AC_SUBST(GL_LIBS)
-
-LEX_CFLAGS="-Dyylex=cmd_nop"
-AC_SUBST(LEX_CFLAGS)
-
 # override the default autoconf cflags if user has not modified them
 if test "x$CFLAGS" = "x" ; then
 	# an unset CFLAGS var is set to "-O2 -g" during AC_PROG_CC, so
@@ -738,8 +671,7 @@ AC_DEFINE(EXTERN_STDOUT,,[Stdout is extern])
 if test "x$use_doxygen" = "xyes" ; then
 	AC_PATH_PROG(DOXYGEN, doxygen, , $PATH)
 	if test "x$DOXYGEN" = "x" ; then
-		BC_EXTRA_SEARCH_DIRS
-		BC_RETRY_CONFIGURE([$0], [CPPFLAGS="$CPPFLAGS" LDFLAGS="$LDFLAGS" PATH="$PATH"])
+		BC_RETRY_CONFIGURE([$0])
 		AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
 		AC_MSG_ERROR([*** Unable to find doxygen ***])
 	fi
@@ -1446,8 +1378,7 @@ if test "x$only_rts" != "xno" ; then
 	AC_MSG_CHECKING(if java seems to be available)
 	if test "x$with_java" = "xno" ; then
 		AC_MSG_RESULT(no)
-		BC_EXTRA_SEARCH_DIRS
-		BC_RETRY_CONFIGURE([$0], [CPPFLAGS="$CPPFLAGS" LDFLAGS="$LDFLAGS" PATH="$PATH"])
+		BC_RETRY_CONFIGURE([$0])
 		AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
 		AC_MSG_NOTICE([Try adding --with-jdk=/path/to/jdk to find jni.h])
 		AC_MSG_ERROR([*** Cannot locate jni.h for building librtserver ***])
@@ -1500,8 +1431,7 @@ if test "x$build_png" = "xyes" ; then
 else
 	if test "x$build_png" = "xno" ; then
 		if test "x$png_works" != "xyes" ; then
-			BC_EXTRA_SEARCH_DIRS
-			BC_RETRY_CONFIGURE([$0], [CPPFLAGS="$CPPFLAGS" LDFLAGS="$LDFLAGS" PATH="$PATH"])
+			BC_RETRY_CONFIGURE([$0])
 			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
 			AC_MSG_NOTICE([Try adding --enable-png-build])
 			AC_MSG_ERROR([*** Building libpng was disabled, yet no system png library was found ***])
@@ -1551,8 +1481,7 @@ if test "x$build_regex" = "xyes" ; then
 else
 	if test "x$build_regex" = "xno" ; then
 		if test "x$regex_works" != "xyes" ; then
-			BC_EXTRA_SEARCH_DIRS
-			BC_RETRY_CONFIGURE([$0], [CPPFLAGS="$CPPFLAGS" LDFLAGS="$LDFLAGS" PATH="$PATH"])
+			BC_RETRY_CONFIGURE([$0])
 			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
 			AC_MSG_NOTICE([Try adding --enable-regex-build])
 			AC_MSG_ERROR([*** Building libregex was disabled, yet no system regex was found ***])
@@ -1596,8 +1525,7 @@ if test "x$build_zlib" = "xyes" ; then
 else
 	if test "x$build_zlib" = "xno" ; then
 		if test "x$zlib_works" != "xyes" ; then
-			BC_EXTRA_SEARCH_DIRS
-			BC_RETRY_CONFIGURE([$0], [CPPFLAGS="$CPPFLAGS" LDFLAGS="$LDFLAGS" PATH="$PATH"])
+			BC_RETRY_CONFIGURE([$0])
 			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
 			AC_MSG_NOTICE([Try adding --enable-zlib-build])
 			AC_MSG_ERROR([*** Building libz was disabled, yet no system zlib compression was found ***])
@@ -1941,8 +1869,6 @@ AC_SUBST(SHLIB_LD)
 AC_SUBST(SHLIB_SUFFIX)
 AC_SUBST(STLIB_LD)
 AC_SUBST(SHLIB_LD_LIBS)
-AC_SUBST(CC_SEARCH_FLAGS)
-AC_SUBST(LD_SEARCH_FLAGS)
 TCL_LIB_FLAG='-ltcl8.4'
 AC_SUBST(TCL_LIB_FLAG)
 TCL_BUILD_LIB_SPEC='-L../../libtcl/.libs -ltcl8.4 -Wl,--rpath -Wl,${libdir}'
