@@ -982,7 +982,7 @@ char	**argv;
 /*
  *			F _ S O U R C E
  *
- *  Open a file and process the commands within.
+ *  Open a file/pipe and process the commands within.
  *
  *  argv[1] is the filename.
  *
@@ -992,16 +992,44 @@ f_source (argc, argv)
 int	argc;
 char	**argv;
 {
-    FILE	*fp;
-    char	*path;
+    char		*path;
+    int			pipe = 0;	/* Read from pipe (vs. file)? */
+    int			status;
+    FILE		*fp;
+    struct rt_vls	str;
 
-    if((fp = fopen(argv[1], "r")) == NULL)
+    if (*(path = *++argv) == '|')
+    {
+	pipe = 1;
+	rt_vls_init(&str);
+	while (isspace(*++path))
+	    ;
+	rt_vls_strcpy(&str, path);
+	while (--argc > 1)
+	{
+	    rt_vls_strcat(&str, " ");
+	    rt_vls_strcat(&str, *++argv);
+	}
+	path = rt_vls_addr(&str);
+    }
+
+    if ((pipe && ((fp = popen(path, "r")) == NULL))
+     || (!pipe && ((fp = fopen(path, "r")) == NULL)))
     {
 	(void) fprintf(stderr,
-	    "f_source: Cannot open command file %s\n", argv[1]);
+	    "f_source: Cannot open %s '%s'\n",
+	    pipe ? "pipe" : "command file", path);
 	return(CMD_BAD);
     }
     mged_source_file(fp);
-    fclose(fp);
+    if (pipe)
+    {
+	rt_vls_free(&str);
+	if (status = pclose(fp))
+	    (void) fprintf(stderr,
+		"f_source: Exit status of pipe: %d\n", status);
+    }
+    else
+	(void) fclose(fp);
     return(CMD_OK);
 }
