@@ -23,6 +23,7 @@ kitchensink_dirs = \
 	libdm \
 	libfb \
 	libfft \
+	libmultispectral \
 	liborle \
 	libpkg \
 	librtserver \
@@ -44,14 +45,17 @@ kitchensink_dirs = \
 	iges \
 	irprep \
 	jack \
+	java \
 	lgt \
 	mged \
 	mk \
 	nirt \
 	off \
 	patch \
+	proc-db \
 	remrt \
 	rt \
+	rttherm \
 	sample_applications \
 	sig \
 	tab \
