@@ -322,6 +322,28 @@ dllEntryPoint.$(OBJEXT): $(WIN_DIR)/dllEntryPoint.c
 .c.$(OBJEXT):
 	$(COMPILE) -c `@CYGPATH@ $<` -o $@
 
+tclAppInit.o: $(PLATFORM_DIR)/tclAppInit.c
+	$(COMPILE) -c `@CYGPATH@ $<` -o $@
+
+itk_cmds.o: $(GENERIC_DIR)/itk_cmds.c
+	$(COMPILE) -c `@CYGPATH@ $<` -o $@
+
+itk_option.o: $(GENERIC_DIR)/itk_option.c
+	$(COMPILE) -c `@CYGPATH@ $<` -o $@
+
+itk_archtype.o: $(GENERIC_DIR)/itk_archetype.c
+	$(COMPILE) -c `@CYGPATH@ $<` -o $@
+
+itk_util.o: $(GENERIC_DIR)/itk_util.c
+	$(COMPILE) -c `@CYGPATH@ $<` -o $@
+
+itkStubInit.o: $(GENERIC_DIR)/itkStubInit.c
+	$(COMPILE) -c `@CYGPATH@ $<` -o $@
+
+itkStubLib.o: $(GENERIC_DIR)/itkStubLib.c
+	$(COMPILE) -c `@CYGPATH@ $<` -o $@
+
+
 #========================================================================
 # End of user-definable section
 #========================================================================

@@ -329,6 +329,46 @@ itcl_ensemble.$(OBJEXT): $(GENERIC_DIR)/itcl_ensemble.c Makefile
 .c.$(OBJEXT):
 	$(COMPILE) -c `@CYGPATH@ $<` -o $@
 
+itclStubInit.o: $(GENERIC_DIR)/itclStubInit.c
+	$(COMPILE) -c `@CYGPATH@ $<` -o $@
+
+itclStubLib.o: $(GENERIC_DIR)/itclStubLib.c
+	$(COMPILE) -c `@CYGPATH@ $<` -o $@
+
+itcl_bicmds.o: $(GENERIC_DIR)/itcl_bicmds.c
+	$(COMPILE) -c `@CYGPATH@ $<` -o $@
+
+itcl_class.o: $(GENERIC_DIR)/itcl_class.c
+	$(COMPILE) -c `@CYGPATH@ $<` -o $@
+
+itcl_cmds.o: $(GENERIC_DIR)/itcl_cmds.c
+	$(COMPILE) -c `@CYGPATH@ $<` -o $@
+
+itcl_ensemble.o: $(GENERIC_DIR)/itcl_ensemble.c
+	$(COMPILE) -c `@CYGPATH@ $<` -o $@
+
+itcl_linkage.o: $(GENERIC_DIR)/itcl_linkage.c
+	$(COMPILE) -c `@CYGPATH@ $<` -o $@
+
+itcl_methods.o: $(GENERIC_DIR)/itcl_methods.c
+	$(COMPILE) -c `@CYGPATH@ $<` -o $@
+
+itcl_migrate.o: $(GENERIC_DIR)/itcl_migrate.c
+	$(COMPILE) -c `@CYGPATH@ $<` -o $@
+
+itcl_objects.o: $(GENERIC_DIR)/itcl_objects.c
+	$(COMPILE) -c `@CYGPATH@ $<` -o $@
+
+itcl_parse.o: $(GENERIC_DIR)/itcl_parse.c
+	$(COMPILE) -c `@CYGPATH@ $<` -o $@
+
+itcl_util.o: $(GENERIC_DIR)/itcl_util.c
+	$(COMPILE) -c `@CYGPATH@ $<` -o $@
+
+tclAppInit.o: $(PLATFORM_DIR)/tclAppInit.c
+	$(COMPILE) -c `@CYGPATH@ $<` -o $@
+
+
 #========================================================================
 # End of user-definable section
 #========================================================================
