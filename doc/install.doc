@@ -37,18 +37,33 @@ Please, if anything seems wrong, pause to finish reading the directions.
 .sp .5
 .nf
 .ft B
-	mkdir /usr/brlcad/bin
+	mkdir /usr/brlcad
 	mkdir cad
 	cd cad
 	tar x                           # 'tar xo'   on System V
 	sh machinetype.sh -v
-	sh newbindir.sh            # non-production config only
 	sh setup.sh
 	sh gen.sh all
-	sh gen.sh install          # production config only
+	sh gen.sh install
 .ft R
 .fi
 .sp .5
+If you need to install the software somewhere other than /usr/brlcad,
+(given as /a/b/c in this example,) follow this procedure:
+.sp .5
+.nf
+.ft B
+	mkdir /a/b/c
+	mkdir cad
+	cd cad
+	tar x                           # 'tar xo'   on System V
+	sh machinetype.sh -v
+	sh newbindir.sh /a/b/c
+	sh setup.sh
+	sh gen.sh all
+	sh gen.sh install
+.ft R
+.fi
 .NH 1
 DISTRIBUTION TERMS
 .PP
