@@ -100,6 +100,9 @@ char	**argv;
 				case RT_VLIST_LINE_DRAW:
 					/* Draw line */
 					break;
+				case RT_VLIST_POLY_VERTNORM:
+					/* Ignore per-vertex normal */
+					break;
 				case RT_VLIST_POLY_START:
 					/* Start poly marker & normal, followed by POLY_MOVE */
 					ph.magic = POLYGON_HEADER_MAGIC;
