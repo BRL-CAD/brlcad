@@ -66,12 +66,15 @@ _LOCAL_ int	rem_open(),
 		rem_write(),
 		rem_rmap(),
 		rem_wmap(),
-		rem_window(),
-		rem_zoom(),
+		rem_view(),
+		rem_getview(),
+		rem_window(),		/* OLD */
+		rem_zoom(),		/* OLD */
 		rem_cursor(),
-		rem_scursor(),
+		rem_getcursor(),
 		rem_readrect(),
 		rem_writerect(),
+		rem_poll(),
 		rem_flush(),
 		rem_free(),
 		rem_help();
@@ -79,20 +82,19 @@ _LOCAL_ int	rem_open(),
 FBIO remote_interface = {
 	rem_open,
 	rem_close,
-	fb_null,			/* fb_reset */
 	rem_clear,
 	rem_read,
 	rem_write,
 	rem_rmap,
 	rem_wmap,
-	fb_null,			/* fb_viewport */
-	rem_window,
-	rem_zoom,
+	rem_view,
+	rem_getview,
 	fb_null,			/* fb_setcursor */
 	rem_cursor,
-	rem_scursor,
+	rem_getcursor,
 	rem_readrect,
 	rem_writerect,
+	rem_poll,
 	rem_flush,
 	rem_free,
 	rem_help,
@@ -102,7 +104,11 @@ FBIO remote_interface = {
 	"host:[dev]",
 	512,
 	512,
+	-1,				/* select fd */
 	-1,
+	1, 1,				/* zoom */
+	256, 256,			/* window center */
+	0, 0, 0,			/* cursor */
 	PIXEL_NULL,
 	PIXEL_NULL,
 	PIXEL_NULL,
@@ -496,6 +502,8 @@ int	x, y;
 {
 	char	buf[3*NET_LONG_LEN+1];
 	
+	fb_sim_cursor(ifp, mode, x, y);	/*XXX*/
+
 	/* Send Command */
 	(void)fbputlong( mode, &buf[0*NET_LONG_LEN] );
 	(void)fbputlong( x, &buf[1*NET_LONG_LEN] );
@@ -506,23 +514,41 @@ int	x, y;
 }
 
 /*
- *  32-bit longs: mode, x, y
  */
 _LOCAL_ int
-rem_scursor( ifp, mode, x, y )
+rem_getcursor( ifp, mode, x, y )
 FBIO	*ifp;
-int	mode;
-int	x, y;
+int	*mode;
+int	*x, *y;
 {
-	char	buf[3*NET_LONG_LEN+1];
-	
-	/* Send Command */
-	(void)fbputlong( mode, &buf[0*NET_LONG_LEN] );
-	(void)fbputlong( x, &buf[1*NET_LONG_LEN] );
-	(void)fbputlong( y, &buf[2*NET_LONG_LEN] );
-	pkg_send( MSG_FBSCURSOR, buf, 3*NET_LONG_LEN, PCP(ifp) );
-	pkg_waitfor( MSG_RETURN, buf, NET_LONG_LEN, PCP(ifp) );
-	return( fbgetlong( buf ) );
+	/* XXX */
+	return	fb_sim_getcursor(ifp, mode, x, y);
+}
+
+/*
+ */
+_LOCAL_ int
+rem_view( ifp, xcenter, ycenter, xzoom, yzoom )
+FBIO	*ifp;
+int	xcenter, ycenter;
+int	xzoom, yzoom;
+{
+	/* XXX */
+	fb_sim_view(ifp, xcenter, ycenter, xzoom, yzoom);
+	rem_window(ifp, xcenter, ycenter);
+	rem_zoom(ifp, xzoom, yzoom);
+}
+
+/*
+ */
+_LOCAL_ int
+rem_getview( ifp, xcenter, ycenter, xzoom, yzoom )
+FBIO	*ifp;
+int	*xcenter, *ycenter;
+int	*xzoom, *yzoom;
+{
+	/* XXX */
+	return fb_sim_getview(ifp, xcenter, ycenter, xzoom, yzoom);
 }
 
 /*
@@ -604,6 +630,13 @@ register ColorMap	*cmap;
 	}
 	pkg_waitfor( MSG_RETURN, buf, NET_LONG_LEN, PCP(ifp) );
 	return( fbgetlong( &buf[0*NET_LONG_LEN] ) );
+}
+
+_LOCAL_ int
+rem_poll( ifp )
+FBIO	*ifp;
+{
+	/* XXX */
 }
 
 _LOCAL_ int
