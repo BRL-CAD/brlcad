@@ -208,7 +208,8 @@ for LAST in \
 		html/ReleaseNotes html/ReleaseNotes/Rel5.0 \
 		html/ReleaseNotes/Rel5.0/Summary \
 	pro-engineer pro-engineer/text pro-engineer/sgi_mips4 \
-		pro-engineer/text/usascii sample_applications
+		pro-engineer/text/usascii sample_applications \
+		pro-engineer/text/usascii/resource
 do
 	if test ! -d $BRLCAD_ROOT/$LAST
 	then
