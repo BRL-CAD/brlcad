@@ -94,7 +94,7 @@ Cad_Main(argc, argv, appInitProc, interp)
 	 * Make command-line arguments available in the Tcl variables "argc"
 	 * and "argv".
 	 */
-	args = Tcl_Merge(argc-1, argv+1);
+	args = Tcl_Merge(argc-1, (const char * const *)argv+1);
 	Tcl_ExternalToUtfDString(NULL, args, -1, &argString);
 	Tcl_SetVar(interp, "argv", Tcl_DStringValue(&argString), TCL_GLOBAL_ONLY);
 	Tcl_DStringFree(&argString);
