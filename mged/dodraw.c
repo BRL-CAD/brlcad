@@ -299,6 +299,7 @@ int			id;
 /* XXX Grotesque, shameless hack */
 static int mged_do_not_draw_nmg_solids_during_debugging = 0;
 static int mged_draw_edge_uses=0;
+static struct rt_vlblock	*mged_draw_edge_uses_vbp;
 
 /*
  *			M G E D _ N M G _ R E G I O N _ E N D
@@ -368,13 +369,10 @@ union tree		*curtree;
 
 		drawH_part2( 0, &vhead, pathp, tsp, SOLID_NULL );
 
-		/* NMG region is no longer necessary, only vlist remains */
 		if( mged_draw_edge_uses )  {
-			/* Leave nmgregion intact for caller to use
-			 * via mged_nmg_model, kill off tree.
-			 */
-			curtree->tr_d.td_r = (struct nmgregion *)NULL;
+			nmg_vlblock_r(mged_draw_edge_uses_vbp, r, 1);
 		}
+		/* NMG region is no longer necessary, only vlist remains */
 		db_free_tree( curtree );
 		return (union tree *)NULL;
 	}
@@ -514,6 +512,10 @@ Please note that the NMG library used by this command is experimental.\n\
 A production implementation will exist in the maintenance release.\n");
 	  	mged_nmg_model = nmg_mm();
 		mged_initial_tree_state.ts_m = &mged_nmg_model;
+	  	if (mged_draw_edge_uses) {
+	  		rt_log( "Doing the edgeuse thang (-u)\n");
+	  		mged_draw_edge_uses_vbp = rt_vlblock_init();
+	  	}
 
 		i = db_walk_tree( dbip, argc, (CONST char **)argv,
 			ncpu,
@@ -523,13 +525,9 @@ A production implementation will exist in the maintenance release.\n");
 			nmg_booltree_leaf_tess );
 
 	  	if (mged_draw_edge_uses) {
-	  		struct rt_vlblock *vbp;
-
-	  		rt_log( "Doing the edgeuse thang\n");
-	  		vbp = rt_vlblock_init();
-			nmg_vlblock_m(vbp, mged_nmg_model, 1);
-	  		cvt_vlblock_to_solids(vbp, "_EDGEUSES_", 0);
-	  		rt_vlblock_free(vbp);
+	  		cvt_vlblock_to_solids(mged_draw_edge_uses_vbp, "_EDGEUSES_", 0);
+	  		rt_vlblock_free(mged_draw_edge_uses_vbp);
+			mged_draw_edge_uses_vbp = (struct rt_vlblock *)NULL;
  	  	}
 
 		/* Destroy NMG */
