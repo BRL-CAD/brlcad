@@ -19,7 +19,7 @@
  *  In order to use this sized chunk of memory with the shared memory
  *  system, it is necessary to "poke" your kernel to authorized this.
  *  In the shminfo structure, change shmmax from 0x10000 to 0x250000,
- *  shmall from 0x40 to 0x258 by running:
+ *  shmall from 0x40 to 0x258, and tcp spaces from 2000 to 4000 by running:
  *
  *	adb -w -k /vmunix
  *	shminfo?W 250000
@@ -442,9 +442,6 @@ int	width, height;
 
 	blanktime( 67 * 60 * 60L );	/* 1 hour blanking when fb open */
 
-	/* Build a linear "colormap" in case he wants to read it */
-	sgi_cmwrite( ifp, COLORMAP_NULL );
-
 	if( width <= 0 )
 		width = ifp->if_width;
 	if( height <= 0 )
@@ -462,7 +459,6 @@ int	width, height;
 		fb_log("sgi_dopen:  sgiinfo malloc failed\n");
 		return(-1);
 	}
-
 	SGI(ifp)->si_zoomflag = 0;
 	SGI(ifp)->si_xzoom = 1;
 	SGI(ifp)->si_yzoom = 1;
@@ -471,9 +467,14 @@ int	width, height;
 	SGI(ifp)->si_mode = MODE_RGB;
 	if( sgi_getmem(ifp) < 0 )
 		return(-1);
+
 	/* Setup default cursor.					*/
 	defcursor( 1, cursor );
 	curorigin( 1, 0, 0 );
+
+	/* Build a linear "colormap" in case he wants to read it */
+	sgi_cmwrite( ifp, COLORMAP_NULL );
+
 	return(0);
 }
 
