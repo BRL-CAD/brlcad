@@ -273,7 +273,6 @@ struct rt_arb_internal		*aip;
 	register int	i;
 	register int	j;
 	register int	k;
-	LOCAL fastf_t	f;
 	int		equiv_pts[8];
 
 	/*
@@ -869,7 +868,6 @@ CONST struct rt_tess_tol	*ttol;
 struct rt_tol			*tol;
 {
 	struct rt_arb_internal	*aip;
-	int			i;
 
 	RT_CK_DB_INTERNAL(ip);
 	aip = (struct rt_arb_internal *)ip->idb_ptr;

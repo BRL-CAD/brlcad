@@ -78,14 +78,6 @@ register struct rt_i *rtip;
 	int	nu_ncells;		/* # cells along one axis */
 	int	nu_sol_per_cell;	/* avg # solids per cell */
 	int	nu_max_ncells;		/* hard limit on nu_ncells */
-	struct boxnode	nu_xbox;
-	struct boxnode	nu_ybox;
-	struct boxnode	nu_zbox;
-	vect_t		xmin, xmax;	/* bounds of x slice */
-	vect_t		ymin, ymax;	/* bounds of y slice of x slice */
-	vect_t		zmin, zmax;	/* bounds of z slice of y of x */
-	struct histogram nu_hist_cellsize;
-	int		xp, yp, zp;
 	int	i;
 
 	rtip->rti_CutHead.bn.bn_type = CUT_BOXNODE;
@@ -219,7 +211,7 @@ if(rt_g.debug&DEBUG_CUT)  rt_log("\nnu_ncells=%d, nu_sol_per_cell=%d, nu_max_nce
 		struct histogram	*shp = &start_hist[i];
 		struct histogram	*ehp = &end_hist[i];
 		int	hindex = 0;
-		int	epos;
+/*		int	epos; */
 		int	axi = 0;	/* nu_axis index */
 
 		if( shp->hg_min != ehp->hg_min )  rt_bomb("cut_it: hg_min error\n");
@@ -531,7 +523,6 @@ int		depth;
 	double	offcenter[3];
 	int	best;
 	double	bestoff;
-	int	i;
 
 	for( axis = X; axis <= Z; axis++ )  {
 #if 0

@@ -48,7 +48,6 @@ int	root;
 {
 	register struct animate **headp;
 	struct directory	*dp;
-	register int i;
 
 	/* Could validate an_type here */
 
@@ -207,7 +206,6 @@ int		argc;
 char		**argv;
 {
 	struct db_tree_state	ts;
-	struct db_full_path	path;
 	struct animate		*anp;
 	int	i;
 	int	at_root = 0;
