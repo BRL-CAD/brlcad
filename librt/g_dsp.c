@@ -3162,11 +3162,11 @@ rt_dsp_plot( vhead, ip, ttol, tol )
 
 
 #define MOVE(_pt) \
-	MAT4X3PNT(m_pt, dsp_ip->dsp_stom, s_pt); \
+	MAT4X3PNT(m_pt, dsp_ip->dsp_stom, _pt); \
 	RT_ADD_VLIST( vhead, m_pt, BN_VLIST_LINE_MOVE )
 
 #define DRAW(_pt) \
-	MAT4X3PNT(m_pt, dsp_ip->dsp_stom, s_pt); \
+	MAT4X3PNT(m_pt, dsp_ip->dsp_stom, _pt); \
 	RT_ADD_VLIST( vhead, m_pt, BN_VLIST_LINE_DRAW )
 
 
