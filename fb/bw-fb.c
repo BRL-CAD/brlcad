@@ -1,5 +1,5 @@
 /*
- *		B W - F B . C
+ *			B W - F B . C
  *
  * Write a black and white (.bw) image to the framebuffer.
  * From an 8-bit/pixel, pix order file (i.e. Bottom UP, left to right).
@@ -36,7 +36,7 @@ extern int	optind;
 FBIO	*fbp;
 
 char	ibuf[MAXSCAN];		/* Allow us to see parts of big files */
-Pixel	obuf[MAXSCAN];
+RGBpixel obuf[MAXSCAN];
 
 int	height;				/* input height */
 int	width;				/* input width */
@@ -53,8 +53,8 @@ FILE *infp;
 
 char	usage[] = "\
 Usage: bw-fb [-h -i -c -r -g -b]\n\
-	[-x file_xoff] [-y file_yoff] [-X scr_xoff] [-Y scr_yoff]\n\
-	[-s squaresize] [-W width] [-H height] [file.pix]\n";
+	[-x scr_xoff] [-y scr_yoff] [-X file_xoff] [-Y file_yoff]\n\
+	[-s squaresize] [-W width] [-H height] [file.bw]\n";
 
 get_args( argc, argv )
 register char **argv;
@@ -83,16 +83,16 @@ register char **argv;
 			blueflag = 1;
 			break;
 		case 'x':
-			file_xoff = atoi(optarg);
-			break;
-		case 'y':
-			file_yoff = atoi(optarg);
-			break;
-		case 'X':
 			scr_xoff = atoi(optarg);
 			break;
-		case 'Y':
+		case 'y':
 			scr_yoff = atoi(optarg);
+			break;
+		case 'X':
+			file_xoff = atoi(optarg);
+			break;
+		case 'Y':
+			file_yoff = atoi(optarg);
 			break;
 		case 's':
 			/* square size */
@@ -135,6 +135,7 @@ main( argc, argv )
 int argc; char **argv;
 {
 	register int	x, y, n;
+	int	xout, yout;		/* number of sceen output lines */
 
 	height = width = 512;		/* Defaults */
 
@@ -159,11 +160,18 @@ int argc; char **argv;
 		exit( 3 );
 	}
 
+	xout = fb_getwidth(fbp) - scr_xoff;
+	if( xout < 0 ) xout = 0;
+	if( xout > width ) xout = width;
+	yout = fb_getheight(fbp) - scr_yoff;
+	if( yout < 0 ) yout = 0;
+	if( yout > height ) yout = height;
+
 	if( clear ) fb_clear(fbp, PIXEL_NULL);
 
-	if( file_yoff != 0 ) fseek( infp, file_yoff*width*height, 1 );
+	if( file_yoff != 0 ) fseek( infp, file_yoff*width, 1 );
 
-	for( y = scr_yoff; y < height; y++ )  {
+	for( y = scr_yoff; y < scr_yoff + yout; y++ ) {
 		if( file_xoff != 0 )
 			fseek( infp, file_xoff, 1 );
 		n = fread( &ibuf[0], sizeof( char ), width-file_xoff, infp );
@@ -175,24 +183,24 @@ int argc; char **argv;
 		if( redflag == 0 || greenflag == 0 || blueflag == 0 ) {
 			if( inverse )
 				n = fb_read( fbp, scr_xoff, fb_getheight(fbp)-1-y,
-					&obuf[0], width );
+					obuf, xout );
 			else
-				n = fb_read( fbp, scr_xoff, y, &obuf[0], width );
+				n = fb_read( fbp, scr_xoff, y, obuf, xout );
 			if( n < 0 )  break;
 		}
 		for( x = 0; x < width; x++ ) {
 			if( redflag )
-				obuf[x].red   = ibuf[x];
+				obuf[x][RED] = ibuf[x];
 			if( greenflag )
-				obuf[x].green = ibuf[x];
+				obuf[x][GRN] = ibuf[x];
 			if( blueflag )
-				obuf[x].blue  = ibuf[x];
+				obuf[x][BLU] = ibuf[x];
 		}
 		if( inverse )
 			fb_write( fbp, scr_xoff, fb_getheight(fbp)-1-y,
-				&obuf[0], width );
+				obuf, xout );
 		else
-			fb_write( fbp, scr_xoff, y, &obuf[0], width );
+			fb_write( fbp, scr_xoff, y, obuf, xout );
 	}
 
 	fb_close( fbp );
