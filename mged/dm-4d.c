@@ -240,7 +240,7 @@ Ir_open()
 
 	/* Start out with the usual window */
 	foreground();
-	prefposition( 376, 1276, 50+12, 1012 );
+	prefposition( 376, 376+900, 112, 112+900 );
 	if( (gr_id = winopen( "BRL MGED" )) == -1 )  {
 		printf( "No more graphics ports available.\n" );
 		return	-1;
