@@ -151,6 +151,8 @@ char	**argv;
 	  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 	  bu_vls_free(&tmp_vls);
 	}
+
+	color_soltab();
 	dmp->dmr_colorchange(dmp);
 	dmaflag = 1;
 
