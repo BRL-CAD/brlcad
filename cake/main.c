@@ -434,6 +434,13 @@ build_cppargv()
 	}
 
 	/* Trudge through all the possibilities */
+	if( strcmp( buf, "fbsd" ) == 0 ) {
+		/* GNU compiler */
+		cppargv[cppargc++] = new_name("/usr/bin/cpp");
+		cppargv[cppargc++] = new_name("-E");
+		cppargv[cppargc++] = new_name("-traditional");
+		goto out;
+	}
 	if( strcmp( buf, "vax" ) == 0 )  {
 		/* VAX 11/780, mircoVAX, etc. */
 		cppargv[cppargc++] = new_name("cc");
