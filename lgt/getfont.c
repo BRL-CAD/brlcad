@@ -13,7 +13,18 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 /* 
 	getfont.c - Load a new font by reading in the header and directory.
  */ 
+
+#include "conf.h"
+
 #include <stdio.h>
+#include <assert.h>
+
+#include "machine.h"
+#include "vmath.h"
+#include "raytrace.h"
+#include "fb.h"
+#include "./hmenu.h"
+#include "./lgt.h"
 #include "./extern.h"
 #include "./font.h"
 
