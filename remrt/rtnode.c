@@ -626,6 +626,8 @@ char *buf;
 
 	/* Copy values from command line options into rtip */
 	rtip->useair = use_air;
+	rtip->rti_space_partition = space_partition;
+	rtip->rti_nu_gfactor = nu_gfactor;
 	if( rt_dist_tol > 0 )  {
 		rtip->rti_tol.dist = rt_dist_tol;
 		rtip->rti_tol.dist_sq = rt_dist_tol * rt_dist_tol;
