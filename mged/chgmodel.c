@@ -57,10 +57,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./solid.h"
 #include "./dm.h"
 
-extern void	perror();
-extern int	atoi(), execl(), fork(), nice(), wait();
-extern long	time();
-extern char	*strcat();
 extern char	*strchr();
 
 void	aexists();
@@ -950,7 +946,7 @@ char	**argv;
 	}
 
 	if( db_ident( dbip, title, dbip->dbi_localunit ) < 0 )
-		printf("error\n");
+		printf("Error: unable to change database title\n");
 	dmaflag = 1;
 }
 
