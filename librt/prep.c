@@ -367,11 +367,46 @@ struct soltab		*stp;
 	return(0);			/* OK */
 }
 
+/*			R T _ I N I T _ R E S O U R C E
+ *
+ *  initialize memory resources.
+ *	This routine should initialize all the same resources
+ *	that rt_free_resource() deallocates.
+ */
+void
+rt_init_resource( resp )
+struct resource *resp;
+{
+	RT_CK_RESOURCE(resp);
+
+	if( !BU_LIST_UNINITIALIZED( &resp->re_seg ) )
+		BU_LIST_INIT( &resp->re_seg )
+
+	if( !BU_PTBL_TEST( &resp->re_seg_blocks ) )
+		bu_ptbl_init( &resp->re_seg_blocks, 64, "re_seg_blocks ptbl" );
+
+	if( !BU_LIST_UNINITIALIZED( &resp->re_parthead ) )
+		BU_LIST_INIT( &resp->re_parthead )
+
+	if( !BU_LIST_UNINITIALIZED( &resp->re_solid_bitv ) )
+		BU_LIST_INIT( &resp->re_solid_bitv )
+
+	if( !BU_LIST_UNINITIALIZED( &resp->re_region_ptbl ) )
+		BU_LIST_INIT( &resp->re_region_ptbl )
+
+	if( !BU_LIST_UNINITIALIZED( &resp->re_nmgfree ) )
+		BU_LIST_INIT( &resp->re_nmgfree )
+
+	resp->re_boolstack = NULL;
+	resp->re_boolslen = 0;
+}
+
 /*
  *			R T _ F R E E _ R E S O U R C E
  *
  *  Deallocate the per-cpu "private" memory resources.
  *	segment freelist
+ *	hitmiss freelist for NMG raytracer
  *	partition freelist
  *	solid_bitv freelist
  *	region_ptbl freelist
@@ -398,6 +433,16 @@ struct resource	*resp;
 			bu_free( (genptr_t)(*spp), "struct seg" );
 		}
 		bu_ptbl_free( &resp->re_seg_blocks );
+	}
+
+	/* The "struct hitmiss' guys are individually malloc()ed */
+	if( !BU_LIST_UNINITIALIZED( &resp->re_nmgfree ) )  {
+		struct hitmiss *hitp;
+		while( BU_LIST_WHILE( hitp, hitmiss, &resp->re_nmgfree ) )  {
+			NMG_CK_HITMISS(hitp);
+			BU_LIST_DEQUEUE( (struct bu_list *)hitp );
+			bu_free( (genptr_t)hitp, "struct hitmiss" );
+		}
 	}
 
 	/* The 'struct partition' guys are individually malloc()ed */
