@@ -40,6 +40,7 @@ static char RCSrayg3[] = "@(#)$Header$ (BRL)";
 
 #include "machine.h"
 #include "vmath.h"
+#include "rtstring.h"
 #include "raytrace.h"
 #include "./material.h"
 #include "./ext.h"
@@ -49,9 +50,9 @@ static char RCSrayg3[] = "@(#)$Header$ (BRL)";
 #define	MM2IN	0.03937008		/* mm times MM2IN gives inches */
 
 extern double	mat_radtodeg;
+extern int	npsw;			/* number of worker PSWs to run */
 
 int		use_air = 1;		/* Handling of air in librt */
-int		using_mlib = 0;		/* Material routines NOT used */
 
 /* Viewing module specific "set" variables */
 struct structparse view_parse[] = {
@@ -107,6 +108,10 @@ char *file, *obj;
 
 	if(rdebug & RDEBUG_RAYPLOT) {
 		plotfp = fopen("rtg3.pl", "w");
+		if( npsw > 1 )  {
+			rt_log("Note: writing rtg3.pl file can only be done using only 1 processor\n");
+			npsw = 1;
+		}
 	}
 
 
@@ -220,6 +225,8 @@ register struct partition *PartHeadp;
 	fastf_t			dcorrection = 0; /* RT to GIFT dist corr */
 	int			card_count;	/* # comp. on this card */
 	char			*fmt;		/* printf() format string */
+	struct rt_vls		str;
+	char			buf[128];	/* temp. sprintf() buffer */
 
 	if( pp == PartHeadp )
 		return(0);		/* nothing was actually hit?? */
@@ -228,6 +235,10 @@ register struct partition *PartHeadp;
 	comp_count = 0;
 	for( pp=PartHeadp->pt_forw; pp!=PartHeadp; pp=pp->pt_forw )
 		comp_count++;
+
+	/* Set up variable length string, to buffer this shotline in */
+	rt_vls_init( &str );
+	rt_vls_extend( &str, 80 * (comp_count+1) );
 
 	/*
 	 *  GIFT format wants grid coordinates, which are the
@@ -252,13 +263,6 @@ register struct partition *PartHeadp;
 		h = ap->a_x * MAGNITUDE(dx_model);
 		v = ap->a_y * MAGNITUDE(dy_model);
 	}
-
-	/* Single-thread through the printf()s.
-	 * COVART will accept non-sequential ray data provided the
-	 * ray header and its associated data are not separated.  CAVEAT:
-	 * COVART will not accept headers out of sequence.
-	 */
-	RES_ACQUIRE( &rt_g.res_syscall );
 
 	/*
 	 *  In RT, rays are launched from the plain of the screen,
@@ -298,12 +302,13 @@ register struct partition *PartHeadp;
 	if( rt_perspective > 0 )  {
 		ae_vec( &azimuth, &elevation, ap->a_ray.r_dir );
 	}
-	fprintf(outfp, SHOT_FMT,
+	sprintf(buf, SHOT_FMT,
 		hcen * MM2IN, vcen * MM2IN,
 		h * MM2IN, v * MM2IN,
 		comp_count,
 		dfirst * MM2IN, dlast * MM2IN,
 		azimuth, elevation );
+	rt_vls_strcat( &str, buf );
 
 	/* loop here to deal with individual components */
 	card_count = 0;
@@ -405,7 +410,7 @@ register struct partition *PartHeadp;
 		 *  a leading space in front of the first component.
 		 */
 		if( card_count == 0 )  {
-			putc( ' ', outfp );
+			rt_vls_strcat( &str, " " );
 		}
 		comp_thickness *= MM2IN;
 		/* Check thickness fields for format overflow */
@@ -413,14 +418,15 @@ register struct partition *PartHeadp;
 			fmt = "%4d%6.1f%5.1f%5.1f%1d%5.0f";
 		else
 			fmt = "%4d%6.2f%5.1f%5.1f%1d%5.1f";
-		fprintf(outfp, fmt,
+		sprintf(buf, fmt,
 			region_id,
 			comp_thickness,
 			in_obliq, out_obliq,
 			air_id, air_thickness*MM2IN );
+		rt_vls_strcat( &str, buf );
 		card_count++;
 		if( card_count >= 3 )  {
-			putc( '\n', outfp );
+			rt_vls_strcat( &str, "\n" );
 			card_count = 0;
 		}
 
@@ -430,8 +436,9 @@ register struct partition *PartHeadp;
 		 * Portions of a ray passing through air within the
 		 * model are represented in blue, while portions 
 		 * passing through a solid are assigned green.
+		 * This will always be done single CPU,
+		 * to prevent output garbling.  (See view_init).
 		 */
-
 		if(rdebug & RDEBUG_RAYPLOT) {
 			vect_t     inpt;
 			vect_t     outpt;
@@ -460,11 +467,23 @@ register struct partition *PartHeadp;
 		 *  but neither COVART II nor COVART III require it,
 		 *  so just end the line here.
 		 */
-		putc( '\n', outfp );
+		rt_vls_strcat( &str, "\n" );
 	}
+
+	/* Single-thread through file output.
+	 * COVART will accept non-sequential ray data provided the
+	 * ray header and its associated data are not separated.  CAVEAT:
+	 * COVART will not accept headers out of sequence.
+	 */
+	RES_ACQUIRE( &rt_g.res_syscall );
+
+	fputs( rt_vls_addr( &str ), outfp );
 
 	/* End of single-thread region */
 	RES_RELEASE( &rt_g.res_syscall );
+
+	/* Release vls storage */
+	rt_vls_free( &str );
 
 	return(0);
 }
