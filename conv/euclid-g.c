@@ -410,6 +410,7 @@ struct rt_wdb *fpout;
 	build_groups( fpout );
 }
 
+#if 0
 static void
 add_shells_to_db( fpout, shell_count, shells, reg_id )
 struct rt_wdb *fpout;
@@ -490,6 +491,7 @@ int reg_id;
 
 	bu_ptbl_ins( &groups[group_id] , (long *)reg_name );
 }
+#endif
 
 /*
  *	R e a d _ E u c l i d _ R e g i o n
@@ -1063,11 +1065,11 @@ FILE	*fp;
 int	*lst, *ni, *nv;
 struct vlist	*vert;
 {
-	fastf_t	num_points, x, y, z, a, b, c, d;
+	double	num_points, x, y, z, a, b, c, d;
 	int	i, j, k, facet_type;
 
 	/* Description of record. */
-	fscanf(fp, "%d %*lf %*lf %lf", &facet_type, &num_points);
+	fscanf(fp, "%d %*f %*f %lf", &facet_type, &num_points);
 	*ni = (int)num_points;
 
 	if( debug )

@@ -160,6 +160,7 @@ genptr_t		client_data;
 	return( (union tree *)NULL );
 }
 
+#if 0
 /* Routine to identify external/void shells
  *	Marks external shells with a +1 in the flags array
  *	Marks void shells with a -1 in the flags array
@@ -315,6 +316,7 @@ CONST struct bn_tol *ttol;
 		}
 	}
 }
+#endif
 
 /*	Routine to write an nmgregion in the TANKILL format */
 static void
