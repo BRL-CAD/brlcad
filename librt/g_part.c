@@ -152,19 +152,8 @@
  *
  *  Note that the normal vector produced above will not have unit length.
  *
- *  THE END PLATES.
+ *  THE HEMISPHERES.
  *
- *  If Dz' == 0, line L' is parallel to the end plates, so there is no hit.
- *
- *  Otherwise, the line L' hits the bottom plate with k = (0 - Pz') / Dz',
- *  and hits the top plate with k = (1 - Pz') / Dz'.
- *
- *  The solution W' is within the end plate IFF
- *
- *	Wx'**2 + Wy'**2 <= 1.0
- *
- *  The normal for a hit on the bottom plate is -Hunit, and
- *  the normal for a hit on the top plate is +Hunit.
  */
 #ifndef lint
 static char RCSpart[] = "@(#)$Header$ (BRL)";
@@ -616,9 +605,23 @@ out:
 		hits[1] = hits[0];		/* struct copy */
 		hitp++;
 	} else if( hitp > &hits[2] )  {
-		bu_log("rt_part_shot(%s): %d hits? surf0=%d\n",
-			stp->st_name, hitp - &hits[0],
-			hits[0].hit_surfno );
+		/* Particle is convex, take maximum extent. */
+		/* XXX Remove printing after testing is complete */
+		struct bu_vls	str;
+		bu_vls_init(&str);
+		bu_vps_printf(&str, "rt_part_shot(%s): %d hits\n",
+			stp->st_name, hitp - &hits[0] );
+		rt_pr_hitarray_vls( &str, "unsorted particle", hits, hitp - &hits[0] );
+
+		/* Sort, take max and min values */
+		rt_hitsort( hits, hitp - &hits[0] );
+		rt_pr_hitarray_vls( &str, "sorted particle", hits, hitp - &hits[0] );
+
+		bu_log("%s", bu_vls_addr(&str));
+		bu_vls_free(&str);
+
+		/* [0] is minimum, make [1] be maximum */
+		hits[1] = hitp[-1];	/* struct copy */
 	}
 
 	if( hits[0].hit_dist < hits[1].hit_dist )  {
