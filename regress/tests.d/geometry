@@ -97,12 +97,12 @@ arb8_IN_ARGS="50 -50 -50 50 50 -50 50 50 50 50 -50 50 -50 -50 -50 -50 50 -50 -50
 arb8_DB_ARGS="V1 {50 -50 -50} V2 {50 50 -50} V3 {50 50 50} V4 {50 -50 50} V5 {-50 -50 -50} V6 {-50 50 -50} V7 {-50 50 50} V8 {-50 -50 50}"
 
 #
-# Arbitrary Regular Polyhedron with Arbitrary number of Faces (arbn) Arguments
+# (arbn) Arguments
 # 
 # in args =>
 #
-arbn_IN_ARGS="8 1 0 0 50 -1 0 0 50 0 1 0 50 0 -1 0 50 0 0 1 50 0 0 -1 50 0.57735 0.57735 0.57735 50 -0.57735 -0.57735 -0.57735 50"
-arbn_DB_ARGS="N 8 P { {1 0 0 50} {-1 0 0 50} {0 1 0 50} {0 -1 0 50} {0 0 1 50} {0 0 -1 50} {0.57735 0.57735 0.57735 50} {-0.57735 -0.57735 -0.57735 50}}"
+arbn_IN_ARGS=""
+arbn_DB_ARGS=""
 
 #
 # (ars) Arguments
@@ -320,10 +320,11 @@ tor_DB_ARGS="V { 0 0 0 } H { 1 0 0 } r_a 50 r_h 25"
 #
 # (vol) Arguments
 # 
-# in args =>
+# in args => file xNcells yNcells zNcells lower_threshold upper_threshold
+#            xvoxelsize yvoxelsize zvoxelsize
 #
-vol_IN_ARGS=""
-vol_DB_ARGS=""
+vol_IN_ARGS="vol.bw 32 32 8 128 255 10 10 10"
+vol_DB_ARGS="file vol.bw w 32 n 32 d 8 lo 128 hi 255 size {10 10 10} mat {1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1}"
 
 #
 # (xxx) Arguments
@@ -349,12 +350,43 @@ for PRIM in $PRIMITIVES ; do
         warn "Primitive ${PRIM} has no arguments set, skipping"
     else
 
-        #
-        # If the solid is an ebm, create the bitmap to extrude
-	#
 	if [ "x${PRIM}" = "xebm" ]; then
+            #
+            # If the solid is an ebm, create the bitmap to extrude
+	    #
 	    gencolor -r205 0 16 32 64 128 | \
                 dd of=ebm.bw bs=1024 count=1 >/dev/null 2>&1
+	fi
+
+	if [ "x${PRIM}" = "xvol" ]; then
+	    #
+	    # Create a 32x32x8 element voxel map by
+	    # concatenating 8 bw files.
+	    #
+	    gencolor -r205 0 16 32 64 128 | \
+                dd of=tmp.bw bs=1024 count=1 >/dev/null 2>&1
+	    cat tmp.bw > vol.bw
+	    gencolor -r205 16 32 64 128 0 | \
+                dd of=tmp.bw bs=1024 count=1 >/dev/null 2>&1
+	    cat tmp.bw >> vol.bw
+	    gencolor -r205 32 64 128 0 16 | \
+                dd of=tmp.bw bs=1024 count=1 >/dev/null 2>&1
+	    cat tmp.bw >> vol.bw
+	    gencolor -r205 64 128 0 16 32 | \
+                dd of=tmp.bw bs=1024 count=1 >/dev/null 2>&1
+	    cat tmp.bw >> vol.bw
+	    gencolor -r205 128 0 16 32 64 | \
+                dd of=tmp.bw bs=1024 count=1 >/dev/null 2>&1
+	    cat tmp.bw >> vol.bw
+	    gencolor -r205 0 16 32 64 128 | \
+                dd of=tmp.bw bs=1024 count=1 >/dev/null 2>&1
+	    cat tmp.bw >> vol.bw
+	    gencolor -r205 16 32 64 128 0 | \
+                dd of=tmp.bw bs=1024 count=1 >/dev/null 2>&1
+	    cat tmp.bw >> vol.bw
+	    gencolor -r205 32 64 128 0 16 | \
+                dd of=tmp.bw bs=1024 count=1 >/dev/null 2>&1
+	    cat tmp.bw >> vol.bw
 	fi
 
         log ""
