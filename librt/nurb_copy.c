@@ -70,7 +70,7 @@ CONST struct edge_g_cnurb * crv;
 		n->k.knots[i] = crv->k.knots[i];
 
 	for( i = 0; i < crv->c_size * 
-		RT_NRUB_EXTRACT_COORDS(crv->pt_type); i++)
+		RT_NURB_EXTRACT_COORDS(crv->pt_type); i++)
 		n->ctl_points[i] = crv->ctl_points[i];
 
 	return (struct edge_g_cnurb *) n;
