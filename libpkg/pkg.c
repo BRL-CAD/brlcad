@@ -502,8 +502,8 @@ register struct pkg_conn *pc;
 	PKG_CK(pc);
 	(void)close(pc->pkc_fd);
 	pc->pkc_fd = -1;		/* safety */
-	if( pc->pkc_buf )
-		(void)free(pc->pkc_buf);
+	if( pc->pkc_buf != (char *)0 )
+		fprintf(stderr, "pkg_close(x%x):  buffer clash\n", pc->pkc_buf);
 	pc->pkc_buf = (char *)0;	/* safety */
 	pc->pkc_magic = 0;		/* safety */
 	(void)free( (char *)pc );
@@ -844,6 +844,10 @@ again:
 		if( pkg_block( pc ) < 0 )
 			return(-1);
 
+	if( pc->pkc_buf != (char *)0 )  {
+		fprintf( stderr, "pkg_waitfor:  buffer clash\n");
+		return(-1);
+	}
 	if( pkg_gethdr( pc, buf ) < 0 )  return(-1);
 	if( pc->pkc_type != type )  {
 		/* A message of some other type has unexpectedly arrived. */
@@ -896,6 +900,9 @@ again:
 		(pc->pkc_errlog)(errbuf);
 		return(-1);
 	}
+	pc->pkc_buf = (char *)0;
+	pc->pkc_curpos = (char *)0;
+	pc->pkc_left = -1;		/* safety */
 	return( pc->pkc_len );
 }
 
@@ -907,7 +914,8 @@ again:
  *  implementing the synchronous portions of a query/reply exchange.
  *  All messages of any other type are processed by pkg_get() and
  *  handed off to the handler for that type message in pkg_switch[].
- *  The buffer to contain the actual message is acquired via malloc().
+ *  The buffer to contain the actual message is acquired via malloc(),
+ *  and the caller must free it.
  *
  *  Returns pointer to message buffer, or NULL.
  */
@@ -917,6 +925,7 @@ int type;
 register struct pkg_conn *pc;
 {
 	register int i;
+	register char *tmpbuf;
 
 	PKG_CK(pc);
 	do  {
@@ -924,6 +933,10 @@ register struct pkg_conn *pc;
 		if( pc->pkc_left >= 0 )
 			if( pkg_block(pc) < 0 )
 				return((char *)0);
+		if( pc->pkc_buf != (char *)0 )  {
+			fprintf( stderr, "pkg_bwaitfor:  buffer clash\n");
+			return((char *)0);
+		}
 		if( pkg_gethdr( pc, (char *)0 ) < 0 )
 			return((char *)0);
 	}  while( pc->pkc_type != type );
@@ -938,7 +951,12 @@ register struct pkg_conn *pc;
 			"pkg_bwaitfor:  pkg_mread %d gave %d\n", pc->pkc_len, i );
 		(pc->pkc_errlog)(errbuf);
 	}
-	return( pc->pkc_buf );
+	tmpbuf = pc->pkc_buf;
+	pc->pkc_buf = (char *)0;
+	pc->pkc_curpos = (char *)0;
+	pc->pkc_left = -1;		/* safety */
+	/* User must free the buffer */
+	return( tmpbuf );
 }
 
 /*
