@@ -26,6 +26,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "machine.h"
 #include "externs.h"	/* needed for things like strtod() */
+#include "bu.h"
 /* 
 #include "vmath.h"
 
@@ -158,4 +159,21 @@ CONST char *s;
 	}
 
 	return v;
+}
+/*	B U _ M M _ C V T
+ *
+ *  Used primarily as a hooked function for bu_structparse tables
+ *  to allow input of floating point values in other units.
+ */
+void
+bu_mm_cvt( sdp, name, base, value )
+register CONST struct bu_structparse	*sdp;	/* structure description */
+register CONST char			*name;	/* struct member name */
+char					*base;	/* begining of structure */
+CONST char				*value;	/* string containing value */
+{
+	register double *p = (double *)(base+sdp->sp_offset);
+
+	/* reconvert with optional units */
+	*p = rt_mm_value(value);
 }

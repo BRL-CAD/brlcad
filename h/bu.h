@@ -992,6 +992,9 @@ extern CONST char		bu_version[];
 BU_EXTERN(double bu_units_conversion, (CONST char *str) );
 BU_EXTERN(CONST char *bu_units_string, (CONST double mm) );
 BU_EXTERN(double bu_mm_value, (CONST char *s) );
+BU_EXTERN(void bu_mm_cvt, (register CONST struct bu_structparse	*sdp,
+		register CONST char *name,  char *base, CONST char *value) );
+
 
 
 
