@@ -141,18 +141,18 @@ struct region		*reg2;
 
 	RES_ACQUIRE( &rt_g.res_syscall );
 	pdv_3line( outfp, ihit, ohit );
-	RES_RELEASE( &rt_g.res_syscall );
 	noverlaps++;
+	RES_RELEASE( &rt_g.res_syscall );
+
+	rt_log( "OVERLAP %d\n", noverlaps );
 
 	if( !rpt_overlap ) {
-		rt_log("OVERLAP %d: %s\n",noverlaps,reg1->reg_name);
-		rt_log("OVERLAP %d: %s\n",noverlaps,reg2->reg_name);
-		rt_log("OVERLAP %d: depth %gmm\n",noverlaps,depth);
-		rt_log("OVERLAP %d: in_hit_point (%g,%g,%g) mm\n",
-			noverlaps,ihit[X],ihit[Y],ihit[Z],depth);
-		rt_log("OVERLAP %d: out_hit_point (%g,%g,%g) mm\n",
+		rt_log("OVERLAP %d: %s\nOVERLAP %d: %s\nOVERLAP %d: depth %gmm\nOVERLAP %d: in_hit_point (%g,%g,%g) mm\nOVERLAP %d: out_hit_point (%g,%g,%g) mm\n--------------------------------------------------\n",
+			noverlaps,reg1->reg_name,
+			noverlaps,reg2->reg_name,
+			noverlaps,depth,
+			noverlaps,ihit[X],ihit[Y],ihit[Z],depth,
 			noverlaps,ohit[X],ohit[Y],ohit[Z],depth);
-		rt_log("--------------------------------------------------\n");
 
 	/* If we report overlaps, don't print if already noted once.
 	 * Build up a linked list of known overlapping regions and compare 
@@ -161,6 +161,8 @@ struct region		*reg2;
 	} else {
 		struct overlap_list	*prev_ol = (struct overlap_list *)0;
 		struct overlap_list	*op;		/* overlap list */
+		struct overlap_list     *new_op;
+		new_op =(struct overlap_list *)rt_malloc(sizeof(struct overlap_list),"overlap list");
 
 		/* look for it in our list */
 		RES_ACQUIRE( &rt_g.res_syscall );
@@ -171,13 +173,14 @@ struct region		*reg2;
 				if( depth > op->maxdepth )
 					op->maxdepth = depth;
 				RES_RELEASE( &rt_g.res_syscall );
+				rt_free( (char *) new_op, "overlap list");
 				return	0;	/* already on list */
 			}
 		}
 
 		/* we have a new overlapping region pair */
 		overlap_count++;
-		op =(struct overlap_list *)rt_malloc(sizeof(struct overlap_list),"overlap list");
+		op = new_op;
 		if( olist )		/* previous entry exists */
 			prev_ol->next = op;
 		else
@@ -246,9 +249,9 @@ view_end() {
 		rt_log("%d overlapping region pairs\n", overlap_count);
 		op = olist;
 		while( op ) {
-			rt_log("\nOVERLAP: %d overlap%c detected--maximum depth is %gmm\n\t%s\n\t%s\n",
-			op->count, op->count>1 ? 's' : (char) 0, 
-			op->maxdepth, op->reg1, op->reg2);
+			rt_log("OVERLAP : %s\nOVERLAP : %s\n%d overlap%c detected, maximum depth is %gmm\n-------------------------------------------\n",
+			op->reg1, op->reg2,
+			op->count, op->count>1 ? 's' : (char) 0, op->maxdepth);
 			/* free struct */
 			nextop = op->next;
 			rt_free( (char *)op, "overlap_list" );
