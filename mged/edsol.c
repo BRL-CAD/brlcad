@@ -8987,7 +8987,7 @@ char **argv;
 
     pnto = Tcl_NewObj();
     /* insert solid name, type and parameters */
-    Tcl_AppendStringsToObj(pnto, illump->s_path[illump->s_last]->d_namep, " ",
+    Tcl_AppendStringsToObj(pnto, illump->s_path[(int)(illump->s_last)]->d_namep, " ",
 			   Tcl_GetStringFromObj(pto, (int *)0), (char *)0);
 
     Tcl_SetObjResult(interp, pnto);
@@ -9133,8 +9133,8 @@ char **argv;
   rt_db_free_internal( &es_int );
 
   /* read in a fresh copy */
-  if( rt_db_get_internal( &es_int, illump->s_path[illump->s_last], dbip, NULL ) < 0 )  {
-    Tcl_AppendResult(interp, "sedit_reset(", illump->s_path[illump->s_last]->d_namep,
+  if( rt_db_get_internal( &es_int, illump->s_path[(int)(illump->s_last)], dbip, NULL ) < 0 )  {
+    Tcl_AppendResult(interp, "sedit_reset(", illump->s_path[(int)(illump->s_last)]->d_namep,
 		     "):  solid import failure\n", (char *)NULL);
     return TCL_ERROR;				/* FAIL */
   }

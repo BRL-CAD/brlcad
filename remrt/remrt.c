@@ -1723,7 +1723,7 @@ struct timeval	*nowp;
 	register struct frame *fr;
 	register struct frame *fr2;
 	int		another_pass;
-	int		nxt_frame;
+	int		nxt_frame=0;
 	static int	scheduler_going = 0;	/* recursion protection */
 	int		ret;
 

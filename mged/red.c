@@ -323,7 +323,7 @@ char *line;
     while (isspace(name[--j]))
       name[j] = '\0';
 
-    if (relation != '+' && relation != 'u' & relation != '-') {
+    if (relation != '+' && relation != 'u' && relation != '-') {
       struct bu_vls tmp_vls;
 
       bu_vls_init(&tmp_vls);
@@ -976,7 +976,7 @@ checkcomb()
 	char line[MAXLINE];
 	char *ptr;
 	int region=(-1);
-	int id,air;
+	int id=0,air=0;
 	int rgb_valid;
 
 	if( (fp=fopen( red_tmpfil , "r" )) == NULL )
@@ -1152,7 +1152,7 @@ checkcomb()
 			while( isspace( name[--j] ) )
 				name[j] = '\0';
 
-			if( relation != '+' && relation != 'u' & relation != '-' )
+			if( relation != '+' && relation != 'u' && relation != '-' )
 			{
 			  struct bu_vls tmp_vls;
 
