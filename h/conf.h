@@ -321,7 +321,9 @@
 #	define	_KERNEL	1
 #endif
 
+#ifndef CPP_ONLY
 #include <sys/types.h>
+#endif
 
 #if SUNOS >= 52
 #	undef	_KERNEL
