@@ -919,6 +919,7 @@ cmd_setup()
 		    TCL_LINK_BOOLEAN);
 
 	/* Provide Tcl interfaces to the fundamental BRL-CAD libraries */
+	bu_tcl_setup( interp );
 	bn_tcl_setup( interp );
 	rt_tcl_setup( interp );
 
