@@ -102,12 +102,16 @@ char	**argv;
 		fprintf(stderr,"cmd: %s\n", buf );
 		ret = rt_do_cmd( 0, buf, cmdtab );
 		rt_free( buf, "cmd buf" );
-		if( ret < 0 )
-			break;
+		if( ret < 0 )  {
+			fprintf(stderr,"aborting\n");
+			exit(1);
+		}
 	}
 
+	fprintf(stderr,"performing interpolations\n");
 	go();
 
+	fprintf(stderr,"writing output\n");
 	output();
 
 	exit(0);	
@@ -162,6 +166,12 @@ char	**argv;
 
 	/* Now, create & allocate memory for each chan */
 	for( i = 1; i < nwords; i++ )  {
+		/* See if this column is not wanted */
+		if( argv[i+1][0] == '-' )  {
+			cnum[i] = -1;
+			continue;
+		}
+
 		sprintf( buf, "File '%s', Column %d", file, i );
 		if( (cnum[i] = create_chan( argv[i+1], nlines, buf )) < 0 )
 			return(-1);	/* abort */
@@ -172,6 +182,16 @@ char	**argv;
 	for( line=0; line < nlines; line++ )  {
 		buf[0] = '\0';
 		(void)fgets( buf, sizeof(buf), fp );
+		if( buf[0] == '#' )  {
+			line--;
+			nlines--;
+			for( i = 1; i < nwords; i++ )  {
+				if( cnum[i] < 0 )  continue;
+				chan[cnum[i]].c_ilen--;
+			}
+			continue;
+		}
+
 		i = rt_split_cmd( iwords, nwords+1, buf );
 		if( i != nwords )  {
 			fprintf(stderr,"File '%s', Line %d:  expected %d columns, got %d\n",
@@ -195,6 +215,7 @@ char	**argv;
 		 * and assign them to the channels indicated in cnum[]
 		 */
 		for( i=1; i < nwords; i++ )  {
+			if( cnum[i] < 0 )  continue;
 			if( sscanf( iwords[i], "%lf", &d ) != 1 )  {
 			    	fprintf(stderr,"File '%s', Line %d:  scanf failure on '%s'\n",
 			    		file, line, iwords[i] );
@@ -252,6 +273,7 @@ char	*itag;
 		}
 	}
 
+fprintf(stderr, "chan %d:  %s\n", n, itag );
 	chan[n].c_ilen = len;
 	chan[n].c_itag = rt_strdup( itag );
 	chan[n].c_ival = (fastf_t *)rt_malloc( len * sizeof(fastf_t), "c_ival");
@@ -433,13 +455,14 @@ go()
 {
 	int	ch;
 	struct chan	*chp;
-	fastf_t	*times;
+	fastf_t		*times;
 	register int	t;
 
 	times = (fastf_t *)rt_malloc( o_len*sizeof(fastf_t), "periodic times");
 
 	for( ch=0; ch < nchans; ch++ )  {
 		chp = &chan[ch];
+fprintf(stderr,"go: ch %d, len=%d\n", ch, chp->c_ilen);
 		if( chp->c_ilen <= 0 )
 			continue;
 
@@ -470,8 +493,8 @@ go()
 again:
 		switch( chp->c_interp )  {
 		default:
-			fprintf(stderr,"unknown interpolation type %d\n", chp->c_interp);
-			/* FALL THROUGH */
+			fprintf(stderr,"channel %d: unknown interpolation type %d\n", ch, chp->c_interp);
+			break;
 		case INTERP_LINEAR:
 			linear_interpolate( chp, times );
 			break;
@@ -544,6 +567,11 @@ register fastf_t	*times;
 	register int	t;		/* output time index */
 	register int	i;		/* input time index */
 
+	if( chp->c_ilen < 2 )  {
+		fprintf(stderr,"lienar_interpolate:  need at least 2 points\n");
+		return;
+	}
+
 	i = 0;
 	for( t=0; t<o_len; t++ )  {
 		/* Check for below initial time */
@@ -598,16 +626,16 @@ fastf_t			*times;
 	register int	i;
 	register int	t;
 
-	/* First, as a quick hack, do linear interpolation to fill in
-	 * values off the endpoints, in non-periodic case
-	 */
-	if( chp->c_periodic == 0 )
-		linear_interpolate( chp );
-
 	if(chp->c_ilen<3) {
 		fprintf(stderr,"spline: need at least 3 points\n");
 		goto bad;
 	}
+
+	/* First, as a quick hack, do linear interpolation to fill in
+	 * values off the endpoints, in non-periodic case
+	 */
+	if( chp->c_periodic == 0 )
+		linear_interpolate( chp, times );
 
 	if( chp->c_periodic && chp->c_ival[0] != chp->c_ival[chp->c_ilen-1] )  {
 		fprintf(stderr,"spline: endpoints don't match, replacing final data value\n");
