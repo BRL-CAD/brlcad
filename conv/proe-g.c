@@ -1194,9 +1194,8 @@ top:
 			{
 				tree_list = (struct rt_tree_array *)bu_calloc( node_count,
 					sizeof( struct rt_tree_array ), "tree list" );
-				actual_count = (struct rt_tree_array *)db_flatten_tree( tree_list, comb->tree, OP_UNION ) - tree_list;
-				if( actual_count > node_count )  bu_bomb("Rm_nulls() array overflow!");
-				if( actual_count < node_count )  bu_log("WARNING Rm_nulls() array underflow! %d < %d", actual_count, node_count);
+				actual_count = (struct rt_tree_array *)db_flatten_tree( tree_list, comb->tree, OP_UNION, 0 ) - tree_list;
+				BU_ASSERT_LONG( actual_count, ==, node_count );
 			}
 			else
 			{
