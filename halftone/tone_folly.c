@@ -2,10 +2,10 @@
 static char rcsid[] = "$Header$";
 #endif
 #include <stdio.h>
-#include "./rndnum.h"
+#include "msr.h"
 extern int Debug;
 extern int Levels;
-extern int RandomFlag;
+extern struct msr_unif *RandomFlag;
 /*
  * Dispersed-Dot ordered Dither at 0 degrees (n=4)
  * 	From page 135 of Digital Halftoning.
@@ -35,7 +35,7 @@ static unsigned char	ordered[4][4] = {
  *	RandomFlag - should we toss some random numbers?
  *
  * Calls:
- *	Random() - to get random numbers from -0.5 to 0.5
+ *	MSR_UNIF_DOUBLE() - to get random numbers from -0.5 to 0.5
  *
  * Method:
  *	straight-forward.
@@ -44,6 +44,9 @@ static unsigned char	ordered[4][4] = {
  *	Christopher T. Johnson	- 90/03/21
  *
  * $Log$
+ * Revision 2.2  90/04/13  01:46:26  cjohnson
+ * Change include "*.h" to "./*.h"
+ * 
  * Revision 2.1  90/04/13  01:23:21  cjohnson
  * First Relese.
  * 
@@ -69,7 +72,7 @@ int	New;
 	register int threshold = 16*ordered[ X % 4][ Y % 4];
 
 	if (RandomFlag) {
-		threshold += Random(0)*63;
+		threshold += MSR_UNIF_DOUBLE(RandomFlag)*63;
 	}
 	return ((Pix*Levels + threshold)/255);
 }

@@ -2,10 +2,10 @@
 static char rcsid[] = "$Header$";
 #endif
 #include <stdio.h>
-#include "./rndnum.h"
+#include "msr.h"
 extern int Debug;
 extern int Levels;
-extern int RandomFlag;
+extern struct msr_unif *RandomFlag;
 #define THRESHOLD	127
 /*	tone_simple	thresh hold method
  *
@@ -26,7 +26,7 @@ extern int RandomFlag;
  *	RandomFlag - Use random threshold flag.
  *
  * Calls:
- *	Random	- return a random number between -0.5 and 0.5;
+ *	MSR_UNIF_DOUBLE	- return a random number between -0.5 and 0.5;
  *
  * Method:
  *	straight-forward.
@@ -35,6 +35,9 @@ extern int RandomFlag;
  *	Christopher T. Johnson	- 90/03/21
  *
  * $Log$
+ * Revision 2.2  90/04/13  01:46:29  cjohnson
+ * Change include "*.h" to "./*.h"
+ * 
  * Revision 2.1  90/04/13  01:23:24  cjohnson
  * First Relese.
  * 
@@ -61,7 +64,7 @@ int	New;
 {
 	register int threshold;
 	if (RandomFlag) {
-		threshold = THRESHOLD + Random(0)*127;
+		threshold = THRESHOLD + MSR_UNIF_DOUBLE(RandomFlag)*127;
 	} else {
 		threshold = THRESHOLD;
 	}

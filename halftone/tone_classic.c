@@ -2,10 +2,10 @@
 static char rcsid[] = "$Header$";
 #endif
 #include <stdio.h>
-#include "./rndnum.h"
+#include "msr.h"
 extern int Debug;
 extern int Levels;
-extern int RandomFlag;
+extern struct msr_unif *RandomFlag;
 /*
  * Clustered-Dot ordered dither at 45 degrees.
  *	Page 86 of Digital Halftoning.
@@ -48,6 +48,9 @@ static unsigned char	ordered[6][6] = {
  *	Christopher T. Johnson	- 90/03/21
  *
  * $Log$
+ * Revision 2.2  90/04/13  01:46:14  cjohnson
+ * Change include "*.h" to "./*.h"
+ * 
  * Revision 2.1  90/04/13  01:23:15  cjohnson
  * First Relese.
  * 
@@ -77,7 +80,7 @@ int	New;
 {
 	register int threshold = 14*ordered[( X + 3) % 6][ Y % 6];
 	if (RandomFlag) {
-		threshold += Random(0)*63;
+		threshold += MSR_UNIF_DOUBLE(RandomFlag)*63;
 	}
 	return ((Pix*Levels + threshold)/255);
 }

@@ -2,11 +2,11 @@
 static char rcsid[] = "$Header$";
 #endif
 #include <stdio.h>
-#include "./rndnum.h"
+#include "msr.h"
 extern int Debug;
 extern int Levels;
 extern int width;
-extern int RandomFlag;
+extern struct msr_unif *RandomFlag;
 
 /*	tone_floyd	floyd-steinberg dispersed error method.
  *
@@ -28,7 +28,7 @@ extern int RandomFlag;
  *	RandomFlag - Should we toss random numbers?
  *
  * Calls:
- *	Random()	Returns a random double between -0.5 and 0.5.
+ *	MSR_UNIF_DOUBLE()	Returns a random double between -0.5 and 0.5.
  *
  * Method:
  *	straight-forward.
@@ -37,6 +37,9 @@ extern int RandomFlag;
  *	Christopher T. Johnson	- 90/03/21
  *
  * $Log$
+ * Revision 2.2  90/04/13  01:46:20  cjohnson
+ * Change include "*.h" to "./*.h"
+ * 
  * Revision 2.1  90/04/13  01:23:18  cjohnson
  * First Relese.
  * 
@@ -67,10 +70,10 @@ int	New;
 
 	if (RandomFlag) {
 		register double val;
-		val = Random(0)*1.0/16.0; /* slowest */
+		val = MSR_UNIF_DOUBLE(RandomFlag)*1.0/16.0; /* slowest */
 		w1 = 1.0/16.0 + val;
 		w3 = 3.0/16.0 - val;
-		val = Random(0)*5.0/16.0; /* slowest */
+		val = MSR_UNIF_DOUBLE(RandomFlag)*5.0/16.0; /* slowest */
 		w5 = 5.0/16.0 + val;
 		w7 = 7.0/16.0 - val;
 	} else {
