@@ -210,7 +210,7 @@ DEVNAME_writerect( ifp, xmin, ymin, width, height, pp )
 FBIO	*ifp;
 int	xmin, ymin;
 int	width, height;
-CONST unsinged char	*pp;
+CONST unsigned char	*pp;
 {
 	return( width*height );
 }
