@@ -166,7 +166,6 @@ int
 rt_ck_vlist( vhead )
 CONST struct bu_list	*vhead;
 {
-	register int		i;
 	register struct bn_vlist	*vp;
 	int			npts = 0;
 
