@@ -3,6 +3,7 @@
 # Authors -
 #	Glenn Durfee
 #	Carl Nuzman
+#	Lee A. Butler
 #
 # Source -
 #	The U. S. Army Ballistic Research Laboratory
@@ -467,6 +468,28 @@ proc vmax { u v } {
 proc hdivide { h } {
     return [vscale [lrange $h 0 2] [expr 1.0/[lindex $h 3]]]
 }
+
+proc quat_from_vrot {r v} {
+	set rot [expr $r * 0.5]
+	set q [vscale [vunitize $v] [expr sin($rot)]]
+	lappend q [expr cos($rot)]
+	return $q
+}
+
+proc quat_from_rot {r x y z} {
+	return [quat_from_vrot $r [list $x $y $z]]
+}
+
+proc quat_from_rot_deg {r x y z} {
+	global M_PI
+	return [quat_from_vrot [expr $r * ( $M_PI / 180.0 )] [list $x $y $z]]
+}
+
+proc quat_from_vrot_deg {r v} {
+	global M_PI
+	return [quat_from_vrot [expr $r * ($M_PI / 180.0) ] $v]
+}
+
 
 proc qadd2 { q r } {
     return [hadd2 $q $r]
