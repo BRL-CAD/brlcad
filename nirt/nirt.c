@@ -22,7 +22,11 @@ static char RCSid[] = "$Header$";
 
 /*	INCLUDES	*/
 #include <ctype.h>
-#include <string.h>
+#if BSD
+# include <strings.h>
+#else
+# include <string.h>
+#endif
 #include <stdio.h>
 #include <math.h>
 #include <machine.h>
