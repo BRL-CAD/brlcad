@@ -142,6 +142,8 @@ typedef struct bn_complex {
  * 4x4 Matrix math
  */
 
+/* XXX Why aren't these bn_mat_whatever ?? */
+
 extern CONST mat_t mat_identity;
 
 BU_EXTERN(void		mat_print, (CONST char *title, CONST mat_t m));
@@ -204,6 +206,79 @@ BU_EXTERN(void		mat_arb_rot, ( mat_t m, CONST point_t pt,
 BU_EXTERN(matp_t	mat_dup, (CONST mat_t	in));
 BU_EXTERN(int		mat_is_equal, (CONST mat_t a, CONST mat_t b, 
 					CONST struct bn_tol *tol));
+
+/*----------------------------------------------------------------------*/
+/* msr.c */
+/*
+ * Define data structures and constants for the "MSR" random number package.
+ *
+ * Also define a set of macros to access the random number tables
+ * and to limit the area/volume that a set of random numbers inhabit.
+ */
+
+#define BN_UNIF_MAGIC	12481632
+#define BN_GAUSS_MAGIC 512256128
+
+#define BN_CK_UNIF(_p) RT_CKMAG(_p, BN_UNIF_MAGIC, "msr_unif")
+#define BN_CK_GAUSS(_p) RT_CKMAG(_p, BN_GAUSS_MAGIC, "msr_gauss")
+
+struct bn_unif {
+	long	magic;
+	long	msr_seed;
+	int	msr_double_ptr;
+	double	*msr_doubles;
+	int	msr_long_ptr;
+	long	*msr_longs;
+};
+/*
+ * NOTE!!! The order of msr_gauss and msr_unif MUST match in the
+ * first three entries as msr_gauss is passed as a msr_unif in
+ * msr_gauss_fill.
+ */
+struct bn_gauss {
+	long	magic;
+	long	msr_gauss_seed;
+	int	msr_gauss_dbl_ptr;
+	double	*msr_gauss_doubles;
+	int	msr_gauss_ptr;
+	double	*msr_gausses;
+};
+
+BU_EXTERN(struct bn_unif *	bn_unif_init, (long setseed, int method));
+BU_EXTERN(long			bn_unif_long_fill, (struct bn_unif *p));
+BU_EXTERN(double		bn_unif_double_fill, (struct bn_unif *p));
+BU_EXTERN(struct bn_gauss *	bn_gauss_init, (long setseed, int method));
+BU_EXTERN(double		bn_gauss_fill, (struct bn_gauss *p));
+
+#define	BN_UNIF_LONG(_p)	\
+	 (((_p)->msr_long_ptr ) ? \
+		(_p)->msr_longs[--(_p)->msr_long_ptr] : \
+		bn_unif_long_fill(_p))
+#define BN_UNIF_DOUBLE(_p)	\
+	(((_p)->msr_double_ptr) ? \
+		(_p)->msr_doubles[--(_p)->msr_double_ptr] : \
+		bn_unif_double_fill(_p))
+
+#define BN_UNIF_CIRCLE(_p,_x,_y,_r) { \
+	do { \
+		(_x) = 2.0*BN_UNIF_DOUBLE((_p)); \
+		(_y) = 2.0*BN_UNIF_DOUBLE((_p)); \
+		(_r) = (_x)*(_x)+(_y)*(_y); \
+	} while ((_r) >= 1.0);  }
+
+#define	BN_UNIF_SPHERE(_p,_x,_y,_z,_r) { \
+	do { \
+		(_x) = 2.0*BN_UNIF_DOUBLE(_p); \
+		(_y) = 2.0*BN_UNIF_DOUBLE(_p); \
+		(_z) = 2.0*BN_UNIF_DOUBLE(_p); \
+		(_r) = (_x)*(_x)+(_y)*(_y)+(_z)*(_z);\
+	} while ((_r) >= 1.0) }
+
+#define	BN_GAUSS_DOUBLE(_p)	\
+	(((_p)->bn_gauss_ptr) ? \
+		(_p)->msr_gausses[--(_p)->bn_gauss_ptr] : \
+		bn_gauss_fill(_p))
+
 
 /*----------------------------------------------------------------------*/
 /* noise.c */
