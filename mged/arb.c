@@ -2,7 +2,7 @@
  *			A R B . C
  *
  * Functions -
- *	draw_arb	draw an ARB8
+ *	move_arb	move an ARB8
  *
  *  Author -
  *	Michael John Muuss
@@ -27,53 +27,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "db.h"
 
 #include "./dm.h"
-#include "./objdir.h"
+#include "raytrace.h"
 #include "./ged.h"
-
-#define FACE( valp, a, b, c, d ) \
-	ADD_VL( vhead, &valp[a*3], 0 ); \
-	ADD_VL( vhead, &valp[b*3], 1 ); \
-	ADD_VL( vhead, &valp[c*3], 1 ); \
-	ADD_VL( vhead, &valp[d*3], 1 );
-
-/*
- *  			D R A W _ A R B 8
- *
- * Draw an ARB8, which is represented as a vector
- * from the origin to the first point, and 7 vectors
- * from the first point to the remaining points.
- */
-void
-draw_arb8( origp, matp, vhead )
-struct solidrec *origp;
-register matp_t matp;
-struct vlhead	*vhead;
-{
-	register int i;
-	register dbfloat_t *ip;
-	register fastf_t *op;
-	static vect_t work;
-	static fastf_t	points[3*8];
-	
-	/*
-	 * Convert from vector to point notation for drawing.
-	 */
-	MAT4X3PNT( &points[0], matp, &origp->s_values[0] );
-
-	ip = &origp->s_values[1*3];
-	op = &points[1*3];
-	for( i=1; i<8; i++ )  {
-		VADD2( work, &origp->s_values[0], ip );
-		MAT4X3PNT( op, matp, work );
-		ip += 3;
-		op += ELEMENTS_PER_VECT;
-	}
-
-	FACE( points, 0, 1, 2, 3 );
-	FACE( points, 4, 0, 3, 7 );
-	FACE( points, 5, 4, 7, 6 );
-	FACE( points, 1, 5, 6, 2 );
-}
 
 void
 move_arb( sp, dp, mat )
