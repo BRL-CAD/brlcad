@@ -48,8 +48,13 @@ PATH=/bin:/usr/bin:/usr/5bin:$PATH
 ARG="$1"
 
 #  Base directory for the entire package.
-#  Modified by newbindir.sh as part of the installation process, if needed.
-BASEDIR=/usr/brlcad
+if test "$BRLCAD_BASEDIR" != ""
+then
+	BASEDIR=$BRLCAD_BASEDIR
+else
+	#  Modified by newbindir.sh as part of the installation process, if needed.
+	BASEDIR=/usr/brlcad
+fi
 
 if test -x /bin/uname -o -x /usr/bin/uname -o -x /usr/5bin/uname
 then
