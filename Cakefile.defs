@@ -77,8 +77,9 @@ set -S2 "/bin/sh"
  * If you only have one kind of machine, don't bother.		*
  *								*
  ****************************************************************/
-#undef NFS
-/* Place "#define NFS	1" here to enable NFS feature */
+
+/* #undef NFS */
+#define NFS	1
 
 /****************************************************************
  *								*
