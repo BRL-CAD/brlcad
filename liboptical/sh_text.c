@@ -43,6 +43,9 @@ extern int rr_render(struct application	*ap,
 		     struct shadework   *swp);
 extern struct region	env_region;		/* import from view.c */
 
+HIDDEN void	txt_transp_hook();
+HIDDEN void txt_source_hook();
+HIDDEN int txt_load_datasource();
 HIDDEN int	bwtxt_render();
 HIDDEN int	txt_setup(), txt_render();
 HIDDEN int	ckr_setup(), ckr_render();
@@ -51,7 +54,6 @@ HIDDEN void	bwtxtprint(), bwtxtfree();
 HIDDEN void	txt_print(), txt_free();
 HIDDEN void	ckr_print(), ckr_free();
 HIDDEN void	bmp_print(), bmp_free();
-HIDDEN void	txt_transp_hook();
 HIDDEN int tstm_render();
 HIDDEN int star_render();
 HIDDEN int envmap_setup();
@@ -87,21 +89,30 @@ struct mfuncs txt_mfuncs[] = {
 #define TXT_NAME_LEN 128
 struct txt_specific {
 	int	tx_transp[3];	/* RGB for transparency */
-	char	tx_file[TXT_NAME_LEN];	/* Filename */
+	/*	char	tx_file[TXT_NAME_LEN];	 Filename */
+	struct bu_vls tx_name;  /* name of object or file (depending on tx_datasrc flag) */
 	int	tx_w;		/* Width of texture in pixels */
 	int	tx_n;		/* Number of scanlines */
 	int	tx_trans_valid;	/* boolean: is tx_transp valid ? */
 	fastf_t	tx_scale[2];	/* replication factors in U, V */
 	int	tx_mirror;	/* flag: repetitions are mirrored */
-	struct bu_mapped_file	*mp;
+#define TXT_SRC_FILE 'f'
+#define TXT_SRC_OBJECT  'o'
+#define TXT_SRC_AUTO 0
+	char tx_datasrc; /* which type of datasource */
+	struct rt_binunif_internal *tx_binunifp;  /* db internal object when TXT_SRC_OBJECT */
+	struct bu_mapped_file	*tx_mp;    /* mapped file when TXT_SRC_FILE */
 };
 #define TX_NULL	((struct txt_specific *)0)
 #define TX_O(m)	offsetof(struct txt_specific, m)
 #define TX_AO(m)	bu_offsetofarray(struct txt_specific, m)
 
+
 struct bu_structparse txt_parse[] = {
 	{"%d",	1, "transp",	bu_offsetofarray(struct txt_specific, tx_transp),	txt_transp_hook },
-	{"%s",	TXT_NAME_LEN, "file", bu_offsetofarray(struct txt_specific, tx_file),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%S",	1, "file", TX_O(tx_name),		txt_source_hook },
+	{"%S",	1, "obj", TX_O(tx_name),		txt_source_hook },
+	{"%S",	1, "texture", TX_O(tx_name),	 BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",	1, "w",		TX_O(tx_w),		BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",	1, "n",		TX_O(tx_n),		BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",	1, "l",		TX_O(tx_n),		BU_STRUCTPARSE_FUNC_NULL }, /*compat*/
@@ -111,6 +122,27 @@ struct bu_structparse txt_parse[] = {
 	{"%d",	1, "m",		TX_O(tx_mirror),	BU_STRUCTPARSE_FUNC_NULL },
 	{"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL }
 };
+
+
+/* txt_datasource_hook() is used to automatically try to load a default texture
+ * datasource.  The type gets set to auto and the datasource is detected.  First
+ * the database is searched for a matching object, then a file on disk is
+ * looked up.  If neither is found, object name is left null so txt_setup() will
+ * fail.
+ */
+HIDDEN void txt_source_hook(const struct bu_structparse *ip, const char *sp_name, genptr_t base, char *p) {
+	struct txt_specific *textureSpecific = (struct txt_specific *)base;
+	if (strncmp(sp_name, "file", 4)==0) {
+		textureSpecific->tx_datasrc=TXT_SRC_FILE;
+	}
+	else if (strncmp(sp_name, "obj", 3)==0) {
+		textureSpecific->tx_datasrc=TXT_SRC_OBJECT;
+	}
+	else {
+		textureSpecific->tx_datasrc=TXT_SRC_AUTO;
+	}
+}
+
 
 /*
  *			T X T _ T R A N S P _ H O O K
@@ -134,6 +166,92 @@ char	*value;
 			__FILE__, __LINE__, name, txt_parse[0].sp_name);
 	}
 }
+
+
+/*
+ *	t x t _ l o a d _ d a t a s o u r c e
+ *
+ * This is a helper routine used in txt_setup() to load a texture either from
+ * a file or from a db object.  The resources are released in txt_free() 
+ * (there is no specific unload_datasource function).
+ */
+HIDDEN int txt_load_datasource(struct txt_specific *texture, struct db_i *dbInstance, const unsigned long int size) {
+	struct directory *dirEntry;
+
+	RT_CK_DBI(dbInstance);
+
+	if (texture==NULL) {
+		bu_bomb("ERROR: txt_load_datasource() received NULL arg (struct txt_specific *)\n");
+	}
+
+	bu_log("Loading texture %s [%S]...", texture->tx_datasrc==TXT_SRC_AUTO?"from auto-determined datasource":texture->tx_datasrc==TXT_SRC_OBJECT?"from a database object":texture->tx_datasrc==TXT_SRC_FILE?"from a file":"from an unknown source (ERROR)", &texture->tx_name);
+
+	/* if the source is auto or object, we try to load the object */
+	if ((texture->tx_datasrc==TXT_SRC_AUTO) || (texture->tx_datasrc==TXT_SRC_OBJECT)) {
+
+		/* see if the object exists */
+		if ( (dirEntry=db_lookup(dbInstance, bu_vls_addr(&texture->tx_name), LOOKUP_QUIET)) == DIR_NULL) {
+
+			/* unable to find the texture object */
+			if (texture->tx_datasrc!=TXT_SRC_AUTO) {
+				return -1;
+			}
+		}
+		else {
+			struct rt_db_internal *dbip=(struct rt_db_internal *)bu_malloc(sizeof(struct rt_db_internal), "txt_load_datasource");
+
+			RT_INIT_DB_INTERNAL(dbip);
+			RT_CK_DB_INTERNAL(dbip);
+			RT_CK_DIR(dirEntry);
+
+			/* the object was in the directory, so go get it */
+			if (rt_db_get_internal(dbip, dirEntry, dbInstance, NULL, NULL) <= 0) {
+				/* unable to load/create the texture database record object */
+				return -1;
+			}
+
+			RT_CK_DB_INTERNAL(dbip);
+			RT_CK_BINUNIF(dbip->idb_ptr);
+
+			texture->tx_binunifp=(struct rt_binunif_internal *)dbip->idb_ptr; /* make it so */
+
+			/* !!! need to release the "struct rt_db_internal" but NOT free the binunif */
+			rt_db_free_internal( dbip, (struct resource *)NULL );
+			// bu_free(dbip, "txt_load_datasource");
+
+			/* check size of object */
+			if (texture->tx_binunifp->count < size) {
+				bu_log("\ntxt_load_datasource() WARNING %S needs %d bytes, '%s' only has %d\n", texture->tx_name, size, texture->tx_binunifp->count);
+			} else if (texture->tx_binunifp->count > size) {
+				bu_log("\nWARNING: Binary object is larger than specified texture size\n\tBinary Object: %d pixels\n\tSpecified Texture Size: %d pixels\n...continuing to load using image subsection...", texture->tx_binunifp->count);
+			}
+		}
+	}
+
+	/* if we are auto and we couldn't find a database object match, or if source is explicitly a file 
+	 * then we load the file.
+	 */
+	if ( ( (texture->tx_datasrc==TXT_SRC_AUTO) && (texture->tx_binunifp==NULL) ) || (texture->tx_datasrc==TXT_SRC_FILE) ) {
+
+		texture->tx_mp = bu_open_mapped_file_with_path(dbInstance->dbi_filepath,	bu_vls_addr(&texture->tx_name), NULL);
+		
+		if ( texture->tx_mp==NULL )
+			return -1;				/* FAIL */
+
+		if (texture->tx_mp->buflen < size) {
+			bu_log("\ntxt_load_datasource() ERROR %S needs %d bytes, '%s' only has %d\n", texture->tx_name, size, texture->tx_mp->buflen);
+			return -1;
+		} else if (texture->tx_mp->buflen > size) {
+			bu_log("\nWARNING: Texture file size is larger than specified texture size\n\tInput File: %d pixels\n\tSpecified Texture Size: %d pixels\n...continuing to load using image subsection...", texture->tx_binunifp->count);
+		}
+		
+	}
+
+	bu_log("done.\n");
+
+	return 0;
+}
+
 
 /*
  *  			T X T _ R E N D E R
@@ -190,7 +308,9 @@ char	*dp;
 	 * If no texture file present, or if
 	 * texture isn't and can't be read, give debug colors
 	 */
-	if (tp->tx_file[0] == '\0' || !tp->mp )  {
+
+	if ((bu_vls_strlen(&tp->tx_name)<=0) || (!tp->tx_mp && !tp->tx_binunifp)) {
+		bu_log("WARNING: texture [%S] could not be read\n", &tp->tx_name);
 		VSET( swp->sw_color, uvc.uv_u, 0, uvc.uv_v );
 		if (swp->sw_reflect > 0 || swp->sw_transmit > 0 )
 			(void)rr_render( ap, pp, swp );
@@ -229,15 +349,26 @@ char	*dp;
 
 	if (rdebug & RDEBUG_SHADE )
 		bu_log( "\tdx = %d, dy = %d\n", dx, dy );
+
 	if (dx == 0 && dy == 0 )
 	{
 		/* No averaging necessary */
 
-		register unsigned char *cp;
+		register unsigned char *cp=NULL;
 
-		cp = ((unsigned char *)(tp->mp->buf)) +
-			(int)(ymin * (tp->tx_n-1)) * tp->tx_w * 3 +
-			(int)(xmin * (tp->tx_w-1)) * 3;
+		if (tp->tx_mp) {
+			cp = ((unsigned char *)(tp->tx_mp->buf)) +
+				(int)(ymin * (tp->tx_n-1)) * tp->tx_w * 3 +
+				(int)(xmin * (tp->tx_w-1)) * 3;
+		}
+		else if (tp->tx_binunifp) {
+			cp = ((unsigned char *)(tp->tx_binunifp->u.uint8)) +
+				(int)(ymin * (tp->tx_n-1)) * tp->tx_w * 3 +
+				(int)(xmin * (tp->tx_w-1)) * 3;
+		}
+		else {
+			bu_bomb("sh_text.c -- No texture data found\n");
+		}
 		r = *cp++;
 		g = *cp++;
 		b = *cp;
@@ -264,16 +395,14 @@ char	*dp;
 
 		r = g = b = 0.0;
 
-		if (rdebug & RDEBUG_SHADE )
-		{
+		if (rdebug & RDEBUG_SHADE ) {
 			bu_log( "\thit in texture space = (%g %g)\n", uvc.uv_u * (tp->tx_w-1), uvc.uv_v * (tp->tx_n-1) );
 			bu_log( "\t averaging from  (%g %g) to (%g %g)\n", xstart, ystart, xstop, ystop );
 			bu_log( "\tcontributions to average:\n" );
 		}
 
-		for( line = start_line ; line <= stop_line ; line++ )
-		{
-			register unsigned char *cp;
+		for( line = start_line ; line <= stop_line ; line++ ) {
+			register unsigned char *cp=NULL;
 			fastf_t line_factor;
 			fastf_t line_upper, line_lower;
 
@@ -284,29 +413,43 @@ char	*dp;
 			if (line_lower < ystart )
 				line_lower = ystart;
 			line_factor = line_upper - line_lower;
-			cp = ((unsigned char *)(tp->mp->buf)) +
-				line * tp->tx_w * 3 + (int)(xstart) * 3;
 
-			for( col = start_col ; col <= stop_col ; col++ )
-			{
+			if (tp->tx_mp) {
+				cp = ((unsigned char *)(tp->tx_mp->buf)) +
+					line * tp->tx_w * 3 + (int)(xstart) * 3;
+			}
+			else if (tp->tx_binunifp) {
+				cp = ((unsigned char *)(tp->tx_binunifp->u.uint8)) +
+					line * tp->tx_w * 3 + (int)(xstart) * 3;
+			}
+			else {
+				/* not reachable */
+				bu_bomb("sh_text.c -- Unable to read datasource\n");
+			}
+
+			for( col = start_col ; col <= stop_col ; col++ ) {
 				fastf_t col_upper, col_lower;
 
 				col_upper = col + 1.0;
-				if (col_upper > xstop )
-					col_upper = xstop;
+				if (col_upper > xstop )	col_upper = xstop;
 				col_lower = col;
-				if (col_lower < xstart )
-					col_lower = xstart;
+				if (col_lower < xstart ) col_lower = xstart;
+
 				cell_area = line_factor * (col_upper - col_lower);
 				tot_area += cell_area;
 
 				if (rdebug & RDEBUG_SHADE )
 					bu_log( "\t %d %d %d weight=%g (from col=%d line=%d)\n", *cp, *(cp+1), *(cp+2), cell_area, col, line );
 
+				//				bu_log("before increment cp=%d *cp=%d RGB (%d, %d, %d)\n", cp, *cp, r,g,b);
+
 				r += (*cp++) * cell_area;
 				g += (*cp++) * cell_area;
 				b += (*cp++) * cell_area;
+
+				//				bu_log("after increment\n");
 			}
+
 		}
 		r /= tot_area;
 		g /= tot_area;
@@ -316,6 +459,7 @@ char	*dp;
 	if (rdebug & RDEBUG_SHADE )
 		bu_log( " average: %g %g %g\n", r, g, b );
 #else
+
 	x = xmin * (tp->tx_w-1);
 	y = ymin * (tp->tx_n-1);
 	dx = (xmax - xmin) * (tp->tx_w-1);
@@ -330,8 +474,20 @@ char	*dp;
 	for( line=0; line<dy; line++ )  {
 		register unsigned char *cp;
 		register unsigned char *ep;
-		cp = ((unsigned char *)(tp->mp->buf)) +
-		     (y+line) * tp->tx_w * 3  +  x * 3;
+
+		if (tp->tx_mp) {
+			cp = ((unsigned char *)(tp->tx_mp->buf)) +
+				(y+line) * tp->tx_w * 3  +  x * 3;
+		}
+		else if (tp->tx_binunifp) {
+			cp = ((unsigned char *)(tp->tx_binunifp->u.unit8)) +
+				(y+line) * tp->tx_w * 3  +  x * 3;
+		}
+		else {
+			/* not reachable */
+			bu_bomb("sh_text.c -- Unable to read datasource\n");
+		}
+		
 		ep = cp + 3*dx;
 		while( cp < ep )  {
 			if (rdebug & RDEBUG_SHADE )
@@ -356,6 +512,7 @@ opaque:
 			r * bn_inv255,
 			g * bn_inv255,
 			b * bn_inv255 );
+
 		if (swp->sw_reflect > 0 || swp->sw_transmit > 0 )
 			(void)rr_render( ap, pp, swp );
 		return(1);
@@ -373,6 +530,9 @@ opaque:
 	 */
 	swp->sw_transmit = 1.0;
 	swp->sw_reflect = 0.0;
+
+	bu_log("leaving txt_render()\n");
+
 	if (swp->sw_reflect > 0 || swp->sw_transmit > 0 )
 		(void)rr_render( ap, pp, swp );
 	return(1);
@@ -410,7 +570,7 @@ char	*dp;
 	 * If no texture file present, or if
 	 * texture isn't and can't be read, give debug colors
 	 */
-	if (tp->tx_file[0] == '\0' || !tp->mp )  {
+	if ((bu_vls_strlen(&tp->tx_name)<=0) || (!tp->tx_mp && !tp->tx_binunifp) )  {
 		VSET( swp->sw_color, uvc.uv_u, 0, uvc.uv_v );
 		if (swp->sw_reflect > 0 || swp->sw_transmit > 0 )
 			(void)rr_render( ap, pp, swp );
@@ -463,10 +623,22 @@ char	*dp;
 	if (dy < 1 )  dy = 1;
 	bw = 0;
 	for( line=0; line<dy; line++ )  {
-		register unsigned char *cp;
+		register unsigned char *cp=NULL;
 		register unsigned char *ep;
-		cp = ((unsigned char *)(tp->mp->buf)) +
-		     (y+line) * tp->tx_w  +  x;
+		
+		if (tp->tx_mp) {
+			cp = ((unsigned char *)(tp->tx_mp->buf)) +
+				(y+line) * tp->tx_w  +  x;
+		}
+		else if (tp->tx_binunifp) {
+			cp = ((unsigned char *)(tp->tx_binunifp->u.uint8)) +
+				(y+line) * tp->tx_w  +  x;
+		}
+		else {
+			/* not reachable */
+			bu_bomb("sh_text.c -- Unable to read datasource\n");
+		}
+
 		ep = cp + dx;
 		while( cp < ep )  {
 			bw += *cp++;
@@ -500,14 +672,8 @@ opaque:
 /*
  *			T X T _ S E T U P
  */
-HIDDEN int
-txt_setup( rp, matparm, dpp, mfp, rtip )
-register struct region	*rp;
-struct bu_vls		*matparm;
-char			**dpp;
-const struct mfuncs	*mfp;
-struct rt_i             *rtip;  /* New since 4.4 release */
-{
+HIDDEN int 
+txt_setup( register struct region *rp, struct bu_vls *matparm, char **dpp, const struct mfuncs *mfp, struct rt_i *rtip ) {
 	register struct txt_specific *tp;
 	int		pixelbytes = 3;
 
@@ -515,45 +681,46 @@ struct rt_i             *rtip;  /* New since 4.4 release */
 	BU_GETSTRUCT( tp, txt_specific );
 	*dpp = (char *)tp;
 
-	tp->tx_file[0] = '\0';
+	bu_vls_init(&tp->tx_name);
+	/* !?!	tp->tx_name[0] = '\0';*/
+
+	/* defaults */
 	tp->tx_w = tp->tx_n = -1;
 	tp->tx_trans_valid = 0;
 	tp->tx_scale[X] = 1.0;
 	tp->tx_scale[Y] = 1.0;
 	tp->tx_mirror = 0;
+	tp->tx_datasrc = 0; /* source is auto-located by default */
+	tp->tx_binunifp = NULL;
+	tp->tx_mp = NULL;
+
+	/* load given values */
 	if (bu_struct_parse( matparm, txt_parse, (char *)tp ) < 0 )  {
 		bu_free( (char *)tp, "txt_specific" );
 		return(-1);
 	}
-	if (tp->tx_w < 0 )  tp->tx_w = 512;
-	if (tp->tx_n < 0 )  tp->tx_n = tp->tx_w;
 
-	if (tp->tx_trans_valid )
-		rp->reg_transmit = 1;
+	/* validate values */
+	if (tp->tx_w < 0 ) tp->tx_w = 512;
+	if (tp->tx_n < 0 ) tp->tx_n = tp->tx_w;
+	if (tp->tx_trans_valid ) rp->reg_transmit = 1;
+	BU_CK_VLS(&tp->tx_name);
+	if (bu_vls_strlen(&tp->tx_name)<=0) return -1; 
+	/*	!?! if (tp->tx_name[0] == '\0' )  return -1;	*//* FAIL, no file */
 
-	if (tp->tx_file[0] == '\0' )  return -1;	/* FAIL, no file */
+	if (strcmp( mfp->mf_name, "bwtexture" ) == 0 ) pixelbytes = 1;
 
-	tp->mp = bu_open_mapped_file_with_path(
-		rtip->rti_dbip->dbi_filepath,
-		tp->tx_file, NULL);
-
-	if (!(tp->mp) )
-		return -1;				/* FAIL */
-
-	/* Ensure file is large enough */
-	if (strcmp( mfp->mf_name, "bwtexture" ) == 0 )
-		pixelbytes = 1;
-	if (tp->mp->buflen < tp->tx_w * tp->tx_n * pixelbytes )  {
-		bu_log("\ntxt_setup() ERROR %s %s needs %d bytes, '%s' only has %d\n",
-			rp->reg_name,
-			mfp->mf_name,
-			tp->tx_w * tp->tx_n * pixelbytes,
-			tp->mp->name,
-			tp->mp->buflen );
-		return -1;				/* FAIL */
+	/* load the texture from its datasource */
+	if (txt_load_datasource(tp, rtip->rti_dbip, tp->tx_w * tp->tx_n * pixelbytes)<0) {
+		bu_log("\ntxt_setup() ERROR %s %s could not be loaded [source was %s]\n", rp->reg_name, tp->tx_name, tp->tx_datasrc==TXT_SRC_OBJECT?"object":tp->tx_datasrc==TXT_SRC_FILE?"file":"auto");
+		return -1;
 	}
-	if (rdebug & RDEBUG_SHADE )
+
+
+	if (rdebug & RDEBUG_SHADE ) {
+		bu_log("txt_setup: texture loaded!  type=%s name=%s\n", tp->tx_datasrc==TXT_SRC_AUTO?"auto":tp->tx_datasrc==TXT_SRC_OBJECT?"object":tp->tx_datasrc==TXT_SRC_FILE?"file":"unknown", bu_vls_addr(&tp->tx_name));
 		bu_struct_print("texture", txt_parse, (char *)tp);
+	}
 
 	return 1;				/* OK */
 }
@@ -575,10 +742,13 @@ HIDDEN void
 txt_free( cp )
 char *cp;
 {
-	struct txt_specific *tp =
-		(struct txt_specific *)cp;
+	struct txt_specific *tp =	(struct txt_specific *)cp;
 
-	if (tp->mp )  bu_close_mapped_file( tp->mp );
+	bu_vls_free(&tp->tx_name);
+	if (tp->tx_binunifp) rt_binunif_free( tp->tx_binunifp );
+	if (tp->tx_mp) bu_close_mapped_file( tp->tx_mp );
+	tp->tx_binunifp = GENPTR_NULL; /* sanity */
+	tp->tx_mp = GENPTR_NULL; /* sanity */
 	bu_free( cp, "txt_specific" );
 }
 
@@ -786,7 +956,7 @@ char	*dp;
 {
 	register struct txt_specific *tp =
 		(struct txt_specific *)dp;
-	unsigned char *cp;
+	unsigned char *cp=NULL;
 	fastf_t	pertU, pertV;
 	vect_t	y;		/* world coordinate axis vectors */
 	vect_t	u, v;		/* surface coord system vectors */
@@ -796,7 +966,7 @@ char	*dp;
 	 * If no texture file present, or if
 	 * texture isn't and can't be read, give debug color.
 	 */
-	if (tp->tx_file[0] == '\0' || !tp->mp )  {
+	if ( (bu_vls_strlen(&tp->tx_name)<=0) || (!tp->tx_mp && !tp->tx_binunifp) )  {
 		VSET( swp->sw_color, swp->sw_uv.uv_u, 0, swp->sw_uv.uv_v );
 		if (swp->sw_reflect > 0 || swp->sw_transmit > 0 )
 			(void)rr_render( ap, pp, swp );
@@ -823,8 +993,19 @@ char	*dp;
 	/* Find our RGB value */
 	i = swp->sw_uv.uv_u * (tp->tx_w-1);
 	j = swp->sw_uv.uv_v * (tp->tx_n-1);
-	cp = ((unsigned char *)(tp->mp->buf)) +
-	     (j) * tp->tx_w * 3  +  i * 3;
+
+	if (tp->tx_mp) {
+		cp = ((unsigned char *)(tp->tx_mp->buf)) +
+			(j) * tp->tx_w * 3  +  i * 3;
+	}
+	else if (tp->tx_binunifp) {
+		cp = ((unsigned char *)(tp->tx_binunifp->u.uint8)) +
+			(j) * tp->tx_w * 3  +  i * 3;
+	}
+	else {
+		/* not reachable */
+		bu_bomb("sh_text.c -- Unreachable code reached while reading datasource\n");
+	}
 	pertU = ((fastf_t)(*cp) - 128.0) / 128.0;
 	pertV = ((fastf_t)(*(cp+2)) - 128.0) / 128.0;
 
