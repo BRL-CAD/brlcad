@@ -18,7 +18,9 @@ static int scanbytes;			/* # of bytes of scanline */
 
 struct pixel outline[MAX_LINE];
 
-char usage[] = "Usage: pix-fb [-h] file.pix [width] [fr_offset] [fr_count]\n";
+int inverse = 0;			/* Draw upside-down */
+
+char usage[] = "Usage: pix-fb [-h] [-i] file.pix [width]\n";
 
 main(argc, argv)
 int argc;
@@ -27,8 +29,6 @@ char **argv;
 	static int y;
 	static int infd;
 	static int nlines;		/* Square:  nlines, npixels/line */
-	static int frame_offset;
-	static int frame_count;
 	static int fbsize;
 
 	if( argc < 2 )  {
@@ -43,6 +43,10 @@ char **argv;
 		nlines = 1024;
 		argc--; argv++;
 	}
+	if( strcmp( argv[1], "-i" ) == 0 )  {
+		inverse++;
+		argc--; argv++;
+	}
 	if( strcmp( "-", argv[1] ) == 0 )  {
 		infd = 0;	/* stdin */
 	} else {
@@ -53,18 +57,10 @@ char **argv;
 	}
 	if( argc >= 3 )
 		nlines = atoi(argv[2] );
-	frame_offset = 0;
-	if( argc >= 4 )
-		frame_offset = atoi(argv[3]);
-	frame_count = 1;
-	if( argc >= 5 )
-		frame_count = atoi(argv[4]);
 	if( nlines > 512 )
 		fbsetsize(fbsize);
 
 	scanbytes = nlines * 3;
-
-	(void)lseek( infd, (long)frame_offset*scanbytes*nlines, 0 );
 
 	if( fbopen( NULL, CREATE ) < 0 )
 		exit(12);
@@ -73,8 +69,29 @@ char **argv;
 		fbsize==nlines? 0 : fbsize/nlines );
 	fbwindow( nlines/2, nlines/2 );		/* center of view */
 
-	while(frame_count-- > 0)  {
+	if( !inverse )  {
+		/* Normal way -- bottom to top */
 		for( y = nlines-1; y >= 0; y-- )  {
+			register char *in;
+			register struct pixel *out;
+			register int i;
+
+			if( mread( infd, (char *)scanline, scanbytes ) != scanbytes )
+				exit(0);
+
+			in = scanline;
+			out = outline;
+			for( i=0; i<nlines; i++ )  {
+				out->red = *in++;
+				out->green = *in++;
+				out->blue = *in++;
+				(out++)->spare = 0;
+			}
+			fbwrite( 0, y, outline, nlines );
+		}
+	}  else  {
+		/* Inverse -- top to bottom */
+		for( y=0; y < nlines; y++ )  {
 			register char *in;
 			register struct pixel *out;
 			register int i;
