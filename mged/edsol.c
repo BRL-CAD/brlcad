@@ -59,6 +59,22 @@ static void 	arb6_rot_face(), arb5_rot_face(), arb4_rot_face(), arb_control();
 void pscale();
 static short int fixv;		/* used in ROTFACE,f_eqn(): fixed vertex */
 
+/* data for solid editing */
+union record es_rec;		/* current solid record */
+union record es_orig;		/* original solid record */
+int     es_edflag;		/* type of editing for this solid */
+float	es_scale;		/* scale factor */
+float 	es_para[3];		/* keyboard input parameter changes */
+float	es_peqn[7][4];		/* ARBs defining plane equations */
+float	es_m[3];		/* edge(line) slope */
+int	es_menu;		/* item selected from menu */
+mat_t	es_mat;			/* accumulated matrix of path */ 
+mat_t 	es_invmat;		/* inverse of es_mat   KAA */
+int	es_nlines;		/* # lines in printed display */
+char	es_display[ES_LINELEN*10];/* buffer for lines of display */
+int arb_faces[5][24];	/* from edarb.c */
+int arb_planes[5][24];	/* from edarb.c */
+
 struct menu_item  edge8_menu[] = {
 	{ "ARB8 EDGES", (void (*)())NULL, 0 },
 	{ "move edge 12", arb8_edge, 0 },
