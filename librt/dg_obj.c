@@ -2473,6 +2473,11 @@ dgo_nmg_region_end(tsp, pathp, curtree, client_data)
 	  Tcl_AppendResult(dgcdp->interp, "dgo_nmg_region_end() path='", sofar,
 			   "'\n", (char *)NULL);
 	  bu_free((genptr_t)sofar, "path string");
+	} else {
+	  char	*sofar = db_path_to_string(pathp);
+
+	  bu_log( "%s:\n", sofar );
+	  bu_free((genptr_t)sofar, "path string");
 	}
 
 	if( curtree->tr_op == OP_NOP )  return  curtree;
