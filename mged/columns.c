@@ -169,3 +169,55 @@ int num_in_list;
     }
   }
 }
+
+/*
+ *				V L S _ L I N E _ D P P
+ *
+ *  Given a pointer to a list of pointers to names and the number of names
+ *  in that list, sort and print that list on the same line.
+ */
+void
+vls_line_dpp(vls, list_of_names, num_in_list, aflag, cflag, rflag, sflag)
+struct bu_vls *vls;
+struct directory **list_of_names;
+int num_in_list;
+int aflag;	/* print all objects */
+int cflag;	/* print combinations */
+int rflag;	/* print regions */
+int sflag;	/* print solids */
+{
+  int i;
+  int isComb, isRegion;
+  int isSolid;
+
+  qsort( (genptr_t)list_of_names,
+	 (unsigned)num_in_list, (unsigned)sizeof(struct directory *),
+	 (int (*)())cmpdirname);
+
+  /*
+   * i - tracks the list item
+   */
+  for (i=0; i < num_in_list; ++i) {
+    if (list_of_names[i]->d_flags & DIR_COMB) {
+      isComb = 1;
+      isSolid = 0;
+
+      if (list_of_names[i]->d_flags & DIR_REGION)
+	isRegion = 1;
+      else
+	isRegion = 0;
+    } else {
+      isComb = isRegion = 0;
+      isSolid = 1;
+    }
+
+    /* print list item i */
+    if (aflag ||
+	!cflag && !rflag && !sflag ||
+	cflag && isComb ||
+	rflag && isRegion ||
+	sflag && isSolid) {
+      bu_vls_printf(vls,  "%s ", list_of_names[i]->d_namep);
+    }
+  }
+}
