@@ -84,11 +84,18 @@ char		**objtab;		/* array of treetop strings */
 int		matflag = 0;		/* read matrix from stdin */
 int		desiredframe = 0;	/* frame to start at */
 int		finalframe = -1;	/* frame to halt at */
-int		curframe = 0;		/* current frame number */
+int		curframe = 0;		/* current frame number,
+					 * also shared with view.c */
 char		*outputfile = (char *)0;/* name of base of output file */
 int		interactive = 0;	/* human is watching results */
 int		benchmark = 0;		/* No random numbers:  benchmark */
 /***** end variables shared with do.c *****/
+
+
+/***** variables shared with view.c *****/
+fastf_t		frame_delta_t = 1./30.; /* 1.0 / frames_per_second_playback */
+/***** end variables shared with view.c *****/
+
 
 fastf_t		rt_dist_tol = 0;	/* Value for rti_tol.dist */
 fastf_t		rt_perp_tol = 0;	/* Value for rti_tol.perp */
@@ -110,7 +117,7 @@ register char **argv;
 	optind = 1;		/* restart */
 
 #define GETOPT_STR	\
-	"a:b:c:e:g:il:n:o:p:rs:w:x:A:BC:D:E:F:G:H:IJ:K:MN:O:P:ST:U:V:X:"
+	"a:b:c:e:f:g:il:n:o:p:rs:w:x:A:BC:D:E:F:G:H:IJ:K:MN:O:P:ST:U:V:X:"
 
 	while( (c=getopt( argc, argv, GETOPT_STR )) != EOF )  {
 		switch( c )  {
@@ -291,6 +298,17 @@ register char **argv;
 			/* Specify a single pixel to be done */
 			/* Actually processed in do_frame() */
 			string_pix_start = optarg;
+			break;
+		case 'f':
+			/* set expected playback rate in frames-per-second.
+			 * This actually gets stored as the delta-t per frame.
+			 */
+			if ( (frame_delta_t=atof( optarg )) == 0.0) {
+				fprintf(stderr, "Invalid frames/sec (%s) == 0.0\n",
+					optarg);
+				frame_delta_t = 30.0;
+			}
+			frame_delta_t = 1.0 / frame_delta_t;
 			break;
 #if 0
 		case ?:
