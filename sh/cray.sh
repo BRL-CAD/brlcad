@@ -54,14 +54,14 @@ PROG_NAME=$0
 set -- `getopt SH:F:D:MA:x:X:s:f:a:e:l:O:o:p:P:Bb:n:w:iI "$@"`
 
 # If no compute server specified in users environment, use default.
-if test x$COMPUTE_SERVER -eq x
+if test x$COMPUTE_SERVER = x
 then
 	COMPUTE_SERVER=patton.brl.mil
 fi
 
 # If no framebuffer is specified in the users environment,
 # then route the image back over the network to the local display.
-if test x$FB_FILE -eq x
+if test x$FB_FILE = x
 then
 	FB_FILE=`hostname`:
 fi
