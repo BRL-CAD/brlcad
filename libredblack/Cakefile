@@ -1,0 +1,22 @@
+/*
+ *			libredblack/Cakefile
+ */
+#define SRCDIR	libredblack
+#define PRODUCTS	libredblack.ARCH_SUF
+#define	SRCSUFF	.c
+#define MANSECTION	3
+
+#include "../Cakefile.defs"
+
+#define FILES	\
+		rb_create rb_delete rb_diagnostics	\
+		rb_extreme rb_insert rb_rotate		\
+		rb_search rb_walk
+	
+
+#define VERSION_VARIABLE	rt_version
+#define LIBRARY_TITLE		"The BRL-CAD Red-Black Library"
+
+#include "../Cakefile.lib"
+
+#include "../Cakefile.rules"
