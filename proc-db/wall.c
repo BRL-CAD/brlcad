@@ -47,8 +47,8 @@ double brick_height = 8.0 * 25.4;
 double brick_width = 2.25 * 25.4;
 double brick_depth = 3.25 * 25.4;
 double min_mortar = 0.25 * 25.4;
-char brick_color[3] = {160, 40, 40};
-char mortar_color[3] = {190, 190, 190};
+unsigned char brick_color[3] = {160, 40, 40};
+unsigned char mortar_color[3] = {190, 190, 190};
 int rand_brick_color = 0;
 int make_mortar = 1;
 
@@ -58,8 +58,8 @@ double bd_thin = 1.5 * 25.4;
 double beam_height = 5.5 * 25.4;
 double sr_thick = 0.75 * 25.4;	/* sheetrock thickness */
 double stud_spacing = 16.0 * 25.4; /* spacing between vertical studs */
-char sheetrock_color[3] = { 200, 200, 200 };
-char stud_color[3] = { 250, 178, 108 };
+unsigned char sheetrock_color[3] = { 200, 200, 200 };
+unsigned char stud_color[3] = { 250, 178, 108 };
 char *stud_properties[] = { "plastic", "sh=10 di=0.7 sp=0.3" };
 
 struct opening {
