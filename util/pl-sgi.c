@@ -40,6 +40,19 @@ Coord	viewsize;
 
 int	axis = 0;	/* display coord axis */
 
+/*
+ *  Color Map:
+ *  In doublebuffered mode, you only have 12 bits per pixel.
+ *  These get mapped via a 4096 entry colormap.
+ *  MEX however steals:
+ *    0 - 15	on the 3030 (first 8 are "known" colors)
+ *    top 256	on the 4D
+ */
+/* Map RGB onto 10x10x10 color cube, giving index in range 0..999 */
+#define MAP_RESERVED	16		/* # slots reserved by MEX */
+#define COLOR_APPROX(r,g,b)	\
+	((r/26)+ (g/26)*10 + (b/26)*100 + MAP_RESERVED)
+
 static char usage[] = "\
 Usage: pl-sgi [-a] < unixplot\n";
 #endif sgi
@@ -72,7 +85,11 @@ char	**argv;
 	init_display();
 
 	makeobj( 1 );
-	color( 3000 );
+	/* set the default drawing color to white */
+	if( ismex() )
+		color( COLOR_APPROX(255,255,255) );
+	else
+		color( (255&0xf0)<<4 | (255&0xf0) | (255>>4) );
 	uplot( max, min );
 	closeobj( 1 );
 
@@ -125,19 +142,6 @@ char	**argv;
 #define	TRANY	DIAL5
 #define	TRANZ	DIAL3
 #define	ZOOM	DIAL1
-
-#define MARGIN	4			/* # pixels margin to screen edge */
-#define WINDIM	768
-#define BANNER	20
-#define WIN_L	(1024-WINDIM-MARGIN)
-#define WIN_R	(1024-1-MARGIN)
-#define WIN_B	MARGIN
-#define WIN_T	(WINDIM-BANNER-MARGIN)
-
-#define MAP_RESERVED	16		/* # slots reserved by MEX */
-#define MAP_TOL		15		/* pixel delta across all channels */
-
-static int map_size;			/* # of color map slots available */
 
 view_loop()
 {
@@ -277,20 +281,29 @@ view_loop()
 	gexit();
 }
 
+/* Window Location */
+#define MARGIN	4			/* # pixels margin to screen edge */
+#define WINDIM	768
+#define BANNER	20
+#define WIN_L	(1024-WINDIM-MARGIN)
+#define WIN_R	(1024-1-MARGIN)
+#define WIN_B	MARGIN
+#define WIN_T	(WINDIM-BANNER-MARGIN)
+
 init_display()
 {
 	int	i;
 	short	r, g, b;
+	int map_size;		/* # of color map slots available */
 
-	if( ismex() )
-		{
+
+	if( ismex() ) {
 		prefposition( WIN_L, WIN_R, WIN_B, WIN_T );
 		foreground();
-		if( winopen( "UNIX plot display" ) == -1 )
-			{
+		if( winopen( "UNIX plot display" ) == -1 ) {
 			printf( "No more graphics ports available.\n" );
 			return	1;
-			}
+		}
 		wintitle( "UNIX plot display" );
 		/* Free window of position constraint.			*/
 		winconstraints();
@@ -301,9 +314,15 @@ init_display()
 
 		/*
 		 * Deal with the SGI hardware color map
+		 * Note: on a 3030, MEX will make getplanes() return
+		 *  10 on a 12 bit system (or double buffered 24).
+		 *  On the 4D, it still returns 12.
 		 */
 		map_size = 1<<getplanes(); /* 10 or 12, depending on ismex() */
-	
+#ifdef mips
+		map_size = 1<<10;	/*XXX*/
+#endif mips
+
 		/* The first 8 entries of the colormap are "known" colors */
 		mapcolor( 0, 000, 000, 000 );	/* BLACK */
 		mapcolor( 1, 255, 000, 000 );	/* RED */
@@ -315,15 +334,15 @@ init_display()
 		mapcolor( 7, 255, 255, 255 );	/* WHITE */
 
 		/* Use fixed color map with 10x10x10 color cube */
-		for( i = 0; i < map_size-MAP_RESERVED; i++ )
+		for( i = 0; i < map_size-MAP_RESERVED; i++ ) {
 			mapcolor( 	i+MAP_RESERVED,
 					(short)((i % 10) + 1) * 25,
 					(short)(((i / 10) % 10) + 1) * 25,
 					(short)((i / 100) + 1) * 25
 					);
 		}
-	else
-		{
+	} else {
+		/* not mex => 3030 with 12 planes/buffer */
 		ginit();
 		tpoff();
 		doublebuffer();
@@ -337,7 +356,7 @@ init_display()
 				}
 			}
 		}
-		}
+	}
 
 	qdevice(LEFTMOUSE);
 	qdevice(MIDDLEMOUSE);
@@ -370,14 +389,7 @@ init_display()
 
 /*
  *  Iris 3-D Unix plot reader
- */
-
-/* Map RGB onto 10x10x10 color cube, giving index in range 0..999 */
-#define MAP_RESERVED	16		/* # slots reserved by MEX */
-#define COLOR_APPROX(r,g,b)	\
-	((r/26)+ (g/26)*10 + (b/26)*100 + MAP_RESERVED)
-
-/*
+ *
  *  UNIX-Plot integers are 16bit VAX order (little-endian) 2's complement.
  */
 #define	geti(x)	{ (x) = getchar(); (x) |= (short)(getchar()<<8); }
