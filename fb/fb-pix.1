@@ -3,7 +3,7 @@
 fb\(hypix \- save a framebuffer image in a color pix file
 .SH SYNOPSIS
 .B fb-pix
-.RB [ \-hi ]
+.RB [ \-hic ]
 .RB [ \-F\  framebuffer]
 .RB [ \-s\  squaresize]
 .RB [ \-w\  width]
@@ -48,6 +48,12 @@ The
 flag switches to a fourth quadrant system, both in the storage order as
 well as the origin offset coordinates (i.e. origin is now the upper left
 corner of the screen).
+.PP
+The
+.B \-c
+flag specifies that the color map in the frame buffer should
+be applied to the pixel values (``crunched'') before they are written to the
+output file.
 .SH "SEE ALSO"
 brlcad(1), pix-fb(1), fb-bw(1), pix(5)
 .SH AUTHOR
