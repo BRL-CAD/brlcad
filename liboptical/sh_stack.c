@@ -244,7 +244,7 @@ struct mfuncs	**headp;
 					i++;
 			} else {
 				/* XXX else clear entry? */
-				bu_log("stk_setup problem\n");
+				bu_log("Problem in stack shader setup\n");
 			}
 			start = ++cp;
 		} else {
