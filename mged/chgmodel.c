@@ -324,7 +324,7 @@ char	**argv;
 	if( not_state( ST_S_EDIT, "Extrude" ) )
 		return;
 
-	if( es_gentype != GENARB8 )  {
+	if( es_rec.s.s_type != GENARB8 )  {
 		(void)printf("Extrude: solid type must be ARB\n");
 		return;
 	}
@@ -677,7 +677,7 @@ char	**argv;
 	if( not_state( ST_S_EDIT, "Mirface" ) )
 		return;
 
-	if( es_gentype != GENARB8 )  {
+	if( es_rec.s.s_type != GENARB8 )  {
 		(void)printf("Mirface: solid type must be ARB\n");
 		return;
 	}
@@ -1375,7 +1375,7 @@ char	**argv;
 		return;
 	}
 
-	if( es_gentype != GENARB8 ) {
+	if( es_rec.s.s_type != GENARB8 ) {
 		(void)printf("Edgedir: solid type must be an ARB\n");
 		return;
 	}
