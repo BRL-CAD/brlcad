@@ -135,7 +135,7 @@ struct servers {
 } servers[MAXSERVERS];
 #define SERVERS_NULL	((struct servers *)0)
 
-/* Options */
+/* RT Options */
 int		width = 64;
 int		height = 64;
 extern int	hypersample;
@@ -153,6 +153,7 @@ extern double	atof();
 /* START */
 char	start_cmd[256];	/* contains file name & objects */
 
+FILE	*helper_fp;		/* pipe to rexec helper process */
 char	ourname[32];
 char	out_file[256];		/* output file name */
 
@@ -215,6 +216,9 @@ char	**argv;
 
 	/* Random inits */
 	gethostname( ourname, sizeof(ourname) );
+
+	start_helper();
+
 	FrameHead.fr_forw = FrameHead.fr_back = &FrameHead;
 	for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
 		sp->sr_work.li_forw = sp->sr_work.li_back = &sp->sr_work;
@@ -680,28 +684,12 @@ FILE *fp;
 		return;
 	}
 	if( strcmp( cmd_args[0], "add" ) == 0 )  {
-		char cmd[128];
 		for( i=1; i<numargs; i++ )  {
-			/* XXX should use rexecd! */
-			sprintf(cmd,
-				"rsh %s -n 'cd cad/remrt; rtsrv %s %d'",
-				cmd_args[i], ourname, pkg_permport );
-			if( vfork() == 0 )  {
-				/* 1st level child */
-				(void)close(0);
-				for(i=3; i<40; i++)  (void)close(i);
-				if( vfork() == 0 )  {
-					/* worker Child */
-					system( cmd );
-					_exit(0);
-				}
-				_exit(0);
-			} else {
-				(void)wait(0);
-			}
+			fprintf( helper_fp, "%s %d ",
+				cmd_args[i], pkg_permport );
+			fflush( helper_fp );
 			check_input(1);		/* get connections */
 		}
-		printf("add finished\n");
 		return;
 	}
 	if( strcmp( cmd_args[0], "drop" ) == 0 )  {
@@ -1522,4 +1510,65 @@ register struct list *lhp;
 mathtab_constant()
 {
 	/* Called on -B (benchmark) flag, by get_args() */
+}
+
+start_helper()
+{
+	int	fds[2];
+	int	pid;
+	int	i;
+
+	if( pipe(fds) < 0 )  {
+		perror("pipe");
+		exit(1);
+	}
+
+	pid = fork();
+	if( pid == 0 )  {
+		/* Child process */
+		FILE	*fp;
+		char	host[128];
+		int	port;
+
+		(void)close(fds[1]);
+		if( (fp = fdopen( fds[0], "r" )) == NULL )  {
+			perror("fdopen");
+			exit(3);
+		}
+		while( !feof(fp) )  {
+			char cmd[128];
+
+			if( fscanf( fp, "%s %d", host, &port ) != 2 )
+				break;
+			/* */
+			sprintf(cmd,
+				"rsh %s -n 'cd cad/remrt; rtsrv %s %d'",
+				host, ourname, port );
+			if( vfork() == 0 )  {
+				/* 1st level child */
+				(void)close(0);
+				for(i=3; i<40; i++)  (void)close(i);
+				if( vfork() == 0 )  {
+					/* worker Child */
+					system( cmd );
+					_exit(0);
+				}
+				_exit(0);
+			} else {
+				(void)wait(0);
+			}
+
+		}
+		/* No more commands from parent */
+		exit(0);
+	} else if( pid < 0 )  {
+		perror("fork");
+		exit(2);
+	}
+	/* Parent process */
+	if( (helper_fp = fdopen( fds[1], "w" )) == NULL )  {
+		perror("fdopen");
+		exit(4);
+	}
+	(void)close(fds[0]);
 }
