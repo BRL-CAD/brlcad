@@ -542,8 +542,8 @@ char *av[];
 
 	if (manifold[3]) make_3manifold_bits(&tol);
 	if (manifold[2]) make_2manifold_bits(&tol);
-	if (manifold[1]) make_1manifold_bits(tol);
-	if (manifold[0]) make_0manifold_bits(tol);
+	if (manifold[1]) make_1manifold_bits(&tol);
+	if (manifold[0]) make_0manifold_bits(&tol);
 
 	NMG_CK_MODEL(m);
 
@@ -555,11 +555,8 @@ char *av[];
 		mk_id(fdmodel, "hairy NMG");
 		mk_nmg(fdmodel, "s.NMG",  m);
 
-
-		/* build a database region of the solid */
-		mk_comb(fdmodel, "r.NMG", 1, 1, (char *)NULL /*matname*/,
-			(char *)NULL /* matparm */, (char *)NULL /*rgb */, 1);
-		mk_memb(fdmodel, "s.NMG", rt_identity, WMOP_UNION);
+		/* build a database region mentioning the solid */
+		mk_comb1( fdmodel, "r.NMG", "s.NMG", 1 );
 
 		fclose(fdmodel);
 	}
