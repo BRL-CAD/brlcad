@@ -586,6 +586,11 @@ register struct pkg_conn *pc;
 		pc->pkc_errlog(errbuf);
 		(void)free( pc->pkc_buf );
 	}
+	if( pc->pkc_inbuf != (char *)0 )  {
+		(void)free( pc->pkc_inbuf );
+		pc->pkc_inbuf = (char *)0;
+		pc->pkc_inlen = 0;
+	}
 	(void)close(pc->pkc_fd);
 	pc->pkc_fd = -1;		/* safety */
 	pc->pkc_buf = (char *)0;	/* safety */
