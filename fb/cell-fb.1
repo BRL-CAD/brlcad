@@ -70,7 +70,7 @@ may legally be any integer greater than -2.
 See the discussion of autosizing below.
 .TP
 .BI \-X n\^
-Set the debug flag to the hexadecimal value
+Set the local debug flag to the hexadecimal value
 .I n.
 .TP
 .BI \-b n\^
@@ -221,12 +221,20 @@ implicitly turns off logging.
 (see the
 .B \-l
 option above).
+.TP
+.BI \-x n\^
+Set the
+.IR librt (3)
+debug flag to the hexadecimal value
+.I n.
+This option is useful primarily in debugging
+memory allocation.
 .SH HINT
 If multiple views are input,
 the user will be asked between views whether he wants to see the next view.
 While being prompted, the user can save the previous image by using a
 utility such as
-.IR fb\-rle\^\ (1).
+.IR fb\-rle (1).
 .SH DISCUSSION
 .I Cell-fb
 determines the appropriate width and height of the frame buffer
@@ -333,7 +341,7 @@ grid of cells, and the display will be erased before each view is drawn.
 $ \|\fIcell-fb \|\-F \|viva.brl.mil: \|\-gek \|\-p \|``20 30'' \|inputs
 .RE
 .SH "SEE ALSO"
-fb-rle(1), libfb(3)
+fb-rle(1), rtregis(1), libfb(3)
 .SH AUTHORS
 .TP
 Gary S. Moss, BRL/VLD-VMB
