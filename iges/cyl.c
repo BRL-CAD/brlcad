@@ -86,8 +86,11 @@ int entityno;
 
 	VSCALE(height, hdir, scale);
 
-	mk_rcc(fdout, dir[entityno]->name, base, height, radius);
-
+	if( mk_rcc(fdout, dir[entityno]->name, base, height, radius) < 0 )  {
+		printf("Unable to write entity D%07d (%s)\n" ,
+			dir[entityno]->direct , dir[entityno]->name );
+		return( 0 );
+	}
 	return( 1 );
 
 }

@@ -92,9 +92,18 @@ int entityno;
 
 	VSET(base, x1, y1, z1);		/* the center pt of base plate */
 	VSET(hdir, x2, y2, z2);
+	if( MAGNITUDE(hdir) <= SQRT_SMALL_FASTF )  {
+		printf("Illegal height vector %g,%g,%g for entity D%07d (%s)\n",
+			V3ARGS(hdir),
+			dir[entityno]->direct , dir[entityno]->name );
+		return(0);
+	}
 	VUNITIZE(hdir);
 
-	mk_cone( fdout, dir[entityno]->name, base, hdir, scale, rad1, rad2 );
-
+	if( mk_cone( fdout, dir[entityno]->name, base, hdir, scale, rad1, rad2 ) < 0 )  {
+		printf("Unable to write entity D%07d (%s)\n",
+			dir[entityno]->direct , dir[entityno]->name );
+		return(0);
+	}
 	return( 1 );
 } 
