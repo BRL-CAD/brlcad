@@ -15,7 +15,9 @@
 #include <stdio.h>
 #include <math.h>
 #include "machine.h"
+#include "bu.h"
 #include "vmath.h"
+#include "bn.h"
 #include "raytrace.h"
 #include "./material.h"
 #include "./mathtab.h"
@@ -50,7 +52,7 @@ CONST char				*value;	/* string containing value */
 	double *p = (double *)(base+sdp->sp_offset);
 
 	/* reconvert with optional units */
-	*p = *p * (M_PI / 180.0);
+	*p = *p * (bn_pi / 180.0);
 }
 
 /*
@@ -74,14 +76,14 @@ struct gravel_specific {
 };
 
 /* The default values for the variables in the shader specific structure */
-CONST static
+static CONST
 struct gravel_specific gravel_defaults = {
 	gravel_MAGIC,
 	2.1753974,	/* lacunarity */
 	1.0,		/* h_val */
 	4.0,		/* octaves */
 	1.0,		/* size */
-	M_PI_2,		/* max_angle */
+	1.57079632679489661923,		/* max_angle M_PI_2 */
 	{ 1.0, 1.0, 1.0 },	/* vscale */
 	{ 1000.0, 1000.0, 1000.0 },	/* delta into noise space */
 	{	0.0, 0.0, 0.0, 0.0,
