@@ -403,6 +403,7 @@ menu .$id.menubar.file -tearoff $do_tearoffs
 .$id.menubar.file add command -label "Open..." -underline 0 -command "do_Open $id"
 .$id.menubar.file add command -label "Insert..." -underline 0 -command "do_Concat $id"
 .$id.menubar.file add command -label "Extract..." -underline 1 -command "init_extractTool $id"
+.$id.menubar.file add command -label "g2asc..." -underline 0 -command "init_g2asc $id"
 .$id.menubar.file add separator
 .$id.menubar.file add command -label "Raytrace..." -underline 0 -command "init_Raytrace $id"
 .$id.menubar.file add cascade -label "Save View As" -underline 0 -menu .$id.menubar.file.saveview
@@ -535,9 +536,9 @@ menu .$id.menubar.view -tearoff $do_tearoffs
 	-command "mged_apply $id \"press restore\""
 .$id.menubar.view add separator
 .$id.menubar.view add command -label "Default"\
-	-underline 6 -command "mged_apply $id \"press reset\""
+	-underline 0 -command "mged_apply $id \"press reset\""
 .$id.menubar.view add command -label "Multipane Defaults"\
-	-underline 6 -command "set_default_views $id"
+	-underline 0 -command "set_default_views $id"
 .$id.menubar.view add command -label "Zero" -underline 0\
 	-command "mged_apply $id \"knob zero\""
 
@@ -960,7 +961,9 @@ set mged_multi_view($id) $mged_default_mvmode
 
 if { $use_grid_gm } {
     if { $comb } {
-	grid $mged_dmc($id) -sticky nsew -row 0 -column 0
+	if { $mged_show_dm($id) } {
+	    grid $mged_dmc($id) -sticky nsew -row 0 -column 0
+	}
     }
 
     grid .$id.t .$id.s -in .$id.tf -sticky "nsew"
@@ -968,8 +971,9 @@ if { $use_grid_gm } {
     grid columnconfigure .$id.tf 1 -weight 0
     grid rowconfigure .$id.tf 0 -weight 1
 
-
-    grid .$id.tf -sticky "nsew" -row 1 -column 0
+    if { !$comb || ($comb && $mged_show_cmd($id)) } {
+	grid .$id.tf -sticky "nsew" -row 1 -column 0
+    }
 
     grid .$id.status.cent .$id.status.size .$id.status.units .$id.status.aet\
 	    .$id.status.ang x -in .$id.status.dpy -sticky "ew"
@@ -990,7 +994,10 @@ if { $use_grid_gm } {
     grid rowconfigure .$id.status 0 -weight 0
     grid rowconfigure .$id.status 1 -weight 0
     grid rowconfigure .$id.status 2 -weight 0
-    grid .$id.status -sticky "ew" -row 2 -column 0
+
+    if { $mged_show_status($id) } {
+	grid .$id.status -sticky "ew" -row 2 -column 0
+    }
 
     grid columnconfigure .$id 0 -weight 1
     if { $comb } {
@@ -1062,8 +1069,17 @@ wm geometry $mged_top($id) -0+0
 #wm geometry $mged_top($id) $width\x$height+8+40
 
 
-if { !$comb } {
+if { $comb } {
+    if { !$mged_show_dm($id) } {
+	update
+	set_dm_win $id
+    }
+} else {
+    # Position command window in upper left corner
+    wm geometry .$id +8+32
     update
+
+    # Prevent command window from resizing itself
     set geometry [wm geometry .$id]
     wm geometry .$id $geometry
 }
@@ -1857,7 +1873,7 @@ proc adc { args } {
 
     if { ![llength $args] } {
 	if {[info exists mged_active_dm($id)]} {
-	    set mged_adc_draw($id) [adc draw]
+	    set mged_adc_draw($id) [_mged_adc draw]
 	}
 
 	if {$transform == "a"} {
@@ -1866,64 +1882,6 @@ proc adc { args } {
     }
 
     return $result
-}
-
-proc mged_apply { id cmd } {
-    global mged_active_dm
-    global mged_dm_loc
-    global mged_apply_to
-
-    if {$mged_apply_to($id) == 1} {
-	mged_apply_local $id $cmd
-    } elseif {$mged_apply_to($id) == 2} {
-	mged_apply_using_list $id $cmd
-    } elseif {$mged_apply_to($id) == 3} {
-	mged_apply_all $cmd
-    } else {
-	winset $mged_active_dm($id)
-	catch [list uplevel #0 $cmd]
-    }
-}
-
-proc mged_apply_local { id cmd } {
-    global mged_top
-    global mged_active_dm
-
-    winset $mged_top($id).ul
-    catch [list uplevel #0 $cmd]
-
-    winset $mged_top($id).ur
-    catch [list uplevel #0 $cmd]
-
-    winset $mged_top($id).ll
-    catch [list uplevel #0 $cmd]
-
-    winset $mged_top($id).lr
-    catch [list uplevel #0 $cmd] msg
-
-    winset $mged_active_dm($id)
-
-    return $msg
-}
-
-proc mged_apply_using_list { id cmd } {
-    global mged_apply_list
-
-    foreach dm $mged_apply_list($id) {
-	winset $dm
-	catch [list uplevel #0 $cmd] msg
-    }
-
-    return $msg
-}
-
-proc mged_apply_all { cmd } {
-    foreach dm [get_dm_list] {
-	winset $dm
-	catch [list uplevel #0 $cmd] msg
-    }
-
-    return $msg
 }
 
 proc set_listen { id } {
