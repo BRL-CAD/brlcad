@@ -107,7 +107,7 @@ proc end_edit_callback {} {
 #
 proc output_callback { str } {
     distribute_text {} {} $str
-    mged_update 1
+    update idletasks
 }
 
 ## - solid_list_callback
