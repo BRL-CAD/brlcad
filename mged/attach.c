@@ -215,10 +215,6 @@ int need_close;
 
   RT_FREE_VLIST(&p->p_vlist);
   BU_LIST_DEQUEUE( &p->l );
-  if(p->_scroll_edit_vls.vls_magic == BU_VLS_MAGIC){
-    Tcl_UnlinkVar(interp, bu_vls_addr(&p->_scroll_edit_vls));
-    bu_vls_free(&p->_scroll_edit_vls);
-  }
 
   bu_free( (genptr_t)p, "release: curr_dm_list" );
 
@@ -410,11 +406,6 @@ char *argv[];
   bu_vls_init(&fps_name);
   bu_vls_printf(&fps_name, "mged_display(%S,fps)",
 		&curr_dm_list->_dmp->dm_pathName);
-  bu_vls_init(&curr_dm_list->_scroll_edit_vls);
-  bu_vls_printf(&curr_dm_list->_scroll_edit_vls, "scroll_edit(%S)",
-		&curr_dm_list->_dmp->dm_pathName);
-  Tcl_LinkVar(interp, bu_vls_addr(&curr_dm_list->_scroll_edit_vls),
-	      (char *)&curr_dm_list->_scroll_edit, TCL_LINK_INT);
   mged_slider_link_vars(curr_dm_list);
   mmenu_init();
   btn_head_menu(0,0,0);
@@ -657,7 +648,11 @@ char    **argv;
     save_cclp = curr_cmd_list;
     curr_cmd_list = p->aim;
   }
+
+#ifdef DO_SCROLL_UPDATES
   set_scroll();
+#endif
+
   curr_dm_list = save_cdlp;
   if(p->aim)
     curr_cmd_list = save_cclp;
@@ -760,7 +755,11 @@ char    **argv;
     save_cclp = curr_cmd_list;
     curr_cmd_list = p1->aim;
   }
+
+#ifdef DO_SCROLL_UPDATES
   set_scroll();
+#endif
+
   curr_dm_list = p;
   if(p2->aim)
     curr_cmd_list = save_cclp;
@@ -797,7 +796,11 @@ struct dm_list *op;
 	save_cclp = curr_cmd_list;
 	curr_cmd_list = p->aim;
       }
+
+#ifdef DO_SCROLL_UPDATES
       set_scroll();
+#endif
+
       curr_dm_list = save_cdlp;
       if(p->aim)
 	curr_cmd_list = save_cclp;
