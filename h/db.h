@@ -106,14 +106,16 @@ union record  {
 	struct ident  {
 		char	i_id;		/* ID_IDENT */
 		char	i_units;	/* units */
+/* Values of 0..5 are fixed for file compat with Release 2.3 through 4.5 */
 #define ID_NO_UNIT	0		/* unspecified */
-#define ID_MM_UNIT	1		/* millimeters (preferred) */
-#define ID_UM_UNIT	2		/* micrometers */
-#define ID_CM_UNIT	3		/* centimeters */
-#define ID_M_UNIT	4		/* meters */
-#define ID_KM_UNIT	5		/* kilometers */
-#define ID_IN_UNIT	6		/* inches */
-#define ID_FT_UNIT	7		/* feet */
+#define ID_MM_UNIT	1		/* milimeters (preferred) */
+#define ID_CM_UNIT	2		/* centimeters */
+#define ID_M_UNIT	3		/* meters */
+#define ID_IN_UNIT	4		/* inches */
+#define ID_FT_UNIT	5		/* feet */
+/* These new values 6..9 added in Release 5.0 */
+#define ID_UM_UNIT	6		/* micrometers */
+#define ID_KM_UNIT	7		/* kilometers */
 #define ID_YD_UNIT	8		/* yards */
 #define ID_MI_UNIT	9		/* miles */
 		char	i_version[6];	/* Version code of Database format */
