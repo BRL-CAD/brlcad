@@ -545,7 +545,7 @@ char	**argv;
 {
 	register FILE *fp;
 	register struct directory *dp;
-	register struct solid *sp;
+	register struct solid *sp = SOLID_NULL;
 	union record	rec;
 	vect_t	eye_model;
 	vect_t	xlate;

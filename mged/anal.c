@@ -517,16 +517,15 @@ ell_anal()
 	if( type == PROLATE ) {
 		sur_area = 2.0 * pi * minor * minor +
 			(2.0 * pi * (major*minor/ecc) * asin(ecc));
-	}
-	if( type == OBLATE ) {
+	} else if( type == OBLATE ) {
 		sur_area = 2.0 * pi * major * major +
 			(pi * (minor*minor/ecc) * log( (1.0+ecc)/(1.0-ecc) ));
+	} else {
+		sur_area = 0.0;
 	}
 
 	(void)printf("   Surface Area = %.4f\n",
 			sur_area*base2local*base2local);
-
-	return;
 }
 
 
