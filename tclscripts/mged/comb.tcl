@@ -110,6 +110,8 @@ proc init_comb { id } {
 
     label $top.shaderL -text "Shader" -anchor w
     entry $top.shaderE -relief flat -width 12 -textvar comb_control($id,shader)
+    bind $top.shaderE <Return> "set_shader_params comb_control($id,shader) $id"
+
     menubutton $top.shaderMB -relief raised -bd 2\
 	    -menu $top.shaderMB.m -indicatoron 1
     menu $top.shaderMB.m -tearoff 0
