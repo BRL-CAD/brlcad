@@ -252,6 +252,22 @@ register struct partition *pp;
 		}
 	}
 
+	/* Get surface normal for hit point */
+	RT_HIT_NORM( hitp, pp->pt_inseg->seg_stp, &(ap->a_ray) );
+
+	/* Temporary check to make sure normals are OK */
+	if( hitp->hit_normal[X] < -1.01 || hitp->hit_normal[X] > 1.01 ||
+	    hitp->hit_normal[Y] < -1.01 || hitp->hit_normal[Y] > 1.01 ||
+	    hitp->hit_normal[Z] < -1.01 || hitp->hit_normal[Z] > 1.01 )  {
+	    	VPRINT("phong_render: N", hitp->hit_normal);
+		VSET( ap->a_color, 9, 9, 0 );	/* Yellow */
+		return(1);
+	}
+	if( pp->pt_inflip )  {
+		VREVERSE( hitp->hit_normal, hitp->hit_normal );
+		pp->pt_inflip = 0;
+	}
+
 	VREVERSE( to_eye, ap->a_ray.r_dir );
 
 	/* Diminish intensity of reflected light the as a function of
@@ -265,7 +281,7 @@ register struct partition *pp;
 	Rd1 = 0;
 	if( (cosI1 = VDOT( hitp->hit_normal, to_light )) > 0.0 )  {
 		if( cosI1 > 1 )  {
-			rt_log("cosI1=%f (x%d,y%d,lvl%d)\n", cosI1,
+			rt_log("cosI1=%g (x%d,y%d,lvl%d)\n", cosI1,
 				ap->a_x, ap->a_y, ap->a_level);
 			cosI1 = 1;
 		}
@@ -276,7 +292,7 @@ register struct partition *pp;
 	d_a = 0;
 	if( (cosI2 = VDOT( hitp->hit_normal, to_eye )) > 0.0 )  {
 		if( cosI2 > 1.00001 )  {
-			rt_log("cosI2=%f (x%d,y%d,lvl%d)\n", cosI2,
+			rt_log("cosI2=%g (x%d,y%d,lvl%d)\n", cosI2,
 				ap->a_x, ap->a_y, ap->a_level);
 			cosI2 = 1;
 		}
@@ -330,7 +346,7 @@ register struct partition *pp;
 		VSUB2( reflected, work, to_light );
 		if( (cosS = VDOT( reflected, to_eye )) > 0 )  {
 			if( cosS > 1 )  {
-				rt_log("cosS=%f (x%d,y%d,lvl%d)\n", cosS,
+				rt_log("cosS=%g (x%d,y%d,lvl%d)\n", cosS,
 					ap->a_x, ap->a_y, ap->a_level);
 				cosS = 1;
 			}

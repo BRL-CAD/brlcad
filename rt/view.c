@@ -237,22 +237,9 @@ struct partition *PartHeadp;
 		return(0);
 	}
 	hitp = pp->pt_inhit;
-	/* XXX  This should be pushed down into materials routines */
-	RT_HIT_NORM( hitp, pp->pt_inseg->seg_stp, &(ap->a_ray) );
 
 	if(rt_g.debug&DEBUG_HITS)  {
 		rt_pr_pt(pp);
-		rt_pr_hit( "colorview", pp->pt_inhit);
-	}
-
-	/* Temporary check to make sure normals are OK */
-	if( hitp->hit_normal[X] < -1.01 || hitp->hit_normal[X] > 1.01 ||
-	    hitp->hit_normal[Y] < -1.01 || hitp->hit_normal[Y] > 1.01 ||
-	    hitp->hit_normal[Z] < -1.01 || hitp->hit_normal[Z] > 1.01 )  {
-		rt_log("colorview: N=(%f,%f,%f)?\n",
-			hitp->hit_normal[X],hitp->hit_normal[Y],hitp->hit_normal[Z]);
-		VSET( ap->a_color, 1, 1, 0 );
-		return(1);
 	}
 	if( hitp->hit_dist >= INFINITY )  {
 		rt_log("colorview:  entry beyond infinity\n");
@@ -289,13 +276,14 @@ struct partition *PartHeadp;
 
 	if( rt_g.debug&DEBUG_RAYWRITE )  {
 		/* Record the approach path */
-		if( hitp->hit_dist > 0.0001 )
+		if( hitp->hit_dist > 0.0001 )  {
 			wraypts( ap->a_ray.r_pt,
 				hitp->hit_point,
 				ap, stdout );
+		}
 	}
 
-	/* Check to see if we hit something special */
+	/* XXX Hack to see if we hit the light */
 	{
 		register struct soltab *stp;
 		stp = pp->pt_inseg->seg_stp;
@@ -305,11 +293,17 @@ struct partition *PartHeadp;
 		}
 	}
 
-	if( pp->pt_inflip )  {
-		VREVERSE( hitp->hit_normal, hitp->hit_normal );
-		pp->pt_inflip = 0;
-	}
-
+	/*
+	 *  Call the material-handling function.
+	 *  Note that only hit_dist is valid in pp_inhit.
+	 *  ft_uv() routines must have hit_point computed
+	 *  in advance, which is responsibility of reg_ufunc() routines.
+	 *  RT_HIT_NORM() must also be called if hit_norm is needed,
+	 *  after which pt_inflip must be handled.
+	 *  These operations have been pushed down to the individual
+	 *  material-handling functions for efficiency reasons,
+	 *  because not all materials need the normals.
+	 */
 	if( !(pp->pt_regionp->reg_ufunc) )  {
 		rt_log("colorview:  no reg_ufunc\n");
 		return(0);

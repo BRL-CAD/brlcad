@@ -134,6 +134,8 @@ register struct partition *pp;
 	double intensity;
 	FAST fastf_t	TR;
 
+	VJOIN1( pp->pt_inhit->hit_point, ap->a_ray.r_pt,
+		pp->pt_inhit->hit_dist, ap->a_ray.r_dir );
 	rt_functab[pp->pt_inseg->seg_stp->st_id].ft_uv(
 		ap, pp->pt_inseg->seg_stp, pp->pt_inhit, &uv );
 	intensity = cloud_texture( uv.uv_u, uv.uv_v, 1.0, 2.0, 1.0 );

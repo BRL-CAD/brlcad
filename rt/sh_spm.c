@@ -387,6 +387,8 @@ struct partition *pp;
 	int	x, y;
 	register unsigned char *cp;
 
+	VJOIN1( pp->pt_inhit->hit_point, ap->a_ray.r_pt,
+		pp->pt_inhit->hit_dist, ap->a_ray.r_dir );
 	rt_functab[pp->pt_inseg->seg_stp->st_id].ft_uv(
 		ap, pp->pt_inseg->seg_stp, pp->pt_inhit, &uv );
 
