@@ -70,7 +70,10 @@ char **argv;
 		return CMD_BAD;
 	}
 
-	if( db_get( dbip , dp , &record , 0 , 1 ) < 0 ) READ_ERR_return;
+	if( db_get( dbip , dp , &record , 0 , 1 ) < 0 ) {
+		READ_ERR;
+		return;
+	}
 	if( record.u_id != ID_COMB )	/* Not a combination */
 	{
 		(void)printf( " %s is not a combination, so cannot be edited this way\n", argv[1] );
