@@ -2218,15 +2218,17 @@ nmg_fix_normals( struct shell *s )
  *	where one long edgeuse (the bottom one above) and two or more
  *	shorter edgeusess (the tops ones) are collinear and have the same
  *	start and end vertices.  The code breaks the longer edgeuse into
- *	ones that can be radials of the shorter ones
+ *	ones that can be radials of the shorter ones.
+ *	Returns the number of splits performed.
  */
 
-void
+int
 nmg_break_long_edges( struct shell *s , struct rt_tol *tol )
 {
 	struct faceuse *fu;
 	struct loopuse *lu;
 	struct edgeuse *eu;
+	int split_count=0;
 
 	/* look at every edgeuse in the shell */
 	for( RT_LIST_FOR( fu , faceuse , &s->fu_hd ) )
@@ -2279,10 +2281,14 @@ nmg_break_long_edges( struct shell *s , struct rt_tol *tol )
 						VSUB2( v1 , eu1->eumate_p->vu_p->v_p->vg_p->coord , eu1->vu_p->v_p->vg_p->coord );
 
 						if (MAGSQ( v0 ) > MAGSQ( v1 ) && VDOT( v0 , v1 ) < 0.0 )
+						{
 							tmp_eu = nmg_esplit(eu1->vu_p->v_p, eu);
+							split_count++;
+						}
 					}
 				}
 			}
 		}
 	}
+	return( split_count );
 }
