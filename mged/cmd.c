@@ -960,7 +960,15 @@ gui_setup()
   int     found;
 
 #define MGED_GUIRC "mged2.tcl"
-#include "./sliders.h"
+#include "./mgedGui.h"
+#include "./menuGui.h"
+#include "./slidersGui.h"
+#include "./editobjGui.h"
+#include "./icreateGui.h"
+#include "./solclickGui.h"
+#include "./solcreateGui.h"
+#include "./vmathUi.h"
+#include "./htmlLibraryUi.h"
 
   if((tkwin = Tk_CreateMainWindow(interp, (char *)NULL, "MGED", "MGED")) == NULL){
     rt_log("mged_setup: Failed to create main window.\n");
@@ -971,8 +979,16 @@ gui_setup()
   if (Tk_Init(interp) == TCL_ERROR)
     rt_log("Tk_Init error %s\n", interp->result);
 
-  /* Load redefined knob command */
-/*  Tcl_Eval( interp, knob_str ); */
+  /* Load default GUI */
+  Tcl_Eval( interp, vmath_ui_str );
+  Tcl_Eval( interp, html_library_ui_str );
+  Tcl_Eval( interp, mged_gui_str );
+  Tcl_Eval( interp, menu_gui_str );
+  Tcl_Eval( interp, sliders_gui_str );
+  Tcl_Eval( interp, editobj_gui_str );
+  Tcl_Eval( interp, icreate_gui_str );
+  Tcl_Eval( interp, solclick_gui_str );
+  Tcl_Eval( interp, solcreate_gui_str );
 
   found = 0;
   rt_vls_init( &str );
@@ -1017,11 +1033,12 @@ gui_setup()
 
   /* Didn't find a startup file, so warn user */
   if(!found){
-    rt_log("gui_setup: user interface startup file was not found.\n\n");
-    rt_log("Note: there are three environment variables that should be set.\n");
-    rt_log("\tMGED_GUIRC is the name of the user interface startup file.\n");
-    rt_log("\tMGED_LIBRARY is the path where the Tcl files live.\n");
-    rt_log("\tMGED_HTML_DIR is the path where the html files live.\n\n");
+    rt_log("gui_setup: user interface startup file was not found.\n");
+    rt_log("         - Using default interface.\n\n");
+    rt_log("Note: there are three environment variables that can be set.\n");
+    rt_log("\tMGED_GUIRC - user interface startup file.\n");
+    rt_log("\tMGED_LIBRARY - search path for Tcl files.\n");
+    rt_log("\tMGED_HTML_DIR - search path for html files.\n\n");
   }
 
   rt_vls_free(&str);
@@ -1118,17 +1135,25 @@ char **argv;
 {
   struct cmd_list *clp;
 
-  if(argc != 2){
-    Tcl_AppendResult(interp, "Usage: cmd_init id", (char *)NULL);
+  if(argc != 3){
+    Tcl_AppendResult(interp, "Usage: cmd_init name id", (char *)NULL);
     return TCL_ERROR;
   }
 
   clp = (struct cmd_list *)rt_malloc(sizeof(struct cmd_list), "cmd_list");
   bzero((void *)clp, sizeof(struct cmd_list));
   RT_LIST_APPEND(&head_cmd_list.l, &clp->l);
-  strcpy((char *)clp->name, argv[1]);
   clp->cur_hist = head_cmd_list.cur_hist;
   rt_vls_init(&clp->more_default);
+  rt_vls_init(&clp->name);
+  rt_vls_strcpy(&clp->name, argv[1]);
+#if 0
+  sscanf(argv[2], "%x", &clp->id);
+  clp->sp = (void *)Tk_Display(Tk_NameToWindow(interp, argv[3], tkwin));
+#else
+  rt_vls_init(&clp->path);
+  rt_vls_strcpy(&clp->path, argv[2]);
+#endif
   return TCL_OK;
 }
 
@@ -1146,7 +1171,7 @@ char **argv;
   /* The current command window is not tied to a display manager so,
      simply return the id of the current command window */
   if(!curr_cmd_list->aim){
-    Tcl_AppendElement(interp, curr_cmd_list->name);
+    Tcl_AppendElement(interp, rt_vls_addr(&curr_cmd_list->name));
     return TCL_OK;
   }
 
@@ -1157,7 +1182,7 @@ char **argv;
     if(curr_cmd_list->aim->s_info == p->s_info)
       /* This display manager is tied to a command window */
       if(p->aim)
-	Tcl_AppendElement(interp, p->aim->name);
+	Tcl_AppendElement(interp, rt_vls_addr(&p->aim->name));
   }
 
   return TCL_OK;
@@ -1180,7 +1205,7 @@ char **argv;
   }
 
   for( RT_LIST_FOR(p, cmd_list, &head_cmd_list.l) ){
-    if(strcmp((char *)p->name, argv[1]))
+    if(strcmp(rt_vls_addr(&p->name), argv[1]))
       continue;
 
     curr_cmd_list = p;
@@ -1196,7 +1221,6 @@ char **argv;
   rt_vls_trunc(&curr_cmd_list->more_default, 0);
   return TCL_OK;
 }
-
 
 int
 get_more_default(clientData, interp, argc, argv)
@@ -1569,6 +1593,9 @@ struct funtab in_functions[];
     register struct funtab *ftp;
     struct funtab *functions;
     char *cp;
+
+    if(argc == 0)
+      return 0; /* Good */
 
     /* if no function table is provided, use the default mged function table */
     if( in_functions == (struct funtab *)NULL )
@@ -2060,26 +2087,30 @@ char *argv[];
   if(argc == 1){
     for( RT_LIST_FOR(p_cmd, cmd_list, &head_cmd_list.l) )
       if(p_cmd->aim)
-	Tcl_AppendResult(interp, p_cmd->name, " ---> ", rt_vls_addr(&p_cmd->aim->_pathName),
+	Tcl_AppendResult(interp, rt_vls_addr(&p_cmd->name), " ---> ",
+			 rt_vls_addr(&p_cmd->aim->_pathName),
 			 "\n", (char *)NULL);
       else
-	Tcl_AppendResult(interp, p_cmd->name, " ---> ", "\n", (char *)NULL);
+	Tcl_AppendResult(interp, rt_vls_addr(&p_cmd->name), " ---> ",
+			 "\n", (char *)NULL);
 
     if(p_cmd->aim)
-      Tcl_AppendResult(interp, p_cmd->name, " ---> ", rt_vls_addr(&p_cmd->aim->_pathName),
+      Tcl_AppendResult(interp, rt_vls_addr(&p_cmd->name), " ---> ",
+		       rt_vls_addr(&p_cmd->aim->_pathName),
 		       "\n", (char *)NULL);
     else
-      Tcl_AppendResult(interp, p_cmd->name, " ---> ", "\n", (char *)NULL);
+      Tcl_AppendResult(interp, rt_vls_addr(&p_cmd->name), " ---> ",
+		       "\n", (char *)NULL);
 
     return TCL_OK;
   }
 
   for( RT_LIST_FOR(p_cmd, cmd_list, &head_cmd_list.l) )
-    if(!strcmp((char *)p_cmd->name, argv[1]))
+    if(!strcmp(rt_vls_addr(&p_cmd->name), argv[1]))
       break;
 
   if(p_cmd == &head_cmd_list &&
-     (strcmp(head_cmd_list.name, argv[1]))){
+     (strcmp(rt_vls_addr(&head_cmd_list.name), argv[1]))){
     Tcl_AppendResult(interp, "f_aim: unrecognized command_window - ", argv[1],
 		     "\n", (char *)NULL);
     return TCL_ERROR;
@@ -2088,10 +2119,11 @@ char *argv[];
   /* print out the display manager being aimed at */
   if(argc == 2){
     if(p_cmd->aim)
-      Tcl_AppendResult(interp, p_cmd->name, " ---> ", rt_vls_addr(&p_cmd->aim->_pathName),
+      Tcl_AppendResult(interp, rt_vls_addr(&p_cmd->name), " ---> ",
+		       rt_vls_addr(&p_cmd->aim->_pathName),
 		       "\n", (char *)NULL);
     else
-      Tcl_AppendResult(interp, p_cmd->name, " ---> ", "\n", (char *)NULL);
+      Tcl_AppendResult(interp, rt_vls_addr(&p_cmd->name), " ---> ", "\n", (char *)NULL);
 
     return TCL_OK;
   }
@@ -2119,7 +2151,8 @@ char *argv[];
     p_dm->aim->aim = (struct dm_list *)NULL;
 
   p_dm->aim = p_cmd;
-  Tcl_AppendResult(interp, p_cmd->name, " ---> ", rt_vls_addr(&p_cmd->aim->_pathName),
+  Tcl_AppendResult(interp, rt_vls_addr(&p_cmd->name), " ---> ",
+		   rt_vls_addr(&p_cmd->aim->_pathName),
 		   "\n", (char *)NULL);
   
   return TCL_OK;
