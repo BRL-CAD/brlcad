@@ -41,6 +41,7 @@ extern char	*strchr();
 #endif
 extern char	*optarg;
 extern int	optind;
+extern int	opterr;
 
 #if (__STDC__ && !apollo) || (sgi && mips)
 	/* SGI has this, even though it isn't ANSI */
