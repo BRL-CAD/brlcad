@@ -2189,8 +2189,16 @@ int		first;
 	 */
 	RT_CK_TOL(sp->tol);
 	NMG_CK_EDGE_G(eu->e_p->eg_p);
+#if 1
+	/* XXX This assumes unit vectors.  These are not.  Fixing this causes lots of error messages, though. */
+	/* ERROR: vu=x10063d54 v=x10050578 is on isect line, tvu=x10063614 eu=x10081b30 isn't */
 	if( fabs( VDOT( eu->e_p->eg_p->e_dir, sp->dir ) ) < sp->tol->para )
 		return;
+#else
+	/* sp->tol->para and RT_DOT_TOL are too tight. 0.1 is 5 degrees */
+	if( fabs( VDOT( eu->e_p->eg_p->e_dir, sp->dir ) ) < 0.9 * MAGNITUDE(eu->e_p->eg_p->e_dir) * MAGNITUDE(sp->dir) )
+		return;
+#endif
 	if( rt_distsq_line3_pt3( sp->pt, sp->dir, eu->vu_p->v_p->vg_p->coord )
 	    > sp->tol->dist_sq )
 		return;
