@@ -3062,12 +3062,59 @@ BU_EXTERN(void			nmg_class_shells, (struct shell *sA,
 				CONST struct bn_tol *tol) );
 
 /* from nmg_fcut.c */
-BU_EXTERN(void			nmg_set_lu_orientation, (struct loopuse	*lu,
-				int is_opposite) );
 /* static void ptbl_vsort */
+BU_EXTERN(int			nmg_ck_vu_ptbl, (struct bu_ptbl	*p,
+				struct faceuse	*fu));
 BU_EXTERN(double		nmg_vu_angle_measure, (struct vertexuse	*vu,
 				vect_t x_dir, vect_t y_dir, int assessment,
 				int in) );
+#if 0
+BU_EXTERN(int			nmg_is_v_on_rs_list, (CONST struct nmg_ray_state *rs,
+				CONST struct vertex		*v));
+BU_EXTERN(int			nmg_assess_eu, (struct edgeuse *eu,
+				int			forw,
+				struct nmg_ray_state	*rs,
+				int			pos));
+BU_EXTERN(int			nmg_assess_vu, (struct nmg_ray_state	*rs,
+				int			pos));
+BU_EXTERN(void			nmg_pr_vu_stuff, (CONST struct nmg_vu_stuff *vs));
+#endif
+BU_EXTERN(int			nmg_wedge_class, (int	ass,			/* assessment of two edges forming wedge */
+				double	a, double	b));
+#if 0
+BU_EXTERN(int			nmg_face_coincident_vu_sort,
+				(struct nmg_ray_state	*rs,
+				int			start,
+				int			end));
+#endif
+BU_EXTERN(void			nmg_sanitize_fu, (struct faceuse	*fu));
+#if 0
+BU_EXTERN(void			nmg_face_rs_init,
+				(struct nmg_ray_state	*rs,
+				struct bu_ptbl	*b,
+				struct faceuse	*fu1,
+				struct faceuse	*fu2,
+				point_t		pt,
+				vect_t		dir,
+				struct edge_g_lseg		*eg,
+				CONST struct bn_tol	*tol));
+BU_EXTERN(void			nmg_edge_geom_isect_line,
+				(struct edgeuse		*eu,
+				struct nmg_ray_state	*rs,
+				CONST char		*reason));
+#endif
+BU_EXTERN(void			nmg_unlist_v,
+				(struct bu_ptbl	*b,
+				fastf_t *mag,
+				struct vertex	*v));
+#if 0
+BU_EXTERN(int			nmg_onon_fix,
+				(struct nmg_ray_state	*rs,
+				struct bu_ptbl		*b,
+				struct bu_ptbl		*ob,
+				fastf_t			*mag,
+				fastf_t			*omag));
+#endif
 BU_EXTERN(struct edge_g_lseg	*nmg_face_cutjoin, (
 				struct bu_ptbl *b1, struct bu_ptbl *b2,
 				fastf_t *mag1, fastf_t *mag2,
@@ -3075,6 +3122,18 @@ BU_EXTERN(struct edge_g_lseg	*nmg_face_cutjoin, (
 				point_t pt, vect_t dir,
 				struct edge_g_lseg *eg,
 				CONST struct bn_tol *tol) );
+BU_EXTERN(void			nmg_fcut_face_2d,
+				(struct bu_ptbl *vu_list,
+				fastf_t *mag,
+				struct faceuse *fu1,
+				struct faceuse *fu2,
+				struct bn_tol *tol));
+BU_EXTERN(int			nmg_insert_vu_if_on_edge,
+				(struct vertexuse *vu1,
+				struct vertexuse *vu2,
+				struct edgeuse *new_eu,
+				struct bn_tol *tol));
+/* nmg_face_state_transition */
 
 #define nmg_mev(_v, _u)	nmg_me((_v), (struct vertex *)NULL, (_u))
 
