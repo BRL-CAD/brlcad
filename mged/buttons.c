@@ -450,16 +450,14 @@ static void be_accept()  {
 		/* Accept a solid edit */
 		dmp->dmr_light( LIGHT_OFF, BE_ACCEPT );
 		dmp->dmr_light( LIGHT_OFF, BE_REJECT );
-		/* write editing changes out to disc */
-		db_put( dbip, illump->s_path[illump->s_last], &es_rec, 0, 1 );
-
 		dmp->dmr_light( LIGHT_OFF, edsol );
 		edsol = 0;
+
+		sedit_accept();		/* zeros "edsol" var */
+
 		menu_array[MENU_L1] = MENU_NULL;
 		menu_array[MENU_L2] = MENU_NULL;
 		dmp->dmr_light( LIGHT_OFF, BE_S_EDIT );
-		es_edflag = -1;
-		menuflag = 0;
 
 		FOR_ALL_SOLIDS( sp )
 			sp->s_iflag = DOWN;
@@ -555,8 +553,7 @@ static void be_reject()  {
 		menu_array[MENU_L1] = MENU_NULL;
 		menu_array[MENU_L2] = MENU_NULL;
 
-		/* Restore the original solid */
-		replot_original_solid( illump );
+		sedit_reject();
 		break;
 
 	case ST_O_EDIT:

@@ -1787,3 +1787,30 @@ f_eqn()
 	pr_solid( &es_rec.s );
 	dmaflag = 1;
 }
+
+/* Hooks from buttons.c */
+
+void
+sedit_accept()
+{
+	if( not_state( ST_S_EDIT, "Solid edit accept" ) )  return;
+
+	/* write editing changes out to disc */
+	db_put( dbip, illump->s_path[illump->s_last], &es_rec, 0, 1 );
+	es_edflag = -1;
+	menuflag = 0;
+	movedir = 0;
+}
+
+void
+sedit_reject()
+{
+	if( not_state( ST_S_EDIT, "Solid edit reject" ) )  return;
+
+	/* Restore the original solid */
+	replot_original_solid( illump );
+
+	menuflag = 0;
+	movedir = 0;
+	es_edflag = -1;
+}
