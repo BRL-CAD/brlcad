@@ -37,7 +37,8 @@ NFS=1
 # Label number for this CAD Release,
 # RCS main Revision number, and date.
 #RELEASE=M.N;	RCS_REVISION=X;		REL=DATE=dd-mmm-yy
-RELEASE=5.3;	RCS_REVISION=14;	REL_DATE=5-Mar-01	# 5.3
+RELEASE=5.4;	RCS_REVISION=15;	REL_DATE=11-Jul-01	# 5.4
+#RELEASE=5.3;	RCS_REVISION=14;	REL_DATE=5-Mar-01	# 5.3
 #RELEASE=5.2;	RCS_REVISION=13;	REL_DATE=7-Oct-00	# 5.2
 #RELEASE=5.0;	RCS_REVISION=12;	REL_DATE=15-Sept-99	# 5.0 production
 #RELEASE=4.6;	RCS_REVISION=11;	REL_DATE=7-Jul-99	# 5.0beta
@@ -812,10 +813,10 @@ Version: ${RELEASE}
 Release: ${REV}
 Copyright:  Copyright 2000 by U.S.Army in all countires except the USA.  See distribution restrictions in your license agreement or ftp.arl.mil:/pub/brl-cad/agreement
 Group: Applications/Graphics
-Source:  http://ftp.arl.mil:/brl-cad/Downloads/Rel${RELEASE}/
-URL:  http://ftp.arl.mil/brlcad/
+Source:  http://ftp.arl.army.mil:/brl-cad/Downloads/Rel${RELEASE}/
+URL:  http://ftp.arl.army.mil/brlcad/
 Vendor: The U. S. Army Research Laboratory, Aberdeen Proving Ground, MD  USA  21005-5068
-Packager: Mike Muuss <Mike@arl.mil>
+Packager: John Anderson <jra@arl.army.mil>
 %description
 The BRL-CAD(tm) Package is a powerful Constructive Solid Geometry (CSG)
 solid modeling system.  BRL-CAD includes an interactive geometry
@@ -824,7 +825,7 @@ a generic framebuffer library, a network-distributed image-processing
 and signal-processing capability, and a large collection of related
 tools and utilities.
 
-This version was compiled on RedHat Linux 6.2
+This version was compiled on RedHat Linux 7.1
 
 %prep
         exit 0
@@ -867,7 +868,7 @@ tools and utilities. \
 Copyright 2000 by U.S.Army in all countires except the USA.  See distribution restrictions in your license agreement or ftp.arl.mil:/pub/brl-cad/agreement
 VENDOR=The U. S. Army Research Laboratory, Aberdeen Proving Ground, MD  USA  21005-5068
 HOTLINE=http://ftp.arl.mil/brlcad/
-EMAIL=acst@arl.mil
+EMAIL=acst@arl.army.mil
 EOF
 	echo "i pkginfo=./pkginfo" >> ./prototype
 	pkgproto /usr/brlcad/.=/usr/brlcad >> ./prototype
