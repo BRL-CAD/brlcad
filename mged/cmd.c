@@ -334,8 +334,8 @@ static struct funtab funtab[] = {
 	f_mouse, 4,4, TRUE,
 "make", "name <arb8|sph|ellg|tor|tgc|rpc|rhc|epa|ehy|eto|part|grip|half|nmg|pipe>", "create a primitive",
 	f_make,3,3,TRUE,
-"make_bb", "new_rpp_name obj1 [obj2 obj3 ...]", "make a bounding box solid enclosing specified objects",
-	f_make_bb, 1, MAXARGS, TRUE,
+"make_bb", "new_rpp_name obj1_or_path1 [list of objects or paths ...]", "make a bounding box solid enclosing specified objects/paths",
+	f_make_bb, 3, MAXARGS, TRUE,
 "mater", "comb [material]", "assign/delete material to combination",
 	f_mater,2,8,TRUE,
 "matpick", "# or a/b", "select arc which has matrix to be edited, in O_PATH state",
@@ -972,7 +972,7 @@ gui_setup()
     rt_log("Tk_Init error %s\n", interp->result);
 
   /* Load redefined knob command */
-  Tcl_Eval( interp, knob_str );
+/*  Tcl_Eval( interp, knob_str ); */
 
   found = 0;
   rt_vls_init( &str );
