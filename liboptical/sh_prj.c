@@ -394,7 +394,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	for (BU_LIST_FOR(img_sp, img_specific, &prj_sp->prj_images.l)) {
 		if (img_sp->i_antialias) {
 			if (rdebug&RDEBUG_SHADE)
-				bu_log("setting prismtrace 1");
+				bu_log("prj_setup(%s) setting prismtrace 1\n", rp->reg_name);
 			rtip->rti_prismtrace = 1;
 			break;
 		}
