@@ -148,12 +148,12 @@ char **argv;
 	 mged_variables->orig_gui){
 #define        MENUXLIM        (-1250)
 
-	if(x >= MENUXLIM && scroll_select( x, y, 0 )){
+	if(x >= MENUXLIM && scroll_select(x, y, 0)){
 	  stolen = 1;
 	  goto end;
 	}
 
-	if(x < MENUXLIM && mmenu_select( y, 0)){
+	if(x < MENUXLIM && mmenu_select(y, 0)){
 	  stolen = 1;
 	  goto end;
 	}
@@ -245,6 +245,10 @@ end:
 	  bu_vls_printf(&vls, "center %lf %lf %lf", model_pt[X], model_pt[Y], model_pt[Z]);
 	}
 #endif
+      }else if(mged_variables->mouse_behavior == 's' && !stolen){
+	bu_vls_printf(&vls, "ray_build_edit_menu s %d %d", x, y);
+      }else if(mged_variables->mouse_behavior == 'o' && !stolen){
+	bu_vls_printf(&vls, "ray_build_edit_menu o %d %d", x, y);
       }else
 	bu_vls_printf(&vls, "M 1 %d %d\n", x, y);
 
