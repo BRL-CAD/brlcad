@@ -110,21 +110,21 @@ static Mat_Db_Entry	mat_tmp_entry =
 				};
 
 /* Collect statistics on refraction. */
-static int		refrac_missed;
-static int		refrac_inside;
-static int		refrac_total;
+static int refrac_missed;
+static int refrac_inside;
+static int refrac_total;
 
 /* Collect statistics on shadowing. */
-static int		hits_shadowed;
-static int		hits_lit;
+static int hits_shadowed;
+static int hits_lit;
 
 /* Local communication with render_Scan(). */
 static int curr_scan;	  /* current scan line number */
 static int last_scan;	  /* last scan */
 static int nworkers;	  /* number of workers now running */
 static int a_gridsz;	  /* grid size taking anti-aliasing into account */
-static fastf_t	a_cellsz; /* cell size taking anti-aliasing into account */
-static fastf_t	grid_dh[3], grid_dv[3];
+static fastf_t a_cellsz;  /* cell size taking anti-aliasing into account */
+static fastf_t grid_dh[3], grid_dv[3];
 static struct application ag;	/* global application structure */
 
 /* Bit map for hidden line drawing. */
@@ -138,9 +138,9 @@ static struct application ag;	/* global application structure */
 #define HL_CLRBIT(_x,_y)	HL_BITVWORD(_x,_y) &= ~HL_BITVMASK(_x)
 #define HL_TSTBIT(_x,_y)	(HL_BITVWORD(_x,_y) & HL_BITVMASK(_x))
 #define ZeroPixel(_p)		((_p)[RED]==0 && (_p)[GRN]==0 && (_p)[BLU]==0)
-static bitv_t	hl_bits[1024][1024/HL_BITVBITS];
-static short		*hl_regmap = NULL;
-static unsigned short	*hl_dstmap = NULL;
+static bitv_t hl_bits[1024][1024/HL_BITVBITS];
+static short *hl_regmap = NULL;
+static unsigned short *hl_dstmap = NULL;
 
 /* Is object behind me.  Using values smaller than .01 cause bogus shadows
 	on single-precision math library machines like the IRIS 3030.  This
@@ -182,38 +182,26 @@ static unsigned short	*hl_dstmap = NULL;
 		}\
 	}
 
-STATIC fastf_t		myIpow();
-STATIC fastf_t		correct_Lgt();
-STATIC fastf_t		*mirror_Reflect();
+STATIC fastf_t myIpow();
+STATIC fastf_t correct_Lgt();
+STATIC fastf_t *mirror_Reflect();
 
 /* "Hit" application routines to pass to "rt_shootray()".		*/
-STATIC int		f_Model(), f_Probe(), f_Shadow(), f_HL_Hit(), f_Region();
+STATIC int f_Model(), f_Probe(), f_Shadow(), f_HL_Hit(), f_Region();
 /* "Miss" application routines to pass to "rt_shootray()".		*/
-STATIC int		f_Backgr(), f_Error(), f_Lit(), f_HL_Miss(), f_R_Miss();
+STATIC int f_Backgr(), f_Error(), f_Lit(), f_HL_Miss(), f_R_Miss();
 /* "Overlap" application routines to pass to "rt_shootray()".		*/
-STATIC int		f_Overlap(), f_NulOverlap();
+STATIC int f_Overlap(), f_NulOverlap();
 
-STATIC int		refract();
+STATIC int refract();
 
-STATIC void		model_Reflectance();
-STATIC void		glass_Refract();
-STATIC void		view_pix(), view_bol(), view_eol(), view_end();
+STATIC void model_Reflectance();
+STATIC void glass_Refract();
+STATIC void view_pix(), view_bol(), view_eol(), view_end();
 
-void			cons_Vector();
-void			render_Model();
-void			render_Scan();
-
-#if defined( cray ) && 0
-#define BYTE_OFFSET(p)	(((long)(p)&0xE000000000000000)>>61)
-#define WORD_ADDR(p)	((long)(p)&0xFFFFFF)
-/* Work around for loop-optimization bug.				*/
-incr_Ptr( pp )
-RGBpixel	**pp;
-	{
-	(*pp)++;
-	return;
-	}
-#endif
+void cons_Vector();
+void render_Model();
+void render_Scan();
 
 /*
 	void getCellSize( int gsize )
@@ -231,7 +219,7 @@ int gsize;
 			cell_sz = view_size / (fastf_t) gsize;
 		}
 	else
-		cell_sz = view_size/ (fastf_t) gsize;
+		cell_sz = view_size / (fastf_t) gsize;
 	return;
 	}
 
@@ -259,11 +247,13 @@ getCenter()
 	return	TRUE;
 	}
 
-/*	r e n d e r _ M o d e l ( )					*/
+/*
+	void render_Model( int frame )
+ */
 void
 render_Model( frame )
-int	frame;
-	{	int	x;
+int frame;
+	{	int x;
 	(void) signal( SIGINT, abort_sig );
 	if( npsw > 1 )
 		pix_buffered = B_LINE;
@@ -397,14 +387,14 @@ int	frame;
 
 void
 render_Scan()
-	{	fastf_t		grid_y_inc[3], grid_x_inc[3];
-		RGBpixel	scanbuf[1024];
-		register int	com;
-		int		cpu;	/* local CPU number */
+	{	fastf_t grid_y_inc[3], grid_x_inc[3];
+		RGBpixel scanbuf[1024];
+		register int com;
+		int cpu;	/* local CPU number */
 		
 	/* Must have local copy of application structure for parallel
 		threads of execution, so make copy.			*/
-		struct application	a;
+		struct application a;
 
 	RES_ACQUIRE( &rt_g.res_worker );
 	cpu = nworkers++;
@@ -448,7 +438,8 @@ render_Scan()
 			{
 			view_bol( &a );
 
-			/* Compute vectors from center to origin (bottom-left) of grid.	*/
+			/* Compute vectors from center to origin (bottom-left)
+				 of grid. */
 			Scale2Vec( grid_dv, (fastf_t)(-a_gridsz/2)+a.a_y, grid_y_inc );
 			Scale2Vec( grid_dh, (fastf_t)(-a_gridsz/2)+a.a_x, grid_x_inc );
 			for(	;
@@ -458,26 +449,28 @@ render_Scan()
 				)
 				{	fastf_t		aim_pt[3];
 				if( rel_perspective == 0.0 )
-					{ /* Parallel rays emanating from grid.	*/
+					{
+					/* Parallel rays emanating from grid. */
 					Add2Vec( grid_loc, grid_y_inc, aim_pt );
 					Add2Vec( aim_pt, grid_x_inc, a.a_ray.r_pt );
 					VREVERSE( a.a_ray.r_dir, lgts[0].dir );
 					}
 				else	
-				/* Fire a ray at model from the zeroth point-light-
-					source position "lgts[0].loc" through each
-					grid cell. The closer the source is to the
-					grid, the more perspective there will be;
-				 */
+					/* Fire a ray at model from the zeroth
+					point light source position lgts[0].loc
+					through each grid cell. The closer the
+					source is to the grid, the more perspec-
+					tive there will be;
+					 */
 					{
 					VMOVE( a.a_ray.r_pt, lgts[0].loc );
-					/* Compute ray direction.		*/
+					/* Compute ray direction. */
 					Add2Vec( grid_loc, grid_y_inc, aim_pt );
 					AddVec( aim_pt, grid_x_inc );
 					Diff2Vec( aim_pt, lgts[0].loc, a.a_ray.r_dir );
 					VUNITIZE( a.a_ray.r_dir );
 					}
-				a.a_level = 0;	 /* Recursion level (bounces).	*/
+				a.a_level = 0; /* Recursion level (bounces). */
 				if( ir_mapping & IR_OCTREE )
 					{
 					if( ir_shootray_octree( &a ) == -1 )
@@ -517,11 +510,11 @@ STATIC int
 f_Region( ap, pt_headp )
 register struct application *ap;
 struct partition *pt_headp;
-	{	register struct partition	*pp;
-		register struct region		*regp;
-		register struct soltab		*stp;
-		register struct xray		*rp;
-		register struct hit		*ihitp;
+	{	register struct partition *pp;
+		register struct region *regp;
+		register struct soltab *stp;
+		register struct xray *rp;
+		register struct hit *ihitp;
 	Get_Partition( ap, pp, pt_headp, "f_Region" );
 	regp = pp->pt_regionp;
 	stp = pp->pt_inseg->seg_stp;
@@ -953,7 +946,11 @@ register Lgt_Source		*lgt_entry;
 
 		/* Set up ray origin at surface contact point. */
 		VMOVE( ap_hit.a_ray.r_pt, pp->pt_inhit->hit_point );
-	
+
+		/* Pass distance to light source to hit routine. */
+		ap_hit.a_cumlen =
+			Dist3d( pp->pt_inhit->hit_point, lgt_entry->loc );
+
 		if( rt_g.debug & DEBUG_SHADOW )
 			{
 			V_Print( "\t\tdir. of ray to light",
@@ -978,7 +975,8 @@ register Lgt_Source		*lgt_entry;
 			fastf_t	cos_angl;
 			fastf_t	gauss_Wgt_Func();
 		if( lgt_entry->stp == SOLTAB_NULL )
-			cons_Vector( lgt_cntr, lgt_entry->azim, lgt_entry->elev );
+			cons_Vector( lgt_cntr,
+					lgt_entry->azim, lgt_entry->elev );
 		else
 			{
 			Diff2Vec( lgt_entry->loc, modl_cntr, lgt_cntr );
@@ -992,16 +990,19 @@ register Lgt_Source		*lgt_entry;
 		rel_radius = lgt_entry->radius / pp->pt_inhit->hit_dist;
 		if( rt_g.debug & DEBUG_RGB )
 			{
-			rt_log( "\t\tcos. of angle to lgt center = %g\n", cos_angl );
+			rt_log( "\t\tcos. of angle to lgt center = %g\n",
+				cos_angl );
 			rt_log( "\t\t	   angular distance = %g\n", ang_dist );
-			rt_log( "\t\t	    relative radius = %g\n", rel_radius );
-			rt_log( "\t\t	relative distance = %g\n", ang_dist/rel_radius );
+			rt_log( "\t\t	    relative radius = %g\n",
+				rel_radius );
+			rt_log( "\t\t	relative distance = %g\n",
+				ang_dist/rel_radius );
 			}
-		/* Return weighted and attenuated light intensity.	*/
+		/* Return weighted and attenuated light intensity. */
 		return	gauss_Wgt_Func( ang_dist/rel_radius ) *
 			lgt_entry->energy * energy_attenuation;
 		}
-	else	/* Return attenuated light intensity.			*/
+	else	/* Return attenuated light intensity. */
 		return	lgt_entry->energy * energy_attenuation;
 	}
 
@@ -1430,7 +1431,7 @@ struct partition *pt_headp;
 		}
 	ap->a_diverge = 1.0;
 	if( pp->pt_inseg->seg_stp == lgts[ap->a_user].stp )
-		{ /* Have hit the EXPLICIT light source, no shadow.	*/
+		{ /* Have hit the EXPLICIT light source, no shadow. */
 		if( rt_g.debug & DEBUG_SHADOW )
 			rt_log( "Unobstructed path to explicit light.\n" );
 		return	ap->a_miss( ap );
@@ -1438,7 +1439,11 @@ struct partition *pt_headp;
 	for( ; pp != pt_headp; pp = pp->pt_forw )
 		{
 		if( pp->pt_inseg->seg_stp == lgts[ap->a_user].stp )
-			/* Have hit the EXPLICIT light source.		*/
+			/* Have hit the EXPLICIT light source. */
+			break;
+		else
+		if( pp->pt_inhit->hit_dist > ap->a_cumlen )
+			/* Don't look beyond the light source. */
 			break;
 		if(	(entry =
 			mat_Get_Db_Entry( (int)(pp->pt_regionp->reg_gmater) ))
@@ -1454,14 +1459,14 @@ struct partition *pt_headp;
 			}
 		}
 	if( ap->a_diverge != 1.0 )
-		/* Light source is obstructed, object shadowed.		*/
+		/* Light source is obstructed, object shadowed. */
 		{
 		if( rt_g.debug & DEBUG_SHADOW )
 			rt_log( "Lgt source obstructed, object shadowed\n" );
 		hits_shadowed++;
 		return	1;
 		}
-	else	/* Full intensity of light source.			*/
+	else	/* Full intensity of light source. */
 		{
 		if( rt_g.debug & DEBUG_SHADOW )
 			rt_log( "Full intensity of light source, no shadow\n" );
@@ -1499,17 +1504,17 @@ struct partition *pt_headp;
  */
 STATIC void
 model_Reflectance( ap, pp, mdb_entry, lgt_entry, view_dir )
-register struct application	*ap;
-struct partition		*pp;
-Mat_Db_Entry			*mdb_entry;
-register Lgt_Source		*lgt_entry;
-fastf_t				*view_dir;
+register struct application *ap;
+struct partition *pp;
+Mat_Db_Entry *mdb_entry;
+register Lgt_Source *lgt_entry;
+fastf_t *view_dir;
 	{	/* Compute attenuation of light source intensity.	*/
-		register fastf_t	*norml = pp->pt_inhit->hit_normal;
-		register fastf_t	ff;		/* temp */
-		fastf_t			lgt_energy;
-		fastf_t			cos_il; /* Cos. incident angle.	*/
-		auto fastf_t		lgt_dir[3];
+		register fastf_t *norml = pp->pt_inhit->hit_normal;
+		register fastf_t ff;		/* temp */
+		fastf_t lgt_energy;
+		fastf_t cos_il;		 /* cosine incident angle */
+		auto fastf_t lgt_dir[3];
 
 	if( rt_g.debug & DEBUG_RGB )
 		rt_log( "\nmodel_Reflectance(): level %d grid <%d,%d>\n",
