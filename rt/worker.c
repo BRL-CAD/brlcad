@@ -29,14 +29,25 @@ static char RCSworker[] = "@(#)$Header$ (BRL)";
 #include "./mathtab.h"
 #include "./rdebug.h"
 
+fastf_t		gift_grid_rounding = 25.4;	/* set to 25.4 for inches */
+
+point_t		viewbase_model;	/* model-space location of viewplane corner */
+
 /* Local communication with worker() */
-HIDDEN point_t	viewbase_model;	/* model-space location of viewplane corner */
 HIDDEN int cur_pixel;		/* current pixel number, 0..last_pixel */
 HIDDEN int last_pixel;		/* last pixel number */
 HIDDEN int nworkers;		/* number of workers now running */
 
 /*
  *			G R I D _ S E T U P
+ *
+ *  In theory, the grid can be specified by providing any two of
+ *  these sets of parameters:
+ *	number of pixels (width, height)
+ *	viewsize (in model units, mm)
+ *	number of grid cells (cell_width, cell_height)
+ *  however, for now, it is required that the view size always be specified,
+ *  and one or the other parameter be provided.
  */
 void
 grid_setup()
@@ -48,14 +59,12 @@ grid_setup()
 		rt_bomb("viewsize <= 0");
 	/* model2view takes us to eye_model location & orientation */
 	mat_idn( toEye );
-	toEye[MDX] = -eye_model[X];
-	toEye[MDY] = -eye_model[Y];
-	toEye[MDZ] = -eye_model[Z];
+	MAT_DELTAS_VEC_NEG( toEye, eye_model );
 	Viewrotscale[15] = 0.5*viewsize;	/* Viewscale */
 	mat_mul( model2view, Viewrotscale, toEye );
 	mat_inv( view2model, model2view );
 
-	/* Determine grid spacing and orientation */
+	/* Determine grid cell size and number of pixels */
 	if( cell_width > 0.0 && width <= 0)  {
 		if( cell_height <= 0.0 )  cell_height = cell_width;
 		width = (viewsize / cell_width) + 0.99;
@@ -67,6 +76,55 @@ grid_setup()
 	} else {
 		/* Do nothing, both are already set */
 	}
+
+	/*
+	 *  Optional GIFT compatabilty, mostly for RTG3.
+	 *  Round coordinates of lower left corner to fall on integer-
+	 *  valued coordinates, in "gift_grid_rounding" units.
+	 */
+	if( gift_grid_rounding > 0.0 )  {
+		point_t		v_ll;		/* view, lower left */
+		point_t		m_ll;		/* model, lower left */
+		point_t		hv_ll;		/* hv, lower left*/
+		point_t		hv_wanted;
+		vect_t		hv_delta;
+		vect_t		m_delta;
+		mat_t		model2hv;
+		mat_t		hv2model;
+
+		/* Build model2hv matrix, including mm2inches conversion */
+		mat_copy( model2hv, Viewrotscale );
+		model2hv[15] = gift_grid_rounding;
+		mat_inv( hv2model, model2hv );
+
+		VSET( v_ll, -1, -1, 0 );
+		MAT4X3PNT( m_ll, view2model, v_ll );
+		MAT4X3PNT( hv_ll, model2hv, m_ll );
+		VSET( hv_wanted, floor(hv_ll[X]), floor(hv_ll[Y]),floor(hv_ll[Z]) );
+		VSUB2( hv_delta, hv_ll, hv_wanted );
+
+		MAT4X3PNT( m_delta, hv2model, hv_delta );
+		VSUB2( eye_model, eye_model, m_delta );
+		MAT_DELTAS_VEC_NEG( toEye, eye_model );
+		mat_mul( model2view, Viewrotscale, toEye );
+		mat_inv( view2model, model2view );
+#if 0
+VPRINT("hv_wanted", hv_wanted);
+VPRINT("hv_delta", hv_delta);
+VPRINT("m_delta", m_delta);
+
+		/* As a check, go again... */
+		VSET( v_ll, -1, -1, 0 );
+		MAT4X3PNT( m_ll, view2model, v_ll );
+		MAT4X3PNT( hv_ll, model2hv, m_ll );
+		VSET( hv_wanted, floor(hv_ll[X]), floor(hv_ll[Y]),floor(hv_ll[Z]) );
+		VSUB2( hv_delta, hv_ll, hv_wanted );
+VPRINT("hv_wanted", hv_wanted);
+VPRINT("check hv_delta", hv_delta );
+#endif
+	}
+
+	/* Create basis vectors dx and dy for emanation plane (grid) */
 	VSET( temp, 1, 0, 0 );
 	MAT3X3VEC( dx_model, view2model, temp );	/* rotate only */
 	VSCALE( dx_model, dx_model, cell_width );
