@@ -65,7 +65,7 @@ vect_t		left_eye_delta;
 int		hypersample=0;		/* number of extra rays to fire */
 int		rt_perspective=0;	/* perspective view -vs- parallel */
 fastf_t		persp_angle = 90;	/* prespective angle (degrees X) */
-fastf_t		aspect = 1;		/* aspect ratio Y/X */
+fastf_t		aspect = 1;		/* view aspect ratio X/Y */
 vect_t		dx_model;		/* view delta-X as model-space vect */
 vect_t		dy_model;		/* view delta-Y as model-space vect */
 point_t		eye_model;		/* model-space location of eye */
@@ -108,7 +108,7 @@ register char **argv;
 	register int c;
 	register int i;
 
-	while( (c=getopt( argc, argv, "E:SH:F:D:MA:x:X:s:f:a:e:l:O:o:p:P:Bb:n:w:iIU:" )) != EOF )  {
+	while( (c=getopt( argc, argv, "E:SH:F:D:MA:x:X:s:f:a:e:l:O:o:p:P:Bb:n:w:iIU:V:" )) != EOF )  {
 		switch( c )  {
 		case 'U':
 			use_air = atoi( optarg );
@@ -146,10 +146,10 @@ register char **argv;
 			fprintf(stderr,"rt rdebug=x%x\n", rdebug);
 			break;
 
-		case 's':
-			/* Square size -- fall through */
 		case 'f':
-			/* "Fast" -- arg's worth of pixels */
+			/* "Fast" - arg's worth of pixels - historical */
+		case 's':
+			/* Square size */
 			i = atoi( optarg );
 			if( i < 2 || i > MAX_WIDTH )
 				fprintf(stderr,"squaresize=%d out of range\n", i);
@@ -198,12 +198,13 @@ register char **argv;
 		case 'p':
 			rt_perspective = 1;
 			persp_angle = atof( optarg );
-			if( persp_angle < 1 )  persp_angle = 90;
+			if( persp_angle <= 1 )  persp_angle = 90;
 			if( persp_angle > 179 )  persp_angle = 90;
 			break;
 		case 'E':
 			eye_backoff = atof( optarg );
 			break;
+
 		case 'P':
 			/* Number of parallel workers */
 			npsw = atoi( optarg );
@@ -233,6 +234,28 @@ register char **argv;
 					pix_start = yy * width + xx;
 					pix_end = pix_start;
 				}
+			}
+			break;
+		case 'V':
+			/* View aspect */
+			{
+				fastf_t xx, yy;
+				register char *cp = optarg;
+
+				xx = atof(cp);
+				while( (*cp >= '0' && *cp <= '9')
+					|| *cp == '.' )  cp++;
+				while( *cp && (*cp < '0' || *cp > '9') ) cp++;
+				yy = atof(cp);
+				if( yy == 0 )
+					aspect = xx;
+				else
+					aspect = xx/yy;
+				if( aspect == 0 ) {
+					fprintf(stderr,"Bogus aspect %d, using 1.0\n", aspect);
+					aspect = 1;
+				}
+				printf("Aspect = %f\n", aspect);
 			}
 			break;
 		default:		/* '?' */
@@ -267,8 +290,8 @@ char **argv;
 
 	beginptr = sbrk(0);
 	width = height = 512;
-	azimuth = -35.0;			/* GIFT defaults */
-	elevation = -25.0;
+	azimuth = 35.0;			/* GIFT defaults */
+	elevation = 25.0;
 #ifdef CRAY1
 	npsw = 1;			/* >1 on GOS crashes system */
 #endif cray
