@@ -219,7 +219,7 @@ register struct application *ap;
 		slp = &scanline[ap->a_y];
 		RES_ACQUIRE( &rt_g.res_results );
 		if( slp->sl_buf == (char *)0 )  {
-			slp->sl_buf = rt_calloc( width, 3, "sl_buf" );
+			slp->sl_buf = rt_calloc( width, 3, "sl_buf scanline buffer" );
 		}
 		pixelp = slp->sl_buf+(ap->a_x*3);
 		*pixelp++ = r ;
@@ -243,7 +243,7 @@ register struct application *ap;
 				slp = &scanline[ap->a_y+dy];
 				if( slp->sl_buf == (char *)0 )
 					slp->sl_buf = rt_calloc( width+32,
-						3, "sl_buf" );
+						3, "sl_buf scanline buffer" );
 
 				pixelp = slp->sl_buf+(ap->a_x*3);
 				for( dx=0; dx<spread; dx++ )  {
@@ -311,7 +311,7 @@ register struct application *ap;
 			if( count != width*3 )
 				rt_bomb("view_pixel:  fwrite failure\n");
 		}
-		rt_free( scanline[ap->a_y].sl_buf, "scanline buf" );
+		rt_free( scanline[ap->a_y].sl_buf, "sl_buf scanline buffer" );
 		scanline[ap->a_y].sl_buf = (char *)0;
 	}
 }
@@ -732,7 +732,7 @@ free_scanlines()
 
 	for( y=0; y<height; y++ )  {
 		if( scanline[y].sl_buf )  {
-			rt_free( scanline[y].sl_buf, "scanline buf" );
+			rt_free( scanline[y].sl_buf, "sl_buf scanline buffer" );
 			scanline[y].sl_buf = (char *)0;
 		}
 	}
@@ -919,7 +919,8 @@ char	*framename;
 				sb.st_size );
 
 			scanline[yy].sl_buf = rt_calloc( width,
-				sizeof(RGBpixel), "sl_buf for continuation scanline");
+				sizeof(RGBpixel), 
+				"sl_buf scanline buffer (for continuation scanline)");
 			if( fseek( outfp, yy*width*3L, 0 ) != 0 )
 		    		rt_log("fseek error\n");
 		    	/* Read the fractional scanline */
