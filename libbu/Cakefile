@@ -11,7 +11,7 @@
 #define FILES	\
 	badmagic bitv bomb \
 	getopt ispar linebuf \
-	log magic malloc memset \
+	log magic malloc mappedfile memset \
 	parallel parse printb ptbl semaphore \
 	vls
 
