@@ -727,21 +727,6 @@ struct rt_db_internal	*intern;
 	return( 0 );
 }
 
-/* parameters for solid, internal representation
- * XXX This goes in rtgeom.h
- */
-/* parameters for solid, internal representation */
-struct rt_submodel_internal {
-	long	magic;
-	char	file[128];	/* .g filename, 0-len --> this database. */
-	char	treetop[128];	/* one treetop only */
-	int	meth;		/* space partitioning method */
-	/* other option flags (lazy prep, etc.)?? */
-	/* REMAINING ELEMENTS PROVIDED BY IMPORT, UNUSED BY EXPORT */
-	mat_t	root2leaf;
-};
-#define RT_SUBMODEL_INTERNAL_MAGIC	0x7375626d	/* subm */
-
 /*			S U B M O D E L _ I N
  *
  *	Read submodel from keyboard
