@@ -95,9 +95,9 @@ typedef int	bool;
 
 static char	*arg0;			/* argv[0] for error message */
 static bool	hires = false;		/* set for 1Kx1K; clear for 512x512 */
-static char	*in_fb_file = NULL;	/* input frame buffer name */
+static char	*in_fb_file = NULL;	/* input image name */
 static char	*out_fb_file = NULL;	/* output frame buffer name */
-static FBIO	*fbp = FBIO_NULL;	/* input/output frame buffer handle */
+static FBIO	*fbp = FBIO_NULL;	/* libfb input/output handle */
 static int	src_width = 0,
 		src_height = 0;		/* input image size */
 static int	dst_width = 0,
@@ -344,7 +344,7 @@ main( argc, argv )
 			register int	wt = fb_getwidth( fbp );
 			register int	ht = fb_getheight( fbp );
 
-			/* Use smaller input image size instead of 512/1024. */
+			/* Use smaller actual input size instead of request. */
 
 			if ( wt < src_width )
 				src_width = wt;
@@ -399,7 +399,7 @@ main( argc, argv )
 		register int	wt = fb_getwidth( fbp );
 		register int	ht = fb_getheight( fbp );
 
-		/* Use smaller frame buffer size for output. */
+		/* Use smaller actual frame buffer size for output. */
 
 		if ( wt < dst_width )
 			dst_width = wt;
@@ -407,7 +407,7 @@ main( argc, argv )
 		if ( ht < dst_height )
 			dst_height = ht;
 
-		/* Don't select pixels outside input image. */
+		/* Avoid selecting pixels outside the input image. */
 
 		if ( dst_width > src_width )
 			dst_width = src_width;
@@ -420,8 +420,8 @@ main( argc, argv )
 	/* The following is probably an optimally fast shuffling algorithm;
 	   unfortunately, it requires a huge auxiliary array.  The way it
 	   works is to start with an array of all pixel indices, then repeat:
-	   select entry at random from the array, output that index, replace
-	   the entry with the last array entry, and reduce the array size. */
+	   select an entry at random from the array, output that index, replace
+	   that entry with the last array entry, then reduce the array size. */
 	{
 	register long	*loc;		/* keeps track of pixel shuffling */
 	register long	wxh = (long)dst_width * (long)dst_height;

@@ -1,9 +1,9 @@
 '\"	@(#)$Header$ (BRL)
 '\" Edit the next two lines to configure for your system:
-.ds ms 1\" utility manual section, normally 1B -- alternatives are 1, 1L, etc.
-.ds ls 3\" library manual section, normally 3B -- alternatives are 3, 3L, etc.
-.ds fs 5\" format manual section, normally 4B -- alternatives are 5, 4L, etc.
-.ie t .ds pf B\" "printout" font, normally (CW -- use B if you don't have one
+.ds ms 1B\" utility manual section, normally 1B -- alternatives are 1, 1L, etc.
+.ds ls 3B\" library manual section, normally 3B -- alternatives are 3, 3L, etc.
+.ds fs 4B\" format manual section, normally 4B -- alternatives are 5, 4L, etc.
+.ie t .ds pf (CB\" "printout" font, normally (CW -- use B if you don't have one
 .el .ds pf 1
 '\"
 .de CW
@@ -27,12 +27,12 @@ fbfade \- fade a frame buffer image in or out
 ] [
 .CW -w
 .I "input width"
-] [
-.CW -n
-.I "input height"
 ]
 .br
 	[
+.CW -n
+.I "input height"
+] [
 .CW -S
 .I "output square size"
 ] [
@@ -41,7 +41,9 @@ fbfade \- fade a frame buffer image in or out
 ] [
 .CW -N
 .I "output height"
-] [ [
+]
+.br
+	[ [
 .CW -F
 ]
 .I "output frame buffer name"
@@ -54,47 +56,48 @@ one randomly chosen pixel at a time.
 .TP "\w'\f\*(pf-F\fP \fIoutput frame buffer name\fP\ \ \ 'u"
 .CW -h
 (``high resolution'')\ 
-Assumes 1024 by 1024 pixels for the default input frame buffer size
+Assumes 1024 by 1024 pixels for default input image size
 instead of 512 by 512.
-Explicitly specified sizes override this default,
-and if the actual input image size is smaller than requested,
+Explicitly specified sizes override the default,
+and if actual input image size is smaller than requested,
 the actual size will be used.
-If the output frame buffer size is not specified,
-the actual input image size will be requested for output also.
-If the actual output frame buffer size is greater than the input image size,
-only the input-image sized lower-left portion of the frame buffer will be used.
-Actual sizes depend on details of the specific frame buffers.
+If output frame buffer size is not specified,
+the revised input size will be requested for output.
+If actual output frame buffer size is greater than requested,
+only the lower-left portion of the frame buffer will be used.
+Actual sizes depend on details of specific frame buffers.
 .TP
 \f\*(pf-f\fP \fIinput image name\fP
 Inputs the image to be displayed
-from the specified frame buffer or \fIpix\fP(\*(fs) file,
-instead of using a constant-background image
-(which amounts to fading out the image initially on the output frame buffer).
+from the specified frame buffer or \fIpix\^\fP(\*(fs) file,
+instead of using pure background
+(which fades out the image already
+on the output frame buffer).
 .TP
 \f\*(pf-s\fP \fIinput square size\fP
-Specifies the input image width and height.
+Specifies input image width and height.
 .TP
 \f\*(pf-w\fP \fIinput width\fP
-Specifies the input image width.
+Specifies input image width.
 .TP
 \f\*(pf-n\fP \fIinput height\fP
-Specifies the input image height.
+Specifies input image height.
 .TP
 \f\*(pf-S\fP \fIoutput square size\fP
-Specifies the output frame buffer width and height.
+Specifies output frame buffer width and height.
 .TP
 \f\*(pf-W\fP \fIoutput width\fP
-Specifies the output frame buffer width.
+Specifies output frame buffer width.
 .TP
 \f\*(pf-N\fP \fIoutput height\fP
-Specifies the output frame buffer height.
+Specifies output frame buffer height.
 .TP
 \f\*(pf-F\fP \fIoutput frame buffer name\fP
 Outputs to the specified frame buffer
 instead of the one specified by the
 .CW FB_FILE
 environment variable
-(or the default frame buffer, if
+(or the default, if
 .CW FB_FILE
 is not set).
 If this is the last option specified, the
@@ -110,7 +113,7 @@ The following shell script can be used to produce a slick ``slide show'':
 .br
 for \|i \|in \|*.pix
 .br
-do	fbfade \|-i \|$i
+do	fbfade \|-f $i
 .br
 	sleep \|15
 .br
