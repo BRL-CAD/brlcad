@@ -225,7 +225,7 @@ top:
 		     cutp->bn.bn_min, cutp->bn.bn_max) )  {
 			rt_log("\nrt_shootray:  ray misses box? (%g,%g) (%g,%g) \n",ap->a_ray.r_min, ap->a_ray.r_max, box_start, box_end);
 			VPRINT("r_pt", ap->a_ray.r_pt);
-			VPRINT("point", point);
+		     	VPRINT("Point", point);
 			VPRINT("Dir", ap->a_ray.r_dir);
 		     	rt_pr_cut( cutp, 0 );
 			break;
@@ -234,8 +234,8 @@ middle:
 		box_end = ap->a_ray.r_max;	
 
 		if(rt_g.debug&DEBUG_SHOOT) {
-			rt_log("ray (%f, %f) %f\n", box_start, box_end, model_end);
-			VPRINT( "point", point );
+			rt_log("ray (%g, %g) %g\n", box_start, box_end, model_end);
+			VPRINT("Point", point);
 			rt_pr_cut( cutp, 0 );
 		}
 
@@ -258,8 +258,7 @@ middle:
 
 			/* If ray does not strike the bounding RPP, skip on */
 			if(
-			   stp->st_id != ID_HALF &&
-			   stp->st_id != ID_ARB8 &&
+			   rt_functab[stp->st_id].ft_use_rpp &&
 			   ( !rt_in_rpp( &ap->a_ray, inv_dir,
 			      stp->st_min, stp->st_max ) ||
 			      ap->a_ray.r_max < -10.0 )
