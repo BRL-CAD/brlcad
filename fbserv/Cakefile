@@ -17,7 +17,7 @@
 /* Explicit composition of each product */
 
 rfbd:	OBJ LIBFB
-	CC LDFLAGS -o rfbd OBJ LIBFB LIBES
+	CC LDFLAGS -o rfbd OBJ LIB_PRE''LIBFB RFBD_LIBES LIBES
 
 
 /* Override the installation directory */

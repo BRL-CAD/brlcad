@@ -4,9 +4,11 @@
 #include "../Cakefile.defs"
 
 #define STATIC_PRODUCTS	moss.pix moss.log \
+			world.pix world.log \
 			star.pix star.log \
 			bldg391.pix bldg391.log \
-			world.pix world.log
+			m35.pix m35.log \
+			lgt1.pix lgt2.pix lgt3.pix
 #define SRCDIR	pix
 #define FILES	/**/
 #define	SRCSUFF	.pix

@@ -11,7 +11,7 @@
 
 #define PRODUCTS	libfb.ARCH_SUF
 #define SRCDIR	libfb
-#define FILES	fb_generic fb_log fb_paged_io getput \
+#define FILES	fb_generic fb_log fb_paged_io fb_rect getput \
 		if_disk if_debug if_stack LIBFB_OBJS
 #define	SRCSUFF	.c
 #define MANSECTION	3

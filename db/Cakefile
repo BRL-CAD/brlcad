@@ -21,7 +21,8 @@
 #define STATIC_PRODUCTS	bldg391.asc crod.asc demo.asc \
 	ktank.asc moss.asc prim.asc \
 	star.asc truck.asc world.asc cube.asc axis.asc \
-	woodsman.asc m35.asc lgt-test.asc
+	woodsman.asc m35.asc \
+	lgt-test.asc lgt-test.ldb lgt-test.mdb lgt-test.key
 
 #define SRCDIR	db
 #define FILES	/**/
