@@ -3137,6 +3137,7 @@ will also be changed. The <a href="#mvall">mvall</a> command performs a similar 
 <DT><a NAME="press"><B>press</B> <I>button_label</I></DT>
 
 <DD>The ``press'' command simulates the pressing of a button.
+All of these button actions can be be run directly as a command.
 The <I>button_label</I> indicates which button to simulate.
 The available buttons are:
 
@@ -3183,7 +3184,6 @@ The available buttons are:
 	the viewing cube (the eye rotates about the center if the viewing cube). In
 	``rotate about eye'' mode the view rotations are done about the eye point
 	(the eye rotates in position as in panning a camera)</li>
-<li>slice -- ??????????????????????</li>
 </ul>
 
 	<DL>
@@ -4442,10 +4442,10 @@ The parameters are (in order):
 
 <DT><a NAME="translate"><B>translate</B> <I>x y z</I></DT>
 
-<DD>The ``translate'' command is used in object edit mode to precisely control
-the translation of an object. The edited object is translated to the specified
-coordinates. The <a href="#p">p</a> command provides a similar capability for
-solid editing.
+<DD>The ``translate'' command is used to precisely control
+the translation of an object in both solid edit and object edit modes.
+The keypoint of the edited object or solid is translated to the specified
+coordinates.
  
 
 	<DL>
