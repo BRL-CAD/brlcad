@@ -305,10 +305,10 @@ set -S2 "/bin/sh"
 #	define	LIBRT_TIMER	timer42
 #endif
 
-#if defined(__CAKE__m3i6.2)
+#if defined(__CAKE__m3i62)
 /*	Silicon Graphics 4D, running IRIX64 6.2 (on a MIPS3 machine) */
 #	undef	sgi
-#	define	MTYPE	m3i6.2
+#	define	MTYPE	m3i62
 #	if 0	/* PRODUCTION=1 */
 /*		This version for production: optimization & shared libraries */
 /*		Warning 1174 is "variable declared but never referenced". */
@@ -373,10 +373,10 @@ set -S2 "/bin/sh"
 
 
 
-#if defined(__CAKE__m4i6.2)
+#if defined(__CAKE__m4i62)
 /*	Silicon Graphics 4D, running IRIX64 6.2 (on a MIPS4 machine) */
 #	undef	sgi
-#	define	MTYPE	m4i6.2
+#	define	MTYPE	m4i62
 #	if 0	/* PRODUCTION=1 */
 /*		This version for production: optimization & shared libraries */
 /*		Warning 1174 is "variable declared but never referenced". */

@@ -61,6 +61,7 @@ then
 	IFS="$SAVE_IFS"		# Restore normal field separators.
 	# Now $1, $2, and $3 have OS revision levels.
 	OS_REVISION="$1"
+	OS_MINOR="$2"
 
 	case "$HARDWARE_TYPE" in
 	"CRAY C90") MACHINE=xmp; UNIXTYPE=SYSV; HAS_TCP=1; HAS_SYMLINKS=1;;
@@ -100,8 +101,8 @@ then
 		IRIX64) UNIXTYPE=SYSV; HAS_TCP=1; HAS_SYMLINKS=1;
 			PROCESSOR=` hinv | sed -n -e 's/^CPU: MIPS \(.*\) Proc.*$/\1/p' `
 			case "$PROCESSOR" in
-			R4*)	MACHINE=m3i`uname -r` ;;
-			*)	MACHINE=m4i`uname -r` ;;
+			R4*)	MACHINE=m3i$OS_REVISION$OS_MINOR
+			*)	MACHINE=m4i$OS_REVISION$OS_MINOR
 			esac ;;
 		esac ;;
 	esac
