@@ -1778,6 +1778,12 @@ struct shell *s;
 
 	/* Mark first faceuse with shell number */
 	NMG_INDEX_ASSIGN( flags , fu , shell_no );
+rt_log( "After first face, %d edges on shared list\n" , NMG_TBL_END( &shared_edges ) );
+for( i=0 ; i<NMG_TBL_END( &shared_edges ) ; i++ )
+{
+	eu = (struct edgeuse *)NMG_TBL_GET( &shared_edges , i );
+	rt_log( "\t( %f %f %f ) -> ( %f %f %f )\n" , V3ARGS( eu->vu_p->v_p->vg_p->coord ) , V3ARGS( eu->eumate_p->vu_p->v_p->vg_p->coord ) );
+}
 
 	/* now pop edgeuse of the stack and visit faces radial to edgeuse */
 	while( (eu1 = nmg_pop_eu( &stack )) != (struct edgeuse *)NULL )
@@ -1838,6 +1844,12 @@ struct shell *s;
 			/* Mark this faceuse and its mate with a shell number */
 			NMG_INDEX_ASSIGN( flags , fu , shell_no );
 			NMG_INDEX_ASSIGN( flags , fu->fumate_p , shell_no );
+rt_log( "After another face, %d edges on shared list\n" , NMG_TBL_END( &shared_edges ) );
+for( i=0 ; i<NMG_TBL_END( &shared_edges ) ; i++ )
+{
+	eu = (struct edgeuse *)NMG_TBL_GET( &shared_edges , i );
+	rt_log( "\t( %f %f %f ) -> ( %f %f %f )\n" , V3ARGS( eu->vu_p->v_p->vg_p->coord ) , V3ARGS( eu->eumate_p->vu_p->v_p->vg_p->coord ) );
+}
 		}
 	}
 
@@ -1858,6 +1870,7 @@ struct shell *s;
 
 	if( !missed_faces )	/* nothing to do, just one shell */
 	{
+rt_log( "No missed faces - done!!!\n" );
 		rt_free( (char *)flags , "nmg_decompose_shell: flags " );
 		nmg_tbl( &stack , TBL_FREE , NULL );
 		nmg_tbl( &shared_edges , TBL_FREE , NULL );
@@ -2068,14 +2081,25 @@ struct shell *s;
 		new_s = nmg_msv( r );
 
 		/* Move faces marked with this shell_no to this shell */
-		for( RT_LIST_FOR( fu , faceuse , &s->fu_hd ) )
+		fu = RT_LIST_FIRST( faceuse , &s->fu_hd );
+		while( RT_LIST_NOT_HEAD( fu , &s->fu_hd ) )
 		{
+			struct faceuse *next_fu;
+
+			next_fu = RT_LIST_NEXT( faceuse , &fu->l );
+			while( RT_LIST_NOT_HEAD( next_fu , &s->fu_hd ) && next_fu->orientation != OT_SAME )
+				next_fu = RT_LIST_NEXT( faceuse , &next_fu->l );
+
 			if( fu->orientation != OT_SAME )
+			{
+				fu = next_fu;
 				continue;
+			}
 
 			if( NMG_INDEX_GET( flags , fu ) == shell_no )
 				nmg_mv_fu_between_shells( new_s , s , fu );
-			
+
+			fu = next_fu;
 		}
 		if( nmg_kvu( new_s->vu_p ) )
 			rt_bomb( "nmg_decompose_shell: killed shell vertex, emptied shell!!\n" );
