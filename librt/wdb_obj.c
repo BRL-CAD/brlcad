@@ -4572,8 +4572,8 @@ not_found:
 		return TCL_ERROR;
 	}
 
-	if (rt_db_put_internal(dp, wdbp->dbip, &new_intern) < 0) {
-		rt_db_free_internal(&new_intern);
+	if (rt_db_put_internal(dp, wdbp->dbip, &new_intern, wdbp->wdb_resp) < 0) {
+		rt_db_free_internal(&new_intern, wdbp->wdb_resp);
 		Tcl_AppendResult(interp, "Database write error, aborting.\n", (char *)NULL);
 		return TCL_ERROR;
 	}
