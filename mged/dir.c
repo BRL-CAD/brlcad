@@ -238,7 +238,8 @@ char	**argv;
   Tcl_AppendResult(interp, "Display manager free map:\n", (char *)NULL);
   rt_memprint( &(dmp->dm_map) );
 #endif
-  Tcl_AppendResult(interp, "Database free granule map:\n", (char *)NULL);
+
+  bu_log("Database free-storage map:\n");
   rt_memprint( &(dbip->dbi_freep) );
 
   return TCL_OK;
