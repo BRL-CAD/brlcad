@@ -3125,6 +3125,7 @@ struct edgeuse *eu;
 	nmg_keu(eu);
 }
 
+
 /*	N M G _ S I M P L I F Y _ L O O P
  *
  *	combine adjacent loops within the same parent
@@ -3146,19 +3147,19 @@ struct loopuse *lu;
 		eu_r = eu->radial_p;
 		NMG_CK_EDGEUSE(eu_r);
 
-		/* if the radial edge is part of a loop, but not the
-		 * loop containing the current edge, and the loop of
+		/* if the radial edge is part of a loop, and the loop of
 		 * the other edge is a part of the same object (face)
 		 * as the loop containing the current edge, and my
 		 * edgeuse mate is radial to my radial`s edgeuse
-		 * mate, then this is a "worthless" edge between
-		 * these two loops.
+		 * mate, and the radial edge is a part of a loop other
+		 * than the one "eu" is a part of 
+		 * then this is a "worthless" edge between these two loops.
 		 */
 		if (*eu_r->up.magic_p == NMG_LOOPUSE_MAGIC &&
-		    eu_r->up.lu_p != lu &&
 		    eu_r->up.lu_p->up.magic_p == lu->up.magic_p &&
-		    eu->eumate_p->radial_p == eu->radial_p->eumate_p) {
-		    	
+		    eu->eumate_p->radial_p == eu->radial_p->eumate_p &&
+		    eu_r->up.lu_p != lu) {
+
 		    	/* save a pointer to where we've already been
 		    	 * so that when eu becomes an invalid pointer, we
 		    	 * still know where to pick up from.
@@ -3187,6 +3188,73 @@ struct loopuse *lu;
 }
 
 
+/*	K I L L _ S N A K E S
+ *
+ */
+static void kill_snakes(lu)
+struct loopuse *lu;
+{
+	struct edgeuse *eu, *eu_r;
+	struct vertexuse *vu;
+	struct vertex *v;
+
+	NMG_CK_LOOPUSE(lu);
+	if (NMG_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
+		return;
+
+	eu = NMG_LIST_FIRST(edgeuse, &lu->down_hd);
+	while (NMG_LIST_MORE(eu, edgeuse, &lu->down_hd) ) {
+
+		NMG_CK_EDGEUSE(eu);
+
+		eu_r = eu->radial_p;
+		NMG_CK_EDGEUSE(eu_r);
+
+		/* if the radial edge is a part of the same loop, and
+		 * this edge is not used by anyplace else, and the radial edge
+		 * is also the next edge, this MAY be the tail of a snake!
+		 */
+
+		if (*eu_r->up.magic_p == NMG_LOOPUSE_MAGIC &&
+		    eu_r->up.lu_p == eu->up.lu_p &&
+		    eu->eumate_p->radial_p == eu->radial_p->eumate_p &&
+		    NMG_LIST_PNEXT_CIRC(edgeuse, eu) == eu_r) {
+
+		    	/* if there are no other uses of the vertex
+		    	 * between these two edgeuses, then this is
+		    	 * indeed the tail of a snake
+		    	 */
+			v = eu->eumate_p->vu_p->v_p;
+			vu = NMG_LIST_FIRST(vertexuse, &v->vu_hd);
+			while (NMG_LIST_MORE(vu, vertexuse, &v->vu_hd) &&
+			      (vu->up.eu_p == eu->eumate_p ||
+			       vu->up.eu_p == eu_r) )
+				vu = NMG_LIST_PNEXT(vertexuse, vu);
+
+			if (! NMG_LIST_MORE(vu, vertexuse, &v->vu_hd) ) {
+				/* this is the tail of a snake! */
+				nmg_keu(eu_r);
+				nmg_keu(eu);
+				eu = NMG_LIST_FIRST(edgeuse, &lu->down_hd);
+
+			    	if (rt_g.NMG_debug &(DEBUG_PLOTEM|DEBUG_PL_ANIM) &&
+				    *lu->up.magic_p == NMG_FACEUSE_MAGIC ) {
+			    	    	static int fno=0;
+
+					nmg_pl_2fu("After_joinloop%d.pl", fno++,
+					    lu->up.fu_p, lu->up.fu_p->fumate_p, 0);
+
+			    	}
+
+
+			} else
+				eu = NMG_LIST_PNEXT(edgeuse, eu);
+		} else
+			eu = NMG_LIST_PNEXT(edgeuse, eu);
+	}
+}
+
+
 /*	N M G _ S I M P L I F Y _ F A C E
  *
  *
@@ -3200,9 +3268,12 @@ struct faceuse *fu;
 
 	NMG_CK_FACEUSE(fu);
 
-	for (NMG_LIST(lu, loopuse, &fu->lu_hd)) {
+	for (NMG_LIST(lu, loopuse, &fu->lu_hd))
 		nmg_simplify_loop(lu);
-	}
+
+	
+	for (NMG_LIST(lu, loopuse, &fu->lu_hd))
+		kill_snakes(lu);
 }
 
 
