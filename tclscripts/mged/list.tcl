@@ -59,14 +59,24 @@ proc get_listbox_entry { w x y } {
 proc lbdcHack {w x y t id type path} {
     global mged_gui
     global mged_default
+    global comb_control
+    global bot_v1 bot_v2 bot_v3
 
+    # set item from listbox selection @$x,$y
     switch $type {
-	s -
-	c {
+	s1 -
+	s2 -
+	o -
+	c1 -
+	c2 -
+	c3 -
+	m1 -
+	m2 -
+	bf {
 	    set item [get_listbox_entry $w $x $y]
 	}
-	m {
-	    set item [$w index @$x,$y]
+	default {
+	    error "lbdcHack: bad type - $type"
 	}
     }
 
@@ -75,36 +85,77 @@ proc lbdcHack {w x y t id type path} {
         [expr {abs($mged_gui($id,lastButtonPress) - $t) > $mged_default(doubleClickTol)}]} {
 
 	switch $type {
-	    s {
+	    s1 -
+	    s2 -
+	    o {
 		solid_illum $item
 	    }
-	    c {
+	    c1 -
+	    c2 {
 		set spath [comb_get_solid_path $item]
 		set path_pos [comb_get_path_pos $spath $item]
 		matrix_illum $spath $path_pos
 	    }
-	    m {
+	    c3 {
+	    }
+	    m1 -
+	    m2 {
 		matrix_illum $path $item
+	    }
+	    bf {
+		set bot_v1 [lindex $item 0];
+		set bot_v2 [lindex $item 1];
+		set bot_v3 [lindex $item 2];
+		get_solid_keypoint;
+		refresh;
 	    }
 	}
     } else {
 	switch $type {
-	    s {
+	    s1 {
+		set sol_data [db get $item]
+		set sol_type [lindex $sol_data 0]
+		if { $sol_type == "sketch" } {
+		    Sketch_editor .#auto $item
+		} else {
+		    _mged_sed -i 1 $item
+		}
+	    }
+	    s2 {
 		set mged_gui($id,mgs_path) $item
-		bind $w <ButtonRelease-1> \
-			"destroy [winfo parent $w]; break"
 	    }
-	    c {
+	    o {
+		bind $w <ButtonRelease-1> \
+			"destroy [winfo parent $w]; build_matrix_menu $id $item; break"
+		return
+	    }
+	    c1 {
 		set mged_gui($id,mgc_comb) $item
-		bind $w <ButtonRelease-1> \
-			"destroy [winfo parent $w]; break"
 	    }
-	    m {
+	    c2 -
+	    c3 {
+		set comb_control($id,name) $item
+		comb_reset $id
+	    }
+	    m1 {
+		_mged_press oill
+		_mged_ill -i 1 $path
+		_mged_matpick $item
+	    }
+	    m2 {
 		set mged_gui($id,mgs_pos) $item
-		bind $w <ButtonRelease-1> \
-			"destroy [winfo parent $w]; break"
+	    }
+	    bf {
+		set bot_v1 [lindex $item 0];
+		set bot_v2 [lindex $item 1];
+		set bot_v3 [lindex $item 2];
+		get_solid_keypoint;
+		refresh;
 	    }
 	}
+
+	bind $w <ButtonRelease-1> \
+		"destroy [winfo parent $w]; break"
     }
 
     set mged_gui($id,lastButtonPress) $t
