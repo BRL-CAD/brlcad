@@ -1015,17 +1015,6 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	BWISH_LIBES	MGED_LIBES
 #	define	BWISH_CONFIG	-I''XINCDIR
 #	define	LIBDM_SAMPLE_LIBES \$"(LIBDM)" \$"(LIBTK)" \$"(LIBTCL)" \$"(LIBTK_LIBES)" \$"(LIBTCL_LIBES)" \$"(XLIBDIR)" -lXi -lXext -lX11
-/*	Use the system-provided TCL and Tk libraries */
-/*	XXX What about the system-provided itcl library? */
-#	if 0	/* PRODUCTION=1 */
-#		define	LIBTCL_DIR	_use_system_tcl_
-#		define	LIBTCL_USE_SYSTEM 
-#		define	LIBTCL		-L/usr/local/lib -ltcl82
-#		define	LIBTCL_DEP	/**/
-#		define	LIBTK_DIR	_use_system_tk_
-#		define	LIBTK		-L/usr/local/lib -ltk82
-#		define	LIBTK_DEP	/**/
-#	endif
 /*	Use the system-provided libz and libpng */
 #	define	LIBZ_DIR	_use_system_z_
 #	define	LIBZ		-lz
