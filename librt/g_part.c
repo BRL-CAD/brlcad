@@ -176,22 +176,9 @@ static char RCSpart[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "db.h"
 #include "raytrace.h"
+#include "nmg.h"
+#include "rtgeom.h"
 #include "./debug.h"
-
-struct part_internal {
-	long	part_magic;
-	point_t	part_V;
-	vect_t	part_H;
-	fastf_t	part_vrad;
-	fastf_t	part_hrad;
-	int	part_type;		/* sphere, cylinder, cone */
-};
-#define RT_PART_INTERNAL_MAGIC	0xaaccee87
-#define RT_PART_CK_MAGIC(_p)	RT_CKMAG(_p,RT_PART_INTERNAL_MAGIC,"part_internal")
-
-#define RT_PARTICLE_TYPE_SPHERE		1
-#define RT_PARTICLE_TYPE_CYLINDER	2
-#define RT_PARTICLE_TYPE_CONE		3
 
 struct part_specific {
 	struct part_internal	part_int;
@@ -895,19 +882,19 @@ double		norm_tol;
 		VSET( b, 0, pip->part_vrad, 0 );
 		VSET( c, 0, 0, pip->part_vrad );
 
-		ell_16pts( sphere_rim, pip->part_V, a, b );
+		rt_ell_16pts( sphere_rim, pip->part_V, a, b );
 		ADD_VL( vhead, sphere_rim[15], 0 );
 		for( i=0; i<16; i++ )  {
 			ADD_VL( vhead, sphere_rim[i], 1 );
 		}
 
-		ell_16pts( sphere_rim, pip->part_V, b, c );
+		rt_ell_16pts( sphere_rim, pip->part_V, b, c );
 		ADD_VL( vhead, sphere_rim[15], 0 );
 		for( i=0; i<16; i++ )  {
 			ADD_VL( vhead, sphere_rim[i], 1 );
 		}
 
-		ell_16pts( sphere_rim, pip->part_V, a, c );
+		rt_ell_16pts( sphere_rim, pip->part_V, a, c );
 		ADD_VL( vhead, sphere_rim[15], 0 );
 		for( i=0; i<16; i++ )  {
 			ADD_VL( vhead, sphere_rim[i], 1 );
