@@ -158,7 +158,7 @@ proc mged_input_dialog { w screen title text entryvar defaultentry default args 
 if [info exists env(MGED_HTML_DIR)] {
     set mged_html_dir $env(MGED_HTML_DIR)
 } else {
-    set mged_html_dir [lindex $auto_path 0]/../html/mged
+    set mged_html_dir [lindex $auto_path 0]/../../html/mged
 }
 
 while { [file exists $mged_html_dir/index.html]==0 } {
@@ -221,16 +221,16 @@ proc ia_apropos { parent screen } {
     ia_help $parent $screen [apropos $keyword]
 }
 
-proc ia_changestate args {
+proc ia_changestate { args } {
     global mged_display ia_illum_label
+    global mged_active_dm
 
     set id [lindex $args 0]
 
     if { [string length $mged_display(keypoint)]>0 } {
 	set ia_illum_label($id) $mged_display(keypoint)
     } elseif { [string compare $mged_display(state) VIEWING]==0 } {
-#	set ia_illum_label($id) "No objects illuminated"
-	set ia_illum_label($id) $mged_display($id,fps)
+	set ia_illum_label($id) $mged_display($mged_active_dm($id),fps)
     } else {
 	set ia_illum_label($id) [format "Illuminated path:    %s    %s" \
 		$mged_display(path_lhs) $mged_display(path_rhs)]
@@ -253,7 +253,7 @@ proc tkTextInsert {w s} {
 }
 
 proc insert_text { id str } {
-    ia_rtlog .ia$id.t $str
+    ia_rtlog .$id.t $str
 }
 
 proc ia_rtlog { w str } {
@@ -284,7 +284,7 @@ proc get_player_id_t { w } {
     global mged_players
     
     foreach id $mged_players {
-	set _w .ia$id.t
+	set _w .$id.t
 	if { $w == $_w } {
 	    return $id
 	}
@@ -298,14 +298,17 @@ proc distribute_text { w cmd str} {
 
     set src_id [get_player_id_t $w]
     foreach id $mged_players {
-	set _w .ia$id.t
+	set _w .$id.t
 	if [winfo exists $_w] {
 	    if {$w != $_w} {
 		set _promptBegin [$_w index {end - 1 l}]
 		$_w mark set curr insert
 		$_w mark set insert $_promptBegin
-		ia_rtlog_bold $_w "mged:$src_id> "
-		ia_rtlog_bold $_w $cmd\n
+
+		if {$cmd != ""} {
+		    ia_rtlog_bold $_w "mged:$src_id> "
+		    ia_rtlog_bold $_w $cmd\n
+		}
 
 		if {$str != ""} {
 		    ia_rtlog_bold $_w $str\n
@@ -318,20 +321,20 @@ proc distribute_text { w cmd str} {
     }
 }
 
-#    if { [mged_input_dialog .ia$id.open $player_screen($id) "Open New File" \
+#    if { [mged_input_dialog .$id.open $player_screen($id) "Open New File" \
 #	    "Enter filename of database you wish to open:" \
 #	    ia_filename "" 0 Open Cancel] == 0 } {
 proc do_Open { id } {
     global player_screen
 
-    set ia_filename [fs_dialog .ia$id.open .ia$id "./*.g"]
+    set ia_filename [fs_dialog .$id.open .$id "./*.g"]
     if {[string length $ia_filename] > 0} {
 	if [file exists $ia_filename] {
 	    opendb $ia_filename
-	    mged_dialog .ia$id.cool $player_screen($id) "File loaded" \
+	    mged_dialog .$id.cool $player_screen($id) "File loaded" \
 		    "Database $ia_filename successfully loaded." info 0 OK
 	} else {
-	    mged_dialog .ia$id.toobad $player_screen($id) "Error" \
+	    mged_dialog .$id.toobad $player_screen($id) "Error" \
 		    "No such file exists." warning 0 OK
 	}
     }
@@ -340,7 +343,7 @@ proc do_Open { id } {
 proc do_About_MGED { id } {
     global player_screen
 
-    mged_dialog .ia$id.about $player_screen($id) "About MGED..." \
+    mged_dialog .$id.about $player_screen($id) "About MGED..." \
 	    "MGED: Multi-device Geometry EDitor\n\
 \n\
 MGED is a part of The BRL-CAD Package.\n\n\
@@ -353,7 +356,7 @@ Aberdeen Proving Ground, Maryland  21005-5068  USA\n\
 proc do_On_command { id } {
     global player_screen
 
-    ia_help .ia$id $player_screen($id) [concat [?]]
+    ia_help .$id $player_screen($id) [concat [?]]
 }
 
 proc ia_invoke { w } {
@@ -690,7 +693,7 @@ set help_data(nirt)		{{}	{trace a single ray from current view}}
 set help_data(nmg_simplify)	{{[arb|tgc|ell|poly] new_solid nmg_solid}	{simplify nmg_solid, if possible}}
 set help_data(oed)		{{path_lhs path_rhs}	{Go from view to object_edit of path_lhs/path_rhs}}
 set help_data(opendb)		{{database.g}	{Close current .g file, and open new .g file}}
-set help_data(openw)		{{[-c] [-j] id screen dtype [dscreen]}	{open display/command window pair}}
+set help_data(openw)		{{[-c b|c|g] [-d display string] [-gd graphics display string] [-gt graphics type] [-id name] [-h] [-j] [-s]}	{open display/command window pair}}
 set help_data(orientation)	{{x y z w}	{Set view direction from quaternion}}
 set help_data(orot)		{{[-i] xdeg ydeg zdeg}	{rotate object being edited}}
 set help_data(oscale)		{{factor}	{scale object by factor}}
@@ -707,7 +710,7 @@ set help_data(polybinout)	{{file}	{store vlist polygons into polygon file (exper
 set help_data(pov)		{{args}	{experimental:  set point-of-view}}
 set help_data(prcolor)		{{}	{print color&material table}}
 set help_data(prefix)		{{new_prefix object(s)}	{prefix each occurrence of object name(s)}}
-set help_data(preview)		{{[-v] [-d sec_delay] rt_script_file}	{preview new style RT animation script}}
+set help_data(preview)		{{[-v] [-d sec_delay] [-D start frame] [-K last frame] rt_script_file}	{preview new style RT animation script}}
 set help_data(press)		{{button_label}	{emulate button press}}
 set help_data(ps)		{{[-f font] [-t title] [-c creator] [-s size in inches] [-l linewidth] file}	{creates a postscript file of the current view}}
 set help_data(push)		{{object[s]}	{pushes object's path transformations to solids}}
@@ -722,7 +725,7 @@ set help_data(R)		{{1|0 xpos ypos}	{handle a right mouse event}}
 set help_data(rcodes)		{{filename}	{read region ident codes from filename}}
 set help_data(red)		{{object}	{edit a group or region using a text editor}}
 set help_data(refresh)		{{}	{send new control list}}
-set help_data(regdebug)		{{}	{toggle register print}}
+set help_data(regdebug)		{{[number]}	{toggle display manager debugging or set debug level}}
 set help_data(regdef)		{{item [air [los [GIFTmaterial]]]}	{change next region default codes}}
 set help_data(regions)		{{file object(s)}	{make ascii summary of regions}}
 set help_data(release)		{{[name]}	{release display processor}}
