@@ -49,33 +49,34 @@ proc init_Raytrace { id } {
     $top.menubar.fb add checkbutton -offvalue 0 -onvalue 1 -variable rt_control($id,fb)\
 	    -label "Active" -underline 0 \
 	    -command "rt_set_fb $id"
-    hoc_register_menu_data "Framebuffer" "Active" "Framebuffer Active"\
+    hoc_register_menu_data "Framebuffer" "Active" "Destination Framebuffer Active"\
 	    { { summary "This activates/deactivates the destination framebuffer.
 Note - this pertains only to MGED's framebuffers." } }
     $top.menubar.fb add separator
     $top.menubar.fb add radiobutton -value 1 -variable rt_control($id,fb_all)\
 	    -label "All" -underline 0\
 	    -command "rt_set_fb_all $id"
-    hoc_register_menu_data "Framebuffer" "All" "Framebuffer - All"\
+    hoc_register_menu_data "Framebuffer" "All" "Destination Framebuffer - All"\
 	    { { summary "Use the entire pane as a framebuffer.
 Note - this pertains only to MGED's framebuffers." } }
     $top.menubar.fb add radiobutton -value 0 -variable rt_control($id,fb_all)\
 	    -label "Rectangle Area" -underline 0\
 	    -command "rt_set_fb_all $id"
-    hoc_register_menu_data "Framebuffer" "Rectangle Area" "Framebuffer - Rectangle Area"\
-	    { { summary "Use only the rectangular area for the framebuffer.
-Note - this pertains only to MGED's framebuffers." } }
+    hoc_register_menu_data "Framebuffer" "Rectangle Area" "Destination Framebuffer - Rectangle Area"\
+	    { { summary "Use only the rectangular area, as defined by the
+sweep rectangle, for the framebuffer. Note - this
+pertains only to MGED's framebuffers." } }
     $top.menubar.fb add separator
     $top.menubar.fb add radiobutton -value 1 -variable rt_control($id,fb_overlay)\
 	    -label "Overlay" -underline 0\
 	    -command "rt_set_fb_overlay $id"
-    hoc_register_menu_data "Framebuffer" "Overlay" "Framebuffer - Overlay"\
+    hoc_register_menu_data "Framebuffer" "Overlay" "Destination Framebuffer - Overlay"\
 	    { { summary "Draw the framebuffer on top of the geometry.
 Note - this pertains only to MGED's framebuffers." } }
     $top.menubar.fb add radiobutton -value 0 -variable rt_control($id,fb_overlay)\
 	    -label "Underlay" -underline 0\
 	    -command "rt_set_fb_overlay $id"
-    hoc_register_menu_data "Framebuffer" "Underlay" "Framebuffer - Underlay"\
+    hoc_register_menu_data "Framebuffer" "Underlay" "Destination Framebuffer - Underlay"\
 	    { { summary "Draw the framebuffer under the geometry.
 Note - this pertains only to MGED's framebuffers." } }
 
@@ -83,52 +84,97 @@ Note - this pertains only to MGED's framebuffers." } }
     $top.menubar.obj add radiobutton -value one -variable rt_control($id,omode)\
 	    -label "one" -underline 0\
 	    -command "rt_set_mouse_behavior $id"
+    hoc_register_menu_data "Objects" "one" "Objects - one"\
+	    { { summary "Raytrace only the selected object." } }
     $top.menubar.obj add radiobutton -value several -variable rt_control($id,omode)\
 	    -label "several" -underline 0\
 	    -command "rt_set_mouse_behavior $id"
+    hoc_register_menu_data "Objects" "several" "Objects - several"\
+	    { { summary "Add the selected object to the list
+of objects to be raytraced." } }
     $top.menubar.obj add radiobutton -value all -variable rt_control($id,omode)\
 	    -label "all" -underline 0\
 	    -command "rt_set_mouse_behavior $id"
+    hoc_register_menu_data "Objects" "all" "Objects - all"\
+	    { { summary "Raytrace all displayed objects." } }
     $top.menubar.obj add separator
     $top.menubar.obj add command -label "edit list"\
 	    -command "rt_edit_olist $id"
+    hoc_register_menu_data "Objects" "edit list" "Edit List"\
+	    { { summary "Pop up a tool to edit the list
+of objects to be raytraced." } }
     $top.menubar.obj add command -label "clear list"\
 	    -command "set rt_control($id,olist) {}"
+    hoc_register_menu_data "Objects" "clear list" "Clear List"\
+	    { { summary "Clear the list of objects to be raytraced." } }
 
     label $top.srcL -text "Source" -anchor e
     entry $top.srcE -relief flat -width 12 -textvar rt_control($id,raw_src)
+    hoc_register_data $top.srcE "Source"\
+	    { { summary "
+Enter the desired source. The source is used to obtain
+the view information (i.e. size, position and orientation)
+that is passed to the raytracer and must be one of the internal
+panes (display manager windows). The source can be specified
+using the pathname of any pane. The panes associated with this
+instance of the GUI may also be specified with keywords. For
+example, ul, \"upper left\" and \"Upper Left\" all specify the
+upper left pane." } }
     bind $top.srcE <KeyRelease> "rt_cook_src $id \$rt_control($id,raw_src)"
     menubutton $top.srcMB -relief raised -bd 2\
 	    -menu $top.srcMB.menu -indicatoron 1
+    hoc_register_data $top.srcMB "Source"\
+	    { { summary "Pop up a menu of likely sources." } }
     menu $top.srcMB.menu -title "Source" -tearoff 0
     $top.srcMB.menu add command -label "Active Pane"\
 	    -command "rt_cook_src $id \$mged_gui($id,active_dm)"
+    hoc_register_menu_data "Source" "Active Pane" "Source - Active Pane"\
+	    { { summary "Set the source to the active pane. The
+active pane is the pane currently tied
+to the GUI." } }
     $top.srcMB.menu add separator
     $top.srcMB.menu add command -label "Upper Left"\
 	    -command "rt_cook_src $id $mged_gui($id,top).ul"
     hoc_register_menu_data "Source" "Upper Left" "Source - Upper Left"\
-	    { { summary "Set the source to \"Upper Left\" pane." } }
+	    { { summary "Set the source to the \"Upper Left\" pane." } }
     $top.srcMB.menu add command -label "Upper Right"\
 	    -command "rt_cook_src $id $mged_gui($id,top).ur"
     hoc_register_menu_data "Source" "Upper Right" "Source - Upper Right"\
-	    { { summary "Set the source to \"Upper Right\" pane." } }
+	    { { summary "Set the source to the \"Upper Right\" pane." } }
     $top.srcMB.menu add command -label "Lower Left"\
 	    -command "rt_cook_src $id $mged_gui($id,top).ll"
     hoc_register_menu_data "Source" "Lower Left" "Source - Lower Left"\
-	    { { summary "Set the source to \"Lower Left\" pane." } }
+	    { { summary "Set the source to the \"Lower Left\" pane." } }
     $top.srcMB.menu add command -label "Lower Right"\
 	    -command "rt_cook_src $id $mged_gui($id,top).lr"
     hoc_register_menu_data "Source" "Lower Right" "Source - Lower Right"\
-	    { { summary "Set the source to \"Lower Right\" pane." } }
+	    { { summary "Set the source to the \"Lower Right\" pane." } }
 
     label $top.destL -text "Destination" -anchor e
     entry $top.destE -relief flat -width 12 -textvar rt_control($id,raw_dest)
+    hoc_register_data $top.destE "Destination"\
+	    { { summary "
+Enter the desired destination. This is the place where
+the pixels will be sent and can be the pathname of any internal
+pane (display manager window). The panes associated with this
+instance of the GUI can also be specified with keywords. For
+example, ul, \"upper left\" and \"Upper Left\" all specify the
+upper left pane. The destination can also be a file or an external
+framebuffer. To specify an external framebuffer the user might
+enter fbhost:0 to send the output to the framebuffer running on
+the machine fbhost and listening on port 0." } }
     bind $top.destE <KeyRelease> "rt_cook_dest $id \$rt_control($id,raw_dest)"
     menubutton $top.destMB -relief raised -bd 2\
 	    -menu $top.destMB.menu -indicatoron 1
+    hoc_register_data $top.destMB "Destination"\
+	    { { summary "Pop up a menu of likely destinations." } }
     menu $top.destMB.menu -title "Destination" -tearoff 0
     $top.destMB.menu add command -label "Active Pane"\
 	    -command "rt_cook_dest $id \$mged_gui($id,active_dm)"
+    hoc_register_menu_data "Destination" "Active Pane" "Destination - Active Pane"\
+	    { { summary "Set the destination to the active pane.
+The active pane is the pane currently
+tied to the GUI." } }
     $top.destMB.menu add separator
     $top.destMB.menu add command -label "Upper Left"\
 	    -command "rt_cook_dest $id $mged_gui($id,top).ul"
@@ -168,41 +214,41 @@ Note - this pertains only to MGED's framebuffers." } }
 This defaults to the size of the active pane." } }
     entry $top.sizeE -relief flat -width 12 -textvar rt_control($id,size)
     hoc_register_data $top.sizeE "Size"\
-	    { { summary "Enter the framebuffer size." } }
+	    { { summary "Enter the desired image size." } }
     menubutton $top.sizeMB -relief raised -bd 2\
 	    -menu $top.sizeMB.sizeM -indicatoron 1
     hoc_register_data $top.sizeMB "Size"\
-	    { { summary "Pops up a menu of popular framebuffer sizes." } }
+	    { { summary "Pop up a menu of popular image sizes." } }
     menu $top.sizeMB.sizeM -title "Size" -tearoff 0
     $top.sizeMB.sizeM add command -label "Size of Pane"\
 	    -command "rt_set_fb_size $id"
     hoc_register_menu_data "Size" "Size of Pane" "Size of Pane"\
-	    { { summary "Set the framebuffer size to be the
+	    { { summary "Set the image size to be the
 same size as the active pane." } }
     $top.sizeMB.sizeM add command -label 128\
 	    -command "set rt_control($id,size) 128"
     hoc_register_menu_data "Size" 128 "Size - 128x128"\
-	    { { summary "Set the framebuffer size to 128x128." } }
+	    { { summary "Set the image size to 128x128." } }
     $top.sizeMB.sizeM add command -label 256\
 	    -command "set rt_control($id,size) 256"
     hoc_register_menu_data "Size" 256 "Size - 256x256"\
-	    { { summary "Set the framebuffer size to 256x256." } }
+	    { { summary "Set the image size to 256x256." } }
     $top.sizeMB.sizeM add command -label 512\
 	    -command "set rt_control($id,size) 512"
     hoc_register_menu_data "Size" 512 "Size - 512x512"\
-	    { { summary "Set the framebuffer size to 512x512." } }
+	    { { summary "Set the image size to 512x512." } }
     $top.sizeMB.sizeM add command -label 640x480\
 	    -command "set rt_control($id,size) 640x480"
     hoc_register_menu_data "Size" 640x480 "Size - 640x480"\
-	    { { summary "Set the framebuffer size to 640x480." } }
+	    { { summary "Set the image size to 640x480." } }
     $top.sizeMB.sizeM add command -label 720x486\
 	    -command "set rt_control($id,size) 720x486"
     hoc_register_menu_data "Size" 720x486 "Size - 720x486"\
-	    { { summary "Set the framebuffer size to 720x486." } }
+	    { { summary "Set the image size to 720x486." } }
     $top.sizeMB.sizeM add command -label 1024\
 	    -command "set rt_control($id,size) 1024"
     hoc_register_menu_data "Size" 1024 "Size - 1024x1024"\
-	    { { summary "Set the framebuffer size to 1024x1024." } }
+	    { { summary "Set the image size to 1024x1024." } }
 
     label $top.colorL -text "Background Color" -anchor e
     hoc_register_data $top.colorL "Background Color"\
@@ -220,22 +266,25 @@ that is used when clearing the framebuffer." } }
     button $top.advancedB -relief raised -text "Advanced Settings..."\
 	    -command "do_Advanced_Settings $id"
     hoc_register_data $top.advancedB "Advanced Settings"\
-	    { { summary "Pops up another GUI for advanced settings." } }
+	    { { summary "Pop up another GUI for advanced settings." } }
     button $top.okB -relief raised -text "Ok"\
 	    -command "rt_ok $id $top"
+    hoc_register_data $top.raytraceB "Raytrace"\
+	    { { summary "Begin raytracing the view of
+the source pane. The results of the raytrace
+will go the place specified by the destination.
+Afterwards dismiss the raytrace control panel." } }
     button $top.raytraceB -relief raised -text "Raytrace" \
 	    -command "do_Raytrace $id"
     hoc_register_data $top.raytraceB "Raytrace"\
-	    { { summary "Begin raytracing the current view of
-the active pane. The results of the raytrace
-will go either to the framebuffer that lives
-in the active pane or to the file specified
-in the filename entry." } }
+	    { { summary "Begin raytracing the view of
+the source pane. The results of the raytrace
+will go the place specified by the destination." } }
     button $top.clearB -relief raised -text "fbclear" \
 	    -command "do_fbclear $id"
     hoc_register_data $top.clearB "Clear the Framebuffer"\
-	    { { summary "If the framebuffer of the active pane
-is enabled, it will be cleared." } }
+	    { { summary "Clear the framebuffer specified by the
+destination." } }
     button $top.dismissB -relief raised -text "Dismiss" \
 	    -command "rt_dismiss $id"
     hoc_register_data $top.dismissB "Dismiss"\
@@ -530,7 +579,7 @@ from which a ray is fired." } }
     menubutton $top.jitterMB -relief sunken -bd 2 -textvar rt_control($id,jitterTitle)\
 	    -menu $top.jitterMB.jitterM -indicatoron 1
     hoc_register_data $top.jitterMB "Jitter"\
-	    { { summary "Pops up a menu of jitter values." } }
+	    { { summary "Pop up a menu of jitter values." } }
     menu $top.jitterMB.jitterM -title "Jitter" -tearoff 0
     $top.jitterMB.jitterM add command -label "None"\
 	 -command "set rt_control($id,jitter) 0; set rt_control($id,jitterTitle) None"
@@ -562,7 +611,7 @@ ray tracer will handle light." } }
 	    -width 24 -textvar rt_control($id,lmodelTitle)\
 	    -menu $top.lmodelMB.lmodelM -indicatoron 1
     hoc_register_data $top.lmodelMB "Light Model"\
-	    { { summary "Pops up a menu of light models." } }
+	    { { summary "Pop up a menu of light models." } }
     menu $top.lmodelMB.lmodelM -title "Light Model" -tearoff 0
     $top.lmodelMB.lmodelM add command -label "Full"\
 	    -command "set rt_control($id,lmodel) 0;\
@@ -683,6 +732,10 @@ proc rt_edit_olist { id } {
     global rt_control
 
     set top $rt_control($id,topEOL)
+
+#    toplevel $top
+#    text $top.olistT -relief sunken -bd 2 -width 40 -height 10\
+#	    -yscrollcommand "$top.olistS set" -set grid true
     return
 }
 
