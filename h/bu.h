@@ -542,11 +542,19 @@ struct bu_bitv {
 
 /* This is not done by default for performance reasons */
 #define BU_BITV_BITNUM_CHECK(_bv,_bit)	/* Validate bit number */ \
-	if( ((unsigned)(_bit)) >= (_bv)->nbits )  \
-		rt_bomb("BU_BITV_BITNUM_CHECK bit number out of range");
+	if( ((unsigned)(_bit)) >= (_bv)->nbits )  {\
+		bu_log("BU_BITV_BITNUM_CHECK bit number (%u) out of range (0..%u)\n",
+			((unsigned)(_bit)), (_bv)->nbits); \
+		bu_bomb("process self-terminating\n");\
+	}
+
 #define BU_BITV_NBITS_CHECK(_bv,_nbits)	/* Validate number of bits */ \
-	if( ((unsigned)(_nbits)) > (_bv)->nbits )  \
-		rt_bomb("BU_BITV_NBITS_CHECK number of bits out of range");
+	if( ((unsigned)(_nbits)) > (_bv)->nbits )  {\
+		bu_log("BU_BITV_NBITS_CHECK number of bits (%u) out of range (> %u)", \
+			((unsigned)(_nbits)), (_bv)->nbits ); \
+		bu_bomb("process self-terminating"); \
+		}
+
 
 /*
  *  Macros to efficiently find all the ONE bits in a bit vector.
