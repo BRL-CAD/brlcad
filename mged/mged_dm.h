@@ -30,6 +30,7 @@ struct device_values  {
 	float	dv_zoom;		/* Zoom knob.  -1.0 <= zoom <= +1.0 */
 	float	dv_xslew;		/* View slew.  -1.0 <= slew <= +1.0 */
 	float	dv_yslew;
+	float	dv_zslew;
 	int	dv_xadc;		/* A/D cursor -2048 <= adc <= +2047 */
 	int	dv_yadc;
 	int	dv_1adc;		/* angle 1 for A/D cursor */
