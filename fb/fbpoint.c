@@ -25,13 +25,13 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 FBIO *fbp;
 
-#define	JumpSpeed 30 /* number of pixels skiped with UPPERCASE commands. */
+int	JumpSpeed;		/* # pixels skiped with fast commands. */
 
 RGBpixel curPix; 		/* Current pixel value */
-int curX, curY;			/* current position */
-int oldX, oldY;			/* previous position */
+int	curX, curY;		/* current position */
+int	oldX, oldY;		/* previous position */
 
-int	Run = 1;	/* Tells when to stop the main loop.	*/
+int	Run = 1;		/* Tells when to stop the main loop */
 
 int	xflag, yflag;
 char	*xprefix = NULL;
@@ -153,6 +153,8 @@ char **argv;
 	if( (fbp = fb_open( NULL, width, height )) == NULL )
 		exit(12);
 
+	JumpSpeed = fb_getwidth(fbp)/16;
+	if( JumpSpeed < 2 )  JumpSpeed = 2;
 	curX = fb_getwidth(fbp)/2;
 	curY = fb_getheight(fbp)/2;
 	oldX = oldY = -1;

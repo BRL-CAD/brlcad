@@ -59,9 +59,9 @@ char **argv;
 	set_Raw( 0 );
 	clr_Echo( 0 );
 
-	do
-		{
-		PanFactor = fb_getwidth(fbp)/zoom/16;
+	do  {
+		PanFactor = fb_getwidth(fbp)/16;
+		if( PanFactor < 2 )  PanFactor = 2;
 		(void) fb_zoom( fbp, zoom, zoom );
 		fb_window( fbp, xPan, yPan );
 		(void) fprintf( stdout,
@@ -69,8 +69,7 @@ char **argv;
 				zoom, xPan, yPan
 				);
 		(void) fflush( stdout );
-		}
-	while( doKeyPad() );
+	}  while( doKeyPad() );
 
 	reset_Tty( 0 );
 	(void) fprintf( stdout,  "\n");	/* Move off of the output line.	*/
