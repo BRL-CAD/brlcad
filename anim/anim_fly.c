@@ -26,6 +26,7 @@
  *      in all countries except the USA.  All rights reserved.
  */
 
+#include "conf.h"
 #include <math.h>
 #include <stdio.h>
 #include "machine.h"
