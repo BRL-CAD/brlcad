@@ -461,6 +461,8 @@ struct seg		*seghead;
 	struct application	sub_ap;
 	struct submodel_gobetween	gb;
 	vect_t			vdiff;
+	struct resource		res;
+	int			code;
 
 	RT_CK_SOLTAB(stp);
 	RT_CK_RTI(ap->a_rt_i);
@@ -476,6 +478,13 @@ struct seg		*seghead;
 	sub_ap.a_miss = rt_submodel_a_miss;
 	sub_ap.a_uptr = (genptr_t)&gb;
 	sub_ap.a_purpose = "rt_submodel_shot";
+
+	/* Special handling for the resources structure */
+	/* One is needed per CPU per rtip */
+	/* For starters, allocate and free per ray */
+	bzero( (char *)&res, sizeof(res) );
+	rt_init_resource( &res, ap->a_resource->re_cpu );
+	sub_ap.a_resource = &res;
 
 	/* shootray already computed a_ray.r_min & r_max for us */
 	/* Construct the ray in submodel coords. */
@@ -493,7 +502,11 @@ struct seg		*seghead;
 /* XXX rt_shootray() doesn't pay attention yet. */
 	submodel->rtip->rti_nobool = 1;
 
-	if( rt_shootray( &sub_ap ) <= 0 )  return 0;	/* MISS */
+	code = rt_shootray( &sub_ap );
+
+	rt_clean_resource( submodel->rtip, &res );
+
+	if( code <= 0 )  return 0;	/* MISS */
 
 	/* All the real (sneaky) work is done in the hit routine */
 	/* a_hit routine will have added the segs to seghead */
