@@ -1296,6 +1296,10 @@ long *flags;
 			if( NMG_INDEX_TEST( flags , eu->up.lu_p->up.fu_p->f_p ) )
 				continue;
 
+			/* skip edges from other shells */
+			if( nmg_find_s_of_eu( eu ) != s )
+				continue;
+
 			/* get vertex at other end of this edge */
 			vu1 = eu->eumate_p->vu_p;
 			NMG_CK_VERTEXUSE( vu1 );
@@ -1340,6 +1344,19 @@ long *flags;
 				fu = lu->up.fu_p;
 				NMG_CK_FACEUSE( fu );
 
+				/* skip faces from other shells */
+				if( fu->s_p != s )
+				{
+					/* go on to next radial face */
+					eu1 = eu1->eumate_p->radial_p;
+
+					/* check if we are back where we started */
+					if( eu1 == eu )
+						done = 1;
+
+					continue;
+				}
+
 				/* make a vector in the direction of "eu1" */
 				VSUB2( edge_dir , eu1->vu_p->v_p->vg_p->coord , eu1->eumate_p->vu_p->v_p->vg_p->coord );
 
@@ -1380,10 +1397,10 @@ long *flags;
 }
 
 
-/*	N M G _ P R O P O G A T E _ N O R M A L S
+/*	N M G _ P R O P A G A T E _ N O R M A L S
  *
  *	This routine expects "fu_in" to have a correctly oriented normal.
- *	It then checks all faceuses it can reach via radial structures, and
+ *	It then checks all faceuses in the same shell it can reach via radial structures, and
  *	reverses faces and modifies radial structures as needed to result in
  *	a consistent NMG shell structure. The "flags" variable is a translation table
  *	for the model, and as each face is checked, its flag is set. Faces with flags
@@ -1443,6 +1460,13 @@ long *flags;
 		/* go to the radial */
 		eu = eu1->radial_p;
 		NMG_CK_EDGEUSE( eu );
+
+		/* make sure we are still on the same shell */
+		while( nmg_find_s_of_eu( eu ) != fu_in->s_p && eu != eu1 && eu != eu1->eumate_p )
+			eu = eu->eumate_p->radial_p;
+
+		if( eu == eu1 || eu == eu1->eumate_p )
+			continue;
 
 		/* find the face that contains this edgeuse */
 		if( *eu->up.magic_p != NMG_LOOPUSE_MAGIC )
@@ -1722,6 +1746,13 @@ struct shell *s;
 		eu = eu1->radial_p;
 		NMG_CK_EDGEUSE( eu );
 
+		/* make sure we stay within the intended shell */
+		while( nmg_find_s_of_eu( eu ) != s && eu != eu1 && eu != eu1->eumate_p )
+			eu = eu->eumate_p->radial_p;
+
+		if( eu == eu1 || eu == eu1->eumate_p )
+			continue;
+
 		fu = nmg_find_fu_of_eu( eu );
 		NMG_CK_FACEUSE( fu );
 
@@ -1803,6 +1834,13 @@ struct shell *s;
 			/* move to the radial */
 			eu = eu1->radial_p;
 			NMG_CK_EDGEUSE( eu );
+
+			/* stay within the original shell */
+			while( nmg_find_s_of_eu( eu ) != s && eu != eu1 && eu != eu1->eumate_p )
+				eu = eu->eumate_p->radial_p;
+
+			if( eu == eu1 || eu == eu1->eumate_p )
+				continue;
 
 			fu = nmg_find_fu_of_eu( eu );
 			NMG_CK_FACEUSE( fu );
