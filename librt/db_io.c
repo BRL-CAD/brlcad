@@ -197,7 +197,7 @@ long		offset;		/* byte offset from start of file */
 	RES_ACQUIRE( &rt_g.res_syscall );
 #if defined(unix) || defined(__unix) || defined(__unix__)
 	if ((s=lseek( dbip->dbi_fd, offset, 0 )) != offset) {
-		rt_log("db_read: lseek returns %d not %d\n", i, offset);
+		rt_log("db_read: lseek returns %d not %d\n", s, offset);
 		rt_bomb("Goodbye");
 	}
 	got = read( dbip->dbi_fd, addr, count );
