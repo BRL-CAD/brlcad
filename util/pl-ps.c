@@ -25,8 +25,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <math.h>
 #include "externs.h"
 
-extern	char	*getenv();
-
 #define	TBAD	0	/* no such command */
 #define TNONE	1	/* no arguments */
 #define TSHORT	2	/* Vax 16-bit short */

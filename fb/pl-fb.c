@@ -70,6 +70,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <ctype.h>
 #include "machine.h"
 #include "fb.h"
+#include "externs.h"
+#include "plot3.h"
 
 /*
 	Raster device model and image terminology as used herein:
@@ -268,10 +270,6 @@ STATIC int	sigs[] =		/* signals to be caught */
 /*	Externals:	*/
 
 STATIC FILE	*pfin;		/* input file FIO block ptr */
-extern void	free();
-extern char	*malloc();
-extern int	close(), creat(), getpid(), kill(), open(), read(),
-		write();
 
 FBIO	*fbp;			/* Current framebuffer */
 
@@ -350,10 +348,6 @@ register long v;
 	w &= ~0x7FFF;
 	return( w | v );
 }
-
-extern int	getopt();
-extern char	*optarg;
-extern int	optind;
 
 get_args( argc, argv )
 register char **argv;
