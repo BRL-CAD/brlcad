@@ -1422,7 +1422,7 @@ int	argc;
 	return(-1);
 }
 
-extern struct rt_list *skewer_solids ();
+extern char **skewer_solids ();
 
 int cmd_solids_on_ray (clientData, interp, argc, argv)
 
@@ -1432,6 +1432,7 @@ int		argc;
 char		**argv;
 
 {
+    char			**snames;
     int				h = 0;
     int				v = 0;
     int				i;		/* Dummy loop index */
@@ -1521,7 +1522,16 @@ char		**argv;
      *	Build a list of all the top-level objects currently displayed
      */
     rt_cmd_vec_len = build_tops(&rt_cmd_vec[0], &rt_cmd_vec[MAXARGS]);
-    skewer_solids(rt_cmd_vec_len, rt_cmd_vec, ray_orig, ray_dir);
+    if ((snames = skewer_solids(rt_cmd_vec_len, rt_cmd_vec, ray_orig, ray_dir))
+	== 0)
+	return (TCL_OK);
+    
+    while (*snames != 0)
+    {
+	rt_log("Appending '%s '\n", *snames);
+	Tcl_AppendResult(interp, *(snames++), " ", NULL);
+    }
+    rt_free((char *) snames, "solid names");
 
 #if 0
     rt_vls_init(&vls);
