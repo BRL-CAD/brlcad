@@ -30,28 +30,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include "fb.h"
 
-#if defined(BSD)
-#include <sys/time.h>		/* for struct timeval */
-#define HAS_TIMEVAL	yes
-#endif
-
-#if defined(sgi)
-#	if !defined(mips) || defined(SGI4D_Rel2)
-		/* 3D systems, and Rel2 4D systems. */
-#		include <bsd/sys/types.h>
-#		include <bsd/sys/time.h>
-#	else
-		/* Rel3 4D systems got it right */
-#		include <sys/types.h>
-#		include <sys/time.h>
-#	endif
-#	define HAS_TIMEVAL yes
-#endif
-
-#ifdef HAS_TIMEVAL
-struct timeval	tv;
-#endif
-
 extern int	getopt();
 extern char	*optarg;
 extern int	optind;
@@ -153,6 +131,7 @@ char **argv;
 	int	islist = 0;		/* set if a list, zero if basename */
 	char	name[256];
 	int	fd;
+	int	sec, usec;
 
 	if( !get_args( argc, argv ) )  {
 		(void)fputs(usage, stderr);
@@ -191,15 +170,13 @@ char **argv;
 		screen_height/file_height );
 	fb_window( fbp, file_width/2, file_height/2 );
 
-#ifdef HAS_TIMEVAL
 	if( fps <= 1 )  {
-		tv.tv_sec = fps ? 1 : 4;
-		tv.tv_usec = 0;
+		sec = fps ? 1 : 4;
+		usec = 0;
 	} else {
-		tv.tv_sec = 0;
-		tv.tv_usec = 1000000/fps;
+		sec = 0;
+		usec = 1000000/fps;
 	}
-#endif
 
 	scanbytes = file_width * file_height * sizeof(RGBpixel);
 
@@ -246,17 +223,17 @@ done:
 			/* Play from start to finish, over and over */
 			for( i=0; i<maxframe; i++ )  {
 				showframe(i);
-				delay();
+				bsdselect( 0, sec, usec );
 			}
 		} else {
 			/* Play from start to finish and back */
 			for( i=0; i<maxframe; i++ )  {
 				showframe(i);
-				delay();
+				bsdselect( 0, sec, usec );
 			}
 			while(i-->0)  {
 				showframe(i);
-				delay();
+				bsdselect( 0, sec, usec );
 			}
 		}
 	}
@@ -285,22 +262,17 @@ register int i;
 	if( sizes_match )  {
 		fb_write( fbp, 0, 0, frames[i], file_width * file_height );
 	} else {
+#if 0
 		for( y=0; y < file_height; y++ )
 			fb_write( fbp, 0, y,
 				frames[i] + (y * file_width * 3),
 				file_width );
+#else
+		fb_writerect( fbp, 0, 0, file_width, file_height, frames[i] );
+#endif
 	}
 	if( verbose )  {
 		fprintf(stderr, ",");
 		fflush( stderr );
 	}
-}
-
-delay()
-{
-#ifdef HAS_TIMEVAL
-	(void)select( 0, 0, 0, 0, &tv );
-#else
-	(void)sleep(1);	/* best I can do, sorry */
-#endif
 }
