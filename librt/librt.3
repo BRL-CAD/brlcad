@@ -159,7 +159,9 @@ Note that it is mandatory that you provide values for
 (recursion level, just for diagnostic printing),
 and
 .I a_resource
-(address of resource structure; may be null).
+(address of
+.I resource
+structure; may be null).
 .P
 To obtain a report of CPU usage for a portion or portions of your program,
 frame the statements with calls to
@@ -222,19 +224,21 @@ object hit along the path of the ray, set the
 flag in the application structure before calling
 .IR rt_shootray .
 .I rt_shootray
-returns the return value of the last user-supplied hit or miss function called.
+returns the return value of the user-supplied hit or miss function
+that it called.
 .P
 If the ray intersects the model, the
 .I a_hit
 routine is called
 with a pointer to the application structure and a pointer to a
-linked list of ray
-.I partitions
+linked list of ray partitions
 (\fIstruct partition\fP).
 Within each partition are
-.I segment
+.I seg
+(solid segment)
 and
 .I hit
+(intersection with evaluated region)
 structure pointers
 for the places where the ray enters and leaves this partition of space.
 .I pt_inhit.hit_dist
@@ -252,6 +256,17 @@ elements, they are not computed by
 .IR rt_shootray .
 If these are needed, they can be filled in by using the
 .I RT_HIT_NORM\^
+macro;
+if surface curvature information is needed,
+it can be obtained by using the
+.I RT_CURVE\^
+macro after
+.IR RT_HIT_NORM ;
+if only the
+.I hit_point
+is needed,
+it can be filled in by using the
+.I VJOIN1\^
 macro (see the following example).
 .P
 Helpful in generating a grid of ray origins, the bounding RPP of the
@@ -278,12 +293,12 @@ int argc;
 char *argv[\|];
 {
 	extern int optind;			/* Used by getopt(3C) */
-	extern int do_if_hit(\|), do_if_miss(\|);	/* Application routines */
+	static int do_if_hit(\|), do_if_miss(\|);	/* Application routines */
 	register int h, v;
 	int grid_sz;
-	struct application ap;			/* Set up for rt_shootray(\|) */
+	struct application ap;		/* Set up for rt_shootray(\|) */
 	struct rt_i *rtip;
-	/* ...\& */
+	/* \s+2...\s0\& */
 
 	/* Build the directory.	*/
 	rtip = rt_dirbuild( argv[optind++] );
@@ -297,11 +312,10 @@ char *argv[\|];
 	ap.a_overlap = 0;
 	ap.a_rt_i = rtip;
 	ap.a_level = 0;
-	ap.a_onehit = 1;		/* Return only closest object hit */
+	ap.a_onehit = 0;		/* Return all objects along ray */
 	ap.a_resource = 0;
 
 	for( v = 0; v < grid_sz; ++v )	/* For each scanline */
-	    )
 		for( h = 0; h < grid_sz; ++h )  {
 			/* Set up ray origin. */
 			VMOVE( ap.a_ray.r_pt, get_grid( h, v ) );
@@ -311,7 +325,7 @@ char *argv[\|];
 			VUNITIZE( ap.a_ray.r_dir );
 			(void) rt_shootray( &ap );
 		}
-	/* ...\& */
+	/* \s+2...\s0\& */
 }
 
 static int
@@ -319,27 +333,32 @@ do_if_hit( ap, PartHeadp )
 register struct application *ap;
 struct partition *PartHeadp;
 {
-	register struct partition	*pp = PartHeadp\->pt_forw;
+	extern void put_component();
+	struct curvature incurv;
+	register struct partition *pp;
 
-	RT_HIT_NORM( pp\->pt_inhit, pp\->pt_inseg\->seg_stp, &ap\->a_ray );
-	RT_HIT_NORM( pp\->pt_outhit, pp\->pt_outseg\->seg_stp, &ap\->a_ray );
+	for( pp = PartHeadp\->pt_forw; pp != PartHeadp; pp = pp\->pt_forw )  {
 
-	/* Check for flipped normal and fix (if you intend to use it). */
-	if( pp\->pt_inflip )  {
-		VREVERSE( pp\->pt_inhit\->hit_normal, pp\->pt_inhit\->hit_normal );
-		pp\->pt_inflip = 0;
+		/* Fill in all inhit info, but just the exit location for outhit. */
+		RT_HIT_NORM( pp\->pt_inhit, pp\->pt_inseg\->seg_stp, &ap\->a_ray );
+		RT_CURVE( &incurv, pp\->pt_inhit, pp\->pt_inseg\->seg_stp );
+		VJOIN1( pp\->pt_outhit\->hit_point, ap\->a_ray.r_pt,
+				pp\->pt_outhit\->hit_dist, ap\->a_ray.r_dir );
+
+		/* Check for flipped normal and fix (if you intend to use it). */
+		if( pp\->pt_inflip )  {
+			VREVERSE( pp\->pt_inhit\->hit_normal,
+					pp\->pt_inhit\->hit_normal );
+			pp\->pt_inflip = 0;
+		}
+
+		/* Do something based on information in partition structure
+		 *	such as output a shotline component data record.
+		 */
+		put_component( pp\->pt_inhit, &incurv, pp\->pt_outhit );
+		/* \s+2...\s0\& */
 	}
-	if( pp\->pt_outflip )  {
-		VREVERSE( pp\->pt_outhit\->hit_normal, pp\->pt_outhit\->hit_normal );
-		pp\->pt_outflip = 0;
-	}
-
-	/* Do something based on information in partition structure
-	 *	such as output a pixel to the frame buffer.
-	 */
-	light_model( pp\->pt_inhit );
-	/* ...\& */
-	return	1;	/* Report hit to main routine */
+	return	1;			/* Report hit to main routine */
 }
 
 static int
@@ -347,7 +366,7 @@ do_if_miss( ap, PartHeadp )
 register struct application *ap;
 struct partition *PartHeadp;
 {
-	return	0;	/* Report miss to main routine */
+	return	0;			/* Report miss to main routine */
 }
 .RE
 .sp
