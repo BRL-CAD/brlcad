@@ -666,6 +666,8 @@ char	*argv[];
 	/* Don't allow unknown commands to be fed to the shell */
 	Tcl_SetVar( interp, "tcl_interactive", "0", TCL_GLOBAL_ONLY );
 
+	Tcl_LinkVar( interp, "database", (char *)&database, TCL_LINK_STRING | TCL_LINK_READ_ONLY );
+
 	/* This runs the tk.tcl script */
 	if(Tk_Init(interp) == TCL_ERROR)  bu_bomb("Try setting TK_LIBRARY environment variable\n");
 	if((tkwin = Tk_MainWindow(interp)) == NULL)
