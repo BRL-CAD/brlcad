@@ -100,8 +100,10 @@ CONST struct rt_tol	*tol;
 	register fastf_t	det1;
 
 	RT_CK_TOL(tol);
-rt_log("rt_isect_line_line2() p=(%g,%g), d=(%g,%g)\n\t\ta=(%g,%g), c=(%g,%g)\n",
-V2ARGS(p), V2ARGS(d), V2ARGS(a), V2ARGS(c) );
+#	if DEBUG_2D_LINES
+		rt_log("rt_isect_line_line2() p=(%g,%g), d=(%g,%g)\n\t\ta=(%g,%g), c=(%g,%g)\n",
+			V2ARGS(p), V2ARGS(d), V2ARGS(a), V2ARGS(c) );
+#	endif
 
 	/*
 	 *  From the two components q and r, form a system
@@ -167,7 +169,9 @@ V2ARGS(p), V2ARGS(d), V2ARGS(a), V2ARGS(c) );
 		/* Lines are parallel */
 		if( !NEAR_ZERO( det1, SQRT_SMALL_FASTF ) )  {
 			/* Lines are NOT co-linear, just parallel */
-rt_log("parallel, not co-linear\n");
+#			if DEBUG_2D_LINES
+				rt_log("parallel, not co-linear\n");
+#			endif
 			return -1;	/* parallel, no intersection */
 		}
 
@@ -185,13 +189,17 @@ rt_log("parallel, not co-linear\n");
 			dist[0] = hy/d[Y];
 			dist[1] = (hy + c[Y]) / d[Y];
 		}
-rt_log("colinear, t = %g, u = %g\n", dist[0], dist[1] );
+#		if DEBUG_2D_LINES
+			rt_log("colinear, t = %g, u = %g\n", dist[0], dist[1] );
+#		endif
 		return 0;	/* Lines co-linear */
 	}
 	det = 1/det;
 	dist[0] = det * det1;
 	dist[1] = det * (d[X] * hy - hx * d[Y]);
-rt_log("intersection, t = %g, u = %g\n", dist[0], dist[1] );
+#	if DEBUG_2D_LINES
+		rt_log("intersection, t = %g, u = %g\n", dist[0], dist[1] );
+#	endif
 
 	return 1;		/* Intersection found */
 }
@@ -341,7 +349,6 @@ struct rt_tol	*tol;
 rt_log("rt_isect_lseg2_lseg2() p=(%g,%g), pdir=(%g,%g)\n\t\tq=(%g,%g), qdir=(%g,%g)\n",
 V2ARGS(p), V2ARGS(pdir), V2ARGS(q), V2ARGS(qdir) );
 
-#if 1
 	status = rt_isect_line2_line2( dist, p, pdir, q, qdir, tol );
 	if( status < 0 )  {
 		/* Lines are parallel, non-colinear */
@@ -383,127 +390,6 @@ rt_log("  MISS\n");
 	}
 rt_log("  HIT!\n");
 	return 1;			/* hit, normal intersection */
-#else
-	/*
-	 *  Form a system 2 equations in 2 unknowns.  Let:
-	 *	P = p
-	 *	D = pdir
-	 *	Q = q
-	 *	C = qdir
-	 *
-	 * then
-	 *	Px + t * Dx = Qx + u * Cx
-	 *	Py + t * Dy = Qy + u * Cy
-	 *  or
-	 *	t * Dx - u * Cx = Qx - Px
-	 *	t * Dy - u * Cy = Qy - Py
-	 *
-	 *  Let H = Q - P, resulting in:
-	 *
-	 *	t * Dx - u * Cx = Hx
-	 *	t * Dy - u * Cy = Hy
-	 *
-	 *  or
-	 *
-	 *	[ Dx  -Cx ]   [ t ]   [ Hx ]
-	 *	[         ] * [   ] = [    ]
-	 *	[ Dy  -Cy ]   [ u ]   [ Hy ]
-	 *
-	 *  This system can be solved by direct substitution, or by
-	 *  finding the determinants by Cramers rule:
-	 *
-	 *	             [ Dx  -Cx ]
-	 *	det(M) = det [         ] = -Dx * Cy + Cx * Dy
-	 *	             [ Dy  -Cy ]
-	 *
-	 *  If det(M) is zero, then the lines are parallel (perhaps colinear).
-	 *  Otherwise, exactly one solution exists.
-	 */
-	det = (qdir[X] * pdir[Y]) - (pdir[X] * qdir[Y]);
-
-	/*
-	 *  Using Cramer's rule, det1(M) replaces the first column
-	 *  of M with the constant column vector, in this case H.
-	 *  Similarly, det2(M) replaces the second column.
-	 *  Computation of the determinant is done as before.
-	 *
-	 *  Now,
-	 *
-	 *	                  [ Hx  -Cx ]
-	 *	              det [         ]
-	 *	    det1(M)       [ Hy  -Cy ]   -Hx * Cy + Cx * Hy
-	 *	t = ------- = --------------- = ------------------
-	 *	     det(M)       det(M)        -Dx * Cy + Cx * Dy
-	 *
-	 *  and
-	 *
-	 *	                  [ Dx   Hx ]
-	 *	              det [         ]
-	 *	    det2(M)       [ Dy   Hy ]    Dx * Hy - Hx * Dy
-	 *	u = ------- = --------------- = ------------------
-	 *	     det(M)       det(M)        -Dx * Cy + Cx * Dy
-	 */
-	hx = q[X] - p[X];
-	hy = q[Y] - p[Y];
-	det1 = qdir[X] * hy - qdir[Y] * hx;
-	if( NEAR_ZERO( det, SQRT_SMALL_FASTF ) )  {
-		int	nogood = 0;
-		/* lines are parallel */
-		if( !NEAR_ZERO( det1, SQRT_SMALL_FASTF ) )  {
-			/* Lines are NOT co-linear, just parallel */
-			return -2;
-		}
-		/*
-		 * Determine dist[0] for point Q w.r.t. P.
-		 * There is a special interpretation of dist[1] here:
-		 *	 point (Q + Qdir) w.r.t. P.
-		 */
-		if( fabs(pdir[X]) >= fabs(pdir[Y]) )  {
-			dist[0] = hx / pdir[X];
-			dist[1] = (hx + qdir[X]) / pdir[X];
-		} else {
-			dist[0] = hy / pdir[Y];
-			dist[1] = (hy + qdir[Y]) / pdir[Y];
-		}
-rt_log("dist[0] = %g, dist[1] = %g\n", dist[0], dist[1] );
-
-		/*  If within tolerance of an endpoint (0, 1), make exact. */
-		ptol = tol->dist / sqrt( pdir[X]*pdir[X] + pdir[Y]*pdir[Y] );
-		if( dist[0] > -ptol && dist[0] < ptol )  dist[0] = 0;
-		else if( dist[0] > 1-ptol && dist[0] < 1+ptol ) dist[0] = 1;
-
-		if( dist[1] > -ptol && dist[1] < ptol )  dist[1] = 0;
-		else if( dist[1] > 1-ptol && dist[1] < 1+ptol ) dist[1] = 1;
-
-		if( dist[1] < 0 || dist[1] > 1 )  nogood = 1;
-		if( dist[0] < 0 || dist[0] > 1 )  nogood++;
-		if( nogood >= 2 )
-			return -1;	/* colinear, but not overlapping */
-rt_log("  HIT colinear!\n");
-		return 0;		/* colinear and overlapping */
-	}
-
-	det = 1 / det;
-	dist[0] = det1 * det;
-	det2 = pdir[X] * hy - pdir[Y] * hx;
-	dist[1] = det2 * det;
-rt_log("dist[0] = %g, dist[1] = %g\n", dist[0], dist[1] );
-
-	/*  If within tolerance of an endpoint (0, 1), make exact. */
-	ptol = tol->dist / sqrt( pdir[X]*pdir[X] + pdir[Y]*pdir[Y] );
-	if( dist[0] > -ptol && dist[0] < ptol )  dist[0] = 0;
-	else if( dist[0] > 1-ptol && dist[0] < 1+ptol ) dist[0] = 1;
-
-	qtol = tol->dist / sqrt( qdir[X]*qdir[X] + qdir[Y]*qdir[Y] );
-	if( dist[1] > -qtol && dist[1] < qtol )  dist[1] = 0;
-	else if( dist[1] > 1-qtol && dist[1] < 1+qtol ) dist[1] = 1;
-
-rt_log("ptol=%g, qtol=%g\n", ptol, qtol);
-	if( dist[0] < 0 || dist[0] > 1 || dist[1] < 0 || dist[1] > 1 )
-		return -1;		/* missed */
-rt_log("  HIT!\n");
-	return 1;			/* hit, normal intersection */
-#endif
 }
 
 /* Was nmg_boolstruct, but that name has appeared in nmg.h */
@@ -589,11 +475,10 @@ CONST struct faceuse	*fu;	/* for plane equation */
 			v->index, V3ARGS(vg->coord), V3ARGS(pt) );
 	}
 
-#if 0
-	if (rt_g.NMG_debug & DEBUG_POLYSECT)
-#endif
+	if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
 		rt_log("%d (%g,%g,%g) becomes (%g,%g) %g\n",
 			v->index, V3ARGS(vg->coord), V3ARGS(pt) );
+	}
 }
 
 /*
@@ -643,7 +528,6 @@ struct face		*f1;
 	 *  by centering calculations around it.
 	 */
 	VSET( to, 0, 0, 1 );
-HPRINT("fg->N", fg->N);
 	mat_fromto( is->proj, fg->N, to );
 	VADD2SCALE( centroid, fg->max_pt, fg->min_pt, 0.5 );
 	MAT4X3PNT( centroid_proj, is->proj, centroid );
@@ -1187,7 +1071,8 @@ CONST char		*str;
 	NMG_CK_FACEUSE(fu1);
 	NMG_CK_FACEUSE(fu2);
 
-	rt_log("nmg_isect_two_colinear_edge2p(x%x, x%x) %s\n", eu1, eu2, str);
+	if (rt_g.NMG_debug & DEBUG_POLYSECT)
+		rt_log("nmg_isect_two_colinear_edge2p(x%x, x%x) %s\n", eu1, eu2, str);
 	nmg_ck_face_worthless_edges( fu1 );
 	nmg_ck_face_worthless_edges( fu2 );
 
@@ -1265,16 +1150,22 @@ struct faceuse		*fu2;		/* fu of eu2, for error checks */
 	NMG_CK_INTER_STRUCT(is);
 	NMG_CK_EDGEUSE(eu1);
 	NMG_CK_EDGEUSE(eu2);
+	/*
+	 * Important note:  don't use eu1->eumate_p->vu_p here,
+	 * because that vu is in the opposite orientation faceuse.
+	 * Putting those vu's on the intersection line makes for big trouble.
+	 */
 	vu1a = eu1->vu_p;
-	vu1b = eu1->eumate_p->vu_p;
+	vu1b = RT_LIST_PNEXT_CIRC( edgeuse, eu1 )->vu_p;
 	vu2a = eu2->vu_p;
-	vu2b = eu2->eumate_p->vu_p;
+	vu2b = RT_LIST_PNEXT_CIRC( edgeuse, eu2 )->vu_p;
 	NMG_CK_VERTEXUSE(vu1a);
 	NMG_CK_VERTEXUSE(vu1b);
 	NMG_CK_VERTEXUSE(vu2a);
 	NMG_CK_VERTEXUSE(vu2b);
 
-	rt_log("nmg_isect_edge2p_edge2p(eu1=x%x, eu2=x%x)\n", eu1, eu2);
+	if (rt_g.NMG_debug & DEBUG_POLYSECT)
+		rt_log("nmg_isect_edge2p_edge2p(eu1=x%x, eu2=x%x)\n", eu1, eu2);
 
 	/* First, a topology check. */
 	if( vu1a->v_p == vu2a->v_p || vu1a->v_p == vu2b->v_p || vu2a->v_p == vu1b->v_p || vu2b->v_p == vu1b->v_p )  {
@@ -1356,7 +1247,12 @@ struct faceuse		*fu2;		/* fu of eu2, for error checks */
 
 		if( eu2dist[1] > -ptol && eu2dist[1] < ptol )  eu2dist[1] = 0;
 		else if( eu2dist[1] > 1-ptol && eu2dist[1] < 1+ptol ) eu2dist[1] = 1;
+
+		if (rt_g.NMG_debug & DEBUG_POLYSECT) {
+			rt_log("\trt_isect_lseg2_lseg2()=%d, eu2dist: %g, %g\n",
+				status, eu2dist[0], eu2dist[1] );
 rt_log("ptol = %g, eu2dist=%g, %g\n", ptol, eu2dist[0], eu2dist[1]);
+		}
 
 		nmg_isect_two_colinear_edge2p( eu2dist, is->l2, is->l1,
 			vu2a, vu2b, vu1a, vu1b,
@@ -1492,7 +1388,8 @@ rt_log("ptol = %g, eu2dist=%g, %g\n", ptol, eu2dist[0], eu2dist[1]);
 			if (rt_g.NMG_debug & DEBUG_POLYSECT)
 			    	VPRINT("\t\tBreaking eu2 at intersect point", hit_pt);
 			(void)nmg_ebreak( NULL, eu2->e_p );
-			new_vu = eu2->eumate_p->vu_p;
+			/* Can't use eumate_p here, it's in wrong orientation face */
+			new_vu = RT_LIST_PNEXT_CIRC(edgeuse,eu2)->vu_p;
 			nmg_vertex_gv( new_vu->v_p, hit_pt );	/* 3d geom */
 
 			plu = nmg_mlv(&fu1->l.magic, new_vu->v_p, OT_UNSPEC);
@@ -1546,8 +1443,9 @@ rt_log("ptol = %g, eu2dist=%g, %g\n", ptol, eu2dist[0], eu2dist[1]);
 
 		/* new_v is at far end of eu1 */
 		if( eu1->eumate_p->vu_p->v_p != new_v ) rt_bomb("new_v 1\n");
-		(void)nmg_tbl(is->l1, TBL_INS_UNIQUE, &eu1->eumate_p->vu_p->l.magic);
-		(void)nmg_tbl(is->l2, TBL_INS_UNIQUE, &eu2->eumate_p->vu_p->l.magic);
+		/* Can't use eumate_p here, it's in wrong orientation face */
+		(void)nmg_tbl(is->l1, TBL_INS_UNIQUE, &RT_LIST_PNEXT_CIRC(edgeuse,eu1)->vu_p->l.magic);
+		(void)nmg_tbl(is->l2, TBL_INS_UNIQUE, &RT_LIST_PNEXT_CIRC(edgeuse,eu2)->vu_p->l.magic);
 		nmg_ck_face_worthless_edges( fu1 );
 		nmg_ck_face_worthless_edges( fu2 );
 	}
@@ -1558,12 +1456,13 @@ rt_log("ptol = %g, eu2dist=%g, %g\n", ptol, eu2dist[0], eu2dist[1]);
 	 *  in the list of vu's encountered along this edge.
 	 *  Note that either (or both) vu's may be shared in the case
 	 *  of co-linear edges.
+	 *  Can't use eumate_p here, it's in wrong orientation faceuse.
 	 */
 topo:
 	vu1a = eu1->vu_p;
-	vu1b = eu1->eumate_p->vu_p;
+	vu1b = RT_LIST_PNEXT_CIRC(edgeuse,eu1)->vu_p;
 	vu2a = eu2->vu_p;
-	vu2b = eu2->eumate_p->vu_p;
+	vu2b = RT_LIST_PNEXT_CIRC(edgeuse,eu2)->vu_p;
 	/*
 	 *  vu1a and vu1b and their duals MUST be listed on
 	 *  the intersection line.
@@ -1990,7 +1889,8 @@ struct faceuse		*eu_fu;		/* fu that eu is from */
 	NMG_CK_FACEUSE(fu);
 	NMG_CK_FACEUSE(eu_fu);
 
-	rt_log("nmg_isect_edge2p_face2p(eu=x%x, fu=x%x)\n", eu, fu);
+	if (rt_g.NMG_debug & DEBUG_POLYSECT)
+		rt_log("nmg_isect_edge2p_face2p(eu=x%x, fu=x%x)\n", eu, fu);
 
 	/* See if this edge is topologically on other face already */
 	/* XXX Is it safe to assume that since both endpoints are
@@ -1999,7 +1899,9 @@ struct faceuse		*eu_fu;		/* fu that eu is from */
 	 */
 	if( nmg_find_vertexuse_on_face( eu->vu_p->v_p, fu ) &&
 	    nmg_find_vertexuse_on_face( eu->eumate_p->vu_p->v_p, fu ) )  {
+#if 0
 		rt_log("edge: (%g,%g,%g) (%g,%g,%g)\n", V3ARGS(eu->vu_p->v_p->vg_p->coord), V3ARGS(eu->eumate_p->vu_p->v_p->vg_p->coord) );
+#endif
 		return;
 	}
 
@@ -2080,15 +1982,16 @@ struct faceuse		*fu1, *fu2;
 	NMG_CK_FACEUSE(fu1);
 	NMG_CK_FACEUSE(fu2);
 
-	rt_log("nmg_isect_two_face2p\n");
-#if 1
+#if 0
 	/* r71, r23 are useful demonstrations */
 	rt_g.NMG_debug |= DEBUG_POLYSECT;
 	rt_g.NMG_debug |= DEBUG_FCUT;
 	rt_g.NMG_debug |= DEBUG_VU_SORT;
 	rt_g.NMG_debug |= DEBUG_PLOTEM;
-	rt_g.NMG_debug |= DEBUG_INS;
 #endif
+
+	if (rt_g.NMG_debug & DEBUG_POLYSECT)
+		rt_log("nmg_isect_two_face2p\n");
 
 	/* For every edge in f1, intersect with f2, incl. cutjoin */
 	for( RT_LIST_FOR( lu, loopuse, &fu1->lu_hd ) )  {
@@ -2248,12 +2151,10 @@ CONST struct rt_tol	*tol;
 		nmg_isect_two_face3p( &bs, fu1, fu2 );
 		break;
 	case -1:
-		/* co-planar */
-		rt_log("co-planar faces.\n");
+		/* co-planar faces */
+rt_log("co-planar faces.\n");
 		bs.coplanar = 1;
-#if 1
 		nmg_isect_two_face2p( &bs, fu1, fu2 );
-#endif
 		break;
 	case -2:
 		/* parallel and distinct, no intersection */
