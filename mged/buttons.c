@@ -398,6 +398,7 @@ register int bnum;
 #endif
 		return;
 	}
+
 	(void)rt_log("button(%d):  Not a defined operation\n", bnum);
 }
 
@@ -408,6 +409,10 @@ void
 press( str )
 char *str;{
 	register struct buttons *bp;
+	struct menu_item	**m;
+	int menu, item;
+	register struct menu_item	*mptr;
+
 
 	if( edsol && edobj )
 		(void)rt_log("WARNING: State error: edsol=%x, edobj=%x\n", edsol, edobj );
@@ -421,7 +426,7 @@ char *str;{
 
 	/* Process the button function requested. */
 	for( bp = button_table; bp->bu_code >= 0; bp++ )  {
-		if( strcmp( str, bp->bu_name) )
+		if( strcmp( str, bp->bu_name ) != 0 )
 			continue;
 #ifdef XMGED
 		bp->bu_func(bp->bu_param);
@@ -430,8 +435,29 @@ char *str;{
 #endif
 		return;
 	}
-	(void)rt_log("press(%s):  Unknown operation, type 'press help' for help\n",
-		str);
+
+	for( menu=0, m=menu_array; m < &menu_array[NMENU]; m++,menu++ )  {
+		if( *m == MENU_NULL )  continue;
+		for( item=0, mptr = *m;
+		     mptr->menu_string[0] != '\0';
+		     mptr++, item++ )  {
+		    if ( strcmp( str, mptr->menu_string ) != 0 )
+			continue;
+			
+		    cur_item = item;
+		    cur_menu = menu;
+		    menuflag = 1;
+		    /* It's up to the menu_func to set menuflag=0
+		     * if no arrow is desired */
+		    if( mptr->menu_func != ((void (*)())0) )
+			(*(mptr->menu_func))(mptr->menu_arg, menu, item);
+		    dmaflag = 1;
+		    return;
+		}
+	}
+
+	rt_log("press(%s):  Unknown operation, type 'press help' for help\n",
+	       str);
 }
 /*
  *  			L A B E L _ B U T T O N
