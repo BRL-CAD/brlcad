@@ -549,7 +549,8 @@ char	*str;
 	if( rt_memdebug == (struct memdebug *)0 )  {
 		rt_log("rt_ck_malloc_ptr(x%x, %s)  no memdebug table yet\n",
 			ptr, str);
-		rt_bomb("Goodbye");
+		/* warning only -- the program is just getting started */
+		return;
 	}
 
 	for( ; mp >= rt_memdebug; mp-- )  {
