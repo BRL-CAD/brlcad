@@ -285,19 +285,22 @@ struct plant *pl;
 double w;	/* 0..1, */
 {
 	int blade, seg;
+	double d;
 
 	if (rdebug&RDEBUG_SHADE)
 		bu_log("plant_scale(%g)\n", w);
 
-	if ( w < .6) pl->blades--;
+	if (w > .4) pl->blades--;
 
 	for (blade=0 ; blade < pl->blades ; blade++) {
 		pl->b[blade].tot_len = 0.0;
 		if (blade != BLADE_MAX-1)
 			pl->b[blade].width *= w;
+		else
+			w = 1.0 - w;
 
 		for (seg=0; seg < pl->b[blade].segs ; seg++) {
-			pl->b[blade].leaf[seg].len *= w;
+				pl->b[blade].leaf[seg].len *= w;
 
 			pl->b[blade].tot_len += pl->b[blade].leaf[seg].len;
 		}
@@ -387,8 +390,13 @@ struct grass_specific *grass_sp;
     /* rotate the vectors of blade 0 to form each extra blade */
     blade_rot(&grass_sp->proto.b[blade], &grass_sp->proto.b[0], m);
 
-    VMINMAX(grass_sp->proto.pmin, grass_sp->proto.pmax, grass_sp->proto.b[blade].pmin);
-    VMINMAX(grass_sp->proto.pmin, grass_sp->proto.pmax, grass_sp->proto.b[blade].pmax);
+    /* scale the leaves so that they aren't all the same length */
+    val = (double)blade / (double)(BLADE_MAX-1);
+    val = val * .25 + .75;
+
+    for (seg=0; seg < grass_sp->proto.b[blade].segs ; seg++) {
+      grass_sp->proto.b[blade].leaf[seg].len *= val;
+    }
 
     bn_mat_mul2(r, m);
   }
@@ -414,7 +422,7 @@ struct grass_specific *grass_sp;
 #if 0
 	    100 - seg * 20;
 #else
-    	grass_sp->t*2.0 + 
+    	grass_sp->t*1.25 + 
     		(grass_sp->proto.b[blade].segs - seg) *
     		grass_sp->t * .75;
 #endif
@@ -426,7 +434,7 @@ struct grass_specific *grass_sp;
       		left, grass_sp->proto.b[blade].leaf[seg].blade);
     VUNITIZE(grass_sp->proto.b[blade].leaf[seg].N);
 
-    val -= (seg+1) * .1;
+    val -= (seg+1) * .2;
   }
 
   if( rdebug&RDEBUG_SHADE) {
@@ -594,7 +602,7 @@ double w;		/* cell specific weght for count, height */
  *		1	hit something
  */
 static int
-hit_blade(bl, r, swp, grass_sp, seg, ldist, blade_num)
+hit_blade(bl, r, swp, grass_sp, seg, ldist, blade_num, fract)
 CONST struct blade *bl;
 struct grass_ray *r;
 struct shadework	*swp;	/* defined in material.h */
@@ -602,6 +610,7 @@ CONST struct grass_specific *grass_sp;
 int seg;
 double ldist[2];
 int blade_num;
+double fract;
 {
 	CK_grass_SP(grass_sp);
 	BU_CKMAG(r, GRASSRAY_MAGIC, "grass_ray");
@@ -617,13 +626,19 @@ int blade_num;
 		/* we're the closest hit on the cell */
 		r->hit.hit_dist = ldist[0];
 		VJOIN1(r->hit.hit_point, r->r.r_pt, ldist[0], r->r.r_dir);
-		VMOVE(r->hit.hit_normal, bl->leaf[seg].N);
 
+		if (VDOT(bl->leaf[seg].N, r->r.r_dir) > 0.0) {
+			VREVERSE(r->hit.hit_normal, bl->leaf[seg].N);
+		} else {
+			VMOVE(r->hit.hit_normal, bl->leaf[seg].N);
+		}
 #if 1
 		if (blade_num == BLADE_MAX-1) {
 			VSET(swp->sw_color, .7, .6, .3);
 		}
 #endif
+		fract = fract * 0.25 + .75;
+		VSCAEL(swp->sw_color, swp->sw_color, fract);
 		if (rdebug&RDEBUG_SHADE) {
 			bu_log("  New closest hit %g < %g\n",
 				ldist[0], r->hit.hit_dist);
@@ -736,7 +751,7 @@ int blade_num;
 					bl->width);
 
 			return hit_blade(bl, r, swp, grass_sp, seg, ldist,
-				blade_num);
+				blade_num, fract);
 		}
 		if (rdebug&RDEBUG_SHADE) bu_log("\t    (missed aside)\n");
 
@@ -828,15 +843,20 @@ double dist_to_cell;
 
 	r->hit.hit_dist = dist_to_cell;
 	VJOIN1(r->hit.hit_point, r->r.r_pt, dist_to_cell, r->r.r_dir);
-#if 0
-	VSET(swp->sw_color, 1.0, 0.0, 0.0);
-#else
 
+	VSET(swp->sw_color, .7, .6, .3);
+
+#if 0
 	bn_noise_vec(cell_pos, r->hit.hit_normal);
 	r->hit.hit_normal[Z] += 1.0;
-	VUNITIZE(r->hit.hit_normal);
-
+#else
+	bn_noise_vec(r->hit.hit_point, r->hit.hit_normal);
+	if (r->hit.hit_normal[Z] < 0.0) r->hit.hit_normal[Z] *= -1.0;
 #endif
+	VUNITIZE(r->hit.hit_normal);
+	if (VDOT(r->hit.hit_normal, r->r.r_dir) > 0.0) {
+		VREVERSE(r->hit.hit_normal, r->hit.hit_normal);
+	}
 
 	return SHADE_ABORT_GRASS;
 }
@@ -892,13 +912,13 @@ struct grass_specific	*grass_sp;
 			val, r->radius, r->diverge, dist_to_cell,  val*32.0,
 			V2ARGS(grass_sp->cell));
 
-	if (val > grass_sp->blade_width * 5)
+	if (val > grass_sp->blade_width * 3)
 		return stat_cell(cell_pos, r, grass_sp, swp, dist_to_cell);
 
 
 	/* Figure out how many plants are in this cell */
 	val = plants_this_cell(cell, grass_sp);
-	ppc = val * grass_sp->ppc;
+	ppc = grass_sp->ppc + grass_sp->ppcd * val;
 
 	VSCALE(c, cell, grass_sp->size);
 
