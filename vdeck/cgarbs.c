@@ -1,6 +1,6 @@
 /*
- *	@(#) cgarbs.c			retrieved 8/13/86 at 07:59:24,
- *	@(#) version 1.4		  created 3/29/83 at 10:53:12.
+ *	@(#) cgarbs.c			retrieved 8/13/86 at 07:59:34,
+ *	@(#) version 1.5		  created 7/19/83 at 10:58:32.
  *
  *	Written by Keith Applin.
  *	All rights reserved, Ballistic Research Laboratory.
@@ -115,6 +115,10 @@ int uvec[], svec[], numvec;
 	cgtype = rec->s.s_num * -1;
 	switch( cgtype ) {
 	case ARB8: /* New stuff Mar 29, 1983.				*/
+#ifdef 0 /* THIS CODE DOES NOT WORK ====================================*/
+	fprintf( stderr,
+	"redoarb():ERROR this statement should not be reached!\n" );
+	exit( 1 );
 		/* Convert to vector notation to check for BOX and RPP.	*/
 		vectors( rec );
 
@@ -192,6 +196,7 @@ int uvec[], svec[], numvec;
 
 		/* Back to point notation.				*/
 		points( rec );
+#endif
 		break;
 	case ARB7:	/* arb7 vectors: 0 1 2 3 4 5 6 4 */
 		switch( svec[2] ) {
