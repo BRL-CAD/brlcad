@@ -273,7 +273,7 @@ CONST struct rt_tol	*tol;
 
 	/* Plane hit point is closer to this edgeuse than previous one(s) */
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
-		rt_log("\t\tCloser. dist=%g (closest=%g), tol=%g\n",
+		rt_log("\t\tCLOSER dist=%g (closest=%g), tol=%g\n",
 			dist, closest->dist, tol->dist);
 	}
 
@@ -304,12 +304,6 @@ CONST struct rt_tol	*tol;
 	/* The point did not lie exactly ON the edge */
 	/* calculate in/out */
 	NMG_GET_FU_NORMAL(norm, eu->up.lu_p->up.fu_p);
-    	if (eu->up.lu_p->orientation == OT_OPPOSITE) {
-    		if (rt_g.NMG_debug & DEBUG_CLASSIFY) rt_log("\t\tReversing normal\n");
-		VREVERSE(norm,norm);
-    	} else if (eu->up.lu_p->orientation != OT_SAME) {
-    		rt_bomb("nmg_class_pt_e() bad lu orientation\n");
-    	}
 
 	VSUB2(euvect, matept, eupt);
     	if (rt_g.NMG_debug & DEBUG_CLASSIFY) VPRINT("\t\teuvect unnorm", euvect);
@@ -406,11 +400,19 @@ CONST struct rt_tol	*tol;
 	lg = lu->l_p->lg_p;
 	NMG_CK_LOOP_G(lg);
 
-	if (rt_g.NMG_debug & DEBUG_CLASSIFY)
+	if (rt_g.NMG_debug & DEBUG_CLASSIFY)  {
 		VPRINT("nmg_class_pt_l\tPt:", pt);
+	}
 
 	if (*lu->up.magic_p != NMG_FACEUSE_MAGIC)
 		return;
+
+	if (rt_g.NMG_debug & DEBUG_CLASSIFY)  {
+		plane_t		peqn;
+		nmg_pr_lu_briefly(lu, 0);
+		NMG_GET_FU_PLANE( peqn, lu->up.fu_p );
+		HPRINT("\tplane eqn", peqn);
+	}
 
 	if( !V3PT_IN_RPP_TOL( pt, lg->min_pt, lg->max_pt, tol ) )  {
 		if (rt_g.NMG_debug & DEBUG_CLASSIFY)
@@ -1053,6 +1055,11 @@ CONST struct rt_tol	*tol;
 	    	nmg_pr_class_status("eumate vu", matev_cl);
 	    	if( rt_g.debug || rt_g.NMG_debug )  {
 		    	/* Do them over, so we can watch */
+	    		rt_log("Edge not cut, doing it over\n");
+	    		NMG_INDEX_CLEAR( classlist[NMG_CLASS_AinB], eu->vu_p);
+	    		NMG_INDEX_CLEAR( classlist[NMG_CLASS_AoutB], eu->vu_p);
+	    		NMG_INDEX_CLEAR( classlist[NMG_CLASS_AinB], eu->eumate_p->vu_p);
+	    		NMG_INDEX_CLEAR( classlist[NMG_CLASS_AoutB], eu->eumate_p->vu_p);
 /**	    		rt_g.debug |= DEBUG_MATH; **/
 			rt_g.NMG_debug |= DEBUG_CLASSIFY;
 			(void)class_vu_vs_s(eu->vu_p, s, classlist, tol);
