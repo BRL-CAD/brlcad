@@ -122,6 +122,7 @@ char **argv;
 	register FBIO *fbp;
 	register int y;
 	int i;
+	int got;
 	png_structp png_p;
 	png_infop info_p;
 
@@ -177,7 +178,12 @@ char **argv;
 		/*  Regular -- read bottom to top */
 		for( y=0; y < screen_height; y++ )
 		{
-			fb_read( fbp, 0, y, scanline, screen_width );
+			got = fb_read( fbp, 0, y, scanline, screen_width );
+			if( got != screen_width )  {
+				fprintf(stderr,"fb-png: Read of scanline %d returned %d, expected %d, aborting.\n",
+					y, got, screen_width);
+				break;
+			}
 			if( crunch )
 				cmap_crunch( scanline, scanpix, &cmap );
 			png_write_row( png_p, scanline );
@@ -188,7 +194,12 @@ char **argv;
 		/*  Inverse -- read top to bottom */
 		for( y = screen_height-1; y >= 0; y-- )
 		{
-			fb_read( fbp, 0, y, scanline, screen_width );
+			got = fb_read( fbp, 0, y, scanline, screen_width );
+			if( got != screen_width )  {
+				fprintf(stderr,"fb-png: Read of scanline %d returned %d, expected %d, aborting.\n",
+					y, got, screen_width);
+				break;
+			}
 			if( crunch )
 				cmap_crunch( scanline, scanpix, &cmap );
 			png_write_row( png_p, scanline );
