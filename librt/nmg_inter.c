@@ -1531,7 +1531,7 @@ struct faceuse *fu;
 	struct edgeuse	*eulast;
 
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)
-		rt_log("nmg_isect_3edge_3face(, eu=x%x, fu=x%x)\n", eu, fu);
+		rt_log("nmg_isect_3edge_3face(, eu=x%x, fu=x%x) START\n", eu, fu);
 
 	NMG_CK_INTER_STRUCT(bs);
 	NMG_CK_EDGEUSE(eu);
@@ -1547,25 +1547,8 @@ struct faceuse *fu;
 	NMG_CK_VERTEX_G(v1mate->vg_p);
 
 	if (*eu->up.magic_p == NMG_LOOPUSE_MAGIC) {
-		/* some edge sanity checking */
-		eunext = RT_LIST_PNEXT_CIRC(edgeuse, &eu->l);
-		eulast = RT_LIST_PLAST_CIRC(edgeuse, &eu->l);
-		NMG_CK_EDGEUSE(eunext);
-		NMG_CK_EDGEUSE(eulast);
-		if (v1 != eulast->eumate_p->vu_p->v_p) {
-			VPRINT("unshared vertex (mine): ",
-				v1->vg_p->coord);
-			VPRINT("\t\t (last->eumate_p): ",
-				eulast->eumate_p->vu_p->v_p->vg_p->coord);
-			rt_bomb("nmg_isect_3edge_3face() discontiuous edgeloop\n");
-		}
-		if( eunext->vu_p->v_p != v1mate) {
-			VPRINT("unshared vertex (my mate): ",
-				v1mate->vg_p->coord);
-			VPRINT("\t\t (next): ",
-				eunext->vu_p->v_p->vg_p->coord);
-			rt_bomb("nmg_isect_3edge_3face() discontinuous edgeloop\n");
-		}
+		/* XXX edge sanity checking */
+		nmg_veu( &eu->up.lu_p->down_hd, eu->up.magic_p );
 	}
 
 	/*
@@ -1586,7 +1569,7 @@ struct faceuse *fu;
 
 		(void)nmg_tbl(bs->l1, TBL_INS_UNIQUE, &eu->vu_p->l.magic);
 		(void)nmg_tbl(bs->l2, TBL_INS_UNIQUE, &vu_other->l.magic);
-		return;
+		goto out;
 	}
 
 	/*
@@ -1622,7 +1605,7 @@ struct faceuse *fu;
 		 */
 		dist = VDOT( start_pt, fu->f_p->fg_p->N ) - fu->f_p->fg_p->N[3];
 		if( !NEAR_ZERO( dist, bs->tol.dist ) )
-			return;		/* No geometric intersection */
+			goto out;		/* No geometric intersection */
 
 		/* Start point lies on plane of other face */
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
@@ -1652,7 +1635,7 @@ struct faceuse *fu;
 		/* Hit is behind first point */
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
 			rt_log("\tplane behind first point\n");
-		return;
+		goto out;
 	}
 
 
@@ -1690,7 +1673,7 @@ struct faceuse *fu;
 			NMG_CK_VERTEXUSE(vu_other);
 			(void)nmg_tbl(bs->l2, TBL_INS_UNIQUE, &vu_other->l.magic);
 		}
-		return;
+		goto out;
 	}
 
 	if ( dist_to_plane < edge_len - bs->tol.dist) {
@@ -1698,7 +1681,7 @@ struct faceuse *fu;
 		 * Insert new vertex at intersection point.
 		 */
 		nmg_break_3edge_at_plane(hit_pt, fu, bs, eu, v1, v1mate);
-		return;
+		goto out;
 	}
 
 	if ( dist_to_plane < edge_len + bs->tol.dist) {
@@ -1735,20 +1718,31 @@ struct faceuse *fu;
 			NMG_CK_VERTEXUSE(vu_other);
 			(void)nmg_tbl(bs->l2, TBL_INS_UNIQUE, &vu_other->l.magic);
 		}
-		return;
+		goto out;
 	}
 
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)
 		rt_log("\tdist to plane X: X > MAGNITUDE(edge)\n");
+
+out:
+	if (*eu->up.magic_p == NMG_LOOPUSE_MAGIC) {
+		/* XXX edge sanity checking */
+		nmg_veu( &eu->up.lu_p->down_hd, eu->up.magic_p );
+	}
+	/* XXX Ensure that other face is still OK */
+	nmg_vfu( &fu->s_p->fu_hd, fu->s_p );
+
+	if (rt_g.NMG_debug & DEBUG_POLYSECT)
+		rt_log("nmg_isect_3edge_3face(, eu=x%x, fu=x%x) END\n", eu, fu);
 }
 
 /*
- *			N M G _ I S E C T _ P L A N E _ L O O P _ F A C E
+ *			N M G _ I S E C T _ L O O P 3 P _ F A C E 3 P
  *
  *	Intersect a single loop with another face
  */
 static void
-nmg_isect_plane_loop_face(bs, lu, fu)
+nmg_isect_loop3p_face3p(bs, lu, fu)
 struct nmg_inter_struct *bs;
 struct loopuse *lu;
 struct faceuse *fu;
@@ -1757,7 +1751,7 @@ struct faceuse *fu;
 	long		magic1;
 
 	if (rt_g.NMG_debug & DEBUG_POLYSECT) {
-		rt_log("nmg_isect_plane_loop_face(, lu=x%x, fu=x%x)\n", lu, fu);
+		rt_log("nmg_isect_loop3p_face3p(, lu=x%x, fu=x%x)\n", lu, fu);
 		HPRINT("  fg N", fu->f_p->fg_p->N);
 	}
 
@@ -1777,7 +1771,7 @@ struct faceuse *fu;
 		nmg_isect_3vertex_3face(bs, vu, fu);
 		return;
 	} else if (magic1 != NMG_EDGEUSE_MAGIC) {
-		rt_bomb("nmg_isect_plane_loop_face() Unknown type of NMG loopuse\n");
+		rt_bomb("nmg_isect_loop3p_face3p() Unknown type of NMG loopuse\n");
 	}
 
 	/*  Process loop consisting of a list of edgeuses.
@@ -1789,19 +1783,23 @@ struct faceuse *fu;
 	 * them is split, it inserts a new edge AHEAD or
 	 * "nextward" of the current edgeuse.
 	 */ 
+	nmg_vfu( &fu->s_p->fu_hd, fu->s_p );
+	nmg_veu( &lu->down_hd, &lu->l.magic );
 	for( eu = RT_LIST_LAST(edgeuse, &lu->down_hd );
 	     RT_LIST_NOT_HEAD(eu,&lu->down_hd);
 	     eu = RT_LIST_PLAST(edgeuse,eu) )  {
 		NMG_CK_EDGEUSE(eu);
 
 		if (eu->up.magic_p != &lu->l.magic) {
-			rt_bomb("nmg_isect_plane_loop_face: edge does not share loop\n");
+			rt_bomb("nmg_isect_loop3p_face3p: edge does not share loop\n");
 		}
 
 		nmg_isect_3edge_3face(bs, eu, fu);
 
-		nmg_ck_lueu(lu, "nmg_isect_plane_loop_face");
+		nmg_ck_lueu(lu, "nmg_isect_loop3p_face3p");
 	}
+	nmg_veu( &lu->down_hd, &lu->l.magic );
+	nmg_vfu( &fu->s_p->fu_hd, fu->s_p );
 }
 
 /*
@@ -1851,7 +1849,7 @@ struct faceuse	*fu2;
 			if (! V3RPP_OVERLAP( fu2lg->min_pt, fu2lg->max_pt,
 			    lg->min_pt, lg->max_pt)) continue;
 
-			nmg_isect_plane_loop_face(bs, lu, fu2);
+			nmg_isect_loop3p_face3p(bs, lu, fu2);
 		}
 	}
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)
@@ -2193,6 +2191,9 @@ CONST struct rt_tol	*tol;
 	NMG_CK_SHELL(s2);
 	sa2 = s2->sa_p;
 	NMG_CK_SHELL_A(sa2);
+
+	nmg_vshell( &s1->r_p->s_hd, s1->r_p );
+	nmg_vshell( &s2->r_p->s_hd, s2->r_p );
 
 	/* XXX this isn't true for non-3-manifold geometry! */
 	if( RT_LIST_IS_EMPTY( &s1->fu_hd ) ||
