@@ -37,7 +37,8 @@ NFS=1
 # Label number for this CAD Release,
 # RCS main Revision number, and date.
 #RELEASE=M.N;	RCS_REVISION=X;		REL=DATE=dd-mmm-yy
-RELEASE=4.6;	RCS_REVISION=11;	REL_DATE=Today		# almost-5.0
+RELEASE=5.0;	RCS_REVISION=11;	REL_DATE=Today		# beta-5.0
+#RELEASE=4.6;	RCS_REVISION=11;	REL_DATE=Today		# almost-5.0
 #RELEASE=4.5;	RCS_REVISION=11;	REL_DATE=14-Feb-98	# 4.4 "Porting release"
 #RELEASE=4.4;	RCS_REVISION=11;	REL_DATE=5-Jan-95
 #RELEASE=4.3;	RCS_REVISION=10;	REL_DATE=2-Jan-95	# Beta6
@@ -141,8 +142,14 @@ eval `machinetype.sh -b`
 BRLCAD_ROOT=${BASEDIR}
 export BRLCAD_ROOT
 
-DISTDIR=/m/dist/.
-ARCHDIR=/m/.
+CAKE=../cake.$MACHINE/cake
+
+if [ ! -f Cakefile.defs ] ; then
+	You must run this from root of brlcad source tree.
+	exit -1
+fi
+DISTDIR=`pwd`/dist
+ARCHDIR=`pwd`/arch
 ARCHIVE=${ARCHDIR}/cad${RELEASE}.tar
 
 # Every shell script to be distributed must be listed here.
@@ -155,7 +162,7 @@ ADIRS="h doc pix vfont awf brlman"
 
 # Has no Cakefile, just copy it (and all sub-directories!) verbatim.
 # Only used in "dist" command.
-CDIRS="sh cake cakeaux html papers contributed pro-engineer"
+CDIRS="sh cake cakeaux html"
 
 # Source directories that will have Machine specific binary directories
 # These will be built in the order listed.
@@ -520,7 +527,7 @@ dist)
 	for i in ${CDIRS} ${TDIRS}
 	do
 		rm -fr ${DISTDIR}/$i
-		mkdir ${DISTDIR}/$i
+		mkdir -p ${DISTDIR}/$i
 		# Get everything (recursively) except the RCS & CVS subdirs
 		# XXX Note that this rule will also miss README files
 		cp -r $i/[!CR]* ${DISTDIR}/$i/.
@@ -543,6 +550,7 @@ dist)
 
 # Use as final step of making a distribution -- write the archive
 arch)
+	mkdir ${ARCHDIR}
 	cd ${DISTDIR}; tar cfv ${ARCHIVE} *
 	# $4 will be file size in bytes (BSD machine)
 	# $5 will be file size in bytes (SYSV machine)
@@ -557,15 +565,13 @@ arch)
 	echo "${ARCHIVE} created"
 
 	# The FTP images:
-	FTP_ARCHIVE=/n/cad/usr/spool/ftp/brl-cad/Rel${RELEASE}/src/cad${RELEASE}.tar
+	FTP_ARCHIVE=$ARCHDIR/cad${RELEASE}.tar
 	echo "Enter encryption key:"
 	read KEY
 	echo "encryption key is /$KEY/"
 	EXCLUDE=/tmp/cad-exclude
 	rm -f ${EXCLUDE}
-	echo 'papers/*' >> ${EXCLUDE}
 	echo 'vfont/*' >> ${EXCLUDE}
-	echo 'contributed/*' >> ${EXCLUDE}
 	echo 'doc/*' >> ${EXCLUDE}
 	echo 'html/*' >> ${EXCLUDE}
 	echo 'pix/*' >> ${EXCLUDE}
@@ -614,6 +620,71 @@ arch)
 	rm -f ${EXCLUDE}
 	;;
 
+# on a FreeBSD system, create the install package
+pkg)
+
+	#########################################
+	#
+	#  Create the various input files
+	#
+	#########################################
+
+	cat > comment << EOF
+Geometric Modeling and rendering package
+EOF
+
+	cat > desc << EOF
+The BRLCAD package is a suite of tools for gemetric modeling, analysis
+and rendering.  It consists of tons of code, including embeddable libraries.
+The GUI is in Tcl/Tk.
+EOF
+
+	cat > postinst.sh << EndOfFile
+#!/bin/sh
+
+more << EOF
+BRLCAD is copyrighted software.  It is distributed under a license
+agreement.  Do not redistribute this software outside your organization.
+EOF
+EndOfFile
+
+
+	#########################################
+	#
+	#  Create the packing list
+	#
+	#########################################
+
+cat > contents << EOF
+@name brlcad-5.0
+@pkgdep tcl-8.0.4
+@pkgdep tk-8.0.4
+@cwd /usr
+@cwd /usr
+@owner bin
+@group bin
+EOF
+
+
+find /usr/brlcad \! -type d -print | sed 's,/usr/,,' >> contents
+
+cat >> contents << EOF
+@exec /usr/bin/env OBJFORMAT=elf /sbin/ldconfig -m /usr/brlcad/lib
+@unexec /usr/bin/env OBJFORMAT=elf /sbin/ldconfig -R
+EOF
+
+find /usr/brlcad -type d -print | sort -r | sed "s,/usr/,@dirrm ," >> contents
+
+	##############################
+	#
+	#  Create the package
+	#
+	##############################
+
+pkg_create -I postinst.sh -d desc -c comment -f contents brlcad-5.0
+rm ./comment ./contents ./desc ./postinst.sh
+
+;;
 # On a Linux system, bundle up /usr/brlcad binary tree as an RPM.
 rpm)
 	REV=`date '+%m%d' `
