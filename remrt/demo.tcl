@@ -297,29 +297,6 @@ proc register {informal_name formalname} {
 	pack .fr_$informal_name -side top -in .rtnode_fr
 }
 
-register "vapor" "vapor-uni0.arl.mil"
-register "wax" "wax-uni0.arl.mil"
-register wilson "wilson-uni0.arl.mil"
-register jewel "jewel-atm.arl.mil"
-register cosm0 "cosm0-atm.arl.hpc.mil"
-#register cosm1 "cosm1-atm.arl.hpc.mil"
-#register cosm2 "cosm2-atm.arl.hpc.mil"
-#register cosm3 "cosm3-atm.arl.hpc.mil"
-#register eckert "eckert-atm.arl.hpc.mil"
-
-#register toltec "toltec.nvl.army.mil"
-#register olmec "olmec.nvl.army.mil"		# Only 1 200Mhz cpu
-#register octopus "octopus.nvl.army.mil"
-#register vdemo3 "vdemo3.arl.mil"
-## NVL, 4 R10k
-#register bfm9000 "bfm9000-lane.nvl.army.mil"
-register toltec "toltec-lane.nvl.army.mil"
-## ARL MSRC, 64 R10k each
-register adele "128.63.240.32"
-register adele1 "128.63.240.33"
-register herman herman.arl.hpc.mil
-register herman1 "128.63.240.35"
-
 frame .button1_fr
 frame .button2_fr
 button .sense_button -text "SENSE" -command sense_servers
@@ -406,7 +383,14 @@ proc start_nodes {} {
 }
 
 # main()
+
+puts "Running .demorc"
+# This file should contain lines of the form
+# register "vapor" "vapor-uni0.arl.mil"
+source ".demorc"
+
 # Automatically try to contact all the registered servers
+puts "Connecting to registered servers"
 reconnect
 
 puts "demo.tcl done"
