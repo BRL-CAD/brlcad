@@ -19,60 +19,52 @@ is that
 handles vehicles with dynamic axles. Both are designed to be use in 
 conjunction with
 .I anim_script, 
-to acheive the final result.
+to achieve the final result.
 .PP
 .B in.table 
 is the file that will be used to animate the
-vehicle itself. By default, it is assumed that it contains a time column
-and three columns of translation information, and that the vehicle will
-be steered by 
-.I anim_script 
-using the 
+vehicle itself. By default, it is assumed that it contains a time column,
+three columns of translation information, and three columns specifying the
+vehicle's yaw, pitch, and roll. If it is desired that the vehicle be steered
+automatically, then the table should contain only time and position, and the
 .B -s 
-option. Otherwise, user-controlled
-orientation can be signaled withe the 
-.B -u 
-flag, in which case 
-.B in.table
-should also contain three columns of orientation information, in yaw, pitch,
-roll format.
+option should be used.
 .PP
-For the purposes of 
-.I anim_hardtrack, 
-the x-axis is the direction the
-vehicle faces, y is to the left and the z-axis is up. In terms of these
-coordinates, the wheels are required to lie in an xz plane. The track's
+The track's
 geometry is defined by 
 .BR trackfile , 
 which has the following format:
 .nf
 
-num_wheels num_links y_offset
-x_pos  z_pos  (radius)		
-x_pos  z_pos  (radius)
-x_pos  z_pos  (radius)
+num_wheels num_links
+x   y   z   (radius)		
+x   y   z   (radius)
+x   y   z   (radius)
 etc.
 
 .fi
-The number of wheels and number of links are specified on the first line,
-followed by the distance between the center of the vehicle and the xz
-plane that intersects the wheels. A positive 
-.B y_offset 
-means that the
-track is to the left of the vehicle's center, and a negative 
-.B y_offset
-means that the track is to the right.
+The number of wheels and number of links are specified on the first line.
 The remaining lines of
 .B trackfile 
-indicate the x and z coordinates
-and radius of each of the wheels which define the track. If they all
-have the same radius, the radius can be specified with the 
+indicate the centerpoint and radius of each wheel.
+If all the wheels have the same radius,
+the radius can be specified with the 
 .B \-r#
 option, in
 which case the radii should not appear in 
 .BR trackfile . 
-The wheels
-should be listed in clockwise order, looking from the right.
+The order in which the wheels are listed should be the order in which a 
+link of the track would move around the wheels when the vehicle is moving
+forward. (clockwise, when looking from the right of the vehicle).
+The wheel centers should all lie in a plane perpendicular to the vehicle's
+left-right axis. If this is not the case,
+.I anim_hardtrack
+uses the first wheel as the standard and projects all the other wheels into
+the same plane as the first wheel. By default, it is assumed that the
+vehicle's left-right axis is the y-axis. If the modeled vehicle has some
+other orientation, this must be specified with the
+.B -b 
+option.
 .PP
 The 
 .B linkname 
@@ -83,10 +75,7 @@ be "tank/track_rt/links/link". The full pathname must be specified,
 because anim_hardtrack's method is to roll the links around within
 the vehicle's tree structure so that when the whole vehicle "tank" is
 animated, the complete combination of rolling around and translating is
-achieved. When the linkname is large and cumbersome, it is sometimes
-more convenient to substitute a simpler name and then restore it in the
-output script using an editor such as 
-.IR jove .
+achieved. 
 .SH
 OPTIONS:
 .TP
@@ -128,27 +117,14 @@ Specify the integer with which to begin numbering frames.
 Default is zero.
 .TP
 .B \-b # # #
-Specify the yaw, pitch, and roll of the track's axes
-with respect to the world axes.
+Specify the yaw, pitch, and roll of the vehicle's axes
+with respect to the world axes. By default, the vehicle is assumed to
+have a yaw, pitch, and roll of 0.
 .TP
 .B \-d # # #
 Specify (in world coordinates) the centroid of the vehicle
-of which the track is a part.
-.PP
-The 
-.B trackfile 
-explains the shape of the track and its
-relationship to the center of the whole vehicle, but the 
-.B -b 
-and 
-.B -d
-options are necessary to specify where the centroid is and what the
-vehicle's orientation is. By default, the vehicle faces the x-axis and
-its centroid is at the origin. The information in 
-.B trackfile 
-is
-interpreted to be displacement from the vehicle's centroid, with respect
-to its own axes.
+of which the track is a part. By default, the vehicle is assumed
+centered at the origin.
 .PP
 When calling 
 .I anim_script 
@@ -176,21 +152,18 @@ If only the wheels are to be animated, the
 should be set to zero in 
 .BR trackfile .
 .TP
-.B \-u
-User specified rotation. 
+.B \-s
+Automatic steering. In this case, 
 .B in.table 
-specifies the position and
-orientation of the vehicle. Otherwise it is assumed that position 
-alone will be specified in 
-.BR in.table , 
-and that the vehicle
-should be "steered" automatically.
+specifies only the time and position 
+of the vehicle. The orientation is calculated to always face the vehicle
+in the direction of motion.
+This should be used when the 
+.B \-s 
+option is used by 
+.I anim_script
+to animate the vehicle.
 .PP
-For 
-.I anim_script, 
-the default is user-specified orientation. For 
-.I anim_hardtrack,
-the default is automatic steering.
 .PP
 .SS Output:
 .PP
@@ -233,28 +206,23 @@ is created, using the following information: There are eighty
 links which make up the track (tank/rtrack/link.i, 0<=i<80).
 There are two
 roadwheels and a drivewheel (tank/rwheel/wheel.i, 0<=i<3) which define
-the shape of the right track. In the tank's coordinate system, the plane
-of the right track lies 1500 units to the right of the center. The rear
-roadwheel, of radius 30, lies 2000 units behind and 970 units below
-the center, the drivewheel, of radius 35 units, is exactly
-in line with the center point, and the front roadwheel, of radius 30,
-lies 2000 units in front of and 970 units below the center. The
-resulting 
+the shape of the right track. 
+A file called 
 .B rtrackfile 
-is:
+is created:
 .nf
 
-3 80 -1500
--2000  -970     30
-    0     0     35
- 2000  -970     30
+3      80
+1500   -2000    30      30
+1500   0        1000    35
+1500   2000     30      30
 
 .fi
 This 
 .B rtrackfile 
-would be the same, regardless of the position and
-orientation of the vehicle in the model, because the displacements are
-relative to the vehicle's own coordinates (x = front, y=  left, z = up).
+shows that there are three wheels, 80 links, and lists the position and
+radius of each of the three wheels.
+.PP
 The links of the right track are all
 stored at the origin. The outer, ground contacting surface should be
 facing up and the inner, wheel-contacting surface should be facing down,
@@ -275,10 +243,10 @@ the left wheels to begin with. The
 would be:
 .nf
 
-3 80 1500
--2000  -970
-    0     0
- 2000  -970
+3       80
+-1500   -2000   30
+-1500   0       1000
+-1500   2000    30
 
 .fi
 and the call would be:
@@ -292,7 +260,7 @@ that is, at the point (2000,1500,-1000) in the vehicle's coordinates.
 If, instead, the first link is initially centered halfway between the
 two roadwheels, this must be specified with the 
 .B -i# 
-option. The link's
+option. If the link's
 actual position is 2000 units farther around the track than expected:
 .sp
 anim_hardtrack -i 2000 -l -r 30 -w tank/lwheel -d 0 0 1000 -b 90 0 0 tank/ltrack/link 
