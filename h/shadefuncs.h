@@ -56,6 +56,9 @@ struct shadework {
 	char		*sw_visible[SW_NLIGHTS]; /* visibility flags/ptrs */
 	int		sw_xmitonly;	/* flag: need sw_transmit only */
 	int		sw_inputs;	/* fields from mf_inputs actually filled */
+	int		sw_frame;	/* # of current frame */
+	fastf_t		sw_frametime;	/* frame time delta off 1st frame */
+	fastf_t		sw_pixeltime;	/* pixel time delta off 1st pixel of 1st frame */
 };
 
 extern void pr_shadework();
