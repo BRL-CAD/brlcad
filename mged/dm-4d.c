@@ -23,7 +23,13 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+/* Forwards compat with IRIX 5.0.1 */
+#define class	inv_class	/* Map Irix 4 name into Irix 5 name */
+#define type	inv_type	/* Map Irix 4 name into Irix 5 name */
+#define state	inv_state	/* Map Irix 4 name into Irix 5 name */
+
 #include <stdio.h>
+#define _BSD_TYPES		/* Needed for IRIX 5.0.1 */
 #include <math.h>
 #include <termio.h>
 #undef VMIN		/* is used in vmath.h, too */
@@ -100,6 +106,8 @@ static double	xlim_view = 1.0;	/* args for ortho() */
 static double	ylim_view = 1.0;
 static mat_t	aspect_corr;
 static int	stereo_is_on = 0;
+
+void		ir_colorit();
 
 #ifdef IR_BUTTONS
 /*
@@ -1680,7 +1688,7 @@ Ir_colorchange()
 	color(WHITE);	/* undefinied after gconfig() */
 }
 
-int
+void
 ir_colorit()
 {
 	register struct solid	*sp;
