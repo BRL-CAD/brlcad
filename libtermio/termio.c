@@ -1,8 +1,8 @@
 /*LINTLIBRARY*/
 /*
-	SCCS id:	@(#) termio.c	1.4
-	Last edit: 	6/16/86 at 16:53:08
-	Retrieved: 	8/13/86 at 03:18:05
+	SCCS id:	@(#) termio.c	1.5
+	Last edit: 	6/18/86 at 09:57:54
+	Retrieved: 	8/13/86 at 03:18:11
 	SCCS archive:	/m/cad/fb_utils/RCS/s.termio.c
 
 	Author:		Gary S. Moss
@@ -12,7 +12,7 @@
 			(301)278-6647 or AV-283-6647
  */
 static
-char	sccsTag[] = "@(#) termio.c	1.4	last edit 6/16/86 at 16:53:08";
+char	sccsTag[] = "@(#) termio.c	1.5	last edit 6/18/86 at 09:57:54";
 #include <stdio.h>
 #include <fcntl.h>
 #include <sgtty.h>
@@ -72,7 +72,7 @@ clr_Raw( fd )
 int	fd;
 	{
 #ifdef TANDEM
-	curr_tio[fd].sg_flags |= RAW;		/* Raw mode OFF.	*/
+	curr_tio[fd].sg_flags &= ~RAW;		/* Raw mode OFF.	*/
 #else
 	curr_tio[fd].c_lflag |= ICANON;		/* Raw mode OFF.	*/
 #endif
@@ -88,7 +88,7 @@ set_Raw( fd )
 int	fd;
 	{
 #ifdef TANDEM
-	curr_tio[fd].sg_flags &= ~RAW;		/* Raw mode ON.		*/
+	curr_tio[fd].sg_flags |= RAW;		/* Raw mode ON.		*/
 #else
 	curr_tio[fd].c_lflag &= ~ICANON;	/* Raw mode ON.		*/
 #endif
