@@ -1224,18 +1224,23 @@ struct vertexuse	*vu2;
 		/*
 		 *  Start by taking a jaunt from vu1 to vu2 and back.
 		 */
-		/* insert 0 length edge */
+		/* insert 0 length edge, before eu1 */
 		first_new_eu = nmg_eins(eu1);
 		/* split the new edge, and connect it to vertex 2 */
 		second_new_eu = nmg_eusplit( vu2->v_p, first_new_eu );
-		first_new_eu = RT_LIST_PLAST_CIRC(edgeuse, second_new_eu);
+		first_new_eu = RT_LIST_PPREV_CIRC(edgeuse, second_new_eu);
 		/* Make the two new edgeuses share just one edge */
 		nmg_moveeu( second_new_eu, first_new_eu );
+		/* first_new_eu is eu that enters shared vertex */
+		vu1 = second_new_eu->vu_p;
 	} else {
-		second_new_eu = RT_LIST_PNEXT_CIRC( edgeuse, &eu1->l );
+		second_new_eu = eu1;
+		first_new_eu = RT_LIST_PPREV_CIRC(edgeuse, second_new_eu);
 		NMG_CK_EDGEUSE(second_new_eu);
 	}
+	/* second_new_eu is eu that departs from shared vertex */
 	vu2 = second_new_eu->vu_p;	/* replacement for original vu2 */
+	if( vu1->v_p != vu2->v_p )  rt_bomb("nmg_join_2loops: jaunt failed\n");
 
 	/*
 	 *  Gobble edges off of loop2, and insert them into loop1,
@@ -1243,7 +1248,7 @@ struct vertexuse	*vu2;
 	 *  The final edge from loop 2 will then be followed by
 	 *  second_new_eu.
 	 */
-	final_eu2 = RT_LIST_PLAST_CIRC(edgeuse, eu2 );
+	final_eu2 = RT_LIST_PPREV_CIRC(edgeuse, eu2 );
 	while( RT_LIST_NON_EMPTY( &lu2->down_hd ) )  {
 		eu2 = RT_LIST_PNEXT_CIRC(edgeuse, final_eu2);
 
@@ -1260,6 +1265,9 @@ struct vertexuse	*vu2;
 
 	/* Kill entire (null) loop associated with lu2 */
 	nmg_klu(lu2);
+
+	nmg_veu( &lu1->down_hd, &lu1->l.magic );	/* XXX sanity */
+
 	return vu2;
 }
 
