@@ -30,6 +30,11 @@
 #define	STKBLK	100	/* Allocation block size */
 
 extern int errno;
+static void Initastack(),Apush();
+static void Initsstack(),Spush();
+static struct node *Spop();
+static void Afreestack(),Sfreestack();
+static char *Apop();
 
 /* Some junk for this routines private node stack */
 struct node **sstk;
@@ -114,7 +119,7 @@ struct node *root;
 
 /* The following are stack routines for character strings */
 
-void
+static void
 Initastack()
 {
 	int i;
@@ -134,7 +139,7 @@ Initastack()
 
 /*  This function pushes a pointer onto the stack. */
 
-void
+static void
 Apush(ptr)
 char *ptr;
 {
@@ -161,7 +166,7 @@ char *ptr;
 /*  This function pops the top of the stack. */
 
 
-char *
+static char *
 Apop()
 {
 	char *ptr;
@@ -178,7 +183,7 @@ Apop()
 }
 
 /* Free the memory associated with the stack */
-void
+static void
 Afreestack()
 {
 
@@ -190,7 +195,7 @@ Afreestack()
 
 
 /* The following routines are stack routines for 'struct node' */
-void
+static void
 Initsstack() /* initialize the stack */
 {
 
@@ -207,7 +212,7 @@ Initsstack() /* initialize the stack */
 
 /*  This function pushes a pointer onto the stack. */
 
-void
+static void
 Spush(ptr)
 struct node *ptr;
 {
@@ -231,7 +236,7 @@ struct node *ptr;
 /*  This function pops the top of the stack. */
 
 
-struct node *
+static struct node *
 Spop()
 {
 	struct node *ptr;
@@ -248,7 +253,7 @@ Spop()
 }
 
 /* free memory associated with the stack, but not the pointed to nodes */
-void
+static void
 Sfreestack()
 {
 	sjtop = (-1);
