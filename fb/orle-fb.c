@@ -1,7 +1,7 @@
 /*
-	SCCS id:	@(#) rle-fb.c	1.3
-	Last edit: 	3/22/85 at 12:55:19
-	Retrieved: 	8/13/86 at 03:16:50
+	SCCS id:	@(#) rle-fb.c	1.4
+	Last edit: 	3/26/85 at 17:45:51
+	Retrieved: 	8/13/86 at 03:16:57
 	SCCS archive:	/m/cad/fb_utils/RCS/s.rle-fb.c
 
 	Author:		Gary S. Moss
@@ -12,10 +12,12 @@
  */
 #if ! defined( lint )
 static
-char	sccsTag[] = "@(#) rle-fb.c	1.3	last edit 3/22/85 at 12:55:19";
+char	sccsTag[] = "@(#) rle-fb.c	1.4	last edit 3/26/85 at 17:45:51";
 #endif
 #include <stdio.h>
 #include <fb.h>
+#include <rle.h>
+#include <memory.h>
 #ifndef pdp11
 #define MAX_DMA	1024*64
 #else
@@ -26,30 +28,26 @@ char	sccsTag[] = "@(#) rle-fb.c	1.3	last edit 3/22/85 at 12:55:19";
 #define DMAS_PER_FB	(fbsz/SCANS_PER_DMA)
 #define PIXEL_OFFSET	((scan_ln%scans_per_dma)*fbsz)
 #define Fbread_Dma( y )\
-		if( y >= 0 &&\
+		if( y >= scans_per_dma &&\
 		    fbread(0,(y)-scans_per_dma,scan_buf,pixels_per_dma)==-1)\
 			return 1;
 
 typedef unsigned char	u_char;
 static char	*usage[] = {
 "",
-"rle-fb (1.3)",
+"rle-fb (1.4)",
 "",
-"Usage: rle-fb [-Odhv][-b (rgbBG)][-pi X Y] [file.rle]",
+"Usage: rle-fb [-Odv][-b (rgbBG)][-p X Y] [file.rle]",
 "",
 "If no rle file is specifed, rle-fb will read its standard input.",
 "If the environment variable FB_FILE is set, its value will be used",
 "	to specify the framebuffer file or device to write to.",
 0
 };
-/* Only for debugging library.						*/
-int		debug = 0;
-int		verbose = 0;
 
 static FILE	*fp = stdin;
 static Pixel	bgpixel = { 0, 0, 0, 0 };
 static int	bgflag = 0;
-static int	bwflag = 0;
 static int	cmflag = 0;
 static int	olflag = 0;
 static int	pars_Argv();
@@ -62,9 +60,14 @@ int	argc;
 char	*argv[];
 	{
 	register int	scan_ln;
-	register int	fbsz;
-	static Pixel	scan_buf[PIXELS_PER_DMA];
+	register int	fbsz = 512;
+	static Pixel	scan_buf[1024];
+	static Pixel	bg_scan[1024];
 	static ColorMap	cmap;
+	static int	get_flags;
+	static int	xlen, ylen;
+	static int	xpos, ypos;
+	static int	scan_bytes;
 	static int	pixels_per_dma;
 	static int	scans_per_dma;
 	static int	dmas_per_fb;
@@ -74,38 +77,48 @@ char	*argv[];
 		prnt_Usage();
 		return	1;
 		}
-	if(	rle_rhdr( fp, bgflag, &bwflag, &cmflag, olflag, &bgpixel )
+	if(	rle_rhdr(	fp,
+				&get_flags,
+				bgflag ? NULL : &bgpixel,
+				&xlen, &ylen, &xpos, &ypos
+				)
 	    ==	-1
 		)
 		return	1;
 
-	fbsz = getfbsize();
+	/* Automatic selection of high res. device.			*/
+	if( xlen > 512 || ylen > 512 )
+		{
+		fbsz = 1024;
+		setfbsize( fbsz );
+		}
 	pixels_per_dma = PIXELS_PER_DMA;
 	scans_per_dma = SCANS_PER_DMA;
+	scan_bytes = fbsz * sizeof(Pixel);
 	if( fbopen( NULL, APPEND ) == -1 )
 		return	1;
 
-	if( verbose )
+	if( rle_verbose )
 		(void) fprintf( stderr,
 				"Background is %d %d %d\n",
 				bgpixel.red, bgpixel.green, bgpixel.blue
 				);
 
 	/* If color map provided, use it, else go with standard map. */
-	if( cmflag )
+	if( ! (get_flags & NO_COLORMAP) )
 		{
-		if( verbose && ! olflag )
+		if( rle_verbose && ! olflag )
 			(void) fprintf( stderr,
 					"Loading saved color map from file\n"
 					);
 		if( rle_rmap( fp, &cmap ) == -1 )
 			return	1;
-		if( verbose )
+		if( rle_verbose )
 			prnt_Cmap( &cmap );
 		if( ! olflag )
 			{
 			/* User-supplied map */
-			if( verbose )
+			if( rle_verbose )
 				(void) fprintf( stderr,
 					"Writing color map to framebuffer\n"
 						);
@@ -116,7 +129,7 @@ char	*argv[];
 	else
 	if( ! olflag )
 		{
-		if( verbose )
+		if( rle_verbose )
 			(void) fprintf( stderr,
 					"Creating standard color map\n"
 					);
@@ -124,52 +137,39 @@ char	*argv[];
 			return	1;
 		}
 
-	/* Fill output buffer with background.				*/
+	/* Fill buffer with background.					*/
 	if( ! olflag )
 		{
 		register int	i;
-		register Pixel	*to = scan_buf;
-		register Pixel	*from = &bgpixel;
+		register Pixel	*to;
+		register Pixel	*from;
 
-		for( i = 0; i < pixels_per_dma; i++ )
+		to = bg_scan;
+		from = &bgpixel;
+		for( i = 0; i < fbsz; i++ )
 			*to++ = *from;
 		}
-	else
+	for( scan_ln = fbsz - 1; scan_ln >= fbsz - ylen; scan_ln-- )
 		{
-		Fbread_Dma( fbsz - 1 );
-		}
-	for( scan_ln = fbsz - 1; scan_ln >= 0; scan_ln-- )
-		{
-		register Pixel	*scan_ptr = &scan_buf[PIXEL_OFFSET];
-		register int	dirty_flag;
-		static int	touched = 0;
+		static int	dirty_flag = 1;
 
-		if( (dirty_flag = rle_decode_ln( fp, scan_ptr )) == -1 )
-			return	1;
-		touched += dirty_flag;
-		if( scan_ptr == scan_buf )
-			{
-			if( fbwrite( 0, scan_ln, scan_buf, pixels_per_dma )
-			    == -1
-				)
+		if( olflag )
+			{ /* Overlay mode -- read scanline from fb.	*/
+			if( fbread( 0, scan_ln, scan_buf, xlen ) == -1 )
 				return	1;
-			/* Fill output buffer with background.		*/
-			if( olflag )
-				{
-				Fbread_Dma( scan_ln );
-				}
-			else
-			if( touched )
-				{
-				register int	i;
-				register Pixel	*to = scan_ptr;
-				register Pixel	*from = &bgpixel;
-
-				for( i = 0; i < pixels_per_dma; i++ )
-					*to++ = *from;
-				touched = 0;
-				}
 			}
+		else
+		if( (get_flags & NO_BOX_SAVE) && dirty_flag )
+			{ /* Fill buffer with background.		*/
+			(void) memcpy(	(char *) scan_buf,
+					(char *) bg_scan,
+					scan_bytes
+					);
+			}
+		if( (dirty_flag = rle_decode_ln( fp, scan_buf )) == -1 )
+			return	1;
+		if( fbwrite( 0, scan_ln, scan_buf, fbsz ) == -1 )
+			return	1;
 		}
 	return	0;
 	}
@@ -185,7 +185,7 @@ register char	**argv;
 	extern char	*optarg;
 
 	/* Parse options.						*/
-	while( (c = getopt( argc, argv, "Ob:dhvp:i:" )) != EOF )
+	while( (c = getopt( argc, argv, "Ob:dvp:" )) != EOF )
 		{
 		switch( c ) {
 		case 'O' : /* Overlay mode.				*/
@@ -225,22 +225,14 @@ register char	**argv;
 			} /* End switch */
 			break;
 		case 'd' :
-			debug = 1;
-			break;
-		case 'h' : /* High resolution mode.		*/
-			setfbsize( 1024 );
+			rle_debug = 1;
 			break;
 		case 'v' :
-			verbose = 1;
+			rle_verbose = 1;
 			break;
 		case 'p' :
 			(void) fprintf( stderr,
 					"-p option not implemented!\n"
-					);
-			break;
-		case 'i' :
-			(void) fprintf( stderr,
-					"-i option not implemented!\n"
 					);
 			break;
 		case '?' :
