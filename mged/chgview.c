@@ -318,8 +318,9 @@ f_debuglib()
 }
 
 void
-do_list( dp )
+do_list( dp, verbose )
 register struct directory *dp;
+int	verbose;
 {
 	register int	i;
 	register union record	*rp;
@@ -354,31 +355,71 @@ register struct directory *dp;
 
 		for( i=1; i < dp->d_len; i++ )  {
 			mat_t	xmat;
+			int	status;
 
+			status = 0;
+#define STAT_ROT	1
+#define STAT_XLATE	2
+#define STAT_PERSP	4
+#define STAT_SCALE	8
+
+			/* See if this matrix does anything */
 			rt_mat_dbmat( xmat, rp[i].M.m_mat );
 
-			(void)printf("  %c %s",
-				rp[i].M.m_relation, rp[i].M.m_instname );
+			if( xmat[0] != 1.0 || xmat[5] != 1.0 || xmat[10] != 1.0 )
+				status |= STAT_ROT;
 
-			if( xmat[0] != 1.0 || xmat[5] != 1.0 || xmat[10] != 1.0 )  {
-				fastf_t	az, el;
-				ae_vec( &az, &el, xmat );
-				(void)printf(" az=%g, el=%g, ", az, el );
-			}
 			if( xmat[MDX] != 0.0 ||
 			    xmat[MDY] != 0.0 ||
 			    xmat[MDZ] != 0.0 )
-				(void)printf(" [%f,%f,%f]",
-					xmat[MDX]*base2local,
-					xmat[MDY]*base2local,
-					xmat[MDZ]*base2local);
+				status |= STAT_XLATE;
+
 			if( xmat[12] != 0.0 ||
 			    xmat[13] != 0.0 ||
 			    xmat[14] != 0.0 )
-				(void)printf(" ??Perspective=[%f,%f,%f]??",
-					xmat[12], xmat[13], xmat[14] );
-			(void)putchar('\n');
+				status |= STAT_PERSP;
+
+			if( xmat[15] != 1.0 )  status |= STAT_SCALE;
+
+			if( verbose )  {
+				(void)printf("  %c %s",
+					rp[i].M.m_relation, rp[i].M.m_instname );
+				if( status & STAT_ROT )  {
+					fastf_t	az, el;
+					ae_vec( &az, &el, xmat );
+					(void)printf(" az=%g, el=%g, ", az, el );
+				}
+				if( status & STAT_XLATE )
+					(void)printf(" [%g,%g,%g]",
+						xmat[MDX]*base2local,
+						xmat[MDY]*base2local,
+						xmat[MDZ]*base2local);
+				if( status & STAT_SCALE )
+					(void)printf(" scale %g", xmat[15] );
+				if( status & STAT_PERSP )
+					(void)printf(" ??Perspective=[%g,%g,%g]??",
+						xmat[12], xmat[13], xmat[14] );
+				(void)putchar('\n');
+			} else {
+				char	buf[132];
+				register char	*cp = buf;
+
+				(void)sprintf(buf, "%c %s",
+					rp[i].M.m_relation, rp[i].M.m_instname );
+
+				if( status )  {
+					cp += strlen(cp);
+					*cp++ = '/';
+					if( status & STAT_ROT )  *cp++ = 'R';
+					if( status & STAT_XLATE) *cp++ = 'T';
+					if( status & STAT_SCALE) *cp++ = 'S';
+					if( status & STAT_PERSP) *cp++ = 'P';
+					*cp = '\0';
+				}
+				col_item( buf );
+			}
 		}
+		if( !verbose )  col_eol();
 		goto out;
 	}
 
@@ -447,20 +488,41 @@ out:
 	rt_free( (char *)rp, "do_list records");
 }
 
-/* List object information */
+/* List object information, verbose */
 /* Format: l object	*/
 void
-f_list()
+f_list(argc, argv)
+int	argc;
+char	**argv;
 {
 	register struct directory *dp;
 	register int arg;
 	
 	(void)signal( SIGINT, sig2 );	/* allow interupts */
-	for( arg = 1; arg < numargs; arg++ )  {
-		if( (dp = db_lookup( dbip,  cmd_args[arg], LOOKUP_NOISY )) == DIR_NULL )
+	for( arg = 1; arg < argc; arg++ )  {
+		if( (dp = db_lookup( dbip, argv[arg], LOOKUP_NOISY )) == DIR_NULL )
 			continue;
 
-		do_list( dp );
+		do_list( dp, 1 );	/* verbose */
+	}
+}
+
+/* List object information, briefly */
+/* Format: cat object	*/
+void
+f_cat( argc, argv )
+int	argc;
+char	**argv;
+{
+	register struct directory *dp;
+	register int arg;
+	
+	(void)signal( SIGINT, sig2 );	/* allow interupts */
+	for( arg = 1; arg < argc; arg++ )  {
+		if( (dp = db_lookup( dbip, argv[arg], LOOKUP_NOISY )) == DIR_NULL )
+			continue;
+
+		do_list( dp, 0 );	/* non-verbose */
 	}
 }
 
