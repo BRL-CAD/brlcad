@@ -95,17 +95,17 @@ char	**argv;
 
 	/* Build the overall combination */
 	mk_comb( stdout, "clut", quant*quant+1+4, 0 );
-	mk_memb( stdout, UNION, "plane.r", identity );
+	mk_memb( stdout, "plane.r", identity, UNION );
 	for( ix=quant-1; ix>=0; ix-- )  {
 		for( iy=quant-1; iy>=0; iy-- )  {
 			sprintf( name, "x%dy%d", ix, iy );
-			mk_memb( stdout, UNION, name, identity );
+			mk_memb( stdout, name, identity, UNION );
 		}
 	}
-	mk_memb( stdout, UNION, "l1", identity );
-	mk_memb( stdout, UNION, "l2", identity );
-	mk_memb( stdout, UNION, "l3", identity );
-	mk_memb( stdout, UNION, "l4", identity );
+	mk_memb( stdout, "l1", identity, UNION );
+	mk_memb( stdout, "l2", identity, UNION );
+	mk_memb( stdout, "l3", identity, UNION );
+	mk_memb( stdout, "l4", identity, UNION );
 #endif
 }
 
@@ -303,6 +303,7 @@ double	r;		/* radius of light */
 char	*rgb;
 {
 	char	nbuf[64];
+	vect_t	center;
 	mat_t	rot;
 	mat_t	xlate;
 	mat_t	both;
@@ -319,7 +320,8 @@ char	*rgb;
 	}
 
 	sprintf( nbuf, "%s.s", name );
-	mk_sph( stdout, nbuf, 0.0, 0.0, 0.0, r );
+	VSETALL( center, 0 );
+	mk_sph( stdout, nbuf, center, r );
 
 	/*
 	 * Need to rotate from 0,0,-1 to vect "dir",
@@ -332,7 +334,7 @@ char	*rgb;
 	mat_mul( both, xlate, rot );
 
 	mk_mcomb( stdout, name, 1, 1, "light", "shadows=1", 1, rgb );
-	mk_memb( stdout, UNION, nbuf, both );
+	mk_memb( stdout, nbuf, both, UNION );
 }
 
 /* wrapper for atan2.  On SGI (and perhaps others), x==0 returns infinity */
