@@ -986,36 +986,66 @@ char			      **argv;
 		buf[i] = 0;
 
 		if( strcmp(buf, "region")==0 ) {
-			if( Tcl_GetBoolean( interp, argv[1], &i )!= TCL_OK )
-				return TCL_ERROR;
-			comb->region_flag = (char)i;
+			if( strcmp( argv[1], "none" ) == 0 )
+				comb->region_flag = 0;
+			else
+			{
+				if( Tcl_GetBoolean( interp, argv[1], &i )!= TCL_OK )
+					return TCL_ERROR;
+				comb->region_flag = (char)i;
+			}
 		} else if( strcmp(buf, "temp")==0 ) {
 			if( !comb->region_flag ) goto not_region;
-			if( Tcl_GetDouble( interp, argv[1], &d ) != TCL_OK )
-				return TCL_ERROR;
-			comb->temperature = (float)d;
+			if( strcmp( argv[1], "none" ) == 0 )
+				comb->temperature = 0.0;
+			else
+			{
+				if( Tcl_GetDouble( interp, argv[1], &d ) != TCL_OK )
+					return TCL_ERROR;
+				comb->temperature = (float)d;
+			}
 		} else if( strcmp(buf, "id")==0 ) {
 			if( !comb->region_flag ) goto not_region;
-			if( Tcl_GetInt( interp, argv[1], &i ) != TCL_OK )
-				return TCL_ERROR;
-			comb->region_id = (short)i;
+			if( strcmp( argv[1], "none" ) == 0 )
+				comb->region_id = 0;
+			else
+			{
+				if( Tcl_GetInt( interp, argv[1], &i ) != TCL_OK )
+					return TCL_ERROR;
+				comb->region_id = (short)i;
+			}
 		} else if( strcmp(buf, "air")==0 ) {
 			if( !comb->region_flag ) goto not_region;
-			if( Tcl_GetInt( interp, argv[1], &i ) != TCL_OK)
-				return TCL_ERROR;
-			comb->aircode = (short)i;
+			if( strcmp( argv[1], "none" ) == 0 )
+				comb->aircode = 0;
+			else
+			{
+				if( Tcl_GetInt( interp, argv[1], &i ) != TCL_OK)
+					return TCL_ERROR;
+				comb->aircode = (short)i;
+			}
 		} else if( strcmp(buf, "los")==0 ) {
 			if( !comb->region_flag ) goto not_region;
-			if( Tcl_GetInt( interp, argv[1], &i ) != TCL_OK )
-				return TCL_ERROR;
-			comb->los = (short)i;
+			if( strcmp( argv[1], "none" ) == 0 )
+				comb->los = 0;
+			else
+			{
+				if( Tcl_GetInt( interp, argv[1], &i ) != TCL_OK )
+					return TCL_ERROR;
+				comb->los = (short)i;
+			}
 		} else if( strcmp(buf, "giftmater")==0 ) {
 			if( !comb->region_flag ) goto not_region;
-			if( Tcl_GetInt( interp, argv[1], &i ) != TCL_OK )
-				return TCL_ERROR;
-			comb->GIFTmater = (short)i;
+			if( strcmp( argv[1], "none" ) == 0 )
+				comb->GIFTmater = 0;
+			else
+			{
+				if( Tcl_GetInt( interp, argv[1], &i ) != TCL_OK )
+					return TCL_ERROR;
+				comb->GIFTmater = (short)i;
+			}
 		} else if( strcmp(buf, "rgb")==0 ) {
-			if( strcmp(argv[1], "invalid")==0 ) {
+			if( strcmp(argv[1], "invalid")==0 || strcmp( argv[1], "none" ) == 0 ) {
 				comb->rgb[0] = comb->rgb[1] =
 					comb->rgb[2] = 0;
 				comb->rgb_valid = 0;
@@ -1035,29 +1065,48 @@ char			      **argv;
 			}
 		} else if( strcmp(buf, "shader" )==0 ) {
 			bu_vls_trunc( &comb->shader, 0 );
-			bu_vls_strcat( &comb->shader, argv[1] );
-			/* Leading spaces boggle the combination exporter */
-			bu_vls_trimspace( &comb->shader );
+			if( strcmp( argv[1], "none" ) )
+			{
+				bu_vls_strcat( &comb->shader, argv[1] );
+				/* Leading spaces boggle the combination exporter */
+				bu_vls_trimspace( &comb->shader );
+			}
 		} else if( strcmp(buf, "material" )==0 ) {
 			bu_vls_trunc( &comb->material, 0 );
-			bu_vls_strcat( &comb->material, argv[1] );
-			bu_vls_trimspace( &comb->material );
+			if( strcmp( argv[1], "none" ) )
+			{
+				bu_vls_strcat( &comb->material, argv[1] );
+				bu_vls_trimspace( &comb->material );
+			}
 		} else if( strcmp(buf, "inherit" )==0 ) {
-			if( Tcl_GetBoolean( interp, argv[1], &i ) != TCL_OK )
-				return TCL_ERROR;
-			comb->inherit = (char)i;
+			if( strcmp( argv[1], "none" ) == 0 )
+				comb->inherit = 0;
+			else
+			{
+				if( Tcl_GetBoolean( interp, argv[1], &i ) != TCL_OK )
+					return TCL_ERROR;
+				comb->inherit = (char)i;
+			}
 		} else if( strcmp(buf, "tree" )==0 ) {
 			union tree	*new;
 
-			new = db_tcl_tree_parse( interp, argv[1] );
-			if( new == TREE_NULL )  {
-				Tcl_AppendResult( interp, "db adjust tree: bad tree '",
-					argv[1], "'\n", (char *)NULL );
-				return TCL_ERROR;
-			}
-			if( comb->tree )
+			if( strcmp( argv[1], "none" ) == 0 )
+			{
 				db_free_tree( comb->tree );
-			comb->tree = new;
+				comb->tree = TREE_NULL;
+			}
+			else
+			{
+				new = db_tcl_tree_parse( interp, argv[1] );
+				if( new == TREE_NULL )  {
+					Tcl_AppendResult( interp, "db adjust tree: bad tree '",
+						argv[1], "'\n", (char *)NULL );
+					return TCL_ERROR;
+				}
+				if( comb->tree )
+					db_free_tree( comb->tree );
+				comb->tree = new;
+			}
 		} else {
 			Tcl_AppendResult( interp, "db adjust ", buf,
 					  ": no such attribute",
