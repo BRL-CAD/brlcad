@@ -25,3 +25,5 @@ ipuscan_SOURCES = ipuscan.c canonlib.c asize.c
 ipustat_SOURCES = ipustat.c canonlib.c
 
 MAINTAINERCLEANFILES = Makefile.in
+
+EXTRA_DIST = $(man_MANS)
