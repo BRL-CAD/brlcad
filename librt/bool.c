@@ -109,7 +109,7 @@ struct partition *FinalHdp;	/* Heads final circ list */
 			goto done_weave;
 		}
 		if( fdiff(segp->seg_in.hit_dist, PartHd.pt_back->pt_outdist) > 0 )  {
-			/* Segment starts beyond last partitions end */
+			/* Segment starts SIGNIFICANTLY beyond last partitions end */
 			GET_PT_INIT( pp );
 			pp->pt_solhit[segp->seg_stp->st_bin] = TRUE;
 			pp->pt_inseg = segp;
@@ -126,9 +126,9 @@ struct partition *FinalHdp;	/* Heads final circ list */
 		for( pp=PartHd.pt_forw; pp != &PartHd; pp=pp->pt_forw ) {
 			register int i;		/* XXX */
 
-			if( fdiff(lasthit->hit_dist, pp->pt_outdist) >= 0 )  {
-				/* Seg starts after current partition ends,
-				 * or exactly at the end.
+			if( fdiff(lasthit->hit_dist, pp->pt_outdist) > 0 )  {
+				/* Seg starts SIGNIFICANTLY after current
+				 * partition ends.
 				 *	PPPP
 				 *	      SSSS
 				 */
@@ -197,16 +197,20 @@ equal_start:
 				newpp->pt_inseg = lastseg;
 				newpp->pt_inhit = lasthit;
 				newpp->pt_inflip = lastflip;
-				if( fdiff(segp->seg_out.hit_dist, pp->pt_indist) <= 0 )  {
-					/* Seg ends before partition starts */
+				if( fdiff(segp->seg_out.hit_dist, pp->pt_indist) < 0 )  {
+					/* Seg ends SIGNIFICANTLY before partition starts */
 					newpp->pt_outseg = segp;
 					newpp->pt_outhit = &segp->seg_out;
+					newpp->pt_outflip = 0;
 					INSERT_PT( newpp, pp );
 					goto done_weave;
 				}
-				lastseg = newpp->pt_outseg = pp->pt_inseg;
-				lasthit = newpp->pt_outhit = pp->pt_inhit;
-				lastflip = newpp->pt_outflip = 1;
+				newpp->pt_outseg = pp->pt_inseg;
+				newpp->pt_outhit = pp->pt_inhit;
+				newpp->pt_outflip = 1;
+				lastseg = pp->pt_inseg;
+				lasthit = pp->pt_inhit;
+				lastflip = newpp->pt_outflip;
 				INSERT_PT( newpp, pp );
 				goto equal_start;
 			}
@@ -264,7 +268,7 @@ done_weave:	; /* Sorry about the goto's, but they give clarity */
 	 * so output a new segment.  If 2 or more regions claim the
 	 * partition, then an overlap exists.
 	 */
-	FinalHdp->pt_forw = FinalHdp->pt_back = FinalHdp;	/* debug */
+	FinalHdp->pt_forw = FinalHdp->pt_back = FinalHdp;
 
 	pp = PartHd.pt_forw;
 	while( pp != &PartHd )  {
@@ -278,8 +282,19 @@ done_weave:	; /* Sorry about the goto's, but they give clarity */
 
 		/* Sanity check of sorting.  Remove later. */
 		if( pp->pt_forw != &PartHd && pp->pt_outdist > pp->pt_forw->pt_indist )  {
+			auto struct partition FakeHead;
+			auto odebug;
 			fprintf(stderr,"bool_regions:  sorting defect!\n");
+			if( debug & DEBUG_PARTITION ) return; /* give up */
+			for( segp = segp_in; segp != SEG_NULL; segp = segp->seg_next )  {
+				pr_seg(segp);
+			}
 			pr_partitions( &PartHd, "With DEFECT" );
+			odebug = debug;
+			debug |= DEBUG_PARTITION;
+			bool_regions( segp_in, &FakeHead );
+			debug = odebug;
+			/* Wastes some dynamic memory */
 		}
 
 		regp = ActRegHd.reg_active;
@@ -462,7 +477,13 @@ register struct region *headp;
  *  
  *  Compares two floating point numbers.  If they are within "epsilon"
  *  of each other, they are considered the same.
- *  
+ *  NOTE:  This is a "fuzzy" difference.  It is important NOT to
+ *  use the results of this function in compound comparisons,
+ *  because a return of 0 makes no statement about the PRECISE
+ *  relationships between the two numbers.  Eg,
+ *	if( fdiff( a, b ) <= 0 )
+ *  is poison!
+ *
  *  Returns -
  *  	-1	if a < b
  *  	 0	if a ~= b
