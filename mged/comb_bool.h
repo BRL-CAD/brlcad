@@ -52,28 +52,6 @@ struct tree_tail
 };
 #define	TREE_TAIL_NULL	((struct tree_tail *) 0)
 
-/*			C H K M A G ( )
- *
- *	    Check and validate a structure pointer
- *
- *	This macro has three parameters: a pointer, the magic number
- *	expected at that location, and a string describing the expected
- *	structure type.
- */
-#define	CHKMAG(p, m, _s)					\
-    if ((p) == 0)						\
-    {								\
-	fprintf(stderr, "Error: Null %s pointer, file %s, line %d\n",	\
-	    (_s), __FILE__, __LINE__);				\
-	exit (0);						\
-    }								\
-    else if (*((long *)(p)) != (m))				\
-    {								\
-	fprintf(stderr,						\
-	    "Error: Bad %s pointer x%x s/b x%x was x%x, file %s, line %d\n", \
-	    (_s), (p), (m), *((long *)(p)), __FILE__, __LINE__);\
-	exit (0);						\
-    }
 #define ZAPMAG(p)		(*((long *)(p)) = 0)
 #define	BOOL_TREE_NODE_MAGIC	0x62746e64
 #define	TREE_TAIL_MAGIC		0x74727461
