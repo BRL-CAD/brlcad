@@ -2556,6 +2556,7 @@ FBIO *ifp;
 int x, y, w, h;
 {
   int mm;
+  int dflag = 0;
 
   if(w < 0){
     w = -w;
@@ -2567,6 +2568,13 @@ int x, y, w, h;
     y -= h;
   }
 
+#if 0
+  if(glIsEnabled(GL_DEPTH_TEST)){
+    glDisable(GL_DEPTH_TEST);
+    dflag = 1;
+  }
+#endif
+
   glGetIntegerv(GL_MATRIX_MODE, &mm);
   glMatrixMode(GL_PROJECTION);
   glPushMatrix();
@@ -2575,6 +2583,9 @@ int x, y, w, h;
   glMatrixMode(GL_MODELVIEW);
   glPushMatrix();
   glLoadIdentity();
+#if 0
+  glTranslatef(0.0, 0.0, -1.0);
+#endif
   glViewport(0, 0, OGL(ifp)->win_width, OGL(ifp)->win_height);
   ogl_xmit_scanlines(ifp, y, h, x, w);
   glMatrixMode(GL_PROJECTION);
@@ -2582,6 +2593,11 @@ int x, y, w, h;
   glMatrixMode(GL_MODELVIEW);
   glPopMatrix();
   glMatrixMode(mm);
+
+#if 0
+  if(dflag)
+    glEnable(GL_DEPTH_TEST);
+#endif
 
   glFlush();
   return 0;
