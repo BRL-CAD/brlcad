@@ -812,7 +812,7 @@ const struct db_i		*dbip;
 	bu_vls_init( &str );
 	bu_vls_struct_print( &str, rt_ebm_parse, (char *)&ebm );
 
-	ep->ext_nbytes = bu_vls_strlen( &str );
+	ep->ext_nbytes = bu_vls_strlen( &str ) + 1;
 	ep->ext_buf = (genptr_t)bu_calloc( 1, ep->ext_nbytes, "ebm external");
 
 	strcpy( ep->ext_buf , bu_vls_addr(&str) );
