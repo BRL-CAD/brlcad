@@ -386,7 +386,7 @@ register struct directory *dp;
 		(void)printf("Material '%s' '%s'\n",
 			rp[0].c.c_matname,
 			rp[0].c.c_matparm);
-	if( rp[0].c.c_override == 1)
+	if( rp[0].c.c_override == 1 )
 		(void)printf("Color %d %d %d\n",
 			rp[0].c.c_rgb[0],
 			rp[0].c.c_rgb[1],
@@ -575,19 +575,20 @@ struct solid *startp;
 			(void)printf(" ILLUM");
 		(void)printf("\n");
 		/* convert to the local unit for printing */
-		(void)printf("    (%.3f, %.3f, %.3f) sz=%.4f ",
+		(void)printf("  (%.3f,%.3f,%.3f) sz=%g ",
 			sp->s_center[X]*base2local,
 			sp->s_center[Y]*base2local, 
 			sp->s_center[Z]*base2local,
 			sp->s_size*base2local );
 		(void)printf("reg=%d",sp->s_regionid );
-		if( sp->s_materp )  {
-			register struct mater *mp;
-			if( (mp = (struct mater *)sp->s_materp) != MATER_NULL)
-				(void)printf(" dm%d",
-					mp->mt_dm_int );
-		}
-		(void)printf("\n");
+		(void)printf(" (%d,%d,%d) %d,%d,%d i=%d\n",
+			sp->s_basecolor[0],
+			sp->s_basecolor[1],
+			sp->s_basecolor[2],
+			sp->s_color[0],
+			sp->s_color[1],
+			sp->s_color[2],
+			sp->s_dmindex );
 		sp = sp->s_forw;
 	}
 }

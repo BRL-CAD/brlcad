@@ -61,8 +61,6 @@ register struct mater *mp;
 	col_item( buf );
 	(void)sprintf( buf, "%3d,%3d,%3d", mp->mt_r, mp->mt_g, mp->mt_b);
 	col_item( buf );
-	(void)sprintf( buf, "dm%d", mp->mt_dm_int );
-	col_item( buf );
 	col_eol();
 }
 
@@ -241,13 +239,6 @@ register struct mater *mp;
 	mp->mt_daddr = MATER_NO_ADDR;
 }
 
-static struct mater default_mater = {
-	0, 32767,
-	DM_RED,
-	255, 0, 0,
-	MATER_NO_ADDR, 0
-};
-
 /*
  *  			C O L O R _ S O L T A B
  *
@@ -265,11 +256,21 @@ color_soltab()
 		for( mp = MaterHead; mp != MATER_NULL; mp = mp->mt_forw )  {
 			if( sp->s_regionid <= mp->mt_high &&
 			    sp->s_regionid >= mp->mt_low ) {
-				sp->s_materp = (char *)mp;
+			    	sp->s_color[0] = mp->mt_r;
+			    	sp->s_color[1] = mp->mt_g;
+			    	sp->s_color[2] = mp->mt_b;
 				goto done;
 			}
 		}
-		sp->s_materp = (char *)&default_mater;
+		/*
+		 *  There is no region-id-based coloring entry in the
+		 *  table, so use the combination-record ("matter"
+		 *  command) based color instead.
+		 *  This is the "new way" of coloring things.
+		 */
+		sp->s_color[0] = sp->s_basecolor[0];
+		sp->s_color[1] = sp->s_basecolor[1];
+		sp->s_color[2] = sp->s_basecolor[2];
 done: ;
 	}
 	dmaflag = 1;		/* re-write control list with new colors */

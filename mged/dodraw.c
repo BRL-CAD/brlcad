@@ -46,7 +46,7 @@ int	reg_pathpos;	/* pathpos of a processed region */
 struct directory	*cur_path[MAX_PATH];	/* Record of current path */
 
 static struct mater_info mged_no_mater = {
-	1.0, 0.0, 0.0,		/* color, RGB */
+	1.0, 1.0, 1.0,		/* color, RGB */
 	0,			/* override */
 	DB_INH_LOWER,		/* color inherit */
 	DB_INH_LOWER		/* mater inherit */
@@ -120,7 +120,7 @@ struct mater_info *materp;
 		GET_SOLID( sp );
 		if( sp == SOLID_NULL )
 			return;		/* ERROR */
-		if( drawHsolid( sp, flag, pathpos, old_xlate, rp, regionid, &curmater ) != 1 ) {
+		if( drawHsolid( sp, flag, pathpos, old_xlate, rp, regionid, materp ) != 1 ) {
 			FREE_SOLID( sp );
 		}
 		goto out;
@@ -145,29 +145,29 @@ struct mater_info *materp;
 	 *  inheritance interlocks.
 	 */
 	curmater = *materp;	/* struct copy */
-	if( rp->c.c_override == 1 )  {
+	if( rp[0].c.c_override == 1 )  {
 		if( regionid != 0 )  {
 			rt_log("rt_drawobj: ERROR: color override in combination within region %s\n",
 				dp->d_namep );
 		} else {
 			if( curmater.ma_cinherit == DB_INH_LOWER )  {
 				curmater.ma_override = 1;
-				curmater.ma_color[0] = (rp->c.c_rgb[0])*rt_inv255;
-				curmater.ma_color[1] = (rp->c.c_rgb[1])*rt_inv255;
-				curmater.ma_color[2] = (rp->c.c_rgb[2])*rt_inv255;
-				curmater.ma_cinherit = rp->c.c_inherit;
+				curmater.ma_color[0] = (rp[0].c.c_rgb[0])*rt_inv255;
+				curmater.ma_color[1] = (rp[0].c.c_rgb[1])*rt_inv255;
+				curmater.ma_color[2] = (rp[0].c.c_rgb[2])*rt_inv255;
+				curmater.ma_cinherit = rp[0].c.c_inherit;
 			}
 		}
 	}
-	if( rp->c.c_matname[0] != '\0' )  {
+	if( rp[0].c.c_matname[0] != '\0' )  {
 		if( regionid != 0 )  {
 			rt_log("rt_drawobj: ERROR: material property spec in combination within region %s\n",
 				dp->d_namep );
 		} else {
 			if( curmater.ma_minherit == DB_INH_LOWER )  {
-				strncpy( curmater.ma_matname, rp->c.c_matname, sizeof(rp->c.c_matname) );
-				strncpy( curmater.ma_matparm, rp->c.c_matparm, sizeof(rp->c.c_matparm) );
-				curmater.ma_minherit = rp->c.c_inherit;
+				strncpy( curmater.ma_matname, rp[0].c.c_matname, sizeof(rp[0].c.c_matname) );
+				strncpy( curmater.ma_matparm, rp[0].c.c_matparm, sizeof(rp[0].c.c_matparm) );
+				curmater.ma_minherit = rp[0].c.c_inherit;
 			}
 		}
 	}
@@ -368,7 +368,6 @@ struct mater_info *materp;
 		for( i=0; i<=sp->s_last; i++ )
 			sp->s_path[i] = cur_path[i];
 	}
-	sp->s_materp = (char *)0;
 	sp->s_regionid = regionid;
 	sp->s_addr = 0;
 	sp->s_bytes = 0;

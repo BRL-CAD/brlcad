@@ -220,14 +220,10 @@ double ratio;
 				vclip( start, fin, clipmin, clipmax ) == 0
 			)  continue;
 
-			{
-				register struct mater *mp;
-				mp = (struct mater *)sp->s_materp;
-				if( mp != MATER_NULL )
-					pl_color( up_fp,  mp->mt_r,
-						mp->mt_g,
-						mp->mt_b );
-			}
+			pl_color( up_fp,
+				sp->s_color[0],
+				sp->s_color[1],
+				sp->s_color[2] );
 			pl_line( up_fp, 
 				(int)( start[0] * 2047 ),
 				(int)( start[1] * 2047 ),

@@ -427,14 +427,12 @@ double ratio;
 	if (sp->s_soldash)
 		setlinestyle( 1 );		/* set dot-dash */
 
-	if( white || sp->s_materp == (char *)0 ) {
+	if( white ) {
 		ovec = nvec = map_entry(DM_WHITE);
 		/* Use the *next* to the brightest white entry */
 		if(cueing_on) shaderange(nvec+1, nvec+1, 0, 768);
 	} else {
-		if((nvec =
-		  map_entry(((struct mater *)sp->s_materp)->mt_dm_int))
-		  != ovec) {
+		if( (nvec = map_entry( sp->s_dmindex )) != ovec) {
 			/* Use only the middle 14 to allow for roundoff...
 			 * Pity the poor fool who has defined a black object.
 			 * The code will use the "reserved" color map entries
@@ -1049,10 +1047,12 @@ Ir_colorchange()
 	ir_rgbtab[4].r = ir_rgbtab[4].g = ir_rgbtab[4].b = 255; /* White */
 
 	slotsused = 5;
-	for( mp = MaterHead; mp != MATER_NULL; mp = mp->mt_forw )
-		ir_colorit( mp );
 
-	color_soltab();		/* apply colors to the solid table */
+	/* apply region-id based colors to the solid table */
+	color_soltab();
+
+	/* Map the colors in the solid table to colormap indices */
+	ir_colorit();
 
 	for( i=0; i < slotsused; i++ )  {
 		gen_color( i, ir_rgbtab[i].r, ir_rgbtab[i].g, ir_rgbtab[i].b);
@@ -1064,41 +1064,44 @@ Ir_colorchange()
 }
 
 int
-ir_colorit( mp )
-struct mater *mp;
+ir_colorit()
 {
+	register struct solid	*sp;
 	register struct rgbtab *rgb;
 	register int i;
 	register int r,g,b;
 
-	r = mp->mt_r;
-	g = mp->mt_g;
-	b = mp->mt_b;
-	if( (r == 255 && g == 255 && b == 255) ||
-	    (r == 0 && g == 0 && b == 0) )  {
-		mp->mt_dm_int = DM_WHITE;
-		return;
-	}
-
-	/* First, see if this matches an existing color map entry */
-	rgb = ir_rgbtab;
-	for( i = 0; i < slotsused; i++, rgb++ )  {
-		if( rgb->r == r && rgb->g == g && rgb->b == b )  {
-			 mp->mt_dm_int = i;
-			 return;
+	FOR_ALL_SOLIDS( sp )  {
+		r = sp->s_color[0];
+		g = sp->s_color[1];
+		b = sp->s_color[2];
+		if( (r == 255 && g == 255 && b == 255) ||
+		    (r == 0 && g == 0 && b == 0) )  {
+		    	sp->s_dmindex = DM_WHITE;
+			continue;
 		}
-	}
 
-	/* If slots left, create a new color map entry, first-come basis */
-	if( slotsused < ir_nslots )  {
-		rgb = &ir_rgbtab[i=(slotsused++)];
-		rgb->r = r;
-		rgb->g = g;
-		rgb->b = b;
-		mp->mt_dm_int = i;
-		return;
+		/* First, see if this matches an existing color map entry */
+		rgb = ir_rgbtab;
+		for( i = 0; i < slotsused; i++, rgb++ )  {
+			if( rgb->r == r && rgb->g == g && rgb->b == b )  {
+				sp->s_dmindex = i;
+				goto next;
+			}
+		}
+
+		/* If slots left, create a new color map entry, first-come basis */
+		if( slotsused < ir_nslots )  {
+			rgb = &ir_rgbtab[i=(slotsused++)];
+			rgb->r = r;
+			rgb->g = g;
+			rgb->b = b;
+			sp->s_dmindex = i;
+			continue;
+		}
+		sp->s_dmindex = DM_YELLOW;	/* Default color */
+next:		;
 	}
-	mp->mt_dm_int = DM_YELLOW;	/* Default color */
 }
 
 /*

@@ -44,13 +44,6 @@ extern long	time();
 extern int	numargs;	/* number of args */
 extern char	*cmd_args[];	/* array of pointers to args */
 
-static struct mater overlay_mater = {
-	0, 32767,
-	DM_YELLOW,
-	255, 255, 0,
-	MATER_NO_ADDR, 0
-};
-
 #define	TBAD	0	/* no such command */
 #define TNONE	1	/* no arguments */
 #define TSHORT	2	/* Vax 16-bit short */
@@ -217,7 +210,9 @@ struct vlhead	*vhead;
 	sp->s_iflag = DOWN;
 	sp->s_soldash = 0;
 	sp->s_Eflag = 0;		/* This is a solid */
-	sp->s_materp = (char *)&overlay_mater;
+	sp->s_color[0] = sp->s_basecolor[0] = 255;
+	sp->s_color[1] = sp->s_basecolor[1] = 255;
+	sp->s_color[2] = sp->s_basecolor[2] = 0;
 	sp->s_regionid = 0;
 	sp->s_addr = 0;
 	sp->s_bytes = 0;

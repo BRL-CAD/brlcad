@@ -139,13 +139,11 @@ f_plot()
 		Dashing = 0;
 		pl_linmod( fp, "solid" );
 		FOR_ALL_SOLIDS( sp )  {
-			register struct mater *mp;
-			mp = (struct mater *)sp->s_materp;
-			if( mp != MATER_NULL )
-				pl_color( fp,
-					mp->mt_r,
-					mp->mt_g,
-					mp->mt_b );
+			/* Could check for differences from last color */
+			pl_color( fp,
+				sp->s_color[0],
+				sp->s_color[1],
+				sp->s_color[2] );
 			if( Dashing != sp->s_soldash )  {
 				if( sp->s_soldash )
 					pl_linmod( fp, "dotdashed");
@@ -211,13 +209,11 @@ f_plot()
 			)  continue;
 
 			if( Three_D )  {
-				register struct mater *mp;
-				mp = (struct mater *)sp->s_materp;
-				if( mp != MATER_NULL )
-					pl_color( fp,
-						mp->mt_r,
-						mp->mt_g,
-						mp->mt_b );
+				/* Could check for differences from last color */
+				pl_color( fp,
+					sp->s_color[0],
+					sp->s_color[1],
+					sp->s_color[2] );
 				pl_3line( fp,
 					(int)( start[X] * 2047 ),
 					(int)( start[Y] * 2047 ),
