@@ -200,6 +200,9 @@ int		ms_all_done;
 int		ms_flush;
 int		ms_total;
 
+fastf_t		ms_rt_min;		/* ms it took fastest ray-tracer */
+fastf_t		ms_rt_max;		/* ms it took slowest ray-tracer */
+
 static fd_set	select_list;			/* master copy */
 static int	max_fd;
 
@@ -1579,6 +1582,9 @@ char			*buf;
 	int		sched_update = 0;
 	int		last_i;
 	char		nbuf[32];
+	int		total_bits;
+	fastf_t		average_mbps;
+	fastf_t		burst_mbps;	/* a lower bound only */
 
 	blend1 = 0.8;
 	blend2 = 1 - blend1;
@@ -1668,12 +1674,30 @@ check_others:
 	ms_all_done = tvdiff( &t_all_done, &frame_start ) * 1000;
 	ms_flush = tvdiff( &time_end, &t_all_done ) * 1000;
 
-	bu_log("%s%6d ms, %5.1f Mbps, %4.1f fps, %d/%d/%d/%d %s\n",
+	/* Find max and min of ray-tracing time */
+	ms_rt_min =  9999999;
+	ms_rt_max = -9999999;
+	for( i = MAX_NODES-1; i >= 0; i-- )  {
+		register int	rtt;
+		if( rtnodes[i].pkg != pc )  continue;
+		if( rtnodes[i].state != STATE_PREPPED )  continue;
+		if( rtnodes[i].ncpus <= 0 )  continue;
+		rtt = (int)rtnodes[i].rt_time;
+		if( rtt < ms_rt_min )  ms_rt_min = rtt;
+		if( rtt > ms_rt_max )  ms_rt_max = rtt;
+	}
+
+	total_bits = width * height * 3 * 8;
+	average_mbps = total_bits / interval / 1000000.0;
+	/* burst_mbps is still too low; it's a lower bound. */
+	burst_mbps = total_bits / (interval - ms_rt_min/1000) / 1000000.0;
+
+	bu_log("%s%6d ms, %5.1f Mbps, %4.1f fps, %d/%d %s\n",
 		stamp(),
 		ms_total,
-		width * height * 3 * 8 / interval / 1000000.0,
+		burst_mbps,
 		1.0/interval,
-		ms_assigned, ms_1st_done, ms_all_done, ms_flush,
+		ms_1st_done, ms_all_done,
 		nbuf );
 
 	/* Trigger TCL code to auto-update cpu status window on major changes */
