@@ -43,6 +43,53 @@ rb_tree *rb_create (char *description, int nm_orders, int (**order_funcs)())
     return (tree);
 }
 
+/*			_ R B _ I N S E R T ( )
+ *
+ *	    Insert a node into one linear order of a red-black tree
+ *
+ *	This function has three parameters: the tree and linear order into
+ *	which to insert the new node and the contents of the node. On success,
+ *	_rb_insert() returns the value 1.  Otherwise, it returns 0.
+ */
+static int _rb_insert (rb_tree *tree, int order, struct rb_node *new_node)
+{
+    struct rb_node	*node;
+    struct rb_node	*parent;
+    int			(*compare)();
+
+
+    RB_CKMAG(tree, RB_TREE_MAGIC, "red-black tree");
+    RB_CKMAG(new_node, RB_NODE_MAGIC, "red-black node");
+
+    /*
+     *	Initialize the new node
+     */
+    rb_parent(new_node, order) =
+    rb_left_child(new_node, order) =
+    rb_right_child(new_node, order) = RB_NODE_NULL;
+
+    parent = RB_NODE_NULL;
+    node = rb_root(tree, order);
+    compare = rb_order_func(tree, order);
+    while (node != RB_NODE_NULL)
+    {
+	parent = node;
+	if ((*compare)(new_node -> rbn_data, node -> rbn_data) < 0)
+	    node = rb_left_child(node, order);
+	else
+	    node = rb_right_child(node, order);
+    }
+    rb_parent(new_node, order) = parent;
+    if (parent == RB_NODE_NULL)
+	rb_root(tree, order) = new_node;
+    else if ((*compare)(new_node -> rbn_data, parent -> rbn_data) < 0)
+	rb_left_child(parent, order) = new_node;
+    else
+	rb_right_child(parent, order) = new_node;
+
+    return (1);
+}
+
 /*		    R B _ I N S E R T ( )
  *
  *		Insert a node into a red-black tree
@@ -108,82 +155,4 @@ int rb_insert (rb_tree *tree, void *data)
     /* Record the node with which we've been working */
     current_node = node;
     return (1);
-}
-
-/*			_ R B _ I N S E R T ( )
- *
- *	    Insert a node into one linear order of a red-black tree
- *
- *	This function has three parameters: the tree and linear order into
- *	which to insert the new node and the contents of the node. On success,
- *	_rb_insert() returns the value 1.  Otherwise, it returns 0.
- */
-int _rb_insert (rb_tree *tree, int order, struct rb_node *new_node)
-{
-    struct rb_node	*node;
-    struct rb_node	*parent;
-    int			(*compare)();
-
-
-    RB_CKMAG(tree, RB_TREE_MAGIC, "red-black tree");
-    RB_CKMAG(new_node, RB_NODE_MAGIC, "red-black node");
-
-    /*
-     *	Initialize the new node
-     */
-    rb_parent(new_node, order) =
-    rb_left_child(new_node, order) =
-    rb_right_child(new_node, order) = RB_NODE_NULL;
-
-    parent = RB_NODE_NULL;
-    node = rb_root(tree, order);
-    compare = rb_order_func(tree, order);
-    while (node != RB_NODE_NULL)
-    {
-	parent = node;
-	if ((*compare)(new_node -> rbn_data, node -> rbn_data) < 0)
-	    node = rb_left_child(node, order);
-	else
-	    node = rb_right_child(node, order);
-    }
-    rb_parent(new_node, order) = parent;
-    if (parent == RB_NODE_NULL)
-	rb_root(tree, order) = new_node;
-    else if ((*compare)(new_node -> rbn_data, parent -> rbn_data) < 0)
-	rb_left_child(parent, order) = new_node;
-    else
-	rb_right_child(parent, order) = new_node;
-
-    return (1);
-}
-
-/*		    R B _ D E S C R I B E ( )
- *
- *		    Describe a red-black tree
- *
- *	This function has one parameter: a pointer to a red-black
- *	tree.  Rb_describe() prints out the header information
- *	for the tree.  It is intended for diagnostic purposes.
- */
-void rb_describe (rb_tree *tree)
-{
-    int		i;
-
-    RB_CKMAG(tree, RB_TREE_MAGIC, "red-black tree");
-    fprintf(stderr, "-------- Red-black tree <%x> --------\n", tree);
-    fprintf(stderr, "Description: '%s'\n", tree -> rbt_description);
-    if (tree -> rbt_nm_orders <= 0)
-	fputs("No orders\n", stderr);
-    else
-	for (i = 0; i < tree -> rbt_nm_orders; ++i)
-	{
-	    fprintf(stderr,
-		    "Order[%d]:   <%x>\n", i, rb_order_func(tree, i));
-	    fprintf(stderr,
-		    "Root[%d]:    <%x>\n", i, rb_root(tree, i));
-	    if (rb_root(tree, 0) != RB_NODE_NULL)
-		fprintf(stderr,
-		    "Data[%d]:    <%x>\n", i, rb_root(tree, i) -> rbn_data);
-	}
-    fprintf(stderr, "-----------------------------------------\n");
 }
