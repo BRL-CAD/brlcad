@@ -79,6 +79,7 @@ void	f_overlay(), f_rtcheck(), f_comb();
 void	f_preview();
 void	f_ev(), f_nmgtest(), f_debugnmg();
 void	f_tol();
+void	f_debugdir();
 
 static struct funtab {
 	char *ft_name;
@@ -125,6 +126,8 @@ static struct funtab {
 	f_copy_inv,3,3,
 "d", "<objects>", "delete list of objects",
 	f_delobj,2,MAXARGS,
+"debugdir", "", "Print in-memory directory, for debugging",
+	f_debugdir, 1, 1,
 "debuglib", "[hex_code]", "Show/set debugging bit vector for librt",
 	f_debuglib,1,2,
 "debugmem", "", "Print librt memory use map",

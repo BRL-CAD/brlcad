@@ -931,3 +931,11 @@ register struct directory *dp;
 	db_delete( dbip, dp);
 	db_dirdelete( dbip, dp );
 }
+
+void
+f_debugdir( argc, argv )
+int	argc;
+char	**argv;
+{
+	db_pr_dir( dbip );
+}
