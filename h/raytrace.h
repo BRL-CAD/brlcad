@@ -79,9 +79,13 @@
 #if __STDC__ && !alliant && !apollo
 # define GETSTRUCT(p,str) \
 	p = (struct str *)rt_calloc(1,sizeof(struct str), "getstruct " #str)
+# define GETUNION(p,unn) \
+	p = (union unn *)rt_calloc(1,sizeof(union unn), "getstruct " #unn)
 #else
 # define GETSTRUCT(p,str) \
 	p = (struct str *)rt_calloc(1,sizeof(struct str), "getstruct str")
+# define GETUNION(p,unn) \
+	p = (union unn *)rt_calloc(1,sizeof(union unn), "getstruct unn")
 #endif
 
 /*
@@ -157,6 +161,13 @@ struct uvcoord {
 	fastf_t		uv_du;		/* delta in u */
 	fastf_t		uv_dv;		/* delta in v */
 };
+#define RT_HIT_UVCOORD( ap, stp, hitp, uvp )  { \
+	register int id = (stp)->st_id; \
+	if( id <= 0 || id > ID_MAXIMUM )  { \
+		rt_log("stp=x%x, id=%d.\n", stp, id); \
+		rt_bomb("RT_UVCOORD:  bad st_id"); \
+	} \
+	rt_functab[id].ft_uv( ap, stp, hitp, uvp ); }
 
 
 /*
@@ -296,10 +307,12 @@ extern int rt_nfunctab;
 #define OP_INTERSECT	MKOP(3)		/* Binary: L intersect R */
 #define OP_SUBTRACT	MKOP(4)		/* Binary: L subtract R */
 #define OP_XOR		MKOP(5)		/* Binary: L xor R, not both*/
-/* Internal */
-#define OP_NOT		MKOP(6)		/* Unary:  not L */
-#define OP_GUARD	MKOP(7)		/* Unary:  not L, or else! */
-#define OP_XNOP		MKOP(8)		/* Unary:  L, mark region */
+#define OP_REGION	MKOP(6)		/* Leaf: tr_stp -> combined_tree_state */
+#define OP_NOP		MKOP(7)		/* Leaf with no effect */
+/* Internal to library routines */
+#define OP_NOT		MKOP(8)		/* Unary:  not L */
+#define OP_GUARD	MKOP(9)		/* Unary:  not L, or else! */
+#define OP_XNOP		MKOP(10)	/* Unary:  L, mark region */
 
 union tree {
 	int	tr_op;		/* Operation */
@@ -601,9 +614,17 @@ struct db_i  {
 	struct mem_map		*dbi_freep;	/* map of free granules */
 	char			*dbi_inmem;	/* ptr to in-memory copy */
 	char			*dbi_shmaddr;	/* ptr to memory-mapped file */
+	struct animate		*dbi_anroot;	/* heads list of anim at root lvl */
 };
 #define DBI_NULL	((struct db_i *)0)
 #define DBI_MAGIC	0x57204381
+
+#define RT_CHECK_DBI(_p) { if( (_p)->dbi_magic != DBI_MAGIC )  { \
+				rt_log("RT_CHECK_DBI(x%x) magic was x%x, s/b x%x, %s line %d\n", \
+					(_p), (_p)->dbi_magic, DBI_MAGIC, \
+					__FILE__, __LINE__ ); \
+				rt_bomb("bad db_i pointer\n"); \
+			} }
 
 /*
  *			D I R E C T O R Y
@@ -627,6 +648,53 @@ struct directory  {
 /* Args to db_lookup() */
 #define LOOKUP_NOISY	1
 #define LOOKUP_QUIET	0
+
+/*
+ *			D B _ F U L L _ P A T H
+ *
+ *  For collecting paths through the database tree
+ */
+struct db_full_path {
+	int		fp_len;
+	int		fp_maxlen;
+	struct directory **fp_names;	/* array of dir pointers */
+};
+#define DB_FULL_PATH_POP(_pp)	{(_pp)->fp_len--;}
+#define DB_FULL_PATH_CUR_DIR(_pp)	((_pp)->fp_names[(_pp)->fp_len-1])
+
+/*
+ *			D B _ T R E E _ S T A T E
+ *
+ *  State for database tree walker db_walk_tree()
+ *  and related user-provided handler routines.
+ */
+struct db_tree_state {
+	struct db_i	*ts_dbip;
+	int		ts_sofar;		/* Flag bits */
+
+	int		ts_regionid;	/* GIFT compat region ID code*/
+	int		ts_aircode;	/* GIFT compat air code */
+	int		ts_gmater;	/* GIFT compat material code */
+	struct mater_info ts_mater;	/* material properties */
+
+	mat_t		ts_mat;		/* transform matrix */
+
+	int		ts_stop_at_regions;	/* else stop at solids */
+	int		(*ts_region_start_func)();
+	union tree *	(*ts_region_end_func)();
+	union tree *	(*ts_leaf_func)();
+};
+#define TS_SOFAR_MINUS	1		/* Subtraction encountered above */
+#define TS_SOFAR_INTER	2		/* Intersection encountered above */
+#define TS_SOFAR_REGION	4		/* Region encountered above */
+
+/*
+ *			C O M B I N E D _ T R E E _ S T A T E
+ */
+struct combined_tree_state {
+	struct db_tree_state	cts_s;
+	struct db_full_path	cts_p;
+};
 
 /*
  *			A N I M A T E
@@ -838,7 +906,6 @@ struct rt_i {
 	struct soltab	*HeadSolid;	/* ptr to list of solids in model */
 	struct region	*HeadRegion;	/* ptr of list of regions in model */
 	struct db_i	*rti_dbip;	/* prt to Database instance struct */
-	char		*file;		/* name of file */
 	vect_t		mdl_min;	/* min corner of model bounding RPP */
 	vect_t		mdl_max;	/* max corner of model bounding RPP */
 	long		nregions;	/* total # of regions participating */
@@ -854,7 +921,6 @@ struct rt_i {
 	int		rti_nrays;	/* # calls to rt_shootray() */
 	union cutter	rti_CutHead;	/* Head of cut tree */
 	union cutter	rti_inf_box;	/* List of infinite solids */
-	struct animate	*rti_anroot;	/* heads list of anim at root lvl */
 	int		rti_pt_bytes;	/* length of partition struct */
 	int		rti_bv_bytes;	/* length of BITV array */
 	long		rti_magic;	/* magic # for integrity check */
@@ -881,7 +947,7 @@ struct rt_i {
 				rt_log("RT_CHECK_RTI(x%x) magic was x%x, s/b x%x, %s line %d\n", \
 					(_p), (_p)->rti_magic, RTI_MAGIC, \
 					__FILE__, __LINE__ ); \
-				rt_bomb("bad rti pointer\n"); \
+				rt_bomb("bad rt_i pointer\n"); \
 			} }
 
 /*
@@ -1107,20 +1173,30 @@ extern void rt_cut_extend(union cutter *cutp, struct soltab *stp);
 extern int rt_rpp_region(struct rt_i *rtip, char *reg_name,
 	fastf_t *min_rpp, fastf_t *max_rpp);
 
-extern int rt_add_anim(struct rt_i *rtip, struct animate *anp, int root);
-extern int rt_do_anim(struct animate *anp, mat_t stack, mat_t arc,
-	struct mater_info *materp);
-extern void rt_fr_anim(struct rt_i *rtip);
-
 /* The database library */
-/* open.c */
+
+/* db_anim.c */
+extern int db_add_anim(struct db_i *dbip, struct animate *anp, int root);
+extern int db_do_anim(struct animate *anp, mat_t stack, mat_t arc,
+	struct mater_info *materp);
+extern void db_free_anim(struct db_i *dbip);
+
+/* db_path.c */
+extern void db_add_node_to_full_path(struct db_full_path *pp,
+	struct directory *dp);
+extern void db_dup_full_path(struct db_full_path *newp,
+	struct db_full_path *oldp);
+extern char *db_path_to_string(struct db_full_path *pp);
+extern void db_free_full_path(struct db_full_path *pp);
+
+/* db_open.c */
 					/* open an existing model database */
 extern struct db_i *db_open( char *name, char *mode );
 					/* create a new model database */
 extern struct db_i *db_create( char *name );
 					/* close a model database */
 extern void db_close( struct db_i *dbip );
-/* io.c */
+/* db_io.c */
 					/* malloc & read records */
 extern union record *db_getmrec( struct db_i *, struct directory *dp );
 					/* get several records from db */
@@ -1129,12 +1205,12 @@ extern int db_get( struct db_i *, struct directory *dp, union record *where,
 					/* put several records into db */
 extern int db_put( struct db_i *, struct directory *dp, union record *where,
 	int offset, int len );
-/* scan.c */
+/* db_scan.c */
 					/* read db (to build directory) */
 extern int db_scan( struct db_i *, int (*handler)() );
 					/* update db unit conversions */
 extern void db_conversions( struct db_i *, int units );
-/* lookup.c */
+/* db_lookup.c */
 					/* convert name to directory ptr */
 extern struct directory *db_lookup( struct db_i *, char *name, int noisy );
 					/* add entry to directory */
@@ -1142,7 +1218,7 @@ extern struct directory *db_diradd( struct db_i *, char *name, long laddr,
 	int len, int flags );
 					/* delete entry from directory */
 extern int db_dirdelete( struct db_i *, struct directory *dp );
-/* alloc.c */
+/* db_alloc.c */
 					/* allocate "count" granules */
 extern int db_alloc( struct db_i *, struct directory *dp, int count );
 					/* grow by "count" granules */
@@ -1211,11 +1287,15 @@ extern void rt_region_color_map();	/* regionid-driven color override */
 extern void rt_color_addrec();		/* process ID_MATERIAL record */
 extern void rt_cut_extend();		/* extend a cut box */
 extern int rt_rpp_region();		/* find RPP of one region */
-extern int rt_add_anim();
-extern int rt_do_anim();
-extern void rt_fr_anim();
 
 /* The database library */
+extern int db_add_anim();
+extern int db_do_anim();
+extern void db_free_anim();
+extern void db_add_node_to_full_path();
+extern void db_dup_full_path();
+extern char *db_path_to_string();
+extern void db_free_full_path();
 extern struct db_i *db_open();		/* open an existing model database */
 extern struct db_i *db_create();	/* create a new model database */
 extern void db_close();			/* close a model database */
