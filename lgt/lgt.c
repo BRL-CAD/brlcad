@@ -20,13 +20,12 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <fcntl.h>
 #include <math.h>
 #include <signal.h>
-#include <machine.h>
-#include <vmath.h>
-#include <raytrace.h>
-#include <std.h>
-#include <fb.h>
-#include <vecmath.h>
-#include <lgt.h>
+#include "machine.h"
+#include "vmath.h"
+#include "raytrace.h"
+#include "fb.h"
+#include "./vecmath.h"
+#include "./lgt.h"
 #include "./screen.h"
 #include "./extern.h"
 int	ready_Output_Device();
@@ -164,10 +163,7 @@ exit_Neatly( status )
 int	status;
 	{
 	if( tty )
-		{
 		prnt_Event( "Quitting...\n" );
-		(void) fflush( stdout );
-		}
 	exit( status );
 	}
 
@@ -176,6 +172,8 @@ int
 ready_Output_Device()
 	{	int	size =
 		(int) sqrt( (double) movie.m_noframes + 0.5 ) * grid_sz;
+	if( tty )
+		prnt_Event( "Opening device..." );
 	if( ! fb_Setup( fb_file, size ) )
 		return	0;
 	fb_Zoom_Window();

@@ -17,12 +17,12 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 */
 
 #include <stdio.h>
-#include <machine.h>
-#include <vmath.h>
-#include <raytrace.h>
-#include <fb.h>
-#include <vecmath.h>
-#include <lgt.h>
+#include "machine.h"
+#include "vmath.h"
+#include "raytrace.h"
+#include "fb.h"
+#include "./vecmath.h"
+#include "./lgt.h"
 #include "./tree.h"
 #include "./extern.h"
 #define IR_DATA_WID	512

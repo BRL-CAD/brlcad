@@ -18,9 +18,12 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <fcntl.h>
-#include <fb.h>
-#include "./extern.h"
+#include "machine.h"
+#include "vmath.h"
+#include "fb.h"
+#include "./lgt.h"
 #include "./screen.h"
+#include "./extern.h"
 int		zoom;	/* Current zoom factor of frame buffer.		*/
 int		fb_Setup();
 void		fb_Zoom_Window();

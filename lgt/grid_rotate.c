@@ -19,8 +19,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 */
 
 #include <math.h>
-#include <machine.h>
-#include <vecmath.h>
+#include "machine.h"
+#include "./vecmath.h"
 void	grid_Rotate();
 
 /*	g r i d _ R o t a t e ( )

@@ -14,34 +14,15 @@
 		Retrieved: 	2/4/87 at 08:53:22
 		SCCS archive:	/vld/moss/src/lgt/s.extern.h
 */
-
 #if ! defined(FAST)
-#include <machine.h>
+#include "machine.h"
 #endif
 
 #if ! defined(INCL_FB)
-#include <fb.h>
-#endif
-
-#if ! defined(INCL_MATDB)
-#include <mat_db.h>
-#endif
-
-#if ! defined(INCL_LGT)
-#include <lgt.h>
-#endif
-
-#if ! defined(INCL_TREE)
-#include "tree.h"
+#include "fb.h"
 #endif
 
 /* Functions.								*/
-extern Mat_Db_Entry	*fb_Entry();
-extern Mat_Db_Entry	*fb_val();
-extern OcList		*get_Region_Name();
-extern Octree		*find_Octant();
-extern Octree		*add_Region_Octree();
-extern Trie		*add_Trie();
 #if defined( BSD )
 extern char		*tmpnam(), *gets(), *strtok();
 #endif
@@ -79,12 +60,16 @@ extern void		grid_Rotate();
 extern void		loc_Perror();
 extern void		perror();
 extern void		prnt_Event();
+extern void		prnt_IR_Status();
+extern void		prnt_Lgt_Status();
+extern void		prnt_Menu();
 extern void		prnt_Octree();
 extern void		prnt_Pixel();
 extern void		prnt_Prompt();
 extern void		prnt_Scroll();
 extern void		prnt_Status();
 extern void		prnt_Timer();
+extern void		prnt_Title();
 extern void		prnt_Trie();
 extern void		prnt_Usage();
 extern void		prnt3vec();
@@ -95,21 +80,26 @@ extern void		user_Interaction();
 
 /* Variables.								*/
 extern FBIO		*fbiop;
-extern Lgt_Source	lgts[];
-extern Movie		movie;
-extern Octree		ir_octree;
+
 extern RGBpixel		bgpixel;
 extern RGBpixel		*ir_table;
-extern Trie		*reg_triep;
+
 extern char		*CS, *DL;
 extern char		*beginptr;
-extern char		ir_file[];
+extern char		*ged_file;
+
 extern char		err_file[];
 extern char		fb_file[];
+extern char		ir_file[];
 extern char		ir_db_file[];
 extern char		lgt_db_file[];
 extern char		mat_db_file[];
+extern char		script_file[];
 extern char		texture_file[];
+extern char		title[];
+extern char		timer[];
+extern char		version[];
+
 extern fastf_t		bg_coefs[];
 extern fastf_t		cell_sz;
 extern fastf_t		degtorad;
@@ -130,8 +120,7 @@ extern int		LI, CO;
 extern int		anti_aliasing;
 extern int		aperture_sz;
 extern int		background[];
-extern int		dispatch_fd;
-extern int		tracking_cursor;
+extern int		co;
 extern int		debug;
 extern int		errno;
 extern int		fatal_error;
@@ -151,7 +140,6 @@ extern int		ir_paint_flag;
 extern int		ir_mapx, ir_mapy;
 extern int		ir_noise;
 extern int		ir_mapping;
-extern int		save_view_flag;
 extern int		lgt_db_size;
 extern int		li;
 extern int		max_bounce;
@@ -160,6 +148,8 @@ extern int		nprocessors;
 extern int		npsw;
 #endif
 extern int		pix_buffered;
+extern int		save_view_flag;
+extern int		tracking_cursor;
 extern int		tty;
 extern int		user_interrupt;
 extern int		x_fb_origin, y_fb_origin;

@@ -30,9 +30,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <varargs.h>
-#include <machine.h>
-#include <vmath.h>
-#include <raytrace.h>
+#include "machine.h"
+#include "vmath.h"
+#include "raytrace.h"
+#include "./lgt.h"
 #include "./screen.h"
 #include "./extern.h"
 

@@ -89,5 +89,8 @@ Movie;
 #define IK_INTENSITY	255.0
 #define RGB_INVERSE	(1.0 / IK_INTENSITY)
 #define EYE_SIZE	12.7
-#define DISPATCHER	"dispatcher"
-#define DISPATCH_LOCK	"dispatcher.lock"
+#define TITLE_LEN	72
+#define TIMER_LEN	72
+
+extern Lgt_Source	lgts[];
+extern Movie		movie;

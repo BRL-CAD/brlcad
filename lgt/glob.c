@@ -17,12 +17,11 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 */
 
 #include <stdio.h>
-#include "std.h"
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "fb.h"
-#include "vecmath.h"
+#include "./vecmath.h"
 #include "./lgt.h"
 #include "./tree.h"
 FBIO	*fbiop = FBIO_NULL;    /* Framebuffer interface ptr.	*/
@@ -56,6 +55,13 @@ char	ir_db_file[MAX_LN] = { 0 };  /* IR database file.		*/
 char	texture_file[MAX_LN] = { 0 };/* Texture map file.		*/
 char	fb_file[MAX_LN] = { 0 };     /* Raster image output.		*/
 char	ir_file[MAX_LN] = { 0 };     /* IR input data.			*/
+
+/* Global buffers and pointers.						*/
+char	version[] = "$Revision$";
+char	title[TITLE_LEN];
+char	timer[TIMER_LEN];
+char	script_file[MAX_LN];
+char	*ged_file = NULL;
 
 char	*beginptr;		     /* sbrk() at start of program.	*/
 
@@ -96,6 +102,7 @@ fastf_t	cell_sz = 0.0;		/* Cell size of grid in target coords.	*/
 int	anti_aliasing = FALSE;	/* Anti-aliasing thru over-sampling.	*/
 int	aperture_sz = 1;	/* Size of window for over-sampling.	*/
 int	background[3];		/* Background as RGB values.		*/
+int	co;			/* Number of columns on screen/layer.	*/
 int	dispatch_fd;		/* File to dispatch scans in parallel.	*/
 int	tracking_cursor = TRUE;	/* Cursor is on by default.		*/
 int	fb_width = 512;		/* Width of input scans in fb map.	*/
