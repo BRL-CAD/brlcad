@@ -18,7 +18,8 @@
 #
 # Description -
 #	As the name indicates, instances of CellPlot are intended
-#       to be used for cell plots.
+#       to be used for cell plots. This widget provide methods for
+#       creating transformed (scaled and translated) cells.
 #
 
 #
@@ -34,7 +35,9 @@ class cadwidgets::CellPlot {
     constructor {args} {}
     destructor {}
 
+    # range of cell data
     itk_option define -range range Range {0.0 1.0}
+
     itk_option define -plotWidth plotWidth PlotWidth 512
     itk_option define -plotHeight plotHeight PlotHeight 512
 
