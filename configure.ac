@@ -45,6 +45,10 @@ dnl Strive to tame the chaos that is so easily achieved.
 dnl
 
 AC_INIT(src/librt/bool.c)
+
+dnl put configure stuff here
+dnl AC_CONFIG_AUX_DIR(config)
+
 AC_PREREQ(2.50)
 
 MAJOR_VERSION=6
