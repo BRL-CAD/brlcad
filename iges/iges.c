@@ -223,10 +223,12 @@ struct nmgregion *r;
 	{
 		struct faceuse *fu;
 
+		NMG_CK_SHELL( s );
 		for( RT_LIST_FOR( fu , faceuse , &s->fu_hd ) )
 		{
 			struct loopuse *lu;
 
+			NMG_CK_FACEUSE( fu );
 			if( fu->orientation != OT_SAME )
 				continue;
 
@@ -234,6 +236,7 @@ struct nmgregion *r;
 			{
 				struct edgeuse *eu1,*eu2;
 
+				NMG_CK_LOOPUSE( lu );
 				if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
 					continue;
 
@@ -242,6 +245,7 @@ struct nmgregion *r;
 					struct edgeuse *eu_new;
 					struct vertex *v1=NULL,*v2=NULL;
 
+					NMG_CK_EDGEUSE( eu1 );
 					if( eu1->radial_p == eu1->eumate_p )
 						continue;	/* dangling edge (?warning?) *?
 
@@ -1472,6 +1476,7 @@ FILE *fp_dir,*fp_param;
 	int			dir_entry[21];
 	int			i;
 
+	NMG_CK_REGION( r );
 
 	rt_vls_init( &str );
 
@@ -1531,6 +1536,9 @@ FILE *fp_dir,*fp_param;
 	int dir_entry[21];
 	int i;
 
+	NMG_CK_VERTEX_G( start_vg );
+	NMG_CK_VERTEX_G( end_vg );
+
 	rt_vls_init( &str );
 
 	/* initialize directory entry */
@@ -1573,6 +1581,9 @@ FILE *fp_dir,*fp_param;
 	struct rt_vls str;
 	int dir_entry[21];
 	int i;
+
+	NMG_CK_VERTEX_G( start_vg );
+	NMG_CK_VERTEX_G( end_vg );
 
 	rt_vls_init( &str );
 
@@ -1619,6 +1630,8 @@ FILE *fp_dir,*fp_param;
 	int dir_entry[21];
 	int edge_de;
 	int i;
+
+	NMG_CK_REGION( r );
 
 	rt_vls_init( &str );
 
@@ -2922,6 +2935,8 @@ FILE *fp_dir,*fp_param;
 	int brep_de;
 	int dependent;
 	int i;
+
+	RT_CK_DB_INTERNAL( ip );
 
 	dependent = 1;
 	for( i=0 ; i<no_of_indeps ; i++ )
