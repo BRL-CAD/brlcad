@@ -1354,7 +1354,7 @@ CONST struct db_i               *dbip;
 			ntohd( (unsigned char *)&(bip->thickness[i]), cp, 1 );
 			cp += SIZEOF_NETWORK_DOUBLE;
 		}
-		bip->face_mode = bu_hex_to_bitv( cp );
+		bip->face_mode = bu_hex_to_bitv( (CONST char *)cp );
 	}
 	else
 	{
@@ -1446,7 +1446,7 @@ CONST struct db_i               *dbip;
 			htond( cp, (CONST unsigned char *)&tmp, 1 );
 			cp += SIZEOF_NETWORK_DOUBLE;
 		}
-		strcpy( cp, bu_vls_addr( &vls ) );
+		strcpy( (char *)cp, bu_vls_addr( &vls ) );
 		cp += bu_vls_strlen( &vls );
 		*cp = '\0';
 		bu_vls_free( &vls );
