@@ -507,6 +507,71 @@ set -S2 "/bin/sh"
 #	define	LIBRT_TIMER	timer42
 #endif
 
+#if defined(__CAKE__m4i65)
+/*	Silicon Graphics 4D, running IRIX64 6.5 (on a MIPS4 machine) */
+#	undef	sgi
+#	define	MTYPE	m4i65
+#	if 0	/* PRODUCTION=1 */
+/*		This version for production: optimization & shared libraries */
+/*		Warning 1174 is "variable declared but never referenced". */
+/*		Warning 1032 is "expression must have arithmetic type". */
+/*		Warning 1203 is "nonstandard type for a bit field" (libpkg). */
+/*		Warning 1048 is "cast between pointer-to-object and pointer-to-function */
+/*		Warning 1110 is "statement is unreachable" */
+/*		Warning 1429 is "the type "long long" is nonstandard " (/usr/include/sys/time.h) */
+/*		Warning 1412 is "destination type of cast is too small to hold all pointers: truncation possible" */
+/*		Warning 1167 is "pointer points outside of underlying object" (tab/script.l) */
+#		define	OPTIMIZER	-O2 -OPT:fold_arith_limit=16000 \
+					-OPT:const_copy_limit=16000 \
+					-use_readonly_const \
+					-woff 1429,1203,1048,1110,1412,1167 -Wl,-w
+/*		-Wl,-S doesn't work! use -Wl,-w.  SGI case #0390575. */
+#	else
+/*		This version for debugging with DBX */
+/*		-fullwarn is pretty verbose */
+#		define	OPTIMIZER	-g -use_readonly_const
+#	endif
+#	define	GFLAG		-64 -mips4 -KPIC -G 7
+#	define  XINCDIR /usr/include/X11
+#	define	XLIBDIR /usr/lib64
+#	if 0	/* PRODUCTION=1 */
+/*		Shared library version support */
+#		define	ARCH_SUF	so
+#		define	LIBVERS ../sh/sharedlibvers.sh
+#		define	BUILD_LIBRARY	ld -64 -mips4 -shared -o
+#		define	RANLIB	true
+#		define	STANDARD_LIBES	-lm -lmalloc -lc -rpath LIBDIR:/usr/lib64
+/*		When debugging libraries, -m and -v are helpful LD_OPTS */
+#		define	LD_OPTS		GFLAG -Wl,-woff,84 -Wl,-woff,85 -Wl,-woff,134
+#	else
+/*		Static linked executables */
+#		define	RANLIB	ranlib5.sh
+#		define	STANDARD_LIBES	-lm -lmalloc -lc
+#		define	LD_OPTS		GFLAG -Wl,-woff,84 -Wl,-woff,85 -Wl,-woff,134
+#	endif
+#	define	TCL_DEFS -woff 1048,1233,1412,1110 OPTIMIZER -DTCL_LIBRARY='"'TCLLIBDIR'"' -DTCL_PACKAGE_PATH='"'TCLLIBDIR'"' -DHAVE_UNISTD_H=1 -DHAVE_SYS_TIME_H=1 -DTIME_WITH_SYS_TIME=1 -DHAVE_TZNAME=1 -DHAVE_TIMEZONE_VAR=1 -DSTDC_HEADERS=1 -DNEED_MATHERR=1 -Dvfork=fork -DHAVE_BSDGETTIMEOFDAY=1 -DHAVE_SYS_IOCTL_H=1 -DHAVE_SYS_FILIO_H=1
+#	define	TK_DEFS -woff 1048,1233,1412,1110 OPTIMIZER -DTK_LIBRARY='"'TKLIBDIR'"' -DHAVE_UNISTD_H=1 -DHAVE_LIMITS_H=1 -DSTDC_HEADERS=1 -D__CHAR_UNSIGNED__=1
+#	define  CC_OPTS		GFLAG -xansi -DIRIX=6 -DIRIX64=65
+#	define	LGT_CONFIG	GFLAG
+#	define	LIBBU_CONFIG	-DBRLCAD_ROOT='"'BASEDIR'"'
+#	define	LIBFB_OBJS	if_remote if_ab if_X if_X24 if_ogl
+#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DBSD=43 -DIF_X -I''XINCDIR -DIF_OGL
+#       define  LIBFB_LIBES     LIBPKG -L''XLIBDIR -lX11 -lGL
+#	define	LIBDM_OBJS	dm-X dm-ogl
+#	define	LIBDM_CONFIG	-DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_X -DDM_OGL -DUSE_RT_ASPECT
+#	define	LIBDM_LIBES	LIBTK LIBTCL LIBTCL_LIBES
+#	define	MGED_OBJS	dm-X dm-ogl dm-generic
+#	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_X -DDM_OGL -I''XINCDIR
+#	define	MGED_LIBES	LIBDM LIBDM_LIBES LIBFB LIBFB_LIBES -lXi -lXext 
+#	define	LIBDM_SAMPLER_LIBES MGED_LIBES
+#	define	HAS_TCP	1
+#	define	CC	cc
+#	define	GETHOST	hostname
+#	define	LIBPKG_CONFIG	-DBSD=43
+#	define	RFBD_CONFIG	-DBSD=43
+#	define	LIBRT_TIMER	timer42
+#endif
+
 #if defined(__CAKE__sun4)
 /*	Sun-4 "SparcStation" hardware, running SunOS 4 */
 #	undef	sun
