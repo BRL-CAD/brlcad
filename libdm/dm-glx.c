@@ -107,9 +107,9 @@ static void glx_make_materials();
 struct dm	*glx_open();
 static int	glx_close();
 static int	glx_drawBegin(), glx_drawEnd();
-static int	glx_normal(), glx_newrot();
+static int	glx_normal(), glx_loadMatrix();
 static int	glx_drawString2D(), glx_drawLine2D();
-static int      glx_drawVertex2D();
+static int      glx_drawPoint2D();
 static int	glx_drawVList();
 static int      glx_setColor(), glx_setLineAttr();
 static int	glx_setWinBounds(), glx_debug();
@@ -137,10 +137,10 @@ struct dm dm_glx = {
   glx_drawBegin,
   glx_drawEnd,
   glx_normal,
-  glx_newrot,
+  glx_loadMatrix,
   glx_drawString2D,
   glx_drawLine2D,
-  glx_drawVertex2D,
+  glx_drawPoint2D,
   glx_drawVList,
   glx_setColor,
   glx_setLineAttr,
@@ -335,14 +335,14 @@ char *argv[];
   if(dmp->dm_width == 0){
     dmp->dm_width =
       DisplayWidth(((struct glx_vars *)dmp->dm_vars)->dpy,
-		   DefaultScreen(((struct glx_vars *)dmp->dm_vars)->dpy)) - 20;
+		   DefaultScreen(((struct glx_vars *)dmp->dm_vars)->dpy)) - 30;
     ++make_square;
   }
 
   if(dmp->dm_height == 0){
     dmp->dm_height =
       DisplayHeight(((struct glx_vars *)dmp->dm_vars)->dpy,
-		    DefaultScreen(((struct glx_vars *)dmp->dm_vars)->dpy)) - 20;
+		    DefaultScreen(((struct glx_vars *)dmp->dm_vars)->dpy)) - 30;
     ++make_square;
   }
 
@@ -620,22 +620,23 @@ struct dm *dmp;
 }
 
 /*
- *			G L X _ P R O L O G
+ *			G L X _ D R A W B E G I N
  *
  * Define the world, and include in it instances of all the
- * important things.  Most important of all is the object "faceplate",
- * which is built between dm_normal() and dm_epilog()
- * by dm_puts and dm_2d_line calls from adcursor() and dotitles().
+ * important things.
  */
 static int
 glx_drawBegin(dmp)
 struct dm *dmp;
 {
-  GLXwinset(((struct glx_vars *)dmp->dm_vars)->dpy,
-	    ((struct glx_vars *)dmp->dm_vars)->win);
-
   if (((struct glx_vars *)dmp->dm_vars)->mvars.debug)
     Tcl_AppendResult(interp, "glx_drawBegin\n", (char *)NULL);
+
+  if(GLXwinset(((struct glx_vars *)dmp->dm_vars)->dpy,
+	       ((struct glx_vars *)dmp->dm_vars)->win) < 0){
+    Tcl_AppendResult(interp, "glx_drawBegin: GLXwinset() failed\n", (char *)NULL);
+    return TCL_ERROR;
+  }
 
   ortho( -xlim_view, xlim_view, -ylim_view, ylim_view, -1.0, 1.0 );
 
@@ -646,30 +647,9 @@ struct dm *dmp;
 }
 
 /*
- *			I R _ N O R M A L
+ *			G L X _ D R A W E N D
  *
- * Restore the display processor to a normal mode of operation
- * (ie, not scaled, rotated, displaced, etc).
- * Turns off windowing.
- */
-static int
-glx_normal(dmp)
-struct dm *dmp;
-{
-  if (((struct glx_vars *)dmp->dm_vars)->mvars.debug)
-    Tcl_AppendResult(interp, "glx_normal\n", (char *)NULL);
-
-#if 0
-  RGBcolor( (short)0, (short)0, (short)0 );
-#endif
-
-  ortho( -xlim_view, xlim_view, -ylim_view, ylim_view, -1.0, 1.0 );
-
-  return TCL_OK;
-}
-
-/*
- *			I R _ E P I L O G
+ * End the drawing sequence.
  */
 static int
 glx_drawEnd(dmp)
@@ -695,9 +675,27 @@ struct dm *dmp;
 }
 
 /*
- *  			I R _ N E W R O T
+ *			I R _ N O R M A L
  *
- *  Load a new rotation matrix.  This will be followed by
+ * Restore the display processor to a normal mode of operation
+ * (ie, not scaled, rotated, displaced, etc).
+ */
+static int
+glx_normal(dmp)
+struct dm *dmp;
+{
+  if (((struct glx_vars *)dmp->dm_vars)->mvars.debug)
+    Tcl_AppendResult(interp, "glx_normal\n", (char *)NULL);
+
+  ortho( -xlim_view, xlim_view, -ylim_view, ylim_view, -1.0, 1.0 );
+
+  return TCL_OK;
+}
+
+/*
+ *  			G L X _ L O A D M A T R I X
+ *
+ *  Load a new transformation matrix.  This will be followed by
  *  many calls to glx_drawVList().
  *
  *  IMPORTANT COORDINATE SYSTEM NOTE:
@@ -721,7 +719,7 @@ struct dm *dmp;
  *  the correct solution is important.
  */
 static int
-glx_newrot(dmp, mat, which_eye)
+glx_loadMatrix(dmp, mat, which_eye)
 struct dm *dmp;
 mat_t	mat;
 int which_eye;
@@ -731,8 +729,22 @@ int which_eye;
   mat_t	newm;
   int	i;
 
-  if (((struct glx_vars *)dmp->dm_vars)->mvars.debug)
-    Tcl_AppendResult(interp, "glx_newrot()\n", (char *)NULL);
+  if(((struct glx_vars *)dmp->dm_vars)->mvars.debug){
+    struct bu_vls tmp_vls;
+
+    Tcl_AppendResult(interp, "glx_loadMatrix()\n", (char *)NULL);
+
+    bu_vls_init(&tmp_vls);
+    bu_vls_printf(&tmp_vls, "which eye = %d\t", which_eye);
+    bu_vls_printf(&tmp_vls, "transformation matrix = \n");
+    bu_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[0], mat[4], mat[8],mat[12]);
+    bu_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[1], mat[5], mat[9],mat[13]);
+    bu_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[2], mat[6], mat[10],mat[14]);
+    bu_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[3], mat[7], mat[11],mat[15]);
+
+    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+    bu_vls_free(&tmp_vls);
+  }
 
   switch(which_eye)  {
   case 0:
@@ -806,10 +818,6 @@ static float material_objdef[] = {
 /*
  *  			I R _ O B J E C T
  *  
- *  Set up for an object, transformed as indicated, and with an
- *  object center as specified.  The ratio of object to screen size
- *  is passed in as a convienience.  Mat is model2view.
- *
  */
 static int
 glx_drawVList( dmp, vp )
@@ -945,7 +953,7 @@ int x2, y2;
 }
 
 static int
-glx_drawVertex2D(dmp, x, y)
+glx_drawPoint2D(dmp, x, y)
 struct dm *dmp;
 int x, y;
 {
@@ -1031,6 +1039,7 @@ int style;
 static int
 glx_debug(dmp, lvl)
 struct dm *dmp;
+int lvl;
 {
   ((struct glx_vars *)dmp->dm_vars)->mvars.debug = lvl;
 
@@ -1040,7 +1049,7 @@ struct dm *dmp;
 static int
 glx_setWinBounds(dmp, w)
 struct dm *dmp;
-int w[];
+int w[6];
 {
   return TCL_OK;
 }
