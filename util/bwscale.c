@@ -155,7 +155,7 @@ int argc; char **argv;
 	if (inx < outx) i = outx;
 	else i = inx;
 
-	if( (outbuf = malloc(i)) == NULL )
+	if( (outbuf = (unsigned char *)malloc(i)) == (unsigned char *)NULL )
 		exit( 4 );
 
 	/* Here we go */
@@ -188,7 +188,8 @@ int scanlen;
 	if( max > 512 ) max = 512;
 
 	buflines = max;
-	if ((buffer = malloc( buflines * scanlen )) == (unsigned char *)NULL) {
+	if ((buffer = (unsigned char *)malloc( buflines * scanlen ))
+	  == (unsigned char *)NULL) {
 		fprintf(stderr, "Cannot allocate buffer\n");
 		exit(-1);
 	} else {
