@@ -24,6 +24,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
+#include <ctype.h>
 #include <string.h>
 #include <math.h>
 
@@ -126,6 +127,7 @@ char **argv;
 	register int i;
 	register float *op;
 	char	ctitle[132];
+	char	*title;
 	char	units[16];
 
 	if ( !get_args( argc, argv ) )  {
@@ -133,7 +135,7 @@ char **argv;
 		exit( 1 );
 	}
 
-	if( version != 4 && version != 5 )  {
+	if( version != 1 && version != 4 && version != 5 )  {
 		fprintf(stderr,"version %d not supported\n", version );
 		(void)fputs(usage, stderr);
 		exit( 1 );
@@ -143,58 +145,102 @@ char **argv;
 
 	if( verbose )  {
 		printf("COMGEOM input file must have this format:\n");
-		printf("     1.  title card\n");
-		printf("     2.  control card\n");
-		printf("     3.  solid table\n");
-		printf("     4.  region table\n");
-		printf("     5.  -1\n");
-		if( version == 4 )
+		switch(version)  {
+		case 1:
+			printf("     1.  title card\n");
+			printf("     2.  solid table\n");
+			printf("     3.  END\n");
+			printf("     4.  region table\n");
+			printf("     5.  END\n");
+			break;
+		case 4:
+			printf("     1.  units & title card\n");
+			printf("     2.  solid & region count card\n");
+			printf("     3.  solid table\n");
+			printf("     4.  region table\n");
+			printf("     5.  -1\n");
 			printf("     6.  blank\n");
-	   	printf("     7.  region ident table\n\n");
+		   	printf("     7.  region ident table\n\n");
+			break;
+		case 5:
+			printf("     1.  units & title card\n");
+			printf("     2.  solid & region count card\n");
+			printf("     3.  solid table\n");
+			printf("     4.  region table\n");
+			printf("     5.  -1\n");
+		   	printf("     6.  region ident table\n\n");
+			break;
+		}
 	}
 
 	group_init();
 
 	/*
-	 *  Read title
+	 *  Read title card
 	 */
 	if( getline( ctitle, sizeof(ctitle), "title card" ) == EOF ) {
 		printf("Empty input file:  no title record\n");
 		exit(10);
 	}
 
-	/* First 2 chars are units */
-	printf("Units: %2.2s\n", ctitle);
-	printf("Title: %s\n", ctitle+2);
+	switch( version )  {
+	case 1:
+		title = ctitle;
+		strcpy( units, "in" );		/* XXX is this right? */
+		break;
+	case 4:
+	case 5:
+		/* First 2 chars are units */
+		units[0] = ctitle[0];
+		units[1] = ctitle[1];
+		units[2] = '\0';
+		title = ctitle+3;
+		break;
+	}
+
+	/* Drop leading blanks in title */
+	while( isspace( *title ) )  title++;
+
+	printf("Title: %s\n", title);
+	printf("Units: %s\n", units);
 
 	/* Before converting any geometry, establish the units conversion
 	 * factor which all mk_* routines will apply.
 	 */
-	units[0] = ctitle[0];
-	units[1] = ctitle[1];
-	units[2] = '\0';
-	if( mk_conversion( units ) < 0 )
-		printf("WARNING:  unknown units '%s', using MM\n", units);
+	if( mk_conversion( units ) < 0 )  {
+		printf("WARNING:  unknown units '%s', using inches\n", units);
+		(void)mk_conversion( "inches" );
+	}
 
 	/* Output the MGED database header */
-	mk_id( outfp, ctitle+3 );
+	mk_id( outfp, title );
 
 
 	/*
-	 *  Read control card
+	 *  Read control card, if present
 	 */
-	sol_total = 0;
+	sol_total = reg_total = 0;
+	switch( version )  {
+	case 1:
+		sol_total = reg_total = 9999;	/* Reads until 'END' rec */
+		break;
 
-	if( getline( ctitle, sizeof(ctitle), "control card" ) == EOF ) {
-		printf("No control card .... STOP\n");
-		exit(10);
-	}
-
-	if( version == 5 )  {
-		sscanf( ctitle, "%5d%5d", &sol_total, &reg_total );
-	} else {
+	case 4:
+		if( getline( ctitle, sizeof(ctitle), "control card" ) == EOF ) {
+			printf("No control card .... STOP\n");
+			exit(10);
+		}
 		sscanf( ctitle, "%20d%10d", &sol_total, &reg_total );
+		break;
+	case 5:
+		if( getline( ctitle, sizeof(ctitle), "control card" ) == EOF ) {
+			printf("No control card .... STOP\n");
+			exit(10);
+		}
+		sscanf( ctitle, "%5d%5d", &sol_total, &reg_total );
+		break;
 	}
+
 	if(verbose) printf("Expecting %d solids, %d regions\n", sol_total, reg_total);
 
 
@@ -212,7 +258,7 @@ char **argv;
 		}
 		if( i > 0 ) {
 			printf("\nprocessed %d of %d solids\n\n",sol_work,sol_total);
-			if( sol_work < sol_total )  {
+			if( sol_work < sol_total && version > 1 )  {
 				printf("some solids are missing, aborting\n");
 				exit(1);
 			}
@@ -236,14 +282,21 @@ char **argv;
 	cur_col = 0;
 	if( getregion() < 0 )  exit(10);
 
-	if( version == 4 )  {
-		char	dummy[88];
-		/* read the blank card (line) */
-		getline( dummy, sizeof(dummy), "blank card" );
-	}
+	if( version == 1 )  {
+		register int i;
+		for( i=1; i < reg_total; i++ )  {
+			region_register( i, 0, 0, 0, 0 );
+		}
+	} else {
+		if( version == 4 )  {
+			char	dummy[88];
+			/* read the blank card (line) */
+			getline( dummy, sizeof(dummy), "blank card" );
+		}
 
-	if(verbose) printf("\nRegion ident table\n");
-	getid();
+		if(verbose) printf("\nRegion ident table\n");
+		getid();
+	}
 
 	if(verbose) printf("\nGroups\n");
 	cur_col = 0;
