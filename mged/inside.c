@@ -194,9 +194,11 @@ char **argv;
 	  transform_editing_solid( &intern, es_mat, &es_int, 0 );
 	  outdp = LAST_SOLID(illump);
 
-	  Tcl_AppendResult(interp, "You are in Prim Edit mode, using edited primitive as outside primitive: ", (char *)NULL);
-	  add_solid_path_to_result( interp, illump );
-	  Tcl_AppendResult(interp, "\n", (char *)NULL);
+	  if( argc < arg+1 ) {
+		  Tcl_AppendResult(interp, "You are in Prim Edit mode, using edited primitive as outside primitive: ", (char *)NULL);
+		  add_solid_path_to_result( interp, illump );
+		  Tcl_AppendResult(interp, "\n", (char *)NULL);
+	  }
 	}  else if( state == ST_O_EDIT ) {
 	  /* object edit mode */
 	  if( illump->s_Eflag ) {
@@ -210,10 +212,11 @@ char **argv;
 	  bn_mat_mul(newmat, modelchanges, es_mat);
 	  transform_editing_solid( &intern, newmat, &es_int, 0 );
 	  outdp = LAST_SOLID(illump);
-
-	  Tcl_AppendResult(interp, "You are in Object Edit mode, using key solid as outside solid: ", (char *)NULL);
-	  add_solid_path_to_result( interp, illump );
-	  Tcl_AppendResult(interp, "\n", (char *)NULL);
+	  if( argc < arg+1 ) {
+		  Tcl_AppendResult(interp, "You are in Object Edit mode, using key solid as outside solid: ", (char *)NULL);
+		  add_solid_path_to_result( interp, illump );
+		  Tcl_AppendResult(interp, "\n", (char *)NULL);
+	  }
 	} else {
 	  /* Not doing any editing....ask for outside solid */
 	  if( argc < arg+1 ) {
