@@ -31,6 +31,8 @@ extern void	exit();
 extern int	printf(), fprintf();
 
 char *name();
+char *strchop();
+#define CH(x)	strchop(x,sizeof(x))
 
 void	idendump(), polyhead(), polydata();
 void	soldump(), combdump(), membdump(), arsadump(), arsbdump();
@@ -93,10 +95,10 @@ idendump()	/* Print out Ident record information */
 	(void)printf( "%c %d %.6s\n",
 		record.i.i_id,			/* I */
 		record.i.i_units,		/* units */
-		record.i.i_version		/* version */
+		CH(record.i.i_version)		/* version */
 	);
 	(void)printf( "%.72s\n",
-		record.i.i_title	/* title or description */
+		CH(record.i.i_title)	/* title or description */
 	);
 
 	/* Print a warning message on stderr if versions differ */
@@ -171,17 +173,17 @@ combdump()	/* Print out Combination record information */
 		record.c.c_rgb[0],
 		record.c.c_rgb[1],
 		record.c.c_rgb[2] );
-	if( record.c.c_matname[0] )  {
+	if( isascii(record.c.c_matname[0]) && isprint(record.c.c_matname[0]) )  {
 		printf("1 ");	/* flag: line 1 follows */
 		if( record.c.c_matparm[0] )
 			printf("2 ");	/* flag: line 2 follows */
 	}
 	(void)printf("\n");			/* Terminate w/ a newline */
 
-	if( record.c.c_matname[0] )  {
-		(void)printf("%.32s\n", record.c.c_matname );
+	if( isascii(record.c.c_matname[0]) && isprint(record.c.c_matname[0]) )  {
+		(void)printf("%.32s\n", CH(record.c.c_matname) );
 		if( record.c.c_matparm[0] )
-			(void)printf("%.60s\n", record.c.c_matparm );
+			(void)printf("%.60s\n", CH(record.c.c_matparm) );
 	}
 
 	length = (int)record.c.c_length;	/* Get # of member records */
@@ -382,7 +384,7 @@ char *str;
 
 	while( op < &buf[NAMESIZE] )  {
 		if( *ip == '\0' )  break;
-		if( isprint(*ip) && !isspace(*ip) )  {
+		if( isascii(*ip) && isprint(*ip) && !isspace(*ip) )  {
 			*op++ = *ip++;
 		}  else  {
 			*op++ = '@';
@@ -393,14 +395,56 @@ char *str;
 	*op = '\0';
 	if(warn)  {
 		(void)fprintf(stderr,
-		"g2asc: Illegal char in object name.  '%s' converted to '%s'\n",
-		str, buf );
+		"g2asc: Illegal char in object name, converted to '%s'\n",
+		buf );
 	}
 	if( op == buf )  {
 		/* Null input name */
 		(void)fprintf(stderr,
 			"g2asc:  NULL object name converted to -=NULL=-\n");
 		return("-=NULL=-");
+	}
+	return(buf);
+}
+
+/*
+ *			S T R C H O P
+ *
+ *  Take a string and a length, and null terminate,
+ *  converting unprintable characters to something printable.
+ */
+char *strchop( str, len )
+char *str;
+{
+	static char buf[1024];
+	register char *ip = str;
+	register char *op = buf;
+	register int warn = 0;
+	char *ep;
+
+	if( len > sizeof(buf)-2 )  len=sizeof(buf)-2;
+	ep = &buf[len];
+	while( op < ep )  {
+		if( *ip == '\0' )  break;
+		if( isascii(*ip) && isprint(*ip) )  {
+			*op++ = *ip++;
+		}  else  {
+			*op++ = '@';
+			ip++;
+			warn = 1;
+		}
+	}
+	*op = '\0';
+	if(warn)  {
+		(void)fprintf(stderr,
+		"g2asc: Illegal char in string, converted to '%s'\n",
+		buf );
+	}
+	if( op == buf )  {
+		/* Null input name */
+		(void)fprintf(stderr,
+			"g2asc:  NULL string converted to -=STRING=-\n");
+		return("-=STRING=-");
 	}
 	return(buf);
 }
