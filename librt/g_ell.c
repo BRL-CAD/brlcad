@@ -31,6 +31,7 @@ static char RCSell[] = "@(#)$Header$ (BRL)";
 #include "db.h"
 #include "raytrace.h"
 #include "nmg.h"
+#include "rtgeom.h"
 #include "./debug.h"
 
 extern int rt_sph_prep();
@@ -137,47 +138,7 @@ struct ell_specific {
 	mat_t	ell_SoR;	/* Scale(Rot(vect)) */
 	mat_t	ell_invRSSR;	/* invRot(Scale(Scale(Rot(vect)))) */
 };
-
-/* Should be in a header file to share betwee g_ell.c and g_sph.c */
-struct ell_internal  {
-	point_t	v;
-	vect_t	a;
-	vect_t	b;
-	vect_t	c;
-};
-
-/*
- *			R T _ E L L _ I M P O R T
- *
- *  Import an ellipsoid/sphere from the database format to
- *  the internal structure.
- *  Apply modeling transformations as well.
- */
-int
-rt_ell_import( eip, rp, mat )
-struct ell_internal	*eip;
-union record		*rp;
-register mat_t		mat;
-{
-	LOCAL fastf_t	vec[3*4];
-
-	/* Check record type */
-	if( rp->u_id != ID_SOLID )  {
-		rt_log("rt_ell_import: defective record\n");
-		return(-1);
-	}
-
-	/* Convert from database to internal format */
-	rt_fastf_float( vec, rp->s.s_values, 4 );
-
-	/* Apply modeling transformations */
-	MAT4X3PNT( eip->v, mat, &vec[0*3] );
-	MAT4X3VEC( eip->a, mat, &vec[1*3] );
-	MAT4X3VEC( eip->b, mat, &vec[2*3] );
-	MAT4X3VEC( eip->c, mat, &vec[3*3] );
-
-	return(0);		/* OK */
-}
+#define ELL_NULL	((struct ell_specific *)0)
 
 /*
  *  			R T _ E L L _ P R E P
@@ -194,13 +155,25 @@ register mat_t		mat;
  *  	A struct ell_specific is created, and it's address is stored in
  *  	stp->st_specific for use by rt_ell_shot().
  */
+#if NEW_IF
+int
+rt_ell_prep( stp, ip, rtip )
+struct soltab		*stp;
+struct rt_db_internal	*ip;
+struct rt_i		*rtip;
+{
+#else
 int
 rt_ell_prep( stp, rec, rtip )
 struct soltab		*stp;
 union record		*rec;
 struct rt_i		*rtip;
 {
+	struct rt_external	ext, *ep;
+	struct rt_db_internal	intern, *ip;
+#endif
 	register struct ell_specific *ell;
+	struct ell_internal	*eip;
 	LOCAL fastf_t	magsq_a, magsq_b, magsq_c;
 	LOCAL mat_t	R;
 	LOCAL mat_t	Rinv;
@@ -209,33 +182,35 @@ struct rt_i		*rtip;
 	LOCAL vect_t	Au, Bu, Cu;	/* A,B,C with unit length */
 	LOCAL vect_t	w1, w2, P;	/* used for bounding RPP */
 	LOCAL fastf_t	f;
-	struct ell_internal ei;
 	int		i;
+
+#if NEW_IF
+	/* All set */
+#else
+	ep = &ext;
+	RT_INIT_EXTERNAL(ep);
+	ep->ext_buf = (genptr_t)rec;
+	ep->ext_nbytes = stp->st_dp->d_len*sizeof(union record);
+	ip = &intern;
+	if( rt_ell_import( ip, ep, stp->st_pathmat ) < 0 )
+		return(-1);		/* BAD */
+	RT_CK_DB_INTERNAL( ip );
+#endif
+	eip = (struct ell_internal *)ip->idb_ptr;
+	RT_ELL_CK_MAGIC(eip);
 
 	/*
 	 *  For a fast way out, hand this solid off to the SPH routine.
 	 *  If it takes it, then there is nothing to do, otherwise
 	 *  the solid is an ELL.
 	 */
-	if( rt_sph_prep( stp, rec, rtip ) == 0 )
+	if( rt_sph_prep( stp, ip, rtip ) == 0 )
 		return(0);		/* OK */
 
-	if( rec == (union record *)0 )  {
-		rec = db_getmrec( rtip->rti_dbip, stp->st_dp );
-		i = rt_ell_import( &ei, rec, stp->st_pathmat );
-		rt_free( (char *)rec, "ell record" );
-	} else {
-		i = rt_ell_import( &ei, rec, stp->st_pathmat );
-	}
-	if( i < 0 )  {
-		rt_log("rt_ell_setup(%s): db import failure\n", stp->st_name);
-		return(-1);		/* BAD */
-	}
-
 	/* Validate that |A| > 0, |B| > 0, |C| > 0 */
-	magsq_a = MAGSQ( ei.a );
-	magsq_b = MAGSQ( ei.b );
-	magsq_c = MAGSQ( ei.c );
+	magsq_a = MAGSQ( eip->a );
+	magsq_b = MAGSQ( eip->b );
+	magsq_c = MAGSQ( eip->c );
 	if( magsq_a < 0.005 || magsq_b < 0.005 || magsq_c < 0.005 ) {
 		rt_log("ell(%s):  zero length A, B, or C vector\n",
 			stp->st_name );
@@ -244,11 +219,11 @@ struct rt_i		*rtip;
 
 	/* Create unit length versions of A,B,C */
 	f = 1.0/sqrt(magsq_a);
-	VSCALE( Au, ei.a, f );
+	VSCALE( Au, eip->a, f );
 	f = 1.0/sqrt(magsq_b);
-	VSCALE( Bu, ei.b, f );
+	VSCALE( Bu, eip->b, f );
 	f = 1.0/sqrt(magsq_c);
-	VSCALE( Cu, ei.c, f );
+	VSCALE( Cu, eip->c, f );
 
 	/* Validate that A.B == 0, B.C == 0, A.C == 0 (check dir only) */
 	f = VDOT( Au, Bu );
@@ -271,7 +246,7 @@ struct rt_i		*rtip;
 	GETSTRUCT( ell, ell_specific );
 	stp->st_specific = (genptr_t)ell;
 
-	VMOVE( ell->ell_V, ei.v );
+	VMOVE( ell->ell_V, eip->v );
 
 	VSET( ell->ell_invsq, 1.0/magsq_a, 1.0/magsq_b, 1.0/magsq_c );
 	VMOVE( ell->ell_Au, Au );
@@ -298,12 +273,12 @@ struct rt_i		*rtip;
 	mat_mul( ell->ell_invRSSR, Rinv, mtemp );
 
 	/* Compute SoR */
-	VSCALE( &ell->ell_SoR[0], ei.a, ell->ell_invsq[0] );
-	VSCALE( &ell->ell_SoR[4], ei.b, ell->ell_invsq[1] );
-	VSCALE( &ell->ell_SoR[8], ei.c, ell->ell_invsq[2] );
+	VSCALE( &ell->ell_SoR[0], eip->a, ell->ell_invsq[0] );
+	VSCALE( &ell->ell_SoR[4], eip->b, ell->ell_invsq[1] );
+	VSCALE( &ell->ell_SoR[8], eip->c, ell->ell_invsq[2] );
 
 	/* Compute bounding sphere */
-	VMOVE( stp->st_center, ei.v );
+	VMOVE( stp->st_center, eip->v );
 	f = magsq_a;
 	if( magsq_b > f )
 		f = magsq_b;
@@ -344,6 +319,9 @@ struct rt_i		*rtip;
 	return(0);			/* OK */
 }
 
+/*
+ *			R T _ E L L _ P R I N T
+ */
 void
 rt_ell_print( stp )
 register struct soltab *stp;
@@ -605,13 +583,13 @@ rt_ell_class()
 }
 
 /*
- *			E L L _ 1 6 P T S
+ *			R T _ E L L _ 1 6 P T S
  *
  * Also used by the TGC code
  */
 #define ELLOUT(n)	ov+(n-1)*3
 void
-ell_16pts( ov, V, A, B )
+rt_ell_16pts( ov, V, A, B )
 register fastf_t *ov;
 register fastf_t *V;
 fastf_t *A, *B;
@@ -651,6 +629,17 @@ fastf_t *A, *B;
 /*
  *			R T _ E L L _ P L O T
  */
+#if NEW_IF
+int
+rt_ell_plot( vhead, mat, ip, abs_tol, rel_tol, norm_tol )
+struct vlhead	*vhead;
+mat_t		mat;
+struct rt_db_internal *ip;
+double		abs_tol;
+double		rel_tol;
+double		norm_tol;
+{
+#else
 int
 rt_ell_plot( rp, mat, vhead, dp, abs_tol, rel_tol, norm_tol )
 union record		*rp;
@@ -661,21 +650,37 @@ double			abs_tol;
 double			rel_tol;
 double			norm_tol;
 {
+	struct rt_external	ext, *ep;
+	struct rt_db_internal	intern, *ip;
+#endif
 	register int		i;
-	struct ell_internal	ei;
+	struct ell_internal	*eip;
 	fastf_t top[16*3];
 	fastf_t middle[16*3];
 	fastf_t bottom[16*3];
 	fastf_t	points[3*8];
 
-	if( rt_ell_import( &ei, rp, mat ) < 0 )  {
-		rt_log("rt_ell_plot(%s): db import failure\n", dp->d_namep);
-		return(-1);
+#if NEW_IF
+	/* All set */
+#else
+	ep = &ext;
+	RT_INIT_EXTERNAL(ep);
+	ep->ext_buf = (genptr_t)rp;
+	ep->ext_nbytes = dp->d_len*sizeof(union record);
+	i = rt_ell_import( &intern, ep, mat );
+	if( i < 0 )  {
+		rt_log("rt_ell_plot(): db import failure\n");
+		return(-1);		/* BAD */
 	}
+	ip = &intern;
+#endif
+	RT_CK_DB_INTERNAL(ip);
+	eip = (struct ell_internal *)ip->idb_ptr;
+	RT_ELL_CK_MAGIC(eip);
 
-	ell_16pts( top, ei.v, ei.a, ei.b );
-	ell_16pts( bottom, ei.v, ei.b, ei.c );
-	ell_16pts( middle, ei.v, ei.a, ei.c );
+	rt_ell_16pts( top, eip->v, eip->a, eip->b );
+	rt_ell_16pts( bottom, eip->v, eip->b, eip->c );
+	rt_ell_16pts( middle, eip->v, eip->a, eip->c );
 
 	ADD_VL( vhead, &top[15*ELEMENTS_PER_VECT], 0 );
 	for( i=0; i<16; i++ )  {
@@ -728,7 +733,7 @@ static struct usvert {
 
 struct ell_state {
 	struct shell	*s;
-	struct ell_internal	ei;
+	struct ell_internal	*eip;
 	mat_t		invRinvS;
 	mat_t		invRoS;
 	fastf_t		theta_tol;
@@ -775,6 +780,18 @@ struct vert_strip {
  *	-1	failure
  *	 0	OK.  *r points to nmgregion that holds this tessellation.
  */
+#if NEW_IF
+int
+rt_ell_tess( r, m, ip, mat, abs_tol, rel_tol, norm_tol )
+struct nmgregion	**r;
+struct model		*m;
+struct rt_db_internal	*ip;
+register mat_t		mat;
+double		abs_tol;
+double		rel_tol;
+double		norm_tol;
+{
+#else
 int
 rt_ell_tess( r, m, rp, mat, dp, abs_tol, rel_tol, norm_tol )
 struct nmgregion	**r;
@@ -786,6 +803,9 @@ double			abs_tol;
 double			rel_tol;
 double			norm_tol;
 {
+	struct rt_external	ext, *ep;
+	struct rt_db_internal	intern, *ip;
+#endif
 	LOCAL mat_t	R;
 	LOCAL mat_t	S;
 	LOCAL mat_t	invR;
@@ -810,15 +830,28 @@ double			norm_tol;
 	int	blim;		/* base subscript limit */
 	int	tlim;		/* top subscrpit limit */
 
-	if( rt_ell_import( &state.ei, rp, mat ) < 0 )  {
-		rt_log("rt_ell_tess(%s): import failure\n", dp->d_namep);
-		return(-1);
+#if NEW_IF
+	/* All set */
+#else
+	ep = &ext;
+	RT_INIT_EXTERNAL(ep);
+	ep->ext_buf = (genptr_t)rp;
+	ep->ext_nbytes = dp->d_len*sizeof(union record);
+	i = rt_ell_import( &intern, ep, mat );
+	if( i < 0 )  {
+		rt_log("rt_ell_tess(): db import failure\n");
+		return(-1);		/* BAD */
 	}
+	ip = &intern;
+#endif
+	RT_CK_DB_INTERNAL(ip);
+	state.eip = (struct ell_internal *)ip->idb_ptr;
+	RT_ELL_CK_MAGIC(state.eip);
 
 	/* Validate that |A| > 0, |B| > 0, |C| > 0 */
-	magsq_a = MAGSQ( state.ei.a );
-	magsq_b = MAGSQ( state.ei.b );
-	magsq_c = MAGSQ( state.ei.c );
+	magsq_a = MAGSQ( state.eip->a );
+	magsq_b = MAGSQ( state.eip->b );
+	magsq_c = MAGSQ( state.eip->c );
 	if( magsq_a < 0.005 || magsq_b < 0.005 || magsq_c < 0.005 ) {
 		rt_log("rt_ell_tess(%s):  zero length A, B, or C vector\n",
 			dp->d_namep );
@@ -827,11 +860,11 @@ double			norm_tol;
 
 	/* Create unit length versions of A,B,C */
 	invAlen = 1.0/(Alen = sqrt(magsq_a));
-	VSCALE( Au, state.ei.a, invAlen );
+	VSCALE( Au, state.eip->a, invAlen );
 	invBlen = 1.0/(Blen = sqrt(magsq_b));
-	VSCALE( Bu, state.ei.b, invBlen );
+	VSCALE( Bu, state.eip->b, invBlen );
 	invClen = 1.0/(Clen = sqrt(magsq_c));
-	VSCALE( Cu, state.ei.c, invClen );
+	VSCALE( Cu, state.eip->c, invClen );
 
 	/* Validate that A.B == 0, B.C == 0, A.C == 0 (check dir only) */
 	f = VDOT( Au, Bu );
@@ -856,7 +889,7 @@ double			norm_tol;
 		f = VDOT( axb, Cu );
 		if( f < 0 )  {
 			VREVERSE( Cu, Cu );
-			VREVERSE( state.ei.c, state.ei.c );
+			VREVERSE( state.eip->c, state.eip->c );
 		}
 	}
 
@@ -1066,7 +1099,7 @@ double			norm_tol;
 				sin_beta * sin_alpha );
 			/* Convert from ideal sphere coordinates */
 			MAT4X3PNT( model_pt, state.invRinvS, sphere_pt );
-			VADD2( model_pt, model_pt, state.ei.v );
+			VADD2( model_pt, model_pt, state.eip->v );
 			/* Associate vertex geometry */
 			nmg_vertex_gv( strips[i].vp[j], model_pt );
 		}
@@ -1107,4 +1140,145 @@ fail:
 	}
 	rt_free( (char *)strips, "strips[]" );
 	return(-1);
+}
+
+/*
+ *			R T _ E L L _ I M P O R T
+ *
+ *  Import an ellipsoid/sphere from the database format to
+ *  the internal structure.
+ *  Apply modeling transformations as well.
+ */
+int
+rt_ell_import( ip, ep, mat )
+struct rt_db_internal	*ip;
+struct rt_external	*ep;
+register mat_t		mat;
+{
+	struct ell_internal	*eip;
+	union record		*rp;
+	LOCAL fastf_t	vec[3*4];
+
+	RT_CK_EXTERNAL( ep );
+	rp = (union record *)ep->ext_buf;
+	/* Check record type */
+	if( rp->u_id != ID_SOLID )  {
+		rt_log("rt_ell_import: defective record\n");
+		return(-1);
+	}
+
+	RT_INIT_DB_INTERNAL( ip );
+	ip->idb_type = ID_ELL;
+	ip->idb_ptr = rt_malloc( sizeof(struct ell_internal), "ell_internal");
+	eip = (struct ell_internal *)ip->idb_ptr;
+	eip->magic = RT_ELL_INTERNAL_MAGIC;
+
+	/* Convert from database to internal format */
+	rt_fastf_float( vec, rp->s.s_values, 4 );
+
+	/* Apply modeling transformations */
+	MAT4X3PNT( eip->v, mat, &vec[0*3] );
+	MAT4X3VEC( eip->a, mat, &vec[1*3] );
+	MAT4X3VEC( eip->b, mat, &vec[2*3] );
+	MAT4X3VEC( eip->c, mat, &vec[3*3] );
+
+	return(0);		/* OK */
+}
+
+/*
+ *			R T _ E L L _ E X P O R T
+ */
+int
+rt_ell_export( ep, ip, local2mm )
+struct rt_external	*ep;
+struct rt_db_internal	*ip;
+double			local2mm;
+{
+	struct ell_internal	*tip;
+	union record		*rec;
+
+	RT_CK_DB_INTERNAL(ip);
+	if( ip->idb_type != ID_ELL )  return(-1);
+	tip = (struct ell_internal *)ip->idb_ptr;
+	RT_ELL_CK_MAGIC(tip);
+
+	RT_INIT_EXTERNAL(ep);
+	ep->ext_nbytes = sizeof(union record);
+	ep->ext_buf = (genptr_t)rt_calloc( 1, ep->ext_nbytes, "ell external");
+	rec = (union record *)ep->ext_buf;
+
+	rec->s.s_id = ID_SOLID;
+	rec->s.s_type = GENELL;
+
+	/* NOTE: This also converts to dbfloat_t */
+	VSCALE( &rec->s.s_values[0], tip->v, local2mm );
+	VSCALE( &rec->s.s_values[3], tip->a, local2mm );
+	VSCALE( &rec->s.s_values[6], tip->b, local2mm );
+	VSCALE( &rec->s.s_values[9], tip->c, local2mm );
+
+	return(0);
+}
+
+/*
+ *			R T _ E L L _ D E S C R I B E
+ *
+ *  Make human-readable formatted presentation of this solid.
+ *  First line describes type of solid.
+ *  Additional lines are indented one tab, and give parameter values.
+ */
+int
+rt_ell_describe( str, ip, verbose, mm2local )
+struct rt_vls		*str;
+struct rt_db_internal	*ip;
+int			verbose;
+double			mm2local;
+{
+	register struct ell_internal	*tip =
+		(struct ell_internal *)ip->idb_ptr;
+	char	buf[256];
+
+	RT_ELL_CK_MAGIC(tip);
+	rt_vls_strcat( str, "ellipsoid (ELL)\n");
+
+	sprintf(buf, "\tV (%g, %g, %g)\n",
+		tip->v[X] * mm2local,
+		tip->v[Y] * mm2local,
+		tip->v[Z] * mm2local );
+	rt_vls_strcat( str, buf );
+
+	sprintf(buf, "\tA (%g, %g, %g) mag=%g\n",
+		tip->a[X] * mm2local,
+		tip->a[Y] * mm2local,
+		tip->a[Z] * mm2local,
+		MAGNITUDE(tip->a) );
+	rt_vls_strcat( str, buf );
+
+	sprintf(buf, "\tB (%g, %g, %g) mag=%g\n",
+		tip->b[X] * mm2local,
+		tip->b[Y] * mm2local,
+		tip->b[Z] * mm2local,
+		MAGNITUDE(tip->b) );
+	rt_vls_strcat( str, buf );
+
+	sprintf(buf, "\tC (%g, %g, %g) mag=%g\n",
+		tip->c[X] * mm2local,
+		tip->c[Y] * mm2local,
+		tip->c[Z] * mm2local,
+		MAGNITUDE(tip->c) );
+	rt_vls_strcat( str, buf );
+
+	return(0);
+}
+
+/*
+ *			R T _ E L L _ I F R E E
+ *
+ *  Free the storage associated with the rt_db_internal version of this solid.
+ */
+void
+rt_ell_ifree( ip )
+struct rt_db_internal	*ip;
+{
+	RT_CK_DB_INTERNAL(ip);
+	rt_free( ip->idb_ptr, "ell ifree" );
 }
