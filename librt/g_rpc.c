@@ -178,6 +178,13 @@ struct pt_node {
 	struct pt_node	*next;	/* ptr to next pt */
 };
 
+struct bu_structparse rt_rpc_parse[] = {
+    { "%f", 3, "V", offsetof(struct rt_rpc_internal, rpc_V[X]), BU_STRUCTPARSE_FUNC_NULL },
+    { "%f", 3, "H", offsetof(struct rt_rpc_internal, rpc_H[X]), BU_STRUCTPARSE_FUNC_NULL },
+    { "%f", 3, "B", offsetof(struct rt_rpc_internal, rpc_B[X]), BU_STRUCTPARSE_FUNC_NULL },
+    { "%f", 1, "r", offsetof(struct rt_rpc_internal, rpc_r),    BU_STRUCTPARSE_FUNC_NULL },
+    {0} };
+	    
 /*
  *  			R T _ R P C _ P R E P
  *  
