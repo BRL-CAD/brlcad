@@ -16,11 +16,13 @@ extern char name_it[16];		/* argv[3] */
  *			G E T L I N E
  */
 int
-getline( cp )
+getline( cp, buflen, title )
 register char *cp;
+int	buflen;
+char	*title;
 {
 	register int	c;
-	register int	count = 80;
+	register int	count = buflen;
 
 	while( (c = fgetc(infp)) == '\n' ) /* Skip blank lines.		*/
 		;
@@ -28,7 +30,7 @@ register char *cp;
 		*cp++ = c;
 		count--;
 		if( count <= 0 )  {
-			printf("input buffer (80) overflow\n");
+			printf("getline(x%x, %d) input record overflows buffer for %s\n", cp, buflen, title);
 			break;
 		}
 		c = fgetc(infp);
