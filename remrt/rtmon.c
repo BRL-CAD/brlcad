@@ -196,26 +196,49 @@ char	*program;	/* name of program to run */
 	}
 
 	for( pp = prog_paths; *pp != NULL; pp++ )  {
+		int	stat;
+		int	pid;
+
 		bu_vls_strcpy( &path, *pp );
 		bu_vls_putc( &path, '/' );
 		bu_vls_strcat( &path, program );
 		if( access( bu_vls_addr(&path), X_OK ) )  continue;
 
-		if( fork() == 0 )  {
+		/* Reap any prior dead children.  Sanity */
+		(void)wait3( &stat, WNOHANG, NULL );
+
+		if( (pid = fork()) == 0 )  {
 			/* Child process */
 			close(fd);
 			(void)execv( bu_vls_addr(&path), argv );
-			perror("execv");
-			/* If execv() succeeds, there is no return */
-			/* Process will be reaped in wait3() in main() */
+			/* If execv() succeeds, there is no return and
+			 * Process will be reaped in wait3() in main(),
+			 * else failure will be reaped below.
+			 */
 			exit(42);
 		}
+		sleep(1);	/* Give exec enough time to fail */
+		if( wait3( &stat, WNOHANG, NULL ) == pid )  {
+			/* It died. */
+			/* Be robust in the face of 'wrong architecture' errors. */
+			if( WIFEXITED(stat) && WEXITSTATUS(stat) == 42 )   {
+				continue;	/* Try another path */
+			}
+			fprintf(ofp, "FAIL %s/%s died with status=x%x\n",
+				bu_vls_addr(&path), program, stat);
+			fflush(ofp);
+			bu_vls_free(&path);
+			return;
+		}
+
 		fprintf(ofp, "OK %s\n", bu_vls_addr(&path) );
 		fflush(ofp);
+		bu_vls_free(&path);
 		return;
 	}
-	fprintf(ofp, "FAIL Unable to locate %s executable\n", program);
+	fprintf(ofp, "FAIL Unable to find executable %s.\n", program);
 	fflush(ofp);
+	bu_vls_free(&path);
 }
 
 char *find_paths[] = {
