@@ -42,18 +42,12 @@ static char RCShalf[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "raytrace.h"
 #include "db.h"
+#include "rtgeom.h"
 #include "./debug.h"
 
 #if defined(alliant) && !defined(__STDC__)
 extern double   modf();
 #endif
-
-struct half_internal  {
-	long	magic;
-	plane_t	eqn;
-};
-#define RT_HALF_INTERNAL_MAGIC	0xaabbdd87
-#define RT_HALF_CK_MAGIC(_p)	RT_CKMAG(_p,RT_HALF_INTERNAL_MAGIC,"half_internal")
 
 struct half_specific  {
 	plane_t	half_eqn;		/* Plane equation, outward normal */
