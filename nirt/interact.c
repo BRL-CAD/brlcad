@@ -41,7 +41,7 @@ FILE	*fPtr;
 	{
 		in_cmt = 0;
 		key_len = 0;
-		if ((fPtr == stdin) && (! silent_flag))
+		if ((fPtr == stdin) && (silent_flag != SILENT_YES))
 		    (void) fputs(NIRT_PROMPT, stdout);     
 		while (((Ch = fgetc(fPtr)) == ' ') OR (Ch == '\t'));
 		if (Ch == '\n')

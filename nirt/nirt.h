@@ -6,6 +6,9 @@
 /*	CONSTANTS	*/
 #define    VAR_NULL     ((struct VarTable *) 0) 
 #define    CT_NULL	((com_table *) 0)
+#define    SILENT_UNSET	0
+#define    SILENT_YES	1
+#define    SILENT_NO	-1
 #define    NIRT_PROMPT   "nirt>  "
 #define    EVER         ;;              /* syntactic sugar       */
 #define    TITLE_LEN    80 
@@ -35,7 +38,7 @@
 #endif
 
 /*	STRING FOR USE WITH GETOPT(3)	*/
-#define         OPT_STRING      "Msu:x:?"
+#define         OPT_STRING      "Msu:vx:?"
 
 /*	MACROS WITH ARGUMENTS	*/
 #define    max(a,b)             (((a)>(b))?(a):(b))

@@ -275,7 +275,7 @@ com_table		*ctp;
 
 void quit()
 {
-	if (! silent_flag)
+	if (silent_flag != SILENT_YES)
 	    (void) fputs("Quitting...\n", stdout);
 	exit (0);
 }
