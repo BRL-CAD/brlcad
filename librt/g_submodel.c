@@ -115,6 +115,7 @@ struct rt_i		*rtip;
 	struct rt_submodel_internal	*sip;
 	struct submodel_specific	*submodel;
 	struct rt_i			*sub_rtip;
+	struct db_i			*sub_dbip;
 	vect_t	radvec;
 	vect_t	diam;
 	char	*argv[2];
@@ -123,13 +124,23 @@ struct rt_i		*rtip;
 	sip = (struct rt_submodel_internal *)ip->idb_ptr;
 	RT_SUBMODEL_CK_MAGIC(sip);
 
+/* XXX How do we match a previous exact use of this file and treetop list,
+ * XXX so as to get any sort of efficiency out of instancing it?
+ */
 	if( sip->file[0] == '\0' )  {
 		/* No .g file name given, tree is in current .g file */
-		sub_rtip = rt_new_rti( rtip->rti_dbip );
+		sub_dbip = rtip->rti_dbip;
 	} else {
-		/* XXX Might want to cache & reuse dbip's, to save dirbuilds */
-		sub_rtip = rt_dirbuild( sip->file, NULL, 0 );
+		/* XXX Might want to cache & reuse dbip's, to save scans */
+		if( (sub_dbip = db_open( sip->file, "r" )) == DBI_NULL )
+		    	return -1;
+		/* XXX How to see if scan has already been done? */
+		if( db_scan( sub_dbip, (int (*)())db_diradd, 1 ) < 0 )  {
+			db_close( sub_dbip );
+			return -1;
+		}
 	}
+	sub_rtip = rt_new_rti( sub_dbip );
 	if( sub_rtip == RTI_NULL )  return -1;
 
 	/* Propagate some important settings downward */
@@ -145,7 +156,6 @@ struct rt_i		*rtip;
 		sub_rtip->rti_space_partition = rtip->rti_space_partition;
 	}
 
-	rt_bomb("XXX Gak, rt_gettrees can't be used recursively\n");
 	argv[0] = sip->treetop;
 	argv[1] = NULL;
 	if( rt_gettrees( sub_rtip, 1, (CONST char **)argv, 1 ) < 0 )  {
@@ -170,6 +180,7 @@ struct rt_i		*rtip;
 #endif
 	
 	BU_GETSTRUCT( submodel, submodel_specific );
+	submodel->magic = RT_SUBMODEL_SPECIFIC_MAGIC;
 	stp->st_specific = (genptr_t)submodel;
 
 	mat_copy( submodel->subm2m, sip->root2leaf );
@@ -266,9 +277,7 @@ struct seg		*segHeadp;
 		segp = BU_LIST_FIRST( seg, &(segHeadp->l) );
 		RT_CHECK_SEG(segp);
 		BU_LIST_DEQUEUE( &(segp->l) );
-#if 0
-		BU_LIST_INSERT( oap->a_finished_segs_p, &(segp->l) );
-#endif
+		BU_LIST_INSERT( &(oap->a_finished_segs_hdp->l), &(segp->l) );
 
 		/* Adjust for new start point & matrix scaling */
 		segp->seg_in.hit_dist = oap->a_ray.r_min +
@@ -283,13 +292,11 @@ struct seg		*segHeadp;
 	}
 
 	/* Steal the partition list */
-	/* ??? Do these need to be sort/merged into the Final list? */
-	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )  {
+	while( (pp=PartHeadp->pt_forw) != PartHeadp )  {
 		RT_CK_PT(pp);
 		DEQUEUE_PT(pp);
-#if 0
-		INSERT_PT( pp, oap->a_Final_Part_p );
-#endif
+	/* XXX These need to be sort/merged into the Final list! */
+		INSERT_PT( pp, oap->a_Final_Part_hdp );
 	}
 	return 1;
 }
@@ -319,6 +326,8 @@ struct seg		*seghead;
 	struct application	nap;
 	point_t			startpt;
 
+	RT_CK_SOLTAB(stp);
+	RT_CK_RTI(ap->a_rt_i);
 	RT_CK_SUBMODEL_SPECIFIC(submodel);
 
 	nap = *ap;		/* struct copy */
