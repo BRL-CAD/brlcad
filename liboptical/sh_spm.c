@@ -38,11 +38,7 @@ struct spm_specific {
 #define SP_NULL	((struct spm_specific *)0)
 
 struct matparse spm_parse[] = {
-#ifndef cray
 	"file",		(mp_off_ty)(SP_NULL->sp_file),	"%s",
-#else
-	"file",		(mp_off_ty)0,			"%s",
-#endif
 	"w",		(mp_off_ty)&(SP_NULL->sp_w),	"%d",
 	"n",		(mp_off_ty)&(SP_NULL->sp_w),	"%d",	/*compat*/
 	(char *)0,	(mp_off_ty)0,			(char *)0

@@ -45,11 +45,7 @@ struct stk_specific {
 #define STK_NULL	((struct stk_specific *)0)
 
 struct matparse stk_parse[] = {
-#ifndef cray
 	"file",		(mp_off_ty)(STK_NULL->st_file),	"%s",
-#else
-	"file",		(mp_off_ty)1,			"%s",
-#endif
 	(char *)0,	(mp_off_ty)0,			(char *)0
 };
 
