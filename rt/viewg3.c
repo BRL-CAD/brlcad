@@ -78,8 +78,8 @@ Options:\n\
  -a Az		Azimuth in degrees	(conflicts with -M)\n\
  -e Elev	Elevation in degrees	(conflicts with -M)\n\
  -M		Read model2view matrix on stdin (conflicts with -a, -e)\n\
- -g #		Grid cell width in millimeters (conflicts with -s\n\
- -G #		Grid cell height in millimeters (conflicts with -s\n\
+ -g #		Grid cell width in millimeters (conflicts with -s)\n\
+ -G #		Grid cell height in millimeters (conflicts with -s)\n\
  -J #		Jitter.  Default is off.  Any non-zero number is on\n\
  -o model.g3	Specify output file, GIFT-3 format (default=stdout)\n\
  -U #		Set use_air boolean to # (default=1)\n\
