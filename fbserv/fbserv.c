@@ -161,7 +161,6 @@ struct pkg_conn *pcp;
 char *buf;
 {
 	int	height, width;
-	long	ret;
 	char	rbuf[5*NET_LONG_LEN+1];
 
 	width = pkg_glong( &buf[0*NET_LONG_LEN] );
@@ -182,12 +181,19 @@ fb_log(s);
 #endif
 	}
 #endif
-	ret = fbp == FBIO_NULL ? -1 : 0;
-	(void)pkg_plong( &rbuf[0*NET_LONG_LEN], ret );
-	(void)pkg_plong( &rbuf[1*NET_LONG_LEN], fbp->if_max_width );
-	(void)pkg_plong( &rbuf[2*NET_LONG_LEN], fbp->if_max_height );
-	(void)pkg_plong( &rbuf[3*NET_LONG_LEN], fbp->if_width );
-	(void)pkg_plong( &rbuf[4*NET_LONG_LEN], fbp->if_height );
+	if( fbp == FBIO_NULL )  {
+		(void)pkg_plong( &rbuf[0*NET_LONG_LEN], -1 );	/* ret */
+		(void)pkg_plong( &rbuf[1*NET_LONG_LEN], 0 );
+		(void)pkg_plong( &rbuf[2*NET_LONG_LEN], 0 );
+		(void)pkg_plong( &rbuf[3*NET_LONG_LEN], 0 );
+		(void)pkg_plong( &rbuf[4*NET_LONG_LEN], 0 );
+	} else {
+		(void)pkg_plong( &rbuf[0*NET_LONG_LEN], 0 );	/* ret */
+		(void)pkg_plong( &rbuf[1*NET_LONG_LEN], fbp->if_max_width );
+		(void)pkg_plong( &rbuf[2*NET_LONG_LEN], fbp->if_max_height );
+		(void)pkg_plong( &rbuf[3*NET_LONG_LEN], fbp->if_width );
+		(void)pkg_plong( &rbuf[4*NET_LONG_LEN], fbp->if_height );
+	}
 
 	pkg_send( MSG_RETURN, rbuf, 5*NET_LONG_LEN, pcp );
 	if( buf ) (void)free(buf);
