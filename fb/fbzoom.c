@@ -53,7 +53,7 @@ char **argv;
 		return	1;
 	zoom = 1;
 	xPan = fb_getwidth(fbp)/2;
-	yPan = fb_getheight(fbp)/2 - 1;
+	yPan = fb_getheight(fbp)/2;
 
 	/* Set RAW mode */
 	save_Tty( 0 );
@@ -82,18 +82,23 @@ char **argv;
 	}
 
 char help[] = "\r\n\
-b ^V	zoom Bigger\r\n\
-s	zoom Smaller\r\n\
-h	move Right\r\n\
-j	move Up\r\n\
-k	move Down\r\n\
-l	move Left\r\n\
+Both VI and EMACS motions work.\r\n\
+b ^V	zoom Bigger (*2)\r\n\
+s	zoom Smaller (*0.5)\r\n\
++	zoom Bigger (+1)\r\n\
+-	zoom Smaller (-1)\r\n\
+h B 	move Right (1)\r\n\
+j P	move Up (1)\r\n\
+k N	move Down (1)\r\n\
+l F	move Left (1)\r\n\
+H ^B	move Right (many)\r\n\
+J ^P	move Up (many)\r\n\
+K ^N	move Down (many)\r\n\
+L ^F	move Left (many)\r\n\
 c	goto Center\r\n\
 r	Reset to normal\r\n\
-^F ^B	Forward, Back\r\n\
-^N ^P	Down, Up\r\n\
-\\n	Exit\r\n\
-Uppercase takes big steps.\r\n";
+q	Exit\r\n\
+RETURN	Exit\r\n";
 
 #define ctl(x)	('x'&037)
 
@@ -102,7 +107,7 @@ doKeyPad()
 	register ch;	
 
 	if( (ch = getchar()) == EOF )
-		return	0;		/* done */
+			return	0;		/* done */
 
 	switch( ch )
 		{
@@ -128,15 +133,23 @@ doKeyPad()
 	case 'R' :				/* Reset */
 		zoom = 1;
 		xPan = fb_getwidth(fbp)/2;
-		yPan = fb_getheight(fbp)/2 - 1;
+		yPan = fb_getheight(fbp)/2;
 		break;
 	case ctl(v) :
-	case 'b' :				/* zoom BIG.	*/
+	case 'b' :				/* zoom BIG binary */
 		if(  (zoom *= 2) > MaxZoom )
 			zoom = MaxZoom;
 		break;
-	case 's' :				/* zoom small.	*/
+	case '+' :				/* zoom BIG incr */
+		if(  ++zoom > MaxZoom )
+			zoom = MaxZoom;
+		break;
+	case 's' :				/* zoom small binary */
 		if(  (zoom /= 2) < MinZoom )
+			zoom = MinZoom;
+		break;
+	case '-' :				/* zoom small incr */
+		if(  --zoom < MinZoom )
 			zoom = MinZoom;
 		break;
 	case 'F' :
