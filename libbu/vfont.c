@@ -37,7 +37,7 @@ static const char libbu_vfont_RCSid[] = "@(#)$Header$ (BRL)";
 /*
  * Forward Definitions
  */
-int vax_gshort(char *);
+int vax_gshort(unsigned char *);
 
 /*
  *			V F O N T _ G E T
@@ -151,7 +151,7 @@ char *font;
  */
 int
 vax_gshort(msgp)
-char *msgp;
+unsigned char *msgp;
 {
 	register unsigned char *p = (unsigned char *) msgp;
 	register int	i;
