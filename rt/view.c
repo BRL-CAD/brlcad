@@ -159,8 +159,13 @@ register struct application *ap;
 	register int	pwidth;		/* Width of each pixel (in bytes) */
 	unsigned char	dist[8];	/* pixel distance (in IEEE format) */
 
-	pwidth = rpt_dist ? 3+8 : 3;
-	htond(dist, (double) ap->a_dist, 1);
+	if (rpt_dist)
+	{
+	    pwidth = 3+8;
+	    htond(dist, &(ap->a_dist), 1);
+	}
+	else
+	    pwidth = 3;
 
 	if( ap->a_user == 0 )  {
 		/* Shot missed the model, don't dither */
@@ -210,7 +215,8 @@ register struct application *ap;
 			if( outfp != NULL )  {
 				if( fwrite( p, 3, 1, outfp ) != 1 )
 					rt_bomb("pixel fwrite error");
-				if( fwrite( dist, 8, 1, outfp ) != 1 )
+				if( rpt_dist &&
+				    ( fwrite( dist, 8, 1, outfp ) != 1 ))
 					rt_bomb("pixel fwrite error");
 			}
 			if( fbp != FBIO_NULL )  {
@@ -845,8 +851,14 @@ char *file, *obj;
 	if( minus_o )  {
 		/* Output is destined for a pixel file */
 		return(0);		/* don't open framebuffer */
-	}  else  {
-		return(1);		/* open a framebuffer */
+	}  else
+	{
+	    if (rpt_dist)
+	    {
+		bu_log("Warning: -d ignored.  Writing to frame buffer\n");
+		rpt_dist = 0;
+	    }
+	    return(1);		/* open a framebuffer */
 	}
 }
 
