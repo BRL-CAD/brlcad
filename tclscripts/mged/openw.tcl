@@ -76,7 +76,7 @@ if ![info exists mged_default_gdisplay] {
     }
 }
 
-if ![info exists mged_default_dt] {
+if {![info exists mged_default_dt] || $mged_default_dt == ""} {
     set mged_default_dt [dm_bestXType $mged_default_gdisplay]
 }
 
@@ -157,8 +157,10 @@ proc gui_create_default { args } {
     global do_tearoffs
     global freshline
     global scratchline
+    global vi_change_flag
     global vi_delete_flag
     global vi_search_flag
+    global vi_search_char
     global bob_testing
 
 # set defaults
@@ -378,11 +380,10 @@ menu .$id.menubar -tearoff $do_tearoffs
 .$id.menubar add cascade -label "Edit" -underline 0 -menu .$id.menubar.edit
 .$id.menubar add cascade -label "Create" -underline 0 -menu .$id.menubar.create
 .$id.menubar add cascade -label "View" -underline 0 -menu .$id.menubar.view
-.$id.menubar add cascade -label "ViewRing" -underline 0 -menu .$id.menubar.viewring
-.$id.menubar add cascade -label "Modes" -underline 0 -menu .$id.menubar.modes
+.$id.menubar add cascade -label "ViewRing" -underline 4 -menu .$id.menubar.viewring
 .$id.menubar add cascade -label "Settings" -underline 0 -menu .$id.menubar.settings
+.$id.menubar add cascade -label "Modes" -underline 0 -menu .$id.menubar.modes
 .$id.menubar add cascade -label "Tools" -underline 0 -menu .$id.menubar.tools
-.$id.menubar add cascade -label "Other" -underline 0 -menu .$id.menubar.other
 .$id.menubar add cascade -label "Help" -underline 0 -menu .$id.menubar.help
 
 menu .$id.menubar.file -tearoff $do_tearoffs
@@ -396,8 +397,8 @@ menu .$id.menubar.file -tearoff $do_tearoffs
 .$id.menubar.file add separator
 .$id.menubar.file add cascade -label "Preferences" -underline 0 -menu .$id.menubar.file.pref
 .$id.menubar.file add separator
-.$id.menubar.file add command -label "Close" -underline 1 -command "gui_destroy_default $id"
-.$id.menubar.file add command -label "Exit" -underline 3 -command quit
+.$id.menubar.file add command -label "Close" -underline 0 -command "gui_destroy_default $id"
+.$id.menubar.file add command -label "Exit" -underline 0 -command quit
 
 menu .$id.menubar.file.saveview -tearoff $do_tearoffs
 .$id.menubar.file.saveview add command -label "RT script" -underline 0\
@@ -414,6 +415,11 @@ menu .$id.menubar.file.pref -tearoff $do_tearoffs
 	-menu .$id.menubar.file.pref.cle
 .$id.menubar.file.pref add cascade -label "View Axes Position" -underline 0\
 	-menu .$id.menubar.file.pref.vap
+.$id.menubar.file.pref add separator
+.$id.menubar.file.pref add radiobutton -value 0 -variable glob_compat_mode\
+	-label "Tcl Evaluation" -underline 0
+.$id.menubar.file.pref add radiobutton -value 1 -variable glob_compat_mode\
+	-label "Object Name Matching" -underline 0
 
 menu .$id.menubar.file.pref.units -tearoff $do_tearoffs
 .$id.menubar.file.pref.units add radiobutton -value um -variable mged_display(units)\
@@ -468,8 +474,17 @@ menu .$id.menubar.edit -tearoff $do_tearoffs
 	-command "init_comb $id"
 
 menu .$id.menubar.create -tearoff $do_tearoffs
-.$id.menubar.create add command -label "Solid..." -underline 0 -command "solcreate $id"
-.$id.menubar.create add command -label "Instance..." -underline 0 -command "icreate $id"
+.$id.menubar.create add cascade -label "Solid" -underline 0 -menu .$id.menubar.create.solid
+.$id.menubar.create add command -label "Instance Creation Panel" -underline 0 -command "icreate $id"
+
+menu .$id.menubar.create.solid -tearoff $do_tearoffs
+.$id.menubar.create.solid add command -label "Solid Creation Panel" -underline 0 -command "solcreate $id"
+.$id.menubar.create.solid add separator
+set make_solid_types [_mged_make -t]
+foreach solid_type $make_solid_types {
+    .$id.menubar.create.solid add command -label $solid_type\
+	    -command "init_solid_create $id $solid_type"
+}
 
 menu .$id.menubar.view -tearoff $do_tearoffs
 .$id.menubar.view add command -label "Top" -underline 0\
@@ -518,23 +533,15 @@ set view_ring($id) 1
 menu .$id.menubar.viewring.delete -tearoff $do_tearoffs
 do_view_ring_entries $id d
 
-menu .$id.menubar.modes -tearoff $do_tearoffs
-.$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_rubber_band($id)\
-	-label "Rubber Band Persistance" -underline 12\
-	-command "mged_apply $id \"set rubber_band \$mged_rubber_band($id)\""
-.$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_rateknobs($id)\
-	-label "Rateknobs" -underline 0\
-	-command "mged_apply $id \"set rateknobs \$mged_rateknobs($id)\""
-
 menu .$id.menubar.settings -tearoff $do_tearoffs
+.$id.menubar.settings add cascade -label "Mouse Behavior" -underline 0\
+	-menu .$id.menubar.settings.mouse_behavior
 .$id.menubar.settings add cascade -label "Transform" -underline 0\
 	-menu .$id.menubar.settings.transform
 .$id.menubar.settings add cascade -label "Constraint Coords" -underline 0\
 	-menu .$id.menubar.settings.coord
 .$id.menubar.settings add cascade -label "Rotate About" -underline 0\
 	-menu .$id.menubar.settings.origin
-.$id.menubar.settings add cascade -label "Mouse Behavior" -underline 0\
-	-menu .$id.menubar.settings.mouse_behavior
 .$id.menubar.settings add cascade -label "Active Pane" -underline 0\
 	-menu .$id.menubar.settings.mpane
 .$id.menubar.settings add cascade -label "Apply To" -underline 1\
@@ -543,6 +550,8 @@ menu .$id.menubar.settings -tearoff $do_tearoffs
 	-menu .$id.menubar.settings.qray
 .$id.menubar.settings add cascade -label "Grid" -underline 0\
 	-menu .$id.menubar.settings.grid
+.$id.menubar.settings add cascade -label "Grid Spacing" -underline 5\
+	-menu .$id.menubar.settings.grid_spacing
 .$id.menubar.settings add cascade -label "Framebuffer" -underline 0\
 	-menu .$id.menubar.settings.fb
 
@@ -634,33 +643,15 @@ menu .$id.menubar.settings.grid -tearoff $do_tearoffs
 	-command "do_grid_anchor $id"
 .$id.menubar.settings.grid add command -label "Color" -underline 0\
 	-command "do_grid_color $id"
-.$id.menubar.settings.grid add cascade -label "Spacing" -underline 0\
+.$id.menubar.settings.grid add cascade -label "Spacing" -underline 1\
 	-menu .$id.menubar.settings.grid.spacing
 .$id.menubar.settings.grid add separator
-.$id.menubar.settings.grid add checkbutton -offvalue 0 -onvalue 1 -variable mged_grid_draw($id)\
-	-label "Draw Grid" -underline 5\
-	-command "mged_apply $id \"set grid_draw \$mged_grid_draw($id)\""
 .$id.menubar.settings.grid add checkbutton -offvalue 0 -onvalue 1 -variable mged_grid_snap($id)\
-	-label "Snap To Grid" -underline 3\
+	-label "Snap To Grid" -underline 0\
 	-command "mged_apply $id \"set grid_snap \$mged_grid_snap($id)\""
-
-#menu .$id.menubar.settings.grid.spacing -tearoff $do_tearoffs
-#.$id.menubar.settings.grid.spacing add cascade -label "Metric" -underline 0\
-#	-menu .$id.menubar.settings.grid.spacing.metric
-#.$id.menubar.settings.grid.spacing add cascade -label "English" -underline 0\
-#	-menu .$id.menubar.settings.grid.spacing.english
-#.$id.menubar.settings.grid.spacing add command -label "Arbitrary" -underline 0\
-#	-command "do_grid_spacing $id b"
-#.$id.menubar.settings.grid.spacing add command -label "Autosize" -underline 1\
-#	-command "grid_control_autosize $id; grid_spacing_apply $id b"
-#.$id.menubar.settings.grid.spacing add command -label "Both" -underline 0\
-#	-command "do_grid_spacing $id b"
-#.$id.menubar.settings.grid.spacing add command -label "Horizontal" -underline 0\
-#	-command "do_grid_spacing $id h"
-#.$id.menubar.settings.grid.spacing add command -label "Vertical" -underline 0\
-#	-command "do_grid_spacing $id v"
-#.$id.menubar.settings.grid.spacing add command -label "Autosize" -underline 0\
-#	-command "grid_control_autosize $id; grid_spacing_apply $id b"
+.$id.menubar.settings.grid add checkbutton -offvalue 0 -onvalue 1 -variable mged_grid_draw($id)\
+	-label "Draw Grid" -underline 0\
+	-command "mged_apply $id \"set grid_draw \$mged_grid_draw($id)\""
 
 menu .$id.menubar.settings.grid.spacing -tearoff $do_tearoffs
 .$id.menubar.settings.grid.spacing add command -label "Autosize" -underline 0\
@@ -694,6 +685,40 @@ menu .$id.menubar.settings.grid.spacing -tearoff $do_tearoffs
 .$id.menubar.settings.grid.spacing add command -label "yard" -underline 0\
 	-command "set_grid_spacing $id yard"
 .$id.menubar.settings.grid.spacing add command -label "mile" -underline 0\
+	-command "set_grid_spacing $id mile"
+
+menu .$id.menubar.settings.grid_spacing -tearoff $do_tearoffs
+.$id.menubar.settings.grid_spacing add command -label "Autosize" -underline 0\
+	-command "grid_control_autosize $id; grid_spacing_apply $id b"
+.$id.menubar.settings.grid_spacing add command -label "Arbitrary" -underline 1\
+	-command "do_grid_spacing $id b"
+.$id.menubar.settings.grid_spacing add separator
+.$id.menubar.settings.grid_spacing add command -label "micrometer" -underline 4\
+	-command "set_grid_spacing $id micrometer"
+.$id.menubar.settings.grid_spacing add command -label "millimeter" -underline 2\
+	-command "set_grid_spacing $id millimeter"
+.$id.menubar.settings.grid_spacing add command -label "centimeter" -underline 0\
+	-command "set_grid_spacing $id centimeter"
+.$id.menubar.settings.grid_spacing add command -label "decimeter" -underline 0\
+	-command "set_grid_spacing $id decimeter"
+.$id.menubar.settings.grid_spacing add command -label "meter" -underline 0\
+	-command "set_grid_spacing $id meter"
+.$id.menubar.settings.grid_spacing add command -label "kilometer" -underline 0\
+	-command "set_grid_spacing $id kilometer"
+.$id.menubar.settings.grid_spacing add separator
+.$id.menubar.settings.grid_spacing add command -label "1/10 inch" -underline 0\
+	-command "set_grid_spacing $id \"1/10 inch\""
+.$id.menubar.settings.grid_spacing add command -label "1/4 inch" -underline 2\
+	-command "set_grid_spacing $id \"1/4 inch\""
+.$id.menubar.settings.grid_spacing add command -label "1/2 inch" -underline 2\
+	-command "set_grid_spacing $id \"1/2 inch\""
+.$id.menubar.settings.grid_spacing add command -label "inch" -underline 0\
+	-command "set_grid_spacing $id inch"
+.$id.menubar.settings.grid_spacing add command -label "foot" -underline 0\
+	-command "set_grid_spacing $id foot"
+.$id.menubar.settings.grid_spacing add command -label "yard" -underline 0\
+	-command "set_grid_spacing $id yard"
+.$id.menubar.settings.grid_spacing add command -label "mile" -underline 0\
 	-command "set_grid_spacing $id mile"
 
 menu .$id.menubar.settings.coord -tearoff $do_tearoffs
@@ -732,6 +757,64 @@ menu .$id.menubar.settings.transform -tearoff $do_tearoffs
 	-label "Model Params" -underline 0\
 	-command "set_transform $id" -state disabled
 
+menu .$id.menubar.modes -tearoff $do_tearoffs
+.$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_rateknobs($id)\
+	-label "Rateknobs" -underline 0\
+	-command "mged_apply $id \"set rateknobs \$mged_rateknobs($id)\""
+.$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_grid_snap($id)\
+	-label "Snap To Grid" -underline 0\
+	-command "mged_apply $id \"set grid_snap \$mged_grid_snap($id)\""
+.$id.menubar.modes add separator
+.$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_grid_draw($id)\
+	-label "Draw Grid" -underline 0\
+	-command "mged_apply $id \"set grid_draw \$mged_grid_draw($id)\""
+.$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_rubber_band($id)\
+	-label "Persistent Rubber Band" -underline 0\
+	-command "mged_apply $id \"set rubber_band \$mged_rubber_band($id)\""
+.$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_adc_draw($id)\
+	-label "Angle/Dist Cursor" -underline 0 \
+	-command "mged_apply $id \"adc draw \$mged_adc_draw($id)\""
+.$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_faceplate($id)\
+	-label "Faceplate" -underline 7\
+	-command "mged_apply $id \"set faceplate \$mged_faceplate($id)\""
+.$id.menubar.modes add cascade -label "Axes" -underline 1\
+	-menu .$id.menubar.modes.axes
+.$id.menubar.modes add separator
+.$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_fb($id)\
+	-label "Framebuffer Active" -underline 0 \
+	-command "set_fb $id"
+.$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_listen($id)\
+	-label "Listen For Clients" -underline 0\
+	-command "set_listen $id" -state disabled
+.$id.menubar.modes add separator
+.$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable multi_view($id)\
+	-label "Multipane" -underline 0 -command "setmv $id"
+.$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable show_edit_info($id)\
+	-label "Edit Info" -underline 0\
+	-command "toggle_edit_info $id"
+.$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable status_bar($id)\
+	-label "Status Bar" -underline 7\
+	-command "toggle_status_bar $id"
+if {$comb} {
+.$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable cmd_win($id)\
+	-label "Command Window" -underline 0\
+	-command "set_cmd_win $id"
+.$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable dm_win($id)\
+	-label "Graphics Window" -underline 0\
+	-command "set_dm_win $id"
+} 
+
+menu .$id.menubar.modes.axes -tearoff $do_tearoffs
+.$id.menubar.modes.axes add checkbutton -offvalue 0 -onvalue 1\
+	-variable mged_v_axes($id) -label "View" -underline 0\
+	-command "mged_apply $id \"set v_axes \$mged_v_axes($id)\""
+.$id.menubar.modes.axes add checkbutton -offvalue 0 -onvalue 1\
+	-variable mged_m_axes($id) -label "Model" -underline 0\
+	-command "mged_apply $id \"set m_axes \$mged_m_axes($id)\""
+.$id.menubar.modes.axes add checkbutton -offvalue 0 -onvalue 1\
+	-variable mged_e_axes($id) -label "Edit" -underline 0\
+	-command "mged_apply $id \"set e_axes \$mged_e_axes($id)\""
+
 menu .$id.menubar.tools -tearoff $do_tearoffs
 .$id.menubar.tools add command -label "ADC Control Panel" -underline 0\
 	-command "init_adc_control $id"
@@ -742,53 +825,9 @@ menu .$id.menubar.tools -tearoff $do_tearoffs
 .$id.menubar.tools add command -label "Combination Edit Panel" -underline 0\
 	-command "init_comb $id"
 .$id.menubar.tools add separator
-.$id.menubar.tools add checkbutton -offvalue 0 -onvalue 1 -variable multi_view($id)\
-	-label "Multipane" -underline 0 -command "setmv $id"
-.$id.menubar.tools add checkbutton -offvalue 0 -onvalue 1 -variable show_edit_info($id)\
-	-label "Edit Info" -underline 0\
-	-command "toggle_edit_info $id"
-if {$comb} {
-.$id.menubar.tools add checkbutton -offvalue 0 -onvalue 1 -variable cmd_win($id)\
-	-label "Command Window" -underline 1\
-	-command "set_cmd_win $id"
-.$id.menubar.tools add checkbutton -offvalue 0 -onvalue 1 -variable dm_win($id)\
-	-label "Graphics Window" -underline 1\
-	-command "set_dm_win $id"
-} 
-.$id.menubar.tools add checkbutton -offvalue 0 -onvalue 1 -variable status_bar($id)\
-	-label "Status Bar" -underline 0\
-	-command "toggle_status_bar $id"
 .$id.menubar.tools add checkbutton -offvalue 0 -onvalue 1 -variable buttons_on($id)\
 	-label "Button Menu" -underline 0\
 	-command "toggle_button_menu $id"
-
-menu .$id.menubar.other -tearoff $do_tearoffs
-.$id.menubar.other add checkbutton -offvalue 0 -onvalue 1 -variable mged_grid_draw($id)\
-	-label "Draw Grid" -underline 5\
-	-command "mged_apply $id \"set grid_draw \$mged_grid_draw($id)\""
-.$id.menubar.other add checkbutton -offvalue 0 -onvalue 1 -variable mged_fb($id)\
-	-label "Framebuffer Active" -underline 0 \
-	-command "set_fb $id"
-.$id.menubar.other add checkbutton -offvalue 0 -onvalue 1 -variable mged_adc_draw($id)\
-	-label "Angle/Dist Cursor" -underline 0 \
-	-command "mged_apply $id \"adc draw \$mged_adc_draw($id)\""
-.$id.menubar.other add checkbutton -offvalue 0 -onvalue 1 -variable mged_faceplate($id)\
-	-label "Faceplate" -underline 2\
-	-command "mged_apply $id \"set faceplate \$mged_faceplate($id)\""
-.$id.menubar.other add separator
-.$id.menubar.other add cascade -label "Axes" -underline 1\
-	-menu .$id.menubar.other.axes
-
-menu .$id.menubar.other.axes -tearoff $do_tearoffs
-.$id.menubar.other.axes add checkbutton -offvalue 0 -onvalue 1\
-	-variable mged_v_axes($id) -label "View" -underline 0\
-	-command "mged_apply $id \"set v_axes \$mged_v_axes($id)\""
-.$id.menubar.other.axes add checkbutton -offvalue 0 -onvalue 1\
-	-variable mged_m_axes($id) -label "Model" -underline 0\
-	-command "mged_apply $id \"set m_axes \$mged_m_axes($id)\""
-.$id.menubar.other.axes add checkbutton -offvalue 0 -onvalue 1\
-	-variable mged_e_axes($id) -label "Edit" -underline 0\
-	-command "mged_apply $id \"set e_axes \$mged_e_axes($id)\""
 
 menu .$id.menubar.help -tearoff $do_tearoffs
 .$id.menubar.help add command -label "About" -underline 0\
@@ -859,8 +898,10 @@ beginning_of_line .$id.t
 set moveView(.$id.t) 0
 set freshline(.$id.t) 1
 set scratchline(.$id.t) ""
+set vi_change_flag(.$id.t) 0
 set vi_delete_flag(.$id.t) 0
 set vi_search_flag(.$id.t) 0
+set vi_search_char(.$id.t) ""
 
 .$id.t tag configure sel -background #fefe8e
 .$id.t tag configure result -foreground blue3
@@ -1672,10 +1713,7 @@ proc mged_apply { id cmd } {
     } elseif {$mged_apply_to($id) == 3} {
 	mged_apply_all $cmd
     } else {
-	if {$mged_dm_loc($id) != "lv"} {
-	    winset $mged_active_dm($id)
-	}
-
+	winset $mged_active_dm($id)
 	catch [list uplevel #0 $cmd]
     }
 }
@@ -1741,10 +1779,12 @@ proc set_fb { id } {
 
     if {$mged_fb($id)} {
 	.$id.menubar.settings.fb entryconfigure 7 -state normal
+	.$id.menubar.modes entryconfigure 10 -state normal
 	set mged_listen($id) 1
 	mged_apply $id "set listen \$mged_listen($id)"
     } else {
 	.$id.menubar.settings.fb entryconfigure 7 -state disabled
+	.$id.menubar.modes entryconfigure 10 -state disabled
 	set mged_listen($id) 0
     }
 }
