@@ -478,7 +478,7 @@ char	**argv;
 	}
 
 #ifdef DO_SINGLE_DISPLAY_LIST
-	for( BU_LIST_FOR(dmlp, dm_list, &head_dm_list.l) ){
+	FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l){
 	  if(dmlp->_dmp->dm_displaylist && dmlp->_mged_variables.dlist){
 	    save_dmlp = curr_dm_list;
 	    curr_dm_list = dmlp;
