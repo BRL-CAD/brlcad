@@ -46,6 +46,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
  *  These interfaces provide the standard UNIX-Plot functionality
  */
 
+void
 pl_point( plotfp, x, y )
 register FILE *plotfp;
 int x, y;
@@ -55,6 +56,7 @@ int x, y;
 	putsi( y );
 }
 
+void
 pl_line( plotfp, x1, y1, x2, y2 )
 register FILE *plotfp;
 int x1, y1, x2, y2;
@@ -66,6 +68,7 @@ int x1, y1, x2, y2;
 	putsi( y2 );
 }
 
+void
 pl_linmod( plotfp, s )
 register FILE *plotfp;
 register char *s;
@@ -76,6 +79,7 @@ register char *s;
 	putc( '\n', plotfp );
 }
 
+void
 pl_move( plotfp, x, y )
 register FILE *plotfp;
 int x, y;
@@ -85,6 +89,7 @@ int x, y;
 	putsi( y );
 }
 
+void
 pl_cont( plotfp, x, y )
 register FILE *plotfp;
 int x, y;
@@ -94,6 +99,7 @@ int x, y;
 	putsi( y );
 }
 
+void
 pl_label( plotfp, s )
 register FILE *plotfp;
 register char *s;
@@ -104,6 +110,7 @@ register char *s;
 	putc( '\n', plotfp );
 }
 
+void
 pl_space( plotfp, x1, y1, x2, y2 )
 register FILE *plotfp;
 int x1, y1, x2, y2;
@@ -115,12 +122,14 @@ int x1, y1, x2, y2;
 	putsi( y2 );
 }
 
+void
 pl_erase( plotfp )
 register FILE *plotfp;
 {
 	putc( 'e', plotfp );
 }
 
+void
 pl_circle( plotfp, x, y, r )
 register FILE *plotfp;
 int x, y, r;
@@ -131,6 +140,7 @@ int x, y, r;
 	putsi( r );
 }
 
+void
 pl_arc( plotfp, xc, yc, x1, y1, x2, y2 )
 register FILE *plotfp;
 int xc, yc, x1, y1, x2, y2;
@@ -144,6 +154,7 @@ int xc, yc, x1, y1, x2, y2;
 	putsi( y2 );
 }
 
+void
 pl_box( plotfp, x1, y1, x2, y2 )
 register FILE *plotfp;
 int x1, y1, x2, y2;
@@ -161,6 +172,7 @@ int x1, y1, x2, y2;
  */
 
 /* Warning: r, g, b are ints.  The output is chars. */
+void
 pl_color( plotfp, r, g, b )
 register FILE *plotfp;
 int r, g, b;
@@ -171,6 +183,7 @@ int r, g, b;
 	putc( b, plotfp );
 }
 
+void
 pl_flush( plotfp )
 register FILE *plotfp;
 {
@@ -178,6 +191,7 @@ register FILE *plotfp;
 	fflush( plotfp );
 }
 
+void
 pl_3space( plotfp, x1, y1, z1, x2, y2, z2 )
 register FILE *plotfp;
 int x1, y1, z1, x2, y2, z2;
@@ -191,6 +205,7 @@ int x1, y1, z1, x2, y2, z2;
 	putsi( z2 );
 }
 
+void
 pl_3point( plotfp, x, y, z )
 register FILE *plotfp;
 int x, y, z;
@@ -201,6 +216,7 @@ int x, y, z;
 	putsi( z );
 }
 
+void
 pl_3move( plotfp, x, y, z )
 register FILE *plotfp;
 int x, y, z;
@@ -211,6 +227,7 @@ int x, y, z;
 	putsi( z );
 }
 
+void
 pl_3cont( plotfp, x, y, z )
 register FILE *plotfp;
 int x, y, z;
@@ -221,6 +238,7 @@ int x, y, z;
 	putsi( z );
 }
 
+void
 pl_3line( plotfp, x1, y1, z1, x2, y2, z2 )
 register FILE *plotfp;
 int x1, y1, z1, x2, y2, z2;
@@ -234,6 +252,7 @@ int x1, y1, z1, x2, y2, z2;
 	putsi( z2 );
 }
 
+void
 pl_3box( plotfp, x1, y1, z1, x2, y2, z2 )
 register FILE *plotfp;
 int x1, y1, z1, x2, y2, z2;
@@ -266,6 +285,7 @@ int x1, y1, z1, x2, y2, z2;
  * Double floating point versions
  */
 
+void
 pd_point( plotfp, x, y )
 register FILE *plotfp;
 double x, y;
@@ -281,6 +301,7 @@ double x, y;
 	fwrite( out, 1, 2*8+1, plotfp );
 }
 
+void
 pd_line( plotfp, x1, y1, x2, y2 )
 register FILE *plotfp;
 double x1, y1, x2, y2;
@@ -300,6 +321,7 @@ double x1, y1, x2, y2;
 
 /* Note: no pd_linmod(), just use pl_linmod() */
 
+void
 pd_move( plotfp, x, y )
 register FILE *plotfp;
 double x, y;
@@ -315,6 +337,7 @@ double x, y;
 	fwrite( out, 1, 2*8+1, plotfp );
 }
 
+void
 pd_cont( plotfp, x, y )
 register FILE *plotfp;
 double x, y;
@@ -330,6 +353,7 @@ double x, y;
 	fwrite( out, 1, 2*8+1, plotfp );
 }
 
+void
 pd_space( plotfp, x1, y1, x2, y2 )
 register FILE *plotfp;
 double x1, y1, x2, y2;
@@ -347,6 +371,7 @@ double x1, y1, x2, y2;
 	fwrite( out, 1, 4*8+1, plotfp );
 }
 
+void
 pd_circle( plotfp, x, y, r )
 register FILE *plotfp;
 double x, y, r;
@@ -363,6 +388,7 @@ double x, y, r;
 	fwrite( out, 1, 3*8+1, plotfp );
 }
 
+void
 pd_arc( plotfp, xc, yc, x1, y1, x2, y2 )
 register FILE *plotfp;
 double xc, yc, x1, y1, x2, y2;
@@ -382,6 +408,7 @@ double xc, yc, x1, y1, x2, y2;
 	fwrite( out, 1, 6*8+1, plotfp );
 }
 
+void
 pd_box( plotfp, x1, y1, x2, y2 )
 register FILE *plotfp;
 double x1, y1, x2, y2;
@@ -395,6 +422,7 @@ double x1, y1, x2, y2;
 }
 
 /* Double 3-D, both in vector and enumerated versions */
+void
 pdv_3space( plotfp, min, max )
 register FILE *plotfp;
 vect_t	min;
@@ -409,6 +437,7 @@ vect_t	max;
 	fwrite( out, 1, 6*8+1, plotfp );
 }
 
+void
 pd_3space( plotfp, x1, y1, z1, x2, y2, z2 )
 register FILE *plotfp;
 double x1, y1, z1, x2, y2, z2;
@@ -428,6 +457,7 @@ double x1, y1, z1, x2, y2, z2;
 	fwrite( out, 1, 6*8+1, plotfp );
 }
 
+void
 pdv_3point( plotfp, pt )
 register FILE *plotfp;
 vect_t	pt;
@@ -440,6 +470,7 @@ vect_t	pt;
 	fwrite( out, 1, 3*8+1, plotfp );
 }
 
+void
 pd_3point( plotfp, x, y, z )
 register FILE *plotfp;
 double x, y, z;
@@ -456,6 +487,7 @@ double x, y, z;
 	fwrite( out, 1, 3*8+1, plotfp );
 }
 
+void
 pdv_3move( plotfp, pt )
 register FILE *plotfp;
 vect_t	pt;
@@ -468,6 +500,7 @@ vect_t	pt;
 	fwrite( out, 1, 3*8+1, plotfp );
 }
 
+void
 pd_3move( plotfp, x, y, z )
 register FILE *plotfp;
 double x, y, z;
@@ -484,6 +517,7 @@ double x, y, z;
 	fwrite( out, 1, 3*8+1, plotfp );
 }
 
+void
 pdv_3cont( plotfp, pt )
 register FILE *plotfp;
 vect_t	pt;
@@ -496,6 +530,7 @@ vect_t	pt;
 	fwrite( out, 1, 3*8+1, plotfp );
 }
 
+void
 pd_3cont( plotfp, x, y, z )
 register FILE *plotfp;
 double x, y, z;
@@ -512,6 +547,7 @@ double x, y, z;
 	fwrite( out, 1, 3*8+1, plotfp );
 }
 
+void
 pdv_3line( plotfp, a, b )
 register FILE *plotfp;
 vect_t	a, b;
@@ -525,6 +561,7 @@ vect_t	a, b;
 	fwrite( out, 1, 6*8+1, plotfp );
 }
 
+void
 pd_3line( plotfp, x1, y1, z1, x2, y2, z2 )
 register FILE *plotfp;
 double x1, y1, z1, x2, y2, z2;
@@ -544,6 +581,7 @@ double x1, y1, z1, x2, y2, z2;
 	fwrite( out, 1, 6*8+1, plotfp );
 }
 
+void
 pdv_3box( plotfp, a, b )
 register FILE *plotfp;
 vect_t	a, b;
@@ -572,6 +610,7 @@ vect_t	a, b;
 	pd_3cont( plotfp, b[X], b[Y], b[Z] );
 }
 
+void
 pd_3box( plotfp, x1, y1, z1, x2, y2, z2 )
 register FILE *plotfp;
 double x1, y1, z1, x2, y2, z2;
