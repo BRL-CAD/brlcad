@@ -35,10 +35,6 @@ RT_EXTERN(union tree *nmg_booltree_leaf_tess, (struct db_tree_state *tsp, struct
 
 RT_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree));
 
-int		heap_find(), heap_insert();
-struct vertex	**init_heap();
-void		heap_increase();
-
 
 static char	usage[] = "Usage: %s [-v] [-d] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-p prefix] brlcad_db.g object(s)\n";
 
@@ -46,7 +42,6 @@ static int	NMG_debug;	/* saved arg of -X, for longjmp handling */
 static int	verbose;
 static int	debug_plots;	/* Make debugging plots */
 static int	ncpu = 1;	/* Number of processors */
-int		heap_cur_sz;	/* Next free spot in heap. */
 static char	*prefix = NULL;	/* output filename prefix. */
 static FILE	*fp_fig;	/* Jack Figure file. */
 static struct db_i	*dbip;
@@ -191,7 +186,7 @@ char	*argv[];
 		&jack_tree_state,
 		0,			/* take all regions */
 		do_region_end,
-		nmg_booltree_leaf_tess);
+		nmg_booltree_leaf_tess);	/* in librt/nmg_bool.c */
 
 	fprintf(fp_fig, "\troot=%s_seg.base;\n", rt_vls_addr(&base_seg));
 	fprintf(fp_fig, "}\n");
@@ -408,7 +403,7 @@ union tree		*curtree;
 		*tsp->ts_m = nmg_mm();
 		goto out;
 	}
-	r = nmg_booltree_evaluate(curtree, &tol);
+	r = nmg_booltree_evaluate(curtree, &tol);	/* librt/nmg_bool.c */
 	RT_UNSETJUMP;		/* Relinquish the protection */
 	regions_done++;
 	if (r != 0) {
@@ -527,115 +522,16 @@ nmg_to_psurf(r, fp_psurf)
 struct nmgregion *r;		/* NMG region to be converted. */
 FILE		*fp_psurf;	/* Jack format file to write vertex list to. */
 {
-	int			cnt, i, sz;
-	struct edgeuse		*eu;
-	struct faceuse		*fu;
-	struct loopuse		*lu;
-	struct shell		*s;
-	struct vertex		*v, **verts[1];
+	int			i;
 	int			*map;	/* map from v->index to Jack vert # */
 	struct nmg_ptbl		vtab;	/* vertex table */
 
 	map = (int *)rt_calloc(r->m_p->maxindex, sizeof(int *), "Jack vert map");
 
-#if 0
-	sz = 1000;
-	verts[0] = init_heap(sz);
-	cnt = 0;
-
-	for (RT_LIST_FOR(s, shell, &r->s_hd)) {
-		/* Shell is made of faces. */
-		for (RT_LIST_FOR(fu, faceuse, &s->fu_hd)) {
-			NMG_CK_FACEUSE(fu);
-			if (fu->orientation != OT_SAME)
-				continue;
-			for (RT_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
-				NMG_CK_LOOPUSE(lu);
-				if (RT_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_EDGEUSE_MAGIC) {
-					for (RT_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
-						NMG_CK_EDGEUSE(eu);
-						NMG_CK_EDGE(eu->e_p);
-						NMG_CK_VERTEXUSE(eu->vu_p);
-						NMG_CK_VERTEX(eu->vu_p->v_p);
-						NMG_CK_VERTEX_G(eu->vu_p->v_p->vg_p);
-						cnt = heap_insert(verts, &sz, eu->vu_p->v_p);
-					}
-				} else if (RT_LIST_FIRST_MAGIC(&lu->down_hd)
-					== NMG_VERTEXUSE_MAGIC) {
-					v = RT_LIST_PNEXT(vertexuse, &lu->down_hd)->v_p;
-					NMG_CK_VERTEX(v);
-					NMG_CK_VERTEX_G(v->vg_p);
-					cnt = heap_insert(verts, &sz, v);
-				} else
-					rt_log("nmg_to_psurf: loopuse mess up! (1)\n");
-			}
-
-			/* Shell contains loops. */
-			for (RT_LIST_FOR(lu, loopuse, &s->lu_hd)) {
-				NMG_CK_LOOPUSE(lu);
-				if (RT_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_EDGEUSE_MAGIC) {
-					for (RT_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
-						NMG_CK_EDGEUSE(eu);
-						NMG_CK_EDGE(eu->e_p);
-						NMG_CK_VERTEXUSE(eu->vu_p);
-						NMG_CK_VERTEX(eu->vu_p->v_p);
-						NMG_CK_VERTEX_G(eu->vu_p->v_p->vg_p);
-						cnt = heap_insert(verts, &sz, eu->vu_p->v_p);
-					}
-				} else if (RT_LIST_FIRST_MAGIC(&lu->down_hd)
-					== NMG_VERTEXUSE_MAGIC) {
-					v = RT_LIST_PNEXT(vertexuse, &lu->down_hd)->v_p;
-					NMG_CK_VERTEX(v);
-					NMG_CK_VERTEX_G(v->vg_p);
-					cnt = heap_insert(verts, &sz, v);
-				} else
-					rt_log("nmg_to_psurf: loopuse mess up! (1)\n");
-			}
-
-			/* Shell contains edges. */
-			for (RT_LIST_FOR(eu, edgeuse, &s->eu_hd)) {
-				NMG_CK_EDGEUSE(eu);
-				NMG_CK_EDGE(eu->e_p);
-				NMG_CK_VERTEXUSE(eu->vu_p);
-				NMG_CK_VERTEX(eu->vu_p->v_p);
-				NMG_CK_VERTEX_G(eu->vu_p->v_p->vg_p);
-				cnt = heap_insert(verts, &sz, eu->vu_p->v_p);
-			}
-
-			/* Shell contains a single vertex. */
-			if (s->vu_p) {
-				NMG_CK_VERTEXUSE(s->vu_p);
-				NMG_CK_VERTEX(s->vu_p->v_p);
-				NMG_CK_VERTEX_G(s->vu_p->v_p->vg_p);
-				cnt = heap_insert(verts, &sz, s->vu_p->v_p);
-			}
-
-			if (RT_LIST_IS_EMPTY(&s->fu_hd) &&
-				RT_LIST_IS_EMPTY(&s->lu_hd) &&
-				RT_LIST_IS_EMPTY(&s->eu_hd) && !s->vu_p) {
-				rt_log("WARNING nmg_to_psurf: empty shell\n");
-			}
-		}
-	}
-
-	/* XXX What to do if cnt == 0 ? */
-
-	/* Print list of unique vertices and convert from mm to cm. */
-	for (i = 1; i < cnt; i++)  {
-		struct vertex			*v;
-		register struct vertex_g	*vg;
-		v = verts[0][i];
-		NMG_CK_VERTEX(v);
-		vg = v->vg_p;
-		NMG_CK_VERTEX_G(vg);
-		NMG_INDEX_ASSIGN( map, v, i );	/* map[v] = i */
-		fprintf(fp_psurf, "%f\t%f\t%f\n",
-			vg->coord[X] / 10.,
-			vg->coord[Y] / 10.,
-			vg->coord[Z] / 10.);
-	}
-#else
+	/* Built list of vertex structs */
 	nmg_region_vertex_list( &vtab, r );
+
+	/* XXX What to do if 0 vertices?  */
 
 	/* Print list of unique vertices and convert from mm to cm. */
 	for (i = 0; i < NMG_TBL_END(&vtab); i++)  {
@@ -645,19 +541,17 @@ FILE		*fp_psurf;	/* Jack format file to write vertex list to. */
 		NMG_CK_VERTEX(v);
 		vg = v->vg_p;
 		NMG_CK_VERTEX_G(vg);
-		NMG_INDEX_ASSIGN( map, v, i+1 );	/* map[v] = i+1 */
+		NMG_INDEX_ASSIGN( map, v, i+1 );  /* map[v->index] = i+1 */
 		fprintf(fp_psurf, "%f\t%f\t%f\n",
 			vg->coord[X] / 10.,
 			vg->coord[Y] / 10.,
 			vg->coord[Z] / 10.);
 	}
-	nmg_tbl( &vtab, TBL_FREE, 0 );
-#endif
 	fprintf(fp_psurf, ";;\n");
-	jack_faces(r, fp_psurf, verts[0], cnt-1, map);
-#if 0
-	rt_free((char *)(verts[0]), "heap");
-#endif
+
+	jack_faces(r, fp_psurf, map);
+
+	nmg_tbl( &vtab, TBL_FREE, 0 );
 	rt_free( (char *)map, "Jack vert map" );
 }
 
@@ -670,14 +564,11 @@ FILE		*fp_psurf;	/* Jack format file to write vertex list to. */
 *	stored in a heap.  Using this heap and the nmg structure, a
 *	list of face vertices is written to the Jack data base file.
 */
-jack_faces(r, fp_psurf, verts, sz, map)
+jack_faces(r, fp_psurf, map)
 struct nmgregion *r;		/* NMG region to be converted. */
 FILE		*fp_psurf;	/* Jack format file to write face vertices to. */
-struct vertex	**verts;	/* Heap of vertex structs. */
-int		sz;	/* Size of vertex heap. */
 int		*map;
 {
-	point_t			vert;
 	struct edgeuse		*eu;
 	struct faceuse		*fu;
 	struct loopuse		*lu;
@@ -764,118 +655,4 @@ int		*map;
 
 	}
 	fprintf(fp_psurf, ";;\n");
-}
-
-/*
-*	I N I T _ H E A P
-*
-*	Initialize an array-based implementation of a heap of vertex structs.
-*	(Heap: Binary tree w/value of parent > than that of children.)
-*/
-struct vertex **
-init_heap(n)
-int	n;
-{
-	extern int	heap_cur_sz;
-	struct vertex	**heap;
-
-	heap_cur_sz = 1;
-	heap = (struct vertex **)
-		rt_malloc(1 + n*sizeof(struct vertex *), "heap");
-	if (heap == (struct vertex **)NULL) {
-		rt_log("init_heap: no mem\n");
-		rt_bomb("");
-	}
-	return(heap);
-}
-
-/*
-*	H E A P _ I N C R E A S E
-*
-*	Make a heap bigger to make room for new entries.
-*/
-void
-heap_increase(h, n)
-struct vertex	**h[1];
-int	*n;
-{
-	struct vertex	**big_heap;
-	int	i;
-
-	big_heap = (struct vertex **)
-		rt_malloc(1 + 3 * (*n) * sizeof(struct vertex *), "heap");
-	if (big_heap == (struct vertex **)NULL)
-		rt_bomb("heap_increase: no mem\n");
-	for (i = 1; i <= *n; i++)
-		big_heap[i] = h[0][i];
-	*n *= 3;
-	rt_free((char *)h[0], "heap");
-	h[0] = big_heap;
-}
-
-/*
-*	H E A P _ I N S E R T
-*
-*	Insert a vertex struct into the heap (only if it is
-*	not already there).
-*/
-int
-heap_insert(h, n, i)
-struct vertex	**h[1];	/* Heap of vertices. */
-int		*n;	/* Max size of heap. */
-struct vertex	*i;	/* Item to insert. */
-{
-	extern int	heap_cur_sz;
-	struct vertex	**new_heap, *tmp;
-	int		cur, done;
-
-	if (heap_find(h[0], heap_cur_sz, i, 1))	/* Already in heap. */
-		return(heap_cur_sz);
-
-	if (heap_cur_sz > *n)
-		heap_increase(h, n);
-
-	cur = heap_cur_sz;
-	h[0][cur] = i;	/* Put at bottom of heap. */
-
-	/* Bubble item up in heap. */
-	done = 0;
-	while (cur > 1 && !done)
-		if (h[0][cur] < h[0][cur>>1]) {
-			tmp          = h[0][cur>>1];
-			h[0][cur>>1] = h[0][cur];
-			h[0][cur]    = tmp;
-			cur >>= 1;
-		} else
-			done = 1;
-	heap_cur_sz++;
-	return(heap_cur_sz);
-}
-
-/*
-*	H E A P _ F I N D
-*
-*	See if a given vertex struct is in the heap.  If so,
-*	return its location in the heap array.
-*/
-int
-heap_find(h, n, i, loc)
-struct vertex	**h;	/* Heap of vertexs. */
-int		n;	/* Max size of heap. */
-struct vertex	*i;	/* Item to search for. */
-int		loc;	/* Location to start search at. */
-{
-	int		retval;
-
-	if (loc > n || h[loc] > i)
-		retval = 0;
-	else if (h[loc] == i)
-		retval = loc;
-	else {
-		loc <<= 1;
-		retval = heap_find(h, n, i, loc);
-		if (!retval)
-			retval = heap_find(h, n, i, loc+1);
-	}
-	return(retval);
 }
