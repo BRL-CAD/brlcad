@@ -40,13 +40,13 @@ class Mged {
     public method blast {args}
     public method c {args}
     public method cat {args}
-    public method clear {}
+    public method clear {args}
     public method color {args}
     public method comb {args}
     public method concat {args}
     public method copyeval {args}
     public method cp {args}
-    public method dbip {}
+    public method dbip {args}
     public method draw {args}
     public method dump {args}
     public method dup {args}
@@ -67,7 +67,7 @@ class Mged {
     public method killall {args}
     public method killtree {args}
     public method l {args}
-    public method label {obj}
+    public method label {args}
     public method listeval {args}
     public method ls {args}
     public method lt {args}
@@ -184,8 +184,8 @@ body Mged::dump {args} {
     eval $db dump $args
 }
 
-body Mged::dbip {} {
-    $db dbip
+body Mged::dbip {args} {
+    eval $db dbip $args
 }
 
 body Mged::l {args} {
@@ -398,7 +398,7 @@ body Mged::xpush {args} {
 }
 
 body Mged::zap {args} {
-    $db zap $args
+    eval $db zap $args
 }
 
 body Mged::binary {args} {
@@ -409,8 +409,8 @@ body Mged::blast {args} {
     eval $db blast $args
 }
 
-body Mged::clear {} {
-    $db clear
+body Mged::clear {args} {
+    eval $db clear $args
 }
 
 body Mged::ev {args} {
