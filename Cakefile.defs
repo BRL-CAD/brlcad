@@ -475,7 +475,7 @@ set -S2 "/bin/sh"
 #		endif
 #	endif
 #	define	GFLAG		-G 14
-#	define  CC_OPTS		GFLAG  -prototypes
+#	define  CC_OPTS		GFLAG  -prototypes -DIRIX=3
 #	define	STANDARD_LIBES	-lm -lmalloc -lc''SHARED
 #	define	LIBRT_LIBES	-lmpc
 #	define	LGT_CONFIG	GFLAG -lmpc
@@ -532,7 +532,7 @@ set -S2 "/bin/sh"
 #	endif
 #	define	GFLAG		-G 13
 /*	ANSI+POSIX mode is used over ANSI, to get fdopen(), etc, defined. */
-#	define  CC_OPTS		GFLAG -ansiposix
+#	define  CC_OPTS		GFLAG -ansiposix -DIRIX=4
 #	define	STANDARD_LIBES	-lm -lmalloc -lc''SHARED
 #	define	LIBRT_LIBES	-lmpc
 #	define	LGT_CONFIG	GFLAG -lmpc
@@ -592,7 +592,7 @@ set -S2 "/bin/sh"
 # endif
 /* -ansiposix	ANSI+POSIX mode is used over ANSI, to get fdopen(), etc, defined. */
 /* -ansi is used, to get struct timeval */
-#	define  CC_OPTS		GFLAG -ansiposix
+#	define  CC_OPTS		GFLAG -ansiposix -DIRIX=5
 #	define	LIBRT_LIBES	-lmpc
 #	define	LGT_CONFIG	GFLAG -lmpc
 #	define	LIBMALLOC	/* needs malloc() from -lmpc */
