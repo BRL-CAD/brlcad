@@ -246,6 +246,11 @@ union tree		*tp;
 }
 
 /*
+ *			D B _ T C L _ T R E E _ P A R S E
+ *
+ *  Take a TCL-style string description of a binary tree, as produced by
+ *  db_tcl_tree_describe(), and reconstruct
+ *  the in-memory form of that tree.
  */
 union tree *
 db_tcl_tree_parse( interp, str )
@@ -265,17 +270,19 @@ char		*str;
 		return TREE_NULL;
 
 	if( argc <= 0 || argc > 3 )  {
-		Tcl_AppendResult( interp, "db_tcl_tree_parse: argc <=0 or >3 on this subtree: ",
+		Tcl_AppendResult( interp, "db_tcl_tree_parse: tree node does not have 1, 2 or 2 elements: ",
 			str, (char *)NULL );
 		goto out;
 	}
 
+#if 0
 Tcl_AppendResult( interp, "\n\ndb_tcl_tree_parse(): ", str, "\n", NULL );
 
 Tcl_AppendResult( interp, "db_tcl_tree_parse() arg0=", argv[0], NULL );
 if(argc > 1 ) Tcl_AppendResult( interp, "\n\targ1=", argv[1], NULL );
 if(argc > 2 ) Tcl_AppendResult( interp, "\n\targ2=", argv[2], NULL );
 Tcl_AppendResult( interp, "\n\n", NULL);
+#endif
 
 	if( argv[0][1] != '\0' )  {
 		Tcl_AppendResult( interp, "db_tcl_tree_parse() operator is not single character: ",
@@ -343,6 +350,46 @@ binary:
 			tp = TREE_NULL;
 			goto out;
 		}
+		break;
+
+	case '!':
+		/* Unary: not {! {lhs}} */
+		BU_GETUNION( tp, tree );
+		tp->tr_b.tb_op = OP_NOT;
+		goto unary;
+	case 'G':
+		/* Unary: GUARD {G {lhs}} */
+		BU_GETUNION( tp, tree );
+		tp->tr_b.tb_op = OP_GUARD;
+		goto unary;
+	case 'X':
+		/* Unary: XNOP {X {lhs}} */
+		BU_GETUNION( tp, tree );
+		tp->tr_b.tb_op = OP_XNOP;
+		goto unary;
+unary:
+		tp->tr_b.magic = RT_TREE_MAGIC;
+		if( argv[1] == (char *)NULL )  {
+			Tcl_AppendResult( interp, "db_tcl_tree_parse: unary operator ",
+				argv[0], " has insufficient operands in ",
+				str, "\n", (char *)NULL );
+			bu_free( (char *)tp, "union tree" );
+			tp = TREE_NULL;
+			goto out;
+		}
+		tp->tr_b.tb_left = db_tcl_tree_parse( interp, argv[1] );
+		if( tp->tr_b.tb_left == TREE_NULL )  {
+			bu_free( (char *)tp, "union tree" );
+			tp = TREE_NULL;
+			goto out;
+		}
+		break;
+
+	case 'N':
+		/* NOP: no args.  {N} */
+		BU_GETUNION( tp, tree );
+		tp->tr_b.tb_op = OP_XNOP;
+		tp->tr_b.magic = RT_TREE_MAGIC;
 		break;
 
 	default:
