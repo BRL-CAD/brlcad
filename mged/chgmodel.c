@@ -870,6 +870,7 @@ void
 f_make()  {
 	register struct directory *dp;
 	union record record;
+	int i;
 
 	if( lookup( cmd_args[1], LOOKUP_QUIET ) != DIR_NULL )  {
 		aexists( cmd_args[1] );
@@ -880,6 +881,11 @@ f_make()  {
 	record.s.s_values[1] = -toViewcenter[MDY];
 	record.s.s_values[2] = -toViewcenter[MDZ];
 	record.s.s_id = ID_SOLID;
+
+	/* Zero out record.s.s_values[] */
+	for( i = 3; i < 24; i++ )  {
+		record.s.s_values[i] = 0.0;
+	}
 
 	/* make name <arb8|arb7|arb6|arb5|arb4|ellg|ell|sph|tor|tgc|rec|trc|rcc> */
 	if( strcmp( cmd_args[2], "arb8" ) == 0 )  {
