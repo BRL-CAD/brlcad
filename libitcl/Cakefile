@@ -1,7 +1,7 @@
 /*
  *			libitcl/Cakefile
  */
-#define SRCDIR	[[echo libitcl''ITCL_VERS]]
+#define SRCDIR	[[echo libitcl]]
 #define	SRCSUFF	.c
 #define MANSECTION	3
 
