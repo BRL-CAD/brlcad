@@ -2750,6 +2750,23 @@ triangulate:
 }
 
 void
+nmg_triangulate_shell(s, tol)
+struct shell *s;
+CONST struct bn_tol   *tol;
+{
+	struct faceuse *fu;
+
+	BN_CK_TOL(tol);
+	NMG_CK_SHELL( s );
+
+	for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
+		NMG_CK_FACEUSE(fu);
+		if (fu->orientation == OT_SAME)
+			nmg_triangulate_fu(fu, tol);
+	}
+}
+
+void
 nmg_triangulate_model(m, tol)
 struct model *m;
 CONST struct bn_tol   *tol;
