@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.1  84/12/31  16:43:09  dpk
+ * Make CTL(Y)==CTL(R) in RunEdit() (command line editor)
+ * 
  * Revision 2.0  84/12/26  16:47:08  dpk
  * System as distributed to Berkeley 26 Dec 84
  * 
@@ -736,7 +739,7 @@ char	*aa, *bb, *cc;
 		if (c == '\033')	/* Again */
 			c = (*HowToRead)() | 0200;
 		while (NumArg-- > 0)
-			if ((int)(cp = RunEdit(c, begin, cp, def, HowToRead)) == -1)
+			if ((cp = RunEdit(c, begin, cp, def, HowToRead)) == (char *)-1)
 				complain("Aborted");
 
 		/* Show the change */

@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.1  86/04/13  22:02:57  gwyn
+ * fixed getchar type bug
+ * 
  * Revision 2.0  84/12/26  16:46:04  dpk
  * System as distributed to Berkeley 26 Dec 84
  * 
@@ -357,7 +360,7 @@ char	*prompt;
 			break;
 
 		default:
-			if ((int)(cp = RunEdit(c, begin, cp, (char *) 0, Getchar)) == -1)
+			if ((cp = RunEdit(c, begin, cp, (char *) 0, Getchar)) == (char *)-1)
 abort:
 				if (InJoverc)
 					return EOF;
