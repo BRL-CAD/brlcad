@@ -1264,6 +1264,67 @@ CONST struct db_i		*dbip;
 }
 
 /*
+ *			R T _ A R B _ I M P O R T 5
+ *
+ * Import an arb from the db5 format and convert to the internal structure.
+ * Code duplicated from rt_arb_import() with db5 help from g_ell.c
+ */
+int
+rt_arb_import5( ip, ep, mat, dbip )
+struct rt_db_internal		*ip;
+CONST struct bu_external	*ep;
+register CONST mat_t		mat;
+CONST struct db_i		*dbip;
+{
+	struct rt_arb_internal *aip;
+	register int		i;
+	fastf_t			vec[3*8];
+
+	BU_CK_EXTERNAL( ep );
+	RT_INIT_DB_INTERNAL( ip );
+	ip->idb_type = ID_ARB8;
+	ip->idb_meth = &rt_functab[ID_ARB8];
+	ip->idb_ptr = bu_malloc( sizeof(struct rt_arb_internal), "rt_arb_internal");
+
+	aip = (struct rt_arb_internal *)ip->idb_ptr;
+	aip->magic = RT_ARB_INTERNAL_MAGIC;
+
+	/* Convert from database (network) to internal (host) format */
+	ntohd( (unsigned char *)vec, ep->ext_buf, 8*3);
+	for (i=0; i<8; i++) {
+		MAT4X3PNT( aip->pt[i], mat, &vec[i*3]);
+	}
+	return 0;	/* OK */
+}
+/*
+ *			R T _ A R B _ E X P O R T 5
+ */
+int
+rt_arb_export5( ep, ip, local2mm, dbip )
+struct bu_external		*ep;
+CONST struct rt_db_internal	*ip;
+double				local2mm;
+CONST struct db_i		*dbip;
+{
+	struct rt_arb_internal	*aip;
+	fastf_t			vec[3*8];
+	register int		i;
+
+	RT_CK_DB_INTERNAL(ip);
+	if (ip->idb_type != ID_ARB8) return -1;
+	aip = (struct rt_arb_internal *)ip->idb_ptr;
+	RT_ARB_CK_MAGIC(aip);
+
+	BU_INIT_EXTERNAL(ep);
+	ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * 8 * 3;
+	ep->ext_buf = (genptr_t)bu_malloc( ep->ext_nbytes, "arb external");
+	for (i=0; i<8; i++) {
+		VSCALE( &vec[i*3], aip->pt[i], local2mm );
+	}
+	htond( ep->ext_buf, (unsigned char *)vec, 8*3);
+	return 0;
+}
+/*
  *			R T _ A R B _ D E S C R I B E
  *
  *  Make human-readable formatted presentation of this solid.
