@@ -882,11 +882,9 @@ CONST char		*item;
 			Tcl_DStringAppendElement( &ds, bu_vls_addr(&comb->material) );
 		}
 
-		if( comb->inherit )
-		{
+		if( comb->inherit ) {
 			Tcl_DStringAppendElement( &ds, "inherit" );
-			strcpy( buf, comb->inherit ? "yes" : "no" );
-			Tcl_DStringAppendElement( &ds, buf );
+			Tcl_DStringAppendElement( &ds, "yes" );
 		}
 
 		Tcl_DStringAppendElement( &ds, "tree" );
