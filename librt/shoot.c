@@ -855,17 +855,7 @@ register struct application *ap;
 		}
 
 		if( ap->a_ray_length > 0.0 && ss.box_end >= ap->a_ray_length )
-		{
-			/* Weave these segments into partition list */
-			rt_boolweave( &finished_segs, &waiting_segs, &InitialPart, ap );
-
-			/* Evaluate regions upto box_end */
-			(void)rt_boolfinal( &InitialPart, &FinalPart,
-				last_bool_start, ss.box_end, regionbits, ap );
-			last_bool_start = ss.box_end;
-
-			goto hitit;
-		}
+			goto weave;
 
 		/* Push ray onwards to next box */
 		ss.box_start = ss.box_end;
