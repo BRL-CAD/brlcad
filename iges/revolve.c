@@ -212,15 +212,9 @@ int entityno;
 		/* Make a name for the TRC */
 		sprintf( trcptr->name , trcform , entityno , ntrcs );
 
-		/* Protect my variables from mk_trc */
-		VMOVE( base , trcptr->base );
-		VMOVE( top , trcptr->top );
-		r1 = trcptr->r1;
-		r2 = trcptr->r2;
-		ch = trcptr->name;
-
 		/* Make the TRC */
-		if( mk_trc( fdout , ch , base , top , r1 , r2 ) < 0 )  {
+		if( mk_trc_top( fdout, trcptr->name, trcptr->base,
+		    trcptr->top, trcptr->r1, trcptr->r2 ) < 0 )  {
 			printf( "Unable to write TRC for entity D%07d (%s)\n" ,
 				dir[entityno]->direct , dir[entityno]->name );
 			return( 0 );
