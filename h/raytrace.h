@@ -774,6 +774,7 @@ struct db_i  {
 	struct bu_mapped_file	*dbi_mf;	/* Only in read-only mode */
 	struct bu_ptbl		dbi_clients;	/* List of rtip's using this db_i */
 	int			dbi_version;	/* 4 or 5 */
+	struct rt_wdb		*dbi_wdbp;	/* ptr back to containing rt_wdb */
 };
 #define DBI_NULL	((struct db_i *)0)
 #define DBI_MAGIC	0x57204381
