@@ -33,27 +33,19 @@
 static char rcs_ident[] = "$Id$";
 #endif
 
-#include <stdio.h>
-#include "rle.h"
-#include "rle_code.h"
-#ifdef USE_STDLIB_H
-#include <stdlib.h>
-#else
+#include "conf.h"
 
+#include <stdio.h>
 #ifdef USE_STRING_H
 #include <string.h>
 #else
 #include <strings.h>
 #endif
 
-#ifndef VOID_STAR
-extern char * malloc();
-#else
-extern void *malloc();
-#endif
-extern void free();
-
-#endif /* USE_STDLIB_H */
+#include "machine.h"
+#include "externs.h"
+#include "rle.h"
+#include "rle_code.h"
 
 /* Read a two-byte "short" that started in VAX (LITTLE_ENDIAN) order */
 #define VAXSHORT( var, fp )\
@@ -201,7 +193,7 @@ rle_hdr * the_hdr;
 	    i++;			/* extra for NULL pointer at end */
 	    /* Get space to put pointers to comments */
 	    the_hdr->comments =
-		(CONST_DECL char **)malloc( (unsigned)(i * sizeof(char *)) );
+		(CONST char **)malloc( (unsigned)(i * sizeof(char *)) );
 	    if ( the_hdr->comments == NULL )
 	    {
 		fprintf( stderr,
@@ -256,8 +248,8 @@ rle_hdr * the_hdr;
 int
 rle_get_error( code, pgmname, fname )
 int code;
-CONST_DECL char *pgmname;
-CONST_DECL char *fname;
+CONST char *pgmname;
+CONST char *fname;
 {
     if (! fname)
 	fname = "Standard Input";
@@ -319,8 +311,8 @@ CONST_DECL char *fname;
 void
 rle_get_setup_ok( the_hdr, prog_name, file_name )
 rle_hdr * the_hdr;
-CONST_DECL char *prog_name;
-CONST_DECL char *file_name;
+CONST char *prog_name;
+CONST char *file_name;
 {
     int code;
 

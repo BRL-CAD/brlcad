@@ -25,19 +25,26 @@
  * Copyright (c) 1988, Curtin University of Technology
  */
 
+#include "conf.h"
+
 #include <stdio.h>
-#include "rle.h"		/* must be before #ifdef's */
 #ifdef USE_STRING_H
 #include <string.h>
 #else
 #include <strings.h>
 #endif
-#ifdef	SYS_TIME_H
+
 #include <sys/types.h>
+
+#ifdef USE_SYS_TIME_H
 #include <sys/time.h>
 #else
 #include <time.h>
 #endif
+
+#include "machine.h"
+#include "externs.h"
+#include "rle.h"
 
 /*****************************************************************
  * TAG( rle_addhist )

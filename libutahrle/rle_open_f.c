@@ -8,15 +8,18 @@
  * Copyright (c) 1990, University of Michigan
  */
 
-#include "rle_config.h"
+#include "conf.h"
+
 #include <stdio.h>
-#include "machine.h"
-#include "externs.h"
 #ifdef USE_STRING_H
 #include <string.h>
 #else
 #include <strings.h>
 #endif
+
+#include "machine.h"
+#include "externs.h"
+
 
 /* 
  *  Purpose : Open a file for input or ouput as controled by the mode

@@ -41,16 +41,15 @@
  */
 
 #include "conf.h"
-#include "rle_config.h"
 
 #include <stdio.h>
 #include <ctype.h>
 #if defined(HAVE_STDARG_H)
-#include <stdarg.h>
+# include <stdarg.h>
 #elif defined(HAVE_VARARGS_H)
-#include <varargs.h>
+# include <varargs.h>
 #else
-#error "Need stdarg.h or varargs.h"
+# error "Need stdarg.h or varargs.h"
 #endif
 
 #include "machine.h"
@@ -59,17 +58,19 @@
 typedef char bool;
 /* 
  * An explicit assumption is made in this code that all pointers look
- * alike, except possible char * pointers.
+ * alike, except possibly char * pointers.
  */
 typedef int *ptr;
 
-#ifndef CONST_DECL
-#define CONST_DECL
-#endif
-
+#ifndef YES
 #define YES 1
+#endif
+#ifndef NO
 #define NO 0
+#endif
+#ifndef ERROR
 #define ERROR(msg)  {fprintf(stderr, "%s\n", msg); goto error; }
+#endif
 
 /* 
  * Storage allocation macros
@@ -83,11 +84,11 @@ static int isnum();
 static int	_do_scanargs();
 void		scan_usage();
 #else
-static CONST_DECL char * prformat( CONST_DECL char *, int );
-static int isnum( CONST_DECL char *, int, int );
-static int	_do_scanargs( int argc, char **argv, CONST_DECL char *format,
+static CONST char * prformat( CONST char *, int );
+static int isnum( CONST char *, int, int );
+static int	_do_scanargs( int argc, char **argv, CONST char *format,
 			      va_list argl );
-void		scan_usage( char **, CONST_DECL char * );
+void		scan_usage( char **, CONST char * );
 #endif
 
 /* 
@@ -95,7 +96,7 @@ void		scan_usage( char **, CONST_DECL char * );
  */
 int
 #ifdef HAVE_STDARG_H
-scanargs ( int argc, char **argv, CONST_DECL char *format, ... )
+scanargs ( int argc, char **argv, CONST char *format, ... )
 #else
 scanargs ( va_alist )
 va_dcl
@@ -108,12 +109,12 @@ va_dcl
 #else
     int argc;
     char ** argv;
-    CONST_DECL char *format;
+    CONST char *format;
 
     va_start( argl );
     argc = va_arg( argl, int );
     argv = va_arg( argl, char ** );
-    format = va_arg( argl, CONST_DECL char * );
+    format = va_arg( argl, CONST char * );
 #endif
     retval = _do_scanargs( argc, argv, format, argl );
     va_end( argl );
@@ -131,13 +132,13 @@ static int
 _do_scanargs( argc, argv, format, argl )
 int     argc;			/* Actual arguments */
 char  **argv;
-CONST_DECL char   *format;
+CONST char   *format;
 va_list argl;
 {
 
     register    check;			/* check counter to be sure all argvs
 					   are processed */
-    register CONST_DECL char  *cp;
+    register CONST char  *cp;
     register    cnt;
     int	    optarg = 0;			/* where optional args start */
     int	    nopt = 0;
@@ -164,7 +165,7 @@ va_list argl;
     double *dbllist = 0;
     char  * argp;			/* Pointer to argument. */
 
-    CONST_DECL char   *ncp;		/* remember cp during flag scanning */
+    CONST char   *ncp;		/* remember cp during flag scanning */
     static char   cntrl[7] = "%  %1s";	/* control string for scanf's */
     char    junk[2];			/* junk buffer for scanf's */
 
@@ -633,9 +634,9 @@ error:
 void
 scan_usage( argv, format )
 char ** argv;
-CONST_DECL char * format;
+CONST char * format;
 {
-    register CONST_DECL char * cp;
+    register CONST char * cp;
 
     fprintf (stderr, "usage : ");
     if (*(cp = format) != ' ')
@@ -665,12 +666,12 @@ CONST_DECL char * format;
     (void)prformat (cp, NO);
 }
 
-static CONST_DECL char *
+static CONST char *
 prformat (format, recurse)
-CONST_DECL char   *format;
+CONST char   *format;
 int 	recurse;
 {
-    register CONST_DECL char  *cp;
+    register CONST char  *cp;
     bool    required, comma_list;
     int    list_of;
 
@@ -798,11 +799,11 @@ reswitch:
  */
 static int
 isnum( str, typchr, comma_list )
-register CONST_DECL char * str;
+register CONST char * str;
 int typchr;
 int comma_list;
 {
-    register CONST_DECL char *allowed, *digits, *cp;
+    register CONST char *allowed, *digits, *cp;
     int hasdigit = NO;
 
     switch( typchr )

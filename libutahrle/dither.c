@@ -28,6 +28,8 @@
  * Copyright (c) 1987, University of Utah
  */
 
+#include "conf.h"
+
 #include <math.h>
 
 #ifdef USE_PROTOTYPES

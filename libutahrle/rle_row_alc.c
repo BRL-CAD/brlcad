@@ -28,15 +28,13 @@
  * Copyright (c) 1986, Spencer W. Thomas
  */
 
-#include <stdio.h>
-#include "rle.h"
+#include "conf.h"
 
-#ifndef VOID_STAR
-extern char * malloc();
-#else
-extern void *malloc();
-#endif
-extern void free();
+#include <stdio.h>
+
+#include "machine.h"
+#include "externs.h"
+#include "rle.h"
 
 /*****************************************************************
  * TAG( rle_row_alloc )

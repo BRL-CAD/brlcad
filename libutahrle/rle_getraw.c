@@ -31,21 +31,15 @@
 static char rcs_ident[] = "$Id$";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
-#ifdef USE_STDLIB_H
-#include <stdlib.h>
-#else
+
+#include "machine.h"
+#include "externs.h"
 #include "rle.h"
+#include "rle_code.h"
 #include "rle_raw.h"
-
-#ifndef VOID_STAR
-extern char * malloc();
-#else
-extern void *malloc();
-#endif
-extern void free();
-
-#endif /* USE_STDLIB_H */
 
 /* Read a two-byte "short" that started in VAX (LITTLE_ENDIAN) order */
 #define VAXSHORT( var, fp )\

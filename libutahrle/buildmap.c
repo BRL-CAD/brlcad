@@ -25,16 +25,15 @@
  * Copyright (c) 1987, University of Utah
  */
 
+#include "conf.h"
+
 #include <stdio.h>
 #include <math.h>
+
+#include "machine.h"
+#include "externs.h"
 #include "rle.h"
 
-#ifdef VOID_STAR
-void *malloc();
-#else
-char *malloc();
-#endif
-void free();
 
 /*****************************************************************
  * TAG( buildmap )

@@ -8,11 +8,17 @@
  * Copyright (c) 1990, University of Michigan
  */
 
+#include "conf.h"
+
+#include <stdio.h>
+
+#include "machine.h"
+#include "externs.h"
+
 #include "rle.h"
+#include "rle_code.h"
 #include "rle_raw.h"
-#ifdef USE_STDLIB_H
-#include <stdlib.h>
-#endif /* USE_STDLIB_H */
+
 
 /*****************************************************************
  * TAG( rle_rawtorow )

@@ -30,21 +30,14 @@
  * $Id$
  */
  
+#include "conf.h"
+
 #include <stdio.h>
+
+#include "machine.h"
+#include "externs.h"
 #include "rle_put.h"
 #include "rle.h"
-#ifdef USE_STDLIB_H
-#include <stdlib.h>
-#else
-
-#ifndef VOID_STAR
-extern char * malloc();
-#else
-extern void *malloc();
-#endif
-extern void free();
-
-#endif /* USE_STDLIB_H */
 
 static int findruns();
 
@@ -53,8 +46,12 @@ static int findruns();
 #define LOCC			/* Use vax instructions for more speed */
 #endif
 
+#ifndef FALSE
 #define	FALSE	0
+#endif
+#ifndef TRUE
 #define	TRUE	1
+#endif
 
 /*****************************************************************
  * TAG( rle_putrow )

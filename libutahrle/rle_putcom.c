@@ -25,13 +25,13 @@
  * Copyright (c) 1987, University of Utah
  */
 
+#include "conf.h"
+
 #include <stdio.h>
+
+#include "machine.h"
+#include "externs.h"
 #include "rle.h"
-#ifdef VOID_STAR
-void *malloc();
-#else
-char *malloc();
-#endif
 
 /*****************************************************************
  * TAG( match )
@@ -82,18 +82,18 @@ register char *v;
  * Algorithm:
  * 	Find match if any, else add at end (realloc to make bigger).
  */
-CONST_DECL char *
+CONST char *
 rle_putcom( value, the_hdr )
-CONST_DECL char * value;
+CONST char * value;
 rle_hdr * the_hdr;
 {
-    register CONST_DECL char ** cp, ** old_comments;
-    CONST_DECL char * v;
+    register CONST char ** cp, ** old_comments;
+    CONST char * v;
     int i;
 
     if ( the_hdr->comments == NULL )
     {
-	the_hdr->comments = (CONST_DECL char **)malloc( 2 * sizeof(char *) );
+	the_hdr->comments = (CONST char **)malloc( 2 * sizeof(char *) );
 	the_hdr->comments[0] = value;
 	the_hdr->comments[1] = NULL;
     }
@@ -115,7 +115,7 @@ rle_hdr * the_hdr;
 	 * could copy the pointers, too.
 	 */
 	old_comments = the_hdr->comments;
-	the_hdr->comments = (CONST_DECL char **)malloc(i * sizeof(char *) );
+	the_hdr->comments = (CONST char **)malloc(i * sizeof(char *) );
 	the_hdr->comments[--i] = NULL;
 	the_hdr->comments[--i] = value;
 	for ( i--; i >= 0; i-- )
@@ -140,13 +140,13 @@ rle_hdr * the_hdr;
  * Algorithm:
  *	[None]
  */
-CONST_DECL char *
+CONST char *
 rle_delcom( name, the_hdr )
-CONST_DECL char * name;
+CONST char * name;
 rle_hdr *the_hdr ;
 {
-    register CONST_DECL char ** cp;
-    CONST_DECL char * v = NULL;
+    register CONST char ** cp;
+    CONST char * v = NULL;
 
     if ( the_hdr->comments == NULL )
 	return NULL;

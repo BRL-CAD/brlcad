@@ -25,7 +25,11 @@
  * Copyright (c) 1987, University of Utah
  */
 
+#include "conf.h"
+
 #include <stdio.h>
+
+#include "machine.h"
 #include "rle.h"
 
 /*****************************************************************
@@ -78,10 +82,10 @@ register char *v;
  */
 char *
 rle_getcom( name, the_hdr )
-CONST_DECL char *name;
+CONST char *name;
 rle_hdr *the_hdr;
 {
-    CONST_DECL char ** cp;
+    CONST char ** cp;
     char * v;
 
     if ( the_hdr->comments == NULL )

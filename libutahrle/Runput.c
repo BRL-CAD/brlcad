@@ -249,7 +249,7 @@ register rle_hdr * the_hdr;
     if ( setup.h_flags & H_COMMENT )
     {
 	int comlen;
-	register CONST_DECL char ** com_p;
+	register CONST char ** com_p;
 
 	/* Get the total length of comments */
 	comlen = 0;

@@ -28,6 +28,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 10.1  1991/10/12  06:38:13  mike
+ * Release_4.0
+ *
  * Revision 1.2  91/01/09  03:31:11  butler
  * added include of rle_config.h to pick up macro definitions
  * 
@@ -78,9 +81,14 @@
  * "whichbox" in GreatestVariance() is now initialized to 0.
  * 
  */
-#include <math.h>
+#include "conf.h"
+
 #include <stdio.h>
-#include "rle_config.h"		/* to get macro for bzero if necessary */
+#include <math.h>
+
+#include "machine.h"
+#include "externs.h"
+#include "rle.h"
 
 /* Ansi uses HUGE_VAL. */
 #ifndef HUGE

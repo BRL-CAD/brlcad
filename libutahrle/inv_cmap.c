@@ -27,8 +27,10 @@
  * $Id$
  */
 
-#include <math.h>
+#include "conf.h"
+
 #include <stdio.h>
+#include <math.h>
 
 #ifndef NO_INV_CMAP_TRACKING
 

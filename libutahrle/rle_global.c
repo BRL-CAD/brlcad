@@ -30,11 +30,11 @@
  * $Id$
  */
 
-#if __sgi
-#	define	__EXTENSIONS__		1	/* To define "stdout" */
-#endif
+#include "conf.h"
 
 #include <stdio.h>
+
+#include "machine.h"
 #include "rle_put.h"
 #include "rle.h"
 
