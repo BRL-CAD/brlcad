@@ -48,6 +48,10 @@ static char RCSrayg3[] = "@(#)$Header$ (BRL)";
 #include "rdebug.h"
 
 #define	MM2IN	0.03937008		/* mm times MM2IN gives inches */
+/* #define TOL
+ *
+ * void	part_compact();
+ */
 
 extern double	mat_radtodeg;
 extern int	npsw;			/* number of worker PSWs to run */
@@ -231,6 +235,9 @@ register struct partition *PartHeadp;
 	if( pp == PartHeadp )
 		return(0);		/* nothing was actually hit?? */
 
+/*	part_compacter(Partheadp, TOL);
+ *
+ */
 	/*  comp components in partitions */
 	comp_count = 0;
 	for( pp=PartHeadp->pt_forw; pp!=PartHeadp; pp=pp->pt_forw )
@@ -297,12 +304,13 @@ register struct partition *PartHeadp;
 	dfirst = PartHeadp->pt_forw->pt_inhit->hit_dist + dcorrection;
 	dlast = PartHeadp->pt_back->pt_outhit->hit_dist + dcorrection;
 
-/* This code is to note any occurances of negative distances. */
+	/* This code is to note any occurances of negative distances. */
 		if( dfirst < 0)  {
 			rt_log("ERROR: dfirst=%g\n", dfirst);
 			rt_pr_partitions(ap->a_rt_i, PartHeadp, "Defective partion:");
 		}
-/* End of bug trap. */
+	/* End of bug trap. */
+
 	/*
 	 *  Output the ray header.  The GIFT statements that
 	 *  would have generated this are:
@@ -567,3 +575,57 @@ view_end()
 
 void view_setup() {}
 void view_cleanup() {}
+
+
+/*		P A R T _ C O M P A C T E R
+ *
+ * This routine takes at partition-head pointer and a tolerance.  It goes
+ * throught the partition list shot-line by shot-line and checks for regions
+ * with identical region-id abutting.  If one is found, and the distance
+ * between the two abbutting regions is less than the tolerance, the two
+ * corresponding partions are collapsed into one, and the outhit from the
+ * second partions becomes the governing outhit.  This will prevent the
+ * occurance of multiple hits per same region.
+ *
+ */
+
+void
+part_compacter(PartHeadp, tolerance)
+register struct partition		*PartHeadp;
+fastf_t					tolerance;
+{
+
+	fastf_t				gap;
+	struct partition		*pp;
+	struct partition		*nextpp;
+
+	for(pp = PartHeadp; pp != PartHeadp; pp = pp->pt_forw)  {
+top:		nextpp = pp->pt_forw;
+		if(nextpp == PartHeadp)
+			break;
+		if(pp->pt_regionp->reg_regionid != nextpp->pt_regionp->reg_regionid)
+			continue;
+		gap = nextpp->pt_inhit->hit_dist - pp->pt_inhit->hit_dist;
+		if(gap > tolerance)
+			continue;
+		if(pp->pt_regionp->reg_regionid == nextpp->pt_regionp->reg_regionid)  {
+			/* librt problem */
+			rt_log("WARNING: region_id's are identical %d\n");
+		}
+
+		/* Eliminate the gap by collapsing the two partitions
+		 * into one.
+		 */
+
+		pp->pt_outhit->hit_dist = nextpp->pt_outhit->hit_dist;
+		pp->pt_outflip = nextpp->pt_outflip;
+		
+
+		/* Now dequeue and free the nextpp */
+/*		DEQUEUE_PT(nextpp);
+ *		free(nextpp);
+ */
+		goto top;
+	}
+
+}
