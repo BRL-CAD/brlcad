@@ -2813,9 +2813,369 @@ struct edgeuse *eu;
 	return(0);
 }
 
+/*
+ *			N M G _ C K _ L U E U
+ *
+ *	check all the edgeuses of a loopuse to make sure these children
+ *	know who thier parent really is.
+ */
+void nmg_ck_lueu(cklu, s)
+struct loopuse *cklu;
+char *s;
+{
+	struct edgeuse *eu;
+
+	if (RT_LIST_FIRST_MAGIC(&cklu->down_hd) == NMG_VERTEXUSE_MAGIC)
+		rt_bomb("NMG nmg_ck_lueu.  I got a vertex loop!\n");
+
+	eu = RT_LIST_FIRST(edgeuse, &cklu->down_hd);
+	if (eu->l.back != &cklu->down_hd) {
+		rt_bomb("nmg_ck_lueu first element in list doesn't point back to head\n");
+	}
+
+	for (RT_LIST_FOR(eu, edgeuse, &cklu->down_hd)) {
+		NMG_CK_EDGEUSE(eu);
+		if (eu->up.lu_p != cklu) {
+			rt_log("edgeuse of %s (going next) has lost proper parent\n", s);
+			rt_bomb("nmg_ck_lueu");
+		}
+		if ((struct edgeuse *)eu->l.forw->back != eu) {
+			rt_log("%s next edge (%8x) doesn't point back to me (%8x)!\n", s, eu->l.forw, eu);
+			nmg_pr_lu(cklu, NULL);
+		}
+		if ((struct edgeuse *)eu->l.back->forw != eu) {
+			rt_log("%s last edge (%8x) doesn't point forward to me (%8x)!\n", s, eu->l.forw, eu);
+			nmg_pr_lu(cklu, NULL);
+		}
+	}
+
+	cklu = cklu->lumate_p;
+
+	eu = RT_LIST_FIRST(edgeuse, &cklu->down_hd);
+	if (eu->l.back != &cklu->down_hd) {
+		rt_bomb("nmg_ck_lueu first element in lumate list doesn't point back to head\n");
+	}
+
+	for (RT_LIST_FOR(eu, edgeuse, &cklu->down_hd)) {
+		NMG_CK_EDGEUSE(eu);
+		if (eu->up.lu_p != cklu) {
+			rt_log("edgeuse of %s (lumate going next) has lost proper parent\n", s);
+			rt_bomb("nmg_ck_lueu");
+		}
+		if ((struct edgeuse *)eu->l.forw->back != eu) {
+			rt_log("%s next edge (%8x) doesn't point back to me (%8x)!\n", s, eu->l.forw, eu);
+			nmg_pr_lu(cklu, NULL);
+		}
+		if ((struct edgeuse *)eu->l.back->forw != eu) {
+			rt_log("%s (lumate) back edge (%8x) doesn't point forward to me (%8x)!\n", s, eu->l.forw, eu);
+			nmg_pr_lu(cklu, NULL);
+		}
+	}
+}
 
 
+/*			N M G _ C U T _ L O O P
+ *
+ *	Divide a loop of edges between two vertexuses
+ *
+ *	we make a new loop between the two vertexes, and split it and
+ *	the loop of the parametric vertexuses at the same time.
+ *
+ *	Old Loop      New loop	Resulting loops
+ *
+ *	    v1		v1	    v1
+ *	    |	        |	    |\
+ *	    V	        V	    V V
+ *	*---*---*	*	*---* *---*
+ *	|	|	|	|   | |   |
+ *	|	|	|	|   | |   |
+ *	*---*---*	*	*---* *---*
+ *	    ^		^	    ^ ^
+ *	    |	        |	    |/
+ *	   v2		v2	    v2
+ *
+ */
+void nmg_cut_loop(vu1, vu2)
+struct vertexuse *vu1, *vu2;
+{
+	struct loopuse *lu, *oldlu;
+	struct edgeuse *eu1, *eu2, *eunext, *neweu, *eu;
+	struct model	*m;
+	FILE		*fd;
+	char		name[32];
+	static int	i=0;
 
+	NMG_CK_VERTEXUSE(vu1);
+	NMG_CK_VERTEXUSE(vu2);
+
+	eu1 = vu1->up.eu_p;
+	eu2 = vu2->up.eu_p;
+	NMG_CK_EDGEUSE(eu1);
+	NMG_CK_EDGEUSE(eu2);
+	oldlu = eu1->up.lu_p;
+	NMG_CK_LOOPUSE(oldlu);
+	if (eu2->up.lu_p != oldlu) {
+		rt_log("at %d in %s vertices should be decendants of same loop\n",
+			__LINE__, __FILE__);
+		rt_bomb("subroutine nmg_cut_loop");
+	}
+	NMG_CK_FACEUSE(oldlu->up.fu_p);
+	m = oldlu->up.fu_p->s_p->r_p->m_p;
+	NMG_CK_MODEL(m);
+
+	if (rt_g.NMG_debug & DEBUG_CUTLOOP) {
+		rt_log("\tnmg_cut_loop\n");
+		if (rt_g.NMG_debug & DEBUG_PLOTEM) {
+			long		*tab;
+			tab = (long *)rt_calloc( m->maxindex, sizeof(long),
+				"nmg_cut_loop flag[] 1" );
+
+			(void)sprintf(name, "Before_cutloop%d.pl", ++i);
+			rt_log("plotting %s\n", name);
+			if ((fd = fopen(name, "w")) == (FILE *)NULL) {
+				(void)perror(name);
+				exit(-1);
+			}
+
+			nmg_pl_fu(fd, oldlu->up.fu_p, tab, 100, 100, 100);
+			nmg_pl_fu(fd, oldlu->up.fu_p->fumate_p, tab, 100, 100, 100);
+			(void)fclose(fd);
+			rt_free( (char *)tab, "nmg_cut_loop flag[] 1" );
+		}
+	}
+
+	nmg_ck_lueu(oldlu, "oldlu (fresh)");
+
+	/* make a new loop structure for the new loop & throw away
+	 * the vertexuse we don't need
+	 */
+	lu = nmg_mlv(oldlu->up.magic_p, (struct vertex *)NULL,
+		oldlu->orientation);
+
+	nmg_kvu(RT_LIST_FIRST(vertexuse, &lu->down_hd));
+	nmg_kvu(RT_LIST_FIRST(vertexuse, &lu->lumate_p->down_hd));
+	/* nmg_kvu() does RT_LIST_INIT() on down_hd */
+
+	/* move the edges into one of the uses of the new loop */
+	for (eu = eu2 ; eu != eu1 ; eu = eunext) {
+		eunext = RT_LIST_PNEXT_CIRC(edgeuse, &eu->l);
+
+		RT_LIST_DEQUEUE(&eu->l);
+		RT_LIST_INSERT(&lu->down_hd, &eu->l);
+		RT_LIST_DEQUEUE(&eu->eumate_p->l);
+		RT_LIST_APPEND(&lu->lumate_p->down_hd, &eu->eumate_p->l);
+		eu->up.lu_p = lu;
+		eu->eumate_p->up.lu_p = lu->lumate_p;
+	}
+	nmg_ck_lueu(lu, "lu check1");	/*LABLABLAB*/
+
+	/* make an edge to "cap off" the new loop */
+	neweu = nmg_me(eu1->vu_p->v_p, eu2->vu_p->v_p, nmg_eups(eu1));
+
+	/* move the new edgeuse into the new loopuse */
+	RT_LIST_DEQUEUE(&neweu->l);
+	RT_LIST_INSERT(&lu->down_hd, &neweu->l);
+	neweu->up.lu_p = lu;
+
+	/* move the new edgeuse mate into the new loopuse mate */
+	RT_LIST_DEQUEUE(&neweu->eumate_p->l);
+	RT_LIST_APPEND(&lu->lumate_p->down_hd, &neweu->eumate_p->l);
+	neweu->eumate_p->up.lu_p = lu->lumate_p;
+
+	nmg_ck_lueu(lu, "lu check2");	/*LABLABLAB*/
+
+
+	/* now we go back and close up the loop we just ripped open */
+	eunext = nmg_me(eu2->vu_p->v_p, eu1->vu_p->v_p, nmg_eups(eu1));
+
+	RT_LIST_DEQUEUE(&eunext->l);
+	RT_LIST_INSERT(&eu1->l, &eunext->l);
+	RT_LIST_DEQUEUE(&eunext->eumate_p->l);
+	RT_LIST_APPEND(&eu1->eumate_p->l, &eunext->eumate_p->l);
+	eunext->up.lu_p = eu1->up.lu_p;
+	eunext->eumate_p->up.lu_p = eu1->eumate_p->up.lu_p;
+
+
+	/* make sure new edgeuses are radial to each other */
+	nmg_moveeu(neweu, eunext);
+
+	nmg_ck_lueu(oldlu, "oldlu");
+	nmg_ck_lueu(lu, "lu");	/*LABLABLAB*/
+
+
+	if (rt_g.NMG_debug & DEBUG_CUTLOOP && rt_g.NMG_debug & DEBUG_PLOTEM) {
+		long		*tab;
+		tab = (long *)rt_calloc( m->maxindex, sizeof(long),
+			"nmg_cut_loop flag[] 2" );
+
+		(void)sprintf(name, "After_cutloop%d.pl", i);
+		rt_log("plotting %s\n", name);
+		if ((fd = fopen(name, "w")) == (FILE *)NULL) {
+			(void)perror(name);
+			exit(-1);
+		}
+
+		nmg_pl_fu(fd, oldlu->up.fu_p, tab, 100, 100, 100);
+		nmg_pl_fu(fd, oldlu->up.fu_p->fumate_p, tab, 100, 100, 100);
+		(void)fclose(fd);
+		rt_free( (char *)tab, "nmg_cut_loop flag[] 2" );
+	}
+
+	nmg_loop_g(oldlu->l_p);
+	nmg_loop_g(lu->l_p);
+}
+
+/*
+ *			N M G _ S P L I T _ L U _ A T _ V U
+ *
+ *  In a loop which has at least two distinct uses of a vertex,
+ *  split off the edges from "split_vu" to the second occurance of
+ *  the vertex into a new loop.
+ *  The bounding boxes of both old and new loops will be updated.
+ *
+ *  Intended primarily for use by nmg_split_touchingloops().
+ *
+ *  Returns -
+ *	NULL	Error
+ *	*lu	Loopuse of new loop, on success.
+ */
+struct loopuse *
+nmg_split_lu_at_vu( lu, split_vu )
+struct loopuse		*lu;
+struct vertexuse	*split_vu;
+{
+	struct edgeuse		*eu;
+	struct vertexuse	*vu;
+	struct loopuse		*newlu;
+	struct loopuse		*newlumate;
+	struct vertex		*split_v;
+
+	split_v = split_vu->v_p;
+	NMG_CK_VERTEX(split_v);
+
+	/*
+	 *  The vertexuse will appear exactly once in the loop, so
+	 *  find the edgeuse which has the indicated vertexuse.
+	 */
+	if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+		return (struct loopuse *)0;	/* FAIL */
+
+	for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
+		vu = eu->vu_p;
+		NMG_CK_VERTEXUSE(vu);
+		if( vu == split_vu )  goto begin;
+	}
+	/* Could not find indicated vertex */
+	return (struct loopuse *)0;		/* FAIL */
+
+begin:
+	/* Make a new loop in the same face */
+	newlu = nmg_mlv( lu->up.magic_p, (struct vertex *)NULL, lu->orientation);
+	NMG_CK_LOOPUSE(newlu);
+	newlumate = newlu->lumate_p;
+	NMG_CK_LOOPUSE(newlumate);
+
+	/* Throw away unneeded lone vertexuse */
+	nmg_kvu(RT_LIST_FIRST(vertexuse, &newlu->down_hd));
+	nmg_kvu(RT_LIST_FIRST(vertexuse, &newlumate->down_hd));
+	/* nmg_kvu() does RT_LIST_INIT() on down_hd */
+
+	/* Move edges & mates into new loop until vertex is repeated */
+	for( ;; )  {
+		struct edgeuse	*eunext;
+		eunext = RT_LIST_PNEXT_CIRC(edgeuse, &eu->l);
+
+		RT_LIST_DEQUEUE(&eu->l);
+		RT_LIST_INSERT(&newlu->down_hd, &eu->l);
+		RT_LIST_DEQUEUE(&eu->eumate_p->l);
+		RT_LIST_APPEND(&newlumate->down_hd, &eu->eumate_p->l);
+
+		/* Change edgeuse & mate up pointers */
+		eu->up.lu_p = newlu;
+		eu->eumate_p->up.lu_p = newlumate;
+
+		/* Advance to next edgeuse */
+		eu = eunext;
+
+		/* When split_vertex is encountered, stop */
+		vu = eu->vu_p;
+		NMG_CK_VERTEXUSE(vu);
+		if( vu->v_p == split_v )  break;
+	}
+
+	/* Create new bounding boxes for both old & new loops */
+	nmg_loop_g(lu->l_p);
+	nmg_loop_g(newlu->l_p);
+
+	return newlu;
+}
+
+/*
+ *			N M G _ S P L I T _ T O U C H I N G L O O P S
+ *
+ *  Search through all the vertices in a loop.
+ *  Whenever there are two distinct uses of one vertex in the loop,
+ *  split off all the edges between them into a new loop.
+ */
+void
+nmg_split_touchingloops( lu )
+struct loopuse	*lu;
+{
+	struct edgeuse		*eu;
+	struct vertexuse	*vu;
+	struct vertex		*v;
+
+top:
+	if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+		return;
+
+	/* For each edgeuse, get vertexuse and vertex */
+	for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
+		struct vertexuse	*tvu;
+
+		vu = eu->vu_p;
+		NMG_CK_VERTEXUSE(vu);
+		v = vu->v_p;
+		NMG_CK_VERTEX(v);
+
+		/*
+		 *  For each vertexuse on vertex list,
+		 *  check to see if it points up to the this loop.
+		 *  If so, then there is a duplicated vertex.
+		 *  Ordinarily, the vertex list will be *very* short,
+		 *  so this strategy is likely to be faster than
+		 *  a table-based approach, for most cases.
+		 */
+		for( RT_LIST_FOR( tvu, vertexuse, &v->vu_hd ) )  {
+			struct edgeuse		*teu;
+			struct loopuse		*tlu;
+			struct loopuse		*newlu;
+
+			if( tvu == vu )  continue;
+			if( *tvu->up.magic_p != NMG_EDGEUSE_MAGIC )  continue;
+			teu = tvu->up.eu_p;
+			NMG_CK_EDGEUSE(teu);
+			if( *teu->up.magic_p != NMG_LOOPUSE_MAGIC )  continue;
+			tlu = teu->up.lu_p;
+			NMG_CK_LOOPUSE(tlu);
+			if( tlu != lu )  continue;
+			/*
+			 *  Repeated vertex exists,
+			 *  Split loop into two loops
+			 */
+			newlu = nmg_split_lu_at_vu( lu, vu );
+			NMG_CK_LOOPUSE(newlu);
+
+			/* Ensure there are no duplications in new loop */
+			nmg_split_touchingloops(newlu);
+
+			/* There is no telling where we will be in the
+			 * remainder of original loop, check 'em all.
+			 */
+			goto top;
+		}
+	}
+}
 
 #if 0
 
