@@ -13,10 +13,8 @@ struct plot_vars {
   struct bu_list l;
   FILE *up_fp;
   char ttybuf[BUFSIZ];
-#if 0
   int floating;
   int zclip;
-#endif
   int grid;
   int is_3D;
   int is_pipe;
