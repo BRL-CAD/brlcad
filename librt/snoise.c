@@ -1012,7 +1012,7 @@ long seed;
 		r = sqrt(1 - z*z);
 
 		/* theta is agnle in (x,y) */
-		theta = 2 * M_PI * RANDNBR;
+		theta = 2 * rt_pi * RANDNBR;
 
 		*table++ = r * cos(theta);
 		*table++ = r * sin(theta);
@@ -1562,8 +1562,7 @@ double			o;
 	struct fbm_spec	*ep;
 	int i;
 #if 1
-	rt_log("locking\n");
-	RES_ACQUIRE(&rt_g.res_worker);
+	RES_ACQUIRE(&rt_g.res_model);
 #endif
 	for (ep = etbl, i=0 ; i < etbl_next ; i++, ep++) {
 		if (ep->magic != MAGIC_fbm_spec_wgt) rt_bomb("find_spec_wgt");
@@ -1574,8 +1573,7 @@ double			o;
 
 	if (i >= etbl_next) ep = build_spec_tbl(h, l, o);
 #if 1
-	RES_RELEASE(&rt_g.res_worker);
-	rt_log("released\n");
+	RES_RELEASE(&rt_g.res_model);
 #endif
 	return (ep);
 }
