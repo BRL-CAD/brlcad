@@ -22,24 +22,14 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "conf.h"
 
-#include	<stdio.h>
-#include	<math.h>
+#include <stdio.h>
+#include <math.h>
 #include "machine.h"
+#include "externs.h"
 #include "vmath.h"
 #include "db.h"
-
-#include "./dm.h"
 #include "raytrace.h"
 #include "./ged.h"
-
-void
-move_arb( sp, dp, mat )
-struct solidrec *sp;
-struct directory *dp;
-mat_t mat;
-{
-	;
-}
 
 void
 dbpr_arb( sp, dp )
