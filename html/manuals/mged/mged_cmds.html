@@ -1875,8 +1875,9 @@ The <I>operation</I> may be ``+'', ``-'', or ``u''. If no <I>operation</I> is sp
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>i region3 group5</b><br>
-		-- add <I>region3</I> to the combination <I>group5</I>
+	<DD>
+	<kbd>mged></kbd> <b>i region3 group5</b><br>
+	-- add <I>region3</I> to the combination <I>group5</I><br>
 	</DD>
 	</DL>
 </DD>
@@ -1897,9 +1898,10 @@ and the <a href="brlcad_glossary.html#PATH">path</a> to the region.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>idents regions_file group1 group2 region3</b><br>
-		-- create a file named <I>regions_file</I> and list all the regions in <I>group1, group2,</I> and <I>region3</I>
-		in the file.
+	<DD>
+	<kbd>mged></kbd> <b>idents regions_file group1 group2 region3</b><br>
+	-- create a file named <I>regions_file</I> and list all the regions in
+		<I>group1, group2,</I> and <I>region3</I><br> in the file.
 	</DD>
 	</DL>
 </DD>
@@ -1920,8 +1922,9 @@ either using the mouse to make the selection, or using <a href="mged_devel_cmds.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>ill solida</b><br>
-		-- select <I>solida</I> for editing.
+	<DD>
+	<kbd>mged></kbd> <b>ill solida</b><br>
+	-- select <I>solida</I> for editing.<br>
 	</DD>
 	</DL>
 </DD>
@@ -1961,12 +1964,14 @@ values for <I>solid_type</I> are:
 <li>epa -- <a href="brlcad_solids.html#EPA">Elliptical Paraboloid</a></li>
 <li>ehy -- <a href="brlcad_solids.html#EHY">Elliptical Hyperboloid</a></li>
 <li>eto -- <a href="brlcad_solids.html#ETO">Elliptical Torus</a></li>
+<li>part -- <a href="brlcad_solids.html#PART">Particle</a></li>
 </ul>
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>in new1 raw 0 0 0 0 0 1 1 0 0 0 1 0</b><br>
-		-- create an <I>ARB</I> named <I>new1</I> in the form of a right angle wedge.
+	<DD>
+	<kbd>mged></kbd> <b>in new1 raw 0 0 0 0 0 1 1 0 0 0 1 0</b><br>
+	-- create an <I>ARB</I> named <I>new1</I> in the form of a right angle wedge.<br>
 	</DD>
 	</DL>
 </DD>
@@ -1982,9 +1987,10 @@ no arguments and it prompts the user for all needed information.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>inside out_arb in_arb 1 1 1 1 1 1</b><br>
-		-- create a solid named <I>in_arb</I> such that each face is 1 <a href="#units">unit</a>
-		from the corresponding face in <I>out_arb</I>
+	<DD>
+	<kbd>mged></kbd> <b>inside out_arb in_arb 1 1 1 1 1 1</b><br>
+	-- create a solid named <I>in_arb</I> such that each face is 1 <a href="#units">unit</a>
+		from the corresponding face in <I>out_arb</I><br>
 	</DD>
 	</DL>
 </DD>
@@ -2001,8 +2007,10 @@ for the specified <a href="brlcad_glossary.html#REGION">region</a>.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>item region_1 1137 0 8 100</b><br>
-		-- set <I>ident number</I> to 1137, <I>air code</I> to 0, <I>material code</I> to 8, and <I>los</I> to 100 for <I>region_1</I>
+	<DD>
+	<kbd>mged></kbd> <b>item region_1 1137 0 8 100</b><br>
+	-- set <I>ident number</I> to 1137, <I>air code</I> to 0,
+		<I>material code</I> to 8, and <I>los</I> to 100 for <I>region_1</I><br>
 	</DD>
 	</DL>
 </DD>
@@ -2073,16 +2081,17 @@ for the specified <a href="brlcad_glossary.html#REGION">region</a>.
 
 <DT><a NAME="journal"><B>journal</B> [<I>-d</I>] [<I>journal_file_name</I>]</DT>
 
-<DD> The ``journal'' command starts or stops the journalling of <I>mged</I> commands in a file.
-If executed with no arguments, the command stops journalling. If a <I>journal_file_name</I>
+<DD> The ``journal'' command starts or stops the journalling of <I>mged</I> commands to a file.
+If executed with no arguments, the command stops journalling. If <I>journal_file_name</I>
 is provided, that file will become the recipient of the journalling. If a <I>-d</I> option
 is also provided, the journalling will include the delays between commands. Journalling
 is off by default.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>journal journal_file</b><br>
-		-- start journalling to <I>journal_file</I>
+	<DD>
+	<kbd>mged></kbd> <b>journal journal_file</b><br>
+	-- start journalling to <I>journal_file</I><br>
 	</DD>
 	</DL>
 </DD>
@@ -2097,8 +2106,9 @@ database file. The <I>objects</I> in the list must exist in the current database
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>keep sample.g sample1 sample2</b><br>
-		-- create <I>sample.g</I> file with objects <I>sample1</I> and <I>sample2</I> in it.
+	<DD>
+	<kbd>mged></kbd> <b>keep sample.g sample1 sample2</b><br>
+	-- create <I>sample.g</I> file with objects <I>sample1</I> and <I>sample2</I> in it.<br>
 	</DD>
 	</DL>
 </DD>
@@ -2114,8 +2124,9 @@ no effect when used in non-editing modes.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>keypoint 10 20 30</b><br>
-		-- set the <I>keypoint</I> to the point (10 20 30) in model units
+	<DD>
+	<kbd>mged></kbd> <b>keypoint 10 20 30</b><br>
+	-- set the <I>keypoint</I> to the point (10 20 30) in model units<br>
 	</DD>
 	</DL>
 </DD>
@@ -2130,12 +2141,13 @@ If the <I>-f</I> option is specified, then kill will not complain if some, or al
 the <I>objects</I> specified do not actaully exist in the database. Note that the <I>objects</I>
 are killed immediately. There is no need for a ``write file'' command in <I>MGED</I>, and
 there is no ``undo'' command. Use this command with caution. Other commands that remove
-objecvts from the database are <a href="#killall">killall</a> and <a href="#killtree">killtree</a>.
+objects from the database are <a href="#killall">killall</a> and <a href="#killtree">killtree</a>.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>kill group1 region2 solidb</b><br>
-		-- destroy <I>group1</I>, <I>region2</I>, and <I>solidb</I>
+	<DD>
+	<kbd>mged></kbd> <b>kill group1 region2 solidb</b><br>
+	-- destroy <I>group1</I>, <I>region2</I>, and <I>solidb</I><br>
 	</DD>
 	</DL>
 </DD>
@@ -2152,9 +2164,10 @@ objects from the database are <a href="#kill">kill</a> and <a href="#killtree">k
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>killall group1 region2 solidb</b><br>
-		-- destroy <I>group1</I>, <I>region2</I>, and <I>solidb</I> and remove
-		all references to these objects from the database.
+	<DD>
+	<kbd>mged></kbd> <b>killall group1 region2 solidb</b><br>
+	-- destroy <I>group1</I>, <I>region2</I>, and <I>solidb</I> and remove
+		all references to these objects from the database.<br>
 	</DD>
 	</DL>
 </DD>
@@ -2178,9 +2191,10 @@ objects from the database are <a href="#kill">kill</a> and <a href="#killall">ki
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>killtree group1 region2 solidb</b><br>
-		-- destroy <I>group1</I>, <I>region2</I>, and <I>solidb</I> and remove
-		all references to these objects from the database.
+	<DD>
+	<kbd>mged></kbd> <b>killtree group1 region2 solidb</b><br>
+	-- destroy <I>group1</I>, <I>region2</I>, and <I>solidb</I> and remove
+		all references to these objects from the database.<br>
 	</DD>
 	</DL>
 </DD>
@@ -2232,8 +2246,9 @@ The available <I>knob ids</I> are:
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>knob y 1</b><br>
-		-- start the view rotating about the vertical axis
+	<DD>
+	<kbd>mged></kbd> <b>knob y 1</b><br>
+	-- start the view rotating about the vertical axis
 	</DD>
 	</DL>
 </DD>
@@ -2265,15 +2280,16 @@ parameters adjusted by the accumulated transformation.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>l region1</b><br>
-		-- display details about region1
-	</DD>
-	<DD><kbd>mged></kbd> <b>l group1/group2/region1/solid3</b><br>
-		-- display solid parameters for <I>solid3</I> with matrices applied from the <I>path</I>
-	</DD>
-	<DD><kbd>mged></kbd> <b>l -r a/b</b><br>
-		-- display all possible paths that start with <I>a/b</I> and end in a primitive <I>solid</I><br>
-		-- the solid parameters with the accumulated transformation applied will be displayed.
+	<DD>
+	<kbd>mged></kbd> <b>l region1</b><br>
+	-- display details about region1<br>
+	<kbd>mged></kbd> <b>l group1/group2/region1/solid3</b><br>
+	-- display solid parameters for <I>solid3</I> with matrices applied
+		from the <I>path</I><br>
+	<kbd>mged></kbd> <b>l -r a/b</b><br>
+	-- display all possible paths that start with <I>a/b</I> and end in a
+		primitive <I>solid</I><br>
+	-- the solid parameters with the accumulated transformation applied will be displayed.
 	</DD>
 	</DL>
 </DD>
@@ -2289,8 +2305,9 @@ display of an object.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>labelvert solidb</b><br>
-		-- place coordinate values in display near the vertices of <I>solidb</I>
+	<DD>
+	<kbd>mged></kbd> <b>labelvert solidb</b><br>
+	-- place coordinate values in display near the vertices of <I>solidb</I><br>
 	</DD>
 	</DL>
 </DD>
@@ -2309,10 +2326,11 @@ from the indicated <I>path</I> to any <I>primitive solid</I> will be evaluated a
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>listeval group1/region1/solidb</b><br>
-		-- display the parameters for <I>solidb</I> after applying the
+	<DD>
+	<kbd>mged></kbd> <b>listeval group1/region1/solidb</b><br>
+	-- display the parameters for <I>solidb</I> after applying the
 		transformation matrix from <I>group1</I> for <I>region1</I> and
-		the transformation matrix from <I>region1</I> for <I>solidb</I>
+		the transformation matrix from <I>region1</I> for <I>solidb</I><br>
 	</DD>
 	</DL>
 </DD>
@@ -2327,8 +2345,9 @@ execute <I>loadtk</I> prior to using any Tk facilities.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>loadtk</b><br>
-		-- Initialize the Tk window library
+	<DD>
+	<kbd>mged></kbd> <b>loadtk</b><br>
+	-- Initialize the Tk window library<br>
 	</DD>
 	</DL>
 </DD>
@@ -2345,9 +2364,10 @@ a similar function, but moves the eye_pt without changing the viewing direction.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>lookat 10 20 30</b><br>
-		-- rotate the view to place the point (10 20 30) (model coordinates)
-		in the center of the display
+	<DD>
+	<kbd>mged></kbd> <b>lookat 10 20 30</b><br>
+	-- rotate the view to place the point (10 20 30) (model coordinates)
+		in the center of the display<br>
 	</DD>
 	</DL>
 </DD>
@@ -2362,8 +2382,9 @@ command is a synonym for the <a href="#t">t</a> command.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>ls solid*</b><br>
-		-- list all objects with names beginning with ``solid''
+	<DD>
+	<kbd>mged></kbd> <b>ls solid*</b><br>
+	-- list all objects with names beginning with ``solid''<br>
 	</DD>
 	</DL>
 </DD>
@@ -2379,8 +2400,10 @@ objects, not MUVES components).
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>l_muves fuel transmission</b><br>
-		-- List the <I>BRL&#173CAD</I> regions that make up the MUVES components named ``fuel'' and ``transmission''.
+	<DD>
+	<kbd>mged></kbd> <b>l_muves fuel transmission</b><br>
+	-- List the <I>BRL&#173CAD</I> regions that make up the MUVES
+		components named ``fuel'' and ``transmission''. <br>
 	</DD>
 	</DL>
 </DD>
@@ -2388,7 +2411,7 @@ objects, not MUVES components).
 
 <DT><a NAME="make"><B>make</B> <I>new_solid type</I></DT>
 
-<DD>The ``make'' creates a <I>new_solid</I> of the indicated type. The <I>new_solid</I>
+<DD>The ``make'' command creates a <I>new_solid</I> of the indicated type. The <I>new_solid</I>
 is sized according to the current viewsize, and is dependent on the <I>type</I>.
 The possible values for <I>type</I> are:
 <ul>
@@ -2420,8 +2443,9 @@ The possible values for <I>type</I> are:
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>make solida sph</b><br>
-		-- create a sphere named <I>solida</I>
+	<DD>
+	<kbd>mged></kbd> <b>make solida sph</b><br>
+	-- create a sphere named <I>solida</I><br>
 	</DD>
 	</DL>
 </DD>
@@ -2438,8 +2462,10 @@ command may be used to see the effect of transformation matrices along a path.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>make_bb new_bb solida group1/region3</b><br>
-		-- create an RPP named <I>new_bb</I> that is large enough to contain <I>solida</I> and <I>group1/region3</I>
+	<DD>
+	<kbd>mged></kbd> <b>make_bb new_bb solida group1/region3</b><br>
+	-- create an RPP named <I>new_bb</I> that is large enough to contain
+		<I>solida</I> and <I>group1/region3</I><br>
 	</DD>
 	</DL>
 </DD>
@@ -2454,7 +2480,7 @@ command may be used to see the effect of transformation matrices along a path.
 <a href="brlcad_glossary.html#INHERITANCE">inheritance</a> to an existing
 <a href="brlcad_glossary.html#COMBINATION">combination</a>.
 The information may be included on the command line, otherwise the user
-will be prompted it.
+will be prompted for it.
 Some available shaders are:
 <ul>
 <li>bump -- bump maps</li>
@@ -2484,13 +2510,12 @@ Some available shaders are:
 <li>wood -- wood texture</li>
 </ul>
 
-
-
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>mater region1 "plastic {tr 0.5 re 0.2}" 210 100 100 0</b><br>
-		-- set <I>region1</I> to use the plastic shader with 50% transparency,
-		20% reflectivity, a base color of (210 100 100), and inheritance set to 0
+	<DD>
+	<kbd>mged></kbd> <b>mater region1 "plastic {tr 0.5 re 0.2}" 210 100 100 0</b><br>
+	-- set <I>region1</I> to use the plastic shader with 50% transparency,
+		20% reflectivity, a base color of (210 100 100), and inheritance set to 0<br>
 	</DD>
 	</DL>
 </DD>
@@ -2501,7 +2526,7 @@ Some available shaders are:
 <DD>The ``matpick'' command selects which matrix in the illuminated path should
 be edited. A number may be specified with 0 being the topmost selection.
 A <I>combination/member</I> may be specified to indicate that the matrix
-in <I>combination</I> that corresponds to </I>mamber</I> si to be edited.
+in <I>combination</I> that corresponds to </I>member</I> is to be edited.
 This command is only useful in object edit mode at the point where the
 user is selecting which matrix in the illuminated path should be edited. It is
 used internally by <I>mged</I>, the user should generally use the mouse to make this
@@ -2509,8 +2534,9 @@ selection.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>matpick group1/region3</b><br>
-		-- select the matrix for <I>region3</I> in <I>group1</I> for editing
+	<DD>
+	<kbd>mged></kbd> <b>matpick group1/region3</b><br>
+	-- select the matrix for <I>region3</I> in <I>group1</I> for editing<br>
 	</DD>
 	</DL>
 </DD>
@@ -2522,8 +2548,9 @@ selection.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>memprint</b><br>
-		-- list memory maps
+	<DD>
+	<kbd>mged></kbd> <b>memprint</b><br>
+	-- list memory maps<br>
 	</DD>
 	</DL>
 </DD>
@@ -2538,10 +2565,10 @@ axis. An <I>ARB</I> solid must be selected for editing. Not all faces of all
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>mirface 1234 x</b><br>
-		-- Modify currently edited <I>ARB</I> by moving the face opposite
-		face 1234 such that it is the mirror image of face 1234 across the
-		YZ-plane
+	<DD>
+	<kbd>mged></kbd> <b>mirface 1234 x</b><br>
+	-- Modify currently edited <I>ARB</I> by moving the face opposite face 1234
+		such that it is the mirror image of face 1234 across the YZ-plane<br>
 	</DD>
 	</DL>
 </DD>
@@ -2559,18 +2586,27 @@ members matrices set do perform the appropriate reflection.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>mirror solid1 solid1_mirror x</b><br>
-		-- make a copy of <I>solid1</I>, name it <I>solid1_mirror</I>,
+	<DD>
+	<kbd>mged></kbd> <b>mirror solid1 solid1_mirror x</b><br>
+	-- make a copy of <I>solid1</I>, name it <I>solid1_mirror</I>,
 		and adjust its parameters so that it is a mirror image of
-		<I>solid1</I> across the YZ-plane
+		<I>solid1</I> across the YZ-plane<br>
 	</DD>
 	</DL>
 </DD>
 <HR>
 
 <DT><a NAME="mrot"><B>mrot</B> <I>x y z</I></DT>
-<DD>Rotate view using model <I>x y z</I>.
+<DD>Rotate the view using model <I>x y z</I>.
 </DD>
+
+	<DL>
+	<DT><big>Examples:</big></DT>
+	<DD>
+	<kbd>mged></kbd> <b>mrot 0 0 10</b><br>
+	-- rotate the view about the model Z axis by 10 degrees</b><br>
+	</DD>
+	</DL>
 <HR>
 
 <DT><a NAME="mv"><B>mv</B> <I>old_name new_name</I></DT>
@@ -2582,8 +2618,9 @@ database. The <a href="#mvall">mvall</a> command will change an objects name eve
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>mv solida solidb</b><br>
-		-- change the name of <I>solida</I> to <I>solidb</I>
+	<DD>
+	<kbd>mged></kbd> <b>mv solida solidb</b><br>
+	-- change the name of <I>solida</I> to <I>solidb</I></b><br>
 	</DD>
 	</DL>
 </DD>
@@ -2600,9 +2637,10 @@ change the names and references of objects.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>mvall solida solidb</b><br>
-		-- change the name of <I>solida</I> to <I>solidb</I> everywhere it occurs
-		in the database.
+	<DD>
+	<kbd>mged></kbd> <b>mvall solida solidb</b><br>
+	-- change the name of <I>solida</I> to <I>solidb</I> everywhere it occurs
+		in the database.</b><br>
 	</DD>
 	</DL>
 </DD>
@@ -2621,8 +2659,9 @@ command line. See the <I>man</I> page of <I>nirt</I> for more details.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>nirt</b><br>
-		-- fire a single ray through the center of the <I>mged</I> display
+	<DD>
+	<kbd>mged></kbd> <b>nirt</b><br>
+	-- fire a single ray through the center of the <I>mged</I> display<br>
 	</DD>
 	</DL>
 </DD>
@@ -2645,11 +2684,12 @@ The resulting solid consists of all triangular faces.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>nmg_collapse nmg_new nmg_old 1.0 10.0</b><br>
-		-- Decimate edges in <I>nmg_old</I> to produce an NMG with an error
+	<DD>
+	<kbd>mged></kbd> <b>nmg_collapse nmg_new nmg_old 1.0 10.0</b><br>
+	-- Decimate edges in <I>nmg_old</I> to produce an NMG with an error
 		no greater than 1.0 <a href="#units">units</a>. The process will
 		not create any triangles with an angle less than 10 degrees. The new
-		NMG solid will be named <I>nmg_new</I>.
+		NMG solid will be named <I>nmg_new</I>.<br>
 	</DD>
 	</DL>
 </DD>
@@ -2658,7 +2698,7 @@ The resulting solid consists of all triangular faces.
 <DT><a NAME="nmg_simplify"><B>nmg_simplify</B>
 	[<I>arb</I>|<I>tgc</I>|<I>poly</I>] <I>new_solid nmg_solid</I></DT>
 
-<DD>The ``nmg_simplify'' command attepts to convert an existing
+<DD>The ``nmg_simplify'' command attempts to convert an existing
 <a href="brlcad_solids.html#NMG">nmg_solid</a> to a simpler
 <a href="brlcad_glossary.html#SOLID">primitive solid</a> type.
 The user may specify which type to attempt by including <I>arb, tgc,</I> or <I>poly</I>
@@ -2669,9 +2709,10 @@ above order. If <I>tgc</I> is specified, the code will attempt to determine if t
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>nmg_simplify poly solida.poly solida.nmg</b><br>
-		-- convert the <I>NMG</I> solid named <I>solida.nmg</I> to a
-		<a href="brlcad_solids.html#PG">polysolid</a> named <I>solida.poly</I>
+	<DD>
+	<kbd>mged></kbd> <b>nmg_simplify poly solida.poly solida.nmg</b><br>
+	-- convert the <I>NMG</I> solid named <I>solida.nmg</I> to a
+		<a href="brlcad_solids.html#PG">polysolid</a> named <I>solida.poly</I><br>
 	</DD>
 	</DL>
 </DD>
@@ -2691,10 +2732,11 @@ in <I>path_rhs</I> is used as the reference solid during the object editing.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>oed group1/group2 region1/solida</b><br>
-		-- place <I>mged</I> into object edit mode, editing the matrix
+	<DD>
+	<kbd>mged></kbd> <b>oed group1/group2 region1/solida</b><br>
+	-- place <I>mged</I> into object edit mode, editing the matrix
 		in <I>group2</I> that corresponds to <I>region1</I>, using <I>solida</I>
-		as the reference solid
+		as the reference solid<br>
 	</DD>
 	</DL>
 </DD>
@@ -2710,10 +2752,11 @@ in <I>path_rhs</I> is used as the reference solid during the object editing.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>opendb model.g</b>
-	     <br> -- close the current database file and open <I>model.g</I>
-	     <br><kbd>mged></kbd> <b>opendb</b>
-	     <br> -- return the name of the current database file
+	<DD>
+	<kbd>mged></kbd> <b>opendb model.g</b><br>
+	-- close the current database file and open <I>model.g</I><br>
+	<kbd>mged></kbd> <b>opendb</b><br>
+	-- return the name of the current database file<br>
 	</DD>
 	</DL>
 </DD>
@@ -2727,8 +2770,9 @@ on the command line.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>orientation 1 0 0 0</b><br>
-		-- set viewing direction to bottom
+	<DD>
+	<kbd>mged></kbd> <b>orientation 1 0 0 0</b><br>
+	-- set viewing direction to bottom<br>
 	</DD>
 	</DL>
 </DD>
@@ -2745,8 +2789,9 @@ for <I>orot</I>.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>orot 0 0 35</b><br>
-		-- rotate currently edited object by 35 degrees about the Z-axis
+	<DD>
+	<kbd>mged></kbd> <b>orot 0 0 35</b><br>
+	-- rotate currently edited object by 35 degrees about the Z-axis<br>
 	</DD>
 	</DL>
 </DD>
@@ -2761,8 +2806,9 @@ its size.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>oscale 3</b><br>
-		-- increase the size of the curently edited object by a factor of 3
+	<DD>
+	<kbd>mged></kbd> <b>oscale 3</b><br>
+	-- increase the size of the curently edited object by a factor of 3<br>
 	</DD>
 	</DL>
 </DD>
@@ -2771,7 +2817,7 @@ its size.
 <DT><a NAME="overlay"><B>overlay</B> <I>plot_file</I> [<I>name</I>]</DT>
 
 <DD>The ``overlay'' command plots the specified UNIX <I>plot_file</I>
-in the <I>mged</I> display. Phoney object names are created for each part
+in the <I>mged</I> display. Phony object names are created for each part
 of the plot file that is in a unique color. The names are created by adding
 a color to the specified <I>name</I>, or to ``_PLOT_OVER'' if no name is
 provided. The color suffix is built by converting the
@@ -2781,9 +2827,10 @@ red becomes "ff0000",  green is "00ff00", etc.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>overlay plot.upl tmp</b><br>
-		-- plot the Unix plot file <I>plot.upl</I> in the <I>mged</I>
-		display, using <I>tmp</I> as the base for the phoney object names.
+	<DD>
+	<kbd>mged></kbd> <b>overlay plot.upl tmp</b><br>
+	-- plot the Unix plot file <I>plot.upl</I> in the <I>mged</I>
+		display, using <I>tmp</I> as the base for the phony object names.<br>
 	</DD>
 	</DL>
 </DD>
@@ -2806,9 +2853,10 @@ for solid parameters. The <a href="#translate">translate</a> and
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>p 30</b><br>
-		-- set the currently selected solid parameter of the currently edited
-		solid to 30 <a href="#units">units</a>
+	<DD>
+	<kbd>mged></kbd> <b>p 30</b><br>
+	-- set the currently selected solid parameter of the currently edited
+		solid to 30 <a href="#units">units</a><br>
 	</DD>
 	</DL>
 </DD>
@@ -2822,9 +2870,10 @@ a <a href="brlcad_glossary.html#SOLID">primitive solid</a>.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>pathlist group1 region2</b><br>
-		-- list all existing paths that start from the <I>combinations</I>
-		<I>group1</I> and <I>region2</I> and end at <I>primitive solids</I>
+	<DD>
+	<kbd>mged></kbd> <b>pathlist group1 region2</b><br>
+	-- list all existing paths that start from the <I>combinations</I>
+		<I>group1</I> and <I>region2</I> and end at <I>primitive solids</I><br>
 	</DD>
 	</DL>
 </DD>
@@ -2835,14 +2884,15 @@ a <a href="brlcad_glossary.html#SOLID">primitive solid</a>.
 <DD>The ``paths'' command lists all existing paths that start from the specified
 <I>path_start</I> and end at
 a <a href="brlcad_glossary.html#SOLID">primitive solid</a>. The <I>path_start</I>
-may be specified as by ``/'' separated components or they may be separated by spaces
+may be specified by ``/'' separated components or they may be separated by spaces
 (but not both).
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>paths group1 region2</b><br>
-		-- list all existing paths that start from <I>group1/region2</I>
-		and end at a <I>primitive solid</I>
+	<DD>
+	<kbd>mged></kbd> <b>paths group1 region2</b><br>
+	-- list all existing paths that start from <I>group1/region2</I>
+		and end at a <I>primitive solid</I><br>
 	</DD>
 	</DL>
 </DD>
@@ -2861,10 +2911,11 @@ geometry of the <I>ARB</I>, but may affect any texture mapping involving this so
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>permute 321 </b><br>
-		-- rearrange the vertices of the currently edited <I>ARB</I> such that
+	<DD>
+	<kbd>mged></kbd> <b>permute 321 </b><br>
+	-- rearrange the vertices of the currently edited <I>ARB</I> such that
 		vertex #3 becomes vertex #1, vertex #2 remains #2, and vertex #1
-		becomes #3
+		becomes #3<br>
 	</DD>
 	</DL>
 </DD>
@@ -2880,15 +2931,16 @@ The <I>-float</I> option requests a plot file with real numbers rather than inte
 The <I>-zclip</I> option requests that the plot be clipped to the viewing cube in the
 Z-direction. The <I>-2d</I> option requests a 2-dimensional plot (the default is 3D).
 The <I>-grid</I> option is intended to include a grid in the plot,
-but is currently not implimented. This command uses the <I>dm-plot</I> display manager.
+but is currently not implemented. This command uses the <I>dm-plot</I> display manager.
 The <a href="#plot">plot</a> command performs the same function, but does not use
 the <I>dm-plot</I> display manager.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>pl -float | pldebug</b><br>
-		-- create a UNIX plot of the current <I>mged</I> display and pipe
-		the results to the <I>pldebug</I> command
+	<DD>
+	<kbd>mged></kbd> <b>pl -float | pldebug</b><br>
+	-- create a UNIX plot of the current <I>mged</I> display and pipe
+		the results to the <I>pldebug</I> command<br>
 	</DD>
 	</DL>
 </DD>
@@ -2904,15 +2956,16 @@ The <I>-float</I> option requests a plot file with real numbers rather than inte
 The <I>-zclip</I> option requests that the plot be clipped to the viewing cube in the
 Z-direction. The <I>-2d</I> option requests a 2-dimensional plot (the default is 3D).
 The <I>-grid</I> option is intended to include a grid in the plot,
-but is currently not implimented. This command does not use the <I>dm-plot</I> display manager.
+but is currently not implemented. This command does not use the <I>dm-plot</I> display manager.
 The <a href="#pl">pl</a> command performs the same function, but does use
 the <I>dm-plot</I> display manager.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>plot -float | pldebug</b><br>
-		-- create a UNIX plot of the current <I>mged</I> display and pipe
-		the results to the <I>pldebug</I> command
+	<DD>
+	<kbd>mged></kbd> <b>plot -float | pldebug</b><br>
+	-- create a UNIX plot of the current <I>mged</I> display and pipe
+		the results to the <I>pldebug</I> command<br>
 	</DD>
 	</DL>
 </DD>
@@ -2944,9 +2997,10 @@ its entries will override any color assigned using the <a href="#mater">mater</a
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>prcolor -float | pldebug</b><br>
-		-- create a UNIX prcolor of the current <I>mged</I> display and pipe
-		the results to the <I>pldebug</I> command
+	<DD>
+	<kbd>mged></kbd> <b>prcolor -float | pldebug</b><br>
+	-- create a UNIX prcolor of the current <I>mged</I> display and pipe
+		the results to the <I>pldebug</I> command<br>
 	</DD>
 	</DL>
 </DD>
@@ -2960,11 +3014,12 @@ will also be changed. The <a href="#mvall">mvall</a> command performs a similar 
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>prefix test_ group1 regiona solidb</b><br>
-		-- change the names of objects <I>group1, regiona</I>, and
+	<DD>
+	<kbd>mged></kbd> <b>prefix test_ group1 regiona solidb</b><br>
+	-- change the names of objects <I>group1, regiona</I>, and
 		<I>solidb</I> to ``test_group1'', ``test_regiona'', and
 		``test_solidb''. All references to these objects will
-		reflect the new names.
+		reflect the new names.<br>
 	</DD>
 	</DL>
 </DD>
@@ -3024,8 +3079,9 @@ The available buttons are:
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>press top</b><br>
-		-- switch to view from the top direction
+	<DD>
+	<kbd>mged></kbd> <b>press top</b><br>
+	-- switch to view from the top direction<br>
 	</DD>
 	</DL>
 </DD>
@@ -3045,9 +3101,10 @@ Note that this may significantly slow the <I>preview</I>.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>preview -D 101 -K 237 script.rt </b><br>
-		-- <I>preview</I> the animation script stored in the file named <I>script.rt</I>
-		from frame number 101 through frame number 237
+	<DD>
+	<kbd>mged></kbd> <b>preview -D 101 -K 237 script.rt </b><br>
+	-- <I>preview</I> the animation script stored in the file named <I>script.rt</I>
+		from frame number 101 through frame number 237<br>
 	</DD>
 	</DL>
 </DD>
@@ -3064,11 +3121,12 @@ option allows the user to specify the creator of the file (the default is ``LIBD
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>ps -t "Test Title" test.ps </b><br>
-		-- place a <I>PostScript</I> version of the current <I>mged</I> display in
+	<DD>
+	<kbd>mged></kbd> <b>ps -t "Test Title" test.ps </b><br>
+	-- place a <I>PostScript</I> version of the current <I>mged</I> display in
 		a file named <I>test.ps</I> and give it the title ``Test Title''.
-	     <br><kbd>mged></kbd> <b>ps -l 10 -t "Test Fat Lines" fat_lines.ps</b>
-	     <br> -- this time use fat lines.
+		<br><kbd>mged></kbd> <b>ps -l 10 -t "Test Fat Lines" fat_lines.ps</b>
+		<br> -- this time use fat lines.<br>
 	</DD>
 	</DL>
 </DD>
@@ -3091,10 +3149,11 @@ similar function, even if some solids are multiply referenced.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>push group1 regiona</b><br>
-		-- push the effects of any transformation matrices in the trees
+	<DD>
+	<kbd>mged></kbd> <b>push group1 regiona</b><br>
+	-- push the effects of any transformation matrices in the trees
 		headed by <I>group1</I> and <I>regiona</I> down to the
-		<I>primitive solids</I>
+		<I>primitive solids</I><br>
 	</DD>
 	</DL>
 </DD>
@@ -3112,9 +3171,10 @@ allows the user to copy an existing transformation matrix.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>putmat group1/regiona I</b><br>
-		-- set the transformation matrix for <I>regiona</I> in <I>group1</I>
-		to the identity matrix.
+	<DD>
+	<kbd>mged></kbd> <b>putmat group1/regiona I</b><br>
+	-- set the transformation matrix for <I>regiona</I> in <I>group1</I>
+		to the identity matrix.<br>
 	</DD>
 	</DL>
 </DD>
@@ -3130,8 +3190,9 @@ command.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>q</b><br>
-		-- quit the current <I>mged</I> session
+	<DD>
+	<kbd>mged></kbd> <b>q</b><br>
+	-- quit the current <I>mged</I> session<br>
 	</DD>
 	</DL>
 </DD>
@@ -3146,9 +3207,10 @@ vector (<I>dx dy dz</I>).
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>qorot 1 2 3 0 0 1 25</b><br>
-		-- rotate the currently edited object through 25 degrees about the axis
-		through the point (1, 2, 3) and in the Z-direction.
+	<DD>
+	<kbd>mged></kbd> <b>qorot 1 2 3 0 0 1 25</b><br>
+	-- rotate the currently edited object through 25 degrees about the axis
+		through the point (1, 2, 3) and in the Z-direction.<br>
 	</DD>
 	</DL>
 </DD>
@@ -3158,6 +3220,14 @@ vector (<I>dx dy dz</I>).
 
 <DD>Get/set <I>query ray</I> characteristics.
 </DD>
+
+	<DL>
+	<DT><big>Examples:</big></DT>
+	<DD>
+	<kbd>mged></kbd> <b>qray</b><br>
+	-- print usage message<br>
+	</DD>
+	</DL>
 <HR>
 
 <DT><a NAME="query_ray"><B>query_ray</B> [<I>nirt_args</I>]</DT>
@@ -3173,8 +3243,9 @@ command line. See the <I>man</I> page of <I>nirt</I> for more details.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>query_ray</b><br>
-		-- fire a single ray through the center of the <I>mged</I> display
+	<DD>
+	<kbd>mged></kbd> <b>query_ray</b><br>
+	-- fire a single ray through the center of the <I>mged</I> display<br>
 	</DD>
 	</DL>
 </DD>
@@ -3190,8 +3261,9 @@ command.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>quit</b><br>
-		-- quit the current <I>mged</I> session
+	<DD>
+	<kbd>mged></kbd> <b>quit</b><br>
+	-- quit the current <I>mged</I> session<br>
 	</DD>
 	</DL>
 </DD>
@@ -3200,16 +3272,17 @@ command.
 <DT><a NAME="qvrot"><B>qvrot</B> <I>dx dy dz angle</I></DT>
 
 <DD>The ``qvrot'' command adjusts the current <I>mged</I> viewing direction
-such the the eye is positioned along the direction vector (<I>dx dy dz</I>)
+such that the eye is positioned along the direction vector (<I>dx dy dz</I>)
 from the view center and is looking towards the view center. The <I>angle</I>
 (in degrees) allows for a twist about the viewing direction. The <a href="#ae">
 ae</a> command provides a similar capability.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>qvrot 0 0 1 90</b><br>
-		-- set the current view to the same as achieved by the <a href="#press">
-		press top</a> command
+	<DD>
+	<kbd>mged></kbd> <b>qvrot 0 0 1 90</b><br>
+	-- set the current view to the same as achieved by the <a href="#press">
+		press top</a> command<br>
 	</DD>
 	</DL>
 </DD>
@@ -3237,11 +3310,12 @@ ident</a> number gets incremented. If <I>region_name</I> already exists, then th
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>r new_region + solid1 - solid2 u solid3 + group4</b><br>
-		-- create a region named <I>new_region</I> that consists of
-			two parts unioned together. The first part is <I>solid1</I>
-			with <I>solid2</I> subtracted. The second part is the intersection of <I>solid3</I>
-			and the <I>combination</I> <I>group4</I>
+	<DD>
+	<kbd>mged></kbd> <b>r new_region + solid1 - solid2 u solid3 + group4</b><br>
+	-- create a region named <I>new_region</I> that consists of
+		two parts unioned together. The first part is <I>solid1</I>
+		with <I>solid2</I> subtracted. The second part is the intersection of <I>solid3</I>
+		and the <I>combination</I> <I>group4</I><br>
 	</DD>
 	</DL>
 </DD>
@@ -3256,9 +3330,10 @@ command.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>rcodes region_codes</b><br>
-		-- read the file named <I>region_codes</I> and set the region specific
-		attributes according to the values found in the file.
+	<DD>
+	<kbd>mged></kbd> <b>rcodes region_codes</b><br>
+	-- read the file named <I>region_codes</I> and set the region specific
+		attributes according to the values found in the file.<br>
 	</DD>
 	</DL>
 </DD>
@@ -3275,8 +3350,9 @@ and <a href="#l_muves">l_muves</a> comands.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>read_muves region_map</b><br>
-		-- Read the MUVES file named <I>region_map</I>.
+	<DD>
+	<kbd>mged></kbd> <b>read_muves region_map</b><br>
+	-- Read the MUVES file named <I>region_map</I>.<br>
 	</DD>
 	</DL>
 </DD>
@@ -3298,8 +3374,9 @@ some basic <I>combination</I> editing capabilities.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>red group2</b><br>
-		-- edit the <I>combination</I> <I>group2</I> with the users editor of choice.
+	<DD>
+	<kbd>mged></kbd> <b>red group2</b><br>
+	-- edit the <I>combination</I> <I>group2</I> with the users editor of choice.<br>
 	</DD>
 	</DL>
 </DD>
@@ -3320,8 +3397,9 @@ useful with outboard .inmem database modifications.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>refresh</b><br>
-		-- update the <I>mged</I> display
+	<DD>
+	<kbd>mged></kbd> <b>refresh</b><br>
+	-- update the <I>mged</I> display<br>
 	</DD>
 	</DL>
 </DD>
@@ -3335,8 +3413,9 @@ that value.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>regdebug</b><br>
-		-- toggle the display manager debug flag
+	<DD>
+	<kbd>mged></kbd> <b>regdebug</b><br>
+	-- toggle the display manager debug flag<br>
 	</DD>
 	</DL>
 </DD>
@@ -3352,12 +3431,13 @@ commands.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>regdef 1003 0 100 8</b><br>
-		-- set the <I>region</I> default attributes to an
+	<DD>
+	<kbd>mged></kbd> <b>regdef 1003 0 100 8</b><br>
+	-- set the <I>region</I> default attributes to an
 		<a href="brlcad_glossary.html#IDENT">ident</a> of 1003,
 		an <a href="brlcad_glossary.html#SPACE">air code</a> of 0,
-		a <a href="brlcad_glossary.html#LOS">los</a> of 100%,
-		and a <a href="brlcad_glossary.html#GIFTMAT">material code</a> of 8.
+		an <a href="brlcad_glossary.html#LOS">los</a> of 100%,
+		and a <a href="brlcad_glossary.html#GIFTMAT">material code</a> of 8.<br>
 	</DD>
 	</DL>
 </DD>
@@ -3378,9 +3458,10 @@ formula for the <I>region</I>.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>regions regions_file group1 group2</b><br>
-		-- place a summary of all the <I>regions</I> from <I>group1</I>
-		and <I>group2</I> in the file named <I>regions_file</I>
+	<DD>
+	<kbd>mged></kbd> <b>regions regions_file group1 group2</b><br>
+	-- place a summary of all the <I>regions</I> from <I>group1</I>
+		and <I>group2</I> in the file named <I>regions_file</I><br>
 	</DD>
 	</DL>
 </DD>
@@ -3391,14 +3472,15 @@ formula for the <I>region</I>.
      arguments, the current display manager is closed. Otherwise, <I>name</I>
      (i.e. the Tcl/Tk path name of the display manager window) is closed.
 
-     <DL>
-       <DT><big>Examples:</big></DT>
-       <DD><kbd>mged></kbd> <b>release</b>
-	    <br> -- close the current display manager
-	    <br><kbd>mged></kbd> <b>release .dm_X0</b>
-	    <br> -- close <I>.dm_X0</I>
-       </DD>
-     </DL>
+	<DL>
+	<DT><big>Examples:</big></DT>
+	<DD>
+	<kbd>mged></kbd> <b>release</b><br>
+	-- close the current display manager<br>
+	<kbd>mged></kbd> <b>release .dm_X0</b><br>
+	-- close <I>.dm_X0</I><br>
+	</DD>
+	</DL>
 </DD>
 <HR>
 
@@ -3415,9 +3497,10 @@ first face is extruded normally by the specified thickness to complete the <I>AR
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>rfarb</b><br>
-		-- create a new <I>ARB8</I> solid according to arguments supplied
-		in answer to prompts.
+	<DD>
+	<kbd>mged></kbd> <b>rfarb</b><br>
+	-- create a new <I>ARB8</I> solid according to arguments supplied
+		in answer to prompts.<br>
 	</DD>
 	</DL>
 </DD>
@@ -3432,8 +3515,9 @@ other <I>combination</I> editing capabilities.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>rm group1 regiona</b><br>
-		-- delete <I>regiona</I> from <I>group1</I>
+	<DD>
+	<kbd>mged></kbd> <b>rm group1 regiona</b><br>
+	-- delete <I>regiona</I> from <I>group1</I><br>
 	</DD>
 	</DL>
 </DD>
@@ -3450,9 +3534,10 @@ in the <I>file</I>. The format of the <I>file</I> is expected to be as produced 
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>rmater mater_file</b><br>
-		-- read the file named <I>mater_file</I> and set the <I>combination</I>
-		attributes according to those listed in the file.
+	<DD>
+	<kbd>mged></kbd> <b>rmater mater_file</b><br>
+	-- read the file named <I>mater_file</I> and set the <I>combination</I>
+		attributes according to those listed in the file.<br>
 	</DD>
 	</DL>
 </DD>
@@ -3466,9 +3551,10 @@ to be as produced by the <a href="#savekey">savekey</a> command.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>rmats key_file</b><br>
-		-- read the file named <I>key_file</I> and set the current
-		<I>mged</I> viewing direction according to the parameters found there.
+	<DD>
+	<kbd>mged></kbd> <b>rmats key_file</b><br>
+	-- read the file named <I>key_file</I> and set the current
+		<I>mged</I> viewing direction according to the parameters found there.<br>
 	</DD>
 	</DL>
 </DD>
@@ -3479,14 +3565,15 @@ to be as produced by the <a href="#savekey">savekey</a> command.
      degrees. Exactly what is rotated and how is dependant on MGED's state
      as well as the state of the display manager. See <a href="#arot">arot</a> for a similar capability.
 
-     <DL>
-       <DT><big>Examples:</big></DT>
-       <DD><kbd>mged></kbd> <b>rot 0 0 45</b>
-	    <br> -- rotate 45 degrees about the Z axis
-	    <br><kbd>mged></kbd> <b>rot 45 45 0</b>
-	    <br> -- rotate 45 degrees about the Y axis, then rotate 45 degrees about the X axis
-       </DD>
-     </DL>
+	<DL>
+	<DT><big>Examples:</big></DT>
+	<DD>
+	<kbd>mged></kbd> <b>rot 0 0 45</b><br>
+	-- rotate 45 degrees about the Z axis<br>
+	<kbd>mged></kbd> <b>rot 45 45 0</b><br>
+	-- rotate 45 degrees about the Y axis, then rotate 45 degrees about the X axis<br>
+	</DD>
+	</DL>
 </DD>
 <HR>
 
@@ -3501,8 +3588,9 @@ The <a href="#p">p</a> command provides a similar capability for solid editing.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>rotobj 0 0 25</b><br>
-		-- rotate the currently edited object through 25 degrees about the Z-direction.
+	<DD>
+	<kbd>mged></kbd> <b>rotobj 0 0 25</b><br>
+	-- rotate the currently edited object through 25 degrees about the Z-direction.<br>
 	</DD>
 	</DL>
 </DD>
@@ -3531,9 +3619,10 @@ objects.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>rrt echo</b><br>
-		-- will list the current database name
-			and the list of currently displayed objects
+	<DD>
+	<kbd>mged></kbd> <b>rrt echo</b><br>
+	-- will list the current database name
+		and the list of currently displayed objects<br>
 	</DD>
 	</DL>
 </DD>
@@ -3553,10 +3642,11 @@ parameters from standard input. See the <I>man</I> page on <I>rt</I> for details
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>rt -s1024 -F/dev/Xl</b><br>
-		-- run the <I>rt</I> program to produce a color-shaded image of the
+	<DD>
+	<kbd>mged></kbd> <b>rt -s1024 -F/dev/Xl</b><br>
+	-- run the <I>rt</I> program to produce a color-shaded image of the
 		current view in the <I>mged</I> display. The image will be 1024 pixels
-		square and will be displayed on a lingering <I>X</I> frambuffer.
+		square and will be displayed on a lingering <I>X</I> frambuffer.<br>
 	</DD>
 	</DL>
 </DD>
@@ -3587,9 +3677,10 @@ page on <I>rtcheck</I> for details.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>rtcheck -g10 -G10</b><br>
-		-- run the <I>rtcheck</I> program with rays fired from a uniform grid
-		with the rays spaced every 10 mm.
+	<DD>
+	<kbd>mged></kbd> <b>rtcheck -g10 -G10</b><br>
+	-- run the <I>rtcheck</I> program with rays fired from a uniform grid
+		with the rays spaced every 10 mm.<br>
 	</DD>
 	</DL>
 </DD>
@@ -3609,9 +3700,10 @@ of keyframes suitable for use with other <I>BRL&#173CAD</I> animation tools.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>savekey key_file 5 </b><br>
-		-- append the current viewing parameters to <I>key_file</I> and tag this
-		as the key frame at 5 seconds.
+	<DD>
+	<kbd>mged></kbd> <b>savekey key_file 5 </b><br>
+	-- append the current viewing parameters to <I>key_file</I> and tag this
+		as the key frame at 5 seconds.<br>
 	</DD>
 	</DL>
 </DD>
@@ -3656,11 +3748,12 @@ page on <I>rt</I> for details on available options.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>saveview rt_script -s1024 </b><br>
-		-- create (or append to) a file named <I>rt_script</I> that will contain
+	<DD>
+	<kbd>mged></kbd> <b>saveview rt_script -s1024 </b><br>
+	-- create (or append to) a file named <I>rt_script</I> that will contain
 		a script to run the <I>rt</I> program and create a color shaded image
 		of the current <I>mged</I> display. The image produced will be 1024
-		pixels square.
+		pixels square.<br>
 	</DD>
 	</DL>
 </DD>
@@ -3671,12 +3764,13 @@ page on <I>rt</I> for details on available options.
      what is done is determined by MGED's state as well as the state of
      the display manager.
 
-     <DL>
-       <DT><big>Examples:</big></DT>
-       <DD><kbd>mged></kbd> <b>sca 2</b>
-	    <br> -- scale by 2
-       </DD>
-     </DL>
+	<DL>
+	<DT><big>Examples:</big></DT>
+	<DD>
+	<kbd>mged></kbd> <b>sca 2</b>
+	-- scale by 2<br>
+	</DD>
+	</DL>
 </DD>
 <HR>
 
@@ -3693,8 +3787,9 @@ a list of the top-level objects currently being displayed.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>sed 0 0 25</b><br>
-		-- rotate the currently edited object through 25 degrees about the Z-direction.
+	<DD>
+	<kbd>mged></kbd> <b>sed solid1</b><br>
+	-- enter solid edit state for solid1
 	</DD>
 	</DL>
 </DD>
@@ -3709,8 +3804,9 @@ command is a synonym for <a href="#press">press top</a>.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>setview 90 180 90</b><br>
-		-- set the current view to that set by <a href="#ae">ae 0 0</a>
+	<DD>
+	<kbd>mged></kbd> <b>setview 90 180 90</b><br>
+	-- set the current view to that set by <a href="#ae">ae 0 0</a><br>
 	</DD>
 	</DL>
 </DD>
@@ -3722,14 +3818,15 @@ command is a synonym for <a href="#press">press top</a>.
 to the specified <a href="brlcad_glossary.html#COMBINATION">combination</a>.
 The <I>shader_name</I> indicates which <I>shader</I> should be assigned. If
 <I>shader_args</I> are supplied, they will be assigned to parameters of the
-indicated shader. This perfomrs a similar function as the <a href="#mater">mater</a>
+indicated shader. This performs a similar function as the <a href="#mater">mater</a>
 command.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>shader group1 checker "{a 0,255,0 b 0,0,255}"</b><br>
-		-- assign the checkerboard shader to <I>group1</I>
-		using green and blue colors for the squares
+	<DD>
+	<kbd>mged></kbd> <b>shader group1 checker "{a 0,255,0 b 0,0,255}"</b><br>
+	-- assign the checkerboard shader to <I>group1</I>
+		using green and blue colors for the squares<br>
 	</DD>
 	</DL>
 </DD>
@@ -3747,9 +3844,10 @@ into a number of separate shells if possible.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>shells object.nmg</b><br>
-		-- break the <I>NMG</I> solid named <I>object.nmg</I> into its
-		constituent shells
+	<DD>
+	<kbd>mged></kbd> <b>shells object.nmg</b><br>
+	-- break the <I>NMG</I> solid named <I>object.nmg</I> into its
+		constituent shells<br>
 	</DD>
 	</DL>
 </DD>
@@ -3769,9 +3867,10 @@ Related commands are
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>showmats head/skull/jaw</b><br>
-		-- list the transformation matrices along the <I>path</I> ``head/skull/jaw''
-		and the accumulated matrix for the entire <I>path</I>
+	<DD>
+	<kbd>mged></kbd> <b>showmats head/skull/jaw</b><br>
+	-- list the transformation matrices along the <I>path</I> ``head/skull/jaw''
+		and the accumulated matrix for the entire <I>path</I><br>
 	</DD>
 	</DL>
 </DD>
@@ -3780,13 +3879,14 @@ Related commands are
 <DT><a NAME="size"><B>size</B> <I>view_size</I></DT>
 
 <DD>The ``size'' command sets the size of the current viewing cube to the specified
-<I>view_size</I> (in model units). This size is the length of any side of the square
+<I>view_size</I> (in local units). This size is the length of any side of the square
 <I>mged</I> display.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>size 250</b><br>
-		-- set the <I>mged</I> display to be 250 <a href="#units">units</a> across
+	<DD>
+	<kbd>mged></kbd> <b>size 250</b><br>
+	-- set the <I>mged</I> display to be 250 <a href="#units">units</a> across<br>
 	</DD>
 	</DL>
 </DD>
@@ -3799,7 +3899,7 @@ Related commands are
 referenced by the list of <I>objects</I>. The summary is written
 to the specified <I>file</I>. The summary is similar to that produced by the
 <a href="#regions">regions</a> command, but with the addition of
-<I>primitive solid</I> parameters. The <I>solid</I> oarameters listed
+<I>primitive solid</I> parameters. The <I>solid</I> parameters listed
 wil have the accumulated transformation matrices along the
 <a href="brlcad_glossary.html#PATH">path</a> from the listed <I>objects</I> to
 the <I>primitive solid</I> applied (as would be listed by the <a href="#listeval">
@@ -3808,10 +3908,11 @@ the actual transformation matrices.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>solids solids_summary group1 regiona</b><br>
-		-- write a summary of all the regions in <I>group1</I> and include the region
+	<DD>
+	<kbd>mged></kbd> <b>solids solids_summary group1 regiona</b><br>
+	-- write a summary of all the regions in <I>group1</I> and include the region
 		named <I>regiona</I>. The summary will include detailed <I>solid</I>
-		parameters for the solids used in the regions
+		parameters for the solids used in the regions<br>
 	</DD>
 	</DL>
 </DD>
@@ -3827,8 +3928,9 @@ the base units (mm) stored in the database, and the view matrices.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>status</b><br>
-		-- list the status of the current view
+	<DD>
+	<kbd>mged></kbd> <b>status</b><br>
+	-- list the status of the current view<br>
 	</DD>
 	</DL>
 </DD>
@@ -3848,8 +3950,9 @@ asks for the names of all the <a href="brlcad_glossary.html#COMBINATION">combina
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>summary sr</b><br>
-		-- list a summary of primitive solids and regions for the current database
+	<DD>
+	<kbd>mged></kbd> <b>summary sr</b><br>
+	-- list a summary of primitive solids and regions for the current database<br>
 	</DD>
 	</DL>
 </DD>
@@ -3862,15 +3965,16 @@ asks for the names of all the <a href="brlcad_glossary.html#COMBINATION">combina
      the center of the screen is (0, 0, 0) and the upper left corner is
      (-2048, 2047, 0).
 
-     <DL>
-       <DT><big>Examples:</big></DT>
-       <DD><kbd>mged></kbd> <b>sv 0 0 0</b>
-	    <br> -- the view is unchanged
-	    <br><kbd>mged></kbd> <b>sv 1024 0 0</b>
-	    <br> -- the view center is moved half way between the current view
-	    center and the right side of the view screen.
-       </DD>
-     </DL>
+	<DL>
+	<DT><big>Examples:</big></DT>
+	<DD>
+	<kbd>mged></kbd> <b>sv 0 0 0</b><br>
+	-- the view is unchanged<br>
+	<kbd>mged></kbd> <b>sv 1024 0 0</b><br>
+	-- the view center is moved half way between the current view<br>
+		center and the right side of the view screen.<br>
+	</DD>
+	</DL>
 </DD>
 <HR>
 
@@ -3882,8 +3986,9 @@ written out.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>sync</b><br>
-		-- make sure disk files are up to date
+	<DD>
+	<kbd>mged></kbd> <b>sync</b><br>
+	-- make sure disk files are up to date<br>
 	</DD>
 	</DL>
 </DD>
@@ -3900,8 +4005,9 @@ expressions that will be matched to object names in the database. This is a syno
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>t r[0-2]*</b><br>
-		-- list the names of all objects that start with ``r0'', ``r1'', or ``r2''
+	<DD>
+	<kbd>mged></kbd> <b>t r[0-2]*</b><br>
+	-- list the names of all objects that start with ``r0'', ``r1'', or ``r2''<br>
 	</DD>
 	</DL>
 </DD>
@@ -3920,8 +4026,9 @@ command performs a similar function for <a href="brlcad_glossary.html#COMBINATIO
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>ted</b><br>
-		-- use a text editor to modify the currently edited solid
+	<DD>
+	<kbd>mged></kbd> <b>ted</b><br>
+	-- use a text editor to modify the currently edited solid<br>
 	</DD>
 	</DL>
 </DD>
@@ -3937,7 +4044,7 @@ the new title string for the current database. Quote marks must be doubly escape
 	<DL>
 	<DT><big>Examples:</big></DT>
 	<DD><kbd>mged></kbd> <b>title This is my \\"database\\"</b><br>
-		-- set the title of the current database to <I>This is my "database"</I>
+	-- set the title of the current database to <I>This is my "database"</I><br>
 	</DD>
 	</DL>
 </DD>
@@ -3964,7 +4071,7 @@ then that tolerance setting will be modified. The keywords are:
 		of the solid size. The value is multiplied by the size of the solid to 
 		determine another bound on the maximum
                 allowable error in the distance from the actual solid surface to the
-                tesselated durface. An <I>relative</I> tolerance of 0 means that the
+                tesselated surface. An <I>relative</I> tolerance of 0 means that the
                 <I>relative</I> tolerance should be ignored.
 	<li>norm -- This <I>normal</I> tolerance is specified in degrees and represents the maximum angle
 		between the actual solid surface normal and the tesellated surface normal.
@@ -3990,9 +4097,10 @@ then that tolerance setting will be modified. The keywords are:
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>tol rel .05 perp 1e-6</b><br>
-		-- set the <I>relative</I> tolerance to 5% and the
-		<I>perpendicularity</I> tolerance to 1e-06 (cosine of 89.9999 degrees).
+	<DD>
+	<kbd>mged></kbd> <b>tol rel .05 perp 1e-6</b><br>
+	-- set the <I>relative</I> tolerance to 5% and the
+		<I>perpendicularity</I> tolerance to 1e-06 (cosine of 89.9999 degrees).<br>
 	</DD>
 	</DL>
 </DD>
@@ -4009,8 +4117,9 @@ object that includes all (or at least most) of the objects in the database.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>tops</b><br>
-		-- list all the <I>top level</I> objects in the current database
+	<DD>
+	<kbd>mged></kbd> <b>tops</b><br>
+	-- list all the <I>top level</I> objects in the current database<br>
 	</DD>
 	</DL>
 </DD>
@@ -4018,15 +4127,16 @@ object that includes all (or at least most) of the objects in the database.
 
 <DT><a NAME="tra"><B>tra</B> <I>dx dy dz</I></DT>
 <DD>The ``tra'' command translates the view or an object. Exactly what is done
-     is determined by MGED's state as well as the state of the display manager.
-     The parameters <I>dx</I>, <I>dy</I> and <I>dz</I> are in local units.
+is determined by MGED's state as well as the state of the current display manager.
+The parameters <I>dx</I>, <I>dy</I> and <I>dz</I> are in local units.
 
-     <DL>
-       <DT><big>Examples:</big></DT>
-       <DD><kbd>mged></kbd> <b>tra 10 0 0</b>
-	    <br> -- translate by 10 units along the X axis
-       </DD>
-     </DL>
+	<DL>
+	<DT><big>Examples:</big></DT>
+	<DD>
+	<kbd>mged></kbd> <b>tra 10 0 0</b><br>
+	-- translate by 10 units along the X axis<br>
+	</DD>
+	</DL>
 </DD>
 <HR>
 
@@ -4059,8 +4169,9 @@ The parameters are (in order):
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>track 500 0 10 10 -50 50 10 550 50 10 -50 -20 2</b><br>
-		-- build a simple track using the provided arguments
+	<DD>
+	<kbd>mged></kbd> <b>track 500 0 10 10 -50 50 10 550 50 10 -50 -20 2</b><br>
+	-- build a simple track using the provided arguments<br>
 	</DD>
 	</DL>
 </DD>
@@ -4076,8 +4187,9 @@ solid editing.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>translate 10 20 30</b><br>
-		-- move the currently edited object to the model coordinates (10 20 30)
+	<DD>
+	<kbd>mged></kbd> <b>translate 10 20 30</b><br>
+	-- move the currently edited object to the model coordinates (10 20 30)<br>
 	</DD>
 	</DL>
 </DD>
@@ -4093,9 +4205,10 @@ and all objects referenced by them, down to the
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>tree group1</b><br>
-		-- show the structure of the tree rooted at <I>group1</I> down to
-		the primitive solid level.
+	<DD>
+	<kbd>mged></kbd> <b>tree group1</b><br>
+	-- show the structure of the tree rooted at <I>group1</I> down to
+		the primitive solid level.<br>
 	</DD>
 	</DL>
 </DD>
@@ -4108,8 +4221,9 @@ as a result of a prior <a href="#read_muves">read_muves</a> command.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>t_muves</b><br>
-		-- List all the known MUVES components.
+	<DD>
+	<kbd>mged></kbd> <b>t_muves</b><br>
+	-- List all the known MUVES components.<br>
 	</DD>
 	</DL>
 </DD>
@@ -4168,9 +4282,10 @@ editing units are:
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>units in</b><br>
-		-- switch to editing in ``inches'' and remember this as the preferred
-		editing units for this database
+	<DD>
+	<kbd>mged></kbd> <b>units in</b><br>
+	-- switch to editing in ``inches'' and remember this as the preferred
+		editing units for this database<br>
 	</DD>
 	</DL>
 </DD>
@@ -4245,8 +4360,9 @@ The available <I>variables</I> are:
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>vars sliders=1</b><br>
-		-- turn on the <I>sliders</I> display
+	<DD>
+	<kbd>mged></kbd> <b>vars sliders=1</b><br>
+	-- turn on the <I>sliders</I> display<br>
 	</DD>
 	</DL>
 </DD>
@@ -4333,7 +4449,7 @@ The <I>vdraw</I> <I>commands</I> are:
 	<li>read -- with an integer argument of <I>i</I>, the <I>i<sup>th</sup></I> command is returned.<br>
 		-- with an argument of ``color'', the curent color is returned.<br>
 		-- with an argument of ``length'', the number of commands in the current list is returned.<br>
-		-- with an argument of ``name'', the nme of the current command list is returned.</li>
+		-- with an argument of ``name'', the name of the current command list is returned.</li>
 	<li>show -- send the current command list to the <I>mged</I> display manager.</li>
 	<li>vlist -- with an argument of ``list'', return a list of the names of all existing command lists.<br>
 		-- with an argument of <I>delete list_name</I>, delete the specified command list.</li>
@@ -4344,29 +4460,23 @@ All textual arguments may be abbreviated by their first letter.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>vdraw open square</b><br>
-		-- open a list named <I>square</I>
-	</DD>
-	<DD><kbd>mged></kbd> <b>vdraw params color ff00</b><br>
-		-- set color to green
-	</DD>
-	<DD><kbd>mged></kbd> <b>vdraw write next 0 0 0 0</b><br>
-		-- start a line at the origin
-	</DD>
-	<DD><kbd>mged></kbd> <b>vdraw write next 1 100 0 0</b><br>
-		-- draw line to (100 0 0)
-	</DD>
-	<DD><kbd>mged></kbd> <b>vdraw write next 1 100 100 0</b><br>
-		-- draw line to (100 100 0)
-	</DD>
-	<DD><kbd>mged></kbd> <b>vdraw write next 1 0 100 0</b><br>
-		-- draw line to (0 100 0)
-	</DD>
-	<DD><kbd>mged></kbd> <b>vdraw write next 1 0 0 0</b><br>
-		-- draw line to (0 0 0)
-	</DD>
-	<DD><kbd>mged></kbd> <b>vdraw show</b><br>
-		-- draw the square in the <I>mged</I> display
+	<DD>
+	<kbd>mged></kbd> <b>vdraw open square</b><br>
+	-- open a list named <I>square</I><br>
+	<kbd>mged></kbd> <b>vdraw params color ff00</b><br>
+	-- set color to green<br>
+	<kbd>mged></kbd> <b>vdraw write next 0 0 0 0</b><br>
+	-- start a line at the origin<br>
+	<kbd>mged></kbd> <b>vdraw write next 1 100 0 0</b><br>
+	-- draw line to (100 0 0)<br>
+	<kbd>mged></kbd> <b>vdraw write next 1 100 100 0</b><br>
+	-- draw line to (100 100 0)<br>
+	<kbd>mged></kbd> <b>vdraw write next 1 0 100 0</b><br>
+	-- draw line to (0 100 0)<br>
+	<kbd>mged></kbd> <b>vdraw write next 1 0 0 0</b><br>
+	-- draw line to (0 0 0)<br>
+	<kbd>mged></kbd> <b>vdraw show</b><br>
+	-- draw the square in the <I>mged</I> display<br>
 	</DD>
 	</DL>
 </DD>
@@ -4401,9 +4511,10 @@ of the entire virtual reality process.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>vrmgr host1.arl.mil master</b><br>
-		-- set the current <I>mged</I> display as the <I>master</I> for
-		the <I>vrmgr</I> process running on the host named <I>host1.arl.mil</I>
+	<DD>
+	<kbd>mged></kbd> <b>vrmgr host1.arl.mil master</b><br>
+	-- set the current <I>mged</I> display as the <I>master</I> for
+		the <I>vrmgr</I> process running on the host named <I>host1.arl.mil</I><br>
 	</DD>
 	</DL>
 </DD>
@@ -4418,15 +4529,18 @@ coordinate axes</I></a>.
 <p>
 If the display is in rotate&#173about&#173center mode
 then the rotation will occur about the center of the viewing volume.  In
-rotate&#173aboute&#173eye mode
-The view on the display will be rotated about the eye. The <a href="#vars">vars</a>
+rotate&#173about&#173eye mode,
+the view on the display will be rotated about the eye. The <a href="#vars">vars</a>
 command (or a menu button) allows the user to toggle between the two modes.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>vrot 90 0 0</b><br> -- rotate 90 degrees about view X axis.  Essentially a "look down".
-	<br><kbd>mged></kbd> <b>vrot 0 180 0</b><br> -- rotate 180 degrees about view Y axis.  This is effectively "Look behind you".
-	
+	<DD>
+	<kbd>mged></kbd> <b>vrot 90 0 0</b><br>
+	-- rotate 90 degrees about view X axis.<br>
+	<kbd>mged></kbd> <b>vrot 0 180 0</b><br>
+	-- rotate 180 degrees about view Y axis.<br>
+	</DD>
 	</DL>
 </DD>
 <HR>
@@ -4443,8 +4557,10 @@ compatible with the <a href="#rcodes">rcodes</a> command.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>wcodes code_file group1 group2</b><br> -- write region data for all
-		the regions in <I>group1</I> and <I>group2</I> to <I>code_file</I>
+	<DD>
+	<kbd>mged></kbd> <b>wcodes code_file group1 group2</b><br>
+	-- write region data for all the regions in <I>group1</I> and
+		 <I>group2</I> to <I>code_file</I><br>
 	</DL>
 </DD>
 <HR>
@@ -4456,7 +4572,9 @@ number of the specified <I>region</I>.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>whatid regiona</b><br> -- get the <I>ident</I> number for <I>regiona</I>
+	<DD>
+	<kbd>mged></kbd> <b>whatid regiona</b><br>
+	-- get the <I>ident</I> number for <I>regiona</I><br>
 	</DL>
 </DD>
 <HR>
@@ -4468,9 +4586,10 @@ that use one of the <I>shaders</I> specified.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>which_shader plastic light</b><br>
+	<DD>
+	<kbd>mged></kbd> <b>which_shader plastic light</b><br>
 	-- list all <I>regions</I> in the current database that use the <I>plastic</I> or
-		<I>light</I> shaders
+		<I>light</I> shaders<br>
 	</DL>
 </DD>
 <HR>
@@ -4486,9 +4605,10 @@ will not be listed by this command.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>whichair 2 3</b><br>
+	<DD>
+	<kbd>mged></kbd> <b>whichair 2 3</b><br>
 	-- list all <I>regions</I> in the current database that have <I>air codes</I>
-		of 2 or 3
+		of 2 or 3<br>
 	</DL>
 </DD>
 <HR>
@@ -4500,9 +4620,10 @@ that use one of the <a href="brlcad_glossary.html#IDENT">idents</a> specified.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>whichid 1002 1003</b><br>
+	<DD>
+	<kbd>mged></kbd> <b>whichid 1002 1003</b><br>
 	-- list all <I>regions</I> in the current database that have <I>idents</I>
-		of 1002 or 1003
+		of 1002 or 1003<br>
 	</DL>
 </DD>
 <HR>
@@ -4521,8 +4642,9 @@ The <a href="#x">x</a> command also lists displayed solids, but in more detail.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>who p</b><br>
-	-- list all top  level <I>phony</I> objects currently displayed
+	<DD>
+	<kbd>mged></kbd> <b>who p</b><br>
+	-- list all top  level <I>phony</I> objects currently displayed<br>
 	</DL>
 </DD>
 <HR>
@@ -4538,8 +4660,9 @@ appended to it.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>wmater mater_file group1 regiona</b><br>
-	-- list the shader parameters of <I>group1</I> and <I>regiona</I> to <I>mater_file</I>
+	<DD>
+	<kbd>mged></kbd> <b>wmater mater_file group1 regiona</b><br>
+	-- list the shader parameters of <I>group1</I> and <I>regiona</I> to <I>mater_file</I><br>
 	</DL>
 </DD>
 <HR>
@@ -4550,7 +4673,7 @@ appended to it.
 currently drawn in the <I>mged</I> display. The <I>level</I> determines how much detail should
 be included in the list. For <I>level</I> zero (the default), only a list of paths to solids
 in the display list is produced. Each solid is prefixed by ``VIEW'' or ``-no-'' indicating
-that the solid is actually being drawn or that is is being skipped respectively.
+that the solid is actually being drawn or that it is being skipped respectively.
 If <I>level</I> is greater than zero, the center, size, <a href="brlcad_glossary.html#IDENT">ident number</a>,
 <a href="brlcad_glossary.html#RGB">RGB</a> color assigned to the region, and the actual
 color used to draw the solid are also listed.
@@ -4562,8 +4685,9 @@ only the top level objects that are displayed.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>x</b><br>
-	-- list the paths to the displayed solids.
+	<DD>
+	<kbd>mged></kbd> <b>x</b><br>
+	-- list the paths to the displayed solids.<br>
 	</DL>
 </DD>
 <HR>
@@ -4586,9 +4710,10 @@ accomplish the ``push'' without creating any new solids.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>xpush group1</b><br>
+	<DD>
+	<kbd>mged></kbd> <b>xpush group1</b><br>
 	-- move all the effects of the transformation matrices in the tree rooted at
-		<I>group1</I> down to the solid level (creating new solids if needed).
+		<I>group1</I> down to the solid level (creating new solids if needed).<br>
 	</DL>
 </DD>
 <HR>
@@ -4602,9 +4727,10 @@ of less than one increases the size of the viewing cube (``zoom out'').
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>zoom 2</b><br>
+	<DD>
+	<kbd>mged></kbd> <b>zoom 2</b><br>
 	-- Halve the size of the current viewing cube (effectively double the size
-		of objects in the display).
+		of objects in the display).<br>
 	</DL>
 </DD>
 <HR>
