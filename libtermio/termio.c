@@ -71,15 +71,9 @@ static struct termios	save_tio[FOPEN_MAX], curr_tio[FOPEN_MAX];
 
 #endif /* HAVE_TERMIOS_H */
 
+#include "termio.h"
+
 static int		fileStatus[FOPEN_MAX];
-int			reset_Fil_Stat();
-void			save_Tty(), reset_Tty();
-void			set_Cbreak(), clr_Cbreak();
-void			set_Raw(), clr_Raw();
-void			set_Echo(), clr_Echo();
-void			set_Tabs(), clr_Tabs();
-void			set_HUPCL();
-void			clr_CRNL();
 void			prnt_Tio();
 static void		copy_Tio();
 
