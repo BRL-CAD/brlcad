@@ -479,6 +479,9 @@ struct seg *finished_segs;
 
 	RT_CK_LIST_HEAD(&finished_segs->l);
 
+	lp = (struct light_specific *)(ap->a_uptr);
+	RT_CK_LIGHT(lp);
+
 	VSETALL( filter_color, 1 );
 
 	/*XXX Bogus with Air.  We should check to see if it is the same 
@@ -524,6 +527,13 @@ struct seg *finished_segs;
 	if( pp == PartHeadp )  {
 		pp=PartHeadp->pt_forw;
 		RT_CK_PT(pp);
+
+		if( lp->lt_invisible || lp->lt_infinite )  {
+			light_visible = 1;
+			VMOVE( ap->a_color, filter_color );
+			reason = "Unobstructed invisible/infinite light";
+			goto out;
+		}
 
 		if( air_sols_seen > 0 )  {
 			light_visible = 1;
@@ -579,8 +589,6 @@ struct seg *finished_segs;
 	regp = pp->pt_regionp;
 
 	/* Check to see if we hit the light source */
-	lp = (struct light_specific *)(ap->a_uptr);
-	RT_CK_LIGHT(lp);
 	if( lp->lt_rp == regp )  {
 		VMOVE( ap->a_color, filter_color );
 		light_visible = 1;
@@ -661,9 +669,11 @@ struct seg *finished_segs;
 	VELMUL( ap->a_color, sub_ap.a_color, filter_color );
 	reason = "after filtering";
 out:
-	if( rdebug & RDEBUG_LIGHT ) rt_log("light %s vis=%d (%4.2f, %4.2f, %4.2f) %s\n",
-		regp ? regp->reg_name : "-miss-",
-		light_visible, V3ARGS(ap->a_color), reason );
+	if( rdebug & RDEBUG_LIGHT ) bu_log("light vis=%d %s (%4.2f, %4.2f, %4.2f) %s %s\n",
+		light_visible,
+		lp->lt_name,
+		V3ARGS(ap->a_color), reason,
+		regp ? regp->reg_name : "" );
 	return(light_visible);
 }
 
@@ -713,6 +723,10 @@ int have;
 
 		/*
 		 *  Determine light visibility
+		 *
+		 *  The sw_intensity field does NOT include the light's
+		 *  emission spectrum (color), only path attenuation.
+		 *  sw_intensity=(1,1,1) for no attenuation.
 		 */
 		i = 0;
 		intensity = swp->sw_intensity;
