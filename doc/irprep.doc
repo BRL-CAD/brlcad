@@ -13,7 +13,9 @@
 .ll 6.6i
 .po .8i
 .fi
-.\"	Last Update to File:  27 October 1992 - to put in troff format
+.\"	27 October 1992 - Update to put in troff format.
+.\"	Last Update to File:  22 February 1993 - to put in info about
+.\"	  all_sf.
 .\"	To Print:
 .\"	troff -Ti300 irprep.doc | dimp -P imt2 &
 .ft B
@@ -93,6 +95,24 @@ programs.
 3.  An error file is written.
 .sp
 4.  The format of the regular output file has been changed.
+.sp 2
+.ft B
+.in -0.75i
+all_sf
+.sp
+.ft R
+A completely new program that finds the shapefactors for all regions
+of an mged file (not just engine regions).  This program does not
+take in to account any air.  Therefore, in order to have the regions
+numbered the same as firpass and secpass air should always be listed
+after all other regions.  This program creates three files:  an
+output file, a longwave radiation exchange file, and an error file.
+The output file lists the shapefactors between each region.  The
+longwave radiation exchange file if for use with PRISM.  This file
+is not PRISM ready and the user must file in the missing parameters
+if this file is to be used with PRISM.  The error file is basically
+used for checking errors in the program and will probably not be
+used by the average user.
 .sp 2
 .ft B
 .in -0.75i
