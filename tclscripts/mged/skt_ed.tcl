@@ -233,7 +233,7 @@ class Sketch_editor {
 		create_segments
 
 		draw_segs
-		update
+		update idletasks
 		set canv_height [winfo height $itk_component(canvas)]
 		set canv_width [winfo width $itk_component(canvas)]
 		set min_max [$itk_component(canvas) bbox all]
