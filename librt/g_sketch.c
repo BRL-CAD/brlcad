@@ -54,7 +54,13 @@ static char RCSsketch[] = "@(#)$Header$ (BRL)";
 #include "rtgeom.h"
 #include "./debug.h"
 
-fastf_t rt_cnurb_par_edge();
+fastf_t rt_cnurb_par_edge( egp, epsilon )
+struct edge_g_cnurb *egp;
+fastf_t	epsilon;
+{
+	bu_bomb("rt_cnurb_par_edge()\n");
+	/* NOTREACHED */
+}
 
 /*
  *  			R T _ S K E T C H _ P R E P
