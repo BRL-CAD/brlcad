@@ -307,7 +307,14 @@ out:
 /*
  *			W D B _ E X P O R T
  *
- *  The internal representation is always freed.
+ *  Export an in-memory representation of an object,
+ *  as described in the file h/rtgeom.h, into the indicated database.
+ *
+ *  The internal representation (gp) is always freed.
+ *
+ *  WARNING: The caller must be careful not to double-free gp,
+ *  particularly if it's been extracted from an rt_db_internal,
+ *  e.g. by passing intern.idb_ptr for gp.
  *
  *  Returns -
  *	 0	OK
