@@ -47,11 +47,11 @@ HIDDEN struct bu_cmdhist *currHist;
 
 HIDDEN struct bu_cmdtab bwish_cmds[] =
 {
-	"exit",		cmd_quit,
-	"history",	cmd_history,
-	"hist",		cmd_hist,
-	"q",		cmd_quit,
-	(char *)NULL,	CMD_NULL
+	{"exit",		cmd_quit},
+	{"history",		cmd_history},
+	{"hist",		cmd_hist},
+	{"q",			cmd_quit},
+	{(char *)NULL,		CMD_NULL}
 };
 
 int
