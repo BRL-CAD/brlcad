@@ -294,7 +294,7 @@ struct seg {
 	} }
 
 #define RT_GET_SEG(p,res)    { \
-	while( !RT_LIST_LOOP((p),seg,&((res)->re_seg.l)) || !(p) ) \
+	while( !RT_LIST_WHILE((p),seg,&((res)->re_seg.l)) || !(p) ) \
 		rt_get_seg(res); \
 	RT_LIST_DEQUEUE( &((p)->l) ); \
 	(p)->l.forw = (p)->l.back = RT_LIST_NULL; \
@@ -305,9 +305,13 @@ struct seg {
 	RT_LIST_INSERT( &((res)->re_seg.l), &((p)->l) ); \
 	res->re_segfree++; }
 
+/*  This could be
+ *	RT_LIST_INSERT_LIST( &((_res)->re_seg.l), &((_segheadp)->l) )
+ *  except for security of checking & counting each element this way.
+ */
 #define RT_FREE_SEG_LIST( _segheadp, _res )	{ \
 	register struct seg *_a; \
-	while( RT_LIST_LOOP( _a, seg, &((_segheadp)->l) ) )  { \
+	while( RT_LIST_WHILE( _a, seg, &((_segheadp)->l) ) )  { \
 		RT_LIST_DEQUEUE( &(_a->l) ); \
 		RT_FREE_SEG( _a, _res ); \
 	} }
@@ -1006,7 +1010,7 @@ struct rt_g {
 	int		res_stats;	/* lock on statistics */
 	int		res_results;	/* lock on result buffer */
 	int		res_model;	/* lock on model growth (splines) */
-	struct vlist	*rtg_vlFree;	/* vlist freelist */
+	struct rt_list	rtg_vlfree;	/* head of rt_vlist freelist */
 	int		rtg_logindent;	/* rt_log() indentation level */
 	int		NMG_debug;	/* debug bits for NMG's see nmg.h */
 };
@@ -1020,6 +1024,7 @@ extern struct rt_g rt_g;
  *  Initially, a pointer to this is returned from rt_dirbuild().
  */
 struct rt_i {
+	long		rti_magic;	/* magic # for integrity check */
 	struct region	**Regions;	/* ptrs to regions [reg_bit] */
 	struct rt_list	rti_headsolid;	/* list of active solids */
 	struct region	*HeadRegion;	/* ptr of list of regions in model */
@@ -1041,7 +1046,6 @@ struct rt_i {
 	union cutter	rti_inf_box;	/* List of infinite solids */
 	int		rti_pt_bytes;	/* length of partition struct */
 	int		rti_bv_bytes;	/* length of BITV array */
-	long		rti_magic;	/* magic # for integrity check */
 	vect_t		rti_pmin;	/* for plotting, min RPP */
 	vect_t		rti_pmax;	/* for plotting, max RPP */
 	int		rti_nlights;	/* number of light sources */
@@ -1072,67 +1076,83 @@ struct rt_i {
  *			V L I S T
  *
  *  Definitions for handling lists of vectors (really verticies, or points)
- *  in 3-space.
- *  Intented for common handling of wireframe display information.
- *  XXX For the moment, allocated with individual malloc() calls.
- *  XXX For the moment, only hold one point per structure.
- *  It is debatable whether these should be single or double precision.
+ *  and polygons in 3-space.
+ *  Intented for common handling of wireframe display information,
+ *  in the full resolution that is calculated in.
+ *
+ *  On 32-bit machines, XXX of 35 results in structures just less than 1k.
+ *
+ *  The head of the doubly linked list can be just a "struct rt_list" head.
+ *
+ *  To visit all the elements in the vlist:
+ *	for( RT_LIST_FOR( vp, rt_vlist, hp ) )  {
+ *		register int	i;
+ *		register int	nused = vp->nused;
+ *		register int	*cmd = vp->cmd;
+ *		register point_t *pt = vp->pt;
+ *		for( i = 0; i < nused; i++,cmd++,pt++ )  {
+ *			access( *cmd, *pt );
+ *			access( vp->cmd[i], vp->pt[i] );
+ *		}
+ *	}
  */
-struct vlist {
-	point_t		vl_pnt;		/* coordinates in space */
-	int		vl_draw;	/* 1=draw, 0=move */
-	struct vlist	*vl_forw;	/* next structure in list */
+#define RT_VLIST_CHUNK	35		/* 32-bit mach => just less than 1k */
+struct rt_vlist  {
+	struct rt_list	l;
+	int		nused;			/* elements 0..nused active */
+	int		cmd[RT_VLIST_CHUNK];	/* VL_CMD_* */
+	point_t		pt[RT_VLIST_CHUNK];	/* associated 3-point/vect */
 };
-#define VL_NULL		((struct vlist *)0)
+#define RT_VLIST_NULL	((struct rt_vlist *)0)
+#define RT_VLIST_MAGIC	0x98237474
 
-struct vlhead {
-	struct vlist	*vh_first;
-	struct vlist	*vh_last;
+/* Values for cmd[] */
+#define RT_VLIST_LINE_MOVE	0
+#define RT_VLIST_LINE_DRAW	1
+#define RT_VLIST_POLY_START	2	/* pt[] has surface normal */
+#define RT_VLIST_POLY_MOVE	3	/* move to first poly vertex */
+#define RT_VLIST_POLY_DRAW	4	/* subsequent poly vertex */
+#define RT_VLIST_POLY_END	5	/* last vert (repeats 1st), draw poly */
+
+/* Note that RT_GET_VLIST and RT_FREE_VLIST are non-PARALLEL */
+#define RT_GET_VLIST(p) {\
+		(p) = RT_LIST_FIRST( rt_vlist, &rt_g.rtg_vlfree ); \
+		if( RT_LIST_IS_HEAD( (p), &rt_g.rtg_vlfree ) )  { \
+			(p) = (struct rt_vlist *)rt_malloc(sizeof(struct rt_vlist), "rt_vlist"); \
+			(p)->l.magic = RT_VLIST_MAGIC; \
+		} else { \
+			RT_LIST_DEQUEUE( &((p)->l) ); \
+		} \
+		(p)->nused = 0; \
+	}
+
+/* Place an entire chain of rt_vlist structs on the global freelist */
+#define RT_FREE_VLIST(hd)	RT_LIST_APPEND_LIST( &rt_g.rtg_vlfree, (hd) )
+
+#define RT_ADD_VLIST(hd,pnt,draw)  { \
+	register struct rt_vlist *_vp = RT_LIST_LAST( rt_vlist, (hd) ); \
+	if( RT_LIST_IS_HEAD( _vp, (hd) ) || _vp->nused >= RT_VLIST_CHUNK )  { \
+		RT_GET_VLIST(_vp); \
+		RT_LIST_INSERT( (hd), &(_vp->l) ); \
+	} \
+	VMOVE( _vp->pt[_vp->nused], (pnt) ); \
+	_vp->cmd[_vp->nused++] = (draw); \
+	}
+
+/* For NMG plotting, a way of separating vlists into colorer parts */
+struct rt_vlblock {
+	long		magic;
+	int		nused;
+	int		max;
+	long		*rgb;		/* rgb[max] */
+	struct rt_list	*head;		/* head[max] */
 };
+#define RT_VLBLOCK_MAGIC	0x981bd112
 
-struct vlblock {
-	int			count;
-	struct color_vlhead	*cvp;
-};
-
-struct color_vlhead {
-	long			rgb;
-	struct vlhead		head;
-};
-
-/* Values for vl_draw */
-#define VL_CMD_LINE_MOVE	0
-#define VL_CMD_LINE_DRAW	1
-#define VL_CMD_POLY_START	2	/* vl_pnt has surface normal */
-#define VL_CMD_POLY_MOVE	3	/* move to first poly vertex */
-#define VL_CMD_POLY_DRAW	4	/* subsequent poly vertex */
-#define VL_CMD_POLY_END		5	/* last vert (repeats 1st), draw poly */
-
-#define GET_VL(p)	{ \
-			if( ((p) = rt_g.rtg_vlFree) == VL_NULL )  { \
-				(p) = (struct vlist *)rt_malloc(sizeof(struct vlist), "vlist"); \
-			} else { \
-				rt_g.rtg_vlFree = (p)->vl_forw; \
-			} }
-
-/* Free an entire chain of vlist structs */
-#define FREE_VL(p)	{ register struct vlist *_vp = (p); \
-			while( _vp->vl_forw != VL_NULL ) _vp=_vp->vl_forw; \
-			_vp->vl_forw = rt_g.rtg_vlFree; \
-			rt_g.rtg_vlFree = (p);  }
-
-#define ADD_VL(hd,pnt,draw)  { \
-			register struct vlist *_vp; \
-			GET_VL(_vp); \
-			VMOVE( _vp->vl_pnt, pnt ); \
-			_vp->vl_draw = draw; \
-			_vp->vl_forw = VL_NULL; \
-			if( (hd)->vh_first == VL_NULL ) { \
-				(hd)->vh_first = (hd)->vh_last = _vp; \
-			} else { \
-				(hd)->vh_last->vl_forw = _vp; \
-				(hd)->vh_last = _vp; \
-			} }
+/* XXX temporary */
+#define GET_VL(p)	xxx
+#define FREE_VL(p)	yyy
+#define ADD_VL(hd,pnt,cmd)	zzz
 
 /*
  *  Replacements for definitions from ../h/vmath.h
@@ -1191,7 +1211,7 @@ struct rt_functab {
 	int	(*ft_classify)();
 	void	(*ft_free) RT_ARGS((struct soltab * /*stp*/));
 	int	(*ft_plot) RT_ARGS((
-			struct vlhead * /*vhead*/,
+			struct rt_list * /*vhead*/,
 			struct rt_db_internal * /*ip*/,
 			double /*abs*/, double /*rel*/, double /*norm*/));
 	void	(*ft_vshot) RT_ARGS((struct soltab * /*stp*/[],
@@ -1482,9 +1502,9 @@ RT_EXTERN(void memfree, (struct mem_map **pp, unsigned size, unsigned long addr)
 RT_EXTERN(void mempurge, (struct mem_map **pp) );
 RT_EXTERN(void memprint, (struct mem_map **pp) );
 
-RT_EXTERN(struct vlblock *rt_vlblock_init, () );
-RT_EXTERN(void rt_vlblock_free, (struct vlblock *vbp) );
-RT_EXTERN(struct vlhead *rt_vlblock_find, (struct vlblock *vbp,
+RT_EXTERN(struct rt_vlblock *rt_vlblock_init, () );
+RT_EXTERN(void rt_vlblock_free, (struct rt_vlblock *vbp) );
+RT_EXTERN(struct rt_list *rt_vlblock_find, (struct rt_vlblock *vbp,
 	int r, int g, int b) );
 
 /* plane.c */
