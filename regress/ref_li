@@ -279,7 +279,6 @@ In file included from /usr/include/math.h:350,
 /n/cad/c/regress/brlcad/.libtcl8.3.li/../libtcl8.3/unix/../unix/tclUnixFile.c:167: warning: passing arg 4 of `__strcpy_small' as unsigned due to prototype
 /n/cad/c/regress/brlcad/.libtcl8.3.li/../libtcl8.3/unix/../unix/tclUnixFile.c:167: warning: passing arg 5 of `__strcpy_small' as unsigned due to prototype
 /n/cad/c/regress/brlcad/.libtcl8.3.li/../libtcl8.3/unix/../unix/tclUnixPipe.c:71: warning: initialization from incompatible pointer type
-make: warning:  Clock skew detected.  Your build may be incomplete.
 -------------------------------- .libtk8.3.li
 creating cache cache.li
 updating cache cache.li
@@ -1153,7 +1152,6 @@ In file included from /usr/include/math.h:350,
                  from /n/cad/c/regress/brlcad/libtk8.3/unix/../generic/tkTextWind.c:19:
 /usr/include/bits/mathinline.h: In function `fabsf':
 /usr/include/bits/mathinline.h:446: warning: passing arg 1 of `__builtin_fabsf' as `float' rather than `double' due to prototype
-make: warning:  Clock skew detected.  Your build may be incomplete.
 -------------------------------- .libitcl3.2.li
 ../libitcl3.2/configure --srcdir=/n/cad/c/regress/brlcad/.libitcl3.2.li/../libitcl3.2/ --enable-shared --quiet --cache-file cache.li --exec-prefix=/n/cad/c/regress/brlcad.li --prefix=/n/cad/c/regress/brlcad.li --with-tcl=/n/cad/c/regress/brlcad/.libitcl3.2.li/../.libtcl8.3.li --with-tk=/n/cad/c/regress/brlcad/.libitcl3.2.li/../.libtk8.3.li
 creating cache cache.li
