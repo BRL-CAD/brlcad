@@ -186,12 +186,20 @@ struct shadework	*swp;
 		 *  We will iterate, but not recurse, due to the special
 		 *  (non-recursing) hit and miss routines used here for
 		 *  internal reflection.
+		 *
+		 *  a_onehit is set to 3, so that where possible,
+		 *  rr_hit() will be given three accurate hit points:
+		 *  the entry and exit points of this glass region,
+		 *  and the entry point into the next region.
+		 *  This permits calculation of the departing
+		 *  refraction angle based on the RI of the current and
+		 *  *next* regions along the ray.
 		 */
 do_inside:
 		sub_ap.a_hit =  rr_hit;
 		sub_ap.a_miss = rr_miss;
 		sub_ap.a_purpose = "internal reflection";
-		sub_ap.a_onehit = 0;	/* need 1st EXIT, not just 1st HIT */
+		sub_ap.a_onehit = 3;
 		switch( rt_shootray( &sub_ap ) )  {
 		case 2:
 			/* All is well, implicit returns stored in sub_ap */
@@ -382,12 +390,9 @@ struct partition *PartHeadp;
  *  This routine is called when an internal reflection ray hits something
  *  (which is ordinarily the case).
  *
- * XXX If this hit resulted from a shot done with the "one hit" flag set,
- * there are no assurances about the accuracy of things behind
- * the ENTRY point.  We need the EXIT point to be accurate.
- * Perhaps this might be good motivation for adding support for
- * a setting of the "one hit" flag that is accurate through the
- * EXIT point, rather than the entry point.
+ *  Generally, there will be one or two partitions on the hit list.
+ *  The values for pt_outhit for the second partition should not be used,
+ *  as a_onehit was set to 3, getting a maximum of 3 valid hit points.
  *
  *  Explicit Returns -
  *	0	dreadful internal error
