@@ -68,7 +68,8 @@
 extern "C" {
 #endif
 
-#if defined(WIN32) && !defined(__CYGWIN__)
+#ifndef BU_EXPORT
+#if defined(WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
 #ifdef BU_EXPORT_DLL
 #define BU_EXPORT __declspec(dllexport)
 #else
@@ -76,6 +77,7 @@ extern "C" {
 #endif
 #else
 #define BU_EXPORT
+#endif
 #endif
 
 #include <setjmp.h>
@@ -2380,8 +2382,13 @@ BU_EXPORT BU_EXTERN(int bu_tcl_units_conversion,
 BU_EXPORT BU_EXTERN(void bu_tcl_setup,
 		    (Tcl_Interp *interp));
 
+#ifdef BRLCAD_DEBUG
+BU_EXPORT BU_EXTERN(int Bu_d_Init,
+		    (Tcl_Interp *interp));
+#else
 BU_EXPORT BU_EXTERN(int Bu_Init,
 		    (Tcl_Interp *interp));
+#endif
 
 /* lex.c */
 #define BU_LEX_ANY	0	/* pseudo type */
