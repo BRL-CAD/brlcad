@@ -978,6 +978,13 @@ CONST point_t	pt;
 	mat_mul( mat, xlate, tmp );
 }
 
+/*
+ *			R T _ M A T _ I S _ E Q U A L
+ *
+ *  Returns -
+ *	0	When matrices are not equal
+ *	1	When matricies are equal
+ */
 int
 rt_mat_is_equal(a,b,tol)
 CONST mat_t	a;
@@ -993,11 +1000,10 @@ CONST struct rt_tol	*tol;
 	tdist = tol->dist;
 	tperp = tol->perp;
 
-/*
- * Check that the rotation part of the matrix (cosines) are within
- * the perpendicular tolarance.
- */
-
+	/*
+	 * Check that the rotation part of the matrix (cosines) are within
+	 * the perpendicular tolerance.
+	 */
 	for (i = 0; i < 16; i+=4) {
 		f = a[i] - b[i];
 		if ( !NEAR_ZERO(f, tperp)) return 0;
@@ -1006,21 +1012,46 @@ CONST struct rt_tol	*tol;
 		f = a[i+2] - b[i+2];
 		if ( !NEAR_ZERO(f, tperp)) return 0;
 	}
-/*
- * Check that the scale part of the matrix (ratio) is within the
- * perpendicular tolarance.  There is no ratio tolarance so we use
- * the tighter of dist or perp.
- */
+	/*
+	 * Check that the scale part of the matrix (ratio) is within the
+	 * perpendicular tolerance.  There is no ratio tolerance so we use
+	 * the tighter of dist or perp.
+	 */
 	f = a[15] - a[15];
 	if ( !NEAR_ZERO(f, tperp)) return 0;
 
-/*
- * Last, check that the translation part of the matrix (dist) are within
- * the distance tolarance.
- */
+	/*
+	 * Last, check that the translation part of the matrix (dist) are within
+	 * the distance tolerance.
+	 */
 	for (i=3; i<12; i+=4) {
 		f = a[i] - b[i];
 		if ( !NEAR_ZERO(f, tdist)) return 0;
 	}
 	return 1;
+}
+
+/*
+ *			R T _ V E C T _ M A X M A G
+ *
+ *  Return the subscript (X, Y, Z) of the element of a vector (3-tuple)
+ *  that has the maximum absolute value.
+ */
+int
+rt_vect_maxmag( v )
+CONST vect_t	v;
+{
+	if( fabs(v[X]) >= fabs(v[Y]) )  {
+		/* X -vs- Z */
+		if( fabs(v[X]) >= fabs(v[Z]) )
+			return X;
+		else
+			return Z;
+	}
+
+	/* Y -vs- Z */
+	if( fabs(v[Y]) >= fabs(v[Z]) )
+		return Y;
+
+	return Z;
 }
