@@ -287,6 +287,186 @@ out:
 	return TCL_OK;
 }
 
+int
+f_edmater(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int     argc;
+char    *argv[];
+{
+  int i;
+  int status;
+  char *tmpfil = "/tmp/GED.aXXXXX";
+
+  char **av;
+  
+  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+    return TCL_ERROR;
+
+  (void)mktemp(tmpfil);
+  i=creat(tmpfil, 0600);
+  if( i < 0 ){
+    perror(tmpfil);
+    return TCL_ERROR;
+  }
+
+  (void)close(i);
+
+  av = (char **)rt_malloc(sizeof(char *)*(argc + 2), "f_edmater: av");
+  av[0] = "wmater";
+  av[1] = tmpfil;
+  for(i = 2; i < argc + 1; ++i)
+    av[i] = argv[i-1];
+
+  av[i] = NULL;
+
+  if( f_wmater(clientData, interp, argc + 1, av) == TCL_ERROR ){
+    (void)unlink(tmpfil);
+    rt_free((char *)av, "f_edmater: av");
+    return TCL_ERROR;
+  }
+
+  if( editit(tmpfil) ){
+    av[0] = "rmater";
+    av[2] = NULL;
+    status = f_rmater(clientData, interp, 2, av);
+  }else
+    status = TCL_ERROR;
+
+  (void)unlink(tmpfil);
+  rt_free((char *)av, "f_edmater: av");
+  return status;
+}
+
+
+int
+f_wmater(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int     argc;
+char    *argv[];
+{
+  int i;
+  int status = TCL_OK;
+  FILE *fp;
+  register struct directory *dp;
+  union record record;
+
+  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+    return TCL_ERROR;
+
+  if((fp = fopen(argv[1], "w")) == NULL){
+    Tcl_AppendResult(interp, "f_wmater: Failed to open file - ", argv[1], (char *)NULL);
+    return TCL_ERROR;
+  }
+
+  for(i = 2; i < argc; ++i){
+    if( (dp = db_lookup( dbip,  argv[i], LOOKUP_NOISY )) == DIR_NULL ){
+      Tcl_AppendResult(interp, "f_wmater: Failed to find ", argv[i], "\n", (char *)NULL);
+      status = TCL_ERROR;
+      continue;
+    }
+
+    if( db_get( dbip, dp, &record, 0 , 1) < 0 ){
+      TCL_READ_ERR;
+      status = TCL_ERROR;
+      continue;
+    }
+
+    if( record.u_id != ID_COMB ) {
+      Tcl_AppendResult(interp, dp->d_namep, ": not a combination\n", (char *)NULL);
+      status = TCL_ERROR;
+      continue;
+    }
+
+    /*XXX Still need to handle matparm that contains spaces */
+    fprintf(fp, "%s\t%s\t%s\t%d\t%d\t%d\t%d\t%d\n", argv[i],
+	    record.c.c_matname[0] ? record.c.c_matname : "-",
+	    record.c.c_matparm[0] ? record.c.c_matparm : "-",
+	    (int)record.c.c_rgb[0], (int)record.c.c_rgb[1], (int)record.c.c_rgb[2],
+	    (int)record.c.c_override, (int)record.c.c_inherit);
+  }
+
+  (void)fclose(fp);
+  return status;
+}
+
+
+int
+f_rmater(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int     argc;
+char    *argv[];
+{
+#ifndef LINELEN
+#define LINELEN 256
+#endif
+  int status = TCL_OK;
+  FILE *fp;
+  register struct directory *dp;
+  union record record;
+  char line[LINELEN];
+  char name[NAMESIZE];
+  char matname[32]; 
+  char parm[60];
+  int r,g,b;
+  int override;
+  int inherit;
+
+  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+    return TCL_ERROR;
+
+  if((fp = fopen(argv[1], "r")) == NULL){
+    Tcl_AppendResult(interp, "f_rcodes: Failed to read file - ", argv[1], (char *)NULL);
+    return TCL_ERROR;
+  }
+
+  while(fgets( line , LINELEN, fp ) != NULL){
+    /*XXX Still need to handle a matparm that contains spaces */
+    if(sscanf(line, "%s%s%s%d%d%d%d%d", name, matname, parm, &r, &g, &b,
+	      &override, &inherit) != 8)
+      continue;
+
+    if( (dp = db_lookup( dbip,  name, LOOKUP_NOISY )) == DIR_NULL ){
+      Tcl_AppendResult(interp, "f_rmater: Failed to find ", name, "\n", (char *)NULL);
+      status = TCL_ERROR;
+      continue;
+    }
+
+    if( db_get( dbip, dp, &record, 0, 1) < 0 )
+      continue;
+
+    /* Assign new values */
+    if(matname[0] == '-')
+      record.c.c_matname[0] = '\0';
+    else
+      strcpy(record.c.c_matname, matname);
+
+    if(parm[0] == '-')
+      record.c.c_matparm[0] = '\0';
+    else
+      strcpy(record.c.c_matparm, parm);
+
+    record.c.c_rgb[0] = (unsigned char)r;
+    record.c.c_rgb[1] = (unsigned char)g;
+    record.c.c_rgb[2] = (unsigned char)b;
+    record.c.c_override = (char)override;
+    record.c.c_inherit = (char)inherit;
+
+    /* Write new values to database */
+    if( db_put( dbip, dp, &record, 0, 1 ) < 0 ){
+      Tcl_AppendResult(interp, "Database write error, aborting.\n",
+		       (char *)NULL);
+      return TCL_ERROR;
+    }
+  }
+
+  (void)fclose(fp);
+  return status;
+}
+
+
 /*
  *			F _ C O M B _ C O L O R
  *
