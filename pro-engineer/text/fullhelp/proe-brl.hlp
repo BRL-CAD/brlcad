@@ -1,5 +1,0 @@
-BRL-CAD
- Produce an ASCII file containing a facetted version of the current
-Pro/Engineer Part or Assembly. The file will have a ".brl" extension
-and will be suitable for use with the BRL-CAD "proe-g" command to
-create a BRL-CAD version of the facetted model.
