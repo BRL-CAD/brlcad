@@ -2232,6 +2232,8 @@ CONST struct rt_tol	*tol;
  *	vec == y_dir returns pi/2,
  *	vec == -x_dir returns pi,
  *	vec == -y_dir returns 3*pi/2.
+ *
+ *  In all cases, the returned value is between 0 and rt_twopi.
  */
 double
 rt_angle_measure( vec, x_dir, y_dir )
@@ -2248,10 +2250,15 @@ CONST vect_t	y_dir;
 	gamma = atan2( yproj, xproj );	/* -pi..+pi */
 	ang = rt_pi + gamma;		/* 0..+2pi */
 	if( ang < 0 )  {
-		return rt_twopi + ang;
+		do {
+			ang += rt_twopi;
+		} while( ang < 0 );
 	} else if( ang > rt_twopi )  {
-		return ang - rt_twopi;
+		do {
+			ang -= rt_twopi;
+		} while( ang > rt_twopi );
 	}
+	if( ang < 0 || ang > rt_twopi )  rt_bomb("rt_angle_measure() angle out of range\n");
 	return ang;
 }
 
