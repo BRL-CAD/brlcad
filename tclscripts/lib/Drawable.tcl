@@ -25,24 +25,24 @@ class Drawable {
     constructor {db} {}
     destructor {}
 
-    public method observer {args}
     public method assoc {args}
-    public method draw {args}
-    public method erase {args}
-    public method zap {}
-    public method who {args}
     public method blast {args}
     public method clear {}
-    public method ev {args}
+    public method draw {args}
+    public method erase {args}
     public method erase_all {args}
+    public method ev {args}
+    public method get_autoview {}
+    public method get_dgname {}
+    public method illum {obj}
+    public method label {obj}
+    public method observer {args}
     public method overlay {args}
     public method rt {args}
     public method rtcheck {args}
     public method vdraw {args}
-    public method get_autoview {}
-    public method get_name {}
-    public method illum {obj}
-    public method label {obj}
+    public method who {args}
+    public method zap {}
 }
 
 body Drawable::constructor {db} {
@@ -114,7 +114,7 @@ body Drawable::get_autoview {} {
     eval $dg get_autoview
 }
 
-body Drawable::get_name {} {
+body Drawable::get_dgname {} {
     return $dg
 }
 
