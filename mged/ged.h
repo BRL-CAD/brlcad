@@ -436,9 +436,9 @@ extern struct mged_variables mged_variables;
 
 #define	MAXARGS		9000	/* Maximum number of args per line */
 
-/* Command return codes */
-
 #define MGED_PROMPT "mged> "
+
+/* Command return codes */
 
 #define CMD_OK		919
 #define CMD_BAD		920
