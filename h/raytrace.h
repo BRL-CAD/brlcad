@@ -99,6 +99,7 @@ struct soltab {
 	vect_t		st_min;		/* min X, Y, Z of bounding RPP */
 	vect_t		st_max;		/* max X, Y, Z of bounding RPP */
 	int		st_bin;		/* Temporary for boolean processing */
+	char		*st_materp;	/* (struct mater *) */
 };
 #define SOLTAB_NULL	((struct soltab *)0)
 
