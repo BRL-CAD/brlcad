@@ -11,8 +11,7 @@
  *	slewview	Slew the view
  *	log_event	Log an event in the log file
  *	finish		Terminate with logging.  To be used instead of exit().
- *	quit		Signal catcher & general Exit routine
- *	sig3		Signal catcher, to restart display when hung
+ *	quit		General Exit routine
  *
  *
  * Authors -
@@ -35,6 +34,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include	<fcntl.h>
 #include	<signal.h>
 #include	<time.h>
+#include	<setjmp.h>
 #include "ged_types.h"
 #include "ged.h"
 #include "solid.h"
@@ -66,7 +66,9 @@ int		inten_scale;		/* intensity scale (ISR) */
 int		windowbounds[6];	/* X hi,lo;  Y hi,lo;  Z hi,lo */
 /**** End global display information ******/
 
-void		quit(), sig3();
+static jmp_buf	jmp_env;		/* For non-local gotos */
+void		(*cur_sigint)();	/* Current SIGINT status */
+void		sig2();
 static void	log_event();
 extern char	version[];		/* from vers.c */
 
@@ -135,9 +137,6 @@ char **argv;
 	/*	 Scan input file and build the directory	 */
 	dir_build();
 
-	(void)signal(SIGINT, quit);
-	(void)signal(SIGQUIT, sig3);
-
 	/* Initialize the menu mechanism to be off, but ready. */
 	menu_init();
 	
@@ -146,6 +145,18 @@ char **argv;
 	inpara = newedge = 0;
 
 	refresh();			/* Put up faceplate */
+
+	/* Caught interrupts take us here */
+	if( setjmp( jmp_env ) == 0 )  {
+		/* First pass through */
+		if( signal( SIGINT, SIG_IGN ) == SIG_IGN )
+			cur_sigint = SIG_IGN;	/* detached? */
+		else
+			cur_sigint = quit;
+	} else {
+		printf("MGED\n");
+	}
+	(void)signal( SIGINT, SIG_IGN );
 
 	/****************  M A I N   L O O P   *********************/
 	while(1) {
@@ -159,13 +170,13 @@ char **argv;
 		 */
 		i = dmp->dmr_input( 0, rateflag );	/* fd 0 for cmds */
 		if( i )
-			cmdline();			/* e8.c */
+			cmdline();
 
 		rateflag = 0;
 
 		/* Process any function button presses */
 		if( dm_values.dv_buttonpress )
-			button( dm_values.dv_buttonpress );	/* e9.c */
+			button( dm_values.dv_buttonpress );
 
 		/* Process any joystick activity */
 		if(	dmaflag
@@ -191,10 +202,10 @@ char **argv;
 		xcross = dm_values.dv_xpen;
 		ycross = dm_values.dv_ypen;
 
-		/* usepen (e4.c) wants inputs:  -2048 <= x,y <= +2047 */
+		/* inputs:  -2048 <= x,y <= +2047 */
 		usepen( dm_values.dv_xpen,
 			dm_values.dv_ypen,
-			dm_values.dv_penpress );	/* e4.c */
+			dm_values.dv_penpress );
 
 		/*
 		 * Set up window so that drawing does not run over into the
@@ -264,12 +275,9 @@ char **argv;
  * the middle of a routine somewhere (such as the "B" command
  * processor), then this routine may be called.
  *
- * When an initialization routine wants to send out a skeleton displaylist,
- * this routine should be called with a non-zero argument;  normal calls
- * should be with a zero argument.
- *
  * If you don't understand the ramifications of using this routine,
- * then you don't want to call it. */
+ * then you don't want to call it.
+ */
 void
 refresh()
 {
@@ -455,24 +463,23 @@ int	exitcode;
 /*
  *			Q U I T
  *
- * catch SIGINT, and process exiting.
- * Also called upon EOF on STDIN.
+ * Handles finishing up.  Also called upon EOF on STDIN.
  */
 void
 quit()
 {
-	(void)signal(SIGINT, SIG_IGN);
-	finish(0);		/* log termination and exit */
+	finish(0);
+	/* NOTREACHED */
 }
 
-/*			S I G 3
- *
- * This routine is used to get things going again.
+/*
+ *  			S I G 2
  */
 void
-sig3()  {
-	(void)signal(SIGQUIT, sig3);
-	printf("Please use keyboard command 'fix' to restart display\n");
+sig2()
+{
+	longjmp( jmp_env );
+	/* NOTREACHED */
 }
 
 /*
