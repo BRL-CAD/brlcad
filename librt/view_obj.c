@@ -68,6 +68,7 @@ static int vo_observer_tcl();
 static int vo_cmd();
 static void vo_update();
 static void vo_mat_aet();
+static void vo_persp_mat();
 static void vo_mike_persp_mat();
 
 struct view_obj HeadViewObj;		/* head of view object list */
@@ -614,7 +615,14 @@ vo_perspective_tcl(clientData, interp, argc, argv)
 		}
 
 		vop->vo_perspective = perspective;
+
+#if 1
+		/* This way works, with reasonable Z-clipping */
+		vo_persp_mat(vop->vo_pmat, vop->vo_perspective,
+			     1.0, 0.01, 1.0e10, 1.0);
+#else
 		vo_mike_persp_mat(vop->vo_pmat, vop->vo_eye_pos);
+#endif
 		vo_update(vop, interp, 1);
 
 		return TCL_OK;
@@ -723,6 +731,38 @@ vo_mat_aet(vop)
 	s_twist = sin(twist);
 	bn_mat_zrot(tmat, s_twist, c_twist);
 	bn_mat_mul2(tmat, vop->vo_rotation);
+}
+
+/*
+ *			P E R S P _ M A T
+ *
+ *  This code came from mged/dozoom.c.
+ *  Compute a perspective matrix for a right-handed coordinate system.
+ *  Reference: SGI Graphics Reference Appendix C
+ *  (Note:  SGI is left-handed, but the fix is done in the Display Manger).
+ */
+static void
+vo_persp_mat(m, fovy, aspect, near, far, backoff)
+     mat_t	m;
+     fastf_t	fovy, aspect, near, far, backoff;
+{
+	mat_t	m2, tran;
+
+	fovy *= 3.1415926535/180.0;
+
+	bn_mat_idn(m2);
+	m2[5] = cos(fovy/2.0) / sin(fovy/2.0);
+	m2[0] = m2[5]/aspect;
+	m2[10] = (far+near) / (far-near);
+	m2[11] = 2*far*near / (far-near);	/* This should be negative */
+
+	m2[14] = -1;		/* XXX This should be positive */
+	m2[15] = 0;
+
+	/* Move eye to origin, then apply perspective */
+	bn_mat_idn(tran);
+	tran[11] = -backoff;
+	bn_mat_mul(m, m2, tran);
 }
 
 /*
