@@ -30,12 +30,12 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <errno.h>
 #include <netdb.h>
 #include <math.h>
-#ifdef BSD
+#ifdef SYSV
+# include <string.h>
+#else
 # include <strings.h>
 # define strchr(s, c)	index(s, c)
 # define strrchr(s, c)	rindex(s, c)
-#else
-# include <string.h>
 #endif
 
 #include <sys/types.h>
