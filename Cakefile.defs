@@ -410,6 +410,26 @@ set -S2 "/bin/sh"
 		rm -fr /usr/tmp/libfb )
 #	define	LIBRT_TIMER	timer42
 #	define	MGED_OBJS	dm-sun
+#	define	MGED_CONFIG	-DDM_SUNPW
+#	define	MGED_LIBES	-lsuntool -lsunwindow -lpixrect
+#endif
+
+#	undef	sun3
+#if defined(apollo)
+#	undef	apollo
+#	define	MTYPE	apollo
+#	define	UNIXTYPE	SYSV
+#	define	HAS_TCP	1
+#	define  CC_OPTS
+#	define	LIBMALLOC	/* must use libc.a, for _malloc_at_addr() */
+#	define	LD_OPTS	CC_OPTS
+#	define	LIBMALLOC	/* may be able to use local libmalloc */
+#	define	LIBRT_TIMER	timerunix
+#	define	LIBFB_OBJS
+#	define	LIBFB_CONFIG
+#	define	LIBFB_SETUP
+#	define	MGED_OBJS
+#	define	RANLIB	/usr/ucb/ranlib
 #	define	MGED_CONFIG
 #	define	MGED_LIBES
 #endif
