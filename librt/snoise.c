@@ -11,7 +11,7 @@
  *	noise_gv	Gradient Value Noise
  *	noise_vc	Value Convolution Noise
  *	noise_sc	Sparse Convolution Noise
- *	noise_fkm	Robert Skinner's Perlin-style "Noise" function
+ *	noise_perlin	Robert Skinner's Perlin-style "Noise" function
  *	noise_vec	Vector-valued noise
  *
  *
@@ -1157,7 +1157,25 @@ point_t point;
 	return sum / NIMPULSES;
 }
 
+void
+init_noise_funcs()
+{
+	static int done=0;
+	RES_ACQUIRE(&rt_g.res_model);
 
+	if (done) {
+		RES_RELEASE(&rt_g.res_model);
+		return;
+	}
+	done = 1;
+
+	valueTabInit(665L);
+	gradientTabInit(665L);
+	impulseTabInit(665L);
+
+
+	RES_RELEASE(&rt_g.res_model);
+}
 
 /****************************************************************
  *								*
@@ -1230,9 +1248,6 @@ static unsigned short xtab[256] =
 	0x8201, 0x42c0, 0x4380, 0x8341, 0x4100, 0x81c1, 0x8081, 0x4040
 };
 
-double Chaos(), Marble();
-
-
 /*
  * Note that passing a double to Crc16 and interpreting it as
  * an array of chars means that machines with different floating-point
@@ -1256,7 +1271,7 @@ register int  count;
 }
 
 static int
-R(v)
+Randomizer(v)
 point_t v;
 {
 	point_t t;
@@ -1276,21 +1291,21 @@ noise_init()
 	int i, j, k, temp;
 	int rndtabi = RNDTABSIZ - 1;
 	
+	RES_ACQUIRE(&rt_g.res_model);
+
 	if (hashTableValid) {
-		rt_log("noise_init(hashTable=0x%08x hashTableValid=%d) sleeping\n",
-			hashTable, hashTableValid);
-		sleep(1);
+		RES_RELEASE(&rt_g.res_model);
 		return;
 	}
-	hashTableValid = 1;
 
-	rt_log("noise_init(hashTable=0x%08x hashTableValid=%d)\n",
-		hashTable, hashTableValid);
+	hashTableValid = 1;
 
 	RANDSEED( (RNDTABSIZ-1) );
 	hashTable = (short *) rt_malloc(4096*sizeof(short int), "noise hashTable");
 	for (i = 0; i < 4096; i++)
 		hashTable[i] = i;
+
+	/* scramble the hash table */
 	for (k = 0, i = 4095; i > 0; i--, k++) {
 		j = (int)(RANDNBR * 4096.0);
 
@@ -1301,8 +1316,10 @@ noise_init()
 
 	for (i = 0; i < MAXSIZE; i++) {
 		rp[0] = rp[1] = rp[2] = (double)i;
-		RTable[i] = R(rp)*REALSCALE - 1.0;
+		RTable[i] = Randomizer(rp) * REALSCALE - 1.0;
 	}
+
+	RES_RELEASE(&rt_g.res_model);
 }
 
 
@@ -1543,15 +1560,7 @@ double h_val, lacunarity, octaves;
  * invocation.  If not, the we compute them and save them for
  * possible future use
  */
-/* #define FIND_SPEC_WGT(_ep, _h, _l, _o) \
- *	for (_ep=etbl, i=0 ; i < etbl_next ; i++, _ep++) { \
- *		if (_ep->magic != MAGIC_fbm_spec_wgt) abort(); \
- *		else if (_ep->lacunarity == _l && _ep->h_val == _h && \
- *			_ep->octaves >= _o ) \
- *		    		break; \
- *	} \
- *	if (i >= etbl_next) _ep = build_spec_tbl(_h, _l, _o)
- */
+
 #define FIND_SPEC_WGT(_ep, _h, _l, _o) _ep = find_spec_wgt(_h, _l, _o)
 struct fbm_spec		*
 find_spec_wgt(h, l, o)
@@ -1561,9 +1570,9 @@ double			o;
 {
 	struct fbm_spec	*ep;
 	int i;
-#if 1
+
 	RES_ACQUIRE(&rt_g.res_model);
-#endif
+
 	for (ep = etbl, i=0 ; i < etbl_next ; i++, ep++) {
 		if (ep->magic != MAGIC_fbm_spec_wgt) rt_bomb("find_spec_wgt");
 		else if (ep->lacunarity == l && ep->h_val == h && 
@@ -1572,9 +1581,9 @@ double			o;
 	}
 
 	if (i >= etbl_next) ep = build_spec_tbl(h, l, o);
-#if 1
+
 	RES_RELEASE(&rt_g.res_model);
-#endif
+
 	return (ep);
 }
 /*
