@@ -1502,6 +1502,12 @@ int n;
 	struct edgeuse	*eu;
 	int		i;
 	int		f_no;		/* Face number */
+struct rt_tol tol;
+       tol.magic = RT_TOL_MAGIC;
+       tol.dist = 0.005;
+       tol.dist_sq = tol.dist * tol.dist;
+       tol.perp = 1e-6;
+       tol.para = 1 - tol.perp;
 	
 	NMG_CK_FACEUSE(fulist[0]);
 	s = fulist[0]->s_p;
@@ -1532,15 +1538,13 @@ int n;
 					struct loopuse		*lu2;
 					register struct edgeuse	*eu2;
 
-					if( eu->radial_p != eu->eumate_p )  break;
-
 					for( BU_LIST_FOR( lu2 , loopuse , &fulist[f_no]->lu_hd ) ) {
 						NMG_CK_LOOPUSE( lu2 );
 						if( BU_LIST_FIRST_MAGIC(&lu2->down_hd) != NMG_EDGEUSE_MAGIC )
 							continue;
 						for( BU_LIST_FOR( eu2, edgeuse, &lu2->down_hd ) )  {
 							if (EDGESADJ(eu, eu2))
-							    	nmg_je(eu, eu2);
+								nmg_radial_join_eu(eu, eu2, &tol);
 						}
 					}
 				}
