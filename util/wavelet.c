@@ -157,7 +157,7 @@ wlt_decompose_1d()
 	tbuf = bu_malloc( scanline_size >> 1, "wavelet buf");
 
 	if (debug)
-		fprintf(stderr, "1D decompose:\n\tdatatype_size:%d channels:%d width:%d height:%d limit:%d\n",
+		fprintf(stderr, "1D decompose:\n\tdatatype_size:%d channels:%lu width:%lu height:%lu limit:%lu\n",
 			value_size, channels, width, height, limit);
 
 	
@@ -166,7 +166,7 @@ wlt_decompose_1d()
 		n = fread(buf, sample_size, width, stdin);
 		if (n  != width ) {
 			fprintf(stderr, 
-				"read failed line %d got %d not %d\n",
+				"read failed line %d got %d not %lu\n",
 				 i, n, width);
 			exit(-1);
 		}
@@ -216,18 +216,19 @@ wlt_decompose_2d()
 	tbuf = bu_malloc( scanline_size, "wavelet buf");
 
 	if (debug)
-		fprintf(stderr, "2D decompose:\n\tdatatype_size:%d channels:%d width:%d height:%d limit:%d\n",
+		fprintf(stderr, "2D decompose:\n\tdatatype_size:%d channels:%lu width:%lu height:%lu limit:%lu\n",
 			value_size, channels, width, height, limit);
 
 
 	if (width != height) {
 		fprintf(stderr, "Two dimensional decomposition requires square image\n");
-		fprintf(stderr, "%d x %d image specified\n", width, height);
+		fprintf(stderr, "%lu x %lu image specified\n", width, height);
 		exit(-1);
 	}
 
 	if (fread(buf, scanline_size, height, stdin) != height) {
-		fprintf(stderr, "read error getting %dx%d bytes\n", scanline_size, height);
+		fprintf(stderr, "read error getting %dx%lu bytes\n",
+			scanline_size, height);
 		exit(-1);
 	}
 
@@ -282,7 +283,7 @@ wlt_reconstruct_1d()
 	tbuf = bu_malloc( scanline_size >> 1, "wavelet buf");
 
 	if (debug)
-		fprintf(stderr, "1D reconstruct:\n\tdatatype_size:%d channels:%d width:%d height:%d limit:%d\n",
+		fprintf(stderr, "1D reconstruct:\n\tdatatype_size:%d channels:%lu width:%lu height:%lu limit:%lu\n",
 			value_size, channels, width, height, limit);
 
 
@@ -292,7 +293,7 @@ wlt_reconstruct_1d()
 		n = fread(buf, sample_size, width, stdin);
 		if (n  != width ) {
 			fprintf(stderr, 
-				"read failed line %d got %d not %d\n",
+				"read failed line %d got %d not %lu\n",
 				 i, n, width);
 			exit(-1);
 		}
@@ -346,17 +347,17 @@ wlt_reconstruct_2d()
 	tbuf = bu_malloc( scanline_size, "wavelet buf");
 
 	if (debug)
-		fprintf(stderr, "2D reconstruct:\n\tdatatype_size:%d channels:%d width:%d height:%d limit:%d\n",
+		fprintf(stderr, "2D reconstruct:\n\tdatatype_size:%d channels:%lu width:%lu height:%lu limit:%lu\n",
 			value_size, channels, width, height, limit);
 
 	if (width != height) {
 		fprintf(stderr, "Two dimensional decomposition requires square image\n");
-		fprintf(stderr, "%d x %d image specified\n", width, height);
+		fprintf(stderr, "%lu x %lu image specified\n", width, height);
 		exit(-1);
 	}
 
 	if (fread(buf, scanline_size, height, stdin) != height) {
-		fprintf(stderr, "read error getting %dx%d bytes\n", scanline_size, height);
+		fprintf(stderr, "read error getting %dx%lu bytes\n", scanline_size, height);
 		exit(-1);
 	}
 
