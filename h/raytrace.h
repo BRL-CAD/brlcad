@@ -453,7 +453,7 @@ struct soltab {
 	struct bu_list	l2;		/* links, headed by st_dp->d_use_hd */
 	CONST struct rt_functab *st_meth; /* pointer to per-solid methods */
 	struct rt_i	*st_rtip;	/* "up" pointer to rt_i */
-	int		st_uses;	/* Usage count, for instanced solids */
+	long		st_uses;	/* Usage count, for instanced solids */
 	int		st_id;		/* Solid ident */
 	vect_t		st_center;	/* Centroid of solid */
 	fastf_t		st_aradius;	/* Radius of APPROXIMATING sphere */
@@ -462,10 +462,11 @@ struct soltab {
 	CONST struct directory *st_dp;	/* Directory entry of solid */
 	vect_t		st_min;		/* min X, Y, Z of bounding RPP */
 	vect_t		st_max;		/* max X, Y, Z of bounding RPP */
-	int		st_bit;		/* solids bit vector index (const) */
+	long		st_bit;		/* solids bit vector index (const) */
 	struct bu_ptbl	st_regions;	/* ptrs to regions using this solid (const) */
 	matp_t		st_matp;	/* solid coords to model space, NULL=identity */
 	struct db_full_path st_path;	/* path from region to leaf */
+	short		st_is_platemode;/* 1 = solid is FASTGEN plate mode */
 };
 #define st_name		st_dp->d_namep
 #define RT_SOLTAB_NULL	((struct soltab *)0)
@@ -1384,6 +1385,7 @@ struct rt_i {
 	int		rti_nugrid_dimlimit;  /* limit on nugrid dimensions */
 	struct bn_tol	rti_tol;	/* Math tolerances for this model */
 	struct rt_tess_tol rti_ttol;	/* Tessellation tolerance defaults */
+	fastf_t		rti_max_beam_radius; /* Max threat radius for FASTGEN cline solid */
 	/* THESE ITEMS ARE AVAILABLE FOR APPLICATIONS TO READ */
 	vect_t		mdl_min;	/* min corner of model bounding RPP */
 	vect_t		mdl_max;	/* max corner of model bounding RPP */
@@ -2169,8 +2171,23 @@ BU_EXTERN(int db_tally_subtree_regions, (union tree *tp,
 	union tree **reg_trees, int cur, int lim));
 BU_EXTERN(int db_walk_tree, (struct db_i *dbip, int argc, CONST char **argv,
 	int ncpu, CONST struct db_tree_state *init_state,
-	int (*reg_start_func)(), union tree * (*reg_end_func)(),
-	union tree * (*leaf_func)(), genptr_t client_data ));
+	int (*reg_start_func) BU_ARGS((
+		struct db_tree_state * /*tsp*/,
+		struct db_full_path * /*pathp*/,
+		CONST struct rt_comb_internal * /* combp */,
+		genptr_t client_data
+	)), union tree * (*reg_end_func) BU_ARGS((
+		struct db_tree_state * /*tsp*/,
+		struct db_full_path * /*pathp*/,
+		union tree * /*curtree*/,
+		genptr_t client_data
+	)), union tree * (*leaf_func) BU_ARGS((
+		struct db_tree_state * /*tsp*/,
+		struct db_full_path * /*pathp*/,
+		struct bu_external * /*ep*/,
+		int /*id*/,
+		genptr_t client_data
+	)), genptr_t client_data ));
 BU_EXTERN(int db_path_to_mat, (struct db_i *dbip, struct db_full_path *pathp,
 	mat_t mat, int depth));
 BU_EXTERN(void db_apply_anims, (struct db_full_path *pathp,
