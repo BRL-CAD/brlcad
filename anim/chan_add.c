@@ -29,6 +29,11 @@ char **argv;
 	int i,j,doit, of, count, val, *col_list;
 
 
+	if (argc < 3) {
+		fprintf(sterr,"Usage: chan_add value num_columns colomn [column ...] < in.file > out.file\n");
+		return;
+	}
+
 	sscanf(*(argv+1),"%lf",&addend);
 	sscanf(*(argv+2),"%d",&of);
 	col_list = (int *) calloc(argc-2,sizeof(int));
