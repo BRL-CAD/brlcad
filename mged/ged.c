@@ -2111,7 +2111,7 @@ char	**argv;
   log_event( "START", argv[1] );
 
   /* --- Scan geometry database and build in-memory directory --- */
-  db_scan( dbip, (int (*)())db_diradd, 1, NULL );
+  (void)db_dirbuild( dbip );
 
   /* Close previous databases, if any.  Ignore errors. */
   bu_vls_strcpy(&vls, "db close; .inmem close");
