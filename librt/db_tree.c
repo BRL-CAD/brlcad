@@ -221,14 +221,14 @@ struct member		*mp;
 		rt_free(sofar, "path string");
 	}
 	for( anp = mdp->d_animate; anp != ANIM_NULL; anp = anp->an_forw ) {
-		register int i = anp->an_pathlen-2;
 		/*
-		 * pathlen - 1 would point to the leaf (a
+		 * pathlen-1 would index the leaf (a
 		 * solid), but the solid is implicit in "path"
-		 * so we need to backup "2" such that we point
-		 * at the combination just above this solid.
+		 * so use pathlen-2 to index
+		 * the combination just above the leaf.
 		 */
-		register int j = pathp->fp_len;
+		register int i = anp->an_pathlen-2;
+		register int j = pathp->fp_len-1;
 
 		if (rt_g.debug & DEBUG_ANIM) {
 			struct db_full_path	path;
