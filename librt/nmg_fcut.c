@@ -722,9 +722,10 @@ int	wclass;
 			continue;
 		}
 	}
-rt_log("nmg_find_vu_in_wedge(start=%d,end=%d, lo=%g, hi=%g) candidate=%d\n",
-start, end, lo_ang, hi_ang,
-candidate);
+	if(rt_g.NMG_debug&DEBUG_VU_SORT)
+		rt_log("nmg_find_vu_in_wedge(start=%d,end=%d, lo=%g, hi=%g) candidate=%d\n",
+			start, end, lo_ang, hi_ang,
+			candidate);
 	return candidate;	/* is -1 if none found */
 }
 
@@ -981,8 +982,12 @@ int				ass;
 /*
  *			N M G _ S P E C I A L _ W E D G E _ P R O C E S S I N G
  *
+ *  Returns -
+ *	0	Nothing done
+ *	1	Loops were cut or joined, need to reclassify everything
+ *		at this vertexuse.
  */
-static void
+static int
 nmg_special_wedge_processing( vs, start, end, lo_ang, hi_ang, wclass )
 struct nmg_vu_stuff	*vs;
 int	start;		/* vu index of coincident range */
@@ -995,13 +1000,14 @@ int	wclass;
 	int	this_wedge;
 
 	this_wedge = nmg_find_vu_in_wedge( vs, start, end, lo_ang, hi_ang, wclass );
-	if( this_wedge <= -1 )  return;	/* No wedges to process */
+	if( this_wedge <= -1 )  return 0;	/* No wedges to process */
 
 	/* There is at least one wedge on this side of the line */
 
 
 	/* XXX more here */
 	rt_log("XXX special wedge processing needed\n");
+	return 1;
 }
 
 /*
@@ -1781,7 +1787,7 @@ int			other_rs_state;
 	 *  on the final result of the boolean, it's just extra work.
 	 *  This can reduce the amount of unnecessary topology by 75% or more.
 	 */
-	if( other_rs_state == NMG_STATE_OUT )  {
+	if( other_rs_state == NMG_STATE_OUT && action != NMG_ACTION_ERROR )  {
 		action = NMG_ACTION_NONE;
 	}
 #endif
@@ -1826,7 +1832,7 @@ rt_log("force next eu to ray\n");
 			vu, pos,
 			nmg_state_names[old_state], nmg_v_assessment_names[assessment],
 			nmg_state_names[new_state], action_names[action] );
-#if 0	/* XXX turn this on only for debugging */
+	     if( rt_g.NMG_debug )  {
 		/* First, print this faceuse */
 		lu = nmg_lu_of_vu( vu );
 		/* Drop a plot file */
@@ -1846,7 +1852,7 @@ rt_log("force next eu to ray\n");
 		}
 		/* Store this face in a .g file for examination! */
 		nmg_stash_model_to_file( "error.g", nmg_find_model((long*)lu), "nmg_fcut.c error dump" );
-#endif
+	     }
 		/* Explode */
 		rt_bomb("nmg_face_state_transition: got action=ERROR\n");
 	case NMG_ACTION_NONE:
