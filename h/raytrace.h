@@ -1966,10 +1966,7 @@ RT_EXTERN(void			nmg_region_vertex_list, (struct nmg_ptbl *tab,
 RT_EXTERN(void			nmg_region_edge_list, (struct nmg_ptbl *tab,
 				struct nmgregion *r));
 
-/* From nmg_misc.c */
-RT_EXTERN(int			nmg_tbl, (struct nmg_ptbl *b, int func, long *p) );
-RT_EXTERN(void			nmg_purge_unwanted_intersection_points, (struct nmg_ptbl *vert_list, CONST struct faceuse *fu, CONST struct rt_tol *tol));
-RT_EXTERN(int			nmg_in_or_ref, (struct vertexuse *vu, struct nmg_ptbl *b) );
+/* From nmg_pr.c */
 RT_EXTERN(char *		nmg_orientation, (int orientation) );
 RT_EXTERN(void			nmg_pr_orient, (int orientation, CONST char *h) );
 RT_EXTERN(void			nmg_pr_m, (CONST struct model *m) );
@@ -1993,8 +1990,15 @@ RT_EXTERN(void			nmg_pr_v, (CONST struct vertex *v, char *h) );
 RT_EXTERN(void			nmg_pr_vu, (CONST struct vertexuse *vu, char *h) );
 RT_EXTERN(void			nmg_pr_vu_briefly, (CONST struct vertexuse *vu, char *h) );
 RT_EXTERN(void			nmg_euprint, (CONST char *str, CONST struct edgeuse *eu) );
+
+/* From nmg_misc.c */
+RT_EXTERN(int			nmg_tbl, (struct nmg_ptbl *b, int func, long *p) );
+RT_EXTERN(void			nmg_purge_unwanted_intersection_points, (struct nmg_ptbl *vert_list, CONST struct faceuse *fu, CONST struct rt_tol *tol));
+RT_EXTERN(int			nmg_in_or_ref, (struct vertexuse *vu, struct nmg_ptbl *b) );
 RT_EXTERN(void			nmg_rebound, (struct model *m) );
 RT_EXTERN(void			nmg_count_shell_kids, (CONST struct model *m, unsigned long *total_wires, unsigned long *total_faces, unsigned long *total_points));
+RT_EXTERN(void			nmg_stash_model_to_file, (CONST char *filename,
+				CONST struct model *m, CONST char *title) );
 
 /* nmg_manif.c */
 RT_EXTERN(int			nmg_dangling_face, (CONST struct faceuse *fu));
@@ -2114,8 +2118,6 @@ RT_EXTERN(void			nmg_face_cutjoin, (
 				CONST struct rt_tol *tol) );
 RT_EXTERN(void			nmg_lu_reorient, (struct loopuse *lu,
 				CONST plane_t norm, CONST struct rt_tol *tol) );
-RT_EXTERN(void			nmg_stash_model_to_file, (CONST char *filename,
-				struct model *m, CONST char *title) );
 
 #define nmg_mev(_v, _u)	nmg_me((_v), (struct vertex *)NULL, (_u))
 
