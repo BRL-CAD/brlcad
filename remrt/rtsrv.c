@@ -41,6 +41,7 @@ mat_t model2view;
 /***** end of sharing with viewing model *****/
 
 /***** variables shared with worker() */
+static int	hypersample=0;	/* number of extra rays to fire */
 static int	perspective=0;	/* perspective view -vs- parallel view */
 static vect_t	dx_model;	/* view delta-X as model-space vector */
 static vect_t	dy_model;	/* view delta-Y as model-space vector */
@@ -165,11 +166,15 @@ char *buf;
 	register char *cp;
 
 	/* Start options in a known state */
+	hypersample = 0;
 	perspective = 0;
 
 	cp = buf;
 	while( *cp == '-' )  {
 		switch( cp[1] )  {
+		case 'h':
+			hypersample = atoi( &cp[2] );
+			break;
 		case 'A':
 			AmbientIntensity = atof( &cp[2] );
 			break;
@@ -216,6 +221,7 @@ char *buf;
 	char *title_file, *title_obj;	/* name of file and first object */
 	struct rt_i *rtip;
 	register int i;
+	register struct region *regp;
 
 	if( parse_cmd( buf ) > 0 )  {
 		(void)free(buf);
@@ -264,6 +270,13 @@ char *buf;
 
 	/* Allow library to prepare itself */
 	rt_prep(rtip);
+
+	/* Initialize the material library for all regions */
+	for( regp=rtip->HeadRegion; regp != REGION_NULL; regp=regp->reg_forw )  {
+		if( mlib_setup( regp ) == 0 )  {
+			rt_log("mlib_setup failure\n");
+		}
+	}
 
 	/* initialize application (claim output to file) */
 	view_init( &ap, title_file, title_obj, npts, 1 );
@@ -334,12 +347,20 @@ char *buf;
 	/* "Upper left" corner of viewing plane */
 	if( perspective )  {
 		VSET( temp, -1, -1, -zoomout );	/* viewing plane */
+		/*
+		 * Divergance is (0.5 * viewsize / npts) mm at
+		 * a ray distance of (viewsize * zoomout) mm.
+		 */
+		ap.a_diverge = (0.5 / npts) / zoomout;
+		ap.a_rbeam = 0;
 	}  else  {
 		VSET( temp, 0, 0, -1 );
 		MAT4X3VEC( ap.a_ray.r_dir, view2model, temp );
 		VUNITIZE( ap.a_ray.r_dir );
 
 		VSET( temp, -1, -1, 0 );	/* eye plane */
+		ap.a_rbeam = 0.5 * viewsize / npts;
+		ap.a_diverge = 0;
 	}
 	MAT4X3PNT( viewbase_model, view2model, temp );
 
@@ -396,6 +417,7 @@ register struct application *ap;
 {
 	LOCAL struct application a;
 	LOCAL vect_t tempdir;
+	LOCAL vect_t colorsum;
 	register char *pixelp;
 	register int r,g,b;
 	register int com;
@@ -408,21 +430,42 @@ register struct application *ap;
 		a.a_hit = ap->a_hit;
 		a.a_miss = ap->a_miss;
 		a.a_rt_i = ap->a_rt_i;
-		VJOIN2( a.a_ray.r_pt, viewbase_model,
-			a.a_x, dx_model, 
-			(npts-a.a_y-1), dy_model );
-		if( perspective )  {
-			VSUB2( a.a_ray.r_dir,
-				a.a_ray.r_pt, eye_model );
-			VUNITIZE( a.a_ray.r_dir );
-			VMOVE( a.a_ray.r_pt, eye_model );
-		} else {
-		 	VMOVE( a.a_ray.r_dir, ap->a_ray.r_dir );
+		a.a_rbeam = ap->a_rbeam;
+		a.a_diverge = ap->a_diverge;
+		a.a_rbeam = ap->a_rbeam;
+		a.a_diverge = ap->a_diverge;
+		VSETALL( colorsum, 0 );
+		for( com=0; com<=hypersample; com++ )  {
+			if( hypersample )  {
+				FAST fastf_t dx, dy;
+				dx = a.a_x + rand_half();
+				dy = (npts-a.a_y-1) + rand_half();
+				VJOIN2( a.a_ray.r_pt, viewbase_model,
+					dx, dx_model, dy, dy_model );
+			}  else  {
+				register int yy = npts-a.a_y-1;
+				VJOIN2( a.a_ray.r_pt, viewbase_model,
+					a.a_x, dx_model,
+					yy, dy_model );
+			}
+			if( perspective )  {
+				VSUB2( a.a_ray.r_dir,
+					a.a_ray.r_pt, eye_model );
+				VUNITIZE( a.a_ray.r_dir );
+				VMOVE( a.a_ray.r_pt, eye_model );
+			} else {
+			 	VMOVE( a.a_ray.r_dir, ap->a_ray.r_dir );
+			}
+
+			a.a_level = 0;		/* recursion level */
+			rt_shootray( &a );
+			VADD2( colorsum, colorsum, a.a_color );
 		}
-
-		a.a_level = 0;		/* recursion level */
-		rt_shootray( &a );
-
+		if( hypersample )  {
+			FAST fastf_t f;
+			f = 1.0 / (hypersample+1);
+			VSCALE( a.a_color, colorsum, f );
+		}
 		pixelp = scanbuf+LINENO_WIDTH+(a.a_x*3);
 		r = a.a_color[0]*255.;
 		g = a.a_color[1]*255.;

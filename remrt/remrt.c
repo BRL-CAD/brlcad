@@ -89,7 +89,8 @@ struct frame {
 	struct list	fr_todo;	/* work still to be done */
 	long		fr_start;	/* start time */
 	long		fr_end;		/* end time */
-	double		fr_zoomout;
+	int		fr_hyper;	/* hypersampling */
+	double		fr_zoomout;	/* perspective */
 	/* Current view */
 	double		fr_viewsize;
 	double		fr_eye_model[3];
@@ -115,6 +116,7 @@ struct servers {
 
 /* Options */
 int npts = 64;
+int hypersample = 0;
 double zoomout = 0;
 extern double atof();
 
@@ -237,8 +239,10 @@ struct pkg_conn *pc;
 
 	printf("%s: ACCEPT\n", sp->sr_name );
 
-	if( start_cmd[0] != '\0' )
+	if( start_cmd[0] != '\0' )  {
 		send_start(sp);
+		send_loglvl(sp);
+	}
 }
 
 dropclient(pc)
@@ -426,6 +430,11 @@ FILE *fp;
 		printf("npts=%d, takes effect after next MAT\n", npts);
 		return;
 	}
+	if( strcmp( cmd_args[0], "h" ) == 0 )  {
+		hypersample = atoi( cmd_args[1] );
+		printf("hypersample=%d, takes effect after next MAT\n", hypersample);
+		return;
+	}
 	if( strcmp( cmd_args[0], "p" ) == 0 )  {
 		zoomout = atof( cmd_args[1] );
 		printf("zoomount=%f, takes effect after next MAT\n", zoomout);
@@ -574,6 +583,8 @@ FILE *fp;
 			return;
 		}
 		for( fr = FrameHead.fr_forw; fr != &FrameHead; fr=fr->fr_forw )  {
+			if( fr->fr_picture )  free(fr->fr_picture);
+			fr->fr_picture = (char *)0;
 			/* Need to remove any pending work,
 			 * work already assigned will dribble in.
 			 */
@@ -618,7 +629,8 @@ FILE *fp;
 			printf(" %d  ", fr->fr_number);
 			printf("size=%d, zoomout=%f, ",
 				fr->fr_size, fr->fr_zoomout );
-			printf("viewsize = %f", fr->fr_viewsize);
+			printf("viewsize = %f, ", fr->fr_viewsize);
+			printf("hypersample = %d", fr->fr_hyper);
 			if( fr->fr_picture )  printf(" (Pic)");
 			printf("\n");
 			pr_list( &(fr->fr_todo) );
@@ -666,7 +678,12 @@ FILE *fp;
 		return;
 	}
 	if( strcmp( cmd_args[0], "print" ) == 0 )  {
+		register struct servers *sp;
 		print_on = atoi(cmd_args[1]);
+		for( sp = &servers[0]; sp < &servers[NFD]; sp++ )  {
+			if( sp->sr_pc == PKC_NULL )  continue;
+			send_loglvl( sp );
+		}
 		printf("Printing of remote messages is %s\n",
 			print_on?"ON":"Off" );
 		return;
@@ -679,6 +696,7 @@ FILE *fp;
 		printf("load db.g trees\n");
 		printf("f #		set npts\n");
 		printf("p #		set zoomout\n");
+		printf("h #		set hypersampling\n");
 		printf("read script\n");
 		printf("mat file	load matrix from file\n");
 		printf("movie file a b\n");
@@ -1168,6 +1186,13 @@ register struct servers *sp;
 		dropclient(sp->sr_pc);
 }
 
+send_loglvl(sp)
+register struct servers *sp;
+{
+	if( pkg_send( MSG_LOGLVL, print_on?"1":"0", 1, sp->sr_pc ) < 0 )
+		dropclient(sp->sr_pc);
+}
+
 send_matrix(sp)
 struct servers *sp;
 {
@@ -1176,10 +1201,12 @@ struct servers *sp;
 
 	fr = sp->sr_curframe;
 	if( fr->fr_viewsize <= 0 )  return;
-	if( fr->fr_zoomout > 0 )
-		sprintf(buf, "-f%d -p%f", fr->fr_size, fr->fr_zoomout );
-	else
-		sprintf(buf, "-f%d", fr->fr_size );
+	if( fr->fr_zoomout > 0 )  {
+		sprintf(buf, "-f%d -h%d -p%f",
+			fr->fr_size, fr->fr_hyper, fr->fr_zoomout );
+	}  else  {
+		sprintf(buf, "-f%d -h%d", fr->fr_size, fr->fr_hyper );
+	}
 
 	if( pkg_send( MSG_OPTIONS, buf, strlen(buf)+1, sp->sr_pc ) < 0 )
 		dropclient(sp->sr_pc);
