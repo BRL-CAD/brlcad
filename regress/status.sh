@@ -224,5 +224,5 @@ if [ "x$MAIL_RESULTS" = "x1" ] ; then
     log "Results have been mailed to [$MAIL_TO]."
 fi
 
-log "Done status.sh"
+log "Done $0"
 exit
