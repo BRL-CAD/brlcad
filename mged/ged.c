@@ -797,7 +797,33 @@ int	non_blocking;
 
     /* Let cool Tk event handler do most of the work */
 
-    Tk_DoOneEvent(TK_ALL_EVENTS | (non_blocking ? TK_DONT_WAIT : 0));
+    if (non_blocking) {
+
+	/* When in non_blocking-mode, we want to deal with as many events
+	   as possible before the next redraw (multiple keypresses, redraw
+	   events, etc... */
+	
+	while (Tk_DoOneEvent(TK_ALL_EVENTS|TK_DONT_WAIT)) {
+	    if( cmdline_hook )  
+		(*cmdline_hook)( &dm_values.dv_string ); 
+	    else {
+		/* Some commands (e.g. mouse events) queue further events. */
+		int oldlen;
+loopagain:
+		oldlen = rt_vls_strlen( &dm_values.dv_string );
+		(void)cmdline( &dm_values.dv_string, FALSE );
+		if( rt_vls_strlen( &dm_values.dv_string ) > oldlen ) {
+		    /* Remove cmds already done, and go again */
+		    rt_vls_nibble( &dm_values.dv_string, oldlen );
+		    goto loopagain;
+		}
+	    }
+	    rt_vls_trunc( &dm_values.dv_string, 0 );
+	}
+    } else {
+	Tk_DoOneEvent(TK_ALL_EVENTS);
+    }
+    
     non_blocking = 0;
 
     /*
@@ -1465,62 +1491,3 @@ char	**argv;
 	return CMD_OK;
 #endif
 }
-
-#ifdef XMGED
-int
-f_source(argc, argv)
-int	argc;
-char	*argv[];
-{
-	FILE	*fp;
-	char	*path;
-	struct rt_vls	str;
-	char option = 'e';	/* default is to execute only */
-	int save_journal;
-
-	save_journal = journal;
-	journal = 0;	/* temporarily shut off journalling */
-
-	if(argc > 2){
-	  sscanf(argv[1], "%c", &option);
-	  ++argv;
-	}
-
-	if( (path = getenv("MGED_SRC_DIR")) != (char *)NULL )  {
-		rt_vls_init(&str);
-		rt_vls_strcpy( &str, path );
-		rt_vls_strcat( &str, "/" );
-		rt_vls_strcat( &str, argv[1] );
-		if( (fp = fopen(rt_vls_addr(&str), "r")) != NULL )  {
-			mged_source_file( fp, option );
-			fclose(fp);
-			rt_vls_free(&str);
-			journal = save_journal;
-			return CMD_OK;
-		}
-		rt_vls_free(&str);
-	}
-	if( (fp = fopen( argv[1], "r" )) != NULL )  {
-		mged_source_file( fp, option );
-		fclose(fp);
-		journal = save_journal;
-		return CMD_OK;
-	}
-	if( (path = getenv("HOME")) != (char *)NULL )  {
-		rt_vls_init(&str);
-		rt_vls_strcpy( &str, path );
-		rt_vls_strcat( &str, "/" );
-		rt_vls_strcat( &str, argv[1] );
-		if( (fp = fopen(rt_vls_addr(&str), "r")) != NULL )  {
-			mged_source_file( fp, option );
-			fclose(fp);
-			rt_vls_free(&str);
-			journal = save_journal;
-			return CMD_OK;
-		}
-		rt_vls_free(&str);
-	}
-	journal = save_journal;
-	return CMD_BAD;
-}
-#endif
