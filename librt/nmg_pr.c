@@ -509,21 +509,37 @@ char *h;
 /*
  *			N M G _ P R _ E G
  *
- * XXX This is presently just nmg_pr_eg_lseg().
+ * Expects a pointer to the magic number of an edge geometry structure
+ * either edge_g_lseg or edge_g_cnurb structures.
  */
 void
-nmg_pr_eg(eg, h)
-CONST struct edge_g_lseg	*eg;
-/*  CONST long *eg;  */
+nmg_pr_eg(eg_magic_p, h)
+CONST long *eg_magic_p;
 char *h;
 {
 	MKPAD(h);
-	NMG_CK_EDGE_G_LSEG(eg);
-	
-	rt_log("%sEDGE_G %8x pt:(%f %f %f)\n",
-		h, eg, V3ARGS(eg->e_pt));
-	rt_log("%s       eu uses=%d  dir:(%f %f %f)\n",
-		h, rt_list_len( &eg->eu_hd2 ), V3ARGS(eg->e_dir));
+	NMG_CK_EDGE_G_EITHER(eg_magic_p);
+
+	switch( *eg_magic_p )
+	{
+		case NMG_EDGE_G_LSEG_MAGIC:
+		{
+			struct edge_g_lseg *eg_l=(struct edge_g_lseg *)eg_magic_p;
+
+			rt_log("%sEDGE_G_LSEG %8x pt:(%f %f %f)\n",
+				h, eg_l, V3ARGS(eg_l->e_pt));
+			rt_log("%s       eu uses=%d  dir:(%f %f %f)\n",
+				h, rt_list_len( &eg_l->eu_hd2 ), V3ARGS(eg_l->e_dir));
+			break;
+		}
+		case NMG_EDGE_G_CNURB_MAGIC:
+		{
+			struct edge_g_cnurb *eg_c=(struct edge_g_cnurb *)eg_magic_p;
+			rt_log( "%sEDGE_G_CNURB %8x\n" , h , eg_c );
+			rt_log( "%s  order=%d, %d ctl pts\n", h, eg_c->order, eg_c->c_size );
+			break;
+		}
+	}
 
 	Return;
 }
@@ -582,7 +598,7 @@ char *h;
 	nmg_pr_vu(eu->vu_p, h);
 
 	if (eu->g.magic_p)
-		nmg_pr_eg(eu->g.lseg_p, h);
+		nmg_pr_eg(eu->g.magic_p, h);
 
 	Return;
 }
