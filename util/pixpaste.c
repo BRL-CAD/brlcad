@@ -37,6 +37,9 @@ static int	base_x = 0;		/* Default to lower left corner */
 static int	base_y = 0;
 static int	Verbose = 0;
 
+#if defined(SYSV)
+static char	stdiobuf[4*1024*1024];
+#endif
 static FILE	*orig, *paste;
 static char	*orig_name, *paste_name;
 static int	paste_autosize = 0;
@@ -197,6 +200,9 @@ int argc; char **argv;
 		}
 	}
 
+#if defined( SYSV )
+	(void) setvbuf(orig, stdiobuf, _IOFBF, sizeof(stdiobuf) );
+#endif
 /*
  * Spew some interesting info at the people...
  */
