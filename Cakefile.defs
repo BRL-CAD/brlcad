@@ -895,8 +895,8 @@ set -S2 "/bin/sh"
 #		define	LIBDM_OBJS	color query dm-X
 #		define	LIBDM_CONFIG	-DDM_X -I''XINCDIR
 #		define	LIBDM_LIBES	LIBTK LIBTCL LIBTK_LIBES LIBTCL_LIBES
-#		define	MGED_OBJS	doevent update dm-X dm-xgl dm-generic
-#		define	MGED_CONFIG	-DDM_X -DDM_XGL -I''XINCDIR -I''XGLHOME/include
+#		define	MGED_OBJS	doevent update dm-X dm-generic
+#		define	MGED_CONFIG	-DDM_X -I''XINCDIR
 /*		-lxgl does not appear available after 5.5 any more -- name changed to -lxil */
 #if 1
 #		define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -lnsl -lsocket
