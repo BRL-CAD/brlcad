@@ -21,6 +21,7 @@ static char RCSworker[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
+#include <math.h>
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
@@ -42,6 +43,8 @@ extern int	stereo;			/* stereo viewing */
 extern vect_t	left_eye_delta;
 extern int	hypersample;		/* number of extra rays to fire */
 extern int	rt_perspective;		/* perspective view -vs- parallel */
+extern fastf_t	aspect;			/* aspect ratio Y/X */
+extern fastf_t	persp_angle;		/* perspective angle (degrees X) */
 extern vect_t	dx_model;		/* view delta-X as model-space vect */
 extern vect_t	dy_model;		/* view delta-Y as model-space vect */
 extern point_t	eye_model;		/* model-space location of eye */
@@ -49,7 +52,6 @@ extern int	width;			/* # of pixels in X */
 extern int	height;			/* # of lines in Y */
 extern mat_t	Viewrotscale;
 extern fastf_t	viewsize;
-extern fastf_t	zoomout;
 extern int	incr_mode;		/* !0 for incremental resolution */
 extern int	incr_level;		/* current incremental level */
 extern int	incr_nlevel;		/* number of levels */
@@ -94,11 +96,11 @@ grid_setup()
 	/* Chop -1.0..+1.0 range into parts */
 	VSET( temp, 2.0/width, 0, 0 );
 	MAT4X3VEC( dx_model, view2model, temp );
-	VSET( temp, 0, 2.0/height, 0 );
+	VSET( temp, 0, 2.0*aspect/height, 0 );
 	MAT4X3VEC( dy_model, view2model, temp );
 	if( stereo )  {
 		/* Move left 2.5 inches (63.5mm) */
-		VSET( temp, 2.0*(-63.5/viewsize), 0, 0 );
+		VSET( temp, -63.5*2.0/viewsize, 0, 0 );
 		rt_log("red eye: moving %f relative screen (left)\n", temp[X]);
 		MAT4X3VEC( left_eye_delta, view2model, temp );
 		VPRINT("left_eye_delta", left_eye_delta);
@@ -106,7 +108,10 @@ grid_setup()
 
 	/* "Lower left" corner of viewing plane */
 	if( rt_perspective )  {
-		VSET( temp, -1, -1, -zoomout );	/* viewing plane */
+		fastf_t	zoomout;
+		extern double mat_degtorad;
+		zoomout = 1.0 / tan( mat_degtorad * persp_angle / 2.0 );
+		VSET( temp, -1, -aspect, -zoomout );	/* viewing plane */
 		/*
 		 * Divergance is (0.5 * viewsize / width) mm at
 		 * a ray distance of (viewsize * zoomout) mm.
@@ -114,11 +119,12 @@ grid_setup()
 		ap.a_diverge = (0.5 / width) / zoomout;
 		ap.a_rbeam = 0;
 	}  else  {
+		/* all rays go this direction */
 		VSET( temp, 0, 0, -1 );
 		MAT4X3VEC( ap.a_ray.r_dir, view2model, temp );
 		VUNITIZE( ap.a_ray.r_dir );
 
-		VSET( temp, -1, -1, 0 );	/* eye plane */
+		VSET( temp, -1, -aspect, 0 );	/* eye plane */
 		ap.a_rbeam = 0.5 * viewsize / width;
 		ap.a_diverge = 0;
 	}

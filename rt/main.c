@@ -61,6 +61,8 @@ int		stereo = 0;		/* stereo viewing */
 vect_t		left_eye_delta;
 int		hypersample=0;		/* number of extra rays to fire */
 int		rt_perspective=0;	/* perspective view -vs- parallel */
+fastf_t		persp_angle = 90;	/* prespective angle (degrees X) */
+fastf_t		aspect = 1;		/* aspect ratio Y/X */
 vect_t		dx_model;		/* view delta-X as model-space vect */
 vect_t		dy_model;		/* view delta-Y as model-space vect */
 point_t		eye_model;		/* model-space location of eye */
@@ -69,7 +71,6 @@ int		width;			/* # of pixels in X */
 int		height;			/* # of lines in Y */
 mat_t		Viewrotscale;
 fastf_t		viewsize=0;
-fastf_t		zoomout=1;		/* >0 zoom out, 0..1 zoom in */
 char		*scanbuf;		/* For optional output buffering */
 int		incr_mode;		/* !0 for incremental resolution */
 int		incr_level;		/* current incremental level */
@@ -191,8 +192,9 @@ register char **argv;
 			break;
 		case 'p':
 			rt_perspective = 1;
-			zoomout = atof( optarg );
-			if( zoomout <= 0 )  zoomout = 1;
+			persp_angle = atof( optarg );
+			if( persp_angle < 1 )  persp_angle = 90;
+			if( persp_angle > 179 )  persp_angle = 90;
 			break;
 		case 'E':
 			eye_backoff = atof( optarg );
