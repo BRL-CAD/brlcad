@@ -113,6 +113,10 @@ register struct application *ap;
 		f = ap->a_ray.r_dir[X] * ap->a_ray.r_dir[X] +
 			ap->a_ray.r_dir[Y] * ap->a_ray.r_dir[Y] +
 			ap->a_ray.r_dir[Z] * ap->a_ray.r_dir[Z];
+		if( NEAR_ZERO(f) )  {
+			rtbomb("shootray:  zero length dir vector\n");
+			return(0);
+		}
 		diff = f - 1;
 		if( !NEAR_ZERO( diff ) )  {
 			rtlog("shootray: non-unit dir vect (x%d y%d lvl%d)\n",
