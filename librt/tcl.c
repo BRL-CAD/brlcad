@@ -1600,10 +1600,7 @@ int argc;
 char **argv;
 {
 	register struct bu_structparse *sp = NULL;
-	register struct rt_solid_type_lookup *stlp;
-	register int i;
-	struct bu_vls str;
-	register char *cp;
+	struct rt_solid_type_lookup	*stlp = NULL;
 
 	--argc;
 	++argv;
@@ -1614,40 +1611,22 @@ char **argv;
 		return TCL_ERROR;
 	}
 
-	bu_vls_init(&str);
-	sp = rt_get_parsetab_by_name(argv[1]) == NULL ? NULL :
-		rt_get_parsetab_by_name(argv[1])->parsetab;
+	if( (stlp = rt_get_parsetab_by_name(argv[1])) == NULL )  {
+		Tcl_AppendResult(interp, "There is no geometric object type \"",
+			argv[1], "\".", (char *)NULL);
+		return TCL_ERROR;
+	}
+	sp = stlp->parsetab;
     
 	if (sp != NULL)
-		while (sp->sp_name != NULL) {
-			Tcl_AppendElement(interp, sp->sp_name);
-			bu_vls_trunc(&str, 0);
-			if (strcmp(sp->sp_fmt, "%c") == 0 ||
-			    strcmp(sp->sp_fmt, "%s") == 0) {
-				if (sp->sp_count > 1)
-					bu_vls_printf(&str, "%%%ds", sp->sp_count);
-				else
-					bu_vls_printf(&str, "%%c");
-			} else {
-				bu_vls_printf(&str, "%s", sp->sp_fmt);
-				for (i = 1; i < sp->sp_count; i++)
-					bu_vls_printf(&str, " %s", sp->sp_fmt);
-			}
-			Tcl_AppendElement(interp, bu_vls_addr(&str));
-			++sp;
-		}
+		bu_structparse_get_terse_form(interp, sp);
 	else {
-		Tcl_AppendResult(interp, "a form routine for this data type has not \
-yet been implemented", (char *)NULL);
-		goto error;
+		Tcl_AppendResult(interp, argv[1],
+			" is a valid object type, but a 'form' routine has not yet been implemented.",
+			(char *)NULL );
+		return TCL_ERROR;
 	}
-
-	bu_vls_free(&str);
 	return TCL_OK;
-
-error:
-	bu_vls_free(&str);
-	return TCL_ERROR;
 }
 
 /*
