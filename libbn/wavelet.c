@@ -294,7 +294,6 @@ unsigned long limit; \
 	unsigned long half_size; \
 	unsigned long x, y, x_tmp, y_tmp, d, i, j; \
 	int do_free; \
-	extern int debug; \
 \
 	CK_POW_2( dimen ); \
 \
