@@ -346,6 +346,7 @@ struct grass_specific *grass_sp;
   double angle;
   double val, tmp, len;
   double seg_len;
+  static CONST vect_t wind = { 0.0, 0.0, 0.0};
 
   grass_sp->proto.magic = PLANT_MAGIC;
   VSETALL(grass_sp->proto.root, 0.0);
@@ -407,7 +408,7 @@ struct grass_specific *grass_sp;
       		left, grass_sp->proto.b[blade].leaf[seg].blade);
         VUNITIZE(grass_sp->proto.b[blade].leaf[seg].N);
     }
-    blade_rot(&grass_sp->proto.b[blade], &grass_sp->proto.b[blade], m);
+    blade_rot(&grass_sp->proto.b[blade], &grass_sp->proto.b[blade], m, wind);
     bn_mat_mul2(r, m);
   }
 
