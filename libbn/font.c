@@ -22,19 +22,21 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include <math.h>
 #include "machine.h"
 #include "vmath.h"
-#include "raytrace.h"
+#include "bu.h"
+#include "bn.h"
 #include "vectfont.h"
 
 /* References tp_xxx symbols from libbn/vectfont.c */
 
 /*
- *			R T _ V L I S T _ 3 S T R I N G
+ *			B N _ V L I S T _ 3 S T R I N G
  *
  *  'scale' is the width, in mm, of one character.
  */
 void
-rt_vlist_3string( vhead, string, origin, rot, scale )
+bn_vlist_3string( vhead, free_hd, string, origin, rot, scale )
 struct bu_list	*vhead;
+struct bu_list	*free_hd;	/* source of free vlists */
 CONST char	*string;	/* string of chars to be plotted */
 CONST point_t	origin;		/* lower left corner of 1st char */
 CONST mat_t	rot;		/* Transform matrix (WARNING: may xlate) */
@@ -76,7 +78,7 @@ double		scale;		/* scale factor to change 1x1 char sz */
 
 		VSET( temp, offset, 0, 0 );
 		MAT4X3PNT( loc, mat, temp );
-		RT_ADD_VLIST( vhead, loc, RT_VLIST_LINE_MOVE );
+		BN_ADD_VLIST(free_hd, vhead, loc, RT_VLIST_LINE_MOVE );
 
 		for( p = tp_cindex[*cp]; ((stroke= *p)) != LAST; p++ )  {
 			int	draw;
@@ -99,9 +101,9 @@ double		scale;		/* scale factor to change 1x1 char sz */
 				   (ysign * (stroke%11)) * 0.1 * scale, 0 );
 			MAT4X3PNT( loc, mat, temp );
 			if( draw )  {
-				RT_ADD_VLIST( vhead, loc, RT_VLIST_LINE_DRAW );
+				BN_ADD_VLIST( free_hd, vhead, loc, RT_VLIST_LINE_DRAW );
 			} else {
-				RT_ADD_VLIST( vhead, loc, RT_VLIST_LINE_MOVE );
+				BN_ADD_VLIST( free_hd, vhead, loc, RT_VLIST_LINE_MOVE );
 			}
 		}
 	}
@@ -109,14 +111,15 @@ double		scale;		/* scale factor to change 1x1 char sz */
 
 
 /*
- *			R T _ V L I S T _ 2 S T R I N G
+ *			B N _ V L I S T _ 2 S T R I N G
  *
  *  A simpler interface, for those cases where the text lies
  *  in the X-Y plane.
  */
 void
-rt_vlist_2string( vhead, string, x, y, scale, theta )
+bn_vlist_2string( vhead, free_hd, string, x, y, scale, theta )
 struct bu_list	*vhead;
+struct bu_list	*free_hd;	/* source of free vlists */
 CONST char	*string;	/* string of chars to be plotted */
 double	x;			/* x,y of lower left corner of 1st char */
 double	y;
@@ -128,5 +131,5 @@ double	theta;			/* degrees ccw from X-axis */
 
 	bn_mat_angles( mat, 0.0, 0.0, theta );
 	VSET( p, x, y, 0 );
-	rt_vlist_3string( vhead, string, p, mat, scale );
+	bn_vlist_3string( vhead, free_hd, string, p, mat, scale );
 }

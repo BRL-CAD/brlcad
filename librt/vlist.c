@@ -43,17 +43,20 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
  *			B N _ V L B L O C K _ I N I T
  */
 struct bn_vlblock *
-rt_vlblock_init()
+bn_vlblock_init( free_vlist_hd, max_ent )
+struct bu_list	*free_vlist_hd;		/* where to get/put free vlists */
+int		max_ent;
 {
 	struct bn_vlblock *vbp;
 	int	i;
 
-	if (BU_LIST_UNINITIALIZED( &rt_g.rtg_vlfree ))
-		BU_LIST_INIT( &rt_g.rtg_vlfree );
+	if (BU_LIST_UNINITIALIZED( free_vlist_hd ))
+		BU_LIST_INIT( free_vlist_hd );
 
 	BU_GETSTRUCT( vbp, bn_vlblock );
 	vbp->magic = BN_VLBLOCK_MAGIC;
-	vbp->max = 32;
+	vbp->free_vlist_hd = free_vlist_hd;
+	vbp->max = max_ent;
 	vbp->head = (struct bu_list *)bu_calloc( vbp->max,
 		sizeof(struct bu_list), "head[]" );
 	vbp->rgb = (long *)bu_calloc( vbp->max,
@@ -70,6 +73,12 @@ rt_vlblock_init()
 	return(vbp);
 }
 
+struct bn_vlblock *
+rt_vlblock_init()
+{
+	return bn_vlblock_init( &rt_g.rtg_vlfree, 32 );
+}
+
 /*
  *			R T _ V L B L O C K _ F R E E
  */
@@ -84,7 +93,7 @@ struct bn_vlblock *vbp;
 		/* Release any remaining vlist storage */
 		if( vbp->rgb[i] == 0 )  continue;
 		if( BU_LIST_IS_EMPTY( &(vbp->head[i]) ) )  continue;
-		BN_FREE_VLIST( &rt_g.rtg_vlfree, &(vbp->head[i]) );
+		BN_FREE_VLIST( vbp->free_vlist_hd, &(vbp->head[i]) );
 	}
 
 	bu_free( (char *)(vbp->head), "head[]" );
@@ -217,13 +226,13 @@ CONST struct bu_list	*src;
 		register int	*cmd = vp->cmd;
 		register point_t *pt = vp->pt;
 		for( i = 0; i < nused; i++,cmd++,pt++ )  {
-			RT_ADD_VLIST( dest, *pt, *cmd );
+			BN_ADD_VLIST( &rt_g.rtg_vlfree, dest, *pt, *cmd );
 		}
 	}
 }
 
 /*
- *			R T _ V L I S T _ C L E A N U P
+ *			B N _ V L I S T _ C L E A N U P
  *
  *  The macro RT_FREE_VLIST() simply appends to the list &rt_g.rtg_vlfree.
  *  Now, give those structures back to bu_free().
@@ -358,7 +367,6 @@ CONST unsigned char	*buf;
 		cmd = *bp++;
 		ntohd( (unsigned char *)point, pp, 3 );
 		pp += 3*8;
-		/* This macro might be expanded inline, for performance */
 		BN_ADD_VLIST( &rt_g.rtg_vlfree, hp, point, cmd );
 	}
 }
@@ -612,52 +620,52 @@ double			char_size;
 		case 'o':
 			/* 2-D move */
 			arg[Z] = 0;
-			BN_ADD_VLIST( &rt_g.rtg_vlfree, vhead, arg, BN_VLIST_LINE_MOVE );
+			BN_ADD_VLIST( vbp->free_vlist_hd, vhead, arg, BN_VLIST_LINE_MOVE );
 			break;
 		case 'M':
 		case 'O':
 			/* 3-D move */
-			BN_ADD_VLIST( &rt_g.rtg_vlfree, vhead, arg, BN_VLIST_LINE_MOVE );
+			BN_ADD_VLIST( vbp->free_vlist_hd, vhead, arg, BN_VLIST_LINE_MOVE );
 			break;
 		case 'n':
 		case 'q':
 			/* 2-D draw */
 			arg[Z] = 0;
-			BN_ADD_VLIST( &rt_g.rtg_vlfree, vhead, arg, BN_VLIST_LINE_DRAW );
+			BN_ADD_VLIST( vbp->free_vlist_hd, vhead, arg, BN_VLIST_LINE_DRAW );
 			break;
 		case 'N':
 		case 'Q':
 			/* 3-D draw */
-			BN_ADD_VLIST( &rt_g.rtg_vlfree, vhead, arg, BN_VLIST_LINE_DRAW );
+			BN_ADD_VLIST( vbp->free_vlist_hd, vhead, arg, BN_VLIST_LINE_DRAW );
 			break;
 		case 'l':
 		case 'v':
 			/* 2-D line */
 			VSET( a, arg[0], arg[1], 0.0 );
 			VSET( b, arg[2], arg[3], 0.0 );
-			BN_ADD_VLIST( &rt_g.rtg_vlfree, vhead, a, BN_VLIST_LINE_MOVE );
-			BN_ADD_VLIST( &rt_g.rtg_vlfree, vhead, b, BN_VLIST_LINE_DRAW );
+			BN_ADD_VLIST( vbp->free_vlist_hd, vhead, a, BN_VLIST_LINE_MOVE );
+			BN_ADD_VLIST( vbp->free_vlist_hd, vhead, b, BN_VLIST_LINE_DRAW );
 			break;
 		case 'L':
 		case 'V':
 			/* 3-D line */
 			VSET( a, arg[0], arg[1], arg[2] );
 			VSET( b, arg[3], arg[4], arg[5] );
-			BN_ADD_VLIST( &rt_g.rtg_vlfree, vhead, a, BN_VLIST_LINE_MOVE );
-			BN_ADD_VLIST( &rt_g.rtg_vlfree, vhead, b, BN_VLIST_LINE_DRAW );
+			BN_ADD_VLIST( vbp->free_vlist_hd, vhead, a, BN_VLIST_LINE_MOVE );
+			BN_ADD_VLIST( vbp->free_vlist_hd, vhead, b, BN_VLIST_LINE_DRAW );
 			break;
 		case 'p':
 		case 'x':
 			/* 2-D point */
 			arg[Z] = 0;
-			BN_ADD_VLIST( &rt_g.rtg_vlfree, vhead, arg, BN_VLIST_LINE_MOVE );
-			BN_ADD_VLIST( &rt_g.rtg_vlfree, vhead, arg, BN_VLIST_LINE_DRAW );
+			BN_ADD_VLIST( vbp->free_vlist_hd, vhead, arg, BN_VLIST_LINE_MOVE );
+			BN_ADD_VLIST( vbp->free_vlist_hd, vhead, arg, BN_VLIST_LINE_DRAW );
 			break;
 		case 'P':
 		case 'X':
 			/* 3-D point */
-			BN_ADD_VLIST( &rt_g.rtg_vlfree, vhead, arg, BN_VLIST_LINE_MOVE );
-			BN_ADD_VLIST( &rt_g.rtg_vlfree, vhead, arg, BN_VLIST_LINE_DRAW );
+			BN_ADD_VLIST( vbp->free_vlist_hd, vhead, arg, BN_VLIST_LINE_MOVE );
+			BN_ADD_VLIST( vbp->free_vlist_hd, vhead, arg, BN_VLIST_LINE_DRAW );
 			break;
 		case 'C':
 			/* Color */
@@ -675,7 +683,7 @@ double			char_size;
 			} else {
 				VSETALL( last_pos, 0 );
 			}
-			rt_vlist_3string( vhead, carg, last_pos, mat, char_size );
+			bn_vlist_3string( vhead, vbp->free_vlist_hd, carg, last_pos, mat, char_size );
 			break;
 		}
 	}
@@ -710,7 +718,7 @@ double			mm2local;
 			/* XXX Skip polygon markers? */
 			sprintf( label, " %g, %g, %g",
 				(*pt)[0]*mm2local, (*pt)[1]*mm2local, (*pt)[2]*mm2local );
-			rt_vlist_3string( vhead, label, pt, mat, sz );
+			bn_vlist_3string( vhead, vbp->free_vlist_hd, label, pt, mat, sz );
 		}
 	}
 }
