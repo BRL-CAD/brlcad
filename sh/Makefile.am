@@ -10,6 +10,13 @@ bin_SCRIPTS = \
 	elapsed.sh \
 	ldAix.sh \
 	machinetype.sh \
+	make_deb.sh \
+	make_dmg.sh \
+	make_pkg.sh \
+	make_rpm.sh \
+	make_tbz.sh \
+	make_tgz.sh \
+	make_zip.sh \
 	pixinfo.sh \
 	pixread.sh \
 	pixwrite.sh \
