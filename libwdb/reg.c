@@ -33,7 +33,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "rtlist.h"
 #include "wdb.h"
 
-#ifdef SYSV
+#if defined(SYSV) && !defined(bzero)
 #define bzero(str,n)		memset( str, '\0', n )
 #define bcopy(from,to,count)	memcpy( to, from, count )
 #endif
@@ -46,11 +46,16 @@ static fastf_t ident_mat[16] = {
 	0.0, 0.0, 0.0, 1.0
 };
 
+/* -------------------- Begin old code, compat only -------------------- */
+
 /*
  *			M K _ C O M B
  *
  *  Make a combination with material properties info.
  *  Must be followed by 'len' mk_memb() calls before any other mk_* routines.
+ *
+ *  XXX WARNING:  This routine should not be called by new code.
+ *  XXX use mk_lcomb() instead.
  */
 int
 mk_comb( fp, name, len, region, matname, matparm, rgb, inherit )
@@ -72,7 +77,7 @@ int	inherit;
 	else
 		rec.c.c_flags = ' ';
 	NAMEMOVE( name, rec.c.c_name );
-	rec.c.c_length = len;
+	rec.c.c_pad1 = len;		/* backwards compat, was c_length */
 	if( matname ) {
 		strncpy( rec.c.c_matname, matname, sizeof(rec.c.c_matname) );
 		if( matparm )
@@ -97,6 +102,9 @@ int	inherit;
  *  Make a combination with material properties info.
  *  Must be followed by 'len' mk_memb() calls before any other mk_* routines.
  *  Like mk_comb except for additional region parameters.
+ *
+ *  XXX WARNING:  This routine should not be called by new code.
+ *  XXX use mk_addmember() instead.
  */
 int
 mk_rcomb( fp, name, len, region, matname, matparm, rgb, id, air, material, los, inherit )
@@ -128,7 +136,7 @@ int	inherit;
 	else
 		rec.c.c_flags = ' ';
 	NAMEMOVE( name, rec.c.c_name );
-	rec.c.c_length = len;
+	rec.c.c_pad1 = len;		/* backwards compat, was c_length */
 	if( matname ) {
 		strncpy( rec.c.c_matname, matname, sizeof(rec.c.c_matname) );
 		if( matparm )
@@ -153,6 +161,8 @@ int	inherit;
  *
  *  Make a simple combination header ("fast" version).
  *  Must be followed by 'len' mk_memb() calls before any other mk_* routines.
+ *
+ *  XXX WARNING:  This routine should not be called by new code.
  */
 int
 mk_fcomb( fp, name, len, region )
@@ -170,7 +180,7 @@ int	region;
 	else
 		rec.c.c_flags = ' ';
 	NAMEMOVE( name, rec.c.c_name );
-	rec.c.c_length = len;
+	rec.c.c_pad1 = len;		/* backwards compat, was c_length */
 	if( fwrite( (char *)&rec, sizeof(rec), 1, fp ) != 1 )
 		return(-1);
 	return(0);
@@ -180,6 +190,8 @@ int	region;
  *			M K _ M E M B
  *
  *  Must be part of combination/member clump of records.
+ *
+ *  XXX WARNING:  This routine should not be called by new code.
  */
 int
 mk_memb( fp, name, mat, bool_op )
@@ -209,6 +221,8 @@ int	bool_op;
 		return(-1);
 	return(0);
 }
+
+/* -------------------- End old code, compat only -------------------- */
 
 /*
  *			M K _ A D D M E M B E R
