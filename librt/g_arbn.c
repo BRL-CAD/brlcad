@@ -33,6 +33,7 @@ static char RCSarbn[] = "@(#)$Header$ (BRL)";
 void	arbn_print();
 
 #define DIST_TOL	(1.0e-8)
+#define DIST_TOL_SQ	(1.0e-10)
 
 struct arbn_internal  {
 	int	neqn;
@@ -356,6 +357,8 @@ struct directory	*dp;
 		for( j=i+1; j<aip->neqn; j++ )  {
 			double	dot;
 			int	point_count;	/* # points on this line */
+			point_t	a,b;		/* start and end points */
+			vect_t	dist;
 
 			/* If normals are parallel, no intersection */
 			dot = VDOT( aip->eqn[i], aip->eqn[j] );
@@ -377,17 +380,29 @@ struct directory	*dp;
 						goto next_k;
 				}
 
-				if( point_count++ == 0 )  {
+				if( point_count <= 0 )  {
 					ADD_VL( vhead, pt, 0 );
-				} else {
+					VMOVE( a, pt );
+				} else if( point_count == 1 )  {
+					VSUB2( dist, pt, a );
+					if( MAGSQ(dist) < DIST_TOL_SQ )  continue;
 					ADD_VL( vhead, pt, 1 );
+					VMOVE( b, pt );
+				} else {
+					VSUB2( dist, pt, a );
+					if( MAGSQ(dist) < DIST_TOL_SQ )  continue;
+					VSUB2( dist, pt, b );
+					if( MAGSQ(dist) < DIST_TOL_SQ )  continue;
+					rt_log("arbn_plot(%s): warning, point_count on line=%d (is >2)\n",
+						dp->d_namep, point_count+1);
+					VPRINT(" a", a);
+					VPRINT(" b", b);
+					VPRINT("pt", pt);
 				}
+				point_count++;
 next_k:				;
 			}
-			if( point_count > 2 )  {
-				printf("arbn_plot(%s): warning, point_count on line=%d (is >2)\n",
-					dp->d_namep, point_count);
-			}
+			if( point_count == 1 ) rt_log("arbn_plot: warning, point_count=1\n");
 		}
 	}
 }
