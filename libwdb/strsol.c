@@ -144,3 +144,31 @@ CONST char	*string_arg;
 		return -1;
 	return 0;
 }
+
+/*
+ *			M K _ S U B M O D E L
+ *
+ *  Create a submodel solid.
+ *  If file is NULL or "", the treetop refers to the current database.
+ *  Treetop is the name of a single database object in 'file'.
+ *  meth is 0 (RT_PART_NUBSPT) or 1 (RT_PART_NUGRID).
+ *  method 0 is what is normally used.
+ */
+int
+mk_submodel( fp, name, file, treetop, meth )
+FILE		*fp;
+CONST char	*name;
+CONST char	*file;
+CONST char	*treetop;
+int		meth;
+{
+	struct rt_submodel_internal in;
+
+	bzero( (char *)&in, sizeof(in) );
+	in.magic = RT_SUBMODEL_INTERNAL_MAGIC;
+	if( file )  strncpy( in.file, file, sizeof(in.file)-1 );
+	strncpy( in.treetop, treetop, sizeof(in.treetop)-1 );
+	in.meth = meth;
+
+	return mk_export_fwrite( fp, name, (genptr_t)&in, ID_SUBMODEL );
+}
