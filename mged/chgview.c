@@ -345,6 +345,7 @@ f_list()
 	register struct directory *dp;
 	register int arg;
 	
+	(void)signal( SIGINT, sig2 );	/* allow interupts */
 	for( arg = 1; arg < numargs; arg++ )  {
 		if( (dp = lookup( cmd_args[arg], LOOKUP_NOISY )) == DIR_NULL )
 			continue;
