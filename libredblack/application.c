@@ -79,12 +79,14 @@ main ()
     record		p;
     static record	pres[] = 
 			{
+#if 1
 			    {RECORD_MAGIC, "Roosevelt", "Franklin", DEMOCRAT},
 			    {RECORD_MAGIC, "Truman", "Harry", DEMOCRAT},
 			    {RECORD_MAGIC, "Eisenhower", "Dwight", REPUBLICAN},
 			    {RECORD_MAGIC, "Kennedy", "John", DEMOCRAT},
 			    {RECORD_MAGIC, "Johnson", "Lyndon", DEMOCRAT},
 			    {RECORD_MAGIC, "Nixon", "Richard", REPUBLICAN},
+#endif
 			    {RECORD_MAGIC, "Ford", "Gerald", REPUBLICAN},
 			    {RECORD_MAGIC, "Carter", "Jimmy", DEMOCRAT},
 			    {RECORD_MAGIC, "Reagan", "Ronald", REPUBLICAN},
@@ -141,5 +143,24 @@ main ()
     {
 	printf("I found it...\n");
 	describe_president((void *) r);
+    }
+
+    {
+	void left_rotate();
+
+	printf("First names as we begin...\n");
+	rb_diagnose_tree(tree, ORDER_FIRSTNAME);
+
+	left_rotate(tree->rbt_root[ORDER_FIRSTNAME], ORDER_FIRSTNAME);
+	printf("First names after left rotation...\n");
+	rb_diagnose_tree(tree, ORDER_FIRSTNAME);
+
+	right_rotate(tree->rbt_root[ORDER_FIRSTNAME], ORDER_FIRSTNAME);
+	printf("First names after derotation...\n");
+	rb_diagnose_tree(tree, ORDER_FIRSTNAME);
+
+	right_rotate(tree->rbt_root[ORDER_FIRSTNAME], ORDER_FIRSTNAME);
+	printf("First names after right rotation...\n");
+	rb_diagnose_tree(tree, ORDER_FIRSTNAME);
     }
 }
