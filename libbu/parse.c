@@ -1441,4 +1441,19 @@ CONST char				*base;	/* structure ponter */
 
 
 
+/* This allows us to specify the "size" parameter as values like ".5m"
+ * or "27in" rather than using mm all the time.
+ */
+void
+bu_parse_mm( sdp, name, base, value )
+register CONST struct bu_structparse	*sdp;	/* structure description */
+register CONST char			*name;	/* struct member name */
+char					*base;	/* begining of structure */
+CONST char				*value;	/* string containing value */
+{
+	double v;
+	double *p = (double *)(base+sdp->sp_offset);
 
+	/* reconvert with optional units */
+	*p = bu_mm_value(value);
+}
