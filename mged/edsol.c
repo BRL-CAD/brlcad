@@ -2834,6 +2834,8 @@ sedit()
 				VMOVE( to_pt , es_mparam )
 			else if( inpara == 3 )
 				VMOVE( to_pt , es_para )
+			else if( inpara == 1 )
+				VJOIN1( to_pt, lu_keypoint, es_para[0], lu_pl )
 			else if( inpara && inpara != 3 )
 			{
 			  Tcl_AppendResult(interp, "x y z coordinates required for loop extrusion\n", (char *)NULL);
