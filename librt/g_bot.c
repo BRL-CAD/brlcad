@@ -30,14 +30,13 @@
  *	go to /cad/mged and create the edit support
  *
  *  Authors -
- *  
+ *  	John R. Anderson
  *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
+ *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *  
  *  Copyright Notice -
- *	This software is Copyright (C) 1990 by the United States Army.
+ *	This software is Copyright (C) 1999 by the United States Army.
  *	All rights reserved.
  */
 #ifndef lint
@@ -343,7 +342,7 @@ struct seg		*seghead;
 	}
 
 	/* build segments */
-	if( bot->bot_mode == RT_BOT_PLATE )
+	if( bot->bot_mode == RT_BOT_PLATE || bot->bot_mode == RT_BOT_PLATE_NOCOS )
 	{
 		register struct seg *segp;
 		register int i;
@@ -353,9 +352,14 @@ struct seg		*seghead;
 			register int surfno = hits[i].hit_surfno;
 			register fastf_t los;
 
-			los = bot->bot_thickness[surfno] / hits[i].hit_vpriv[X];
-			if( los < 0.0 )
-				los = -los;
+			if( bot->bot_mode == RT_BOT_PLATE_NOCOS )
+			  los = bot->bot_thickness[surfno];
+			else
+			  {
+			    los = bot->bot_thickness[surfno] / hits[i].hit_vpriv[X];
+			    if( los < 0.0 )
+			      los = -los;
+			  }
 			if( BU_BITTEST( bot->bot_facemode, hits[i].hit_surfno ) )
 			{
 				/* append thickness to hit point */
@@ -789,7 +793,7 @@ CONST struct bn_tol	*tol;
 	bot_ip = (struct rt_bot_internal *)ip->idb_ptr;
 	RT_BOT_CK_MAGIC(bot_ip);
 
-	if( bot_ip->mode == RT_BOT_PLATE )	/* tesselation not supported */
+	if( bot_ip->mode == RT_BOT_PLATE || bot_ip->mode == RT_BOT_PLATE_NOCOS )	/* tesselation not supported */
 		return( -1 );
 
         *r = nmg_mrsv( m );     /* Make region, empty shell, vertex */
@@ -928,7 +932,7 @@ CONST struct db_i		*dbip;
 		bot_ip->faces[i*3 + 2] = bu_glong( (CONST unsigned char *)&rp->bot.bot_data[index + 8] );
 	}
 
-	if( bot_ip->mode == RT_BOT_PLATE )
+	if( bot_ip->mode == RT_BOT_PLATE || bot_ip->mode == RT_BOT_PLATE_NOCOS )
 	{
 		chars_used = bot_ip->num_vertices * 3 * 8 + bot_ip->num_faces * 12;
 
@@ -975,7 +979,7 @@ CONST struct db_i		*dbip;
 	BU_INIT_EXTERNAL(ep);
 	ep->ext_nbytes = sizeof( struct bot_rec ) - 1 +
 		bot_ip->num_vertices * 3 * 8 + bot_ip->num_faces * 3 * 4;
-	if( bot_ip->mode == RT_BOT_PLATE )
+	if( bot_ip->mode == RT_BOT_PLATE || bot_ip->mode == RT_BOT_PLATE_NOCOS )
 	{
 		bu_vls_init( &face_mode );
 		bu_bitv_to_hex( &face_mode, bot_ip->face_mode );
@@ -1031,7 +1035,7 @@ CONST struct db_i		*dbip;
 
 	chars_used += bot_ip->num_faces * 12;
 
-	if( bot_ip->mode == RT_BOT_PLATE )
+	if( bot_ip->mode == RT_BOT_PLATE || bot_ip->mode == RT_BOT_PLATE_NOCOS )
 	{
 		for( i=0 ; i<bot_ip->num_faces ; i++ )
 		{
@@ -1059,6 +1063,7 @@ static char *unknown_orientation="unknown orientation";
 static char *surface="\tThis is a surface with no volume\n";
 static char *solid="\tThis is a solid object (not just a surface)\n";
 static char *plate="\tThis is a FASTGEN plate mode solid\n";
+static char *nocos="\tThis is a plate mode solid with no obliquity angle effect\n";
 static char *unknown_mode="\tunknown mode\n";
 int
 rt_bot_describe( str, ip, verbose, mm2local )
@@ -1102,6 +1107,9 @@ double			mm2local;
 		case RT_BOT_PLATE:
 			mode = plate;
 			break;
+	        case RT_BOT_PLATE_NOCOS:
+		        mode = nocos;
+		        break;
 		default:
 			mode = unknown_mode;
 			break;
@@ -1127,7 +1135,7 @@ double			mm2local;
 				V3ARGS( pt[1] ),
 				V3ARGS( pt[2] ) );
 			bu_vls_strcat( str, buf );
-			if( bot_ip->mode == RT_BOT_PLATE )
+			if( bot_ip->mode == RT_BOT_PLATE || bot_ip->mode == RT_BOT_PLATE_NOCOS )
 			{
 				char *face_mode;
 
@@ -1163,7 +1171,7 @@ struct rt_db_internal	*ip;
 	bu_free( (char *)bot_ip->vertices, "BOT vertices" );
 	bu_free( (char *)bot_ip->faces, "BOT faces" );
 
-	if( bot_ip->mode == RT_BOT_PLATE )
+	if( bot_ip->mode == RT_BOT_PLATE || bot_ip->mode == RT_BOT_PLATE_NOCOS )
 	{
 		bu_free( (char *)bot_ip->thickness, "BOT thickness" );
 		bu_free( (char *)bot_ip->face_mode, "BOT face_mode" );
@@ -1435,7 +1443,8 @@ static char *modes[]={
 	"ERROR: Unrecognized mode",
 	"surf",
 	"volume",
-	"plate"
+	"plate",
+	"plate_nocos"
 };
 
 static char *orientation[]={
@@ -1480,7 +1489,7 @@ CONST char			*attr;
 			bu_vls_printf( &vls, " { %d %d %d }",
 				V3ARGS( &bot->faces[i*3] ) );
 		bu_vls_strcat( &vls, " }" );
-		if( bot->mode == RT_BOT_PLATE )
+		if( bot->mode == RT_BOT_PLATE || bot->mode == RT_BOT_PLATE_NOCOS )
 		{
 			bu_vls_strcat( &vls, " T {" );
 			for( i=0 ; i<bot->num_faces ; i++ )
@@ -1494,7 +1503,7 @@ CONST char			*attr;
 	{
 		if( !strncmp( attr, "fm", 2 ) )
 		{
-			if( bot->mode != RT_BOT_PLATE )
+			if( bot->mode != RT_BOT_PLATE && bot->mode != RT_BOT_PLATE_NOCOS )
 			{
 				bu_vls_strcat( &vls, "Only plate mode BOTs have face_modes" );
 				status = TCL_ERROR;
@@ -1575,7 +1584,7 @@ CONST char			*attr;
 		}
 		else if( attr[0] == 'T' )
 		{
-			if( bot->mode != RT_BOT_PLATE )
+			if( bot->mode != RT_BOT_PLATE && bot->mode != RT_BOT_PLATE_NOCOS )
 			{
 				bu_vls_strcat( &vls, "Only plate mode BOTs have thicknesses" );
 				status = TCL_ERROR;
@@ -1903,7 +1912,7 @@ char			**argv;
 			int mode;
 
 			mode = atoi( m_str );
-			if( mode < RT_BOT_SURFACE || mode > RT_BOT_PLATE )
+			if( mode < RT_BOT_SURFACE || mode > RT_BOT_PLATE_NOCOS )
 			  {
 			    Tcl_SetResult( interp, "unrecognized mode!!!", TCL_STATIC );
 			    Tcl_DecrRefCount( list );
@@ -1919,6 +1928,8 @@ char			**argv;
 			  bot->mode = RT_BOT_SOLID;
 			else if( !strcmp( m_str, modes[RT_BOT_PLATE] ) )
 			  bot->mode = RT_BOT_PLATE;
+			else if( !strcmp( m_str, modes[RT_BOT_PLATE_NOCOS] ) )
+			  bot->mode = RT_BOT_PLATE_NOCOS;
 			else
 			  {
 			    Tcl_SetResult( interp, "unrecognized mode!!!", TCL_STATIC );
@@ -1926,7 +1937,7 @@ char			**argv;
 			    return( TCL_ERROR );
 			  }
 		      }
-		    if( bot->mode != RT_BOT_PLATE )
+		    if( bot->mode != RT_BOT_PLATE && bot->mode != RT_BOT_PLATE_NOCOS )
 		      {
 			if( bot->thickness )
 			  {
@@ -1981,7 +1992,7 @@ char			**argv;
 		argv += 2;
 	}
 
-	if( bot->mode == RT_BOT_PLATE )
+	if( bot->mode == RT_BOT_PLATE || bot->mode == RT_BOT_PLATE_NOCOS )
 	  {
 	    if( !bot->thickness )
 	      bot->thickness = (fastf_t *)bu_calloc( bot->num_faces, sizeof( fastf_t ), "BOT thickness" );
