@@ -1130,7 +1130,8 @@ struct rt_tol		*tol;
 			VCOMB2( edge, cos_alpha, G, sin_alpha*tip->r_h, tip->h );
 			VADD3( PTA(w,len), tip->v, edge, radius );
 
-			VCOMB2( NORM_A(w,len), cos_alpha/tip->r_h , radius , sin_alpha , tip->h );
+			VMOVE( NORM_A(w,len) , edge );
+			VUNITIZE( NORM_A(w,len) );
 		}
 	}
 
