@@ -1,10 +1,20 @@
 /*
-	@(#) vproc.c			retrieved: 8/13/86 at 08:26:13,
-	@(#) version 2.5		last edit: 3/29/85 at 15:13:08.
+	SCCS id:	@(#) vproc.c	2.6
+	Last edit: 	12/20/85 at 19:04:33
+	Retrieved: 	8/13/86 at 08:26:34
+	SCCS archive:	/m/cad/vdeck/RCS/s.vproc.c
 
-	Written by Gary S. Moss.
-	All rights reserved, Ballistic Research Laboratory.
-
+	Author:		Gary S. Moss
+			U. S. Army Ballistic Research Laboratory
+			Aberdeen Proving Ground
+			Maryland 21005-5066
+			(301)278-6647 or AV-298-6647
+*/
+#if ! defined( lint )
+static
+char	sccsTag[] = "@(#) vproc.c	2.6	last edit 12/20/85 at 19:04:33";
+#endif
+/*
 	Procedures for vproc.c
 
 	Section 1:  Commands
@@ -20,9 +30,12 @@
 #include <setjmp.h>
 #include <std.h>
 #include "./vextern.h"
+Directory	directory[NDIR];
 static char	*db_title = NULL, *db_units = "  ";
+
 char		*addname(), getarg();
 Directory	*lookup(), *diradd();
+void		quit(), abort_sig();
 
 /*
 	Section 1:	C O M M A N D S
@@ -36,10 +49,8 @@ Directory	*lookup(), *diradd();
 
  */
 deck( prefix )
-register
-char *prefix;
-{
-	register int	i, j;
+register char *prefix;
+	{	register int	i, j;
 	
 	nns = nnr = regflag = numrr = 0;
 	
@@ -65,136 +76,139 @@ char *prefix;
 	/* Title							*/
 	if( db_title == NULL )
 		{
-		write( solfd, objfile, strlen( objfile ) );
+		(void) write( solfd, objfile, (unsigned) strlen( objfile ) );
 		}
 	else
 		{
-		write( solfd, db_title, strlen( db_title ) );
+		(void) write( solfd, db_title, (unsigned) strlen( db_title ) );
 		}
-	write( solfd, LF, 1 );
+	(void) write( solfd, LF, 1 );
 
 	/* save space for number of solids and regions
 	 */
 	savsol = lseek( solfd, 0L, 1 );
 	blank_fill( solfd, 10 );
-	write( solfd, LF, 1 );
+	(void) write( solfd, LF, 1 );
 
-	/* create file for region table
-	 */
-	if( prefix != 0 ) {
-		strncpy( rt_file, prefix, 73 );
-		strcat( rt_file, ".rt" );
-	} else	strncpy( rt_file, "regions", 8 );
-	if( (regfd = creat( rt_file, 0666 )) < 0 ) {
+	/* Create file for region table.				*/
+	if( prefix != 0 )
+		{
+		(void) strncpy( rt_file, prefix, 73 );
+		(void) strcat( rt_file, ".rt" );
+		}
+	else
+		(void) strncpy( rt_file, "regions", 8 );
+	if( (regfd = creat( rt_file, 0666 )) < 0 )
+		{
 		perror( rt_file );
 		exit( 10 );
-	}
+		}
 
 	/* create file for region ident table
 	 */
-	if( prefix != 0 ) {
-		strncpy( id_file, prefix, 73 );
-		strcat( id_file, ".id" );
-	} else	strncpy( id_file, "region_ids", 11 );
-	if( (ridfd = creat( id_file, 0666 )) < 0 ) {
+	if( prefix != 0 )
+		{
+		(void) strncpy( id_file, prefix, 73 );
+		(void) strcat( id_file, ".id" );
+		}
+	else
+		(void) strncpy( id_file, "region_ids", 11 );
+	if( (ridfd = creat( id_file, 0666 )) < 0 )
+		{
 		perror( id_file );
 		exit( 10 );
-	}
+		}
 	itoa( -1, buff, 5 );
-	write( ridfd, buff, 5 );
-	write( ridfd, LF, 1 );
+	(void) write( ridfd, buff, 5 );
+	(void) write( ridfd, LF, 1 );
 
-	/* create /tmp file for discrimination of files
-	 */
-	strncpy( disc_file, mktemp( "/tmp/disXXXXXX" ), 15 );
-	if( (idfd = creat( disc_file, 0666 )) < 0 ) {
+	/* Create /tmp file for discrimination of files.		*/
+	(void) strncpy( disc_file, mktemp( "/tmp/disXXXXXX" ), 15 );
+	if( (idfd = creat( disc_file, 0666 )) < 0 )
+		{
 		perror( disc_file );
 		exit( 10 );
-	}
+		}
 	rd_idfd = open( disc_file, 2 );
 
-	/* create /tmp file for storage of region names in the comgeom desc
-	 */
-	strncpy( reg_file, mktemp( "/tmp/regXXXXXX" ), 15 );
-	if( (rrfd = creat( reg_file, 0666 )) < 0 ) {
+	/* Create /tmp file for storage of region names in the comgeom desc.	*/
+	(void) strncpy( reg_file, mktemp( "/tmp/regXXXXXX" ), 15 );
+	if( (rrfd = creat( reg_file, 0666 )) < 0 )
+		{
 		perror( reg_file );
 		exit( 10 );
-	}
+		}
 	rd_rrfd = open( reg_file, 2 );
 
-	/* initialize matrices
-	 */
+	/* Initialize matrices.						*/
 	mat_idn( identity );
 	mat_idn( xform );
 
-	/* Check integrity of list against directory and build
-	 * card deck.
-	 */
+	/* Check integrity of list against directory and build card deck.	*/
 	for( i = 0; i < curr_ct; i++ )
-		if( (dp = lookup( curr_list[i], NOISY )) != DIR_NULL )
-			cgobj( dp, 0, identity );
-
-	/* add number of solids and regions on second card
-	 */
-	lseek( solfd, savsol, 0 );
+		{	Directory	*dirp;
+		if( (dirp = lookup( curr_list[i], NOISY )) != DIR_NULL )
+			cgobj( dirp, 0, identity );
+		}
+	/* Add number of solids and regions on second card.		*/
+	(void) lseek( solfd, savsol, 0 );
 	itoa( nns, buff, 5 );
-	write( solfd, buff, 5 );
+	(void) write( solfd, buff, 5 );
 	itoa( nnr, buff, 5 );
-	write( solfd, buff, 5 );
+	(void) write( solfd, buff, 5 );
 
-	/* finish region id table
-	 */
-	write( ridfd, LF, 1 );
+	/* Finish region id table.					*/
+	(void) write( ridfd, LF, 1 );
 
- 	/* must go back and add regions as members of regions
-	 */
-	if( numrr > 0 ) {
-		for( i = 1; i <= numrr; i++ ) {
-			lseek( rd_rrfd, 0L, 0 );   /* rewind */
-			for( j = 1; j <= nnr; j++ ) {
-				/* next region name in desc
-				 */
-				readF( rd_rrfd, name, 16 );
-				if(	strcmp( findrr[i].rr_name, name )
-					== 0)
-				{	/* region number in desc is j
-					 * add to regfd at rrpos[i]
-					 */
-					lseek( regfd, findrr[i].rr_pos, 0);
+ 	/* Must go back and add regions as members of regions.		*/
+	if( numrr > 0 )
+		{
+		for( i = 1; i <= numrr; i++ )
+			{
+			(void) lseek( rd_rrfd, 0L, 0 );   /* rewind */
+			for( j = 1; j <= nnr; j++ )
+				{
+				/* Next region name in desc.		 */
+				readF( rd_rrfd, name, NAMESIZE );
+				if( strcmp( findrr[i].rr_name, name ) == 0 )
+					{ /* Region number in desc is j add
+						to regfd at rrpos[i]	*/
+					(void) lseek( regfd, findrr[i].rr_pos, 0);
 					itoa( j+delreg, buff, 4 );
-					write( regfd, buff, 4 );
+					(void) write( regfd, buff, 4 );
 					break;
+					}
 				}
-			}
-			if( j > nnr ) {
-				fprintf( stderr,
+			if( j > nnr )
+				{
+				(void) fprintf( stderr,
 					"Region %s is member of a region ",
 					findrr[i].rr_name );
-				fprintf( stderr,
+				(void) fprintf( stderr,
 					"but not in description.\n" );
 				exit( 10 );
- 			}
+ 				}
+			}
 		}
-	}
-	prompt( "\n====================================================" );
-	prompt( "\nO U T P U T    F I L E S :\n\n" );
-	prompt( "solid table = \"%s\"\n", st_file );
-	prompt( "region table = \"%s\"\n", rt_file );
-	prompt( "region identification table = \"%s\"\n", id_file );
-	close( solfd );
-	close( regfd );
-	close( ridfd );
+	(void) printf( "====================================================\n" );
+	(void) printf( "O U T P U T    F I L E S :\n\n" );
+	(void) printf( "solid table = \"%s\"\n", st_file );
+	(void) printf( "region table = \"%s\"\n", rt_file );
+	(void) printf( "region identification table = \"%s\"\n", id_file );
+	(void) close( solfd );
+	(void) close( regfd );
+	(void) close( ridfd );
 	unlink( disc_file );
-	close( idfd );
-	close( rd_idfd );
+	(void) close( idfd );
+	(void) close( rd_idfd );
 	unlink( reg_file );
-	close( rrfd );
-	close( rd_rrfd );
+	(void) close( rrfd );
+	(void) close( rd_rrfd );
 
 	/* reset starting numbers for solids and regions
 	 */
 	delsol = delreg = 0;
-}
+	}
 
 /*	s h e l l ( )
 	Execute shell command.
@@ -220,12 +234,13 @@ char  *args[];
 			fprintf( stderr, "\ncommand line too long\n" );
 			exit( 10 );
 		}
-		printf( "%s ", args[i] );
-		while( *from )	*to++ = *from++;
+		(void) printf( "%s ", args[i] );
+		while( *from )
+			*to++ = *from++;
 		*to++ = ' ';
 	}
 	to[-1] = '\0';
-	prompt( "\n" );
+	(void) printf( "\n" );
 	argv[3] = 0;
 	if( (pid = fork()) == -1 ) {
 		perror( "shell()" );
@@ -267,165 +282,144 @@ char  *args[];
  named access to objects.
  */
 builddir()
-	{ register Directory *dp;
+	{	register Directory *dirp;
 	(void) printf( "Building the directory.\n" );
 	(void) fflush( stdout );
-
-	dp = directory;
-	while( 1 ) {
-		dp->d_addr = lseek( objfd, 0L, 1 );
-		if(	readF( objfd, &record, sizeof record )
-			!= sizeof record
-			)	
-			break;
-		if( ++ndir >= NDIR )
-			{
-			fprintf( stderr, "Too many objects in input\n" );
-			break;
-			}
-		switch( record.u_id )
+	for(	dirp = directory, ndir = 0;
+		ndir < NDIR
+	    &&	(dirp->d_addr = lseek( objfd, 0L, 1 )) != -1
+	    &&	readF( objfd, (char *) &record, sizeof(record) ) == sizeof(record);
+		dirp++, ndir++
+		)
 		{
+		switch( record.u_id )
+			{
 		case ID_IDENT : /* Identification record.		*/
-		{ static int	units_set_flag = false;
-
-			ndir--; dp--; /* Don't include in directory.	*/
+			{	static int	units_set_flag = false;
+			ndir--;	/* Don't include in directory.		*/
+			dirp--;
 			if( db_title == NULL )
 				{
 				/* This must be the first ident record.	*/
-				if(	(db_title =
-					malloc( strlen( record.i.i_title )+1 )
-					) == NULL
-					)
-					{
-					(void) fprintf( stderr,
-					"Builddir() :Malloc failed!\n"
-							);
-					}
-				else
-					{
-					strcpy( db_title, record.i.i_title );
-					}
+				db_title = emalloc( strlen(record.I.i_title)+1 );
+				(void) strcpy( db_title, record.I.i_title );
 				}
-			(void) fprintf( stdout, "%s\n", record.i.i_title );
+			(void) fprintf( stdout, "%s\n", record.I.i_title );
 			(void) fprintf( stdout,
 					"GED database version (%s)\n",
-					record.i.i_version
+					record.I.i_version
 					);
-			if( units_set_flag )
-				{
-				;/* Ignore second ident records' units, unless
-					previous were bogus or unspecified.
-				  */
-				}
-			else
-			switch( record.i.i_units )
+			/* Ignore second ident records' units, unless
+				previous were bogus or unspecified.
+			 */
+			if( ! units_set_flag )
 				{
 				/* NOTE : Default unit conversion factor (1.0)
 					is set in 'vglobal.c'.
 				 */
+				switch( record.I.i_units )
+					{
 				case ID_NO_UNIT : /* unspecified	*/
-					(void) fprintf( stdout,
-						"No units specified.\n"
-							);
+					(void) printf( "No units specified.\n" );
 					break;
 				case ID_MM_UNIT	: /* milimeters		*/
-					(void) fprintf( stdout,
-						"Units = milimeters.\n"
-							);
+					(void) printf( "Units = milimeters.\n" );
 					unit_conversion = 1.0;
 					units_set_flag = true;
-					strcpy( db_units, "mm" );
+					(void) strcpy( db_units, "mm" );
 					break;
 				case ID_CM_UNIT	: /* centimeters	*/
-					(void) fprintf( stdout,
-						"Units = centimeters.\n"
-							);
+					(void) printf( "Units = centimeters.\n" );
 					unit_conversion = 0.1;
 					units_set_flag = true;
-					strcpy( db_units, "cm" );
+					(void) strcpy( db_units, "cm" );
 					break;
 				case ID_M_UNIT  : /* meters		*/
-					(void) fprintf( stdout,
-							"Units = meters.\n"
-							);
+					(void) printf( "Units = meters.\n" );
 					unit_conversion = 0.001;
 					units_set_flag = true;
-					strcpy( db_units, "m " );
+					(void) strcpy( db_units, "m " );
 					break;
 				case ID_IN_UNIT	: /* inches		*/
-					(void) fprintf( stdout,
-							"Units = inches.\n"
-							);
+					(void) printf( "Units = inches.\n" );
 					unit_conversion = 0.03937008;
 					units_set_flag = true;
-					strcpy( db_units, "in" );
+					(void) strcpy( db_units, "in" );
 					break;
 				case ID_FT_UNIT	: /* feet		*/
-					(void) fprintf( stdout,
-							"Units = feet.\n"
-							);
+					(void) printf( "Units = feet.\n" );
 					unit_conversion = 0.00328084;
 					units_set_flag = true;
-					strcpy( db_units, "ft" );
+					(void) strcpy( db_units, "ft" );
 					break;
 				default :
 					(void) fprintf( stderr,
 							"Unknown units (%d)!\n",
-							record.i.i_units
+							record.I.i_units
 							);
 					break;
+					}
+				break;
 				}
-			break;
-		}
+			}
 		case ID_FREE :  /* Free record -- ignore.		*/
+		case ID_MATER : /* Material database record -- ignore.	*/
 			ndir--;
-			dp--;
+			dirp--;
 			break;
 		case ID_SOLID : /* Check for a deleted record.	 	*/
-			if( record.s.s_name[0] == 0 )  {
+			if( record.s.s_name[0] == 0 )
+				{
 				ndir--;
-				continue;
-			}
-			dp->d_namep = addname( record.s.s_name );
+				dirp--;
+				}
+			else
+				dirp->d_namep = addname( record.s.s_name );
 			break;
 		case ID_ARS_A :  /* Check for a deleted record.		 */
-			if( record.s.s_name[0] == 0 )  {
+			if( record.s.s_name[0] == 0 )
+				{
 				ndir--;
-				continue;
-			}
-			dp->d_namep = addname( record.s.s_name );
-
-			/*  Skip remaining B type records.		 */
-			lseek(	objfd,
-				((long)record.a.a_totlen)
-				* sizeof record,
-				1 );
+				dirp--;
+				}
+			else
+				dirp->d_namep = addname( record.s.s_name );
+			/*  Skip remaining B type records.		*/
+			(void) lseek(	objfd,
+					(long)(record.a.a_totlen * sizeof record),
+					1
+					);
 			break;
 		case ID_COMB :  /* Check for a deleted record.		 */
-			if( record.c.c_name[0] == 0 )  {
+			if( record.c.c_name[0] == 0 )
+				{
 				ndir--;
-				dp--;
-			}  else	dp->d_namep = addname( record.c.c_name );
-
+				dirp--;
+				}
+			else
+				dirp->d_namep = addname( record.c.c_name );
 			/* Skip over remaining records.			 */
-			lseek(	objfd,
-				((long)record.c.c_length)
-				* sizeof record,
-				1 );
+			(void) lseek(	objfd,
+					(long)(record.c.c_length * sizeof(record)),
+					1
+					);
 			break;
 		default :
-			fprintf( stderr,
-				"Builddir:  unknown record %c (0%o).\n",
-				record.u_id,
-				record.u_id );
+			(void) fprintf( stderr,
+					"Builddir:  unknown record %c (0%o).\n",
+					record.u_id,
+					record.u_id
+					);
 			ndir--;
-			dp--;
+			dirp--;
 			break;
+			}
 		}
-		dp++;
+	if( ndir == NDIR )
+		(void) fprintf( stderr, "Too many objects in input\n" );
+	(void) printf( "%d objects tallied\n", ndir );
+	return;
 	}
-	prompt( "\n%d objects tallied\n", ndir );
-}
 
 /*	t o c ( )
 	Build a sorted list of names of all the objects accessable
@@ -433,16 +427,12 @@ builddir()
  */
 void
 toc()
-	{
-	register int		i;
-
+	{	register int		i;
 	(void) printf( "Making the Table of Contents.\n" );
 	(void) fflush( stdout );
 
 	for( i = 0; i < ndir; i++ )
-		{
 		toc_list[i] = directory[i].d_namep;
-		}
 	return;
 	}
 
@@ -452,51 +442,52 @@ toc()
 	the directory struct element is returned, otherwise
 	a -1 is returned.
 
- If the flag is NOISY, a print occurs, else only
- the return code indicates failure.
+	If the flag is NOISY, a print occurs, else only
+	the return code indicates failure.
  */
 Directory *
 lookup( str, flag )
 register char *str;
-{
-	register Directory *dp;
-	register char *np;
-	static Directory *ep;
-	static int	i;
-
+	{	register Directory	*dirp;
+		register char		*np;
+		static Directory	*ep;
+		static int		i;
 	ep = &directory[ndir];
-	for( dp = &directory[0]; dp < ep; dp++ )  {
-		np = dp->d_namep;
-		for( i = 0; i < 16; i++ ) {
-			if( str[i] != *np )	break;
-			if( *np++ == 0 || i == 15 )	return	dp;
+	for( dirp = &directory[0]; dirp < ep; dirp++ )
+		{
+		np = dirp->d_namep;
+		for( i = 0; i < NAMESIZE; i++ )
+			{
+			if( str[i] != *np )
+				break;
+			if( *np++ == 0 || i == 15 )
+				return	dirp;
+			}
 		}
-	}
 	if( flag == NOISY )
-		fprintf( stderr, "Lookup: could not find '%s'.\n", str );
+		(void) fprintf( stderr, "Lookup: could not find '%s'.\n", str );
 	return	DIR_NULL;
-}
+	}
 
 /*	d i r a d d ( )
 	Add an entry to the directory.
  */
 Directory *
-diradd( name, laddr )
-register char *name;
-long laddr;
-{
-	register Directory *dp;
+diradd( namep, laddr )
+register char	*namep;
+long		laddr;
+	{	register Directory *dirp;
 
-	if( ndir >= NDIR )  {
-		fprintf( stderr, "Diradd:  no more dir structs.\n");
+	if( ndir >= NDIR )
+		{
+		(void) fprintf( stderr, "Diradd:  no more dir structs.\n" );
 		return	DIR_NULL;
+		}
+	dirp = &directory[ndir++];
+	dirp->d_namep = addname( namep );
+	dirp->d_addr = laddr;
+	return	dirp;
 	}
-
-	dp = &directory[ndir++];
-	dp->d_namep = addname( name );
-	dp->d_addr = laddr;
-	return( dp );
-}
 
 /*	a d d n a m e ( )
 	Given a name, it puts the name in the name buffer, and
@@ -504,22 +495,21 @@ long laddr;
  */
 char *
 addname( cp )
-register
-char	*cp;
-{
-	static char	*holder;
-	register int	i;
-
-	if( dir_last >= &dir_names[NDIR*10-16] )  {
-		fprintf( stderr, "Addname:  out of name space.\n" );
+register char	*cp;
+	{	static char	*holder;
+		register int	i;
+	if( dir_last >= &dir_names[NDIR*10-NAMESIZE] )
+		{
+		(void) fprintf( stderr, "Addname:  out of name space.\n" );
 		exit( 1 );
-	}
+		}
 	holder = dir_last;
 	i = 0;
-	while( *cp != 0 && i++ < 16 )	*dir_last++ = *cp++;
+	while( *cp != 0 && i++ < NAMESIZE )
+		*dir_last++ = *cp++;
 	*dir_last++ = 0;
 	return	holder;
-}
+	}
 
 /*
 	Section 3:	L I S T   P R O C E S S I N G   R O U T I N E S
@@ -575,27 +565,25 @@ int	ct;
 
 	for( i = 0, column = 0; i < ct; i++ )
 		{
-		strcpy( &buf[column], list[i] );
+		(void) strcpy( &buf[column], list[i] );
 		column += strlen( list[i] );
 		if( column > 56 )
 			{
 			buf[column++] = '\n';
-			write( 1, buf, column );
+			(void) write( 1, buf, (unsigned) column );
 			column = 0;
 			}
 		else
 			{
-			for(	spaces = 16 - (column % 16 );
+			for(	spaces = NAMESIZE - (column % NAMESIZE );
 				spaces > 0;
 				spaces--
 				)
-				{
 				buf[column++] = ' ';
-				}
 			}
 		}
 	buf[column++] = '\n';
-	write( 1, buf, column );
+	(void) write( 1, buf, (unsigned) column );
 	column = 0;
 	return	ct;
 	}
@@ -605,46 +593,35 @@ int	ct;
 	matches one of the arguments into the current list 'curr_list'.
  */
 insert(  args,	ct )
-char	*args[];
+char		*args[];
 register int	ct;
-{
-	char		*malloc();
-	register int	i, j, nomatch;
-	unsigned	bytect;
-	
-	/* for each argument (does not include args[0])
-	 */
-	for( i = 1; i < ct; i++ ) {
-		/* if object is in table of contents,
-		 * insert in current list
-		 */
+	{	register int	i, j, nomatch;
+		unsigned	bytect;
+
+	/* For each argument (does not include args[0]).			*/
+	for( i = 1; i < ct; i++ )
+		{ /* If object is in table of contents, insert in current list.	*/
 		nomatch = YES;
-		for( j = 0; j < ndir; j++ ) {
-			if( match( args[i], toc_list[j] ) ) {
-				nomatch = NO;
-
-				/* allocate storage for string
-				 */
-				bytect = strlen( toc_list[j] );
-				if(	(curr_list[curr_ct] =
-					malloc( ++bytect )) == 0 )
+		for( j = 0; j < ndir; j++ )
+			{
+			if( match( args[i], toc_list[j] ) )
 				{
-					perror( "malloc" );
-					exit( 1 );
+				nomatch = NO;
+				/* Allocate storage for string.			*/
+				bytect = strlen( toc_list[j] );
+				curr_list[curr_ct] = emalloc( (int) ++bytect );
+				/* Insert string at end of list.		*/
+				(void) strcpy(	curr_list[curr_ct++],
+						toc_list[j]
+						);
 				}
-
-				/* insert string at end of list
-				 */
-				strcpy(	curr_list[curr_ct++],
-					toc_list[j] );
 			}
-		}
 		if( nomatch )
-			fprintf( stderr,
+			(void) fprintf( stderr,
 				"Object \"%s\" not found.\n", args[i] );
+		}
+	return	curr_ct;
 	}
-	return( curr_ct );
-}
 
 /*	d e l e t e ( )
 	delete all members of current list 'curr_list' which match
@@ -781,21 +758,19 @@ float	  f;
 	Compares solids to see if have a new solid.
  */
 check( a, b )
-register
-char	*a, *b;
-{
-	register int	c = sizeof( struct deck_ident );
-
-	while( c-- )	if( *a++ != *b++ ) return( 0 );   /* new solid */
-	return( 1 );   /* match - old solid */
-}
+register char	*a, *b;
+	{ 	register int	c = sizeof( struct deck_ident );
+	while( c-- )
+		if( *a++ != *b++ )
+			return	0;   /* new solid */
+	return	1;   /* match - old solid */
+	}
 
 /*
 	Section 5:	I / O   R O U T I N E S
  *
 			getcmd()
 			getarg()
-			pars_arg()
 			menu()
 			blank_fill()
 			bug()
@@ -808,17 +783,20 @@ char	*a, *b;
 		
  */
 char
-getcmd(  args, ct )
-char	*args[];
-register
-int		ct;
-{
+getcmd( args, ct )
+char		*args[];
+register int	ct;
+	{
 	/* Get arguments.						 */
-	if( ct == 0 )	while( --arg_ct >= 0 )	free( args[arg_ct] );
-	for( arg_ct = ct; arg_ct < MAXARG - 1; ++arg_ct ) {
-		args[arg_ct] = malloc( MAXLN );
-		if( !getarg( args[arg_ct] ) )	break;
-	}
+	if( ct == 0 )
+		while( --arg_ct >= 0 )
+			free( args[arg_ct] );
+	for( arg_ct = ct; arg_ct < MAXARG - 1; ++arg_ct )
+		{
+		args[arg_ct] = emalloc( MAXLN );
+		if( ! getarg( args[arg_ct] ) )
+			break;
+		}
 	++arg_ct;
 	args[arg_ct] = 0;
 
@@ -827,9 +805,9 @@ int		ct;
 	 * trap interrupts such that command is aborted cleanly and
 	 * command line is restored rather than terminating program
 	 */
-	signal( SIGINT, abort );
+	signal( SIGINT, abort_sig );
 	return( (args[0])[0] );
-}
+	}
 
 /*	g e t a r g ( )
 	Get a word of input into 'str',
@@ -837,61 +815,26 @@ int		ct;
  	Return 1 otherwise.
  */
 char
-getarg(		 str )
+getarg( str )
 register char	*str;
-{
-	do {
+	{
+	do
+		{
 		*str = getchar();
-		if( *str == ' ' ) {
+		if( (int)(*str) == ' ' )
+			{
 			*str = '\0';
 			return( 1 );
-		} else	++str;
-	} while( str[-1] != EOF && str[-1] != '\n' );
-	if( str[-1] == '\n' )	--str;
-	*str = '\0';
-	return( 0 );
-}
-
-/*	p a r s _ a r g ( )
-	Seperate words into seperate arguments.
- */
-pars_arg( argvec,	ct )
-char	 *argvec[];
-register int		ct;
-{
-	char		buf[MAXLN];
-	register char	*from, *to = buf;
-	register int	i;
-
-	for( i = 1; i < ct; i++ ) {
-		from = argvec[i];
-		while( *from != '\0' ) {
-			if( *from != ' ' )	*to++ = *from++;
-			else {
-				*to = '\0';
-				if( (arg_list[arg_ct] =
-					malloc( strlen( buf ) + 1 ))
-					== 0 ) {
-					perror( "malloc()" );
-					exit( 10 );
-				}
-				strcpy( arg_list[arg_ct], buf );
-				to = buf;
-				from++;
-				arg_ct++;
 			}
+		else
+			++str;
 		}
-		*to = '\0';
-		if( (arg_list[arg_ct] = malloc( strlen( buf ) + 1 )) == 0 )
-		{
-			perror( "malloc()" );
-			exit( 10 );
-		}
-		strcpy( arg_list[arg_ct], buf );
-		to = buf;
-		++arg_ct;
+	while( (int)(str[-1]) != EOF && (int)(str[-1]) != '\n' );
+	if( (int)(str[-1]) == '\n' )
+		--str;
+	*str = '\0';
+	return	0;
 	}
-}
 
 /*	m e n u ( )
 	Display menu stored at address 'addr'.
@@ -901,25 +844,23 @@ char **addr;
 {
 	register char	**sbuf = addr;
 	
-	while( *sbuf )	prompt( "%s\n", *sbuf++ );
+	while( *sbuf )	(void) printf( "%s\n", *sbuf++ );
 	fflush( stdout );
 }
 
 /*	b l a n k _ f i l l ( )
 	Write count blanks to fildes.
  */
-blank_fill(	fildes,	count )
+blank_fill( fildes, count )
 register int	fildes,	count;
-{
-	register char	*blank_buf = BLANKS;
-
-	return( write( fildes, blank_buf, count ) );
-}
+	{	register char	*blank_buf = BLANKS;
+	return( write( fildes, blank_buf, (unsigned) count ) );
+	}
 
 /*
 	Section 6:	I N T E R R U P T   H A N D L E R S
  *
-			abort()
+			abort_sig()
 			quit()
  */
 
@@ -927,28 +868,38 @@ register int	fildes,	count;
 	Abort command without terminating run (restore command prompt) and
 	cleanup temporary files.
  */
-abort( sig ) {
-	signal( SIGINT, quit );	/* reset trap */
-	if( access( disc_file, 0 ) == 0 ) {
+/*ARGSUSED*/
+void
+abort_sig( sig )
+	{
+	(void) signal( SIGINT, quit );	/* reset trap */
+	if( access( disc_file, 0 ) == 0 )
+		{
 		unlink( disc_file );
-		if( idfd > 0 )		close( idfd );
-		if( rd_idfd > 0 )	close( rd_idfd );
-	}
-	if( access( reg_file, 0 ) == 0 ) {
+		if( idfd > 0 )
+			(void) close( idfd );
+		if( rd_idfd > 0 )
+			(void) close( rd_idfd );
+		}
+	if( access( reg_file, 0 ) == 0 )
+		{
 		unlink( reg_file );
-		if( rrfd > 0 )		close( rrfd );
-		if( rd_rrfd > 0 )	close( rd_rrfd );
-	}
-
-	/* goto command interpreter with environment restored
-	 */
+		if( rrfd > 0 )
+			(void) close( rrfd );
+		if( rd_rrfd > 0 )
+			(void) close( rd_rrfd );
+		}
+	/* goto command interpreter with environment restored.		*/
 	longjmp( env, sig );
-}
+	}
 
 /*	q u i t ( )
 	Terminate run.
  */
-quit( sig ) {
-	fprintf( stderr, "quitting...\n" );
+/*ARGSUSED*/
+void
+quit( sig )
+	{
+	(void) fprintf( stdout, "quitting...\n" );
 	exit( 0 );
-}
+	}
