@@ -296,6 +296,7 @@ char **argv;
 	bzero((void *)&head_cmd_list, sizeof(struct cmd_list));
 	BU_LIST_INIT(&head_cmd_list.l);
 	bu_vls_init(&head_cmd_list.cl_name);
+	bu_vls_init(&head_cmd_list.cl_more_default);
 	bu_vls_strcpy(&head_cmd_list.cl_name, "mged");
 	curr_cmd_list = &head_cmd_list;
 
@@ -379,7 +380,6 @@ char **argv;
 
 	es_edflag = -1;		/* no solid editing just now */
 
-	bu_vls_init( &curr_cmd_list->cl_more_default );
 	bu_vls_init(&input_str);
 	bu_vls_init(&input_str_prefix);
 	bu_vls_init(&scratchline);
@@ -1961,6 +1961,8 @@ char	**argv;
   struct db_i *save_dbip;
   struct bu_vls vls;
 
+  bu_vls_init(&vls);
+
   if( argc <= 1 )  {
     /* Invoked without args, return name of current database */
     if( dbip != DBI_NULL )  {
@@ -1973,9 +1975,6 @@ char	**argv;
   }
 
   if(3 < argc || (strlen(argv[1]) == 0)){
-    struct bu_vls vls;
-
-    bu_vls_init(&vls);
     bu_vls_printf(&vls, "help opendb");
     Tcl_Eval(interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
@@ -1985,9 +1984,6 @@ char	**argv;
   if(argc == 3 &&
      strcmp("y", argv[2]) && strcmp("Y", argv[2]) &&
      strcmp("n", argv[2]) && strcmp("N", argv[2])){
-    struct bu_vls vls;
-
-    bu_vls_init(&vls);
     bu_vls_printf(&vls, "help opendb");
     Tcl_Eval(interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
@@ -2013,9 +2009,7 @@ char	**argv;
 	}
       }else{
 	int status;
-	struct bu_vls vls;
 
-	bu_vls_init(&vls);
 	if(dpy_string != (char *)NULL)
 	  bu_vls_printf(&vls, "cad_dialog .createdb %s \"Create New Database?\" \"Create new database named %s?\" \"\" 0 OK Cancel",
 			dpy_string, argv[1]);
@@ -2081,18 +2075,18 @@ char	**argv;
   db_scan( dbip, (int (*)())db_diradd, 1);
 
   /* Close previous databases, if any.  Ignore errors. */
-  (void)Tcl_Eval( interp, "db close; .inmem close" );
+  bu_vls_strcpy(&vls, "db close; .inmem close");
+  (void)Tcl_Eval( interp, bu_vls_addr(&vls) );
 
   /* Establish TCL access to both disk and in-memory databases */
-  if( Tcl_Eval( interp, "set wdbp [wdb_open db disk [get_dbip]]; wdb_open .inmem inmem [get_dbip]" ) != TCL_OK )  {
+  bu_vls_strcpy(&vls, "set wdbp [wdb_open db disk [get_dbip]]; wdb_open .inmem inmem [get_dbip]");
+  if( Tcl_Eval( interp, bu_vls_addr(&vls) ) != TCL_OK )  {
 	bu_log("%s\n%s\n",
     		interp->result,
 		Tcl_GetVar(interp,"errorInfo", TCL_GLOBAL_ONLY) );
 	return TCL_ERROR;
   }
   Tcl_ResetResult( interp );
-
-  bu_vls_init(&vls);
 
   /* Perhaps do something special with the GUI */
   bu_vls_printf(&vls, "new_db_callback %s", dbip->dbi_filename);
