@@ -144,7 +144,7 @@ export BRLCAD_ROOT
 
 CAKE=../cake.$MACHINE/cake
 
-if [ ! -f Cakefile.defs -a $1 != dist ] ; then
+if [ ! -f Cakefile.defs -a X$1 != Xdist ] ; then
 	echo "You must run this from root of brlcad source tree."
 	exit -1
 fi
@@ -260,7 +260,7 @@ case "${MACHINE}" in
 esac
 
 
-if test "$1" = ""
+if test X"$1" = X""
 then	TARGET=all
 else	TARGET=$1
 fi
