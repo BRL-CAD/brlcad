@@ -87,7 +87,6 @@ char		*beginptr;		/* sbrk() at start of program */
 /* Variables shared within mainline pieces */
 int		rdebug;			/* RT program debugging (not library) */
 
-static char outbuf[132];
 static char idbuf[132];			/* First ID record info */
 
 /* State flags */
@@ -147,7 +146,6 @@ int argc;
 char **argv;
 {
 	register int	n;
-	auto int	ibits;
 	FILE		*fp;
 
 	if( argc < 2 )  {
@@ -397,9 +395,10 @@ char	*buf;
 
 	if( debug )  fprintf(stderr, "ph_enqueue: %s\n", buf );
 
+	/* XXX This should be a different structure, based on rtlist.h */
 	GET_LIST( lp );
-	lp->li_start = (int)pc->pkc_type;
-	lp->li_stop = (int)buf;
+	lp->li_start = (long)pc->pkc_type;
+	lp->li_stop = (long)buf;
 	APPEND_LIST( lp, WorkHead.li_back );
 }
 
@@ -442,13 +441,11 @@ char *buf;
 {
 #define MAXARGS 1024
 	char	*argv[MAXARGS+1];
-	int	argc;
 	struct rt_i *rtip;
-	register int i;
 
 	if( debug )  fprintf(stderr, "ph_dirbuild: %s\n", buf );
 
-	if( (argc = rt_split_cmd( argv, MAXARGS, buf )) <= 0 )  {
+	if( (rt_split_cmd( argv, MAXARGS, buf )) <= 0 )  {
 		/* No words in input */
 		(void)free(buf);
 		return;
@@ -674,7 +671,6 @@ char *buf;
 	auto int		a,b, fr;
 	struct line_info	info;
 	register struct rt_i	*rtip = ap.a_rt_i;
-	int	len;
 	struct	rt_external	ext;
 
 	RT_CK_RTI(rtip);
@@ -711,7 +707,6 @@ char *buf;
 	info.li_cpusec = rt_read_timer( (char *)0, 0 );
 	info.li_percent = 42.0;	/* for now */
 
-	len = 0;
 	if (!rt_struct_export( &ext, (genptr_t)&info, desc_line_info ) ) {
 		rt_log("ph_lines: rt_struct_export failure\n");
 		exit(98);

@@ -435,9 +435,8 @@ char *
 stamp()
 {
 	static char	buf[128];
-	long		now;
+	time_t		now;
 	struct tm	*tmp;
-	register char	*cp;
 
 	(void)time( &now );
 	tmp = localtime( &now );
@@ -1009,7 +1008,9 @@ is_night( tv )
 struct timeval	*tv;
 {
 	struct tm	*tp;
-	long		sec = tv->tv_sec;
+	time_t		sec;
+
+	sec  = tv->tv_sec;
 
 	tp = localtime( &sec );
 
@@ -1032,8 +1033,9 @@ is_hackers_night( tv )
 struct timeval	*tv;
 {
 	struct tm	*tp;
-	long		sec = tv->tv_sec;
+	time_t		sec;
 
+	sec = tv->tv_sec;
 	tp = localtime( &sec );
 
 	/* Sunday(0) and Saturday(6) are "night" */
@@ -1613,7 +1615,6 @@ all_servers_idle()
 int
 all_done()
 {
-	register struct servers	*sp;
 	register struct frame	*fr;
 
 	for( fr = FrameHead.fr_forw; fr != &FrameHead; fr = fr->fr_forw)  {
@@ -2632,7 +2633,6 @@ send_dirbuild(sp)
 register struct servers *sp;
 {
 	register struct ihost	*ihp;
-	char	cmd[512];
 
 	if( sp->sr_pc == PKC_NULL )  return;
 	if( file_fullname[0] == '\0' || sp->sr_state != SRST_VERSOK )  return;
@@ -3611,7 +3611,6 @@ int	argc;
 char	**argv;
 {
 	register struct frame *fr;
-	register int	i;
 
 	rt_log("%s Frames waiting:\n", stamp() );
 	for(fr=FrameHead.fr_forw; fr != &FrameHead; fr=fr->fr_forw) {
