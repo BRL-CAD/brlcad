@@ -410,8 +410,8 @@ char *h;
 	MKPAD(h);
 	NMG_CK_FACEUSE(fu);
 
-	rt_log("%sFACEUSE %8x (%s)\n",
-		h, fu, nmg_orientation(fu->orientation));
+	rt_log("%sFACEUSE %8x (%s) f_p=x%x\n",
+		h, fu, nmg_orientation(fu->orientation), fu->f_p);
 
 	for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
 		nmg_pr_lu_briefly(lu, h);
