@@ -81,7 +81,7 @@ void print_valid_dm();
 void dm_var_init();
 void mged_slider_init_vls();
 void mged_slider_free_vls();
-void mged_slider_link_vars();
+void mged_link_vars();
 
 static int do_2nd_attach_prompt();
 void mged_fb_open();
@@ -369,7 +369,7 @@ char *argv[];
   /* initialize the background color */
   cs_set_bg();
 
-  mged_slider_link_vars(curr_dm_list);
+  mged_link_vars(curr_dm_list);
 
   Tcl_ResetResult(interp);
   Tcl_AppendResult(interp, "ATTACHING ", dmp->dm_name, " (", dmp->dm_lname,
@@ -378,8 +378,10 @@ char *argv[];
 #ifdef DO_DISPLAY_LISTS
   share_dlist(curr_dm_list);
 
-  if(displaylist && mged_variables->mv_dlist && !dlist_state->dl_active)
+  if(displaylist && mged_variables->mv_dlist && !dlist_state->dl_active){
     createDLists(&HeadSolid); 
+    dlist_state->dl_active = 1;
+  }
 #endif
 
   DM_SET_WIN_BOUNDS(dmp, windowbounds);
@@ -567,7 +569,6 @@ struct dm_list *initial_dm_list;
 
   BU_GETSTRUCT(dlist_state, _dlist_state);
   dlist_state->dl_rc = 1;
-  dlist_state->dl_active = mged_variables->mv_dlist;
 
   BU_GETSTRUCT(view_state, _view_state);
   *view_state = *initial_dm_list->dml_view_state;		/* struct copy */
@@ -607,7 +608,7 @@ struct dm_list *p;
 }
 
 void
-mged_slider_link_vars(p)
+mged_link_vars(p)
 struct dm_list *p;
 {
   mged_slider_init_vls(p);
