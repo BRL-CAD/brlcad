@@ -82,6 +82,7 @@ struct prep_arb {
 	int		pa_faces;	/* Number of faces done so far */
 	int		pa_npts[6];	/* # of points on face's plane */
 	int		pa_pindex[4][6]; /* subscr in arbi_pt[] */
+	int		pa_reversed[6];	/* face normal was flipped */
 	struct aface	pa_face[6];	/* required face info work area */
 	struct oface	pa_opt[6];	/* optional face info work area */
 	/* These elements must be initialized before using */
@@ -94,6 +95,7 @@ struct prep_arb {
  *  Layout of arb in input record.
  *  Points are listed in "clockwise" order,
  *  to make proper outward-pointing face normals.
+ *  (Although the cross product wants counter-clockwise order)
  */
 static struct arb_info {
 	char	*ai_title;
@@ -156,8 +158,9 @@ int		ptno;	/* current point # on face */
 		return(0);				/* OK */
 	case 2:
 		VSUB2( P_A, point, afp->A );	/* C-A */
+		/* Pts are given clockwise, so reverse terms of cross prod. */
+		VCROSS( afp->peqn, P_A, ofp->arb_U );
 		/* Check for co-linear, ie, |(B-A)x(C-A)| ~= 0 */
-		VCROSS( afp->peqn, ofp->arb_U, P_A );
 		f = MAGNITUDE( afp->peqn );
 		if( NEAR_ZERO(f,0.005) )  {
 			return(-1);			/* BAD */
@@ -199,6 +202,9 @@ int		ptno;	/* current point # on face */
 		f = VDOT( work, afp->peqn );
 		if( f < 0.0 )  {
 			VREVERSE(afp->peqn, afp->peqn);	/* "fix" normal */
+			pap->pa_reversed[pap->pa_faces] = 1;
+		} else {
+			pap->pa_reversed[pap->pa_faces] = 0;
 		}
 		afp->peqn[3] = VDOT( afp->peqn, afp->A );
 		return(0);				/* OK */
@@ -970,13 +976,22 @@ double			norm_tol;
 
 	/* Process each face */
 	for( i=0; i < pa.pa_faces; i++ )  {
-		vertp[0] = &verts[pa.pa_pindex[0][i]];
-		vertp[1] = &verts[pa.pa_pindex[1][i]];
-		vertp[2] = &verts[pa.pa_pindex[2][i]];
-		if( pa.pa_npts[i] > 3 ) {
-			vertp[3] = &verts[pa.pa_pindex[3][i]];
+		if( pa.pa_reversed[i] == 0 )  {
+			/* Normal orientation */
+			vertp[0] = &verts[pa.pa_pindex[0][i]];
+			vertp[1] = &verts[pa.pa_pindex[1][i]];
+			vertp[2] = &verts[pa.pa_pindex[2][i]];
+			if( pa.pa_npts[i] > 3 ) {
+				vertp[3] = &verts[pa.pa_pindex[3][i]];
+			}
 		} else {
-			vertp[3] = (struct vertex **)0;
+			register struct vertex	***vertpp = vertp;
+			if( pa.pa_npts[i] > 3 ) {
+				*vertpp++ = &verts[pa.pa_pindex[3][i]];
+			}
+			*vertpp++ = &verts[pa.pa_pindex[2][i]];
+			*vertpp++ = &verts[pa.pa_pindex[1][i]];
+			*vertpp++ = &verts[pa.pa_pindex[0][i]];
 		}
 		if( rt_g.debug & DEBUG_ARB8 )  {
 			rt_log("face %d, npts=%d, verts %d %d %d %d\n",
@@ -996,7 +1011,13 @@ double			norm_tol;
 
 	/* Associate face geometry */
 	for( i=0; i < pa.pa_faces; i++ )  {
+#if 1
+		/* We already know the plane equations, this is fast */
 		nmg_face_g( fu[i], pa.pa_face[i].peqn );
+#else
+		/* For the cautious, ensure topology and geometry match */
+		rt_mk_nmg_planeeqn( fu[i] );
+#endif
 	}
 
 	/* Compute "geometry" for region and shell */
