@@ -423,6 +423,13 @@ struct resource	*resp;
 			bu_free( (genptr_t)tabp, "struct bu_ptbl" );
 		}
 	}
+
+	/* 're_boolstack' is a simple pointer */
+	if( resp->re_boolstack )  {
+		bu_free( (genptr_t)resp->re_boolstack, "boolstack" );
+		resp->re_boolstack = NULL;
+		resp->re_boolslen = 0;
+	}
 }
 
 /*
@@ -643,4 +650,3 @@ struct resource		*resp;
 		}
 	}
 }
-
