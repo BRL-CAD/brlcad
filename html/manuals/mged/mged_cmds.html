@@ -2494,21 +2494,25 @@ objects from the database are <a href="#kill">kill</a> and <a href="#killall">ki
 <DT><a NAME="knob"><B>knob</B> [<I>-e -i -m -v</I>]
      [<I>-o v|m|e|k</I>] [<I>zap|zero|(id</I> [<I>val</I>])]</DT>
 
-<DD> The ``knob'' command is used internally by <I>mged</I> in the processing of
+<DD> The ``knob'' command is used internally by <I>mged</I> for the processing of
 knob input devices and is not recommended for users.
 The <I>knob</I> command provides a method for simulating knob input.
-With no options it will display the current values for
-the knobs. With the <I>zap</I> or <I>zero</I> command provided, all the knob
+With no options, it will display the current values for
+the knobs. When the <I>zap</I> or <I>zero</I> command is provided, all the knob
 values will be reset to zero. If an <I>id</I> and <I>value</I> are provided, the
 specified knob setting will be simulated. If the <I>-i</I> option is specified,
-then the value provided will be used as an increment to be applied to the indicated knob.
-The knobs have different functions depending on the current mode. When in solid or
-object edit mode and a rotation or translation function is selected the the knob effects are applied
-to the edited object by default. However, the <I>-v</I> (view coordinates) and <I>-m</I> (model coordinates) options may be used with the <I>knob</I>
-command to adjust the view without modifying any solid or object parameters. The <I>-e</I>
+the value provided will be used as an increment to be applied to the indicated knob.
+The knobs have different functions depending on the current mode.
+For example, if in primitive or matrix edit mode
+and a rotation or translation function is selected,
+ the knob effects are applied to the edited object by default.
+However, the <I>-v</I> (view coordinates) and <I>-m</I> (model coordinates)
+options may be used
+to adjust the view without modifying primitives or matrices. The <I>-e</I>
 option allows the knob effects to be applied to the edited object when they would
 normally be applied to the view.
-The <I>-o</I> option allows the origin of rotation to be specified.
+The <I>-o</I> option allows the origin of rotation to be specified
+with v, m, e and k indicating view, model, eye and keypoint, respectively.
 The units for <I>value</I> are degrees for rotation and local units for
 translation.
 
