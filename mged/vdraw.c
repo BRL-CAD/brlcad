@@ -40,6 +40,8 @@ DEBUGGING COMMAND
 vdraw	help	1		- returns the number of vlist chunks
 		2	i	- prints the nused param of the i-th chunk
 
+vdraw verbose 			-toggle verbose thing
+
 All textual arguments can be replaced by their first letter.
 (e.g. "vdraw d a" instead of "vdraw delete all"
 
@@ -104,6 +106,18 @@ static struct rt_list head;
 	RT_LIST_NOT_HEAD(p,hp);		\
 	(p)=RT_LIST_PLAST(structure,p)
 
+int my_final_check(hp)
+struct rt_list *hp;
+{
+	struct rt_vlist *vp;
+
+	for ( RT_LIST_FOR( vp, rt_vlist, hp) ) {
+		RT_CK_VLIST( vp );
+		printf("num_used = %d\n", vp->nused);
+	}
+}
+
+
 int
 cmd_vdraw(clientData, interp, argc, argv)
 ClientData clientData;
@@ -112,6 +126,7 @@ int argc;
 char **argv;
 {
 	static initialized = 0;
+	static int verbose = 0;
 	struct rt_vlist *vp, *cp, *wp;
 	int i, index, uind, blocks, change;
 	int length;
@@ -437,6 +452,8 @@ char **argv;
 		(void)cmdline( &killstr, FALSE );
 		rt_vls_free(&killstr);
 		index = 0;
+		if (verbose)
+			my_final_check(&head);
 		index = invent_solid( vdraw_name, &head, my_rgb, 1);
 		sprintf(result_string,"%d",index);
 		/* 0 means OK, -1 means conflict with real solid name */
@@ -532,6 +549,9 @@ char **argv;
 			Tcl_AppendResult(interp, "0", (char *)NULL);
 			return TCL_OK;
 		}
+		break;
+	case 'v':
+		verbose = (verbose + 1)%2;
 		break;
 	default:
 		Tcl_AppendResult(interp, "vdraw: see drawline.c for help\n", (char *)NULL);
