@@ -862,6 +862,9 @@ rt_db_cvt_to_external5(
  *  Convert the internal representation of a solid to the external one,
  *  and write it into the database.
  *
+ *  Applications and middleware shouldn't call this directly, they
+ *  should use the generic interface "rt_db_get_internal()".
+ *
  *  The internal representation is always freed.
  *
  *  Returns -
@@ -957,6 +960,9 @@ double			conv2mm;
  *  Get an object from the database, and convert it into it's internal
  *  representation.
  *
+ *  Applications and middleware shouldn't call this directly, they
+ *  should use the generic interface "rt_db_get_internal()".
+ *
  *  Returns -
  *	<0	On error
  *	id	On success.
@@ -1002,11 +1008,13 @@ CONST mat_t		mat;
 	 * in the internal form.
 	 */
 	if( raw.attributes.ext_buf )  {
+if(getuid()==53) bu_hexdump_external( stderr, &raw.attributes, "rt_db_get_internal5: raw.attributes");
 		if( db5_import_attributes( &ip->idb_avs, &raw.attributes ) < 0 )  {
 			bu_log("rt_db_get_internal5(%s):  mal-formed attributes in database\n",
 				dp->d_namep );
 			return -8;
 		}
+if(getuid()==53) bu_avs_print( &ip->idb_avs, "rt_db_get_internal5: attributes.ext_buf");
 	}
 
 	if( !raw.body.ext_buf )  {
@@ -1016,6 +1024,7 @@ CONST mat_t		mat;
 		return -4;
 	}
 
+	/* ip has already been initialized, and should not be re-initted */
 	if( rt_functab[id].ft_import5( ip, &raw.body, mat, dbip ) < 0 )  {
 		bu_log("rt_db_get_internal5(%s):  import failure\n",
 			dp->d_namep );
