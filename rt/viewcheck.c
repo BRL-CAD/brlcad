@@ -39,6 +39,8 @@ static char RCScheckview[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "./material.h"
 
+#define OVLP_TOL	0.1
+
 extern int	rpt_overlap;		/* report overlapping region names */
 int		use_air = 0;		/* Handling of air in librt */
 
@@ -49,10 +51,24 @@ struct structparse view_parse[] = {
 
 extern FILE	*outfp;
 
-char usage[] = "Usage:  rtcheck [options] model.g objects...\n";
+char usage[] = "Usage:  rtcheck [options] model.g objects...\n\
+Options:\n\
+ -s #       Square grid size in pixels (default 512)\n\
+ -w # -n #  Grid size width and height in pixels\n\
+ -V #       View (pixel) aspect ratio (width/height)\n\
+ -a #       Azimuth in degrees\n\
+ -e #       Elevation in degrees\n\
+ -M         Read matrix, cmds on stdin\n\
+ -o file.pl Specify UNIX-plot output file\n\
+ -x #       Set librt debug flags\n\
+ -X #       Set rt debug flags\n\
+ -r         Report only unique overlaps\n\
+ -P #       Set number of processors\n\
+";
 
 static int	noverlaps;		/* Number of overlaps seen */
 static int	overlap_count;		/* Number of overlap pairs seen */
+static int	rays;
 
 /*
  *  For each unique pair of regions that we find an overlap for
@@ -93,7 +109,7 @@ int
 miss( ap )
 struct application *ap;
 {
-	return	1;
+	return	0;
 }
 
 /*
@@ -115,22 +131,35 @@ struct region		*reg2;
 	register struct hit	*ohitp = pp->pt_outhit;
 	vect_t	ihit;
 	vect_t	ohit;
+	double depth;
 
 	VJOIN1( ihit, rp->r_pt, ihitp->hit_dist, rp->r_dir );
 	VJOIN1( ohit, rp->r_pt, ohitp->hit_dist, rp->r_dir );
+	depth = ohitp->hit_dist - ihitp->hit_dist;
+	if( depth < OVLP_TOL )
+		return(0);
 
 	RES_ACQUIRE( &rt_g.res_syscall );
 	pdv_3line( outfp, ihit, ohit );
 	noverlaps++;
 
+	if( !rpt_overlap ) {
+		rt_log("OVERLAP %d: %s\n",noverlaps,reg1->reg_name);
+		rt_log("OVERLAP %d: %s\n",noverlaps,reg2->reg_name);
+		rt_log("OVERLAP %d: depth %gmm\n",noverlaps,depth);
+		rt_log("OVERLAP %d: in_hit_point (%g,%g,%g) mm\n",
+			noverlaps,ihit[X],ihit[Y],ihit[Z],depth);
+		rt_log("OVERLAP %d: out_hit_point (%g,%g,%g) mm\n",
+			noverlaps,ohit[X],ohit[Y],ohit[Z],depth);
+		rt_log("--------------------------------------------------\n");
+
 	/* If we report overlaps, don't print if already noted once.
 	 * Build up a linked list of known overlapping regions and compare 
 	 * againt it.
 	 */
-	if( rpt_overlap ) {
+	} else {
 		struct overlap_list	*prev_ol = (struct overlap_list *)0;
 		struct overlap_list	*op;		/* overlap list */
-		double depth = ohitp->hit_dist - ihitp->hit_dist;
 
 		/* look for it in our list */
 		for( op=olist; op; prev_ol=op,op=op->next ) {
@@ -146,16 +175,6 @@ struct region		*reg2;
 
 		/* we have a new overlapping region pair */
 		overlap_count++;
-#if 0
-		/*
-		 * Note: by default, RT also gives us in/out solid names in
-		 * the partition, the XYZ hit point, and the ray grid x,y.
-		 */
-		rt_log("OVERLAP %d: %s\n",overlap_count,reg1->reg_name);
-		rt_log("OVERLAP %d: %s\n",overlap_count,reg2->reg_name);
-		rt_log("OVERLAP %d: depth %gmm\n",overlap_count,reg2->reg_name,depth);
-		rt_log("-----<>-----<>-----<>-----<>-----<>------<>-----\n");
-#endif
 		if( (op =(struct overlap_list *)rt_malloc(sizeof(struct overlap_list),"overlap list")) != NULL ){
 			if( olist )		/* previous entry exists */
 				prev_ol->next = op;
@@ -163,7 +182,9 @@ struct region		*reg2;
 				olist = op;	/* finally initialize root */
 			op->reg1 = reg1->reg_name;
 			op->reg2 = reg2->reg_name;
+			op->maxdepth = depth;
 			op->next = NULL;
+			op->count = 1;
 		} else {
 			rt_log("rtcheck: can't allocate enough space for overlap list!!\n");
 			exit(1);
@@ -191,7 +212,7 @@ int minus_o;
 	ap->a_onehit = 0;
 	if( !minus_o)			/* Needs to be set to  stdout */
 		outfp = stdout;
-
+	rays = 1;
 	return	0;		/* No framebuffer needed */
 }
 
@@ -227,7 +248,9 @@ view_end() {
 		rt_log("%d overlapping region pairs\n", overlap_count);
 		op = olist;
 		while( op ) {
-			rt_log("OVERLAP: %gmm %s %s\n", op->maxdepth, op->reg1, op->reg2);
+			rt_log("\nOVERLAP: %d overlap%c detected--maximum depth is %gmm\n\t%s\n\t%s\n",
+			op->count, op->count>1 ? 's' : (char) 0, 
+			op->maxdepth, op->reg1, op->reg2);
 			/* free struct */
 			nextop = op->next;
 			rt_free( (char *)op, "overlap_list" );
