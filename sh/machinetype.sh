@@ -65,7 +65,17 @@ cat << EOF > ${IN_FILE}
 	HAS_SYMLINKS=0;
 #endif
 
-#if defined(unix) && defined(i386)
+#if defined(unix) && defined(i386) && defined(__bsdi__)
+/* BSDI/386 (Berkeley Software Design, Inc.) */
+	MACHINE=bsdi386;
+	UNIXTYPE=BSD;
+	HAS_TCP=1;
+	HAS_SYMLINKS=0;
+#endif
+
+
+
+#if defined(unix) && defined(i386) && !defined(__bsdi__)
 /* PC/AT with Interactive Systems Unix V/386 3.2 */
 #	undef	at
 	MACHINE=at;
