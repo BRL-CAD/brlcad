@@ -49,7 +49,7 @@ RT_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, struct db_full_
 extern double nmg_eue_dist;		/* from nmg_plot.c */
 
 static char	usage[] = "\
-Usage: %s [-v][-i][-u][-xX lvl][-a abs_tess_tol][-r rel_tess_tol][-n norm_tess_tol]\n\
+Usage: %s [-m][-v][-i][-u][-xX lvl][-a abs_tess_tol][-r rel_tess_tol][-n norm_tess_tol]\n\
 [-e error_file ][-D dist_calc_tol] -o output_file_name brlcad_db.g object(s)\n";
 
 static long	vert_offset=0;
@@ -57,6 +57,12 @@ static long	norm_offset=0;
 static int	do_normals=0;
 static int	NMG_debug;	/* saved arg of -X, for longjmp handling */
 static int	verbose;
+static int	usemtl=0;	/* flag to include 'usemtl' statements with a code for GIFT materials:
+				 * 	usemtl 0_100_32
+				 *		means aircode is 0
+				 *		      los is 100
+				 *		      GIFT material is 32
+				 */
 static int	ncpu = 1;	/* Number of processors */
 static char	*output_file = NULL;	/* output filename */
 static char	*error_file = NULL;	/* error filename */
@@ -124,8 +130,11 @@ char	*argv[];
 	RT_LIST_INIT( &rt_g.rtg_vlfree );	/* for vlist macros */
 
 	/* Get command line arguments. */
-	while ((c = getopt(argc, argv, "ua:n:o:r:vx:D:P:X:e:i:")) != EOF) {
+	while ((c = getopt(argc, argv, "mua:n:o:r:vx:D:P:X:e:i:")) != EOF) {
 		switch (c) {
+		case 'm':		/* include 'usemtl' statements */
+			usemtl = 1;
+			break;
 		case 'u':		/* Include vertexuse normals */
 			do_normals = 1;
 			break;
@@ -265,10 +274,12 @@ char	*argv[];
 }
 
 static void
-nmg_to_wave( r, pathp, region_id, material_id )
+nmg_to_wave( r, pathp, region_id, aircode, los, material_id )
 struct nmgregion *r;
 struct db_full_path *pathp;
 int region_id;
+int aircode;
+int los;
 int material_id;
 {
 	struct model *m;
@@ -378,6 +389,9 @@ int material_id;
 
 /* END CHECK SECTION */
 /* Write pertinent info for this region */
+
+	if( usemtl )
+		fprintf( fp, "usemtl %d_%d_%d\n", aircode, los, material_id );
 
 	fprintf( fp, "g %s %s\n", pathp->fp_names[0]->d_namep, DB_FULL_PATH_CUR_DIR(pathp)->d_namep); 
 
@@ -671,7 +685,7 @@ union tree		*curtree;
 				goto out;
 			}
 		/* Write the region to the TANKILL file */
-			nmg_to_wave( r, pathp, tsp->ts_regionid, tsp->ts_gmater );
+			nmg_to_wave( r, pathp, tsp->ts_regionid, tsp->ts_aircode, tsp->ts_los, tsp->ts_gmater );
 
 			regions_written++;
 
