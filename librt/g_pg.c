@@ -329,12 +329,17 @@ struct seg		*seghead;
 
 		if( nerrors++ < 6 )  {
 			rt_log("rt_pg_shot(%s): WARNING %d hits:\n", stp->st_name, nhits);
+			rt_log( "\tray start = (%g %g %g) ray dir = (%g %g %g)\n",
+				V3ARGS( rp->r_pt ), V3ARGS( rp->r_dir ) );
 			for(i=0; i < nhits; i++ )
 			{
+				point_t tmp_pt;
+
+				VJOIN1( tmp_pt, rp->r_pt, hits[i].hit_dist, rp->r_dir );
 				if( VDOT( rp->r_dir, hits[i].hit_normal ) < 0.0 )
-					rt_log("\tentrance at %f\n", hits[i].hit_dist );
+					rt_log("\tentrance at dist=%f (%g %g %g)\n", hits[i].hit_dist, V3ARGS( tmp_pt ) );
 				else
-					rt_log("\texit at %f\n", hits[i].hit_dist );
+					rt_log("\texit at dist=%f (%g %g %g)\n", hits[i].hit_dist, V3ARGS( tmp_pt ) );
 			}
 		}
 
