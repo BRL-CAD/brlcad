@@ -133,7 +133,7 @@ set -S2 "/bin/sh"
 #define	TCLTK_VERS	8.4
 
 /* This is the version of [incr Tcl] distributed with BRL-CAD */
-#define ITCL_VERS	3.2
+#define ITCL_VERS	3.3
 #define LIBTCL_LIBES	LIBITCL
 #define LIBTK_LIBES	LIBITK
 
@@ -2502,14 +2502,14 @@ set -S2 "/bin/sh"
 #		define	LIBITCL_DEP	[[LIBVERS LIBITCL_DIR/libitcl''ITCL_VERS.''ARCH_SUF]]
 #	endif
 #	if !defined(LIBITCL_DIR)
-#		define	LIBITCL_DIR	../libitcl''ITCL_VERS/itcl
+#		define	LIBITCL_DIR	../libitcl/itcl
 #	endif
 #	if !defined(LIBITK)
 #		define	LIBITK		-L''LIBITK_DIR -litk''ITCL_VERS
 #		define	LIBITK_DEP	[[LIBVERS LIBITK_DIR/libitk''ITCL_VERS.''ARCH_SUF]]
 #	endif
 #	if !defined(LIBITK_DIR)
-#		define	LIBITK_DIR	../libitcl''ITCL_VERS/itk
+#		define	LIBITK_DIR	../libitcl/itk
 #	endif
 #	define  LIBTCLCAD_DIR	../libtclcad
 #	define  LIBTCLCAD	-L''LIBTCLCAD_DIR -ltclcad
@@ -2622,14 +2622,14 @@ set -S2 "/bin/sh"
 #		define	LIBITCL_DEP	[[LIBVERS LIBITCL_DIR/libitcl''ITCL_VERS.''ARCH_SUF]]
 #	endif
 #	if !defined(LIBITCL_DIR)
-#		define	LIBITCL_DIR	../.libitcl''ITCL_VERS.''MTYPE/itcl
+#		define	LIBITCL_DIR	../.libitcl.''MTYPE/itcl
 #	endif
 #	if !defined(LIBITK)
 #		define	LIBITK		-L''LIBITK_DIR -litk''ITCL_VERS
 #		define	LIBITK_DEP	[[LIBVERS LIBITK_DIR/libitk''ITCL_VERS.''ARCH_SUF]]
 #	endif
 #	if !defined(LIBITK_DIR)
-#		define	LIBITK_DIR	../.libitcl''ITCL_VERS.''MTYPE/itk
+#		define	LIBITK_DIR	../.libitcl.''MTYPE/itk
 #	endif
 #	define	LIBTCLCAD_DIR	../.libtclcad.MTYPE
 #	define	LIBTCLCAD	-L''LIBTCLCAD_DIR -ltclcad
