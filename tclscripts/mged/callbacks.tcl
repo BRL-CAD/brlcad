@@ -43,7 +43,7 @@ if ![info exists in_begin_edit_callback] {
 #
 # This is called at the start of an edit.
 #
-proc begin_edit_callback {} {
+proc begin_edit_callback {path} {
     global mged_gui
     global mged_display
     global mged_players
@@ -53,17 +53,31 @@ proc begin_edit_callback {} {
 	return
     }
 
+    # remove leading /
+    if {[string index $path 0] == "/"} {
+	set path [string range $path 1 end]
+    }
+
     set in_begin_edit_callback 1
 
     if {$mged_display(state) == "SOL EDIT"} {
+	catch {get_sed} esolint_info
+	set esolint_type [lindex $esolint_info 1]
+
+	if {$esolint_type == "sketch"} {
+	    set in_begin_edit_callback 0
+	    Sketch_editor .#auto [lindex $esolint_info 0] $path
+
+	    # jump out of solid edit state
+	    press reject
+	    return
+	}
+
 	foreach id $mged_players {
 	    if {$mged_gui($id,show_edit_info)} {
 		init_edit_solid_int $id
 	    }
 	}
-
-	catch {get_sed} esolint_info
-	set esolint_type [lindex $esolint_info 1]
 
 	# load solid edit menus
 	set edit_menus [get_sed_menus]
@@ -78,9 +92,7 @@ proc begin_edit_callback {} {
     }
 
     set in_begin_edit_callback 0
-
-    # empty result
-    set junk ""
+    return
 }
 
 ## - active_edit_callback
