@@ -33,6 +33,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <signal.h>
 
 extern struct rt_db_internal	es_int;	/* from edsol.c */
+extern struct rt_tol		mged_tol;		/* from ged.c */
 
 char *p_rotfb[] = {
 	"Enter rot, fb angles: ",
@@ -78,18 +79,10 @@ char **argv;
 {
 	short int 	i;
 	int		face,prod,plane;
-	struct rt_tol	tol;
 	struct rt_db_internal	intern;
 	struct rt_arb_internal	*arb;
 	struct rt_arb_internal	*arbo;
 	plane_t		planes[6];
-
-	/* XXX These need to be improved */
-	tol.magic = RT_TOL_MAGIC;
-	tol.dist = 0.005;
-	tol.dist_sq = tol.dist * tol.dist;
-	tol.perp = 1e-6;
-	tol.para = 1 - tol.perp;
 
 #ifdef XMGED
 	(void)signal( SIGINT, cur_sigint );		/* allow interrupts */
@@ -113,7 +106,7 @@ char **argv;
 	RT_ARB_CK_MAGIC(arb);
 
 	/* find new planes to account for any editing */
-	if( rt_arb_calc_planes( planes, arb, es_type, &tol ) < 0 )  {
+	if( rt_arb_calc_planes( planes, arb, es_type, &mged_tol ) < 0 )  {
 		rt_log("Unable to determine plane equations\n");
 		return CMD_BAD;
 	}
@@ -209,7 +202,7 @@ char **argv;
 			rt_log("%s %d: ", p_3pts[(argc-3)%3], argc/3);
 			return CMD_MORE;
 		}
-		if( get_3pts( planes[plane], &argv[3], &tol) ){
+		if( get_3pts( planes[plane], &argv[3], &mged_tol) ){
 			return CMD_BAD;			/* failure */
 		}
 		break;
@@ -251,7 +244,7 @@ char **argv;
 	}
 
 	/* find all vertices from the plane equations */
-	if( rt_arb_calc_points( arb, es_type, planes, &tol ) < 0 )  {
+	if( rt_arb_calc_points( arb, es_type, planes, &mged_tol ) < 0 )  {
 		rt_log("facedef:  unable to find points\n");
 		return CMD_BAD;
 	}
@@ -309,7 +302,7 @@ static int
 get_3pts( plane, argv, tol)
 plane_t		plane;
 char		*argv[];
-struct rt_tol	*tol;
+CONST struct rt_tol	*tol;
 {
 	int i;
 	point_t	a,b,c;

@@ -420,21 +420,13 @@ int loc, use1, use2, use3;
 struct solidrec *sp;
 {
 	vect_t	a,b,c;
-	struct rt_tol	tol;
-
-	/* XXX These need to be improved */
-	tol.magic = RT_TOL_MAGIC;
-	tol.dist = 0.005;
-	tol.dist_sq = tol.dist * tol.dist;
-	tol.perp = 1e-6;
-	tol.para = 1 - tol.perp;
 
 	/* XXX This converts data types as well! */
 	VMOVE( a, &sp->s_values[use1*3] );
 	VMOVE( b, &sp->s_values[use2*3] );
 	VMOVE( c, &sp->s_values[use3*3] );
 
-	return( rt_mk_plane_3pts( es_peqn[loc], a, b, c, &tol ) );
+	return( rt_mk_plane_3pts( es_peqn[loc], a, b, c, &mged_tol ) );
 }
 
 /* planes to define ARB vertices */
@@ -501,17 +493,9 @@ vect_t	dir;
 {
 	struct rt_arb_internal *arb;
 	fastf_t	t1, t2;
-	struct rt_tol	tol;
 
-	/* XXX These need to be improved */
-	tol.magic = RT_TOL_MAGIC;
-	tol.dist = 0.005;
-	tol.dist_sq = tol.dist * tol.dist;
-	tol.perp = 1e-6;
-	tol.para = 1 - tol.perp;
-
-	if( rt_isect_line3_plane( &t1, thru, dir, es_peqn[bp1], &tol ) < 0 ||
-	    rt_isect_line3_plane( &t2, thru, dir, es_peqn[bp2], &tol ) < 0 )  {
+	if( rt_isect_line3_plane( &t1, thru, dir, es_peqn[bp1], &mged_tol ) < 0 ||
+	    rt_isect_line3_plane( &t2, thru, dir, es_peqn[bp2], &mged_tol ) < 0 )  {
 		rt_log("edge (direction) parallel to face normal\n");
 		return( 1 );
 	}
@@ -1363,7 +1347,7 @@ rt_arb_calc_points( arb, cgtype, planes, tol )
 struct rt_arb_internal	*arb;
 int		cgtype;
 plane_t		planes[6];
-struct rt_tol	*tol;
+CONST struct rt_tol	*tol;
 {
 	int	i;
 	point_t	pt[8];

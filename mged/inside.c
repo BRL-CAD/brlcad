@@ -52,8 +52,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./solid.h"
 #include "./dm.h"
 
-RT_EXTERN( void nmg_invert_shell , ( struct shell *s , struct rt_tol *tol ) );
-RT_EXTERN( struct shell *nmg_extrude_shell , ( struct shell *s, fastf_t thick , int normal_ward , int approximate , struct rt_tol *tol ) );
+RT_EXTERN( void nmg_invert_shell , ( struct shell *s , CONST struct rt_tol *tol ) );
+RT_EXTERN( struct shell *nmg_extrude_shell , ( struct shell *s, fastf_t thick , int normal_ward , int approximate , CONST struct rt_tol *tol ) );
 
 extern struct rt_db_internal	es_int;	/* from edsol.c */
 extern struct rt_tol		mged_tol;	/* from ged.c */
@@ -156,16 +156,8 @@ char **argv;
 	plane_t	planes[6];
 	struct rt_db_internal	intern;
 	char	*newname;
-	struct rt_tol	tol;
 
 	int arg = 1;
-
-	/* XXX These need to be improved */
-	tol.magic = RT_TOL_MAGIC;
-	tol.dist = 0.005;
-	tol.dist_sq = tol.dist * tol.dist;
-	tol.perp = 1e-6;
-	tol.para = 1 - tol.perp;
 
 #ifdef XMGED
 	(void)signal( SIGINT, cur_sigint);	/* allow interrupts */
@@ -227,7 +219,7 @@ char **argv;
 		/* find the comgeom arb type, & reorganize */
 		int uvec[8],svec[8];
 
-		if( rt_arb_get_cgtype( &cgtype , intern.idb_ptr, &tol , uvec , svec ) == 0 ) {
+		if( rt_arb_get_cgtype( &cgtype , intern.idb_ptr, &mged_tol , uvec , svec ) == 0 ) {
 			rt_log("%s: BAD ARB\n",outdp->d_namep);
 			return CMD_BAD;
 		}
@@ -235,7 +227,7 @@ char **argv;
 		/* must find new plane equations to account for
 		 * any editing in the es_mat matrix or path to this solid.
 		 */
-		if( rt_arb_calc_planes( planes, intern.idb_ptr, cgtype, &tol ) < 0 )  {
+		if( rt_arb_calc_planes( planes, intern.idb_ptr, cgtype, &mged_tol ) < 0 )  {
 			rt_log("rt_arb_calc_planes(%s): failed\n", outdp->d_namep);
 			return CMD_BAD;
 		}

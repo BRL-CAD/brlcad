@@ -37,6 +37,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./dm.h"
 
 extern struct rt_db_internal	es_int;	/* from edsol.c */
+extern struct rt_tol		mged_tol;		/* from ged.c */
 
 static void	do_anal();
 static void	arb_anal();
@@ -205,19 +206,11 @@ CONST struct rt_db_internal	*ip;
 	point_t		center_pt;
 	double		tot_vol;
 	double		tot_area;
-	struct rt_tol	tol;
 	int		cgtype;		/* COMGEOM arb type: # of vertices */
 	int		type;
 
-	/* XXX These need to be improved */
-	tol.magic = RT_TOL_MAGIC;
-	tol.dist = 0.005;	/* 0.005 matches planeqn() val, 0.0001 matches dist checking */
-	tol.dist_sq = tol.dist * tol.dist;
-	tol.perp = 1e-6;
-	tol.para = 1 - tol.perp;
-
 	/* find the specific arb type, in GIFT order. */
-	if( (cgtype = rt_arb_std_type( ip, &tol )) == 0 ) {
+	if( (cgtype = rt_arb_std_type( ip, &mged_tol )) == 0 ) {
 		rt_vls_printf(vp,"arb_anal: bad ARB\n");
 		return;
 	}
@@ -233,7 +226,7 @@ CONST struct rt_db_internal	*ip;
 	rt_arb_centroid( center_pt, arb, cgtype );
 
 	for(i=0; i<6; i++) 
-		tot_area += anal_face( vp, i, center_pt, arb, type, &tol );
+		tot_area += anal_face( vp, i, center_pt, arb, type, &mged_tol );
 
 	rt_vls_printf(vp,"------------------------------------------------------------------------------\n");
 
@@ -261,7 +254,7 @@ CONST struct rt_db_internal	*ip;
 
 	/* find the volume - break arb8 into 6 arb4s */
 	for(i=0; i<6; i++)
-		tot_vol += find_vol( i, arb, &tol );
+		tot_vol += find_vol( i, arb, &mged_tol );
 
 	rt_vls_printf(vp,"      | Volume = %18.3f    Surface Area = %15.3f |\n",
 			tot_vol*base2local*base2local*base2local,

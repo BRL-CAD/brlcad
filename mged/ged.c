@@ -267,7 +267,7 @@ char **argv;
 	mat_idn( modelchanges );
 	mat_idn( ModelDelta );
 
-	/* XXX Some better method is needed for setting this */
+	/* These values match old GED.  Use 'tol' command to change them. */
 	mged_tol.magic = RT_TOL_MAGIC;
 	mged_tol.dist = 0.005;
 	mged_tol.dist_sq = mged_tol.dist * mged_tol.dist;

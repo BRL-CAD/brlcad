@@ -728,7 +728,7 @@ int
 rt_arb_get_cgtype( cgtype, arb, tol, uvec, svec )
 int			*cgtype;
 struct rt_arb_internal	*arb;
-struct rt_tol		*tol;
+CONST struct rt_tol	*tol;
 register int *uvec;	/* array of unique points */
 register int *svec;	/* array of like points */
 {
@@ -860,7 +860,7 @@ register int *svec;	/* array of like points */
 int
 rt_arb_std_type( ip, tol )
 struct rt_db_internal	*ip;
-struct rt_tol		*tol;
+CONST struct rt_tol	*tol;
 {
 	struct rt_arb_internal	*arb;
 	int uvec[8], svec[11];

@@ -4386,7 +4386,7 @@ rt_arb_calc_planes( planes, arb, type, tol )
 plane_t			planes[6];
 struct rt_arb_internal	*arb;
 int			type;
-struct rt_tol		*tol;
+CONST struct rt_tol	*tol;
 {
 	register int i, p1, p2, p3;
 
