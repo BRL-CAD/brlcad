@@ -726,7 +726,7 @@ int *old;
 
 		idbuf1.i_index = i + 1;
 
-		if( check( &idbuf1, &idbuf2 ) == 1 )
+		if( check( (char *)&idbuf1, (char *)&idbuf2 ) == 1 )
 		{
 			*old = 1;
 			return( idbuf2.i_index );
