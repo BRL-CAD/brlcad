@@ -80,6 +80,7 @@ static struct wmember  group_head[11];	/* Lists of regions for groups */
 static struct wmember  hole_head;	/* List of regions used as holes (not solid parts of model) */
 static struct bu_ptbl stack;		/* Stack for traversing name_tree */
 static struct bu_ptbl stack2;		/* Stack for traversing name_tree */
+static fastf_t	min_radius;		/* minimum radius for TGC solids */
 
 static int		*faces=NULL;	/* one triplet per face indexing three grid points */
 static fastf_t		*thickness;	/* thickness of each face */
@@ -1611,7 +1612,7 @@ do_ccone1()
 			return;
 		}
 
-		if( r1-thick <= SQRT_SMALL_FASTF && r2-thick <= SQRT_SMALL_FASTF )
+		if( r1-thick < min_radius && r2-thick < min_radius )
 		{
 			bu_log( "ERROR: Plate mode CCONE1 has too large thickness (%f)\n" , thick/25.4 );
 			bu_log( "\tgroup_id = %d, comp_id = %d, element_id = %d\n",
@@ -1631,10 +1632,10 @@ do_ccone1()
 	}
 
 	/* BRL_CAD doesn't allow zero radius, so use a very small radius */
-	if( r1 < SQRT_SMALL_FASTF )
-		r1 = SQRT_SMALL_FASTF;
-	if( r2 < SQRT_SMALL_FASTF )
-		r2 = SQRT_SMALL_FASTF;
+	if( r1 < min_radius )
+		r1 = min_radius;
+	if( r2 < min_radius )
+		r2 = min_radius;
 
 	VSUB2( height , grid_pts[pt2] , grid_pts[pt1] );
 
@@ -1691,11 +1692,11 @@ do_ccone1()
 			fastf_t dist_to_new_base;
 
 			dist_to_new_base = inner_r1 * length/(r1 - r2 );
-			inner_r1 = SQRT_SMALL_FASTF;
+			inner_r1 = min_radius;
 			VJOIN1( base , base , dist_to_new_base , height_dir );
 		}
-		else if( inner_r1 < SQRT_SMALL_FASTF )
-			inner_r1 = SQRT_SMALL_FASTF;
+		else if( inner_r1 < min_radius )
+			inner_r1 = min_radius;
 
 		if( end2 == END_OPEN )
 		{
@@ -1715,14 +1716,14 @@ do_ccone1()
 			fastf_t dist_to_new_top;
 
 			dist_to_new_top = inner_r2 * length/(r2 - r1 );
-			inner_r2 = SQRT_SMALL_FASTF;
+			inner_r2 = min_radius;
 			VJOIN1( top , top , -dist_to_new_top , height_dir );
 		}
-		else if( inner_r2 < SQRT_SMALL_FASTF )
-			inner_r2 = SQRT_SMALL_FASTF;
+		else if( inner_r2 < min_radius )
+			inner_r2 = min_radius;
 
 		VSUB2( inner_height , top , base );
-		if( VDOT( inner_height , height ) < 0.0 )
+		if( VDOT( inner_height , height ) <= 0.0 )
 		{
 			bu_log( "ERROR: CCONE1 height (%f) too small for thickness (%f)\n" , length/25.4 , thick/25.4 );
 			bu_log( "\tgroup_id = %d, comp_id = %d, element_id = %d\n",
@@ -1830,11 +1831,11 @@ do_ccone2()
 		return;
 	}
 
-	if( ro1 < SQRT_SMALL_FASTF )
-		ro1 = SQRT_SMALL_FASTF;
+	if( ro1 < min_radius )
+		ro1 = min_radius;
 
-	if( ro2 < SQRT_SMALL_FASTF )
-		ro2 = SQRT_SMALL_FASTF;
+	if( ro2 < min_radius )
+		ro2 = min_radius;
 
 	BU_LIST_INIT( &r_head.l );
 
@@ -1855,11 +1856,11 @@ do_ccone2()
 			rt_bomb( "mk_addmember failed!\n" );
 		bu_free( name, "solid_name" );
 
-		if( ri1 < SQRT_SMALL_FASTF )
-			ri1 = SQRT_SMALL_FASTF;
+		if( ri1 < min_radius )
+			ri1 = min_radius;
 
-		if( ri2 < SQRT_SMALL_FASTF )
-			ri2 = SQRT_SMALL_FASTF;
+		if( ri2 < min_radius )
+			ri2 = min_radius;
 
 		name = make_solid_name( CCONE2 , element_id , comp_id , group_id , 2 );
 		mk_trc_h( fdout , name , grid_pts[pt1] , height , ri1 , ri2 );
@@ -2018,10 +2019,10 @@ do_ccone3()
 
 	for( i=0 ; i<4 ; i++ )
 	{
-		if( ro[i] < SQRT_SMALL_FASTF )
-			ro[i] = SQRT_SMALL_FASTF;
-		if( ri[i] < SQRT_SMALL_FASTF )
-			ri[i] = SQRT_SMALL_FASTF;
+		if( ro[i] < min_radius )
+			ro[i] = min_radius;
+		if( ri[i] < min_radius )
+			ri[i] = min_radius;
 	}
 
 	BU_LIST_INIT( &r_head.l );
@@ -2031,7 +2032,7 @@ do_ccone3()
 		VSUB2( diff, grid_pts[pt2], grid_pts[pt1] );
 
 		/* make first cone */
-		if( ro[0] != SQRT_SMALL_FASTF || ro[1] != SQRT_SMALL_FASTF )
+		if( ro[0] != min_radius || ro[1] != min_radius )
 		{
 			name = make_solid_name( CCONE3, element_id, comp_id, group_id, 1 );
 			mk_trc_h( fdout, name, grid_pts[pt1], diff, ro[0], ro[1] );
@@ -2040,7 +2041,7 @@ do_ccone3()
 			bu_free( name, "solid_name" );
 
 			/* and the inner cone */
-			if( ri[0] != SQRT_SMALL_FASTF || ri[1] != SQRT_SMALL_FASTF )
+			if( ri[0] != min_radius || ri[1] != min_radius )
 			{
 				name = make_solid_name( CCONE3, element_id, comp_id, group_id, 11 );
 				mk_trc_h( fdout, name, grid_pts[pt1], diff, ri[0], ri[1] );
@@ -2056,7 +2057,7 @@ do_ccone3()
 		VSUB2( diff, grid_pts[pt3], grid_pts[pt2] );
 
 		/* make second cone */
-		if( ro[1] != SQRT_SMALL_FASTF || ro[2] != SQRT_SMALL_FASTF )
+		if( ro[1] != min_radius || ro[2] != min_radius )
 		{
 			name = make_solid_name( CCONE3, element_id, comp_id, group_id, 2 );
 			mk_trc_h( fdout, name, grid_pts[pt2], diff, ro[1], ro[2] );
@@ -2065,7 +2066,7 @@ do_ccone3()
 			bu_free( name, "solid_name" );
 
 			/* and the inner cone */
-			if( ri[1] != SQRT_SMALL_FASTF || ri[2] != SQRT_SMALL_FASTF )
+			if( ri[1] != min_radius || ri[2] != min_radius )
 			{
 				name = make_solid_name( CCONE3, element_id, comp_id, group_id, 22 );
 				mk_trc_h( fdout, name, grid_pts[pt2], diff, ri[1], ri[2] );
@@ -2081,7 +2082,7 @@ do_ccone3()
 		VSUB2( diff, grid_pts[pt4], grid_pts[pt3] );
 
 		/* make third cone */
-		if( ro[2] != SQRT_SMALL_FASTF || ro[3] != SQRT_SMALL_FASTF )
+		if( ro[2] != min_radius || ro[3] != min_radius )
 		{
 			name = make_solid_name( CCONE3, element_id, comp_id, group_id, 3 );
 			mk_trc_h( fdout, name, grid_pts[pt3], diff, ro[2], ro[3] );
@@ -2090,7 +2091,7 @@ do_ccone3()
 			bu_free( name, "solid_name" );
 
 			/* and the inner cone */
-			if( ri[2] != SQRT_SMALL_FASTF || ri[3] != SQRT_SMALL_FASTF )
+			if( ri[2] != min_radius || ri[3] != min_radius )
 			{
 				name = make_solid_name( CCONE3, element_id, comp_id, group_id, 33 );
 				mk_trc_h( fdout, name, grid_pts[pt3], diff, ri[2], ri[3] );
@@ -3504,6 +3505,8 @@ char *argv[];
 	hole_root = (struct holes *)NULL;
 
 	compsplt_root = (struct compsplt *)NULL;
+
+	min_radius = 2.0 * sqrt( SQRT_SMALL_FASTF );
 
 	name_count = 0;
 
