@@ -655,6 +655,44 @@ CONST char		*cp;
 	return -3;
 }
 
+/*
+ *			D B _ T R E E _ M U L _ D B L E A F
+ *
+ *  Multiply on the left every matrix found in a DB_LEAF node in a tree.
+ */
+void
+db_tree_mul_dbleaf( tp, mat )
+union tree	*tp;
+CONST mat_t	mat;
+{
+	mat_t	temp;
+
+	RT_CK_TREE(tp);
+
+	switch( tp->tr_op )  {
+
+	case OP_DB_LEAF:
+		if( tp->tr_l.tl_mat == NULL )  {
+			tp->tr_l.tl_mat = mat_dup(mat);
+			return;
+		}
+		bn_mat_mul( temp, mat, tp->tr_l.tl_mat );
+		bn_mat_copy( tp->tr_l.tl_mat, temp );
+		break;
+
+	case OP_UNION:
+	case OP_INTERSECT:
+	case OP_SUBTRACT:
+	case OP_XOR:
+		db_tree_mul_dbleaf( tp->tr_b.tb_left, mat );
+		db_tree_mul_dbleaf( tp->tr_b.tb_right, mat );
+		break;
+
+	default:
+		bu_log("db_tree_mul_dbleaf: bad op %d\n", tp->tr_op);
+		bu_bomb("db_tree_mul_dbleaf\n");
+	}
+}
 
 /*
  *			D B _ F O L L O W _ P A T H _ F O R _ S T A T E
