@@ -650,6 +650,7 @@ genptr_t	arg;
 	long	stdin_pos;
 	FILE	stdin_save;
 	int	worker_pid_tbl[MAX_PSW];
+	int	avail_cpus;
 
 	bzero(worker_pid_tbl, sizeof(worker_pid_tbl) );
 #  endif
@@ -763,6 +764,13 @@ genptr_t	arg;
 	stdin_save = *(stdin);		/* struct copy */
 	bu_nthreads_started = 1;
 	bu_nthreads_finished = 1;
+	avail_cpus = bu_avail_cpus();
+
+	if( ncpu > avail_cpus + 1 ) {
+		bu_log( "%d cpus requested, but only %d available\n", ncpu, bu_avail_cpus() );
+		bu_log( "\t(NOTE: timings are likely incorrect)\n" );
+		ncpu = avail_cpus + 1;
+	}
 
 	/* Note:  it may be beneficial to call prctl(PR_SETEXITSIG); */
 	/* prctl(PR_TERMCHILD) could help when parent dies.  But SIGHUP??? hmmm */
