@@ -1470,7 +1470,12 @@ got_loop:
  *  Set up nmg_ray_state structure.
  *  "left" is a vector that lies in the plane of the face
  *  which contains the loops being operated on.
- *  It points in the direction "left" of the ray.
+ *  It points in the direction "left" of the ray, such that the first
+ *  OT_SAME loop in the first OT_SAME fact that it crosses will cross
+ *  the ray in a left-to-right manner consistent with the CCW loop rule.
+ *  There are some special conditions placed on the "dir" argument to
+ *  make this happen;  see the comments in nmg_inter.c for details, or
+ *  Mike's notes "The 'Left' Vector Choice" dated 27-Aug-93, page 1.
  */
 HIDDEN void
 nmg_face_rs_init( rs, b, fu1, fu2, pt, dir )
@@ -1491,7 +1496,6 @@ vect_t		dir;
 	rs->fu2 = fu2;
 	VMOVE( rs->pt, pt );
 	VMOVE( rs->dir, dir );
-/* XXX We can't assume that "dir" lies in the direction of an edge. */
 	VCROSS( rs->left, fu1->f_p->fg_p->N, dir );
 	VUNITIZE( rs->left );
 	switch( fu1->orientation )  {
