@@ -1156,7 +1156,8 @@ char	**argv;
 		}
 
 		rt_log( "Calculational tolerances:\n" );
-		rt_log( "\tdistance = %g\n\tperpendicularity = %g\n", mged_tol.dist, mged_tol.perp );
+		rt_log( "\tdistance = %g\n\tperpendicularity = %g (cosine of %g degrees)\n",
+			mged_tol.dist, mged_tol.perp, acos( mged_tol.perp)*rt_radtodeg );
 		return CMD_OK;
 	}
 
@@ -1166,11 +1167,10 @@ char	**argv;
 		f = atof(argv[argind+1]);
 		if( argv[argind][0] == 'a' )  {
 			/* Absolute tol */
-			if( f <= 0.0 )  {
+			if( f <= 0.0 )
 				mged_abs_tol = 0.0;	/* None */
-				return CMD_OK;
-			}
-			mged_abs_tol = f * local2base;
+			else
+				mged_abs_tol = f * local2base;
 			return CMD_OK;
 		}
 		else if( argv[argind][0] == 'r' )  {
@@ -1181,7 +1181,6 @@ char	**argv;
 			}
 			/* Note that a value of 0.0 will disable relative tolerance */
 			mged_rel_tol = f;
-			return CMD_OK;
 		}
 		else if( argv[argind][0] == 'n' )  {
 			/* Normal tolerance, in degrees */
@@ -1191,7 +1190,6 @@ char	**argv;
 			}
 			/* Note that a value of 0.0 or 360.0 will disable this tol */
 			mged_nrm_tol = f * rt_degtorad;
-			return CMD_OK;
 		}
 		else if( argv[argind][0] == 'd' ) {
 			/* Calculational distance tolerance */
@@ -1201,7 +1199,6 @@ char	**argv;
 			}
 			mged_tol.dist = f;
 			mged_tol.dist_sq = f*f;
-			return CMD_OK;
 		}
 		else if( argv[argind][0] == 'p' ) {
 			/* Calculational perpendicularity tolerance */
@@ -1211,7 +1208,6 @@ char	**argv;
 			}
 			mged_tol.perp = f;
 			mged_tol.para = 1.0 - f;
-			return CMD_OK;
 		}
 		else
 			rt_log("Error, tolerance '%s' unknown\n", argv[argind] );

@@ -358,7 +358,7 @@ static struct funtab funtab[] = {
 	f_tedit,1,1,
 "title", "string", "change the title",
 	f_title,1,MAXARGS,
-"tol", "[abs #]|[rel #]", "show/set tessellation and calculation tolerances",
+"tol", "[abs #] [rel #] [norm #] [dist #] [perp #]", "show/set tessellation and calculation tolerances",
 	f_tol, 1, 11,
 "tops", "", "find all top level objects",
 	f_tops,1,1,
