@@ -74,6 +74,17 @@ then
 	"CRAY C90") MACHINE=xmp; UNIXTYPE=SYSV; HAS_TCP=1; HAS_SYMLINKS=1;;
 	vax)	MACHINE=vax; UNIXTYPE=BSD; HAS_TCP=1; HAS_SYMLINKS=1;;
 	esac
+
+	if test "$MACHINE" = ""; then case "$OS_TYPE" in
+	IRIX)  	UNIXTYPE=SYSV; HAS_TCP=1; HAS_SYMLINKS=1;
+		case "$OS_REVISION" in
+		4)	MACHINE=5d;;
+		5)	MACHINE=6d;;
+		6)	MACHINE=7d;;
+		7)	MACHINE=8d;;
+		*)	echo ERROR unknown SGI software version `uname -a` 1>&2;;
+		esac;;
+	esac; fi
 fi
 
 if test "$MACHINE" = ""
@@ -218,66 +229,6 @@ cat << EOF > ${IN_FILE}
 	UNIXTYPE=SYSV;
 	HAS_TCP=1;
 	HAS_SYMLINKS=1;
-#endif
-
-#if (defined(sgi) && defined(mips)) || (defined(__sgi) && defined(__mips))
-/*	Silicon Graphics 4D, which uses the MIPS chip */
-#	undef	sgi
-#	if __STDC__
-/*		Irix 5.0 system or later */
-/*		Irix 5.0 = 6d, Irix 6.0 = 7d */
-		case `uname -r` in
-		4.*)	MACHINE=5d;;
-		5.*)	MACHINE=6d;;
-		6.*)	MACHINE=7d;;
-		7.*)	MACHINE=8d;;
-		*)	echo ERROR unknown SGI software version `uname -a` 1>&2;;
-		esac
-#	else
-#		if defined(__sgi)
-/*			IRIX 4.0, "cypress" */
-			MACHINE=5d;
-#		else
-/*			IRIX 3.3, now obsolete */
-			MACHINE=4d;
-#		endif
-#	endif
-	UNIXTYPE=SYSV;
-	HAS_TCP=1;
-	HAS_SYMLINKS=1;
-#endif
-
-#if defined(sun) && !defined(sparc)
-#	undef	sun
-#	undef	sun3
-	MACHINE=sun3;
-	UNIXTYPE=BSD;
-	HAS_TCP=1;
-	HAS_SYMLINKS=1;
-#endif
-
-#if defined(sun) && defined(sparc)
-#	undef	sun
-#	undef	sun4
-#	undef	sun5
-	HAS_TCP=1;
-	HAS_SYMLINKS=1;
-
-	if [ -x /usr/bin/uname ] ; then
-		if expr \`/usr/bin/uname -r\` : '4\.*' > /dev/null; then
-			/* Solarix 1.X (BSD based) */
-			UNIXTYPE=BSD;
-			MACHINE=sun4;
-		else
-			/* Solaris 2.X (SYSV based) (SunOS 5) */
-			UNIXTYPE=SYSV;
-			MACHINE=sun5;
-		fi
-	else
-		/* No uname.  Must be Solarix 1.X (SunOS 4) */
-		UNIXTYPE=BSD;
-		MACHINE=sun4;
-	fi
 #endif
 
 #if defined(NeXT)
