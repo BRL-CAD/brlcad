@@ -39,7 +39,7 @@ char *progname = "(noname)";
 char	*file_name;
 
 char usage[] = "\
-Usage: bwmod {-a add -s sub -m mult -d div -A(abs) -e exp -r root} [file.bw]\n";
+Usage: bwmod [-c] {-a add -s sub -m mult -d div -A -e exp -r root} [file.bw]\n";
 
 #define	ADD	1
 #define MULT	2
