@@ -908,7 +908,7 @@ AC_SUBST(FFT)
 OPTICAL='${top_builddir}/src/liboptical/liboptical.la'
 AC_SUBST(OPTICAL)
 
-ORLE='${top_builddir}/src/other/liborle/liborle.la'
+ORLE='${top_builddir}/src/liborle/liborle.la'
 AC_SUBST(ORLE)
 
 PKG='${top_builddir}/src/libpkg/libpkg.la'
@@ -1004,6 +1004,7 @@ AC_CONFIG_FILES([
 	src/libfft/Makefile
 	src/libmultispectral/Makefile
 	src/liboptical/Makefile
+	src/liborle/Makefile
 	src/libpkg/Makefile
 	src/librt/Makefile
 	src/librtserver/Makefile
@@ -1033,7 +1034,6 @@ AC_CONFIG_FILES([
 	src/other/libitcl/itk/doc/Makefile
 	src/other/libitcl/itk/generic/Makefile
 	src/other/libitcl/itk/library/Makefile
-	src/other/liborle/Makefile
 	src/other/libpng/Makefile
 	src/other/libregex/Makefile
 	src/other/libtcl/Makefile
