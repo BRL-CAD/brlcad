@@ -52,6 +52,8 @@ static char RCSrayg3[] = "@(#)$Header$ (BRL)";
 
 void	part_compact();
 
+extern fastf_t	gift_grid_rounding;
+extern point_t	viewbase_model;
 
 extern double	mat_radtodeg;
 extern int	npsw;			/* number of worker PSWs to run */
@@ -63,9 +65,9 @@ struct structparse view_parse[] = {
 	"",	0, (char *)0,	0,		FUNC_NULL
 };
 
+static mat_t	model2hv;		/* model coords to GIFT h,v in inches */
+
 static FILE	*plotfp;		/* optional plotting file */
-fastf_t		h_offset;
-fastf_t		v_offset;
 
 char usage[] = "\
 Usage:  rtg3 [options] model.g objects... >file.ray\n\
@@ -107,6 +109,9 @@ char *file, *obj;
 	save_file = file;
 	save_obj = obj;
 
+	/* Cause grid_setup() to align the grid on inch boundaries */
+	gift_grid_rounding = 25.4;
+
 	ap->a_hit = rayhit;
 	ap->a_miss = raymiss;
 	ap->a_onehit = 0;
@@ -139,6 +144,8 @@ struct application	*ap;
 
 	point_t		model_origin;		/* origin in model coordinates */
 	point_t		v_model_origin;		/* model origin shifted to view space coordinates */
+	vect_t		temp;
+	vect_t		m_temp, g_tmp;
 
 	if( outfp == NULL )
 		rt_bomb("outfp is NULL\n");
@@ -170,19 +177,17 @@ struct application	*ap;
 	 */
 	fprintf(outfp,
 		"     %-15.8f     %-15.8f                              %10f\n",
-		azimuth, elevation, MAGNITUDE(dx_model)*MM2IN );
+		azimuth, elevation, cell_width*MM2IN );
 
-	/* Calculate the offset of the screen_space origin to the
-	 * model_space origin.  First set the model origin to 0, 0, 0,
-	 * and then convert it to view space coordinates.
+	/*
+	 *  GIFT uses an H,V coordinate system that is anchored at the
+	 *  model origin, but rotated according to the view.
+	 *  For convenience later, build a matrix that will take
+	 *  a point in model space (with units of mm), and convert it
+	 *  to a point in HV space, with units of inches.
 	 */
-
-	VSET(model_origin, 0, 0, 0);
-	MAT4X3PNT(v_model_origin, model2view, model_origin);
-	
-	h_offset = (v_model_origin[X] + 1) * 0.5 * width * MAGNITUDE(dx_model);
-	v_offset = (v_model_origin[Y] + 1) * 0.5 * height * MAGNITUDE(dy_model);
-
+	mat_copy( model2hv, Viewrotscale );
+	model2hv[15] = 1/MM2IN;
 }
 
 /*
@@ -239,14 +244,14 @@ register struct partition *PartHeadp;
 	struct partition	*np;	/* next partition */
 	struct partition	air;
 	int 			comp_count;	/* component count */
-	fastf_t			h, v;		/* h,v actual ray pos */
-	fastf_t			hcen, vcen;	/* h,v cell center */
 	fastf_t			dfirst, dlast;	/* ray distances */
 	static fastf_t		dcorrection = 0; /* RT to GIFT dist corr */
 	int			card_count;	/* # comp. on this card */
 	char			*fmt;		/* printf() format string */
 	struct rt_vls		str;
 	char			buf[128];	/* temp. sprintf() buffer */
+	point_t			hv;		/* GIFT h,v coords, in inches */
+	point_t			hvcen;
 
 	if( pp == PartHeadp )
 		return(0);		/* nothing was actually hit?? */
@@ -269,37 +274,31 @@ register struct partition *PartHeadp;
 	rt_vls_extend( &str, 80 * (comp_count+1) );
 
 	/*
-	 *  GIFT format wants grid coordinates, which are the
-	 *  h,v coordinates of the screen plain projected into model space.
+	 *  Find the H,V coordinates of the grid cell center.
+	 *  RT uses the lower left corner of each cell.
 	 */
-	hcen = (ap->a_x + 0.5) * MAGNITUDE(dx_model) - h_offset;
-	vcen = (ap->a_y + 0.5) * MAGNITUDE(dy_model) - v_offset;
-	if( jitter )  {
-		vect_t	hv;
-		/*
-		 *  Find exact h,v coordinates of ray by
-		 *  projecting start point back into view coordinates,
-		 *  and converting from view coordinates (-1..+1) to
-		 *  screen (pixel) coordinates for h,v.
-		 */
-		MAT4X3PNT( hv, model2view, ap->a_ray.r_pt );
+	{
+		point_t		center;
+		fastf_t		dx;
+		fastf_t		dy;
 
-		h = (hv[X]+1)*0.5 * width * MAGNITUDE(dx_model) - h_offset;
-		v = (hv[Y]+1)*0.5 * height * MAGNITUDE(dy_model) - v_offset;
-	} else {
-		/* h,v coordinates of ray are of the lower left corner */
-		h = ap->a_x * MAGNITUDE(dx_model) - h_offset;
-		v = ap->a_y * MAGNITUDE(dy_model) - v_offset;
+		dx = ap->a_x + 0.5;
+		dy = ap->a_y + 0.5;
+		VJOIN2( center, viewbase_model, dx, dx_model, dy, dy_model );
+		MAT4X3PNT( hvcen, model2hv, center );
 	}
 
-	/* This code is for diagnostics.
-	 *	fprintf(stderr, " h_offset=%g, v_offset=%g, hcen=%g, vcen=%g, h=%g, v=%g\n",
-	 *	h_offset, v_offset, hcen, vcen, h);
-	 *
+	/*
+	 *  Find exact h,v coordinates of actual ray start by
+	 *  projecting start point into GIFT h,v coordinates.
+	 */
+	MAT4X3PNT( hv, model2hv, ap->a_ray.r_pt );
+
+	/*
 	 *  In RT, rays are launched from the plane of the screen,
 	 *  and ray distances are relative to the start point.
 	 *  In GIFT-3 output files, ray distances are relative to
-	 *  the screen plane translated so that it contains the origin.
+	 *  the (H,V) plane translated so that it contains the origin.
 	 *  A distance correction is required to convert between the two.
 	 *  Since this really should be computed only once, not every time,
 	 *  the trip_count flag was added.
@@ -358,8 +357,8 @@ register struct partition *PartHeadp;
 #endif
 
 	sprintf(buf, SHOT_FMT,
-		hcen * MM2IN, vcen * MM2IN,
-		h * MM2IN, v * MM2IN,
+		hvcen[0], hvcen[1],
+		hv[0], hv[1],
 		comp_count,
 		dfirst * MM2IN, dlast * MM2IN,
 		azimuth, elevation );
@@ -407,7 +406,7 @@ register struct partition *PartHeadp;
 		 */
 		if( comp_thickness <= 0 )  {
 			rt_log("ERROR: comp_thickness=%g at h=%g, v=%g (x=%d, y=%d)\n",
-				comp_thickness, h , v, ap->a_x, ap->a_y);
+				comp_thickness, hv[0], hv[1], ap->a_x, ap->a_y);
 			rt_pr_partitions(ap->a_rt_i, PartHeadp, "Defective partion:");
 			rt_log("Send this output to Sue Muuss (sue@brl.mil)\n");
 		}
