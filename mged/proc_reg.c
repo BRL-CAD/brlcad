@@ -203,18 +203,24 @@ matp_t mat;
 	eptr->l.stp->st_matp = mat;
 
 	{
-		struct rt_pg_internal *pg;
+		struct rt_bot_internal *bot;
 		struct rt_db_internal intern2;
 
 		if( do_polysolids )
 		{
-			/* create and prep a polysolid version of this solid */
+			struct shell *s=(struct shell *)NULL;
+			struct nmgregion *r=(struct nmgregion *)NULL;
 
-			BU_GETSTRUCT( pg, rt_pg_internal );
+			/* create and prep a BoT version of this solid */
+			if( eptr->l.m ) {
+				r = BU_LIST_FIRST( nmgregion, &eptr->l.m->r_hd );
+				s = BU_LIST_FIRST( shell, &r->s_hd );
+			}
 
-			if( !solid_is_plate_mode_bot || !eptr->l.m || !nmg_to_poly( eptr->l.m, pg, &mged_tol ) )
+			if( solid_is_plate_mode_bot ||
+			    !eptr->l.m ||
+			    (bot=nmg_bot( s, &mged_tol ) ) == (struct rt_bot_internal *)NULL )
 			{
-				bu_free( (char *)pg, "rt_pg_internal" );
 				eptr->l.stp->st_id = id;
 				if( rt_functab[id].ft_prep( eptr->l.stp, &intern, rtip ) < 0 )
 					Tcl_AppendResult(interp, "Prep failure for solid '", dp->d_namep,
@@ -223,11 +229,11 @@ matp_t mat;
 			else
 			{
 				RT_INIT_DB_INTERNAL( &intern2 );
-				intern2.idb_type = ID_POLY;
-				intern2.idb_meth = &rt_functab[ID_POLY];
-				intern2.idb_ptr = (genptr_t)pg;
-				eptr->l.stp->st_id = ID_POLY;
-				if (rt_functab[ID_POLY].ft_prep( eptr->l.stp, &intern2, rtip ) < 0 )
+				intern2.idb_type = ID_BOT;
+				intern2.idb_meth = &rt_functab[ID_BOT];
+				intern2.idb_ptr = (genptr_t)bot;
+				eptr->l.stp->st_id = ID_BOT;
+				if (rt_functab[ID_BOT].ft_prep( eptr->l.stp, &intern2, rtip ) < 0 )
 				{
 					Tcl_AppendResult(interp, "Prep failure for solid '", dp->d_namep,
 						"'\n", (char *)NULL );
