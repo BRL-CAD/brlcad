@@ -18,7 +18,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCScloud[] = "@(#)$Header$ (BRL)";
+static char RCSmathtab[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
