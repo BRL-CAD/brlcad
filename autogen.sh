@@ -134,6 +134,22 @@ _prev_path="`pwd`"
 cd "$PATH_TO_AUTOGEN"
 
 
+#####################
+# detect an aux dir #
+#####################
+_aux_dir=.
+_configure_file=/dev/null
+if test -f configure.ac ; then
+  _configure_file=configure.ac
+elif test -f configure.in ; then
+  _configure_file=configure.in
+fi
+_aux_dir="`cat $_configure_file | grep AC_CONFIG_AUX_DIR | tail -1 | sed 's/^[ ]*AC_CONFIG_AUX_DIR(\(.*\)).*/\1/'`"
+if test ! -d "$_aux_dir" ; then
+  _aux_dir=.
+fi
+
+
 ##########################################
 # make sure certain required files exist #
 ##########################################
@@ -156,8 +172,10 @@ fi
 # protect COPYING from overwrite #
 ##################################
 if test -f COPYING ; then
-  if test ! -f misc/COPYING.backup ; then
-    cp -pf COPYING misc/COPYING.backup
+  if test -d "${_aux_dir}" ; then
+    if test ! -f "${_aux_dir}/COPYING.backup" ; then
+      cp -pf COPYING "${_aux_dir}/COPYING.backup"
+    fi
   fi
 fi
 
@@ -166,14 +184,16 @@ fi
 # make sure certain generated files do not exist #
 ##################################################
 
-if test -f misc/config.guess ; then
-  mv -f misc/config.guess misc/config.guess.backup
-fi
-if test -f misc/config.sub ; then
-  mv -f misc/config.sub misc/config.sub.backup
-fi
-if test -f misc/ltmain.sh ; then
-  mv -f misc/ltmain.sh misc/ltmain.sh.backup
+if test -d "${_aux_dir}" ; then
+  if test -f "${_aux_dir}/config.guess" ; then
+    mv -f "${_aux_dir}/config.guess" "${_aux_dir}/config.guess.backup"
+  fi
+  if test -f "${_aux_dir}/config.sub" ; then
+    mv -f "${_aux_dir}/config.sub" "${_aux_dir}/config.sub.backup"
+  fi
+  if test -f "${_aux_dir}/ltmain.sh" ; then
+    mv -f "${_aux_dir}/ltmain.sh" "${_aux_dir}/ltmain.sh.backup"
+  fi
 fi
 
 
@@ -209,14 +229,14 @@ if [ "x$reconfigure_manually" = "xyes" ] ; then
 
   # libtoolize might put ltmain.sh in the wrong place
   if test -f ltmain.sh ; then
-    if test ! -f misc/ltmain.sh ; then
+    if test ! -f "${_aux_dir}/ltmain.sh" ; then
       echo
       echo "Warning:  libtoolize is creating ltmain.sh in the wrong directory"
       echo
       echo "Fortunately, the problem can be worked around by simply copying the"
-      echo "file to the appropriate location (misc/).  This has been done for you."
+      echo "file to the appropriate location (${_aux_dir}/).  This has been done for you."
       echo
-      cp ltmain.sh misc/ltmain.sh
+      cp ltmain.sh "${_aux_dir}/ltmain.sh"
       echo $ECHO_N "Continuing build preparation ... $ECHO_C"
     fi
   fi
@@ -235,8 +255,10 @@ fi
 ###############################
 # restore COPYING from backup #
 ###############################
-if test -f misc/COPYING.backup ; then
-  cp -pf misc/COPYING.backup COPYING
+if test -d "${_aux_dir}" ; then
+  if test -f "${_aux_dir}/COPYING.backup" ; then
+    cp -pf "${_aux_dir}/COPYING.backup" COPYING
+  fi
 fi
 
 ################
