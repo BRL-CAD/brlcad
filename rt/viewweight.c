@@ -244,7 +244,7 @@ struct application *ap;
 	for( rp = rtip->HeadRegion; rp != (struct region *) NULL;
 			rp = rp->reg_forw ) {
 		register fastf_t weight = 0;
-		register l = strlen(rp->reg_name);
+		register int l = strlen(rp->reg_name);
 		register fastf_t *ptr;
 
 /* */
