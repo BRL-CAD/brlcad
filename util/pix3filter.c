@@ -66,6 +66,9 @@ struct	kernels {
 	{ "Boxcar Average", "b", 1, 1, 1, 1, 1, 1, 1, 1, 1,
 				 1, 1, 1, 1,27, 1, 1, 1, 1,
 				 1, 1, 1, 1, 1, 1, 1, 1, 1, 53, 0},
+	{ "Animation Smear", "s",1, 1, 1, 1, 1, 1, 1, 1, 1,
+				 1, 1, 1, 1, 1, 1, 1, 1, 1,
+				 2, 2, 2, 2,35, 2, 2, 2, 2, 69, 0},
 	{ NULL, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
 };
 
@@ -85,7 +88,8 @@ void	select_filter(), dousage();
 
 char	usage[] = "\
 Usage: pix3filter [-f<type>] [-v] [-d#] [-o#]\n\
-        [-s squaresize] [-w width] [-n height] [file.pix] > file.pix\n";
+        [-s squaresize] [-w width] [-n height]\n\
+	file.pix.n | file.pix1 file.pix2 file.pix3  > file.pix\n";
 
 get_args( argc, argv )
 register char **argv;
@@ -126,7 +130,7 @@ register char **argv;
 		(void) fprintf( stderr,
 		    "pix3filter: must supply a file name\n");
 		return(0);
-	} else if ( optind + 3 < argc ) {
+	} else if ( optind + 3 <= argc ) {
 
 		if( (oldfp = fopen(argv[optind], "r")) == NULL )  {
 			(void)fprintf( stderr,
@@ -148,7 +152,7 @@ register char **argv;
 				argv[optind] );
 			return(0);
 		}
-
+		optind += 3;
 	} else {
 		int frameNumber;
 		char *idx, *working_name;
@@ -199,12 +203,13 @@ register char **argv;
 			return(0);
 		}
 		free(working_name);
+		optind += 1;
 	}
 
 	if( isatty(fileno(stdout)) )
 		return(0);
 
-	if ( argc > ++optind )
+	if ( argc > optind )
 		(void)fprintf( stderr, "pix3filter: excess argument(s) ignored\n" );
 
 	return(1);		/* OK */
