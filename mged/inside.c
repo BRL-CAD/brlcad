@@ -239,7 +239,7 @@ char **argv;
 
 	if( intern.idb_type == ID_ARB8 )  {
 	  /* find the comgeom arb type, & reorganize */
-	  int uvec[8],svec[8];
+	  int uvec[8],svec[11];
 
 	  if( rt_arb_get_cgtype( &cgtype , intern.idb_ptr, &mged_tol , uvec , svec ) == 0 ) {
 	    Tcl_AppendResult(interp, outdp->d_namep, ": BAD ARB\n", (char *)NULL);
