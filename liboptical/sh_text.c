@@ -32,7 +32,7 @@ HIDDEN int ckr_setup(), ckr_render(), ckr_print(), ckr_free();
 HIDDEN int bmp_setup(), bmp_render(), bmp_print(), bmp_free();
 HIDDEN int tstm_render();
 HIDDEN int star_render();
-extern int mlib_zero();
+extern int mlib_zero(), mlib_one();
 
 struct mfuncs txt_mfuncs[] = {
 	"texture",	0,		0,		MFI_UV,
@@ -42,10 +42,10 @@ struct mfuncs txt_mfuncs[] = {
 	ckr_setup,	ckr_render,	ckr_print,	ckr_free,
 
 	"testmap",	0,		0,		MFI_UV,
-	mlib_zero,	tstm_render,	mlib_zero,	mlib_zero,
+	mlib_one,	tstm_render,	mlib_zero,	mlib_zero,
 
 	"fakestar",	0,		0,		0,
-	mlib_zero,	star_render,	mlib_zero,	mlib_zero,
+	mlib_one,	star_render,	mlib_zero,	mlib_zero,
 
 	"bump",		0,		0,		MFI_UV|MFI_NORMAL,
 	txt_setup,	bmp_render,	txt_print,	txt_free,
@@ -238,7 +238,10 @@ char	**dpp;
 	tp->tx_pixels = (char *)0;
 	if( tp->tx_transp[3] != 0 )
 		rp->reg_transmit = 1;
-	return( txt_read(tp) );
+	if( txt_read(tp) == 0 )
+		return(-1);
+	else
+		return(1);
 }
 
 /*
