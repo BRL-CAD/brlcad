@@ -67,8 +67,10 @@ fastf_t a,b,c,x;
 
 	if (fabs(a)>VDIVIDE_TOL){
 		z = cosh(a*(x-c))/a + b;
-		return(z);
+	} else {
+		z = b;
 	}
+	return(z);
 }
 
 /* HYPER_GET_ANG - calculate angle corresponding to the slope of 
@@ -221,7 +223,7 @@ vect_t p_zero, p_one;
 		}
 
 		if ((j==0)&&(k==0)){
-			status==SOLVED;
+			status = SOLVED;
 			break;
 		}
 	}
