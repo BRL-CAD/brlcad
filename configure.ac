@@ -49,7 +49,7 @@ AC_CANONICAL_HOST
 AC_CANONICAL_TARGET
 
 AM_INIT_AUTOMAKE(brlcad, $BRLCAD_VERSION.$CONFIG_DATE)
-AM_CONFIG_HEADER(h/config.h)
+AM_CONFIG_HEADER(include/config.h)
 
 AC_PREFIX_DEFAULT(/usr/brlcad)
 
@@ -713,6 +713,9 @@ AC_SUBST(WDB)
 
 AC_CONFIG_FILES([
 	Makefile
+	bench/Makefile
+	db/Makefile
+	doc/Makefile
 	doc/html/Makefile
 	doc/html/ReleaseNotes/Makefile
 	doc/html/ReleaseNotes/Rel5.0/Makefile
@@ -741,14 +744,12 @@ AC_CONFIG_FILES([
 	sh/Makefile
 	src/Makefile
 	src/anim/Makefile
-	src/bench/Makefile
 	src/brlman/Makefile
 	src/burst/Makefile
 	src/bwish/Makefile
+	src/canon/Makefile
 	src/comgeom-g/Makefile
 	src/conv/Makefile
-	src/db/Makefile
-	src/doc/Makefile
 	src/fb/Makefile
 	src/fbed/Makefile
 	src/fbserv/Makefile
@@ -756,12 +757,12 @@ AC_CONFIG_FILES([
 	src/halftone/Makefile
 	src/iges/Makefile
 	src/irprep/Makefile
-	src/iwidgets/Makefile
-	src/iwidgets/doc/Makefile
-	src/iwidgets/generic/Makefile
-	src/iwidgets/iwidgets.tcl
-	src/iwidgets/pkgIndex.tcl
 	src/jack/Makefile
+	src/java/Makefile
+	src/java/mil/Makefile
+	src/java/mil/army/Makefile
+	src/java/mil/army/arl/Makefile
+	src/java/mil/army/arl/brlcad/Makefile
 	src/lgt/Makefile
 	src/libbn/Makefile
 	src/libbu/Makefile
@@ -769,37 +770,47 @@ AC_CONFIG_FILES([
 	src/libdm/Makefile
 	src/libfb/Makefile
 	src/libfft/Makefile
-	src/libitcl/Makefile
-	src/libitcl/itcl/Makefile
-	src/libitcl/itcl/doc/Makefile
-	src/libitcl/itcl/generic/Makefile
-	src/libitcl/itcl/library/Makefile
-	src/libitcl/itk/Makefile
-	src/libitcl/itk/doc/Makefile
-	src/libitcl/itk/generic/Makefile
-	src/libitcl/itk/library/Makefile
+	src/libmultispectral/Makefile
 	src/liboptical/Makefile
-	src/liborle/Makefile
 	src/libpkg/Makefile
-	src/libpng/Makefile
 	src/librt/Makefile
 	src/librtserver/Makefile
 	src/libsysv/Makefile
 	src/libtclcad/Makefile
 	src/libtermio/Makefile
-	src/libutahrle/Makefile
 	src/libwdb/Makefile
 	src/mged/Makefile
 	src/mk/Makefile
 	src/nirt/Makefile
 	src/off/Makefile
 	src/other/awf/Makefile
+	src/other/iwidgets/Makefile
+	src/other/iwidgets/doc/Makefile
+	src/other/iwidgets/generic/Makefile
+	src/other/iwidgets/iwidgets.tcl
+	src/other/iwidgets/pkgIndex.tcl
+	src/other/jove/Makefile
+	src/other/libitcl/Makefile
+	src/other/libitcl/itcl/Makefile
+	src/other/libitcl/itcl/doc/Makefile
+	src/other/libitcl/itcl/generic/Makefile
+	src/other/libitcl/itcl/library/Makefile
+	src/other/libitcl/itk/Makefile
+	src/other/libitcl/itk/doc/Makefile
+	src/other/libitcl/itk/generic/Makefile
+	src/other/libitcl/itk/library/Makefile
+	src/other/liborle/Makefile
+	src/other/libpng/Makefile
 	src/other/libtcl/Makefile
 	src/other/libtk/Makefile
+	src/other/libtkGLX/Makefile
+	src/other/libutahrle/Makefile
 	src/other/libz/Makefile
 	src/patch/Makefile
+	src/proc-db/Makefile
 	src/remrt/Makefile
 	src/rt/Makefile
+	src/rttherm/Makefile
 	src/sample_applications/Makefile
 	src/sample_applications/mk
 	src/sig/Makefile
