@@ -1597,6 +1597,9 @@ RT_EXTERN(void rt_rotate_bbox, (point_t omin, point_t omax, CONST mat_t mat,
 	CONST point_t imin, CONST point_t imax));
 RT_EXTERN(void rt_rotate_plane, (plane_t oplane, CONST mat_t mat,
 	CONST plane_t iplane));
+RT_EXTERN(int rt_coplanar, (CONST plane_t a, CONST plane_t b,
+	CONST struct rt_tol *tol));
+
 
 /* CxDiv, CxSqrt */
 extern void rt_pr_roots();		/* print complex roots */
@@ -1644,6 +1647,7 @@ RT_EXTERN(void			nmg_ks, (struct shell *s) );
 RT_EXTERN(void			nmg_kr, (struct nmgregion *r) );
 RT_EXTERN(void			nmg_km, (struct model *m) );
 RT_EXTERN(void			nmg_vertex_gv, (struct vertex *v, pointp_t pt) );
+RT_EXTERN(void			nmg_vertex_g, (struct vertex *v, fastf_t x, fastf_t y, fastf_t z) );
 RT_EXTERN(void			nmg_loop_g, (struct loop *l) );
 RT_EXTERN(void			nmg_face_g, (struct faceuse *fu, plane_t p) );
 RT_EXTERN(void			nmg_face_bb, (struct face *f) );
@@ -1791,8 +1795,17 @@ RT_EXTERN(void			nmg_ck_lueu, (struct loopuse *cklu, char *s) );
 RT_EXTERN(void			nmg_face_combine, (struct nmg_ptbl *b,
 				struct faceuse *fu1, struct faceuse *fu2,
 				point_t pt, vect_t dir) );
+RT_EXTERN(void			nmg_face_plot, ( struct faceuse *fu) );
+RT_EXTERN(void			nmg_face_lu_plot, ( struct loopuse *lu, struct nmg_ray_state *rs) );
 
 #define nmg_mev(_v, _u)	nmg_me((_v), (struct vertex *)NULL, (_u))
+
+/* From nmg_eval.c */
+RT_EXTERN(void			nmg_eval_shell, ( register struct shell *s, struct nmg_bool_state *bs ) );
+RT_EXTERN(void			nmg_rm_redundancies, (struct shell *s ) );
+RT_EXTERN(void			nmg_eval_plot, (struct nmg_bool_state *bs, int num, int delay) );
+
+
 
 /* From nmg_inter.c */
 RT_EXTERN(void			nmg_crackshells, (struct shell *s1, struct shell *s2, CONST struct rt_tol *tol) );
