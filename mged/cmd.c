@@ -260,6 +260,7 @@ static struct cmdtab cmdtab[] = {
 	"find", f_find,
 	"fracture", f_fracture,
 	"g", f_group,
+	"get_dm_list", f_get_dm_list,
 	"get_rect", f_get_rect, 
 	"get_view", f_get_view,
 	"goto_view", f_goto_view,
