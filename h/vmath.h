@@ -276,9 +276,9 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 #ifdef SHORT_VECTORS
 #define VADD2SCALE( o, a, b, s )	VADD2SCALEN( o, a, b, s, 3 )
 #else
-#define VADD2SCALE( o, a, b, s )	o[X] = ((a)[X] + (b)[X]) * (s); \
-					o[Y] = ((a)[Y] + (b)[Y]) * (s); \
-					o[Z] = ((a)[Z] + (b)[Z]) * (s);
+#define VADD2SCALE( o, a, b, s )	(o)[X] = ((a)[X] + (b)[X]) * (s); \
+					(o)[Y] = ((a)[Y] + (b)[Y]) * (s); \
+					(o)[Z] = ((a)[Z] + (b)[Z]) * (s);
 #endif
 
 #define VADD2SCALEN( o, a, b, n ) \
@@ -294,9 +294,9 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 #ifdef SHORT_VECTORS
 #define VSUB2SCALE( o, a, b, s )	VSUB2SCALEN( o, a, b, s, 3 )
 #else
-#define VSUB2SCALE( o, a, b, s )	o[X] = ((a)[X] - (b)[X]) * (s); \
-					o[Y] = ((a)[Y] - (b)[Y]) * (s); \
-					o[Z] = ((a)[Z] - (b)[Z]) * (s);
+#define VSUB2SCALE( o, a, b, s )	(o)[X] = ((a)[X] - (b)[X]) * (s); \
+					(o)[Y] = ((a)[Y] - (b)[Y]) * (s); \
+					(o)[Z] = ((a)[Z] - (b)[Z]) * (s);
 #endif
 
 #define VSUB2SCALEN( o, a, b, n ) \
