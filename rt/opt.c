@@ -80,6 +80,7 @@ int		incr_level;		/* current incremental level */
 int		incr_nlevel;		/* number of levels */
 int		npsw = 1;		/* number of worker PSWs to run */
 struct resource	resource[MAX_PSW];	/* memory resources */
+int		transpose_grid = 0;     /* reverse the order of grid traversal */
 /***** end variables shared with worker() *****/
 
 /***** variables shared with do.c *****/
@@ -139,7 +140,7 @@ int get_args( int argc, register char **argv )
 
 
 #define GETOPT_STR	\
-	".:,:@:a:b:c:d:e:f:g:ij:l:n:o:p:q:rs:v:w:x:A:BC:D:E:F:G:H:IJ:K:MN:O:P:Q:RST:U:V:X:!:"
+	".:,:@:a:b:c:d:e:f:g:ij:l:n:o:p:q:rs:tv:w:x:A:BC:D:E:F:G:H:IJ:K:MN:O:P:Q:RST:U:V:X:!:"
 
 	while( (c=bu_getopt( argc, argv, GETOPT_STR )) != EOF )  {
 		switch( c )  {
@@ -155,6 +156,9 @@ int get_args( int argc, register char **argv )
 				bu_bomb("");
 			}
 			bn_randhalftabsize = i;
+			break;
+		case 't':
+			transpose_grid = 1;
 			break;
 		case 'j':
 			{
