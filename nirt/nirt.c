@@ -31,6 +31,8 @@ static char RCSid[] = "$Header$";
 #include "./nirt.h"
 #include "./usrfmt.h"
 
+extern void	cm_libdebug();
+
 char		*db_name;	/* the name of the MGED file      */
 com_table	ComTab[] =
 		{
@@ -59,6 +61,8 @@ com_table	ComTab[] =
 			"read new state for NIRT from the state file" },
 		    { "print", print_item, "query an output item",
 			"item" },
+		    { "libdebug", cm_libdebug, "set librt debug flags",
+		    	"hexadecimal flag value" },
 		    { "!", sh_esc, "escape to the shell" },
 		    { "q", quit, "quit" },
 		    { "?", show_menu, "display this help menu" },
@@ -75,7 +79,6 @@ int argc;
 char **argv;
 {
     char                db_title[TITLE_LEN+1];/* title from MGED file      */
-    char		*optstring = OPT_STRING; /* To control getopt(3C) */
     extern char		*local_unit[];
     extern char		local_u_name[];
     extern double	base2local;
@@ -113,9 +116,12 @@ char **argv;
     void		   shoot();
 
     /* Handle command-line options */
-    while ((Ch = getopt(argc, argv, optstring)) != EOF)
+    while ((Ch = getopt(argc, argv, OPT_STRING)) != EOF)
         switch (Ch)
         {
+            case 'x':
+		sscanf( optarg, "%x", &rt_g.debug );
+		break;
             case 'u':
                 if (sscanf(optarg, "%d", &use_of_air) != 1)
                 {
@@ -166,6 +172,7 @@ char **argv;
     ap.a_overlap = if_overlap;/* branch to if_overlap routine        */
     ap.a_onehit = 0;          /* continue through shotline after hit */
     ap.a_resource = 0;
+    ap.a_purpose = "NIRT ray";
     ap.a_rt_i = rtip;         /* rt_i pointer                        */
     ap.a_zero1 = 0;           /* sanity check, sayth raytrace.h      */
     ap.a_zero2 = 0;           /* sanity check, sayth raytrace.h      */
