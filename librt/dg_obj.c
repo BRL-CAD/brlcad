@@ -1168,7 +1168,7 @@ dgo_rtcheck_output_handler(clientData, mask)
 {
 	int count;
 	char line[RT_MAXLINE];
-	int fd = (int)clientData;
+	int fd = (int)((long)clientData & 0xFFFF);	/* fd's will be small */
 
 	/* Get textual output from rtcheck */
 #if 0
@@ -2421,7 +2421,7 @@ dgo_rt_output_handler(clientData, mask)
      ClientData clientData;
      int mask;
 {
-	int fd = (int)clientData;
+	int fd = (int)((long)clientData & 0xFFFF);	/* fd's will be small */
 	int count;
 #if 0
 	char line[10240];
