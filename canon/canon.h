@@ -40,7 +40,7 @@ extern int	ipu_debug;
 #endif
 
 
-#if __STDC__
+#ifdef USE_PROTOTYPES
 #	define	FUNC_EXTERN(type_and_name,args)	extern type_and_name args
 #else
 #	define	FUNC_EXTERN(type_and_name,args)	extern type_and_name()
