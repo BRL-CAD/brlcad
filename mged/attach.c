@@ -31,100 +31,38 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "tk.h"
 #include "vmath.h"
 #include "raytrace.h"
+#include "dm-Null.h"
 #include "./ged.h"
 #include "./solid.h"
-#include "./dm.h"
+#include "./mged_dm.h"
 
-MGED_EXTERN(void	Nu_input, (fd_set *input, int noblock) );
-static void	Nu_void();
-static int	Nu_int0();
-static unsigned Nu_unsign();
 static int do_2nd_attach_prompt();
 static void find_new_owner();
 static void dm_var_init();
 
-struct dm dm_Null = {
-  Nu_int0,
-  Nu_int0, Nu_void,
-  Nu_input,
-  Nu_void, Nu_void,
-  Nu_void, Nu_void,
-  Nu_void,
-  Nu_void, Nu_void,
-  Nu_void,
-  Nu_int0,
-  Nu_unsign, Nu_unsign,
-  Nu_void,
-  Nu_void,
-  Nu_void,
-  Nu_void, Nu_void, Nu_int0, Nu_int0,
-  0,			/* no displaylist */
-  0,			/* no display to release */
-  0.0,
-  "nu", "Null Display",
-  0,
-  0,
-  0,
-  0
-};
+extern void color_soltab();
 
 /* All systems can compile these! */
-extern struct dm dm_Tek;	/* Tek 4014 */
-extern struct dm dm_T49;	/* Tek 4109 */
+extern struct dm dm_Null;
+
+extern int Plot_dm_init();
 extern struct dm dm_Plot;	/* Unix Plot */
+#define IS_DM_PLOT(dp) ((dp) == &dm_Plot)
+
+extern int PS_dm_init();
 extern struct dm dm_PS;		/* PostScript */
 #define IS_DM_PS(dp) ((dp) == &dm_PS)
 
-#ifdef DM_MG
-/* We only supply a kernel driver for Berkeley VAX systems for the MG */
-extern struct dm dm_Mg;
-#endif
-
-#ifdef DM_VG
-/* We only supply a kernel driver for Berkeley VAX systems for the VG */
-extern struct dm dm_Vg;
-#endif
-
-#ifdef DM_RAT
-extern struct dm dm_Rat;
-#endif
-
-#ifdef DM_RAT80
-extern struct dm dm_Rat80;
-#endif
-
-#ifdef DM_MER
-extern struct dm dm_Mer;
-#endif
-
-#ifdef DM_PS
-extern struct dm dm_Ps;
-#endif
-
-#ifdef DM_IR
-extern struct dm dm_Ir;
-#endif
-
-#ifdef DM_4D
-extern struct dm dm_4d;
-#endif
-
-#ifdef DM_SUNPW
-extern struct dm dm_SunPw;
-#endif
-
 #ifdef DM_X
+extern int X_dm_init();
 extern struct dm dm_X;
 #define IS_DM_X(dp) ((dp) == &dm_X)
 #else
 #define IS_DM_X(dp) (0)
 #endif
 
-#ifdef DM_XGL
-extern struct dm dm_XGL;
-#endif
-
 #ifdef DM_OGL
+extern int Ogl_dm_init();
 extern struct dm dm_ogl;
 #define IS_DM_OGL(dp) ((dp) == &dm_ogl)
 #else
@@ -132,6 +70,7 @@ extern struct dm dm_ogl;
 #endif
 
 #ifdef DM_GLX
+extern int Glx_dm_init();
 extern struct dm dm_glx;
 #define IS_DM_GLX(dp) ((dp) == &dm_glx)
 #else
@@ -139,27 +78,18 @@ extern struct dm dm_glx;
 #endif
 
 #ifdef DM_PEX
+extern int Pex_dm_init();
 extern struct dm dm_pex;
 #define IS_DM_PEX(dp) ((dp) == &dm_pex)
 #else
 #define IS_DM_PEX(dp) (0)
 #endif
 
-#ifdef USE_LIBDM
-extern int Ogl_dm_init();
-extern int X_dm_init();
-extern int Glx_dm_init();
-extern int Pex_dm_init();
-extern int PS_dm_init();
-extern void color_soltab();
-
 #define NEED_GUI(dp) ( \
 	IS_DM_OGL(dp) || \
 	IS_DM_GLX(dp) || \
 	IS_DM_PEX(dp) || \
-	IS_DM_X(dp) || \
-	0)
-#endif
+	IS_DM_X(dp) )
 
 extern Tk_Window tkwin;
 extern struct _mged_variables default_mged_variables;
@@ -174,54 +104,27 @@ static char *view_cmd_str[] = {
   "press 35,25"
 };
 
-static struct dm *which_dm[] = {
-	&dm_PS,  /* We won't be advertising this guy --- access is now through the ps command */
-	&dm_Tek,
-	&dm_T49,
-	&dm_Plot,
-#ifdef DM_IR
-	&dm_Ir,
-#endif
-#ifdef DM_4D
-	&dm_4d,
-#endif
-#ifdef DM_XGL
-	&dm_XGL,
-#endif
-#ifdef DM_GT
-	&dm_gt,
-#endif
-#ifdef DM_SUNPW
-	&dm_SunPw,
-#endif
-#ifdef DM_GLX
-	&dm_glx,
+struct w_dm {
+  struct dm *dp;
+  int (*init)();
+};
+
+static struct w_dm which_dm[] = {
+  { &dm_Plot, Plot_dm_init },
+  { &dm_PS, PS_dm_init },
+#ifdef DM_X
+  { &dm_X, X_dm_init },
 #endif
 #ifdef DM_PEX
-	&dm_pex,
-#endif
-#ifdef DM_X
-	&dm_X,
-#endif
-#ifdef DM_MG
-	&dm_Mg,
-#endif
-#ifdef DM_VG
-	&dm_Vg,
-#endif
-#ifdef DM_RAT
-	&dm_Rat,
-#endif
-#ifdef DM_MER
-	&dm_Mer,
-#endif
-#ifdef DM_PS
-	&dm_Ps,
+  { &dm_pex, Pex_dm_init },
 #endif
 #ifdef DM_OGL
-	&dm_ogl,
+  { &dm_ogl, Ogl_dm_init },
 #endif
-	0
+#ifdef DM_GLX
+  { &dm_glx, Glx_dm_init },
+#endif
+  { (struct dm *)0, (int (*)())0}
 };
 
 int
@@ -266,18 +169,15 @@ char *name;
 	}
 	rt_mempurge( &(dmp->dmr_map) );
 
-#ifdef USE_LIBDM
 	dmp->dmr_close(dmp);
-#else
-	dmp->dmr_close();
-#endif
 
 	if(!--p->s_info->_rc)
 	  bu_free( (char *)p->s_info, "release: s_info" );
 	else if(p->_owner)
 	  find_new_owner(p);
 
-	/* If this display is being referenced by a command window, remove it */
+	/* If this display is being referenced by a command window,
+	   then remove the reference  */
 	for( BU_LIST_FOR(p_cmd, cmd_list, &head_cmd_list.l) )
 	  if(p_cmd->aim == p)
 	    p_cmd->aim = (struct dm_list *)NULL;
@@ -292,47 +192,6 @@ char *name;
 	  curr_dm_list = (struct dm_list *)head_dm_list.l.forw;
 
 	return TCL_OK;
-}
-
-static int Nu_int0() { return(0); }
-static void Nu_void() { ; }
-static unsigned Nu_unsign() { return(0); }
-
-/*
- *
- * Implicit Return -
- *	If any files are ready for input, their bits will be set in 'input'.
- *	Otherwise, 'input' will be all zeros.
- */
-void
-Nu_input( input, noblock )
-fd_set		*input;
-int		noblock;
-{
-	struct timeval	tv;
-	int		width;
-	int		cnt;
-
-	if( !isatty(fileno(stdin)) )  return;	/* input awaits! */
-
-#if defined(_SC_OPEN_MAX)
-	if( (width = sysconf(_SC_OPEN_MAX)) <= 0 || width > 32)
-#endif
-		width = 32;
-
-	if( noblock )  {
-		/* 1/20th second */
-		tv.tv_sec = 0;
-		tv.tv_usec = 50000;
-	} else {
-		/* Wait a VERY long time for user to type something */
-		tv.tv_sec = 9999999;
-		tv.tv_usec = 0;
-	}
-	cnt = select( width, input, (fd_set *)0,  (fd_set *)0, &tv );
-	if( cnt < 0 )  {
-		perror("Nu_input/select()");
-	}
 }
 
 int
@@ -351,52 +210,32 @@ reattach()
 
 
 static int
-do_2nd_attach_prompt(name)
-char *name;
+do_2nd_attach_prompt()
 {
-  static char plot_default[] = "pl-fb";
-  static char tek_default[] = "/dev/tty";
-#if 0
-  static char ps_default[] = "mged.ps";
-#endif
   char *dm_default;
+  char  hostname[80];
+  char  display[82];
   struct bu_vls prompt;
+
 
   bu_vls_init(&prompt);
 
-  if(!strcmp(name, "plot")){
-    dm_default = plot_default;
-    bu_vls_printf(&prompt, "UNIX-Plot filter [pl-fb]? ");
-  }else if(!strcmp(name, "tek")){
-    dm_default = tek_default;
-    bu_vls_printf(&prompt, "Output tty [stdout]? ");
-#if 0
-  }else if(!strcmp(name, "ps")){
-    dm_default = ps_default;
-    bu_vls_printf(&prompt, "PostScript file [mged.ps]? ");
-#endif
-  }else{
-    char  hostname[80];
-    char  display[82];
-
-    /* get or create the default display */
-    if( (dm_default = getenv("DISPLAY")) == NULL ) {
-      /* Env not set, use local host */
-      gethostname( hostname, 80 );
-      hostname[79] = '\0';
-      (void)sprintf( display, "%s:0", hostname );
-      dm_default = display;
-    }
-
-    bu_vls_printf(&prompt, "Display [%s]? ", dm_default);
+  /* get or create the default display */
+  if( (dm_default = getenv("DISPLAY")) == NULL ) {
+    /* Env not set, use local host */
+    gethostname( hostname, 80 );
+    hostname[79] = '\0';
+    (void)sprintf( display, "%s:0", hostname );
+    dm_default = display;
   }
+
+  bu_vls_printf(&prompt, "Display [%s]? ", dm_default);
 
   Tcl_AppendResult(interp, MORE_ARGS_STR, bu_vls_addr(&prompt), (char *)NULL);
   bu_vls_printf(&curr_cmd_list->more_default, "%s", dm_default);
 
   return TCL_ERROR;
 }
-
 
 int
 f_attach(clientData, interp, argc, argv)
@@ -405,7 +244,7 @@ Tcl_Interp *interp;
 int     argc;
 char    **argv;
 {
-  register struct dm **dp;
+  register struct w_dm *wp;
   register struct solid *sp;
   register struct dm_list *dmlp;
   register struct dm_list *o_dm_list;
@@ -414,24 +253,25 @@ char    **argv;
     return TCL_ERROR;
 
   if(argc == 1){
-    dp = &which_dm[1];  /* not advertising dm_PS */
-    Tcl_AppendResult(interp, MORE_ARGS_STR, "attach (", (*dp++)->dmr_name, (char *)NULL);
-    for( ; *dp != (struct dm *)0; dp++ )
-      Tcl_AppendResult(interp, "|", (*dp)->dmr_name, (char *)NULL);
+    wp = &which_dm[2];  /* not advertising dm_Plot or dm_PS */
+    Tcl_AppendResult(interp, MORE_ARGS_STR,
+		     "attach (", (wp++)->dp->dmr_name, (char *)NULL);
+    for( ; wp->dp != (struct dm *)0; wp++ )
+      Tcl_AppendResult(interp, "|", wp->dp->dmr_name, (char *)NULL);
     Tcl_AppendResult(interp, ")? ",  (char *)NULL);
     
     return TCL_ERROR;
   }
 
-  for( dp = &which_dm[0]; *dp != (struct dm *)0; dp++ )
-    if( strcmp(argv[1], (*dp)->dmr_name ) == 0 )
+  for( wp = &which_dm[0]; wp->dp != (struct dm *)0; wp++ )
+    if( strcmp(argv[1], wp->dp->dmr_name ) == 0 )
       break;
 
-  if(*dp == (struct dm *)0)
+  if(wp == (struct w_dm *)0)
     goto Bad;
 
-  if(argc == 2){
-    return do_2nd_attach_prompt((*dp)->dmr_name);
+  if(argc == 2 && NEED_GUI(wp->dp)){
+    return do_2nd_attach_prompt();
   }else{
     dmlp = (struct dm_list *)bu_malloc(sizeof(struct dm_list), "struct dm_list");
     bzero((void *)dmlp, sizeof(struct dm_list));
@@ -439,65 +279,45 @@ char    **argv;
     o_dm_list = curr_dm_list;
     curr_dm_list = dmlp;
     dmp = (struct dm *)bu_malloc(sizeof(struct dm), "struct dm");
-    *dmp = **dp;
-    dm_var_init(o_dm_list, argv[2], *dp);
+    *dmp = *wp->dp;
+    dm_init = wp->init;
+    dm_var_init(o_dm_list, argv[2]);
   }
 
   no_memory = 0;
 
   /* Only need to do this once */
-  if(tkwin == NULL && NEED_GUI(*dp))
+  if(tkwin == NULL && NEED_GUI(wp->dp))
     gui_setup();
 
-#ifdef USE_LIBDM
-  if( dm_init() )
+  if( dm_init(argc - 1, argv + 1) )
     goto Bad;
-#else
-  if( dmp->dmr_open() )
-    goto Bad;
-#endif
 
   Tcl_AppendResult(interp, "ATTACHING ", dmp->dmr_name, " (", dmp->dmr_lname,
 		   ")\n", (char *)NULL);
 
   FOR_ALL_SOLIDS( sp )  {
     /* Write vector subs into new display processor */
-#ifdef USE_LIBDM
     if( (sp->s_bytes = dmp->dmr_cvtvecs( dmp, sp )) != 0 )  {
-#else
-    if( (sp->s_bytes = dmp->dmr_cvtvecs( sp )) != 0 )  {
-#endif
       sp->s_addr = rt_memalloc( &(dmp->dmr_map), sp->s_bytes );
       if( sp->s_addr == 0 )  break;
-#ifdef USE_LIBDM
       sp->s_bytes = dmp->dmr_load(dmp, sp->s_addr, sp->s_bytes);
-#else
-      sp->s_bytes = dmp->dmr_load(sp->s_addr, sp->s_bytes);
-#endif
     } else {
       sp->s_addr = 0;
       sp->s_bytes = 0;
     }
   }
 
-#ifdef USE_LIBDM
   dmp->dmr_colorchange(dmp);
-#else
-  dmp->dmr_colorchange();
-#endif
   color_soltab();
-#ifdef USE_LIBDM
   dmp->dmr_viewchange( dmp, DM_CHGV_REDO, SOLID_NULL );
-#else
-  dmp->dmr_viewchange( DM_CHGV_REDO, SOLID_NULL );
-#endif
   ++dmaflag;
   return TCL_OK;
 
 Bad:
   Tcl_AppendResult(interp, "attach(", argv[1], "): BAD\n", (char *)NULL);
 
-  if(*dp != (struct dm *)0)
+  if(wp != (struct w_dm *)0)
     release((char *)NULL);
 
   return TCL_ERROR;
@@ -658,10 +478,9 @@ struct dm_list *op;
 
 
 static void
-dm_var_init(initial_dm_list, name, dp)
+dm_var_init(initial_dm_list, name)
 struct dm_list *initial_dm_list;
 char *name;
-struct dm *dp;
 {
   int i;
 
@@ -680,20 +499,6 @@ struct dm *dp;
 
   MAT_DELTAS_GET(orig_pos, toViewcenter);
 
-#ifdef USE_LIBDM
-  if(IS_DM_X(dp))
-    dm_init = X_dm_init;
-  else if(IS_DM_OGL(dp))
-    dm_init = Ogl_dm_init;
-  else if(IS_DM_GLX(dp))
-    dm_init = Glx_dm_init;
-  else if(IS_DM_PEX(dp))
-    dm_init = Pex_dm_init;
-  else if(IS_DM_PS(dp))
-    dm_init = PS_dm_init;
-  else
-    dm_init = dmp->dmr_open;
-#endif
   am_mode = ALT_MOUSE_MODE_IDLE;
   rc = 1;
   dmaflag = 1;

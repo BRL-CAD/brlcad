@@ -57,7 +57,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "wdb.h"
 #include "./ged.h"
 #include "./solid.h"
-#include "./dm.h"
+#include "./mged_dm.h"
 #include "./sedit.h"
 
 void set_tran();
@@ -1331,15 +1331,9 @@ char	**argv;
 
 	if(movedir != ROTARROW) {
 		/* NOT in object rotate mode - put it in obj rot */
-#ifdef USE_LIBDM
 		dmp->dmr_light( dmp, LIGHT_ON, BE_O_ROTATE );
 		dmp->dmr_light( dmp, LIGHT_OFF, BE_O_SCALE );
 		dmp->dmr_light( dmp, LIGHT_OFF, BE_O_XY );
-#else
-		dmp->dmr_light( LIGHT_ON, BE_O_ROTATE );
-		dmp->dmr_light( LIGHT_OFF, BE_O_SCALE );
-		dmp->dmr_light( LIGHT_OFF, BE_O_XY );
-#endif
 		movedir = ROTARROW;
 	}
 
@@ -1407,20 +1401,11 @@ char	**argv;
 
 	if(movedir != SARROW) {
 		/* Put in global object scale mode */
-#ifdef USE_LIBDM
 		dmp->dmr_light( dmp, LIGHT_OFF, BE_O_ROTATE );
 		dmp->dmr_light( dmp, LIGHT_OFF, BE_O_XY );
-#else
-		dmp->dmr_light( LIGHT_OFF, BE_O_ROTATE );
-		dmp->dmr_light( LIGHT_OFF, BE_O_XY );
-#endif
 		if( edobj == 0 )
 			edobj = BE_O_SCALE;	/* default is global scaling */
-#ifdef USE_LIBDM
 		dmp->dmr_light( dmp, LIGHT_ON, edobj );
-#else
-		dmp->dmr_light( LIGHT_ON, edobj );
-#endif
 		movedir = SARROW;
 	}
 
@@ -1489,15 +1474,9 @@ char	**argv;
 
 	if( (movedir & (RARROW|UARROW)) == 0 ) {
 		/* put in object trans mode */
-#ifdef USE_LIBDM
 		dmp->dmr_light( dmp, LIGHT_ON, BE_O_XY );
 		dmp->dmr_light( dmp, LIGHT_OFF, BE_O_SCALE );
 		dmp->dmr_light( dmp, LIGHT_OFF, BE_O_ROTATE );
-#else
-		dmp->dmr_light( LIGHT_ON, BE_O_XY );
-		dmp->dmr_light( LIGHT_OFF, BE_O_SCALE );
-		dmp->dmr_light( LIGHT_OFF, BE_O_ROTATE );
-#endif
 		movedir = UARROW | RARROW;
 	}
 
@@ -1775,15 +1754,9 @@ char	**argv;
 
 	if(movedir != ROTARROW) {
 		/* NOT in object rotate mode - put it in obj rot */
-#ifdef USE_LIBDM
 		dmp->dmr_light( dmp, LIGHT_ON, BE_O_ROTATE );
 		dmp->dmr_light( dmp, LIGHT_OFF, BE_O_SCALE );
 		dmp->dmr_light( dmp, LIGHT_OFF, BE_O_XY );
-#else
-		dmp->dmr_light( LIGHT_ON, BE_O_ROTATE );
-		dmp->dmr_light( LIGHT_OFF, BE_O_SCALE );
-		dmp->dmr_light( LIGHT_OFF, BE_O_XY );
-#endif
 		movedir = ROTARROW;
 	}
 	VSET(specified_pt, atof(argv[1]), atof(argv[2]), atof(argv[3]));
