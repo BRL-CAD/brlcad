@@ -23,6 +23,7 @@ SUBDIRS=\
 	libutahrle\
 	libwdb\
 	anim\
+	awf\
 	bench\
 	brlman\
 	burst\
@@ -55,6 +56,7 @@ SUBDIRS=\
 	tab\
 	tclscripts\
 	tools\
+	unigraphics\
 	util\
 	vas4\
 	vdeck\

@@ -6,4 +6,5 @@ fbed_SOURCES = char.c empty.c execshell.c fbed.c fill_buf.c getfont.c getinput.c
 noinst_HEADERS = ascii.h cursorbits.h extern.h fb_ik.h font.h popup.h std.h try.h
 fbed_LDADD = @FB@ @TERMIO@ @CURSOR@ @CURSES@ @SGIGL@
 
-#include "../Cakefile.rules"
+man_MANS = fbed.1
+EXTRA_DIST = $(man_MANS)

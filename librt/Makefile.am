@@ -12,3 +12,5 @@ CFLAGS = -I$(top_srcdir)/h
 BUILT_SOURCES = vers.c
 vers.c: $(SRCS)
 	$(top_srcdir)/sh/newvers.sh rt_version librt
+
+dist_man_MANS = librt.3

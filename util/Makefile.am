@@ -336,13 +336,8 @@ dsp_add_LDADD = @BU@
 binfo_SOURCES = binfo.c 
 binfo_LDADD = @BN@ @FB@
 
-# huh, these are just if NFS
-#morphedit.tcl:
-#	cp $(top_srcdir)/morphedit.tcl morphedit.tcl
-#	
 rtwizard = $(top_srcdir)//rtwizard
 	cp $(top_srcdir)/tclscripts/rtwizard rtwizard
-
 
 CFLAGS = -I$(top_srcdir)/h
 
@@ -350,5 +345,8 @@ CFLAGS = -I$(top_srcdir)/h
 vers.c:
 	$(top_srcdir)/sh/newvers.sh version "BRL-CAD info"
 
-man_MANS = alias-pix.1 ap-pix.1 asc-pl.1 azel.1 bary.1 brlcad.1 buffer.1 bw-imp.1 bw-pix.1 bw-png.1 bw-ps.1 bw-rle.1 bw3-pix.1 bwcrop.1 bwdiff.1 bwfilter.1 bwhist.1 bwhisteq.1 bwmod.1 bwrect.1 bwrot.1 bwscale.1 bwshrink.1 bwstat.1 bwthresh.1 cv.1 dbcp.1 decimate.1 dpix-pix.1 dunncolor.1 dunnsnap.1 gencolor.1 hd.1 imgdims.1 loop.1 mac-pix.1 morphedit.1 op-bw.1 orle-pix.1 pcd-pix.1 pix-alias.1 pix-bw.1 pix-bw3.1 pix-orle.1 pix-png.1 pix-ps.1 pix-rle.1 pix-sun.1 pixbackgnd.1 pixbgstrip.1 pixblend.1 pixborder.1 pixbustup.1 pixclump.1 pixcolors.1 pixcut.1 pixdiff.1 pixdsplit.1 pixfade.1 pixfilter.1 pixhalve.1 pixhist.1 pixhist3d-pl.1 pixhist3d.1 pixinterp2x.1 pixmatte.1 pixmerge.1 pixmorph.1 pixrect.1 pixrot.1 pixsaturate.1 pixscale.1 pixshrink.1 pixstat.1 pixsubst.1 pixtile.1 pixuntile.1 pl-X.1 pl-asc.1 pl-hpgl.1 pl-pl.1 pl-ps.1 pl-sgi.1 pl-starbase.1 pl-tek.1 plcolor.1 pldebug.1 plgetframe.1 plline2.1 plrot.1 png-bw.1 png-pix.1 png_info.1 query.1 rle-pix.1 sun-pix.1 terrain.1 wavelet.1
+man_MANS = alias-pix.1 ap-pix.1 asc-pl.1 azel.1 bary.1 brlcad.1 buffer.1 bw-imp.1 bw-pix.1 bw-png.1 bw-ps.1 bw-rle.1 bw3-pix.1 bwcrop.1 bwdiff.1 bwfilter.1 bwhist.1 bwhisteq.1 bwmod.1 bwrect.1 bwrot.1 bwscale.1 bwshrink.1 bwstat.1 bwthresh.1 cv.1 dbcp.1 decimate.1 dpix-pix.1 dunncolor.1 dunnsnap.1 gencolor.1 hd.1 imgdims.1 loop.1 mac-pix.1 morphedit.1 op-bw.1 orle-pix.1 pcd-pix.1 pix-alias.1 pix-bw.1 pix-bw3.1 pix-orle.1 pix-png.1 pix-ps.1 pix-rle.1 pix-sun.1 pixbackgnd.1 pixbgstrip.1 pixblend.1 pixborder.1 pixbustup.1 pixclump.1 pixcolors.1 pixcut.1 pixdiff.1 pixdsplit.1 pixfade.1 pixfilter.1 pixhalve.1 pixhist.1 pixhist3d-pl.1 pixhist3d.1 pixinterp2x.1 pixmatte.1 pixmerge.1 pixmorph.1 pixrect.1 pixrot.1 pixsaturate.1 pixscale.1 pixshrink.1 pixstat.1 pixsubst.1 pixtile.1 pixuntile.1 pl-X.1 pl-asc.1 pl-hpgl.1 pl-pl.1 pl-ps.1 pl-sgi.1 pl-starbase.1 pl-tek.1 plcolor.1 pldebug.1 plgetframe.1 plline2.1 plrot.1 png-bw.1 png-pix.1 png_info.1 query.1 rle-pix.1 sun-pix.1 terrain.1 wavelet.1 pl-X10.1
 EXTRA_DIST = $(man_MANS)
+
+pl-X10.1: pl-X.1
+	cp $< $@
