@@ -77,7 +77,7 @@ void	f_rmats(),f_prefix(), f_keep(), f_tree(), f_inside(), f_mvall(), f_amtrack(
 void	f_tabobj(), f_pathsum(), f_copyeval(), f_push(), f_facedef(), f_eqn();
 void	f_overlay(), f_rtcheck(), f_comb();
 void	f_preview();
-void	f_enmg(), f_nmgtest(); f_debugnmg();
+void	f_enmg(), f_nmgtest(), f_debugnmg();
 void	f_tol();
 
 static struct funtab {
