@@ -51,56 +51,20 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 /* XXX move to raytrach.h for nmg_info.c */
 RT_EXTERN(struct vertex	*	nmg_find_pt_in_model, (CONST struct model *m,
 				CONST point_t pt, CONST struct rt_tol *tol));
+RT_EXTERN(struct edgeuse *	nmg_find_eu_in_face, (CONST struct vertex *v1,
+				CONST struct vertex *v2, CONST struct faceuse *fu,
+				CONST struct edgeuse *eup, int dangling_only));
 
+RT_EXTERN(double		rt_dist_line2_point2, (CONST point_t pt,
+				CONST vect_t dir, CONST point_t a));
+RT_EXTERN(double		rt_distsq_line2_point2, (CONST point_t pt,
+				CONST vect_t dir, CONST point_t a));
 
-/* XXX move to vmath.h */
-#define VDOT_2D(a,b)	( (a)[X]*(b)[X] + (a)[Y]*(b)[Y] )
-#define VSUB2_2D(a,b,c)	{ \
-			(a)[X] = (b)[X] - (c)[X];\
-			(a)[Y] = (b)[Y] - (c)[Y]; }
+#define DIST_PT_PT(a,b)		sqrt( \
+	((a)[X]-(b)[X])*((a)[X]-(b)[X]) + \
+	((a)[Y]-(b)[Y])*((a)[Y]-(b)[Y]) + \
+	((a)[Z]-(b)[Z])*((a)[Z]-(b)[Z]) )
 
-
-/* XXX move to plane.c */
-/*
- *			R T _ D I S T _ L I N E 2 _ P O I N T 2
- *
- *  Given a parametric line defined by PT + t * DIR and a point A,
- *  return the closest distance between the line and the point.
- *  It is necessary that DIR have unit length.
- *
- *  Return -
- *	Distance
- */
-double
-rt_dist_line2_point2( pt, dir, a )
-CONST point_t	pt;
-CONST vect_t	dir;
-CONST point_t	a;
-{
-	LOCAL vect_t		f;
-	register fastf_t	FdotD;
-
-	VSUB2_2D( f, pt, a );
-	FdotD = VDOT_2D( f, dir );
-	if( (FdotD = VDOT_2D( f, f ) - FdotD * FdotD ) <= SMALL_FASTF )
-		return(0.0);
-	return( sqrt(FdotD) );
-}
-double
-rt_distsq_line2_point2( pt, dir, a )
-CONST point_t	pt;
-CONST vect_t	dir;
-CONST point_t	a;
-{
-	LOCAL vect_t		f;
-	register fastf_t	FdotD;
-
-	VSUB2_2D( f, pt, a );
-	FdotD = VDOT_2D( f, dir );
-	if( (FdotD = VDOT_2D( f, f ) - FdotD * FdotD ) <= SMALL_FASTF )
-		return(0.0);
-	return( FdotD );
-}
 
 struct nmg_inter_struct {
 	long		magic;
@@ -700,10 +664,6 @@ struct edgeuse		*eu1;		/* Edge to be broken (in fu1) */
 			rt_bomb("nmg_break_3edge_at_plane() eu1 changes direction?\n");
 		}
 	}
-#define DIST_PT_PT(a,b)		sqrt( \
-	((a)[X]-(b)[X])*((a)[X]-(b)[X]) + \
-	((a)[Y]-(b)[Y])*((a)[Y]-(b)[Y]) + \
-	((a)[Z]-(b)[Z])*((a)[Z]-(b)[Z]) )
 	{
 		struct rt_tol	t2;
 		t2 = is->tol;	/* Struct copy */
@@ -1925,6 +1885,13 @@ struct faceuse	*fu2;
  *  be killed, and the vu, which is listed in the 3D (calling)
  *  routine's l1/l2 list, is now invalid.
  *
+ *  NOTE-
+ *  Since this routine calls the face cutter, *all* points of intersection
+ *  along the line, for *both* faces, need to be found.
+ *  Otherwise, the parity requirements of the face cutter will be violated.
+ *  This means that eu1 needs to be intersected with all of fu1 also,
+ *  including itself (so that the vu's at the ends of eu1 are listed).
+ *
  *  Returns -
  *	0	Topology is completely shared (or no sharing).  l1/l2 valid.
  *	>0	Caller needs to invalidate his l1/l2 list.
@@ -1954,15 +1921,14 @@ struct faceuse		*fu1;		/* fu that eu1 is from */
 	NMG_CK_FACEUSE(fu1);
 
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)
-		rt_log("nmg_isect_edge2p_face2p(eu1=x%x, fu2=x%x, fu1=x%x)\n", eu1, fu2, fu1);
+		rt_log("nmg_isect_edge2p_face2p(eu1=x%x, fu2=x%x, fu1=x%x) START\n", eu1, fu2, fu1);
 
 	if( fu2->orientation != OT_SAME )  rt_bomb("nmg_isect_edge2p_face2p() fu2 not OT_SAME\n");
 	if( fu1->orientation != OT_SAME )  rt_bomb("nmg_isect_edge2p_face2p() fu1 not OT_SAME\n");
 
 	/*  See if an edge exists in other face that connects these 2 verts */
-	/* XXX This searches whole other shell.  Should be shared w/fu2, but... */
-	fu2_eu = nmg_findeu( eu1->vu_p->v_p, eu1->eumate_p->vu_p->v_p,
-	    fu2->s_p, (CONST struct edgeuse *)NULL, 0 );
+	fu2_eu = nmg_find_eu_in_face( eu1->vu_p->v_p, eu1->eumate_p->vu_p->v_p,
+	    fu2, (CONST struct edgeuse *)NULL, 0 );
 	if( fu2_eu != (struct edgeuse *)NULL )  {
 		/* There is an edge in other face that joins these 2 verts. */
 		NMG_CK_EDGEUSE(fu2_eu);
@@ -1970,10 +1936,16 @@ struct faceuse		*fu1;		/* fu that eu1 is from */
 			/* Not the same edge, fuse! */
 			rt_log("nmg_isect_edge2p_face2p() fusing unshared shared edge\n");
 			nmg_radial_join_eu( eu1, fu2_eu, &is->tol );
-			/* Topology is completely shared */
-			goto do_ret;
 		}
+		/* Topology is completely shared */
+		if (rt_g.NMG_debug & DEBUG_POLYSECT)
+			rt_log("nmg_isect_edge2p_face2p() topology is shared\n");
+		ret = 0;
+		goto do_ret;
 	}
+
+	/* Zap 2d cache, we could be switching faces now */
+	nmg_isect2d_cleanup(is);
 
 	(void)nmg_tbl(&vert_list1, TBL_INIT,(long *)NULL);
 	(void)nmg_tbl(&vert_list2, TBL_INIT,(long *)NULL);
@@ -2031,7 +2003,7 @@ struct faceuse		*fu1;		/* fu that eu1 is from */
 		VPRINT("fu2 max", fu2->f_p->max_pt);
 		rt_log("r_min=%g, r_max=%g\n", line.r_min, line.r_max);
 	}
-	/* Start point will line on min side of face RPP */
+	/* Start point will lie at min or max dist, outside of face RPP */
 	VJOIN1( is->pt, line.r_pt, line.r_min, line.r_dir );
 	if( line.r_min > line.r_max )  {
 		/* Direction is heading the wrong way, flip it */
@@ -2052,9 +2024,10 @@ nmg_fu_touchingloops(fu2);
 nmg_fu_touchingloops(fu1);
 nmg_region_v_unique( fu2->s_p->r_p, &is->tol );
 nmg_region_v_unique( fu1->s_p->r_p, &is->tol );
-	/* Run through the list until no more edges are split */
+	/* Run through the list until no more edges are split in either face */
 	do  {
 		another_pass = 0;
+		/* First, eu1 -vs- fu2 */
 		for( RT_LIST_FOR( lu, loopuse, &fu2->lu_hd ) )  {
 			struct edgeuse	*eu2;
 
@@ -2090,6 +2063,36 @@ nmg_region_v_unique( fu1->s_p->r_p, &is->tol );
 
     	if (rt_g.NMG_debug & DEBUG_FCUT) {
 	    	rt_log("nmg_isect_edge2p_face2p(eu1=x%x, fu2=x%x) vert_lists B:\n", eu1, fu2 );
+    		nmg_pr_ptbl_vert_list( "vert_list1", &vert_list1 );
+    		nmg_pr_ptbl_vert_list( "vert_list2", &vert_list2 );
+    	}
+
+/* XXX If there were _no_ new intersections, IN EITHER FACE,
+ * XXX then there is no need to
+ * XXX call the face cutter here.  Otherwise, yes.
+ * The return codes from nmg_isect_edge2p_edge2p() are presently inadequate.
+ */
+
+	if (vert_list1.end == 0 && vert_list2.end == 0) {
+    		/* there were no intersections */
+    		goto out;
+    	}
+
+	/* Now, run line of intersection through fu1 */
+/* XXX This is new */
+	nmg_isect_line2_face2p( is, &vert_list1, fu1, fu2 );
+
+    	if (rt_g.NMG_debug & DEBUG_FCUT) {
+	    	rt_log("nmg_isect_edge2p_face2p(eu1=x%x, fu2=x%x) vert_lists C:\n", eu1, fu2 );
+    		nmg_pr_ptbl_vert_list( "vert_list1", &vert_list1 );
+    		nmg_pr_ptbl_vert_list( "vert_list2", &vert_list2 );
+    	}
+
+	nmg_purge_unwanted_intersection_points(&vert_list1, fu2, &is->tol);
+	nmg_purge_unwanted_intersection_points(&vert_list2, fu1, &is->tol);
+
+    	if (rt_g.NMG_debug & DEBUG_FCUT) {
+	    	rt_log("nmg_isect_edge2p_face2p(eu1=x%x, fu2=x%x) vert_lists D:\n", eu1, fu2 );
     		nmg_pr_ptbl_vert_list( "vert_list1", &vert_list1 );
     		nmg_pr_ptbl_vert_list( "vert_list2", &vert_list2 );
     	}
@@ -2173,18 +2176,11 @@ nmg_region_v_unique( fu2->s_p->r_p, &is->tol );
 		}
 		for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
 			NMG_CK_EDGEUSE(eu);
-			/* XXX What about return code here? */
-			nmg_isect_edge2p_face2p( is, eu, fu2, fu1 );
 
-			/* XXX "eu" may have been simplified away! */
-			if( eu->l.magic != NMG_EDGEUSE_MAGIC ) goto f1_again;
-
-			/* "eu" may have moved to another loop,
-			 * need to abort for() to avoid getting
-			 * RT_LIST_NEXT on wrong linked list!
-			 */
-			NMG_CK_EDGEUSE(eu);
-			if(eu->up.lu_p != lu)  goto f1_again;
+			if( nmg_isect_edge2p_face2p( is, eu, fu2, fu1 ) )  {
+				/* Face topologies have changed */
+				goto f1_again;
+			}
 		}
 	}
 
@@ -2206,15 +2202,11 @@ nmg_region_v_unique( fu2->s_p->r_p, &is->tol );
 		}
 		for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
 			NMG_CK_EDGEUSE(eu);
-			/* XXX What about return code here? */
-			nmg_isect_edge2p_face2p( is, eu, fu1, fu2 );
 
-			/* XXX "eu" may have been simplified away! */
-			if( eu->l.magic != NMG_EDGEUSE_MAGIC ) goto f1_again;
-
-			/* "eu" may have moved to another loop */
-			NMG_CK_EDGEUSE(eu);
-			if(eu->up.lu_p != lu )  goto f2_again;
+			if( nmg_isect_edge2p_face2p( is, eu, fu1, fu2 ) )  {
+				/* Face topologies have changed */
+				goto f2_again;
+			}
 		}
 	}
 nmg_fu_touchingloops(fu1);
@@ -3178,6 +3170,7 @@ struct shell	*s2;
 			eu2 = nmg_findeu( vu1a->v_p, vu1b->v_p, s2,
 			    (CONST struct edgeuse *)NULL, 0 );
 			if( eu2	)  {
+rt_log("nmg_isect_face3p_shell_int() eu2=x%x: v1=x%x, v2=x%x (nothing to do)\n", eu2, vu1a->v_p, vu1b->v_p);
 				/*  Whether the edgeuse is in a face, or a
 				 *  wire edgeuse, the other guys will isect it.
 				 */
