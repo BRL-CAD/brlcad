@@ -106,13 +106,10 @@ static struct arb_info {
  *  			A R B _ P R E P
  */
 int
-arb_prep( Xvec, stp, Xmat, rec, rtip, dp )
-fastf_t		*Xvec;
+arb_prep( stp, rec, rtip )
 struct soltab	*stp;
-matp_t		Xmat;
 union record	*rec;
 struct rt_i	*rtip;
-struct directory *dp;
 {
 	return( arb_setup( stp, rec, rtip, 0 ) );
 }
