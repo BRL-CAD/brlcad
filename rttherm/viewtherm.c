@@ -666,7 +666,6 @@ view_init( ap, file, obj, minus_o )
 register struct application *ap;
 char *file, *obj;
 {
-	struct rt_vls	name;
 	extern char	libmultispectral_version[];
 
 	bu_log("%s", libmultispectral_version+5);
@@ -675,22 +674,17 @@ char *file, *obj;
 
 	bu_struct_print( "rttherm variables", view_parse, NULL );
 
+	if( !minus_o )   {
+		bu_bomb("rttherm: No -o flag specified, can't write to framebuffer, aborting\n");
+		exit(2);
+	}
+
 	/* Build spectrum definition */
 	spectrum = bn_table_make_visible_and_uniform( (int)spectrum_param[0],
 		spectrum_param[1], spectrum_param[2], 20 );
 
-	rt_vls_init( &name );
-	rt_vls_printf( &name, "%s.spect", outputfile ? outputfile : "RTTHERM" );
-	bn_table_write( rt_vls_addr(&name), spectrum );
-	rt_vls_free( &name );
-
-	if( minus_o )  {
-		/* Output is destined for a file */
-		return(0);		/* don't open framebuffer */
-	}
-	bu_bomb("rttherm: No -o flag specified, can't write to framebuffer, aborting\n");
-	exit(2);
-	/* NOTREACHED */
+	/* Output is destined for a file */
+	return 0;		/* don't open framebuffer */
 }
 
 /*
@@ -704,6 +698,7 @@ register struct application *ap;
 char	*framename;
 {
 	register int i;
+	struct bu_vls	name;
 
 	ap->a_refrac_index = 1.0;	/* RI_AIR -- might be water? */
 	ap->a_cumlen = 0.0;
@@ -727,6 +722,13 @@ char	*framename;
 			height, sizeof(struct scanline),
 			"struct scanline[height]" );
 	}
+
+	/* Extra 2nd file!  Write out spectrum info */
+	bu_vls_init( &name );
+	bu_vls_printf( &name, "%s.spect", framename ? framename : "RTTHERM" );
+	bn_table_write( bu_vls_addr(&name), spectrum );
+	bu_log("Wrote %s\n", bu_vls_addr(&name) );
+	bu_vls_free( &name );
 
 	/* Check for existing file and checkpoint-restart? */
 
