@@ -133,7 +133,7 @@ FBIO            sun_interface = {
 				 sun_cmemory_addr,
 				 sun_cscreen_addr,
 				 sun_help,
-				 "SUN Pixwin",
+				 "SUN SunView or raw Pixwin",
 				 XMAXWINDOW,	/* max width */
 				 YMAXWINDOW,	/* max height */
 				 "/dev/sun",
@@ -167,6 +167,7 @@ struct suninfo
 	short	su_depth;
 	int	su_shmid;	/* shared memory ID */
 	Pixwin	*su_windowpw;	/* f. b. window Pixwin pointer under SUNTOOLS. */
+	int	su_mode;
 	};
 #define if_mem		u2.p	/* shared memory pointer */
 #define if_cmap		u3.p	/* color map in shared memory */
@@ -278,6 +279,38 @@ static int      biggest = RR * GR * BR - 1;
 
 static Pixwin	*windowpw;
 static Pixwin	*imagepw;
+
+/*
+ *  The mode has several independent bits:
+ *	SHARED -vs- MALLOC'ed memory for the image
+ *	TRANSIENT -vs- LINGERING windows
+ */
+#define MODE_1MASK	(1<<0)
+#define MODE_1SHARED	(0<<0)		/* Use Shared memory */
+#define MODE_1MALLOC	(1<<0)		/* Use malloc memory */
+
+#define MODE_2MASK	(1<<1)
+#define MODE_2TRANSIENT	(0<<1)
+#define MODE_2LINGERING (1<<1)
+
+#define MODE_15MASK	(1<<14)
+#define MODE_15NORMAL	(0<<14)
+#define MODE_15ZAP	(1<<14)
+
+struct modeflags {
+	char	c;
+	long	mask;
+	long	value;
+	char	*help;
+} modeflags[] = {
+	{ 'p',	MODE_1MASK, MODE_1MALLOC,
+		"Private memory - else shared" },
+	{ 'l',	MODE_2MASK, MODE_2LINGERING,
+		"Lingering window - else transient" },
+	{ 'z',	MODE_15MASK, MODE_15ZAP,
+		"Zap (free) shared memory" },
+	{ '\0', 0, 0, "" }
+};
 
 _LOCAL_ int
 sun_sigwinch( sig )
@@ -612,6 +645,9 @@ FBIO	*ifp;
 #define SHMEM_KEY	42
 	if( sp == (char *) NULL ) /* Do once per process. */
 		{
+		if( (SUN(ifp)->su_mode & MODE_1MASK) == MODE_1MALLOC )
+			goto localmem;
+
 		/* First try to attach to an existing one */
 		if( (SUN(ifp)->su_shmid = shmget( SHMEM_KEY, size, 0 )) < 0 )
 			{ /* No existing one, create a new one */
@@ -633,6 +669,7 @@ FBIO	*ifp;
 		goto	common;
 fail:
 		fb_log("sun_getmem:  Unable to attach to shared memory.\nConsult comment in cad/libfb/if_sun.c for details\n");
+localmem:
 		if( (sp = malloc( size )) == NULL )
 			{
 			fb_log( "sun_getmem:  malloc failure, couldn't allocate %d bytes\n", size );
@@ -719,20 +756,64 @@ int	width, height;
 		int		x;
 		struct pr_prpos	where;
 		struct pixfont	*myfont;
-	if( file != NULL )
-		{	register char *cp;
-			int mode;
-		/* "/dev/sun###" gives optional mode */
-		for( cp = file; *cp != '\0' && !isdigit(*cp); cp++ ) ;
-		mode = 0;
-		if( *cp && isdigit(*cp) )
-			(void)sscanf( cp, "%d", &mode );
-		if( mode >= 99 )
-			{ /* Attempt to release shared memory segment */
-			sun_zapmem();
-			return	-1;
+		int	mode;
+
+	/*
+	 *  First, attempt to determine operating mode for this open,
+	 *  based upon the "unit number" or flags.
+	 *  file = "/dev/sun###"
+	 *  The default mode is zero.
+	 */
+	mode = 0;
+
+	if( file != NULL )  {
+		register char *cp;
+		char	modebuf[80];
+		char	*mp;
+		int	alpha;
+		struct	modeflags *mfp;
+
+		if( strncmp(file, "/dev/sun", 8) ) {
+			/* How did this happen?? */
+			mode = 0;
+		} else {
+			/* Parse the options */
+			alpha = 0;
+			mp = &modebuf[0];
+			cp = &file[8];
+			while( *cp != '\0' && !isspace(*cp) ) {
+				*mp++ = *cp;	/* copy it to buffer */
+				if( isdigit(*cp) ) {
+					cp++;
+					continue;
+				}
+				alpha++;
+				for( mfp = modeflags; mfp->c != '\0'; mfp++ ) {
+					if( mfp->c == *cp ) {
+						mode = (mode&~mfp->mask)|mfp->value;
+						break;
+					}
+				}
+				if( mfp->c == '\0' && *cp != '-' ) {
+					fb_log( "if_sun: unknown option '%c' ignored\n", *cp );
+				}
+				cp++;
 			}
+			*mp = '\0';
+			if( !alpha )
+				mode = atoi( modebuf );
 		}
+
+		if( (mode & MODE_15MASK) == MODE_15ZAP ) {
+			/* Only task: Attempt to release shared memory segment */
+			sun_zapmem();
+			return(-1);
+		}
+
+		/* Pick off just the mode bits of interest here */
+		mode &= (MODE_1MASK | MODE_2MASK);
+	}
+
 	if( width <= 0 )
 		width = ifp->if_width;
 	if( height <= 0 )
@@ -752,6 +833,7 @@ int	width, height;
 		fb_log( "sun_dopen:  suninfo calloc failed\n" );
 		return	-1;
 		}
+	SUN(ifp)->su_mode = mode;
 	myfont = pf_open( "/usr/lib/fonts/fixedwidthfonts/screen.b.14" );
 
 	/* Create window. */
@@ -1461,6 +1543,8 @@ _LOCAL_ int
 sun_help( ifp )
 FBIO	*ifp;
 {
+	struct	modeflags *mfp;
+
 	fb_log( "Description: %s\n", sun_interface.if_type );
 	fb_log( "Device: %s\n", ifp->if_name );
 	fb_log( "Max width/height: %d %d\n",
@@ -1469,6 +1553,10 @@ FBIO	*ifp;
 	fb_log( "Default width/height: %d %d\n",
 		sun_interface.if_width,
 		sun_interface.if_height );
+	fb_log( "Usage: /dev/sun[options]\n" );
+	for( mfp = modeflags; mfp->c != '\0'; mfp++ ) {
+		fb_log( "   %c   %s\n", mfp->c, mfp->help );
+	}
 
 	return(0);
 }
