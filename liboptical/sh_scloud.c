@@ -49,6 +49,7 @@ struct scloud_specific {
 	double	h_val;
 	double	octaves;
 	double	scale;	/* scale coordinate space */
+	point_t	vscale;
 	vect_t	delta;	/* xlatd in noise space (where interesting noise is)*/
 	double	max_d_p_mm;	/* maximum density per millimeter */
 	mat_t	xform;
@@ -59,7 +60,8 @@ static struct scloud_specific scloud_defaults = {
 	1.0,		/* h_val */
 	4.0,		/* octaves */
 	1.0,		/* scale */
-	{ 0.0, 0.0, 0.0 },	/* delta */
+	{ 1.0, 1.0, 1.0 },	/* vscale */
+	{ 1000.0, 1200.0, 2100.0 },	/* delta */
 	0.01			/* max_d_p_mm */
 	};
 
@@ -69,23 +71,25 @@ static struct scloud_specific scloud_defaults = {
 
 struct bu_structparse scloud_pr[] = {
 	{"%f",	1, "lacunarity",	SHDR_O(lacunarity),	FUNC_NULL },
-	{"%f",	1, "H", 		SHDR_O(h_val),	FUNC_NULL },
+	{"%f",	1, "H", 		SHDR_O(h_val),		FUNC_NULL },
 	{"%f",	1, "octaves", 		SHDR_O(octaves),	FUNC_NULL },
-	{"%f",  1, "scale",		SHDR_O(scale),	FUNC_NULL },
-	{"%f",  3, "delta",		SHDR_AO(delta),	FUNC_NULL },
+	{"%f",  1, "scale",		SHDR_O(scale),		FUNC_NULL },
+	{"%f",  3, "vscale",		SHDR_AO(vscale),	FUNC_NULL },
+	{"%f",  3, "delta",		SHDR_AO(delta),		FUNC_NULL },
 	{"",	0, (char *)0,		0,			FUNC_NULL }
 };
 struct bu_structparse scloud_parse[] = {
 	{"%f",	1, "lacunarity",	SHDR_O(lacunarity),	FUNC_NULL },
-	{"%f",	1, "H", 		SHDR_O(h_val),	FUNC_NULL },
+	{"%f",	1, "H", 		SHDR_O(h_val),		FUNC_NULL },
 	{"%f",	1, "octaves", 		SHDR_O(octaves),	FUNC_NULL },
-	{"%f",  1, "scale",		SHDR_O(scale),	FUNC_NULL },
-	{"%f",  3, "delta",		SHDR_AO(delta),	FUNC_NULL },
+	{"%f",  1, "scale",		SHDR_O(scale),		FUNC_NULL },
+	{"%f",  3, "delta",		SHDR_AO(delta),		FUNC_NULL },
 	{"%f",	1, "l",			SHDR_O(lacunarity),	FUNC_NULL },
 	{"%f",	1, "m", 		SHDR_O(max_d_p_mm),	FUNC_NULL },
 	{"%f",	1, "o", 		SHDR_O(octaves),	FUNC_NULL },
-	{"%f",  1, "s",			SHDR_O(scale),	FUNC_NULL },
-	{"%f",  3, "d",			SHDR_AO(delta),	FUNC_NULL },
+	{"%f",  1, "s",			SHDR_O(scale),		FUNC_NULL },
+	{"%f",  3, "vs",		SHDR_AO(vscale),	FUNC_NULL },
+	{"%f",  3, "d",			SHDR_AO(delta),		FUNC_NULL },
 	{"",	0, (char *)0,		0,			FUNC_NULL }
 };
 
@@ -126,6 +130,14 @@ struct rt_i		*rtip;
 	GETSTRUCT( scloud, scloud_specific );
 	*dpp = (char *)scloud;
 
+	if (rp->reg_aircode == 0) {
+		bu_log("WARNING(%s): air shader '%s' applied to non-air region.\n%s\n",
+			rp->reg_name,
+			mfp->mf_name,
+			"  Set air flag with \"edcodes\" in mged");
+		bu_bomb("");
+	}
+
 	memcpy(scloud, &scloud_defaults, sizeof(struct scloud_specific) );
 	if( rdebug&RDEBUG_SHADE)
 		rt_log("scloud_setup\n");
@@ -154,9 +166,13 @@ struct rt_i		*rtip;
 
 	/* add the noise-space scaling */
 	mat_idn(tmp);
-	tmp[0] = 1. / scloud->scale;
-	tmp[5] = 1. / scloud->scale;
-	tmp[10] =  1. / scloud->scale;
+	if (scloud->scale != 1.0) {
+		tmp[0] = tmp[5] = tmp[10] = 1.0 / scloud->scale;
+	} else {
+		tmp[0] = 1.0 / (scloud->vscale[0]);
+		tmp[5] = 1.0 / (scloud->vscale[1]);
+		tmp[10] = 1.0 / (scloud->vscale[2]);
+	}
 
 	mat_mul(scloud->xform, tmp, model_to_region);
 
