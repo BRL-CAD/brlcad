@@ -550,6 +550,7 @@ MGED_EXTERN(int f_vrot, (int argc, char **argv));
 MGED_EXTERN(int f_vrot_center, (int argc, char **argv));
 MGED_EXTERN(int f_which_id, (int argc, char **argv));
 #ifdef MULTI_ATTACH
+MGED_EXTERN(int f_tie, (int argc, char **argv));
 MGED_EXTERN(int f_winset, (int argc, char **argv));
 #endif
 MGED_EXTERN(int f_xpush, (int argc, char **argv));
