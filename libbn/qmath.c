@@ -69,7 +69,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 void
 quat_mat2quat( quat, mat )
 register quat_t	quat;
-register mat_t	mat;
+register CONST mat_t	mat;
 {
 	fastf_t		tr;
 	FAST fastf_t	s;
@@ -77,7 +77,7 @@ register mat_t	mat;
 #define XX	0
 #define YY	5
 #define ZZ	10
-#define M(a,b)		mat[4*(a)+(b)]
+#define MMM(a,b)		mat[4*(a)+(b)]
 
 	tr = mat[XX] + mat[YY] + mat[ZZ];
 	if( tr > 0.0 )  {
@@ -93,38 +93,38 @@ register mat_t	mat;
 	/* Find dominant element of primary diagonal */
 	if( mat[YY] > mat[XX] )  {
 		if( mat[ZZ] > mat[YY] )  {
-			s = sqrt( M(Z,Z) - (M(X,X)+M(Y,Y)) + 1.0 );
+			s = sqrt( MMM(Z,Z) - (MMM(X,X)+MMM(Y,Y)) + 1.0 );
 			quat[Z] = s * 0.5;
 			s = 0.5 / s;
-			quat[W] = (M(X,Y) - M(Y,X)) * s;
-			quat[X] = (M(Z,X) + M(X,Z)) * s;
-			quat[Y] = (M(Z,Y) + M(Y,Z)) * s;
+			quat[W] = (MMM(X,Y) - MMM(Y,X)) * s;
+			quat[X] = (MMM(Z,X) + MMM(X,Z)) * s;
+			quat[Y] = (MMM(Z,Y) + MMM(Y,Z)) * s;
 		} else {
-			s = sqrt( M(Y,Y) - (M(Z,Z)+M(X,X)) + 1.0 );
+			s = sqrt( MMM(Y,Y) - (MMM(Z,Z)+MMM(X,X)) + 1.0 );
 			quat[Y] = s * 0.5;
 			s = 0.5 / s;
-			quat[W] = (M(Z,X) - M(X,Z)) * s;
-			quat[Z] = (M(Y,Z) + M(Z,Y)) * s;
-			quat[X] = (M(Y,X) + M(X,Y)) * s;
+			quat[W] = (MMM(Z,X) - MMM(X,Z)) * s;
+			quat[Z] = (MMM(Y,Z) + MMM(Z,Y)) * s;
+			quat[X] = (MMM(Y,X) + MMM(X,Y)) * s;
 		}
 	} else {
 		if( mat[ZZ] > mat[XX] )  {
-			s = sqrt( M(Z,Z) - (M(X,X)+M(Y,Y)) + 1.0 );
+			s = sqrt( MMM(Z,Z) - (MMM(X,X)+MMM(Y,Y)) + 1.0 );
 			quat[Z] = s * 0.5;
 			s = 0.5 / s;
-			quat[W] = (M(X,Y) - M(Y,X)) * s;
-			quat[X] = (M(Z,X) + M(X,Z)) * s;
-			quat[Y] = (M(Z,Y) + M(Y,Z)) * s;
+			quat[W] = (MMM(X,Y) - MMM(Y,X)) * s;
+			quat[X] = (MMM(Z,X) + MMM(X,Z)) * s;
+			quat[Y] = (MMM(Z,Y) + MMM(Y,Z)) * s;
 		} else {
-			s = sqrt( M(X,X) - (M(Y,Y)+M(Z,Z)) + 1.0 );
+			s = sqrt( MMM(X,X) - (MMM(Y,Y)+MMM(Z,Z)) + 1.0 );
 			quat[X] = s * 0.5;
 			s = 0.5 / s;
-			quat[W] = (M(Y,Z) - M(Z,Y)) * s;
-			quat[Y] = (M(X,Y) + M(Y,X)) * s;
-			quat[Z] = (M(X,Z) + M(Z,X)) * s;
+			quat[W] = (MMM(Y,Z) - MMM(Z,Y)) * s;
+			quat[Y] = (MMM(X,Y) + MMM(Y,X)) * s;
+			quat[Z] = (MMM(X,Z) + MMM(Z,X)) * s;
 		}
 	}
-#undef M
+#undef MMM
 }
 
 /*
@@ -138,7 +138,7 @@ register mat_t	mat;
 void
 quat_quat2mat( mat, quat )
 register mat_t	mat;
-register quat_t	quat;
+register CONST quat_t	quat;
 {
 	quat_t	q;
 
@@ -170,7 +170,7 @@ register quat_t	quat;
  */
 double
 quat_distance( q1, q2 )
-quat_t	q1, q2;
+CONST quat_t	q1, q2;
 {
 	quat_t	qtemp;
 
@@ -188,7 +188,8 @@ quat_t	q1, q2;
  */
 void
 quat_double( qout, q1, q2 )
-quat_t	qout, q1, q2;
+quat_t	qout;
+CONST quat_t q1, q2;
 {
 	quat_t	qtemp;
 	double	scale;
@@ -208,7 +209,8 @@ quat_t	qout, q1, q2;
  */
 void
 quat_bisect( qout, q1, q2 )
-quat_t	qout, q1, q2;
+quat_t	qout;
+CONST quat_t q1, q2;
 {
 	QADD2( qout, q1, q2 );
 	QUNITIZE( qout );
@@ -225,7 +227,8 @@ quat_t	qout, q1, q2;
  */
 void
 quat_slerp( qout, q1, q2, f )
-quat_t	qout, q1, q2;
+quat_t	qout;
+CONST quat_t q1, q2;
 double	f;
 {
 	double		omega;
@@ -281,7 +284,8 @@ double	f;
  */
 void
 quat_sberp( qout, q1, qa, qb, q2, f )
-quat_t	qout, q1, qa, qb, q2;
+quat_t	qout;
+CONST quat_t q1, qa, qb, q2;
 double	f;
 {
 	quat_t	p1, p2, p3, p4, p5;
@@ -311,7 +315,8 @@ double	f;
  */
 void
 quat_make_nearest( q1, q2 )
-quat_t	q1, q2;
+quat_t	q1;
+CONST quat_t q2;
 {
 	quat_t	qtemp;
 	double	d1, d2;
@@ -332,8 +337,8 @@ quat_t	q1, q2;
 /* DEBUG ROUTINE */
 void
 quat_print( title, quat )
-char	*title;
-quat_t	quat;
+CONST char	*title;
+CONST quat_t	quat;
 {
 	int	i;
 	vect_t	axis;
@@ -358,7 +363,8 @@ quat_t	quat;
  */
 void
 quat_exp( out, in )
-quat_t	out, in;
+quat_t	out;
+CONST quat_t	in;
 {
 	FAST fastf_t	theta;
 	FAST fastf_t	scale;
@@ -380,7 +386,8 @@ quat_t	out, in;
  */
 void
 quat_log( out, in )
-quat_t	out, in;
+quat_t	out;
+CONST quat_t in;
 {
 	FAST fastf_t	theta;
 	FAST fastf_t	scale;

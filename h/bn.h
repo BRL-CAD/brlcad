@@ -459,18 +459,18 @@ BU_EXTERN(void			bn_pr_roots, (CONST char *title,
  * Quaternion support 
  */
 
-BU_EXTERN(void quat_mat2quat, (quat_t quat, mat_t mat));
-BU_EXTERN(void quat_quat2mat, (mat_t mat, quat_t quat));
-BU_EXTERN(double quat_distance, (quat_t q1, quat_t q2));
-BU_EXTERN(void quat_double, (quat_t qout, quat_t q1, quat_t q2));
-BU_EXTERN(void quat_bisect, (quat_t qout, quat_t q1, quat_t q2));
-BU_EXTERN(void quat_slerp, (quat_t qout, quat_t q1, quat_t q2, double f));
-BU_EXTERN(void quat_sberp, (quat_t qout, quat_t q1, quat_t qa, quat_t qb,
-			    quat_t q2, double f));
-BU_EXTERN(void quat_make_nearest, (quat_t q1, quat_t q2));
-BU_EXTERN(void quat_print, (char *title, quat_t quat));
-BU_EXTERN(void quat_exp, (quat_t out, quat_t in));
-BU_EXTERN(void quat_log, (quat_t out, quat_t in));
+BU_EXTERN(void quat_mat2quat, (quat_t quat, CONST mat_t mat));
+BU_EXTERN(void quat_quat2mat, (mat_t mat, CONST quat_t quat));
+BU_EXTERN(double quat_distance, (CONST quat_t q1, CONST quat_t q2));
+BU_EXTERN(void quat_double, (quat_t qout, CONST quat_t q1, CONST quat_t q2));
+BU_EXTERN(void quat_bisect, (quat_t qout, CONST quat_t q1, CONST quat_t q2));
+BU_EXTERN(void quat_slerp, (quat_t qout, CONST quat_t q1, CONST quat_t q2, double f));
+BU_EXTERN(void quat_sberp, (quat_t qout, CONST quat_t q1, CONST quat_t qa, CONST quat_t qb,
+			    CONST quat_t q2, double f));
+BU_EXTERN(void quat_make_nearest, (quat_t q1, CONST quat_t q2));
+BU_EXTERN(void quat_print, (CONST char *title, CONST quat_t quat));
+BU_EXTERN(void quat_exp, (quat_t out, CONST quat_t in));
+BU_EXTERN(void quat_log, (quat_t out, CONST quat_t in));
 /*----------------------------------------------------------------------*/
 /* rand.c */
 
@@ -950,6 +950,9 @@ BU_EXTERN(void	bn_vlist_2string, (struct bu_list *vhead,
 				struct bu_list *free_hd, CONST char *string,
 				double x, double y, double scale, double theta));
 
+/*----------------------------------------------------------------------*/
+/* vectfont.c */
+extern void tp_setup();
 
 
 /*----------------------------------------------------------------------*/
