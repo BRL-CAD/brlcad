@@ -51,7 +51,7 @@
 #								#
 #################################################################
 
-SYSTEM		= -DBSD
+#VAX#SYSTEM	= -DBSD
 #SYSV#SYSTEM	= -DSYSV
 #VLD#SYSTEM	= -DSYSV -DVLDSYSV
 # Silicon Graphics, -Zf if Weitek FP chip installed
@@ -148,7 +148,7 @@ SYSTEM		= -DBSD
 #  Edit all three LIBFB_* lines below similarly.		#
 #  NOTES:							#
 #  1)  When TCP exists and if_remote is desired, set		#
-#	LIBFB_OBJS = if_remote.o ../libpkg/pkg.o		#
+#	LIBFB_OBJS = if_remote.o pkg.o				#
 #	to gain access to the PKG routines.			#
 #								#
 #  2)  For SGI release 3.4 and below, but not 3.5 and above:	#
@@ -159,21 +159,21 @@ SYSTEM		= -DBSD
 #	because the default is a 68020				#
 #								#
 LIBFB_CFILES	= if_remote.c \
-		  if_adage.c \
 		  if_ptty.c
+#VAX#		  if_adage.c
 #SGI#		  if_sgi.c
 #SUN#		  if_sun.c
 #4D32#		  if_4d.c
-LIBFB_OBJS	= if_remote.o ../libpkg/pkg.o \
-		  if_adage.o \
+LIBFB_OBJS	= if_remote.o pkg.o \
 		  if_ptty.o
+#VAX#		  if_adage.o
 #SGI35#		  if_sgi.o
 #SGI34#		  if_sgi.o sgiselect.o
 #SUN#		  if_sun.o
 #4D32#		  if_4d.o
 LIBFB_CONFIG	= -DIF_REMOTE \
-		  -DIF_ADAGE \
 		  -DIF_PTTY
+#VAX#		  -DIF_ADAGE
 #SGI#		  -DIF_SGI	# -DMC_68010
 #SUN#		  -DIF_SUN
 #4D32#		  -DIF_4D
@@ -236,11 +236,10 @@ LIBRT_TIMER	= timer42
 #								#
 #  Specify all OPTIONAL display managers to attach.		#
 #								#
-# The MG and VG drivers are only interesting on a VAX
-MGED_CFILES	= dm-mg.c dm-vg.c
-MGED_OBJS	= dm-mg.o dm-vg.o
-MGED_CONFIG	= -DDM_MG -DDM_VG
-MGED_LIBES	=
+#VAX#MGED_CFILES	= dm-mg.c dm-vg.c
+#VAX#MGED_OBJS		= dm-mg.o dm-vg.o
+#VAX#MGED_CONFIG	= -DDM_MG -DDM_VG
+#VAX#MGED_LIBES		=
 #
 #4D32#MGED_CFILES	= dm-4d.c
 #4D32#MGED_OBJS		= dm-4d.o
@@ -248,7 +247,7 @@ MGED_LIBES	=
 #4D32#MGED_LIBES	= -lbsd -lgl
 #
 #SGI#MGED_CFILES	= dm-ir.c
-#SGI#MGED_OBJS	= dm-ir.o
+#SGI#MGED_OBJS		= dm-ir.o
 #SGI#MGED_CONFIG	= -DDM_IR	# -DMC_68010
 #SGIXNS#MGED_CONFIG	= -DDM_IR -DNONBLOCK	# -DMC_68010
 #SGI35#MGED_LIBES	= -lbsd -lgl2
@@ -283,7 +282,6 @@ CC		= /bin/cc
 #VLD#CC		= /usr/5bin/cc
 
 SHELL		= /bin/sh
-#VLD#SHELL	= /usr/5bin/sh
 
 MAKE		= /bin/make
 
@@ -297,8 +295,8 @@ GETHOST		= hostname
 
 # If BSD42, use ranlib on archives.  For SYSV, set to "echo" (except SGI).
 RANLIB		= ranlib
-#VLD#RANLIB	= ranlib
 #SYSV#RANLIB	= echo
+#VLD#RANLIB	= ranlib
 #SGI#RANLIB	= ranlib
 #4D32#RANLIB	= ar ts
 
@@ -318,18 +316,18 @@ ARCH_SUF	= a
 #XMP#ARCH_SUF	= o
 
 # For utilities that wish to USE our libraries, here are the popular ones:
-LIBFB		= ../libfb/libfb.${ARCH_SUF}
-LIBRT		= ../librt/librt.${ARCH_SUF}
-LIBPLOT		= ../libplot3/libplot3.${ARCH_SUF}
-LIBRLE		= ../librle/librle.${ARCH_SUF}
-LIBPKG		= ../libpkg/libpkg.${ARCH_SUF}
-LIBWDB		= ../libwdb/libwdb.${ARCH_SUF}
-LIBSPL		= ../libspl/libspl.${ARCH_SUF}
+LIBFB		= ../libfb.'`sh ../mtype.sh`'/libfb.${ARCH_SUF}
+LIBRT		= ../librt.'`sh ../mtype.sh`'/librt.${ARCH_SUF}
+LIBPLOT		= ../libplot3.'`sh ../mtype.sh`'/libplot3.${ARCH_SUF}
+LIBRLE		= ../librle.'`sh ../mtype.sh`'/librle.${ARCH_SUF}
+LIBPKG		= ../libpkg.'`sh ../mtype.sh`'/libpkg.${ARCH_SUF}
+LIBWDB		= ../libwdb.'`sh ../mtype.sh`'/libwdb.${ARCH_SUF}
+LIBSPL		= ../libspl.'`sh ../mtype.sh`'/libspl.${ARCH_SUF}
 LIBTERMLIB	= -ltermlib
 #XMP#LIBTERMLIB	= -lcurses
-LIBTERMIO	= ../libtermio/libtermio.${ARCH_SUF}
-LIBCURSOR	= ../libcursor/libcursor.${ARCH_SUF}
-LIBSYSV		= ../libsysv/libsysv.${ARCH_SUF}
+LIBTERMIO	= ../libtermio.'`sh ../mtype.sh`'/libtermio.${ARCH_SUF}
+LIBCURSOR	= ../libcursor.'`sh ../mtype.sh`'/libcursor.${ARCH_SUF}
+LIBSYSV		= ../libsysv.'`sh ../mtype.sh`'/libsysv.${ARCH_SUF}
 #SYSV#LIBSYSV	=
 
 # For strictly serial machines, the Princeton malloc() in libmalloc
@@ -393,10 +391,9 @@ INS		= cp
 # Command string to typeset manual pages
 # Usage is:   ${TYPESET_MAN1} *.${MANSECTION} ${TYPESET_MAN2}
 #
-# im117-raw is Chuck's office
 TYPESET_MAN1	= tbl /usr/lib/tmac/tmac.an
 TYPESET_MAN2	= | /usr/5lib/troff -Ti300 | /usr/5bin/dimp -t | \
-		    qpr -q im217
+		    qpr -q im231
 #TYPESET_MAN1	= tbl /usr/lib/tmac/tmac.an 
 #TYPESET_MAN2	= | /usr/5lib/troff -Ti10 | /usr/5bin/di10 -t | \
 		    qpr -q im328-raw
