@@ -39,7 +39,8 @@ echo
 #  Replace one path with another, in all the files that matter.
 
 for i in \
-	Cakefile.defs setup.sh gen.sh cray.sh machinetype.sh \
+	Cakefile.defs setup.sh gen.sh machinetype.sh \
+	sh/cray.sh \
 	cake/Makefile cakeaux/Makefile \
 	remrt/remrt.c libbu/vfont.c \
 	fb/cat-fb.c canon/canonserver.c \
