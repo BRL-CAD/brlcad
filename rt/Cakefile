@@ -22,7 +22,7 @@
 	view viewpp viewray viewrad viewcheck viewg3 \
 	shade \
 	material refract \
-	wray bomb
+	wray
 
 /*  The "top-half" (user interface) for the RT family of programs */
 #define RTUIF	main.o opt.o do.o worker.o bomb.o
