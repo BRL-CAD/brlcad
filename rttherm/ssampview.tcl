@@ -311,7 +311,7 @@ proc do_testing {} {
 	for {set i [expr [llength $curve_list]-1]} {$i >= 0} {incr i -1} {
 		set name [lindex $curve_list $i]
 		puts "curve $i is called $name"
-		eval popup_plot_tabdata $name \$$name 0 1
+		eval popup_plot_tabdata $name \$$name
 	}
 	puts "do_testing: end"
 }

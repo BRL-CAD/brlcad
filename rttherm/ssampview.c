@@ -135,6 +135,7 @@ char		*argv[];
 		bu_free( sum, "rt_tabdata sum" );
 	}
 
+#if 0
 	/* Check out the RGB to spectrum curves */
 	{
 		struct rt_tabdata	*r, *g, *b, *sum;
@@ -165,6 +166,29 @@ char		*argv[];
 		bu_free( g, "g" );
 		bu_free( b, "b" );
 		bu_free( sum, "sum" );
+	}
+#endif
+
+	/* Check out the black body curves */
+	{
+		struct rt_tabdata	*a, *b, *c;
+
+		RT_GET_TABDATA( a, ntsc_r->table );
+		RT_GET_TABDATA( b, ntsc_r->table );
+		RT_GET_TABDATA( c, ntsc_r->table );
+
+		rt_spect_black_body_fast( a, 5000.0 );
+		assign_tabdata_to_tcl_var( interp, "a_5000", a );
+
+		rt_spect_black_body_fast( b, 6500.0 );
+		assign_tabdata_to_tcl_var( interp, "b_6500", b );
+
+		rt_spect_black_body_fast( c, 10000.0 );
+		assign_tabdata_to_tcl_var( interp, "c_10000", c );
+
+		bu_free( a, "a" );
+		bu_free( b, "b" );
+		bu_free( c, "c" );
 	}
 
 	return TCL_OK;
