@@ -22,16 +22,20 @@
  *	Lee A. Butler
  *  
  *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5066
+ *	The U. S. Army Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *  
+ *  Distribution Notice -
+ *	Re-distribution of this software is restricted, as described in
+ *	your "Statement of Terms and Conditions for the Release of
+ *	The BRL-CAD Pacakge" agreement.
+ *
  *  Copyright Notice -
- *	This software is Copyright (C) 1992 by the United States Army.
- *	All rights reserved.
+ *	This software is Copyright (C) 1993 by the United States Army
+ *	in all countries except the USA.  All rights reserved.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 
 #include <stdio.h>
@@ -1305,8 +1309,9 @@ int	*exclude;
 CONST struct rt_tol	*tol;
 {
 	register int	i;
-	int	outer_wedge;
-	int	inner_wedge;
+	int		outer_wedge;
+	int		inner_wedge;
+	int		class2;
 	struct loopuse	*outer_lu;
 	struct loopuse	*inner_lu;
 	int		not_these[128];
@@ -1324,14 +1329,17 @@ CONST struct rt_tol	*tol;
 		rt_log("nmg_special_wedge_processing(start=%d,end=%d, lo=%g, hi=%g, wclass=%s)\n",
 			start, end, lo_ang, hi_ang,
 			WEDGECLASS2STR(wclass) );
+		VPRINT("\tvertex", vs[start].vu->v_p->vg_p->coord);
 
 		/* Plot all the loops that touch here. */
 		m = nmg_find_model((long *)vs[start].vu);
 		b = (long *)rt_calloc( m->maxindex, sizeof(long), "nmg_special_wedge_processing flag[]" );
 		vbp = rt_vlblock_init();
 		for( i=start; i < end; i++ )  {
-			nmg_vlblock_lu(vbp, nmg_find_lu_of_vu(vs[i].vu), b,
-				255, 0, 0, 0 );
+			struct loopuse	*lu;
+			lu = nmg_find_lu_of_vu(vs[i].vu);
+			rt_log("\tvu[%d]=x%x, lu=x%x\n", i, vs[i].vu, lu);
+			nmg_vlblock_lu(vbp, lu, b, 255, 0, 0, 0 );
 		}
 		sprintf(buf, "wedge%d.pl", num++);
 		fp = fopen(buf, "w");
@@ -1373,13 +1381,25 @@ again:
 	}
 	if( inner_wedge == outer_wedge )  rt_bomb("nmg_special_wedge_processing() identical vu selections?\n");
 
+	class2 = nmg_compare_2_wedges( vs[outer_wedge].lo_ang, vs[outer_wedge].hi_ang,
+		vs[inner_wedge].lo_ang, vs[inner_wedge].hi_ang );
+	if(rt_g.NMG_debug&DEBUG_VU_SORT)
+		rt_log("nmg_special_wedge_processing() outer=%d, inner=%d, class2=%s\n", outer_wedge, inner_wedge, WEDGE2_TO_STRING(class2) );
+
 	inner_lu = nmg_find_lu_of_vu( vs[inner_wedge].vu );
 	NMG_CK_LOOPUSE(inner_lu);
 
 	if( outer_lu == inner_lu )  {
 		struct loopuse	*new_lu;
+#if 0
+		if( class2 == WEDGE2_IDENTICAL )  {
+			if(rt_g.NMG_debug&DEBUG_VU_SORT)
+				rt_log("nmg_special_wedge_processing() inner and outer wedges from same loop, wedges identical, nothing to do\n");
+			return 0;
+		}
+#endif
 		if(rt_g.NMG_debug&DEBUG_VU_SORT)
-			rt_log("special_wedge:  inner and outer wedges from same loop, cutting loop\n");
+			rt_log("nmg_special_wedge_processing:  inner and outer wedges from same loop, cutting loop\n");
 		new_lu = nmg_cut_loop( vs[outer_wedge].vu, vs[inner_wedge].vu );
 		NMG_CK_LOOPUSE(new_lu);
 		NMG_CK_LOOPUSE(inner_lu);
@@ -1453,6 +1473,10 @@ int			end;		/* last index + 1 */
 	struct loopuse	*lu;
 	int		ass;
 	int		l;
+	int		retries = 0;
+
+	if(rt_g.NMG_debug&DEBUG_VU_SORT)
+		rt_log("nmg_face_coincident_vu_sort(, %d, %d) START\n", start, end);
 
 	num = end - start;
 	vs = (struct nmg_vu_stuff *)rt_malloc( sizeof(struct nmg_vu_stuff)*num,
@@ -1461,9 +1485,8 @@ int			end;		/* last index + 1 */
 		"nmg_loop_stuff" );
 
 top:
-	if(rt_g.NMG_debug&DEBUG_VU_SORT)
-		rt_log("nmg_face_coincident_vu_sort(, %d, %d)\n", start, end);
-
+	if( retries > 20 )  rt_g.NMG_debug |= DEBUG_VU_SORT;
+	if( retries++ > 24 )  rt_bomb("nmg_face_coincident_vu_sort() infinite loop\n");
 	/* Assess each vu, create list of loopuses, find max angles */
 	nloop = 0;
 	nvu = 0;
@@ -1571,11 +1594,17 @@ got_loop:
 	/* XXX */
 
 	/* Here is where the special wedge-breaking code goes */
-	if( nmg_special_wedge_processing( vs, 0, nvu, 0.0, 180.0, WEDGE_RIGHT, 0, rs->tol ) )
+	if( nmg_special_wedge_processing( vs, 0, nvu, 0.0, 180.0, WEDGE_RIGHT, 0, rs->tol ) )  {
+		if(rt_g.NMG_debug&DEBUG_VU_SORT)
+			rt_log("*** nmg_face_coincident_vu_sort(, %d, %d) restarting after 0--180 wedge\n", start, end);
 		goto top;
+	}
 	/* XXX reclass on/on edges from WEDGE_RIGHT to WEDGE_LEFT here? */
-	if( nmg_special_wedge_processing( vs, 0, nvu, 360.0, 180.0, WEDGE_LEFT, 0, rs->tol ) )
+	if( nmg_special_wedge_processing( vs, 0, nvu, 360.0, 180.0, WEDGE_LEFT, 0, rs->tol ) ) {
+		if(rt_g.NMG_debug&DEBUG_VU_SORT)
+			rt_log("*** nmg_face_coincident_vu_sort(, %d, %d) restarting after 180-360 wedge\n", start, end);
 		goto top;
+	}
 
 	if(rt_g.NMG_debug&DEBUG_VU_SORT)
 	{
@@ -1635,6 +1664,10 @@ got_loop:
 
 	rt_free( (char *)vs, "nmg_vu_stuff");
 	rt_free( (char *)ls, "nmg_loop_stuff");
+
+	if(rt_g.NMG_debug&DEBUG_VU_SORT)
+		rt_log("nmg_face_coincident_vu_sort(, %d, %d) END, ret=%d\n", start, end, start+nvu);
+
 	return start+nvu;
 }
 
@@ -1802,7 +1835,7 @@ int		other_rs_state;
 	if( cur == rs->nvu-1 || mag[cur+1] != mag[cur] )  {
 		/* Single vertexuse at this dist */
 		if(rt_g.NMG_debug&DEBUG_FCUT)
-			rt_log("fu x%x, single vertexuse at index %d\n", rs->fu1, cur);
+			rt_log("nmg_face_next_vu_interval() fu=x%x, single vertexuse at index %d\n", rs->fu1, cur);
 		nmg_face_state_transition( rs, cur, 0, other_rs_state );
 #if PLOT_BOTH_FACES
 		nmg_2face_plot( rs->fu1, rs->fu2 );
@@ -1827,7 +1860,7 @@ int		other_rs_state;
 
 	/* vu Interval runs from [cur] to [j-1] inclusive */
 	if(rt_g.NMG_debug&DEBUG_FCUT)
-		rt_log("fu x%x vu's on list interval [%d] to [%d] equal\n", rs->fu1, cur, j-1 );
+		rt_log("nmg_face_next_vu_interval() fu=x%x vu's on list interval [%d] to [%d] equal\n", rs->fu1, cur, j-1 );
 
 	/* Ensure that all vu's point to same vertex */
 	for( k = cur+1; k < j; k++ )  {
@@ -1858,7 +1891,7 @@ int		other_rs_state;
 	}
 	rs->vu[j-1] = rs->vu[m-1]; /* for next iteration's lookback */
 	if(rt_g.NMG_debug&DEBUG_FCUT)
-		rt_log("vu[%d] set to x%x\n", j-1, rs->vu[j-1] );
+		rt_log("nmg_face_next_vu_interval() vu[%d] set to x%x\n", j-1, rs->vu[j-1] );
 	return j;
 }
 
@@ -1880,6 +1913,9 @@ fastf_t			*mag2;
 
 	RT_CK_TOL(rs1->tol);
 	RT_CK_TOL(rs2->tol);
+
+	if(rt_g.NMG_debug&DEBUG_FCUT)
+		rt_log("nmg_face_combine()\n");
 
 #if PLOT_BOTH_FACES
 	nmg_2face_plot( rs1->fu1, rs1->fu2 );
