@@ -794,9 +794,11 @@ set -S2 "/bin/sh"
 #		define	OPTIMIZER	-g
 #	endif
 #	define	CC_DEFS		-Xc -D_REENTRANT -Dsparc -DSUNOS=52
+
 /*	Shared library support */
 #	define	ARCH_SUF	so
-#	define	LIBVERS		../sharedlibvers.sh
+/*	LIBVERS should be ../sharedlibvers.sh, but LD doesn't grok the version numbers! */
+#	define	LIBVERS		echo
 #	define	BUILD_LIBRARY	ld -Bdynamic -G -o
 #	define	RANLIB		/**/
 #	define	STANDARD_LIBES	-L''LIBDIR -lm
