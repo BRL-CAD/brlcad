@@ -1,6 +1,9 @@
 #!/bin/sh
 # @(#)$Header$ (BRL)
 
+echo XXX mkversion.sh should not be invoked XXX
+exit 1
+
 if test ! -f version.number
 then
 	echo 0 > version.number
