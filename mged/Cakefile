@@ -17,7 +17,7 @@
 			proc_reg polyif red \
 			mater plot overlay inside \
 			concat utility1 utility2 track arbs \
-			facedef arb set animedit db comb \
+			facedef set animedit db comb \
 			solids_on_ray history \
 			TCP_FILES attach dm-plot dm-ps \
 			MGED_OBJS vdraw
