@@ -142,6 +142,7 @@ int		flipflag;
 	vect_t		norm;
 	struct soltab	*stp;
 	CONST struct directory	*dp;
+	struct curvature crv;
 
 	RT_CK_SEG(segp);
 	stp = segp->seg_stp;
@@ -150,12 +151,16 @@ int		flipflag;
 	RT_CK_DIR(dp);
 
 	RT_HIT_NORMAL( norm, hitp, stp, rayp, flipflag );
+	RT_CURVATURE( &crv, hitp, flipflag, stp );
 
 	bu_vls_init(&str);
 	bu_vls_printf( &str, " {dist %g point {", hitp->hit_dist);
 	bn_encode_vect( &str, hitp->hit_point );
 	bu_vls_printf( &str, "} normal {" );
 	bn_encode_vect( &str, norm );
+	bu_vls_printf( &str, "} c1 %g c2 %g pdir {",
+		crv.crv_c1, crv.crv_c2 );
+	bn_encode_vect( &str, crv.crv_pdir );
 	bu_vls_printf( &str, "} surfno %d solid %s}",
 		hitp->hit_surfno,
 		dp->d_namep );
