@@ -63,35 +63,49 @@ then
 	OS_REVISION="$1"
 
 	case "$HARDWARE_TYPE" in
-	# SGI is ugly, returning IP## here.
+	"CRAY C90") MACHINE=xmp; UNIXTYPE=SYSV; HAS_TCP=1; HAS_SYMLINKS=1;;
+	vax)	MACHINE=vax; UNIXTYPE=BSD; HAS_TCP=1; HAS_SYMLINKS=1;;
 	sun3*)  MACHINE=sun3; UNIXTYPE=BSD; HAS_TCP=1; HAS_SYMLINKS=1;;
 	sun4*)  HAS_TCP=1; HAS_SYMLINKS=1;
 		case "$OS_REVISION" in
 		4)  UNIXTYPE=BSD; MACHINE=sun4;;
 		5)  UNIXTYPE=SYSV; MACHINE=sun5;;
 		esac;;
-	alpha)  MACHINE=alpha; UNIXTYPE=BSD; HAS_TCP=1; HAS_SYMLINKS=1;;
-	"CRAY C90") MACHINE=xmp; UNIXTYPE=SYSV; HAS_TCP=1; HAS_SYMLINKS=1;;
-	vax)	MACHINE=vax; UNIXTYPE=BSD; HAS_TCP=1; HAS_SYMLINKS=1;;
+	alpha)  
+		case "$OS_TYPE" in
+		Linux) ;;
+		Ultrix)
+			MACHINE=alpha
+			UNIXTYPE=BSD
+			HAS_TCP=1
+			HAS_SYMLINKS=1 ;;
+		esac ;;
+	i[3456]86)
+		UNIXTYPE=BSD; HAS_TCP=1; HAS_SYMLINKS=1
+		case "$OS_TYPE" in
+		Linux)	MACHINE=li ;;
+		FreeBSD) MACHINE=fbsd ;;
+		BSD/OS)	MACHINE=bsdi ;;
+		esac ;;
+	# SGI is ugly, returning IP## here.
+	IP??) 
+		case "$OS_TYPE" in
+		IRIX)  	UNIXTYPE=SYSV; HAS_TCP=1; HAS_SYMLINKS=1;
+			case "$OS_REVISION" in
+			4)	MACHINE=5d;;
+			5)	MACHINE=6d;;
+			6)	MACHINE=7d;;
+			*)	echo ERROR unknown SGI OS version `uname -a` 1>&2;;
+			esac ;;
+		IRIX64) UNIXTYPE=SYSV; HAS_TCP=1; HAS_SYMLINKS=1;
+			PROCESSOR=` hinv | sed -n -e 's/^CPU: MIPS \(.*\) Proc.*$/\1/p' `
+			case "$PROCESSOR" in
+			R4*)	MACHINE=m3i`uname -r` ;;
+			*)	MACHINE=m4i`uname -r` ;;
+			esac ;;
+		esac ;;
 	esac
 
-	if test "$MACHINE" = ""; then case "$OS_TYPE" in
-	FreeBSD) UNIXTYPE=BSD; HAS_TCP=1; HAS_SYMLINKS=1; MACHINE=fbsd;;
-	IRIX)  	UNIXTYPE=SYSV; HAS_TCP=1; HAS_SYMLINKS=1;
-		case "$OS_REVISION" in
-		4)	MACHINE=5d;;
-		5)	MACHINE=6d;;
-		6)	MACHINE=7d;;
-		7)	MACHINE=9d;;
-		*)	echo ERROR unknown SGI software version `uname -a` 1>&2;;
-		esac;;
-	IRIX64)	UNIXTYPE=SYSV; HAS_TCP=1; HAS_SYMLINKS=1;
-		PROCESSOR=` hinv | sed -n -e 's/^CPU: MIPS \(.*\) Proc.*$/\1/p' `
-		case "$PROCESSOR" in
-		R4000|R4400)	MACHINE=7d;;
-		R8000|R10000)	MACHINE=8d;;
-		esac;;
-	esac; fi
 fi
 
 if test "$MACHINE" = ""
@@ -109,13 +123,6 @@ cat << EOF > ${IN_FILE}
 #	undef	aux
 	MACHINE=aux;
 	UNIXTYPE=SYSV;
-	HAS_TCP=1;
-	HAS_SYMLINKS=1;
-#endif
-
-#if defined(__ksr_cc)
-	MACHINE=ksr;
-	UNIXTYPE=SYSV;		# MACH
 	HAS_TCP=1;
 	HAS_SYMLINKS=1;
 #endif
@@ -147,15 +154,6 @@ cat << EOF > ${IN_FILE}
 	HAS_SYMLINKS=0;
 #endif
 
-#if defined(unix) && defined(i386) && defined(__bsdi__)
-/* IBM PC/386 with BSD/386 (Berkeley Software Design, Inc.) */
-#undef bsdi
-	MACHINE=bsdi;
-	UNIXTYPE=BSD;
-	HAS_TCP=1;
-	HAS_SYMLINKS=1;
-#endif
-
 #if defined(unix) && defined(i386) && !defined(__bsdi__) && \
 	!defined(__386BSD__) && !defined(__NetBSD__) && !defined(linux)
 /* PC/AT with Interactive Systems Unix V/386 3.2 */
@@ -166,13 +164,6 @@ cat << EOF > ${IN_FILE}
 	HAS_SYMLINKS=0;
 #endif
 
-#if defined(unix) && defined(i386) && defined(linux)
-/* IBM PC with Linux */
-	MACHINE=li;
-	UNIXTYPE=BSD;
-	HAS_TCP=1;
-	HAS_SYMLINKS=1;
-#endif
 
 #if defined(__unix__) && defined(__i386__) && defined(__386BSD__)
 /* IBM PC with 386BSD from William Jolitz */
@@ -194,23 +185,6 @@ cat << EOF > ${IN_FILE}
 	HAS_SYMLINKS=1
 #endif
 
-#if defined(alliant) && !defined(i860)
-/*	Alliant FX/8 or FX/80 */
-#	undef	fx
-	MACHINE=fx;
-	UNIXTYPE=BSD;
-	HAS_TCP=1;
-	HAS_SYMLINKS=1;
-#endif
-
-#if defined(alliant) && defined(i860)
-/*	Alliant FX/2800 */
-#	undef	fy
-	MACHINE=fy;
-	UNIXTYPE=BSD;
-	HAS_TCP=1;
-	HAS_SYMLINKS=1;
-#endif
 
 #if !defined(alliant) && defined(i860) && defined(unix) && __STDC__ == 0
 /*	Stardent VISTRA i860 machine.  No vendor symbols found in cpp */
@@ -297,16 +271,6 @@ cat << EOF > ${IN_FILE}
 	HAS_SYMLINKS=0;
 #endif
 
-#ifdef eta10
-/*	ETA-10 running UNIX System V. */
-/*	The network support is different enough that is isn't supported yet */
-#	undef	eta
-	MACHINE=eta;
-	UNIXTYPE=SYSV;
-	HAS_TCP=0;
-	HAS_SYMLINKS=0;
-#endif
-
 #ifdef pyr
 #	undef	pyr
 	MACHINE=pyr;
@@ -378,6 +342,7 @@ then
 fi
 
 # Now, look at first arg to determine output behavior
+
 case x"$ARG" in
 
 x|x-m)
