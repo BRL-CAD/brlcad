@@ -56,10 +56,18 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "mater.h"
 #include "raytrace.h"
 #include "./ged.h"
-#include "./mged_solid.h"
 #include "./mged_dm.h"
 #include "./sedit.h"
 #include "dm-X.h"
+
+#ifdef USE_FRAMEBUFFER
+extern void X24_configureWindow();
+#endif
+
+#ifdef DO_RUBBER_BAND
+extern void rt_rect_area(); /* from rect.c */
+extern void zoom_rect_area();
+#endif
 
 extern void dm_var_init();
 extern void mged_print_result();
@@ -137,6 +145,7 @@ char *argv[];
 {
   int i;
   char **av;
+  struct bu_vls name_vls, value_vls;
 
   /* register application provided routines */
   cmd_hook = X_dm;
@@ -167,6 +176,54 @@ char *argv[];
   curr_dm_list->s_info->opp = &pathName;
   Tk_CreateGenericHandler(doEvent, (ClientData)NULL);
   dm_configureWindowShape(dmp);
+
+  bu_vls_init(&value_vls);
+#ifdef USE_FRAMEBUFFER
+  {
+    int status;
+    struct bu_vls vls;
+
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "fb_open_existing /dev/X %lu %lu %lu %lu %d %d %lu",
+		  (unsigned long)((struct x_vars *)dmp->dm_vars)->dpy,
+		  (unsigned long)((struct x_vars *)dmp->dm_vars)->pix,
+		  (unsigned long)((struct x_vars *)dmp->dm_vars)->cmap,
+		  (unsigned long)((struct x_vars *)dmp->dm_vars)->vip,
+		  dmp->dm_width, dmp->dm_height,
+		  (unsigned long)((struct x_vars *)dmp->dm_vars)->gc);
+    status = Tcl_Eval(interp, bu_vls_addr(&vls));
+
+    if(status == TCL_OK){
+      if(sscanf(interp->result, "%lu", (unsigned long *)&fbp) != 1){
+	fbp = (FBIO *)0;   /* sanity */
+	Tcl_AppendResult(interp, "X_dm_init: failed to get framebuffer pointer\n",
+			 (char *)NULL);
+      }else
+	bu_vls_printf(&value_vls, "%s ", interp->result);
+    }else{
+      Tcl_AppendResult(interp, "X_dm_init: failed to get framebuffer\n",
+		       (char *)NULL);
+    }
+
+    bu_vls_free(&vls);
+  }
+#endif
+
+#if 1
+  /*XXX Experimenting */
+  bu_vls_init(&name_vls);
+  bu_vls_printf(&name_vls, "dm_info(%s)", bu_vls_addr(&dmp->dm_pathName));
+  bu_vls_printf(&value_vls, "%lu %lu %lu %lu %d %d %lu",
+		(unsigned long)((struct x_vars *)dmp->dm_vars)->dpy,
+		(unsigned long)((struct x_vars *)dmp->dm_vars)->win,
+		(unsigned long)((struct x_vars *)dmp->dm_vars)->cmap,
+		(unsigned long)((struct x_vars *)dmp->dm_vars)->vip,
+		dmp->dm_width, dmp->dm_height,
+		(unsigned long)((struct x_vars *)dmp->dm_vars)->gc);
+  Tcl_SetVar(interp, bu_vls_addr(&name_vls), bu_vls_addr(&value_vls), TCL_GLOBAL_ONLY);
+  bu_vls_free(&name_vls);
+  bu_vls_free(&value_vls);
+#endif
 
   return TCL_OK;
 }
@@ -215,8 +272,14 @@ XEvent *eventPtr;
 
     goto handled;
   }else if(eventPtr->type == ConfigureNotify){
+    XConfigureEvent *conf = (XConfigureEvent *)eventPtr;
+
     dm_configureWindowShape(dmp);
     dirty = 1;
+
+#ifdef USE_FRAMEBUFFER
+    X24_configureWindow(fbp, conf->width, conf->height);
+#endif
 
     goto handled;
   } else if( eventPtr->type == MapNotify ){
@@ -241,16 +304,35 @@ XEvent *eventPtr;
 
     switch(am_mode){
     case AMM_IDLE:
+#if 1
+      if(scroll_active)
+#else
       if(scroll_active && eventPtr->xmotion.state & ((struct x_vars *)dmp->dm_vars)->mb_mask)
+#endif
 	bu_vls_printf( &cmd, "M 1 %d %d\n",
-		       (int)(dm_X2Normal(dmp, mx, 0) * 2047.0),
-		       (int)(dm_Y2Normal(dmp, my) * 2047.0) );
+		       (int)(dm_Xx2Normal(dmp, mx, 0) * 2047.0),
+		       (int)(dm_Xy2Normal(dmp, my) * 2047.0) );
+#ifdef DO_RUBBER_BAND
+#if 1
+      else if(rubber_band_active){
+#else
+      else if(rubber_band_active && eventPtr->xmotion.state & ((struct x_vars *)dmp->dm_vars)->mb_mask){
+#endif
+	fastf_t x = dm_Xx2Normal(dmp, mx, 1);
+	fastf_t y = dm_Xy2Normal(dmp, my);
+
+	rect_width = x - rect_x;
+	rect_height = y - rect_y;
+
+	dirty = 1;
+      }
+#endif
       else if(XdoMotion)
 	/* trackball not active so do the regular thing */
 	/* Constant tracking (e.g. illuminate mode) bound to M mouse */
 	bu_vls_printf( &cmd, "M 0 %d %d\n",
-		       (int)(dm_X2Normal(dmp, mx, 1) * 2047.0),
-		       (int)(dm_Y2Normal(dmp, my) * 2047.0) );
+		       (int)(dm_Xx2Normal(dmp, mx, 1) * 2047.0),
+		       (int)(dm_Xy2Normal(dmp, my) * 2047.0) );
       else
 	goto handled;
 
@@ -375,26 +457,26 @@ XEvent *eventPtr;
 
       break;
     case AMM_ADC_ANG1:
-      fx = dm_X2Normal(dmp, mx, 1) * 2047.0 - dv_xadc;
-      fy = dm_Y2Normal(dmp, my) * 2047.0 - dv_yadc;
+      fx = dm_Xx2Normal(dmp, mx, 1) * 2047.0 - dv_xadc;
+      fy = dm_Xy2Normal(dmp, my) * 2047.0 - dv_yadc;
       bu_vls_printf(&cmd, "adc a1 %lf\n", DEGRAD*atan2(fy, fx));
 
       break;
     case AMM_ADC_ANG2:
-      fx = dm_X2Normal(dmp, mx, 1) * 2047.0 - dv_xadc;
-      fy = dm_Y2Normal(dmp, my) * 2047.0 - dv_yadc;
+      fx = dm_Xx2Normal(dmp, mx, 1) * 2047.0 - dv_xadc;
+      fy = dm_Xy2Normal(dmp, my) * 2047.0 - dv_yadc;
       bu_vls_printf(&cmd, "adc a2 %lf\n", DEGRAD*atan2(fy, fx));
 
       break;
     case AMM_ADC_TRAN:
       bu_vls_printf(&cmd, "adc hv %lf %lf\n",
-		    dm_X2Normal(dmp, mx, 1) * Viewscale * base2local,
-		    dm_Y2Normal(dmp, my) * Viewscale * base2local);
+		    dm_Xx2Normal(dmp, mx, 1) * Viewscale * base2local,
+		    dm_Xy2Normal(dmp, my) * Viewscale * base2local);
 
       break;
     case AMM_ADC_DIST:
-      fx = (dm_X2Normal(dmp, mx, 1) * 2047.0 - dv_xadc) * Viewscale * base2local / 2047.0;
-      fy = (dm_Y2Normal(dmp, my) * 2047.0 - dv_yadc) * Viewscale * base2local / 2047.0;
+      fx = (dm_Xx2Normal(dmp, mx, 1) * 2047.0 - dv_xadc) * Viewscale * base2local / 2047.0;
+      fy = (dm_Xy2Normal(dmp, my) * 2047.0 - dv_yadc) * Viewscale * base2local / 2047.0;
       td = sqrt(fx * fx + fy * fy);
       bu_vls_printf(&cmd, "adc dst %lf\n", td);
 
@@ -1506,12 +1588,23 @@ char *argv[];
 
   if(!strcmp(argv[0], "idle")){
     am_mode = AMM_IDLE;
+    scroll_active = 0;
+#ifdef DO_RUBBER_BAND
+    if(rubber_band_active){
+      rubber_band_active = 0;
+      dirty = 1;
+
+      if(mged_variables->mouse_behavior == 'r')
+	rt_rect_area();
+      else if(mged_variables->mouse_behavior == 'z')
+	zoom_rect_area();
+    }
+#endif    
+
     return TCL_OK;
   }
 
   if( !strcmp( argv[0], "m" )){
-    scroll_active = 0;
-
     if( argc < 4){
       Tcl_AppendResult(interp, "dm m: need more parameters\n",
 		       "dm m button xpos ypos\n", (char *)NULL);
@@ -1539,19 +1632,25 @@ char *argv[];
       int y;
       int old_orig_gui;
       int stolen = 0;
+      fastf_t fx, fy;
 
       old_orig_gui = mged_variables->orig_gui;
 
-      x = dm_X2Normal(dmp, atoi(argv[2]), 0) * 2047.0;
-      y = dm_Y2Normal(dmp, atoi(argv[3])) * 2047.0;
+      fx = dm_Xx2Normal(dmp, atoi(argv[2]), 0);
+      fy = dm_Xy2Normal(dmp, atoi(argv[3]));
+      x = fx * 2047.0;
+      y = fy * 2047.0;
 
       if(mged_variables->faceplate &&
 	 mged_variables->orig_gui){
 #define        MENUXLIM        (-1250)
+
+#if 0
 	if(scroll_active){
 	  stolen = 1;
 	  goto end;
 	}
+#endif
 
 	if(x >= MENUXLIM && scroll_select( x, y, 0 )){
 	  stolen = 1;
@@ -1565,17 +1664,16 @@ char *argv[];
       }
 
       mged_variables->orig_gui = 0;
-      x = dm_X2Normal(dmp, atoi(argv[2]), 1) * 2047.0;
+      fx = dm_Xx2Normal(dmp, atoi(argv[2]), 1);
+      x = fx * 2047.0;
 
 end:
       bu_vls_init(&vls);
-      if(mged_variables->mouse_nirt && !stolen){
+      if(mged_variables->mouse_behavior == 'q' && !stolen){
 	point_t view_pt;
 	point_t model_pt;
-	fastf_t sf = 1.0/2047.0;
 
-	VSET(view_pt, x, y, 2047.0);
-	VSCALE(view_pt, view_pt, sf);
+	VSET(view_pt, fx, fy, 1.0);
 	MAT4X3PNT(model_pt, view2model, view_pt);
 	VSCALE(model_pt, model_pt, base2local);
 	if(*zclip_ptr)
@@ -1584,6 +1682,18 @@ end:
 	else
 	  bu_vls_printf(&vls, "nirt -b %lf %lf %lf",
 			model_pt[X], model_pt[Y], model_pt[Z]);
+#ifdef DO_RUBBER_BAND
+      }else if((mged_variables->mouse_behavior == 'p' ||
+		mged_variables->mouse_behavior == 'r' ||
+		mged_variables->mouse_behavior == 'z') && !stolen){
+	rubber_band_active = 1;
+	rect_x = fx;
+	rect_y = fy;
+	rect_width = 0.0;
+	rect_height = 0.0;
+
+	dirty = 1;
+#endif
       }else
 	bu_vls_printf(&vls, "M 1 %d %d\n", x, y);
 
@@ -1596,7 +1706,9 @@ end:
   }
 
   if(!strcmp(argv[0], "am")){
+#if 0
     scroll_active = 0;
+#endif
 
     if( argc < 4){
       Tcl_AppendResult(interp, "dm am: need more parameters\n",
@@ -1624,8 +1736,8 @@ end:
 	mged_variables->ecoords = 'v';
 
 	MAT4X3PNT(ea_view_pos, model2view, e_axes_pos);
-	mouse_view_pos[X] = dm_X2Normal(dmp, ((struct x_vars *)dmp->dm_vars)->omx, 1);
-	mouse_view_pos[Y] = dm_Y2Normal(dmp, ((struct x_vars *)dmp->dm_vars)->omy);
+	mouse_view_pos[X] = dm_Xx2Normal(dmp, ((struct x_vars *)dmp->dm_vars)->omx, 1);
+	mouse_view_pos[Y] = dm_Xy2Normal(dmp, ((struct x_vars *)dmp->dm_vars)->omy);
 	mouse_view_pos[Z] = ea_view_pos[Z];
 	VSUB2(diff, mouse_view_pos, ea_view_pos);
 	VSCALE(diff, diff, Viewscale * base2local);
@@ -1662,8 +1774,9 @@ end:
   if(!strcmp(argv[0], "adc")){
     fastf_t fx, fy;
     fastf_t td; /* tick distance */
-
+#if 0
     scroll_active = 0;
+#endif
 
     if(argc < 4){
       Tcl_AppendResult(interp, "dm adc: need more parameters\n",
@@ -1676,8 +1789,8 @@ end:
 
     switch(*argv[1]){
     case '1':
-      fx = dm_X2Normal(dmp, ((struct x_vars *)dmp->dm_vars)->omx, 1) * 2047.0 - dv_xadc;
-      fy = dm_Y2Normal(dmp, ((struct x_vars *)dmp->dm_vars)->omy) * 2047.0 - dv_yadc;
+      fx = dm_Xx2Normal(dmp, ((struct x_vars *)dmp->dm_vars)->omx, 1) * 2047.0 - dv_xadc;
+      fy = dm_Xy2Normal(dmp, ((struct x_vars *)dmp->dm_vars)->omy) * 2047.0 - dv_yadc;
       bu_vls_init(&vls);
       bu_vls_printf(&vls, "adc a1 %lf\n", DEGRAD*atan2(fy, fx));
       Tcl_Eval(interp, bu_vls_addr(&vls));
@@ -1686,8 +1799,8 @@ end:
       am_mode = AMM_ADC_ANG1;
       break;
     case '2':
-      fx = dm_X2Normal(dmp, ((struct x_vars *)dmp->dm_vars)->omx, 1) * 2047.0 - dv_xadc;
-      fy = dm_Y2Normal(dmp, ((struct x_vars *)dmp->dm_vars)->omy) * 2047.0 - dv_yadc;
+      fx = dm_Xx2Normal(dmp, ((struct x_vars *)dmp->dm_vars)->omx, 1) * 2047.0 - dv_xadc;
+      fy = dm_Xy2Normal(dmp, ((struct x_vars *)dmp->dm_vars)->omy) * 2047.0 - dv_yadc;
       bu_vls_init(&vls);
       bu_vls_printf(&vls, "adc a2 %lf\n", DEGRAD*atan2(fy, fx));
       Tcl_Eval(interp, bu_vls_addr(&vls));
@@ -1698,9 +1811,9 @@ end:
     case 't':
       bu_vls_init(&vls);
       bu_vls_printf(&vls, "adc hv %lf %lf\n",
-		    dm_X2Normal(dmp, ((struct x_vars *)dmp->dm_vars)->omx, 1) *
+		    dm_Xx2Normal(dmp, ((struct x_vars *)dmp->dm_vars)->omx, 1) *
 		    Viewscale * base2local,
-		    dm_Y2Normal(dmp, ((struct x_vars *)dmp->dm_vars)->omy) *
+		    dm_Xy2Normal(dmp, ((struct x_vars *)dmp->dm_vars)->omy) *
 		    Viewscale * base2local);
       Tcl_Eval(interp, bu_vls_addr(&vls));
       bu_vls_free(&vls);
@@ -1708,9 +1821,9 @@ end:
       am_mode = AMM_ADC_TRAN;
       break;
     case 'd':
-      fx = (dm_X2Normal(dmp, ((struct x_vars *)dmp->dm_vars)->omx, 1) * 2047.0 -
+      fx = (dm_Xx2Normal(dmp, ((struct x_vars *)dmp->dm_vars)->omx, 1) * 2047.0 -
 	    dv_xadc) * Viewscale * base2local / 2047.0;
-      fy = (dm_Y2Normal(dmp, ((struct x_vars *)dmp->dm_vars)->omy) * 2047.0 -
+      fy = (dm_Xy2Normal(dmp, ((struct x_vars *)dmp->dm_vars)->omy) * 2047.0 -
 	    dv_yadc) * Viewscale * base2local / 2047.0;
 
       td = sqrt(fx * fx + fy * fy);
@@ -1731,7 +1844,9 @@ end:
   }
 
   if(!strcmp(argv[0], "con")){
+#if 0
     scroll_active = 0;
+#endif
 
     if(argc < 5){
       Tcl_AppendResult(interp, "dm con: need more parameters\n",
