@@ -165,7 +165,6 @@ static bool	boolean_flag = false;	/* Show only one value? */
 static bool	color_flag = false;	/* Interpret fields as R, G, B? */
 static bool	erase_flag = false;	/* Erase frame buffer first? */
 static bool	grid_flag = false;	/* Leave space between cells? */
-static bool	hires_flag = false;	/* Force high-res frame buffer? */
 static bool	interp_flag = true;	/* Ramp between colortbl entries? */
 static bool	key_flag = false;	/* Display color-mapping key? */
 static bool	log_flag = false;	/* Make a log file? */
@@ -734,7 +733,7 @@ register char	**argv;
 		grid_flag = true;
 		break;
 	    case 'h':
-		hires_flag = true;
+		fb_height = fb_width = HIRES;
 		break;
 	    case 'i':
 		interp_flag = false;
@@ -831,6 +830,10 @@ register char	**argv;
     else
 	filep = stdin;
 
+    /* if fb_height/width has not been set, do snug fit
+     * else if fb_height/width set to 0 force loose fit
+     * else take user specified dimensions
+     */
     compute_fb_height = (fb_height == -1) ? SNUG_FIT :
 			(fb_height == 0) ? LOOSE_FIT : false;
     compute_fb_width = (fb_width == -1) ? SNUG_FIT :
