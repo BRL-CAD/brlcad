@@ -408,7 +408,7 @@ char	**argv;
 			clients = 0;
 			eat_script( stdin );
 		}
-		cd_frames( 0, (char **)0 );
+		if(debug) cd_frames( 0, (char **)0 );
 
 		/* Compute until no work remains */
 		running = 1;
