@@ -54,6 +54,11 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./solid.h"
 #include "./dm.h"
 
+#ifndef XMGED
+#include "tcl.h"
+#endif
+
+
 #define BAD_EOF	(-1L)			/* eof_addr not set yet */
 
 void	killtree();
@@ -220,59 +225,95 @@ dir_nref( )
  *		\	Escapes special characters.
  */
 int
-regexp_match(	 pattern, string )
-register char	*pattern, *string;
+regexp_match( pattern, string )
+register char *pattern, *string;
 {
-	do {
-		switch( *pattern ) {
-		case '*': /*
-			   * match any string including null string
-			   */
-			++pattern;
-			do {
-				if( regexp_match( pattern, string ) )
-					 return( 1 );
-			} while( *string++ != '\0' );
-			return( 0 );
-		case '?': /*
-			   * match any character
-			   */
-			if( *string == '\0' )	return( 0 );
+    do {
+	switch( *pattern ) {
+	case '*':
+	    /* match any string including null string */
+	    ++pattern;
+	    do {
+		if( regexp_match( pattern, string ) )
+		    return( 1 );
+	    } while( *string++ != '\0' );
+	    return( 0 );
+	case '?':
+	    /* match any character  */
+	    if( *string == '\0' )
+		return( 0 );
+	    break;
+	case '[':
+	    /* try to match one of the characters in brackets */
+	    ++pattern;
+	    if( *pattern == '\0' )
+		return( 0 );
+	    while( *pattern != *string ) {
+		if( pattern[0] == '-' && pattern[-1] != '\\')
+		    if(	pattern[-1] <= *string &&
+		        pattern[-1] != '[' &&
+		       	pattern[ 1] >= *string &&
+		        pattern[ 1] != ']' )
 			break;
-		case '[': /*
-			   * try to match one of the characters in brackets
-			   */
-			++pattern;
-			while( *pattern != *string ) {
-				if(	pattern[ 0] == '-'
-				    &&	pattern[-1] != '\\'
-				)	if(	pattern[-1] <= *string
-					    &&	pattern[-1] != '['
-					    &&	pattern[ 1] >= *string
-					    &&	pattern[ 1] != ']'
-					)	break;
-				if( *++pattern == ']' )	return( 0 );
-			}
-
-			/* skip to next character after closing bracket
-			 */
-			while( *++pattern != ']' );
-			break;
-		case '\\': /*
-			    * escape special character
-			    */
-			++pattern;
-			/* WARNING: falls through to default case */
-		default:  /*
-			   * compare characters
-			   */
-			if( *pattern != *string )	return( 0 );
-			break;
-		}
-		++string;
-	} while( *pattern++ != '\0' );
-	return( 1 );
+		++pattern;
+		if( *pattern == '\0' || *pattern == ']' )
+		    return( 0 );
+	    }
+	    /* skip to next character after closing bracket */
+	    while( *pattern != '\0' && *pattern != ']' )
+		++pattern;
+	    break;
+	case '\\':
+	    /* escape special character */
+	    ++pattern;
+	    /* compare characters */
+	    if( *pattern != *string )
+		return( 0 );
+	    break;
+	default:
+	    /* compare characters */
+	    if( *pattern != *string )
+		return( 0 );
+	}
+	++string;
+    } while( *pattern++ != '\0' );
+    return( 1 );
 }
+
+/*
+ *			R E G E X P _ M A T C H _ A L L
+ *
+ * Appends a list of all database matches to the given vls, or the pattern
+ * itself if no matches are found.
+ * Returns the number of matches.
+ *
+ */
+ 
+int
+regexp_match_all( dest, pattern )
+struct rt_vls *dest;
+char *pattern;
+{
+    register int i, num;
+    register struct directory *dp;
+
+    for( i = num = 0; i < RT_DBNHASH; i++ )  {
+	for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw ){
+	    if( !regexp_match( pattern, dp->d_namep ) )
+		continue;
+	    if( num == 0 )
+		rt_vls_strcat( dest, dp->d_namep );
+	    else {
+		rt_vls_strcat( dest, " " );
+		rt_vls_strcat( dest, dp->d_namep );
+	    }
+	    ++num;
+	}
+    }
+
+    return num;
+}
+
 
 /*
  *  			D I R _ S U M M A R Y
@@ -380,7 +421,7 @@ char	**argv;
  *			C M D _ G L O B
  *  
  *  Assist routine for command processor.  If the current word in
- *  the argv[] array contains "*", "?", "[", or "\" then this word
+ *  the argv[] array contains '*', '?', '[', or '\' then this word
  *  is potentially a regular expression, and we will tromp through the
  *  entire in-core directory searching for a match. If no match is
  *  found, the original word remains untouched and this routine was an
@@ -474,6 +515,109 @@ int   maxargs;
 	}
 	return(0);		/* found nothing */
 }
+
+#ifndef XMGED
+void
+scrape_escapes_AppendResult( interp, str )
+Tcl_Interp *interp;
+char *str;
+{
+    char buf[2];
+    buf[1] = '\0';
+    
+    while ( *str ) {
+	buf[0] = *str;
+	if ( *str != '\\' ) {
+	    Tcl_AppendResult( interp, buf, NULL );
+	} else if( *(str+1) == '\\' ) {
+	    Tcl_AppendResult( interp, buf, NULL );
+	    ++str;
+	}
+	if( *str == '\0' )
+	    break;
+	++str;
+    }
+}
+
+/*
+ *                C M D _ E X P A N D
+ *
+ * Performs wildcard expansion (matched to the database elements)
+ * on its given arguments.  The result is returned in interp->result.
+ */
+
+int
+cmd_expand( clientData, interp, argc, argv )
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
+{
+    register char *pattern;
+    register struct directory *dp;
+    register int i, whicharg;
+    int regexp, nummatch, thismatch, backslashed;
+
+    nummatch = 0;
+    backslashed = 0;
+    for ( whicharg = 1; whicharg < argc; whicharg++ ) {
+	/* If * ? or [ are present, this is a regular expression */
+	pattern = argv[whicharg];
+	regexp = 0;
+	do {
+	    if( (*pattern == '*' || *pattern == '?' || *pattern == '[') &&
+	        !backslashed ) {
+		regexp = 1;
+		break;
+	    }
+	    if( *pattern == '\\' && !backslashed )
+		backslashed = 1;
+	    else
+		backslashed = 0;
+	} while( *pattern++ );
+
+	/* If it isn't a regexp, copy directly and continue */
+	if( regexp == 0 ) {
+	    if( nummatch > 0 )
+		Tcl_AppendResult( interp, " ", NULL );
+	    scrape_escapes_AppendResult( interp, argv[whicharg] );
+	    ++nummatch;
+	    continue;
+	}
+	
+	/* Search for pattern matches.
+	 * If any matches are found, we do not have to worry about
+	 * '\' escapes since the match coming from dp->d_namep will be
+	 * clean. In the case of no matches, just copy the argument
+	 * directly.
+	 */
+
+	pattern = argv[whicharg];
+	thismatch = 0;
+	for( i = 0; i < RT_DBNHASH; i++ )  {
+	    for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw )  {
+		if( !regexp_match( pattern, dp->d_namep, '*', '?', '[', ']' ) )
+		    continue;
+		/* Successful match */
+		if( nummatch == 0 )
+		    Tcl_AppendResult( interp, dp->d_namep, NULL );
+		else 
+		    Tcl_AppendResult( interp, " ", dp->d_namep, NULL );
+		++nummatch;
+		++thismatch;
+	    }
+	}
+	if( thismatch == 0 ) {
+	    if( nummatch > 0 )
+		Tcl_AppendResult( interp, " ", NULL );
+	    scrape_escapes_AppendResult( interp, argv[whicharg] );
+	}
+    }
+
+    return TCL_OK;
+}
+
+#endif
 
 /*
  *  			F _ F I N D
