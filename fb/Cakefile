@@ -98,8 +98,8 @@ fbzoom:		fbzoom.o LIBFB_DEP LIBTERMIO_DEP
 fbpoint:	fbpoint.o LIBFB_DEP LIBTERMIO_DEP
 	CC LDFLAGS -o fbpoint fbpoint.o LIBFB LIBFB_LIBES LIBTERMIO LIBES 
 
-fblabel:	fblabel.o LIBFB_DEP LIBFONT_DEP
-	CC LDFLAGS -o fblabel fblabel.o LIBFONT LIBFB LIBFB_LIBES LIBES 
+fblabel:	fblabel.o LIBFB_DEP LIBBU_DEP
+	CC LDFLAGS -o fblabel fblabel.o LIBBU LIBBU_LIBES LIBFB LIBFB_LIBES LIBES 
 
 fbline:		fbline.o LIBFB_DEP
 	CC LDFLAGS -o fbline fbline.o LIBFB LIBFB_LIBES LIBES 
@@ -119,8 +119,8 @@ bw-fb:		bw-fb.o LIBFB_DEP LIBRT_DEP LIBBU_DEP LIBBN_DEP
 fb-bw:		fb-bw.o LIBFB_DEP
 	CC LDFLAGS -o fb-bw fb-bw.o LIBFB LIBFB_LIBES LIBES
 
-cat-fb:		cat-fb.o LIBFB_DEP LIBFONT_DEP
-	CC LDFLAGS -o cat-fb cat-fb.o LIBFONT LIBFB LIBFB_LIBES LIBES
+cat-fb:		cat-fb.o LIBFB_DEP LIBBU_DEP
+	CC LDFLAGS -o cat-fb cat-fb.o LIBBU LIBBU_LIBES LIBFB LIBFB_LIBES LIBES
 
 /* "gif2fb" is an alternative implementation of "gif-fb"; use either or both */
 
