@@ -136,67 +136,67 @@ proc do_arb_edit_menu { menu1 menu2 menu3 } {
     foreach id $mged_players {
 	build_edit_info $id
 
-	.$id.m.settings.m.cm_transform entryconfigure 2 -state normal
+	.$id.settings.m.cm_transform entryconfigure 2 -state normal
 	set mged_transform($id) "e"
 	set_transform $id
 
-	.$id.m.settings.m.cm_coord entryconfigure 2 -state normal
+	.$id.settings.m.cm_coord entryconfigure 2 -state normal
 	set mged_coords($id) "o"
 	mged_apply $id "set coords $mged_coords($id)"
 
-	.$id.m.settings.m.cm_origin entryconfigure 3 -state normal
+	.$id.settings.m.cm_origin entryconfigure 3 -state normal
 	set mged_rotate_about($id) "k"
 	mged_apply $id "set rotate_about $mged_rotate_about($id)"
 
-	.$id.m.edit.m entryconfigure 0 -state disabled
-	.$id.m.edit.m entryconfigure 1 -state disabled
-	.$id.m.edit.m entryconfigure 2 -state disabled
-	.$id.m.edit.m entryconfigure 3 -state disabled
+	.$id.edit.m entryconfigure 0 -state disabled
+	.$id.edit.m entryconfigure 1 -state disabled
+	.$id.edit.m entryconfigure 2 -state disabled
+	.$id.edit.m entryconfigure 3 -state disabled
 
-	.$id.m.edit.m insert 0 cascade -label "move edges" \
-		-menu .$id.m.edit.m.cm_mvedges
-	.$id.m.edit.m insert 1 cascade -label "move faces" \
-		-menu .$id.m.edit.m.cm_mvfaces
-	.$id.m.edit.m insert 2 cascade -label "rotate faces" \
-		-menu .$id.m.edit.m.cm_rotfaces
-	.$id.m.edit.m insert 3 separator
-	.$id.m.edit.m insert 4 radiobutton -variable edit_type \
+	.$id.edit.m insert 0 cascade -label "move edges" \
+		-menu .$id.edit.m.cm_mvedges
+	.$id.edit.m insert 1 cascade -label "move faces" \
+		-menu .$id.edit.m.cm_mvfaces
+	.$id.edit.m insert 2 cascade -label "rotate faces" \
+		-menu .$id.edit.m.cm_rotfaces
+	.$id.edit.m insert 3 separator
+	.$id.edit.m insert 4 radiobutton -variable edit_type \
 		-label "Rotate" -underline 0 -command "press srot"
-	.$id.m.edit.m insert 5 radiobutton -variable edit_type \
+	.$id.edit.m insert 5 radiobutton -variable edit_type \
 		-label "Translate" -underline 0 -command "press sxy"
-	.$id.m.edit.m insert 6 radiobutton -variable edit_type \
+	.$id.edit.m insert 6 radiobutton -variable edit_type \
 		-label "Scale" -underline 0 -command "press sscale"
-	.$id.m.edit.m insert 7 radiobutton -variable edit_type \
+	.$id.edit.m insert 7 radiobutton -variable edit_type \
 		 -label "none of above" -command "press \"edit menu\""
-	.$id.m.edit.m insert 8 separator
-	.$id.m.edit.m insert 9 command -label "Reject" -underline 0 \
+	.$id.edit.m insert 8 separator
+	.$id.edit.m insert 9 command -label "Reject" -underline 0 \
 		-command "press reject"
-	.$id.m.edit.m insert 10 command -label "Accept" -underline 0 \
+	.$id.edit.m insert 10 command -label "Accept" -underline 0 \
 		-command "press accept"
-	.$id.m.edit.m insert 11 separator
+	.$id.edit.m insert 11 separator
 
-	menu .$id.m.edit.m.cm_mvedges -tearoff $do_tearoffs
+	menu .$id.edit.m.cm_mvedges -tearoff $do_tearoffs
 	foreach item $menu1 {
 	    if {$item != "RETURN"} {
-		.$id.m.edit.m.cm_mvedges add radiobutton -variable edit_type -label $item \
+		.$id.edit.m.cm_mvedges add radiobutton -variable edit_type -label $item \
 			-command "press \"edit menu\"; press \"move edges\"; \
 			press \"$item\""
 	    }
 	}
 
-	menu .$id.m.edit.m.cm_mvfaces -tearoff $do_tearoffs
+	menu .$id.edit.m.cm_mvfaces -tearoff $do_tearoffs
 	foreach item $menu2 {
 	    if {$item != "RETURN"} {
-		.$id.m.edit.m.cm_mvfaces add radiobutton -variable edit_type -label $item \
+		.$id.edit.m.cm_mvfaces add radiobutton -variable edit_type -label $item \
 			-command "press \"edit menu\"; press \"move faces\"; \
 			press \"$item\""
 	    }
 	}
     
-	menu .$id.m.edit.m.cm_rotfaces -tearoff $do_tearoffs
+	menu .$id.edit.m.cm_rotfaces -tearoff $do_tearoffs
 	foreach item $menu3 {
 	    if {$item != "RETURN"} {
-		.$id.m.edit.m.cm_rotfaces add radiobutton -variable edit_type -label $item \
+		.$id.edit.m.cm_rotfaces add radiobutton -variable edit_type -label $item \
 			-command "press \"edit menu\"; press \"rotate faces\"; \
 			press \"$item\""
 	    }
@@ -221,93 +221,93 @@ proc do_edit_menu { menu1 } {
     foreach id $mged_players {
 	build_edit_info $id
 
-	.$id.m.settings.m.cm_transform entryconfigure 2 -state normal
+	.$id.settings.m.cm_transform entryconfigure 2 -state normal
 	set mged_transform($id) "e"
 	set_transform $id
 
-	.$id.m.settings.m.cm_coord entryconfigure 2 -state normal
+	.$id.settings.m.cm_coord entryconfigure 2 -state normal
 	set mged_coords($id) "o"
 	mged_apply $id "set coords $mged_coords($id)"
 
-	.$id.m.settings.m.cm_origin entryconfigure 3 -state normal
+	.$id.settings.m.cm_origin entryconfigure 3 -state normal
 	set mged_rotate_about($id) "k"
 	mged_apply $id "set rotate_about $mged_rotate_about($id)"
 
-	.$id.m.edit.m entryconfigure 0 -state disabled
-	.$id.m.edit.m entryconfigure 1 -state disabled
-	.$id.m.edit.m entryconfigure 2 -state disabled
-	.$id.m.edit.m entryconfigure 3 -state disabled
+	.$id.edit.m entryconfigure 0 -state disabled
+	.$id.edit.m entryconfigure 1 -state disabled
+	.$id.edit.m entryconfigure 2 -state disabled
+#	.$id.edit.m entryconfigure 3 -state disabled
 
 	set i 0
 	foreach item $menu1 {
 	    if {$item != "RETURN"} {
-		.$id.m.edit.m insert $i radiobutton -variable edit_type \
+		.$id.edit.m insert $i radiobutton -variable edit_type \
 			-label $item -command "press \"$item\""
 		incr i
 	    }
 	}
 
 	if {[llength $menu1]} {
-	    .$id.m.edit.m insert $i separator
+	    .$id.edit.m insert $i separator
 	    incr i
 	}
 
 	if {$mged_display(state) == "SOL EDIT"} {
-	    .$id.m.edit.m insert $i radiobutton -variable edit_type \
+	    .$id.edit.m insert $i radiobutton -variable edit_type \
 		    -label "Rotate" -underline 0 -command "press srot"
 	    incr i
-	    .$id.m.edit.m insert $i radiobutton -variable edit_type \
+	    .$id.edit.m insert $i radiobutton -variable edit_type \
 		    -label "Translate" -underline 0 -command "press sxy"
 	    incr i
-	    .$id.m.edit.m insert $i radiobutton -variable edit_type \
+	    .$id.edit.m insert $i radiobutton -variable edit_type \
 		    -label "Scale" -underline 0 -command "press sscale"
 	    incr i
-	    .$id.m.edit.m insert $i radiobutton -variable edit_type \
+	    .$id.edit.m insert $i radiobutton -variable edit_type \
 		    -label "none of above" -command "set edit_solid_flag 0"
 	    incr i
-	    .$id.m.edit.m insert $i separator
+	    .$id.edit.m insert $i separator
 	    incr i
 	} else {
-	    .$id.m.edit.m insert $i radiobutton -variable edit_type \
+	    .$id.edit.m insert $i radiobutton -variable edit_type \
 		    -label "Scale" -command "press \"Scale\""
 	    incr i
-	    .$id.m.edit.m insert $i radiobutton -variable edit_type \
+	    .$id.edit.m insert $i radiobutton -variable edit_type \
 		    -label "X move" -command "press \"X move\""
 	    incr i
-	    .$id.m.edit.m insert $i radiobutton -variable edit_type \
+	    .$id.edit.m insert $i radiobutton -variable edit_type \
 		    -label "Y move" -command "press \"Y move\""
 	    incr i
-	    .$id.m.edit.m insert $i radiobutton -variable edit_type \
+	    .$id.edit.m insert $i radiobutton -variable edit_type \
 		    -label "XY move" -command "press \"XY move\""
 	    incr i
-	    .$id.m.edit.m insert $i radiobutton -variable edit_type \
+	    .$id.edit.m insert $i radiobutton -variable edit_type \
 		    -label "Rotate" -command "press \"Rotate\""
 	    incr i
-	    .$id.m.edit.m insert $i radiobutton -variable edit_type \
+	    .$id.edit.m insert $i radiobutton -variable edit_type \
 		    -label "Scale X" -command "press \"Scale X\""
 	    incr i
-	    .$id.m.edit.m insert $i radiobutton -variable edit_type \
+	    .$id.edit.m insert $i radiobutton -variable edit_type \
 		    -label "Scale Y" -command "press \"Scale Y\""
 	    incr i
-	    .$id.m.edit.m insert $i radiobutton -variable edit_type \
+	    .$id.edit.m insert $i radiobutton -variable edit_type \
 		    -label "Scale Z" -command "press \"Scale Z\""
 	    incr i
-	    .$id.m.edit.m insert $i radiobutton -variable edit_type \
+	    .$id.edit.m insert $i radiobutton -variable edit_type \
 		    -label "none of above" -command "set edit_object_flag 0"
 	    incr i
-	    .$id.m.edit.m insert $i separator
+	    .$id.edit.m insert $i separator
 	    incr i
 	}
 
-	.$id.m.edit.m insert $i command -label "Reject" -underline 0 \
+	.$id.edit.m insert $i command -label "Reject" -underline 0 \
 		-command "press reject"
 
 	incr i
-	.$id.m.edit.m insert $i command -label "Accept" -underline 0 \
+	.$id.edit.m insert $i command -label "Accept" -underline 0 \
 		-command "press accept"
 
 	incr i
-	.$id.m.edit.m insert $i separator
+	.$id.edit.m insert $i separator
     }
 }
 
@@ -326,42 +326,42 @@ proc undo_edit_menu {} {
 	destroy_edit_info $id
 
 	while {1} {
-	    if {[.$id.m.edit.m type 0] == "separator"} {
-		.$id.m.edit.m delete 0
+	    if {[.$id.edit.m type 0] == "separator"} {
+		.$id.edit.m delete 0
 		continue
 	    }
 
-	    if {[.$id.m.edit.m entrycget 0 -label] != "Add"} {
-		.$id.m.edit.m delete 0
+	    if {[.$id.edit.m entrycget 0 -label] != "Solid"} {
+		.$id.edit.m delete 0
 	    } else {
 		break
 	    }
 	}
 
-	if {[winfo exists .$id.m.edit.m.cm_mvedges]} {
-	    destroy .$id.m.edit.m.cm_mvedges
-	    destroy .$id.m.edit.m.cm_mvfaces
-	    destroy .$id.m.edit.m.cm_rotfaces
+	if {[winfo exists .$id.edit.m.cm_mvedges]} {
+	    destroy .$id.edit.m.cm_mvedges
+	    destroy .$id.edit.m.cm_mvfaces
+	    destroy .$id.edit.m.cm_rotfaces
 	}
 
-	.$id.m.edit.m entryconfigure 0 -state normal
-	.$id.m.edit.m entryconfigure 1 -state normal
-	.$id.m.edit.m entryconfigure 2 -state normal
-	.$id.m.edit.m entryconfigure 3 -state normal
+	.$id.edit.m entryconfigure 0 -state normal
+	.$id.edit.m entryconfigure 1 -state normal
+	.$id.edit.m entryconfigure 2 -state normal
+	.$id.edit.m entryconfigure 3 -state normal
 
-	.$id.m.settings.m.cm_transform entryconfigure 2 -state disabled
+	.$id.settings.m.cm_transform entryconfigure 2 -state disabled
 	if {$mged_transform($id) == "e"} {
 	    set mged_transform($id) "v"
 	    set_transform $id
 	}
 
-	.$id.m.settings.m.cm_coord entryconfigure 2 -state disabled
+	.$id.settings.m.cm_coord entryconfigure 2 -state disabled
 	if {$mged_coords($id) == "o"} {
 	    set mged_coords($id) "v"
 	    mged_apply $id "set coords $mged_coords($id)"
 	}
 
-	.$id.m.settings.m.cm_origin entryconfigure 3 -state disabled
+	.$id.settings.m.cm_origin entryconfigure 3 -state disabled
 	if {$mged_rotate_about($id) == "k"} {
 	    set mged_rotate_about($id) "v"
 	    mged_apply $id "set rotate_about $mged_rotate_about($id)"
