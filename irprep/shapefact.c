@@ -248,7 +248,7 @@ char **argv;
  *	   (void)fflush(stdout);
  */
 #ifdef MSRMAXTBL
-	   q = MSR_UNIF_DOUBLE(msr);
+	   q = MSR_UNIF_DOUBLE(msr) + 0.5;
 #else
 	   q = drand48();
 #endif
@@ -258,7 +258,7 @@ char **argv;
  *	   (void)fflush(stdout);
  */
 #ifdef MSRMAXTBL
-	   q = MSR_UNIF_DOUBLE(msr);
+	   q = MSR_UNIF_DOUBLE(msr) + 0.5;
 #else
 	   q = drand48();
 #endif
@@ -288,7 +288,7 @@ char **argv;
 	   /*  Find vector in yz-plane.  */
 
 #ifdef MSRMAXTBL
-	   q = MSR_UNIF_DOUBLE(msr);
+	   q = MSR_UNIF_DOUBLE(msr) + 0.5;
 #else
 	   q = drand48();
 #endif
@@ -298,7 +298,7 @@ char **argv;
  *	   (void)fflush(stdout);
  */
 #ifdef MSRMAXTBL
-	   q = MSR_UNIF_DOUBLE(msr);
+	   q = MSR_UNIF_DOUBLE(msr) + 0.5;
 #else
 	   q = drand48();
 #endif
