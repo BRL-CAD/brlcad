@@ -47,9 +47,15 @@ static float	m_param[NMEMB*24];	/* member parameters */
 static int	memb_count = 0;		/* running count of members */
 static int	param_count = 0; 	/* location in m_param[] array */
 
+static float	reg_min[3], reg_max[3];		/* min,max's for the region */
+static float	sol_min[3], sol_max[3];		/* min,max's for a solid */
+static float	pinf = 1000000.0;
+static float	*sp;			/* pointers to the solid parameter array m_param[] */
+
 /*
- * This routine processes each member(solid) of a region.
+ *			P R O C _ R E G
  *
+ * This routine processes each member(solid) of a region.
  * When the last member is processed, dwreg() is executed.
  *
  * Returns -
@@ -82,11 +88,17 @@ int flag, more;
 	else
 		m_op[memb_count] = '-';
 
-	m_type[memb_count++] = cgtype;
-	if(memb_count > NMEMB) {
+	m_type[memb_count] = cgtype;
+	if(memb_count >= NMEMB) {
 		(void)printf("proc_reg: region has more than %d members\n", NMEMB);
 		nmemb = param_count = memb_count = 0;
 		return(-1);	/* ERROR */
+	}
+	if( memb_count == 0 )  {
+		/* First part of this region, initialize */
+		reg_min[0]=reg_min[1]=reg_min[2] = -pinf;
+		reg_max[0]=reg_max[1]=reg_max[2]=pinf;
+		sp = &m_param[0];	/* XXX */
 	}
 
 	switch( cgtype )  {
@@ -150,18 +162,28 @@ int flag, more;
 		return(-1);	/* ERROR */
 	}
 
-	if(more == 0) {
-		/* this was the last member solid - draw the region */
-		nmemb = memb_count;
-		param_count = memb_count = 0;
-		if(nmemb == 0) {
-			nmemb = param_count = memb_count = 0;
-			return(-1);	/* ERROR */
+	/* Find min and max */
+	solin(memb_count);
+	if(m_op[memb_count] != '-') {
+		for(i=0;i<3;i++){
+			MAX(reg_min[i],sol_min[i]);
+			MIN(reg_max[i],sol_max[i]);
 		}
-		dwreg();
-		return(0);	/* OK, region was drawn */
 	}
-	return(1);		/* MORE solids follow */
+	memb_count++;
+
+	if(more)
+		return(1);		/* MORE solids follow */
+
+	/* this was the last member solid - draw the region */
+	nmemb = memb_count;
+	param_count = memb_count = 0;
+	if(nmemb == 0) {
+		nmemb = param_count = memb_count = 0;
+		return(-1);	/* ERROR */
+	}
+	dwreg();
+	return(0);	/* OK, region was drawn */
 }
 
 
@@ -198,17 +220,13 @@ static float	peq[NPLANES*4];		/* plane equations for EACH region */
 static float	solrpp[NMEMB*6];	/* enclosing RPPs for each member of the region */
 static float	regi[NMEMB], rego[NMEMB];	/* distances along ray where ray enters and leaves the region */
 static float	pcenter[3];		/* center (interior) point of a solid */
-static float	reg_min[3], reg_max[3];		/* min,max's for the region */
-static float	sol_min[3], sol_max[3];		/* min,max's for a solid */
 static float	xb[3];			/* starting point of ray */
 static float	wb[3];			/* direction cosines of ray */
 static float	rin, rout;		/* location where ray enters and leaves a solid */
 static float	ri, ro;			/* location where ray enters and leaves a region */
 static float	tol;			/* tolerance */
-static float	*sp;			/* pointers to the solid parameter array m_param[] */
 static int	mlc[NMEMB];		/* location of last plane for each member */
 static int	la, lb, lc, id, jd, ngaps;
-static float	pinf = 1000000.0;
 static int	negpos;
 static char	oper;
 
@@ -235,20 +253,9 @@ orregion:	/* sent here if region has or's */
 		;
 
 	lc = 0;
-	tol=reg_min[0]=reg_min[1]=reg_min[2] = -pinf;
-	reg_max[0]=reg_max[1]=reg_max[2]=pinf;
+	tol = -pinf;
 	sp = savesp;
 
-	/* find min max's */
-	for(i=lmemb;i<umemb;i++){
-		solin(i);
-		if(m_op[i] != '-') {
-			for(j=0;j<3;j++){
-				MAX(reg_min[j],sol_min[j]);
-				MIN(reg_max[j],sol_max[j]);
-			}
-		}
-	}
 	for(i=0;i<3;i++){
 		MAX(tol,fabs(reg_min[i]));
 		MAX(tol,fabs(reg_max[i]));
