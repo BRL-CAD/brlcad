@@ -724,10 +724,11 @@ int		red, green, blue;
 /*
  *			M N G _ P L _ F U
  */
-void nmg_pl_fu(fp, fu, b)
+void nmg_pl_fu(fp, fu, b, red, green, blue)
 FILE *fp;
 struct faceuse *fu;
 struct nmg_ptbl *b;
+int red, green, blue;
 {
 	struct loopuse *lu;
 
@@ -735,7 +736,7 @@ struct nmg_ptbl *b;
 	if (nmg_tbl(b, TBL_INS_UNIQUE, &fu->l.magic) >= 0) return;
 
 	for( NMG_LIST( lu, loopuse, &fu->lu_hd ) )  {
-		nmg_pl_lu(fp, lu, b, 80, 100, 170 );
+		nmg_pl_lu(fp, lu, b, red, green, blue);
 	}
 }
 
@@ -763,7 +764,7 @@ struct shell *s;
 
 	for( NMG_LIST( fu, faceuse, &s->fu_hd ) )  {
 		NMG_CK_FACEUSE(fu);
-		nmg_pl_fu(fp, fu, &b );
+		nmg_pl_fu(fp, fu, &b, 80, 100, 170);
 	}
 
 	for( NMG_LIST( lu, loopuse, &s->lu_hd ) )  {
