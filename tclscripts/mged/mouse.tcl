@@ -261,8 +261,21 @@ proc mouse_rt_obj_select { x y } {
 
     set spath [lindex $spath_and_pos 0]
     set sindex [lindex $spath_and_pos 1]
-    incr sindex
-    set component [lindex [split $spath /] $sindex]
+
+    # remove leading /
+    if {[string index $spath 0] == "/"} {
+	set spath [string range $spath 1 end]
+    }
+
+    set components [split $spath /]
+    if ![llength $components] {
+	return
+    }
+
+    set component [lindex $components 0]
+    for {set i 1} {$i <= $sindex} {incr i} {
+	set component $component/[lindex $components $i]
+    }
 
     rt_init_vars $id $win
 
@@ -270,7 +283,7 @@ proc mouse_rt_obj_select { x y } {
 	all
             -
 	one {
-	    set rt_control($id,olist) $component
+	    rt_olist_set $id $component
 	    do_Raytrace $id
 	}
 	several {
