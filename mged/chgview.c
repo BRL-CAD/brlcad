@@ -323,32 +323,72 @@ register struct directory *dp;
 {
 	register int	i;
 	register union record	*rp;
+	int		id;
 
 	if( (rp = db_getmrec( dbip, dp )) == (union record *)0 )
 		return;
 
-	if( rp[0].u_id == ID_SOLID )  {
-		switch( rp[0].s.s_type )  {
-		case GENARB8:
-			dbpr_arb( &rp[0].s, dp );
-			break;
-		case GENTGC:
-			dbpr_tgc( &rp[0].s, dp );
-			break;
-		case GENELL:
-			dbpr_ell( &rp[0].s, dp );
-			break;
-		case HALFSPACE:
-			dbpr_half( &rp[0].s, dp );
-			break;
-		case TOR:
-			dbpr_torus( &rp[0].s, dp );
-			break;
-		default:
-			printf("bad solid type %d\n", rp[0].s.s_type );
-			break;
+	if( rp[0].u_id == ID_COMB )  {
+		/* Combination */
+		(void)printf("%s (len %d) ", dp->d_namep, dp->d_len-1 );
+		if( rp[0].c.c_flags == 'R' )
+			(void)printf("REGION id=%d  (air=%d, los=%d, GIFTmater=%d) ",
+				rp[0].c.c_regionid,
+				rp[0].c.c_aircode,
+				rp[0].c.c_los,
+				rp[0].c.c_material );
+		(void)printf("--\n");
+		if( rp[0].c.c_matname[0] )
+			(void)printf("Material '%s' '%s'\n",
+				rp[0].c.c_matname,
+				rp[0].c.c_matparm);
+		if( rp[0].c.c_override == 1 )
+			(void)printf("Color %d %d %d\n",
+				rp[0].c.c_rgb[0],
+				rp[0].c.c_rgb[1],
+				rp[0].c.c_rgb[2]);
+		if( rp[0].c.c_matname[0] || rp[0].c.c_override )  {
+			if( rp[0].c.c_inherit == DB_INH_HIGHER )
+				(void)printf("(These material properties override all lower ones in the tree)\n");
 		}
 
+		for( i=1; i < dp->d_len; i++ )  {
+			mat_t	xmat;
+
+			rt_mat_dbmat( xmat, rp[i].M.m_mat );
+
+			(void)printf("  %c %s",
+				rp[i].M.m_relation, rp[i].M.m_instname );
+
+			if( xmat[0] != 1.0 || xmat[5] != 1.0 || xmat[10] != 1.0 )  {
+				fastf_t	az, el;
+				ae_vec( &az, &el, xmat );
+				(void)printf(" az=%g, el=%g, ", az, el );
+			}
+			if( xmat[MDX] != 0.0 ||
+			    xmat[MDY] != 0.0 ||
+			    xmat[MDZ] != 0.0 )
+				(void)printf(" [%f,%f,%f]",
+					xmat[MDX]*base2local,
+					xmat[MDY]*base2local,
+					xmat[MDZ]*base2local);
+			if( xmat[12] != 0.0 ||
+			    xmat[13] != 0.0 ||
+			    xmat[14] != 0.0 )
+				(void)printf(" ??Perspective=[%f,%f,%f]??",
+					xmat[12], xmat[13], xmat[14] );
+			(void)putchar('\n');
+		}
+		goto out;
+	}
+
+	/* XXX This should run through the ft_switch[] table!! */
+	/* XXX The result should be a variable length string */
+	id = rt_id_solid( rp );
+	switch( id )  {
+	case ID_ARB8:
+		dbpr_arb( &rp[0].s, dp );
+sol_com:
 		/* This stuff ought to get pushed into the dbpr_xx code */
 		pr_solid( &rp[0].s );
 
@@ -360,9 +400,23 @@ register struct directory *dp;
 			pr_solid(&es_rec.s);
 
 		goto out;
-	}
+	case ID_TGC:
+		dbpr_tgc( &rp[0].s, dp );
+		goto sol_com;
+	case ID_ELL:
+		dbpr_ell( &rp[0].s, dp );
+		goto sol_com;
+	case ID_HALF:
+		dbpr_half( &rp[0].s, dp );
+		goto sol_com;
+	case ID_TOR:
+		dbpr_torus( &rp[0].s, dp );
+		goto sol_com;
+	default:
+		printf("Unknown solid type, id=%d\n", id);
+		break;
 
-	if( rp[0].u_id == ID_ARS_A )  {
+	case ID_ARS:
 		(void)printf("%s:  ARS\n", dp->d_namep );
 		(void)printf(" num curves  %d\n", rp[0].a.a_m );
 		(void)printf(" pts/curve   %d\n", rp[0].a.a_n );
@@ -371,70 +425,24 @@ register struct directory *dp;
 			rp[1].b.b_values[0]*base2local,
 			rp[1].b.b_values[1]*base2local,
 			rp[1].b.b_values[2]*base2local );
-		goto out;
-	}
-	if( rp[0].u_id == ID_BSOLID ) {
+		break;
+
+	case ID_BSPLINE:
 		dbpr_spline( dp );
-		goto out;
-	}
-	if( rp[0].u_id == ID_P_HEAD )  {
+		break;
+
+	case ID_POLY:
 		(void)printf("%s:  %d granules of polygon data\n",
 			dp->d_namep, dp->d_len-1 );
-		goto out;
-	}
-	if( rp[0].u_id != ID_COMB )  {
-		(void)printf("%s: unknown record type!\n",
-			dp->d_namep );
-		goto out;
-	}
+		break;
 
-	/* Combination */
-	(void)printf("%s (len %d) ", dp->d_namep, dp->d_len-1 );
-	if( rp[0].c.c_flags == 'R' )
-		(void)printf("REGION id=%d  (air=%d, los=%d, GIFTmater=%d) ",
-			rp[0].c.c_regionid,
-			rp[0].c.c_aircode,
-			rp[0].c.c_los,
-			rp[0].c.c_material );
-	(void)printf("--\n");
-	if( rp[0].c.c_matname[0] )
-		(void)printf("Material '%s' '%s'\n",
-			rp[0].c.c_matname,
-			rp[0].c.c_matparm);
-	if( rp[0].c.c_override == 1 )
-		(void)printf("Color %d %d %d\n",
-			rp[0].c.c_rgb[0],
-			rp[0].c.c_rgb[1],
-			rp[0].c.c_rgb[2]);
-	if( rp[0].c.c_matname[0] || rp[0].c.c_override )  {
-		if( rp[0].c.c_inherit == DB_INH_HIGHER )
-			(void)printf("(These material properties override all lower ones in the tree)\n");
+	case ID_STRINGSOL:
+	case ID_EBM:
+	case ID_VOL:
+		(void)printf("%s: %s\n", dp->d_namep, rp->ss.ss_str );
+		break;
 	}
 
-	for( i=1; i < dp->d_len; i++ )  {
-		mat_t	xmat;
-
-		rt_mat_dbmat( xmat, rp[i].M.m_mat );
-
-		(void)printf("  %c %s",
-			rp[i].M.m_relation, rp[i].M.m_instname );
-
-		if( xmat[0] != 1.0 || xmat[5] != 1.0 || xmat[10] != 1.0 )
-			(void)printf(" (Rotated)");
-		if( xmat[MDX] != 0.0 ||
-		    xmat[MDY] != 0.0 ||
-		    xmat[MDZ] != 0.0 )
-			(void)printf(" [%f,%f,%f]",
-				xmat[MDX]*base2local,
-				xmat[MDY]*base2local,
-				xmat[MDZ]*base2local);
-		if( xmat[12] != 0.0 ||
-		    xmat[13] != 0.0 ||
-		    xmat[14] != 0.0 )
-			(void)printf(" ??Perspective=[%f,%f,%f]??",
-				xmat[12], xmat[13], xmat[14] );
-		(void)putchar('\n');
-	}
 out:
 	rt_free( (char *)rp, "do_list records");
 }
