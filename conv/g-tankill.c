@@ -342,12 +342,15 @@ struct db_full_path *pathp;
 		}
 	}
 
-	/* First make sure that each shell is broken down into maximally connected shells */
+	/* First make sure that each shell is broken down into maximally connected shells
+	 * and while we're at it, split touching loops
+	 */
 	nmg_tbl( &shells , TBL_INIT , NULL );
 	for( RT_LIST_FOR( s , shell , &r->s_hd ) )
 	{
 		NMG_CK_SHELL( s );
 		nmg_tbl( &shells , TBL_INS , (long *)s );
+		nmg_s_split_touchingloops( s , &tol );
 	}
 
 	for( i=0 ; i<NMG_TBL_END( &shells ) ; i++ )
@@ -439,6 +442,7 @@ struct db_full_path *pathp;
 		if( lu->orientation != OT_SAME )
 		{
 			rt_log( "g-tankill: Found a hole in a triangulated face!!!\n" );
+			nmg_pr_fu_briefly( fu , (char *)NULL );
 			goto outt;
 		}
 
