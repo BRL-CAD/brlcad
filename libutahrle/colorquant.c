@@ -28,6 +28,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.2  91/01/09  03:31:11  butler
+ * added include of rle_config.h to pick up macro definitions
+ * 
  * Revision 1.1  91/01/03  17:30:45  butler
  * Initial revision
  * 
