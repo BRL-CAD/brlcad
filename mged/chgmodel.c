@@ -51,6 +51,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "rtstring.h"
 #include "nmg.h"
 #include "raytrace.h"
+#include "rtgeom.h"
 #include "./ged.h"
 #include "./solid.h"
 #include "./dm.h"
@@ -452,163 +453,222 @@ int	argc;
 char	**argv;
 {
 	register struct directory *dp;
-	union record record;
+	int ngran;
 	int i;
+	struct rt_db_internal	internal;
+	struct rt_external	external;
+	struct rt_arb_internal	*arb_ip;
+	struct rt_tgc_internal	*tgc_ip;
+	struct rt_ell_internal	*ell_ip;
+	struct rt_tor_internal	*tor_ip;
 
 	if( db_lookup( dbip,  argv[1], LOOKUP_QUIET ) != DIR_NULL )  {
 		aexists( argv[1] );
 		return;
 	}
-	/* Position this solid at view center */
-	record.s.s_values[0] = -toViewcenter[MDX];
-	record.s.s_values[1] = -toViewcenter[MDY];
-	record.s.s_values[2] = -toViewcenter[MDZ];
-	record.s.s_id = ID_SOLID;
 
-	/* Zero out record.s.s_values[] */
-	for( i = 3; i < 24; i++ )  {
-		record.s.s_values[i] = 0.0;
-	}
+	RT_INIT_DB_INTERNAL( &internal );
 
 	/* make name <arb8|arb7|arb6|arb5|arb4|ellg|ell|sph|tor|tgc|rec|trc|rcc> */
 	if( strcmp( argv[2], "arb8" ) == 0 )  {
-		record.s.s_type = GENARB8;
-		record.s.s_cgtype = ARB8;
-		VSET( &record.s.s_values[0*3],
+		internal.idb_type = ID_ARB8;
+		internal.idb_ptr = (genptr_t)rt_malloc( sizeof(struct rt_arb_internal) , "rt_arb_internal" );
+		arb_ip = (struct rt_arb_internal *)internal.idb_ptr;
+		arb_ip->magic = RT_ARB_INTERNAL_MAGIC;
+		VSET( arb_ip->pt[0] ,
 			-toViewcenter[MDX] +Viewscale,
 			-toViewcenter[MDY] -Viewscale,
 			-toViewcenter[MDZ] -Viewscale );
-		VSET( &record.s.s_values[1*3],  0, (Viewscale*2), 0 );
-		VSET( &record.s.s_values[2*3],  0, (Viewscale*2), (Viewscale*2) );
-		VSET( &record.s.s_values[3*3],  0, 0, (Viewscale*2) );
-		VSET( &record.s.s_values[4*3],  -(Viewscale*2), 0, 0 );
-		VSET( &record.s.s_values[5*3],  -(Viewscale*2), (Viewscale*2), 0 );
-		VSET( &record.s.s_values[6*3],  -(Viewscale*2), (Viewscale*2), (Viewscale*2) );
-		VSET( &record.s.s_values[7*3],  -(Viewscale*2), 0, (Viewscale*2)  );
+		for( i=1 ; i<8 ; i++ )			VMOVE( arb_ip->pt[i] , arb_ip->pt[0] );
+		arb_ip->pt[1][Y] += Viewscale*2.0;
+		arb_ip->pt[2][Y] += Viewscale*2.0;
+		arb_ip->pt[2][Z] += Viewscale*2.0;
+		arb_ip->pt[3][Z] += Viewscale*2.0;
+		for( i=4 ; i<8 ; i++ )
+			arb_ip->pt[i][X] -= Viewscale*2.0;
+		arb_ip->pt[5][Y] += Viewscale*2.0;
+		arb_ip->pt[6][Y] += Viewscale*2.0;
+		arb_ip->pt[6][Z] += Viewscale*2.0;
+		arb_ip->pt[7][Z] += Viewscale*2.0;
 	} else if( strcmp( argv[2], "arb7" ) == 0 )  {
-		record.s.s_type = GENARB8;
-		record.s.s_cgtype = ARB7;
-		VSET( &record.s.s_values[0*3],
+		internal.idb_type = ID_ARB8;
+		internal.idb_ptr = (genptr_t)rt_malloc( sizeof(struct rt_arb_internal) , "rt_arb_internal" );
+		arb_ip = (struct rt_arb_internal *)internal.idb_ptr;
+		arb_ip->magic = RT_ARB_INTERNAL_MAGIC;
+		VSET( arb_ip->pt[0] ,
 			-toViewcenter[MDX] +Viewscale,
 			-toViewcenter[MDY] -Viewscale,
 			-toViewcenter[MDZ] -(0.5*Viewscale) );
-		VSET( &record.s.s_values[1*3],  0, (Viewscale*2), 0 );
-		VSET( &record.s.s_values[2*3],  0, (Viewscale*2), (Viewscale*2) );
-		VSET( &record.s.s_values[3*3],  0, 0, Viewscale );
-		VSET( &record.s.s_values[4*3],  -(Viewscale*2), 0, 0 );
-		VSET( &record.s.s_values[5*3],  -(Viewscale*2), (Viewscale*2), 0 );
-		VSET( &record.s.s_values[6*3],  -(Viewscale*2), (Viewscale*2), Viewscale );
-		VSET( &record.s.s_values[7*3],  -(Viewscale*2), 0, 0  );
+		for( i=1 ; i<8 ; i++ )
+			VMOVE( arb_ip->pt[i] , arb_ip->pt[0] );
+		arb_ip->pt[1][Y] += Viewscale*2.0;
+		arb_ip->pt[2][Y] += Viewscale*2.0;
+		arb_ip->pt[2][Z] += Viewscale*2.0;
+		arb_ip->pt[3][Z] += Viewscale;
+		for( i=4 ; i<8 ; i++ )
+			arb_ip->pt[i][X] -= Viewscale*2.0;
+		arb_ip->pt[5][Y] += Viewscale*2.0;
+		arb_ip->pt[6][Y] += Viewscale*2.0;
+		arb_ip->pt[6][Z] += Viewscale;
 	} else if( strcmp( argv[2], "arb6" ) == 0 )  {
-		record.s.s_type = GENARB8;
-		record.s.s_cgtype = ARB6;
-		VSET( &record.s.s_values[0*3],
+		internal.idb_type = ID_ARB8;
+		internal.idb_ptr = (genptr_t)rt_malloc( sizeof(struct rt_arb_internal) , "rt_arb_internal" );
+		arb_ip = (struct rt_arb_internal *)internal.idb_ptr;
+		arb_ip->magic = RT_ARB_INTERNAL_MAGIC;
+		VSET( arb_ip->pt[0],
 			-toViewcenter[MDX] +Viewscale,
 			-toViewcenter[MDY] -Viewscale,
 			-toViewcenter[MDZ] -Viewscale );
-		VSET( &record.s.s_values[1*3],  0, (Viewscale*2), 0 );
-		VSET( &record.s.s_values[2*3],  0, (Viewscale*2), (Viewscale*2) );
-		VSET( &record.s.s_values[3*3],  0, 0, (Viewscale*2) );
-		VSET( &record.s.s_values[4*3],  -(Viewscale*2), Viewscale, 0 );
-		VSET( &record.s.s_values[5*3],  -(Viewscale*2), Viewscale, 0 );
-		VSET( &record.s.s_values[6*3],  -(Viewscale*2), Viewscale, (Viewscale*2) );
-		VSET( &record.s.s_values[7*3],  -(Viewscale*2), Viewscale, (Viewscale*2)  );
+		for( i=1 ; i<8 ; i++ )
+			VMOVE( arb_ip->pt[i] , arb_ip->pt[0] );
+		arb_ip->pt[1][Y] += Viewscale*2.0;
+		arb_ip->pt[2][Y] += Viewscale*2.0;
+		arb_ip->pt[2][Z] += Viewscale*2.0;
+		arb_ip->pt[3][Z] += Viewscale*2.0;
+		for( i=4 ; i<8 ; i++ )
+			arb_ip->pt[i][X] -= Viewscale*2.0;
+		arb_ip->pt[4][Y] += Viewscale;
+		arb_ip->pt[5][Y] += Viewscale;
+		arb_ip->pt[6][Y] += Viewscale;
+		arb_ip->pt[6][Z] += Viewscale*2.0;
+		arb_ip->pt[7][Y] += Viewscale;
+		arb_ip->pt[7][Z] += Viewscale*2.0;
 	} else if( strcmp( argv[2], "arb5" ) == 0 )  {
-		record.s.s_type = GENARB8;
-		record.s.s_cgtype = ARB5;
-		VSET( &record.s.s_values[0*3],
+		internal.idb_type = ID_ARB8;
+		internal.idb_ptr = (genptr_t)rt_malloc( sizeof(struct rt_arb_internal) , "rt_arb_internal" );
+		arb_ip = (struct rt_arb_internal *)internal.idb_ptr;
+		arb_ip->magic = RT_ARB_INTERNAL_MAGIC;
+		VSET( arb_ip->pt[0] ,
 			-toViewcenter[MDX] +Viewscale,
 			-toViewcenter[MDY] -Viewscale,
 			-toViewcenter[MDZ] -Viewscale );
-		VSET( &record.s.s_values[1*3],  0, (Viewscale*2), 0 );
-		VSET( &record.s.s_values[2*3],  0, (Viewscale*2), (Viewscale*2) );
-		VSET( &record.s.s_values[3*3],  0, 0, (Viewscale*2) );
-		VSET( &record.s.s_values[4*3],  -(Viewscale*2), Viewscale, Viewscale );
-		VSET( &record.s.s_values[5*3],  -(Viewscale*2), Viewscale, Viewscale );
-		VSET( &record.s.s_values[6*3],  -(Viewscale*2), Viewscale, Viewscale );
-		VSET( &record.s.s_values[7*3],  -(Viewscale*2), Viewscale, Viewscale  );
+		for( i=1 ; i<8 ; i++ )
+			VMOVE( arb_ip->pt[i] , arb_ip->pt[0] );
+		arb_ip->pt[1][Y] += Viewscale*2.0;
+		arb_ip->pt[2][Y] += Viewscale*2.0;
+		arb_ip->pt[2][Z] += Viewscale*2.0;
+		arb_ip->pt[3][Z] += Viewscale*2.0;
+		for( i=4 ; i<8 ; i++ )
+		{
+			arb_ip->pt[i][X] -= Viewscale*2.0;
+			arb_ip->pt[i][Y] += Viewscale;
+			arb_ip->pt[i][Z] += Viewscale;
+		}
 	} else if( strcmp( argv[2], "arb4" ) == 0 )  {
-		record.s.s_type = GENARB8;
-		record.s.s_cgtype = ARB4;
-		VSET( &record.s.s_values[0*3],
+		internal.idb_type = ID_ARB8;
+		internal.idb_ptr = (genptr_t)rt_malloc( sizeof(struct rt_arb_internal) , "rt_arb_internal" );
+		arb_ip = (struct rt_arb_internal *)internal.idb_ptr;
+		arb_ip->magic = RT_ARB_INTERNAL_MAGIC;
+		VSET( arb_ip->pt[0] ,
 			-toViewcenter[MDX] +Viewscale,
 			-toViewcenter[MDY] -Viewscale,
 			-toViewcenter[MDZ] -Viewscale );
-		VSET( &record.s.s_values[1*3],  0, (Viewscale*2), 0 );
-		VSET( &record.s.s_values[2*3],  0, (Viewscale*2), (Viewscale*2) );
-		VSET( &record.s.s_values[3*3],  0, (Viewscale*2), (Viewscale*2) );
-		VSET( &record.s.s_values[4*3],  -(Viewscale*2), (Viewscale*2), 0 );
-		VSET( &record.s.s_values[5*3],  -(Viewscale*2), (Viewscale*2), 0 );
-		VSET( &record.s.s_values[6*3],  -(Viewscale*2), (Viewscale*2), 0 );
-		VSET( &record.s.s_values[7*3],  -(Viewscale*2), (Viewscale*2), 0  );
+		for( i=1 ; i<8 ; i++ )
+			VMOVE( arb_ip->pt[i] , arb_ip->pt[0] );
+		arb_ip->pt[1][Y] += Viewscale*2.0;
+		arb_ip->pt[2][Y] += Viewscale*2.0;
+		arb_ip->pt[2][Z] += Viewscale*2.0;
+		arb_ip->pt[3][Y] += Viewscale*2.0;
+		arb_ip->pt[3][Z] += Viewscale*2.0;
+		for( i=4 ; i<8 ; i++ )
+		{
+			arb_ip->pt[i][X] -= Viewscale*2.0;
+			arb_ip->pt[i][Y] += Viewscale*2.0;
+		}
 	} else if( strcmp( argv[2], "sph" ) == 0 )  {
-		record.s.s_type = GENELL;
-		record.s.s_cgtype = SPH;
-		VSET( &record.s.s_values[1*3], (0.5*Viewscale), 0, 0 );	/* A */
-		VSET( &record.s.s_values[2*3], 0, (0.5*Viewscale), 0 );	/* B */
-		VSET( &record.s.s_values[3*3], 0, 0, (0.5*Viewscale) );	/* C */
+		internal.idb_type = ID_ELL;
+		internal.idb_ptr = (genptr_t)rt_malloc( sizeof(struct rt_ell_internal) , "rt_ell_internal" );
+		ell_ip = (struct rt_ell_internal *)internal.idb_ptr;
+		ell_ip->magic = RT_ELL_INTERNAL_MAGIC;
+		VSET( ell_ip->v , -toViewcenter[MDX] , -toViewcenter[MDY] , -toViewcenter[MDZ] );
+		VSET( ell_ip->a, (0.5*Viewscale), 0, 0 );	/* A */
+		VSET( ell_ip->b, 0, (0.5*Viewscale), 0 );	/* B */
+		VSET( ell_ip->c, 0, 0, (0.5*Viewscale) );	/* C */
 	} else if( strcmp( argv[2], "ell" ) == 0 )  {
-		record.s.s_type = GENELL;
-		record.s.s_cgtype = ELL;
-		VSET( &record.s.s_values[1*3], (0.5*Viewscale), 0, 0 );	/* A */
-		VSET( &record.s.s_values[2*3], 0, (0.25*Viewscale), 0 );	/* B */
-		VSET( &record.s.s_values[3*3], 0, 0, (0.25*Viewscale) );	/* C */
+		internal.idb_type = ID_ELL;
+		internal.idb_ptr = (genptr_t)rt_malloc( sizeof(struct rt_ell_internal) , "rt_ell_internal" );
+		ell_ip = (struct rt_ell_internal *)internal.idb_ptr;
+		ell_ip->magic = RT_ELL_INTERNAL_MAGIC;
+		VSET( ell_ip->v , -toViewcenter[MDX] , -toViewcenter[MDY] , -toViewcenter[MDZ] );
+		VSET( ell_ip->a, (0.5*Viewscale), 0, 0 );	/* A */
+		VSET( ell_ip->b, 0, (0.25*Viewscale), 0 );	/* B */
+		VSET( ell_ip->c, 0, 0, (0.25*Viewscale) );	/* C */
 	} else if( strcmp( argv[2], "ellg" ) == 0 )  {
-		record.s.s_type = GENELL;
-		record.s.s_cgtype = ELL;
-		VSET( &record.s.s_values[1*3], Viewscale, 0, 0 );	/* A */
-		VSET( &record.s.s_values[2*3], 0, (0.5*Viewscale), 0 );	/* B */
-		VSET( &record.s.s_values[3*3], 0, 0, (0.25*Viewscale) );	/* C */
+		internal.idb_type = ID_ELL;
+		internal.idb_ptr = (genptr_t)rt_malloc( sizeof(struct rt_ell_internal) , "rt_ell_internal" );
+		ell_ip = (struct rt_ell_internal *)internal.idb_ptr;
+		ell_ip->magic = RT_ELL_INTERNAL_MAGIC;
+		VSET( ell_ip->v , -toViewcenter[MDX] , -toViewcenter[MDY] , -toViewcenter[MDZ] );
+		VSET( ell_ip->a, Viewscale, 0, 0 );		/* A */
+		VSET( ell_ip->b, 0, (0.5*Viewscale), 0 );	/* B */
+		VSET( ell_ip->c, 0, 0, (0.25*Viewscale) );	/* C */
 	} else if( strcmp( argv[2], "tor" ) == 0 )  {
-		record.s.s_type = TOR;
-		record.s.s_cgtype = TOR;
-		VSET( &record.s.s_values[1*3], (0.5*Viewscale), 0, 0 );	/* N with mag = r2 */
-		VSET( &record.s.s_values[2*3], 0, Viewscale, 0 );	/* A == r1 */
-		VSET( &record.s.s_values[3*3], 0, 0, Viewscale );	/* B == r1 */
-		VSET( &record.s.s_values[4*3], 0, (0.5*Viewscale), 0 );	/* A == r1-r2 */
-		VSET( &record.s.s_values[5*3], 0, 0, (0.5*Viewscale) );	/* B == r1-r2 */
-		VSET( &record.s.s_values[6*3], 0, (1.5*Viewscale), 0 );	/* A == r1+r2 */
-		VSET( &record.s.s_values[7*3], 0, 0, (1.5*Viewscale) );	/* B == r1+r2 */
+		internal.idb_type = ID_TOR;
+		internal.idb_ptr = (genptr_t)rt_malloc( sizeof(struct rt_tor_internal) , "rt_tor_internal" );
+		tor_ip = (struct rt_tor_internal *)internal.idb_ptr;
+		tor_ip->magic = RT_TOR_INTERNAL_MAGIC;
+		VSET( tor_ip->v , -toViewcenter[MDX] , -toViewcenter[MDY] , -toViewcenter[MDZ] );
+		VSET( tor_ip->h , 1.0 , 0.0 , 0.0 );	/* unit normal */
+		tor_ip->r_h = 0.5*Viewscale;
+		tor_ip->r_a = Viewscale;
+		tor_ip->r_b = Viewscale;
+		VSET( tor_ip->a , 0.0 , Viewscale , 0.0 );
+		VSET( tor_ip->b , 0.0 , 0.0 , Viewscale );
 	} else if( strcmp( argv[2], "tgc" ) == 0 )  {
-		record.s.s_type = GENTGC;
-		record.s.s_cgtype = TGC;
-		VSET( &record.s.s_values[1*3],  0, 0, (Viewscale*2) );
-		VSET( &record.s.s_values[2*3],  (0.5*Viewscale), 0, 0 );
-		VSET( &record.s.s_values[3*3],  0, (0.25*Viewscale), 0 );
-		VSET( &record.s.s_values[4*3],  (0.25*Viewscale), 0, 0 );
-		VSET( &record.s.s_values[5*3],  0, (0.5*Viewscale), 0 );
+		internal.idb_type = ID_TGC;
+		internal.idb_ptr = (genptr_t)rt_malloc( sizeof(struct rt_tgc_internal) , "rt_tgc_internal" );
+		tgc_ip = (struct rt_tgc_internal *)internal.idb_ptr;
+		tgc_ip->magic = RT_TGC_INTERNAL_MAGIC;
+		VSET( tgc_ip->v , -toViewcenter[MDX] , -toViewcenter[MDY] , -toViewcenter[MDZ]-Viewscale );
+		VSET( tgc_ip->h,  0, 0, (Viewscale*2) );
+		VSET( tgc_ip->a,  (0.5*Viewscale), 0, 0 );
+		VSET( tgc_ip->b,  0, (0.25*Viewscale), 0 );
+		VSET( tgc_ip->c,  (0.25*Viewscale), 0, 0 );
+		VSET( tgc_ip->d,  0, (0.5*Viewscale), 0 );
 	} else if( strcmp( argv[2], "tec" ) == 0 )  {
-		record.s.s_type = GENTGC;
-		record.s.s_cgtype = TEC;
-		VSET( &record.s.s_values[1*3],  0, 0, (Viewscale*2) );
-		VSET( &record.s.s_values[2*3],  (0.5*Viewscale), 0, 0 );
-		VSET( &record.s.s_values[3*3],  0, (0.25*Viewscale), 0 );
-		VSET( &record.s.s_values[4*3],  (0.25*Viewscale), 0, 0 );
-		VSET( &record.s.s_values[5*3],  0, 31.75, 0 );
+		internal.idb_type = ID_TGC;
+		internal.idb_ptr = (genptr_t)rt_malloc( sizeof(struct rt_tgc_internal) , "rt_tgc_internal" );
+		tgc_ip = (struct rt_tgc_internal *)internal.idb_ptr;
+		tgc_ip->magic = RT_TGC_INTERNAL_MAGIC;
+		VSET( tgc_ip->v , -toViewcenter[MDX] , -toViewcenter[MDY] , -toViewcenter[MDZ]-Viewscale );
+		VSET( tgc_ip->h,  0, 0, (Viewscale*2) );
+		VSET( tgc_ip->a,  (0.5*Viewscale), 0, 0 );
+		VSET( tgc_ip->b,  0, (0.25*Viewscale), 0 );
+		VSET( tgc_ip->c,  (0.25*Viewscale), 0, 0 );
+		VSET( tgc_ip->d,  0, (0.125*Viewscale), 0 );
 	} else if( strcmp( argv[2], "rec" ) == 0 )  {
-		record.s.s_type = GENTGC;
-		record.s.s_cgtype = REC;
-		VSET( &record.s.s_values[1*3],  0, 0, (Viewscale*2) );
-		VSET( &record.s.s_values[2*3],  (0.5*Viewscale), 0, 0 );
-		VSET( &record.s.s_values[3*3],  0, (0.25*Viewscale), 0 );
-		VSET( &record.s.s_values[4*3],  (0.5*Viewscale), 0, 0 );
-		VSET( &record.s.s_values[5*3],  0, (0.25*Viewscale), 0 );
+		internal.idb_type = ID_TGC;
+		internal.idb_ptr = (genptr_t)rt_malloc( sizeof(struct rt_tgc_internal) , "rt_tgc_internal" );
+		tgc_ip = (struct rt_tgc_internal *)internal.idb_ptr;
+		tgc_ip->magic = RT_TGC_INTERNAL_MAGIC;
+		VSET( tgc_ip->v , -toViewcenter[MDX] , -toViewcenter[MDY] , -toViewcenter[MDZ]-Viewscale );
+		VSET( tgc_ip->h,  0, 0, (Viewscale*2) );
+		VSET( tgc_ip->a,  (0.5*Viewscale), 0, 0 );
+		VSET( tgc_ip->b,  0, (0.25*Viewscale), 0 );
+		VSET( tgc_ip->c,  (0.5*Viewscale), 0, 0 );
+		VSET( tgc_ip->d,  0, (0.25*Viewscale), 0 );
 	} else if( strcmp( argv[2], "trc" ) == 0 )  {
-		record.s.s_type = GENTGC;
-		record.s.s_cgtype = TRC;
-		VSET( &record.s.s_values[1*3],  0, 0, (Viewscale*2) );
-		VSET( &record.s.s_values[2*3],  (0.5*Viewscale), 0, 0 );
-		VSET( &record.s.s_values[3*3],  0, (0.5*Viewscale), 0 );
-		VSET( &record.s.s_values[4*3],  (0.25*Viewscale), 0, 0 );
-		VSET( &record.s.s_values[5*3],  0, (0.25*Viewscale), 0 );
+		internal.idb_type = ID_TGC;
+		internal.idb_ptr = (genptr_t)rt_malloc( sizeof(struct rt_tgc_internal) , "rt_tgc_internal" );
+		tgc_ip = (struct rt_tgc_internal *)internal.idb_ptr;
+		tgc_ip->magic = RT_TGC_INTERNAL_MAGIC;
+		VSET( tgc_ip->v , -toViewcenter[MDX] , -toViewcenter[MDY] , -toViewcenter[MDZ]-Viewscale );
+		VSET( tgc_ip->h,  0, 0, (Viewscale*2) );
+		VSET( tgc_ip->a,  (0.5*Viewscale), 0, 0 );
+		VSET( tgc_ip->b,  0, (0.5*Viewscale), 0 );
+		VSET( tgc_ip->c,  (0.25*Viewscale), 0, 0 );
+		VSET( tgc_ip->d,  0, (0.25*Viewscale), 0 );
 	} else if( strcmp( argv[2], "rcc" ) == 0 )  {
-		record.s.s_type = GENTGC;
-		record.s.s_cgtype = RCC;
-		VSET( &record.s.s_values[1*3],  0, 0, (Viewscale*2) );
-		VSET( &record.s.s_values[2*3],  (0.5*Viewscale), 0, 0 );
-		VSET( &record.s.s_values[3*3],  0, (0.5*Viewscale), 0 );
-		VSET( &record.s.s_values[4*3],  (0.5*Viewscale), 0, 0 );
-		VSET( &record.s.s_values[5*3],  0, (0.5*Viewscale), 0 );
+		internal.idb_type = ID_TGC;
+		internal.idb_ptr = (genptr_t)rt_malloc( sizeof(struct rt_tgc_internal) , "rt_tgc_internal" );
+		tgc_ip = (struct rt_tgc_internal *)internal.idb_ptr;
+		tgc_ip->magic = RT_TGC_INTERNAL_MAGIC;
+		VSET( tgc_ip->v , -toViewcenter[MDX] , -toViewcenter[MDY] , -toViewcenter[MDZ]-Viewscale );
+		VSET( tgc_ip->h,  0, 0, (Viewscale*2) );
+		VSET( tgc_ip->a,  (0.5*Viewscale), 0, 0 );
+		VSET( tgc_ip->b,  0, (0.5*Viewscale), 0 );
+		VSET( tgc_ip->c,  (0.5*Viewscale), 0, 0 );
+		VSET( tgc_ip->d,  0, (0.5*Viewscale), 0 );
 	} else if( strcmp( argv[2], "ars" ) == 0 )  {
 		(void)printf("make ars not implimented yet\n");
 		return;
@@ -617,14 +677,31 @@ char	**argv;
 		return;
 	}
 
-	/* Add to in-core directory */
-	if( (dp = db_diradd( dbip,  argv[1], -1, 0, DIR_SOLID )) == DIR_NULL ||
-	    db_alloc( dbip, dp, 1 ) < 0 )  {
-	    	ALLOC_ERR_return;
+	if( rt_functab[internal.idb_type].ft_export( &external, &internal, local2base ) < 0 )
+	{
+		rt_log( "f_make: export failure\n" );
+		rt_functab[internal.idb_type].ft_ifree( &internal );
+		return;
 	}
+	rt_functab[internal.idb_type].ft_ifree( &internal );   /* free internal rep */
 
-	NAMEMOVE( argv[1], record.s.s_name );
-	if( db_put( dbip, dp, &record, 0, 1 ) < 0 )  WRITE_ERR_return;
+	/* no interuprts */
+	(void)signal( SIGINT, SIG_IGN );
+
+	ngran = (external.ext_nbytes+sizeof(union record)-1) / sizeof(union record);
+	if( (dp = db_diradd( dbip, argv[1], -1L, ngran, DIR_SOLID)) == DIR_NULL ||
+	    db_alloc( dbip, dp, 1 ) < 0 )
+	    {
+	    	db_free_external( &external );
+	    	ALLOC_ERR_return;
+	    }
+
+	if (db_put_external( &external, dp, dbip ) < 0 )
+	{
+		db_free_external( &external );
+		WRITE_ERR_return;
+	}
+	db_free_external( &external );
 
 	/* draw the "made" solid */
 	f_edit( 2, argv );	/* depends on name being in argv[1] */
