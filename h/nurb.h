@@ -211,7 +211,7 @@ RT_EXTERN(void rt_nurb_gen_knot_vector, (struct knot_vector *new_knots,
 			int order, fastf_t lower, fastf_t upper));
 
 /* nurb_norm.c */
-RT_EXTERN(fastf_t *rt_nurb_s_norm, (struct snurb *srf, fastf_t u, fastf_t v));
+RT_EXTERN(void rt_nurb_s_norm, (struct snurb *srf, fastf_t u, fastf_t v, fastf_t * norm));
 
 /* nurb_c2.c */
 RT_EXTERN(void rt_nurb_curvature, (struct curvature *cvp,
