@@ -556,7 +556,7 @@ CONST struct rt_tol	*tol;
 	return nmg_class_pt_f_except(pt, fu, (struct loopuse *)0, tol);
 #else
 	return nmg_class_pt_fu_except(pt, fu, (struct loopuse *)0,
-			(void (*)())NULL, (void (*)())NULL (char *)NULL, 0,
+			(void (*)())NULL, (void (*)())NULL, (char *)NULL, 0,
 			tol);
 #endif                                                                        
 
