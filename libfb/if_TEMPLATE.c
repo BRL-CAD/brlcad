@@ -23,52 +23,54 @@
 
 _LOCAL_ int	DEVNAME_open(),
 		DEVNAME_close(),
-		DEVNAME_reset(),
 		DEVNAME_clear(),
 		DEVNAME_read(),
 		DEVNAME_write(),
 		DEVNAME_rmap(),
 		DEVNAME_wmap(),
-		DEVNAME_viewport(),
-		DEVNAME_window(),
-		DEVNAME_zoom(),
+		DEVNAME_view(),
+		DEVNAME_getview(),
 		DEVNAME_setcursor(),
 		DEVNAME_cursor(),
-		DEVNAME_scursor(),
+		DEVNAME_getcursor(),
 		DEVNAME_readrect(),
 		DEVNAME_writerect(),
+		DEVNAME_poll(),
 		DEVNAME_flush(),
 		DEVNAME_free(),
 		DEVNAME_help();
 
 /* This is the ONLY thing that we normally "export" */
 FBIO DEVNAME_interface =  {
-	DEVNAME_open,		/* open device	*/
-	DEVNAME_close,		/* close device	*/
-	DEVNAME_reset,		/* reset device	*/
-	DEVNAME_clear,		/* clear device	*/
-	DEVNAME_read,		/* read	pixels	*/
-	DEVNAME_write,		/* write pixels */
-	DEVNAME_rmap,		/* rmap - read colormap	*/
-	DEVNAME_wmap,		/* wmap - write colormap */
-	DEVNAME_viewport,	/* viewport set	*/
-	DEVNAME_window,		/* window set	*/
-	DEVNAME_zoom,		/* zoom set	*/
-	DEVNAME_setcursor,	/* setcursor - define cursor	*/
-	DEVNAME_cursor,		/* cursor - memory address	*/
-	DEVNAME_scursor,	/* scursor - screen address	*/
-	DEVNAME_readrect,	/* readrect - read rectangle	*/
-	DEVNAME_writerect,	/* writerect - write rectangle	*/
-	DEVNAME_flush,		/* flush output	*/
-	DEVNAME_free,		/* free resources */
-	DEVNAME_help,		/* help message	*/
+	DEVNAME_open,		/* open device		*/
+	DEVNAME_close,		/* close device		*/
+	DEVNAME_clear,		/* clear device		*/
+	DEVNAME_read,		/* read	pixels		*/
+	DEVNAME_write,		/* write pixels		*/
+	DEVNAME_rmap,		/* read colormap	*/
+	DEVNAME_wmap,		/* write colormap	*/
+	DEVNAME_view,		/* set view		*/
+	DEVNAME_getview,	/* get view		*/
+	DEVNAME_setcursor,	/* define cursor	*/
+	DEVNAME_cursor,		/* set cursor		*/
+	DEVNAME_getcursor,	/* get cursor		*/
+	DEVNAME_readrect,	/* read rectangle	*/
+	DEVNAME_writerect,	/* write rectangle	*/
+	DEVNAME_poll,		/* process events	*/
+	DEVNAME_flush,		/* flush output		*/
+	DEVNAME_free,		/* free resources	*/
+	DEVNAME_help,		/* help message		*/
 	"Device description",	/* device description	*/
 	0,			/* max width		*/
 	0,			/* max height		*/
 	"/dev/shortname",	/* short device name	*/
 	0,			/* default/current width  */
 	0,			/* default/current height */
+	-1,			/* select file desc	*/
 	-1,			/* file descriptor	*/
+	1, 1,			/* zoom			*/
+	0, 0,			/* window center	*/
+	0, 0, 0,		/* cursor		*/
 	PIXEL_NULL,		/* page_base		*/
 	PIXEL_NULL,		/* page_curp		*/
 	PIXEL_NULL,		/* page_endp		*/
@@ -90,13 +92,6 @@ int	width, height;
 
 _LOCAL_ int
 DEVNAME_close( ifp )
-FBIO	*ifp;
-{
-	return(0);
-}
-
-_LOCAL_ int
-DEVNAME_reset( ifp )
 FBIO	*ifp;
 {
 	return(0);
@@ -147,25 +142,19 @@ ColorMap	*cmp;
 }
 
 _LOCAL_ int
-DEVNAME_viewport( ifp, left, top, right, bottom )
+DEVNAME_view( ifp, xcenter, ycenter, xzoom, yzoom )
 FBIO	*ifp;
-int	left, top, right, bottom;
+int	xcenter, ycenter;
+int	xzoom, yzoom;
 {
 	return(0);
 }
 
 _LOCAL_ int
-DEVNAME_window( ifp, x, y )
+DEVNAME_getview( ifp, xcenter, ycenter, xzoom, yzoom )
 FBIO	*ifp;
-int	x, y;
-{
-	return(0);
-}
-
-_LOCAL_ int
-DEVNAME_zoom( ifp, x, y )
-FBIO	*ifp;
-int	x, y;
+int	*xcenter, *ycenter;
+int	*xzoom, *yzoom;
 {
 	return(0);
 }
@@ -190,10 +179,10 @@ int	x, y;
 }
 
 _LOCAL_ int
-DEVNAME_scursor( ifp, mode, x, y )
+DEVNAME_getcursor( ifp, mode, x, y )
 FBIO	*ifp;
-int	mode;
-int	x, y;
+int	*mode;
+int	*x, *y;
 {
 	return(0);
 }
@@ -216,6 +205,13 @@ int	width, height;
 RGBpixel	*pp;
 {
 	return( width*height );
+}
+
+_LOCAL_ int
+DEVNAME_poll( ifp )
+FBIO	*ifp;
+{
+	return(0);
 }
 
 _LOCAL_ int

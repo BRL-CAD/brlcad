@@ -14,20 +14,19 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 _LOCAL_ int	deb_open(),
 		deb_close(),
-		deb_reset(),
 		deb_clear(),
 		deb_read(),
 		deb_write(),
 		deb_rmap(),
 		deb_wmap(),
-		deb_viewport(),
-		deb_window(),
-		deb_zoom(),
+		deb_view(),
+		deb_getview(),
 		deb_setcursor(),
 		deb_cursor(),
-		deb_scursor(),
+		deb_getcursor(),
 		deb_readrect(),
 		deb_writerect(),
+		deb_poll(),
 		deb_flush(),
 		deb_free(),
 		deb_help();
@@ -36,20 +35,19 @@ _LOCAL_ int	deb_open(),
 FBIO debug_interface = {
 	deb_open,
 	deb_close,
-	deb_reset,
 	deb_clear,
 	deb_read,
 	deb_write,
 	deb_rmap,
 	deb_wmap,
-	deb_viewport,
-	deb_window,
-	deb_zoom,
+	deb_view,
+	deb_getview,
 	deb_setcursor,
 	deb_cursor,
-	deb_scursor,
+	deb_getcursor,
 	deb_readrect,
 	deb_writerect,
+	deb_poll,
 	deb_flush,
 	deb_free,
 	deb_help,
@@ -59,7 +57,11 @@ FBIO debug_interface = {
 	"/dev/debug",
 	512,			/* current/default width */
 	512,			/* current/default height */
+	-1,			/* select fd */
 	-1,			/* file descriptor */
+	1, 1,			/* zoom */
+	256, 256,		/* window center */
+	0, 0, 0,		/* cursor */
 	PIXEL_NULL,		/* page_base */
 	PIXEL_NULL,		/* page_curp */
 	PIXEL_NULL,		/* page_endp */
@@ -110,14 +112,6 @@ deb_close( ifp )
 FBIO	*ifp;
 {
 	fb_log( "fb_close( 0x%lx )\n", (unsigned long)ifp );
-	return	0;
-}
-
-_LOCAL_ int
-deb_reset( ifp )
-FBIO	*ifp;
-{
-	fb_log( "fb_reset( 0x%lx )\n", (unsigned long)ifp );
 	return	0;
 }
 
@@ -217,32 +211,28 @@ ColorMap	*cmp;
 }
 
 _LOCAL_ int
-deb_viewport( ifp, left, top, right, bottom )
+deb_view( ifp, xcenter, ycenter, xzoom, yzoom )
 FBIO	*ifp;
-int	left, top, right, bottom;
+int	xcenter, ycenter;
+int	xzoom, yzoom;
 {
-	fb_log( "fb_viewport( 0x%lx,%4d,%4d,%4d,%4d )\n",
-		(unsigned long)ifp, left, top, right, bottom );
+	fb_log( "fb_view( 0x%lx,%4d,%4d,%4d,%4d )\n",
+		(unsigned long)ifp, xcenter, ycenter, xzoom, yzoom );
+	fb_sim_view( ifp, xcenter, ycenter, xzoom, yzoom );
 	return	0;
 }
 
 _LOCAL_ int
-deb_window( ifp, x, y )
+deb_getview( ifp, xcenter, ycenter, xzoom, yzoom )
 FBIO	*ifp;
-int	x, y;
+int	*xcenter, *ycenter;
+int	*xzoom, *yzoom;
 {
-	fb_log( "fb_window( 0x%lx,%4d,%4d )\n",
-		(unsigned long)ifp, x, y );
-	return	0;
-}
-
-_LOCAL_ int
-deb_zoom( ifp, x, y )
-FBIO	*ifp;
-int	x, y;
-{
-	fb_log( "fb_zoom( 0x%lx, %d, %d )\n",
-		(unsigned long)ifp, x, y );
+	fb_log( "fb_getview( 0x%lx, 0x%x, 0x%x, 0x%x, 0x%x )\n",
+		(unsigned long)ifp, xcenter, ycenter, xzoom, yzoom );
+	fb_sim_getview( ifp, xcenter, ycenter, xzoom, yzoom );
+	fb_log( " <= %d %d %d %d\n",
+		*xcenter, *ycenter, *xzoom, *yzoom );
 	return	0;
 }
 
@@ -266,17 +256,20 @@ int	x, y;
 {
 	fb_log( "fb_cursor( 0x%lx, %d,%4d,%4d )\n",
 		(unsigned long)ifp, mode, x, y );
+	fb_sim_cursor( ifp, mode, x, y );
 	return	0;
 }
 
 _LOCAL_ int
-deb_scursor( ifp, mode, x, y )
+deb_getcursor( ifp, mode, x, y )
 FBIO	*ifp;
-int	mode;
-int	x, y;
+int	*mode;
+int	*x, *y;
 {
-	fb_log( "fb_scursor( 0x%lx, %d,%4d,%4d )\n",
+	fb_log( "fb_getcursor( 0x%lx, 0x%x,0x%x,0x%x )\n",
 		(unsigned long)ifp, mode, x, y );
+	fb_sim_getcursor( ifp, mode, x, y );
+	fb_log( " <= %d %d %d\n", *mode, *x, *y );
 	return	0;
 }
 
@@ -304,6 +297,14 @@ RGBpixel	*pp;
 		(unsigned long)ifp, xmin, ymin, width, height,
 		(unsigned long)pp );
 	return( width*height );
+}
+
+_LOCAL_ int
+deb_poll( ifp )
+FBIO	*ifp;
+{
+	fb_log( "fb_poll( 0x%lx )\n", (unsigned long)ifp );
+	return	0;
 }
 
 _LOCAL_ int

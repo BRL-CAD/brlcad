@@ -25,20 +25,19 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 _LOCAL_ int	null_open(),
 		null_close(),
-		null_reset(),
 		null_clear(),
 		null_read(),
 		null_write(),
 		null_rmap(),
 		null_wmap(),
-		null_viewport(),
-		null_window(),
-		null_zoom(),
+		null_view(),
+		null_getview(),
 		null_setcursor(),
 		null_cursor(),
-		null_scursor(),
+		null_getcursor(),
 		null_readrect(),
 		null_writerect(),
+		null_poll(),
 		null_flush(),
 		null_free(),
 		null_help();
@@ -47,20 +46,19 @@ _LOCAL_ int	null_open(),
 FBIO null_interface =  {
 	null_open,		/* device_open		*/
 	null_close,		/* device_close		*/
-	null_reset,		/* device_reset		*/
 	null_clear,		/* device_clear		*/
 	null_read,		/* buffer_read		*/
 	null_write,		/* buffer_write		*/
 	null_rmap,		/* colormap_read	*/
 	null_wmap,		/* colormap_write	*/
-	null_viewport,		/* viewport_set		*/
-	null_window,		/* window_set		*/
-	null_zoom,		/* zoom_set		*/
-	null_setcursor,		/* curs_set		*/
-	null_cursor,		/* cursor_move_memory_addr */
-	null_scursor,		/* cursor_move_screen_addr */
+	null_view,		/* set view		*/
+	null_getview,		/* get view		*/
+	null_setcursor,		/* define cursor	*/
+	null_cursor,		/* set cursor		*/
+	null_getcursor,		/* get cursor		*/
 	null_readrect,		/* rectangle read	*/
 	null_writerect,		/* rectangle write	*/
+	null_poll,		/* handle events	*/
 	null_flush,		/* flush output		*/
 	null_free,		/* free resources	*/
 	null_help,		/* help message		*/
@@ -70,7 +68,11 @@ FBIO null_interface =  {
 	"/dev/null",		/* short device name	*/
 	512,			/* default/current width  */
 	512,			/* default/current height */
+	-1,			/* select fd		*/
 	-1,			/* file descriptor	*/
+	1, 1,			/* zoom			*/
+	256, 256,		/* window center	*/
+	0, 0, 0,		/* cursor		*/
 	PIXEL_NULL,		/* page_base		*/
 	PIXEL_NULL,		/* page_curp		*/
 	PIXEL_NULL,		/* page_endp		*/
@@ -97,13 +99,6 @@ int	width, height;
 
 _LOCAL_ int
 null_close( ifp )
-FBIO	*ifp;
-{
-	return(0);
-}
-
-_LOCAL_ int
-null_reset( ifp )
 FBIO	*ifp;
 {
 	return(0);
@@ -154,26 +149,22 @@ ColorMap	*cmp;
 }
 
 _LOCAL_ int
-null_viewport( ifp, left, top, right, bottom )
+null_view( ifp, xcenter, ycenter, xzoom, yzoom )
 FBIO	*ifp;
-int	left, top, right, bottom;
+int	xcenter, ycenter;
+int	xzoom, yzoom;
 {
+	/*fb_sim_view( ifp, xcenter, ycenter, xzoom, yzoom );*/
 	return(0);
 }
 
 _LOCAL_ int
-null_window( ifp, x, y )
+null_getview( ifp, xcenter, ycenter, xzoom, yzoom )
 FBIO	*ifp;
-int	x, y;
+int	*xcenter, *ycenter;
+int	*xzoom, *yzoom;
 {
-	return(0);
-}
-
-_LOCAL_ int
-null_zoom( ifp, x, y )
-FBIO	*ifp;
-int	x, y;
-{
+	/*fb_sim_getview( ifp, xcenter, ycenter, xzoom, yzoom );*/
 	return(0);
 }
 
@@ -193,15 +184,17 @@ FBIO	*ifp;
 int	mode;
 int	x, y;
 {
+	/*fb_sim_cursor(ifp, mode, x, y);*/
 	return(0);
 }
 
 _LOCAL_ int
-null_scursor( ifp, mode, x, y )
+null_getcursor( ifp, mode, x, y )
 FBIO	*ifp;
-int	mode;
-int	x, y;
+int	*mode;
+int	*x, *y;
 {
+	/*fb_sim_getcursor(ifp, mode, x, y);*/
 	return(0);
 }
 
@@ -223,6 +216,13 @@ int	width, height;
 RGBpixel	*pp;
 {
 	return( width*height );
+}
+
+_LOCAL_ int
+null_poll( ifp )
+FBIO	*ifp;
+{
+	return(0);
 }
 
 _LOCAL_ int
