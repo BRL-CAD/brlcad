@@ -615,7 +615,8 @@ set -S2 "/bin/sh"
 #	define	LIBVERS	[[../sharedlibvers.sh]]
 #	define	BUILD_LIBRARY	ld -shared -o
 #	define	RANLIB		/**/
-#	define	STANDARD_LIBES	-lm -lmalloc -lc''SHARED -rpath LIBDIR
+/*	Note that /usr/lib MUST go first on -rpath, so that -lmalloc is the system one */
+#	define	STANDARD_LIBES	-lm -lmalloc -lc''SHARED -rpath /usr/lib:LIBDIR
 /*				-m and -v are helpful here */
 #	define	LD_OPTS		GFLAG
 # else
