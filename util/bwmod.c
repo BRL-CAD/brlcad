@@ -174,7 +174,6 @@ void mk_char_trans_tbl()
 				   exit(-1);
 				   break;
 			}
-			fprintf(stderr, "%d: %d\n", j, d);
 		}
 		mapbuf[j] = d & 0x0ff;
 	}
