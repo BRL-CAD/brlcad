@@ -38,6 +38,7 @@ static char RCSrt[] = "@(#)$Header$ (BRL)";
 #include "bn.h"
 #include "raytrace.h"
 #include "fb.h"
+#include "./mathtab.h"
 #include "./ext.h"
 #include "./rdebug.h"
 #include "../librt/debug.h"
@@ -132,7 +133,7 @@ char **argv;
 		(void)fputs(usage, stderr);
 		exit(1);
 	}
-	if( optind >= argc )  {
+	if( bu_optind >= argc )  {
 		fprintf(stderr,"rt:  MGED database not specified\n");
 		(void)fputs(usage, stderr);
 		exit(1);
@@ -195,10 +196,10 @@ char **argv;
 		bu_log("\n");
 	}
 
-	title_file = argv[optind];
-	title_obj = argv[optind+1];
-	nobjs = argc - optind - 1;
-	objtab = &(argv[optind+1]);
+	title_file = argv[bu_optind];
+	title_obj = argv[bu_optind+1];
+	nobjs = argc - bu_optind - 1;
+	objtab = &(argv[bu_optind+1]);
 
 	if( nobjs <= 0 )  {
 		bu_log("rt: no objects specified\n");
@@ -277,6 +278,15 @@ char **argv;
 			exit(14);
 		}
 	}
+
+	/*
+	 *  Initialize all the per-CPU memory resources.
+	 */
+	for( i=0; i < npsw; i++ )  {
+		rt_init_resource( &resource[i], i );
+		rand_init( resource[i].re_randptr, i );
+	}
+
 #ifdef HAVE_SBRK
 	fprintf(stderr,"initial dynamic memory use=%d.\n", (char *)sbrk(0)-beginptr );
 	beginptr = (char *) sbrk(0);
