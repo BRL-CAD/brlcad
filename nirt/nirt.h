@@ -1,8 +1,5 @@
 /*      NIRT.H          */
 
-#include   <machine.h>
-#include   <vmath.h>
-
 /*	CONSTANTS	*/
 #define    VAR_NULL     ((struct VarTable *) 0) 
 #define    CT_NULL	((com_table *) 0)
