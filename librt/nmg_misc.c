@@ -1810,7 +1810,7 @@ nmg_dup_shell( struct shell *s , long ***trans_tbl )
 
 #define	NMG_PUSH( _ptr , _stack )	nmg_tbl( _stack , TBL_INS , (long *) _ptr );
 
-static struct edgeuse
+struct edgeuse
 *nmg_pop_eu( struct nmg_ptbl *stack )
 {
 	struct edgeuse *eu;
