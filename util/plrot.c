@@ -62,16 +62,16 @@ void	two_dcoord_out(), three_dcoord_out();
 
 static char usage[] = "\
 Usage: plrot [options] [file1 ... fileN] > file.plot\n\
-   -x# -y# -z#    Rotation about axis in degrees\n\
-   -X# -Y# -Z#    Translation along axis\n\
-   -s#            Scale factor\n\
-   -a# -e#        Azimuth/Elevation from front view\n\
+   -x # -y # -z # Rotation about axis in degrees\n\
+   -X # -Y # -Z # Translation along axis\n\
+   -s #           Scale factor\n\
+   -a # -e #      Azimuth/Elevation from front view\n\
                   (usually first, in this order, implies -M)\n\
-   -g		  MGED front view to display coordinates (usually last)\n\
+   -g             MGED front view to display coordinates (usually last)\n\
    -M             Autoscale space command like RT model RPP\n\
-   -m#		  Takes a 4X4 matrix as an argument\n\
-   -v		  Verbose\n\
-   -S#		  Space: takes a quoted string of four integers\n";
+   -m #           Takes a 4X4 matrix as an argument\n\
+   -v             Verbose\n\
+   -S #           Space: takes a quoted string of six floats\n";
 
 get_args( argc, argv )
 register char **argv;
