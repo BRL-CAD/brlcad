@@ -633,12 +633,14 @@ struct nmg_bool_state *bs;
 	 *  For each face in the shell, process all the loops in the face,
 	 *  and then handle the face and all loops as a unit.
 	 */
+start_faces:
 	fu = fu_end = s->fu_p;
 	do  {
 		/* Consider this face */
 		if( !s->fu_p )  break;		/* face list became empty */
 		NMG_CK_FACEUSE(fu);
 		NMG_CK_FACE(fu->f_p);
+start_face_loops:
 		loops_retained = loops_flipped = 0;
 		lu = lu_end = fu->lu_p;
 		do {
@@ -649,9 +651,8 @@ struct nmg_bool_state *bs;
 			switch( nmg_eval_action( (genptr_t)lu->l_p, bs ) )  {
 			case BACTION_KILL:
 				/* Kill by demoting loop to edges */
-			  	lu = lu->next;
-				(void)nmg_demote_lu( lu->last );
-				continue;
+				(void)nmg_demote_lu( lu );
+				goto start_face_loops;	/* lost our place */
 			case BACTION_RETAIN:
 				loops_retained++;
 				break;
@@ -675,12 +676,8 @@ struct nmg_bool_state *bs;
 			/* faceuse is empty, it dies */
 			if (rt_g.NMG_debug & DEBUG_BOOLEVAL)
 		    		rt_log("faceuse x%x empty, kill\n", fu);
-		    	if( fu->fumate_p == fu->next )
-				fu = fu->next->next;	/* skip mate too */
-			else
-				fu = fu->next;
-			nmg_kfu( fu->last );		/* kill face & mate */
-		    	continue;
+			nmg_kfu( fu );		/* kill face & mate */
+		    	goto start_faces;	/* lost our place */
 		}
 
 		if( loops_flipped > 0 )  {
@@ -703,12 +700,8 @@ struct nmg_bool_state *bs;
 		if( s != bs->bs_dest )  {
 			if (rt_g.NMG_debug & DEBUG_BOOLEVAL)
 		    		rt_log("faceuse x%x moved to A shell\n", fu);
-		    	if( fu->fumate_p == fu->next )
-				fu = fu->next->next;	/* skip mate too */
-			else
-				fu = fu->next;
 			nmg_mv_fu_between_shells( bs->bs_dest, s, fu->last );
-			continue;
+			goto start_face_loops;	/* lost our place */
 		}
 		fu = fu->next;
 	} while (fu != fu_end);
@@ -718,6 +711,7 @@ struct nmg_bool_state *bs;
 	 *  Each loop is either a wire-loop, or a vertex-with-self-loop.
 	 *  Only consider wire loops here.
 	 */
+start_wire_loop:
 	lu = lu_end = s->lu_p;
 	do  {
 		if( !s->lu_p )  break;		/* loop list became empty */
@@ -731,21 +725,13 @@ struct nmg_bool_state *bs;
 		switch( nmg_eval_action( (genptr_t)lu->l_p, bs ) )  {
 		case BACTION_KILL:
 			/* Demote the loopuse into wire edges */
-			if( lu->lumate_p == lu->next )
-				lu = lu->next->next;	/* skip mate too */
-			else
-				lu = lu->next;
 			(void)nmg_demote_lu( lu->last );/* kill loop & mate */
-			continue;
+			goto start_wire_loop;
 		case BACTION_RETAIN:
 		case BACTION_RETAIN_AND_FLIP:
 			if( s == bs->bs_dest )  break;
-			if( lu->lumate_p == lu->next )
-				lu = lu->next->next;	/* skip mate too */
-			else
-				lu = lu->next;
 			nmg_mv_lu_between_shells( bs->bs_dest, s, lu->last );
-			continue;
+			goto start_wire_loop;
 		}
 		lu = lu->next;
 	}  while( lu != lu_end );
@@ -753,6 +739,7 @@ struct nmg_bool_state *bs;
 	/*
 	 *  For each wire-edge in the shell, ...
 	 */
+start_wire_edge:
 	eu = eu_end = s->eu_p;
 	do  {
 		/* Consider this edge */
@@ -761,21 +748,13 @@ struct nmg_bool_state *bs;
 		switch( nmg_eval_action( (genptr_t)eu->e_p, bs ) )  {
 		case BACTION_KILL:
 			/* Demote the edegeuse into vertices */
-			if( eu->eumate_p == eu->next )
-				eu = eu->next->next;
-			else
-				eu = eu->next;
 			(void)nmg_demote_eu( eu->last );	/* and mate */
-			continue;
+			goto start_wire_edge;
 		case BACTION_RETAIN:
 		case BACTION_RETAIN_AND_FLIP:
 			if( s == bs->bs_dest )  break;
-			if( eu->eumate_p == eu->next )
-				eu = eu->next->next;
-			else
-				eu = eu->next;
 			nmg_mv_eu_between_shells( bs->bs_dest, s, eu->last );
-			continue;
+			goto start_wire_edge;
 		}
 		eu = eu->next;
 	} while( eu != eu_end );
@@ -792,6 +771,7 @@ struct nmg_bool_state *bs;
 	 *  be demoted into vertex-with-self-loop objects above,
 	 *  which will be processed here.
 	 */
+start_vertex_loops:
 	lu = lu_end = s->lu_p;
 	do  {
 		if( !s->lu_p )  break;		/* loop list became empty */
@@ -807,21 +787,13 @@ struct nmg_bool_state *bs;
 		switch( nmg_eval_action( (genptr_t)vu->v_p, bs ) )  {
 		case BACTION_KILL:
 			/* Simply eliminate the loopuse */
-			if( lu->lumate_p == lu->next )
-				lu = lu->next->next;	/* skip mate too */
-			else
-				lu = lu->next;
 			nmg_klu( lu->last );	/* kill loop & mate */
-			continue;
+			goto start_vertex_loops;
 		case BACTION_RETAIN:
 		case BACTION_RETAIN_AND_FLIP:
 			if( s == bs->bs_dest )  break;
-			if( lu->lumate_p == lu->next )
-				lu = lu->next->next;	/* skip mate too */
-			else
-				lu = lu->next;
 			nmg_mv_lu_between_shells( bs->bs_dest, s, lu->last );
-			continue;
+			goto start_vertex_loops;
 		}
 		lu = lu->next;
 	}  while( lu != lu_end );
