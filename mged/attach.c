@@ -93,6 +93,10 @@ extern struct dm dm_Ir;
 extern struct dm dm_4d;
 #endif
 
+#ifdef DM_GT
+extern struct dm dm_gt;
+#endif
+
 #ifdef DM_SUNPW
 extern struct dm dm_SunPw;
 #endif
@@ -115,6 +119,9 @@ static struct dm *which_dm[] = {
 #endif
 #ifdef DM_4D
 	&dm_4d,
+#endif
+#ifdef DM_GT
+	&dm_gt,
 #endif
 #ifdef DM_SUNPW
 	&dm_SunPw,
