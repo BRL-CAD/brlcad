@@ -220,6 +220,7 @@ BDIRS="bench \
 	burst \
 	gtools \
 	tk \
+	cwish \
 "			# This ends the list.
 
 TSDIRS=". mged nirt pl-dm"
