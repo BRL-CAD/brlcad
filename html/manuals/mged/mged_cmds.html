@@ -1713,14 +1713,15 @@ The options are:
 </DD>
 <HR>
 
-<DT><a NAME="facetize"><B>facetize</B> [<I>-tT</I>] [<I>-P#</I>] <I>new_object old_object</I></DT>
+<DT><a NAME="facetize"><B>facetize</B> [<I>-ntT</I>] [<I>-P#</I>] <I>new_object old_object</I></DT>
 
-<DD> The ``facetize'' command creates <I>new_object</I> as an <a href="brlcad_solids.html#NMG">
-NMG</a> solid by tessellating all the <a href="brlcad_glossary.html#SOLID">primitive solids</a> in
+<DD> The ``facetize'' command creates <I>new_object</I> as an <a href="brlcad_solids.html#BOT">
+BOT</a> solid by tessellating all the <a href="brlcad_glossary.html#SOLID">primitive solids</a> in
 <I>old_object</I> and then performing any <a href="brlcad_glossary.html#BOOLEAN">Boolean operations</a>
 specified in <I>old_object</I>. The <I>-T</I> option indicates that all faces in
-the <I>new_object</I> should be triangulated.
-The <I>-t</I> option is to create TNURB faces rather than planar approximations (this
+the <I>new_object</I> should be triangulated. The <I>-n</I> option specifies that the resulting
+solid should be saved as an <a href="brlcad_solids.html#NMG">NMG</a> solid.
+The <I>-t</I> option is to create TNURB faces in an NMG rather than planar approximations (this
 option is still under development). The <I>-P</I> option is intended to allow the user
 to specifiy the number of CPU's to use for this command, but it is currently ignored.
 
@@ -1728,7 +1729,7 @@ to specifiy the number of CPU's to use for this command, but it is currently ign
 	<DT><big>Examples:</big></DT>
 	<DD>
 	<kbd>mged></kbd> <b>facetize region1.nmg region1.r</b><br>
-	-- create a facetized <I>NMG</I> version of existing object <I>region1.r</I><br>
+	-- create a facetized <I>BOT</I> version of existing object <I>region1.r</I><br>
 	</DD>
 	</DL>
 </DD>
