@@ -139,6 +139,7 @@ set mged_help_data(pl)		{{[-float] [-zclip] [-2d] [-grid] [out_file] [|filter]}	
 set mged_help_data(polybinout)	{{file}	{store vlist polygons into polygon file (experimental)}}
 set mged_help_data(pov)		{{args}	{experimental:  set point-of-view}}
 set mged_help_data(prcolor)	{{}	{print color&material table}}
+set mged_help_data(print_tree)	{{file obj(s)}	{print obj(s)' tree(s) to file}}
 set mged_help_data(prefix)	{{new_prefix object(s)}	{prefix each occurrence of object name(s)}}
 set mged_help_data(press)	{{button_label}	{emulate button press}}
 set mged_help_data(prj_add)	{{shaderfile [image_file] [image_width] [image_height]} {Appends image filename + current view parameters to shaderfile}}
