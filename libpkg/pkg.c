@@ -37,12 +37,28 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <sys/types.h>
+#include <ctype.h>		/* used by inet_addr() routine, below */
+
+#ifdef BSD
+/* 4.2BSD, 4.3BSD network stuff */
 #include <sys/socket.h>
-#include <sys/uio.h>		/* for struct iovec */
 #include <sys/ioctl.h>		/* for FIONBIO */
 #include <netinet/in.h>		/* for htons(), etc */
 #include <netdb.h>
 #include <sys/time.h>		/* for struct timeval */
+#endif
+
+#ifdef BSD
+#include <sys/uio.h>		/* for struct iovec (writev) */
+#endif
+
+#ifdef SGI_EXCELAN
+#include <EXOS/exos/misc.h>
+#include <EXOS/sys/socket.h>
+#include <EXOS/netinet/in.h>
+#include <sys/time.h>		/* for struct timeval */
+#endif
+
 #include <errno.h>
 
 #include "pkg.h"
@@ -96,6 +112,7 @@ void (*errlog)();
 	if( atoi(service) > 0 )  {
 		sinhim.sin_port = htons((unsigned short)atoi(service));
 	} else {
+#ifdef BSD
 		register struct servent *sp;
 		if( (sp = getservbyname( service, "tcp" )) == NULL )  {
 			sprintf(errbuf,"pkg_open(%s,%s): unknown service\n",
@@ -104,6 +121,11 @@ void (*errlog)();
 			return(PKC_ERROR);
 		}
 		sinhim.sin_port = sp->s_port;
+#endif
+#ifdef SGI_EXCELAN
+		/* What routine does SGI give for this one? */
+		sinhim.sin_port = htons(5558);	/* mfb service!! XXX */
+#endif
 	}
 
 	/* Get InterNet address */
@@ -112,6 +134,7 @@ void (*errlog)();
 		sinhim.sin_family = AF_INET;
 		sinhim.sin_addr.s_addr = inet_addr(host);
 	} else {
+#ifdef BSD
 		if( (hp = gethostbyname(host)) == NULL )  {
 			sprintf(errbuf,"pkg_open(%s,%s): unknown host\n",
 				host, service );
@@ -120,8 +143,20 @@ void (*errlog)();
 		}
 		sinhim.sin_family = hp->h_addrtype;
 		bcopy(hp->h_addr, (char *)&sinhim.sin_addr, hp->h_length);
+#endif
+#ifdef SGI_EXCELAN
+		char **hostp = &host;
+		if((sinhim.sin_addr.s_addr = rhost(&hostp)) < 0) {
+			sprintf(errbuf,"pkg_open(%s,%s): unknown host\n",
+				host, service );
+			errlog(errbuf);
+			return(PKC_ERROR);
+		}
+
+#endif
 	}
 
+#ifdef BSD
 	if( (netfd = socket(sinhim.sin_family, SOCK_STREAM, 0)) < 0 )  {
 		pkg_perror( errlog, "pkg_open:  client socket" );
 		return(PKC_ERROR);
@@ -137,6 +172,19 @@ void (*errlog)();
 		pkg_perror( errlog, "pkg_open: client connect" );
 		return(PKC_ERROR);
 	}
+#endif
+#ifdef SGI_EXCELAN
+	sinme.sin_port = 0;		/* let kernel pick it */
+	if( (netfd = socket(SOCK_STREAM, 0, &sinme, 0)) <= 0 )  {
+		pkg_perror( errlog, "pkg_open:  client socket" );
+		return(PKC_ERROR);
+	}
+
+	if( connect(netfd, (char *)&sinhim) < 0 )  {
+		pkg_perror( errlog, "pkg_open: client connect" );
+		return(PKC_ERROR);
+	}
+#endif
 
 	return( pkg_makeconn(netfd, switchp, errlog) );
 }
@@ -157,6 +205,9 @@ int backlog;
 void (*errlog)();
 {
 	struct sockaddr_in sinme;
+#ifdef SGI_EXCELAN
+	struct sockaddr_in sinhim;		/* Server */
+#endif
 	register struct servent *sp;
 	int pkg_listenfd;
 
@@ -167,14 +218,21 @@ void (*errlog)();
 	bzero((char *)&sinme, sizeof(sinme));
 
 	/* Determine port for service */
+#ifdef BSD
 	if( (sp = getservbyname( service, "tcp" )) == NULL )  {
 		sprintf(errbuf,"pkg_initserver(%s,%d): unknown service\n",
 			service, backlog );
 		errlog(errbuf);
 		return(-1);
 	}
-
 	sinme.sin_port = sp->s_port;
+#endif
+#ifdef SGI_EXCELAN
+	/* What routine does SGI give for this one? */
+	sinme.sin_port = htons(5558);	/* mfb service!! XXX */
+#endif
+
+#ifdef BSD
 	if( (pkg_listenfd = socket(AF_INET, SOCK_STREAM, 0)) < 0 )  {
 		pkg_perror( errlog, "pkg_initserver:  socket" );
 		return(-1);
@@ -190,6 +248,20 @@ void (*errlog)();
 		pkg_perror( errlog, "pkg_initserver:  listen" );
 		return(-1);
 	}
+#endif
+#ifdef SGI_EXCELAN
+	if( (pkg_listenfd = socket(SOCK_STREAM,0,&sinme,SO_ACCEPTCONN|SO_KEEPALIVE)) < 0 )  {
+		pkg_perror( errlog, "pkg_initserver:  socket" );
+		return(-1);
+	}
+
+	/* wait until someone tries to connect */
+	/* XXX not quite right semantics! */
+	if(accept(pkg_listenfd,&sinhim) < 0){
+		pkg_perror( errlog, "pkg_initserver:  accept" );
+		return(-1);
+	}
+#endif
 	return(pkg_listenfd);
 }
 
@@ -210,6 +282,7 @@ pkg_getclient(fd, switchp, errlog, nodelay)
 struct pkg_switch *switchp;
 void (*errlog)();
 {
+#ifdef BSD
 	struct sockaddr_in from;
 	register int s2;
 	auto int fromlen = sizeof (from);
@@ -244,6 +317,11 @@ void (*errlog)();
 	}
 
 	return( pkg_makeconn(s2, switchp, errlog) );
+#endif
+#ifdef SGI_EXCELAN
+	/* Hopefully, once-only XXX */
+	return( pkg_makeconn( fd, switchp, errlog) );
+#endif
 }
 
 /*
@@ -357,47 +435,61 @@ char *buf;
 int len;
 register struct pkg_conn *pc;
 {
+#ifdef BSD
 	static struct iovec cmdvec[2];
+#endif
 	static struct pkg_header hdr;
-	register int i;
-#ifdef never
 	struct timeval tv;
 	long bits;
-#endif
+	register int i;
 
 	PKG_CK(pc);
 	if( len < 0 )  len=0;
 
-	/*
-	 * Flush any queued stream output
-	 * XXX - If len < MAXQLEN we may wish to queue this one
-	 * also and THEN flush the whole business.  This would
-	 * also cover the writev problem for small packets.
-	 */
-	if( pc->pkc_strpos > 0 )
-		pkg_flush( pc );
-
+	/* Finish any partially read message */
 	do  {
-		/* Finish any partially read message */
 		if( pc->pkc_left > 0 )
 			if( pkg_block(pc) < 0 )
 				return(-1);
-#ifdef never
-		/* Check socket for more input */
+
+		/* Check socket for unexpected input */
 		tv.tv_sec = 0;
-		tv.tv_usec = 0;		/* poll */
-		bits = 1<<pc->pkc_fd;
+		tv.tv_usec = 0;		/* poll -- no waiting */
+		bits = 1 << pc->pkc_fd;
+#ifdef BSD
 		i = select( pc->pkc_fd+1, &bits, (char *)0, (char *)0, &tv );
+#endif
+#ifdef SGI_EXCELAN
+		i = select( pc->pkc_fd+1, &bits, (char *)0, &tv );
+#endif
 		if( i > 0 && bits )
 			if( pkg_block(pc) < 0 )
 				return(-1);
-#endif
 	} while( pc->pkc_left > 0 );
+
+	/* Flush any queued stream output first. */
+	if( pc->pkc_strpos > 0 )  {
+		/*
+		 * Buffered output is already queued, and needs to be
+		 * flushed before sending this one.  If this pkg will
+		 * also fit in the buffer, add it to the stream, and
+		 * then send the whole thing with one flush.
+		 * Otherwise, just flush, and proceed.
+		 */
+		if( len <= MAXQLEN && len <= PKG_STREAMLEN -
+		    sizeof(struct pkg_header) - pc->pkc_strpos )  {
+			(void)pkg_stream( type, buf, len, pc );
+			return( (pkg_flush(pc) < 0) ? -1 : len );
+		}
+		if( pkg_flush( pc ) < 0 )
+			return(-1);	/* assumes 2nd write would fail too */
+	}
 
 	hdr.pkg_magic = htons(PKG_MAGIC);
 	hdr.pkg_type = htons(type);	/* should see if it's a valid type */
 	hdr.pkg_len = htonl(len);
 
+#ifdef BSD
 	cmdvec[0].iov_base = (caddr_t)&hdr;
 	cmdvec[0].iov_len = sizeof(hdr);
 	cmdvec[1].iov_base = (caddr_t)buf;
@@ -410,7 +502,7 @@ register struct pkg_conn *pc;
 	 */
 	if( (i = writev( pc->pkc_fd, cmdvec, (len>0)?2:1 )) != len+sizeof(hdr) )  {
 		if( i < 0 )  {
-			pkg_perror(pc->pkc_errlog, "pkg_send: write");
+			pkg_perror(pc->pkc_errlog, "pkg_send: writev");
 			return(-1);
 		}
 		sprintf(errbuf,"pkg_send of %d+%d, wrote %d\n",
@@ -418,6 +510,18 @@ register struct pkg_conn *pc;
 		(pc->pkc_errlog)(errbuf);
 		return(i-sizeof(hdr));	/* amount of user data sent */
 	}
+#else
+	(void)write( pc->pkc_fd, (char *)&hdr, sizeof(hdr) );
+	if( (i = write( pc->pkc_fd, buf, len )) != len )  {
+		if( i < 0 )  {
+			pkg_perror(pc->pkc_errlog, "pkg_send: write");
+			return(-1);
+		}
+		sprintf(errbuf,"pkg_send of %d, wrote %d\n", len, i);
+		(pc->pkc_errlog)(errbuf);
+		return(i);		/* amount of user data sent */
+	}
+#endif
 	return(len);
 }
 
@@ -646,7 +750,12 @@ register struct pkg_conn *pc;
 		tv.tv_sec = 0;
 		tv.tv_usec = 20000;	/* 20 ms */
 		bits = (1<<pc->pkc_fd);
+#ifdef BSD
 		i = select( pc->pkc_fd+1, (char *)&bits, (char *)0, (char *)0, &tv );
+#endif
+#ifdef SGI_EXCELAN
+		i = select( pc->pkc_fd+1, (char *)&bits, (char *)0, &tv );
+#endif
 		if( i <= 0 )  return(0);	/* timed out */
 		if( !bits )  return(0);		/* no input */
 	}
@@ -848,3 +957,94 @@ char *s;
 {
 	fputs( s, stderr );
 }
+
+#ifdef SGI_EXCELAN
+/*
+ * Internet address interpretation routine.
+ * All the network library routines call this
+ * routine to interpret entries in the data bases
+ * which are expected to be an address.
+ * The value returned is in network order.
+ */
+u_long
+inet_addr(cp)
+	register char *cp;
+{
+	register u_long val, base, n;
+	register char c;
+	u_long parts[4], *pp = parts;
+
+again:
+	/*
+	 * Collect number up to ``.''.
+	 * Values are specified as for C:
+	 * 0x=hex, 0=octal, other=decimal.
+	 */
+	val = 0; base = 10;
+	if (*cp == '0')
+		base = 8, cp++;
+	if (*cp == 'x' || *cp == 'X')
+		base = 16, cp++;
+	while (c = *cp) {
+		if (isdigit(c)) {
+			val = (val * base) + (c - '0');
+			cp++;
+			continue;
+		}
+		if (base == 16 && isxdigit(c)) {
+			val = (val << 4) + (c + 10 - (islower(c) ? 'a' : 'A'));
+			cp++;
+			continue;
+		}
+		break;
+	}
+	if (*cp == '.') {
+		/*
+		 * Internet format:
+		 *	a.b.c.d
+		 *	a.b.c	(with c treated as 16-bits)
+		 *	a.b	(with b treated as 24 bits)
+		 */
+		if (pp >= parts + 4)
+			return (-1);
+		*pp++ = val, cp++;
+		goto again;
+	}
+	/*
+	 * Check for trailing characters.
+	 */
+	if (*cp && !isspace(*cp))
+		return (-1);
+	*pp++ = val;
+	/*
+	 * Concoct the address according to
+	 * the number of parts specified.
+	 */
+	n = pp - parts;
+	switch (n) {
+
+	case 1:				/* a -- 32 bits */
+		val = parts[0];
+		break;
+
+	case 2:				/* a.b -- 8.24 bits */
+		val = (parts[0] << 24) | (parts[1] & 0xffffff);
+		break;
+
+	case 3:				/* a.b.c -- 8.8.16 bits */
+		val = (parts[0] << 24) | ((parts[1] & 0xff) << 16) |
+			(parts[2] & 0xffff);
+		break;
+
+	case 4:				/* a.b.c.d -- 8.8.8.8 bits */
+		val = (parts[0] << 24) | ((parts[1] & 0xff) << 16) |
+		      ((parts[2] & 0xff) << 8) | (parts[3] & 0xff);
+		break;
+
+	default:
+		return (-1);
+	}
+	val = htonl(val);
+	return (val);
+}
+#endif
