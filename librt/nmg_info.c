@@ -2090,73 +2090,30 @@ CONST long		*magic_p;
 	rt_free( (char *)st.visited, "visited[]");
 }
 
-struct eg_state {
-	char			*visited;
-	struct nmg_ptbl		*tabl;
-	CONST struct edge_g_lseg	*eg;
-};
-
-/*
- *			N M G _ 2 E D G E G E O M _ H A N D L E R
- *
- *  A private support routine for nmg_edgegeom_tabulate().
- *  Having just visited an edgeuse, if this is the first time,
- *  and this edgeuse uses the designated edge geometry,
- *  add it to the nmg_ptbl array.
- */
-static void
-nmg_2edgegeom_handler( longp, state, first )
-long		*longp;
-genptr_t	state;
-int		first;
-{
-	register struct eg_state *sp = (struct eg_state *)state;
-	register struct edgeuse	*eu = (struct edgeuse *)longp;
-
-	NMG_CK_EDGEUSE(eu);
-	/* If this edgeuse has been processed before, do nothing more */
-	if( !NMG_INDEX_FIRST_TIME(sp->visited, eu) )  return;
-
-	if( eu->g.lseg_p != sp->eg )  return;
-
-	nmg_tbl( sp->tabl, TBL_INS, longp );
-}
-
 /*
  *			N M G _ E D G E U S E _ W I T H _ E G _ T A B U L A T E
  *
- *  Given a pointer to any nmg data structure,
- *  build an nmg_ptbl list which cites every edgeuse
- *  pointer from there on "down" in the model
- *  that uses edge geometry "eg".
+ *  Build an nmg_ptbl list which cites every edgeuse
+ *  pointer that uses edge geometry "eg".
  */
 void
-nmg_edgeuse_with_eg_tabulate( tab, magic_p, eg )
-struct nmg_ptbl		*tab;
-CONST long		*magic_p;
-CONST struct edge_g_lseg	*eg;
+nmg_edgeuse_with_eg_tabulate( tab, eg )
+struct nmg_ptbl			*tab;
+CONST struct edge_g_lseg	*eg;	/* can also be edge_g_cnurb */
 {
-	struct model		*m;
-	struct eg_state		st;
-	struct nmg_visit_handlers	handlers;
+	struct rt_list	*midway;	/* &eu->l2, midway into edgeuse */
+	struct edgeuse	*eu;
 
-	m = nmg_find_model( magic_p );
-	NMG_CK_MODEL(m);
-	NMG_CK_EDGE_G_LSEG(eg);
-
-	/* XXX Need to re-write this to use eg->eu_hd list instead */
-
-	st.visited = (char *)rt_calloc(m->maxindex+1, sizeof(char), "visited[]");
-	st.tabl = tab;
-	st.eg = eg;
-
+	NMG_CK_EDGE_G_EITHER(eg);
 	(void)nmg_tbl( tab, TBL_INIT, 0 );
 
-	handlers = nmg_visit_handlers_null;		/* struct copy */
-	handlers.bef_edgeuse = nmg_2edgegeom_handler;
-	nmg_visit( magic_p, &handlers, (genptr_t)&st );
-
-	rt_free( (char *)st.visited, "visited[]");
+	for( RT_LIST_FOR( midway, rt_list, &eg->eu_hd2 ) )  {
+		NMG_CKMAG(midway, NMG_EDGEUSE2_MAGIC, "edgeuse2 [l2]");
+		eu = RT_LIST_MAIN_PTR( edgeuse, midway, l2 );
+		NMG_CK_EDGEUSE(eu);
+		if( eu->g.lseg_p != eg )  rt_bomb("nmg_edgeuse_with_eg_tabulate() eu disavows eg\n");
+		nmg_tbl( tab, TBL_INS_UNIQUE, (long *)eu );
+	}
 }
 
 struct edge_line_state {
