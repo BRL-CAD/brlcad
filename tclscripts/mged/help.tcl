@@ -47,6 +47,7 @@ set mged_help_data(db)		{{command}	{database manipulation routines}}
 set mged_help_data(db_glob)	{{cmd_string}	{globs cmd_string against the MGED database
          resulting in an expanded command string}}
 set mged_help_data(dbconcat)	{{file [prefix]}	{concatenate 'file' onto end of present database.  Run 'dup file' first.}}
+set mged_help_data(dbfind)	{{[-s] <objects>}	{find all references to objects}}
 set mged_help_data(debugbu)	{{[hex_code]}	{show/set debugging bit vector for libbu}}
 set mged_help_data(debugdir)	{{}	{Print in-memory directory, for debugging}}
 set mged_help_data(debuglib)	{{[hex_code]}	{show/set debugging bit vector for librt}}
@@ -78,7 +79,6 @@ set mged_help_data(eye_pt)	{{mx my mz}	{set eye point to given model coordinates
 set mged_help_data(e_muves)	{{MUVES_component_1 MUVES_component2 ...}	{display listed MUVES components/systems}}
 set mged_help_data(facedef)	{{####}	{define new face for an arb}}
 set mged_help_data(facetize)	{{[-ntT] [-P#] new_obj old_obj(s)}	{convert objects to faceted BOT (or NMG for -n option) objects at current tol}}
-set mged_help_data(find)	{{[-s] <objects>}	{find all references to objects}}
 set mged_help_data(fracture)	{{NMGsolid [prefix]}	{fracture an NMG solid into many NMG solids, each containing one face}}
 set mged_help_data(g)		{{groupname <objects>}	{group objects}}
 set mged_help_data(garbage_collect)	{{}	{eliminate unused space in database file}}
