@@ -266,11 +266,32 @@ int ac;
 char *av[];
 {
 	int arg_index;
+	char *cp;
+	char *last_slash=(char *)NULL;
 
 	/* parse command flags, and make sure there are arguments
 	 * left over for processing.
 	 */
 	if ((arg_index = parse_args(ac, av)) >= ac) usage();
+
+	/* if the source file has a path, use that as source directory */
+	cp = av[arg_index];
+	while( *cp != '\0' )
+	{
+		if( *cp == '/' )
+			last_slash = cp;
+		cp++;
+	}
+
+	if( last_slash )
+	{
+		int len;
+
+		len = last_slash - av[arg_index];
+		srcdir = (char *)malloc( len + 1 );
+		strncpy( srcdir, av[arg_index], len );
+		srcdir[len] = '\0';
+	}
 
 	if( debug )  {
 		if( incdir )  fprintf(stderr, "include dir = '%s'\n", incdir );
