@@ -1985,7 +1985,7 @@ fillItemTree( jobject parent_node,
 /* JAVA JNI bindings */
 
 JNIEXPORT jobject JNICALL
-Java_mil_army_arl_muves_rtserver_RtServerImpl_getItemTree(JNIEnv *env, jobject obj, jint sessionId )
+Java_mil_army_arl_services_RtService_getItemTree(JNIEnv *env, jobject obj, jint sessionId )
 {
 	jclass itemTree_class;
 	jmethodID itemTree_constructor_id, itemTree_addcomponent_id, itemTree_setMuvesName_id;
@@ -2074,7 +2074,7 @@ Java_mil_army_arl_muves_rtserver_RtServerImpl_getItemTree(JNIEnv *env, jobject o
  *	JNI_TRUE - something went wrong
  */
 JNIEXPORT jint JNICALL
-Java_mil_army_arl_muves_rtserver_RtServerImpl_rtsInit(JNIEnv *env, jobject obj, jobjectArray args) 
+Java_mil_army_arl_services_RtService_rtsInit(JNIEnv *env, jobject obj, jobjectArray args) 
 {
 	jsize len=(*env)->GetArrayLength(env, args);
 	jstring jfile_name, *jobj_name;
@@ -2156,14 +2156,14 @@ Java_mil_army_arl_muves_rtserver_RtServerImpl_rtsInit(JNIEnv *env, jobject obj, 
 
 /* JAVA openSession method */
 JNIEXPORT jint JNICALL
-Java_mil_army_arl_muves_rtserver_RtServerImpl_openSession(JNIEnv *env, jobject jobj)
+Java_mil_army_arl_services_RtService_openSession(JNIEnv *env, jobject jobj)
 {
 	return( (jint)rts_open_session() );
 }
 
 /* JAVA closeSession method */
 JNIEXPORT void JNICALL
-Java_mil_army_arl_muves_rtserver_RtServerImpl_closeSession(JNIEnv *env, jobject jobj,
+Java_mil_army_arl_services_RtService_closeSession(JNIEnv *env, jobject jobj,
 							   jint sessionId)
 {
 	rts_close_session( (int)sessionId );
@@ -2171,14 +2171,14 @@ Java_mil_army_arl_muves_rtserver_RtServerImpl_closeSession(JNIEnv *env, jobject 
 
 /* JAVA getDbTitle method */
 JNIEXPORT jstring JNICALL
-Java_mil_army_arl_muves_rtserver_RtServerImpl_getDbTitle(JNIEnv *env, jobject jobj )
+Java_mil_army_arl_services_RtService_getDbTitle(JNIEnv *env, jobject jobj )
 {
 	return( (*env)->NewStringUTF(env, title) );
 }
 
 /* JAVA shootRay method */
 JNIEXPORT jobject JNICALL
-Java_mil_army_arl_muves_rtserver_RtServerImpl_shootRay( JNIEnv *env, jobject jobj,
+Java_mil_army_arl_services_RtService_shootRay( JNIEnv *env, jobject jobj,
 	jobject jstart_pt, jobject jdir, jint sessionId )
 {
 	jclass point_class, vect_class;
@@ -2313,13 +2313,13 @@ Java_mil_army_arl_muves_rtserver_RtServerImpl_shootRay( JNIEnv *env, jobject job
 }
 
 JNIEXPORT void JNICALL
-Java_mil_army_arl_muves_rtserver_RtServerImpl_shutdownNative(JNIEnv *env, jobject obj )
+Java_mil_army_arl_services_RtService_shutdownNative(JNIEnv *env, jobject obj )
 {
 	rts_shutdown();
 }
 
 JNIEXPORT jobject JNICALL
-Java_mil_army_arl_muves_rtserver_RtServerImpl_getBoundingBox(JNIEnv *env, jobject obj, jint sessionId )
+Java_mil_army_arl_services_RtService_getBoundingBox(JNIEnv *env, jobject obj, jint sessionId )
 {
 	jclass boundingBox_class, point_class;
 	jmethodID boundingBox_constructor_id, point_constructor_id;
@@ -2387,6 +2387,57 @@ Java_mil_army_arl_muves_rtserver_RtServerImpl_getBoundingBox(JNIEnv *env, jobjec
 	}
 
 	return( bb );
+}
+
+
+/* backward compatible support for the JNDI version of the raytrace service */
+
+JNIEXPORT jobject JNICALL
+Java_mil_army_arl_muves_rtserver_RtServerImpl_getItemTree(JNIEnv *env, jobject obj, jint sessionId )
+{
+	return Java_mil_army_arl_services_RtService_getItemTree(env, obj, sessionId );
+}
+
+JNIEXPORT jint JNICALL
+Java_mil_army_arl_muves_rtserver_RtServerImpl_rtsInit(JNIEnv *env, jobject obj, jobjectArray args) 
+{
+	return Java_mil_army_arl_services_RtService_rtsInit(env, obj, args);
+}
+
+JNIEXPORT jint JNICALL
+Java_mil_army_arl_muves_rtserver_RtServerImpl_openSession(JNIEnv *env, jobject jobj)
+{
+	return Java_mil_army_arl_services_RtService_openSession(env, jobj);
+}
+
+JNIEXPORT void JNICALL
+Java_mil_army_arl_muves_rtserver_RtServerImpl_closeSession(JNIEnv *env, jobject jobj, jint sessionId)
+{
+	return Java_mil_army_arl_services_RtService_closeSession(env, jobj, sessionId);
+}
+
+JNIEXPORT jstring JNICALL
+Java_mil_army_arl_muves_rtserver_RtServerImpl_getDbTitle(JNIEnv *env, jobject jobj )
+{
+	return Java_mil_army_arl_services_RtService_getDbTitle(env, jobj );
+}
+
+JNIEXPORT jobject JNICALL
+Java_mil_army_arl_muves_rtserver_RtServerImpl_shootRay( JNIEnv *env, jobject jobj, jobject jstart_pt, jobject jdir, jint sessionId )
+{
+	return Java_mil_army_arl_services_RtService_shootRay( env, jobj, jstart_pt, jdir, sessionId );
+}
+
+JNIEXPORT void JNICALL
+Java_mil_army_arl_muves_rtserver_RtServerImpl_shutdownNative(JNIEnv *env, jobject obj )
+{
+	Java_mil_army_arl_services_RtService_shutdownNative(env, obj );
+}
+
+JNIEXPORT jobject JNICALL
+Java_mil_army_arl_muves_rtserver_RtServerImpl_getBoundingBox(JNIEnv *env, jobject obj, jint sessionId )
+{
+	return Java_mil_army_arl_services_RtService_getBoundingBox(env, obj, sessionId );
 }
 
 void

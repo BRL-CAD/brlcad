@@ -20,15 +20,8 @@ extern "C" {
 #define mil_army_arl_muves_rtserver_RtServerImpl_serialVersionUID -3215090123894869218LL
 #undef mil_army_arl_muves_rtserver_RtServerImpl_serialVersionUID
 #define mil_army_arl_muves_rtserver_RtServerImpl_serialVersionUID -4100238210092549637LL
-/* Inaccessible static: logNull */
 #undef mil_army_arl_muves_rtserver_RtServerImpl_serialVersionUID
 #define mil_army_arl_muves_rtserver_RtServerImpl_serialVersionUID 4974527148936298033LL
-/* Inaccessible static: portParamTypes */
-/* Inaccessible static: portFactoryParamTypes */
-/* Inaccessible static: class_00024java_00024rmi_00024server_00024RMIClientSocketFactory */
-/* Inaccessible static: class_00024java_00024rmi_00024server_00024RMIServerSocketFactory */
-/* Inaccessible static: class_00024java_00024rmi_00024server_00024ServerRef */
-/* Inaccessible static: usage */
 /*
  * Class:     mil_army_arl_muves_rtserver_RtServerImpl
  * Method:    rtsInit
@@ -91,6 +84,72 @@ JNIEXPORT jobject JNICALL Java_mil_army_arl_muves_rtserver_RtServerImpl_getItemT
  * Signature: (I)Lmil/army/arl/muves/math/BoundingBox;
  */
 JNIEXPORT jobject JNICALL Java_mil_army_arl_muves_rtserver_RtServerImpl_getBoundingBox
+  (JNIEnv *, jobject, jint);
+
+/* Header for class mil_army_arl_services_RtService */
+
+/*
+ * Class:     mil_army_arl_services_RtService
+ * Method:    rtsInit
+ * Signature: ([Ljava/lang/String;)I
+ */
+JNIEXPORT jint JNICALL Java_mil_army_arl_services_RtService_rtsInit
+  (JNIEnv *, jobject, jobjectArray);
+
+/*
+ * Class:     mil_army_arl_services_RtService
+ * Method:    getDbTitle
+ * Signature: ()Ljava/lang/String;
+ */
+JNIEXPORT jstring JNICALL Java_mil_army_arl_services_RtService_getDbTitle
+  (JNIEnv *, jobject);
+
+/*
+ * Class:     mil_army_arl_services_RtService
+ * Method:    openSession
+ * Signature: ()I
+ */
+JNIEXPORT jint JNICALL Java_mil_army_arl_services_RtService_openSession
+  (JNIEnv *, jobject);
+
+/*
+ * Class:     mil_army_arl_services_RtService
+ * Method:    closeSession
+ * Signature: (I)V
+ */
+JNIEXPORT void JNICALL Java_mil_army_arl_services_RtService_closeSession
+  (JNIEnv *, jobject, jint);
+
+/*
+ * Class:     mil_army_arl_services_RtService
+ * Method:    shutdownNative
+ * Signature: ()V
+ */
+JNIEXPORT void JNICALL Java_mil_army_arl_services_RtService_shutdownNative
+  (JNIEnv *, jobject);
+
+/*
+ * Class:     mil_army_arl_services_RtService
+ * Method:    shootRay
+ * Signature: (Lmil/army/arl/muves/math/Point;Lmil/army/arl/muves/math/Vector3;I)Lmil/army/arl/muves/rtserver/RayResult;
+ */
+JNIEXPORT jobject JNICALL Java_mil_army_arl_services_RtService_shootRay
+  (JNIEnv *, jobject, jobject, jobject, jint);
+
+/*
+ * Class:     mil_army_arl_services_RtService
+ * Method:    getItemTree
+ * Signature: (I)Lmil/army/arl/muves/rtserver/ItemTree;
+ */
+JNIEXPORT jobject JNICALL Java_mil_army_arl_services_RtService_getItemTree
+  (JNIEnv *, jobject, jint);
+
+/*
+ * Class:     mil_army_arl_services_RtService
+ * Method:    getBoundingBox
+ * Signature: (I)Lmil/army/arl/muves/math/BoundingBox;
+ */
+JNIEXPORT jobject JNICALL Java_mil_army_arl_services_RtService_getBoundingBox
   (JNIEnv *, jobject, jint);
 
 #ifdef __cplusplus
