@@ -160,7 +160,7 @@ char	**argv;
 		   "  with ", argv[1], " for duplicate names\n", (char *)NULL);
   if( ncharadd ) {
     Tcl_AppendResult(interp, "  For comparison, all names in ",
-		     argv[1], " prefixed with:  ", prestr, "\n", (char *)NULL);
+		     argv[1], " were prefixed with:  ", prestr, "\n", (char *)NULL);
   }
 
   /* Get array to hold names of duplicates */
