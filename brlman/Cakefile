@@ -8,8 +8,6 @@
 
 #define PRODUCTS	awf brlman
 #define SRCDIR	brlman
-#undef BINDIR
-#define BINDIR	ETCDIR
 #define FILES	/**/
 #define	SRCSUFF	/**/
 #define MANSECTION	1
