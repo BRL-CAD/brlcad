@@ -1175,8 +1175,8 @@ int			multi;
 		nmg_join_2loops( prev_vu, vu );
 
 		/* update vu[pos], as it will have changed. */
-		rs->vu[pos] = RT_LIST_PNEXT_CIRC(edgeuse,
-			prev_vu->up.eu_p)->vu_p;
+		/* Must be all on one line for SGI 3d compiler */
+		rs->vu[pos] = RT_LIST_PNEXT_CIRC(edgeuse,prev_vu->up.eu_p)->vu_p;
 
 		if(rt_g.NMG_debug&DEBUG_COMBINE)  {
 			rt_log("After JOIN, the final loop: ");
