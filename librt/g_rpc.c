@@ -847,7 +847,7 @@ fastf_t	r, b, dtol, ntol;
 	vect_t	norm_line, norm_parab;
 	struct rt_pt_node *new, *rt_ptalloc();
 	
-#define MIKE_TOL .0001
+#define RPC_TOL .0001
 	/* endpoints of segment approximating parabola */
 	VMOVE( p0, pts->p );
 	VMOVE( p1, pts->next->p );
@@ -857,10 +857,10 @@ fastf_t	r, b, dtol, ntol;
 	/* point on parabola with max dist between parabola and line */
 	mpt[X] = 0;
 	mpt[Y] = (r * r * m) / (2 * b);
-	if (NEAR_ZERO( mpt[Y], MIKE_TOL))
+	if (NEAR_ZERO( mpt[Y], RPC_TOL))
 		mpt[Y] = 0.;
 	mpt[Z] = (mpt[Y] * m / 2) - b;
-	if (NEAR_ZERO( mpt[Z], MIKE_TOL))
+	if (NEAR_ZERO( mpt[Z], RPC_TOL))
 		mpt[Z] = 0.;
 	/* max distance between that point and line */
 	dist = fabs( mpt[Z] + b + b + intr ) / sqrt( m * m + 1 );

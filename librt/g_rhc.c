@@ -843,7 +843,7 @@ struct rt_pt_node *pts;
 	vect_t	norm_line, norm_hyperb;
 	struct rt_pt_node *new, *rt_ptalloc();
 	
-#define MIKE_TOL .0001
+#define RHC_TOL .0001
 	/* endpoints of segment approximating hyperbola */
 	VMOVE( p0, pts->p );
 	VMOVE( p1, pts->next->p );
@@ -858,15 +858,15 @@ struct rt_pt_node *pts;
 	C = j*j*k - c*c;
 	discr = sqrt(B*B - 4*A*C);
 	z0 = (-B + discr) / (2. * A);
-	if ( z0+MIKE_TOL >= -b )	/* use top sheet of hyperboloid */
+	if ( z0+RHC_TOL >= -b )	/* use top sheet of hyperboloid */
 		mpt[Z] = z0;
 	else
 		mpt[Z] = (-B - discr) / (2. * A);
-	if (NEAR_ZERO( mpt[Z], MIKE_TOL))
+	if (NEAR_ZERO( mpt[Z], RHC_TOL))
 		mpt[Z] = 0.;
 	mpt[X] = 0;
 	mpt[Y] = ((mpt[Z] + b + c) * (mpt[Z] + b + c) - c*c) / (b*(b + 2*c));
-	if (NEAR_ZERO( mpt[Y], MIKE_TOL ))
+	if (NEAR_ZERO( mpt[Y], RHC_TOL ))
 		mpt[Y] = 0.;
 	mpt[Y] = r * sqrt( mpt[Y] );
 	if (p0[Y] < 0.)
