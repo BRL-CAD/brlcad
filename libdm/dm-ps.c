@@ -43,45 +43,44 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 /* Display Manager package interface */
 
 #define PLOTBOUND	1000.0	/* Max magnification in Rot matrix */
-struct dm	*PS_open();
-static int	PS_close();
-static int	PS_drawBegin(), PS_drawEnd();
-static int	PS_normal(), PS_newrot();
-static int	PS_drawString2D(), PS_drawLine2D();
-static int      PS_drawVertex2D();
-static int	PS_drawVList();
-static int      PS_setColor();
-static int      PS_setLineAttr();
-static unsigned PS_cvtvecs(), PS_load();
-static int	PS_setWinBounds(), PS_debug();
+struct dm	*ps_open();
+static int	ps_close();
+static int	ps_drawBegin(), ps_drawEnd();
+static int	ps_normal(), ps_newrot();
+static int	ps_drawString2D(), ps_drawLine2D();
+static int      ps_drawVertex2D();
+static int	ps_drawVList();
+static int      ps_setColor();
+static int      ps_setLineAttr();
+static unsigned ps_cvtvecs(), ps_load();
+static int	ps_setWinBounds(), ps_debug();
 
-struct dm dm_PS = {
-  PS_open,
-  PS_close,
-  PS_drawBegin,
-  PS_drawEnd,
-  PS_normal,
-  PS_newrot,
-  PS_drawString2D,
-  PS_drawLine2D,
-  PS_drawVertex2D,
-  PS_drawVList,
-  PS_setColor,
-  PS_setLineAttr,
-  PS_cvtvecs,
-  PS_load,
-  PS_setWinBounds,
-  PS_debug,
+struct dm dm_ps = {
+  ps_close,
+  ps_drawBegin,
+  ps_drawEnd,
+  ps_normal,
+  ps_newrot,
+  ps_drawString2D,
+  ps_drawLine2D,
+  ps_drawVertex2D,
+  ps_drawVList,
+  ps_setColor,
+  ps_setLineAttr,
+  ps_cvtvecs,
+  ps_load,
+  ps_setWinBounds,
+  ps_debug,
   Nu_int0,
   0,				/* no displaylist */
   PLOTBOUND,
   "ps",
   "Screen to PostScript",
+  DM_TYPE_PS,
   0,
   0,
   0,
   1.0, /* aspect ratio */
-  0,
   0,
   0,
   0,
@@ -102,7 +101,7 @@ struct ps_vars head_ps_vars;
  *
  */
 struct dm *
-PS_open(eventHandler, argc, argv)
+ps_open(eventHandler, argc, argv)
 int (*eventHandler)();
 int argc;
 char *argv[];
@@ -114,12 +113,12 @@ char *argv[];
   if(dmp == DM_NULL)
     return DM_NULL;
 
-  *dmp = dm_PS;  /* struct copy */
+  *dmp = dm_ps;  /* struct copy */
   dmp->dm_eventHandler = eventHandler;
 
-  dmp->dm_vars = (genptr_t)bu_calloc(1, sizeof(struct ps_vars), "PS_init: ps_vars");
+  dmp->dm_vars = (genptr_t)bu_calloc(1, sizeof(struct ps_vars), "ps_open: ps_vars");
   if(dmp->dm_vars == (genptr_t)NULL){
-    bu_free(dmp, "PS_open: dmp");
+    bu_free(dmp, "ps_open: dmp");
     return DM_NULL;
   }
 
@@ -139,7 +138,10 @@ char *argv[];
   bu_vls_strcpy(&((struct ps_vars *)dmp->dm_vars)->creator, "LIBDM dm-ps");
   ((struct ps_vars *)dmp->dm_vars)->scale = 0.0791;
   ((struct ps_vars *)dmp->dm_vars)->linewidth = 4;
-  
+
+  /* skip first argument */
+  --argc; ++argv;
+
   /* Process any options */
   while(argv[0] != (char *)0 && argv[0][0] == '-'){
     switch(argv[0][1]){
@@ -150,7 +152,7 @@ char *argv[];
 	argv++;
 	if(argv[0] == (char *)0 || argv[0][0] == '-'){
 	  Tcl_AppendResult(interp, ps_usage, (char *)0);
-	  (void)PS_close(dmp);
+	  (void)ps_close(dmp);
 	  return DM_NULL;
 	}else
 	  bu_vls_strcpy(&((struct ps_vars *)dmp->dm_vars)->font, &argv[0][0]);
@@ -163,7 +165,7 @@ char *argv[];
 	argv++;
 	if(argv[0] == (char *)0 || argv[0][0] == '-'){
 	  Tcl_AppendResult(interp, ps_usage, (char *)0);
-	  (void)PS_close(dmp);
+	  (void)ps_close(dmp);
 	  return DM_NULL;
 	}else
 	  bu_vls_strcpy(&((struct ps_vars *)dmp->dm_vars)->title, &argv[0][0]);
@@ -176,7 +178,7 @@ char *argv[];
 	argv++;
 	if(argv[0] == (char *)0 || argv[0][0] == '-'){
 	  Tcl_AppendResult(interp, ps_usage, (char *)0);
-	  (void)PS_close(dmp);
+	  (void)ps_close(dmp);
 	  return DM_NULL;
 	}else
 	  bu_vls_strcpy(&((struct ps_vars *)dmp->dm_vars)->creator, &argv[0][0]);
@@ -192,7 +194,7 @@ char *argv[];
 	  argv++;
 	  if(argv[0] == (char *)0 || argv[0][0] == '-'){
 	    Tcl_AppendResult(interp, ps_usage, (char *)0);
-	    (void)PS_close(dmp);
+	    (void)ps_close(dmp);
 	    return DM_NULL;
 	  }else
 	    sscanf(&argv[0][0], "%lf", &size);
@@ -208,7 +210,7 @@ char *argv[];
 	argv++;
 	if(argv[0] == (char *)0 || argv[0][0] == '-'){
 	  Tcl_AppendResult(interp, ps_usage, (char *)0);
-	  (void)PS_close(dmp);
+	  (void)ps_close(dmp);
 	  return DM_NULL;
 	}else
 	  sscanf(&argv[0][0], "%d", &((struct ps_vars *)dmp->dm_vars)->linewidth);
@@ -216,7 +218,7 @@ char *argv[];
       break;
     default:
       Tcl_AppendResult(interp, ps_usage, (char *)0);
-      (void)PS_close(dmp);
+      (void)ps_close(dmp);
       return DM_NULL;
     }
     argv++;
@@ -224,7 +226,7 @@ char *argv[];
 
   if(argv[0] == (char *)0){
     Tcl_AppendResult(interp, "no filename specified\n", (char *)NULL);
-    (void)PS_close(dmp);
+    (void)ps_close(dmp);
     return DM_NULL;
   }
 
@@ -235,7 +237,7 @@ char *argv[];
     Tcl_AppendResult(interp, "f_ps: Error opening file - ",
 		     ((struct ps_vars *)dmp->dm_vars)->fname,
 		     "\n", (char *)NULL);
-    (void)PS_close(dmp);
+    (void)ps_close(dmp);
     return DM_NULL;
   }
   
@@ -294,7 +296,7 @@ NEWPG\n\
  *  Gracefully release the display.
  */
 static int
-PS_close(dmp)
+ps_close(dmp)
 struct dm *dmp;
 {
   if(!((struct ps_vars *)dmp->dm_vars)->ps_fp)
@@ -309,8 +311,8 @@ struct dm *dmp;
   bu_vls_free(&((struct ps_vars *)dmp->dm_vars)->font);
   bu_vls_free(&((struct ps_vars *)dmp->dm_vars)->title);
   bu_vls_free(&((struct ps_vars *)dmp->dm_vars)->creator);
-  bu_free(dmp->dm_vars, "PS_close: ps_vars");
-  bu_free(dmp, "PS_close: dmp");
+  bu_free(dmp->dm_vars, "ps_close: ps_vars");
+  bu_free(dmp, "ps_close: dmp");
 
   return TCL_OK;
 }
@@ -321,7 +323,7 @@ struct dm *dmp;
  * There are global variables which are parameters to this routine.
  */
 static int
-PS_drawBegin(dmp)
+ps_drawBegin(dmp)
 struct dm *dmp;
 {
   return TCL_OK;
@@ -331,7 +333,7 @@ struct dm *dmp;
  *			P S _ E P I L O G
  */
 static int
-PS_drawEnd(dmp)
+ps_drawEnd(dmp)
 struct dm *dmp;
 {
   if( !((struct ps_vars *)dmp->dm_vars)->ps_fp )
@@ -350,7 +352,7 @@ struct dm *dmp;
  */
 /* ARGSUSED */
 static int
-PS_newrot(dmp, mat)
+ps_newrot(dmp, mat)
 struct dm *dmp;
 mat_t mat;
 {
@@ -368,7 +370,7 @@ mat_t mat;
  */
 /* ARGSUSED */
 static int
-PS_drawVList( dmp, vp, mat )
+ps_drawVList( dmp, vp, mat )
 struct dm *dmp;
 register struct rt_vlist *vp;
 mat_t mat;
@@ -441,7 +443,7 @@ mat_t mat;
  * Turns off windowing.
  */
 static int
-PS_normal(dmp)
+ps_normal(dmp)
 struct dm *dmp;
 {
   return TCL_OK;
@@ -455,7 +457,7 @@ struct dm *dmp;
  */
 /* ARGSUSED */
 static int
-PS_drawString2D( dmp, str, x, y, size, use_aspect )
+ps_drawString2D( dmp, str, x, y, size, use_aspect )
 struct dm *dmp;
 register char *str;
 int x, y;
@@ -493,7 +495,7 @@ int use_aspect;
  *
  */
 static int
-PS_drawLine2D( dmp, x1, y1, x2, y2 )
+ps_drawLine2D( dmp, x1, y1, x2, y2 )
 struct dm *dmp;
 int x1, y1;
 int x2, y2;
@@ -517,15 +519,15 @@ int x2, y2;
 }
 
 static int
-PS_drawVertex2D(dmp, x, y)
+ps_drawVertex2D(dmp, x, y)
 struct dm *dmp;
 int x, y;
 {
-  return PS_drawLine2D(dmp, x, y, x, y);
+  return ps_drawLine2D(dmp, x, y, x, y);
 }
 
 static int
-PS_setColor(dmp, r, g, b, strict)
+ps_setColor(dmp, r, g, b, strict)
 struct dm *dmp;
 register short r, g, b;
 int strict;
@@ -534,7 +536,7 @@ int strict;
 }
 
 static int
-PS_setLineAttr(dmp, width, dashed)
+ps_setLineAttr(dmp, width, dashed)
 struct dm *dmp;
 int width;
 int dashed;
@@ -549,7 +551,7 @@ int dashed;
 
 /* ARGSUSED */
 static unsigned
-PS_cvtvecs( dmp, sp )
+ps_cvtvecs( dmp, sp )
 struct dm *dmp;
 struct solid *sp;
 {
@@ -560,26 +562,26 @@ struct solid *sp;
  * Loads displaylist
  */
 static unsigned
-PS_load( dmp, addr, count )
+ps_load( dmp, addr, count )
 struct dm *dmp;
 unsigned addr, count;
 {
 #if 0
-	bu_log("PS_load(x%x, %d.)\n", addr, count );
+	bu_log("ps_load(x%x, %d.)\n", addr, count );
 #endif
 	return( 0 );
 }
 
 /* ARGSUSED */
 static int
-PS_debug(dmp, lvl)
+ps_debug(dmp, lvl)
 struct dm *dmp;
 {
   return TCL_OK;
 }
 
 static int
-PS_setWinBounds(dmp, w)
+ps_setWinBounds(dmp, w)
 struct dm *dmp;
 register int w[];
 {
