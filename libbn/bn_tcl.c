@@ -469,4 +469,6 @@ Tcl_Interp *interp;
 		    (ClientData)mp->func,
 		    (Tcl_CmdDeleteProc *)NULL);
 	}
+
+	Tcl_SetVar(interp, "bn_version", (char *)bn_version+5, TCL_GLOBAL_ONLY);
 }
