@@ -1695,7 +1695,6 @@ point_t plane_pt;
 double dist;
 struct faceuse *fu_p;
 plane_t norm;
-struct hitmiss		*a_hit;
 {
 	double cos_angle;
 
@@ -1789,10 +1788,6 @@ struct hitmiss		*a_hit;
 
 	NMG_CK_HITMISS(myhit);
 
-	NMG_CK_HITMISS_LISTS(a_hit, rd);
-
-
-
 }
 
 /*	I S E C T _ R A Y _ F A C E U S E
@@ -1808,7 +1803,6 @@ struct faceuse *fu_p;
 	struct loopuse		*lu_p;
 	point_t			plane_pt;
 	struct hitmiss		*myhit;
-	struct hitmiss		*a_hit;
 	int			code;
 	plane_t			norm;
 	struct fu_pt_info	*fpi;
@@ -1822,9 +1816,6 @@ struct faceuse *fu_p;
 	NMG_CK_FACE(fu_p->f_p);
 	NMG_CK_FACE_G_PLANE(fu_p->f_p->g.plane_p);
 
-#ifdef CHECK_HITMISS_LISTS
-	NMG_CK_HITMISS_LISTS(a_hit, rd);
-#endif
 
 	/* if this face already processed, we are done. */
 	if (myhit = NMG_INDEX_GET(rd->hitmiss, fu_p->f_p)) {
@@ -1978,7 +1969,7 @@ struct faceuse *fu_p;
 			 * face.  We need to record a hit on the face
 			 */
 			record_face_hit(rd, myhit, plane_pt, dist,
-				fu_p, norm, a_hit);
+				fu_p, norm);
 		}
 		break;
 	case NMG_CLASS_AoutB	:
@@ -1999,8 +1990,6 @@ struct faceuse *fu_p;
 	/* intersect the ray with the edges/verticies of the face */
 	for ( RT_LIST_FOR(lu_p, loopuse, &fu_p->lu_hd) )
 		isect_ray_loopuse(rd, lu_p);
-
-	NMG_CK_HITMISS_LISTS(a_hit, rd);
 
 	NMG_FPI_FREE( fpi );
 }
