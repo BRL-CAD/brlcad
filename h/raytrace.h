@@ -2894,6 +2894,7 @@ void rt_vls_pipept(
 	int seg_no,
 	const struct rt_db_internal *ip,
 	double mm2local);
+void rt_pipept_print();		/* needs wdb_pipept for arg */
 int rt_pipe_ck( const struct bu_list *headp );
 
 /* g_rpc.c */

@@ -423,10 +423,11 @@ register CONST struct soltab *stp;
 		(struct bu_list *)stp->st_specific; */
 }
 
+/*
+ *			R T _ P I P E P T _ P R I N T
+ */
 void
-rt_pipept_print( pipe, mm2local )
-struct wdb_pipept *pipe;
-double mm2local;
+rt_pipept_print( const struct wdb_pipept *pipe, double mm2local )
 {
 	point_t p1;
 
