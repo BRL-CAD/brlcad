@@ -2085,11 +2085,20 @@ genptr_t	state;
 int		first;
 {
 	register struct vf_state *sp = (struct vf_state *)state;
-	register struct edge_g_lseg	*eg = (struct edge_g_lseg *)ep;
 
-	NMG_CK_EDGE_G_LSEG(eg);
+	NMG_CK_EDGE_G_EITHER(ep);
+
 	/* If this edge has been processed before, do nothing more */
-	if( !NMG_INDEX_FIRST_TIME(sp->visited, eg) )  return;
+	switch( *ep )  {
+	case NMG_EDGE_G_LSEG_MAGIC:
+		if( !NMG_INDEX_FIRST_TIME(sp->visited, ((struct edge_g_lseg *)ep)) )
+			return;
+		break;
+	case NMG_EDGE_G_CNURB_MAGIC:
+		if( !NMG_INDEX_FIRST_TIME(sp->visited, ((struct edge_g_cnurb *)ep)) )
+			return;
+		break;
+	}
 
 	nmg_tbl( sp->tabl, TBL_INS, ep );
 }

@@ -35,9 +35,10 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "raytrace.h"
 #include "./debug.h"
 
-/* XXX Move to nmg_info.c */
+/* XXX Move to raytrace.h */
 RT_EXTERN(int	 	nmg_is_vertex_in_face, (CONST struct vertex *v,
 			CONST struct face *f));
+/* XXX Move to nmg_info.c */
 /*
  *			N M G _ I S _ V E R T E X _ I N _ F A C E
  *
@@ -347,6 +348,8 @@ CONST struct rt_tol	*tol;
 	RT_CK_TOL(tol);
 
 	/* Make a list of all the edgeuse structs in the model */
+again:
+	total = 0;
 	nmg_edgeuse_tabulate( &eutab, &m->magic );
 
 	for( i = NMG_TBL_END(&eutab)-1; i >= 0; i-- )  {
@@ -363,6 +366,18 @@ CONST struct rt_tol	*tol;
 		v1b = eu1->eumate_p->vu_p->v_p;
 		NMG_CK_VERTEX(v1a);
 		NMG_CK_VERTEX(v1b);
+
+		if( v1a == v1b )  {
+			/* 0-length edge.  Eliminate. */
+			/* These should't happen, but need fixing. */
+			if( nmg_keu( eu1 ) )  {
+				rt_log("nmg_model_edge_fuse() WARNING:  deletion of 0-length edgeuse=x%x caused parent to go empty.\n", eu1);
+			}
+			rt_log("nmg_model_edge_fuse() 0-length edgeuse=x%x deleted\n", eu1);
+			/* XXX no way to know where edgeuse mate will be */
+			nmg_tbl( &eutab, TBL_FREE, 0 );
+			goto again;
+		}
 
 		for( j = i-1; j >= 0; j-- )  {
 			register struct edgeuse	*eu2;
@@ -384,6 +399,7 @@ CONST struct rt_tol	*tol;
 		}
 	}
 if(total>0)rt_log("nmg_model_edge_fuse(): %d edges fused\n", total);
+	nmg_tbl( &eutab, TBL_FREE, 0 );
 	return total;
 }
 
@@ -482,6 +498,13 @@ CONST struct rt_tol	*tol;
 		struct edgeuse			*eu1;
 
 		eg1 = (struct edge_g_lseg *)NMG_TBL_GET(&etab, i);
+		NMG_CK_EDGE_G_EITHER(eg1);
+
+		/* XXX Need routine to compare two cnurbs geometricly */
+		if( eg1->magic == NMG_EDGE_G_CNURB_MAGIC )  {
+			continue;
+		}
+
 		NMG_CK_EDGE_G_LSEG(eg1);
 		eu1 = RT_LIST_MAIN_PTR( edgeuse, RT_LIST_FIRST( rt_list, &eg1->eu_hd2 ), l2 );
 		NMG_CK_EDGEUSE(eu1);
@@ -492,6 +515,8 @@ CONST struct rt_tol	*tol;
 			register struct edge	**ep;
 
 			eg2 = (struct edge_g_lseg *)NMG_TBL_GET(&etab,j);
+			NMG_CK_EDGE_G_EITHER(eg2);
+			if( eg2->magic == NMG_EDGE_G_CNURB_MAGIC )  continue;
 			NMG_CK_EDGE_G_LSEG(eg2);
 			eu2 = RT_LIST_MAIN_PTR( edgeuse, RT_LIST_FIRST( rt_list, &eg2->eu_hd2 ), l2 );
 			NMG_CK_EDGEUSE(eu2);
@@ -812,8 +837,14 @@ CONST struct rt_tol	*tol;
 		register struct face_g_plane	*fg1;
 		f1 = (struct face *)NMG_TBL_GET(&ftab, i);
 		NMG_CK_FACE(f1);
+		NMG_CK_FACE_G_EITHER(f1->g.magic_p);
+
+		if( *f1->g.magic_p == NMG_FACE_G_SNURB_MAGIC )  {
+			/* XXX Need routine to compare 2 snurbs for equality here */
+			continue;
+		}
+
 		fg1 = f1->g.plane_p;
-		if( !fg1 )  continue;
 		NMG_CK_FACE_G_PLANE(fg1);
 
 		/* Check that all the verts of f1 are within tol of face */

@@ -141,6 +141,10 @@ CONST struct rt_tol	*tol;
 		}
 	}
 
+	/* XXX This angle-based algorithm can't handle snurb faces! */
+	if( fu1 && fu1->f_p->g.magic_p && *fu1->f_p->g.magic_p == NMG_FACE_G_SNURB_MAGIC )  return;
+	if( fu2 && fu2->f_p->g.magic_p && *fu2->f_p->g.magic_p == NMG_FACE_G_SNURB_MAGIC )  return;
+
 	/*  Construct local coordinate system for this edge,
 	 *  so all angles can be measured relative to a common reference.
 	 */
