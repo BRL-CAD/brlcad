@@ -193,6 +193,9 @@ struct faceuse *fu;
 /*	I S E C T _ E D G E _ F A C E
  *
  *	Intersect an edge with a face
+ *
+ * This code currently assumes that an edge can only intersect a face at one
+ * point.  This is probably a bad assumption for the future
  */
 static void isect_edge_face(bs, eu, fu)
 struct nmg_inter_struct *bs;
@@ -212,8 +215,15 @@ struct faceuse *fu;
 
 	NMG_CK_EDGEUSE(eu);
 	NMG_CK_VERTEXUSE(eu->vu_p);
-	NMG_CK_VERTEX(eu->vu_p->v_p);
-	NMG_CK_VERTEX_G(eu->vu_p->v_p->vg_p);
+	v1 = eu->vu_p->v_p;
+	NMG_CK_VERTEX(v1);
+	NMG_CK_VERTEX_G(v1->vg_p);
+
+	NMG_CK_EDGEUSE(eu->eumate_p);
+	NMG_CK_VERTEXUSE(eu->eumate_p->vu_p);
+	v1mate = eu->eumate_p->vu_p->v_p;
+	NMG_CK_VERTEX(v1mate);
+	NMG_CK_VERTEX_G(v1mate->vg_p);
 
 	if (*eu->up.magic_p == NMG_LOOPUSE_MAGIC) {
 		struct edgeuse	*eunext;
@@ -239,22 +249,14 @@ struct faceuse *fu;
 		}
 	}
 
-	/* We check to see if the edge crosses the plane of face fu.
-	 * First we check the topology.  If the topology says that the start
-	 * vertex of this edgeuse is on the other face, we enter the
-	 * vertexuses in the list and it's all over.
-	 *
-	 * If the vertex on the other end of this edgeuse is on the face,
-	 * then make a linkage to an existing face vertex (if found),
-	 * and give up on this edge, knowing that we'll pick up the
-	 * intersection of the next edgeuse with the face later.
-	 *
-	 * This all assumes that an edge can only intersect a face at one
-	 * point.  This is probably a bad assumption for the future
+	/*
+	 * First check the topology.  If the topology says that either
+	 * vertex of this edgeuse is on the other face, enter the
+	 * vertexuses in the list and return.
 	 */
-	if (vu_other=vertex_on_face(eu->vu_p->v_p, fu)) {
-		register pointp_t	p1, p2;
+	if (vu_other=vertex_on_face(v1, fu)) {
 		if (rt_g.NMG_debug & DEBUG_POLYSECT) {
+			register pointp_t	p1, p2;
 			p1 = eu->vu_p->v_p->vg_p->coord;
 			NMG_CK_EDGEUSE(eu->eumate_p);
 			NMG_CK_VERTEXUSE(eu->eumate_p->vu_p);
@@ -291,8 +293,6 @@ struct faceuse *fu;
 	 *  Form a ray that starts at one vertex of the edgeuse
 	 *  and points to the other vertex.
 	 */
-	v1 = eu->vu_p->v_p;
-	v1mate = eu->eumate_p->vu_p->v_p;
 	VSUB2(edge_vect, v1mate->vg_p->coord, v1->vg_p->coord);
 
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
@@ -310,12 +310,8 @@ struct faceuse *fu;
 			rt_log("\tBoring status of rt_isect_ray_plane: %d dist: %g\n",
 				status, dist);
 	}
-
-	/* if this edge doesn't intersect the other face by geometry,
-	 * we're done.
-	 */
 	if (status < 0)
-		return;
+		return;		/* No geometric intersection */
 
 	/* The ray defined by the edgeuse intersects the plane 
 	 * of the other face.  Check to see if the distance to
