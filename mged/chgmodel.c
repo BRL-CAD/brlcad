@@ -1411,7 +1411,6 @@ char	**argv;
 	int code;
 
 	CHECK_DBI_NULL;
-	CHECK_READ_ONLY;
 
 	if(argc < 1 || MAXARGS < argc){
 	  struct bu_vls vls;
@@ -1423,10 +1422,12 @@ char	**argv;
 	  return TCL_ERROR;
 	}
 
-	if( argc < 2 )  {
+	if (argc == 1) {
 	  Tcl_AppendResult(interp, dbip->dbi_title, "\n", (char *)NULL);
 	  return TCL_OK;
 	}
+
+	CHECK_READ_ONLY;
 
 	bu_vls_init( &title );
 	bu_vls_from_argv( &title, argc-1, argv+1 );
