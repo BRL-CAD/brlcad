@@ -637,6 +637,20 @@ struct bu_ptbl {
 /* mappedfile.c */
 /*
  *			B U _ M A P P E D _ F I L E
+ *
+ *  Structure for opening a mapped file.
+ *  Each file is opened and mapped only once (per application,
+ *  as tagged by the string in "appl" field).
+ *  Subsequent opens require an exact match on both strings.
+ *
+ *  Before allocating apbuf and performing data conversion into it,
+ *  openers should check to see if the file has already been opened and
+ *  converted previously.
+ *
+ *  When used in RT, the mapped files are not closed at the end of a frame,
+ *  so that subsequent frames may take advantage of the large data files
+ *  having already been read and converted.
+ *  Examples include EBMs, texture maps, and height fields.
  */
 struct bu_mapped_file {
 	struct bu_list	l;
