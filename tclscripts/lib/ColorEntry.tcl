@@ -20,6 +20,10 @@
 #	ColorEntry instances are used to specify colors.
 #
 
+itk::usual ColorEntry {
+    keep -tearoff
+}
+
 class cadwidgets::ColorEntry {
     inherit cadwidgets::ComboBox
 
