@@ -145,6 +145,71 @@ int	r, g, b;
  *			Generic RT_VLIST routines			*
  *									*
  ************************************************************************/
+CONST char *rt_vlist_cmd_descriptions[] = {
+	"line move ",
+	"line draw ",
+	"poly start",
+	"poly move ",
+	"poly draw ",
+	"poly end  ",
+	"poly vnorm",
+	"**unknown*"
+};
+
+/*
+ *			R T _ C K _ V L I S T
+ *
+ *  Validate an rt_vlist chain for having reasonable
+ *  values inside.  Calls rt_bomb() if not.
+ *
+ *  Returns -
+ *	npts	Number of point/command sets in use.
+ */
+int
+rt_ck_vlist( vhead )
+CONST struct rt_list	*vhead;
+{
+	register int		i;
+	register struct rt_vlist	*vp;
+	int			npts = 0;
+
+	for( RT_LIST_FOR( vp, rt_vlist, vhead ) )  {
+		register int	i;
+		register int	nused = vp->nused;
+		register int	*cmd = vp->cmd;
+		register point_t *pt = vp->pt;
+
+		RT_CK_VLIST( vp );
+		npts += nused;
+
+		for( i = 0; i < nused; i++,cmd++,pt++ )  {
+			register int	j;
+
+			for( j=0; j < 3; j++ )  {
+				/*
+				 *  If (*pt)[j] is an IEEE NaN, then all comparisons
+				 *  between it and any genuine number will return
+				 *  FALSE.  This test is formulated so that NaN
+				 *  values will activate the "else" clause.
+				 */
+				if( (*pt)[j] > -INFINITY && (*pt)[j] < INFINITY )  {
+					/* Number is good */
+				} else {
+					rt_log("  %s (%g, %g, %g)\n",
+						rt_vlist_cmd_descriptions[*cmd],
+						V3ARGS( *pt ) );
+					rt_bomb("rt_ck_vlist() bad coordinate value\n");
+				}
+				/* XXX Need a define for largest command number */
+				if( *cmd < 0 || *cmd > RT_VLIST_POLY_VERTNORM )  {
+					rt_log("cmd = x%x (%d.)\n", *cmd, *cmd);
+					rt_bomb("rt_ck_vlist() bad vlist command\n");
+				}
+			}
+		}
+	}
+	return npts;
+}
 
 /*
  *			R T _ V L I S T _ C O P Y
