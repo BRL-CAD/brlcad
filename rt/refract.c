@@ -152,7 +152,8 @@ struct shadework	*swp;
 		sub_ap = *ap;		/* struct copy */
 		sub_ap.a_level = 0;	/* # of internal reflections */
 		sub_ap.a_cumlen = 0;	/* distance through the glass */
-		sub_ap.a_user = (int)(pp->pt_regionp);
+		sub_ap.a_user = -1;	/* sanity */
+		sub_ap.a_uptr = (genptr_t)(pp->pt_regionp);
 		VMOVE( sub_ap.a_ray.r_pt, swp->sw_hit.hit_point );
 		VMOVE( incident_dir, ap->a_ray.r_dir );
 
@@ -453,12 +454,12 @@ struct partition *PartHeadp;
 	 */
 	psave = pp;
 	for( ; pp != PartHeadp; pp = pp->pt_forw )
-		if( pp->pt_regionp == (struct region *)(ap->a_user) )  break;
+		if( pp->pt_regionp == (struct region *)(ap->a_uptr) )  break;
 	if( pp == PartHeadp )  {
 		if(rdebug&(RDEBUG_SHOWERR|RDEBUG_REFRACT))  {
 			rt_log("rr_hit:  %d,%d Ray int.reflected in %s landed in %s\n",
 				ap->a_x, ap->a_y,
-				((struct region *)(ap->a_user))->reg_name,
+				((struct region *)(ap->a_uptr))->reg_name,
 				psave->pt_regionp->reg_name );
 			return(0);	/* error */
 		}
