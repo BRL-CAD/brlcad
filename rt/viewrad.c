@@ -123,12 +123,12 @@ struct application *ap;
 	union radrec r;
 
 	if( numreflect > MAXREFLECT ) {
-		rt_log("Warning: maxreflect too large (%d), using %d\n",
+		bu_log("Warning: maxreflect too large (%d), using %d\n",
 			numreflect, MAXREFLECT );
 		numreflect = MAXREFLECT;
 	}
 
-	rt_log( "Ray Spacing: %f rays/cm\n", 10.0*(width/viewsize) );
+	bu_log( "Ray Spacing: %f rays/cm\n", 10.0*(width/viewsize) );
 
 	/* Header Record */
 	bzero( (char *)&r, sizeof(r) );
@@ -180,7 +180,7 @@ view_end()
 		writephysrec( outfp );
 	}
 
-	rt_log( "view_end: %d physical records, (%d/%d) logical\n",
+	bu_log( "view_end: %d physical records, (%d/%d) logical\n",
 		precnum, recnum, precnum*256 );
 }
 
@@ -200,7 +200,7 @@ struct seg	*segHeadp;
 	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
 		if( pp->pt_outhit->hit_dist >= 0.0 )  break;
 	if( pp == PartHeadp )  {
-		rt_log("radhit:  no hit out front?\n");
+		bu_log("radhit:  no hit out front?\n");
 		return(0);
 	}
 
@@ -210,13 +210,13 @@ struct seg	*segHeadp;
 
 	hitp = pp->pt_inhit;
 	if( hitp->hit_dist >= INFINITY )  {
-		rt_log("radhit:  entry beyond infinity\n");
+		bu_log("radhit:  entry beyond infinity\n");
 		return(1);
 	}
 	/* Check to see if eye is "inside" the solid */
 	if( hitp->hit_dist < 0 )  {
 		/* XXX */
-		rt_log("radhit:  GAK, eye inside solid (%g)\n", hitp->hit_dist );
+		bu_log("radhit:  GAK, eye inside solid (%g)\n", hitp->hit_dist );
 		for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
 			rt_pr_pt( ap->a_rt_i, pp );
 		return(0);
@@ -236,7 +236,7 @@ struct seg	*segHeadp;
 	rayp->surf = hitp->hit_surfno;
 	RT_CURVATURE( &(rayp->curvature), hitp, pp->pt_inflip, pp->pt_inseg->seg_stp );
 	if( VDOT( rayp->norm, ap->a_ray.r_dir ) < 0 ) {
-		rt_log(" debug: flipping curvature\n");
+		bu_log(" debug: flipping curvature\n");
 		rayp->curvature.crv_c1 = - rayp->curvature.crv_c1;
 		rayp->curvature.crv_c2 = - rayp->curvature.crv_c2;
 	}
@@ -268,7 +268,7 @@ struct seg	*segHeadp;
 		VMOVE( sub_ap.a_ray.r_dir, rayp->spec );
 		depth = rt_shootray( &sub_ap );
 	} else {
-		rt_log( "radhit:  max reflections exceeded [%d %d]\n",
+		bu_log( "radhit:  max reflections exceeded [%d %d]\n",
 			ap->a_x, ap->a_y );
 		depth = 0;
 	}
@@ -306,12 +306,12 @@ struct seg	*segHeadp;
 	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
 		if( pp->pt_outhit->hit_dist > 0 )  break;
 	if( pp == PartHeadp )  {
-		rt_log("hiteye:  no hit out front?\n");
+		bu_log("hiteye:  no hit out front?\n");
 		return(1);
 	}
 	hitp = pp->pt_inhit;
 	if( hitp->hit_dist >= INFINITY )  {
-		rt_log("hiteye:  entry beyond infinity\n");
+		bu_log("hiteye:  entry beyond infinity\n");
 		return(1);
 	}
 	/* The current ray segment exits "in front" of me,
@@ -325,7 +325,7 @@ struct seg	*segHeadp;
 		 * Otherwise, its hard to tell how we got in here!
 		 */
 		if( hitp->hit_dist < -1.001 ) {
-			rt_log("hiteye: *** GAK2, eye inside solid (%g) ***\n", hitp->hit_dist );
+			bu_log("hiteye: *** GAK2, eye inside solid (%g) ***\n", hitp->hit_dist );
 			for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
 				rt_pr_pt( ap->a_rt_i, pp );
 		}
@@ -400,7 +400,7 @@ int depth;
 	union radrec r;
 
 	if( depth > numreflect ) {
-		rt_log( "dumpall: %d reflections!\n", depth );
+		bu_log( "dumpall: %d reflections!\n", depth );
 	}
 
 	/* Firing record */
@@ -546,7 +546,7 @@ buf++;
 	length = sizeof(physrec);
 	fwrite( &length, sizeof(length), 1, fp );
 	if( fwrite( physrec, sizeof(physrec), 1, fp ) != 1 ) {
-		rt_log( "writephysrec: error writing physical record\n" );
+		bu_log( "writephysrec: error writing physical record\n" );
 		return( 0 );
 	}
 	fwrite( &length, sizeof(length), 1, fp );

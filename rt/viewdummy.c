@@ -164,7 +164,7 @@ rayhit( ap, PartHeadp )
 register struct application *ap;
 struct partition *PartHeadp;
 {
-	rt_log("hit: 0x%x\n", ap->a_resource);
+	bu_log("hit: 0x%x\n", ap->a_resource);
 
 	return(1);	/* report hit to main routine */
 }
@@ -178,7 +178,7 @@ int
 raymiss( ap )
 register struct application *ap;
 {
-	rt_log("miss: 0x%x\n", ap->a_resource);
+	bu_log("miss: 0x%x\n", ap->a_resource);
 
 	return(0);
 }

@@ -120,7 +120,7 @@ struct application	*ap;
 	 *  tree walking and database prepping to still be done in parallel.
 	 */
 	if( npsw >= 1 )  {
-		rt_log("Note: changing from %d cpus to 1 cpu\n", npsw );
+		bu_log("Note: changing from %d cpus to 1 cpu\n", npsw );
 		npsw = 1;		/* Disable parallel processing */
 	}
 
@@ -131,7 +131,7 @@ struct application	*ap;
 	 *  a point in model space (with units of mm), and convert it
 	 *  to a point in HV space, with units of inches.
 	 */
-	mat_copy( model2hv, Viewrotscale );
+	bn_mat_copy( model2hv, Viewrotscale );
 	model2hv[15] = 1/MM2IN;
 }
 

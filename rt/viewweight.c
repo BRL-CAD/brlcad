@@ -145,7 +145,7 @@ char *file, *obj;
 					}
 			}
 		else
-			rt_log( "Material index %d in \"%s\" is out of range.\n", index, densityfile );
+			bu_log( "Material index %d in \"%s\" is out of range.\n", index, densityfile );
 		}
 	ap->a_hit = hit;
 	ap->a_miss = miss;
@@ -222,7 +222,7 @@ struct application *ap;
 		}
 	
 	if( noverlaps )
-		rt_log( "%d overlap%c detected.\n\n", noverlaps,
+		bu_log( "%d overlap%c detected.\n\n", noverlaps,
 			noverlaps==1 ? (char) 0 : 's' );
 
 	fprintf( outfp, "RT Check Program Output:\n" );
@@ -368,7 +368,7 @@ struct partition *PartHeadp;
 		   in parallel, the region structures are a shared resource */
 		bu_semaphore_acquire( BU_SEM_SYSCALL );
 #if 0
-		rt_log( "\nhit: partition %d\n", part_count );
+		bu_log( "\nhit: partition %d\n", part_count );
 #endif
 		dp = (struct datapoint *) malloc( sizeof(struct datapoint));
 		addp = reg->reg_udata;
@@ -377,7 +377,7 @@ struct partition *PartHeadp;
         	bu_semaphore_release( BU_SEM_SYSCALL );
 
 		if( density[ reg->reg_gmater ] < 0 ) {
-			rt_log( "Material type %d used, but has no density file entry.\n", reg->reg_gmater );
+			bu_log( "Material type %d used, but has no density file entry.\n", reg->reg_gmater );
 			bu_semaphore_acquire( BU_SEM_SYSCALL );
 			reg->reg_gmater = 0;
         		bu_semaphore_release( BU_SEM_SYSCALL );
@@ -392,8 +392,8 @@ struct partition *PartHeadp;
 			dp->volume = depth * cell_height * cell_width;
 #if 0
 			bu_semaphore_acquire( BU_SEM_SYSCALL );
-			rt_log( "hit: reg_name=\"%s\"\n",reg->reg_name );
-			rt_log( "hit: gmater=%d, los=%d, density=%gg/cc, depth=%gmm, wt=%gg\n",
+			bu_log( "hit: reg_name=\"%s\"\n",reg->reg_name );
+			bu_log( "hit: gmater=%d, los=%d, density=%gg/cc, depth=%gmm, wt=%gg\n",
 			reg->reg_gmater, reg->reg_los, density[reg->reg_gmater],
 			depth, dp->weight );
         		bu_semaphore_release( BU_SEM_SYSCALL );

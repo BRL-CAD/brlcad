@@ -85,7 +85,7 @@ int	minus_o;
 	output_is_binary = 0;		/* output is printable ascii */
 
 	if( npsw > 1 )  {
-		rt_log("rtfrac:  dropping down to 1 CPU\n");
+		bu_log("rtfrac:  dropping down to 1 CPU\n");
 		npsw = 1;
 	}
 
@@ -111,7 +111,7 @@ struct application *ap;
 
 	cell_depth = cell_width;
 	depth = width;
-rt_log("cell_depth=%g, # depth cells=%d\n", cell_depth, depth);
+bu_log("cell_depth=%g, # depth cells=%d\n", cell_depth, depth);
 }
 
 /*

@@ -139,7 +139,7 @@ struct application *ap;
 	
 
 	if( numreflect > MAXREFLECT ) {
-		rt_log("Warning: maxreflect too large (%d), using %d\n",
+		bu_log("Warning: maxreflect too large (%d), using %d\n",
 			numreflect, MAXREFLECT );
 		numreflect = MAXREFLECT;
 	}
@@ -170,10 +170,10 @@ struct application *ap;
 
 	VSET(temp, 0.0, 0.0, -1.414 );
 	MAT4X3PNT( aimpt,view2model, temp);
-	rt_log("aim point %f %f %f\n", aimpt[0], aimpt[1], aimpt[2]);
-	rt_log("viewsize %f\n", viewsize);
+	bu_log("aim point %f %f %f\n", aimpt[0], aimpt[1], aimpt[2]);
+	bu_log("viewsize %f\n", viewsize);
 	backoff = 1.414 * viewsize/2.0;
-	rt_log("backoff %f\n", backoff);
+	bu_log("backoff %f\n", backoff);
 
 #ifdef SAR
 	sar_2init( ap );
@@ -207,7 +207,7 @@ view_end()
 
 	rcs = (iret * iret) + (qret * qret);
 
-	rt_log("Az %2.1f Ele %2.1f totali %1.4E totalq %1.4E rcs %1.4E\n",
+	bu_log("Az %2.1f Ele %2.1f totali %1.4E totalq %1.4E rcs %1.4E\n",
 		azimuth, elevation, iret, qret, rcs );
 }
 
@@ -229,7 +229,7 @@ struct partition *PartHeadp;
 	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
 		if( pp->pt_outhit->hit_dist >= 0.0 )  break;
 	if( pp == PartHeadp )  {
-		rt_log("radhit:  no hit out front?\n");
+		bu_log("radhit:  no hit out front?\n");
 		return(0);
 	}
 
@@ -239,7 +239,7 @@ struct partition *PartHeadp;
 
 	hitp = pp->pt_inhit;
 	if( hitp->hit_dist >= INFINITY )  {
-		rt_log("radhit:  entry beyond infinity\n");
+		bu_log("radhit:  entry beyond infinity\n");
 		return(1);
 	}
 	/* Check to see if eye is "inside" the solid */
@@ -267,7 +267,7 @@ struct partition *PartHeadp;
 	RT_HIT_NORMAL( rayp->norm, hitp, pp->pt_inseg->seg_stp, &(ap->a_ray), pp->pt_inflip );
 	RT_CURVATURE( &(rayp->curvature), hitp, pp->pt_inflip, pp->pt_inseg->seg_stp );
 	if( VDOT( hitp->hit_normal, ap->a_ray.r_dir ) < 0 ) {
-		rt_log(" debug: curvature flip\n");
+		bu_log(" debug: curvature flip\n");
 		rayp->curvature.crv_c1 = - rayp->curvature.crv_c1;
 		rayp->curvature.crv_c2 = - rayp->curvature.crv_c2;
 	}
@@ -346,12 +346,12 @@ struct partition *PartHeadp;
 	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
 		if( pp->pt_outhit->hit_dist > 0 )  break;
 	if( pp == PartHeadp )  {
-		rt_log("hiteye:  no hit out front?\n");
+		bu_log("hiteye:  no hit out front?\n");
 		return(1);
 	}
 	hitp = pp->pt_inhit;
 	if( hitp->hit_dist >= INFINITY )  {
-		rt_log("hiteye:  entry beyond infinity\n");
+		bu_log("hiteye:  entry beyond infinity\n");
 		return(1);
 	}
 	/* The current ray segment exits "in front" of me,

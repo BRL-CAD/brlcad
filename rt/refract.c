@@ -126,7 +126,7 @@ struct shadework	*swp;
 			count++ < MSG_PROLOGUE ||
 			(count%MSG_INTERVAL) == 3
 		) )  {
-			rt_log("rr_render: %d,%d MAX BOUNCES=%d: %s\n",
+			bu_log("rr_render: %d,%d MAX BOUNCES=%d: %s\n",
 				ap->a_x, ap->a_y,
 				ap->a_level,
 				pp->pt_regionp->reg_name );
@@ -200,7 +200,7 @@ struct shadework	*swp;
 		goto out;
 	}
 	if(rdebug&RDEBUG_REFRACT) {
-		rt_log("rr_render: lvl=%d start shader=%g, reflect=%g, transmit=%g %s\n",
+		bu_log("rr_render: lvl=%d start shader=%g, reflect=%g, transmit=%g %s\n",
 			ap->a_level,
 			shader_fract, reflect, transmit,
 			pp->pt_regionp->reg_name );
@@ -219,7 +219,7 @@ struct shadework	*swp;
 	 */
 	if( transmit > 0 )  {
 		if(rdebug&RDEBUG_REFRACT) {
-			rt_log("rr_render: lvl=%d begin xmit through %s\n",
+			bu_log("rr_render: lvl=%d begin xmit through %s\n",
 				ap->a_level,
 				pp->pt_regionp->reg_name );
 		}
@@ -263,7 +263,7 @@ struct shadework	*swp;
 			VSETALL( transmit_color, 0 );
 #endif
 			if(rdebug&RDEBUG_REFRACT) {
-				rt_log("rr_render: lvl=%d change xmit into reflection %s\n",
+				bu_log("rr_render: lvl=%d change xmit into reflection %s\n",
 					ap->a_level,
 					pp->pt_regionp->reg_name );
 			}
@@ -305,7 +305,7 @@ do_inside:
 		case 1:
 			/* Treat as escaping ray */
 			if(rdebug&RDEBUG_REFRACT)
-				rt_log("rr_refract: Treating as escaping ray\n");
+				bu_log("rr_refract: Treating as escaping ray\n");
 			goto do_exit;
 		case 0:
 		default:
@@ -319,7 +319,7 @@ do_inside:
 		}
 
 		if(rdebug&RDEBUG_REFRACT)
-			rt_log("rr_render: calculating refraction @ exit from %s\n", pp->pt_regionp->reg_name);
+			bu_log("rr_render: calculating refraction @ exit from %s\n", pp->pt_regionp->reg_name);
 
 		/* NOTE: rr_hit returns EXIT Point in sub_ap.a_uvec,
 		 *  and returns EXIT Normal in sub_ap.a_vvec,
@@ -370,7 +370,7 @@ do_inside:
 				count++ < MSG_PROLOGUE ||
 				(count%MSG_INTERVAL) == 3
 			) )  {
-				rt_log("rr_render: %d,%d Int.reflect=%d: %s lvl=%d\n",
+				bu_log("rr_render: %d,%d Int.reflect=%d: %s lvl=%d\n",
 					sub_ap.a_x, sub_ap.a_y,
 					sub_ap.a_level,
 					pp->pt_regionp->reg_name,
@@ -441,7 +441,7 @@ do_exit:
 		VELMUL( transmit_color, filter_color, transmit_color );
 #endif
 		if(rdebug&RDEBUG_REFRACT) {
-			rt_log("rr_render: lvl=%d end of xmit through %s\n",
+			bu_log("rr_render: lvl=%d end of xmit through %s\n",
 				ap->a_level,
 				pp->pt_regionp->reg_name );
 		}
@@ -534,7 +534,7 @@ do_reflection:
 		transmit, transmit_color );
 #endif
 	if(rdebug&RDEBUG_REFRACT)  {
-		rt_log("rr_render: lvl=%d end shader=%g reflect=%g, transmit=%g %s\n",
+		bu_log("rr_render: lvl=%d end shader=%g reflect=%g, transmit=%g %s\n",
 			ap->a_level,
 			shader_fract, reflect, transmit,
 			pp->pt_regionp->reg_name );
@@ -631,7 +631,7 @@ struct partition *PartHeadp;
 		if( pp->pt_outhit->hit_dist > 0.0 )  break;
 	if( pp == PartHeadp )  {
 		if(rdebug&(RDEBUG_SHOWERR|RDEBUG_REFRACT))  {
-			rt_log("rr_hit:  %d,%d no hit out front?\n",
+			bu_log("rr_hit:  %d,%d no hit out front?\n",
 				ap->a_x, ap->a_y );
 			return(0);	/* error */
 		}
@@ -651,7 +651,7 @@ struct partition *PartHeadp;
 		if( pp->pt_regionp == (struct region *)(ap->a_uptr) )  break;
 	if( pp == PartHeadp )  {
 		if(rdebug&(RDEBUG_SHOWERR|RDEBUG_REFRACT))  {
-			rt_log("rr_hit:  %d,%d Ray int.reflected in %s landed in %s\n",
+			bu_log("rr_hit:  %d,%d Ray int.reflected in %s landed in %s\n",
 				ap->a_x, ap->a_y,
 				((struct region *)(ap->a_uptr))->reg_name,
 				psave->pt_regionp->reg_name );
@@ -678,7 +678,7 @@ struct partition *PartHeadp;
 	 */
 	if( pp->pt_inhit->hit_dist > 10 )  {
 		stp = pp->pt_inseg->seg_stp;
-		rt_log("rr_hit: %d,%d %s inhit %g > 10.0!\n",
+		bu_log("rr_hit: %d,%d %s inhit %g > 10.0!\n",
 			ap->a_x, ap->a_y,
 			pp->pt_regionp->reg_name,
 			pp->pt_inhit->hit_dist);
@@ -701,7 +701,7 @@ struct partition *PartHeadp;
 			break;
 		if( pp->pt_forw->pt_regionp != pp->pt_regionp )
 			break;
-		if(rdebug&(RDEBUG_SHOWERR|RDEBUG_REFRACT)) rt_log(
+		if(rdebug&(RDEBUG_SHOWERR|RDEBUG_REFRACT)) bu_log(
 			"rr_hit: %d,%d fusing small crack in glass %s\n",
 			ap->a_x, ap->a_y,
 			pp->pt_regionp->reg_name );
@@ -711,7 +711,7 @@ struct partition *PartHeadp;
 	hitp = pp->pt_outhit;
 	stp = pp->pt_outseg->seg_stp;
 	if( hitp->hit_dist >= INFINITY )  {
-		rt_log("rr_hit: %d,%d infinite glass (%g,%g) %s\n",
+		bu_log("rr_hit: %d,%d infinite glass (%g,%g) %s\n",
 			ap->a_x, ap->a_y,
 			pp->pt_inhit->hit_dist, hitp->hit_dist,
 			pp->pt_regionp->reg_name );
@@ -757,7 +757,7 @@ struct partition *PartHeadp;
 #endif
 
 			if (rdebug&RDEBUG_SHADE)
-				rt_log("rr_hit calling viewshade to discover refractive index\n");
+				bu_log("rr_hit calling viewshade to discover refractive index\n");
 
 			(void)viewshade( &appl, pp->pt_forw, &sw );
 
@@ -769,7 +769,7 @@ struct partition *PartHeadp;
 			if( sw.sw_transmit > 0 )  {
 				ap->a_refrac_index = sw.sw_refrac_index;
 				if (rdebug&RDEBUG_SHADE)  {
-					rt_log("rr_hit a_refrac_index=%g (trans=%g)\n",
+					bu_log("rr_hit a_refrac_index=%g (trans=%g)\n",
 						ap->a_refrac_index,
 						sw.sw_transmit );
 				}
@@ -813,12 +813,12 @@ register vect_t	v_2;
 	FAST fastf_t	beta;
 
 	if( NEAR_ZERO(ri_1, 0.0001) || NEAR_ZERO( ri_2, 0.0001 ) )  {
-		rt_log("rr_refract:ri1=%g, ri2=%g\n", ri_1, ri_2 );
+		bu_log("rr_refract:ri1=%g, ri2=%g\n", ri_1, ri_2 );
 		beta = 1;
 	} else {
 		beta = ri_1/ri_2;		/* temp */
 		if( beta > 10000 )  {
-			rt_log("rr_refract:  beta=%g\n", beta);
+			bu_log("rr_refract:  beta=%g\n", beta);
 			beta = 1000;
 		}
 	}
@@ -833,7 +833,7 @@ register vect_t	v_2;
 		/*  Past critical angle, total reflection.
 		 *  Calculate reflected (bounced) incident ray.
 		 */
-		if(rdebug&RDEBUG_REFRACT) rt_log("rr_refract: reflected.  ri1=%g ri2=%g beta=%g\n",
+		if(rdebug&RDEBUG_REFRACT) bu_log("rr_refract: reflected.  ri1=%g ri2=%g beta=%g\n",
 			ri_1, ri_2, beta);
 		VREVERSE( u, v_1 );
 		beta = 2 * VDOT( u, norml );
@@ -846,7 +846,7 @@ register vect_t	v_2;
 		 *	    = cos( theta_2 )^^2.
 		 *     beta = -1.0 * cos( theta_2 ) - Dot( w, norml ).
 		 */
-		if(rdebug&RDEBUG_REFRACT) rt_log("rr_refract: refracted.  ri1=%g ri2=%g beta=%g\n",
+		if(rdebug&RDEBUG_REFRACT) bu_log("rr_refract: refracted.  ri1=%g ri2=%g beta=%g\n",
 			ri_1, ri_2, beta);
 		beta = -sqrt( 1.0 - beta) - VDOT( w, norml );
 		VSCALE( u, norml, beta );

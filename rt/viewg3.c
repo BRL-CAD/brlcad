@@ -130,7 +130,7 @@ char *file, *obj;
 	if(rdebug & RDEBUG_RAYPLOT) {
 		plotfp = fopen("rtg3.pl", "w");
 		if( npsw > 1 )  {
-			rt_log("Note: writing rtg3.pl file can only be done using only 1 processor\n");
+			bu_log("Note: writing rtg3.pl file can only be done using only 1 processor\n");
 			npsw = 1;
 		}
 	}
@@ -189,7 +189,7 @@ struct application	*ap;
 	 *  a point in model space (with units of mm), and convert it
 	 *  to a point in HV space, with units of inches.
 	 */
-	mat_copy( model2hv, Viewrotscale );
+	bn_mat_copy( model2hv, Viewrotscale );
 	model2hv[15] = 1/MM2IN;
 }
 
@@ -249,7 +249,7 @@ register struct partition *PartHeadp;
 	static fastf_t		dcorrection = 0; /* RT to GIFT dist corr */
 	int			card_count;	/* # comp. on this card */
 	char			*fmt;		/* printf() format string */
-	struct rt_vls		str;
+	struct bu_vls		str;
 	char			buf[128];	/* temp. sprintf() buffer */
 	point_t			hv;		/* GIFT h,v coords, in inches */
 	point_t			hvcen;
@@ -273,8 +273,8 @@ register struct partition *PartHeadp;
 	 * rt-vls-extend().
 	 */
 
-	rt_vls_init( &str );
-	rt_vls_extend( &str, 80 * (comp_count+1) );
+	bu_vls_init( &str );
+	bu_vls_extend( &str, 80 * (comp_count+1) );
 
 	/*
 	 *  Find the H,V coordinates of the grid cell center.
@@ -324,7 +324,7 @@ register struct partition *PartHeadp;
 	}
 
 	/* This code is for diagnostics.
-	 * rt_log("dcorrection=%g\n", dcorrection);
+	 * bu_log("dcorrection=%g\n", dcorrection);
 	 */
 
 	/* dfirst and dlast have been made negative to account for GIFT looking
@@ -336,9 +336,9 @@ register struct partition *PartHeadp;
 #if 0
 	/* This code is to note any occurances of negative distances. */
 		if( PartHeadp->pt_forw->pt_inhit->hit_dist < 0)  {
-			rt_log("ERROR: dfirst=%g at partition x%x\n", dfirst , PartHeadp->pt_forw );
-			rt_log("\tdcorrection = %f\n" , dcorrection );
-			rt_log("\tray start point is ( %f %f %f ) in direction ( %f %f %f )\n" , V3ARGS( ap->a_ray.r_pt ) , V3ARGS( ap->a_ray.r_dir ) );
+			bu_log("ERROR: dfirst=%g at partition x%x\n", dfirst , PartHeadp->pt_forw );
+			bu_log("\tdcorrection = %f\n" , dcorrection );
+			bu_log("\tray start point is ( %f %f %f ) in direction ( %f %f %f )\n" , V3ARGS( ap->a_ray.r_pt ) , V3ARGS( ap->a_ray.r_dir ) );
 			VJOIN1( PartHeadp->pt_forw->pt_inhit->hit_point , ap->a_ray.r_pt ,PartHeadp->pt_forw->pt_inhit->hit_dist , ap->a_ray.r_dir );
 			VJOIN1( PartHeadp->pt_back->pt_outhit->hit_point , ap->a_ray.r_pt ,PartHeadp->pt_forw->pt_outhit->hit_dist , ap->a_ray.r_dir );
 			rt_pr_partitions(ap->a_rt_i, PartHeadp, "Defective partion:");
@@ -372,7 +372,7 @@ register struct partition *PartHeadp;
 #ifdef SPRINTF_NOT_PARALLEL
 	bu_semaphore_release( BU_SEM_SYSCALL );
 #endif
-	rt_vls_strcat( &str, buf );
+	bu_vls_strcat( &str, buf );
 
 	/* loop here to deal with individual components */
 	card_count = 0;
@@ -402,7 +402,7 @@ register struct partition *PartHeadp;
 		register struct partition	*nextpp = pp->pt_forw;
 
 		if( (region_id = pp->pt_regionp->reg_regionid) <= 0 )  {
-			rt_log("air region '%s' found when solid region expected, using id=111\n", pp->pt_regionp->reg_name);
+			bu_log("air region '%s' found when solid region expected, using id=111\n", pp->pt_regionp->reg_name);
 			region_id = 111;
 		}
 		comp_thickness = pp->pt_outhit->hit_dist -
@@ -416,10 +416,10 @@ register struct partition *PartHeadp;
 		if( comp_thickness <= 0 )  {
 			VJOIN1( pp->pt_inhit->hit_point , ap->a_ray.r_pt ,pp->pt_inhit->hit_dist , ap->a_ray.r_dir );
 			VJOIN1( pp->pt_outhit->hit_point , ap->a_ray.r_pt ,pp->pt_outhit->hit_dist , ap->a_ray.r_dir );
-			rt_log("ERROR: comp_thickness=%g for region id = %d at h=%g, v=%g (x=%d, y=%d), partition at x%x\n",
+			bu_log("ERROR: comp_thickness=%g for region id = %d at h=%g, v=%g (x=%d, y=%d), partition at x%x\n",
 				comp_thickness, region_id, hv[0], hv[1], ap->a_x, ap->a_y , pp );
 			rt_pr_partitions(ap->a_rt_i, PartHeadp, "Defective partion:");
-			rt_log("Send this output to Sue Muuss (sue@brl.mil)\n");
+			bu_log("Send this output to Sue Muuss (sue@brl.mil)\n");
 			if ( ! (rt_g.debug & DEBUG_ARB8)) {
 				rt_g.debug |= DEBUG_ARB8;
 				rt_shootray(ap);
@@ -446,7 +446,7 @@ register struct partition *PartHeadp;
 			if( !NEAR_ZERO( air_thickness, 0.1 ) )  {
 				air_id = 1;	/* air gap */
 				if( rdebug & RDEBUG_HITS )
-					rt_log("air gap added\n");
+					bu_log("air gap added\n");
 			} else {
 				air_thickness = 0.0;
 			}
@@ -469,7 +469,7 @@ register struct partition *PartHeadp;
 			dot_prod = (-1.0);
 
 		in_obliq = acos( -dot_prod ) *
-			mat_radtodeg;
+			bn_radtodeg;
 		RT_HIT_NORMAL( normal, pp->pt_outhit, pp->pt_outseg->seg_stp, &(ap->a_ray), pp->pt_outflip );
 		dot_prod = VDOT( ap->a_ray.r_dir, normal );
 		if( dot_prod > 1.0 )
@@ -478,19 +478,19 @@ register struct partition *PartHeadp;
 			dot_prod = (-1.0);
 
 		out_obliq = acos( dot_prod ) *
-			mat_radtodeg;
+			bn_radtodeg;
 
 		/* Check for exit obliquties greater than 90 degrees. */
 #if 0
 		if( in_obliq > 90 || in_obliq < 0 )  {
-			rt_log("ERROR: in_obliquity=%g\n", in_obliq);
+			bu_log("ERROR: in_obliquity=%g\n", in_obliq);
 			rt_pr_partitions(ap->a_rt_i, PartHeadp, "Defective partion:");
 		}
 		if( out_obliq > 90 || out_obliq < 0 )  {
-			rt_log("ERROR: out_obliquity=%g\n", out_obliq);
+			bu_log("ERROR: out_obliquity=%g\n", out_obliq);
 			VPRINT(" r_dir", ap->a_ray.r_dir);
 			VPRINT("normal", normal);
-			rt_log("dot=%g, acos(dot)=%g\n",
+			bu_log("dot=%g, acos(dot)=%g\n",
 				VDOT( ap->a_ray.r_dir, normal ),
 				acos( VDOT( ap->a_ray.r_dir, normal ) ) );
 			/* Print the defective one */
@@ -514,7 +514,7 @@ register struct partition *PartHeadp;
 		 *  a leading space in front of the first component.
 		 */
 		if( card_count == 0 )  {
-			rt_vls_strcat( &str, " " );
+			bu_vls_strcat( &str, " " );
 		}
 		comp_thickness *= MM2IN;
 		/* Check thickness fields for format overflow */
@@ -533,10 +533,10 @@ register struct partition *PartHeadp;
 #ifdef SPRINTF_NOT_PARALLEL
 		bu_semaphore_release( BU_SEM_SYSCALL );
 #endif
-		rt_vls_strcat( &str, buf );
+		bu_vls_strcat( &str, buf );
 		card_count++;
 		if( card_count >= 3 )  {
-			rt_vls_strcat( &str, "\n" );
+			bu_vls_strcat( &str, "\n" );
 			card_count = 0;
 		}
 
@@ -577,7 +577,7 @@ register struct partition *PartHeadp;
 		 *  but neither COVART II nor COVART III require it,
 		 *  so just end the line here.
 		 */
-		rt_vls_strcat( &str, "\n" );
+		bu_vls_strcat( &str, "\n" );
 	}
 
 	/* Single-thread through file output.
@@ -587,13 +587,13 @@ register struct partition *PartHeadp;
 	 */
 	bu_semaphore_acquire( BU_SEM_SYSCALL );
 
-	fputs( rt_vls_addr( &str ), outfp );
+	fputs( bu_vls_addr( &str ), outfp );
 
 	/* End of single-thread region */
 	bu_semaphore_release( BU_SEM_SYSCALL );
 
 	/* Release vls storage */
-	rt_vls_free( &str );
+	bu_vls_free( &str );
 
 	return(0);
 }
@@ -691,7 +691,7 @@ top:		nextpp = pp->pt_forw;
 		gap = nextpp->pt_inhit->hit_dist - pp->pt_outhit->hit_dist;
 
 		/* The following line is a diagnostic that is worth reusing:
-		 * rt_log("gap=%e\n", gap);
+		 * bu_log("gap=%e\n", gap);
 		 */
 
 		if(gap > tolerance)  {
@@ -703,7 +703,7 @@ top:		nextpp = pp->pt_forw;
 		 * should be retained for debugging purposes.
 		 */
 
-		 /* rt_log("part_comp: collapsing gap of %e mm between id=%d and id=%d\n",
+		 /* bu_log("part_comp: collapsing gap of %e mm between id=%d and id=%d\n",
 		  *	gap, pp->pt_regionp->reg_regionid, 
 		  *	nextpp->pt_regionp->reg_regionid);
 		  */

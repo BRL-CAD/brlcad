@@ -262,7 +262,7 @@ genptr_t	arg;
 	if( per_processor_chunk <= 0 )  per_processor_chunk = npsw;
 
 	if( cpu >= MAX_PSW )  {
-		rt_log("rt/worker() cpu %d > MAX_PSW %d, array overrun\n", cpu, MAX_PSW);
+		bu_log("rt/worker() cpu %d > MAX_PSW %d, array overrun\n", cpu, MAX_PSW);
 		rt_bomb("rt/worker() cpu > MAX_PSW, array overrun\n");
 	}
 	RT_CK_RESOURCE( &resource[cpu] );

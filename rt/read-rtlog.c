@@ -267,12 +267,12 @@ mat_t 	model2view;
 
 	quat_quat2mat( rotate, orientation );
 	rotate[15] = 0.5 * m_size;
-	mat_idn( xlate );
+	bn_mat_idn( xlate );
 	MAT_DELTAS( xlate, -eye_pos[0], -eye_pos[1], -eye_pos[2] );
-	mat_mul( model2view, rotate, xlate );
+	bn_mat_mul( model2view, rotate, xlate );
 
 	if(verbose)  {
-		 mat_print("model2view", model2view);
+		 bn_mat_print("model2view", model2view);
 	}
 
 	fclose(fp);		/* clean up */

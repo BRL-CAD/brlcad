@@ -118,7 +118,7 @@ struct application	*ap;
 	 *  tree walking and database prepping to still be done in parallel.
 	 */
 	if( npsw >= 1 )  {
-		rt_log("Note: changing from %d cpus to 1 cpu\n", npsw );
+		bu_log("Note: changing from %d cpus to 1 cpu\n", npsw );
 		npsw = 1;		/* Disable parallel processing */
 	}
 

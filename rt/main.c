@@ -121,7 +121,7 @@ char **argv;
 	elevation = 25.0;
 
 	/* Before option processing, get default number of processors */
-	npsw = rt_avail_cpus();		/* Use all that are present */
+	npsw = bu_avail_cpus();		/* Use all that are present */
 	if( npsw > DEFAULT_PSW )  npsw = DEFAULT_PSW;
 	if( npsw > MAX_PSW )  npsw = MAX_PSW;
 
@@ -164,7 +164,7 @@ char **argv;
 #endif
 	if( npsw < 0 )  {
 		/* Negative number means "all but" npsw */
-		npsw = rt_avail_cpus() + npsw;
+		npsw = bu_avail_cpus() + npsw;
 	}
 	if( npsw > MAX_PSW )  npsw = MAX_PSW;
 	if( npsw > 1 )  {
@@ -316,7 +316,7 @@ char **argv;
 			if( rdebug&RDEBUG_PARSE )
 				fprintf(stderr,"cmd: %s\n", buf );
 			ret = rt_do_cmd( rtip, buf, rt_cmdtab );
-			rt_free( buf, "rt_read_cmd command buffer" );
+			bu_free( buf, "rt_read_cmd command buffer" );
 			if( ret < 0 )
 				break;
 		}

@@ -259,7 +259,7 @@ struct partition *PartHeadp;
 		}
 	}
 	for( ; pp != PartHeadp; pp = pp->pt_forw )  {
-		rt_log("\n--- Hit region %s (in %s, out %s)\n",
+		bu_log("\n--- Hit region %s (in %s, out %s)\n",
 			pp->pt_regionp->reg_name,
 			pp->pt_inseg->seg_stp->st_name,
 			pp->pt_outseg->seg_stp->st_name );
@@ -273,7 +273,7 @@ struct partition *PartHeadp;
 		rt_pr_hit( "  In", pp->pt_inhit );
 		VPRINT(    "  Ipoint", inpt );
 		VPRINT(    "  Inormal", inormal );
-		rt_log(    "   PDir (%g, %g, %g) c1=%g, c2=%g\n",
+		bu_log(    "   PDir (%g, %g, %g) c1=%g, c2=%g\n",
 			V3ARGS(cur.crv_pdir), cur.crv_c1, cur.crv_c2);
 
 		/* outhit info */
@@ -285,7 +285,7 @@ struct partition *PartHeadp;
 		rt_pr_hit( "  Out", pp->pt_outhit );
 		VPRINT(    "  Opoint", outpt );
 		VPRINT(    "  Onormal", onormal );
-		rt_log(    "   PDir (%g, %g, %g) c1=%g, c2=%g\n",
+		bu_log(    "   PDir (%g, %g, %g) c1=%g, c2=%g\n",
 			V3ARGS(cur.crv_pdir), cur.crv_c1, cur.crv_c2);
 
 		/* Plot inhit to outhit */
@@ -306,7 +306,7 @@ struct partition *PartHeadp;
 miss( ap )
 register struct application *ap;
 {
-	rt_log("missed\n");
+	bu_log("missed\n");
 	if( rdebug&RDEBUG_RAYPLOT )  {
 		vect_t	out;
 

@@ -87,9 +87,9 @@ char	**argv;
 	mat_t		view2model;		/* matrix for converting from view to model space */
 	int		ret;			/* function return code */
 
-	mat_idn(mod2view1);				/* makes an identity matrix */
-	mat_idn(mod2view2);
-	mat_idn(regismat);
+	bn_mat_idn(mod2view1);				/* makes an identity matrix */
+	bn_mat_idn(mod2view2);
+	bn_mat_idn(regismat);
 
 	/* Check to see that the correct format is given, else print
 	 * usage message.
@@ -133,9 +133,9 @@ char	**argv;
 	fclose(fp);
 
 	if(verbose)  {
-		mat_inv(view2model, mod2view1);
-		mat_print("mod2view1-plot.log", mod2view1);
-		mat_print("mod2view2-pix.log", mod2view2);
+		bn_mat_inv(view2model, mod2view1);
+		bn_mat_print("mod2view1-plot.log", mod2view1);
+		bn_mat_print("mod2view2-pix.log", mod2view2);
 		fprintf(stderr, "mod2view1[0, 1, 2, 3, 15]: %.6f, %.6f, %.6f, %.6f, %.6f\n",
 		mod2view1[0], mod2view1[1], mod2view1[2], mod2view1[3], mod2view1[15]);
 	}
@@ -205,8 +205,8 @@ mat_t	regismat;
 	 * deltas are used.   This will be implemented later.
 	 */
 
-	mat_copy( regismat, mat2);
-	mat_print("regismat", regismat);
+	bn_mat_copy( regismat, mat2);
+	bn_mat_print("regismat", regismat);
 	return(1);				/* OK */
 }
 

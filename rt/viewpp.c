@@ -81,7 +81,7 @@ struct seg	*segHeadp;
 	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
 		if( pp->pt_outhit->hit_dist >= 0.0 )  break;
 	if( pp == PartHeadp )  {
-		rt_log("pphit:  no hit out front?\n");
+		bu_log("pphit:  no hit out front?\n");
 		return(0);
 	}
 	hitp = pp->pt_inhit;

@@ -68,7 +68,7 @@ struct vldray
  *  might make _norm[Z] slightly outside of the range -1.0 to +1.0.
  *  A completely stable formulation is:
  *
- *	_ray.ne = mat_atan2( _norm[Z], hypot( _norm[X], _norm[Y] ) );
+ *	_ray.ne = bn_atan2( _norm[Z], hypot( _norm[X], _norm[Y] ) );
  *
  *  Note that the hypot() return is always positive, restricting the
  *  range of return values for elevation to between -pi/2 and +pi/2,
@@ -81,8 +81,8 @@ struct vldray
  *  on machines with hardware sqrt().
  */
 #define WRAY_NORMAL(_ray, _norm)	\
-	_ray.na = mat_atan2( _norm[Y], _norm[X] ); \
-	_ray.ne = mat_atan2( _norm[Z], \
+	_ray.na = bn_atan2( _norm[Y], _norm[X] ); \
+	_ray.ne = bn_atan2( _norm[Z], \
 		sqrt( _norm[X] * _norm[X] + _norm[Y] * _norm[Y]) );
 
 /*

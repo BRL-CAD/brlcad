@@ -147,7 +147,7 @@ struct region		*reg2;
 	bu_semaphore_release( BU_SEM_SYSCALL );
 
 	if( !rpt_overlap ) {
-		rt_log("OVERLAP %d: %s\nOVERLAP %d: %s\nOVERLAP %d: depth %gmm\nOVERLAP %d: in_hit_point (%g,%g,%g) mm\nOVERLAP %d: out_hit_point (%g,%g,%g) mm\n------------------------------------------------------------\n",
+		bu_log("OVERLAP %d: %s\nOVERLAP %d: %s\nOVERLAP %d: depth %gmm\nOVERLAP %d: in_hit_point (%g,%g,%g) mm\nOVERLAP %d: out_hit_point (%g,%g,%g) mm\n------------------------------------------------------------\n",
 			noverlaps,reg1->reg_name,
 			noverlaps,reg2->reg_name,
 			noverlaps,depth,
@@ -162,7 +162,7 @@ struct region		*reg2;
 		struct overlap_list	*prev_ol = (struct overlap_list *)0;
 		struct overlap_list	*op;		/* overlap list */
 		struct overlap_list     *new_op;
-		new_op =(struct overlap_list *)rt_malloc(sizeof(struct overlap_list),"overlap list");
+		new_op =(struct overlap_list *)bu_malloc(sizeof(struct overlap_list),"overlap list");
 
 		/* look for it in our list */
 		bu_semaphore_acquire( BU_SEM_SYSCALL );
@@ -173,7 +173,7 @@ struct region		*reg2;
 				if( depth > op->maxdepth )
 					op->maxdepth = depth;
 				bu_semaphore_release( BU_SEM_SYSCALL );
-				rt_free( (char *) new_op, "overlap list");
+				bu_free( (char *) new_op, "overlap list");
 				return	0;	/* already on list */
 			}
 		}
@@ -241,24 +241,24 @@ void
 view_end() {
 	pl_flush(outfp);
 	fflush(outfp);
-	rt_log("%d overlaps detected\n", noverlaps);
+	bu_log("%d overlaps detected\n", noverlaps);
 	if( rpt_overlap ) {
 		register struct overlap_list *op, *nextop;
 
-		rt_log("%d overlapping region pairs\n", overlap_count);
+		bu_log("%d overlapping region pairs\n", overlap_count);
 		op = olist;
 		while( op ) {
-			rt_log("OVERLAP : %s\nOVERLAP : %s\n%d overlap%c detected, maximum depth is %gmm\n-------------------------------------------\n",
+			bu_log("OVERLAP : %s\nOVERLAP : %s\n%d overlap%c detected, maximum depth is %gmm\n-------------------------------------------\n",
 			op->reg1, op->reg2,
 			op->count, op->count>1 ? 's' : (char) 0, op->maxdepth);
 			/* free struct */
 			nextop = op->next;
-			rt_free( (char *)op, "overlap_list" );
+			bu_free( (char *)op, "overlap_list" );
 			op = nextop;
 		}
 		olist = (struct overlap_list *)NULL;
 	}
-	rt_log("\n");
+	bu_log("\n");
 }
 
 /*

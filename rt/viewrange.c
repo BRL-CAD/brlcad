@@ -123,21 +123,21 @@ struct application	*ap;
 	 *  tree walking and database prepping to still be done in parallel.
 	 */
 	if( npsw >= 1 )  {
-		rt_log("Note: changing from %d cpus to 1 cpu\n", npsw );
+		bu_log("Note: changing from %d cpus to 1 cpu\n", npsw );
 		npsw = 1;		/* Disable parallel processing */
 	}
 
 
 	/* malloc() a buffer that has room for as many struct cell 's
 	 * as the incoming file is wide (width).
-	 * Rather than using malloc(), though, rt_malloc() is used.  This
+	 * Rather than using malloc(), though, bu_malloc() is used.  This
 	 * has the advantage of inbuild error-checking and automatic aborting
-	 * if there is no memory.  Also, rt_malloc() takes a string as its
+	 * if there is no memory.  Also, bu_malloc() takes a string as its
 	 * final parameter: this tells the user exactly where memory ran out.
 	 */
 
 
-	cellp = (struct cell *)rt_malloc(sizeof(struct cell) * width,
+	cellp = (struct cell *)bu_malloc(sizeof(struct cell) * width,
 		"cell buffer" );
 
 

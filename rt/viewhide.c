@@ -160,18 +160,18 @@ struct application	*ap;
 
 	/* malloc() two buffers that have room for as many struct cell 's
 	 * as the incoming file is wide (width), plus two for the border.
-	 * Rather than using malloc(), though, rt_malloc() is used.  This
+	 * Rather than using malloc(), though, bu_malloc() is used.  This
 	 * has the advantage of inbuild error-checking and automatic aborting
-	 * if there is no memory.  Also, rt_malloc() takes a string as its
+	 * if there is no memory.  Also, bu_malloc() takes a string as its
 	 * final parameter: this tells the usr exactly where memory ran out.
 	 * The file_height is counted by using ap->a_y directly. The benefit
 	 * of this is WHAT?
 	 */
 
 
-	botp = (struct cell *)rt_malloc(sizeof(struct cell) * (width + 2),
+	botp = (struct cell *)bu_malloc(sizeof(struct cell) * (width + 2),
 		"bottom cell buffer" );
-	topp = (struct cell *)rt_malloc(sizeof(struct cell) * (width + 2),
+	topp = (struct cell *)bu_malloc(sizeof(struct cell) * (width + 2),
 		"top cell buffer" );
 
 	/* Clear both in-buffers to ensure abscence of garbage.  Note 

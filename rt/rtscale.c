@@ -105,8 +105,8 @@ char	**argv;
 	int		ret;			/* function return code */
 	fastf_t		m_len;			/* scale length in model size */
 
-	mat_idn(view2model);			/* makes an identity matrix */
-	mat_idn(model2view);
+	bn_mat_idn(view2model);			/* makes an identity matrix */
+	bn_mat_idn(model2view);
 
 	/* Check to see that the correct format is given, else print
 	 * usage message.
@@ -161,11 +161,11 @@ char	**argv;
 		exit(-1);
 	}
 
-	mat_inv(view2model, model2view);
+	bn_mat_inv(view2model, model2view);
 
 	if(verbose)  {
 		fprintf(stderr, "label=%s\n", label);
-		mat_print("view2model", view2model);
+		bn_mat_print("view2model", view2model);
 	}
 
 	/* Make a bounding rpp for the model and put out a space command. */
@@ -334,7 +334,7 @@ char	*descript;
 	 * MAT_DELTAS to 0, and set the scale to 1.
 	 */
 
-	mat_copy(v2symbol, v2mod);
+	bn_mat_copy(v2symbol, v2mod);
 	MAT_DELTAS(v2symbol, 0, 0, 0);
 	v2symbol[15] = 1;
 
@@ -375,7 +375,7 @@ char	*descript;
 	if(verbose)  {
 		fprintf(stderr, "Now calling tp_3symbol( outfp, %s, m_lable_st= %.6f, %.6f, %.6f, m_char_width=%.6f\n",
 		        label, V3ARGS(m_label_st), m_char_width);
-		mat_print("v2symbol", v2symbol);
+		bn_mat_print("v2symbol", v2symbol);
 	}
 
 	/* Now put the label on the plot.  The first is the lable for
@@ -541,7 +541,7 @@ mat_t	v2mod;
 
 	/* Now rotate the viewing cube and obtain new minimum and maximum. */
 
-	rt_rotate_bbox(new_min, new_max, v2mod, v_min, v_max);
+	bn_rotate_bbox(new_min, new_max, v2mod, v_min, v_max);
 
 	/* Now issue the space command */
 

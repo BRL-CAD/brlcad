@@ -309,12 +309,12 @@ char **argv;
 				/* Try 7 azimuthal escapes, 1..7 */
 				i = failed_try-1+1;	/*  1..7 */
 				if(rdebug>=3)fprintf(stderr,"Try az %d\n", i);
-				mat_ae( mat, i*45.0, 0.0 );
+				bn_mat_ae( mat, i*45.0, 0.0 );
 			} else if( failed_try <= 14 ) {
 				/* Try 7 Elevations to escape, 8..14 */
 				i = failed_try-8+1;	/*     1..7 */
 				if(rdebug>=3)fprintf(stderr,"Try el %d\n", i);
-				mat_ae( mat, 0.0, i*45.0 );
+				bn_mat_ae( mat, 0.0, i*45.0 );
 			} else {
 				fprintf(stderr,"trapped, giving up on escape\n");
 				exit(1);
@@ -376,7 +376,7 @@ struct partition *PartHeadp;
 	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
 		if( pp->pt_outhit->hit_dist >= 0.0 )  break;
 	if( pp == PartHeadp )  {
-		rt_log("hit:  no hit out front?\n");
+		bu_log("hit:  no hit out front?\n");
 		return(0);
 	}
 	hitp = pp->pt_inhit;

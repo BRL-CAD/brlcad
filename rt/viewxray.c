@@ -94,7 +94,7 @@ int minus_o;
 	 */
 	if (rt_g.rtg_parallel) {
 		rt_g.rtg_parallel = 0;
-		rt_log("rtxray: Can't do parallel yet, using one CPU\n");
+		bu_log("rtxray: Can't do parallel yet, using one CPU\n");
 	}
 
 	if( lightmodel == LGT_BW ) {
@@ -108,7 +108,7 @@ int minus_o;
 	}
 	if( pixsize ) {
 		scanbuf = (unsigned char *)
-			rt_malloc( width*pixsize, "scanline buffer" );
+			bu_malloc( width*pixsize, "scanline buffer" );
 	}
 
 	if( minus_o ) {
@@ -117,7 +117,7 @@ int minus_o;
 	}
 
 	if( lightmodel == LGT_FLOAT ) {
-		rt_log("rtxray: Can't do floating point mode to frame buffer, use -o\n");
+		bu_log("rtxray: Can't do floating point mode to frame buffer, use -o\n");
 		exit(1);
 	}
 	return(1);		/* we need a framebuffer */
@@ -137,7 +137,7 @@ char *framename;
 	 */
 	if (AmbientIntensity > 1.0)
 		contrast_boost = AmbientIntensity;
-	rt_log("Contrast Boost = %5.2f\n", contrast_boost);
+	bu_log("Contrast Boost = %5.2f\n", contrast_boost);
 
 	ap->a_hit = xrayhit;
 	ap->a_miss = xraymiss;
@@ -191,7 +191,7 @@ struct partition *PartHeadp;
 	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
 		if( pp->pt_outhit->hit_dist >= 0.0 )  break;
 	if( pp == PartHeadp )  {
-		rt_log("xrayhit:  no hit out front?\n");
+		bu_log("xrayhit:  no hit out front?\n");
 		return(0);
 	}
 
@@ -201,13 +201,13 @@ struct partition *PartHeadp;
 
 	hitp = pp->pt_inhit;
 	if( hitp->hit_dist >= INFINITY )  {
-		rt_log("xrayhit:  entry beyond infinity\n");
+		bu_log("xrayhit:  entry beyond infinity\n");
 		return(1);
 	}
 	/* Check to see if eye is "inside" the solid */
 	if( hitp->hit_dist < 0.0 )  {
 		/* XXX */
-		rt_log("xrayhit:  Eye inside solid (%g)\n", hitp->hit_dist );
+		bu_log("xrayhit:  Eye inside solid (%g)\n", hitp->hit_dist );
 		for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
 			rt_pr_pt( ap->a_rt_i, pp );
 		return(0);
@@ -277,7 +277,7 @@ struct partition *PartHeadp;
 		bu_semaphore_release( BU_SEM_SYSCALL );
 		break;
 	default:
-		rt_log( "xraymiss: Bad lighting model %d\n", lightmodel );
+		bu_log( "xraymiss: Bad lighting model %d\n", lightmodel );
 		break;
 	}
 

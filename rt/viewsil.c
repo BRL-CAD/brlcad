@@ -81,10 +81,10 @@ int	minus_o;
 {
 	if (rt_g.rtg_parallel) {
 		rt_g.rtg_parallel = 0;
-		rt_log("rtsil: Can't do parallel yet, using one CPU\n");
+		bu_log("rtsil: Can't do parallel yet, using one CPU\n");
 	}
 	scanbuf = (unsigned char *)
-		rt_malloc( width, "scanline buffer" );
+		bu_malloc( width, "scanline buffer" );
 	return(0);		/* no framebuffer needed */
 }
 
