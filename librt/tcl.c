@@ -1056,6 +1056,7 @@ char	      **argv;
 
 	/* XXX
 	   Verify that this wdb supports lookup operations (non-null dbip) */
+	RT_CK_DBI_TCL(wdb->dbip);
 
 	dp = db_lookup( wdb->dbip, argv[1], LOOKUP_QUIET );
 	if( dp == DIR_NULL ) {
@@ -1129,9 +1130,12 @@ char	      **argv;
 		} else if( strcmp(argv[2], "shader" )==0 ) {
 			bu_vls_trunc( &comb->shader, 0 );
 			bu_vls_strcat( &comb->shader, argv[3] );
+			/* Leading spaces boggle the combination exporter */
+			bu_vls_trimspace( &comb->shader );
 		} else if( strcmp(argv[2], "material" )==0 ) {
 			bu_vls_trunc( &comb->material, 0 );
 			bu_vls_strcat( &comb->material, argv[3] );
+			bu_vls_trimspace( &comb->material );
 		} else if( strcmp(argv[2], "inherit" )==0 ) {
 			if( Tcl_GetBoolean( interp, argv[3], &i ) != TCL_OK )
 				goto error;
