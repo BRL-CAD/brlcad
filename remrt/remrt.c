@@ -1949,10 +1949,17 @@ struct timeval		*nowp;
 	 */
 	/* Base new assignment on desired result rate & measured speed */
 	lump = assignment_time() * sp->sr_w_elapsed;
+
 	/* If for an interactive demo, limit assignment to 1 scanline */
 	if( interactive && lump > fr->fr_width )  lump = fr->fr_width;
-	/* Limit growth in assignment size to 2X each assignment */
-	if( lump > 2*sp->sr_lump )  lump = 2*sp->sr_lump;
+
+	/* If each frame has a dedicated server, make lumps big */
+	if( work_allocate_method == OPT_MOVIE )  {
+		lump = fr->fr_width * 2;	/* 2 scanlines at a wack */
+	} else {
+		/* Limit growth in assignment size to 2X each assignment */
+		if( lump > 2*sp->sr_lump )  lump = 2*sp->sr_lump;
+	}
 	/* Provide some bounds checking */
 	if( lump < 32 )  lump = 32;
 	else if( lump > REMRT_MAX_PIXELS ) lump = REMRT_MAX_PIXELS;
