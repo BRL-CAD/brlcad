@@ -42,6 +42,51 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./debug.h"
 
 /*
+ *			D B _ D U P _ D B _ T R E E _ S T A T E
+ *
+ *  Duplicate the contents of a db_tree_state structure,
+ *  including a private copy of the ts_mater field(s).
+ */
+void
+db_dup_db_tree_state( otsp, itsp )
+register struct db_tree_state		*otsp;
+register CONST struct db_tree_state	*itsp;
+{
+	int		shader_len=0;
+
+	RT_CK_DBI(itsp->ts_dbip);
+
+	*otsp = *itsp;			/* struct copy */
+
+	if( itsp->ts_mater.ma_shader )
+		shader_len = strlen( itsp->ts_mater.ma_shader );
+	if( shader_len )
+	{
+		otsp->ts_mater.ma_shader = (char *)bu_malloc( shader_len+1, "db_new_combined_tree_state: ma_shader" );
+		strcpy( otsp->ts_mater.ma_shader, itsp->ts_mater.ma_shader );
+	}
+	else
+		otsp->ts_mater.ma_shader = (char *)NULL;
+}
+
+/*
+ *			D B _ F R E E _ D B _ T R E E _ S T A T E
+ *
+ *  Release dynamic fields inside the structure, but not the structure itself.
+ */
+void
+db_free_db_tree_state( tsp )
+register struct db_tree_state	*tsp;
+{
+	RT_CK_DBI(tsp->ts_dbip);
+	if( tsp->ts_mater.ma_shader )  {
+		bu_free( tsp->ts_mater.ma_shader, "db_free_combined_tree_state: ma_shader" );
+		tsp->ts_mater.ma_shader = (char *)NULL;		/* sanity */
+	}
+	tsp->ts_dbip = (struct db_i *)NULL;			/* sanity */
+}
+
+/*
  *			D B _ N E W _ C O M B I N E D _ T R E E _ S T A T E
  */
 struct combined_tree_state *
@@ -50,24 +95,13 @@ register CONST struct db_tree_state	*tsp;
 register CONST struct db_full_path	*pathp;
 {
 	struct combined_tree_state	*new;
-	int				shader_len=0;
 
 	RT_CK_FULL_PATH(pathp);
 	RT_CK_DBI(tsp->ts_dbip);
 
 	BU_GETSTRUCT( new, combined_tree_state );
 	new->magic = RT_CTS_MAGIC;
-	new->cts_s = *tsp;		/* struct copy */
-	if( tsp->ts_mater.ma_shader )
-		shader_len = strlen( tsp->ts_mater.ma_shader );
-	if( shader_len )
-	{
-		new->cts_s.ts_mater.ma_shader = (char *)bu_malloc( shader_len+1, "db_new_combined_tree_state: ma_shader" );
-	strcpy( new->cts_s.ts_mater.ma_shader, tsp->ts_mater.ma_shader );
-	}
-	else
-		new->cts_s.ts_mater.ma_shader = (char *)NULL;
-
+	db_dup_db_tree_state( &(new->cts_s), tsp );
 	db_full_path_init( &(new->cts_p) );
 	db_dup_full_path( &(new->cts_p), pathp );
 	return new;
@@ -86,17 +120,7 @@ CONST struct combined_tree_state	*old;
  	RT_CK_CTS(old);
 	BU_GETSTRUCT( new, combined_tree_state );
 	new->magic = RT_CTS_MAGIC;
-	new->cts_s = old->cts_s;	/* struct copy */
-	if( old->cts_s.ts_mater.ma_shader )
-		shader_len = strlen( old->cts_s.ts_mater.ma_shader );
-	if( shader_len )
-	{
-		new->cts_s.ts_mater.ma_shader = (char *)bu_malloc( shader_len+1, "db_dup_combined_tree_state: ma_shader" );
-	strcpy( new->cts_s.ts_mater.ma_shader, old->cts_s.ts_mater.ma_shader );
-	}
-	else
-		new->cts_s.ts_mater.ma_shader = (char *)NULL;
-
+	db_dup_db_tree_state( &(new->cts_s), &(old->cts_s) );
 	db_full_path_init( &(new->cts_p) );
 	db_dup_full_path( &(new->cts_p), &(old->cts_p) );
 	return new;
@@ -111,9 +135,7 @@ register struct combined_tree_state	*ctsp;
 {
  	RT_CK_CTS(ctsp);
 	db_free_full_path( &(ctsp->cts_p) );
-	if( ctsp->cts_s.ts_mater.ma_shader )
-		bu_free( ctsp->cts_s.ts_mater.ma_shader, "db_free_combined_tree_state: ma_shader" );
-
+	db_free_db_tree_state( &(ctsp->cts_s) );
 	bzero( (char *)ctsp, sizeof(*ctsp) );		/* sanity */
 	rt_free( (char *)ctsp, "combined_tree_state");
 }
@@ -816,9 +838,9 @@ struct combined_tree_state	**region_start_statepp;
 	struct db_tree_state	memb_state;
 	union tree		*subtree;
 
-	memb_state = *msp;		/* struct copy */
-
 	RT_CK_TREE(tp);
+	db_dup_db_tree_state( &memb_state, msp );
+
 	switch( tp->tr_op )  {
 
 	case OP_DB_LEAF:
@@ -831,7 +853,7 @@ struct combined_tree_state	**region_start_statepp;
 			rt_free( tp->tr_l.tl_name, "tl_name" );
 			tp->tr_l.tl_name = NULL;
 			tp->tr_op = OP_NOP;
-			return;
+			goto out;
 		}
 
 		/* Recursive call */
@@ -875,6 +897,8 @@ struct combined_tree_state	**region_start_statepp;
 		bu_log("db_recurse_subtree: bad op %d\n", tp->tr_op);
 		rt_bomb("db_recurse_subtree\n");
 	}
+out:
+	db_free_db_tree_state( &memb_state );
 	RT_CK_TREE(tp);
 	return;
 }
@@ -938,16 +962,18 @@ struct combined_tree_state	**region_start_statepp;
 		int			is_region;
 
 		/*  Handle inheritance of material property. */
-		nts = *tsp;	/* struct copy */
+		db_dup_db_tree_state( &nts, tsp );
 
 		if( rt_comb_v4_import( &intern , &ext , NULL ) < 0 )  {
 			bu_log("db_recurse() import of %s failed\n", dp->d_namep);
+			db_free_db_tree_state( &nts );
 			curtree = TREE_NULL;		/* FAIL */
 			goto out;
 		}
 		comb = (struct rt_comb_internal *)intern.idb_ptr;
 		RT_CK_COMB(comb);
 		if( (is_region = db_apply_state_from_comb( &nts, pathp, comb )) < 0 )  {
+			db_free_db_tree_state( &nts );
 			curtree = TREE_NULL;		/* FAIL */
 			goto out;
 		}
@@ -967,6 +993,7 @@ struct combined_tree_state	**region_start_statepp;
 						sofar);
 					rt_free(sofar, "path string");
 				}
+				db_free_db_tree_state( &nts );
 				curtree = TREE_NULL;		/* FAIL */
 				goto out;
 			}
@@ -979,6 +1006,7 @@ struct combined_tree_state	**region_start_statepp;
 			if( *region_start_statepp != (struct combined_tree_state *)0 ) {
 				bu_log("db_recurse() ERROR at start of a region, *region_start_statepp = x%x\n",
 					*region_start_statepp );
+				db_free_db_tree_state( &nts );
 				curtree = TREE_NULL;		/* FAIL */
 				goto out;
 			}
@@ -1016,6 +1044,7 @@ region_end:
 				if(curtree) RT_CK_TREE(curtree);
 			}
 		}
+		db_free_db_tree_state( &nts );
 		if(curtree) RT_CK_TREE(curtree);
 	} else if( dp->d_flags & DIR_SOLID )  {
 		int	id;

@@ -53,6 +53,10 @@ HIDDEN struct region *rt_getregion();
 HIDDEN void	rt_tree_region_assign();
 
 
+/*
+ *  Also used by converters in conv/ directory.
+ *  Don't forget to initialize ts_dbip before use.
+ */
 CONST struct db_tree_state	rt_initial_tree_state = {
 	0,			/* ts_dbip */
 	0,			/* ts_sofar */
@@ -612,11 +616,13 @@ int		ncpus;
 {
 	register struct soltab	*stp;
 	register struct region	*regp;
+	struct db_tree_state	tree_state;
 	int			prev_sol_count;
 	int			i;
 	point_t			region_min, region_max;
 
 	RT_CHECK_RTI(rtip);
+	RT_CK_DBI(rtip->rti_dbip);
 
 	if(!rtip->needprep)  {
 		bu_log("ERROR: rt_gettree() called again after rt_prep!\n");
@@ -627,6 +633,9 @@ int		ncpus;
 
 	prev_sol_count = rtip->nsolids;
 	rt_tree_rtip = rtip;
+
+	tree_state = rt_initial_tree_state;	/* struct copy */
+	tree_state.ts_dbip = rtip->rti_dbip;
 
 	i = db_walk_tree( rtip->rti_dbip, argc, argv, ncpus,
 		&rt_initial_tree_state,
