@@ -140,7 +140,3 @@ BU_EXTERN(void rb_free_node,		(struct rb_node *node));
 BU_EXTERN(void rb_free_package,		(struct rb_package *package));
 
 #endif /* RB_INTERNALS_H */
-
-#define	made_it()	bu_log("Made it to file '%s' line %d\n", \
-					__FILE__, __LINE__);
-
