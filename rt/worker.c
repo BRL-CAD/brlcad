@@ -136,7 +136,7 @@ do_run( a, b )
 		/*
 		 * SERIAL case -- one CPU does all the work.
 		 */
-		worker(0);
+		worker();
 		return;
 	}
 
