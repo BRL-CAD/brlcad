@@ -13,10 +13,6 @@
 #define	bool		char
 #endif
 
-#define	uint		unsigned int
-#define	ushort		unsigned short
-#define	uchar		unsigned char
-
 #define	max(a, b)	((a) > (b) ? (a) : (b))
 #define	min(a, b)	((a) < (b) ? (a) : (b))
 
