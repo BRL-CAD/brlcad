@@ -1,7 +1,7 @@
 .TH pcd-pix 1 " 28 November 1992"
 .IX pcd-pix
 .SH NAME
-pcd-pix - convert a Photo-CD (tm) file into a pix(5) file
+pcd-pix \- convert a Photo-CD (tm) file into a pix(5) file
 .SH SYNOPSIS
 .B pcd-pix
 [options] file.pcd
@@ -19,12 +19,21 @@ flag, the image will be displayed onto the current framebuffer instead.
 (See
 .IR pix\-fb (1)
 for details).
-.P
-Photo-CD disks are recorded in ISO 9660 format.
+.PP
+Photo-CD disks are recorded in ISO 9660 format,
+and can be mounted as part of the normal filesystem on most machines.
 The primary Image files are located in
 photo_cd/images/img####.pcd, where #### is the 4-digit frame number.
-The Overview file is found in photo_cd/overview.pcd .
-.P
+The Overview file is found one level up, in "photo_cd/overview.pcd".
+.PP
+File names may be specified by their full name, or they
+may be specified as a positive integer.
+When given in this shortened form,
+.IR pcd-pix (1)
+will look for the file "img####.pcd" in the current directory.
+Note that Photo-CD files are just data files, and can be copied from
+the CD-ROM onto another filesystem with impunity.
+.PP
 Photo-CD images are recorded in a three-channel luminance and
 chrominance format called YCC,
 similar to the YUV format used in CCIR 601 ("D-1")
@@ -43,11 +52,16 @@ You may need to experiment with values ranging from 0.7 to 1.4,
 depending on your monitor.
 It is believed that the original gamma correction was 2.2 as per
 the NTSC television specification.
-The reduced chrominanace resolution and the early gamma correction
-seem to be a result of Kodak's having originally intended the home
+.PP
+The choice of resolutions,
+the reduced chrominance resolution, and the early gamma correction
+all seem to be a result of Kodak's having originally intended the home
 Photo-CD player and television set combination to be the replacement
-for the 35mm slide projector, as both these choices as less than
-optimal for serious professional applications.
+for the 35mm slide projector.
+These choices are less than
+optimal for serious professional applications,
+but good results can still be obtained
+by being aware of them.
 .SH OPTIONS
 .TP
 .B -b
@@ -77,7 +91,7 @@ two chroma channels are stored in half resolution only and have to be
 interpolated. In the Overskip Mode the chroma channels of the next
 higher resolution are used, instead of interpolating. This gives
 more accurate results because all the lower resolution images are digitally
-derrived from the original 16Base scan.
+derived from the original 16Base scan.
 .TP
 .B -1 | -Base/16 | -128x192
 Extract the Base/16 size picture.
@@ -87,6 +101,7 @@ Extract the Base/4 size picture.
 .TP
 .B -3 | -Base | -512x768
 Extract the Base size picture.
+When no size option is given, this is the default resolution.
 .TP
 .B -4 | -4Base | -1024x1536
 Extract the 4Base size picture.
@@ -112,7 +127,7 @@ This flag causes
 to be run via
 .IR popen (3)
 to immediately display the image on the current framebuffer.
-This option was implemented in leiu of creating a separate
+This option was implemented in lieu of creating a separate
 .IR pcd-fb (1)
 program.
 .TP
@@ -137,7 +152,11 @@ hex-dumps and the famous trial-and-error-method. :-)
 hpcdtoppm(1), 
 brlcad(1), pix-fb(1), bw-fb(1), fbscanplot(1), pix(5), bw(5)
 .SH AUTHOR
-Copyright (c) 1992 by Hadmut Danisch (danisch@ira.uka.de).
+.IR pcd-pix (1)
+is derived from
+.IR hpcdtoppm (1)
+which is
+copyright (c) 1992 by Hadmut Danisch (danisch@ira.uka.de).
 Permission to use and distribute this software and its
 documentation for noncommercial use and without fee is hereby granted,
 provided that the above copyright notice appear in all copies and that
