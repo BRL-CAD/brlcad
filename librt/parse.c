@@ -244,16 +244,6 @@ char				*value;		/* string containing value */
 		case 'f':
 			parse_float(value, sdp->sp_count, (double *)loc);
 			break;
-		case 'C':	/* sdp->sp_count ignored */
-			for (i=0 ; i < 3 && *value ; ++i) {
-				*((unsigned char *)loc++) = atoi( value );
-				while (*value && isdigit(*value) )
-					value++;
-
-				/* skip the separator */
-				if (*value) value++;
-			}
-			break;
 		default:
 			rt_log("rt_struct_lookup(%s): unknown format '%s'\n",
 				name, sdp->sp_fmt );
@@ -501,15 +491,6 @@ char			*base;		/* base address of users structure */
 				}
 			}
 			break;
-		case 'C':	/* sdp->sp_count ignored */
-			{	register unsigned char *ucp =
-					(unsigned char *)loc;
-
-				rt_log( " %s=%u/%u/%u\n",
-					sdp->sp_name,
-					ucp[0], ucp[1], ucp[2] );
-			}
-			break;
 		default:
 			rt_log( " rt_structprint: Unknown format: %s=%s??\n",
 				sdp->sp_name, sdp->sp_fmt );
@@ -712,21 +693,6 @@ char				*base;	/* structure ponter */
 		case 'f':
 			vls_print_float(vls, sdp->sp_name, sdp->sp_count,
 				(double *)loc);
-			break;
-		case 'C':
-			{
-				register unsigned char *RGBp =
-					(unsigned char *)loc;
-
-				rt_vls_extend(vls, 16+strlen(sdp->sp_name) );
-
-				cp = &vls->vls_str[vls->vls_len];
-				sprintf(cp, "%s%s=%d/%d/%d", 
-						(vls->vls_len?" ":""),
-						sdp->sp_name,
-						RGBp[0], RGBp[1], RGBp[2]);
-				vls->vls_len += strlen(cp);
-			}
 			break;
 		default:
 			rt_log( " %s=%s??\n", sdp->sp_name, sdp->sp_fmt );
