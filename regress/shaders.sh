@@ -1,27 +1,16 @@
 #!/bin/sh
 
-if [ X$BRLCAD_ROOT = X ] ; then
-	BIN=/usr/brlcad/bin
-else
-	BIN=$BRLCAD_ROOT/bin
-fi
-
-export BIN
-
-ARCH=`$BIN/machinetype.sh`
-export ARCH
-
-EDITOR=ed
-export EDITOR
+PREFIX=$1
+TOP_SRCDIR=$2
 
 if [ ! -f ebm.bw ] ; then
-	$BIN/gencolor -r205 0 16 32 64 128 | dd of=ebm.bw bs=1024 count=1
+	$PREFIX/bin/gencolor -r205 0 16 32 64 128 | dd of=ebm.bw bs=1024 count=1
 fi
 
 rm -f shaders.rt shaders.g shaders.pix shaders shaders.log shaders.txt shaders.dat eagleCAD-w512-n438.pix eagle.pix
 
 
-$BIN/asc2pix > eagleCAD-w512-n438.pix << EOF
+$PREFIX/bin/asc2pix > eagleCAD-w512-n438.pix << EOF
 FFFFFD
 FEFEFD
 FFFFFD
@@ -224283,7 +224272,7 @@ ln -s eagleCAD-w512-n438.pix eagle.pix
 
 
 
-$BIN/mged -c > mged_shaders.log 2>&1 << EOF
+$PREFIX/bin/mged -c > mged_shaders.log 2>&1 << EOF
 opendb shaders.g y
 
 
@@ -224309,12 +224298,12 @@ r half3.r u half3.s - half.s - half2.s
 mater half3.r "plastic" 80 80 250 0
 g all.g half3.r
 
-in env.s ellg 0 0 1000 0 1 0 0 0 1 1 0 0
+in env.s ell 0 0 1000 0 1 0 0 0 1 1 0 0
 r env.r u env.s
 mater env.r "envmap fakestar" 255 255 255 0
 g all.g env.r
 
-in light1.s ellg -464 339 2213 0 100 0 0 0 100 100 0 0
+in light1.s ell -464 339 2213 0 100 0 0 0 100 100 0 0
 r light1.r u light1.s
 mater light1.r "light invisible=1 angle=180 infinite=0" 255 255 255 0
 g all.g light1.r
@@ -224333,7 +224322,7 @@ foreach p {1 2 3 4 5} {
 
     set n [expr ( \$p - 1 ) * 5 + \$v]
 
-    in ell_\${n}.s ellg \$x \$y 96 0 0 -48 \$radius 0 0 0 \$radius 0
+    in ell_\${n}.s ell \$x \$y 96 0 0 -48 \$radius 0 0 0 \$radius 0
     r  ell_\${n}.r u ell_\${n}.s
 
     g all.g ell_\${n}.r
@@ -224421,7 +224410,7 @@ if [ ! -f shaders ] ; then
 	exit
 fi
 mv shaders shaders.orig
-sed "s,^rt,$BIN/rt -P 1 -B -U 1," < shaders.orig > shaders
+sed "s,^rt,$PREFIX/bin/rt -P 1 -B -U 1," < shaders.orig > shaders
 rm shaders.orig
 chmod 775 shaders
 echo 'rendering shaders...'
@@ -224430,10 +224419,10 @@ echo 'rendering shaders...'
 if [ ! -f shaders.pix ] ; then
 	echo shaders raytrace failed
 else
-	if [ ! -f /vld/regress/brlcad_scripts/ref/shaders.pix ] ; then
-		echo No reference file for shaders.pix
+	if [ ! -f $TOP_SRCDIR/regress/ref/shaders.pix ] ; then
+		echo No reference file for $TOP_SRCDIR/regress/ref/shaders.pix
 	else
-		$BIN/pixdiff shaders.pix /vld/regress/brlcad_scripts/ref/shaders.pix \
+		$PREFIX/bin/pixdiff shaders.pix /vld/regress/brlcad_scripts/ref/shaders.pix \
 		> shaders.pix.diff \
 		2>> shaders.log
 
@@ -224441,3 +224430,4 @@ else
 		tr , '\012' < shaders.log | grep many
 	fi
 fi
+rm -f   ebm.bw ebm.bw shaders.rt shaders.g shaders shaders.log shaders.txt shaders.dat eagleCAD-w512-n438.pix eagle.pix

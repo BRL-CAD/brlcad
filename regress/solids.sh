@@ -1,11 +1,6 @@
 #!/bin/sh
 
-if [ X$BRLCAD_ROOT != X ] ; then
-	BIN=${BRLCAD_ROOT}/bin
-else
-	BIN=/usr/brlcad/bin
-fi
-
+BIN=$1/bin
 export BIN
 
 rm -f dsp.dat ebm.bw solids solids.g solids.log solids.pix
@@ -739,7 +734,7 @@ CD01C2
 390147
 EOF
 
-cat << EOF | $BIN/asc2g - moss.g
+cat > moss.asc << EOF
 I 0 v4
 Gary Moss's "World on a Platter"
 S 16 tor 6 4.916235923767e+00 -3.280223083496e+01 3.171177673340e+01 0.000000000000e+00 5.079999923706e+00 0.000000000000e+00 -1.796051025391e+01 0.000000000000e+00 1.796051025391e+01 -1.796051025391e+01 0.000000000000e+00 -1.796051025391e+01 -1.436841011047e+01 0.000000000000e+00 1.436841011047e+01 -1.436840915680e+01 0.000000000000e+00 -1.436840915680e+01 -2.155261230469e+01 0.000000000000e+00 2.155261230469e+01 -2.155261230469e+01 0.000000000000e+00 -2.155261230469e+01 
@@ -769,7 +764,7 @@ M u ellipse.r 1.000000000000e+00 0.000000000000e+00 0.000000000000e+00 1.4679292
 M u tor.r 1.000000000000e+00 0.000000000000e+00 0.000000000000e+00 0.000000000000e+00 0.000000000000e+00 1.000000000000e+00 0.000000000000e+00 0.000000000000e+00 0.000000000000e+00 0.000000000000e+00 1.000000000000e+00 0.000000000000e+00 0.000000000000e+00 0.000000000000e+00 0.000000000000e+00 1.000000000000e+00 0 
 M u light.r 1.000000000000e+00 0.000000000000e+00 0.000000000000e+00 0.000000000000e+00 0.000000000000e+00 1.000000000000e+00 0.000000000000e+00 0.000000000000e+00 0.000000000000e+00 0.000000000000e+00 1.000000000000e+00 0.000000000000e+00 0.000000000000e+00 0.000000000000e+00 0.000000000000e+00 1.000000000000e+00 0 
 EOF
-
+$BIN/asc2g moss.asc moss.g
 
 # Trim 1025 byte sequence down to exactly 1024.
 $BIN/gencolor -r205 0 16 32 64 128 | dd of=ebm.bw bs=1024 count=1 >/dev/null 2>&1
@@ -817,9 +812,9 @@ in sph.s sph -32 0 32 32
 r sph.r u sph.s
 mater sph.r "plastic re=0.2" 255 255 255 0
 
-in ellg.s ellg -32 0 96 8 0 0 0 16 0 0 0 32
-r ellg.r u ellg.s
-mater ellg.r "plastic {sp .4 di .6}" 255 120 120 0
+in ell.s ell -32 0 96  8 0 0  0 16 0  0 0 32
+r ell.r u ell.s
+mater ell.r "plastic {sp .4 di .6}" 255 120 120 0
 
 #
 #  Tori
@@ -877,14 +872,14 @@ mater rpc.r plastic 128 128 255 0
 #
 # Extruded bit-map
 #
-db put ebm.s ebm file ebm.bw w 32 n 32 d 32 mat {1 0 0 -82  0 1 0 -64   0 0 1 0  0 0 0 0.05}
+db put ebm.s ebm F ebm.bw W 32 N 32 H 32 M {1 0 0 -82  0 1 0 -64   0 0 1 0  0 0 0 0.05}
 r ebm.r u ebm.s
 
 #
 # Displacement map
 #
-#db put dsp.s dsp file dsp.dat sm 1 w 33 n 33 stom {20 0 0 -1687 0 20 0 -2432 0 0 0.003906250 0 0 0 0 1}
-#r dsp.r u dsp.s
+db put dsp.s dsp src f name dsp.dat w 33 n 33 sm 0 cut a stom {20 0 0 -1687 0 20 0 -2432 0 0 0.003906250 0 0 0 0 1}
+r dsp.r u dsp.s
 
 #
 # Particle Solid
@@ -928,10 +923,10 @@ echo 'rendering solids...'
 if [ ! -f solids.pix ] ; then
 	echo raytrace failed
 else
-	if [ ! -f /vld/regress/brlcad_scripts/ref/solids.pix ] ; then
+	if [ ! -f $2/regress/ref/solids.pix ] ; then
 		echo No reference file for solids.pix
 	else
-		$BIN/pixdiff solids.pix /vld/regress/brlcad_scripts/ref/solids.pix \
+		$BIN/pixdiff solids.pix $2/regress/ref/solids.pix \
 		> solids.pix.diff \
 		2>> solids-diff.log
 
@@ -957,11 +952,11 @@ EOF
 if [ ! -f moss.pix ] ; then
 	echo raytrace failed
 else
-	if [ ! -f /vld/regress/brlcad_scripts/ref/moss.pix ] ; then
+	if [ ! -f $2/regress/ref/moss.pix ] ; then
 		echo No reference file for moss.pix
 	else
 		$BIN/pixdiff moss.pix \
-			/vld/regress/brlcad_scripts/ref/moss.pix \
+			$2/regress/ref/moss.pix \
 			> moss.pix.diff \
 			2> moss-diff.log
 
