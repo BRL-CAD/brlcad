@@ -263,6 +263,7 @@ FBIO	*ifp;
 	char	*sp;
 	int	new = 0;
 
+	/* The shared memory section never changes size */
 	errno = 0;
 	pixsize = 1024 * 768 * sizeof(RGBpixel);
 	size = pixsize + sizeof(struct sgi_cmap);
@@ -301,6 +302,7 @@ FBIO	*ifp;
 		/* Take the memory and run */
 	}
 
+success:
 	ifp->if_mem = sp;
 	ifp->if_cmap = sp + pixsize;	/* cmap at end of area */
 
@@ -314,8 +316,8 @@ fail:
 		fb_log("sgi_getmem:  malloc failure\n");
 		return(-1);
 	}
-	ifp->if_mem = sp;
-	return(0);
+	new = 1;
+	goto success;
 }
 
 /*
