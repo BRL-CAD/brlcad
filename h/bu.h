@@ -1346,6 +1346,10 @@ BU_EXTERN(void			bu_vls_vprintf, (struct bu_vls *vls,
 				CONST char *fmt, va_list ap));
 #endif
 BU_EXTERN(void			bu_vls_printf, (struct bu_vls *vls, char *fmt, ... ) );
+BU_EXTERN(void			bu_vls_spaces, (struct bu_vls *vp, int cnt));
+BU_EXTERN(int			bu_vls_print_positions_used, (CONST struct bu_vls *vp));
+BU_EXTERN(void			bu_vls_detab, (struct bu_vls *vp));
+
 #if 0
 BU_EXTERN(void			bu_vls_blkset, (struct bu_vls *vp, int len, int ch) );
 #endif
