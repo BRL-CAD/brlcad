@@ -5,17 +5,22 @@
  *
  *  Author -
  *	Lee A. Butler
- *  
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5066  USA
+ *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *  
+ *  Distribution Notice -
+ *	Re-distribution of this software is restricted, as described in
+ *	your "Statement of Terms and Conditions for the Release of
+ *	The BRL-CAD Package" agreement.
+ *
  *  Copyright Notice -
- *	This software is Copyright (C) 1993 by the United States Army.
- *	All rights reserved.
+ *	This software is Copyright (C) 1994 by the United States Army
+ *	in all countries except the USA.  All rights reserved.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 
 #include "conf.h"
@@ -1808,12 +1813,17 @@ plane_t norm;
 	NMG_CK_HITMISS(myhit);
 
 }
-isect_ray_snurb_face(fu_p, fg_p)
+
+void
+isect_ray_snurb_face(rd, fu_p, fg_p)
+struct ray_data *rd;
 struct faceuse *fu_p;
 struct face_g_snurb *fg_p;
 {
+	rt_bomb("isect_ray_snurb_face()\n");
 }
 
+void
 isect_ray_planar_face(rd, fu_p, fg_p)
 struct ray_data *rd;
 struct faceuse *fu_p;
