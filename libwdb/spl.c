@@ -52,7 +52,7 @@ char	*name;
 int	nsurf;
 double	res;
 {
-	static union record rec;
+	union record rec;
 
 	bzero( (char *)&rec, sizeof(rec) );
 	rec.d.d_id = ID_BSOLID;
@@ -76,7 +76,7 @@ mk_bsurf( filep, bp )
 FILE	*filep;
 struct b_spline *bp;
 {
-	static union record rec;
+	union record rec;
 	dbfloat_t	*kp;		/* knot vector area */
 	dbfloat_t	*mp;		/* mesh area */
 	register dbfloat_t	*dbp;
