@@ -6440,6 +6440,53 @@ wdb_hide_cmd(struct rt_wdb	*wdbp,
 
 		RT_CK_DIR( dp );
 
+		if( dp->d_major_type == DB5_MAJORTYPE_BRLCAD ) {
+			int no_hide=0;
+
+			/* warn the user that this might be a bad idea */
+			if( isatty(fileno(stdin)) && isatty(fileno(stdout))) {
+				char line[80];
+
+				/* classic interactive MGED */
+				while( 1 ) {
+					bu_log( "Hiding BRL-CAD geometry (%s) is generaly a bad idea.\n", dp->d_namep );
+					bu_log( "This may cause unexpected problems with other commands.\n" );
+					bu_log( "Are you sure you want to do this?? (y/n)\n" );
+					(void)fgets( line, sizeof( line ), stdin );
+					if( line[0] == 'y' || line[0] == 'Y' ) break;
+					if( line[0] == 'n' || line[0] == 'N' ) {
+						no_hide = 1;
+						break;
+					}
+				}
+			} else if( Tcl_GetVar2Ex( interp, "tk_version", NULL, TCL_GLOBAL_ONLY ) ) {
+				struct bu_vls vls;
+
+				/* Tk is active, we can pop-up a window */
+				bu_vls_init( &vls );
+				bu_vls_printf( &vls, "Hiding BRL-CAD geometry (%s) is generaly a bad idea.\n", dp->d_namep );
+				bu_vls_strcat( &vls, "This may cause unexpected problems with other commands.\n" );
+				bu_vls_strcat( &vls, "Are you sure you want to do this??" );
+				(void)Tcl_ResetResult( interp );
+				if( Tcl_VarEval( interp, "tk_messageBox -type yesno ",
+						 "-title Warning -icon question -message {",
+						 bu_vls_addr( &vls ), "}",
+						 (char *)NULL ) != TCL_OK ) {
+					bu_log( "Unable to post question!!!\n" );
+				} else {
+					char *result;
+
+					result = Tcl_GetStringResult( interp );
+					if( !strcmp( result, "no" ) ) {
+						no_hide = 1;
+					}
+					(void)Tcl_ResetResult( interp );
+				}
+			}
+			if( no_hide )
+				continue;
+		}
+
 		BU_INIT_EXTERNAL(&ext);
 
 		if( db_get_external( &ext, dp, dbip ) < 0 ) {
