@@ -770,7 +770,7 @@ int have;
 				if( VDOT(swp->sw_hit.hit_normal,tolight) < 0 ) {
 					/* backfacing, opaque */
 					if (rdebug & RDEBUG_LIGHT)
-						bu_log("backfacing, opaque\n");
+						bu_log("normal backfacing, opaque surface: %s\n", lp->lt_name);
 					swp->sw_visible[i] = (char *)0;
 					goto next;
 				}
@@ -794,7 +794,7 @@ int have;
 			if( -VDOT(tolight, lp->lt_aim) < lp->lt_cosangle )  {
 				/* dark (outside of light beam) */
 				if (rdebug & RDEBUG_LIGHT)
-					bu_log("outside beam\n");
+					bu_log("point outside beam, obscured: %s\n", lp->lt_name);
 
 				swp->sw_visible[i] = (char *)0;
 				goto next;
@@ -802,7 +802,7 @@ int have;
 			if( !(lp->lt_shadows) )  {
 				/* "fill light" in beam, don't care about shadows */
 				if (rdebug & RDEBUG_LIGHT)
-					bu_log("fill light, no shadow\n");
+					bu_log("fill light, no shadow, visible: %s\n", lp->lt_name);
 				swp->sw_visible[i] = (char *)lp;
 				VSETALL( intensity, 1 );
 				goto next;
@@ -844,13 +844,13 @@ int have;
 			if( rt_shootray( &sub_ap ) )  {
 				/* light visible */
 				if (rdebug & RDEBUG_LIGHT)
-					bu_log("light visible\n");
+					bu_log("light visible: %s\n", lp->lt_name);
 				swp->sw_visible[i] = (char *)lp;
 				VMOVE( intensity, sub_ap.a_color );
 			} else {
 				/* dark (light obscured) */
 				if (rdebug & RDEBUG_LIGHT)
-					bu_log("light obscured\n");
+					bu_log("light obscured: %s\n", lp->lt_name);
 				swp->sw_visible[i] = (char *)0;
 			}
 next:
