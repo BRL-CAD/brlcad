@@ -1175,6 +1175,7 @@ struct rt_g {
 	int		NMG_debug;	/* debug bits for NMG's see nmg.h */
 	int		rtg_setjmp_valid;/* !0 = rtg_jmpbuf is valid */
 	int		rtg_jmpbuf[64];	/* for RT_SETJMP.  should be jmp_buf */
+	struct rt_list	rtg_mapped_files; /* list of mapped files open */
 };
 extern struct rt_g rt_g;
 
@@ -1309,6 +1310,7 @@ struct rt_vlist  {
 #define RT_VLIST_POLY_MOVE	3	/* move to first poly vertex */
 #define RT_VLIST_POLY_DRAW	4	/* subsequent poly vertex */
 #define RT_VLIST_POLY_END	5	/* last vert (repeats 1st), draw poly */
+#define RT_VLIST_POLY_VERTNORM	6	/* per-vertex normal, for interpoloation */
 
 /* XXX Note that RT_GET_VLIST and RT_FREE_VLIST are non-PARALLEL */
 /*
@@ -1390,6 +1392,24 @@ struct rt_point_labels {
 	char	str[8];
 	point_t	pt;
 };
+
+/*
+ *			R T _ M A P P E D _ F I L E
+ */
+struct rt_mapped_file {
+	struct rt_list	l;
+	char		name[512];	/* Copy of file name */
+	genptr_t	buf;		/* In-memory copy of file (may be mmapped) */
+	long		buflen;		/* # bytes in 'buf' */
+	int		is_mapped;	/* 1=mmap() used, 0=rt_malloc/fread */
+	char		appl[32];	/* Tag for application using 'apbuf' */
+	genptr_t	apbuf;		/* opt: application-specific buffer */
+	long		apbuflen;	/* opt: application-specific buflen */
+	/* XXX Needs date stamp, in case file is modified */
+	int		uses;		/* # ptrs to this struct handed out */
+};
+#define RT_MAPPED_FILE_MAGIC	0x4d617066	/* Mapf */
+#define RT_CK_MAPPED_FILE(_p)	RT_CKMAG(_p, RT_MAPPED_FILE_MAGIC, "rt_mapped_file")
 
 /*
  *			R T _ F U N C T A B
@@ -1834,6 +1854,12 @@ RT_EXTERN(int			rt_between, (double left, double mid,
 
 /* CxDiv, CxSqrt */
 extern void rt_pr_roots();		/* print complex roots */
+
+/* file.c */
+RT_EXTERN(struct rt_mapped_file *rt_open_mapped_file, (CONST char *name,
+				CONST char *appl));
+RT_EXTERN(void			rt_close_mapped_file, (struct rt_mapped_file *mp));
+
 
 /* pr.c */
 RT_EXTERN(void rt_pr_tree_vls, (struct rt_vls *vls, CONST union tree *tp));
