@@ -551,8 +551,10 @@ CONST struct rt_tol	*tol;
 		if( nextfu == fu2->fumate_p )
 			nextfu = RT_LIST_PNEXT(faceuse, nextfu);
 
+#if 0
 		/* First, ensure faceuse orientation parity is harmonious */
 		nmg_fu_harmonize_radial_parity( fu2, s1, tol );
+#endif
 
 		/* If there is a face in the destination shell that
 		 * shares face geometry with this face, then
