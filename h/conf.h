@@ -388,7 +388,13 @@
 #if defined(__bsdi__)
 #	define USE_REGCOMP 1	/* This is the POSIX way */
 #else
+/*
+ * XXX This hack was put in to prevent both USE_REGCOMP and USE_SYSV_RE
+ * being defined at the same time.
+ */
+#if !defined(USE_REGCOMP)
 #	define USE_SYSV_RE 1
+#endif
 #endif
 
 #if !defined(SYSV)
