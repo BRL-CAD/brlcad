@@ -12,16 +12,20 @@
  *	Michael John Muuss
  *  
  *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
+ *	The U. S. Army Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *  
+ *  Distribution Notice -
+ *	Re-distribution of this software is restricted, as described in
+ *	your "Statement of Terms and Conditions for the Release of
+ *	The BRL-CAD Package" agreement.
+ *
  *  Copyright Notice -
- *	This software is Copyright (C) 1985 by the United States Army.
- *	All rights reserved.
+ *	This software is Copyright (C) 1995 by the United States Army
+ *	in all countries except the USA.  All rights reserved.
  */
 #ifndef lint
-static char RCStree[] = "@(#)$Header$ (BRL)";
+static char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 
 #include "conf.h"
@@ -359,6 +363,7 @@ int				id;
 	struct directory	*dp;
 	struct rt_db_internal	intern;
 	register matp_t		mat;
+	int			i;
 
 	RT_CK_DBI(tsp->ts_dbip);
 	RT_CK_FULL_PATH(pathp);
@@ -433,6 +438,27 @@ int				id;
 		stp->st_aradius = -1;
 		stp->st_uses--;
 		return( TREE_NULL );		/* BAD */
+	}
+
+	/*
+	 *  If there is more than just a direct reference to this leaf
+	 *  from it's containing region, copy that below-region path
+	 *  into st_path.  Otherwise, leave st_path's magic number 0.
+	 */
+	i = pathp->fp_len-1;
+	if( i > 0 && !(pathp->fp_names[i-1]->d_flags & DIR_REGION) )  {
+		/* Search backwards for region.  If no region, use whole path */
+		for( --i; i > 0; i-- )  {
+			if( pathp->fp_names[i-1]->d_flags & DIR_REGION ) break;
+		}
+		if( i < 0 )  i = 0;
+		db_full_path_init( &stp->st_path );
+		db_dup_path_tail( &stp->st_path, pathp, i );
+		if(rt_g.debug&DEBUG_TREEWALK)  {
+			char	*sofar = db_path_to_string(&stp->st_path);
+			rt_log("rt_gettree_leaf() st_path=%s\n", sofar );
+			rt_free(sofar, "path string");
+		}
 	}
 
 #if 0
@@ -519,6 +545,10 @@ struct soltab	*stp;
 	stp->st_dp = DIR_NULL;		/* Sanity */
 	rt_free( (char *)stp, "struct soltab" );
 
+	if( stp->st_path.magic )  {
+		RT_CK_FULL_PATH( &stp->st_path );
+		db_free_full_path( &stp->st_path );
+	}
 }
 
 /*
