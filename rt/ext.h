@@ -70,8 +70,9 @@ extern struct resource	resource[];		/* memory resources */
 struct floatpixel {
 	double	ff_dist;		/* range to ff_hitpt[], <-INFINITY for miss */
 	float	ff_hitpt[3];
-	char	ff_color[3];
+	struct region *ff_regp;
 	int	ff_frame;		/* >= 0 means pixel was reprojected */
+	char	ff_color[3];
 };
 extern int		fullfloat_mode;
 extern int		reproject_mode;
