@@ -1213,7 +1213,6 @@ proc do_phong { shade_var id } {
 	grid $shader_params($id,window).fr.emiss_e -row 3 -column 3 -sticky w
 	
 	grid $shader_params($id,window).fr -sticky ew -ipadx 3 -ipady 3
-
 	return $shader_params($id,window).fr
 }
 
@@ -2056,26 +2055,26 @@ proc stack_delete { index shade_var id } {
 	set shader_params($id,stk_$index,shader_name) ""
 }
 
-proc stack_add { shader shade_var id } {
+proc stack_add { shader shade_var id childsite} {
 	global shader_params
 
 	set index $shader_params($id,stack_len)
 	incr shader_params($id,stack_len)
-	frame $shader_params($id,window).fr.stk_$index -relief raised -bd 3
-	set shader_params($id,stk_$index,window) $shader_params($id,window).fr.stk_$index
+	frame $childsite.stk_$index -relief raised -bd 3
+	set shader_params($id,stk_$index,window) $childsite.stk_$index
 
 	if { [is_good_shader $shader] } then {
-		label $shader_params($id,window).fr.stk_$index.lab -text $shader
+		label $childsite.stk_$index.lab -text $shader
 	} else {
-		label $shader_params($id,window).fr.stk_$index.lab -text "Unrecognized Shader"
+		label $childsite.stk_$index.lab -text "Unrecognized Shader"
 	}
-	grid $shader_params($id,window).fr.stk_$index.lab -columnspan 4 -sticky ew
+	grid $childsite.stk_$index.lab -columnspan 4 -sticky ew
 	set shader_params($id,stk_$index,shader_name) $shader
 
-	button $shader_params($id,window).fr.stk_$index.del -text delete -width 8 \
+	button $childsite.stk_$index.del -text delete -width 8 \
 		-command "stack_delete $index $shade_var $id;\
 			do_shader_apply $shade_var $id"
-	hoc_register_data $shader_params($id,window).fr.stk_$index.del "Delete" {
+	hoc_register_data $childsite.stk_$index.del "Delete" {
 		{summary "The 'stack' shader applies a series of shaders to the\n\
 			object being edited. This button will delete one shader\n\
 			from the stack"}
@@ -2138,33 +2137,34 @@ proc stack_add { shader shade_var id } {
 		}
 	}
 
-	grid $shader_params($id,window).fr.stk_$index.del -columnspan 4
-	grid $shader_params($id,window).fr.stk_$index -columnspan 2 -sticky ew
-	grid columnconfigure $shader_params($id,window).fr.stk_$index 0 -minsize 400
+	grid $childsite.stk_$index.del -columnspan 4
+	grid $childsite.stk_$index -columnspan 2 -sticky ew
+	grid columnconfigure $childsite.stk_$index 0 -minsize 400
 }
 
 # do not call this routine without first deleting the index_th window
 proc stack_insert { index shader shade_var id } {
 	global shader_params
 
-	frame $shader_params($id,window).fr.stk_$index -relief raised -bd 3
-	set shader_params($id,stk_$index,window) $shader_params($id,window).fr.stk_$index
+    set childsite [$shader_params($id,window).fr.leesf childsite]
+	frame $childsite.stk_$index -relief raised -bd 3
+	set shader_params($id,stk_$index,window) $childsite.stk_$index
 
 	if { [is_good_shader $shader] } then {
-		label $shader_params($id,window).fr.stk_$index.lab -text $shader
+		label $childsite.stk_$index.lab -text $shader
 	} else {
-		label $shader_params($id,window).fr.stk_$index.lab -text "Unrecognized Shader"
+		label $childsite.stk_$index.lab -text "Unrecognized Shader"
 	}
-	button $shader_params($id,window).fr.stk_$index.del -text delete -width 8 \
+	button $childsite.stk_$index.del -text delete -width 8 \
 		-command "stack_delete $index $shade_var $id;\
 			do_shader_apply $shade_var $id"
-	hoc_register_data $shader_params($id,window).fr.stk_$index.del "Delete" {
+	hoc_register_data $childsite.stk_$index.del "Delete" {
 		{summary "The 'stack' shader applies a series of shaders to the\n\
 			object being edited. This button will delete one shader\n\
 			from the stack"}
 	}
 
-	grid $shader_params($id,window).fr.stk_$index.lab -columnspan 4 -sticky ew
+	grid $childsite.stk_$index.lab -columnspan 4 -sticky ew
 	set shader_params($id,stk_$index,shader_name) $shader
 
 	switch $shader {
@@ -2223,13 +2223,13 @@ proc stack_insert { index shader shade_var id } {
 			set tmp_win [do_unknown $shade_var $id,stk_$index]
 		}
 	}
-	grid $shader_params($id,window).fr.stk_$index.del -columnspan 4
+	grid $childsite.stk_$index.del -columnspan 4
 
 	set index 0
 	for { set i 0 } { $i < $shader_params($id,stack_len) } { incr i } {
 		if { [string compare $shader_params($id,stk_$i,window) "deleted"] == 0 } continue
-		grid $shader_params($id,window).fr.stk_$i -columnspan 2 -sticky ew -row [expr $index + 2]
-		grid columnconfigure $shader_params($id,window).fr.stk_$i 0 -minsize 400
+		grid $childsite.stk_$i -columnspan 2 -sticky ew -row [expr $index + 2]
+		grid columnconfigure $childsite.stk_$i 0 -minsize 400
 		incr index
 	}
 }
@@ -2272,7 +2272,7 @@ proc set_stack_values { shade_str id } {
 		# if we are beyond the current stack length, then we need to add another shader to the stack
 		if { $index >= $shader_params($id,stack_len) } {
 			# add another shader frame
-			stack_add $shader $shader_params($id,shade_var) $id
+			stack_add $shader $shader_params($id,shade_var) $id [$shader_params($id,window).fr.leesf childsite]
 			if { [is_good_shader $shader]} then {
 				set_${shader}_values $sub_str $id,stk_$index
 			} else {
@@ -2327,8 +2327,9 @@ proc do_stack { shade_var id } {
 	upvar #0 $shade_var shade_str
 
 	catch { destroy $shader_params($id,window).fr }
-	frame $shader_params($id,window).fr
+	frame $shader_params($id,window).fr -bd 3 -relief sunken
 
+    set childsite [[scrolledframe $shader_params($id,window).fr.leesf -width 425 -height 250 -hscrollmode dynamic ] childsite]
 	set shader_params($id,shade_var) $shade_var
 
 	menubutton $shader_params($id,window).fr.add\
@@ -2341,41 +2342,46 @@ proc do_stack { shade_var id } {
 
 	menu $shader_params($id,window).fr.add.m -tearoff 0
 	$shader_params($id,window).fr.add.m add command \
-		-label plastic -command "stack_add plastic $shade_var $id; do_shader_apply $shade_var $id"
+		-label plastic -command "stack_add plastic $shade_var $id $childsite; do_shader_apply $shade_var $id"
 	$shader_params($id,window).fr.add.m add command \
-		-label glass -command "stack_add glass $shade_var $id; do_shader_apply $shade_var $id"
+		-label glass -command "stack_add glass $shade_var $id $childsite; do_shader_apply $shade_var $id"
 	$shader_params($id,window).fr.add.m add command \
-		-label mirror -command "stack_add mirror $shade_var $id; do_shader_apply $shade_var $id"
+		-label mirror -command "stack_add mirror $shade_var $id $childsite; do_shader_apply $shade_var $id"
 
 	$shader_params($id,window).fr.add.m add command \
-		-label light -command "stack_add light $shade_var $id; do_shader_apply $shade_var $id"
+		-label light -command "stack_add light $shade_var $id $childsite; do_shader_apply $shade_var $id"
 
 	$shader_params($id,window).fr.add.m add command \
-		-label "bump map" -command "stack_add bump $shade_var $id; do_shader_apply $shade_var $id"
+		-label "bump map" -command "stack_add bump $shade_var $id $childsite; do_shader_apply $shade_var $id"
 	$shader_params($id,window).fr.add.m add command \
-		-label texture -command "stack_add texture $shade_var $id; do_shader_apply $shade_var $id"
+		-label texture -command "stack_add texture $shade_var $id $childsite; do_shader_apply $shade_var $id"
 	$shader_params($id,window).fr.add.m add command \
-		-label bwtexture -command "stack_add bwtexture $shade_var $id; do_shader_apply $shade_var $id"
+		-label bwtexture -command "stack_add bwtexture $shade_var $id $childsite; do_shader_apply $shade_var $id"
 	$shader_params($id,window).fr.add.m add command \
-		-label fakestar -command "stack_add fakestar $shade_var $id; do_shader_apply $shade_var $id"
+		-label fakestar -command "stack_add fakestar $shade_var $id $childsite; do_shader_apply $shade_var $id"
 	$shader_params($id,window).fr.add.m add command \
-		-label cloud -command "stack_add cloud $shade_var $id; do_shader_apply $shade_var $id"
+		-label cloud -command "stack_add cloud $shade_var $id $childsite; do_shader_apply $shade_var $id"
 	$shader_params($id,window).fr.add.m add command \
-		-label checker -command "stack_add checker $shade_var $id; do_shader_apply $shade_var $id"
+		-label checker -command "stack_add checker $shade_var $id $childsite; do_shader_apply $shade_var $id"
 	$shader_params($id,window).fr.add.m add command \
-		-label camouflage -command "stack_add camo $shade_var $id; do_shader_apply $shade_var $id"
+		-label camouflage -command "stack_add camo $shade_var $id $childsite; do_shader_apply $shade_var $id"
 	$shader_params($id,window).fr.add.m add command \
-		-label projection -command "stack_add prj $shade_var $id; do_shader_apply $shade_var $id"
+		-label projection -command "stack_add prj $shade_var $id $childsite; do_shader_apply $shade_var $id"
 	$shader_params($id,window).fr.add.m add command \
-		-label air -command "stack_add air $shade_var $id; do_shader_apply $shade_var $id"
+		-label air -command "stack_add air $shade_var $id $childsite; do_shader_apply $shade_var $id"
 	$shader_params($id,window).fr.add.m add command \
-		-label testmap -command "stack_add testmap $shade_var $id; do_shader_apply $shade_var $id"
+		-label testmap -command "stack_add testmap $shade_var $id $childsite; do_shader_apply $shade_var $id"
 	$shader_params($id,window).fr.add.m add command \
-		-label Unknown -command "stack_add unknown $shade_var $id; do_shader_apply $shade_var $id"
+		-label Unknown -command "stack_add unknown $shade_var $id $childsite; do_shader_apply $shade_var $id"
 
-	grid $shader_params($id,window).fr.add -columnspan 2
+    grid $shader_params($id,window).fr.add -columnspan 2 -row 0
+    grid $shader_params($id,window).fr.leesf -sticky ew -row 1
+    grid columnconfigure $shader_params($id,window).fr 0 -weight 1
+    grid rowconfigure $shader_params($id,window).fr 1 -weight 1
 
-	grid $shader_params($id,window).fr -sticky ew -ipadx 3 -ipady 3
+    grid rowconfigure $shader_params($id,window) 1 -weight 1
+    grid columnconfigure $shader_params($id,window) 0 -weight 1
+    grid $shader_params($id,window).fr -sticky ewns
 
 	set_stack_values $shade_str $id
 
