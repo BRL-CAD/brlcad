@@ -442,7 +442,7 @@ int			tip;
 	vect_t		delta_vec;	/* offset vector from vertex */
 	struct vertex_g	*this_vg, *mate_vg, *prev_vg;
 
-	bzero(delta_vec, sizeof(vect_t)),
+	bzero( (char *)delta_vec, sizeof(vect_t)),
 	prev_eu = RT_LIST_PLAST_CIRC( edgeuse, eu ); 
 	this_eu = eu;
 
@@ -2037,7 +2037,7 @@ CONST char	*a_string;
 		broken_tab = (long *)rt_calloc( m->maxindex+1, sizeof(long),
 			"nmg_vlblock_s tab[]");
 	} else if (all_new) {
-		bzero(broken_tab,  (m->maxindex+1) * sizeof(long));
+		bzero( (char *)broken_tab,  (m->maxindex+1) * sizeof(long));
 	}
 
 

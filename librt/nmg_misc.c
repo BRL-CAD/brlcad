@@ -1696,13 +1696,13 @@ long *p;
 				sizeof(p)*(b->blen += d.t->blen),
 				"pointer table (CAT)");
 		}
-		bcopy(d.t->buffer, &b->buffer[b->end], d.t->end*sizeof(p));
+		bcopy( (char *)d.t->buffer, (char *)&b->buffer[b->end], d.t->end*sizeof(p));
 		return(0);
 	} else if (func == TBL_FREE) {
 		NMG_CK_PTBL(b);
 		bzero((char *)b->buffer, b->blen * sizeof(p));
 		rt_free((char *)b->buffer, "pointer table");
-		bzero(b, sizeof(struct nmg_ptbl));
+		bzero((char *)b, sizeof(struct nmg_ptbl));
 		if (rt_g.NMG_debug & DEBUG_INS)
 			rt_log("nmg_tbl(%8x) TBL_FREE\n", b);
 		return (0);
