@@ -7,6 +7,12 @@
  *  Operation is one-pass, top to bottom, so vertical motion is
  *  limited to NLINES scanlines.
  *
+ *  Fonts are operating at 200 dpi, giving this correspondence between
+ *  screen pixel widths and troff line lengths:
+ *	 512	2.56i
+ *	1024	5.12i	(4.7i)
+ *	1280	6.4i
+ *
  *  Authors -
  *	Ronald B. Natalie
  *	Michael John Muuss
@@ -95,7 +101,7 @@ int	new_pt_size = 10;		/* new point size */
 int	last_ssize = 02;
 int	xpos, ypos;
 int	esc, lead, back, verd, mcase, railmag;
-double	row, col;
+double	row, col;		/* position in phototypesetter units */
 char	*fontname[MAXF];
 char	fnbuf[120];
 
@@ -440,6 +446,10 @@ main(argc, argv)
 
 	if( optind >= argc )  {
 		/* Process one TROFF file from stdin */
+		if( overlay )  {
+			fprintf(stderr,"cat-fb: -O ignored, stdin used for C/A/T code\n");
+			overlay = 0;
+		}
 		ofile(stdin);
 	} else {
 		for( ; optind < argc; optind++ )  {
@@ -512,8 +522,8 @@ register FILE	*fp;
 			if (initialized)
 				goto out;
 			initialized = 1;
-/**			row = 25;**/
-			row = 0;
+/**			row = 25;	/** original value **/
+			row = -108;	/* ignore 1/4 C/A/T inch header */
 			xpos = CONVERT(row);
 			for (c = 0; c < BUFFER_SIZE; c++)
 				buffer[c] = 0;
@@ -592,6 +602,7 @@ register FILE	*fp;
 					c = CONVERT(row);
 				}
 				xpos = c;
+				if(debug)fprintf(stderr,"v=%d (%f)\n", xpos, row);
 				continue;
 			}
 			if ((c & 0360) == 0120)	/* size change */ {
@@ -692,6 +703,7 @@ readinfont()
 	fontdes[cfont].fnum = fnum;
 	fontdes[cfont].psize = fontdes[cfont].psize = size;
 	fontdes[cfont].vfp = vfp;
+	if(debug) fprintf(stderr,"slot %d = %s\n", cfont, cbuf );
 
 	fontwanted = 0;
 	new_font_num = new_pt_size = -1;
@@ -762,6 +774,9 @@ outc(code)
 
 	/* xpos is vertical (typ. called Y), ypos is horizontal (typ. X)
 	 * like a strip-chart recorder */
+	if(debug)fprintf(stderr,"%c h=%d v=%d  l=%d r=%d  u=%d d=%d  w=%d\n",
+		c, ypos, xpos, vdp->vd_left, vdp->vd_right,
+		vdp->vd_up, vdp->vd_down, vdp->vd_width);
 	addr = &fontdes[cfont].vfp->vf_bits[vdp->vd_addr];
 	llen = (vdp->vd_left + vdp->vd_right+7)/8;
 	nlines = vdp->vd_up + vdp->vd_down;
@@ -828,14 +843,15 @@ writelines(nlines, buf)
 {
 	register RGBpixel *pp;
 	register int	bit;
+	register int	bufval;
 	int	lpos;
 	int	l;
 
 	for(l = 0; l < nlines; l++)  {
 		if(cur_fb_line < 0 )  {
-			fprintf(stderr, "cat-fb:  Ran off bottom\n");
+			/* Ran off bottom of screen */
 			fb_close(fbp);
-			exit(1);
+			exit(0);
 		}
 		if( clear )
 			bzero( (char *)scanline, scr_width*3 );
@@ -848,8 +864,13 @@ writelines(nlines, buf)
 			fb_read( fbp, 0, cur_fb_line, scanline, scr_width );
 		pp = scanline;
 		for( lpos = 0; lpos < BYTES_PER_LINE; lpos++)  {
+			if( (bufval = *buf) == 0 )  {
+				pp += 8;
+				buf++;
+				continue;
+			}
 			for(bit = 0x80; bit; bit >>= 1)  {
-				if(*buf & bit)  {
+				if(bufval & bit)  {
 					COPYRGB( *pp, writing_color );
 				}
 				pp++;
