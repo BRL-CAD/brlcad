@@ -13,7 +13,7 @@
  *	mat_print( &title, &m )		Print matrix (with title) on stdout.
  *	mat_trn( &o, &i )		Transpose matrix i into matrix o
  *	mat_ae( &o, azimuth, elev)	Make rot matrix from azimuth+elevation
- *	ae_vec( &az, &el, v )		Find az/elev from dir vector
+ *	mat_ae_vec( &az, &el, v )		Find az/elev from dir vector
  *	mat_angles( &o, alpha, beta, gama )	Make rot matrix from angles
  *	eigen2x2()			Eigen values and vectors
  *	mat_lookat			Make rot mat:  xform from D to -Z
@@ -292,15 +292,16 @@ register mat_t	output;
 }
 
 /*
- *			V T O H _ M O V E
+ *			M A T _ V T O H _ M O V E
  *
  * Takes a pointer to a [x,y,z] vector, and a pointer
  * to space for a homogeneous vector [x,y,z,w],
  * and builds [x,y,z,1].
  */
 void
-vtoh_move( h, v )
-register vect_t h, v;
+mat_vtoh_move( h, v )
+register vect_t		h;
+register CONST vect_t	v;
 {
 	h[X] = v[X];
 	h[Y] = v[Y];
@@ -309,17 +310,18 @@ register vect_t h, v;
 }
 
 /*
- *			H T O V _ M O V E
+ *			M A T _ H T O V _ M O V E
  *
  * Takes a pointer to [x,y,z,w], and converts it to
  * an ordinary vector [x/w, y/w, z/w].
  * Optimization for the case of w==1 is performed.
  */
 void
-htov_move( v, h )
-register vect_t v, h;
+mat_htov_move( v, h )
+register vect_t		v;
+register CONST vect_t	h;
 {
-	FAST fastf_t inv;
+	register fastf_t inv;
 
 	if( h[3] == 1.0 )  {
 		v[X] = h[X];
@@ -327,7 +329,7 @@ register vect_t v, h;
 		v[Z] = h[Z];
 	}  else  {
 		if( h[W] == 0.0 )  {
-			rt_log("htov_move: divide by %f!\n", h[W]);
+			rt_log("mat_htov_move: divide by %f!\n", h[W]);
 			return;
 		}
 		inv = 1.0 / h[W];
@@ -434,13 +436,13 @@ double		elev;
 }
 
 /*
- *			A E _ V E C
+ *			M A T _ A E _ V E C
  *
  *  Find the azimuth and elevation angles that correspond to the
  *  direction (not including twist) given by a direction vector.
  */
 void
-ae_vec( azp, elp, v )
+mat_ae_vec( azp, elp, v )
 fastf_t	*azp;
 fastf_t	*elp;
 vect_t	v;
@@ -511,6 +513,8 @@ double alpha, beta, ggamma;
 }
 
 /*
+ *			M A T _ E I G E N 2 X 2
+ *
  *  Find the eigenvalues and eigenvectors of a
  *  symmetric 2x2 matrix.
  *	( a b )
@@ -520,7 +524,7 @@ double alpha, beta, ggamma;
  *  returned in val1, with its eigenvector in vec1.
  */
 void
-eigen2x2( val1, val2, vec1, vec2, a, b, c )
+mat_eigen2x2( val1, val2, vec1, vec2, a, b, c )
 fastf_t	*val1, *val2;
 vect_t	vec1, vec2;
 fastf_t	a, b, c;
@@ -778,16 +782,16 @@ int	yflip;
 }
 
 /*
- *			V E C _ O R T H O
+ *			M A T _ V E C _ O R T H O
  *
  *  Given a vector, create another vector which is perpendicular to it,
  *  and with unit length.  This algorithm taken from Gift's arvec.f;
  *  a faster algorithm may be possible.
  */
 void
-vec_ortho( out, in )
+mat_vec_ortho( out, in )
 register vect_t	out;
-register vect_t	in;
+register CONST vect_t	in;
 {
 	register int j, k;
 	FAST fastf_t	f;
@@ -796,7 +800,7 @@ register vect_t	in;
 	if( NEAR_ZERO(in[X], 0.0001) && NEAR_ZERO(in[Y], 0.0001) &&
 	    NEAR_ZERO(in[Z], 0.0001) )  {
 		VSETALL( out, 0 );
-		VPRINT("vec_ortho: zero-length input", in);
+		VPRINT("mat_vec_ortho: zero-length input", in);
 		return;
 	}
 
@@ -818,7 +822,7 @@ register vect_t	in;
 	}
 	f = hypot( in[j], in[k] );
 	if( NEAR_ZERO( f, SMALL ) ) {
-		VPRINT("vec_ortho: zero hypot on", in);
+		VPRINT("mat_vec_ortho: zero hypot on", in);
 		VSETALL( out, 0 );
 		return;
 	}
@@ -829,14 +833,15 @@ register vect_t	in;
 }
 
 /*
- *			V E C _ P E R P
+ *			M A T _ V E C _ P E R P
  *
  *  Given a vector, create another vector which is perpendicular to it,
  *  but may not have unit length.
  */
 void
-vec_perp( new, old )
-vect_t new, old;
+mat_vec_perp( new, old )
+vect_t		new;
+CONST vect_t	old;
 {
 	register int i;
 	LOCAL vect_t another;	/* Another vector, different */
