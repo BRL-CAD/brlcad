@@ -35,7 +35,7 @@ proc color_scheme_init {} {
     set mged_color_scheme(blues) { "0 0 70" "0 0 50" "175 175 255" "175 175 255"\
 	    "255 255 255" "255 255 255" "255 0 0" "255 0 0" "100 255 100" "100 255 100"\
 	    "150 150 255" "150 150 255" "255 255 255" "255 255 255" "255 255 255" "255 255 255"\
-	    "255 255 100" "255 255 100" "255 50 50" "255 50 50" "255 255 255" "255 255 255" }
+	    "255 255 150" "255 255 150" "255 50 50" "255 50 50" "255 255 255" "255 255 255" }
     set mged_color_scheme(marine) { "0 70 70" "0 50 50" "0 200 200" "0 200 200"\
 	    "255 255 255" "255 255 255" "255 0 0" "255 0 0" "100 255 100" "100 255 100"\
 	    "150 150 255" "150 150 255" "255 255 255" "255 255 255" "255 255 255" "255 255 255"\
@@ -43,7 +43,7 @@ proc color_scheme_init {} {
     set mged_color_scheme(iceBlue) { "255 255 255" "0 0 70" "0 0 200" "175 175 255"\
 	    "0 0 0" "255 255 255" "255 0 0" "255 0 0" "100 255 100" "100 255 100"\
 	    "100 100 255" "150 150 255" "0 0 0" "255 255 255" "0 0 0" "255 255 255"\
-	    "100 100 255" "255 255 100" "255 0 0" "255 0 0" "0 0 0" "255 255 255" }
+	    "100 100 255" "255 255 150" "255 0 0" "255 0 0" "0 0 0" "255 255 255" }
 #    set mged_color_scheme() { "" "" "" ""\
 #	    "" "" "" "" "" ""\
 #	    "" "" "" "" "" ""\
@@ -70,21 +70,21 @@ proc color_scheme_init {} {
 	}
 
     set mged_color_scheme(secondary_map) {\
-	    { fp_menu_line "Menu Lines" } \
-	    { fp_menu_title "Menu Title" } \
-	    { fp_menu_text2 "Menu Text" } \
-	    { fp_menu_text1 "Menu Text (Highlight)" } \
-	    { fp_state_text1 "Menu State Text 1" } \
-	    { fp_state_text2 "Menu State Text 2" } \
-	    { fp_menu_arrow "Menu Arrow" } \
-	    { fp_slider_line "Slider Lines" } \
-	    { fp_slider_text1 "Slider Text 1" } \
-	    { fp_slider_text2 "Slider Text 2" } \
-	    { fp_status_text1 "Status Text 1" } \
-	    { fp_status_text2 "Status Text 2" } \
-	    { fp_edit_info "Edit Info" } \
-	    { fp_center_dot "Center Dot" } \
-	    { fp_other_line "Other Lines" } \
+	    { menu_line "Menu Lines" } \
+	    { menu_title "Menu Title" } \
+	    { menu_text2 "Menu Text" } \
+	    { menu_text1 "Menu Text (Highlight)" } \
+	    { state_text1 "Menu State Text 1" } \
+	    { state_text2 "Menu State Text 2" } \
+	    { menu_arrow "Menu Arrow" } \
+	    { slider_line "Slider Lines" } \
+	    { slider_text1 "Slider Text 1" } \
+	    { slider_text2 "Slider Text 2" } \
+	    { status_text1 "Status Text 1" } \
+	    { status_text2 "Status Text 2" } \
+	    { edit_info "Edit Info" } \
+	    { center_dot "Center Dot" } \
+	    { other_line "Other Lines" } \
 	}
 }
 
@@ -222,12 +222,12 @@ proc color_scheme_build_entries { id top container map row entry_width } {
 	set ce_a [color_entry_build $top $key_a $colorvar_a\
 		"color_entry_chooser $id $top $key_a \"Active $name Color\" \
 		mged_color_scheme $id,$key_a"\
-		$entry_width [cs_set $key_a]]
+		$entry_width [rset cs $key_a]]
 
 	set ce_ia [color_entry_build $top $key_ia $colorvar_ia\
 		"color_entry_chooser $id $top $key_ia \"Inactive $name Color\" \
 		mged_color_scheme $id,$key_ia"\
-		$entry_width [cs_set $key_ia]]
+		$entry_width [rset cs $key_ia]]
 
 	grid $top.$key\L -row $ce_row -column 0 -sticky "e" -in $container -padx 2 -pady 2
 	grid $ce_a -row $ce_row -column 1 -sticky "nsew" -in $container -padx 2 -pady 2
@@ -280,7 +280,7 @@ proc color_scheme_apply { id } {
 	set color_a $mged_color_scheme($id,$key_a)
 	set color_ia $mged_color_scheme($id,$key_ia)
 
-	mged_apply_local $id "cs_set $key_a $color_a; cs_set $key_ia $color_ia"
+	mged_apply_local $id "rset cs $key_a $color_a; rset cs $key_ia $color_ia"
     }
 
     foreach key_name_pair $mged_color_scheme(secondary_map) {
@@ -290,11 +290,11 @@ proc color_scheme_apply { id } {
 	set color_a $mged_color_scheme($id,$key_a)
 	set color_ia $mged_color_scheme($id,$key_ia)
 
-	mged_apply_local $id "cs_set $key_a $color_a; cs_set $key_ia $color_ia"
+	mged_apply_local $id "rset cs $key_a $color_a; rset cs $key_ia $color_ia"
     }
 
-    # force display manager windows to update
-    mged_apply_local $id "cs_set active \[cs_set active\]"
+    # force display manager windows to update their respective color schemes
+    mged_apply_local $id "rset cs mode \[rset cs mode\]"
 }
 
 proc color_scheme_reset { id top } {
@@ -307,8 +307,8 @@ proc color_scheme_reset { id top } {
 	set key [lindex $key_name_pair 0]
 	set key_a $key\_a
 	set key_ia $key\_ia
-	set color_a [cs_set $key_a]
-	set color_ia [cs_set $key_ia]
+	set color_a [rset cs $key_a]
+	set color_ia [rset cs $key_ia]
 
 	set mged_color_scheme($id,$key_a) $color_a
 	set mged_color_scheme($id,$key_ia) $color_ia
@@ -320,8 +320,8 @@ proc color_scheme_reset { id top } {
 	set key [lindex $key_name_pair 0]
 	set key_a $key\_a
 	set key_ia $key\_ia
-	set color_a [cs_set $key_a]
-	set color_ia [cs_set $key_ia]
+	set color_a [rset cs $key_a]
+	set color_ia [rset cs $key_ia]
 
 	set mged_color_scheme($id,$key_a) $color_a
 	set mged_color_scheme($id,$key_ia) $color_ia
@@ -411,36 +411,36 @@ proc color_scheme_load_canned { id top\
     set mged_color_scheme($id,grid_ia) $line_hl_ia
     set mged_color_scheme($id,predictor_a) $line_hl_a
     set mged_color_scheme($id,predictor_ia) $line_hl_ia
-    set mged_color_scheme($id,fp_menu_line_a) $line_a
-    set mged_color_scheme($id,fp_menu_line_ia) $line_ia
-    set mged_color_scheme($id,fp_slider_line_a) $line_a
-    set mged_color_scheme($id,fp_slider_line_ia) $line_ia
-    set mged_color_scheme($id,fp_other_line_a) $line_a
-    set mged_color_scheme($id,fp_other_line_ia) $line_ia
-    set mged_color_scheme($id,fp_status_text1_a) $text3_a
-    set mged_color_scheme($id,fp_status_text1_ia) $text3_ia
-    set mged_color_scheme($id,fp_status_text2_a) $text1_a
-    set mged_color_scheme($id,fp_status_text2_ia) $text1_ia
-    set mged_color_scheme($id,fp_slider_text1_a) $text3_a
-    set mged_color_scheme($id,fp_slider_text1_ia) $text3_ia
-    set mged_color_scheme($id,fp_slider_text2_a) $text2_a
-    set mged_color_scheme($id,fp_slider_text2_ia) $text2_ia
-    set mged_color_scheme($id,fp_menu_text1_a) $text3_a
-    set mged_color_scheme($id,fp_menu_text1_ia) $text3_ia
-    set mged_color_scheme($id,fp_menu_text2_a) $text1_a
-    set mged_color_scheme($id,fp_menu_text2_ia) $text1_ia
-    set mged_color_scheme($id,fp_menu_title_a) $text2_a
-    set mged_color_scheme($id,fp_menu_title_ia) $text2_ia
-    set mged_color_scheme($id,fp_menu_arrow_a) $text3_a
-    set mged_color_scheme($id,fp_menu_arrow_ia) $text3_ia
-    set mged_color_scheme($id,fp_state_text1_a) $text3_a
-    set mged_color_scheme($id,fp_state_text1_ia) $text3_ia
-    set mged_color_scheme($id,fp_state_text2_a) $text1_a
-    set mged_color_scheme($id,fp_state_text2_ia) $text1_ia
-    set mged_color_scheme($id,fp_edit_info_a) $text1_a
-    set mged_color_scheme($id,fp_edit_info_ia) $text1_ia
-    set mged_color_scheme($id,fp_center_dot_a) $text1_a
-    set mged_color_scheme($id,fp_center_dot_ia) $text1_ia
+    set mged_color_scheme($id,menu_line_a) $line_a
+    set mged_color_scheme($id,menu_line_ia) $line_ia
+    set mged_color_scheme($id,slider_line_a) $line_a
+    set mged_color_scheme($id,slider_line_ia) $line_ia
+    set mged_color_scheme($id,other_line_a) $line_a
+    set mged_color_scheme($id,other_line_ia) $line_ia
+    set mged_color_scheme($id,status_text1_a) $text3_a
+    set mged_color_scheme($id,status_text1_ia) $text3_ia
+    set mged_color_scheme($id,status_text2_a) $text1_a
+    set mged_color_scheme($id,status_text2_ia) $text1_ia
+    set mged_color_scheme($id,slider_text1_a) $text3_a
+    set mged_color_scheme($id,slider_text1_ia) $text3_ia
+    set mged_color_scheme($id,slider_text2_a) $text2_a
+    set mged_color_scheme($id,slider_text2_ia) $text2_ia
+    set mged_color_scheme($id,menu_text1_a) $text3_a
+    set mged_color_scheme($id,menu_text1_ia) $text3_ia
+    set mged_color_scheme($id,menu_text2_a) $text1_a
+    set mged_color_scheme($id,menu_text2_ia) $text1_ia
+    set mged_color_scheme($id,menu_title_a) $text2_a
+    set mged_color_scheme($id,menu_title_ia) $text2_ia
+    set mged_color_scheme($id,menu_arrow_a) $text3_a
+    set mged_color_scheme($id,menu_arrow_ia) $text3_ia
+    set mged_color_scheme($id,state_text1_a) $text3_a
+    set mged_color_scheme($id,state_text1_ia) $text3_ia
+    set mged_color_scheme($id,state_text2_a) $text1_a
+    set mged_color_scheme($id,state_text2_ia) $text1_ia
+    set mged_color_scheme($id,edit_info_a) $text1_a
+    set mged_color_scheme($id,edit_info_ia) $text1_ia
+    set mged_color_scheme($id,center_dot_a) $text1_a
+    set mged_color_scheme($id,center_dot_ia) $text1_ia
 
     foreach key_name_pair $mged_color_scheme(primary_map) {
 	set key [lindex $key_name_pair 0]
