@@ -42,6 +42,374 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "bn.h"
 
 /*
+ *			B U _ B A D M A G I C _ T C L
+ */
+
+void
+bu_badmagic_tcl( interp, ptr, magic, str, file, line )
+Tcl_Interp	*interp;
+CONST long	*ptr;
+long		magic;
+CONST char	*str;
+CONST char	*file;
+int		line;
+{
+	char	buf[256];
+
+	if( !(ptr) )  { 
+		sprintf(buf, "ERROR: NULL %s pointer, file %s, line %d\n", 
+			str, file, line ); 
+		Tcl_AppendResult(interp, buf, NULL);
+		return;
+	}
+	if( *((long *)(ptr)) != (magic) )  { 
+		sprintf(buf, "ERROR: bad pointer x%x: s/b %s(x%lx), was %s(x%lx), file %s, line %d\n", 
+			ptr,
+			str, magic,
+			bu_identify_magic( *(ptr) ), *(ptr),
+			file, line ); 
+		Tcl_AppendResult(interp, buf, NULL);
+		return;
+	}
+	Tcl_AppendResult(interp, "bu_badmagic_tcl() mysterious error condition, ", str, " pointer, ", file, "\n", NULL);
+}
+
+
+
+/*
+ *			B U _ S T R U C T P A R S E _ A R G V
+ *
+ * Support routine for db adjust and db put.  Much like bu_structparse routine,
+ * but takes the arguments as lists, a more Tcl-friendly method.
+ * Also knows about the Tcl result string, so it can make more informative
+ * error messages.
+ * XXX move to libbu/bu_tcl.c
+ */
+
+int
+bu_structparse_argv( interp, argc, argv, desc, base )
+Tcl_Interp			*interp;
+int				 argc;
+char			       **argv;
+CONST struct bu_structparse	*desc;		/* structure description */
+char				*base;		/* base addr of users struct */
+{
+	register char				*cp, *loc;
+	register CONST struct bu_structparse	*sdp;
+	register int				 i, j;
+	struct bu_vls				 str;
+
+	if( desc == (struct bu_structparse *)NULL ) {
+		bu_log( "bu_structparse_argv: NULL desc pointer\n" );
+		Tcl_AppendResult( interp, "NULL desc pointer", (char *)NULL );
+		return TCL_ERROR;
+	}
+
+	/* Run through each of the attributes and their arguments. */
+
+	bu_vls_init( &str );
+	while( argc > 0 ) {
+		/* Find the attribute which matches this argument. */
+		for( sdp = desc; sdp->sp_name != NULL; sdp++ ) {
+			if( strcmp(sdp->sp_name, *argv) != 0 )
+				continue;
+
+			/* if we get this far, we've got a name match
+			 * with a name in the structure description
+			 */
+
+#if CRAY && !__STDC__
+			loc = (char *)(base+((int)sdp->sp_offset*sizeof(int)));
+#else
+			loc = (char *)(base+((int)sdp->sp_offset));
+#endif
+			if( sdp->sp_fmt[0] != '%' ) {
+				bu_log( "bu_structparse_argv: unknown format\n" );
+				bu_vls_free( &str );
+				Tcl_AppendResult( interp, "unknown format",
+						  (char *)NULL );
+				return TCL_ERROR;
+			}
+
+			--argc;
+			++argv;
+
+			switch( sdp->sp_fmt[1] )  {
+			case 'c':
+			case 's':
+				/* copy the string, converting escaped
+				 * double quotes to just double quotes
+				 */
+				if( argc < 1 ) {
+					bu_vls_trunc( &str, 0 );
+					bu_vls_printf( &str,
+			 "not enough values for \"%s\" argument: should be %d",
+						       sdp->sp_name,
+						       sdp->sp_count );
+					Tcl_AppendResult( interp,
+							  bu_vls_addr(&str),
+							  (char *)NULL );
+					bu_vls_free( &str );
+					return TCL_ERROR;
+				}
+				for( i = j = 0;
+				     j < sdp->sp_count && argv[0][i] != '\0';
+				     loc[j++] = argv[0][i++] )
+					;
+				if( sdp->sp_count > 1 ) {
+					loc[sdp->sp_count-1] = '\0';
+					Tcl_AppendResult( interp,
+							  sdp->sp_name, " ",
+							  loc, " ",
+							  (char *)NULL );
+				} else {
+					bu_vls_trunc( &str, 0 );
+					bu_vls_printf( &str, "%s %c ",
+						       sdp->sp_name, *loc );
+					Tcl_AppendResult( interp,
+							  bu_vls_addr(&str),
+							  (char *)NULL );
+				}
+				--argc;
+				++argv;
+				break;
+			case 'i':
+				bu_log(
+			 "Error: %%i not implemented. Contact developers.\n" );
+				Tcl_AppendResult( interp,
+						  "%%i not implemented yet",
+						  (char *)NULL );
+				bu_vls_free( &str );
+				return TCL_ERROR;
+			case 'd': {
+				register int *ip = (int *)loc;
+				register int tmpi;
+				register char CONST *cp;
+
+				if( argc < 1 ) {
+					bu_vls_trunc( &str, 0 );
+					bu_vls_printf( &str,
+      "not enough values for \"%s\" argument: should have %d, only %d given",
+						       sdp->sp_name,
+						       sdp->sp_count, i );
+					Tcl_AppendResult( interp,
+							  bu_vls_addr(&str),
+							  (char *)NULL );
+					bu_vls_free( &str );
+					return TCL_ERROR;
+				}
+
+				Tcl_AppendResult( interp, sdp->sp_name, " ",
+						  (char *)NULL );
+
+				/* Special case:  '=!' toggles a boolean */
+				if( argv[0][0] == '!' ) {
+					*ip = *ip ? 0 : 1;
+					bu_vls_trunc( &str, 0 );
+					bu_vls_printf( &str, "%d ", *ip );
+					Tcl_AppendResult( interp,
+							  bu_vls_addr(&str),
+							  (char *)NULL );
+					++argv;
+					--argc;
+					break;
+				}
+				/* Normal case: an integer */
+				cp = *argv;
+				for( i = 0; i < sdp->sp_count; ++i ) {
+					if( *cp == '\0' ) {
+						bu_vls_trunc( &str, 0 );
+						bu_vls_printf( &str,
+		      "not enough values for \"%s\" argument: should have %d",
+							       sdp->sp_name,
+							       sdp->sp_count );
+						Tcl_AppendResult( interp,
+							    bu_vls_addr(&str),
+							    (char *)NULL );
+						bu_vls_free( &str );
+						return TCL_ERROR;
+					}
+
+					while( (*cp == ' ' || *cp == '\n' ||
+						*cp == '\t') && *cp )
+						++cp;
+			
+					tmpi = atoi( cp );
+					if( *cp && (*cp == '+' || *cp == '-') )
+						cp++;
+					while( *cp && isdigit(*cp) )
+						cp++; 
+					/* make sure we actually had an
+					 * integer out there
+					 */
+
+					if( cp == *argv ||
+					    (cp == *argv+1 &&
+					     (argv[0][0] == '+' ||
+					      argv[0][0] == '-')) ) {
+						bu_vls_trunc( &str, 0 );
+						bu_vls_printf( &str, 
+			       "value \"%s\" to argument %s isn't an integer",
+							       argv,
+							       sdp->sp_name );
+						Tcl_AppendResult( interp,
+							    bu_vls_addr(&str),
+							    (char *)NULL );
+						bu_vls_free( &str );
+						return TCL_ERROR;
+					} else {
+						*(ip++) = tmpi;
+					}
+					/* Skip the separator(s) */
+					while( (*cp == ' ' || *cp == '\n' ||
+						*cp == '\t') && *cp ) 
+						++cp;
+				}
+				Tcl_AppendResult( interp,
+						  sdp->sp_count > 1 ? "{" : "",
+						  argv[0],
+						  sdp->sp_count > 1 ? "}" : "",
+						  " ", (char *)NULL);
+				--argc;
+				++argv;
+				break; }
+			case 'f': {
+				int		dot_seen;
+				double		tmp_double;
+				register double *dp;
+				char		*numstart;
+
+				dp = (double *)loc;
+
+				if( argc < 1 ) {
+					bu_vls_trunc( &str, 0 );
+					bu_vls_printf( &str,
+       "not enough values for \"%s\" argument: should have %d, only %d given",
+						       sdp->sp_name,
+						       sdp->sp_count, argc );
+					Tcl_AppendResult( interp,
+							  bu_vls_addr(&str),
+							  (char *)NULL );
+					bu_vls_free( &str );
+					return TCL_ERROR;
+				}
+
+				Tcl_AppendResult( interp, sdp->sp_name, " ",
+						  (char *)NULL );
+
+				cp = *argv;
+				for( i = 0; i < sdp->sp_count; i++ ) {
+					if( *cp == '\0' ) {
+						bu_vls_trunc( &str, 0 );
+						bu_vls_printf( &str,
+       "not enough values for \"%s\" argument: should have %d, only %d given",
+							       sdp->sp_name,
+							       sdp->sp_count,
+							       i );
+						Tcl_AppendResult( interp,
+							    bu_vls_addr(&str),
+							    (char *)NULL );
+						bu_vls_free( &str );
+						return TCL_ERROR;
+					}
+					
+					while( (*cp == ' ' || *cp == '\n' ||
+						*cp == '\t') && *cp )
+						++cp;
+
+					numstart = cp;
+					if( *cp == '-' || *cp == '+' ) cp++;
+
+					/* skip matissa */
+					dot_seen = 0;
+					for( ; *cp ; cp++ ) {
+						if( *cp == '.' && !dot_seen ) {
+							dot_seen = 1;
+							continue;
+						}
+						if( !isdigit(*cp) )
+							break;
+					}
+
+					/* If no mantissa seen,
+					   then there is no float here */
+					if( cp == (numstart + dot_seen) ) {
+						bu_vls_trunc( &str, 0 );
+						bu_vls_printf( &str, 
+	                           "value \"%s\" to argument %s isn't a float",
+							       argv[0],
+							       sdp->sp_name );
+						Tcl_AppendResult( interp,
+							    bu_vls_addr(&str),
+							    (char *)NULL );
+						bu_vls_free( &str );
+						return TCL_ERROR;
+					}
+
+					/* there was a mantissa,
+					   so we may have an exponent */
+					if( *cp == 'E' || *cp == 'e' ) {
+						cp++;
+
+						/* skip exponent sign */
+						if (*cp == '+' || *cp == '-')
+							cp++;
+						while( isdigit(*cp) )
+							cp++;
+					}
+
+					bu_vls_trunc( &str, 0 );
+					bu_vls_strcpy( &str, numstart );
+					bu_vls_trunc( &str, cp-numstart );
+					if( sscanf(bu_vls_addr(&str),
+						   "%lf", &tmp_double) != 1 ) {
+						bu_vls_trunc( &str, 0 );
+						bu_vls_printf( &str, 
+				  "value \"%s\" to argument %s isn't a float",
+							       numstart,
+							       sdp->sp_name );
+						Tcl_AppendResult( interp,
+							    bu_vls_addr(&str),
+							    (char *)NULL );
+						bu_vls_free( &str );
+						return TCL_ERROR;
+					}
+					
+					*dp++ = tmp_double;
+
+					while( (*cp == ' ' || *cp == '\n' ||
+						*cp == '\t') && *cp )
+						++cp;
+				}
+				Tcl_AppendResult( interp,
+						  sdp->sp_count > 1 ? "{" : "",
+						  argv[0],
+						  sdp->sp_count > 1 ? "}" : "",
+						  " ", (char *)NULL );
+				--argc;
+				++argv;
+				break; }
+			default:
+				Tcl_AppendResult( interp, "unknown format",
+						  (char *)NULL );
+				return TCL_ERROR;
+			}
+			break;
+		}
+		
+		if( sdp->sp_name == NULL ) {
+			bu_vls_trunc( &str, 0 );
+			bu_vls_printf( &str, "invalid attribute %s", argv[0] );
+			Tcl_AppendResult( interp, bu_vls_addr(&str),
+					  (char *)NULL );
+			bu_vls_free( &str );
+			return TCL_ERROR;
+		}
+	}
+	return TCL_OK;
+}
+
+/*
  *			B U _ T C L _ M E M _ B A R R I E R C H E C K
  */
 int
