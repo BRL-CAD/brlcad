@@ -17,7 +17,29 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 #include <stdio.h>
-#include <varargs.h>
+#if __STDC__ && !apollo
+# include <stdarg.h>
+#else
+# include <varargs.h>
+#endif
+#include "machine.h"
+
+#if __STDC__ && !apollo
+/*
+ *  			F B _ L O G
+ *  
+ *  Log a framebuffer library event in the Standard way.
+ */
+void
+fb_log( char *fmt, ... )
+{
+	va_list ap;
+
+	va_start( ap, fmt );
+	(void)vfprintf( stderr, fmt, ap );
+	va_end(ap);
+}
+#else /* __STDC__ */
 
 #ifdef CRAY1
 void
@@ -43,3 +65,4 @@ va_dcl
 	return;
 	}
 #endif
+#endif /* !__STDC__ */
