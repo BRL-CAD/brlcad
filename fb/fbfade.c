@@ -333,7 +333,6 @@ main( argc, argv )
 	if ( src_height == 0 )
 		src_height = hires ? 1024 : 512;	/* starting default */
 
-/*XXX*/Message( "Requested source %dx%d", src_width, src_height );
 	if ( in_fb_file != NULL )
 		if ( (fbp = fb_open( in_fb_file, src_width, src_height ))
 		  == FBIO_NULL
@@ -352,7 +351,6 @@ main( argc, argv )
 			if ( ht < src_height )
 				src_height = ht;
 
-/*XXX*/Message( "Final source %dx%d", src_width, src_height );
 			if ( (long)(SIZE_T)((long)src_width * (long)src_height
 					   * (long)sizeof(RGBpixel)
 					   )
@@ -391,7 +389,6 @@ main( argc, argv )
 	if ( dst_height == 0 )
 		dst_height = src_height;	/* default */
 
-/*XXX*/Message( "Requested destination %dx%d", dst_width, dst_height );
 	if ( (fbp = fb_open( out_fb_file, dst_width, dst_height )) == FBIO_NULL
 	   )
 		Fatal( "Couldn't open output frame buffer" );
@@ -414,7 +411,6 @@ main( argc, argv )
 
 		if ( dst_height > src_height )
 			dst_height = src_height;
-/*XXX*/Message( "Final destination %dx%d", dst_width, dst_height );
 		}
 
 	/* The following is probably an optimally fast shuffling algorithm;
