@@ -364,7 +364,7 @@ register struct application *ap;
 	 */
 	if( !rt_in_rpp( &ap->a_ray, ss.inv_dir, rtip->mdl_min, rtip->mdl_max )  ||
 	    ap->a_ray.r_max < 0.0 )  {
-	    	if( RT_LIST_IS_EMPTY( &waiting_segs.l ) )  {
+	    	if( RT_LIST_NON_EMPTY( &waiting_segs.l ) )  {
 	    		/* Go handle the infinite objects we hit */
 	    		ss.model_end = INFINITY;
 	    		goto weave;
