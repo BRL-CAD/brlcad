@@ -32,7 +32,7 @@ char	*even_file = "even.pix";
 char	*odd_file = "odd.pix";
 
 static char usage[] = "\
-Usage: pixfieldsep [-w file_width] [-s square_size] [-# nbytes/pixel] \
+Usage: pixfieldsep [-w file_width] [-s square_size] [-# nbytes/pixel] \n\
 	[even.pix odd.pix]\n";
 
 get_args( argc, argv )
