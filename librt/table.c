@@ -52,7 +52,14 @@ static char RCStree[] = "@(#)$Header$ (BRL)";
 	RT_EXTERN(int rt_##name##_tess, (struct nmgregion **r, \
 			struct model *m, union record *rp, \
 			mat_t mat, struct directory *dp, \
-			double abs_tol, double rel_tol, double norm_tol));
+			double abs_tol, double rel_tol, double norm_tol)); \
+	RT_EXTERN(int rt_##name##_import, (struct rt_db_internal *ip, \
+			struct rt_external *ep, mat_t mat)); \
+	RT_EXTERN(int rt_##name##_export, (struct rt_external *ep, \
+			struct rt_db_internal *ip)); \
+	RT_EXTERN(void rt_##name##_ifree, (struct rt_db_internal *ip)); \
+	RT_EXTERN(int rt_##name##_describe, (struct rt_vls *str, \
+			struct rt_db_internal *ip, int verbose));
 #else
 # define RT_DECLARE_INTERFACE(name)	\
 	RT_EXTERN(int rt_/**/name/**/_prep, (struct soltab *stp, \
@@ -78,7 +85,14 @@ static char RCStree[] = "@(#)$Header$ (BRL)";
 	RT_EXTERN(int rt_/**/name/**/_tess, (struct nmgregion **r, \
 			struct model *m, union record *rp, \
 			mat_t mat, struct directory *dp, \
-			double abs_tol, double rel_tol, double norm_tol));
+			double abs_tol, double rel_tol, double norm_tol)); \
+	RT_EXTERN(int rt_/**/name/**/_import, (struct rt_db_internal *ip, \
+			struct rt_external *ep, mat_t mat)); \
+	RT_EXTERN(int rt_/**/name/**/_export, (struct rt_external *ep, \
+			struct rt_db_internal *ip)); \
+	RT_EXTERN(void rt_/**/name/**/_ifree, (struct rt_db_internal *ip)); \
+	RT_EXTERN(int rt_/**/name/**/_describe, (struct rt_vls *str, \
+			struct rt_db_internal *ip, int verbose));
 #endif
 
 		
@@ -106,91 +120,127 @@ struct rt_functab rt_functab[ID_MAXIMUM+2] = {
 		rt_nul_prep,	rt_nul_shot,	rt_nul_print, 	rt_nul_norm,
 	 	rt_nul_uv,	rt_nul_curve,	rt_nul_class,	rt_nul_free,
 		rt_nul_plot,	rt_nul_vshot,	rt_nul_tess,
+		rt_nul_import,	rt_nul_export,	rt_nul_ifree,
+		rt_nul_describe,
 		
 	"ID_TOR",	1,
 		rt_tor_prep,	rt_tor_shot,	rt_tor_print,	rt_tor_norm,
 		rt_tor_uv,	rt_tor_curve,	rt_tor_class,	rt_tor_free,
 		rt_tor_plot,	rt_tor_vshot,	rt_tor_tess,
+		rt_nul_import,	rt_nul_export,	rt_nul_ifree,
+		rt_nul_describe,
 
 	"ID_TGC",	1,
 		rt_tgc_prep,	rt_tgc_shot,	rt_tgc_print,	rt_tgc_norm,
 		rt_tgc_uv,	rt_tgc_curve,	rt_tgc_class,	rt_tgc_free,
 		rt_tgc_plot,	rt_tgc_vshot,	rt_tgc_tess,
+		rt_tgc_import,	rt_tgc_export,	rt_tgc_ifree,
+		rt_tgc_describe,
 
 	"ID_ELL",	1,
 		rt_ell_prep,	rt_ell_shot,	rt_ell_print,	rt_ell_norm,
 		rt_ell_uv,	rt_ell_curve,	rt_ell_class,	rt_ell_free,
 		rt_ell_plot,	rt_ell_vshot,	rt_ell_tess,
+		rt_nul_import,	rt_nul_export,	rt_nul_ifree,
+		rt_nul_describe,
 
 	"ID_ARB8",	0,
 		rt_arb_prep,	rt_arb_shot,	rt_arb_print,	rt_arb_norm,
 		rt_arb_uv,	rt_arb_curve,	rt_arb_class,	rt_arb_free,
 		rt_arb_plot,	rt_arb_vshot,	rt_arb_tess,
+		rt_nul_import,	rt_nul_export,	rt_nul_ifree,
+		rt_nul_describe,
 
 	"ID_ARS",	1,
 		rt_ars_prep,	rt_ars_shot,	rt_ars_print,	rt_ars_norm,
 		rt_ars_uv,	rt_ars_curve,	rt_ars_class,	rt_ars_free,
 		rt_ars_plot,	rt_vstub,	rt_ars_tess,
+		rt_nul_import,	rt_nul_export,	rt_nul_ifree,
+		rt_nul_describe,
 
 	"ID_HALF",	0,
 		rt_hlf_prep,	rt_hlf_shot,	rt_hlf_print,	rt_hlf_norm,
 		rt_hlf_uv,	rt_hlf_curve,	rt_hlf_class,	rt_hlf_free,
 		rt_hlf_plot,	rt_hlf_vshot,	rt_hlf_tess,
+		rt_nul_import,	rt_nul_export,	rt_nul_ifree,
+		rt_nul_describe,
 
 	"ID_REC",	1,
 		rt_rec_prep,	rt_rec_shot,	rt_rec_print,	rt_rec_norm,
 		rt_rec_uv,	rt_rec_curve,	rt_rec_class,	rt_rec_free,
 		rt_tgc_plot,	rt_rec_vshot,	rt_tgc_tess,
+		rt_nul_import,	rt_nul_export,	rt_nul_ifree,
+		rt_nul_describe,
 
 	"ID_POLY",	1,
 		rt_pg_prep,	rt_pg_shot,	rt_pg_print,	rt_pg_norm,
 		rt_pg_uv,	rt_pg_curve,	rt_pg_class,	rt_pg_free,
 		rt_pg_plot,	rt_vstub,	rt_pg_tess,
+		rt_nul_import,	rt_nul_export,	rt_nul_ifree,
+		rt_nul_describe,
 
 	"ID_BSPLINE",	1,
 		rt_spl_prep,	rt_spl_shot,	rt_spl_print,	rt_spl_norm,
 		rt_spl_uv,	rt_spl_curve,	rt_spl_class,	rt_spl_free,
 		rt_spl_plot,	rt_vstub,	rt_spl_tess,
+		rt_nul_import,	rt_nul_export,	rt_nul_ifree,
+		rt_nul_describe,
 
 	"ID_SPH",	1,
 		rt_sph_prep,	rt_sph_shot,	rt_sph_print,	rt_sph_norm,
 		rt_sph_uv,	rt_sph_curve,	rt_sph_class,	rt_sph_free,
 		rt_ell_plot,	rt_sph_vshot,	rt_ell_tess,
+		rt_nul_import,	rt_nul_export,	rt_nul_ifree,
+		rt_nul_describe,
 
 	"ID_STRINGSOL",	0,
 		rt_nul_prep,	rt_nul_shot,	rt_nul_print,	rt_nul_norm,
 		rt_nul_uv,	rt_nul_curve,	rt_nul_class,	rt_nul_free,
 		rt_nul_plot,	rt_nul_vshot,	rt_nul_tess,
+		rt_nul_import,	rt_nul_export,	rt_nul_ifree,
+		rt_nul_describe,
 
 	"ID_EBM",	0,
 		rt_ebm_prep,	rt_ebm_shot,	rt_ebm_print,	rt_ebm_norm,
 		rt_ebm_uv,	rt_ebm_curve,	rt_ebm_class,	rt_ebm_free,
 		rt_ebm_plot,	rt_vstub,	rt_nul_tess,
+		rt_nul_import,	rt_nul_export,	rt_nul_ifree,
+		rt_nul_describe,
 
 	"ID_VOL",	0,
 		rt_vol_prep,	rt_vol_shot,	rt_vol_print,	rt_vol_norm,
 		rt_vol_uv,	rt_vol_curve,	rt_vol_class,	rt_vol_free,
 		rt_vol_plot,	rt_vstub,	rt_nul_tess,
+		rt_nul_import,	rt_nul_export,	rt_nul_ifree,
+		rt_nul_describe,
 
 	"ID_ARBN",	0,
 		rt_arbn_prep,	rt_arbn_shot,	rt_arbn_print,	rt_arbn_norm,
 		rt_arbn_uv,	rt_arbn_curve,	rt_arbn_class,	rt_arbn_free,
 		rt_arbn_plot,	rt_arbn_vshot,	rt_arbn_tess,
+		rt_arbn_import,	rt_arbn_export,	rt_arbn_ifree,
+		rt_arbn_describe,
 
 	"ID_PIPE",	0,
 		rt_pipe_prep,	rt_pipe_shot,	rt_pipe_print,	rt_pipe_norm,
 		rt_pipe_uv,	rt_pipe_curve,	rt_pipe_class,	rt_pipe_free,
 		rt_pipe_plot,	rt_pipe_vshot,	rt_pipe_tess,
+		rt_pipe_import,	rt_pipe_export,	rt_pipe_ifree,
+		rt_pipe_describe,
 
 	"ID_PARTICLE",	0,
 		rt_part_prep,	rt_part_shot,	rt_part_print,	rt_part_norm,
 		rt_part_uv,	rt_part_curve,	rt_part_class,	rt_part_free,
 		rt_part_plot,	rt_part_vshot,	rt_part_tess,
+		rt_part_import,	rt_part_export,	rt_part_ifree,
+		rt_part_describe,
 
 	">ID_MAXIMUM",	0,
 		rt_nul_prep,	rt_nul_shot,	rt_nul_print,	rt_nul_norm,
 		rt_nul_uv,	rt_nul_curve,	rt_nul_class,	rt_nul_free,
-		rt_nul_plot,	rt_nul_vshot,	rt_nul_tess
+		rt_nul_plot,	rt_nul_vshot,	rt_nul_tess,
+		rt_nul_import,	rt_nul_export,	rt_nul_ifree,
+		rt_nul_describe
 };
 int rt_nfunctab = sizeof(rt_functab)/sizeof(struct rt_functab);
 
@@ -212,6 +262,10 @@ void DEF(rt_nul_free)
 int NDEF(rt_nul_plot)
 void DEF(rt_nul_vshot)
 int NDEF(rt_nul_tess)
+int NDEF(rt_nul_import)
+int NDEF(rt_nul_export)
+void DEF(rt_nul_ifree)
+int NDEF(rt_nul_describe)
 
 /* Map for database solidrec objects to internal objects */
 static char idmap[] = {
