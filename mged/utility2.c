@@ -2132,8 +2132,7 @@ char **argv;
 				struct rt_db_internal intern;
 				struct rt_comb_internal *comb;
 
-				if( (dp->d_flags & DIR_COMB|DIR_REGION) !=
-				    (DIR_COMB|DIR_REGION) )
+				if( !(dp->d_flags & DIR_REGION) )
 					continue;
 
 				if( rt_db_get_internal( &intern, dp, dbip, (mat_t *)NULL ) < 0 )
