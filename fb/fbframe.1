@@ -1,0 +1,43 @@
+.TH FBFRAME 1 BRL/CAD
+.SH NAME
+fbframe \- place a colored frame around a framebuffer
+.SH SYNOPSIS
+.B fbframe
+.RB [ \-h ]
+.SH DESCRIPTION
+.I Fbframe
+places a colored frame around the edge pixels of a framebuffer.
+It is mostly for purposes of framebuffer alignment.
+The environment
+variable
+.B
+.SM FB_FILE
+is used to select the display device (see
+.IR brlcad (1)).
+If the variable is not set, the default device for your system will
+be used.
+If the
+.B \-h
+option is used, a
+1024x1024 frame is written;
+otherwise a
+512x512 device is assumed.
+.PP
+The frame starts in the lower left with a red line running to the
+right to the next to last pixel.  Next, a green line from there up to the next
+to top scan line is drawn.  Then blue across the top scan line to the next to
+first column.  Finally a white line down the left edge stopping just
+above the red line.
+.SH "SEE ALSO"
+brlcad(1), fbgrid(1)
+.SH AUTHOR
+Phillip Dykstra
+.SH SOURCE
+SECAD/VLD Computing Consortium, Bldg 394
+.br
+The U. S. Army Ballistic Research Laboratory
+.br
+Aberdeen Proving Ground, Maryland  21005
+.SH "BUG REPORTS"
+Reports of bugs or problems should be submitted via electronic
+mail to <CAD@BRL.ARPA>.
