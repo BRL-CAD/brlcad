@@ -232,8 +232,14 @@ proc space_partitioning {val} {
 	reprep
 }
 
-# Create independent status window.  All further creates happen here.
-frame .statusbut_fr; pack .statusbut_fr -side top
+# Aids for memory debugging
+proc memdebug {}  {
+	node_send \
+		set bu_debug 2 ";" \
+		bu_printb bu_debug {$bu_debug} {$BU_DEBUG_FORMAT}
+}
+# Follow this up by issuing a:
+# one_node_send 01 bu_prmem
 
 # Allow "send rtsync _stuff_" directives to reach us.
 tk appname rtsync
