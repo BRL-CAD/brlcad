@@ -34,15 +34,15 @@ static int	fileinput = 0;		/* file of pipe on input? */
 static char	*file_name;
 static FILE	*infp;
 
-#define BYTESPERPIXEL 3
-#define ROWSIZE (file_width * BYTESPERPIXEL)
+static int	pixbytes = 3;
 
-#define SIZE (file_width * file_height * BYTESPERPIXEL)
+#define ROWSIZE (file_width * pixbytes)
+#define SIZE (file_width * file_height * pixbytes)
 
 char *scanbuf;
 
 static char usage[] = "\
-Usage: pix-ppm [-a] [-w file_width] [-n file_height]\n\
+Usage: pix-ppm [-a] [-#bytes] [-w file_width] [-n file_height]\n\
 	[-s square_file_size] [file.pix]\n";
 
 get_args( argc, argv )
@@ -50,8 +50,11 @@ register char **argv;
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "as:w:n:" )) != EOF )  {
+	while ( (c = getopt( argc, argv, "a#:s:w:n:" )) != EOF )  {
 		switch( c )  {
+		case '#':
+			pixbytes = atoi(optarg);
+			break;
 		case 'a':
 			autosize = 1;
 			break;
@@ -113,7 +116,7 @@ char	**argv;
 	/* autosize input? */
 	if( fileinput && autosize ) {
 		int	w, h;
-		if( bn_common_file_size(&w, &h, file_name, 3) ) {
+		if( bn_common_file_size(&w, &h, file_name, pixbytes) ) {
 			file_width = w;
 			file_height = h;
 		} else {
@@ -135,8 +138,13 @@ char	**argv;
 		exit(1);
 	}
 
-	/* PPM magic number */
-	printf("P6\n");
+	if( pixbytes == 1 )  {
+		/* PGM magic number */
+		printf("P2\n");
+	} else {
+		/* PPM magic number */
+		printf("P6\n");
+	}
 
 	/* width height */
 	printf("%d %d\n", file_width, file_height);
