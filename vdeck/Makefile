@@ -2,7 +2,7 @@
 
 #	last edit:	84/06/01	G S Moss
 
-#	SCCSID	@(#)Makefile	1.1
+#	SCCSID	@(#)Makefile	2.1
 
 PRODUCT = vdeck
 HEADERS = ${PRODUCT}.h ged_types.h 3d.h vextern.h
