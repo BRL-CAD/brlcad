@@ -31,7 +31,7 @@ static char sccsid[] = "@(#) tkAppInit.c 1.15 95/06/28 13:14:28";
 
 #include "tk.h"
 
-extern int TclCad_Init();
+extern int tclcad_tk_setup();
 
 /*
  * The following variable is a special hack that is needed in order for
