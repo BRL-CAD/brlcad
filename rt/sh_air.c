@@ -41,8 +41,8 @@ struct bu_structparse air_parse[] = {
 	{"%f",  1, "dpm",		SHDR_O(d_p_mm),		dpm_hook },
 	{"%f",  1, "scale",		SHDR_O(scale),		FUNC_NULL },
 	{"%f",  1, "s",			SHDR_O(scale),		FUNC_NULL },
-	{"%f",  1, "delta",		SHDR_O(delta),		FUNC_NULL },
-	{"%f",  1, "d",			SHDR_O(delta),		FUNC_NULL },
+	{"%f",  1, "delta",		SHDR_O(delta),		bu_mm_cvt },
+	{"%f",  1, "d",			SHDR_O(delta),		bu_mm_cvt },
 	{"",	0, (char *)0,		0,			FUNC_NULL }
 };
 
