@@ -78,14 +78,6 @@ void	ogl_zbuffer();
 
 static XVisualInfo *ogl_choose_visual();
 
-/* Flags indicating whether the ogl and sgi display managers have been
- * attached.
- * These are necessary to decide whether or not to use direct rendering
- * with gl.
- */
-char  ogl_ogl_used = 0;
-char  ogl_sgi_used = 0;
-
 /* Display Manager package interface */
 #define IRBOUND	4095.9	/* Max magnification in Rot matrix */
 
@@ -395,16 +387,6 @@ char *argv[];
   ((struct ogl_vars *)dmp->dm_vars.priv_vars)->is_direct =
     (char) glXIsDirect(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 		       ((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc);
-
-#if 0
-  bu_log("%s is using %s OpenGL rendering context.\n", bu_vls_addr(&dmp->dm_pathName),
-	 ((struct ogl_vars *)dmp->dm_vars.priv_vars)->is_direct ?
-	 "a direct" : "an indirect");
-#endif
-
-  /* set ogl_ogl_used if the context was ever direct */
-  ogl_ogl_used = (((struct ogl_vars *)dmp->dm_vars.priv_vars)->is_direct ||
-		  ogl_ogl_used);
 
   /*
    * Take a look at the available input devices. We're looking
@@ -1586,7 +1568,9 @@ struct dm *dmp;
   }
 
   if( ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.zbuf == 0 ) {
+#if 0
     bu_log("dm-Ogl: This machine has no Zbuffer to enable\n");
+#endif
     ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.zbuffer_on = 0;
   }
 
