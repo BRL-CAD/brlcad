@@ -222,7 +222,7 @@ BDIRS="bench \
 
 TSDIRS=". mged nirt pl-dm"
 TDIRS="libtk libtkGLX"
-HTML_DIRS="manuals manuals/shaders manuals/Anim_Tutorial manuals/libdm manuals/mged manuals/mged/animmate"
+HTML_DIRS="manuals manuals/shaders manuals/Anim_Tutorial manuals/libdm manuals/mged manuals/mged/animmate ReleaseNotes ReleaseNotes/Rel5.0 ReleaseNotes/Rel5.0/Summary"
 
 # If there is no TCP networking, eliminate network-only directories.
 if test "${HAS_TCP}" = "0"
