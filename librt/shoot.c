@@ -550,27 +550,8 @@ hitit:
 	 *  and segments.  Otherwise, this can amount to a source of
 	 *  persistent memory growth.
 	 */
-	{
-		register struct partition *pp;
-
-		for( pp = InitialPart.pt_forw; pp != &InitialPart;  )  {
-			register struct partition *newpp;
-			newpp = pp;
-			pp = pp->pt_forw;
-			FREE_PT(newpp, ap->a_resource);
-		}
-		InitialPart.pt_forw = InitialPart.pt_back = &InitialPart;
-	}
-	{
-		register struct seg *segp;
-
-		while( HeadSeg != SEG_NULL )  {
-			segp = HeadSeg->seg_next;
-			FREE_SEG( HeadSeg, ap->a_resource );
-			HeadSeg = segp;
-		}
-		HeadSeg = SEG_NULL;
-	}
+	RT_FREE_PT_LIST( &InitialPart, ap->a_resource );
+	RT_FREE_SEG_LIST( HeadSeg, ap->a_resource );
 	ret = ap->a_hit( ap, &FinalPart );
 	status = "HIT";
 
@@ -578,33 +559,10 @@ hitit:
 	 * Processing of this ray is complete.  Free dynamic resources.
 	 */
 freeup:
-	{
-		register struct partition *pp;
+	RT_FREE_PT_LIST( &InitialPart, ap->a_resource );
+	RT_FREE_PT_LIST( &FinalPart, ap->a_resource );
+	RT_FREE_SEG_LIST( HeadSeg, ap->a_resource );
 
-		/* Free up initial partition list */
-		for( pp = InitialPart.pt_forw; pp != &InitialPart;  )  {
-			register struct partition *newpp;
-			newpp = pp;
-			pp = pp->pt_forw;
-			FREE_PT(newpp, ap->a_resource);
-		}
-		/* Free up final partition list */
-		for( pp = FinalPart.pt_forw; pp != &FinalPart;  )  {
-			register struct partition *newpp;
-			newpp = pp;
-			pp = pp->pt_forw;
-			FREE_PT(newpp, ap->a_resource);
-		}
-	}
-	{
-		register struct seg *segp;
-
-		while( HeadSeg != SEG_NULL )  {
-			segp = HeadSeg->seg_next;
-			FREE_SEG( HeadSeg, ap->a_resource );
-			HeadSeg = segp;
-		}
-	}
 out:
 	if( solidbits != BITV_NULL)  {
 		FREE_BITV( solidbits, ap->a_resource );
@@ -621,18 +579,6 @@ out:
 			ap->a_purpose != (char *)0 ? ap->a_purpose : "?",
 			status, ret);
 	}
-
-#if 0
-	/* For now, a good sanity check XXX */
-	end_free_len = rt_partition_len( &ap->a_resource->re_parthead );
-	if( ap->a_level == 0 &&
-	    ap->a_purpose && strcmp( ap->a_purpose, "main ray" ) == 0 &&
-	    end_free_len != ap->a_resource->re_partlen ) {
-		rt_log("PP free error, qlen=%d, s/b=%d (%s)\n",
-			end_free_len, ap->a_resource->re_partlen,
-			ap->a_purpose != (char *)0 ? ap->a_purpose : "?" );
-	}
-#endif
 	return( ret );
 }
 
