@@ -1,9 +1,20 @@
 #!/bin/sh
 #
-# library
-#   is a general purpose sh utility library providing a set of environment
+# l i b r a r y
+#
+###
+#   this is a general purpose sh utility library providing a set of environment
 #   variables and function calls.  the primary intended usage is to aid the
 #   brlcad regression testing suite.
+#
+#   do not copy the routines found here.  instead, include this library into
+#   scripts as such:
+#
+#     . ./library
+#
+#   listed below are the functions and variables that are provided by sourcing
+#   this script.  see the respective function for more details on what 
+#   arguments it takes and how the function behaves.
 #
 ###
 #
@@ -11,18 +22,30 @@
 #
 #   initializeVariable
 #       initializes a given variable to a defaultValue if it is not already set
-#   getHostName
+#   setHostName
 #       sets a var to the HOSTNAME from a variety of potential methods
+#
 #   log
 #       writes output to a given log file
+#   bomb
+#       writes an error message to the log
+#   warn
+#       writes a warning message to the log, optionally bombing
+#
 #   acquireLock
-#       gets a file semaphore (!!! needs to be changed)
+#       creates a cooperative lock file ("blocks" when one already exists)
 #   releaseLock
-#       releases and creates a file semaphore that may be acquired
+#       releases and/or removes a cooperative lock file (rm's the lock)
+#   releaseAllLocks
+#       releases all acquired locks (via internal _ACQUIRED_LOCKS)
+#
 #   acquireSemaphore
-#       !!!
+#       gets a cooperative file semaphore ("blocks" when one does not exist)
 #   releaseSemaphore
-#       !!!
+#       releases and/or creates a cooperative file semaphore (touch's the 
+#       semaphore)
+#   releaseAllSemaphores
+#       releases all acquired semaphores (via internal _ACQUIRED_SEMAPHORES)
 #
 ###
 #
@@ -36,8 +59,14 @@
 #   HOSTNAME
 #       the host name derifed from 1) hostname command, 2) HOST env var,
 #       3) HOSTNAME env var, 4) default "unknown" value
-#   PWD
+#   LPWD
 #       current working directory path where library is included
+#
+# INTERNAL  (do not use)
+#
+#   _ACQUIRED_LOCKS
+#   _ACQUIRED_SEMAPHORES
+#   _TEMP_DEBUG_OFF
 #
 ###############################################################################
 
@@ -45,18 +74,33 @@
 if [ x$LOG = x ] ; then 
     LOG="/dev/tty" ; export LOG
 fi
-if [ ! x$DEBUG = x ]  ; then echo "LOG=$LOG" ; fi
+if [ ! "x$DEBUG" = "x" ]  ; then echo "LOG=$LOG" ; fi
 #
 # log [messageToWrite] [fileToWriteTo]
 #
 # log writes a given message out to a file name
+# log should *never* call the inherited warn() or bomb() calls
 #
 log ( ) {
-# for gratuitous logging...
-#    if [ ! x$DEBUG = x ] ; then echo "log( \$1=[$1] \$2=[$2] )" >> $LOG ; fi
-
     MESSAGE="\$1"
     if [ "x$2" = "x" ] ; then FILE="$LOG" ; else FILE="$2" ; fi
+
+    # convert stdout and stderr to the proper redirect
+    if [ "x$FILE" = "xstdout" ] ; then 
+	FILE=""
+    elif [ "x$FILE" = "xstderr" ] ; then 
+	FILE="1>&2"
+    else
+	FILE=">> $FILE"
+    fi
+
+    # this is the only call that sends debug after initialization since we want
+    # to properly handle a "std???" set LOG var
+    if [ x$_TEMP_DEBUG_OFF = x ] ; then
+	# for gratuitous logging...
+	if [ ! "x$DEBUG" = x ] ; then echo "log( \$1=[$1] \$2=[$2] )" ; fi
+    fi
+
 
     # check for explicit escape option support
     # try to find a decent echo with -e support
@@ -65,7 +109,7 @@ log ( ) {
 	ECHO="echo -e"
 
     # no -e support
-    else 
+    else
 	# need to do some extra checking since the sun5 /bin/echo sucks
 	# see if default echo supports special chars
 	LOGTEST=`echo "\t\ntest"`
@@ -88,7 +132,77 @@ log ( ) {
 
 #    OUTPUT="$ECHO \"$MESSAGE\""
 #    eval "$OUTPUT >> $FILE"
-    eval "$ECHO \"$MESSAGE\" >> $FILE"
+#    eval "$ECHO \"$MESSAGE\" >> $FILE"
+    eval "$ECHO \"$MESSAGE\" $FILE"
+}
+
+
+#
+# bomb [messageToWrite] [fileToWriteTo] [returnCode]
+#
+# writes a message out via the log facility and then exits returning a given 
+# value. if the global _ACQUIRED_LOCKS or _ACQUIRED_SEMAPHORES variables are
+# set (done by acquireLock() and acquireSemaphore()), then they are released
+# prior to exiting.
+# 
+bomb ( ) {
+    if [ x$_TEMP_DEBUG_OFF = x ] ; then
+        if [ ! "x$DEBUG" = x ] ; then log "bomb( \$1=[$1] \$2=[$2] \$3=[$3] )" ; fi
+    fi
+
+    # need a check if dollar three is a number...
+    if [ "x$3" = "x" ] ; then local CODE=1 ; else local CODE="$3" ; fi
+
+    # turn off log debugging
+    if [ ! "x$DEBUG" = x ] ; then export _TEMP_DEBUG_OFF=1 ; fi
+
+    log "ERROR: $1" "$2"
+    # explicitly display the error message to terminal if logging elsewhere
+    if [ ! "x$2" = "x/dev/tty" ] ; then 
+	if [ "x$2" = "x" ] ; then 
+	    if [ ! "x$LOG" = "x/dev/tty" ] ; then
+		log "ERROR: $1" "/dev/tty"
+	    fi
+	fi
+    fi
+
+    # turn log debugging back on if it was
+    if [ ! "x$DEBUG" = x ] ; then unset _TEMP_DEBUG_OFF ; fi
+
+    releaseAllLocks
+    releaseAllSemaphores
+    
+    exit $CODE
+}
+
+
+#
+# warn [messageToWrite] [fileToWriteTo] [noWarnings]
+#
+# writes a message out via the log facility and optionally will bomb instead of
+# simply warn if NO_WARNINGS is set or specified, noWarnings arg overrides 
+# (any non-zero value is true)
+# 
+warn ( ) {
+    if [ x$_TEMP_DEBUG_OFF = x ] ; then
+        if [ ! "x$DEBUG" = x ] ; then log "warn( \$1=[$1] \$2=[$2] \$3=[$3] )" ; fi
+    fi
+
+    # should check if dollar three is a number...
+    local BOMB=0
+    if [ ! x$NO_WARNINGS = x ] ; then BOMB=$NO_WARNINGS ; fi
+    if [ ! "x$3" = "x" ] ; then BOMB=1 ; fi
+
+    # turn off log debugging
+    if [ ! "x$DEBUG" = x ] ; then export _TEMP_DEBUG_OFF=1 ; fi
+
+    log "WARNING: $1" "$2"
+    if [ ! "x$BOMB" = "x0" ] ; then
+	bomb "fail on warnings is set"
+    fi
+
+    # turn log debugging back on if it was
+    if [ ! "x$DEBUG" = x ] ; then unset _TEMP_DEBUG_OFF ; fi
 }
 
 
@@ -100,11 +214,10 @@ log ( ) {
 # script variables to also be overridden by environment variables
 #
 initializeVariable ( ) {
-    if [ ! x$DEBUG = x ] ; then log "initializeVariable( \$1=[$1] \$2=[$2] )" ; fi
+    if [ ! "x$DEBUG" = "x" ] ; then log "initializeVariable( \$1=[$1] \$2=[$2] )" ; fi
 
-    if [ x$1 = x ] ; then 
-	log "initializeVariable: arg1 mismatch -- no variable name given"
-	exit 
+    if [ "x$1" = "x" ] ; then 
+	bomb "initializeVariable arg1 mismatch"
     else 
 	VAR="$1"
     fi
@@ -126,7 +239,7 @@ initializeVariable ( ) {
 
 
 #
-# getHostName [variable] [defaultValue]
+# setHostName [variable] [defaultValue]
 #
 # attempts to derive the host name of the running machine.
 # precedence is given to the HOSTNAME and HOST environment
@@ -135,54 +248,72 @@ initializeVariable ( ) {
 #
 # returns the host name set
 #
-getHostName ( ) {
-    if [ ! x$DEBUG = x ] ; then log "getHostName( \$1=[${1}] \$2=[${2}] )" ; fi
+setHostName ( ) {
+    if [ ! "x$DEBUG" = x ] ; then log "setHostName( \$1=[${1}] \$2=[${2}] )" ; fi
 
-    if [ x$1 = x ] ; then 
-	VAR="HOSTNAME"
+    if [ "x$1" = x ] ; then 
+	local VAR="HOSTNAME"
     else 
-	VAR="$1"
+	local VAR=$1
 	# do not forget to check system
 	initializeVariable $VAR "$HOST"
-	if [ x$VAR = x ] ; then export $VAR="$HOSTNAME" ; fi
+	if [ x$VAR = x ] ; then export $VAR=$HOSTNAME ; fi
     fi
-    if [ x$2 = x ] ; then DEFVAL="unknown" ; else DEFVAL="$2" ; fi
+    if [ "x$2" = x ] ; then local DEFVAL="unknown" ; else local DEFVAL=$2 ; fi
 
     # multiple inits work (without the ifthen mess) since the set should
     # not clobber a variable that already has a non-empty value set
-    if [ ! x$VAR = x ] ; then initializeVariable $VAR `hostname` ; fi
-    if [ ! x$VAR = x ] ; then initializeVariable $VAR $HOST ; fi
-    if [ ! x$VAR = x ] ; then initializeVariable $VAR `uname -n` ; fi
-    if [ ! x$VAR = x ] ; then initializeVariable $VAR $DEFVAL ; fi
+    if [ x$VAR = x ] ; then initializeVariable $VAR `hostname` ; fi
+    if [ x$VAR = x ] ; then initializeVariable $VAR $HOST ; fi
+    if [ x$VAR = x ] ; then initializeVariable $VAR `uname -n` ; fi
+    if [ x$VAR = x ] ; then initializeVariable $VAR $DEFVAL ; fi
 
-    VARVAL="echo \$$VAR"
-    if [ ! x$DEBUG = x ] ; then log "getHostName: ${VAR}=[`eval $VARVAL`]" ; fi
+    local VARVAL="echo \$$VAR"
+    if [ ! "x$DEBUG" = x ] ; then log "setHostName: ${VAR}=[`eval $VARVAL`]" ; fi
 
     # return value is only useful if DEBUG is off (since echo'd values are return values)
     # return `eval $VARVAL`
 }
 
-
 #
-# acquireLock [lockFile] [retryCount] [waitLength]
+# acquireLock [lockName] [retryCount] [waitLength] [location]
+#
+# will create a file that will block subsequent calls to acquireLock until the 
+# file lock is released.  a ".lock" extension is appended automatically to 
+# distinguish between file locks and file semaphores.
+# locks acquired are listed in the ACQUIRED_LOCKS global var
 #
 acquireLock ( ) {
-    if [ ! x$DEBUG = x ] ; then log "acquireLock( \$1=[$1] \$2=[$2] \$3=[$3] )" ; fi
+    if [ ! "x$DEBUG" = x ] ; then log "acquireLock( \$1=[$1] \$2=[$2] \$3=[$3] \$4=[$4] )" ; fi
 
-    if [ x$1 = x ] ; then LOCK="local.lock" ; else LOCK="$1" ; fi
-    if [ x$2 = x ] ; then RETRY="1" ; else RETRY="$2" ; fi
-    if [ x$3 = x ] ; then WAIT="0" ; else WAIT="$3" ; fi
+    if [ "x$1" = x ] ; then local NAME="local" ; else local NAME="${1}" ; fi
+    if [ "x$2" = x ] ; then local RETRY=1 ; else local RETRY=$2 ; fi
+    if [ "x$3" = x ] ; then local WAIT=0 ; else local WAIT=$3 ; fi
+    if [ "x$4" = x ] ; then 
+	# if we start with a slash, prefix is nothing (rooted name), otherwise use a relative path
+	local SWS=`echo $NAME | sed 's/^\/.*/___ROOTED_NAME___/'`
+	if [ "x$SWS" = "x___ROOTED_NAME___" ] ; then local PREFIX="" ; else local PREFIX="./" ; fi
+    else 
+	# if we end with a slash, no worries, otherwise, append one
+	local SWS=`echo $NAME | sed 's/.*\/$/___END_SLASH___/'`
+	if [ "x$SWS" = "x___END_SLASH___" ] ; then local PREFIX="$4" ; else local PREFIX="${4}/" ; fi
+    fi
+    local LOCK="${NAME}.lock"
 
-    while [ ! -f $LOCK ] ; do
+    while [ -f ${PREFIX}$LOCK ] ; do
 	RETRY=`expr $RETRY - 1`
 	if [ $RETRY -lt 1 ] ; then
-	    log "ERROR: Unable to obtain $LOCK"
+	    log "ERROR: Unable to obtain $LOCK in $PREFIX"
 	    return 1
 	fi
 	log "Waiting for $LOCK... $RETRY attempts remain"
 	sleep $WAIT
     done
-    rm $LOCK
+    touch ${PREFIX}$LOCK
+    # save the PID of the acquiring process to the lock file
+    log "PID: $$" "${PREFIX}$LOCK"
+    # keep a list of the acquired locks up to date
+    export _ACQUIRED_LOCKS="$_ACQUIRED_LOCKS ${PREFIX}$NAME"
     log "Acquired $LOCK"
 
     return 0
@@ -190,20 +321,185 @@ acquireLock ( ) {
 
 
 #
-# releaseLock [lockFile]
+# releaseLock [lockName] [location]
 #
 releaseLock ( ) {
-    if [ ! x$DEBUG = x ] ; then log "releaseLock( \$1=[$1] )" ; fi
+    if [ ! "x$DEBUG" = x ] ; then log "releaseLock( \$1=[$1] \$2=[$2] )" ; fi
 
-    if [ x$1 = x ] ; then LOCK="local.lock" ; else LOCK="$1" ; fi
-    if [ -f $LOCK ] ; then
-	log "WARNING: Lock [$LOCK] is already released"
+    if [ "x$1" = x ] ; then local NAME="local" ; else local NAME="${1}" ; fi
+    if [ "x$2" = x ] ; then 
+	# if we start with a slash, prefix is nothing (rooted name), otherwise use a relative path
+	local SWS=`echo $NAME | sed 's/^\/.*/___ROOTED_NAME___/'`
+	if [ ! "x$DEBUG" = x ] ; then log "releaseLock: SWS=[$SWS]" ; fi
+	if [ "x$SWS" = "x___ROOTED_NAME___" ] ; then local PREFIX="" ; else local PREFIX="./" ; fi
+    else 
+	# if we end with a slash, no worries, otherwise, append one
+	local SWS=`echo $NAME | sed 's/.*\/$/___END_SLASH___/'`
+	if [ "x$SWS" = "x___END_SLASH___" ] ; then local PREFIX="$2" ; else local PREFIX="${2}/" ; fi
+    fi
+    local LOCK="${NAME}.lock"
+
+    if [ ! "x$DEBUG" = x ] ; then log "releaseLock: PREFIX=[$PREFIX] LOCK=[$LOCK]" ; fi
+
+    if [ ! -f "${PREFIX}$LOCK" ] ; then
+	warn "Lock [$LOCK] is already released"
+	# make sure the lock is not registered 
+	if [ ! "x$_ACQUIRED_LOCKS" = "x" ] ; then
+	    local NEW_AL
+	    for CL in $_ACQUIRED_LOCKS ; do
+		if [ ! "x$CL" = "x${PREFIX}$NAME" ] ; then
+		    NEW_AL="$NEW_AL $CL"
+		fi
+	    done
+	    export _ACQUIRED_LOCKS="$NEW_AL"
+	fi
 	return 1
     fi
-    touch $LOCK
+    rm ${PREFIX}$LOCK
+    # unregister the lock with the _ACQUIRED_LOCKS var
+    if [ ! "x$_ACQUIRED_LOCKS" = "x" ] ; then
+	local NEW_AL
+	local FOUND_LOCK=0
+	for CL in $_ACQUIRED_LOCKS ; do
+	    if [ "x$CL" = "x${PREFIX}$NAME" ] ; then
+		FOUND_LOCK=1
+	    else
+		NEW_AL="$NEW_AL $CL"
+	    fi
+	done
+	if [ x$FOUND_LOCK = x0 ] ; then
+	    bomb "bad bookkeeping -- _ACQUIRED_LOCKS is missing entry $NAME"
+	fi
+	export _ACQUIRED_LOCKS="$NEW_AL"
+    else
+	bomb "bad bookkeeping -- _ACQUIRED_LOCKS is empty prior to a release"
+    fi
     log "Released $LOCK"
     return 0
 }
+
+#
+# releaseAllLocks
+#
+releaseAllLocks ( ) {
+    if [ ! "x$DEBUG" = x ] ; then log "releaseAllLocks() _ACQUIRED_LOCKS=[$_ACQUIRED_LOCKS]" ; fi
+
+    if [ ! "x$_ACQUIRED_LOCKS" = x ] ; then
+	for LOCK in $_ACQUIRED_LOCKS ; do
+	    releaseLock $LOCK
+	done
+    fi
+}
+
+#
+# acquireSemaphore [semaphoreName] [retryCount] [waitLength] [location]
+#
+acquireSemaphore ( ) {
+    if [ ! "x$DEBUG" = x ] ; then log "acquireSemaphore( \$1=[$1] \$2=[$2] \$3=[$3] \$4=[$4] )" ; fi
+
+    if [ "x$1" = x ] ; then local NAME="local" ; else local NAME="${1}" ; fi
+    if [ "x$2" = x ] ; then local RETRY=1 ; else local RETRY=$2 ; fi
+    if [ "x$3" = x ] ; then local WAIT=0 ; else local WAIT=$3 ; fi
+    if [ "x$4" = x ] ; then 
+	# if we start with a slash, prefix is nothing (rooted name), otherwise use a relative path
+	local SWS=`echo $NAME | sed 's/^\/.*/___ROOTED_NAME___/'`
+	if [ "x$SWS" = "x___ROOTED_NAME___" ] ; then local PREFIX="" ; else local PREFIX="./" ; fi
+    else 
+	# if we end with a slash, no worries, otherwise, append one
+	local SWS=`echo $NAME | sed 's/.*\/$/___END_SLASH___/'`
+	if [ "x$SWS" = "x___END_SLASH___" ] ; then local PREFIX="$4" ; else local PREFIX="${4}/" ; fi
+    fi
+    local SEMAPHORE="${NAME}.semaphore"
+
+    while [ ! -f ${PREFIX}$SEMAPHORE ] ; do
+	RETRY=`expr $RETRY - 1`
+	if [ $RETRY -lt 1 ] ; then
+	    log "Unable to obtain $SEMAPHORE in $PREFIX"
+	    return 1
+	fi
+	log "Waiting for $SEMAPHORE... $RETRY attempts remain"
+	sleep $WAIT
+    done
+    # we move instead of delete so that we can tell who has acquired the semaphore
+    cp -f "${PREFIX}${SEMAPHORE}" "${PREFIX}${SEMAPHORE}.acquired"
+    log "HOLDING PID: $$" "${PREFIX}${SEMAPHORE}.acquired"
+    export _ACQUIRED_SEMAPHORES="$_ACQUIRED_SEMAPHORES ${PREFIX}$NAME"
+    log "Acquired $SEMAPHORE"
+
+    return 0
+}
+
+
+#
+# releaseSemaphore [semaphoreName]
+#
+releaseSemaphore ( ) {
+    if [ ! "x$DEBUG" = x ] ; then log "releaseSemaphore( \$1=[$1] \$2=[$2] )" ; fi
+
+    if [ "x$1" = x ] ; then local NAME="local" ; else local NAME="${1}" ; fi
+    if [ "x$2" = x ] ; then 
+	# if we start with a slash, prefix is nothing (rooted name), otherwise use a relative path
+	local SWS=`echo $NAME | sed 's/^\/.*/___ROOTED_NAME___/'`
+	if [ "x$SWS" = "x___ROOTED_NAME___" ] ; then local PREFIX="" ; else local PREFIX="./" ; fi
+    else 
+	# if we end with a slash, no worries, otherwise, append one
+	local SWS=`echo $NAME | sed 's/.*\/$/___END_SLASH___/'`
+	if [ "x$SWS" = "x___END_SLASH___" ] ; then local PREFIX="$2" ; else local PREFIX="${2}/" ; fi
+    fi
+    local SEMAPHORE="${NAME}.semaphore"
+
+    if [ -f ${PREFIX}$SEMAPHORE ] ; then
+	warn "Semaphore [$SEMAPHORE] is already released"
+	# make sure the semaphore is not registered 
+	if [ ! "x$_ACQUIRED_SEMAPHORES" = "x" ] ; then
+	    local NEW_AS
+	    for SEM in $_ACQUIRED_SEMAPHORES ; do
+		if [ ! "x$SEM" = "x${PREFIX}$NAME" ] ; then
+		    NEW_AS="$NEW_AS $SEM"
+		fi
+	    done
+	    export _ACQUIRED_SEMAPHORES="$NEW_AS"
+	fi
+	return 1
+    fi
+    touch ${PREFIX}$SEMAPHORE
+    # save the PID of the process that last released this semaphore
+    log "CREATOR PID: $$" "${PREFIX}${SEMAPHORE}"
+    # unregister the semaphore with the _ACQUIRED_SEMAPHORES var
+    if [ ! "x$_ACQUIRED_SEMAPHORES" = "x" ] ; then
+	local NEW_AS
+	local FOUND_SEM=0
+	for SEM in $_ACQUIRED_SEMAPHORES ; do
+	    if [ "x$SEM" = "x${PREFIX}$NAME" ] ; then
+		FOUND_SEM=1
+	    else
+		NEW_AS="$NEW_AS $SEM"
+	    fi
+	done
+	if [ x$FOUND_SEM = x0 ] ; then
+	    bomb "bad bookkeeping -- _ACQUIRED_SEMAPHORES is missing entry $NAME"
+	fi
+	export _ACQUIRED_SEMAPHORES="$NEW_AS"
+    else
+	bomb "bad bookkeeping -- _ACQUIRED_SEMAPHORES is empty prior to release"
+    fi
+    log "Released $SEMAPHORE"
+    return 0
+}
+
+#
+# releaseAllSemaphores
+#
+releaseAllSemaphores ( ) {
+    if [ ! "x$DEBUG" = x ] ; then log "releaseAllSemaphores() _ACQUIRED_SEMAPHORES=[$_ACQUIRED_SEMAPHORES]" ; fi
+
+    if [ ! "x$_ACQUIRED_SEMAPHORES" = x ] ; then
+	for SEM in $_ACQUIRED_SEMAPHORES ; do
+	    releaseSemaphore $SEM
+	done
+    fi
+}
+
 
 #
 # mail {addressList} [subject] [body]
@@ -212,7 +508,7 @@ releaseLock ( ) {
 # addressList is required only if USER is not set
 ###
 mail ( ) {
-    if [ ! x$DEBUG = x ] ; then log "mail( \$1=[$1] \$2=[$2] \$3=[$3] )" ; fi
+    if [ ! "x$DEBUG" = "x" ] ; then log "mail( \$1=[$1] \$2=[$2] \$3=[$3] )" ; fi
 
     if [ "x$1" = x ] ; then 
 	if [ ! "x$USER" = x ] ; then
@@ -235,7 +531,7 @@ mail ( ) {
 	done
     fi
 
-    if [ ! x$DEBUG = x ] ; then log "mail: MAILER=[$MAILER] ADDRESS=[$ADDRESS] SUBJECT=[$SUBJECT]" ; fi
+    if [ ! "x$DEBUG" = "x" ] ; then log "mail: MAILER=[$MAILER] ADDRESS=[$ADDRESS] SUBJECT=[$SUBJECT]" ; fi
 
     # !!! should test validity of mail program existance
 
@@ -250,7 +546,13 @@ EOF
     fi
 }
 
+# INTERNAL STUFF
+###
+# vars used to manage locks and semaphores
+initializeVariable _ACQUIRED_LOCKS 
+initializeVariable _ACQUIRED_SEMAPHORES
+
 # GLOBAL STUFF
-# get a hostname and pwd to play with -- exports HOSTNAME and PWD accordingly
-getHostName
-initializeVariable PWD `pwd`
+# set a hostname and pwd to play with -- exports HOSTNAME and LPWD accordingly
+setHostName
+initializeVariable LPWD `pwd`
