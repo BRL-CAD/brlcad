@@ -162,14 +162,6 @@ int	count;
 		{
 			first_time = 0;
 			scan_count = ifp->if_width - x;
-			if ( count > scan_count )
-				count -= scan_count;
-			else
-			{
-				scan_count = count;
-				count = 0;
-			}
-
 			xpos = x;
 			ypos = y;
 		}
@@ -233,20 +225,11 @@ short	count;
 		{
 			first_time = 0;
 			scan_count = ifp->if_width - x;
-			if ( count > scan_count )
-				count -= scan_count;
-			else
-			{
-				scan_count = count;
-				count = 0;
-			}
-
 			xpos = x;
 			ypos = y;
 		}
 
 		cmov2s( xpos, ypos++ );		/* move to current position */
-
 
 		for( i = 0; i < scan_count; i++, pixptr++)
 		{
