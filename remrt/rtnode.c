@@ -422,7 +422,8 @@ char *buf;
 /* -------------------- */
 
 void
-rtsync_timeout()
+rtsync_timeout(foo)
+int	foo;
 {
 	bu_bomb("rtnode: unable to open remote framebuffer.  Ensure BRL-CAD Release 5.0 fbserv is running. Aborting.\n");
 }
