@@ -594,7 +594,7 @@ int mask;
     return;
   }
 
-  (void)rt_process_uplot_value( rtcp->vhead,
+  (void)rt_process_uplot_value( &rtcp->vhead,
 				rtcp->vbp,
 				rtcp->fp,
 				value,
