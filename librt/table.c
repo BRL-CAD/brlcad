@@ -32,7 +32,8 @@ static char RCStree[] = "@(#)$Header$ (BRL)";
 # define RT_DECLARE_INTERFACE(name)	\
 	RT_EXTERN(int rt_##name##_prep, (struct soltab *stp, \
 			struct rt_db_internal *ip, struct rt_i *rtip )); \
-	RT_EXTERN(int rt_##name##_shot, (struct soltab *stp, struct xray *rp, \
+	RT_EXTERN(int rt_##name##_shot, (struct soltab *stp,\
+			register struct xray *rp, \
 			struct application *ap, struct seg *seghead )); \
 	RT_EXTERN(void rt_##name##_print, (CONST struct soltab *stp)); \
 	RT_EXTERN(void rt_##name##_norm, (struct hit *hitp, \
