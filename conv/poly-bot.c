@@ -63,7 +63,6 @@ char *argv[];
 	union record *poly;
 	long poly_limit=0;
 	long curr_poly=0;
-	struct rt_tess_tol	ttol;
 	struct bn_tol		tol;
 	int polys=0;
 	int frees=0;
@@ -72,12 +71,6 @@ char *argv[];
 
 	ifp = stdin;
 	ofp = stdout;
-
-        ttol.magic = RT_TESS_TOL_MAGIC;
-        /* Defaults, updated by command line options. */
-        ttol.abs = 0.0;
-        ttol.rel = 0.01;
-        ttol.norm = 0.0;
 
         /* XXX These need to be improved */
         tol.magic = BN_TOL_MAGIC;
