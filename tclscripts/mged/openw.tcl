@@ -111,7 +111,7 @@ proc gui_create_default { args } {
     global mged_rotate_about
     global mged_transform
     global mged_rateknobs
-    global mged_adcflag
+    global mged_adc_draw
     global mged_v_axes_pos
     global mged_v_axes
     global mged_m_axes
@@ -611,8 +611,8 @@ menu .$id.m.settings.m.cm_vap -tearoff $do_tearoffs
 
 menubutton .$id.m.tools -text "Tools" -menu .$id.m.tools.m
 menu .$id.m.tools.m -tearoff $do_tearoffs
-.$id.m.tools.m add checkbutton -offvalue 0 -onvalue 1 -variable mged_adcflag($id)\
-	-label "Angle/Dist Cursor" -underline 0 -command "doit $id \"set adcflag \$mged_adcflag($id)\""
+.$id.m.tools.m add checkbutton -offvalue 0 -onvalue 1 -variable mged_adc_draw($id)\
+	-label "Angle/Dist Cursor" -underline 0 -command "doit $id \"adc draw \$mged_adc_draw($id)\""
 .$id.m.tools.m add checkbutton -offvalue 0 -onvalue 1 -variable edit_info_on($id)\
 	-label "Edit Info" -underline 0 -command "toggle_edit_info $id"
 .$id.m.tools.m add checkbutton -offvalue 0 -onvalue 1 -variable status_bar($id)\
@@ -625,6 +625,8 @@ if {$comb} {
 } 
 .$id.m.tools.m add checkbutton -offvalue 0 -onvalue 1 -variable buttons_on($id)\
 	-label "Button Menu" -underline 0 -command "toggle_button_menu $id"
+.$id.m.tools.m add checkbutton -offvalue 0 -onvalue 1 -variable mged_adc_control($id)\
+	-label "ADC Control Panel" -command "init_adc_control $id"
 .$id.m.tools.m add checkbutton -offvalue 0 -onvalue 1 -variable mged_grid_control($id)\
 	-label "Grid Control Panel" -command "init_grid_control $id"
 .$id.m.tools.m add separator
@@ -967,8 +969,7 @@ proc update_mged_vars { id } {
     global mged_active_dm
     global rateknobs
     global mged_rateknobs
-    global adcflag
-    global mged_adcflag
+    global mged_adc_draw
     global m_axes
     global mged_m_axes
     global v_axes
@@ -1008,7 +1009,7 @@ proc update_mged_vars { id } {
 
     winset $mged_active_dm($id)
     set mged_rateknobs($id) $rateknobs
-    set mged_adcflag($id) $adcflag
+    set mged_adc_draw($id) [adc draw]
     set mged_m_axes($id) $m_axes
     set mged_v_axes($id) $v_axes
     set mged_v_axes_pos($id) $v_axes_pos
@@ -1514,18 +1515,19 @@ proc do_rebind_keys { id } {
 proc adc { args } {
     global mged_active_dm
     global transform
-    global adcflag
-    global mged_adcflag
+    global mged_adc_draw
 
     set result [eval _mged_adc $args]
     set id [lindex [cmd_get] 2]
 
-    if {[info exists mged_active_dm($id)]} {
-	set mged_adcflag($id) $adcflag
-    }
+    if { ![llength $args] } {
+	if {[info exists mged_active_dm($id)]} {
+	    set mged_adc_draw($id) [adc draw]
+	}
 
-    if {$transform == "a"} {
-	do_mouse_bindings [winset]
+	if {$transform == "a"} {
+	    do_mouse_bindings [winset]
+	}
     }
 
     return $result
