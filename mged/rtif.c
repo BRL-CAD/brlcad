@@ -254,7 +254,8 @@ register char	**vp;
 	register struct solid *sp;
 	register int i;
 
-	rt_cmd_vec_len = build_tops(vp, &rt_cmd_vec[LEN]);
+	rt_cmd_vec_len = vp - rt_cmd_vec;
+	rt_cmd_vec_len += build_tops(vp, &rt_cmd_vec[LEN]);
 
 	/* Print out the command we are about to run */
 	vp = &rt_cmd_vec[0];
@@ -1117,6 +1118,7 @@ int	argc;
 	if( argc < 2 )
 		return(-1);
 	/* Has frame number */
+	tree_walk_needed = 0;
 	return(0);
 }
 
@@ -1253,6 +1255,7 @@ int	argc;
 
 	/* If new treewalk is needed, get new objects into view. */
 	if( tree_walk_needed )  {
+		(void)f_zap( 0, 0 );
 		edit_com( rt_cmd_vec_len, rt_cmd_vec, rtif_mode, 0 );
 	}
 
