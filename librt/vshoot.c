@@ -178,8 +178,12 @@ register struct application *ap;
 
 	/* For each type of solid to be shot at, assemble the vectors */
 	for( id = 1; id <= ID_MAXIMUM; id++ )  {
+		register int	nsol;
+
+		if( (nsol = rtip->rti_nsol_by_type[id]) <= 0 )  continue;
+
 		/* For each instance of this solid type */
-		for( i = rtip->rti_nsol_by_type[id]-1; i >= 0; i-- )  {
+		for( i = nsol-1; i >= 0; i-- )  {
 			ary_stp[i] = rtip->rti_sol_by_type[id][i];
 			ary_rp[i] = &(ap->a_ray);	/* XXX, sb [ray] */
 			ary_seg[i].seg_stp = SOLTAB_NULL;
@@ -188,18 +192,14 @@ register struct application *ap;
 		/* bounding box check */
 		/* bit vector check */
 		/* mark elements to be skipped with ary_stp[] = SOLTAB_NULL */
-#if 0
 		rt_functab[id].ft_vshot(
-#else
-		stub(
-#endif
 			ary_stp, ary_rp, ary_seg,
 			rtip->rti_nsol_by_type[id], ap );
 
 		/* set bits for all solids shot at */
 
 		/* append resulting seg list to input for boolweave */
-		for( i = rtip->rti_nsol_by_type[id]-1; i >= 0; i-- )  {
+		for( i = nsol-1; i >= 0; i-- )  {
 			register struct seg	*seg2;
 
 			if( ary_seg[i].seg_stp == SOLTAB_NULL )  continue;	/* MISS */
@@ -221,7 +221,7 @@ register struct application *ap;
 		}
 
 		/* OR in regionbits */
-		for( i = rtip->rti_nsol_by_type[id]-1; i >= 0; i-- )  {
+		for( i = nsol-1; i >= 0; i-- )  {
 			register int words;
 			register bitv_t *in = ary_stp[i]->st_regions;
 			register bitv_t *out = regionbits;	/* XXX sb [ray] */
@@ -335,7 +335,7 @@ out:
 
 /* Stub function which will "similate" a call to a vector shot routine */
 /*void*/
-stub( stp, rp, segp, n, ap)
+rt_vstub( stp, rp, segp, n, ap)
 struct soltab	       *stp[]; /* An array of solid pointers */
 struct xray		*rp[]; /* An array of ray pointers */
 struct  seg            segp[]; /* array of segs (results returned) */
