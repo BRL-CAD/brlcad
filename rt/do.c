@@ -884,8 +884,8 @@ double azim, elev;
 	/* Fit a sphere to the model RPP, diameter is viewsize,
 	 * unless viewsize command used to override.
 	 */
-	VSUB2( diag, rtip->mdl_max, rtip->mdl_min );
 	if( viewsize <= 0 ) {
+		VSUB2( diag, rtip->mdl_max, rtip->mdl_min );
 		viewsize = MAGNITUDE( diag );
 		if( aspect > 1 ) {
 			/* don't clip any of the image when autoscaling */
