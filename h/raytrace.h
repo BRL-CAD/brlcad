@@ -1425,7 +1425,10 @@ struct rt_i {
 	struct bu_list	rti_solidheads[RT_DBNHASH]; /* active solid lists */
 	struct bu_ptbl	rti_resources;	/* list of 'struct resource'es encountered */
 	double		rti_nu_gfactor;	/* constant in numcells computation */
-	struct soltab	*rti_up;	/* 'up' ptr for rt_submodel rti's only */
+	/* Experimental stuff for rt_submodel */
+/*	struct soltab	*rti_up;	/_* 'up' ptr for rt_submodel rti's only */
+	char		*rti_treetop;	/* bu_strduped, for rt_submodel rti's only */
+	int		rti_uses;	/* for rt_submodel */
 };
 
 #define RT_NU_GFACTOR_DEFAULT	1.5	 /* see rt_cut_it() for a description
@@ -1650,7 +1653,7 @@ struct rt_functab {
 			double /*mm2local*/));
 	int	(*ft_xform) BU_ARGS((struct rt_db_internal * /*op*/,
 			CONST mat_t /*mat*/, struct rt_db_internal * /*ip*/,
-			int /*free*/));
+			int /*free*/, struct db_i * /*dbip*/));
 	CONST struct bu_structparse *ft_parsetab;	/* rt_xxx_parse */
 	size_t	ft_internal_size;	/* sizeof(struct rt_xxx_internal) */
 	long	ft_internal_magic;	/* RT_XXX_INTERNAL_MAGIC */
