@@ -1,8 +1,13 @@
-/*	D E C O M P O S E --- perform Haar wavelet transform
+/*
+ *                 W A V E L E T . C
+ *
+ *      This program performs a wavelet transformation on data.
+ *      Transformations possible are decompositions and reconstructions.
+ *      Currently, only the Haar wavelet is supported.
  *
  *	Options
- *	-d		decompose
- *	-r		reconstruct
+ *	-D		decompose
+ *	-R		reconstruct
  *	-1		one-dimensional transform
  *	-2		two-dimensional transform
  *	-# n		n-elements/channels per sample (eg 3 for a pix file)
@@ -14,7 +19,28 @@
  *	-w		width of dataset
  *	-S		level/limit of transform ...
  *	-W			(size of avg img in transformed data output)
- */
+ *
+ *
+ *  Author -
+ *      Lee Butler
+ *      Christopher Sean Morrison
+ *  
+ *  Source -
+ *      The U. S. Army Research Laboratory
+ *      Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *  
+ *  Distribution Notice -
+ *      Re-distribution of this software is restricted, as described in
+ *      your "Statement of Terms and Conditions for the Release of
+ *      The BRL-CAD Package" agreement.
+ *
+ *  Copyright Notice -
+ *      This software is Copyright (C) 1998 & 1999 by the United States
+ *      Army in all countries except the USA.  All rights reserved.
+ *
+ ***********************************************************************/
+
+
 #include <stdio.h>
 #include "machine.h"
 #include "bu.h"
