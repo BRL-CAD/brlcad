@@ -36,15 +36,18 @@ struct dm dm_Null = {
 	Nu_void,
 	Nu_int0,
 	Nu_unsign, Nu_unsign,
+	Nu_void,
+	0,
 	0.0,
 	"nu", "Null Display"
 };
-extern struct dm dm_Mg, dm_Vg, dm_Tek, dm_Rat;
+extern struct dm dm_Mg, dm_Vg, dm_Tek, dm_Rat, dm_Ps;
 
 struct dm *dmp = &dm_Null;	/* Ptr to current Display Manager package */
 
 /* The [0] entry will be the startup default */
 static struct dm *which_dm[] = {
+	&dm_Ps,
 	&dm_Mg,
 	&dm_Vg,
 	&dm_Tek,
@@ -99,6 +102,7 @@ char *name;
 				sp->s_bytes = 0;
 			}
 		}
+		dmp->dmr_viewchange();
 		dmaflag++;
 		return;
 	}
