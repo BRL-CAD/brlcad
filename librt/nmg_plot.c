@@ -31,12 +31,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #define US_DELAY	10	/* Additional delay between frames */
 
-/* Move to vmath.h */
-#define VJOIN3(a,b,c,d,e,f,g,h)	\
-	(a)[X] = (b)[X] + (c)*(d)[X] + (e)*(f)[X] + (g)*(h)[X];\
-	(a)[Y] = (b)[Y] + (c)*(d)[Y] + (e)*(f)[Y] + (g)*(h)[Y];\
-	(a)[Z] = (b)[Z] + (c)*(d)[Z] + (e)*(f)[Z] + (g)*(h)[Z]
-
 #define NMG_TAB_RETURN_IF_SET_ELSE_SET(_tab,_index)	\
 	{ if( (_tab)[_index] )  return; \
 	  else (_tab)[_index] = 1; }
