@@ -19,10 +19,10 @@
 
 #include <stdio.h>	/* GED specific include files */
 #include <math.h>
-#include "../h/machine.h"
-#include "../h/vmath.h"
-#include "../h/db.h"
-#include "../h/raytrace.h"
+#include "machine.h"
+#include "vmath.h"
+#include "db.h"
+#include "raytrace.h"
 #include "./debug.h"
 
 #include "../libspl/b_spline.h"
@@ -135,7 +135,7 @@ struct rt_i * rtip;
 		{
 			fprintf(stderr,"BSURF geom_type = %d\n", 
 			    rec.d.d_geom_type );
-			return;
+			return(1);	/* BAD */
 		}
 
 		/* Read in the knot vectors and convert them to the 
@@ -345,7 +345,7 @@ struct b_tree * tree;
 {
 	struct b_tree * leftp, * rightp, * rootp;
 	
-	root = tree;
+	rootp = tree;
 
 	if ( tree->left != (struct b_tree *) 0 )
 	{
@@ -359,7 +359,7 @@ struct b_tree * tree;
 		n_free( rightp );
 	}
 
-	if ( rootp != (struct b_spline *) 0 )
+	if ( rootp->root != (struct b_spline *) 0 )
 		free_spl( rootp->root );
 
 	if ( rootp->u_diff != (struct b_spline *) 0 )
@@ -530,8 +530,8 @@ struct application *ap;
 			tree->left->dir = (tree-> dir == 0) ? 1:0;
 			tree->left->level = tree->level + 1;
 			tree->left->left = tree->left->right = NULLTREE;
-			tree->left->u_diff = NULLTREE;
-			tree->left->v_diff = NULLTREE;
+			tree->left->u_diff = (struct b_spline *)0;
+			tree->left->v_diff =  (struct b_spline *)0;
 
 			tree->right->root = sub->next; 		
 			tree->right->next = NULLTREE;
@@ -540,8 +540,8 @@ struct application *ap;
 			tree->right->level = tree->level + 1; 
 			tree->right->left =
 			tree->right->right = NULLTREE; 		
-			tree->right->u_diff = NULLTREE;
-			tree->right->v_diff = NULLTREE;
+			tree->right->u_diff = (struct b_spline *)0;
+			tree->right->v_diff = (struct b_spline *)0;
 		}
 shoot:
 		if ( rt_g.debug & DEBUG_SPLINE ) 
