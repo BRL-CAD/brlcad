@@ -1024,7 +1024,9 @@ start_cell:
 				/* Find the lowest pending hit, that's as far as boolfinal can progress to */
 				struct rt_piecestate **psp;
 				for( BU_PTBL_FOR( psp, (struct rt_piecestate **), &resp->re_pieces_pending ) )  {
-					FAST fastf_t dist = (*psp)->oddhit.hit_dist;
+					FAST fastf_t dist;
+
+					dist = (*psp)->oddhit.hit_dist;
 					BU_ASSERT_DOUBLE( dist, <, INFINITY );
 					if( dist < pending_hit )
 						pending_hit = dist;
