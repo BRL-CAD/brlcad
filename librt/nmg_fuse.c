@@ -34,6 +34,36 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "raytrace.h"
 #include "./debug.h"
 
+/* XXX Move to nmg_info.c */
+RT_EXTERN(int	 	nmg_is_vertex_in_face, (CONST struct vertex *v,
+			CONST struct face *f));
+/*
+ *			N M G _ I S _ V E R T E X _ I N _ F A C E
+ *
+ *  Returns -
+ *	!0	If there is at least one use of vertex 'v' in face 'f'.
+ *	0	If there are no uses of 'v' in 'f'.
+ */
+int
+nmg_is_vertex_in_face( v, f )
+CONST struct vertex	*v;
+CONST struct face	*f;
+{
+	CONST struct vertexuse	*vu;
+	CONST struct faceuse	*fu;
+
+	NMG_CK_VERTEX(v);
+	NMG_CK_FACE(f);
+
+	for( RT_LIST_FOR( vu, vertexuse, &v->vu_hd ) )  {
+		if( !(fu = nmg_find_fu_of_vu(vu)) )  continue;
+		NMG_CK_FACEUSE(fu);
+		if( fu->f_p != f )  continue;
+		return 1;
+	}
+	return 0;
+}
+
 /*
  *			N M G _ R E G I O N _ V _ U N I Q U E
  *
@@ -462,6 +492,12 @@ CONST struct rt_tol	*tol;
 		if( !vg )  rt_bomb("nmg_ck_fu_verts(): vertex with no geometry?\n");
 		NMG_CK_VERTEX_G(vg);
 
+		/* Topology check */
+		if( nmg_is_vertex_in_face( v, f2 ) )  {
+			continue;
+		}
+
+		/* Geometry check */
 		dist = DIST_PT_PLANE(vg->coord, fg2->N);
 		if( dist > tol->dist || dist < (-tol->dist) )  {
 			if (rt_g.NMG_debug & DEBUG_MESH)  {
@@ -489,6 +525,11 @@ CONST struct rt_tol	*tol;
 
 /*
  *			N M G _ T W O _ F A C E _ F U S E
+ *
+ *  XXX A better algorithm would be to compare loop by loop.
+ *  If the two faces share all the verts of at least one loop of 3 or more
+ *  vertices, then they should be shared.  Otherwise it will be awkward
+ *  having shared loop(s) on non-shared faces!!
  *
  *  Compare the geometry of two faces, and fuse them if they are the
  *  same within tolerance.
