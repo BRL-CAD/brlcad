@@ -1358,11 +1358,14 @@ RT_EXTERN(void rt_printb, (CONST char *s, unsigned long v, CONST char *bits) );
 RT_EXTERN(struct soltab *rt_find_solid, (CONST struct rt_i *rtip,
 	CONST char *name) );
 					/* Parse arbitrary data structure */
-RT_EXTERN(int rt_structparse, (struct rt_vls *vls, struct structparse *tab, char *base ) );
+RT_EXTERN(int rt_structparse, (struct rt_vls *vls,
+	CONST struct structparse *tab, char *base ) );
 		/* Print arbitrary data structure for human consuption*/
-RT_EXTERN(void rt_structprint, (char *title, struct structparse *tab, char *base ) );
+RT_EXTERN(void rt_structprint, (CONST char *title,
+	CONST struct structparse *tab, CONST char *base ) );
 		/* Print arbitrary data structure to vls for rt_structparse */
-RT_EXTERN(void rt_vls_structprint, (struct rt_vls *vls, struct structparse *tab, char *base ) );
+RT_EXTERN(void rt_vls_structprint, (struct rt_vls *vls,
+	CONST struct structparse *tab, CONST char *base ) );
 RT_EXTERN(char *rt_read_cmd, (FILE *fp) );	/* Read semi-colon terminated line */
 					/* do cmd from string via cmd table */
 RT_EXTERN(int rt_do_cmd, (struct rt_i *rtip, char *lp, struct command_tab *ctp) );
