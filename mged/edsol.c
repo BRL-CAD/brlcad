@@ -93,6 +93,7 @@ static short int fixv;		/* used in ECMD_ARB_ROTATE_FACE,f_eqn(): fixed vertex */
 MGED_EXTERN( fastf_t nmg_loop_plane_area , ( struct loopuse *lu , plane_t pl ) );
 MGED_EXTERN( struct wdb_pipeseg *find_pipeseg_nearest_pt, (CONST struct rt_list *pipe_hd, CONST point_t pt ) );
 MGED_EXTERN( void split_pipeseg, (struct rt_list *pipe_hd, struct wdb_pipeseg *ps, point_t pt ) );
+MGED_EXTERN( struct wdb_pipeseg *del_pipeseg, (struct wdb_pipeseg *ps ) );
 
 /* data for solid editing */
 int			sedraw;	/* apply solid editing changes */
@@ -181,6 +182,7 @@ int	es_menu;		/* item selected from menu */
 #define	MENU_PIPE_SCALE_ID	67
 #define	MENU_PIPE_ADD_SEG	68
 #define MENU_PIPE_INS_SEG	69
+#define MENU_PIPE_DEL_SEG	70
 
 extern int arb_faces[5][24];	/* from edarb.c */
 
@@ -488,6 +490,7 @@ struct menu_item pipe_menu[] = {
 	{ "next segment", pipe_ed, MENU_PIPE_NEXT_SEG },
 	{ "previous segment", pipe_ed, MENU_PIPE_PREV_SEG },
 	{ "split segment", pipe_ed, MENU_PIPE_SPLIT },
+	{ "delete segment", pipe_ed, MENU_PIPE_DEL_SEG },
 	{ "append segmemt", pipe_ed, MENU_PIPE_ADD_SEG },
 	{ "prepend segment", pipe_ed, MENU_PIPE_INS_SEG },
 	{ "scale segment OD", pipe_ed, MENU_PSEG_OD },
@@ -711,6 +714,12 @@ int arg;
 		case MENU_PIPE_INS_SEG:
 			es_menu = arg;
 			es_edflag = ECMD_PIPE_SEG_INS;
+		break;
+		case MENU_PIPE_DEL_SEG:
+			sedraw = 1;
+			es_menu = arg;
+			es_edflag = ECMD_PIPE_SEG_DEL;
+		break;
 	}
 #ifdef XMGED
 	set_e_axis_pos();
@@ -2910,6 +2919,16 @@ sedit()
 				break;
 
 			ins_pipeseg( pipe, new_pt );
+		}
+		break;
+	case ECMD_PIPE_SEG_DEL:
+		{
+			if( !es_pipeseg )
+			{
+				rt_log( "No pipe segment selected\n" );
+				break;
+			}
+			es_pipeseg = del_pipeseg( es_pipeseg );
 		}
 		break;
 	default:

@@ -468,7 +468,7 @@ vect_t dir;
 		VSUB2( to_start, ps->ps_start, ps->ps_bendcenter );
 		VSUB2( to_end, next->ps_start, ps->ps_bendcenter );
 		VCROSS( normal, to_start, to_end );
-		VCROSS( dir, normal, to_end );
+		VCROSS( dir, to_end, normal );
 		VUNITIZE( dir );
 		return;
 	}
@@ -1185,3 +1185,246 @@ CONST point_t new_pt;
 		break_bend( new_bend, to_start, d2, angle/2.0 );
 }
 
+struct wdb_pipeseg *
+del_pipeseg( ps )
+struct wdb_pipeseg *ps;
+{
+	struct wdb_pipeseg *next;
+	struct wdb_pipeseg *prev;
+	struct wdb_pipeseg *pprev;
+	struct wdb_pipeseg *bend1;
+	struct wdb_pipeseg *bend2;
+	struct wdb_pipeseg *linear;
+	vect_t trans;
+	point_t start,end;
+	vect_t dir1,dir2,dir3,dir4;
+	vect_t normal1,normal2;
+	vect_t to_center;
+	vect_t to_start,to_end,v2;
+	vect_t cent_to_cent;
+	vect_t d2,d2_rot;
+	vect_t d1,d1_rot;
+	fastf_t bend_radius1,bend_radius2;
+	fastf_t angle;
+	mat_t mat;
+
+	RT_CKMAG( ps, WDB_PIPESEG_MAGIC, "pipe segment" );
+
+	if( ps->ps_type == WDB_PIPESEG_TYPE_END )
+	{
+		rt_log( "Cannot delete END segment\n" );
+		return( ps );
+	}
+
+	prev = RT_LIST_PREV( wdb_pipeseg, &ps->l );
+	if( prev->l.magic == RT_LIST_HEAD_MAGIC )
+		prev = (struct wdb_pipeseg *)NULL;
+
+	next = RT_LIST_NEXT( wdb_pipeseg, &ps->l );
+	RT_CKMAG( next, WDB_PIPESEG_MAGIC, "pipe segment" );
+
+	/* Check if this is the only segment */
+	if( next->ps_type == WDB_PIPESEG_TYPE_END && !prev )
+	{
+		rt_log( "Cannot delete only segment in pipe\n" );
+		return( ps );
+	}
+
+	/* Check if this is the last segment */
+	if( next->ps_type == WDB_PIPESEG_TYPE_END )
+	{
+		/* just delete the last segment */
+		VMOVE( next->ps_start, ps->ps_start );
+		next->ps_od = ps->ps_od;
+		next->ps_id = ps->ps_id;
+		RT_LIST_DEQUEUE( &ps->l );
+		rt_free( (char *)ps, "del_pipeseg: ps" );
+		if( prev )
+			return( prev );
+		else
+			return( next );
+	}
+
+	/* Check if this is the first segment */
+	if( !prev )
+	{
+		/* just delete the first segment */
+		RT_LIST_DEQUEUE( &ps->l );
+		rt_free( (char *)ps, "del_pipeseg: ps" );
+		return( next );
+	}
+
+	/* selected segment has segments before and after it */
+	if( ps->ps_type == WDB_PIPESEG_TYPE_BEND )
+	{
+		rt_log( "Cannot delete BEND segments in the middle of a pipe\n" );
+		return( ps );
+	}
+
+	/* if selected segment is one of two consecutive linear segments,
+	 * just remove one and stretch the remaining one
+	 */
+	if( next->ps_type == WDB_PIPESEG_TYPE_LINEAR )
+	{
+		if( prev->ps_type == WDB_PIPESEG_TYPE_BEND )
+		{
+			next->ps_od = prev->ps_od;
+			next->ps_id = prev->ps_id;
+			VMOVE( next->ps_start, ps->ps_start );
+		}
+
+		RT_LIST_DEQUEUE( &ps->l );
+		rt_free( (char *)ps, "del_pipeseg: ps" );
+		return( next );
+	}
+
+	if( prev->ps_type == WDB_PIPESEG_TYPE_LINEAR )
+	{
+		RT_LIST_DEQUEUE( &ps->l );
+		rt_free( (char *)ps, "del_pipeseg: ps" );
+		return( prev );
+	}
+
+	/* If we reach here, selected segment is linear with bends at both ends */
+
+	if( next->ps_type != WDB_PIPESEG_TYPE_BEND || prev->ps_type != WDB_PIPESEG_TYPE_BEND )
+	{
+		rt_log( "Error in del_pipeseg, linear segment not surrounded by bends!!!\n" );
+		return( ps );
+	}
+
+	/* Get translation vector for moving bend segments */
+	VSUB2( trans, next->ps_start, ps->ps_start );
+	RT_LIST_DEQUEUE( &ps->l );
+	rt_free( (char *)ps, "del_pipeseg: ps" );
+
+	/* move all bend segments prior to "ps" by translation vector */
+	while( prev->l.magic != RT_LIST_HEAD_MAGIC && prev->ps_type == WDB_PIPESEG_TYPE_BEND )
+	{
+		VADD2( prev->ps_start, prev->ps_start, trans );
+		VADD2( prev->ps_bendcenter, prev->ps_bendcenter, trans );
+		prev = RT_LIST_PREV( wdb_pipeseg, &prev->l );
+	}
+
+	/* if no linear segments, we are done */
+	if( prev->l.magic == RT_LIST_HEAD_MAGIC )
+		return( next );
+
+	if( prev->ps_type != WDB_PIPESEG_TYPE_LINEAR )
+		rt_bomb( "del_pipeseg: Expecting a linear segment, didn't find one!!!\n" );
+
+	linear = prev;
+	bend2 = RT_LIST_NEXT( wdb_pipeseg, &linear->l );
+	bend1 = RT_LIST_PREV( wdb_pipeseg, &linear->l );
+	if( bend1->l.magic == RT_LIST_HEAD_MAGIC )
+		bend1 = (struct wdb_pipeseg *)NULL;
+	next = RT_LIST_NEXT( wdb_pipeseg, &bend2->l );
+
+	/* bend1, linear, and bend2 must be adjusted to mate correctly */
+
+	if( bend1 )
+	{
+		/* calculate new bend center for bend1 */
+		get_bend_start_line( bend1, start, dir1 );
+		bend_radius1 = get_bend_radius( bend1 );
+
+		/* get line direction away from bend */
+		VREVERSE( dir1, dir1 );
+
+		VSUB2( dir2, next->ps_start, start );
+		VCROSS( normal1, dir1, dir2 );
+
+		VCROSS( to_center, normal1, dir1 );
+		VUNITIZE( to_center );
+		VJOIN1( bend1->ps_bendcenter, start, bend_radius1, to_center );
+	}
+	else
+		VSUB2( dir2, next->ps_start, linear->ps_start )
+
+	/* calculate new bend center for bend2 */
+	get_bend_end_line( bend2, end, dir3 );
+	bend_radius2 = get_bend_radius( bend2 );
+
+	VREVERSE( dir3, dir3 );
+	VREVERSE( dir4, dir2 );
+	VCROSS( normal2, dir4, dir3 );
+	VCROSS( to_center, dir3, normal2 );
+	VUNITIZE( to_center );
+	VJOIN1( bend2->ps_bendcenter, next->ps_start, bend_radius2, to_center );
+
+	/* calculate angle off normal of center-to-center line for bend/linear junction */
+	if( bend1 )
+	{
+		VSUB2( cent_to_cent, bend2->ps_bendcenter, bend1->ps_bendcenter );
+		VCROSS( d1, normal1, cent_to_cent );
+	}
+	else
+		VSUB2( cent_to_cent, bend2->ps_bendcenter, linear->ps_start )
+
+	VCROSS( d2, normal2, cent_to_cent );
+
+	if( bend1 )
+	{
+		if( VDOT( d1, d2 ) > 0.0 )
+			angle = asin( (bend_radius1 - bend_radius2)/MAGNITUDE( cent_to_cent ) );
+		else
+			angle = asin( (bend_radius1 + bend_radius2)/MAGNITUDE( cent_to_cent ) );
+	}
+	else
+		angle = asin( bend_radius2/MAGNITUDE( cent_to_cent ) );
+
+	/* calulate new end points for linear segment */
+	if( NEAR_ZERO( angle, RT_DOT_TOL ) )
+	{
+		if( bend1 )
+		{
+			VUNITIZE( d1 );
+			VJOIN1( linear->ps_start, bend1->ps_bendcenter, bend_radius1, d1 );
+		}
+		VUNITIZE( d2 );
+		VJOIN1( bend2->ps_start, bend2->ps_bendcenter, bend_radius2, d2 );
+		return( linear );
+	}
+
+	if( bend1 )
+	{
+		VUNITIZE( normal1 );
+		mat_arb_rot( mat, bend1->ps_bendcenter, normal1, angle );
+		MAT4X3VEC( d1_rot, mat, d1 );
+		VUNITIZE( d1_rot );
+		VJOIN1( linear->ps_start, bend1->ps_bendcenter, bend_radius1, d1_rot );
+	}
+
+	VUNITIZE( normal2 );
+	mat_arb_rot( mat, bend2->ps_bendcenter, normal2, angle );
+	MAT4X3VEC( d2_rot, mat, d2 );
+	VUNITIZE( d2_rot );
+	VJOIN1( bend2->ps_start, bend2->ps_bendcenter, bend_radius2, d2_rot );
+
+	/* insure that bends are less than 180 degrees */
+	if( bend1 )
+	{
+		VSUB2( to_start, bend1->ps_start, bend1->ps_bendcenter );
+		VUNITIZE( to_start );
+		VSUB2( to_end, linear->ps_start, bend1->ps_bendcenter );
+		VCROSS( v2, to_start, normal1 );
+		angle = atan2( VDOT( to_end, v2 ), VDOT( to_end, to_start ) );
+		if( angle < 0.0 )
+			angle += 2.0*rt_pi;
+		if( angle > rt_pi - RT_DOT_TOL )
+			break_bend( bend1, to_start, v2, angle/2.0 );
+	}
+
+	VSUB2( to_start, bend2->ps_start, bend2->ps_bendcenter );
+	VUNITIZE( to_start );
+	next = RT_LIST_NEXT( wdb_pipeseg, &bend2->l );
+	VSUB2( to_end, next->ps_start, bend2->ps_bendcenter );
+	VCROSS( v2, to_start, normal2 );
+	angle = atan2( VDOT( to_end, v2 ), VDOT( to_end, to_start ) );
+	if( angle < 0.0 )
+		angle += 2.0*rt_pi;
+	if( angle > rt_pi - RT_DOT_TOL )
+		break_bend( bend2, to_start, v2, angle/2.0 );
+
+	return( linear );
+}
