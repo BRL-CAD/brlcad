@@ -137,7 +137,6 @@ int face_orient;
 	for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
 	{
 		struct vertex **v;
-		struct iges_vert *ivert;
 
 		v = Get_vertex( &edge_uses[i] );
 
@@ -203,7 +202,7 @@ int face_orient;
 			int linear;
 			int coords;
 			struct edge_g_cnurb *crv;
-			struct vertex *v1,*v2;
+			struct vertex *v2;
 			struct edgeuse *new_eu;
 			point_t start_uv;
 			point_t end_uv;
@@ -225,7 +224,6 @@ int face_orient;
 
 			if( param->next )
 			{
-				v1 = eu->vu_p->v_p;
 				/* need to split this edge to agree with parameter curves */
 				new_eu = nmg_esplit( v2, eu, 0 );
 

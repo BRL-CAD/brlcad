@@ -41,7 +41,6 @@ Do_subfigs()
 		int *members;
 		char *name;
 		struct wmember head2;
-		vect_t tmp_vec;
 		double mat_scale[3];
 		int non_unit;
 

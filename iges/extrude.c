@@ -26,7 +26,6 @@ int entityno;
 	int		sol_num;		/* IGES solid type number */
 	int		curve;			/* pointer to directory entry for base curve */
 	struct ptlist	*curv_pts;		/* List of points along curve */
-	point_t		crvmin,crvmax;		/* Bounding box for curve */
 	int		i;
 
 	/* Default values */

@@ -713,7 +713,6 @@ genptr_t	ptr;
 {
 	struct rt_db_internal intern;
 	struct rt_comb_internal *comb;
-	struct directory *dp_M;
 	struct iges_properties props;
 	int comb_len;
 	int i;

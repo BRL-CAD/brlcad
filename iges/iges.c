@@ -3071,7 +3071,6 @@ FILE *fp_dir,*fp_param;
 	int			name_de;
 	int			props_de;
 	int			color_de=DEFAULT;
-	int			union_count=0;
 	int			non_union_count=0;
 	int			status=1;
 	int			entity_type;

@@ -24,16 +24,14 @@ void
 Convtree()
 {
 
-	int			notdone=2;
 	int			conv=0;
 	int			tottrees=0;
-	union tree		*ptr,*oldptr;
+	union tree		*ptr;
 	union tree		*Readtree(),*Copytree();
 	struct rt_comb_internal	*comb;
 	int			no_of_assoc=0;
 	int			no_of_props=0;
 	int			att_de=0;
-	unsigned char 		*rgb;
 	struct brlcad_att	brl_att;
 	int			i,j,k;
 

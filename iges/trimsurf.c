@@ -49,16 +49,12 @@ struct model *m;
 	struct face_g_snurb *srf;
 	point_t pt;
 	int entity_type;
-	int i,j;
-	int num_knots;
-	int num_pts;
+	int i;
 	int rational;
 	int ncoords;
 	int n_rows,n_cols,u_order,v_order;
 	int n_u,n_v;
 	int pt_type;
-	fastf_t u_min,u_max;
-	fastf_t v_min,v_max;
 	double a;
 
 	/* Acquiring Data */
@@ -193,13 +189,9 @@ struct model *m;
 	}
 
 	Readdbl( &a , "" );
-	u_min = a;
 	Readdbl( &a , "" );
-	u_max = a;
 	Readdbl( &a , "" );
-	v_min = a;
 	Readdbl( &a , "" );
-	v_max = a;
 
 	return( srf );
 }
@@ -244,7 +236,7 @@ int entity_no;
 	int entity_type;
 	int num_pts;
 	int degree;
-	int i,j;
+	int i;
 	int planar;
 	int rational;
 	int pt_type;
@@ -412,7 +404,6 @@ struct face_g_snurb *srf;
 	struct edgeuse *new_eu;
 	struct vertex *vp;
 	double x,y,z;
-	fastf_t u,v;
 	point_t pt, pt2;
 	int ncoords;
 	int i;
@@ -581,14 +572,11 @@ int orientation;
 struct face_g_snurb *srf;
 struct faceuse *fu;
 {
-	struct edge_g_cnurb *crv;
 	struct loopuse *lu;
 	struct edgeuse *eu;
 	struct edgeuse *new_eu;
 	struct vertexuse *vu;
 	struct vertex *vp;
-	point_t pt_on_srf;
-	vect_t uvw;
 	int entity_type;
 	int ncoords;
 	double x,y,z;
@@ -830,7 +818,6 @@ Make_default_loop( srf, fu )
 struct face_g_snurb *srf;
 struct faceuse *fu;
 {
-	struct shell *s;
 	struct loopuse *lu;
 	struct edgeuse *eu;
 	struct vertexuse *vu;
@@ -984,16 +971,10 @@ struct shell *s;
 	struct face_g_snurb *srf;
 	struct faceuse *fu;
 	struct loopuse *lu;
-	struct loopuse *lumate;
 	struct loopuse *kill_lu;
-	struct nurb_verts *nurb_v;
 	struct vertex *verts[3];
 	int entity_type;
 	int surf_de;
-	int nverts;
-	int u_order,v_order,n_u,n_v,n_rows,n_cols,pt_type;
-	fastf_t *ukv,*vkv,*mesh,u_min,u_max,v_min,v_max;
-	int coords;
 	int has_outer_boundary,inner_loop_count,outer_loop;
 	int *inner_loop;
 	int i;
@@ -1041,7 +1022,6 @@ struct shell *s;
 		rt_free( (char *)inner_loop , "trim_surf: inner_loop" );
 		return( (struct faceuse *)NULL );
 	}
-	coords = RT_NURB_EXTRACT_COORDS( srf->pt_type );
 
 	/* Make a face (with a loop to be destroted later)
 	 * because loop routines insist that face and face geometry
@@ -1229,8 +1209,6 @@ struct bu_list *hit_list;
 			struct snurb_hit *myhit;
 			vect_t to_hit;
 			fastf_t homo_hit[4];
-			int ot_sames, ot_opps;
-			struct loopuse *lu;
 
 			next = hp->next;
 
@@ -1503,7 +1481,6 @@ Convtrimsurfs()
 	struct nmgregion *r;
 	struct shell *s;
 	struct faceuse *fu;
-	struct bu_list bezier;
 	struct bu_list hit_list;
 
 	rt_log( "\n\nConverting Trimmed Surface entities:\n" );

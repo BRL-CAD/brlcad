@@ -21,7 +21,6 @@ char *name;
 	struct name_list *ptr;
 	int namelen;
 	int i;
-	int found=0;
 
 	/* replace white space */
 	namelen = strlen( name );
@@ -41,10 +40,7 @@ char *name;
 	while( ptr )
 	{
 		if( !strncmp( ptr->name, name, NAMESIZE ) )
-		{
-			found = 1;
 			return( ptr->name );
-		}
 		ptr = ptr->next;
 	}
 
@@ -520,8 +516,6 @@ Get_subfig_name( entityno )
 int entityno;
 {
 	int i;
-	int def_de;
-	int def_index;
 	int entity_type;
 	char *name;
 
