@@ -784,27 +784,10 @@ struct rt_i	*rtip;
 	env_region.reg_forw = REGION_NULL;
 	env_region.reg_mfuncs = (char *)0;
 
-	rt_vls_init( &material );
-	rt_vls_vlscat( &material, matparm );
-	/* Expect "material SPACE args", find space */
-	cp = RT_VLS_ADDR( &material );
-	while( *cp != '\0' )  {
-		if( !isascii(*cp) || isspace(*cp) )  break;
-		cp++;
-	}
-	if( *cp == '\0' )  {
-		/*  Null was encountered while searching for space,
-		 *  leave "cp" pointing at null, e.g., no parameter string.
-		 */
-	} else {
-		/* Replace space with null, advance "cp" to parameter */
-		*cp++ = '\0';
-	}
-
-	env_region.reg_mater.ma_shader = bu_vls_strdup( &material );
+	env_region.reg_mater.ma_shader = bu_vls_strdup( matparm );
 
 	if( mlib_setup( &env_region, rtip ) < 0 )
 		rt_log("envmap_setup() material '%s' failed\n", env_region.reg_mater );
-	rt_vls_free( &material );
+
 	return(0);		/* This region should be dropped */
 }
