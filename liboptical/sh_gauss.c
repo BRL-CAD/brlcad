@@ -534,9 +534,9 @@ char			*dp;	/* ptr to the shader-specific struct */
 		RT_CK_SOLTAB(seg_p->seg_stp);
 
 		/* check to see if the seg/solid is in this partition */
-		if (BITTEST(pp->pt_solhit, seg_p->seg_stp->st_bit) ) {
+		if( bu_ptbl_locate( &pp->pt_solids_hit, (long *)seg_p->seg_stp ) != -1 )  {
 
-
+			/* XXX You might use a bu_ptbl list of the solid pointers... */
 			/* check to see if the solid is from this region */
 			for (RT_LIST_FOR(dbint_p, reg_db_internals,
 			    &gauss_sp->dbil)){
@@ -555,7 +555,7 @@ char			*dp;	/* ptr to the shader-specific struct */
 			}
 		} else {
 				if( rdebug&RDEBUG_SHADE)
-					rt_log("bittest failed\n");
+					rt_log("gauss_render() bittest failed\n");
 		}
 	}
 
