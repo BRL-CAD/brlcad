@@ -40,6 +40,8 @@
     destructor {}
 
     public {
+	common SEP_MARK "XXX_SEP"
+
 	# initialize table with 1 row and 1 col
 	variable table {{{}}}
 	variable rows 1
@@ -56,6 +58,7 @@
 	method appendRow {rdata}
 	method deleteRow {i}
 	method insertRow {i rdata}
+	method moveRow {srcIndex destIndex}
 
 	# methods that operate on columns
 	method getCol {j}
@@ -73,6 +76,14 @@
 
 	method isData {i mark}
 	method countData {i mark}
+
+	method printColRange {chan j1 j2}
+	method sortByCol {j type order}
+	method searchCol {j i str}
+	method deleteEmptyRows {}
+    }
+
+    protected {
     }
 }
 
@@ -220,6 +231,58 @@
     set table $newtable
     incr rows
     return
+}
+
+::itcl::body Table::moveRow {srcIndex destIndex} {
+    if {![isValidRow $srcIndex] || ![isValidRow $destIndex]} {
+	error "Table::insertRow: srcIndex and destIndex must be in the range (1, $rows) inclusive"
+    }
+
+    if {$srcIndex == $destIndex} {
+	# Nothing to do
+	return
+    }
+
+    incr srcIndex -1
+    incr destIndex -1
+
+    set rdata [lindex $table $srcIndex]
+    set newtable {}
+
+    if {0 < $destIndex} {
+	if {0 < $srcIndex} {
+	    if {$srcIndex < $destIndex} {
+		set i1 $srcIndex
+		set i2 $destIndex
+
+		eval lappend newtable [lrange $table 0 [expr {$i1 - 1}]]
+		eval lappend newtable [lrange $table [expr {$i1 + 1}] \
+					             [expr {$i2 - 1}]]
+		lappend newtable $rdata
+		eval lappend newtable [lrange $table $i2 end]
+	    } else {
+		set i1 $destIndex
+		set i2 $srcIndex
+
+		eval lappend newtable [lrange $table 0 [expr {$i1 - 1}]]
+		lappend newtable $rdata
+		eval lappend newtable [lrange $table $i1 \
+					             [expr {$i2 - 1}]]
+		eval lappend newtable [lrange $table [expr {$i2 + 1}] end]
+	    }
+
+	} else {
+	    eval lappend newtable [lrange $table 1 [expr {$destIndex - 1}]]
+	    lappend newtable $rdata
+	    eval lappend newtable [lrange $table $destIndex end]
+	}
+    } else {
+	lappend newtable $rdata
+	eval lappend newtable [lrange $table 0 [expr {$srcIndex - 1}]]
+	eval lappend newtable [lrange $table [expr {$srcIndex + 1}] end]
+    }
+
+    set table $newtable
 }
 
 ::itcl::body Table::getCol {j} {
@@ -464,6 +527,120 @@
     }
 
     return $dcount
+}
+
+::itcl::body Table::printColRange {chan j1 j2} {
+    if {![isValidCol $j1]} {
+	error "Table::printColRange: j1 must be in the range (1,$cols) inclusive"
+    } else {
+	incr j1 -1
+    }
+
+    if {$j2 != "end"} {
+	if {![isValidCol $j2]} {
+	    error "Table::printColRange: j2 must be in the range (1,$cols) inclusive"
+	} else {
+	    incr j2 -1
+	}
+    }
+
+    foreach row $table {
+	set item1 [lindex $row 0]
+	if {[lindex $item1 0] != $SEP_MARK} {
+	    foreach item [lrange $row $j1 $j2] {
+		puts -nonewline $chan "$item\t"
+	    }
+	} else {
+	    puts -nonewline $chan [lindex $item1 1]
+	}
+	puts $chan ""
+    }
+}
+
+## - sortByCol
+#
+# Sort the table using column j
+#
+::itcl::body Table::sortByCol {j type order} {
+    if {![isValidCol $j]} {
+	error "Table::sortByCol: j must be in the range (1,$cols) inclusive"
+    }
+
+    if {$type != "-ascii" &&
+	$type != "-dictionary" &&
+	$type != "-integer" &&
+	$type != "-real"} {
+	error "Table::sortByCol: type must be either -ascii, -dictionary, -integer or -real"
+    }
+
+    if {$order != "-increasing" &&
+        $order != "-decreasing"} {
+	error "Table::sortByCol: order must be either -increasing or -decreasing"
+    }
+
+    incr j -1
+    set newTable {}
+
+    # First, we wack the separator and empty rows
+    foreach row $table {
+	set item1 [lindex $row 0]
+	if {[lindex $item1 0] != $SEP_MARK} {
+	    set empty 1
+
+	    foreach item $row {
+		if {$item != {}} {
+		    set empty 0
+		    break
+		}
+	    }
+
+	    if {$empty} {
+		incr rows -1
+	    } else {
+		lappend newTable $row
+	    }
+	} else {
+	    incr rows -1
+	}
+    }
+
+    # sort the new table
+    set table [lsort -index $j $type $order $newTable]
+
+    return
+}
+
+## - searchCol
+#
+# Search for the string in the specified column
+#
+::itcl::body Table::searchCol {j i str} {
+    set cdata [getCol $j]
+    incr i -1
+    return [expr {[lsearch -start $i -regexp $cdata $str]} + 1]
+}
+
+::itcl::body Table::deleteEmptyRows {} {
+    set newTable {}
+
+    foreach row $table {
+	set empty 1
+
+	foreach item $row {
+	    if {$item != {}} {
+		set empty 0
+		break
+	    }
+	}
+
+	if {$empty} {
+	    incr rows -1
+	} else {
+	    lappend newTable $row
+	}
+    }
+
+    set table $newTable
 }
 
 # Local Variables:
