@@ -131,7 +131,7 @@ Acknowledgements:
 	(p)=BU_LIST_PLAST(structure,p)
 
 /* defined in librt/dg_obj.c */
-extern int dgo_invent_solid(struct dg_obj *dgop, Tcl_Interp *interp, char *name, struct bu_list *vhead, long int rgb, int copy);
+extern int dgo_invent_solid(struct dg_obj *dgop, Tcl_Interp *interp, char *name, struct bu_list *vhead, long int rgb, int copy, fastf_t transparency, int dmode);
 extern void dgo_notify(struct dg_obj *dgop, Tcl_Interp *interp);
 
 static int vdraw_write_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
@@ -564,7 +564,7 @@ vdraw_send_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 				 solid_name,
 				 &(dgop->dgo_currVHead->vdc_vhd),
 				 dgop->dgo_currVHead->vdc_rgb,
-				 1);
+				 1, 0.0, 0);
 	dgo_notify(dgop, interp);
 
 	bu_vls_init(&vls);
