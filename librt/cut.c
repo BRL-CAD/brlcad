@@ -705,6 +705,106 @@ int				 just_collect_info, depth;
 	bu_free( (genptr_t)nu_xbox.bn_list, "nu_xbox bn_list[]" );
 }	
 
+int
+rt_split_mostly_empty_cells( struct rt_i *rtip, union cutter *cutp )
+{
+	point_t max, min;
+	struct soltab *stp;
+	struct rt_piecelist pl;
+	fastf_t range[3], empty[3], tmp;
+	int upper_or_lower[3];
+	fastf_t max_empty;
+	int max_empty_dir;
+	int i;
+	int num_splits=0;
+
+	switch( cutp->cut_type ) {
+	case CUT_CUTNODE:
+		num_splits += rt_split_mostly_empty_cells( rtip, cutp->cn.cn_l );
+		num_splits += rt_split_mostly_empty_cells( rtip, cutp->cn.cn_r );
+		break;
+	case CUT_BOXNODE:
+		/* find the actual bounds of stuff in this cell */
+		if( cutp->bn.bn_len == 0 && cutp->bn.bn_piecelen == 0 ) {
+			break;
+		}
+		VSETALL( min, MAX_FASTF );
+		VREVERSE( max, min );
+
+		for( i=0 ; i<cutp->bn.bn_len ; i++ ) {
+			stp = cutp->bn.bn_list[i];
+			VMIN( min, stp->st_min );
+			VMAX( max, stp->st_max );
+		}
+
+		for( i=0 ; i<cutp->bn.bn_piecelen ; i++ ) {
+			int j;
+
+			pl = cutp->bn.bn_piecelist[i];
+			for( j=0 ; j<pl.npieces ; j++ ) {
+				int piecenum;
+
+				piecenum = pl.pieces[j];
+				VMIN( min, pl.stp->st_piece_rpps[piecenum].min );
+				VMAX( max, pl.stp->st_piece_rpps[piecenum].max );
+			}
+		}
+
+		/* clip min and max to the bounds of this cell */
+		for( i=X ; i<=Z ; i++ ) {
+			if( min[i] < cutp->bn.bn_min[i] ) {
+				min[i] = cutp->bn.bn_min[i];
+			}
+			if( max[i] > cutp->bn.bn_max[i] ) {
+				max[i] = cutp->bn.bn_max[i];
+			}
+		}
+
+		/* min and max now have the real bounds of data in this cell */
+		VSUB2( range, cutp->bn.bn_max, cutp->bn.bn_min );
+		for( i=X ; i<=Z ; i++ ) {
+			empty[i] = cutp->bn.bn_max[i] - max[i];
+			upper_or_lower[i] = 1; /* upper section is empty */
+			tmp = min[i] - cutp->bn.bn_min[i];
+			if( tmp > empty[i] ) {
+				empty[i] = tmp;
+				upper_or_lower[i] = 0;	/* lower section is empty */
+			}
+		}
+		max_empty = empty[X];
+		max_empty_dir = X;
+		if( empty[Y] > max_empty ) {
+			max_empty = empty[Y];
+			max_empty_dir = Y;
+		}
+		if( empty[Z] > max_empty ) {
+			max_empty = empty[Z];
+			max_empty_dir = Z;
+		}
+		if( max_empty / range[max_empty_dir] > 0.5 ) {
+			/* this cell is over 50% empty in this direction, split it */
+
+			fastf_t where;
+
+			if( upper_or_lower[max_empty_dir] ) {
+				where = max[max_empty_dir];
+			} else {
+				where = min[max_empty_dir];
+			}
+			if( rt_ct_box( rtip, cutp, max_empty_dir, where ) ) {
+				num_splits++;
+				num_splits += rt_split_mostly_empty_cells( rtip, cutp->cn.cn_l );
+				num_splits += rt_split_mostly_empty_cells( rtip, cutp->cn.cn_r );
+			}
+		}
+		break;
+	}
+
+	return( num_splits );
+}
+
+
+
 /*
  *  			R T _ C U T _ I T
  *  
@@ -723,6 +823,7 @@ int			ncpu;
 	register struct soltab *stp;
 	union cutter *finp;	/* holds the finite solids */
 	FILE *plotfp;
+	int num_splits=0;
 
 	/* Make a list of all solids into one special boxnode, then refine. */
 	BU_GETUNION( finp, cutter );
@@ -827,6 +928,13 @@ int			ncpu;
 			}
 		}
 #endif
+		/* one more pass to find cells that are mostly empty */
+		num_splits = rt_split_mostly_empty_cells( rtip,  &rtip->rti_CutHead );
+
+		if( RT_G_DEBUG&DEBUG_CUT ) {
+			bu_log( "rt_split_mostly_empty_cells(): split %d cells\n", num_splits );
+		}
+
 		break; }
 	default:
 		rt_bomb( "rt_cut_it: unknown space partitioning method\n" );
