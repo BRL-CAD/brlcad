@@ -2488,6 +2488,64 @@ fastf_t			dist;			/* distance along intersect ray for this vu */
 }
 
 static void
+nmg_coplanar_face_vertex_fuse( fu1, fu2, tol )
+struct faceuse *fu1, *fu2;
+struct bn_tol *tol;
+{
+	struct bu_ptbl fu1_verts;
+	struct bu_ptbl fu2_verts;
+	int i, j;
+	vect_t norm;
+
+	NMG_CK_FACEUSE( fu1 );
+	NMG_CK_FACEUSE( fu2 );
+	BN_CK_TOL( tol );
+
+	NMG_GET_FU_NORMAL( norm, fu1 );
+
+	nmg_vertex_tabulate( &fu1_verts, &fu1->l.magic );
+	nmg_vertex_tabulate( &fu2_verts, &fu2->l.magic );
+
+	for( i=0 ; i<BU_PTBL_END( &fu1_verts ) ; i++ )
+	{
+		struct vertex *v1;
+
+		v1 = (struct vertex *)BU_PTBL_GET( &fu1_verts, i );
+
+		for( j=0 ; j<BU_PTBL_END( &fu2_verts ) ; j++ )
+		{
+			struct vertex *v2;
+			vect_t diff;
+			vect_t diff_unit;
+			fastf_t len_sq, inv_len;
+			fastf_t dot;
+
+			v2 = (struct vertex *)BU_PTBL_GET( &fu2_verts, j );
+
+			if( v1 == v2 )
+				continue;
+
+			VSUB2( diff, v1->vg_p->coord, v2->vg_p->coord );
+			len_sq = MAGSQ( diff );
+			if( len_sq > 4.0*tol->dist_sq )
+				continue;
+
+			inv_len = 1.0 / sqrt( len_sq );
+
+			VSCALE( diff_unit, diff, inv_len );
+
+			dot = VDOT( norm, diff_unit );
+			if( BN_VECT_ARE_PARALLEL( dot, tol ) )
+			{
+				/* fuse these two vertices */
+				nmg_jv( v2, v1 );
+				break;
+			}
+		}
+	}
+}
+
+static void
 nmg_isect_two_face2p_jra( is, fu1, fu2 )
 struct nmg_inter_struct	*is;
 struct faceuse		*fu1, *fu2;
@@ -2507,6 +2565,8 @@ struct faceuse		*fu1, *fu2;
 
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)
 		bu_log( "nmg_isect_two)face2p_jra: fu1=x%x, fu2=x%x\n" );
+
+	nmg_coplanar_face_vertex_fuse( fu1, fu2, &is->tol );
 
 	m = nmg_find_model( &fu1->l.magic );
 	NMG_CK_MODEL( m );
@@ -2550,17 +2610,19 @@ struct faceuse		*fu1, *fu2;
 		NMG_CK_VERTEX_G( vg1b );
 
 		VSUB2( vt1_3d, vg1b->coord, vg1a->coord );
-
+#if 0
 		nmg_get_2d_vertex( pt1a, eu1->vu_p->v_p, is, (long *)fu1 );
 		nmg_get_2d_vertex( pt1b, eu1->eumate_p->vu_p->v_p, is, (long *)fu1 );
 		VSUB2( vt1, pt1b, pt1a );
-
+#endif
 		for( j=0 ; j<BU_PTBL_END( &eu2_list ) ; j++ )
 		{
 			struct edgeuse *eu2;
+			struct vertex_g *vg2a, *vg2b;
 			int code;
 			point_t pt2a,pt2b;	/* 2D */
 			vect_t vt2;		/* 2D */
+			vect_t vt2_3d;
 			fastf_t dist[2];
 			point_t hit_pt;
 			int hit_no;
@@ -2570,12 +2632,21 @@ struct faceuse		*fu1, *fu2;
 
 			eu2 = (struct edgeuse *)BU_PTBL_GET( &eu2_list, j );
 			NMG_CK_EDGEUSE( eu2 );
+#if 0
 			nmg_get_2d_vertex( pt2a, eu2->vu_p->v_p, is, (long *)fu1 );
 			nmg_get_2d_vertex( pt2b, eu2->eumate_p->vu_p->v_p, is, (long *)fu1 );
 			VSUB2( vt2, pt2b, pt2a );
-
+#endif
+			vg2a = eu2->vu_p->v_p->vg_p;
+			vg2b = eu2->eumate_p->vu_p->v_p->vg_p;
+			VSUB2( vt2_3d, vg2b->coord, vg2a->coord );
+#if 0
 			code = bn_isect_lseg2_lseg2( dist, pt1a, vt1,
 				pt2a, vt2, &is->tol );
+#else
+			code = bn_isect_lseg3_lseg3( dist, vg1a->coord, vt1_3d,
+				vg2a->coord, vt2_3d, &is->tol );
+#endif
 
 			if( code < 0 )
 				continue;
@@ -2634,34 +2705,52 @@ struct faceuse		*fu1, *fu2;
 
 				if( hitv != eu1->vu_p->v_p && hitv != eu1->eumate_p->vu_p->v_p )
 				{
-					if (rt_g.NMG_debug & DEBUG_POLYSECT)
-						bu_log( "Splitting eu1 x%x\n", eu1 );
-					new_eu = nmg_esplit( hitv, eu1, 1 );
-					hitv = new_eu->vu_p->v_p;
-					if( !hitv->vg_p )
-						nmg_vertex_gv( hitv, hit_pt );
-					vg1b = eu1->eumate_p->vu_p->v_p->vg_p;
-					VSUB2( vt1_3d, vg1b->coord, vg1a->coord );
-					bu_ptbl_ins( &eu1_list, (long *)new_eu );
-					nmg_get_2d_vertex( pt1b, eu1->eumate_p->vu_p->v_p, is, (long *)fu1 );
-					VSUB2( vt1, pt1b, pt1a );
+					struct edgeuse *next_eu, *prev_eu;
+
+					next_eu = BU_LIST_PNEXT_CIRC( edgeuse, &eu1->l );
+					prev_eu = BU_LIST_PPREV_CIRC( edgeuse, &eu1->l );
+
+					if( hitv != prev_eu->vu_p->v_p && hitv != next_eu->eumate_p->vu_p->v_p )
+					{
+						if (rt_g.NMG_debug & DEBUG_POLYSECT)
+							bu_log( "Splitting eu1 x%x\n", eu1 );
+						new_eu = nmg_esplit( hitv, eu1, 1 );
+						hitv = new_eu->vu_p->v_p;
+						if( !hitv->vg_p )
+							nmg_vertex_gv( hitv, hit_pt );
+						vg1b = eu1->eumate_p->vu_p->v_p->vg_p;
+						VSUB2( vt1_3d, vg1b->coord, vg1a->coord );
+#if 0
+						bu_ptbl_ins( &eu1_list, (long *)new_eu );
+						nmg_get_2d_vertex( pt1b, eu1->eumate_p->vu_p->v_p, is, (long *)fu1 );
+						VSUB2( vt1, pt1b, pt1a );
+#endif
+					}
 				}
 				if( code == 1 && hitv != eu2->vu_p->v_p && hitv != eu2->eumate_p->vu_p->v_p )
 				{
-					if (rt_g.NMG_debug & DEBUG_POLYSECT)
+					struct edgeuse *next_eu, *prev_eu;
+
+					next_eu = BU_LIST_PNEXT_CIRC( edgeuse, &eu2->l );
+					prev_eu = BU_LIST_PPREV_CIRC( edgeuse, &eu2->l );
+
+					if( hitv != prev_eu->vu_p->v_p && hitv != next_eu->eumate_p->vu_p->v_p )
 					{
-						vect_t tmp1, tmp2;
-						VSUB2( tmp1, hit_pt, eu2->vu_p->v_p->vg_p->coord )
-						VSUB2( tmp2, hit_pt, eu2->eumate_p->vu_p->v_p->vg_p->coord )
-						bu_log( "Splitting eu2 x%x\n",  eu2 );
-						bu_log( "Distance to hit_pt = %g from vu1, %g from vu2\n",
-							MAGNITUDE( tmp1 ), MAGNITUDE( tmp2 ) );
+						if (rt_g.NMG_debug & DEBUG_POLYSECT)
+						{
+							vect_t tmp1, tmp2;
+							VSUB2( tmp1, hit_pt, eu2->vu_p->v_p->vg_p->coord )
+							VSUB2( tmp2, hit_pt, eu2->eumate_p->vu_p->v_p->vg_p->coord )
+							bu_log( "Splitting eu2 x%x\n",  eu2 );
+							bu_log( "Distance to hit_pt = %g from vu1, %g from vu2\n",
+								MAGNITUDE( tmp1 ), MAGNITUDE( tmp2 ) );
+						}
+						new_eu = nmg_esplit( hitv, eu2, 1 );
+						hitv = new_eu->vu_p->v_p;
+						if( !hitv->vg_p )
+							nmg_vertex_gv( hitv, hit_pt );
+						bu_ptbl_ins( &eu2_list, (long *)new_eu );
 					}
-					new_eu = nmg_esplit( hitv, eu2, 1 );
-					hitv = new_eu->vu_p->v_p;
-					if( !hitv->vg_p )
-						nmg_vertex_gv( hitv, hit_pt );
-					bu_ptbl_ins( &eu2_list, (long *)new_eu );
 				}
 
 				if( hitv )
