@@ -40,10 +40,10 @@ char **argv;
 {
 	register int i;
 
-	if( argv[1][0] == '-' && argv[1][1] == 'h' )  {
+	if( argc > 1 && argv[1][0] == '-' && argv[1][1] == 'h' )  {
 		argc--;
 		argv++;
-		size = 512;
+		size = 1024;
 	}
 	if( argc > 1 )  {
 		wtime = atoi( argv[1] ) * 1000;	/* ms as arg */
