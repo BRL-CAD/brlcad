@@ -155,8 +155,10 @@ RT_EXTERN( struct rt_tabdata	*rt_tabdata_malloc_array, (
 					int num));
 RT_EXTERN( void			rt_tabdata_copy, (struct rt_tabdata *out,
 					CONST struct rt_tabdata *in));
+RT_EXTERN(struct rt_tabdata	*rt_tabdata_dup, (CONST struct rt_tabdata *in));
 RT_EXTERN(struct rt_tabdata	*rt_tabdata_get_constval, (double val,
 					CONST struct rt_table	*tabp));
+RT_EXTERN(void			rt_tabdata_constval, (struct rt_tabdata	*data, double val));
 
 #ifdef __cplusplus
 }
