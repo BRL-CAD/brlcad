@@ -21,7 +21,7 @@
  *	success, _rb_search() returns a pointer to the data block
  *	in the discovered node.  Otherwise, it returns NULL.
  */
-void *_rb_search
+static void *_rb_search
 	(struct rb_node *root, int order_nm, int (*order)(), void *datum)
 {
     int	result;
