@@ -365,6 +365,104 @@ CONST struct db_i		*dbip;
 	return(0);
 }
 
+
+
+/*
+ *			R T _ X X X _ I M P O R T 5
+ *
+ *  Import an XXX from the database format to the internal format.
+ *  Note that the data read will be in network order.  This means
+ *  Big-Endian integers and IEEE doubles for floating point.
+ *
+ *  Apply modeling transformations as well.
+ *
+ */
+int
+rt_xxx_import5( ip, ep, mat, dbip )
+struct rt_db_internal		*ip;
+CONST struct bu_external	*ep;
+register CONST mat_t		mat;
+CONST struct db_i		*dbip;
+{
+	LOCAL struct rt_xxx_internal	*xxx_ip;
+	union record			*rp;
+	vect_t				vv;
+
+	BU_CK_EXTERNAL( ep );
+	rp = (union record *)ep->ext_buf;
+	/* Check record type */
+	if( rp->u_id != ID_SOLID )  {
+		bu_log("rt_xxx_import: defective record\n");
+		return(-1);
+	}
+
+	/* set up the internal structure */
+	RT_INIT_DB_INTERNAL( ip );
+	ip->idb_type = ID_XXX;
+	ip->idb_meth = &rt_functab[ID_XXX];
+	ip->idb_ptr = bu_malloc( sizeof(struct rt_xxx_internal), "rt_xxx_internal");
+	xxx_ip = (struct rt_xxx_internal *)ip->idb_ptr;
+	xxx_ip->magic = RT_XXX_INTERNAL_MAGIC;
+
+	/* Convert the data in ep->ext_buf into internal format.
+	 * Note the conversion from network data 
+	 * (Big Endian ints, IEEE double floating point) to host local data
+	 * representations.
+	 */
+	ntohd( (unsigned char *)&vv, (char *)ep->ext_buf, 3);
+
+	/* Apply the modeling transformation */
+	MAT4X3PNT( xxx_ip->v, mat, vv );
+
+	return(0);			/* OK */
+}
+
+/*
+ *			R T _ X X X _ E X P O R T 5
+ *
+ *  Export an XXX from internal form to external format.
+ *  Note that this means converting all integers to Big-Endian format
+ *  and floating point data to IEEE double.
+ *
+ *  Apply the transformation to mm units as well.
+ */
+int
+rt_xxx_export5( ep, ip, local2mm, dbip )
+struct bu_external		*ep;
+CONST struct rt_db_internal	*ip;
+double				local2mm;
+CONST struct db_i		*dbip;
+{
+	struct rt_xxx_internal	*xxx_ip;
+	fastf_t			vec;
+
+	RT_CK_DB_INTERNAL(ip);
+	if( ip->idb_type != ID_XXX )  return(-1);
+	xxx_ip = (struct rt_xxx_internal *)ip->idb_ptr;
+	RT_XXX_CK_MAGIC(xxx_ip);
+
+	BU_INIT_EXTERNAL(ep);
+	ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * 3;
+	ep->ext_buf = (genptr_t)bu_calloc( 1, ep->ext_nbytes, "xxx external");
+
+
+	/* Since libwdb users may want to operate in units other
+	 * than mm, we offer the opportunity to scale the solid
+	 * (to get it into mm) on the way out.
+	 */
+	VSCALE( vec, xxx_ip->v, local2mm );
+
+	/* convert from local editing units to mm and export
+	 * to database record format
+	 *
+	 * Warning: type conversion: double to float
+	 */
+	VSCALE( vec, xxx_ip->v, local2mm );
+	htond((char *)ep->ext_buf, (char *)vec, 3);
+
+	return(0);
+}
+
 /*
  *			R T _ X X X _ D E S C R I B E
  *
