@@ -98,7 +98,7 @@ XEvent *eventPtr;
   register struct dm_list *save_dm_list;
   int status;
 
-  if(eventPtr->type == DestroyNotify)
+  if(eventPtr->type == DestroyNotify || (unsigned long)eventPtr->xany.window == 0)
     return TCL_OK;
 
   save_dm_list = curr_dm_list;
