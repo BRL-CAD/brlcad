@@ -328,7 +328,7 @@ int	nwords;
 		if( nwords < 6+1 )  return(-1);
 		for( i=1; i<6+1; i++ )
 			args[i] = 0;
-		args[7] = 1.0;	/* optional */
+		args[7] = 1.0;	/* optional arg, default to 1 */
 		for( i=1; i<nwords; i++ )
 			args[i] = atof( words[i] );
 		bn_mat_idn( mat );
@@ -339,8 +339,9 @@ int	nwords;
 			fprintf(stderr,"Orient scale arg is near zero ('%s')\n",
 				words[7] );
 			return(-1);
+		} else {
+			mat[15] = 1 / args[7];
 		}
-		mat[15] = 1 / args[7];
 		out_mat( mat, stdout );
 		return(0);
 	}
