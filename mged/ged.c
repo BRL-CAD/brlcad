@@ -875,6 +875,7 @@ do_rc()
 	char	*path;
 	int 	found;
 	struct	rt_vls str;
+	int bogus;
 
 	found = 0;
 	rt_vls_init( &str );
@@ -912,7 +913,30 @@ do_rc()
 		return -1;
 
 #ifndef XMGED
+	bogus = 0;
+	while( !feof(fp) ) {
+	    char buf[80];
+
+	    /* Get beginning of line */
+	    fgets( buf, 80, fp );
+	    /* Discard rest of line */
+	    while( !feof(fp) && fgetc(fp)!='\n' )
+		;
+	    while( !feof(fp) && fgetc(fp)!='\n' )
+		;
+    /* If the user has a set command with an equal sign, remember to warn */
+	    if( strstr(buf, "set") != NULL )
+		if( strchr(buf, '=') != NULL )
+		    bogus = 1;
+	}
+	
 	fclose( fp );
+	if( bogus ) {
+	    rt_log("\nWARNING: The new format of the \"set\" command is:\n");
+	    rt_log("    set varname value\n");
+	    rt_log("If you are setting variables in your .mgedrc, you will ");
+	    rt_log("need to change those\ncommands.\n\n");
+	}
 	Tcl_EvalFile( interp, rt_vls_addr(&str) );
 #else
 	mged_source_file( fp );
