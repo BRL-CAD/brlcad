@@ -293,14 +293,19 @@ long	*up_magic_p;
 
 		nmg_vedge(eu->e_p, eu);
 
-		if( !eu->l2.forw )
-			rt_bomb("nmg_veu() l2.forw is NULL\n");
-		if( !eu->l2.back )
-			rt_bomb("nmg_veu() l2.back is NULL\n");
+		if( eu->g.magic_p )
+		{
+			if( !eu->l2.forw )
+				rt_bomb("nmg_veu() l2.forw is NULL\n");
+			if( !eu->l2.back )
+				rt_bomb("nmg_veu() l2.back is NULL\n");
 
-		if( eu->g.magic_p != eu->eumate_p->g.magic_p )
-			rt_bomb("nmg_veu() edgeuse and mate don't share geometry\n");
-		if (eu->g.magic_p) nmg_veg(eu->g.magic_p);
+			if( eu->g.magic_p != eu->eumate_p->g.magic_p )
+				rt_bomb("nmg_veu() edgeuse and mate don't share geometry\n");
+			nmg_veg(eu->g.magic_p);
+		}
+		else
+			rt_log( "Warning: nmg_veu() edgeuse has no geometry\n" );
 		
 		switch (eu->orientation) {
 		case OT_NONE	: break;
