@@ -308,7 +308,7 @@ register cosm7 "cosm7-atm.arl.hpc.mil"
 register eckert "eckert-atm.arl.hpc.mil"
 register toltec "toltec.nvl.army.mil"
 #register olmec "olmec.nvl.army.mil"		# Only 1 200Mhz cpu
-## What was name of SPARC server?
+register octopus "octopus.nvl.army.mil"
 
 button .sense_button -text "SENSE" -command sense_servers
 button .reconnect_button -text "RECONNECT" -command reconnect
