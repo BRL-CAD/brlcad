@@ -90,12 +90,20 @@ viewit( ap, PartHeadp )
 register struct application *ap;
 struct partition *PartHeadp;
 {
-	register struct partition *pp = PartHeadp->pt_forw;
-	register struct hit *hitp= pp->pt_inhit;
+	register struct partition *pp;
+	register struct hit *hitp;
 	LOCAL fastf_t diffuse2, cosI2;
 	LOCAL fastf_t diffuse1, cosI1;
 	LOCAL fastf_t diffuse0, cosI0;
 	LOCAL vect_t work0, work1;
+
+	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
+		if( pp->pt_outhit->hit_dist >= 0.0 )  break;
+	if( pp == PartHeadp )  {
+		rt_log("viewit:  no hit out front?\n");
+		return(0);
+	}
+	hitp = pp->pt_inhit;
 
 	/*
 	 * Diffuse reflectance from each light source
@@ -210,12 +218,20 @@ colorview( ap, PartHeadp )
 register struct application *ap;
 struct partition *PartHeadp;
 {
-	register struct partition *pp = PartHeadp->pt_forw;
-	register struct hit *hitp= pp->pt_inhit;
+	register struct partition *pp;
+	register struct hit *hitp;
+
+	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
+		if( pp->pt_outhit->hit_dist >= 0.0 )  break;
+	if( pp == PartHeadp )  {
+		rt_log("colorview:  no hit out front?\n");
+		return(0);
+	}
+	hitp = pp->pt_inhit;
 
 	if(rt_g.debug&DEBUG_HITS)  {
 		rt_pr_pt(pp);
-		rt_pr_hit( "view", pp->pt_inhit);
+		rt_pr_hit( "colorview", pp->pt_inhit);
 	}
 
 	/* Temporary check to make sure normals are OK */
@@ -228,12 +244,19 @@ struct partition *PartHeadp;
 		return(1);
 	}
 
+	if( hitp->hit_dist >= INFINITY )  {
+		rt_log("colorview:  entry beyond infinity\n");
+		VSET( ap->a_color, .5, 0, 0 );
+		return(1);
+	}
+
 	/* Check to see if eye is "inside" the solid */
 	if( hitp->hit_dist < 0.0 )  {
 		struct application sub_ap;
 		FAST fastf_t f;
 
-		if( rt_g.debug || ap->a_level > MAX_BOUNCE )  {
+		if( rt_g.debug || pp->pt_outhit->hit_dist >= INFINITY ||
+		    ap->a_level > MAX_BOUNCE )  {
 			VSET( ap->a_color, 1, 0, 0 );
 			rt_log("colorview:  eye inside %s (x=%d, y=%d, lvl=%d)\n",
 				pp->pt_inseg->seg_stp->st_name,
