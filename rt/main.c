@@ -156,8 +156,7 @@ char **argv;
 		nsolids, nregions );
 
 	/* Set up the online display and/or the display file */
-	if( !(debug&DEBUG_QUICKIE) )
-		dev_setup(npts);
+	dev_setup(npts);
 
 	fprintf(stderr,"model X(%f,%f), Y(%f,%f), Z(%f,%f)\n",
 		model_min[X], model_max[X],
@@ -176,17 +175,8 @@ char **argv;
 			azimuth, elevation);
 		mat_inv( view2model, model2view );
 
-		if( !(debug&DEBUG_QUICKIE) )  {
-			autosize( model2view, npts );
+		autosize( model2view, npts );
 		VSET( tempdir, 0, 0, -1 );
-		} else {
-			base[X] = -3;
-			base[Y] = -3;
-			base[Z] = -10;
-			deltas = 1;
-			npts = 8;
-			VSET( tempdir, 0, 0, 1 );
-		}
 	}  else  {
 		static int i;
 
