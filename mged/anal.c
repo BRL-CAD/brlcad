@@ -36,6 +36,7 @@ extern int	atoi();
 
 extern int	numargs;	/* number of args */
 extern char	*cmd_args[];	/* array of pointers to args */
+extern void	arb_center();
 
 static void	do_anal();
 static void	arb_anal();
@@ -46,6 +47,7 @@ static void	tgc_anal();
 static void	ell_anal();
 static void	tor_anal();
 static void	ars_anal();
+
 
 /*	Analyze command - prints loads of info about a solid
  *	Format:	analyze [name]
@@ -177,6 +179,7 @@ static void
 arb_anal()
 {
 	register int i;
+	static vect_t cpt;
 
 	/* got the arb - convert to point notation */
 	for(i=3; i<24; i+=3) {
@@ -194,12 +197,13 @@ arb_anal()
 		type = ARB6;
 	type -= 4;
 
-	/* analyze each face */
+	/* analyze each face, use center point of arb for reference */
 	(void)printf("\n------------------------------------------------------------------------------\n");
 	(void)printf("| FACE |   ROT     FB  |        PLANE EQUATION            |   SURFACE AREA   |\n");
 	(void)printf("|------|---------------|----------------------------------|------------------|\n");
+	arb_center( cpt, temp_rec.s.s_values, type+4 );
 	for(i=0; i<6; i++) 
-		anal_face( i );
+		anal_face( i, cpt  );
 
 	(void)printf("------------------------------------------------------------------------------\n");
 
@@ -264,8 +268,9 @@ static int farb4[6][4] = {
 /* 	Analyzes an arb face
  */
 static void
-anal_face( face )
+anal_face( face, cpt )
 int face;
+vect_t cpt;				/* reference center point */
 {
 	register int i, j, k;
 	static int a, b, c, d;		/* 4 points of face to look at */
@@ -286,6 +291,18 @@ int face;
 		(void)printf("| %d%d%d%d    ***NOT A PLANE***                                          |\n",
 				a+1,b+1,c+1,d+1);
 		return;
+	}
+
+	/* the plane equations returned by planeqn above do not
+	 * necessarily point outward. Use the reference center
+	 * point for the arb and reverse direction for
+	 * any errant planes. This corrects the output rotation,
+	 * fallback angles so that they always give the outward
+	 * pointing normal vector.
+	 */
+	if( (es_peqn[6][3] - VDOT(cpt, &es_peqn[6][0])) < 0.0 ){
+		for( i=0; i<4 ; i++ )
+			es_peqn[6][i] *= -1.0;
 	}
 
 	/* es_peqn[6][] contains normalized eqn of plane of this face
