@@ -71,6 +71,15 @@ struct  tgc_specific {
 #define VLARGE		1000000.0
 #define	ALPHA(x,y,c,d)	( (x)*(x)*(c) + (y)*(y)*(d) )
 
+struct bu_structparse rt_tgc_parse[] = {
+    { "%f", 3, "V", offsetof(struct rt_tgc_internal, v[X]), BU_STRUCTPARSE_FUNC_NULL },
+    { "%f", 3, "H", offsetof(struct rt_tgc_internal, h[X]), BU_STRUCTPARSE_FUNC_NULL },
+    { "%f", 3, "A", offsetof(struct rt_tgc_internal, a[X]), BU_STRUCTPARSE_FUNC_NULL },
+    { "%f", 3, "B", offsetof(struct rt_tgc_internal, b[X]), BU_STRUCTPARSE_FUNC_NULL },
+    { "%f", 3, "C", offsetof(struct rt_tgc_internal, c[X]), BU_STRUCTPARSE_FUNC_NULL },
+    { "%f", 3, "D", offsetof(struct rt_tgc_internal, d[X]), BU_STRUCTPARSE_FUNC_NULL },
+    {0} };
+
 /*
  *			R T _ T G C _ P R E P
  *
