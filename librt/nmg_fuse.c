@@ -40,6 +40,9 @@ RT_EXTERN(struct vertexuse 	*nmg_is_vertex_in_face, (CONST struct vertex *v,
 				CONST struct face *f));
 RT_EXTERN(struct edge_g_lseg	*nmg_pick_best_edge_g, (struct edgeuse *eu1,
 				struct edgeuse *eu2, CONST struct rt_tol *tol));
+RT_EXTERN(void			nmg_pr_radial_list, (CONST struct rt_list *hd,
+				CONST struct rt_tol *tol));
+
 
 /* XXX Move to nmg.h */
 #define NMG_TBL_LEN(p)	((p)->end)
@@ -49,6 +52,12 @@ RT_EXTERN(struct edge_g_lseg	*nmg_pick_best_edge_g, (struct edgeuse *eu1,
 	(p)=RT_LIST_LAST(structure,hp); \
 	RT_LIST_NOT_HEAD(p,hp); \
 	(p)=RT_LIST_PLAST(structure,p)
+
+/* Process all the list members except hp and the actual head */
+#define RT_LIST_FOR_CIRC(p,structure,hp)	\
+	(p)=RT_LIST_PNEXT_CIRC(structure,hp); \
+	(p) != (hp); \
+	(p)=RT_LIST_PNEXT_CIRC(structure,p)
 
 
 /* XXX Move to nmg_info.c */
@@ -1091,7 +1100,7 @@ struct nmg_radial	*rad;
 	}
 
 	/* Add before first element */
-	RT_LIST_INSERT( hd, &rad->l );
+	RT_LIST_APPEND( hd, &rad->l );
 }
 
 /*
@@ -1141,6 +1150,8 @@ CONST struct rt_tol	*tol;		/* for printing */
 }
 
 /*
+ *			N M G _ R A D I A L _ M E R G E _ L I S T S
+ *
  *  Merge all of the src list into the dest list, sorting by angles.
  */
 void
@@ -1155,7 +1166,7 @@ CONST struct rt_tol	*tol;
 	RT_CK_LIST_HEAD(src);
 	RT_CK_TOL(tol);
 
-	for( RT_LIST_FOR( rad, nmg_radial, src ) )  {
+	while( RT_LIST_WHILE( rad, nmg_radial, src ) )  {
 		RT_LIST_DEQUEUE( &rad->l );
 		nmg_radial_sorted_list_insert( dest, rad );
 	}
@@ -1171,6 +1182,10 @@ CONST struct rt_tol	*tol;
  *  an even number of crack-pairs, and 0 to 2 non-crack edges, i.e.
  *  edges which border actual surface area.
  *  Telling the difference takes real work.
+ *
+ *  XXX Worse still, this approach does not distinguish between
+ *  an edge cutting across a face, -vs- a pair of crack edges. :-(
+ *  Good thing this flag bit isn't used for anything yet!
  */
 void
 nmg_radial_mark_cracks( hd, tol )
@@ -1198,29 +1213,39 @@ CONST struct rt_tol	*tol;
 		}
 	}
 
-	/* XXX Go back and un-mark cracks which border surface area */
+	/* XXX Go back and un-mark any edgeuses which acutally border surface area */
 }
 
 /*
+ *			N M G _ R A D I A L _ F I N D _ A N _ O R I G I N A L
+ *
+ *  Returns -
+ *	NULL		No edgeuses from indicated shell on this list
+ *	nmg_radial*	An original, else first newbie, else a newbie crack.
  */
 struct nmg_radial *
-nmg_radial_find_an_original( hd, s )
+nmg_radial_find_an_original( hd, s, tol )
 struct rt_list		*hd;
 CONST struct shell	*s;
+CONST struct rt_tol	*tol;
 {
 	register struct nmg_radial	*rad;
-	struct nmg_radial	*fallback;
+	struct nmg_radial	*fallback = (struct nmg_radial *)NULL;
 	struct nmg_radial	*wire = (struct nmg_radial *)NULL;
+	int			seen_shell = 0;
 
 	RT_CK_LIST_HEAD(hd);
 	NMG_CK_SHELL(s);
 
 	for( RT_LIST_FOR( rad, nmg_radial, hd ) )  {
+		NMG_CK_RADIAL(rad);
 		if( rad->s != s )  continue;
+		seen_shell++;
 		if( rad->is_crack )  continue;	/* skip cracks */
 		if( !rad->fu )  continue;	/* skip wires */
 		if( rad->existing_flag )  return rad;
 	}
+	if( !seen_shell )  return (struct nmg_radial *)NULL;	/* No edgeuses from that shell, at all! */
 
 	/* If there were no originals, find first newbie */
 	for( RT_LIST_FOR( rad, nmg_radial, hd ) )  {
@@ -1250,6 +1275,9 @@ CONST struct shell	*s;
 		return rad;
 	}
 	if(fallback) return fallback;
+
+	rt_log("nmg_radial_find_an_original() shell=x%x\n", s);
+	nmg_pr_radial_list( hd, tol );
 	rt_bomb("nmg_radial_find_an_original() No entries from indicated shell\n");
 }
 
@@ -1262,11 +1290,10 @@ CONST struct shell	*s;
 void
 nmg_radial_mark_flips( hd, shells, tol )
 struct rt_list		*hd;
-struct nmg_ptbl		*shells;
+CONST struct nmg_ptbl	*shells;
 CONST struct rt_tol	*tol;
 {
 	struct nmg_radial	*rad;
-	struct nmg_radial	*other;
 	struct shell		**sp;
 	struct nmg_radial	*orig;
 	register int		expected_ot;
@@ -1275,20 +1302,14 @@ CONST struct rt_tol	*tol;
 	NMG_CK_PTBL(shells);
 	RT_CK_TOL(tol);
 
-/* Process all the list members except hp and the actual head */
-#define RT_LIST_FOR_CIRC(p,structure,hp)	\
-	(p)=RT_LIST_PNEXT(structure,hp); \
-	(p) != (hp) && \
-	  (RT_LIST_FIRST_MAGIC((struct rt_list *)(p)) != RT_LIST_HEAD_MAGIC); \
-	(p)=RT_LIST_PNEXT(structure,p)
-
 	for( sp = (struct shell **)NMG_TBL_LASTADDR(shells);
  	     sp >= (struct shell **)NMG_TBL_BASEADDR(shells); sp-- 
 	)  {
 		int	count = 1;
 
 		NMG_CK_SHELL(*sp);
-		orig = nmg_radial_find_an_original( hd, *sp );
+		orig = nmg_radial_find_an_original( hd, *sp, tol );
+		NMG_CK_RADIAL(orig);
 		if( !orig->existing_flag )  {
 			/* There were no originals.  Do something sensible to check the newbies */
 			if( !orig->fu )  continue;	/* Nothing but wires */
@@ -1304,19 +1325,77 @@ CONST struct rt_tol	*tol;
 				continue;
 			}
 			/* Mis-match detected */
-			rt_log("Mis-match detected, setting flip flag eu=x%x\n", rad->eu);
+			rt_log("nmg_radial_mark_flips() Mis-match detected, setting flip flag eu=x%x\n", rad->eu);
 			/* XXX Should it be flipped, rather than set? */
 			rad->needs_flip = 1;
 			/* With this one flipped, set expectation for next */
 			expected_ot = !expected_ot;
 		}
-		rad = RT_LIST_PPREV_CIRC( nmg_radial, orig );
-		if( expected_ot != (rad->fu->orientation == OT_SAME) )  {
-			rt_log("nmg_radial_mark_flips() unable to establish proper orientation parity.  eu count=%d, shell=x%x\n",
-				count, *sp);
-			rt_bomb("nmg_radial_mark_flips() unable to establish proper orientation parity.\n");
-		}
+		if( expected_ot == (orig->fu->orientation == OT_SAME) )
+			continue;
+		rt_log("nmg_radial_mark_flips() unable to establish proper orientation parity.\n  eu count=%d, shell=x%x, expectation=%d\n",
+			count, *sp, expected_ot);
+		rt_bomb("nmg_radial_mark_flips() unable to establish proper orientation parity.\n");
  	}
+}
+
+/*
+ *			N M G _ R A D I A L _ C H E C K _ P A R I T Y
+ *
+ *  For each shell, check orientation parity of edgeuses within that shell.
+ */
+int
+nmg_radial_check_parity( hd, shells, tol )
+CONST struct rt_list	*hd;
+CONST struct nmg_ptbl	*shells;
+CONST struct rt_tol	*tol;
+{
+	struct nmg_radial	*rad;
+	struct nmg_radial	*other;
+	struct shell		**sp;
+	struct nmg_radial	*orig;
+	register int		expected_ot;
+	int			count = 0;
+
+	RT_CK_LIST_HEAD(hd);
+	NMG_CK_PTBL(shells);
+	RT_CK_TOL(tol);
+
+	for( sp = (struct shell **)NMG_TBL_LASTADDR(shells);
+ 	     sp >= (struct shell **)NMG_TBL_BASEADDR(shells); sp-- 
+	)  {
+
+		NMG_CK_SHELL(*sp);
+		orig = nmg_radial_find_an_original( hd, *sp, tol );
+		if( !orig )  continue;
+		NMG_CK_RADIAL(orig);
+		if( !orig->existing_flag )  {
+			/* There were no originals.  Do something sensible to check the newbies */
+			if( !orig->fu )  continue;	/* Nothing but wires */
+		}
+		expected_ot = !(orig->fu->orientation == OT_SAME);
+
+		for( RT_LIST_FOR_CIRC( rad, nmg_radial, orig ) )  {
+			if( rad->s != *sp )  continue;
+			if( !rad->fu )  continue;	/* skip wires */
+			if( expected_ot == (rad->fu->orientation == OT_SAME) )  {
+				expected_ot = !expected_ot;
+				continue;
+			}
+			/* Mis-match detected */
+			rt_log("nmg_radial_check_parity() bad parity eu=x%x, s=x%x\n",
+				rad->eu, *sp);
+			count++;
+			/* Set expectation for next */
+			expected_ot = !expected_ot;
+		}
+		if( expected_ot == (orig->fu->orientation == OT_SAME) )
+			continue;
+		rt_log("nmg_radial_check_parity() bad parity at END eu=x%x, s=x%x\n",
+			rad->eu, *sp);
+		count++;
+ 	}
+	return count;
 }
 
 /*
@@ -1369,22 +1448,26 @@ again:
  */
 void
 nmg_pr_radial_list( hd, tol )
-struct rt_list		*hd;
+CONST struct rt_list	*hd;
 CONST struct rt_tol	*tol;		/* for printing */
 {
 	struct nmg_radial	*rad;
+
+	RT_CK_LIST_HEAD(hd);
+	RT_CK_TOL(tol);
 
 	rt_log("nmg_pr_radial_list( hd=x%x )\n", hd);
 
 	for( RT_LIST_FOR( rad, nmg_radial, hd ) )  {
 		NMG_CK_RADIAL(rad);
-		rt_log(" %8.8x, f=%8.8x, fu=%8.8x=%s, s=%8.8x %g deg %s %c%c\n",
+		rt_log(" %8.8x, f=%8.8x, fu=%8.8x=%c, s=%8.8x %s %c%c %g deg\n",
 			rad->eu, rad->fu->f_p, rad->fu,
-			nmg_orientation(rad->fu->orientation)+3,
-			rad->s, rad->ang,
-			rad->existing_flag ? 'old' : 'new',
-			rad->is_crack ? 'C' : '-',
-			rad->needs_flip ? 'F' : '-'
+			nmg_orientation(rad->fu->orientation)[3],
+			rad->s,
+			rad->existing_flag ? "old" : "new",
+			rad->is_crack ? 'C' : '/',
+			rad->needs_flip ? 'F' : '/',
+			rad->ang * rt_radtodeg
 		);
 	}
 }
@@ -1409,6 +1492,7 @@ CONST struct rt_tol	*tol;
 	struct rt_list		list1;
 	struct rt_list		list2;
 	struct nmg_ptbl		shell_tbl;
+	int			count1, count2;
 
 	NMG_CK_EDGEUSE(eu1);
 	NMG_CK_EDGEUSE(eu2);
@@ -1454,6 +1538,13 @@ CONST struct rt_tol	*tol;
 	nmg_radial_build_list( &list1, &shell_tbl, 1, eu1, xvec, yvec, zvec, tol );
 	nmg_radial_build_list( &list2, &shell_tbl, 0, eu2, xvec, yvec, zvec, tol );
 
+#if 0
+	/* OK so far? */
+	nmg_pr_radial_list( &list1, tol );
+	nmg_pr_radial_list( &list2, tol );
+	nmg_pr_ptbl( "Participating shells", &shell_tbl, 1 );
+#endif
+
 	if (rt_g.NMG_debug & DEBUG_MESH_EU ) {
 		rt_log("nmg_radial_join_eu_NEW(eu1=x%x, eu2=x%x) e1=x%x, e2=x%x\n",
 			eu1, eu2,
@@ -1467,22 +1558,34 @@ CONST struct rt_tol	*tol;
 		rt_log( "Faces around eu2:\n" );
 		nmg_pr_fu_around_eu_vecs( eu2, xvec, yvec, zvec, tol );
 		nmg_pr_radial_list( &list2, tol );
+		nmg_pr_ptbl( "Participating shells", &shell_tbl, 1 );
 	}
+
+	count1 = nmg_radial_check_parity( &list1, &shell_tbl, tol );
+	count2 = nmg_radial_check_parity( &list2, &shell_tbl, tol );
+	if( count1 || count2 ) rt_log("nmg_radial_join_eu_NEW() bad parity at the outset, %d, %d\n", count1, count2);
 
 	best_eg = nmg_pick_best_edge_g( eu1, eu2, tol );
 
 	/* Merge the two lists, sorting by angles */
 	nmg_radial_merge_lists( &list1, &list2, tol );
 	nmg_radial_mark_cracks( &list1, tol );
-	nmg_radial_mark_flips( &list1, tol );
 
-	nmg_pr_radial_list( &list1, tol );
+	nmg_radial_mark_flips( &list1, &shell_tbl, tol );
+#if 0
+rt_log("marked list:\n");
+nmg_pr_radial_list( &list1, tol );
+#endif
 
 	nmg_radial_implement_decisions( &list1, tol );
 
+#if 0
 	/* How did it come out? */
 	nmg_pr_radial_list( &list1, tol );
 	nmg_pr_fu_around_eu_vecs( eu1, xvec, yvec, zvec, tol );
+#endif
+	count1 = nmg_radial_check_parity( &list1, &shell_tbl, tol );
+	if( count1 )  rt_log("nmg_radial_join_eu_NEW() bad parity at completion, %d\n", count1);
 
 	/* Ensure that all edgeuses are using the "best_eg" line */
 	for( RT_LIST_FOR( rad, nmg_radial, &list1 ) )  {
@@ -1497,5 +1600,4 @@ CONST struct rt_tol	*tol;
 		RT_LIST_DEQUEUE( &rad->l );
 		rt_free( (char *)rad, "nmg_radial" );
 	}
-	if( RT_LIST_NON_EMPTY( &list1 ) )  rt_bomb("nmg_radial_join_eu_NEW() list2 non-empty\n");
 }
