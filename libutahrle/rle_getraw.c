@@ -28,7 +28,7 @@
  * Copyright (c) 1986, University of Utah
  */
 #ifndef lint
-static char rcs_ident[] = "$Id$";
+static const char rcs_ident[] = "$Id$";
 #endif
 
 #include "conf.h"

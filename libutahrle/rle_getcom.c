@@ -58,10 +58,12 @@ CONST char *v;
     for ( ; *n != '\0' && *n != '=' && *n == *v; n++, v++ )
 	;
     if (*n == '\0' || *n == '=')
+    {
 	if ( *v == '\0' )
 	    return( (char *) v);
 	else if ( *v == '=' )
 	    return( (char *) ++v);
+    }
 
     return NULL;
 }

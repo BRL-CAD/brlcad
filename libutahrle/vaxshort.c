@@ -18,7 +18,7 @@
  *	Public Domain, Distribution Unlimitied.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Id$ (BRL)";
+static const char RCSid[] = "@(#)$Id$ (BRL)";
 #endif
 
 /*

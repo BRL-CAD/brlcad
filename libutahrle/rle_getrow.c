@@ -30,7 +30,7 @@
  * $Id$
  */
 #ifndef lint
-static char rcs_ident[] = "$Id$";
+static const char rcs_ident[] = "$Id$";
 #endif
 
 #include "conf.h"
@@ -407,6 +407,7 @@ rle_pixel *scanline[];
 	the_hdr->priv.get.vert_skip--;
 	the_hdr->priv.get.scan_y++;
 	if ( the_hdr->priv.get.vert_skip > 0 )
+    	{
 	    if ( the_hdr->priv.get.scan_y >= the_hdr->ymax )
 	    {
 		int y = the_hdr->priv.get.scan_y;
@@ -416,6 +417,7 @@ rle_pixel *scanline[];
 	    }
 	    else
 		return the_hdr->priv.get.scan_y;
+    	}
     }
 
     /* If EOF has been encountered, return also */
@@ -504,6 +506,7 @@ rle_pixel *scanline[];
 		    (void)getc( infile );	/* throw away odd byte */
 	    }
 	    else
+	    {
 		if ( the_hdr->priv.get.is_seek )
 		    fseek( infile, ((nc + 1) / 2) * 2, 1 );
 		else
@@ -512,10 +515,12 @@ rle_pixel *scanline[];
 		    for ( ii = ((nc + 1) / 2) * 2; ii > 0; ii-- )
 			(void) getc( infile );	/* discard it */
 		}
+	    }
 
 	    scanc += nc;
 	    scan_x += nc;
 	    if ( debug_f )
+	    {
 		if ( RLE_BIT( *the_hdr, channel ) )
 		{
 		    rle_pixel * cp = scanc - nc;
@@ -524,6 +529,7 @@ rle_pixel *scanline[];
 			fprintf( stderr, "%02x", *cp++ );
 		    putc( '\n', stderr );
 		}
+	    }
 	    else
 		fprintf( stderr, "Pixel data %d (to %d)\n", nc, scan_x );
 	    break;
