@@ -1,3 +1,7 @@
+#ifndef CONF_H
+#include "conf.h"  /* Horrible but temporary hack to get things to compile */
+#endif
+
 /*
  *			M A C H I N E . H
  *
@@ -37,24 +41,6 @@
  *		A portable way of declaring a signed variable, since
  *		the "signed" keyword is not known in K&R compilers.  e.g.:
  *			register SIGNED int twoway;
- *
- *	USE_PROTOTYPES -
- *		When defined, this compiler will accept ANSI-C function
- *		prototypes, even if it isn't a full ANSI compiler.
- *		Used mostly to build more sophisticated macros.
- *
- *	USE_STRING_H -
- *		When defined, use <string.h>, not <strings.h>
- *		XXX A better way of handling this is needed.
- *		Most code does this based on the BSD flag instead, which
- *		isn't always the best idea, viz:
- *			#include <stdio.h>
- *			#ifdef BSD
- *			#	include <strings.h>
- *			#else
- *			#	include <string.h>
- *			#endif
- *			#include <math.h>
  *
  *	fastf_t -
  *		Intended to be the fastest floating point data type on
@@ -218,8 +204,21 @@
 #ifndef MACHINE_H
 #define MACHINE_H seen
 
-#ifdef SYSV
-#	define	USE_STRING_H	1	/* use <string.h>, not <strings.h> */
+/*
+ * Figure out the maximum number of files that can simultaneously be open 
+ * by a process.
+ */
+
+#if !defined(FOPEN_MAX)
+#	if defined(_NFILE)
+#		define FOPEN_MAX	_NFILE
+#	elif defined(NOFILE)
+#		define FOPEN_MAX	NOFILE
+#	elif defined(OPEN_MAX)
+#		define FOPEN_MAX	OPEN_MAX
+#	else
+#		define FOPEN_MAX	32
+#	endif
 #endif
 
 /**********************************
@@ -332,8 +331,14 @@ typedef long	bitv_t;		/* largest integer type */
 typedef double		fastf_t;/* double|float, "Fastest" float type */
 #define LOCAL		auto	/* static|auto, for serial|parallel cpu */
 #define FAST		register /* LOCAL|register, for fastest floats */
+#if 1
 typedef long long	bitv_t;	/* largest integer type */
 #define BITV_SHIFT	6	/* log2( bits_wide(bitv_t) ) */
+#else
+typedef long		bitv_t;
+#define BITV_SHIFT	5
+#endif
+
 
 #define RES_INIT(ptr)		RES_RELEASE(ptr)
 /* RES_ACQUIRE is a function in machine.c, using tas instruction */
@@ -408,7 +413,6 @@ typedef long	bitv_t;		/* largest integer type */
 #define MAX_PSW		32
 #define DEFAULT_PSW	MAX_PSW
 #define PARALLEL	1
-#define USE_PROTOTYPES	1	/* not ANSI, but prototypes supported */
 
 #endif
 
@@ -601,7 +605,7 @@ typedef long	bitv_t;		/* largest integer type */
 /* XXX Soon BRL-CAD will convert to sources written using the SYSV names,
  * XXX with defines back to the old UNIX V6 names for antique systems.
  */
-#if defined(BSD) && !defined(SYSV) && (BSD <= 43)
+#if !defined(HAVE_STRCHR)
 #	define strchr(sp,c)	index(sp,c)
 #	define strrchr(sp,c)	rindex(sp,c)
 	extern char *index();
@@ -620,12 +624,6 @@ typedef long	bitv_t;		/* largest integer type */
 # endif
 #endif
 
-/* Some non-ANSI C compilers can take advantage of prototypes.  See above */
-#if __STDC__ && !defined(USE_PROTOTYPES)
-#	define USE_PROTOTYPES 1
-#endif
-
-
 /* POSIX (or at least the SGI versions does not define hypot) */
 #if defined(_POSIX_SOURCE)
 	/* But the sgi -lm does have a hypot routine so lets use it */
@@ -636,5 +634,5 @@ typedef long	bitv_t;		/* largest integer type */
 #endif
 #endif
 
-
 #endif
+
