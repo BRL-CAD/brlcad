@@ -5,6 +5,10 @@
  */
 #include <stdio.h>
 
+#if !defined(SYSV) && defined(BSD) && BSD < 43
+#define strrchr rindex
+#endif
+
 /* declarations to support use of getopt() system call */
 char *options = "h";
 extern char *optarg;
