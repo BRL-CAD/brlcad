@@ -1011,6 +1011,7 @@ BU_EXTERN(void			bu_pr_bitv, (CONST char *str,
 BU_EXTERN(void			bu_bitv_to_hex, (struct bu_vls *v,
 				CONST struct bu_bitv *bv));
 BU_EXTERN( struct bu_bitv *	bu_hex_to_bitv, (CONST char *str));
+BU_EXTERN( struct bu_bitv *	bu_bitv_dup, (CONST struct bu_bitv *bv));
 
 /* bomb.c */
 BU_EXTERN(void			bu_bomb, (CONST char *str) );
