@@ -1628,6 +1628,7 @@ CONST struct rt_tol *tol;
 		NMG_CK_VERTEXUSE( vu );
 		vg = vu->v_p->vg_p;
 		NMG_CK_VERTEX_G( vg );
+
 		nmg_class_pt_l( &closest , vg->coord , lu2 , tol );
 
 		return( closest.class );
@@ -1642,6 +1643,12 @@ CONST struct rt_tol *tol;
 
 		vg = eu->vu_p->v_p->vg_p;
 		NMG_CK_VERTEX_G( vg );
+
+		/* reset the closest structure for each call */
+		closest.dist = MAX_FASTF;
+		closest.p.eu = (struct edgeuse *)NULL;
+		closest.class = NMG_CLASS_AoutB;	/* default return */
+
 		nmg_class_pt_l( &closest , vg->coord , lu2 , tol );
 
 		if( closest.class != NMG_CLASS_AonBshared )
