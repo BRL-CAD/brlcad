@@ -84,22 +84,32 @@ int argc;
 char *argv[];
 {
   int i;
+  char **av;
 
   /* register application provided routines */
   cmd_hook = X_dm;
   state_hook = X_statechange;
 
-  for(i = argc-1; i-1; --i)
-    argv[i] = argv[i-1];
+  /* stuff in a default initialization script */
+  av = (char **)bu_malloc(sizeof(char *)*(argc + 2), "X_dm_init: av");
+  av[0] = "X_open";
+  av[1] = "-i";
+  av[2] = "mged_bind_dm";
 
-  argv[0] = "-i";
-  argv[1] = "mged_bind_dm";
+  /* copy the rest except last */
+  for(i = 1; i < argc-1; ++i)
+    av[i+2] = argv[i];
+
+  av[i+2] = (char *)NULL;
 
   dm_var_init(o_dm_list);
   Tk_DeleteGenericHandler(X_doevent, (ClientData)DM_TYPE_X);
-  if((dmp = X_open(DM_EVENT_HANDLER_NULL, argc, argv)) == DM_NULL)
+  if((dmp = dm_open(DM_TYPE_X, DM_EVENT_HANDLER_NULL, argc+1, av)) == DM_NULL){
+    bu_free(av, "X_dm_init: av");
     return TCL_ERROR;
+  }
 
+  bu_free(av, "X_dm_init: av");
   dmp->dm_eventHandler = X_doevent;
   curr_dm_list->s_info->opp = &tkName;
   Tk_CreateGenericHandler(X_doevent, (ClientData)DM_TYPE_X);
