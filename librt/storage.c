@@ -224,7 +224,7 @@ char	*ptr;
 char	*str;
 {
 	if(rt_g.debug&DEBUG_MEM) rt_log("%7x free %s\n", ptr, str);
-	if(ptr == (char *)0)  {
+	if(ptr == (char *)0 || (int)ptr == -1)  {
 		rt_log("%7x free ERROR %s\n", ptr, str);
 		return;
 	}
