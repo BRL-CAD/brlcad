@@ -1245,16 +1245,18 @@ Tk_Window tkwin;
   int tries, baddepth;
   int num, i, j;
   int fail;
-  int use = 0;
-  int rgba = 0;
-  int dbfr = 0;
-  int depth = 0;
-#if OGL_DO_STEREO
-  int m_stereo, stereo;
 
-  /*
-   * m_stereo - try to get stereo 
-   */
+  /* requirements */
+  int use;
+  int rgba;
+  int dbfr;
+
+  /* desires */
+  int m_zbuffer = 1; /* m_zbuffer - try to get zbuffer */
+  int zbuffer;
+#if OGL_DO_STEREO
+  int m_stereo; /* m_stereo - try to get stereo */
+  int stereo;
 
   /*XXX Need to do something with this */
   if( dmp->dm_stereo )  {
@@ -1289,13 +1291,15 @@ Tk_Window tkwin;
       if (fail || !dbfr)
 	continue;
 
-      fail = glXGetConfig(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-		     vip, GLX_DEPTH_SIZE,&depth);
-      if (fail || !depth)
-	continue;
+      /* desires */
+      if ( m_zbuffer ) {
+	fail = glXGetConfig(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+			    vip, GLX_DEPTH_SIZE,&zbuffer);
+	if (fail || !zbuffer)
+	  continue;
+      }
 
 #if OGL_DO_STEREO
-      /* desires */
       if ( m_stereo ) {
 	fail = glXGetConfig(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 		     vip, GLX_STEREO, &stereo);
@@ -1371,13 +1375,21 @@ Tk_Window tkwin;
       }
     }
 
-#if OGL_DO_STEREO
     /* if no success at this point, relax a desire and try again */
-    if ( m_stereo ){
+
+#if OGL_DO_STEREO
+    if ( m_stereo ) {
       m_stereo = 0;
       bu_log("Stereo not available.\n");
+      continue;
     }
 #endif
+
+    if ( m_zbuffer ) {
+      m_zbuffer = 0;
+      continue;
+    }
+
 #if 0
       XFree((void *)vibase);
 #endif
