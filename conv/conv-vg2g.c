@@ -1,5 +1,5 @@
 /*
- *  			C V . C
+ *  			C O N V - V G 2 G . C
  *  
  *  Converts .vg files to .g (latest style, with idents).
  *  
@@ -23,6 +23,11 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "conf.h"
 
 #include <stdio.h>
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
 #include "machine.h"
 #include "externs.h"
 #include "db.h"
@@ -33,6 +38,7 @@ union record rec;
 
 char line[256];
 
+int
 main(argc, argv)
 int argc;
 char *argv[];
@@ -201,6 +207,7 @@ after_read:
 		count++;
 	}
 	printf("%d database granules written\n", count);
+	return 0;
 }
 
 void
