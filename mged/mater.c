@@ -38,11 +38,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./solid.h"
 #include "./dm.h"
 
-extern char	*mktemp();
-
-extern int	numargs;	/* number of args */
-extern char	*cmd_args[];	/* array of pointers to args */
-
 /*
  *  It is expected that entries on this mater list will be sorted
  *  in strictly ascending order, with no overlaps (ie, monotonicly
@@ -69,7 +64,9 @@ register struct mater *mp;
  *  			F _ P R C O L O R
  */
 void
-f_prcolor()
+f_prcolor( argc, argv )
+int	argc;
+char	**argv;
 {
 	register struct mater *mp;
 
@@ -87,16 +84,18 @@ f_prcolor()
  *  Add a color table entry.
  */
 void
-f_color()
+f_color( argc, argv )
+int	argc;
+char	**argv;
 {
 	register struct mater *newp;
 
 	GETSTRUCT( newp, mater );
-	newp->mt_low = atoi( cmd_args[1] );
-	newp->mt_high = atoi( cmd_args[2] );
-	newp->mt_r = atoi( cmd_args[3] );
-	newp->mt_g = atoi( cmd_args[4] );
-	newp->mt_b = atoi( cmd_args[5] );
+	newp->mt_low = atoi( argv[1] );
+	newp->mt_high = atoi( argv[2] );
+	newp->mt_r = atoi( argv[3] );
+	newp->mt_g = atoi( argv[4] );
+	newp->mt_b = atoi( argv[5] );
 	newp->mt_daddr = MATER_NO_ADDR;		/* not in database yet */
 	rt_insert_color( newp );
 	color_putrec( newp );			/* write to database */
@@ -112,7 +111,9 @@ f_color()
  *  and update database.
  */
 void
-f_edcolor()
+f_edcolor( argc, argv )
+int	argc;
+char	**argv;
 {
 	static char tempfile[] = "/tmp/MGED.aXXXXX";
 	register struct mater *mp;
