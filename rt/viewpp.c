@@ -41,6 +41,9 @@ Options:\n\
  -x #		Set librt debug flags\n\
 ";
 
+extern int	width;
+extern int	height;
+
 /* Stuff for pretty-picture output format */
 static struct soltab *last_solidp;	/* pointer to last solid hit */
 static int last_item;			/* item number of last region hit */
@@ -150,7 +153,7 @@ int arg;
 /*
  *  			V I E W _ I N I T
  */
-view_init( ap, file, obj, npts, minus_o )
+view_init( ap, file, obj, minus_o )
 register struct application *ap;
 char *file, *obj;
 {
@@ -165,7 +168,7 @@ char *file, *obj;
 
 	fprintf(stdout, "%s: %s (RT)\n", file, obj );
 	fprintf(stdout, "%10d%10d", (int)azimuth, (int)elevation );
-	fprintf(stdout, "%10d%10d\n", npts, npts );
+	fprintf(stdout, "%10d%10d\n", width, height );
 	return(0);		/* no framebuffer needed */
 }
 

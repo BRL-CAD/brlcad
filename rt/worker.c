@@ -38,14 +38,15 @@ extern mat_t	model2view;
 /***** worker.c variables imported from rt.c *****/
 extern void	worker();
 extern struct application ap;
-extern int	stereo;		/* stereo viewing */
+extern int	stereo;			/* stereo viewing */
 extern vect_t	left_eye_delta;
-extern int	hypersample;	/* number of extra rays to fire */
-extern int	perspective;	/* perspective view -vs- parallel view */
-extern vect_t	dx_model;	/* view delta-X as model-space vector */
-extern vect_t	dy_model;	/* view delta-Y as model-space vector */
-extern point_t	eye_model;	/* model-space location of eye */
-extern int	npts;		/* # of points to shoot: x,y */
+extern int	hypersample;		/* number of extra rays to fire */
+extern int	perspective;		/* perspective view -vs- parallel */
+extern vect_t	dx_model;		/* view delta-X as model-space vect */
+extern vect_t	dy_model;		/* view delta-Y as model-space vect */
+extern point_t	eye_model;		/* model-space location of eye */
+extern int	width;			/* # of pixels in X */
+extern int	height;			/* # of lines in Y */
 extern mat_t	Viewrotscale;
 extern fastf_t	viewsize;
 extern fastf_t	zoomout;
@@ -84,10 +85,10 @@ grid_setup()
 	mat_mul( model2view, Viewrotscale, toEye );
 	mat_inv( view2model, model2view );
 
-	/* Chop -1.0..+1.0 range into npts parts */
-	VSET( temp, 2.0/npts, 0, 0 );
+	/* Chop -1.0..+1.0 range into parts */
+	VSET( temp, 2.0/width, 0, 0 );
 	MAT4X3VEC( dx_model, view2model, temp );
-	VSET( temp, 0, 2.0/npts, 0 );
+	VSET( temp, 0, 2.0/height, 0 );
 	MAT4X3VEC( dy_model, view2model, temp );
 	if( stereo )  {
 		/* Move left 2.5 inches (63.5mm) */
@@ -101,10 +102,10 @@ grid_setup()
 	if( perspective )  {
 		VSET( temp, -1, -1, -zoomout );	/* viewing plane */
 		/*
-		 * Divergance is (0.5 * viewsize / npts) mm at
+		 * Divergance is (0.5 * viewsize / width) mm at
 		 * a ray distance of (viewsize * zoomout) mm.
 		 */
-		ap.a_diverge = (0.5 / npts) / zoomout;
+		ap.a_diverge = (0.5 / width) / zoomout;
 		ap.a_rbeam = 0;
 	}  else  {
 		VSET( temp, 0, 0, -1 );
@@ -112,7 +113,7 @@ grid_setup()
 		VUNITIZE( ap.a_ray.r_dir );
 
 		VSET( temp, -1, -1, 0 );	/* eye plane */
-		ap.a_rbeam = 0.5 * viewsize / npts;
+		ap.a_rbeam = 0.5 * viewsize / width;
 		ap.a_diverge = 0;
 	}
 	MAT4X3PNT( viewbase_model, view2model, temp );
@@ -220,8 +221,8 @@ int cpu;
 		if( com > last_pixel )
 			break;
 		/* Note: ap.... may not be valid until first time here */
-		a.a_x = com%npts;
-		a.a_y = com/npts;
+		a.a_x = com%width;
+		a.a_y = com/width;
 		a.a_hit = ap.a_hit;
 		a.a_miss = ap.a_miss;
 		a.a_rt_i = ap.a_rt_i;
@@ -281,7 +282,7 @@ int cpu;
 			VSCALE( a.a_color, colorsum, f );
 		}
 		view_pixel( &a );
-		if( a.a_x == npts-1 )
+		if( a.a_x == width-1 )
 			view_eol( &a );		/* End of scan line */
 	}
 	RES_ACQUIRE( &rt_g.res_worker );

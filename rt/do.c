@@ -55,16 +55,19 @@ extern void	worker();
 
 /***** variables shared with worker() ******/
 extern struct application ap;
-extern point_t	eye_model;	/* model-space location of eye */
-extern int	npts;		/* # of points to shoot: x,y */
+extern point_t	eye_model;		/* model-space location of eye */
+extern int	width;			/* # of pixels in X */
+extern int	height;			/* # of lines in Y */
 extern mat_t	Viewrotscale;
 extern fastf_t	viewsize;
-extern char	*scanbuf;	/* For optional output buffering */
+extern char	*scanbuf;		/* For optional output buffering */
 extern int	npsw;
 extern struct resource resource[];
 /***** end variables shared with worker() */
 
 /***** variables shared with do.c *****/
+extern int	pix_start;		/* pixel to start at */
+extern int	pix_end;		/* pixel to end at */
 extern int	nobjs;			/* Number of cmd-line treetops */
 extern char	**objtab;		/* array of treetop strings */
 extern char	*beginptr;		/* sbrk() at start of program */
@@ -507,7 +510,7 @@ int framenumber;
 	 *  It may prove desirable to do this in chunks
 	 */
 	rt_prep_timer();
-	do_run( 0, npts*npts - 1 );
+	do_run( pix_start, pix_end );
 	utime = rt_read_timer( outbuf, sizeof(outbuf) );
 
 	/*
@@ -534,7 +537,7 @@ int framenumber;
 	fprintf(stderr,
 		"Frame %5d: %8d pixels in %10.2f sec = %10.2f pixels/sec\n",
 		framenumber,
-		npts*npts, utime, (double)(npts*npts)/utime );
+		width*height, utime, (double)(width*height)/utime );
 	fprintf(stderr,
 		"Frame %5d: %8d rays   in %10.2f sec = %10.2f rays/sec (RTFM)\n",
 		framenumber,

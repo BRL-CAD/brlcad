@@ -50,25 +50,27 @@ static char RCSview[] = "@(#)$Header$ (BRL)";
 char usage[] = "\
 Usage:  rt [options] model.g objects...\n\
 Options:\n\
- -f #		Grid size in pixels, default 512, max 1024\n\
- -a Az		Azimuth in degrees\n\
- -e Elev	Elevation in degrees\n\
- -M		Read model2view matrix on stdin\n\
+ -s #		Grid size in pixels (default 512)\n\
+ -a #		Azimuth in degrees\n\
+ -e #		Elevation in degrees\n\
+ -M		Read matrix, cmds on stdin\n\
  -o model.pix	Specify output file, .pix format (default=fb)\n\
  -x #		Set librt debug flags\n\
  -X #		Set rt debug flags\n\
  -p #		Perspective viewing, focal length scaling\n\
+ -P #		Set number of processors (default 1)\n\
 ";
 
-extern FBIO	*fbp;		/* Framebuffer handle */
-extern FILE	*outfp;		/* optional output file */
+extern FBIO	*fbp;			/* Framebuffer handle */
+extern FILE	*outfp;			/* optional output file */
 
-extern int lightmodel;		/* lighting model # to use */
-extern mat_t view2model;
-extern mat_t model2view;
-extern int npts;
-extern int hex_out;		/* Output format, 0=binary, !0=hex */
-extern char *scanbuf;		/* Optional output buffer */
+extern int	width;
+extern int	height;
+extern int	lightmodel;		/* lighting model # to use */
+extern mat_t	view2model;
+extern mat_t	model2view;
+extern int	hex_out;		/* Output format, 0=binary, !0=hex */
+extern char	*scanbuf;		/* Optional output buffer */
 
 extern struct light_specific *LightHeadp;
 vect_t ambient_color = { 1, 1, 1 };	/* Ambient white light */
@@ -253,7 +255,7 @@ register struct application *ap;
 		/* Here, the buffer is only one line long */
 		pixelp = scanbuf+ap->a_x*3;
 #else RTSRV
-		pixelp = scanbuf+((ap->a_y*npts)+ap->a_x)*3;
+		pixelp = scanbuf+((ap->a_y*width)+ap->a_x)*3;
 #endif RTSRV
 		/* Don't depend on interlocked hardware byte-splice */
 		RES_ACQUIRE( &rt_g.res_worker );	/* XXX need extra semaphore */
@@ -390,7 +392,7 @@ register struct application *ap;
 		return;
 	/* We make no guarantee that the last few pixels are done */
 	RES_ACQUIRE( &rt_g.res_syscall );
-	fb_write( fbp, 0, ap->a_y, scanbuf+ap->a_y*npts*3, npts );
+	fb_write( fbp, 0, ap->a_y, scanbuf+ap->a_y*width*3, width );
 	RES_RELEASE( &rt_g.res_syscall );
 #endif PARALLEL
 }
@@ -405,7 +407,7 @@ struct application *ap;
 
 #ifdef PARALLEL
 	if( (outfp != NULL) &&
-	    fwrite( scanbuf, sizeof(char), npts*npts*3, outfp ) != npts*npts*3 )  {
+	    fwrite( scanbuf, sizeof(char), width*height*3, outfp ) != width*height*3 )  {
 		fprintf(stderr,"view_end:  fwrite failure\n");
 		return(-1);		/* BAD */
 	}
@@ -430,13 +432,13 @@ struct application *ap;
  *
  *  Called once, early on in RT setup.
  */
-view_init( ap, file, obj, npts, minus_o )
+view_init( ap, file, obj, minus_o )
 register struct application *ap;
 char *file, *obj;
 {
 
 #ifdef PARALLEL
-	scanbuf = rt_malloc( npts*npts*3 + sizeof(long), "scanbuf" );
+	scanbuf = rt_malloc( width*height*3 + sizeof(long), "scanbuf" );
 #endif
 
 	mlib_init();			/* initialize material library */

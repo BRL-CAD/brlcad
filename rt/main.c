@@ -1,7 +1,7 @@
 /*
  *			R T . C 
  *
- *  Demonstration Ray Tracing main program, using RT library.
+ *  Ray Tracing main program, using RT library.
  *  Invoked by MGED for quick pictures.
  *  Is linked with each of three "back ends" (view.c, viewpp.c, viewray.c)
  *  to produce three executable programs:  rt, rtpp, rtray.
@@ -15,7 +15,7 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *  
  *  Copyright Notice -
- *	This software is Copyright (C) 1985 by the United States Army.
+ *	This software is Copyright (C) 1985,1987 by the United States Army.
  *	All rights reserved.
  */
 #ifndef lint
@@ -57,23 +57,26 @@ mat_t		model2view;
 
 /***** variables shared with worker() ******/
 struct application ap;
-int		stereo = 0;	/* stereo viewing */
+int		stereo = 0;		/* stereo viewing */
 vect_t		left_eye_delta;
-int		hypersample=0;	/* number of extra rays to fire */
-int		perspective=0;	/* perspective view -vs- parallel view */
-vect_t		dx_model;	/* view delta-X as model-space vector */
-vect_t		dy_model;	/* view delta-Y as model-space vector */
-point_t		eye_model;	/* model-space location of eye */
-int		npts;		/* # of points to shoot: x,y */
+int		hypersample=0;		/* number of extra rays to fire */
+int		perspective=0;		/* perspective view -vs- parallel */
+vect_t		dx_model;		/* view delta-X as model-space vect */
+vect_t		dy_model;		/* view delta-Y as model-space vect */
+point_t		eye_model;		/* model-space location of eye */
+int		width;			/* # of pixels in X */
+int		height;			/* # of lines in Y */
 mat_t		Viewrotscale;
 fastf_t		viewsize=0;
-fastf_t		zoomout=1;	/* >0 zoom out, 0..1 zoom in */
-char		*scanbuf;	/* For optional output buffering */
+fastf_t		zoomout=1;		/* >0 zoom out, 0..1 zoom in */
+char		*scanbuf;		/* For optional output buffering */
 int		npsw = MAX_PSW;		/* number of worker PSWs to run */
 struct resource	resource[MAX_PSW];	/* memory resources */
 /***** end variables shared with worker() *****/
 
 /***** variables shared with do.c *****/
+int		pix_start = -1;		/* pixel to start at */
+int		pix_end;		/* pixel to end at */
 int		nobjs;			/* Number of cmd-line treetops */
 char		**objtab;		/* array of treetop strings */
 char		*beginptr;		/* sbrk() at start of program */
@@ -85,6 +88,8 @@ char		*outputfile = (char *)0;/* name of base of output file */
 
 static char	*framebuffer;		/* desired framebuffer */
 
+#define MAX_WIDTH	(8*1024)
+
 /*
  *			G E T _ A R G S
  */
@@ -92,8 +97,9 @@ get_args( argc, argv )
 register char **argv;
 {
 	register int c;
+	register int i;
 
-	while( (c=getopt( argc, argv, "SH:F:D:MA:x:X:s:f:a:e:l:O:o:p:P:B" )) != EOF )  {
+	while( (c=getopt( argc, argv, "SH:F:D:MA:x:X:s:f:a:e:l:O:o:p:P:Bb:n:w:" )) != EOF )  {
 		switch( c )  {
 		case 'S':
 			stereo = 1;
@@ -121,16 +127,32 @@ register char **argv;
 			sscanf( optarg, "%x", &rdebug );
 			fprintf(stderr,"rt rdebug=x%x\n", rdebug);
 			break;
+
 		case 's':
 			/* Square size -- fall through */
 		case 'f':
 			/* "Fast" -- arg's worth of pixels */
-			npts = atoi( optarg );
-			if( npts < 2 || npts > (1024*8) )  {
-				fprintf(stderr,"npts=%d out of range\n", npts);
-				npts = 50;
-			}
+			i = atoi( optarg );
+			if( i < 2 || i > MAX_WIDTH )
+				fprintf(stderr,"squaresize=%d out of range\n", i);
+			else
+				width = height = i;
 			break;
+		case 'n':
+			i = atoi( optarg );
+			if( i < 2 || i > MAX_WIDTH )
+				fprintf(stderr,"height=%d out of range\n", i);
+			else
+				height = i;
+			break;
+		case 'w':
+			i = atoi( optarg );
+			if( i < 2 || i > MAX_WIDTH )
+				fprintf(stderr,"width=%d out of range\n", i);
+			else
+				width = i;
+			break;
+
 		case 'a':
 			/* Set azimuth */
 			azimuth = atof( optarg );
@@ -174,6 +196,17 @@ register char **argv;
 			 */
 			mathtab_constant();
 			break;
+		case 'b':
+			/* Specify a single pixel to be done */
+			{
+				int xx, yy;
+				(void)sscanf( optarg, "%d%d", &xx, &yy );
+				if( xx * yy >= 0 )  {
+					pix_start = yy * width + xx;
+					pix_end = pix_start;
+				}
+			}
+			break;
 		default:		/* '?' */
 			fprintf(stderr,"unknown option %c\n", c);
 			return(0);	/* BAD */
@@ -198,7 +231,7 @@ char **argv;
 	char cbuf[512];			/* Input command buffer */
 
 	beginptr = sbrk(0);
-	npts = 512;
+	width = height = 512;
 	azimuth = -35.0;			/* GIFT defaults */
 	elevation = -25.0;
 
@@ -214,6 +247,10 @@ char **argv;
 		fprintf(stderr,"rt: MGED database not specified\n");
 		(void)fputs(usage, stderr);
 		exit(1);
+	}
+	if( pix_start == -1 )  {
+		pix_start = 0;
+		pix_end = height * width - 1;
 	}
 
 	RES_INIT( &rt_g.res_syscall );
@@ -237,20 +274,26 @@ char **argv;
 	/* 
 	 *  Initialize application.
 	 */
-	if( view_init( &ap, title_file, title_obj, npts, outputfile!=(char *)0 ) != 0 )  {
+	if( view_init( &ap, title_file, title_obj, outputfile!=(char *)0 ) != 0 )  {
 		/* Framebuffer is desired */
-		register int sz = 512;
-		while( sz < npts )
-			sz <<= 1;
-		if( (fbp = fb_open( framebuffer, sz, sz )) == FBIO_NULL )  {
-			rt_log("rt:  can't open frame buffer\n");
+		register int xx, yy;
+		xx = yy = 512;		/* SGI users may want 768 */
+		while( xx < width )
+			xx <<= 1;
+		while( yy < width )
+			yy <<= 1;
+		if( (fbp = fb_open( framebuffer, xx, yy )) == FBIO_NULL )  {
+			fprintf(stderr,"rt:  can't open frame buffer\n");
 			exit(12);
 		}
 		/* ALERT:  The library wants zoom before window! */
-		fb_zoom( fbp, fb_getwidth(fbp)/npts, fb_getheight(fbp)/npts );
-		fb_window( fbp, npts/2, npts/2 );
+		fb_zoom( fbp, fb_getwidth(fbp)/width, fb_getheight(fbp)/height );
+		fb_window( fbp, width/2, height/2 );
 	} else if( outputfile == (char *)0 )  {
-		/* Perhaps the isatty check here? */
+		if( isatty(fileno(stdout)) )  {
+			fprintf(stderr,"rt: binary output to terminal\n");
+			exit(14);
+		}
 		outfp = stdout;
 	}
 	fprintf(stderr,"initial dynamic memory use=%d.\n",sbrk(0)-beginptr );

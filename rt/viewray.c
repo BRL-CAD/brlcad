@@ -65,7 +65,7 @@ register struct partition *PartHeadp;
 /*
  *  			V I E W _ I N I T
  */
-view_init( ap, file, obj, npts, minus_o )
+view_init( ap, file, obj, minus_o )
 register struct application *ap;
 char *file, *obj;
 {

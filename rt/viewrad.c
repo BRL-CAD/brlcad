@@ -43,7 +43,8 @@ extern	point_t	eye_model;		/* ray origin for perspective */
 extern	point_t	dx_model;
 extern	point_t	dy_model;
 #endif never
-extern	int	npts;
+extern	int	width;
+extern	int	height;
 
 char usage[] = "\
 Usage:  rtrad [options] model.g objects... >file.rad\n\
@@ -66,7 +67,6 @@ static struct rayinfo {
 	int	reg, sol, surf;
 } rayinfo[MAXREFLECT], *rayp;
 static struct xray firstray;
-static int numpts;
 
 /*
  *  Yucky Fortran/SRIM style I/O
@@ -205,20 +205,13 @@ view_end()
 /*
  *  			V I E W _ I N I T
  */
-view_init( ap, file, obj, npts, minus_o )
+view_init( ap, file, obj, minus_o )
 register struct application *ap;
 char *file, *obj;
 {
 	ap->a_hit = radhit;
 	ap->a_miss = radmiss;
 	ap->a_onehit = 1;
-
-	numpts = npts;		/* hang on to this for header */
-
-	/* RT should do this for us... */
-	if( minus_o == 0 ) {
-		outfp = stdout;
-	}
 
 	return(0);		/* no framebuffer needed */
 }
@@ -230,7 +223,7 @@ struct application *ap;
 	vect_t temp, aimpt;
 	union radrec r;
 
-	rt_log( "Ray Spacing: %f rays/cm\n", 10.0*(npts/viewsize) );
+	rt_log( "Ray Spacing: %f rays/cm\n", 10.0*(width/viewsize) );
 
 	/* Header Record */
 	bzero( &r, sizeof(r) );
@@ -252,8 +245,8 @@ struct application *ap;
 	r.h.a = - azimuth;
 	r.h.vert = viewsize;
 	r.h.horz = viewsize;
-	r.h.nvert = numpts;
-	r.h.nhorz = numpts;
+	r.h.nvert = height;
+	r.h.nhorz = width;
 	r.h.maxrfl = MAXREFLECT;
 
 	writerec( &r, outfp );
@@ -384,8 +377,8 @@ int depth;
 	r.f.ox = ap->a_ray.r_pt[0];	/* ray origin */
 	r.f.oy = ap->a_ray.r_pt[1];
 	r.f.oz = ap->a_ray.r_pt[2];
-	r.f.h = (ap->a_x - npts/2) * viewsize/npts;
-	r.f.v = (ap->a_y - npts/2) * viewsize/npts;
+	r.f.h = (ap->a_x - width/2) * viewsize/width;
+	r.f.v = (ap->a_y - height/2) * viewsize/height;
 	r.f.ih = ap->a_x + 1;		/* Radsim counts from 1 */
 	r.f.iv = ap->a_y + 1;
 	writerec( &r, outfp );
