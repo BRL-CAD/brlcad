@@ -14,7 +14,7 @@
 	sh_stack \
 	sh_plastic sh_cook sh_spm sh_light \
 	sh_wood sh_stxt sh_points sh_toyota \
-	sh_camo sh_scloud sh_air sh_fire sh_cs sh_rtrans sh_brdf \
+	sh_camo sh_scloud sh_air sh_fire sh_rtrans sh_brdf \
 	sh_gauss sh_noise sh_prj sh_grass \
 	turb
 
