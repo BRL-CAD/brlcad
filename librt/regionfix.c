@@ -47,6 +47,7 @@ extern int	re_exec();
  *  to distinguish between different instances of the same
  *  prototype region.
  */
+void
 regionfix( ap, file )
 struct application	*ap;
 char			*file;
