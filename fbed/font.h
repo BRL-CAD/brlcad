@@ -24,6 +24,14 @@
 #if defined(mips)
 #define CHARS_UNSIGNED_ONLY
 #endif
+
+#define FONTBUFSZ 200
+#ifndef FONTDIR
+#define FONTDIR		"/usr/lib/vfont" /* default font directory */
+#endif
+#define FONTNAME	"nonie.r.12"	 /* default font name */
+#define FONTNAMESZ	128
+
 #define SIGNBIT		(1<<7)
 #define SIGNMASK	~SIGNBIT
 #define TWOSCOMP(chr)	((~(chr)&0xff)+1)
@@ -49,11 +57,6 @@ struct dispatch
 	char		up, down, left, right;
 	short		width;
 	};
-
-#define FONTBUFSZ 200
-#define FONTDIR		"/usr/lib/vfont"	/* Font directory.	*/
-#define FONTNAME	"nonie.r.12"		/* Default font name.	*/
-#define FONTNAMESZ	128
 
 /* Variables controlling the font itself.				*/
 extern FILE *ffdes;		/* Fontfile file descriptor.		*/
