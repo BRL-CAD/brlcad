@@ -71,7 +71,7 @@ void	aexists();
 int		newedge;		/* new edge for arb editing */
 
 /* Add/modify item and air codes of a region */
-/* Format: I region item <air>	*/
+/* Format: item region item <air>	*/
 int
 f_itemair(clientData, interp, argc, argv)
 ClientData clientData;
@@ -81,7 +81,8 @@ char	**argv;
 {
 	register struct directory *dp;
 	int ident, air;
-	union record record;
+	struct rt_db_internal	intern;
+	struct rt_comb_internal	*comb;
 
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;
@@ -92,6 +93,10 @@ char	**argv;
 	  Tcl_AppendResult(interp, dp->d_namep, ": not a combination\n", (char *)NULL);
 	  return TCL_ERROR;
 	}
+	if( (dp->d_flags & DIR_REGION) == 0 )  {
+	  Tcl_AppendResult(interp, dp->d_namep, ": not a region\n", (char *)NULL);
+	  return TCL_ERROR;
+	}
 
 	air = ident = 0;
 	ident = atoi( argv[2] );
@@ -100,20 +105,19 @@ char	**argv;
 	if( argc == 4 )  {
 		air = atoi( argv[3] );
 	}
-	if( db_get( dbip,  dp, &record, 0 , 1) < 0 ) {
-	  TCL_READ_ERR_return;
-	}
-	if( record.c.c_flags != 'R' ) {
-	  Tcl_AppendResult(interp, dp->d_namep, ": not a region\n", (char *)NULL);
-	  return TCL_ERROR;
-	}
-	record.c.c_regionid = ident;
-	record.c.c_aircode = air;
-	if( db_put( dbip, dp, &record, 0, 1 ) < 0 ) {
-	  TCL_WRITE_ERR_return;
-	}
 
-	return TCL_ERROR;
+	if( rt_get_comb( &intern, dp, (mat_t *)NULL, dbip ) < 0 )  {
+		Tcl_AppendResult(interp, "rt_get_comb(", dp->d_namep,
+			") failure", (char *)NULL );
+		return TCL_ERROR;
+	}
+	comb = (struct rt_comb_internal *)intern.idb_ptr;
+	comb->region_id = ident;
+	comb->aircode = air;
+	if( rt_db_put_internal( dp, dbip, &intern ) < 0 )  {
+		TCL_WRITE_ERR_return;
+	}
+	return TCL_OK;
 }
 
 /* Modify material information */
