@@ -192,6 +192,13 @@ int y;
       dmp->dm_drawString2D( dmp, "View", MENUX+5*40, y-15, 0, 0 );
     }
     break;
+  case BV_EYEROT_TOGGLE:
+    if(mged_variables.eyerot)
+      dmp->dm_setColor(dmp, DM_WHITE, 1);
+    else
+      dmp->dm_setColor(dmp, DM_YELLOW, 1);
+
+    dmp->dm_drawString2D( dmp, mptr->menu_string, MENUX, y-15, 0, 0 );
 #if 0
   case BE_S_CONTEXT:
     if(mged_variables.context)
@@ -238,8 +245,10 @@ int y_top;
 				  mptr->menu_arg == BV_EDIT_TOGGLE))
 	  || (*m == (struct menu_item *)sed_menu && mptr->menu_arg == BE_S_CONTEXT))
 #else
-      if((*m == (struct menu_item *)second_menu && (mptr->menu_arg == BV_RATE_TOGGLE ||
-				  mptr->menu_arg == BV_EDIT_TOGGLE)))
+      if((*m == (struct menu_item *)second_menu &&
+	  (mptr->menu_arg == BV_RATE_TOGGLE ||
+	   mptr->menu_arg == BV_EDIT_TOGGLE ||
+	   mptr->menu_arg == BV_EYEROT_TOGGLE)))
 #endif
 	mged_highlight_menu_item(mptr, y);
       else{
@@ -278,8 +287,9 @@ int y_top;
  *		-1 if pen is ABOVE menu	(error)
  */
 int
-mmenu_select( pen_y )
+mmenu_select( pen_y, do_func )
 register int pen_y;
+int do_func;
 { 
 	static int menu, item;
 	struct menu_item	**m;
@@ -308,7 +318,7 @@ register int pen_y;
 			menuflag = 1;
 		     	/* It's up to the menu_func to set menuflag=0
 		     	 * if no arrow is desired */
-			if( mptr->menu_func != ((void (*)())0) )
+			if( do_func && mptr->menu_func != ((void (*)())0) )
 				(*(mptr->menu_func))(mptr->menu_arg, menu, item);
 
 			return( 1 );		/* menu claims pen value */
