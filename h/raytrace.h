@@ -2445,13 +2445,33 @@ BU_EXTERN(void			nmg_jeg, (struct edge_g_lseg *dest_eg,
 				struct edge_g_lseg *src_eg) );
 
 /* From nmg_mod.c */
+/*	REGION Routines */
+BU_EXTERN(void			nmg_merge_regions,
+				(struct nmgregion *r1,
+				struct nmgregion *r2,
+				CONST struct bn_tol *tol));
+
 /*	SHELL Routines */
+BU_EXTERN(void			nmg_shell_coplanar_face_merge,
+				(struct shell		*s,
+				CONST struct bn_tol	*tol,
+				CONST int		simplify));
 BU_EXTERN(int			nmg_simplify_shell, (struct shell *s) );
 BU_EXTERN(void			nmg_rm_redundancies, (struct shell *s, CONST struct bn_tol *tol ) );
 BU_EXTERN(void			nmg_sanitize_s_lv, (struct shell *s,
 				int orient) );
 BU_EXTERN(void			nmg_s_split_touchingloops, (struct shell *s,
 				CONST struct bn_tol *tol) );
+BU_EXTERN(void			nmg_s_join_touchingloops,
+				(struct shell		*s,
+				CONST struct bn_tol	*tol));
+BU_EXTERN(void			nmg_js,
+				(struct shell	*s1, struct shell	*s2,
+				CONST struct bn_tol	*tol));
+BU_EXTERN(void			nmg_invert_shell,
+				(struct shell		*s,
+				CONST struct bn_tol	*tol));
+
 /*	FACE Routines */
 BU_EXTERN(struct faceuse	*nmg_cmface, (struct shell *s, struct vertex **vt[], int n) );
 BU_EXTERN(struct faceuse	*nmg_cface, (struct shell *s, struct vertex **vt,	int n) );
@@ -2472,9 +2492,18 @@ BU_EXTERN(struct vertexuse	*nmg_join_singvu_loop, (struct vertexuse *vu1, struct
 BU_EXTERN(struct vertexuse	*nmg_join_2singvu_loops, (struct vertexuse *vu1, struct vertexuse *vu2) );
 BU_EXTERN(struct loopuse	*nmg_cut_loop, (struct vertexuse *vu1, struct vertexuse *vu2) );
 BU_EXTERN(struct loopuse	*nmg_split_lu_at_vu, (struct loopuse *lu, struct vertexuse *vu) );
+BU_EXTERN(struct vertexuse	*nmg_find_repeated_v_in_lu, (struct vertexuse	*vu));
 BU_EXTERN(void			nmg_split_touchingloops, (struct loopuse *lu,
 				CONST struct bn_tol *tol) );
 BU_EXTERN(int			nmg_join_touchingloops, (struct loopuse *lu) );
+BU_EXTERN(int			nmg_get_touching_jaunts,
+				(CONST struct loopuse *lu,
+				struct bu_ptbl *tbl,
+				int *need_init));
+BU_EXTERN(void			nmg_kill_accordions, (struct loopuse *lu));
+BU_EXTERN(int			nmg_loop_split_at_touching_jaunt,
+				(struct loopuse		*lu,
+				CONST struct bn_tol	*tol));
 BU_EXTERN(void			nmg_simplify_loop, (struct loopuse *lu) );
 BU_EXTERN(int			nmg_kill_snakes, (struct loopuse *lu) );
 BU_EXTERN(void			nmg_mv_lu_between_shells, (struct shell *dest,
@@ -2491,6 +2520,9 @@ BU_EXTERN(struct edgeuse	*nmg_ebreak, (struct vertex *v, struct edgeuse *eu));
 BU_EXTERN(struct edgeuse	*nmg_ebreaker, (struct vertex *v,
 				struct edgeuse *eu, CONST struct bn_tol *tol));
 BU_EXTERN(struct vertex		*nmg_e2break, (struct edgeuse *eu1, struct edgeuse *eu2) );
+BU_EXTERN(int			nmg_unbreak_edge, (struct edgeuse *eu1_first));
+BU_EXTERN(int			nmg_unbreak_shell_edge_unsafe,
+				(struct edgeuse	*eu1_first));
 BU_EXTERN(struct edgeuse	*nmg_eins, (struct edgeuse *eu) );
 BU_EXTERN(void			nmg_mv_eu_between_shells, (struct shell *dest,
 				struct shell *src, struct edgeuse *eu) );
