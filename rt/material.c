@@ -211,10 +211,9 @@ done:
  *	 1	success
  */
 int
-mlib_setup( headp, rp, rtip )
-struct mfuncs		**headp;
-register struct region	*rp;
-struct rt_i		*rtip;
+mlib_setup( struct mfuncs **headp,
+	register struct region *rp,
+	struct rt_i *rtip )
 {
 	register CONST struct mfuncs *mfp;
 	register struct mfuncs *mfp_new;
@@ -315,8 +314,7 @@ found:
  *  Routine to free material-property specific data
  */
 void
-mlib_free( rp )
-register struct region *rp;
+mlib_free( register struct region *rp )
 {
 	register CONST struct mfuncs *mfp = (struct mfuncs *)rp->reg_mfuncs;
 
