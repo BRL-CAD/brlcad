@@ -213,8 +213,7 @@ int main(int argc, char **argv)
   return 0;
 }
 
-void usage(n)
-     char *n;
+void usage(char *n)
 {
   printf(
 	 "\nUSAGE: %s -D -d# -i -f fileName\n\
