@@ -37,7 +37,7 @@ reg	Node	*node;
 **	This function adds msg to the list of error messages
 **	to be printed by trace_errs for the given node.
 */
-
+void
 add_error(node, msg, badguys, iserror)
 reg	Node	*node;
 reg	char	*msg;

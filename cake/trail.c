@@ -18,7 +18,7 @@ static	char	*trailevent[TRAILSIZE];	/* init to NULL by C	  */
 /*
 **	Register this function on the trail.
 */
-
+void
 put_trail(func, event)
 reg	char	*func;
 reg	char	*event;
@@ -34,7 +34,7 @@ reg	char	*event;
 /*
 **	Print the trail on the given file.
 */
-
+void
 get_trail(fp)
 reg	FILE	*fp;
 {

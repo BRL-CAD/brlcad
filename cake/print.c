@@ -77,6 +77,7 @@ reg	int	flag;
 	return new_name(buf);
 }
 
+void
 print_pat(pat)
 reg	Pat	*pat;
 {
@@ -88,6 +89,7 @@ reg	Pat	*pat;
 	printf(str_pflag(pat->p_flag));
 }
 
+void
 print_act(act)
 reg	Act	*act;
 {
@@ -95,6 +97,7 @@ reg	Act	*act;
 	printf("%s", act->a_str);
 }
 
+void
 print_test(test)
 reg	Test	*test;
 {
@@ -175,6 +178,7 @@ default:	printf("Bad type kind %d in print_test\n", test->t_kind);
 	}
 }
 
+void
 print_entry(entry)
 reg	Entry	*entry;
 {
@@ -240,6 +244,7 @@ case n_CANDO:	return "cando";
 	return "bizarre";
 }
 
+void
 print_time(str, ntime)
 reg	char	*str;
 time_t		ntime;
@@ -249,6 +254,7 @@ time_t		ntime;
 	printf("%s time: %d, %s", str, ntime, ctime(&ntime));
 }
 
+void
 print_node(node)
 reg	Node	*node;
 {

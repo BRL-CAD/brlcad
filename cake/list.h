@@ -37,4 +37,4 @@ extern	List	*_makelist();
 extern	List	*_addhead();
 extern	List	*_addtail();
 extern	List	*addlist();
-extern		delete();
+extern	void	delete();

@@ -17,13 +17,12 @@ rcs_id[] = "$Header$";
 **	This controls the printing of messages about the primary
 **	targets.
 */
-
+void
 update(node, level, force_exec)
 reg	Node	*node;
 reg	int	level;
 reg	bool	force_exec;
 {
-	extern		get_utime();
 	extern		save_novol();
 	extern	bool	diff_novol();
 	extern		carry_out();
@@ -315,7 +314,7 @@ endit:
 **	Execute the plan prepared by chase.c
 **	Prevent the deletion of the primary targets by cleanup.
 */
-
+void
 execute(root)
 reg	Node	*root;
 {
@@ -465,7 +464,7 @@ reg	Node	*node;
 **	The second may be NULL, in which case show_act does the
 **	expansion itself.
 */
-
+void
 show_act(before, after)
 reg	char	*before;
 reg	char	*after;
@@ -568,7 +567,7 @@ reg	char	*cmd;
 /*
 **	Clean up after an error or interrupt.
 */
-
+void
 cake_error(node)
 reg	Node	*node;
 {
@@ -592,7 +591,7 @@ reg	Node	*node;
 /*
 **	Clean up after all the fuss.
 */
-
+void
 cleanup()
 {
 	extern	List	*get_allnodes();

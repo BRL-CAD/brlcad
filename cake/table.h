@@ -22,7 +22,7 @@ typedef	struct	s_table
 #define	tablehash(table)	(*(table->ta_hash))
 #define	tableequal(table)	(*(table->ta_equal))
 
-extern		_init_table();
+extern	void	_init_table();
 extern	Cast	_lookup_table();
 extern	bool	_insert_table();
 extern	List	*_contents_table();

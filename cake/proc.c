@@ -469,6 +469,7 @@ int	signalmask;
 #endif
 #endif
 
+void
 mutex_lock()
 {
 #if 0
@@ -481,6 +482,7 @@ mutex_lock()
 #endif
 }
 
+void
 mutex_unlock()
 {
 #if 0

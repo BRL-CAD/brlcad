@@ -267,7 +267,7 @@ reg	char	*str;
 **	The second arg says whether the pattern is to be broken after
 **	dereferencing: this is needed purely for debugging purposes.
 */
-
+void
 deref(pat, broken)
 reg	Pat	*pat;
 reg	bool	broken;

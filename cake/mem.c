@@ -41,6 +41,7 @@ int	size;
 */
 
 /*ARGSUSED*/
+void
 oldmem(ptr)
 Cast	ptr;
 {

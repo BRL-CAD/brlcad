@@ -294,7 +294,7 @@ nextword:
 /*
 **	Put a flag into the CAKEFLAGS definition.
 */
-
+void
 putflag(base, flag)
 reg	int	base;
 reg	char	*flag;

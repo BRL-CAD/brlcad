@@ -152,7 +152,7 @@ reg	List	*list;
 /*
 **	Delete an item from its linked list, and free the node.
 */
-
+void
 delete(list, item)
 reg	List	*list;
 reg	List	*item;

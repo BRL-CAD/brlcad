@@ -15,7 +15,7 @@ rcs_id[] = "$Header$";
 /*
 **	Initialize a table.
 */
-
+void
 _init_table(table)
 reg	Table	*table;
 {

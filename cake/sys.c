@@ -56,6 +56,7 @@ char	*shell_path[2];
 char	*shell_cmd[2];
 char	*shell_opt[2];
 
+void
 shell_setup(shell, which)
 reg	char	*shell;
 reg	int	which;
@@ -117,7 +118,7 @@ bool	metatab[CHARSETSIZE];
 /*
 **	Set up the metacharacter table.
 */
-
+void
 meta_setup(metachars)
 reg	char	*metachars;
 {

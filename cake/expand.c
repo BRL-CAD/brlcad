@@ -137,6 +137,7 @@ reg	char	*str;
 	return new_name(buf);
 }
 
+void
 segcpy(target, left, right)
 reg	char	*target, *left, *right;
 {
@@ -154,6 +155,7 @@ reg	char	*target, *left, *right;
 	}
 }
 
+void
 segcat(target, left, right)
 reg	char	*target, *left, *right;
 {

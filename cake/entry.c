@@ -19,7 +19,7 @@ Test	*ground_test();		/* defined further down */
 /*
 **	Initialise ALL data structures about entries.
 */
-
+void
 init_entry()
 {
 	entries = makelist0();
@@ -29,7 +29,7 @@ init_entry()
 /*
 **	Deposit an entry just read in.
 */
-
+void
 new_entry(deps, acts)
 reg	List	*deps;				/* of Entry	*/
 reg	List	*acts;				/* of Pat	*/
@@ -51,7 +51,7 @@ reg	List	*acts;				/* of Pat	*/
 **	Another minor correction is also done here: if -n is given
 **	then we set nf_PRECIOUS so no file is deleted.
 */
-
+void
 prep_entries()
 {
 	reg	List	*ptr, *ptr1;
@@ -119,7 +119,7 @@ prep_entries()
 **	However, if the first concrete entry is in an included file,
 **	we keep looking, unless it had a double colon.
 */
-
+void
 final_entry(argc, argv)
 reg	int	argc;
 reg	char	*argv[];
@@ -250,7 +250,7 @@ reg	Entry	*entry;
 /*
 **	Look after '*' (when) flags.
 */
-
+void
 do_when(entry, pat)
 reg	Entry	*entry;
 reg	Pat	*pat;
@@ -344,7 +344,7 @@ default:	printf("cake internal error: bad test type %x in ground_test\n", test->
 /*
 **	Dereference all command patterns in the given entry.
 */
-
+void
 deref_entry(env, entry)
 Env		env;
 reg	Entry	*entry;

@@ -33,6 +33,7 @@ Table	stat_tab = { SIZE, NULL, stat_key, hash, stat_equal };
 **	Initialize the name and the command tables.
 */
 
+void
 init_sym()
 {
 	init_table(name_tab);
@@ -145,7 +146,7 @@ int	out_found = 0;
 /*
 **	Save a command and its output.
 */
-
+void
 new_out(cmd, output)
 reg	char	*cmd;
 reg	char	*output;
@@ -215,7 +216,7 @@ int	stat_found = 0;
 /*
 **	Save a command and its status.
 */
-
+void
 new_stat(cmd, status)
 reg	char	*cmd;
 reg	int	status;

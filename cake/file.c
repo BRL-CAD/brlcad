@@ -27,7 +27,7 @@ static	char	dir_name[30] = "/tmp/CakeXXXXXX";
 /*
 **	Create the directory to be used for all temporary storage.
 */
-
+void
 dir_start()
 {
 	reg	bool	successful;
@@ -71,7 +71,7 @@ dir_start()
 /*
 **	Clean up /tmp when we are finished
 */
-
+void
 dir_finish()
 {
 #ifndef	LEAVE_DIR
@@ -157,7 +157,7 @@ get_newname()
 **	Any slashes in the filename are replaced by colons
 **	to avoid reference to nonexistent directories.
 */
-
+void
 save_novol(node)
 reg	Node	*node;
 {
@@ -282,7 +282,7 @@ reg	Node	*node;
 /*
 **	Get the the name of the saved copy of the given file.
 */
-
+void
 get_savename(name, buf)
 reg	char	*name;
 reg	char	buf[];
@@ -324,7 +324,7 @@ reg	char	*name;
 **	file does not exist, it is by definition volatile. An aside
 **	considers all directories precious.
 */
-
+void
 node_stat(node)
 reg	Node	*node;
 {
@@ -354,7 +354,7 @@ reg	Node	*node;
 **	remade again and again to discover this anew
 **	while its ancestors remain the same.
 */
-
+void
 node_resetstat(node)
 reg	Node	*node;
 {
@@ -370,7 +370,7 @@ reg	Node	*node;
 **	Set up the stat of a file as the latest ancestor's,
 **	both in the filesystem and in cake's memory.
 */
-
+void
 node_setstat(node)
 reg	Node	*node;
 {
@@ -440,6 +440,7 @@ typedef	struct	utimbuf
 } Utimbuf;
 #endif
 
+void
 cake_utimes(node, newtime)
 reg	Node	*node;
 time_t		newtime;
@@ -563,7 +564,7 @@ reg	char	*name;
 /*
 **	Remove the given file.
 */
-
+void
 cake_remove(name)
 reg	char	*name;
 {

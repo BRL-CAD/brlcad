@@ -27,7 +27,7 @@ time_t	pick_time();		/* Defined further down */
 **	Whenever nf_ERR is not set, do_chase sets the utime field,
 **	and the rtime field as well if the file exists.
 */
-
+void
 do_chase(node, picked)
 reg	Node	*node;
 reg	Entry	*picked;
@@ -379,7 +379,7 @@ end:
 **	Calculate the "update time" of the given node. The second arg
 **	tells us whether we should set a flag for nonvolatile ancestors.
 */
-
+void
 get_utime(node, planning)
 reg	Node	*node;
 reg	bool	planning;
@@ -440,7 +440,7 @@ reg	bool	planning;
 **	it is not this rule (if it were, then the caller would not
 **	have done anything about buddies). This is an inconsistency.
 */
-
+void
 set_buddies(node, entry)
 reg	Node	*node;
 reg	Entry	*entry;
@@ -526,7 +526,7 @@ reg	bool	flag;
 reg	Entry	*picked;
 {
 	extern	Table	node_tab;
-	extern		do_chase();
+	extern	void	do_chase();
 	extern	char	*find_circle();
 	reg	Node	*node;
 
