@@ -224,7 +224,6 @@ register struct partition *PartHeadp;
 		return(0);		/* nothing was actually hit?? */
 
 
-/*  NOTE: wish to insert  "viewing direction" stuff here if feasible     */
 
 	/*  comp components in partitions */
 	comp_count = 0;
@@ -261,17 +260,24 @@ register struct partition *PartHeadp;
 	 *  In GIFT-3 output files, ray distances are relative to
 	 *  the screen plane translated so that it contains the origin.
 	 *  A distance correction is required to convert between the two.
-	 *  XXX This really should be computed only once, not every time.
+	 *  Since this really should be computed only once, not every time,
+	 *  the trip_count flag was added.
 	 */
 	{
+
+		static int  trip_count;
 		vect_t	tmp;
 		vect_t	viewZdir;
 
-		VSET( tmp, 0, 0, -1 );		/* viewing direction */
-		MAT4X3VEC( viewZdir, view2model, tmp );
-		VUNITIZE( viewZdir );
-		/* dcorrection will typically be negative */
-		dcorrection = VDOT( ap->a_ray.r_pt, viewZdir );
+		if( trip_count == 0) {
+
+			VSET( tmp, 0, 0, -1 );		/* viewing direction */
+			MAT4X3VEC( viewZdir, view2model, tmp );
+			VUNITIZE( viewZdir );
+			/* dcorrection will typically be negative */
+			dcorrection = VDOT( ap->a_ray.r_pt, viewZdir );
+			trip_count = 1;
+		}
 	}
 	dfirst = PartHeadp->pt_forw->pt_inhit->hit_dist + dcorrection;
 	dlast = PartHeadp->pt_back->pt_outhit->hit_dist + dcorrection;
@@ -415,6 +421,7 @@ register struct partition *PartHeadp;
 				ap->a_ray.r_dir);
 			VJOIN1(outpt, ap->a_ray.r_pt, pp->pt_outhit->hit_dist,
 				ap->a_ray.r_dir);
+				pl_color(plotfp, 0, 255, 0);	/* green */
 			pdv_3line(plotfp, inpt,outpt);
 			
 			if(air_thickness > 0) {
@@ -423,8 +430,7 @@ register struct partition *PartHeadp;
 					pp->pt_outhit->hit_dist + air_thickness,
 					ap->a_ray.r_dir);
 				pl_color(plotfp, 0, 0, 255);	/* blue */
-				pdv_3move(plotfp, air_end);
-				pl_color(plotfp, 0, 255, 0);	/* green */
+				pdv_3cont(plotfp, air_end);
 			}
 		}
 	}
