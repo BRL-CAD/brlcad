@@ -32,13 +32,13 @@ static char RCSlight[] = "@(#)$Header$ (BRL)";
 #define LIGHT_O(m)	offsetof(struct light_specific, m)
 
 struct structparse light_parse[] = {
-	"%f",	"inten",	LIGHT_O(lt_intensity),	FUNC_NULL,
-	"%f",	"angle",	LIGHT_O(lt_angle),	FUNC_NULL,
-	"%f",	"fract",	LIGHT_O(lt_fraction),	FUNC_NULL,
-	"%d",	"shadows",	LIGHT_O(lt_shadows),	FUNC_NULL,
-	"%d",	"infinite",	LIGHT_O(lt_infinite),	FUNC_NULL,
-	"%d",	"invisible",	LIGHT_O(lt_invisible),	FUNC_NULL,
-	(char *)0,(char *)0,	0,			FUNC_NULL
+	"%f",	1, "inten",	LIGHT_O(lt_intensity),	FUNC_NULL,
+	"%f",	1, "angle",	LIGHT_O(lt_angle),	FUNC_NULL,
+	"%f",	1, "fract",	LIGHT_O(lt_fraction),	FUNC_NULL,
+	"%d",	1, "shadows",	LIGHT_O(lt_shadows),	FUNC_NULL,
+	"%d",	1, "infinite",	LIGHT_O(lt_infinite),	FUNC_NULL,
+	"%d",	1, "invisible",	LIGHT_O(lt_invisible),	FUNC_NULL,
+	(char *)0, 0,(char *)0,	0,			FUNC_NULL
 };
 
 struct light_specific	LightHead;	/* Heads linked list of lights */

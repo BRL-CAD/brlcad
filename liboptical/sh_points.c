@@ -37,8 +37,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./mathtab.h"
 #include "./rdebug.h"
 
+#define PT_NAME_LEN 128
 struct points_specific {
-	char	pt_file[128];	/* Filename */
+	char	pt_file[PT_NAME_LEN];	/* Filename */
 	int	pt_size;	/* number of bins around equator */
 	spm_map_t *pt_map;	/* stuff */
 };
@@ -46,10 +47,10 @@ struct points_specific {
 #define POINTS_O(m)	offsetof(struct points_specific, m)
 
 struct structparse points_parse[] = {
-	"%s",	"file",		offsetofarray(struct points_specific, pt_file),	FUNC_NULL,
-	"%d",	"size",		POINTS_O(pt_size),	FUNC_NULL,
-	"%d",	"w",		POINTS_O(pt_size),	FUNC_NULL,
-	(char *)0,(char *)0,	0,			FUNC_NULL
+	"%s",	PT_NAME_LEN, "file", offsetofarray(struct points_specific, pt_file),	FUNC_NULL,
+	"%d",	1, "size",		POINTS_O(pt_size),	FUNC_NULL,
+	"%d",	1, "w",			POINTS_O(pt_size),	FUNC_NULL,
+	(char *)0, 0, (char *)0,	0,			FUNC_NULL
 };
 
 HIDDEN int	points_setup(), points_render();

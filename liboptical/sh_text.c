@@ -66,9 +66,10 @@ struct mfuncs txt_mfuncs[] = {
 	0,		0,		0,		0
 };
 
+#define TXT_NAME_LEN 128
 struct txt_specific {
 	unsigned char tx_transp[8];	/* RGB for transparency */
-	char	tx_file[128];	/* Filename */
+	char	tx_file[TXT_NAME_LEN];	/* Filename */
 	int	tx_w;		/* Width of texture in pixels */
 	int	tx_fw;		/* File width of texture in pixels */
 	int	tx_n;		/* Number of scanlines */
@@ -81,18 +82,18 @@ struct txt_specific {
 struct structparse txt_parse[] = {
 #if CRAY && !__STDC__
 	/* Hack for old Cray compilers */
-	"%C",	"transp",	0,			txt_transp_hook,
-	"%s",	"file",		1,			FUNC_NULL,
+	"%C",	1, "transp",	0,			txt_transp_hook,
+	"%s",	TXT_NAME_LEN, "file",	1,			FUNC_NULL,
 #else
-	"%C",	"transp",	offsetofarray(struct txt_specific, tx_transp),	txt_transp_hook,
-	"%s",	"file",		offsetofarray(struct txt_specific, tx_file),		FUNC_NULL,
+	"%C",	1, "transp",	offsetofarray(struct txt_specific, tx_transp),	txt_transp_hook,
+	"%s",	TXT_NAME_LEN, "file", offsetofarray(struct txt_specific, tx_file),		FUNC_NULL,
 #endif
-	"%d",	"w",		TX_O(tx_w),		FUNC_NULL,
-	"%d",	"n",		TX_O(tx_n),		FUNC_NULL,
-	"%d",	"l",		TX_O(tx_n),		FUNC_NULL, /*compat*/
-	"%d",	"fw",		TX_O(tx_fw),		FUNC_NULL,
-	"%d",	"trans_valid",	TX_O(trans_valid),	FUNC_NULL,
-	(char *)0,(char *)0,	0,			FUNC_NULL
+	"%d",	1, "w",		TX_O(tx_w),		FUNC_NULL,
+	"%d",	1, "n",		TX_O(tx_n),		FUNC_NULL,
+	"%d",	1, "l",		TX_O(tx_n),		FUNC_NULL, /*compat*/
+	"%d",	1, "fw",		TX_O(tx_fw),		FUNC_NULL,
+	"%d",	1, "trans_valid",	TX_O(trans_valid),	FUNC_NULL,
+	(char *)0, 0,(char *)0,	0,			FUNC_NULL
 };
 
 /*
@@ -325,13 +326,13 @@ struct ckr_specific  {
 struct structparse ckr_parse[] = {
 #if CRAY && !__STDC__
 	/* Hack for old Cray compilers */
-	"%C",	"a",		0,			FUNC_NULL,
-	"%C",	"b",		1,			FUNC_NULL,
+	"%C",	1, "a",		0,			FUNC_NULL,
+	"%C",	1, "b",		1,			FUNC_NULL,
 #else
-	"%C",	"a",		offsetofarray(struct ckr_specific, ckr_a),		FUNC_NULL,
-	"%C",	"b",		offsetofarray(struct ckr_specific, ckr_b),		FUNC_NULL,
+	"%C",	1, "a",	offsetofarray(struct ckr_specific, ckr_a), FUNC_NULL,
+	"%C",	1, "b",	offsetofarray(struct ckr_specific, ckr_b), FUNC_NULL,
 #endif
-	(char *)0,(char *)0,	0,			FUNC_NULL
+	(char *)0, 0, (char *)0,	0,		FUNC_NULL
 };
 
 /*

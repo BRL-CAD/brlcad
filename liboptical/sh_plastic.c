@@ -51,20 +51,20 @@ struct phong_specific {
 #define PL_O(m)	offsetof(struct phong_specific, m)
 
 struct structparse phong_parse[] = {
-	"%d",	"shine",	PL_O(shine),		FUNC_NULL,
-	"%d",	"sh",		PL_O(shine),		FUNC_NULL,
-	"%f",	"specular",	PL_O(wgt_specular),	FUNC_NULL,
-	"%f",	"sp",		PL_O(wgt_specular),	FUNC_NULL,
-	"%f",	"diffuse",	PL_O(wgt_diffuse),	FUNC_NULL,
-	"%f",	"di",		PL_O(wgt_diffuse),	FUNC_NULL,
-	"%f",	"transmit",	PL_O(transmit),		FUNC_NULL,
-	"%f",	"tr",		PL_O(transmit),		FUNC_NULL,
-	"%f",	"reflect",	PL_O(reflect),		FUNC_NULL,
-	"%f",	"re",		PL_O(reflect),		FUNC_NULL,
-	"%f",	"ri",		PL_O(refrac_index),	FUNC_NULL,
-	"%f",	"extinction",	PL_O(extinction),	FUNC_NULL,
-	"%f",	"ex",		PL_O(extinction),	FUNC_NULL,
-	(char *)0,(char *)0,	0,			FUNC_NULL
+	"%d",	1, "shine",		PL_O(shine),		FUNC_NULL,
+	"%d",	1, "sh",		PL_O(shine),		FUNC_NULL,
+	"%f",	1, "specular",		PL_O(wgt_specular),	FUNC_NULL,
+	"%f",	1, "sp",		PL_O(wgt_specular),	FUNC_NULL,
+	"%f",	1, "diffuse",		PL_O(wgt_diffuse),	FUNC_NULL,
+	"%f",	1, "di",		PL_O(wgt_diffuse),	FUNC_NULL,
+	"%f",	1, "transmit",		PL_O(transmit),		FUNC_NULL,
+	"%f",	1, "tr",		PL_O(transmit),		FUNC_NULL,
+	"%f",	1, "reflect",		PL_O(reflect),		FUNC_NULL,
+	"%f",	1, "re",		PL_O(reflect),		FUNC_NULL,
+	"%f",	1, "ri",		PL_O(refrac_index),	FUNC_NULL,
+	"%f",	1, "extinction",	PL_O(extinction),	FUNC_NULL,
+	"%f",	1, "ex",		PL_O(extinction),	FUNC_NULL,
+	(char *)0, 0, (char *)0,	0,			FUNC_NULL
 };
 
 HIDDEN int phong_setup(), mirror_setup(), glass_setup();

@@ -107,10 +107,10 @@ static int	pixel_width = 3;	/* # bytes/pixel */
 
 /* Viewing module specific "set" variables */
 struct structparse view_parse[] = {
-	"%d",	"bounces",	(int)&max_bounces,		FUNC_NULL,
-	"%d",	"ireflect",	(int)&max_ireflect,		FUNC_NULL,
-	"%V",	"background",	(int)background,		FUNC_NULL,
-	(char *)0,(char *)0,	0,				FUNC_NULL
+	"%d",	1, "bounces",	(int)&max_bounces,		FUNC_NULL,
+	"%d",	1, "ireflect",	(int)&max_ireflect,		FUNC_NULL,
+	"%f", ELEMENTS_PER_VECT, "background",(int)background,	FUNC_NULL,
+	(char *)0, 0, (char *)0,	0,			FUNC_NULL
 };
 
 /*

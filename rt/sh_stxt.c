@@ -37,9 +37,10 @@ HIDDEN int  stxt_setup(), brick_render(), mbound_render(), rbound_render();
 HIDDEN void	stxt_print(), stxt_free();
 HIDDEN void	stxt_transp_hook();
 
+#define STX_NAME_LEN 128
 struct	stxt_specific  {
 	unsigned char stx_transp[8];	/* RGB for transparency */
-	char	stx_file[128];	/* Filename */
+	char	stx_file[STX_NAME_LEN];	/* Filename */
 	int	stx_magic;
 	int	stx_w;		/* Width of texture in pixels */
 	int	stx_fw;		/* File width of texture in pixels */
@@ -57,18 +58,18 @@ struct	stxt_specific  {
 struct	structparse stxt_parse[] = {
 #if CRAY && !__STDC__
 	/* Hack for Cray compiler */
-	"%C",	"transp",	0,			stxt_transp_hook,
-	"%s",	"file",		1,			FUNC_NULL,
+	"%C",	1, "transp",		0,		stxt_transp_hook,
+	"%s",	STX_NAME_LEN, "file",	1,			FUNC_NULL,
 #else
-	"%C",	"transp",	offsetofarray(struct stxt_specific, stx_transp),	stxt_transp_hook,
-	"%s",	"file",		offsetofarray(struct stxt_specific, stx_file),	FUNC_NULL,
+	"%C",	1, "transp",	offsetofarray(struct stxt_specific, stx_transp),	stxt_transp_hook,
+	"%s",	STX_NAME_LEN, "file",	offsetofarray(struct stxt_specific, stx_file),	FUNC_NULL,
 #endif
-	"%d",	"w",		SOL_O(stx_w),		FUNC_NULL,
-	"%d",	"n",		SOL_O(stx_n),		FUNC_NULL,
-	"%d",	"d",		SOL_O(stx_d),		FUNC_NULL,
-	"%d",	"fw",		SOL_O(stx_fw),		FUNC_NULL,
-	"%d",	"trans_valid",	SOL_O(trans_valid),	FUNC_NULL,
-	(char *)0,(char *)0,	0,			FUNC_NULL
+	"%d",	1, "w",			SOL_O(stx_w),		FUNC_NULL,
+	"%d",	1, "n",			SOL_O(stx_n),		FUNC_NULL,
+	"%d",	1, "d",			SOL_O(stx_d),		FUNC_NULL,
+	"%d",	1, "fw",		SOL_O(stx_fw),		FUNC_NULL,
+	"%d",	1, "trans_valid",	SOL_O(trans_valid),	FUNC_NULL,
+	(char *)0, 0, (char *)0,	0,			FUNC_NULL
 };
 
 struct	mfuncs stxt_mfuncs[] = {

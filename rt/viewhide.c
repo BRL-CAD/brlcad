@@ -82,7 +82,7 @@ int		using_mlib = 0;		/* Material routines NOT used */
 
 /* Viewing module specific "set" variables */
 struct structparse view_parse[] = {
-	(char *)0,(char *)0,	0,			FUNC_NULL
+	(char *)0, 0, (char *)0,	0,	FUNC_NULL
 };
 
 

@@ -29,8 +29,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./material.h"
 #include "./rdebug.h"
 
+#define SPM_NAME_LEN 128
 struct spm_specific {
-	char	sp_file[128];	/* Filename */
+	char	sp_file[SPM_NAME_LEN];	/* Filename */
 	int	sp_w;		/* Width: number of pixels around equator */
 	spm_map_t *sp_map;	/* stuff */
 };
@@ -38,10 +39,10 @@ struct spm_specific {
 #define SP_O(m)	offsetof(struct spm_specific, m)
 
 struct structparse spm_parse[] = {
-	"%s",	"file",		offsetofarray(struct spm_specific, sp_file),	FUNC_NULL,
-	"%d",	"w",		SP_O(sp_w),	FUNC_NULL,
-	"%d",	"n",		SP_O(sp_w),	FUNC_NULL,	/*compat*/
-	(char *)0,(char *)0,	0,		FUNC_NULL
+	"%s",	SPM_NAME_LEN, "file",		offsetofarray(struct spm_specific, sp_file),	FUNC_NULL,
+	"%d",	1, "w",		SP_O(sp_w),	FUNC_NULL,
+	"%d",	1, "n",		SP_O(sp_w),	FUNC_NULL,	/*compat*/
+	(char *)0, 0,(char *)0,	0,		FUNC_NULL
 };
 
 HIDDEN int	spm_setup(), spm_render();
