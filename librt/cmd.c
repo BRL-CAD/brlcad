@@ -171,7 +171,12 @@ register char	*lp;
 #if defined(unix) || defined(__unix)
 	/* Handle "!" shell escape char so the shell can parse the line */
 	if( *lp == '!' )  {
-		(void)system( lp+1 );
+		int	ret;
+		ret = system( lp+1 );
+		if( ret != 0 )  {
+			perror("system(3)");
+			rt_log("rt_split_cmd() FAILED: !%s\n", lp);
+		}
 		return(0);		/* No words */
 	}
 #endif
