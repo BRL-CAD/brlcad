@@ -40,16 +40,12 @@
 everything&::	PRODUCTS
 
 #if defined(NFS)
-/tmp/asc2g:	../.conv.MTYPE/asc2g
-	rm -f /tmp/asc2g
-	cp ../.conv.MTYPE/asc2g /tmp/asc2g
+#	define	CONV	../.conv.MTYPE/asc2g
 #else
-/tmp/asc2g:	../conv/asc2g
-	rm -f /tmp/asc2g
-	cp ../conv/asc2g /tmp/asc2g
+#	define	CONV	../conv/asc2g
 #endif
 
 %.g:	../SRCDIR/%.asc	/tmp/asc2g		if exist ../SRCDIR/%.asc
-	/tmp/asc2g < ../SRCDIR/%.asc > %.g
+	CONV < ../SRCDIR/%.asc > %.g
 
 #include "../Cakefile.rules"
