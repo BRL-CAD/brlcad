@@ -58,10 +58,11 @@ int set_more_default();
 void mged_setup(), cmd_setup(), mged_compat();
 void mged_print_result();
 
-extern int cmd_get_comb(), cmd_put_comb();  /* defined in red.c */
-extern void set_scroll();  /* defined in set.c */
+extern int cmd_get_comb(), cmd_put_comb();	/* in red.c */
+extern void set_scroll();			/* in set.c */
 extern void sync();
-extern int gui_setup();
+extern int gui_setup();				/* in attach.c */
+extern void init_qray();			/* in qray.c */
 
 struct cmd_list head_cmd_list;
 struct cmd_list *curr_cmd_list;
@@ -74,34 +75,6 @@ struct bu_vls tcl_output_hook;
 
 Tcl_Interp *interp = NULL;
 Tk_Window tkwin;
-
-/* query_ray stuff */
-#define QUERY_RAY_BASENAME "query_ray"
-#define QUERY_RAY_FMT "query_ray_fmt"
-
-struct bu_vls query_ray_basename;
-
-struct query_ray_fmt {
-  struct bu_vls tclName;
-  struct bu_vls fmt;
-};
-struct query_ray_fmt *query_ray_fmts;
-
-struct query_ray_fmt_data {
-  char type;
-  char *fmt;
-};
-
-struct query_ray_fmt_data def_query_ray_fmt_data[] = {
-  {'r', "\"Origin (x y z) = (%.2f %.2f %.2f)  (h v d) = (%.2f %.2f %.2f)\\nDirection (x y z) = (%.4f %.4f %.4f)  (az el) = (%.2f %.2f)\\n\" x_orig y_orig z_orig h v d_orig x_dir y_dir z_dir a e"},
-  {'h', "\"    Region Name               Entry (x y z)              LOS  Obliq_in\\n\""},
-  {'p', "\"%-20s (%9.3f %9.3f %9.3f) %8.2f %8.3f\\n\" reg_name x_in y_in z_in los obliq_in"},
-  {'f', "\"\""},
-  {'m', "\"You missed the target\\n\""},
-  {'o', "\"OVERLAP: '%s' and '%s' xyz_in=(%g %g %g) los=%g\\n\" ov_reg1_name ov_reg2_name ov_x_in ov_y_in ov_z_in ov_los"},
-  {(char)NULL, (char *)NULL}
-};
-/* End query_ray format stuff */
 
 /*
  *			C M D _ L E F T _ M O U S E
@@ -248,6 +221,8 @@ static struct cmdtab cmdtab[] = {
 	"get_rect", f_get_rect, 
 	"get_view", f_get_view,
 	"goto_view", f_goto_view,
+	"grid2model_lu", f_grid2model_lu,
+	"grid2view_lu", f_grid2view_lu,
 	"output_hook", cmd_output_hook,
 #ifdef HIDELINE
 	"H", f_hideline,
@@ -288,7 +263,9 @@ static struct cmdtab cmdtab[] = {
 	"memprint", f_memprint,
 	"mirface", f_mirface,
 	"mirror", f_mirror,
+	"model2grid_lu", f_model2grid_lu,
 	"model2view", f_model2view,
+	"model2view_lu", f_model2view_lu,
 	"mv", f_name,
 	"mvall", f_mvall,
 	"next_view", f_next_view,
@@ -318,6 +295,7 @@ static struct cmdtab cmdtab[] = {
 	"push", f_push,
 	"putmat", f_putmat,
 	"q", f_quit,
+	"qray", f_qray,
 	"query_ray", f_nirt,
 	"quit", f_quit,
 	"qorot", f_qorot,
@@ -387,7 +365,10 @@ static struct cmdtab cmdtab[] = {
 	"vdraw", cmd_vdraw,
 	"viewget", cmd_viewget,
 	"viewset", cmd_viewset,
+	"view2grid_lu", f_view2grid_lu,
 	"view2model", f_view2model,
+	"view2model_vec", f_view2model_vec,
+	"view2model_lu", f_view2model_lu,
 	"vnirt", f_vnirt,
 	"vquery_ray", f_vnirt,
 	"vrmgr", f_vrmgr,
@@ -726,7 +707,6 @@ mged_setup()
 {
 	struct bu_vls str;
 	char *filename;
-	struct query_ray_fmt_data *nfdp;
 	register int i, n;
 
 	/* The following is for GUI output hooks: contains name of function to
@@ -905,29 +885,8 @@ mged_setup()
 	Tcl_SetVar(interp, bu_vls_addr(&str), state_str[state],
 		   TCL_GLOBAL_ONLY);
 
-	/* initialize query_ray variables */
-	bu_vls_init(&query_ray_basename);
-
-	bu_vls_strcpy(&query_ray_basename, "query_ray_basename");
-	Tcl_SetVar(interp, bu_vls_addr(&query_ray_basename), QUERY_RAY_BASENAME, TCL_GLOBAL_ONLY);
-
-	/* query_ray format variables */
-	n = 0;
-	for(nfdp = def_query_ray_fmt_data; nfdp->fmt != (char *)NULL; ++nfdp)
-	  ++n;
-
-	query_ray_fmts = (struct query_ray_fmt *)bu_malloc(sizeof(struct query_ray_fmt) * n, "query_ray_fmts");
-	for(i = 0; i < n; ++i){
-	  bu_vls_init(&query_ray_fmts[i].tclName);
-	  bu_vls_init(&query_ray_fmts[i].fmt);
-
-	  bu_vls_printf(&query_ray_fmts[i].tclName, "%s(%c)",
-			QUERY_RAY_FMT, def_query_ray_fmt_data[i].type);
-	  bu_vls_strcpy(&query_ray_fmts[i].fmt, def_query_ray_fmt_data[i].fmt);
-
-	  Tcl_SetVar(interp, bu_vls_addr(&query_ray_fmts[i].tclName),
-		     bu_vls_addr(&query_ray_fmts[i].fmt), TCL_GLOBAL_ONLY);
-	}
+	/* initialize "Query Ray" variables */
+	init_qray();
 
 	Tcl_ResetResult(interp);
 
