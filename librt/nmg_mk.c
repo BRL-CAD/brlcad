@@ -457,7 +457,8 @@ struct loopuse *lu1;
  *  'v' will be fused together.  XXX Why is this good?
  *
  *  If a convenient shell does not exist, use s=nmg_msv() to make
- *  the shell and vertex, then call lu=nmg_mlv(s,NULL,).
+ *  the shell and vertex, then call lu=nmg_mlv(s,s->vu_p->v_p,OT_SAME),
+ *  followed by nmg_kvu(s->vu_p).
  * 
  *  Implicit returns -
  *	The new vertexuse can be had by:
@@ -473,7 +474,8 @@ struct loopuse *lu1;
  * the "hack" of stealing a vertexuse structure from the shell if
  * at all possible.  A future enhancement to this function would be
  * to remove the vertexuse steal and have the caller pass in the
- * vertex from the shell followed by a call to nmg_kvu(s->v_p).
+ * vertex from the shell followed by a call to nmg_kvu(s->vu_p).
+ * The v==NULL convention is used only in nmg_mod.c.
  */
 struct loopuse *
 nmg_mlv(magic, v, orientation)
@@ -483,6 +485,7 @@ int		orientation;
 {
 	struct loop	*l;
 	struct loopuse	*lu1, *lu2;
+	struct vertexuse *vu1, *vu2;
 	struct model	*m;
 	/* XXX - why the new union? ctj */
 	union {
@@ -518,10 +521,7 @@ int		orientation;
 	/* The only thing left to do to make the loopuses good is to */
 	/* set the "up" pointer and "l.magic". */
 	if (*p.magic_p == NMG_SHELL_MAGIC) {
-		struct shell		*s;
-		struct vertexuse	*vu1, *vu2;
-
-		s = p.s;
+		struct shell	*s = p.s;
 
 		/* First, finish setting up the loopuses */
 		lu1->up.s_p = lu2->up.s_p = s;
@@ -552,8 +552,6 @@ int		orientation;
 		RT_LIST_SET_DOWN_TO_VERT(&lu2->down_hd, vu2);
 		/* vu2->up.lu_p = lu2; done by nmg_mvu() */
 	} else if (*p.magic_p == NMG_FACEUSE_MAGIC) {
-		struct vertexuse	*vu1, *vu2;
-
 		/* First, finish setting up the loopuses */
 		lu1->up.fu_p = p.fu;
 		lu2->up.fu_p = p.fu->fumate_p;
@@ -576,6 +574,11 @@ int		orientation;
 		rt_bomb("nmg_mlv() unknown parent for loopuse!\n");
 	}
 
+	if (rt_g.NMG_debug & DEBUG_BASIC)  {
+		rt_log("nmg_mlv(up=x%x, v=x%x, %s) returns lu=x%x on vu=x%x\n",
+			magic, v, nmg_orientation(orientation),
+			lu1, vu1 );
+	}
 	return(lu1);
 }
 
@@ -618,6 +621,10 @@ struct model	*m;
 	vu->up.magic_p = upptr;
 	vu->l.magic = NMG_VERTEXUSE_MAGIC;	/* Vertexuse struct is GOOD */
 
+	if (rt_g.NMG_debug & DEBUG_BASIC)  {
+		rt_log("nmg_mvu(v=x%x, up=x%x) returns vu=x%x\n",
+			v, upptr, vu);
+	}
 	return(vu);
 }
 
@@ -1086,6 +1093,9 @@ register struct vertexuse *vu;
 		rt_bomb("nmg_kvu() killing vertexuse of unknown parent?\n");
 
 	FREE_VERTEXUSE(vu);
+	if (rt_g.NMG_debug & DEBUG_BASIC)  {
+		rt_log("nmg_kvu(vu=x%x) ret=%d\n", vu, ret);
+	}
 	return ret;
 }
 
@@ -1111,6 +1121,7 @@ struct faceuse *fu1;
 	struct face	*f2;
 	struct face_g	*fg;
 	struct shell	*s;
+	int		ret;
 
 	NMG_CK_FACEUSE(fu1);
 	fu2 = fu1->fumate_p;
@@ -1161,7 +1172,11 @@ struct faceuse *fu1;
 
 	FREE_FACEUSE(fu1);
 	FREE_FACEUSE(fu2);
-	return nmg_shell_is_empty(s);
+	ret = nmg_shell_is_empty(s);
+	if (rt_g.NMG_debug & DEBUG_BASIC)  {
+		rt_log("nmg_kfu(fu1=x%x) fu2=x%x ret=%d\n", fu1, fu2, ret);
+	}
+	return ret;
 }
 
 /*			N M G _ K L U
@@ -1248,6 +1263,9 @@ struct loopuse *lu1;
 	FREE_LOOP(lu1->l_p);
 	FREE_LOOPUSE(lu1);
 	FREE_LOOPUSE(lu2);
+	if (rt_g.NMG_debug & DEBUG_BASIC)  {
+		rt_log("nmg_klu(lu1=x%x) lu2=x%x ret=%d\n", lu1, lu2, ret);
+	}
 	return ret;
 }
 
@@ -1361,6 +1379,9 @@ register struct edgeuse *eu1;
 
 	FREE_EDGEUSE(eu1);
 	FREE_EDGEUSE(eu2);
+	if (rt_g.NMG_debug & DEBUG_BASIC)  {
+		rt_log("nmg_keu(eu1=x%x) eu2=x%x ret=%d\n", eu1, eu2, ret);
+	}
 	return ret;
 }
 
@@ -1399,6 +1420,9 @@ struct shell *s;
 	}
 
 	FREE_SHELL(s);
+	if (rt_g.NMG_debug & DEBUG_BASIC)  {
+		rt_log("nmg_ks(s=x%x)\n", s);
+	}
 	if( RT_LIST_IS_EMPTY( &r->s_hd ) )  return 1;
 	return 0;
 }
@@ -1431,6 +1455,9 @@ struct nmgregion *r;
 		FREE_REGION_A(r->ra_p);
 	}
 	FREE_REGION(r);
+	if (rt_g.NMG_debug & DEBUG_BASIC)  {
+		rt_log("nmg_kr(r=x%x)\n", r);
+	}
 
 	if( RT_LIST_IS_EMPTY( &m->r_hd ) ) {
 		m->maxindex = 1;	/* Reset when last region is killed */
@@ -1456,6 +1483,9 @@ struct model *m;
 		FREE_MODEL_A(m->ma_p);
 	}
 	FREE_MODEL(m);
+	if (rt_g.NMG_debug & DEBUG_BASIC)  {
+		rt_log("nmg_km(m=x%x)\n", m);
+	}
 }
 
 /************************************************************************
