@@ -72,14 +72,14 @@ vect_t		absolute_rotate;	/* selected by mged_variables.rateknobs */
 int		rateflag_zoom;
 fastf_t		rate_zoom;
 
-RT_EXTERN(void	edit_com, (int argc, char **argv, int kind, int catch_sigint));
-void		f_zap();
+RT_EXTERN(int	edit_com, (int argc, char **argv, int kind, int catch_sigint));
+int		f_zap();
 
 
 
 /* Delete an object or several objects from the display */
 /* Format: d object1 object2 .... objectn */
-void
+int
 f_delobj(argc, argv)
 int	argc;
 char	**argv;
@@ -93,11 +93,13 @@ char	**argv;
 	}
 	no_memory = 0;
 	dmaflag = 1;
+
+	return CMD_OK;
 }
 
 /* DEBUG -- force view center */
 /* Format: C x y z	*/
-void
+int
 f_center(argc, argv)
 int	argc;
 char	**argv;
@@ -108,6 +110,8 @@ char	**argv;
 	toViewcenter[MDZ] = -atof( argv[3] ) * local2base;
 	new_mats();
 	dmaflag++;
+
+	return CMD_OK;
 }
 
 void
@@ -118,16 +122,18 @@ char	**argv;
 	/* Actually, it would be nice if this worked all the time */
 	/* usejoy isn't quite the right thing */
 	if( not_state( ST_VIEW, "View Rotate") )
-		return;
+		return CMD_BAD;
 
 	usejoy(	atof(argv[1]) * degtorad,
 		atof(argv[2]) * degtorad,
 		atof(argv[3]) * degtorad );
+
+	return CMD_OK;
 }
 
 /* DEBUG -- force viewsize */
 /* Format: view size	*/
-void
+int
 f_view(argc, argv)
 int	argc;
 char	**argv;
@@ -138,17 +144,19 @@ char	**argv;
 	Viewscale = f * 0.5 * local2base;
 	new_mats();
 	dmaflag++;
+
+	return CMD_OK;
 }
 
 /* ZAP the display -- then edit anew */
 /* Format: B object	*/
-void
+int
 f_blast(argc, argv)
 int	argc;
 char	**argv;
 {
 
-	f_zap(argc, argv);
+	if (f_zap(argc, argv) == CMD_BAD) return CMD_BAD;
 
 	if( dmp->dmr_displaylist )  {
 		/*
@@ -159,31 +167,31 @@ char	**argv;
 		refresh();
 	}
 
-	edit_com( argc, argv, 1, 1 );
+	return edit_com( argc, argv, 1, 1 );
 }
 
 /* Edit something (add to visible display) */
 /* Format: e object	*/
-void
+int
 f_edit(argc, argv)
 int	argc;
 char	**argv;
 {
-	edit_com( argc, argv, 1, 1 );
+	return edit_com( argc, argv, 1, 1 );
 }
 
 /* Format: ev objects	*/
-void
+int
 f_ev(argc, argv)
 int	argc;
 char	**argv;
 {
-	edit_com( argc, argv, 3, 1 );
+	return edit_com( argc, argv, 3, 1 );
 }
 
 #if 0
 /* XXX until NMG support is complete,
- * XXX the old Big-E command is retained in all it's glory in
+ * XXX the old Big-E command is retained in all its glory in
  * XXX the file proc_reg.c, including the command processing.
  */
 /*
@@ -193,12 +201,12 @@ char	**argv;
  *  Evaluated Edit something (add to visible display)
  *  Usage: E object(s)
  */
-void
+int
 f_evedit(argc, argv)
 int	argc;
 char	**argv;
 {
-	edit_com( argc, argv, 2, 1 );
+	return edit_com( argc, argv, 2, 1 );
 }
 #endif
 
@@ -252,7 +260,7 @@ size_reset()
  *
  * B, e, and E commands uses this area as common
  */
-void
+int
 edit_com(argc, argv, kind, catch_sigint)
 int	argc;
 char	**argv;
@@ -301,9 +309,11 @@ int	catch_sigint;
 
 	dmp->dmr_colorchange();
 	dmaflag = 1;
+
+	return CMD_OK;
 }
 
-void
+int
 f_debug( argc, argv )
 int	argc;
 char	**argv;
@@ -315,9 +325,11 @@ char	**argv;
 	printf("ndrawn=%d\n", ndrawn);
 	(void)signal( SIGINT, sig2 );	/* allow interupts */
 	pr_schain( &HeadSolid, lvl );
+
+	return CMD_OK;
 }
 
-void
+int
 f_regdebug(argc, argv)
 int	argc;
 char	**argv;
@@ -330,9 +342,11 @@ char	**argv;
 		regdebug = atoi( argv[1] );
 	(void)printf("regdebug=%d\n", regdebug);
 	dmp->dmr_debug(regdebug);
+
+	return CMD_OK;
 }
 
-void
+int
 f_debuglib(argc, argv)
 int	argc;
 char	**argv;
@@ -345,18 +359,21 @@ char	**argv;
 	}
 	rt_printb( "librt rt_g.debug", rt_g.debug, DEBUG_FORMAT );
 	rt_log("\n");
+
+	return CMD_OK;
 }
 
-void
+int
 f_debugmem( argc, argv )
 int	argc;
 char	**argv;
 {
 	(void)signal( SIGINT, sig2 );	/* allow interupts */
 	rt_prmem("Invoked via MGED command");
+	return CMD_OK;
 }
 
-void
+int
 f_debugnmg(argc, argv)
 int	argc;
 char	**argv;
@@ -369,6 +386,8 @@ char	**argv;
 	}
 	rt_printb( "librt rt_g.NMG_debug", rt_g.NMG_debug, NMG_DEBUG_FORMAT );
 	rt_log("\n");
+
+	return CMD_OK;
 }
 
 /*
@@ -511,7 +530,7 @@ out:
 
 /* List object information, verbose */
 /* Format: l object	*/
-void
+int
 f_list(argc, argv)
 int	argc;
 char	**argv;
@@ -526,11 +545,13 @@ char	**argv;
 
 		do_list( stdout, dp, 99 );	/* very verbose */
 	}
+
+	return CMD_OK;
 }
 
 /* List object information, briefly */
 /* Format: cat object	*/
-void
+int
 f_cat( argc, argv )
 int	argc;
 char	**argv;
@@ -545,11 +566,13 @@ char	**argv;
 
 		do_list( stdout, dp, 0 );	/* non-verbose */
 	}
+
+	return CMD_OK;
 }
 
 /* ZAP the display -- everything dropped */
 /* Format: Z	*/
-void
+int
 f_zap(argc, argv)
 int	argc;
 char	**argv;
@@ -574,9 +597,11 @@ char	**argv;
 	}
 	(void)chg_state( state, state, "zap" );
 	dmaflag = 1;
+
+	return CMD_OK;
 }
 
-void
+int
 f_status(argc, argv)
 int	argc;
 char	**argv;
@@ -592,36 +617,41 @@ char	**argv;
 		mat_print("model2objview", model2objview);
 		mat_print("objview2model", objview2model);
 	}
+
+	return CMD_OK;
 }
 
 /* Fix the display processor after a hardware error by re-attaching */
-void
+int
 f_fix(argc, argv)
 int	argc;
 char	**argv;
 {
 	attach( dmp->dmr_name );	/* reattach */
 	dmaflag = 1;		/* causes refresh() */
+	return CMD_OK;
 }
 
-void
+int
 f_refresh(argc, argv)
 int	argc;
 char	**argv;
 {
 	dmaflag = 1;		/* causes refresh() */
+	return CMD_OK;
 }
 
 /* set view using azimuth and elevation angles */
-void
+int
 f_aeview(argc, argv)
 int	argc;
 char	**argv;
 {
 	setview( 270.0 + atof(argv[2]), 0.0, 270.0 - atof(argv[1]) );
+	return CMD_OK;
 }
 
-void
+int
 f_attach(argc, argv)
 int	argc;
 char	**argv;
@@ -630,14 +660,16 @@ char	**argv;
 		get_attached();
 	else
 		attach( argv[1] );
+	return CMD_OK;
 }
 
-void
+int
 f_release(argc, argv)
 int	argc;
 char	**argv;
 {
 	release();
+	return CMD_OK;
 }
 
 /*
@@ -754,7 +786,7 @@ int		lvl;			/* debug level */
 
 /* Illuminate the named object */
 /* TODO:  allow path specification on cmd line */
-void
+int
 f_ill(argc, argv)
 int	argc;
 char	**argv;
@@ -766,10 +798,10 @@ char	**argv;
 	int nmatch;
 
 	if( (dp = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
-		return;
+		return CMD_BAD;
 	if( state != ST_O_PICK && state != ST_S_PICK )  {
 		state_err("keyboard illuminate pick");
-		return;
+		return CMD_BAD;
 	}
 	nmatch = 0;
 	FOR_ALL_SOLIDS( sp )  {
@@ -784,11 +816,11 @@ char	**argv;
 	}
 	if( nmatch <= 0 )  {
 		(void)printf("%s not being displayed\n", argv[1]);
-		return;
+		return CMD_BAD;
 	}
 	if( nmatch > 1 )  {
 		(void)printf("%s multiply referenced\n", argv[1]);
-		return;
+		return CMD_BAD;
 	}
 	/* Make the specified solid the illuminated solid */
 	illump = lastfound;
@@ -801,19 +833,20 @@ char	**argv;
 		init_sedit();
 	}
 	dmaflag = 1;
+	return CMD_OK;
 }
 
 /* Simulate pressing "Solid Edit" and doing an ILLuminate command */
-void
+int
 f_sed(argc, argv)
 int	argc;
 char	**argv;
 {
 	if( not_state( ST_VIEW, "keyboard solid edit start") )
-		return;
+		return CMD_BAD;
 
 	button(BE_S_ILLUMINATE);	/* To ST_S_PICK */
-	f_ill(argc, argv);		/* Illuminate named solid --> ST_S_EDIT */
+	return f_ill(argc, argv);	/* Illuminate named solid --> ST_S_EDIT */
 }
 
 void
@@ -843,7 +876,7 @@ check_nonzero_rates()
 }
 
 /* Main processing of a knob twist.  "knob id val" */
-void
+int
 f_knob(argc, argv)
 int	argc;
 char	**argv;
@@ -1000,7 +1033,7 @@ char	**argv;
 		} else {
 			(void)printf("\tnorm None\n");
 		}
-		return;
+		return CMD_OK;
 	}
 
 	f = atof(argv[2]);
@@ -1011,29 +1044,30 @@ char	**argv;
 			return;
 		}
 		mged_abs_tol = f * local2base;
-		return;
+		return CMD_OK;
 	}
 	if( argv[1][0] == 'r' )  {
 		/* Relative */
 		if( f < 0.0 || f >= 1.0 )  {
 			(void)printf("relative tolerance must be between 0 and 1, not changed\n");
-			return;
+			return CMD_BAD;
 		}
 		/* Note that a value of 0.0 will disable relative tolerance */
 		mged_rel_tol = f;
-		return;
+		return CMD_OK;
 	}
 	if( argv[1][0] == 'n' )  {
 		/* Normal tolerance, in degrees */
 		if( f < 0.0 || f > 90.0 )  {
 			(void)printf("Normal tolerance must be in positive degrees, < 90.0\n");
-			return;
+			return CMD_BAD;
 		}
 		/* Note that a value of 0.0 or 360.0 will disable this tol */
 		mged_nrm_tol = f * rt_degtorad;
-		return;
+		return CMD_OK;
 	}
 	(void)printf("Error, tolerance '%s' unknown\n", argv[1] );
+	return CMD_BAD;
 }
 
 /*
@@ -1042,7 +1076,7 @@ char	**argv;
  *  A scale factor of 2 will increase the view size by a factor of 2,
  *  (i.e., a zoom out) which is accomplished by reducing Viewscale in half.
  */
-void
+int
 f_zoom( argc, argv )
 int	argc;
 char	**argv;
@@ -1052,13 +1086,14 @@ char	**argv;
 	val = atof(argv[1]);
 	if( val < SMALL_FASTF || val > INFINITY )  {
 		(void)printf("zoom: scale factor out of range\n");
-		return;
+		return CMD_BAD;
 	}
 	if( Viewscale < SMALL_FASTF || Viewscale > INFINITY )
-		return;
+		return CMD_BAD;
 
 	Viewscale /= val;
 	new_mats();
+	return CMD_OK;
 }
 
 /*
@@ -1067,7 +1102,7 @@ char	**argv;
  *  Set current view direction from a quaternion,
  *  such as might be found in a "saveview" script.
  */
-void
+int
 f_orientation( argc, argv )
 int	argc;
 char	**argv;
@@ -1079,4 +1114,5 @@ char	**argv;
 		quat[i] = atof( argv[i+1] );
 	quat_quat2mat( Viewrot, quat );
 	new_mats();
+	return CMD_OK;
 }
