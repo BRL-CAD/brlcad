@@ -2,14 +2,36 @@
                          Release 7.0.0
                        http://brlcad.org/
 
+BRL-CAD is a comprehensive solid modeling system based on the
+Combinatorial/Constructive Solid Geometry (CSG) technique.  The
+package is Primarily used for design and analysis of vehicles,
+mechanical parts, and architecture. Also used in radiation dose
+planning and education.
+
+The distribution includes an interactive 3-D geometry editor,
+ray-tracing library, sophisticated ray-tracing based lighting models,
+a network-distributed ray-tracer, animation capabilities, a
+network-distributed image-processing capability, image-handling, and
+data-compression utilities.  Also included is an implementation of
+Weiler's n-Manifold Geometry (NMG) data structures for surface-based
+solid models and photon mapping.
+
+BRL-CAD is a constructive solid geometry (CSG) software package 
 
 CONTENTS
 
 This README file exists only to provide you a brief roadmap to the
-contents of the BRL-CAD distribution.  The information on how to
-install and operate the software, and perform the benchmark tests have
-become sufficiently large that they are now each a standalone
-document.  
+contents of the BRL-CAD distribution.  
+
+The information on how to install and operate the software, to become
+involved with the development of the package, or to run the benchmark
+performance test suite have each become sufficiently large that their
+details are covered in more detail in standalone documents.  For more
+details on what BRL-CAD provides, see the documentation provided on
+the website.  Information relevant to those interested in the source
+code is contained in the HACKING and COPYING files.  See
+doc/benchmark.tr file for benchmark suite information.  There is a
+variety of other information also available in the doc/ directory.
 
 Please note that this distribution package does not include the
 various military-specific model analysis tools such as MUVES, GIFT,
