@@ -327,8 +327,8 @@ int npts;
 
 		rad = sqrt(stp->st_radsq);
 		MAT3XVEC( xlated, invrot, stp->st_center );
-#define MIN(v,t) {FAST fastf_t rt=(t); if(rt<v) v = rt;}
-#define MAX(v,t) {FAST fastf_t rt=(t); if(rt>v) v = rt;}
+#define MIN(v,t) {FAST fastf_t rt; rt=(t); if(rt<v) v = rt;}
+#define MAX(v,t) {FAST fastf_t rt; rt=(t); if(rt>v) v = rt;}
 		MIN( xmin, xlated[0]-rad );
 		MAX( xmax, xlated[0]+rad );
 		MIN( ymin, xlated[1]-rad );
