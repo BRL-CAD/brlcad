@@ -174,7 +174,7 @@ char **argv;
 	if( setjmp( jmp_env ) == 0 )  {
 		/* First pass through */
 		if( signal( SIGINT, SIG_IGN ) == SIG_IGN )
-			cur_sigint = SIG_IGN;	/* detached? */
+			cur_sigint = (void (*)())SIG_IGN; /* detached? */
 		else
 			cur_sigint = sig2;	/* back to here w/!0 return */
 	} else {
