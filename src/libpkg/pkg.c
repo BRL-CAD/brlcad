@@ -841,9 +841,9 @@ pkg_2send(int type, char *buf1, int len1, char *buf2, int len2, register struct 
 		if( i < 0 )  {
 			pkg_perror(pc->pkc_errlog, "pkg_2send: writev");
 			sprintf( errbuf,
-				"pkg_send2(type=%d, buf1=x%x, len1=%d, buf2=x%x, len2=%d, pc=x%x)\n",
-				 type, (unsigned int)buf1, len1, 
-				 (unsigned int)buf2, len2, (unsigned int)pc );
+				"pkg_send2(type=%d, buf1=x%lx, len1=%d, buf2=x%lx, len2=%d, pc=x%lx)\n",
+				 type, (unsigned long int)buf1, len1, 
+				 (unsigned long int)buf2, len2, (unsigned long int)pc );
 			(pc->pkc_errlog)(errbuf);
 			return(-1);
 		}
