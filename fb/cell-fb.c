@@ -63,7 +63,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
  * coordinates.
  */
 
-#define H2VPX(_h)	( ((_h) - xmin)/cell_size * (wid + grid_flag)+0.5 )
+#define H2VPX(_h)	( ((_h) - xmin)/cell_size * (wid + grid_flag)+1.0 )
 #define V2VPY(_v)	( ((_v) - ymin)/cell_size * (hgt + grid_flag)+key_height )
 #define VPX2SCRX(_vp_x)	( (_vp_x) + xorigin )
 #define VPY2SCRY(_vp_y)	( (_vp_y) + yorigin )
@@ -71,14 +71,14 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #define SCRX2VPX(_scr_x) ( (_scr_x) - xorigin )
 #define SCRY2VPY(_scr_y) ( (_scr_y) - yorigin )
 
-#define VPX2H(_vp_x)	( cell_size * ((_vp_x)/(wid+grid_flag)-0.5) + xmin )
+#define VPX2H(_vp_x)	( cell_size * ((_vp_x)/(wid+grid_flag)-1.0) + xmin )
 #define VPY2V(_vp_y)	( cell_size * ((_vp_y)/(hgt+grid_flag)-key_height) + ymin )
 
 #define SCRX2H(_s_x)	VPX2H( SCRX2VPX(_s_x) )
 #define SCRY2V(_s_y)	VPY2V( SCRY2VPY(_s_y) )
 
 /* Map pixels into user units */
-#define	fbh2uu(_h)	(cell_size*(((_h)-xorigin)/(wid+grid_flag)-.5)+xmin)
+#define	fbh2uu(_h)	(cell_size*(((_h)-xorigin)/(wid+grid_flag)-1.0)+xmin)
 #define	fbv2uu(_v)	(cell_size*(((_v)-yorigin)/(hgt+grid_flag)-key_height)+ymin)
 /* Absolute value */
 #define Abs(_a)	((_a) < 0.0 ? -(_a) : (_a))
@@ -884,10 +884,9 @@ STATIC void log_Run()
 	 * of the screen space, i.e., the framebuffer. )
 	 * Also find the hv_viewsize at this time.
 	 */
-
 	hv_viewsize = SCRX2H( fb_width - 1 ) - SCRX2H( 0 );
-	hv_eye[0] = SCRX2H( fb_width/2 );
-	hv_eye[1] = SCRY2V( fb_height/2 );
+	hv_eye[0] = SCRX2H( fb_width/2 + 0.5 );
+	hv_eye[1] = SCRY2V( fb_height/2 + 0.5 );
 	hv_eye[2] = hv_viewsize/2;
 
 printf("SCRX2H(fb_width -1) = %g; SCRX2H(0) = %g; hv_viewsize= %g\n",
