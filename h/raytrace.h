@@ -99,49 +99,6 @@ extern "C" {
 #define RT_DOT_TOL	(0.001)
 #define RT_PCOEF_TOL	(1.0e-10)
 
-/*
- *			R T _ T O L
- *
- *  A handy way of passing around the tolerance information needed to
- *  perform approximate floating-point calculations on geometry.
- *
- *  dist & dist_sq establish the distance tolerance.
- *
- *	If two points are closer together than dist, then they are to
- *	be considered the same point.
- *	For example:
- *		point_t	a,b;
- *		vect_t	diff;
- *		VSUB2( diff, a, b );
- *		if( MAGNITUDE(diff) < tol->dist )	a & b are the same.
- *	or, more efficiently:
- *		if( MAQSQ(diff) < tol->dist_sq )
- *
- *  perp & para establish the angular tolerance.
- *
- *	If two rays emanate from the same point, and their dot product
- *	is nearly one, then the two rays are the same, while if their
- *	dot product is nearly zero, then they are perpendicular.
- *	For example:
- *		vect_t	a,b;
- *		if( fabs(VDOT(a,b)) >= tol->para )	a & b are parallel
- *		if( fabs(VDOT(a,b)) <= tol->perp )	a & b are perpendicular
- *
- */
-struct rt_tol {
-	long		magic;
-	double		dist;			/* >= 0 */
-	double		dist_sq;		/* dist * dist */
-	double		perp;			/* nearly 0 */
-	double		para;			/* nearly 1 */
-};
-#define RT_TOL_MAGIC	0x98c734bb
-#define RT_CK_TOL(_p)	RT_CKMAG(_p, RT_TOL_MAGIC, "rt_tol")
-
-#define	RT_VECT_ARE_PARALLEL(_dot,_tol)		\
-	(((_dot) < 0) ? ((-(_dot))>=(_tol)->para) : ((_dot) >= (_tol)->para))
-#define RT_VECT_ARE_PERP(_dot,_tol)		\
-	(((_dot) < 0) ? ((-(_dot))<=(_tol)->perp) : ((_dot) <= (_tol)->perp))
 
 /*
  *			R T _ T E S S _ T O L
@@ -1401,58 +1358,16 @@ RT_EXTERN(void rt_add_res_stats, (struct rt_i *rtip, struct resource *resp) );
 					/* Tally stats into struct rt_i */
 
 /* The matrix math routines */
-RT_EXTERN(double mat_atan2, (double y, double x) );
-RT_EXTERN(void mat_zero, (mat_t m) );
-RT_EXTERN(void mat_idn, (mat_t m) );
-RT_EXTERN(void mat_copy, (mat_t dest, CONST mat_t src) );
-RT_EXTERN(void mat_mul, (mat_t dest, CONST mat_t a, CONST mat_t b) );
-RT_EXTERN(void matXvec, (vect_t dest, CONST mat_t m, CONST vect_t src) );
-RT_EXTERN(void mat_inv, (mat_t dest, CONST mat_t src) );
-RT_EXTERN(void mat_vtoh_move, (hvect_t dest, CONST vect_t src) );
-RT_EXTERN(void mat_htov_move, (vect_t dest, CONST hvect_t src) );
 #define vtoh_move(_d,_s)	mat_vtoh_move(_d,_s)	/* compat */
 #define htov_move(_d,_s)	mat_htov_move(_d,_s)
-RT_EXTERN(void mat_print, (CONST char *title, CONST mat_t m) );
-RT_EXTERN(void mat_trn, (mat_t dest, CONST mat_t src) );
-RT_EXTERN(void mat_ae, (mat_t dest, double azimuth, double elev) );
-RT_EXTERN(void mat_ae_vec, (fastf_t *azp, fastf_t *elp, CONST vect_t src) );
-RT_EXTERN(void mat_aet_vec, (fastf_t *azp, fastf_t *elp, fastf_t *twistp,
-			     vect_t vec_ae, vect_t vec_twist, fastf_t accuracy) );
 #define ae_vec(_az,_el,_vec)	mat_ae_vec(_az,_el,_vec)	/* compat */
-RT_EXTERN(void mat_angles, (mat_t dest, double alpha, double beta, double ggamma) );
-RT_EXTERN(void mat_eigen2x2, (fastf_t *val1, fastf_t *val2,
-	vect_t vec1, vect_t vec2, double a, double b, double c) );
 #define eigen2x2(_val1,_val2,_vec1,_vec2,_a,_b,_c)	\
 	mat_eigen2x2(_val1,_val2,_vec1,_vec2,_a,_b,_c)	/* compat */
-RT_EXTERN(void mat_fromto, (mat_t dest, CONST vect_t from, CONST vect_t to) );
-RT_EXTERN(void mat_xrot, (mat_t dest, double sinx, double cosx) );
-RT_EXTERN(void mat_yrot, (mat_t dest, double siny, double cosy) );
-RT_EXTERN(void mat_zrot, (mat_t dest, double sinz, double cosz) );
-RT_EXTERN(void mat_lookat, (mat_t dest, CONST vect_t dir, int yflip) );
-RT_EXTERN(void mat_vec_ortho, (vect_t dest, CONST vect_t src) );
-RT_EXTERN(void mat_vec_perp, (vect_t dest, CONST vect_t src) );
-RT_EXTERN(int mat_scale_about_pt, (mat_t mat, CONST point_t pt, CONST double scale));
-RT_EXTERN(void mat_xform_about_pt, (mat_t mat, CONST mat_t xform, CONST point_t pt));
-RT_EXTERN(void mat_arb_rot, (mat_t mat, CONST point_t pt, CONST vect_t dir, CONST fastf_t ang));
-RT_EXTERN(int rt_mat_is_equal, (CONST mat_t a, CONST mat_t b, CONST struct rt_tol *tol));
 #define vec_ortho(_d,_s)	mat_vec_ortho(_d,_s)	/* compat */
 #define vec_perp(_d,_s)		mat_vec_perp(_d,_s)	/* compat */
-RT_EXTERN(matp_t mat_dup,	(CONST mat_t in) );
 
 
 /* Routines from qmath.h */
-RT_EXTERN(void quat_mat2quat, (quat_t quat, mat_t mat));
-RT_EXTERN(void quat_quat2mat, (mat_t mat, quat_t quat));
-RT_EXTERN(double quat_distance, (quat_t q1, quat_t q2));
-RT_EXTERN(void quat_double, (quat_t qout, quat_t q1, quat_t q2));
-RT_EXTERN(void quat_bisect, (quat_t qout, quat_t q1, quat_t q2));
-RT_EXTERN(void quat_slerp, (quat_t qout, quat_t q1, quat_t q2, double f));
-RT_EXTERN(void quat_sberp, (quat_t qout, quat_t q1, quat_t qa, quat_t qb,
-			    quat_t q2, double f));
-RT_EXTERN(void quat_make_nearest, (quat_t q1, quat_t q2));
-RT_EXTERN(void quat_print, (char *title, quat_t quat));
-RT_EXTERN(void quat_exp, (quat_t out, quat_t in));
-RT_EXTERN(void quat_log, (quat_t out, quat_t in));
 
 /*****************************************************************
  *                                                               *

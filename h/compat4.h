@@ -28,6 +28,10 @@ extern "C" {
 #define GETSTRUCT	BU_GETSTRUCT
 #define GETUNION	BU_GETUNION
 #define RT_CKMAG	BU_CKMAG
+#define RT_TOL_MAGIC	BN_TOL_MAGIC
+#define RT_CK_TOL	BN_CK_TOL
+#define RT_VECT_ARE_PARALLEL	BN_VECT_ARE_PARALLEL
+#define RT_VECT_ARE_PERP	BN_VECT_ARE_PERP
 
 /* The ordering of these sections should track the order of externs in bu.h */
 
@@ -125,6 +129,10 @@ extern "C" {
 #define rt_close_mapped_file	bu_close_mapped_file
 #define RT_CK_MAPPED_FILE	BU_CK_MAPPED_FILE
 
+/* mat.c */
+#define rt_mat_is_equal	mat_is_equal
+
+
 /* parallel.c */
 #define rt_pri_set	bu_nice_set
 #define rt_cpuget	bu_cpulimit_get
@@ -185,6 +193,10 @@ extern "C" {
 #define NMG_TBL_LASTADDR	BU_PTBL_LASTADDR
 #define NMG_TBL_END		BU_PTBL_END
 #define NMG_TBL_GET		BU_PTBL_GET
+
+/* raytrace.h */
+#define rt_tol bn_tol
+
 
 /*
  * semaphore.c

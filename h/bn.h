@@ -50,6 +50,54 @@ extern "C" {
 
 #define BN_H_VERSION	"@(#)$Header$ (BRL)"
 
+
+
+
+/*			R T _ T O L
+ *
+ *  A handy way of passing around the tolerance information needed to
+ *  perform approximate floating-point calculations on geometry.
+ *
+ *  dist & dist_sq establish the distance tolerance.
+ *
+ *	If two points are closer together than dist, then they are to
+ *	be considered the same point.
+ *	For example:
+ *		point_t	a,b;
+ *		vect_t	diff;
+ *		VSUB2( diff, a, b );
+ *		if( MAGNITUDE(diff) < tol->dist )	a & b are the same.
+ *	or, more efficiently:
+ *		if( MAQSQ(diff) < tol->dist_sq )
+ *
+ *  perp & para establish the angular tolerance.
+ *
+ *	If two rays emanate from the same point, and their dot product
+ *	is nearly one, then the two rays are the same, while if their
+ *	dot product is nearly zero, then they are perpendicular.
+ *	For example:
+ *		vect_t	a,b;
+ *		if( fabs(VDOT(a,b)) >= tol->para )	a & b are parallel
+ *		if( fabs(VDOT(a,b)) <= tol->perp )	a & b are perpendicular
+ *
+ */
+struct bn_tol {
+	long		magic;
+	double		dist;			/* >= 0 */
+	double		dist_sq;		/* dist * dist */
+	double		perp;			/* nearly 0 */
+	double		para;			/* nearly 1 */
+};
+#define BN_TOL_MAGIC	0x98c734bb
+#define BN_CK_TOL(_p)	BU_CKMAG(_p, BN_TOL_MAGIC, "bn_tol")
+
+#define	BN_VECT_ARE_PARALLEL(_dot,_tol)		\
+	(((_dot) < 0) ? ((-(_dot))>=(_tol)->para) : ((_dot) >= (_tol)->para))
+#define BN_VECT_ARE_PERP(_dot,_tol)		\
+	(((_dot) < 0) ? ((-(_dot))<=(_tol)->perp) : ((_dot) <= (_tol)->perp))
+
+
+
 /*----------------------------------------------------------------------*/
 /* complex.c */
 /*
@@ -89,6 +137,66 @@ typedef struct bn_complex {
 	(ap)->im = (cp)->re * (bp)->im + (cp)->im * (bp)->re; }
 
 /*----------------------------------------------------------------------*/
+/* mat.c */
+
+
+
+BU_EXTERN(void		mat_print, (CONST char *title, CONST mat_t m));
+BU_EXTERN(double	mat_atan2, (double x, double y));
+BU_EXTERN(void		mat_zero, (mat_t m));
+BU_EXTERN(void		mat_idn, (mat_t m));
+BU_EXTERN(void		mat_copy, (register mat_t dest,
+					register CONST mat_t src));
+BU_EXTERN(void		mat_mul, (register mat_t o, register CONST mat_t a,
+					register CONST mat_t b));
+BU_EXTERN(void		mat_mul2, (register CONST mat_t i, register mat_t o));
+BU_EXTERN(void		mat_Xvec, (register hvect_t ov,
+					register CONST mat_t im,
+					register hvect_t iv));
+BU_EXTERN(void		mat_inv, (register mat_t output, CONST mat_t input));
+BU_EXTERN(void		mat_vtoh_move, (register vect_t h, 
+					register CONST vect_t v));
+BU_EXTERN(void		mat_htov_move, (register vect_t v, 
+					register CONST vect_t h));
+BU_EXTERN(void		mat_trn, (mat_t om, register CONST mat_t im));
+BU_EXTERN(void		mat_ae, (register mat_t	m, double azimuth,
+					double elev));
+BU_EXTERN(void		mat_ae_vec, (fastf_t *azp, fastf_t *elp, 
+					CONST vect_t v));
+BU_EXTERN(void 		mat_aet_vec, ( fastf_t *az, fastf_t *el, 
+					fastf_t *twist, vect_t vec_ae,
+					vect_t vec_twist, fastf_t accuracy));
+
+BU_EXTERN(void		mat_angles, (register mat_t mat, double alpha,
+					double beta, double ggamma ));
+
+BU_EXTERN(void		mat_eigen2x2, ( fastf_t	*val1, fastf_t *val2,
+					vect_t	vec1, vect_t vec2, fastf_t a,
+					fastf_t b, fastf_t c) );
+
+BU_EXTERN(void		mat_vec_perp, (vect_t new, CONST vect_t	old));
+BU_EXTERN(void		mat_fromto, ( mat_t m, CONST vect_t from,
+					CONST vect_t to));
+BU_EXTERN(void		mat_xrot, (mat_t m, double sinx, double cosx));
+BU_EXTERN(void		mat_yrot, (mat_t m, double siny, double cosy));
+BU_EXTERN(void		mat_zrot, (mat_t m, double sinz, double cosz));
+BU_EXTERN(void		mat_lookat, (mat_t rot, CONST vect_t dir, int yflip));
+BU_EXTERN(void		mat_vec_ortho, (register vect_t out, 
+					register CONST vect_t in));
+BU_EXTERN(int		mat_scale_about_pt, (mat_t mat, CONST point_t pt,
+					CONST double scale));
+BU_EXTERN(void		mat_xform_about_pt, (mat_t mat, 
+					CONST mat_t xform,
+					CONST point_t pt));
+BU_EXTERN(int		mat_is_identity, (CONST mat_t m));
+BU_EXTERN(void		mat_arb_rot, ( mat_t m, CONST point_t pt,
+					CONST vect_t dir, CONST fastf_t ang));
+BU_EXTERN(matp_t	mat_dup, (CONST mat_t	in));
+BU_EXTERN(int		mat_is_equal, (CONST mat_t a, CONST mat_t b, 
+					CONST struct bn_tol *tol));
+
+
+/*----------------------------------------------------------------------*/
 /* poly.c */
 /*
  *  Polynomial data type
@@ -104,6 +212,89 @@ typedef  struct bn_poly {
 #define BN_POLY_MAGIC	0x506f4c79	/* 'PoLy' */
 #define BN_CK_POLY(_p)	BU_CKMAG(_p, BN_POLY_MAGIC, "struct bn_poly")
 #define BN_POLY_NULL	((struct bn_poly *)NULL)
+
+/*----------------------------------------------------------------------*/
+/* qmath.c */
+
+BU_EXTERN(void quat_mat2quat, (quat_t quat, mat_t mat));
+BU_EXTERN(void quat_quat2mat, (mat_t mat, quat_t quat));
+BU_EXTERN(double quat_distance, (quat_t q1, quat_t q2));
+BU_EXTERN(void quat_double, (quat_t qout, quat_t q1, quat_t q2));
+BU_EXTERN(void quat_bisect, (quat_t qout, quat_t q1, quat_t q2));
+BU_EXTERN(void quat_slerp, (quat_t qout, quat_t q1, quat_t q2, double f));
+BU_EXTERN(void quat_sberp, (quat_t qout, quat_t q1, quat_t qa, quat_t qb,
+			    quat_t q2, double f));
+BU_EXTERN(void quat_make_nearest, (quat_t q1, quat_t q2));
+BU_EXTERN(void quat_print, (char *title, quat_t quat));
+BU_EXTERN(void quat_exp, (quat_t out, quat_t in));
+BU_EXTERN(void quat_log, (quat_t out, quat_t in));
+/*----------------------------------------------------------------------*/
+/* rand.c */
+
+
+/*  A supply of fast pseudo-random numbers from table in bn/rand.c.
+ *  The values are in the range 0..1
+ *
+ * Usage:
+ *	int idx;
+ *	float f;
+ *
+ *	BN_RANDSEED( idx, integer_seed );
+ *
+ *	while (NEED_MORE_RAND_NUMBERS) {
+ *		f = BN_RANDOM( idx );
+ *	}
+ */
+#define BN_RAND_TABSIZE 4096
+#define BN_RANDSEED( _i, _seed )        _i = _seed % BN_RAND_TABSIZE
+#define BN_RANDOM( _i )	bn_rand_table[ _i = (_i+1) % BN_RAND_TABSIZE ]
+extern CONST float bn_rand_table[BN_RAND_TABSIZE];
+
+/*----------------------------------------------------------------------*/
+/* wavelet.c */
+
+
+BU_EXTERN(void	bn_wlt_1d_double_decompose, (double *tbuf, double *buf,
+			unsigned long dimen, unsigned long depth,
+			unsigned long limit ));
+BU_EXTERN(void	bn_wlt_1d_double_reconstruct, (double *tbuf, double *buf, 
+			unsigned long dimen, unsigned long depth, 
+			unsigned long subimage_size, unsigned long limit ));
+
+BU_EXTERN(void	bn_wlt_1d_float_decompose, (float *tbuf, float *buf,
+			unsigned long dimen, unsigned long depth,
+			unsigned long limit ));
+BU_EXTERN(void	bn_wlt_1d_float_reconstruct, (float *tbuf, float *buf, 
+			unsigned long dimen, unsigned long depth, 
+			unsigned long subimage_size, unsigned long limit ));
+
+BU_EXTERN(void	bn_wlt_1d_char_decompose, (char *tbuf, char *buf,
+			unsigned long dimen, unsigned long depth,
+			unsigned long limit ));
+BU_EXTERN(void	bn_wlt_1d_char_reconstruct, (char *tbuf, char *buf, 
+			unsigned long dimen, unsigned long depth, 
+			unsigned long subimage_size, unsigned long limit ));
+
+BU_EXTERN(void	bn_wlt_1d_short_decompose, (short *tbuf, short *buf,
+			unsigned long dimen, unsigned long depth,
+			unsigned long limit ));
+BU_EXTERN(void	bn_wlt_1d_short_reconstruct, (short *tbuf, short *buf, 
+			unsigned long dimen, unsigned long depth, 
+			unsigned long subimage_size, unsigned long limit ));
+
+BU_EXTERN(void	bn_wlt_1d_int_decompose, (int *tbuf, int *buf,
+			unsigned long dimen, unsigned long depth,
+			unsigned long limit ));
+BU_EXTERN(void	bn_wlt_1d_int_reconstruct, (int *tbuf, int *buf, 
+			unsigned long dimen, unsigned long depth, 
+			unsigned long subimage_size, unsigned long limit ));
+
+BU_EXTERN(void	bn_wlt_1d_long_decompose, (long *tbuf, long *buf,
+			unsigned long dimen, unsigned long depth,
+			unsigned long limit ));
+BU_EXTERN(void	bn_wlt_1d_long_reconstruct, (long *tbuf, long *buf, 
+			unsigned long dimen, unsigned long depth, 
+			unsigned long subimage_size, unsigned long limit ));
 
 /*----------------------------------------------------------------------*/
 /*
