@@ -68,13 +68,13 @@ struct mfuncs txt_mfuncs[] = {
 
 #define TXT_NAME_LEN 128
 struct txt_specific {
-	unsigned char tx_transp[8];	/* RGB for transparency */
+	int	tx_transp[3];	/* RGB for transparency */
 	char	tx_file[TXT_NAME_LEN];	/* Filename */
 	int	tx_w;		/* Width of texture in pixels */
 	int	tx_fw;		/* File width of texture in pixels */
 	int	tx_n;		/* Number of scanlines */
 	char	*tx_pixels;	/* Pixel holding area */
-	int	trans_valid;	/* boolean: is tx_transp valid ? */
+	int	tx_trans_valid;	/* boolean: is tx_transp valid ? */
 };
 #define TX_NULL	((struct txt_specific *)0)
 #define TX_O(m)	offsetof(struct txt_specific, m)
@@ -82,17 +82,17 @@ struct txt_specific {
 struct structparse txt_parse[] = {
 #if CRAY && !__STDC__
 	/* Hack for old Cray compilers */
-	"%C",	1, "transp",	0,			txt_transp_hook,
-	"%s",	TXT_NAME_LEN, "file",	1,			FUNC_NULL,
+	"%d",	1, "transp",	0,			txt_transp_hook,
+	"%s",	TXT_NAME_LEN, "file",	3,		FUNC_NULL,
 #else
-	"%C",	1, "transp",	offsetofarray(struct txt_specific, tx_transp),	txt_transp_hook,
+	"%d",	1, "transp",	offsetofarray(struct txt_specific, tx_transp),	txt_transp_hook,
 	"%s",	TXT_NAME_LEN, "file", offsetofarray(struct txt_specific, tx_file),		FUNC_NULL,
 #endif
 	"%d",	1, "w",		TX_O(tx_w),		FUNC_NULL,
 	"%d",	1, "n",		TX_O(tx_n),		FUNC_NULL,
 	"%d",	1, "l",		TX_O(tx_n),		FUNC_NULL, /*compat*/
-	"%d",	1, "fw",		TX_O(tx_fw),		FUNC_NULL,
-	"%d",	1, "trans_valid",	TX_O(trans_valid),	FUNC_NULL,
+	"%d",	1, "fw",		TX_O(tx_fw),	FUNC_NULL,
+	"%d",	1, "trans_valid",	TX_O(tx_trans_valid),	FUNC_NULL,
 	(char *)0, 0,(char *)0,	0,			FUNC_NULL
 };
 
@@ -112,7 +112,7 @@ char	*value;
 		(struct txt_specific *)cp;
 
 	if (!strcmp(name, txt_parse[0].sp_name) && ptab == txt_parse) {
-		tp->trans_valid = 1;
+		tp->tx_trans_valid = 1;
 	} else {
 		rt_log("file:%s, line:%d txt_transp_hook name:(%s) instead of (%s)\n",
 			__FILE__, __LINE__, name, txt_parse[0].sp_name);
@@ -240,7 +240,7 @@ char	*dp;
 	g /= (dx*dy);
 	b /= (dx*dy);
 
-	if( tp->tx_transp[3] == 0 )  {
+	if (!tp->tx_trans_valid) {
 opaque:
 		VSET( swp->sw_color,
 			r * rt_inv255,
@@ -248,10 +248,12 @@ opaque:
 			b * rt_inv255 );
 		return(1);
 	}
-	/* This circumlocution needed to keep expression simple for Cray, others */
-	if( r != (tp->tx_transp[0]) )  goto opaque;
-	if( g != (tp->tx_transp[1]) )  goto opaque;
-	if( b != (tp->tx_transp[2]) )  goto opaque;
+	/* This circumlocution needed to keep expression simple for Cray,
+	 * and others
+	 */
+	if( r != ((long)tp->tx_transp[0]) )  goto opaque;
+	if( g != ((long)tp->tx_transp[1]) )  goto opaque;
+	if( b != ((long)tp->tx_transp[2]) )  goto opaque;
 
 	/*
 	 *  Transparency mapping is enabled, and we hit a transparent spot.
@@ -278,13 +280,14 @@ char			**dpp;
 
 	tp->tx_file[0] = '\0';
 	tp->tx_w = tp->tx_fw = tp->tx_n = -1;
+	tp->tx_trans_valid = 0;
 	rt_structparse( matparm, txt_parse, (char *)tp );
 	if( tp->tx_w < 0 )  tp->tx_w = 512;
 	if( tp->tx_n < 0 )  tp->tx_n = tp->tx_w;
 	if( tp->tx_fw < 0 )  tp->tx_fw = tp->tx_w;
 	tp->tx_pixels = (char *)0;
 
-	if( tp->trans_valid )
+	if( tp->tx_trans_valid )
 		rp->reg_transmit = 1;
 
 	if( txt_read(tp) == 0 )
@@ -317,8 +320,8 @@ char *cp;
 }
 
 struct ckr_specific  {
-	unsigned char	ckr_a[8];	/* first RGB */
-	unsigned char	ckr_b[8];	/* second RGB */
+	int	ckr_a[3];	/* first RGB */
+	int	ckr_b[3];	/* second RGB */
 };
 #define CKR_NULL	((struct ckr_specific *)0)
 #define CKR_O(m)	offsetof(struct ckr_specific, m)
@@ -326,11 +329,11 @@ struct ckr_specific  {
 struct structparse ckr_parse[] = {
 #if CRAY && !__STDC__
 	/* Hack for old Cray compilers */
-	"%C",	1, "a",		0,			FUNC_NULL,
-	"%C",	1, "b",		1,			FUNC_NULL,
+	"%d",	1, "a",		0,			FUNC_NULL,
+	"%d",	1, "b",		1,			FUNC_NULL,
 #else
-	"%C",	1, "a",	offsetofarray(struct ckr_specific, ckr_a), FUNC_NULL,
-	"%C",	1, "b",	offsetofarray(struct ckr_specific, ckr_b), FUNC_NULL,
+	"%d",	1, "a",	offsetofarray(struct ckr_specific, ckr_a), FUNC_NULL,
+	"%d",	1, "b",	offsetofarray(struct ckr_specific, ckr_b), FUNC_NULL,
 #endif
 	(char *)0, 0, (char *)0,	0,		FUNC_NULL
 };
@@ -347,7 +350,7 @@ char	*dp;
 {
 	register struct ckr_specific *ckp =
 		(struct ckr_specific *)dp;
-	register unsigned char *cp;
+	register int *cp;
 
 	if( (swp->sw_uv.uv_u < 0.5 && swp->sw_uv.uv_v < 0.5) ||
 	    (swp->sw_uv.uv_u >=0.5 && swp->sw_uv.uv_v >=0.5) )  {
@@ -356,9 +359,9 @@ char	*dp;
 		cp = ckp->ckr_b;
 	}
 	VSET( swp->sw_color,
-		cp[0] * rt_inv255,
-		cp[1] * rt_inv255,
-		cp[2] * rt_inv255 );
+		(unsigned char)cp[0] * rt_inv255,
+		(unsigned char)cp[1] * rt_inv255,
+		(unsigned char)cp[2] * rt_inv255 );
 	return(1);
 }
 
@@ -378,6 +381,12 @@ char			**dpp;
 	*dpp = (char *)ckp;
 	ckp->ckr_a[0] = ckp->ckr_a[1] = ckp->ckr_a[2] = 255;
 	rt_structparse( matparm, ckr_parse, (char *)ckp );
+	ckp->ckr_a[0] &= 0x0ff;
+	ckp->ckr_a[1] &= 0x0ff;
+	ckp->ckr_a[2] &= 0x0ff;
+	ckp->ckr_b[0] &= 0x0ff;
+	ckp->ckr_b[1] &= 0x0ff;
+	ckp->ckr_b[2] &= 0x0ff;
 	return(1);
 }
 
