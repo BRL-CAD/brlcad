@@ -10,7 +10,8 @@
  *  Authors -
  *	Michael John Muuss
  *	Paul R. Stay
- *  
+ *	Bill Mermagen Jr.
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -82,6 +83,59 @@ int	inherit;
 		rec.c.c_rgb[2] = rgb[2];
 	}
 	rec.c.c_inherit = inherit;
+	fwrite( (char *)&rec, sizeof(rec), 1, fp );
+	return(0);
+}
+
+/*
+ *			M K _ R C O M B
+ *
+ *  Make a combination with material properties info.
+ *  Must be followed by 'len' mk_memb() calls before any other mk_* routines.
+ *  Like mk_comb except for additional region parameters.
+ */
+int
+mk_rcomb( fp, name, len, region, matname, matparm, rgb, id, air, material, los, inherit )
+FILE	*fp;
+char	*name;
+char	*matname;
+char	*matparm;
+char	*rgb;
+int	id;
+int	air;
+int	material;
+int	los;
+int	inherit;
+{
+	static union record rec;
+
+	bzero( (char *)&rec, sizeof(rec) );
+	rec.c.c_id = ID_COMB;
+	if( region ){
+		rec.c.c_flags = 'R';
+		rec.c.c_inherit = inherit;
+		rec.c.c_regionid = id;
+		rec.c.c_aircode = air;
+		rec.c.c_material = material;
+		rec.c.c_los = los;
+	}
+	else
+		rec.c.c_flags = ' ';
+	NAMEMOVE( name, rec.c.c_name );
+	rec.c.c_length = len;
+	if( matname ) {
+		strncpy( rec.c.c_matname, matname, sizeof(rec.c.c_matname) );
+		if( matparm )
+			strncpy( rec.c.c_matparm, matparm,
+				sizeof(rec.c.c_matparm) );
+	}
+	if( rgb )  {
+		rec.c.c_override = 1;
+		rec.c.c_rgb[0] = rgb[0];
+		rec.c.c_rgb[1] = rgb[1];
+		rec.c.c_rgb[2] = rgb[2];
+	}
+
 	fwrite( (char *)&rec, sizeof(rec), 1, fp );
 	return(0);
 }
@@ -216,6 +270,63 @@ register struct wmember *headp;
 
 	/* Output combination record and member records */
 	mk_comb( fp, name, len, region, matname, matparm, rgb, inherit );
+	for( wp = headp->wm_forw; wp != headp; wp = wp->wm_forw )
+		mk_memb( fp, wp->wm_name, wp->wm_mat, wp->wm_op );
+
+	/* Release the member structure dynamic storage */
+	for( wp = headp->wm_forw; wp != headp; )  {
+		register struct wmember *next;
+
+		wp->wm_magic = -1;	/* Sanity */
+		next = wp->wm_forw;
+		free( (char *)wp );
+		wp = next;
+	}
+	headp->wm_forw = headp->wm_back = headp;
+	return(0);
+}
+
+/*
+ *			M K _ R L C O M B
+ *
+ *  Make a combination, much like mk_comb(), but where the
+ *  members are described by a linked list of wmember structs.
+ *  This routine produces the combination and member records
+ *  all at once, making it easier and less risky to use than
+ *  direct use of the pair of mk_comb() and mk_memb().
+ *  The linked list is freed when it has been output.
+ *  Like mk_lcomb except for additional region parameters.
+ *
+ */
+int
+mk_lrcomb( fp, name, headp, region, matname, matparm, rgb, id, air, material, los, inherit )
+FILE	*fp;
+char	*name;
+char	*matname;
+char	*matparm;
+char	*rgb;
+int	id;
+int	air;
+int	material;
+int	los;
+char	inherit;
+register struct wmember *headp;
+{
+	register struct wmember *wp;
+	register int len = 0;
+
+	/* Measure length of list */
+	for( wp = headp->wm_forw; wp != headp; wp = wp->wm_forw )  {
+		if( wp->wm_magic != WMEMBER_MAGIC )  {
+			fprintf(stderr, "mk_wmcomb:  corrupted linked list\n");
+			abort();
+		}
+		len++;
+	}
+
+	/* Output combination record and member records */
+
+	mk_rcomb( fp, name, len, region, matname, matparm, rgb, id, air, material, los, inherit );
 	for( wp = headp->wm_forw; wp != headp; wp = wp->wm_forw )
 		mk_memb( fp, wp->wm_name, wp->wm_mat, wp->wm_op );
 
