@@ -45,6 +45,30 @@ char *msg;
 void rt_log( fmt, ...\& )
 char *fmt;
 .sp
+char *rt_malloc(cnt, str)
+unsigned int cnt;
+char *str;
+.sp
+void rt_free(ptr, str)
+char *ptr;
+char *str;
+.sp
+char *rt_realloc(ptr, cnt, str)
+register char   *ptr;
+unsigned int    cnt;
+char      *str;
+.sp
+char *rt_calloc( nelem, elsize, str )
+unsigned int    nelem;
+unsigned int    elsize;
+char      *str;
+.sp
+void rt_prmem(str)
+char *str;
+.sp
+char *rt_strdup( cp )
+char *cp;
+.sp
 struct soltab *rt_find_solid(\|)
 .sp
 void mat_zero( m )			/* fill matrix m with zeros */
@@ -188,12 +212,42 @@ is placed in the user-supplied buffer
 can be used to exit your program with
 .I msg
 printed on the standard error output.
-.I rt_log
-is called with
-.IR printf -like
-arguments to print an error message without terminating.
-If this default behavior is inappropriate,
-these functions can be preempted by versions provided by the application.
+.SH WARNING
+.I Librt
+is designed to run in parallel on some multiprocessor machines.
+On some such machines
+system calls must be semaphore protected.  For this reason, 
+.I librt
+provides:
+.sp
+.nf
+.I rt_log()
+.I rt_malloc() rt_free() rt_calloc() rt_realloc() rt_prmem()
+.I rt_strdup()
+.fi
+.P
+The fuction
+.I rt_log()
+is essentially a semaphore-protected version of
+.I printf()
+except that it uses the standard error (stderr) instead of the standard
+output (stdout).
+.P
+Dynamic memory handling in applications using librt should use
+the functions provided by librt instead of the usual system runtime library
+routines.  The
+.I librt
+versions do not return to the caller unless they succeed.  If they fail,
+they call 
+.I rt_bomb
+with their last argument (str) as the parameter.  The string parameter
+usually indicates the purpose of the memory being allocated.
+.P
+The fuction
+.I rt_strdup()
+calls rt_malloc() instead of malloc() to acquire memory.
+Thus it should be used in place of strdup() in programs linking with 
+.I librt.
 .SH "EXIT CODE"
 All truly fatal errors detected by the library use
 .I rt_bomb
