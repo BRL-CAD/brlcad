@@ -1980,6 +1980,60 @@ CONST long		*magic_p;
 }
 
 /*
+ *			N M G _ E D G E _ G _ H A N D L E R
+ *
+ *  A private support routine for nmg_edge_g_tabulate().
+ *  Having just visited an edge_g, if this is the first time,
+ *  add it to the nmg_ptbl array.
+ */
+static void
+nmg_edge_g_handler( ep, state, first )
+long		*ep;
+genptr_t	state;
+int		first;
+{
+	register struct vf_state *sp = (struct vf_state *)state;
+	register struct edge_g	*eg = (struct edge_g *)ep;
+
+	NMG_CK_EDGE_G(eg);
+	/* If this edge has been processed before, do nothing more */
+	if( !NMG_INDEX_FIRST_TIME(sp->visited, eg) )  return;
+
+	nmg_tbl( sp->tabl, TBL_INS, ep );
+}
+
+/*
+ *			N M G _ E D G E _ G _ T A B U L A T E
+ *
+ *  Given a pointer to any nmg data structure,
+ *  build an nmg_ptbl list which has every edge
+ *  pointer from there on "down" in the model, each one listed exactly once.
+ */
+void
+nmg_edge_g_tabulate( tab, magic_p )
+struct nmg_ptbl		*tab;
+CONST long		*magic_p;
+{
+	struct model		*m;
+	struct vf_state		st;
+	struct nmg_visit_handlers	handlers;
+
+	m = nmg_find_model( magic_p );
+	NMG_CK_MODEL(m);
+
+	st.visited = (char *)rt_calloc(m->maxindex+1, sizeof(char), "visited[]");
+	st.tabl = tab;
+
+	(void)nmg_tbl( tab, TBL_INIT, 0 );
+
+	handlers = nmg_visit_handlers_null;		/* struct copy */
+	handlers.vis_edge_g = nmg_edge_g_handler;
+	nmg_visit( magic_p, &handlers, (genptr_t)&st );
+
+	rt_free( (char *)st.visited, "visited[]");
+}
+
+/*
  *			N M G _ 2 F A C E _ H A N D L E R
  *
  *  A private support routine for nmg_face_tabulate().
