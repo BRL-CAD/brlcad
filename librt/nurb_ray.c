@@ -107,7 +107,7 @@ struct snurb *srf;
 int	dir;
 fastf_t *min, *max;
 {
-	register struct internal_convex_hull *ch;
+	register struct internal_convex_hull ch[20]; /* max order is 10 */
 	register fastf_t * mp1;
 	fastf_t * p1, *p2, *p3, *p4;	/* corner points of the mesh */
 	fastf_t v1[2], v2[2], v3[2];		/* vectors from corneres */
@@ -161,10 +161,6 @@ fastf_t *min, *max;
 
 	if( dir == RT_NURB_SPLIT_ROW)
 	{
-		ch = (struct internal_convex_hull *) rt_malloc(
-			sizeof( struct internal_convex_hull) * col_size,
-			"rt_nurb_clip_srf:convex_hull");
-
 		for( i = 0; i < col_size; i++)
 		{
 			ch[i].param = (fastf_t) i / (col_size - 1.0);
@@ -217,10 +213,6 @@ fastf_t *min, *max;
 			*max = 1.0;
 	} else
 	{
-		ch = (struct internal_convex_hull *) rt_malloc(
-			sizeof( struct internal_convex_hull) * row_size,
-			"rt_nurb_clip_srf:convex_hull");
-
 		for( i = 0; i < row_size; i++)
 		{
 			ch[i].param = (fastf_t) i / (row_size - 1.0);
@@ -274,8 +266,6 @@ fastf_t *min, *max;
 		j = SIGN(ch[row_size -1].max);
 		if ( i != j )
 			*max = 1.0;	}
-
-	rt_free( (char *)ch, "rt_nurb_clip_srf:convex_hull");
 }
 
 
@@ -287,45 +277,37 @@ fastf_t param1, param2;
 {
 	int	i;
 	struct snurb *region;
-	struct knot_vector *new_knots;
+	struct knot_vector new_knots;
 
 	if ( dir == RT_NURB_SPLIT_ROW) {
-		new_knots = (struct knot_vector *) rt_malloc( 
-		    sizeof( struct knot_vector ), 
-		    "region from srf knot vector");
 
-		new_knots->k_size = srf->order[0] * 2;
-		new_knots->knots = (fastf_t * ) rt_malloc( sizeof (fastf_t)
+		new_knots.k_size = srf->order[0] * 2;
+		new_knots.knots = (fastf_t * ) rt_malloc( sizeof (fastf_t)
 		    *srf->order[0] * 2, 
 		    "rt_nurb__region_from_srf: newknot values");
 
 		for ( i = 0; i < srf->order[0]; i++) {
-			new_knots->knots[i] = param1;
-			new_knots->knots[i+srf->order[0]] = param2;
+			new_knots.knots[i] = param1;
+			new_knots.knots[i+srf->order[0]] = param2;
 		}
 	} else
 	 {
-		new_knots = (struct knot_vector *) rt_malloc( 
-		    sizeof( struct knot_vector ), 
-		    "region from srf knot vector");
-
-		new_knots->k_size = srf->order[1] * 2;
-		new_knots->knots = (fastf_t * ) rt_malloc( sizeof (fastf_t)
+		new_knots.k_size = srf->order[1] * 2;
+		new_knots.knots = (fastf_t * ) rt_malloc( sizeof (fastf_t)
 		    *srf->order[1] * 2, 
 		    "rt_nurb_region_from_srf: newknot values");
 
 		for ( i = 0; i < srf->order[1]; i++) {
-			new_knots->knots[i] = param1;
-			new_knots->knots[i+srf->order[1]] = param2;
+			new_knots.knots[i] = param1;
+			new_knots.knots[i+srf->order[1]] = param2;
 		}
 
 	}
 
 	region = (struct snurb *)
-		rt_nurb_s_refine( srf, dir, new_knots);
+		rt_nurb_s_refine( srf, dir, &new_knots);
 
-	rt_free( (char *)new_knots->knots, "rt_nurb_region_from_srf:knotvalues");
-	rt_free( (char *)new_knots, "rt_nurb_region_from_srf:knot vector");
+	rt_free( (char *)new_knots.knots, "rt_nurb_region_from_srf:knotvalues");
 
 	return region;
 }
