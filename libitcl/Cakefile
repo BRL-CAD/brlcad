@@ -65,14 +65,12 @@ noprod&:
 	rm -rf libtcl.*
 
 #ifdef NFS
-clobber&: Makefile.MTYPE
-	make -f Makefile.MTYPE distclean
-	rm -f *.MTYPE *.o config.log config.status Makefile lib* itclsh itkwish
+clobber&:
+	rm -f *.MTYPE *.o config.log config.status Makefile lib* itclsh itkwish *.a *.so
 	rm -rf itcl itk iwidgets*	# Only for \N\F\S case
 #else
-clobber&: Makefile.MTYPE
-	make -f Makefile.MTYPE distclean
-	rm -f *.MTYPE *.o config.log config.status Makefile lib* itclsh itkwish
+clobber&:
+	rm -f *.MTYPE *.o config.log config.status Makefile lib* itclsh itkwish *.a *.so
 #endif
 
 install&: Makefile.MTYPE
