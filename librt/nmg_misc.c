@@ -1,7 +1,7 @@
 /*
  *			N M G _ M I S C . C
  *
- *	As the name implies, these are miscelaneous routines that work with
+ *	As the ame implies, these are miscelaneous routines that work with
  *	the NMG structures.
  *
  *	Packages included:
@@ -525,6 +525,8 @@ char *h;
 	rt_log("%s%8x fua_p\n", h, fu->fua_p);
 
 	rt_log("%s%8x f_p\n", h, fu->f_p);
+	if (fu->f_p)
+		nmg_pr_f(fu->f_p, h);
 
 	for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
 		nmg_pr_lu(lu, h);
