@@ -9,7 +9,8 @@
  *		rt_ct_optim()
  *			rt_ct_old_assess()
  *			rt_ct_box()
- *				rt_ck_overlap()
+ *				rt_ct_populate_box()
+ *					rt_ck_overlap()
  *  
  *
  *  Author -
@@ -1078,6 +1079,89 @@ double		*offcenter_p;
 }
 
 /*
+ *			R T _ C T _ P O P U L A T E _ B O X
+ *
+ *  Given that 'outp' has been given a bounding box smaller than
+ *  that of 'inp', copy over everything which still fits in the smaller box.
+ *
+ *  Returns -
+ *	0	if outp has the same number of items as inp
+ *	1	if outp has fewer items than inp
+ */
+HIDDEN int
+rt_ct_populate_box( outp, inp, rtip )
+union cutter		*outp;
+CONST union cutter	*inp;
+struct rt_i		*rtip;
+{
+	register int	i;
+	int success = 0;
+
+	/* Examine the solids */
+	outp->bn.bn_len = 0;
+	outp->bn.bn_maxlen = inp->bn.bn_len;
+	if( outp->bn.bn_maxlen > 0 )  {
+		outp->bn.bn_list = (struct soltab **) bu_malloc(
+			sizeof(struct soltab *) * outp->bn.bn_maxlen,
+			"bn_list" );
+		for( i = inp->bn.bn_len-1; i >= 0; i-- )  {
+			struct soltab *stp = inp->bn.bn_list[i];
+			if( !rt_ck_overlap(outp->bn.bn_min, outp->bn.bn_max,
+			    stp, rtip))
+				continue;
+			outp->bn.bn_list[outp->bn.bn_len++] = stp;
+		}
+		if( outp->bn.bn_len < inp->bn.bn_len )  success = 1;
+	} else {
+		outp->bn.bn_list = (struct soltab **)NULL;
+	}
+
+	/* Examine the solid pieces */
+	outp->bn.bn_piecelen = 0;
+	if( inp->bn.bn_piecelen > 0 )  {
+		outp->bn.bn_piecelist = (struct rt_piecelist *) bu_malloc(
+			sizeof(struct rt_piecelist) * inp->bn.bn_piecelen,
+			"rt_piecelist" );
+		for( i = inp->bn.bn_piecelen-1; i >= 0; i-- )  {
+			struct rt_piecelist *plp = &inp->bn.bn_piecelist[i];	/* input */
+			struct soltab *stp = plp->stp;
+			struct rt_piecelist *olp = &outp->bn.bn_piecelist[outp->bn.bn_piecelen]; /* output */
+			int j;
+
+			RT_CK_PIECELIST(plp);
+			RT_CK_SOLTAB(stp);
+			olp->pieces = (long *)bu_malloc(
+				sizeof(long) * plp->npieces,
+				"olp->pieces[] (left)" );
+			olp->npieces = 0;
+
+			/* Loop for every piece of this solid */
+			for( j = plp->npieces-1; j >= 0; j-- )  {
+				long indx = plp->pieces[j];
+				struct bound_rpp *rpp = &stp->st_piece_rpps[indx];
+				if( V3RPP_DISJOINT(outp->bn.bn_min, outp->bn.bn_max,
+				    rpp->min, rpp->max) )
+					continue;
+				olp->pieces[olp->npieces++] = indx;
+			}
+			if( olp->npieces > 0 )  {
+				olp->magic = RT_PIECELIST_MAGIC;
+				olp->stp = stp;
+				outp->bn.bn_piecelen++;
+				if( olp->npieces < plp->npieces ) success = 1;
+			} else {
+				bu_free( (char *)olp->pieces, "olp->pieces (left)");
+				olp->pieces = NULL;
+			}
+		}
+	} else {
+		outp->bn.bn_piecelist = (struct rt_piecelist *)NULL;
+	}
+
+	return success;
+}
+
+/*
  *			R T _ C T _ B O X
  *
  *  Cut the given box node with a plane along the given axis,
@@ -1104,7 +1188,6 @@ register int		axis;
 double			where;
 {
 	register union cutter	*rhs, *lhs;
-	register int	i;
 	int success = 0;
 
 	RT_CK_RTI(rtip);
@@ -1123,63 +1206,7 @@ double			where;
 	VMOVE( lhs->bn.bn_max, cutp->bn.bn_max );
 	lhs->bn.bn_max[axis] = where;
 
-	lhs->bn.bn_len = 0;
-	lhs->bn.bn_maxlen = cutp->bn.bn_len;
-	if( lhs->bn.bn_maxlen > 0 )  {
-		lhs->bn.bn_list = (struct soltab **) bu_malloc(
-			sizeof(struct soltab *) * lhs->bn.bn_maxlen,
-			"rt_ct_box (left list)" );
-		for( i = cutp->bn.bn_len-1; i >= 0; i-- )  {
-			if( !rt_ck_overlap(lhs->bn.bn_min, lhs->bn.bn_max,
-			    cutp->bn.bn_list[i], rtip))
-				continue;
-			lhs->bn.bn_list[lhs->bn.bn_len++] = cutp->bn.bn_list[i];
-		}
-		if( lhs->bn.bn_len < cutp->bn.bn_len )  success = 1;
-	} else {
-		lhs->bn.bn_list = (struct soltab **)NULL;
-	}
-
-	lhs->bn.bn_piecelen = 0;
-	if( cutp->bn.bn_piecelen > 0 )  {
-		lhs->bn.bn_piecelist = (struct rt_piecelist *) bu_malloc(
-			sizeof(struct rt_piecelist) * cutp->bn.bn_piecelen,
-			"rt_ct_box (left piece list)" );
-		for( i = cutp->bn.bn_piecelen-1; i >= 0; i-- )  {
-			struct rt_piecelist *plp = &cutp->bn.bn_piecelist[i];	/* input */
-			struct soltab *stp = plp->stp;
-			struct rt_piecelist *olp = &lhs->bn.bn_piecelist[lhs->bn.bn_piecelen]; /* output */
-			int j;
-
-			RT_CK_PIECELIST(plp);
-			RT_CK_SOLTAB(stp);
-			olp->pieces = (long *)bu_malloc(
-				sizeof(long) * plp->npieces,
-				"olp->pieces[] (left)" );
-			olp->npieces = 0;
-
-			/* Loop for every piece of this solid */
-			for( j = plp->npieces-1; j >= 0; j-- )  {
-				long indx = plp->pieces[j];
-				struct bound_rpp *rpp = &stp->st_piece_rpps[indx];
-				if( V3RPP_DISJOINT(lhs->bn.bn_min, lhs->bn.bn_max,
-				    rpp->min, rpp->max) )
-					continue;
-				olp->pieces[olp->npieces++] = indx;
-			}
-			if( olp->npieces > 0 )  {
-				olp->magic = RT_PIECELIST_MAGIC;
-				olp->stp = stp;
-				lhs->bn.bn_piecelen++;
-				if( olp->npieces < plp->npieces ) success = 1;
-			} else {
-				bu_free( (char *)olp->pieces, "olp->pieces (left)");
-				olp->pieces = NULL;
-			}
-		}
-	} else {
-		lhs->bn.bn_piecelist = (struct rt_piecelist *)NULL;
-	}
+	success = rt_ct_populate_box( lhs, cutp, rtip );
 
 	/* RIGHT side */
 	rhs = rt_ct_get(rtip);
@@ -1188,63 +1215,7 @@ double			where;
 	VMOVE( rhs->bn.bn_max, cutp->bn.bn_max );
 	rhs->bn.bn_min[axis] = where;
 
-	rhs->bn.bn_len = 0;
-	rhs->bn.bn_maxlen = cutp->bn.bn_len;
-	if( rhs->bn.bn_maxlen > 0 ) {
-		rhs->bn.bn_list = (struct soltab **) bu_malloc(
-			sizeof(struct soltab *) * rhs->bn.bn_maxlen,
-			"rt_ct_box (right list)" );
-		for( i = cutp->bn.bn_len-1; i >= 0; i-- )  {
-			if( !rt_ck_overlap(rhs->bn.bn_min, rhs->bn.bn_max,
-			    cutp->bn.bn_list[i], rtip))
-				continue;
-			rhs->bn.bn_list[rhs->bn.bn_len++] = cutp->bn.bn_list[i];
-		}
-		if( rhs->bn.bn_len < cutp->bn.bn_len )  success = 1;
-	} else {
-		rhs->bn.bn_list = (struct soltab **)NULL;
-	}
-
-	rhs->bn.bn_piecelen = 0;
-	if( cutp->bn.bn_piecelen > 0 )  {
-		rhs->bn.bn_piecelist = (struct rt_piecelist *) bu_malloc(
-			sizeof(struct rt_piecelist) * cutp->bn.bn_piecelen,
-			"rt_ct_box (left piece list)" );
-		for( i = cutp->bn.bn_piecelen-1; i >= 0; i-- )  {
-			struct rt_piecelist *plp = &cutp->bn.bn_piecelist[i];	/* input */
-			struct soltab *stp = plp->stp;
-			struct rt_piecelist *olp = &rhs->bn.bn_piecelist[rhs->bn.bn_piecelen];	/* output */
-			int j;
-
-			RT_CK_PIECELIST(plp);
-			RT_CK_SOLTAB(stp);
-			olp->pieces = (long *)bu_malloc(
-				sizeof(long) * plp->npieces,
-				"olp->pieces[] (right)" );
-			olp->npieces = 0;
-
-			/* Loop for every piece of this solid */
-			for( j = plp->npieces-1; j >= 0; j-- )  {
-				long indx = plp->pieces[j];
-				struct bound_rpp *rpp = &stp->st_piece_rpps[indx];
-				if( V3RPP_DISJOINT(rhs->bn.bn_min, rhs->bn.bn_max,
-				    rpp->min, rpp->max) )
-					continue;
-				olp->pieces[olp->npieces++] = indx;
-			}
-			if( olp->npieces > 0 )  {
-				olp->magic = RT_PIECELIST_MAGIC;
-				olp->stp = stp;
-				rhs->bn.bn_piecelen++;
-				if( olp->npieces < plp->npieces ) success = 1;
-			} else {
-				bu_free( (char *)olp->pieces, "olp->pieces (right)");
-				olp->pieces = NULL;
-			}
-		}
-	} else {
-		rhs->bn.bn_piecelist = (struct rt_piecelist *)NULL;
-	}
+	success += rt_ct_populate_box( rhs, cutp, rtip );
 
 	/* Check to see if complexity didn't decrease */
 	if( success == 0 )  {
