@@ -1626,6 +1626,82 @@ CONST struct db_i		*dbip;
 }
 
 /*
+ *			R T _ T G C _ I M P O R T 5
+ *
+ *  Import a TGC from the database format to the internal format.
+ *  Apply modeling transformations as well.
+ */
+int
+rt_tgc_import5( ip, ep, mat, dbip )
+struct rt_db_internal		*ip;
+CONST struct bu_external	*ep;
+register CONST mat_t		mat;
+CONST struct db_i		*dbip;
+{
+	struct rt_tgc_internal	*tip;
+	fastf_t			vec[3*6];
+
+	BU_CK_EXTERNAL( ep );
+
+	RT_INIT_DB_INTERNAL( ip );
+	ip->idb_type = ID_TGC;
+	ip->idb_meth = &rt_functab[ID_TGC];
+	ip->idb_ptr = bu_malloc( sizeof(struct rt_tgc_internal), "rt_tgc_internal");
+
+	tip = (struct rt_tgc_internal *)ip->idb_ptr;
+	tip->magic = RT_TGC_INTERNAL_MAGIC;
+
+	/* Convert from database (network) to internal (host) format */
+	ntohd( (unsigned char *)vec, ep->ext_buf, 3*6 );
+
+	/* Apply modeling transformations */
+	MAT4X3PNT( tip->v, mat, &vec[0*3] );
+	MAT4X3VEC( tip->h, mat, &vec[1*3] );
+	MAT4X3VEC( tip->a, mat, &vec[2*3] );
+	MAT4X3VEC( tip->b, mat, &vec[3*3] );
+	MAT4X3VEC( tip->c, mat, &vec[4*3] );
+	MAT4X3VEC( tip->d, mat, &vec[5*3] );
+
+	return(0);		/* OK */
+}
+
+/*
+ *			R T _ T G C _ E X P O R T 5
+ */
+int
+rt_tgc_export5( ep, ip, local2mm, dbip )
+struct bu_external		*ep;
+CONST struct rt_db_internal	*ip;
+double				local2mm;
+CONST struct db_i		*dbip;
+{
+	struct rt_tgc_internal	*tip;
+	fastf_t			vec[3*6];
+
+	RT_CK_DB_INTERNAL(ip);
+	if( ip->idb_type != ID_TGC )  return(-1);
+	tip = (struct rt_tgc_internal *)ip->idb_ptr;
+	RT_TGC_CK_MAGIC(tip);
+
+	BU_INIT_EXTERNAL(ep);
+	ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * 3*6;
+	ep->ext_buf = (genptr_t)bu_malloc( ep->ext_nbytes, "tgc external");
+
+	/* scale 'em into local buffer */
+	VSCALE( &vec[0*3], tip->v, local2mm );
+	VSCALE( &vec[1*3], tip->h, local2mm );
+	VSCALE( &vec[2*3], tip->a, local2mm );
+	VSCALE( &vec[3*3], tip->b, local2mm );
+	VSCALE( &vec[4*3], tip->c, local2mm );
+	VSCALE( &vec[5*3], tip->d, local2mm );
+
+	/* Convert from internal (host) to database (network) format */
+	htond( ep->ext_buf, (unsigned char *)vec, 3*6 );
+
+	return(0);
+}
+
+/*
  *			R T _ T G C _ D E S C R I B E
  *
  *  Make human-readable formatted presentation of this solid.
