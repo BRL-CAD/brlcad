@@ -163,31 +163,32 @@ struct nmg_ptbl {
 /*
  *  Magic Numbers.
  */
-#define NMG_MODEL_MAGIC 	12121212
+#define NMG_MODEL_MAGIC 	0x12121212
 #define NMG_MODEL_A_MAGIC	0x68652062
-#define NMG_REGION_MAGIC	23232323
+#define NMG_REGION_MAGIC	0x23232323
 #define NMG_REGION_A_MAGIC	0x696e6720
-#define NMG_SHELL_MAGIC 	71077345	/* shell oil */
+#define NMG_SHELL_MAGIC 	0x71077345	/* shell oil */
 #define NMG_SHELL_A_MAGIC	0x65207761
-#define NMG_FACE_MAGIC		45454545
-#define NMG_FACE_G_MAGIC	0x726b6e65
+#define NMG_FACE_MAGIC		0x45454545
+#define NMG_FACE_G_MAGIC	bogus_nmg_face_g_magic;
 #define NMG_FACE_G_PLANE_MAGIC	0x726b6e65
 #define NMG_FACE_G_SNURB_MAGIC	0x736e7262	/* was RT_SNURB_MAGIC */
-#define NMG_FACEUSE_MAGIC	56565656
+#define NMG_FACEUSE_MAGIC	0x56565656
 #define NMG_FACEUSE_A_MAGIC	0x20476f64
-#define NMG_LOOP_MAGIC		67676767
+#define NMG_LOOP_MAGIC		0x67676767
 #define NMG_LOOP_G_MAGIC	0x6420224c
-#define NMG_LOOPUSE_MAGIC	78787878
+#define NMG_LOOPUSE_MAGIC	0x78787878
 #define NMG_LOOPUSE_A_MAGIC	0x68657265
-#define NMG_EDGE_MAGIC		33333333
+#define NMG_EDGE_MAGIC		0x33333333
 #define NMG_EDGE_G_MAGIC	0x6c696768
 #define NMG_EDGE_G_LSEG_MAGIC	0x6c696768
 #define NMG_EDGE_G_CNURB_MAGIC	0x636e7262	/* was RT_CNURB_MAGIC */
-#define NMG_EDGEUSE_MAGIC	90909090
+#define NMG_EDGEUSE_MAGIC	0x90909090
+#define NMG_EDGEUSE2_MAGIC	0x91919191	/* used in eu->l2.magic */
 #define NMG_EDGEUSE_A_MAGIC	0x20416e64
-#define NMG_VERTEX_MAGIC	123123
-#define NMG_VERTEX_G_MAGIC	727737707
-#define NMG_VERTEXUSE_MAGIC	12341234
+#define NMG_VERTEX_MAGIC	0x00123123
+#define NMG_VERTEX_G_MAGIC	0x72737707
+#define NMG_VERTEXUSE_MAGIC	0x12341234
 #define NMG_VERTEXUSE_A_MAGIC	0x69676874
 #define NMG_KNOT_VECTOR_MAGIC	0x6b6e6f74	/* aka RT_KNOT_VECTOR_MAGIC */
 
@@ -205,7 +206,7 @@ struct nmg_ptbl {
 #define NMG_CK_SHELL(_p)	NMG_CKMAG(_p, NMG_SHELL_MAGIC, "shell")
 #define NMG_CK_SHELL_A(_p)	NMG_CKMAG(_p, NMG_SHELL_A_MAGIC, "shell_a")
 #define NMG_CK_FACE(_p)		NMG_CKMAG(_p, NMG_FACE_MAGIC, "face")
-#define NMG_CK_FACE_G(_p)	NMG_CKMAG(_p, NMG_FACE_G_MAGIC, "face_g")
+#define NMG_CK_FACE_G(_p)	bogus_ck_face_g;
 #define NMG_CK_FACE_G_PLANE(_p)	NMG_CKMAG(_p, NMG_FACE_G_PLANE_MAGIC, "face_g plane")
 #define NMG_CK_FACE_G_SNURB(_p)	NMG_CKMAG(_p, NMG_FACE_G_SNURB_MAGIC, "face_g snurb")
 #define NMG_CK_FACEUSE(_p)	NMG_CKMAG(_p, NMG_FACEUSE_MAGIC, "faceuse")
@@ -352,21 +353,16 @@ struct shell_a {
  *  Note: there will always be exactly two faceuse's using a face.
  *  To find them, go up fu_p for one, then across fumate_p to other.
  */
-#define face_g			face_g_plane	/* compat */
 #define edge_g			edge_g_lseg	/* compat */
 #define vertexuse_a		vertexuse_a_plane	/* compat */
 struct face {
 	struct rt_list		l;	/* faces in face_g's f_hd list */
 	struct faceuse		*fu_p;	/* Ptr up to one use of this face */
-#if OLD_NMG
-	struct face_g		*fg_p;	/* geometry */
-#else
 	union {
 		long		    *magic_p;	
 		struct face_g_plane *plane_p;
 		struct face_g_snurb *snurb_p;
 	} g;				/* geometry */
-#endif
 	int			flip;	/* !0 ==> flip normal of fg */
 	/* These might be better stored in a face_a (not faceuse_a!) */
 	/* These are not stored on disk */
@@ -422,11 +418,11 @@ struct faceuse_a {
 /* Returns a 3-tuple (vect_t), given faceuse and state of flip flags */
 #define NMG_GET_FU_NORMAL(_N, _fu)	{ \
 	register CONST struct faceuse	*_fu1 = (_fu); \
-	register CONST struct face_g	*_fg; \
+	register CONST struct face_g_plane	*_fg; \
 	NMG_CK_FACEUSE(_fu1); \
 	NMG_CK_FACE(_fu1->f_p); \
-	_fg = _fu1->f_p->fg_p; \
-	NMG_CK_FACE_G(_fg); \
+	_fg = _fu1->f_p->g.plane_p; \
+	NMG_CK_FACE_G_PLANE(_fg); \
 	if( (_fu1->orientation != OT_SAME) != (_fu1->f_p->flip != 0) )  { \
 		VREVERSE( _N, _fg->N); \
 	} else { \
@@ -436,11 +432,11 @@ struct faceuse_a {
 /* Returns a 4-tuple (plane_t), given faceuse and state of flip flags */
 #define NMG_GET_FU_PLANE(_N, _fu)	{ \
 	register CONST struct faceuse	*_fu1 = (_fu); \
-	register CONST struct face_g	*_fg; \
+	register CONST struct face_g_plane	*_fg; \
 	NMG_CK_FACEUSE(_fu1); \
 	NMG_CK_FACE(_fu1->f_p); \
-	_fg = _fu1->f_p->fg_p; \
-	NMG_CK_FACE_G(_fg); \
+	_fg = _fu1->f_p->g.plane_p; \
+	NMG_CK_FACE_G_PLANE(_fg); \
 	if( (_fu1->orientation != OT_SAME) != (_fu1->f_p->flip != 0) )  { \
 		HREVERSE( _N, _fg->N); \
 	} else { \
@@ -694,7 +690,7 @@ struct vertexuse_a_cnurb {
 #define GET_SHELL(p,m)	    {NMG_GETSTRUCT(p, shell); NMG_INCR_INDEX(p,m);}
 #define GET_SHELL_A(p,m)    {NMG_GETSTRUCT(p, shell_a); NMG_INCR_INDEX(p,m);}
 #define GET_FACE(p,m)	    {NMG_GETSTRUCT(p, face); NMG_INCR_INDEX(p,m);}
-#define GET_FACE_G(p,m)	    {NMG_GETSTRUCT(p, face_g); NMG_INCR_INDEX(p,m);}
+#define GET_FACE_G(p,m)	    bogus_get_face_g;
 #define GET_FACE_G_PLANE(p,m) {NMG_GETSTRUCT(p, face_g_plane); NMG_INCR_INDEX(p,m);}
 #define GET_FACE_G_SNURB(p,m) {NMG_GETSTRUCT(p, face_g_snurb); NMG_INCR_INDEX(p,m);}
 #define GET_FACEUSE(p,m)    {NMG_GETSTRUCT(p, faceuse); NMG_INCR_INDEX(p,m);}
@@ -721,7 +717,7 @@ struct vertexuse_a_cnurb {
 #define FREE_SHELL(p)	    NMG_FREESTRUCT(p, shell)
 #define FREE_SHELL_A(p)	    NMG_FREESTRUCT(p, shell_a)
 #define FREE_FACE(p)	    NMG_FREESTRUCT(p, face)
-#define FREE_FACE_G(p)	    NMG_FREESTRUCT(p, face_g)
+#define FREE_FACE_G(p)	    bogus_free_face_g;
 #define FREE_FACE_G_PLANE(p) NMG_FREESTRUCT(p, face_g_plane)
 #define FREE_FACE_G_SNURB(p) NMG_FREESTRUCT(p, face_g_snurb)
 #define FREE_FACEUSE(p)	    NMG_FREESTRUCT(p, faceuse)
@@ -840,7 +836,7 @@ struct nmg_struct_counts {
 	long	faceuse_a;
 	long	face;
 #if OLD_NMG
-	long	face_g;
+	long	face_g;		/* face_g_plane */
 #else
 	long	face_g_plane;
 	long	face_g_snurb;
