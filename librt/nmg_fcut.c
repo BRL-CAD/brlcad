@@ -657,8 +657,12 @@ got_loop:
 #endif
 
 	/* Sort the vertexuse table into appropriate order */
+#if defined(__convexc__)
+	qsort( (genptr_t)vs, nvu, sizeof(*vs),
+		(int (*)())nmg_face_vu_compare);
+#else
 	qsort( (genptr_t)vs, nvu, sizeof(*vs), nmg_face_vu_compare );
-
+#endif
 	if(rt_g.NMG_debug&DEBUG_COMBINE)  {
 		rt_log("Vertexuse table (after sort):\n");
 		for( i=0; i < nvu; i++ )  {
