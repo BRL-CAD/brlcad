@@ -1312,7 +1312,6 @@ int	argc;
 char	**argv;
 {
 	double	loc2mm;
-	int	new_unit = 0;
 	struct bu_vls vls;
 	CONST char	*str;
 	fastf_t sf;
@@ -1395,7 +1394,6 @@ char	**argv;
 {
 	struct bu_vls	title;
 	int bad = 0;
-	int code;
 
 	CHECK_DBI_NULL;
 
