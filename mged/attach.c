@@ -184,7 +184,10 @@ int need_close;
 	   then remove the reference  */
 	for( BU_LIST_FOR(p_cmd, cmd_list, &head_cmd_list.l) )
 	  if(p_cmd->aim == p)
-	    p_cmd->aim = (struct dm_list *)NULL;
+	    break;
+
+	if(p_cmd->aim == p)
+	  p_cmd->aim = (struct dm_list *)NULL;
 
 	bu_vls_free(&pathName);
 	BU_LIST_DEQUEUE( &p->l );
@@ -298,7 +301,10 @@ char    **argv;
       goto Bad;
   }
 
-  if( curr_dm_list->dm_init(argc - 1, argv + 1) )
+  curr_dm_list->dm_init();
+  bu_vls_init(&dmp->dm_initWinProc);
+  bu_vls_strcpy(&dmp->dm_initWinProc, "mged_bind_dm_win");
+  if(dmp->dm_open(dmp, argc - 2, argv + 2))
     goto Bad;
 
   Tcl_AppendResult(interp, "ATTACHING ", dmp->dm_name, " (", dmp->dm_lname,
@@ -561,7 +567,6 @@ char *name;
   bcopy((void *)&default_mged_variables, (void *)&mged_variables,
 	sizeof(struct _mged_variables));
 
-  bu_vls_init(&pathName);
   strcpy(dname, name);
   mat_copy(Viewrot, identity);
   size_reset();

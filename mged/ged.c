@@ -866,12 +866,26 @@ int	non_blocking;
        *  Handle rate-based processing *
        *********************************/
       if( rateflag_rotate )  {
+#if 1
+	struct bu_vls vls;
+
+	non_blocking++;
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "knob -i ax %f ay %f az %f\n",
+		      rate_rotate[X] * 6,
+		      rate_rotate[Y] * 6,
+		      rate_rotate[Z] * 6);
+
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+#else
 	non_blocking++;
 
 	/* Compute delta x,y,z parameters */
 	usejoy( rate_rotate[X] * 6 * degtorad,
 	        rate_rotate[Y] * 6 * degtorad,
 	        rate_rotate[Z] * 6 * degtorad );
+#endif
       }
       if( rateflag_slew )  {
 	non_blocking++;
@@ -995,7 +1009,8 @@ refresh()
       dotitles(mged_variables.faceplate);
 
       /* Draw center dot */
-      dmp->dm_drawVertex2D(dmp, 0, 0, DM_YELLOW);
+      dmp->dm_setColor(dmp, DM_YELLOW, 1);
+      dmp->dm_drawVertex2D(dmp, 0, 0);
 
       dmp->dm_drawEnd(dmp);
 
@@ -1132,6 +1147,15 @@ void
 aslewview( view_pos )
 vect_t view_pos;
 {
+#if 1
+  struct bu_vls vls;
+
+  bu_vls_init(&vls);
+  bu_vls_printf(&vls, "knob aX %f aY %f aZ %f",
+		view_pos[X], view_pos[Y], view_pos[Z]);
+  Tcl_Eval(interp, bu_vls_addr(&vls));
+  bu_vls_free(&vls);
+#else
   char *av[8];
   struct bu_vls x_vls, y_vls, z_vls;
 
@@ -1156,6 +1180,7 @@ vect_t view_pos;
   bu_vls_free(&x_vls);
   bu_vls_free(&y_vls);
   bu_vls_free(&z_vls);
+#endif
 }
 
 /*
@@ -1169,6 +1194,15 @@ slewview( view_pos )
 vect_t view_pos;
 {
 #if 1
+#if 1
+  struct bu_vls vls;
+
+  bu_vls_init(&vls);
+  bu_vls_printf(&vls, "knob -i aX %f aY %f aZ %f",
+		-view_pos[X], -view_pos[Y], -view_pos[Z]);
+  Tcl_Eval(interp, bu_vls_addr(&vls));
+  bu_vls_free(&vls);
+#else
   char *av[9];
   struct bu_vls x_vls, y_vls, z_vls;
 
@@ -1194,6 +1228,7 @@ vect_t view_pos;
   bu_vls_free(&x_vls);
   bu_vls_free(&y_vls);
   bu_vls_free(&z_vls);
+#endif
 #else
 	point_t	old_model_center;
 	point_t	new_model_center;
@@ -1549,10 +1584,11 @@ char	**argv;
 	/* --- Scan geometry database and build in-memory directory --- */
 	db_scan( dbip, (int (*)())db_diradd, 1);
 	/* XXX - save local units */
+#if 0
 	localunit = dbip->dbi_localunit;
 	local2base = dbip->dbi_local2base;
 	base2local = dbip->dbi_base2local;
-
+#endif
 	/* Print title/units information */
 	if( interactive )
 	  Tcl_AppendResult(interp, dbip->dbi_title, " (units=",
