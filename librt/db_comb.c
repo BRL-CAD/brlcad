@@ -246,8 +246,26 @@ CONST struct db_i		*dbip;
 			namebuf[NAMESIZE] = '\0';	/* ensure null term */
 			tp->tr_l.tl_name = bu_strdup( namebuf );
 
-			/* See if disk record is identity matrix */
 			rt_mat_dbmat( diskmat, rp[j+1].M.m_mat );
+
+			/* Verify that rotation part is pure rotation */
+			if( fabs(diskmat[0]) > 1 || fabs(diskmat[1]) > 1 ||
+			    fabs(diskmat[2]) > 1 ||
+			    fabs(diskmat[4]) > 1 || fabs(diskmat[5]) > 1 ||
+			    fabs(diskmat[6]) > 1 ||
+			    fabs(diskmat[8]) > 1 || fabs(diskmat[9]) > 1 ||
+			    fabs(diskmat[10]) > 1 )  {
+				bu_log("ERROR: %s/%s improper scaling, rotation matrix elements > 1\n",
+					rp[0].c.c_name, namebuf );
+			}
+
+			/* Verify that perspective isn't used as a modeling transform */
+			if( diskmat[12] != 0 || diskmat[13] != 0 || diskmat[14] != 0 )  {
+				bu_log("ERROR: %s/%s has perspective transform\n",
+					rp[0].c.c_name, namebuf );
+			}
+
+			/* See if disk record is identity matrix */
 			if( bn_mat_is_identity( diskmat ) )  {
 				if( matrix == NULL )  {
 					tp->tr_l.tl_mat = NULL;	/* identity */
