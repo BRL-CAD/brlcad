@@ -91,8 +91,10 @@ proc apply_angle {} {
 	# indicate LIBRT re-prep required.
 	# Use new POV if one receieved, else repeat last POV.
 	send rtsync \
-		node_send .inmem adjust $sun_solid_name \
-			V "{" $sunx $suny $sunz "}" ";" \
+		node_send "{" \
+			.inmem adjust $sun_solid_name \
+				V "{" $sunx $suny $sunz "}" \
+		"}" ";" \
 		vrmgr_send "{" \
 			.inmem adjust $sun_solid_name \
 				V "{" $sunx $suny $sunz "}" ";" \
@@ -203,6 +205,8 @@ proc hole_init {} {
 	puts "newtree = $newtree"
 
 	# .inmem form tgc
+	# XXX Maybe this should be _mged_killall ?
+	# Or better still, an rm $treetop_name _hole.s
 	send rtsync \
 		vrmgr_send \
 			_mged_kill _hole.s
