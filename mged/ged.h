@@ -407,6 +407,9 @@ struct mged_variables {
 	double	perspective;	/* >0 implies perspective viewing is on. */
 	double	nmg_eu_dist;
 	double	eye_sep_dist;	/* >0 implies stereo.  units = "room" mm */
+	char	union_lexeme[1024];
+	char	intersection_lexeme[1024];
+	char	difference_lexeme[1024];
 };
 
 extern struct mged_variables mged_variables;
@@ -435,6 +438,7 @@ MGED_EXTERN(int f_cat, (int argc, char **argv));
 MGED_EXTERN(int f_center, (int argc, char **argv));
 MGED_EXTERN(int f_color, (int argc, char **argv));
 MGED_EXTERN(int f_comb, (int argc, char **argv));
+MGED_EXTERN(int f_comb_std, (int argc, char **argv));
 MGED_EXTERN(int f_comm, (int argc, char **argv));
 MGED_EXTERN(int f_concat, (int argc, char **argv));
 MGED_EXTERN(int f_copy, (int argc, char **argv));
