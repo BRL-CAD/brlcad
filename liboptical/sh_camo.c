@@ -30,6 +30,7 @@ struct camo_specific {
 	point_t c2;
 	point_t c3;
 	vect_t	delta;
+	mat_t	xform;
 };
 
 static struct camo_specific camo_defaults = {
@@ -85,14 +86,22 @@ struct mfuncs camo_mfuncs[] = {
  *	C A M O _ S E T U P
  */
 HIDDEN int
-camo_setup( rp, matparm, dpp )
-register struct region *rp;
-struct rt_vls	*matparm;
-char	**dpp;	/* pointer to reg_udata in *rp */
+camo_setup( rp, matparm, dpp, mfp, rtip)
+register struct region	*rp;
+struct rt_vls		*matparm;
+char			**dpp;	/* pointer to reg_udata in *rp */
+struct mfuncs		*mfp;
+struct rt_i		*rtip;
 {
 	register struct camo_specific *camo;
+	struct db_full_path full_path;
+	mat_t	region_to_model;
+	mat_t	model_to_region;
+	mat_t	tmp;
 
+	RT_CHECK_RTI(rtip);
 	RT_VLS_CHECK( matparm );
+	RT_CK_REGION(rp);
 	GETSTRUCT( camo, camo_specific );
 	*dpp = (char *)camo;
 
@@ -106,6 +115,36 @@ char	**dpp;	/* pointer to reg_udata in *rp */
 	if( rdebug&RDEBUG_SHADE)
 		rt_structprint( rp->reg_name, camo_parse, (char *)camo );
 
+	/* get transformation between world and "region" coordinates */
+	if (db_string_to_path( &full_path, rtip->rti_dbip, rp->reg_name) ) {
+		/* bad thing */
+		rt_bomb("db_string_to_path() error");
+	}
+	if(! db_path_to_mat(rtip->rti_dbip, &full_path, region_to_model, 0)) {
+		/* bad thing */
+		rt_bomb("db_path_to_mat() error");
+	}
+
+	/* get matrix to map points from model (world) space
+	 * to "region" space
+	 */
+	mat_inv(model_to_region, region_to_model);
+
+
+	/* add the noise-space scaling */
+	mat_idn(tmp);
+	tmp[0] = camo->scale[0];
+	tmp[5] = camo->scale[1];
+	tmp[10] = camo->scale[2];
+
+	mat_mul(camo->xform, tmp2, model_to_region);
+
+	/* add the translation within noise space */
+	mat_idn(tmp);
+	tmp[MDX] = camo->delta[0];
+	tmp[MDY] = camo->delta[1];
+	tmp[MDZ] = camo->delta[2];
+	mat_mul2(tmp, camo->xform);
 
 	return(1);
 }
@@ -147,11 +186,6 @@ char	*dp;
 	point_t pt;
 	double  val;
 
-	struct db_full_path full_path;
-	mat_t	region_to_model;
-	mat_t	model_to_region;
-
-
 /*	pp->pt_inseg->seg_stp	/* struct soltab */
 /*	pp->pt_regionp		/* region */
 
@@ -162,36 +196,9 @@ char	*dp;
 
 	if( rdebug&RDEBUG_SHADE)
 		rt_structprint( "foo", camo_parse, (char *)camo_sp );
-#if 1
 
-	/* get transformation between world and "region" coordinates */
-	if (db_string_to_path( &full_path, ap->a_rt_i->rti_dbip, pp->pt_regionp->reg_name) ) {
-		/* bad thing */
-		rt_bomb("db_string_to_path() error");
-	}
-	if(! db_path_to_mat(ap->a_rt_i->rti_dbip, &full_path, region_to_model, 0) ) {
-		/* bad thing */
-		rt_bomb("db_path_to_mat() error");
-	}
-
-	/* map point from model (world) space to "region" space */
-	mat_inv(model_to_region, region_to_model);
-
-	/* transform point into "region coordinates" */
-	MAT4X3PNT(pt, model_to_region, swp->sw_hit.hit_point);
-
-	VADD2(pt, pt, camo_sp->delta);
-
-	/* apply noise-field scaling */
-	VELMUL(pt, pt, camo_sp->scale);
-
-#else
-
-	/* apply noise-field scaling */
-	VELMUL(pt, swp->sw_hit.hit_point, camo_sp->scale);
-#endif
-
-
+	/* transform point into "noise-space coordinates" */
+	MAT4X3PNT(pt, camo_sp->xform, swp->sw_hit.hit_point);
 
 	val = noise_fbm(pt, camo_sp->h_val, camo_sp->lacunarity, camo_sp->octaves );
 
