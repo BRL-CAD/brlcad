@@ -57,13 +57,13 @@ mlib_init()
 	extern struct mfuncs phg_mfuncs[];
 	extern struct mfuncs light_mfuncs[];
 	extern struct mfuncs cloud_mfuncs[];
-	extern struct mfuncs sph_mfuncs[];
+	extern struct mfuncs spm_mfuncs[];
 	extern struct mfuncs txt_mfuncs[];
 
 	mlib_add( phg_mfuncs );
 	mlib_add( light_mfuncs );
 	mlib_add( cloud_mfuncs );
-	mlib_add( sph_mfuncs );
+	mlib_add( spm_mfuncs );
 	mlib_add( txt_mfuncs );
 }
 
