@@ -51,6 +51,13 @@
  *  $Header$
  */
 
+#ifndef TABDATA_H_SEEN
+#define TABDATA_H_SEEN seen
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct rt_table {
 	long		magic;
 	int		nx;
@@ -150,3 +157,9 @@ RT_EXTERN( void			rt_tabdata_copy, (struct rt_tabdata *out,
 					CONST struct rt_tabdata *in));
 RT_EXTERN(struct rt_tabdata	*rt_tabdata_get_constval, (double val,
 					CONST struct rt_table	*tabp));
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* TABDATA_H_SEEN */
