@@ -559,6 +559,22 @@ char **argv;
 
 #ifdef MGED_TCL
 
+/*
+ *	T C L _ A P P I N I T
+ *
+ *	Called by the Tcl/Tk libraries for initialization.
+ *	Unncessary in our case; cmd_setup does all the work.
+ */
+
+
+int
+Tcl_AppInit(interp)
+    Tcl_Interp *interp;		/* Interpreter for application. */
+{
+	return TCL_OK;
+}
+
+
 /*			C M D _ W R A P P E R
  *
  */
@@ -942,8 +958,7 @@ int	interactive;
         	sprintf(buf, "info commands %s", ftp->ft_name);
         	if( Tcl_Eval(interp, buf) != TCL_OK ||
 		    interp->result[0] != '\0' )  {
-        	rt_log("WARNING:  '%s' name collision (%s)\n", ftp->ft_name, interp->result);
-        		continue;
+	        	rt_log("WARNING:  '%s' name collision (%s)\n", ftp->ft_name, interp->result);
         	}
 		Tcl_CreateCommand(interp, ftp->ft_name, cmd_wrapper, 
 			(ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
@@ -1013,6 +1028,7 @@ struct rt_vls	*vp;
 	rt_vls_init( &cmd_buf );
 	rt_vls_init( &str );
 	rt_vls_init( &hadd );
+	rt_vls_strcpy( &hadd, "" );
 
 	while( cp < end )  {
 		ep = strchr( cp, '\n' );
@@ -1122,6 +1138,7 @@ struct rt_vls	*vp;
 
 		cp = ep+1;
 	}
+
 	rt_vls_free( &cmd );
 	rt_vls_free( &cmd_buf );
 	rt_vls_free( &str );
@@ -1459,6 +1476,7 @@ char	**argv;
  *			S O U R C E _ F I L E
  *
  */
+
 void
 mged_source_file(fp)
 register FILE	*fp;
@@ -1476,6 +1494,12 @@ register FILE	*fp;
 
 	rt_vls_free(&str);
 }
+
+
+/*
+ *	F _ E C H O
+ *
+ */
 
 int
 f_echo( argc, argv )
