@@ -76,6 +76,7 @@ static char *usage="proe-g [-psdar] [-u reg_exp] [-x rt_debug_flag] [-X nmg_debu
 	The -p option is to create polysolids rather than NMG's.\n\
 	The -s option is to simplify the objects to ARB's where possible.\n\
 	The -d option prints additional debugging information.\n\
+	The -i option sets the initial region ident number (default is 1000).\n\
 	The -u option indicates that portions of object names that match the regular expression\n\
 		'reg_exp' should be ignored.\n\
 	The -a option creates BRL-CAD 'air' regions from everything in the model.\n\
@@ -1272,8 +1273,11 @@ char	*argv[];
 	}
 
 	/* Get command line arguments. */
-	while ((c = getopt(argc, argv, "rsdax:X:pu:")) != EOF) {
+	while ((c = getopt(argc, argv, "i:rsdax:X:pu:")) != EOF) {
 		switch (c) {
+		case 'i':
+			id_no = atoi( optarg );
+			break;
 		case 'd':
 			debug = 1;
 			break;
