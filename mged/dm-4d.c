@@ -399,7 +399,12 @@ Ir_open()
 
 	/* Start out with the usual window */
 	foreground();
-	prefposition( 376, 376+900, 112, 112+900 );
+#if 1
+	prefposition( 272, 1272, 12, 1012 );		/* Larger still */
+#else
+	prefposition( 376, 1276, 12, 912 );		/* Old, larger size */
+	prefposition( 376, 376+900, 112, 112+900 );	/* new, smaller size */
+#endif
 	if( (gr_id = winopen( "BRL MGED" )) == -1 )  {
 		printf( "No more graphics ports available.\n" );
 		return	-1;
@@ -1497,7 +1502,9 @@ int func;			/* BE_ or BV_ function */
 	}
 
 	/* Update the lights box. */
+#if !defined(__sgi)	/* This bombs, on early Irix 4.0 releases */
 	setdblights( lights );
+#endif
 #endif
 }
 
