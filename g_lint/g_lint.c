@@ -230,8 +230,11 @@ struct partition	*ph;
 			    if (show_origin)
 				printf("%g %g %g ",
 				    V3ARGS((cp -> glc_ap -> a_ray).r_pt));
-			    printf("%d %d %g %g %g\n",
-				last_air, pp -> pt_regionp -> reg_aircode,
+			    printf("%s %d %s %d %g %g %g\n",
+				pp -> pt_back -> pt_regionp -> reg_name,
+				last_air,
+				pp -> pt_regionp -> reg_name,
+				pp -> pt_regionp -> reg_aircode,
 				pp -> pt_inhit -> hit_point[X],
 				pp -> pt_inhit -> hit_point[Y],
 				pp -> pt_inhit -> hit_point[Z]);
@@ -257,7 +260,8 @@ struct partition	*ph;
 			    if (show_origin)
 				printf("%g %g %g ",
 				    V3ARGS(cp -> glc_ap -> a_ray.r_pt));
-			    printf("%d %g %g %g\n",
+			    printf("%s %d %g %g %g\n",
+				pp -> pt_regionp -> reg_name,
 				pp -> pt_regionp -> reg_aircode,
 				pp -> pt_inhit -> hit_point[X],
 				pp -> pt_inhit -> hit_point[Y],
@@ -328,7 +332,8 @@ struct partition	*ph;
 			    if (show_origin)
 				printf("%g %g %g ",
 				    V3ARGS(cp -> glc_ap -> a_ray.r_pt));
-			    printf("%d %g %g %g\n",
+			    printf("%s %d %g %g %g\n",
+				pp -> pt_regionp -> reg_name,
 				pp -> pt_regionp -> reg_aircode,
 				pp -> pt_outhit -> hit_point[X],
 				pp -> pt_outhit -> hit_point[Y],
