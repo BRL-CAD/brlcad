@@ -428,7 +428,8 @@ proc glint_setup { id } {
 
 # This is the top level entry point
 proc overlap_tool { id } {
-	global over_cont comb_control localunit local2base
+    global over_cont comb_control localunit local2base
+    global tkPriv
 
 	set over_cont($id,top) .fovr_$id
 	if [winfo exists $over_cont($id,top)] {
@@ -660,5 +661,5 @@ proc overlap_tool { id } {
 	set over_cont($id,pid) ""
 	set over_cont($id,length) 0
 	set over_cont($id,overlap_count) 0
-	set over_cont($id,dialog_window) .${id}_dialog
+	set over_cont($id,dialog_window) $tkPriv(cad_dialog)
 }

@@ -11,9 +11,10 @@ check_externs "_mged_opendb _mged_pl"
 proc init_plotTool { id } {
     global mged_gui
     global pl_control
+    global tkPriv
 
     if {[opendb] == ""} {
-	cad_dialog .$id.uncool $mged_gui($id,screen) "No database." \
+	cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen) "No database." \
 		"No database has been opened!" info 0 OK
 	return
     }
@@ -139,6 +140,7 @@ The plot dialog is then dismissed."} {see_also pl}}
 proc do_plot { id } {
     global mged_gui
     global pl_control
+    global tkPriv
 
     cmd_win set $id
     set pl_cmd "_mged_pl"
@@ -158,7 +160,7 @@ proc do_plot { id } {
     if {$pl_control($id,file_or_filter) == "file"} {
 	if {$pl_control($id,file) != ""} {
 	    if [file exists $pl_control($id,file)] {
-		set result [cad_dialog .$id.plotDialog $mged_gui($id,screen)\
+		set result [cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen)\
 			"Overwrite $pl_control($id,file)?"\
 			"Overwrite $pl_control($id,file)?"\
 			"" 0 OK CANCEL]
@@ -168,7 +170,7 @@ proc do_plot { id } {
 		}
 	    }
 	} else {
-	    cad_dialog .$id.plotDialog $mged_gui($id,screen)\
+	    cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen)\
 		    "No file name specified!"\
 		    "No file name specified!"\
 		    "" 0 OK
@@ -179,7 +181,7 @@ proc do_plot { id } {
 	append pl_cmd " $pl_control($id,file)"
     } else {
 	if {$pl_control($id,filter) == ""} {
-	    cad_dialog .$id.plotDialog $mged_gui($id,screen)\
+	    cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen)\
 		    "No filter specified!"\
 		    "No filter specified!"\
 		    "" 0 OK

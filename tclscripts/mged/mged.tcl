@@ -77,10 +77,10 @@ proc ia_help { parent screen cmds } {
 	$w.l insert end $cmd
     }
 
-#    bind $w.l <Button-1> "mged_help %W $w.u $screen"
-    bind $w.l <Button-1> "handle_select %W %y; mged_help %W $w.u $screen; break"
-    bind $w.l <Button-2> "handle_select %W %y; mged_help %W $w.u $screen; break"
-    bind $w.l <Return> "mged_help %W $w.u $screen; break"
+#    bind $w.l <Button-1> "mged_help %W $screen"
+    bind $w.l <Button-1> "handle_select %W %y; mged_help %W $screen; break"
+    bind $w.l <Button-2> "handle_select %W %y; mged_help %W $screen; break"
+    bind $w.l <Return> "mged_help %W $screen; break"
 
     place_near_mouse $w
 }
@@ -94,10 +94,11 @@ proc handle_select { w y } {
     $w selection set [$w nearest $y]
 }
 
-proc mged_help { w1 w2 screen } {
+proc mged_help { w1 screen } {
+    global tkPriv
+
     catch { help [$w1 get [$w1 curselection]]} msg
-    catch { destroy $w2 }
-    cad_dialog $w2 $screen Usage $msg info 0 OK
+    cad_dialog $tkPriv(cad_dialog) $screen Usage $msg info 0 OK
 }
 
 proc ia_apropos { parent screen } {
@@ -171,6 +172,7 @@ proc get_player_id_t { w } {
 
 proc do_New { id } {
     global mged_gui
+    global tkPriv
 
     set ret [cad_input_dialog .$id.new $mged_gui($id,screen)\
 	    "New MGED Database" \
@@ -183,7 +185,7 @@ must not exist by this name."}}\
 	# save the directory
 	if [file isdirectory $ia_filename] {
 	    set mged_gui(databaseDir) $ia_filename
-	    cad_dialog .$id.uncool $mged_gui($id,screen) "Not a database." \
+	    cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen) "Not a database." \
 		    "$ia_filename is a directory!" info 0 OK
 	    return
 	} else {
@@ -191,15 +193,15 @@ must not exist by this name."}}\
 	}
 
 	if [file exists $ia_filename] {
-	    cad_dialog .$id.uncool $mged_gui($id,screen) "Existing Database" \
+	    cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen) "Existing Database" \
 		    "$ia_filename already exists" info 0 OK
 	} else {
 	    set ret [catch {opendb $ia_filename y} msg]
 	    if {$ret} {
-		cad_dialog .$id.uncool $mged_gui($id,screen) "Error" \
+		cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen) "Error" \
 			$msg info 0 OK
 	    } else {
-		cad_dialog .$id.cool $mged_gui($id,screen) "File created" \
+		cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen) "File created" \
 			$msg info 0 OK
 	    }
 	}
@@ -208,6 +210,7 @@ must not exist by this name."}}\
 
 proc do_Open { id } {
     global mged_gui
+    global tkPriv
 
     set ftypes {{{MGED Database} {.g}} {{All Files} {*}}}
     set filename [tk_getOpenFile -parent .$id -filetypes $ftypes \
@@ -219,10 +222,10 @@ proc do_Open { id } {
 
 	set ret [catch {opendb $filename} msg]
 	if {$ret} {
-	    cad_dialog .$id.uncool $mged_gui($id,screen) "Error" \
+	    cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen) "Error" \
 		    $msg info 0 OK
 	} else {
-	    cad_dialog .$id.cool $mged_gui($id,screen) "File loaded" \
+	    cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen) "File loaded" \
 		    $msg info 0 OK
 	}
     }
@@ -238,6 +241,8 @@ proc do_Open { id } {
 #
 proc getFile { parent dir ftypes title } {
     global mged_gui
+    global tkPriv
+
     upvar #0 $dir path
 
     if {![info exists path] || $path == ""} {
@@ -252,7 +257,7 @@ proc getFile { parent dir ftypes title } {
 	if {$parent == "."} {
 	    set parent ""
 	}
-	cad_dialog $parent.uncool $parent "Error" \
+	cad_dialog $tkPriv(cad_dialog) $parent "Error" \
 		"Length of path is greater than 127 bytes." info 0 OK
 	return ""
     }
@@ -267,9 +272,10 @@ proc getFile { parent dir ftypes title } {
 
 proc do_Concat { id } {
     global mged_gui
+    global tkPriv
 
     if {[opendb] == ""} {
-	cad_dialog .$id.uncool $mged_gui($id,screen) "No database." \
+	cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen) "No database." \
 		"No database has been opened!" info 0 OK
 	return
     }
@@ -302,6 +308,7 @@ the database being inserted."} { see_also dbconcat } } OK CANCEL]
 
 proc do_LoadScript { id } {
     global mged_gui
+    global tkPriv
 
     set ftypes {{{Tcl Scripts} {.tcl}} {{All Files} {*}}}
     set ia_filename [tk_getOpenFile -parent .$id -filetypes $ftypes \
@@ -314,10 +321,10 @@ proc do_LoadScript { id } {
 
 	set ret [catch {source $ia_filename} msg]
 	if {$ret} {
-	    cad_dialog .$id.uncool $mged_gui($id,screen) "Error" \
+	    cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen) "Error" \
 		    $msg info 0 OK
 	} else {
-	    cad_dialog .$id.cool $mged_gui($id,screen) "Script loaded" \
+	    cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen) "Script loaded" \
 		    "Script successfully loaded!" info 0 OK
 	}
     }
@@ -326,10 +333,11 @@ proc do_LoadScript { id } {
 proc do_Units { id } {
     global mged_gui
     global mged_display
+    global tkPriv
 
     if {[opendb] == ""} {
 	set mged_display(units) ""
-	cad_dialog .$id.uncool $mged_gui($id,screen) "No database." \
+	cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen) "No database." \
 		"No database has been opened!" info 0 OK
 	return
     }
@@ -339,12 +347,13 @@ proc do_Units { id } {
 
 proc do_rt_script { id } {
     global mged_gui
+    global tkPriv
 
     set ia_filename [fs_dialog .$id.rtscript .$id "./*"]
     if {[string length $ia_filename] > 0} {
 	saveview $ia_filename
     } else {
-	cad_dialog .$id.uncool $mged_gui($id,screen) "Error" \
+	cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen) "Error" \
 		"No such file exists." warning 0 OK
     }
 }
@@ -353,8 +362,9 @@ proc do_About_MGED { id } {
     global mged_gui
     global mged_default
     global version
+    global tkPriv
 
-    cad_dialog .$id.about $mged_gui($id,screen) "About MGED..." \
+    cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen) "About MGED..." \
 	    "$version
 MGED (Multi-device Geometry EDitor) is part
 of the BRL-CAD(TM) package.
@@ -463,8 +473,9 @@ proc echo args {
 #==============================================================================
 proc man_goto { w screen } {
     global ia_url
+    global tkPriv
 
-    cad_input_dialog $w.goto $screen "Go To" "Enter filename to read:" \
+    cad_input_dialog $tkPriv(cad_dialog) $screen "Go To" "Enter filename to read:" \
 	    filename $ia_url(current) \
 	    0 {{ summary "Enter a filename or URL."}} OK
 
@@ -477,7 +488,7 @@ proc man_goto { w screen } {
 
 	HMlink_callback $w.text $new_url
     } else {
-	cad_dialog $w.gotoerror $screen "Error reading file" \
+	cad_dialog $tkPriv(cad_dialog) $screen "Error reading file" \
 		"Cannot read file $filename." error 0 OK
     }
 }

@@ -11,9 +11,10 @@ check_externs "_mged_opendb _mged_keep db_glob"
 proc init_extractTool { id } {
     global mged_gui
     global ex_control
+    global tkPriv
 
     if {[opendb] == ""} {
-	cad_dialog .$id.uncool $mged_gui($id,screen) "No database." \
+	cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen) "No database." \
 		"No database has been opened!" info 0 OK
 	return
     }
@@ -86,13 +87,14 @@ extracting database objects."}}
 proc do_extract { id } {
     global mged_gui
     global ex_control
+    global tkPriv
 
     cmd_win set $id
     set ex_cmd "_mged_keep"
 
     if {$ex_control($id,file) != ""} {
 	if [file exists $ex_control($id,file)] {
-	    set result [cad_dialog .$id.exDialog $mged_gui($id,screen)\
+	    set result [cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen)\
 		    "Append to $ex_control($id,file)?"\
 		    "Append to $ex_control($id,file)?"\
 		    "" 0 OK CANCEL]
@@ -102,7 +104,7 @@ proc do_extract { id } {
 	    }
 	}
     } else {
-	cad_dialog .$id.exDialog $mged_gui($id,screen)\
+	cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen)\
 		"No file name specified!"\
 		"No file name specified!"\
 		"" 0 OK
@@ -116,7 +118,7 @@ proc do_extract { id } {
 	set globbed_str [db_glob $ex_control($id,objects)]
 	append ex_cmd " $globbed_str"
     } else {
-	cad_dialog .$id.exDialog $mged_gui($id,screen)\
+	cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen)\
 		"No objects specified!"\
 		"No objects specified!"\
 		"" 0 OK
