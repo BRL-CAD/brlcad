@@ -421,9 +421,7 @@ struct db_i		*dbip;
 			bu_bomb("db_io.c: db_put_external()");
 		}
 
-		/* Add name.  Depends on solid names always being in the same place */
-		rec = (union record *)ep->ext_buf;
-		NAMEMOVE( dp->d_namep, rec->s.s_name );
+		db_wrap_v4_external( ep, dp->d_namep );
 	} else
 		bu_bomb("db_put_external(): unknown dbi_version\n");
 
@@ -455,6 +453,8 @@ struct db_i		*dbip;
  *  Returns -
  *	<0	error
  *	0	OK
+ *
+ *  NOTE:  Callers of this should be using wdb_export_external() instead.
  */
 int
 db_fwrite_external( fp, name, ep )
@@ -462,20 +462,15 @@ FILE			*fp;
 CONST char		*name;
 struct bu_external	*ep;			/* can't be const */
 {
-	union record		*rec;
 
 	if(rt_g.debug&DEBUG_DB) bu_log("db_fwrite_external(%s) ep=x%x\n",
 		name, ep);
 
 	BU_CK_EXTERNAL(ep);
 
-	/* Add name.  Depends on solid names always being in the same place */
-	rec = (union record *)ep->ext_buf;
-	NAMEMOVE( name, rec->s.s_name );
+	db_wrap_v4_external( ep, name );
 
-	if( fwrite( ep->ext_buf, ep->ext_nbytes, 1, fp ) != 1 )
-		return -1;
-	return 0;
+	return bu_fwrite_external( fp, ep );
 }
 
 /*
