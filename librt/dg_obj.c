@@ -2496,7 +2496,8 @@ dgo_eraseobjpath(dgop, interp, argc, argv, noisy, all)
 		}
 		list = bu_vls_addr(&vls);
 #endif
-		Tcl_SplitList(interp, list, &ac, &av_orig);
+		if (Tcl_SplitList(interp, list, &ac, &av_orig) != TCL_OK)
+			continue;
 
 		/* skip first element if empty */
 		av = av_orig;
