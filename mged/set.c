@@ -50,6 +50,7 @@ struct _mged_variables default_mged_variables = {
 /* view */                      0,
 /* edit */                      0,
 /* context */                   1,
+/* eyerot */                    0,
 /* predictor */			0,
 /* predictor_advance */		1.0,
 /* predictor_length */		2.0,
@@ -106,6 +107,7 @@ struct bu_structparse mged_vparse[] = {
 	{"%d",  1, "view",              MV_O(view),             set_view },
 	{"%d",  1, "edit",              MV_O(edit),             set_scroll },
 	{"%d",  1, "context",           MV_O(context),          refresh_hook },
+	{"%d",  1, "mged_rotate_view_around_eye",           MV_O(eyerot),          refresh_hook },
 	{"%d",	1, "predictor",		MV_O(predictor),	predictor_hook },
 	{"%f",	1, "predictor_advance",	MV_O(predictor_advance),predictor_hook },
 	{"%f",	1, "predictor_length",	MV_O(predictor_length),	predictor_hook },
@@ -298,12 +300,7 @@ set_view()
   Viewscale = viewscale_table[current_view];
   new_mats();
 
-  if(absolute_slew[X] != 0.0 ||
-     absolute_slew[Y] != 0.0 ||
-     absolute_slew[Z] != 0.0){
-    VSET(new_pos, -orig_pos[X], -orig_pos[Y], -orig_pos[Z]);
-    MAT4X3PNT(absolute_slew, model2view, new_pos);
-  }
+  (void)mged_svbase();
 }
 
 void
