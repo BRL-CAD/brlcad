@@ -45,10 +45,10 @@
 #define DEBUG_PARTITION	0x00002000	/* 14 Info about bool_weave() */
 #define DEBUG_CUT	0x00004000	/* 15 Print space cutting statistics */
 #define DEBUG_BOXING	0x00008000	/* 16 Object/box checking details */
-#define DEBUG_MEM	0x00010000	/* 17 Print all dynamic memory operations */
-#define DEBUG_MEM_FULL	0x00020000	/* 18 Mem barrier & leak checking */
+#define DEBUG_MEM	0x00010000	/* 17 -->> BU_DEBUG_MEM_LOG */
+#define DEBUG_MEM_FULL	0x00020000	/* 18 -->> BU_DEBUG_MEM_CHECK */
 #define DEBUG_FDIFF	0x00040000	/* 19 bool/fdiff debugging */
-#define DEBUG_PARALLEL	0x00080000	/* 20 machine.c parallel support */
+#define DEBUG_PARALLEL	0x00080000	/* 20 -->> BU_DEBUG_PARALLEL */
 #define DEBUG_CUTDETAIL	0x00100000	/* 21 Print space cutting details */
 #define DEBUG_TREEWALK	0x00200000	/* 22 Database tree traversal */
 #define DEBUG_TESTING	0x00400000	/* 23 One-shot debugging flag */
