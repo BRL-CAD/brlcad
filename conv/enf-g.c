@@ -634,7 +634,7 @@ Part_import( int id_start )
 			exit( 1 );
 		}
 		if( mk_comb( fd_out, part->brlcad_comb, &reg_head.l, 1, NULL, NULL, rgb, ident++,
-			     0, 0, 0, 0, 0, 0 ) ) {
+			     0, 1, 100, 0, 0, 0 ) ) {
 			bu_log( "Failed to write region %s (%s) to database\n",
 				part->brlcad_comb, part->obj_name );
 			exit( 1 );
