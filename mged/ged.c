@@ -1547,76 +1547,86 @@ refresh()
 
       DM_DRAW_BEGIN(dmp);	/* update displaylist prolog */
 
-      if(dbip != DBI_NULL){
-	/* do framebuffer underlay */
-	if(mged_variables->mv_fb && !mged_variables->mv_fb_overlay){
-	  if(mged_variables->mv_fb_all)
-	    fb_refresh(fbp, 0, 0, dmp->dm_width, dmp->dm_height);
-	  else if(mged_variables->mv_mouse_behavior != 'z')
-	    paint_rect_area();
-	}
+      if (dbip != DBI_NULL) {
+	      /* do framebuffer underlay */
+	      if (mged_variables->mv_fb && !mged_variables->mv_fb_overlay) {
+		      if (mged_variables->mv_fb_all)
+			      fb_refresh(fbp, 0, 0, dmp->dm_width, dmp->dm_height);
+		      else if (mged_variables->mv_mouse_behavior != 'z')
+			      paint_rect_area();
+	      }
 
-	/*  Draw each solid in it's proper place on the screen
-	 *  by applying zoom, rotation, & translation.
-	 *  Calls DM_LOADMATRIX() and DM_DRAW_VLIST().
-	 */
-	if( dmp->dm_stereo == 0 || mged_variables->mv_eye_sep_dist <= 0 )  {
-	  /* Normal viewing */
-	  dozoom(0);
-	} else {
-	  /* Stereo viewing */
-	  dozoom(1);
-	  dozoom(2);
-	}
+	      /* do framebuffer overlay for entire window */
+	      if (mged_variables->mv_fb &&
+		  mged_variables->mv_fb_overlay &&
+		  mged_variables->mv_fb_all) {
+		      fb_refresh(fbp, 0, 0, dmp->dm_width, dmp->dm_height);
+	      } else {
+		      /*  Draw each solid in it's proper place on the screen
+		       *  by applying zoom, rotation, & translation.
+		       *  Calls DM_LOADMATRIX() and DM_DRAW_VLIST().
+		       */
 
-	/* do framebuffer overlay */
-	if(mged_variables->mv_fb && mged_variables->mv_fb_overlay){
-	  if(mged_variables->mv_fb_all)
-	    fb_refresh(fbp, 0, 0, dmp->dm_width, dmp->dm_height);
-	  else if(mged_variables->mv_mouse_behavior != 'z')
-	    paint_rect_area();
-	}
+		      if (dmp->dm_stereo == 0 ||
+			  mged_variables->mv_eye_sep_dist <= 0) {
+			      /* Normal viewing */
+			      dozoom(0);
+		      } else {
+			      /* Stereo viewing */
+			      dozoom(1);
+			      dozoom(2);
+		      }
 
-	/* Restore to non-rotated, full brightness */
-	DM_NORMAL(dmp);
+		      /* do framebuffer overlay in rectangular area */
+		      if (mged_variables->mv_fb &&
+			  mged_variables->mv_fb_overlay &&
+			  mged_variables->mv_mouse_behavior != 'z')
+			      paint_rect_area();
+	      }
 
-	/* only if not doing overlay */
-	if(!mged_variables->mv_fb || mged_variables->mv_fb_overlay != 2){
-	  if(rubber_band->rb_active || rubber_band->rb_draw)
-	    draw_rect();
 
-	  if(grid_state->gr_draw)
-	    draw_grid();
+	      /* Restore to non-rotated, full brightness */
+	      DM_NORMAL(dmp);
 
-	  /* Compute and display angle/distance cursor */
-	  if (adc_state->adc_draw)
-	    adcursor();
+	      /* only if not doing overlay */
+	      if (!mged_variables->mv_fb ||
+		  mged_variables->mv_fb_overlay != 2) {
+		      if (rubber_band->rb_active || rubber_band->rb_draw)
+			      draw_rect();
 
-	  if(axes_state->ax_view_draw)
-	    draw_v_axes();
+		      if (grid_state->gr_draw)
+			      draw_grid();
 
-	  if(axes_state->ax_model_draw)
-	    draw_m_axes();
+		      /* Compute and display angle/distance cursor */
+		      if (adc_state->adc_draw)
+			      adcursor();
 
-	  if(axes_state->ax_edit_draw &&
-	     (state == ST_S_EDIT || state == ST_O_EDIT))
-	    draw_e_axes();
+		      if (axes_state->ax_view_draw)
+			      draw_v_axes();
 
-	  /* Display titles, etc., if desired */
-	  bu_vls_strcpy(&tmp_vls, bu_vls_addr(&overlay_vls));
-	  dotitles(&tmp_vls);
-	  bu_vls_trunc(&tmp_vls, 0);
-	}
+		      if (axes_state->ax_model_draw)
+			      draw_m_axes();
+
+		      if (axes_state->ax_edit_draw &&
+			  (state == ST_S_EDIT || state == ST_O_EDIT))
+			      draw_e_axes();
+
+		      /* Display titles, etc., if desired */
+		      bu_vls_strcpy(&tmp_vls, bu_vls_addr(&overlay_vls));
+		      dotitles(&tmp_vls);
+		      bu_vls_trunc(&tmp_vls, 0);
+	      }
       }
 
       /* only if not doing overlay */
-      if(!mged_variables->mv_fb || mged_variables->mv_fb_overlay != 2){
-	/* Draw center dot */
-	DM_SET_FGCOLOR(dmp,
-		       color_scheme->cs_center_dot[0],
-		       color_scheme->cs_center_dot[1],
-		       color_scheme->cs_center_dot[2], 1);
-	DM_DRAW_POINT_2D(dmp, 0.0, 0.0);
+      if (!mged_variables->mv_fb ||
+	  mged_variables->mv_fb_overlay != 2) {
+	      /* Draw center dot */
+	      DM_SET_FGCOLOR(dmp,
+			     color_scheme->cs_center_dot[0],
+			     color_scheme->cs_center_dot[1],
+			     color_scheme->cs_center_dot[2], 1);
+	      DM_DRAW_POINT_2D(dmp, 0.0, 0.0);
       }
 
       DM_DRAW_END(dmp);
