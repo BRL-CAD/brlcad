@@ -477,7 +477,11 @@ AC_DEFINE(HAVE_TM_ZONE,,string in time zone)
 
 AC_CHECK_MEMBERS([struct stat.st_blksize],[AC_DEFINE(HAVE_ST_BLKSIZE, 1, [the old blksize define])])
 
-AC_CHECK_DECL(sys_errlist, AC_DEFINE(HAVE_SYS_ERRLIST_DECL,1,sys_errlist[]), AC_DEFINE(HAVE_SYS_ERRLIST_DECL,0,don't have sys_errlist[]),[# include <stdio.h>])
+AC_CHECK_DECL(sys_errlist, 
+	      AC_DEFINE(HAVE_SYS_ERRLIST_DECL,1,sys_errlist[]), 
+	      AC_DEFINE(HAVE_SYS_ERRLIST_DECL,0,don't have sys_errlist[]),
+	      [# include <stdio.h>])
+
 AC_CHECK_DECL(re_comp, AC_DEFINE(HAVE_REGEX_DECL,, BSD regular expressions))
 
 
