@@ -21,7 +21,7 @@
  */
 
 #ifndef lint
-static char RCSid[] = "$Header$";
+static const char RCSid[] = "$Header$";
 #endif
 
 #include "conf.h"
@@ -47,11 +47,12 @@ static char RCSid[] = "$Header$";
 
 #define POLY_BLOCK	512
 
-static char *usage="\
+static const char *usage="\
 Usage: poly-bot < file_poly.g > file_bot.g\n\
    or  poly-bot file_poly.g file_bot.g\n\
- Convert polysolids to BOT solids\n";
+ Convert polysolids to BOT solids in v4 database format only\n";
 
+int
 main( argc, argv )
 int argc;
 char *argv[];
@@ -186,7 +187,7 @@ top:
 					i += 3;
 				}
 
-				(void)bot_vertex_fuse( bot );
+				(void)rt_bot_vertex_fuse( bot );
 
 				mk_export_fwrite( ofp, poly[0].p.p_name, (genptr_t)bot, ID_BOT );
 
@@ -228,4 +229,7 @@ top:
 	bu_log( "%d polysolids converted to BOT solids\n", polys );
 	bu_log( "%d other records copied without change\n", others );
 	bu_log( "%d free records skipped\n", frees );
+
+	fclose(ofp);
+	return 0;
 }
