@@ -108,7 +108,8 @@ struct rt_curve {
 };
 
 
-
+#if 0
+/*XXX Not being called. */
 int my_final_check(hp)
 struct rt_list *hp;
 {
@@ -119,7 +120,7 @@ struct rt_list *hp;
 		printf("num_used = %d\n", vp->nused);
 	}
 }
-
+#endif
 
 int
 cmd_vdraw(clientData, interp, argc, argv)
@@ -130,7 +131,7 @@ char **argv;
 {
 	char *str;
 	static struct rt_curve *curhead;
-	static initialized = 0;
+	static int initialized = 0;
 	struct rt_curve *rcp, *rcp2;
 	struct rt_vlist *vp, *cp, *wp;
 	int i, index, uind, blocks, change;
@@ -238,7 +239,6 @@ char **argv;
 			cp->nused++;
 
 		return TCL_OK;
-		break;
 	case 'i': /*insert*/
 		if (!curhead) {
 			Tcl_AppendResult(interp, "vdraw: no vlist is currently open.", (char *)NULL);
@@ -308,7 +308,6 @@ char **argv;
 		vp->pt[index][1] = atof(argv[5]);
 		vp->pt[index][2] = atof(argv[6]);
 		return TCL_OK;
-		break;
 	case 'd': /*delete*/
 		if (!curhead) {
 			Tcl_AppendResult(interp, "vdraw: no vlist is currently open.", (char *)NULL);
@@ -387,7 +386,6 @@ char **argv;
 		vp->nused--;
 
 		return TCL_OK;
-		break;
 	case 'r': /*read*/
 		if (!curhead) {
 			Tcl_AppendResult(interp, "vdraw: no vlist is currently open.", (char *)NULL);
@@ -448,7 +446,6 @@ char **argv;
 			vp->pt[uind][1],vp->pt[uind][2]);
 		Tcl_AppendResult(interp, result_string, (char *)NULL);
 		return TCL_OK;
-		break;
 	case 's': /*send*/
 		if (!curhead) {
 			Tcl_AppendResult(interp, "vdraw: no vlist is currently open.", (char *)NULL);
@@ -476,7 +473,6 @@ char **argv;
 		/* 0 means OK, -1 means conflict with real solid name */
 		Tcl_AppendResult(interp, result_string, (char *)NULL);
 		return TCL_OK;
-		break;
 	case 'p':  /* params */
 		if (!curhead) {
 			Tcl_AppendResult(interp, "vdraw: no vlist is currently open.", (char *)NULL);
@@ -566,7 +562,6 @@ char **argv;
 			str = rt_vls_strgrab(&killstr);
 			Tcl_AppendResult(interp, str, (char *)NULL);
 			return TCL_OK;
-			break;
 		case 'd':
 			if (argc<4) {
 				Tcl_AppendResult(interp,"vdraw: need name of vlist to delete", (char *)NULL);
@@ -595,7 +590,6 @@ char **argv;
 			RT_FREE_VLIST(&(rcp2->vhd));
 			rt_free((char *) rcp2, "rt_curve");
 			return TCL_OK;
-			break;
 		default:
 			Tcl_AppendResult(interp,"vdraw: unknown option to vdraw vlist", (char *)NULL);
 			return TCL_ERROR;
@@ -604,7 +598,6 @@ char **argv;
 	default:
 		Tcl_AppendResult(interp, "vdraw: see vdraw.c for help\n", (char *)NULL);
 		return TCL_ERROR;
-		break;
 	}
 		
 	return TCL_OK;
