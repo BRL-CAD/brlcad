@@ -51,7 +51,7 @@ HIDDEN int		rt_ck_overlap BU_ARGS((const vect_t min,
 					       const struct rt_i *rtip));
 HIDDEN int		rt_ct_box BU_ARGS((struct rt_i *rtip,
 					   union cutter *cutp,
-					   int axis, double where));
+					   int axis, double where, int force));
 HIDDEN void		rt_ct_optim BU_ARGS((struct rt_i *rtip,
 					     union cutter *cutp, int depth));
 HIDDEN void		rt_ct_free BU_ARGS((struct rt_i *rtip,
@@ -798,7 +798,12 @@ rt_split_mostly_empty_cells( struct rt_i *rtip, union cutter *cutp )
 				       return( num_splits );
 				}
 			}
-			if( rt_ct_box( rtip, cutp, max_empty_dir, where ) ) {
+			if( where - cutp->bn.bn_min[max_empty_dir] < 2.0 ||
+			    cutp->bn.bn_max[max_empty_dir] - where < 2.0 ) {
+				/* will make a box too small */
+				return( num_splits );
+			}
+			if( rt_ct_box( rtip, cutp, max_empty_dir, where, 1 ) ) {
 				num_splits++;
 				num_splits += rt_split_mostly_empty_cells( rtip, cutp->cn.cn_l );
 				num_splits += rt_split_mostly_empty_cells( rtip, cutp->cn.cn_r );
@@ -865,10 +870,10 @@ int			ncpu;
 	rtip->rti_cutlen = (int)log((double)rtip->nsolids);  /* ln ~= log2 */
 	rtip->rti_cutdepth = 2 * rtip->rti_cutlen;
 	if( rtip->rti_cutlen < 3 )  rtip->rti_cutlen = 3;
-	if( rtip->rti_cutdepth < 9 )  rtip->rti_cutdepth = 9;
+	if( rtip->rti_cutdepth < 12 )  rtip->rti_cutdepth = 12;
 	if( rtip->rti_cutdepth > 24 )  rtip->rti_cutdepth = 24;     /* !! */
-	if( RT_G_DEBUG&DEBUG_CUT )
-		bu_log( "Cut: Tree Depth=%d, Leaf Len=%d\n",
+	/*	if( RT_G_DEBUG&DEBUG_CUT ) */
+		bu_log( "Before Space Partitioning: Max Tree Depth=%d, Cuttoff primitive count=%d\n",
 			rtip->rti_cutdepth, rtip->rti_cutlen );
 
 	bu_ptbl_init( &rtip->rti_cuts_waiting, rtip->nsolids,
@@ -1103,7 +1108,7 @@ int		depth;
 
 		if( best < 0 )  return(-1);	/* No cut is possible */
 
-		if( rt_ct_box( rtip, cutp, best, where[best] ) > 0 )
+		if( rt_ct_box( rtip, cutp, best, where[best], 0 ) > 0 )
 			return(0);		/* OK */
 
 		/*
@@ -1347,6 +1352,7 @@ struct rt_i		*rtip;
 			if( olp->npieces < plp->npieces ) success = 1;
 		} else {
 			olp->pieces = NULL;
+			/*			if( plp->npieces > 0 ) success = 1; */
 		}
 	}
 #endif
@@ -1374,11 +1380,12 @@ struct rt_i		*rtip;
  *	1	success
  */
 HIDDEN int
-rt_ct_box( rtip, cutp, axis, where )
+rt_ct_box( rtip, cutp, axis, where, force )
 struct rt_i		*rtip;
 register union cutter	*cutp;
 register int		axis;
 double			where;
+int			force;
 {
 	register union cutter	*rhs, *lhs;
 	int success = 0;
@@ -1411,7 +1418,7 @@ double			where;
 	success += rt_ct_populate_box( rhs, cutp, rtip );
 
 	/* Check to see if complexity didn't decrease */
-	if( success == 0 )  {
+	if( success == 0 && !force )  {
 		/*
 		 *  This cut operation did no good, release storage,
 		 *  and let caller attempt something else.
@@ -1562,6 +1569,8 @@ int	depth;
 #else
  /* Old (Release 3.7) way */
  {
+	int did_a_cut;
+	int i;
  	int axis;
  	double where, offcenter;
 	/*
@@ -1572,19 +1581,45 @@ int	depth;
 	 *  In absolute terms, each box must be at least 1mm wide after cut.
 	 */
 	axis = AXIS(depth);
+#if 1
+	did_a_cut = 0;
+	for( i=0 ; i<3 ; i++ ) {
+		axis += i;
+		if( axis > Z ) {
+			axis = X;
+		}
+		if( cutp->bn.bn_max[axis]-cutp->bn.bn_min[axis] < 2.0 ) {
+			continue;
+		}
+		if( rt_ct_old_assess( cutp, axis, &where, &offcenter ) <= 0 ) {
+			continue;
+		}
+		if( rt_ct_box( rtip, cutp, axis, where, 0 ) == 0 )  {
+			continue;
+		} else {
+			did_a_cut = 1;
+			break;
+		}
+	}
+
+	if( !did_a_cut ) {
+		return;
+	}
+#else
 	if( cutp->bn.bn_max[axis]-cutp->bn.bn_min[axis] < 2.0 )
 		return;
  	if( rt_ct_old_assess( cutp, axis, &where, &offcenter ) <= 0 )
  		return;			/* not practical */
-	if( rt_ct_box( rtip, cutp, axis, where ) == 0 )  {
+	if( rt_ct_box( rtip, cutp, axis, where, 0 ) == 0 )  {
 	 	if( rt_ct_old_assess( cutp, AXIS(depth+1), &where, &offcenter ) <= 0 )
 	 		return;			/* not practical */
-		if( rt_ct_box( rtip, cutp, AXIS(depth+1), where ) == 0 )
+		if( rt_ct_box( rtip, cutp, AXIS(depth+1), where, 0 ) == 0 )
 			return;	/* hopeless */
 	}
+#endif
 	if( rt_ct_piececount(cutp->cn.cn_l) >= oldlen &&
 	    rt_ct_piececount(cutp->cn.cn_r) >= oldlen )  {
-/* 		if( RT_G_DEBUG&DEBUG_CUTDETAIL ) */
+ 		if( RT_G_DEBUG&DEBUG_CUTDETAIL )
 	    	bu_log("rt_ct_optim(cutp=x%x, depth=%d) oldlen=%d, lhs=%d, rhs=%d, hopeless\n",
 	    		cutp, depth, oldlen,
 			rt_ct_piececount(cutp->cn.cn_l),
@@ -1619,6 +1654,7 @@ double	*offcenter_p;
 	double		where;		/* Point closest to midpoint */
 	double		middle;		/* midpoint */
 	double		d;
+	fastf_t		max, min;
 	register int	i;
 	register double	left, right;
 
@@ -1635,11 +1671,15 @@ double	*offcenter_p;
 	 *  This should ordinarily guarantee that at least one side of the
 	 *  cut has one less item in it.
 	 */
+	min = MAX_FASTF;
+	max = -min;
 	where = left;
 	middle = (left + right) * 0.5;
 	offcenter = middle - where;	/* how far off 'middle', 'where' is */
 	for( i=0; i < cutp->bn.bn_len; i++ )  {
 		val = cutp->bn.bn_list[i]->st_min[axis];
+		if( val < min ) min = val;
+		if( val > max ) max = val;
 		d = val - middle;
 		if( d < 0 )  d = (-d);
 		if( d < offcenter )  {
@@ -1647,6 +1687,8 @@ double	*offcenter_p;
 			where = val-0.1;
 		}
 		val = cutp->bn.bn_list[i]->st_max[axis];
+		if( val < min ) min = val;
+		if( val > max ) max = val;
 		d = val - middle;
 		if( d < 0 )  d = (-d);
 		if( d < offcenter )  {
@@ -1667,6 +1709,8 @@ double	*offcenter_p;
 			struct bound_rpp *rpp = &stp->st_piece_rpps[indx];
 
 			val = rpp->min[axis];
+			if( val < min ) min = val;
+			if( val > max ) max = val;
 			d = val - middle;
 			if( d < 0 )  d = (-d);
 			if( d < offcenter )  {
@@ -1674,6 +1718,8 @@ double	*offcenter_p;
 				where = val-0.1;
 			}
 			val = rpp->max[axis];
+			if( val < min ) min = val;
+			if( val > max ) max = val;
 			d = val - middle;
 			if( d < 0 )  d = (-d);
 			if( d < offcenter )  {
@@ -1684,7 +1730,19 @@ double	*offcenter_p;
 	}
 
 	if(RT_G_DEBUG&DEBUG_CUTDETAIL)bu_log("rt_ct_old_assess() left=%g, where=%g, right=%g, offcenter=%g\n",
-		left, where, right, offcenter);
+
+	      left, where, right, offcenter);
+
+	if( where < min || where > max ) {
+		/* this will make an empty cell.
+		 * try splitting the range instead
+		 */
+		where = (max + min) / 2.0;
+		offcenter = where - middle;
+		if( offcenter < 0 ) {
+			offcenter = -offcenter;
+		}
+	}
 
 	if( where <= left || where >= right )
 		return(0);	/* not reasonable */
@@ -2159,6 +2217,9 @@ int			depth;
 		len = rt_ct_piececount( cutp ) - len;
 		BU_HIST_TALLY( &rtip->rti_hist_cell_pieces, len );
 		BU_HIST_TALLY( &rtip->rti_hist_cutdepth, depth );
+		if( len == 0 ) {
+			rtip->nempty_cells++;
+		}
 		return;
 	default:
 		bu_log("rt_ct_measure: bad node x%x\n", cutp->cut_type);
