@@ -4036,3 +4036,387 @@ CONST struct rt_tol *tol;
 
 	return( 0 );
 }
+
+/*	N M G _ V L I S T _ T O _ W I R E _ E D G E S
+ *
+ *	Convert a vlist to NMG wire edges
+ *
+ */
+void
+nmg_vlist_to_wire_edges( s , vhead )
+struct shell *s;
+struct rt_list *vhead;
+{
+	struct rt_vlist *vp;
+	struct edgeuse *eu;
+	struct vertex *v1,*v2;
+	point_t pt1,pt2;
+
+	NMG_CK_SHELL( s );
+	NMG_CK_LIST( vhead );
+
+	v1 = (struct vertex *)NULL;
+	v2 = (struct vertex *)NULL;
+
+	vp = RT_LIST_FIRST( rt_vlist , vhead );
+	if( vp->nused < 2 )
+		return;
+
+	for( RT_LIST_FOR( vp , rt_vlist , vhead ) )
+	{
+		register int i;
+		register int nused = vp->nused;
+
+		for( i=0 ; i<vp->nused ; i++ )
+		{
+			switch( vp->cmd[i] )
+			{
+				case RT_VLIST_LINE_MOVE:
+				case RT_VLIST_POLY_MOVE:
+					v1 = (struct vertex *)NULL;
+					v2 = (struct vertex *)NULL;
+					VMOVE( pt2 , vp->pt[i] );
+					break;
+				case RT_VLIST_LINE_DRAW:
+				case RT_VLIST_POLY_DRAW:
+					VMOVE( pt1 , pt2 );
+					v1 = v2;
+					VMOVE( pt2 , vp->pt[i] );
+					v2 = (struct vertex *)NULL;
+					eu = nmg_me( v1 , v2 , s );
+					v1 = eu->vu_p->v_p;
+					v2 = eu->eumate_p->vu_p->v_p;
+					nmg_vertex_gv( v2 , pt2 );
+					if( !v1->vg_p )
+						nmg_vertex_gv( v1 , pt1 );
+					break;
+				case RT_VLIST_POLY_START:
+				case RT_VLIST_POLY_END:
+					break;
+			}
+		}
+	}
+}
+
+/*	N M G _ O P E N _ S H E L L S _ C O N N E C T
+ *
+ *	Two open shells are connected along their free edges by building
+ *	new faces.  The resluting closed shell is in "dst", and "src" shell
+ *	is destroyed.  The "copy_tbl" is a translation table that provides
+ *	a one-to-one translation between the vertices in the two shells, i.e.,
+ *	NMG_INDEX_GETP(vertex, copy_tbl, v), where v is a pointer to a vertex
+ *	in "dst" shell, provides a pointer to the corresponding vertex in "src" shell
+ */
+void
+nmg_open_shells_connect( dst , src , copy_tbl , tol )
+struct shell *dst;
+struct shell *src;
+CONST long **copy_tbl;
+CONST struct rt_tol *tol;
+{
+	struct faceuse *fu;
+	struct loopuse *lu;
+	struct edgeuse *eu1;
+	struct edgeuse *eu2;
+	struct faceuse *new_fu;
+	struct nmg_ptbl faces;
+	int i;
+
+	NMG_CK_SHELL( dst );
+	NMG_CK_SHELL( src );
+
+	if( nmg_ck_closed_surf( dst , tol ) )
+		rt_bomb( "nmg_open_shells_connect: destination shell is closed!\n" );
+
+	if( nmg_ck_closed_surf( src , tol ) )
+		rt_bomb( "nmg_open_shells_connect: source shell is closed!\n" );
+
+	/* find free edges in "dst" shell */
+	for( RT_LIST_FOR( fu , faceuse , &dst->fu_hd ) )
+	{
+		NMG_CK_FACEUSE( fu );
+		if( fu->orientation != OT_SAME )
+			continue;
+		for( RT_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
+		{
+			NMG_CK_LOOPUSE( lu );
+			if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_VERTEXUSE_MAGIC )
+				continue;
+			for( RT_LIST_FOR( eu1 , edgeuse , &lu->down_hd ) )
+			{
+				NMG_CK_EDGEUSE( eu1 );
+				if( eu1->eumate_p == eu1->radial_p )
+				{
+					struct vertex *verts[3];
+					struct vertex *vp1,*vp2;
+					struct vertexuse *vu;
+					struct faceuse *fu1,*fu2;
+
+					/* found a free edge, find corresponding edge in "src" shell */
+					vp1 = NMG_INDEX_GETP(vertex, copy_tbl, eu1->vu_p->v_p);
+					NMG_CK_VERTEX( vp1 );
+					vp2 = NMG_INDEX_GETP(vertex, copy_tbl, eu1->eumate_p->vu_p->v_p);
+					NMG_CK_VERTEX( vp2 );
+
+					/* Make two triangular faces connecting these two edges */
+					verts[0] = eu1->vu_p->v_p;
+					verts[1] = vp1;
+					verts[2] = vp2;
+					if( rt_3pts_distinct( verts[0]->vg_p->coord,verts[1]->vg_p->coord,verts[2]->vg_p->coord, tol ) )
+					{
+						fu1 = nmg_cface( dst , verts , 3 );
+						if( nmg_fu_planeeqn( fu1 , tol ) )
+						{
+							rt_log( "nmg_connect_open_shells: failed to calulate plane eqn\n" );
+							rt_log( "\tFace:\n" );
+							rt_log( "\t\t( %f %f %f ) -> ( %f %f %f ) -> ( %f %f %f )\n",
+								V3ARGS( verts[0]->vg_p->coord ),
+								V3ARGS( verts[1]->vg_p->coord ),
+								V3ARGS( verts[2]->vg_p->coord ) );
+						}
+					}
+
+					verts[0] = eu1->eumate_p->vu_p->v_p;
+					verts[1] = eu1->vu_p->v_p;
+					verts[2] = vp2;
+					if( rt_3pts_distinct( verts[0]->vg_p->coord,verts[1]->vg_p->coord,verts[2]->vg_p->coord, tol ) )
+					{
+						fu2 = nmg_cface( dst , verts , 3 );
+						if( nmg_fu_planeeqn( fu2 , tol ) )
+						{
+							rt_log( "nmg_connect_open_shells: failed to calulate plane eqn\n" );
+							rt_log( "\tFace:\n" );
+							rt_log( "\t\t( %f %f %f ) -> ( %f %f %f ) -> ( %f %f %f )\n",
+								V3ARGS( verts[0]->vg_p->coord ),
+								V3ARGS( verts[1]->vg_p->coord ),
+								V3ARGS( verts[2]->vg_p->coord ) );
+						}
+					}
+				}
+			}
+		}
+	}
+
+	nmg_merge_shells( dst , src );
+
+	/* now glue it all together */
+	nmg_tbl( &faces , TBL_INIT , NULL );
+	for( RT_LIST_FOR( fu , faceuse , &dst->fu_hd ) )
+	{
+		NMG_CK_FACEUSE( fu );
+		if( fu->orientation == OT_SAME )
+			nmg_tbl( &faces , TBL_INS , (long *)fu );
+	}
+	nmg_gluefaces( (struct faceuse **)NMG_TBL_BASEADDR( &faces) , NMG_TBL_END( &faces ) );
+	nmg_tbl( &faces , TBL_FREE , NULL );
+}
+
+/*	N M G _ I N S I D E _ V E R T
+ *
+ *	Move vertex so it is at the intersection of the newly created faces
+ *
+ *	This routine is used by "nmg_extrude_shell" to move vertices. Each
+ *	plane has already been moved a distance inward and
+ *	the surface normals have been reversed.
+ *
+ */
+int
+nmg_in_vert( old_vu , new_v , copy_tbl , tol )
+CONST struct vertexuse *old_vu;
+struct vertex *new_v;
+CONST long **copy_tbl;
+CONST struct rt_tol *tol;
+{
+	struct nmg_ptbl faces;
+	int failed=0;
+	int i;
+
+	NMG_CK_VERTEXUSE( old_vu );
+	NMG_CK_VERTEX( new_v );
+	RT_CK_TOL( tol );
+
+	nmg_tbl( &faces , TBL_INIT , NULL );
+
+	/* find all unique faces that intersect at this vertex (new_v) */
+	if( nmg_find_isect_faces( new_v , &faces , tol ) < 4 )
+	{
+		if( nmg_simple_vertex_solve( new_v , &faces , tol ) )
+		{
+			failed = 1;
+			rt_log( "Could not solve simple vertex\n" );
+			goto out;
+		}
+	}
+	else
+		nmg_complex_vertex_solve( new_v , &faces , tol );
+
+out:
+	/* Free memory */
+	nmg_tbl( &faces , TBL_FREE , NULL );
+
+	if( failed )
+		return( 1 );
+	else
+		return( 0 );
+}
+
+/*
+ *	N M G _ E X T R U D E _ S H E L L
+ *
+ *	Hollows out a shell producing a wall thickness of thickness "thick"
+ *	by creating a new "inner" shell and combining the two shells.
+ *
+ *	If the original shell is closed, the new shell is simply
+ *	merged with the original shell.  If the original shell is open, then faces
+ *	are constructed along the free edges of the two shells to make a closed shell.
+ *
+ */
+void
+nmg_extrude_shell( s , thick , tol )
+struct shell *s;
+CONST fastf_t thick;
+CONST struct rt_tol *tol;
+{
+	struct nmgregion *new_r;
+	struct vertex *v;
+	struct vertexuse *vu;
+	struct edgeuse *eu;
+	struct loopuse *lu;
+	struct faceuse *fu;
+	struct face_g *fg_p;
+	struct model *m;
+	struct shell *is;	/* inside shell */
+	struct nmg_ptbl vertex_uses,faces;
+	long *flags;
+	long **copy_tbl;
+	int i,j;
+
+	NMG_CK_SHELL( s );
+	RT_CK_TOL( tol );
+
+	if( thick < 0.0 )
+	{
+		rt_log( "nmg_extrude_shell: thickness less than zero not allowed" );
+		return;
+	}
+
+	if( thick < tol->dist )
+	{
+		rt_log( "nmg_extrude_shell: thickness less than tolerance not allowed" );
+		return;
+	}
+
+	m = nmg_find_model( (long *)s );
+
+	nmg_vmodel( m );
+
+	/* first make a copy of this shell */
+	is = nmg_dup_shell( s , &copy_tbl );
+
+	/* make a translation table for this model */
+	flags = (long *)rt_calloc( m->maxindex , sizeof( long ) , "nmg_extrude_shell flags" );
+
+	/* now adjust all the planes, first move them inward by distance "thick" */
+	for( RT_LIST_FOR( fu , faceuse , &is->fu_hd ) )
+	{
+		NMG_CK_FACEUSE( fu );
+		NMG_CK_FACE( fu->f_p );
+		fg_p = fu->f_p->fg_p;
+		NMG_CK_FACE_G( fg_p );
+
+		/* move the faces by the distance "thick" */
+		if( NMG_INDEX_TEST_AND_SET( flags , fg_p ) )
+			fg_p->N[3] -= thick;
+	}
+
+	/* Reverse the normals of all the faces */
+	for( RT_LIST_FOR( fu , faceuse , &is->fu_hd ) )
+	{
+		/* "nmg_reverse_face" does the fu and fu mate */
+		if( fu->orientation == OT_SAME )
+		{
+			if( NMG_INDEX_TEST_AND_SET( flags , fu->f_p ) )
+				nmg_reverse_face( fu );
+		}
+	}
+
+	/* now start adjusting the vertices
+	 * Use the original shell so that we can pass the original vertex to nmg_inside_vert
+	 */
+	for( RT_LIST_FOR( fu , faceuse , &s->fu_hd ) )
+	{
+		if( fu->orientation != OT_SAME )
+			continue;
+
+		for( RT_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
+		{
+			NMG_CK_LOOPUSE( lu );
+			if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_VERTEXUSE_MAGIC )
+			{
+				/* the vertex in a loop of one vertex
+				 * must show up in an edgeuse somewhere,
+				 * so don't mess with it here */
+				continue;
+			}
+			else
+			{
+				for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
+				{
+					struct vertex *new_v;
+
+					NMG_CK_EDGEUSE( eu );
+					vu = eu->vu_p;
+					NMG_CK_VERTEXUSE( vu );
+					new_v = NMG_INDEX_GETP( vertex , copy_tbl , vu->v_p );
+					NMG_CK_VERTEX( new_v )
+					if( NMG_INDEX_TEST_AND_SET( flags , new_v ) )
+					{
+						/* move this vertex */
+						if( nmg_in_vert( vu , new_v , copy_tbl , tol ) )
+							rt_bomb( "Failed to get a new point from nmg_inside_vert\n" );
+					}
+				}
+			}
+		}
+	}
+	/* recompute the bounding boxes */
+	nmg_region_a( is->r_p , tol );
+
+	is = nmg_extrude_cleanup( is , tol );
+
+	/* Inside shell is done */
+	if( is )
+	{
+		if( nmg_ck_closed_surf( s , tol ) )
+		{
+			if( !nmg_ck_closed_surf( is , tol ) )
+			{
+				rt_log( "nmg_extrude_shell: inside shell is not closed, calling nmg_close_shell\n" );
+				nmg_close_shell( is );
+			}
+
+			/* now merge the inside and outside shells */
+			nmg_merge_shells( s , is );
+		}
+		else
+		{
+			if( nmg_ck_closed_surf( is , tol ) )
+			{
+				rt_log( "nmg_extrude_shell: inside shell is closed, outer isn't!!\n" );
+				nmg_merge_shells( s , is );
+			}
+			else
+			{
+				/* connect the boundaries of the two open shells */
+				nmg_open_shells_connect( s , is , copy_tbl , tol );
+			}
+		}
+	}
+
+	/* recompute the bounding boxes */
+	nmg_region_a( s->r_p , tol );
+
+	/* free memory */
+	rt_free( (char *)flags , "nmg_extrude_shell: flags" );
+	rt_free( (char *)copy_tbl , "nmg_extrude_shell: copy_tbl" );
+}
