@@ -155,7 +155,7 @@ char **argv;
   }
 
   if(mged_variables.show_menu)
-    dmaflag++;
+    dirty = 1;
 
   return TCL_OK;
 }
@@ -555,9 +555,7 @@ int do_func;
 
 			if(do_func)
 			  (*(mptr->scroll_func))(mptr, val);
-#if 0
-			dmaflag = 1;
-#endif
+
 			return( 1 );		/* scroll claims pen value */
 		}
 	}

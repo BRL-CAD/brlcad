@@ -323,47 +323,15 @@ char    **argv;
   o_dm_list = curr_dm_list;
   BU_GETSTRUCT(curr_dm_list, dm_list);
   BU_LIST_APPEND(&head_dm_list.l, &curr_dm_list->l);
-#if 1
   /* Only need to do this once */
   if(tkwin == NULL && NEED_GUI(wp->dp)){
     if(gui_setup() == TCL_ERROR)
       goto Bad;
   }
 
-#if DO_NEW_LIBDM_OPEN
   if(wp->init(o_dm_list, argc, argv) == TCL_ERROR)
     goto Bad;
   no_memory = 0;
-#else
-  BU_GETSTRUCT(dmp, dm);
-  *dmp = *wp->dp;
-  dm_var_init(o_dm_list);
-  no_memory = 0;
-  if(wp->init(argc, argv) == DM_NULL)
-    goto Bad;
-#endif
-
-#else
-  BU_GETSTRUCT(dmp, dm);
-  *dmp = *wp->dp;
-  curr_dm_list->dm_init = wp->init;
-  dm_var_init(o_dm_list);
-
-  no_memory = 0;
-
-  curr_dm_list->dm_init();
-  bu_vls_init(&dmp->dm_initWinProc);
-  bu_vls_strcpy(&dmp->dm_initWinProc, "mged_bind_dm");
-
-  /* Only need to do this once */
-  if(tkwin == NULL && NEED_GUI(wp->dp)){
-    if(gui_setup() == TCL_ERROR)
-      goto Bad;
-  }
-
-  if(dmp->dm_open(dmp, argc - 1, argv + 1))
-    goto Bad;
-#endif
 
 #if TRY_NEW_MGED_VARS
   mged_variable_setup(curr_dm_list);
@@ -714,6 +682,7 @@ struct dm_list *initial_dm_list;
   owner = 1;
   frametime = 1;
   adc_a1_deg = adc_a2_deg = 45.0;
+  last_v_axes = 2; /* center location */
 }
 
 mged_slider_init_vls(p)
