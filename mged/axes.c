@@ -150,16 +150,16 @@ draw_e_axes()
   draw_axes(v_ap1,
 	    Viewrot,
 	    mged_variables->e_axes_size1 * INV_GED,
-	    mged_variables->e_axes_color1,
-	    mged_variables->e_axes_label_color1,
+	    color_scheme->edit_axes1,
+	    color_scheme->edit_axes_label1,
 	    mged_variables->e_axes_linewidth1);
 
   bn_mat_mul(rot_mat, Viewrot, acc_rot_sol);
   draw_axes(v_ap2,
 	    rot_mat,
 	    mged_variables->e_axes_size2 * INV_GED,
-	    mged_variables->e_axes_color2,
-	    mged_variables->e_axes_label_color2,
+	    color_scheme->edit_axes2,
+	    color_scheme->edit_axes_label2,
 	    mged_variables->e_axes_linewidth2);
 }
 
@@ -174,8 +174,8 @@ draw_m_axes()
   draw_axes(v_ap,
 	    Viewrot,
 	    mged_variables->m_axes_size * INV_GED,
-	    mged_variables->m_axes_color,
-	    mged_variables->m_axes_label_color,
+	    color_scheme->model_axes,
+	    color_scheme->model_axes_label,
 	    mged_variables->m_axes_linewidth);
 }
 
@@ -192,7 +192,7 @@ draw_v_axes()
   draw_axes(v_ap,
 	    Viewrot,
 	    mged_variables->v_axes_size * INV_GED,
-	    mged_variables->v_axes_color,
-	    mged_variables->v_axes_label_color,
+	    color_scheme->view_axes,
+	    color_scheme->view_axes_label,
 	    mged_variables->v_axes_linewidth);
 }
