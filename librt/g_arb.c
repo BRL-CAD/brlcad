@@ -865,7 +865,6 @@ struct directory	*dp;
 	struct faceuse		*outfaceuses[6];
 	struct vertex		*verts[8];
 	struct vertex		**vertp[4];
-	struct edgeuse		*eu, *eu2;
 	int			face;
 	plane_t			plane;
 
@@ -874,78 +873,91 @@ struct directory	*dp;
 		return(-1);
 	}
 
+	for( i=0; i<6; i++ )  outfaceuses[i] = (struct faceuse *)0;
 	for( i=0; i<8; i++ )  verts[i] = (struct vertex *)0;
 
-	/* Build all 6 faces of the ARB */
 	*r = nmg_mrsv( m );	/* Make region, empty shell, vertex */
 	s = m->r_p->s_p;
 
-	/* make "top" */
-	vertp[0] = &verts[0];
-	vertp[1] = &verts[1];
-	vertp[2] = &verts[2];
-	vertp[3] = &verts[3];
-	outfaceuses[0] = nmg_cmface(s, vertp, 4);
+	/*  List the vertices for each face in clockwise order */
+	for( i=0; i<6; i++ )  {
+		register struct arb_info	*aip = &arb_info[i];
+#if 1
+		vertp[0] = &verts[aip->ai_sub[0]];
+		vertp[1] = &verts[aip->ai_sub[1]];
+		vertp[2] = &verts[aip->ai_sub[2]];
+		vertp[3] = &verts[aip->ai_sub[3]];
 
-	/* make "bottom", going the other way around */
-	vertp[0] = &verts[7];
-	vertp[1] = &verts[6];
-	vertp[2] = &verts[5];
-	vertp[3] = &verts[4];
-	outfaceuses[1] = nmg_cmface(s, vertp, 4);
-
-	/* make sure that vertices are listed in clockwise fashion when
-	 * viewed from the outside of the face.  In this way the face
-	 * geometry will be properly computed.
-	 * ????? XXX
-	 */
-	vertp[0] = &verts[0];
-	vertp[1] = &verts[1];
-	vertp[2] = &verts[5];
-	vertp[3] = &verts[4];
-	outfaceuses[2] = nmg_cmface(s, vertp, 4);
-
-	vertp[0] = &verts[0];
-	vertp[1] = &verts[4];
-	vertp[2] = &verts[7];
-	vertp[3] = &verts[3];
-	outfaceuses[3] = nmg_cmface(s, vertp, 4);
-
-	vertp[0] = &verts[2];
-	vertp[1] = &verts[6];
-	vertp[2] = &verts[5];
-	vertp[3] = &verts[1];
-	outfaceuses[4] = nmg_cmface(s, vertp, 4);
-
-	vertp[0] = &verts[2];
-	vertp[1] = &verts[3];
-	vertp[2] = &verts[7];
-	vertp[3] = &verts[6];
-	outfaceuses[5] = nmg_cmface(s, vertp, 4);
+		outfaceuses[i] = nmg_cmface(s, vertp, 4);
+#else
+		struct vertex	*vertlist[4];
+		vertlist[0] = verts[aip->ai_sub[0]];
+		vertlist[1] = verts[aip->ai_sub[1]];
+		vertlist[2] = verts[aip->ai_sub[2]];
+		vertlist[3] = verts[aip->ai_sub[3]];
+		outfaceuses[i] = nmg_cface(s, vertlist, 4);
+		verts[aip->ai_sub[0]] = vertlist[0];
+		verts[aip->ai_sub[1]] = vertlist[1];
+		verts[aip->ai_sub[2]] = vertlist[2];
+		verts[aip->ai_sub[3]] = vertlist[3];
+#endif
+	}
 
 	/* Associate vertex geometry */
 	for( i=0; i<8; i++ )
-		nmg_vertex_gv(verts[i], &ai.arbi_pt[3*i]);
+		if(verts[i]) nmg_vertex_gv(verts[i], &ai.arbi_pt[3*i]);
 
 	/* Associate face geometry */
 	for (i=0 ; i < 6 ; ++i) {
-		eu = outfaceuses[i]->lu_p->down.eu_p;
-		if (rt_mk_plane_3pts(plane, eu->vu_p->v_p->vg_p->coord,
-					eu->next->vu_p->v_p->vg_p->coord,
-					eu->last->vu_p->v_p->vg_p->coord)) {
-			rt_log("At %d in %s\n", __LINE__, __FILE__);
-			rt_bomb("cannot make plane equation\n");
-		}
-		else if (plane[0] == 0.0 && plane[1] == 0.0 && plane[2] == 0.0) {
-			rt_log("Bad plane equation from rt_mk_plane_3pts at %d in %s\n",
-					__LINE__, __FILE__);
-			rt_bomb("BAD Plane Equation");
-		}
-		else nmg_face_g(outfaceuses[i], plane);
+		if(outfaceuses[i])  rt_mk_nmg_planeeqn( outfaceuses[i] );
 	}
+
+#if 0
+	/* Glue the edges of different outward pointing face uses together */
+	nmg_gluefaces( outfaceuses, 6 );
+#endif
 
 	/* Compute "geometry" for region and shell */
 	nmg_region_a( *r );
 
+	{
+		FILE *file;
+		if( (file = fopen("mged.pl", "w")) == NULL )  {
+			perror("mged.pl");
+		} else {
+			nmg_pl_r( file, *r );
+			fclose( file );
+			printf("wrote mged.pl\n");
+		}
+	}
+	nmg_ck_closed_surf(s);		/* debug */
+
 	return(0);
+}
+
+/*
+ *  This routine is just a hack, for getting started quickly.
+ *
+ *  If face was built in clockwise manner from points A, B, C, then
+ *	A is at eu
+ *	B is at eu->last, and
+ *	C is at eu->next
+ *  as a consequence of the way nmg_cmface() makes the face.
+ */
+rt_mk_nmg_planeeqn( ofp )
+struct faceuse	*ofp;
+{
+	struct edgeuse		*eu;
+	plane_t			plane;
+
+	eu = ofp->lu_p->down.eu_p;
+	if (rt_mk_plane_3pts(plane, eu->vu_p->v_p->vg_p->coord,
+				eu->last->vu_p->v_p->vg_p->coord,
+				eu->next->vu_p->v_p->vg_p->coord)) {
+		rt_log("rt_mk_nmg_planeeqn(): rt_mk_plane_3pts failed\n");
+	}
+	else if (plane[0] == 0.0 && plane[1] == 0.0 && plane[2] == 0.0) {
+		rt_log("rt_mk_nmg_planeeqn():  Bad plane equation from rt_mk_plane_3pts\n" );
+	}
+	else nmg_face_g( ofp, plane);
 }
