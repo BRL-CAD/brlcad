@@ -222,7 +222,7 @@ register struct region *rp;
 	if( tp->tx_fw < 0 )  tp->tx_fw = tp->tx_w;
 	tp->tx_pixels = (char *)0;
 mlib_print("txt_setup", txt_parse, (char *)tp);
-	return(1);
+	return( txt_read(tp) );
 }
 
 struct ckr_specific  {
