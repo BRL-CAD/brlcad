@@ -160,6 +160,7 @@ struct resource		*resources;	/* resources[ncpus] */
 	for( i=0; i < ncpus; i++ )  {
 		RT_CK_RESOURCE( &resources[i] );
 	}
+	rmi.resources = resources;
 
 	rmi.magic = RT_MANY_INTERNAL_MAGIC;
 	rmi.stop_worker = 0;
